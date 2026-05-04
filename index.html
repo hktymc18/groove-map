@@ -775,7 +775,7 @@ var isLocal = !GAS_URL || GAS_URL === 'YOUR_GAS_WEB_APP_URL_HERE';
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v62';
+  var DATA_VERSION = 'v63';
   try {
     if (_lsAvailable && localStorage.getItem('grooveMap_version') !== DATA_VERSION) {
       localStorage.removeItem(LS_KEY);
@@ -783,23 +783,15 @@ function init() {
     }
   } catch(e) {}
 
-  if (isLocal) {
-    var cached = lsLoad();
-    if (cached) {
-      state.members = cached.members || [];
-      state.stats = cached.stats || getDefaultStats();
-      state.commission = cached.commission || getDefaultCommission();
-      state.months = cached.months || ['2026.01'];
-    } else {
-      seedDefaultData();
-    }
-    state.isEditor = true;
-    state.currentMonth = state.months[0] || '2026.01';
-    document.getElementById('userDot').classList.add('editor');
-    document.getElementById('userDot').title = 'ローカルモード（編集可）';
-  } else {
-    loadFromGAS();
-  }
+  // Firebase使用時はログイン後にデータ読み込むのでseedしない
+  // 空の状態でUIを初期化するだけ
+  state.members = [];
+  state.stats = getDefaultStats();
+  state.commission = getDefaultCommission();
+  state.months = ['2026.01'];
+  state.currentMonth = '2026.01';
+  state.isEditor = true;
+
   buildMonthSelector();
   updateEditorUI();
   renderCurrentView();
@@ -2962,17 +2954,20 @@ function fsLoadFromFirestore(uid) {
   fsGet('maps/' + uid + '/months/' + month).then(function(data) {
     if (data && data.members && data.members.length > 0) {
       state.members = data.members;
-      state.stats = data.stats || state.stats;
-      state.commission = data.commission || state.commission;
-      renderCurrentView();
-      updateLTSV('current', state.members);
+      state.stats = data.stats || getDefaultStats();
+      state.commission = data.commission || getDefaultCommission();
       toast('データを読み込みました ✓');
     } else {
-      // 初回 or データなし → デフォルトのまま
-      renderCurrentView();
+      // 新規ユーザー or この月のデータなし → 空のまま
+      state.members = [];
+      state.stats = getDefaultStats();
+      state.commission = getDefaultCommission();
     }
+    renderCurrentView();
+    updateLTSV('current', state.members);
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
+    state.members = [];
     renderCurrentView();
   });
 }
