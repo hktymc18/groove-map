@@ -483,6 +483,11 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
       <div class="exp-btn" onclick="exportCSV('stats')">📄 統計CSV</div>
     </div>
     <!-- 月次テーブル -->
+    <div style="padding:8px 14px;display:flex;align-items:center;gap:12px">
+      <label style="font-size:13px;color:var(--text-dim)">表示年</label>
+      <select class="fs" id="statsYear" onchange="onStatsYearChange()" style="width:120px">
+      </select>
+    </div>
     <div class="sec-label">月次推移</div>
     <div class="card" style="overflow-x:auto">
       <table class="tbl" id="statsTbl">
@@ -742,43 +747,68 @@ var pendingChanges = false;
 var selectedParentId = null; // カードを選択したときのID
 
 // ── LOCAL STORAGE FALLBACK ──
-var LS_KEY = 'grooveMap_v2';
+var LS_KEY = 'grooveMap_v3';
 // localStorage安全ラッパー（iPhoneメール等で使えない場合も動作）
-var _lsAvailable = (function() {
-  try { localStorage.setItem('__test__','1'); localStorage.removeItem('__test__'); return true; }
-  catch(e) { return false; }
-})();
-function lsLoad() {
-  if (!_lsAvailable) return null;
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch { return null; }
-}
-function lsSave() {
-  if (!_lsAvailable) return;
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify({
-      members: state.members,
-      stats: state.stats,
-      commission: state.commission,
-      months: state.months,
-    }));
-  } catch(e) {}
-}
+var _lsAvailable = false; // Firebase接続時はlocalStorage無効
+function lsLoad() { return null; }
+function lsSave() { /* Firebase自動保存のみ使用 */ }
 
 var isLocal = !GAS_URL || GAS_URL === 'YOUR_GAS_WEB_APP_URL_HERE';
 
+
+// ── 年選択・統計表 ──
+function buildYearSelector() {
+  var sel = document.getElementById('statsYear');
+  if (!sel) return;
+  sel.innerHTML = '';
+  var years = [];
+  state.months.forEach(function(m) {
+    var y = m.split('.')[0];
+    if (years.indexOf(y) < 0) years.push(y);
+  });
+  if (years.length === 0) years.push(new Date().getFullYear().toString());
+  years.forEach(function(y) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '年';
+    sel.appendChild(opt);
+  });
+  sel.value = years[years.length-1];
+}
+
+function onStatsYearChange() {
+  renderStats();
+}
+
+function getStatsYear() {
+  var sel = document.getElementById('statsYear');
+  return sel ? sel.value : new Date().getFullYear().toString();
+}
+
+// 月次テーブルのヘッダーを動的に生成（選択年の1〜12月）
+function buildStatsTableHeader() {
+  var year = getStatsYear();
+  var months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var thead = document.getElementById('statsTblHead');
+  if (thead) {
+    thead.innerHTML = '<tr><th style="text-align:left;padding-left:6px">項目</th>' 
+      + months.map(function(m){ return '<th>' + m + '</th>'; }).join('') + '</tr>';
+  }
+}
+
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v66';
+  var DATA_VERSION = 'v72';
+  // localStorageを完全クリア（旧キャッシュ対策）
   try {
-    if (_lsAvailable && localStorage.getItem('grooveMap_version') !== DATA_VERSION) {
-      localStorage.removeItem(LS_KEY);
-      localStorage.setItem('grooveMap_version', DATA_VERSION);
-    }
+    localStorage.removeItem('grooveMap_v2');
+    localStorage.removeItem('grooveMap_v3');
+    localStorage.removeItem('grooveMap_version');
+    localStorage.removeItem('map_current_user');
   } catch(e) {}
 
-  // Firebase使用時はログイン後にデータ読み込むのでseedしない
-  // 空の状態でUIを初期化するだけ
+  // 空の状態でUIを初期化
   state.members = [];
+  state.idealMembers = [];
   state.stats = getDefaultStats();
   state.commission = getDefaultCommission();
   state.months = ['2026.01'];
@@ -791,38 +821,8 @@ function init() {
 }
 
 function loadFromGAS() {
-  try {
-    // ユーザー確認
-    var who = gasGet({ action: 'whoami' });
-    state.isEditor = who.isEditor;
-    state.userEmail = who.email;
-    var dot = document.getElementById('userDot');
-    dot.classList.toggle('editor', who.isEditor);
-    dot.title = (who.email+" ("+(who.isEditor?"編集者":"閲覧のみ")+")");
-
-    // データ取得
-    var data = gasGet({ action: 'getAll' });
-    state.members = data.members || [];
-    state.stats = normalizeStats(data.stats);
-    state.commission = data.commission || getDefaultCommission();
-    state.months = data.months && data.months.length ? data.months : ['2026.01'];
-    state.currentMonth = state.months[0];
-    lsSave();
-  } catch(e) {
-    toast('通信エラー。ローカルデータで表示します。');
-    var cached = lsLoad();
-    if (cached) {
-      state.members = cached.members || [];
-      state.stats = cached.stats || getDefaultStats();
-      state.commission = cached.commission || getDefaultCommission();
-      state.months = cached.months || ['2026.01'];
-      state.isEditor = false;
-    } else {
-      seedDefaultData();
-      state.isEditor = true;
-    }
-    state.currentMonth = state.months[0] || '2026.01';
-  }
+  // GAS未使用（Firebase接続に移行）
+  renderCurrentView();
 }
 
 function gasGet(params, cb) {
@@ -904,9 +904,17 @@ function renderCurrentView() {
 
 // ── TREE ──
 function membersForMap(mapType) {
+  if (mapType === 'ideal') {
+    // 理想MAPは専用配列から（なければstate.membersのboth/idealでフォールバック）
+    if (state.idealMembers && state.idealMembers.length > 0) {
+      return state.idealMembers;
+    }
+    return state.members.filter(function(m) {
+      return m.mapType === 'ideal' || m.mapType === 'both';
+    });
+  }
   return state.members.filter(function(m) {
-    return (m.month === state.currentMonth || !m.month || m.month === '') &&
-    (m.mapType === mapType || m.mapType === 'both');
+    return (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
   });
 }
 function childrenOf(parentId, members) {
@@ -1199,19 +1207,179 @@ function updateLTSV(mapType, members) {
 
 // ── COMMISSION ──
 function renderCommission() {
-  var cm = state.commission;
-  var total = (cm.SB&&cm.SB.com||0) + (cm.BB&&cm.BB.com||0) + (cm.LB&&cm.LB.com||0);
+  // BB/LB自動計算
+  recalcCommission();
+  
+  var cm = state.commission || getDefaultCommission();
+  var sbPt  = cm.SB&&cm.SB.pt  !== undefined ? cm.SB.pt  : 0;
+  var sbCom = cm.SB&&cm.SB.com !== undefined ? cm.SB.com : 0;
+  var bbPt  = cm.BB&&cm.BB.pt  !== undefined ? cm.BB.pt  : 0;
+  var bbCom = cm.BB&&cm.BB.com !== undefined ? cm.BB.com : 0;
+  var lbCom = cm.LB&&cm.LB.com !== undefined ? cm.LB.com : 0;
+  var total = sbCom + bbCom + lbCom;
+  
   document.getElementById('commTotal').textContent = '¥'+total.toLocaleString();
-  document.getElementById('commTableWrap').innerHTML =
-    '<div class="card" style="margin-top:10px">' +
-    '<table class="tbl comm-tbl">' +
-    '<thead><tr><th style="text-align:left;padding-left:12px">種別</th><th>ポイント</th><th>コミッション</th></tr></thead>' +
-    '<tbody>' +
-    '<tr><td class="lname">SB</td><td>' + (cm.SB&&cm.SB.pt||0).toLocaleString() + '</td><td>¥' + (cm.SB&&cm.SB.com||0).toLocaleString() + '</td></tr>' +
-    '<tr><td class="lname">BB</td><td>' + (cm.BB&&cm.BB.pt||0).toLocaleString() + '</td><td>¥' + (cm.BB&&cm.BB.com||0).toLocaleString() + '</td></tr>' +
-    '<tr><td class="lname">LB</td><td>' + (cm.LB&&cm.LB.pt||0).toLocaleString() + '</td><td>¥' + (cm.LB&&cm.LB.com||0).toLocaleString() + '</td></tr>' +
-    '<tr class="tot"><td class="lname" colspan="2">コミッション合計</td><td>¥' + total.toLocaleString() + '</td></tr>' +
-    '</tbody></table></div>';
+
+  var wrap = document.getElementById('commTableWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  
+  var card = document.createElement('div');
+  card.className = 'card';
+  card.style.marginTop = '10px';
+  
+  // テーブル
+  var tbl = document.createElement('table');
+  tbl.className = 'tbl comm-tbl';
+  tbl.innerHTML = '<thead><tr><th style="text-align:left;padding-left:12px">種別</th><th>ポイント</th><th>コミッション</th></tr></thead>';
+  var tbody = document.createElement('tbody');
+  
+  // SB行（ポイント・コミッション共に手入力）
+  var sbRow = document.createElement('tr');
+  sbRow.innerHTML = '<td class="lname">SB</td>';
+  var sbPtTd = document.createElement('td');
+  var sbPtIn = document.createElement('input');
+  sbPtIn.type='number'; sbPtIn.value=sbPt; sbPtIn.style.cssText='width:80px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px';
+  sbPtIn.oninput = function(){ cm.SB.pt=parseInt(this.value)||0; renderCommission(); autoSave(); };
+  sbPtTd.appendChild(sbPtIn);
+  var sbComTd = document.createElement('td');
+  var sbComIn = document.createElement('input');
+  sbComIn.type='number'; sbComIn.value=sbCom; sbComIn.style.cssText='width:90px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px';
+  sbComIn.oninput = function(){ cm.SB.com=parseInt(this.value)||0; renderCommission(); autoSave(); };
+  sbComTd.appendChild(document.createTextNode('¥')); sbComTd.appendChild(sbComIn);
+  sbRow.appendChild(sbPtTd); sbRow.appendChild(sbComTd);
+  tbody.appendChild(sbRow);
+  
+  // BB行（ポイント自動・コミッション手入力）
+  var bbRow = document.createElement('tr');
+  bbRow.innerHTML = '<td class="lname">BB</td>';
+  var bbPtTd = document.createElement('td');
+  bbPtTd.style.cssText = 'text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px;color:var(--accent)';
+  bbPtTd.textContent = bbPt.toLocaleString() + ' (自動)';
+  var bbComTd = document.createElement('td');
+  var bbComIn = document.createElement('input');
+  bbComIn.type='number'; bbComIn.value=bbCom; bbComIn.style.cssText='width:90px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px';
+  bbComIn.oninput = function(){ cm.BB.com=parseInt(this.value)||0; renderCommission(); autoSave(); };
+  bbComTd.appendChild(document.createTextNode('¥')); bbComTd.appendChild(bbComIn);
+  bbRow.appendChild(bbPtTd); bbRow.appendChild(bbComTd);
+  tbody.appendChild(bbRow);
+  
+  // LB行（自動計算）
+  var lbRow = document.createElement('tr');
+  lbRow.innerHTML = '<td class="lname">LB</td>'
+    + '<td style="text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px;color:var(--accent)">自動</td>'
+    + '<td style="text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px">¥' + lbCom.toLocaleString() + '</td>';
+  tbody.appendChild(lbRow);
+  
+  // 合計行
+  var totRow = document.createElement('tr');
+  totRow.className = 'tot';
+  totRow.innerHTML = '<td class="lname" colspan="2">コミッション合計</td><td>¥' + total.toLocaleString() + '</td>';
+  tbody.appendChild(totRow);
+  
+  tbl.appendChild(tbody);
+  card.appendChild(tbl);
+  wrap.appendChild(card);
+}
+
+
+// ── コミッション自動計算 ──
+var BR_TITLES = ['BR','ゴールド','G','ラピス','L','ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
+
+function isBROrAbove(title) {
+  return BR_TITLES.indexOf(title||'') >= 0;
+}
+
+// 指定メンバーの配下を全取得（再帰）
+function getAllDescendants(memberId, members) {
+  var result = [];
+  function walk(pid) {
+    members.forEach(function(m) {
+      if (m.parentId === pid) {
+        result.push(m);
+        walk(m.id);
+      }
+    });
+  }
+  walk(memberId);
+  return result;
+}
+
+// BB計算: 自分配下のBR以上の直接配下を除いたポイント合計
+function calcBBGSV(members) {
+  var roots = members.filter(function(m){ return !m.parentId; });
+  if (roots.length === 0) return 0;
+  var rootId = roots[0].id;
+  
+  var total = 0;
+  // ルートの直下BR以上を特定
+  var brDirectChildren = members.filter(function(m){
+    return m.parentId === rootId && isBROrAbove(m.title);
+  });
+  var excludeIds = {};
+  brDirectChildren.forEach(function(br) {
+    excludeIds[br.id] = true;
+    getAllDescendants(br.id, members).forEach(function(d){ excludeIds[d.id] = true; });
+  });
+  
+  // ルート自身を除く、excludeに含まれないメンバーのPT合計
+  members.forEach(function(m) {
+    if (m.id === rootId) return;
+    if (excludeIds[m.id]) return;
+    total += (m.ptCurrent || 0);
+  });
+  return total;
+}
+
+// LB計算
+function calcLBCommission(bbGSV, members) {
+  var roots = members.filter(function(m){ return !m.parentId; });
+  if (roots.length === 0) return 0;
+  var rootId = roots[0].id;
+  
+  // 1段目BR以上の配下ポイント合計（BR自身含む）
+  var brDirectChildren = members.filter(function(m){
+    return m.parentId === rootId && isBROrAbove(m.title);
+  });
+  var brTotal = 0;
+  brDirectChildren.forEach(function(br) {
+    brTotal += (br.ptCurrent || 0);
+    getAllDescendants(br.id, members).forEach(function(d){ brTotal += (d.ptCurrent || 0); });
+  });
+  
+  // LBポイント = BR以上の配下全体合計
+  var lbPt = brTotal;
+  
+  var rate = 0;
+  if (bbGSV >= 3000) rate = 0.05;
+  else if (bbGSV >= 2000) rate = 0.025;
+  else return 0;
+  
+  var lbCom = Math.floor(lbPt * rate * 126 * 1.08);
+  
+  // 6: 直下BR以上×0.1×126×1.08 と比較
+  var directBRPt = 0;
+  brDirectChildren.forEach(function(br){ directBRPt += (br.ptCurrent || 0); });
+  var alt = Math.floor(directBRPt * 0.1 * 126 * 1.08);
+  
+  return Math.max(lbCom, alt);
+}
+
+// コミッション再計算（BB/LBは自動、SBは手入力維持）
+function recalcCommission() {
+  var members = membersForMap('ideal');
+  if (!members || members.length === 0) return;
+  
+  var bbGSV = calcBBGSV(members);
+  var lbCom = calcLBCommission(bbGSV, members);
+  
+  if (!state.commission) state.commission = getDefaultCommission();
+  state.commission.BB = state.commission.BB || {pt:0, com:0};
+  state.commission.LB = state.commission.LB || {pt:0, com:0};
+  
+  state.commission.BB.pt = bbGSV;
+  state.commission.LB.pt = 0; // LBのポイント表示は別途
+  state.commission.LB.com = lbCom;
 }
 
 // ── DIFF ──
@@ -1307,7 +1475,43 @@ function renderDiffTree(diffs, mA, mB) {
 }
 
 // ── STATS ──
+function buildAutoStats() {
+  // 現状MAPから稼働/研修生ステータスを自動集計して state.stats.monthly に反映
+  var members = membersForMap('current');
+  var s = state.stats;
+  if (!s || !s.monthly) return;
+  
+  var colIdx = -1; // 現在の月の列インデックス（最後の列 = 5）
+  // 月次の最後（最新）列を自動集計列とする
+  colIdx = (s.monthly[0].vals||[]).length - 1;
+  if (colIdx < 0) colIdx = 5;
+  
+  var counts = {S:0, A:0, B:0, C:0, B1:0, make:0, dlr:0};
+  members.forEach(function(m) {
+    if (m.activity === 'S') counts.S++;
+    else if (m.activity === 'A') counts.A++;
+    else if (m.activity === 'B') counts.B++;
+    else if (m.activity === 'C') counts.C++;
+    // B1 = 研修生かつ終着点がBC
+    if (m.trainee && m.traineeResult === 'BC') counts.B1++;
+    // マケ・PG
+    if (m.traineeStatus === 'マケ' || m.traineeStatus === 'PG') counts.make++;
+    // DLR
+    if (m.traineeStatus === 'DLR') counts.dlr++;
+  });
+  
+  var labelMap = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr'};
+  s.monthly.forEach(function(row) {
+    var key = labelMap[row.label];
+    if (key && counts[key] !== undefined) {
+      while (row.vals.length <= colIdx) row.vals.push('');
+      row.vals[colIdx] = counts[key];
+    }
+  });
+}
+
 function renderStats() {
+  buildAutoStats();
   var s = state.stats;
   var hlRows = ['平均稼働','UNIVERSE'];
   var hl2Rows = ['B1'];
@@ -1332,12 +1536,18 @@ function renderStats() {
     }).join('');
   }
 
-  document.getElementById('plBody').innerHTML = (s.powerline||[]).map(function(row) {
-    var vals = (row.vals||[]).map(function(v) {
-      return '<td>' + (v===''||v===undefined ? '-' : Number(v) ? Number(v).toLocaleString() : v) + '</td>';
-    }).join('');
-    return '<tr><td class="plname">' + row.name + '</td>' + vals + '</tr>';
-  }).join('');
+  // パワーライン: LTSV 5000P以上の系列を自動表示
+  var plData = [];
+  var currentMembers = membersForMap('current');
+  currentMembers.forEach(function(m) {
+    if (!m.parentId) return; // ルート除外
+    var ltsv = calcLtsv(m.id, currentMembers);
+    if (ltsv >= 5000) plData.push({name:(m.lastName||'')+(m.firstName||''), ltsv:ltsv});
+  });
+  plData.sort(function(a,b){ return b.ltsv - a.ltsv; });
+  document.getElementById('plBody').innerHTML = plData.map(function(row) {
+    return '<tr><td class="plname">' + row.name + '</td><td>' + row.ltsv.toLocaleString() + '</td></tr>';
+  }).join('') || '<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
 
   document.getElementById('goldListWrap').innerHTML = (s.goldList||[]).map(function(item,i) {
     return '<div class="li"><div class="li-rank">' + (i+1) + '</div><div>' + (item.name||'-') + '</div><div class="li-num">' + (item.num||'') + '</div></div>';
@@ -1351,7 +1561,7 @@ function renderStats() {
   if (freshList.length === 0) { freshWrap.innerHTML = '<div class="empty">なし</div>'; }
   else {
     freshWrap.innerHTML = '';
-    var FRESH_ACTIONS = ['リスト作戦会議','基準値UP','F-DATA','次回ハウディ'];
+    var FRESH_ACTIONS = ['リスト','基準値','F-DATA','ハウディ'];
 
     freshList.forEach(function(n, i) {
       var key = 'fresh_' + i;
@@ -1371,25 +1581,41 @@ function renderStats() {
 
       // 名前行
       var nameRow = document.createElement('div');
-      nameRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:2px 0';
+      nameRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:2px 0;cursor:pointer';
       nameRow.onclick = function() { toggleFreshPanel(i); };
 
       var nameEl = document.createElement('div');
       nameEl.className = 'fresh-name';
       nameEl.textContent = n;
       if (allDone) { nameEl.style.textDecoration = 'line-through'; nameEl.style.color = 'var(--text-dim)'; }
-
-      // 完了済みアクション数バッジ
-      var doneCount = FRESH_ACTIONS.filter(function(a) {
-        var akey = 'act_' + a;
-        return fd[akey] && fd[akey].done;
-      }).length;
-      var badge = document.createElement('span');
-      badge.style.cssText = 'font-size:10px;color:var(--accent);font-family:DM Mono,monospace;margin-left:6px';
-      badge.textContent = doneCount > 0 ? doneCount + '/' + FRESH_ACTIONS.length : '';
-
       nameRow.appendChild(nameEl);
-      nameRow.appendChild(badge);
+      item.appendChild(nameRow);
+
+      // タグ行（常時表示・色分け）
+      var tagRow = document.createElement('div');
+      tagRow.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;padding:4px 0 6px';
+      FRESH_ACTIONS.forEach(function(actionName) {
+        var akey = 'act_' + actionName;
+        var afd = fd[akey] || {};
+        var tag = document.createElement('div');
+        tag.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:10px;font-family:IBM Plex Mono,monospace;cursor:pointer';
+        tag.textContent = actionName;
+        if (afd.done) {
+          tag.style.background = 'var(--surface3)';
+          tag.style.color = 'var(--text-dim)';
+          tag.style.textDecoration = 'line-through';
+        } else if (afd.date) {
+          tag.style.background = 'rgba(0,212,170,0.15)';
+          tag.style.color = 'var(--accent)';
+          tag.style.border = '1px solid var(--accent)';
+        } else {
+          tag.style.background = 'rgba(251,191,36,0.15)';
+          tag.style.color = '#f59e0b';
+          tag.style.border = '1px solid rgba(251,191,36,0.4)';
+        }
+        tag.onclick = function(e){ e.stopPropagation(); toggleFreshPanel(i); };
+        tagRow.appendChild(tag);
+      });
 
       // ── パネル（タップで開閉） ──
       var panel = document.createElement('div');
@@ -1480,9 +1706,57 @@ function renderStats() {
     });
   }
 
-  document.getElementById('outlineWrap').innerHTML = (s.outline||[]).map(function(o) {
-    return '<div class="li"><div class="li-date">' + (o.date||'') + '</div><div style="flex:1">' + (o.content||'') + '</div><div style="color:var(--text-dim);font-size:11px">' + (o.target||'') + '</div></div>';
-  }).join('') || '<div class="empty">なし</div>';
+  // アウトライン（3〜7人、手入力）
+  var outlineWrap = document.getElementById('outlineWrap');
+  if (outlineWrap) {
+    if (!s.outline) s.outline = [];
+    // 3〜7人のアウトラインを確保
+    while (s.outline.length < 3) s.outline.push({date:'',target:'',content:'',aSan:''});
+    while (s.outline.length > 7) s.outline.pop();
+    
+    outlineWrap.innerHTML = '';
+    s.outline.forEach(function(o, i) {
+      var row = document.createElement('div');
+      row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border)';
+      
+      // 1行目: 日時 + Aさん
+      var r1 = document.createElement('div');
+      r1.style.cssText = 'display:flex;gap:8px;margin-bottom:6px';
+      var dtIn = document.createElement('input');
+      dtIn.placeholder='日時'; dtIn.value=o.date||''; dtIn.className='fi';
+      dtIn.style.cssText='flex:1;font-size:12px;padding:5px 8px';
+      (function(idx){ dtIn.oninput=function(){ s.outline[idx].date=this.value; autoSave(); }; })(i);
+      var asIn = document.createElement('input');
+      asIn.placeholder='Aさん'; asIn.value=o.aSan||''; asIn.className='fi';
+      asIn.style.cssText='flex:1;font-size:12px;padding:5px 8px';
+      (function(idx){ asIn.oninput=function(){ s.outline[idx].aSan=this.value; autoSave(); }; })(i);
+      r1.appendChild(dtIn); r1.appendChild(asIn);
+      
+      // 2行目: 対象者
+      var tgIn = document.createElement('input');
+      tgIn.placeholder='対象者'; tgIn.value=o.target||''; tgIn.className='fi';
+      tgIn.style.cssText='width:100%;font-size:12px;padding:5px 8px;margin-bottom:6px';
+      (function(idx){ tgIn.oninput=function(){ s.outline[idx].target=this.value; autoSave(); }; })(i);
+      
+      // 3行目: 内容
+      var ctIn = document.createElement('input');
+      ctIn.placeholder='内容'; ctIn.value=o.content||''; ctIn.className='fi';
+      ctIn.style.cssText='width:100%;font-size:12px;padding:5px 8px';
+      (function(idx){ ctIn.oninput=function(){ s.outline[idx].content=this.value; autoSave(); }; })(i);
+      
+      row.appendChild(r1); row.appendChild(tgIn); row.appendChild(ctIn);
+      outlineWrap.appendChild(row);
+    });
+    
+    // 行追加ボタン（最大7人）
+    if (s.outline.length < 7) {
+      var addBtn = document.createElement('div');
+      addBtn.style.cssText='color:var(--accent);font-size:13px;padding:10px 0;cursor:pointer;text-align:center';
+      addBtn.textContent='＋ 追加';
+      addBtn.onclick=function(){ s.outline.push({date:'',target:'',content:'',aSan:''}); renderStats(); };
+      outlineWrap.appendChild(addBtn);
+    }
+  }
 
   // ── 研修生ファネル ──
   var funnelWrap = document.getElementById('funnelWrap');
@@ -2039,22 +2313,17 @@ function toast(msg, dur) {
 // ── DEFAULTS & SEED ──
 function getDefaultStats() {
   return { monthly:[
-    {label:'平均稼働',vals:[36,30,30,30,30,'']},
-    {label:'S',vals:[15,12,12,12,12,'']},{label:'A',vals:[3,3,3,0,0,'']},
-    {label:'B',vals:[9,12,12,12,12,'']},{label:'C',vals:[24,24,6,12,15,'']},
-    {label:'OUT',vals:[6,3,3,3,3,3]},{label:'B1',vals:[21,18,15,18,21,21]},
-    {label:'UNIVERSE',vals:[36,36,30,30,27,'']},
-    {label:'マケ・PG',vals:[26,24,22,25,28,'']},{label:'DLR動員',vals:[20,18,17,20,22,'']},
-    {label:'コミッション',vals:[820000,950000,760000,1020000,1150000,'']},
-  ], powerline:[
-    {name:'黒川涼介', vals:[8821,12106,6350,7675,10084,'']},
-    {name:'木下彩花',vals:[6540,9820,5100,7200,8950,'']},
-  ],
-  goldList:[{name:'黒川　涼介',num:4},{name:'木下　彩花',num:5},{name:'中村　由衣',num:6}],
-  freshList:['森下 美咲','福島 萌','田村 玲奈','宮本 愛','安田 早希','池上 里奈','林田 藍花','太田 美咲','後藤 菜々','中嶋 絵美','坂田 なつ','清野 綾奈','加納 美緒','野口 ゆか','吉川 舞','浜口 結衣','木本 そら'], outline:[] };
+    {label:'平均稼働',vals:['','','','','','']},
+    {label:'S',vals:['','','','','','']},{label:'A',vals:['','','','','','']},
+    {label:'B',vals:['','','','','','']},{label:'C',vals:['','','','','','']},
+    {label:'OUT',vals:['','','','','','']},{label:'B1',vals:['','','','','','']},
+    {label:'UNIVERSE',vals:['','','','','','']},
+    {label:'マケ・PG',vals:['','','','','','']},{label:'DLR動員',vals:['','','','','','']},
+    {label:'コミッション',vals:['','','','','','']},
+  ], powerline:[], goldList:[], freshList:[], outline:[] };
 }
 function getDefaultCommission() {
-  return {SB:{pt:7000,com:26460},BB:{pt:9000,com:256886},LB:{pt:145000,com:913500}};
+  return {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}};
 }
 function normalizeStats(s) {
   if (!s) return getDefaultStats();
@@ -2065,114 +2334,11 @@ function normalizeStats(s) {
   return s;
 }
 function seedDefaultData() {
-  state.currentMonth = '2026.01';
-  state.months = ['2026.01'];
+  // デモデータなし - Firestoreから読み込む
+  state.members = [];
+  state.idealMembers = [];
   state.stats = getDefaultStats();
   state.commission = getDefaultCommission();
-  // 階層構造
-  // 山内
-  //   ├ 川副
-  //   ├ 上田
-  //   │   ├ 重畠
-  //   │   │   ├ 中西
-  //   │   │   │   ├ 吉岡
-  //   │   │   │   └ 森山
-  //   │   │   └ 福木
-  //   │   │       └ 椎葉
-  //   │   ├ 波佐間
-  //   │   │   ├ 川野
-  //   │   │   │   ├ 増田
-  //   │   │   │   └ 山本
-  //   │   │   └ 今村
-  //   │   └ 高橋
-  //   ├ 古藤
-  //   └ 平橋（研修生）
-  state.members = [
-    // 1段目
-    {id:'m1', lastName:'山内', firstName:'北斗', gender:'male',   title:'D',   activity:'S', actRate:'120',  ptCurrent:9000, ptFixed:5500, rank:'G',  rankPt:2000, morale:3, trainee:false, mapType:'both', memo:'', parentId:'', month:'2026.01'},
-    // 山内直下（2段目）
-
-    {id:'y01',lastName:'中田',firstName:'剛',gender:'male',title:'E',activity:'C',actRate:'0',ptCurrent:4720,ptFixed:0,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m1',month:'2026.01'},
-    {id:'y02',lastName:'上野',firstName:'大輔',gender:'male',title:'BR',activity:'C',actRate:'0',ptCurrent:5130,ptFixed:0,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m1',month:'2026.01'},
-    {id:'y03',lastName:'本田',firstName:'健司',gender:'male',title:'BR',activity:'C',actRate:'0',ptCurrent:4380,ptFixed:0,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m1',month:'2026.01'},
-    {id:'m14',lastName:'平井', firstName:'洋平', gender:'male',   title:'',    activity:'',  actRate:'',  ptCurrent:0,    ptFixed:0, rank:'PA', rankPt:0,    morale:1, trainee:true,  mapType:'both', memo:'', parentId:'m1', month:'2026.01', nextDate:'', aSan:''},
-    {id:'m2', lastName:'辻', firstName:'沙織', gender:'female', title:'BM',  activity:'C',  actRate:'0',  ptCurrent:600,    ptFixed:450, rank:'BM', rankPt:676,  morale:1, trainee:false, mapType:'both', memo:'', parentId:'m1', month:'2026.01'},
-    {id:'m3', lastName:'黒川', firstName:'涼介',   gender:'male',   title:'R',   activity:'S', actRate:'120',  ptCurrent:1100, ptFixed:1500, rank:'BR', rankPt:1712, morale:3, trainee:false, mapType:'both', memo:'', parentId:'m1', month:'2026.01'},
-    {id:'m9', lastName:'浦田', firstName:'俊也', gender:'male',   title:'BM', activity:'S',  actRate:'120',  ptCurrent:280,    ptFixed:280, rank:'BM', rankPt:200,  morale:2, trainee:false, mapType:'both', memo:'', parentId:'m1', month:'2026.01'},
-    // 上田直下（3段目）
-    {id:'m4', lastName:'木下', firstName:'彩花', gender:'female', title:'G',   activity:'S', actRate:'120',  ptCurrent:3500, ptFixed:2000, rank:'G',  rankPt:2000, morale:3, trainee:false, mapType:'both', memo:'', parentId:'m3', month:'2026.01'},
-    {id:'m5', lastName:'波多野',firstName:'正樹', gender:'male',  title:'BR',    activity:'',  actRate:'0',  ptCurrent:840,  ptFixed:1000, rank:'BR', rankPt:1052, morale:1, trainee:false, mapType:'both', memo:'', parentId:'m3', month:'2026.01'},
-    {id:'m8', lastName:'高山', firstName:'信也', gender:'male',   title:'BM', activity:'B',  actRate:'90',  ptCurrent:280,    ptFixed:280, rank:'BM', rankPt:226,  morale:1, trainee:false, mapType:'both', memo:'', parentId:'m3', month:'2026.01'},
-    // 重畠直下（4段目）
-    {id:'m11',lastName:'中村', firstName:'由衣', gender:'female', title:'BR',   activity:'S', actRate:'120',  ptCurrent:4200, ptFixed:1000, rank:'BR', rankPt:500,  morale:2, trainee:false, mapType:'both', memo:'', parentId:'m4', month:'2026.01'},
-    {id:'m16',lastName:'福島', firstName:'萌',   gender:'female', title:'Q3', activity:'B',  actRate:'60',  ptCurrent:1300,    ptFixed:300, rank:'B2', rankPt:0,    morale:2, trainee:false, mapType:'both', memo:'フレッシュリスト', parentId:'m4', month:'2026.01'},
-    // 波佐間直下（4段目）
-    {id:'m6', lastName:'川上', firstName:'菜月', gender:'female', title:'BR',   activity:'B', actRate:'90',  ptCurrent:800,  ptFixed:1000, rank:'BR', rankPt:400,  morale:2, trainee:false, mapType:'both', memo:'', parentId:'m5', month:'2026.01'},
-    {id:'m7', lastName:'今井', firstName:'佳奈', gender:'female', title:'BM', activity:'C',  actRate:'0',  ptCurrent:170,    ptFixed:170, rank:'BM', rankPt:132,  morale:1, trainee:false, mapType:'both', memo:'', parentId:'m5', month:'2026.01'},
-    // 中西直下（5段目）
-    {id:'m12',lastName:'岡田', firstName:'裕美', gender:'female', title:'B9', activity:'S',  actRate:'120',  ptCurrent:450,  ptFixed:300, rank:'B5', rankPt:100,  morale:2, trainee:false, mapType:'both', memo:'', parentId:'m11', month:'2026.01'},
-    {id:'m13',lastName:'森下', firstName:'美咲', gender:'female', title:'B3',    activity:'C',  actRate:'30',  ptCurrent:200,    ptFixed:200, rank:'PA', rankPt:0,    morale:1, trainee:false, mapType:'both', memo:'フレッシュリスト', parentId:'m11', month:'2026.01'},
-    // 福木直下（5段目）
-    {id:'m20',lastName:'椎名', firstName:'由紀',gender:'female',title:'Q3',    activity:'B',  actRate:'90',  ptCurrent:300,    ptFixed:200, rank:'PG', rankPt:0,    morale:2, trainee:false, mapType:'both', memo:'1/24 マケPG 体感PA日程未設定', parentId:'m16', month:'2026.01'},
-    // 川野直下（5段目）
-    {id:'m10',lastName:'増子', firstName:'のどか', gender:'female', title:'B11', activity:'B',  actRate:'90',  ptCurrent:300,    ptFixed:300, rank:'B8', rankPt:481,  morale:1, trainee:false, mapType:'both', memo:'', parentId:'m6', month:'2026.01'},
-    {id:'m21',lastName:'山崎', firstName:'春菜', gender:'female', title:'B3',    activity:'C',  actRate:'60',  ptCurrent:100,    ptFixed:100, rank:'PG', rankPt:0,    morale:1, trainee:false, mapType:'both', memo:'', parentId:'m6', month:'2026.01'},
-    // ─── 追加メンバー（川副直下）───
-    {id:'x01',lastName:'村上',firstName:'早紀',gender:'female',title:'B3',activity:'C',actRate:'30',ptCurrent:150,ptFixed:150,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m2',month:'2026.01'},
-    {id:'x02',lastName:'岸田',firstName:'誠',gender:'male',title:'BM',activity:'B',actRate:'60',ptCurrent:90,ptFixed:90,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m2',month:'2026.01'},
-    // ─── 古藤直下 ───
-    {id:'x03',lastName:'田村',firstName:'玲奈',gender:'female',title:'B3',activity:'B',actRate:'60',ptCurrent:200,ptFixed:200,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m9',month:'2026.01'},
-    {id:'x04',lastName:'小早川',firstName:'健太',gender:'male',title:'BM',activity:'C',actRate:'0',ptCurrent:80,ptFixed:80,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m9',month:'2026.01'},
-    // ─── 平橋直下 ───
-    {id:'x05',lastName:'松本',firstName:'明里',gender:'female',title:'',activity:'',actRate:'',ptCurrent:0,ptFixed:0,morale:1,trainee:true,mapType:'both',memo:'',parentId:'m14',month:'2026.01',nextDate:'',aSan:''},
-    // ─── 上田直下（高橋の横） ───
-    {id:'x06',lastName:'西川',firstName:'光',gender:'male',title:'B2',activity:'B',actRate:'90',ptCurrent:350,ptFixed:300,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m3',month:'2026.01'},
-    // ─── 重畠直下追加 ───
-    {id:'x07',lastName:'浜口',firstName:'結衣',gender:'female',title:'Q2',activity:'B',actRate:'60',ptCurrent:600,ptFixed:400,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m4',month:'2026.01'},
-    {id:'x08',lastName:'長田',firstName:'翔',gender:'male',title:'B1',activity:'S',actRate:'120',ptCurrent:900,ptFixed:500,morale:3,trainee:false,mapType:'both',memo:'',parentId:'m4',month:'2026.01'},
-    // ─── 波佐間直下追加 ───
-    {id:'x09',lastName:'坂田',firstName:'なつ',gender:'female',title:'B3',activity:'C',actRate:'30',ptCurrent:180,ptFixed:180,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m5',month:'2026.01'},
-    {id:'x10',lastName:'近藤',firstName:'大地',gender:'male',title:'BM',activity:'B',actRate:'60',ptCurrent:100,ptFixed:100,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m5',month:'2026.01'},
-    // ─── 中西直下追加 ───
-    {id:'x11',lastName:'宮本',firstName:'愛',gender:'female',title:'B2',activity:'B',actRate:'90',ptCurrent:400,ptFixed:300,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m11',month:'2026.01'},
-    {id:'x12',lastName:'谷川',firstName:'雄太',gender:'male',title:'Q3',activity:'S',actRate:'120',ptCurrent:700,ptFixed:400,morale:3,trainee:false,mapType:'both',memo:'',parentId:'m11',month:'2026.01'},
-    // ─── 福木直下追加 ───
-    {id:'x13',lastName:'石田',firstName:'美空',gender:'female',title:'B1',activity:'B',actRate:'90',ptCurrent:500,ptFixed:300,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m16',month:'2026.01'},
-    {id:'x14',lastName:'藤井',firstName:'卓也',gender:'male',title:'BM',activity:'C',actRate:'0',ptCurrent:70,ptFixed:70,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m16',month:'2026.01'},
-    // ─── 吉岡直下 ───
-    {id:'x15',lastName:'池上',firstName:'里奈',gender:'female',title:'B3',activity:'C',actRate:'30',ptCurrent:160,ptFixed:160,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m12',month:'2026.01'},
-    {id:'x16',lastName:'山田',firstName:'浩二',gender:'male',title:'BM',activity:'B',actRate:'60',ptCurrent:90,ptFixed:90,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m12',month:'2026.01'},
-    // ─── 森山直下 ───
-    {id:'x17',lastName:'中嶋',firstName:'絵美',gender:'female',title:'',activity:'',actRate:'',ptCurrent:0,ptFixed:0,morale:1,trainee:true,mapType:'both',memo:'',parentId:'m13',month:'2026.01',nextDate:'',aSan:''},
-    // ─── 椎葉直下 ───
-    {id:'x18',lastName:'木本',firstName:'そら',gender:'female',title:'B1',activity:'B',actRate:'90',ptCurrent:450,ptFixed:300,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m20',month:'2026.01'},
-    {id:'x19',lastName:'渡辺',firstName:'剛',gender:'male',title:'BM',activity:'C',actRate:'0',ptCurrent:60,ptFixed:60,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m20',month:'2026.01'},
-    // ─── 川野直下追加 ───
-    {id:'x20',lastName:'清野',firstName:'綾奈',gender:'female',title:'Q4',activity:'B',actRate:'60',ptCurrent:500,ptFixed:300,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m6',month:'2026.01'},
-    {id:'x21',lastName:'橋田',firstName:'翼',gender:'male',title:'B2',activity:'S',actRate:'120',ptCurrent:600,ptFixed:400,morale:3,trainee:false,mapType:'both',memo:'',parentId:'m6',month:'2026.01'},
-    // ─── 増田直下 ───
-    {id:'x22',lastName:'加納',firstName:'美緒',gender:'female',title:'B3',activity:'C',actRate:'30',ptCurrent:100,ptFixed:100,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m10',month:'2026.01'},
-    // ─── 山本直下 ───
-    {id:'x23',lastName:'伊東',firstName:'亮太',gender:'male',title:'BM',activity:'B',actRate:'60',ptCurrent:80,ptFixed:80,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m21',month:'2026.01'},
-    // ─── 今村直下 ───
-    {id:'x24',lastName:'野口',firstName:'ゆか',gender:'female',title:'B2',activity:'B',actRate:'60',ptCurrent:250,ptFixed:200,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m7',month:'2026.01'},
-    // ─── 高橋直下 ───
-    {id:'x25',lastName:'原',firstName:'圭太',gender:'male',title:'B1',activity:'B',actRate:'90',ptCurrent:400,ptFixed:300,morale:2,trainee:false,mapType:'both',memo:'',parentId:'m8',month:'2026.01'},
-    {id:'x26',lastName:'吉川',firstName:'舞',gender:'female',title:'BM',activity:'C',actRate:'0',ptCurrent:70,ptFixed:70,morale:1,trainee:false,mapType:'both',memo:'',parentId:'m8',month:'2026.01'},
-    // ─── x08長谷川直下 ───
-    {id:'x27',lastName:'安田',firstName:'早希',gender:'female',title:'Q2',activity:'B',actRate:'90',ptCurrent:350,ptFixed:250,morale:2,trainee:false,mapType:'both',memo:'',parentId:'x08',month:'2026.01'},
-    {id:'x28',lastName:'前川',firstName:'陸',gender:'male',title:'B3',activity:'C',actRate:'30',ptCurrent:120,ptFixed:120,morale:1,trainee:false,mapType:'both',memo:'',parentId:'x08',month:'2026.01'},
-    // ─── x12谷口直下 ───
-    {id:'x29',lastName:'後藤',firstName:'菜々',gender:'female',title:'B2',activity:'B',actRate:'60',ptCurrent:280,ptFixed:200,morale:2,trainee:false,mapType:'both',memo:'',parentId:'x12',month:'2026.01'},
-    // ─── x13石川直下 ───
-    {id:'x30',lastName:'菊地',firstName:'翔太',gender:'male',title:'B1',activity:'S',actRate:'120',ptCurrent:500,ptFixed:300,morale:3,trainee:false,mapType:'both',memo:'',parentId:'x13',month:'2026.01'},
-    {id:'x31',lastName:'林田',firstName:'藍花',gender:'female',title:'BM',activity:'C',actRate:'0',ptCurrent:60,ptFixed:60,morale:1,trainee:false,mapType:'both',memo:'',parentId:'x13',month:'2026.01'},
-    // ─── x18木村直下 ───
-    {id:'x32',lastName:'小川',firstName:'大輝',gender:'male',title:'B3',activity:'B',actRate:'60',ptCurrent:180,ptFixed:150,morale:2,trainee:false,mapType:'both',memo:'',parentId:'x18',month:'2026.01'},
-    // ─── x21橋本直下 ───
-    {id:'x33',lastName:'太田',firstName:'美咲',gender:'female',title:'Q3',activity:'B',actRate:'90',ptCurrent:400,ptFixed:250,morale:2,trainee:false,mapType:'both',memo:'',parentId:'x21',month:'2026.01'},
-    {id:'x34',lastName:'斉藤',firstName:'光輝',gender:'male',title:'B2',activity:'S',actRate:'120',ptCurrent:550,ptFixed:350,morale:3,trainee:false,mapType:'both',memo:'',parentId:'x21',month:'2026.01'},
-  ];
 }
 
 
@@ -2775,8 +2941,8 @@ function switchAuthTab(tab) {
 }
 
 function doLogin() {
-  var email = (document.getElementById('loginEmail')||{}).value||'';
-  var pass  = (document.getElementById('loginPass')||{}).value||'';
+  var email = ((document.getElementById('loginEmail')||{}).value||'').trim();
+  var pass  = ((document.getElementById('loginPass')||{}).value||'').trim();
   var errEl = document.getElementById('loginError');
   if (!email || !pass) { errEl.textContent='メールアドレスとパスワードを入力してください'; errEl.style.display=''; return; }
 
@@ -3020,36 +3186,110 @@ function checkAuth() {
 function fsLoadFromFirestore(uid) {
   var month = state.currentMonth;
   toast('データを読み込み中...');
-  fsGet('maps/' + uid + '/months/' + month).then(function(data) {
-    if (data && data.members && data.members.length > 0) {
-      state.members = data.members;
-      state.stats = data.stats || getDefaultStats();
-      state.commission = data.commission || getDefaultCommission();
-      toast('データを読み込みました ✓');
+
+  // 旧形式（2026.01）を削除して新形式に移行
+  if (db) {
+    db.doc('maps/' + uid + '/months/' + month).get().then(function(doc) {
+      if (doc.exists) {
+        // 旧形式データを新形式に変換して削除
+        var old = doc.data();
+        if (old && old.members) {
+          // 移行: 旧データを新形式で保存
+          var currentM = old.members.filter(function(m){ return !m.mapType || m.mapType==='current' || m.mapType==='both'; });
+          var idealM   = old.members.filter(function(m){ return m.mapType==='ideal' || m.mapType==='both'; });
+          db.doc('maps/' + uid + '/months/' + month + '_current').set({ members: currentM, updatedAt: new Date().toISOString() });
+          db.doc('maps/' + uid + '/months/' + month + '_ideal').set({ members: idealM, updatedAt: new Date().toISOString() });
+        }
+        // 旧ドキュメント削除
+        doc.ref.delete();
+      }
+    }).catch(function(){});
+  }
+
+  // 旧パス（maps/{uid}/months/{month}）のデータを削除（クリーンアップ）
+  if (db) {
+    db.doc('maps/' + uid + '/months/' + month).delete().catch(function(){});
+  }
+
+  // 現状MAP・理想MAP・stats・commissionを全て読み込む
+  var p1 = fsGet('maps/' + uid + '/months/' + month + '_current');
+  var p2 = fsGet('maps/' + uid + '/months/' + month + '_ideal');
+  var p3 = fsGet('maps/' + uid + '/stats/' + month);
+
+  // Promise.allが使えない環境向けに順次読み込み
+  var loaded = { current: null, ideal: null, stats: null };
+
+  p1.then(function(data) {
+    loaded.current = data;
+    return p2;
+  }).then(function(data) {
+    loaded.ideal = data;
+    return p3;
+  }).then(function(data) {
+    loaded.stats = data;
+
+    // 現状MAPメンバー
+    if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
+      state.members = loaded.current.members;
     } else {
-      // 新規ユーザー or この月のデータなし → 空のまま
       state.members = [];
-      state.stats = getDefaultStats();
+    }
+
+    // 理想MAPメンバー
+    if (loaded.ideal && loaded.ideal.members && loaded.ideal.members.length > 0) {
+      state.idealMembers = loaded.ideal.members;
+    } else {
+      state.idealMembers = [];
+    }
+
+    // stats・commission
+    if (loaded.stats) {
+      state.stats      = loaded.stats.stats      || getDefaultStats();
+      state.commission = loaded.stats.commission || getDefaultCommission();
+    } else {
+      state.stats      = getDefaultStats();
       state.commission = getDefaultCommission();
+      // statsはデフォルト値でも月次データは空に
+      state.stats.monthly.forEach(function(row) {
+        row.vals = ['','','','','',''];
+      });
+      state.stats.powerline = [];
+      state.stats.goldList  = [];
+      state.stats.freshList = [];
+    }
+
+    if (loaded.current || loaded.ideal || loaded.stats) {
+      toast('データを読み込みました ✓');
     }
     renderCurrentView();
     updateLTSV('current', state.members);
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
-    state.members = [];
+    state.members      = [];
+    state.idealMembers = [];
+    state.stats        = getDefaultStats();
+    state.commission   = getDefaultCommission();
     renderCurrentView();
   });
 }
 
-// Firestoreに保存
+// Firestoreに保存（現状・理想・statsを別パスで保存）
 function fsSaveToFirestore(uid) {
   var month = state.currentMonth;
-  return fsSet('maps/' + uid + '/months/' + month, {
+  var p1 = fsSet('maps/' + uid + '/months/' + month + '_current', {
     members: state.members,
+    updatedAt: new Date().toISOString()
+  });
+  var p2 = fsSet('maps/' + uid + '/months/' + month + '_ideal', {
+    members: state.idealMembers || [],
+    updatedAt: new Date().toISOString()
+  });
+  var p3 = fsSet('maps/' + uid + '/stats/' + month, {
     stats: state.stats,
     commission: state.commission,
     updatedAt: new Date().toISOString()
   });
+  return p1.then(function(){ return p2; }).then(function(){ return p3; });
 }
 
 // ── START ──
