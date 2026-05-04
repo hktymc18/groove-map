@@ -128,6 +128,8 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 }
 .edit-hover-btn{display:none!important}
 .nc.trainee{background:rgba(251,191,36,.13);border-color:rgba(251,191,36,.35)}
+.nc.result-ng{background:rgba(100,100,100,.18);border-color:rgba(100,100,100,.3);opacity:0.6}
+.nc.result-user{background:rgba(100,140,180,.18);border-color:rgba(100,140,180,.4)}
 .nc.diff-added{border-color:var(--green)!important;background:rgba(34,197,94,.06)}
 .nc.diff-removed{border-color:var(--red)!important;background:rgba(239,68,68,.06);opacity:.7}
 .nc.diff-changed{border-color:var(--gold)!important;background:rgba(245,158,11,.06)}
@@ -366,6 +368,8 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
       <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-bottom:16px">アカウントを作成してください</div>
       <input id="signupName" type="text" placeholder="お名前" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupOrg" type="text" placeholder="屋号" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupArea" type="text" placeholder="活動地域（例：東京・大阪）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupUnion" type="text" placeholder="所属ユニオン" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupEmail" type="email" placeholder="メールアドレス" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupPass" type="password" placeholder="パスワード（6文字以上）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:16px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <!-- プライバシーポリシー同意 -->
@@ -383,7 +387,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 
 <header>
   <div class="hdr-top">
-    <div class="logo" id="appLogo" style="cursor:default">GROOVE</div>
+    <div style="display:flex;flex-direction:column;line-height:1.2"><div class="logo" id="appLogo" style="cursor:default">GROOVE</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;display:none"></div></div>
     <select class="month-sel" id="monthSel" onchange="onMonthChange()"></select>
     <div class="user-dot" id="userDot" title=""></div>
   </div>
@@ -408,7 +412,6 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
     </div>
     <div class="export-bar">
       <div class="exp-btn" onclick="exportCSV('current')">📄 CSV出力</div>
-      <div class="exp-btn" onclick="saveCurrent()" id="saveBtn" style="display:none">💾 保存</div>
       <div class="exp-btn" onclick="openShareModal()" id="shareBtn" style="display:none">🔗 共有</div>
     </div>
     <div class="edit-hint" id="editHint">ダブルタップで編集</div>
@@ -536,32 +539,22 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 <!-- 共有モーダル -->
 <div class="overlay" id="shareModal" onclick="closeShareModal(event)">
   <div class="sheet">
-    <div style="font-size:16px;font-weight:700;margin-bottom:6px">共有</div>
-    <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">メールアドレスを入力すると、相手のブラウザで同じデータを閲覧できるリンクを生成します</div>
-    <div class="fr">
-      <label class="fl">共有先メールアドレス</label>
-      <input class="fi" id="shareEmail" type="email" placeholder="example@mail.com">
-    </div>
-    <div style="margin-top:10px">
-      <div class="fr-row" style="margin-bottom:0">
-        <div class="fr">
-          <label class="fl">権限</label>
-          <div class="rg">
-            <div class="rb sel" id="rbShareView" onclick="selSharePerm('view')">閲覧のみ</div>
-            <div class="rb" id="rbShareEdit" onclick="selSharePerm('edit')">編集可</div>
-          </div>
-        </div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">共有設定</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">追加したメールアドレスのユーザーが、このMAPをリアルタイムで閲覧・編集できます</div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input class="fi" id="shareEmail" type="email" placeholder="example@mail.com" style="flex:1">
+      <div class="rg" style="flex-shrink:0">
+        <div class="rb sel" id="rbShareView" onclick="selSharePerm('view')" style="padding:8px 10px;font-size:12px">閲覧</div>
+        <div class="rb" id="rbShareEdit" onclick="selSharePerm('edit')" style="padding:8px 10px;font-size:12px">編集</div>
       </div>
     </div>
-    <div id="shareResult" style="display:none;margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:12px">
-      <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">共有リンク（タップしてコピー）</div>
-      <div id="shareLinkText" onclick="copyShareLink()" style="font-size:12px;color:var(--accent);word-break:break-all;cursor:pointer;font-family:'IBM Plex Mono',monospace"></div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:8px">※このリンクを相手に送ってください。開くと同じデータが表示されます。</div>
-    </div>
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn-c" onclick="closeShareModal(null)">閉じる</button>
-      <button class="btn-p" onclick="generateShareLink()">リンクを生成</button>
-    </div>
+    <button class="btn-p" style="width:100%;margin-bottom:16px" onclick="addShareUser()">追加</button>
+
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace">共有中のユーザー</div>
+    <div id="shareUserList" style="min-height:40px"></div>
+
+    <button class="btn-c" style="width:100%;margin-top:16px" onclick="closeShareModal(null)">閉じる</button>
   </div>
 </div>
 
@@ -641,7 +634,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
         <div class="rb" id="rbMapB" onclick="selMapType('both')">両方</div>
       </div>
     </div>
-    <div id="traineeStatusFields">
+    <div id="traineeStatusFields" style="display:none">
       <div class="fr-row">
         <div class="fr">
           <label class="fl">研修ステータス</label>
@@ -775,7 +768,7 @@ var isLocal = !GAS_URL || GAS_URL === 'YOUR_GAS_WEB_APP_URL_HERE';
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v63';
+  var DATA_VERSION = 'v66';
   try {
     if (_lsAvailable && localStorage.getItem('grooveMap_version') !== DATA_VERSION) {
       localStorage.removeItem(LS_KEY);
@@ -886,7 +879,8 @@ function onMonthChange() {
 function updateEditorUI() {
   var show = state.isEditor;
   document.getElementById('fab').classList.toggle('hidden', !show);
-  document.getElementById('saveBtn').style.display = show ? '' : 'none';
+  var sb = document.getElementById('saveBtn');
+  if (sb) sb.style.display = show ? '' : 'none';
   document.getElementById('editHint').style.display = show ? 'block' : 'none';
 }
 
@@ -1070,7 +1064,7 @@ function nodeHTML(m, members, mapType, depth) {
   }
 
   return '<div class="nw' + (defaultOpen && hasKids ? ' open' : '') + '" id="nw-' + m.id + '">'
-    + '<div class="nc' + (m.trainee ? ' trainee' : '') + '" id="nc-' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
+    + '<div class="nc' + (m.trainee ? ' trainee' : '') + (m.traineeResult==='流れた' ? ' result-ng' : m.traineeResult==='ユーザー' ? ' result-user' : '') + '" id="nc-' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
     + hoverBtn
     + instaBtn
     + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.getAttribute(\'data-cid\'),event)" ondblclick="if(state.isEditor){openEdit(this.getAttribute(\'data-cid\'));event.stopPropagation()}">'
@@ -1715,8 +1709,14 @@ function exportCSV(type) {
   var rows, filename;
   if (type === 'current') {
     var members = membersForMap('current');
-    rows = [['姓','名','性別','タイトル','稼働','稼働率','やる気','現在PT','固定PT','ランク','ランクPT','研修生','メモ']];
-    members.forEach(function(m) { rows.push([m.lastName,m.firstName,m.gender,m.title,m.activity,m.actRate,m.morale,m.ptCurrent,m.ptFixed,m.rank,m.rankPt,m.trainee?'研修生':'',m.memo]); });
+    rows = [['段数','姓','名','性別','タイトル','稼働','稼働率','やる気','現在PT','固定PT','アップライン','研修生','研修ステータス','終着点','メモ']];
+    members.forEach(function(m) {
+      var depth = calcMemberDepth(m, members);
+      var parent = null;
+      for (var i=0; i<members.length; i++) { if (members[i].id===m.parentId){ parent=members[i]; break; } }
+      var parentName = parent ? (parent.lastName||'')+(parent.firstName||'') : '';
+      rows.push([depth,m.lastName,m.firstName,m.gender,m.title,m.activity,m.actRate,m.morale,m.ptCurrent,m.ptFixed,parentName,m.trainee?'研修生':'',m.traineeStatus||'',m.traineeResult||'',m.memo]);
+    });
     filename = "groove_map_"+state.currentMonth+".csv";
   } else {
     var s = state.stats;
@@ -1734,6 +1734,18 @@ function exportCSV(type) {
 }
 
 // ── SAVE TO GAS ──
+
+function autoSave() {
+  lsSave();
+  if (USE_FIREBASE && currentUser && currentUser.uid) {
+    fsSaveToFirestore(currentUser.uid)
+      .then(function() { toast('保存しました ✓'); })
+      .catch(function(e) { console.error('自動保存エラー:', e); });
+  } else {
+    toast('保存しました ✓');
+  }
+}
+
 function saveCurrent() {
   if (!state.isEditor) return;
   toast('保存中...');
@@ -1823,6 +1835,8 @@ function openEdit(id) {
     set('fInsta', m.instaUrl);
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
+    var tsf2=document.getElementById('traineeStatusFields');
+    if (tsf2) tsf2.style.display = (m.trainee ? '' : 'none');
 
     var pl = document.getElementById('parentLabel');
     if (pl) {
@@ -1921,10 +1935,13 @@ function selCategory(cat) {
         sel.appendChild(opt);
       }
     }
+    var tsf = document.getElementById('traineeStatusFields');
     if (cat === '研修生') {
       selTrainee(true);
+      if (tsf) tsf.style.display = '';
     } else {
       selTrainee(false);
+      if (tsf) tsf.style.display = 'none';
     }
   } catch(e) {}
 }
@@ -2001,14 +2018,14 @@ function saveMember() {
   }
   closeModal();
   renderCurrentView();
-  toast('変更しました（保存ボタンで確定）');
+  autoSave();
 }
 function deleteMember() {
   if (!editingId || !confirm('削除しますか？')) return;
   state.members = state.members.filter(function(m){return m.id!==editingId;});
   closeModal();
   renderCurrentView();
-  toast('削除しました（保存ボタンで確定）');
+  autoSave();
 }
 
 // ── TOAST ──
@@ -2695,7 +2712,7 @@ function applyAllFilters() {
     var instaBtn = m.instaUrl ? '<a class="insta-btn" href="' + m.instaUrl + '" target="_blank" onclick="event.stopPropagation()" title="Instagram"><svg viewBox="0 0 24 24"><path fill="white" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>' : '';
 
     return '<div class="nw" id="nw-' + m.id + '" style="margin-bottom:4px">'
-      + '<div class="nc' + (m.trainee ? ' trainee' : '') + '" id="nc-' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
+      + '<div class="nc' + (m.trainee ? ' trainee' : '') + (m.traineeResult==='流れた' ? ' result-ng' : m.traineeResult==='ユーザー' ? ' result-user' : '') + '" id="nc-' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
       + instaBtn
       + '<div class="card-main" onclick="selectCard(\'' + m.id + '\',event)" ondblclick="if(state.isEditor){openEdit(\'' + m.id + '\');event.stopPropagation()}">'
       + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
@@ -2801,7 +2818,9 @@ function doSignup() {
     auth.createUserWithEmailAndPassword(email, pass)
       .then(function(cred) {
         var uid = cred.user.uid;
-        return fsSet('users/' + uid, { name: name, org: org, email: email, uid: uid });
+        var area  = (document.getElementById('signupArea')||{}).value||'';
+        var union = (document.getElementById('signupUnion')||{}).value||'';
+        return fsSet('users/' + uid, { name: name, org: org, email: email, uid: uid, area: area, union: union });
       })
       .then(function() {
         errEl.style.display = 'none';
@@ -2823,6 +2842,8 @@ function loginSuccess(user) {
   // ロゴ更新
   var logo = document.getElementById('appLogo');
   if (logo) logo.textContent = user.org || 'MAP';
+  var nameEl = document.getElementById('appUserName');
+  if (nameEl && user.name) { nameEl.textContent = user.name; nameEl.style.display = ''; }
   // ログイン画面を非表示
   var ls = document.getElementById('loginScreen');
   if (ls) ls.style.display = 'none';
@@ -2847,12 +2868,13 @@ function showForgotPass() {
   }
 }
 
-// ── 共有 ──
+// ── 共有（Firestoreベース リアルタイム） ──
+var unsubscribeShared = null; // リアルタイム購読解除用
+
 function openShareModal() {
   var modal = document.getElementById('shareModal');
   if (modal) modal.classList.add('open');
-  var res = document.getElementById('shareResult');
-  if (res) res.style.display = 'none';
+  loadShareUserList();
 }
 
 function closeShareModal(e) {
@@ -2864,65 +2886,112 @@ function closeShareModal(e) {
 function selSharePerm(perm) {
   sharePerm = perm;
   var v = document.getElementById('rbShareView');
-  var e = document.getElementById('rbShareEdit');
+  var e2 = document.getElementById('rbShareEdit');
   if (v) v.classList.toggle('sel', perm==='view');
-  if (e) e.classList.toggle('sel', perm==='edit');
+  if (e2) e2.classList.toggle('sel', perm==='edit');
 }
 
-function generateShareLink() {
-  var email = (document.getElementById('shareEmail')||{}).value||'';
-  if (!email) { alert('共有先のメールアドレスを入力してください'); return; }
-  // データをBase64エンコードしてURLパラメータに
-  var shareData = {
-    members: state.members,
-    stats: state.stats,
-    commission: state.commission,
+function loadShareUserList() {
+  if (!db || !currentUser) return;
+  var listEl = document.getElementById('shareUserList');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  var loading = document.createElement('div');
+  loading.style.cssText = 'color:var(--text-dim);font-size:13px';
+  loading.textContent = '読み込み中...';
+  listEl.appendChild(loading);
+  fsGetCol('maps/' + currentUser.uid + '/shared').then(function(docs) {
+    listEl.innerHTML = '';
+    if (docs.length === 0) {
+      var em = document.createElement('div');
+      em.style.cssText = 'color:var(--text-dim);font-size:13px';
+      em.textContent = 'まだ共有していません';
+      listEl.appendChild(em);
+      return;
+    }
+    docs.forEach(function(d) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)';
+      var emailEl = document.createElement('div');
+      emailEl.style.cssText = 'flex:1;font-size:13px';
+      emailEl.textContent = d.email || '';
+      var permEl = document.createElement('div');
+      permEl.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace';
+      permEl.textContent = d.perm === 'edit' ? '編集可' : '閲覧のみ';
+      var delEl = document.createElement('div');
+      delEl.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 6px';
+      delEl.textContent = '✕';
+      (function(id){ delEl.onclick = function(){ removeShareUser(id); }; })(d.id);
+      row.appendChild(emailEl);
+      row.appendChild(permEl);
+      row.appendChild(delEl);
+      listEl.appendChild(row);
+    });
+  });
+}
+
+function addShareUser() {
+  if (!db || !currentUser) return;
+  var email = (document.getElementById('shareEmail')||{}).value.trim();
+  if (!email) { toast('メールアドレスを入力してください'); return; }
+  // メールアドレスをIDとしてFirestoreに保存
+  var safeId = email.replace(/[.@]/g, '_');
+  fsSet('maps/' + currentUser.uid + '/shared/' + safeId, {
+    email: email,
     perm: sharePerm,
-    sharedBy: currentUser ? currentUser.name : '',
-    sharedTo: email,
-  };
-  var encoded = btoa(encodeURIComponent(JSON.stringify(shareData)));
-  var baseUrl = window.location.href.split('?')[0];
-  var link = baseUrl + '?share=' + encoded;
-  var linkEl = document.getElementById('shareLinkText');
-  if (linkEl) linkEl.textContent = link;
-  var res = document.getElementById('shareResult');
-  if (res) res.style.display = '';
-  toast('リンクを生成しました！');
+    addedAt: new Date().toISOString()
+  }).then(function() {
+    toast(email + ' に共有しました');
+    document.getElementById('shareEmail').value = '';
+    loadShareUserList();
+  }).catch(function(e) {
+    toast('エラー: ' + e.message);
+  });
 }
 
-function copyShareLink() {
-  var linkEl = document.getElementById('shareLinkText');
-  if (!linkEl) return;
-  var text = linkEl.textContent;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text);
-  } else {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
+function removeShareUser(id) {
+  if (!db || !currentUser) return;
+  db.doc('maps/' + currentUser.uid + '/shared/' + id).delete().then(function() {
+    toast('共有を解除しました');
+    loadShareUserList();
+  });
+}
+
+// 自分が閲覧者として追加されているMAPを購読
+function subscribeSharedMaps() {
+  if (!db || !currentUser || !currentUser.email) return;
+  var safeId = currentUser.email.replace(/[.@]/g, '_');
+  // 全ユーザーのsharedコレクションを検索（Firestoreのcollection group query）
+  db.collectionGroup('shared')
+    .where('email', '==', currentUser.email)
+    .get()
+    .then(function(snap) {
+      var owners = [];
+      snap.forEach(function(doc) {
+        // パス: maps/{ownerUid}/shared/{id}
+        var parts = doc.ref.path.split('/');
+        if (parts.length >= 2) owners.push({ uid: parts[1], perm: doc.data().perm });
+      });
+      if (owners.length > 0) {
+        showSharedMapSelector(owners);
+      }
+    }).catch(function(e) {
+      console.log('shared query:', e.message);
+    });
+}
+
+function showSharedMapSelector(owners) {
+  // 複数の共有MAPがある場合はセレクターを表示
+  // シンプルに最初のオーナーのMAPを読み込む
+  // TODO: 複数対応は後日
+  var owner = owners[0];
+  if (owner) {
+    toast('共有されたMAPが見つかりました');
   }
-  toast('コピーしました！');
 }
 
 function checkShareParam() {
-  var params = window.location.search;
-  if (!params) return;
-  var match = params.match(/[?&]share=([^&]+)/);
-  if (!match) return;
-  try {
-    var data = JSON.parse(decodeURIComponent(atob(match[1])));
-    state.members = data.members || [];
-    state.stats = data.stats || getDefaultStats();
-    state.commission = data.commission || getDefaultCommission();
-    state.isEditor = data.perm === 'edit';
-    updateEditorUI();
-    renderCurrentView();
-    toast('共有データを読み込みました');
-  } catch(e) {}
+  // URL共有パラメータは廃止（Firestoreベースに移行）
 }
 
 // ログイン状態チェック（Firebase AuthのonAuthStateChangedが主体）
