@@ -397,9 +397,9 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
     <button class="tab" onclick="switchView('ideal')">理想</button>
-    <button class="tab purple" onclick="switchView('diff')">差分</button>
-    <button class="tab" onclick="switchView('stats')">データ</button>
     <button class="tab" onclick="switchView('ol')">OL</button>
+    <button class="tab" onclick="switchView('stats')">データ</button>
+    <button class="tab purple" onclick="switchView('diff')">差分</button>
   </div>
 </header>
 
@@ -827,7 +827,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v81';
+  var DATA_VERSION = 'v82';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -919,22 +919,37 @@ function onMonthChange() { onYearMonthChange(); }
 // ── EDITOR UI ──
 function updateEditorUI() {
   var show = state.isEditor;
-  document.getElementById('fab').classList.toggle('hidden', !show);
+  updateFabVisibility();
   var sb = document.getElementById('saveBtn');
   if (sb) sb.style.display = show ? '' : 'none';
   document.getElementById('editHint').style.display = show ? 'block' : 'none';
+}
+
+function updateFabVisibility() {
+  var fab = document.getElementById('fab');
+  if (!fab) return;
+  var showFab = state.isEditor && (currentView === 'current' || currentView === 'ideal');
+  fab.classList.toggle('hidden', !showFab);
 }
 
 // ── VIEW SWITCH ──
 function switchView(v) {
   currentView = v;
   ['current','ideal','diff','stats','ol'].forEach(function(n) {
-    document.getElementById('view-'+n).style.display = n===v ? '' : 'none';
+    var el = document.getElementById('view-'+n);
+    if (el) el.style.display = (n===v ? '' : 'none');
   });
-  Array.prototype.slice.call(document.querySelectorAll('.tab')).forEach(function(t,i) {
-    t.classList.toggle('active', ['current','ideal','diff','stats'][i] === v);
+  // タブボタンのactive切り替え
+  var tabMap = {'現状':'current','理想':'ideal','OL':'ol','データ':'stats','差分':'diff'};
+  Array.prototype.slice.call(document.querySelectorAll('.tab')).forEach(function(btn) {
+    btn.classList.toggle('active', tabMap[btn.textContent.trim()] === v);
   });
-  renderCurrentView();
+  updateFabVisibility();
+  if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
+  else if (v==='ideal') { renderTree('ideal'); renderCommission(); }
+  else if (v==='diff') loadDiff();
+  else if (v==='stats') renderStats();
+  else if (v==='ol') renderOL();
 }
 function renderCurrentView() {
   if (currentView === 'current') renderTree('current');
@@ -1287,13 +1302,13 @@ function renderCommission() {
   sbRow.innerHTML = '<td class="lname">SB</td>';
   var sbPtTd = document.createElement('td');
   var sbPtIn = document.createElement('input');
-  sbPtIn.type='number'; sbPtIn.value=sbPt; sbPtIn.style.cssText='width:80px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px';
-  sbPtIn.oninput = function(){ cm.SB.pt=parseInt(this.value)||0; renderCommission(); autoSave(); };
+  sbPtIn.type='number'; sbPtIn.value=sbPt; sbPtIn.style.cssText='width:80px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:Inter,monospace;font-size:16px';
+  sbPtIn.onchange = function(){ cm.SB.pt=parseInt(this.value)||0; renderCommission(); autoSave(); };
   sbPtTd.appendChild(sbPtIn);
   var sbComTd = document.createElement('td');
   var sbComIn = document.createElement('input');
-  sbComIn.type='number'; sbComIn.value=sbCom; sbComIn.style.cssText='width:90px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px';
-  sbComIn.oninput = function(){ cm.SB.com=parseInt(this.value)||0; renderCommission(); autoSave(); };
+  sbComIn.type='number'; sbComIn.value=sbCom; sbComIn.style.cssText='width:90px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:Inter,monospace;font-size:16px';
+  sbComIn.onchange = function(){ cm.SB.com=parseInt(this.value)||0; renderCommission(); autoSave(); };
   sbComTd.appendChild(document.createTextNode('¥')); sbComTd.appendChild(sbComIn);
   sbRow.appendChild(sbPtTd); sbRow.appendChild(sbComTd);
   tbody.appendChild(sbRow);
@@ -1302,12 +1317,12 @@ function renderCommission() {
   var bbRow = document.createElement('tr');
   bbRow.innerHTML = '<td class="lname">BB</td>';
   var bbPtTd = document.createElement('td');
-  bbPtTd.style.cssText = 'text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px;color:var(--accent)';
+  bbPtTd.style.cssText = 'text-align:right;font-family:Inter,monospace;font-size:16px;color:var(--accent)';
   bbPtTd.textContent = bbPt.toLocaleString() + ' (自動)';
   var bbComTd = document.createElement('td');
   var bbComIn = document.createElement('input');
-  bbComIn.type='number'; bbComIn.value=bbCom; bbComIn.style.cssText='width:90px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px';
-  bbComIn.oninput = function(){ cm.BB.com=parseInt(this.value)||0; renderCommission(); autoSave(); };
+  bbComIn.type='number'; bbComIn.value=bbCom; bbComIn.style.cssText='width:90px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:Inter,monospace;font-size:16px';
+  bbComIn.onchange = function(){ cm.BB.com=parseInt(this.value)||0; renderCommission(); autoSave(); };
   bbComTd.appendChild(document.createTextNode('¥')); bbComTd.appendChild(bbComIn);
   bbRow.appendChild(bbPtTd); bbRow.appendChild(bbComTd);
   tbody.appendChild(bbRow);
@@ -1701,13 +1716,13 @@ function buildAutoStats() {
     else if (m.activity === 'C') counts.C++;
     // 研修生判定：trainee=trueまたは研修履歴がある人
     var isTrainee = m.trainee || (m.traineeHistory && m.traineeHistory.length > 0);
-    // B1 = 研修生（または履歴あり）かつ終着点がBC
     if (isTrainee && m.traineeResult === 'BC') counts.B1++;
-    // マケ・PG = 最新ステータスがマケまたはPG
-    var latestStatus = m.traineeStatus || '';
-    if (latestStatus === 'マケ' || latestStatus === 'PG') counts.make++;
-    // DLR動員
-    if (latestStatus === 'DLR') counts.dlr++;
+    // マケ・PG = 履歴にマケまたはPGが含まれる人数
+    var hist = m.traineeHistory || [];
+    var hasMake = hist.some(function(h){ return h.status==='マケ' || h.status==='PG'; });
+    var hasDLR  = hist.some(function(h){ return h.status==='DLR'; });
+    if (hasMake) counts.make++;
+    if (hasDLR)  counts.dlr++;
   });
   
   var labelMap = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr'};
@@ -1751,18 +1766,49 @@ function renderStats() {
       + '</tr>';
   }
 
-  document.getElementById('statsTblBody').innerHTML = (s.monthly||[]).map(function(row) {
+  var EDITABLE_ROWS = ['平均稼働','コミッション','OUT','UNIVERSE'];
+  var AUTO_ROWS = ['マケ・PG','DLR動員','S','A','B','C','B1'];
+  var tbody = document.getElementById('statsTblBody');
+  tbody.innerHTML = '';
+  (s.monthly||[]).forEach(function(row) {
     var cls = comRows.indexOf(row.label)>=0 ? 'hl' : hl2Rows.indexOf(row.label)>=0 ? 'hl2' : hlRows.indexOf(row.label)>=0 ? 'hl' : '';
-    // 最後の12列を使用（不足分は-で埋める）
-    var vals = monthLabels.map(function(ml, idx) {
+    var tr = document.createElement('tr');
+    tr.className = cls;
+    tr.style.cursor = 'pointer';
+    tr.onclick = function(){ selectChartRow(row.label); };
+    var th = document.createElement('td');
+    th.className = 'lname';
+    th.style.cssText = 'position:sticky;left:0;background:var(--surface2);z-index:1';
+    th.textContent = row.label;
+    tr.appendChild(th);
+    monthLabels.forEach(function(ml, idx) {
+      var td = document.createElement('td');
+      td.style.minWidth = '60px';
       var v = (row.vals||[])[idx];
-      if (v==='' || v===undefined || v===null) return '<td style="min-width:60px">-</td>';
-      var n = Number(v);
-      return '<td style="min-width:60px">' + (n > 10000 ? n.toLocaleString() : v) + '</td>';
-    }).join('');
-    return '<tr class="' + cls + '" style="cursor:pointer" onclick="selectChartRow(\'' + row.label + '\')">'
-      + '<td class="lname" style="position:sticky;left:0;background:var(--surface2);z-index:1">' + row.label + '</td>' + vals + '</tr>';
-  }).join('');
+      var isEditable = EDITABLE_ROWS.indexOf(row.label) >= 0;
+      var isAuto = AUTO_ROWS.indexOf(row.label) >= 0;
+      if (isEditable) {
+        var inp = document.createElement('input');
+        inp.type = 'number';
+        inp.value = (v===''||v===undefined||v===null) ? '' : v;
+        inp.style.cssText = 'width:55px;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);text-align:right;font-family:Inter,monospace;font-size:13px;padding:0 2px';
+        inp.placeholder = '-';
+        (function(r, i){ inp.onchange = function(){
+          if (!r.vals) r.vals = [];
+          while (r.vals.length <= i) r.vals.push('');
+          r.vals[i] = this.value === '' ? '' : Number(this.value);
+          autoSave();
+        }; })(row, idx);
+        inp.onclick = function(e){ e.stopPropagation(); };
+        td.appendChild(inp);
+      } else {
+        td.textContent = (v===''||v===undefined||v===null) ? '-' : (Number(v)>10000 ? Number(v).toLocaleString() : v);
+        if (isAuto) td.style.color = 'var(--accent)';
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
 
   // グラフボタン
   var btnRow = document.getElementById('chartBtnRow');
@@ -1865,13 +1911,9 @@ function renderStats() {
         chk.style.cssText = 'width:16px;height:16px;accent-color:var(--accent);flex-shrink:0';
         (function(gi2,ti2){ chk.onchange=function(){ s.goldList[gi2].tasks[ti2].done=this.checked; renderStats(); autoSave(); }; })(gi,ti);
         var dtIn = document.createElement('input');
-        dtIn.type='date'; dtIn.value=task.date||''; dtIn.className='fi';
+        dtIn.type='date'; dtIn.value=task.date||''; dtIn.className='fi'; dtIn.placeholder='日付';
         dtIn.style.cssText='width:120px;font-size:11px;padding:3px 6px;flex-shrink:0';
         (function(gi2,ti2){ dtIn.oninput=function(){ s.goldList[gi2].tasks[ti2].date=this.value; autoSave(); }; })(gi,ti);
-        var tmIn = document.createElement('input');
-        tmIn.type='time'; tmIn.value=task.time||''; tmIn.className='fi';
-        tmIn.style.cssText='width:90px;font-size:11px;padding:3px 6px;flex-shrink:0';
-        (function(gi2,ti2){ tmIn.oninput=function(){ s.goldList[gi2].tasks[ti2].time=this.value; autoSave(); }; })(gi,ti);
         var ctIn = document.createElement('input');
         ctIn.placeholder='内容'; ctIn.value=task.content||''; ctIn.className='fi';
         ctIn.style.cssText='flex:1;font-size:12px;padding:3px 8px' + (isDone?';text-decoration:line-through':'');
@@ -1880,7 +1922,7 @@ function renderStats() {
         tDel.style.cssText='color:var(--red);font-size:13px;cursor:pointer;padding:0 4px;flex-shrink:0';
         tDel.textContent='\u2715';
         (function(gi2,ti2){ tDel.onclick=function(){ s.goldList[gi2].tasks.splice(ti2,1); renderStats(); autoSave(); }; })(gi,ti);
-        tRow.appendChild(chk); tRow.appendChild(dtIn); tRow.appendChild(tmIn); tRow.appendChild(ctIn); tRow.appendChild(tDel);
+        tRow.appendChild(chk); tRow.appendChild(dtIn); tRow.appendChild(ctIn); tRow.appendChild(tDel);
         gBlock.appendChild(tRow);
       });
       goldWrap.appendChild(gBlock);
@@ -1925,55 +1967,54 @@ function renderStats() {
 
       // 名前行
       var nameRow = document.createElement('div');
-      nameRow.style.cssText = 'display:flex;align-items:center;gap:6px;padding:2px 0';
+      nameRow.style.cssText = 'display:flex;align-items:center;gap:6px;padding:2px 0;flex-wrap:wrap';
 
-      // 名前入力フィールド
+      // 名前入力
       var nameIn = document.createElement('input');
       nameIn.className = 'fi';
       nameIn.placeholder = '名前を入力';
       nameIn.value = n;
-      nameIn.style.cssText = 'flex:1;font-size:14px;font-weight:700;padding:4px 8px;' + (allDone ? 'text-decoration:line-through;color:var(--text-dim);' : '');
+      nameIn.style.cssText = 'flex:1;min-width:80px;font-size:14px;font-weight:700;padding:4px 8px;' + (allDone ? 'text-decoration:line-through;color:var(--text-dim);' : '');
       (function(idx){ nameIn.oninput = function(){ s.freshList[idx].name = this.value; autoSave(); }; })(i);
       nameIn.onclick = function(e){ e.stopPropagation(); };
-      // タップでパネル開閉（長押し的な操作はやめてボタンに）
-      var expandBtn = document.createElement('div');
-      expandBtn.style.cssText = 'color:var(--text-dim);font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0';
-      expandBtn.textContent = '▼';
-      (function(idx){ expandBtn.onclick = function(){ toggleFreshPanel(idx); }; })(i);
-      var delBtn = document.createElement('div');
-      delBtn.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 4px;flex-shrink:0';
-      delBtn.textContent = '✕';
-      (function(idx){ delBtn.onclick = function(){ removeFreshMember(idx); }; })(i);
       nameRow.appendChild(nameIn);
-      nameRow.appendChild(expandBtn);
-      nameRow.appendChild(delBtn);
-      item.appendChild(nameRow);
 
-      // タグ行（常時表示・色分け）
-      var tagRow = document.createElement('div');
-      tagRow.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;padding:4px 0 6px';
+      // タグを名前の横に表示
       FRESH_ACTIONS.forEach(function(actionName) {
         var akey = 'act_' + actionName;
         var afd = fd[akey] || {};
         var tag = document.createElement('div');
-        tag.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:10px;font-family:IBM Plex Mono,monospace;cursor:pointer';
+        tag.style.cssText = 'font-size:10px;padding:2px 7px;border-radius:10px;font-family:Inter,monospace;cursor:pointer;flex-shrink:0';
         tag.textContent = actionName;
         if (afd.done) {
-          tag.style.background = 'var(--surface3)';
-          tag.style.color = 'var(--text-dim)';
-          tag.style.textDecoration = 'line-through';
+          tag.style.cssText += ';background:var(--surface3);color:var(--text-dim);text-decoration:line-through';
         } else if (afd.date) {
-          tag.style.background = 'rgba(0,212,170,0.15)';
-          tag.style.color = 'var(--accent)';
-          tag.style.border = '1px solid var(--accent)';
+          tag.style.cssText += ';background:rgba(0,212,170,0.15);color:var(--accent);border:1px solid var(--accent)';
         } else {
-          tag.style.background = 'rgba(251,191,36,0.15)';
-          tag.style.color = '#f59e0b';
-          tag.style.border = '1px solid rgba(251,191,36,0.4)';
+          tag.style.cssText += ';background:rgba(251,191,36,0.15);color:#f59e0b;border:1px solid rgba(251,191,36,0.4)';
         }
-        tag.onclick = function(e){ e.stopPropagation(); toggleFreshPanel(i); };
-        tagRow.appendChild(tag);
+        // タグをクリックでそのアクションのパネルを展開
+        (function(idx, aname){
+          tag.onclick = function(e){
+            e.stopPropagation();
+            toggleFreshPanel(idx, aname);
+          };
+        })(i, actionName);
+        nameRow.appendChild(tag);
       });
+
+      // 削除ボタン
+      var delBtn = document.createElement('div');
+      delBtn.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 4px;flex-shrink:0';
+      delBtn.textContent = '✕';
+      (function(idx){ delBtn.onclick = function(){ removeFreshMember(idx); }; })(i);
+      nameRow.appendChild(delBtn);
+
+      item.appendChild(nameRow);
+
+      // タグ行は不要（名前横に移動）
+      var tagRow = document.createElement('div');
+      tagRow.style.cssText = 'display:none';
 
       // ── パネル（タップで開閉） ──
       var panel = document.createElement('div');
@@ -2074,8 +2115,9 @@ function renderStats() {
     
     outlineWrap.innerHTML = '';
     s.outline.forEach(function(o, i) {
+      var isDoneOutline = !!o.done;
       var row = document.createElement('div');
-      row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border)';
+      row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border)' + (isDoneOutline ? ';opacity:0.4' : '');
       
       // 削除ボタン
       var delRow = document.createElement('div');
@@ -2084,8 +2126,18 @@ function renderStats() {
       delOutBtn.style.cssText = 'color:var(--red);font-size:12px;cursor:pointer;padding:2px 8px;border:1px solid var(--red);border-radius:4px';
       delOutBtn.textContent = '削除';
       (function(idx){ delOutBtn.onclick = function(){ s.outline.splice(idx,1); renderStats(); autoSave(); }; })(i);
-      delRow.appendChild(delOutBtn);
-      row.appendChild(delRow);
+      // チェックボックス
+      var chkRow = document.createElement('div');
+      chkRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+      var outChk = document.createElement('input');
+      outChk.type='checkbox'; outChk.checked=isDoneOutline;
+      outChk.style.cssText='width:16px;height:16px;accent-color:var(--accent);flex-shrink:0';
+      (function(idx){ outChk.onchange=function(){ s.outline[idx].done=this.checked; renderStats(); autoSave(); }; })(i);
+      var chkLabel = document.createElement('span');
+      chkLabel.style.cssText='font-size:12px;color:var(--text-dim)';
+      chkLabel.textContent='完了';
+      chkRow.appendChild(outChk); chkRow.appendChild(chkLabel); chkRow.appendChild(delOutBtn);
+      row.appendChild(chkRow);
 
       // 1行目: 日時（date picker）+ Aさん
       var r1 = document.createElement('div');
@@ -2100,11 +2152,42 @@ function renderStats() {
       (function(idx){ asIn.oninput=function(){ s.outline[idx].aSan=this.value; autoSave(); }; })(i);
       r1.appendChild(dtIn); r1.appendChild(asIn);
       
-      // 2行目: 対象者
-      var tgIn = document.createElement('input');
-      tgIn.placeholder='対象者'; tgIn.value=o.target||''; tgIn.className='fi';
-      tgIn.style.cssText='width:100%;font-size:12px;padding:5px 8px;margin-bottom:6px';
-      (function(idx){ tgIn.oninput=function(){ s.outline[idx].target=this.value; autoSave(); }; })(i);
+      // 対象者（複数追加可）
+      if (!o.targets) o.targets = o.target ? [o.target] : [''];
+      var targetsWrap = document.createElement('div');
+      targetsWrap.style.cssText = 'margin-bottom:6px';
+      var tLabel = document.createElement('div');
+      tLabel.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between';
+      tLabel.innerHTML = '<span>対象者</span>';
+      var addTargetBtn = document.createElement('span');
+      addTargetBtn.style.cssText = 'color:var(--accent);cursor:pointer;font-size:12px;padding:2px 8px;border:1px solid var(--accent);border-radius:4px';
+      addTargetBtn.textContent = '+ 追加';
+      (function(idx){ addTargetBtn.onclick = function(){
+        s.outline[idx].targets = s.outline[idx].targets || [''];
+        s.outline[idx].targets.push('');
+        renderStats(); autoSave();
+      }; })(i);
+      tLabel.appendChild(addTargetBtn);
+      targetsWrap.appendChild(tLabel);
+      (o.targets||['']).forEach(function(tval, ti) {
+        var tRow2 = document.createElement('div');
+        tRow2.style.cssText = 'display:flex;gap:6px;margin-bottom:4px';
+        var tgIn = document.createElement('input');
+        tgIn.placeholder = '対象者'; tgIn.value = tval; tgIn.className = 'fi';
+        tgIn.style.cssText = 'flex:1;font-size:12px;padding:5px 8px';
+        (function(idx,tidx){ tgIn.oninput=function(){ if(!s.outline[idx].targets) s.outline[idx].targets=[]; s.outline[idx].targets[tidx]=this.value; autoSave(); }; })(i,ti);
+        var tDel = document.createElement('div');
+        tDel.style.cssText = 'color:var(--red);font-size:14px;cursor:pointer;padding:4px 6px;flex-shrink:0';
+        tDel.textContent = '✕';
+        (function(idx,tidx){ tDel.onclick=function(){
+          s.outline[idx].targets.splice(tidx,1);
+          if(s.outline[idx].targets.length===0) s.outline[idx].targets=[''];
+          renderStats(); autoSave();
+        }; })(i,ti);
+        tRow2.appendChild(tgIn);
+        if (ti > 0) tRow2.appendChild(tDel);
+        targetsWrap.appendChild(tRow2);
+      });
       
       // 3行目: 内容
       var ctIn = document.createElement('input');
@@ -2112,7 +2195,7 @@ function renderStats() {
       ctIn.style.cssText='width:100%;font-size:12px;padding:5px 8px';
       (function(idx){ ctIn.oninput=function(){ s.outline[idx].content=this.value; autoSave(); }; })(i);
       
-      row.appendChild(r1); row.appendChild(tgIn); row.appendChild(ctIn);
+      row.appendChild(r1); row.appendChild(targetsWrap); row.appendChild(ctIn);
       outlineWrap.appendChild(row);
     });
     
@@ -2803,7 +2886,7 @@ function seedDefaultData() {
 }
 
 
-function toggleFreshPanel(i) {
+function toggleFreshPanel(i, focusAction) {
   var panel = document.getElementById('fp'+i);
   if (!panel) return;
   panel.classList.toggle('open');
