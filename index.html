@@ -640,20 +640,8 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
       </div>
     </div>
     <div id="traineeStatusFields" style="display:none">
+      <!-- 現在のステータスと終着点 -->
       <div class="fr-row">
-        <div class="fr">
-          <label class="fl">研修ステータス</label>
-          <select class="fs" id="fTraineeStatus">
-            <option value="">-</option>
-            <option value="マケ">マケ</option>
-            <option value="PG">PG</option>
-            <option value="DLR">DLR</option>
-            <option value="EXP">EXP</option>
-            <option value="PA">PA</option>
-            <option value="面談">面談</option>
-            <option value="CO">CO</option>
-          </select>
-        </div>
         <div class="fr">
           <label class="fl">終着点</label>
           <select class="fs" id="fTraineeResult">
@@ -662,6 +650,30 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
             <option value="ユーザー">ユーザー（△）</option>
             <option value="流れた">流れた（NG）</option>
           </select>
+        </div>
+      </div>
+      <!-- 研修履歴 -->
+      <div class="fr">
+        <label class="fl">研修履歴</label>
+        <div id="traineeHistoryWrap" style="width:100%"></div>
+      </div>
+      <!-- ステータス追加 -->
+      <div class="fr">
+        <label class="fl">ステータスを進める</label>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%">
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="traineeStepBtns">
+            <div class="rb" onclick="addTraineeHistory('マケ')">マケ</div>
+            <div class="rb" onclick="addTraineeHistory('PG')">PG</div>
+            <div class="rb" onclick="addTraineeHistory('DLR')">DLR</div>
+            <div class="rb" onclick="addTraineeHistory('EXP')">EXP</div>
+            <div class="rb" onclick="addTraineeHistory('PA')">PA</div>
+            <div class="rb" onclick="addTraineeHistory('面談')">面談</div>
+            <div class="rb" onclick="addTraineeHistory('CO')">CO</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:13px;padding:6px 8px" placeholder="日付">
+            <input class="fi" id="fHistoryASan" type="text" style="flex:1;font-size:13px;padding:6px 8px" placeholder="Aさん">
+          </div>
         </div>
       </div>
     </div>
@@ -797,7 +809,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v72';
+  var DATA_VERSION = 'v75';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1322,9 +1334,8 @@ function calcBBGSV(members) {
     getAllDescendants(br.id, members).forEach(function(d){ excludeIds[d.id] = true; });
   });
   
-  // ルート自身を除く、excludeに含まれないメンバーのPT合計
+  // 自分自身のPTを含む、excludeに含まれないメンバーのPT合計
   members.forEach(function(m) {
-    if (m.id === rootId) return;
     if (excludeIds[m.id]) return;
     total += (m.ptCurrent || 0);
   });
@@ -1380,6 +1391,71 @@ function recalcCommission() {
   state.commission.BB.pt = bbGSV;
   state.commission.LB.pt = 0; // LBのポイント表示は別途
   state.commission.LB.com = lbCom;
+}
+
+
+// ── 研修履歴 ──
+var TRAINEE_STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
+
+function renderTraineeHistory(m) {
+  var wrap = document.getElementById('traineeHistoryWrap');
+  if (!wrap) return;
+  var hist = m.traineeHistory || [];
+  if (hist.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
+    return;
+  }
+  wrap.innerHTML = '';
+  hist.forEach(function(h, i) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)';
+    var stepEl = document.createElement('div');
+    stepEl.style.cssText = 'background:var(--accent-dim);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:12px;font-family:IBM Plex Mono,monospace;flex-shrink:0';
+    stepEl.textContent = h.status||'';
+    var dateEl = document.createElement('div');
+    dateEl.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;flex-shrink:0';
+    dateEl.textContent = h.date||'';
+    var asanEl = document.createElement('div');
+    asanEl.style.cssText = 'font-size:12px;flex:1';
+    asanEl.textContent = h.aSan ? ('A: '+h.aSan) : '';
+    var delEl = document.createElement('div');
+    delEl.style.cssText = 'color:var(--red);font-size:14px;cursor:pointer;padding:0 4px;flex-shrink:0';
+    delEl.textContent = '✕';
+    (function(idx){
+      delEl.onclick = function() {
+        var m2 = null;
+        for (var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}}
+        if (m2) { m2.traineeHistory.splice(idx,1); m2.traineeStatus = getLatestStatus(m2); renderTraineeHistory(m2); }
+      };
+    })(i);
+    row.appendChild(stepEl); row.appendChild(dateEl); row.appendChild(asanEl); row.appendChild(delEl);
+    wrap.appendChild(row);
+  });
+}
+
+function getLatestStatus(m) {
+  var hist = m.traineeHistory || [];
+  return hist.length > 0 ? hist[hist.length-1].status : '';
+}
+
+function addTraineeHistory(status) {
+  var m = null;
+  for (var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m=state.members[j];break;}}
+  if (!m) return;
+  if (!m.traineeHistory) m.traineeHistory = [];
+  var dateEl = document.getElementById('fHistoryDate');
+  var asanEl = document.getElementById('fHistoryASan');
+  var date = dateEl ? dateEl.value : '';
+  var aSan = asanEl ? asanEl.value : '';
+  // 日付未入力なら今日
+  if (!date) {
+    var today = new Date();
+    date = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    if (dateEl) dateEl.value = date;
+  }
+  m.traineeHistory.push({ status: status, date: date, aSan: aSan });
+  m.traineeStatus = getLatestStatus(m);
+  renderTraineeHistory(m);
 }
 
 // ── DIFF ──
@@ -1549,9 +1625,29 @@ function renderStats() {
     return '<tr><td class="plname">' + row.name + '</td><td>' + row.ltsv.toLocaleString() + '</td></tr>';
   }).join('') || '<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
 
-  document.getElementById('goldListWrap').innerHTML = (s.goldList||[]).map(function(item,i) {
-    return '<div class="li"><div class="li-rank">' + (i+1) + '</div><div>' + (item.name||'-') + '</div><div class="li-num">' + (item.num||'') + '</div></div>';
-  }).join('') || '<div class="empty">なし</div>';
+  // 金の船リスト（6人分名前入力）
+  var goldWrap = document.getElementById('goldListWrap');
+  if (goldWrap) {
+    while ((s.goldList||[]).length < 6) (s.goldList = s.goldList||[]).push({name:''});
+    goldWrap.innerHTML = '';
+    for (var gi=0; gi<6; gi++) {
+      var gRow = document.createElement('div');
+      gRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+      var gNum = document.createElement('div');
+      gNum.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:13px;color:var(--text-dim);width:20px;text-align:right;flex-shrink:0';
+      gNum.textContent = gi+1;
+      var gIn = document.createElement('input');
+      gIn.className = 'fi';
+      gIn.placeholder = '名前';
+      gIn.value = s.goldList[gi].name||'';
+      gIn.style.cssText = 'flex:1;font-size:14px;padding:6px 10px';
+      (function(idx){ gIn.oninput = function(){ s.goldList[idx].name=this.value; autoSave(); }; })(gi);
+      gRow.appendChild(gNum);
+      gRow.appendChild(gIn);
+      goldWrap.appendChild(gRow);
+    }
+  }
+
 
   // フレッシュリストデータ初期化
   if (!state.freshData) state.freshData = {};
@@ -1764,101 +1860,153 @@ function renderStats() {
     var trainees = state.members.filter(function(m){ return !!m.trainee; });
     var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
     var RESULTS = [
-      {key:'BC',    label:'BC（成約）', color:'#00d4aa'},
+      {key:'BC',     label:'BC（成約）',  color:'#00d4aa'},
       {key:'ユーザー', label:'ユーザー（△）', color:'#f59e0b'},
       {key:'流れた',  label:'流れた（NG）', color:'#ef4444'},
     ];
     var total = trainees.length;
 
-    // ステップ別人数
-    var stepHTML = '<div style="margin-bottom:14px">';
-    stepHTML += '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px">フロー（研修生 ' + total + '人）</div>';
+    // 各ステップを「経験したことがある人数」を履歴から集計
+    funnelWrap.innerHTML = '';
+    var headerEl = document.createElement('div');
+    headerEl.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px';
+    headerEl.textContent = 'フロー（研修生累計 ' + total + '人）';
+    funnelWrap.appendChild(headerEl);
+
     STEPS.forEach(function(step) {
-      var count = trainees.filter(function(m){ return m.traineeStatus === step; }).length;
+      // 履歴にこのステップが含まれる人数
+      var count = trainees.filter(function(m) {
+        var hist = m.traineeHistory || [];
+        for (var hi=0; hi<hist.length; hi++) { if (hist[hi].status === step) return true; }
+        return false;
+      }).length;
       var pct = total > 0 ? Math.round(count/total*100) : 0;
-      var barW = total > 0 ? Math.max(4, Math.round(count/total*100)) : 0;
-      stepHTML += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-        + '<div style="width:36px;font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;flex-shrink:0">' + step + '</div>'
+      var barW = total > 0 ? Math.max(count>0?3:0, Math.round(count/total*100)) : 0;
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+      row.innerHTML = '<div style="width:36px;font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;flex-shrink:0">' + step + '</div>'
         + '<div style="flex:1;background:var(--surface3);border-radius:4px;height:18px;overflow:hidden">'
-        + '<div style="background:var(--accent);height:100%;width:' + barW + '%;border-radius:4px;transition:width .3s"></div>'
-        + '</div>'
-        + '<div style="font-size:12px;font-family:IBM Plex Mono,monospace;color:var(--text);width:44px;text-align:right">' + count + '人 <span style="color:var(--text-dim);font-size:10px">(' + pct + '%)</span></div>'
-        + '</div>';
+        + '<div style="background:var(--accent);height:100%;width:' + barW + '%;border-radius:4px"></div></div>'
+        + '<div style="font-size:12px;font-family:IBM Plex Mono,monospace;width:52px;text-align:right">' + count + '人<span style="color:var(--text-dim);font-size:10px"> ' + pct + '%</span></div>';
+      funnelWrap.appendChild(row);
     });
-    stepHTML += '</div>';
 
     // 終着点
-    var resultHTML = '<div style="border-top:1px solid var(--border);padding-top:12px;">';
-    resultHTML += '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px">終着点</div>';
-    var finished = trainees.filter(function(m){ return !!m.traineeResult; });
-    var finTotal = finished.length;
+    var divider = document.createElement('div');
+    divider.style.cssText = 'border-top:1px solid var(--border);padding-top:12px;margin-top:8px';
+    var resultHeader = document.createElement('div');
+    resultHeader.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px';
+    resultHeader.textContent = '終着点';
+    divider.appendChild(resultHeader);
+
     RESULTS.forEach(function(r) {
       var count = trainees.filter(function(m){ return m.traineeResult === r.key; }).length;
       var pct = total > 0 ? Math.round(count/total*100) : 0;
-      var barW = total > 0 ? Math.max(count>0?4:0, Math.round(count/total*100)) : 0;
-      resultHTML += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-        + '<div style="width:80px;font-size:11px;color:' + r.color + ';flex-shrink:0">' + r.label + '</div>'
+      var barW = total > 0 ? Math.max(count>0?3:0, Math.round(count/total*100)) : 0;
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+      row.innerHTML = '<div style="width:80px;font-size:11px;color:' + r.color + ';flex-shrink:0">' + r.label + '</div>'
         + '<div style="flex:1;background:var(--surface3);border-radius:4px;height:18px;overflow:hidden">'
-        + '<div style="background:' + r.color + ';height:100%;width:' + barW + '%;border-radius:4px;opacity:0.7"></div>'
-        + '</div>'
-        + '<div style="font-size:12px;font-family:IBM Plex Mono,monospace;width:44px;text-align:right;color:' + r.color + '">' + count + '人 <span style="font-size:10px;color:var(--text-dim)">(' + pct + '%)</span></div>'
-        + '</div>';
+        + '<div style="background:' + r.color + ';opacity:0.7;height:100%;width:' + barW + '%;border-radius:4px"></div></div>'
+        + '<div style="font-size:12px;font-family:IBM Plex Mono,monospace;width:52px;text-align:right;color:' + r.color + '">' + count + '人<span style="font-size:10px;color:var(--text-dim)"> ' + pct + '%</span></div>';
+      divider.appendChild(row);
     });
-    var inProgress = trainees.filter(function(m){ return !m.traineeResult; }).length;
-    resultHTML += '<div style="font-size:11px;color:var(--text-dim);margin-top:6px">進行中: ' + inProgress + '人</div>';
-    resultHTML += '</div>';
-
-    funnelWrap.innerHTML = stepHTML + resultHTML;
+    var inProg = trainees.filter(function(m){ return !m.traineeResult; }).length;
+    var progEl = document.createElement('div');
+    progEl.style.cssText = 'font-size:11px;color:var(--text-dim);margin-top:4px';
+    progEl.textContent = '進行中: ' + inProg + '人';
+    divider.appendChild(progEl);
+    funnelWrap.appendChild(divider);
   }
 
   // ── Aさん別決定率 ──
   var asanWrap = document.getElementById('asanFunnelWrap');
   if (asanWrap) {
-    var traineesA = state.members.filter(function(m){ return !!m.trainee && !!m.aSan; });
-    // Aさんごとにグループ化
+    var trainees = state.members.filter(function(m){ return !!m.trainee; });
+    // 履歴からAさんを全て集める
     var asanMap = {};
-    traineesA.forEach(function(m) {
-      var a = m.aSan;
-      if (!asanMap[a]) asanMap[a] = [];
-      asanMap[a].push(m);
-    });
-    var asanKeys = Object.keys(asanMap);
-    if (asanKeys.length === 0) {
-      asanWrap.innerHTML = '<div class="empty">Aさんが設定された研修生がいません</div>';
-    } else {
-      var html = '';
-      asanKeys.forEach(function(asan) {
-        var group = asanMap[asan];
-        var gt = group.length;
-        var bc = group.filter(function(m){ return m.traineeResult==='BC'; }).length;
-        var user = group.filter(function(m){ return m.traineeResult==='ユーザー'; }).length;
-        var ng = group.filter(function(m){ return m.traineeResult==='流れた'; }).length;
-        var inProg = group.filter(function(m){ return !m.traineeResult; }).length;
-        var bcRate = gt > 0 ? Math.round(bc/gt*100) : 0;
-        html += '<div style="padding:12px;border-bottom:1px solid var(--border)">'
-          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-          + '<div style="font-weight:700;font-size:13px">' + asan + '</div>'
-          + '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text-dim)">計 ' + gt + '人</div>'
-          + '</div>'
-          + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
-          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:18px;font-weight:700;color:#00d4aa">' + bc + '</div><div style="font-size:10px;color:var(--text-dim)">BC ' + bcRate + '%</div></div>'
-          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:18px;font-weight:700;color:#f59e0b">' + user + '</div><div style="font-size:10px;color:var(--text-dim)">ユーザー</div></div>'
-          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:18px;font-weight:700;color:#ef4444">' + ng + '</div><div style="font-size:10px;color:var(--text-dim)">流れた</div></div>'
-          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:18px;font-weight:700;color:var(--text-dim)">' + inProg + '</div><div style="font-size:10px;color:var(--text-dim)">進行中</div></div>'
-          + '</div>'
-          + '<div style="margin-top:8px">';
-        // ミニバー
-        if (gt > 0) {
-          html += '<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:1px">';
-          if (bc > 0)   html += '<div style="flex:' + bc   + ';background:#00d4aa"></div>';
-          if (user > 0) html += '<div style="flex:' + user + ';background:#f59e0b"></div>';
-          if (ng > 0)   html += '<div style="flex:' + ng   + ';background:#ef4444"></div>';
-          if (inProg>0) html += '<div style="flex:' + inProg + ';background:var(--border2)"></div>';
-          html += '</div>';
+    trainees.forEach(function(m) {
+      var hist = m.traineeHistory || [];
+      var seenAsan = {};
+      hist.forEach(function(h) {
+        if (!h.aSan) return;
+        if (!asanMap[h.aSan]) asanMap[h.aSan] = { trainees: {} };
+        if (!asanMap[h.aSan].trainees[m.id]) {
+          asanMap[h.aSan].trainees[m.id] = { m: m, steps: [] };
         }
-        html += '</div></div>';
+        asanMap[h.aSan].trainees[m.id].steps.push(h.status);
       });
-      asanWrap.innerHTML = html;
+    });
+
+    var asanKeys = Object.keys(asanMap);
+    asanWrap.innerHTML = '';
+
+    if (asanKeys.length === 0) {
+      asanWrap.innerHTML = '<div class="empty">履歴にAさんが設定されていません</div>';
+    } else {
+      var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
+      asanKeys.forEach(function(asan) {
+        var group = Object.values ? Object.values(asanMap[asan].trainees) : Object.keys(asanMap[asan].trainees).map(function(k){ return asanMap[asan].trainees[k]; });
+        var gt = group.length;
+        var bc = group.filter(function(g){ return g.m.traineeResult==='BC'; }).length;
+        var user = group.filter(function(g){ return g.m.traineeResult==='ユーザー'; }).length;
+        var ng = group.filter(function(g){ return g.m.traineeResult==='流れた'; }).length;
+        var inProg = group.filter(function(g){ return !g.m.traineeResult; }).length;
+        var bcRate = gt > 0 ? Math.round(bc/gt*100) : 0;
+
+        var block = document.createElement('div');
+        block.style.cssText = 'padding:12px;border-bottom:1px solid var(--border)';
+
+        // ヘッダー
+        var hdr = document.createElement('div');
+        hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px';
+        hdr.innerHTML = '<div style="font-weight:700;font-size:14px">' + asan + '</div>'
+          + '<div style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text-dim)">担当 ' + gt + '人</div>';
+        block.appendChild(hdr);
+
+        // 結果サマリー
+        var summary = document.createElement('div');
+        summary.style.cssText = 'display:flex;gap:12px;margin-bottom:10px';
+        summary.innerHTML =
+          '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#00d4aa">' + bc + '</div><div style="font-size:10px;color:var(--text-dim)">BC ' + bcRate + '%</div></div>'
+          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#f59e0b">' + user + '</div><div style="font-size:10px;color:var(--text-dim)">ユーザー</div></div>'
+          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#ef4444">' + ng + '</div><div style="font-size:10px;color:var(--text-dim)">流れた</div></div>'
+          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:var(--text-dim)">' + inProg + '</div><div style="font-size:10px;color:var(--text-dim)">進行中</div></div>';
+        block.appendChild(summary);
+
+        // ステップ別転換率
+        var stepDiv = document.createElement('div');
+        stepDiv.style.cssText = 'margin-top:6px';
+        STEPS.forEach(function(step, si) {
+          var reached = group.filter(function(g){ return g.steps.indexOf(step) >= 0; }).length;
+          if (reached === 0 && si > 0) return; // 誰も到達していないステップはスキップ
+          var prev = si > 0 ? group.filter(function(g){ return g.steps.indexOf(STEPS[si-1]) >= 0; }).length : gt;
+          var rate = prev > 0 ? Math.round(reached/prev*100) : 0;
+          var stepRow = document.createElement('div');
+          stepRow.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px';
+          stepRow.innerHTML = '<div style="width:32px;font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace">' + step + '</div>'
+            + '<div style="flex:1;background:var(--surface3);border-radius:3px;height:14px;overflow:hidden">'
+            + '<div style="background:var(--accent);opacity:0.6;height:100%;width:' + (gt>0?Math.round(reached/gt*100):0) + '%;border-radius:3px"></div></div>'
+            + '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;color:var(--text);width:50px;text-align:right">' + reached + '人</div>'
+            + '<div style="font-size:10px;color:var(--text-dim);width:36px;text-align:right">' + rate + '%</div>';
+          stepDiv.appendChild(stepRow);
+        });
+        block.appendChild(stepDiv);
+
+        // バー
+        if (gt > 0) {
+          var barEl = document.createElement('div');
+          barEl.style.cssText = 'display:flex;height:6px;border-radius:3px;overflow:hidden;gap:1px;margin-top:8px';
+          if (bc>0)   barEl.innerHTML += '<div style="flex:'+bc+';background:#00d4aa"></div>';
+          if (user>0) barEl.innerHTML += '<div style="flex:'+user+';background:#f59e0b"></div>';
+          if (ng>0)   barEl.innerHTML += '<div style="flex:'+ng+';background:#ef4444"></div>';
+          if (inProg>0) barEl.innerHTML += '<div style="flex:'+inProg+';background:var(--border2)"></div>';
+          block.appendChild(barEl);
+        }
+
+        asanWrap.appendChild(block);
+      });
     }
   }
 
@@ -2111,6 +2259,7 @@ function openEdit(id) {
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
     var tsf2=document.getElementById('traineeStatusFields');
     if (tsf2) tsf2.style.display = (m.trainee ? '' : 'none');
+    if (m.trainee) { setTimeout(function(){ renderTraineeHistory(m); }, 60); }
 
     var pl = document.getElementById('parentLabel');
     if (pl) {
@@ -2279,7 +2428,8 @@ function saveMember() {
     nextDate: (document.getElementById('fNextDate')||{}).value||'',
     aSan: (document.getElementById('fASan')||{}).value||'',
     instaUrl: (document.getElementById('fInsta')||{}).value||'',
-    traineeStatus: (document.getElementById('fTraineeStatus')||{}).value||'',
+    traineeStatus: (function(){ var m2=null; for(var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}} return m2 ? getLatestStatus(m2) : ''; })(),
+    traineeHistory: (function(){ var m2=null; for(var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}} return m2 ? (m2.traineeHistory||[]) : []; })(),
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
     month: state.currentMonth,
   };
@@ -3018,9 +3168,13 @@ function loginSuccess(user) {
   if (sb) sb.style.display = '';
   var saveBtn = document.getElementById('saveBtn');
   if (saveBtn && state.isEditor) saveBtn.style.display = '';
-  // Firestoreからデータ読み込み
+  // Firestoreからデータ読み込み + 共有MAP確認
   if (USE_FIREBASE && user.uid) {
     fsLoadFromFirestore(user.uid);
+    // 少し遅延してから共有MAP確認（自分のデータ読み込み後）
+    setTimeout(function() {
+      checkSharedMaps();
+    }, 1500);
   }
 }
 
@@ -3146,14 +3300,105 @@ function subscribeSharedMaps() {
     });
 }
 
-function showSharedMapSelector(owners) {
-  // 複数の共有MAPがある場合はセレクターを表示
-  // シンプルに最初のオーナーのMAPを読み込む
-  // TODO: 複数対応は後日
-  var owner = owners[0];
-  if (owner) {
-    toast('共有されたMAPが見つかりました');
+var sharedOwners = []; // 共有してくれているオーナー一覧
+var viewingOwnerUid = null; // 現在閲覧中のオーナーUID（nullなら自分）
+
+function checkSharedMaps() {
+  if (!db || !currentUser || !currentUser.email) return;
+  db.collectionGroup('shared')
+    .where('email', '==', currentUser.email)
+    .get()
+    .then(function(snap) {
+      sharedOwners = [];
+      snap.forEach(function(doc) {
+        var parts = doc.ref.path.split('/');
+        // パス: maps/{ownerUid}/shared/{id}
+        if (parts.length >= 4 && parts[0] === 'maps') {
+          sharedOwners.push({
+            uid: parts[1],
+            perm: doc.data().perm,
+            email: doc.data().email || ''
+          });
+        }
+      });
+      if (sharedOwners.length > 0) {
+        buildViewSelector();
+      }
+    }).catch(function(e) {
+      console.log('shared check error:', e.message);
+    });
+}
+
+function buildViewSelector() {
+  // ヘッダーに閲覧切り替えボタンを追加
+  var header = document.querySelector('.hdr-top');
+  if (!header) return;
+
+  var existing = document.getElementById('viewSwitcher');
+  if (existing) existing.remove();
+
+  var switcher = document.createElement('div');
+  switcher.id = 'viewSwitcher';
+  switcher.style.cssText = 'display:flex;align-items:center;gap:6px;padding:0 8px';
+
+  // 自分のMAP
+  var myBtn = document.createElement('div');
+  myBtn.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--accent);color:var(--accent);background:var(--accent-dim)';
+  myBtn.textContent = '自分';
+  myBtn.onclick = function() { switchToOwner(null); };
+  switcher.appendChild(myBtn);
+
+  // 共有されたMAP
+  sharedOwners.forEach(function(owner) {
+    var btn = document.createElement('div');
+    btn.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--border);color:var(--text-dim)';
+    // オーナー名を取得
+    fsGet('users/' + owner.uid).then(function(profile) {
+      btn.textContent = profile ? (profile.org || profile.name || owner.email) : owner.email;
+    });
+    btn.dataset.uid = owner.uid;
+    btn.onclick = function() { switchToOwner(owner.uid, owner.perm); };
+    switcher.appendChild(btn);
+  });
+
+  // ヘッダーの月選択の前に追加
+  var monthSel = document.getElementById('monthSel');
+  if (monthSel) {
+    header.insertBefore(switcher, monthSel);
+  } else {
+    header.appendChild(switcher);
   }
+
+  toast('共有されたMAPが' + sharedOwners.length + '件あります');
+}
+
+function switchToOwner(ownerUid, perm) {
+  viewingOwnerUid = ownerUid;
+
+  // ボタンのスタイル更新
+  var btns = document.querySelectorAll('#viewSwitcher div');
+  Array.prototype.slice.call(btns).forEach(function(btn) {
+    var isActive = ownerUid ? btn.dataset.uid === ownerUid : btn.textContent === '自分';
+    btn.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+    btn.style.color = isActive ? 'var(--accent)' : 'var(--text-dim)';
+    btn.style.background = isActive ? 'var(--accent-dim)' : '';
+  });
+
+  if (!ownerUid) {
+    // 自分のMAPに戻る
+    state.isEditor = true;
+    fsLoadFromFirestore(currentUser.uid);
+    updateEditorUI();
+  } else {
+    // 他人のMAPを閲覧
+    state.isEditor = perm === 'edit';
+    fsLoadFromFirestore(ownerUid);
+    updateEditorUI();
+  }
+}
+
+function showSharedMapSelector(owners) {
+  // checkSharedMaps に統合したので不要
 }
 
 function checkShareParam() {
