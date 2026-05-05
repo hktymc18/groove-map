@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GROOVE MAP</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
 :root{
   --bg:#0d0f14; --surface:#161920; --surface2:#1e222d; --surface3:#252a38;
   --border:#2a2f3e; --border2:#3a4055;
@@ -27,8 +27,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 /* ── HEADER ── */
 header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(--border);z-index:50}
 .hdr-top{display:flex;align-items:center;gap:8px;padding:10px 14px 0}
-.logo{font-family:'IBM Plex Mono',monospace;font-size:17px;color:var(--accent);letter-spacing:2px;font-weight:700}
-.month-sel{margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:var(--rxs);font-family:'IBM Plex Mono',monospace}
+.logo{font-family:'Inter','IBM Plex Mono',monospace;font-size:17px;color:var(--accent);letter-spacing:2px;font-weight:700}
+.month-sel{margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:var(--rxs);font-family:'Inter','IBM Plex Mono',monospace}
 .user-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim)}
 .user-dot.editor{background:var(--accent)}
 .tab-bar{display:flex;gap:5px;padding:8px 14px 10px}
@@ -45,14 +45,14 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 .banner.current{background:linear-gradient(135deg,#0a1f1a,#0d2419);border:1px solid rgba(0,212,170,.4)}
 .banner.ideal{background:linear-gradient(135deg,#12102a,#1a1540);border:1px solid rgba(124,106,255,.4)}
 .banner-label{font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
-.banner-val{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700}
+.banner-val{font-family:'Inter','IBM Plex Mono',monospace;font-size:24px;font-weight:700}
 .banner-val.green{color:var(--accent)}
 .banner-val.purple{color:var(--purple)}
 .banner-sub{font-size:11px;color:var(--text-dim);text-align:right}
-.banner-sub span{display:block;font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--text);margin-top:1px}
+.banner-sub span{display:block;font-family:'Inter','IBM Plex Mono',monospace;font-size:18px;color:var(--text);margin-top:1px}
 
 /* ── SECTION LABEL ── */
-.sec-label{padding:14px 14px 5px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.sec-label{padding:14px 14px 5px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace}
 
 /* ── TREE ── */
 .tree{padding:0 14px 80px}
@@ -80,7 +80,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 .depth-num{
   width:22px;height:22px;border-radius:6px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;
+  font-family:'Inter','IBM Plex Mono',monospace;font-size:12px;font-weight:500;
 }
 /* ▶ 展開アイコン */
 .expand-arrow-v2{
@@ -93,7 +93,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 /* アバター円内にタイトル文字 */
 .av-title{
   font-size:9px;font-weight:700;letter-spacing:0;
-  font-family:'IBM Plex Mono',monospace;
+  font-family:'Inter','IBM Plex Mono',monospace;
   overflow:hidden;text-overflow:clip;white-space:nowrap;
   padding:0 2px;
 }
@@ -101,13 +101,13 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 /* カード情報行：タイトル・稼働・ポイント */
 .card-info-row{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
 .info-title{
-  font-size:13px;font-weight:500;font-family:'IBM Plex Mono',monospace;
+  font-size:13px;font-weight:500;font-family:'Inter','IBM Plex Mono',monospace;
   background:var(--surface2);border:1px solid var(--border2);
   color:var(--text-mid);padding:2px 7px;border-radius:4px;
 }
-.info-act{font-size:20px;font-weight:500;font-family:'IBM Plex Mono',monospace}
+.info-act{font-size:20px;font-weight:500;font-family:'Inter','IBM Plex Mono',monospace}
 .info-pt{
-  font-size:15px;font-weight:500;font-family:'IBM Plex Mono',monospace;color:var(--text);
+  font-size:15px;font-weight:500;font-family:'Inter','IBM Plex Mono',monospace;color:var(--text);
   margin-left:auto;line-height:1;
 }
 .info-pt-fix{font-size:11px;color:var(--text-dim);font-weight:400}
@@ -149,7 +149,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 
 /* badges */
 .meta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:3px}
-.badge{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px}
+.badge{font-family:'Inter','IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px}
 .badge.S{background:rgba(0,212,170,.15);color:var(--s);border:1px solid rgba(0,212,170,.3)}
 .badge.A{background:rgba(124,106,255,.15);color:var(--a);border:1px solid rgba(124,106,255,.3)}
 .badge.B90,.badge.B80,.badge.B30{background:rgba(59,130,246,.15);color:var(--b);border:1px solid rgba(59,130,246,.3)}
@@ -162,7 +162,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 
 /* points */
 .pt-col{margin-left:auto;text-align:right;flex-shrink:0}
-.pt-main{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700}
+.pt-main{font-family:'Inter','IBM Plex Mono',monospace;font-size:15px;font-weight:700}
 .pt-fix{font-size:9px;color:var(--text-dim)}
 
 /* morale dots は morale-emoji に置き換え済み */
@@ -187,7 +187,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 
 /* ── STATS ── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:0 14px 10px}
-.card-hdr{background:var(--surface2);padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.card-hdr{background:var(--surface2);padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace}
 .tbl{width:100%;border-collapse:collapse;font-size:11px}
 .tbl th{background:var(--surface2);padding:5px 8px;color:var(--text-dim);font-weight:500;text-align:center;border-bottom:1px solid var(--border);font-size:14px}
 .tbl td{padding:5px 8px;text-align:center;border-bottom:1px solid var(--border);font-size:14px}
@@ -200,15 +200,15 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 /* list items */
 .li{display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);gap:8px;font-size:13px}
 .li:last-child{border-bottom:none}
-.li-rank{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--border2);width:22px;flex-shrink:0}
-.li-num{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent)}
+.li-rank{font-family:'Inter','IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--border2);width:22px;flex-shrink:0}
+.li-num{margin-left:auto;font-family:'Inter','IBM Plex Mono',monospace;font-size:12px;color:var(--accent)}
 .li-date{font-size:10px;color:var(--text-dim);flex-shrink:0;min-width:60px}
 .empty{text-align:center;padding:24px;color:var(--text-dim);font-size:13px}
 
 /* commission */
-.comm-tbl td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
-.comm-tbl td:nth-child(2){text-align:right;font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
-.comm-tbl .tot td{color:var(--accent);font-weight:700;font-size:20px}
+.comm-tbl td:last-child{text-align:right;font-family:'Inter','IBM Plex Mono',monospace;font-size:22px;font-weight:500}
+.comm-tbl td:nth-child(2){text-align:right;font-family:'Inter','IBM Plex Mono',monospace;font-size:22px;font-weight:500}
+.comm-tbl .tot td{color:var(--accent);font-weight:700;font-size:16px}
 
 /* ── FAB ── */
 .fab{position:fixed;bottom:22px;right:18px;z-index:200;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#000;font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,212,170,.4);cursor:pointer;border:none;transition:transform .15s;line-height:1}
@@ -232,7 +232,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   content:'ダブルタップで編集';
   position:absolute;bottom:4px;right:8px;
   font-size:9px;color:var(--accent);opacity:0.7;
-  font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;
+  font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:0.5px;
   pointer-events:none;
 }
 /* タップ編集可能フィールド */
@@ -293,7 +293,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 .fresh-action-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .fresh-sub{margin-top:8px;display:none}
 .fresh-sub.open{display:block}
-.fresh-sub-title{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'IBM Plex Mono',monospace}
+.fresh-sub-title{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'Inter','IBM Plex Mono',monospace}
 .fresh-fi{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);padding:7px 10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:6px}
 .fresh-fi:focus{border-color:var(--accent)}
 .fresh-check-row{display:flex;align-items:center;gap:8px;margin-top:6px}
@@ -316,7 +316,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 .chart-btn{
   padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;
   background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);
-  font-family:'IBM Plex Mono',monospace;transition:all .15s;
+  font-family:'Inter','IBM Plex Mono',monospace;transition:all .15s;
 }
 .chart-btn-active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .loading{text-align:center;padding:40px 20px;color:var(--text-dim);font-size:13px}
@@ -342,9 +342,9 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   <div style="width:100%;max-width:400px">
     <!-- タイトル -->
     <div style="text-align:center;margin-bottom:40px">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:3px;margin-bottom:8px">ORGANIZATION MANAGEMENT</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:700;color:var(--accent);letter-spacing:4px;line-height:1">MAP</div>
-      <div style="font-size:12px;color:var(--text-dim);margin-top:6px;font-family:'IBM Plex Mono',monospace">ver.2.0</div>
+      <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:3px;margin-bottom:8px">ORGANIZATION MANAGEMENT</div>
+      <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:36px;font-weight:700;color:var(--accent);letter-spacing:4px;line-height:1">MAP</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:6px;font-family:'Inter','IBM Plex Mono',monospace">ver.2.0</div>
     </div>
 
     <!-- タブ -->
@@ -387,7 +387,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 
 <header>
   <div class="hdr-top">
-    <div style="display:flex;flex-direction:column;line-height:1.2"><div class="logo" id="appLogo" style="cursor:default">GROOVE</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;display:none"></div></div>
+    <div style="display:flex;flex-direction:column;line-height:1.2"><div class="logo" id="appLogo" style="cursor:default">GROOVE</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none"></div></div>
 <div style="display:flex;gap:4px;align-items:center">
       <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
@@ -399,6 +399,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
     <button class="tab" onclick="switchView('ideal')">理想</button>
     <button class="tab purple" onclick="switchView('diff')">差分</button>
     <button class="tab" onclick="switchView('stats')">データ</button>
+    <button class="tab" onclick="switchView('ol')">OL</button>
   </div>
 </header>
 
@@ -500,7 +501,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
     </div>
     <!-- 折れ線グラフ -->
     <div class="card" style="padding:12px 8px 8px">
-      <div style="font-size:10px;color:var(--text-dim);padding:0 4px 8px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase">CHART — 項目を選択</div>
+      <div style="font-size:10px;color:var(--text-dim);padding:0 4px 8px;font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase">CHART — 項目を選択</div>
       <canvas id="statsChart" height="160" style="width:100%;display:block"></canvas>
       <div id="chartBtnRow" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 4px 2px"></div>
     </div>
@@ -512,16 +513,21 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
         <tbody id="plBody"></tbody>
       </table>
     </div>
-    <!-- 金の舟 -->
-    <div class="sec-label">金の舟リスト</div>
-    <div class="card" id="goldListWrap"></div>
-    <!-- フレッシュ -->
+    <!-- 研修生ファネル -->
     <div class="sec-label">研修生ファネル</div>
     <div class="card" id="funnelWrap" style="padding:14px"></div>
     <div class="sec-label">Aさん別決定率</div>
     <div class="card" id="asanFunnelWrap"></div>
+  </div>
+
+  <!-- OLタブ -->
+  <div id="view-ol" style="display:none">
+    <!-- フレッシュリスト -->
     <div class="sec-label" style="display:flex;align-items:center;justify-content:space-between"><span>フレッシュリスト</span><div onclick="addFreshMember()" style="color:var(--accent);font-size:13px;cursor:pointer;padding:2px 8px">+ 追加</div></div>
     <div class="card" id="freshListWrap"></div>
+    <!-- 金の船リスト -->
+    <div class="sec-label" style="display:flex;align-items:center;justify-content:space-between"><span>金の船リスト</span><div onclick="addGoldTask()" style="color:var(--accent);font-size:13px;cursor:pointer;padding:2px 8px">+ 追加</div></div>
+    <div class="card" id="goldListWrap"></div>
     <!-- アウトライン -->
     <div class="sec-label">３〜７人のアウトライン</div>
     <div class="card" id="outlineWrap"></div>
@@ -559,7 +565,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
     </div>
     <button class="btn-p" style="width:100%;margin-bottom:16px" onclick="addShareUser()">追加</button>
 
-    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace">共有中のユーザー</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-family:'Inter','IBM Plex Mono',monospace">共有中のユーザー</div>
     <div id="shareUserList" style="min-height:40px"></div>
 
     <button class="btn-c" style="width:100%;margin-top:16px" onclick="closeShareModal(null)">閉じる</button>
@@ -821,7 +827,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v80';
+  var DATA_VERSION = 'v81';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -922,7 +928,7 @@ function updateEditorUI() {
 // ── VIEW SWITCH ──
 function switchView(v) {
   currentView = v;
-  ['current','ideal','diff','stats'].forEach(function(n) {
+  ['current','ideal','diff','stats','ol'].forEach(function(n) {
     document.getElementById('view-'+n).style.display = n===v ? '' : 'none';
   });
   Array.prototype.slice.call(document.querySelectorAll('.tab')).forEach(function(t,i) {
@@ -935,6 +941,7 @@ function renderCurrentView() {
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
   else if (currentView === 'diff') renderDiffControls();
   else if (currentView === 'stats') renderStats();
+  else if (currentView === 'ol') renderOL();
 }
 
 // ── TREE ──
@@ -1713,6 +1720,11 @@ function buildAutoStats() {
   });
 }
 
+
+function renderOL() {
+  renderStats(); // フレッシュ・金の船・アウトラインはrenderStatsで描画
+}
+
 function renderStats() {
   buildAutoStats();
   var s = state.stats;
@@ -1806,29 +1818,74 @@ function renderStats() {
     return '<tr><td class="plname" style="position:sticky;left:0;background:var(--surface2);z-index:1">' + row.name + '</td>' + vals + '</tr>';
   }).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
 
-  // 金の船リスト（6人分名前入力）
+  // 金の船リスト（名前＋タスク追加可）
   var goldWrap = document.getElementById('goldListWrap');
   if (goldWrap) {
-    while ((s.goldList||[]).length < 6) (s.goldList = s.goldList||[]).push({name:''});
+    if (!s.goldList) s.goldList = [];
     goldWrap.innerHTML = '';
-    for (var gi=0; gi<6; gi++) {
-      var gRow = document.createElement('div');
-      gRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+    if (s.goldList.length === 0) {
+      goldWrap.innerHTML = '<div class="empty">+ ボタンで追加してください</div>';
+    }
+    s.goldList.forEach(function(entry, gi) {
+      if (typeof entry === 'string') { entry = {name: entry, tasks:[]}; s.goldList[gi] = entry; }
+      var gBlock = document.createElement('div');
+      gBlock.style.cssText = 'padding:10px;border-bottom:1px solid var(--border)';
+      // 名前行
+      var nameRow = document.createElement('div');
+      nameRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
       var gNum = document.createElement('div');
-      gNum.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:13px;color:var(--text-dim);width:20px;text-align:right;flex-shrink:0';
+      gNum.style.cssText = 'font-family:Inter,monospace;font-size:13px;color:var(--text-dim);width:20px;flex-shrink:0';
       gNum.textContent = gi+1;
       var gIn = document.createElement('input');
-      gIn.className = 'fi';
-      gIn.placeholder = '名前';
-      gIn.value = s.goldList[gi].name||'';
+      gIn.className = 'fi'; gIn.placeholder = '名前';
+      gIn.value = entry.name||'';
       gIn.style.cssText = 'flex:1;font-size:14px;padding:6px 10px';
       (function(idx){ gIn.oninput = function(){ s.goldList[idx].name=this.value; autoSave(); }; })(gi);
-      gRow.appendChild(gNum);
-      gRow.appendChild(gIn);
-      goldWrap.appendChild(gRow);
-    }
+      var addTaskBtn = document.createElement('div');
+      addTaskBtn.style.cssText = 'color:var(--accent);font-size:12px;cursor:pointer;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;white-space:nowrap;flex-shrink:0';
+      addTaskBtn.textContent = '+ タスク';
+      (function(idx){ addTaskBtn.onclick = function(){
+        if (!s.goldList[idx].tasks) s.goldList[idx].tasks = [];
+        s.goldList[idx].tasks.push({date:'',time:'',content:'',done:false});
+        renderStats(); autoSave();
+      }; })(gi);
+      var delBtn = document.createElement('div');
+      delBtn.style.cssText = 'color:var(--red);font-size:15px;cursor:pointer;padding:0 6px;flex-shrink:0';
+      delBtn.textContent = '\u2715';
+      (function(idx){ delBtn.onclick = function(){ s.goldList.splice(idx,1); renderStats(); autoSave(); }; })(gi);
+      nameRow.appendChild(gNum); nameRow.appendChild(gIn); nameRow.appendChild(addTaskBtn); nameRow.appendChild(delBtn);
+      gBlock.appendChild(nameRow);
+      // タスク一覧
+      (entry.tasks||[]).forEach(function(task, ti) {
+        var isDone = !!task.done;
+        var tRow = document.createElement('div');
+        tRow.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 0 6px 24px;border-top:1px solid var(--border)' + (isDone ? ';opacity:0.4' : '');
+        var chk = document.createElement('input');
+        chk.type='checkbox'; chk.checked=isDone;
+        chk.style.cssText = 'width:16px;height:16px;accent-color:var(--accent);flex-shrink:0';
+        (function(gi2,ti2){ chk.onchange=function(){ s.goldList[gi2].tasks[ti2].done=this.checked; renderStats(); autoSave(); }; })(gi,ti);
+        var dtIn = document.createElement('input');
+        dtIn.type='date'; dtIn.value=task.date||''; dtIn.className='fi';
+        dtIn.style.cssText='width:120px;font-size:11px;padding:3px 6px;flex-shrink:0';
+        (function(gi2,ti2){ dtIn.oninput=function(){ s.goldList[gi2].tasks[ti2].date=this.value; autoSave(); }; })(gi,ti);
+        var tmIn = document.createElement('input');
+        tmIn.type='time'; tmIn.value=task.time||''; tmIn.className='fi';
+        tmIn.style.cssText='width:90px;font-size:11px;padding:3px 6px;flex-shrink:0';
+        (function(gi2,ti2){ tmIn.oninput=function(){ s.goldList[gi2].tasks[ti2].time=this.value; autoSave(); }; })(gi,ti);
+        var ctIn = document.createElement('input');
+        ctIn.placeholder='内容'; ctIn.value=task.content||''; ctIn.className='fi';
+        ctIn.style.cssText='flex:1;font-size:12px;padding:3px 8px' + (isDone?';text-decoration:line-through':'');
+        (function(gi2,ti2){ ctIn.oninput=function(){ s.goldList[gi2].tasks[ti2].content=this.value; autoSave(); }; })(gi,ti);
+        var tDel = document.createElement('div');
+        tDel.style.cssText='color:var(--red);font-size:13px;cursor:pointer;padding:0 4px;flex-shrink:0';
+        tDel.textContent='\u2715';
+        (function(gi2,ti2){ tDel.onclick=function(){ s.goldList[gi2].tasks.splice(ti2,1); renderStats(); autoSave(); }; })(gi,ti);
+        tRow.appendChild(chk); tRow.appendChild(dtIn); tRow.appendChild(tmIn); tRow.appendChild(ctIn); tRow.appendChild(tDel);
+        gBlock.appendChild(tRow);
+      });
+      goldWrap.appendChild(gBlock);
+    });
   }
-
 
   // フレッシュリストデータ初期化
   if (!state.freshData) state.freshData = {};
@@ -2239,6 +2296,14 @@ function renderStats() {
 
   // デフォルト表示
   if (s.monthly && s.monthly.length) selectChartRow(s.monthly[0].label);
+
+  // テーブルを右端（最新月）にスクロール
+  setTimeout(function() {
+    var tblWrap = document.querySelector('#statsTbl')&&document.querySelector('#statsTbl').closest('.card');
+    if (tblWrap) tblWrap.scrollLeft = 9999;
+    var plWrap = document.querySelector('#plTbl')&&document.querySelector('#plTbl').closest('.card');
+    if (plWrap) plWrap.scrollLeft = 9999;
+  }, 50);
 }
 
 var selectedChartLabel = '';
@@ -2250,11 +2315,22 @@ function selectChartRow(label) {
   Array.prototype.slice.call(document.querySelectorAll('.chart-btn')).forEach(function(b) {
     b.classList.toggle('chart-btn-active', b.textContent===label);
   });
-  var months = ['8月','9月','10月','11月','12月','1月'];
-  var vals = (row.vals||[]).map(function(v) {
-    return (v===''||v===undefined) ? null : Number(v);
+  // 動的月ラベル生成（月次推移と同じ）
+  var now = state.currentMonth || '2026.06';
+  var nowParts = now.split('.');
+  var nowYear = parseInt(nowParts[0]);
+  var nowMonth = parseInt(nowParts[1]);
+  var chartMonths = [];
+  for (var cmi = 11; cmi >= 0; cmi--) {
+    var mDate = new Date(nowYear, nowMonth - 1 - cmi, 1);
+    chartMonths.push((mDate.getMonth()+1) + '月');
+  }
+  var vals = (row.vals||[]).slice(0, 12).map(function(v) {
+    return (v===''||v===undefined||v===null) ? null : Number(v);
   });
-  drawLineChart(months, vals, label);
+  // 12列に揃える
+  while (vals.length < 12) vals.unshift(null);
+  drawLineChart(chartMonths, vals, label);
 }
 
 function drawLineChart(labels, data, title) {
