@@ -649,10 +649,10 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
       </div>
     </div>
     <div id="traineeStatusFields" style="display:none">
-      <!-- 終着点 -->
+      <!-- 研修結果 -->
       <div class="fr-row">
         <div class="fr">
-          <label class="fl">終着点</label>
+          <label class="fl">研修結果</label>
           <select class="fs" id="fTraineeResult">
             <option value="">進行中</option>
             <option value="BC">BC（成約）</option>
@@ -827,7 +827,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v82';
+  var DATA_VERSION = 'v83';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1791,14 +1791,34 @@ function renderStats() {
         var inp = document.createElement('input');
         inp.type = 'number';
         inp.value = (v===''||v===undefined||v===null) ? '' : v;
-        inp.style.cssText = 'width:55px;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);text-align:right;font-family:Inter,monospace;font-size:13px;padding:0 2px';
+        inp.style.cssText = 'width:55px;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);text-align:center;font-family:Inter,monospace;font-size:13px;padding:0 2px';
         inp.placeholder = '-';
-        (function(r, i){ inp.onchange = function(){
-          if (!r.vals) r.vals = [];
-          while (r.vals.length <= i) r.vals.push('');
-          r.vals[i] = this.value === '' ? '' : Number(this.value);
-          autoSave();
-        }; })(row, idx);
+        (function(r, i){ 
+          inp.onchange = function(){
+            if (!r.vals) r.vals = [];
+            while (r.vals.length <= i) r.vals.push('');
+            var num = this.value === '' ? '' : Number(this.value);
+            r.vals[i] = num;
+            autoSave();
+          };
+          inp.onfocus = function(){
+            var raw = (r.vals||[])[i];
+            this.value = (raw===''||raw===undefined) ? '' : raw;
+          };
+          inp.onblur = function(){
+            var raw = (r.vals||[])[i];
+            if (raw!==''&&raw!==undefined&&raw!==null) {
+              var n = Number(raw);
+              this.value = n > 999 ? n.toLocaleString() : n;
+            }
+          };
+          // 初期表示
+          var initV = (r.vals||[])[idx];
+          if (initV!==''&&initV!==undefined&&initV!==null) {
+            var n2 = Number(initV);
+            inp.value = n2 > 999 ? n2.toLocaleString() : n2;
+          }
+        })(row, idx);
         inp.onclick = function(e){ e.stopPropagation(); };
         td.appendChild(inp);
       } else {
@@ -2049,7 +2069,8 @@ function renderStats() {
             state.freshData['fresh_'+ii][ak].done = this.checked;
             st.style.color = this.checked ? 'var(--text-dim)' : 'var(--text)';
             st.style.textDecoration = this.checked ? 'line-through' : '';
-            lsSave();
+            autoSave();
+            renderStats(); // タグ即時再描画
             // バッジ更新
             var df = state.freshData['fresh_'+ii];
             var dc = FRESH_ACTIONS.filter(function(a){ var k='act_'+a; return df[k]&&df[k].done; }).length;
@@ -2077,12 +2098,24 @@ function renderStats() {
         var inDate = document.createElement('input');
         inDate.className = 'fresh-fi'; inDate.placeholder = '日時 例:5/10 14:00';
         inDate.value = ad.date || ''; inDate.style.marginBottom = '0';
-        inDate.oninput = (function(ii, ak){ return function(){ state.freshData['fresh_'+ii][ak].date=this.value; lsSave(); }; })(i, akey);
+        inDate.oninput = (function(ii, ak){ return function(){
+          if (!state.freshData['fresh_'+ii]) state.freshData['fresh_'+ii] = {};
+          if (!state.freshData['fresh_'+ii][ak]) state.freshData['fresh_'+ii][ak] = {};
+          state.freshData['fresh_'+ii][ak].date=this.value;
+          autoSave();
+          // タグを即時再描画
+          renderStats();
+        }; })(i, akey);
 
         var inAsan = document.createElement('input');
         inAsan.className = 'fresh-fi'; inAsan.placeholder = 'Aさん';
         inAsan.value = ad.asan || ''; inAsan.style.marginBottom = '0';
-        inAsan.oninput = (function(ii, ak){ return function(){ state.freshData['fresh_'+ii][ak].asan=this.value; lsSave(); }; })(i, akey);
+        inAsan.oninput = (function(ii, ak){ return function(){
+          if (!state.freshData['fresh_'+ii]) state.freshData['fresh_'+ii] = {};
+          if (!state.freshData['fresh_'+ii][ak]) state.freshData['fresh_'+ii][ak] = {};
+          state.freshData['fresh_'+ii][ak].asan=this.value;
+          autoSave();
+        }; })(i, akey);
 
         r2.appendChild(inDate); r2.appendChild(inAsan);
 
@@ -2247,12 +2280,12 @@ function renderStats() {
       funnelWrap.appendChild(row);
     });
 
-    // 終着点
+    // 研修結果
     var divider = document.createElement('div');
     divider.style.cssText = 'border-top:1px solid var(--border);padding-top:12px;margin-top:8px';
     var resultHeader = document.createElement('div');
     resultHeader.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px';
-    resultHeader.textContent = '終着点';
+    resultHeader.textContent = '研修結果';
     divider.appendChild(resultHeader);
 
     RESULTS.forEach(function(r) {
@@ -2515,7 +2548,7 @@ function exportCSV(type) {
   var rows, filename;
   if (type === 'current') {
     var members = membersForMap('current');
-    rows = [['段数','姓','名','性別','タイトル','稼働','稼働率','やる気','現在PT','固定PT','アップライン','研修生','研修ステータス','終着点','メモ']];
+    rows = [['段数','姓','名','性別','タイトル','稼働','稼働率','やる気','現在PT','固定PT','アップライン','研修生','研修ステータス','研修結果','メモ']];
     members.forEach(function(m) {
       var depth = calcMemberDepth(m, members);
       var parent = null;
