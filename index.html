@@ -809,7 +809,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v75';
+  var DATA_VERSION = 'v76';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1400,12 +1400,18 @@ var TRAINEE_STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
 function renderTraineeHistory(m) {
   var wrap = document.getElementById('traineeHistoryWrap');
   if (!wrap) return;
-  var hist = m.traineeHistory || [];
+  // 常にstateから最新のメンバーを取得
+  var member = null;
+  for (var j=0; j<state.members.length; j++) {
+    if (state.members[j].id === editingId) { member = state.members[j]; break; }
+  }
+  if (!member && m) member = m;
+  wrap.innerHTML = '';
+  var hist = member ? (member.traineeHistory || []) : [];
   if (hist.length === 0) {
     wrap.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
     return;
   }
-  wrap.innerHTML = '';
   hist.forEach(function(h, i) {
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)';
@@ -1419,13 +1425,19 @@ function renderTraineeHistory(m) {
     asanEl.style.cssText = 'font-size:12px;flex:1';
     asanEl.textContent = h.aSan ? ('A: '+h.aSan) : '';
     var delEl = document.createElement('div');
-    delEl.style.cssText = 'color:var(--red);font-size:14px;cursor:pointer;padding:0 4px;flex-shrink:0';
-    delEl.textContent = '✕';
+    delEl.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 6px;flex-shrink:0';
+    delEl.textContent = '\u2715';
     (function(idx){
       delEl.onclick = function() {
         var m2 = null;
-        for (var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}}
-        if (m2) { m2.traineeHistory.splice(idx,1); m2.traineeStatus = getLatestStatus(m2); renderTraineeHistory(m2); }
+        for (var k=0; k<state.members.length; k++) {
+          if (state.members[k].id === editingId) { m2 = state.members[k]; break; }
+        }
+        if (m2 && m2.traineeHistory) {
+          m2.traineeHistory.splice(idx, 1);
+          m2.traineeStatus = getLatestStatus(m2);
+          renderTraineeHistory(null);
+        }
       };
     })(i);
     row.appendChild(stepEl); row.appendChild(dateEl); row.appendChild(asanEl); row.appendChild(delEl);
@@ -2259,7 +2271,10 @@ function openEdit(id) {
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
     var tsf2=document.getElementById('traineeStatusFields');
     if (tsf2) tsf2.style.display = (m.trainee ? '' : 'none');
-    if (m.trainee) { setTimeout(function(){ renderTraineeHistory(m); }, 60); }
+    // 履歴エリアをまずクリアしてから描画
+    var hw = document.getElementById('traineeHistoryWrap');
+    if (hw) hw.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
+    if (m.trainee) { setTimeout(function(){ renderTraineeHistory(null); }, 60); }
 
     var pl = document.getElementById('parentLabel');
     if (pl) {
