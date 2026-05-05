@@ -640,7 +640,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
       </div>
     </div>
     <div id="traineeStatusFields" style="display:none">
-      <!-- 現在のステータスと終着点 -->
+      <!-- 終着点 -->
       <div class="fr-row">
         <div class="fr">
           <label class="fl">終着点</label>
@@ -652,27 +652,36 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
           </select>
         </div>
       </div>
-      <!-- 研修履歴 -->
+      <!-- 研修履歴（リアルタイム追加） -->
       <div class="fr">
         <label class="fl">研修履歴</label>
-        <div id="traineeHistoryWrap" style="width:100%"></div>
-      </div>
-      <!-- ステータス追加 -->
-      <div class="fr">
-        <label class="fl">ステータスを進める</label>
-        <div style="display:flex;flex-direction:column;gap:8px;width:100%">
-          <div style="display:flex;gap:6px;flex-wrap:wrap" id="traineeStepBtns">
-            <div class="rb" onclick="addTraineeHistory('マケ')">マケ</div>
-            <div class="rb" onclick="addTraineeHistory('PG')">PG</div>
-            <div class="rb" onclick="addTraineeHistory('DLR')">DLR</div>
-            <div class="rb" onclick="addTraineeHistory('EXP')">EXP</div>
-            <div class="rb" onclick="addTraineeHistory('PA')">PA</div>
-            <div class="rb" onclick="addTraineeHistory('面談')">面談</div>
-            <div class="rb" onclick="addTraineeHistory('CO')">CO</div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:13px;padding:6px 8px" placeholder="日付">
-            <input class="fi" id="fHistoryASan" type="text" style="flex:1;font-size:13px;padding:6px 8px" placeholder="Aさん">
+        <div style="width:100%">
+          <!-- 既存の履歴一覧 -->
+          <div id="traineeHistoryWrap" style="margin-bottom:10px"></div>
+          <!-- 新規追加フォーム -->
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px">
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px">履歴を追加</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:13px;padding:6px 8px">
+              <input class="fi" id="fHistoryASan" type="text" style="flex:1;font-size:13px;padding:6px 8px" placeholder="Aさん">
+            </div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+              <div class="sf-chip" onclick="addTraineeHistory('マケ')" style="font-size:12px">マケ</div>
+              <div class="sf-chip" onclick="addTraineeHistory('PG')" style="font-size:12px">PG</div>
+              <div class="sf-chip" onclick="addTraineeHistory('DLR')" style="font-size:12px">DLR</div>
+              <div class="sf-chip" onclick="addTraineeHistory('EXP')" style="font-size:12px">EXP</div>
+              <div class="sf-chip" onclick="addTraineeHistory('PA')" style="font-size:12px">PA</div>
+              <div class="sf-chip" onclick="addTraineeHistory('面談')" style="font-size:12px">面談</div>
+              <div class="sf-chip" onclick="addTraineeHistory('CO')" style="font-size:12px">CO</div>
+            </div>
+            <!-- 結果（このステップで進んだか離脱したか） -->
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:12px;color:var(--text-dim);flex-shrink:0">このステップの結果</span>
+              <div class="rg" style="gap:5px">
+                <div class="rb sel" id="rbStepNext" onclick="selStepResult('next')" style="font-size:11px;padding:4px 10px">→ 次へ進んだ</div>
+                <div class="rb" id="rbStepLeft" onclick="selStepResult('left')" style="font-size:11px;padding:4px 10px">✗ 離脱した</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -809,7 +818,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v76';
+  var DATA_VERSION = 'v77';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1424,6 +1433,17 @@ function renderTraineeHistory(m) {
     var asanEl = document.createElement('div');
     asanEl.style.cssText = 'font-size:12px;flex:1';
     asanEl.textContent = h.aSan ? ('A: '+h.aSan) : '';
+    var resEl = document.createElement('div');
+    resEl.style.cssText = 'font-size:10px;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:IBM Plex Mono,monospace';
+    if (h.result === 'left') {
+      resEl.textContent = '離脱';
+      resEl.style.background = 'rgba(239,68,68,0.15)';
+      resEl.style.color = '#ef4444';
+    } else if (h.result === 'next') {
+      resEl.textContent = '→次';
+      resEl.style.background = 'rgba(0,212,170,0.1)';
+      resEl.style.color = 'var(--accent)';
+    }
     var delEl = document.createElement('div');
     delEl.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 6px;flex-shrink:0';
     delEl.textContent = '\u2715';
@@ -1440,7 +1460,7 @@ function renderTraineeHistory(m) {
         }
       };
     })(i);
-    row.appendChild(stepEl); row.appendChild(dateEl); row.appendChild(asanEl); row.appendChild(delEl);
+    row.appendChild(stepEl); row.appendChild(dateEl); row.appendChild(asanEl); row.appendChild(resEl); row.appendChild(delEl);
     wrap.appendChild(row);
   });
 }
@@ -1450,24 +1470,50 @@ function getLatestStatus(m) {
   return hist.length > 0 ? hist[hist.length-1].status : '';
 }
 
+var _stepResult = 'next'; // 'next' or 'left'
+
+function selStepResult(val) {
+  _stepResult = val;
+  var n = document.getElementById('rbStepNext');
+  var l = document.getElementById('rbStepLeft');
+  if (n) n.classList.toggle('sel', val === 'next');
+  if (l) l.classList.toggle('sel', val === 'left');
+}
+
 function addTraineeHistory(status) {
   var m = null;
   for (var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m=state.members[j];break;}}
   if (!m) return;
   if (!m.traineeHistory) m.traineeHistory = [];
+
   var dateEl = document.getElementById('fHistoryDate');
   var asanEl = document.getElementById('fHistoryASan');
   var date = dateEl ? dateEl.value : '';
-  var aSan = asanEl ? asanEl.value : '';
+  var aSan = (asanEl ? asanEl.value.trim() : '');
+
   // 日付未入力なら今日
   if (!date) {
     var today = new Date();
     date = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
     if (dateEl) dateEl.value = date;
   }
-  m.traineeHistory.push({ status: status, date: date, aSan: aSan });
+
+  // result: 'next'=次へ進んだ, 'left'=離脱した
+  m.traineeHistory.push({
+    status: status,
+    date: date,
+    aSan: aSan,
+    result: _stepResult
+  });
   m.traineeStatus = getLatestStatus(m);
-  renderTraineeHistory(m);
+
+  // 即時保存（Firestore）
+  autoSave();
+
+  renderTraineeHistory(null);
+
+  // ステップボタンのリセット（次のステップを選びやすく）
+  selStepResult('next');
 }
 
 // ── DIFF ──
@@ -1987,21 +2033,31 @@ function renderStats() {
           + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:var(--text-dim)">' + inProg + '</div><div style="font-size:10px;color:var(--text-dim)">進行中</div></div>';
         block.appendChild(summary);
 
-        // ステップ別転換率
+        // ステップ別転換率（resultベース）
         var stepDiv = document.createElement('div');
         stepDiv.style.cssText = 'margin-top:6px';
-        STEPS.forEach(function(step, si) {
-          var reached = group.filter(function(g){ return g.steps.indexOf(step) >= 0; }).length;
-          if (reached === 0 && si > 0) return; // 誰も到達していないステップはスキップ
-          var prev = si > 0 ? group.filter(function(g){ return g.steps.indexOf(STEPS[si-1]) >= 0; }).length : gt;
-          var rate = prev > 0 ? Math.round(reached/prev*100) : 0;
+        STEPS.forEach(function(step) {
+          // このAさんが担当したこのステップの履歴
+          var stepHists = [];
+          group.forEach(function(g) {
+            (g.m.traineeHistory||[]).forEach(function(h) {
+              if (h.status === step && h.aSan === asan) stepHists.push(h);
+            });
+          });
+          if (stepHists.length === 0) return;
+          var nextCount = stepHists.filter(function(h){ return h.result === 'next'; }).length;
+          var leftCount = stepHists.filter(function(h){ return h.result === 'left'; }).length;
+          var total = stepHists.length;
+          var nextRate = total > 0 ? Math.round(nextCount/total*100) : 0;
           var stepRow = document.createElement('div');
           stepRow.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px';
           stepRow.innerHTML = '<div style="width:32px;font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace">' + step + '</div>'
             + '<div style="flex:1;background:var(--surface3);border-radius:3px;height:14px;overflow:hidden">'
-            + '<div style="background:var(--accent);opacity:0.6;height:100%;width:' + (gt>0?Math.round(reached/gt*100):0) + '%;border-radius:3px"></div></div>'
-            + '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;color:var(--text);width:50px;text-align:right">' + reached + '人</div>'
-            + '<div style="font-size:10px;color:var(--text-dim);width:36px;text-align:right">' + rate + '%</div>';
+            + '<div style="background:var(--accent);opacity:0.7;height:100%;width:' + nextRate + '%;border-radius:3px"></div></div>'
+            + '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;color:var(--accent);width:32px;text-align:right">' + nextCount + '</div>'
+            + '<div style="font-size:10px;color:var(--text-dim);width:10px;text-align:center">/</div>'
+            + '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;width:28px">' + total + '</div>'
+            + '<div style="font-size:10px;color:var(--text-dim);width:32px;text-align:right">' + nextRate + '%</div>';
           stepDiv.appendChild(stepRow);
         });
         block.appendChild(stepDiv);
