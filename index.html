@@ -127,7 +127,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   white-space:nowrap;
 }
 .edit-hover-btn{display:none!important}
-.nc.trainee{background:rgba(251,191,36,.13);border-color:rgba(251,191,36,.35)}
+.nc.trainee{border-left-width:5px!important;background:rgba(34,211,238,.05)}
 .nc.result-ng{background:rgba(100,100,100,.18);border-color:rgba(100,100,100,.3);opacity:0.6}
 .nc.result-user{background:rgba(100,140,180,.18);border-color:rgba(100,140,180,.4)}
 .nc.diff-added{border-color:var(--green)!important;background:rgba(34,197,94,.06)}
@@ -208,7 +208,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 /* commission */
 .comm-tbl td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
 .comm-tbl td:nth-child(2){text-align:right;font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500}
-.comm-tbl .tot td{color:var(--accent);font-weight:700;font-size:26px}
+.comm-tbl .tot td{color:var(--accent);font-weight:700;font-size:20px}
 
 /* ── FAB ── */
 .fab{position:fixed;bottom:22px;right:18px;z-index:200;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#000;font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,212,170,.4);cursor:pointer;border:none;transition:transform .15s;line-height:1}
@@ -388,7 +388,10 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 <header>
   <div class="hdr-top">
     <div style="display:flex;flex-direction:column;line-height:1.2"><div class="logo" id="appLogo" style="cursor:default">GROOVE</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;display:none"></div></div>
-    <select class="month-sel" id="monthSel" onchange="onMonthChange()"></select>
+<div style="display:flex;gap:4px;align-items:center">
+      <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
+      <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
+    </div>
     <div class="user-dot" id="userDot" title=""></div>
   </div>
   <div class="tab-bar">
@@ -818,7 +821,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v79';
+  var DATA_VERSION = 'v80';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -832,8 +835,8 @@ function init() {
   state.idealMembers = [];
   state.stats = getDefaultStats();
   state.commission = getDefaultCommission();
-  state.months = ['2026.01'];
-  state.currentMonth = '2026.01';
+  state.months = ['2026.06'];
+  state.currentMonth = '2026.06';
   state.isEditor = true;
 
   buildMonthSelector();
@@ -867,34 +870,45 @@ function gasPost(body) {
 
 // ── MONTH SELECTOR ──
 function buildMonthSelector() {
-  var sel = document.getElementById('monthSel');
-  sel.innerHTML = '';
-  // 現在月がリストになければ追加
-  if (!state.months.includes(state.currentMonth)) state.months.unshift(state.currentMonth);
-  state.months.forEach(function(m) {
+  var yearSel = document.getElementById('selYear');
+  var monthSel = document.getElementById('selMonth');
+  if (!yearSel || !monthSel) return;
+
+  var cur = state.currentMonth || '2026.01';
+  var parts = cur.split('.');
+  var curYear = parseInt(parts[0]) || 2026;
+  var curMonth = parseInt(parts[1]) || 1;
+
+  // 年: 2024〜2030
+  yearSel.innerHTML = '';
+  for (var y = 2024; y <= 2030; y++) {
     var opt = document.createElement('option');
-    opt.value = opt.textContent = m;
-    if (m === state.currentMonth) opt.selected = true;
-    sel.appendChild(opt);
-  });
-  // 新月追加オプション
-  var opt = document.createElement('option');
-  opt.value = '__new__'; opt.textContent = '+ 新しい月';
-  sel.appendChild(opt);
-}
-function onMonthChange() {
-  var v = document.getElementById('monthSel').value;
-  if (v === '__new__') {
-    var input = prompt('月を入力（例: 2026.02）');
-    if (!input) { buildMonthSelector(); return; }
-    if (!state.months.includes(input)) state.months.unshift(input);
-    state.currentMonth = input;
-    buildMonthSelector();
-  } else {
-    state.currentMonth = v;
+    opt.value = y; opt.textContent = y + '年';
+    if (y === curYear) opt.selected = true;
+    yearSel.appendChild(opt);
   }
-  renderCurrentView();
+
+  // 月: 1〜12
+  monthSel.innerHTML = '';
+  for (var mo = 1; mo <= 12; mo++) {
+    var opt2 = document.createElement('option');
+    opt2.value = mo; opt2.textContent = mo + '月';
+    if (mo === curMonth) opt2.selected = true;
+    monthSel.appendChild(opt2);
+  }
 }
+
+function onYearMonthChange() {
+  var y = document.getElementById('selYear').value;
+  var m = document.getElementById('selMonth').value;
+  var mm = String(m).padStart(2,'0');
+  state.currentMonth = y + '.' + mm;
+  if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
+  renderCurrentView();
+  if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+}
+
+function onMonthChange() { onYearMonthChange(); }
 
 // ── EDITOR UI ──
 function updateEditorUI() {
@@ -992,8 +1006,14 @@ function titleAvatarStyle(title) {
 
 // 系列カラー（ルート直下の各ブランチに固有色）
 var FAMILY_COLORS = [
-  '#00d4aa','#f59e0b','#ec4899','#3b82f6','#f97316',
-  '#a855f7','#14b8a6','#ef4444','#84cc16','#7c6aff',
+  '#00d4aa', // 系列1（ターコイズ - デフォルト/ルート）
+  '#7c6aff', // 系列2（パープル）
+  '#f59e0b', // 系列3（アンバー）
+  '#ef4444', // 系列4（レッド）
+  '#3b82f6', // 系列5（ブルー）
+  '#10b981', // 系列6（グリーン）
+  '#f97316', // 系列7（オレンジ）
+  '#8b5cf6', // 系列8（バイオレット）
 ];
 function getFamilyColor(memberId, members, depth) {
   var root = null;
@@ -1285,10 +1305,24 @@ function renderCommission() {
   bbRow.appendChild(bbPtTd); bbRow.appendChild(bbComTd);
   tbody.appendChild(bbRow);
   
+  // LBポイントを計算して表示
+  var lbMembers = membersForMap('ideal');
+  var lbPtVal = 0;
+  if (lbMembers.length > 0) {
+    var lbRoot = null;
+    for (var lri=0; lri<lbMembers.length; lri++) { if (!lbMembers[lri].parentId) { lbRoot=lbMembers[lri]; break; } }
+    if (lbRoot) {
+      var lbBrDirect = lbMembers.filter(function(m){ return m.parentId===lbRoot.id && isBROrAbove(m.title); });
+      lbBrDirect.forEach(function(br) {
+        lbPtVal += (br.ptCurrent||0);
+        getAllDescendants(br.id, lbMembers).forEach(function(d){ lbPtVal += (d.ptCurrent||0); });
+      });
+    }
+  }
   // LB行（自動計算）
   var lbRow = document.createElement('tr');
   lbRow.innerHTML = '<td class="lname">LB</td>'
-    + '<td style="text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px;color:var(--accent)">自動</td>'
+    + '<td style="text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px;color:var(--accent)">' + lbPtVal.toLocaleString() + '</td>'
     + '<td style="text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px">¥' + lbCom.toLocaleString() + '</td>';
   tbody.appendChild(lbRow);
   
@@ -1639,10 +1673,16 @@ function buildAutoStats() {
   var s = state.stats;
   if (!s || !s.monthly) return;
   
-  var colIdx = -1; // 現在の月の列インデックス（最後の列 = 5）
-  // 月次の最後（最新）列を自動集計列とする
-  colIdx = (s.monthly[0].vals||[]).length - 1;
-  if (colIdx < 0) colIdx = 5;
+  // 月ラベルリストを生成（過去12ヶ月、当該月含む）
+  var now2 = state.currentMonth || '2026.06';
+  var np = now2.split('.');
+  var ny = parseInt(np[0]), nm = parseInt(np[1]);
+  var colIdx = 11; // 最後の列（最新月）が常に11番目
+  // valsの長さを12に揃える
+  (s.monthly||[]).forEach(function(row) {
+    while ((row.vals||[]).length < 12) { if(!row.vals)row.vals=[]; row.vals.unshift(''); }
+    while (row.vals.length > 12) row.vals.shift();
+  });
   
   var counts = {S:0, A:0, B:0, C:0, B1:0, make:0, dlr:0};
   // 全メンバーを対象（研修履歴があるBAも研修生としてカウント）
@@ -1681,7 +1721,7 @@ function renderStats() {
   var comRows = ['コミッション'];
 
   // 月ラベルを生成（当該月含む過去12ヶ月）
-  var now = state.currentMonth || '2026.01';
+  var now = state.currentMonth || '2026.06';
   var nowParts = now.split('.');
   var nowYear = parseInt(nowParts[0]);
   var nowMonth = parseInt(nowParts[1]);
@@ -1729,14 +1769,42 @@ function renderStats() {
     if (ltsv >= 5000) plData.push({name:(m.lastName||'')+(m.firstName||''), ltsv:ltsv});
   });
   plData.sort(function(a,b){ return b.ltsv - a.ltsv; });
-  // パワーライン - 現在のLTSVのみ表示（シンプル版）
+  // パワーライン - 月次ラベルをヘッダーに、現在LTSVを最終列に表示
   var plHead = document.getElementById('plHead');
   if (plHead) {
-    plHead.innerHTML = '<tr><th style="text-align:left;padding-left:12px">名前</th><th>' + now + '</th></tr>';
+    plHead.innerHTML = '<tr><th style="text-align:left;padding-left:12px;min-width:80px;position:sticky;left:0;background:var(--surface2);z-index:1">名前</th>'
+      + monthLabels.map(function(ml){ return '<th style="min-width:60px">' + ml + '</th>'; }).join('')
+      + '</tr>';
   }
-  document.getElementById('plBody').innerHTML = plData.map(function(row) {
-    return '<tr><td class="plname">' + row.name + '</td><td>' + row.ltsv.toLocaleString() + '</td></tr>';
-  }).join('') || '<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
+  // パワーラインのstats保存データと現在LTSVをマージ
+  var plStats = (s.powerline || []);
+  // plDataにある人は最終列に現在のLTSVをセット
+  var plNames = {};
+  plData.forEach(function(pd) { plNames[pd.name] = pd.ltsv; });
+  // 既存のplStatsにないものを追加
+  plData.forEach(function(pd) {
+    var found = false;
+    for (var pi=0; pi<plStats.length; pi++) {
+      if (plStats[pi].name === pd.name) {
+        while ((plStats[pi].vals||[]).length < 12) { if(!plStats[pi].vals)plStats[pi].vals=[]; plStats[pi].vals.unshift(''); }
+        plStats[pi].vals[11] = pd.ltsv;
+        found = true; break;
+      }
+    }
+    if (!found) {
+      var vals = []; while(vals.length < 12) vals.unshift('');
+      vals[11] = pd.ltsv;
+      plStats.push({ name: pd.name, vals: vals });
+    }
+  });
+  s.powerline = plStats;
+
+  document.getElementById('plBody').innerHTML = plStats.length > 0 ? plStats.map(function(row) {
+    var vals = (row.vals||[]).map(function(v) {
+      return '<td style="min-width:60px">' + (v ? Number(v).toLocaleString() : '-') + '</td>';
+    }).join('');
+    return '<tr><td class="plname" style="position:sticky;left:0;background:var(--surface2);z-index:1">' + row.name + '</td>' + vals + '</tr>';
+  }).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
 
   // 金の船リスト（6人分名前入力）
   var goldWrap = document.getElementById('goldListWrap');
@@ -1952,11 +2020,21 @@ function renderStats() {
       var row = document.createElement('div');
       row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border)';
       
-      // 1行目: 日時 + Aさん
+      // 削除ボタン
+      var delRow = document.createElement('div');
+      delRow.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:4px';
+      var delOutBtn = document.createElement('div');
+      delOutBtn.style.cssText = 'color:var(--red);font-size:12px;cursor:pointer;padding:2px 8px;border:1px solid var(--red);border-radius:4px';
+      delOutBtn.textContent = '削除';
+      (function(idx){ delOutBtn.onclick = function(){ s.outline.splice(idx,1); renderStats(); autoSave(); }; })(i);
+      delRow.appendChild(delOutBtn);
+      row.appendChild(delRow);
+
+      // 1行目: 日時（date picker）+ Aさん
       var r1 = document.createElement('div');
       r1.style.cssText = 'display:flex;gap:8px;margin-bottom:6px';
       var dtIn = document.createElement('input');
-      dtIn.placeholder='日時'; dtIn.value=o.date||''; dtIn.className='fi';
+      dtIn.type='date'; dtIn.value=o.date||''; dtIn.className='fi';
       dtIn.style.cssText='flex:1;font-size:12px;padding:5px 8px';
       (function(idx){ dtIn.oninput=function(){ s.outline[idx].date=this.value; autoSave(); }; })(i);
       var asIn = document.createElement('input');
