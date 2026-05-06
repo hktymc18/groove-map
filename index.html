@@ -827,7 +827,7 @@ function buildStatsTableHeader() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v83';
+  var DATA_VERSION = 'v84';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2096,7 +2096,8 @@ function renderStats() {
         r2.style.marginBottom = '6px';
 
         var inDate = document.createElement('input');
-        inDate.className = 'fresh-fi'; inDate.placeholder = '日時 例:5/10 14:00';
+        inDate.className = 'fresh-fi'; inDate.placeholder = '日付';
+        inDate.type = 'date';
         inDate.value = ad.date || ''; inDate.style.marginBottom = '0';
         inDate.oninput = (function(ii, ak){ return function(){
           if (!state.freshData['fresh_'+ii]) state.freshData['fresh_'+ii] = {};
