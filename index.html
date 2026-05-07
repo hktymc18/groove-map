@@ -36,6 +36,21 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 .tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
 .tab.purple.active{background:var(--purple);border-color:var(--purple)}
 
+/* ── 系列縦ライン ── */
+.family-block { position:relative; margin-bottom:8px; }
+.family-line {
+  position:absolute;
+  left:6px; top:0; bottom:0;
+  width:2px;
+  border-radius:2px;
+  opacity:0.5;
+  pointer-events:none;
+}
+.nc-indent {
+  margin-left:0;
+  transition:margin-left 0.1s;
+}
+
 /* ── SCROLL AREA ── */
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .scroll-area::-webkit-scrollbar{display:none}
@@ -391,6 +406,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 <div style="display:flex;gap:4px;align-items:center">
       <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
+      <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
   </div>
@@ -825,9 +841,61 @@ function buildStatsTableHeader() {
   }
 }
 
+
+// ── 翌月コピー ──
+function copyToNextMonth() {
+  var cur = state.currentMonth || '2026.06';
+  var parts = cur.split('.');
+  var y = parseInt(parts[0]);
+  var m = parseInt(parts[1]);
+
+  // 翌月を計算
+  var nextM = m + 1;
+  var nextY = y;
+  if (nextM > 12) { nextM = 1; nextY++; }
+  var nextMonth = nextY + '.' + String(nextM).padStart(2, '0');
+
+  var msg = '(' + cur + ') -> ' + nextMonth + ' にコピーしますか？既存データは上書きされます。';
+  if (!confirm(msg)) return;
+
+  // メンバーをディープコピー（研修結果がBC・ユーザー・流れたの人は除外するか確認）
+  var copyMembers = JSON.parse(JSON.stringify(state.members));
+  var copyIdeal   = JSON.parse(JSON.stringify(state.idealMembers || []));
+
+  // 翌月に切り替え
+  state.currentMonth = nextMonth;
+  if (state.months.indexOf(nextMonth) < 0) state.months.unshift(nextMonth);
+
+  // データをセット（statsはリセット）
+  state.members      = copyMembers;
+  state.idealMembers = copyIdeal;
+  state.commission   = JSON.parse(JSON.stringify(state.commission || {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}}));
+
+  // statsは翌月用に新規（月次推移は引き継がない）
+  // ただしfreshList/goldList/outlineは引き継ぐ
+  var oldStats = state.stats;
+  state.stats = getDefaultStats();
+  state.stats.freshList = JSON.parse(JSON.stringify(oldStats.freshList || []));
+  state.stats.goldList  = JSON.parse(JSON.stringify(oldStats.goldList  || []));
+  state.stats.outline   = JSON.parse(JSON.stringify(oldStats.outline   || []));
+  state.freshData       = JSON.parse(JSON.stringify(state.freshData    || {}));
+
+  // 保存
+  buildMonthSelector();
+  autoSave();
+  renderCurrentView();
+  toast(nextMonth + ' にコピーしました ✓');
+}
+
+// ログイン後にコピーボタンを表示
+function showCopyBtn() {
+  var btn = document.getElementById('copyMonthBtn');
+  if (btn && state.isEditor) btn.style.display = '';
+}
+
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v84';
+  var DATA_VERSION = 'v86';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -989,8 +1057,116 @@ function renderTree(mapType) {
     updateLTSV(mapType, members);
     return;
   }
-  container.innerHTML = roots.map(function(r) { return nodeHTML(r, members, mapType); }).join('');
+
+  // ルートが1人 → 直下メンバーを系列として扱う
+  var html = '';
+  if (roots.length === 1) {
+    var root = roots[0];
+    var rootKids = childrenOf(root.id, members);
+    // ルート自体を表示
+    html += '<div class="family-block">';
+    html += nodeHTML(root, members, mapType, 0);
+
+    // 直下メンバーを系列ごとにグループ化
+    var familyColors = ['#00d4aa','#7c6aff','#f59e0b','#ef4444','#3b82f6','#10b981','#f97316','#8b5cf6'];
+    rootKids.forEach(function(kid, fi) {
+      var fColor = familyColors[fi % familyColors.length];
+      html += '<div class="family-block" style="position:relative;padding-left:14px;margin-bottom:4px">';
+      html += '<div class="family-line" style="background:' + fColor + ';left:4px"></div>';
+      html += nodeHTMLWithColor(kid, members, mapType, 1, fColor);
+      html += '</div>';
+    });
+    html += '</div>';
+  } else {
+    // 複数ルートの場合はそのまま
+    html = roots.map(function(r) { return nodeHTML(r, members, mapType); }).join('');
+  }
+
+  container.innerHTML = html;
   updateLTSV(mapType, members);
+}
+
+// 系列カラー固定版nodeHTML
+function nodeHTMLWithColor(m, members, mapType, depth, familyColor) {
+  if (depth === undefined) depth = 0;
+  var kids = childrenOf(m.id, members);
+  var hasKids = kids.length > 0;
+  var g = m.gender || 'male';
+  var depthColor = familyColor || getFamilyColor(m.id, members, depth);
+
+  var actLabel = m.activity === 'S' ? 'S 120%' :
+                 m.activity ? (m.activity + (m.actRate ? m.actRate+'%' : '')) : '';
+  var actColor = m.activity === 'S' ? 'var(--s)' :
+                 m.activity === 'A' ? 'var(--a)' :
+                 m.activity === 'B' ? 'var(--b)' :
+                 m.activity === 'C' ? 'var(--c)' : 'var(--text-dim)';
+
+  var ptDisplay = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '-';
+  var defaultOpen = depth < 2;
+  var expandArrow = hasKids ? '<span class="expand-arrow-v2" id="arr-' + m.id + '">&#9654;</span>' : '';
+  var memoTxt = m.memo ? '<div class="memo" id="mem-' + m.id + '">' + m.memo + '</div>' : '';
+
+  var parentMember = null;
+  for (var pi = 0; pi < members.length; pi++) {
+    if (members[pi].id === m.parentId) { parentMember = members[pi]; break; }
+  }
+  var parentChip = parentMember
+    ? '<div class="parent-chip"><span class="parent-chip-arrow">&#x21b3;</span>' + (parentMember.lastName||'') + ' ' + (parentMember.firstName||'') + '</div>'
+    : '';
+
+  var ef = function(field) {
+    if (!state.isEditor) return '';
+    return 'onclick="editField(' + "'" + m.id + "','" + field + "',event)" + '"';
+  };
+  var hoverBtn = state.isEditor
+    ? '<div class="edit-hover-btn" onclick="openEdit(' + "'" + m.id + "'" + ');event.stopPropagation()">&#x270e;</div>'
+    : '';
+  var instaBtn = m.instaUrl
+    ? '<a class="insta-btn" href="' + m.instaUrl + '" target="_blank" onclick="event.stopPropagation()" title="Instagram"><svg viewBox="0 0 24 24"><path fill="white" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>'
+    : '';
+  var avStyle = titleAvatarStyle(m.title);
+  var ptFixHTML = m.ptFixed > 0 ? '<span class="info-pt-fix"> (' + m.ptFixed.toLocaleString() + ')</span>' : '';
+  var actHTML = actLabel ? '<span class="info-act" style="color:' + actColor + ';font-size:10px;margin-left:auto">' + actLabel + '</span>' : '';
+  var traineeInfoHTML = '';
+  if (m.trainee && (m.nextDate || m.aSan)) {
+    traineeInfoHTML = '<div class="trainee-info">'
+      + (m.nextDate ? '<span class="ti-item">&#x1F4C5; ' + m.nextDate + '</span>' : '')
+      + (m.aSan ? '<span class="ti-item">&#x1F464; ' + m.aSan + '</span>' : '')
+      + '</div>';
+  }
+
+  // 配下を縦ライン内に表示
+  var kidsHTML = '';
+  if (hasKids) {
+    var kidsContent = '';
+    for (var ki = 0; ki < kids.length; ki++) {
+      kidsContent += nodeHTMLWithColor(kids[ki], members, mapType, depth + 1, familyColor);
+    }
+    kidsHTML = '<div class="children depth-' + Math.min(depth,4) + (defaultOpen ? '' : ' closed') + '" id="ch-' + m.id + '">' + kidsContent + '</div>';
+  }
+
+  return '<div class="nw' + (defaultOpen && hasKids ? ' open' : '') + '" id="nw-' + m.id + '">'
+    + '<div class="nc' + (m.trainee ? ' trainee' : '') + (m.traineeResult==='流れた' ? ' result-ng' : m.traineeResult==='ユーザー' ? ' result-user' : '') + '" id="nc-' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
+    + hoverBtn + instaBtn
+    + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.dataset.cid,event)" ondblclick="if(state.isEditor){openEdit(this.dataset.cid);event.stopPropagation()}">'
+    + '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">'
+    + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
+    + expandArrow
+    + '</div>'
+    + '<div class="av ' + g + (m.trainee ? ' trainee-av' : '') + ' av-title" style="' + avStyle + '">' + (m.title||'&#x2013;') + '</div>'
+    + '<div style="flex:1;min-width:0;overflow:hidden">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px">' + parentChip + actHTML + '</div>'
+    + '<div class="nm ' + g + '">' + (m.lastName||'') + ' ' + (m.firstName||'') + '</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
+    + '<div class="morale-emoji tap-edit" ' + ef('morale') + '>' + moraleEmoji(m.morale||1) + '</div>'
+    + '<span class="info-pt tap-edit" ' + ef('pt') + '>' + ptDisplay + ptFixHTML + '</span>'
+    + '</div>'
+    + '</div>'
+    + memoTxt + traineeInfoHTML
+    + '</div>'
+    + kidsHTML
+    + '</div>';
 }
 
 var DEPTH_COLORS = ['#00d4aa','#7c6aff','#3b82f6','#f59e0b','#ec4899'];
@@ -3588,6 +3764,7 @@ function loginSuccess(user) {
   if (logo) logo.textContent = user.org || 'MAP';
   var nameEl = document.getElementById('appUserName');
   if (nameEl && user.name) { nameEl.textContent = user.name; nameEl.style.display = ''; }
+  showCopyBtn();
   // ログイン画面を非表示
   var ls = document.getElementById('loginScreen');
   if (ls) ls.style.display = 'none';
