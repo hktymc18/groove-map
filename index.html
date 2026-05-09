@@ -58,8 +58,8 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
     display: block;
     position: relative;
     width: 100%;
-    min-height: calc(100vh - 180px);
     overflow: hidden;
+    background: var(--bg);
   }
   .mobile-tree { display: none !important; visibility: hidden; }
   .pc-map-svg { width: 100%; display: block; }
@@ -1029,21 +1029,19 @@ function renderPCMap(mapType) {
 
   var maxDepth = Object.keys(depthMap).reduce(function(a,b){ return Math.max(a,parseInt(b)); }, 0);
 
-  // SVGサイズ計算
-  var W = wrap.offsetWidth || wrap.parentElement && wrap.parentElement.offsetWidth || window.innerWidth || 900;
-  var H = Math.max(600, window.innerHeight - 200);
+  // SVGサイズ計算（コンテナの実サイズを取得）
+  var W = Math.max(wrap.offsetWidth, wrap.getBoundingClientRect().width, window.innerWidth * 0.95, 600);
+  var H = Math.max(window.innerHeight - 180, 500);
   // 楕円のパラメータ（段ごと）
   var CX = W / 2, CY = H / 2;
-  var RX_BASE = W * 0.08, RY_BASE = H * 0.08;
-  var RX_STEP = (W * 0.43) / Math.max(maxDepth, 1);
-  var RY_STEP = (H * 0.38) / Math.max(maxDepth, 1);
-  var NODE_R = Math.min(28, W * 0.032);
+  var RX_BASE = W * 0.07, RY_BASE = H * 0.07;
+  var RX_STEP = (W * 0.42) / Math.max(maxDepth, 1);
+  var RY_STEP = (H * 0.40) / Math.max(maxDepth, 1);
+  var NODE_R = Math.min(30, W * 0.035);
 
   var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-  svg.setAttribute('width', W);
-  svg.setAttribute('height', H);
-  svg.style.cssText = 'display:block;background:var(--bg)';
+  svg.style.cssText = 'display:block;width:100%;height:' + H + 'px;background:var(--bg)';
   svg.setAttribute('class', 'pc-map-svg');
 
   // 接続線グループ（ノードの下に描画）
@@ -1325,7 +1323,7 @@ function ctxDelete() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v95';
+  var DATA_VERSION = 'v96';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1530,7 +1528,12 @@ function renderTree(mapType) {
 
   if (isPCMode()) {
     // DOMが更新されてからサイズを取得するため遅延
-    setTimeout(function(){ renderPCMap(mapType); }, 100);
+    // DOMが確定してからコンテナサイズを取得して描画
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        renderPCMap(mapType);
+      });
+    });
   }
 }
 
