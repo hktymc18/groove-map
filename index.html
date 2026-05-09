@@ -1012,14 +1012,16 @@ function renderPCMap(mapType) {
 
   var members = membersForMap(mapType);
   if (!members || members.length === 0) {
-    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">' +
-      (state.isEditor ? '＋ボタンでメンバーを追加' : 'データなし') + '</div>';
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし (total:0)</div>';
     return;
   }
 
-  var roots = members.filter(function(m){ return !m.parentId; });
+  // デバッグ: parentIdの状態を確認
+  var roots = members.filter(function(m){ return !m.parentId || m.parentId === '' || m.parentId === null; });
   if (roots.length === 0) {
-    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">ルートメンバーが見つかりません</div>';
+    // parentIdの値を表示してデバッグ
+    var pids = members.slice(0,3).map(function(m){ return JSON.stringify(m.parentId); }).join(', ');
+    wrap.innerHTML = '<div style="padding:20px;color:#f59e0b;font-size:13px">total:' + members.length + ' roots:0 parentIds:[' + pids + ']</div>';
     return;
   }
   var root = roots[0];
@@ -1289,7 +1291,7 @@ function ctxDelete() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v97';
+  var DATA_VERSION = 'v98';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
