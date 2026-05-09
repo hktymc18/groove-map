@@ -1153,16 +1153,6 @@ function renderPCMap(mapType) {
 
   wrap.appendChild(svg);
 }
-
-// renderTreeをオーバーライドしてPC/モバイル振り分け
-var _origRenderTree = renderTree;
-function renderTree(mapType) {
-  _origRenderTree(mapType);
-  if (isPCMode()) {
-    renderPCMap(mapType);
-  }
-}
-
 // ウィンドウリサイズ時に再描画
 window.addEventListener('resize', function() {
   if (isPCMode()) {
@@ -1173,7 +1163,7 @@ window.addEventListener('resize', function() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v89';
+  var DATA_VERSION = 'v90';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1363,6 +1353,11 @@ function renderTree(mapType) {
 
   container.innerHTML = html;
   updateLTSV(mapType, members);
+
+  // PC時は楕円MAPも描画
+  if (isPCMode()) {
+    setTimeout(function(){ renderPCMap(mapType); }, 0);
+  }
 }
 
 // 共通カードHTML生成（系列カラー固定、子も同色）
@@ -1421,7 +1416,8 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily) {
     for (var ki = 0; ki < kids.length; ki++) {
       kidsContent += buildNodeHTML(kids[ki], members, mapType, depth + 1, familyColor, inFamily);
     }
-    kidsHTML = '<div class="children depth-' + Math.min(depth,4) + (defaultOpen ? '' : ' closed') + '" id="ch-' + m.id + '" style="' + (inFamily ? 'padding-left:10px;border-left:1px solid ' + familyColor + '22;margin-left:6px' : '') + '">' + kidsContent + '</div>';
+    var indentStyle = inFamily ? 'padding-left:10px;border-left:1.5px solid ' + familyColor + '44;margin-left:8px' : '';
+    kidsHTML = '<div class="children depth-' + Math.min(depth,4) + (defaultOpen ? '' : ' closed') + '" id="ch-' + m.id + '" style="' + indentStyle + '">' + kidsContent + '</div>';
   }
 
   var ncClass = 'nc' + (m.trainee ? ' trainee' : '') +
@@ -1457,28 +1453,20 @@ var DEPTH_COLORS = ['#00d4aa','#7c6aff','#3b82f6','#f59e0b','#ec4899'];
 
 function titleAvatarStyle(title) {
   var t = (title||'').toUpperCase().replace(/\s/g,'');
-  // 上位タイトル
-  // 研修生カテゴリ
+  // 研修ステータス系
   if (t==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||t==='面談'||t==='CO')
     return 'background:rgba(34,211,238,0.15);color:#22d3ee;border-color:rgba(34,211,238,0.4)';
-  // チームエリート / PD
-  if (t==='PD') return 'background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#7dd3fc;border-color:#38bdf8';
-  if (t==='チームエリート') return 'background:linear-gradient(135deg,#0f0a1e,#4c1d95);color:#e9d5ff;border-color:#a855f7';
-  if (t==='BD'||t==='ブルーダイヤモンド') return 'background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#93c5fd;border-color:#3b82f6';
-  if (t==='D')   return 'background:linear-gradient(135deg,#e8e8f0,#f5f5ff);color:#4a4a6a;border-color:#c0bfe0';
-  if (t==='E'||t.includes('エメラルド')) return 'background:linear-gradient(135deg,#064e3b,#059669);color:#6ee7b7;border-color:#10b981';
-  if (t==='R'||t.includes('ルビー'))     return 'background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fca5a5;border-color:#ef4444';
-  if (t==='L'||t.includes('ラピス'))     return 'background:linear-gradient(135deg,#1e3a5f,#0ea5e9);color:#7dd3fc;border-color:#38bdf8';
-  if (t==='G'||t.includes('ゴールド'))   return 'background:linear-gradient(135deg,#78350f,#d97706);color:#fde68a;border-color:#f59e0b';
-  // BR
-  if (t==='BR')  return 'background:linear-gradient(135deg,#292524,#57534e);color:#d6d3d1;border-color:#78716c';
+  // BR以上は全て同じスタイル（BRカラー）
+  var BR_ALL = ['BR','G','ゴールド','L','ラピス','R','ルビー','E','エメラルド','D','ダイヤモンド','BD','ブルーダイヤモンド','PD','チームエリート'];
+  if (BR_ALL.indexOf(title||'') >= 0 || BR_ALL.indexOf(t) >= 0)
+    return 'background:linear-gradient(135deg,#292524,#57534e);color:#d6d3d1;border-color:#78716c';
   // LOI / Q系
   if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;border-color:#22c55e';
   // B1
   if (t==='B1')  return 'background:linear-gradient(135deg,#4c1d95,#9333ea);color:#e9d5ff;border-color:#a855f7';
   // B2 B3
   if (t==='B2'||t==='B3') return 'background:linear-gradient(135deg,#3b0764,#7e22ce);color:#ddd6fe;border-color:#8b5cf6';
-  // B4〜B12, BM → カードと同じ（ほぼ無地）
+  // B4〜B12, BM
   if (/^B(M|[4-9]|1[0-2])$/.test(t)) return 'background:var(--surface2);color:var(--text-dim);border-color:var(--border2)';
   // デフォルト
   return 'background:var(--surface2);color:var(--text-dim);border-color:var(--border2)';
@@ -1728,10 +1716,8 @@ function renderCommission() {
 
 
 // ── コミッション自動計算 ──
-var BR_TITLES = ['BR','ゴールド','G','ラピス','L','ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
-
 function isBROrAbove(title) {
-  return BR_TITLES.indexOf(title||'') >= 0;
+  return isBROrAboveTitle(title);
 }
 
 // 指定メンバーの配下を全取得（再帰）
