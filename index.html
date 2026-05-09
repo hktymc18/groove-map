@@ -1163,7 +1163,7 @@ window.addEventListener('resize', function() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v90';
+  var DATA_VERSION = 'v91';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1331,41 +1331,53 @@ function renderTree(mapType) {
 
   if (roots.length === 1) {
     var root = roots[0];
-    // ルートカード（縦ラインなし）
-    html += buildNodeHTML(root, members, mapType, 0, '#00d4aa', false);
-
-    // ルートの直下を系列として扱う
     var rootKids = childrenOf(root.id, members);
+
+    // 系列カラーを事前に確定
+    var familyColorMap = {};
     rootKids.forEach(function(kid, fi) {
       var fColor = FAMILY_COLORS_LIST[fi % FAMILY_COLORS_LIST.length];
-      // 系列ブロック：縦ラインをpadding-leftで作る
+      function assignColor(m, col) {
+        familyColorMap[m.id] = col;
+        childrenOf(m.id, members).forEach(function(c) { assignColor(c, col); });
+      }
+      assignColor(kid, fColor);
+    });
+    familyColorMap[root.id] = FAMILY_COLORS_LIST[0];
+
+    // ルートカード（子は描画しない）
+    html += buildNodeHTML(root, members, mapType, 0, FAMILY_COLORS_LIST[0], false, familyColorMap, true);
+
+    // 各系列を縦ライン付きブロックで描画
+    rootKids.forEach(function(kid) {
+      var fColor = familyColorMap[kid.id] || FAMILY_COLORS_LIST[0];
       html += '<div style="position:relative;padding-left:12px;margin-bottom:2px">';
       html += '<div style="position:absolute;left:3px;top:0;bottom:0;width:2px;border-radius:2px;background:' + fColor + ';opacity:0.7"></div>';
-      html += buildNodeHTML(kid, members, mapType, 1, fColor, true);
+      html += buildNodeHTML(kid, members, mapType, 1, fColor, true, familyColorMap, false);
       html += '</div>';
     });
   } else {
     roots.forEach(function(r, fi) {
       var fColor = FAMILY_COLORS_LIST[fi % FAMILY_COLORS_LIST.length];
-      html += buildNodeHTML(r, members, mapType, 0, fColor, false);
+      html += buildNodeHTML(r, members, mapType, 0, fColor, false, {}, false);
     });
   }
 
   container.innerHTML = html;
   updateLTSV(mapType, members);
 
-  // PC時は楕円MAPも描画
   if (isPCMode()) {
     setTimeout(function(){ renderPCMap(mapType); }, 0);
   }
 }
 
 // 共通カードHTML生成（系列カラー固定、子も同色）
-function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily) {
+function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, familyColorMap, skipChildren) {
+  if (!familyColorMap) familyColorMap = {};
   var kids = childrenOf(m.id, members);
   var hasKids = kids.length > 0;
   var g = m.gender || 'male';
-  var depthColor = familyColor;
+  var depthColor = familyColorMap[m.id] || familyColor;
 
   var actLabel = m.activity === 'S' ? 'S 120%' :
                  m.activity ? (m.activity + (m.actRate ? m.actRate+'%' : '')) : '';
@@ -1375,8 +1387,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily) {
                  m.activity === 'C' ? 'var(--c)' : 'var(--text-dim)';
 
   var ptDisplay = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '-';
-  var defaultOpen = depth < 2;
-  var expandArrow = hasKids
+  var expandArrow = hasKids && !skipChildren
     ? '<span class="expand-arrow-v2" id="arr-' + m.id + '">&#9654;</span>'
     : '';
 
@@ -1411,19 +1422,20 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily) {
 
   // 子要素（再帰）
   var kidsHTML = '';
-  if (hasKids) {
+  if (hasKids && !skipChildren) {
     var kidsContent = '';
     for (var ki = 0; ki < kids.length; ki++) {
-      kidsContent += buildNodeHTML(kids[ki], members, mapType, depth + 1, familyColor, inFamily);
+      kidsContent += buildNodeHTML(kids[ki], members, mapType, depth + 1, depthColor, inFamily, familyColorMap, false);
     }
-    var indentStyle = inFamily ? 'padding-left:10px;border-left:1.5px solid ' + familyColor + '44;margin-left:8px' : '';
-    kidsHTML = '<div class="children depth-' + Math.min(depth,4) + (defaultOpen ? '' : ' closed') + '" id="ch-' + m.id + '" style="' + indentStyle + '">' + kidsContent + '</div>';
+    var indentStyle = inFamily ? 'padding-left:10px;border-left:1.5px solid ' + depthColor + '44;margin-left:8px' : '';
+    kidsHTML = '<div class="children depth-' + Math.min(depth,4) + (depth < 2 ? '' : ' closed') + '" id="ch-' + m.id + '" style="' + indentStyle + '">' + kidsContent + '</div>';
   }
 
   var ncClass = 'nc' + (m.trainee ? ' trainee' : '') +
     (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '');
 
-  return '<div class="nw' + (defaultOpen && hasKids ? ' open' : '') + '" id="nw-' + m.id + '">'
+  var isDefaultOpen = depth < 2;
+  return '<div class="nw' + (isDefaultOpen && hasKids && !skipChildren ? ' open' : '') + '" id="nw-' + m.id + '">'
     + '<div class="' + ncClass + '" id="nc-' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
     + hoverBtn + instaBtn
     + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.dataset.cid,event)" ondblclick="if(state.isEditor){openEdit(this.dataset.cid);event.stopPropagation()}">'
