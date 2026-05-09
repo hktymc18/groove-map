@@ -85,7 +85,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   dominant-baseline: middle;
 }
 .oval-node-name {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   font-family: 'Noto Sans JP', sans-serif;
   text-anchor: middle;
@@ -102,6 +102,42 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   font-size: 9px;
   font-family: 'IBM Plex Mono', monospace;
   text-anchor: middle;
+}
+
+
+/* ── 右クリックメニュー ── */
+#ctxMenu {
+  position: fixed;
+  z-index: 9999;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 0;
+  min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: none;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+#ctxMenu.open { display: block; }
+.ctx-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ctx-item:hover { background: var(--surface3); }
+.ctx-item.danger { color: var(--red); }
+.ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.ctx-label {
+  padding: 6px 16px 2px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 /* ── SCROLL AREA ── */
@@ -609,6 +645,17 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 <!-- FAB -->
 <button class="fab" id="fab" onclick="openAdd()">＋</button>
 
+<!-- 右クリックメニュー -->
+<div id="ctxMenu">
+  <div class="ctx-label" id="ctxLabel">メンバー名</div>
+  <div class="ctx-item" onclick="ctxAddChild()">＋ 直下に追加</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxEdit()">✏️ 編集</div>
+  <div class="ctx-item" id="ctxInsta" onclick="ctxOpenInsta()" style="display:none">📷 Instagramを開く</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item danger" onclick="ctxDelete()">🗑 削除</div>
+</div>
+
 
 <!-- LTSV詳細モーダル -->
 <div class="overlay" id="ltsvModal" onclick="closeLtsvModal(event)">
@@ -1114,19 +1161,30 @@ function renderPCMap(mapType) {
     // 名前（中央）
     var name = (m.lastName || '') + (m.firstName || '');
     var nameEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    nameEl.setAttribute('y', NODE_R * 0.1);
+    nameEl.setAttribute('y', NODE_R * 0.05);
     nameEl.setAttribute('class', 'oval-node-name');
     nameEl.setAttribute('fill', '#e8eaf0');
-    var displayName = name.length > 4 ? name.substring(0,4) : name;
+    var displayName = name.length > 5 ? name.substring(0,5) : name;
     nameEl.textContent = displayName;
     g.appendChild(nameEl);
 
     // ポイント（下部）
     var ptEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    ptEl.setAttribute('y', NODE_R * 0.55);
+    ptEl.setAttribute('y', NODE_R * 0.48);
     ptEl.setAttribute('class', 'oval-node-pt');
     ptEl.textContent = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '-';
     g.appendChild(ptEl);
+
+    // やる気（最下部）
+    if (m.morale && m.morale > 0) {
+      var moraleEmojis = ['','🌱','💪','🔥'];
+      var moraleEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      moraleEl.setAttribute('y', NODE_R * 0.82);
+      moraleEl.setAttribute('text-anchor', 'middle');
+      moraleEl.setAttribute('font-size', Math.max(8, NODE_R * 0.38) + 'px');
+      moraleEl.textContent = moraleEmojis[Math.min(m.morale, 3)] || '';
+      g.appendChild(moraleEl);
+    }
 
     // 稼働バッジ（円の上）
     if (m.activity) {
@@ -1140,11 +1198,16 @@ function renderPCMap(mapType) {
       g.appendChild(actEl);
     }
 
-    // クリックで編集
+    // クリック・右クリック
     (function(memberId) {
-      g.addEventListener('click', function() { selectCard(memberId, event); });
+      g.addEventListener('click', function(e) { selectCard(memberId, e); });
       g.addEventListener('dblclick', function() {
         if (state.isEditor) openEdit(memberId);
+      });
+      g.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openCtxMenu(memberId, e.clientX, e.clientY);
       });
     })(m.id);
 
@@ -1161,9 +1224,88 @@ window.addEventListener('resize', function() {
   }
 });
 
+
+// ── 右クリックコンテキストメニュー ──
+var _ctxTargetId = null;
+
+function openCtxMenu(memberId, x, y) {
+  _ctxTargetId = memberId;
+  var menu = document.getElementById('ctxMenu');
+  var label = document.getElementById('ctxLabel');
+  if (!menu) return;
+
+  // メンバー名を表示
+  var m = null;
+  var members = state.members.concat(state.idealMembers || []);
+  for (var i=0; i<members.length; i++) {
+    if (members[i].id === memberId) { m = members[i]; break; }
+  }
+  if (label && m) label.textContent = (m.lastName||'') + ' ' + (m.firstName||'');
+
+  // 位置調整（画面端に収まるよう）
+  menu.style.left = x + 'px';
+  menu.style.top  = y + 'px';
+  menu.classList.add('open');
+
+  // インスタボタンの表示切替
+  var instaBtn = document.getElementById('ctxInsta');
+  if (instaBtn) {
+    instaBtn.style.display = (m && m.instaUrl) ? '' : 'none';
+  }
+
+  // メニュー外クリックで閉じる
+  setTimeout(function() {
+    document.addEventListener('click', closeCtxMenu, { once: true });
+    document.addEventListener('contextmenu', closeCtxMenu, { once: true });
+  }, 10);
+}
+
+function closeCtxMenu() {
+  var menu = document.getElementById('ctxMenu');
+  if (menu) menu.classList.remove('open');
+  _ctxTargetId = null;
+}
+
+function ctxAddChild() {
+  closeCtxMenu();
+  selectedParentId = _ctxTargetId;
+  openAdd();
+}
+
+function ctxEdit() {
+  closeCtxMenu();
+  if (_ctxTargetId && state.isEditor) openEdit(_ctxTargetId);
+}
+
+function ctxOpenInsta() {
+  closeCtxMenu();
+  var members = state.members.concat(state.idealMembers || []);
+  for (var i=0; i<members.length; i++) {
+    if (members[i].id === _ctxTargetId && members[i].instaUrl) {
+      window.open(members[i].instaUrl, '_blank');
+      return;
+    }
+  }
+}
+
+function ctxDelete() {
+  closeCtxMenu();
+  if (!_ctxTargetId || !state.isEditor) return;
+  var m = null;
+  for (var i=0; i<state.members.length; i++) {
+    if (state.members[i].id === _ctxTargetId) { m = state.members[i]; break; }
+  }
+  if (!m) return;
+  var name = (m.lastName||'') + (m.firstName||'');
+  if (!confirm(name + ' を削除しますか？')) return;
+  state.members = state.members.filter(function(x){ return x.id !== _ctxTargetId; });
+  renderCurrentView();
+  autoSave();
+}
+
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v91';
+  var DATA_VERSION = 'v93';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
