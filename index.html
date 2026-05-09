@@ -58,9 +58,10 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
     display: block;
     position: relative;
     width: 100%;
+    min-height: calc(100vh - 180px);
     overflow: hidden;
   }
-  .mobile-tree { display: none !important; }
+  .mobile-tree { display: none !important; visibility: hidden; }
   .pc-map-svg { width: 100%; display: block; }
 }
 @media (max-width: 767px) {
@@ -1029,8 +1030,8 @@ function renderPCMap(mapType) {
   var maxDepth = Object.keys(depthMap).reduce(function(a,b){ return Math.max(a,parseInt(b)); }, 0);
 
   // SVGサイズ計算
-  var W = wrap.offsetWidth || 900;
-  var H = Math.max(500, W * 0.55);
+  var W = wrap.offsetWidth || wrap.parentElement && wrap.parentElement.offsetWidth || window.innerWidth || 900;
+  var H = Math.max(600, window.innerHeight - 200);
   // 楕円のパラメータ（段ごと）
   var CX = W / 2, CY = H / 2;
   var RX_BASE = W * 0.08, RY_BASE = H * 0.08;
@@ -1324,7 +1325,7 @@ function ctxDelete() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v94';
+  var DATA_VERSION = 'v95';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1528,7 +1529,8 @@ function renderTree(mapType) {
   updateLTSV(mapType, members);
 
   if (isPCMode()) {
-    setTimeout(function(){ renderPCMap(mapType); }, 0);
+    // DOMが更新されてからサイズを取得するため遅延
+    setTimeout(function(){ renderPCMap(mapType); }, 100);
   }
 }
 
