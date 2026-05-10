@@ -492,7 +492,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 
 <header>
   <div class="hdr-top">
-    <div style="display:flex;flex-direction:column;line-height:1.2"><div class="logo" id="appLogo" style="cursor:default">GROOVE</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none"></div></div>
+    <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer">GROOVE</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none"></div></div>
 <div style="display:flex;gap:4px;align-items:center">
       <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
@@ -526,6 +526,11 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
     </div>
     <div class="edit-hint" id="editHint">ダブルタップで編集</div>
     <!-- 検索欄 -->
+    <!-- 段数フィルター -->
+    <div id="depthFilterWrap" style="display:flex;gap:6px;padding:6px 14px 0;flex-wrap:wrap;align-items:center">
+      <span style="font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace">段数:</span>
+      <div id="depthFilterBtns" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+    </div>
     <div id="searchBar" style="padding:6px 14px 0">
       <div style="display:flex;gap:8px;align-items:center">
         <!-- メインサーチボックス（1行） -->
@@ -645,6 +650,22 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 
 <!-- FAB -->
 <button class="fab" id="fab" onclick="openAdd()">＋</button>
+
+
+<!-- プロフィール設定モーダル -->
+<div class="overlay" id="profileModal" onclick="closeProfileModal(event)">
+  <div class="sheet">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px">プロフィール設定</div>
+    <div class="fr"><label class="fl">お名前</label><input class="fi" id="profileName" placeholder="山内 北斗"></div>
+    <div class="fr"><label class="fl">屋号</label><input class="fi" id="profileOrg" placeholder="GROOVE"></div>
+    <div class="fr"><label class="fl">活動地域</label><input class="fi" id="profileArea" placeholder="東京・大阪"></div>
+    <div class="fr"><label class="fl">所属ユニオン</label><input class="fi" id="profileUnion" placeholder="BASE REVE"></div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn-c" onclick="closeProfileModal(null)">キャンセル</button>
+      <button class="btn-p" onclick="saveProfile()">保存</button>
+    </div>
+  </div>
+</div>
 
 <!-- 右クリックメニュー -->
 <div id="ctxMenu">
@@ -1010,7 +1031,8 @@ function renderPCMap(mapType) {
   if (!wrap) return;
   wrap.innerHTML = '';
 
-  var members = membersForMap(mapType);
+  var allMembers = membersForMap(mapType);
+  var members = applyDepthFilter(allMembers);
   if (!members || members.length === 0) {
     wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし (total:0)</div>';
     return;
@@ -1018,6 +1040,8 @@ function renderPCMap(mapType) {
 
   // デバッグ: parentIdの状態を確認
   var roots = members.filter(function(m){ return !m.parentId || m.parentId === '' || m.parentId === null; });
+  console.log('[PCMap] members:', members.length, 'roots:', roots.length, 'W:', W, 'H:', H);
+  if (members.length > 0) console.log('[PCMap] sample parentId:', JSON.stringify(members[0].parentId), typeof members[0].parentId);
   if (roots.length === 0) {
     // parentIdの値を表示してデバッグ
     var pids = members.slice(0,3).map(function(m){ return JSON.stringify(m.parentId); }).join(', ');
@@ -1108,6 +1132,7 @@ function renderPCMap(mapType) {
     if (!pos) return;
     var col = colorMap[m.id] || COLORS[0];
     var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class', 'oval-node');
     g.style.cursor = 'pointer';
     g.setAttribute('data-mid', m.id);
 
@@ -1194,18 +1219,21 @@ var _ctxTargetId = null;
 
 // documentレベルでcontextmenuを捕捉（Safari対応）
 document.addEventListener('contextmenu', function(e) {
-  // nc（カード）またはoval-node上か確認
   var target = e.target;
   var memberId = null;
 
-  // カードリスト（card-main か nc の中）
-  var cardEl = target.closest ? target.closest('[data-cid]') : null;
-  if (cardEl) memberId = cardEl.getAttribute('data-cid') || cardEl.dataset.cid;
-
-  // PC楕円MAPノード（oval-node）
-  if (!memberId) {
-    var ovalEl = target.closest ? target.closest('.oval-node') : null;
-    if (ovalEl) memberId = ovalEl.getAttribute('data-mid');
+  // SVGノード（oval-node g要素）を検索 - Chrome対応で自分自身もチェック
+  var node = target;
+  while (node && node !== document) {
+    if (node.getAttribute && node.getAttribute('data-mid')) {
+      memberId = node.getAttribute('data-mid');
+      break;
+    }
+    if (node.getAttribute && node.getAttribute('data-cid')) {
+      memberId = node.getAttribute('data-cid');
+      break;
+    }
+    node = node.parentNode;
   }
 
   if (memberId) {
@@ -1289,9 +1317,108 @@ function ctxDelete() {
   autoSave();
 }
 
+
+// ── 段数フィルター ──
+var depthFilter = null; // null=全表示, 数値=その段数まで
+
+function buildDepthFilter(members) {
+  var wrap = document.getElementById('depthFilterBtns');
+  if (!wrap) return;
+
+  // 最大段数を計算
+  var maxDepth = 0;
+  members.forEach(function(m) {
+    var d = calcMemberDepth(m.id, members);
+    if (d > maxDepth) maxDepth = d;
+  });
+
+  wrap.innerHTML = '';
+
+  // 「全て」ボタン
+  var allBtn = document.createElement('div');
+  allBtn.textContent = '全て';
+  allBtn.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent)';
+  allBtn.onclick = function() { depthFilter = null; renderCurrentView(); buildDepthFilter(members); };
+  if (depthFilter === null) allBtn.style.background = 'var(--accent)'; allBtn.style.color = depthFilter===null?'#000':'var(--accent)';
+  wrap.appendChild(allBtn);
+
+  // 各段数ボタン
+  for (var d = 0; d <= maxDepth; d++) {
+    (function(depth) {
+      var btn = document.createElement('div');
+      btn.textContent = depth + '段';
+      var isActive = depthFilter === depth;
+      btn.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid ' + (isActive ? 'var(--accent)' : 'var(--border)') + ';background:' + (isActive ? 'var(--accent)' : 'transparent') + ';color:' + (isActive ? '#000' : 'var(--text-dim)') + '';
+      btn.onclick = function() {
+        depthFilter = depth;
+        renderCurrentView();
+        buildDepthFilter(members);
+      };
+      wrap.appendChild(btn);
+    })(d);
+  }
+}
+
+function applyDepthFilter(members) {
+  if (depthFilter === null) return members;
+  return members.filter(function(m) {
+    return calcMemberDepth(m.id, members) <= depthFilter;
+  });
+}
+
+
+// ── プロフィール設定 ──
+function openProfileModal() {
+  if (!currentUser) return;
+  var el = function(id){ return document.getElementById(id); };
+  if (el('profileName')) el('profileName').value = currentUser.name || '';
+  if (el('profileOrg'))  el('profileOrg').value  = currentUser.org  || '';
+  if (el('profileArea')) el('profileArea').value  = currentUser.area || '';
+  if (el('profileUnion'))el('profileUnion').value = currentUser.union|| '';
+  var m = document.getElementById('profileModal');
+  if (m) m.classList.add('open');
+}
+
+function closeProfileModal(e) {
+  if (e && e.target !== document.getElementById('profileModal')) return;
+  var m = document.getElementById('profileModal');
+  if (m) m.classList.remove('open');
+}
+
+function saveProfile() {
+  if (!currentUser || !currentUser.uid) return;
+  var el = function(id){ return (document.getElementById(id)||{}).value||''; };
+  currentUser.name  = el('profileName');
+  currentUser.org   = el('profileOrg');
+  currentUser.area  = el('profileArea');
+  currentUser.union = el('profileUnion');
+
+  // ヘッダー更新
+  var logo = document.getElementById('appLogo');
+  if (logo) logo.textContent = currentUser.org || 'MAP';
+  var nameEl = document.getElementById('appUserName');
+  if (nameEl) {
+    var infoText = currentUser.name;
+    if (currentUser.area)  infoText += ' | ' + currentUser.area;
+    if (currentUser.union) infoText += ' | ' + currentUser.union;
+    nameEl.textContent = infoText;
+    nameEl.style.display = '';
+  }
+
+  // Firestoreに保存
+  if (USE_FIREBASE && currentUser.uid) {
+    fsSet('users/' + currentUser.uid, {
+      name: currentUser.name, org: currentUser.org,
+      area: currentUser.area, union: currentUser.union,
+      email: currentUser.email, uid: currentUser.uid
+    }).then(function(){ toast('プロフィールを保存しました ✓'); });
+  }
+  closeProfileModal(null);
+}
+
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v98';
+  var DATA_VERSION = 'v101';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4086,7 +4213,13 @@ function loginSuccess(user) {
   var logo = document.getElementById('appLogo');
   if (logo) logo.textContent = user.org || 'MAP';
   var nameEl = document.getElementById('appUserName');
-  if (nameEl && user.name) { nameEl.textContent = user.name; nameEl.style.display = ''; }
+  if (nameEl && user.name) {
+    var infoText = user.name;
+    if (user.area) infoText += ' | ' + user.area;
+    if (user.union) infoText += ' | ' + user.union;
+    nameEl.textContent = infoText;
+    nameEl.style.display = '';
+  }
   showCopyBtn();
   // ログイン画面を非表示
   var ls = document.getElementById('loginScreen');
@@ -4182,19 +4315,38 @@ function addShareUser() {
   if (!db || !currentUser) return;
   var email = (document.getElementById('shareEmail')||{}).value.trim();
   if (!email) { toast('メールアドレスを入力してください'); return; }
-  // メールアドレスをIDとしてFirestoreに保存
   var safeId = email.replace(/[.@]/g, '_');
-  fsSet('maps/' + currentUser.uid + '/shared/' + safeId, {
+
+  // オーナー側: maps/{ownerUid}/shared/{safeId}
+  var p1 = fsSet('maps/' + currentUser.uid + '/shared/' + safeId, {
     email: email,
     perm: sharePerm,
+    ownerUid: currentUser.uid,
+    ownerName: currentUser.org || currentUser.name || '',
     addedAt: new Date().toISOString()
-  }).then(function() {
-    toast(email + ' に共有しました');
+  });
+
+  // 受け取り側: sharedWith/{safeEmail}/from/{ownerUid}
+  // → 受け取り側が自分のメールアドレスで検索できる場所に書く
+  var recipientSafeId = safeId;
+  var p2 = fsSet('sharedWith/' + recipientSafeId + '/from/' + currentUser.uid, {
+    ownerUid: currentUser.uid,
+    ownerName: currentUser.org || currentUser.name || '',
+    ownerEmail: currentUser.email || '',
+    perm: sharePerm,
+    addedAt: new Date().toISOString()
+  });
+
+  Promise.all ? Promise.all([p1, p2]).then(function() {
+    toast(email + ' に共有しました ✓');
     document.getElementById('shareEmail').value = '';
     loadShareUserList();
-  }).catch(function(e) {
-    toast('エラー: ' + e.message);
-  });
+  }).catch(function(e){ toast('エラー: ' + e.message); })
+  : p1.then(function(){ return p2; }).then(function(){
+    toast(email + ' に共有しました ✓');
+    document.getElementById('shareEmail').value = '';
+    loadShareUserList();
+  }).catch(function(e){ toast('エラー: ' + e.message); });
 }
 
 function removeShareUser(id) {
@@ -4231,30 +4383,57 @@ function subscribeSharedMaps() {
 var sharedOwners = []; // 共有してくれているオーナー一覧
 var viewingOwnerUid = null; // 現在閲覧中のオーナーUID（nullなら自分）
 
+
+function fsLoadSharedMap(ownerUid) {
+  var month = state.currentMonth;
+  toast('共有MAPを読み込み中...');
+  // 共有されたMAPのデータを直接読む
+  // セキュリティルール上、sharedWithを経由して許可する
+  var p1 = fsGet('maps/' + ownerUid + '/months/' + month + '_current');
+  var p2 = fsGet('maps/' + ownerUid + '/months/' + month + '_ideal');
+  var p3 = fsGet('maps/' + ownerUid + '/stats/' + month);
+
+  p1.then(function(data) {
+    state.members = (data && data.members) ? data.members : [];
+    return p2;
+  }).then(function(data) {
+    state.idealMembers = (data && data.members) ? data.members : [];
+    return p3;
+  }).then(function(data) {
+    if (data) {
+      state.stats = data.stats || getDefaultStats();
+      state.commission = data.commission || getDefaultCommission();
+    }
+    renderCurrentView();
+    toast('共有MAPを読み込みました ✓');
+  }).catch(function(e) {
+    toast('読み込みエラー: ' + e.message);
+    console.error('shared map load error:', e);
+  });
+}
+
 function checkSharedMaps() {
   if (!db || !currentUser || !currentUser.email) return;
-  db.collectionGroup('shared')
-    .where('email', '==', currentUser.email)
-    .get()
-    .then(function(snap) {
-      sharedOwners = [];
-      snap.forEach(function(doc) {
-        var parts = doc.ref.path.split('/');
-        // パス: maps/{ownerUid}/shared/{id}
-        if (parts.length >= 4 && parts[0] === 'maps') {
-          sharedOwners.push({
-            uid: parts[1],
-            perm: doc.data().perm,
-            email: doc.data().email || ''
-          });
-        }
-      });
-      if (sharedOwners.length > 0) {
-        buildViewSelector();
+  var safeEmail = currentUser.email.replace(/[.@]/g, '_');
+
+  // sharedWith/{safeEmail}/from/ を読む
+  fsGetCol('sharedWith/' + safeEmail + '/from').then(function(docs) {
+    sharedOwners = [];
+    docs.forEach(function(d) {
+      if (d.ownerUid) {
+        sharedOwners.push({
+          uid: d.ownerUid,
+          perm: d.perm || 'view',
+          name: d.ownerName || d.ownerEmail || d.ownerUid
+        });
       }
-    }).catch(function(e) {
-      console.log('shared check error:', e.message);
     });
+    if (sharedOwners.length > 0) {
+      buildViewSelector();
+    }
+  }).catch(function(e) {
+    console.log('shared check error:', e.message);
+  });
 }
 
 function buildViewSelector() {
@@ -4280,9 +4459,11 @@ function buildViewSelector() {
   sharedOwners.forEach(function(owner) {
     var btn = document.createElement('div');
     btn.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--border);color:var(--text-dim)';
-    // オーナー名を取得
+    // sharedWithに保存されたオーナー名を使用
+    btn.textContent = owner.name || owner.uid;
+    // Firestoreから最新名を取得
     fsGet('users/' + owner.uid).then(function(profile) {
-      btn.textContent = profile ? (profile.org || profile.name || owner.email) : owner.email;
+      if (profile) btn.textContent = profile.org || profile.name || owner.name || owner.uid;
     });
     btn.dataset.uid = owner.uid;
     btn.onclick = function() { switchToOwner(owner.uid, owner.perm); };
@@ -4318,9 +4499,9 @@ function switchToOwner(ownerUid, perm) {
     fsLoadFromFirestore(currentUser.uid);
     updateEditorUI();
   } else {
-    // 他人のMAPを閲覧
+    // 他人のMAPを閲覧（sharedWithを経由して読む）
     state.isEditor = perm === 'edit';
-    fsLoadFromFirestore(ownerUid);
+    fsLoadSharedMap(ownerUid);
     updateEditorUI();
   }
 }
