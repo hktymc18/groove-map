@@ -1031,23 +1031,13 @@ function renderPCMap(mapType) {
   if (!wrap) return;
   wrap.innerHTML = '';
 
-  var allMembers = membersForMap(mapType);
-  var members = applyDepthFilter(allMembers);
+  var members = membersForMap(mapType);
   if (!members || members.length === 0) {
-    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし (total:0)</div>';
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし</div>';
     return;
   }
-
-  // デバッグ: parentIdの状態を確認
-  var roots = members.filter(function(m){ return !m.parentId || m.parentId === '' || m.parentId === null; });
-  console.log('[PCMap] members:', members.length, 'roots:', roots.length, 'W:', W, 'H:', H);
-  if (members.length > 0) console.log('[PCMap] sample parentId:', JSON.stringify(members[0].parentId), typeof members[0].parentId);
-  if (roots.length === 0) {
-    // parentIdの値を表示してデバッグ
-    var pids = members.slice(0,3).map(function(m){ return JSON.stringify(m.parentId); }).join(', ');
-    wrap.innerHTML = '<div style="padding:20px;color:#f59e0b;font-size:13px">total:' + members.length + ' roots:0 parentIds:[' + pids + ']</div>';
-    return;
-  }
+  var roots = members.filter(function(m){ return !m.parentId; });
+  if (roots.length === 0) { wrap.innerHTML = '<div style="padding:20px;color:var(--text-dim)">ルートなし</div>'; return; }
   var root = roots[0];
 
   // 深さごとにグループ化
@@ -1055,8 +1045,7 @@ function renderPCMap(mapType) {
   function groupByDepth(m, d) {
     if (!depthMap[d]) depthMap[d] = [];
     depthMap[d].push(m);
-    members.filter(function(k){ return k.parentId === m.id; })
-           .forEach(function(kid){ groupByDepth(kid, d+1); });
+    members.filter(function(k){ return k.parentId === m.id; }).forEach(function(kid){ groupByDepth(kid, d+1); });
   }
   groupByDepth(root, 0);
   var maxDepth = 0;
@@ -1068,43 +1057,72 @@ function renderPCMap(mapType) {
   var CX = W / 2, CY = H / 2;
   var md = Math.max(maxDepth, 1);
   var RX_STEP = (W * 0.44) / md;
-  var RY_STEP = (H * 0.42) / md;
+  var RY_STEP = (H * 0.40) / md;
   var NODE_R = Math.min(32, W * 0.034);
 
   // 系列カラー
   var COLORS = ['#00d4aa','#7c6aff','#f59e0b','#ef4444','#3b82f6','#10b981','#f97316','#8b5cf6'];
   var colorMap = {};
   colorMap[root.id] = COLORS[0];
-  members.filter(function(m){ return m.parentId === root.id; })
-         .forEach(function(kid, fi){
+  members.filter(function(m){ return m.parentId === root.id; }).forEach(function(kid, fi){
     var col = COLORS[(fi+1) % COLORS.length];
     function assignCol(m, c){ colorMap[m.id]=c; members.filter(function(k){return k.parentId===m.id;}).forEach(function(k){assignCol(k,c);}); }
     assignCol(kid, col);
   });
 
-  // 楕円上の座標
-  function ePos(depth, idx, total) {
+  // ── 線のクロスを減らす配置アルゴリズム ──
+  // 親の角度を基準に子を扇状に配置
+  var posMap = {};
+  var angleMap = {}; // 各メンバーの角度
+  posMap[root.id] = { x: CX, y: CY };
+  angleMap[root.id] = 0;
+
+  function placeChildren(parentId, parentAngle, arcSpan, depth) {
+    var kids = members.filter(function(m){ return m.parentId === parentId; });
+    if (kids.length === 0) return;
     var rx = RX_STEP * depth;
     var ry = RY_STEP * depth;
-    var angle = total > 1 ? (-Math.PI/2) + (2*Math.PI*idx/total) : (-Math.PI/2);
-    return { x: CX + rx*Math.cos(angle), y: CY + ry*Math.sin(angle) };
+    var startAngle = parentAngle - arcSpan/2;
+    kids.forEach(function(kid, i) {
+      var angle = kids.length === 1 ? parentAngle : startAngle + arcSpan * i / (kids.length - 1);
+      posMap[kid.id] = {
+        x: CX + rx * Math.cos(angle),
+        y: CY + ry * Math.sin(angle)
+      };
+      angleMap[kid.id] = angle;
+      // 子の扇形範囲は親より狭く
+      var childArc = arcSpan / Math.max(kids.length, 1.5);
+      placeChildren(kid.id, angle, childArc, depth + 1);
+    });
   }
 
-  // 位置計算
-  var posMap = {};
-  posMap[root.id] = { x: CX, y: CY };
-  Object.keys(depthMap).sort(function(a,b){return a-b;}).forEach(function(d){
-    if (parseInt(d) === 0) return;
-    var group = depthMap[d];
-    group.forEach(function(m, idx){
-      posMap[m.id] = ePos(parseInt(d), idx, group.length);
-    });
+  // ルートの直下は全円に均等配置
+  var rootKids = members.filter(function(m){ return m.parentId === root.id; });
+  rootKids.forEach(function(kid, i) {
+    var angle = rootKids.length > 1
+      ? -Math.PI/2 + (2 * Math.PI * i / rootKids.length)
+      : -Math.PI/2;
+    posMap[kid.id] = {
+      x: CX + RX_STEP * Math.cos(angle),
+      y: CY + RY_STEP * Math.sin(angle)
+    };
+    angleMap[kid.id] = angle;
+    var arcSpan = rootKids.length > 1
+      ? (2 * Math.PI / rootKids.length) * 0.85
+      : Math.PI;
+    placeChildren(kid.id, angle, arcSpan, 2);
+  });
+
+  // カスタム位置（ドラッグで移動した場合）
+  var customPos = window._pcCustomPos || {};
+  Object.keys(customPos).forEach(function(id) {
+    if (posMap[id]) posMap[id] = customPos[id];
   });
 
   // SVG作成
   var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
-  svg.style.cssText = 'display:block;width:100%;height:'+H+'px;background:var(--bg)';
+  svg.style.cssText = 'display:block;width:100%;height:'+H+'px;background:var(--bg);user-select:none';
 
   // 楕円の輪郭
   for (var d=1; d<=maxDepth; d++) {
@@ -1115,7 +1133,10 @@ function renderPCMap(mapType) {
     svg.appendChild(el);
   }
 
-  // 接続線
+  // 接続線（ノードの下に描画）
+  var lineGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
+  svg.appendChild(lineGroup);
+
   members.forEach(function(m){
     if (!m.parentId || !posMap[m.id] || !posMap[m.parentId]) return;
     var ln = document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -1123,7 +1144,8 @@ function renderPCMap(mapType) {
     ln.setAttribute('x2',posMap[m.id].x);       ln.setAttribute('y2',posMap[m.id].y);
     ln.setAttribute('stroke', colorMap[m.id]||'#444');
     ln.setAttribute('stroke-width','1'); ln.setAttribute('stroke-opacity','0.35');
-    svg.appendChild(ln);
+    ln.setAttribute('id','line-'+m.id);
+    lineGroup.appendChild(ln);
   });
 
   // ノード描画
@@ -1133,56 +1155,54 @@ function renderPCMap(mapType) {
     var col = colorMap[m.id] || COLORS[0];
     var g = document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('class', 'oval-node');
-    g.style.cursor = 'pointer';
     g.setAttribute('data-mid', m.id);
+    g.style.cursor = 'grab';
 
-    // 外枠円
     var circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
     circle.setAttribute('cx', pos.x); circle.setAttribute('cy', pos.y);
     circle.setAttribute('r', NODE_R);
     circle.setAttribute('fill','#161920'); circle.setAttribute('stroke',col); circle.setAttribute('stroke-width','1.5');
     g.appendChild(circle);
 
-    // タイトル
     var tEl = document.createElementNS('http://www.w3.org/2000/svg','text');
     tEl.setAttribute('x',pos.x); tEl.setAttribute('y', pos.y - NODE_R*0.35);
     tEl.setAttribute('text-anchor','middle'); tEl.setAttribute('fill',col);
-    tEl.setAttribute('font-size', Math.max(8, NODE_R*0.32)+'px');
+    tEl.setAttribute('font-size', Math.max(8, NODE_R*0.3)+'px');
     tEl.setAttribute('font-family','IBM Plex Mono,monospace');
+    tEl.setAttribute('pointer-events','none');
     tEl.textContent = m.title||'-';
     g.appendChild(tEl);
 
-    // 名前
     var name = ((m.lastName||'')+(m.firstName||'')).substring(0,5);
     var nEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-    nEl.setAttribute('x',pos.x); nEl.setAttribute('y', pos.y + NODE_R*0.08);
+    nEl.setAttribute('x',pos.x); nEl.setAttribute('y', pos.y + NODE_R*0.1);
     nEl.setAttribute('text-anchor','middle'); nEl.setAttribute('fill','#e8eaf0');
     nEl.setAttribute('font-size', Math.max(9, NODE_R*0.34)+'px');
     nEl.setAttribute('font-weight','700'); nEl.setAttribute('font-family','Noto Sans JP,sans-serif');
+    nEl.setAttribute('pointer-events','none');
     nEl.textContent = name;
     g.appendChild(nEl);
 
-    // ポイント
     var pEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-    pEl.setAttribute('x',pos.x); pEl.setAttribute('y', pos.y + NODE_R*0.48);
+    pEl.setAttribute('x',pos.x); pEl.setAttribute('y', pos.y + NODE_R*0.5);
     pEl.setAttribute('text-anchor','middle'); pEl.setAttribute('fill','#888');
-    pEl.setAttribute('font-size', Math.max(7, NODE_R*0.28)+'px');
+    pEl.setAttribute('font-size', Math.max(7, NODE_R*0.27)+'px');
     pEl.setAttribute('font-family','Inter,monospace');
+    pEl.setAttribute('pointer-events','none');
     pEl.textContent = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '-';
     g.appendChild(pEl);
 
-    // やる気
     if (m.morale && m.morale > 0) {
       var mEmojis = ['','🌱','💪','🔥'];
       var mEl = document.createElementNS('http://www.w3.org/2000/svg','text');
       mEl.setAttribute('x',pos.x); mEl.setAttribute('y', pos.y + NODE_R*0.82);
       mEl.setAttribute('text-anchor','middle');
       mEl.setAttribute('font-size', Math.max(8, NODE_R*0.3)+'px');
+      mEl.setAttribute('pointer-events','none');
       mEl.textContent = mEmojis[Math.min(m.morale,3)]||'';
       g.appendChild(mEl);
     }
 
-    // 稼働バッジ（円の上）
     if (m.activity) {
       var aCol = m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#888';
       var aEl = document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -1190,21 +1210,101 @@ function renderPCMap(mapType) {
       aEl.setAttribute('text-anchor','middle'); aEl.setAttribute('fill',aCol);
       aEl.setAttribute('font-size', Math.max(8, NODE_R*0.28)+'px');
       aEl.setAttribute('font-family','IBM Plex Mono,monospace');
+      aEl.setAttribute('pointer-events','none');
       aEl.textContent = m.activity + (m.actRate ? m.actRate+'%' : '');
       g.appendChild(aEl);
     }
 
-    // イベント
-    (function(mid){
-      g.addEventListener('click', function(e){ selectCard(mid,e); });
-      g.addEventListener('dblclick', function(){ if(state.isEditor) openEdit(mid); });
-    })(m.id);
+    // ── ドラッグ移動 ──
+    (function(memberId, nodeG, nodePos) {
+      var dragging = false;
+      var dragStartX, dragStartY, origX, origY;
+      var DRAG_THRESH = 5;
+      var moved = false;
+
+      function getEventXY(ev) {
+        if (ev.touches && ev.touches.length > 0) return { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+        return { x: ev.clientX, y: ev.clientY };
+      }
+
+      function onMove(ev) {
+        if (!dragging) return;
+        ev.preventDefault();
+        var pt = getEventXY(ev);
+        var dx = pt.x - dragStartX, dy = pt.y - dragStartY;
+        if (!moved && Math.sqrt(dx*dx+dy*dy) < DRAG_THRESH) return;
+        moved = true;
+        nodeG.style.cursor = 'grabbing';
+        var newX = origX + dx, newY = origY + dy;
+
+        // ノード内の全テキスト・円を移動
+        var children = nodeG.childNodes;
+        for (var ci=0; ci<children.length; ci++) {
+          var child = children[ci];
+          if (child.tagName === 'circle') {
+            child.setAttribute('cx', newX);
+            child.setAttribute('cy', newY);
+          } else if (child.tagName === 'text') {
+            var relY = parseFloat(child.getAttribute('y')) - origY;
+            child.setAttribute('x', newX);
+            child.setAttribute('y', newY + relY);
+          }
+        }
+
+        // 接続線を更新
+        var parentLine = document.getElementById('line-'+memberId);
+        if (parentLine) { parentLine.setAttribute('x2', newX); parentLine.setAttribute('y2', newY); }
+        // 子への線も更新
+        members.filter(function(k){ return k.parentId === memberId; }).forEach(function(kid) {
+          var cl = document.getElementById('line-'+kid.id);
+          if (cl) { cl.setAttribute('x1', newX); cl.setAttribute('y1', newY); }
+        });
+
+        // カスタム位置を保存
+        if (!window._pcCustomPos) window._pcCustomPos = {};
+        window._pcCustomPos[memberId] = { x: newX, y: newY };
+      }
+
+      function onUp(ev) {
+        if (!dragging) return;
+        dragging = false;
+        nodeG.style.cursor = 'grab';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onUp);
+        if (!moved) {
+          // クリックとして処理
+          selectCard(memberId, ev);
+        }
+      }
+
+      nodeG.addEventListener('mousedown', function(ev) {
+        if (ev.button !== 0) return;
+        dragging = true; moved = false;
+        var pt = getEventXY(ev);
+        dragStartX = pt.x; dragStartY = pt.y;
+        origX = nodePos.x; origY = nodePos.y;
+        if (window._pcCustomPos && window._pcCustomPos[memberId]) {
+          origX = window._pcCustomPos[memberId].x;
+          origY = window._pcCustomPos[memberId].y;
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        ev.preventDefault();
+      });
+
+      nodeG.addEventListener('dblclick', function() {
+        if (state.isEditor) openEdit(memberId);
+      });
+    })(m.id, g, pos);
 
     svg.appendChild(g);
   });
 
   wrap.appendChild(svg);
 }
+
 // ウィンドウリサイズ時に再描画
 window.addEventListener('resize', function() {
   if (isPCMode()) {
@@ -1328,7 +1428,7 @@ function buildDepthFilter(members) {
   // 最大段数を計算
   var maxDepth = 0;
   members.forEach(function(m) {
-    var d = calcMemberDepth(m.id, members);
+    var d = calcMemberDepth(m, members);
     if (d > maxDepth) maxDepth = d;
   });
 
@@ -1337,9 +1437,9 @@ function buildDepthFilter(members) {
   // 「全て」ボタン
   var allBtn = document.createElement('div');
   allBtn.textContent = '全て';
-  allBtn.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent)';
-  allBtn.onclick = function() { depthFilter = null; renderCurrentView(); buildDepthFilter(members); };
-  if (depthFilter === null) allBtn.style.background = 'var(--accent)'; allBtn.style.color = depthFilter===null?'#000':'var(--accent)';
+  var allActive = depthFilter === null;
+  allBtn.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--accent);background:' + (allActive ? 'var(--accent)' : 'transparent') + ';color:' + (allActive ? '#000' : 'var(--accent)') + '';
+  allBtn.onclick = function() { depthFilter = null; renderCurrentView(); };
   wrap.appendChild(allBtn);
 
   // 各段数ボタン
@@ -1349,11 +1449,7 @@ function buildDepthFilter(members) {
       btn.textContent = depth + '段';
       var isActive = depthFilter === depth;
       btn.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid ' + (isActive ? 'var(--accent)' : 'var(--border)') + ';background:' + (isActive ? 'var(--accent)' : 'transparent') + ';color:' + (isActive ? '#000' : 'var(--text-dim)') + '';
-      btn.onclick = function() {
-        depthFilter = depth;
-        renderCurrentView();
-        buildDepthFilter(members);
-      };
+      btn.onclick = function() { depthFilter = depth; renderCurrentView(); };
       wrap.appendChild(btn);
     })(d);
   }
@@ -1362,7 +1458,7 @@ function buildDepthFilter(members) {
 function applyDepthFilter(members) {
   if (depthFilter === null) return members;
   return members.filter(function(m) {
-    return calcMemberDepth(m.id, members) <= depthFilter;
+    return calcMemberDepth(m, members) <= depthFilter;
   });
 }
 
@@ -1418,7 +1514,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v101';
+  var DATA_VERSION = 'v102';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4024,9 +4120,12 @@ function memberMatchesAllFilters(m) {
   return true;
 }
 
-function calcMemberDepth(m, members) {
+function calcMemberDepth(mOrId, members) {
+  // IDでもオブジェクトでも受け取れる
+  var cur = (typeof mOrId === 'string')
+    ? members.filter(function(x){ return x.id === mOrId; })[0]
+    : mOrId;
   var d = 0;
-  var cur = m;
   while (cur && cur.parentId) {
     var par = null;
     for (var pi=0; pi<members.length; pi++) {
