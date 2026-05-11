@@ -1237,30 +1237,17 @@ function renderPCMap(mapType) {
         nodeG.style.cursor = 'grabbing';
         var newX = origX + dx, newY = origY + dy;
 
-        // ノード内の全テキスト・円を移動
-        var children = nodeG.childNodes;
-        for (var ci=0; ci<children.length; ci++) {
-          var child = children[ci];
-          if (child.tagName === 'circle') {
-            child.setAttribute('cx', newX);
-            child.setAttribute('cy', newY);
-          } else if (child.tagName === 'text') {
-            var relY = parseFloat(child.getAttribute('y')) - origY;
-            child.setAttribute('x', newX);
-            child.setAttribute('y', newY + relY);
-          }
-        }
+        // g要素全体をtransformで移動（個別要素を触らない）
+        nodeG.setAttribute('transform', 'translate(' + (newX - origX) + ',' + (newY - origY) + ')');
 
         // 接続線を更新
         var parentLine = document.getElementById('line-'+memberId);
         if (parentLine) { parentLine.setAttribute('x2', newX); parentLine.setAttribute('y2', newY); }
-        // 子への線も更新
         members.filter(function(k){ return k.parentId === memberId; }).forEach(function(kid) {
           var cl = document.getElementById('line-'+kid.id);
           if (cl) { cl.setAttribute('x1', newX); cl.setAttribute('y1', newY); }
         });
 
-        // カスタム位置を保存
         if (!window._pcCustomPos) window._pcCustomPos = {};
         window._pcCustomPos[memberId] = { x: newX, y: newY };
       }
@@ -1367,11 +1354,10 @@ function openCtxMenu(memberId, x, y) {
     instaBtn.style.display = (m && m.instaUrl) ? '' : 'none';
   }
 
-  // メニュー外クリックで閉じる
+  // メニュー外クリックで閉じる（contextmenuは除外）
   setTimeout(function() {
     document.addEventListener('click', closeCtxMenu, { once: true });
-    document.addEventListener('contextmenu', closeCtxMenu, { once: true });
-  }, 10);
+  }, 50);
 }
 
 function closeCtxMenu() {
@@ -1514,7 +1500,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v102';
+  var DATA_VERSION = 'v103';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
