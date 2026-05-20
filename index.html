@@ -1367,14 +1367,16 @@ function closeCtxMenu() {
 }
 
 function ctxAddChild() {
+  var tid = _ctxTargetId; // closeの前に保存
   closeCtxMenu();
-  selectedParentId = _ctxTargetId;
+  selectedParentId = tid;
   openAdd();
 }
 
 function ctxEdit() {
+  var tid = _ctxTargetId;
   closeCtxMenu();
-  if (_ctxTargetId && state.isEditor) openEdit(_ctxTargetId);
+  if (tid && state.isEditor) openEdit(tid);
 }
 
 function ctxOpenInsta() {
@@ -1389,16 +1391,18 @@ function ctxOpenInsta() {
 }
 
 function ctxDelete() {
+  var tid = _ctxTargetId;
   closeCtxMenu();
-  if (!_ctxTargetId || !state.isEditor) return;
+  if (!tid || !state.isEditor) return;
+  _ctxTargetId = tid; // 一時的に復元
   var m = null;
   for (var i=0; i<state.members.length; i++) {
-    if (state.members[i].id === _ctxTargetId) { m = state.members[i]; break; }
+    if (state.members[i].id === tid) { m = state.members[i]; break; }
   }
   if (!m) return;
   var name = (m.lastName||'') + (m.firstName||'');
   if (!confirm(name + ' を削除しますか？')) return;
-  state.members = state.members.filter(function(x){ return x.id !== _ctxTargetId; });
+  state.members = state.members.filter(function(x){ return x.id !== tid; });
   renderCurrentView();
   autoSave();
 }
@@ -1500,7 +1504,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v103';
+  var DATA_VERSION = 'v104';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3333,7 +3337,7 @@ function openAdd() {
   var hw = document.getElementById('traineeHistoryWrap');
   if (hw) hw.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
   var tsf = document.getElementById('traineeStatusFields');
-  if (tsf) tsf.style.display = 'none';
+  if (tsf) tsf.style.display = 'none'; // 新規追加時はリセット
   selStepResult('next');
   // 選択中の親を表示
   var pl = document.getElementById('parentLabel');
@@ -3389,13 +3393,14 @@ function openEdit(id) {
     set('fInsta', m.instaUrl);
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
+    var hasTraineeData = m.trainee || (m.traineeHistory && m.traineeHistory.length > 0) || m.traineeResult;
     var tsf2=document.getElementById('traineeStatusFields');
-    if (tsf2) tsf2.style.display = (m.trainee ? '' : 'none');
+    if (tsf2) tsf2.style.display = (hasTraineeData ? '' : 'none');
     // 履歴エリアを即座にクリア
     var hw = document.getElementById('traineeHistoryWrap');
     if (hw) hw.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
     selStepResult('next');
-    if (m.trainee) { setTimeout(function(){ renderTraineeHistory(null); }, 60); }
+    if (hasTraineeData) { setTimeout(function(){ renderTraineeHistory(null); }, 60); }
 
     var pl = document.getElementById('parentLabel');
     if (pl) {
