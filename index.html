@@ -508,6 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v108</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1050,24 +1051,21 @@ function renderPCMap(mapType) {
   var root = roots[0];
 
   var COLORS = ['#00d4aa','#7c6aff','#f59e0b','#ef4444','#3b82f6','#10b981','#f97316','#8b5cf6'];
-
-  // 子を取得するヘルパー
   function kids(id) { return members.filter(function(m){ return m.parentId === id; }); }
 
-  // 各メンバーの深さを計算
-  var depthCache = {};
-  function getDepth(m) {
-    if (depthCache[m.id] !== undefined) return depthCache[m.id];
-    if (!m.parentId) { depthCache[m.id] = 0; return 0; }
-    var par = members.filter(function(x){ return x.id === m.parentId; })[0];
-    var d = par ? getDepth(par) + 1 : 0;
-    depthCache[m.id] = d;
-    return d;
+  // ── Step1: 各ノードのサブツリーサイズを計算 ──
+  var subtreeSize = {};
+  function calcSize(id) {
+    var ch = kids(id);
+    if (ch.length === 0) { subtreeSize[id] = 1; return 1; }
+    var s = 0;
+    ch.forEach(function(k){ s += calcSize(k.id); });
+    subtreeSize[id] = s;
+    return s;
   }
-  var maxDepth = 0;
-  members.forEach(function(m){ var d = getDepth(m); if (d > maxDepth) maxDepth = d; });
+  calcSize(root.id);
 
-  // 系列カラー
+  // ── Step2: 系列カラー ──
   var colorMap = {};
   colorMap[root.id] = COLORS[0];
   kids(root.id).forEach(function(kid, fi) {
@@ -1076,80 +1074,91 @@ function renderPCMap(mapType) {
     assignCol(kid, col);
   });
 
-  // ── 配置：再帰的に扇形を分割 ──
-  // 各ノードに「担当角度範囲」を割り当てる
-  var posMap = {};
+  // ── Step3: 配置 ──
   var W = Math.max(window.innerWidth - 20, 600);
   var H = Math.max(window.innerHeight - 160, 500);
   var CX = W / 2, CY = H / 2;
-  var NODE_R = Math.min(30, W * 0.032);
+  var NODE_R = Math.min(28, W * 0.028);
 
-  // 楕円の各段のサイズ
-  var md = Math.max(maxDepth, 1);
-  var RX = (W * 0.46 - NODE_R * 2) / md;
-  var RY = (H * 0.44 - NODE_R * 2) / md;
+  // ノード数に応じて楕円サイズを動的決定
+  var totalNodes = members.length;
+  var minSpacing = NODE_R * 2.8; // ノード間の最低間隔
+  // 外周の円周 ≧ 最外段のノード数 × minSpacing になるよう調整
+  var maxDepth = 0;
+  var depthCount = {}; // 段ごとのノード数
+  members.forEach(function(m) {
+    var d = 0; var cur = m;
+    while (cur && cur.parentId) {
+      var par = members.filter(function(x){ return x.id === cur.parentId; })[0];
+      if (!par) break;
+      d++; cur = par;
+    }
+    depthCount[d] = (depthCount[d]||0) + 1;
+    if (d > maxDepth) maxDepth = d;
+  });
 
+  // 最外段のノード数から楕円サイズを決定
+  var outerCount = depthCount[maxDepth] || 1;
+  var minOuterRX = (outerCount * minSpacing) / (2 * Math.PI);
+  var minOuterRY = minOuterRX * (H / W);
+  var outerRX = Math.max(W * 0.44, minOuterRX);
+  var outerRY = Math.max(H * 0.42, minOuterRY);
+  // 画面に収まるよう調整
+  outerRX = Math.min(outerRX, W * 0.46);
+  outerRY = Math.min(outerRY, H * 0.44);
+
+  var RX = maxDepth > 0 ? outerRX / maxDepth : outerRX;
+  var RY = maxDepth > 0 ? outerRY / maxDepth : outerRY;
+
+  var posMap = {};
   posMap[root.id] = { x: CX, y: CY };
 
-  // 再帰的に扇形内に均等配置
-  function placeSubtree(nodeId, angleFrom, angleTo, depth) {
-    var children = kids(nodeId);
-    if (children.length === 0) return;
-    var span = angleTo - angleFrom;
-    // 子が多い場合は最小角度を確保
-    var minAnglePerChild = 0.15; // ラジアン
-    if (children.length > 1) {
-      span = Math.max(span, minAnglePerChild * children.length);
-      angleFrom = (angleFrom + angleTo) / 2 - span / 2;
-      angleTo = angleFrom + span;
-    }
+  // 再帰配置：angleFromとangleTo内にサブツリーサイズ比で分割
+  function placeChildren(nodeId, angleFrom, angleTo, depth) {
+    var ch = kids(nodeId);
+    if (ch.length === 0) return;
     var rx = RX * depth;
     var ry = RY * depth;
-    children.forEach(function(child, i) {
-      var angle;
-      if (children.length === 1) {
-        angle = (angleFrom + angleTo) / 2;
-      } else {
-        angle = angleFrom + span * i / (children.length - 1);
-      }
-      posMap[child.id] = {
-        x: CX + rx * Math.cos(angle),
-        y: CY + ry * Math.sin(angle)
+    var totalSize = ch.reduce(function(s, k){ return s + (subtreeSize[k.id]||1); }, 0);
+    var cursor = angleFrom;
+    ch.forEach(function(kid) {
+      var kidSize = subtreeSize[kid.id] || 1;
+      var kidSpan = (angleTo - angleFrom) * (kidSize / totalSize);
+      var kidAngle = cursor + kidSpan / 2;
+      posMap[kid.id] = {
+        x: CX + rx * Math.cos(kidAngle),
+        y: CY + ry * Math.sin(kidAngle)
       };
-      // 子の扇形を再帰
-      var childSpan = children.length > 1
-        ? span / children.length * 1.1
-        : Math.PI * 0.6;
-      placeSubtree(child.id, angle - childSpan/2, angle + childSpan/2, depth + 1);
+      placeChildren(kid.id, cursor, cursor + kidSpan, depth + 1);
+      cursor += kidSpan;
     });
   }
 
-  // ルートの直下を等間隔で配置
-  var rootKids = kids(root.id);
-  var totalArc = 2 * Math.PI;
-  var arcPerFamily = rootKids.length > 0 ? totalArc / rootKids.length : totalArc;
-  rootKids.forEach(function(kid, fi) {
-    var centerAngle = -Math.PI/2 + arcPerFamily * fi + arcPerFamily / 2;
-    var halfArc = arcPerFamily * 0.45;
+  // ルート直下を全円に均等（サブツリーサイズ比）配置
+  var totalRootSize = kids(root.id).reduce(function(s,k){ return s+(subtreeSize[k.id]||1); }, 0);
+  var cursor = -Math.PI / 2;
+  kids(root.id).forEach(function(kid) {
+    var kidSize = subtreeSize[kid.id] || 1;
+    var kidSpan = 2 * Math.PI * (kidSize / Math.max(totalRootSize, 1));
+    var kidAngle = cursor + kidSpan / 2;
     posMap[kid.id] = {
-      x: CX + RX * Math.cos(centerAngle),
-      y: CY + RY * Math.sin(centerAngle)
+      x: CX + RX * Math.cos(kidAngle),
+      y: CY + RY * Math.sin(kidAngle)
     };
-    placeSubtree(kid.id, centerAngle - halfArc, centerAngle + halfArc, 2);
+    placeChildren(kid.id, cursor, cursor + kidSpan, 2);
+    cursor += kidSpan;
   });
 
-  // カスタム位置を適用
-  var customPos = window._pcCustomPos || {};
-  Object.keys(customPos).forEach(function(id) {
-    if (posMap[id]) posMap[id] = customPos[id];
+  // カスタム位置
+  Object.keys(window._pcCustomPos || {}).forEach(function(id) {
+    if (posMap[id]) posMap[id] = window._pcCustomPos[id];
   });
 
-  // ── SVG作成 ──
+  // ── SVG ──
   var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox','0 0 '+W+' '+H);
   svg.style.cssText = 'display:block;width:100%;height:'+H+'px;background:var(--bg);user-select:none';
 
-  // 楕円の輪郭
   for (var d=1; d<=maxDepth; d++) {
     var el = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
     el.setAttribute('cx',CX); el.setAttribute('cy',CY);
@@ -1158,7 +1167,6 @@ function renderPCMap(mapType) {
     svg.appendChild(el);
   }
 
-  // 接続線
   var lineGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
   svg.appendChild(lineGroup);
   members.forEach(function(m){
@@ -1172,139 +1180,104 @@ function renderPCMap(mapType) {
     lineGroup.appendChild(ln);
   });
 
-  // ノード描画
   members.forEach(function(m){
     var pos = posMap[m.id];
     if (!pos) return;
     var col = colorMap[m.id] || COLORS[0];
     var isTrainee = m.trainee || (m.traineeHistory && m.traineeHistory.length > 0);
     var isFemale = m.gender === 'female';
+    var circleColor = isTrainee ? '#22d3ee' : col;
+    var circleFill  = isTrainee ? 'rgba(8,145,178,0.3)' : '#161920';
 
     var g = document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class', 'oval-node');
-    g.setAttribute('data-mid', m.id);
-    g.style.cursor = 'grab';
+    g.setAttribute('class','oval-node'); g.setAttribute('data-mid',m.id); g.style.cursor='grab';
 
-    // 外枠円 - 研修生は水色
-    var circleColor = isTrainee ? '#22d3ee' : col;
-    var circleFill = isTrainee ? 'rgba(8,145,178,0.25)' : '#161920';
     var circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    circle.setAttribute('cx', pos.x); circle.setAttribute('cy', pos.y);
-    circle.setAttribute('r', NODE_R);
-    circle.setAttribute('fill', circleFill);
-    circle.setAttribute('stroke', circleColor);
-    circle.setAttribute('stroke-width', isTrainee ? '2.5' : '1.5');
+    circle.setAttribute('cx',pos.x); circle.setAttribute('cy',pos.y); circle.setAttribute('r',NODE_R);
+    circle.setAttribute('fill',circleFill); circle.setAttribute('stroke',circleColor);
+    circle.setAttribute('stroke-width', isTrainee?'2.5':'1.5');
     g.appendChild(circle);
 
-    // タイトル
     var tEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-    tEl.setAttribute('x',pos.x); tEl.setAttribute('y', pos.y - NODE_R*0.35);
-    tEl.setAttribute('text-anchor','middle'); tEl.setAttribute('fill', circleColor);
-    tEl.setAttribute('font-size', Math.max(8, NODE_R*0.3)+'px');
-    tEl.setAttribute('font-family','IBM Plex Mono,monospace');
-    tEl.setAttribute('pointer-events','none');
-    tEl.textContent = m.title||'-';
+    tEl.setAttribute('x',pos.x); tEl.setAttribute('y',pos.y-NODE_R*0.35);
+    tEl.setAttribute('text-anchor','middle'); tEl.setAttribute('fill',circleColor);
+    tEl.setAttribute('font-size',Math.max(7,NODE_R*0.28)+'px'); tEl.setAttribute('font-family','IBM Plex Mono,monospace');
+    tEl.setAttribute('pointer-events','none'); tEl.textContent=m.title||'-';
     g.appendChild(tEl);
 
-    // 名前（女性はピンク）
-    var name = ((m.lastName||'')+(m.firstName||'')).substring(0,5);
     var nEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-    nEl.setAttribute('x',pos.x); nEl.setAttribute('y', pos.y + NODE_R*0.1);
-    nEl.setAttribute('text-anchor','middle');
-    nEl.setAttribute('fill', isFemale ? '#f9a8d4' : '#e8eaf0');
-    nEl.setAttribute('font-size', Math.max(9, NODE_R*0.34)+'px');
-    nEl.setAttribute('font-weight','700'); nEl.setAttribute('font-family','Noto Sans JP,sans-serif');
-    nEl.setAttribute('pointer-events','none');
-    nEl.textContent = name;
+    nEl.setAttribute('x',pos.x); nEl.setAttribute('y',pos.y+NODE_R*0.1);
+    nEl.setAttribute('text-anchor','middle'); nEl.setAttribute('fill',isFemale?'#f9a8d4':'#e8eaf0');
+    nEl.setAttribute('font-size',Math.max(8,NODE_R*0.32)+'px'); nEl.setAttribute('font-weight','700');
+    nEl.setAttribute('font-family','Noto Sans JP,sans-serif'); nEl.setAttribute('pointer-events','none');
+    nEl.textContent=((m.lastName||'')+(m.firstName||'')).substring(0,5);
     g.appendChild(nEl);
 
-    // ポイント
     var pEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-    pEl.setAttribute('x',pos.x); pEl.setAttribute('y', pos.y + NODE_R*0.5);
-    pEl.setAttribute('text-anchor','middle'); pEl.setAttribute('fill','#888');
-    pEl.setAttribute('font-size', Math.max(7, NODE_R*0.27)+'px');
-    pEl.setAttribute('font-family','Inter,monospace');
+    pEl.setAttribute('x',pos.x); pEl.setAttribute('y',pos.y+NODE_R*0.5);
+    pEl.setAttribute('text-anchor','middle'); pEl.setAttribute('fill','#666');
+    pEl.setAttribute('font-size',Math.max(6,NODE_R*0.25)+'px'); pEl.setAttribute('font-family','Inter,monospace');
     pEl.setAttribute('pointer-events','none');
-    pEl.textContent = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '-';
+    pEl.textContent=m.ptCurrent>0?m.ptCurrent.toLocaleString():'-';
     g.appendChild(pEl);
 
-    // やる気
     if (m.morale && m.morale > 0) {
-      var mEmojis = ['','🌱','💪','🔥'];
       var mEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-      mEl.setAttribute('x',pos.x); mEl.setAttribute('y', pos.y + NODE_R*0.82);
-      mEl.setAttribute('text-anchor','middle');
-      mEl.setAttribute('font-size', Math.max(8, NODE_R*0.3)+'px');
+      mEl.setAttribute('x',pos.x); mEl.setAttribute('y',pos.y+NODE_R*0.82);
+      mEl.setAttribute('text-anchor','middle'); mEl.setAttribute('font-size',Math.max(7,NODE_R*0.28)+'px');
       mEl.setAttribute('pointer-events','none');
-      mEl.textContent = mEmojis[Math.min(m.morale,3)]||'';
+      mEl.textContent=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
       g.appendChild(mEl);
     }
 
-    // 稼働
     if (m.activity) {
-      var aCol = m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#888';
       var aEl = document.createElementNS('http://www.w3.org/2000/svg','text');
-      aEl.setAttribute('x',pos.x); aEl.setAttribute('y', pos.y - NODE_R - 5);
-      aEl.setAttribute('text-anchor','middle'); aEl.setAttribute('fill',aCol);
-      aEl.setAttribute('font-size', Math.max(8, NODE_R*0.28)+'px');
-      aEl.setAttribute('font-family','IBM Plex Mono,monospace');
+      aEl.setAttribute('x',pos.x); aEl.setAttribute('y',pos.y-NODE_R-4);
+      aEl.setAttribute('text-anchor','middle');
+      aEl.setAttribute('fill',m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#888');
+      aEl.setAttribute('font-size',Math.max(7,NODE_R*0.26)+'px'); aEl.setAttribute('font-family','IBM Plex Mono,monospace');
       aEl.setAttribute('pointer-events','none');
-      aEl.textContent = m.activity + (m.actRate ? m.actRate+'%' : '');
+      aEl.textContent=m.activity+(m.actRate?m.actRate+'%':'');
       g.appendChild(aEl);
     }
 
-    // ドラッグ
-    (function(memberId, nodeG, nodePos) {
-      var dragging = false, moved = false;
-      var dragStartX, dragStartY, origX, origY;
-
-      function getXY(ev) {
-        if (ev.touches&&ev.touches[0]) return {x:ev.touches[0].clientX,y:ev.touches[0].clientY};
-        return {x:ev.clientX,y:ev.clientY};
-      }
-      function onMove(ev) {
-        if (!dragging) return;
-        ev.preventDefault();
-        var pt = getXY(ev);
-        var dx = pt.x-dragStartX, dy = pt.y-dragStartY;
-        if (!moved && Math.sqrt(dx*dx+dy*dy) < 5) return;
-        moved = true;
-        var newX = origX+dx, newY = origY+dy;
-        nodeG.setAttribute('transform','translate('+(newX-origX)+','+(newY-origY)+')');
-        var pl = document.getElementById('line-'+memberId);
-        if (pl){pl.setAttribute('x2',newX);pl.setAttribute('y2',newY);}
-        members.filter(function(k){return k.parentId===memberId;}).forEach(function(kid){
-          var cl=document.getElementById('line-'+kid.id);
-          if(cl){cl.setAttribute('x1',newX);cl.setAttribute('y1',newY);}
+    (function(mid, ng, np) {
+      var drag=false,moved=false,sx,sy,ox,oy;
+      function xy(ev){return ev.touches?{x:ev.touches[0].clientX,y:ev.touches[0].clientY}:{x:ev.clientX,y:ev.clientY};}
+      function mv(ev){
+        if(!drag)return; ev.preventDefault();
+        var p=xy(ev),dx=p.x-sx,dy=p.y-sy;
+        if(!moved&&Math.sqrt(dx*dx+dy*dy)<4)return;
+        moved=true;
+        var nx=ox+dx,ny=oy+dy;
+        ng.setAttribute('transform','translate('+(nx-ox)+','+(ny-oy)+')');
+        var pl=document.getElementById('line-'+mid);
+        if(pl){pl.setAttribute('x2',nx);pl.setAttribute('y2',ny);}
+        members.filter(function(k){return k.parentId===mid;}).forEach(function(k){
+          var cl=document.getElementById('line-'+k.id);
+          if(cl){cl.setAttribute('x1',nx);cl.setAttribute('y1',ny);}
         });
-        if(!window._pcCustomPos) window._pcCustomPos={};
-        window._pcCustomPos[memberId]={x:newX,y:newY};
+        if(!window._pcCustomPos)window._pcCustomPos={};
+        window._pcCustomPos[mid]={x:nx,y:ny};
       }
-      function onUp(ev) {
-        if (!dragging) return;
-        dragging = false;
-        nodeG.style.cursor = 'grab';
-        document.removeEventListener('mousemove',onMove);
-        document.removeEventListener('mouseup',onUp);
-        if (!moved) selectCard(memberId, ev);
+      function up(ev){
+        if(!drag)return; drag=false; ng.style.cursor='grab';
+        document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up);
+        if(!moved)selectCard(mid,ev);
       }
-      nodeG.addEventListener('mousedown',function(ev){
-        if (ev.button!==0) return;
-        dragging=true; moved=false;
-        var pt=getXY(ev);
-        dragStartX=pt.x; dragStartY=pt.y;
-        var cp=window._pcCustomPos&&window._pcCustomPos[memberId];
-        origX=cp?cp.x:nodePos.x; origY=cp?cp.y:nodePos.y;
-        document.addEventListener('mousemove',onMove);
-        document.addEventListener('mouseup',onUp);
+      ng.addEventListener('mousedown',function(ev){
+        if(ev.button!==0)return; drag=true; moved=false;
+        var p=xy(ev); sx=p.x; sy=p.y;
+        var cp=window._pcCustomPos&&window._pcCustomPos[mid];
+        ox=cp?cp.x:np.x; oy=cp?cp.y:np.y;
+        document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
         ev.preventDefault();
       });
-      nodeG.addEventListener('dblclick',function(){if(state.isEditor)openEdit(memberId);});
-    })(m.id, g, pos);
+      ng.addEventListener('dblclick',function(){if(state.isEditor)openEdit(mid);});
+    })(m.id,g,pos);
 
     svg.appendChild(g);
   });
-
   wrap.appendChild(svg);
 }
 
@@ -1520,7 +1493,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v107';
+  var DATA_VERSION = 'v108';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
