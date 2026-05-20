@@ -253,7 +253,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;border:2px solid var(--border)}
 .av.male{background:rgba(147,197,253,.1);color:var(--male);border-color:rgba(147,197,253,.3)}
 .av.female{background:rgba(249,168,212,.1);color:var(--female);border-color:rgba(249,168,212,.3)}
-.av.trainee-av{}
+.av.trainee-av{background:linear-gradient(135deg,#0891b2,#22d3ee) !important;border-color:#22d3ee !important;color:#fff !important}
 
 /* name */
 .nm{font-size:14px;font-weight:700;line-height:1.2}
@@ -772,8 +772,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div class="fr">
         <label class="fl">やる気レベル</label>
         <select class="fs" id="fMorale">
-          <option value="1">🌱 パヤパヤ</option>
-          <option value="2" selected>💪 やる気</option>
+          <option value="1" selected>🌱 パヤパヤ</option>
+          <option value="2">💪 やる気</option>
           <option value="3">🔥 死ぬ気</option>
         </select>
       </div>
@@ -1079,47 +1079,39 @@ function renderPCMap(mapType) {
     assignCol(kid, col);
   });
 
-  // ── 線のクロスを減らす配置アルゴリズム ──
-  // 親の角度を基準に子を扇状に配置
+  // ── 重なりを防ぐ配置：段ごとに全メンバーを均等配置 ──
   var posMap = {};
-  var angleMap = {}; // 各メンバーの角度
   posMap[root.id] = { x: CX, y: CY };
-  angleMap[root.id] = 0;
 
-  function placeChildren(parentId, parentAngle, arcSpan, depth) {
-    var kids = members.filter(function(m){ return m.parentId === parentId; });
-    if (kids.length === 0) return;
+  // 深さごとに全メンバーを均等に配置（親の角度を考慮して並び替え）
+  Object.keys(depthMap).sort(function(a,b){return a-b;}).forEach(function(d) {
+    var depth = parseInt(d);
+    if (depth === 0) return;
+    var group = depthMap[d];
     var rx = RX_STEP * depth;
     var ry = RY_STEP * depth;
-    var startAngle = parentAngle - arcSpan/2;
-    kids.forEach(function(kid, i) {
-      var angle = kids.length === 1 ? parentAngle : startAngle + arcSpan * i / (kids.length - 1);
-      posMap[kid.id] = {
+
+    // 親の角度で並び替えてクロスを減らす
+    group.sort(function(a, b) {
+      var pa = posMap[a.parentId];
+      var pb = posMap[b.parentId];
+      var aa = pa ? Math.atan2(pa.y - CY, pa.x - CX) : 0;
+      var ab = pb ? Math.atan2(pb.y - CY, pb.x - CX) : 0;
+      return aa - ab;
+    });
+
+    // 均等に配置（最小間隔を確保）
+    var minNodeSpacing = NODE_R * 2.5; // ノード直径 × 余裕
+    var circum = 2 * Math.PI * Math.sqrt((rx*rx + ry*ry) / 2);
+    var spacing = circum / group.length;
+    
+    group.forEach(function(m, idx) {
+      var angle = -Math.PI/2 + (2 * Math.PI * idx / group.length);
+      posMap[m.id] = {
         x: CX + rx * Math.cos(angle),
         y: CY + ry * Math.sin(angle)
       };
-      angleMap[kid.id] = angle;
-      // 子の扇形範囲は親より狭く
-      var childArc = arcSpan / Math.max(kids.length, 1.5);
-      placeChildren(kid.id, angle, childArc, depth + 1);
     });
-  }
-
-  // ルートの直下は全円に均等配置
-  var rootKids = members.filter(function(m){ return m.parentId === root.id; });
-  rootKids.forEach(function(kid, i) {
-    var angle = rootKids.length > 1
-      ? -Math.PI/2 + (2 * Math.PI * i / rootKids.length)
-      : -Math.PI/2;
-    posMap[kid.id] = {
-      x: CX + RX_STEP * Math.cos(angle),
-      y: CY + RY_STEP * Math.sin(angle)
-    };
-    angleMap[kid.id] = angle;
-    var arcSpan = rootKids.length > 1
-      ? (2 * Math.PI / rootKids.length) * 0.85
-      : Math.PI;
-    placeChildren(kid.id, angle, arcSpan, 2);
   });
 
   // カスタム位置（ドラッグで移動した場合）
@@ -1185,7 +1177,7 @@ function renderPCMap(mapType) {
     var name = ((m.lastName||'')+(m.firstName||'')).substring(0,5);
     var nEl = document.createElementNS('http://www.w3.org/2000/svg','text');
     nEl.setAttribute('x',pos.x); nEl.setAttribute('y', pos.y + NODE_R*0.1);
-    nEl.setAttribute('text-anchor','middle'); nEl.setAttribute('fill','#e8eaf0');
+    nEl.setAttribute('text-anchor','middle'); nEl.setAttribute('fill', m.gender==='female' ? '#f9a8d4' : '#e8eaf0');
     nEl.setAttribute('font-size', Math.max(9, NODE_R*0.34)+'px');
     nEl.setAttribute('font-weight','700'); nEl.setAttribute('font-family','Noto Sans JP,sans-serif');
     nEl.setAttribute('pointer-events','none');
@@ -1513,7 +1505,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v105';
+  var DATA_VERSION = 'v106';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2401,6 +2393,37 @@ function addGoldTask() {
   autoSave();
 }
 
+
+function updateFreshTags(freshIdx) {
+  // フレッシュリストのタグ色を再描画せずに更新
+  var item = document.getElementById('fi' + freshIdx);
+  if (!item) return;
+  var FRESH_ACTIONS = ['リスト','基準値','F-DATA','ハウディ'];
+  var fd = state.freshData && state.freshData['fresh_'+freshIdx] ? state.freshData['fresh_'+freshIdx] : {};
+  var tags = item.querySelectorAll('.fresh-tag');
+  Array.prototype.slice.call(tags).forEach(function(tag) {
+    var actionName = tag.getAttribute('data-action');
+    if (!actionName) return;
+    var akey = 'act_' + actionName;
+    var afd = fd[akey] || {};
+    tag.style.textDecoration = '';
+    if (afd.done) {
+      tag.style.background = 'var(--surface3)';
+      tag.style.color = 'var(--text-dim)';
+      tag.style.textDecoration = 'line-through';
+      tag.style.border = '1px solid transparent';
+    } else if (afd.date) {
+      tag.style.background = 'rgba(0,212,170,0.15)';
+      tag.style.color = 'var(--accent)';
+      tag.style.border = '1px solid var(--accent)';
+    } else {
+      tag.style.background = 'rgba(251,191,36,0.15)';
+      tag.style.color = '#f59e0b';
+      tag.style.border = '1px solid rgba(251,191,36,0.4)';
+    }
+  });
+}
+
 function addFreshMember() {
   if (!state.stats.freshList) state.stats.freshList = [];
   state.stats.freshList.push({ name: '' });
@@ -2740,6 +2763,8 @@ function renderStats() {
         var afd = fd[akey] || {};
         var tag = document.createElement('div');
         tag.style.cssText = 'font-size:10px;padding:2px 7px;border-radius:10px;font-family:Inter,monospace;cursor:pointer;flex-shrink:0';
+        tag.setAttribute('data-action', actionName);
+        tag.className = 'fresh-tag';
         tag.textContent = actionName;
         if (afd.done) {
           tag.style.cssText += ';background:var(--surface3);color:var(--text-dim);text-decoration:line-through';
@@ -2805,7 +2830,7 @@ function renderStats() {
             st.style.color = this.checked ? 'var(--text-dim)' : 'var(--text)';
             st.style.textDecoration = this.checked ? 'line-through' : '';
             autoSave();
-            renderStats(); // タグ即時再描画
+            updateFreshTags(ii); // タグ色のみ更新
             // バッジ更新
             var df = state.freshData['fresh_'+ii];
             var dc = FRESH_ACTIONS.filter(function(a){ var k='act_'+a; return df[k]&&df[k].done; }).length;
@@ -2840,8 +2865,8 @@ function renderStats() {
           if (!state.freshData['fresh_'+ii][ak]) state.freshData['fresh_'+ii][ak] = {};
           state.freshData['fresh_'+ii][ak].date=this.value;
           autoSave();
-          // タグを即時再描画
-          renderStats();
+          // タグ色のみ更新（renderStats不要＝パネルが閉じない）
+          updateFreshTags(ii);
         }; })(i, akey);
 
         var inAsan = document.createElement('input');
@@ -3476,7 +3501,7 @@ function clearForm() {
     if (el) el.value='';
   });
   document.getElementById('fAct').value='';
-  document.getElementById('fMorale').value='2';
+  document.getElementById('fMorale').value='1';
   fCategory='';
   ['研修生','BA','BR'].forEach(function(k){
     var el=document.getElementById('rbCat'+(k==='研修生'?'Trainee':k));
@@ -4722,6 +4747,7 @@ function fsLoadFromFirestore(uid) {
     if (loaded.stats) {
       state.stats      = loaded.stats.stats      || getDefaultStats();
       state.commission = loaded.stats.commission || getDefaultCommission();
+      state.freshData  = loaded.stats.freshData  || {};
     } else {
       state.stats      = getDefaultStats();
       state.commission = getDefaultCommission();
@@ -4763,6 +4789,7 @@ function fsSaveToFirestore(uid) {
   var p3 = fsSet('maps/' + uid + '/stats/' + month, {
     stats: state.stats,
     commission: state.commission,
+    freshData: state.freshData || {},
     updatedAt: new Date().toISOString()
   });
   return p1.then(function(){ return p2; }).then(function(){ return p3; });
