@@ -7,7 +7,8 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
 :root{
-  --bg:#0d0f14; --surface:#161920; --surface2:#1e222d; --surface3:#252a38;
+  --bg:#0d0f14;
+  --placeholder:#3a3f4a; --surface:#161920; --surface2:#1e222d; --surface3:#252a38;
   --border:#2a2f3e; --border2:#3a4055;
   --text:#e8eaf0; --text-dim:#6b7280; --text-mid:#9ca3af;
   --accent:#00d4aa; --accent-dim:rgba(0,212,170,0.12);
@@ -140,6 +141,14 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   letter-spacing: 1px;
   text-transform: uppercase;
 }
+
+
+input::placeholder, textarea::placeholder {
+  color: var(--placeholder, #3a3f4a) !important;
+  opacity: 1;
+}
+input::-webkit-input-placeholder { color: var(--placeholder, #3a3f4a) !important; }
+input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 /* ── SCROLL AREA ── */
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
@@ -811,7 +820,7 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px">
             <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px">履歴を追加</div>
             <div style="display:flex;gap:6px;margin-bottom:8px">
-              <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:13px;padding:6px 8px">
+              <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:16px;padding:6px 8px" onchange="this.blur()">
               <input class="fi" id="fHistoryASan" type="text" style="flex:1;font-size:13px;padding:6px 8px" placeholder="Aさん">
             </div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
@@ -1504,7 +1513,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v104';
+  var DATA_VERSION = 'v105';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1790,7 +1799,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
     + expandArrow
     + '</div>'
-    + '<div class="av ' + g + (m.trainee ? ' trainee-av' : '') + ' av-title" style="' + avStyle + '">' + (m.title||'&#x2013;') + '</div>'
+    + '<div class="av ' + g + ((m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + avStyle + '">' + (m.title||'&#x2013;') + '</div>'
     + '<div style="flex:1;min-width:0;overflow:hidden">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px">' + parentChip + actHTML + '</div>'
     + '<div class="nm ' + g + '">' + (m.lastName||'') + ' ' + (m.firstName||'') + '</div>'
@@ -2182,6 +2191,7 @@ function renderTraineeHistory(m) {
   for (var j=0; j<state.members.length; j++) {
     if (state.members[j].id === editingId) { member = state.members[j]; break; }
   }
+  if (!member && !editingId && window._tempNewMember) member = window._tempNewMember;
   if (!member && m) member = m;
   wrap.innerHTML = '';
   var hist = member ? (member.traineeHistory || []) : [];
@@ -2250,7 +2260,13 @@ function selStepResult(val) {
 
 function addTraineeHistory(status) {
   var m = null;
+  // 編集中のメンバーを探す
   for (var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m=state.members[j];break;}}
+  // 新規追加中（editingId=null）の場合は一時メンバーオブジェクトを使用
+  if (!m && !editingId) {
+    if (!window._tempNewMember) window._tempNewMember = { id:'__new__', traineeHistory:[], traineeStatus:'' };
+    m = window._tempNewMember;
+  }
   if (!m) return;
   if (!m.traineeHistory) m.traineeHistory = [];
 
@@ -2377,6 +2393,13 @@ function renderDiffTree(diffs, mA, mB) {
 }
 
 // ── STATS ──
+
+function addGoldTask() {
+  if (!state.stats.goldList) state.stats.goldList = [];
+  state.stats.goldList.push({name:'', tasks:[]});
+  renderStats();
+  autoSave();
+}
 
 function addFreshMember() {
   if (!state.stats.freshList) state.stats.freshList = [];
@@ -2811,7 +2834,8 @@ function renderStats() {
         inDate.className = 'fresh-fi'; inDate.placeholder = '日付';
         inDate.type = 'date';
         inDate.value = ad.date || ''; inDate.style.marginBottom = '0';
-        inDate.oninput = (function(ii, ak){ return function(){
+        inDate.onchange = (function(ii, ak){ return function(){
+          this.blur();
           if (!state.freshData['fresh_'+ii]) state.freshData['fresh_'+ii] = {};
           if (!state.freshData['fresh_'+ii][ak]) state.freshData['fresh_'+ii][ak] = {};
           state.freshData['fresh_'+ii][ak].date=this.value;
@@ -2958,7 +2982,7 @@ function renderStats() {
   // ── 研修生ファネル ──
   var funnelWrap = document.getElementById('funnelWrap');
   if (funnelWrap) {
-    var trainees = state.members.filter(function(m){ return !!m.trainee; });
+    var trainees = state.members.filter(function(m){ return !!m.trainee || (m.traineeHistory && m.traineeHistory.length > 0) || !!m.traineeResult; });
     var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
     var RESULTS = [
       {key:'BC',     label:'BC（成約）',  color:'#00d4aa'},
@@ -3024,7 +3048,7 @@ function renderStats() {
   // ── Aさん別決定率 ──
   var asanWrap = document.getElementById('asanFunnelWrap');
   if (asanWrap) {
-    var trainees = state.members.filter(function(m){ return !!m.trainee; });
+    var trainees = state.members.filter(function(m){ return !!m.trainee || (m.traineeHistory && m.traineeHistory.length > 0) || !!m.traineeResult; });
     // 履歴からAさんを全て集める
     var asanMap = {};
     trainees.forEach(function(m) {
@@ -3328,6 +3352,7 @@ function saveCurrent() {
 // ── MODAL ──
 function openAdd() {
   if (!state.isEditor) return;
+  window._tempNewMember = null; // 一時データリセット
   editingId = null; fGender='male'; fTrainee=false;
   fMapType = currentView==='stats' ? 'current' : currentView;
   document.getElementById('shTitle').textContent = 'メンバー追加';
@@ -3570,7 +3595,14 @@ function saveMember() {
     aSan: (document.getElementById('fASan')||{}).value||'',
     instaUrl: (document.getElementById('fInsta')||{}).value||'',
     traineeStatus: (function(){ var m2=null; for(var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}} return m2 ? getLatestStatus(m2) : ''; })(),
-    traineeHistory: (function(){ var m2=null; for(var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}} return m2 ? (m2.traineeHistory||[]) : []; })(),
+    traineeHistory: (function(){
+      if (editingId) {
+        var m2=null; for(var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}}
+        return m2 ? (m2.traineeHistory||[]) : [];
+      }
+      // 新規追加時は一時データから取得
+      return (window._tempNewMember && window._tempNewMember.traineeHistory) ? window._tempNewMember.traineeHistory : [];
+    })(),
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
     month: state.currentMonth,
   };
