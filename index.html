@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v109</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v110</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1080,8 +1080,8 @@ function renderPCMap(mapType) {
   });
 
   // ノードサイズ・間隔
-  var NODE_R = 32;
-  var MIN_GAP = NODE_R * 2.6; // ノード間最低間隔
+  var NODE_R = 28;
+  var MIN_GAP = NODE_R * 2.2; // ノード間最低間隔
 
   // 楕円サイズ: 各段のノード数 × 最低間隔 から逆算
   var depthCnt = {};
@@ -1096,7 +1096,7 @@ function renderPCMap(mapType) {
   // 外周の楕円サイズ（最も混む段のノードが重ならないよう）
   var minRX = (maxCnt * MIN_GAP) / (2 * Math.PI);
   var RX_unit = Math.max(minRX / Math.max(maxD,1), MIN_GAP * 2);
-  var RY_unit = RX_unit * 0.55; // 横長楕円
+  var RY_unit = RX_unit * 0.6; // 横長楕円
 
   var SVG_W = RX_unit * maxD * 2 + NODE_R * 4 + 200;
   var SVG_H = RY_unit * maxD * 2 + NODE_R * 4 + 200;
@@ -1143,9 +1143,69 @@ function renderPCMap(mapType) {
   var viewW = Math.max(window.innerWidth - 20, 600);
   var viewH = Math.max(window.innerHeight - 160, 500);
 
+  // ズームコントロール
+  var zoom = 1.0;
+  var zoomMin = 0.3, zoomMax = 2.0;
+
+  var outerWrap = document.createElement('div');
+  outerWrap.style.cssText = 'width:100%;position:relative;background:var(--bg)';
+
+  // ズームボタン
+  var zoomBar = document.createElement('div');
+  zoomBar.style.cssText = 'position:absolute;top:8px;right:12px;z-index:10;display:flex;gap:6px;align-items:center';
+  var zoomOut = document.createElement('div');
+  zoomOut.textContent = '−';
+  zoomOut.style.cssText = 'width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text);user-select:none';
+  var zoomFit = document.createElement('div');
+  zoomFit.textContent = '⊡';
+  zoomFit.title = '全体表示';
+  zoomFit.style.cssText = zoomOut.style.cssText;
+  var zoomIn = document.createElement('div');
+  zoomIn.textContent = '＋';
+  zoomIn.style.cssText = zoomOut.style.cssText;
+  var zoomLabel = document.createElement('div');
+  zoomLabel.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;min-width:36px;text-align:center';
+  zoomLabel.textContent = '100%';
+  zoomBar.appendChild(zoomOut); zoomBar.appendChild(zoomFit); zoomBar.appendChild(zoomIn); zoomBar.appendChild(zoomLabel);
+  outerWrap.appendChild(zoomBar);
+
   var outer = document.createElement('div');
-  outer.style.cssText = 'width:100%;height:'+viewH+'px;overflow:auto;background:var(--bg);cursor:grab;position:relative';
-  wrap.appendChild(outer);
+  outer.style.cssText = 'width:100%;height:'+viewH+'px;overflow:auto;cursor:grab;position:relative';
+  outerWrap.appendChild(outer);
+  wrap.appendChild(outerWrap);
+
+  // ズーム適用
+  function applyZoom(newZoom) {
+    zoom = Math.max(zoomMin, Math.min(zoomMax, newZoom));
+    svg.style.transform = 'scale('+zoom+')';
+    svg.style.transformOrigin = '0 0';
+    svg.style.width = SVG_W + 'px';
+    svg.style.height = SVG_H + 'px';
+    outer.style.width = '100%';
+    outer.style.height = viewH + 'px';
+    // スクロール範囲をズームに合わせる
+    var scrollW = SVG_W * zoom;
+    var scrollH = SVG_H * zoom;
+    svg.parentElement && (svg.parentElement.scrollWidth);
+    zoomLabel.textContent = Math.round(zoom*100) + '%';
+  }
+
+  zoomIn.onclick = function(){ applyZoom(zoom + 0.1); };
+  zoomOut.onclick = function(){ applyZoom(zoom - 0.1); };
+  zoomFit.onclick = function(){
+    // 全体が見えるズームレベルを計算
+    var fitZoom = Math.min(viewW / SVG_W, viewH / SVG_H) * 0.95;
+    applyZoom(fitZoom);
+    outer.scrollLeft = 0; outer.scrollTop = 0;
+  };
+
+  // マウスホイールでズーム
+  outer.addEventListener('wheel', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      applyZoom(zoom - e.deltaY * 0.001);
+    }
+  }, { passive: false });
 
   // ドラッグスクロール
   (function(){
@@ -1170,11 +1230,12 @@ function renderPCMap(mapType) {
   svg.style.cssText = 'display:block;background:var(--bg);user-select:none';
   outer.appendChild(svg);
 
-  // 初期スクロール位置を中央に
+  // 初期は全体が見えるようにフィット
   setTimeout(function(){
-    outer.scrollLeft = (SVG_W - viewW)/2;
-    outer.scrollTop  = (SVG_H - viewH)/2;
-  },50);
+    var fitZoom = Math.min(viewW / SVG_W, viewH / SVG_H) * 0.92;
+    applyZoom(fitZoom);
+    outer.scrollLeft = 0; outer.scrollTop = 0;
+  }, 80);
 
   // 楕円輪郭
   for(var d=1;d<=maxD;d++){
@@ -1485,7 +1546,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v109';
+  var DATA_VERSION = 'v110';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
