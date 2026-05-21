@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v117</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v118</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1601,7 +1601,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v117';
+  var DATA_VERSION = 'v118';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1735,17 +1735,26 @@ function renderCurrentView() {
 
 // ── TREE ──
 function membersForMap(mapType) {
+  var result;
   if (mapType === 'ideal') {
-    // 理想MAPは専用配列から（なければstate.membersのboth/idealでフォールバック）
     if (state.idealMembers && state.idealMembers.length > 0) {
-      return state.idealMembers;
+      result = state.idealMembers;
+    } else {
+      result = state.members.filter(function(m) {
+        return m.mapType === 'ideal' || m.mapType === 'both';
+      });
     }
-    return state.members.filter(function(m) {
-      return m.mapType === 'ideal' || m.mapType === 'both';
+  } else {
+    result = state.members.filter(function(m) {
+      return (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
     });
   }
-  return state.members.filter(function(m) {
-    return (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
+  // IDで重複排除
+  var seen = {};
+  return result.filter(function(m) {
+    if (seen[m.id]) return false;
+    seen[m.id] = true;
+    return true;
   });
 }
 function childrenOf(parentId, members) {
