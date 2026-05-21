@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v115</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v116</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -992,9 +992,15 @@ function copyToNextMonth() {
   var msg = '(' + cur + ') -> ' + nextMonth + ' にコピーしますか？既存データは上書きされます。';
   if (!confirm(msg)) return;
 
-  // メンバーをディープコピー（研修結果がBC・ユーザー・流れたの人は除外するか確認）
+  // メンバーをディープコピー
   var copyMembers = JSON.parse(JSON.stringify(state.members));
   var copyIdeal   = JSON.parse(JSON.stringify(state.idealMembers || []));
+  // 研修結果が確定済みの研修生は trainee=false にして翌月の決定率にカウントさせない
+  copyMembers.forEach(function(m) {
+    if (m.traineeResult) {
+      m.trainee = false;
+    }
+  });
 
   // 翌月に切り替え
   state.currentMonth = nextMonth;
@@ -1005,14 +1011,24 @@ function copyToNextMonth() {
   state.idealMembers = copyIdeal;
   state.commission   = JSON.parse(JSON.stringify(state.commission || {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}}));
 
-  // statsは翌月用に新規（月次推移は引き継がない）
-  // ただしfreshList/goldList/outlineは引き継ぐ
-  var oldStats = state.stats;
-  state.stats = getDefaultStats();
-  state.stats.freshList = JSON.parse(JSON.stringify(oldStats.freshList || []));
-  state.stats.goldList  = JSON.parse(JSON.stringify(oldStats.goldList  || []));
-  state.stats.outline   = JSON.parse(JSON.stringify(oldStats.outline   || []));
-  state.freshData       = JSON.parse(JSON.stringify(state.freshData    || {}));
+  // stats引き継ぎ: 月次推移は1列シフト（過去データを保持）
+  var oldStats = JSON.parse(JSON.stringify(state.stats || getDefaultStats()));
+  state.stats = oldStats;
+  // monthly: 各行のvalsを左にシフトして最新列を空にする（過去データ保持）
+  (state.stats.monthly || []).forEach(function(row) {
+    if (!row.vals) row.vals = [];
+    while (row.vals.length < 12) row.vals.unshift('');
+    row.vals.shift();
+    row.vals.push('');
+  });
+  // powerline: 同様にシフト
+  (state.stats.powerline || []).forEach(function(row) {
+    if (!row.vals) row.vals = [];
+    while (row.vals.length < 12) row.vals.unshift('');
+    row.vals.shift();
+    row.vals.push('');
+  });
+  state.freshData = JSON.parse(JSON.stringify(state.freshData || {}));
 
   // 保存
   buildMonthSelector();
@@ -1585,7 +1601,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v115';
+  var DATA_VERSION = 'v116';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2054,7 +2070,12 @@ function editField(id, field, e) {
 }
 
 function updateLTSV(mapType, members) {
-  var ltsv = members.reduce(function(s,m){return s+(m.ptCurrent||0);},0);
+  var BR_PLUS = ['BR','ゴールド','G','ラピス','L','ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
+  var ltsv = members.reduce(function(s,m){
+    var t = (m.title||'').trim();
+    if (BR_PLUS.indexOf(t) >= 0) return s + (m.ptCurrent||0);
+    return s;
+  },0);
   if (mapType === 'current') {
     document.getElementById('ltsvC').textContent = ltsv.toLocaleString();
     document.getElementById('actCount').textContent = members.filter(function(m){return m.activity;}).length;
@@ -3087,7 +3108,8 @@ function renderStats() {
   // ── 研修生ファネル ──
   var funnelWrap = document.getElementById('funnelWrap');
   if (funnelWrap) {
-    var trainees = state.members.filter(function(m){ return !!m.trainee || (m.traineeHistory && m.traineeHistory.length > 0) || !!m.traineeResult; });
+    // 当月の研修生のみ: trainee=true または（結果あり＆まだtraineeフラグが立っている）
+    var trainees = state.members.filter(function(m){ return !!m.trainee || (!!m.traineeResult && m.trainee !== false); });
     var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
     var RESULTS = [
       {key:'BC',     label:'BC（成約）',  color:'#00d4aa'},
@@ -3153,7 +3175,8 @@ function renderStats() {
   // ── Aさん別決定率 ──
   var asanWrap = document.getElementById('asanFunnelWrap');
   if (asanWrap) {
-    var trainees = state.members.filter(function(m){ return !!m.trainee || (m.traineeHistory && m.traineeHistory.length > 0) || !!m.traineeResult; });
+    // 当月の研修生のみ
+    var trainees = state.members.filter(function(m){ return !!m.trainee || (!!m.traineeResult && m.trainee !== false); });
     // 履歴からAさんを全て集める
     var asanMap = {};
     trainees.forEach(function(m) {
