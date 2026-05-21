@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v111</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v112</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1110,41 +1110,54 @@ function renderPCMap(mapType) {
   var posMap = {};
   posMap[root.id] = { x: CX, y: CY };
 
+  // 角度配分: 小サブツリーだけ最小角度に引き上げ、不足分は大サブツリーから比例で借りる
+  function allocAngles(chList, span, depth) {
+    var totalSz = chList.reduce(function(s,k){ return s+(sz[k.id]||1); },0);
+    var minA = MIN_GAP / Math.max(RY_unit * depth, 1);
+    var result = [];
+    var stolen = 0, stealableTotal = 0;
+    chList.forEach(function(kid) {
+      var kidSz = sz[kid.id]||1;
+      var prop = span * (kidSz / Math.max(totalSz,1));
+      var needBoost = prop < minA;
+      result.push({ kid: kid, prop: prop, final: needBoost ? minA : prop });
+      if (needBoost) { stolen += (minA - prop); } else { stealableTotal += prop; }
+    });
+    if (stolen > 0 && stealableTotal > 0) {
+      result.forEach(function(a) {
+        if (a.prop >= minA) {
+          a.final = a.prop - stolen * (a.prop / stealableTotal);
+          if (a.final < minA) a.final = minA;
+        }
+      });
+    }
+    return result;
+  }
+
   function place(nodeId, af, at, depth) {
     var ch = kids(nodeId);
     if (!ch.length) return;
-    var totalSz = ch.reduce(function(s,k){ return s+(sz[k.id]||1); },0);
-    var span = at - af;
-    var minA = MIN_GAP / Math.max(RY_unit * depth, 1);
-    var totalMin = ch.length * minA;
-    var extra = Math.max(span - totalMin, 0);
+    var alloc = allocAngles(ch, at - af, depth);
     var cursor = af;
-    ch.forEach(function(kid) {
-      var kidSz = sz[kid.id]||1;
-      var kidSpan = (totalMin <= span) ? (minA + extra * (kidSz / totalSz)) : (span / ch.length);
-      var angle = cursor + kidSpan/2;
-      posMap[kid.id] = {
-        x: CX + RX_unit*depth*Math.cos(angle),
-        y: CY + RY_unit*depth*Math.sin(angle)
+    alloc.forEach(function(a) {
+      var angle = cursor + a.final / 2;
+      posMap[a.kid.id] = {
+        x: CX + RX_unit * depth * Math.cos(angle),
+        y: CY + RY_unit * depth * Math.sin(angle)
       };
-      place(kid.id, cursor, cursor+kidSpan, depth+1);
-      cursor += kidSpan;
+      place(a.kid.id, cursor, cursor + a.final, depth + 1);
+      cursor += a.final;
     });
   }
 
   var rootKids = kids(root.id);
-  var totalRootSz = rootKids.reduce(function(s,k){ return s+(sz[k.id]||1); },0);
-  var minA = rootKids.length > 0 ? MIN_GAP / Math.max(RY_unit, 1) : 0;
-  var totalMin = rootKids.length * minA;
-  var extraAngle = Math.max(2 * Math.PI - totalMin, 0);
-  var cursor = -Math.PI/2;
-  rootKids.forEach(function(kid) {
-    var kidSz = sz[kid.id]||1;
-    var kidSpan = minA + extraAngle * (kidSz / Math.max(totalRootSz, 1));
-    var angle = cursor + kidSpan / 2;
-    posMap[kid.id] = { x: CX + RX_unit * Math.cos(angle), y: CY + RY_unit * Math.sin(angle) };
-    place(kid.id, cursor, cursor + kidSpan, 2);
-    cursor += kidSpan;
+  var rootAlloc = allocAngles(rootKids, 2 * Math.PI, 1);
+  var cursor = -Math.PI / 2;
+  rootAlloc.forEach(function(a) {
+    var angle = cursor + a.final / 2;
+    posMap[a.kid.id] = { x: CX + RX_unit * Math.cos(angle), y: CY + RY_unit * Math.sin(angle) };
+    place(a.kid.id, cursor, cursor + a.final, 2);
+    cursor += a.final;
   });
 
   // カスタム位置
@@ -1557,7 +1570,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v111';
+  var DATA_VERSION = 'v112';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
