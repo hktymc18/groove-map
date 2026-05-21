@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v112</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v113</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1071,25 +1071,42 @@ function renderPCMap(mapType) {
     ac(kid, col);
   });
 
-  // 深さ
+  // 深さ（各ノードの深さをマップに保存）
   var maxD = 0;
+  var nodeDepth = {};
   members.forEach(function(m) {
     var d=0, cur=m;
     while(cur&&cur.parentId){ var p=members.filter(function(x){return x.id===cur.parentId;})[0]; if(!p)break; d++;cur=p; }
+    nodeDepth[m.id] = d;
     if(d>maxD) maxD=d;
   });
 
   // ノードサイズ・間隔
   var NODE_R = 28;
-  var MIN_GAP = NODE_R * 2.2; // ノード間最低間隔
+  var MIN_GAP = NODE_R * 2.2;
+
+  // 幅スコア: 各ノードのサブツリーで「段ごとのノード数/段数」の最大値
+  var ws = {};
+  members.forEach(function(m) {
+    var dw = {};
+    (function walk(nid) {
+      var d = nodeDepth[nid];
+      dw[d] = (dw[d] || 0) + 1;
+      kids(nid).forEach(function(k) { walk(k.id); });
+    })(m.id);
+    var maxR = 0.5;
+    Object.keys(dw).forEach(function(dk) {
+      var depth = parseInt(dk);
+      if (depth < 1) return;
+      var r = dw[dk] / depth;
+      if (r > maxR) maxR = r;
+    });
+    ws[m.id] = maxR;
+  });
 
   // 各段のノード数を集計
   var depthCnt = {};
-  members.forEach(function(m){
-    var d=0,cur=m;
-    while(cur&&cur.parentId){var p=members.filter(function(x){return x.id===cur.parentId;})[0];if(!p)break;d++;cur=p;}
-    depthCnt[d]=(depthCnt[d]||0)+1;
-  });
+  members.forEach(function(m){ depthCnt[nodeDepth[m.id]] = (depthCnt[nodeDepth[m.id]]||0)+1; });
 
   // 各段ごとに楕円最狭部で重ならないRX_unitを逆算
   var minRXNeeded = MIN_GAP * 2;
@@ -1110,15 +1127,15 @@ function renderPCMap(mapType) {
   var posMap = {};
   posMap[root.id] = { x: CX, y: CY };
 
-  // 角度配分: 小サブツリーだけ最小角度に引き上げ、不足分は大サブツリーから比例で借りる
+  // 角度配分: 幅スコア(ws)ベースで比例配分 + 最小角度保証
   function allocAngles(chList, span, depth) {
-    var totalSz = chList.reduce(function(s,k){ return s+(sz[k.id]||1); },0);
+    var totalWS = chList.reduce(function(s,k){ return s+(ws[k.id]||1); },0);
     var minA = MIN_GAP / Math.max(RY_unit * depth, 1);
     var result = [];
     var stolen = 0, stealableTotal = 0;
     chList.forEach(function(kid) {
-      var kidSz = sz[kid.id]||1;
-      var prop = span * (kidSz / Math.max(totalSz,1));
+      var kidWS = ws[kid.id]||1;
+      var prop = span * (kidWS / Math.max(totalWS,1));
       var needBoost = prop < minA;
       result.push({ kid: kid, prop: prop, final: needBoost ? minA : prop });
       if (needBoost) { stolen += (minA - prop); } else { stealableTotal += prop; }
@@ -1162,6 +1179,21 @@ function renderPCMap(mapType) {
 
   // カスタム位置
   Object.keys(window._pcCustomPos||{}).forEach(function(id){ if(posMap[id]) posMap[id]=window._pcCustomPos[id]; });
+
+  // 接続線パス生成（ベジェ曲線: 親の放射方向に沿わせてクロス防止）
+  function makeLinkD(px, py, cx, cy) {
+    var dx = px - CX, dy = py - CY;
+    var parentR = Math.sqrt(dx * dx + dy * dy);
+    if (parentR < NODE_R * 2) {
+      return 'M' + px + ',' + py + ' L' + cx + ',' + cy;
+    }
+    var cdx = cx - CX, cdy = cy - CY;
+    var childR = Math.sqrt(cdx * cdx + cdy * cdy);
+    var scale = childR / parentR;
+    var qx = CX + dx * scale;
+    var qy = CY + dy * scale;
+    return 'M' + px + ',' + py + ' Q' + qx + ',' + qy + ' ' + cx + ',' + cy;
+  }
 
   // ── コンテナ（スクロール対応） ──
   var viewW = Math.max(window.innerWidth - 20, 600);
@@ -1270,17 +1302,21 @@ function renderPCMap(mapType) {
     svg.appendChild(el);
   }
 
-  // 接続線
+  // 接続線（ベジェ曲線）
   var lg=document.createElementNS('http://www.w3.org/2000/svg','g');
   svg.appendChild(lg);
   members.forEach(function(m){
     if(!m.parentId||!posMap[m.id]||!posMap[m.parentId]) return;
-    var ln=document.createElementNS('http://www.w3.org/2000/svg','line');
-    ln.setAttribute('x1',posMap[m.parentId].x); ln.setAttribute('y1',posMap[m.parentId].y);
-    ln.setAttribute('x2',posMap[m.id].x);       ln.setAttribute('y2',posMap[m.id].y);
-    ln.setAttribute('stroke',cmap[m.id]||'#444'); ln.setAttribute('stroke-width','1'); ln.setAttribute('stroke-opacity','0.3');
-    ln.setAttribute('id','line-'+m.id);
-    lg.appendChild(ln);
+    var px=posMap[m.parentId].x, py=posMap[m.parentId].y;
+    var cx=posMap[m.id].x, cy=posMap[m.id].y;
+    var pt=document.createElementNS('http://www.w3.org/2000/svg','path');
+    pt.setAttribute('d',makeLinkD(px,py,cx,cy));
+    pt.setAttribute('fill','none');
+    pt.setAttribute('stroke',cmap[m.id]||'#444'); pt.setAttribute('stroke-width','1'); pt.setAttribute('stroke-opacity','0.3');
+    pt.setAttribute('id','line-'+m.id);
+    pt.setAttribute('data-px',px); pt.setAttribute('data-py',py);
+    pt.setAttribute('data-cx',cx); pt.setAttribute('data-cy',cy);
+    lg.appendChild(pt);
   });
 
   // ノード
@@ -1329,10 +1365,18 @@ function renderPCMap(mapType) {
         var nx=ox+dx,ny=oy+dy;
         ng.setAttribute('transform','translate('+(nx-ox)+','+(ny-oy)+')');
         var pl=document.getElementById('line-'+mid);
-        if(pl){pl.setAttribute('x2',nx);pl.setAttribute('y2',ny);}
+        if(pl){
+          var ppx=parseFloat(pl.getAttribute('data-px')),ppy=parseFloat(pl.getAttribute('data-py'));
+          pl.setAttribute('d',makeLinkD(ppx,ppy,nx,ny));
+          pl.setAttribute('data-cx',nx);pl.setAttribute('data-cy',ny);
+        }
         members.filter(function(k){return k.parentId===mid;}).forEach(function(k){
           var cl=document.getElementById('line-'+k.id);
-          if(cl){cl.setAttribute('x1',nx);cl.setAttribute('y1',ny);}
+          if(cl){
+            var ccx=parseFloat(cl.getAttribute('data-cx')),ccy=parseFloat(cl.getAttribute('data-cy'));
+            cl.setAttribute('d',makeLinkD(nx,ny,ccx,ccy));
+            cl.setAttribute('data-px',nx);cl.setAttribute('data-py',ny);
+          }
         });
         if(!window._pcCustomPos)window._pcCustomPos={};
         window._pcCustomPos[mid]={x:nx,y:ny};
@@ -1570,7 +1614,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v112';
+  var DATA_VERSION = 'v113';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
