@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v116</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v117</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1601,7 +1601,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v116';
+  var DATA_VERSION = 'v117';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2070,10 +2070,9 @@ function editField(id, field, e) {
 }
 
 function updateLTSV(mapType, members) {
-  var BR_PLUS = ['BR','ゴールド','G','ラピス','L','ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
   var ltsv = members.reduce(function(s,m){
     var t = (m.title||'').trim();
-    if (BR_PLUS.indexOf(t) >= 0) return s + (m.ptCurrent||0);
+    if (LTSV_BR_PLUS.indexOf(t) >= 0) return s + (m.ptCurrent||0);
     return s;
   },0);
   if (mapType === 'current') {
@@ -3816,24 +3815,21 @@ function saveFreshData(i, field, value) {
 
 
 // ── LTSV詳細 ──
+var LTSV_BR_PLUS = ['BR','ゴールド','G','ラピス','L','ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
 function calcLtsv(memberId, allMembers) {
   var total = 0;
-  function walk(id) {
-    for (var i=0; i<allMembers.length; i++) {
-      var m = allMembers[i];
-      if (m.id === id) total += (m.ptCurrent||0);
-      if (m.parentId === id) walk(m.id);
+  // 本人（BR以上のはず）
+  for (var i=0; i<allMembers.length; i++) {
+    if (allMembers[i].id === memberId) {
+      if (LTSV_BR_PLUS.indexOf((allMembers[i].title||'').trim()) >= 0) total += (allMembers[i].ptCurrent||0);
+      break;
     }
   }
-  // 本人含む
-  for (var i=0; i<allMembers.length; i++) {
-    if (allMembers[i].id === memberId) { total += (allMembers[i].ptCurrent||0); break; }
-  }
-  // 配下
+  // 配下のBR以上のみ合算
   function walkDown(pid) {
     for (var j=0; j<allMembers.length; j++) {
       if (allMembers[j].parentId === pid) {
-        total += (allMembers[j].ptCurrent||0);
+        if (LTSV_BR_PLUS.indexOf((allMembers[j].title||'').trim()) >= 0) total += (allMembers[j].ptCurrent||0);
         walkDown(allMembers[j].id);
       }
     }
@@ -3844,7 +3840,6 @@ function calcLtsv(memberId, allMembers) {
 
 function showLtsvDetail() {
   var members = membersForMap('current');
-  var BR_PLUS = ['BR','ゴールド','G','ラピス','L','ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
 
   var list = members
     .filter(function(m) {
@@ -3852,7 +3847,7 @@ function showLtsvDetail() {
       if (!m.parentId || m.parentId === '') return false;
       // BR以上のみ
       var t = (m.title||'').trim();
-      return BR_PLUS.indexOf(t) >= 0;
+      return LTSV_BR_PLUS.indexOf(t) >= 0;
     })
     .map(function(m) {
       return { m: m, ltsv: calcLtsv(m.id, members) };
