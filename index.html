@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v113</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v114</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1085,40 +1085,28 @@ function renderPCMap(mapType) {
   var NODE_R = 28;
   var MIN_GAP = NODE_R * 2.2;
 
-  // 幅スコア: 各ノードのサブツリーで「段ごとのノード数/段数」の最大値
-  var ws = {};
-  members.forEach(function(m) {
-    var dw = {};
-    (function walk(nid) {
-      var d = nodeDepth[nid];
-      dw[d] = (dw[d] || 0) + 1;
-      kids(nid).forEach(function(k) { walk(k.id); });
-    })(m.id);
-    var maxR = 0.5;
-    Object.keys(dw).forEach(function(dk) {
-      var depth = parseInt(dk);
-      if (depth < 1) return;
-      var r = dw[dk] / depth;
-      if (r > maxR) maxR = r;
+  // 再帰的角度係数(ra): 各サブツリーが全段で重ならないために必要な角度を
+  // MIN_GAP/RY_unit 単位で再帰算出。子が多い段ほど大きな値になる
+  var ra = {};
+  function calcRA(nodeId) {
+    var ch = kids(nodeId);
+    if (!ch.length) { ra[nodeId] = 0; return 0; }
+    var total = 0;
+    ch.forEach(function(k) {
+      calcRA(k.id);
+      var cd = nodeDepth[k.id] || 1;
+      total += Math.max(1.0 / cd, ra[k.id]);
     });
-    ws[m.id] = maxR;
-  });
+    ra[nodeId] = total;
+    return total;
+  }
+  calcRA(root.id);
 
-  // 各段のノード数を集計
-  var depthCnt = {};
-  members.forEach(function(m){ depthCnt[nodeDepth[m.id]] = (depthCnt[nodeDepth[m.id]]||0)+1; });
-
-  // 各段ごとに楕円最狭部で重ならないRX_unitを逆算
-  var minRXNeeded = MIN_GAP * 2;
-  Object.keys(depthCnt).forEach(function(d) {
-    var depth = parseInt(d);
-    if (depth === 0) return;
-    var cnt = depthCnt[d];
-    var needed = (cnt * MIN_GAP) / (2 * Math.PI * depth * 0.6);
-    if (needed > minRXNeeded) minRXNeeded = needed;
-  });
-  var RX_unit = minRXNeeded;
-  var RY_unit = RX_unit * 0.6;
+  // RX_unit: ra(root)からフィッティング
+  var raRoot = Math.max(ra[root.id], 1);
+  var RY_unit = raRoot * MIN_GAP / (2 * Math.PI);
+  var RX_unit = Math.max(RY_unit / 0.6, MIN_GAP * 2);
+  RY_unit = RX_unit * 0.6;
 
   var SVG_W = RX_unit * maxD * 2 + NODE_R * 4 + 200;
   var SVG_H = RY_unit * maxD * 2 + NODE_R * 4 + 200;
@@ -1127,34 +1115,27 @@ function renderPCMap(mapType) {
   var posMap = {};
   posMap[root.id] = { x: CX, y: CY };
 
-  // 角度配分: 幅スコア(ws)ベースで比例配分 + 最小角度保証
-  function allocAngles(chList, span, depth) {
-    var totalWS = chList.reduce(function(s,k){ return s+(ws[k.id]||1); },0);
-    var minA = MIN_GAP / Math.max(RY_unit * depth, 1);
-    var result = [];
-    var stolen = 0, stealableTotal = 0;
+  // 角度配分: ra係数で比例配分（全段でMIN_GAP保証）
+  function allocAngles(chList, span) {
+    var total = 0;
+    var entries = [];
     chList.forEach(function(kid) {
-      var kidWS = ws[kid.id]||1;
-      var prop = span * (kidWS / Math.max(totalWS,1));
-      var needBoost = prop < minA;
-      result.push({ kid: kid, prop: prop, final: needBoost ? minA : prop });
-      if (needBoost) { stolen += (minA - prop); } else { stealableTotal += prop; }
+      var cd = nodeDepth[kid.id] || 1;
+      var coeff = Math.max(1.0 / cd, ra[kid.id] || 0);
+      entries.push({ kid: kid, coeff: coeff });
+      total += coeff;
     });
-    if (stolen > 0 && stealableTotal > 0) {
-      result.forEach(function(a) {
-        if (a.prop >= minA) {
-          a.final = a.prop - stolen * (a.prop / stealableTotal);
-          if (a.final < minA) a.final = minA;
-        }
-      });
-    }
+    var result = [];
+    entries.forEach(function(e) {
+      result.push({ kid: e.kid, final: span * e.coeff / Math.max(total, 0.001) });
+    });
     return result;
   }
 
   function place(nodeId, af, at, depth) {
     var ch = kids(nodeId);
     if (!ch.length) return;
-    var alloc = allocAngles(ch, at - af, depth);
+    var alloc = allocAngles(ch, at - af);
     var cursor = af;
     alloc.forEach(function(a) {
       var angle = cursor + a.final / 2;
@@ -1168,7 +1149,7 @@ function renderPCMap(mapType) {
   }
 
   var rootKids = kids(root.id);
-  var rootAlloc = allocAngles(rootKids, 2 * Math.PI, 1);
+  var rootAlloc = allocAngles(rootKids, 2 * Math.PI);
   var cursor = -Math.PI / 2;
   rootAlloc.forEach(function(a) {
     var angle = cursor + a.final / 2;
@@ -1614,7 +1595,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v113';
+  var DATA_VERSION = 'v114';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
