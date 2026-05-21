@@ -508,7 +508,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v114</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v115</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1161,19 +1161,9 @@ function renderPCMap(mapType) {
   // カスタム位置
   Object.keys(window._pcCustomPos||{}).forEach(function(id){ if(posMap[id]) posMap[id]=window._pcCustomPos[id]; });
 
-  // 接続線パス生成（ベジェ曲線: 親の放射方向に沿わせてクロス防止）
+  // 接続線パス生成（直線）
   function makeLinkD(px, py, cx, cy) {
-    var dx = px - CX, dy = py - CY;
-    var parentR = Math.sqrt(dx * dx + dy * dy);
-    if (parentR < NODE_R * 2) {
-      return 'M' + px + ',' + py + ' L' + cx + ',' + cy;
-    }
-    var cdx = cx - CX, cdy = cy - CY;
-    var childR = Math.sqrt(cdx * cdx + cdy * cdy);
-    var scale = childR / parentR;
-    var qx = CX + dx * scale;
-    var qy = CY + dy * scale;
-    return 'M' + px + ',' + py + ' Q' + qx + ',' + qy + ' ' + cx + ',' + cy;
+    return 'M' + px + ',' + py + ' L' + cx + ',' + cy;
   }
 
   // ── コンテナ（スクロール対応） ──
@@ -1595,7 +1585,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v114';
+  var DATA_VERSION = 'v115';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
