@@ -510,7 +510,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v120</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v122</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1605,7 +1605,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v120';
+  var DATA_VERSION = 'v122';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3514,7 +3514,12 @@ function openAdd() {
     pl.textContent = "📍 "+pname+" の直下に追加";
     pl.style.display = '';
   } else {
-    pl.textContent = '📍 トップ直下に追加（カードを選択してから＋を押すとその人の直下に追加）';
+    var existRoots = state.members.filter(function(x){ return !x.parentId; });
+    if (existRoots.length >= 1) {
+      alert('0段目（自分）は既に登録済みです。カードを選択してからその直下に追加してください。');
+      return;
+    }
+    pl.textContent = '📍 トップ（0段目）に追加';
     pl.style.display = '';
   }
   document.getElementById('modal').classList.add('open');
@@ -3749,6 +3754,14 @@ function saveMember() {
     month: state.currentMonth,
   };
   if (!m.lastName && !m.firstName) { alert('名前を入力してください'); return; }
+  // 0段目（トップ）は1人だけ
+  if (!editingId && !m.parentId) {
+    var existRoots = state.members.filter(function(x){ return !x.parentId; });
+    if (existRoots.length >= 1) {
+      alert('0段目（自分）は1人だけです。カードを選択してからその直下に追加してください。');
+      return;
+    }
+  }
   if (editingId) {
     var idx = -1; for(var fi=0;fi<state.members.length;fi++){if(state.members[fi].id===editingId){idx=fi;break;}}
     state.members[idx] = m;
@@ -3799,40 +3812,6 @@ function normalizeStats(s) {
   return s;
 }
 // 同名+同タイトルの重複メンバーを除去（ツリーに繋がっている方を残す）
-function deduplicateMembers(members) {
-  var nameMap = {};
-  var parentIds = {};
-  members.forEach(function(m) { parentIds[m.id] = false; });
-  members.forEach(function(m) { if (m.parentId && parentIds[m.parentId] !== undefined) parentIds[m.parentId] = true; });
-  var removeIds = {};
-  members.forEach(function(m) {
-    var key = (m.lastName||'') + (m.firstName||'') + '|' + (m.title||'');
-    if (!nameMap[key]) { nameMap[key] = m; return; }
-    var existing = nameMap[key];
-    // 子がいる方を残す。両方いるなら先の方を残す
-    var existHasKids = !!parentIds[existing.id];
-    var newHasKids = !!parentIds[m.id];
-    if (newHasKids && !existHasKids) {
-      removeIds[existing.id] = true;
-      nameMap[key] = m;
-    } else {
-      removeIds[m.id] = true;
-    }
-  });
-  if (Object.keys(removeIds).length > 0) {
-    console.log('dedup removed:', Object.keys(removeIds));
-    // 削除されるメンバーを親にしている子のparentIdを残す方に付け替え
-    var idToKey = {};
-    members.forEach(function(m) { idToKey[m.id] = (m.lastName||'')+(m.firstName||'')+'|'+(m.title||''); });
-    members.forEach(function(m) {
-      if (m.parentId && removeIds[m.parentId]) {
-        var key = idToKey[m.parentId];
-        if (nameMap[key]) m.parentId = nameMap[key].id;
-      }
-    });
-  }
-  return members.filter(function(m) { return !removeIds[m.id]; });
-}
 function seedDefaultData() {
   // デモデータなし - Firestoreから読み込む
   state.members = [];
@@ -4879,14 +4858,14 @@ function fsLoadFromFirestore(uid) {
 
     // 現状MAPメンバー
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
-      state.members = deduplicateMembers(loaded.current.members);
+      state.members = loaded.current.members;
     } else {
       state.members = [];
     }
 
     // 理想MAPメンバー
     if (loaded.ideal && loaded.ideal.members && loaded.ideal.members.length > 0) {
-      state.idealMembers = deduplicateMembers(loaded.ideal.members);
+      state.idealMembers = loaded.ideal.members;
     } else {
       state.idealMembers = [];
     }
