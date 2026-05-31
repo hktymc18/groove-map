@@ -510,7 +510,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
     </div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v122</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v123</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1503,7 +1503,20 @@ function ctxDelete() {
   if (!m) return;
   var name = (m.lastName||'') + (m.firstName||'');
   if (!confirm(name + ' を削除しますか？')) return;
-  state.members = state.members.filter(function(x){ return x.id !== tid; });
+  var delParent = '';
+  for (var di=0; di<state.members.length; di++) {
+    if (state.members[di].id === tid) {
+      state.members[di].deleted = true;
+      delParent = state.members[di].parentId || '';
+      break;
+    }
+  }
+  // 子を親に付け替え
+  for (var ci=0; ci<state.members.length; ci++) {
+    if (state.members[ci].parentId === tid) {
+      state.members[ci].parentId = delParent;
+    }
+  }
   renderCurrentView();
   autoSave();
 }
@@ -1605,7 +1618,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v122';
+  var DATA_VERSION = 'v123';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1742,15 +1755,15 @@ function membersForMap(mapType) {
   var result;
   if (mapType === 'ideal') {
     if (state.idealMembers && state.idealMembers.length > 0) {
-      result = state.idealMembers;
+      result = state.idealMembers.filter(function(m) { return !m.deleted; });
     } else {
       result = state.members.filter(function(m) {
-        return m.mapType === 'ideal' || m.mapType === 'both';
+        return !m.deleted && (m.mapType === 'ideal' || m.mapType === 'both');
       });
     }
   } else {
     result = state.members.filter(function(m) {
-      return (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
+      return !m.deleted && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
     });
   }
   // IDで重複排除
@@ -3514,7 +3527,7 @@ function openAdd() {
     pl.textContent = "📍 "+pname+" の直下に追加";
     pl.style.display = '';
   } else {
-    var existRoots = state.members.filter(function(x){ return !x.parentId; });
+    var existRoots = state.members.filter(function(x){ return !x.parentId && !x.deleted; });
     if (existRoots.length >= 1) {
       alert('0段目（自分）は既に登録済みです。カードを選択してからその直下に追加してください。');
       return;
@@ -3756,7 +3769,7 @@ function saveMember() {
   if (!m.lastName && !m.firstName) { alert('名前を入力してください'); return; }
   // 0段目（トップ）は1人だけ
   if (!editingId && !m.parentId) {
-    var existRoots = state.members.filter(function(x){ return !x.parentId; });
+    var existRoots = state.members.filter(function(x){ return !x.parentId && !x.deleted; });
     if (existRoots.length >= 1) {
       alert('0段目（自分）は1人だけです。カードを選択してからその直下に追加してください。');
       return;
@@ -3774,7 +3787,20 @@ function saveMember() {
 }
 function deleteMember() {
   if (!editingId || !confirm('削除しますか？')) return;
-  state.members = state.members.filter(function(m){return m.id!==editingId;});
+  var delParent = '';
+  for (var di=0; di<state.members.length; di++) {
+    if (state.members[di].id === editingId) {
+      state.members[di].deleted = true;
+      delParent = state.members[di].parentId || '';
+      break;
+    }
+  }
+  // 子を親に付け替え
+  for (var ci=0; ci<state.members.length; ci++) {
+    if (state.members[ci].parentId === editingId) {
+      state.members[ci].parentId = delParent;
+    }
+  }
   closeModal();
   renderCurrentView();
   autoSave();
