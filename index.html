@@ -101,10 +101,10 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 .pc-view-toggle{display:none}
 
 /* ── PC テーブルビュー ── */
-.pc-table-wrap{display:none;width:100%;overflow-x:auto;padding:0 14px 80px}
+.pc-table-wrap{display:none;width:100%;padding:0 0 80px}
 @media(min-width:768px){.pc-table-wrap.show{display:block}}
 .org-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:auto}
-.org-table thead{position:sticky;top:88px;z-index:5}
+.org-table thead{position:sticky;top:86px;z-index:5}
 .org-table th{background:var(--surface2);padding:8px 10px;color:var(--text-dim);font-weight:500;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;cursor:pointer;white-space:nowrap;user-select:none}
 .org-table th:hover{color:var(--accent)}
 .org-table th .sort-arrow{font-size:10px;margin-left:4px;opacity:0.5}
@@ -141,7 +141,9 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 .org-table .inline-select option{background:var(--bg)}
 .org-table .inline-textarea{background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:3px 6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;width:200px;min-height:50px;outline:none;resize:vertical}
 /* テーブルフィルター */
-.tbl-filter-bar{display:flex;gap:6px;padding:8px 14px;flex-wrap:wrap;align-items:center;position:sticky;top:46px;z-index:19;background:var(--bg);border-bottom:1px solid var(--border)}
+.pc-filter-bar{display:none}
+@media(min-width:768px){.pc-filter-bar.show{display:block;position:sticky;top:46px;z-index:19;background:var(--bg);border-bottom:1px solid var(--border)}}
+.tbl-filter-bar{display:flex;gap:6px;padding:8px 14px;flex-wrap:wrap;align-items:center}
 .tbl-filter-chip{padding:3px 10px;border-radius:12px;font-size:11px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'IBM Plex Mono',monospace;transition:all .15s}
 .tbl-filter-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 
@@ -716,7 +718,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v140</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v141</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -807,6 +809,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       </div>
     </div>
     <div class="sec-label mobile-tree">組織ツリー</div>
+    <div class="pc-filter-bar" id="pcFilterCurrent"></div>
     <div class="pc-map-wrap" id="pcMapCurrent"></div>
     <div class="pc-table-wrap" id="pcTableCurrent"></div>
     <div class="mobile-tree tree" id="treeCurrent"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
@@ -829,6 +832,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">テーブル</div>
     </div>
     <div class="sec-label mobile-tree">目標ツリー</div>
+    <div class="pc-filter-bar" id="pcFilterIdeal"></div>
     <div class="pc-map-wrap" id="pcMapIdeal"></div>
     <div class="pc-table-wrap" id="pcTableIdeal"></div>
     <div class="mobile-tree tree" id="treeIdeal"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
@@ -1935,7 +1939,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v140';
+  var DATA_VERSION = 'v141';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2084,10 +2088,14 @@ function switchPCView(view) {
   var treeI = document.getElementById('pcMapIdeal');
   var tblC = document.getElementById('pcTableCurrent');
   var tblI = document.getElementById('pcTableIdeal');
+  var fltC = document.getElementById('pcFilterCurrent');
+  var fltI = document.getElementById('pcFilterIdeal');
   if (treeC) treeC.style.display = view === 'tree' ? '' : 'none';
   if (treeI) treeI.style.display = view === 'tree' ? '' : 'none';
   if (tblC) tblC.classList.toggle('show', view === 'table');
   if (tblI) tblI.classList.toggle('show', view === 'table');
+  if (fltC) fltC.classList.toggle('show', view === 'table');
+  if (fltI) fltI.classList.toggle('show', view === 'table');
   if (view === 'table') {
     if (currentView === 'current') renderPCTable('current');
     else if (currentView === 'ideal') renderPCTable('ideal');
@@ -2101,9 +2109,12 @@ var _tblFilterAct = '';
 
 function renderPCTable(mapType) {
   var containerId = mapType === 'current' ? 'pcTableCurrent' : 'pcTableIdeal';
+  var filterId = mapType === 'current' ? 'pcFilterCurrent' : 'pcFilterIdeal';
   var wrap = document.getElementById(containerId);
+  var filterWrap = document.getElementById(filterId);
   if (!wrap) return;
   wrap.innerHTML = '';
+  if (filterWrap) filterWrap.innerHTML = '';
 
   var members = membersForMap(mapType);
   if (!members || members.length === 0) {
@@ -2214,7 +2225,8 @@ function renderPCTable(mapType) {
     filterBar.appendChild(chip);
   });
 
-  wrap.appendChild(filterBar);
+  if (filterWrap) filterWrap.appendChild(filterBar);
+  else wrap.appendChild(filterBar);
 
   // テーブル
   var table = document.createElement('table');
