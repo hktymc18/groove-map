@@ -648,6 +648,34 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .sd-viewing-back{font-size:12px;color:var(--accent);cursor:pointer;padding:4px 10px;border:1px solid var(--accent);border-radius:8px;white-space:nowrap}
 .sd-viewing-list{font-size:12px;color:var(--accent);cursor:pointer;padding:4px 10px;border:1px solid var(--accent);border-radius:8px;white-space:nowrap;background:var(--accent-dim)}
 
+/* ── ミニマップ ── */
+.minimap{position:absolute;bottom:12px;right:12px;z-index:15;width:180px;height:120px;background:rgba(13,15,20,.9);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;display:none}
+@media(min-width:768px){.minimap{display:block}}
+.minimap canvas{width:100%;height:100%;display:block}
+.minimap-viewport{position:absolute;border:1.5px solid var(--accent);border-radius:2px;pointer-events:none}
+
+/* ── カンバンビュー ── */
+.pc-kanban-wrap{display:none;width:100%;padding:0 14px 80px}
+@media(min-width:768px){.pc-kanban-wrap.show{display:block}}
+.kanban-board{display:flex;gap:10px;overflow-x:auto;padding:8px 0 16px;align-items:flex-start}
+.kanban-board::-webkit-scrollbar{height:6px}
+.kanban-board::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.kanban-col{min-width:160px;max-width:200px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.kanban-col-hdr{padding:8px 10px;font-size:11px;font-weight:600;font-family:Inter,sans-serif;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.kanban-col-count{font-size:12px;font-weight:700;font-family:Inter,sans-serif;color:var(--text);background:var(--surface3);border-radius:10px;padding:1px 8px}
+.kanban-col-body{padding:6px;min-height:60px;max-height:60vh;overflow-y:auto}
+.kanban-col-body::-webkit-scrollbar{display:none}
+.kanban-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all .12s}
+.kanban-card:hover{border-color:var(--accent);background:var(--surface3)}
+.kanban-card:last-child{margin-bottom:0}
+.kanban-card-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.kanban-card-name.male{color:var(--male)}
+.kanban-card-name.female{color:var(--female)}
+.kanban-card-sub{font-size:10px;color:var(--text-dim);font-family:Inter,sans-serif}
+.kanban-card-asan{font-size:10px;color:var(--purple);margin-top:2px}
+.kanban-result-col{border-top:2px solid var(--border)}
+.kanban-result-col .kanban-col-hdr{border-bottom:none}
+
 /* カード内クイックアクション */
 .card-quick-add{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);color:var(--accent);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s;z-index:5;line-height:1}
 .nc:hover .card-quick-add{opacity:1}
@@ -718,7 +746,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v141</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v142</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -796,6 +824,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div class="pt-sep"></div>
       <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')">ツリー</div>
       <div class="pv-btn" id="pvTable" onclick="switchPCView('table')">テーブル</div>
+      <div class="pv-btn" id="pvKanban" onclick="switchPCView('kanban')">カンバン</div>
       <div class="pt-sep"></div>
       <div class="pt-search" onclick="openSearchModal()">
         <span style="font-size:13px">🔍</span>
@@ -812,6 +841,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <div class="pc-filter-bar" id="pcFilterCurrent"></div>
     <div class="pc-map-wrap" id="pcMapCurrent"></div>
     <div class="pc-table-wrap" id="pcTableCurrent"></div>
+    <div class="pc-kanban-wrap" id="pcKanbanCurrent"></div>
     <div class="mobile-tree tree" id="treeCurrent"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
   </div>
 
@@ -1559,10 +1589,16 @@ function renderPCMap(mapType) {
   svg.style.cssText = 'display:block;background:var(--bg);user-select:none';
   outer.appendChild(svg);
 
+  // ミニマップ
+  var _minimap = renderMinimap(outerWrap, outer, svg, SVG_W, SVG_H, viewW, viewH, 0.6, posMap, members, cmap);
+
+  // ズーム変更時にミニマップ更新
+  var _origApplyZoom = applyZoom;
+  applyZoom = function(z) { _origApplyZoom(z); outer._currentZoom = zoom; if (_minimap) _minimap.draw(); };
+
   // 初期表示: 60%ズーム、0段目(ルート)を中央に
   setTimeout(function(){
     applyZoom(0.6);
-    // ルートノードを画面中央にスクロール
     var rootPos = posMap[root.id];
     if (rootPos) {
       var scrollX = rootPos.x * 0.6 - viewW / 2;
@@ -1939,7 +1975,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v141';
+  var DATA_VERSION = 'v142';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2072,16 +2108,18 @@ function renderCurrentView() {
 }
 
 // ── PC ビュー切替 ──
-var _pcView = 'tree'; // 'tree' | 'table'
+var _pcView = 'tree'; // 'tree' | 'table' | 'kanban'
 function switchPCView(view) {
   _pcView = view;
   // ボタン状態
-  var ids = ['pvTree','pvTable','pvTreeI','pvTableI'];
+  var ids = ['pvTree','pvTable','pvKanban','pvTreeI','pvTableI'];
   ids.forEach(function(id) {
     var el = document.getElementById(id);
     if (!el) return;
-    var isTree = id.indexOf('Tree') >= 0;
-    el.classList.toggle('active', (isTree && view === 'tree') || (!isTree && view === 'table'));
+    var match = (id.indexOf('Tree') >= 0 && view === 'tree')
+      || (id.indexOf('Table') >= 0 && view === 'table')
+      || (id.indexOf('Kanban') >= 0 && view === 'kanban');
+    el.classList.toggle('active', match);
   });
   // 表示切替
   var treeC = document.getElementById('pcMapCurrent');
@@ -2090,16 +2128,19 @@ function switchPCView(view) {
   var tblI = document.getElementById('pcTableIdeal');
   var fltC = document.getElementById('pcFilterCurrent');
   var fltI = document.getElementById('pcFilterIdeal');
+  var kbnC = document.getElementById('pcKanbanCurrent');
   if (treeC) treeC.style.display = view === 'tree' ? '' : 'none';
   if (treeI) treeI.style.display = view === 'tree' ? '' : 'none';
   if (tblC) tblC.classList.toggle('show', view === 'table');
   if (tblI) tblI.classList.toggle('show', view === 'table');
   if (fltC) fltC.classList.toggle('show', view === 'table');
   if (fltI) fltI.classList.toggle('show', view === 'table');
+  if (kbnC) kbnC.classList.toggle('show', view === 'kanban');
   if (view === 'table') {
     if (currentView === 'current') renderPCTable('current');
     else if (currentView === 'ideal') renderPCTable('ideal');
   }
+  if (view === 'kanban') renderKanban();
 }
 
 // ── PC テーブルビュー ──
@@ -2600,6 +2641,260 @@ function inlineMemo(td, member, mapType) {
   }
   ta.onblur = finish;
   ta.onkeydown = function(e) { if (e.key === 'Escape') { member.memo = ta.value.trim(); renderPCTable(mapType); } };
+}
+
+// ── ミニマップ ──
+function renderMinimap(outerWrap, outer, svg, SVG_W, SVG_H, viewW, viewH, zoom, posMap, members, cmap) {
+  var mm = document.createElement('div');
+  mm.className = 'minimap';
+  var canvas = document.createElement('canvas');
+  canvas.width = 180; canvas.height = 120;
+  mm.appendChild(canvas);
+  var vp = document.createElement('div');
+  vp.className = 'minimap-viewport';
+  mm.appendChild(vp);
+  outerWrap.appendChild(mm);
+
+  function draw() {
+    var ctx = canvas.getContext('2d');
+    var scaleX = 180 / SVG_W;
+    var scaleY = 120 / SVG_H;
+    var sc = Math.min(scaleX, scaleY);
+    ctx.clearRect(0, 0, 180, 120);
+
+    // ノードを描画
+    members.forEach(function(m) {
+      var pos = posMap[m.id];
+      if (!pos) return;
+      var col = cmap[m.id] || '#444';
+      ctx.fillStyle = col;
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(pos.x * sc - 1.5, pos.y * sc - 1, 3, 2);
+    });
+    ctx.globalAlpha = 1;
+
+    // 接続線
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 0.5;
+    members.forEach(function(m) {
+      if (!m.parentId || !posMap[m.id] || !posMap[m.parentId]) return;
+      ctx.beginPath();
+      ctx.moveTo(posMap[m.parentId].x * sc, posMap[m.parentId].y * sc);
+      ctx.lineTo(posMap[m.id].x * sc, posMap[m.id].y * sc);
+      ctx.stroke();
+    });
+
+    // ビューポート矩形
+    var z = parseFloat(outer._currentZoom) || 0.6;
+    var vpW = (viewW / z) * sc;
+    var vpH = (viewH / z) * sc;
+    var vpX = (outer.scrollLeft / z) * sc;
+    var vpY = (outer.scrollTop / z) * sc;
+    vp.style.left = Math.max(0, vpX) + 'px';
+    vp.style.top = Math.max(0, vpY) + 'px';
+    vp.style.width = Math.min(vpW, 180) + 'px';
+    vp.style.height = Math.min(vpH, 120) + 'px';
+  }
+
+  draw();
+  outer._currentZoom = zoom;
+  outer.addEventListener('scroll', function() { draw(); });
+
+  // ミニマップクリックでスクロール
+  mm.addEventListener('click', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+    var sc = Math.min(180 / SVG_W, 120 / SVG_H);
+    var z = parseFloat(outer._currentZoom) || 0.6;
+    outer.scrollLeft = (mx / sc - viewW / z / 2) * z;
+    outer.scrollTop = (my / sc - viewH / z / 2) * z;
+  });
+
+  return { draw: draw };
+}
+
+// ── カンバンビュー ──
+function renderKanban() {
+  var wrap = document.getElementById('pcKanbanCurrent');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  var members = membersForMap('current');
+  // 研修経験者を抽出
+  var trainees = members.filter(function(m) {
+    return !!m.trainee || !!m.traineeResult || (m.traineeHistory && m.traineeHistory.length > 0);
+  });
+
+  if (trainees.length === 0) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">研修生がいません</div>';
+    return;
+  }
+
+  // Aさんでグルーピング切替
+  var groupBy = window._kanbanGroup || 'step'; // 'step' | 'asan'
+  var toggleBar = document.createElement('div');
+  toggleBar.style.cssText = 'display:flex;gap:6px;padding:8px 0;align-items:center';
+  var lbl = document.createElement('span');
+  lbl.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:Inter,sans-serif';
+  lbl.textContent = '表示:';
+  toggleBar.appendChild(lbl);
+  ['step','asan'].forEach(function(g) {
+    var btn = document.createElement('div');
+    btn.className = 'tbl-filter-chip' + (groupBy === g ? ' active' : '');
+    btn.textContent = g === 'step' ? 'ステップ別' : 'Aさん別';
+    btn.onclick = function() { window._kanbanGroup = g; renderKanban(); };
+    toggleBar.appendChild(btn);
+  });
+  // 人数
+  var cntEl = document.createElement('span');
+  cntEl.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:Inter,sans-serif;margin-left:auto';
+  cntEl.textContent = '研修生 ' + trainees.length + '人';
+  toggleBar.appendChild(cntEl);
+  wrap.appendChild(toggleBar);
+
+  var board = document.createElement('div');
+  board.className = 'kanban-board';
+
+  if (groupBy === 'step') {
+    renderKanbanByStep(board, trainees);
+  } else {
+    renderKanbanByAsan(board, trainees);
+  }
+
+  wrap.appendChild(board);
+}
+
+function renderKanbanByStep(board, trainees) {
+  var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
+  var RESULTS = [
+    { key: 'BC', label: 'BC（成約）', color: 'var(--accent)' },
+    { key: 'ユーザー', label: 'ユーザー', color: 'var(--gold)' },
+    { key: '流れた', label: '流れた', color: 'var(--red)' }
+  ];
+
+  // 各ステップに属するメンバーを分類（最新ステップで分類）
+  var stepMap = {};
+  STEPS.forEach(function(s) { stepMap[s] = []; });
+  var resultMap = { 'BC': [], 'ユーザー': [], '流れた': [] };
+  var inProgress = [];
+
+  trainees.forEach(function(m) {
+    if (m.traineeResult) {
+      if (resultMap[m.traineeResult]) resultMap[m.traineeResult].push(m);
+      return;
+    }
+    var latest = getLatestStatus(m);
+    if (latest && stepMap[latest]) {
+      stepMap[latest].push(m);
+    } else {
+      inProgress.push(m);
+    }
+  });
+
+  // 進行中（ステップなし）
+  if (inProgress.length > 0) {
+    board.appendChild(buildKanbanCol('未着手', inProgress, 'var(--text-dim)'));
+  }
+
+  // ステップ列
+  STEPS.forEach(function(s) {
+    board.appendChild(buildKanbanCol(s, stepMap[s], 'var(--accent)'));
+  });
+
+  // 結果列
+  RESULTS.forEach(function(r) {
+    var col = buildKanbanCol(r.label, resultMap[r.key], r.color);
+    col.classList.add('kanban-result-col');
+    board.appendChild(col);
+  });
+}
+
+function renderKanbanByAsan(board, trainees) {
+  var asanMap = {};
+  var noAsan = [];
+  trainees.forEach(function(m) {
+    var hist = m.traineeHistory || [];
+    var asan = '';
+    for (var i = hist.length - 1; i >= 0; i--) {
+      if (hist[i].aSan) { asan = hist[i].aSan; break; }
+    }
+    if (asan) {
+      if (!asanMap[asan]) asanMap[asan] = [];
+      asanMap[asan].push(m);
+    } else {
+      noAsan.push(m);
+    }
+  });
+
+  var keys = Object.keys(asanMap).sort();
+  keys.forEach(function(k) {
+    board.appendChild(buildKanbanCol(k, asanMap[k], 'var(--purple)'));
+  });
+  if (noAsan.length > 0) {
+    board.appendChild(buildKanbanCol('Aさん未設定', noAsan, 'var(--text-dim)'));
+  }
+}
+
+function buildKanbanCol(title, members, color) {
+  var col = document.createElement('div');
+  col.className = 'kanban-col';
+
+  var hdr = document.createElement('div');
+  hdr.className = 'kanban-col-hdr';
+  hdr.style.color = color;
+  var t = document.createElement('span');
+  t.textContent = title;
+  hdr.appendChild(t);
+  var cnt = document.createElement('span');
+  cnt.className = 'kanban-col-count';
+  cnt.textContent = members.length;
+  hdr.appendChild(cnt);
+  col.appendChild(hdr);
+
+  var body = document.createElement('div');
+  body.className = 'kanban-col-body';
+
+  members.forEach(function(m) {
+    var card = document.createElement('div');
+    card.className = 'kanban-card';
+    card.ondblclick = function() { if (state.isEditor) openEdit(m.id); };
+
+    var name = document.createElement('div');
+    name.className = 'kanban-card-name ' + (m.gender || 'male');
+    name.textContent = (m.lastName || '') + ' ' + (m.firstName || '');
+    card.appendChild(name);
+
+    var sub = document.createElement('div');
+    sub.className = 'kanban-card-sub';
+    var parts = [];
+    if (m.title) parts.push(m.title);
+    if (m.traineeResult) {
+      var rc = m.traineeResult === 'BC' ? 'var(--accent)' : m.traineeResult === '流れた' ? 'var(--red)' : 'var(--gold)';
+      sub.style.color = rc;
+      parts.push(m.traineeResult);
+    }
+    sub.textContent = parts.join(' | ');
+    card.appendChild(sub);
+
+    // Aさん表示
+    var hist = m.traineeHistory || [];
+    var asan = '';
+    for (var i = hist.length - 1; i >= 0; i--) {
+      if (hist[i].aSan) { asan = hist[i].aSan; break; }
+    }
+    if (asan) {
+      var asEl = document.createElement('div');
+      asEl.className = 'kanban-card-asan';
+      asEl.textContent = 'A: ' + asan;
+      card.appendChild(asEl);
+    }
+
+    body.appendChild(card);
+  });
+
+  col.appendChild(body);
+  return col;
 }
 
 // ── TREE ──
