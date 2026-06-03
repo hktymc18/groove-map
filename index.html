@@ -532,6 +532,45 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .result-chip.sel-next{background:rgba(0,212,170,0.15);border-color:var(--accent);color:var(--accent)}
 .result-chip.sel-left{background:rgba(239,68,68,0.15);border-color:var(--red);color:var(--red)}
 
+/* ── 共有MAPダッシュボード ── */
+.sd-overlay{position:fixed;inset:0;z-index:350;background:var(--bg);display:none;flex-direction:column}
+.sd-overlay.open{display:flex}
+.sd-hdr{flex-shrink:0;padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sd-close{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.sd-title{font-size:16px;font-weight:700;flex:1}
+.sd-count{font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.sd-search{padding:8px 14px;border-bottom:1px solid var(--border)}
+.sd-search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);padding:8px 14px;font-size:14px;outline:none;font-family:'Noto Sans JP',sans-serif}
+.sd-search-input:focus{border-color:var(--accent)}
+.sd-filters{display:flex;gap:6px;padding:8px 14px 4px;flex-wrap:wrap;overflow-x:auto}
+.sd-filter{padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);transition:all .15s;white-space:nowrap;font-family:'IBM Plex Mono',monospace}
+.sd-filter.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:600}
+.sd-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 14px 20px}
+.sd-body::-webkit-scrollbar{display:none}
+.sd-section-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;padding:10px 0 6px}
+.sd-grid{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:600px){.sd-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.sd-grid{grid-template-columns:repeat(3,1fr)}}
+.sd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.sd-card:active{background:var(--surface2);transform:scale(0.98)}
+.sd-card.viewing{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.sd-card-org{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sd-card-name{font-size:12px;color:var(--text-mid);margin-bottom:6px}
+.sd-card-tags{display:flex;gap:4px;flex-wrap:wrap}
+.sd-card-tag{font-size:10px;padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace}
+.sd-card-tag.union{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(124,106,255,.3)}
+.sd-card-tag.area{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,212,170,.3)}
+.sd-card-tag.perm-edit{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.sd-card-tag.perm-view{background:var(--surface2);color:var(--text-dim);border:1px solid var(--border)}
+.sd-card-perm{position:absolute;top:8px;right:10px;font-size:9px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.sd-empty{text-align:center;padding:40px 20px;color:var(--text-dim)}
+/* 共有ヘッダーバー（閲覧中表示） */
+.sd-viewing-bar{display:none;padding:6px 14px;background:var(--accent-dim);border-bottom:1px solid rgba(0,212,170,.3);align-items:center;gap:8px;flex-shrink:0}
+.sd-viewing-bar.show{display:flex}
+.sd-viewing-name{font-size:13px;font-weight:600;color:var(--accent);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sd-viewing-back{font-size:12px;color:var(--accent);cursor:pointer;padding:4px 10px;border:1px solid var(--accent);border-radius:8px;white-space:nowrap}
+.sd-viewing-list{font-size:12px;color:var(--accent);cursor:pointer;padding:4px 10px;border:1px solid var(--accent);border-radius:8px;white-space:nowrap;background:var(--accent-dim)}
+
 /* カード内クイックアクション */
 .card-quick-add{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);color:var(--accent);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s;z-index:5;line-height:1}
 .nc:hover .card-quick-add{opacity:1}
@@ -600,9 +639,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
       <div id="copyMonthBtn" class="copy-month-btn" onclick="copyToNextMonth()" title="翌月にコピー" style="display:none">→ 翌月コピー</div>
     </div>
-    <div class="share-chips" id="shareChips"></div>
+    <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v126</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v127</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -612,6 +651,13 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <button class="tab purple" onclick="switchView('diff')">差分</button>
   </div>
 </header>
+
+<!-- 共有MAP閲覧中バー -->
+<div class="sd-viewing-bar" id="sdViewingBar">
+  <div class="sd-viewing-name" id="sdViewingName"></div>
+  <div class="sd-viewing-list" onclick="openSharedDashboard()">一覧</div>
+  <div class="sd-viewing-back" onclick="switchToOwner(null)">自分に戻る</div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -751,6 +797,20 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   </div>
 
 </div><!-- /scroll-area -->
+
+<!-- 共有MAPダッシュボード -->
+<div class="sd-overlay" id="sharedDashboard">
+  <div class="sd-hdr">
+    <div class="sd-close" onclick="closeSharedDashboard()">&larr;</div>
+    <div class="sd-title">共有MAP</div>
+    <div class="sd-count" id="sdCount"></div>
+  </div>
+  <div class="sd-search">
+    <input class="sd-search-input" id="sdSearchInput" placeholder="名前・屋号・ユニオン・地域で検索" oninput="filterSharedCards()">
+  </div>
+  <div class="sd-filters" id="sdFilters"></div>
+  <div class="sd-body" id="sdBody"></div>
+</div>
 
 <!-- FAB -->
 <button class="fab" id="fab" onclick="onFabClick()">＋</button>
@@ -1733,7 +1793,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v126';
+  var DATA_VERSION = 'v127';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3701,16 +3761,7 @@ function hidePcTooltip() {
 
 // #6 共有チップ表示
 function renderShareChips() {
-  var wrap = document.getElementById('shareChips');
-  if (!wrap) return;
-  if (!state.shareUsers || state.shareUsers.length === 0) { wrap.innerHTML = ''; return; }
-  var html = '';
-  state.shareUsers.forEach(function(u) {
-    var email = u.email || u;
-    var initial = email.charAt(0).toUpperCase();
-    html += '<div class="share-chip" title="共有中: ' + email + '" onclick="openShareModal()">' + initial + '</div>';
-  });
-  wrap.innerHTML = html;
+  // 旧実装 — showSharedButtonに統合
 }
 
 // #8 エンプティステート
@@ -4947,7 +4998,10 @@ function addShareUser() {
   var recipientSafeId = safeId;
   var p2 = fsSet('sharedWith/' + recipientSafeId + '/from/' + currentUser.uid, {
     ownerUid: currentUser.uid,
-    ownerName: currentUser.org || currentUser.name || '',
+    ownerName: currentUser.name || '',
+    ownerOrg: currentUser.org || '',
+    ownerArea: currentUser.area || '',
+    ownerUnion: currentUser.union || '',
     ownerEmail: currentUser.email || '',
     perm: sharePerm,
     addedAt: new Date().toISOString()
@@ -5040,74 +5094,245 @@ function checkSharedMaps() {
         sharedOwners.push({
           uid: d.ownerUid,
           perm: d.perm || 'view',
-          name: d.ownerName || d.ownerEmail || d.ownerUid
+          name: d.ownerName || '',
+          org: d.ownerOrg || d.ownerName || '',
+          area: d.ownerArea || '',
+          union: d.ownerUnion || '',
+          email: d.ownerEmail || ''
         });
       }
     });
     if (sharedOwners.length > 0) {
-      buildViewSelector();
+      // Firestoreからプロフィール最新情報を取得
+      var pending = sharedOwners.length;
+      sharedOwners.forEach(function(owner, idx) {
+        fsGet('users/' + owner.uid).then(function(profile) {
+          if (profile) {
+            owner.name = profile.name || owner.name;
+            owner.org = profile.org || owner.org;
+            owner.area = profile.area || owner.area;
+            owner.union = profile.union || owner.union;
+          }
+          pending--;
+          if (pending <= 0) showSharedButton();
+        }).catch(function() {
+          pending--;
+          if (pending <= 0) showSharedButton();
+        });
+      });
     }
   }).catch(function(e) {
     console.log('shared check error:', e.message);
   });
 }
 
-function buildViewSelector() {
-  // ヘッダーに閲覧切り替えボタンを追加
-  var header = document.querySelector('.hdr-top');
-  if (!header) return;
+function showSharedButton() {
+  var btn = document.getElementById('sharedMapBtn');
+  if (btn) {
+    btn.style.display = '';
+    var cnt = document.getElementById('sharedMapCount');
+    if (cnt) cnt.textContent = sharedOwners.length;
+  }
+}
 
-  var existing = document.getElementById('viewSwitcher');
-  if (existing) existing.remove();
+// ── 共有MAPダッシュボード ──
+var _sdFilterUnion = '';
+var _sdFilterArea = '';
 
-  var switcher = document.createElement('div');
-  switcher.id = 'viewSwitcher';
-  switcher.style.cssText = 'display:flex;align-items:center;gap:6px;padding:0 8px';
+function openSharedDashboard() {
+  var dash = document.getElementById('sharedDashboard');
+  if (!dash) return;
+  dash.classList.add('open');
+  var cnt = document.getElementById('sdCount');
+  if (cnt) cnt.textContent = sharedOwners.length + '件';
+  buildSharedFilters();
+  renderSharedCards();
+}
 
-  // 自分のMAP
-  var myBtn = document.createElement('div');
-  myBtn.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--accent);color:var(--accent);background:var(--accent-dim)';
-  myBtn.textContent = '自分';
-  myBtn.onclick = function() { switchToOwner(null); };
-  switcher.appendChild(myBtn);
+function closeSharedDashboard() {
+  var dash = document.getElementById('sharedDashboard');
+  if (dash) dash.classList.remove('open');
+}
 
-  // 共有されたMAP
-  sharedOwners.forEach(function(owner) {
-    var btn = document.createElement('div');
-    btn.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:IBM Plex Mono,monospace;border:1px solid var(--border);color:var(--text-dim)';
-    // sharedWithに保存されたオーナー名を使用
-    btn.textContent = owner.name || owner.uid;
-    // Firestoreから最新名を取得
-    fsGet('users/' + owner.uid).then(function(profile) {
-      if (profile) btn.textContent = profile.org || profile.name || owner.name || owner.uid;
-    });
-    btn.dataset.uid = owner.uid;
-    btn.onclick = function() { switchToOwner(owner.uid, owner.perm); };
-    switcher.appendChild(btn);
+function buildSharedFilters() {
+  var wrap = document.getElementById('sdFilters');
+  if (!wrap) return;
+  // ユニオンと地域のユニーク値を収集
+  var unions = {};
+  var areas = {};
+  sharedOwners.forEach(function(o) {
+    if (o.union) unions[o.union] = (unions[o.union]||0) + 1;
+    if (o.area) areas[o.area] = (areas[o.area]||0) + 1;
+  });
+  wrap.innerHTML = '';
+  // 「全て」チップ
+  var allChip = document.createElement('div');
+  allChip.className = 'sd-filter active';
+  allChip.textContent = 'すべて ' + sharedOwners.length;
+  allChip.onclick = function() { _sdFilterUnion = ''; _sdFilterArea = ''; filterSharedCards(); };
+  wrap.appendChild(allChip);
+  // ユニオン別チップ
+  Object.keys(unions).sort().forEach(function(u) {
+    var chip = document.createElement('div');
+    chip.className = 'sd-filter';
+    chip.textContent = u + ' ' + unions[u];
+    chip.dataset.union = u;
+    chip.onclick = function() { _sdFilterUnion = u; _sdFilterArea = ''; filterSharedCards(); };
+    wrap.appendChild(chip);
+  });
+  // 地域別チップ
+  Object.keys(areas).sort().forEach(function(a) {
+    var chip = document.createElement('div');
+    chip.className = 'sd-filter';
+    chip.dataset.area = a;
+    chip.textContent = a + ' ' + areas[a];
+    chip.onclick = function() { _sdFilterArea = a; _sdFilterUnion = ''; filterSharedCards(); };
+    wrap.appendChild(chip);
+  });
+}
+
+function filterSharedCards() {
+  // フィルターチップのアクティブ状態更新
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.sd-filter'));
+  chips.forEach(function(c) {
+    var isAll = !c.dataset.union && !c.dataset.area;
+    var active = false;
+    if (!_sdFilterUnion && !_sdFilterArea) active = isAll;
+    else if (_sdFilterUnion) active = c.dataset.union === _sdFilterUnion;
+    else if (_sdFilterArea) active = c.dataset.area === _sdFilterArea;
+    c.classList.toggle('active', active);
+  });
+  renderSharedCards();
+}
+
+function renderSharedCards() {
+  var body = document.getElementById('sdBody');
+  if (!body) return;
+  var query = (document.getElementById('sdSearchInput') || {}).value || '';
+  query = query.toLowerCase().trim();
+
+  // フィルタリング
+  var filtered = sharedOwners.filter(function(o) {
+    if (_sdFilterUnion && o.union !== _sdFilterUnion) return false;
+    if (_sdFilterArea && o.area !== _sdFilterArea) return false;
+    if (query) {
+      var haystack = ((o.name||'') + ' ' + (o.org||'') + ' ' + (o.union||'') + ' ' + (o.area||'') + ' ' + (o.email||'')).toLowerCase();
+      if (haystack.indexOf(query) < 0) return false;
+    }
+    return true;
   });
 
-  // ヘッダーの月選択の前に追加
-  var monthSel = document.getElementById('monthSel');
-  if (monthSel) {
-    header.insertBefore(switcher, monthSel);
-  } else {
-    header.appendChild(switcher);
+  body.innerHTML = '';
+
+  if (filtered.length === 0) {
+    body.innerHTML = '<div class="sd-empty">該当する共有MAPがありません</div>';
+    return;
   }
 
-  toast('共有されたMAPが' + sharedOwners.length + '件あります');
+  // ユニオン別にグループ化
+  var groups = {};
+  var noGroup = [];
+  filtered.forEach(function(o) {
+    var key = o.union || '';
+    if (!key) { noGroup.push(o); return; }
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(o);
+  });
+
+  var groupKeys = Object.keys(groups).sort();
+
+  groupKeys.forEach(function(gk) {
+    var label = document.createElement('div');
+    label.className = 'sd-section-label';
+    label.textContent = gk + ' (' + groups[gk].length + ')';
+    body.appendChild(label);
+    var grid = document.createElement('div');
+    grid.className = 'sd-grid';
+    groups[gk].forEach(function(o) {
+      grid.appendChild(buildSharedCard(o));
+    });
+    body.appendChild(grid);
+  });
+
+  if (noGroup.length > 0) {
+    var label2 = document.createElement('div');
+    label2.className = 'sd-section-label';
+    label2.textContent = 'その他 (' + noGroup.length + ')';
+    body.appendChild(label2);
+    var grid2 = document.createElement('div');
+    grid2.className = 'sd-grid';
+    noGroup.forEach(function(o) {
+      grid2.appendChild(buildSharedCard(o));
+    });
+    body.appendChild(grid2);
+  }
+
+  // カウント更新
+  var cnt = document.getElementById('sdCount');
+  if (cnt) cnt.textContent = filtered.length + ' / ' + sharedOwners.length + '件';
+}
+
+function buildSharedCard(owner) {
+  var card = document.createElement('div');
+  card.className = 'sd-card' + (viewingOwnerUid === owner.uid ? ' viewing' : '');
+  card.onclick = function() {
+    closeSharedDashboard();
+    switchToOwner(owner.uid, owner.perm);
+  };
+
+  var orgEl = document.createElement('div');
+  orgEl.className = 'sd-card-org';
+  orgEl.textContent = owner.org || owner.name || owner.email || '(名前未設定)';
+  card.appendChild(orgEl);
+
+  var nameEl = document.createElement('div');
+  nameEl.className = 'sd-card-name';
+  nameEl.textContent = owner.name || '';
+  card.appendChild(nameEl);
+
+  var tags = document.createElement('div');
+  tags.className = 'sd-card-tags';
+  if (owner.union) {
+    var ut = document.createElement('span');
+    ut.className = 'sd-card-tag union';
+    ut.textContent = owner.union;
+    tags.appendChild(ut);
+  }
+  if (owner.area) {
+    var at = document.createElement('span');
+    at.className = 'sd-card-tag area';
+    at.textContent = owner.area;
+    tags.appendChild(at);
+  }
+  var pt = document.createElement('span');
+  pt.className = 'sd-card-tag ' + (owner.perm === 'edit' ? 'perm-edit' : 'perm-view');
+  pt.textContent = owner.perm === 'edit' ? '編集可' : '閲覧のみ';
+  tags.appendChild(pt);
+  card.appendChild(tags);
+
+  return card;
 }
 
 function switchToOwner(ownerUid, perm) {
   viewingOwnerUid = ownerUid;
 
-  // ボタンのスタイル更新
-  var btns = document.querySelectorAll('#viewSwitcher div');
-  Array.prototype.slice.call(btns).forEach(function(btn) {
-    var isActive = ownerUid ? btn.dataset.uid === ownerUid : btn.textContent === '自分';
-    btn.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
-    btn.style.color = isActive ? 'var(--accent)' : 'var(--text-dim)';
-    btn.style.background = isActive ? 'var(--accent-dim)' : '';
-  });
+  // 閲覧中バー更新
+  var bar = document.getElementById('sdViewingBar');
+  var nameEl = document.getElementById('sdViewingName');
+  if (bar && nameEl) {
+    if (ownerUid) {
+      var owner = null;
+      for (var i=0; i<sharedOwners.length; i++) {
+        if (sharedOwners[i].uid === ownerUid) { owner = sharedOwners[i]; break; }
+      }
+      var displayName = owner ? ((owner.org || owner.name || '') + (owner.name ? ' (' + owner.name + ')' : '')) : ownerUid;
+      if (owner && owner.union) displayName += ' | ' + owner.union;
+      nameEl.textContent = displayName;
+      bar.classList.add('show');
+    } else {
+      bar.classList.remove('show');
+    }
+  }
 
   if (!ownerUid) {
     // 自分のMAPに戻る
@@ -5115,7 +5340,7 @@ function switchToOwner(ownerUid, perm) {
     fsLoadFromFirestore(currentUser.uid);
     updateEditorUI();
   } else {
-    // 他人のMAPを閲覧（sharedWithを経由して読む）
+    // 他人のMAPを閲覧
     state.isEditor = perm === 'edit';
     fsLoadSharedMap(ownerUid);
     updateEditorUI();
@@ -5123,7 +5348,7 @@ function switchToOwner(ownerUid, perm) {
 }
 
 function showSharedMapSelector(owners) {
-  // checkSharedMaps に統合したので不要
+  // checkSharedMaps に統合済み
 }
 
 function checkShareParam() {
