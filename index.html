@@ -705,7 +705,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v132</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v133</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1368,7 +1368,7 @@ function renderPCMap(mapType) {
   });
 
   // ノードサイズ・間隔（カード型）
-  var NODE_W = 160, NODE_H = 64, NODE_RX = 10;
+  var NODE_W = 170, NODE_H = 70, NODE_RX = 10;
   var NODE_R = Math.max(NODE_W, NODE_H) / 2; // 互換用
   var MIN_GAP = NODE_R * 2.0;
 
@@ -1620,24 +1620,23 @@ function renderPCMap(mapType) {
 
     // 上段: 名前（左寄せ）+ 稼働（右寄せ）
     var nameStr = ((m.lastName||'')+(m.firstName||'')).substring(0,8);
-    g.appendChild(txt(rx+10, ry2+22, nameStr, isF?'#f9a8d4':'#e8eaf0', 14, '700', 'Noto Sans JP,sans-serif'));
+    g.appendChild(txt(rx+10, ry2+24, nameStr, isF?'#f9a8d4':'#e8eaf0', 14, '700', 'Noto Sans JP,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#f59e0b';
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
-      g.appendChild(txt(rx+NODE_W-10, ry2+22, actStr, ac, 11, '600', 'IBM Plex Mono,monospace', 'end'));
+      g.appendChild(txt(rx+NODE_W-10, ry2+24, actStr, ac, 14, '600', 'IBM Plex Mono,monospace', 'end'));
     }
-    // 中段: タイトル（左）
-    g.appendChild(txt(rx+10, ry2+40, m.title||'-', cc, 11, '500'));
-    // 中段右: やる気
+    // 中段: タイトル（左）+ やる気（右）
+    g.appendChild(txt(rx+10, ry2+44, m.title||'-', cc, 14, '500'));
     if(m.morale>0){
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
-      g.appendChild(txt(rx+NODE_W-10, ry2+40, emoji, '#fff', 11, null, 'Inter,monospace', 'end'));
+      g.appendChild(txt(rx+NODE_W-10, ry2+44, emoji, '#fff', 14, null, 'Inter,monospace', 'end'));
     }
     // 下段: GSV + (固定PT)
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? ' (' + m.ptFixed.toLocaleString() + ')' : '';
-    g.appendChild(txt(rx+10, ry2+56, gsvStr, '#e8eaf0', 12, '600', 'Inter,monospace'));
-    if(fixStr) g.appendChild(txt(rx+10 + gsvStr.length*7.5, ry2+56, fixStr, '#6b7280', 10, null, 'Inter,monospace'));
+    g.appendChild(txt(rx+10, ry2+62, gsvStr, '#e8eaf0', 14, '600', 'Inter,monospace'));
+    if(fixStr) g.appendChild(txt(rx+10 + gsvStr.length*8.5, ry2+62, fixStr, '#9ca3af', 12, null, 'Inter,monospace'));
 
     // ドラッグ
     (function(mid,ng,np){
@@ -1916,7 +1915,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v132';
+  var DATA_VERSION = 'v133';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
