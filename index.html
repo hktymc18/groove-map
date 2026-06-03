@@ -258,7 +258,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .av.loi-av{background:linear-gradient(135deg,#15803d,#22c55e) !important;border-color:#22c55e !important;color:#fff !important}
 
 /* name */
-.nm{font-size:14px;font-weight:700;line-height:1.2}
+.nm{font-size:16px;font-weight:700;line-height:1.2}
 .nm.male{color:var(--male)}
 .nm.female{color:var(--female)}
 .nm-sub{font-size:10px;color:var(--text-dim);margin-top:1px}
@@ -282,7 +282,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .pt-fix{font-size:9px;color:var(--text-dim)}
 
 /* morale dots は morale-emoji に置き換え済み */
-.morale-emoji{font-size:18px;flex-shrink:0;margin-left:4px;line-height:1;user-select:none}
+.morale-emoji{font-size:14px;flex-shrink:0;margin-left:4px;line-height:1;user-select:none}
 
 /* expand */
 .expand-arrow{font-size:9px;color:var(--text-dim);transition:transform .18s;margin-left:3px;display:inline-block}
@@ -445,6 +445,65 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 /* edit hint */
 .edit-hint{font-size:10px;color:var(--text-dim);text-align:center;padding:4px 0 0;display:none}
+
+/* #7 マイクロインタラクション */
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateX(-40px)}}
+.nw{animation:fadeSlideIn .25s ease-out}
+.nw.removing{animation:fadeSlideOut .25s ease-out;pointer-events:none}
+
+/* #3 翌月コピーボタン強調 */
+.copy-month-btn{font-size:12px!important;padding:5px 12px!important;border:1px solid var(--accent)!important;border-radius:8px!important;color:var(--accent)!important;cursor:pointer;white-space:nowrap;background:var(--accent-dim)!important;font-weight:600;transition:all .15s}
+.copy-month-btn:active{background:var(--accent)!important;color:#000!important}
+
+/* #2 FAB親選択メニュー */
+.fab-menu{position:fixed;bottom:80px;right:18px;z-index:199;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:6px 0;min-width:200px;display:none;max-height:60vh;overflow-y:auto}
+.fab-menu.open{display:block;animation:fadeSlideIn .2s ease-out}
+.fab-menu-item{padding:10px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text);transition:background .1s}
+.fab-menu-item:active,.fab-menu-item:hover{background:var(--surface3)}
+.fab-menu-item .fmi-depth{font-size:10px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;width:18px;flex-shrink:0;text-align:center}
+.fab-menu-item .fmi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fab-menu-hdr{padding:8px 14px 4px;font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace}
+
+/* #4 モーダルセクション折りたたみ */
+.modal-section{margin-bottom:4px}
+.modal-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 0 4px;cursor:pointer;user-select:none}
+.modal-section-hdr .ms-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace}
+.modal-section-hdr .ms-arrow{font-size:10px;color:var(--text-dim);transition:transform .2s}
+.modal-section.collapsed .ms-arrow{transform:rotate(-90deg)}
+.modal-section-body{overflow:hidden;transition:max-height .25s ease}
+.modal-section.collapsed .modal-section-body{max-height:0!important;overflow:hidden}
+
+/* #5 モバイルデータタブ改善 */
+@media(max-width:767px){
+  .tbl th,.tbl td{font-size:12px!important;padding:4px 5px!important}
+  .stats-compact .tbl th.hide-mobile,.stats-compact .tbl td.hide-mobile{display:none}
+}
+
+/* #6 共有チップ */
+.share-chips{display:flex;gap:4px;align-items:center}
+.share-chip{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--purple-dim);border:1px solid rgba(124,106,255,.4);color:var(--purple);font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;cursor:pointer}
+
+/* #8 エンプティステート改善 */
+.empty-state{text-align:center;padding:40px 20px}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:0.4}
+.empty-state-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-state-desc{font-size:12px;color:var(--text-dim);line-height:1.6}
+.empty-state-arrow{margin-top:16px;font-size:24px;color:var(--accent);opacity:0.6;animation:bounceDown 1.5s infinite}
+@keyframes bounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+
+/* #9 PC MAPツールチップ */
+.pc-tooltip{position:fixed;z-index:500;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;box-shadow:var(--shadow);pointer-events:none;font-size:12px;min-width:160px;display:none}
+.pc-tooltip.show{display:block;animation:fadeSlideIn .15s ease-out}
+.pc-tooltip-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.pc-tooltip-row{display:flex;justify-content:space-between;gap:12px;margin-top:2px}
+.pc-tooltip-label{color:var(--text-dim);font-size:11px}
+.pc-tooltip-val{font-family:'IBM Plex Mono',monospace;font-size:11px}
+
+/* カード内クイックアクション */
+.card-quick-add{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);color:var(--accent);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s;z-index:5;line-height:1}
+.nc:hover .card-quick-add{opacity:1}
+@media(max-width:767px){.card-quick-add{display:none}}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -507,10 +566,11 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 <div style="display:flex;gap:4px;align-items:center">
       <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
-      <div id="copyMonthBtn" onclick="copyToNextMonth()" title="翌月にコピー" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:pointer;white-space:nowrap;display:none">→翌月</div>
+      <div id="copyMonthBtn" class="copy-month-btn" onclick="copyToNextMonth()" title="翌月にコピー" style="display:none">→ 翌月コピー</div>
     </div>
+    <div class="share-chips" id="shareChips"></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v123</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v125</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -661,7 +721,11 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 </div><!-- /scroll-area -->
 
 <!-- FAB -->
-<button class="fab" id="fab" onclick="openAdd()">＋</button>
+<button class="fab" id="fab" onclick="onFabClick()">＋</button>
+<!-- FAB親選択メニュー -->
+<div class="fab-menu" id="fabMenu"></div>
+<!-- PC MAPツールチップ -->
+<div class="pc-tooltip" id="pcTooltip"></div>
 
 
 <!-- プロフィール設定モーダル -->
@@ -729,126 +793,146 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   <div class="sheet">
     <div class="sh-title" id="shTitle">メンバー追加</div>
     <div id="parentLabel" style="display:none;margin-bottom:12px;padding:8px 12px;background:var(--accent-dim);border:1px solid rgba(0,212,170,.3);border-radius:var(--rsm);font-size:12px;color:var(--accent)"></div>
-    <div class="fr-row">
-      <div class="fr"><label class="fl">姓</label><input class="fi" id="fLast" placeholder="田中"></div>
-      <div class="fr"><label class="fl">名</label><input class="fi" id="fFirst" placeholder="太郎"></div>
-    </div>
-    <div class="fr">
-      <label class="fl">性別</label>
-      <div class="rg">
-        <div class="rb sel" id="rbMale" onclick="selGender('male')">♂ 男性</div>
-        <div class="rb" id="rbFemale" onclick="selGender('female')">♀ 女性</div>
+
+    <!-- ▼ 月次情報（常時展開・上部配置）毎月触る -->
+    <div class="modal-section" id="msMonthly">
+      <div class="modal-section-hdr" onclick="toggleModalSection('msMonthly')">
+        <span class="ms-label">📊 月次情報</span><span class="ms-arrow">▼</span>
       </div>
-    </div>
-    <div class="fr">
-      <label class="fl">カテゴリ</label>
-      <div class="rg">
-        <div class="rb" id="rbCatTrainee" onclick="selCategory('研修生')">研修生</div>
-        <div class="rb" id="rbCatBA" onclick="selCategory('BA')">BA</div>
-        <div class="rb" id="rbCatBR" onclick="selCategory('BR')">BR</div>
-      </div>
-    </div>
-    <div class="fr">
-      <label class="fl">タイトル</label>
-      <select class="fs" id="fTitle" onchange="onTitleChange()">
-        <option value="">カテゴリを選択してください</option>
-      </select>
-    </div>
-    <div class="fr-row">
-      <div class="fr" style="display:none"><!-- spacer --></div>
-      <div class="fr">
-        <label class="fl">稼働タイプ</label>
-        <select class="fs" id="fAct">
-          <option value="">-</option>
-          <option value="S">S（120%）</option>
-          <option value="A">A（辞める確定）</option>
-          <option value="B">B（仕事以外来る）</option>
-          <option value="C">C（来れるけど来ない）</option>
-        </select>
-      </div>
-    </div>
-    <div class="fr-row">
-      <div class="fr">
-        <label class="fl">稼働率（%）※S以外に入力</label>
-        <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
-      </div>
-      <div class="fr">
-        <label class="fl">やる気レベル</label>
-        <select class="fs" id="fMorale">
-          <option value="1" selected>🌱 パヤパヤ</option>
-          <option value="2">💪 やる気</option>
-          <option value="3">🔥 死ぬ気</option>
-        </select>
-      </div>
-    </div>
-    <div class="fr-row">
-      <div class="fr"><label class="fl">現状GSV</label><input class="fi" id="fPtC" type="number" placeholder="1712"></div>
-      <div class="fr"><label class="fl">固定で上がるポイント</label><input class="fi" id="fPtF" type="number" placeholder="500"></div>
-    </div>
-    <div class="fr" style="display:none">
-      <label class="fl">研修生</label>
-      <div class="rg">
-        <div class="rb sel" id="rbTraNo" onclick="selTrainee(false)">いいえ</div>
-        <div class="rb" id="rbTraYes" onclick="selTrainee(true)">研修生（水色）</div>
-      </div>
-    </div>
-    <div class="fr">
-      <label class="fl">適用MAP</label>
-      <div class="rg">
-        <div class="rb sel" id="rbMapC" onclick="selMapType('current')">現状</div>
-        <div class="rb" id="rbMapI" onclick="selMapType('ideal')">理想</div>
-        <div class="rb" id="rbMapB" onclick="selMapType('both')">両方</div>
-      </div>
-    </div>
-    <div id="traineeStatusFields" style="display:none">
-      <!-- 研修結果 -->
-      <div class="fr-row">
+      <div class="modal-section-body" style="max-height:400px">
+        <div class="fr-row">
+          <div class="fr"><label class="fl">現状GSV</label><input class="fi" id="fPtC" type="number" placeholder="1712"></div>
+          <div class="fr"><label class="fl">固定で上がるポイント</label><input class="fi" id="fPtF" type="number" placeholder="500"></div>
+        </div>
+        <div class="fr-row">
+          <div class="fr">
+            <label class="fl">稼働タイプ</label>
+            <select class="fs" id="fAct">
+              <option value="">-</option>
+              <option value="S">S（120%）</option>
+              <option value="A">A（辞める確定）</option>
+              <option value="B">B（仕事以外来る）</option>
+              <option value="C">C（来れるけど来ない）</option>
+            </select>
+          </div>
+          <div class="fr">
+            <label class="fl">やる気レベル</label>
+            <select class="fs" id="fMorale">
+              <option value="1" selected>🌱 パヤパヤ</option>
+              <option value="2">💪 やる気</option>
+              <option value="3">🔥 死ぬ気</option>
+            </select>
+          </div>
+        </div>
         <div class="fr">
-          <label class="fl">研修結果</label>
-          <select class="fs" id="fTraineeResult">
-            <option value="">進行中</option>
-            <option value="BC">BC（成約）</option>
-            <option value="ユーザー">ユーザー（△）</option>
-            <option value="流れた">流れた（NG）</option>
+          <label class="fl">稼働率（%）※S以外に入力</label>
+          <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
+        </div>
+        <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="1/24 クロージング&#10;次回：馬越さんと日程調整中"></textarea></div>
+      </div>
+    </div>
+
+    <!-- ▼ 基本情報（編集時は折りたたみ）初回入力後ほぼ触らない -->
+    <div class="modal-section" id="msBasic">
+      <div class="modal-section-hdr" onclick="toggleModalSection('msBasic')">
+        <span class="ms-label">👤 基本情報</span><span class="ms-arrow">▼</span>
+      </div>
+      <div class="modal-section-body" style="max-height:600px">
+        <div class="fr-row">
+          <div class="fr"><label class="fl">姓</label><input class="fi" id="fLast" placeholder="田中"></div>
+          <div class="fr"><label class="fl">名</label><input class="fi" id="fFirst" placeholder="太郎"></div>
+        </div>
+        <div class="fr">
+          <label class="fl">性別</label>
+          <div class="rg">
+            <div class="rb sel" id="rbMale" onclick="selGender('male')">♂ 男性</div>
+            <div class="rb" id="rbFemale" onclick="selGender('female')">♀ 女性</div>
+          </div>
+        </div>
+        <div class="fr">
+          <label class="fl">カテゴリ</label>
+          <div class="rg">
+            <div class="rb" id="rbCatTrainee" onclick="selCategory('研修生')">研修生</div>
+            <div class="rb" id="rbCatBA" onclick="selCategory('BA')">BA</div>
+            <div class="rb" id="rbCatBR" onclick="selCategory('BR')">BR</div>
+          </div>
+        </div>
+        <div class="fr">
+          <label class="fl">タイトル</label>
+          <select class="fs" id="fTitle" onchange="onTitleChange()">
+            <option value="">カテゴリを選択してください</option>
           </select>
         </div>
+        <div class="fr" style="display:none">
+          <label class="fl">研修生</label>
+          <div class="rg">
+            <div class="rb sel" id="rbTraNo" onclick="selTrainee(false)">いいえ</div>
+            <div class="rb" id="rbTraYes" onclick="selTrainee(true)">研修生（水色）</div>
+          </div>
+        </div>
+        <div class="fr">
+          <label class="fl">適用MAP</label>
+          <div class="rg">
+            <div class="rb sel" id="rbMapC" onclick="selMapType('current')">現状</div>
+            <div class="rb" id="rbMapI" onclick="selMapType('ideal')">理想</div>
+            <div class="rb" id="rbMapB" onclick="selMapType('both')">両方</div>
+          </div>
+        </div>
+        <div class="fr"><label class="fl">Instagram URL</label><input class="fi" id="fInsta" placeholder="https://instagram.com/username"></div>
       </div>
-      <!-- 研修履歴（リアルタイム追加） -->
-      <div class="fr">
-        <label class="fl">研修履歴</label>
-        <div style="width:100%">
-          <!-- 既存の履歴一覧 -->
-          <div id="traineeHistoryWrap" style="margin-bottom:10px"></div>
-          <!-- 新規追加フォーム -->
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px">
-            <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px">履歴を追加</div>
-            <div style="display:flex;gap:6px;margin-bottom:8px">
-              <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:16px;padding:6px 8px" onchange="this.blur()">
-              <input class="fi" id="fHistoryASan" type="text" style="flex:1;font-size:13px;padding:6px 8px" placeholder="Aさん">
+    </div>
+
+    <!-- ▼ 研修情報（研修生のみ表示） -->
+    <div id="traineeStatusFields" style="display:none">
+      <div class="modal-section" id="msTrainee">
+        <div class="modal-section-hdr" onclick="toggleModalSection('msTrainee')">
+          <span class="ms-label">📋 研修情報</span><span class="ms-arrow">▼</span>
+        </div>
+        <div class="modal-section-body" style="max-height:800px">
+          <div class="fr-row">
+            <div class="fr">
+              <label class="fl">研修結果</label>
+              <select class="fs" id="fTraineeResult">
+                <option value="">進行中</option>
+                <option value="BC">BC（成約）</option>
+                <option value="ユーザー">ユーザー（△）</option>
+                <option value="流れた">流れた（NG）</option>
+              </select>
             </div>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-              <div class="sf-chip" onclick="addTraineeHistory('マケ')" style="font-size:12px">マケ</div>
-              <div class="sf-chip" onclick="addTraineeHistory('PG')" style="font-size:12px">PG</div>
-              <div class="sf-chip" onclick="addTraineeHistory('DLR')" style="font-size:12px">DLR</div>
-              <div class="sf-chip" onclick="addTraineeHistory('EXP')" style="font-size:12px">EXP</div>
-              <div class="sf-chip" onclick="addTraineeHistory('PA')" style="font-size:12px">PA</div>
-              <div class="sf-chip" onclick="addTraineeHistory('面談')" style="font-size:12px">面談</div>
-              <div class="sf-chip" onclick="addTraineeHistory('CO')" style="font-size:12px">CO</div>
-            </div>
-            <!-- 結果（このステップで進んだか離脱したか） -->
-            <div style="display:flex;gap:6px;align-items:center">
-              <span style="font-size:12px;color:var(--text-dim);flex-shrink:0">このステップの結果</span>
-              <div class="rg" style="gap:5px">
-                <div class="rb sel" id="rbStepNext" onclick="selStepResult('next')" style="font-size:11px;padding:4px 10px">→ 次へ進んだ</div>
-                <div class="rb" id="rbStepLeft" onclick="selStepResult('left')" style="font-size:11px;padding:4px 10px">✗ 離脱した</div>
+          </div>
+          <div class="fr">
+            <label class="fl">研修履歴</label>
+            <div style="width:100%">
+              <div id="traineeHistoryWrap" style="margin-bottom:10px"></div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px">
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px">履歴を追加</div>
+                <div style="display:flex;gap:6px;margin-bottom:8px">
+                  <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:16px;padding:6px 8px" onchange="this.blur()">
+                  <input class="fi" id="fHistoryASan" type="text" style="flex:1;font-size:13px;padding:6px 8px" placeholder="Aさん">
+                </div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+                  <div class="sf-chip" onclick="addTraineeHistory('マケ')" style="font-size:12px">マケ</div>
+                  <div class="sf-chip" onclick="addTraineeHistory('PG')" style="font-size:12px">PG</div>
+                  <div class="sf-chip" onclick="addTraineeHistory('DLR')" style="font-size:12px">DLR</div>
+                  <div class="sf-chip" onclick="addTraineeHistory('EXP')" style="font-size:12px">EXP</div>
+                  <div class="sf-chip" onclick="addTraineeHistory('PA')" style="font-size:12px">PA</div>
+                  <div class="sf-chip" onclick="addTraineeHistory('面談')" style="font-size:12px">面談</div>
+                  <div class="sf-chip" onclick="addTraineeHistory('CO')" style="font-size:12px">CO</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span style="font-size:12px;color:var(--text-dim);flex-shrink:0">このステップの結果</span>
+                  <div class="rg" style="gap:5px">
+                    <div class="rb sel" id="rbStepNext" onclick="selStepResult('next')" style="font-size:11px;padding:4px 10px">→ 次へ進んだ</div>
+                    <div class="rb" id="rbStepLeft" onclick="selStepResult('left')" style="font-size:11px;padding:4px 10px">✗ 離脱した</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="fr"><label class="fl">Instagram URL</label><input class="fi" id="fInsta" placeholder="https://instagram.com/username"></div>
-    <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="1/24 クロージング&#10;次回：馬越さんと日程調整中"></textarea></div>
+
     <div class="btn-row">
       <button class="btn-c" onclick="closeModal()">キャンセル</button>
       <button class="btn-d" id="btnDel" onclick="deleteMember()" style="display:none">削除</button>
@@ -998,10 +1082,12 @@ function copyToNextMonth() {
   var copyMembers = JSON.parse(JSON.stringify(state.members));
   var copyIdeal   = JSON.parse(JSON.stringify(state.idealMembers || []));
   // 研修結果が確定済みの研修生は trainee=false にして翌月の決定率にカウントさせない
+  // GSVを0にリセット
   copyMembers.forEach(function(m) {
     if (m.traineeResult) {
       m.trainee = false;
     }
+    m.ptCurrent = 0;
   });
 
   // 翌月に切り替え
@@ -1387,6 +1473,9 @@ function renderPCMap(mapType) {
         ev.preventDefault();
       });
       ng.addEventListener('dblclick',function(){if(state.isEditor)openEdit(mid);});
+      // #9 ツールチップ
+      ng.addEventListener('mouseenter',function(ev){showPcTooltip(mid,ev);});
+      ng.addEventListener('mouseleave',function(){hidePcTooltip();});
     })(m.id,g,pos);
 
     svg.appendChild(g);
@@ -1618,7 +1707,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v123';
+  var DATA_VERSION = 'v125';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1785,7 +1874,7 @@ function renderTree(mapType) {
   var roots = childrenOf('', members);
 
   if (roots.length === 0) {
-    container.innerHTML = '<div class="empty">' + (state.isEditor ? '＋ボタンでメンバーを追加' : 'データがありません') + '</div>';
+    container.innerHTML = emptyStateHTML('map');
     updateLTSV(mapType, members);
     return;
   }
@@ -1910,6 +1999,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
   return '<div class="nw' + (isDefaultOpen && hasKids && !skipChildren ? ' open' : '') + '" id="nw-' + m.id + '">'
     + '<div class="' + ncClass + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
     + hoverBtn + instaBtn
+    + (state.isEditor ? '<div class="card-quick-add" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="直下に追加">＋</div>' : '')
     + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.dataset.cid,event)" ondblclick="if(state.isEditor){openEdit(this.dataset.cid);event.stopPropagation()}">'
     + '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">'
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
@@ -1917,11 +2007,12 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '</div>'
     + '<div class="av ' + g + (isLOI ? ' loi-av' : (m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + avStyle + '">' + (m.title||'&#x2013;') + '</div>'
     + '<div style="flex:1;min-width:0;overflow:hidden">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px">' + parentChip + actHTML + '</div>'
-    + '<div class="nm ' + g + '">' + (m.lastName||'') + ' ' + (m.firstName||'') + '</div>'
+    + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
+    + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
     + '</div>'
-    + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
-    + '<div class="morale-emoji">' + moraleEmoji(m.morale||1) + '</div>'
+    + '<div style="display:flex;align-items:center;gap:4px;margin-top:2px">' + parentChip + actHTML + '</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0">'
     + '<span class="info-pt">' + ptDisplay + ptFixHTML + '</span>'
     + '</div>'
     + '</div>'
@@ -2648,8 +2739,11 @@ function renderStats() {
   var thead = document.getElementById('statsTblHead');
   if (thead) {
     thead.innerHTML = '<tr><th style="text-align:left;padding-left:12px;min-width:80px;position:sticky;left:0;background:var(--surface2);z-index:1">項目</th>'
-      + monthLabels.map(function(ml){ return '<th style="min-width:60px">' + ml + '</th>'; }).join('')
+      + monthLabels.map(function(ml, mi){ return '<th style="min-width:60px" class="' + (mi < 9 ? 'hide-mobile' : '') + '">' + ml + '</th>'; }).join('')
       + '</tr>';
+    // #5 モバイル用クラス
+    var statsCard = thead.closest('.card');
+    if (statsCard) statsCard.classList.add('stats-compact');
   }
 
   var EDITABLE_ROWS = ['平均稼働','コミッション','OUT','UNIVERSE'];
@@ -2670,6 +2764,7 @@ function renderStats() {
     monthLabels.forEach(function(ml, idx) {
       var td = document.createElement('td');
       td.style.minWidth = '60px';
+      if (idx < 9) td.className = 'hide-mobile';
       var v = (row.vals||[])[idx];
       var isEditable = EDITABLE_ROWS.indexOf(row.label) >= 0;
       var isAuto = AUTO_ROWS.indexOf(row.label) >= 0;
@@ -2776,7 +2871,7 @@ function renderStats() {
     if (!s.goldList) s.goldList = [];
     goldWrap.innerHTML = '';
     if (s.goldList.length === 0) {
-      goldWrap.innerHTML = '<div class="empty">+ ボタンで追加してください</div>';
+      goldWrap.innerHTML = emptyStateHTML('ol-gold');
     }
     s.goldList.forEach(function(entry, gi) {
       if (typeof entry === 'string') { entry = {name: entry, tasks:[]}; s.goldList[gi] = entry; }
@@ -2847,10 +2942,7 @@ function renderStats() {
 
   freshWrap.innerHTML = '';
   if (freshList.length === 0) {
-    var emptyEl = document.createElement('div');
-    emptyEl.className = 'empty';
-    emptyEl.textContent = '+ ボタンで追加してください';
-    freshWrap.appendChild(emptyEl);
+    freshWrap.innerHTML = emptyStateHTML('ol-fresh');
   } else {
     var FRESH_ACTIONS = ['リスト','基準値','F-DATA','ハウディ'];
 
@@ -3505,6 +3597,127 @@ function saveCurrent() {
 }
 
 // ── MODAL ──
+// #9 PC MAPツールチップ
+function showPcTooltip(mid, ev) {
+  var m = null;
+  for (var i=0; i<state.members.length; i++) { if (state.members[i].id===mid) { m=state.members[i]; break; } }
+  if (!m) return;
+  var tip = document.getElementById('pcTooltip');
+  var name = (m.lastName||'') + ' ' + (m.firstName||'');
+  var actLabel = m.activity ? m.activity + (m.actRate ? ' ' + m.actRate + '%' : '') : '-';
+  var moraleStr = ['','🌱 パヤパヤ','💪 やる気','🔥 死ぬ気'][Math.min(m.morale||1,3)]||'';
+  tip.innerHTML = '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + '</span></div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">GSV</span><span class="pc-tooltip-val">' + (m.ptCurrent>0?m.ptCurrent.toLocaleString():'-') + '</span></div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">稼働</span><span class="pc-tooltip-val">' + actLabel + '</span></div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">やる気</span><span class="pc-tooltip-val">' + moraleStr + '</span></div>'
+    + (m.memo ? '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-mid);white-space:pre-wrap;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + m.memo.substring(0,80) + '</div>' : '');
+  tip.style.left = Math.min(ev.clientX + 12, window.innerWidth - 200) + 'px';
+  tip.style.top = Math.max(ev.clientY - 10, 10) + 'px';
+  tip.classList.add('show');
+}
+function hidePcTooltip() {
+  var tip = document.getElementById('pcTooltip');
+  if (tip) tip.classList.remove('show');
+}
+
+// #6 共有チップ表示
+function renderShareChips() {
+  var wrap = document.getElementById('shareChips');
+  if (!wrap) return;
+  if (!state.shareUsers || state.shareUsers.length === 0) { wrap.innerHTML = ''; return; }
+  var html = '';
+  state.shareUsers.forEach(function(u) {
+    var email = u.email || u;
+    var initial = email.charAt(0).toUpperCase();
+    html += '<div class="share-chip" title="共有中: ' + email + '" onclick="openShareModal()">' + initial + '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+// #8 エンプティステート
+function emptyStateHTML(type) {
+  if (type === 'map') {
+    return '<div class="empty-state">'
+      + '<div class="empty-state-icon">🗺️</div>'
+      + '<div class="empty-state-title">メンバーがいません</div>'
+      + '<div class="empty-state-desc">右下の ＋ ボタンからメンバーを追加して<br>組織MAPを作りましょう</div>'
+      + '<div class="empty-state-arrow">↘</div>'
+      + '</div>';
+  }
+  if (type === 'ol-fresh') {
+    return '<div class="empty-state" style="padding:20px 16px">'
+      + '<div class="empty-state-icon" style="font-size:32px">📋</div>'
+      + '<div class="empty-state-desc">「+ 追加」からフレッシュを追加</div>'
+      + '</div>';
+  }
+  if (type === 'ol-gold') {
+    return '<div class="empty-state" style="padding:20px 16px">'
+      + '<div class="empty-state-icon" style="font-size:32px">🚢</div>'
+      + '<div class="empty-state-desc">「+ 追加」からタスクを追加</div>'
+      + '</div>';
+  }
+  return '<div class="empty">' + (state.isEditor ? '＋ボタンでメンバーを追加' : 'データがありません') + '</div>';
+}
+
+// #4 モーダルセクション折りたたみ
+function toggleModalSection(id) {
+  var sec = document.getElementById(id);
+  if (sec) sec.classList.toggle('collapsed');
+}
+
+// #2 FABクリック — 親選択メニュー
+function onFabClick() {
+  if (!state.isEditor) return;
+  var members = membersForMap(currentView === 'ideal' ? 'ideal' : 'current');
+  if (members.length === 0) {
+    // メンバーがいない → そのまま追加
+    selectedParentId = null;
+    openAdd();
+    return;
+  }
+  var menu = document.getElementById('fabMenu');
+  if (menu.classList.contains('open')) {
+    menu.classList.remove('open');
+    return;
+  }
+  // メンバーリストを生成
+  var html = '<div class="fab-menu-hdr">誰の直下に追加？</div>';
+  // ツリー順に表示
+  function buildMenuItems(parentId, depth) {
+    var kids = [];
+    for (var i=0; i<members.length; i++) {
+      if ((members[i].parentId||'') === parentId) kids.push(members[i]);
+    }
+    kids.forEach(function(m) {
+      var name = (m.lastName||'') + ' ' + (m.firstName||'');
+      html += '<div class="fab-menu-item" onclick="fabSelectParent(\'' + m.id + '\')">'
+        + '<span class="fmi-depth">' + depth + '</span>'
+        + '<span class="fmi-name">' + name + '</span>'
+        + '<span style="font-size:10px;color:var(--text-dim)">' + (m.title||'') + '</span>'
+        + '</div>';
+      buildMenuItems(m.id, depth + 1);
+    });
+  }
+  buildMenuItems('', 0);
+  menu.innerHTML = html;
+  menu.classList.add('open');
+  // 外側タップで閉じる
+  setTimeout(function() {
+    document.addEventListener('click', closeFabMenu);
+  }, 0);
+}
+function fabSelectParent(id) {
+  selectedParentId = id;
+  closeFabMenu();
+  openAdd();
+}
+function closeFabMenu() {
+  var menu = document.getElementById('fabMenu');
+  if (menu) menu.classList.remove('open');
+  document.removeEventListener('click', closeFabMenu);
+}
+
 function openAdd() {
   if (!state.isEditor) return;
   window._tempNewMember = null; // 一時データリセット
@@ -3535,6 +3748,11 @@ function openAdd() {
     pl.textContent = '📍 トップ（0段目）に追加';
     pl.style.display = '';
   }
+  // 新規追加 → 基本情報を展開、月次も展開
+  var msB = document.getElementById('msBasic');
+  var msM = document.getElementById('msMonthly');
+  if (msB) msB.classList.remove('collapsed');
+  if (msM) msM.classList.remove('collapsed');
   document.getElementById('modal').classList.add('open');
   // カテゴリとタイトルをモーダル表示後にセット
   setTimeout(function() {
@@ -3599,6 +3817,11 @@ function openEdit(id) {
     selTrainee(fTrainee, true);
     selMapType(fMapType, true);
 
+    // 編集時 → 基本情報を折りたたみ、月次を展開
+    var msB = document.getElementById('msBasic');
+    var msM = document.getElementById('msMonthly');
+    if (msB) msB.classList.add('collapsed');
+    if (msM) msM.classList.remove('collapsed');
     // モーダルを開く
     document.getElementById('modal').classList.add('open');
 
@@ -3787,9 +4010,10 @@ function saveMember() {
 }
 function deleteMember() {
   if (!editingId || !confirm('削除しますか？')) return;
+  var delId = editingId;
   var delParent = '';
   for (var di=0; di<state.members.length; di++) {
-    if (state.members[di].id === editingId) {
+    if (state.members[di].id === delId) {
       state.members[di].deleted = true;
       delParent = state.members[di].parentId || '';
       break;
@@ -3797,12 +4021,19 @@ function deleteMember() {
   }
   // 子を親に付け替え
   for (var ci=0; ci<state.members.length; ci++) {
-    if (state.members[ci].parentId === editingId) {
+    if (state.members[ci].parentId === delId) {
       state.members[ci].parentId = delParent;
     }
   }
   closeModal();
-  renderCurrentView();
+  // #7 削除アニメーション
+  var nw = document.getElementById('nw-' + delId);
+  if (nw) {
+    nw.classList.add('removing');
+    setTimeout(function() { renderCurrentView(); }, 250);
+  } else {
+    renderCurrentView();
+  }
   autoSave();
 }
 
@@ -4590,6 +4821,9 @@ function loadShareUserList() {
       listEl.appendChild(em);
       return;
     }
+    // #6 共有チップ用にデータ保存
+    state.shareUsers = docs.map(function(d) { return { email: d.email || '', perm: d.perm || 'view' }; });
+    renderShareChips();
     docs.forEach(function(d) {
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)';
