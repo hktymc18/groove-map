@@ -705,7 +705,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v134</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v135</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1368,7 +1368,7 @@ function renderPCMap(mapType) {
   });
 
   // ノードサイズ・間隔（カード型）
-  var NODE_W = 190, NODE_H = 76, NODE_RX = 10;
+  var NODE_W = 210, NODE_H = 62, NODE_RX = 10;
   var NODE_R = Math.max(NODE_W, NODE_H) / 2; // 互換用
   var MIN_GAP = NODE_R * 2.0;
 
@@ -1623,22 +1623,21 @@ function renderPCMap(mapType) {
     // やる気: カード枠外の左上
     if(m.morale>0){
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
-      g.appendChild(txt(rx, ry2-4, emoji, '#fff', 16, null, 'Inter,monospace'));
+      g.appendChild(txt(rx+2, ry2-5, emoji, '#fff', 16, null, 'Inter,monospace'));
     }
-    // 上段: 名前（大きく）+ 稼働（右寄せ）
-    g.appendChild(txt(rx+10, ry2+26, nameStr, isF?'#f9a8d4':'#e8eaf0', 18, '700', 'Noto Sans JP,sans-serif'));
+    // 1行目: 名前（左・大）+ 稼働（右）
+    g.appendChild(txt(rx+14, ry2+28, nameStr, isF?'#f9a8d4':'#e8eaf0', 18, '700', 'Noto Sans JP,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#f59e0b';
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
-      g.appendChild(txt(rx+NODE_W-10, ry2+26, actStr, ac, 15, '600', 'IBM Plex Mono,monospace', 'end'));
+      g.appendChild(txt(rx+NODE_W-14, ry2+28, actStr, ac, 15, '600', 'IBM Plex Mono,monospace', 'end'));
     }
-    // 中段: タイトル（左）
-    g.appendChild(txt(rx+10, ry2+48, m.title||'-', cc, 15, '500'));
-    // 下段: GSV + (固定PT)
+    // 2行目: タイトル（左）+ GSV (固定PT)（右）
+    g.appendChild(txt(rx+14, ry2+52, m.title||'-', cc, 15, '500'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
-    var fixStr = m.ptFixed>0 ? ' (' + m.ptFixed.toLocaleString() + ')' : '';
-    g.appendChild(txt(rx+10, ry2+68, gsvStr, '#e8eaf0', 15, '600', 'Inter,monospace'));
-    if(fixStr) g.appendChild(txt(rx+10 + gsvStr.length*9, ry2+68, fixStr, '#9ca3af', 13, null, 'Inter,monospace'));
+    var fixStr = m.ptFixed>0 ? '(' + m.ptFixed.toLocaleString() + ')' : '';
+    var ptRight = gsvStr + (fixStr ? ' ' + fixStr : '');
+    g.appendChild(txt(rx+NODE_W-14, ry2+52, ptRight, '#e8eaf0', 14, '500', 'Inter,monospace', 'end'));
 
     // ドラッグ
     (function(mid,ng,np){
@@ -1917,7 +1916,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v134';
+  var DATA_VERSION = 'v135';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
