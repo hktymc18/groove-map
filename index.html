@@ -500,6 +500,38 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .pc-tooltip-label{color:var(--text-dim);font-size:11px}
 .pc-tooltip-val{font-family:'IBM Plex Mono',monospace;font-size:11px}
 
+/* ── 研修履歴リニューアル ── */
+.th-timeline{position:relative;padding-left:20px}
+.th-timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--border)}
+.th-entry{position:relative;padding:8px 0 12px;animation:fadeSlideIn .2s ease-out}
+.th-entry::before{content:'';position:absolute;left:-17px;top:12px;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);z-index:1}
+.th-entry.result-bc::before{background:var(--accent);border-color:var(--accent)}
+.th-entry.result-left::before{background:var(--red);border-color:var(--red)}
+.th-step-name{font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--accent)}
+.th-entry.result-left .th-step-name{color:var(--red)}
+.th-meta{display:flex;gap:8px;align-items:center;margin-top:2px;font-size:11px;color:var(--text-dim)}
+.th-del{position:absolute;right:0;top:8px;color:var(--text-dim);font-size:14px;cursor:pointer;padding:2px 4px;opacity:0.4;transition:opacity .15s}
+.th-del:hover{opacity:1;color:var(--red)}
+
+/* ステップ選択UI */
+.step-flow{display:flex;gap:0;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.step-flow-item{display:flex;align-items:center;flex-shrink:0}
+.step-btn{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);transition:all .15s;white-space:nowrap}
+.step-btn:active{transform:scale(0.95)}
+.step-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.step-arrow{font-size:10px;color:var(--border2);margin:0 2px;flex-shrink:0}
+
+/* ステップ詳細入力（選択後に表示） */
+.step-detail{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-top:8px;animation:fadeSlideIn .2s ease-out}
+.step-detail-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.step-detail-badge{background:var(--accent);color:#000;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+
+/* 結果チップ */
+.result-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface3);color:var(--text-dim);transition:all .15s}
+.result-chip:active{transform:scale(0.95)}
+.result-chip.sel-next{background:rgba(0,212,170,0.15);border-color:var(--accent);color:var(--accent)}
+.result-chip.sel-left{background:rgba(239,68,68,0.15);border-color:var(--red);color:var(--red)}
+
 /* カード内クイックアクション */
 .card-quick-add{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);color:var(--accent);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s;z-index:5;line-height:1}
 .nc:hover .card-quick-add{opacity:1}
@@ -570,7 +602,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div class="share-chips" id="shareChips"></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v125</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v126</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -889,45 +921,39 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
           <span class="ms-label">📋 研修情報</span><span class="ms-arrow">▼</span>
         </div>
         <div class="modal-section-body" style="max-height:800px">
-          <div class="fr-row">
-            <div class="fr">
-              <label class="fl">研修結果</label>
-              <select class="fs" id="fTraineeResult">
-                <option value="">進行中</option>
-                <option value="BC">BC（成約）</option>
-                <option value="ユーザー">ユーザー（△）</option>
-                <option value="流れた">流れた（NG）</option>
-              </select>
-            </div>
-          </div>
+          <!-- 研修結果 -->
           <div class="fr">
-            <label class="fl">研修履歴</label>
-            <div style="width:100%">
-              <div id="traineeHistoryWrap" style="margin-bottom:10px"></div>
-              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px">
-                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:IBM Plex Mono,monospace;text-transform:uppercase;letter-spacing:1px">履歴を追加</div>
-                <div style="display:flex;gap:6px;margin-bottom:8px">
-                  <input class="fi" id="fHistoryDate" type="date" style="flex:1;font-size:16px;padding:6px 8px" onchange="this.blur()">
-                  <input class="fi" id="fHistoryASan" type="text" style="flex:1;font-size:13px;padding:6px 8px" placeholder="Aさん">
-                </div>
-                <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-                  <div class="sf-chip" onclick="addTraineeHistory('マケ')" style="font-size:12px">マケ</div>
-                  <div class="sf-chip" onclick="addTraineeHistory('PG')" style="font-size:12px">PG</div>
-                  <div class="sf-chip" onclick="addTraineeHistory('DLR')" style="font-size:12px">DLR</div>
-                  <div class="sf-chip" onclick="addTraineeHistory('EXP')" style="font-size:12px">EXP</div>
-                  <div class="sf-chip" onclick="addTraineeHistory('PA')" style="font-size:12px">PA</div>
-                  <div class="sf-chip" onclick="addTraineeHistory('面談')" style="font-size:12px">面談</div>
-                  <div class="sf-chip" onclick="addTraineeHistory('CO')" style="font-size:12px">CO</div>
-                </div>
-                <div style="display:flex;gap:6px;align-items:center">
-                  <span style="font-size:12px;color:var(--text-dim);flex-shrink:0">このステップの結果</span>
-                  <div class="rg" style="gap:5px">
-                    <div class="rb sel" id="rbStepNext" onclick="selStepResult('next')" style="font-size:11px;padding:4px 10px">→ 次へ進んだ</div>
-                    <div class="rb" id="rbStepLeft" onclick="selStepResult('left')" style="font-size:11px;padding:4px 10px">✗ 離脱した</div>
-                  </div>
-                </div>
-              </div>
+            <label class="fl">研修結果</label>
+            <div style="display:flex;gap:6px">
+              <div class="result-chip" id="rcNone" onclick="selTraineeResultChip('')">⏳ 進行中</div>
+              <div class="result-chip" id="rcBC" onclick="selTraineeResultChip('BC')">✅ BC</div>
+              <div class="result-chip" id="rcUser" onclick="selTraineeResultChip('ユーザー')">△ ユーザー</div>
+              <div class="result-chip" id="rcNG" onclick="selTraineeResultChip('流れた')">✗ 流れた</div>
             </div>
+            <input type="hidden" id="fTraineeResult" value="">
+          </div>
+
+          <!-- 研修履歴タイムライン -->
+          <div class="fr">
+            <label class="fl" style="margin-bottom:8px">研修履歴</label>
+            <div id="traineeHistoryWrap" style="margin-bottom:12px"></div>
+          </div>
+
+          <!-- ステップ追加UI -->
+          <div class="fr">
+            <label class="fl" style="margin-bottom:6px">ステップを追加</label>
+            <!-- ステップフロー（プログレス表示） -->
+            <div class="step-flow" id="stepFlow">
+              <div class="step-flow-item"><div class="step-btn" onclick="selectStep('マケ')">マケ</div></div>
+              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('PG')">PG</div></div>
+              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('DLR')">DLR</div></div>
+              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('EXP')">EXP</div></div>
+              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('PA')">PA</div></div>
+              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('面談')">面談</div></div>
+              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('CO')">CO</div></div>
+            </div>
+            <!-- 選択後の詳細入力パネル -->
+            <div id="stepDetailPanel" style="display:none"></div>
           </div>
         </div>
       </div>
@@ -1707,7 +1733,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v125';
+  var DATA_VERSION = 'v126';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2394,64 +2420,83 @@ function recalcCommission() {
 // ── 研修履歴 ──
 var TRAINEE_STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
 
+// ── 研修履歴UI（リニューアル） ──
+function getTraineeMember() {
+  var m = null;
+  for (var j=0; j<state.members.length; j++) {
+    if (state.members[j].id === editingId) { m = state.members[j]; break; }
+  }
+  if (!m && !editingId) {
+    if (!window._tempNewMember) window._tempNewMember = { id:'__new__', traineeHistory:[], traineeStatus:'' };
+    m = window._tempNewMember;
+  }
+  return m;
+}
+
 function renderTraineeHistory(m) {
   var wrap = document.getElementById('traineeHistoryWrap');
   if (!wrap) return;
-  // 常にstateから最新のメンバーを取得
-  var member = null;
-  for (var j=0; j<state.members.length; j++) {
-    if (state.members[j].id === editingId) { member = state.members[j]; break; }
-  }
-  if (!member && !editingId && window._tempNewMember) member = window._tempNewMember;
+  var member = getTraineeMember();
   if (!member && m) member = m;
   wrap.innerHTML = '';
   var hist = member ? (member.traineeHistory || []) : [];
   if (hist.length === 0) {
-    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
+    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:8px 0;text-align:center">まだ記録なし</div>';
+    updateStepFlow(hist);
     return;
   }
+  // タイムライン表示
+  var timeline = document.createElement('div');
+  timeline.className = 'th-timeline';
   hist.forEach(function(h, i) {
-    var row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)';
-    var stepEl = document.createElement('div');
-    stepEl.style.cssText = 'background:var(--accent-dim);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:12px;font-family:IBM Plex Mono,monospace;flex-shrink:0';
-    stepEl.textContent = h.status||'';
-    var dateEl = document.createElement('div');
-    dateEl.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;flex-shrink:0';
-    dateEl.textContent = h.date||'';
-    var asanEl = document.createElement('div');
-    asanEl.style.cssText = 'font-size:12px;flex:1';
-    asanEl.textContent = h.aSan ? ('A: '+h.aSan) : '';
-    var resEl = document.createElement('div');
-    resEl.style.cssText = 'font-size:10px;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:IBM Plex Mono,monospace';
-    if (h.result === 'left') {
-      resEl.textContent = '離脱';
-      resEl.style.background = 'rgba(239,68,68,0.15)';
-      resEl.style.color = '#ef4444';
-    } else if (h.result === 'next') {
-      resEl.textContent = '→次';
-      resEl.style.background = 'rgba(0,212,170,0.1)';
-      resEl.style.color = 'var(--accent)';
-    }
-    var delEl = document.createElement('div');
-    delEl.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 6px;flex-shrink:0';
-    delEl.textContent = '\u2715';
-    (function(idx){
-      delEl.onclick = function() {
-        var m2 = null;
-        for (var k=0; k<state.members.length; k++) {
-          if (state.members[k].id === editingId) { m2 = state.members[k]; break; }
-        }
-        if (m2 && m2.traineeHistory) {
-          m2.traineeHistory.splice(idx, 1);
-          m2.traineeStatus = getLatestStatus(m2);
-          renderTraineeHistory(null);
-        }
+    var entry = document.createElement('div');
+    entry.className = 'th-entry' + (h.result === 'left' ? ' result-left' : ' result-bc');
+    var stepName = document.createElement('div');
+    stepName.className = 'th-step-name';
+    stepName.textContent = h.status || '';
+    entry.appendChild(stepName);
+    var meta = document.createElement('div');
+    meta.className = 'th-meta';
+    if (h.date) { var ds = document.createElement('span'); ds.textContent = h.date; meta.appendChild(ds); }
+    if (h.aSan) { var as2 = document.createElement('span'); as2.textContent = 'A: ' + h.aSan; meta.appendChild(as2); }
+    var rs = document.createElement('span');
+    rs.textContent = h.result === 'left' ? 'x 離脱' : '→ 次へ';
+    rs.style.color = h.result === 'left' ? 'var(--red)' : 'var(--accent)';
+    meta.appendChild(rs);
+    entry.appendChild(meta);
+    var del = document.createElement('div');
+    del.className = 'th-del';
+    del.textContent = 'x';
+    (function(idx) {
+      del.onclick = function() {
+        var m2 = getTraineeMember();
+        if (m2 && m2.traineeHistory) { m2.traineeHistory.splice(idx, 1); m2.traineeStatus = getLatestStatus(m2); renderTraineeHistory(null); autoSave(); }
       };
     })(i);
-    row.appendChild(stepEl); row.appendChild(dateEl); row.appendChild(asanEl); row.appendChild(resEl); row.appendChild(delEl);
-    wrap.appendChild(row);
+    entry.appendChild(del);
+    timeline.appendChild(entry);
   });
+  wrap.appendChild(timeline);
+  updateStepFlow(hist);
+  updateStepFlow(hist);
+}
+
+function updateStepFlow(hist) {
+  var reached = {};
+  (hist || []).forEach(function(h) { reached[h.status] = true; });
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.step-btn'));
+  for (var i=0; i<btns.length; i++) {
+    var label = btns[i].textContent.trim();
+    if (reached[label]) {
+      btns[i].style.background = 'var(--accent-dim)';
+      btns[i].style.borderColor = 'var(--accent)';
+      btns[i].style.color = 'var(--accent)';
+    } else {
+      btns[i].style.background = '';
+      btns[i].style.borderColor = '';
+      btns[i].style.color = '';
+    }
+  }
 }
 
 function getLatestStatus(m) {
@@ -2459,57 +2504,90 @@ function getLatestStatus(m) {
   return hist.length > 0 ? hist[hist.length-1].status : '';
 }
 
-var _stepResult = 'next'; // 'next' or 'left'
-
-function selStepResult(val) {
-  _stepResult = val;
-  var n = document.getElementById('rbStepNext');
-  var l = document.getElementById('rbStepLeft');
-  if (n) n.classList.toggle('sel', val === 'next');
-  if (l) l.classList.toggle('sel', val === 'left');
+// 研修結果チップ選択
+function selTraineeResultChip(val) {
+  var hidden = document.getElementById('fTraineeResult');
+  if (hidden) hidden.value = val;
+  var map = {rcNone:'', rcBC:'BC', rcUser:'ユーザー', rcNG:'流れた'};
+  var keys = ['rcNone','rcBC','rcUser','rcNG'];
+  for (var i=0; i<keys.length; i++) {
+    var el = document.getElementById(keys[i]);
+    if (!el) continue;
+    el.classList.remove('sel-next','sel-left');
+    el.style.cssText = '';
+    if (map[keys[i]] === val) {
+      if (keys[i] === 'rcBC') el.classList.add('sel-next');
+      else if (keys[i] === 'rcNG') el.classList.add('sel-left');
+      else { el.style.background = 'var(--surface3)'; el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--accent)'; }
+    }
+  }
 }
 
-function addTraineeHistory(status) {
-  var m = null;
-  // 編集中のメンバーを探す
-  for (var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m=state.members[j];break;}}
-  // 新規追加中（editingId=null）の場合は一時メンバーオブジェクトを使用
-  if (!m && !editingId) {
-    if (!window._tempNewMember) window._tempNewMember = { id:'__new__', traineeHistory:[], traineeStatus:'' };
-    m = window._tempNewMember;
+// ステップ選択 → 詳細パネル表示
+var _selectedStep = '';
+function selectStep(step) {
+  _selectedStep = step;
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.step-btn'));
+  for (var i=0; i<btns.length; i++) {
+    btns[i].classList.toggle('active', btns[i].textContent.trim() === step);
   }
+  var panel = document.getElementById('stepDetailPanel');
+  if (!panel) return;
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  panel.style.display = '';
+  panel.innerHTML = '<div class="step-detail">'
+    + '<div class="step-detail-hdr"><span class="step-detail-badge">' + step + '</span><span style="font-size:12px;color:var(--text-dim)"> の記録を追加</span></div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    + '<div style="flex:1"><label class="fl">日付</label><input class="fi" id="fHistoryDate" type="date" value="' + todayStr + '" style="font-size:14px;padding:8px" onchange="this.blur()"></div>'
+    + '<div style="flex:1"><label class="fl">Aさん</label><input class="fi" id="fHistoryASan" type="text" placeholder="名前" style="font-size:14px;padding:8px"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px"><label class="fl" style="margin-bottom:6px">結果</label>'
+    + '<div style="display:flex;gap:8px">'
+    + '<div class="result-chip sel-next" id="sdNext" onclick="selDetailResult(\'next\')" style="flex:1;justify-content:center">→ 次へ進んだ</div>'
+    + '<div class="result-chip" id="sdLeft" onclick="selDetailResult(\'left\')" style="flex:1;justify-content:center">x 離脱した</div>'
+    + '</div></div>'
+    + '<button class="btn-p" style="width:100%;padding:10px;font-size:14px" onclick="confirmAddHistory()">追加する</button>'
+    + '</div>';
+  window._detailResult = 'next';
+}
+function selDetailResult(val) {
+  window._detailResult = val;
+  var n = document.getElementById('sdNext');
+  var l = document.getElementById('sdLeft');
+  if (n) { n.classList.remove('sel-next','sel-left'); if (val==='next') n.classList.add('sel-next'); }
+  if (l) { l.classList.remove('sel-next','sel-left'); if (val==='left') l.classList.add('sel-left'); }
+}
+function confirmAddHistory() {
+  if (!_selectedStep) return;
+  var m = getTraineeMember();
   if (!m) return;
   if (!m.traineeHistory) m.traineeHistory = [];
-
   var dateEl = document.getElementById('fHistoryDate');
   var asanEl = document.getElementById('fHistoryASan');
   var date = dateEl ? dateEl.value : '';
-  var aSan = (asanEl ? asanEl.value.trim() : '');
-
-  // 日付未入力なら今日
+  var aSan = asanEl ? asanEl.value.trim() : '';
   if (!date) {
     var today = new Date();
     date = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-    if (dateEl) dateEl.value = date;
   }
-
-  // result: 'next'=次へ進んだ, 'left'=離脱した
-  m.traineeHistory.push({
-    status: status,
-    date: date,
-    aSan: aSan,
-    result: _stepResult
-  });
+  var addedStep = _selectedStep;
+  m.traineeHistory.push({ status: addedStep, date: date, aSan: aSan, result: window._detailResult || 'next' });
   m.traineeStatus = getLatestStatus(m);
-
-  // 即時保存（Firestore）
   autoSave();
-
   renderTraineeHistory(null);
-
-  // ステップボタンのリセット（次のステップを選びやすく）
-  selStepResult('next');
+  toast(addedStep + ' を追加しました');
+  var panel = document.getElementById('stepDetailPanel');
+  if (panel) panel.style.display = 'none';
+  _selectedStep = '';
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.step-btn'));
+  for (var i=0; i<btns.length; i++) btns[i].classList.remove('active');
 }
+
+// 後方互換
+var _stepResult = 'next';
+function selStepResult(val) { _stepResult = val; }
+
 
 // ── DIFF ──
 function renderDiffControls() {
@@ -2691,8 +2769,8 @@ function buildAutoStats() {
     else if (m.activity === 'A') counts.A++;
     else if (m.activity === 'B') counts.B++;
     else if (m.activity === 'C') counts.C++;
-    // 研修生判定：trainee=trueまたは研修履歴がある人
-    var isTrainee = m.trainee || (m.traineeHistory && m.traineeHistory.length > 0);
+    // 研修経験者判定：trainee=true、研修結果あり、または研修履歴がある人
+    var isTrainee = m.trainee || !!m.traineeResult || (m.traineeHistory && m.traineeHistory.length > 0);
     if (isTrainee && m.traineeResult === 'BC') counts.B1++;
     // マケ・PG = 履歴にマケまたはPGが含まれる人数
     var hist = m.traineeHistory || [];
@@ -3227,8 +3305,8 @@ function renderStats() {
   // ── 研修生ファネル ──
   var funnelWrap = document.getElementById('funnelWrap');
   if (funnelWrap) {
-    // 当月の研修生のみ: trainee=true または（結果あり＆まだtraineeフラグが立っている）
-    var trainees = state.members.filter(function(m){ return !!m.trainee || (!!m.traineeResult && m.trainee !== false); });
+    // 研修経験者: trainee=true、または研修結果あり、または研修履歴あり
+    var trainees = state.members.filter(function(m){ return !!m.trainee || !!m.traineeResult || (m.traineeHistory && m.traineeHistory.length > 0); });
     var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
     var RESULTS = [
       {key:'BC',     label:'BC（成約）',  color:'#00d4aa'},
@@ -3294,8 +3372,8 @@ function renderStats() {
   // ── Aさん別決定率 ──
   var asanWrap = document.getElementById('asanFunnelWrap');
   if (asanWrap) {
-    // 当月の研修生のみ
-    var trainees = state.members.filter(function(m){ return !!m.trainee || (!!m.traineeResult && m.trainee !== false); });
+    // 研修経験者
+    var trainees = state.members.filter(function(m){ return !!m.trainee || !!m.traineeResult || (m.traineeHistory && m.traineeHistory.length > 0); });
     // 履歴からAさんを全て集める
     var asanMap = {};
     trainees.forEach(function(m) {
@@ -3796,6 +3874,7 @@ function openEdit(id) {
     set('fInsta', m.instaUrl);
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
+    selTraineeResultChip(m.traineeResult||'');
     var hasTraineeData = m.trainee || (m.traineeHistory && m.traineeHistory.length > 0) || m.traineeResult;
     var tsf2=document.getElementById('traineeStatusFields');
     if (tsf2) tsf2.style.display = (hasTraineeData ? '' : 'none');
@@ -3868,6 +3947,9 @@ function clearForm() {
   var sel=document.getElementById('fTitle');
   if(sel){ sel.innerHTML='<option value="">カテゴリを選択してください</option>'; }
   document.getElementById('parentLabel').style.display='none';
+  selTraineeResultChip('');
+  var sdp = document.getElementById('stepDetailPanel');
+  if (sdp) sdp.style.display = 'none';
   selGender('male',true); selTrainee(false,true);
   selMapType(currentView==='stats'?'current':currentView,true);
 }
