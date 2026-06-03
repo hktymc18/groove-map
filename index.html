@@ -641,7 +641,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v127</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v128</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1793,7 +1793,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v127';
+  var DATA_VERSION = 'v128';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5007,16 +5007,25 @@ function addShareUser() {
     addedAt: new Date().toISOString()
   });
 
-  Promise.all ? Promise.all([p1, p2]).then(function() {
-    toast(email + ' に共有しました ✓');
+  // p1（自分のmaps配下）を先に実行、成功したらp2（sharedWith）を実行
+  p1.then(function() {
+    return p2;
+  }).then(function() {
+    toast(email + ' に共有しました');
     document.getElementById('shareEmail').value = '';
     loadShareUserList();
-  }).catch(function(e){ toast('エラー: ' + e.message); })
-  : p1.then(function(){ return p2; }).then(function(){
-    toast(email + ' に共有しました ✓');
-    document.getElementById('shareEmail').value = '';
-    loadShareUserList();
-  }).catch(function(e){ toast('エラー: ' + e.message); });
+  }).catch(function(e) {
+    // p2が失敗してもp1（オーナー側）は成功しているのでリスト更新
+    console.log('share error detail:', e.message);
+    if (e.message && e.message.indexOf('permission') >= 0) {
+      // sharedWith書き込み失敗 — p1は成功済みなのでリスト更新
+      toast(email + ' に共有しました（受信側通知は手動で伝えてください）');
+      document.getElementById('shareEmail').value = '';
+      loadShareUserList();
+    } else {
+      toast('エラー: ' + e.message);
+    }
+  });
 }
 
 function removeShareUser(id) {
