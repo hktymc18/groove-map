@@ -69,14 +69,36 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
   .pc-map-wrap { display: none !important; }
   .pc-table-wrap { display: none !important; }
   .pc-view-toggle { display: none !important; }
+  .pc-toolbar { display: none !important; }
   .mobile-tree { display: block; }
 }
+/* PC時にモバイル用バナー/検索/段数/ヒントを非表示 */
+@media (min-width: 768px) {
+  #view-current > .banner,
+  #view-current > .export-bar,
+  #view-current > .edit-hint,
+  #view-current > #depthFilterWrap,
+  #view-current > #searchBar,
+  #view-ideal > .banner { display: none !important; }
+}
 
-/* ── PC ビュー切替 ── */
-.pc-view-toggle{display:none;gap:4px;padding:6px 14px 0;align-items:center}
-@media(min-width:768px){.pc-view-toggle{display:flex}}
-.pv-btn{padding:5px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:all .15s;font-family:'IBM Plex Mono',monospace}
+/* ── PC ツールバー（統合版） ── */
+.pc-toolbar{display:none;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);background:rgba(13,15,20,.6);flex-wrap:wrap}
+@media(min-width:768px){.pc-toolbar{display:flex}}
+.pc-toolbar .pt-ltsv{display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;padding:4px 12px;border-radius:8px;background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2)}
+.pc-toolbar .pt-ltsv-val{font-size:18px;font-weight:700;color:var(--accent)}
+.pc-toolbar .pt-ltsv-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.pc-toolbar .pt-act{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-mid)}
+.pc-toolbar .pt-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.pv-btn{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:all .15s;font-family:'IBM Plex Mono',monospace}
 .pv-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.pc-toolbar .pt-search{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0 12px;height:32px;min-width:180px;cursor:pointer;flex:1;max-width:300px}
+.pc-toolbar .pt-search span{font-size:13px;color:var(--text-dim)}
+.pc-toolbar .pt-action{padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);background:transparent;transition:all .15s;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.pc-toolbar .pt-action:hover{background:var(--surface2);color:var(--text)}
+
+/* 旧PC切替ボタン（非表示） */
+.pc-view-toggle{display:none}
 
 /* ── PC テーブルビュー ── */
 .pc-table-wrap{display:none;width:100%;overflow-x:auto;padding:0 14px 80px}
@@ -683,7 +705,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v130</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v131</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -752,10 +774,26 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
         </div>
       </div>
     </div>
-    <div class="pc-view-toggle" id="pcViewToggle">
-      <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')">&#x1F333; ツリー</div>
-      <div class="pv-btn" id="pvTable" onclick="switchPCView('table')">&#x1F4CA; テーブル</div>
-      <span style="font-size:11px;color:var(--text-dim);margin-left:8px" id="searchResultCount"></span>
+    <!-- PC統合ツールバー -->
+    <div class="pc-toolbar" id="pcToolbarC">
+      <div class="pt-ltsv" onclick="showLtsvDetail()">
+        <div><div class="pt-ltsv-label">LTSV</div><div class="pt-ltsv-val" id="pcLtsvC">-</div></div>
+        <div class="pt-act">稼働 <span id="pcActC">-</span></div>
+      </div>
+      <div class="pt-sep"></div>
+      <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')">ツリー</div>
+      <div class="pv-btn" id="pvTable" onclick="switchPCView('table')">テーブル</div>
+      <div class="pt-sep"></div>
+      <div class="pt-search" onclick="openSearchModal()">
+        <span style="font-size:13px">🔍</span>
+        <span id="pcSearchText" style="font-size:12px;color:var(--text-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">検索</span>
+        <span id="pcSearchClear" style="display:none;font-size:14px;color:var(--text-dim);cursor:pointer" onclick="event.stopPropagation();clearSearch()">✕</span>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <div class="pt-action" onclick="exportCSV('current')">CSV</div>
+        <div class="pt-action" id="pcShareBtn" onclick="openShareModal()" style="display:none">共有</div>
+        <span style="font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace" id="searchResultCount"></span>
+      </div>
     </div>
     <div class="sec-label mobile-tree">組織ツリー</div>
     <div class="pc-map-wrap" id="pcMapCurrent"></div>
@@ -770,9 +808,14 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div class="banner-sub">コミッション<span id="commTotal">-</span></div>
     </div>
     <div id="commTableWrap"></div>
-    <div class="pc-view-toggle" id="pcViewToggleIdeal">
-      <div class="pv-btn active" id="pvTreeI" onclick="switchPCView('tree')">&#x1F333; ツリー</div>
-      <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">&#x1F4CA; テーブル</div>
+    <!-- PC統合ツールバー(理想) -->
+    <div class="pc-toolbar" id="pcToolbarI">
+      <div class="pt-ltsv" style="border-color:rgba(124,106,255,.3);background:rgba(124,106,255,.06)">
+        <div><div class="pt-ltsv-label">LTSV 目標</div><div class="pt-ltsv-val" id="pcLtsvI" style="color:var(--purple)">-</div></div>
+      </div>
+      <div class="pt-sep"></div>
+      <div class="pv-btn active" id="pvTreeI" onclick="switchPCView('tree')">ツリー</div>
+      <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">テーブル</div>
     </div>
     <div class="sec-label mobile-tree">目標ツリー</div>
     <div class="pc-map-wrap" id="pcMapIdeal"></div>
@@ -1324,8 +1367,9 @@ function renderPCMap(mapType) {
     if(d>maxD) maxD=d;
   });
 
-  // ノードサイズ・間隔
-  var NODE_R = 28;
+  // ノードサイズ・間隔（カード型）
+  var NODE_W = 120, NODE_H = 52, NODE_RX = 8;
+  var NODE_R = Math.max(NODE_W, NODE_H) / 2; // 互換用
   var MIN_GAP = NODE_R * 2.2;
 
   // 再帰的角度係数(ra): 各サブツリーが全段で重ならないために必要な角度を
@@ -1546,27 +1590,50 @@ function renderPCMap(mapType) {
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('class','oval-node'); g.setAttribute('data-mid',m.id); g.style.cursor='grab';
 
-    var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    ci.setAttribute('cx',pos.x); ci.setAttribute('cy',pos.y); ci.setAttribute('r',NODE_R);
-    ci.setAttribute('fill',cf); ci.setAttribute('stroke',cc); ci.setAttribute('stroke-width',isT?'2.5':'1.5');
-    g.appendChild(ci);
+    // カード型ノード（角丸長方形）
+    var rx=pos.x-NODE_W/2, ry2=pos.y-NODE_H/2;
+    var rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',rx); rect.setAttribute('y',ry2);
+    rect.setAttribute('width',NODE_W); rect.setAttribute('height',NODE_H);
+    rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
+    rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
+    rect.setAttribute('stroke-width',isT||isPcLOI?'2':'1');
+    g.appendChild(rect);
 
-    function txt(y,content,fill,fs,fw,ff){
+    // 系列カラー左ボーダー
+    var lb=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    lb.setAttribute('x',rx); lb.setAttribute('y',ry2+3);
+    lb.setAttribute('width','3'); lb.setAttribute('height',NODE_H-6);
+    lb.setAttribute('rx','1.5'); lb.setAttribute('fill',col);
+    g.appendChild(lb);
+
+    function txt(x,y,content,fill,fs,fw,ff,anchor){
       var t=document.createElementNS('http://www.w3.org/2000/svg','text');
-      t.setAttribute('x',pos.x); t.setAttribute('y',y); t.setAttribute('text-anchor','middle');
+      t.setAttribute('x',x); t.setAttribute('y',y);
+      t.setAttribute('text-anchor',anchor||'start');
       t.setAttribute('fill',fill); t.setAttribute('font-size',fs+'px');
       if(fw) t.setAttribute('font-weight',fw);
       t.setAttribute('font-family',ff||'IBM Plex Mono,monospace');
       t.setAttribute('pointer-events','none'); t.textContent=content;
       return t;
     }
-    g.appendChild(txt(pos.y-NODE_R*0.35, m.title||'-', cc, Math.max(9,NODE_R*0.28)));
-    g.appendChild(txt(pos.y+NODE_R*0.1, ((m.lastName||'')+(m.firstName||'')).substring(0,5), isF?'#f9a8d4':'#e8eaf0', Math.max(10,NODE_R*0.32), '700', 'Noto Sans JP,sans-serif'));
-    g.appendChild(txt(pos.y+NODE_R*0.52, m.ptCurrent>0?m.ptCurrent.toLocaleString():'-', '#666', Math.max(8,NODE_R*0.25), null, 'Inter,monospace'));
-    if(m.morale>0) g.appendChild(txt(pos.y+NODE_R*0.82, ['','🌱','💪','🔥'][Math.min(m.morale,3)]||'', '#fff', Math.max(9,NODE_R*0.3)));
+
+    // 上段: 名前（左寄せ）+ 稼働（右寄せ）
+    var nameStr = ((m.lastName||'')+(m.firstName||'')).substring(0,7);
+    g.appendChild(txt(rx+8, ry2+19, nameStr, isF?'#f9a8d4':'#e8eaf0', 12, '700', 'Noto Sans JP,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#888';
-      g.appendChild(txt(pos.y-NODE_R-5, m.activity+(m.actRate?m.actRate+'%':''), ac, Math.max(8,NODE_R*0.27)));
+      var actStr=m.activity==='S'?'S':m.activity+(m.actRate?m.actRate+'%':'');
+      g.appendChild(txt(rx+NODE_W-8, ry2+19, actStr, ac, 10, '600', 'IBM Plex Mono,monospace', 'end'));
+    }
+    // 下段: タイトル（左）+ GSV（右）
+    g.appendChild(txt(rx+8, ry2+36, m.title||'-', cc, 10));
+    var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'-';
+    g.appendChild(txt(rx+NODE_W-8, ry2+36, gsvStr, '#888', 10, null, 'Inter,monospace', 'end'));
+    // やる気（右下）
+    if(m.morale>1){
+      var emoji=['','','💪','🔥'][Math.min(m.morale,3)]||'';
+      g.appendChild(txt(rx+NODE_W-8, ry2+48, emoji, '#fff', 9, null, 'Inter,monospace', 'end'));
     }
 
     // ドラッグ
@@ -1846,7 +1913,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v130';
+  var DATA_VERSION = 'v131';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2655,11 +2722,16 @@ function updateLTSV(mapType, members) {
     if (LTSV_BR_PLUS.indexOf(t) >= 0) return s + (m.ptCurrent||0);
     return s;
   },0);
+  var actCnt = members.filter(function(m){return m.activity;}).length;
   if (mapType === 'current') {
     document.getElementById('ltsvC').textContent = ltsv.toLocaleString();
-    document.getElementById('actCount').textContent = members.filter(function(m){return m.activity;}).length;
+    document.getElementById('actCount').textContent = actCnt;
+    // PCツールバー更新
+    var pcL = document.getElementById('pcLtsvC'); if (pcL) pcL.textContent = ltsv.toLocaleString();
+    var pcA = document.getElementById('pcActC'); if (pcA) pcA.textContent = actCnt;
   } else {
     document.getElementById('ltsvI').textContent = ltsv.toLocaleString();
+    var pcLI = document.getElementById('pcLtsvI'); if (pcLI) pcLI.textContent = ltsv.toLocaleString();
   }
 }
 
@@ -5266,6 +5338,8 @@ function loginSuccess(user) {
   // 共有・保存ボタンを表示
   var sb = document.getElementById('shareBtn');
   if (sb) sb.style.display = '';
+  var pcSb = document.getElementById('pcShareBtn');
+  if (pcSb) pcSb.style.display = '';
   var saveBtn = document.getElementById('saveBtn');
   if (saveBtn && state.isEditor) saveBtn.style.display = '';
   // Firestoreからデータ読み込み + 共有MAP確認
