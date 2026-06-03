@@ -67,8 +67,50 @@ header{flex-shrink:0;background:rgba(13,15,20,.97);border-bottom:1px solid var(-
 }
 @media (max-width: 767px) {
   .pc-map-wrap { display: none !important; }
+  .pc-table-wrap { display: none !important; }
+  .pc-view-toggle { display: none !important; }
   .mobile-tree { display: block; }
 }
+
+/* ── PC ビュー切替 ── */
+.pc-view-toggle{display:none;gap:4px;padding:6px 14px 0;align-items:center}
+@media(min-width:768px){.pc-view-toggle{display:flex}}
+.pv-btn{padding:5px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:all .15s;font-family:'IBM Plex Mono',monospace}
+.pv-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+/* ── PC テーブルビュー ── */
+.pc-table-wrap{display:none;width:100%;overflow-x:auto;padding:0 14px 80px}
+@media(min-width:768px){.pc-table-wrap.show{display:block}}
+.org-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:auto}
+.org-table thead{position:sticky;top:0;z-index:5}
+.org-table th{background:var(--surface2);padding:8px 10px;color:var(--text-dim);font-weight:500;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;cursor:pointer;white-space:nowrap;user-select:none}
+.org-table th:hover{color:var(--accent)}
+.org-table th .sort-arrow{font-size:10px;margin-left:4px;opacity:0.5}
+.org-table th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+.org-table td{padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:middle}
+.org-table tr:hover{background:var(--surface2)}
+.org-table tr.selected-row{background:var(--accent-dim);box-shadow:inset 3px 0 0 var(--accent)}
+.org-table .col-depth{width:36px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.org-table .col-family{width:6px;padding:0}
+.org-table .col-family-dot{width:4px;height:24px;border-radius:2px}
+.org-table .col-name{font-weight:700;font-size:14px;min-width:100px}
+.org-table .col-name.male{color:var(--male)}
+.org-table .col-name.female{color:var(--female)}
+.org-table .col-title{font-family:'IBM Plex Mono',monospace;font-size:12px}
+.org-table .col-act{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px}
+.org-table .col-gsv{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;text-align:right;min-width:70px}
+.org-table .col-fixed{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);text-align:right}
+.org-table .col-morale{text-align:center;font-size:16px}
+.org-table .col-trainee{font-size:11px}
+.org-table .col-memo{font-size:11px;color:var(--text-mid);max-width:200px;overflow:hidden;text-overflow:ellipsis}
+/* インライン編集 */
+.org-table .editable{cursor:pointer;border-radius:4px;padding:2px 6px;transition:background .12s}
+.org-table .editable:hover{background:rgba(255,255,255,.06)}
+.org-table .inline-input{background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:3px 6px;font-size:13px;font-family:'IBM Plex Mono',monospace;width:80px;outline:none}
+/* テーブルフィルター */
+.tbl-filter-bar{display:flex;gap:6px;padding:8px 0;flex-wrap:wrap;align-items:center}
+.tbl-filter-chip{padding:3px 10px;border-radius:12px;font-size:11px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'IBM Plex Mono',monospace;transition:all .15s}
+.tbl-filter-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 
 /* PC楕円ノード */
 .oval-node {
@@ -641,7 +683,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v129</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v130</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -710,8 +752,14 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
         </div>
       </div>
     </div>
-    <div class="sec-label">組織ツリー <span id="searchResultCount" style="color:var(--accent);font-size:11px"></span></div>
+    <div class="pc-view-toggle" id="pcViewToggle">
+      <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')">&#x1F333; ツリー</div>
+      <div class="pv-btn" id="pvTable" onclick="switchPCView('table')">&#x1F4CA; テーブル</div>
+      <span style="font-size:11px;color:var(--text-dim);margin-left:8px" id="searchResultCount"></span>
+    </div>
+    <div class="sec-label mobile-tree">組織ツリー</div>
     <div class="pc-map-wrap" id="pcMapCurrent"></div>
+    <div class="pc-table-wrap" id="pcTableCurrent"></div>
     <div class="mobile-tree tree" id="treeCurrent"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
   </div>
 
@@ -722,8 +770,13 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div class="banner-sub">コミッション<span id="commTotal">-</span></div>
     </div>
     <div id="commTableWrap"></div>
-    <div class="sec-label">目標ツリー</div>
+    <div class="pc-view-toggle" id="pcViewToggleIdeal">
+      <div class="pv-btn active" id="pvTreeI" onclick="switchPCView('tree')">&#x1F333; ツリー</div>
+      <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">&#x1F4CA; テーブル</div>
+    </div>
+    <div class="sec-label mobile-tree">目標ツリー</div>
     <div class="pc-map-wrap" id="pcMapIdeal"></div>
+    <div class="pc-table-wrap" id="pcTableIdeal"></div>
     <div class="mobile-tree tree" id="treeIdeal"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
   </div>
 
@@ -1793,7 +1846,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v129';
+  var DATA_VERSION = 'v130';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -1925,6 +1978,326 @@ function renderCurrentView() {
   else if (currentView === 'ol') renderOL();
 }
 
+// ── PC ビュー切替 ──
+var _pcView = 'tree'; // 'tree' | 'table'
+function switchPCView(view) {
+  _pcView = view;
+  // ボタン状態
+  var ids = ['pvTree','pvTable','pvTreeI','pvTableI'];
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var isTree = id.indexOf('Tree') >= 0;
+    el.classList.toggle('active', (isTree && view === 'tree') || (!isTree && view === 'table'));
+  });
+  // 表示切替
+  var treeC = document.getElementById('pcMapCurrent');
+  var treeI = document.getElementById('pcMapIdeal');
+  var tblC = document.getElementById('pcTableCurrent');
+  var tblI = document.getElementById('pcTableIdeal');
+  if (treeC) treeC.style.display = view === 'tree' ? '' : 'none';
+  if (treeI) treeI.style.display = view === 'tree' ? '' : 'none';
+  if (tblC) tblC.classList.toggle('show', view === 'table');
+  if (tblI) tblI.classList.toggle('show', view === 'table');
+  if (view === 'table') {
+    if (currentView === 'current') renderPCTable('current');
+    else if (currentView === 'ideal') renderPCTable('ideal');
+  }
+}
+
+// ── PC テーブルビュー ──
+var _tblSort = { col: 'depth', asc: true };
+var _tblFilterDepth = null;
+var _tblFilterAct = '';
+
+function renderPCTable(mapType) {
+  var containerId = mapType === 'current' ? 'pcTableCurrent' : 'pcTableIdeal';
+  var wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  var members = membersForMap(mapType);
+  if (!members || members.length === 0) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし</div>';
+    return;
+  }
+
+  // 各メンバーの深さ・系列カラーを計算
+  var COLORS = ['#00d4aa','#7c6aff','#f59e0b','#ef4444','#3b82f6','#10b981','#f97316','#8b5cf6'];
+  var depthMap = {};
+  var familyMap = {};
+  var roots = members.filter(function(m) { return !m.parentId; });
+
+  function calcDepth(id, d) {
+    depthMap[id] = d;
+    members.filter(function(m) { return m.parentId === id; }).forEach(function(m) { calcDepth(m.id, d + 1); });
+  }
+  roots.forEach(function(r) { calcDepth(r.id, 0); });
+
+  // 系列カラー
+  roots.forEach(function(r) {
+    familyMap[r.id] = COLORS[0];
+    var fKids = members.filter(function(m) { return m.parentId === r.id; });
+    fKids.forEach(function(kid, fi) {
+      var col = COLORS[(fi + 1) % COLORS.length];
+      function setColor(id, c) {
+        familyMap[id] = c;
+        members.filter(function(m) { return m.parentId === id; }).forEach(function(m) { setColor(m.id, c); });
+      }
+      setColor(kid.id, col);
+    });
+  });
+
+  // ツリー順でフラット配列にする
+  var flatList = [];
+  function walkTree(id) {
+    var m = null;
+    for (var i = 0; i < members.length; i++) { if (members[i].id === id) { m = members[i]; break; } }
+    if (!m) return;
+    flatList.push(m);
+    members.filter(function(c) { return c.parentId === id; }).forEach(function(c) { walkTree(c.id); });
+  }
+  roots.forEach(function(r) { walkTree(r.id); });
+
+  // フィルタ
+  var filtered = flatList.filter(function(m) {
+    if (_tblFilterDepth !== null && depthMap[m.id] !== _tblFilterDepth) return false;
+    if (_tblFilterAct && m.activity !== _tblFilterAct) return false;
+    return true;
+  });
+
+  // ソート
+  if (_tblSort.col !== 'tree') {
+    filtered.sort(function(a, b) {
+      var va, vb;
+      switch (_tblSort.col) {
+        case 'depth': va = depthMap[a.id]||0; vb = depthMap[b.id]||0; break;
+        case 'name': va = (a.lastName||'')+(a.firstName||''); vb = (b.lastName||'')+(b.firstName||''); break;
+        case 'title': va = a.title||''; vb = b.title||''; break;
+        case 'activity': va = a.activity||'Z'; vb = b.activity||'Z'; break;
+        case 'gsv': va = a.ptCurrent||0; vb = b.ptCurrent||0; break;
+        case 'fixed': va = a.ptFixed||0; vb = b.ptFixed||0; break;
+        case 'morale': va = a.morale||0; vb = b.morale||0; break;
+        default: va = depthMap[a.id]||0; vb = depthMap[b.id]||0;
+      }
+      if (typeof va === 'string') return _tblSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+      return _tblSort.asc ? va - vb : vb - va;
+    });
+  }
+
+  // フィルターバー
+  var filterBar = document.createElement('div');
+  filterBar.className = 'tbl-filter-bar';
+
+  // 段数フィルター
+  var maxDepth = 0;
+  flatList.forEach(function(m) { if ((depthMap[m.id]||0) > maxDepth) maxDepth = depthMap[m.id]; });
+  var allChip = document.createElement('div');
+  allChip.className = 'tbl-filter-chip' + (_tblFilterDepth === null ? ' active' : '');
+  allChip.textContent = '全段 ' + flatList.length;
+  allChip.onclick = function() { _tblFilterDepth = null; renderPCTable(mapType); };
+  filterBar.appendChild(allChip);
+  for (var d = 0; d <= maxDepth; d++) {
+    (function(dd) {
+      var cnt = flatList.filter(function(m) { return depthMap[m.id] === dd; }).length;
+      if (cnt === 0) return;
+      var chip = document.createElement('div');
+      chip.className = 'tbl-filter-chip' + (_tblFilterDepth === dd ? ' active' : '');
+      chip.textContent = dd + '段 ' + cnt;
+      chip.onclick = function() { _tblFilterDepth = dd; renderPCTable(mapType); };
+      filterBar.appendChild(chip);
+    })(d);
+  }
+
+  // 稼働フィルター
+  var sep = document.createElement('span');
+  sep.style.cssText = 'width:1px;height:16px;background:var(--border);margin:0 4px';
+  filterBar.appendChild(sep);
+  ['S','A','B','C'].forEach(function(act) {
+    var cnt = flatList.filter(function(m) { return m.activity === act; }).length;
+    if (cnt === 0) return;
+    var chip = document.createElement('div');
+    chip.className = 'tbl-filter-chip' + (_tblFilterAct === act ? ' active' : '');
+    chip.style.color = act==='S'?'var(--s)':act==='A'?'var(--a)':act==='B'?'var(--b)':'var(--c)';
+    if (_tblFilterAct === act) chip.style.borderColor = chip.style.color;
+    chip.textContent = act + ' ' + cnt;
+    chip.onclick = function() { _tblFilterAct = _tblFilterAct === act ? '' : act; renderPCTable(mapType); };
+    filterBar.appendChild(chip);
+  });
+
+  wrap.appendChild(filterBar);
+
+  // テーブル
+  var table = document.createElement('table');
+  table.className = 'org-table';
+
+  var cols = [
+    { key: 'tree', label: '' , w: '6px' },
+    { key: 'depth', label: '段' },
+    { key: 'name', label: '名前' },
+    { key: 'title', label: 'タイトル' },
+    { key: 'activity', label: '稼働' },
+    { key: 'gsv', label: 'GSV' },
+    { key: 'fixed', label: '固定PT' },
+    { key: 'morale', label: '' },
+    { key: 'trainee', label: '研修' },
+    { key: 'memo', label: 'メモ' }
+  ];
+
+  // ヘッダー
+  var thead = document.createElement('thead');
+  var hrow = document.createElement('tr');
+  cols.forEach(function(c) {
+    var th = document.createElement('th');
+    if (c.key === 'tree') { th.style.width = c.w; th.style.padding = '0'; }
+    else {
+      th.textContent = c.label;
+      var arrow = document.createElement('span');
+      arrow.className = 'sort-arrow';
+      arrow.textContent = _tblSort.col === c.key ? (_tblSort.asc ? '▲' : '▼') : '▲';
+      th.appendChild(arrow);
+      if (_tblSort.col === c.key) th.className = 'sorted';
+      th.onclick = function() {
+        if (_tblSort.col === c.key) _tblSort.asc = !_tblSort.asc;
+        else { _tblSort.col = c.key; _tblSort.asc = true; }
+        renderPCTable(mapType);
+      };
+    }
+    hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  // ボディ
+  var tbody = document.createElement('tbody');
+  filtered.forEach(function(m) {
+    var tr = document.createElement('tr');
+    tr.dataset.mid = m.id;
+    tr.ondblclick = function() { if (state.isEditor) openEdit(m.id); };
+
+    // 系列カラー
+    var tdF = document.createElement('td');
+    tdF.className = 'col-family';
+    var dot = document.createElement('div');
+    dot.className = 'col-family-dot';
+    dot.style.background = familyMap[m.id] || '#444';
+    tdF.appendChild(dot);
+    tr.appendChild(tdF);
+
+    // 段
+    var tdD = document.createElement('td');
+    tdD.className = 'col-depth';
+    tdD.textContent = depthMap[m.id] !== undefined ? depthMap[m.id] : '-';
+    tdD.style.color = familyMap[m.id] || 'var(--text-dim)';
+    tr.appendChild(tdD);
+
+    // 名前
+    var tdN = document.createElement('td');
+    tdN.className = 'col-name ' + (m.gender || 'male');
+    tdN.textContent = (m.lastName || '') + ' ' + (m.firstName || '');
+    tr.appendChild(tdN);
+
+    // タイトル
+    var tdT = document.createElement('td');
+    tdT.className = 'col-title';
+    var LOI_T = ['LOI','Q2','Q3','Q4'];
+    if (LOI_T.indexOf((m.title||'').trim()) >= 0) tdT.style.color = '#22c55e';
+    else if (m.trainee) tdT.style.color = '#22d3ee';
+    tdT.textContent = m.title || '-';
+    tr.appendChild(tdT);
+
+    // 稼働
+    var tdA = document.createElement('td');
+    tdA.className = 'col-act';
+    var actText = m.activity || '-';
+    if (m.activity && m.actRate) actText += ' ' + m.actRate + '%';
+    if (m.activity === 'S') actText = 'S 120%';
+    tdA.textContent = actText;
+    tdA.style.color = m.activity==='S'?'var(--s)':m.activity==='A'?'var(--a)':m.activity==='B'?'var(--b)':m.activity==='C'?'var(--c)':'var(--text-dim)';
+    tr.appendChild(tdA);
+
+    // GSV（インライン編集可能）
+    var tdG = document.createElement('td');
+    tdG.className = 'col-gsv editable';
+    tdG.textContent = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '-';
+    if (state.isEditor) {
+      tdG.onclick = function(e) { startInlineEdit(e.target, m, 'ptCurrent', mapType); };
+    }
+    tr.appendChild(tdG);
+
+    // 固定PT
+    var tdFx = document.createElement('td');
+    tdFx.className = 'col-fixed editable';
+    tdFx.textContent = m.ptFixed > 0 ? m.ptFixed.toLocaleString() : '-';
+    if (state.isEditor) {
+      tdFx.onclick = function(e) { startInlineEdit(e.target, m, 'ptFixed', mapType); };
+    }
+    tr.appendChild(tdFx);
+
+    // やる気
+    var tdM = document.createElement('td');
+    tdM.className = 'col-morale';
+    tdM.textContent = ['','🌱','💪','🔥'][Math.min(m.morale||1, 3)] || '';
+    tr.appendChild(tdM);
+
+    // 研修
+    var tdTr = document.createElement('td');
+    tdTr.className = 'col-trainee';
+    if (m.traineeResult) {
+      tdTr.textContent = m.traineeResult;
+      tdTr.style.color = m.traineeResult === 'BC' ? 'var(--accent)' : m.traineeResult === '流れた' ? 'var(--red)' : 'var(--gold)';
+    } else if (m.trainee) {
+      var ls = getLatestStatus(m);
+      tdTr.textContent = ls || '研修中';
+      tdTr.style.color = '#22d3ee';
+    }
+    tr.appendChild(tdTr);
+
+    // メモ
+    var tdMe = document.createElement('td');
+    tdMe.className = 'col-memo';
+    tdMe.textContent = m.memo || '';
+    tdMe.title = m.memo || '';
+    tr.appendChild(tdMe);
+
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+}
+
+// インライン編集
+function startInlineEdit(td, member, field, mapType) {
+  if (td.querySelector('.inline-input')) return;
+  var oldVal = member[field] || 0;
+  var oldText = td.textContent;
+  var input = document.createElement('input');
+  input.className = 'inline-input';
+  input.type = 'number';
+  input.value = oldVal;
+  td.textContent = '';
+  td.appendChild(input);
+  input.focus();
+  input.select();
+
+  function finish() {
+    var newVal = parseInt(input.value) || 0;
+    member[field] = newVal;
+    td.textContent = newVal > 0 ? newVal.toLocaleString() : '-';
+    autoSave();
+    // LTSVも更新
+    if (field === 'ptCurrent') {
+      var allMembers = membersForMap(mapType);
+      updateLTSV(mapType, allMembers);
+    }
+  }
+  input.onblur = finish;
+  input.onkeydown = function(e) {
+    if (e.key === 'Enter') { input.blur(); }
+    else if (e.key === 'Escape') { td.textContent = oldText; member[field] = oldVal; }
+  };
+}
+
 // ── TREE ──
 function membersForMap(mapType) {
   var result;
@@ -1954,6 +2327,8 @@ function childrenOf(parentId, members) {
 }
 
 function renderTree(mapType) {
+  // PC テーブルビューの場合も更新
+  if (isPCMode() && _pcView === 'table') renderPCTable(mapType);
   var containerId = mapType === 'current' ? 'treeCurrent' : 'treeIdeal';
   var container = document.getElementById(containerId);
   var members = membersForMap(mapType);
