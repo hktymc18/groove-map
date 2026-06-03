@@ -705,7 +705,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v131</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v132</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1368,9 +1368,9 @@ function renderPCMap(mapType) {
   });
 
   // ノードサイズ・間隔（カード型）
-  var NODE_W = 120, NODE_H = 52, NODE_RX = 8;
+  var NODE_W = 160, NODE_H = 64, NODE_RX = 10;
   var NODE_R = Math.max(NODE_W, NODE_H) / 2; // 互換用
-  var MIN_GAP = NODE_R * 2.2;
+  var MIN_GAP = NODE_R * 2.0;
 
   // 再帰的角度係数(ra): 各サブツリーが全段で重ならないために必要な角度を
   // MIN_GAP/RY_unit 単位で再帰算出。子が多い段ほど大きな値になる
@@ -1546,7 +1546,7 @@ function renderPCMap(mapType) {
 
   // 初期は全体が見えるようにフィット
   setTimeout(function(){
-    var fitZoom = Math.min(viewW / SVG_W, viewH / SVG_H) * 0.92;
+    var fitZoom = Math.min(Math.min(viewW / SVG_W, viewH / SVG_H) * 0.95, 1.0);
     applyZoom(fitZoom);
     outer.scrollLeft = 0; outer.scrollTop = 0;
   }, 80);
@@ -1619,22 +1619,25 @@ function renderPCMap(mapType) {
     }
 
     // 上段: 名前（左寄せ）+ 稼働（右寄せ）
-    var nameStr = ((m.lastName||'')+(m.firstName||'')).substring(0,7);
-    g.appendChild(txt(rx+8, ry2+19, nameStr, isF?'#f9a8d4':'#e8eaf0', 12, '700', 'Noto Sans JP,sans-serif'));
+    var nameStr = ((m.lastName||'')+(m.firstName||'')).substring(0,8);
+    g.appendChild(txt(rx+10, ry2+22, nameStr, isF?'#f9a8d4':'#e8eaf0', 14, '700', 'Noto Sans JP,sans-serif'));
     if(m.activity){
-      var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#888';
-      var actStr=m.activity==='S'?'S':m.activity+(m.actRate?m.actRate+'%':'');
-      g.appendChild(txt(rx+NODE_W-8, ry2+19, actStr, ac, 10, '600', 'IBM Plex Mono,monospace', 'end'));
+      var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#f59e0b';
+      var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
+      g.appendChild(txt(rx+NODE_W-10, ry2+22, actStr, ac, 11, '600', 'IBM Plex Mono,monospace', 'end'));
     }
-    // 下段: タイトル（左）+ GSV（右）
-    g.appendChild(txt(rx+8, ry2+36, m.title||'-', cc, 10));
-    var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'-';
-    g.appendChild(txt(rx+NODE_W-8, ry2+36, gsvStr, '#888', 10, null, 'Inter,monospace', 'end'));
-    // やる気（右下）
-    if(m.morale>1){
-      var emoji=['','','💪','🔥'][Math.min(m.morale,3)]||'';
-      g.appendChild(txt(rx+NODE_W-8, ry2+48, emoji, '#fff', 9, null, 'Inter,monospace', 'end'));
+    // 中段: タイトル（左）
+    g.appendChild(txt(rx+10, ry2+40, m.title||'-', cc, 11, '500'));
+    // 中段右: やる気
+    if(m.morale>0){
+      var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
+      g.appendChild(txt(rx+NODE_W-10, ry2+40, emoji, '#fff', 11, null, 'Inter,monospace', 'end'));
     }
+    // 下段: GSV + (固定PT)
+    var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
+    var fixStr = m.ptFixed>0 ? ' (' + m.ptFixed.toLocaleString() + ')' : '';
+    g.appendChild(txt(rx+10, ry2+56, gsvStr, '#e8eaf0', 12, '600', 'Inter,monospace'));
+    if(fixStr) g.appendChild(txt(rx+10 + gsvStr.length*7.5, ry2+56, fixStr, '#6b7280', 10, null, 'Inter,monospace'));
 
     // ドラッグ
     (function(mid,ng,np){
@@ -1913,7 +1916,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v131';
+  var DATA_VERSION = 'v132';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4191,9 +4194,12 @@ function showPcTooltip(mid, ev) {
   var name = (m.lastName||'') + ' ' + (m.firstName||'');
   var actLabel = m.activity ? m.activity + (m.actRate ? ' ' + m.actRate + '%' : '') : '-';
   var moraleStr = ['','🌱 パヤパヤ','💪 やる気','🔥 死ぬ気'][Math.min(m.morale||1,3)]||'';
+  var gsvDisplay = m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0';
+  var fixDisplay = m.ptFixed>0 ? m.ptFixed.toLocaleString() : '-';
   tip.innerHTML = '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + '</span></div>'
-    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">GSV</span><span class="pc-tooltip-val">' + (m.ptCurrent>0?m.ptCurrent.toLocaleString():'-') + '</span></div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">GSV</span><span class="pc-tooltip-val" style="color:var(--text)">' + gsvDisplay + '</span></div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">固定PT</span><span class="pc-tooltip-val" style="color:var(--accent)">' + fixDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">稼働</span><span class="pc-tooltip-val">' + actLabel + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">やる気</span><span class="pc-tooltip-val">' + moraleStr + '</span></div>'
     + (m.memo ? '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-mid);white-space:pre-wrap;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + m.memo.substring(0,80) + '</div>' : '');
