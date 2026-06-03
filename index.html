@@ -716,7 +716,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v139</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v140</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1935,7 +1935,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v139';
+  var DATA_VERSION = 'v140';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2223,6 +2223,7 @@ function renderPCTable(mapType) {
   var cols = [
     { key: 'tree', label: '' , w: '6px' },
     { key: 'depth', label: '段' },
+    { key: 'actions', label: '', nosort: true },
     { key: 'name', label: '名前' },
     { key: 'title', label: 'タイトル' },
     { key: 'activity', label: '稼働' },
@@ -2230,8 +2231,7 @@ function renderPCTable(mapType) {
     { key: 'fixed', label: '固定PT' },
     { key: 'morale', label: '' },
     { key: 'trainee', label: '研修' },
-    { key: 'memo', label: 'メモ' },
-    { key: 'actions', label: '', nosort: true }
+    { key: 'memo', label: 'メモ' }
   ];
 
   // ヘッダー
@@ -2282,6 +2282,29 @@ function renderPCTable(mapType) {
     tdD.textContent = depthMap[m.id] !== undefined ? depthMap[m.id] : '-';
     tdD.style.color = familyMap[m.id] || 'var(--text-dim)';
     tr.appendChild(tdD);
+
+    // アクション列（名前の左）
+    var tdAc = document.createElement('td');
+    tdAc.className = 'col-actions';
+    if (isEd) {
+      var addBtn = document.createElement('button');
+      addBtn.className = 'tbl-act-btn add';
+      addBtn.textContent = '+';
+      addBtn.title = 'この人の直下に追加';
+      (function(parentId) {
+        addBtn.onclick = function(e) { e.stopPropagation(); tblAddChild(parentId, mapType); };
+      })(m.id);
+      tdAc.appendChild(addBtn);
+      var delBtn = document.createElement('button');
+      delBtn.className = 'tbl-act-btn del';
+      delBtn.textContent = '×';
+      delBtn.title = '削除';
+      (function(mid, mName) {
+        delBtn.onclick = function(e) { e.stopPropagation(); tblDeleteMember(mid, mName, mapType); };
+      })(m.id, (m.lastName||'')+(m.firstName||''));
+      tdAc.appendChild(delBtn);
+    }
+    tr.appendChild(tdAc);
 
     // 名前（クリックで姓・名を編集）
     var tdN = document.createElement('td');
@@ -2352,30 +2375,6 @@ function renderPCTable(mapType) {
     tdMe.title = m.memo || '';
     if (isEd) tdMe.onclick = function() { inlineMemo(tdMe, m, mapType); };
     tr.appendChild(tdMe);
-
-    // アクション列
-    var tdAc = document.createElement('td');
-    tdAc.className = 'col-actions';
-    if (isEd) {
-      var addBtn = document.createElement('button');
-      addBtn.className = 'tbl-act-btn add';
-      addBtn.textContent = '+';
-      addBtn.title = 'この人の直下に追加';
-      (function(parentId) {
-        addBtn.onclick = function(e) { e.stopPropagation(); tblAddChild(parentId, mapType); };
-      })(m.id);
-      tdAc.appendChild(addBtn);
-
-      var delBtn = document.createElement('button');
-      delBtn.className = 'tbl-act-btn del';
-      delBtn.textContent = '×';
-      delBtn.title = '削除';
-      (function(mid, mName) {
-        delBtn.onclick = function(e) { e.stopPropagation(); tblDeleteMember(mid, mName, mapType); };
-      })(m.id, (m.lastName||'')+(m.firstName||''));
-      tdAc.appendChild(delBtn);
-    }
-    tr.appendChild(tdAc);
 
     tbody.appendChild(tr);
   });
@@ -2534,11 +2533,35 @@ function inlineSelect(td, member, field, mapType) {
       td.textContent = ['','🌱','💪','🔥'][Math.min(member.morale,3)] || '';
     } else if (field === 'activity') {
       member.activity = sel.value;
+      td.style.color = member.activity==='S'?'var(--s)':member.activity==='A'?'var(--a)':member.activity==='B'?'var(--b)':member.activity==='C'?'var(--c)':'var(--text-dim)';
+      // S以外は%入力を表示
+      if (member.activity && member.activity !== 'S') {
+        if (sel.parentNode) sel.parentNode.removeChild(sel);
+        var pctInput = document.createElement('input');
+        pctInput.className = 'inline-input';
+        pctInput.type = 'number';
+        pctInput.style.width = '60px';
+        pctInput.placeholder = '%';
+        pctInput.value = member.actRate || '';
+        td.textContent = '';
+        var label = document.createElement('span');
+        label.textContent = member.activity + ' ';
+        label.style.cssText = 'font-weight:600;margin-right:4px;color:' + td.style.color;
+        td.appendChild(label);
+        td.appendChild(pctInput);
+        pctInput.focus();
+        pctInput.onblur = function() {
+          member.actRate = pctInput.value.trim();
+          var actText2 = member.activity + (member.actRate ? ' ' + member.actRate + '%' : '');
+          td.textContent = actText2;
+          autoSave();
+        };
+        pctInput.onkeydown = function(e) { if (e.key === 'Enter') pctInput.blur(); };
+        return;
+      }
       var actText = member.activity || '-';
       if (member.activity === 'S') actText = 'S 120%';
-      else if (member.activity && member.actRate) actText = member.activity + ' ' + member.actRate + '%';
       td.textContent = actText;
-      td.style.color = member.activity==='S'?'var(--s)':member.activity==='A'?'var(--a)':member.activity==='B'?'var(--b)':member.activity==='C'?'var(--c)':'var(--text-dim)';
     } else {
       member[field] = sel.value;
       td.textContent = sel.value || '-';
