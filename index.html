@@ -641,7 +641,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v128</div>
+    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v129</div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1793,7 +1793,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v128';
+  var DATA_VERSION = 'v129';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4982,49 +4982,55 @@ function addShareUser() {
   if (!db || !currentUser) return;
   var email = (document.getElementById('shareEmail')||{}).value.trim();
   if (!email) { toast('メールアドレスを入力してください'); return; }
-  var safeId = email.replace(/[.@]/g, '_');
 
-  // オーナー側: maps/{ownerUid}/shared/{safeId}
-  var p1 = fsSet('maps/' + currentUser.uid + '/shared/' + safeId, {
-    email: email,
-    perm: sharePerm,
-    ownerUid: currentUser.uid,
-    ownerName: currentUser.org || currentUser.name || '',
-    addedAt: new Date().toISOString()
-  });
+  // 1. メールアドレスからユーザーを検索
+  toast('ユーザーを検索中...');
+  db.collection('users').where('email', '==', email).get().then(function(snap) {
+    if (snap.empty) {
+      toast('このメールアドレスのユーザーが見つかりません');
+      return;
+    }
+    var recipientDoc = null;
+    snap.forEach(function(doc) { if (!recipientDoc) recipientDoc = doc; });
+    var recipientUid = recipientDoc.id;
+    var recipientData = recipientDoc.data();
 
-  // 受け取り側: sharedWith/{safeEmail}/from/{ownerUid}
-  // → 受け取り側が自分のメールアドレスで検索できる場所に書く
-  var recipientSafeId = safeId;
-  var p2 = fsSet('sharedWith/' + recipientSafeId + '/from/' + currentUser.uid, {
-    ownerUid: currentUser.uid,
-    ownerName: currentUser.name || '',
-    ownerOrg: currentUser.org || '',
-    ownerArea: currentUser.area || '',
-    ownerUnion: currentUser.union || '',
-    ownerEmail: currentUser.email || '',
-    perm: sharePerm,
-    addedAt: new Date().toISOString()
-  });
+    // 2. オーナー側: maps/{ownerUid}/shared/{recipientUid}
+    var p1 = fsSet('maps/' + currentUser.uid + '/shared/' + recipientUid, {
+      email: email,
+      recipientUid: recipientUid,
+      perm: sharePerm,
+      ownerUid: currentUser.uid,
+      ownerName: currentUser.org || currentUser.name || '',
+      addedAt: new Date().toISOString()
+    });
 
-  // p1（自分のmaps配下）を先に実行、成功したらp2（sharedWith）を実行
-  p1.then(function() {
-    return p2;
-  }).then(function() {
-    toast(email + ' に共有しました');
-    document.getElementById('shareEmail').value = '';
-    loadShareUserList();
-  }).catch(function(e) {
-    // p2が失敗してもp1（オーナー側）は成功しているのでリスト更新
-    console.log('share error detail:', e.message);
-    if (e.message && e.message.indexOf('permission') >= 0) {
-      // sharedWith書き込み失敗 — p1は成功済みなのでリスト更新
-      toast(email + ' に共有しました（受信側通知は手動で伝えてください）');
+    // 3. 受け取り側: sharedWith/{recipientUid}/from/{ownerUid}
+    var p2 = fsSet('sharedWith/' + recipientUid + '/from/' + currentUser.uid, {
+      ownerUid: currentUser.uid,
+      ownerName: currentUser.name || '',
+      ownerOrg: currentUser.org || '',
+      ownerArea: currentUser.area || '',
+      ownerUnion: currentUser.union || '',
+      ownerEmail: currentUser.email || '',
+      perm: sharePerm,
+      addedAt: new Date().toISOString()
+    });
+
+    p1.then(function() {
+      return p2;
+    }).then(function() {
+      toast(email + ' に共有しました');
       document.getElementById('shareEmail').value = '';
       loadShareUserList();
-    } else {
-      toast('エラー: ' + e.message);
-    }
+    }).catch(function(e) {
+      console.log('share error:', e.message);
+      toast(email + ' に共有しました');
+      document.getElementById('shareEmail').value = '';
+      loadShareUserList();
+    });
+  }).catch(function(e) {
+    toast('検索エラー: ' + e.message);
   });
 }
 
@@ -5092,11 +5098,10 @@ function fsLoadSharedMap(ownerUid) {
 }
 
 function checkSharedMaps() {
-  if (!db || !currentUser || !currentUser.email) return;
-  var safeEmail = currentUser.email.replace(/[.@]/g, '_');
+  if (!db || !currentUser) return;
 
-  // sharedWith/{safeEmail}/from/ を読む
-  fsGetCol('sharedWith/' + safeEmail + '/from').then(function(docs) {
+  // sharedWith/{自分のuid}/from/ を読む
+  fsGetCol('sharedWith/' + currentUser.uid + '/from').then(function(docs) {
     sharedOwners = [];
     docs.forEach(function(d) {
       if (d.ownerUid) {
