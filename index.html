@@ -746,7 +746,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v142</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v143</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1975,7 +1975,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v142';
+  var DATA_VERSION = 'v143';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4679,11 +4679,20 @@ function autoSave() {
   lsSave();
   if (USE_FIREBASE && currentUser && currentUser.uid) {
     fsSaveToFirestore(currentUser.uid)
-      .then(function() { toast('保存しました ✓'); })
+      .then(function() { updateLastSaved(); toast('保存しました ✓'); })
       .catch(function(e) { console.error('自動保存エラー:', e); });
   } else {
+    updateLastSaved();
     toast('保存しました ✓');
   }
+}
+function updateLastSaved() {
+  var el = document.getElementById('lastSavedTag');
+  if (!el) return;
+  var now = new Date();
+  var h = String(now.getHours()).padStart(2, '0');
+  var m = String(now.getMinutes()).padStart(2, '0');
+  el.textContent = h + ':' + m + ' saved';
 }
 
 function saveCurrent() {
