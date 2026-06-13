@@ -648,6 +648,12 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .sd-viewing-back{font-size:12px;color:var(--accent);cursor:pointer;padding:4px 10px;border:1px solid var(--accent);border-radius:8px;white-space:nowrap}
 .sd-viewing-list{font-size:12px;color:var(--accent);cursor:pointer;padding:4px 10px;border:1px solid var(--accent);border-radius:8px;white-space:nowrap;background:var(--accent-dim)}
 
+/* ── 横レイヤードツリー 段ルーラー ── */
+.depth-ruler{position:absolute;top:0;left:0;right:0;height:30px;z-index:8;pointer-events:none;overflow:hidden;border-bottom:1px solid var(--border);background:rgba(13,15,20,.85)}
+.depth-ruler-label{position:absolute;top:0;height:30px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:Inter,sans-serif;color:var(--text-dim);letter-spacing:1px;transform:translateX(-50%)}
+.layered-focus-hint{position:absolute;top:8px;left:12px;z-index:10;font-size:11px;color:var(--text-dim);font-family:Inter,sans-serif;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;display:none}
+.layered-focus-hint.show{display:block}
+
 /* ── ミニマップ ── */
 .minimap{position:absolute;bottom:12px;right:12px;z-index:15;width:180px;height:120px;background:rgba(13,15,20,.9);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;display:none}
 @media(min-width:768px){.minimap{display:block}}
@@ -746,7 +752,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v145</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v146</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1366,6 +1372,7 @@ function isPCMode() {
   return window.innerWidth >= 768;
 }
 
+
 function renderPCMap(mapType) {
   var containerId = mapType === 'current' ? 'pcMapCurrent' : 'pcMapIdeal';
   var wrap = document.getElementById(containerId);
@@ -1381,28 +1388,10 @@ function renderPCMap(mapType) {
   if (roots.length === 0) return;
   var root = roots[0];
 
-  var COLORS = ['#00d4aa','#7c6aff','#f59e0b','#ef4444','#3b82f6','#10b981','#f97316','#8b5cf6'];
+  var COLORS = ['#00d4aa','#7c6aff','#f59e0b','#ef4444','#3b82f6','#10b981','#f97316','#8b5cf6','#14b8a6','#a855f7','#eab308','#06b6d4'];
   function kids(id) { return members.filter(function(m){ return m.parentId === id; }); }
 
-  // サブツリーサイズ
-  var sz = {};
-  function calcSz(id) {
-    var ch = kids(id), s = 1;
-    ch.forEach(function(k){ s += calcSz(k.id); });
-    sz[id] = s; return s;
-  }
-  calcSz(root.id);
-
-  // 系列カラー
-  var cmap = {};
-  cmap[root.id] = COLORS[0];
-  kids(root.id).forEach(function(kid, fi) {
-    var col = COLORS[(fi+1)%COLORS.length];
-    function ac(m,c){ cmap[m.id]=c; kids(m.id).forEach(function(k){ac(k,c);}); }
-    ac(kid, col);
-  });
-
-  // 深さ（各ノードの深さをマップに保存）
+  // 深さ
   var maxD = 0;
   var nodeDepth = {};
   members.forEach(function(m) {
@@ -1412,118 +1401,113 @@ function renderPCMap(mapType) {
     if(d>maxD) maxD=d;
   });
 
-  // ノードサイズ・間隔（カード型）
-  var NODE_W = 210, NODE_H = 62, NODE_RX = 10;
-  var NODE_R = Math.max(NODE_W, NODE_H) / 2; // 互換用
-  var MIN_GAP = NODE_R * 2.0;
-
-  // 再帰的角度係数(ra): 各サブツリーが全段で重ならないために必要な角度を
-  // MIN_GAP/RY_unit 単位で再帰算出。子が多い段ほど大きな値になる
-  var ra = {};
-  function calcRA(nodeId) {
-    var ch = kids(nodeId);
-    if (!ch.length) { ra[nodeId] = 0; return 0; }
-    var total = 0;
-    ch.forEach(function(k) {
-      calcRA(k.id);
-      var cd = nodeDepth[k.id] || 1;
-      total += Math.max(1.0 / cd, ra[k.id]);
-    });
-    ra[nodeId] = total;
-    return total;
-  }
-  calcRA(root.id);
-
-  // RX_unit: ra(root)からフィッティング
-  var raRoot = Math.max(ra[root.id], 1);
-  var RY_unit = raRoot * MIN_GAP / (2 * Math.PI);
-  var RX_unit = Math.max(RY_unit / 0.6, MIN_GAP * 2);
-  RY_unit = RX_unit * 0.6;
-
-  var SVG_W = RX_unit * maxD * 2 + NODE_R * 4 + 200;
-  var SVG_H = RY_unit * maxD * 2 + NODE_R * 4 + 200;
-  var CX = SVG_W / 2, CY = SVG_H / 2;
-
-  var posMap = {};
-  posMap[root.id] = { x: CX, y: CY };
-
-  // 角度配分: ra係数で比例配分（全段でMIN_GAP保証）
-  function allocAngles(chList, span) {
-    var total = 0;
-    var entries = [];
-    chList.forEach(function(kid) {
-      var cd = nodeDepth[kid.id] || 1;
-      var coeff = Math.max(1.0 / cd, ra[kid.id] || 0);
-      entries.push({ kid: kid, coeff: coeff });
-      total += coeff;
-    });
-    var result = [];
-    entries.forEach(function(e) {
-      result.push({ kid: e.kid, final: span * e.coeff / Math.max(total, 0.001) });
-    });
-    return result;
-  }
-
-  function place(nodeId, af, at, depth) {
-    var ch = kids(nodeId);
-    if (!ch.length) return;
-    var alloc = allocAngles(ch, at - af);
-    var cursor = af;
-    alloc.forEach(function(a) {
-      var angle = cursor + a.final / 2;
-      posMap[a.kid.id] = {
-        x: CX + RX_unit * depth * Math.cos(angle),
-        y: CY + RY_unit * depth * Math.sin(angle)
-      };
-      place(a.kid.id, cursor, cursor + a.final, depth + 1);
-      cursor += a.final;
-    });
-  }
-
-  var rootKids = kids(root.id);
-  var rootAlloc = allocAngles(rootKids, 2 * Math.PI);
-  var cursor = -Math.PI / 2;
-  rootAlloc.forEach(function(a) {
-    var angle = cursor + a.final / 2;
-    posMap[a.kid.id] = { x: CX + RX_unit * Math.cos(angle), y: CY + RY_unit * Math.sin(angle) };
-    place(a.kid.id, cursor, cursor + a.final, 2);
-    cursor += a.final;
+  // 系列カラー & 系列ルート(1段目)
+  var cmap = {};
+  var lineageRoot = {};
+  cmap[root.id] = '#8a94a6';
+  lineageRoot[root.id] = '';
+  kids(root.id).forEach(function(kid, fi) {
+    var col = COLORS[fi % COLORS.length];
+    function ac(m,c,lr){ cmap[m.id]=c; lineageRoot[m.id]=lr; kids(m.id).forEach(function(k){ac(k,c,lr);}); }
+    ac(kid, col, kid.id);
   });
 
-  // カスタム位置
-  Object.keys(window._pcCustomPos||{}).forEach(function(id){ if(posMap[id]) posMap[id]=window._pcCustomPos[id]; });
+  // 折りたたみ状態
+  if (!window._pcCollapsed) window._pcCollapsed = {};
+  function visKids(id) { return window._pcCollapsed[id] ? [] : kids(id); }
 
-  // 接続線パス生成（直線）
-  function makeLinkD(px, py, cx, cy) {
-    return 'M' + px + ',' + py + ' L' + cx + ',' + cy;
+  // ── レイアウト（横レイヤード：左→右） ──
+  var NODE_W = 200, NODE_H = 56, NODE_RX = 10;
+  var COL_GAP = 80, ROW_GAP = 14;
+  var colStep = NODE_W + COL_GAP;
+  var rowStep = NODE_H + ROW_GAP;
+  var PAD_L = 50, PAD_T = 56;
+
+  var posX = {}, posY = {};
+  var leafCursor = 0;
+  function assignPos(id) {
+    posX[id] = PAD_L + (nodeDepth[id]||0) * colStep;
+    var ch = visKids(id);
+    if (ch.length === 0) {
+      posY[id] = PAD_T + leafCursor * rowStep;
+      leafCursor++;
+    } else {
+      ch.forEach(function(c){ assignPos(c.id); });
+      posY[id] = (posY[ch[0].id] + posY[ch[ch.length-1].id]) / 2;
+    }
+  }
+  assignPos(root.id);
+
+  // 表示対象（折りたたみで隠れたノードを除外）
+  var visible = {};
+  (function markVisible(id){ visible[id]=true; visKids(id).forEach(function(c){markVisible(c.id);}); })(root.id);
+  var visMembers = members.filter(function(m){ return visible[m.id]; });
+
+  // centerMap（ミニマップ用：中心座標）
+  var posMap = {};
+  visMembers.forEach(function(m){ posMap[m.id] = { x: posX[m.id]+NODE_W/2, y: posY[m.id]+NODE_H/2 }; });
+
+  var totalLeafRows = Math.max(leafCursor, 1);
+  var SVG_W = PAD_L + (maxD+1) * colStep + 60;
+  var SVG_H = PAD_T + totalLeafRows * rowStep + 80;
+
+  // 系列ごとのY範囲（スイムレーン用）
+  var lineageBounds = {};
+  visMembers.forEach(function(m){
+    var lr = lineageRoot[m.id];
+    if (!lr) return;
+    if (!lineageBounds[lr]) lineageBounds[lr] = { minY: posY[m.id], maxY: posY[m.id], col: cmap[m.id], minX: posX[m.id], maxX: posX[m.id] };
+    var b = lineageBounds[lr];
+    if (posY[m.id] < b.minY) b.minY = posY[m.id];
+    if (posY[m.id] > b.maxY) b.maxY = posY[m.id];
+    if (posX[m.id] < b.minX) b.minX = posX[m.id];
+    if (posX[m.id] > b.maxX) b.maxX = posX[m.id];
+  });
+
+  // エルボーコネクタ
+  function elbow(px,py,cx,cy){
+    var midX = px + (cx-px)/2;
+    return 'M'+px+','+py+' H'+midX+' V'+cy+' H'+cx;
   }
 
-  // ── コンテナ（スクロール対応） ──
+  // ── コンテナ ──
   var viewW = Math.max(window.innerWidth - 20, 600);
-  var viewH = Math.max(window.innerHeight - 160, 500);
-
-  // ズームコントロール
-  var zoom = 1.0;
-  var zoomMin = 0.3, zoomMax = 2.0;
+  var viewH = Math.max(window.innerHeight - 200, 500);
+  var zoom = 1.0, zoomMin = 0.3, zoomMax = 2.0;
 
   var outerWrap = document.createElement('div');
   outerWrap.style.cssText = 'width:100%;position:relative;background:var(--bg)';
 
-  // ズームボタン
+  // 段ルーラー（固定）
+  var ruler = document.createElement('div');
+  ruler.className = 'depth-ruler';
+  outerWrap.appendChild(ruler);
+  var rulerLabels = [];
+  for (var di=0; di<=maxD; di++) {
+    var rl = document.createElement('div');
+    rl.className = 'depth-ruler-label';
+    rl.textContent = di + '段';
+    ruler.appendChild(rl);
+    rulerLabels.push(rl);
+  }
+
+  // フォーカス解除ヒント
+  var focusHint = document.createElement('div');
+  focusHint.className = 'layered-focus-hint';
+  focusHint.textContent = '✕ 系列フォーカス解除';
+  focusHint.onclick = function(){ applyFocus(''); };
+  outerWrap.appendChild(focusHint);
+
+  // ズームコントロール
   var zoomBar = document.createElement('div');
   zoomBar.style.cssText = 'position:absolute;top:8px;right:12px;z-index:10;display:flex;gap:6px;align-items:center';
   var zoomOut = document.createElement('div');
   zoomOut.textContent = '−';
   zoomOut.style.cssText = 'width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text);user-select:none';
-  var zoomFit = document.createElement('div');
-  zoomFit.textContent = '⊡';
-  zoomFit.title = '全体表示';
-  zoomFit.style.cssText = zoomOut.style.cssText;
-  var zoomIn = document.createElement('div');
-  zoomIn.textContent = '＋';
-  zoomIn.style.cssText = zoomOut.style.cssText;
+  var zoomFit = document.createElement('div'); zoomFit.textContent = '⊡'; zoomFit.title='全体表示'; zoomFit.style.cssText = zoomOut.style.cssText;
+  var zoomIn = document.createElement('div'); zoomIn.textContent = '＋'; zoomIn.style.cssText = zoomOut.style.cssText;
   var zoomLabel = document.createElement('div');
-  zoomLabel.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;min-width:36px;text-align:center';
+  zoomLabel.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:Inter,monospace;min-width:36px;text-align:center';
   zoomLabel.textContent = '100%';
   zoomBar.appendChild(zoomOut); zoomBar.appendChild(zoomFit); zoomBar.appendChild(zoomIn); zoomBar.appendChild(zoomLabel);
   outerWrap.appendChild(zoomBar);
@@ -1533,40 +1517,45 @@ function renderPCMap(mapType) {
   outerWrap.appendChild(outer);
   wrap.appendChild(outerWrap);
 
-  // ズーム適用
+  var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width', SVG_W);
+  svg.setAttribute('height', SVG_H);
+  svg.style.cssText = 'display:block;background:var(--bg);user-select:none';
+  outer.appendChild(svg);
+
+  // 段ルーラー位置更新
+  function updateRuler() {
+    for (var i=0; i<=maxD; i++) {
+      var colCenterX = PAD_L + i*colStep + NODE_W/2;
+      var screenX = colCenterX * zoom - outer.scrollLeft;
+      rulerLabels[i].style.left = screenX + 'px';
+      rulerLabels[i].style.display = (screenX < -40 || screenX > outer.clientWidth + 40) ? 'none' : 'flex';
+    }
+  }
+
   function applyZoom(newZoom) {
     zoom = Math.max(zoomMin, Math.min(zoomMax, newZoom));
     svg.style.transform = 'scale('+zoom+')';
     svg.style.transformOrigin = '0 0';
     svg.style.width = SVG_W + 'px';
     svg.style.height = SVG_H + 'px';
-    outer.style.width = '100%';
-    outer.style.height = viewH + 'px';
-    // スクロール範囲をズームに合わせる
-    var scrollW = SVG_W * zoom;
-    var scrollH = SVG_H * zoom;
-    svg.parentElement && (svg.parentElement.scrollWidth);
     zoomLabel.textContent = Math.round(zoom*100) + '%';
+    updateRuler();
   }
-
   zoomIn.onclick = function(){ applyZoom(zoom + 0.1); };
   zoomOut.onclick = function(){ applyZoom(zoom - 0.1); };
   zoomFit.onclick = function(){
-    // 全体が見えるズームレベルを計算
     var fitZoom = Math.min(viewW / SVG_W, viewH / SVG_H) * 0.95;
     applyZoom(fitZoom);
     outer.scrollLeft = 0; outer.scrollTop = 0;
+    updateRuler();
   };
 
-  // マウスホイールでズーム
   outer.addEventListener('wheel', function(e) {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      applyZoom(zoom - e.deltaY * 0.001);
-    }
+    if (e.ctrlKey || e.metaKey) { e.preventDefault(); applyZoom(zoom - e.deltaY * 0.001); }
   }, { passive: false });
 
-  // ドラッグスクロール
+  // 背景ドラッグでスクロール
   (function(){
     var isScrollDrag=false, ssx,ssy,scrollLeft,scrollTop;
     outer.addEventListener('mousedown',function(e){
@@ -1583,74 +1572,72 @@ function renderPCMap(mapType) {
     document.addEventListener('mouseup',function(){ isScrollDrag=false; outer.style.cursor='grab'; });
   })();
 
-  var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('width', SVG_W);
-  svg.setAttribute('height', SVG_H);
-  svg.style.cssText = 'display:block;background:var(--bg);user-select:none';
-  outer.appendChild(svg);
+  outer.addEventListener('scroll', function(){ updateRuler(); });
 
-  // ミニマップ
-  var _minimap = renderMinimap(outerWrap, outer, svg, SVG_W, SVG_H, viewW, viewH, 0.6, posMap, members, cmap);
+  // ── スイムレーン背景（系列ごとの薄い帯） ──
+  var laneG = document.createElementNS('http://www.w3.org/2000/svg','g');
+  svg.appendChild(laneG);
+  Object.keys(lineageBounds).forEach(function(lr){
+    var b = lineageBounds[lr];
+    var lane = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    lane.setAttribute('x', b.minX - 10);
+    lane.setAttribute('y', b.minY - 8);
+    lane.setAttribute('width', (b.maxX - b.minX) + NODE_W + 20);
+    lane.setAttribute('height', (b.maxY - b.minY) + NODE_H + 16);
+    lane.setAttribute('rx', 14);
+    lane.setAttribute('fill', b.col);
+    lane.setAttribute('fill-opacity', '0.05');
+    lane.setAttribute('data-lineage', lr);
+    lane.setAttribute('class', 'lane-bg');
+    laneG.appendChild(lane);
+  });
 
-  // ズーム変更時にミニマップ更新
-  var _origApplyZoom = applyZoom;
-  applyZoom = function(z) { _origApplyZoom(z); outer._currentZoom = zoom; if (_minimap) _minimap.draw(); };
-
-  // 初期表示: 60%ズーム、0段目(ルート)を中央に
-  setTimeout(function(){
-    applyZoom(0.6);
-    var rootPos = posMap[root.id];
-    if (rootPos) {
-      var scrollX = rootPos.x * 0.6 - viewW / 2;
-      var scrollY = rootPos.y * 0.6 - viewH / 2;
-      outer.scrollLeft = Math.max(0, scrollX);
-      outer.scrollTop = Math.max(0, scrollY);
-    } else {
-      outer.scrollLeft = 0; outer.scrollTop = 0;
+  // 列の交互シェーディング（段ゾーン）
+  for (var dd=0; dd<=maxD; dd++) {
+    if (dd % 2 === 1) {
+      var band = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      band.setAttribute('x', PAD_L + dd*colStep - COL_GAP/2);
+      band.setAttribute('y', 0);
+      band.setAttribute('width', NODE_W + COL_GAP);
+      band.setAttribute('height', SVG_H);
+      band.setAttribute('fill', '#ffffff');
+      band.setAttribute('fill-opacity', '0.015');
+      laneG.appendChild(band);
     }
-  }, 80);
-
-  // 楕円輪郭
-  for(var d=1;d<=maxD;d++){
-    var el=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
-    el.setAttribute('cx',CX); el.setAttribute('cy',CY);
-    el.setAttribute('rx',RX_unit*d); el.setAttribute('ry',RY_unit*d);
-    el.setAttribute('fill','none'); el.setAttribute('stroke','#252a33'); el.setAttribute('stroke-width','1');
-    svg.appendChild(el);
   }
 
-  // 接続線（ベジェ曲線）
+  // ── コネクタ（エルボー） ──
   var lg=document.createElementNS('http://www.w3.org/2000/svg','g');
   svg.appendChild(lg);
-  members.forEach(function(m){
-    if(!m.parentId||!posMap[m.id]||!posMap[m.parentId]) return;
-    var px=posMap[m.parentId].x, py=posMap[m.parentId].y;
-    var cx=posMap[m.id].x, cy=posMap[m.id].y;
+  visMembers.forEach(function(m){
+    if(!m.parentId||!visible[m.parentId]) return;
+    var px=posX[m.parentId]+NODE_W, py=posY[m.parentId]+NODE_H/2;
+    var cx=posX[m.id], cy=posY[m.id]+NODE_H/2;
     var pt=document.createElementNS('http://www.w3.org/2000/svg','path');
-    pt.setAttribute('d',makeLinkD(px,py,cx,cy));
+    pt.setAttribute('d',elbow(px,py,cx,cy));
     pt.setAttribute('fill','none');
-    pt.setAttribute('stroke',cmap[m.id]||'#444'); pt.setAttribute('stroke-width','1'); pt.setAttribute('stroke-opacity','0.3');
-    pt.setAttribute('id','line-'+m.id);
-    pt.setAttribute('data-px',px); pt.setAttribute('data-py',py);
-    pt.setAttribute('data-cx',cx); pt.setAttribute('data-cy',cy);
+    pt.setAttribute('stroke',cmap[m.id]||'#444');
+    pt.setAttribute('stroke-width','1.5'); pt.setAttribute('stroke-opacity','0.5');
+    pt.setAttribute('class','pc-link');
+    pt.setAttribute('data-lineage', lineageRoot[m.id]||'');
     lg.appendChild(pt);
   });
 
-  // ノード
-  members.forEach(function(m){
-    var pos=posMap[m.id]; if(!pos) return;
+  // ── ノード ──
+  visMembers.forEach(function(m){
     var col=cmap[m.id]||COLORS[0];
     var isT=m.trainee||(m.traineeHistory&&m.traineeHistory.length>0);
     var pcLOI=['LOI','Q2','Q3','Q4'];
     var isPcLOI=pcLOI.indexOf((m.title||'').trim())>=0;
     var isF=m.gender==='female';
-    var cc=isPcLOI?'#22c55e':isT?'#22d3ee':col, cf=isPcLOI?'rgba(34,197,94,0.15)':isT?'rgba(8,145,178,0.3)':'#161920';
+    var cc=isPcLOI?'#22c55e':isT?'#22d3ee':col, cf=isPcLOI?'rgba(34,197,94,0.12)':isT?'rgba(8,145,178,0.22)':'#161920';
+    var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','oval-node'); g.setAttribute('data-mid',m.id); g.style.cursor='grab';
+    g.setAttribute('class','oval-node'); g.setAttribute('data-mid',m.id);
+    g.setAttribute('data-lineage', lineageRoot[m.id]||'');
+    g.style.cursor='pointer';
 
-    // カード型ノード（角丸長方形）
-    var rx=pos.x-NODE_W/2, ry2=pos.y-NODE_H/2;
     var rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
     rect.setAttribute('x',rx); rect.setAttribute('y',ry2);
     rect.setAttribute('width',NODE_W); rect.setAttribute('height',NODE_H);
@@ -1662,8 +1649,8 @@ function renderPCMap(mapType) {
     // 系列カラー左ボーダー
     var lb=document.createElementNS('http://www.w3.org/2000/svg','rect');
     lb.setAttribute('x',rx); lb.setAttribute('y',ry2+3);
-    lb.setAttribute('width','3'); lb.setAttribute('height',NODE_H-6);
-    lb.setAttribute('rx','1.5'); lb.setAttribute('fill',col);
+    lb.setAttribute('width','4'); lb.setAttribute('height',NODE_H-6);
+    lb.setAttribute('rx','2'); lb.setAttribute('fill',col);
     g.appendChild(lb);
 
     function txt(x,y,content,fill,fs,fw,ff,anchor){
@@ -1672,82 +1659,114 @@ function renderPCMap(mapType) {
       t.setAttribute('text-anchor',anchor||'start');
       t.setAttribute('fill',fill); t.setAttribute('font-size',fs+'px');
       if(fw) t.setAttribute('font-weight',fw);
-      t.setAttribute('font-family',ff||'IBM Plex Mono,monospace');
+      t.setAttribute('font-family',ff||'Inter,sans-serif');
       t.setAttribute('pointer-events','none'); t.textContent=content;
       return t;
     }
-
-    // 上段: 名前（左寄せ）+ 稼働（右寄せ）
     var nameStr = ((m.lastName||'')+(m.firstName||'')).substring(0,8);
-    // やる気: カード枠外の左上
     if(m.morale>0){
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
-      g.appendChild(txt(rx+2, ry2-5, emoji, '#fff', 16, null, 'Inter,sans-serif'));
+      g.appendChild(txt(rx+2, ry2-4, emoji, '#fff', 15, null, 'Inter,sans-serif'));
     }
-    // 1行目: 名前（左・大）+ 稼働（右）
-    g.appendChild(txt(rx+14, ry2+28, nameStr, isF?'#f9a8d4':'#e8eaf0', 18, '700', 'Noto Sans JP,Inter,sans-serif'));
+    // 1行目: 名前 + 稼働
+    g.appendChild(txt(rx+14, ry2+25, nameStr, isF?'#f9a8d4':'#e8eaf0', 16, '700', 'Noto Sans JP,Inter,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#f59e0b';
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
-      g.appendChild(txt(rx+NODE_W-14, ry2+28, actStr, ac, 16, '700', 'Inter,sans-serif', 'end'));
+      g.appendChild(txt(rx+NODE_W-14, ry2+25, actStr, ac, 14, '700', 'Inter,sans-serif', 'end'));
     }
-    // 2行目: タイトル（左）+ GSV (固定PT)（右）
-    g.appendChild(txt(rx+14, ry2+52, m.title||'-', cc, 15, '600', 'Inter,Noto Sans JP,sans-serif'));
+    // 2行目: タイトル + GSV(固定)
+    g.appendChild(txt(rx+14, ry2+46, m.title||'-', cc, 13, '600', 'Inter,Noto Sans JP,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
-    var fixStr = m.ptFixed>0 ? '(' + m.ptFixed.toLocaleString() + ')' : '';
-    var ptRight = gsvStr + (fixStr ? ' ' + fixStr : '');
-    g.appendChild(txt(rx+NODE_W-14, ry2+52, ptRight, '#e8eaf0', 15, '600', 'Inter,sans-serif', 'end'));
+    var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
+    g.appendChild(txt(rx+NODE_W-14, ry2+46, gsvStr+(fixStr?' '+fixStr:''), '#cbd5e1', 13, '600', 'Inter,sans-serif', 'end'));
 
-    // ドラッグ
-    (function(mid,ng,np){
-      var drag=false,moved=false,sx,sy,ox,oy;
-      function xy(ev){return{x:ev.clientX,y:ev.clientY};}
-      function mv(ev){
-        if(!drag)return; ev.preventDefault();
-        var dx=ev.clientX-sx,dy=ev.clientY-sy;
-        if(!moved&&Math.sqrt(dx*dx+dy*dy)<4)return;
-        moved=true;
-        var nx=ox+dx,ny=oy+dy;
-        ng.setAttribute('transform','translate('+(nx-ox)+','+(ny-oy)+')');
-        var pl=document.getElementById('line-'+mid);
-        if(pl){
-          var ppx=parseFloat(pl.getAttribute('data-px')),ppy=parseFloat(pl.getAttribute('data-py'));
-          pl.setAttribute('d',makeLinkD(ppx,ppy,nx,ny));
-          pl.setAttribute('data-cx',nx);pl.setAttribute('data-cy',ny);
-        }
-        members.filter(function(k){return k.parentId===mid;}).forEach(function(k){
-          var cl=document.getElementById('line-'+k.id);
-          if(cl){
-            var ccx=parseFloat(cl.getAttribute('data-cx')),ccy=parseFloat(cl.getAttribute('data-cy'));
-            cl.setAttribute('d',makeLinkD(nx,ny,ccx,ccy));
-            cl.setAttribute('data-px',nx);cl.setAttribute('data-py',ny);
-          }
+    // 折りたたみトグル（子がいる場合、右端に）
+    var childCount = kids(m.id).length;
+    if (childCount > 0) {
+      var collapsed = !!window._pcCollapsed[m.id];
+      var tg=document.createElementNS('http://www.w3.org/2000/svg','g');
+      tg.style.cursor='pointer';
+      var tc=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      tc.setAttribute('cx',rx+NODE_W); tc.setAttribute('cy',ry2+NODE_H/2);
+      tc.setAttribute('r','11'); tc.setAttribute('fill','#1e222d'); tc.setAttribute('stroke',col); tc.setAttribute('stroke-width','1.5');
+      tg.appendChild(tc);
+      var tt=document.createElementNS('http://www.w3.org/2000/svg','text');
+      tt.setAttribute('x',rx+NODE_W); tt.setAttribute('y',ry2+NODE_H/2+1);
+      tt.setAttribute('text-anchor','middle'); tt.setAttribute('dominant-baseline','middle');
+      tt.setAttribute('fill',col); tt.setAttribute('font-size','13'); tt.setAttribute('font-weight','700');
+      tt.setAttribute('font-family','Inter,sans-serif'); tt.setAttribute('pointer-events','none');
+      tt.textContent = collapsed ? ('+'+childCount) : '−';
+      if (collapsed) { tt.setAttribute('font-size','10'); }
+      tg.appendChild(tt);
+      (function(mid){
+        tg.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          window._pcCollapsed[mid] = !window._pcCollapsed[mid];
+          renderPCMap(mapType);
         });
-        if(!window._pcCustomPos)window._pcCustomPos={};
-        window._pcCustomPos[mid]={x:nx,y:ny};
-      }
-      function up(ev){
-        if(!drag)return; drag=false; ng.style.cursor='grab';
-        document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up);
-        if(!moved)selectCard(mid,ev);
-      }
-      ng.addEventListener('mousedown',function(ev){
-        if(ev.button!==0)return;
-        ev.stopPropagation(); // スクロールドラッグと分離
-        drag=true; moved=false; sx=ev.clientX; sy=ev.clientY;
-        var cp=window._pcCustomPos&&window._pcCustomPos[mid];
-        ox=cp?cp.x:np.x; oy=cp?cp.y:np.y;
-        document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
-        ev.preventDefault();
+        tg.addEventListener('mousedown',function(ev){ ev.stopPropagation(); });
+      })(m.id);
+      g.appendChild(tg);
+    }
+
+    // クリック=選択+系列フォーカス、ダブルクリック=編集
+    (function(mid,lin){
+      var clickT=null;
+      g.addEventListener('click',function(ev){
+        ev.stopPropagation();
+        if(clickT){ clearTimeout(clickT); clickT=null; if(state.isEditor)openEdit(mid); return; }
+        clickT=setTimeout(function(){ clickT=null; selectCard(mid,ev); applyFocus(lin); }, 230);
       });
-      ng.addEventListener('dblclick',function(){if(state.isEditor)openEdit(mid);});
-      // #9 ツールチップ
-      ng.addEventListener('mouseenter',function(ev){showPcTooltip(mid,ev);});
-      ng.addEventListener('mouseleave',function(){hidePcTooltip();});
-    })(m.id,g,pos);
+      g.addEventListener('mouseenter',function(ev){showPcTooltip(mid,ev);});
+      g.addEventListener('mouseleave',function(){hidePcTooltip();});
+    })(m.id, lineageRoot[m.id]||'');
 
     svg.appendChild(g);
   });
+
+  // 背景クリックでフォーカス解除
+  svg.addEventListener('click', function(e){ if(e.target===svg) applyFocus(''); });
+
+  // 系列フォーカス
+  function applyFocus(lin) {
+    window._pcFocusLineage = lin;
+    var nodes = svg.querySelectorAll('.oval-node');
+    var links = svg.querySelectorAll('.pc-link');
+    var lanes = svg.querySelectorAll('.lane-bg');
+    var i;
+    for (i=0;i<nodes.length;i++){
+      var nl = nodes[i].getAttribute('data-lineage');
+      nodes[i].style.opacity = (!lin || nl===lin || nl==='') ? '1' : '0.18';
+    }
+    for (i=0;i<links.length;i++){
+      var ll = links[i].getAttribute('data-lineage');
+      links[i].style.opacity = (!lin || ll===lin) ? '1' : '0.1';
+    }
+    for (i=0;i<lanes.length;i++){
+      var al = lanes[i].getAttribute('data-lineage');
+      lanes[i].setAttribute('fill-opacity', (!lin || al===lin) ? '0.1' : '0.02');
+    }
+    focusHint.classList.toggle('show', !!lin);
+  }
+
+  // ミニマップ
+  var _minimap = renderMinimap(outerWrap, outer, svg, SVG_W, SVG_H, viewW, viewH, 0.6, posMap, visMembers, cmap);
+  var _origApplyZoom = applyZoom;
+  applyZoom = function(z) { _origApplyZoom(z); outer._currentZoom = zoom; if (_minimap) _minimap.draw(); };
+
+  // 初期表示: ルートが左に見えるようにフィット（最大100%）
+  setTimeout(function(){
+    var fitZoom = Math.min(Math.min(viewW / SVG_W, viewH / SVG_H) * 0.95, 1.0);
+    fitZoom = Math.max(fitZoom, 0.5);
+    applyZoom(fitZoom);
+    outer.scrollLeft = 0;
+    var rootCenterY = (posY[root.id]+NODE_H/2) * fitZoom;
+    outer.scrollTop = Math.max(0, rootCenterY - viewH/2);
+    updateRuler();
+    // 以前のフォーカス状態を復元
+    if (window._pcFocusLineage) applyFocus(window._pcFocusLineage);
+  }, 60);
 }
 
 // ウィンドウリサイズ時に再描画
@@ -1975,7 +1994,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v145';
+  var DATA_VERSION = 'v146';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
