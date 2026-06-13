@@ -746,7 +746,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v144</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v145</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" onclick="switchView('current')">現状</button>
@@ -1975,7 +1975,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v144';
+  var DATA_VERSION = 'v145';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5209,58 +5209,58 @@ function loadTestData() {
   };
   state.members = [
     // 0段: 自分
-    m('r','','山内','北斗','male','チームエリート','S','',5000,2000,3,false,'',''),
-    // 1段: 直フロント3系列
-    m('a1','r','上田','裕','male','BR','S','',3000,1000,3,false,'','エースライン。自発心を高めたい'),
-    m('a2','r','古藤','雄貴','male','BM','B','80',500,150,2,false,'','進行がひどく、緩和ケアに入るため製品でなんとかして'),
-    m('a3','r','山本','春華','female','B5','S','',280,100,2,false,'','いつも上田に連れ回されている'),
-    m('a4','r','増田','信乃','female','BM','B','80',0,0,1,false,'','勉強が好き。製品確信が高い'),
-    // 2段: 上田ライン
-    m('b1','a1','重畠','咲良','female','ラピス','S','',1757,500,3,false,'','惜しい。結婚式の準備関連で忙しい'),
-    m('b2','a1','波左間','俊介','male','BR','C','0',800,400,1,false,'','禁煙vlogで満足気'),
-    m('b3','a1','高橋','尚也','male','BM','B','90',300,200,2,false,'','相変わらず「高橋」な状態'),
-    m('b4','a1','川野','葉月','female','BR','B','90',1980,500,2,false,'','上田にキレているがDラインの前では我慢'),
-    // 3段: 重畠ライン
-    m('c1','b1','福木','葵','female','ゴールド','B','',1136,300,1,false,'','わけがわかっておらず咲良ちゃんに頼り切り'),
-    m('c2','b1','中西','優衣','female','BR','S','',705,200,3,false,'','お母さんが倒れてまだ半身麻痺が残っている'),
-    m('c3','b1','小松','尚輝','male','B3','C','10',0,0,1,false,'','葵ニーズ。稼ぎたい願望がない'),
-    // 3段: 川野ライン
-    m('c4','b4','椎葉','美瑠姫','female','B5','C','0',100,0,1,false,'','旦那泰晴と深刻な喧嘩中で離婚しそう'),
-    m('c5','b4','徳永','優','male','B3','C','20',0,0,1,false,'','葵ニーズ多少あり。同じコールセンターの同僚'),
-    // 3段: 波左間ライン
-    m('c6','b2','山口','のぞみ','female','B3','C','10',0,0,1,false,'','飯塚在住。看護師。消えそう'),
-    // 2段: 古藤ライン
-    m('b5','a2','吉岡','祐美','female','B8','A','100',200,100,2,false,'','保育士を5月で辞めたが転職先選びに難航'),
-    m('b6','a2','畑辺','真美','female','B4','C','0',0,0,1,false,'','北九州在住。看護師。GOT以降数回オンラインでハウディ'),
-    // 2段: 山本ライン
-    m('b7','a3','森田','愛奈穂','female','Q2','C','10',0,0,1,true,'BC','上田が囲っていて山内はまだ喋ったことがない'),
-    m('b8','a3','瓜生','千咲','female','B4','A','30',0,0,1,false,'','6月いっぱいで退職予定'),
-    m('b9','a3','能見','雪那','female','Q2','C','0',0,0,1,true,'','個別で通っていて、まだ見たことがない'),
-    // 2段: 増田ライン
-    m('b10','a4','野元','やえ','female','B3','C','20',0,0,1,false,'','上田が囲いまくっている'),
-    m('b11','a4','稲永','彩香','female','B3','C','10',0,0,1,false,'','埼玉在住。元地下アイドル。29歳で女優を目指している'),
-    m('b12','a4','黒川','一孝','male','PA','','',0,0,1,true,'','UR参加予定だったがリスケ。消えそう'),
+    m('r','','田中','太郎','male','チームエリート','S','',5000,2000,3,false,'',''),
+    // 1段: 直フロント4系列
+    m('a1','r','佐藤','健一','male','BR','S','',3000,1000,3,false,'','主力ライン。月2回の面談を継続中'),
+    m('a2','r','鈴木','大輔','male','BM','B','80',500,150,2,false,'','製品愛用中。少しずつ活動再開'),
+    m('a3','r','高橋','美咲','female','B5','S','',280,100,2,false,'','友人紹介が得意。イベント参加率高い'),
+    m('a4','r','伊藤','由美','female','BM','B','80',0,0,1,false,'','製品知識豊富。口コミ力あり'),
+    // 2段: 佐藤ライン
+    m('b1','a1','渡辺','花','female','ラピス','S','',1757,500,3,false,'','成長中。来月ルビー昇格見込み'),
+    m('b2','a1','山本','誠','male','BR','C','0',800,400,1,false,'','最近モチベーション低下気味'),
+    m('b3','a1','中村','翔太','male','BM','B','90',300,200,2,false,'','副業として週末活動中'),
+    m('b4','a1','小林','あゆみ','female','BR','B','90',1980,500,2,false,'','安定した実績。リーダー候補'),
+    // 3段: 渡辺ライン
+    m('c1','b1','加藤','さくら','female','ゴールド','B','',1136,300,1,false,'','まだ自走できていない。サポート必要'),
+    m('c2','b1','吉田','拓也','male','BR','S','',705,200,3,false,'','家庭の事情で時間が限られている'),
+    m('c3','b1','山田','隆','male','B3','C','10',0,0,1,false,'','興味はあるが行動に移せない'),
+    // 3段: 小林ライン
+    m('c4','b4','佐々木','恵','female','B5','C','0',100,0,1,false,'','育児中で時間が取りにくい'),
+    m('c5','b4','松本','康平','male','B3','C','20',0,0,1,false,'','同僚からの紹介。検討中'),
+    // 3段: 山本ライン
+    m('c6','b2','井上','菜々','female','B3','C','10',0,0,1,false,'','看護師。シフト勤務で予定が合いにくい'),
+    // 2段: 鈴木ライン
+    m('b5','a2','木村','真理','female','B8','A','100',200,100,2,false,'','転職活動中。時間に余裕が出てきた'),
+    m('b6','a2','林','智子','female','B4','C','0',0,0,1,false,'','オンライン参加がメイン'),
+    // 2段: 高橋ライン
+    m('b7','a3','清水','愛','female','Q2','C','10',0,0,1,true,'BC','紹介で参加。前向きに検討中'),
+    m('b8','a3','森','千尋','female','B4','A','30',0,0,1,false,'','来月退職予定。時間ができる見込み'),
+    m('b9','a3','池田','雪乃','female','Q2','C','0',0,0,1,true,'','個別フォロー中。反応良好'),
+    // 2段: 伊藤ライン
+    m('b10','a4','橋本','かおり','female','B3','C','20',0,0,1,false,'','SNS発信が上手い'),
+    m('b11','a4','石川','彩','female','B3','C','10',0,0,1,false,'','都内在住。美容に興味あり'),
+    m('b12','a4','前田','和也','male','PA','','',0,0,1,true,'','セミナー参加予定だったがリスケ'),
     // 4段
-    m('d1','c1','森山','美保','female','B4','C','10',0,0,1,false,'','極度の人見知り。体調不良気味'),
-    m('d2','c2','吉田','健太','male','B4','C','10',50,0,1,false,'','やる気はあるが行動が伴わない'),
+    m('d1','c1','藤田','恵美','female','B4','C','10',0,0,1,false,'','人見知り。オンライン向き'),
+    m('d2','c2','後藤','翼','male','B4','C','10',50,0,1,false,'','意欲はあるが行動が伴わない'),
   ];
 
-  // 研修履歴をいくつか追加
+  // 研修履歴
   var hist = function(status, date, asan, result) { return {status:status, date:date, aSan:asan, result:result}; };
-  // 森田: BC済み
+  // 清水: BC済み
   state.members[17].traineeHistory = [
-    hist('マケ','2026-04-10','上田','next'), hist('PG','2026-04-15','上田','next'),
-    hist('DLR','2026-04-20','上田','next'), hist('EXP','2026-04-25','上田','next'),
-    hist('PA','2026-05-01','上田','next'), hist('面談','2026-05-05','上田','next'),
-    hist('CO','2026-05-10','上田','next')
+    hist('マケ','2026-04-10','佐藤','next'), hist('PG','2026-04-15','佐藤','next'),
+    hist('DLR','2026-04-20','佐藤','next'), hist('EXP','2026-04-25','佐藤','next'),
+    hist('PA','2026-05-01','佐藤','next'), hist('面談','2026-05-05','佐藤','next'),
+    hist('CO','2026-05-10','佐藤','next')
   ];
-  // 能見: 進行中
+  // 池田: 進行中
   state.members[19].traineeHistory = [
-    hist('マケ','2026-05-20','山本','next'), hist('PG','2026-05-28','山本','next')
+    hist('マケ','2026-05-20','高橋','next'), hist('PG','2026-05-28','高橋','next')
   ];
-  // 黒川: 進行中
+  // 前田: 進行中
   state.members[21].traineeHistory = [
-    hist('マケ','2026-06-01','増田','next')
+    hist('マケ','2026-06-01','伊藤','next')
   ];
 
   state.idealMembers = [];
@@ -5271,11 +5271,11 @@ function loadTestData() {
   toast('テストデータを読み込みました');
   console.log('=== テストデータ LTSV検証 ===');
   var cm = membersForMap('current');
-  console.log('上田ライン LTSV:', calcLtsv('a1', cm), '(期待: 上田3000+重畠1757+福木1136+中西705+波左間800+川野1980 = 9378)');
-  console.log('重畠ライン LTSV:', calcLtsv('b1', cm), '(期待: 重畠1757+福木1136+中西705 = 3598)');
-  console.log('福木 LTSV:', calcLtsv('c1', cm), '(期待: 福木1136 = 1136)');
-  console.log('川野 LTSV:', calcLtsv('b4', cm), '(期待: 川野1980 = 1980)');
-  console.log('古藤ライン LTSV:', calcLtsv('a2', cm), '(期待: 0 — 古藤BM,吉岡B8,畑辺B4は全てBR未満)');
+  console.log('佐藤ライン LTSV:', calcLtsv('a1', cm), '(期待: 佐藤3000+渡辺1757+加藤1136+吉田705+山本800+小林1980 = 9378)');
+  console.log('渡辺ライン LTSV:', calcLtsv('b1', cm), '(期待: 渡辺1757+加藤1136+吉田705 = 3598)');
+  console.log('加藤 LTSV:', calcLtsv('c1', cm), '(期待: 加藤1136 = 1136)');
+  console.log('小林 LTSV:', calcLtsv('b4', cm), '(期待: 小林1980 = 1980)');
+  console.log('鈴木ライン LTSV:', calcLtsv('a2', cm), '(期待: 0 — 鈴木BM,木村B8,林B4は全てBR未満)');
 }
 
 
