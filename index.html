@@ -754,15 +754,18 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ev-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px;margin-bottom:3px}
 .ev-cal-weekdays span{text-align:center;font-size:10px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
 .ev-cal-weekdays .ev-sat{color:var(--b)}
+.ev-cal-weekdays .ev-sun{color:var(--red)}
 .ev-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px}
 .ev-cell{position:relative;min-height:60px;border:1px solid var(--border);border-radius:6px;background:var(--surface);display:flex;flex-direction:column;align-items:stretch;padding:2px;cursor:pointer;overflow:hidden}
 .ev-cell.empty{background:transparent;border-color:transparent;cursor:default}
 .ev-cell.today{border-color:var(--accent)}
 .ev-cell.sel{background:var(--accent-dim);border-color:var(--accent)}
 .ev-cell-num{font-size:10px;color:var(--text);font-family:'IBM Plex Mono',monospace;padding:0 2px;text-align:left}
+.ev-cell-num.sun{color:var(--red)}
+.ev-cell-num.sat{color:var(--b)}
 .ev-cell.today .ev-cell-num{color:var(--accent);font-weight:700}
 .ev-cell-bars{display:flex;flex-direction:column;gap:1px;margin-top:1px;width:100%}
-.ev-bar{font-size:9px;line-height:1.35;padding:1px 3px;border-radius:3px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;text-align:left}
+.ev-bar{font-size:9px;line-height:1.4;padding:0 3px;border-radius:3px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;text-align:left}
 .ev-bar.bar-task{background:var(--accent);color:#000}
 .ev-bar.bar-event{background:var(--purple);color:#fff}
 .ev-bar.bar-overdue{background:var(--red);color:#fff}
@@ -850,7 +853,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v151</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v153</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1070,7 +1073,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
         <div class="ev-cal-nav" onclick="calShiftMonth(1)">›</div>
       </div>
       <div class="ev-cal-weekdays">
-        <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span>
+        <span class="ev-sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span>
       </div>
       <div class="ev-cal-grid" id="evCalGrid"></div>
       <div class="ev-cal-daylabel" id="evCalDayLabel"></div>
@@ -2245,7 +2248,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v151';
+  var DATA_VERSION = 'v153';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5489,7 +5492,12 @@ function loadEvents(uid) {
     state.events = list || [];
     return fsGet('maps/' + uid + '/meta/eventCategories');
   }).then(function(catDoc) {
-    state.categories = (catDoc && catDoc.list) ? catDoc.list : [];
+    if (catDoc && catDoc.list) {
+      state.categories = catDoc.list;     // 既存（空配列=ユーザーが全削除した状態も尊重）
+    } else {
+      state.categories = defaultCategories(); // 初回のみ初期候補を投入して永続化
+      saveCategories();
+    }
     updateEventsBadge();
     if (currentView === 'events') renderEvents();
     notifyDueEvents();
@@ -5547,6 +5555,16 @@ function findCategory(id) {
   var arr = state.categories || [];
   for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
   return null;
+}
+// 初回のみ投入する初期カテゴリ候補（ユーザーは自由に編集・削除可）
+function defaultCategories() {
+  return [
+    { id: 'cat_def_work',     name: '仕事',         color: '#3b82f6' },
+    { id: 'cat_def_apo',      name: 'アポ',         color: '#ec4899' },
+    { id: 'cat_def_train',    name: '研修',         color: '#22c55e' },
+    { id: 'cat_def_deadline', name: '締切',         color: '#ef4444' },
+    { id: 'cat_def_private',  name: 'プライベート', color: '#f59e0b' }
+  ];
 }
 // 背景色に対する読みやすい文字色
 function catTextColor(hex) {
@@ -6003,14 +6021,16 @@ function renderCalendar() {
     var cls = 'ev-cell';
     if (ds === t) cls += ' today';
     if (ds === _calSelDate) cls += ' sel';
+    var dow = (startDow + d - 1) % 7;
+    var numCls = 'ev-cell-num' + (dow === 0 ? ' sun' : (dow === 6 ? ' sat' : ''));
     var dayList = (byDate[ds] || []).slice();
     dayList.sort(evSortFn);
-    var MAXBARS = 4;
+    var MAXBARS = 7;
     var bars = '';
     for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi]);
-    if (dayList.length > MAXBARS) bars += '<div class="ev-more">+' + (dayList.length - MAXBARS) + '</div>';
+    if (dayList.length > MAXBARS) bars += '<div class="ev-more">他' + (dayList.length - MAXBARS) + '件</div>';
     html += '<div class="' + cls + '" onclick="selCalDay(\'' + ds + '\')">'
-      + '<span class="ev-cell-num">' + d + '</span>'
+      + '<span class="' + numCls + '">' + d + '</span>'
       + '<div class="ev-cell-bars">' + bars + '</div></div>';
   }
   grid.innerHTML = html;
