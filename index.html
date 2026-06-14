@@ -2,8 +2,17 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>GROOVE MAP</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0f14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GROOVE">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
 :root{
@@ -746,18 +755,33 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ev-cal-weekdays span{text-align:center;font-size:10px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
 .ev-cal-weekdays .ev-sat{color:var(--b)}
 .ev-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px}
-.ev-cell{position:relative;aspect-ratio:1/1;border:1px solid var(--border);border-radius:6px;background:var(--surface);display:flex;flex-direction:column;align-items:center;padding:3px 0;cursor:pointer;overflow:hidden}
+.ev-cell{position:relative;min-height:60px;border:1px solid var(--border);border-radius:6px;background:var(--surface);display:flex;flex-direction:column;align-items:stretch;padding:2px;cursor:pointer;overflow:hidden}
 .ev-cell.empty{background:transparent;border-color:transparent;cursor:default}
 .ev-cell.today{border-color:var(--accent)}
 .ev-cell.sel{background:var(--accent-dim);border-color:var(--accent)}
-.ev-cell-num{font-size:12px;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.ev-cell-num{font-size:10px;color:var(--text);font-family:'IBM Plex Mono',monospace;padding:0 2px;text-align:left}
 .ev-cell.today .ev-cell-num{color:var(--accent);font-weight:700}
-.ev-cell-dots{display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;justify-content:center}
-.ev-dot{width:5px;height:5px;border-radius:50%}
-.ev-dot.task{background:var(--accent)}
-.ev-dot.event{background:var(--purple)}
-.ev-dot.overdue{background:var(--red)}
+.ev-cell-bars{display:flex;flex-direction:column;gap:1px;margin-top:1px;width:100%}
+.ev-bar{font-size:9px;line-height:1.35;padding:1px 3px;border-radius:3px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;text-align:left}
+.ev-bar.bar-task{background:var(--accent);color:#000}
+.ev-bar.bar-event{background:var(--purple);color:#fff}
+.ev-bar.bar-overdue{background:var(--red);color:#fff}
+.ev-bar.bar-done{opacity:.5}
+.ev-more{font-size:8px;color:var(--text-dim);padding-left:2px}
 .ev-cal-daylabel{font-size:13px;font-weight:700;color:var(--text);padding:16px 16px 4px}
+/* カテゴリ */
+.ev-cat-field{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:9px 11px;cursor:pointer;font-size:15px}
+.cat-swatch{width:16px;height:16px;border-radius:50%;flex:none;display:inline-block;border:1px solid rgba(127,127,127,0.3)}
+.ev-i-cat{padding:1px 7px;border-radius:10px;font-weight:600;font-size:11px}
+.cat-row{display:flex;align-items:center;gap:8px;padding:11px 4px;border-bottom:1px solid var(--border)}
+.cat-rowmain{display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;min-width:0}
+.cat-name{font-size:14px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-check{color:var(--accent);font-weight:700;padding:0 4px}
+.cat-edit{color:var(--text-dim);font-size:16px;cursor:pointer;padding:4px 8px}
+.cat-add{color:var(--accent);font-size:14px;font-weight:600;padding:14px 4px;cursor:pointer}
+.cat-palette{display:flex;flex-wrap:wrap;gap:10px}
+.cat-color{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;box-sizing:border-box}
+.cat-color.sel{border-color:var(--text)}
 /* 編集モーダル内 +タスク */
 .ev-member-add{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:9px;border:1px dashed var(--accent);border-radius:var(--rsm);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
 </style>
@@ -826,7 +850,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v149</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v151</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1026,6 +1050,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
         <div class="ev-seg-btn" id="evSegCal" onclick="setEventsMode('calendar')">カレンダー</div>
       </div>
       <div class="ev-actions">
+        <div class="ev-notif" id="evInstallBtn" onclick="installPWA()" style="display:none">📲 アプリとして追加</div>
+        <div class="ev-notif" id="evCatBtn" onclick="openCategorySheet(false)">🏷 カテゴリ</div>
         <div class="ev-notif" id="evNotifBtn" onclick="requestNotifPermission()">🔔 通知をオン</div>
         <div class="ev-add" id="evAddBtn" onclick="openEventAdd('')">＋ 予定・タスク</div>
       </div>
@@ -1308,6 +1334,14 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div class="fr" style="flex:1"><label class="fl">時刻（任意）</label><input class="fi" id="evTime" type="time"></div>
     </div>
     <div class="fr">
+      <label class="fl">カテゴリ（色分け）</label>
+      <div class="ev-cat-field" id="evCatField" onclick="openCategorySheet(true)">
+        <span class="cat-swatch" id="evCatSwatch" style="background:#9ca3af"></span>
+        <span id="evCatName" style="flex:1">未分類</span>
+        <span style="color:var(--text-dim)">▾</span>
+      </div>
+    </div>
+    <div class="fr">
       <label class="fl">関連メンバー（任意）</label>
       <select class="fi" id="evMember"></select>
     </div>
@@ -1335,6 +1369,25 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <button class="btn-d" id="evBtnDel" onclick="deleteEvent()" style="display:none">削除</button>
       <button class="btn-p" onclick="saveEvent()">保存</button>
     </div>
+  </div>
+</div>
+
+<!-- カテゴリ 選択/管理 シート -->
+<div class="overlay" id="catSheet" onclick="onCatSheetClick(event)">
+  <div class="sheet" style="max-height:85vh;overflow-y:auto">
+    <div class="sh-title">色の選択 / カテゴリ</div>
+    <div id="catList"></div>
+    <div id="catForm" style="display:none">
+      <div class="fr"><label class="fl">カテゴリ名</label><input class="fi" id="catName" placeholder="例：ゆうの予定 / 仕事 / くもん"></div>
+      <div class="fr"><label class="fl">色</label><div class="cat-palette" id="catPalette"></div></div>
+      <div class="btn-row">
+        <button class="btn-c" onclick="catCancelForm()">キャンセル</button>
+        <button class="btn-d" id="catDelBtn" onclick="catDeleteCurrent()" style="display:none">削除</button>
+        <button class="btn-p" onclick="catSaveForm()">保存</button>
+      </div>
+    </div>
+    <div class="cat-add" id="catAddBtn" onclick="catShowForm(null)">＋ 新しいカテゴリ</div>
+    <div class="btn-row" id="catCloseRow"><button class="btn-c" onclick="closeCategorySheet()">閉じる</button></div>
   </div>
 </div>
 
@@ -1395,6 +1448,7 @@ var GAS_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
 var state = {
   members: [],
   events: [],
+  categories: [],
   stats: { monthly:[], powerline:[], goldList:[], freshList:[], outline:[] },
   commission: {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}},
   months: [],
@@ -2191,7 +2245,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v149';
+  var DATA_VERSION = 'v151';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5430,16 +5484,19 @@ function genEventId() {
 
 // ── Firestore ──
 function loadEvents(uid) {
-  if (!uid || !db) { state.events = []; updateEventsBadge(); return Promise.resolve(); }
+  if (!uid || !db) { state.events = []; state.categories = []; updateEventsBadge(); return Promise.resolve(); }
   return fsGetCol('maps/' + uid + '/events').then(function(list) {
     state.events = list || [];
+    return fsGet('maps/' + uid + '/meta/eventCategories');
+  }).then(function(catDoc) {
+    state.categories = (catDoc && catDoc.list) ? catDoc.list : [];
     updateEventsBadge();
     if (currentView === 'events') renderEvents();
     notifyDueEvents();
     startReminderLoop();
     checkReminders();
     return state.events;
-  }).catch(function() { state.events = []; updateEventsBadge(); });
+  }).catch(function() { state.events = []; state.categories = []; updateEventsBadge(); });
 }
 function saveEventDoc(e) {
   var uid = eventsUid();
@@ -5474,6 +5531,181 @@ function notifyDueEvents() {
       showBrowserNotif('期限のタスク ' + n + ' 件', '今日まで未完了のタスクがあります', 'gm-due-summary');
     }
   }
+}
+
+// ============================================================
+//  カテゴリ（色分け）
+// ============================================================
+var CAT_COLORS = ['#f9a8d4','#ec4899','#ef4444','#f59e0b','#eab308','#22c55e','#14b8a6','#3b82f6','#6366f1','#a855f7','#a87c5a','#9ca3af'];
+var UNCAT_COLOR = '#9ca3af';
+var _evCategoryId = '';     // イベントモーダルで選択中のカテゴリ
+var _catPickMode  = false;  // シートが「イベントへ割当」モードか
+var _catEditId    = null;   // フォーム編集中のカテゴリID
+var _catFormColor = CAT_COLORS[0];
+
+function findCategory(id) {
+  var arr = state.categories || [];
+  for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
+  return null;
+}
+// 背景色に対する読みやすい文字色
+function catTextColor(hex) {
+  if (!hex) return '#fff';
+  var c = hex.replace('#','');
+  if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  var r = parseInt(c.substr(0,2),16), g = parseInt(c.substr(2,2),16), b = parseInt(c.substr(4,2),16);
+  var lum = 0.299*r + 0.587*g + 0.114*b;
+  return lum > 150 ? '#111' : '#fff';
+}
+function saveCategories() {
+  var uid = eventsUid();
+  if (!uid || !db) return Promise.resolve();
+  return fsSet('maps/' + uid + '/meta/eventCategories', {
+    list: state.categories, updatedAt: new Date().toISOString()
+  });
+}
+
+// カレンダーのバー1本
+function evBarHtml(e) {
+  var t = evTodayYmd();
+  var overdue = e.type === 'task' && !e.done && e.date && e.date < t;
+  var cat = e.categoryId ? findCategory(e.categoryId) : null;
+  var cls = 'ev-bar', style = '';
+  if (cat) { style = ' style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '"'; }
+  else if (overdue) cls += ' bar-overdue';
+  else cls += (e.type === 'task') ? ' bar-task' : ' bar-event';
+  if (e.type === 'task' && e.done) cls += ' bar-done';
+  var title = (e.type === 'task' && e.done ? '✓ ' : '') + (e.title || '');
+  return '<div class="' + cls + '"' + style + '>' + evEsc(title) + '</div>';
+}
+
+// イベントモーダルのカテゴリ表示更新
+function updateEvCategoryDisplay() {
+  var sw = document.getElementById('evCatSwatch');
+  var nm = document.getElementById('evCatName');
+  if (!sw || !nm) return;
+  if (_evCategoryId) {
+    var c = findCategory(_evCategoryId);
+    if (c) { sw.style.background = c.color; nm.textContent = c.name; return; }
+    _evCategoryId = '';
+  }
+  sw.style.background = UNCAT_COLOR;
+  nm.textContent = '未分類';
+}
+
+// シート開閉
+function openCategorySheet(pickMode) {
+  if (!eventsUid()) { toast('ログインが必要です'); return; }
+  _catPickMode = !!pickMode;
+  catCancelForm();
+  renderCatPalette();
+  renderCatList();
+  document.getElementById('catSheet').classList.add('open');
+}
+function closeCategorySheet() {
+  document.getElementById('catSheet').classList.remove('open');
+}
+function onCatSheetClick(e) {
+  if (e.target === document.getElementById('catSheet')) closeCategorySheet();
+}
+
+function renderCatList() {
+  var wrap = document.getElementById('catList');
+  if (!wrap) return;
+  var html = '';
+  if (_catPickMode) {
+    html += '<div class="cat-row"><span class="cat-rowmain" onclick="selectCategoryForEvent(\'\')">'
+      + '<span class="cat-swatch" style="background:' + UNCAT_COLOR + '"></span>'
+      + '<span class="cat-name">未分類</span></span>'
+      + (_evCategoryId === '' ? '<span class="cat-check">✓</span>' : '') + '</div>';
+  }
+  (state.categories || []).forEach(function(c) {
+    var mainAction = _catPickMode ? ("selectCategoryForEvent('" + c.id + "')") : ("catShowForm('" + c.id + "')");
+    html += '<div class="cat-row">'
+      + '<span class="cat-rowmain" onclick="' + mainAction + '">'
+      + '<span class="cat-swatch" style="background:' + c.color + '"></span>'
+      + '<span class="cat-name">' + evEsc(c.name) + '</span></span>'
+      + (_catPickMode && _evCategoryId === c.id ? '<span class="cat-check">✓</span>' : '')
+      + '<span class="cat-edit" onclick="catShowForm(\'' + c.id + '\')">✎</span>'
+      + '</div>';
+  });
+  if (!(state.categories || []).length && !_catPickMode) {
+    html += '<div class="ev-empty" style="padding:14px">カテゴリ未作成。<br>「＋ 新しいカテゴリ」から作成できます。</div>';
+  }
+  wrap.innerHTML = html;
+}
+function renderCatPalette() {
+  var p = document.getElementById('catPalette');
+  if (!p) return;
+  p.innerHTML = CAT_COLORS.map(function(col) {
+    return '<span class="cat-color' + (_catFormColor === col ? ' sel' : '')
+      + '" style="background:' + col + '" onclick="catPickColor(\'' + col + '\')"></span>';
+  }).join('');
+}
+function catPickColor(col) { _catFormColor = col; renderCatPalette(); }
+
+function selectCategoryForEvent(catId) {
+  _evCategoryId = catId || '';
+  updateEvCategoryDisplay();
+  closeCategorySheet();
+}
+
+function catShowForm(id) {
+  _catEditId = id || null;
+  var c = id ? findCategory(id) : null;
+  document.getElementById('catName').value = c ? c.name : '';
+  _catFormColor = c ? c.color : CAT_COLORS[0];
+  renderCatPalette();
+  document.getElementById('catForm').style.display = '';
+  document.getElementById('catAddBtn').style.display = 'none';
+  document.getElementById('catDelBtn').style.display = id ? '' : 'none';
+  document.getElementById('catList').style.display = 'none';
+  document.getElementById('catCloseRow').style.display = 'none';
+}
+function catCancelForm() {
+  var f = document.getElementById('catForm');
+  if (f) f.style.display = 'none';
+  var add = document.getElementById('catAddBtn'); if (add) add.style.display = '';
+  var list = document.getElementById('catList'); if (list) list.style.display = '';
+  var close = document.getElementById('catCloseRow'); if (close) close.style.display = '';
+  _catEditId = null;
+}
+function catSaveForm() {
+  var name = document.getElementById('catName').value.trim();
+  if (!name) { toast('カテゴリ名を入力してください'); return; }
+  if (_catEditId) {
+    var c = findCategory(_catEditId);
+    if (c) { c.name = name; c.color = _catFormColor; }
+  } else {
+    state.categories.push({
+      id: 'cat_' + Date.now() + '_' + Math.floor(Math.random()*100000),
+      name: name, color: _catFormColor
+    });
+  }
+  saveCategories();
+  catCancelForm();
+  renderCatList();
+  updateEvCategoryDisplay();
+  if (currentView === 'events') renderEvents();
+  toast('保存しました ✓');
+}
+function catDeleteCurrent() {
+  if (!_catEditId) return;
+  if (!confirm('このカテゴリを削除しますか？\n（紐づく予定は「未分類」になります）')) return;
+  var delId = _catEditId;
+  for (var i=0;i<state.categories.length;i++) {
+    if (state.categories[i].id === delId) { state.categories.splice(i,1); break; }
+  }
+  (state.events || []).forEach(function(e) {
+    if (e.categoryId === delId) { e.categoryId = ''; saveEventDoc(e); }
+  });
+  if (_evCategoryId === delId) _evCategoryId = '';
+  saveCategories();
+  catCancelForm();
+  renderCatList();
+  updateEvCategoryDisplay();
+  if (currentView === 'events') renderEvents();
+  toast('削除しました');
 }
 
 // ── ブラウザ通知（Notification API）──
@@ -5582,6 +5814,58 @@ function startReminderLoop() {
   _reminderTimer = setInterval(checkReminders, 60000);
 }
 
+// ── PWA（インストール / Service Worker）──
+var _deferredInstall = null; // beforeinstallprompt（Android/デスクトップChrome）
+
+function isStandalone() {
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+    || navigator.standalone === true;
+}
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+}
+function updateInstallBtn() {
+  var b = document.getElementById('evInstallBtn');
+  if (!b) return;
+  // インストール済み(standalone)なら隠す。それ以外で、インストール手段がある時だけ表示。
+  if (isStandalone()) { b.style.display = 'none'; return; }
+  b.style.display = (_deferredInstall || isIOS()) ? '' : 'none';
+}
+function installPWA() {
+  if (_deferredInstall) {
+    _deferredInstall.prompt();
+    _deferredInstall.userChoice.then(function(res) {
+      if (res && res.outcome === 'accepted') toast('ホーム画面に追加しました ✓');
+      _deferredInstall = null;
+      updateInstallBtn();
+    });
+    return;
+  }
+  if (isIOS()) {
+    alert('ホーム画面に追加する手順:\n\n1. 画面下の「共有」ボタン（□に↑）をタップ\n2.「ホーム画面に追加」を選択\n\n※ ホーム画面から起動すると、今後アプリを閉じていても通知を受け取れるようになります（次のステップで対応予定）。');
+    return;
+  }
+  toast('お使いのブラウザのメニューから「インストール」を選んでください');
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    _deferredInstall = e;
+    updateInstallBtn();
+  });
+  window.addEventListener('appinstalled', function() {
+    _deferredInstall = null;
+    toast('アプリをインストールしました 🎉');
+    updateInstallBtn();
+  });
+}
+// Service Worker 登録（相対パス → scope は /groove-map/ 配下）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function() {});
+  });
+}
+
 // ── 表示モード ──
 function setEventsMode(mode) {
   _evMode = mode;
@@ -5598,6 +5882,7 @@ function setEventsMode(mode) {
 function renderEvents() {
   updateEventsBadge();
   updateNotifBtn();
+  updateInstallBtn();
   var addBtn = document.getElementById('evAddBtn');
   if (addBtn) addBtn.style.display = eventsUid() ? '' : 'none';
   if (_evMode === 'agenda') renderAgenda();
@@ -5647,12 +5932,15 @@ function evItemHtml(e) {
   }
   var dateLabel = fmtEvDate(e.date, e.time);
   var dueCls = overdue ? 'due-overdue' : (e.date === t ? 'due-today' : '');
-  var h = '<div class="' + cls + '">';
+  var cat = e.categoryId ? findCategory(e.categoryId) : null;
+  var styleAttr = cat ? ' style="border-left-color:' + cat.color + '"' : '';
+  var h = '<div class="' + cls + '"' + styleAttr + '>';
   h += '<div class="' + checkCls + '" onclick="toggleEventDone(\'' + e.id + '\')">✓</div>';
   h += '<div class="ev-i-body" onclick="openEventEdit(\'' + e.id + '\')">';
   h += '<div class="ev-i-title">' + evEsc(e.title || '(無題)') + '</div>';
   h += '<div class="ev-i-meta">';
   if (dateLabel) h += '<span class="' + dueCls + '">' + (isTask && e.date && e.date <= t && !e.done ? '⏰ ' : '') + evEsc(dateLabel) + '</span>';
+  if (cat) h += '<span class="ev-i-cat" style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">⚑ 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
   h += '</div></div></div>';
@@ -5715,15 +6003,15 @@ function renderCalendar() {
     var cls = 'ev-cell';
     if (ds === t) cls += ' today';
     if (ds === _calSelDate) cls += ' sel';
-    var dots = '', seen = {};
-    (byDate[ds] || []).forEach(function(e) {
-      var k = (e.type === 'task' && !e.done && e.date < t) ? 'overdue' : e.type;
-      if (seen[k]) return; seen[k] = 1;
-      dots += '<span class="ev-dot ' + k + '"></span>';
-    });
+    var dayList = (byDate[ds] || []).slice();
+    dayList.sort(evSortFn);
+    var MAXBARS = 4;
+    var bars = '';
+    for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi]);
+    if (dayList.length > MAXBARS) bars += '<div class="ev-more">+' + (dayList.length - MAXBARS) + '</div>';
     html += '<div class="' + cls + '" onclick="selCalDay(\'' + ds + '\')">'
       + '<span class="ev-cell-num">' + d + '</span>'
-      + '<span class="ev-cell-dots">' + dots + '</span></div>';
+      + '<div class="ev-cell-bars">' + bars + '</div></div>';
   }
   grid.innerHTML = html;
   renderCalDayList();
@@ -5806,6 +6094,8 @@ function openEventModal(id, presetMember, presetDate) {
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : '';
   document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
+  _evCategoryId = e ? (e.categoryId || '') : '';
+  updateEvCategoryDisplay();
   buildEvMemberOptions(e ? (e.memberId || '') : (presetMember || ''));
   document.getElementById('eventModal').classList.add('open');
 }
@@ -5832,6 +6122,7 @@ function saveEvent() {
   e.date     = document.getElementById('evDate').value;
   e.time     = document.getElementById('evTime').value;
   e.memberId = document.getElementById('evMember').value;
+  e.categoryId = _evCategoryId || '';
   e.priority = (_evType === 'task') ? _evPrio : 'normal';
   e.memo     = document.getElementById('evMemo').value.trim();
   var rbVal  = document.getElementById('evRemind').value;
