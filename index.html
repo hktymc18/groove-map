@@ -785,6 +785,18 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .cat-palette{display:flex;flex-wrap:wrap;gap:10px}
 .cat-color{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;box-sizing:border-box}
 .cat-color.sel{border-color:var(--text)}
+/* スマホ：カレンダーをできるだけ全画面で表示 */
+@media(max-width:767px){
+  #view-events .ev-toolbar{padding:6px 10px 2px;gap:6px}
+  #view-events .ev-seg-btn{padding:6px 14px;font-size:12px}
+  #view-events .ev-notif,#view-events .ev-add{padding:6px 9px;font-size:12px}
+  #view-events .ev-cal-hdr{padding:2px 14px;gap:12px}
+  #view-events .ev-cal-nav{width:30px;height:30px;font-size:16px}
+  #view-events .ev-cal-title{font-size:14px;min-width:110px}
+  #view-events .ev-cal-grid{gap:3px;padding:0 8px 8px}
+  /* グリッドに残り画面高を与え、行(grid-auto-rows:1fr)を均等に伸ばして全画面表示 */
+  #view-events #evCalGrid{height:calc(100vh - 222px);height:calc(100dvh - 222px);grid-auto-rows:1fr}
+}
 /* 編集モーダル内 +タスク */
 .ev-member-add{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:9px;border:1px dashed var(--accent);border-radius:var(--rsm);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
 </style>
@@ -853,7 +865,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v153</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v154</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -2248,7 +2260,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v153';
+  var DATA_VERSION = 'v154';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
