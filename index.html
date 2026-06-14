@@ -705,6 +705,61 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .card-quick-add{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;background:var(--surface3);border:1px solid var(--border);color:var(--accent);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s;z-index:5;line-height:1}
 .nc:hover .card-quick-add{opacity:1}
 @media(max-width:767px){.card-quick-add{display:none}}
+
+/* ====== 予定（カレンダー） ====== */
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;margin-left:4px;border-radius:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;line-height:1;vertical-align:middle}
+.ev-toolbar{display:flex;align-items:center;gap:8px;padding:12px 14px 6px;flex-wrap:wrap}
+.ev-seg{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);overflow:hidden}
+.ev-seg-btn{padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:all .15s}
+.ev-seg-btn.active{background:var(--accent);color:#000}
+.ev-add{margin-left:auto;padding:7px 14px;font-size:13px;font-weight:600;color:#000;background:var(--accent);border-radius:var(--rsm);cursor:pointer;white-space:nowrap}
+.ev-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ev-actions .ev-add{margin-left:0}
+.ev-notif{padding:7px 12px;font-size:13px;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);cursor:pointer;white-space:nowrap}
+.ev-notif.on{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+.ev-notif.denied{color:var(--text-dim);opacity:.65}
+.ev-group-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;padding:14px 16px 6px;display:flex;align-items:center;gap:8px}
+.ev-group-label.overdue{color:var(--red)}
+.ev-group-label.today{color:var(--accent)}
+.ev-item{display:flex;align-items:flex-start;gap:10px;margin:0 14px 8px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);border-left:3px solid var(--border)}
+.ev-item.t-task{border-left-color:var(--accent)}
+.ev-item.t-event{border-left-color:var(--purple)}
+.ev-item.is-overdue{border-left-color:var(--red)}
+.ev-item.is-done{opacity:.5}
+.ev-item.is-done .ev-i-title{text-decoration:line-through}
+.ev-check{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;margin-top:1px}
+.ev-check.checked{background:var(--accent);border-color:var(--accent);color:#000}
+.ev-item.t-event .ev-check{visibility:hidden}
+.ev-i-body{flex:1;min-width:0;cursor:pointer}
+.ev-i-title{font-size:14px;font-weight:600;color:var(--text);word-break:break-word}
+.ev-i-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px;font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.ev-i-meta .due-overdue{color:var(--red);font-weight:700}
+.ev-i-meta .due-today{color:var(--accent);font-weight:700}
+.ev-i-member{padding:1px 7px;border-radius:10px;background:var(--purple-dim);color:var(--purple);font-weight:600}
+.ev-i-prio{padding:1px 6px;border-radius:10px;background:rgba(239,68,68,.14);color:var(--red);font-weight:700}
+.ev-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 20px}
+/* 月カレンダー */
+.ev-cal-hdr{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 14px}
+.ev-cal-title{font-size:15px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;min-width:130px;text-align:center}
+.ev-cal-nav{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer}
+.ev-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px;margin-bottom:3px}
+.ev-cal-weekdays span{text-align:center;font-size:10px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.ev-cal-weekdays .ev-sat{color:var(--b)}
+.ev-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px}
+.ev-cell{position:relative;aspect-ratio:1/1;border:1px solid var(--border);border-radius:6px;background:var(--surface);display:flex;flex-direction:column;align-items:center;padding:3px 0;cursor:pointer;overflow:hidden}
+.ev-cell.empty{background:transparent;border-color:transparent;cursor:default}
+.ev-cell.today{border-color:var(--accent)}
+.ev-cell.sel{background:var(--accent-dim);border-color:var(--accent)}
+.ev-cell-num{font-size:12px;color:var(--text);font-family:'IBM Plex Mono',monospace}
+.ev-cell.today .ev-cell-num{color:var(--accent);font-weight:700}
+.ev-cell-dots{display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;justify-content:center}
+.ev-dot{width:5px;height:5px;border-radius:50%}
+.ev-dot.task{background:var(--accent)}
+.ev-dot.event{background:var(--purple)}
+.ev-dot.overdue{background:var(--red)}
+.ev-cal-daylabel{font-size:13px;font-weight:700;color:var(--text);padding:16px 16px 4px}
+/* 編集モーダル内 +タスク */
+.ev-member-add{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:9px;border:1px dashed var(--accent);border-radius:var(--rsm);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -771,14 +826,15 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v147</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v149</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
-    <button class="tab active" onclick="switchView('current')">現状</button>
-    <button class="tab" onclick="switchView('ideal')">理想</button>
-    <button class="tab" onclick="switchView('ol')">OL</button>
-    <button class="tab" onclick="switchView('stats')">データ</button>
-    <button class="tab purple" onclick="switchView('diff')">差分</button>
+    <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
+    <button class="tab" data-view="ideal" onclick="switchView('ideal')">理想</button>
+    <button class="tab" data-view="ol" onclick="switchView('ol')">OL</button>
+    <button class="tab" data-view="events" onclick="switchView('events')">予定<span class="tab-badge" id="eventsBadge" style="display:none">0</span></button>
+    <button class="tab" data-view="stats" onclick="switchView('stats')">データ</button>
+    <button class="tab purple" data-view="diff" onclick="switchView('diff')">差分</button>
   </div>
 </header>
 
@@ -962,6 +1018,40 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <div class="card" id="outlineWrap"></div>
   </div>
 
+  <!-- ====== 予定（カレンダー） ====== -->
+  <div id="view-events" style="display:none">
+    <div class="ev-toolbar">
+      <div class="ev-seg">
+        <div class="ev-seg-btn active" id="evSegAgenda" onclick="setEventsMode('agenda')">アジェンダ</div>
+        <div class="ev-seg-btn" id="evSegCal" onclick="setEventsMode('calendar')">カレンダー</div>
+      </div>
+      <div class="ev-actions">
+        <div class="ev-notif" id="evNotifBtn" onclick="requestNotifPermission()">🔔 通知をオン</div>
+        <div class="ev-add" id="evAddBtn" onclick="openEventAdd('')">＋ 予定・タスク</div>
+      </div>
+    </div>
+
+    <!-- アジェンダ -->
+    <div id="evAgenda">
+      <div id="evAgendaList"></div>
+    </div>
+
+    <!-- 月カレンダー -->
+    <div id="evCalendar" style="display:none">
+      <div class="ev-cal-hdr">
+        <div class="ev-cal-nav" onclick="calShiftMonth(-1)">‹</div>
+        <div class="ev-cal-title" id="evCalTitle"></div>
+        <div class="ev-cal-nav" onclick="calShiftMonth(1)">›</div>
+      </div>
+      <div class="ev-cal-weekdays">
+        <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span>
+      </div>
+      <div class="ev-cal-grid" id="evCalGrid"></div>
+      <div class="ev-cal-daylabel" id="evCalDayLabel"></div>
+      <div id="evCalDayList"></div>
+    </div>
+  </div>
+
 </div><!-- /scroll-area -->
 
 <!-- 共有MAPダッシュボード -->
@@ -1094,6 +1184,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
           <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
         </div>
         <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="1/24 クロージング&#10;次回：馬越さんと日程調整中"></textarea></div>
+        <div class="ev-member-add" id="memberTaskBtn" onclick="openTaskForMember()" style="display:none">＋ このメンバーにタスク追加</div>
       </div>
     </div>
 
@@ -1200,6 +1291,53 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   </div>
 </div>
 
+<!-- 予定・タスク 追加/編集モーダル -->
+<div class="overlay" id="eventModal" onclick="onEventOverlayClick(event)">
+  <div class="sheet">
+    <div class="sh-title" id="evShTitle">予定・タスク</div>
+    <div class="fr">
+      <label class="fl">種別</label>
+      <div class="rg">
+        <div class="rb sel" id="evChipTask" onclick="selEvType('task')">✅ タスク</div>
+        <div class="rb" id="evChipEvent" onclick="selEvType('event')">📅 予定</div>
+      </div>
+    </div>
+    <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：馬越さんとアポ / 資料作成"></div>
+    <div style="display:flex;gap:10px">
+      <div class="fr" style="flex:1"><label class="fl">日付</label><input class="fi" id="evDate" type="date"></div>
+      <div class="fr" style="flex:1"><label class="fl">時刻（任意）</label><input class="fi" id="evTime" type="time"></div>
+    </div>
+    <div class="fr">
+      <label class="fl">関連メンバー（任意）</label>
+      <select class="fi" id="evMember"></select>
+    </div>
+    <div class="fr">
+      <label class="fl">リマインド通知（任意・時刻未指定は9:00基準）</label>
+      <select class="fi" id="evRemind">
+        <option value="">なし</option>
+        <option value="0">時刻ちょうど</option>
+        <option value="10">10分前</option>
+        <option value="30">30分前</option>
+        <option value="60">1時間前</option>
+        <option value="1440">前日</option>
+      </select>
+    </div>
+    <div class="fr" id="evPrioRow">
+      <label class="fl">優先度</label>
+      <div class="rg">
+        <div class="rb sel" id="evPrioNormal" onclick="selEvPrio('normal')">通常</div>
+        <div class="rb" id="evPrioHigh" onclick="selEvPrio('high')">⚑ 重要</div>
+      </div>
+    </div>
+    <div class="fr"><label class="fl">メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
+    <div class="btn-row">
+      <button class="btn-c" onclick="closeEventModal()">キャンセル</button>
+      <button class="btn-d" id="evBtnDel" onclick="deleteEvent()" style="display:none">削除</button>
+      <button class="btn-p" onclick="saveEvent()">保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // CONFIG — デプロイ後にここを変更してください
@@ -1256,6 +1394,7 @@ var GAS_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
 
 var state = {
   members: [],
+  events: [],
   stats: { monthly:[], powerline:[], goldList:[], freshList:[], outline:[] },
   commission: {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}},
   months: [],
@@ -2052,7 +2191,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v147';
+  var DATA_VERSION = 'v149';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2160,14 +2299,13 @@ function updateFabVisibility() {
 // ── VIEW SWITCH ──
 function switchView(v) {
   currentView = v;
-  ['current','ideal','diff','stats','ol'].forEach(function(n) {
+  ['current','ideal','diff','stats','ol','events'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
   // タブボタンのactive切り替え
-  var tabMap = {'現状':'current','理想':'ideal','OL':'ol','データ':'stats','差分':'diff'};
   Array.prototype.slice.call(document.querySelectorAll('.tab')).forEach(function(btn) {
-    btn.classList.toggle('active', tabMap[btn.textContent.trim()] === v);
+    btn.classList.toggle('active', btn.getAttribute('data-view') === v);
   });
   updateFabVisibility();
   if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
@@ -2175,6 +2313,7 @@ function switchView(v) {
   else if (v==='diff') loadDiff();
   else if (v==='stats') renderStats();
   else if (v==='ol') renderOL();
+  else if (v==='events') renderEvents();
 }
 function renderCurrentView() {
   if (currentView === 'current') renderTree('current');
@@ -4921,6 +5060,8 @@ function openAdd() {
   fMapType = currentView==='stats' ? 'current' : currentView;
   document.getElementById('shTitle').textContent = 'メンバー追加';
   document.getElementById('btnDel').style.display = 'none';
+  var _mtb1 = document.getElementById('memberTaskBtn');
+  if (_mtb1) _mtb1.style.display = 'none';
   clearForm();
   // 研修履歴エリアをリセット
   var hw = document.getElementById('traineeHistoryWrap');
@@ -5019,6 +5160,8 @@ function openEdit(id) {
     var msM = document.getElementById('msMonthly');
     if (msB) msB.classList.add('collapsed');
     if (msM) msM.classList.remove('collapsed');
+    var _mtb2 = document.getElementById('memberTaskBtn');
+    if (_mtb2) _mtb2.style.display = eventsUid() ? '' : 'none';
     // モーダルを開く
     document.getElementById('modal').classList.add('open');
 
@@ -5243,6 +5386,482 @@ function toast(msg, dur) {
   var el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   setTimeout(function(){el.classList.remove('show');}, dur);
+}
+
+// ============================================================
+//  予定（カレンダー / タスク）
+// ============================================================
+var _evMode    = 'agenda';   // 'agenda' | 'calendar'
+var _evType    = 'task';     // モーダル内：種別
+var _evPrio    = 'normal';   // モーダル内：優先度
+var _evEditId  = null;       // 編集中イベントID
+var _calYear   = 0;
+var _calMonth  = 0;          // 0始まり
+var _calSelDate = '';
+var _evNotified = false;
+
+function evEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function eventsUid() {
+  return (currentUser && currentUser.uid) ? currentUser.uid : null;
+}
+function evPad2(n){ return (n<10?'0':'') + n; }
+function evYmd(d) {
+  return d.getFullYear() + '-' + evPad2(d.getMonth()+1) + '-' + evPad2(d.getDate());
+}
+function evTodayYmd() { return evYmd(new Date()); }
+function evAddDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate()+n); return x; }
+function findEvent(id) {
+  var arr = state.events || [];
+  for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
+  return null;
+}
+function findMemberAny(id) {
+  var arr = (state.members||[]).concat(state.idealMembers||[]);
+  for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
+  return null;
+}
+function genEventId() {
+  return 'ev_' + Date.now() + '_' + Math.floor(Math.random()*100000);
+}
+
+// ── Firestore ──
+function loadEvents(uid) {
+  if (!uid || !db) { state.events = []; updateEventsBadge(); return Promise.resolve(); }
+  return fsGetCol('maps/' + uid + '/events').then(function(list) {
+    state.events = list || [];
+    updateEventsBadge();
+    if (currentView === 'events') renderEvents();
+    notifyDueEvents();
+    startReminderLoop();
+    checkReminders();
+    return state.events;
+  }).catch(function() { state.events = []; updateEventsBadge(); });
+}
+function saveEventDoc(e) {
+  var uid = eventsUid();
+  if (!uid || !db) return Promise.resolve();
+  return fsSet('maps/' + uid + '/events/' + e.id, e);
+}
+
+// ── アプリ内アラート ──
+function dueTaskCount() {
+  var t = evTodayYmd(), n = 0;
+  (state.events||[]).forEach(function(e) {
+    if (e.type === 'task' && !e.done && e.date && e.date <= t) n++;
+  });
+  return n;
+}
+function updateEventsBadge() {
+  var b = document.getElementById('eventsBadge');
+  if (!b) return;
+  var n = dueTaskCount();
+  if (n > 0) { b.textContent = n; b.style.display = ''; }
+  else b.style.display = 'none';
+}
+function notifyDueEvents() {
+  if (_evNotified) return;
+  _evNotified = true;
+  var n = dueTaskCount();
+  if (n > 0) {
+    setTimeout(function() {
+      toast('⏰ 期限が来ているタスクが ' + n + ' 件あります', 3500);
+    }, 900);
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      showBrowserNotif('期限のタスク ' + n + ' 件', '今日まで未完了のタスクがあります', 'gm-due-summary');
+    }
+  }
+}
+
+// ── ブラウザ通知（Notification API）──
+var _notifiedTriggers = {};   // 同一トリガーの二重通知防止（セッション内）
+var _reminderTimer = null;
+
+function notifSupported() { return typeof Notification !== 'undefined'; }
+
+function updateNotifBtn() {
+  var b = document.getElementById('evNotifBtn');
+  if (!b) return;
+  if (!notifSupported()) { b.style.display = 'none'; return; }
+  b.style.display = '';
+  b.classList.remove('on', 'denied');
+  if (Notification.permission === 'granted') { b.classList.add('on'); b.textContent = '🔔 通知ON'; }
+  else if (Notification.permission === 'denied') { b.classList.add('denied'); b.textContent = '🔔 通知ブロック中'; }
+  else { b.textContent = '🔔 通知をオン'; }
+}
+
+function requestNotifPermission() {
+  if (!notifSupported()) { toast('このブラウザは通知に対応していません'); return; }
+  if (Notification.permission === 'granted') {
+    toast('通知はすでにオンです');
+    updateNotifBtn(); checkReminders(); return;
+  }
+  if (Notification.permission === 'denied') {
+    toast('ブラウザ設定で通知がブロックされています。設定から許可してください');
+    updateNotifBtn(); return;
+  }
+  var handle = function(p) {
+    updateNotifBtn();
+    if (p === 'granted') {
+      toast('通知をオンにしました 🔔');
+      showBrowserNotif('通知をオンにしました', '期限・予定の時刻にお知らせします', 'gm-welcome');
+      checkReminders();
+    } else {
+      toast('通知は許可されませんでした');
+    }
+  };
+  // Promise版と旧コールバック版の両対応（iOS Safari等）
+  try {
+    var res = Notification.requestPermission(handle);
+    if (res && typeof res.then === 'function') res.then(handle);
+  } catch (err) {
+    try { Notification.requestPermission(handle); } catch (e2) {}
+  }
+}
+
+function showBrowserNotif(title, body, tag) {
+  if (!notifSupported() || Notification.permission !== 'granted') return;
+  try {
+    var opts = { body: body || '' };
+    if (tag) opts.tag = tag;
+    var n = new Notification('🔔 ' + title, opts);
+    n.onclick = function() {
+      try { window.focus(); } catch (_) {}
+      switchView('events');
+      try { n.close(); } catch (_) {}
+    };
+    setTimeout(function() { try { n.close(); } catch (_) {} }, 12000);
+  } catch (err) {}
+}
+
+// 予定の日時オブジェクト（時刻未指定は9:00基準）
+function evDateTime(e) {
+  if (!e.date) return null;
+  var p = e.date.split('-');
+  if (p.length !== 3) return null;
+  var hh = 9, mm = 0;
+  if (e.time) {
+    var tp = e.time.split(':');
+    hh = parseInt(tp[0], 10) || 0;
+    mm = parseInt(tp[1], 10) || 0;
+  }
+  return new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), hh, mm, 0, 0);
+}
+
+// リマインド通知チェック（60秒ごと＋随時呼び出し）
+function checkReminders() {
+  if (!notifSupported() || Notification.permission !== 'granted') return;
+  var now = Date.now();
+  var GRACE = 5 * 60000; // 予定時刻を5分過ぎたら以降は通知しない
+  (state.events || []).forEach(function(e) {
+    var rb = e.remindBefore;
+    if (rb === undefined || rb === null || rb === '') return;
+    if (e.type === 'task' && e.done) return;
+    var dt = evDateTime(e);
+    if (!dt) return;
+    var evMs = dt.getTime();
+    var trigger = evMs - (parseInt(rb, 10) || 0) * 60000;
+    var key = e.id + '@' + e.date + (e.time || '') + '#' + rb;
+    if (_notifiedTriggers[key]) return;
+    if (now >= trigger && now <= evMs + GRACE) {
+      _notifiedTriggers[key] = 1;
+      var when = e.time ? e.time : fmtEvDate(e.date, '');
+      var body = (e.type === 'task' ? 'タスク' : '予定') + '：' + when;
+      var m = e.memberId ? findMemberAny(e.memberId) : null;
+      if (m) body += ' / ' + ((m.lastName||'') + (m.firstName||'')).trim();
+      showBrowserNotif(e.title || '(無題)', body, key);
+    }
+  });
+}
+
+function startReminderLoop() {
+  if (_reminderTimer) return;
+  _reminderTimer = setInterval(checkReminders, 60000);
+}
+
+// ── 表示モード ──
+function setEventsMode(mode) {
+  _evMode = mode;
+  var a = document.getElementById('evSegAgenda');
+  var c = document.getElementById('evSegCal');
+  if (a) a.classList.toggle('active', mode === 'agenda');
+  if (c) c.classList.toggle('active', mode === 'calendar');
+  var ea = document.getElementById('evAgenda');
+  var ec = document.getElementById('evCalendar');
+  if (ea) ea.style.display = mode === 'agenda' ? '' : 'none';
+  if (ec) ec.style.display = mode === 'calendar' ? '' : 'none';
+  renderEvents();
+}
+function renderEvents() {
+  updateEventsBadge();
+  updateNotifBtn();
+  var addBtn = document.getElementById('evAddBtn');
+  if (addBtn) addBtn.style.display = eventsUid() ? '' : 'none';
+  if (_evMode === 'agenda') renderAgenda();
+  else renderCalendar();
+}
+
+// ── 並び替え ──
+function evSortFn(a, b) {
+  var da = a.date || '9999-99-99', db2 = b.date || '9999-99-99';
+  if (da !== db2) return da < db2 ? -1 : 1;
+  var ta = a.time || '99:99', tb = b.time || '99:99';
+  return ta < tb ? -1 : (ta > tb ? 1 : 0);
+}
+function fmtEvDate(date, time) {
+  if (!date) return '';
+  var parts = date.split('-');
+  if (parts.length !== 3) return date + (time ? (' ' + time) : '');
+  var d = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+  var wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  var t = evTodayYmd();
+  var label;
+  if (date === t) label = '今日';
+  else if (date === evYmd(evAddDays(new Date(),1))) label = '明日';
+  else if (date === evYmd(evAddDays(new Date(),-1))) label = '昨日';
+  else label = parseInt(parts[1],10) + '/' + parseInt(parts[2],10) + '(' + wd + ')';
+  if (time) label += ' ' + time;
+  return label;
+}
+
+// ── アジェンダ ──
+function evGrpLabel(text, cls, count) {
+  return '<div class="ev-group-label ' + cls + '">' + text
+    + ' <span style="opacity:.55">(' + count + ')</span></div>';
+}
+function evItemHtml(e) {
+  var t = evTodayYmd();
+  var isTask = e.type === 'task';
+  var overdue = isTask && !e.done && e.date && e.date < t;
+  var cls = 'ev-item ' + (isTask ? 't-task' : 't-event');
+  if (overdue) cls += ' is-overdue';
+  if (isTask && e.done) cls += ' is-done';
+  var checkCls = 'ev-check' + (e.done ? ' checked' : '');
+  var memberName = '';
+  if (e.memberId) {
+    var m = findMemberAny(e.memberId);
+    if (m) memberName = ((m.lastName||'') + (m.firstName||'')).trim();
+  }
+  var dateLabel = fmtEvDate(e.date, e.time);
+  var dueCls = overdue ? 'due-overdue' : (e.date === t ? 'due-today' : '');
+  var h = '<div class="' + cls + '">';
+  h += '<div class="' + checkCls + '" onclick="toggleEventDone(\'' + e.id + '\')">✓</div>';
+  h += '<div class="ev-i-body" onclick="openEventEdit(\'' + e.id + '\')">';
+  h += '<div class="ev-i-title">' + evEsc(e.title || '(無題)') + '</div>';
+  h += '<div class="ev-i-meta">';
+  if (dateLabel) h += '<span class="' + dueCls + '">' + (isTask && e.date && e.date <= t && !e.done ? '⏰ ' : '') + evEsc(dateLabel) + '</span>';
+  if (e.priority === 'high') h += '<span class="ev-i-prio">⚑ 重要</span>';
+  if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
+  h += '</div></div></div>';
+  return h;
+}
+function renderAgenda() {
+  var wrap = document.getElementById('evAgendaList');
+  if (!wrap) return;
+  var evs = (state.events||[]).slice();
+  evs.sort(evSortFn);
+  var t = evTodayYmd();
+  var weekEnd = evYmd(evAddDays(new Date(), 6));
+  var overdue = [], today = [], week = [], later = [], noDate = [], done = [];
+  evs.forEach(function(e) {
+    if (e.type === 'task' && e.done) { done.push(e); return; }
+    if (!e.date) { noDate.push(e); return; }
+    if (e.date < t) overdue.push(e);
+    else if (e.date === t) today.push(e);
+    else if (e.date <= weekEnd) week.push(e);
+    else later.push(e);
+  });
+  var html = '';
+  if (overdue.length) html += evGrpLabel('期限切れ','overdue', overdue.length) + overdue.map(evItemHtml).join('');
+  if (today.length)   html += evGrpLabel('今日','today', today.length) + today.map(evItemHtml).join('');
+  if (week.length)    html += evGrpLabel('今週','', week.length) + week.map(evItemHtml).join('');
+  if (later.length)   html += evGrpLabel('これから','', later.length) + later.map(evItemHtml).join('');
+  if (noDate.length)  html += evGrpLabel('日付なし','', noDate.length) + noDate.map(evItemHtml).join('');
+  if (done.length)    html += evGrpLabel('完了済み','', done.length) + done.map(evItemHtml).join('');
+  if (!html) html = '<div class="ev-empty">予定・タスクはまだありません。<br>「＋ 予定・タスク」から追加できます。</div>';
+  wrap.innerHTML = html;
+}
+
+// ── 月カレンダー ──
+function calShiftMonth(delta) {
+  if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
+  _calMonth += delta;
+  if (_calMonth < 0) { _calMonth = 11; _calYear--; }
+  else if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+  renderCalendar();
+}
+function renderCalendar() {
+  if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
+  var title = document.getElementById('evCalTitle');
+  if (title) title.textContent = _calYear + '年 ' + (_calMonth+1) + '月';
+  var grid = document.getElementById('evCalGrid');
+  if (!grid) return;
+  var startDow = new Date(_calYear, _calMonth, 1).getDay();
+  var daysInMonth = new Date(_calYear, _calMonth+1, 0).getDate();
+  var t = evTodayYmd();
+  var byDate = {};
+  (state.events||[]).forEach(function(e) {
+    if (!e.date) return;
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  });
+  var html = '';
+  for (var i=0;i<startDow;i++) html += '<div class="ev-cell empty"></div>';
+  for (var d=1; d<=daysInMonth; d++) {
+    var ds = _calYear + '-' + evPad2(_calMonth+1) + '-' + evPad2(d);
+    var cls = 'ev-cell';
+    if (ds === t) cls += ' today';
+    if (ds === _calSelDate) cls += ' sel';
+    var dots = '', seen = {};
+    (byDate[ds] || []).forEach(function(e) {
+      var k = (e.type === 'task' && !e.done && e.date < t) ? 'overdue' : e.type;
+      if (seen[k]) return; seen[k] = 1;
+      dots += '<span class="ev-dot ' + k + '"></span>';
+    });
+    html += '<div class="' + cls + '" onclick="selCalDay(\'' + ds + '\')">'
+      + '<span class="ev-cell-num">' + d + '</span>'
+      + '<span class="ev-cell-dots">' + dots + '</span></div>';
+  }
+  grid.innerHTML = html;
+  renderCalDayList();
+}
+function selCalDay(ds) {
+  _calSelDate = (ds === _calSelDate) ? '' : ds;
+  renderCalendar();
+}
+function renderCalDayList() {
+  var label = document.getElementById('evCalDayLabel');
+  var wrap = document.getElementById('evCalDayList');
+  if (!wrap || !label) return;
+  if (!_calSelDate) { label.textContent = ''; wrap.innerHTML = ''; return; }
+  label.textContent = fmtEvDate(_calSelDate, '') + ' の予定';
+  var list = (state.events||[]).filter(function(e){ return e.date === _calSelDate; });
+  list.sort(evSortFn);
+  var addLink = eventsUid()
+    ? '<div class="ev-member-add" style="margin:8px 14px 0" onclick="openEventAddDate(\'' + _calSelDate + '\')">＋ この日に追加</div>'
+    : '';
+  if (!list.length) {
+    wrap.innerHTML = '<div class="ev-empty" style="padding:16px 16px 4px">この日に予定はありません</div>' + addLink;
+    return;
+  }
+  wrap.innerHTML = list.map(evItemHtml).join('') + addLink;
+}
+
+// ── 完了トグル ──
+function toggleEventDone(id) {
+  var e = findEvent(id);
+  if (!e || e.type !== 'task') return;
+  e.done = !e.done;
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  updateEventsBadge();
+  renderEvents();
+}
+
+// ── モーダル ──
+function selEvType(t) {
+  _evType = t;
+  var a = document.getElementById('evChipTask');
+  var b = document.getElementById('evChipEvent');
+  if (a) a.classList.toggle('sel', t === 'task');
+  if (b) b.classList.toggle('sel', t === 'event');
+  var pr = document.getElementById('evPrioRow');
+  if (pr) pr.style.display = (t === 'task') ? '' : 'none';
+}
+function selEvPrio(p) {
+  _evPrio = p;
+  var a = document.getElementById('evPrioNormal');
+  var b = document.getElementById('evPrioHigh');
+  if (a) a.classList.toggle('sel', p === 'normal');
+  if (b) b.classList.toggle('sel', p === 'high');
+}
+function buildEvMemberOptions(sel) {
+  var s = document.getElementById('evMember');
+  if (!s) return;
+  var html = '<option value="">（なし）</option>';
+  (state.members||[]).forEach(function(m) {
+    var name = ((m.lastName||'') + ' ' + (m.firstName||'')).trim();
+    html += '<option value="' + m.id + '">' + evEsc(name || '(無名)') + '</option>';
+  });
+  s.innerHTML = html;
+  s.value = sel || '';
+}
+function openEventAdd(memberId) { openEventModal(null, memberId, ''); }
+function openEventAddDate(date) { openEventModal(null, '', date); }
+function openEventEdit(id) { openEventModal(id, '', ''); }
+function openEventModal(id, presetMember, presetDate) {
+  if (!eventsUid()) { toast('ログインが必要です'); return; }
+  _evEditId = id;
+  var e = id ? findEvent(id) : null;
+  document.getElementById('evShTitle').textContent = id ? '予定・タスクを編集' : '予定・タスクを追加';
+  document.getElementById('evBtnDel').style.display = id ? '' : 'none';
+  selEvType(e ? (e.type || 'task') : 'task');
+  selEvPrio(e ? (e.priority || 'normal') : 'normal');
+  document.getElementById('evTitle').value = e ? (e.title || '') : '';
+  document.getElementById('evDate').value  = e ? (e.date || '') : (presetDate || evTodayYmd());
+  document.getElementById('evTime').value  = e ? (e.time || '') : '';
+  document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
+  var rb = e ? e.remindBefore : '';
+  document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
+  buildEvMemberOptions(e ? (e.memberId || '') : (presetMember || ''));
+  document.getElementById('eventModal').classList.add('open');
+}
+function closeEventModal() {
+  document.getElementById('eventModal').classList.remove('open');
+}
+function onEventOverlayClick(ev) {
+  if (ev.target === document.getElementById('eventModal')) closeEventModal();
+}
+function saveEvent() {
+  if (!eventsUid()) { toast('ログインが必要です'); return; }
+  var title = document.getElementById('evTitle').value.trim();
+  if (!title) { toast('タイトルを入力してください'); return; }
+  var e;
+  if (_evEditId) {
+    e = findEvent(_evEditId);
+    if (!e) { closeEventModal(); return; }
+  } else {
+    e = { id: genEventId(), done: false, createdAt: new Date().toISOString() };
+    state.events.push(e);
+  }
+  e.type     = _evType;
+  e.title    = title;
+  e.date     = document.getElementById('evDate').value;
+  e.time     = document.getElementById('evTime').value;
+  e.memberId = document.getElementById('evMember').value;
+  e.priority = (_evType === 'task') ? _evPrio : 'normal';
+  e.memo     = document.getElementById('evMemo').value.trim();
+  var rbVal  = document.getElementById('evRemind').value;
+  e.remindBefore = (rbVal === '') ? '' : (parseInt(rbVal, 10) || 0);
+  e.updatedAt = new Date().toISOString();
+  if (e.type === 'event') e.done = false;
+  saveEventDoc(e).then(function(){ toast('保存しました ✓'); });
+  closeEventModal();
+  updateEventsBadge();
+  renderEvents();
+  checkReminders();
+}
+function deleteEvent() {
+  if (!_evEditId) return;
+  if (!confirm('この予定・タスクを削除しますか？')) return;
+  var uid = eventsUid();
+  for (var i=0;i<state.events.length;i++) {
+    if (state.events[i].id === _evEditId) { state.events.splice(i,1); break; }
+  }
+  if (uid && db) db.doc('maps/' + uid + '/events/' + _evEditId).delete().catch(function(){});
+  closeEventModal();
+  updateEventsBadge();
+  renderEvents();
+  toast('削除しました');
+}
+function openTaskForMember() {
+  if (!editingId) { toast('先にメンバーを保存してください'); return; }
+  var mid = editingId;
+  closeModal();
+  openEventModal(null, mid, '');
 }
 
 // ── DEFAULTS & SEED ──
@@ -6043,6 +6662,7 @@ function loginSuccess(user) {
   // Firestoreからデータ読み込み + 共有MAP確認
   if (USE_FIREBASE && user.uid) {
     fsLoadFromFirestore(user.uid);
+    loadEvents(user.uid);
     // 少し遅延してから共有MAP確認（自分のデータ読み込み後）
     setTimeout(function() {
       checkSharedMaps();
@@ -6499,6 +7119,7 @@ function switchToOwner(ownerUid, perm) {
     // 自分のMAPに戻る
     state.isEditor = true;
     fsLoadFromFirestore(currentUser.uid);
+    loadEvents(currentUser.uid);
     updateEditorUI();
   } else {
     // 他人のMAPを閲覧
