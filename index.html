@@ -640,6 +640,21 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* ── 共有MAPダッシュボード ── */
 .sd-overlay{position:fixed;inset:0;z-index:350;background:var(--bg);display:none;flex-direction:column}
 .sd-overlay.open{display:flex}
+/* アカウント管理 */
+.adm-row{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-bottom:1px solid var(--border)}
+.adm-row.is-dis{opacity:.55}
+.adm-main{flex:1;min-width:0}
+.adm-name{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.adm-sub{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;margin-top:2px;word-break:break-all}
+.adm-badge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
+.adm-badge.owner{background:var(--accent);color:#000}
+.adm-badge.admin{background:var(--purple-dim);color:var(--purple)}
+.adm-badge.dis{background:rgba(239,68,68,.15);color:var(--red)}
+.adm-actions{display:flex;flex-direction:column;gap:6px;flex:none}
+.adm-btn{font-size:12px;padding:7px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;white-space:nowrap}
+.adm-btn.on{border-color:var(--accent);color:var(--accent)}
+.adm-btn.admin{border-color:var(--purple);color:var(--purple)}
+.adm-note{font-size:11px;color:var(--text-dim)}
 .sd-hdr{flex-shrink:0;padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .sd-close{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .sd-title{font-size:16px;font-weight:700;flex:1}
@@ -841,6 +856,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <input id="signupOrg" type="text" placeholder="屋号" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupArea" type="text" placeholder="活動地域（例：東京・大阪）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupUnion" type="text" placeholder="所属ユニオン" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupUpRuby" type="text" placeholder="UPルビー" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupUpBd" type="text" placeholder="UPBD" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupEmail" type="email" placeholder="メールアドレス" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupPass" type="password" placeholder="パスワード（6文字以上）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:16px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <!-- プライバシーポリシー同意 -->
@@ -866,7 +883,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v155</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v157</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1110,6 +1127,19 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   <div class="sd-body" id="sdBody"></div>
 </div>
 
+<!-- アカウント管理（管理者のみ） -->
+<div class="sd-overlay" id="adminPanel">
+  <div class="sd-hdr">
+    <div class="sd-close" onclick="closeAdminPanel()">&larr;</div>
+    <div class="sd-title">アカウント管理</div>
+    <div class="sd-count" id="adminCount"></div>
+  </div>
+  <div class="sd-search">
+    <input class="sd-search-input" id="adminSearch" placeholder="名前・ユニオン・地域・メールで検索" oninput="renderAdminList()">
+  </div>
+  <div class="sd-body" id="adminBody"></div>
+</div>
+
 <!-- FAB -->
 <button class="fab" id="fab" onclick="onFabClick()">＋</button>
 <!-- FAB親選択メニュー -->
@@ -1121,11 +1151,14 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 <!-- プロフィール設定モーダル -->
 <div class="overlay" id="profileModal" onclick="closeProfileModal(event)">
   <div class="sheet">
-    <div style="font-size:16px;font-weight:700;margin-bottom:16px">プロフィール設定</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px" id="profileModalTitle">プロフィール設定</div>
+    <div id="profileMandatoryNote" style="display:none;font-size:13px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5">続けるには、ユニオン名・活動地域・UPルビー・UPBD の入力が必要です。</div>
     <div class="fr"><label class="fl">お名前</label><input class="fi" id="profileName" placeholder="山内 北斗"></div>
     <div class="fr"><label class="fl">屋号</label><input class="fi" id="profileOrg" placeholder="GROOVE"></div>
-    <div class="fr"><label class="fl">活動地域</label><input class="fi" id="profileArea" placeholder="東京・大阪"></div>
-    <div class="fr"><label class="fl">所属ユニオン</label><input class="fi" id="profileUnion" placeholder="BASE REVE"></div>
+    <div class="fr"><label class="fl">所属ユニオン <span style="color:var(--accent)">*</span></label><input class="fi" id="profileUnion" placeholder="BASE REVE"></div>
+    <div class="fr"><label class="fl">活動地域 <span style="color:var(--accent)">*</span></label><input class="fi" id="profileArea" placeholder="東京・大阪"></div>
+    <div class="fr"><label class="fl">UPルビー <span style="color:var(--accent)">*</span></label><input class="fi" id="profileUpRuby" placeholder="UPルビー"></div>
+    <div class="fr"><label class="fl">UPBD <span style="color:var(--accent)">*</span></label><input class="fi" id="profileUpBd" placeholder="UPBD"></div>
     <div class="fr">
       <label class="fl">テーマ</label>
       <div class="rg">
@@ -1133,8 +1166,12 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
         <div class="rb" id="rbThemeLight" onclick="setTheme('light')">☀️ ライト</div>
       </div>
     </div>
+    <div id="profileAdminWrap" style="display:none;margin-top:4px;margin-bottom:4px">
+      <button class="btn-c" style="width:100%;border-color:var(--purple);color:var(--purple)" onclick="openAdminPanel()">🛡 アカウント管理</button>
+    </div>
+    <div id="profileError" style="color:#ef4444;font-size:13px;margin-bottom:10px;display:none"></div>
     <div class="btn-row" style="margin-top:16px">
-      <button class="btn-c" onclick="closeProfileModal(null)">キャンセル</button>
+      <button class="btn-c" id="profileCancelBtn" onclick="closeProfileModal(null)">キャンセル</button>
       <button class="btn-p" onclick="saveProfile()">保存</button>
     </div>
   </div>
@@ -2210,6 +2247,123 @@ function initTheme() {
 }
 
 // ── プロフィール設定 ──
+var _profileMandatory = false; // 必須項目未入力 → 強制入力モード（閉じられない）
+var OWNER_UID = 'j2DPDAccCygHmR9i5K3bTvHnH0V2'; // 永久管理者（ルールと一致させること）
+
+// 現在のユーザーが管理者か（オーナー or role:'admin'）
+function isCurrentAdmin() {
+  return !!currentUser && (currentUser.uid === OWNER_UID || currentUser.role === 'admin');
+}
+
+// ===== アカウント管理（管理者のみ） =====
+var _adminUsers = [];
+function openAdminPanel() {
+  if (!isCurrentAdmin()) { toast('権限がありません'); return; }
+  closeProfileModal(null);
+  document.getElementById('adminPanel').classList.add('open');
+  loadAdminUsers();
+}
+function closeAdminPanel() {
+  document.getElementById('adminPanel').classList.remove('open');
+}
+function loadAdminUsers() {
+  var body = document.getElementById('adminBody');
+  if (body) body.innerHTML = '<div class="ev-empty">読み込み中...</div>';
+  fsGetCol('users').then(function(list) {
+    _adminUsers = list || [];
+    renderAdminList();
+  }).catch(function() {
+    if (body) body.innerHTML = '<div class="ev-empty">読み込みに失敗しました（権限をご確認ください）</div>';
+  });
+}
+function _adminFindUser(uid) {
+  for (var i=0;i<_adminUsers.length;i++) if (_adminUsers[i].id === uid) return _adminUsers[i];
+  return null;
+}
+function renderAdminList() {
+  var body = document.getElementById('adminBody');
+  if (!body) return;
+  var q = ((document.getElementById('adminSearch')||{}).value||'').toLowerCase();
+  var list = _adminUsers.filter(function(u) {
+    if (!q) return true;
+    return ((u.name||'')+(u.union||'')+(u.area||'')+(u.email||'')+(u.upRuby||'')+(u.upBd||'')).toLowerCase().indexOf(q) >= 0;
+  });
+  list.sort(function(a,b) {
+    function rank(u){ return u.id===OWNER_UID ? 0 : (u.role==='admin' ? 1 : 2); }
+    var ra=rank(a), rb=rank(b);
+    if (ra!==rb) return ra-rb;
+    return (a.name||'').localeCompare(b.name||'');
+  });
+  var cnt = document.getElementById('adminCount');
+  if (cnt) cnt.textContent = _adminUsers.length + '人';
+  if (!list.length) { body.innerHTML = '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
+  body.innerHTML = list.map(adminRowHtml).join('');
+}
+function adminRowHtml(u) {
+  var uid = u.id;
+  var isOwner = uid === OWNER_UID;
+  var disabled = u.status === 'disabled';
+  var roleBadge = isOwner ? '<span class="adm-badge owner">オーナー</span>'
+                 : (u.role==='admin' ? '<span class="adm-badge admin">管理者</span>' : '');
+  var statusBadge = disabled ? '<span class="adm-badge dis">無効</span>' : '';
+  var name = evEsc(u.name || '(名前未設定)');
+  var sub  = evEsc([u.union, u.area].filter(Boolean).join(' / '));
+  var sub2 = evEsc([u.upRuby ? ('UPルビー:'+u.upRuby) : '', u.upBd ? ('UPBD:'+u.upBd) : ''].filter(Boolean).join(' / '));
+  var email = evEsc(u.email || '');
+  var actions;
+  if (isOwner) {
+    actions = '<div class="adm-note">オーナー<br>（変更不可）</div>';
+  } else {
+    actions = '<button class="adm-btn' + (disabled ? ' on' : '') + '" onclick="adminToggleStatus(\'' + uid + '\')">' + (disabled ? '有効化' : '無効化') + '</button>'
+            + '<button class="adm-btn' + (u.role==='admin' ? ' admin' : '') + '" onclick="adminToggleRole(\'' + uid + '\')">' + (u.role==='admin' ? '管理者解除' : '管理者にする') + '</button>';
+  }
+  return '<div class="adm-row' + (disabled ? ' is-dis' : '') + '">'
+    + '<div class="adm-main"><div class="adm-name">' + name + ' ' + roleBadge + statusBadge + '</div>'
+    + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
+    + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
+    + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
+    + '</div><div class="adm-actions">' + actions + '</div></div>';
+}
+function adminToggleStatus(uid) {
+  if (uid === OWNER_UID) { toast('オーナーは変更できません'); return; }
+  var u = _adminFindUser(uid); if (!u) return;
+  var disable = u.status !== 'disabled';
+  if (!confirm((disable ? 'このアカウントを無効化（全データ閲覧不可）にしますか？' : 'このアカウントを有効化しますか？') + '\n' + (u.name||'') + '（' + (u.email||'') + '）')) return;
+  u.status = disable ? 'disabled' : 'active';
+  u.disabledAt = disable ? new Date().toISOString() : '';
+  u.disabledBy = disable ? currentUser.uid : '';
+  fsSet('users/' + uid, { status: u.status, disabledAt: u.disabledAt, disabledBy: u.disabledBy })
+    .then(function(){ toast(disable ? '無効化しました' : '有効化しました'); })
+    .catch(function(){ toast('変更に失敗しました'); });
+  renderAdminList();
+}
+function adminToggleRole(uid) {
+  if (uid === OWNER_UID) { toast('オーナーは変更できません'); return; }
+  var u = _adminFindUser(uid); if (!u) return;
+  var makeAdmin = u.role !== 'admin';
+  if (!confirm((makeAdmin ? 'このアカウントを共同管理者にしますか？' : '共同管理者を解除しますか？') + '\n' + (u.name||'') + '（' + (u.email||'') + '）')) return;
+  u.role = makeAdmin ? 'admin' : 'member';
+  u.roleSetBy = currentUser.uid;
+  u.roleSetAt = new Date().toISOString();
+  fsSet('users/' + uid, { role: u.role, roleSetBy: u.roleSetBy, roleSetAt: u.roleSetAt })
+    .then(function(){ toast(makeAdmin ? '共同管理者にしました' : '管理者を解除しました'); })
+    .catch(function(){ toast('変更に失敗しました'); });
+  renderAdminList();
+}
+
+// プロフィールが必須4項目を満たしているか
+function profileComplete(u) {
+  u = u || currentUser || {};
+  return !!(u.union && u.area && u.upRuby && u.upBd);
+}
+// ログイン後ゲート：未入力なら強制入力モーダルを開く
+function enforceProfileGate() {
+  if (!currentUser) return;
+  if (profileComplete(currentUser)) { _profileMandatory = false; return; }
+  _profileMandatory = true;
+  openProfileModal();
+}
+
 function openProfileModal() {
   if (!currentUser) return;
   var el = function(id){ return document.getElementById(id); };
@@ -2217,6 +2371,14 @@ function openProfileModal() {
   if (el('profileOrg'))  el('profileOrg').value  = currentUser.org  || '';
   if (el('profileArea')) el('profileArea').value  = currentUser.area || '';
   if (el('profileUnion'))el('profileUnion').value = currentUser.union|| '';
+  if (el('profileUpRuby'))el('profileUpRuby').value = currentUser.upRuby || '';
+  if (el('profileUpBd')) el('profileUpBd').value  = currentUser.upBd || '';
+  // 必須モードの見た目
+  var note = el('profileMandatoryNote'); if (note) note.style.display = _profileMandatory ? '' : 'none';
+  var cancel = el('profileCancelBtn'); if (cancel) cancel.style.display = _profileMandatory ? 'none' : '';
+  var title = el('profileModalTitle'); if (title) title.textContent = _profileMandatory ? 'プロフィール入力（必須）' : 'プロフィール設定';
+  var perr = el('profileError'); if (perr) perr.style.display = 'none';
+  var adm = el('profileAdminWrap'); if (adm) adm.style.display = (!_profileMandatory && isCurrentAdmin()) ? '' : 'none';
   syncThemeButtons();
   var m = document.getElementById('profileModal');
   if (m) m.classList.add('open');
@@ -2224,17 +2386,34 @@ function openProfileModal() {
 
 function closeProfileModal(e) {
   if (e && e.target !== document.getElementById('profileModal')) return;
+  if (_profileMandatory) { // 必須未入力の間は閉じさせない
+    if (e) return;
+    var perr = document.getElementById('profileError');
+    if (perr) { perr.textContent = '必須項目を入力してください'; perr.style.display = ''; }
+    return;
+  }
   var m = document.getElementById('profileModal');
   if (m) m.classList.remove('open');
 }
 
 function saveProfile() {
   if (!currentUser || !currentUser.uid) return;
-  var el = function(id){ return (document.getElementById(id)||{}).value||''; };
-  currentUser.name  = el('profileName');
-  currentUser.org   = el('profileOrg');
-  currentUser.area  = el('profileArea');
-  currentUser.union = el('profileUnion');
+  var el = function(id){ return ((document.getElementById(id)||{}).value||'').trim(); };
+  var name  = el('profileName');
+  var org   = el('profileOrg');
+  var union = el('profileUnion');
+  var area  = el('profileArea');
+  var upRuby= el('profileUpRuby');
+  var upBd  = el('profileUpBd');
+  var perr  = document.getElementById('profileError');
+  // 必須4項目チェック
+  if (!union || !area || !upRuby || !upBd) {
+    if (perr) { perr.textContent = '所属ユニオン・活動地域・UPルビー・UPBD は必須です'; perr.style.display = ''; }
+    return;
+  }
+  currentUser.name = name; currentUser.org = org;
+  currentUser.area = area; currentUser.union = union;
+  currentUser.upRuby = upRuby; currentUser.upBd = upBd;
 
   // ヘッダー更新
   var logo = document.getElementById('appLogo');
@@ -2248,20 +2427,22 @@ function saveProfile() {
     nameEl.style.display = '';
   }
 
-  // Firestoreに保存
+  // Firestoreに保存（role/status は本人が触らない＝送らない）
   if (USE_FIREBASE && currentUser.uid) {
     fsSet('users/' + currentUser.uid, {
-      name: currentUser.name, org: currentUser.org,
-      area: currentUser.area, union: currentUser.union,
-      email: currentUser.email, uid: currentUser.uid
+      name: name, org: org, area: area, union: union,
+      upRuby: upRuby, upBd: upBd,
+      email: currentUser.email, uid: currentUser.uid,
+      registrationComplete: true, updatedAt: new Date().toISOString()
     }).then(function(){ toast('プロフィールを保存しました ✓'); });
   }
+  _profileMandatory = false;
   closeProfileModal(null);
 }
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v155';
+  var DATA_VERSION = 'v157';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6922,14 +7103,23 @@ function doLogin() {
 }
 
 function doSignup() {
-  var name  = (document.getElementById('signupName')||{}).value||'';
-  var org   = (document.getElementById('signupOrg')||{}).value||'';
-  var email = (document.getElementById('signupEmail')||{}).value||'';
+  var v = function(id){ return ((document.getElementById(id)||{}).value||'').trim(); };
+  var name  = v('signupName');
+  var org   = v('signupOrg');
+  var union = v('signupUnion');
+  var area  = v('signupArea');
+  var upRuby= v('signupUpRuby');
+  var upBd  = v('signupUpBd');
+  var email = v('signupEmail');
   var pass  = (document.getElementById('signupPass')||{}).value||'';
   var chk   = document.getElementById('privacyCheck');
   var errEl = document.getElementById('signupError');
   if (!name)  { errEl.textContent='お名前を入力してください'; errEl.style.display=''; return; }
   if (!org)   { errEl.textContent='屋号を入力してください'; errEl.style.display=''; return; }
+  if (!union) { errEl.textContent='所属ユニオンを入力してください'; errEl.style.display=''; return; }
+  if (!area)  { errEl.textContent='活動地域を入力してください'; errEl.style.display=''; return; }
+  if (!upRuby){ errEl.textContent='UPルビーを入力してください'; errEl.style.display=''; return; }
+  if (!upBd)  { errEl.textContent='UPBDを入力してください'; errEl.style.display=''; return; }
   if (!email) { errEl.textContent='メールアドレスを入力してください'; errEl.style.display=''; return; }
   if (pass.length < 6) { errEl.textContent='パスワードは6文字以上で入力してください'; errEl.style.display=''; return; }
   if (!chk || !chk.checked) { errEl.textContent='プライバシーポリシーに同意してください'; errEl.style.display=''; return; }
@@ -6940,9 +7130,12 @@ function doSignup() {
     auth.createUserWithEmailAndPassword(email, pass)
       .then(function(cred) {
         var uid = cred.user.uid;
-        var area  = (document.getElementById('signupArea')||{}).value||'';
-        var union = (document.getElementById('signupUnion')||{}).value||'';
-        return fsSet('users/' + uid, { name: name, org: org, email: email, uid: uid, area: area, union: union });
+        return fsSet('users/' + uid, {
+          name: name, org: org, email: email, uid: uid,
+          area: area, union: union, upRuby: upRuby, upBd: upBd,
+          role: 'member', status: 'active', registrationComplete: true,
+          createdAt: new Date().toISOString()
+        });
       })
       .then(function() {
         errEl.style.display = 'none';
@@ -6992,6 +7185,8 @@ function loginSuccess(user) {
       checkSharedMaps();
     }, 1500);
   }
+  // プロフィール必須項目ゲート（未入力なら強制入力）
+  enforceProfileGate();
 }
 
 function showForgotPass() {

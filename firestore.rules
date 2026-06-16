@@ -1,0 +1,109 @@
+rules_version = '2';
+// =====================================================================
+// GROOVE 共通 Firestore セキュリティルール（MAP / AttackList / 目標シート）
+// ---------------------------------------------------------------------
+// ⚠️ 公開順序の注意:
+//   このルールは「新規プロフィール作成時に union/area/upRuby/upBd が必須」。
+//   3アプリの登録フォームがこの4項目を送るように改修してから公開すること。
+//   先に公開すると新規登録が一切できなくなります。
+//
+// 設計:
+//   - users/{uid} = 3アプリ共通プロフィール（union/area/upRuby/upBd/role/status）
+//   - オーナーUIDは固定で「永久管理者」。role=='admin' で共同管理者を動的に付与。
+//   - status=='disabled' で当該ユーザーは自分のデータを読み書き不可（管理者が設定）。
+//   - 既存(レガシー)プロフィールは status 未設定 → 「無効化されていない」扱いでロックしない。
+// =====================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function myEmail()  { return request.auth.token.email; }
+    function isSelf(uid){ return signedIn() && request.auth.uid == uid; }
+
+    function profileExists(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid));
+    }
+    function profile(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    // オーナー(固定・永久) または role=='admin' を付与された共同管理者
+    function isAdmin() {
+      return signedIn() && (
+        request.auth.uid == 'j2DPDAccCygHmR9i5K3bTvHnH0V2' ||
+        (profileExists(request.auth.uid) && profile(request.auth.uid).role == 'admin')
+      );
+    }
+
+    // 無効化されていない（status!='disabled'）。レガシー(status無し)は有効扱い。
+    function notDisabled(uid) {
+      return profileExists(uid) && profile(uid).status != 'disabled';
+    }
+    // 自分が有効なオーナー
+    function ownerActive(uid) { return isSelf(uid) && notDisabled(uid); }
+
+    // 新規プロフィールの必須項目
+    function hasRequiredProfile(d) {
+      return d.union  is string && d.union.size()  > 0
+          && d.area   is string && d.area.size()   > 0
+          && d.upRuby is string && d.upRuby.size() > 0
+          && d.upBd   is string && d.upBd.size()   > 0;
+    }
+
+    // ============ プロフィール（3アプリ共通） ============
+    match /users/{uid} {
+      // 共有・ユーザー検索のため、ログイン済みは閲覧可
+      allow read: if signedIn();
+
+      // 新規登録：本人のみ＆必須4項目＆自分でadmin/disabledにできない
+      allow create: if isSelf(uid)
+        && hasRequiredProfile(request.resource.data)
+        && (!('role'   in request.resource.data) || request.resource.data.role   == 'member')
+        && (!('status' in request.resource.data) || request.resource.data.status == 'active');
+
+      // 更新：管理者は何でも可。本人は role/status を変えない範囲のみ可。
+      allow update: if isAdmin()
+        || (isSelf(uid)
+            && request.resource.data.role   == resource.data.role
+            && request.resource.data.status == resource.data.status);
+
+      allow delete: if isAdmin();
+
+      // ---- AttackList：人物リスト ----
+      match /people/{pid} {
+        allow read:  if isAdmin() || ownerActive(uid)
+                     || (signedIn() && notDisabled(uid)
+                         && exists(/databases/$(database)/documents/users/$(uid)/settings/share)
+                         && get(/databases/$(database)/documents/users/$(uid)/settings/share)
+                              .data.sharedWith.hasAny([myEmail()]));
+        allow write: if isAdmin() || ownerActive(uid);
+      }
+      // ---- AttackList：共有設定（受信側が全ユーザー分を読んで判定するため read は広め） ----
+      match /settings/{sid} {
+        allow read:  if signedIn();
+        allow write: if isAdmin() || ownerActive(uid);
+      }
+      // ---- 目標シート ----
+      match /appData/{aid} {
+        allow read:  if isAdmin() || ownerActive(uid);
+        allow write: if isAdmin() || ownerActive(uid);
+      }
+    }
+
+    // ============ MAP本体（months/stats/events/meta/shared など） ============
+    match /maps/{uid}/{document=**} {
+      allow read:  if isAdmin() || ownerActive(uid)
+                   || (signedIn() && notDisabled(uid)
+                       && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid)));
+      allow write: if isAdmin() || ownerActive(uid);
+    }
+
+    // ============ MAP 受信側の共有インデックス ============
+    match /sharedWith/{uid}/from/{ownerUid} {
+      allow read:   if isSelf(uid) || isAdmin();
+      // 共有レコードを作るのはオーナー（ownerUid）本人
+      allow write:  if isAdmin() || (isSelf(ownerUid) && notDisabled(ownerUid));
+      allow delete: if isSelf(uid) || isSelf(ownerUid) || isAdmin();
+    }
+  }
+}
