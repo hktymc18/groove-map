@@ -786,7 +786,26 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ev-bar.bar-overdue{background:var(--red);color:#fff}
 .ev-bar.bar-done{opacity:.5}
 .ev-more{font-size:8px;color:var(--text-dim);padding-left:2px}
-.ev-cal-daylabel{font-size:13px;font-weight:700;color:var(--text);padding:16px 16px 4px}
+.ev-cal-daylabel{font-size:15px;font-weight:700;color:var(--text)}
+/* 選んだ日の予定：ボトムシート */
+.ev-day-sheet{display:none}
+.ev-day-sheet.open{
+  display:flex;flex-direction:column;
+  position:fixed;left:0;right:0;bottom:0;z-index:120;
+  background:var(--surface);border-top:1px solid var(--border2);
+  border-radius:18px 18px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.5);
+  max-height:62vh;max-height:62dvh;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 6px);
+}
+.ev-day-sheet-grab{width:40px;height:4px;border-radius:2px;background:var(--border2);margin:8px auto 4px;cursor:pointer;flex:none}
+.ev-day-sheet-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 16px 8px;flex:none}
+.ev-day-sheet-close{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;color:var(--text-dim);background:var(--surface2);cursor:pointer;flex:none}
+.ev-day-sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 4px;flex:1}
+.ev-day-sheet-foot{flex:none;padding:10px 14px 4px;border-top:1px solid var(--border)}
+.ev-day-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:14px;border-radius:12px;background:var(--accent);color:#000;font-size:15px;font-weight:700;cursor:pointer;border:none}
+@media(min-width:768px){
+  .ev-day-sheet.open{left:auto;right:24px;bottom:24px;width:400px;border-radius:18px;border:1px solid var(--border2);max-height:72vh;max-height:72dvh}
+}
 /* カテゴリ */
 .ev-cat-field{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:9px 11px;cursor:pointer;font-size:15px}
 .cat-swatch{width:16px;height:16px;border-radius:50%;flex:none;display:inline-block;border:1px solid rgba(127,127,127,0.3)}
@@ -883,7 +902,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v157</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v158</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1106,8 +1125,6 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
         <span class="ev-sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span>
       </div>
       <div class="ev-cal-grid" id="evCalGrid"></div>
-      <div class="ev-cal-daylabel" id="evCalDayLabel"></div>
-      <div id="evCalDayList"></div>
     </div>
   </div>
 
@@ -1138,6 +1155,17 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <input class="sd-search-input" id="adminSearch" placeholder="名前・ユニオン・地域・メールで検索" oninput="renderAdminList()">
   </div>
   <div class="sd-body" id="adminBody"></div>
+</div>
+
+<!-- 選んだ日の予定（ボトムシート・body直下でviewport固定） -->
+<div class="ev-day-sheet" id="evDaySheet">
+  <div class="ev-day-sheet-grab" onclick="closeDaySheet()"></div>
+  <div class="ev-day-sheet-hdr">
+    <div class="ev-cal-daylabel" id="evCalDayLabel"></div>
+    <div class="ev-day-sheet-close" onclick="closeDaySheet()">×</div>
+  </div>
+  <div class="ev-day-sheet-body" id="evCalDayList"></div>
+  <div class="ev-day-sheet-foot" id="evDaySheetFoot"></div>
 </div>
 
 <!-- FAB -->
@@ -2442,7 +2470,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v157';
+  var DATA_VERSION = 'v158';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2559,6 +2587,7 @@ function switchView(v) {
     btn.classList.toggle('active', btn.getAttribute('data-view') === v);
   });
   updateFabVisibility();
+  if (v !== 'events') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
   if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
   else if (v==='ideal') { renderTree('ideal'); renderCommission(); }
   else if (v==='diff') loadDiff();
@@ -6089,6 +6118,7 @@ function setEventsMode(mode) {
   var ec = document.getElementById('evCalendar');
   if (ea) ea.style.display = mode === 'agenda' ? '' : 'none';
   if (ec) ec.style.display = mode === 'calendar' ? '' : 'none';
+  if (mode !== 'calendar') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
   renderEvents();
 }
 function renderEvents() {
@@ -6234,22 +6264,33 @@ function selCalDay(ds) {
   _calSelDate = (ds === _calSelDate) ? '' : ds;
   renderCalendar();
 }
+function closeDaySheet() {
+  _calSelDate = '';
+  renderCalendar();
+}
 function renderCalDayList() {
+  var sheet = document.getElementById('evDaySheet');
   var label = document.getElementById('evCalDayLabel');
   var wrap = document.getElementById('evCalDayList');
-  if (!wrap || !label) return;
-  if (!_calSelDate) { label.textContent = ''; wrap.innerHTML = ''; return; }
+  var foot = document.getElementById('evDaySheetFoot');
+  if (!wrap || !label || !sheet) return;
+  if (!_calSelDate) { // 未選択 → シートを閉じる
+    sheet.classList.remove('open');
+    label.textContent = ''; wrap.innerHTML = ''; if (foot) foot.innerHTML = '';
+    return;
+  }
   label.textContent = fmtEvDate(_calSelDate, '') + ' の予定';
   var list = (state.events||[]).filter(function(e){ return e.date === _calSelDate; });
   list.sort(evSortFn);
-  var addLink = eventsUid()
-    ? '<div class="ev-member-add" style="margin:8px 14px 0" onclick="openEventAddDate(\'' + _calSelDate + '\')">＋ この日に追加</div>'
-    : '';
-  if (!list.length) {
-    wrap.innerHTML = '<div class="ev-empty" style="padding:16px 16px 4px">この日に予定はありません</div>' + addLink;
-    return;
+  wrap.innerHTML = list.length
+    ? list.map(evItemHtml).join('')
+    : '<div class="ev-empty" style="padding:24px 16px">この日に予定はありません</div>';
+  if (foot) {
+    foot.innerHTML = eventsUid()
+      ? '<button class="ev-day-add-btn" onclick="openEventAddDate(\'' + _calSelDate + '\')"><span style="font-size:18px">＋</span> この日に予定・タスクを追加</button>'
+      : '';
   }
-  wrap.innerHTML = list.map(evItemHtml).join('') + addLink;
+  sheet.classList.add('open'); // 画面下からせり上げ
 }
 
 // ── 完了トグル ──
