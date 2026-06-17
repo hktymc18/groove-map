@@ -521,6 +521,17 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .fresh-check{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
 .fresh-check-label{font-size:13px;color:var(--text-dim)}
 .fresh-row2{display:flex;gap:6px}
+/* フレッシュリスト（自動表示・ステップUI） */
+.fresh-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px;margin:10px}
+.fresh-card.done{opacity:.55}
+.fresh-card-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fresh-card-name{font-size:15px;font-weight:700;color:var(--text)}
+.fresh-card.done .fresh-card-name{text-decoration:line-through;color:var(--text-dim)}
+.fresh-card-title{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--purple-dim);color:var(--purple)}
+.fresh-card-prog{margin-left:auto;font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.fresh-steps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.fresh-step{display:flex;align-items:center;justify-content:center;padding:12px 8px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid);font-size:13px;font-weight:600;cursor:pointer;user-select:none}
+.fresh-step.on{background:var(--accent);border-color:var(--accent);color:#000}
 .fresh-row2 .fresh-fi{flex:1;margin-bottom:0}
 /* 研修生カード情報 */
 .trainee-info{display:flex;gap:8px;padding:4px 12px 8px 60px;flex-wrap:wrap}
@@ -571,13 +582,15 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .fab-menu-hdr{padding:8px 14px 4px;font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace}
 
 /* #4 モーダルセクション折りたたみ */
-.modal-section{margin-bottom:4px}
-.modal-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 0 4px;cursor:pointer;user-select:none}
-.modal-section-hdr .ms-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace}
-.modal-section-hdr .ms-arrow{font-size:10px;color:var(--text-dim);transition:transform .2s}
+.modal-section{margin-bottom:10px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+.modal-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 14px;min-height:50px;cursor:pointer;user-select:none;background:var(--surface2)}
+.modal-section-hdr .ms-label{font-size:14px;font-weight:700;color:var(--text);letter-spacing:.3px}
+.modal-section-hdr .ms-arrow{font-size:13px;color:var(--accent);transition:transform .2s}
 .modal-section.collapsed .ms-arrow{transform:rotate(-90deg)}
-.modal-section-body{overflow:hidden;transition:max-height .25s ease}
-.modal-section.collapsed .modal-section-body{max-height:0!important;overflow:hidden}
+/* 折りたたみ時に「タップで開く」を表示して入力欄の存在を気づきやすく */
+.modal-section.collapsed .modal-section-hdr .ms-label::after{content:' （タップで開く）';font-size:11px;font-weight:400;color:var(--text-dim)}
+.modal-section-body{overflow:hidden;transition:max-height .25s ease;padding:12px 12px 4px}
+.modal-section.collapsed .modal-section-body{max-height:0!important;overflow:hidden;padding-top:0;padding-bottom:0}
 
 /* #5 モバイルデータタブ改善 */
 @media(max-width:767px){
@@ -902,7 +915,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v158</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v159</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1084,7 +1097,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   <!-- OLタブ -->
   <div id="view-ol" style="display:none">
     <!-- フレッシュリスト -->
-    <div class="sec-label" style="display:flex;align-items:center;justify-content:space-between"><span>フレッシュリスト</span><div onclick="addFreshMember()" style="color:var(--accent);font-size:13px;cursor:pointer;padding:2px 8px">+ 追加</div></div>
+    <div class="sec-label" style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span>フレッシュリスト</span><span style="font-size:10px;color:var(--text-dim);font-weight:400">現状MAPの LOI / Q2 / B1 / B2 を自動表示</span></div>
     <div class="card" id="freshListWrap"></div>
     <!-- 金の船リスト -->
     <div class="sec-label" style="display:flex;align-items:center;justify-content:space-between"><span>金の船リスト</span><div onclick="addGoldTask()" style="color:var(--accent);font-size:13px;cursor:pointer;padding:2px 8px">+ 追加</div></div>
@@ -1290,7 +1303,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
           <label class="fl">稼働率（%）※S以外に入力</label>
           <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
         </div>
-        <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="1/24 クロージング&#10;次回：馬越さんと日程調整中"></textarea></div>
+        <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="OLもらってモチベアップ&#10;9/4 FTのノウハウOL鈴木さん依頼済"></textarea></div>
         <div class="ev-member-add" id="memberTaskBtn" onclick="openTaskForMember()" style="display:none">＋ このメンバーにタスク追加</div>
       </div>
     </div>
@@ -1409,7 +1422,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
         <div class="rb" id="evChipEvent" onclick="selEvType('event')">📅 予定</div>
       </div>
     </div>
-    <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：馬越さんとアポ / 資料作成"></div>
+    <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
     <div style="display:flex;gap:10px">
       <div class="fr" style="flex:1"><label class="fl">日付</label><input class="fi" id="evDate" type="date"></div>
       <div class="fr" style="flex:1"><label class="fl">時刻（任意）</label><input class="fi" id="evTime" type="time"></div>
@@ -2470,7 +2483,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v158';
+  var DATA_VERSION = 'v159';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4279,6 +4292,15 @@ function removeFreshMember(idx) {
   autoSave();
 }
 
+// フレッシュリスト：オンボーディング各ステップの完了トグル（メンバーID単位で保持）
+function toggleFreshStep(mid, step) {
+  if (!state.freshData) state.freshData = {};
+  if (!state.freshData[mid]) state.freshData[mid] = {};
+  state.freshData[mid][step] = !state.freshData[mid][step];
+  autoSave();
+  renderStats();
+}
+
 function buildAutoStats() {
   // 現状MAPから稼働/研修生ステータスを自動集計して state.stats.monthly に反映
   var members = membersForMap('current');
@@ -4543,194 +4565,43 @@ function renderStats() {
     });
   }
 
-  // フレッシュリストデータ初期化
+  // ── フレッシュリスト（現状MAPの LOI / Q2 / B1 / B2 を自動表示） ──
   if (!state.freshData) state.freshData = {};
   var freshWrap = document.getElementById('freshListWrap');
-  if (!freshWrap) return;
-  // 文字列をオブジェクトに正規化
-  var freshList = (s.freshList || []).map(function(item) {
-    return typeof item === 'string' ? { name: item } : item;
-  });
-  s.freshList = freshList;
-
-  freshWrap.innerHTML = '';
-  if (freshList.length === 0) {
-    freshWrap.innerHTML = emptyStateHTML('ol-fresh');
-  } else {
-    var FRESH_ACTIONS = ['リスト','基準値','F-DATA','ハウディ'];
-
-    freshList.forEach(function(entry, i) {
-      var n = entry.name || '';
-      var key = 'fresh_' + i;
-      if (!state.freshData[key]) state.freshData[key] = {};
-      var fd = state.freshData[key];
-
-      // 全アクションが完了済みかチェック
-      var allDone = FRESH_ACTIONS.every(function(a) {
-        var akey = 'act_' + a;
-        return fd[akey] && fd[akey].done;
-      });
-
-      // ── アイテム本体 ──
-      var item = document.createElement('div');
-      item.className = 'fresh-item';
-      item.id = 'fi' + i;
-
-      // 名前行
-      var nameRow = document.createElement('div');
-      nameRow.style.cssText = 'display:flex;align-items:center;gap:6px;padding:2px 0;flex-wrap:wrap';
-
-      // 名前入力
-      var nameIn = document.createElement('input');
-      nameIn.className = 'fi';
-      nameIn.placeholder = '名前を入力';
-      nameIn.value = n;
-      nameIn.style.cssText = 'flex:1;min-width:80px;font-size:14px;font-weight:700;padding:4px 8px;' + (allDone ? 'text-decoration:line-through;color:var(--text-dim);' : '');
-      (function(idx){ nameIn.oninput = function(){ s.freshList[idx].name = this.value; autoSave(); }; })(i);
-      nameIn.onclick = function(e){ e.stopPropagation(); };
-      nameRow.appendChild(nameIn);
-
-      // タグを名前の横に表示
-      FRESH_ACTIONS.forEach(function(actionName) {
-        var akey = 'act_' + actionName;
-        var afd = fd[akey] || {};
-        var tag = document.createElement('div');
-        tag.style.cssText = 'font-size:10px;padding:2px 7px;border-radius:10px;font-family:Inter,monospace;cursor:pointer;flex-shrink:0';
-        tag.setAttribute('data-action', actionName);
-        tag.className = 'fresh-tag';
-        tag.textContent = actionName;
-        if (afd.done) {
-          tag.style.cssText += ';background:var(--surface3);color:var(--text-dim);text-decoration:line-through';
-        } else if (afd.date) {
-          tag.style.cssText += ';background:rgba(0,212,170,0.15);color:var(--accent);border:1px solid var(--accent)';
-        } else {
-          tag.style.cssText += ';background:rgba(251,191,36,0.15);color:#f59e0b;border:1px solid rgba(251,191,36,0.4)';
-        }
-        // タグをクリックでそのアクションのパネルを展開
-        (function(idx, aname){
-          tag.onclick = function(e){
-            e.stopPropagation();
-            toggleFreshPanel(idx, aname);
-          };
-        })(i, actionName);
-        nameRow.appendChild(tag);
-      });
-
-      // 削除ボタン
-      var delBtn = document.createElement('div');
-      delBtn.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 4px;flex-shrink:0';
-      delBtn.textContent = '✕';
-      (function(idx){ delBtn.onclick = function(){ removeFreshMember(idx); }; })(i);
-      nameRow.appendChild(delBtn);
-
-      item.appendChild(nameRow);
-
-      // タグ行は不要（名前横に移動）
-      var tagRow = document.createElement('div');
-      tagRow.style.cssText = 'display:none';
-
-      // ── パネル（タップで開閉） ──
-      var panel = document.createElement('div');
-      panel.className = 'fresh-panel';
-      panel.id = 'fp' + i;
-
-      // 4項目それぞれのセクション
-      FRESH_ACTIONS.forEach(function(actionName) {
-        var akey = 'act_' + actionName;
-        if (!fd[akey]) fd[akey] = {date:'', asan:'', memo:'', done:false};
-        var ad = fd[akey];
-
-        var section = document.createElement('div');
-        section.style.cssText = 'border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden';
-
-        // セクションヘッダー
-        var sHdr = document.createElement('div');
-        sHdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface3);cursor:pointer';
-
-        var sTitle = document.createElement('div');
-        sTitle.style.cssText = 'font-size:12px;font-weight:700;color:' + (ad.done ? 'var(--text-dim)' : 'var(--text)');
-        if (ad.done) sTitle.style.textDecoration = 'line-through';
-        sTitle.textContent = actionName;
-
-        var sCheck = document.createElement('input');
-        sCheck.type = 'checkbox';
-        sCheck.className = 'fresh-check';
-        sCheck.checked = !!ad.done;
-        sCheck.onclick = function(e) { e.stopPropagation(); };
-        sCheck.onchange = (function(ii, ak, sec, st, sc) {
-          return function() {
-            state.freshData['fresh_'+ii][ak].done = this.checked;
-            st.style.color = this.checked ? 'var(--text-dim)' : 'var(--text)';
-            st.style.textDecoration = this.checked ? 'line-through' : '';
-            autoSave();
-            updateFreshTags(ii); // タグ色のみ更新
-            // バッジ更新
-            var df = state.freshData['fresh_'+ii];
-            var dc = FRESH_ACTIONS.filter(function(a){ var k='act_'+a; return df[k]&&df[k].done; }).length;
-            var bg = document.querySelector('#fi'+ii+' .fresh-name + span');
-            if (bg) bg.textContent = dc > 0 ? dc+'/'+FRESH_ACTIONS.length : '';
-          };
-        })(i, akey, section, sTitle, sCheck);
-
-        sHdr.appendChild(sTitle);
-        sHdr.appendChild(sCheck);
-
-        // フォームエリア
-        var sBody = document.createElement('div');
-        sBody.style.cssText = 'padding:8px 10px;display:none';
-        sHdr.onclick = (function(sb){ return function(e) {
-          if (e.target.type === 'checkbox') return;
-          sb.style.display = sb.style.display === 'none' ? '' : 'none';
-        }; })(sBody);
-
-        // 日時・Aさん
-        var r2 = document.createElement('div');
-        r2.className = 'fresh-row2';
-        r2.style.marginBottom = '6px';
-
-        var inDate = document.createElement('input');
-        inDate.className = 'fresh-fi'; inDate.placeholder = '日付';
-        inDate.type = 'date';
-        inDate.value = ad.date || ''; inDate.style.marginBottom = '0';
-        inDate.onchange = (function(ii, ak){ return function(){
-          this.blur();
-          if (!state.freshData['fresh_'+ii]) state.freshData['fresh_'+ii] = {};
-          if (!state.freshData['fresh_'+ii][ak]) state.freshData['fresh_'+ii][ak] = {};
-          state.freshData['fresh_'+ii][ak].date=this.value;
-          autoSave();
-          // タグ色のみ更新（renderStats不要＝パネルが閉じない）
-          updateFreshTags(ii);
-        }; })(i, akey);
-
-        var inAsan = document.createElement('input');
-        inAsan.className = 'fresh-fi'; inAsan.placeholder = 'Aさん';
-        inAsan.value = ad.asan || ''; inAsan.style.marginBottom = '0';
-        inAsan.oninput = (function(ii, ak){ return function(){
-          if (!state.freshData['fresh_'+ii]) state.freshData['fresh_'+ii] = {};
-          if (!state.freshData['fresh_'+ii][ak]) state.freshData['fresh_'+ii][ak] = {};
-          state.freshData['fresh_'+ii][ak].asan=this.value;
-          autoSave();
-        }; })(i, akey);
-
-        r2.appendChild(inDate); r2.appendChild(inAsan);
-
-        // メモ
-        var ta = document.createElement('textarea');
-        ta.className = 'fresh-fi'; ta.rows = 2; ta.placeholder = 'メモ';
-        ta.value = ad.memo || '';
-        ta.oninput = (function(ii, ak){ return function(){ state.freshData['fresh_'+ii][ak].memo=this.value; lsSave(); }; })(i, akey);
-
-        sBody.appendChild(r2);
-        sBody.appendChild(ta);
-        section.appendChild(sHdr);
-        section.appendChild(sBody);
-        panel.appendChild(section);
-      });
-
-      item.appendChild(nameRow);
-      item.appendChild(panel);
-      freshWrap.appendChild(item);
+  if (freshWrap) {
+    var FRESH_TITLES = ['LOI','Q2','B1','B2'];
+    var FRESH_STEPS = ['リスト','基準値','F-DATA','ハウディ'];
+    var freshMembers = membersForMap('current').filter(function(m){
+      return !m.deleted && FRESH_TITLES.indexOf(m.title) >= 0;
     });
+    freshMembers.sort(function(a,b){
+      var d = FRESH_TITLES.indexOf(a.title) - FRESH_TITLES.indexOf(b.title);
+      if (d !== 0) return d;
+      return ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||''));
+    });
+    if (freshMembers.length === 0) {
+      freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / B1 / B2 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
+    } else {
+      freshWrap.innerHTML = freshMembers.map(function(m){
+        var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
+        var fd = state.freshData[m.id] || {};
+        var doneCount = 0;
+        var chips = FRESH_STEPS.map(function(step){
+          var on = !!fd[step];
+          if (on) doneCount++;
+          return '<div class="fresh-step'+(on?' on':'')+'" onclick="toggleFreshStep(\''+m.id+'\',\''+step+'\')">'+(on?'✓ ':'')+evEsc(step)+'</div>';
+        }).join('');
+        var allDone = doneCount === FRESH_STEPS.length;
+        return '<div class="fresh-card'+(allDone?' done':'')+'">'
+          + '<div class="fresh-card-top">'
+          +   '<span class="fresh-card-name">'+evEsc(name)+'</span>'
+          +   '<span class="fresh-card-title">'+evEsc(m.title||'')+'</span>'
+          +   '<span class="fresh-card-prog">'+doneCount+'/'+FRESH_STEPS.length+'</span>'
+          + '</div>'
+          + '<div class="fresh-steps">'+chips+'</div>'
+          + '</div>';
+      }).join('');
+    }
   }
 
   // アウトライン（3〜7人、手入力）
@@ -5007,8 +4878,16 @@ function renderStats() {
 
 
 
-  // デフォルト表示
-  if (s.monthly && s.monthly.length) selectChartRow(s.monthly[0].label);
+  // デフォルト表示：データが入っている項目を優先して選択（空項目で空白に見えるのを防ぐ）
+  if (s.monthly && s.monthly.length) {
+    var defLabel = s.monthly[0].label;
+    for (var di=0; di<s.monthly.length; di++) {
+      var rv = s.monthly[di].vals || [];
+      var hasData = rv.some(function(v){ return v!=='' && v!==null && v!==undefined; });
+      if (hasData) { defLabel = s.monthly[di].label; break; }
+    }
+    selectChartRow(defLabel);
+  }
 
   // テーブルを右端（最新月）にスクロール
   setTimeout(function() {
@@ -5098,29 +4977,37 @@ function drawLineChart(labels, data, title) {
     points.push({x:x, y:y});
   });
 
-  if (points.length >= 2) {
-    // fill
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, pad.top + ch);
-    points.forEach(function(p){ ctx.lineTo(p.x, p.y); });
-    ctx.lineTo(points[points.length-1].x, pad.top + ch);
-    ctx.closePath();
-    ctx.fillStyle = fillColor;
-    ctx.fill();
+  if (points.length === 0) {
+    // データなし
+    ctx.fillStyle = 'rgba(156,163,175,0.75)';
+    ctx.font = '12px "Noto Sans JP", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('この項目のデータがありません', pad.left + cw/2, pad.top + ch/2);
+  } else {
+    if (points.length >= 2) {
+      // fill
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, pad.top + ch);
+      points.forEach(function(p){ ctx.lineTo(p.x, p.y); });
+      ctx.lineTo(points[points.length-1].x, pad.top + ch);
+      ctx.closePath();
+      ctx.fillStyle = fillColor;
+      ctx.fill();
 
-    // line
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (var i=1; i<points.length; i++) {
-      var p = points[i], q = points[i-1];
-      var cpx = (p.x + q.x) / 2;
-      ctx.bezierCurveTo(cpx, q.y, cpx, p.y, p.x, p.y);
+      // line
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (var i=1; i<points.length; i++) {
+        var p = points[i], q = points[i-1];
+        var cpx = (p.x + q.x) / 2;
+        ctx.bezierCurveTo(cpx, q.y, cpx, p.y, p.x, p.y);
+      }
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
     }
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
 
-    // dots
+    // dots（1点だけでも表示）
     points.forEach(function(p) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
@@ -5716,7 +5603,13 @@ function loadEvents(uid) {
     return fsGet('maps/' + uid + '/meta/eventCategories');
   }).then(function(catDoc) {
     if (catDoc && catDoc.list) {
-      state.categories = catDoc.list;     // 既存（空配列=ユーザーが全削除した状態も尊重）
+      if (categoriesAreOldDefault(catDoc.list)) {
+        // 旧デフォルトのまま未編集 → 新デフォルトへ自動移行
+        state.categories = defaultCategories();
+        saveCategories();
+      } else {
+        state.categories = catDoc.list;   // 既存（空配列=ユーザーが全削除した状態も尊重）
+      }
     } else {
       state.categories = defaultCategories(); // 初回のみ初期候補を投入して永続化
       saveCategories();
@@ -5782,12 +5675,28 @@ function findCategory(id) {
 // 初回のみ投入する初期カテゴリ候補（ユーザーは自由に編集・削除可）
 function defaultCategories() {
   return [
-    { id: 'cat_def_work',     name: '仕事',         color: '#3b82f6' },
-    { id: 'cat_def_apo',      name: 'アポ',         color: '#ec4899' },
-    { id: 'cat_def_train',    name: '研修',         color: '#22c55e' },
-    { id: 'cat_def_deadline', name: '締切',         color: '#ef4444' },
-    { id: 'cat_def_private',  name: 'プライベート', color: '#f59e0b' }
+    { id: 'cat_def_howdy', name: 'ハウディ',     color: '#3b82f6' }, // 青
+    { id: 'cat_def_ol',    name: 'OL',           color: '#22c55e' }, // 緑
+    { id: 'cat_def_ct',    name: 'CT',           color: '#ec4899' }, // ピンク
+    { id: 'cat_def_st',    name: 'ST',           color: '#f59e0b' }, // オレンジ
+    { id: 'cat_def_side',  name: 'サイドの仕事', color: '#eab308' }  // 黄色
   ];
+}
+// 旧デフォルト（v152〜v158で投入された5種）。未編集ならこれを検出して新デフォルトへ自動移行する。
+var OLD_DEFAULT_CATS = [
+  { id: 'cat_def_work',     name: '仕事',         color: '#3b82f6' },
+  { id: 'cat_def_apo',      name: 'アポ',         color: '#ec4899' },
+  { id: 'cat_def_train',    name: '研修',         color: '#22c55e' },
+  { id: 'cat_def_deadline', name: '締切',         color: '#ef4444' },
+  { id: 'cat_def_private',  name: 'プライベート', color: '#f59e0b' }
+];
+function categoriesAreOldDefault(list) {
+  if (!list || list.length !== OLD_DEFAULT_CATS.length) return false;
+  for (var i=0;i<list.length;i++) {
+    var a = list[i], b = OLD_DEFAULT_CATS[i];
+    if (!a || a.id !== b.id || a.name !== b.name || a.color !== b.color) return false;
+  }
+  return true;
 }
 // 背景色に対する読みやすい文字色
 function catTextColor(hex) {
