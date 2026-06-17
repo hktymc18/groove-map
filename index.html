@@ -531,7 +531,18 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .fresh-card-prog{margin-left:auto;font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
 .fresh-steps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .fresh-step{display:flex;align-items:center;justify-content:center;padding:12px 8px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid);font-size:13px;font-weight:600;cursor:pointer;user-select:none}
+.fresh-step.scheduled{background:rgba(245,158,11,0.15);border-color:#f59e0b;color:#f59e0b}
 .fresh-step.on{background:var(--accent);border-color:var(--accent);color:#000}
+.fresh-step.open{outline:2px solid var(--accent);outline-offset:-2px}
+.fresh-editor{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.fresh-editor-ttl{font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px}
+.fresh-editor-row{display:flex;gap:8px;margin-bottom:8px}
+.fresh-editor-f{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.fresh-editor-f label{font-size:10px;color:var(--text-dim)}
+.fresh-editor-f input{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 9px;font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;width:100%;box-sizing:border-box}
+.fresh-editor-f input:focus{border-color:var(--accent)}
+.fresh-done-btn{width:100%;padding:11px;border-radius:9px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer}
+.fresh-done-btn.on{background:var(--accent);color:#000}
 .fresh-row2 .fresh-fi{flex:1;margin-bottom:0}
 /* 研修生カード情報 */
 .trainee-info{display:flex;gap:8px;padding:4px 12px 8px 60px;flex-wrap:wrap}
@@ -915,7 +926,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v159</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v160</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -2483,7 +2494,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v159';
+  var DATA_VERSION = 'v160';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4292,11 +4303,51 @@ function removeFreshMember(idx) {
   autoSave();
 }
 
-// フレッシュリスト：オンボーディング各ステップの完了トグル（メンバーID単位で保持）
-function toggleFreshStep(mid, step) {
+// フレッシュリスト：各ステップに 日付/Aさん/完了 を保持（メンバーID単位）
+// freshData[mid][step] = { date, asan, done }（旧データは true=完了 を吸収）
+var _freshOpenKey = ''; // 'mid|step' 編集中のステップ
+function freshNorm(v) {
+  if (v === true) return { done: true };
+  return v || {};
+}
+function freshStepClass(sd) {
+  sd = freshNorm(sd);
+  if (sd.done) return 'fresh-step on';        // 完了 = 緑
+  if (sd.date) return 'fresh-step scheduled';  // 日付あり = オレンジ
+  return 'fresh-step';                          // 未設定 = グレー
+}
+function _freshGet(mid, step) {
   if (!state.freshData) state.freshData = {};
   if (!state.freshData[mid]) state.freshData[mid] = {};
-  state.freshData[mid][step] = !state.freshData[mid][step];
+  var sd = state.freshData[mid][step];
+  if (sd === true) sd = { done: true };
+  if (!sd) sd = {};
+  state.freshData[mid][step] = sd;
+  return sd;
+}
+function freshOpenStep(mid, step) {
+  var k = mid + '|' + step;
+  _freshOpenKey = (_freshOpenKey === k) ? '' : k;
+  renderStats();
+}
+function freshUpdateStepBtn(mid, step) {
+  var btn = document.querySelector('.fresh-step[data-mid="' + mid + '"][data-step="' + step + '"]');
+  if (!btn) return;
+  var sd = freshNorm((state.freshData[mid] || {})[step]);
+  var open = (_freshOpenKey === (mid + '|' + step));
+  btn.className = freshStepClass(sd) + (open ? ' open' : '');
+  btn.textContent = (sd.done ? '✓ ' : (sd.date ? '📅 ' : '')) + step;
+}
+// 日付/Aさん入力：再描画せず色だけ更新（入力フォーカス維持）
+function freshSetField(mid, step, field, val) {
+  var sd = _freshGet(mid, step);
+  sd[field] = val;
+  autoSave();
+  freshUpdateStepBtn(mid, step);
+}
+function freshToggleDone(mid, step) {
+  var sd = _freshGet(mid, step);
+  sd.done = !sd.done;
   autoSave();
   renderStats();
 }
@@ -4587,11 +4638,28 @@ function renderStats() {
         var fd = state.freshData[m.id] || {};
         var doneCount = 0;
         var chips = FRESH_STEPS.map(function(step){
-          var on = !!fd[step];
-          if (on) doneCount++;
-          return '<div class="fresh-step'+(on?' on':'')+'" onclick="toggleFreshStep(\''+m.id+'\',\''+step+'\')">'+(on?'✓ ':'')+evEsc(step)+'</div>';
+          var sd = freshNorm(fd[step]);
+          if (sd.done) doneCount++;
+          var open = (_freshOpenKey === (m.id + '|' + step));
+          var mark = sd.done ? '✓ ' : (sd.date ? '📅 ' : '');
+          return '<div class="' + freshStepClass(sd) + (open ? ' open' : '') + '" data-mid="' + m.id + '" data-step="' + step + '" onclick="freshOpenStep(\'' + m.id + '\',\'' + step + '\')">' + mark + evEsc(step) + '</div>';
         }).join('');
         var allDone = doneCount === FRESH_STEPS.length;
+        // 編集パネル（開いているステップのみ：日付・Aさん・完了）
+        var editorHtml = '';
+        var ok = _freshOpenKey.split('|');
+        if (ok[0] === m.id && FRESH_STEPS.indexOf(ok[1]) >= 0) {
+          var estep = ok[1];
+          var esd = freshNorm(fd[estep]);
+          editorHtml = '<div class="fresh-editor">'
+            + '<div class="fresh-editor-ttl">' + evEsc(estep) + ' の予定</div>'
+            + '<div class="fresh-editor-row">'
+            +   '<div class="fresh-editor-f"><label>日付</label><input type="date" value="' + (esd.date||'') + '" onchange="freshSetField(\'' + m.id + '\',\'' + estep + '\',\'date\',this.value)"></div>'
+            +   '<div class="fresh-editor-f"><label>Aさん</label><input type="text" placeholder="担当" value="' + evEsc(esd.asan||'') + '" oninput="freshSetField(\'' + m.id + '\',\'' + estep + '\',\'asan\',this.value)"></div>'
+            + '</div>'
+            + '<button class="fresh-done-btn' + (esd.done?' on':'') + '" onclick="freshToggleDone(\'' + m.id + '\',\'' + estep + '\')">' + (esd.done ? '✓ 完了済み（タップで戻す）' : '完了にする') + '</button>'
+            + '</div>';
+        }
         return '<div class="fresh-card'+(allDone?' done':'')+'">'
           + '<div class="fresh-card-top">'
           +   '<span class="fresh-card-name">'+evEsc(name)+'</span>'
@@ -4599,6 +4667,7 @@ function renderStats() {
           +   '<span class="fresh-card-prog">'+doneCount+'/'+FRESH_STEPS.length+'</span>'
           + '</div>'
           + '<div class="fresh-steps">'+chips+'</div>'
+          + editorHtml
           + '</div>';
       }).join('');
     }
