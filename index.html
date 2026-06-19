@@ -817,6 +817,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ev-i-meta .due-today{color:var(--accent);font-weight:700}
 .ev-i-member{padding:1px 7px;border-radius:10px;background:var(--purple-dim);color:var(--purple);font-weight:600}
 .ev-i-prio{padding:1px 6px;border-radius:10px;background:rgba(239,68,68,.14);color:var(--red);font-weight:700}
+.ev-gcal-btn{flex:none;align-self:center;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);font-size:16px;cursor:pointer;margin-left:6px}
+.ev-gcal-btn:active{background:var(--accent);border-color:var(--accent)}
 .ev-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 20px}
 /* 月カレンダー */
 .ev-cal-hdr{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 14px}
@@ -960,7 +962,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v164</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v165</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -2538,7 +2540,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v164';
+  var DATA_VERSION = 'v165';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5817,6 +5819,43 @@ function updateGcalBtn() {
   else { b.classList.remove('on'); b.textContent = '🔗 Googleカレンダー連携'; }
 }
 
+// ── テンプレートリンク方式（連携不要：Googleカレンダーの予定作成画面を内容入りで開く） ──
+function gcalTemplateUrl(e) {
+  if (!e.date) return '';
+  var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+  var y = parseInt(e.date.slice(0,4),10), mo = parseInt(e.date.slice(5,7),10), da = parseInt(e.date.slice(8,10),10);
+  var datesParam;
+  if (e.time) {
+    var tp = e.time.split(':');
+    var sd = new Date(y, mo-1, da, parseInt(tp[0],10)||0, parseInt(tp[1],10)||0);
+    var ed = new Date(sd.getTime() + 60*60000); // +1時間
+    var fmt = function(d){ return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00'; };
+    datesParam = fmt(sd) + '/' + fmt(ed);
+  } else {
+    var nd = new Date(y, mo-1, da+1); // 終日は翌日をendに（exclusive）
+    datesParam = (y+pad(mo)+pad(da)) + '/' + (nd.getFullYear()+pad(nd.getMonth()+1)+pad(nd.getDate()));
+  }
+  var cat = e.categoryId ? findCategory(e.categoryId) : null;
+  var m = e.memberId ? findMemberAny(e.memberId) : null;
+  var details = [];
+  if (e.memo) details.push(e.memo);
+  if (m) details.push('メンバー: ' + ((m.lastName||'') + (m.firstName||'')).replace(/^\s+|\s+$/g,''));
+  if (cat) details.push('カテゴリ: ' + cat.name);
+  var url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent((e.type === 'task' && e.done ? '✓ ' : '') + (e.title || '(無題)'))
+    + '&dates=' + datesParam
+    + '&ctz=Asia/Tokyo';
+  if (details.length) url += '&details=' + encodeURIComponent(details.join('\n'));
+  return url;
+}
+function gcalOpenTemplate(id) {
+  var e = findEvent(id);
+  if (!e) return;
+  if (!e.date) { toast('日付のある予定だけカレンダーに追加できます'); return; }
+  var url = gcalTemplateUrl(e);
+  if (url) window.open(url, '_blank');
+}
+
 // ── アプリ内アラート ──
 function dueTaskCount() {
   var t = evTodayYmd(), n = 0;
@@ -6284,7 +6323,10 @@ function evItemHtml(e) {
   if (cat) h += '<span class="ev-i-cat" style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">⚑ 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
-  h += '</div></div></div>';
+  h += '</div></div>';
+  // 📅 Googleカレンダーに追加（連携不要・テンプレートを開くだけ）
+  if (e.date) h += '<div class="ev-gcal-btn" onclick="event.stopPropagation();gcalOpenTemplate(\'' + e.id + '\')" title="Googleカレンダーに追加">&#x1F4C5;</div>';
+  h += '</div>';
   return h;
 }
 function renderAgenda() {
