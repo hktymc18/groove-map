@@ -346,6 +346,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   white-space:nowrap;
 }
 .edit-hover-btn{display:none!important}
+/* カード右端の編集ボタン（モバイルでも常時タップ可） */
+.node-edit-btn{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text-mid);font-size:15px;cursor:pointer;margin-left:4px}
+.node-edit-btn:active{background:var(--accent);color:#000;border-color:var(--accent)}
 .nc.trainee{border-left-width:5px!important;background:rgba(34,211,238,.05)}
 .nc.loi-card{border-left-width:5px!important;border-color:var(--loi)!important;background:rgba(34,197,94,.05)}
 .nc.result-ng{background:rgba(100,100,100,.18);border-color:rgba(100,100,100,.3);opacity:0.6}
@@ -957,7 +960,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v163</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v164</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -991,7 +994,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       <div class="exp-btn" onclick="exportCSV('current')">📄 CSV出力</div>
       <div class="exp-btn" onclick="openShareModal()" id="shareBtn" style="display:none">🔗 共有</div>
     </div>
-    <div class="edit-hint" id="editHint">ダブルタップで編集</div>
+    <div class="edit-hint" id="editHint">タップで開閉 ・ ✎ボタンで編集</div>
     <!-- 検索欄 -->
     <!-- 段数フィルター -->
     <div id="depthFilterWrap" style="display:flex;gap:6px;padding:6px 14px 0;flex-wrap:wrap;align-items:center">
@@ -2535,7 +2538,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v163';
+  var DATA_VERSION = 'v164';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3600,6 +3603,10 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
       + '</div>';
   }
 
+  // 開閉状態：ユーザーが手で開閉したものを保持（無ければ深さ2未満を初期表示）
+  if (!window._treeOpen) window._treeOpen = {};
+  var isDefaultOpen = (m.id in window._treeOpen) ? !!window._treeOpen[m.id] : (depth < 2);
+
   // 子要素（再帰）
   var kidsHTML = '';
   if (hasKids && !skipChildren) {
@@ -3608,7 +3615,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
       kidsContent += buildNodeHTML(kids[ki], members, mapType, depth + 1, depthColor, inFamily, familyColorMap, false);
     }
     var indentStyle = inFamily ? 'padding-left:10px;border-left:1.5px solid ' + depthColor + '44;margin-left:8px' : '';
-    kidsHTML = '<div class="children depth-' + Math.min(depth,4) + (depth < 2 ? '' : ' closed') + '" id="ch-' + m.id + '" style="' + indentStyle + '">' + kidsContent + '</div>';
+    kidsHTML = '<div class="children depth-' + Math.min(depth,4) + (isDefaultOpen ? '' : ' closed') + '" id="ch-' + m.id + '" style="' + indentStyle + '">' + kidsContent + '</div>';
   }
 
   var LOI_TITLES = ['LOI','Q2','Q3','Q4'];
@@ -3616,12 +3623,11 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
   var ncClass = 'nc' + (isLOI ? ' loi-card' : m.trainee ? ' trainee' : '') +
     (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '');
 
-  var isDefaultOpen = depth < 2;
   return '<div class="nw' + (isDefaultOpen && hasKids && !skipChildren ? ' open' : '') + '" id="nw-' + m.id + '">'
     + '<div class="' + ncClass + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
-    + hoverBtn + instaBtn
+    + instaBtn
     + (state.isEditor ? '<div class="card-quick-add" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="直下に追加">＋</div>' : '')
-    + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.dataset.cid,event)" ondblclick="if(state.isEditor){openEdit(this.dataset.cid);event.stopPropagation()}">'
+    + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.dataset.cid,event)">'
     + '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">'
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
     + expandArrow
@@ -3636,6 +3642,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0">'
     + '<span class="info-pt">' + ptDisplay + ptFixHTML + '</span>'
     + '</div>'
+    + (state.isEditor ? '<div class="node-edit-btn" onclick="event.stopPropagation();openEdit(\'' + m.id + '\')" title="編集">&#x270e;</div>' : '')
     + '</div>'
     + memoTxt + traineeInfoHTML
     + '</div>'
@@ -3715,52 +3722,22 @@ function moraleEmoji(level) {
 var _lastTapId = null;
 var _lastTapTime = 0;
 
+// カードタップ：子の開閉のみ（編集は各カードの✎ボタン）。開閉状態は _treeOpen に保持して再描画で消えないようにする
 function selectCard(id, e) {
   // tap-edit 要素はeditFieldが処理するので無視
   if (e && e.target && e.target.closest && e.target.closest('.tap-edit')) return;
+  if (!window._treeOpen) window._treeOpen = {};
 
-  var now = Date.now();
-  var isDoubleTap = (_lastTapId === id && now - _lastTapTime < 350);
-  _lastTapId = id;
-  _lastTapTime = now;
-
-  // ダブルタップ → 編集モーダル
-  if (isDoubleTap && state.isEditor) {
-    // 選択解除してから編集
-    Array.prototype.slice.call(document.querySelectorAll('.nc.selected')).forEach(function(el) { el.classList.remove('selected'); });
-    selectedParentId = null;
-    openEdit(id);
-    return;
-  }
-
-  // シングルタップ → 選択トグル＋展開
-  if (selectedParentId === id) {
-    selectedParentId = null;
-    Array.prototype.slice.call(document.querySelectorAll('.nc.selected')).forEach(function(el) { el.classList.remove('selected'); });
-    document.getElementById('fab').style.background = '';
-    document.getElementById('fab').title = '';
-  } else {
-    Array.prototype.slice.call(document.querySelectorAll('.nc.selected')).forEach(function(el) { el.classList.remove('selected'); });
-    selectedParentId = id;
-    var nc = document.getElementById('nc-'+id);
-    if (nc) nc.classList.add('selected');
-    var m = null;
-    for (var i=0; i<state.members.length; i++) { if (state.members[i].id===id){ m=state.members[i]; break; } }
-    var name = m ? ((m.lastName||'') + ' ' + (m.firstName||'')) : '';
-    var fab = document.getElementById('fab');
-    if (fab) fab.title = name + 'の直下に追加';
-  }
-
-  // 子ノード展開
   var nw = document.getElementById('nw-'+id);
   var ch = document.getElementById('ch-'+id);
   var mem = document.getElementById('mem-'+id);
   if (ch) {
-    var isOpen = !ch.classList.contains('closed');
-    ch.classList.toggle('closed', isOpen);
-    if (nw) nw.classList.toggle('open', !isOpen);
-  } else {
-    if (mem) mem.classList.toggle('show');
+    var willOpen = ch.classList.contains('closed'); // 今閉じている → 開く
+    ch.classList.toggle('closed', !willOpen);
+    if (nw) nw.classList.toggle('open', willOpen);
+    window._treeOpen[id] = willOpen; // 状態を保持
+  } else if (mem) {
+    mem.classList.toggle('show'); // 子なしノードはメモ開閉
   }
 }
 
