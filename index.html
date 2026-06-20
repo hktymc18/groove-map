@@ -962,7 +962,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v166</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v167</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1480,7 +1480,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
     <div style="display:flex;gap:10px">
       <div class="fr" style="flex:1"><label class="fl">日付</label><input class="fi" id="evDate" type="date"></div>
-      <div class="fr" style="flex:1"><label class="fl">時刻（任意・15分単位）</label><input class="fi" id="evTime" type="time" step="900"></div>
+      <div class="fr" style="flex:1"><label class="fl">時刻（任意・15分単位）</label><select class="fi" id="evTime"></select></div>
     </div>
     <div class="fr">
       <label class="fl">カテゴリ（色分け）</label>
@@ -2540,7 +2540,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v166';
+  var DATA_VERSION = 'v167';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6477,6 +6477,23 @@ function buildEvMemberOptions(sel) {
 function openEventAdd(memberId) { openEventModal(null, memberId, ''); }
 function openEventAddDate(date) { openEventModal(null, '', date); }
 function openEventEdit(id) { openEventModal(id, '', ''); }
+// 時刻セレクトを15分刻みで生成（なし＋00:00〜23:45）。既存の端数時刻があれば候補に足して保持
+function buildTimeOptions(selected) {
+  var sel = document.getElementById('evTime');
+  if (!sel) return;
+  var html = '<option value="">なし</option>';
+  var has = false;
+  for (var h = 0; h < 24; h++) {
+    for (var mi = 0; mi < 60; mi += 15) {
+      var v = (h < 10 ? '0' : '') + h + ':' + (mi < 10 ? '0' : '') + mi;
+      if (v === selected) has = true;
+      html += '<option value="' + v + '">' + v + '</option>';
+    }
+  }
+  if (selected && !has) html += '<option value="' + selected + '">' + selected + '（保存値）</option>';
+  sel.innerHTML = html;
+  sel.value = selected || '';
+}
 function openEventModal(id, presetMember, presetDate) {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   _evEditId = id;
@@ -6487,7 +6504,7 @@ function openEventModal(id, presetMember, presetDate) {
   selEvPrio(e ? (e.priority || 'normal') : 'normal');
   document.getElementById('evTitle').value = e ? (e.title || '') : '';
   document.getElementById('evDate').value  = e ? (e.date || '') : (presetDate || evTodayYmd());
-  document.getElementById('evTime').value  = e ? (e.time || '') : '';
+  buildTimeOptions(e ? (e.time || '') : '');
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : '';
   document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
