@@ -1,6 +1,6 @@
 {
-  "name": "GROOVE MAP",
-  "short_name": "GROOVE",
+  "name": "MAP",
+  "short_name": "MAP",
   "description": "組織管理ツール（現状/理想MAP・予定・データ集計）",
   "start_url": "./index.html",
   "scope": "./",

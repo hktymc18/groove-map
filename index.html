@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>GROOVE MAP</title>
+<title>MAP</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0d0f14">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GROOVE">
+<meta name="apple-mobile-web-app-title" content="MAP">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
@@ -55,7 +55,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 
 /* ── HEADER ── */
 header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--border);z-index:50}
-.hdr-top{display:flex;align-items:center;gap:8px;padding:10px 14px 0}
+.hdr-top{display:flex;align-items:center;gap:8px;padding:10px 14px 0;flex-wrap:wrap}
 .logo{font-family:'Inter','IBM Plex Mono',monospace;font-size:17px;color:var(--accent);letter-spacing:2px;font-weight:700}
 .month-sel{margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:var(--rxs);font-family:'Inter','IBM Plex Mono',monospace}
 .user-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim)}
@@ -954,7 +954,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 <header>
   <div class="hdr-top">
-    <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer">GROOVE</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none"></div></div>
+    <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer;flex-shrink:0;max-width:100%;overflow:hidden" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">MAP</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%"></div></div>
 <div style="display:flex;gap:4px;align-items:center">
       <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
@@ -962,7 +962,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v167</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v169</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -2540,7 +2540,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v167';
+  var DATA_VERSION = 'v169';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
