@@ -462,6 +462,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* タップ編集可能フィールド */
 .tap-edit{cursor:pointer;border-radius:3px;transition:background .12s;-webkit-user-select:none}
 .tap-edit:active{background:rgba(255,255,255,.1)}
+/* 予定モーダルの日付・時刻：高さを揃えてかぶり防止 */
+.ev-dt{height:46px;box-sizing:border-box;min-width:0}
 .overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .22s}
 .overlay.open{opacity:1;pointer-events:all}
 .sheet{background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:18px 18px 44px;width:100%;max-height:90vh;overflow-y:auto;transform:translateY(36px);transition:transform .22s}
@@ -962,7 +964,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v169</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v170</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1478,9 +1480,15 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
       </div>
     </div>
     <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
-    <div style="display:flex;gap:10px">
-      <div class="fr" style="flex:1"><label class="fl">日付</label><input class="fi" id="evDate" type="date"></div>
-      <div class="fr" style="flex:1"><label class="fl">時刻（任意・15分単位）</label><select class="fi" id="evTime"></select></div>
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
+      <div class="fr" style="flex:1.1;margin-bottom:0"><label class="fl">時刻（任意・15分）</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select class="fi ev-dt" id="evTimeH" style="flex:1;padding-right:6px"></select>
+          <span style="color:var(--text-dim);font-weight:700">:</span>
+          <select class="fi ev-dt" id="evTimeM" style="flex:1;padding-right:6px"></select>
+        </div>
+      </div>
     </div>
     <div class="fr">
       <label class="fl">カテゴリ（色分け）</label>
@@ -2540,7 +2548,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v169';
+  var DATA_VERSION = 'v170';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6477,22 +6485,33 @@ function buildEvMemberOptions(sel) {
 function openEventAdd(memberId) { openEventModal(null, memberId, ''); }
 function openEventAddDate(date) { openEventModal(null, '', date); }
 function openEventEdit(id) { openEventModal(id, '', ''); }
-// 時刻セレクトを15分刻みで生成（なし＋00:00〜23:45）。既存の端数時刻があれば候補に足して保持
-function buildTimeOptions(selected) {
-  var sel = document.getElementById('evTime');
-  if (!sel) return;
-  var html = '<option value="">なし</option>';
-  var has = false;
-  for (var h = 0; h < 24; h++) {
-    for (var mi = 0; mi < 60; mi += 15) {
-      var v = (h < 10 ? '0' : '') + h + ':' + (mi < 10 ? '0' : '') + mi;
-      if (v === selected) has = true;
-      html += '<option value="' + v + '">' + v + '</option>';
-    }
+// 時刻を「時」「分(15分刻み)」の2セレクト（ホイール）で生成。selected='HH:MM' or ''
+function buildTimeSelects(selected) {
+  var hSel = document.getElementById('evTimeH');
+  var mSel = document.getElementById('evTimeM');
+  if (!hSel || !mSel) return;
+  var selH = '', selM = '00';
+  if (selected && selected.indexOf(':') >= 0) {
+    var p = selected.split(':');
+    selH = String(parseInt(p[0], 10));
+    selM = (p[1].length < 2 ? ('0' + p[1]) : p[1]).slice(0, 2);
   }
-  if (selected && !has) html += '<option value="' + selected + '">' + selected + '（保存値）</option>';
-  sel.innerHTML = html;
-  sel.value = selected || '';
+  var hHtml = '<option value="">なし</option>';
+  for (var h = 0; h < 24; h++) hHtml += '<option value="' + h + '">' + (h < 10 ? '0' + h : h) + '時</option>';
+  hSel.innerHTML = hHtml;
+  hSel.value = selH;
+  var mins = ['00','15','30','45'], hasM = false, mHtml = '';
+  for (var i=0;i<mins.length;i++) { if (mins[i] === selM) hasM = true; mHtml += '<option value="' + mins[i] + '">' + mins[i] + '分</option>'; }
+  if (selH && selM && !hasM) mHtml += '<option value="' + selM + '">' + selM + '分</option>'; // 端数分を保持
+  mSel.innerHTML = mHtml;
+  mSel.value = selM;
+}
+// 2セレクトから 'HH:MM' を取得（時が「なし」なら ''）
+function readTimeSelects() {
+  var th = (document.getElementById('evTimeH')||{}).value || '';
+  var tm = (document.getElementById('evTimeM')||{}).value || '00';
+  if (th === '') return '';
+  return (th.length < 2 ? '0' + th : th) + ':' + (tm.length < 2 ? '0' + tm : tm);
 }
 function openEventModal(id, presetMember, presetDate) {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
@@ -6504,7 +6523,7 @@ function openEventModal(id, presetMember, presetDate) {
   selEvPrio(e ? (e.priority || 'normal') : 'normal');
   document.getElementById('evTitle').value = e ? (e.title || '') : '';
   document.getElementById('evDate').value  = e ? (e.date || '') : (presetDate || evTodayYmd());
-  buildTimeOptions(e ? (e.time || '') : '');
+  buildTimeSelects(e ? (e.time || '') : '');
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : '';
   document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
@@ -6534,7 +6553,7 @@ function saveEvent() {
   e.type     = _evType;
   e.title    = title;
   e.date     = document.getElementById('evDate').value;
-  e.time     = document.getElementById('evTime').value;
+  e.time     = readTimeSelects();
   e.memberId = document.getElementById('evMember').value;
   e.categoryId = _evCategoryId || '';
   e.priority = (_evType === 'task') ? _evPrio : 'normal';
