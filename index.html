@@ -962,7 +962,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v165</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v166</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
@@ -1144,7 +1144,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   <!-- OLタブ -->
   <div id="view-ol" style="display:none">
     <!-- フレッシュリスト -->
-    <div class="sec-label" style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span>フレッシュリスト</span><span style="font-size:10px;color:var(--text-dim);font-weight:400">現状MAPの LOI / Q2 / B1 / B2 を自動表示</span></div>
+    <div class="sec-label" style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span>フレッシュリスト</span><span style="font-size:10px;color:var(--text-dim);font-weight:400">現状MAPの LOI / Q2 / Q3 / B1〜B6 を自動表示</span></div>
     <div class="card" id="freshListWrap"></div>
     <!-- 金の船リスト -->
     <div class="sec-label"><span>金の船リスト</span> <span style="font-size:10px;color:var(--text-dim);font-weight:400">MAPで「⛴金の船」にしたメンバーを自動表示</span></div>
@@ -1480,7 +1480,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
     <div style="display:flex;gap:10px">
       <div class="fr" style="flex:1"><label class="fl">日付</label><input class="fi" id="evDate" type="date"></div>
-      <div class="fr" style="flex:1"><label class="fl">時刻（任意）</label><input class="fi" id="evTime" type="time"></div>
+      <div class="fr" style="flex:1"><label class="fl">時刻（任意・15分単位）</label><input class="fi" id="evTime" type="time" step="900"></div>
     </div>
     <div class="fr">
       <label class="fl">カテゴリ（色分け）</label>
@@ -2540,7 +2540,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v165';
+  var DATA_VERSION = 'v166';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4641,18 +4641,18 @@ function renderStats() {
   if (!state.freshData) state.freshData = {};
   var freshWrap = document.getElementById('freshListWrap');
   if (freshWrap) {
-    var FRESH_TITLES = ['LOI','Q2','B1','B2'];
+    var FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
     var FRESH_STEPS = ['リスト','基準値','F-DATA','ハウディ'];
     var freshMembers = membersForMap('current').filter(function(m){
-      return !m.deleted && FRESH_TITLES.indexOf(m.title) >= 0;
+      return !m.deleted && FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
     });
     freshMembers.sort(function(a,b){
-      var d = FRESH_TITLES.indexOf(a.title) - FRESH_TITLES.indexOf(b.title);
+      var d = FRESH_TITLES.indexOf((a.title||'').trim()) - FRESH_TITLES.indexOf((b.title||'').trim());
       if (d !== 0) return d;
       return ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||''));
     });
     if (freshMembers.length === 0) {
-      freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / B1 / B2 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
+      freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
     } else {
       freshWrap.innerHTML = freshMembers.map(function(m){
         var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
