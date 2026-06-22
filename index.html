@@ -935,6 +935,24 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .bdg.earned{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-dim),var(--surface))}
 .badge-banner{position:fixed;inset:0;z-index:551;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);pointer-events:none}
 .badge-card{background:var(--surface);border:2px solid var(--accent);border-radius:18px;padding:24px 34px;text-align:center;box-shadow:var(--shadow);animation:luPop .4s ease}
+.home-self{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.self-wk{font-size:28px;font-weight:800;color:var(--accent);font-family:'IBM Plex Mono',monospace;line-height:1}
+.self-lbl{font-size:11px;color:var(--text-dim);margin-top:3px}
+.self-delta{font-size:13px;font-weight:700}
+.self-delta.up{color:var(--accent)}
+.self-delta.dn{color:#ef4444}
+.self-delta.eq{color:var(--text-dim)}
+.home-rank{display:flex;flex-direction:column;gap:6px}
+.rank-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.rank-row.self{border-color:var(--accent);background:var(--accent-dim)}
+.rank-no{width:28px;text-align:center;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text-dim);flex:none;font-size:15px}
+.rank-row.self .rank-no{color:var(--accent)}
+.rank-nm{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank-meta{font-size:11px;color:var(--text-dim);flex:none}
+.rank-xp{font-size:13px;font-weight:800;color:var(--accent);flex:none;font-family:'IBM Plex Mono',monospace}
+.rank-empty,.rank-loading{font-size:13px;color:var(--text-dim);padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;line-height:1.8}
+.rank-join{margin-top:8px;padding:7px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer}
+.rank-toggle{font-size:11px;color:var(--text-dim);text-align:center;margin-top:6px;cursor:pointer;text-decoration:underline}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1005,7 +1023,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v172</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v173</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2593,7 +2611,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v172';
+  var DATA_VERSION = 'v173';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2753,7 +2771,7 @@ var GAME_TIPS = [
 ];
 function gameToday() { return evTodayYmd(); }              // 'YYYY-MM-DD'
 function gameYesterday() { return evYmd(evAddDays(new Date(), -1)); }
-function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[] }; }
+function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[], weekStart:'', weekXp:0, lastWeekXp:0, rankOptIn:true }; }
 function getGame() {
   if (!state.game) state.game = defaultGame();
   var g = state.game;
@@ -2763,7 +2781,27 @@ function getGame() {
   if (!g.gameDays) g.gameDays = {};
   if (!g.todayMissions) g.todayMissions = { date:'', done:[] };
   if (!g.badges) g.badges = [];
+  if (typeof g.weekStart !== 'string') g.weekStart = '';
+  if (typeof g.weekXp !== 'number') g.weekXp = 0;
+  if (typeof g.lastWeekXp !== 'number') g.lastWeekXp = 0;
+  if (typeof g.rankOptIn !== 'boolean') g.rankOptIn = true;
   return g;
+}
+// 週の始まり（月曜）を 'YYYY-MM-DD' で返す
+function gameWeekStart(d) {
+  d = d || new Date();
+  var day = d.getDay(); // 0=日
+  var diff = (day === 0 ? -6 : 1 - day);
+  return evYmd(new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff));
+}
+// 週が変わっていたら週次XPをロール（先週分を退避してリセット）
+function gameRollWeek() {
+  var g = getGame(), wk = gameWeekStart();
+  if (g.weekStart !== wk) {
+    g.lastWeekXp = g.weekStart ? (g.weekXp || 0) : 0;
+    g.weekXp = 0;
+    g.weekStart = wk;
+  }
 }
 function saveGame() {
   var uid = eventsUid();
@@ -2855,6 +2893,74 @@ function gameBadgeUnlock(b) {
   document.body.appendChild(el);
   setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 2100);
 }
+// ── ランキング（UPBD内・今週XP・任意参加） ──
+function gameMyUid() { return (currentUser && currentUser.uid) ? currentUser.uid : eventsUid(); }
+function gameToggleRank() {
+  var g = getGame();
+  g.rankOptIn = !g.rankOptIn;
+  saveGame();
+  toast(g.rankOptIn ? 'ランキングに参加しました' : 'ランキング非表示にしました');
+  if (currentView === 'home') renderHome();
+}
+// 同じUPBDのユーザーを取得し、今週XP降順で返す。cb(null)=UPBD未設定。
+function gameFetchRanking(cb) {
+  if (!db) { cb([]); return; }
+  var myUp = (currentUser && currentUser.upBd) ? currentUser.upBd : '';
+  if (!myUp) { cb(null); return; }
+  var myUid = gameMyUid(), wk = gameWeekStart();
+  db.collection('users').where('upBd', '==', myUp).get().then(function(snap){
+    var rows = [];
+    snap.forEach(function(d){
+      var u = d.data() || {}, g = u.game || {};
+      var isSelf = d.id === myUid;
+      if (g.rankOptIn === false && !isSelf) return; // 他人で非参加はスキップ
+      var wxp = (g.weekStart === wk) ? (g.weekXp || 0) : 0; // 今週活動なしは0扱い
+      rows.push({ uid:d.id, name:u.name || '(名前未設定)', wxp:wxp,
+        level: gameLevelInfo(g.xp || 0).level, streak: g.streak || 0, isSelf: isSelf });
+    });
+    rows.sort(function(a,b){ return b.wxp - a.wxp || b.level - a.level; });
+    cb(rows);
+  }).catch(function(){ cb([]); });
+}
+function gameRankMedal(i) { return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : String(i + 1); }
+function gameRenderRanking() {
+  var box = document.getElementById('homeRank');
+  if (!box) return;
+  var g = getGame();
+  if (!(currentUser && currentUser.upBd)) {
+    box.innerHTML = '<div class="rank-empty">UPBDを設定するとランキングに参加できます</div>';
+    return;
+  }
+  if (g.rankOptIn === false) {
+    box.innerHTML = '<div class="rank-empty">ランキングは非表示中です<br><button class="rank-join" onclick="gameToggleRank()">参加する</button></div>';
+    return;
+  }
+  gameFetchRanking(function(rows){
+    if (rows === null) { box.innerHTML = '<div class="rank-empty">UPBDを設定するとランキングに参加できます</div>'; return; }
+    if (!rows.length) { box.innerHTML = '<div class="rank-empty">まだ参加者がいません</div>'; return; }
+    var myUid = gameMyUid(), selfIdx = -1;
+    for (var k = 0; k < rows.length; k++) { if (rows[k].isSelf) { selfIdx = k; break; } }
+    var top = rows.slice(0, 10);
+    var html = top.map(function(r, i){
+      return '<div class="rank-row' + (r.isSelf ? ' self' : '') + '">'
+        + '<div class="rank-no">' + gameRankMedal(i) + '</div>'
+        + '<div class="rank-nm">' + evEsc(r.name) + '</div>'
+        + '<div class="rank-meta">Lv.' + r.level + '</div>'
+        + '<div class="rank-xp">' + r.wxp + ' XP</div></div>';
+    }).join('');
+    // 自分が圏外なら末尾に自分の順位を追記
+    if (selfIdx >= 10) {
+      var me = rows[selfIdx];
+      html += '<div class="rank-row self" style="margin-top:4px">'
+        + '<div class="rank-no">' + (selfIdx + 1) + '</div>'
+        + '<div class="rank-nm">' + evEsc(me.name) + '</div>'
+        + '<div class="rank-meta">Lv.' + me.level + '</div>'
+        + '<div class="rank-xp">' + me.wxp + ' XP</div></div>';
+    }
+    html += '<div class="rank-toggle" onclick="gameToggleRank()">ランキングに表示しない</div>';
+    box.innerHTML = html;
+  });
+}
 function missionDefs() {
   return [
     { id:'login',     label:'アプリを開く',           xp:5,  target:1, view:'home',   count:function(){ return 1; } },
@@ -2881,13 +2987,14 @@ function gameDisplayStreak(g) {
 // 達成済みミッションを採点・XP付与（animate=trueで演出）。描画はしない。
 function gameAward(animate) {
   var g = getGame(), today = gameToday();
+  gameRollWeek();
   if (g.todayMissions.date !== today) g.todayMissions = { date: today, done: [] };
   var before = gameLevelInfo(g.xp).level, gained = 0;
   missionDefs().forEach(function(m){
     if (g.todayMissions.done.indexOf(m.id) >= 0) return;
     if (m.count() >= m.target) {
       g.todayMissions.done.push(m.id);
-      g.xp += m.xp; gained += m.xp;
+      g.xp += m.xp; gained += m.xp; g.weekXp = (g.weekXp || 0) + m.xp;
       gameMarkActive();
     }
   });
@@ -2960,6 +3067,11 @@ function renderHome() {
       + '<div class="bdg-ic">' + (got ? b.ic : '🔒') + '</div>'
       + '<div class="bdg-nm">' + evEsc(b.nm) + '</div></div>';
   }).join('');
+  var thisW = g.weekXp || 0, lastW = g.lastWeekXp || 0, dw = thisW - lastW;
+  var deltaCls = dw > 0 ? 'up' : (dw < 0 ? 'dn' : 'eq');
+  var deltaTxt = dw > 0 ? ('▲ 先週比 +' + dw) : (dw < 0 ? ('▼ 先週比 ' + dw) : '先週と同じペース');
+  var selfHtml = '<div class="home-self"><div><div class="self-wk">' + thisW + ' XP</div><div class="self-lbl">今週の獲得XP</div></div>'
+    + '<div style="text-align:right"><div class="self-delta ' + deltaCls + '">' + deltaTxt + '</div><div class="self-lbl">先週 ' + lastW + ' XP</div></div></div>';
   wrap.innerHTML = '<div class="home-wrap">'
     + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
     + '<div class="home-date">' + gameDateLabel() + '</div>'
@@ -2970,12 +3082,17 @@ function renderHome() {
     + missionsHtml
     + '<div class="home-sec-label"><span>🏅 称号</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + earnedCnt + '/' + bdefs.length + '</span></div>'
     + '<div class="home-badges">' + badgesHtml + '</div>'
+    + '<div class="home-sec-label">📊 今週のあなた</div>'
+    + selfHtml
+    + '<div class="home-sec-label"><span>🏆 ランキング</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">UPBD内・今週</span></div>'
+    + '<div id="homeRank" class="home-rank"><div class="rank-loading">読み込み中…</div></div>'
     + '<div class="home-sec-label">💡 今日の学び</div>'
     + '<div class="home-tip">' + evEsc(tip) + '</div>'
     + '<div class="home-sec-label">💬 今日の一言</div>'
     + '<div class="home-quote">' + evEsc(quote) + '</div>'
     + '</div>';
   updateHomeBadge();
+  gameRenderRanking();
 }
 // 演出
 function gameXpFloat(xp) {
