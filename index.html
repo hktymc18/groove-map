@@ -1025,7 +1025,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v175</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v176</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -1497,6 +1497,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
               <div class="result-chip" id="rcNG" onclick="selTraineeResultChip('流れた')">✗ 流れた</div>
             </div>
             <input type="hidden" id="fTraineeResult" value="">
+            <div id="bcCatNote" style="display:none;margin-top:8px;font-size:12px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;line-height:1.5">🎉 BC獲得！「👤 基本情報」のカテゴリを <b>BA</b> に変更しましょう</div>
           </div>
 
           <!-- 研修履歴タイムライン -->
@@ -2613,7 +2614,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v175';
+  var DATA_VERSION = 'v176';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2773,7 +2774,7 @@ var GAME_TIPS = [
 ];
 function gameToday() { return evTodayYmd(); }              // 'YYYY-MM-DD'
 function gameYesterday() { return evYmd(evAddDays(new Date(), -1)); }
-function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[], weekStart:'', weekXp:0, lastWeekXp:0, rankOptIn:true }; }
+function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[], weekStart:'', weekXp:0, lastWeekXp:0, rankOptIn:true, stepUpdatedDate:'', bpcAwarded:[], brAwarded:[] }; }
 function getGame() {
   if (!state.game) state.game = defaultGame();
   var g = state.game;
@@ -2787,6 +2788,9 @@ function getGame() {
   if (typeof g.weekXp !== 'number') g.weekXp = 0;
   if (typeof g.lastWeekXp !== 'number') g.lastWeekXp = 0;
   if (typeof g.rankOptIn !== 'boolean') g.rankOptIn = true;
+  if (typeof g.stepUpdatedDate !== 'string') g.stepUpdatedDate = '';
+  if (!g.bpcAwarded) g.bpcAwarded = [];
+  if (!g.brAwarded) g.brAwarded = [];
   return g;
 }
 // 週の始まり（月曜）を 'YYYY-MM-DD' で返す
@@ -2810,10 +2814,13 @@ function saveGame() {
   if (currentUser) currentUser.game = state.game;
   if (uid && db) fsSet('users/' + uid, { game: state.game });
 }
+var GAME_MAX_LEVEL = 99;
+// レベルL→L+1に必要なXP = 50 + (L-1)*4。Lv99で打ち止め。
 function gameLevelInfo(xp) {
-  var lvl = 1, need = 100, acc = 0;
-  while (xp >= acc + need) { acc += need; lvl++; need = Math.round(need * 1.3); }
-  return { level: lvl, into: xp - acc, need: need };
+  var lvl = 1, need = 50, acc = 0;
+  while (lvl < GAME_MAX_LEVEL && xp >= acc + need) { acc += need; lvl++; need = 50 + (lvl - 1) * 4; }
+  if (lvl >= GAME_MAX_LEVEL) return { level: GAME_MAX_LEVEL, into: 0, need: 0, max: true };
+  return { level: lvl, into: xp - acc, need: need, max: false };
 }
 // id内タイムスタンプ → 'YYYY-MM-DD'
 function _tsDateFromId(id, prefix) {
@@ -2838,13 +2845,47 @@ function gameCountTasksDoneToday() {
   (state.events || []).forEach(function(e){ if (e.type === 'task' && e.done && e.completedAt && String(e.completedAt).slice(0,10) === t) n++; });
   return n;
 }
+// 研修ステップは「何日の分でも、今日更新したら」達成（g.stepUpdatedDateで判定）
 function gameCountTrainStepsToday() {
+  return (getGame().stepUpdatedDate === gameToday()) ? 1 : 0;
+}
+// ── メンバーのカテゴリ判定（タイトルから導出。研修生フラグも考慮） ──
+function gameActiveMembers() { return (state.members || []).filter(function(m){ return !m.deleted; }); }
+function memberCat(m) {
+  var c = (typeof detectCategory === 'function') ? detectCategory((m.title || '').trim()) : '';
+  if (c) return c;
+  if (m.trainee) return '研修生';
+  return '';
+}
+// 今日 追加された研修生の数
+function gameCountNewTraineesToday() {
   var t = gameToday(), n = 0;
-  (state.members || []).forEach(function(m){ (m.traineeHistory || []).forEach(function(h){ if (h.date === t) n++; }); });
+  gameActiveMembers().forEach(function(m){
+    if (m.id && String(m.id).indexOf('id-') === 0 && _tsDateFromId(m.id,'id-') === t && memberCat(m) === '研修生') n++;
+  });
   return n;
 }
 // ── 累計カウント（称号バッジ用） ──
-function gameCountMembersTotal() { return (state.members || []).length; }
+function gameCountMembersTotal() { return gameActiveMembers().length; }
+// カテゴリBA・BR合計人数
+function gameCountBaBr() {
+  var n = 0;
+  gameActiveMembers().forEach(function(m){ var c = memberCat(m); if (c === 'BA' || c === 'BR') n++; });
+  return n;
+}
+// やる気=死ぬ気(morale 3) かつ S稼働 のメンバー数
+function gameCountShibukiS() {
+  var n = 0;
+  gameActiveMembers().forEach(function(m){ if ((m.morale === 3 || m.morale === '3') && m.activity === 'S') n++; });
+  return n;
+}
+// タイトル「ルビー以上」のメンバー数
+var GAME_RUBY_PLUS = ['ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
+function gameCountRubyPlus() {
+  var n = 0;
+  gameActiveMembers().forEach(function(m){ if (GAME_RUBY_PLUS.indexOf((m.title || '').trim()) >= 0) n++; });
+  return n;
+}
 function gameCountTrainStepsTotal() {
   var n = 0;
   (state.members || []).forEach(function(m){ n += (m.traineeHistory || []).length; });
@@ -2859,18 +2900,18 @@ function gameCountTasksDoneTotal() {
 function badgeDefs() {
   var g = getGame(), lvl = gameLevelInfo(g.xp).level, best = g.bestStreak || 0;
   return [
-    { id:'streak3',  ic:'🔥', nm:'火種',         desc:'3日連続ログイン',   ok: best >= 3 },
-    { id:'streak7',  ic:'🌟', nm:'一週間継続',   desc:'7日連続ログイン',   ok: best >= 7 },
-    { id:'streak30', ic:'💎', nm:'習慣化',       desc:'30日連続ログイン',  ok: best >= 30 },
-    { id:'mem1',     ic:'🌱', nm:'はじめの一歩', desc:'リストを1人追加',   ok: gameCountMembersTotal() >= 1 },
-    { id:'mem10',    ic:'🌿', nm:'広がる輪',     desc:'リスト10人',        ok: gameCountMembersTotal() >= 10 },
-    { id:'mem50',    ic:'🌳', nm:'大きな組織',   desc:'リスト50人',        ok: gameCountMembersTotal() >= 50 },
-    { id:'train10',  ic:'📚', nm:'育成スタート', desc:'研修ステップ累計10', ok: gameCountTrainStepsTotal() >= 10 },
-    { id:'train50',  ic:'🎓', nm:'育成のプロ',   desc:'研修ステップ累計50', ok: gameCountTrainStepsTotal() >= 50 },
-    { id:'task10',   ic:'✅', nm:'行動家',       desc:'タスク累計10完了',   ok: gameCountTasksDoneTotal() >= 10 },
-    { id:'task50',   ic:'⚡', nm:'実行マシン',   desc:'タスク累計50完了',   ok: gameCountTasksDoneTotal() >= 50 },
-    { id:'lv5',      ic:'⭐', nm:'熟練者',       desc:'レベル5到達',       ok: lvl >= 5 },
-    { id:'lv10',     ic:'🏆', nm:'達人',         desc:'レベル10到達',      ok: lvl >= 10 }
+    { id:'streak3',  ic:'🔥', nm:'はじめの一歩', desc:'3日連続ログイン',   ok: best >= 3 },
+    { id:'streak7',  ic:'🌟', nm:'１週間継続',   desc:'7日連続ログイン',   ok: best >= 7 },
+    { id:'streak30', ic:'💎', nm:'習慣化',       desc:'21日連続ログイン',  ok: best >= 21 },
+    { id:'mem1',     ic:'🌱', nm:'初陣',         desc:'メンバーを1人追加', ok: gameCountMembersTotal() >= 1 },
+    { id:'mem10',    ic:'🌿', nm:'十人将',       desc:'BA・BR合計10人',    ok: gameCountBaBr() >= 10 },
+    { id:'mem50',    ic:'🌳', nm:'三十人将',     desc:'BA・BR合計30人',    ok: gameCountBaBr() >= 30 },
+    { id:'train10',  ic:'📚', nm:'本気の５人衆', desc:'死ぬ気かつS稼働が5人以上', ok: gameCountShibukiS() >= 5 },
+    { id:'train50',  ic:'🎓', nm:'王騎将軍',     desc:'ルビー以上が5人以上', ok: gameCountRubyPlus() >= 5 },
+    { id:'task10',   ic:'✅', nm:'素直さ○',      desc:'タスク累計10完了',   ok: gameCountTasksDoneTotal() >= 10 },
+    { id:'task50',   ic:'⚡', nm:'２割',         desc:'タスク累計50完了',   ok: gameCountTasksDoneTotal() >= 50 },
+    { id:'lv5',      ic:'🦁', nm:'ライオン',     desc:'レベル50到達',      ok: lvl >= 50 },
+    { id:'lv10',     ic:'😇', nm:'神様',         desc:'レベル99到達',      ok: lvl >= 99 }
   ];
 }
 // 新規達成バッジを検出・付与（animate=trueでアンロック演出）。戻り値=新規獲得数。
@@ -2895,7 +2936,45 @@ function gameBadgeUnlock(b) {
   document.body.appendChild(el);
   setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 2100);
 }
-// ── ランキング（UPBD内・今週XP・任意参加） ──
+// ── ボーナスポイント（昇格時） ──
+function gameBonusBanner(title, ic, m, xp) {
+  if (navigator.vibrate) try { navigator.vibrate([30,40,30,40,60]); } catch(e){}
+  gameConfetti();
+  var nm = m ? ((m.lastName||'') + (m.firstName||'')) : '';
+  var el = document.createElement('div'); el.className = 'levelup-banner';
+  el.innerHTML = '<div class="levelup-card"><div style="font-size:13px;color:var(--text-dim);letter-spacing:2px">BONUS</div>'
+    + '<div style="font-size:40px;margin:4px 0">' + ic + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:var(--accent);font-family:IBM Plex Mono,monospace">' + title + ' +' + xp + '</div>'
+    + (nm ? '<div style="font-size:13px;margin-top:4px">' + evEsc(nm) + ' さん昇格！🎉</div>' : '') + '</div>';
+  document.body.appendChild(el);
+  setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 2300);
+}
+// メンバー保存時に昇格を判定してボーナス付与（prev=保存前、m=保存後）
+function gameCheckPromotion(prev, m) {
+  if (!m) return;
+  var g = getGame();
+  var prevCat = prev ? memberCat(prev) : '';
+  var newCat = memberCat(m);
+  var before = gameLevelInfo(g.xp).level, gained = 0;
+  // new BPC +50：研修生（または新規）→ BA かつ GSV1000P以上
+  if (newCat === 'BA' && (m.ptCurrent||0) >= 1000 && prevCat !== 'BA' && prevCat !== 'BR' && g.bpcAwarded.indexOf(m.id) < 0) {
+    g.bpcAwarded.push(m.id); g.xp += 50; g.weekXp = (g.weekXp||0) + 50; gained += 50;
+    gameBonusBanner('new BPC', '🎖', m, 50);
+  }
+  // new BR +100：BA → BR
+  if (newCat === 'BR' && prevCat !== 'BR' && g.brAwarded.indexOf(m.id) < 0) {
+    g.brAwarded.push(m.id); g.xp += 100; g.weekXp = (g.weekXp||0) + 100; gained += 100;
+    gameBonusBanner('new BR', '👑', m, 100);
+  }
+  if (gained > 0) {
+    saveGame();
+    var after = gameLevelInfo(g.xp).level;
+    if (after > before) setTimeout(function(){ gameLevelUp(after); }, 2400);
+    updateHomeBadge();
+    if (currentView === 'home') renderHome();
+  }
+}
+// ── ランキング（全ユーザー・今週XP・任意参加） ──
 function gameMyUid() { return (currentUser && currentUser.uid) ? currentUser.uid : eventsUid(); }
 function gameToggleRank() {
   var g = getGame();
@@ -2970,7 +3049,7 @@ function missionDefs() {
   return [
     { id:'login',     label:'アプリを開く',           xp:5,  target:1, view:'home',   count:function(){ return 1; } },
     { id:'trainstep', label:'研修ステップを記録',     xp:20, target:1, view:'current', count:gameCountTrainStepsToday },
-    { id:'addmember', label:'メンバー（リスト）を追加', xp:20, target:1, view:'current', count:gameCountMembersToday },
+    { id:'addmember', label:'新規研修生を追加',       xp:20, target:1, view:'current', count:gameCountNewTraineesToday },
     { id:'addevent',  label:'予定・タスクを登録',     xp:10, target:1, view:'events',  count:gameCountEventsCreatedToday },
     { id:'donetask',  label:'タスクを3件完了',        xp:15, target:3, view:'events',  count:gameCountTasksDoneToday }
   ];
@@ -3058,7 +3137,8 @@ function renderHome() {
       + '</div>';
   }).join('');
   var li = gameLevelInfo(g.xp);
-  var pct = Math.round(li.into / li.need * 100);
+  var pct = li.max ? 100 : Math.round(li.into / li.need * 100);
+  var lvRight = li.max ? 'MAX' : ('あと ' + (li.need - li.into) + ' XP');
   var name = (currentUser && currentUser.name) ? currentUser.name : '';
   var streak = gameDisplayStreak(g);
   var dseed = (new Date().getFullYear()*372 + (new Date().getMonth())*31 + new Date().getDate());
@@ -3081,7 +3161,7 @@ function renderHome() {
     + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
     + '<div class="home-date">' + gameDateLabel() + '</div>'
     + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日連続</div></div></div>'
-    + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>あと ' + (li.need - li.into) + ' XP</span></div>'
+    + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>' + lvRight + '</span></div>'
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
     + '<div class="home-sec-label"><span>🎯 今日のミッション</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + doneCount + '/' + defs.length + '</span></div>'
     + missionsHtml
@@ -4544,6 +4624,8 @@ function getLatestStatus(m) {
 function selTraineeResultChip(val) {
   var hidden = document.getElementById('fTraineeResult');
   if (hidden) hidden.value = val;
+  var bcNote = document.getElementById('bcCatNote');
+  if (bcNote) bcNote.style.display = (val === 'BC') ? '' : 'none';
   var map = {rcNone:'', rcBC:'BC', rcUser:'ユーザー', rcNG:'流れた'};
   var keys = ['rcNone','rcBC','rcUser','rcNG'];
   for (var i=0; i<keys.length; i++) {
@@ -4613,6 +4695,7 @@ function confirmAddHistory() {
   autoSave();
   renderTraineeHistory(null);
   toast(addedStep + ' を追加しました');
+  getGame().stepUpdatedDate = gameToday(); // 何日の分でも、今日更新したらミッション達成
   gameCheck();
   var panel = document.getElementById('stepDetailPanel');
   if (panel) panel.style.display = 'none';
@@ -5930,6 +6013,8 @@ function closeModal() { document.getElementById('modal').classList.remove('open'
 function onOverlayClick(e) { if(e.target===document.getElementById('modal')) closeModal(); }
 
 function saveMember() {
+  var _prevMember = null;
+  if (editingId) { for (var _pi=0; _pi<state.members.length; _pi++){ if (state.members[_pi].id===editingId){ _prevMember=state.members[_pi]; break; } } }
   var m = {
     id: editingId || 'id-'+Date.now(),
     lastName: document.getElementById('fLast').value.trim(),
@@ -5993,6 +6078,7 @@ function saveMember() {
   renderCurrentView();
   autoSave();
   gameCheck();
+  gameCheckPromotion(_prevMember, m);
 }
 function deleteMember() {
   if (!editingId || !confirm('削除しますか？')) return;
