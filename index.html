@@ -1023,7 +1023,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v173</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v174</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2611,7 +2611,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v173';
+  var DATA_VERSION = 'v174';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2902,13 +2902,11 @@ function gameToggleRank() {
   toast(g.rankOptIn ? 'ランキングに参加しました' : 'ランキング非表示にしました');
   if (currentView === 'home') renderHome();
 }
-// 同じUPBDのユーザーを取得し、今週XP降順で返す。cb(null)=UPBD未設定。
+// 全ユーザーを取得し、今週XP降順で返す。
 function gameFetchRanking(cb) {
   if (!db) { cb([]); return; }
-  var myUp = (currentUser && currentUser.upBd) ? currentUser.upBd : '';
-  if (!myUp) { cb(null); return; }
   var myUid = gameMyUid(), wk = gameWeekStart();
-  db.collection('users').where('upBd', '==', myUp).get().then(function(snap){
+  db.collection('users').get().then(function(snap){
     var rows = [];
     snap.forEach(function(d){
       var u = d.data() || {}, g = u.game || {};
@@ -2927,16 +2925,11 @@ function gameRenderRanking() {
   var box = document.getElementById('homeRank');
   if (!box) return;
   var g = getGame();
-  if (!(currentUser && currentUser.upBd)) {
-    box.innerHTML = '<div class="rank-empty">UPBDを設定するとランキングに参加できます</div>';
-    return;
-  }
   if (g.rankOptIn === false) {
     box.innerHTML = '<div class="rank-empty">ランキングは非表示中です<br><button class="rank-join" onclick="gameToggleRank()">参加する</button></div>';
     return;
   }
   gameFetchRanking(function(rows){
-    if (rows === null) { box.innerHTML = '<div class="rank-empty">UPBDを設定するとランキングに参加できます</div>'; return; }
     if (!rows.length) { box.innerHTML = '<div class="rank-empty">まだ参加者がいません</div>'; return; }
     var myUid = gameMyUid(), selfIdx = -1;
     for (var k = 0; k < rows.length; k++) { if (rows[k].isSelf) { selfIdx = k; break; } }
@@ -3084,7 +3077,7 @@ function renderHome() {
     + '<div class="home-badges">' + badgesHtml + '</div>'
     + '<div class="home-sec-label">📊 今週のあなた</div>'
     + selfHtml
-    + '<div class="home-sec-label"><span>🏆 ランキング</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">UPBD内・今週</span></div>'
+    + '<div class="home-sec-label"><span>🏆 ランキング</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">全ユーザー・今週</span></div>'
     + '<div id="homeRank" class="home-rank"><div class="rank-loading">読み込み中…</div></div>'
     + '<div class="home-sec-label">💡 今日の学び</div>'
     + '<div class="home-tip">' + evEsc(tip) + '</div>'
