@@ -924,6 +924,17 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .levelup-banner{position:fixed;inset:0;z-index:550;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);pointer-events:none}
 .levelup-card{background:var(--surface);border:2px solid var(--accent);border-radius:18px;padding:28px 40px;text-align:center;box-shadow:var(--shadow);animation:luPop .4s ease}
 @keyframes luPop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.home-tip{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:13px 14px;font-size:14px;color:var(--text);line-height:1.6}
+.home-badges{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bdg{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;background:var(--surface);border:1px solid var(--border);border-radius:13px;text-align:center;cursor:default}
+.bdg-ic{font-size:25px;line-height:1}
+.bdg-nm{font-size:10px;font-weight:600;color:var(--text);line-height:1.25}
+.bdg.locked{opacity:.4}
+.bdg.locked .bdg-ic{filter:grayscale(1)}
+.bdg.locked .bdg-nm{color:var(--text-dim)}
+.bdg.earned{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-dim),var(--surface))}
+.badge-banner{position:fixed;inset:0;z-index:551;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);pointer-events:none}
+.badge-card{background:var(--surface);border:2px solid var(--accent);border-radius:18px;padding:24px 34px;text-align:center;box-shadow:var(--shadow);animation:luPop .4s ease}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -994,7 +1005,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v171</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v172</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2582,7 +2593,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v171';
+  var DATA_VERSION = 'v172';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2728,6 +2739,18 @@ var GAME_QUOTES = [
   '迷ったら、行動。動けば景色が変わる。',
   '昨日の自分を、今日少しだけ超える。'
 ];
+var GAME_TIPS = [
+  'リストアップは「数」より「思い出す力」。会った人を一人ずつ書き出そう。',
+  'アポは断られて当たり前。10件声をかけて1件繋がればOK。',
+  '相手の「なぜ」を聞こう。理由が見つかれば人は自分から動く。',
+  'フォローは即日が鉄則。鉄は熱いうちに打て。',
+  '自分が本気で良いと思うものしか、人には伝わらない。',
+  '研修は「教える」より「一緒にやる」。背中で見せよう。',
+  '成果が出ない時こそ、行動量を見直すサイン。',
+  '断られた人もリストから消さない。タイミングは後から来る。',
+  '今日の小さな約束を守る人が、大きな信頼を積み上げる。',
+  '比べるのは他人じゃなく、昨日の自分。'
+];
 function gameToday() { return evTodayYmd(); }              // 'YYYY-MM-DD'
 function gameYesterday() { return evYmd(evAddDays(new Date(), -1)); }
 function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[] }; }
@@ -2780,6 +2803,58 @@ function gameCountTrainStepsToday() {
   (state.members || []).forEach(function(m){ (m.traineeHistory || []).forEach(function(h){ if (h.date === t) n++; }); });
   return n;
 }
+// ── 累計カウント（称号バッジ用） ──
+function gameCountMembersTotal() { return (state.members || []).length; }
+function gameCountTrainStepsTotal() {
+  var n = 0;
+  (state.members || []).forEach(function(m){ n += (m.traineeHistory || []).length; });
+  return n;
+}
+function gameCountTasksDoneTotal() {
+  var n = 0;
+  (state.events || []).forEach(function(e){ if (e.type === 'task' && e.done) n++; });
+  return n;
+}
+// 称号バッジ定義。check()で達成判定（既存データ＋ゲーム状態から自動）。
+function badgeDefs() {
+  var g = getGame(), lvl = gameLevelInfo(g.xp).level, best = g.bestStreak || 0;
+  return [
+    { id:'streak3',  ic:'🔥', nm:'火種',         desc:'3日連続ログイン',   ok: best >= 3 },
+    { id:'streak7',  ic:'🌟', nm:'一週間継続',   desc:'7日連続ログイン',   ok: best >= 7 },
+    { id:'streak30', ic:'💎', nm:'習慣化',       desc:'30日連続ログイン',  ok: best >= 30 },
+    { id:'mem1',     ic:'🌱', nm:'はじめの一歩', desc:'リストを1人追加',   ok: gameCountMembersTotal() >= 1 },
+    { id:'mem10',    ic:'🌿', nm:'広がる輪',     desc:'リスト10人',        ok: gameCountMembersTotal() >= 10 },
+    { id:'mem50',    ic:'🌳', nm:'大きな組織',   desc:'リスト50人',        ok: gameCountMembersTotal() >= 50 },
+    { id:'train10',  ic:'📚', nm:'育成スタート', desc:'研修ステップ累計10', ok: gameCountTrainStepsTotal() >= 10 },
+    { id:'train50',  ic:'🎓', nm:'育成のプロ',   desc:'研修ステップ累計50', ok: gameCountTrainStepsTotal() >= 50 },
+    { id:'task10',   ic:'✅', nm:'行動家',       desc:'タスク累計10完了',   ok: gameCountTasksDoneTotal() >= 10 },
+    { id:'task50',   ic:'⚡', nm:'実行マシン',   desc:'タスク累計50完了',   ok: gameCountTasksDoneTotal() >= 50 },
+    { id:'lv5',      ic:'⭐', nm:'熟練者',       desc:'レベル5到達',       ok: lvl >= 5 },
+    { id:'lv10',     ic:'🏆', nm:'達人',         desc:'レベル10到達',      ok: lvl >= 10 }
+  ];
+}
+// 新規達成バッジを検出・付与（animate=trueでアンロック演出）。戻り値=新規獲得数。
+function gameCheckBadges(animate) {
+  var g = getGame(), gained = 0, last = null;
+  badgeDefs().forEach(function(b){
+    if (b.ok && g.badges.indexOf(b.id) < 0) { g.badges.push(b.id); gained++; last = b; }
+  });
+  if (gained > 0) {
+    saveGame();
+    if (animate && last) gameBadgeUnlock(last);
+  }
+  return gained;
+}
+function gameBadgeUnlock(b) {
+  if (navigator.vibrate) try { navigator.vibrate([20,30,40]); } catch(e){}
+  var el = document.createElement('div'); el.className = 'badge-banner';
+  el.innerHTML = '<div class="badge-card"><div style="font-size:13px;color:var(--text-dim);letter-spacing:2px">称号 GET</div>'
+    + '<div style="font-size:46px;margin:6px 0">' + b.ic + '</div>'
+    + '<div style="font-size:18px;font-weight:800;color:var(--accent)">' + evEsc(b.nm) + '</div>'
+    + '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + evEsc(b.desc) + '</div></div>';
+  document.body.appendChild(el);
+  setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 2100);
+}
 function missionDefs() {
   return [
     { id:'login',     label:'アプリを開く',           xp:5,  target:1, view:'home',   count:function(){ return 1; } },
@@ -2822,6 +2897,7 @@ function gameAward(animate) {
     var after = gameLevelInfo(g.xp).level;
     if (animate && after > before) gameLevelUp(after);
   }
+  gameCheckBadges(animate); // 称号は獲得有無に関わらず毎回判定
   return gained;
 }
 // アクション後に呼ぶ：採点＋演出＋必要なら再描画
@@ -2873,7 +2949,17 @@ function renderHome() {
   var pct = Math.round(li.into / li.need * 100);
   var name = (currentUser && currentUser.name) ? currentUser.name : '';
   var streak = gameDisplayStreak(g);
-  var quote = GAME_QUOTES[ (new Date().getFullYear()*372 + (new Date().getMonth())*31 + new Date().getDate()) % GAME_QUOTES.length ];
+  var dseed = (new Date().getFullYear()*372 + (new Date().getMonth())*31 + new Date().getDate());
+  var quote = GAME_QUOTES[ dseed % GAME_QUOTES.length ];
+  var tip = GAME_TIPS[ dseed % GAME_TIPS.length ];
+  var bdefs = badgeDefs(), earnedCnt = 0;
+  var badgesHtml = bdefs.map(function(b){
+    var got = g.badges.indexOf(b.id) >= 0 || b.ok;
+    if (got) earnedCnt++;
+    return '<div class="bdg ' + (got ? 'earned' : 'locked') + '" title="' + evEsc(b.desc) + '">'
+      + '<div class="bdg-ic">' + (got ? b.ic : '🔒') + '</div>'
+      + '<div class="bdg-nm">' + evEsc(b.nm) + '</div></div>';
+  }).join('');
   wrap.innerHTML = '<div class="home-wrap">'
     + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
     + '<div class="home-date">' + gameDateLabel() + '</div>'
@@ -2882,6 +2968,10 @@ function renderHome() {
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
     + '<div class="home-sec-label"><span>🎯 今日のミッション</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + doneCount + '/' + defs.length + '</span></div>'
     + missionsHtml
+    + '<div class="home-sec-label"><span>🏅 称号</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + earnedCnt + '/' + bdefs.length + '</span></div>'
+    + '<div class="home-badges">' + badgesHtml + '</div>'
+    + '<div class="home-sec-label">💡 今日の学び</div>'
+    + '<div class="home-tip">' + evEsc(tip) + '</div>'
     + '<div class="home-sec-label">💬 今日の一言</div>'
     + '<div class="home-quote">' + evEsc(quote) + '</div>'
     + '</div>';
