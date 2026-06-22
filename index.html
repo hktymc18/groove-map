@@ -952,6 +952,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .rank-xp{font-size:13px;font-weight:800;color:var(--accent);flex:none;font-family:'IBM Plex Mono',monospace}
 .rank-empty,.rank-loading{font-size:13px;color:var(--text-dim);padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center;line-height:1.8}
 .rank-join{margin-top:8px;padding:7px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer}
+.rank-more{margin-top:4px;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--accent);font-size:13px;font-weight:700;text-align:center;cursor:pointer}
+.rank-more:active{background:var(--surface3)}
 .rank-toggle{font-size:11px;color:var(--text-dim);text-align:center;margin-top:6px;cursor:pointer;text-decoration:underline}
 </style>
 <!-- Firebase SDK -->
@@ -1023,7 +1025,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v174</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v175</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2611,7 +2613,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v174';
+  var DATA_VERSION = 'v175';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2921,6 +2923,34 @@ function gameFetchRanking(cb) {
   }).catch(function(){ cb([]); });
 }
 function gameRankMedal(i) { return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : String(i + 1); }
+var GAME_RANK_MAX = 100;     // 表示上限
+var gameRankCache = null;    // 取得済み全行（再取得せず展開に使う）
+var gameRankShown = 10;      // 現在の表示件数（初期10件→もっと見るで100件）
+function gameRankRowHtml(r, i) {
+  return '<div class="rank-row' + (r.isSelf ? ' self' : '') + '">'
+    + '<div class="rank-no">' + gameRankMedal(i) + '</div>'
+    + '<div class="rank-nm">' + evEsc(r.name) + '</div>'
+    + '<div class="rank-meta">Lv.' + r.level + '</div>'
+    + '<div class="rank-xp">' + r.wxp + ' XP</div></div>';
+}
+function gameRankExpand() { gameRankShown = GAME_RANK_MAX; gameRankPaint(); }
+function gameRankPaint() {
+  var box = document.getElementById('homeRank');
+  if (!box || !gameRankCache) return;
+  var rows = gameRankCache, limit = Math.min(gameRankShown, GAME_RANK_MAX);
+  var selfIdx = -1;
+  for (var k = 0; k < rows.length; k++) { if (rows[k].isSelf) { selfIdx = k; break; } }
+  var html = rows.slice(0, limit).map(function(r, i){ return gameRankRowHtml(r, i); }).join('');
+  // 自分が表示範囲外なら末尾に自分の順位を追記
+  if (selfIdx >= limit) html += '<div style="margin-top:4px">' + gameRankRowHtml(rows[selfIdx], selfIdx) + '</div>';
+  // もっと見る（まだ表示できる人がいる & 上限未満）
+  if (rows.length > limit && limit < GAME_RANK_MAX) {
+    var more = Math.min(GAME_RANK_MAX, rows.length);
+    html += '<div class="rank-more" onclick="gameRankExpand()">もっと見る（上位' + more + '位まで）</div>';
+  }
+  html += '<div class="rank-toggle" onclick="gameToggleRank()">ランキングに表示しない</div>';
+  box.innerHTML = html;
+}
 function gameRenderRanking() {
   var box = document.getElementById('homeRank');
   if (!box) return;
@@ -2929,29 +2959,11 @@ function gameRenderRanking() {
     box.innerHTML = '<div class="rank-empty">ランキングは非表示中です<br><button class="rank-join" onclick="gameToggleRank()">参加する</button></div>';
     return;
   }
+  gameRankShown = 10; // ホームを開くたび初期10件に戻す
   gameFetchRanking(function(rows){
     if (!rows.length) { box.innerHTML = '<div class="rank-empty">まだ参加者がいません</div>'; return; }
-    var myUid = gameMyUid(), selfIdx = -1;
-    for (var k = 0; k < rows.length; k++) { if (rows[k].isSelf) { selfIdx = k; break; } }
-    var top = rows.slice(0, 10);
-    var html = top.map(function(r, i){
-      return '<div class="rank-row' + (r.isSelf ? ' self' : '') + '">'
-        + '<div class="rank-no">' + gameRankMedal(i) + '</div>'
-        + '<div class="rank-nm">' + evEsc(r.name) + '</div>'
-        + '<div class="rank-meta">Lv.' + r.level + '</div>'
-        + '<div class="rank-xp">' + r.wxp + ' XP</div></div>';
-    }).join('');
-    // 自分が圏外なら末尾に自分の順位を追記
-    if (selfIdx >= 10) {
-      var me = rows[selfIdx];
-      html += '<div class="rank-row self" style="margin-top:4px">'
-        + '<div class="rank-no">' + (selfIdx + 1) + '</div>'
-        + '<div class="rank-nm">' + evEsc(me.name) + '</div>'
-        + '<div class="rank-meta">Lv.' + me.level + '</div>'
-        + '<div class="rank-xp">' + me.wxp + ' XP</div></div>';
-    }
-    html += '<div class="rank-toggle" onclick="gameToggleRank()">ランキングに表示しない</div>';
-    box.innerHTML = html;
+    gameRankCache = rows;
+    gameRankPaint();
   });
 }
 function missionDefs() {
