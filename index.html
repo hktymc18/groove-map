@@ -894,6 +894,36 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 }
 /* 編集モーダル内 +タスク */
 .ev-member-add{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:9px;border:1px dashed var(--accent);border-radius:var(--rsm);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
+/* ===== 今日（ホーム）・ゲーミフィケーション ===== */
+.home-wrap{padding:14px}
+.home-greet{font-size:18px;font-weight:700;color:var(--text)}
+.home-date{font-size:12px;color:var(--text-dim);margin-bottom:14px}
+.home-streak{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.home-streak-fire{font-size:32px}
+.home-streak-num{font-size:34px;font-weight:800;color:var(--accent);font-family:'IBM Plex Mono',monospace;line-height:1}
+.home-streak-label{font-size:11px;color:var(--text-dim);margin-top:3px}
+.home-lv-top{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:5px}
+.home-lv-bar{height:10px;background:var(--surface3);border-radius:6px;overflow:hidden}
+.home-lv-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:6px;transition:width .5s}
+.home-sec-label{font-size:13px;font-weight:700;color:var(--text);margin:18px 2px 8px;display:flex;align-items:center;justify-content:space-between}
+.mission{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
+.mission.done{border-color:var(--accent);background:var(--accent-dim)}
+.mission-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent}
+.mission.done .mission-check{background:var(--accent);border-color:var(--accent);color:#000}
+.mission-body{flex:1;min-width:0}
+.mission-title{font-size:14px;font-weight:600;color:var(--text)}
+.mission.done .mission-title{color:var(--text-dim);text-decoration:line-through}
+.mission-prog{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.mission-xp{font-size:13px;font-weight:800;color:var(--accent);flex:none}
+.mission-go{font-size:20px;color:var(--text-dim);flex:none}
+.home-quote{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:10px;padding:13px 14px;font-size:14px;color:var(--text);line-height:1.6}
+.xp-float{position:fixed;z-index:560;font-size:20px;font-weight:800;color:var(--accent);pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,.5);animation:xpUp 1s ease-out forwards}
+@keyframes xpUp{0%{opacity:0;transform:translate(-50%,0) scale(.8)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-70px) scale(1.3)}}
+.confetti-pc{position:fixed;top:-14px;width:9px;height:14px;z-index:600;pointer-events:none;border-radius:2px;animation:confFall linear forwards}
+@keyframes confFall{to{transform:translateY(110vh) rotate(720deg);opacity:.85}}
+.levelup-banner{position:fixed;inset:0;z-index:550;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);pointer-events:none}
+.levelup-card{background:var(--surface);border:2px solid var(--accent);border-radius:18px;padding:28px 40px;text-align:center;box-shadow:var(--shadow);animation:luPop .4s ease}
+@keyframes luPop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -964,9 +994,10 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v170</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v171</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
+    <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
     <button class="tab" data-view="ideal" onclick="switchView('ideal')">理想</button>
     <button class="tab" data-view="ol" onclick="switchView('ol')">OL</button>
@@ -987,6 +1018,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 <div class="toast" id="toast"></div>
 
 <div class="scroll-area" id="scrollArea">
+
+  <!-- ====== 今日（ホーム） ====== -->
+  <div id="view-home" style="display:none"></div>
 
   <!-- ====== 現状MAP ====== -->
   <div id="view-current">
@@ -2548,7 +2582,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v170';
+  var DATA_VERSION = 'v171';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2656,7 +2690,7 @@ function updateFabVisibility() {
 // ── VIEW SWITCH ──
 function switchView(v) {
   currentView = v;
-  ['current','ideal','diff','stats','ol','events'].forEach(function(n) {
+  ['home','current','ideal','diff','stats','ol','events'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
@@ -2666,7 +2700,8 @@ function switchView(v) {
   });
   updateFabVisibility();
   if (v !== 'events') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
-  if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
+  if (v==='home') renderHome();
+  else if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
   else if (v==='ideal') { renderTree('ideal'); renderCommission(); }
   else if (v==='diff') loadDiff();
   else if (v==='stats') renderStats();
@@ -2679,6 +2714,208 @@ function renderCurrentView() {
   else if (currentView === 'diff') renderDiffControls();
   else if (currentView === 'stats') renderStats();
   else if (currentView === 'ol') renderOL();
+}
+
+// ============================================================
+//  ゲーミフィケーション（今日ホーム / ストリーク / ミッション / XP・レベル）
+// ============================================================
+var GAME_QUOTES = [
+  '価値を先に。お金は後からついてくる。',
+  '今日の一歩が、未来の組織をつくる。',
+  '行動した分だけ、世界は変わる。',
+  '小さな積み重ねが、大きな差になる。',
+  '今日会う人が、未来を変えるかもしれない。',
+  '迷ったら、行動。動けば景色が変わる。',
+  '昨日の自分を、今日少しだけ超える。'
+];
+function gameToday() { return evTodayYmd(); }              // 'YYYY-MM-DD'
+function gameYesterday() { return evYmd(evAddDays(new Date(), -1)); }
+function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[] }; }
+function getGame() {
+  if (!state.game) state.game = defaultGame();
+  var g = state.game;
+  if (typeof g.xp !== 'number') g.xp = 0;
+  if (typeof g.streak !== 'number') g.streak = 0;
+  if (typeof g.bestStreak !== 'number') g.bestStreak = 0;
+  if (!g.gameDays) g.gameDays = {};
+  if (!g.todayMissions) g.todayMissions = { date:'', done:[] };
+  if (!g.badges) g.badges = [];
+  return g;
+}
+function saveGame() {
+  var uid = eventsUid();
+  if (currentUser) currentUser.game = state.game;
+  if (uid && db) fsSet('users/' + uid, { game: state.game });
+}
+function gameLevelInfo(xp) {
+  var lvl = 1, need = 100, acc = 0;
+  while (xp >= acc + need) { acc += need; lvl++; need = Math.round(need * 1.3); }
+  return { level: lvl, into: xp - acc, need: need };
+}
+// id内タイムスタンプ → 'YYYY-MM-DD'
+function _tsDateFromId(id, prefix) {
+  var ts = 0;
+  if (prefix === 'id-') ts = parseInt(String(id).replace('id-', ''), 10);
+  else { var p = String(id).split('_'); ts = parseInt(p[1], 10); }
+  if (!ts) return '';
+  return evYmd(new Date(ts));
+}
+function gameCountMembersToday() {
+  var t = gameToday(), n = 0;
+  (state.members || []).forEach(function(m){ if (m.id && String(m.id).indexOf('id-') === 0 && _tsDateFromId(m.id,'id-') === t) n++; });
+  return n;
+}
+function gameCountEventsCreatedToday() {
+  var t = gameToday(), n = 0;
+  (state.events || []).forEach(function(e){ if (e.id && String(e.id).indexOf('ev_') === 0 && _tsDateFromId(e.id,'ev_') === t) n++; });
+  return n;
+}
+function gameCountTasksDoneToday() {
+  var t = gameToday(), n = 0;
+  (state.events || []).forEach(function(e){ if (e.type === 'task' && e.done && e.completedAt && String(e.completedAt).slice(0,10) === t) n++; });
+  return n;
+}
+function gameCountTrainStepsToday() {
+  var t = gameToday(), n = 0;
+  (state.members || []).forEach(function(m){ (m.traineeHistory || []).forEach(function(h){ if (h.date === t) n++; }); });
+  return n;
+}
+function missionDefs() {
+  return [
+    { id:'login',     label:'アプリを開く',           xp:5,  target:1, view:'home',   count:function(){ return 1; } },
+    { id:'trainstep', label:'研修ステップを記録',     xp:20, target:1, view:'current', count:gameCountTrainStepsToday },
+    { id:'addmember', label:'メンバー（リスト）を追加', xp:20, target:1, view:'current', count:gameCountMembersToday },
+    { id:'addevent',  label:'予定・タスクを登録',     xp:10, target:1, view:'events',  count:gameCountEventsCreatedToday },
+    { id:'donetask',  label:'タスクを3件完了',        xp:15, target:3, view:'events',  count:gameCountTasksDoneToday }
+  ];
+}
+function gameMarkActive() {
+  var g = getGame(), today = gameToday();
+  if (g.gameDays[today]) return;            // 今日すでにアクティブ
+  if (g.lastActiveDate === gameYesterday()) g.streak = (g.streak || 0) + 1;
+  else if (g.lastActiveDate !== today) g.streak = 1;
+  g.gameDays[today] = true;
+  g.lastActiveDate = today;
+  if (g.streak > (g.bestStreak || 0)) g.bestStreak = g.streak;
+}
+function gameDisplayStreak(g) {
+  var today = gameToday();
+  if (g.lastActiveDate === today || g.lastActiveDate === gameYesterday()) return g.streak || 0;
+  return 0;
+}
+// 達成済みミッションを採点・XP付与（animate=trueで演出）。描画はしない。
+function gameAward(animate) {
+  var g = getGame(), today = gameToday();
+  if (g.todayMissions.date !== today) g.todayMissions = { date: today, done: [] };
+  var before = gameLevelInfo(g.xp).level, gained = 0;
+  missionDefs().forEach(function(m){
+    if (g.todayMissions.done.indexOf(m.id) >= 0) return;
+    if (m.count() >= m.target) {
+      g.todayMissions.done.push(m.id);
+      g.xp += m.xp; gained += m.xp;
+      gameMarkActive();
+    }
+  });
+  if (gained > 0) {
+    saveGame();
+    if (animate) { gameXpFloat(gained); if (navigator.vibrate) try { navigator.vibrate(25); } catch(e){} }
+    var after = gameLevelInfo(g.xp).level;
+    if (animate && after > before) gameLevelUp(after);
+  }
+  return gained;
+}
+// アクション後に呼ぶ：採点＋演出＋必要なら再描画
+function gameCheck() {
+  gameAward(true);
+  updateHomeBadge();
+  if (currentView === 'home') renderHome();
+}
+function updateHomeBadge() {
+  var b = document.getElementById('homeBadge');
+  if (!b) return;
+  var g = getGame();
+  if (g.todayMissions.date !== gameToday()) { b.textContent = missionDefs().length; b.style.display = ''; return; }
+  var remain = missionDefs().length - g.todayMissions.done.length;
+  if (remain > 0) { b.textContent = remain; b.style.display = ''; } else b.style.display = 'none';
+}
+function gameGreeting() {
+  var h = new Date().getHours();
+  if (h < 5) return 'おつかれさま';
+  if (h < 11) return 'おはようございます';
+  if (h < 18) return 'こんにちは';
+  return 'こんばんは';
+}
+function gameDateLabel() {
+  var d = new Date(), wd = ['日','月','火','水','木','金','土'][d.getDay()];
+  return (d.getMonth()+1) + '月' + d.getDate() + '日(' + wd + ')';
+}
+function renderHome() {
+  var wrap = document.getElementById('view-home');
+  if (!wrap) return;
+  var g = getGame(), today = gameToday();
+  if (g.todayMissions.date !== today) g.todayMissions = { date: today, done: [] };
+  gameAward(false); // ログイン等を静かに採点
+  g = getGame();
+  var defs = missionDefs(), doneCount = 0;
+  var missionsHtml = defs.map(function(m){
+    var c = m.count();
+    var done = g.todayMissions.done.indexOf(m.id) >= 0 || c >= m.target;
+    if (done) doneCount++;
+    return '<div class="mission' + (done ? ' done' : '') + '"' + (done ? '' : ' onclick="switchView(\'' + m.view + '\')"') + '>'
+      + '<div class="mission-check">✓</div>'
+      + '<div class="mission-body"><div class="mission-title">' + m.label + '</div>'
+      + '<div class="mission-prog">' + Math.min(c, m.target) + ' / ' + m.target + '</div></div>'
+      + '<div class="mission-xp">+' + m.xp + '</div>'
+      + (done ? '' : '<div class="mission-go">›</div>')
+      + '</div>';
+  }).join('');
+  var li = gameLevelInfo(g.xp);
+  var pct = Math.round(li.into / li.need * 100);
+  var name = (currentUser && currentUser.name) ? currentUser.name : '';
+  var streak = gameDisplayStreak(g);
+  var quote = GAME_QUOTES[ (new Date().getFullYear()*372 + (new Date().getMonth())*31 + new Date().getDate()) % GAME_QUOTES.length ];
+  wrap.innerHTML = '<div class="home-wrap">'
+    + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
+    + '<div class="home-date">' + gameDateLabel() + '</div>'
+    + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日連続</div></div></div>'
+    + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>あと ' + (li.need - li.into) + ' XP</span></div>'
+    + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
+    + '<div class="home-sec-label"><span>🎯 今日のミッション</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + doneCount + '/' + defs.length + '</span></div>'
+    + missionsHtml
+    + '<div class="home-sec-label">💬 今日の一言</div>'
+    + '<div class="home-quote">' + evEsc(quote) + '</div>'
+    + '</div>';
+  updateHomeBadge();
+}
+// 演出
+function gameXpFloat(xp) {
+  var el = document.createElement('div'); el.className = 'xp-float'; el.textContent = '+' + xp + ' XP';
+  document.body.appendChild(el);
+  setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 1100);
+}
+function gameConfetti() {
+  var colors = ['#00d4aa','#7c6aff','#f59e0b','#ef4444','#3b82f6','#ec4899'];
+  for (var i = 0; i < 60; i++) {
+    (function(i){
+      var c = document.createElement('div'); c.className = 'confetti-pc';
+      c.style.left = (Math.random()*100) + 'vw';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = (1.5 + Math.random()*1.5) + 's';
+      c.style.animationDelay = (Math.random()*0.3) + 's';
+      document.body.appendChild(c);
+      setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 3600);
+    })(i);
+  }
+}
+function gameLevelUp(level) {
+  gameConfetti();
+  if (navigator.vibrate) try { navigator.vibrate([30,40,30]); } catch(e){}
+  var b = document.createElement('div'); b.className = 'levelup-banner';
+  b.innerHTML = '<div class="levelup-card"><div style="font-size:13px;color:var(--text-dim);letter-spacing:2px">LEVEL UP</div>'
+    + '<div style="font-size:42px;font-weight:800;color:var(--accent);font-family:IBM Plex Mono,monospace;margin:4px 0">Lv.' + level + '</div>'
+    + '<div style="font-size:14px">おめでとう！🎉</div></div>';
+  document.body.appendChild(b);
+  setTimeout(function(){ if (b.parentNode) b.parentNode.removeChild(b); }, 1900);
 }
 
 // ── PC ビュー切替 ──
@@ -4164,6 +4401,7 @@ function confirmAddHistory() {
   autoSave();
   renderTraineeHistory(null);
   toast(addedStep + ' を追加しました');
+  gameCheck();
   var panel = document.getElementById('stepDetailPanel');
   if (panel) panel.style.display = 'none';
   _selectedStep = '';
@@ -5542,6 +5780,7 @@ function saveMember() {
   closeModal();
   renderCurrentView();
   autoSave();
+  gameCheck();
 }
 function deleteMember() {
   if (!editingId || !confirm('削除しますか？')) return;
@@ -6447,11 +6686,13 @@ function toggleEventDone(id) {
   var e = findEvent(id);
   if (!e || e.type !== 'task') return;
   e.done = !e.done;
+  e.completedAt = e.done ? new Date().toISOString() : '';
   e.updatedAt = new Date().toISOString();
   saveEventDoc(e);
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   renderEvents();
+  if (e.done) gameCheck();
 }
 
 // ── モーダル ──
@@ -6568,6 +6809,7 @@ function saveEvent() {
   updateEventsBadge();
   renderEvents();
   checkReminders();
+  gameCheck();
 }
 function deleteEvent() {
   if (!_evEditId) return;
@@ -7380,6 +7622,9 @@ function loginSuccess(user) {
   state.gcalConnected = !!user.gcalConnected;
   state.gcalCalendarId = user.gcalCalendarId || '';
   updateGcalBtn();
+  // ゲームデータ復元
+  state.game = user.game || defaultGame();
+  updateHomeBadge();
   // ロゴ更新
   var logo = document.getElementById('appLogo');
   if (logo) logo.textContent = user.org || 'MAP';
@@ -7413,6 +7658,8 @@ function loginSuccess(user) {
   }
   // プロフィール必須項目ゲート（未入力なら強制入力）
   enforceProfileGate();
+  // 起動画面は「今日」ホーム
+  switchView('home');
 }
 
 function showForgotPass() {
