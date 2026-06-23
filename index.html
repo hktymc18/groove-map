@@ -1025,7 +1025,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v176</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v177</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2614,7 +2614,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v176';
+  var DATA_VERSION = 'v177';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2956,13 +2956,17 @@ function gameCheckPromotion(prev, m) {
   var prevCat = prev ? memberCat(prev) : '';
   var newCat = memberCat(m);
   var before = gameLevelInfo(g.xp).level, gained = 0;
-  // new BPC +50：研修生（または新規）→ BA かつ GSV1000P以上
-  if (newCat === 'BA' && (m.ptCurrent||0) >= 1000 && prevCat !== 'BA' && prevCat !== 'BR' && g.bpcAwarded.indexOf(m.id) < 0) {
+  // 「BAかつGSV1000P以上」を満たすか
+  var newBpcQual  = (newCat === 'BA' && (m.ptCurrent||0) >= 1000);
+  var prevBpcQual = prev ? (prevCat === 'BA' && (prev.ptCurrent||0) >= 1000) : false;
+  var prevBrQual  = (prevCat === 'BR');
+  // new BPC +50：BA かつ GSV1000P以上 を「初めて」満たした瞬間（BA先・GSV後でもOK）
+  if (newBpcQual && !prevBpcQual && g.bpcAwarded.indexOf(m.id) < 0) {
     g.bpcAwarded.push(m.id); g.xp += 50; g.weekXp = (g.weekXp||0) + 50; gained += 50;
     gameBonusBanner('new BPC', '🎖', m, 50);
   }
-  // new BR +100：BA → BR
-  if (newCat === 'BR' && prevCat !== 'BR' && g.brAwarded.indexOf(m.id) < 0) {
+  // new BR +100：BRに「初めて」昇格した瞬間
+  if (newCat === 'BR' && !prevBrQual && g.brAwarded.indexOf(m.id) < 0) {
     g.brAwarded.push(m.id); g.xp += 100; g.weekXp = (g.weekXp||0) + 100; gained += 100;
     gameBonusBanner('new BR', '👑', m, 100);
   }
