@@ -955,6 +955,21 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .rank-more{margin-top:4px;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--accent);font-size:13px;font-weight:700;text-align:center;cursor:pointer}
 .rank-more:active{background:var(--surface3)}
 .rank-toggle{font-size:11px;color:var(--text-dim);text-align:center;margin-top:6px;cursor:pointer;text-decoration:underline}
+/* ── MAP結合（Phase A） ── */
+.nc.merged-node{border-style:dashed!important;opacity:.92}
+.nc.merged-node::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px var(--purple-dim)}
+.merged-badge{font-size:9px;font-weight:700;color:var(--purple);border:1px solid var(--purple);background:var(--purple-dim);border-radius:6px;padding:0 4px;white-space:nowrap;flex-shrink:0}
+.sd-merge-btn{margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1px solid var(--purple);background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.sd-merge-btn.active{border-color:var(--red,#ef4444);background:rgba(239,68,68,.12);color:var(--red,#ef4444)}
+.merge-pick-ov{position:fixed;inset:0;z-index:620;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.merge-pick-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;width:100%;max-width:360px;max-height:80vh;display:flex;flex-direction:column}
+.merge-pick-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.5;text-align:center}
+.merge-pick-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.merge-pick-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer;text-align:left;font-family:'Noto Sans JP',sans-serif}
+.merge-pick-item:active{background:var(--surface3)}
+.merge-pick-item .mp-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);min-width:42px}
+.merge-pick-item .mp-name{font-weight:600}
+.merge-pick-cancel{margin-top:12px;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);font-size:14px;cursor:pointer}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1025,7 +1040,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v178</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v179</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -1680,6 +1695,8 @@ var state = {
   currentMonth: '',
   isEditor: false,
   userEmail: '',
+  mergedMaps: [],    // 結合中の下位MAP [{uid, name, graftId}]
+  mergedData: {},    // uid -> その下位の現状メンバー配列（onSnapshotで更新）
 };
 
 var editingId = null;
@@ -1823,7 +1840,7 @@ function renderPCMap(mapType) {
   if (!wrap) return;
   wrap.innerHTML = '';
 
-  var members = membersForMap(mapType);
+  var members = composeMergedInto(membersForMap(mapType), mapType); // 結合中の下位ツリーを合成
   if (!members || members.length === 0) {
     wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし</div>';
     return;
@@ -2092,6 +2109,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
     rect.setAttribute('stroke-width',isT||isPcLOI?'2':'1');
+    if (m._foreign) { rect.setAttribute('stroke','#7c6aff'); rect.setAttribute('stroke-dasharray','5,3'); rect.setAttribute('stroke-width','1.5'); }
     g.appendChild(rect);
 
     // 系列カラー左ボーダー
@@ -2257,6 +2275,7 @@ document.addEventListener('contextmenu', function(e) {
 });
 
 function openCtxMenu(memberId, x, y) {
+  if (/^MG_/.test(memberId)) return; // 結合された下位メンバーは操作不可（読み取り専用）
   _ctxTargetId = memberId;
   var menu = document.getElementById('ctxMenu');
   var label = document.getElementById('ctxLabel');
@@ -2614,7 +2633,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v178';
+  var DATA_VERSION = 'v179';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2699,6 +2718,7 @@ function onYearMonthChange() {
   if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
   renderCurrentView();
   if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+  startAllMergeListeners(); // 月が変わったら結合MAPの購読を新しい月で張り直す
 }
 
 function onMonthChange() { onYearMonthChange(); }
@@ -4037,12 +4057,13 @@ function renderTree(mapType) {
   if (isPCMode() && _pcView === 'table') renderPCTable(mapType);
   var containerId = mapType === 'current' ? 'treeCurrent' : 'treeIdeal';
   var container = document.getElementById(containerId);
-  var members = membersForMap(mapType);
+  var ownMembers = membersForMap(mapType);
+  var members = composeMergedInto(ownMembers, mapType); // 結合中の下位ツリーを合成（表示のみ）
   var roots = childrenOf('', members);
 
   if (roots.length === 0) {
     container.innerHTML = emptyStateHTML('map');
-    updateLTSV(mapType, members);
+    updateLTSV(mapType, ownMembers); // LTSVは自分のメンバーのみで集計（数値を変えない）
     return;
   }
 
@@ -4084,7 +4105,7 @@ function renderTree(mapType) {
   }
 
   container.innerHTML = html;
-  updateLTSV(mapType, members);
+  updateLTSV(mapType, ownMembers); // LTSVは自分のメンバーのみで集計
 
   if (isPCMode()) {
     // DOMが更新されてからサイズを取得するため遅延
@@ -4127,7 +4148,8 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     ? '<div class="parent-chip"><span class="parent-chip-arrow">&#x21b3;</span>' + (parentMember.lastName||'') + ' ' + (parentMember.firstName||'') + '</div>'
     : '';
 
-  var hoverBtn = state.isEditor
+  var isForeign = !!m._foreign; // 結合された下位メンバー（読み取り専用）
+  var hoverBtn = (state.isEditor && !isForeign)
     ? '<div class="edit-hover-btn" onclick="openEdit(\'' + m.id + '\');event.stopPropagation()">&#x270e;</div>'
     : '';
 
@@ -4167,9 +4189,9 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '');
 
   return '<div class="nw' + (isDefaultOpen && hasKids && !skipChildren ? ' open' : '') + '" id="nw-' + m.id + '">'
-    + '<div class="' + ncClass + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
+    + '<div class="' + ncClass + (isForeign ? ' merged-node' : '') + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
     + instaBtn
-    + (state.isEditor ? '<div class="card-quick-add" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="直下に追加">＋</div>' : '')
+    + (state.isEditor && !isForeign ? '<div class="card-quick-add" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="直下に追加">＋</div>' : '')
     + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.dataset.cid,event)">'
     + '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">'
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
@@ -4179,6 +4201,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div style="flex:1;min-width:0;overflow:hidden">'
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
     + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
+    + (isForeign ? '<span class="merged-badge">🔗' + evEsc(m._ownerName || '下位') + '</span>' : '')
     + '</div>'
     + '<div style="display:flex;align-items:center;gap:4px;margin-top:2px">' + parentChip + actHTML + '</div>'
     + '</div>'
@@ -5840,6 +5863,7 @@ function openAdd() {
 }
 function openEdit(id) {
   try {
+    if (/^MG_/.test(id)) { toast('結合された下位メンバーは編集できません'); return; } // 読み取り専用
     if (!state.isEditor) return;
     editingId = id;
     var m = null;
@@ -7981,6 +8005,7 @@ function loginSuccess(user) {
     // 少し遅延してから共有MAP確認（自分のデータ読み込み後）
     setTimeout(function() {
       checkSharedMaps();
+      loadMergedConfig(); // 結合中の下位MAPを購読開始
     }, 1500);
   }
   // プロフィール必須項目ゲート（未入力なら強制入力）
@@ -8410,6 +8435,18 @@ function buildSharedCard(owner) {
   tags.appendChild(pt);
   card.appendChild(tags);
 
+  // 結合ボタン（自分のMAPに下位ツリーを合成）
+  var merged = isMerged(owner.uid);
+  var mergeBtn = document.createElement('button');
+  mergeBtn.className = 'sd-merge-btn' + (merged ? ' active' : '');
+  mergeBtn.textContent = merged ? '🔗 結合を解除' : '🔗 自分のMAPに結合';
+  mergeBtn.onclick = function(e) {
+    e.stopPropagation();
+    if (merged) unmergeMap(owner.uid);
+    else openMergePicker(owner);
+  };
+  card.appendChild(mergeBtn);
+
   return card;
 }
 
@@ -8440,8 +8477,10 @@ function switchToOwner(ownerUid, perm) {
     fsLoadFromFirestore(currentUser.uid);
     loadEvents(currentUser.uid);
     updateEditorUI();
+    startAllMergeListeners(); // 自分のMAPに戻ったら結合の購読を再開
   } else {
-    // 他人のMAPを閲覧
+    // 他人のMAPを閲覧（結合合成は止める）
+    stopAllMergeListeners();
     state.isEditor = perm === 'edit';
     fsLoadSharedMap(ownerUid);
     updateEditorUI();
@@ -8450,6 +8489,127 @@ function switchToOwner(ownerUid, perm) {
 
 function showSharedMapSelector(owners) {
   // checkSharedMaps に統合済み
+}
+
+// ============================================================
+//  MAP結合（連邦型・リアルタイム） Phase A
+//  各自が自分のMAPを所有したまま、下位の共有MAPを自分のツリーに合成表示。
+//  下位の編集はonSnapshotでリアルタイム反映。自分は自分のノードのみ編集。
+// ============================================================
+var _mergeUnsub = {}; // uid -> unsubscribe関数
+function mergedConfigPath() { return 'maps/' + currentUser.uid + '/meta/merged'; }
+function loadMergedConfig() {
+  if (!db || !currentUser) return;
+  fsGet(mergedConfigPath()).then(function(d) {
+    state.mergedMaps = (d && d.maps) ? d.maps : [];
+    startAllMergeListeners();
+  }).catch(function() { state.mergedMaps = []; });
+}
+function saveMergedConfig() {
+  if (!db || !currentUser) return Promise.resolve();
+  return fsSet(mergedConfigPath(), { maps: state.mergedMaps || [], updatedAt: new Date().toISOString() });
+}
+function stopAllMergeListeners() {
+  for (var k in _mergeUnsub) { if (_mergeUnsub[k]) { try { _mergeUnsub[k](); } catch(e){} } }
+  _mergeUnsub = {};
+}
+function startAllMergeListeners() {
+  stopAllMergeListeners();
+  if (!db || !state.mergedMaps) return;
+  state.mergedData = state.mergedData || {};
+  state.mergedMaps.forEach(function(mm) { startMergeListener(mm.uid); });
+}
+function startMergeListener(uid) {
+  if (!db || viewingOwnerUid) return; // 他人MAP閲覧中は購読しない
+  if (_mergeUnsub[uid]) { try { _mergeUnsub[uid](); } catch(e){} }
+  var month = state.currentMonth;
+  state.mergedData = state.mergedData || {};
+  var ref = db.doc('maps/' + uid + '/months/' + month + '_current');
+  _mergeUnsub[uid] = ref.onSnapshot(function(doc) {
+    var data = doc.exists ? doc.data() : null;
+    state.mergedData[uid] = (data && data.members) ? data.members : [];
+    if (currentView === 'current' && !viewingOwnerUid) renderCurrentView();
+  }, function(err) { console.log('merge listener err:', err && err.message); });
+}
+function isMerged(uid) {
+  return (state.mergedMaps || []).some(function(x) { return x.uid === uid; });
+}
+// 自分のメンバー配列に、結合中の下位ツリーを接続点(graftId)の下へ差し込む（現状MAPのみ）
+function composeMergedInto(ownMembers, mapType) {
+  if (mapType !== 'current' || viewingOwnerUid) return ownMembers;
+  var mm = state.mergedMaps || [];
+  if (!mm.length) return ownMembers;
+  var ownIds = {}; ownMembers.forEach(function(m) { ownIds[m.id] = true; });
+  var out = ownMembers.slice();
+  mm.forEach(function(cfg) {
+    if (!ownIds[cfg.graftId]) return; // 接続先ノードが自分のMAPに無ければスキップ
+    var foreign = (state.mergedData && state.mergedData[cfg.uid]) ? state.mergedData[cfg.uid] : [];
+    if (!foreign.length) return;
+    var rootId = '';
+    foreign.forEach(function(fm) { if (!fm.parentId) rootId = fm.id; }); // 下位本人＝ルート
+    var pre = 'MG_' + String(cfg.uid).substring(0, 6) + '_';
+    foreign.forEach(function(fm) {
+      if (fm.deleted || fm.id === rootId) return; // 下位本人の重複ルートは畳む（graftノードが本人）
+      var copy = {};
+      for (var key in fm) copy[key] = fm[key];
+      copy.id = pre + fm.id;
+      copy.parentId = (!fm.parentId || fm.parentId === rootId) ? cfg.graftId : (pre + fm.parentId);
+      copy._foreign = true;
+      copy._ownerName = cfg.name || '';
+      copy.mapType = 'current';
+      out.push(copy);
+    });
+  });
+  return out;
+}
+// ── 結合UI ──
+function openMergePicker(owner) {
+  var members = membersForMap('current');
+  if (!members.length) { toast('先に自分のMAPにメンバーを追加してください'); return; }
+  closeMergePicker();
+  var ov = document.createElement('div');
+  ov.id = 'mergePickOv';
+  ov.className = 'merge-pick-ov';
+  ov.onclick = function(e) { if (e.target === ov) closeMergePicker(); };
+  var box = '<div class="merge-pick-box">'
+    + '<div class="merge-pick-title">「' + evEsc(owner.name || owner.org || '下位') + '」のMAPを<br>どのメンバーの下に結合しますか？</div>'
+    + '<div class="merge-pick-list">'
+    + members.map(function(m) {
+        var nm = (m.lastName || '') + ' ' + (m.firstName || '');
+        return '<button class="merge-pick-item" onclick="confirmMerge(\'' + owner.uid + '\',\'' + m.id + '\')">'
+          + '<span class="mp-title">' + evEsc(m.title || '-') + '</span>'
+          + '<span class="mp-name">' + evEsc(nm) + '</span></button>';
+      }).join('')
+    + '</div>'
+    + '<button class="merge-pick-cancel" onclick="closeMergePicker()">キャンセル</button>'
+    + '</div>';
+  ov.innerHTML = box;
+  document.body.appendChild(ov);
+  window._mergePickOwner = owner;
+}
+function closeMergePicker() {
+  var ov = document.getElementById('mergePickOv');
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+}
+function confirmMerge(uid, graftId) {
+  var owner = window._mergePickOwner || {};
+  state.mergedMaps = (state.mergedMaps || []).filter(function(x) { return x.uid !== uid; });
+  state.mergedMaps.push({ uid: uid, name: owner.name || owner.org || '', graftId: graftId });
+  saveMergedConfig();
+  startMergeListener(uid);
+  closeMergePicker();
+  toast('結合しました ✓');
+  renderSharedCards();
+  if (currentView === 'current') renderCurrentView();
+}
+function unmergeMap(uid) {
+  state.mergedMaps = (state.mergedMaps || []).filter(function(x) { return x.uid !== uid; });
+  if (_mergeUnsub[uid]) { try { _mergeUnsub[uid](); } catch(e){} delete _mergeUnsub[uid]; }
+  if (state.mergedData) delete state.mergedData[uid];
+  saveMergedConfig();
+  toast('結合を解除しました');
+  renderSharedCards();
+  if (currentView === 'current') renderCurrentView();
 }
 
 function checkShareParam() {
