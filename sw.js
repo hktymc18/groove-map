@@ -3,7 +3,7 @@
  * HTML はネットワーク優先（デプロイ反映）、失敗時にキャッシュへフォールバック。
  * Firebase/gstatic 等の外部オリジンは素通し（キャッシュしない）。
  * 注意: バージョンを上げたら CACHE 名も更新すること（古いキャッシュを破棄）。 */
-var CACHE = 'groove-map-v183';
+var CACHE = 'groove-map-v184';
 var ASSETS = [
   './',
   './index.html',
