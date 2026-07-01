@@ -955,6 +955,24 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .rank-more{margin-top:4px;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--accent);font-size:13px;font-weight:700;text-align:center;cursor:pointer}
 .rank-more:active{background:var(--surface3)}
 .rank-toggle{font-size:11px;color:var(--text-dim);text-align:center;margin-top:6px;cursor:pointer;text-decoration:underline}
+/* ── 気になるメンバー（コックピット） ── */
+.ck-empty{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;font-size:13px;color:var(--text);line-height:1.7}
+.ck-empty span{font-size:11px;color:var(--text-dim)}
+.ck-group{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;color:var(--text-mid);margin:12px 2px 6px}
+.ck-group .ck-cnt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);font-weight:400}
+.ck-card{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
+.ck-main{flex:1;min-width:0;cursor:pointer}
+.ck-name{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ck-name .ck-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);font-weight:600}
+.ck-name .ck-act{font-size:10px;color:var(--text-dim)}
+.ck-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.ck-badge{font-size:10px;font-weight:700;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.ck-badge.high{color:#ef4444;background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.4)}
+.ck-badge.mid{color:#f59e0b;background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.4)}
+.ck-badge.warn{color:var(--text-mid);background:var(--surface3);border:1px solid var(--border2)}
+.ck-task{flex:none;padding:8px 12px;border-radius:9px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap}
+.ck-task:active{background:var(--surface3)}
+.ck-more{font-size:12px;color:var(--text-dim);text-align:center;padding:6px;cursor:pointer;text-decoration:underline;margin-bottom:6px}
 /* ── MAP結合（Phase A） ── */
 .nc.merged-node{border-style:dashed!important;opacity:.92}
 .nc.merged-node::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px var(--purple-dim)}
@@ -1040,7 +1058,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v182</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v183</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -1049,7 +1067,6 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <button class="tab" data-view="ol" onclick="switchView('ol')">OL</button>
     <button class="tab" data-view="events" onclick="switchView('events')">予定<span class="tab-badge" id="eventsBadge" style="display:none">0</span></button>
     <button class="tab" data-view="stats" onclick="switchView('stats')">データ</button>
-    <button class="tab purple" data-view="diff" onclick="switchView('diff')">差分</button>
   </div>
 </header>
 
@@ -1165,23 +1182,6 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     <div class="pc-map-wrap" id="pcMapIdeal"></div>
     <div class="pc-table-wrap" id="pcTableIdeal"></div>
     <div class="mobile-tree tree" id="treeIdeal"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
-  </div>
-
-  <!-- ====== 差分 ====== -->
-  <div id="view-diff" style="display:none">
-    <div class="diff-ctrl">
-      <select class="diff-sel" id="diffSelA"></select>
-      <div class="diff-vs">→</div>
-      <select class="diff-sel" id="diffSelB"></select>
-      <div class="exp-btn" style="flex:0;padding:8px 12px" onclick="loadDiff()">比較</div>
-    </div>
-    <div class="diff-legend">
-      <div class="dl"><div class="dl-dot" style="background:var(--green)"></div>追加</div>
-      <div class="dl"><div class="dl-dot" style="background:var(--red)"></div>削除</div>
-      <div class="dl"><div class="dl-dot" style="background:var(--gold)"></div>変更</div>
-    </div>
-    <div class="sec-label">変更一覧</div>
-    <div class="tree" id="treeDiff"><div class="empty">月を選んで「比較」をタップ</div></div>
   </div>
 
   <!-- ====== データ ====== -->
@@ -1429,9 +1429,20 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
             </select>
           </div>
         </div>
-        <div class="fr">
-          <label class="fl">稼働率（%）※S以外に入力</label>
-          <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
+        <div class="fr-row">
+          <div class="fr">
+            <label class="fl">稼働率（%）※S以外に入力</label>
+            <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
+          </div>
+          <div class="fr">
+            <label class="fl">優先度（フォロー注力度）</label>
+            <select class="fs" id="fPriority">
+              <option value="">なし</option>
+              <option value="高">🔴 高</option>
+              <option value="中">🟡 中</option>
+              <option value="低">⚪️ 低</option>
+            </select>
+          </div>
         </div>
         <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="OLもらってモチベアップ&#10;9/4 FTのノウハウOL鈴木さん依頼済"></textarea></div>
         <div class="ev-member-add" id="memberTaskBtn" onclick="openTaskForMember()" style="display:none">＋ このメンバーにタスク追加</div>
@@ -2633,7 +2644,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v182';
+  var DATA_VERSION = 'v183';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2742,7 +2753,7 @@ function updateFabVisibility() {
 // ── VIEW SWITCH ──
 function switchView(v) {
   currentView = v;
-  ['home','current','ideal','diff','stats','ol','events'].forEach(function(n) {
+  ['home','current','ideal','stats','ol','events'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
@@ -2755,7 +2766,6 @@ function switchView(v) {
   if (v==='home') renderHome();
   else if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
   else if (v==='ideal') { renderTree('ideal'); renderCommission(); }
-  else if (v==='diff') loadDiff();
   else if (v==='stats') renderStats();
   else if (v==='ol') renderOL();
   else if (v==='events') renderEvents();
@@ -2763,7 +2773,6 @@ function switchView(v) {
 function renderCurrentView() {
   if (currentView === 'current') renderTree('current');
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
-  else if (currentView === 'diff') renderDiffControls();
   else if (currentView === 'stats') renderStats();
   else if (currentView === 'ol') renderOL();
 }
@@ -3129,6 +3138,117 @@ function updateHomeBadge() {
   var remain = missionDefs().length - g.todayMissions.done.length;
   if (remain > 0) { b.textContent = remain; b.style.display = ''; } else b.style.display = 'none';
 }
+// ============================================================
+//  気になるメンバー（コックピット）— 今日ホーム ①
+//  優先度(高)＋時間ベースの自動検知(研修3日/フレッシュOL7日/予定切れ)で
+//  「今フォローすべき人」を層別に抽出。カードからタスク化・詳細へ。
+// ============================================================
+var CK_FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
+var ckExpanded = { trainee:false, fresh:false, leader:false };
+function ckDaysSince(ymd) {
+  if (!ymd) return 99999;
+  var d = new Date(ymd);
+  if (isNaN(d.getTime())) return 99999;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+function ckLatestStepDate(m) {
+  var ds = [];
+  (m.traineeHistory || []).forEach(function(h){ if (h.date) ds.push(h.date); });
+  ds.sort();
+  return ds.length ? ds[ds.length - 1] : '';
+}
+function ckFreshListState(m) {
+  var raw = (state.freshData && state.freshData[m.id]) ? state.freshData[m.id]['リスト'] : null;
+  var fd = (typeof freshNorm === 'function') ? freshNorm(raw) : (raw || {});
+  return { done: !!fd.done, date: fd.date || '' };
+}
+// 層判定：金の船 > 研修生 > フレッシュ(LOI〜B6)
+function ckGroup(m) {
+  if (m.goldShip) return 'leader';
+  var cat = (typeof memberCat === 'function') ? memberCat(m) : '';
+  if (cat === '研修生') return 'trainee';
+  if (CK_FRESH_TITLES.indexOf((m.title || '').trim()) >= 0) return 'fresh';
+  return '';
+}
+// 自動検知の理由（時間ベースのみ）
+function ckAutoReasons(m, group) {
+  var r = [], today = gameToday();
+  if (group === 'trainee') {
+    var sd = ckLatestStepDate(m), d = ckDaysSince(sd);
+    if (!sd) r.push({ t:'研修未記録', c:'warn' });
+    else if (d >= 3) r.push({ t:'研修' + d + '日停滞', c:'warn' });
+    if (!m.nextDate) r.push({ t:'次回予定なし', c:'warn' });
+    else if (m.nextDate < today) r.push({ t:'予定日超過', c:'warn' });
+  } else if (group === 'fresh') {
+    var fl = ckFreshListState(m);
+    if (!fl.done) {
+      if (!fl.date) r.push({ t:'OL未着手', c:'warn' });
+      else { var d2 = ckDaysSince(fl.date); if (d2 >= 7) r.push({ t:'OL' + d2 + '日停滞', c:'warn' }); }
+    }
+  }
+  return r;
+}
+// 層別に対象メンバーを収集（表示条件：優先度高 or 自動信号あり）
+function ckCollect() {
+  var g = { trainee:[], fresh:[], leader:[] };
+  (typeof gameActiveMembers === 'function' ? gameActiveMembers() : (state.members || [])).forEach(function(m) {
+    var grp = ckGroup(m);
+    if (!grp) return;
+    var auto = ckAutoReasons(m, grp);
+    var show = auto.length > 0 || m.priority === '高';
+    if (!show) return;
+    var reasons = [];
+    if (m.priority === '高') reasons.push({ t:'優先度 高', c:'high' });
+    else if (m.priority === '中') reasons.push({ t:'優先度 中', c:'mid' });
+    reasons = reasons.concat(auto);
+    var pr = m.priority === '高' ? 3 : (m.priority === '中' ? 2 : (m.priority === '低' ? 1 : 0));
+    g[grp].push({ m:m, reasons:reasons, pr:pr });
+  });
+  Object.keys(g).forEach(function(k){
+    g[k].sort(function(a,b){ return (b.pr - a.pr) || (b.reasons.length - a.reasons.length); });
+  });
+  return g;
+}
+function ckToggle(k) { ckExpanded[k] = !ckExpanded[k]; renderHome(); }
+function ckAddTask(mid) {
+  if (typeof openEventModal === 'function') openEventModal(null, mid, ''); // 新規は既定でタスク・メンバー紐付け
+}
+function cockpitHtml() {
+  var g = ckCollect();
+  var total = g.trainee.length + g.fresh.length + g.leader.length;
+  var html = '<div class="home-sec-label"><span>👀 気になるメンバー</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + total + '人</span></div>';
+  if (total === 0) {
+    return html + '<div class="ck-empty">今フォローが必要なメンバーはいません 👍<br><span>優先度「高」・研修3日/OL7日停滞・予定切れの人がここに出ます</span></div>';
+  }
+  var groups = [
+    { key:'trainee', ic:'🌱', label:'研修生' },
+    { key:'fresh',   ic:'🌿', label:'フレッシュ' },
+    { key:'leader',  ic:'⛴', label:'リーダー格・金の船' }
+  ];
+  groups.forEach(function(gr) {
+    var list = g[gr.key];
+    if (!list.length) return;
+    html += '<div class="ck-group"><span>' + gr.ic + ' ' + gr.label + '</span><span class="ck-cnt">' + list.length + '</span></div>';
+    var shown = ckExpanded[gr.key] ? list : list.slice(0, 3);
+    shown.forEach(function(it) {
+      var m = it.m;
+      var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
+      var act = m.activity ? (m.activity === 'S' ? 'S' : (m.activity + (m.actRate ? m.actRate + '%' : ''))) : '';
+      var badges = it.reasons.map(function(rr){ return '<span class="ck-badge ' + rr.c + '">' + evEsc(rr.t) + '</span>'; }).join('');
+      html += '<div class="ck-card">'
+        + '<div class="ck-main" onclick="openEdit(\'' + m.id + '\')">'
+        +   '<div class="ck-name">' + evEsc(nm) + '<span class="ck-title">' + evEsc(m.title || '-') + '</span>' + (act ? '<span class="ck-act">' + evEsc(act) + '</span>' : '') + '</div>'
+        +   '<div class="ck-badges">' + badges + '</div>'
+        + '</div>'
+        + '<button class="ck-task" onclick="ckAddTask(\'' + m.id + '\')">＋タスク</button>'
+        + '</div>';
+    });
+    if (list.length > 3) {
+      html += '<div class="ck-more" onclick="ckToggle(\'' + gr.key + '\')">' + (ckExpanded[gr.key] ? '閉じる' : ('ほか ' + (list.length - 3) + '人を見る')) + '</div>';
+    }
+  });
+  return html;
+}
 function gameGreeting() {
   var h = new Date().getHours();
   if (h < 5) return 'おつかれさま';
@@ -3187,6 +3307,7 @@ function renderHome() {
     + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日連続</div></div></div>'
     + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>' + lvRight + '</span></div>'
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
+    + cockpitHtml()
     + '<div class="home-sec-label"><span>🎯 今日のミッション</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + doneCount + '/' + defs.length + '</span></div>'
     + missionsHtml
     + '<div class="home-sec-label"><span>🏅 称号</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + earnedCnt + '/' + bdefs.length + '</span></div>'
@@ -5885,6 +6006,7 @@ function openEdit(id) {
     set('fAct', m.activity);
     set('fActRate', m.actRate);
     set('fMorale', m.morale||2);
+    set('fPriority', m.priority||'');
     set('fPtC', m.ptCurrent);
     set('fPtF', m.ptFixed);
     set('fMemo', m.memo);
@@ -5961,6 +6083,7 @@ function clearForm() {
   });
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
+  var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
   fCategory='';
   ['研修生','BA','BR'].forEach(function(k){
     var el=document.getElementById('rbCat'+(k==='研修生'?'Trainee':k));
@@ -6077,6 +6200,7 @@ function saveMember() {
     activity: document.getElementById('fAct').value,
     actRate: document.getElementById('fActRate').value,
     morale: parseInt(document.getElementById('fMorale').value)||1,
+    priority: (document.getElementById('fPriority')||{}).value || '',
     ptCurrent: parseInt(document.getElementById('fPtC').value)||0,
     ptFixed: parseInt(document.getElementById('fPtF').value)||0,
     trainee: fTrainee,
