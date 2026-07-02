@@ -970,8 +970,10 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ck-badge.high{color:#ef4444;background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.4)}
 .ck-badge.mid{color:#f59e0b;background:rgba(245,158,11,.13);border:1px solid rgba(245,158,11,.4)}
 .ck-badge.warn{color:var(--text-mid);background:var(--surface3);border:1px solid var(--border2)}
-.ck-task{flex:none;padding:8px 12px;border-radius:9px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap}
-.ck-task:active{background:var(--surface3)}
+.ck-actions{flex:none;display:flex;flex-direction:column;gap:5px}
+.ck-btn{padding:7px 10px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid)}
+.ck-btn.task{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.ck-btn:active{background:var(--surface3)}
 .ck-more{font-size:12px;color:var(--text-dim);text-align:center;padding:6px;cursor:pointer;text-decoration:underline;margin-bottom:6px}
 /* ── 今日のタスク（ホーム②） ── */
 .ht-item{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
@@ -1088,7 +1090,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v185</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v186</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2674,7 +2676,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v185';
+  var DATA_VERSION = 'v186';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3243,6 +3245,27 @@ function ckToggle(k) { ckExpanded[k] = !ckExpanded[k]; renderHome(); }
 function ckAddTask(mid) {
   if (typeof openEventModal === 'function') openEventModal(null, mid, ''); // 新規は既定でタスク・メンバー紐付け
 }
+// 記録ワンタップ深リンク：研修生→編集モーダルの研修情報、フレッシュ→OLタブでOL記録追加
+function ckRecord(mid, group) {
+  if (group === 'trainee') {
+    openEdit(mid);
+    setTimeout(function() {
+      var mst = document.getElementById('msTrainee');
+      if (mst) mst.classList.remove('collapsed');
+      var tsf = document.getElementById('traineeStatusFields');
+      if (tsf && tsf.scrollIntoView) tsf.scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 160);
+  } else if (group === 'fresh') {
+    switchView('ol');
+    setTimeout(function() {
+      freshOlAdd(mid); // 新規OL記録を1件追加（renderStatsで再描画）
+      setTimeout(function() {
+        var card = document.getElementById('freshcard-' + mid);
+        if (card && card.scrollIntoView) card.scrollIntoView({ behavior:'smooth', block:'center' });
+      }, 160);
+    }, 120);
+  }
+}
 function cockpitHtml() {
   var g = ckCollect();
   var total = g.trainee.length + g.fresh.length + g.leader.length;
@@ -3270,7 +3293,10 @@ function cockpitHtml() {
         +   '<div class="ck-name">' + evEsc(nm) + '<span class="ck-title">' + evEsc(m.title || '-') + '</span>' + (act ? '<span class="ck-act">' + evEsc(act) + '</span>' : '') + '</div>'
         +   '<div class="ck-badges">' + badges + '</div>'
         + '</div>'
-        + '<button class="ck-task" onclick="ckAddTask(\'' + m.id + '\')">＋タスク</button>'
+        + '<div class="ck-actions">'
+        +   (gr.key !== 'leader' ? '<button class="ck-btn rec" onclick="ckRecord(\'' + m.id + '\',\'' + gr.key + '\')">📝' + (gr.key === 'trainee' ? '研修' : 'OL') + '</button>' : '')
+        +   '<button class="ck-btn task" onclick="ckAddTask(\'' + m.id + '\')">＋タスク</button>'
+        + '</div>'
         + '</div>';
     });
     if (list.length > 3) {
@@ -5489,7 +5515,7 @@ function renderStats() {
             + '</div>';
         }).join('');
         ologHtml += '<button class="fol-add" onclick="freshOlAdd(\'' + m.id + '\')">＋ OL記録を追加</button></div>';
-        return '<div class="fresh-card'+(allDone?' done':'')+'">'
+        return '<div class="fresh-card'+(allDone?' done':'')+'" id="freshcard-'+m.id+'">'
           + '<div class="fresh-card-top">'
           +   '<span class="fresh-card-name">'+evEsc(name)+'</span>'
           +   '<span class="fresh-card-title">'+evEsc(m.title||'')+'</span>'
