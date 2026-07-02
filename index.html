@@ -982,6 +982,27 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ht-title{font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ht-meta{font-size:11px;color:var(--text-dim);margin-top:2px;font-family:'IBM Plex Mono',monospace}
 .ht-meta .ht-over{color:var(--red,#ef4444);font-weight:700;font-family:'Noto Sans JP',sans-serif}
+/* ── 今日の気づき ── */
+.hi-item{font-size:13px;line-height:1.6;border-radius:10px;padding:11px 13px;margin-bottom:7px;border:1px solid var(--border);background:var(--surface);border-left-width:3px}
+.hi-item.warn{border-left-color:#f59e0b}
+.hi-item.info{border-left-color:var(--purple)}
+.hi-item.good{border-left-color:var(--accent)}
+/* ── フレッシュ OLログ ── */
+.fresh-ol{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.fresh-ol-lbl{font-size:11px;color:var(--text-dim);margin-bottom:6px;font-weight:700}
+.fol-row{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:start}
+.fol-row .fol-full{grid-column:1 / -1}
+.fol-in{box-sizing:border-box;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none}
+.fol-x{flex:none;width:34px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-dim);border-radius:8px;font-size:14px;cursor:pointer}
+.fol-add{width:100%;padding:9px;border-radius:9px;border:1px dashed var(--border2);background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:2px}
+.fol-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:6px}
+.fol-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.fol-date-lite{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);font-weight:700}
+.fol-to-lite{font-size:12px;color:var(--text-mid)}
+/* ── 3〜7人アウトライン 折りたたみ ── */
+.ol-collapse-hd{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 2px}
+.ol-collapse-hd .ol-cc-arrow{font-size:12px;color:var(--text-dim);transition:transform .2s}
+.ol-collapse-hd.open .ol-cc-arrow{transform:rotate(90deg)}
 /* ── MAP結合（Phase A） ── */
 .nc.merged-node{border-style:dashed!important;opacity:.92}
 .nc.merged-node::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px var(--purple-dim)}
@@ -1067,7 +1088,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v184</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v185</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2653,7 +2674,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v184';
+  var DATA_VERSION = 'v185';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3294,6 +3315,29 @@ function homeTasksHtml() {
   }
   return html;
 }
+// ── 今日の気づき（今日ホーム）現状データからの組織レベルの気づき ──
+function homeInsights() {
+  var mem = (typeof gameActiveMembers === 'function') ? gameActiveMembers() : (state.members || []);
+  var cC = 0, cA = 0, shibu = 0, goldNoPr = 0;
+  mem.forEach(function(m){
+    if (m.activity === 'C') cC++;
+    if (m.activity === 'A') cA++;
+    if (m.morale === 3 || m.morale === '3') shibu++;
+    if (m.goldShip && !m.priority) goldNoPr++;
+  });
+  var out = [];
+  if (cA > 0) out.push({ t:'稼働A（辞める確定）が ' + cA + '人。見極め・引き止めの判断を', c:'warn' });
+  if (cC > 0) out.push({ t:'稼働C（来れるけど来ない）が ' + cC + '人。個別フォローのタイミング', c:'warn' });
+  if (goldNoPr > 0) out.push({ t:'金の船 ' + goldNoPr + '人に優先度が未設定。注力先を決めましょう', c:'info' });
+  if (shibu > 0) out.push({ t:'🔥 死ぬ気メンバーが ' + shibu + '人！この勢いを次に繋げよう', c:'good' });
+  return out;
+}
+function insightsHtml() {
+  var ins = homeInsights();
+  var html = '<div class="home-sec-label">💡 今日の気づき</div>';
+  if (!ins.length) return html + '<div class="ck-empty">大きな気づきはありません。組織は良好です 👍</div>';
+  return html + ins.map(function(x){ return '<div class="hi-item ' + x.c + '">' + evEsc(x.t) + '</div>'; }).join('');
+}
 function gameGreeting() {
   var h = new Date().getHours();
   if (h < 5) return 'おつかれさま';
@@ -3354,6 +3398,7 @@ function renderHome() {
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
     + cockpitHtml()
     + homeTasksHtml()
+    + insightsHtml()
     + '<div class="home-sec-label"><span>🎯 今日のミッション</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + doneCount + '/' + defs.length + '</span></div>'
     + missionsHtml
     + '<div class="home-sec-label"><span>🏅 称号</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + earnedCnt + '/' + bdefs.length + '</span></div>'
@@ -5116,6 +5161,19 @@ function olAddEntry() { var a = _ol(); if (a.length >= 7) return; a.push({date:'
 function olRemoveEntry(i) { var a = _ol(); a.splice(i, 1); autoSave(); renderStats(); }
 function olAddTarget(i) { var o = _ol()[i]; if (!o) return; if (!o.targets) o.targets = ['']; o.targets.push(''); autoSave(); renderStats(); }
 function olRemoveTarget(i, ti) { var o = _ol()[i]; if (!o || !o.targets) return; o.targets.splice(ti, 1); if (o.targets.length === 0) o.targets = ['']; autoSave(); renderStats(); }
+// ── フレッシュ OLログ（いつ・誰に・内容・備考(反応)）──
+function freshOlLog(mid) {
+  if (!state.freshData) state.freshData = {};
+  if (!state.freshData[mid]) state.freshData[mid] = {};
+  if (!state.freshData[mid].olLog) state.freshData[mid].olLog = [];
+  return state.freshData[mid].olLog;
+}
+function freshOlAdd(mid) { var t=new Date(); var d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); freshOlLog(mid).unshift({date:d,to:'',what:'',note:''}); autoSave(); renderStats(); }
+function freshOlField(mid, idx, field, val) { var log=freshOlLog(mid); if (log[idx]) { log[idx][field]=val; autoSave(); } } // 入力中は再描画しない
+function freshOlRemove(mid, idx) { var log=freshOlLog(mid); log.splice(idx,1); autoSave(); renderStats(); }
+// ── 3〜7人アウトライン 折りたたみ ──
+var _outlineExpanded = false;
+function toggleOutlineExpand() { _outlineExpanded = !_outlineExpanded; renderStats(); }
 
 // ── 研修生 月次集計ヘルパー ──
 function _ymToMon(dateStr) {  // 'YYYY-MM-DD' → 'YYYY.MM'
@@ -5377,7 +5435,7 @@ function renderStats() {
   var freshWrap = document.getElementById('freshListWrap');
   if (freshWrap) {
     var FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
-    var FRESH_STEPS = ['リスト','基準値','F-DATA','ハウディ'];
+    var FRESH_STEPS = ['リスト'];
     var freshMembers = membersForMap('current').filter(function(m){
       return !m.deleted && FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
     });
@@ -5416,14 +5474,30 @@ function renderStats() {
             + '<button class="fresh-done-btn' + (esd.done?' on':'') + '" onclick="freshToggleDone(\'' + m.id + '\',\'' + estep + '\')">' + (esd.done ? '✓ 完了済み（タップで戻す）' : '完了にする') + '</button>'
             + '</div>';
         }
+        // OLログ（いつ・誰に・内容・備考=反応）
+        var olog = fd.olLog || [];
+        var ologHtml = '<div class="fresh-ol"><div class="fresh-ol-lbl">📝 OL記録（いつ・誰に・内容・反応）</div>';
+        ologHtml += olog.map(function(e, idx){
+          return '<div class="fol-item">'
+            + '<div class="fol-row">'
+            +   '<input class="fol-in" type="date" value="' + (e.date||'') + '" onchange="freshOlField(\'' + m.id + '\',' + idx + ',\'date\',this.value)">'
+            +   '<input class="fol-in" placeholder="誰に" value="' + evEsc(e.to||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'to\',this.value)">'
+            +   '<button class="fol-x" onclick="freshOlRemove(\'' + m.id + '\',' + idx + ')">✕</button>'
+            + '</div>'
+            + '<input class="fol-in fol-full" placeholder="内容（何をした）" value="' + evEsc(e.what||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'what\',this.value)" style="margin-bottom:6px">'
+            + '<input class="fol-in fol-full" placeholder="備考（どんな反応だったか）" value="' + evEsc(e.note||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'note\',this.value)">'
+            + '</div>';
+        }).join('');
+        ologHtml += '<button class="fol-add" onclick="freshOlAdd(\'' + m.id + '\')">＋ OL記録を追加</button></div>';
         return '<div class="fresh-card'+(allDone?' done':'')+'">'
           + '<div class="fresh-card-top">'
           +   '<span class="fresh-card-name">'+evEsc(name)+'</span>'
           +   '<span class="fresh-card-title">'+evEsc(m.title||'')+'</span>'
-          +   '<span class="fresh-card-prog">'+doneCount+'/'+FRESH_STEPS.length+'</span>'
+          +   '<span class="fresh-card-prog">リスト '+(doneCount?'✓':'—')+'</span>'
           + '</div>'
           + '<div class="fresh-steps">'+chips+'</div>'
           + editorHtml
+          + ologHtml
           + '</div>';
       }).join('');
     }
@@ -5435,7 +5509,11 @@ function renderStats() {
     if (!s.outline) s.outline = [];
     while (s.outline.length < 3) s.outline.push({date:'',targets:[''],content:'',aSan:'',done:false});
     while (s.outline.length > 7) s.outline.pop();
-    var olHtml = s.outline.map(function(o, i){
+    var visibleOl = _outlineExpanded ? s.outline : s.outline.slice(0, 1);
+    var olHtml = '<div class="ol-collapse-hd' + (_outlineExpanded?' open':'') + '" onclick="toggleOutlineExpand()">'
+      + '<span style="font-size:12px;font-weight:700;color:var(--text-mid)">３〜７人OL（' + s.outline.length + '件）</span>'
+      + '<span class="ol-cc-arrow">▶</span></div>';
+    olHtml += visibleOl.map(function(o, i){
       if (!o.targets) o.targets = o.target ? [o.target] : [''];
       var done = !!o.done;
       var targetsHtml = o.targets.map(function(t, ti){
@@ -5458,7 +5536,11 @@ function renderStats() {
         + '<div class="ol-f"><label>内容</label><input class="ol-input" placeholder="内容" value="' + evEsc(o.content||'') + '" oninput="olSetField(' + i + ',\'content\',this.value)"></div>'
         + '</div>';
     }).join('');
-    if (s.outline.length < 7) olHtml += '<button class="ol-add" onclick="olAddEntry()">＋ 人を追加</button>';
+    if (_outlineExpanded) {
+      if (s.outline.length < 7) olHtml += '<button class="ol-add" onclick="olAddEntry()">＋ 人を追加</button>';
+    } else if (s.outline.length > 1) {
+      olHtml += '<div class="ck-more" onclick="toggleOutlineExpand()">ほか ' + (s.outline.length - 1) + '件を表示</div>';
+    }
     outlineWrap.innerHTML = olHtml;
   }
 
