@@ -1090,7 +1090,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v186</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v187</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2676,7 +2676,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v186';
+  var DATA_VERSION = 'v187';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3364,6 +3364,61 @@ function insightsHtml() {
   if (!ins.length) return html + '<div class="ck-empty">大きな気づきはありません。組織は良好です 👍</div>';
   return html + ins.map(function(x){ return '<div class="hi-item ' + x.c + '">' + evEsc(x.t) + '</div>'; }).join('');
 }
+// ── 先月からの変化（月次変化の自動検知）──
+var mcExpanded = false;
+function mcPrevMonth(cur) {
+  var p = String(cur || '').split('.'); var y = parseInt(p[0],10), m = parseInt(p[1],10);
+  if (!y || !m) return '';
+  m--; if (m < 1) { m = 12; y--; }
+  return y + '.' + String(m).padStart(2,'0');
+}
+function mcActRank(a) { return a==='S'?4:(a==='B'?3:(a==='C'?2:(a==='A'?1:0))); } // S最良/A(辞める確定)最悪
+function mcTitleRank(t) {
+  t = (t || '').trim(); if (!t) return -1;
+  var order = [];
+  if (typeof TITLE_OPTIONS !== 'undefined') { ['研修生','BA','BR'].forEach(function(k){ (TITLE_OPTIONS[k]||[]).forEach(function(x){ order.push(x); }); }); }
+  return order.indexOf(t);
+}
+function mcName(m) { return ((m.lastName||'') + (m.firstName||'')) || '(無名)'; }
+function computeMonthlyChanges(prev, cur) {
+  var prevById = {}, curById = {};
+  prev.forEach(function(m){ if (!m.deleted) prevById[m.id] = m; });
+  cur.forEach(function(m){ curById[m.id] = m; });
+  var out = [];
+  cur.forEach(function(m){
+    var pm = prevById[m.id], nm = mcName(m);
+    if (!pm) { out.push({ t: nm + ' が新加入 🎉', c:'good', pr:2 }); return; }
+    if ((m.activity||'') !== (pm.activity||'')) {
+      var worse = mcActRank(m.activity) < mcActRank(pm.activity);
+      out.push({ t: nm + '：稼働 ' + (pm.activity||'-') + '→' + (m.activity||'-'), c: worse?'warn':'good', pr: worse?3:1 });
+    }
+    var pmo = pm.morale||1, cmo = m.morale||1;
+    if (cmo < pmo) out.push({ t: nm + '：やる気ダウン ' + moraleEmoji(pmo) + '→' + moraleEmoji(cmo), c:'warn', pr:2 });
+    else if (cmo > pmo) out.push({ t: nm + '：やる気アップ ' + moraleEmoji(pmo) + '→' + moraleEmoji(cmo), c:'good', pr:1 });
+    var cr = mcTitleRank(m.title), pr2 = mcTitleRank(pm.title);
+    if (cr >= 0 && pr2 >= 0 && cr > pr2) out.push({ t: nm + '：昇格 ' + pm.title + '→' + m.title + ' 🎉', c:'good', pr:2 });
+    else if (cr >= 0 && pr2 >= 0 && cr < pr2) out.push({ t: nm + '：' + pm.title + '→' + m.title + ' に降格', c:'warn', pr:2 });
+  });
+  prev.forEach(function(pm){ if (!pm.deleted && !curById[pm.id]) out.push({ t: mcName(pm) + ' が離脱', c:'warn', pr:2 }); });
+  out.sort(function(a,b){ return b.pr - a.pr; });
+  return out;
+}
+function renderMonthlyChanges() {
+  var box = document.getElementById('homeChanges'); if (!box) return;
+  var uid = (currentUser && currentUser.uid) ? currentUser.uid : (typeof eventsUid === 'function' ? eventsUid() : '');
+  var prev = mcPrevMonth(state.currentMonth);
+  if (!db || !uid || !prev) { box.innerHTML = '<div class="ck-empty">前月データがありません</div>'; return; }
+  fsGet('maps/' + uid + '/months/' + prev + '_current').then(function(data) {
+    var pm = (data && data.members) ? data.members : [];
+    if (!pm.length) { box.innerHTML = '<div class="ck-empty">前月（' + prev + '）のデータがありません<br><span>月をまたいで使うと自動で変化が出ます</span></div>'; return; }
+    var ch = computeMonthlyChanges(pm, (typeof gameActiveMembers === 'function' ? gameActiveMembers() : (state.members||[])));
+    if (!ch.length) { box.innerHTML = '<div class="ck-empty">先月からの大きな変化はありません 👍</div>'; return; }
+    var shown = mcExpanded ? ch : ch.slice(0, 6);
+    var html = shown.map(function(x){ return '<div class="hi-item ' + x.c + '">' + evEsc(x.t) + '</div>'; }).join('');
+    if (ch.length > 6) html += '<div class="ck-more" onclick="mcExpanded=!mcExpanded;renderMonthlyChanges()">' + (mcExpanded ? '閉じる' : ('ほか ' + (ch.length - 6) + '件')) + '</div>';
+    box.innerHTML = html;
+  }).catch(function() { box.innerHTML = '<div class="ck-empty">前月データの読み込みに失敗しました</div>'; });
+}
 function gameGreeting() {
   var h = new Date().getHours();
   if (h < 5) return 'おつかれさま';
@@ -3425,6 +3480,8 @@ function renderHome() {
     + cockpitHtml()
     + homeTasksHtml()
     + insightsHtml()
+    + '<div class="home-sec-label">📊 先月からの変化</div>'
+    + '<div id="homeChanges" class="home-changes"><div class="ck-empty" style="color:var(--text-dim)">読み込み中…</div></div>'
     + '<div class="home-sec-label"><span>🎯 今日のミッション</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + doneCount + '/' + defs.length + '</span></div>'
     + missionsHtml
     + '<div class="home-sec-label"><span>🏅 称号</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + earnedCnt + '/' + bdefs.length + '</span></div>'
@@ -3440,6 +3497,7 @@ function renderHome() {
     + '</div>';
   updateHomeBadge();
   gameRenderRanking();
+  renderMonthlyChanges();
 }
 // 演出
 function gameXpFloat(xp) {
