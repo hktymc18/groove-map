@@ -1090,7 +1090,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v187</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v188</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -1801,7 +1801,7 @@ function buildStatsTableHeader() {
 
 // ── 翌月コピー ──
 function copyToNextMonth() {
-  var cur = state.currentMonth || '2026.06';
+  var cur = state.currentMonth || currentMonthStr();
   var parts = cur.split('.');
   var y = parseInt(parts[0]);
   var m = parseInt(parts[1]);
@@ -2676,7 +2676,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v187';
+  var DATA_VERSION = 'v188';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2690,8 +2690,8 @@ function init() {
   state.idealMembers = [];
   state.stats = getDefaultStats();
   state.commission = getDefaultCommission();
-  state.months = ['2026.06'];
-  state.currentMonth = '2026.06';
+  state.months = [currentMonthStr()];
+  state.currentMonth = currentMonthStr();
   state.isEditor = true;
 
   buildMonthSelector();
@@ -2724,12 +2724,17 @@ function gasPost(body) {
 }
 
 // ── MONTH SELECTOR ──
+// 当月を 'YYYY.MM' で返す
+function currentMonthStr() {
+  var d = new Date();
+  return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0');
+}
 function buildMonthSelector() {
   var yearSel = document.getElementById('selYear');
   var monthSel = document.getElementById('selMonth');
   if (!yearSel || !monthSel) return;
 
-  var cur = state.currentMonth || '2026.01';
+  var cur = state.currentMonth || currentMonthStr();
   var parts = cur.split('.');
   var curYear = parseInt(parts[0]) || 2026;
   var curMonth = parseInt(parts[1]) || 1;
@@ -5290,7 +5295,7 @@ function buildAutoStats() {
   if (!s || !s.monthly) return;
   
   // 月ラベルリストを生成（過去12ヶ月、当該月含む）
-  var now2 = state.currentMonth || '2026.06';
+  var now2 = state.currentMonth || currentMonthStr();
   var np = now2.split('.');
   var ny = parseInt(np[0]), nm = parseInt(np[1]);
   var colIdx = 11; // 最後の列（最新月）が常に11番目
@@ -5342,7 +5347,7 @@ function renderStats() {
   var comRows = ['コミッション'];
 
   // 月ラベルを生成（当該月含む過去12ヶ月）
-  var now = state.currentMonth || '2026.06';
+  var now = state.currentMonth || currentMonthStr();
   var nowParts = now.split('.');
   var nowYear = parseInt(nowParts[0]);
   var nowMonth = parseInt(nowParts[1]);
@@ -5807,7 +5812,7 @@ function selectChartRow(label) {
     b.classList.toggle('chart-btn-active', b.textContent===label);
   });
   // 動的月ラベル生成（月次推移と同じ）
-  var now = state.currentMonth || '2026.06';
+  var now = state.currentMonth || currentMonthStr();
   var nowParts = now.split('.');
   var nowYear = parseInt(nowParts[0]);
   var nowMonth = parseInt(nowParts[1]);
