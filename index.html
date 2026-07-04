@@ -981,6 +981,28 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .hm-tile:active{background:var(--surface2)}
 .hm-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;line-height:1}
 .hm-label{font-size:13px;font-weight:600;color:var(--text)}
+/* ── メンバー一覧 ② ── */
+.ml-head{display:flex;align-items:center;gap:8px;padding:12px 14px 6px}
+.ml-title{font-size:16px;font-weight:700;color:var(--text)}
+.ml-count{font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.ml-filters{display:flex;gap:6px;padding:6px 14px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ml-filters::-webkit-scrollbar{display:none}
+.ml-pill{flex:none;font-size:12px;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.ml-pill.active{color:#000;background:var(--accent);border-color:var(--accent);font-weight:600}
+.ml-list{padding:0 12px 14px;display:flex;flex-direction:column;gap:8px}
+.ml-card{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:11px 12px;cursor:pointer}
+.ml-card:active{background:var(--surface2)}
+.ml-avatar{width:38px;height:38px;border-radius:11px;background:var(--surface3);color:var(--text-mid);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex:none}
+.ml-mid{flex:1;min-width:0}
+.ml-name{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.ml-badge{font-size:10px;font-weight:600;color:var(--accent);background:var(--accent-dim);border-radius:5px;padding:1px 6px;font-family:'IBM Plex Mono',monospace}
+.ml-meta{font-size:11px;color:var(--text-dim);margin-top:3px;font-family:'IBM Plex Mono',monospace}
+.ml-dot{width:9px;height:9px;border-radius:50%;flex:none}
+.ml-dot.high{background:#ef4444}
+.ml-dot.mid{background:#f59e0b}
+.ml-dot.low{background:#6b7280}
+.ml-dot.none{background:transparent;border:1px solid var(--border2)}
+.ml-chev{color:var(--text-dim);font-size:20px;flex:none}
 /* ── 今日のタスク（ホーム②） ── */
 .ht-item{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
 .ht-item.overdue{border-left:3px solid var(--red,#ef4444)}
@@ -1096,7 +1118,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v189</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v190</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -1122,6 +1144,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
   <!-- ====== 今日（ホーム） ====== -->
   <div id="view-home" style="display:none"></div>
+
+  <!-- ====== メンバー一覧 ====== -->
+  <div id="view-members" style="display:none"></div>
 
   <!-- ====== 現状MAP ====== -->
   <div id="view-current">
@@ -2682,7 +2707,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v189';
+  var DATA_VERSION = 'v190';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2796,7 +2821,7 @@ function updateFabVisibility() {
 // ── VIEW SWITCH ──
 function switchView(v) {
   currentView = v;
-  ['home','current','ideal','stats','ol','events'].forEach(function(n) {
+  ['home','members','current','ideal','stats','ol','events'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
@@ -2807,6 +2832,7 @@ function switchView(v) {
   updateFabVisibility();
   if (v !== 'events') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
   if (v==='home') renderHome();
+  else if (v==='members') renderMembers();
   else if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
   else if (v==='ideal') { renderTree('ideal'); renderCommission(); }
   else if (v==='stats') renderStats();
@@ -2814,7 +2840,8 @@ function switchView(v) {
   else if (v==='events') renderEvents();
 }
 function renderCurrentView() {
-  if (currentView === 'current') renderTree('current');
+  if (currentView === 'members') renderMembers();
+  else if (currentView === 'current') renderTree('current');
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
   else if (currentView === 'stats') renderStats();
   else if (currentView === 'ol') renderOL();
@@ -3434,8 +3461,8 @@ function renderMonthlyChanges() {
 function homeAddMember() { switchView('current'); setTimeout(function(){ if (typeof onFabClick === 'function') onFabClick(); }, 160); }
 function homeMenuHtml() {
   var items = [
-    { label:'現状MAP',     emoji:'🗺',  color:'#00d4aa', act:"switchView('current')" },
-    { label:'理想MAP',     emoji:'🎯',  color:'#3b82f6', act:"switchView('ideal')" },
+    { label:'組織MAP',     emoji:'🗺',  color:'#00d4aa', act:"switchView('current')" },
+    { label:'メンバー',    emoji:'👥',  color:'#3b82f6', act:"switchView('members')" },
     { label:'OL',          emoji:'📋',  color:'#7c6aff', act:"switchView('ol')" },
     { label:'予定',        emoji:'📅',  color:'#f59e0b', act:"switchView('events')" },
     { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" },
@@ -3448,6 +3475,52 @@ function homeMenuHtml() {
       + '<span class="hm-label">' + it.label + '</span></div>';
   }).join('');
   return html + '</div>';
+}
+// ── メンバー一覧（1列カード＋層フィルタ＋優先度ドット）②──
+var _memberFilter = 'all';
+function setMemberFilter(f) { _memberFilter = f; renderMembers(); }
+function memberMatchesFilter(m, f) {
+  if (f === 'all') return true;
+  if (f === 'trainee') return memberCat(m) === '研修生';
+  if (f === 'fresh') return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
+  if (f === 'gold') return !!m.goldShip;
+  return true;
+}
+function memberPriorityRank(m) { return m.priority === '高' ? 3 : (m.priority === '中' ? 2 : (m.priority === '低' ? 1 : 0)); }
+function renderMembers() {
+  var wrap = document.getElementById('view-members'); if (!wrap) return;
+  var all = membersForMap('current').filter(function(m){ return !m.deleted; });
+  var cAll = all.length, cTr = 0, cFr = 0, cGo = 0;
+  all.forEach(function(m){
+    if (memberCat(m) === '研修生') cTr++;
+    if (CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0) cFr++;
+    if (m.goldShip) cGo++;
+  });
+  var filters = [['all','すべて',cAll],['trainee','研修生',cTr],['fresh','フレッシュ',cFr],['gold','金の船',cGo]];
+  var list = all.filter(function(m){ return memberMatchesFilter(m, _memberFilter); });
+  list.sort(function(a,b){ return (memberPriorityRank(b) - memberPriorityRank(a)) || ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||'')); });
+  var html = '<div class="ml-head"><span class="ml-title">👥 メンバー</span><span class="ml-count">' + list.length + '人</span></div>';
+  html += '<div class="ml-filters">' + filters.map(function(f){
+    return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
+  }).join('') + '</div>';
+  if (!list.length) { wrap.innerHTML = html + '<div class="ck-empty">該当するメンバーがいません</div>'; return; }
+  html += '<div class="ml-list">' + list.map(function(m){
+    var nm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
+    var ini = (m.lastName || m.firstName || '？').charAt(0);
+    var gsv = (m.ptCurrent > 0) ? ('GSV ' + m.ptCurrent.toLocaleString()) : '';
+    var act = m.activity ? ('稼働 ' + (m.activity === 'S' ? 'S' : (m.activity + (m.actRate ? m.actRate + '%' : '')))) : '';
+    var meta = [gsv, act].filter(Boolean).join(' ・ ') || (memberCat(m) || '-');
+    var pr = memberPriorityRank(m);
+    var dotCls = pr === 3 ? 'high' : (pr === 2 ? 'mid' : (pr === 1 ? 'low' : 'none'));
+    var accent = pr === 3 ? '#ef4444' : (memberCat(m) === '研修生' ? '#f59e0b' : (m.goldShip ? '#7c6aff' : '#3b82f6'));
+    return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openEdit(\'' + m.id + '\')">'
+      + '<span class="ml-avatar">' + evEsc(ini) + '</span>'
+      + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span></div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
+      + '<span class="ml-dot ' + dotCls + '"></span>'
+      + '<span class="ml-chev">›</span>'
+      + '</div>';
+  }).join('') + '</div>';
+  wrap.innerHTML = html;
 }
 function gameGreeting() {
   var h = new Date().getHours();
