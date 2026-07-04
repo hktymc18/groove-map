@@ -63,6 +63,8 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 .tab-bar{display:flex;gap:5px;padding:8px 14px 10px}
 .tab{flex:1;padding:7px 0;text-align:center;font-size:12px;font-weight:600;border-radius:var(--rxs);border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;white-space:nowrap}
 .tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.back-home-bar{align-items:center;gap:8px;padding:9px 16px;font-size:13px;font-weight:600;color:var(--accent);background:var(--card);border-bottom:1px solid var(--border);cursor:pointer;position:sticky;top:0;z-index:40}
+.back-home-bar .bhb-sec{color:var(--text-dim);font-weight:500}
 .tab.purple.active{background:var(--purple);border-color:var(--purple)}
 
 /* ── 系列縦ライン ── */
@@ -1199,17 +1201,19 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v193</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v194</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
     <button class="tab active" data-view="current" onclick="switchView('current')">現状</button>
-    <button class="tab" data-view="ideal" onclick="switchView('ideal')">理想</button>
-    <button class="tab" data-view="ol" onclick="switchView('ol')">OL</button>
+    <button class="tab" data-view="members" onclick="switchView('members')">メンバー</button>
     <button class="tab" data-view="events" onclick="switchView('events')">予定<span class="tab-badge" id="eventsBadge" style="display:none">0</span></button>
     <button class="tab" data-view="stats" onclick="switchView('stats')">データ</button>
   </div>
 </header>
+
+<!-- 戻り導線バー（タブに無いビュー用） -->
+<div id="backHomeBar" class="back-home-bar" style="display:none" onclick="switchView('home')"></div>
 
 <!-- 共有MAP閲覧中バー -->
 <div class="sd-viewing-bar" id="sdViewingBar">
@@ -2789,7 +2793,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v193';
+  var DATA_VERSION = 'v194';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2911,6 +2915,13 @@ function switchView(v) {
   Array.prototype.slice.call(document.querySelectorAll('.tab')).forEach(function(btn) {
     btn.classList.toggle('active', btn.getAttribute('data-view') === v);
   });
+  // タブに無いビュー（理想/OL）は戻り導線バーを表示
+  var bh = document.getElementById('backHomeBar');
+  if (bh) {
+    var secName = (v === 'ideal') ? '理想' : (v === 'ol' ? 'OL' : '');
+    if (secName) { bh.innerHTML = '‹ 今日にもどる<span class="bhb-sec">・' + secName + '</span>'; bh.style.display = 'flex'; }
+    else bh.style.display = 'none';
+  }
   updateFabVisibility();
   if (v !== 'events') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
   if (v==='home') renderHome();
@@ -3548,6 +3559,7 @@ function homeMenuHtml() {
     { label:'OL',          emoji:'📋',  color:'#7c6aff', act:"switchView('ol')" },
     { label:'予定',        emoji:'📅',  color:'#f59e0b', act:"switchView('events')" },
     { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" },
+    { label:'理想',        emoji:'🎯',  color:'#ec4899', act:"switchView('ideal')" },
     { label:'メンバー追加', emoji:'➕',  color:'#f97316', act:"homeAddMember()" }
   ];
   var html = '<div class="home-sec-label">📂 メニュー</div><div class="home-menu">';
