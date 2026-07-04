@@ -1026,6 +1026,64 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ms-act:active{background:var(--surface2)}
 .ms-aic{font-size:18px;width:24px;text-align:center}
 .ms-ch{margin-left:auto;color:var(--text-dim);font-size:18px}
+/* ── メンバー詳細 スワイプ ④ ── */
+.md-overlay{position:fixed;inset:0;z-index:530;background:var(--bg);display:flex;flex-direction:column;opacity:0;transition:opacity .18s}
+.md-overlay.show{opacity:1}
+.md-top{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 12px) 14px 10px;border-bottom:1px solid var(--border);flex:none}
+.md-back{color:var(--accent);font-size:14px;cursor:pointer;min-width:52px}
+.md-title{font-size:16px;font-weight:700;color:var(--text);flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.md-edit{font-size:18px;cursor:pointer;min-width:52px;text-align:right}
+.md-card{display:flex;align-items:center;gap:11px;padding:14px;flex:none}
+.md-avatar{width:46px;height:46px;border-radius:12px;background:var(--surface3);color:var(--text-mid);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex:none}
+.md-name{font-size:16px;font-weight:700;color:var(--text)}
+.md-badges{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.md-tabs{display:flex;gap:5px;padding:0 12px 10px;flex:none}
+.md-tab{flex:1;text-align:center;font-size:12px;color:var(--text-dim);background:var(--surface2);border-radius:8px;padding:8px 0;cursor:pointer}
+.md-tab.on{color:#000;background:var(--accent);font-weight:600}
+.md-vp{flex:1;overflow:hidden;min-height:0}
+.md-track{display:flex;width:500%;height:100%;transition:transform .25s ease}
+.md-page{width:20%;flex:none;overflow-y:auto;padding:4px 14px 24px;-webkit-overflow-scrolling:touch}
+.md-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid var(--border)}
+.md-l{color:var(--text-dim);font-size:13px;flex:none}
+.md-v{color:var(--text);font-size:14px;font-weight:500;text-align:right;word-break:break-word}
+.md-memo{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:13px;color:var(--text-mid);white-space:pre-wrap;line-height:1.6}
+.md-empty{color:var(--text-dim);font-size:13px;text-align:center;padding:28px 0}
+.md-hist{display:flex;align-items:center;gap:9px;padding:12px 2px;border-bottom:1px solid var(--border)}
+.md-hstep{font-size:13px;font-weight:600;color:var(--text);background:var(--surface2);border-radius:6px;padding:2px 9px}
+.md-hdate{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.md-hasan{font-size:11px;color:var(--text-mid);margin-left:auto}
+.md-ol{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px}
+.md-oltop{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.md-olwhat{font-size:13px;color:var(--text);margin-top:4px}
+.md-olnote{font-size:12px;color:var(--text-mid);margin-top:3px}
+.md-task{display:flex;align-items:center;gap:9px;padding:12px 2px;border-bottom:1px solid var(--border)}
+.md-tt{flex:1;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.md-tt.done{text-decoration:line-through;color:var(--text-dim)}
+.md-td{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;flex:none}
+.md-dots{display:flex;justify-content:center;gap:7px;padding:12px 0 calc(env(safe-area-inset-bottom) + 14px);flex:none}
+.md-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:width .2s}
+.md-dot.on{width:18px;border-radius:4px;background:var(--accent)}
+/* ── データハブ ⑤ ── */
+.dh-wrap{padding:10px 14px 0}
+.dh-ai{display:flex;gap:11px;align-items:flex-start;background:var(--surface);border:1px solid #2b3a52;border-radius:14px;padding:13px;margin-bottom:14px}
+.dh-ai-ic{font-size:20px;flex:none}
+.dh-ai-t{font-size:12px;font-weight:600;color:#7fbef0;margin-bottom:3px}
+.dh-ai-b{font-size:13px;color:var(--text);line-height:1.6}
+.dh-chart{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px 10px;margin-bottom:14px}
+.dh-chart-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.dh-chart-hd span:first-child{font-size:13px;font-weight:600;color:var(--text)}
+.dh-chart-cnt{font-size:10px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.dh-bars{display:flex;align-items:flex-end;justify-content:space-around;height:118px;gap:14px}
+.dh-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end}
+.dh-bnum{font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.dh-brect{width:100%;border-radius:6px 6px 0 0}
+.dh-blbl{font-size:11px;color:var(--text-dim)}
+.dh-cats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.dh-cat{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 11px;cursor:pointer}
+.dh-cat:active{background:var(--surface2)}
+.dh-cat-ic{font-size:20px;flex:none}
+.dh-cat-l{font-size:13px;font-weight:600;color:var(--text)}
+.dh-cat-s{font-size:10px;color:var(--text-dim);margin-top:2px}
 /* ── 今日のタスク（ホーム②） ── */
 .ht-item{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
 .ht-item.overdue{border-left:3px solid var(--red,#ef4444)}
@@ -1141,7 +1199,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v191</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v193</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -1272,6 +1330,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
   <!-- ====== データ ====== -->
   <div id="view-stats" style="display:none">
+    <div id="dataHub"></div>
     <div class="export-bar">
       <div class="exp-btn" onclick="exportCSV('stats')">📄 統計CSV</div>
     </div>
@@ -2730,7 +2789,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v191';
+  var DATA_VERSION = 'v193';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3578,7 +3637,7 @@ function openMemberActions(mid) {
   if (group === 'trainee') rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'trainee\')"><span class="ms-aic">📝</span>研修ステップを記録<span class="ms-ch">›</span></div>';
   if (group === 'fresh')   rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'fresh\')"><span class="ms-aic">📋</span>OLを記録<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMemberActions();ckAddTask(\'' + mid + '\')"><span class="ms-aic">➕</span>タスクを追加<span class="ms-ch">›</span></div>';
-  rows += '<div class="ms-act" onclick="closeMemberActions();openEdit(\'' + mid + '\')"><span class="ms-aic">📄</span>詳細・編集<span class="ms-ch">›</span></div>';
+  rows += '<div class="ms-act" onclick="openMemberDetail(\'' + mid + '\')"><span class="ms-aic">📄</span>詳細・データを見る<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
   ov.className = 'ms-overlay';
   ov.onclick = function(e){ if (e.target === ov) closeMemberActions(); };
@@ -3590,6 +3649,67 @@ function openMemberActions(mid) {
     + '</div>';
   document.body.appendChild(ov);
   _msheetEl = ov;
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+// ── メンバー詳細（スワイプ式ページ）④──
+var _mdPage = 0, _mdMid = '', _mdX0 = 0;
+function _mFind(mid) { for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid) return state.members[i]; } return null; }
+function _dRow(l, v) { return '<div class="md-row"><span class="md-l">' + evEsc(l) + '</span><span class="md-v">' + ((v===''||v==null) ? '—' : evEsc(String(v))) + '</span></div>'; }
+function closeMemberDetail() { var el=document.getElementById('mdOverlay'); if (el&&el.parentNode) el.parentNode.removeChild(el); }
+function mdGo(i) {
+  i = Math.max(0, Math.min(4, i)); _mdPage = i;
+  var t = document.getElementById('mdTrack'); if (t) t.style.transform = 'translateX(-' + (i*20) + '%)';
+  Array.prototype.forEach.call(document.querySelectorAll('#mdOverlay .md-tab'), function(x,k){ x.classList.toggle('on', k===i); });
+  Array.prototype.forEach.call(document.querySelectorAll('#mdOverlay .md-dot'), function(x,k){ x.classList.toggle('on', k===i); });
+}
+function openMemberDetail(mid) {
+  var m = _mFind(mid); if (!m) return;
+  closeMemberActions(); closeMemberDetail();
+  _mdMid = mid; _mdPage = 0;
+  var nm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
+  var ini = (m.lastName || m.firstName || '？').charAt(0);
+  var parent = m.parentId ? _mFind(m.parentId) : null;
+  var actStr = m.activity ? (m.activity==='S'?'S':m.activity+(m.actRate?m.actRate+'%':'')) : '';
+  var badges = '<span class="msb">' + evEsc(m.title||'-') + '</span>' + (actStr?'<span class="msb">稼働 '+evEsc(actStr)+'</span>':'') + (m.priority?'<span class="msb hi">優先度 '+evEsc(m.priority)+'</span>':'');
+  var basic = _dRow('カテゴリ', (typeof memberCat==='function'?memberCat(m):'') || '-')
+    + _dRow('タイトル', m.title || '-')
+    + _dRow('性別', m.gender==='female'?'女性':'男性')
+    + _dRow('適用MAP', m.mapType==='ideal'?'理想':(m.mapType==='both'?'両方':'現状'))
+    + _dRow('アップライン', parent ? ((parent.lastName||'')+(parent.firstName||'')) : 'トップ直下')
+    + _dRow('金の船', m.goldShip ? '⛴ 金の船' : '—')
+    + (m.instaUrl ? _dRow('Instagram', m.instaUrl) : '');
+  var monthly = _dRow('現状GSV', m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0')
+    + _dRow('固定PT', m.ptFixed>0 ? m.ptFixed.toLocaleString() : '—')
+    + _dRow('稼働タイプ', m.activity ? (m.activity==='S'?'S（120%）':(m.activity+(m.actRate?' '+m.actRate+'%':''))) : '—')
+    + _dRow('やる気', ['','パヤパヤ','やる気','死ぬ気'][Math.min(m.morale||1,3)])
+    + _dRow('優先度', m.priority || '—')
+    + (m.memo ? '<div class="md-memo">' + evEsc(m.memo) + '</div>' : '');
+  var th = m.traineeHistory || [], train = '';
+  if (m.traineeResult) train += _dRow('研修結果', m.traineeResult);
+  if (!th.length) train += '<div class="md-empty">研修履歴はまだありません</div>';
+  else train += th.slice().reverse().map(function(h){ return '<div class="md-hist"><span class="md-hstep">' + evEsc(h.status||'') + '</span><span class="md-hdate">' + evEsc(h.date||'') + '</span>' + (h.aSan?'<span class="md-hasan">' + evEsc(h.aSan) + '</span>':'') + '</div>'; }).join('');
+  var fd = (state.freshData && state.freshData[mid]) || {};
+  var listSt = (typeof freshNorm==='function') ? freshNorm(fd['リスト']) : (fd['リスト']||{});
+  var olog = fd.olLog || [], ol = '';
+  ol += _dRow('リストOL', listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手'));
+  if (!olog.length) ol += '<div class="md-empty">OL記録はまだありません</div>';
+  else ol += olog.map(function(e){ return '<div class="md-ol"><div class="md-oltop">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div class="md-olwhat">' + evEsc(e.what) + '</div>':'') + (e.note?'<div class="md-olnote">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
+  var evs = (state.events||[]).filter(function(e){ return e.memberId===mid && !e.deleted; });
+  var tk = '';
+  if (!evs.length) tk = '<div class="md-empty">紐付くタスク・予定はありません</div>';
+  else tk = evs.map(function(e){ var ic=e.type==='task'?(e.done?'✅':'⬜'):'📅'; var d=e.date?e.date.split('-').slice(1).join('/'):''; return '<div class="md-task"><span>' + ic + '</span><span class="md-tt' + (e.done?' done':'') + '">' + evEsc(e.title||'(無題)') + '</span><span class="md-td">' + d + '</span></div>'; }).join('');
+  var pages = [basic, monthly, train, ol, tk];
+  var tabs = ['基本','月次','研修','OL','タスク'];
+  var ov = document.createElement('div'); ov.id='mdOverlay'; ov.className='md-overlay';
+  ov.innerHTML = '<div class="md-top"><span class="md-back" onclick="closeMemberDetail()">‹ 戻る</span><span class="md-title">' + evEsc(nm) + '</span><span class="md-edit" onclick="closeMemberDetail();openEdit(\'' + mid + '\')">✏️</span></div>'
+    + '<div class="md-card"><span class="md-avatar">' + evEsc(ini) + '</span><div style="min-width:0"><div class="md-name">' + evEsc(nm) + '</div><div class="md-badges">' + badges + '</div></div></div>'
+    + '<div class="md-tabs">' + tabs.map(function(t,i){ return '<span class="md-tab' + (i===0?' on':'') + '" onclick="mdGo(' + i + ')">' + t + '</span>'; }).join('') + '</div>'
+    + '<div class="md-vp" id="mdVp"><div class="md-track" id="mdTrack">' + pages.map(function(p){ return '<div class="md-page">' + p + '</div>'; }).join('') + '</div></div>'
+    + '<div class="md-dots">' + tabs.map(function(t,i){ return '<span class="md-dot' + (i===0?' on':'') + '"></span>'; }).join('') + '</div>';
+  document.body.appendChild(ov);
+  var vp = document.getElementById('mdVp');
+  vp.addEventListener('touchstart', function(e){ _mdX0 = e.touches[0].clientX; }, { passive:true });
+  vp.addEventListener('touchend', function(e){ var dx = e.changedTouches[0].clientX - _mdX0; if (dx < -45) mdGo(_mdPage+1); else if (dx > 45) mdGo(_mdPage-1); });
   requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
 function gameGreeting() {
@@ -5508,7 +5628,39 @@ function renderOL() {
   renderStats(); // フレッシュ・金の船・アウトラインはrenderStatsで描画
 }
 
+// ── データハブ（⑤）AIアドバイス枠＋稼働分布＋カテゴリカード ──
+function dataScrollTo(id) { var el = document.getElementById(id); if (el && el.scrollIntoView) el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+function renderDataHub() {
+  var box = document.getElementById('dataHub'); if (!box) return;
+  var mem = (typeof gameActiveMembers === 'function') ? gameActiveMembers() : (state.members||[]).filter(function(m){return !m.deleted;});
+  var cnt = { S:0, A:0, B:0, C:0 };
+  mem.forEach(function(m){ if (cnt[m.activity] !== undefined) cnt[m.activity]++; });
+  var maxC = Math.max(cnt.S, cnt.A, cnt.B, cnt.C, 1);
+  var ins = (typeof homeInsights === 'function') ? homeInsights() : [];
+  var advice = ins.length ? ins.slice(0,2).map(function(x){ return x.t; }).join('　/　') : '大きな気づきはありません。組織は良好です 👍';
+  var bars = [['S','#00d4aa'],['A','#ef4444'],['B','#3b82f6'],['C','#f59e0b']].map(function(a){
+    var c = cnt[a[0]], h = Math.round(c / maxC * 92);
+    return '<div class="dh-bar"><span class="dh-bnum" style="color:' + a[1] + '">' + c + '</span><div class="dh-brect" style="height:' + Math.max(h, c>0?8:2) + 'px;background:' + a[1] + '"></div><span class="dh-blbl">' + a[0] + '</span></div>';
+  }).join('');
+  var cats = [
+    { label:'月次推移', sub:'稼働・人数の推移', emoji:'📈', target:'statsTbl' },
+    { label:'研修ファネル', sub:'マケ→BCの流れ', emoji:'🔻', target:'funnelWrap' },
+    { label:'パワーライン', sub:'LTSVランキング', emoji:'⚡', target:'plTbl' },
+    { label:'決定率', sub:'Aさん別の成約', emoji:'🎯', target:'asanFunnelWrap' }
+  ];
+  var catHtml = cats.map(function(c){
+    return '<div class="dh-cat" onclick="dataScrollTo(\'' + c.target + '\')"><span class="dh-cat-ic">' + c.emoji + '</span><div><div class="dh-cat-l">' + c.label + '</div><div class="dh-cat-s">' + c.sub + '</div></div></div>';
+  }).join('');
+  box.innerHTML = '<div class="dh-wrap">'
+    + '<div class="home-sec-label">📊 データ・分析</div>'
+    + '<div class="dh-ai"><span class="dh-ai-ic">🤖</span><div><div class="dh-ai-t">AIアドバイス</div><div class="dh-ai-b">' + evEsc(advice) + '</div></div></div>'
+    + '<div class="dh-chart"><div class="dh-chart-hd"><span>稼働分布</span><span class="dh-chart-cnt">今月 ' + mem.length + '人</span></div><div class="dh-bars">' + bars + '</div></div>'
+    + '<div class="home-sec-label" style="padding-left:0">項目を選ぶ</div>'
+    + '<div class="dh-cats">' + catHtml + '</div>'
+    + '</div>';
+}
 function renderStats() {
+  renderDataHub();
   buildAutoStats();
   var s = state.stats;
   var hlRows = ['平均稼働','UNIVERSE'];
