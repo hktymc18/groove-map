@@ -900,16 +900,16 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .home-wrap{padding:14px}
 .home-greet{font-size:18px;font-weight:700;color:var(--text)}
 .home-date{font-size:12px;color:var(--text-dim);margin-bottom:14px}
-.home-streak{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
-.home-streak-fire{font-size:32px}
+.home-streak{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(239,68,68,.07) 60%,var(--surface));border:1px solid rgba(245,158,11,.34);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 4px 20px rgba(245,158,11,.13)}
+.home-streak-fire{font-size:32px;filter:drop-shadow(0 0 9px rgba(245,158,11,.6))}
 .home-streak-num{font-size:34px;font-weight:800;color:var(--accent);font-family:'IBM Plex Mono',monospace;line-height:1}
 .home-streak-label{font-size:11px;color:var(--text-dim);margin-top:3px}
 .home-lv-top{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:5px}
-.home-lv-bar{height:10px;background:var(--surface3);border-radius:6px;overflow:hidden}
-.home-lv-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:6px;transition:width .5s}
+.home-lv-bar{height:12px;background:var(--surface3);border-radius:7px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+.home-lv-fill{height:100%;background:linear-gradient(90deg,var(--accent),#7c6aff 55%,#ec4899);border-radius:7px;transition:width .5s;box-shadow:0 0 11px rgba(124,106,255,.6)}
 .home-sec-label{font-size:13px;font-weight:700;color:var(--text);margin:18px 2px 8px;display:flex;align-items:center;justify-content:space-between}
 .mission{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
-.mission.done{border-color:var(--accent);background:var(--accent-dim)}
+.mission.done{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 14px rgba(0,212,170,.13)}
 .mission-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent}
 .mission.done .mission-check{background:var(--accent);border-color:var(--accent);color:#000}
 .mission-body{flex:1;min-width:0}
@@ -934,7 +934,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .bdg.locked{opacity:.4}
 .bdg.locked .bdg-ic{filter:grayscale(1)}
 .bdg.locked .bdg-nm{color:var(--text-dim)}
-.bdg.earned{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-dim),var(--surface))}
+.bdg.earned{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-dim),var(--surface));box-shadow:0 3px 14px rgba(0,212,170,.18)}
+.bdg.earned .bdg-ic{filter:drop-shadow(0 0 6px rgba(0,212,170,.45))}
 .badge-banner{position:fixed;inset:0;z-index:551;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);pointer-events:none}
 .badge-card{background:var(--surface);border:2px solid var(--accent);border-radius:18px;padding:24px 34px;text-align:center;box-shadow:var(--shadow);animation:luPop .4s ease}
 .home-self{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:14px;padding:14px 16px}
@@ -1068,7 +1069,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .md-dot.on{width:18px;border-radius:4px;background:var(--accent)}
 /* ── メンバー編集スワイプ（追加・編集を統一）── */
 .overlay.me-mode{align-items:stretch;background:var(--bg);backdrop-filter:none}
-.me-sheet{border-radius:0;border-top:none;padding:0;max-height:100vh;height:100vh;width:100%;overflow:hidden;display:flex;flex-direction:column;transform:translateY(0)}
+.me-sheet{border-radius:0;border-top:none;padding:0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;width:100%;overflow:hidden;display:flex;flex-direction:column;transform:translateY(0)}
 .overlay.me-mode.open .me-sheet{transform:translateY(0)}
 .me-top{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 12px) 14px 10px;border-bottom:1px solid var(--border);flex:none}
 .me-back{color:var(--accent);font-size:14px;cursor:pointer;min-width:56px}
@@ -1083,7 +1084,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .me-dots{display:flex;justify-content:center;gap:7px;padding:9px 0;flex:none}
 .me-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:width .2s}
 .me-dot.on{width:18px;border-radius:4px;background:var(--accent)}
-.me-foot{flex:none;padding:0 14px calc(env(safe-area-inset-bottom) + 14px)}
+.me-foot{flex:none;padding:0 14px max(calc(env(safe-area-inset-bottom) + 12px), 30px)}
 .me-foot .btn-d{width:100%;padding:11px 0}
 .me-ol,.me-task{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px;font-size:13px}
 .me-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:6px;border:1px dashed var(--accent);border-radius:10px;color:var(--accent);background:var(--accent-dim);font-size:13px;font-weight:600;cursor:pointer}
@@ -1241,7 +1242,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v197</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v198</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2841,7 +2842,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v197';
+  var DATA_VERSION = 'v198';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
