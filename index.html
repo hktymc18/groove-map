@@ -975,6 +975,12 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ck-btn.task{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
 .ck-btn:active{background:var(--surface3)}
 .ck-more{font-size:12px;color:var(--text-dim);text-align:center;padding:6px;cursor:pointer;text-decoration:underline;margin-bottom:6px}
+/* ── ホーム大アイコンメニュー ── */
+.home-menu{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.hm-tile{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 11px;cursor:pointer;transition:background .12s}
+.hm-tile:active{background:var(--surface2)}
+.hm-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;line-height:1}
+.hm-label{font-size:13px;font-weight:600;color:var(--text)}
 /* ── 今日のタスク（ホーム②） ── */
 .ht-item{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
 .ht-item.overdue{border-left:3px solid var(--red,#ef4444)}
@@ -1090,7 +1096,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v188</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v189</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2676,7 +2682,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v188';
+  var DATA_VERSION = 'v189';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3424,6 +3430,25 @@ function renderMonthlyChanges() {
     box.innerHTML = html;
   }).catch(function() { box.innerHTML = '<div class="ck-empty">前月データの読み込みに失敗しました</div>'; });
 }
+// ── ホームの大アイコンメニュー（モバイルUIリニューアル ①）──
+function homeAddMember() { switchView('current'); setTimeout(function(){ if (typeof onFabClick === 'function') onFabClick(); }, 160); }
+function homeMenuHtml() {
+  var items = [
+    { label:'現状MAP',     emoji:'🗺',  color:'#00d4aa', act:"switchView('current')" },
+    { label:'理想MAP',     emoji:'🎯',  color:'#3b82f6', act:"switchView('ideal')" },
+    { label:'OL',          emoji:'📋',  color:'#7c6aff', act:"switchView('ol')" },
+    { label:'予定',        emoji:'📅',  color:'#f59e0b', act:"switchView('events')" },
+    { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" },
+    { label:'メンバー追加', emoji:'➕',  color:'#f97316', act:"homeAddMember()" }
+  ];
+  var html = '<div class="home-sec-label">📂 メニュー</div><div class="home-menu">';
+  html += items.map(function(it){
+    return '<div class="hm-tile" style="border-color:' + it.color + '55" onclick="' + it.act + '">'
+      + '<span class="hm-ic" style="background:' + it.color + '">' + it.emoji + '</span>'
+      + '<span class="hm-label">' + it.label + '</span></div>';
+  }).join('');
+  return html + '</div>';
+}
 function gameGreeting() {
   var h = new Date().getHours();
   if (h < 5) return 'おつかれさま';
@@ -3484,6 +3509,7 @@ function renderHome() {
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
     + cockpitHtml()
     + homeTasksHtml()
+    + homeMenuHtml()
     + insightsHtml()
     + '<div class="home-sec-label">📊 先月からの変化</div>'
     + '<div id="homeChanges" class="home-changes"><div class="ck-empty" style="color:var(--text-dim)">読み込み中…</div></div>'
