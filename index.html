@@ -64,6 +64,16 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 .tab{flex:1;padding:7px 0;text-align:center;font-size:12px;font-weight:600;border-radius:var(--rxs);border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;white-space:nowrap}
 .tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
 .back-home-bar{align-items:center;gap:8px;padding:9px 16px;font-size:13px;font-weight:600;color:var(--accent);background:var(--card);border-bottom:1px solid var(--border);cursor:pointer;position:sticky;top:0;z-index:40}
+/* PC左サイドバー */
+.pc-sidebar{display:none;position:fixed;left:0;top:0;bottom:0;width:60px;background:#0a0c11;border-right:1px solid var(--border);flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 12px) 0 14px;gap:8px;z-index:60}
+@media(min-width:768px){.pc-sidebar{display:flex}body{padding-left:60px}}
+.pcs-logo{font-weight:800;color:var(--accent);font-size:13px;letter-spacing:.5px;margin-bottom:8px;cursor:pointer}
+.pcs-item{cursor:pointer;padding:3px;border-radius:13px;transition:background .12s}
+.pcs-item:hover{background:var(--surface)}
+.pcs-item.active{background:var(--surface2)}
+.pcs-ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;transition:filter .15s}
+.pcs-item:not(.active) .pcs-ic{filter:saturate(.8) brightness(.94)}
+.pcs-spacer{flex:1}
 .back-home-bar .bhb-sec{color:var(--text-dim);font-weight:500}
 .tab.purple.active{background:var(--purple);border-color:var(--purple)}
 
@@ -115,17 +125,18 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 /* ── PC ツールバー（統合版） ── */
 .pc-toolbar{display:none;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--header-bg);flex-wrap:wrap;position:sticky;top:0;z-index:20}
 @media(min-width:768px){.pc-toolbar{display:flex}}
-.pc-toolbar .pt-ltsv{display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;padding:4px 12px;border-radius:8px;background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.2)}
+.pc-toolbar .pt-ltsv{display:flex;align-items:center;gap:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;padding:6px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(0,212,170,.16),var(--surface));border:1px solid rgba(0,212,170,.32);box-shadow:0 3px 14px rgba(0,212,170,.12)}
 .pc-toolbar .pt-ltsv-val{font-size:18px;font-weight:700;color:var(--accent)}
 .pc-toolbar .pt-ltsv-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
 .pc-toolbar .pt-act{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-mid)}
 .pc-toolbar .pt-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
-.pv-btn{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:all .15s;font-family:'IBM Plex Mono',monospace}
-.pv-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.pv-btn{padding:6px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;background:var(--surface2);color:var(--text-dim);transition:all .15s}
+.pv-btn:hover{color:var(--text)}
+.pv-btn.active{background:var(--accent);color:#000;border-color:var(--accent);box-shadow:0 2px 10px rgba(0,212,170,.3)}
 .pc-toolbar .pt-search{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0 12px;height:32px;min-width:180px;cursor:pointer;flex:1;max-width:300px}
 .pc-toolbar .pt-search span{font-size:13px;color:var(--text-dim)}
-.pc-toolbar .pt-action{padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text-dim);background:transparent;transition:all .15s;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
-.pc-toolbar .pt-action:hover{background:var(--surface2);color:var(--text)}
+.pc-toolbar .pt-action{padding:6px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;color:var(--text-dim);background:var(--surface2);transition:all .15s;white-space:nowrap}
+.pc-toolbar .pt-action:hover{background:var(--surface3);color:var(--text)}
 
 /* 旧PC切替ボタン（非表示） */
 .pc-view-toggle{display:none}
@@ -1085,6 +1096,14 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .me-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:width .2s}
 .me-dot.on{width:18px;border-radius:4px;background:var(--accent)}
 .me-foot{flex:none;padding:0 14px max(calc(env(safe-area-inset-bottom) + 12px), 30px)}
+/* PC：編集は右にドッキングするスライドパネル（組織図を見ながら編集）*/
+@media(min-width:768px){
+  .overlay.me-mode{align-items:stretch;justify-content:flex-end;background:transparent;backdrop-filter:none;pointer-events:none}
+  .overlay.me-mode .me-sheet{width:400px;max-width:400px;height:100vh;height:100dvh;max-height:none;border-radius:0;border-left:1px solid var(--border);box-shadow:-14px 0 48px rgba(0,0,0,.48);transform:translateX(100%);transition:transform .26s ease;pointer-events:auto}
+  .overlay.me-mode.open .me-sheet{transform:translateX(0)}
+  .me-top{padding-top:16px}
+  .me-foot{padding-bottom:16px}
+}
 .me-foot .btn-d{width:100%;padding:11px 0}
 .me-ol,.me-task{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px;font-size:13px}
 .me-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:6px;border:1px dashed var(--accent);border-radius:10px;color:var(--accent);background:var(--accent-dim);font-size:13px;font-weight:600;cursor:pointer}
@@ -1232,6 +1251,19 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
+<!-- PC左サイドバー（≥768px） -->
+<aside class="pc-sidebar" id="pcSidebar">
+  <div class="pcs-logo" onclick="switchView('home')" title="今日">MAP</div>
+  <div class="pcs-item" data-view="current" onclick="switchView('current')" title="組織MAP"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#00d4aa;box-shadow:0 3px 12px rgba(0,212,170,.55)">🗺</span></div>
+  <div class="pcs-item" data-view="members" onclick="switchView('members')" title="メンバー"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#3b82f6;box-shadow:0 3px 12px rgba(59,130,246,.5)">👥</span></div>
+  <div class="pcs-item" data-view="ol" onclick="switchView('ol')" title="OL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#7c6aff;box-shadow:0 3px 12px rgba(124,106,255,.5)">📋</span></div>
+  <div class="pcs-item" data-view="events" onclick="switchView('events')" title="予定"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#f59e0b;box-shadow:0 3px 12px rgba(245,158,11,.5)">📅</span></div>
+  <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#10b981;box-shadow:0 3px 12px rgba(16,185,129,.5)">📊</span></div>
+  <div class="pcs-item" data-view="ideal" onclick="switchView('ideal')" title="理想"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#ec4899;box-shadow:0 3px 12px rgba(236,72,153,.5)">🎯</span></div>
+  <div class="pcs-spacer"></div>
+  <div class="pcs-item" onclick="homeAddMember()" title="メンバー追加"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#f97316;box-shadow:0 3px 12px rgba(249,115,22,.55)">➕</span></div>
+</aside>
+
 <header>
   <div class="hdr-top">
     <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer;flex-shrink:0;max-width:100%;overflow:hidden" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">MAP</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%"></div></div>
@@ -1242,7 +1274,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v198</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v200</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2842,7 +2874,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v198';
+  var DATA_VERSION = 'v200';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2960,11 +2992,15 @@ function switchView(v) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
-  // ホーム以外の全ビューで「メニューへ戻る」バーを表示
+  // PC左サイドバーのactive切り替え
+  Array.prototype.slice.call(document.querySelectorAll('.pcs-item')).forEach(function(it) {
+    it.classList.toggle('active', it.getAttribute('data-view') === v);
+  });
+  // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
   if (bh) {
     var names = { current:'組織MAP', members:'メンバー', ideal:'理想', stats:'データ', ol:'OL', events:'予定' };
-    if (v !== 'home' && names[v]) { bh.innerHTML = '‹ メニューにもどる<span class="bhb-sec">・' + names[v] + '</span>'; bh.style.display = 'flex'; }
+    if (v !== 'home' && names[v] && !isPCMode()) { bh.innerHTML = '‹ メニューにもどる<span class="bhb-sec">・' + names[v] + '</span>'; bh.style.display = 'flex'; }
     else bh.style.display = 'none';
   }
   updateFabVisibility();
