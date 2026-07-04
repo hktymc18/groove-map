@@ -1003,6 +1003,29 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ml-dot.low{background:#6b7280}
 .ml-dot.none{background:transparent;border:1px solid var(--border2)}
 .ml-chev{color:var(--text-dim);font-size:20px;flex:none}
+/* ── メンバー アクションシート ③ ── */
+.ms-overlay{position:fixed;inset:0;z-index:520;background:rgba(0,0,0,0);display:flex;align-items:flex-end;transition:background .2s}
+.ms-overlay.show{background:rgba(0,0,0,.5)}
+.ms-sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border2);padding:8px 16px calc(env(safe-area-inset-bottom) + 22px);transform:translateY(100%);transition:transform .25s ease}
+.ms-overlay.show .ms-sheet{transform:translateY(0)}
+.ms-grip{width:38px;height:4px;border-radius:2px;background:var(--border2);margin:6px auto 14px}
+.ms-hd{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.ms-avatar{width:46px;height:46px;border-radius:12px;background:var(--surface3);color:var(--text-mid);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex:none}
+.ms-hinfo{flex:1;min-width:0}
+.ms-name{font-size:16px;font-weight:700;color:var(--text)}
+.ms-badges{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.msb{font-size:10px;color:var(--text-mid);background:var(--surface2);border-radius:5px;padding:1px 6px}
+.msb.hi{color:#ef4444;background:rgba(239,68,68,.13)}
+.ms-x{width:28px;height:28px;border-radius:8px;background:var(--surface2);color:var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;cursor:pointer}
+.ms-plabel{font-size:11px;color:var(--text-dim);margin-bottom:7px}
+.ms-prio{display:flex;gap:6px;margin-bottom:16px}
+.ms-pchip{flex:1;text-align:center;font-size:13px;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 0;cursor:pointer}
+.ms-pchip.on{color:#000;background:var(--accent);border-color:var(--accent);font-weight:600}
+.ms-list{display:flex;flex-direction:column}
+.ms-act{display:flex;align-items:center;gap:12px;padding:15px 4px;border-top:1px solid var(--border);font-size:14px;color:var(--text);cursor:pointer}
+.ms-act:active{background:var(--surface2)}
+.ms-aic{font-size:18px;width:24px;text-align:center}
+.ms-ch{margin-left:auto;color:var(--text-dim);font-size:18px}
 /* ── 今日のタスク（ホーム②） ── */
 .ht-item{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
 .ht-item.overdue{border-left:3px solid var(--red,#ef4444)}
@@ -1118,7 +1141,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v190</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v191</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -2707,7 +2730,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v190';
+  var DATA_VERSION = 'v191';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3513,7 +3536,7 @@ function renderMembers() {
     var pr = memberPriorityRank(m);
     var dotCls = pr === 3 ? 'high' : (pr === 2 ? 'mid' : (pr === 1 ? 'low' : 'none'));
     var accent = pr === 3 ? '#ef4444' : (memberCat(m) === '研修生' ? '#f59e0b' : (m.goldShip ? '#7c6aff' : '#3b82f6'));
-    return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openEdit(\'' + m.id + '\')">'
+    return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openMemberActions(\'' + m.id + '\')">'
       + '<span class="ml-avatar">' + evEsc(ini) + '</span>'
       + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span></div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
       + '<span class="ml-dot ' + dotCls + '"></span>'
@@ -3521,6 +3544,53 @@ function renderMembers() {
       + '</div>';
   }).join('') + '</div>';
   wrap.innerHTML = html;
+}
+// ── メンバー アクションシート（ボトムシート）③──
+var _msheetEl = null;
+function closeMemberActions() {
+  if (_msheetEl && _msheetEl.parentNode) _msheetEl.parentNode.removeChild(_msheetEl);
+  _msheetEl = null;
+}
+function setMemberPriority(mid, p) {
+  var m = null; for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid){ m=state.members[i]; break; } }
+  if (!m) return;
+  m.priority = p; autoSave();
+  if (currentView === 'members') renderMembers();
+  if (currentView === 'home') renderHome();
+  if (_msheetEl) {
+    var vals = ['高','中','低',''];
+    Array.prototype.forEach.call(_msheetEl.querySelectorAll('.ms-pchip'), function(c, i){ c.classList.toggle('on', vals[i] === p); });
+  }
+  toast(p ? ('優先度: ' + p) : '優先度をクリア');
+}
+function openMemberActions(mid) {
+  if (/^MG_/.test(mid)) return;
+  var m = null; for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid){ m=state.members[i]; break; } }
+  if (!m) return;
+  closeMemberActions();
+  var group = (typeof ckGroup === 'function') ? ckGroup(m) : '';
+  var nm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
+  var ini = (m.lastName || m.firstName || '？').charAt(0);
+  var actStr = m.activity ? ('稼働 ' + (m.activity === 'S' ? 'S' : (m.activity + (m.actRate ? m.actRate + '%' : '')))) : '';
+  var badges = '<span class="msb">' + evEsc(m.title||'-') + '</span>' + (actStr ? '<span class="msb">' + evEsc(actStr) + '</span>' : '') + (m.priority ? '<span class="msb hi">優先度 ' + evEsc(m.priority) + '</span>' : '');
+  var prioChips = ['高','中','低',''].map(function(p){ return '<span class="ms-pchip' + ((m.priority||'')===p?' on':'') + '" onclick="setMemberPriority(\'' + mid + '\',\'' + p + '\')">' + (p||'なし') + '</span>'; }).join('');
+  var rows = '';
+  if (group === 'trainee') rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'trainee\')"><span class="ms-aic">📝</span>研修ステップを記録<span class="ms-ch">›</span></div>';
+  if (group === 'fresh')   rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'fresh\')"><span class="ms-aic">📋</span>OLを記録<span class="ms-ch">›</span></div>';
+  rows += '<div class="ms-act" onclick="closeMemberActions();ckAddTask(\'' + mid + '\')"><span class="ms-aic">➕</span>タスクを追加<span class="ms-ch">›</span></div>';
+  rows += '<div class="ms-act" onclick="closeMemberActions();openEdit(\'' + mid + '\')"><span class="ms-aic">📄</span>詳細・編集<span class="ms-ch">›</span></div>';
+  var ov = document.createElement('div');
+  ov.className = 'ms-overlay';
+  ov.onclick = function(e){ if (e.target === ov) closeMemberActions(); };
+  ov.innerHTML = '<div class="ms-sheet">'
+    + '<div class="ms-grip"></div>'
+    + '<div class="ms-hd"><span class="ms-avatar">' + evEsc(ini) + '</span><div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + '</div><div class="ms-badges">' + badges + '</div></div><span class="ms-x" onclick="closeMemberActions()">✕</span></div>'
+    + '<div class="ms-plabel">優先度（フォロー注力度）</div><div class="ms-prio">' + prioChips + '</div>'
+    + '<div class="ms-list">' + rows + '</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  _msheetEl = ov;
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
 function gameGreeting() {
   var h = new Date().getHours();
