@@ -1065,6 +1065,27 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .md-dots{display:flex;justify-content:center;gap:7px;padding:12px 0 calc(env(safe-area-inset-bottom) + 14px);flex:none}
 .md-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:width .2s}
 .md-dot.on{width:18px;border-radius:4px;background:var(--accent)}
+/* ── メンバー編集スワイプ（追加・編集を統一）── */
+.overlay.me-mode{align-items:stretch;background:var(--bg);backdrop-filter:none}
+.me-sheet{border-radius:0;border-top:none;padding:0;max-height:100vh;height:100vh;width:100%;overflow:hidden;display:flex;flex-direction:column;transform:translateY(0)}
+.overlay.me-mode.open .me-sheet{transform:translateY(0)}
+.me-top{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 12px) 14px 10px;border-bottom:1px solid var(--border);flex:none}
+.me-back{color:var(--accent);font-size:14px;cursor:pointer;min-width:56px}
+.me-title{font-size:16px;font-weight:700;color:var(--text);flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-save{color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;min-width:56px;text-align:right}
+.me-tabs{display:flex;gap:5px;padding:10px 12px 8px;flex:none}
+.me-tab{flex:1;text-align:center;font-size:12px;color:var(--text-dim);background:var(--surface2);border-radius:8px;padding:8px 0;cursor:pointer}
+.me-tab.on{color:#000;background:var(--accent);font-weight:600}
+.me-vp{flex:1;overflow:hidden;min-height:0}
+.me-track{display:flex;width:500%;height:100%;transition:transform .25s ease}
+.me-page{width:20%;flex:none;overflow-y:auto;padding:10px 14px 24px;-webkit-overflow-scrolling:touch}
+.me-dots{display:flex;justify-content:center;gap:7px;padding:9px 0;flex:none}
+.me-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:width .2s}
+.me-dot.on{width:18px;border-radius:4px;background:var(--accent)}
+.me-foot{flex:none;padding:0 14px calc(env(safe-area-inset-bottom) + 14px)}
+.me-foot .btn-d{width:100%;padding:11px 0}
+.me-ol,.me-task{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px;font-size:13px}
+.me-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:6px;border:1px dashed var(--accent);border-radius:10px;color:var(--accent);background:var(--accent-dim);font-size:13px;font-weight:600;cursor:pointer}
 /* ── データハブ ⑤ ── */
 .dh-wrap{padding:10px 14px 0}
 .dh-ai{display:flex;gap:11px;align-items:flex-start;background:var(--surface);border:1px solid #2b3a52;border-radius:14px;padding:13px;margin-bottom:14px}
@@ -1201,7 +1222,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v194</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v195</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
   <div class="tab-bar">
     <button class="tab" data-view="home" onclick="switchView('home')">🏠 今日<span class="tab-badge" id="homeBadge" style="display:none">0</span></button>
@@ -1543,168 +1564,168 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 </div>
 
 <!-- MODAL -->
-<div class="overlay" id="modal" onclick="onOverlayClick(event)">
-  <div class="sheet">
-    <div class="sh-title" id="shTitle">メンバー追加</div>
-    <div id="parentLabel" style="display:none;margin-bottom:12px;padding:8px 12px;background:var(--accent-dim);border:1px solid rgba(0,212,170,.3);border-radius:var(--rsm);font-size:12px;color:var(--accent)"></div>
-
-    <!-- ▼ 月次情報（常時展開・上部配置）毎月触る -->
-    <div class="modal-section" id="msMonthly">
-      <div class="modal-section-hdr" onclick="toggleModalSection('msMonthly')">
-        <span class="ms-label">📊 月次情報</span><span class="ms-arrow">▼</span>
-      </div>
-      <div class="modal-section-body" style="max-height:400px">
-        <div class="fr-row">
-          <div class="fr"><label class="fl">現状GSV</label><input class="fi" id="fPtC" type="number" placeholder="1712"></div>
-          <div class="fr"><label class="fl">固定で上がるポイント</label><input class="fi" id="fPtF" type="number" placeholder="500"></div>
-        </div>
-        <div class="fr-row">
-          <div class="fr">
-            <label class="fl">稼働タイプ</label>
-            <select class="fs" id="fAct">
-              <option value="">-</option>
-              <option value="S">S（120%）</option>
-              <option value="A">A（辞める確定）</option>
-              <option value="B">B（仕事以外来る）</option>
-              <option value="C">C（来れるけど来ない）</option>
-            </select>
-          </div>
-          <div class="fr">
-            <label class="fl">やる気レベル</label>
-            <select class="fs" id="fMorale">
-              <option value="1" selected>🌱 パヤパヤ</option>
-              <option value="2">💪 やる気</option>
-              <option value="3">🔥 死ぬ気</option>
-            </select>
-          </div>
-        </div>
-        <div class="fr-row">
-          <div class="fr">
-            <label class="fl">稼働率（%）※S以外に入力</label>
-            <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
-          </div>
-          <div class="fr">
-            <label class="fl">優先度（フォロー注力度）</label>
-            <select class="fs" id="fPriority">
-              <option value="">なし</option>
-              <option value="高">🔴 高</option>
-              <option value="中">🟡 中</option>
-              <option value="低">⚪️ 低</option>
-            </select>
-          </div>
-        </div>
-        <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="OLもらってモチベアップ&#10;9/4 FTのノウハウOL鈴木さん依頼済"></textarea></div>
-        <div class="ev-member-add" id="memberTaskBtn" onclick="openTaskForMember()" style="display:none">＋ このメンバーにタスク追加</div>
-      </div>
+<div class="overlay me-mode" id="modal" onclick="onOverlayClick(event)">
+  <div class="sheet me-sheet">
+    <div class="me-top">
+      <span class="me-back" onclick="closeModal()">‹ 戻る</span>
+      <span class="me-title" id="shTitle">メンバー編集</span>
+      <span class="me-save" onclick="saveMember()">保存</span>
     </div>
-
-    <!-- ▼ 基本情報（編集時は折りたたみ）初回入力後ほぼ触らない -->
-    <div class="modal-section" id="msBasic">
-      <div class="modal-section-hdr" onclick="toggleModalSection('msBasic')">
-        <span class="ms-label">👤 基本情報</span><span class="ms-arrow">▼</span>
-      </div>
-      <div class="modal-section-body" style="max-height:600px">
-        <div class="fr-row">
-          <div class="fr"><label class="fl">姓</label><input class="fi" id="fLast" placeholder="田中"></div>
-          <div class="fr"><label class="fl">名</label><input class="fi" id="fFirst" placeholder="太郎"></div>
-        </div>
-        <div class="fr">
-          <label class="fl">性別</label>
-          <div class="rg">
-            <div class="rb sel" id="rbMale" onclick="selGender('male')">♂ 男性</div>
-            <div class="rb" id="rbFemale" onclick="selGender('female')">♀ 女性</div>
-          </div>
-        </div>
-        <div class="fr">
-          <label class="fl">カテゴリ</label>
-          <div class="rg">
-            <div class="rb" id="rbCatTrainee" onclick="selCategory('研修生')">研修生</div>
-            <div class="rb" id="rbCatBA" onclick="selCategory('BA')">BA</div>
-            <div class="rb" id="rbCatBR" onclick="selCategory('BR')">BR</div>
-          </div>
-        </div>
-        <div class="fr">
-          <label class="fl">タイトル</label>
-          <select class="fs" id="fTitle" onchange="onTitleChange()">
-            <option value="">カテゴリを選択してください</option>
-          </select>
-        </div>
-        <div class="fr" style="display:none">
-          <label class="fl">研修生</label>
-          <div class="rg">
-            <div class="rb sel" id="rbTraNo" onclick="selTrainee(false)">いいえ</div>
-            <div class="rb" id="rbTraYes" onclick="selTrainee(true)">研修生（水色）</div>
-          </div>
-        </div>
-        <div class="fr">
-          <label class="fl">適用MAP</label>
-          <div class="rg">
-            <div class="rb sel" id="rbMapC" onclick="selMapType('current')">現状</div>
-            <div class="rb" id="rbMapI" onclick="selMapType('ideal')">理想</div>
-            <div class="rb" id="rbMapB" onclick="selMapType('both')">両方</div>
-          </div>
-        </div>
-        <div class="fr">
-          <label class="fl">金の船（重要メンバー）</label>
-          <div class="rg">
-            <div class="rb sel" id="rbGoldNo" onclick="selGoldShip(false)">通常</div>
-            <div class="rb" id="rbGoldYes" onclick="selGoldShip(true)">⛴ 金の船</div>
-          </div>
-        </div>
-        <div class="fr"><label class="fl">Instagram URL</label><input class="fi" id="fInsta" placeholder="https://instagram.com/username"></div>
-      </div>
+    <div id="parentLabel" style="display:none;margin:10px 14px 0;padding:8px 12px;background:var(--accent-dim);border:1px solid rgba(0,212,170,.3);border-radius:var(--rsm);font-size:12px;color:var(--accent)"></div>
+    <div class="me-tabs">
+      <span class="me-tab on" onclick="meGo(0)">月次</span>
+      <span class="me-tab" onclick="meGo(1)">基本</span>
+      <span class="me-tab" onclick="meGo(2)">研修</span>
+      <span class="me-tab" onclick="meGo(3)">OL</span>
+      <span class="me-tab" onclick="meGo(4)">タスク</span>
     </div>
+    <div class="me-vp" id="meVp">
+      <div class="me-track" id="meTrack">
 
-    <!-- ▼ 研修情報（研修生のみ表示） -->
-    <div id="traineeStatusFields" style="display:none">
-      <div class="modal-section" id="msTrainee">
-        <div class="modal-section-hdr" onclick="toggleModalSection('msTrainee')">
-          <span class="ms-label">📋 研修情報</span><span class="ms-arrow">▼</span>
-        </div>
-        <div class="modal-section-body" style="max-height:800px">
-          <!-- 研修結果 -->
-          <div class="fr">
-            <label class="fl">研修結果</label>
-            <div style="display:flex;gap:6px">
-              <div class="result-chip" id="rcNone" onclick="selTraineeResultChip('')">⏳ 進行中</div>
-              <div class="result-chip" id="rcBC" onclick="selTraineeResultChip('BC')">✅ BC</div>
-              <div class="result-chip" id="rcUser" onclick="selTraineeResultChip('ユーザー')">△ ユーザー</div>
-              <div class="result-chip" id="rcNG" onclick="selTraineeResultChip('流れた')">✗ 流れた</div>
+        <!-- Page 0: 月次 -->
+        <div class="me-page">
+          <div class="fr-row">
+            <div class="fr"><label class="fl">現状GSV</label><input class="fi" id="fPtC" type="number" placeholder="1712"></div>
+            <div class="fr"><label class="fl">固定で上がるポイント</label><input class="fi" id="fPtF" type="number" placeholder="500"></div>
+          </div>
+          <div class="fr-row">
+            <div class="fr">
+              <label class="fl">稼働タイプ</label>
+              <select class="fs" id="fAct">
+                <option value="">-</option>
+                <option value="S">S（120%）</option>
+                <option value="A">A（辞める確定）</option>
+                <option value="B">B（仕事以外来る）</option>
+                <option value="C">C（来れるけど来ない）</option>
+              </select>
             </div>
-            <input type="hidden" id="fTraineeResult" value="">
-            <div id="bcCatNote" style="display:none;margin-top:8px;font-size:12px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;line-height:1.5">🎉 BC獲得！「👤 基本情報」のカテゴリを <b>BA</b> に変更しましょう</div>
-          </div>
-
-          <!-- 研修履歴タイムライン -->
-          <div class="fr">
-            <label class="fl" style="margin-bottom:8px">研修履歴</label>
-            <div id="traineeHistoryWrap" style="margin-bottom:12px"></div>
-          </div>
-
-          <!-- ステップ追加UI -->
-          <div class="fr">
-            <label class="fl" style="margin-bottom:6px">ステップを追加</label>
-            <!-- ステップフロー（プログレス表示） -->
-            <div class="step-flow" id="stepFlow">
-              <div class="step-flow-item"><div class="step-btn" onclick="selectStep('マケ')">マケ</div></div>
-              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('PG')">PG</div></div>
-              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('DLR')">DLR</div></div>
-              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('EXP')">EXP</div></div>
-              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('PA')">PA</div></div>
-              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('面談')">面談</div></div>
-              <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('CO')">CO</div></div>
+            <div class="fr">
+              <label class="fl">やる気レベル</label>
+              <select class="fs" id="fMorale">
+                <option value="1" selected>🌱 パヤパヤ</option>
+                <option value="2">💪 やる気</option>
+                <option value="3">🔥 死ぬ気</option>
+              </select>
             </div>
-            <!-- 選択後の詳細入力パネル -->
-            <div id="stepDetailPanel" style="display:none"></div>
+          </div>
+          <div class="fr-row">
+            <div class="fr">
+              <label class="fl">稼働率（%）※S以外に入力</label>
+              <input class="fi" id="fActRate" type="number" placeholder="80" min="0" max="100">
+            </div>
+            <div class="fr">
+              <label class="fl">優先度（フォロー注力度）</label>
+              <select class="fs" id="fPriority">
+                <option value="">なし</option>
+                <option value="高">🔴 高</option>
+                <option value="中">🟡 中</option>
+                <option value="低">⚪️ 低</option>
+              </select>
+            </div>
+          </div>
+          <div class="fr"><label class="fl">メモ（予定・心境・タスクなど）</label><textarea class="fta" id="fMemo" placeholder="OLもらってモチベアップ&#10;9/4 FTのノウハウOL鈴木さん依頼済"></textarea></div>
+        </div>
+
+        <!-- Page 1: 基本 -->
+        <div class="me-page">
+          <div class="fr-row">
+            <div class="fr"><label class="fl">姓</label><input class="fi" id="fLast" placeholder="田中"></div>
+            <div class="fr"><label class="fl">名</label><input class="fi" id="fFirst" placeholder="太郎"></div>
+          </div>
+          <div class="fr">
+            <label class="fl">性別</label>
+            <div class="rg">
+              <div class="rb sel" id="rbMale" onclick="selGender('male')">♂ 男性</div>
+              <div class="rb" id="rbFemale" onclick="selGender('female')">♀ 女性</div>
+            </div>
+          </div>
+          <div class="fr">
+            <label class="fl">カテゴリ</label>
+            <div class="rg">
+              <div class="rb" id="rbCatTrainee" onclick="selCategory('研修生')">研修生</div>
+              <div class="rb" id="rbCatBA" onclick="selCategory('BA')">BA</div>
+              <div class="rb" id="rbCatBR" onclick="selCategory('BR')">BR</div>
+            </div>
+          </div>
+          <div class="fr">
+            <label class="fl">タイトル</label>
+            <select class="fs" id="fTitle" onchange="onTitleChange()">
+              <option value="">カテゴリを選択してください</option>
+            </select>
+          </div>
+          <div class="fr" style="display:none">
+            <label class="fl">研修生</label>
+            <div class="rg">
+              <div class="rb sel" id="rbTraNo" onclick="selTrainee(false)">いいえ</div>
+              <div class="rb" id="rbTraYes" onclick="selTrainee(true)">研修生（水色）</div>
+            </div>
+          </div>
+          <div class="fr">
+            <label class="fl">適用MAP</label>
+            <div class="rg">
+              <div class="rb sel" id="rbMapC" onclick="selMapType('current')">現状</div>
+              <div class="rb" id="rbMapI" onclick="selMapType('ideal')">理想</div>
+              <div class="rb" id="rbMapB" onclick="selMapType('both')">両方</div>
+            </div>
+          </div>
+          <div class="fr">
+            <label class="fl">金の船（重要メンバー）</label>
+            <div class="rg">
+              <div class="rb sel" id="rbGoldNo" onclick="selGoldShip(false)">通常</div>
+              <div class="rb" id="rbGoldYes" onclick="selGoldShip(true)">⛴ 金の船</div>
+            </div>
+          </div>
+          <div class="fr"><label class="fl">Instagram URL</label><input class="fi" id="fInsta" placeholder="https://instagram.com/username"></div>
+        </div>
+
+        <!-- Page 2: 研修 -->
+        <div class="me-page">
+          <div id="meTrainEmpty" class="md-empty" style="display:none">このメンバーは研修生ではありません。<br>「基本」タブでカテゴリを「研修生」にすると<br>研修ステップを記録できます。</div>
+          <div id="traineeStatusFields" style="display:none">
+            <div class="fr">
+              <label class="fl">研修結果</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <div class="result-chip" id="rcNone" onclick="selTraineeResultChip('')">⏳ 進行中</div>
+                <div class="result-chip" id="rcBC" onclick="selTraineeResultChip('BC')">✅ BC</div>
+                <div class="result-chip" id="rcUser" onclick="selTraineeResultChip('ユーザー')">△ ユーザー</div>
+                <div class="result-chip" id="rcNG" onclick="selTraineeResultChip('流れた')">✗ 流れた</div>
+              </div>
+              <input type="hidden" id="fTraineeResult" value="">
+              <div id="bcCatNote" style="display:none;margin-top:8px;font-size:12px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;line-height:1.5">🎉 BC獲得！「基本」タブのカテゴリを <b>BA</b> に変更しましょう</div>
+            </div>
+            <div class="fr">
+              <label class="fl" style="margin-bottom:8px">研修履歴</label>
+              <div id="traineeHistoryWrap" style="margin-bottom:12px"></div>
+            </div>
+            <div class="fr">
+              <label class="fl" style="margin-bottom:6px">ステップを追加</label>
+              <div class="step-flow" id="stepFlow">
+                <div class="step-flow-item"><div class="step-btn" onclick="selectStep('マケ')">マケ</div></div>
+                <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('PG')">PG</div></div>
+                <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('DLR')">DLR</div></div>
+                <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('EXP')">EXP</div></div>
+                <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('PA')">PA</div></div>
+                <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('面談')">面談</div></div>
+                <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('CO')">CO</div></div>
+              </div>
+              <div id="stepDetailPanel" style="display:none"></div>
+            </div>
           </div>
         </div>
+
+        <!-- Page 3: OL -->
+        <div class="me-page" id="mePageOL"></div>
+
+        <!-- Page 4: タスク -->
+        <div class="me-page" id="mePageTask"></div>
+
       </div>
     </div>
-
-    <div class="btn-row">
-      <button class="btn-c" onclick="closeModal()">キャンセル</button>
-      <button class="btn-d" id="btnDel" onclick="deleteMember()" style="display:none">削除</button>
-      <button class="btn-p" onclick="saveMember()">保存</button>
+    <div class="me-dots">
+      <span class="me-dot on"></span><span class="me-dot"></span><span class="me-dot"></span><span class="me-dot"></span><span class="me-dot"></span>
+    </div>
+    <div class="me-foot">
+      <button class="btn-d" id="btnDel" onclick="deleteMember()" style="display:none">🗑 このメンバーを削除</button>
     </div>
   </div>
 </div>
@@ -2793,7 +2814,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v194';
+  var DATA_VERSION = 'v195';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3381,10 +3402,7 @@ function ckRecord(mid, group) {
   if (group === 'trainee') {
     openEdit(mid);
     setTimeout(function() {
-      var mst = document.getElementById('msTrainee');
-      if (mst) mst.classList.remove('collapsed');
-      var tsf = document.getElementById('traineeStatusFields');
-      if (tsf && tsf.scrollIntoView) tsf.scrollIntoView({ behavior:'smooth', block:'start' });
+      if (typeof meGo === 'function') meGo(2); // 研修タブへ
     }, 160);
   } else if (group === 'fresh') {
     switchView('ol');
@@ -3649,7 +3667,7 @@ function openMemberActions(mid) {
   if (group === 'trainee') rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'trainee\')"><span class="ms-aic">📝</span>研修ステップを記録<span class="ms-ch">›</span></div>';
   if (group === 'fresh')   rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'fresh\')"><span class="ms-aic">📋</span>OLを記録<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMemberActions();ckAddTask(\'' + mid + '\')"><span class="ms-aic">➕</span>タスクを追加<span class="ms-ch">›</span></div>';
-  rows += '<div class="ms-act" onclick="openMemberDetail(\'' + mid + '\')"><span class="ms-aic">📄</span>詳細・データを見る<span class="ms-ch">›</span></div>';
+  rows += '<div class="ms-act" onclick="closeMemberActions();openEdit(\'' + mid + '\')"><span class="ms-aic">📄</span>詳細・編集<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
   ov.className = 'ms-overlay';
   ov.onclick = function(e){ if (e.target === ov) closeMemberActions(); };
@@ -6482,6 +6500,61 @@ function closeFabMenu() {
   document.removeEventListener('click', closeFabMenu);
 }
 
+// ── メンバー編集スワイプ制御（追加・編集で共用）──
+var _mePage = 0, _meX0 = 0, _meY0 = 0;
+function meGo(i) {
+  if (i < 0) i = 0; if (i > 4) i = 4;
+  _mePage = i;
+  var tr = document.getElementById('meTrack');
+  if (tr) tr.style.transform = 'translateX(-' + (i * 20) + '%)';
+  Array.prototype.forEach.call(document.querySelectorAll('#modal .me-tab'), function(x, k){ x.classList.toggle('on', k === i); });
+  Array.prototype.forEach.call(document.querySelectorAll('#modal .me-dot'), function(x, k){ x.classList.toggle('on', k === i); });
+  var pgs = document.querySelectorAll('#modal .me-page');
+  if (pgs[i]) pgs[i].scrollTop = 0;
+}
+function meBindSwipe() {
+  var vp = document.getElementById('meVp');
+  if (!vp || vp._meBound) return;
+  vp._meBound = true;
+  vp.addEventListener('touchstart', function(e){ _meX0 = e.touches[0].clientX; _meY0 = e.touches[0].clientY; }, { passive: true });
+  vp.addEventListener('touchend', function(e){
+    var t = (e.target && e.target.tagName) || '';
+    if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || t === 'OPTION') return;
+    var dx = e.changedTouches[0].clientX - _meX0, dy = e.changedTouches[0].clientY - _meY0;
+    if (Math.abs(dx) < 55 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0) meGo(_mePage + 1); else meGo(_mePage - 1);
+  });
+}
+function meSyncTrainTab() {
+  var tsf = document.getElementById('traineeStatusFields');
+  var em = document.getElementById('meTrainEmpty');
+  if (tsf && em) em.style.display = (tsf.style.display === 'none') ? '' : 'none';
+}
+function meRenderExtras(m) {
+  var olBox = document.getElementById('mePageOL');
+  var tkBox = document.getElementById('mePageTask');
+  if (!olBox || !tkBox) return;
+  if (!m || !m.id) {
+    olBox.innerHTML = '<div class="md-empty">メンバーを保存すると<br>OL記録を残せます</div>';
+    tkBox.innerHTML = '<div class="md-empty">メンバーを保存すると<br>タスクを追加できます</div>';
+    return;
+  }
+  var mid = m.id;
+  var fd = (state.freshData && state.freshData[mid]) || {};
+  var listSt = (typeof freshNorm === 'function') ? freshNorm(fd['リスト']) : (fd['リスト'] || {});
+  var olog = fd.olLog || [];
+  var olHtml = _dRow('リストOL', listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手'));
+  if (!olog.length) olHtml += '<div class="md-empty">OL記録はまだありません</div>';
+  else olHtml += olog.slice().reverse().map(function(e){ return '<div class="me-ol"><div style="color:var(--text-dim);font-size:12px">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div style="margin-top:3px">' + evEsc(e.what) + '</div>':'') + (e.note?'<div style="margin-top:3px;color:var(--text-mid);font-size:12px">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
+  olHtml += '<div class="me-add-btn" onclick="closeModal();ckRecord(\'' + mid + '\',\'fresh\')">＋ OLを記録する</div>';
+  olBox.innerHTML = olHtml;
+  var evs = (state.events || []).filter(function(e){ return e.memberId === mid && !e.deleted; });
+  var tkHtml = '';
+  if (!evs.length) tkHtml += '<div class="md-empty">紐付くタスク・予定はありません</div>';
+  else tkHtml += evs.map(function(e){ var ic = e.type === 'task' ? (e.done?'✅':'⬜') : '📅'; var d = e.date ? e.date.split('-').slice(1).join('/') : ''; return '<div class="me-task"><span>' + ic + '</span> <span style="' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span> <span style="color:var(--text-dim);font-size:12px">' + d + '</span></div>'; }).join('');
+  tkHtml += '<div class="me-add-btn" onclick="closeModal();ckAddTask(\'' + mid + '\')">＋ タスクを追加する</div>';
+  tkBox.innerHTML = tkHtml;
+}
 function openAdd() {
   if (!state.isEditor) return;
   window._tempNewMember = null; // 一時データリセット
@@ -6514,11 +6587,11 @@ function openAdd() {
     pl.textContent = '📍 トップ（0段目）に追加';
     pl.style.display = '';
   }
-  // 新規追加 → 基本情報を展開、月次も展開
-  var msB = document.getElementById('msBasic');
-  var msM = document.getElementById('msMonthly');
-  if (msB) msB.classList.remove('collapsed');
-  if (msM) msM.classList.remove('collapsed');
+  // 新規追加 → 基本タブから開始
+  meRenderExtras(null);
+  meSyncTrainTab();
+  meBindSwipe();
+  meGo(1);
   document.getElementById('modal').classList.add('open');
   // カテゴリとタイトルをモーダル表示後にセット
   setTimeout(function() {
@@ -6549,7 +6622,8 @@ function openEdit(id) {
       var el = document.getElementById(elId);
       if (el) el.value = val||'';
     };
-    set('shTitle', null); document.getElementById('shTitle').textContent = 'メンバー編集';
+    var _mnm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || 'メンバー編集';
+    document.getElementById('shTitle').textContent = _mnm;
     document.getElementById('btnDel').style.display = '';
     set('fLast', m.lastName);
     set('fFirst', m.firstName);
@@ -6588,13 +6662,11 @@ function openEdit(id) {
     selMapType(fMapType, true);
     selGoldShip(fGoldShip, true);
 
-    // 編集時 → 基本情報を折りたたみ、月次を展開
-    var msB = document.getElementById('msBasic');
-    var msM = document.getElementById('msMonthly');
-    if (msB) msB.classList.add('collapsed');
-    if (msM) msM.classList.remove('collapsed');
-    var _mtb2 = document.getElementById('memberTaskBtn');
-    if (_mtb2) _mtb2.style.display = eventsUid() ? '' : 'none';
+    // 編集時 → 月次タブから開始（スワイプ画面）
+    meRenderExtras(m);
+    meSyncTrainTab();
+    meBindSwipe();
+    meGo(0);
     // モーダルを開く
     document.getElementById('modal').classList.add('open');
 
@@ -6693,6 +6765,7 @@ function selCategory(cat) {
       selTrainee(false);
       if (tsf) tsf.style.display = 'none';
     }
+    if (typeof meSyncTrainTab === 'function') meSyncTrainTab();
   } catch(e) {}
 }
 
