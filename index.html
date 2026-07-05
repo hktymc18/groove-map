@@ -366,8 +366,16 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* カード右端の編集ボタン（モバイルでも常時タップ可） */
 .node-edit-btn{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text-mid);font-size:15px;cursor:pointer;margin-left:4px}
 .node-edit-btn:active{background:var(--accent);color:#000;border-color:var(--accent)}
-.node-add-btn{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:19px;font-weight:700;cursor:pointer;margin-left:4px;line-height:1}
+.node-add-btn{flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;margin-left:4px;line-height:1}
 .node-add-btn:active{background:var(--accent);color:#000}
+.expand-col.can-expand{cursor:pointer;border-radius:8px;padding:2px;transition:background .12s}
+.expand-col.can-expand:active{background:var(--surface2)}
+.olp-cat{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text-dim);padding:12px 4px 6px;position:sticky;top:0;background:var(--surface)}
+.olp-cat span{font-size:11px;font-weight:400;background:var(--surface2);border-radius:8px;padding:1px 7px}
+.olp-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;border:1px solid var(--border);margin-bottom:5px;background:var(--surface2)}
+.olp-item:active{background:var(--accent-dim);border-color:var(--accent)}
+.olp-name{font-size:14px;font-weight:600;color:var(--text)}
+.olp-title{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
 .nc.trainee{border-left-width:5px!important;background:rgba(34,211,238,.05)}
 .nc.loi-card{border-left-width:5px!important;border-color:var(--loi)!important;background:rgba(34,197,94,.05)}
 .nc.result-ng{background:rgba(100,100,100,.18);border-color:rgba(100,100,100,.3);opacity:0.6}
@@ -1310,7 +1318,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v211</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v212</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1345,11 +1353,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="exp-btn" onclick="exportCSV('current')">📄 CSV出力</div>
       <div class="exp-btn" onclick="openShareModal()" id="shareBtn" style="display:none">🔗 共有</div>
     </div>
-    <div class="edit-hint" id="editHint">タップで開閉 ・ ✎ボタンで編集</div>
+    <div class="edit-hint" id="editHint">▶で開閉 ・ ダブルタップで編集</div>
     <!-- 検索欄 -->
-    <!-- 段数フィルター -->
-    <div id="depthFilterWrap" style="display:flex;gap:6px;padding:6px 14px 0;flex-wrap:wrap;align-items:center">
-      <span style="font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace">段数:</span>
+    <!-- レベル（段数）展開セレクタ -->
+    <div id="depthFilterWrap" style="display:flex;gap:8px;padding:8px 14px 0;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;color:var(--text-dim)">レベル</span>
+      <select id="levelSelect" onchange="expandToLevel(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;padding:5px 10px;border-radius:8px;outline:none"></select>
       <div id="depthFilterBtns" style="display:flex;gap:4px;flex-wrap:wrap"></div>
     </div>
     <div id="searchBar" style="padding:6px 14px 0">
@@ -2495,8 +2504,8 @@ function renderPCMap(mapType) {
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
-    // 地域（カード上部に小さく）
-    if(m.region){ g.appendChild(txt(rx+16, ry2+14, '📍 '+m.region.substring(0,6), gsvColor, 11, '500', 'Noto Sans JP,Inter,sans-serif')); }
+    // 地域（カードの外・右上に小さく）
+    if(m.region){ g.appendChild(txt(rx+NODE_W-2, ry2-4, '📍'+m.region.substring(0,6), gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif', 'end')); }
 
     // 折りたたみトグル（子がいる場合、右端に）
     var childCount = kids(m.id).length;
@@ -2719,6 +2728,34 @@ function ctxDelete() {
 // ── 段数フィルター ──
 var depthFilter = null; // null=全表示, 数値=その段数まで
 
+// ── レベル（段数）展開：選択した段まで一気に開く ──
+function buildLevelSelector(members) {
+  var sel = document.getElementById('levelSelect');
+  var wrap = document.getElementById('depthFilterWrap');
+  if (!sel || !wrap) return;
+  var maxD = 0;
+  members.forEach(function(m){ var d = calcMemberDepth(m, members); if (d > maxD) maxD = d; });
+  if (maxD < 1) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  var cur = sel.value || '2';
+  var opts = '';
+  for (var n = 1; n <= maxD; n++) opts += '<option value="' + n + '">' + n + '段まで</option>';
+  opts += '<option value="all">全部表示</option>';
+  sel.innerHTML = opts;
+  // 現在値を維持（範囲内なら）
+  if (cur === 'all' || (parseInt(cur, 10) >= 1 && parseInt(cur, 10) <= maxD)) sel.value = cur;
+  else sel.value = String(Math.min(2, maxD));
+}
+function expandToLevel(n) {
+  var mapType = (currentView === 'ideal') ? 'ideal' : 'current';
+  var members = membersForMap(mapType);
+  if (!window._treeOpen) window._treeOpen = {};
+  members.forEach(function(m){
+    var d = calcMemberDepth(m, members);
+    window._treeOpen[m.id] = (n === 'all') ? true : (d < parseInt(n, 10));
+  });
+  renderTree(mapType);
+}
 function buildDepthFilter(members) {
   var wrap = document.getElementById('depthFilterBtns');
   if (!wrap) return;
@@ -3028,7 +3065,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v211';
+  var DATA_VERSION = 'v212';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4996,6 +5033,7 @@ function renderTree(mapType) {
   var container = document.getElementById(containerId);
   var ownMembers = membersForMap(mapType);
   var members = composeMergedInto(ownMembers, mapType); // 結合中の下位ツリーを合成（表示のみ）
+  if (!isPCMode()) buildLevelSelector(members); // モバイル：レベル展開セレクタ
   var roots = childrenOf('', members);
 
   if (roots.length === 0) {
@@ -5129,8 +5167,8 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div class="' + ncClass + (isForeign ? ' merged-node' : '') + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
     + instaBtn
     + (state.isEditor && !isForeign ? '<div class="card-quick-add" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="直下に追加">＋</div>' : '')
-    + '<div class="card-main" data-cid="' + m.id + '" onclick="selectCard(this.dataset.cid,event)">'
-    + '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">'
+    + '<div class="card-main" data-cid="' + m.id + '" onclick="cardSingleTap(this.dataset.cid,event)"' + (state.isEditor && !isForeign ? ' ondblclick="event.stopPropagation();openEdit(\'' + m.id + '\')"' : '') + '>'
+    + '<div class="expand-col' + (hasKids && !skipChildren ? ' can-expand' : '') + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0"' + (hasKids && !skipChildren ? ' onclick="event.stopPropagation();toggleExpand(\'' + m.id + '\')"' : '') + '>'
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
     + expandArrow
     + '</div>'
@@ -5146,7 +5184,6 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<span class="info-pt">' + ptDisplay + ptFixHTML + '</span>'
     + '</div>'
     + (state.isEditor && !isForeign ? '<div class="node-add-btn" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="この下に追加">＋</div>' : '')
-    + (state.isEditor ? '<div class="node-edit-btn" onclick="event.stopPropagation();openEdit(\'' + m.id + '\')" title="編集">&#x270e;</div>' : '')
     + '</div>'
     + memoTxt + traineeInfoHTML
     + '</div>'
@@ -5227,6 +5264,25 @@ var _lastTapId = null;
 var _lastTapTime = 0;
 
 // カードタップ：子の開閉のみ（編集は各カードの✎ボタン）。開閉状態は _treeOpen に保持して再描画で消えないようにする
+// ツリーカード：矢印エリアのみで展開トグル
+function toggleExpand(id) {
+  if (!window._treeOpen) window._treeOpen = {};
+  var nw = document.getElementById('nw-'+id);
+  var ch = document.getElementById('ch-'+id);
+  if (!ch) return;
+  var willOpen = ch.classList.contains('closed');
+  ch.classList.toggle('closed', !willOpen);
+  if (nw) nw.classList.toggle('open', willOpen);
+  window._treeOpen[id] = willOpen;
+}
+// ツリーカード：シングルタップ＝メモ開閉（展開はしない・編集はダブルタップ）
+function cardSingleTap(id, e) {
+  if (e && e.target && e.target.closest) {
+    if (e.target.closest('.tap-edit') || e.target.closest('.expand-col') || e.target.closest('.node-add-btn')) return;
+  }
+  var mem = document.getElementById('mem-'+id);
+  if (mem) mem.classList.toggle('show');
+}
 function selectCard(id, e) {
   // tap-edit 要素はeditFieldが処理するので無視
   if (e && e.target && e.target.closest && e.target.closest('.tap-edit')) return;
@@ -5897,6 +5953,44 @@ function freshOlLog(mid) {
 function freshOlAdd(mid) { var t=new Date(); var d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); freshOlLog(mid).unshift({date:d,to:'',what:'',note:''}); autoSave(); renderStats(); }
 function freshOlField(mid, idx, field, val) { var log=freshOlLog(mid); if (log[idx]) { log[idx][field]=val; autoSave(); } } // 入力中は再描画しない
 function freshOlRemove(mid, idx) { var log=freshOlLog(mid); log.splice(idx,1); autoSave(); renderStats(); }
+// OLの「誰に」をカテゴリ別メンバーピッカーで選択
+var _olPick = { mid:'', idx:-1 };
+function closeOlPicker() { var el=document.getElementById('olPickerOv'); if (el && el.parentNode) el.parentNode.removeChild(el); }
+function olPickSelect(name) {
+  if (_olPick.mid && _olPick.idx >= 0) { freshOlField(_olPick.mid, _olPick.idx, 'to', name); if (typeof renderStats === 'function') renderStats(); }
+  closeOlPicker();
+}
+function openOlPicker(mid, idx) {
+  _olPick = { mid: mid, idx: idx };
+  closeOlPicker();
+  var all = (state.members || []).filter(function(m){ return !m.deleted; });
+  var cats = [
+    { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
+    { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
+    { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
+    { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } }
+  ];
+  var used = {}, body = '';
+  cats.forEach(function(c){
+    var ms = all.filter(function(m){ return c.test(m) && !used[m.id]; });
+    if (!ms.length) return;
+    ms.forEach(function(m){ used[m.id] = 1; });
+    body += '<div class="olp-cat">' + c.label + '<span>' + ms.length + '</span></div>';
+    body += ms.map(function(m){
+      var nm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
+      return '<div class="olp-item" onclick="olPickSelect(&quot;' + evEsc(nm).replace(/"/g,'') + '&quot;)"><span class="olp-name">' + evEsc(nm) + '</span><span class="olp-title">' + evEsc(m.title||'') + '</span></div>';
+    }).join('');
+  });
+  if (!body) body = '<div style="padding:24px;text-align:center;color:var(--text-dim)">選べるメンバーがいません</div>';
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'olPickerOv';
+  ov.onclick = function(e){ if (e.target === ov) closeOlPicker(); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:74vh;overflow-y:auto">'
+    + '<div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">OL相手を選択</div></div><span class="ms-x" onclick="closeOlPicker()">✕</span></div>'
+    + '<div class="olp-list">' + body + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
 // ── 3〜7人アウトライン 折りたたみ ──
 var _outlineExpanded = false;
 function toggleOutlineExpand() { _outlineExpanded = !_outlineExpanded; renderStats(); }
@@ -6205,8 +6299,7 @@ function renderStats() {
     if (freshMembers.length === 0) {
       freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
     } else {
-      var _olNames = (state.members||[]).filter(function(x){return !x.deleted;}).map(function(x){ return '<option value="' + evEsc(((x.lastName||'')+' '+(x.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'')) + '">'; }).join('');
-      freshWrap.innerHTML = '<datalist id="olMemberList">' + _olNames + '</datalist>' + freshMembers.map(function(m){
+      freshWrap.innerHTML = freshMembers.map(function(m){
         var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
         var fd = state.freshData[m.id] || {};
         var doneCount = 0;
@@ -6240,7 +6333,7 @@ function renderStats() {
           return '<div class="fol-item">'
             + '<div class="fol-row">'
             +   '<input class="fol-in" type="date" value="' + (e.date||'') + '" onchange="freshOlField(\'' + m.id + '\',' + idx + ',\'date\',this.value)">'
-            +   '<input class="fol-in" list="olMemberList" placeholder="誰に（メンバーから選択可）" value="' + evEsc(e.to||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'to\',this.value)">'
+            +   '<input class="fol-in" readonly placeholder="誰に（タップで選択）" value="' + evEsc(e.to||'') + '" onclick="openOlPicker(\'' + m.id + '\',' + idx + ')" style="cursor:pointer">'
             +   '<button class="fol-x" onclick="freshOlRemove(\'' + m.id + '\',' + idx + ')">✕</button>'
             + '</div>'
             + '<input class="fol-in fol-full" placeholder="内容（何をした）" value="' + evEsc(e.what||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'what\',this.value)" style="margin-bottom:6px">'
