@@ -1337,7 +1337,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v214</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v215</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3084,7 +3084,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v214';
+  var DATA_VERSION = 'v215';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6880,13 +6880,38 @@ function showPcTooltip(mid, ev) {
     evHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">'
       + '<div style="font-size:11px;color:var(--text-dim);margin-bottom:2px">📋 予定・タスク</div>' + rows + more + '</div>';
   }
+  // OL記録（組んだアウトライン）— マップ上で見れるように（動線一本化）
+  var olHtml = '';
+  var _fd = (state.freshData && state.freshData[m.id]) || {};
+  var _olog = (_fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
+  if (_olog.length) {
+    var olRows = _olog.slice(0, 4).map(function(e){
+      var od = e.date ? e.date.split('-').slice(1).join('/') : '';
+      return '<div style="font-size:12px;margin-top:3px;line-height:1.45">'
+        + (od ? '<span style="color:var(--text-dim);font-family:Inter,monospace;font-size:11px">' + od + '</span> ' : '')
+        + (e.to ? '<b style="color:var(--text)">' + evEsc(e.to) + '</b> ' : '')
+        + (e.what ? '<span style="color:var(--text-mid)">' + evEsc(e.what) + '</span>' : '')
+        + (e.note ? '<div style="color:var(--text-dim);font-size:11px;padding-left:4px">↳ ' + evEsc(e.note) + '</div>' : '')
+        + '</div>';
+    }).join('');
+    var olMore = _olog.length > 4 ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">ほか ' + (_olog.length - 4) + ' 件</div>' : '';
+    olHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><div style="font-size:11px;color:var(--text-dim);margin-bottom:2px">📝 OL記録</div>' + olRows + olMore + '</div>';
+  }
+  // 次の予定（研修の予定ステップ or 次回予定日）
+  var planHtml = '';
+  var _plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
+  if (_plan) {
+    planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#f59e0b">📅 次の予定：' + evEsc(_plan.status||'') + (_plan.date ? '（' + _plan.date.split('-').slice(1).join('/') + '）' : '') + (_plan.aSan ? ' A:' + evEsc(_plan.aSan) : '') + '</div>';
+  } else if (m.nextDate) {
+    planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#f59e0b">📅 次回予定：' + evEsc(m.nextDate.split('-').slice(1).join('/')) + '</div>';
+  }
   tip.innerHTML = '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">GSV</span><span class="pc-tooltip-val" style="color:var(--text)">' + gsvDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">固定PT</span><span class="pc-tooltip-val" style="color:var(--accent)">' + fixDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">稼働</span><span class="pc-tooltip-val">' + actLabel + '</span></div>'
     + (m.memo ? '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:var(--text-mid);white-space:pre-wrap;max-width:280px;line-height:1.5">' + m.memo.substring(0,200) + '</div>' : '')
-    + evHtml;
+    + planHtml + olHtml + evHtml;
   tip.style.left = Math.min(ev.clientX + 12, window.innerWidth - 200) + 'px';
   tip.style.top = Math.max(ev.clientY - 10, 10) + 'px';
   tip.classList.add('show');
