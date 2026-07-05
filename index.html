@@ -426,6 +426,17 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 /* memo */
 .memo{padding:0 12px 10px 60px;font-size:11px;color:var(--text-mid);line-height:1.6;display:none;white-space:pre-wrap}
+.card-info{display:none;padding:0 12px 10px 14px}
+.card-info.show{display:block}
+.ci-inner{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px}
+.ci-memo{color:var(--text-mid);white-space:pre-wrap;line-height:1.55;margin-bottom:6px}
+.ci-plan{color:#f59e0b;font-weight:600;margin-bottom:6px}
+.ci-ol-lbl{font-size:11px;color:var(--text-dim);margin:6px 0 3px;padding-top:6px;border-top:1px solid var(--border)}
+.ci-ol{margin-top:4px;line-height:1.45;color:var(--text)}
+.ci-ol-d{color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.ci-ol b{color:var(--accent)}
+.ci-ol-note{color:var(--text-dim);font-size:11px;padding-left:6px}
+.ci-empty{color:var(--text-dim);text-align:center;font-size:11px}
 .memo.show{display:block}
 
 /* diff badge */
@@ -1337,7 +1348,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v215</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v216</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3084,7 +3095,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v215';
+  var DATA_VERSION = 'v216';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5132,7 +5143,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     ? '<span class="expand-arrow-v2" id="arr-' + m.id + '">&#9654;</span>'
     : '';
 
-  var memoTxt = m.memo ? '<div class="memo" id="mem-' + m.id + '">' + m.memo + '</div>' : '';
+  var memoTxt = '<div class="card-info" id="mem-' + m.id + '"></div>';
 
   var parentMember = null;
   for (var pi = 0; pi < members.length; pi++) {
@@ -5299,8 +5310,31 @@ function cardSingleTap(id, e) {
   if (e && e.target && e.target.closest) {
     if (e.target.closest('.tap-edit') || e.target.closest('.expand-col') || e.target.closest('.node-add-btn')) return;
   }
-  var mem = document.getElementById('mem-'+id);
-  if (mem) mem.classList.toggle('show');
+  var box = document.getElementById('mem-'+id);
+  if (!box) return;
+  if (box.classList.contains('show')) { box.classList.remove('show'); return; }
+  var m = null; for (var i=0;i<state.members.length;i++){ if (state.members[i].id===id){ m=state.members[i]; break; } }
+  box.innerHTML = m ? memberInfoHtml(m) : '';
+  box.classList.add('show');
+}
+// カードのミニ情報（メモ＋次の予定＋OL記録）— モバイルで名前タップ時に表示
+function memberInfoHtml(m) {
+  var html = '';
+  if (m.memo) html += '<div class="ci-memo">' + evEsc(m.memo) + '</div>';
+  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
+  if (plan) html += '<div class="ci-plan">📅 次の予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : '') + '</div>';
+  else if (m.nextDate) html += '<div class="ci-plan">📅 次回予定：' + evEsc(m.nextDate) + '</div>';
+  var fd = (state.freshData && state.freshData[m.id]) || {};
+  var olog = (fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
+  if (olog.length) {
+    html += '<div class="ci-ol-lbl">📝 OL記録</div>';
+    html += olog.slice(0, 5).map(function(e){
+      var d = e.date ? e.date.split('-').slice(1).join('/') : '';
+      return '<div class="ci-ol">' + (d ? '<span class="ci-ol-d">' + d + '</span> ' : '') + (e.to ? '<b>' + evEsc(e.to) + '</b> ' : '') + (e.what ? evEsc(e.what) : '') + (e.note ? '<div class="ci-ol-note">↳ ' + evEsc(e.note) + '</div>' : '') + '</div>';
+    }).join('');
+  }
+  if (!html) html = '<div class="ci-empty">メモ・OL・予定なし（ダブルタップで編集）</div>';
+  return '<div class="ci-inner">' + html + '</div>';
 }
 function selectCard(id, e) {
   // tap-edit 要素はeditFieldが処理するので無視
