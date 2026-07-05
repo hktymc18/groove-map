@@ -1350,7 +1350,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v217</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v219</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2111,6 +2111,92 @@ function copyCurrentToIdeal() {
   if (typeof switchView === 'function') switchView('ideal');
   toast('現状MAPを理想MAPにコピーしました 🎯');
 }
+// 1メンバーのタイトル遷移を判定（GSV基準・資料ルール）
+// 返り値: { to:新タイトル, kind:'promote'|'advance'|'demote'|null, cum:審査累計pt, reason }
+function _computeTitleTransition(m, nextMonth) {
+  var gsv = m.ptCurrent || 0;
+  var t = (m.title || '').trim();
+  var cat = (typeof detectCategory === 'function') ? detectCategory(t) : '';
+  if (cat === 'BA') {
+    var qi = ['LOI', 'Q2', 'Q3', 'Q4'].indexOf(t);
+    if (qi >= 0) {
+      // 審査中
+      var cum = (m.loiCumPt || 0) + gsv;
+      if (gsv < LOI_MONTHLY_MIN) {
+        return { to: bTitleFor(activityMonths(m, nextMonth)), kind: 'demote', cum: 0, reason: '審査脱落（今月 ' + gsv.toLocaleString() + 'pt < ' + LOI_MONTHLY_MIN.toLocaleString() + '）' };
+      }
+      if (cum >= BR_PROMOTE_CUM) {
+        return { to: 'BR', kind: 'promote', cum: 0, reason: '審査累計 ' + cum.toLocaleString() + 'pt 達成' };
+      }
+      if (qi < 3) {
+        return { to: ['Q2', 'Q3', 'Q4'][qi], kind: 'advance', cum: cum, reason: '審査継続（累計 ' + cum.toLocaleString() + 'pt）' };
+      }
+      // Q4終了で5000未達
+      return { to: bTitleFor(activityMonths(m, nextMonth)), kind: 'demote', cum: 0, reason: '審査4ヶ月終了・累計 ' + cum.toLocaleString() + 'pt 未達' };
+    }
+    if (t !== 'BM') {
+      // B系：活動月数に応じて自動更新（BMは到達点なので維持）
+      return { to: bTitleFor(activityMonths(m, nextMonth)), kind: null, cum: (m.loiCumPt || 0) };
+    }
+    return { to: t, kind: null, cum: (m.loiCumPt || 0) };
+  }
+  if (t === 'BR') {
+    // BR維持判定（ゴールド以上は要件が異なるため自動変更しない）
+    if (gsv < BR_MAINTAIN) {
+      return { to: bTitleFor(activityMonths(m, nextMonth)), kind: 'demote', cum: 0, reason: 'BR維持失敗（今月 ' + gsv.toLocaleString() + 'pt < ' + BR_MAINTAIN.toLocaleString() + '）' };
+    }
+    return { to: t, kind: null, cum: 0 };
+  }
+  return { to: t, kind: null, cum: (m.loiCumPt || 0) };
+}
+
+// 昇降格プレビュー確認モーダル → OKで onConfirm() 実行
+function _showCopyPreview(cur, nextMonth, changes, onConfirm) {
+  var esc = (typeof evEsc === 'function') ? evEsc : function(s){ return s; };
+  function sect(title, list, color) {
+    if (!list.length) return '';
+    var rows = list.map(function(c) {
+      return '<div style="padding:7px 10px;border-radius:8px;background:var(--panel,#1a1d24);margin-bottom:6px">'
+        + '<div style="font-weight:600;font-size:14px">' + esc(c.name) + '</div>'
+        + '<div style="font-size:12px;color:var(--text-dim,#8a94a6);margin-top:2px">'
+        + esc(c.from || '—') + ' → <span style="color:' + color + ';font-weight:600">' + esc(c.to) + '</span>'
+        + (c.reason ? '　' + esc(c.reason) : '') + '</div></div>';
+    }).join('');
+    return '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:' + color + ';margin-bottom:6px">' + title + '（' + list.length + '）</div>' + rows + '</div>';
+  }
+  var ups   = changes.filter(function(c){ return c.kind === 'promote'; });
+  var downs = changes.filter(function(c){ return c.kind === 'demote'; });
+  var advs  = changes.filter(function(c){ return c.kind === 'advance'; });
+
+  var body = '';
+  body += sect('🎉 昇格', ups, '#00d4aa');
+  body += sect('⚠️ 降格', downs, '#ef4444');
+  body += sect('▶ 審査継続', advs, '#f59e0b');
+  if (!ups.length && !downs.length && !advs.length) {
+    body = '<div style="color:var(--text-dim,#8a94a6);font-size:13px;padding:8px 0">タイトルの自動変更はありません。</div>';
+  }
+
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--bg,#12141a);border:1px solid var(--border,#2a2e38);border-radius:16px;max-width:440px;width:100%;max-height:82vh;overflow:auto;padding:18px';
+  card.innerHTML =
+      '<div style="font-size:16px;font-weight:700;margin-bottom:4px">翌月コピー確認</div>'
+    + '<div style="font-size:12px;color:var(--text-dim,#8a94a6);margin-bottom:14px">' + cur + ' → ' + nextMonth + '　（今月のGSVでタイトルを自動判定）</div>'
+    + body
+    + '<div style="font-size:11px;color:var(--text-dim,#8a94a6);margin:10px 0 14px">※GSVは0にリセットされ、上記タイトルで翌月を作成します。既存の翌月データは上書きされます。</div>'
+    + '<div style="display:flex;gap:10px">'
+    + '<button id="_cpCancel" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border,#2a2e38);background:transparent;color:var(--text,#e6e8ec);font-size:14px;font-weight:600">キャンセル</button>'
+    + '<button id="_cpOk" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--accent,#00d4aa);color:#08121a;font-size:14px;font-weight:700">確定してコピー</button>'
+    + '</div>';
+  ov.appendChild(card);
+  document.body.appendChild(ov);
+  function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+  ov.onclick = function(e) { if (e.target === ov) close(); };
+  document.getElementById('_cpCancel').onclick = close;
+  document.getElementById('_cpOk').onclick = function() { close(); onConfirm(); };
+}
+
 function copyToNextMonth() {
   var cur = state.currentMonth || currentMonthStr();
   var parts = cur.split('.');
@@ -2123,68 +2209,64 @@ function copyToNextMonth() {
   if (nextM > 12) { nextM = 1; nextY++; }
   var nextMonth = nextY + '.' + String(nextM).padStart(2, '0');
 
-  var msg = '(' + cur + ') -> ' + nextMonth + ' にコピーしますか？既存データは上書きされます。';
-  if (!confirm(msg)) return;
-
   // メンバーをディープコピー
   var copyMembers = JSON.parse(JSON.stringify(state.members));
   var copyIdeal   = JSON.parse(JSON.stringify(state.idealMembers || []));
-  // 研修結果が確定済みの研修生は trainee=false にして翌月の決定率にカウントさせない
-  // GSVを0にリセット／BAタイトルの昇格・降格
-  copyMembers.forEach(function(m) {
-    if (m.traineeResult) {
-      m.trainee = false;
+
+  // 今月の確定GSVで判定（リセット前に積み上げを確定）
+  recalcGSV(copyMembers);
+
+  // タイトル遷移を計算＆適用、変更点を収集
+  var changes = [];
+  copyMembers.forEach(function(mm) {
+    if (mm.traineeResult) mm.trainee = false; // 研修結果確定済みは翌月の決定率にカウントしない
+    var tr = _computeTitleTransition(mm, nextMonth);
+    if (tr.kind === 'promote' || tr.kind === 'demote' || tr.kind === 'advance') {
+      changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: tr.reason || '' });
     }
-    m.ptCurrent = 0;
-    var cat = (typeof detectCategory === 'function') ? detectCategory((m.title || '').trim()) : '';
-    if (cat === 'BA') {
-      var t = (m.title || '').trim();
-      var qi = ['LOI', 'Q2', 'Q3', 'Q4'].indexOf(t);
-      var nextQ = ['Q2', 'Q3', 'Q4', 'BR'];
-      if (qi >= 0) {
-        var passed = confirm(mcName(m) + 'さん（' + t + '）\n今月の審査テストに合格しましたか？\n\n[OK＝合格 → ' + nextQ[qi] + 'へ昇格]\n[キャンセル＝不合格 → 活動歴Bへ降格]');
-        if (passed) m.title = nextQ[qi];
-        else m.title = bTitleFor(activityMonths(m, nextMonth));
-      } else if (t !== 'BM') {
-        // B系：活動月数に応じて自動更新（毎月+1相当）。BMは活動歴の到達点なので維持
-        m.title = bTitleFor(activityMonths(m, nextMonth));
-      }
-    }
+    mm.title = tr.to;
+    mm.loiCumPt = tr.cum;
+    mm.ptCurrent = 0;
+    mm.ptSelf = 0;
   });
 
-  // 翌月に切り替え
-  state.currentMonth = nextMonth;
-  if (state.months.indexOf(nextMonth) < 0) state.months.unshift(nextMonth);
+  // プレビュー確認 → 確定でコミット
+  _showCopyPreview(cur, nextMonth, changes, function() {
+    // 翌月に切り替え
+    state.currentMonth = nextMonth;
+    if (state.months.indexOf(nextMonth) < 0) state.months.unshift(nextMonth);
 
-  // データをセット（statsはリセット）
-  state.members      = copyMembers;
-  state.idealMembers = copyIdeal;
-  state.commission   = JSON.parse(JSON.stringify(state.commission || {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}}));
+    // データをセット（statsはリセット）
+    state.members      = copyMembers;
+    state.idealMembers = copyIdeal;
+    state.commission   = JSON.parse(JSON.stringify(state.commission || {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}}));
 
-  // stats引き継ぎ: 月次推移は1列シフト（過去データを保持）
-  var oldStats = JSON.parse(JSON.stringify(state.stats || getDefaultStats()));
-  state.stats = oldStats;
-  // monthly: 各行のvalsを左にシフトして最新列を空にする（過去データ保持）
-  (state.stats.monthly || []).forEach(function(row) {
-    if (!row.vals) row.vals = [];
-    while (row.vals.length < 12) row.vals.unshift('');
-    row.vals.shift();
-    row.vals.push('');
+    // stats引き継ぎ: 月次推移は1列シフト（過去データを保持）
+    var oldStats = JSON.parse(JSON.stringify(state.stats || getDefaultStats()));
+    state.stats = oldStats;
+    (state.stats.monthly || []).forEach(function(row) {
+      if (!row.vals) row.vals = [];
+      while (row.vals.length < 12) row.vals.unshift('');
+      row.vals.shift();
+      row.vals.push('');
+    });
+    (state.stats.powerline || []).forEach(function(row) {
+      if (!row.vals) row.vals = [];
+      while (row.vals.length < 12) row.vals.unshift('');
+      row.vals.shift();
+      row.vals.push('');
+    });
+    state.freshData = JSON.parse(JSON.stringify(state.freshData || {}));
+
+    // 保存
+    buildMonthSelector();
+    autoSave();
+    renderCurrentView();
+    var up = changes.filter(function(c){ return c.kind === 'promote'; }).length;
+    var dn = changes.filter(function(c){ return c.kind === 'demote'; }).length;
+    var extra = (up || dn) ? '（🎉' + up + ' / ⚠️' + dn + '）' : '';
+    toast(nextMonth + ' にコピーしました ✓ ' + extra);
   });
-  // powerline: 同様にシフト
-  (state.stats.powerline || []).forEach(function(row) {
-    if (!row.vals) row.vals = [];
-    while (row.vals.length < 12) row.vals.unshift('');
-    row.vals.shift();
-    row.vals.push('');
-  });
-  state.freshData = JSON.parse(JSON.stringify(state.freshData || {}));
-
-  // 保存
-  buildMonthSelector();
-  autoSave();
-  renderCurrentView();
-  toast(nextMonth + ' にコピーしました ✓');
 }
 
 // ログイン後にコピーボタンを表示
@@ -3127,7 +3209,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v217';
+  var DATA_VERSION = 'v219';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3299,7 +3381,85 @@ function switchView(v) {
   else if (v==='ol') renderOL();
   else if (v==='events') renderEvents();
 }
+// ============================================================
+//  報酬プラン定数（資料: 販売報酬プラン＋エリートLOI / 2026-07確認）
+// ============================================================
+var LOI_MONTHLY_MIN = 1000;  // 審査中の各月最低GSV（下回ると審査脱落）
+var BR_PROMOTE_CUM  = 5000;  // 4ヶ月累計これでBR昇格
+var BR_MAINTAIN     = 1000;  // BR維持の月次GSV（資料は2000だが現行運用は1000）
+var PT_YEN          = 126;   // 1pt≈126円（建てB/LB換算・要ブローシャー照合）
+// 建てボーナス: 500ptごとの階段料率（7ブロック目以降は残り全部30%）
+function buildingBonus(gsvPt) {
+  var rate = [0.05, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30];
+  var base = 0, rem = gsvPt || 0;
+  for (var k = 0; k < 7 && rem > 0; k++) {
+    var blk = (k < 6) ? Math.min(rem, 500) : rem;
+    base += blk * rate[k];
+    rem -= blk;
+  }
+  return Math.floor(base * PT_YEN * 1.08);
+}
+
+// ============================================================
+//  GSV自動集計（配下メンバーのptCurrentを足し上げ）
+//  真値 = ptSelf（自分の分）。ptCurrent(GSV) = ptSelf + 配下のptCurrent合計。
+//  GSVを手入力すると ptSelf に変換され、再計算でアップラインへ伝播する。
+// ============================================================
+function sumChildGSV(id, members) {
+  var s = 0;
+  if (!members) return 0;
+  for (var i = 0; i < members.length; i++) {
+    if (members[i].parentId === id && !members[i].deleted) s += (members[i].ptCurrent || 0);
+  }
+  return s;
+}
+function _gsvDepth(m, members) {
+  var d = 0, cur = m, g = 0;
+  while (cur && cur.parentId && g++ < 999) {
+    var p = null;
+    for (var i = 0; i < members.length; i++) { if (members[i].id === cur.parentId) { p = members[i]; break; } }
+    if (!p) break;
+    d++; cur = p;
+  }
+  return d;
+}
+// 既存データ（ptSelf未設定）を、現在のGSV表示を保ったまま ptSelf に自動導出
+function _migrateGSVSelf(members) {
+  if (!members || !members.length) return;
+  members.forEach(function(m) {
+    if (typeof m.ptSelf !== 'number') {
+      m.ptSelf = Math.max(0, (m.ptCurrent || 0) - sumChildGSV(m.id, members));
+    }
+  });
+}
+// ptSelf から ptCurrent(GSV) を全再計算（深い順＝子を先に確定）
+function recalcGSV(members) {
+  if (!members || !members.length) return;
+  var arr = members.slice().sort(function(a, b) { return _gsvDepth(b, members) - _gsvDepth(a, members); });
+  arr.forEach(function(m) {
+    if (m.deleted) return;
+    if (typeof m.ptSelf !== 'number') m.ptSelf = m.ptCurrent || 0;
+    m.ptCurrent = (m.ptSelf || 0) + sumChildGSV(m.id, members);
+  });
+}
+function recalcAllGSV() {
+  _migrateGSVSelf(state.members);
+  recalcGSV(state.members);
+  if (state.idealMembers) { _migrateGSVSelf(state.idealMembers); recalcGSV(state.idealMembers); }
+}
+// GSV(合計値)を手入力で上書き → 自分の分(ptSelf)に変換して全体再計算
+function setMemberGSV(m, gsvVal, members) {
+  m.ptSelf = Math.max(0, (parseInt(gsvVal) || 0) - sumChildGSV(m.id, members));
+  recalcAllGSV();
+}
+function _arrOf(m) {
+  if (state.members && state.members.indexOf(m) >= 0) return state.members;
+  if (state.idealMembers && state.idealMembers.indexOf(m) >= 0) return state.idealMembers;
+  return state.members;
+}
+
 function renderCurrentView() {
+  recalcAllGSV();
   if (currentView === 'members') renderMembers();
   else if (currentView === 'current') renderTree('current');
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
@@ -4628,6 +4788,7 @@ function tblAddChild(parentId, mapType) {
     actRate: '',
     morale: 1,
     ptCurrent: 0,
+    ptSelf: 0,
     ptFixed: 0,
     trainee: false,
     traineeHistory: [],
@@ -4687,10 +4848,17 @@ function inlineNum(td, member, field, mapType) {
   input.focus(); input.select();
   function finish() {
     var v = parseInt(input.value) || 0;
+    if (field === 'ptCurrent') {
+      // GSV手入力 → 自分の分(ptSelf)に変換し、全体再計算でアップラインへ反映
+      var arr = (mapType === 'ideal') ? state.idealMembers : state.members;
+      setMemberGSV(member, v, arr);
+      autoSave();
+      renderCurrentView(); // アップラインのGSVも再描画
+      return;
+    }
     member[field] = v;
     td.textContent = v > 0 ? v.toLocaleString() : '-';
     autoSave();
-    if (field === 'ptCurrent') updateLTSV(mapType, membersForMap(mapType));
   }
   input.onblur = finish;
   input.onkeydown = function(e) { if (e.key === 'Enter') input.blur(); else if (e.key === 'Escape') { member[field] = oldVal; renderPCTable(mapType); } };
@@ -5421,10 +5589,12 @@ function editField(id, field, e) {
     }
     toast("稼働: "+labels[next]);
   } else if (field === 'pt') {
-    var v = prompt('現状GSVを入力', m.ptCurrent||0);
+    var _arr = _arrOf(m);
+    var _kid = sumChildGSV(m.id, _arr);
+    var v = prompt('GSVを入力（配下合計 ' + _kid.toLocaleString() + ' ＋ 自分の分）', m.ptCurrent||0);
     if (v === null) return;
-    m.ptCurrent = parseInt(v)||0;
-    var f = prompt('固定で上がるポイントを入力', m.ptFixed||0);
+    setMemberGSV(m, v, _arr); // アップラインへ自動反映
+    var f = prompt('固定で上がる見込みポイント（任意）', m.ptFixed||0);
     if (f !== null) m.ptFixed = parseInt(f)||0;
   } else if (field === 'morale') {
     m.morale = (m.morale||1) >= 3 ? 1 : (m.morale||1) + 1;
@@ -5503,18 +5673,11 @@ function renderCommission() {
   sbRow.appendChild(sbPtTd); sbRow.appendChild(sbComTd);
   tbody.appendChild(sbRow);
   
-  // BB行（ポイント自動・コミッション手入力）
+  // BB行（ポイント・コミッション共に自動計算）
   var bbRow = document.createElement('tr');
-  bbRow.innerHTML = '<td class="lname">BB</td>';
-  var bbPtTd = document.createElement('td');
-  bbPtTd.style.cssText = 'text-align:right;font-family:Inter,monospace;font-size:16px;color:var(--accent)';
-  bbPtTd.textContent = bbPt.toLocaleString() + ' (自動)';
-  var bbComTd = document.createElement('td');
-  var bbComIn = document.createElement('input');
-  bbComIn.type='number'; bbComIn.value=bbCom; bbComIn.style.cssText='width:90px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);text-align:right;font-family:Inter,monospace;font-size:16px';
-  bbComIn.onchange = function(){ cm.BB.com=parseInt(this.value)||0; renderCommission(); autoSave(); };
-  bbComTd.appendChild(document.createTextNode('¥')); bbComTd.appendChild(bbComIn);
-  bbRow.appendChild(bbPtTd); bbRow.appendChild(bbComTd);
+  bbRow.innerHTML = '<td class="lname">BB</td>'
+    + '<td style="text-align:right;font-family:Inter,monospace;font-size:16px;color:var(--accent)">' + bbPt.toLocaleString() + ' (自動)</td>'
+    + '<td style="text-align:right;font-family:IBM Plex Mono,monospace;font-size:16px;color:var(--accent)">¥' + bbCom.toLocaleString() + '</td>';
   tbody.appendChild(bbRow);
   
   // LBポイントを計算して表示
@@ -5642,6 +5805,7 @@ function recalcCommission() {
   state.commission.LB = state.commission.LB || {pt:0, com:0};
   
   state.commission.BB.pt = bbGSV;
+  state.commission.BB.com = buildingBonus(bbGSV); // 建てB自動計算（5/5/10/15/20/25/30%）
   state.commission.LB.pt = 0; // LBのポイント表示は別途
   state.commission.LB.com = lbCom;
 }
@@ -7514,6 +7678,10 @@ function saveMember() {
   } else {
     state.members.push(m);
   }
+  // 入力されたGSVを「自分の分(ptSelf)」に変換し、配下合計を差し引いてアップラインへ反映
+  var _gsvIn = parseInt(document.getElementById('fPtC').value)||0;
+  m.ptSelf = Math.max(0, _gsvIn - sumChildGSV(m.id, state.members));
+  recalcAllGSV();
   closeModal();
   renderCurrentView();
   autoSave();
