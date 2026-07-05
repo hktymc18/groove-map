@@ -913,6 +913,10 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .home-date{font-size:12px;color:var(--text-dim);margin-bottom:14px}
 .home-streak{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(239,68,68,.07) 60%,var(--surface));border:1px solid rgba(245,158,11,.34);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 4px 20px rgba(245,158,11,.13)}
 .home-streak-fire{font-size:32px;filter:drop-shadow(0 0 9px rgba(245,158,11,.6))}
+.home-bday{display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(236,72,153,.18),rgba(245,158,11,.08) 60%,var(--surface));border:1px solid rgba(236,72,153,.4);border-radius:14px;padding:13px 15px;margin-bottom:12px;box-shadow:0 4px 20px rgba(236,72,153,.16)}
+.home-bday-ic{font-size:26px;flex:none;filter:drop-shadow(0 0 8px rgba(236,72,153,.55))}
+.home-bday-t{font-size:14px;font-weight:700;color:var(--text)}
+.home-bday-s{font-size:12px;color:var(--text-dim);margin-top:2px}
 .home-streak-num{font-size:34px;font-weight:800;color:var(--accent);font-family:'IBM Plex Mono',monospace;line-height:1}
 .home-streak-label{font-size:11px;color:var(--text-dim);margin-top:3px}
 .home-lv-top{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:5px}
@@ -1274,7 +1278,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v200</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v201</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1644,12 +1648,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <div class="ed-ctrl"><select class="ed-in" id="fAct">
               <option value="">-</option>
               <option value="S">S（120%）</option>
-              <option value="A">A（辞める確定）</option>
+              <option value="A">A（仕事辞める日確定）</option>
               <option value="B">B（仕事以外来る）</option>
               <option value="C">C（来れるけど来ない）</option>
             </select><span class="ed-chev">▾</span></div>
           </div>
-          <div class="ed-help" id="h_fAct">S＝120%稼働／A＝辞める確定／B＝仕事以外は来る／C＝来れるけど来ない。</div>
+          <div class="ed-help" id="h_fAct">S＝120%稼働／A＝仕事辞める日確定（昼の仕事を辞めてビジネスに専念＝good）／B＝仕事以外は来る／C＝来れるけど来ない。</div>
           <div class="ed-row">
             <span class="ed-l">やる気</span>
             <div class="ed-ctrl"><select class="ed-in" id="fMorale">
@@ -1689,6 +1693,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <span class="ed-l">名</span>
             <div class="ed-ctrl"><input class="ed-in" id="fFirst" placeholder="未入力"></div>
           </div>
+          <div class="ed-row">
+            <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
+            <div class="ed-ctrl"><input class="ed-in" id="fBirth" type="date"></div>
+          </div>
+          <div class="ed-help" id="h_birth">誕生日の前日にホームでリマインドが出ます。</div>
           <div class="ed-row">
             <span class="ed-l">性別</span>
             <div class="ed-chips">
@@ -1736,6 +1745,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <span class="ed-l">Instagram</span>
             <div class="ed-ctrl"><input class="ed-in" id="fInsta" placeholder="URL"></div>
           </div>
+          <div class="ed-row">
+            <span class="ed-l">登録月<span class="ed-q" onclick="edHelp(event,'h_start')">?</span></span>
+            <div class="ed-ctrl"><input class="ed-in" id="fStartMonth" type="month"></div>
+          </div>
+          <div class="ed-help" id="h_start">組織に入った月。翌月コピー時の活動月数（B◯の判定）に使います。</div>
         </div>
 
         <!-- Page 2: 研修 -->
@@ -2017,12 +2031,26 @@ function copyToNextMonth() {
   var copyMembers = JSON.parse(JSON.stringify(state.members));
   var copyIdeal   = JSON.parse(JSON.stringify(state.idealMembers || []));
   // 研修結果が確定済みの研修生は trainee=false にして翌月の決定率にカウントさせない
-  // GSVを0にリセット
+  // GSVを0にリセット／BAタイトルの昇格・降格
   copyMembers.forEach(function(m) {
     if (m.traineeResult) {
       m.trainee = false;
     }
     m.ptCurrent = 0;
+    var cat = (typeof detectCategory === 'function') ? detectCategory((m.title || '').trim()) : '';
+    if (cat === 'BA') {
+      var t = (m.title || '').trim();
+      var qi = ['LOI', 'Q2', 'Q3', 'Q4'].indexOf(t);
+      var nextQ = ['Q2', 'Q3', 'Q4', 'BR'];
+      if (qi >= 0) {
+        var passed = confirm(mcName(m) + 'さん（' + t + '）\n今月の審査テストに合格しましたか？\n\n[OK＝合格 → ' + nextQ[qi] + 'へ昇格]\n[キャンセル＝不合格 → 活動歴Bへ降格]');
+        if (passed) m.title = nextQ[qi];
+        else m.title = bTitleFor(activityMonths(m, nextMonth));
+      } else {
+        // B系・BM：活動月数に応じて自動更新（毎月+1相当）
+        m.title = bTitleFor(activityMonths(m, nextMonth));
+      }
+    }
   });
 
   // 翌月に切り替え
@@ -2874,7 +2902,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v200';
+  var DATA_VERSION = 'v201';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -2927,6 +2955,24 @@ function currentMonthStr() {
   var d = new Date();
   return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0');
 }
+// ── 登録月・活動月数・BAタイトル判定 ──
+function monthIdx(ms) { var p = (ms || '').split('.'); return parseInt(p[0], 10) * 12 + (parseInt(p[1], 10) - 1); }
+function addMonths(ms, delta) { var i = monthIdx(ms) + delta; var y = Math.floor(i / 12); var m = (i % 12) + 1; return y + '.' + String(m).padStart(2, '0'); }
+// メンバーの登録月（無ければBタイトルから逆算 or 当月）
+function memberStartMonth(m, ref) {
+  ref = ref || state.currentMonth || currentMonthStr();
+  if (m.startMonth) return m.startMonth;
+  var bm = /^B(\d+)$/.exec((m.title || '').trim());
+  if (bm) return addMonths(ref, -(parseInt(bm[1], 10) - 1));
+  return ref;
+}
+// 対象月における活動月数（1始まり）
+function activityMonths(m, targetMonth) {
+  var sm = memberStartMonth(m, targetMonth);
+  return Math.max(1, monthIdx(targetMonth) - monthIdx(sm) + 1);
+}
+// 活動月数→Bタイトル（B1..B11, 12以上はBM）
+function bTitleFor(n) { return (n >= 12) ? 'BM' : ('B' + Math.max(1, n)); }
 function buildMonthSelector() {
   var yearSel = document.getElementById('selYear');
   var monthSel = document.getElementById('selMonth');
@@ -3475,6 +3521,24 @@ function ckRecord(mid, group) {
     }, 120);
   }
 }
+// ── 誕生日リマインド（前日）──
+function birthdayUpcoming() {
+  var tm = new Date(); tm.setDate(tm.getDate() + 1);
+  var mmdd = String(tm.getMonth() + 1).padStart(2, '0') + '-' + String(tm.getDate()).padStart(2, '0');
+  var out = [];
+  (state.members || []).forEach(function(m) {
+    if (m.deleted || !m.birthday) return;
+    var p = (m.birthday || '').split('-'); // YYYY-MM-DD
+    if (p.length >= 3 && (p[1] + '-' + p[2]) === mmdd) out.push(m);
+  });
+  return out;
+}
+function birthdayHtml() {
+  var bs = birthdayUpcoming();
+  if (!bs.length) return '';
+  var names = bs.map(function(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; }).join('、');
+  return '<div class="home-bday"><span class="home-bday-ic">🎂</span><div><div class="home-bday-t">明日は ' + evEsc(names) + ' さんの誕生日！</div><div class="home-bday-s">お祝いメッセージの準備を 🎉</div></div></div>';
+}
 function cockpitHtml() {
   var g = ckCollect();
   var total = g.trainee.length + g.fresh.length + g.leader.length;
@@ -3561,7 +3625,7 @@ function homeInsights() {
     if (m.goldShip && !m.priority) goldNoPr++;
   });
   var out = [];
-  if (cA > 0) out.push({ t:'稼働A（辞める確定）が ' + cA + '人。見極め・引き止めの判断を', c:'warn' });
+  if (cA > 0) out.push({ t:'稼働A（仕事辞める日確定）が ' + cA + '人。モチベ/ノウハウOL・リスト作戦会議でフォローを', c:'good' });
   if (cC > 0) out.push({ t:'稼働C（来れるけど来ない）が ' + cC + '人。個別フォローのタイミング', c:'warn' });
   if (goldNoPr > 0) out.push({ t:'金の船 ' + goldNoPr + '人に優先度が未設定。注力先を決めましょう', c:'info' });
   if (shibu > 0) out.push({ t:'🔥 死ぬ気メンバーが ' + shibu + '人！この勢いを次に繋げよう', c:'good' });
@@ -3581,7 +3645,7 @@ function mcPrevMonth(cur) {
   m--; if (m < 1) { m = 12; y--; }
   return y + '.' + String(m).padStart(2,'0');
 }
-function mcActRank(a) { return a==='S'?4:(a==='B'?3:(a==='C'?2:(a==='A'?1:0))); } // S最良/A(辞める確定)最悪
+function mcActRank(a) { return a==='S'?4:(a==='A'?3:(a==='B'?2:(a==='C'?1:0))); } // S>A(仕事辞める日確定=good)>B>C
 function mcTitleRank(t) {
   t = (t || '').trim(); if (!t) return -1;
   var order = [];
@@ -3604,9 +3668,16 @@ function computeMonthlyChanges(prev, cur) {
     var pmo = pm.morale||1, cmo = m.morale||1;
     if (cmo < pmo) out.push({ t: nm + '：やる気ダウン ' + moraleEmoji(pmo) + '→' + moraleEmoji(cmo), c:'warn', pr:2 });
     else if (cmo > pmo) out.push({ t: nm + '：やる気アップ ' + moraleEmoji(pmo) + '→' + moraleEmoji(cmo), c:'good', pr:1 });
-    var cr = mcTitleRank(m.title), pr2 = mcTitleRank(pm.title);
-    if (cr >= 0 && pr2 >= 0 && cr > pr2) out.push({ t: nm + '：昇格 ' + pm.title + '→' + m.title + ' 🎉', c:'good', pr:2 });
-    else if (cr >= 0 && pr2 >= 0 && cr < pr2) out.push({ t: nm + '：' + pm.title + '→' + m.title + ' に降格', c:'warn', pr:2 });
+    // タイトル変化：B系（活動歴）は非表示。LOI/Q2/Q3/Q4の審査クリアと、BR昇格のみ表示
+    var qSeries = ['LOI','Q2','Q3','Q4'];
+    var ct = (m.title||'').trim(), pt = (pm.title||'').trim();
+    if (ct !== pt) {
+      var cCat = (typeof detectCategory==='function') ? detectCategory(ct) : '';
+      var pCat = (typeof detectCategory==='function') ? detectCategory(pt) : '';
+      var cQ = qSeries.indexOf(ct), pQ = qSeries.indexOf(pt);
+      if (cCat === 'BR' && pCat !== 'BR') out.push({ t: nm + '：BR昇格 ' + pt + '→' + ct + ' 🎉🎉', c:'good', pr:3 });
+      else if (pQ >= 0 && cQ >= 0 && cQ > pQ) out.push({ t: nm + '：審査クリア ' + pt + '→' + ct + ' 🎉', c:'good', pr:2 });
+    }
   });
   prev.forEach(function(pm){ if (!pm.deleted && !curById[pm.id]) out.push({ t: mcName(pm) + ' が離脱', c:'warn', pr:2 }); });
   out.sort(function(a,b){ return b.pr - a.pr; });
@@ -3865,6 +3936,7 @@ function renderHome() {
     + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日連続</div></div></div>'
     + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>' + lvRight + '</span></div>'
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
+    + birthdayHtml()
     + cockpitHtml()
     + homeTasksHtml()
     + homeMenuHtml()
@@ -5009,7 +5081,7 @@ function editField(id, field, e) {
   } else if (field === 'activity') {
     // 稼働タイプと%を一度に
     var types = ['', 'S', 'A', 'B', 'C'];
-    var labels = ['なし', 'S 120%', 'A 辞める確定', 'B 仕事以外', 'C 来れるけど来ない'];
+    var labels = ['なし', 'S 120%', 'A 仕事辞める日確定', 'B 仕事以外', 'C 来れるけど来ない'];
     var cur = types.indexOf(m.activity);
     var next = (cur + 1) % types.length;
     m.activity = types[next];
@@ -6710,6 +6782,9 @@ function openEdit(id) {
     set('fNextDate', m.nextDate);
     set('fASan', m.aSan);
     set('fInsta', m.instaUrl);
+    set('fBirth', m.birthday);
+    var _smEl = document.getElementById('fStartMonth');
+    if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
     selTraineeResultChip(m.traineeResult||'');
@@ -6779,6 +6854,8 @@ function clearForm() {
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
   var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
+  var _fb=document.getElementById('fBirth'); if(_fb) _fb.value='';
+  var _fsm=document.getElementById('fStartMonth'); if(_fsm) _fsm.value=(state.currentMonth||currentMonthStr()).replace('.', '-');
   fCategory='';
   ['研修生','BA','BR'].forEach(function(k){
     var el=document.getElementById('rbCat'+(k==='研修生'?'Trainee':k));
@@ -6920,6 +6997,14 @@ function saveMember() {
       return (window._tempNewMember && window._tempNewMember.traineeHistory) ? window._tempNewMember.traineeHistory : [];
     })(),
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
+    birthday: (document.getElementById('fBirth')||{}).value || '',
+    startMonth: (function(){
+      var el = document.getElementById('fStartMonth');
+      var v = el ? el.value : ''; // 'YYYY-MM'
+      if (v) return v.replace('-', '.');
+      if (editingId && _prevMember && _prevMember.startMonth) return _prevMember.startMonth;
+      return state.currentMonth || currentMonthStr();
+    })(),
     month: state.currentMonth,
   };
   // 結果確定月のスタンプ（月次決定率の集計に使用）
@@ -8285,7 +8370,7 @@ var CATEGORY_TITLES = {
 
 var SEARCH_FIELDS = [
   { key:'freeword',  label:'フリーワード', type:'text',    placeholder:'名前・メモ・タイトルなど' },
-  { key:'activity',  label:'稼働',         type:'chips',   options:[{v:'S',l:'S（120%）'},{v:'A',l:'A（辞める確定）'},{v:'B',l:'B（仕事以外）'},{v:'C',l:'C（来れるけど来ない）'}] },
+  { key:'activity',  label:'稼働',         type:'chips',   options:[{v:'S',l:'S（120%）'},{v:'A',l:'A（仕事辞める日確定）'},{v:'B',l:'B（仕事以外）'},{v:'C',l:'C（来れるけど来ない）'}] },
   { key:'morale',    label:'やる気',       type:'chips',   options:[{v:'1',l:'🌱 パヤパヤ'},{v:'2',l:'💪 やる気'},{v:'3',l:'🔥 死ぬ気'}] },
   { key:'category',  label:'研修生・BA・BR', type:'chips',   options:[{v:'研修生',l:'研修生'},{v:'BA',l:'BA'},{v:'BR',l:'BR'}] },
   { key:'gender',    label:'性別',         type:'chips',   options:[{v:'male',l:'♂ 男性'},{v:'female',l:'♀ 女性'}] },
