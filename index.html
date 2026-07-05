@@ -1305,7 +1305,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v207</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v208</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1594,6 +1594,10 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="profileAdminWrap" style="display:none;margin-top:4px;margin-bottom:4px">
       <button class="btn-c" style="width:100%;border-color:var(--purple);color:var(--purple)" onclick="openAdminPanel()">🛡 アカウント管理</button>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:7px;letter-spacing:.5px">⚠️ 危険な操作</div>
+      <button class="btn-c" style="width:100%;border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,.06)" onclick="clearMapData()">🗑 組織MAPをクリア（テストデータ削除）</button>
     </div>
     <div id="profileError" style="color:#ef4444;font-size:13px;margin-bottom:10px;display:none"></div>
     <div class="btn-row" style="margin-top:16px">
@@ -2894,6 +2898,20 @@ function closeProfileModal(e) {
   if (m) m.classList.remove('open');
 }
 
+function clearMapData() {
+  if (!state.isEditor) { toast('編集権限がありません'); return; }
+  var mo = state.currentMonth || (typeof currentMonthStr === 'function' ? currentMonthStr() : '');
+  var cnt = (state.members || []).filter(function(m){ return !m.deleted; }).length;
+  if (!confirm('【組織MAPをクリア】\n\n' + mo + ' の組織MAP（現状・理想のメンバー ' + cnt + '人・OL記録）を全て削除します。\nテストデータの削除に使ってください。\n\n※この操作は取り消せません。続けますか？')) return;
+  if (!confirm('本当に削除してよろしいですか？\n\nもう一度確認：' + mo + ' のメンバー ' + cnt + '人を全て消します。')) return;
+  state.members = [];
+  state.idealMembers = [];
+  state.freshData = {};
+  if (typeof autoSave === 'function') autoSave();
+  if (typeof closeProfileModal === 'function') closeProfileModal(null);
+  if (typeof switchView === 'function') switchView('current'); else if (typeof renderCurrentView === 'function') renderCurrentView();
+  toast('組織MAPをクリアしました 🗑');
+}
 function saveProfile() {
   if (!currentUser || !currentUser.uid) return;
   var el = function(id){ return ((document.getElementById(id)||{}).value||'').trim(); };
@@ -2940,7 +2958,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v207';
+  var DATA_VERSION = 'v208';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
