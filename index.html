@@ -1143,6 +1143,12 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ed-in:focus{color:var(--accent)}
 select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;text-align-last:right;cursor:pointer}
 .ed-chev{color:var(--text-dim);font-size:10px;flex:none;pointer-events:none}
+/* 誕生日：未入力時はiOS等の日付プレースホルダを隠し「未設定」を表示 */
+.ed-birth{position:relative}
+#fBirth:not(.has-value){color:transparent}
+#fBirth:not(.has-value)::-webkit-datetime-edit{color:transparent}
+.ed-bph{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:15px;color:var(--text-dim);opacity:.55;pointer-events:none}
+#fBirth.has-value ~ .ed-bph{display:none}
 .ed-help{font-size:12px;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin:0 0 10px;line-height:1.6;display:none}
 .ed-help.open{display:block}
 .ed-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
@@ -1299,7 +1305,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v204</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v205</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1725,7 +1731,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           </div>
           <div class="ed-row">
             <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fBirth" type="date" min="1900-01-01"></div>
+            <div class="ed-ctrl ed-birth"><input class="ed-in" id="fBirth" type="date" min="1900-01-01" onchange="this.classList.toggle('has-value',!!this.value)"><span class="ed-bph">未設定</span></div>
           </div>
           <div class="ed-help" id="h_birth">誕生日の前日にホームでリマインドが出ます。</div>
           <div class="ed-row">
@@ -2934,7 +2940,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v204';
+  var DATA_VERSION = 'v205';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6851,7 +6857,7 @@ function openEdit(id) {
     set('fASan', m.aSan);
     set('fInsta', m.instaUrl);
     set('fBirth', m.birthday);
-    var _fbMax = document.getElementById('fBirth'); if (_fbMax) _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10);
+    var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
     if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
@@ -6924,7 +6930,7 @@ function clearForm() {
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
   var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
-  var _fb=document.getElementById('fBirth'); if(_fb){ _fb.value=''; _fb.max=(typeof evTodayYmd==='function')?evTodayYmd():new Date().toISOString().slice(0,10); }
+  var _fb=document.getElementById('fBirth'); if(_fb){ _fb.value=''; _fb.classList.remove('has-value'); _fb.max=(typeof evTodayYmd==='function')?evTodayYmd():new Date().toISOString().slice(0,10); }
   var _fsm=document.getElementById('fStartMonth'); if(_fsm) _fsm.value=(state.currentMonth||currentMonthStr()).replace('.', '-');
   fCategory='';
   ['研修生','BA','BR'].forEach(function(k){
