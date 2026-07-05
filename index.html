@@ -366,6 +366,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* カード右端の編集ボタン（モバイルでも常時タップ可） */
 .node-edit-btn{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text-mid);font-size:15px;cursor:pointer;margin-left:4px}
 .node-edit-btn:active{background:var(--accent);color:#000;border-color:var(--accent)}
+.node-add-btn{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:19px;font-weight:700;cursor:pointer;margin-left:4px;line-height:1}
+.node-add-btn:active{background:var(--accent);color:#000}
 .nc.trainee{border-left-width:5px!important;background:rgba(34,211,238,.05)}
 .nc.loi-card{border-left-width:5px!important;border-color:var(--loi)!important;background:rgba(34,197,94,.05)}
 .nc.result-ng{background:rgba(100,100,100,.18);border-color:rgba(100,100,100,.3);opacity:0.6}
@@ -933,6 +935,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .home-streak{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(239,68,68,.07) 60%,var(--surface));border:1px solid rgba(245,158,11,.34);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 4px 20px rgba(245,158,11,.13)}
 .home-streak-fire{font-size:32px;filter:drop-shadow(0 0 9px rgba(245,158,11,.6))}
 .home-bday{display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,rgba(236,72,153,.18),rgba(245,158,11,.08) 60%,var(--surface));border:1px solid rgba(236,72,153,.4);border-radius:14px;padding:13px 15px;margin-bottom:12px;box-shadow:0 4px 20px rgba(236,72,153,.16)}
+.home-bday-month{background:var(--surface);border:1px solid rgba(236,72,153,.25);border-radius:12px;padding:10px 13px;margin-bottom:12px;font-size:12px;color:var(--text-mid);line-height:1.7}
 .home-bday-ic{font-size:26px;flex:none;filter:drop-shadow(0 0 8px rgba(236,72,153,.55))}
 .home-bday-t{font-size:14px;font-weight:700;color:var(--text)}
 .home-bday-s{font-size:12px;color:var(--text-dim);margin-top:2px}
@@ -1307,7 +1310,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v210</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v211</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1414,6 +1417,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div><div class="banner-label">LTSV 目標</div><div class="banner-val purple" id="ltsvI">-</div></div>
       <div class="banner-sub">コミッション<span id="commTotal">-</span></div>
     </div>
+    <div style="padding:8px 14px 0"><button class="btn-c" style="border-color:var(--purple);color:var(--purple);font-size:12px;padding:7px 14px;width:auto" onclick="copyCurrentToIdeal()">🗺 → 🎯 現状MAPからコピー</button></div>
     <div id="commTableWrap"></div>
     <!-- PC統合ツールバー(理想) -->
     <div class="pc-toolbar" id="pcToolbarI">
@@ -2059,6 +2063,21 @@ function buildStatsTableHeader() {
 
 
 // ── 翌月コピー ──
+// 現状MAPのメンバーを理想MAPにコピー（適用MAP「両方」を選ばなくても理想を作れる）
+function copyCurrentToIdeal() {
+  if (!state.isEditor) { toast('編集権限がありません'); return; }
+  var cur = (state.members || []).filter(function(m){ return !m.deleted && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType); });
+  if (!cur.length) { toast('現状MAPにメンバーがいません'); return; }
+  var msg = '現状MAPのメンバー ' + cur.length + '人を理想MAPにコピーします。';
+  if (state.idealMembers && state.idealMembers.length) msg += '\n\n※理想MAPの既存データ（' + state.idealMembers.length + '人）は上書きされます。';
+  if (!confirm(msg + '\n\n続けますか？')) return;
+  var copy = JSON.parse(JSON.stringify(cur));
+  copy.forEach(function(m){ m.mapType = 'ideal'; }); // 理想側の扱いに
+  state.idealMembers = copy;
+  if (typeof autoSave === 'function') autoSave();
+  if (typeof switchView === 'function') switchView('ideal');
+  toast('現状MAPを理想MAPにコピーしました 🎯');
+}
 function copyToNextMonth() {
   var cur = state.currentMonth || currentMonthStr();
   var parts = cur.split('.');
@@ -3009,7 +3028,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v210';
+  var DATA_VERSION = 'v211';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3652,11 +3671,32 @@ function birthdayUpcoming() {
   });
   return out;
 }
+function birthdayThisMonth() {
+  var now = new Date();
+  var mm = String(now.getMonth() + 1).padStart(2, '0');
+  var out = [];
+  (state.members || []).forEach(function(m) {
+    if (m.deleted || !m.birthday) return;
+    var p = (m.birthday || '').split('-');
+    if (p.length >= 3 && p[1] === mm) out.push({ m: m, day: parseInt(p[2], 10) });
+  });
+  out.sort(function(a, b){ return a.day - b.day; });
+  return out;
+}
 function birthdayHtml() {
+  var html = '';
   var bs = birthdayUpcoming();
-  if (!bs.length) return '';
-  var names = bs.map(function(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; }).join('、');
-  return '<div class="home-bday"><span class="home-bday-ic">🎂</span><div><div class="home-bday-t">明日は ' + evEsc(names) + ' さんの誕生日！</div><div class="home-bday-s">お祝いメッセージの準備を 🎉</div></div></div>';
+  if (bs.length) {
+    var names = bs.map(function(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; }).join('、');
+    html += '<div class="home-bday"><span class="home-bday-ic">🎂</span><div><div class="home-bday-t">明日は ' + evEsc(names) + ' さんの誕生日！</div><div class="home-bday-s">お祝いメッセージの準備を 🎉</div></div></div>';
+  }
+  var tm = birthdayThisMonth();
+  if (tm.length) {
+    var curM = new Date().getMonth() + 1, today = new Date().getDate();
+    var list = tm.map(function(x){ var nm = ((x.m.lastName || '') + ' ' + (x.m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; var passed = x.day < today; return '<span' + (passed ? ' style="opacity:.5"' : '') + '>' + evEsc(nm) + '（' + curM + '/' + x.day + '）</span>'; }).join('、');
+    html += '<div class="home-bday-month">🎂 今月の誕生日：' + list + '</div>';
+  }
+  return html;
 }
 function cockpitHtml() {
   var g = ckCollect();
@@ -5105,6 +5145,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0">'
     + '<span class="info-pt">' + ptDisplay + ptFixHTML + '</span>'
     + '</div>'
+    + (state.isEditor && !isForeign ? '<div class="node-add-btn" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="この下に追加">＋</div>' : '')
     + (state.isEditor ? '<div class="node-edit-btn" onclick="event.stopPropagation();openEdit(\'' + m.id + '\')" title="編集">&#x270e;</div>' : '')
     + '</div>'
     + memoTxt + traineeInfoHTML
@@ -5362,7 +5403,7 @@ function renderCommission() {
 
 // ── コミッション自動計算 ──
 function isBROrAbove(title) {
-  return isBROrAboveTitle(title);
+  return (typeof detectCategory === 'function') ? (detectCategory((title||'').trim()) === 'BR') : false;
 }
 
 // 指定メンバーの配下を全取得（再帰）
@@ -6164,7 +6205,8 @@ function renderStats() {
     if (freshMembers.length === 0) {
       freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
     } else {
-      freshWrap.innerHTML = freshMembers.map(function(m){
+      var _olNames = (state.members||[]).filter(function(x){return !x.deleted;}).map(function(x){ return '<option value="' + evEsc(((x.lastName||'')+' '+(x.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'')) + '">'; }).join('');
+      freshWrap.innerHTML = '<datalist id="olMemberList">' + _olNames + '</datalist>' + freshMembers.map(function(m){
         var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
         var fd = state.freshData[m.id] || {};
         var doneCount = 0;
@@ -6198,7 +6240,7 @@ function renderStats() {
           return '<div class="fol-item">'
             + '<div class="fol-row">'
             +   '<input class="fol-in" type="date" value="' + (e.date||'') + '" onchange="freshOlField(\'' + m.id + '\',' + idx + ',\'date\',this.value)">'
-            +   '<input class="fol-in" placeholder="誰に" value="' + evEsc(e.to||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'to\',this.value)">'
+            +   '<input class="fol-in" list="olMemberList" placeholder="誰に（メンバーから選択可）" value="' + evEsc(e.to||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'to\',this.value)">'
             +   '<button class="fol-x" onclick="freshOlRemove(\'' + m.id + '\',' + idx + ')">✕</button>'
             + '</div>'
             + '<input class="fol-in fol-full" placeholder="内容（何をした）" value="' + evEsc(e.what||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'what\',this.value)" style="margin-bottom:6px">'
