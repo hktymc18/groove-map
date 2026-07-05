@@ -449,6 +449,19 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 /* ── FAB ── */
 .fab{position:fixed;bottom:22px;right:18px;z-index:200;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#000;font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,212,170,.4);cursor:pointer;border:none;transition:transform .15s;line-height:1}
+/* モバイル下部固定ナビ（ドック風）*/
+.mobile-tabbar{display:none}
+@media(max-width:767px){
+  .mobile-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:46;background:var(--header-bg);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .scroll-area{padding-bottom:calc(env(safe-area-inset-bottom) + 60px)}
+  .fab{bottom:calc(env(safe-area-inset-bottom) + 74px)}
+  .fab-menu{bottom:calc(env(safe-area-inset-bottom) + 132px)!important}
+}
+.mtab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;cursor:pointer;color:var(--text-dim);transition:color .12s}
+.mtab.active{color:var(--accent)}
+.mtab-ic{font-size:20px;line-height:1;filter:grayscale(.35);transition:filter .12s}
+.mtab.active .mtab-ic{filter:none}
+.mtab-lb{font-size:10px;font-weight:600;letter-spacing:.3px}
 .fab:active{transform:scale(.9)}
 .fab.hidden{display:none}
 
@@ -1009,6 +1022,10 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ml-pill{flex:none;font-size:12px;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;white-space:nowrap}
 .ml-pill.active{color:#000;background:var(--accent);border-color:var(--accent);font-weight:600}
 .ml-list{padding:0 12px 14px;display:flex;flex-direction:column;gap:8px}
+@media(min-width:768px){
+  .ml-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:4px 16px 24px}
+  #view-members .ml-head,#view-members .ml-filters{padding-left:16px;padding-right:16px}
+}
 .ml-card{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:11px 12px;cursor:pointer}
 .ml-card:active{background:var(--surface2)}
 .ml-avatar{width:38px;height:38px;border-radius:11px;background:var(--surface3);color:var(--text-mid);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex:none}
@@ -1258,6 +1275,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <!-- PC左サイドバー（≥768px） -->
 <aside class="pc-sidebar" id="pcSidebar">
   <div class="pcs-logo" onclick="switchView('home')" title="今日">MAP</div>
+  <div class="pcs-item" data-view="home" onclick="switchView('home')" title="今日（ホーム）"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#22c55e;box-shadow:0 3px 12px rgba(34,197,94,.5)">🏠</span></div>
   <div class="pcs-item" data-view="current" onclick="switchView('current')" title="組織MAP"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#00d4aa;box-shadow:0 3px 12px rgba(0,212,170,.55)">🗺</span></div>
   <div class="pcs-item" data-view="members" onclick="switchView('members')" title="メンバー"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#3b82f6;box-shadow:0 3px 12px rgba(59,130,246,.5)">👥</span></div>
   <div class="pcs-item" data-view="ol" onclick="switchView('ol')" title="OL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#7c6aff;box-shadow:0 3px 12px rgba(124,106,255,.5)">📋</span></div>
@@ -1278,7 +1296,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v201</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v203</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1534,6 +1552,15 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <button class="fab" id="fab" onclick="onFabClick()">＋</button>
 <!-- FAB親選択メニュー -->
 <div class="fab-menu" id="fabMenu"></div>
+
+<!-- モバイル下部固定ナビ（ドック風・常時表示）-->
+<nav class="mobile-tabbar" id="mobileTabbar">
+  <div class="mtab" data-view="home" onclick="switchView('home')"><span class="mtab-ic">🏠</span><span class="mtab-lb">今日</span></div>
+  <div class="mtab" data-view="current" onclick="switchView('current')"><span class="mtab-ic">🗺</span><span class="mtab-lb">現状</span></div>
+  <div class="mtab" data-view="members" onclick="switchView('members')"><span class="mtab-ic">👥</span><span class="mtab-lb">メンバー</span></div>
+  <div class="mtab" data-view="events" onclick="switchView('events')"><span class="mtab-ic">📅</span><span class="mtab-lb">予定</span></div>
+  <div class="mtab" data-view="stats" onclick="switchView('stats')"><span class="mtab-ic">📊</span><span class="mtab-lb">データ</span></div>
+</nav>
 <!-- PC MAPツールチップ -->
 <div class="pc-tooltip" id="pcTooltip"></div>
 
@@ -1695,7 +1722,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           </div>
           <div class="ed-row">
             <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fBirth" type="date"></div>
+            <div class="ed-ctrl"><input class="ed-in" id="fBirth" type="date" min="1900-01-01"></div>
           </div>
           <div class="ed-help" id="h_birth">誕生日の前日にホームでリマインドが出ます。</div>
           <div class="ed-row">
@@ -2147,8 +2174,8 @@ function renderPCMap(mapType) {
   function visKids(id) { return window._pcCollapsed[id] ? [] : kids(id); }
 
   // ── レイアウト（横レイヤード：左→右） ──
-  var NODE_W = 200, NODE_H = 56, NODE_RX = 10;
-  var COL_GAP = 80, ROW_GAP = 14;
+  var NODE_W = 220, NODE_H = 72, NODE_RX = 12;
+  var COL_GAP = 70, ROW_GAP = 15;
   var colStep = NODE_W + COL_GAP;
   var rowStep = NODE_H + ROW_GAP;
   var PAD_L = 50, PAD_T = 56;
@@ -2203,7 +2230,10 @@ function renderPCMap(mapType) {
   // ── コンテナ ──
   var viewW = Math.max(window.innerWidth - 20, 600);
   var viewH = Math.max(window.innerHeight - 200, 500);
-  var zoom = 1.0, zoomMin = 0.3, zoomMax = 2.0;
+  var zoomMin = 0.3, zoomMax = 2.0;
+  // 初期表示：全段が横幅に収まるようフィット（大きめ優先）
+  var _fitW = (viewW - 30) / SVG_W;
+  var zoom = Math.max(0.55, Math.min(1.25, _fitW));
 
   var outerWrap = document.createElement('div');
   outerWrap.style.cssText = 'width:100%;position:relative;background:var(--bg)';
@@ -2403,20 +2433,20 @@ function renderPCMap(mapType) {
     var gsvColor = isLightTheme ? '#54607a' : '#cbd5e1';
     if(m.morale>0){
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
-      g.appendChild(txt(rx+2, ry2-4, emoji, '#fff', 15, null, 'Inter,sans-serif'));
+      g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
     }
     // 1行目: 名前 + 稼働
-    g.appendChild(txt(rx+14, ry2+25, nameStr, nameColor, 16, '700', 'Noto Sans JP,Inter,sans-serif'));
+    g.appendChild(txt(rx+16, ry2+30, nameStr, nameColor, 20, '700', 'Noto Sans JP,Inter,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#f59e0b';
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
-      g.appendChild(txt(rx+NODE_W-14, ry2+25, actStr, ac, 14, '700', 'Inter,sans-serif', 'end'));
+      g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
     }
     // 2行目: タイトル + GSV(固定)
-    g.appendChild(txt(rx+14, ry2+46, m.title||'-', cc, 13, '600', 'Inter,Noto Sans JP,sans-serif'));
+    g.appendChild(txt(rx+16, ry2+55, m.title||'-', cc, 16, '600', 'Inter,Noto Sans JP,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
-    g.appendChild(txt(rx+NODE_W-14, ry2+46, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 13, '600', 'Inter,sans-serif', 'end'));
+    g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
 
     // 折りたたみトグル（子がいる場合、右端に）
     var childCount = kids(m.id).length;
@@ -2447,13 +2477,12 @@ function renderPCMap(mapType) {
       g.appendChild(tg);
     }
 
-    // クリック=選択+系列フォーカス、ダブルクリック=編集
+    // クリック=編集パネル（右ドッキング）＋系列フォーカス
     (function(mid,lin){
-      var clickT=null;
       g.addEventListener('click',function(ev){
         ev.stopPropagation();
-        if(clickT){ clearTimeout(clickT); clickT=null; if(state.isEditor)openEdit(mid); return; }
-        clickT=setTimeout(function(){ clickT=null; selectCard(mid,ev); applyFocus(lin); }, 230);
+        selectCard(mid,ev); applyFocus(lin);
+        if(state.isEditor && !/^MG_/.test(mid) && typeof openEdit==='function') openEdit(mid);
       });
       g.addEventListener('mouseenter',function(ev){showPcTooltip(mid,ev);});
       g.addEventListener('mouseleave',function(){hidePcTooltip();});
@@ -2492,10 +2521,10 @@ function renderPCMap(mapType) {
   var _origApplyZoom = applyZoom;
   applyZoom = function(z) { _origApplyZoom(z); outer._currentZoom = zoom; if (_minimap) _minimap.draw(); };
 
-  // 初期表示: ルートが左に見えるようにフィット（最大100%）
+  // 初期表示: 全段が横幅に収まるようフィット（縦はスクロール、文字は大きめ優先）
   setTimeout(function(){
-    var fitZoom = Math.min(Math.min(viewW / SVG_W, viewH / SVG_H) * 0.95, 1.0);
-    fitZoom = Math.max(fitZoom, 0.5);
+    var fitZoom = Math.min((viewW - 30) / SVG_W, 1.25);
+    fitZoom = Math.max(fitZoom, 0.55);
     applyZoom(fitZoom);
     outer.scrollLeft = 0;
     var rootCenterY = (posY[root.id]+NODE_H/2) * fitZoom;
@@ -2902,7 +2931,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v201';
+  var DATA_VERSION = 'v203';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3038,8 +3067,8 @@ function switchView(v) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
-  // PC左サイドバーのactive切り替え
-  Array.prototype.slice.call(document.querySelectorAll('.pcs-item')).forEach(function(it) {
+  // PC左サイドバー・モバイル下部ナビのactive切り替え
+  Array.prototype.slice.call(document.querySelectorAll('.pcs-item, .mtab')).forEach(function(it) {
     it.classList.toggle('active', it.getAttribute('data-view') === v);
   });
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
@@ -3701,16 +3730,29 @@ function renderMonthlyChanges() {
 }
 // ── ホームの大アイコンメニュー（モバイルUIリニューアル ①）──
 function homeAddMember() { switchView('current'); setTimeout(function(){ if (typeof onFabClick === 'function') onFabClick(); }, 160); }
+// 組織MAP：現状 or 理想を選ぶミニシート
+function closeMapChoice() { var el = document.getElementById('mapChoiceOv'); if (el && el.parentNode) el.parentNode.removeChild(el); }
+function homeMapChoice() {
+  closeMapChoice();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'mapChoiceOv';
+  ov.onclick = function(e){ if (e.target === ov) closeMapChoice(); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">組織MAPを開く</div></div><span class="ms-x" onclick="closeMapChoice()">✕</span></div>'
+    + '<div class="ms-list">'
+    + '<div class="ms-act" onclick="closeMapChoice();switchView(\'current\')"><span class="ms-aic">🗺</span>現状MAP<span class="ms-ch">›</span></div>'
+    + '<div class="ms-act" onclick="closeMapChoice();switchView(\'ideal\')"><span class="ms-aic">🎯</span>理想MAP<span class="ms-ch">›</span></div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
 function homeMenuHtml() {
   var due = (typeof dueTaskCount === 'function') ? dueTaskCount() : 0;
   var items = [
-    { label:'組織MAP',     emoji:'🗺',  color:'#00d4aa', act:"switchView('current')" },
+    { label:'組織MAP',     emoji:'🗺',  color:'#00d4aa', act:"homeMapChoice()" },
     { label:'メンバー',    emoji:'👥',  color:'#3b82f6', act:"switchView('members')" },
     { label:'OL',          emoji:'📋',  color:'#7c6aff', act:"switchView('ol')" },
     { label:'予定',        emoji:'📅',  color:'#f59e0b', act:"switchView('events')", badge: due },
-    { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" },
-    { label:'理想',        emoji:'🎯',  color:'#ec4899', act:"switchView('ideal')" },
-    { label:'メンバー追加', emoji:'➕',  color:'#f97316', act:"homeAddMember()" }
+    { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" }
   ];
   var html = '<div class="home-sec-label">📂 メニュー</div><div class="home-menu">';
   html += items.map(function(it){
@@ -3761,7 +3803,7 @@ function renderMembers() {
     var pr = memberPriorityRank(m);
     var dotCls = pr === 3 ? 'high' : (pr === 2 ? 'mid' : (pr === 1 ? 'low' : 'none'));
     var accent = pr === 3 ? '#ef4444' : (memberCat(m) === '研修生' ? '#f59e0b' : (m.goldShip ? '#7c6aff' : '#3b82f6'));
-    return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openMemberActions(\'' + m.id + '\')">'
+    return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openMemberCard(\'' + m.id + '\')">'
       + '<span class="ml-avatar">' + evEsc(ini) + '</span>'
       + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span></div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
       + '<span class="ml-dot ' + dotCls + '"></span>'
@@ -3787,6 +3829,12 @@ function setMemberPriority(mid, p) {
     Array.prototype.forEach.call(_msheetEl.querySelectorAll('.ms-pchip'), function(c, i){ c.classList.toggle('on', vals[i] === p); });
   }
   toast(p ? ('優先度: ' + p) : '優先度をクリア');
+}
+// メンバーカードのタップ：PCは右ドッキング編集、モバイルはアクションシート
+function openMemberCard(mid) {
+  if (/^MG_/.test(mid)) return;
+  if (isPCMode()) { if (typeof openEdit === 'function') openEdit(mid); }
+  else { openMemberActions(mid); }
 }
 function openMemberActions(mid) {
   if (/^MG_/.test(mid)) return;
@@ -6783,6 +6831,7 @@ function openEdit(id) {
     set('fASan', m.aSan);
     set('fInsta', m.instaUrl);
     set('fBirth', m.birthday);
+    var _fbMax = document.getElementById('fBirth'); if (_fbMax) _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10);
     var _smEl = document.getElementById('fStartMonth');
     if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
@@ -6854,7 +6903,7 @@ function clearForm() {
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
   var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
-  var _fb=document.getElementById('fBirth'); if(_fb) _fb.value='';
+  var _fb=document.getElementById('fBirth'); if(_fb){ _fb.value=''; _fb.max=(typeof evTodayYmd==='function')?evTodayYmd():new Date().toISOString().slice(0,10); }
   var _fsm=document.getElementById('fStartMonth'); if(_fsm) _fsm.value=(state.currentMonth||currentMonthStr()).replace('.', '-');
   fCategory='';
   ['研修生','BA','BR'].forEach(function(k){
