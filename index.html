@@ -724,8 +724,14 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .th-entry::before{content:'';position:absolute;left:-17px;top:12px;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);z-index:1}
 .th-entry.result-bc::before{background:var(--accent);border-color:var(--accent)}
 .th-entry.result-left::before{background:var(--red);border-color:var(--red)}
+.th-entry.result-planned::before{background:var(--bg);border-color:#f59e0b;border-style:dashed}
 .th-step-name{font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--accent)}
 .th-entry.result-left .th-step-name{color:var(--red)}
+.th-entry.result-planned .th-step-name{color:#f59e0b}
+.th-acts{display:flex;gap:6px;margin-top:6px}
+.th-act-btn{font-size:11px;padding:5px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid)}
+.th-act-btn.go:active{background:var(--accent);border-color:var(--accent);color:#000}
+.th-act-btn.left:active{background:var(--red);border-color:var(--red);color:#fff}
 .th-meta{display:flex;gap:8px;align-items:center;margin-top:2px;font-size:11px;color:var(--text-dim)}
 .th-del{position:absolute;right:0;top:8px;color:var(--text-dim);font-size:14px;cursor:pointer;padding:2px 4px;opacity:0.4;transition:opacity .15s}
 .th-del:hover{opacity:1;color:var(--red)}
@@ -748,6 +754,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .result-chip:active{transform:scale(0.95)}
 .result-chip.sel-next{background:rgba(0,212,170,0.15);border-color:var(--accent);color:var(--accent)}
 .result-chip.sel-left{background:rgba(239,68,68,0.15);border-color:var(--red);color:var(--red)}
+.result-chip.sel-plan{background:rgba(245,158,11,0.15);border-color:#f59e0b;color:#f59e0b}
 
 /* ── 共有MAPダッシュボード ── */
 .sd-overlay{position:fixed;inset:0;z-index:350;background:var(--bg);display:none;flex-direction:column}
@@ -1330,7 +1337,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v213</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v214</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3077,7 +3084,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v213';
+  var DATA_VERSION = 'v214';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3630,7 +3637,7 @@ function ckDaysSince(ymd) {
 }
 function ckLatestStepDate(m) {
   var ds = [];
-  (m.traineeHistory || []).forEach(function(h){ if (h.date) ds.push(h.date); });
+  (m.traineeHistory || []).forEach(function(h){ if (h.date && h.result !== 'planned') ds.push(h.date); }); // 実施済みのみ（予定は停滞判定に含めない）
   ds.sort();
   return ds.length ? ds[ds.length - 1] : '';
 }
@@ -5599,20 +5606,34 @@ function renderTraineeHistory(m) {
   timeline.className = 'th-timeline';
   hist.forEach(function(h, i) {
     var entry = document.createElement('div');
-    entry.className = 'th-entry' + (h.result === 'left' ? ' result-left' : ' result-bc');
+    var cls = h.result === 'left' ? ' result-left' : (h.result === 'planned' ? ' result-planned' : ' result-bc');
+    entry.className = 'th-entry' + cls;
     var stepName = document.createElement('div');
     stepName.className = 'th-step-name';
-    stepName.textContent = h.status || '';
+    stepName.textContent = (h.result === 'planned' ? '📅 ' : '') + (h.status || '');
     entry.appendChild(stepName);
     var meta = document.createElement('div');
     meta.className = 'th-meta';
     if (h.date) { var ds = document.createElement('span'); ds.textContent = h.date; meta.appendChild(ds); }
     if (h.aSan) { var as2 = document.createElement('span'); as2.textContent = 'A: ' + h.aSan; meta.appendChild(as2); }
     var rs = document.createElement('span');
-    rs.textContent = h.result === 'left' ? 'x 離脱' : '→ 次へ';
-    rs.style.color = h.result === 'left' ? 'var(--red)' : 'var(--accent)';
+    rs.textContent = h.result === 'left' ? '✗ 離脱' : (h.result === 'planned' ? '📅 予定' : '✓ 進んだ');
+    rs.style.color = h.result === 'left' ? 'var(--red)' : (h.result === 'planned' ? '#f59e0b' : 'var(--accent)');
     meta.appendChild(rs);
     entry.appendChild(meta);
+    // 予定エントリ：後から結果を確定
+    if (h.result === 'planned') {
+      var acts = document.createElement('div');
+      acts.className = 'th-acts';
+      (function(idx){
+        var bN = document.createElement('button'); bN.className = 'th-act-btn go'; bN.textContent = '✓ 進んだ';
+        bN.onclick = function(){ setStepResult(idx, 'next'); };
+        var bL = document.createElement('button'); bL.className = 'th-act-btn left'; bL.textContent = '✗ 離脱';
+        bL.onclick = function(){ setStepResult(idx, 'left'); };
+        acts.appendChild(bN); acts.appendChild(bL);
+      })(i);
+      entry.appendChild(acts);
+    }
     var del = document.createElement('div');
     del.className = 'th-del';
     del.textContent = 'x';
@@ -5630,6 +5651,18 @@ function renderTraineeHistory(m) {
   updateStepFlow(hist);
 }
 
+// 予定ステップの結果を後から確定（進んだ/離脱）
+function setStepResult(idx, result) {
+  var m = getTraineeMember();
+  if (!m || !m.traineeHistory || !m.traineeHistory[idx]) return;
+  m.traineeHistory[idx].result = result;
+  m.traineeStatus = getLatestStatus(m);
+  autoSave();
+  renderTraineeHistory(null);
+  if (typeof getGame === 'function') getGame().stepUpdatedDate = gameToday();
+  if (typeof gameCheck === 'function') gameCheck();
+  toast(result === 'left' ? '離脱に確定しました' : '進んだに確定しました 🎉');
+}
 function updateStepFlow(hist) {
   var reached = {};
   (hist || []).forEach(function(h) { reached[h.status] = true; });
@@ -5693,21 +5726,24 @@ function selectStep(step) {
     + '<div style="flex:1"><label class="fl">日付</label><input class="fi" id="fHistoryDate" type="date" value="' + todayStr + '" style="font-size:14px;padding:8px" onchange="this.blur()"></div>'
     + '<div style="flex:1"><label class="fl">Aさん</label><input class="fi" id="fHistoryASan" type="text" placeholder="名前" style="font-size:14px;padding:8px"></div>'
     + '</div>'
-    + '<div style="margin-bottom:12px"><label class="fl" style="margin-bottom:6px">結果</label>'
-    + '<div style="display:flex;gap:8px">'
-    + '<div class="result-chip sel-next" id="sdNext" onclick="selDetailResult(\'next\')" style="flex:1;justify-content:center">→ 次へ進んだ</div>'
-    + '<div class="result-chip" id="sdLeft" onclick="selDetailResult(\'left\')" style="flex:1;justify-content:center">x 離脱した</div>'
+    + '<div style="margin-bottom:12px"><label class="fl" style="margin-bottom:6px">状態</label>'
+    + '<div style="display:flex;gap:6px">'
+    + '<div class="result-chip sel-plan" id="sdPlan" onclick="selDetailResult(\'planned\')" style="flex:1;justify-content:center">📅 予定</div>'
+    + '<div class="result-chip" id="sdNext" onclick="selDetailResult(\'next\')" style="flex:1;justify-content:center">✓ 進んだ</div>'
+    + '<div class="result-chip" id="sdLeft" onclick="selDetailResult(\'left\')" style="flex:1;justify-content:center">✗ 離脱</div>'
     + '</div></div>'
     + '<button class="btn-p" style="width:100%;padding:10px;font-size:14px" onclick="confirmAddHistory()">追加する</button>'
     + '</div>';
-  window._detailResult = 'next';
+  window._detailResult = 'planned';
 }
 function selDetailResult(val) {
   window._detailResult = val;
+  var p = document.getElementById('sdPlan');
   var n = document.getElementById('sdNext');
   var l = document.getElementById('sdLeft');
-  if (n) { n.classList.remove('sel-next','sel-left'); if (val==='next') n.classList.add('sel-next'); }
-  if (l) { l.classList.remove('sel-next','sel-left'); if (val==='left') l.classList.add('sel-left'); }
+  if (p) { p.classList.remove('sel-plan'); if (val==='planned') p.classList.add('sel-plan'); }
+  if (n) { n.classList.remove('sel-next'); if (val==='next') n.classList.add('sel-next'); }
+  if (l) { l.classList.remove('sel-left'); if (val==='left') l.classList.add('sel-left'); }
 }
 function confirmAddHistory() {
   if (!_selectedStep) return;
@@ -5723,11 +5759,14 @@ function confirmAddHistory() {
     date = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
   }
   var addedStep = _selectedStep;
-  m.traineeHistory.push({ status: addedStep, date: date, aSan: aSan, result: window._detailResult || 'next' });
+  var res = window._detailResult || 'planned';
+  m.traineeHistory.push({ status: addedStep, date: date, aSan: aSan, result: res });
+  // 予定なら次回予定として同期（気になるメンバーの「予定なし」に出さない）
+  if (res === 'planned') { m.nextDate = date; if (aSan) m.aSan = aSan; }
   m.traineeStatus = getLatestStatus(m);
   autoSave();
   renderTraineeHistory(null);
-  toast(addedStep + ' を追加しました');
+  toast(addedStep + (res === 'planned' ? ' の予定を追加しました' : ' を追加しました'));
   getGame().stepUpdatedDate = gameToday(); // 何日の分でも、今日更新したらミッション達成
   gameCheck();
   var panel = document.getElementById('stepDetailPanel');
