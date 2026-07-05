@@ -1305,7 +1305,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v205</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v206</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2940,7 +2940,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v205';
+  var DATA_VERSION = 'v206';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3794,6 +3794,7 @@ function memberMatchesFilter(m, f) {
   if (f === 'all') return true;
   if (f === 'trainee') return memberCat(m) === '研修生';
   if (f === 'fresh') return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
+  if (f === 'br') return memberCat(m) === 'BR';
   if (f === 'gold') return !!m.goldShip;
   return true;
 }
@@ -3801,13 +3802,14 @@ function memberPriorityRank(m) { return m.priority === '高' ? 3 : (m.priority =
 function renderMembers() {
   var wrap = document.getElementById('view-members'); if (!wrap) return;
   var all = membersForMap('current').filter(function(m){ return !m.deleted; });
-  var cAll = all.length, cTr = 0, cFr = 0, cGo = 0;
+  var cAll = all.length, cTr = 0, cFr = 0, cGo = 0, cBr = 0;
   all.forEach(function(m){
     if (memberCat(m) === '研修生') cTr++;
     if (CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0) cFr++;
+    if (memberCat(m) === 'BR') cBr++;
     if (m.goldShip) cGo++;
   });
-  var filters = [['all','すべて',cAll],['trainee','研修生',cTr],['fresh','フレッシュ',cFr],['gold','金の船',cGo]];
+  var filters = [['all','すべて',cAll],['trainee','研修生',cTr],['fresh','フレッシュ',cFr],['br','BR',cBr],['gold','金の船',cGo]];
   var list = all.filter(function(m){ return memberMatchesFilter(m, _memberFilter); });
   list.sort(function(a,b){ return (memberPriorityRank(b) - memberPriorityRank(a)) || ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||'')); });
   var html = '<div class="ml-head"><span class="ml-title">👥 メンバー</span><span class="ml-count">' + list.length + '人</span></div>';
