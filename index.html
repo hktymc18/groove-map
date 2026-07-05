@@ -1307,7 +1307,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v209</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v210</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1739,7 +1739,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
             <div class="ed-ctrl ed-birth"><input class="ed-in" id="fBirth" type="date" min="1900-01-01" onchange="this.classList.toggle('has-value',!!this.value)"><span class="ed-bph">未設定</span></div>
           </div>
-          <div class="ed-help" id="h_birth">誕生日の前日にホームでリマインドが出ます。</div>
+          <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
+          <div class="ed-row">
+            <span class="ed-l">地域<span class="ed-q" onclick="edHelp(event,'h_region')">?</span></span>
+            <div class="ed-ctrl"><input class="ed-in" id="fRegion" placeholder="例：福岡"></div>
+          </div>
+          <div class="ed-help" id="h_region">活動拠点。組織図の名前の横に表示され、地域でフィルタできます。</div>
           <div class="ed-row">
             <span class="ed-l">性別</span>
             <div class="ed-chips">
@@ -2253,6 +2258,11 @@ function renderPCMap(mapType) {
   var outerWrap = document.createElement('div');
   outerWrap.style.cssText = 'width:100%;position:relative;background:var(--bg)';
 
+  // 地域フィルタバー（地域が設定されているメンバーがいる時のみ・マップ構造の上に配置）
+  var regionBar = document.createElement('div');
+  regionBar.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);background:var(--bg)';
+  if (buildRegionFilter(members, regionBar)) wrap.appendChild(regionBar);
+
   // 段ルーラー（固定）
   var ruler = document.createElement('div');
   ruler.className = 'depth-ruler';
@@ -2415,6 +2425,7 @@ function renderPCMap(mapType) {
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
     g.setAttribute('class','oval-node'); g.setAttribute('data-mid',m.id);
     g.setAttribute('data-lineage', lineageRoot[m.id]||'');
+    g.setAttribute('data-region', m.region||'');
     g.style.cursor='pointer';
 
     var rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
@@ -2465,6 +2476,8 @@ function renderPCMap(mapType) {
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
+    // 地域（カード上部に小さく）
+    if(m.region){ g.appendChild(txt(rx+16, ry2+14, '📍 '+m.region.substring(0,6), gsvColor, 11, '500', 'Noto Sans JP,Inter,sans-serif')); }
 
     // 折りたたみトグル（子がいる場合、右端に）
     var childCount = kids(m.id).length;
@@ -2550,6 +2563,7 @@ function renderPCMap(mapType) {
     updateRuler();
     // 以前のフォーカス状態を復元
     if (window._pcFocusLineage) applyFocus(window._pcFocusLineage);
+    applyRegionDim();
   }, 60);
 }
 
@@ -2725,6 +2739,38 @@ function applyDepthFilter(members) {
   return members.filter(function(m) {
     return calcMemberDepth(m, members) <= depthFilter;
   });
+}
+
+// ── 地域フィルタ（配列は崩さず、非該当を薄く表示）──
+var regionFilter = '';
+function buildRegionFilter(members, wrap) {
+  if (!wrap) wrap = document.getElementById('depthFilterBtns');
+  if (!wrap) return false;
+  var seen = {}, regions = [];
+  members.forEach(function(m){ var r=(m.region||'').trim(); if(r && !seen[r]){ seen[r]=1; regions.push(r); } });
+  if (!regions.length) { regionFilter = ''; return false; }
+  regions.sort();
+  var lbl = document.createElement('span'); lbl.textContent = '地域'; lbl.style.cssText = 'font-size:11px;color:var(--text-dim);align-self:center;margin-right:2px';
+  wrap.appendChild(lbl);
+  var chips = ['__ALL__'].concat(regions);
+  chips.forEach(function(r){
+    var isAll = (r === '__ALL__');
+    var active = isAll ? (regionFilter === '') : (regionFilter === r);
+    var chip = document.createElement('div');
+    chip.textContent = isAll ? '📍全地域' : r;
+    chip.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;border:1px solid ' + (active?'#ec4899':'var(--border)') + ';background:' + (active?'#ec4899':'transparent') + ';color:' + (active?'#fff':'var(--text-dim)') + '';
+    chip.onclick = function(){ regionFilter = isAll ? '' : r; renderCurrentView(); setTimeout(applyRegionDim, 160); };
+    wrap.appendChild(chip);
+  });
+  return true;
+}
+function applyRegionDim() {
+  if (!regionFilter) return;
+  var nodes = document.querySelectorAll('.oval-node');
+  for (var i=0;i<nodes.length;i++){
+    var r = nodes[i].getAttribute('data-region') || '';
+    nodes[i].style.opacity = (r === regionFilter) ? '1' : '0.22';
+  }
 }
 
 
@@ -2963,7 +3009,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v209';
+  var DATA_VERSION = 'v210';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6881,6 +6927,7 @@ function openEdit(id) {
     set('fNextDate', m.nextDate);
     set('fASan', m.aSan);
     set('fInsta', m.instaUrl);
+    set('fRegion', m.region);
     set('fBirth', m.birthday);
     var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
@@ -6948,7 +6995,7 @@ function openEdit(id) {
   }
 }
 function clearForm() {
-  ['fLast','fFirst','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta'].forEach(function(id){
+  ['fLast','fFirst','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta','fRegion'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value='';
   });
@@ -7119,6 +7166,7 @@ function saveMember() {
       return (window._tempNewMember && window._tempNewMember.traineeHistory) ? window._tempNewMember.traineeHistory : [];
     })(),
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
+    region: ((document.getElementById('fRegion')||{}).value || '').trim(),
     birthday: (document.getElementById('fBirth')||{}).value || '',
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
