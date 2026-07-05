@@ -1305,7 +1305,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v206</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v207</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2082,8 +2082,8 @@ function copyToNextMonth() {
         var passed = confirm(mcName(m) + 'さん（' + t + '）\n今月の審査テストに合格しましたか？\n\n[OK＝合格 → ' + nextQ[qi] + 'へ昇格]\n[キャンセル＝不合格 → 活動歴Bへ降格]');
         if (passed) m.title = nextQ[qi];
         else m.title = bTitleFor(activityMonths(m, nextMonth));
-      } else {
-        // B系・BM：活動月数に応じて自動更新（毎月+1相当）
+      } else if (t !== 'BM') {
+        // B系：活動月数に応じて自動更新（毎月+1相当）。BMは活動歴の到達点なので維持
         m.title = bTitleFor(activityMonths(m, nextMonth));
       }
     }
@@ -2940,7 +2940,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v206';
+  var DATA_VERSION = 'v207';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
