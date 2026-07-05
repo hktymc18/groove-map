@@ -494,6 +494,8 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .tap-edit:active{background:rgba(255,255,255,.1)}
 /* 予定モーダルの日付・時刻：高さを揃えてかぶり防止 */
 .ev-dt{height:46px;box-sizing:border-box;min-width:0}
+.ev-dt-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+@media(max-width:767px){.ev-dt-row>.fr{flex:1 1 100%!important}}
 .overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .22s}
 .overlay.open{opacity:1;pointer-events:all}
 .sheet{background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:18px 18px 44px;width:100%;max-height:90vh;overflow-y:auto;transform:translateY(36px);transition:transform .22s}
@@ -1305,7 +1307,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v208</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v209</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1856,7 +1858,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
     </div>
     <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
-    <div style="display:flex;gap:10px;align-items:flex-end">
+    <div class="ev-dt-row">
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
       <div class="fr" style="flex:1.1;margin-bottom:0"><label class="fl">時刻（任意・15分）</label>
         <div style="display:flex;gap:6px;align-items:center">
@@ -2441,22 +2443,25 @@ function renderPCMap(mapType) {
       t.setAttribute('pointer-events','none'); t.textContent=content;
       return t;
     }
-    var nameStr = ((m.lastName||'')+(m.firstName||'')).substring(0,8);
-    var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#e8eaf0');
-    var gsvColor = isLightTheme ? '#54607a' : '#cbd5e1';
+    var nameStr = ((m.lastName||'')+(m.firstName||'')).replace(/\s+/g,'').substring(0,8);
+    var nameFs = nameStr.length<=5 ? 20 : (nameStr.length<=6 ? 18 : 16); // 長い名前は自動縮小して見切れ防止
+    var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#f2f4f8');
+    var gsvColor = isLightTheme ? '#3a4560' : '#e2e8f0';
     if(m.morale>0){
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
       g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
     }
     // 1行目: 名前 + 稼働
-    g.appendChild(txt(rx+16, ry2+30, nameStr, nameColor, 20, '700', 'Noto Sans JP,Inter,sans-serif'));
+    g.appendChild(txt(rx+16, ry2+30, nameStr, nameColor, nameFs, '700', 'Noto Sans JP,Inter,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#00d4aa':m.activity==='A'?'#7c6aff':m.activity==='B'?'#3b82f6':'#f59e0b';
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
       g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
     }
     // 2行目: タイトル + GSV(固定)
-    g.appendChild(txt(rx+16, ry2+55, m.title||'-', cc, 16, '600', 'Inter,Noto Sans JP,sans-serif'));
+    var titleStr = m.title||'-';
+    var titleFs = titleStr.length<=6 ? 16 : (titleStr.length<=8 ? 14 : 12); // 長いタイトル(ブルーダイヤ等)は縮小
+    g.appendChild(txt(rx+16, ry2+55, titleStr, cc, titleFs, '600', 'Inter,Noto Sans JP,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
@@ -2516,11 +2521,11 @@ function renderPCMap(mapType) {
     var i;
     for (i=0;i<nodes.length;i++){
       var nl = nodes[i].getAttribute('data-lineage');
-      nodes[i].style.opacity = (!lin || nl===lin || nl==='') ? '1' : '0.18';
+      nodes[i].style.opacity = (!lin || nl===lin || nl==='') ? '1' : '0.6';
     }
     for (i=0;i<links.length;i++){
       var ll = links[i].getAttribute('data-lineage');
-      links[i].style.opacity = (!lin || ll===lin) ? '1' : '0.1';
+      links[i].style.opacity = (!lin || ll===lin) ? '1' : '0.35';
     }
     for (i=0;i<lanes.length;i++){
       var al = lanes[i].getAttribute('data-lineage');
@@ -2958,7 +2963,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v208';
+  var DATA_VERSION = 'v209';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
