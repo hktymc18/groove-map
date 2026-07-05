@@ -599,6 +599,18 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ol-x{flex:none;width:40px;background:transparent;border:1px solid var(--border2);color:var(--red);border-radius:8px;cursor:pointer;font-size:13px}
 .ol-add{display:block;width:calc(100% - 20px);margin:0 10px 10px;padding:12px;border-radius:10px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer}
 .fresh-card-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fresh-hide-btn{margin-left:auto;flex:none;font-size:10px;padding:3px 9px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--text-dim);cursor:pointer}
+.fresh-hide-btn:active{background:var(--red);border-color:var(--red);color:#fff}
+.fresh-hidden-sec{margin:10px 0 4px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.fresh-hidden-hd{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:12px;color:var(--text-dim);cursor:pointer;background:var(--surface)}
+.fhs-count{background:var(--surface2);border-radius:8px;padding:1px 7px;font-size:11px}
+.fhs-arrow{margin-left:auto;transition:transform .2s}
+.fresh-hidden-sec.open .fhs-arrow{transform:rotate(90deg)}
+.fresh-hidden-body{display:none;padding:4px 10px 10px}
+.fresh-hidden-sec.open .fresh-hidden-body{display:block}
+.fresh-hidden-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:13px}
+.fhs-title{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.fresh-restore-btn{flex:none;font-size:11px;padding:4px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);cursor:pointer}
 .fresh-card-name{font-size:15px;font-weight:700;color:var(--text)}
 .fresh-card.done .fresh-card-name{text-decoration:line-through;color:var(--text-dim)}
 .fresh-card-title{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--purple-dim);color:var(--purple)}
@@ -1318,7 +1330,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v212</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v213</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3065,7 +3077,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v212';
+  var DATA_VERSION = 'v213';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5953,6 +5965,25 @@ function freshOlLog(mid) {
 function freshOlAdd(mid) { var t=new Date(); var d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); freshOlLog(mid).unshift({date:d,to:'',what:'',note:''}); autoSave(); renderStats(); }
 function freshOlField(mid, idx, field, val) { var log=freshOlLog(mid); if (log[idx]) { log[idx][field]=val; autoSave(); } } // 入力中は再描画しない
 function freshOlRemove(mid, idx) { var log=freshOlLog(mid); log.splice(idx,1); autoSave(); renderStats(); }
+// OLリストの表示/非表示フラグ（フォロー不要な人を隠す）
+function setOlHidden(mid, hide) {
+  var m = null; for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid){ m=state.members[i]; break; } }
+  if (!m) return;
+  m.olHidden = !!hide;
+  autoSave();
+  if (typeof renderStats === 'function') renderStats();
+  toast(hide ? 'OL対象外にしました' : 'OLリストに戻しました');
+}
+function olHiddenSectionHtml(hidden) {
+  if (!hidden || !hidden.length) return '';
+  var items = hidden.map(function(m){
+    var nm = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
+    return '<div class="fresh-hidden-item"><span>' + evEsc(nm) + ' <span class="fhs-title">' + evEsc(m.title||'') + '</span></span><button class="fresh-restore-btn" onclick="setOlHidden(\'' + m.id + '\',false)">戻す</button></div>';
+  }).join('');
+  return '<div class="fresh-hidden-sec">'
+    + '<div class="fresh-hidden-hd" onclick="this.parentNode.classList.toggle(\'open\')">🚫 OL対象外 <span class="fhs-count">' + hidden.length + '</span><span class="fhs-arrow">▶</span></div>'
+    + '<div class="fresh-hidden-body">' + items + '</div></div>';
+}
 // OLの「誰に」をカテゴリ別メンバーピッカーで選択
 var _olPick = { mid:'', idx:-1 };
 function closeOlPicker() { var el=document.getElementById('olPickerOv'); if (el && el.parentNode) el.parentNode.removeChild(el); }
@@ -6288,18 +6319,20 @@ function renderStats() {
   if (freshWrap) {
     var FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
     var FRESH_STEPS = [];
-    var freshMembers = membersForMap('current').filter(function(m){
-      return !m.deleted && FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
-    });
-    freshMembers.sort(function(a,b){
+    var _freshSort = function(a,b){
       var d = FRESH_TITLES.indexOf((a.title||'').trim()) - FRESH_TITLES.indexOf((b.title||'').trim());
       if (d !== 0) return d;
       return ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||''));
+    };
+    var _allFresh = membersForMap('current').filter(function(m){
+      return !m.deleted && FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
     });
-    if (freshMembers.length === 0) {
+    var freshMembers = _allFresh.filter(function(m){ return !m.olHidden; }).sort(_freshSort);
+    var hiddenFresh = _allFresh.filter(function(m){ return m.olHidden; }).sort(_freshSort);
+    if (freshMembers.length === 0 && hiddenFresh.length === 0) {
       freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
     } else {
-      freshWrap.innerHTML = freshMembers.map(function(m){
+      freshWrap.innerHTML = (freshMembers.length ? '' : '<div class="ev-empty" style="padding:14px 14px 0;color:var(--text-dim)">表示中のOL対象はいません。下の「OL対象外」から戻せます。</div>') + freshMembers.map(function(m){
         var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
         var fd = state.freshData[m.id] || {};
         var doneCount = 0;
@@ -6345,12 +6378,13 @@ function renderStats() {
           + '<div class="fresh-card-top">'
           +   '<span class="fresh-card-name">'+evEsc(name)+'</span>'
           +   '<span class="fresh-card-title">'+evEsc(m.title||'')+'</span>'
+          +   '<button class="fresh-hide-btn" onclick="setOlHidden(\''+m.id+'\',true)" title="OLリストから外す">✕ OL対象外</button>'
           + '</div>'
           + (chips ? '<div class="fresh-steps">'+chips+'</div>' : '')
           + editorHtml
           + ologHtml
           + '</div>';
-      }).join('');
+      }).join('') + olHiddenSectionHtml(hiddenFresh);
     }
   }
 
