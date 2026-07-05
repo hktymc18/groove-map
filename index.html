@@ -366,8 +366,10 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* カード右端の編集ボタン（モバイルでも常時タップ可） */
 .node-edit-btn{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border2);background:var(--surface3);color:var(--text-mid);font-size:15px;cursor:pointer;margin-left:4px}
 .node-edit-btn:active{background:var(--accent);color:#000;border-color:var(--accent)}
-.node-add-btn{flex:none;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;margin-left:4px;line-height:1}
-.node-add-btn:active{background:var(--accent);color:#000}
+.mc-chip{font-size:12px;font-weight:600;padding:5px 12px;border-radius:14px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:all .12s}
+.nc.card-selected{box-shadow:0 0 0 2px var(--accent),0 4px 16px rgba(0,212,170,.25)!important}
+.fab.has-selection{box-shadow:0 0 0 3px var(--accent-dim),0 4px 24px rgba(0,212,170,.6);animation:fabPulse 1.4s ease-in-out infinite}
+@keyframes fabPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .expand-col.can-expand{cursor:pointer;border-radius:8px;padding:2px;transition:background .12s}
 .expand-col.can-expand:active{background:var(--surface2)}
 .olp-cat{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text-dim);padding:12px 4px 6px;position:sticky;top:0;background:var(--surface)}
@@ -1348,7 +1350,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v216</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v217</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1391,15 +1393,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <select id="levelSelect" onchange="expandToLevel(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;padding:5px 10px;border-radius:8px;outline:none"></select>
       <div id="depthFilterBtns" style="display:flex;gap:4px;flex-wrap:wrap"></div>
     </div>
-    <div id="searchBar" style="padding:6px 14px 0">
-      <div style="display:flex;gap:8px;align-items:center">
-        <!-- メインサーチボックス（1行） -->
-        <div style="flex:1;display:flex;align-items:center;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:0 12px;height:36px" onclick="openSearchModal()">
-          <span style="font-size:14px;margin-right:6px">🔍</span>
-          <span id="searchDisplayText" style="font-size:13px;color:var(--text-dim);flex:1">名前・タイトル・稼働・メモ</span>
-          <span id="searchClearBtn" style="display:none;font-size:16px;color:var(--text-dim);cursor:pointer" onclick="event.stopPropagation();clearSearch()">✕</span>
-        </div>
-      </div>
+    <div id="searchBar" style="padding:8px 14px 0">
+      <div id="mapCatChips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
     <!-- 検索モーダル -->
     <div class="overlay" id="searchModal" onclick="closeSearchModal(event)">
@@ -1611,7 +1606,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <nav class="mobile-tabbar" id="mobileTabbar">
   <div class="mtab" data-view="home" onclick="switchView('home')"><span class="mtab-ic">🏠</span><span class="mtab-lb">HOME</span></div>
   <div class="mtab" data-view="current" onclick="switchView('current')"><span class="mtab-ic">🗺</span><span class="mtab-lb">現状</span></div>
-  <div class="mtab" data-view="members" onclick="switchView('members')"><span class="mtab-ic">👥</span><span class="mtab-lb">メンバー</span></div>
   <div class="mtab" data-view="events" onclick="switchView('events')"><span class="mtab-ic">📅</span><span class="mtab-lb">予定</span></div>
   <div class="mtab" data-view="stats" onclick="switchView('stats')"><span class="mtab-ic">📊</span><span class="mtab-lb">データ</span></div>
 </nav>
@@ -2859,6 +2853,44 @@ function applyRegionDim() {
   }
 }
 
+// ── カテゴリ絞り込み（メンバータブを現状に統合）──
+var mapCatFilter = '';
+function _findMember(mid){ for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid) return state.members[i]; } return null; }
+function buildMapCatChips(members) {
+  var wrap = document.getElementById('mapCatChips');
+  if (!wrap) return;
+  var own = (members || []).filter(function(m){ return !m.deleted; });
+  var cAll = own.length, cTr = 0, cFr = 0, cBr = 0, cGo = 0;
+  own.forEach(function(m){
+    if (memberMatchesFilter(m,'trainee')) cTr++;
+    if (memberMatchesFilter(m,'fresh')) cFr++;
+    if (memberMatchesFilter(m,'br')) cBr++;
+    if (m.goldShip) cGo++;
+  });
+  var defs = [['','すべて',cAll,'#00d4aa'],['trainee','研修生',cTr,'#f59e0b'],['fresh','フレッシュ',cFr,'#10b981'],['br','BR',cBr,'#3b82f6'],['gold','金の船',cGo,'#7c6aff']];
+  wrap.innerHTML = defs.map(function(d){
+    var active = (mapCatFilter === d[0]);
+    return '<span class="mc-chip" onclick="setMapCatFilter(\'' + d[0] + '\')" style="border-color:' + (active?d[3]:'var(--border)') + ';background:' + (active?d[3]:'transparent') + ';color:' + (active?'#000':'var(--text-dim)') + '">' + d[1] + ' ' + d[2] + '</span>';
+  }).join('');
+}
+function setMapCatFilter(f) { mapCatFilter = f; renderCurrentView(); setTimeout(applyMapCatDim, 180); }
+function applyMapCatDim() {
+  // PC組織図ノード
+  var nodes = document.querySelectorAll('.oval-node');
+  for (var i=0;i<nodes.length;i++){
+    var m = _findMember(nodes[i].getAttribute('data-mid'));
+    var ok = !mapCatFilter || (m && memberMatchesFilter(m, mapCatFilter));
+    nodes[i].style.opacity = ok ? '1' : '0.2';
+  }
+  // モバイルツリーカード
+  var cards = document.querySelectorAll('.nc[data-cid]');
+  for (var j=0;j<cards.length;j++){
+    var m2 = _findMember(cards[j].getAttribute('data-cid'));
+    var ok2 = !mapCatFilter || (m2 && memberMatchesFilter(m2, mapCatFilter));
+    cards[j].style.opacity = ok2 ? '' : '0.3';
+  }
+}
+
 
 // ── テーマ切替 ──
 function setTheme(theme) {
@@ -3095,7 +3127,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v216';
+  var DATA_VERSION = 'v217';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3222,11 +3254,14 @@ function updateFabVisibility() {
   if (!fab) return;
   var showFab = state.isEditor && (currentView === 'current' || currentView === 'ideal');
   fab.classList.toggle('hidden', !showFab);
+  fab.classList.toggle('has-selection', !!window._selectedCardId);
+  fab.title = window._selectedCardId ? '選択中メンバーの直下に追加' : 'メンバーを追加';
 }
 
 // ── VIEW SWITCH ──
 function switchView(v) {
   currentView = v;
+  window._selectedCardId = null;
   ['home','members','current','ideal','stats','ol','events'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
@@ -5064,6 +5099,7 @@ function renderTree(mapType) {
   var ownMembers = membersForMap(mapType);
   var members = composeMergedInto(ownMembers, mapType); // 結合中の下位ツリーを合成（表示のみ）
   if (!isPCMode()) buildLevelSelector(members); // モバイル：レベル展開セレクタ
+  if (mapType === 'current') { buildMapCatChips(ownMembers); setTimeout(applyMapCatDim, 200); } // カテゴリ絞り込み
   var roots = childrenOf('', members);
 
   if (roots.length === 0) {
@@ -5213,7 +5249,6 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0">'
     + '<span class="info-pt">' + ptDisplay + ptFixHTML + '</span>'
     + '</div>'
-    + (state.isEditor && !isForeign ? '<div class="node-add-btn" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="この下に追加">＋</div>' : '')
     + '</div>'
     + memoTxt + traineeInfoHTML
     + '</div>'
@@ -5310,6 +5345,11 @@ function cardSingleTap(id, e) {
   if (e && e.target && e.target.closest) {
     if (e.target.closest('.tap-edit') || e.target.closest('.expand-col') || e.target.closest('.node-add-btn')) return;
   }
+  // カード選択（右下＋ボタンでこの下に追加できるように）
+  window._selectedCardId = id;
+  Array.prototype.slice.call(document.querySelectorAll('.nc.card-selected')).forEach(function(c){ c.classList.remove('card-selected'); });
+  var nc = document.getElementById('nc-'+id); if (nc) nc.classList.add('card-selected');
+  updateFabVisibility();
   var box = document.getElementById('mem-'+id);
   if (!box) return;
   if (box.classList.contains('show')) { box.classList.remove('show'); return; }
@@ -7005,6 +7045,11 @@ function onFabClick() {
     selectedParentId = null;
     openAdd();
     return;
+  }
+  // カード選択中 → その直下に追加
+  if (window._selectedCardId) {
+    var selM = members.filter(function(x){ return x.id === window._selectedCardId; })[0];
+    if (selM) { fabSelectParent(window._selectedCardId); return; }
   }
   var menu = document.getElementById('fabMenu');
   if (menu.classList.contains('open')) {
