@@ -1350,7 +1350,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v219</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v220</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1633,6 +1633,10 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="profileAdminWrap" style="display:none;margin-top:4px;margin-bottom:4px">
       <button class="btn-c" style="width:100%;border-color:var(--purple);color:var(--purple)" onclick="openAdminPanel()">🛡 アカウント管理</button>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <div id="profileAccountEmail" style="font-size:11px;color:var(--text-dim);margin-bottom:7px;letter-spacing:.5px"></div>
+      <button class="btn-c" style="width:100%" onclick="doLogout()">↩ ログアウト</button>
     </div>
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
       <div style="font-size:11px;color:var(--text-dim);margin-bottom:7px;letter-spacing:.5px">⚠️ 危険な操作</div>
@@ -3126,7 +3130,11 @@ function openProfileModal() {
   if (el('profileUnion'))el('profileUnion').value = currentUser.union|| '';
   if (el('profileUpRuby'))el('profileUpRuby').value = currentUser.upRuby || '';
   if (el('profileUpBd')) el('profileUpBd').value  = currentUser.upBd || '';
-  // 必須モードの見た目
+  var accEmail = el('profileAccountEmail');
+  if (accEmail) {
+    var em = currentUser.email || (auth && auth.currentUser && auth.currentUser.email) || '';
+    accEmail.textContent = em ? ('ログイン中：' + em) : '';
+  }
   var note = el('profileMandatoryNote'); if (note) note.style.display = _profileMandatory ? '' : 'none';
   var cancel = el('profileCancelBtn'); if (cancel) cancel.style.display = _profileMandatory ? 'none' : '';
   var title = el('profileModalTitle'); if (title) title.textContent = _profileMandatory ? 'プロフィール入力（必須）' : 'プロフィール設定';
@@ -3209,7 +3217,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v219';
+  var DATA_VERSION = 'v220';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -9415,6 +9423,8 @@ var sharePerm = 'view';
 
 // Firebase Authのリスナー
 if (auth) {
+  // パスワードリセットのリンクで開かれた場合は、再設定画面を最優先で表示
+  handlePasswordResetLink();
   auth.onAuthStateChanged(function(fbUser) {
     if (fbUser) {
       // Firestoreからプロフィール取得
@@ -9569,14 +9579,91 @@ function loginSuccess(user) {
   switchView('home');
 }
 
-function showForgotPass() {
-  var email = (document.getElementById('loginEmail')||{}).value||'';
-  if (!email) { alert('メールアドレスを入力してからタップしてください'); return; }
-  if (auth) {
-    auth.sendPasswordResetEmail(email)
-      .then(function() { toast('パスワードリセットメールを送信しました'); })
-      .catch(function(e) { alert('送信失敗: ' + e.message); });
+function _resetAuthErrMsg(code) {
+  switch (code) {
+    case 'auth/invalid-email': return 'メールアドレスの形式が正しくありません';
+    case 'auth/user-not-found': return 'このメールアドレスの登録が見つかりません';
+    case 'auth/missing-email': return 'メールアドレスを入力してください';
+    case 'auth/too-many-requests': return '回数が多すぎます。しばらくしてから再度お試しください';
+    case 'auth/expired-action-code': return 'リンクの有効期限が切れています。もう一度お試しください';
+    case 'auth/invalid-action-code': return 'リンクが無効です。もう一度お試しください';
+    case 'auth/weak-password': return 'パスワードは6文字以上にしてください';
+    default: return 'エラーが発生しました（' + (code || '') + '）';
   }
+}
+function doLogout() {
+  if (!confirm('ログアウトしますか？')) return;
+  if (auth) {
+    auth.signOut().then(function() { location.reload(); }).catch(function(e) { alert('ログアウトに失敗しました: ' + e.message); });
+  } else {
+    location.reload();
+  }
+}
+
+function showForgotPass() {
+  var email = ((document.getElementById('loginEmail')||{}).value||'').trim();
+  var errEl = document.getElementById('loginError');
+  function say(msg, ok) { if (errEl) { errEl.textContent = msg; errEl.style.color = ok ? '#00d4aa' : '#ef4444'; errEl.style.display = ''; } else { alert(msg); } }
+  if (!email) { say('先にメールアドレスを入力してください'); return; }
+  if (!auth) { say('接続エラー。時間をおいて再度お試しください'); return; }
+  // リンクをこのアプリ(groove-map)に着地させ、再設定画面を自前で処理する
+  auth.sendPasswordResetEmail(email, {
+    url: 'https://hktymc18.github.io/groove-map/',
+    handleCodeInApp: true
+  })
+    .then(function() { say('✅ リセットメールを送信しました。迷惑メールもご確認ください。', true); })
+    .catch(function(e) { say(_resetAuthErrMsg(e.code)); console.error('resetPassword error:', e.code, e.message); });
+}
+
+// リセットメールのリンク（?mode=resetPassword&oobCode=...）で開かれた場合の処理
+function handlePasswordResetLink() {
+  if (!auth) return false;
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('mode') !== 'resetPassword') return false;
+  var oobCode = params.get('oobCode');
+  if (!oobCode) return false;
+  auth.verifyPasswordResetCode(oobCode)
+    .then(function(email) { _showResetPasswordForm(email, oobCode); })
+    .catch(function(e) {
+      var ls = document.getElementById('loginScreen'); if (ls) ls.style.display = 'flex';
+      var errEl = document.getElementById('loginError');
+      if (errEl) { errEl.textContent = _resetAuthErrMsg(e.code); errEl.style.color = '#ef4444'; errEl.style.display = ''; }
+      window.history.replaceState({}, '', window.location.pathname);
+    });
+  return true;
+}
+
+// 新パスワード入力オーバーレイ
+function _showResetPasswordForm(email, oobCode) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:var(--bg,#12141a);display:flex;align-items:center;justify-content:center;padding:24px';
+  var inStyle = 'width:100%;background:var(--surface,#1a1d24);border:1px solid var(--border,#2a2e38);border-radius:12px;color:var(--text,#e6e8ec);padding:14px 16px;font-size:16px;margin-bottom:12px;outline:none;-webkit-appearance:none';
+  ov.innerHTML =
+      '<div style="max-width:360px;width:100%">'
+    + '<div style="font-size:18px;font-weight:700;margin-bottom:6px">パスワード再設定</div>'
+    + '<div style="font-size:13px;color:var(--text-dim,#8a94a6);margin-bottom:16px">' + (email ? evEsc(email) + ' の' : '') + '新しいパスワードを入力してください</div>'
+    + '<input id="_rpNew" type="password" placeholder="新しいパスワード（6文字以上）" style="' + inStyle + '">'
+    + '<input id="_rpNew2" type="password" placeholder="新しいパスワード（確認）" style="' + inStyle + '">'
+    + '<div id="_rpErr" style="color:#ef4444;font-size:13px;text-align:center;margin-bottom:12px;display:none"></div>'
+    + '<button id="_rpOk" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--accent,#00d4aa);color:#08121a;font-size:15px;font-weight:700">パスワードを変更</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  function err(m) { var e = document.getElementById('_rpErr'); e.textContent = m; e.style.display = ''; }
+  document.getElementById('_rpOk').onclick = function() {
+    var p1 = document.getElementById('_rpNew').value;
+    var p2 = document.getElementById('_rpNew2').value;
+    if (!p1 || p1.length < 6) { err('パスワードは6文字以上にしてください'); return; }
+    if (p1 !== p2) { err('パスワードが一致しません'); return; }
+    auth.confirmPasswordReset(oobCode, p1)
+      .then(function() {
+        if (ov.parentNode) ov.parentNode.removeChild(ov);
+        window.history.replaceState({}, '', window.location.pathname);
+        var ls = document.getElementById('loginScreen'); if (ls) ls.style.display = 'flex';
+        var le = document.getElementById('loginError');
+        if (le) { le.textContent = '✅ パスワードを変更しました。新しいパスワードでログインしてください。'; le.style.color = '#00d4aa'; le.style.display = ''; }
+      })
+      .catch(function(e) { err(_resetAuthErrMsg(e.code)); });
+  };
 }
 
 // ── 共有（Firestoreベース リアルタイム） ──
