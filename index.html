@@ -1350,7 +1350,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v220</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v221</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3217,7 +3217,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v220';
+  var DATA_VERSION = 'v221';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3417,7 +3417,9 @@ function sumChildGSV(id, members) {
   var s = 0;
   if (!members) return 0;
   for (var i = 0; i < members.length; i++) {
-    if (members[i].parentId === id && !members[i].deleted) s += (members[i].ptCurrent || 0);
+    var c = members[i];
+    // BR以上はブレイクアウェイ：その組織ごと上位のGSVに含めない
+    if (c.parentId === id && !c.deleted && !isBROrAbove(c.title)) s += (c.ptCurrent || 0);
   }
   return s;
 }
@@ -5747,23 +5749,11 @@ function calcBBGSV(members) {
   if (roots.length === 0) return 0;
   var rootId = roots[0].id;
   
-  var total = 0;
-  // ルートの直下BR以上を特定
-  var brDirectChildren = members.filter(function(m){
-    return m.parentId === rootId && isBROrAbove(m.title);
-  });
-  var excludeIds = {};
-  brDirectChildren.forEach(function(br) {
-    excludeIds[br.id] = true;
-    getAllDescendants(br.id, members).forEach(function(d){ excludeIds[d.id] = true; });
-  });
-  
-  // 自分自身のPTを含む、excludeに含まれないメンバーのPT合計
-  members.forEach(function(m) {
-    if (excludeIds[m.id]) return;
-    total += (m.ptCurrent || 0);
-  });
-  return total;
+  // ルートのGSV(ptCurrent)は既にBR以上のブレイクアウェイを除外した積み上げ済み
+  for (var i = 0; i < members.length; i++) {
+    if (members[i].id === rootId) return members[i].ptCurrent || 0;
+  }
+  return 0;
 }
 
 // LB計算
@@ -5777,9 +5767,10 @@ function calcLBCommission(bbGSV, members) {
     return m.parentId === rootId && isBROrAbove(m.title);
   });
   var brTotal = 0;
+  // ptCurrentは積み上げ済みのため、二重計上を避けて各自の分(ptSelf)で合算
   brDirectChildren.forEach(function(br) {
-    brTotal += (br.ptCurrent || 0);
-    getAllDescendants(br.id, members).forEach(function(d){ brTotal += (d.ptCurrent || 0); });
+    brTotal += (typeof br.ptSelf === 'number' ? br.ptSelf : (br.ptCurrent || 0));
+    getAllDescendants(br.id, members).forEach(function(d){ brTotal += (typeof d.ptSelf === 'number' ? d.ptSelf : (d.ptCurrent || 0)); });
   });
   
   // LBポイント = BR以上の配下全体合計
