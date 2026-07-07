@@ -1156,9 +1156,13 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .me-back{color:var(--accent);font-size:14px;cursor:pointer;min-width:56px}
 .me-title{font-size:16px;font-weight:700;color:var(--text);flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .me-save{color:var(--accent);font-size:15px;font-weight:700;cursor:pointer;min-width:56px;text-align:right}
+.me-del{color:var(--red);font-size:19px;cursor:pointer;min-width:56px;text-align:right;line-height:1}
 .me-tabs{display:flex;gap:5px;padding:10px 12px 8px;flex:none}
 .me-tab{flex:1;text-align:center;font-size:12px;color:var(--text-dim);background:var(--surface2);border-radius:8px;padding:8px 0;cursor:pointer}
 .me-tab.on{color:#000;background:var(--accent);font-weight:600}
+/* ダークモードのみ：ラベル・タブの文字を見やすく（ライトモードは従来のまま） */
+body:not(.light) .ed-l,body:not(.light) .md-l,body:not(.light) .pc-tooltip-label{color:#c6cdda}
+body:not(.light) .me-tab:not(.on),body:not(.light) .md-tab:not(.on){color:#c6cdda}
 .me-vp{flex:1;overflow:hidden;min-height:0}
 .me-track{display:flex;width:500%;height:100%;transition:transform .25s ease}
 .me-page{width:20%;flex:none;overflow-y:auto;padding:10px 14px 24px;-webkit-overflow-scrolling:touch}
@@ -1174,7 +1178,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
   .me-top{padding-top:16px}
   .me-foot{padding-bottom:16px}
 }
-.me-foot .btn-d{width:100%;padding:11px 0}
+.me-foot .btn-d,.me-foot .btn-p{width:100%;padding:11px 0}
 .me-ol,.me-task{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:8px;font-size:13px}
 .me-add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:6px;border:1px dashed var(--accent);border-radius:10px;color:var(--accent);background:var(--accent-dim);font-size:13px;font-weight:600;cursor:pointer}
 /* 編集：閲覧レイアウトのまま編集（行ベース）*/
@@ -1350,7 +1354,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v221</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v222</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1701,7 +1705,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="me-top">
       <span class="me-back" onclick="closeMemberEdit()">‹ 戻る</span>
       <span class="me-title" id="shTitle">メンバー編集</span>
-      <span class="me-save" onclick="saveMember()">保存</span>
+      <span class="me-del" id="btnDel" onclick="deleteMember()" style="visibility:hidden" title="このメンバーを削除">🗑</span>
     </div>
     <div id="parentLabel" style="display:none;margin:10px 14px 0;padding:8px 12px;background:var(--accent-dim);border:1px solid rgba(0,212,170,.3);border-radius:var(--rsm);font-size:12px;color:var(--accent)"></div>
     <div class="me-tabs">
@@ -1887,7 +1891,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <span class="me-dot on"></span><span class="me-dot"></span><span class="me-dot"></span><span class="me-dot"></span><span class="me-dot"></span>
     </div>
     <div class="me-foot">
-      <button class="btn-d" id="btnDel" onclick="deleteMember()" style="display:none">🗑 このメンバーを削除</button>
+      <button class="btn-p" onclick="saveMember()">保存</button>
     </div>
   </div>
 </div>
@@ -3217,7 +3221,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v221';
+  var DATA_VERSION = 'v222';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -7325,7 +7329,7 @@ function openAdd() {
   editingId = null; fGender='male'; fTrainee=false; fGoldShip=false;
   fMapType = currentView==='stats' ? 'current' : currentView;
   document.getElementById('shTitle').textContent = 'メンバー追加';
-  document.getElementById('btnDel').style.display = 'none';
+  document.getElementById('btnDel').style.visibility = 'hidden';
   var _mtb1 = document.getElementById('memberTaskBtn');
   if (_mtb1) _mtb1.style.display = 'none';
   clearForm();
@@ -7389,7 +7393,7 @@ function openEdit(id) {
     };
     var _mnm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || 'メンバー編集';
     document.getElementById('shTitle').textContent = _mnm;
-    document.getElementById('btnDel').style.display = '';
+    document.getElementById('btnDel').style.visibility = 'visible';
     set('fLast', m.lastName);
     set('fFirst', m.firstName);
     set('fAct', m.activity);
