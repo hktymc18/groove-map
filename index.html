@@ -1102,6 +1102,40 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .gl-actions{display:flex;gap:4px;flex:none}
 .gl-addgoal{display:block;width:100%;text-align:center;padding:13px;border-radius:12px;border:1px dashed var(--border2);background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
 .gl-empty{color:var(--text-dim);font-size:13px;text-align:center;padding:26px 10px;line-height:1.7}
+/* ── 逆算プランナー ── */
+.gp-card{border:1px solid rgba(14,165,233,.35);border-radius:16px;background:linear-gradient(135deg,rgba(14,165,233,.10),var(--surface) 62%);padding:14px 15px;margin-bottom:16px}
+.gp-goal{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.gp-goal-main{flex:1;min-width:0}
+.gp-goal-l{font-size:11px;font-weight:700;letter-spacing:1px;color:#0ea5e9;margin-bottom:3px}
+.gp-goal-t{font-size:18px;font-weight:800;color:var(--text);line-height:1.35;word-break:break-word}
+.gp-goal-t .ph{color:var(--text-dim);font-weight:600;font-size:15px}
+.gp-goal-sub{font-size:12px;color:var(--text-mid);margin-top:3px}
+.gp-edit{flex:none;font-size:12px;color:#0ea5e9;background:rgba(14,165,233,.12);border-radius:8px;padding:4px 9px;cursor:pointer;font-weight:700}
+.gp-flow{margin-top:12px;display:flex;flex-direction:column;gap:0}
+.gp-step{position:relative;padding:11px 12px 11px 14px;border-left:2px solid rgba(14,165,233,.4);margin-left:6px}
+.gp-step:first-child{padding-top:2px}
+.gp-step-l{font-size:11px;font-weight:700;color:var(--text-mid);display:flex;align-items:center;gap:6px}
+.gp-step-l .gp-auto{font-size:9px;font-weight:800;color:#0ea5e9;background:rgba(14,165,233,.15);border-radius:4px;padding:1px 5px;letter-spacing:.5px}
+.gp-step-v{font-size:15px;font-weight:800;color:var(--text);margin-top:3px}
+.gp-step-v b{color:#0ea5e9;font-size:22px}
+.gp-step-v .sm{font-size:12px;color:var(--text-mid);font-weight:600}
+.gp-set{font-size:11px;color:var(--text-dim);cursor:pointer;text-decoration:underline;margin-left:6px}
+.gp-two{display:flex;gap:16px;margin-top:2px}
+.gp-two>div .k{font-size:10px;color:var(--text-mid)}
+.gp-two>div .v{font-size:17px;font-weight:800;color:var(--text)}
+.gp-two>div .v.must{color:#f43f5e}
+.gp-kpi{margin-top:6px;display:flex;flex-direction:column;gap:7px}
+.gp-krow{display:flex;align-items:center;gap:9px}
+.gp-kname{flex:1;min-width:0;font-size:12px;color:var(--text);font-weight:600}
+.gp-ktarget{flex:none;font-size:12px;color:var(--text-mid)}
+.gp-ktarget b{color:#0ea5e9;font-weight:800;font-size:15px}
+.gp-kact{flex:none;width:58px}
+.gp-kact input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:5px 7px;font-size:13px;text-align:right;outline:none;-webkit-appearance:none}
+.gp-kbar{flex:none;width:52px;height:6px;border-radius:4px;background:var(--surface3);overflow:hidden}
+.gp-kbar>i{display:block;height:100%;background:var(--accent)}
+.gp-month{font-size:12px;font-weight:700;color:var(--text);background:var(--surface2);border-radius:8px;padding:5px 10px;display:inline-block;margin:2px 0 8px}
+.gp-hint{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6}
+.gp-milestone{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-top:6px}
 .gl-soon{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 16px;line-height:1.8}
 .hm-tile{position:relative;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 11px;cursor:pointer;transition:background .12s}
 .hm-badge{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.45)}
@@ -1401,7 +1435,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v223</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v224</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3272,7 +3306,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v223';
+  var DATA_VERSION = 'v224';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -7831,12 +7865,35 @@ function genEventId() {
 var _glBoard = 'self';
 function genGoalId(){ return 'gl_' + Date.now() + '_' + Math.floor(Math.random()*100000); }
 function goalsUid(){ return (currentUser && currentUser.uid) ? currentUser.uid : null; }
-function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[] }; }
+function _glDefaultPlan(){ return {
+  deadline:'', income:0, title:'',
+  frontMust:null, frontIdeal:null,
+  frontTable:{ 'ルビー':6, 'エメラルド':8, 'ダイヤモンド':10, 'ブルーダイヤモンド':12, 'チームエリート':15 },
+  ryutsu:3000, adpUnit:100, monthlyFront:null,
+  funnel:{ b1:2, dlr:4, pg:8, ft:16, ct:32, ctget:64, action:128 },
+  actuals:{}
+}; }
+function _glNormPlan(p){
+  var d=_glDefaultPlan(); p=p||{};
+  p.funnel=Object.assign({}, d.funnel, p.funnel||{});
+  p.frontTable=Object.assign({}, d.frontTable, p.frontTable||{});
+  return Object.assign(d, p);
+}
+function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[], plan:_glDefaultPlan() }; }
+var GL_STAGES=[
+  {k:'b1',    label:'B1 / LOI'},
+  {k:'dlr',   label:'研修生（DLR）'},
+  {k:'pg',    label:'研修生（PG）'},
+  {k:'ft',    label:'FT（ビジネスを伝える）'},
+  {k:'ct',    label:'CT（アポ）'},
+  {k:'ctget', label:'CT取り（アポ取り）'},
+  {k:'action',label:'アクション（ストーリー/LINE等）'}
+];
 function loadGoals(uid){
   if(!uid || !db){ if(!state.goals) state.goals=_glDefault(); return Promise.resolve(); }
   return fsGet('maps/'+uid+'/meta/goals').then(function(g){
     if(g && (g.items || g.vision!==undefined)){
-      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[] };
+      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[], plan:_glNormPlan(g.plan) };
     } else { state.goals = _glDefault(); }
     if(currentView==='goals') renderGoals();
     return state.goals;
@@ -7891,6 +7948,7 @@ function renderGoals(){
   var el=document.getElementById('view-goals'); if(!el) return;
   if(!state.goals) state.goals=_glDefault();
   if(!state.goals.year) state.goals.year=(new Date()).getFullYear();
+  if(!state.goals.plan) state.goals.plan=_glDefaultPlan();
   var g=state.goals;
   var h='<div class="gl-wrap">';
   h+='<div class="gl-head"><div class="gl-title">🧭 GOAL</div>'
@@ -7906,6 +7964,9 @@ function renderGoals(){
   // 価値観
   var vt = g.vision ? ('<div class="gl-vision-t">'+evEsc(g.vision)+'</div>') : '<div class="gl-vision-t ph">タップして「価値観・理想の人生」を書く（ここが全ての起点）</div>';
   h+='<div class="gl-vision" onclick="glEditVision()"><div class="gl-vision-l">🌱 価値観 / 理想の人生</div>'+vt+'</div>';
+
+  // 逆算プランナー
+  h+=_glPlannerHtml();
 
   // GOALツリー
   var goals=_glItems('goal');
@@ -8020,6 +8081,108 @@ function glAddTask(monthId){
   renderGoals();
 }
 function glToggleTask(evId){ if(typeof toggleEventDone==='function') toggleEventDone(evId); renderGoals(); }
+
+// ── 逆算プランナー ──
+function _glCurYm(){ var d=new Date(); return d.getFullYear()+'-'+((d.getMonth()+1)<10?'0':'')+(d.getMonth()+1); }
+function _glMonthsUntil(deadline){
+  if(!/^\d{4}-\d{2}$/.test(deadline||'')) return 0;
+  var now=new Date(); var n=(+deadline.slice(0,4)-now.getFullYear())*12+(+deadline.slice(5,7)-(now.getMonth()+1))+1;
+  return n;
+}
+function _glFrontMust(p){ return (p.frontMust!=null)?p.frontMust:(p.frontTable[p.title]||0); }
+function _glFrontIdeal(p){ return (p.frontIdeal!=null)?p.frontIdeal:_glFrontMust(p); }
+function _glMonthlyFront(p){
+  if(p.monthlyFront!=null) return p.monthlyFront;
+  var f=_glFrontMust(p), rem=_glMonthsUntil(p.deadline);
+  return rem>0 ? Math.ceil(f/rem) : f;
+}
+function _glPlannerHtml(){
+  var p=state.goals.plan;
+  var h='<div class="gp-card">';
+  // ゴール
+  var hasGoal = p.title || p.income || p.deadline;
+  var gt = hasGoal
+    ? ('<div class="gp-goal-t">'+(p.deadline?('〜'+p.deadline.replace('-','/')+' '):'')+(p.income?('月収'+Number(p.income).toLocaleString()+'円 '):'')+(p.title?('／'+evEsc(p.title)):'')+'</div>')
+    : '<div class="gp-goal-t"><span class="ph">タップしてゴールを設定（期限・月収・目標タイトル）</span></div>';
+  h+='<div class="gp-goal" onclick="glEditGoal()"><div class="gp-goal-main"><div class="gp-goal-l">🎯 ゴール</div>'+gt
+    + (hasGoal?('<div class="gp-goal-sub">目標から必要フロント→ADP→今月の行動まで自動逆算</div>'):'')
+    + '</div><span class="gp-edit">編集</span></div>';
+
+  if(!hasGoal){ h+='</div>'; return h; }
+
+  var front=_glFrontMust(p), ideal=_glFrontIdeal(p), rem=_glMonthsUntil(p.deadline), mFront=_glMonthlyFront(p);
+  var adp = p.adpUnit>0 ? Math.ceil(p.ryutsu/p.adpUnit) : 0;
+  h+='<div class="gp-flow">';
+  // フロント数
+  h+='<div class="gp-step"><div class="gp-step-l">👥 必要フロント数 <span class="gp-auto">自動</span>'
+    + (p.title&&!p.frontTable[p.title]?' <span class="gp-set" onclick="event.stopPropagation();glSetFrontTable()">※表に無いタイトル</span>':'')
+    + '</div>'
+    + '<div class="gp-two"><div><div class="k">必達</div><div class="v must">'+front+'人</div></div>'
+    + '<div><div class="k">理想</div><div class="v">'+ideal+'人</div></div>'
+    + '<div><div class="k">残り</div><div class="v">'+(rem>0?rem+'ヶ月':'—')+'</div></div></div>'
+    + '<div class="gp-step-v"><span class="sm">→ 今月つくるフロント目安 </span><b>'+mFront+'</b><span class="sm">人</span>'
+    + '<span class="gp-set" onclick="glSetFrontTable()">表を編集</span></div></div>';
+  // ADP
+  h+='<div class="gp-step"><div class="gp-step-l">🛒 流通→必要ADP（定期購入顧客） <span class="gp-auto">自動</span></div>'
+    + '<div class="gp-step-v">流通 '+Number(p.ryutsu).toLocaleString()+'P ÷ '+Number(p.adpUnit).toLocaleString()+'P/人 = <b>'+adp+'</b><span class="sm">人</span>'
+    + '<span class="gp-set" onclick="glSetAdp()">数値を編集</span></div></div>';
+  // 今月の行動KPI
+  var ym=_glCurYm(); var act=p.actuals[ym]||{};
+  h+='<div class="gp-step"><div class="gp-step-l">📆 今月の行動KPI <span class="gp-auto">自動</span><span class="gp-set" onclick="glSetFunnel()">係数を編集</span></div>'
+    + '<div class="gp-month">'+ym.replace('-','年')+'月　（フロント'+mFront+'人 × 各係数）</div><div class="gp-kpi">';
+  GL_STAGES.forEach(function(s){
+    var tgt=mFront*(p.funnel[s.k]||0); var a=parseInt(act[s.k]||0,10)||0;
+    var pct=tgt>0?Math.min(100,Math.round(a/tgt*100)):0;
+    h+='<div class="gp-krow"><span class="gp-kname">'+s.label+'</span>'
+      + '<span class="gp-ktarget">目標<b>'+tgt+'</b></span>'
+      + '<span class="gp-kact"><input type="number" inputmode="numeric" value="'+(a||'')+'" placeholder="実績" onchange="glSetActual(\''+s.k+'\',this.value)"></span>'
+      + '<span class="gp-kbar"><i style="width:'+pct+'%"></i></span></div>';
+  });
+  h+='</div></div>';
+  h+='</div>'; // flow
+  h+='<div class="gp-hint">💡 係数は「1フロントを作るのに必要な各アクション数」。段階ごとに2倍が初期値。あなたの歩留まりに合わせて編集できます。</div>';
+  h+='</div>';
+  return h;
+}
+function glEditGoal(){
+  var p=state.goals.plan;
+  var d=prompt('期限（YYYY-MM 例:2026-12）', p.deadline||''); if(d===null)return;
+  if(d.trim()&&!/^\d{4}-\d{2}$/.test(d.trim())){ toast('YYYY-MM で入力してください'); return; }
+  var inc=prompt('目標の月収（円・数字のみ）', p.income||''); if(inc===null)return;
+  var keys=Object.keys(p.frontTable);
+  var t=prompt('目標タイトル（'+keys.join(' / ')+'）', p.title||''); if(t===null)return;
+  p.deadline=d.trim(); p.income=parseInt(String(inc).replace(/[^0-9]/g,''),10)||0; p.title=(t||'').trim();
+  saveGoals(); renderGoals();
+}
+function glSetFrontTable(){
+  var p=state.goals.plan; var keys=Object.keys(p.frontTable);
+  var cur=keys.map(function(k){return k+':'+p.frontTable[k];}).join(', ');
+  var v=prompt('タイトル→必要フロント数（カンマ区切り）', cur); if(v===null)return;
+  v.split(',').forEach(function(pair){ var kv=pair.split(':'); if(kv.length===2){ var k=kv[0].trim(); var n=parseInt(kv[1],10); if(k&&!isNaN(n)) p.frontTable[k]=n; } });
+  var im=prompt('理想フロント数（空欄=必達と同じ）', p.frontIdeal!=null?p.frontIdeal:''); if(im!==null){ p.frontIdeal = im.trim()===''?null:(parseInt(im,10)||0); }
+  var mf=prompt('今月つくるフロント数を手動指定する場合（空欄=自動）', p.monthlyFront!=null?p.monthlyFront:''); if(mf!==null){ p.monthlyFront = mf.trim()===''?null:(parseInt(mf,10)||0); }
+  saveGoals(); renderGoals();
+}
+function glSetAdp(){
+  var p=state.goals.plan;
+  var r=prompt('流通の目標ポイント（例:3000）', p.ryutsu); if(r===null)return;
+  var u=prompt('1 ADP あたりの流通ポイント（人により単価が違う場合はここを変更）', p.adpUnit); if(u===null)return;
+  p.ryutsu=parseInt(String(r).replace(/[^0-9]/g,''),10)||0; p.adpUnit=parseInt(String(u).replace(/[^0-9]/g,''),10)||100;
+  saveGoals(); renderGoals();
+}
+function glSetFunnel(){
+  var p=state.goals.plan;
+  GL_STAGES.forEach(function(s){
+    var v=prompt(s.label+'：フロント1人あたり何回？', p.funnel[s.k]); if(v!==null){ var n=parseInt(v,10); if(!isNaN(n)) p.funnel[s.k]=n; }
+  });
+  saveGoals(); renderGoals();
+}
+function glSetActual(stage, val){
+  var p=state.goals.plan; var ym=_glCurYm();
+  p.actuals[ym]=p.actuals[ym]||{};
+  p.actuals[ym][stage]=parseInt(String(val).replace(/[^0-9]/g,''),10)||0;
+  saveGoals(); renderGoals();
+}
 
 // ── Firestore ──
 function loadEvents(uid) {
