@@ -1057,6 +1057,52 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ck-more{font-size:12px;color:var(--text-dim);text-align:center;padding:6px;cursor:pointer;text-decoration:underline;margin-bottom:6px}
 /* ── ホーム大アイコンメニュー ── */
 .home-menu{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+/* ── GOAL（価値観→年→月→日） ── */
+.gl-wrap{max-width:760px;margin:0 auto;padding:14px 14px 90px}
+.gl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.gl-title{font-size:19px;font-weight:800;color:var(--text)}
+.gl-boards{display:flex;gap:6px}
+.gl-board{padding:7px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid)}
+.gl-board.on{background:#0ea5e9;border-color:#0ea5e9;color:#04121c}
+.gl-year{padding:6px 10px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:700;cursor:pointer}
+.gl-vision{background:linear-gradient(135deg,rgba(14,165,233,.14),var(--surface) 65%);border:1px solid rgba(14,165,233,.4);border-radius:14px;padding:14px 16px;margin-bottom:16px;cursor:pointer}
+.gl-vision-l{font-size:11px;font-weight:700;letter-spacing:1px;color:#0ea5e9;margin-bottom:5px}
+.gl-vision-t{font-size:15px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.gl-vision-t.ph{color:var(--text-dim)}
+.gl-goal{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:12px 13px;margin-bottom:12px}
+.gl-goal-hd{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.gl-goal-ic{font-size:17px}
+.gl-goal-t{flex:1;font-size:16px;font-weight:800;color:var(--text);word-break:break-word}
+.gl-annual{border-left:2px solid rgba(14,165,233,.4);margin:10px 0 0 6px;padding:8px 0 2px 12px}
+.gl-annual-hd{display:flex;align-items:center;gap:8px}
+.gl-annual-t{flex:1;font-size:14px;font-weight:700;color:var(--text);word-break:break-word}
+.gl-chain{font-size:10px;color:var(--text-mid);margin:2px 0 6px 0;letter-spacing:.2px}
+.gl-bar{height:7px;border-radius:5px;background:var(--surface3);overflow:hidden;margin:6px 0}
+.gl-bar>i{display:block;height:100%;background:#0ea5e9;border-radius:5px}
+.gl-metric{font-size:12px;color:var(--text-mid);cursor:pointer}
+.gl-metric b{color:var(--text);font-weight:700}
+.gl-month{display:flex;align-items:flex-start;gap:7px;margin:7px 0 0 8px;padding-left:8px;border-left:1px dashed var(--border2)}
+.gl-mtag{flex:none;font-size:11px;font-weight:800;color:#0ea5e9;background:rgba(14,165,233,.13);border-radius:6px;padding:2px 6px;min-width:34px;text-align:center}
+.gl-mbody{flex:1;min-width:0}
+.gl-mtitle{font-size:13px;color:var(--text);font-weight:600;word-break:break-word}
+.gl-habit{display:flex;align-items:center;gap:9px;margin:6px 0 0 8px;padding:6px 8px;border-left:1px dashed var(--border2);border-radius:0 8px 8px 0}
+.gl-hcheck{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.gl-hcheck.on{background:var(--accent);border-color:var(--accent);color:#04121c}
+.gl-hbody{flex:1;min-width:0}
+.gl-htitle{font-size:13px;color:var(--text);font-weight:600}
+.gl-hmeta{font-size:11px;color:var(--text-mid)}
+.gl-task{display:flex;align-items:center;gap:8px;margin:5px 0 0 8px;font-size:12px}
+.gl-tcheck{flex:none;width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border2);color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px}
+.gl-tcheck.on{background:var(--accent);border-color:var(--accent);color:#04121c}
+.gl-ttitle{flex:1;color:var(--text);word-break:break-word}
+.gl-ttitle.done{text-decoration:line-through;color:var(--text-dim)}
+.gl-add{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:#0ea5e9;background:rgba(14,165,233,.1);border:1px dashed rgba(14,165,233,.5);border-radius:8px;padding:4px 9px;cursor:pointer;margin-top:8px}
+.gl-mini{font-size:12px;color:var(--text-dim);cursor:pointer;padding:2px 5px;border-radius:6px}
+.gl-mini:hover{background:var(--surface2);color:var(--text)}
+.gl-actions{display:flex;gap:4px;flex:none}
+.gl-addgoal{display:block;width:100%;text-align:center;padding:13px;border-radius:12px;border:1px dashed var(--border2);background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+.gl-empty{color:var(--text-dim);font-size:13px;text-align:center;padding:26px 10px;line-height:1.7}
+.gl-soon{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 16px;line-height:1.8}
 .hm-tile{position:relative;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 11px;cursor:pointer;transition:background .12s}
 .hm-badge{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.45)}
 .hm-tile:active{background:var(--surface2)}
@@ -1340,6 +1386,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="pcs-item" data-view="events" onclick="switchView('events')" title="予定"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#f59e0b;box-shadow:0 3px 12px rgba(245,158,11,.5)">📅</span><span class="pcs-lb">予定</span></div>
   <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#10b981;box-shadow:0 3px 12px rgba(16,185,129,.5)">📊</span><span class="pcs-lb">データ</span></div>
   <div class="pcs-item" data-view="ideal" onclick="switchView('ideal')" title="理想"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#ec4899;box-shadow:0 3px 12px rgba(236,72,153,.5)">🎯</span><span class="pcs-lb">理想</span></div>
+  <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)">🧭</span><span class="pcs-lb">GOAL</span></div>
   <div class="pcs-spacer"></div>
   <div class="pcs-item" onclick="homeAddMember()" title="メンバー追加"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#f97316;box-shadow:0 3px 12px rgba(249,115,22,.55)">➕</span><span class="pcs-lb">追加</span></div>
 </aside>
@@ -1354,7 +1401,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v222</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v223</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1375,6 +1422,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- ====== 今日（ホーム） ====== -->
   <div id="view-home" style="display:none"></div>
+
+  <!-- ⑧ GOAL -->
+  <div id="view-goals" style="display:none"></div>
 
   <!-- ====== メンバー一覧 ====== -->
   <div id="view-members" style="display:none"></div>
@@ -2044,6 +2094,7 @@ var state = {
   userEmail: '',
   mergedMaps: [],    // 結合中の下位MAP [{uid, name, graftId}]
   mergedData: {},    // uid -> その下位の現状メンバー配列（onSnapshotで更新）
+  goals: { vision:'', year:0, items:[], habits:[] }, // GOAL（価値観→年→月→日）
 };
 
 var editingId = null;
@@ -3221,7 +3272,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v222';
+  var DATA_VERSION = 'v223';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3356,7 +3407,7 @@ function updateFabVisibility() {
 function switchView(v) {
   currentView = v;
   window._selectedCardId = null;
-  ['home','members','current','ideal','stats','ol','events'].forEach(function(n) {
+  ['home','members','current','ideal','stats','ol','events','goals'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
@@ -3367,7 +3418,7 @@ function switchView(v) {
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
   if (bh) {
-    var names = { current:'組織MAP', members:'メンバー', ideal:'理想', stats:'データ', ol:'OL', events:'予定' };
+    var names = { current:'組織MAP', members:'メンバー', ideal:'理想', stats:'データ', ol:'OL', events:'予定', goals:'GOAL' };
     if (isPCMode() || v === 'home' || !names[v]) {
       bh.style.display = 'none';
     } else if (v === 'current' || v === 'ideal') {
@@ -3392,6 +3443,7 @@ function switchView(v) {
   else if (v==='stats') renderStats();
   else if (v==='ol') renderOL();
   else if (v==='events') renderEvents();
+  else if (v==='goals') renderGoals();
 }
 // ============================================================
 //  報酬プラン定数（資料: 販売報酬プラン＋エリートLOI / 2026-07確認）
@@ -4158,7 +4210,8 @@ function homeMenuHtml() {
     { label:'メンバー',    emoji:'👥',  color:'#3b82f6', act:"switchView('members')" },
     { label:'OL',          emoji:'📋',  color:'#7c6aff', act:"switchView('ol')" },
     { label:'予定',        emoji:'📅',  color:'#f59e0b', act:"switchView('events')", badge: due },
-    { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" }
+    { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" },
+    { label:'GOAL',        emoji:'🧭',  color:'#0ea5e9', act:"switchView('goals')" }
   ];
   var html = '<div class="home-sec-label">📂 メニュー</div><div class="home-menu">';
   html += items.map(function(it){
@@ -7768,6 +7821,206 @@ function genEventId() {
   return 'ev_' + Date.now() + '_' + Math.floor(Math.random()*100000);
 }
 
+// ============================================================
+//  GOAL（価値観 → 年間 → 月間 → 日々／習慣）  Phase 1
+//  データ: state.goals = { vision, year, items[], habits[] }
+//   item  : { id, level:'goal'|'annual'|'monthly', parentId, title, month, tgt, cur, unit }
+//   habit : { id, title, parentId, perWeek, log:{ 'YYYY-MM-DD':true } }
+//   タスク: 既存 state.events を流用（e.goalId で月間目標に紐付け）
+// ============================================================
+var _glBoard = 'self';
+function genGoalId(){ return 'gl_' + Date.now() + '_' + Math.floor(Math.random()*100000); }
+function goalsUid(){ return (currentUser && currentUser.uid) ? currentUser.uid : null; }
+function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[] }; }
+function loadGoals(uid){
+  if(!uid || !db){ if(!state.goals) state.goals=_glDefault(); return Promise.resolve(); }
+  return fsGet('maps/'+uid+'/meta/goals').then(function(g){
+    if(g && (g.items || g.vision!==undefined)){
+      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[] };
+    } else { state.goals = _glDefault(); }
+    if(currentView==='goals') renderGoals();
+    return state.goals;
+  }).catch(function(){ if(!state.goals) state.goals=_glDefault(); });
+}
+var _glSaveT=null;
+function saveGoals(){
+  if(!state.goals) return;
+  var uid=goalsUid(); if(!uid||!db) return;
+  if(_glSaveT) clearTimeout(_glSaveT);
+  _glSaveT=setTimeout(function(){
+    fsSet('maps/'+uid+'/meta/goals', state.goals).then(function(){ if(typeof updateLastSaved==='function') updateLastSaved(); }).catch(function(){});
+  }, 400);
+}
+function _glItems(level, parentId){
+  return (state.goals.items||[]).filter(function(it){
+    return it.level===level && (parentId===undefined || it.parentId===parentId);
+  });
+}
+function _glFind(id){ return (state.goals.items||[]).find(function(it){ return it.id===id; }); }
+function _glChain(item){
+  // item(annual/monthly) から 価値観›GOAL›年間 のパンくずを作る
+  var parts=[]; var cur=item; var guard=0;
+  while(cur && guard++<6){
+    if(cur.level!=='monthly') parts.unshift(evEsc(cur.title||''));
+    cur = cur.parentId ? _glFind(cur.parentId) : null;
+  }
+  if(state.goals.vision) parts.unshift('🌱');
+  return parts.join(' › ');
+}
+function _glWeekStart(){
+  var d=new Date(); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d;
+}
+function _glHabitWeekCount(h){
+  var ws=_glWeekStart(); var n=0;
+  for(var i=0;i<7;i++){ var dd=new Date(ws.getTime()); dd.setDate(dd.getDate()+i); if((h.log||{})[evYmd(dd)]) n++; }
+  return n;
+}
+function _glHabitStreak(h){
+  var log=h.log||{}; var n=0; var d=new Date(); d.setHours(0,0,0,0);
+  if(!log[evYmd(d)]){ d.setDate(d.getDate()-1); } // 今日未チェックでも昨日までの連続は生かす
+  for(var g=0; g<400; g++){ if(log[evYmd(d)]){ n++; d.setDate(d.getDate()-1); } else break; }
+  return n;
+}
+function _glGoalTasks(monthId){
+  return (state.events||[]).filter(function(e){ return e.type==='task' && !e.deleted && e.goalId===monthId; })
+    .sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+}
+
+// ── 描画 ──
+function renderGoals(){
+  var el=document.getElementById('view-goals'); if(!el) return;
+  if(!state.goals) state.goals=_glDefault();
+  if(!state.goals.year) state.goals.year=(new Date()).getFullYear();
+  var g=state.goals;
+  var h='<div class="gl-wrap">';
+  h+='<div class="gl-head"><div class="gl-title">🧭 GOAL</div>'
+   + '<div class="gl-boards"><span class="gl-board'+(_glBoard==='self'?' on':'')+'" onclick="glBoard(\'self\')">👤 自分</span>'
+   + '<span class="gl-board'+(_glBoard==='org'?' on':'')+'" onclick="glBoard(\'org\')">🏢 組織</span></div>'
+   + '<span class="gl-year" onclick="glEditYear()">'+g.year+'年 ▼</span></div>';
+
+  if(_glBoard==='org'){
+    h+='<div class="gl-soon">🏢 組織ボードは準備中です（Phase 3）<br>サクセストリップ等の資格者集計をここに実装予定。<br>まずは「自分」ボードで価値観→年→月→日を作っていきましょう。</div></div>';
+    el.innerHTML=h; return;
+  }
+
+  // 価値観
+  var vt = g.vision ? ('<div class="gl-vision-t">'+evEsc(g.vision)+'</div>') : '<div class="gl-vision-t ph">タップして「価値観・理想の人生」を書く（ここが全ての起点）</div>';
+  h+='<div class="gl-vision" onclick="glEditVision()"><div class="gl-vision-l">🌱 価値観 / 理想の人生</div>'+vt+'</div>';
+
+  // GOALツリー
+  var goals=_glItems('goal');
+  if(!goals.length){
+    h+='<div class="gl-empty">まだ目標がありません。<br>「理想の人生」から逆算して、まず大きな GOAL を1つ立ててみましょう。</div>';
+  }
+  goals.forEach(function(go){
+    h+='<div class="gl-goal"><div class="gl-goal-hd"><span class="gl-goal-ic">🎯</span><span class="gl-goal-t">'+evEsc(go.title)+'</span>'
+      +'<span class="gl-actions"><span class="gl-mini" onclick="glEditItem(\''+go.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+go.id+'\')">🗑</span></span></div>';
+    // 年間
+    _glItems('annual', go.id).forEach(function(an){
+      h+='<div class="gl-annual"><div class="gl-annual-hd"><span>📅</span><span class="gl-annual-t">'+evEsc(an.title)+'</span>'
+        +'<span class="gl-actions"><span class="gl-mini" onclick="glEditItem(\''+an.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+an.id+'\')">🗑</span></span></div>';
+      h+=_glMetricHtml(an);
+      // 月間
+      _glItems('monthly', an.id).sort(function(a,b){return (a.month||0)-(b.month||0);}).forEach(function(mo){
+        h+='<div class="gl-month"><span class="gl-mtag">'+(mo.month||'-')+'月</span><div class="gl-mbody">'
+          +'<div class="gl-mtitle">'+evEsc(mo.title)+' <span class="gl-mini" onclick="glEditItem(\''+mo.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+mo.id+'\')">🗑</span></div>'
+          + _glMetricHtml(mo);
+        // 紐付くタスク（既存MAPタスク）
+        _glGoalTasks(mo.id).forEach(function(e){
+          h+='<div class="gl-task"><span class="gl-tcheck'+(e.done?' on':'')+'" onclick="glToggleTask(\''+e.id+'\')">'+(e.done?'✓':'')+'</span>'
+            +'<span class="gl-ttitle'+(e.done?' done':'')+'">'+evEsc(e.title||'(無題)')+'</span></div>';
+        });
+        h+='<span class="gl-add" onclick="glAddTask(\''+mo.id+'\')">＋タスク</span>';
+        h+='</div></div>';
+      });
+      // 習慣
+      (g.habits||[]).filter(function(hb){return hb.parentId===an.id;}).forEach(function(hb){
+        var wc=_glHabitWeekCount(hb), st=_glHabitStreak(hb), done=(hb.log||{})[evTodayYmd()];
+        h+='<div class="gl-habit"><span class="gl-hcheck'+(done?' on':'')+'" onclick="glToggleHabit(\''+hb.id+'\')">'+(done?'✓':'')+'</span>'
+          +'<div class="gl-hbody"><div class="gl-htitle">🔁 '+evEsc(hb.title)+' <span class="gl-mini" onclick="glDelHabit(\''+hb.id+'\')">🗑</span></div>'
+          +'<div class="gl-hmeta">今週 '+wc+'/'+(hb.perWeek||7)+'回'+(st>1?('　🔥'+st+'日連続'):'')+'</div></div></div>';
+      });
+      h+='<div class="gl-chain">'+_glChain(an)+'</div>';
+      h+='<div><span class="gl-add" onclick="glAddMonthly(\''+an.id+'\')">＋月間目標</span> <span class="gl-add" onclick="glAddHabit(\''+an.id+'\')">＋習慣</span></div>';
+      h+='</div>';
+    });
+    h+='<span class="gl-add" onclick="glAddAnnual(\''+go.id+'\')">＋年間目標</span>';
+    h+='</div>';
+  });
+  h+='<div class="gl-addgoal" onclick="glAddGoal()">＋ 目標（GOAL）を追加</div>';
+  h+='</div>';
+  el.innerHTML=h;
+}
+function _glMetricHtml(it){
+  if(typeof it.tgt!=='number'){
+    return '<div class="gl-metric" onclick="glSetMetric(\''+it.id+'\')">＋数値目標を設定</div>';
+  }
+  var cur=(typeof it.cur==='number')?it.cur:0;
+  var pct=it.tgt>0?Math.min(100,Math.round(cur/it.tgt*100)):0;
+  return '<div class="gl-bar"><i style="width:'+pct+'%"></i></div>'
+    + '<div class="gl-metric" onclick="glSetMetric(\''+it.id+'\')"><b>'+cur.toLocaleString()+'</b> / '+it.tgt.toLocaleString()+' '+evEsc(it.unit||'')+'　('+pct+'%)</div>';
+}
+
+// ── 操作 ──
+function glBoard(b){ _glBoard=b; renderGoals(); }
+function glEditYear(){ var v=prompt('対象の年（西暦）', state.goals.year); if(v===null)return; var y=parseInt(v,10); if(y>2000&&y<2100){ state.goals.year=y; saveGoals(); renderGoals(); } }
+function glEditVision(){ var v=prompt('価値観 / 理想の人生（改行OK）', state.goals.vision||''); if(v===null)return; state.goals.vision=v.trim(); saveGoals(); renderGoals(); }
+function glAddGoal(){ var t=prompt('GOAL（やりたいこと・中長期の目標）'); if(!t||!t.trim())return; state.goals.items.push({id:genGoalId(),level:'goal',parentId:null,title:t.trim()}); saveGoals(); renderGoals(); }
+function glAddAnnual(goalId){ var t=prompt('年間目標（'+state.goals.year+'年）'); if(!t||!t.trim())return; state.goals.items.push({id:genGoalId(),level:'annual',parentId:goalId,title:t.trim()}); saveGoals(); renderGoals(); }
+function glAddMonthly(annualId){
+  var m=prompt('何月の目標？（1〜12）'); if(m===null)return; var mm=parseInt(m,10); if(!(mm>=1&&mm<=12)){ toast('1〜12で入力してください'); return; }
+  var t=prompt(mm+'月の目標'); if(!t||!t.trim())return;
+  state.goals.items.push({id:genGoalId(),level:'monthly',parentId:annualId,title:t.trim(),month:mm}); saveGoals(); renderGoals();
+}
+function glEditItem(id){ var it=_glFind(id); if(!it)return; var t=prompt('目標を編集', it.title); if(t===null)return; if(!t.trim())return; it.title=t.trim(); saveGoals(); renderGoals(); }
+function glDelItem(id){
+  var it=_glFind(id); if(!it)return;
+  if(!confirm('「'+it.title+'」と、その下の項目も削除します。よろしいですか？'))return;
+  var ids={}; ids[id]=1;
+  // 子孫を集める
+  var changed=true; while(changed){ changed=false; state.goals.items.forEach(function(x){ if(x.parentId&&ids[x.parentId]&&!ids[x.id]){ids[x.id]=1;changed=true;} }); }
+  state.goals.items=state.goals.items.filter(function(x){ return !ids[x.id]; });
+  state.goals.habits=(state.goals.habits||[]).filter(function(x){ return !ids[x.parentId]; });
+  saveGoals(); renderGoals();
+}
+function glSetMetric(id){
+  var it=_glFind(id); if(!it)return;
+  var t=prompt('目標値（数字のみ）', (typeof it.tgt==='number')?it.tgt:''); if(t===null)return;
+  if(t.trim()===''){ delete it.tgt; delete it.cur; delete it.unit; saveGoals(); renderGoals(); return; }
+  var tg=parseInt(String(t).replace(/[^0-9]/g,''),10); if(isNaN(tg)){ toast('数字で入力してください'); return; }
+  var c=prompt('現在値（数字のみ）', (typeof it.cur==='number')?it.cur:'0'); if(c===null)return;
+  var cu=prompt('単位（例: 万円 / 人 / 冊。無しでもOK）', it.unit||'');
+  it.tgt=tg; it.cur=parseInt(String(c||'0').replace(/[^0-9]/g,''),10)||0; it.unit=(cu||'').trim();
+  saveGoals(); renderGoals();
+}
+function glAddHabit(annualId){
+  var t=prompt('習慣（例: 本を読む / 筋トレ）'); if(!t||!t.trim())return;
+  var n=prompt('週に何回やる？（毎日なら7）','2'); if(n===null)return; var pw=parseInt(n,10); if(!(pw>=1&&pw<=7))pw=7;
+  state.goals.habits=state.goals.habits||[]; state.goals.habits.push({id:genGoalId(),title:t.trim(),parentId:annualId,perWeek:pw,log:{}});
+  saveGoals(); renderGoals();
+}
+function glToggleHabit(id){
+  var hb=(state.goals.habits||[]).find(function(x){return x.id===id;}); if(!hb)return;
+  hb.log=hb.log||{}; var k=evTodayYmd(); if(hb.log[k]) delete hb.log[k]; else hb.log[k]=true;
+  saveGoals(); renderGoals();
+  if(hb.log[k] && typeof gameCheck==='function') gameCheck();
+}
+function glDelHabit(id){
+  var hb=(state.goals.habits||[]).find(function(x){return x.id===id;}); if(!hb)return;
+  if(!confirm('習慣「'+hb.title+'」を削除しますか？'))return;
+  state.goals.habits=(state.goals.habits||[]).filter(function(x){return x.id!==id;}); saveGoals(); renderGoals();
+}
+function glAddTask(monthId){
+  if(!eventsUid()){ toast('ログインが必要です'); return; }
+  var t=prompt('やること（タスク）'); if(!t||!t.trim())return;
+  var d=prompt('期日（YYYY-MM-DD。空欄なら今日）', evTodayYmd()); if(d===null)return;
+  var date=(d&&/^\d{4}-\d{2}-\d{2}$/.test(d.trim()))?d.trim():evTodayYmd();
+  var e={ id:genEventId(), type:'task', title:t.trim(), date:date, done:false, memberId:'', categoryId:'', priority:'normal', memo:'', goalId:monthId, createdAt:new Date().toISOString() };
+  state.events.push(e); saveEventDoc(e); if(typeof updateEventsBadge==='function') updateEventsBadge();
+  renderGoals();
+}
+function glToggleTask(evId){ if(typeof toggleEventDone==='function') toggleEventDone(evId); renderGoals(); }
+
 // ── Firestore ──
 function loadEvents(uid) {
   if (!uid || !db) { state.events = []; state.categories = []; updateEventsBadge(); return Promise.resolve(); }
@@ -9562,6 +9815,7 @@ function loginSuccess(user) {
   if (USE_FIREBASE && user.uid) {
     fsLoadFromFirestore(user.uid);
     loadEvents(user.uid);
+    loadGoals(user.uid);
     // 少し遅延してから共有MAP確認（自分のデータ読み込み後）
     setTimeout(function() {
       checkSharedMaps();
@@ -10113,6 +10367,7 @@ function switchToOwner(ownerUid, perm) {
     state.isEditor = true;
     fsLoadFromFirestore(currentUser.uid);
     loadEvents(currentUser.uid);
+    loadGoals(currentUser.uid);
     updateEditorUI();
     startAllMergeListeners(); // 自分のMAPに戻ったら結合の購読を再開
   } else {
