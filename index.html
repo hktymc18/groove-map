@@ -1557,7 +1557,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v229</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v230</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3182,6 +3182,25 @@ function buildRegionChipsInto(members, containerId) {
 }
 // ── 地域入力（プルダウン＋自由入力） ──
 var REGION_PRESETS = ['東京','大阪','福岡','名古屋','熊本','大分','北九州'];
+// 地域の表記ゆれ統一（愛知・愛知県 → 名古屋）
+var REGION_ALIASES = { '愛知':'名古屋', '愛知県':'名古屋' };
+function normalizeRegionValue(r) {
+  r = (r || '').trim();
+  return REGION_ALIASES[r] || r;
+}
+// 既存メンバーの地域を統一。変換が発生したら true
+function migrateRegions() {
+  var changed = false;
+  [state.members, state.idealMembers].forEach(function(arr){
+    if (!arr) return;
+    arr.forEach(function(m){
+      if (!m.region) return;
+      var nr = normalizeRegionValue(m.region);
+      if (nr !== m.region) { m.region = nr; changed = true; }
+    });
+  });
+  return changed;
+}
 function onRegionSelChange() {
   var sel = document.getElementById('fRegionSel');
   var inp = document.getElementById('fRegion');
@@ -3483,7 +3502,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v229';
+  var DATA_VERSION = 'v230';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3737,6 +3756,8 @@ function _arrOf(m) {
 
 function renderCurrentView() {
   recalcAllGSV();
+  // 自分のMAPのみ：地域の表記ゆれ（愛知/愛知県→名古屋）を統一し、変換時のみ保存
+  if (!viewingOwnerUid && typeof migrateRegions === 'function' && migrateRegions()) autoSave();
   if (currentView === 'members') renderMembers();
   else if (currentView === 'current') renderTree('current');
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
@@ -7916,7 +7937,7 @@ function saveMember() {
       return (window._tempNewMember && window._tempNewMember.traineeHistory) ? window._tempNewMember.traineeHistory : [];
     })(),
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
-    region: ((document.getElementById('fRegion')||{}).value || '').trim(),
+    region: normalizeRegionValue((document.getElementById('fRegion')||{}).value || ''),
     birthday: (document.getElementById('fBirth')||{}).value || '',
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
