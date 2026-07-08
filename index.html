@@ -27,6 +27,7 @@
   --gold:#f59e0b; --gold-dim:rgba(245,158,11,0.12);
   --red:#ef4444; --green:#22c55e;
   --s:#00d4aa; --a:#7c6aff; --b:#3b82f6; --c:#f59e0b;
+  --go-sky:#38bdf8; --go-ink:#04120e; --go-rose:#fb7185;
   --r:14px; --rsm:8px; --rxs:5px;
   --shadow:0 4px 24px rgba(0,0,0,0.4);
   --header-bg:rgba(13,15,20,.97);
@@ -45,6 +46,7 @@ body.light{
   --gold:#d97706; --gold-dim:rgba(217,119,6,0.12);
   --red:#dc2626; --green:#16a34a;
   --s:#00b896; --a:#6d5cf0; --b:#2563eb; --c:#d97706;
+  --go-sky:#0284c7; --go-ink:#00332a; --go-rose:#e11d48;
   --shadow:0 4px 24px rgba(0,0,0,0.12);
   --header-bg:rgba(255,255,255,.97);
   --col-band:#000000;
@@ -1156,6 +1158,100 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ms-qbar{flex:1;height:7px;border-radius:5px;background:var(--surface3);overflow:hidden}
 .ms-qbar>i{display:block;height:100%;border-radius:5px}
 .ms-add-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+/* ===== GOAL 再設計（頂上→道のり→今月のフォーカス） ===== */
+.go-wrap{max-width:1160px;margin:0 auto}
+.go-tnum{font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.go-eyebrow{font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--text-dim);margin:22px 2px 10px;display:flex;align-items:center;gap:7px}
+.go-eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.go-eyebrow.gold::before{background:var(--gold)} .go-eyebrow.sky::before{background:var(--go-sky)}
+/* summit */
+.go-summit{position:relative;border-radius:20px;padding:20px 18px;overflow:hidden;cursor:pointer;
+  background:radial-gradient(130% 120% at 88% -20%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 55%),radial-gradient(120% 120% at 8% 130%,color-mix(in srgb,var(--go-sky) 13%,transparent),transparent 55%),linear-gradient(165deg,var(--surface2),var(--surface) 72%);
+  border:1px solid var(--border);box-shadow:var(--shadow)}
+.go-sk{font-size:11px;font-weight:900;letter-spacing:1.6px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.go-title{font-size:27px;font-weight:900;letter-spacing:-.5px;line-height:1.14;margin:8px 0 4px}
+.go-title .amt{color:var(--accent)}
+.go-title .ph{color:var(--text-dim);font-weight:700;font-size:17px}
+.go-sub{font-size:12px;color:var(--text-mid)} .go-sub b{color:var(--text)}
+.go-sstats{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.go-stat{flex:1;min-width:130px;background:color-mix(in srgb,var(--surface) 60%,transparent);border:1px solid var(--border);border-radius:13px;padding:11px 12px}
+.go-stat .k{font-size:10px;color:var(--text-dim);font-weight:800;letter-spacing:.5px}
+.go-stat .row{display:flex;align-items:baseline;justify-content:space-between;margin-top:4px}
+.go-stat .now{font-size:12px;color:var(--text-mid);font-weight:700}
+.go-stat .gl{font-size:16px;font-weight:900}
+.go-stat .gl.a{color:var(--accent)} .go-stat .gl.s{color:var(--go-sky)}
+.go-prog{height:7px;border-radius:5px;background:var(--surface3);overflow:hidden;margin-top:8px}
+.go-prog>i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--go-sky),var(--accent))}
+.go-cd{flex:none;min-width:110px;background:linear-gradient(150deg,var(--accent),color-mix(in srgb,var(--accent) 60%,var(--go-sky)));color:var(--go-ink);border-radius:13px;padding:11px 13px;display:flex;flex-direction:column;justify-content:center}
+.go-cd .k{font-size:10px;font-weight:900;opacity:.85} .go-cd .big{font-size:24px;font-weight:900;line-height:1} .go-cd .big small{font-size:12px}
+/* journey */
+.go-panel{border:1px solid var(--border);border-radius:18px;background:var(--surface);box-shadow:var(--shadow);padding:16px 14px 12px}
+.go-trail{position:relative;display:flex;justify-content:space-between;align-items:flex-end;padding:12px 2px 4px;gap:4px}
+.go-trail::before{content:"";position:absolute;left:9%;right:9%;bottom:36px;height:3px;background:linear-gradient(90deg,var(--text-dim),var(--go-sky) 45%,var(--gold) 72%,var(--accent));border-radius:2px;opacity:.5}
+.go-tn{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;flex:1;min-width:0}
+.go-cap{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--surface2);border:1px solid var(--border)}
+.go-tn.now .go-cap{background:var(--bg);border-color:var(--go-sky);box-shadow:0 0 0 4px color-mix(in srgb,var(--go-sky) 20%,transparent)}
+.go-tn.mile .go-cap{background:color-mix(in srgb,var(--gold) 13%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.go-tn.peak .go-cap{width:56px;height:56px;border-radius:17px;font-size:27px;background:linear-gradient(150deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--go-sky)));border:none;box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 30%,transparent);transform:translateY(-7px)}
+.go-tl{font-size:10.5px;font-weight:800;line-height:1.3;color:var(--text)}
+.go-tl .sub{display:block;font-size:9px;color:var(--text-dim);font-weight:700}
+.go-tn.now .go-tl{color:var(--go-sky)} .go-tn.mile .go-tl{color:var(--gold)} .go-tn.peak .go-tl{color:var(--accent)}
+.go-cap2{text-align:center;font-size:10.5px;color:var(--text-dim);margin-top:4px;line-height:1.5} .go-cap2 b{color:var(--text-mid)}
+.go-rail{overflow-x:auto;padding:12px 6px 2px;margin-top:8px;border-top:1px dashed var(--border);-webkit-overflow-scrolling:touch}
+.go-railt{display:grid;grid-auto-flow:column;grid-auto-columns:40px;min-width:max-content}
+.go-mo{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:15px}
+.go-mo::before{content:"";position:absolute;top:20px;left:0;right:0;height:3px;background:var(--surface3)}
+.go-mo.done::before{background:var(--accent)} .go-mo.now::before{background:linear-gradient(90deg,var(--accent),var(--surface3))}
+.go-dt{position:relative;z-index:2;width:12px;height:12px;border-radius:50%;background:var(--surface3);border:2px solid var(--surface)}
+.go-mo.done .go-dt{background:var(--accent)} .go-mo.now .go-dt{background:var(--bg);border-color:var(--go-sky);box-shadow:0 0 0 3px color-mix(in srgb,var(--go-sky) 20%,transparent)}
+.go-mo.flag .go-dt{background:var(--gold)}
+.go-mo .gl{font-size:10px;color:var(--text-dim);font-weight:700} .go-mo.now .gl{color:var(--go-sky)} .go-mo.flag .gl{color:var(--gold)}
+.go-mo .tg{position:absolute;top:-8px;font-size:12px}
+/* pipeline + milestone cards */
+.go-pipe{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--surface3);border-radius:10px;padding:8px 11px;margin-top:10px;font-size:11px;color:var(--text-mid)}
+.go-pl-lab{font-weight:800;color:var(--text)} .go-pl-n{font-weight:800;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:10.5px}
+.go-pl-a{color:var(--text-dim);font-size:9px;font-weight:900} .go-pl-t{margin-left:auto;font-weight:800;color:var(--go-sky)}
+.go-miles{display:grid;gap:10px;margin-top:12px}
+.go-mc{border:1px solid var(--border);border-radius:14px;background:var(--surface2);padding:12px 13px}
+.go-mc-hd{display:flex;align-items:center;gap:9px}
+.go-mc-em{width:32px;height:32px;border-radius:9px;background:color-mix(in srgb,var(--gold) 13%,transparent);display:flex;align-items:center;justify-content:center;font-size:17px}
+.go-mc-nm{flex:1;font-size:14px;font-weight:800;color:var(--text)}
+.go-mc-tag{font-size:9px;font-weight:900;letter-spacing:.8px;color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent);border-radius:6px;padding:3px 7px}
+.go-need{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--text-mid);margin-top:9px} .go-need b{color:var(--text)} .go-need .gd{color:var(--gold);font-weight:800}
+.go-calc{margin-top:9px;background:var(--surface);border:1px dashed color-mix(in srgb,var(--gold) 45%,var(--border));border-radius:11px;padding:11px 12px;font-size:12.5px;font-weight:700;line-height:1.5;display:flex;flex-direction:column;gap:7px}
+.go-cl{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .go-cl .cell b{font-size:16px} .go-cl .arw{color:var(--text-dim);font-weight:800;font-size:11px}
+.go-warn{color:var(--go-rose);font-weight:800;background:color-mix(in srgb,var(--go-rose) 13%,transparent);border-radius:8px;padding:7px 9px;font-size:11.5px;line-height:1.5}
+.go-ok{color:var(--text-mid);font-weight:700;font-size:11.5px} .go-ok b{font-size:15px}
+.c-a{color:var(--accent)} .c-r{color:var(--go-rose)} .c-g{color:var(--gold)} .c-s{color:var(--go-sky)}
+.go-mroutes{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.go-mroute{font-size:11px;font-weight:700;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:4px 9px;cursor:pointer}
+.go-mroute.on{background:var(--go-sky);border-color:var(--go-sky);color:var(--go-ink)}
+.go-mrow{display:flex;align-items:center;gap:10px;margin-top:9px}
+.go-mcond{flex:1;font-size:11px;color:var(--text-mid);line-height:1.5}
+.go-mq{display:flex;align-items:center;gap:7px}
+.go-mbtn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:15px;font-weight:800;cursor:pointer;line-height:1}
+.go-mqv{font-size:12px;color:var(--text-mid)} .go-mqv b{color:var(--text);font-size:16px}
+.go-madd{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+/* focus */
+.go-focus{position:relative;border-radius:18px;padding:17px 16px 15px;overflow:hidden;background:linear-gradient(165deg,color-mix(in srgb,var(--accent) 13%,transparent),var(--surface) 68%);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));box-shadow:var(--shadow)}
+.go-fk{font-size:10.5px;font-weight:900;letter-spacing:1.4px;color:var(--accent);display:flex;justify-content:space-between} .go-fk .mn{color:var(--text-dim)}
+.go-flead{font-size:21px;font-weight:900;letter-spacing:-.3px;margin:7px 0 3px;line-height:1.3} .go-flead b{color:var(--accent)}
+.go-fwhy{font-size:11.5px;color:var(--text-mid);margin-bottom:14px;line-height:1.6} .go-fwhy b{color:var(--go-sky)}
+.go-krow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid var(--border)} .go-krow:first-child{border-top:0}
+.go-kn{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--text)}
+.go-kbar{flex:none;width:56px;height:6px;border-radius:4px;background:var(--surface3);overflow:hidden} .go-kbar>i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.go-ktgt{flex:none;font-size:11.5px;color:var(--text-mid);min-width:44px;text-align:right} .go-ktgt b{color:var(--text);font-size:15px}
+.go-kact{flex:none;width:52px} .go-kact input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:5px 6px;font-size:13px;text-align:right;outline:none;-webkit-appearance:none}
+.go-btns{margin-top:13px;display:flex;gap:8px}
+.go-btn{flex:1;text-align:center;font-size:13px;font-weight:800;border-radius:11px;padding:11px;cursor:pointer;border:1px solid transparent}
+.go-btn.pri{background:var(--accent);color:var(--go-ink)} .go-btn.gh{background:var(--surface);border-color:var(--border);color:var(--text)}
+@media(min-width:900px){
+  .go-cols{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:start;margin-top:24px}
+  .go-eyebrow{margin-top:0}
+  .go-summit{padding:26px 28px}
+  .go-title{font-size:34px}
+  .go-flead{font-size:24px}
+}
 .gl-soon{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 16px;line-height:1.8}
 .hm-tile{position:relative;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 11px;cursor:pointer;transition:background .12s}
 .hm-badge{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.45)}
@@ -1455,7 +1551,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v225</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v226</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3326,7 +3422,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v225';
+  var DATA_VERSION = 'v226';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -7886,19 +7982,22 @@ var _glBoard = 'self';
 function genGoalId(){ return 'gl_' + Date.now() + '_' + Math.floor(Math.random()*100000); }
 function goalsUid(){ return (currentUser && currentUser.uid) ? currentUser.uid : null; }
 function _glDefaultPlan(){ return {
-  deadline:'', income:0, title:'',
-  frontMust:null, frontIdeal:null,
+  deadline:'', income:0, title:'', titleNow:'', incomeNow:0,
+  frontMust:null, frontIdeal:null, pipeline:3,
   frontTable:{ 'ルビー':6, 'エメラルド':8, 'ダイヤモンド':10, 'ブルーダイヤモンド':12, 'チームエリート':15 },
+  brTable:{ 'ルビー':4, 'エメラルド':6, 'ダイヤモンド':8, 'ブルーダイヤモンド':10, 'チームエリート':12 },
   ryutsu:3000, adpUnit:100, monthlyFront:null,
   funnel:{ b1:1, dlr:2, pg:4, ft:8, ct:16, ctget:32, action:64 },
   actuals:{}
 }; }
+var GL_TITLE_ORDER=['','LOI','ブランドレプリゼンタティブ','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','チームエリート'];
 function _glNormPlan(p){
   var d=_glDefaultPlan(); p=p||{};
   // 旧既定(B1=2始まり)を保存していたら、新既定(B1=フロント=1始まり)へ自動移行
   if(p.funnel && p.funnel.b1===2 && p.funnel.dlr===4 && p.funnel.action===128){ p.funnel=null; }
   p.funnel=Object.assign({}, d.funnel, p.funnel||{});
   p.frontTable=Object.assign({}, d.frontTable, p.frontTable||{});
+  p.brTable=Object.assign({}, d.brTable, p.brTable||{});
   return Object.assign(d, p);
 }
 function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[], plan:_glDefaultPlan(), milestones:[] }; }
@@ -7988,11 +8087,8 @@ function renderGoals(){
   var vt = g.vision ? ('<div class="gl-vision-t">'+evEsc(g.vision)+'</div>') : '<div class="gl-vision-t ph">タップして「価値観・理想の人生」を書く（ここが全ての起点）</div>';
   h+='<div class="gl-vision" onclick="glEditVision()"><div class="gl-vision-l">🌱 価値観 / 理想の人生</div>'+vt+'</div>';
 
-  // 逆算プランナー
+  // 逆算プランナー（頂上→道のり→今月のフォーカス。通過点も内包）
   h+=_glPlannerHtml();
-
-  // マイルストーン（サブ指標：サクセストリップ/アカデミー等）
-  h+=_glMilestoneHtml();
 
   // GOALツリー
   var goals=_glItems('goal');
@@ -8129,66 +8225,126 @@ function _glMonthlyFront(p){
   var f=_glRemainFront(p), rem=_glMonthsUntil(p.deadline);
   return rem>0 ? Math.ceil(f/rem) : f;
 }
+function _glSubMonths(ym,n){ if(!/^\d{4}-\d{2}$/.test(ym||''))return ym; var y=+ym.slice(0,4),m=+ym.slice(5,7)-n; while(m<1){m+=12;y--;} while(m>12){m-=12;y++;} return y+'-'+(m<10?'0':'')+m; }
+function _glTitleRank(t){ var i=GL_TITLE_ORDER.indexOf(t||''); return i<0?0:i; }
+function _glReqBR(p,title){ return p.brTable[title]||p.frontTable[title]||4; }
+function _glFmtYen(n){ n=Number(n)||0; if(n>=10000) return (Math.round(n/1000)/10).toLocaleString()+'万'; return n.toLocaleString(); }
+function _glFmtMonth(ym){ return (ym&&/^\d{4}-\d{2}$/.test(ym))? (+ym.slice(5,7))+'月' : '—'; }
 function _glPlannerHtml(){
-  var p=state.goals.plan;
-  var h='<div class="gp-card">';
-  // ゴール
+  var p=state.goals.plan; var ms=state.goals.milestones||[];
   var hasGoal = p.title || p.income || p.deadline;
-  var gt = hasGoal
-    ? ('<div class="gp-goal-t">'+(p.deadline?('〜'+p.deadline.replace('-','/')+' '):'')+(p.income?('月収'+Number(p.income).toLocaleString()+'円 '):'')+(p.title?('／'+evEsc(p.title)):'')+'</div>')
-    : '<div class="gp-goal-t"><span class="ph">タップしてゴールを設定（期限・月収・目標タイトル）</span></div>';
-  h+='<div class="gp-goal" onclick="glEditGoal()"><div class="gp-goal-main"><div class="gp-goal-l">🎯 ゴール</div>'+gt
-    + (hasGoal?('<div class="gp-goal-sub">目標から必要フロント→ADP→今月の行動まで自動逆算</div>'):'')
-    + '</div><span class="gp-edit">編集</span></div>';
-
+  var h='<div class="go-wrap">';
+  // ===== SUMMIT =====
+  h+='<div class="go-summit" onclick="glEditGoal()"><div class="go-sk">🏔 最重要目標 — MY SUMMIT</div>';
+  if(hasGoal){
+    h+='<div class="go-title">'+(p.income?('月収 <span class="amt go-tnum">'+_glFmtYen(p.income)+'</span>円'):'')+(p.income&&p.title?'・':'')+(p.title?('<span class="amt">'+evEsc(p.title)+'</span>'):'')+'</div>';
+    h+='<div class="go-sub">'+(p.deadline?(p.deadline.replace('-','年')+'月まで'):'期限未設定')+' ／ <b>これが最終到達点</b>。すべての行動はここへ向かう。</div>';
+    var tPct=_glTitleRank(p.title)>0?Math.min(100,Math.round(_glTitleRank(p.titleNow)/_glTitleRank(p.title)*100)):0;
+    var iPct=p.income>0?Math.min(100,Math.round((p.incomeNow||0)/p.income*100)):0;
+    var cd=_glMonthsUntil(p.deadline);
+    h+='<div class="go-sstats">'
+      +'<div class="go-stat"><div class="k">タイトル</div><div class="row"><span class="now">今：'+(p.titleNow?evEsc(p.titleNow):'—')+'</span><span class="gl a">'+(p.title?evEsc(p.title):'—')+'</span></div><div class="go-prog"><i style="width:'+tPct+'%"></i></div></div>'
+      +'<div class="go-stat"><div class="k">月収</div><div class="row"><span class="now go-tnum">今：'+_glFmtYen(p.incomeNow)+'</span><span class="gl s go-tnum">'+_glFmtYen(p.income)+'</span></div><div class="go-prog"><i style="width:'+iPct+'%"></i></div></div>'
+      +'<div class="go-cd"><span class="k">期限まで</span><span class="big go-tnum">'+(cd>0?cd:'—')+'<small>'+(cd>0?'ヶ月':'')+'</small></span></div></div>';
+  } else {
+    h+='<div class="go-title"><span class="ph">タップして最重要目標を設定（月収・タイトル・期限）</span></div>';
+  }
+  h+='</div>';
   if(!hasGoal){ h+='</div>'; return h; }
 
-  var front=_glFrontMust(p), ideal=_glFrontIdeal(p), rem=_glMonthsUntil(p.deadline), mFront=_glMonthlyFront(p);
-  var curF=_glCurrentFront(), remainF=_glRemainFront(p);
-  var adp = p.adpUnit>0 ? Math.ceil(p.ryutsu/p.adpUnit) : 0;
-  h+='<div class="gp-flow">';
-  // フロント数
-  h+='<div class="gp-step"><div class="gp-step-l">👥 必要フロント数 <span class="gp-auto">自動</span>'
-    + (p.title&&!p.frontTable[p.title]?' <span class="gp-set" onclick="event.stopPropagation();glSetFrontTable()">※表に無いタイトル</span>':'')
-    + '</div>'
-    + '<div class="gp-two"><div><div class="k">必達</div><div class="v must">'+front+'人</div></div>'
-    + '<div><div class="k">理想</div><div class="v">'+ideal+'人</div></div>'
-    + '<div><div class="k">現状MAP</div><div class="v">'+curF+'人</div></div>'
-    + '<div><div class="k">残り必要</div><div class="v must">'+remainF+'人</div></div>'
-    + '<div><div class="k">期限</div><div class="v">'+(rem>0?rem+'ヶ月':'—')+'</div></div></div>'
-    + '<div class="gp-step-v"><span class="sm">→ 今月つくるフロント目安 </span><b>'+mFront+'</b><span class="sm">人（残り'+remainF+'人 ÷ '+(rem>0?rem:1)+'ヶ月）</span>'
-    + '<span class="gp-set" onclick="glSetFrontTable()">表を編集</span></div></div>';
-  // ADP
-  h+='<div class="gp-step"><div class="gp-step-l">🛒 流通→必要ADP（定期購入顧客） <span class="gp-auto">自動</span></div>'
-    + '<div class="gp-step-v">流通 '+Number(p.ryutsu).toLocaleString()+'P ÷ '+Number(p.adpUnit).toLocaleString()+'P/人 = <b>'+adp+'</b><span class="sm">人</span>'
-    + '<span class="gp-set" onclick="glSetAdp()">数値を編集</span></div></div>';
-  // 今月の行動KPI
-  var ym=_glCurYm(); var act=p.actuals[ym]||{};
-  h+='<div class="gp-step"><div class="gp-step-l">📆 今月の行動KPI <span class="gp-auto">自動</span><span class="gp-set" onclick="glSetFunnel()">係数を編集</span></div>'
-    + '<div class="gp-month">'+ym.replace('-','年')+'月　（フロント'+mFront+'人 × 各係数）</div><div class="gp-kpi">';
-  GL_STAGES.forEach(function(s){
-    var tgt=mFront*(p.funnel[s.k]||0); var a=parseInt(act[s.k]||0,10)||0;
-    var pct=tgt>0?Math.min(100,Math.round(a/tgt*100)):0;
-    h+='<div class="gp-krow"><span class="gp-kname">'+s.label+'</span>'
-      + '<span class="gp-ktarget">目標<b>'+tgt+'</b></span>'
-      + '<span class="gp-kact"><input type="number" inputmode="numeric" value="'+(a||'')+'" placeholder="実績" onchange="glSetActual(\''+s.k+'\',this.value)"></span>'
-      + '<span class="gp-kbar"><i style="width:'+pct+'%"></i></span></div>';
-  });
+  var curF=_glCurrentFront();
+  h+='<div class="go-cols"><div>';
+  // ===== JOURNEY =====
+  h+='<div class="go-eyebrow gold">頂上への道のり ― 途中の通過点（マイルストーン）</div><div class="go-panel">';
+  var msSorted=ms.slice().sort(function(a,b){ return ((a.brYm||(_glProg(a.tmplId)||{}).brYm)||'').localeCompare((b.brYm||(_glProg(b.tmplId)||{}).brYm)||''); });
+  h+='<div class="go-trail"><div class="go-tn now"><span class="go-cap">📍</span><span class="go-tl">現在地<span class="sub">'+(p.titleNow?evEsc(p.titleNow):'—')+'・F'+curF+'</span></span></div>';
+  msSorted.forEach(function(m){ var t=_glProg(m.tmplId); if(!t)return; h+='<div class="go-tn mile"><span class="go-cap">'+t.emoji+'</span><span class="go-tl">'+evEsc(t.name.split(' ')[0])+'<span class="sub">通過点・'+_glFmtMonth(m.brYm||t.brYm)+'</span></span></div>'; });
+  h+='<div class="go-tn peak"><span class="go-cap">🏔</span><span class="go-tl">頂上<span class="sub">'+evEsc(p.title||'—')+'</span></span></div></div>';
+  h+='<div class="go-cap2"><b>トリップ・アカデミーは頂上ではなく、登る途中の"旗"</b>。達成するたび頂上へ近づく。</div>';
+  // month rail
+  var yr=(p.deadline&&/^\d{4}/.test(p.deadline))?p.deadline.slice(0,4):String((new Date()).getFullYear());
+  var nowYm=_glCurYm(), flagM={};
+  msSorted.forEach(function(m){ var ym=m.brYm||(_glProg(m.tmplId)||{}).brYm; if(ym&&ym.slice(0,4)===yr) flagM[+ym.slice(5,7)]='🚩'; });
+  if(p.deadline&&p.deadline.slice(0,4)===yr) flagM[+p.deadline.slice(5,7)]='🏔';
+  h+='<div class="go-rail"><div class="go-railt">';
+  for(var mi=1;mi<=12;mi++){ var ym=yr+'-'+(mi<10?'0':'')+mi; var cls=ym<nowYm?'done':(ym===nowYm?'now':''); if(flagM[mi])cls+=' flag';
+    h+='<div class="go-mo '+cls+'">'+(flagM[mi]?('<span class="tg">'+flagM[mi]+'</span>'):(ym===nowYm?'<span class="tg">📍</span>':''))+'<span class="go-dt"></span><span class="gl">'+mi+'月</span></div>'; }
   h+='</div></div>';
-  h+='</div>'; // flow
-  h+='<div class="gp-hint">💡 係数は「1フロントを作るのに必要な各アクション数」。段階ごとに2倍が初期値。あなたの歩留まりに合わせて編集できます。</div>';
+  // pipeline
+  h+='<div class="go-pipe"><span class="go-pl-lab">🔁 育成パイプライン</span><span class="go-pl-n">LOI</span><span class="go-pl-a">▶</span><span class="go-pl-n">Q2</span><span class="go-pl-a">▶</span><span class="go-pl-n">Q3</span><span class="go-pl-a">▶</span><span class="go-pl-n">BR</span><span class="go-pl-t">＝ '+p.pipeline+'ヶ月</span></div>';
+  h+='<div class="go-cap2" style="margin-top:6px">LOIを出してから <b>BRまで'+p.pipeline+'ヶ月</b>。「BR必達月」の '+p.pipeline+'ヶ月前がLOIカウント月。<span class="go-mroute" style="display:inline-block;cursor:pointer" onclick="glSetPipeline()">育成月数を編集</span></div>';
+  // milestone cards
+  h+='<div class="go-miles">'; ms.forEach(function(m){ h+=_glMsCardHtml(m,p,curF); }); h+='</div>';
+  var avail=GL_PROGRAMS.filter(function(t){ return !ms.some(function(x){return x.tmplId===t.id;}); });
+  if(avail.length){ h+='<div class="go-madd">'; avail.forEach(function(t){ h+='<span class="gl-add" onclick="glAddMilestone(\''+t.id+'\')">＋ '+t.emoji+' '+evEsc(t.name.split(' ')[0])+'</span>'; }); h+='</div>'; }
+  h+='</div></div>'; // panel, col-main
+  // ===== FOCUS =====
+  var mFront=_glMonthlyFront(p), remainF=_glRemainFront(p), rem=_glMonthsUntil(p.deadline);
+  var ym2=_glCurYm(), act=p.actuals[ym2]||{}, adp=p.adpUnit>0?Math.ceil(p.ryutsu/p.adpUnit):0;
+  h+='<div><div class="go-eyebrow">だから、今月やること</div><div class="go-focus">';
+  h+='<div class="go-fk"><span>今月のフォーカス</span><span class="mn go-tnum">'+ym2.replace('-','年')+'月</span></div>';
+  h+='<div class="go-flead">フロントを <b>'+mFront+'人</b> つくる</div>';
+  h+='<div class="go-fwhy">残り必要フロント <b>'+remainF+'人</b> ÷ 期限'+(rem>0?rem:1)+'ヶ月 → 今月'+mFront+'人。今月のLOIが<b>BRになるのは'+p.pipeline+'ヶ月後</b>。先行するほど間に合う。</div>';
+  GL_STAGES.forEach(function(s){ var tgt=mFront*(p.funnel[s.k]||0); var a=parseInt(act[s.k]||0,10)||0; var pct=tgt>0?Math.min(100,Math.round(a/tgt*100)):0;
+    h+='<div class="go-krow"><span class="go-kn">'+s.label+'</span><span class="go-kbar"><i style="width:'+pct+'%"></i></span><span class="go-ktgt">目標<b>'+tgt+'</b></span><span class="go-kact"><input type="number" inputmode="numeric" value="'+(a||'')+'" placeholder="実績" onchange="glSetActual(\''+s.k+'\',this.value)"></span></div>'; });
+  h+='<div class="go-fwhy" style="margin:12px 0 0">🛒 流通'+Number(p.ryutsu).toLocaleString()+'P ÷ '+p.adpUnit+'P/人 = 必要ADP <b style="color:var(--accent)">'+adp+'人</b> <span class="go-mroute" style="display:inline-block;cursor:pointer" onclick="glSetAdp()">編集</span></div>';
+  h+='<div class="go-btns"><span class="go-btn pri" onclick="glFocusToTasks()">今日のタスクに追加</span><span class="go-btn gh" onclick="glSetFunnel()">係数を調整</span></div>';
+  h+='</div></div></div></div>';
+  return h;
+}
+function _glMsCardHtml(m,p,curF){
+  var t=_glProg(m.tmplId); if(!t)return '';
+  var r=(t.routes.find(function(x){return x.id===m.route;}))||t.routes[0];
+  var reqTitle=m.reqTitle||t.reqTitle||'ルビー';
+  var reqBR=_glReqBR(p,reqTitle), frontTgt=p.frontTable[reqTitle]||reqBR;
+  var brYm=m.brYm||t.brYm, loiYm=_glSubMonths(brYm,p.pipeline), monthsToLoi=_glMonthsUntil(loiYm);
+  var remain=Math.max(0,frontTgt-curF), pace=monthsToLoi>0?(Math.ceil(remain/monthsToLoi*10)/10):remain, done=m.qual||0;
+  var h='<div class="go-mc"><div class="go-mc-hd"><span class="go-mc-em">'+t.emoji+'</span><span class="go-mc-nm">'+evEsc(t.name)+'</span><span class="go-mc-tag">通過点</span><span class="gl-mini" onclick="glDelMilestone(\''+m.id+'\')">🗑</span></div>';
+  h+='<div class="go-need"><span>到達 <b>'+evEsc(reqTitle)+'</b> ＝ <b>BR'+reqBR+'人</b>（目標フロント'+frontTgt+'・現状'+curF+'）</span><span>BR必達 <span class="gd">'+_glFmtMonth(brYm)+'</span> <span class="gl-mini" onclick="glEditMsDeadline(\''+m.id+'\')">✎</span></span></div>';
+  h+='<div class="go-calc"><div class="go-cl"><span class="cell">BR必達 <b class="c-g">'+_glFmtMonth(brYm)+'</b></span><span class="arw">− 育成'+p.pipeline+'ヶ月 →</span><span class="cell">LOIカウント月 <b class="'+(monthsToLoi>0?'c-s':'c-r')+'">'+_glFmtMonth(loiYm)+'</b></span></div>';
+  if(remain<=0){ h+='<div class="go-ok">✅ 現状フロント'+curF+'人で必要数クリア。維持しつつ資格月づくりへ。</div>'; }
+  else if(monthsToLoi<=0){ h+='<div class="go-warn">⚠️ LOIカウント月（'+_glFmtMonth(loiYm)+'）を過ぎています。今サイクルでの'+evEsc(reqTitle)+'化は間に合いません。次サイクルへ先行着手を。</div>'; }
+  else { h+='<div class="go-ok">✅ 間に合う。'+_glFmtMonth(loiYm)+'まであと<b>'+monthsToLoi+'ヶ月</b> → フロント残り<b class="c-r">'+remain+'人</b> → <b class="c-a">月'+pace+'人</b>ペース</div>'; }
+  h+='</div>';
+  h+='<div class="go-mroutes">'+t.routes.map(function(x){ return '<span class="go-mroute'+(x.id===r.id?' on':'')+'" onclick="glSetMsRoute(\''+m.id+'\',\''+x.id+'\')">'+evEsc(x.name)+'</span>'; }).join('')+'</div>';
+  h+='<div class="go-mrow"><div class="go-mcond">'+evEsc(r.cond)+(r.vol?('<br>📦 '+evEsc(r.vol)):'')+'</div><div class="go-mq"><button class="go-mbtn" onclick="glMsQual(\''+m.id+'\',-1)">−</button><span class="go-mqv"><b>'+done+'</b>/'+r.need+'</span><button class="go-mbtn" onclick="glMsQual(\''+m.id+'\',1)">＋</button></div></div>';
   h+='</div>';
   return h;
 }
 function glEditGoal(){
   var p=state.goals.plan;
-  var d=prompt('期限（YYYY-MM 例:2026-12）', p.deadline||''); if(d===null)return;
-  if(d.trim()&&!/^\d{4}-\d{2}$/.test(d.trim())){ toast('YYYY-MM で入力してください'); return; }
-  var inc=prompt('目標の月収（円・数字のみ）', p.income||''); if(inc===null)return;
   var keys=Object.keys(p.frontTable);
-  var t=prompt('目標タイトル（'+keys.join(' / ')+'）', p.title||''); if(t===null)return;
-  p.deadline=d.trim(); p.income=parseInt(String(inc).replace(/[^0-9]/g,''),10)||0; p.title=(t||'').trim();
+  var t=prompt('🏔 目標タイトル（'+keys.join(' / ')+'）', p.title||''); if(t===null)return;
+  var inc=prompt('目標の月収（円・数字のみ）', p.income||''); if(inc===null)return;
+  var d=prompt('達成期限（YYYY-MM 例:2026-12）', p.deadline||''); if(d===null)return;
+  if(d.trim()&&!/^\d{4}-\d{2}$/.test(d.trim())){ toast('YYYY-MM で入力してください'); return; }
+  var tn=prompt('今の自分のタイトル（進捗表示用）', p.titleNow||''); if(tn===null)return;
+  var inn=prompt('今の月収（円・進捗表示用）', p.incomeNow||''); if(inn===null)return;
+  p.title=(t||'').trim(); p.income=parseInt(String(inc).replace(/[^0-9]/g,''),10)||0; p.deadline=d.trim();
+  p.titleNow=(tn||'').trim(); p.incomeNow=parseInt(String(inn).replace(/[^0-9]/g,''),10)||0;
   saveGoals(); renderGoals();
+}
+function glSetPipeline(){
+  var p=state.goals.plan;
+  var v=prompt('育成パイプライン月数（LOI→BRまで何ヶ月？）', p.pipeline); if(v===null)return;
+  var n=parseInt(v,10); if(n>=0&&n<=12){ p.pipeline=n; saveGoals(); renderGoals(); }
+}
+function glEditMsDeadline(id){
+  var m=(state.goals.milestones||[]).find(function(x){return x.id===id;}); if(!m)return;
+  var t=_glProg(m.tmplId)||{};
+  var v=prompt('BR必達の年月（YYYY-MM）', m.brYm||t.brYm||''); if(v===null)return;
+  if(v.trim()&&!/^\d{4}-\d{2}$/.test(v.trim())){ toast('YYYY-MM で入力してください'); return; }
+  m.brYm=v.trim();
+  var rt=prompt('到達タイトル（ルビー等）', m.reqTitle||t.reqTitle||'ルビー'); if(rt!==null&&rt.trim()) m.reqTitle=rt.trim();
+  saveGoals(); renderGoals();
+}
+function glFocusToTasks(){
+  if(!eventsUid()){ toast('ログインが必要です'); return; }
+  var p=state.goals.plan, mF=_glMonthlyFront(p);
+  var parts=GL_STAGES.map(function(s){ return s.label.replace(/（.*）/,'')+(mF*(p.funnel[s.k]||0)); });
+  var e={ id:genEventId(), type:'task', title:'今月の行動目標：フロント'+mF+'人（'+parts.join('・')+'）', date:evTodayYmd(), done:false, memberId:'', categoryId:'', priority:'normal', memo:'', createdAt:new Date().toISOString() };
+  state.events.push(e); saveEventDoc(e); if(typeof updateEventsBadge==='function') updateEventsBadge();
+  toast('今日のタスクに追加しました ✓');
 }
 function glSetFrontTable(){
   var p=state.goals.plan; var keys=Object.keys(p.frontTable);
@@ -8223,6 +8379,7 @@ function glSetActual(stage, val){
 // ── マイルストーン（インセンティブ・プログラム）テンプレート ──
 var GL_PROGRAMS=[
   { id:'trip2027', emoji:'🏛', name:'サクセストリップ2027 ローマ', color:'#0ea5e9',
+    reqTitle:'ルビー', brYm:'2026-09',
     period:'対象 2026/1〜12', event:'2027年5月・ローマ',
     routes:[
       { id:'title',  name:'タイトル昇格', need:4,
@@ -8237,6 +8394,7 @@ var GL_PROGRAMS=[
     ],
     deadlines:['9月までにRUBY必達（最終カウント 9〜12月）'] },
   { id:'academy2026', emoji:'🎓', name:'サクセスアカデミー2026 マカオ', color:'#8b5cf6',
+    reqTitle:'ルビー', brYm:'2026-02',
     period:'対象 2025/10〜2026/3', event:'2026年6/22-24・マカオ',
     routes:[
       { id:'lapis', name:'ラピス以下', need:2,
@@ -8285,7 +8443,7 @@ function _glMilestoneHtml(){
 function glAddMilestone(tmplId){
   var t=_glProg(tmplId); if(!t)return;
   state.goals.milestones=state.goals.milestones||[];
-  state.goals.milestones.push({ id:genGoalId(), tmplId:tmplId, route:t.routes[0].id, qual:0 });
+  state.goals.milestones.push({ id:genGoalId(), tmplId:tmplId, route:t.routes[0].id, qual:0, brYm:t.brYm||'', reqTitle:t.reqTitle||'ルビー' });
   saveGoals(); renderGoals();
 }
 function glDelMilestone(id){
