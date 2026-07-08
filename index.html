@@ -1136,6 +1136,26 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .gp-month{font-size:12px;font-weight:700;color:var(--text);background:var(--surface2);border-radius:8px;padding:5px 10px;display:inline-block;margin:2px 0 8px}
 .gp-hint{font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6}
 .gp-milestone{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-top:6px}
+/* ── マイルストーン ── */
+.gl-sec-l{font-size:12px;font-weight:800;color:var(--text-mid);letter-spacing:.5px;margin:6px 0 8px}
+.ms-card{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:12px 13px;margin-bottom:10px}
+.ms-hd{display:flex;align-items:center;gap:8px}
+.ms-emoji{font-size:18px}
+.ms-name{flex:1;font-size:15px;font-weight:800;color:var(--text);word-break:break-word}
+.ms-meta{font-size:11px;color:var(--text-mid);margin:3px 0 8px}
+.ms-routes{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.ms-route{font-size:11px;font-weight:700;color:var(--text-mid);background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:4px 9px;cursor:pointer}
+.ms-route.on{background:#0ea5e9;border-color:#0ea5e9;color:#04121c}
+.ms-cond{font-size:12px;color:var(--text);line-height:1.6;background:var(--surface2);border-radius:9px;padding:8px 10px}
+.ms-vol{font-size:11px;color:var(--text-mid);margin-top:5px;line-height:1.5}
+.ms-qual{display:flex;align-items:center;gap:9px;margin-top:9px}
+.ms-qlabel{font-size:12px;color:var(--text-mid);font-weight:600}
+.ms-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;font-weight:800;cursor:pointer;line-height:1}
+.ms-qval{font-size:13px;color:var(--text-mid)}
+.ms-qval b{color:var(--text);font-size:18px;font-weight:800}
+.ms-qbar{flex:1;height:7px;border-radius:5px;background:var(--surface3);overflow:hidden}
+.ms-qbar>i{display:block;height:100%;border-radius:5px}
+.ms-add-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .gl-soon{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 16px;line-height:1.8}
 .hm-tile{position:relative;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 11px;cursor:pointer;transition:background .12s}
 .hm-badge{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.45)}
@@ -1435,7 +1455,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v224</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v225</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3306,7 +3326,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v224';
+  var DATA_VERSION = 'v225';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -7870,16 +7890,18 @@ function _glDefaultPlan(){ return {
   frontMust:null, frontIdeal:null,
   frontTable:{ 'ルビー':6, 'エメラルド':8, 'ダイヤモンド':10, 'ブルーダイヤモンド':12, 'チームエリート':15 },
   ryutsu:3000, adpUnit:100, monthlyFront:null,
-  funnel:{ b1:2, dlr:4, pg:8, ft:16, ct:32, ctget:64, action:128 },
+  funnel:{ b1:1, dlr:2, pg:4, ft:8, ct:16, ctget:32, action:64 },
   actuals:{}
 }; }
 function _glNormPlan(p){
   var d=_glDefaultPlan(); p=p||{};
+  // 旧既定(B1=2始まり)を保存していたら、新既定(B1=フロント=1始まり)へ自動移行
+  if(p.funnel && p.funnel.b1===2 && p.funnel.dlr===4 && p.funnel.action===128){ p.funnel=null; }
   p.funnel=Object.assign({}, d.funnel, p.funnel||{});
   p.frontTable=Object.assign({}, d.frontTable, p.frontTable||{});
   return Object.assign(d, p);
 }
-function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[], plan:_glDefaultPlan() }; }
+function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[], plan:_glDefaultPlan(), milestones:[] }; }
 var GL_STAGES=[
   {k:'b1',    label:'B1 / LOI'},
   {k:'dlr',   label:'研修生（DLR）'},
@@ -7893,7 +7915,7 @@ function loadGoals(uid){
   if(!uid || !db){ if(!state.goals) state.goals=_glDefault(); return Promise.resolve(); }
   return fsGet('maps/'+uid+'/meta/goals').then(function(g){
     if(g && (g.items || g.vision!==undefined)){
-      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[], plan:_glNormPlan(g.plan) };
+      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[], plan:_glNormPlan(g.plan), milestones:g.milestones||[] };
     } else { state.goals = _glDefault(); }
     if(currentView==='goals') renderGoals();
     return state.goals;
@@ -7949,6 +7971,7 @@ function renderGoals(){
   if(!state.goals) state.goals=_glDefault();
   if(!state.goals.year) state.goals.year=(new Date()).getFullYear();
   if(!state.goals.plan) state.goals.plan=_glDefaultPlan();
+  if(!state.goals.milestones) state.goals.milestones=[];
   var g=state.goals;
   var h='<div class="gl-wrap">';
   h+='<div class="gl-head"><div class="gl-title">🧭 GOAL</div>'
@@ -7967,6 +7990,9 @@ function renderGoals(){
 
   // 逆算プランナー
   h+=_glPlannerHtml();
+
+  // マイルストーン（サブ指標：サクセストリップ/アカデミー等）
+  h+=_glMilestoneHtml();
 
   // GOALツリー
   var goals=_glItems('goal');
@@ -8091,9 +8117,16 @@ function _glMonthsUntil(deadline){
 }
 function _glFrontMust(p){ return (p.frontMust!=null)?p.frontMust:(p.frontTable[p.title]||0); }
 function _glFrontIdeal(p){ return (p.frontIdeal!=null)?p.frontIdeal:_glFrontMust(p); }
+// 現状MAPの1段目（parentId無し＝フロント）の人数
+function _glCurrentFront(){
+  var arr=state.members||[], n=0;
+  for(var i=0;i<arr.length;i++){ var m=arr[i]; if(m && !m.deleted && !m.parentId) n++; }
+  return n;
+}
+function _glRemainFront(p){ return Math.max(0, _glFrontMust(p) - _glCurrentFront()); }
 function _glMonthlyFront(p){
   if(p.monthlyFront!=null) return p.monthlyFront;
-  var f=_glFrontMust(p), rem=_glMonthsUntil(p.deadline);
+  var f=_glRemainFront(p), rem=_glMonthsUntil(p.deadline);
   return rem>0 ? Math.ceil(f/rem) : f;
 }
 function _glPlannerHtml(){
@@ -8111,6 +8144,7 @@ function _glPlannerHtml(){
   if(!hasGoal){ h+='</div>'; return h; }
 
   var front=_glFrontMust(p), ideal=_glFrontIdeal(p), rem=_glMonthsUntil(p.deadline), mFront=_glMonthlyFront(p);
+  var curF=_glCurrentFront(), remainF=_glRemainFront(p);
   var adp = p.adpUnit>0 ? Math.ceil(p.ryutsu/p.adpUnit) : 0;
   h+='<div class="gp-flow">';
   // フロント数
@@ -8119,8 +8153,10 @@ function _glPlannerHtml(){
     + '</div>'
     + '<div class="gp-two"><div><div class="k">必達</div><div class="v must">'+front+'人</div></div>'
     + '<div><div class="k">理想</div><div class="v">'+ideal+'人</div></div>'
-    + '<div><div class="k">残り</div><div class="v">'+(rem>0?rem+'ヶ月':'—')+'</div></div></div>'
-    + '<div class="gp-step-v"><span class="sm">→ 今月つくるフロント目安 </span><b>'+mFront+'</b><span class="sm">人</span>'
+    + '<div><div class="k">現状MAP</div><div class="v">'+curF+'人</div></div>'
+    + '<div><div class="k">残り必要</div><div class="v must">'+remainF+'人</div></div>'
+    + '<div><div class="k">期限</div><div class="v">'+(rem>0?rem+'ヶ月':'—')+'</div></div></div>'
+    + '<div class="gp-step-v"><span class="sm">→ 今月つくるフロント目安 </span><b>'+mFront+'</b><span class="sm">人（残り'+remainF+'人 ÷ '+(rem>0?rem:1)+'ヶ月）</span>'
     + '<span class="gp-set" onclick="glSetFrontTable()">表を編集</span></div></div>';
   // ADP
   h+='<div class="gp-step"><div class="gp-step-l">🛒 流通→必要ADP（定期購入顧客） <span class="gp-auto">自動</span></div>'
@@ -8182,6 +8218,87 @@ function glSetActual(stage, val){
   p.actuals[ym]=p.actuals[ym]||{};
   p.actuals[ym][stage]=parseInt(String(val).replace(/[^0-9]/g,''),10)||0;
   saveGoals(); renderGoals();
+}
+
+// ── マイルストーン（インセンティブ・プログラム）テンプレート ──
+var GL_PROGRAMS=[
+  { id:'trip2027', emoji:'🏛', name:'サクセストリップ2027 ローマ', color:'#0ea5e9',
+    period:'対象 2026/1〜12', event:'2027年5月・ローマ',
+    routes:[
+      { id:'title',  name:'タイトル昇格', need:4,
+        cond:'ルビー以上＆基準月より高いタイトル（or 過去STより上）／そのタイトル＆3,000GSVを4ヶ月(非連続可)維持',
+        vol:'上位4ヶ月の組織ボリューム合計：ルビー5万/エメ7.6万/ダイヤ15.6万/BD27.6万' },
+      { id:'volume', name:'ボリューム増加', need:4,
+        cond:'過去ST達成と同タイトル／そのタイトル＆3,000GSVを4ヶ月維持（各タイトル1回のみ）',
+        vol:'上位4ヶ月合計：ルビー7万/エメ11.6万/ダイヤ21.6万/BD35.6万' },
+      { id:'te',     name:'チームエリート', need:6,
+        cond:'チームエリート＆3,000GSVを6ヶ月(非連続可)維持',
+        vol:'上位6ヶ月合計：642,000pt' }
+    ],
+    deadlines:['9月までにRUBY必達（最終カウント 9〜12月）'] },
+  { id:'academy2026', emoji:'🎓', name:'サクセスアカデミー2026 マカオ', color:'#8b5cf6',
+    period:'対象 2025/10〜2026/3', event:'2026年6/22-24・マカオ',
+    routes:[
+      { id:'lapis', name:'ラピス以下', need:2,
+        cond:'①自分BR以上＆2,000GSV／G1に審査中BR以上を4名育成　②自分ゴールド以上＆2,000GSV／4名中1名をBRへ昇格', vol:'' },
+      { id:'ruby',  name:'ルビー以上', need:2,
+        cond:'①②とも自分ルビー以上＆2,000GSV／各月 組織SV前年同月比+1pt', vol:'' }
+    ],
+    deadlines:['2026年3月に維持条件（ゴールド以上＆2,000GSV）'] }
+];
+function _glProg(id){ return GL_PROGRAMS.find(function(x){return x.id===id;}); }
+function _glMilestoneHtml(){
+  var ms=state.goals.milestones||[];
+  var h='<div class="gl-sec-l">🏁 マイルストーン（サブ指標）</div>';
+  ms.forEach(function(m){
+    var t=_glProg(m.tmplId); if(!t)return;
+    var r=(t.routes.find(function(x){return x.id===m.route;}))||t.routes[0];
+    var done=m.qual||0, pct=r.need>0?Math.min(100,Math.round(done/r.need*100)):0;
+    h+='<div class="ms-card" style="border-color:'+t.color+'55">';
+    h+='<div class="ms-hd"><span class="ms-emoji">'+t.emoji+'</span><span class="ms-name">'+evEsc(t.name)+'</span>'
+      +'<span class="gl-mini" onclick="glDelMilestone(\''+m.id+'\')">🗑</span></div>';
+    h+='<div class="ms-meta">'+evEsc(t.period)+'　/　'+evEsc(t.event)+'</div>';
+    // ルート選択
+    h+='<div class="ms-routes">'+t.routes.map(function(x){
+      return '<span class="ms-route'+(x.id===r.id?' on':'')+'" onclick="glSetMsRoute(\''+m.id+'\',\''+x.id+'\')">'+evEsc(x.name)+'</span>';
+    }).join('')+'</div>';
+    h+='<div class="ms-cond">'+evEsc(r.cond)+'</div>';
+    if(r.vol) h+='<div class="ms-vol">📦 '+evEsc(r.vol)+'</div>';
+    // 資格月カウンター
+    h+='<div class="ms-qual"><span class="ms-qlabel">資格達成月</span>'
+      +'<button class="ms-btn" onclick="glMsQual(\''+m.id+'\',-1)">−</button>'
+      +'<span class="ms-qval"><b>'+done+'</b> / '+r.need+'ヶ月</span>'
+      +'<button class="ms-btn" onclick="glMsQual(\''+m.id+'\',1)">＋</button>'
+      +'<span class="ms-qbar"><i style="width:'+pct+'%;background:'+t.color+'"></i></span></div>';
+    t.deadlines.forEach(function(d){ h+='<div class="gl-milestone">🚩 '+evEsc(d)+'</div>'; });
+    h+='</div>';
+  });
+  // 追加候補
+  var avail=GL_PROGRAMS.filter(function(t){ return !ms.some(function(m){return m.tmplId===t.id;}); });
+  if(avail.length){
+    h+='<div class="ms-add-row">';
+    avail.forEach(function(t){ h+='<span class="gl-add" onclick="glAddMilestone(\''+t.id+'\')">＋ '+t.emoji+' '+evEsc(t.name)+'</span>'; });
+    h+='</div>';
+  }
+  return h;
+}
+function glAddMilestone(tmplId){
+  var t=_glProg(tmplId); if(!t)return;
+  state.goals.milestones=state.goals.milestones||[];
+  state.goals.milestones.push({ id:genGoalId(), tmplId:tmplId, route:t.routes[0].id, qual:0 });
+  saveGoals(); renderGoals();
+}
+function glDelMilestone(id){
+  state.goals.milestones=(state.goals.milestones||[]).filter(function(m){return m.id!==id;});
+  saveGoals(); renderGoals();
+}
+function glSetMsRoute(id, routeId){
+  var m=(state.goals.milestones||[]).find(function(x){return x.id===id;}); if(!m)return;
+  m.route=routeId; saveGoals(); renderGoals();
+}
+function glMsQual(id, delta){
+  var m=(state.goals.milestones||[]).find(function(x){return x.id===id;}); if(!m)return;
+  m.qual=Math.max(0,(m.qual||0)+delta); saveGoals(); renderGoals();
 }
 
 // ── Firestore ──
