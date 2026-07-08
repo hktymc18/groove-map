@@ -91,11 +91,40 @@ service cloud.firestore {
       }
     }
 
-    // ============ MAP本体（months/stats/events/meta/shared など） ============
-    match /maps/{uid}/{document=**} {
-      allow read:  if isAdmin() || ownerActive(uid)
-                   || (signedIn() && notDisabled(uid)
-                       && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid)));
+    // ============ MAP本体（months/stats/events/meta/shared） ============
+    // 共有された相手（閲覧以上）：maps/{uid}/shared/{自分} が存在する
+    function isSharedToMap(uid) {
+      return signedIn() && notDisabled(uid)
+          && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid));
+    }
+    // 共有編集者：上記に加え perm=='edit'（＝共同編集）
+    function canEditMap(uid) {
+      return signedIn() && notDisabled(uid) && notDisabled(request.auth.uid)
+          && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
+          && get(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
+               .data.get('perm','view') == 'edit';
+    }
+
+    // データ本体：read=オーナー/管理者/共有された人、write=オーナー/管理者/共有編集者
+    match /maps/{uid}/months/{doc} {
+      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
+      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+    }
+    match /maps/{uid}/stats/{doc} {
+      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
+      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+    }
+    match /maps/{uid}/events/{doc} {
+      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
+      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+    }
+    match /maps/{uid}/meta/{doc} {
+      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
+      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+    }
+    // 共有設定サブコレクション：作成・変更はオーナー/管理者のみ（共有編集者でも変更不可）
+    match /maps/{uid}/shared/{rid} {
+      allow read:  if isAdmin() || ownerActive(uid) || isSelf(rid);
       allow write: if isAdmin() || ownerActive(uid);
     }
 

@@ -1557,7 +1557,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v227</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v228</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3428,7 +3428,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v227';
+  var DATA_VERSION = 'v228';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -7248,11 +7248,14 @@ function exportCSV(type) {
 // ── SAVE TO GAS ──
 
 function autoSave() {
-  lsSave();
-  if (USE_FIREBASE && currentUser && currentUser.uid) {
-    fsSaveToFirestore(currentUser.uid)
-      .then(function() { updateLastSaved(); toast('保存しました ✓'); })
-      .catch(function(e) { console.error('自動保存エラー:', e); });
+  // 共有MAPを閲覧中で編集権が無ければ保存しない（自分・他人のデータを壊さない）
+  if (viewingOwnerUid && !state.isEditor) return;
+  if (!viewingOwnerUid) lsSave(); // 自分のMAPだけローカルキャッシュ
+  var uid = mapTargetUid();
+  if (USE_FIREBASE && uid) {
+    fsSaveToFirestore(uid)
+      .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); })
+      .catch(function(e) { console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
   } else {
     updateLastSaved();
     toast('保存しました ✓');
@@ -7271,12 +7274,13 @@ function saveCurrent() {
   if (!state.isEditor) return;
   toast('保存中...');
 
-  // ローカルキャッシュ
-  lsSave();
+  // ローカルキャッシュ（自分のMAPのみ）
+  if (!viewingOwnerUid) lsSave();
 
-  // Firestore保存
-  if (USE_FIREBASE && currentUser && currentUser.uid) {
-    fsSaveToFirestore(currentUser.uid)
+  // Firestore保存（共有MAP編集中はオーナーへ）
+  var uid = mapTargetUid();
+  if (USE_FIREBASE && uid) {
+    fsSaveToFirestore(uid)
       .then(function() {
         toast('保存しました ✓');
         var months = state.months;
@@ -7954,8 +7958,13 @@ function evEsc(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-function eventsUid() {
+// 保存先のUID。共有MAPを編集権限つきで閲覧中はオーナーへ保存（＝共同編集）
+function mapTargetUid() {
+  if (viewingOwnerUid && state.isEditor) return viewingOwnerUid;
   return (currentUser && currentUser.uid) ? currentUser.uid : null;
+}
+function eventsUid() {
+  return mapTargetUid();
 }
 function evPad2(n){ return (n<10?'0':'') + n; }
 function evYmd(d) {
@@ -10553,6 +10562,7 @@ var viewingOwnerUid = null; // 現在閲覧中のオーナーUID（nullなら自
 
 function fsLoadSharedMap(ownerUid) {
   var month = state.currentMonth;
+  stopSharedLiveSync();
   toast('共有MAPを読み込み中...');
   // 共有されたMAPのデータを直接読む
   // セキュリティルール上、sharedWithを経由して許可する
@@ -10570,13 +10580,54 @@ function fsLoadSharedMap(ownerUid) {
     if (data) {
       state.stats = data.stats || getDefaultStats();
       state.commission = data.commission || getDefaultCommission();
+      state.freshData = data.freshData || {};
     }
     renderCurrentView();
     toast('共有MAPを読み込みました ✓');
+    // 共有MAPの変更をリアルタイム反映（閲覧・共同編集どちらも）
+    startSharedLiveSync(ownerUid);
   }).catch(function(e) {
     toast('読み込みエラー: ' + e.message);
     console.error('shared map load error:', e);
   });
+  // 予定も共有MAPのものを表示（編集も可）
+  loadEvents(ownerUid);
+}
+
+// ── 共同編集：共有MAP閲覧中のリアルタイム同期 ──
+var _sharedSyncUnsub = [];
+function stopSharedLiveSync() {
+  _sharedSyncUnsub.forEach(function(u){ try { u(); } catch(e){} });
+  _sharedSyncUnsub = [];
+}
+function _isEditingOpen() {
+  var a = document.activeElement;
+  if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return true;
+  var ids = ['modal','profileModal'];
+  for (var i=0;i<ids.length;i++){ var el=document.getElementById(ids[i]); if (el && el.classList.contains('open')) return true; }
+  return false;
+}
+function startSharedLiveSync(ownerUid) {
+  if (!db) return;
+  stopSharedLiveSync();
+  var month = state.currentMonth;
+  function guard(apply) {
+    return function(doc) {
+      if (!doc || doc.metadata.hasPendingWrites) return; // 自分の書き込みエコーは無視
+      if (viewingOwnerUid !== ownerUid) return;          // 既に別MAPへ移動済み
+      if (_isEditingOpen()) return;                       // 編集中は中断しない
+      var d = doc.data(); if (!d) return;
+      apply(d);
+      renderCurrentView();
+    };
+  }
+  _sharedSyncUnsub.push(db.doc('maps/'+ownerUid+'/months/'+month+'_current').onSnapshot(guard(function(d){ state.members = d.members || []; })));
+  _sharedSyncUnsub.push(db.doc('maps/'+ownerUid+'/months/'+month+'_ideal').onSnapshot(guard(function(d){ state.idealMembers = d.members || []; })));
+  _sharedSyncUnsub.push(db.doc('maps/'+ownerUid+'/stats/'+month).onSnapshot(guard(function(d){
+    state.stats = d.stats || state.stats;
+    state.commission = d.commission || state.commission;
+    state.freshData = d.freshData || state.freshData;
+  })));
 }
 
 function checkSharedMaps() {
@@ -10844,6 +10895,7 @@ function switchToOwner(ownerUid, perm) {
 
   if (!ownerUid) {
     // 自分のMAPに戻る
+    stopSharedLiveSync();
     state.isEditor = true;
     fsLoadFromFirestore(currentUser.uid);
     loadEvents(currentUser.uid);
