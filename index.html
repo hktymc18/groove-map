@@ -1245,12 +1245,18 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .go-btns{margin-top:13px;display:flex;gap:8px}
 .go-btn{flex:1;text-align:center;font-size:13px;font-weight:800;border-radius:11px;padding:11px;cursor:pointer;border:1px solid transparent}
 .go-btn.pri{background:var(--accent);color:var(--go-ink)} .go-btn.gh{background:var(--surface);border-color:var(--border);color:var(--text)}
+.go-seg{display:inline-flex;background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:2px;margin:2px 0 10px}
+.go-seg-b{font-size:12px;font-weight:800;color:var(--text-mid);padding:5px 15px;border-radius:7px;cursor:pointer}
+.go-seg-b.on{background:var(--accent);color:var(--go-ink)}
+.go-due{display:block;font-size:9px;color:var(--text-dim);font-weight:700;font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.go-due.od{color:var(--go-rose)}
+.go-kro{flex:none;width:50px;text-align:right;font-size:15px;font-weight:800;color:var(--text)}
+.go-hint{font-size:10.5px;color:var(--text-dim);margin-top:8px;line-height:1.5}
 @media(min-width:900px){
-  .go-cols{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:start;margin-top:24px}
-  .go-eyebrow{margin-top:0}
   .go-summit{padding:26px 28px}
   .go-title{font-size:34px}
   .go-flead{font-size:24px}
+  .go-miles{grid-template-columns:1fr 1fr}
 }
 .gl-soon{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 16px;line-height:1.8}
 .hm-tile{position:relative;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 11px;cursor:pointer;transition:background .12s}
@@ -1551,7 +1557,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v226</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v227</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3422,7 +3428,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v226';
+  var DATA_VERSION = 'v227';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -7986,9 +7992,9 @@ function _glDefaultPlan(){ return {
   frontMust:null, frontIdeal:null, pipeline:3,
   frontTable:{ 'ルビー':6, 'エメラルド':8, 'ダイヤモンド':10, 'ブルーダイヤモンド':12, 'チームエリート':15 },
   brTable:{ 'ルビー':4, 'エメラルド':6, 'ダイヤモンド':8, 'ブルーダイヤモンド':10, 'チームエリート':12 },
-  ryutsu:3000, adpUnit:100, monthlyFront:null,
+  ryutsu:3000, adpUnit:100, monthlyFront:null, b1Day:'',
   funnel:{ b1:1, dlr:2, pg:4, ft:8, ct:16, ctget:32, action:64 },
-  actuals:{}
+  actuals:{}, dailyActuals:{}
 }; }
 var GL_TITLE_ORDER=['','LOI','ブランドレプリゼンタティブ','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','チームエリート'];
 function _glNormPlan(p){
@@ -8253,8 +8259,9 @@ function _glPlannerHtml(){
   if(!hasGoal){ h+='</div>'; return h; }
 
   var curF=_glCurrentFront();
-  h+='<div class="go-cols"><div>';
-  // ===== JOURNEY =====
+  // ===== 今月のフォーカス（最重要目標の直下）=====
+  h+=_glFocusHtml(p);
+  // ===== JOURNEY（全幅・通過点ワイド）=====
   h+='<div class="go-eyebrow gold">頂上への道のり ― 途中の通過点（マイルストーン）</div><div class="go-panel">';
   var msSorted=ms.slice().sort(function(a,b){ return ((a.brYm||(_glProg(a.tmplId)||{}).brYm)||'').localeCompare((b.brYm||(_glProg(b.tmplId)||{}).brYm)||''); });
   h+='<div class="go-trail"><div class="go-tn now"><span class="go-cap">📍</span><span class="go-tl">現在地<span class="sub">'+(p.titleNow?evEsc(p.titleNow):'—')+'・F'+curF+'</span></span></div>';
@@ -8277,21 +8284,56 @@ function _glPlannerHtml(){
   h+='<div class="go-miles">'; ms.forEach(function(m){ h+=_glMsCardHtml(m,p,curF); }); h+='</div>';
   var avail=GL_PROGRAMS.filter(function(t){ return !ms.some(function(x){return x.tmplId===t.id;}); });
   if(avail.length){ h+='<div class="go-madd">'; avail.forEach(function(t){ h+='<span class="gl-add" onclick="glAddMilestone(\''+t.id+'\')">＋ '+t.emoji+' '+evEsc(t.name.split(' ')[0])+'</span>'; }); h+='</div>'; }
-  h+='</div></div>'; // panel, col-main
-  // ===== FOCUS =====
-  var mFront=_glMonthlyFront(p), remainF=_glRemainFront(p), rem=_glMonthsUntil(p.deadline);
-  var ym2=_glCurYm(), act=p.actuals[ym2]||{}, adp=p.adpUnit>0?Math.ceil(p.ryutsu/p.adpUnit):0;
-  h+='<div><div class="go-eyebrow">だから、今月やること</div><div class="go-focus">';
-  h+='<div class="go-fk"><span>今月のフォーカス</span><span class="mn go-tnum">'+ym2.replace('-','年')+'月</span></div>';
-  h+='<div class="go-flead">フロントを <b>'+mFront+'人</b> つくる</div>';
-  h+='<div class="go-fwhy">残り必要フロント <b>'+remainF+'人</b> ÷ 期限'+(rem>0?rem:1)+'ヶ月 → 今月'+mFront+'人。今月のLOIが<b>BRになるのは'+p.pipeline+'ヶ月後</b>。先行するほど間に合う。</div>';
-  GL_STAGES.forEach(function(s){ var tgt=mFront*(p.funnel[s.k]||0); var a=parseInt(act[s.k]||0,10)||0; var pct=tgt>0?Math.min(100,Math.round(a/tgt*100)):0;
-    h+='<div class="go-krow"><span class="go-kn">'+s.label+'</span><span class="go-kbar"><i style="width:'+pct+'%"></i></span><span class="go-ktgt">目標<b>'+tgt+'</b></span><span class="go-kact"><input type="number" inputmode="numeric" value="'+(a||'')+'" placeholder="実績" onchange="glSetActual(\''+s.k+'\',this.value)"></span></div>'; });
-  h+='<div class="go-fwhy" style="margin:12px 0 0">🛒 流通'+Number(p.ryutsu).toLocaleString()+'P ÷ '+p.adpUnit+'P/人 = 必要ADP <b style="color:var(--accent)">'+adp+'人</b> <span class="go-mroute" style="display:inline-block;cursor:pointer" onclick="glSetAdp()">編集</span></div>';
-  h+='<div class="go-btns"><span class="go-btn pri" onclick="glFocusToTasks()">今日のタスクに追加</span><span class="go-btn gh" onclick="glSetFunnel()">係数を調整</span></div>';
-  h+='</div></div></div></div>';
+  h+='</div>'; // panel
+  h+='</div>'; // go-wrap
   return h;
 }
+// ── 今月のフォーカス（期日・週次/日次） ──
+var _glFocusMode='day';
+function _glMonthEndDate(){ var d=new Date(); return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+function _glAddDaysD(date,n){ var x=new Date(date.getTime()); x.setDate(x.getDate()+n); return x; }
+function _glYmdOfD(date){ return date.getFullYear()+'-'+((date.getMonth()+1)<10?'0':'')+(date.getMonth()+1)+'-'+(date.getDate()<10?'0':'')+date.getDate(); }
+function _glMDStr(date){ return (date.getMonth()+1)+'/'+date.getDate(); }
+function _glDaysUntilD(date){ var t=new Date(); t.setHours(0,0,0,0); var d=new Date(date.getTime()); d.setHours(0,0,0,0); return Math.round((d-t)/86400000)+1; }
+function _glStageDates(p){
+  var end=_glMonthEndDate();
+  var b1 = (p.b1Day && /^\d{4}-\d{2}-\d{2}$/.test(p.b1Day)) ? new Date(p.b1Day.replace(/-/g,'/')) : _glAddDaysD(end,-2);
+  var dlr=_glAddDaysD(b1,-7), pg=_glAddDaysD(dlr,-1), ft=_glAddDaysD(pg,-1), ct=ft;
+  var today=new Date(); today.setHours(0,0,0,0);
+  return { b1:b1, dlr:dlr, pg:pg, ft:ft, ct:ct, ctget:today, action:today };
+}
+function _glDayActual(p,st){ var k=evTodayYmd(); return parseInt(((p.dailyActuals||{})[k]||{})[st]||0,10)||0; }
+function _glMonthActual(p,ym,st){ var s=0,da=p.dailyActuals||{}; for(var k in da){ if(k.slice(0,7)===ym) s+=parseInt(da[k][st]||0,10)||0; } return s; }
+function _glWeekActual(p,st){ var ws=_glWeekStart(),s=0; for(var i=0;i<7;i++){ var k=_glYmdOfD(_glAddDaysD(ws,i)); s+=parseInt(((p.dailyActuals||{})[k]||{})[st]||0,10)||0; } return s; }
+function _glFocusHtml(p){
+  var mFront=_glMonthlyFront(p), remainF=_glRemainFront(p), rem=_glMonthsUntil(p.deadline);
+  var ym2=_glCurYm(), adp=p.adpUnit>0?Math.ceil(p.ryutsu/p.adpUnit):0, dates=_glStageDates(p), mode=_glFocusMode;
+  var h='<div class="go-eyebrow">だから、今月やること</div><div class="go-focus">';
+  h+='<div class="go-fk"><span>今月のフォーカス</span><span class="mn go-tnum">'+ym2.replace('-','年')+'月</span></div>';
+  h+='<div class="go-flead">フロントを <b>'+mFront+'人</b> つくる</div>';
+  h+='<div class="go-fwhy">残り必要フロント <b>'+remainF+'人</b> ÷ 期限'+(rem>0?rem:1)+'ヶ月 → 今月'+mFront+'人。B1の期日 <b>'+_glMDStr(dates.b1)+'</b>（<span class="go-mroute" style="display:inline-block;cursor:pointer" onclick="glSetB1Day()">変更</span>）から各アクションの期日を逆算。</div>';
+  h+='<div class="go-seg">'+[['month','月次'],['week','週次'],['day','日次']].map(function(o){ return '<span class="go-seg-b'+(mode===o[0]?' on':'')+'" onclick="glSetFocusMode(\''+o[0]+'\')">'+o[1]+'</span>'; }).join('')+'</div>';
+  GL_STAGES.forEach(function(s){
+    var monthlyT=mFront*(p.funnel[s.k]||0), d=dates[s.k], daysU=Math.max(1,_glDaysUntilD(d)), weeksU=Math.max(1,Math.ceil(daysU/7));
+    var tgt = mode==='day'?Math.ceil(monthlyT/daysU):(mode==='week'?Math.ceil(monthlyT/weeksU):monthlyT);
+    var act = mode==='day'?_glDayActual(p,s.k):(mode==='week'?_glWeekActual(p,s.k):_glMonthActual(p,ym2,s.k));
+    var pct=tgt>0?Math.min(100,Math.round(act/tgt*100)):0, overdue=_glDaysUntilD(d)<=0;
+    var actCell = mode==='day'
+      ? '<span class="go-kact"><input type="number" inputmode="numeric" value="'+(act||'')+'" placeholder="実績" onchange="glSetDaily(\''+s.k+'\',this.value)"></span>'
+      : '<span class="go-kro">'+act+'</span>';
+    h+='<div class="go-krow"><span class="go-kn">'+s.label+'<small class="go-due'+(overdue?' od':'')+'">期日 '+_glMDStr(d)+'</small></span>'
+      +'<span class="go-ktgt">目標<b>'+tgt+'</b></span>'+actCell
+      +'<span class="go-kbar"><i style="width:'+pct+'%"></i></span></div>';
+  });
+  if(mode!=='day') h+='<div class="go-hint">※実績は「日次」タブで今日ぶんを入力 → 週次・月次に自動合算されます。</div>';
+  h+='<div class="go-fwhy" style="margin:12px 0 0">🛒 流通'+Number(p.ryutsu).toLocaleString()+'P ÷ '+p.adpUnit+'P/人 = 必要ADP <b style="color:var(--accent)">'+adp+'人</b> <span class="go-mroute" style="display:inline-block;cursor:pointer" onclick="glSetAdp()">編集</span></div>';
+  h+='<div class="go-btns"><span class="go-btn pri" onclick="glFocusToTasks()">今日のタスクに追加</span><span class="go-btn gh" onclick="glSetFunnel()">係数を調整</span></div>';
+  h+='</div>';
+  return h;
+}
+function glSetFocusMode(m){ _glFocusMode=m; renderGoals(); }
+function glSetDaily(st,val){ var p=state.goals.plan, k=evTodayYmd(); p.dailyActuals=p.dailyActuals||{}; p.dailyActuals[k]=p.dailyActuals[k]||{}; p.dailyActuals[k][st]=parseInt(String(val).replace(/[^0-9]/g,''),10)||0; saveGoals(); renderGoals(); }
+function glSetB1Day(){ var p=state.goals.plan, end=_glMonthEndDate(), def=p.b1Day||_glYmdOfD(_glAddDaysD(end,-2)); var v=prompt('B1（LOI）の期日（YYYY-MM-DD・当月内）\n※各アクションの期日はここから逆算されます', def); if(v===null)return; if(v.trim()&&!/^\d{4}-\d{2}-\d{2}$/.test(v.trim())){ toast('YYYY-MM-DD で入力してください'); return; } p.b1Day=v.trim(); saveGoals(); renderGoals(); }
 function _glMsCardHtml(m,p,curF){
   var t=_glProg(m.tmplId); if(!t)return '';
   var r=(t.routes.find(function(x){return x.id===m.route;}))||t.routes[0];
