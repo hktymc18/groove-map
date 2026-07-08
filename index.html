@@ -1557,7 +1557,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v228</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v229</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1605,6 +1605,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="searchBar" style="padding:8px 14px 0">
       <div id="mapCatChips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <div id="mapRegionChips" style="display:none;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
     </div>
     <!-- 検索モーダル -->
     <div class="overlay" id="searchModal" onclick="closeSearchModal(event)">
@@ -1993,7 +1994,20 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
           <div class="ed-row">
             <span class="ed-l">地域<span class="ed-q" onclick="edHelp(event,'h_region')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fRegion" placeholder="例：福岡"></div>
+            <div class="ed-ctrl" style="flex-direction:column;align-items:stretch;gap:6px">
+              <select class="ed-in" id="fRegionSel" onchange="onRegionSelChange()">
+                <option value="">未設定</option>
+                <option value="東京">東京</option>
+                <option value="大阪">大阪</option>
+                <option value="福岡">福岡</option>
+                <option value="名古屋">名古屋</option>
+                <option value="熊本">熊本</option>
+                <option value="大分">大分</option>
+                <option value="北九州">北九州</option>
+                <option value="__other__">その他（自由入力）</option>
+              </select>
+              <input class="ed-in" id="fRegion" placeholder="地域を入力" style="display:none">
+            </div>
           </div>
           <div class="ed-help" id="h_region">活動拠点。組織図の名前の横に表示され、地域でフィルタできます。</div>
           <div class="ed-row">
@@ -3142,12 +3156,53 @@ function buildRegionFilter(members, wrap) {
   return true;
 }
 function applyRegionDim() {
-  if (!regionFilter) return;
+  // PC組織図ノード（SVG）
   var nodes = document.querySelectorAll('.oval-node');
   for (var i=0;i<nodes.length;i++){
     var r = nodes[i].getAttribute('data-region') || '';
-    nodes[i].style.opacity = (r === regionFilter) ? '1' : '0.22';
+    var ok = !regionFilter || (r === regionFilter);
+    nodes[i].style.opacity = ok ? '1' : '0.22';
   }
+  // モバイルツリーカード（HTML）
+  var cards = document.querySelectorAll('.nc[data-cid]');
+  for (var j=0;j<cards.length;j++){
+    var m = _findMember(cards[j].getAttribute('data-cid'));
+    var rr = (m && m.region) ? m.region : '';
+    var ok2 = !regionFilter || (rr === regionFilter);
+    cards[j].style.opacity = ok2 ? '' : '0.3';
+  }
+}
+// 地域チップを指定コンテナに描画（モバイル用・都度クリア）
+function buildRegionChipsInto(members, containerId) {
+  var wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  var ok = buildRegionFilter(members, wrap);
+  wrap.style.display = ok ? 'flex' : 'none';
+}
+// ── 地域入力（プルダウン＋自由入力） ──
+var REGION_PRESETS = ['東京','大阪','福岡','名古屋','熊本','大分','北九州'];
+function onRegionSelChange() {
+  var sel = document.getElementById('fRegionSel');
+  var inp = document.getElementById('fRegion');
+  if (!sel || !inp) return;
+  if (sel.value === '__other__') {
+    if (REGION_PRESETS.indexOf(inp.value) >= 0) inp.value = ''; // preset値ならクリア
+    inp.style.display = '';
+    inp.focus();
+  } else {
+    inp.value = sel.value; // preset / 未設定 を反映（保存元は #fRegion）
+    inp.style.display = 'none';
+  }
+}
+function syncRegionSelect(region) {
+  var sel = document.getElementById('fRegionSel');
+  var inp = document.getElementById('fRegion');
+  if (!sel || !inp) return;
+  region = (region || '').trim();
+  if (region === '') { sel.value = ''; inp.value = ''; inp.style.display = 'none'; }
+  else if (REGION_PRESETS.indexOf(region) >= 0) { sel.value = region; inp.value = region; inp.style.display = 'none'; }
+  else { sel.value = '__other__'; inp.value = region; inp.style.display = ''; }
 }
 
 // ── カテゴリ絞り込み（メンバータブを現状に統合）──
@@ -3428,7 +3483,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v228';
+  var DATA_VERSION = 'v229';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5491,6 +5546,7 @@ function renderTree(mapType) {
   var members = composeMergedInto(ownMembers, mapType); // 結合中の下位ツリーを合成（表示のみ）
   if (!isPCMode()) buildLevelSelector(members); // モバイル：レベル展開セレクタ
   if (mapType === 'current') { buildMapCatChips(ownMembers); setTimeout(applyMapCatDim, 200); } // カテゴリ絞り込み
+  if (mapType === 'current') { buildRegionChipsInto(ownMembers, 'mapRegionChips'); setTimeout(applyRegionDim, 200); } // 地域絞り込み（モバイル）
   var roots = childrenOf('', members);
 
   if (roots.length === 0) {
@@ -7620,6 +7676,7 @@ function openEdit(id) {
     set('fASan', m.aSan);
     set('fInsta', m.instaUrl);
     set('fRegion', m.region);
+    syncRegionSelect(m.region);
     set('fBirth', m.birthday);
     var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
@@ -7691,6 +7748,7 @@ function clearForm() {
     var el = document.getElementById(id);
     if (el) el.value='';
   });
+  syncRegionSelect(''); // 地域プルダウンを未設定にリセット
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
   var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
