@@ -1584,7 +1584,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="pcs-item" data-view="ideal" onclick="switchView('ideal')" title="理想"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#ec4899;box-shadow:0 3px 12px rgba(236,72,153,.5)">🎯</span><span class="pcs-lb">理想</span></div>
   <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)">🧭</span><span class="pcs-lb">GOAL</span></div>
   <div class="pcs-spacer"></div>
-  <div class="pcs-item" onclick="homeAddMember()" title="メンバー追加"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#f97316;box-shadow:0 3px 12px rgba(249,115,22,.55)">➕</span><span class="pcs-lb">追加</span></div>
 </aside>
 
 <header>
@@ -1597,7 +1596,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v234</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v235</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3542,7 +3541,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v234';
+  var DATA_VERSION = 'v235';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6736,8 +6735,9 @@ var _OL_CATS_FRESH = [
   { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
   { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } }
 ];
-// 3〜7人アウトライン用カテゴリ（フレッシュ/BR/金の船/その他）
+// 3〜7人アウトライン用カテゴリ（研修生/フレッシュ/BR/金の船/その他）
 var _OL_CATS_OUTLINE = [
+  { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
   { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
   { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
   { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } },
