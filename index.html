@@ -645,6 +645,11 @@ tr.ot-drawer td{background:var(--surface2);padding:0}
 .ot-mel.warn{color:var(--gold)} .ot-mel.crit{color:var(--red)} .ot-mel.ok{color:var(--green)}
 .ot-mlast{padding:0 12px 11px;font-size:12.5px;color:var(--text-mid);line-height:1.6} .ot-mlast b{color:var(--text);font-weight:700}
 .ot-mbody{border-top:1px solid var(--border);padding:10px 12px;background:var(--surface2)}
+.gold-grid{display:grid;gap:10px;padding:10px}
+.gold-grid .gold-card{margin:0}
+@media(min-width:900px){.gold-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
+table.ot.olt7{min-width:640px}
+tr.ot-done{opacity:.5}
 .ol-target-row{display:flex;gap:6px;margin-bottom:6px}
 .ol-x{flex:none;width:40px;background:transparent;border:1px solid var(--border2);color:var(--red);border-radius:8px;cursor:pointer;font-size:13px}
 .ol-add{display:block;width:calc(100% - 20px);margin:0 10px 10px;padding:12px;border-radius:10px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer}
@@ -1592,7 +1597,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v231</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v232</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3537,7 +3542,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v231';
+  var DATA_VERSION = 'v232';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6556,6 +6561,27 @@ function olAddEntry() { var a = _ol(); if (a.length >= 7) return; a.push({date:'
 function olRemoveEntry(i) { var a = _ol(); a.splice(i, 1); autoSave(); renderStats(); }
 function olAddTarget(i) { var o = _ol()[i]; if (!o) return; if (!o.targets) o.targets = ['']; o.targets.push(''); autoSave(); renderStats(); }
 function olRemoveTarget(i, ti) { var o = _ol()[i]; if (!o || !o.targets) return; o.targets.splice(ti, 1); if (o.targets.length === 0) o.targets = ['']; autoSave(); renderStats(); }
+// 3〜7人OL：PC一覧テーブル
+function renderOutlinePC(wrap, outline){
+  var h='<div class="ot-scroll"><table class="ot olt7"><thead><tr><th style="width:60px">完了</th><th>対象者</th><th>内容</th><th>Aさん</th><th>日付</th><th style="width:52px"></th></tr></thead><tbody>';
+  outline.forEach(function(o,i){
+    if(!o.targets) o.targets = o.target?[o.target]:[''];
+    var done=!!o.done;
+    var tg=o.targets.map(function(t,ti){
+      return '<div class="ol-target-row" style="margin-bottom:4px"><input class="ol-input" style="height:34px" placeholder="対象者" value="'+evEsc(t||'')+'" oninput="olSetTarget('+i+','+ti+',this.value)">'+(ti>0?'<button class="ol-x" onclick="olRemoveTarget('+i+','+ti+')">✕</button>':'')+'</div>';
+    }).join('');
+    h+='<tr class="'+(done?'ot-done':'')+'">'
+      +'<td><button class="ol-done'+(done?' on':'')+'" onclick="olToggleDone('+i+')">'+(done?'✓':'未')+'</button></td>'
+      +'<td style="min-width:150px">'+tg+'<span class="ol-add-t" onclick="olAddTarget('+i+')">＋追加</span></td>'
+      +'<td style="min-width:190px"><input class="ol-input" style="height:34px" placeholder="内容" value="'+evEsc(o.content||'')+'" oninput="olSetField('+i+',\'content\',this.value)"></td>'
+      +'<td style="min-width:100px"><input class="ol-input" style="height:34px" placeholder="Aさん" value="'+evEsc(o.aSan||'')+'" oninput="olSetField('+i+',\'aSan\',this.value)"></td>'
+      +'<td><input class="ol-input" style="height:34px;width:150px" type="date" value="'+(o.date||'')+'" onchange="olSetField('+i+',\'date\',this.value)"></td>'
+      +'<td><button class="ol-del" onclick="olRemoveEntry('+i+')">削除</button></td></tr>';
+  });
+  h+='</tbody></table></div>';
+  if(outline.length<7) h+='<button class="ol-add" onclick="olAddEntry()" style="margin:10px">＋ 人を追加</button>';
+  wrap.innerHTML=h;
+}
 // ── フレッシュ OLログ（いつ・誰に・内容・備考(反応)）──
 function freshOlLog(mid) {
   if (!state.freshData) state.freshData = {};
@@ -6958,7 +6984,7 @@ function renderStats() {
       goldWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">「金の船」のメンバーがいません。<br>メンバー編集で「⛴ 金の船」に設定すると、ここに表示されます。</div>';
     } else {
       var allEvents = state.events || [];
-      goldWrap.innerHTML = goldMembers.map(function(m){
+      goldWrap.innerHTML = '<div class="gold-grid">' + goldMembers.map(function(m){
         var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/^\s+|\s+$/g,'') || '(無名)';
         var evs = allEvents.filter(function(e){ return e.memberId === m.id; });
         evs.sort(evSortFn);
@@ -6975,7 +7001,7 @@ function renderStats() {
           + '<div class="gold-tasks">' + tasksHtml + '</div>'
           + addBtn
           + '</div>';
-      }).join('');
+      }).join('') + '</div>';
     }
   }
 
@@ -7063,6 +7089,7 @@ function renderStats() {
     if (!s.outline) s.outline = [];
     while (s.outline.length < 3) s.outline.push({date:'',targets:[''],content:'',aSan:'',done:false});
     while (s.outline.length > 7) s.outline.pop();
+    if (isPCMode()) { renderOutlinePC(outlineWrap, s.outline); } else {
     var visibleOl = _outlineExpanded ? s.outline : s.outline.slice(0, 1);
     var olHtml = '<div class="ol-collapse-hd' + (_outlineExpanded?' open':'') + '" onclick="toggleOutlineExpand()">'
       + '<span style="font-size:12px;font-weight:700;color:var(--text-mid)">３〜７人OL（' + s.outline.length + '件）</span>'
@@ -7096,6 +7123,7 @@ function renderStats() {
       olHtml += '<div class="ck-more" onclick="toggleOutlineExpand()">ほか ' + (s.outline.length - 1) + '件を表示</div>';
     }
     outlineWrap.innerHTML = olHtml;
+    }
   }
 
   // ── 研修生ファネル（月次：表示中の月に活動 or 結果確定した研修生のみ） ──
