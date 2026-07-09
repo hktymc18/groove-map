@@ -610,6 +610,41 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ol-add-t{color:var(--accent);font-weight:600;cursor:pointer}
 .ol-input{box-sizing:border-box;width:100%;height:42px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0 10px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none}
 .ol-input:focus{border-color:var(--accent)}
+/* OL育成ダッシュボード */
+.ot-funnel{display:flex;gap:7px;overflow-x:auto;padding:10px 10px 6px}
+.ot-fs{flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:9px 11px}
+.ot-fs .st{font-size:10px;font-weight:800;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px}
+.ot-fs .ct{font-size:22px;font-weight:900;font-family:'IBM Plex Mono',monospace;line-height:1.1;margin-top:2px}
+.ot-fs .bl{height:3px;border-radius:2px;background:var(--accent);margin-top:6px;opacity:.85}
+.ot-fs.crit{border-color:color-mix(in srgb,var(--red) 40%,var(--border));background:color-mix(in srgb,var(--red) 10%,transparent)}
+.ot-fs.crit .st,.ot-fs.crit .ct{color:var(--red)} .ot-fs.crit .bl{background:var(--red)}
+.ot-scroll{overflow-x:auto}
+table.ot{width:100%;border-collapse:collapse;min-width:800px}
+table.ot thead th{text-align:left;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--text-dim);text-transform:uppercase;padding:9px 11px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)}
+table.ot tbody td{padding:10px 11px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+table.ot tbody tr:hover{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.ot-sev{width:4px;padding:0!important}
+.ot-sev i{display:block;width:4px;min-height:42px;height:100%;background:transparent}
+tr.ot-warn .ot-sev i{background:var(--gold)} tr.ot-crit .ot-sev i{background:var(--red)}
+.ot-nm{font-weight:700;white-space:nowrap;cursor:pointer} .ot-nm.male{color:var(--male)} .ot-nm.female{color:var(--female)}
+.ot-ttl{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:3px 7px;border-radius:5px;background:var(--surface3);color:var(--text-mid);white-space:nowrap}
+.ot-ttl.loi{color:var(--go-sky)} .ot-ttl.q{color:var(--accent)} .ot-ttl.b{color:var(--gold)}
+.ot-date{font-family:'IBM Plex Mono',monospace;font-size:12px;white-space:nowrap}
+.ot-dim{color:var(--text-mid);font-size:12px;white-space:nowrap}
+.ot-txt{color:var(--text);font-size:12px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ot-cnt{font-family:'IBM Plex Mono',monospace;text-align:center;color:var(--text-mid)}
+.ot-el{font-family:'IBM Plex Mono',monospace;font-weight:800;white-space:nowrap}
+.ot-el.warn{color:var(--gold)} .ot-el.crit{color:var(--red)} .ot-el.ok{color:var(--green)}
+.ot-exp{cursor:pointer;color:var(--text-dim);padding:0 6px;font-size:15px}
+tr.ot-drawer td{background:var(--surface2);padding:0}
+.ot-mcard{border:1px solid var(--border);border-radius:12px;background:var(--surface);margin:9px 10px;overflow:hidden}
+.ot-mcard.warn{border-left:4px solid var(--gold)} .ot-mcard.crit{border-left:4px solid var(--red)}
+.ot-mhd{display:flex;align-items:center;gap:9px;padding:11px 12px;cursor:pointer}
+.ot-mname{font-weight:800;font-size:15px} .ot-mname.male{color:var(--male)} .ot-mname.female{color:var(--female)}
+.ot-mel{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:13px}
+.ot-mel.warn{color:var(--gold)} .ot-mel.crit{color:var(--red)} .ot-mel.ok{color:var(--green)}
+.ot-mlast{padding:0 12px 11px;font-size:12.5px;color:var(--text-mid);line-height:1.6} .ot-mlast b{color:var(--text);font-weight:700}
+.ot-mbody{border-top:1px solid var(--border);padding:10px 12px;background:var(--surface2)}
 .ol-target-row{display:flex;gap:6px;margin-bottom:6px}
 .ol-x{flex:none;width:40px;background:transparent;border:1px solid var(--border2);color:var(--red);border-radius:8px;cursor:pointer;font-size:13px}
 .ol-add{display:block;width:calc(100% - 20px);margin:0 10px 10px;padding:12px;border-radius:10px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer}
@@ -1557,7 +1592,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v230</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v231</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3502,7 +3537,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v230';
+  var DATA_VERSION = 'v231';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6528,9 +6563,74 @@ function freshOlLog(mid) {
   if (!state.freshData[mid].olLog) state.freshData[mid].olLog = [];
   return state.freshData[mid].olLog;
 }
-function freshOlAdd(mid) { var t=new Date(); var d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); freshOlLog(mid).unshift({date:d,to:'',what:'',note:''}); autoSave(); renderStats(); }
+function freshOlAdd(mid) { var t=new Date(); var d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); freshOlLog(mid).unshift({date:d,asan:'',to:'',what:'',note:''}); autoSave(); renderStats(); }
 function freshOlField(mid, idx, field, val) { var log=freshOlLog(mid); if (log[idx]) { log[idx][field]=val; autoSave(); } } // 入力中は再描画しない
 function freshOlRemove(mid, idx) { var log=freshOlLog(mid); log.splice(idx,1); autoSave(); renderStats(); }
+// ── OL育成ダッシュボード（PCテーブル / モバイルカード） ──
+var _olExpandMid='';
+function olToggleExpand(mid){ _olExpandMid=(_olExpandMid===mid)?'':mid; renderStats(); }
+function _olDaysSince(ymd){ if(!ymd||!/^\d{4}-\d{2}-\d{2}$/.test(ymd))return null; var t=new Date();t.setHours(0,0,0,0); var d=new Date(ymd.replace(/-/g,'/'));d.setHours(0,0,0,0); return Math.round((t-d)/86400000); }
+function _olSev(days){ if(days===null||days>=30)return 'crit'; if(days>=14)return 'warn'; return 'ok'; }
+function _olMD(ymd){ if(!ymd||!/^\d{4}-\d{2}-\d{2}$/.test(ymd))return '—'; return (+ymd.slice(5,7))+'/'+(+ymd.slice(8,10)); }
+function _olNm(m){ return ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'')||'(無名)'; }
+function _olTtlCls(t){ t=(t||'').trim(); if(t==='LOI')return 'loi'; if(t.charAt(0)==='Q')return 'q'; if(t.charAt(0)==='B')return 'b'; return ''; }
+function _olRecordsHtml(m){
+  var log=freshOlLog(m.id)||[];
+  var h='<div class="fresh-ol"><div class="fresh-ol-lbl">📝 OL記録（日付・Aさん・内容・反応）</div>';
+  h+=log.map(function(e,idx){
+    return '<div class="fol-item"><div class="fol-row">'
+      +'<input class="fol-in" type="date" value="'+(e.date||'')+'" onchange="freshOlField(\''+m.id+'\','+idx+',\'date\',this.value)">'
+      +'<input class="fol-in" placeholder="Aさん" value="'+evEsc(e.asan||'')+'" oninput="freshOlField(\''+m.id+'\','+idx+',\'asan\',this.value)">'
+      +'<button class="fol-x" onclick="freshOlRemove(\''+m.id+'\','+idx+')">✕</button></div>'
+      +'<input class="fol-in fol-full" placeholder="内容（何をした）" value="'+evEsc(e.what||'')+'" oninput="freshOlField(\''+m.id+'\','+idx+',\'what\',this.value)" style="margin-bottom:6px">'
+      +'<input class="fol-in fol-full" placeholder="反応（どんな反応だったか）" value="'+evEsc(e.note||'')+'" oninput="freshOlField(\''+m.id+'\','+idx+',\'note\',this.value)"></div>';
+  }).join('');
+  h+='<button class="fol-add" onclick="freshOlAdd(\''+m.id+'\')">＋ OL記録を追加</button></div>';
+  return h;
+}
+function renderFreshOL(wrap, members, hidden, TITLES){
+  if(!members.length && !hidden.length){ wrap.innerHTML='<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>'; return; }
+  var rows=members.map(function(m){ var log=freshOlLog(m.id)||[]; var last=log[0]||{}; var days=_olDaysSince(last.date); return {m:m,log:log,last:last,days:days,sev:_olSev(days)}; });
+  rows.sort(function(a,b){ var da=(a.days===null?99999:a.days), db=(b.days===null?99999:b.days); return db-da; });
+  var counts={}; members.forEach(function(m){ var t=(m.title||'').trim(); counts[t]=(counts[t]||0)+1; });
+  var followCt=rows.filter(function(r){ return r.sev!=='ok'; }).length;
+  var groups=[['LOI',['LOI']],['Q2',['Q2']],['Q3',['Q3']],['B1',['B1']],['B2',['B2']],['B3',['B3']],['B4–B6',['B4','B5','B6']]];
+  if(isPCMode()){
+    var h='<div class="ot-funnel">';
+    groups.forEach(function(g){ var c=g[1].reduce(function(s,t){ return s+(counts[t]||0); },0); h+='<div class="ot-fs"><div class="st">'+g[0]+'</div><div class="ct">'+c+'</div><div class="bl"></div></div>'; });
+    h+='<div class="ot-fs crit"><div class="st">要フォロー</div><div class="ct">'+followCt+'</div><div class="bl"></div></div></div>';
+    h+='<div class="ot-scroll"><table class="ot"><thead><tr><th class="ot-sev"></th><th>名前</th><th>タイトル</th><th>最終OL</th><th>Aさん</th><th>内容</th><th>反応・メモ</th><th style="text-align:center">記録</th><th>経過</th><th></th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      var m=r.m, nm=_olNm(m), g=(m.gender==='female'?'female':'male'), open=(_olExpandMid===m.id);
+      var el=(r.days===null?'未接触':(r.days+'日'));
+      h+='<tr class="ot-'+r.sev+'"><td class="ot-sev"><i></i></td>'
+        +'<td><span class="ot-nm '+g+'" onclick="olToggleExpand(\''+m.id+'\')">'+evEsc(nm)+'</span></td>'
+        +'<td><span class="ot-ttl '+_olTtlCls(m.title)+'">'+evEsc((m.title||'').trim()||'—')+'</span></td>'
+        +'<td class="ot-date">'+_olMD(r.last.date)+'</td>'
+        +'<td class="ot-dim">'+evEsc(r.last.asan||'—')+'</td>'
+        +'<td class="ot-txt">'+evEsc(r.last.what||'—')+'</td>'
+        +'<td class="ot-txt">'+evEsc(r.last.note||'—')+'</td>'
+        +'<td class="ot-cnt">'+r.log.length+'</td>'
+        +'<td><span class="ot-el '+r.sev+'">'+el+'</span></td>'
+        +'<td><span class="ot-exp" onclick="olToggleExpand(\''+m.id+'\')">'+(open?'▲':'⋯')+'</span></td></tr>';
+      if(open) h+='<tr class="ot-drawer"><td colspan="10"><div style="padding:4px 14px 14px">'+_olRecordsHtml(m)+'<div style="margin-top:8px"><button class="fresh-hide-btn" onclick="setOlHidden(\''+m.id+'\',true)">✕ OL対象外にする</button></div></div></td></tr>';
+    });
+    h+='</tbody></table></div>'+olHiddenSectionHtml(hidden);
+    wrap.innerHTML=h;
+  } else {
+    var h='';
+    rows.forEach(function(r){
+      var m=r.m, nm=_olNm(m), g=(m.gender==='female'?'female':'male'), open=(_olExpandMid===m.id);
+      var el=(r.days===null?'未接触':(r.days+'日'));
+      h+='<div class="ot-mcard '+(r.sev==='ok'?'':r.sev)+'">'
+        +'<div class="ot-mhd" onclick="olToggleExpand(\''+m.id+'\')"><span class="ot-mname '+g+'">'+evEsc(nm)+'</span><span class="ot-ttl '+_olTtlCls(m.title)+'">'+evEsc((m.title||'').trim()||'—')+'</span><span class="ot-mel '+r.sev+'">'+el+'</span></div>'
+        +'<div class="ot-mlast">最終OL <b>'+_olMD(r.last.date)+'</b>　Aさん <b>'+evEsc(r.last.asan||'—')+'</b><br>内容：'+evEsc(r.last.what||'—')+'<br>反応：'+evEsc(r.last.note||'—')+'</div>'
+        +(open?('<div class="ot-mbody">'+_olRecordsHtml(m)+'<div style="margin-top:8px"><button class="fresh-hide-btn" onclick="setOlHidden(\''+m.id+'\',true)">✕ OL対象外にする</button></div></div>'):'')
+        +'</div>';
+    });
+    wrap.innerHTML=h+olHiddenSectionHtml(hidden);
+  }
+}
 // OLリストの表示/非表示フラグ（フォロー不要な人を隠す）
 function setOlHidden(mid, hide) {
   var m = null; for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid){ m=state.members[i]; break; } }
@@ -6895,6 +6995,8 @@ function renderStats() {
     });
     var freshMembers = _allFresh.filter(function(m){ return !m.olHidden; }).sort(_freshSort);
     var hiddenFresh = _allFresh.filter(function(m){ return m.olHidden; }).sort(_freshSort);
+    renderFreshOL(freshWrap, freshMembers, hiddenFresh, FRESH_TITLES);
+    if (false) {
     if (freshMembers.length === 0 && hiddenFresh.length === 0) {
       freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
     } else {
@@ -6952,6 +7054,7 @@ function renderStats() {
           + '</div>';
       }).join('') + olHiddenSectionHtml(hiddenFresh);
     }
+    } // legacy card render (disabled: renderFreshOL handles it)
   }
 
   // ── アウトライン（3〜7人）カード型UI ──
