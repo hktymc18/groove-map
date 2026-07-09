@@ -1597,7 +1597,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v232</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v233</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3542,7 +3542,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v232';
+  var DATA_VERSION = 'v233';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6568,7 +6568,7 @@ function renderOutlinePC(wrap, outline){
     if(!o.targets) o.targets = o.target?[o.target]:[''];
     var done=!!o.done;
     var tg=o.targets.map(function(t,ti){
-      return '<div class="ol-target-row" style="margin-bottom:4px"><input class="ol-input" style="height:34px" placeholder="対象者" value="'+evEsc(t||'')+'" oninput="olSetTarget('+i+','+ti+',this.value)">'+(ti>0?'<button class="ol-x" onclick="olRemoveTarget('+i+','+ti+')">✕</button>':'')+'</div>';
+      return '<div class="ol-target-row" style="margin-bottom:4px"><input class="ol-input" style="height:34px;cursor:pointer" readonly placeholder="対象者（タップで選択）" value="'+evEsc(t||'')+'" onclick="openOutlinePicker('+i+','+ti+')">'+(ti>0?'<button class="ol-x" onclick="olRemoveTarget('+i+','+ti+')">✕</button>':'')+'</div>';
     }).join('');
     h+='<tr class="'+(done?'ot-done':'')+'">'
       +'<td><button class="ol-done'+(done?' on':'')+'" onclick="olToggleDone('+i+')">'+(done?'✓':'未')+'</button></td>'
@@ -6677,22 +6677,43 @@ function olHiddenSectionHtml(hidden) {
     + '<div class="fresh-hidden-body">' + items + '</div></div>';
 }
 // OLの「誰に」をカテゴリ別メンバーピッカーで選択
-var _olPick = { mid:'', idx:-1 };
+var _olPick = { kind:'fresh', mid:'', idx:-1, oi:-1, ti:-1 };
 function closeOlPicker() { var el=document.getElementById('olPickerOv'); if (el && el.parentNode) el.parentNode.removeChild(el); }
 function olPickSelect(name) {
-  if (_olPick.mid && _olPick.idx >= 0) { freshOlField(_olPick.mid, _olPick.idx, 'to', name); if (typeof renderStats === 'function') renderStats(); }
+  if (_olPick.kind === 'outline') {
+    olSetTarget(_olPick.oi, _olPick.ti, name);
+    if (typeof renderStats === 'function') renderStats();
+  } else if (_olPick.mid && _olPick.idx >= 0) {
+    freshOlField(_olPick.mid, _olPick.idx, 'to', name);
+    if (typeof renderStats === 'function') renderStats();
+  }
   closeOlPicker();
 }
+// フレッシュOL「誰に」用カテゴリ
+var _OL_CATS_FRESH = [
+  { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
+  { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
+  { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
+  { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } }
+];
+// 3〜7人アウトライン用カテゴリ（フレッシュ/BR/金の船/その他）
+var _OL_CATS_OUTLINE = [
+  { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
+  { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
+  { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } },
+  { label:'👤 その他', test:function(m){ return true; } }
+];
 function openOlPicker(mid, idx) {
-  _olPick = { mid: mid, idx: idx };
+  _olPick = { kind:'fresh', mid: mid, idx: idx };
+  _openMemberPicker(_OL_CATS_FRESH, 'OL相手を選択');
+}
+function openOutlinePicker(oi, ti) {
+  _olPick = { kind:'outline', oi: oi, ti: ti };
+  _openMemberPicker(_OL_CATS_OUTLINE, 'アウトライン対象を選択');
+}
+function _openMemberPicker(cats, title) {
   closeOlPicker();
   var all = (state.members || []).filter(function(m){ return !m.deleted; });
-  var cats = [
-    { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
-    { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
-    { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
-    { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } }
-  ];
   var used = {}, body = '';
   cats.forEach(function(c){
     var ms = all.filter(function(m){ return c.test(m) && !used[m.id]; });
@@ -6709,7 +6730,7 @@ function openOlPicker(mid, idx) {
   ov.onclick = function(e){ if (e.target === ov) closeOlPicker(); };
   ov.innerHTML = '<div class="ms-sheet" style="max-height:74vh;overflow-y:auto">'
     + '<div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">OL相手を選択</div></div><span class="ms-x" onclick="closeOlPicker()">✕</span></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + title + '</div></div><span class="ms-x" onclick="closeOlPicker()">✕</span></div>'
     + '<div class="olp-list">' + body + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
@@ -7099,7 +7120,7 @@ function renderStats() {
       var done = !!o.done;
       var targetsHtml = o.targets.map(function(t, ti){
         return '<div class="ol-target-row">'
-          + '<input class="ol-input" placeholder="対象者" value="' + evEsc(t||'') + '" oninput="olSetTarget(' + i + ',' + ti + ',this.value)">'
+          + '<input class="ol-input" style="cursor:pointer" readonly placeholder="対象者（タップで選択）" value="' + evEsc(t||'') + '" onclick="openOutlinePicker(' + i + ',' + ti + ')">'
           + (ti>0 ? '<button class="ol-x" onclick="olRemoveTarget(' + i + ',' + ti + ')">✕</button>' : '')
           + '</div>';
       }).join('');
