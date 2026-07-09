@@ -1491,6 +1491,14 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .fol-x{flex:none;width:34px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-dim);border-radius:8px;font-size:14px;cursor:pointer}
 .fol-add{width:100%;padding:9px;border-radius:9px;border:1px dashed var(--border2);background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:2px}
 .fol-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:6px}
+/* OL履歴：一覧行（タップで詳細ポップアップ） */
+.fol-log-row{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:background .1s}
+.fol-log-row:active,.fol-log-row:hover{background:var(--surface3)}
+.fol-log-date{flex:none;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;min-width:38px}
+.fol-log-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.fol-log-ttl{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fol-log-sub{font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fol-log-arrow{flex:none;color:var(--text-dim);font-size:18px;line-height:1}
 .fol-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .fol-date-lite{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);font-weight:700}
 .fol-to-lite{font-size:12px;color:var(--text-mid)}
@@ -1596,7 +1604,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v235</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v236</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3541,7 +3549,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v235';
+  var DATA_VERSION = 'v236';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6614,9 +6622,16 @@ function openOlRecordModal(mid, editIdx){
     + '<label style="'+lbStyle+'">反応（どんな反応だったか）</label>'
     + '<input id="_olrNote" placeholder="反応" value="'+v(rec.note)+'" style="'+inStyle+'">'
     + '<button onclick="olRecordModalSave(\''+mid+'\','+(editing?editIdx:'-1')+')" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent,#00d4aa);color:#08121a;font-size:15px;font-weight:700;margin-top:4px">保存</button>'
+    + (editing ? '<button onclick="olRecordModalDelete(\''+mid+'\','+editIdx+')" style="width:100%;padding:11px;border-radius:10px;border:1px solid #ef4444;color:#ef4444;background:transparent;font-size:14px;font-weight:600;margin-top:8px">この記録を削除</button>' : '')
     + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); setTimeout(function(){ var f=document.getElementById('_olrWhat'); if(f&&!editing) f.focus(); },80); });
+}
+function olRecordModalDelete(mid, editIdx){
+  if(typeof editIdx!=='number' || editIdx<0) return;
+  if(!confirm('この記録を削除しますか？')) return;
+  var log=freshOlLog(mid); if(log[editIdx]) log.splice(editIdx,1);
+  autoSave(); closeOlRecordModal(); renderStats();
 }
 function olRecordModalSave(mid, editIdx){
   var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
@@ -6639,16 +6654,21 @@ function _olSev(days){ if(days===null||days>=30)return 'crit'; if(days>=14)retur
 function _olMD(ymd){ if(!ymd||!/^\d{4}-\d{2}-\d{2}$/.test(ymd))return '—'; return (+ymd.slice(5,7))+'/'+(+ymd.slice(8,10)); }
 function _olNm(m){ return ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'')||'(無名)'; }
 function _olTtlCls(t){ t=(t||'').trim(); if(t==='LOI')return 'loi'; if(t.charAt(0)==='Q')return 'q'; if(t.charAt(0)==='B')return 'b'; return ''; }
+function _olMD2(ymd){ if(!ymd) return '—'; var p=String(ymd).split('-'); return p.length>=3?((+p[1])+'/'+(+p[2])):ymd; }
 function _olRecordsHtml(m){
   var log=freshOlLog(m.id)||[];
-  var h='<div class="fresh-ol"><div class="fresh-ol-lbl">📝 OL記録（日付・Aさん・内容・反応）</div>';
+  var h='<div class="fresh-ol"><div class="fresh-ol-lbl">📝 OL記録（タップで詳細）</div>';
+  if(!log.length){ h+='<div style="font-size:12px;color:var(--text-dim);padding:2px 2px 8px">まだ記録がありません</div>'; }
   h+=log.map(function(e,idx){
-    return '<div class="fol-item"><div class="fol-row">'
-      +'<input class="fol-in" type="date" value="'+(e.date||'')+'" onchange="freshOlField(\''+m.id+'\','+idx+',\'date\',this.value)">'
-      +'<input class="fol-in" placeholder="Aさん" value="'+evEsc(e.asan||'')+'" oninput="freshOlField(\''+m.id+'\','+idx+',\'asan\',this.value)">'
-      +'<button class="fol-x" onclick="freshOlRemove(\''+m.id+'\','+idx+')">✕</button></div>'
-      +'<input class="fol-in fol-full" placeholder="内容（何をした）" value="'+evEsc(e.what||'')+'" oninput="freshOlField(\''+m.id+'\','+idx+',\'what\',this.value)" style="margin-bottom:6px">'
-      +'<input class="fol-in fol-full" placeholder="反応（どんな反応だったか）" value="'+evEsc(e.note||'')+'" oninput="freshOlField(\''+m.id+'\','+idx+',\'note\',this.value)"></div>';
+    var ttl=evEsc(e.what || e.note || '（内容なし）');
+    var subs=[];
+    if(e.asan) subs.push('👤 '+evEsc(e.asan));
+    if(e.what && e.note) subs.push('💬 '+evEsc(e.note));
+    var sub=subs.length?'<span class="fol-log-sub">'+subs.join('　')+'</span>':'';
+    return '<div class="fol-log-row" onclick="openOlRecordModal(\''+m.id+'\','+idx+')">'
+      +'<span class="fol-log-date">'+_olMD2(e.date)+'</span>'
+      +'<span class="fol-log-main"><span class="fol-log-ttl">'+ttl+'</span>'+sub+'</span>'
+      +'<span class="fol-log-arrow">›</span></div>';
   }).join('');
   h+='<button class="fol-add" onclick="openOlRecordModal(\''+m.id+'\')">＋ OL記録を追加</button></div>';
   return h;
