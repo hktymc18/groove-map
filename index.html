@@ -1604,7 +1604,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v237</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v238</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3373,20 +3373,64 @@ function renderAdminList() {
   var body = document.getElementById('adminBody');
   if (!body) return;
   var q = ((document.getElementById('adminSearch')||{}).value||'').toLowerCase();
-  var list = _adminUsers.filter(function(u) {
+  // オーナーは全体、ユニオンリーダー(admin)は自ユニオンのみ
+  var owner = (currentUser && currentUser.uid === OWNER_UID);
+  var myUnion = (currentUser && currentUser.union) ? currentUser.union : '';
+  var scoped = owner ? _adminUsers : _adminUsers.filter(function(u){ return (u.union||'') === myUnion; });
+  var list = scoped.filter(function(u) {
     if (!q) return true;
     return ((u.name||'')+(u.union||'')+(u.area||'')+(u.email||'')+(u.upRuby||'')+(u.upBd||'')).toLowerCase().indexOf(q) >= 0;
   });
-  list.sort(function(a,b) {
+  var pending = list.filter(function(u){ return u.status === 'pending'; });
+  var others  = list.filter(function(u){ return u.status !== 'pending'; });
+  others.sort(function(a,b) {
     function rank(u){ return u.id===OWNER_UID ? 0 : (u.role==='admin' ? 1 : 2); }
     var ra=rank(a), rb=rank(b);
     if (ra!==rb) return ra-rb;
     return (a.name||'').localeCompare(b.name||'');
   });
   var cnt = document.getElementById('adminCount');
-  if (cnt) cnt.textContent = _adminUsers.length + '人';
-  if (!list.length) { body.innerHTML = '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
-  body.innerHTML = list.map(adminRowHtml).join('');
+  if (cnt) cnt.textContent = scoped.length + '人' + (pending.length ? '・承認待ち'+pending.length : '');
+  var html = '';
+  if (pending.length) {
+    html += '<div style="padding:12px 14px 4px;font-size:12px;font-weight:700;color:#f59e0b">⏳ 承認待ち（' + pending.length + '）</div>';
+    html += pending.map(adminPendingRowHtml).join('');
+    html += '<div style="height:6px;border-bottom:1px solid var(--border);margin-bottom:6px"></div>';
+  }
+  if (!others.length && !pending.length) { body.innerHTML = '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
+  html += others.map(adminRowHtml).join('');
+  body.innerHTML = html;
+}
+function adminPendingRowHtml(u){
+  var uid = u.id;
+  var name = evEsc(u.name || '(名前未設定)');
+  var sub  = evEsc([u.union, u.area].filter(Boolean).join(' / '));
+  var sub2 = evEsc([u.upRuby ? ('UPルビー:'+u.upRuby) : '', u.upBd ? ('UPBD:'+u.upBd) : ''].filter(Boolean).join(' / '));
+  var email= evEsc(u.email || '');
+  return '<div class="adm-row" style="border-left:3px solid #f59e0b">'
+    + '<div class="adm-main"><div class="adm-name">' + name + ' <span class="adm-badge" style="background:rgba(245,158,11,.15);color:#f59e0b">承認待ち</span></div>'
+    + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
+    + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
+    + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
+    + '</div><div class="adm-actions">'
+    + '<button class="adm-btn on" onclick="adminApprove(\'' + uid + '\')">承認</button>'
+    + '<button class="adm-btn" style="border-color:#ef4444;color:#ef4444" onclick="adminReject(\'' + uid + '\')">却下</button>'
+    + '</div></div>';
+}
+function adminApprove(uid){
+  var u=_adminFindUser(uid); if(!u) return;
+  u.status='active'; u.approvedBy=currentUser.uid; u.approvedAt=new Date().toISOString();
+  fsSet('users/'+uid,{status:'active',approvedBy:u.approvedBy,approvedAt:u.approvedAt})
+    .then(function(){ toast('承認しました ✓'); }).catch(function(e){ toast('承認に失敗しました'); console.error(e); });
+  renderAdminList();
+}
+function adminReject(uid){
+  var u=_adminFindUser(uid); if(!u) return;
+  if(!confirm('この登録申請を却下しますか？\n' + (u.name||'') + '（' + (u.email||'') + '）')) return;
+  u.status='disabled'; u.disabledBy=currentUser.uid; u.disabledAt=new Date().toISOString();
+  fsSet('users/'+uid,{status:'disabled',disabledBy:u.disabledBy,disabledAt:u.disabledAt})
+    .then(function(){ toast('却下しました'); }).catch(function(e){ toast('失敗しました'); console.error(e); });
+  renderAdminList();
 }
 function adminRowHtml(u) {
   var uid = u.id;
@@ -3549,7 +3593,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v237';
+  var DATA_VERSION = 'v238';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -10541,13 +10585,13 @@ function doSignup() {
         return fsSet('users/' + uid, {
           name: name, org: org, email: email, uid: uid,
           area: area, union: union, upRuby: upRuby, upBd: upBd,
-          role: 'member', status: 'active', registrationComplete: true,
+          role: 'member', status: 'pending', registrationComplete: true,
           createdAt: new Date().toISOString()
         });
       })
       .then(function() {
         errEl.style.display = 'none';
-        // onAuthStateChanged が loginSuccess を呼ぶ
+        showApprovalGate('pending'); // 承認待ち画面を表示（承認されるまで利用不可）
       })
       .catch(function(err) {
         errEl.textContent = '登録に失敗しました: ' + (err.code === 'auth/email-already-in-use' ? 'このメールアドレスは既に登録されています' : err.message);
@@ -10560,8 +10604,44 @@ function doSignup() {
   }
 }
 
+// 承認待ち/無効アカウントのゲート画面
+function closeApprovalGate(){ var el=document.getElementById('approvalGate'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
+function showApprovalGate(kind, user){
+  closeApprovalGate();
+  var ls=document.getElementById('loginScreen'); if(ls) ls.style.display='none';
+  var pending = (kind === 'pending');
+  var msg = pending
+    ? 'アカウント登録を受け付けました。<br>所属ユニオンのリーダーの<b>承認</b>をお待ちください。<br>承認されると利用できます。'
+    : 'このアカウントは現在ご利用いただけません。<br>管理者にお問い合わせください。';
+  var ov=document.createElement('div'); ov.id='approvalGate';
+  ov.style.cssText='position:fixed;inset:0;z-index:10000;background:var(--bg,#12141a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center';
+  ov.innerHTML='<div style="font-size:46px;margin-bottom:14px">'+(pending?'⏳':'🔒')+'</div>'
+    +'<div style="font-size:19px;font-weight:700;margin-bottom:12px">'+(pending?'承認待ちです':'ご利用いただけません')+'</div>'
+    +'<div style="font-size:14px;color:var(--text-dim,#8a94a6);line-height:1.7;margin-bottom:26px;max-width:340px">'+msg+'</div>'
+    +'<button onclick="location.reload()" style="width:100%;max-width:280px;padding:13px;border-radius:12px;border:none;background:var(--accent,#00d4aa);color:#08121a;font-size:15px;font-weight:700;margin-bottom:10px">承認状況を再確認</button>'
+    +'<button onclick="doLogout()" style="width:100%;max-width:280px;padding:12px;border-radius:12px;border:1px solid var(--border,#2a2e38);background:transparent;color:var(--text,#e6e8ec);font-size:14px">ログアウト</button>';
+  document.body.appendChild(ov);
+}
+// 管理者ログイン時：自ユニオン（オーナーは全体）の承認待ち件数を通知
+function checkPendingApprovals(){
+  if(!isCurrentAdmin() || !db) return;
+  var owner = currentUser.uid === OWNER_UID;
+  var myUnion = currentUser.union || '';
+  fsGetCol('users').then(function(list){
+    var scoped = owner ? (list||[]) : (list||[]).filter(function(u){ return (u.union||'')===myUnion; });
+    var pend = scoped.filter(function(u){ return u.status==='pending'; });
+    if(pend.length){ setTimeout(function(){ toast('⏳ 承認待ち '+pend.length+'件（プロフィール→アカウント管理）'); }, 2200); }
+  }).catch(function(){});
+}
+
 function loginSuccess(user) {
   currentUser = user;
+  // 承認制：承認待ち/無効はゲート表示してアプリに入れない（オーナー・レガシー(status無し=active)は通過）
+  if (user.uid !== OWNER_UID && (user.status === 'pending' || user.status === 'disabled')) {
+    showApprovalGate(user.status, user);
+    return;
+  }
+  closeApprovalGate();
   // Googleカレンダー連携状態をプロフィールから復元
   state.gcalConnected = !!user.gcalConnected;
   state.gcalCalendarId = user.gcalCalendarId || '';
@@ -10604,6 +10684,8 @@ function loginSuccess(user) {
   }
   // プロフィール必須項目ゲート（未入力なら強制入力）
   enforceProfileGate();
+  // 管理者：承認待ち件数を通知
+  checkPendingApprovals();
   // 起動画面は「今日」ホーム
   switchView('home');
 }

@@ -35,12 +35,26 @@ service cloud.firestore {
       );
     }
 
-    // 無効化されていない（status!='disabled'）。レガシー(status無し)は有効扱い。
+    // 利用可能なユーザー（status=='active'）。承認待ち(pending)・無効(disabled)は不可。
+    // レガシー(status無し)は 'active' 既定で通過。
     function notDisabled(uid) {
-      return profileExists(uid) && profile(uid).get('status','active') != 'disabled';
+      return profileExists(uid) && profile(uid).get('status','active') == 'active';
     }
     // 自分が有効なオーナー
     function ownerActive(uid) { return isSelf(uid) && notDisabled(uid); }
+
+    // 承認制ヘルパー
+    function isOwnerAdmin() {
+      return signedIn() && request.auth.uid == 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
+    }
+    function isUnionAdmin() {
+      return signedIn() && profileExists(request.auth.uid) && profile(request.auth.uid).get('role','') == 'admin';
+    }
+    // 更新対象(resource)が自分と同じユニオン
+    function sameUnionAsTarget() {
+      return profileExists(request.auth.uid)
+          && profile(request.auth.uid).get('union','__a') == resource.data.get('union','__b');
+    }
 
     // 新規プロフィールの必須項目
     function hasRequiredProfile(d) {
@@ -55,15 +69,16 @@ service cloud.firestore {
       // 共有・ユーザー検索のため、ログイン済みは閲覧可
       allow read: if signedIn();
 
-      // 新規登録：本人のみ＆必須4項目＆自分でadmin/disabledにできない
+      // 新規登録：本人のみ＆必須4項目＆role=member＆status=pending（承認待ちで作成・自分で有効化不可）
       allow create: if isSelf(uid)
         && hasRequiredProfile(request.resource.data)
         && (!('role'   in request.resource.data) || request.resource.data.role   == 'member')
-        && (!('status' in request.resource.data) || request.resource.data.status == 'active');
+        && request.resource.data.get('status','') == 'pending';
 
-      // 更新：管理者は何でも可。本人は role/status を変えない範囲のみ可。
-      // ※ レガシー(role/status未設定)で落ちないよう .get(キー,既定値) で比較する
-      allow update: if isAdmin()
+      // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
+      //       本人は role/status を変えない範囲のみ可。
+      allow update: if isOwnerAdmin()
+        || (isUnionAdmin() && sameUnionAsTarget())
         || (isSelf(uid)
             && request.resource.data.get('role','member')   == resource.data.get('role','member')
             && request.resource.data.get('status','active') == resource.data.get('status','active'));
