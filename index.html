@@ -1294,6 +1294,25 @@ tr.ot-done{opacity:.5}
 .go-due.od{color:var(--go-rose)}
 .go-kro{flex:none;width:50px;text-align:right;font-size:15px;font-weight:800;color:var(--text)}
 .go-hint{font-size:10.5px;color:var(--text-dim);margin-top:8px;line-height:1.5}
+/* 頂上への道のり（リニューアル・ワイドタイムライン） */
+.gj-panel{padding:16px 16px 14px}
+.gj-head{font-size:18px;font-weight:900;margin-bottom:4px} .gj-head .ar{color:var(--text-dim);margin:0 5px} .gj-head b{color:var(--accent)} .gj-head small{font-size:12px;color:var(--text-mid);font-weight:600;margin-left:8px}
+.gj-tl{position:relative;height:188px;margin:10px 4px 0;min-width:560px}
+.gj-track{position:absolute;left:1.5%;right:1.5%;top:120px;height:5px;background:var(--surface3);border-radius:3px}
+.gj-fill{position:absolute;left:1.5%;top:120px;height:5px;background:var(--accent);border-radius:3px}
+.gj-ev{position:absolute;top:6px;transform:translateX(-50%);white-space:nowrap;z-index:3;text-align:center;cursor:pointer}
+.gj-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:5px 11px;font-size:12.5px;font-weight:700;color:var(--text)}
+.gj-line{display:block;width:2px;height:78px;background:var(--border2);margin:3px auto 0}
+.gj-dot{position:absolute;top:120px;transform:translate(-50%,-50%);border-radius:50%;border:3px solid var(--surface);z-index:2}
+.gj-molab{position:absolute;top:138px;transform:translateX(-50%);font-size:13px;color:var(--text-mid);white-space:nowrap}
+.gj-mk{position:absolute;top:160px;transform:translateX(-50%);font-size:12.5px;font-weight:800;white-space:nowrap;z-index:3}
+.gj-mk.peak{transform:translateX(-86%)}
+.gj-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.gj-loi{display:flex;align-items:center;gap:12px;background:color-mix(in srgb,var(--go-rose) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--go-rose) 40%,var(--border));border-radius:14px;padding:13px 15px;margin-top:8px}
+.gj-loi .ic{font-size:24px} .gj-loi .lb{font-size:12px;color:var(--go-rose);font-weight:800} .gj-loi .bg{font-size:15px;font-weight:800;margin-top:1px} .gj-loi .bg b{font-size:21px;color:var(--go-rose)} .gj-loi .bg small{font-size:12px;color:var(--text-mid);font-weight:500;margin-left:6px}
+.gj-pipe{display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;margin-top:11px;font-size:14px}
+.gj-pipe .lab{color:var(--text-mid)} .gj-pipe .n{font-weight:800} .gj-pipe i{color:var(--text-dim);font-style:normal} .gj-pipe .t{font-weight:800;color:var(--accent)} .gj-pipe .ed{margin-left:auto;color:var(--go-sky);cursor:pointer;font-size:12px;font-weight:700}
+.gj-note{font-size:12px;color:var(--text-mid);margin-top:7px;line-height:1.6} .gj-note b{color:var(--go-rose)}
 @media(min-width:900px){
   .go-summit{padding:26px 28px}
   .go-title{font-size:34px}
@@ -1606,7 +1625,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v239</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v240</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3595,7 +3614,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v239';
+  var DATA_VERSION = 'v240';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -8607,34 +8626,87 @@ function _glPlannerHtml(){
   var curF=_glCurrentFront();
   // ===== 今月のフォーカス（最重要目標の直下）=====
   h+=_glFocusHtml(p);
-  // ===== JOURNEY（全幅・通過点ワイド）=====
-  h+='<div class="go-eyebrow gold">頂上への道のり ― 途中の通過点（マイルストーン）</div><div class="go-panel">';
-  var msSorted=ms.slice().sort(function(a,b){ return ((a.brYm||(_glProg(a.tmplId)||{}).brYm)||'').localeCompare((b.brYm||(_glProg(b.tmplId)||{}).brYm)||''); });
-  h+='<div class="go-trail"><div class="go-tn now"><span class="go-cap">📍</span><span class="go-tl">現在地<span class="sub">'+(p.titleNow?evEsc(p.titleNow):'—')+'・F'+curF+'</span></span></div>';
-  msSorted.forEach(function(m){ var t=_glProg(m.tmplId); if(!t)return; h+='<div class="go-tn mile"><span class="go-cap">'+t.emoji+'</span><span class="go-tl">'+evEsc(t.name.split(' ')[0])+'<span class="sub">通過点・'+_glFmtMonth(m.brYm||t.brYm)+'</span></span></div>'; });
-  h+='<div class="go-tn peak"><span class="go-cap">🏔</span><span class="go-tl">頂上<span class="sub">'+evEsc(p.title||'—')+'</span></span></div></div>';
-  h+='<div class="go-cap2"><b>トリップ・アカデミーは頂上ではなく、登る途中の"旗"</b>。達成するたび頂上へ近づく。</div>';
-  // month rail
-  var yr=(p.deadline&&/^\d{4}/.test(p.deadline))?p.deadline.slice(0,4):String((new Date()).getFullYear());
-  var nowYm=_glCurYm(), flagM={};
-  msSorted.forEach(function(m){ var ym=m.brYm||(_glProg(m.tmplId)||{}).brYm; if(ym&&ym.slice(0,4)===yr) flagM[+ym.slice(5,7)]='🚩'; });
-  if(p.deadline&&p.deadline.slice(0,4)===yr) flagM[+p.deadline.slice(5,7)]='🏔';
-  h+='<div class="go-rail"><div class="go-railt">';
-  for(var mi=1;mi<=12;mi++){ var ym=yr+'-'+(mi<10?'0':'')+mi; var cls=ym<nowYm?'done':(ym===nowYm?'now':''); if(flagM[mi])cls+=' flag';
-    h+='<div class="go-mo '+cls+'">'+(flagM[mi]?('<span class="tg">'+flagM[mi]+'</span>'):(ym===nowYm?'<span class="tg">📍</span>':''))+'<span class="go-dt"></span><span class="gl">'+mi+'月</span></div>'; }
-  h+='</div></div>';
-  // pipeline
-  h+='<div class="go-pipe"><span class="go-pl-lab">🔁 育成パイプライン</span><span class="go-pl-n">LOI</span><span class="go-pl-a">▶</span><span class="go-pl-n">Q2</span><span class="go-pl-a">▶</span><span class="go-pl-n">Q3</span><span class="go-pl-a">▶</span><span class="go-pl-n">BR</span><span class="go-pl-t">＝ '+p.pipeline+'ヶ月</span></div>';
-  h+='<div class="go-cap2" style="margin-top:6px">LOIを出してから <b>BRまで'+p.pipeline+'ヶ月</b>。「BR必達月」の '+p.pipeline+'ヶ月前がLOIカウント月。<span class="go-mroute" style="display:inline-block;cursor:pointer" onclick="glSetPipeline()">育成月数を編集</span></div>';
-  // milestone cards
-  h+='<div class="go-miles">'; ms.forEach(function(m){ h+=_glMsCardHtml(m,p,curF); }); h+='</div>';
-  var avail=GL_PROGRAMS.filter(function(t){ return !ms.some(function(x){return x.tmplId===t.id;}); });
-  if(avail.length){ h+='<div class="go-madd">'; avail.forEach(function(t){ h+='<span class="gl-add" onclick="glAddMilestone(\''+t.id+'\')">＋ '+t.emoji+' '+evEsc(t.name.split(' ')[0])+'</span>'; }); h+='</div>'; }
-  h+='</div>'; // panel
+  // ===== JOURNEY（リニューアル：ワイド・タイムライン） =====
+  h+=_glJourneyHtml(p);
   h+='</div>'; // go-wrap
   return h;
 }
-// ── 今月のフォーカス（期日・週次/日次） ──
+// ── 頂上への道のり（リニューアル：ワイド・タイムライン＋マイルストーン旗） ──
+var GL_EVENT_EMOJIS=['🏆','🎓','✈️','💎','🏔','🎯','🔥','🎉','📣','🏛','⛴','🌏'];
+function _glEvents(p){
+  if(!Array.isArray(p.events)){
+    p.events=[{id:'ev1',name:'GOT100',emoji:'🏆',month:4},{id:'ev2',name:'アカデミー',emoji:'🎓',month:6},{id:'ev3',name:'RRR TRIP',emoji:'✈️',month:9},{id:'ev4',name:'REVE200',emoji:'💎',month:12}];
+  }
+  return p.events;
+}
+function _glJourneyHtml(p){
+  var events=_glEvents(p).slice().filter(function(e){return e&&e.month;}).sort(function(a,b){return a.month-b.month;});
+  var dl=p.deadline, yr=(dl&&/^\d{4}/.test(dl))?dl.slice(0,4):String((new Date()).getFullYear());
+  var nowYm=_glCurYm();
+  var curM=(nowYm.slice(0,4)===yr)?parseInt(nowYm.slice(5,7),10):0;
+  var sumM=(dl&&dl.slice(0,4)===yr)?parseInt(dl.slice(5,7),10):12;
+  var pipe=parseInt(p.pipeline,10)||3, loiM=Math.max(1,sumM-pipe);
+  function X(m){ return (1.5+(m-0.5)/12*97).toFixed(2); }
+  var h='<div class="go-eyebrow gold">頂上への道のり ― マイルストーン</div><div class="go-panel gj-panel">';
+  h+='<div class="gj-head">'+evEsc(p.titleNow||'現在地')+' <span class="ar">→</span> <b>'+evEsc(p.title||'頂上')+'</b><small>頂上まで '+(_glMonthsUntil(dl)>0?_glMonthsUntil(dl):'—')+'ヶ月（'+sumM+'月）</small></div>';
+  h+='<div class="gj-scroll"><div class="gj-tl"><div class="gj-track"></div>';
+  if(curM>0) h+='<div class="gj-fill" style="width:'+(X(curM)-1.5)+'%"></div>';
+  events.forEach(function(e){ h+='<div class="gj-ev" style="left:'+X(e.month)+'%" onclick="glEditEvent(\''+e.id+'\')"><span class="gj-chip">'+(e.emoji||'📌')+' '+evEsc(e.name)+'</span><span class="gj-line"></span></div>'; });
+  for(var m=1;m<=12;m++){ var isLoi=m===loiM,isSum=m===sumM,isCur=m===curM,big=isLoi||isSum||isCur;
+    var col=isLoi?'var(--go-rose)':(isSum?'var(--accent)':((curM>0&&m<=curM)?'var(--accent)':'var(--surface3)'));
+    var sz=big?18:10;
+    h+='<div class="gj-dot" style="left:'+X(m)+'%;width:'+sz+'px;height:'+sz+'px;background:'+col+'"></div>';
+    h+='<div class="gj-molab" style="left:'+X(m)+'%;color:'+(isLoi?'var(--go-rose)':(isSum?'var(--accent)':'var(--text-mid)'))+';font-weight:'+(big?'800':'600')+'">'+m+'月</div>';
+  }
+  if(curM>0) h+='<div class="gj-mk" style="left:'+X(curM)+'%;color:var(--accent)">📍現在地</div>';
+  h+='<div class="gj-mk" style="left:'+X(loiM)+'%;color:var(--go-rose)">🚩最終LOI</div>';
+  h+='<div class="gj-mk peak" style="left:'+X(sumM)+'%;color:var(--accent)">🏔頂上</div>';
+  h+='</div></div>';
+  h+='<div class="gj-loi"><span class="ic">🚩</span><div class="tx"><div class="lb">最終LOIカウント月</div><div class="bg"><b>'+loiM+'月</b>まで<small>ここを過ぎると'+sumM+'月「'+evEsc(p.title||'頂上')+'」に間に合わない</small></div></div></div>';
+  h+='<div class="gj-pipe"><span class="lab">🔁 育成パイプライン</span><span class="n">LOI</span><i>▶</i><span class="n">Q2</span><i>▶</i><span class="n">Q3</span><i>▶</i><span class="n">BR</span><span class="t">＝'+pipe+'ヶ月</span><span class="ed" onclick="glSetPipeline()">編集</span></div>';
+  h+='<div class="gj-note">頂上（'+sumM+'月）から育成'+pipe+'ヶ月を逆算 →<b> '+loiM+'月</b>が最終LOIカウント月。</div>';
+  h+='<div class="go-madd"><span class="gl-add" onclick="glAddEvent()">＋ マイルストーンを追加</span></div>';
+  h+='</div>';
+  return h;
+}
+function _glCloseEvModal(){ var el=document.getElementById('glEvModal'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
+function glAddEvent(){ _glEvModal(null); }
+function glEditEvent(id){ _glEvModal(id); }
+function _glEvModal(id){
+  _glCloseEvModal();
+  var p=state.goals.plan, evs=_glEvents(p);
+  var e=id?evs.filter(function(x){return x.id===id;})[0]:null;
+  var inS='box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px;outline:none;-webkit-appearance:none;margin:4px 0 12px';
+  var lb='font-size:12px;color:var(--text-dim);font-weight:700';
+  var moOpt=''; for(var m=1;m<=12;m++){ moOpt+='<option value="'+m+'"'+((e&&e.month===m)?' selected':'')+'>'+m+'月</option>'; }
+  var emOpt=GL_EVENT_EMOJIS.map(function(x){return '<option value="'+x+'"'+((e&&e.emoji===x)?' selected':'')+'>'+x+'</option>';}).join('');
+  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='glEvModal';
+  ov.onclick=function(ev){ if(ev.target===ov) _glCloseEvModal(); };
+  ov.innerHTML='<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
+    +'<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+(id?'マイルストーンを編集':'マイルストーンを追加')+'</div></div><span class="ms-x" onclick="_glCloseEvModal()">✕</span></div>'
+    +'<div style="padding:4px 16px 16px">'
+    +'<label style="'+lb+'">名前</label><input id="_glEvName" placeholder="例: RRR TRIP" value="'+(e?evEsc(e.name):'')+'" style="'+inS+'">'
+    +'<div style="display:flex;gap:10px"><div style="flex:1"><label style="'+lb+'">月</label><select id="_glEvMonth" style="'+inS+'">'+moOpt+'</select></div>'
+    +'<div style="flex:1"><label style="'+lb+'">アイコン</label><select id="_glEvEmoji" style="'+inS+'">'+emOpt+'</select></div></div>'
+    +'<button type="button" onclick="glSaveEvent(\''+(id||'')+'\')" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink,#08121a);font-size:15px;font-weight:800;margin-top:4px">保存</button>'
+    +(id?'<button type="button" onclick="glDeleteEvent(\''+id+'\')" style="width:100%;padding:11px;border-radius:10px;border:1px solid #ef4444;color:#ef4444;background:transparent;font-size:14px;font-weight:600;margin-top:8px">削除</button>':'')
+    +'</div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function glSaveEvent(id){
+  var p=state.goals.plan, evs=_glEvents(p), g=function(x){var el=document.getElementById(x);return el?el.value:'';};
+  var name=(g('_glEvName')||'').trim(); if(!name){ toast('名前を入力してください'); return; }
+  var month=parseInt(g('_glEvMonth'),10)||1, emoji=g('_glEvEmoji')||'📌';
+  if(id){ var e=evs.filter(function(x){return x.id===id;})[0]; if(e){ e.name=name; e.month=month; e.emoji=emoji; } }
+  else { evs.push({id:'ev'+Date.now(),name:name,month:month,emoji:emoji}); }
+  _glCloseEvModal(); saveGoals(); renderGoals();
+}
+function glDeleteEvent(id){
+  var p=state.goals.plan; p.events=_glEvents(p).filter(function(x){return x.id!==id;});
+  _glCloseEvModal(); saveGoals(); renderGoals();
+}
+
+// ── 今月のフォーカス（月次のみ） ──
 var _glFocusMode='day';
 function _glMonthEndDate(){ var d=new Date(); return new Date(d.getFullYear(), d.getMonth()+1, 0); }
 function _glAddDaysD(date,n){ var x=new Date(date.getTime()); x.setDate(x.getDate()+n); return x; }
