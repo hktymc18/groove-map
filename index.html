@@ -1625,7 +1625,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v240</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v241</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3614,7 +3614,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v240';
+  var DATA_VERSION = 'v241';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -10600,7 +10600,13 @@ if (auth) {
     if (fbUser) {
       // Firestoreからプロフィール取得
       fsGet('users/' + fbUser.uid).then(function(profile) {
-        var user = profile || { name: fbUser.displayName || '', org: '', email: fbUser.email };
+        if (!profile) {
+          // プロフィール未作成（新規登録の途中 or 異常）→ アプリに入れず待機（保存失敗トースト等を防ぐ）
+          if (typeof closeApprovalGate === 'function') closeApprovalGate();
+          var ls0 = document.getElementById('loginScreen'); if (ls0) ls0.style.display = 'flex';
+          return;
+        }
+        var user = profile;
         user.uid = fbUser.uid;
         loginSuccess(user);
       });
@@ -10690,10 +10696,19 @@ function doSignup() {
       })
       .then(function() {
         errEl.style.display = 'none';
-        showApprovalGate('pending'); // 承認待ち画面を表示（承認されるまで利用不可）
+        // 承認待ちで作成完了 → 一旦サインアウト（レース・権限エラー回避）。承認後にログイン。
+        return auth.signOut();
+      })
+      .then(function() {
+        if (typeof closeApprovalGate === 'function') closeApprovalGate();
+        if (typeof switchAuthTab === 'function') switchAuthTab('login');
+        var ls1 = document.getElementById('loginScreen'); if (ls1) ls1.style.display = 'flex';
+        var le = document.getElementById('loginError');
+        if (le) { le.textContent = '✅ 登録が完了しました。ユニオンリーダーの承認後にログインできます。'; le.style.color = '#00d4aa'; le.style.display = ''; }
+        if (btn) { btn.textContent = '登録する'; btn.disabled = false; }
       })
       .catch(function(err) {
-        errEl.textContent = '登録に失敗しました: ' + (err.code === 'auth/email-already-in-use' ? 'このメールアドレスは既に登録されています' : err.message);
+        errEl.textContent = '登録に失敗しました: ' + (err.code === 'auth/email-already-in-use' ? 'このメールアドレスは既に登録されています' : (err.message || '')) + '（ルール未反映の可能性）';
         errEl.style.display = '';
         if (btn) { btn.textContent = '登録する'; btn.disabled = false; }
       });
