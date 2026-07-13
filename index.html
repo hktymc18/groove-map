@@ -1701,7 +1701,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v249</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v250</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3708,7 +3708,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v249';
+  var DATA_VERSION = 'v250';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -9522,11 +9522,15 @@ function _gcalEnsureClient() {
   });
   return _gcalTokenClient;
 }
+var _gcalLastPrompt = 0;
 function gcalGetToken(interactive) {
   return new Promise(function(resolve, reject) {
     if (_gcalToken && Date.now() < _gcalTokenExp) { resolve(_gcalToken); return; }
     var c = _gcalEnsureClient();
     if (!c) { reject(new Error('Googleが読み込めていません')); return; }
+    // ポップアップ連発防止：直近15秒以内に開いていたら追加で開かない
+    if (Date.now() - _gcalLastPrompt < 15000) { reject(new Error('認証待ち')); return; }
+    _gcalLastPrompt = Date.now();
     _gcalResolve = resolve; _gcalReject = reject;
     try { c.requestAccessToken({ prompt: interactive ? 'consent' : '' }); }
     catch (e) { _gcalResolve = _gcalReject = null; reject(e); }
@@ -9704,7 +9708,7 @@ function gcalSyncAll() {
 
 // 未同期の予定・タスクだけを自動で再送（モバイルでは同意画面から戻るとアプリが
 // 再読み込みされ送信待ちが消えるため、起動時・トークン取得後に拾い直す）
-var _gcalPendingBusy = false;
+var _gcalPendingBusy = false, _gcalHintShown = false;
 function gcalSyncPending() {
   if (_gcalPendingBusy || !state.gcalConnected || viewingOwnerUid || _aggActive) return;
   var evs = (state.events || []).filter(function(e) {
@@ -9712,6 +9716,11 @@ function gcalSyncPending() {
     return (e.type === 'task') ? !e.gtaskId : !e.gcalEventId;
   });
   if (!evs.length) return;
+  // 有効なトークンが無い時は絶対にポップアップを開かない（無限ループ防止）。案内だけ1回出す
+  if (!(_gcalToken && Date.now() < _gcalTokenExp)) {
+    if (!_gcalHintShown) { _gcalHintShown = true; toast('🔗 Google未同期が' + evs.length + '件。予定タブの「Google同期」で送信できます'); }
+    return;
+  }
   _gcalPendingBusy = true;
   var i = 0, ok = 0;
   (function next() {
