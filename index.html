@@ -1060,6 +1060,8 @@ tr.ot-done{opacity:.5}
 .nc.act-active>.card-main{box-shadow:0 0 12px rgba(44,229,184,.22)}
 .nc.act-dormant{opacity:.62;filter:saturate(.45)}
 .home-wk{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:12px 15px;font-size:13px;line-height:1.7;margin-top:10px}
+/* 自動コーチング（Phase H）：次の一手を1行だけ */
+.home-coach{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--go-sky);border-radius:0 14px 14px 0;padding:11px 14px;font-size:13px;line-height:1.7;margin-top:10px}
 /* FTUE（Phase G）：はじめの4ステップ */
 .home-ftue{background:linear-gradient(160deg,var(--accent-dim),var(--surface) 70%);border:1px solid var(--accent);border-radius:16px;padding:13px 15px;margin-bottom:12px}
 .hf-hd{font-size:14px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between}
@@ -1730,7 +1732,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v259</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v260</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3740,7 +3742,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v259';
+  var DATA_VERSION = 'v260';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5057,6 +5059,30 @@ function renderHome() {
   var nightHtml = closed
     ? '<div class="home-night done">🌙 今日は締め済み。お疲れさまでした ✓</div>'
     : '<div class="home-night" onclick="closeToday()"><span>🌙 今日を締める<small>ワンタップ日報 → ストリーク更新</small></span><span class="hn-btn">締める</span></div>';
+  // 自動コーチング（Phase H）：データから「次の一手」を1行だけ提案
+  function buildCoachLine() {
+    try {
+      var p = state.goals && state.goals.plan;
+      var curM = (state.members || []).filter(function(m){ return !m.deleted; });
+      var dorm = 0; curM.forEach(function(m){ if (memberActivityLevel(m) === 'act-dormant') dorm++; });
+      if (dorm >= 3) return '💤 フォロー待ちが' + dorm + '人。今日は新規より「フォローDay」がおすすめ。';
+      if (p && p.title && p.funnel) {
+        var ym = _glCurYm(), mF = _glMonthlyFront(p);
+        var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), prog = d.getDate() / dim;
+        var actT = mF * (p.funnel.action || 0), actA = _glMonthActual(p, ym, 'action');
+        if (actT > 0 && prog > 0.15 && actA < actT * prog * 0.5) return '📣 アクションが目標ペースの半分以下。まず声かけの母数を増やそう。';
+        var ctgA = _glMonthActual(p, ym, 'ctget'), ctA = _glMonthActual(p, ym, 'ct');
+        if (ctgA >= 4 && ctA < ctgA * 0.4) return '☕ アポ取り→実施の転換が低め。日程は取ったその場で確定しよう。';
+        var ftA = _glMonthActual(p, ym, 'ft'), b1A = _glMonthActual(p, ym, 'b1');
+        if (mF > 0 && ftA >= mF * (p.funnel.ft || 0) * 0.7 && b1A === 0 && prog > 0.5) return '🎓 FTは十分打てている。研修動員→B1の「決め」に進もう。';
+        if (mF > 0 && b1A >= mF) return '🏆 今月のフロント目標は達成！育成と来月の仕込みに時間を使おう。';
+        if (mF > 0) return '🧭 今月フロント ' + b1A + '/' + mF + '。逆算どおりに進行中。';
+      }
+      return '';
+    } catch(e) { return ''; }
+  }
+  var coachLine = buildCoachLine();
+  var coachHtml = coachLine ? '<div class="home-coach">' + coachLine + '</div>' : '';
   // 週次成長レポート（Phase E：週が変わったら先週スナップショットと比較）
   var wkHtml = '';
   try {
@@ -5083,6 +5109,7 @@ function renderHome() {
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
     + qrHtml
     + nightHtml
+    + coachHtml
     + wkHtml
     + birthdayHtml()
     + cockpitHtml()
