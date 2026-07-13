@@ -1721,7 +1721,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v257</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v258</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2027,6 +2027,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <button class="btn-c" style="width:100%;border-color:var(--purple);color:var(--purple)" onclick="openAdminPanel()">🛡 アカウント管理</button>
     </div>
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+      <button class="btn-c" style="width:100%;margin-bottom:8px" onclick="closeProfileModal(null);showHistoryModal()">📜 変更履歴（追加・削除・タイトル変更）</button>
       <div id="profileAccountEmail" style="font-size:11px;color:var(--text-dim);margin-bottom:7px;letter-spacing:.5px"></div>
       <button class="btn-c" style="width:100%" onclick="doLogout()">↩ ログアウト</button>
     </div>
@@ -3730,7 +3731,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v257';
+  var DATA_VERSION = 'v258';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6224,6 +6225,16 @@ function memberInfoHtml(m) {
     html += '<div class="ci-plan" style="color:' + (lvl==='act-dormant' ? 'var(--go-rose)' : 'var(--text-mid)') + '">' + (lvl==='act-dormant' ? '💤' : '⚡') + ' 最後の活動：' + lastAct.split('-').slice(1).join('/') + (lvl==='act-dormant' ? '（30日以上前・フォロー推奨）' : '') + '</div>';
   }
   if (m.memo) html += '<div class="ci-memo">' + evEsc(m.memo) + '</div>';
+  // GSV検算（Phase F）：数字の根拠を1タップで確認できる
+  try {
+    var _garr = _arrOf(m);
+    var _gkids = (_garr || []).filter(function(c){ return c.parentId === m.id && !c.deleted; });
+    if (_gkids.length && (m.ptCurrent || 0) > 0) {
+      var _gp = ['自分 ' + ((typeof m.ptSelf === 'number' ? m.ptSelf : 0)).toLocaleString()], _gex = 0;
+      _gkids.forEach(function(c){ if (isBROrAbove(c.title)) { _gex++; return; } if ((c.ptCurrent||0) > 0) _gp.push(evEsc(mcName(c)) + ' ' + (c.ptCurrent||0).toLocaleString()); });
+      html += '<div class="ci-plan" style="color:var(--text-dim);font-size:11px">💰 GSV内訳：' + _gp.join(' ＋ ') + (_gex ? '（BR系列' + _gex + '件は除外）' : '') + ' ＝ ' + (m.ptCurrent||0).toLocaleString() + '</div>';
+    }
+  } catch(e) {}
   var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
   if (plan) html += '<div class="ci-plan">📅 次の予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : '') + '</div>';
   else if (m.nextDate) html += '<div class="ci-plan">📅 次回予定：' + evEsc(m.nextDate) + '</div>';
@@ -8106,12 +8117,60 @@ function autoSave() {
   var uid = mapTargetUid();
   if (USE_FIREBASE && uid) {
     fsSaveToFirestore(uid)
-      .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); })
+      .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); recordHistory(); })
       .catch(function(e) { console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
   } else {
     updateLastSaved();
     toast('保存しました ✓');
   }
+}
+
+// ── 変更履歴（Phase F）：メンバーの追加/削除/タイトル変更を自動記録 ──
+var _histPrev = null;
+function _histSnap() {
+  var o = {};
+  (state.members || []).forEach(function(m){ if (!m.deleted) o[m.id] = { t: (m.title || '').trim(), n: mcName(m) }; });
+  return o;
+}
+function recordHistory() {
+  try {
+    if (viewingOwnerUid) return; // 自分のMAPのみ記録
+    var cur = _histSnap();
+    if (!_histPrev) { _histPrev = cur; return; } // 初回は基準だけ作る
+    var ent = [], d = new Date();
+    var ts = (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    for (var id in cur) {
+      if (!_histPrev[id]) ent.push(ts + '　＋追加 ' + cur[id].n);
+      else if (_histPrev[id].t !== cur[id].t) ent.push(ts + '　' + cur[id].n + '：' + (_histPrev[id].t || '—') + ' → ' + (cur[id].t || '—'));
+    }
+    for (var id2 in _histPrev) { if (!cur[id2]) ent.push(ts + '　−削除 ' + _histPrev[id2].n); }
+    _histPrev = cur;
+    if (!ent.length) return;
+    var uid = currentUser && currentUser.uid;
+    if (!uid || !db) return;
+    fsGet('maps/' + uid + '/meta/history').then(function(dd) {
+      var items = (dd && dd.items) || [];
+      items = ent.concat(items).slice(0, 200);
+      return fsSet('maps/' + uid + '/meta/history', { items: items });
+    }).catch(function(){});
+  } catch(e) {}
+}
+function showHistoryModal() {
+  var uid = (viewingOwnerUid || (currentUser && currentUser.uid));
+  if (!uid || !db) { toast('履歴は接続時のみ見られます'); return; }
+  fsGet('maps/' + uid + '/meta/history').then(function(d) {
+    var items = (d && d.items) || [];
+    var body = items.length
+      ? items.map(function(x){ return '<div style="padding:8px 2px;border-bottom:1px solid var(--border);font-size:12.5px;line-height:1.5">' + evEsc(x) + '</div>'; }).join('')
+      : '<div style="padding:24px;text-align:center;color:var(--text-dim)">まだ履歴がありません<br><small>メンバーの追加・削除・タイトル変更が自動で残ります</small></div>';
+    var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'histOv';
+    ov.onclick = function(e){ if (e.target === ov && ov.parentNode) ov.parentNode.removeChild(ov); };
+    ov.innerHTML = '<div class="ms-sheet" style="max-height:80vh;overflow-y:auto"><div class="ms-grip"></div>'
+      + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📜 変更履歴（直近200件）</div></div><span class="ms-x" onclick="var o=document.getElementById(\'histOv\');if(o&&o.parentNode)o.parentNode.removeChild(o)">✕</span></div>'
+      + '<div style="padding:2px 16px 16px">' + body + '</div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ ov.classList.add('show'); });
+  }).catch(function(){ toast('履歴の読み込みに失敗しました'); });
 }
 function updateLastSaved() {
   var el = document.getElementById('lastSavedTag');
@@ -10457,9 +10516,26 @@ if (typeof window !== 'undefined') {
   });
 }
 // Service Worker 登録（相対パス → scope は /groove-map/ 配下）
+// 新バージョン検知 → 更新バナー（「アプリを再起動して」の案内を撲滅）
+function showUpdateBanner() {
+  if (document.getElementById('updBanner')) return;
+  var b = document.createElement('div'); b.id = 'updBanner';
+  b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:900;background:var(--surface2);border:1px solid var(--accent);border-radius:24px;padding:9px 16px;font-size:13px;display:flex;gap:12px;align-items:center;box-shadow:var(--shadow);white-space:nowrap';
+  b.innerHTML = '<span>🔄 新しいバージョンがあります</span><span style="color:var(--accent);font-weight:800;cursor:pointer" onclick="location.reload()">更新</span>';
+  document.body.appendChild(b);
+}
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js').catch(function() {});
+    navigator.serviceWorker.register('sw.js').then(function(reg) {
+      if (reg.waiting && navigator.serviceWorker.controller) { showUpdateBanner(); return; }
+      reg.addEventListener('updatefound', function() {
+        var nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', function() {
+          if ((nw.state === 'activated' || nw.state === 'installed') && navigator.serviceWorker.controller) showUpdateBanner();
+        });
+      });
+    }).catch(function() {});
   });
 }
 
