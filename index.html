@@ -1701,7 +1701,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v251</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v253</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3245,7 +3245,8 @@ function buildLevelSelector(members) {
 }
 function expandToLevel(n) {
   var mapType = (currentView === 'ideal') ? 'ideal' : 'current';
-  var members = membersForMap(mapType);
+  // 結合(MG_)ノードも含めた合成後リストで開閉フラグを立てる（全段表示が結合ツリーにも効くように）
+  var members = composeMergedInto(membersForMap(mapType), mapType);
   if (!window._treeOpen) window._treeOpen = {};
   members.forEach(function(m){
     var d = calcMemberDepth(m, members);
@@ -3708,7 +3709,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v251';
+  var DATA_VERSION = 'v253';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5863,10 +5864,12 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     ? '<div class="parent-chip"><span class="parent-chip-arrow">&#x21b3;</span>' + (parentMember.lastName||'') + ' ' + (parentMember.firstName||'') + '</div>'
     : '';
 
-  var isForeign = !!m._foreign; // 結合された下位メンバー（読み取り専用）
-  var hoverBtn = (state.isEditor && !isForeign)
-    ? '<div class="edit-hover-btn" onclick="openEdit(\'' + m.id + '\');event.stopPropagation()">&#x270e;</div>'
-    : '';
+  var isForeign = !!m._foreign; // 結合された下位メンバー（編集は相手MAPへジャンプ）
+  var hoverBtn = isForeign
+    ? '<div class="edit-hover-btn" onclick="mgNodeClick(\'' + m.id + '\');event.stopPropagation()" title="相手のMAPで編集">&#x270e;</div>'
+    : (state.isEditor
+      ? '<div class="edit-hover-btn" onclick="openEdit(\'' + m.id + '\');event.stopPropagation()">&#x270e;</div>'
+      : '');
 
   var instaBtn = m.instaUrl
     ? '<a class="insta-btn" href="' + m.instaUrl + '" target="_blank" onclick="event.stopPropagation()" title="Instagram"><svg viewBox="0 0 24 24"><path fill="white" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>'
@@ -5907,7 +5910,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div class="' + ncClass + (isForeign ? ' merged-node' : '') + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
     + instaBtn
     + (state.isEditor && !isForeign ? '<div class="card-quick-add" onclick="event.stopPropagation();fabSelectParent(\'' + m.id + '\')" title="直下に追加">＋</div>' : '')
-    + '<div class="card-main" data-cid="' + m.id + '" onclick="cardSingleTap(this.dataset.cid,event)"' + (state.isEditor && !isForeign ? ' ondblclick="event.stopPropagation();openEdit(\'' + m.id + '\')"' : '') + '>'
+    + '<div class="card-main" data-cid="' + m.id + '" onclick="cardSingleTap(this.dataset.cid,event)"' + (isForeign ? ' ondblclick="event.stopPropagation();mgNodeClick(\'' + m.id + '\')"' : (state.isEditor ? ' ondblclick="event.stopPropagation();openEdit(\'' + m.id + '\')"' : '')) + '>'
     + '<div class="expand-col' + (hasKids && !skipChildren ? ' can-expand' : '') + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0"' + (hasKids && !skipChildren ? ' onclick="event.stopPropagation();toggleExpand(\'' + m.id + '\')"' : '') + '>'
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
     + expandArrow
@@ -6027,7 +6030,9 @@ function cardSingleTap(id, e) {
   var box = document.getElementById('mem-'+id);
   if (!box) return;
   if (box.classList.contains('show')) { box.classList.remove('show'); return; }
-  var m = null; for (var i=0;i<state.members.length;i++){ if (state.members[i].id===id){ m=state.members[i]; break; } }
+  // 結合(MG_)メンバーはstate.membersに居ないため、合成後リストから探す
+  var pool = /^MG_/.test(id) ? membersForMap('current') : state.members;
+  var m = null; for (var i=0;i<pool.length;i++){ if (pool[i].id===id){ m=pool[i]; break; } }
   box.innerHTML = m ? memberInfoHtml(m) : '';
   box.classList.add('show');
 }
@@ -6048,6 +6053,10 @@ function memberInfoHtml(m) {
     }).join('');
   }
   if (!html) html = '<div class="ci-empty">メモ・OL・予定なし（ダブルタップで編集）</div>';
+  // 結合メンバー：モバイルからも編集へ飛べるボタンを表示
+  if (/^MG_/.test(m.id)) {
+    html += '<div style="margin-top:8px"><button style="width:100%;padding:9px;border-radius:9px;border:1px solid var(--purple);background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();mgNodeClick(\'' + m.id + '\')">✏️ このメンバーを編集（相手のMAPで開く）</button></div>';
+  }
   return '<div class="ci-inner">' + html + '</div>';
 }
 function selectCard(id, e) {
