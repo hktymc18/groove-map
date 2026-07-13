@@ -1041,6 +1041,18 @@ tr.ot-done{opacity:.5}
 .home-lv-bar{height:12px;background:var(--surface3);border-radius:7px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
 .home-lv-fill{height:100%;background:linear-gradient(90deg,var(--accent),#8B7CFF 55%,#FF87B3);border-radius:7px;transition:width .5s;box-shadow:0 0 11px rgba(139,124,255,.6)}
 .home-sec-label{font-size:13px;font-weight:700;color:var(--text);margin:18px 2px 8px;display:flex;align-items:center;justify-content:space-between}
+/* クイック記録（Phase A） */
+.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qr-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 4px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text);cursor:pointer;transition:transform .1s;-webkit-appearance:none;font-family:inherit}
+.qr-btn:active{transform:scale(.94);border-color:var(--accent)}
+.qr-ic{font-size:19px;line-height:1}
+.qr-lb{font-size:12px;font-weight:700}
+.qr-n{font-size:11px;color:var(--gold);font-weight:700;font-family:'IBM Plex Mono',monospace}
+.home-comeback{background:var(--gold-dim);border:1px solid rgba(255,180,84,.4);border-radius:14px;padding:13px 15px;font-size:13px;line-height:1.7;margin-bottom:12px}
+.home-night{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:13px 15px;margin-top:10px;cursor:pointer;font-size:14px;font-weight:700}
+.home-night small{display:block;font-size:11px;color:var(--text-dim);font-weight:400;margin-top:2px}
+.home-night .hn-btn{flex:none;background:var(--accent);color:var(--go-ink);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:800}
+.home-night.done{cursor:default;color:var(--text-mid);font-weight:500;border-style:dashed}
 .mission{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
 .mission.done{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 14px rgba(44,229,184,.13)}
 .mission-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent}
@@ -1702,7 +1714,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v254</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v255</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3710,7 +3722,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v254';
+  var DATA_VERSION = 'v255';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4002,7 +4014,7 @@ var GAME_TIPS = [
 ];
 function gameToday() { return evTodayYmd(); }              // 'YYYY-MM-DD'
 function gameYesterday() { return evYmd(evAddDays(new Date(), -1)); }
-function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[], weekStart:'', weekXp:0, lastWeekXp:0, rankOptIn:true, stepUpdatedDate:'', bpcAwarded:[], brAwarded:[] }; }
+function defaultGame() { return { xp:0, streak:0, bestStreak:0, lastActiveDate:'', gameDays:{}, todayMissions:{date:'',done:[]}, badges:[], weekStart:'', weekXp:0, lastWeekXp:0, rankOptIn:true, stepUpdatedDate:'', bpcAwarded:[], brAwarded:[], streakInsurance:1, closedDays:{} }; }
 function getGame() {
   if (!state.game) state.game = defaultGame();
   var g = state.game;
@@ -4035,6 +4047,7 @@ function gameRollWeek() {
     g.lastWeekXp = g.weekStart ? (g.weekXp || 0) : 0;
     g.weekXp = 0;
     g.weekStart = wk;
+    g.streakInsurance = 1; // ストリーク保険を週1で回復
   }
 }
 function saveGame() {
@@ -4277,20 +4290,58 @@ function gameRenderRanking() {
     gameRankPaint();
   });
 }
+function gameCountOlToday() {
+  var t = evTodayYmd(), n = 0, fd = state.freshData || {};
+  for (var mid in fd) {
+    var log = fd[mid].olLog || [];
+    for (var i = 0; i < log.length; i++) if (log[i].date === t) n++;
+  }
+  return n;
+}
 function missionDefs() {
-  return [
+  var defs = [
     { id:'login',     label:'アプリを開く',           xp:5,  target:1, view:'home',   count:function(){ return 1; } },
     { id:'trainstep', label:'研修ステップを記録',     xp:20, target:1, view:'current', count:gameCountTrainStepsToday },
     { id:'addmember', label:'新規研修生を追加',       xp:20, target:1, view:'current', count:gameCountNewTraineesToday },
-    { id:'addevent',  label:'予定・タスクを登録',     xp:10, target:1, view:'events',  count:gameCountEventsCreatedToday },
+    { id:'olrecord',  label:'OL記録を1件つける',      xp:15, target:1, view:'ol',      count:gameCountOlToday },
     { id:'donetask',  label:'タスクを3件完了',        xp:15, target:3, view:'events',  count:gameCountTasksDoneToday }
   ];
+  // GOAL逆算クエスト：今日のアクション目標（目標設定済みの場合のみ）
+  try {
+    var p = state.goals && state.goals.plan;
+    if (p && p.title && p.funnel && typeof _glMonthlyFront === 'function') {
+      var mT = _glMonthlyFront(p) * (p.funnel.action || 0);
+      if (mT > 0) {
+        var dInM = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
+        var dailyT = Math.max(1, Math.round(mT / dInM));
+        defs.splice(1, 0, { id:'goalaction', label:'アクション' + dailyT + '件（GOAL逆算）', xp:15, target:dailyT, view:'home', count:function(){ return _qrToday('action'); } });
+      }
+    }
+  } catch(e) {}
+  return defs;
+}
+function gameDaysGap(fromYmd, toYmd) {
+  if (!fromYmd) return 9999;
+  var a = new Date(fromYmd.replace(/-/g,'/')), b = new Date(toYmd.replace(/-/g,'/'));
+  return Math.round((b - a) / 86400000);
 }
 function gameMarkActive() {
   var g = getGame(), today = gameToday();
   if (g.gameDays[today]) return;            // 今日すでにアクティブ
-  if (g.lastActiveDate === gameYesterday()) g.streak = (g.streak || 0) + 1;
-  else if (g.lastActiveDate !== today) g.streak = 1;
+  var gap = gameDaysGap(g.lastActiveDate, today);
+  if (g.lastActiveDate === today) { /* 同日 */ }
+  else if (gap === 1) g.streak = (g.streak || 0) + 1;
+  else if (gap === 2 && (g.streakInsurance || 0) > 0) {
+    // 1日サボり→保険で継続
+    g.streakInsurance--; g.streak = (g.streak || 0) + 1;
+    toast('🛡 ストリーク保険を使って継続！（残り' + g.streakInsurance + '回）');
+  }
+  else if (gap >= 7 && (g.streak || 0) >= 7) {
+    // おかえり復活：半分から再開
+    g.streak = Math.max(1, Math.floor(g.streak / 2));
+    toast('🌅 おかえり！ストリーク' + g.streak + '日から再開');
+  }
+  else g.streak = 1;
   g.gameDays[today] = true;
   g.lastActiveDate = today;
   if (g.streak > (g.bestStreak || 0)) g.bestStreak = g.streak;
@@ -4327,6 +4378,71 @@ function gameAward(animate) {
 function gameCheck() {
   gameAward(true);
   updateHomeBadge();
+  if (currentView === 'home') renderHome();
+}
+
+// ── クイック記録（Phase A）：押すだけで dailyActuals に記録 → 即XP ──
+var GAME_XP = { action:2, ctget:3, ct:5, ft:8, pg:8, dlr:8, b1:50, ol:5, close:5 };
+var QUICK_STAGES = [
+  { k:'action', label:'アクション', ic:'📣' },
+  { k:'ctget',  label:'CT取り',    ic:'📲' },
+  { k:'ct',     label:'CT',        ic:'☕' },
+  { k:'ft',     label:'FT',        ic:'🎤' },
+  { k:'pg',     label:'研修(PG)',  ic:'🎓' },
+  { k:'b1',     label:'フロント',  ic:'🚀' }
+];
+function _qrToday(stage) {
+  if (!state.goals || !state.goals.plan) return 0;
+  var da = state.goals.plan.dailyActuals || {};
+  return parseInt((da[evTodayYmd()] || {})[stage] || 0, 10) || 0;
+}
+function quickRecord(stage) {
+  if (!state.goals) state.goals = _glDefault();
+  if (!state.goals.plan) state.goals.plan = _glDefaultPlan();
+  var p = state.goals.plan, k = evTodayYmd();
+  p.dailyActuals = p.dailyActuals || {};
+  p.dailyActuals[k] = p.dailyActuals[k] || {};
+  p.dailyActuals[k][stage] = (parseInt(p.dailyActuals[k][stage] || 0, 10) || 0) + 1;
+  saveGoals();
+  // 即時報酬
+  var g = getGame(), xp = GAME_XP[stage] || 2;
+  var before = gameLevelInfo(g.xp).level;
+  g.xp += xp; g.weekXp = (g.weekXp || 0) + xp;
+  gameMarkActive(); saveGame();
+  gameXpFloat(xp);
+  if (navigator.vibrate) try { navigator.vibrate(15); } catch(e) {}
+  var after = gameLevelInfo(g.xp).level;
+  if (after > before) gameLevelUp(after);
+  gameAward(true);
+  if (currentView === 'home') renderHome();
+}
+// 夜の締め：今日の合計を見て1タップで確定
+function closeToday() {
+  var g = getGame(), today = gameToday();
+  if (g.closedDays && g.closedDays[today]) { toast('今日はもう締めています ✓'); return; }
+  var rows = QUICK_STAGES.map(function(s){
+    var n = _qrToday(s.k);
+    return '<div style="display:flex;justify-content:space-between;padding:7px 2px;border-bottom:1px solid var(--border);font-size:14px"><span>' + s.ic + ' ' + s.label + '</span><b style="font-family:IBM Plex Mono,monospace">' + n + '</b></div>';
+  }).join('');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'closeDayOv';
+  ov.onclick = function(e){ if (e.target === ov) { if(ov.parentNode) ov.parentNode.removeChild(ov); } };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:80vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🌙 今日を締める</div></div><span class="ms-x" onclick="var o=document.getElementById(\'closeDayOv\');if(o&&o.parentNode)o.parentNode.removeChild(o)">✕</span></div>'
+    + '<div style="padding:4px 16px 16px">' + rows
+    + '<button type="button" onclick="confirmCloseToday()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:14px">お疲れさま！締める（+' + GAME_XP.close + 'XP）</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function confirmCloseToday() {
+  var g = getGame(), today = gameToday();
+  g.closedDays = g.closedDays || {};
+  g.closedDays[today] = 1;
+  g.xp += GAME_XP.close; g.weekXp = (g.weekXp || 0) + GAME_XP.close;
+  gameMarkActive(); saveGame();
+  var o = document.getElementById('closeDayOv'); if (o && o.parentNode) o.parentNode.removeChild(o);
+  gameXpFloat(GAME_XP.close); gameConfetti();
+  toast('今日もお疲れさまでした 🌙');
   if (currentView === 'home') renderHome();
 }
 function updateHomeBadge() {
@@ -4879,12 +4995,30 @@ function renderHome() {
   var deltaTxt = dw > 0 ? ('▲ 先週比 +' + dw) : (dw < 0 ? ('▼ 先週比 ' + dw) : '先週と同じペース');
   var selfHtml = '<div class="home-self"><div><div class="self-wk">' + thisW + ' XP</div><div class="self-lbl">今週の獲得XP</div></div>'
     + '<div style="text-align:right"><div class="self-delta ' + deltaCls + '">' + deltaTxt + '</div><div class="self-lbl">先週 ' + lastW + ' XP</div></div></div>';
+  // おかえりカード（7日以上離脱・大きいストリークが残っている）
+  var comebackHtml = '';
+  if (streak === 0 && (g.streak || 0) >= 7 && !g.gameDays[today]) {
+    comebackHtml = '<div class="home-comeback">🌅 <b>おかえりなさい！</b><br>今日1つ記録すれば、ストリーク<b>' + Math.max(1, Math.floor(g.streak / 2)) + '日</b>から再開できます</div>';
+  }
+  // クイック記録グリッド
+  var qrHtml = '<div class="home-sec-label"><span>⚡ クイック記録</span><span style="color:var(--text-dim);font-weight:400;font-size:11px">押すだけ・詳細はあとでOK</span></div>'
+    + '<div class="qr-grid">' + QUICK_STAGES.map(function(s){
+        return '<button type="button" class="qr-btn" onclick="quickRecord(\'' + s.k + '\')"><span class="qr-ic">' + s.ic + '</span><span class="qr-lb">＋ ' + s.label + '</span><span class="qr-n">今日 ' + _qrToday(s.k) + '</span></button>';
+      }).join('') + '</div>';
+  // 夜の締めカード
+  var closed = g.closedDays && g.closedDays[today];
+  var nightHtml = closed
+    ? '<div class="home-night done">🌙 今日は締め済み。お疲れさまでした ✓</div>'
+    : '<div class="home-night" onclick="closeToday()"><span>🌙 今日を締める<small>ワンタップ日報 → ストリーク更新</small></span><span class="hn-btn">締める</span></div>';
   wrap.innerHTML = '<div class="home-wrap">'
     + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
     + '<div class="home-date">' + gameDateLabel() + '</div>'
-    + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日連続</div></div></div>'
+    + comebackHtml
+    + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日 ・ 🛡保険 残り' + (g.streakInsurance||0) + '回（週1回復）</div></div></div>'
     + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>' + lvRight + '</span></div>'
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
+    + qrHtml
+    + nightHtml
     + birthdayHtml()
     + cockpitHtml()
     + homeTasksHtml()
@@ -9068,8 +9202,29 @@ function _glFocusHtml(p){
 function glSetFocusMode(m){ _glFocusMode=m; renderGoals(); }
 function glSetDaily(st,val){ var p=state.goals.plan, k=evTodayYmd(); p.dailyActuals=p.dailyActuals||{}; p.dailyActuals[k]=p.dailyActuals[k]||{}; p.dailyActuals[k][st]=parseInt(String(val).replace(/[^0-9]/g,''),10)||0; saveGoals(); renderGoals(); }
 // 月次実績（月次のみ表示）。直接入力を優先し、無ければ旧日次データの合算をフォールバック
-function _glMonthActualShown(p,ym,st){ var ma=(p.monthlyActuals||{})[ym]; if(ma && typeof ma[st]==='number') return ma[st]; return _glMonthActual(p,ym,st); }
-function glSetMonthlyActual(st,val){ var p=state.goals.plan, ym=_glCurYm(); p.monthlyActuals=p.monthlyActuals||{}; p.monthlyActuals[ym]=p.monthlyActuals[ym]||{}; p.monthlyActuals[ym][st]=Math.max(0,parseInt(String(val).replace(/[^0-9]/g,''),10)||0); saveGoals(); renderGoals(); }
+// 実績の真実は dailyActuals に一本化。旧 monthlyActuals は初回に日次へ移行して廃止。
+function _glMigrateMonthlyActuals(p){
+  if(!p.monthlyActuals) return;
+  for(var ym in p.monthlyActuals){
+    var ma=p.monthlyActuals[ym]||{};
+    for(var st in ma){
+      var v=parseInt(ma[st],10)||0, ds=_glMonthActual(p,ym,st);
+      if(v>ds){ var k=ym+'-01'; p.dailyActuals=p.dailyActuals||{}; p.dailyActuals[k]=p.dailyActuals[k]||{}; p.dailyActuals[k][st]=(parseInt(p.dailyActuals[k][st]||0,10)||0)+(v-ds); }
+    }
+  }
+  delete p.monthlyActuals;
+  saveGoals();
+}
+function _glMonthActualShown(p,ym,st){ if(p.monthlyActuals) _glMigrateMonthlyActuals(p); return _glMonthActual(p,ym,st); }
+function glSetMonthlyActual(st,val){
+  var p=state.goals.plan, ym=_glCurYm(), k=evTodayYmd();
+  var target=Math.max(0,parseInt(String(val).replace(/[^0-9]/g,''),10)||0);
+  var cur=_glMonthActualShown(p,ym,st), delta=target-cur;
+  p.dailyActuals=p.dailyActuals||{}; p.dailyActuals[k]=p.dailyActuals[k]||{};
+  var todayV=parseInt(p.dailyActuals[k][st]||0,10)||0;
+  p.dailyActuals[k][st]=Math.max(0,todayV+delta); // 今日ぶんに差分を反映（他日の記録は崩さない）
+  saveGoals(); renderGoals();
+}
 function glStepMonthly(st,delta){ var p=state.goals.plan, ym=_glCurYm(); glSetMonthlyActual(st, Math.max(0,_glMonthActualShown(p,ym,st)+delta)); }
 function glSetB1Day(){ var p=state.goals.plan, end=_glMonthEndDate(), def=p.b1Day||_glYmdOfD(_glAddDaysD(end,-2)); var v=prompt('B1（LOI）の期日（YYYY-MM-DD・当月内）\n※各アクションの期日はここから逆算されます', def); if(v===null)return; if(v.trim()&&!/^\d{4}-\d{2}-\d{2}$/.test(v.trim())){ toast('YYYY-MM-DD で入力してください'); return; } p.b1Day=v.trim(); saveGoals(); renderGoals(); }
 
