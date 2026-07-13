@@ -1701,7 +1701,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v250</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v251</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3708,7 +3708,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v250';
+  var DATA_VERSION = 'v251';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -9642,6 +9642,16 @@ function gtaskUpsert(e) {
     if (e.gtaskId && String(err.message).indexOf('404') >= 0) { // Google側で消えていた → 作り直し
       e.gtaskId = '';
       return gtasksApi('POST', GTASKS_BASE, gtaskBody(e)).then(function(r) { if (r && r.id) { e.gtaskId = r.id; saveEventDoc(e); } });
+    }
+    // 原因が分かるようにエラーを表示（セッション中1回だけ）
+    if (!window._gtaskErrShown) {
+      window._gtaskErrShown = true;
+      var msg = String(err && err.message || err);
+      if (/has not been used|is disabled|accessNotConfigured|SERVICE_DISABLED/i.test(msg)) {
+        toast('⚠️ Google Tasks APIが未有効です（Cloud ConsoleでTasks APIを有効化してください）');
+      } else {
+        toast('⚠️ ToDo同期エラー: ' + msg.substring(0, 80));
+      }
     }
     throw err;
   });
