@@ -1692,7 +1692,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v244</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v245</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1820,6 +1820,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- ====== データ ====== -->
   <div id="view-stats" style="display:none">
+    <div id="teamPickStats"></div>
     <div id="teamCompareWrap"></div>
     <div id="dataHub"></div>
     <div class="export-bar">
@@ -1861,6 +1862,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- OLタブ -->
   <div id="view-ol" style="display:none">
+    <div id="teamPickOl"></div>
     <!-- フレッシュリスト -->
     <div class="sec-label" style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span>フレッシュリスト</span><span style="font-size:10px;color:var(--text-dim);font-weight:400">現状MAPの LOI / Q2 / Q3 / B1〜B6 を自動表示</span></div>
     <div class="card" id="freshListWrap"></div>
@@ -3686,7 +3688,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v244';
+  var DATA_VERSION = 'v245';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6141,6 +6143,30 @@ function _cmpFetch(uid, month){
   }).catch(function(){ _teamCmpCache[month][uid]=[]; return []; });
 }
 function teamCmpToggle(on){ _teamCmpOn=on; renderTeamCompare(); }
+// ── 表示チーム切替（データ/OLタブ上部。共有MAPのデータ・OLをまるごと見る） ──
+function teamPick(uid){
+  if(!uid){ if(viewingOwnerUid) switchToOwner(null); return; }
+  if(viewingOwnerUid===uid) return;
+  var o=(sharedOwners||[]).filter(function(x){return x.uid===uid;})[0];
+  switchToOwner(uid, o?o.perm:'view');
+}
+function renderTeamPickBars(){
+  var els=[document.getElementById('teamPickStats'), document.getElementById('teamPickOl')];
+  var owners=sharedOwners||[];
+  els.forEach(function(el){
+    if(!el) return;
+    if(!owners.length){ el.innerHTML=''; return; }
+    var h='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 14px 0">'
+      +'<span style="font-size:11px;font-weight:800;color:var(--text-dim)">表示チーム</span>'
+      +'<span class="tc-b'+(!viewingOwnerUid?' on':'')+'" onclick="teamPick(\'\')">自分</span>';
+    owners.forEach(function(o){
+      var nm=(o.org||o.name||o.email||'共有').substring(0,10);
+      h+='<span class="tc-b'+(viewingOwnerUid===o.uid?' on':'')+'" onclick="teamPick(\''+o.uid+'\')">'+evEsc(nm)+(o.perm==='edit'?' ✏️':'')+'</span>';
+    });
+    h+='</div>';
+    el.innerHTML=h;
+  });
+}
 function renderTeamCompare(){
   var wrap=document.getElementById('teamCompareWrap'); if(!wrap) return;
   if(viewingOwnerUid || !sharedOwners || !sharedOwners.length){ wrap.innerHTML=''; return; }
@@ -7135,6 +7161,7 @@ function renderDataHub() {
     + '</div>';
 }
 function renderStats() {
+  renderTeamPickBars();
   renderTeamCompare();
   renderDataHub();
   buildAutoStats();
@@ -11852,15 +11879,14 @@ function composeMergedInto(ownMembers, mapType) {
     if (!ownIds[cfg.graftId]) return; // 接続先ノードが自分のMAPに無ければスキップ
     var foreign = (state.mergedData && state.mergedData[cfg.uid]) ? state.mergedData[cfg.uid] : [];
     if (!foreign.length) return;
-    var rootId = '';
-    foreign.forEach(function(fm) { if (!fm.parentId) rootId = fm.id; }); // 下位本人＝ルート
     var pre = 'MG_' + String(cfg.uid).substring(0, 6) + '_';
     foreign.forEach(function(fm) {
-      if (fm.deleted || fm.id === rootId) return; // 下位本人の重複ルートは畳む（graftノードが本人）
+      if (fm.deleted) return;
       var copy = {};
       for (var key in fm) copy[key] = fm[key];
       copy.id = pre + fm.id;
-      copy.parentId = (!fm.parentId || fm.parentId === rootId) ? cfg.graftId : (pre + fm.parentId);
+      // 0段目（共有元の本人）は選んだ接続先メンバーの直下に、それ以外は元の親子関係を維持
+      copy.parentId = fm.parentId ? (pre + fm.parentId) : cfg.graftId;
       copy._foreign = true;
       copy._ownerName = cfg.name || '';
       copy.mapType = 'current';
