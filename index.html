@@ -650,6 +650,9 @@ tr.ot-drawer td{background:var(--surface2);padding:0}
 @media(min-width:900px){.gold-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
 table.ot.olt7{min-width:640px}
 tr.ot-done{opacity:.5}
+.tc-seg{display:inline-flex;background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:2px}
+.tc-b{font-size:11px;font-weight:800;color:var(--text-mid);padding:4px 12px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.tc-b.on{background:var(--accent);color:var(--go-ink)}
 .ol-target-row{display:flex;gap:6px;margin-bottom:6px}
 .ol-x{flex:none;width:40px;background:transparent;border:1px solid var(--border2);color:var(--red);border-radius:8px;cursor:pointer;font-size:13px}
 .ol-add{display:block;width:calc(100% - 20px);margin:0 10px 10px;padding:12px;border-radius:10px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer}
@@ -1689,7 +1692,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v242</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v243</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1817,6 +1820,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- ====== データ ====== -->
   <div id="view-stats" style="display:none">
+    <div id="teamCompareWrap"></div>
     <div id="dataHub"></div>
     <div class="export-bar">
       <div class="exp-btn" onclick="exportCSV('stats')">📄 統計CSV</div>
@@ -3681,7 +3685,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v242';
+  var DATA_VERSION = 'v243';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6105,6 +6109,96 @@ function updateLTSV(mapType, members) {
   }
 }
 
+// ── チーム比較（自分＋共有MAPの横断ビュー） ──
+var _teamCmpOn = false;
+var _teamCmpCache = {}; // month -> { uid: members[] }
+function _cmpPrevMonth(mStr){ // 'YYYY.M' → 前月
+  var p=(mStr||'').split('.'); var y=parseInt(p[0],10), m=parseInt(p[1],10);
+  if(!y||!m) return '';
+  m--; if(m<1){ m=12; y--; }
+  return y+'.'+m;
+}
+function _cmpMetrics(members){
+  var ms=(members||[]).filter(function(m){ return m && !m.deleted; });
+  var ltsv=0, act=0, front=0, tr=0;
+  ms.forEach(function(m){
+    var t=(m.title||'').trim();
+    if(LTSV_BR_PLUS.indexOf(t)>=0) ltsv+=(m.ptCurrent||0);
+    if(m.activity) act++;
+    if(!m.parentId) front++;
+    if(m.trainee) tr++;
+  });
+  return { ltsv:ltsv, act:act, cnt:ms.length, front:front, trainee:tr };
+}
+function _cmpFetch(uid, month){
+  _teamCmpCache[month]=_teamCmpCache[month]||{};
+  if(_teamCmpCache[month][uid]) return Promise.resolve(_teamCmpCache[month][uid]);
+  return fsGet('maps/'+uid+'/months/'+month+'_current').then(function(d){
+    var arr=(d&&d.members)?d.members:[];
+    _teamCmpCache[month][uid]=arr;
+    return arr;
+  }).catch(function(){ _teamCmpCache[month][uid]=[]; return []; });
+}
+function teamCmpToggle(on){ _teamCmpOn=on; renderTeamCompare(); }
+function renderTeamCompare(){
+  var wrap=document.getElementById('teamCompareWrap'); if(!wrap) return;
+  if(viewingOwnerUid || !sharedOwners || !sharedOwners.length){ wrap.innerHTML=''; return; }
+  var month=state.currentMonth, prev=_cmpPrevMonth(month);
+  var h='<div style="padding:10px 14px 0">'
+    +'<div class="dh-chart" style="margin-bottom:10px"><div class="dh-chart-hd"><span>🏢 チーム比較（自分＋共有MAP '+sharedOwners.length+'）</span>'
+    +'<span class="tc-seg"><span class="tc-b'+(!_teamCmpOn?' on':'')+'" onclick="teamCmpToggle(false)">自分のみ</span><span class="tc-b'+(_teamCmpOn?' on':'')+'" onclick="teamCmpToggle(true)">チーム比較</span></span></div>';
+  if(!_teamCmpOn){
+    h+='<div style="font-size:11px;color:var(--text-dim);padding:2px 0 6px">「チーム比較」にすると、共有された各MAPのLTSV・稼働・人数を横並びで確認し、合算も見られます。</div></div></div>';
+    wrap.innerHTML=h; return;
+  }
+  h+='<div id="tcBody" style="padding:4px 0 6px;font-size:12px;color:var(--text-dim)">読み込み中...</div></div></div>';
+  wrap.innerHTML=h;
+  // 自分 + 各共有オーナーの当月・前月を取得
+  var teams=[{ uid:(currentUser&&currentUser.uid)||'', name:'自分', members:state.members }];
+  sharedOwners.forEach(function(o){ teams.push({ uid:o.uid, name:(o.org||o.name||o.email||'共有'), members:null }); });
+  var jobs=[];
+  teams.forEach(function(t){
+    if(t.members){ _teamCmpCache[month]=_teamCmpCache[month]||{}; _teamCmpCache[month][t.uid]=t.members; }
+    else jobs.push(_cmpFetch(t.uid, month).then(function(arr){ t.members=arr; }));
+    jobs.push(_cmpFetch(t.uid, prev).then(function(arr){ t.prevMembers=arr; }));
+  });
+  Promise.all(jobs).then(function(){
+    var body=document.getElementById('tcBody'); if(!body) return;
+    var rows=teams.map(function(t){
+      var cur=_cmpMetrics(t.members), pv=_cmpMetrics(t.prevMembers||[]);
+      var diff=cur.ltsv-pv.ltsv;
+      var pct=pv.ltsv>0?Math.round(diff/pv.ltsv*100):(cur.ltsv>0?100:0);
+      return { t:t, cur:cur, pv:pv, diff:diff, pct:pct };
+    });
+    rows.sort(function(a,b){ return b.pct-a.pct; });
+    var tot={ltsv:0,act:0,cnt:0,front:0,trainee:0,pvLtsv:0};
+    rows.forEach(function(r){ tot.ltsv+=r.cur.ltsv; tot.act+=r.cur.act; tot.cnt+=r.cur.cnt; tot.front+=r.cur.front; tot.trainee+=r.cur.trainee; tot.pvLtsv+=r.pv.ltsv; });
+    var totPct=tot.pvLtsv>0?Math.round((tot.ltsv-tot.pvLtsv)/tot.pvLtsv*100):0;
+    var hh='<div class="ot-scroll"><table class="ot" style="min-width:560px"><thead><tr><th>チーム</th><th style="text-align:right">LTSV</th><th style="text-align:right">前月比</th><th style="text-align:right">稼働</th><th style="text-align:right">人数</th><th style="text-align:right">フロント</th><th style="text-align:right">研修生</th></tr></thead><tbody>';
+    rows.forEach(function(r,i){
+      var cls=r.pct>=10?'c-a':(r.pct<0?'c-r':'');
+      var flag=(i===rows.length-1&&rows.length>1&&r.pct<0)?' ⚠️':'';
+      hh+='<tr><td style="font-weight:700">'+evEsc(r.t.name)+flag+'</td>'
+        +'<td class="go-tnum" style="text-align:right;font-weight:800">'+r.cur.ltsv.toLocaleString()+'</td>'
+        +'<td class="go-tnum '+cls+'" style="text-align:right;font-weight:800">'+(r.pct>=0?'+':'')+r.pct+'%</td>'
+        +'<td class="go-tnum" style="text-align:right">'+r.cur.act+'</td>'
+        +'<td class="go-tnum" style="text-align:right">'+r.cur.cnt+'</td>'
+        +'<td class="go-tnum" style="text-align:right">'+r.cur.front+'</td>'
+        +'<td class="go-tnum" style="text-align:right">'+r.cur.trainee+'</td></tr>';
+    });
+    hh+='<tr style="border-top:2px solid var(--border2)"><td style="font-weight:900">🧮 合算</td>'
+      +'<td class="go-tnum" style="text-align:right;font-weight:900;color:var(--accent)">'+tot.ltsv.toLocaleString()+'</td>'
+      +'<td class="go-tnum" style="text-align:right;font-weight:900">'+(totPct>=0?'+':'')+totPct+'%</td>'
+      +'<td class="go-tnum" style="text-align:right;font-weight:800">'+tot.act+'</td>'
+      +'<td class="go-tnum" style="text-align:right;font-weight:800">'+tot.cnt+'</td>'
+      +'<td class="go-tnum" style="text-align:right;font-weight:800">'+tot.front+'</td>'
+      +'<td class="go-tnum" style="text-align:right;font-weight:800">'+tot.trainee+'</td></tr>';
+    hh+='</tbody></table></div>'
+      +'<div style="font-size:10.5px;color:var(--text-dim);margin-top:7px">伸び率順。前月比マイナスの最下位チームに ⚠️（テコ入れ候補）。各チームのMAP/OL/データ詳細は「共有MAP」から切り替えて確認できます。</div>';
+    body.innerHTML=hh;
+  });
+}
+
 // ── COMMISSION ──
 function renderCommission() {
   // BB/LB自動計算
@@ -7040,6 +7134,7 @@ function renderDataHub() {
     + '</div>';
 }
 function renderStats() {
+  renderTeamCompare();
   renderDataHub();
   buildAutoStats();
   var s = state.stats;
