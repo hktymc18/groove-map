@@ -1287,6 +1287,69 @@ tr.ot-done{opacity:.5}
 .go-btns{margin-top:13px;display:flex;gap:8px}
 .go-btn{flex:1;text-align:center;font-size:13px;font-weight:800;border-radius:11px;padding:11px;cursor:pointer;border:1px solid transparent}
 .go-btn.pri{background:var(--accent);color:var(--go-ink)} .go-btn.gh{background:var(--surface);border-color:var(--border);color:var(--text)}
+/* ── 📆 今月タブ（マイカウンター） ── */
+.mc-sum{display:flex;gap:9px;margin-bottom:12px}
+.mc-sc{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:10px 12px}
+.mc-sc .k{font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:.5px}
+.mc-sc .v{font-size:20px;font-weight:900;margin-top:2px;color:var(--text)}
+.mc-sc .v small{font-size:11px;color:var(--text-mid);font-weight:700}
+.mc-sc.ok .v{color:var(--accent)} .mc-sc.warn .v{color:var(--gold)}
+.mc-today{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 12%,transparent),var(--surface) 70%);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:16px;padding:12px 14px;margin-bottom:14px}
+.mc-thd{display:flex;justify-content:space-between;align-items:baseline}
+.mc-thd .tt{font-size:13px;font-weight:900;color:var(--accent);letter-spacing:.5px}
+.mc-thd .td{font-size:11px;color:var(--text-mid);font-weight:700}
+.mc-tq{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px dashed var(--border);font-size:13px}
+.mc-tq:first-of-type{border-top:0;margin-top:5px}
+.mc-tq .st{flex:none;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.mc-tq .st.ok{background:var(--accent);color:var(--go-ink)}
+.mc-tq .st.no{background:var(--surface3);color:var(--text-mid);border:1px solid var(--border2)}
+.mc-tq .nm{flex:1;font-weight:700;color:var(--text);cursor:pointer}
+.mc-tq .qt{font-weight:800;color:var(--text);font-size:12px}
+.mc-grid{display:grid;gap:12px}
+@media(min-width:900px){.mc-grid{grid-template-columns:1fr 1fr}}
+.mc-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.mc-card.done .mc-name::after{content:"🎉";margin-left:5px}
+.mc-main{display:flex;align-items:stretch}
+.mc-body{flex:1;min-width:0;padding:13px 0 11px 14px}
+.mc-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mc-name{font-size:15px;font-weight:800;color:var(--text)}
+.mc-tgt{font-size:11px;color:var(--text-mid);font-weight:700} .mc-tgt b{color:var(--text);font-size:14px}
+.mc-due{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;font-family:'IBM Plex Mono',monospace;border-radius:7px;padding:3px 7px;background:var(--surface3);color:var(--text-mid);cursor:pointer}
+.mc-due.warn{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold)}
+.mc-due.crit{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red)}
+.mc-stamps{margin:9px 0 7px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mc-stamp{width:25px;height:25px;border-radius:8px;border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent}
+.mc-stamp.big{width:33px;height:33px;font-size:15px}
+.mc-stamp.on{border-style:solid;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent);font-weight:900}
+.mc-stamp.bonus{border-style:solid;border-color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold);font-weight:900}
+.mc-cal{margin:8px 12px 7px 0}
+.mc-wd{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+.mc-wd span{text-align:center;font-size:8px;font-weight:800;color:var(--text-dim)}
+.mc-cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.mc-d{aspect-ratio:1;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--text-mid);cursor:pointer}
+.mc-d.blank{background:transparent;border-color:transparent;cursor:default}
+.mc-d.f1{background:color-mix(in srgb,var(--accent) 15%,transparent);border-color:color-mix(in srgb,var(--accent) 35%,var(--border));color:var(--accent);font-weight:800}
+.mc-d.f2{background:color-mix(in srgb,var(--accent) 45%,transparent);border-color:var(--accent);color:#fff;font-weight:900}
+.mc-d.f3{background:var(--accent);border-color:var(--accent);color:var(--go-ink);font-weight:900}
+.mc-d.today{outline:2px solid var(--go-sky);outline-offset:1px}
+.mc-d.future{opacity:.45}
+.mc-meta{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--text-mid);flex-wrap:wrap;padding-right:10px}
+.mc-bar{position:relative;flex:1;max-width:110px;height:5px;border-radius:4px;background:var(--surface3)}
+.mc-bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.mc-idm{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--go-sky);border-radius:1px}
+.mc-idm::after{content:"▾";position:absolute;top:-11px;left:-4px;font-size:8px;color:var(--go-sky)}
+.mc-pace{font-weight:800} .mc-pace.ok{color:var(--accent)} .mc-pace.warn{color:var(--gold)} .mc-pace.done{color:var(--accent)}
+.mc-quota{font-weight:800;color:var(--gold)} .mc-quota.ok{color:var(--accent)}
+.mc-streak{font-weight:800;color:var(--gold)}
+.mc-plus{flex:none;width:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:1px dashed var(--border);color:var(--accent);background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--accent) 12%,transparent));cursor:pointer;user-select:none}
+.mc-plus:active{background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.mc-plus .p{font-size:24px;font-weight:900;line-height:1}
+.mc-plus .t{font-size:9px;font-weight:800;color:var(--text-mid)}
+.mc-plus .td{font-size:11px;font-weight:900;color:var(--accent)}
+.mc-foot{display:flex;align-items:center;gap:7px;padding:7px 11px;border-top:1px solid var(--border);background:var(--surface2)}
+.mc-undo{font-size:11px;font-weight:700;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:4px 9px;cursor:pointer}
+.mc-task{display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px}
+.mc-task:last-child{border-bottom:0}
 .go-seg{display:inline-flex;background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:2px;margin:2px 0 10px}
 .go-seg-b{font-size:12px;font-weight:800;color:var(--text-mid);padding:5px 15px;border-radius:7px;cursor:pointer}
 .go-seg-b.on{background:var(--accent);color:var(--go-ink)}
@@ -1612,6 +1675,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#10b981;box-shadow:0 3px 12px rgba(16,185,129,.5)">📊</span><span class="pcs-lb">データ</span></div>
   <div class="pcs-item" data-view="ideal" onclick="switchView('ideal')" title="理想"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#ec4899;box-shadow:0 3px 12px rgba(236,72,153,.5)">🎯</span><span class="pcs-lb">理想</span></div>
   <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)">🧭</span><span class="pcs-lb">GOAL</span></div>
+  <div class="pcs-item" data-view="month" onclick="switchView('month')" title="今月"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#14b8a6;box-shadow:0 3px 12px rgba(20,184,166,.5)">📆</span><span class="pcs-lb">今月</span></div>
   <div class="pcs-spacer"></div>
 </aside>
 
@@ -1625,7 +1689,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v241</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v242</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1649,6 +1713,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- ⑧ GOAL -->
   <div id="view-goals" style="display:none"></div>
+
+  <!-- ⑨ 今月（月間タスク） -->
+  <div id="view-month" style="display:none"></div>
 
   <!-- ====== メンバー一覧 ====== -->
   <div id="view-members" style="display:none"></div>
@@ -3614,7 +3681,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v241';
+  var DATA_VERSION = 'v242';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3749,7 +3816,7 @@ function updateFabVisibility() {
 function switchView(v) {
   currentView = v;
   window._selectedCardId = null;
-  ['home','members','current','ideal','stats','ol','events','goals'].forEach(function(n) {
+  ['home','members','current','ideal','stats','ol','events','goals','month'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
@@ -3760,7 +3827,7 @@ function switchView(v) {
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
   if (bh) {
-    var names = { current:'組織MAP', members:'メンバー', ideal:'理想', stats:'データ', ol:'OL', events:'予定', goals:'GOAL' };
+    var names = { current:'組織MAP', members:'メンバー', ideal:'理想', stats:'データ', ol:'OL', events:'予定', goals:'GOAL', month:'今月' };
     if (isPCMode() || v === 'home' || !names[v]) {
       bh.style.display = 'none';
     } else if (v === 'current' || v === 'ideal') {
@@ -3786,6 +3853,7 @@ function switchView(v) {
   else if (v==='ol') renderOL();
   else if (v==='events') renderEvents();
   else if (v==='goals') renderGoals();
+  else if (v==='month') renderMonth();
 }
 // ============================================================
 //  報酬プラン定数（資料: 販売報酬プラン＋エリートLOI / 2026-07確認）
@@ -4551,7 +4619,8 @@ function homeMenuHtml() {
     { label:'OL',          emoji:'📋',  color:'#7c6aff', act:"switchView('ol')" },
     { label:'予定',        emoji:'📅',  color:'#f59e0b', act:"switchView('events')", badge: due },
     { label:'データ',      emoji:'📊',  color:'#10b981', act:"switchView('stats')" },
-    { label:'GOAL',        emoji:'🧭',  color:'#0ea5e9', act:"switchView('goals')" }
+    { label:'GOAL',        emoji:'🧭',  color:'#0ea5e9', act:"switchView('goals')" },
+    { label:'今月',        emoji:'📆',  color:'#14b8a6', act:"switchView('month')" }
   ];
   var html = '<div class="home-sec-label">📂 メニュー</div><div class="home-menu">';
   html += items.map(function(it){
@@ -8371,7 +8440,7 @@ function _glNormPlan(p){
   p.brTable=Object.assign({}, d.brTable, p.brTable||{});
   return Object.assign(d, p);
 }
-function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[], plan:_glDefaultPlan(), milestones:[] }; }
+function _glDefault(){ return { vision:'', year:(new Date()).getFullYear(), items:[], habits:[], plan:_glDefaultPlan(), milestones:[], counters:[] }; }
 var GL_STAGES=[
   {k:'b1',    label:'B1 / LOI'},
   {k:'dlr',   label:'研修生（DLR）'},
@@ -8385,7 +8454,7 @@ function loadGoals(uid){
   if(!uid || !db){ if(!state.goals) state.goals=_glDefault(); return Promise.resolve(); }
   return fsGet('maps/'+uid+'/meta/goals').then(function(g){
     if(g && (g.items || g.vision!==undefined)){
-      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[], plan:_glNormPlan(g.plan), milestones:g.milestones||[] };
+      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[], plan:_glNormPlan(g.plan), milestones:g.milestones||[], counters:g.counters||[] };
     } else { state.goals = _glDefault(); }
     if(currentView==='goals') renderGoals();
     return state.goals;
@@ -8437,6 +8506,8 @@ function _glGoalTasks(monthId){
 
 // ── 描画 ──
 function renderGoals(){
+  // 今月タブ表示中にKPI等を操作した場合も反映（各setterはrenderGoalsを呼ぶ）
+  if(currentView==='month' && typeof renderMonth==='function') renderMonth();
   var el=document.getElementById('view-goals'); if(!el) return;
   if(!state.goals) state.goals=_glDefault();
   if(!state.goals.year) state.goals.year=(new Date()).getFullYear();
@@ -8624,8 +8695,8 @@ function _glPlannerHtml(){
   if(!hasGoal){ h+='</div>'; return h; }
 
   var curF=_glCurrentFront();
-  // ===== 今月のフォーカス（最重要目標の直下）=====
-  h+=_glFocusHtml(p);
+  // ===== 今月の要約（詳細は📆今月タブへ移設）=====
+  h+=_glMonthSummaryCardHtml(p);
   // ===== JOURNEY（リニューアル：ワイド・タイムライン） =====
   h+=_glJourneyHtml(p);
   h+='</div>'; // go-wrap
@@ -8754,6 +8825,196 @@ function _glMonthActualShown(p,ym,st){ var ma=(p.monthlyActuals||{})[ym]; if(ma 
 function glSetMonthlyActual(st,val){ var p=state.goals.plan, ym=_glCurYm(); p.monthlyActuals=p.monthlyActuals||{}; p.monthlyActuals[ym]=p.monthlyActuals[ym]||{}; p.monthlyActuals[ym][st]=Math.max(0,parseInt(String(val).replace(/[^0-9]/g,''),10)||0); saveGoals(); renderGoals(); }
 function glStepMonthly(st,delta){ var p=state.goals.plan, ym=_glCurYm(); glSetMonthlyActual(st, Math.max(0,_glMonthActualShown(p,ym,st)+delta)); }
 function glSetB1Day(){ var p=state.goals.plan, end=_glMonthEndDate(), def=p.b1Day||_glYmdOfD(_glAddDaysD(end,-2)); var v=prompt('B1（LOI）の期日（YYYY-MM-DD・当月内）\n※各アクションの期日はここから逆算されます', def); if(v===null)return; if(v.trim()&&!/^\d{4}-\d{2}-\d{2}$/.test(v.trim())){ toast('YYYY-MM-DD で入力してください'); return; } p.b1Day=v.trim(); saveGoals(); renderGoals(); }
+
+// ============================================================
+//  📆 今月タブ（月間タスク）: 今日やる分 → ビジネスKPI → マイカウンター → 当月タスク
+//  counter: { id, title, target, unit, due(''=月末), view:'stamp'|'cal', log:{ 'YYYY-MM-DD':count } }
+// ============================================================
+function _mcList(){ if(!state.goals.counters) state.goals.counters=[]; return state.goals.counters; }
+function _mcFind(id){ return _mcList().find(function(c){return c.id===id;}); }
+function _mcDueDate(c){
+  if(c.due && /^\d{4}-\d{2}-\d{2}$/.test(c.due)) return new Date(c.due.replace(/-/g,'/'));
+  return _glMonthEndDate();
+}
+function _mcMonthCount(c, ym){ var s=0, log=c.log||{}; for(var k in log){ if(k.slice(0,7)===ym) s+=(parseInt(log[k],10)||0); } return s; }
+function _mcDayCount(c, ymd){ return parseInt((c.log||{})[ymd],10)||0; }
+function _mcStreak(c){
+  var log=c.log||{}, n=0, d=new Date(); d.setHours(0,0,0,0);
+  if(!(parseInt(log[_glYmdOfD(d)],10)>0)) d.setDate(d.getDate()-1);
+  for(var g=0;g<400;g++){ if(parseInt(log[_glYmdOfD(d)],10)>0){ n++; d.setDate(d.getDate()-1); } else break; }
+  return n;
+}
+function _mcQuotaToday(c, ym){
+  var done=_mcMonthCount(c,ym), remain=Math.max(0,(c.target||0)-done);
+  if(remain<=0) return 0;
+  var days=Math.max(1,_glDaysUntilD(_mcDueDate(c)));
+  return Math.ceil(remain/days);
+}
+function _mcIdealPct(c){
+  // 月初→期日のうち、今日までに達成しているべき割合
+  var due=_mcDueDate(c); var start=new Date(); start.setDate(1); start.setHours(0,0,0,0);
+  var t=new Date(); t.setHours(0,0,0,0);
+  var total=Math.max(1,Math.round((due-start)/86400000)+1);
+  var elapsed=Math.min(total,Math.max(0,Math.round((t-start)/86400000)+1));
+  return Math.round(elapsed/total*100);
+}
+function mcAdd(){
+  var t=prompt('タスク名（例：腕立て / 本を読む）'); if(!t||!t.trim())return;
+  var n=prompt('今月の目標数（数字）','8'); if(n===null)return; var tg=parseInt(n,10); if(!(tg>0)){ toast('1以上の数字で入力してください'); return; }
+  var u=prompt('単位（回 / 冊 / km など）','回'); if(u===null)return;
+  _mcList().push({ id:genGoalId(), title:t.trim(), target:tg, unit:(u||'').trim()||'回', due:'', view:'stamp', log:{} });
+  saveGoals(); renderMonth();
+}
+function mcEdit(id){
+  var c=_mcFind(id); if(!c)return;
+  var t=prompt('タスク名', c.title); if(t===null)return; if(t.trim()) c.title=t.trim();
+  var n=prompt('今月の目標数', c.target); if(n!==null){ var tg=parseInt(n,10); if(tg>0) c.target=tg; }
+  var u=prompt('単位', c.unit); if(u!==null&&u.trim()) c.unit=u.trim();
+  var d=prompt('期日（YYYY-MM-DD・空欄=月末）', c.due||''); if(d!==null){ if(d.trim()===''||/^\d{4}-\d{2}-\d{2}$/.test(d.trim())) c.due=d.trim(); else toast('期日はYYYY-MM-DDで'); }
+  saveGoals(); renderMonth();
+}
+function mcDel(id){ var c=_mcFind(id); if(!c)return; if(!confirm('「'+c.title+'」を削除しますか？（記録も消えます）'))return; state.goals.counters=_mcList().filter(function(x){return x.id!==id;}); saveGoals(); renderMonth(); }
+function mcPlus(id){ var c=_mcFind(id); if(!c)return; c.log=c.log||{}; var k=evTodayYmd(); c.log[k]=(parseInt(c.log[k],10)||0)+1; saveGoals(); renderMonth(); }
+function mcMinus(id){ var c=_mcFind(id); if(!c)return; c.log=c.log||{}; var k=evTodayYmd(); var v=(parseInt(c.log[k],10)||0)-1; if(v<=0) delete c.log[k]; else c.log[k]=v; saveGoals(); renderMonth(); }
+function mcToggleView(id){ var c=_mcFind(id); if(!c)return; c.view=(c.view==='cal')?'stamp':'cal'; saveGoals(); renderMonth(); }
+function mcSetDay(id, ymd){
+  var c=_mcFind(id); if(!c)return;
+  var cur=_mcDayCount(c,ymd);
+  var v=prompt(ymd.slice(5).replace('-','/')+' の回数', cur); if(v===null)return;
+  var n=parseInt(String(v).replace(/[^0-9]/g,''),10)||0;
+  c.log=c.log||{}; if(n<=0) delete c.log[ymd]; else c.log[ymd]=n;
+  saveGoals(); renderMonth();
+}
+function _mcDueChip(c, ym){
+  var due=_mcDueDate(c), days=_glDaysUntilD(due), done=_mcMonthCount(c,ym)>=(c.target||0);
+  var cls=done?'':(days<=0?' crit':(days<=5?' warn':''));
+  var txt=done?'達成済':(days<=0?'期日超過':'あと'+days+'日');
+  return '<span class="mc-due'+cls+'" onclick="mcEdit(\''+c.id+'\')">⏱ 期日 '+_glMDStr(due)+'・'+txt+'</span>';
+}
+function _mcStampsHtml(c, ym){
+  var done=_mcMonthCount(c,ym), tgt=c.target||0;
+  var h='<div class="mc-stamps">';
+  var big=(tgt<=5);
+  for(var i=0;i<Math.max(tgt,done);i++){
+    var on=i<done, bonus=i>=tgt;
+    h+='<span class="mc-stamp'+(on?(bonus?' bonus':' on'):'')+(big?' big':'')+'">'+(on?(bonus?'＋':'✓'):'')+'</span>';
+  }
+  h+='</div>';
+  return h;
+}
+function _mcCalHtml(c){
+  var t=new Date(); var y=t.getFullYear(), mo=t.getMonth();
+  var first=new Date(y,mo,1), lead=first.getDay(), dim=new Date(y,mo+1,0).getDate();
+  var todayYmd=evTodayYmd();
+  var h='<div class="mc-cal"><div class="mc-wd"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="mc-cg">';
+  for(var b=0;b<lead;b++) h+='<span class="mc-d blank"></span>';
+  for(var d=1;d<=dim;d++){
+    var ymd=y+'-'+((mo+1)<10?'0':'')+(mo+1)+'-'+(d<10?'0':'')+d;
+    var n=_mcDayCount(c,ymd);
+    var cls=n>=3?' f3':(n===2?' f2':(n===1?' f1':''));
+    if(ymd===todayYmd) cls+=' today';
+    if(ymd>todayYmd) cls+=' future';
+    h+='<span class="mc-d'+cls+'" onclick="mcSetDay(\''+c.id+'\',\''+ymd+'\')">'+d+'</span>';
+  }
+  h+='</div></div>';
+  return h;
+}
+function _mcCardHtml(c, ym){
+  var done=_mcMonthCount(c,ym), tgt=c.target||0, pct=tgt>0?Math.min(100,Math.round(done/tgt*100)):0;
+  var ideal=_mcIdealPct(c), quota=_mcQuotaToday(c,ym), today=_mcDayCount(c,evTodayYmd()), streak=_mcStreak(c);
+  var achieved=done>=tgt;
+  var paceHtml=achieved?'<span class="mc-pace done">🎉 達成！</span>'
+    :(pct>=ideal?'<span class="mc-pace ok">理想ペースより先行</span>'
+    :'<span class="mc-pace warn">遅れ・挽回 1日'+quota+c.unit+'</span>');
+  var h='<div class="mc-card'+(achieved?' done':'')+'">';
+  h+='<div class="mc-main"><div class="mc-body">'
+    +'<div class="mc-hd"><span class="mc-name">'+evEsc(c.title)+'</span><span class="mc-tgt go-tnum">目標 '+tgt+evEsc(c.unit)+'　いま <b>'+done+'</b></span>'+_mcDueChip(c,ym)+'</div>'
+    +(c.view==='cal'?_mcCalHtml(c):_mcStampsHtml(c,ym))
+    +'<div class="mc-meta"><span class="mc-bar"><i style="width:'+pct+'%'+(pct<ideal&&!achieved?';background:var(--gold)':'')+'"></i><span class="mc-idm" style="left:'+ideal+'%"></span></span>'
+    +paceHtml
+    +(quota>0?'<span class="mc-quota'+(today>=quota?' ok':'')+'">今日ノルマ '+quota+evEsc(c.unit)+(today>=quota?' ✓':'')+'</span>':'')
+    +(streak>1?'<span class="mc-streak">🔥'+streak+'日連続</span>':'')
+    +'</div></div>'
+    +'<div class="mc-plus" onclick="mcPlus(\''+c.id+'\')"><span class="p">＋</span><span class="t">タップで+1</span><span class="td go-tnum">今日 '+(today>0?'+':'')+today+'</span></div></div>';
+  h+='<div class="mc-foot"><span class="mc-undo" onclick="mcMinus(\''+c.id+'\')">− 戻す</span>'
+    +'<span class="mc-undo" onclick="mcToggleView(\''+c.id+'\')">'+(c.view==='cal'?'🎫 スタンプ表示':'🗓 カレンダー表示')+'</span>'
+    +'<span class="mc-undo" onclick="mcEdit(\''+c.id+'\')">✎ 編集</span>'
+    +'<span class="mc-undo" style="margin-left:auto" onclick="mcDel(\''+c.id+'\')">🗑</span></div>';
+  h+='</div>';
+  return h;
+}
+function _glMonthSummaryCardHtml(p){
+  var ym=_glCurYm(), mFront=_glMonthlyFront(p);
+  var b1=_glMonthActualShown(p,ym,'b1');
+  var cs=_mcList(); var okC=cs.filter(function(c){ return _mcMonthCount(c,ym)>=(c.target||0); }).length;
+  return '<div class="go-eyebrow">今月のフォーカス</div>'
+    +'<div class="go-panel" style="padding:13px 16px;cursor:pointer" onclick="switchView(\'month\')">'
+    +'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px">'
+    +'<span style="font-weight:800">📆 '+ym.replace('-','年')+'月</span>'
+    +'<span>フロント <b class="c-a">'+b1+'</b>/'+mFront+'</span>'
+    +(cs.length?('<span>マイカウンター <b class="c-a">'+okC+'</b>/'+cs.length+'達成</span>'):'')
+    +'<span style="margin-left:auto;color:var(--go-sky);font-weight:800">詳細・入力は「今月」タブ ›</span>'
+    +'</div></div>';
+}
+function renderMonth(){
+  var el=document.getElementById('view-month'); if(!el) return;
+  if(!state.goals) state.goals=_glDefault();
+  var p=state.goals.plan||_glDefaultPlan();
+  var ym=_glCurYm(), t=new Date();
+  var dim=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();
+  var remDays=dim-t.getDate();
+  var cs=_mcList();
+  // 今日やる分（カウンター集約）
+  var quotas=cs.map(function(c){ return { c:c, q:_mcQuotaToday(c,ym), today:_mcDayCount(c,evTodayYmd()), doneAll:_mcMonthCount(c,ym)>=(c.target||0) }; });
+  var active=quotas.filter(function(x){ return !x.doneAll; });
+  var doneToday=quotas.filter(function(x){ return x.doneAll || (x.q>0&&x.today>=x.q); }).length;
+  var behind=cs.filter(function(c){ var pc=(c.target||0)>0?Math.round(_mcMonthCount(c,ym)/(c.target||1)*100):0; return pc<_mcIdealPct(c)&&_mcMonthCount(c,ym)<(c.target||0); }).length;
+  var h='<div class="go-wrap" style="padding:14px 14px 90px">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:19px;font-weight:800">📆 今月</div><div class="go-tnum" style="font-size:12px;color:var(--text-mid);font-weight:700">'+ym.replace('-','年')+'月</div></div>';
+  // サマリー
+  h+='<div class="mc-sum">'
+    +'<div class="mc-sc"><div class="k">今月の残り</div><div class="v go-tnum">'+remDays+'<small>日</small></div></div>'
+    +'<div class="mc-sc ok"><div class="k">今日のノルマ</div><div class="v go-tnum">'+doneToday+'<small> / '+quotas.length+'</small></div></div>'
+    +'<div class="mc-sc'+(behind>0?' warn':'')+'"><div class="k">遅れ項目</div><div class="v go-tnum">'+behind+'<small>件</small></div></div>'
+    +'</div>';
+  // ☀️今日やる分
+  if(cs.length){
+    h+='<div class="mc-today"><div class="mc-thd"><span class="tt">☀️ 今日やる分</span><span class="td go-tnum">'+(t.getMonth()+1)+'/'+t.getDate()+'</span></div>';
+    quotas.forEach(function(x){
+      var ok=x.doneAll||(x.q>0&&x.today>=x.q);
+      var label=x.doneAll?'今月分クリア済み':(x.q>0?(x.today+'/'+x.q+x.c.unit+(ok?' — クリア':'')):'—');
+      h+='<div class="mc-tq"><span class="st '+(ok?'ok':'no')+'">'+(ok?'✓':'…')+'</span><span class="nm" onclick="mcPlus(\''+x.c.id+'\')">'+evEsc(x.c.title)+'</span><span class="qt go-tnum">'+label+'</span></div>';
+    });
+    h+='</div>';
+  }
+  // ビジネスKPI（GOALから）
+  var hasGoal=p.title||p.income||p.deadline;
+  if(hasGoal){ h+=_glFocusHtml(p); }
+  else { h+='<div class="gl-empty">🧭 GOALタブで最重要目標を設定すると、ここにビジネスKPI（フロント・B1等）が自動で出ます。</div>'; }
+  // マイカウンター
+  h+='<div class="go-eyebrow" style="margin-top:20px">🖊 マイカウンター（自分で決めた月間タスク）</div>';
+  if(!cs.length) h+='<div class="gl-empty">まだありません。「＋追加」から、腕立て8回・本3冊のような今月の約束を作りましょう。</div>';
+  h+='<div class="mc-grid">'+cs.map(function(c){ return _mcCardHtml(c,ym); }).join('')+'</div>';
+  h+='<div style="display:flex;justify-content:center;margin-top:10px"><span class="gl-add" style="padding:10px 22px" onclick="mcAdd()">＋ カウンターを追加</span></div>';
+  // 当月タスク
+  var mTasks=(state.events||[]).filter(function(e){ return e.type==='task'&&!e.deleted&&e.date&&e.date.slice(0,7)===ym; });
+  mTasks.sort(function(a,b){ return (a.done?1:0)-(b.done?1:0) || (a.date||'').localeCompare(b.date||''); });
+  h+='<div class="go-eyebrow" style="margin-top:20px">✅ 今月のタスク（予定・タスクと共通）</div>';
+  if(!mTasks.length) h+='<div class="gl-empty">今月のタスクはありません。</div>';
+  else{
+    h+='<div class="go-panel" style="padding:6px 12px">';
+    mTasks.slice(0,30).forEach(function(e){
+      var d=e.date?(+e.date.slice(5,7))+'/'+(+e.date.slice(8,10)):'';
+      h+='<div class="mc-task"><span class="gl-tcheck'+(e.done?' on':'')+'" onclick="toggleEventDone(\''+e.id+'\');renderMonth()">'+(e.done?'✓':'')+'</span>'
+        +'<span class="gl-ttitle'+(e.done?' done':'')+'" onclick="openEventModal(\''+e.id+'\')">'+evEsc(e.title||'(無題)')+'</span>'
+        +'<span class="go-tnum" style="font-size:11px;color:var(--text-dim)">'+d+'</span></div>';
+    });
+    if(mTasks.length>30) h+='<div class="gl-empty" style="padding:8px">ほか'+(mTasks.length-30)+'件</div>';
+    h+='</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
 function _glMsCardHtml(m,p,curF){
   var t=_glProg(m.tmplId); if(!t)return '';
   var r=(t.routes.find(function(x){return x.id===m.route;}))||t.routes[0];
