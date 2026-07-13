@@ -1060,6 +1060,15 @@ tr.ot-done{opacity:.5}
 .nc.act-active>.card-main{box-shadow:0 0 12px rgba(44,229,184,.22)}
 .nc.act-dormant{opacity:.62;filter:saturate(.45)}
 .home-wk{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:12px 15px;font-size:13px;line-height:1.7;margin-top:10px}
+/* FTUE（Phase G）：はじめの4ステップ */
+.home-ftue{background:linear-gradient(160deg,var(--accent-dim),var(--surface) 70%);border:1px solid var(--accent);border-radius:16px;padding:13px 15px;margin-bottom:12px}
+.hf-hd{font-size:14px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between}
+.hf-hd span{color:var(--accent);font-family:'IBM Plex Mono',monospace}
+.hf-row{display:flex;align-items:center;gap:9px;padding:8px 2px;border-top:1px solid var(--border);font-size:13.5px;cursor:pointer}
+.hf-row.ok{cursor:default;color:var(--text-dim)}
+.hf-row.ok .hf-lb{text-decoration:line-through}
+.hf-lb{flex:1}
+.hf-go{color:var(--accent);font-size:18px;font-weight:800}
 .mission{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
 .mission.done{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 14px rgba(44,229,184,.13)}
 .mission-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent}
@@ -1721,7 +1730,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v258</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v259</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3731,7 +3740,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v258';
+  var DATA_VERSION = 'v259';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5004,6 +5013,35 @@ function renderHome() {
   var deltaTxt = dw > 0 ? ('▲ 先週比 +' + dw) : (dw < 0 ? ('▼ 先週比 ' + dw) : '先週と同じペース');
   var selfHtml = '<div class="home-self"><div><div class="self-wk">' + thisW + ' XP</div><div class="self-lbl">今週の獲得XP</div></div>'
     + '<div style="text-align:right"><div class="self-delta ' + deltaCls + '">' + deltaTxt + '</div><div class="self-lbl">先週 ' + lastW + ' XP</div></div></div>';
+  // FTUE（Phase G）：最初の5分チェックリスト。完了までホーム最上部に表示
+  var ftueHtml = '';
+  try {
+    if (!g.ftueDone) {
+      var _mAll = (state.members || []).filter(function(m){ return !m.deleted; });
+      var _hasRoot = _mAll.some(function(m){ return !m.parentId; });
+      var _p3 = state.goals && state.goals.plan && state.goals.plan.title;
+      var steps = [
+        { ok: _hasRoot, label: '自分をマップに置く', act: "switchView('current')" },
+        { ok: _mAll.length >= 4, label: 'メンバーを3人追加する（' + Math.max(0, Math.min(3, _mAll.length - 1)) + '/3）', act: "switchView('current')" },
+        { ok: !!_p3, label: '頂上（目標）を決める', act: "switchView('goals');setTimeout(function(){if(typeof glEditGoal==='function')glEditGoal()},300)" },
+        { ok: !!(g.gameDays && g.gameDays[today]), label: '今日1つ記録する（クイック記録でOK）', act: '' }
+      ];
+      var doneN = steps.filter(function(s){ return s.ok; }).length;
+      if (doneN === steps.length) {
+        g.ftueDone = 1; saveGame();
+        if (g.ftueShown) { gameConfetti(); toast('🎉 セットアップ完了！ここから毎日3分ではじめよう'); }
+      } else {
+        g.ftueShown = 1;
+        ftueHtml = '<div class="home-ftue"><div class="hf-hd">🚀 はじめの4ステップ <span>' + doneN + '/4</span></div>'
+          + steps.map(function(s){
+              return '<div class="hf-row' + (s.ok ? ' ok' : '') + '"' + (!s.ok && s.act ? ' onclick="' + s.act + '"' : '') + '>'
+                + '<span class="hf-ck">' + (s.ok ? '✅' : '⬜') + '</span><span class="hf-lb">' + s.label + '</span>'
+                + (!s.ok && s.act ? '<span class="hf-go">›</span>' : '') + '</div>';
+            }).join('')
+          + '</div>';
+      }
+    }
+  } catch(e) {}
   // おかえりカード（7日以上離脱・大きいストリークが残っている）
   var comebackHtml = '';
   if (streak === 0 && (g.streak || 0) >= 7 && !g.gameDays[today]) {
@@ -5038,6 +5076,7 @@ function renderHome() {
   wrap.innerHTML = '<div class="home-wrap">'
     + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
     + '<div class="home-date">' + gameDateLabel() + '</div>'
+    + ftueHtml
     + comebackHtml
     + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日 ・ 🛡保険 残り' + (g.streakInsurance||0) + '回（週1回復）</div></div></div>'
     + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>' + lvRight + '</span></div>'
