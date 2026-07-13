@@ -143,6 +143,16 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 .pc-toolbar .pt-search span{font-size:13px;color:var(--text-dim)}
 .pc-toolbar .pt-action{padding:6px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;color:var(--text-dim);background:var(--surface2);transition:all .15s;white-space:nowrap}
 .pc-toolbar .pt-action:hover{background:var(--surface3);color:var(--text)}
+/* 現状/理想 切替（PCツールバー内） */
+.pt-mapseg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:3px;flex-shrink:0}
+.pt-ms{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;color:var(--text-dim);cursor:pointer;white-space:nowrap;transition:all .15s}
+.pt-ms:hover{color:var(--text)}
+.pt-ms.cur.active{background:var(--accent);color:#04120e;box-shadow:0 2px 10px rgba(0,212,170,.35)}
+.pt-ms.idl.active{background:var(--purple);color:#fff;box-shadow:0 2px 10px rgba(124,106,255,.45)}
+.pt-modebadge{font-size:11px;font-weight:800;color:var(--purple);background:var(--purple-dim);border:1px solid rgba(124,106,255,.35);border-radius:8px;padding:5px 11px;white-space:nowrap}
+/* 理想MAP表示中はツールバー全体を紫トーンに（切替が一目で分かる） */
+.pc-toolbar-ideal{background:linear-gradient(180deg,rgba(124,106,255,.10),var(--header-bg) 80%);border-bottom:2px solid var(--purple)}
+.pc-toolbar-ideal .pv-btn.active{background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 2px 10px rgba(124,106,255,.35)}
 
 /* 旧PC切替ボタン（非表示） */
 .pc-view-toggle{display:none}
@@ -1676,7 +1686,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="pcs-item" data-view="ol" onclick="switchView('ol')" title="OL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#7c6aff;box-shadow:0 3px 12px rgba(124,106,255,.5)">📋</span><span class="pcs-lb">OL</span></div>
   <div class="pcs-item" data-view="events" onclick="switchView('events')" title="予定"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#f59e0b;box-shadow:0 3px 12px rgba(245,158,11,.5)">📅</span><span class="pcs-lb">予定</span></div>
   <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#10b981;box-shadow:0 3px 12px rgba(16,185,129,.5)">📊</span><span class="pcs-lb">データ</span></div>
-  <div class="pcs-item" data-view="ideal" onclick="switchView('ideal')" title="理想"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#ec4899;box-shadow:0 3px 12px rgba(236,72,153,.5)">🎯</span><span class="pcs-lb">理想</span></div>
   <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)">🧭</span><span class="pcs-lb">GOAL</span></div>
   <div class="pcs-item" data-view="month" onclick="switchView('month')" title="今月"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#14b8a6;box-shadow:0 3px 12px rgba(20,184,166,.5)">📆</span><span class="pcs-lb">今月</span></div>
   <div class="pcs-spacer"></div>
@@ -1692,7 +1701,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v245</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v247</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1766,6 +1775,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <!-- PC統合ツールバー -->
     <div class="pc-toolbar" id="pcToolbarC">
+      <div class="pt-mapseg">
+        <span class="pt-ms cur active" onclick="switchView('current')">🗺 現状MAP</span>
+        <span class="pt-ms idl" onclick="switchView('ideal')">🎯 理想MAP</span>
+      </div>
+      <div class="pt-sep"></div>
       <div class="pt-ltsv" onclick="showLtsvDetail()">
         <div><div class="pt-ltsv-label">LTSV</div><div class="pt-ltsv-val" id="pcLtsvC">-</div></div>
         <div class="pt-act">稼働 <span id="pcActC">-</span></div>
@@ -1803,7 +1817,13 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div style="padding:8px 14px 0"><button class="btn-c" style="border-color:var(--purple);color:var(--purple);font-size:12px;padding:7px 14px;width:auto" onclick="copyCurrentToIdeal()">🗺 → 🎯 現状MAPからコピー</button></div>
     <div id="commTableWrap"></div>
     <!-- PC統合ツールバー(理想) -->
-    <div class="pc-toolbar" id="pcToolbarI">
+    <div class="pc-toolbar pc-toolbar-ideal" id="pcToolbarI">
+      <div class="pt-mapseg">
+        <span class="pt-ms cur" onclick="switchView('current')">🗺 現状MAP</span>
+        <span class="pt-ms idl active" onclick="switchView('ideal')">🎯 理想MAP</span>
+      </div>
+      <span class="pt-modebadge">🎯 理想MAPを表示中 — 目標の組織図です</span>
+      <div class="pt-sep"></div>
       <div class="pt-ltsv" style="border-color:rgba(124,106,255,.3);background:rgba(124,106,255,.06)">
         <div><div class="pt-ltsv-label">LTSV 目標</div><div class="pt-ltsv-val" id="pcLtsvI" style="color:var(--purple)">-</div></div>
       </div>
@@ -3688,7 +3708,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v245';
+  var DATA_VERSION = 'v247';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -3829,7 +3849,9 @@ function switchView(v) {
   });
   // PC左サイドバー・モバイル下部ナビのactive切り替え
   Array.prototype.slice.call(document.querySelectorAll('.pcs-item, .mtab')).forEach(function(it) {
-    it.classList.toggle('active', it.getAttribute('data-view') === v);
+    var dv = it.getAttribute('data-view');
+    // PCサイドバーでは理想MAPもMAPアイコンをアクティブに（現状/理想はツールバーで切替）
+    it.classList.toggle('active', dv === v || (v === 'ideal' && dv === 'current'));
   });
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
@@ -6143,33 +6165,122 @@ function _cmpFetch(uid, month){
   }).catch(function(){ _teamCmpCache[month][uid]=[]; return []; });
 }
 function teamCmpToggle(on){ _teamCmpOn=on; renderTeamCompare(); }
-// ── 表示チーム切替（データ/OLタブ上部。共有MAPのデータ・OLをまるごと見る） ──
-function teamPick(uid){
-  if(!uid){ if(viewingOwnerUid) switchToOwner(null); return; }
-  if(viewingOwnerUid===uid) return;
-  var o=(sharedOwners||[]).filter(function(x){return x.uid===uid;})[0];
-  switchToOwner(uid, o?o.perm:'view');
+// ── 表示チーム切替（データ/OLタブ上部）──
+//  1つ選択＝そのチームを表示（編集可のまま）／複数選択＝合算表示（閲覧のみ）
+var _aggActive = false;     // 合算表示中フラグ
+var _aggSelArr = [];        // 合算中の選択（''=自分, ほかはuid）
+function _teamSelection(){
+  if(_aggActive) return _aggSelArr.slice();
+  if(viewingOwnerUid) return [viewingOwnerUid];
+  return [''];
+}
+function teamChip(uid){
+  var sel=_teamSelection();
+  var i=sel.indexOf(uid);
+  if(i>=0) sel.splice(i,1); else sel.push(uid);
+  if(!sel.length) sel=[''];
+  applyTeamSelection(sel);
+}
+function applyTeamSelection(sel){
+  if(sel.length===1){
+    var u=sel[0];
+    if(u===''){ if(_aggActive || viewingOwnerUid){ switchToOwner(null); } else { renderTeamPickBars(); } return; }
+    var o=(sharedOwners||[]).filter(function(x){return x.uid===u;})[0];
+    switchToOwner(u, o?o.perm:'view');
+    return;
+  }
+  enterAggregate(sel);
+}
+function _aggFetchTeam(uid, month){
+  // members と stats（stats/commission/freshData）を取得。自分も同じパスから読む
+  var mP=fsGet('maps/'+uid+'/months/'+month+'_current').then(function(d){ return (d&&d.members)?d.members:[]; }).catch(function(){ return []; });
+  var sP=fsGet('maps/'+uid+'/stats/'+month).then(function(d){ return d||{}; }).catch(function(){ return {}; });
+  return Promise.all([mP,sP]).then(function(r){ return { members:r[0], stats:(r[1].stats||null), freshData:(r[1].freshData||{}) }; });
+}
+function _aggNum(v){ var s=String(v==null?'':v).replace(/[^0-9.\-]/g,''); if(s===''||s==='-'||s==='.')return null; var n=parseFloat(s); return isNaN(n)?null:n; }
+function _aggSumMonthly(statsList){
+  // 行ラベルごとに数値セルを合算（平均稼働のみ平均）。空欄は空欄のまま
+  var labels=[], byLabel={};
+  statsList.forEach(function(st){ ((st&&st.monthly)||[]).forEach(function(row){ if(!(row.label in byLabel)){ byLabel[row.label]=[]; labels.push(row.label); } byLabel[row.label].push(row.vals||[]); }); });
+  return labels.map(function(lb){
+    var rows=byLabel[lb], len=0; rows.forEach(function(r){ if(r.length>len)len=r.length; });
+    var vals=[];
+    for(var i=0;i<len;i++){
+      var nums=[]; rows.forEach(function(r){ var n=_aggNum(r[i]); if(n!==null)nums.push(n); });
+      if(!nums.length){ vals.push(''); continue; }
+      var s=nums.reduce(function(a,b){return a+b;},0);
+      if(lb==='平均稼働') s=Math.round(s/nums.length*10)/10;
+      vals.push(String(Math.round(s*10)/10));
+    }
+    return { label:lb, vals:vals };
+  });
+}
+function enterAggregate(sel){
+  if(!currentUser){ toast('ログインが必要です'); return; }
+  var month=state.currentMonth;
+  toast('合算データを読み込み中...');
+  stopSharedLiveSync(); stopAllMergeListeners();
+  var teams=sel.map(function(u){
+    if(u==='') return { uid:currentUser.uid, name:'自分' };
+    var o=(sharedOwners||[]).filter(function(x){return x.uid===u;})[0];
+    return { uid:u, name:(o?(o.org||o.name||o.email||'共有'):'共有') };
+  });
+  Promise.all(teams.map(function(t){ return _aggFetchTeam(t.uid, month); })).then(function(list){
+    var members=[], fresh={}, statsList=[];
+    list.forEach(function(ds,ti){
+      var pre='AG'+ti+'_';
+      (ds.members||[]).forEach(function(m){
+        if(m.deleted) return;
+        var c={}; for(var k in m) c[k]=m[k];
+        c.id=pre+m.id; if(c.parentId) c.parentId=pre+c.parentId;
+        c._aggTeam=teams[ti].name;
+        members.push(c);
+      });
+      var fd=ds.freshData||{}; for(var mid in fd){ fresh[pre+mid]=fd[mid]; }
+      if(ds.stats) statsList.push(ds.stats);
+    });
+    _aggActive=true; _aggSelArr=sel.slice();
+    viewingOwnerUid=null; state.isEditor=false;
+    state.members=members;
+    state.idealMembers=[];
+    state.freshData=fresh;
+    var base=getDefaultStats();
+    base.monthly=_aggSumMonthly(statsList);
+    state.stats=base;
+    updateEditorUI();
+    // 合算中バー表示
+    var bar=document.getElementById('sdViewingBar'), nameEl=document.getElementById('sdViewingName');
+    if(bar&&nameEl){ nameEl.textContent='🧮 合算表示：'+teams.map(function(t){return t.name;}).join('＋')+'（閲覧のみ）'; bar.classList.add('show'); }
+    renderCurrentView();
+    renderTeamPickBars();
+    toast('🧮 '+teams.length+'チームを合算表示中');
+  }).catch(function(e){ toast('合算の読み込みに失敗: '+(e&&e.message||'')); });
+}
+function teamPick(uid){ // 旧API互換（単一選択）
+  applyTeamSelection([uid||'']);
 }
 function renderTeamPickBars(){
   var els=[document.getElementById('teamPickStats'), document.getElementById('teamPickOl')];
   var owners=sharedOwners||[];
+  var sel=_teamSelection();
   els.forEach(function(el){
     if(!el) return;
     if(!owners.length){ el.innerHTML=''; return; }
     var h='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 14px 0">'
       +'<span style="font-size:11px;font-weight:800;color:var(--text-dim)">表示チーム</span>'
-      +'<span class="tc-b'+(!viewingOwnerUid?' on':'')+'" onclick="teamPick(\'\')">自分</span>';
+      +'<span class="tc-b'+(sel.indexOf('')>=0?' on':'')+'" onclick="teamChip(\'\')">自分</span>';
     owners.forEach(function(o){
       var nm=(o.org||o.name||o.email||'共有').substring(0,10);
-      h+='<span class="tc-b'+(viewingOwnerUid===o.uid?' on':'')+'" onclick="teamPick(\''+o.uid+'\')">'+evEsc(nm)+(o.perm==='edit'?' ✏️':'')+'</span>';
+      h+='<span class="tc-b'+(sel.indexOf(o.uid)>=0?' on':'')+'" onclick="teamChip(\''+o.uid+'\')">'+evEsc(nm)+(o.perm==='edit'?' ✏️':'')+'</span>';
     });
+    h+='<span style="font-size:10px;color:var(--text-dim)">'+(_aggActive?'🧮 合算表示中（閲覧のみ）':'複数選ぶと合算表示')+'</span>';
     h+='</div>';
     el.innerHTML=h;
   });
 }
 function renderTeamCompare(){
   var wrap=document.getElementById('teamCompareWrap'); if(!wrap) return;
-  if(viewingOwnerUid || !sharedOwners || !sharedOwners.length){ wrap.innerHTML=''; return; }
+  if(viewingOwnerUid || _aggActive || !sharedOwners || !sharedOwners.length){ wrap.innerHTML=''; return; }
   var month=state.currentMonth, prev=_cmpPrevMonth(month);
   var h='<div style="padding:10px 14px 0">'
     +'<div class="dh-chart" style="margin-bottom:10px"><div class="dh-chart-hd"><span>🏢 チーム比較（自分＋共有MAP '+sharedOwners.length+'）</span>'
@@ -7794,6 +7905,8 @@ function exportCSV(type) {
 // ── SAVE TO GAS ──
 
 function autoSave() {
+  // 合算表示中は保存しない（合算コピーで自分のデータを上書きしない）
+  if (_aggActive) return;
   // 共有MAPを閲覧中で編集権が無ければ保存しない（自分・他人のデータを壊さない）
   if (viewingOwnerUid && !state.isEditor) return;
   if (!viewingOwnerUid) lsSave(); // 自分のMAPだけローカルキャッシュ
@@ -7817,6 +7930,7 @@ function updateLastSaved() {
 }
 
 function saveCurrent() {
+  if (_aggActive) return; // 合算表示中は保存不可
   if (!state.isEditor) return;
   toast('保存中...');
 
@@ -11749,6 +11863,7 @@ function buildSharedCard(owner) {
 }
 
 function switchToOwner(ownerUid, perm) {
+  _aggActive = false; _aggSelArr = []; // 合算表示を解除
   viewingOwnerUid = ownerUid;
 
   // 閲覧中バー更新
