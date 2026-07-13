@@ -1701,7 +1701,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v248</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v249</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3708,7 +3708,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v248';
+  var DATA_VERSION = 'v249';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -9466,6 +9466,8 @@ function loadEvents(uid) {
     notifyDueEvents();
     startReminderLoop();
     checkReminders();
+    // 起動時：Google連携済みなら未同期の予定・タスクを自動再送
+    if (state.gcalConnected && !viewingOwnerUid) setTimeout(function(){ try { gcalSyncPending(); } catch(e){} }, 1500);
     return state.events;
   }).catch(function() { state.events = []; state.categories = []; updateEventsBadge(); });
 }
@@ -9512,6 +9514,7 @@ function _gcalEnsureClient() {
         _gcalToken = resp.access_token;
         _gcalTokenExp = Date.now() + ((parseInt(resp.expires_in, 10) || 3600) - 60) * 1000;
         if (_gcalResolve) _gcalResolve(_gcalToken);
+        setTimeout(function(){ try { gcalSyncPending(); } catch(e){} }, 800); // 同意直後に未同期分を再送
       } else if (_gcalReject) { _gcalReject(new Error('トークン取得失敗')); }
       _gcalResolve = _gcalReject = null;
     },
@@ -9699,6 +9702,27 @@ function gcalSyncAll() {
   })();
 }
 
+// 未同期の予定・タスクだけを自動で再送（モバイルでは同意画面から戻るとアプリが
+// 再読み込みされ送信待ちが消えるため、起動時・トークン取得後に拾い直す）
+var _gcalPendingBusy = false;
+function gcalSyncPending() {
+  if (_gcalPendingBusy || !state.gcalConnected || viewingOwnerUid || _aggActive) return;
+  var evs = (state.events || []).filter(function(e) {
+    if (!e.date || e.deleted) return false;
+    return (e.type === 'task') ? !e.gtaskId : !e.gcalEventId;
+  });
+  if (!evs.length) return;
+  _gcalPendingBusy = true;
+  var i = 0, ok = 0;
+  (function next() {
+    if (i >= evs.length) {
+      _gcalPendingBusy = false;
+      if (ok > 0) toast('🔗 Google未同期 ' + ok + '件を同期しました ✓');
+      return;
+    }
+    gcalUpsertEvent(evs[i]).then(function(){ ok++; i++; next(); }, function(){ i++; next(); });
+  })();
+}
 function gcalBtnClick() {
   if (state.gcalConnected) {
     if (confirm('既存の予定・タスクをGoogleカレンダー「MAP予定」へまとめて同期しますか？')) gcalSyncAll();
