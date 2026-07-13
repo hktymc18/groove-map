@@ -1701,7 +1701,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v247</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v248</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3708,7 +3708,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v247';
+  var DATA_VERSION = 'v248';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -9479,8 +9479,23 @@ function saveEventDoc(e) {
 //  Googleカレンダー連携（一方向 GROOVE→Google / クライアントのみ / 専用カレンダー「MAP予定」）
 // ============================================================
 var GCAL_CLIENT_ID = '565556414915-32tucter48uo9fueui3kiub0mc1j1h1p.apps.googleusercontent.com';
-var GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar';
+var GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks';
 var GCAL_CAL_NAME = 'MAP予定';
+var GTASKS_BASE = 'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks';
+// Googleカレンダーのイベント色（固定11色）。カテゴリ色から最も近い色を選ぶ
+var GCAL_EVENT_COLORS = { 1:'#7986cb', 2:'#33b679', 3:'#8e24aa', 4:'#e67c73', 5:'#f6c026', 6:'#f5511d', 7:'#039be5', 8:'#616161', 9:'#3f51b5', 10:'#0b8043', 11:'#d60000' };
+function gcalNearestColorId(hex) {
+  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return '';
+  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  var best = '', bd = Infinity;
+  for (var id in GCAL_EVENT_COLORS) {
+    var c = GCAL_EVENT_COLORS[id];
+    var dr = r - parseInt(c.slice(1,3),16), dg = g - parseInt(c.slice(3,5),16), db = b - parseInt(c.slice(5,7),16);
+    var d = dr*dr + dg*dg + db*db;
+    if (d < bd) { bd = d; best = id; }
+  }
+  return best;
+}
 var _gcalToken = '', _gcalTokenExp = 0, _gcalTokenClient = null, _gcalResolve = null, _gcalReject = null;
 
 function gcalSupported() { return typeof google !== 'undefined' && google.accounts && google.accounts.oauth2; }
@@ -9575,13 +9590,75 @@ function gcalEventBody(e) {
   if (e.remindBefore !== '' && e.remindBefore != null) {
     body.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: parseInt(e.remindBefore, 10) || 0 }] };
   }
+  // カテゴリ色 → Googleの近似イベント色を引き継ぐ
+  if (cat && cat.color) { var cid = gcalNearestColorId(cat.color); if (cid) body.colorId = cid; }
   return body;
 }
 
-// 1件アップサート（保存・完了トグル時）
+// ── Google ToDo（Tasks API）：タスクはカレンダーではなくToDoへ ──
+function gtasksApi(method, url, body) {
+  return gcalApi(method, url, body).catch(function(err) {
+    // 旧トークンにtasksスコープが無い場合 → 再同意して1回リトライ
+    if (String(err.message).indexOf('403') >= 0 && /insufficient|PERMISSION/i.test(String(err.message))) {
+      _gcalToken = '';
+      return gcalGetToken(true).then(function() { return gcalApi(method, url, body); });
+    }
+    throw err;
+  });
+}
+function gtaskBody(e) {
+  var m = e.memberId ? findMemberAny(e.memberId) : null;
+  var cat = e.categoryId ? findCategory(e.categoryId) : null;
+  var notes = [];
+  if (e.memo) notes.push(e.memo);
+  if (m) notes.push('メンバー: ' + ((m.lastName || '') + (m.firstName || '')).replace(/^\s+|\s+$/g, ''));
+  if (cat) notes.push('カテゴリ: ' + cat.name);
+  notes.push('（GROOVE MAPより自動連携）');
+  var body = {
+    title: e.title || '(無題)',
+    notes: notes.join('\n'),
+    status: e.done ? 'completed' : 'needsAction'
+  };
+  if (e.date) body.due = e.date + 'T00:00:00.000Z'; // Google ToDoは日付のみ（時刻不可）
+  if (!e.done) body.completed = null; // 未完了へ戻す時はcompletedをクリア
+  return body;
+}
+function gtaskUpsert(e) {
+  var body = gtaskBody(e);
+  var p = e.gtaskId
+    ? gtasksApi('PATCH', GTASKS_BASE + '/' + encodeURIComponent(e.gtaskId), body)
+    : gtasksApi('POST', GTASKS_BASE, body);
+  return p.then(function(res) {
+    if (res && res.id && res.id !== e.gtaskId) { e.gtaskId = res.id; saveEventDoc(e); }
+    return res;
+  }).catch(function(err) {
+    if (e.gtaskId && String(err.message).indexOf('404') >= 0) { // Google側で消えていた → 作り直し
+      e.gtaskId = '';
+      return gtasksApi('POST', GTASKS_BASE, gtaskBody(e)).then(function(r) { if (r && r.id) { e.gtaskId = r.id; saveEventDoc(e); } });
+    }
+    throw err;
+  });
+}
+function gtaskDeleteRemote(e) {
+  if (!e || !e.gtaskId) return Promise.resolve();
+  return gtasksApi('DELETE', GTASKS_BASE + '/' + encodeURIComponent(e.gtaskId)).catch(function() {});
+}
+
+// 1件アップサート（保存・完了トグル時）。タスク→Google ToDo / 予定→カレンダー
 function gcalUpsertEvent(e) {
   if (!state.gcalConnected || !state.gcalCalendarId) return Promise.resolve();
   if (!e.date) return Promise.resolve(); // 日付なしは連携対象外
+  if (e.type === 'task') {
+    // 以前カレンダー予定として同期済みなら、その予定を削除してToDoへ移行
+    var mig = Promise.resolve();
+    if (e.gcalEventId) {
+      var _oldId = e.gcalEventId;
+      var _cal = encodeURIComponent(state.gcalCalendarId);
+      mig = gcalApi('DELETE', 'https://www.googleapis.com/calendar/v3/calendars/' + _cal + '/events/' + encodeURIComponent(_oldId)).catch(function(){});
+      e.gcalEventId = '';
+    }
+    return mig.then(function(){ return gtaskUpsert(e); });
+  }
   var cal = encodeURIComponent(state.gcalCalendarId);
   var base = 'https://www.googleapis.com/calendar/v3/calendars/' + cal + '/events';
   var body = gcalEventBody(e);
@@ -9600,9 +9677,14 @@ function gcalUpsertEvent(e) {
   });
 }
 function gcalDeleteRemote(e) {
-  if (!state.gcalConnected || !state.gcalCalendarId || !e || !e.gcalEventId) return Promise.resolve();
-  var cal = encodeURIComponent(state.gcalCalendarId);
-  return gcalApi('DELETE', 'https://www.googleapis.com/calendar/v3/calendars/' + cal + '/events/' + encodeURIComponent(e.gcalEventId)).catch(function() {});
+  if (!state.gcalConnected || !e) return Promise.resolve();
+  var ps = [];
+  if (e.gtaskId) ps.push(gtaskDeleteRemote(e));
+  if (state.gcalCalendarId && e.gcalEventId) {
+    var cal = encodeURIComponent(state.gcalCalendarId);
+    ps.push(gcalApi('DELETE', 'https://www.googleapis.com/calendar/v3/calendars/' + cal + '/events/' + encodeURIComponent(e.gcalEventId)).catch(function() {}));
+  }
+  return Promise.all(ps);
 }
 // 既存をまとめて同期（順次）
 function gcalSyncAll() {
