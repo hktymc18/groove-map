@@ -1053,6 +1053,13 @@ tr.ot-done{opacity:.5}
 .home-night small{display:block;font-size:11px;color:var(--text-dim);font-weight:400;margin-top:2px}
 .home-night .hn-btn{flex:none;background:var(--accent);color:var(--go-ink);border-radius:10px;padding:8px 16px;font-size:13px;font-weight:800}
 .home-night.done{cursor:default;color:var(--text-mid);font-weight:500;border-style:dashed}
+/* マップ生命化（Phase E）：活動中は脈打ち・30日放置は色あせ */
+@keyframes mapPulse{0%,100%{opacity:1}50%{opacity:.78}}
+.oval-node.act-active{animation:mapPulse 2.8s ease-in-out infinite}
+.oval-node.act-dormant{opacity:.5}
+.nc.act-active>.card-main{box-shadow:0 0 12px rgba(44,229,184,.22)}
+.nc.act-dormant{opacity:.62;filter:saturate(.45)}
+.home-wk{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:12px 15px;font-size:13px;line-height:1.7;margin-top:10px}
 .mission{display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
 .mission.done{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 14px rgba(44,229,184,.13)}
 .mission-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:transparent}
@@ -1714,7 +1721,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v256</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v257</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2960,7 +2967,8 @@ function renderPCMap(mapType) {
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','oval-node'); g.setAttribute('data-mid',m.id);
+    g.setAttribute('class','oval-node' + (mapType === 'current' && typeof memberActivityLevel === 'function' ? (' ' + memberActivityLevel(m)) : ''));
+    g.setAttribute('data-mid',m.id);
     g.setAttribute('data-lineage', lineageRoot[m.id]||'');
     g.setAttribute('data-region', m.region||'');
     g.style.cursor='pointer';
@@ -3722,7 +3730,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v256';
+  var DATA_VERSION = 'v257';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -5010,6 +5018,22 @@ function renderHome() {
   var nightHtml = closed
     ? '<div class="home-night done">🌙 今日は締め済み。お疲れさまでした ✓</div>'
     : '<div class="home-night" onclick="closeToday()"><span>🌙 今日を締める<small>ワンタップ日報 → ストリーク更新</small></span><span class="hn-btn">締める</span></div>';
+  // 週次成長レポート（Phase E：週が変わったら先週スナップショットと比較）
+  var wkHtml = '';
+  try {
+    var wkNow = gameWeekStart();
+    var curMembers = (state.members || []).filter(function(m){ return !m.deleted; });
+    var rootM = curMembers.filter(function(m){ return !m.parentId; })[0];
+    var curStat = { date: wkNow, n: curMembers.length, gsv: rootM ? (rootM.ptCurrent || 0) : 0 };
+    if (!g.wkSnap) { g.wkSnap = curStat; saveGame(); }
+    else if (g.wkSnap.date !== wkNow) { g.wkPrev = g.wkSnap; g.wkSnap = curStat; saveGame(); }
+    if (g.wkPrev && curMembers.length) {
+      var dn = curStat.n - (g.wkPrev.n || 0), dg = curStat.gsv - (g.wkPrev.gsv || 0);
+      var dorm = 0; curMembers.forEach(function(m){ if (memberActivityLevel(m) === 'act-dormant') dorm++; });
+      wkHtml = '<div class="home-wk">🌱 <b>先週からの組織</b>　メンバー ' + (dn >= 0 ? '+' : '') + dn + '人 ・ GSV ' + (dg >= 0 ? '+' : '') + dg.toLocaleString()
+        + (dorm ? ' ・ <span style="color:var(--go-rose)">💤フォロー要 ' + dorm + '人</span>' : ' ・ 全員稼働中🔥') + '</div>';
+    }
+  } catch(e) {}
   wrap.innerHTML = '<div class="home-wrap">'
     + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
     + '<div class="home-date">' + gameDateLabel() + '</div>'
@@ -5019,6 +5043,7 @@ function renderHome() {
     + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
     + qrHtml
     + nightHtml
+    + wkHtml
     + birthdayHtml()
     + cockpitHtml()
     + homeTasksHtml()
@@ -5970,6 +5995,24 @@ function renderTree(mapType) {
 }
 
 // 共通カードHTML生成（系列カラー固定、子も同色）
+// ── マップ生命化（Phase E）：最終活動日から生死を表現 ──
+function memberLastActivity(m) {
+  var last = '';
+  var fd = (state.freshData || {})[m.id] || {};
+  (fd.olLog || []).forEach(function(e){ if (e.date && e.date > last) last = e.date; });
+  (m.traineeHistory || []).forEach(function(h){ if (h.date && h.date > last) last = h.date; });
+  var t = evTodayYmd();
+  (state.events || []).forEach(function(e){ if (e.memberId === m.id && !e.deleted && e.date && e.date <= t && e.date > last) last = e.date; });
+  return last;
+}
+function memberActivityLevel(m) {
+  var last = memberLastActivity(m);
+  if (!last) return '';
+  var d = gameDaysGap(last, evTodayYmd());
+  if (d <= 7) return 'act-active';    // 1週間以内に活動＝生きている（脈打つ）
+  if (d >= 30) return 'act-dormant';  // 30日以上活動なし＝枯れかけ（色あせ）
+  return '';
+}
 function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, familyColorMap, skipChildren) {
   if (!familyColorMap) familyColorMap = {};
   var kids = childrenOf(m.id, members);
@@ -6039,7 +6082,8 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
   var LOI_TITLES = ['LOI','Q2','Q3','Q4'];
   var isLOI = LOI_TITLES.indexOf((m.title||'').trim()) >= 0;
   var ncClass = 'nc' + (isLOI ? ' loi-card' : m.trainee ? ' trainee' : '') +
-    (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '');
+    (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '') +
+    (mapType === 'current' ? (' ' + memberActivityLevel(m)) : '');
 
   return '<div class="nw' + (isDefaultOpen && hasKids && !skipChildren ? ' open' : '') + '" id="nw-' + m.id + '">'
     + '<div class="' + ncClass + (isForeign ? ' merged-node' : '') + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
@@ -6174,6 +6218,11 @@ function cardSingleTap(id, e) {
 // カードのミニ情報（メモ＋次の予定＋OL記録）— モバイルで名前タップ時に表示
 function memberInfoHtml(m) {
   var html = '';
+  var lastAct = memberLastActivity(m);
+  if (lastAct) {
+    var lvl = memberActivityLevel(m);
+    html += '<div class="ci-plan" style="color:' + (lvl==='act-dormant' ? 'var(--go-rose)' : 'var(--text-mid)') + '">' + (lvl==='act-dormant' ? '💤' : '⚡') + ' 最後の活動：' + lastAct.split('-').slice(1).join('/') + (lvl==='act-dormant' ? '（30日以上前・フォロー推奨）' : '') + '</div>';
+  }
   if (m.memo) html += '<div class="ci-memo">' + evEsc(m.memo) + '</div>';
   var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
   if (plan) html += '<div class="ci-plan">📅 次の予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : '') + '</div>';
