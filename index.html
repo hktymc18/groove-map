@@ -1714,7 +1714,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v255</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v256</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3722,7 +3722,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v255';
+  var DATA_VERSION = 'v256';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -9103,7 +9103,7 @@ function _glJourneyHtml(p){
   h+='<div class="gj-head">'+evEsc(p.titleNow||'現在地')+' <span class="ar">→</span> <b>'+evEsc(p.title||'頂上')+'</b><small>頂上まで '+(_glMonthsUntil(dl)>0?_glMonthsUntil(dl):'—')+'ヶ月（'+sumM+'月）</small></div>';
   h+='<div class="gj-scroll"><div class="gj-tl"><div class="gj-track"></div>';
   if(curM>0) h+='<div class="gj-fill" style="width:'+(X(curM)-1.5)+'%"></div>';
-  events.forEach(function(e){ h+='<div class="gj-ev" style="left:'+X(e.month)+'%" onclick="glEditEvent(\''+e.id+'\')"><span class="gj-chip">'+(e.emoji||'📌')+' '+evEsc(e.name)+'</span><span class="gj-line"></span></div>'; });
+  events.forEach(function(e){ h+='<div class="gj-ev" style="left:'+X(e.month)+'%" onclick="openSeasonPanel(\''+e.id+'\')"><span class="gj-chip">'+(e.emoji||'📌')+' '+evEsc(e.name)+'</span><span class="gj-line"></span></div>'; });
   for(var m=1;m<=12;m++){ var isLoi=m===loiM,isSum=m===sumM,isCur=m===curM,big=isLoi||isSum||isCur;
     var col=isLoi?'var(--go-rose)':(isSum?'var(--accent)':((curM>0&&m<=curM)?'var(--accent)':'var(--surface3)'));
     var sz=big?18:10;
@@ -9140,6 +9140,7 @@ function _glEvModal(id){
     +'<label style="'+lb+'">名前</label><input id="_glEvName" placeholder="例: RRR TRIP" value="'+(e?evEsc(e.name):'')+'" style="'+inS+'">'
     +'<div style="display:flex;gap:10px"><div style="flex:1"><label style="'+lb+'">月</label><select id="_glEvMonth" style="'+inS+'">'+moOpt+'</select></div>'
     +'<div style="flex:1"><label style="'+lb+'">アイコン</label><select id="_glEvEmoji" style="'+inS+'">'+emOpt+'</select></div></div>'
+    +'<label style="'+lb+'">シーズン目標（この行事までに出すフロント数・任意）</label><input id="_glEvTarget" type="number" inputmode="numeric" placeholder="例: 4" value="'+((e&&e.target)?e.target:'')+'" style="'+inS+'">'
     +'<button type="button" onclick="glSaveEvent(\''+(id||'')+'\')" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink,#08121a);font-size:15px;font-weight:800;margin-top:4px">保存</button>'
     +(id?'<button type="button" onclick="glDeleteEvent(\''+id+'\')" style="width:100%;padding:11px;border-radius:10px;border:1px solid #FF5D73;color:#FF5D73;background:transparent;font-size:14px;font-weight:600;margin-top:8px">削除</button>':'')
     +'</div></div>';
@@ -9149,9 +9150,58 @@ function glSaveEvent(id){
   var p=state.goals.plan, evs=_glEvents(p), g=function(x){var el=document.getElementById(x);return el?el.value:'';};
   var name=(g('_glEvName')||'').trim(); if(!name){ toast('名前を入力してください'); return; }
   var month=parseInt(g('_glEvMonth'),10)||1, emoji=g('_glEvEmoji')||'📌';
-  if(id){ var e=evs.filter(function(x){return x.id===id;})[0]; if(e){ e.name=name; e.month=month; e.emoji=emoji; } }
-  else { evs.push({id:'ev'+Date.now(),name:name,month:month,emoji:emoji}); }
+  var target=parseInt(g('_glEvTarget'),10)||0;
+  if(id){ var e=evs.filter(function(x){return x.id===id;})[0]; if(e){ e.name=name; e.month=month; e.emoji=emoji; e.target=target; } }
+  else { evs.push({id:'ev'+Date.now(),name:name,month:month,emoji:emoji,target:target}); }
   _glCloseEvModal(); saveGoals(); renderGoals();
+}
+
+// ── シーズンパス（Phase D）：行事＝シーズン。旗タップで進捗パネル ──
+function _glSeasonWindow(ev, events){
+  // 直前の行事の翌月〜行事月。無ければ1月〜
+  var start=1;
+  events.forEach(function(x){ if(x.id!==ev.id && x.month<ev.month && x.month+1>start) start=x.month+1; });
+  return { start:start, end:ev.month };
+}
+function _glSeasonProgress(p, ev){
+  var yr=(p.deadline&&/^\d{4}/.test(p.deadline))?p.deadline.slice(0,4):String((new Date()).getFullYear());
+  var w=_glSeasonWindow(ev,_glEvents(p)), done=0;
+  for(var m=w.start;m<=w.end;m++){ done+=_glMonthActual(p, yr+'-'+(m<10?'0':'')+m, 'b1'); }
+  return { done:done, target:ev.target||0, win:w, yr:yr };
+}
+function _glCloseSeason(){ var el=document.getElementById('seasonOv'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
+function openSeasonPanel(id){
+  var p=state.goals.plan, ev=_glEvents(p).filter(function(x){return x.id===id;})[0];
+  if(!ev) return;
+  _glCloseSeason();
+  var pr=_glSeasonProgress(p,ev);
+  var pct=pr.target>0?Math.min(100,Math.round(pr.done/pr.target*100)):0;
+  // 残り日数（行事月の末日まで）
+  var end=new Date(parseInt(pr.yr,10), ev.month, 0), today=new Date(); today.setHours(0,0,0,0);
+  var days=Math.max(0, Math.round((end-today)/86400000));
+  // 報酬トラック＆バッジ付与
+  var g=getGame(); g.badges=g.badges||[];
+  var marks=[25,50,75,100], newly=[];
+  var track=marks.map(function(mk){
+    var got=pr.target>0&&pct>=mk, bid='season:'+ev.id+':'+mk;
+    if(got&&g.badges.indexOf(bid)<0){ g.badges.push(bid); newly.push(mk); }
+    return '<div style="flex:1;text-align:center"><div style="width:38px;height:38px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:17px;background:'+(got?'var(--gold-dim)':'var(--surface3)')+';border:2px solid '+(got?'var(--gold)':'var(--border)')+'">'+(got?(mk===100?ev.emoji:'🎖'):'🔒')+'</div><div style="font-size:10px;color:'+(got?'var(--gold)':'var(--text-dim)')+';font-weight:700;margin-top:3px">'+mk+'%</div></div>';
+  }).join('');
+  if(newly.length){ saveGame(); gameConfetti(); toast('🎖 シーズン報酬 '+newly.join('%・')+'% 獲得！'); }
+  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='seasonOv';
+  ov.onclick=function(e){ if(e.target===ov) _glCloseSeason(); };
+  ov.innerHTML='<div class="ms-sheet" style="max-height:84vh;overflow-y:auto"><div class="ms-grip"></div>'
+    +'<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+(ev.emoji||'📌')+' '+evEsc(ev.name)+'</div></div><span class="ms-x" onclick="_glCloseSeason()">✕</span></div>'
+    +'<div style="padding:4px 16px 16px">'
+    +'<div style="text-align:center;margin:4px 0 12px"><span style="font-size:13px;color:var(--text-mid)">'+ev.month+'月開催まで</span> <span style="font-size:26px;font-weight:900;color:var(--accent);font-family:IBM Plex Mono,monospace">'+days+'</span><span style="font-size:13px;color:var(--text-mid)">日</span></div>'
+    +(pr.target>0
+      ? '<div style="font-size:13px;font-weight:700;margin-bottom:5px">シーズン目標：フロント '+pr.done+' / '+pr.target+'<span style="color:var(--text-dim);font-weight:400;font-size:11px">（'+pr.win.start+'月〜'+pr.win.end+'月）</span></div>'
+        +'<div style="height:10px;background:var(--surface3);border-radius:6px;overflow:hidden;margin-bottom:16px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--accent),var(--go-sky));border-radius:6px"></div></div>'
+        +'<div style="display:flex;gap:6px;margin-bottom:16px">'+track+'</div>'
+      : '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:8px 0 16px">シーズン目標が未設定です。「編集」からフロント数を設定すると<br>報酬トラックが有効になります。</div>')
+    +'<button type="button" onclick="_glCloseSeason();glEditEvent(\''+ev.id+'\')" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text);font-size:14px;font-weight:600">✎ このマイルストーンを編集</button>'
+    +'</div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
 function glDeleteEvent(id){
   var p=state.goals.plan; p.events=_glEvents(p).filter(function(x){return x.id!==id;});
