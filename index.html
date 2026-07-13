@@ -1692,7 +1692,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v243</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v244</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3015,7 +3015,8 @@ function renderPCMap(mapType) {
       g.addEventListener('click',function(ev){
         ev.stopPropagation();
         selectCard(mid,ev); applyFocus(lin);
-        if(state.isEditor && !/^MG_/.test(mid) && typeof openEdit==='function') openEdit(mid);
+        if(/^MG_/.test(mid)){ if(typeof mgNodeClick==='function') mgNodeClick(mid); }
+        else if(state.isEditor && typeof openEdit==='function') openEdit(mid);
       });
       g.addEventListener('mouseenter',function(ev){showPcTooltip(mid,ev);});
       g.addEventListener('mouseleave',function(){hidePcTooltip();});
@@ -3107,7 +3108,7 @@ document.addEventListener('contextmenu', function(e) {
 });
 
 function openCtxMenu(memberId, x, y) {
-  if (/^MG_/.test(memberId)) return; // 結合された下位メンバーは操作不可（読み取り専用）
+  if (/^MG_/.test(memberId)) { mgNodeClick(memberId); return; } // 結合ノード→編集権限があれば相手MAPへ
   _ctxTargetId = memberId;
   var menu = document.getElementById('ctxMenu');
   var label = document.getElementById('ctxLabel');
@@ -3685,7 +3686,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v243';
+  var DATA_VERSION = 'v244';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4706,12 +4707,12 @@ function setMemberPriority(mid, p) {
 }
 // メンバーカードのタップ：PCは右ドッキング編集、モバイルはアクションシート
 function openMemberCard(mid) {
-  if (/^MG_/.test(mid)) return;
+  if (/^MG_/.test(mid)) { mgNodeClick(mid); return; }
   if (isPCMode()) { if (typeof openEdit === 'function') openEdit(mid); }
   else { openMemberActions(mid); }
 }
 function openMemberActions(mid) {
-  if (/^MG_/.test(mid)) return;
+  if (/^MG_/.test(mid)) { mgNodeClick(mid); return; }
   var m = null; for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid){ m=state.members[i]; break; } }
   if (!m) return;
   closeMemberActions();
@@ -8107,7 +8108,7 @@ function openAdd() {
 }
 function openEdit(id) {
   try {
-    if (/^MG_/.test(id)) { toast('結合された下位メンバーは編集できません'); return; } // 読み取り専用
+    if (/^MG_/.test(id)) { mgNodeClick(id); return; } // 結合ノード→編集権限があれば相手MAPへ切替して編集
     if (!state.isEditor) return;
     editingId = id;
     var m = null;
@@ -11427,6 +11428,11 @@ function fsLoadSharedMap(ownerUid) {
     }
     renderCurrentView();
     toast('共有MAPを読み込みました ✓');
+    // 結合ノードからの編集ジャンプ：対象メンバーの編集パネルを開く
+    if (_pendingSharedEditId) {
+      var _eid = _pendingSharedEditId; _pendingSharedEditId = null;
+      setTimeout(function(){ if (typeof openEdit === 'function') openEdit(_eid); }, 200);
+    }
     // 共有MAPの変更をリアルタイム反映（閲覧・共同編集どちらも）
     startSharedLiveSync(ownerUid);
   }).catch(function(e) {
@@ -11752,6 +11758,17 @@ function switchToOwner(ownerUid, perm) {
     state.isEditor = perm === 'edit';
     fsLoadSharedMap(ownerUid);
     updateEditorUI();
+    // 権限の食い違い対策：オーナー側の正データがeditなら自動昇格
+    if (perm !== 'edit' && currentUser) {
+      fsGet('maps/' + ownerUid + '/shared/' + currentUser.uid).then(function(d){
+        if (d && d.perm === 'edit' && viewingOwnerUid === ownerUid && !state.isEditor) {
+          state.isEditor = true;
+          updateEditorUI();
+          renderCurrentView();
+          toast('✏️ 編集権限を確認しました');
+        }
+      }).catch(function(){});
+    }
   }
 }
 
@@ -11801,6 +11818,28 @@ function startMergeListener(uid) {
 }
 function isMerged(uid) {
   return (state.mergedMaps || []).some(function(x) { return x.uid === uid; });
+}
+// ── 結合ノードの編集ジャンプ（編集権限があれば相手MAPへ切替して編集を開く） ──
+var _pendingSharedEditId = null;
+function mgResolve(mid) {
+  var mm = state.mergedMaps || [];
+  for (var i = 0; i < mm.length; i++) {
+    var pre = 'MG_' + String(mm[i].uid).substring(0, 6) + '_';
+    if (mid.indexOf(pre) === 0) return { uid: mm[i].uid, srcId: mid.slice(pre.length) };
+  }
+  return null;
+}
+function mgNodeClick(mid) {
+  var r = mgResolve(mid);
+  if (!r || !currentUser) { toast('結合メンバーを特定できませんでした'); return; }
+  // 権限はオーナー側の正データ（maps/{owner}/shared/{自分}）で確認
+  fsGet('maps/' + r.uid + '/shared/' + currentUser.uid).then(function(d) {
+    var perm = (d && d.perm) || (function(){ var o=(sharedOwners||[]).filter(function(x){return x.uid===r.uid;})[0]; return o?o.perm:'view'; })();
+    if (perm !== 'edit') { toast('👁 閲覧のみで共有されています（編集するには相手に「編集」で共有してもらってください）'); return; }
+    toast('相手のMAPに切り替えて編集します…');
+    _pendingSharedEditId = r.srcId;
+    switchToOwner(r.uid, 'edit');
+  }).catch(function(){ toast('権限を確認できませんでした'); });
 }
 // 自分のメンバー配列に、結合中の下位ツリーを接続点(graftId)の下へ差し込む（現状MAPのみ）
 function composeMergedInto(ownMembers, mapType) {
