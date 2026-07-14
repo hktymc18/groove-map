@@ -1777,7 +1777,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v265</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v266</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2715,6 +2715,30 @@ function copyToNextMonth() {
 
   // プレビュー確認 → 確定でコミット
   _showCopyPreview(cur, nextMonth, changes, function() {
+    // リザルト用データを「リセット前」に収集（Phase B）
+    var _rd = null;
+    try {
+      var _p = state.goals && state.goals.plan;
+      var _ym = _glCurYm();
+      var _roots = (state.members || []).filter(function(m){ return !m.parentId && !m.deleted; });
+      var _g = getGame();
+      var _rec = 0; for (var _k in (_g.gameDays || {})) { if (_k.slice(0,7) === _ym) _rec++; }
+      _rd = {
+        ymLabel: cur.replace('.', '年') + '月',
+        name: (currentUser && currentUser.name) || '',
+        org: (currentUser && currentUser.org) || '',
+        title: (_p && _p.titleNow) || '',
+        frontA: _p ? _glMonthActual(_p, _ym, 'b1') : 0,
+        frontT: _p ? _glMonthlyFront(_p) : 0,
+        gsv: _roots[0] ? (_roots[0].ptCurrent || 0) : 0,
+        ct: _p ? _glMonthActual(_p, _ym, 'ct') : 0,
+        action: _p ? _glMonthActual(_p, _ym, 'action') : 0,
+        recDays: _rec,
+        dim: new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate(),
+        streak: _g.streak || 0,
+        promos: changes.filter(function(c){ return c.kind === 'promote' || c.kind === 'advance'; })
+      };
+    } catch(e) { _rd = null; }
     // 翌月に切り替え
     state.currentMonth = nextMonth;
     if (state.months.indexOf(nextMonth) < 0) state.months.unshift(nextMonth);
@@ -2749,7 +2773,122 @@ function copyToNextMonth() {
     var dn = changes.filter(function(c){ return c.kind === 'demote'; }).length;
     var extra = (up || dn) ? '（🎉' + up + ' / ⚠️' + dn + '）' : '';
     toast(nextMonth + ' にコピーしました ✓ ' + extra);
+    // 月末リザルト（Phase B）：先月の成績表を全画面表示
+    if (_rd) setTimeout(function(){ showMonthlyResult(_rd); }, 350);
   });
+}
+
+// ── 月末リザルト＋シェア画像（Phase B） ──
+function _closeResultOv(){ var el=document.getElementById('resultOv'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
+function showMonthlyResult(rd) {
+  _closeResultOv();
+  var hit = rd.frontT > 0 && rd.frontA >= rd.frontT;
+  var stat = function(lb, v, sub){
+    return '<div style="background:var(--surface2);border-radius:12px;padding:11px 12px"><div style="font-size:11px;color:var(--text-dim)">' + lb + '</div>'
+      + '<div style="font-size:21px;font-weight:800;font-family:IBM Plex Mono,monospace">' + v + (sub ? '<span style="font-size:11px;color:var(--text-dim);font-weight:500"> ' + sub + '</span>' : '') + '</div></div>';
+  };
+  var promoHtml = '';
+  if (rd.promos && rd.promos.length) {
+    promoHtml = '<div style="font-size:12px;font-weight:700;margin:12px 0 6px">今月の昇格・前進</div><div style="display:flex;flex-wrap:wrap;gap:6px">'
+      + rd.promos.map(function(c){ return '<span style="background:var(--purple-dim);color:var(--purple);border-radius:16px;padding:5px 11px;font-size:12px;font-weight:700">↗ ' + evEsc(c.name) + ' ' + evEsc(c.from||'') + '→' + evEsc(c.to||'') + '</span>'; }).join('')
+      + '</div>';
+  }
+  var ov = document.createElement('div'); ov.id = 'resultOv';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(5,8,16,.82);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto';
+  ov.onclick = function(e){ if (e.target === ov) _closeResultOv(); };
+  ov.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:20px;max-width:420px;width:100%;padding:20px 18px;max-height:90vh;overflow-y:auto">'
+    + '<div style="text-align:center;margin-bottom:12px"><div style="font-size:11px;letter-spacing:2.5px;color:var(--text-dim);font-weight:800">MONTHLY RESULT</div>'
+    + '<div style="font-size:22px;font-weight:900;margin-top:2px">' + evEsc(rd.ymLabel) + ' リザルト</div>'
+    + '<div style="font-size:12px;color:var(--text-mid);margin-top:2px">' + evEsc(rd.name) + (rd.org ? '（' + evEsc(rd.org) + '）' : '') + (rd.title ? ' ・ ' + evEsc(rd.title) : '') + '</div></div>'
+    + '<div style="display:flex;align-items:center;justify-content:center;gap:8px;background:' + (hit ? 'var(--gold-dim)' : 'var(--surface2)') + ';border:1px solid ' + (hit ? 'var(--gold)' : 'var(--border)') + ';border-radius:14px;padding:12px;margin-bottom:12px">'
+    + '<span style="font-size:22px">' + (hit ? '🏆' : '🧗') + '</span><span style="font-size:15px;font-weight:800;color:' + (hit ? 'var(--gold)' : 'var(--text)') + '">フロント ' + rd.frontA + (rd.frontT ? ' / ' + rd.frontT : '') + (hit ? '　月間目標 達成！' : '　来月へ続く') + '</span></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + stat('GSV', (rd.gsv||0).toLocaleString(), '')
+    + stat('CT実施', rd.ct, '件')
+    + stat('アクション', rd.action, '件')
+    + stat('記録日数', rd.recDays, '/' + rd.dim + '日')
+    + '</div>'
+    + promoHtml
+    + '<button type="button" onclick="generateResultImage()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:16px">📸 画像でシェア（LINEに貼れる）</button>'
+    + '<button type="button" onclick="_closeResultOv()" style="width:100%;padding:11px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:var(--text-mid);font-size:13px;margin-top:8px">閉じて' + '新しい月へ →</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  window._lastResultData = rd;
+  if (hit) setTimeout(function(){ gameConfetti(); }, 250);
+}
+function generateResultImage() {
+  var rd = window._lastResultData; if (!rd) return;
+  var W = 1080, H = 1350;
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var x = cv.getContext('2d');
+  // 背景（SUMMITネイビー）
+  x.fillStyle = '#0B0E15'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#141A28'; _rrect(x, 60, 60, W-120, H-120, 36); x.fill();
+  x.strokeStyle = '#33405C'; x.lineWidth = 2; _rrect(x, 60, 60, W-120, H-120, 36); x.stroke();
+  var cxm = W / 2;
+  x.textAlign = 'center';
+  x.fillStyle = '#7E8AA6'; x.font = '800 34px "Noto Sans JP", sans-serif';
+  x.fillText('M O N T H L Y   R E S U L T', cxm, 160);
+  x.fillStyle = '#F4F6FB'; x.font = '900 88px "Noto Sans JP", sans-serif';
+  x.fillText(rd.ymLabel, cxm, 270);
+  x.fillStyle = '#AAB6CF'; x.font = '600 40px "Noto Sans JP", sans-serif';
+  x.fillText(rd.name + (rd.title ? ' ・ ' + rd.title : ''), cxm, 340);
+  // 達成バナー
+  var hit = rd.frontT > 0 && rd.frontA >= rd.frontT;
+  x.fillStyle = hit ? 'rgba(255,180,84,.16)' : '#1B2232'; _rrect(x, 120, 400, W-240, 130, 24); x.fill();
+  x.strokeStyle = hit ? '#FFB454' : '#33405C'; _rrect(x, 120, 400, W-240, 130, 24); x.stroke();
+  x.fillStyle = hit ? '#FFB454' : '#F4F6FB'; x.font = '900 52px "Noto Sans JP", sans-serif';
+  x.fillText((hit ? '🏆 ' : '🧗 ') + 'フロント ' + rd.frontA + (rd.frontT ? ' / ' + rd.frontT : '') + (hit ? '  達成！' : ''), cxm, 485);
+  // 統計 2×2
+  var stats = [['GSV', (rd.gsv||0).toLocaleString()], ['CT実施', rd.ct + '件'], ['アクション', rd.action + '件'], ['記録日数', rd.recDays + '/' + rd.dim + '日']];
+  for (var i = 0; i < 4; i++) {
+    var gx = 120 + (i % 2) * ((W-240)/2 + 0), gy = 580 + Math.floor(i/2) * 190;
+    var gw = (W-260)/2, gh = 170;
+    if (i % 2 === 1) gx = 120 + gw + 20;
+    x.fillStyle = '#1B2232'; _rrect(x, gx, gy, gw, gh, 20); x.fill();
+    x.fillStyle = '#7E8AA6'; x.font = '600 30px "Noto Sans JP", sans-serif'; x.textAlign = 'left';
+    x.fillText(stats[i][0], gx + 32, gy + 56);
+    x.fillStyle = '#2CE5B8'; x.font = '900 62px "IBM Plex Mono", monospace';
+    x.fillText(String(stats[i][1]), gx + 32, gy + 136);
+  }
+  // 昇格
+  x.textAlign = 'center';
+  var py = 1010;
+  if (rd.promos && rd.promos.length) {
+    x.fillStyle = '#8B7CFF'; x.font = '800 34px "Noto Sans JP", sans-serif';
+    var pl = rd.promos.slice(0, 3).map(function(c){ return c.name + ' ' + (c.from||'') + '→' + (c.to||''); }).join('　');
+    x.fillText('↗ ' + pl, cxm, py);
+    py += 70;
+  }
+  x.fillStyle = '#FFB454'; x.font = '800 36px "Noto Sans JP", sans-serif';
+  x.fillText('🔥 ストリーク ' + rd.streak + '日', cxm, py + 20);
+  x.fillStyle = '#3D465C'; x.font = '800 30px "Noto Sans JP", sans-serif';
+  x.fillText('▲ GROOVE MAP', cxm, H - 110);
+  // 共有 or ダウンロード
+  cv.toBlob(function(blob) {
+    if (!blob) { toast('画像の生成に失敗しました'); return; }
+    var file;
+    try { file = new File([blob], 'result.png', { type: 'image/png' }); } catch(e) { file = null; }
+    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: rd.ymLabel + ' リザルト' }).catch(function(){});
+    } else {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'groove_result.png';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(a.href); }, 800);
+      toast('画像を保存しました（LINEに貼ってシェア！）');
+    }
+  }, 'image/png');
+}
+function _rrect(x, px, py, w, h, r) {
+  x.beginPath();
+  x.moveTo(px + r, py);
+  x.arcTo(px + w, py, px + w, py + h, r);
+  x.arcTo(px + w, py + h, px, py + h, r);
+  x.arcTo(px, py + h, px, py, r);
+  x.arcTo(px, py, px + w, py, r);
+  x.closePath();
 }
 
 // ログイン後にコピーボタンを表示
@@ -3905,7 +4044,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v265';
+  var DATA_VERSION = 'v266';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4462,7 +4601,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v265', d:'2026-07-14', items:['メンバー編集のタスクをその場でチェック（消込）できるように','現状MAPからメンバーのOLをポップアップで閲覧＆記録（MAPの位置を保持）','研修生ファネルのAさん別（BC/ユーザー/流れた/進行中）をタップ→内訳→現状MAPへジャンプ','データのマケ・PG/DLR動員/B1を月度で正しく集計（前月引き継ぎを修正）','PCのデータタブ：当月が空ならデータのある一番左の月から表示','メンバーにLINE ID/URLを登録して💬LINEボタンから直接トークを開ける','GOALのSUMMIT入力を一括フォームに刷新（期限・目標・月収→タイトル自動判定・流通量・客単価→客数自動）','クイック記録に「↩直前を取り消す」を追加','メンバータブは設定で表示/非表示を選択可能に'] },
+  { v:'v266', d:'2026-07-14', items:['メンバー編集のタスクをその場でチェック（消込）できるように','現状MAPからメンバーのOLをポップアップで閲覧＆記録（MAPの位置を保持）','研修生ファネルのAさん別（BC/ユーザー/流れた/進行中）をタップ→内訳→現状MAPへジャンプ','データのマケ・PG/DLR動員/B1を月度で正しく集計（前月引き継ぎを修正）','PCのデータタブ：当月が空ならデータのある一番左の月から表示','メンバーにLINE ID/URLを登録して💬LINEボタンから直接トークを開ける','GOALのSUMMIT入力を一括フォームに刷新（期限・目標・月収→タイトル自動判定・流通量・客単価→客数自動）','クイック記録に「↩直前を取り消す」を追加','メンバータブは設定で表示/非表示を選択可能に'] },
   { v:'v264', d:'2026-07-14', items:['所属ユニオンを自由入力から選択制に変更（入力揺れを防止）','ユニオンを選ぶとUPBD欄にユニオン管理者名を自動表示（あとから編集可）','既存ユーザーもユニオンを選び直すまで利用不可（プロフィールで再選択）'] },
   { v:'v263', d:'2026-07-14', items:['GOAL/今月/MAPの全入力をブラウザのprompt から専用フォームに刷新（価値観・数値目標・カウンター・係数・GSV・メモ等）','PC版のGOAL/今月を画面幅いっぱいに拡大・文字も大きく'] },
   { v:'v262', d:'2026-07-14', items:['🔔お知らせ機能を追加：ホームのベル/右下のバージョン番号から更新内容を確認できます'] },
