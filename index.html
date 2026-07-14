@@ -1109,6 +1109,48 @@ tr.ot-done{opacity:.5}
 .self-delta.dn{color:#FF5D73}
 .self-delta.eq{color:var(--text-dim)}
 .home-rank{display:flex;flex-direction:column;gap:6px}
+/* ── ゲームストリップ＋実績シート＋デイリールーチン ── */
+.game-strip{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:10px 14px;margin-bottom:12px;cursor:pointer;flex-wrap:wrap}
+.game-strip:active{background:var(--surface2)}
+.gs-fire{font-size:13px;font-weight:700;color:var(--text)} .gs-fire b{font-size:17px;color:var(--gold)}
+.gs-lv{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--text)}
+.gs-bar{width:64px;height:6px;border-radius:4px;background:var(--surface3);overflow:hidden;display:inline-block}
+.gs-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--go-sky),var(--accent));border-radius:4px}
+.gs-wk{font-size:12px;font-weight:800;color:var(--text)} .gs-wk small{font-weight:800} .gs-wk small.up{color:var(--accent)} .gs-wk small.dn{color:var(--go-rose)} .gs-wk small.eq{color:var(--text-dim)}
+.gs-more{margin-left:auto;font-size:12px;font-weight:800;color:var(--text-dim)}
+.home-routine{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:11px 13px;margin-bottom:12px}
+.rt-hd{display:flex;justify-content:space-between;font-size:13px;font-weight:800;color:var(--text);margin-bottom:4px}
+.rt-hd .go-tnum{color:var(--text-dim);font-size:12px}
+.rt-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px dashed var(--border);cursor:pointer}
+.rt-row:first-of-type{border-top:0}
+.rt-chk{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:transparent}
+.rt-row.done .rt-chk{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
+.rt-lb{flex:1;font-size:13.5px;font-weight:700;color:var(--text)}
+.rt-lb small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:600}
+.rt-row.done .rt-lb{color:var(--text-dim)}
+.rt-go{color:var(--text-dim);font-size:15px}
+.home-bell{position:relative;flex:none;font-size:18px;cursor:pointer;padding:6px 9px;border-radius:11px;background:var(--surface);border:1px solid var(--border);line-height:1}
+.bell-dot{position:absolute;top:4px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--red);border:1.5px solid var(--surface)}
+.rn-item{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:11px 13px;margin-bottom:10px}
+.rn-item.latest{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 8%,transparent),var(--surface) 60%)}
+.rn-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rn-v{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--text)}
+.rn-new{font-size:9px;font-weight:900;letter-spacing:1px;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);border-radius:5px;padding:2px 6px}
+.rn-d{margin-left:auto;font-size:11px;color:var(--text-dim)}
+.rn-ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--text-mid);line-height:1.7}
+.rn-ul li{margin-bottom:2px}
+.trophy-ov{position:fixed;inset:0;z-index:560;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center}
+.trophy-sheet{width:100%;max-width:560px;max-height:82vh;overflow-y:auto;background:var(--bg);border-radius:18px 18px 0 0;border:1px solid var(--border);padding:14px 16px 26px;-webkit-overflow-scrolling:touch}
+.ts-hd{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:900;color:var(--text);margin-bottom:12px}
+.ts-x{font-size:15px;color:var(--text-dim);cursor:pointer;padding:4px 8px}
+.ts-stats{display:flex;gap:9px;margin-bottom:14px}
+.ts-st{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 11px;min-width:0}
+.ts-st .k{font-size:11px;font-weight:800;color:var(--text-dim)}
+.ts-st .v{font-size:20px;font-weight:900;color:var(--text)} .ts-st .v small{font-size:11px;color:var(--text-dim)}
+.ts-st .s{font-size:9.5px;color:var(--text-dim);margin-top:2px}
+.ts-bar{height:7px;border-radius:5px;background:var(--surface3);overflow:hidden;margin:8px 0 2px}
+.ts-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--go-sky),var(--accent))}
+.ts-sec{font-size:12.5px;font-weight:800;color:var(--text);margin:14px 0 8px}
 .rank-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px}
 .rank-row.self{border-color:var(--accent);background:var(--accent-dim)}
 .rank-no{width:28px;text-align:center;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text-dim);flex:none;font-size:15px}
@@ -1732,7 +1774,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px">v260</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v262</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3742,7 +3784,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v260';
+  var DATA_VERSION = 'v262';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4051,6 +4093,7 @@ function getGame() {
   if (typeof g.stepUpdatedDate !== 'string') g.stepUpdatedDate = '';
   if (!g.bpcAwarded) g.bpcAwarded = [];
   if (!g.brAwarded) g.brAwarded = [];
+  if (!g.alDays) g.alDays = {}; // ATTACK LISTを見た日
   return g;
 }
 // 週の始まり（月曜）を 'YYYY-MM-DD' で返す
@@ -4295,6 +4338,129 @@ function gameRankPaint() {
   html += '<div class="rank-toggle" onclick="gameToggleRank()">ランキングに表示しない</div>';
   box.innerHTML = html;
 }
+// ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
+var RELEASE_NOTES = [
+  { v:'v262', d:'2026-07-14', items:['🔔お知らせ機能を追加：ホームのベル/右下のバージョン番号から更新内容を確認できます'] },
+  { v:'v261', d:'2026-07-14', items:['ホームを刷新：ゲーム要素を1行ストリップに統合（タップで実績・ランキングTOP10・称号）','🎯デイリールーチン新設（ATTACK LIST・記録・夜の締め）'] },
+  { v:'v254〜260', d:'2026-07-14', items:['デザイン全面刷新（SUMMIT）','ホーム再設計：クイック記録・おかえり・夜の締め','シーズンパス／週次成長レポート／自動コーチング','GSV検算・変更履歴・更新バナー','はじめの4ステップ（初期セットアップ）'] },
+  { v:'v242〜253', d:'2026-07-13', items:['📆今月タブ新設：今日やる分・ビジネスKPI・マイカウンター（スタンプ/カレンダー）','共有MAPの共同編集を修復（編集権限で保存可能に）','結合ノードから相手MAPへ編集ジャンプ（PC/モバイル）','結合で0段目（共有元本人）を表示','データ/OL：表示チーム切替＋複数チーム合算表示＋チーム比較','タスクをGoogle ToDoへ連携・予定に色を引き継ぎ'] },
+  { v:'v226〜232', d:'2026-07-08', items:['GOAL再設計：頂上（最重要目標）→道のり（通過点）→今月のフォーカス','育成パイプライン逆算（LOIカウント月・間に合う/警告）','OL育成をダッシュボード化（PC表・停滞警告・経過ソート）','金の船グリッド・3〜7人OLテーブル'] },
+  { v:'v222〜225', d:'2026-07-07', items:['GOALタブ新設：価値観→年間→月間→日々の逆算プランナー','マイルストーン（サクセストリップ/アカデミー）','ダークモードの文字色改善・編集パネルのボタン配置変更'] }
+];
+function hasUnseenNotes() {
+  try { return localStorage.getItem('gm_seenNote') !== RELEASE_NOTES[0].v; } catch(e) { return false; }
+}
+function openReleaseNotes() {
+  try { localStorage.setItem('gm_seenNote', RELEASE_NOTES[0].v); } catch(e) {}
+  var old = document.getElementById('notesOv'); if (old && old.parentNode) old.parentNode.removeChild(old);
+  var body = RELEASE_NOTES.map(function(n, i){
+    return '<div class="rn-item' + (i===0?' latest':'') + '">'
+      + '<div class="rn-hd"><span class="rn-v">' + evEsc(n.v) + '</span>' + (i===0?'<span class="rn-new">NEW</span>':'') + '<span class="rn-d go-tnum">' + evEsc(n.d) + '</span></div>'
+      + '<ul class="rn-ul">' + n.items.map(function(t){ return '<li>' + evEsc(t) + '</li>'; }).join('') + '</ul>'
+      + '</div>';
+  }).join('');
+  var ov = document.createElement('div');
+  ov.id = 'notesOv'; ov.className = 'trophy-ov';
+  ov.onclick = function(e){ if (e.target === ov) { if(ov.parentNode) ov.parentNode.removeChild(ov); } };
+  ov.innerHTML = '<div class="trophy-sheet"><div class="ts-hd"><span>🔔 お知らせ（アップデート情報）</span>'
+    + '<span class="ts-x" onclick="var o=document.getElementById(\'notesOv\');if(o&&o.parentNode)o.parentNode.removeChild(o)">✕</span></div>'
+    + body + '</div>';
+  document.body.appendChild(ov);
+  if (currentView === 'home') setTimeout(renderHome, 100); // ベルの未読ドットを消す
+}
+
+// ── デイリールーチン（朝AL→日中記録→夜締め） ──
+var AL_URL = 'https://hktymc18.github.io/hotlist/';
+function _alStreak(g) {
+  var n = 0, d = new Date(); d.setHours(0,0,0,0);
+  var pad = function(x){ return (x<10?'0':'')+x; };
+  var key = function(dt){ return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate()); };
+  if (!g.alDays[key(d)]) d.setDate(d.getDate()-1);
+  for (var i=0;i<400;i++){ if (g.alDays[key(d)]) { n++; d.setDate(d.getDate()-1); } else break; }
+  return n;
+}
+function alOpenDaily() {
+  var g = getGame(), today = gameToday();
+  window.open(AL_URL, '_blank');
+  if (!g.alDays[today]) {
+    g.alDays[today] = 1;
+    g.xp += 5; g.weekXp = (g.weekXp || 0) + 5;
+    gameMarkActive(); saveGame();
+    gameXpFloat(5);
+    toast('🎯 ATTACK LIST チェック ✓ (+5XP)');
+  }
+  if (currentView === 'home') setTimeout(renderHome, 300);
+}
+function dailyRoutineHtml(g, today) {
+  var alDone = !!g.alDays[today];
+  var recDone = !!(g.gameDays && g.gameDays[today]);
+  var closeDone = !!(g.closedDays && g.closedDays[today]);
+  var doneN = (alDone?1:0)+(recDone?1:0)+(closeDone?1:0);
+  var alStreak = _alStreak(g);
+  function row(done, ic, label, sub, act) {
+    return '<div class="rt-row' + (done?' done':'') + '"' + (act && !done ? ' onclick="' + act + '"' : (act ? ' onclick="' + act + '"' : '')) + '>'
+      + '<span class="rt-chk">' + (done?'✓':'') + '</span>'
+      + '<span class="rt-lb">' + ic + ' ' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span>'
+      + (done ? '' : '<span class="rt-go">›</span>') + '</div>';
+  }
+  return '<div class="home-routine"><div class="rt-hd"><span>🎯 今日のルーチン</span><span class="go-tnum">' + doneN + '/3</span></div>'
+    + row(alDone, '📋', 'ATTACK LISTを見る', (alStreak>1 ? '🔥' + alStreak + '日連続' : '毎朝の入口'), 'alOpenDaily()')
+    + row(recDone, '⚡', '今日1つ記録する', 'クイック記録でOK', '')
+    + row(closeDone, '🌙', '夜の締めをする', '1日をふりかえって確定', 'closeToday()')
+    + '</div>';
+}
+// ── 実績シート（ストリップタップで開く：詳細・称号・ランキングTOP10） ──
+function closeTrophySheet(e) {
+  if (e && e.target !== document.getElementById('trophyOv')) return;
+  var o = document.getElementById('trophyOv'); if (o && o.parentNode) o.parentNode.removeChild(o);
+}
+function openTrophySheet() {
+  closeTrophySheet();
+  var g = getGame(), li = gameLevelInfo(g.xp);
+  var pct = li.max ? 100 : Math.round(li.into / li.need * 100);
+  var streak = gameDisplayStreak(g);
+  var bdefs = badgeDefs(), earnedCnt = 0;
+  var badgesHtml = bdefs.map(function(b){
+    var got = g.badges.indexOf(b.id) >= 0 || b.ok;
+    if (got) earnedCnt++;
+    return '<div class="bdg ' + (got ? 'earned' : 'locked') + '" title="' + evEsc(b.desc) + '">'
+      + '<div class="bdg-ic">' + (got ? b.ic : '🔒') + '</div>'
+      + '<div class="bdg-nm">' + evEsc(b.nm) + '</div></div>';
+  }).join('');
+  var thisW = g.weekXp || 0, lastW = g.lastWeekXp || 0, dw = thisW - lastW;
+  var ov = document.createElement('div');
+  ov.id = 'trophyOv'; ov.className = 'trophy-ov';
+  ov.onclick = closeTrophySheet;
+  ov.innerHTML = '<div class="trophy-sheet">'
+    + '<div class="ts-hd"><span>🏅 実績</span><span class="ts-x" onclick="closeTrophySheet()">✕</span></div>'
+    + '<div class="ts-stats">'
+    +   '<div class="ts-st"><div class="k">🔥 連続</div><div class="v go-tnum">' + streak + '<small>日</small></div><div class="s">最高' + (g.bestStreak||0) + '日・🛡保険' + (g.streakInsurance||0) + '</div></div>'
+    +   '<div class="ts-st"><div class="k">Lv.' + li.level + '</div><div class="ts-bar"><i style="width:' + pct + '%"></i></div><div class="s">' + (li.max ? 'MAX' : 'あと' + (li.need - li.into) + 'XP') + '</div></div>'
+    +   '<div class="ts-st"><div class="k">今週XP</div><div class="v go-tnum">' + thisW + '</div><div class="s">' + (dw>0?('▲先週比+'+dw):(dw<0?('▼先週比'+dw):'先週と同じ')) + '</div></div>'
+    + '</div>'
+    + '<div class="ts-sec">🏆 ランキング（今週・TOP10）</div>'
+    + '<div id="tsRank" class="home-rank"><div class="rank-loading">読み込み中…</div></div>'
+    + '<div class="ts-sec">🏅 称号 <span class="go-tnum" style="font-size:11px;color:var(--text-dim)">' + earnedCnt + '/' + bdefs.length + '</span></div>'
+    + '<div class="home-badges" style="margin:0">' + badgesHtml + '</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  // ランキングTOP10
+  var gg = getGame();
+  if (gg.rankOptIn === false) {
+    var tb = document.getElementById('tsRank');
+    if (tb) tb.innerHTML = '<div class="rank-empty">ランキングは非表示中です<br><button class="rank-join" onclick="gameToggleRank();openTrophySheet()">参加する</button></div>';
+  } else {
+    gameFetchRanking(function(rows){
+      var tb = document.getElementById('tsRank'); if (!tb) return;
+      var selfIdx = -1;
+      for (var k=0;k<rows.length;k++){ if (rows[k].isSelf) { selfIdx = k; break; } }
+      var html = rows.slice(0, 10).map(function(r,i){ return gameRankRowHtml(r,i); }).join('');
+      if (selfIdx >= 10) html += '<div style="margin-top:4px">' + gameRankRowHtml(rows[selfIdx], selfIdx) + '</div>';
+      html += '<div class="rank-toggle" onclick="gameToggleRank();closeTrophySheet()">ランキングに表示しない</div>';
+      tb.innerHTML = html || '<div class="rank-empty">まだデータがありません</div>';
+    });
+  }
+}
 function gameRenderRanking() {
   var box = document.getElementById('homeRank');
   if (!box) return;
@@ -4449,6 +4615,7 @@ function closeToday() {
   ov.innerHTML = '<div class="ms-sheet" style="max-height:80vh;overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🌙 今日を締める</div></div><span class="ms-x" onclick="var o=document.getElementById(\'closeDayOv\');if(o&&o.parentNode)o.parentNode.removeChild(o)">✕</span></div>'
     + '<div style="padding:4px 16px 16px">' + rows
+    + (function(){ var ds=(new Date().getFullYear()*372+(new Date().getMonth())*31+new Date().getDate()); var q=(ds%2===0)?('💡 '+GAME_TIPS[ds%GAME_TIPS.length]):('💬 '+GAME_QUOTES[ds%GAME_QUOTES.length]); return '<div style="margin-top:12px;padding:11px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);font-size:12.5px;color:var(--text-mid);line-height:1.7">'+evEsc(q)+'</div>'; })()
     + '<button type="button" onclick="confirmCloseToday()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:14px">お疲れさま！締める（+' + GAME_XP.close + 'XP）</button>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -5099,14 +5266,23 @@ function renderHome() {
         + (dorm ? ' ・ <span style="color:var(--go-rose)">💤フォロー要 ' + dorm + '人</span>' : ' ・ 全員稼働中🔥') + '</div>';
     }
   } catch(e) {}
+  // ゲームストリップ（1行）：タップで実績シート（バッジ・ランキングTOP10）
+  var dwTxt = dw > 0 ? ('▲+' + dw) : (dw < 0 ? ('▼' + dw) : '±0');
+  var stripHtml = '<div class="game-strip" onclick="openTrophySheet()">'
+    + '<span class="gs-fire">🔥<b>' + streak + '</b>日</span>'
+    + '<span class="gs-lv">Lv.' + li.level + '<span class="gs-bar"><i style="width:' + pct + '%"></i></span></span>'
+    + '<span class="gs-wk go-tnum">今週 +' + thisW + 'XP <small class="' + deltaCls + '">' + dwTxt + '</small></span>'
+    + '<span class="gs-more">🏅 ›</span></div>';
   wrap.innerHTML = '<div class="home-wrap">'
-    + '<div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
-    + '<div class="home-date">' + gameDateLabel() + '</div>'
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">'
+    +   '<div><div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
+    +   '<div class="home-date">' + gameDateLabel() + '</div></div>'
+    +   '<span class="home-bell" onclick="openReleaseNotes()" title="お知らせ（アップデート情報）">🔔' + (hasUnseenNotes() ? '<i class="bell-dot"></i>' : '') + '</span>'
+    + '</div>'
     + ftueHtml
     + comebackHtml
-    + '<div class="home-streak"><span class="home-streak-fire">🔥</span><div><span class="home-streak-num">' + streak + '</span> <span style="font-size:14px;color:var(--text)">日連続</span><div class="home-streak-label">最高 ' + (g.bestStreak||0) + '日 ・ 🛡保険 残り' + (g.streakInsurance||0) + '回（週1回復）</div></div></div>'
-    + '<div class="home-lv"><div class="home-lv-top"><span>Lv.' + li.level + '</span><span>' + lvRight + '</span></div>'
-    + '<div class="home-lv-bar"><div class="home-lv-fill" style="width:' + pct + '%"></div></div></div>'
+    + stripHtml
+    + dailyRoutineHtml(g, today)
     + qrHtml
     + nightHtml
     + coachHtml
@@ -5118,21 +5294,8 @@ function renderHome() {
     + insightsHtml()
     + '<div class="home-sec-label">📊 先月からの変化</div>'
     + '<div id="homeChanges" class="home-changes"><div class="ck-empty" style="color:var(--text-dim)">読み込み中…</div></div>'
-    + '<div class="home-sec-label"><span>🎯 今日のミッション</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + doneCount + '/' + defs.length + '</span></div>'
-    + missionsHtml
-    + '<div class="home-sec-label"><span>🏅 称号</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">' + earnedCnt + '/' + bdefs.length + '</span></div>'
-    + '<div class="home-badges">' + badgesHtml + '</div>'
-    + '<div class="home-sec-label">📊 今週のあなた</div>'
-    + selfHtml
-    + '<div class="home-sec-label"><span>🏆 ランキング</span><span style="color:var(--text-dim);font-weight:400;font-family:IBM Plex Mono,monospace">全ユーザー・今週</span></div>'
-    + '<div id="homeRank" class="home-rank"><div class="rank-loading">読み込み中…</div></div>'
-    + '<div class="home-sec-label">💡 今日の学び</div>'
-    + '<div class="home-tip">' + evEsc(tip) + '</div>'
-    + '<div class="home-sec-label">💬 今日の一言</div>'
-    + '<div class="home-quote">' + evEsc(quote) + '</div>'
     + '</div>';
   updateHomeBadge();
-  gameRenderRanking();
   renderMonthlyChanges();
 }
 // 演出
