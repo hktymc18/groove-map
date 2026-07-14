@@ -1736,7 +1736,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <input id="signupName" type="text" placeholder="お名前" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupOrg" type="text" placeholder="屋号" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupArea" type="text" placeholder="活動地域（例：東京・大阪）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <input id="signupUnion" type="text" placeholder="所属ユニオン" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <select id="signupUnion" onchange="onUnionSelect(this,'signupUpBd')" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">所属ユニオンを選択</option></select>
       <input id="signupUpRuby" type="text" placeholder="UPルビー" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupUpBd" type="text" placeholder="UPBD" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupEmail" type="email" placeholder="メールアドレス" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
@@ -1777,7 +1777,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v263</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v264</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2068,7 +2068,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div id="profileMandatoryNote" style="display:none;font-size:13px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5">続けるには、ユニオン名・活動地域・UPルビー・UPBD の入力が必要です。</div>
     <div class="fr"><label class="fl">お名前</label><input class="fi" id="profileName" placeholder="山内 北斗"></div>
     <div class="fr"><label class="fl">屋号</label><input class="fi" id="profileOrg" placeholder="GROOVE"></div>
-    <div class="fr"><label class="fl">所属ユニオン <span style="color:var(--accent)">*</span></label><input class="fi" id="profileUnion" placeholder="BASE REVE"></div>
+    <div class="fr"><label class="fl">所属ユニオン <span style="color:var(--accent)">*</span></label><select class="fi" id="profileUnion" onchange="onUnionSelect(this,'profileUpBd')" style="-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">ユニオンを選択</option></select></div>
     <div class="fr"><label class="fl">活動地域 <span style="color:var(--accent)">*</span></label><input class="fi" id="profileArea" placeholder="東京・大阪"></div>
     <div class="fr"><label class="fl">UPルビー <span style="color:var(--accent)">*</span></label><input class="fi" id="profileUpRuby" placeholder="UPルビー"></div>
     <div class="fr"><label class="fl">UPBD <span style="color:var(--accent)">*</span></label><input class="fi" id="profileUpBd" placeholder="UPBD"></div>
@@ -3678,10 +3678,55 @@ function adminToggleRole(uid) {
   renderAdminList();
 }
 
+// ── ユニオン一覧（選択制）＋デフォルトUPBD（ユニオン管理者） ──
+var UNION_LIST = [
+  { name:'GRANT',        upbd:'木村妃咲' },
+  { name:'PRESTO',       upbd:'中原賢三' },
+  { name:'LIEN',         upbd:'小川拓郎' },
+  { name:'BEYOND',       upbd:'堀田めぐみ' },
+  { name:'FELIN',        upbd:'平井凛太郎' },
+  { name:'FORMULA',      upbd:'木下文貴' },
+  { name:'REVITALIZE',   upbd:'藤原拓晶' },
+  { name:'INFLUENCE',    upbd:'高島健佑' },
+  { name:'BASE ANTARES', upbd:'馬越雅哉' },
+  { name:'BASE REVE',    upbd:'井上美沙子' },
+  { name:'LIEN LOAD',    upbd:'松田郁愛' },
+  { name:'DEFI',         upbd:'中原賢三' },
+  { name:'GRANDIR',      upbd:'嶽本尚希' },
+  { name:'SFIDA',        upbd:'' }
+];
+function unionOptionsHtml(placeholder) {
+  var h = '<option value="">' + (placeholder || 'ユニオンを選択') + '</option>';
+  UNION_LIST.forEach(function(u){
+    h += '<option value="' + u.name + '" data-upbd="' + u.upbd + '">' + u.name + '</option>';
+  });
+  return h;
+}
+// select要素へ選択肢を流し込む（未流し込みのときだけ）
+function populateUnionSelects() {
+  var targets = [
+    { id:'signupUnion',  ph:'所属ユニオンを選択' },
+    { id:'profileUnion', ph:'ユニオンを選択' }
+  ];
+  targets.forEach(function(t){
+    var s = document.getElementById(t.id);
+    if (s && s.tagName === 'SELECT' && s.options.length <= 1) s.innerHTML = unionOptionsHtml(t.ph);
+  });
+}
+// ユニオン選択時：デフォルトで管理者名をUPBD欄へ（あとから編集可）
+function onUnionSelect(sel, upbdId) {
+  if (!sel) return;
+  var opt = sel.options[sel.selectedIndex];
+  var mgr = opt ? (opt.getAttribute('data-upbd') || '') : '';
+  var t = document.getElementById(upbdId);
+  if (t) t.value = mgr;
+}
+
 // プロフィールが必須4項目を満たしているか
+// （unionSelectedV2＝選択制ユニオンで選び直したか。旧ユーザーは強制で選び直させる）
 function profileComplete(u) {
   u = u || currentUser || {};
-  return !!(u.union && u.area && u.upRuby && u.upBd);
+  return !!(u.union && u.area && u.upRuby && u.upBd && u.unionSelectedV2);
 }
 // ログイン後ゲート：未入力なら強制入力モーダルを開く
 function enforceProfileGate() {
@@ -3697,7 +3742,9 @@ function openProfileModal() {
   if (el('profileName')) el('profileName').value = currentUser.name || '';
   if (el('profileOrg'))  el('profileOrg').value  = currentUser.org  || '';
   if (el('profileArea')) el('profileArea').value  = currentUser.area || '';
-  if (el('profileUnion'))el('profileUnion').value = currentUser.union|| '';
+  populateUnionSelects();
+  // 選択制ユニオン：既に選び直し済みのユーザーだけ現在値を復元。旧ユーザーは未選択にして選び直しを強制。
+  if (el('profileUnion')) el('profileUnion').value = currentUser.unionSelectedV2 ? (currentUser.union || '') : '';
   if (el('profileUpRuby'))el('profileUpRuby').value = currentUser.upRuby || '';
   if (el('profileUpBd')) el('profileUpBd').value  = currentUser.upBd || '';
   var accEmail = el('profileAccountEmail');
@@ -3759,6 +3806,7 @@ function saveProfile() {
   currentUser.name = name; currentUser.org = org;
   currentUser.area = area; currentUser.union = union;
   currentUser.upRuby = upRuby; currentUser.upBd = upBd;
+  currentUser.unionSelectedV2 = true; // 選択制ユニオンで確定済みの印
 
   // ヘッダー更新
   var logo = document.getElementById('appLogo');
@@ -3776,7 +3824,7 @@ function saveProfile() {
   if (USE_FIREBASE && currentUser.uid) {
     fsSet('users/' + currentUser.uid, {
       name: name, org: org, area: area, union: union,
-      upRuby: upRuby, upBd: upBd,
+      upRuby: upRuby, upBd: upBd, unionSelectedV2: true,
       email: currentUser.email, uid: currentUser.uid,
       registrationComplete: true, updatedAt: new Date().toISOString()
     }).then(function(){ toast('プロフィールを保存しました ✓'); });
@@ -3787,7 +3835,8 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v263';
+  var DATA_VERSION = 'v264';
+  populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4343,6 +4392,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v264', d:'2026-07-14', items:['所属ユニオンを自由入力から選択制に変更（入力揺れを防止）','ユニオンを選ぶとUPBD欄にユニオン管理者名を自動表示（あとから編集可）','既存ユーザーもユニオンを選び直すまで利用不可（プロフィールで再選択）'] },
   { v:'v263', d:'2026-07-14', items:['GOAL/今月/MAPの全入力をブラウザのprompt から専用フォームに刷新（価値観・数値目標・カウンター・係数・GSV・メモ等）','PC版のGOAL/今月を画面幅いっぱいに拡大・文字も大きく'] },
   { v:'v262', d:'2026-07-14', items:['🔔お知らせ機能を追加：ホームのベル/右下のバージョン番号から更新内容を確認できます'] },
   { v:'v261', d:'2026-07-14', items:['ホームを刷新：ゲーム要素を1行ストリップに統合（タップで実績・ランキングTOP10・称号）','🎯デイリールーチン新設（ATTACK LIST・記録・夜の締め）'] },
@@ -11984,7 +12034,7 @@ function doSignup() {
         var uid = cred.user.uid;
         return fsSet('users/' + uid, {
           name: name, org: org, email: email, uid: uid,
-          area: area, union: union, upRuby: upRuby, upBd: upBd,
+          area: area, union: union, upRuby: upRuby, upBd: upBd, unionSelectedV2: true,
           role: 'member', status: 'pending', registrationComplete: true,
           createdAt: new Date().toISOString()
         });
