@@ -1187,6 +1187,7 @@ tr.ot-done{opacity:.5}
 .home-menu{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 /* ── GOAL（価値観→年→月→日） ── */
 .gl-wrap{max-width:760px;margin:0 auto;padding:14px 14px 90px}
+@media(min-width:1000px){.gl-wrap{max-width:1520px;padding:22px 36px 90px}.gl-title{font-size:24px}}
 .gl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .gl-title{font-size:19px;font-weight:800;color:var(--text)}
 .gl-boards{display:flex;gap:6px}
@@ -1286,6 +1287,8 @@ tr.ot-done{opacity:.5}
 .ms-add-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 /* ===== GOAL 再設計（頂上→道のり→今月のフォーカス） ===== */
 .go-wrap{max-width:1160px;margin:0 auto}
+@media(min-width:1280px){.go-wrap{max-width:1440px}.go-summit{padding:34px 40px}.go-title{font-size:44px}.go-panel{padding:22px 24px 16px}.go-flead{font-size:26px}}
+.gl-form-sheet{max-width:600px;margin:0 auto}
 .go-tnum{font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono',ui-monospace,monospace}
 .go-eyebrow{font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--text-dim);margin:22px 2px 10px;display:flex;align-items:center;gap:7px}
 .go-eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
@@ -1774,7 +1777,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v262</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v263</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3784,7 +3787,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v262';
+  var DATA_VERSION = 'v263';
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -4340,6 +4343,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v263', d:'2026-07-14', items:['GOAL/今月/MAPの全入力をブラウザのprompt から専用フォームに刷新（価値観・数値目標・カウンター・係数・GSV・メモ等）','PC版のGOAL/今月を画面幅いっぱいに拡大・文字も大きく'] },
   { v:'v262', d:'2026-07-14', items:['🔔お知らせ機能を追加：ホームのベル/右下のバージョン番号から更新内容を確認できます'] },
   { v:'v261', d:'2026-07-14', items:['ホームを刷新：ゲーム要素を1行ストリップに統合（タップで実績・ランキングTOP10・称号）','🎯デイリールーチン新設（ATTACK LIST・記録・夜の締め）'] },
   { v:'v254〜260', d:'2026-07-14', items:['デザイン全面刷新（SUMMIT）','ホーム再設計：クイック記録・おかえり・夜の締め','シーズンパス／週次成長レポート／自動コーチング','GSV検算・変更履歴・更新バナー','はじめの4ステップ（初期セットアップ）'] },
@@ -6512,9 +6516,10 @@ function editField(id, field, e) {
     m.gender = m.gender === 'male' ? 'female' : 'male';
     toast(m.gender === 'male' ? '♂ 男性に変更' : '♀ 女性に変更');
   } else if (field === 'title') {
-    var v = prompt('タイトルを入力（例: B1, LOI, BR, E）', m.title||'');
-    if (v === null) return;
-    m.title = v.trim();
+    glForm('🏷 タイトル', [{label:'タイトル', value:m.title||'', ph:'例: B1, LOI, BR, E'}], function(v){
+      m.title = v[0].trim(); renderCurrentView(); autoSave();
+    });
+    return;
   } else if (field === 'activity') {
     // 稼働タイプと%を一度に
     var types = ['', 'S', 'A', 'B', 'C'];
@@ -6523,25 +6528,31 @@ function editField(id, field, e) {
     var next = (cur + 1) % types.length;
     m.activity = types[next];
     if (m.activity && m.activity !== 'S') {
-      var r = prompt("稼働率(%)を入力", m.actRate||'');
-      if (r !== null) m.actRate = r;
+      glForm('📈 稼働率', [{label:'稼働率（%）', type:'number', value:m.actRate||''}], function(v){
+        m.actRate = v[0]; renderCurrentView(); autoSave();
+      });
     }
     toast("稼働: "+labels[next]);
   } else if (field === 'pt') {
     var _arr = _arrOf(m);
     var _kid = sumChildGSV(m.id, _arr);
-    var v = prompt('GSVを入力（配下合計 ' + _kid.toLocaleString() + ' ＋ 自分の分）', m.ptCurrent||0);
-    if (v === null) return;
-    setMemberGSV(m, v, _arr); // アップラインへ自動反映
-    var f = prompt('固定で上がる見込みポイント（任意）', m.ptFixed||0);
-    if (f !== null) m.ptFixed = parseInt(f)||0;
+    glForm('💠 GSV', [
+      {label:'GSV（配下合計 ' + _kid.toLocaleString() + ' ＋ 自分の分）', type:'number', value:m.ptCurrent||0, half:true},
+      {label:'固定で上がる見込み（任意）', type:'number', value:m.ptFixed||0, half:true}
+    ], function(v){
+      setMemberGSV(m, v[0], _arr); // アップラインへ自動反映
+      m.ptFixed = parseInt(v[1])||0;
+      renderCurrentView(); autoSave();
+    });
+    return;
   } else if (field === 'morale') {
     m.morale = (m.morale||1) >= 3 ? 1 : (m.morale||1) + 1;
     toast("やる気: "+moraleEmoji(m.morale));
   } else if (field === 'memo') {
-    var v = prompt('メモを入力', m.memo||'');
-    if (v === null) return;
-    m.memo = v;
+    glForm('📝 メモ', [{label:'メモ', type:'textarea', value:m.memo||''}], function(v){
+      m.memo = v[0]; renderCurrentView(); autoSave();
+    });
+    return;
   }
 
   renderCurrentView();
@@ -9306,16 +9317,23 @@ function _glMetricHtml(it){
 
 // ── 操作 ──
 function glBoard(b){ _glBoard=b; renderGoals(); }
-function glEditYear(){ var v=prompt('対象の年（西暦）', state.goals.year); if(v===null)return; var y=parseInt(v,10); if(y>2000&&y<2100){ state.goals.year=y; saveGoals(); renderGoals(); } }
-function glEditVision(){ var v=prompt('価値観 / 理想の人生（改行OK）', state.goals.vision||''); if(v===null)return; state.goals.vision=v.trim(); saveGoals(); renderGoals(); }
-function glAddGoal(){ var t=prompt('GOAL（やりたいこと・中長期の目標）'); if(!t||!t.trim())return; state.goals.items.push({id:genGoalId(),level:'goal',parentId:null,title:t.trim()}); saveGoals(); renderGoals(); }
-function glAddAnnual(goalId){ var t=prompt('年間目標（'+state.goals.year+'年）'); if(!t||!t.trim())return; state.goals.items.push({id:genGoalId(),level:'annual',parentId:goalId,title:t.trim()}); saveGoals(); renderGoals(); }
+function glEditYear(){ glForm('📅 対象の年',[{label:'西暦',type:'number',value:state.goals.year}],function(v){ var y=parseInt(v[0],10); if(y>2000&&y<2100){ state.goals.year=y; saveGoals(); renderGoals(); } else toast('2001〜2099で入力してください'); }); }
+function glEditVision(){ glForm('🌱 価値観 / 理想の人生',[{label:'あなたの価値観・理想の人生（改行OK）',type:'textarea',value:state.goals.vision||'',ph:'例：自由でクリエイティブに生きる。家族との時間を大切に…'}],function(v){ state.goals.vision=v[0].trim(); saveGoals(); renderGoals(); }); }
+function glAddGoal(){ glForm('🎯 GOALを追加',[{label:'やりたいこと・中長期の目標',value:'',ph:'例：経済的自由を手に入れる'}],function(v){ var t=v[0].trim(); if(!t)return; state.goals.items.push({id:genGoalId(),level:'goal',parentId:null,title:t}); saveGoals(); renderGoals(); }); }
+function glAddAnnual(goalId){ glForm('📅 年間目標を追加（'+state.goals.year+'年）',[{label:'今年の目標',value:'',ph:'例：ルビーになる'}],function(v){ var t=v[0].trim(); if(!t)return; state.goals.items.push({id:genGoalId(),level:'annual',parentId:goalId,title:t}); saveGoals(); renderGoals(); }); }
 function glAddMonthly(annualId){
-  var m=prompt('何月の目標？（1〜12）'); if(m===null)return; var mm=parseInt(m,10); if(!(mm>=1&&mm<=12)){ toast('1〜12で入力してください'); return; }
-  var t=prompt(mm+'月の目標'); if(!t||!t.trim())return;
-  state.goals.items.push({id:genGoalId(),level:'monthly',parentId:annualId,title:t.trim(),month:mm}); saveGoals(); renderGoals();
+  var cm=(new Date()).getMonth()+1, opts=[];
+  for(var i=1;i<=12;i++) opts.push({v:i,l:i+'月'});
+  glForm('🗓 月間目標を追加',[
+    {label:'対象の月',type:'select',options:opts,value:cm},
+    {label:'目標の内容',value:'',ph:'例：フロント2人つくる'}
+  ],function(v){
+    var mm=parseInt(v[0],10), t=v[1].trim(); if(!t)return;
+    state.goals.items.push({id:genGoalId(),level:'monthly',parentId:annualId,title:t,month:mm});
+    saveGoals(); renderGoals();
+  });
 }
-function glEditItem(id){ var it=_glFind(id); if(!it)return; var t=prompt('目標を編集', it.title); if(t===null)return; if(!t.trim())return; it.title=t.trim(); saveGoals(); renderGoals(); }
+function glEditItem(id){ var it=_glFind(id); if(!it)return; glForm('✎ 目標を編集',[{label:'内容',value:it.title}],function(v){ var t=v[0].trim(); if(!t)return; it.title=t; saveGoals(); renderGoals(); }); }
 function glDelItem(id){
   var it=_glFind(id); if(!it)return;
   if(!confirm('「'+it.title+'」と、その下の項目も削除します。よろしいですか？'))return;
@@ -9328,19 +9346,29 @@ function glDelItem(id){
 }
 function glSetMetric(id){
   var it=_glFind(id); if(!it)return;
-  var t=prompt('目標値（数字のみ）', (typeof it.tgt==='number')?it.tgt:''); if(t===null)return;
-  if(t.trim()===''){ delete it.tgt; delete it.cur; delete it.unit; saveGoals(); renderGoals(); return; }
-  var tg=parseInt(String(t).replace(/[^0-9]/g,''),10); if(isNaN(tg)){ toast('数字で入力してください'); return; }
-  var c=prompt('現在値（数字のみ）', (typeof it.cur==='number')?it.cur:'0'); if(c===null)return;
-  var cu=prompt('単位（例: 万円 / 人 / 冊。無しでもOK）', it.unit||'');
-  it.tgt=tg; it.cur=parseInt(String(c||'0').replace(/[^0-9]/g,''),10)||0; it.unit=(cu||'').trim();
-  saveGoals(); renderGoals();
+  glForm('📊 数値目標',[
+    {label:'目標値',type:'number',value:(typeof it.tgt==='number')?it.tgt:'',ph:'空欄で数値目標を削除',half:true},
+    {label:'現在値',type:'number',value:(typeof it.cur==='number')?it.cur:0,half:true},
+    {label:'単位（任意）',value:it.unit||'',ph:'万円 / 人 / 冊 など'}
+  ],function(v){
+    if(v[0].trim()===''){ delete it.tgt; delete it.cur; delete it.unit; saveGoals(); renderGoals(); return; }
+    var tg=parseInt(v[0].replace(/[^0-9]/g,''),10); if(isNaN(tg)){ toast('目標値は数字で入力してください'); return; }
+    it.tgt=tg; it.cur=parseInt(v[1].replace(/[^0-9]/g,''),10)||0; it.unit=v[2].trim();
+    saveGoals(); renderGoals();
+  });
 }
 function glAddHabit(annualId){
-  var t=prompt('習慣（例: 本を読む / 筋トレ）'); if(!t||!t.trim())return;
-  var n=prompt('週に何回やる？（毎日なら7）','2'); if(n===null)return; var pw=parseInt(n,10); if(!(pw>=1&&pw<=7))pw=7;
-  state.goals.habits=state.goals.habits||[]; state.goals.habits.push({id:genGoalId(),title:t.trim(),parentId:annualId,perWeek:pw,log:{}});
-  saveGoals(); renderGoals();
+  var opts=[]; for(var i=1;i<=7;i++) opts.push({v:i,l:'週'+i+'回'+(i===7?'（毎日）':'')});
+  glForm('🔁 習慣を追加',[
+    {label:'習慣の内容',value:'',ph:'例：本を読む / 筋トレ'},
+    {label:'頻度',type:'select',options:opts,value:2}
+  ],function(v){
+    var t=v[0].trim(); if(!t)return;
+    var pw=parseInt(v[1],10); if(!(pw>=1&&pw<=7))pw=7;
+    state.goals.habits=state.goals.habits||[];
+    state.goals.habits.push({id:genGoalId(),title:t,parentId:annualId,perWeek:pw,log:{}});
+    saveGoals(); renderGoals();
+  });
 }
 function glToggleHabit(id){
   var hb=(state.goals.habits||[]).find(function(x){return x.id===id;}); if(!hb)return;
@@ -9355,12 +9383,16 @@ function glDelHabit(id){
 }
 function glAddTask(monthId){
   if(!eventsUid()){ toast('ログインが必要です'); return; }
-  var t=prompt('やること（タスク）'); if(!t||!t.trim())return;
-  var d=prompt('期日（YYYY-MM-DD。空欄なら今日）', evTodayYmd()); if(d===null)return;
-  var date=(d&&/^\d{4}-\d{2}-\d{2}$/.test(d.trim()))?d.trim():evTodayYmd();
-  var e={ id:genEventId(), type:'task', title:t.trim(), date:date, done:false, memberId:'', categoryId:'', priority:'normal', memo:'', goalId:monthId, createdAt:new Date().toISOString() };
-  state.events.push(e); saveEventDoc(e); if(typeof updateEventsBadge==='function') updateEventsBadge();
-  renderGoals();
+  glForm('✅ タスクを追加',[
+    {label:'やること',value:'',ph:'例：Aさんに連絡する'},
+    {label:'期日',type:'date',value:evTodayYmd()}
+  ],function(v){
+    var t=v[0].trim(); if(!t)return;
+    var date=/^\d{4}-\d{2}-\d{2}$/.test(v[1])?v[1]:evTodayYmd();
+    var e={ id:genEventId(), type:'task', title:t, date:date, done:false, memberId:'', categoryId:'', priority:'normal', memo:'', goalId:monthId, createdAt:new Date().toISOString() };
+    state.events.push(e); saveEventDoc(e); if(typeof updateEventsBadge==='function') updateEventsBadge();
+    renderGoals();
+  });
 }
 function glToggleTask(evId){ if(typeof toggleEventDone==='function') toggleEventDone(evId); renderGoals(); }
 
@@ -9613,7 +9645,7 @@ function glSetMonthlyActual(st,val){
   saveGoals(); renderGoals();
 }
 function glStepMonthly(st,delta){ var p=state.goals.plan, ym=_glCurYm(); glSetMonthlyActual(st, Math.max(0,_glMonthActualShown(p,ym,st)+delta)); }
-function glSetB1Day(){ var p=state.goals.plan, end=_glMonthEndDate(), def=p.b1Day||_glYmdOfD(_glAddDaysD(end,-2)); var v=prompt('B1（LOI）の期日（YYYY-MM-DD・当月内）\n※各アクションの期日はここから逆算されます', def); if(v===null)return; if(v.trim()&&!/^\d{4}-\d{2}-\d{2}$/.test(v.trim())){ toast('YYYY-MM-DD で入力してください'); return; } p.b1Day=v.trim(); saveGoals(); renderGoals(); }
+function glSetB1Day(){ var p=state.goals.plan, end=_glMonthEndDate(), def=p.b1Day||_glYmdOfD(_glAddDaysD(end,-2)); glForm('⏱ B1（LOI）の期日',[{label:'期日（当月内）',type:'date',value:def,hint:'ここから各アクションの期日を逆算します'}],function(v){ if(v[0]&&!/^\d{4}-\d{2}-\d{2}$/.test(v[0])){ toast('日付を選択してください'); return; } p.b1Day=v[0]; saveGoals(); renderGoals(); }); }
 
 // ============================================================
 //  📆 今月タブ（月間タスク）: 今日やる分 → ビジネスKPI → マイカウンター → 当月タスク
@@ -9648,19 +9680,32 @@ function _mcIdealPct(c){
   return Math.round(elapsed/total*100);
 }
 function mcAdd(){
-  var t=prompt('タスク名（例：腕立て / 本を読む）'); if(!t||!t.trim())return;
-  var n=prompt('今月の目標数（数字）','8'); if(n===null)return; var tg=parseInt(n,10); if(!(tg>0)){ toast('1以上の数字で入力してください'); return; }
-  var u=prompt('単位（回 / 冊 / km など）','回'); if(u===null)return;
-  _mcList().push({ id:genGoalId(), title:t.trim(), target:tg, unit:(u||'').trim()||'回', due:'', view:'stamp', log:{} });
-  saveGoals(); renderMonth();
+  glForm('🖊 カウンターを追加',[
+    {label:'タスク名',value:'',ph:'例：腕立て / 本を読む'},
+    {label:'今月の目標数',type:'number',value:8,half:true},
+    {label:'単位',value:'回',ph:'回 / 冊 / km',half:true},
+    {label:'期日（空欄＝月末）',type:'date',value:''}
+  ],function(v){
+    var t=v[0].trim(); if(!t){ toast('タスク名を入力してください'); return; }
+    var tg=parseInt(v[1],10); if(!(tg>0)){ toast('目標数は1以上で入力してください'); return; }
+    _mcList().push({ id:genGoalId(), title:t, target:tg, unit:v[2].trim()||'回', due:(/^\d{4}-\d{2}-\d{2}$/.test(v[3])?v[3]:''), view:'stamp', log:{} });
+    saveGoals(); renderMonth();
+  });
 }
 function mcEdit(id){
   var c=_mcFind(id); if(!c)return;
-  var t=prompt('タスク名', c.title); if(t===null)return; if(t.trim()) c.title=t.trim();
-  var n=prompt('今月の目標数', c.target); if(n!==null){ var tg=parseInt(n,10); if(tg>0) c.target=tg; }
-  var u=prompt('単位', c.unit); if(u!==null&&u.trim()) c.unit=u.trim();
-  var d=prompt('期日（YYYY-MM-DD・空欄=月末）', c.due||''); if(d!==null){ if(d.trim()===''||/^\d{4}-\d{2}-\d{2}$/.test(d.trim())) c.due=d.trim(); else toast('期日はYYYY-MM-DDで'); }
-  saveGoals(); renderMonth();
+  glForm('✎ カウンターを編集',[
+    {label:'タスク名',value:c.title},
+    {label:'今月の目標数',type:'number',value:c.target,half:true},
+    {label:'単位',value:c.unit,half:true},
+    {label:'期日（空欄＝月末）',type:'date',value:c.due||''}
+  ],function(v){
+    if(v[0].trim()) c.title=v[0].trim();
+    var tg=parseInt(v[1],10); if(tg>0) c.target=tg;
+    if(v[2].trim()) c.unit=v[2].trim();
+    c.due=(/^\d{4}-\d{2}-\d{2}$/.test(v[3])?v[3]:'');
+    saveGoals(); renderMonth();
+  });
 }
 function mcDel(id){ var c=_mcFind(id); if(!c)return; if(!confirm('「'+c.title+'」を削除しますか？（記録も消えます）'))return; state.goals.counters=_mcList().filter(function(x){return x.id!==id;}); saveGoals(); renderMonth(); }
 function mcPlus(id){ var c=_mcFind(id); if(!c)return; c.log=c.log||{}; var k=evTodayYmd(); c.log[k]=(parseInt(c.log[k],10)||0)+1; saveGoals(); renderMonth(); }
@@ -9668,11 +9713,13 @@ function mcMinus(id){ var c=_mcFind(id); if(!c)return; c.log=c.log||{}; var k=ev
 function mcToggleView(id){ var c=_mcFind(id); if(!c)return; c.view=(c.view==='cal')?'stamp':'cal'; saveGoals(); renderMonth(); }
 function mcSetDay(id, ymd){
   var c=_mcFind(id); if(!c)return;
-  var cur=_mcDayCount(c,ymd);
-  var v=prompt(ymd.slice(5).replace('-','/')+' の回数', cur); if(v===null)return;
-  var n=parseInt(String(v).replace(/[^0-9]/g,''),10)||0;
-  c.log=c.log||{}; if(n<=0) delete c.log[ymd]; else c.log[ymd]=n;
-  saveGoals(); renderMonth();
+  glForm('🗓 '+ymd.slice(5).replace('-','/')+' の記録',[
+    {label:'回数（0で削除）',type:'number',value:_mcDayCount(c,ymd)}
+  ],function(v){
+    var n=parseInt(String(v[0]).replace(/[^0-9]/g,''),10)||0;
+    c.log=c.log||{}; if(n<=0) delete c.log[ymd]; else c.log[ymd]=n;
+    saveGoals(); renderMonth();
+  });
 }
 function _mcDueChip(c, ym){
   var due=_mcDueDate(c), days=_glDaysUntilD(due), done=_mcMonthCount(c,ym)>=(c.target||0);
@@ -9824,6 +9871,46 @@ function _glMsCardHtml(m,p,curF){
   return h;
 }
 function _glCloseModal(){ var el=document.getElementById('glModal'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
+// ── 共通フォームシート：prompt()の置き換え。fields=[{label,type,value,ph,options,hint,half}] ──
+function glForm(title, fields, onSave){
+  _glCloseModal();
+  var inS='box-sizing:border-box;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:16px;outline:none;-webkit-appearance:none;margin:4px 0 12px;font-family:inherit';
+  var lb='font-size:12px;color:var(--text-dim);font-weight:700';
+  function ctrl(f,i){
+    var id='_gf'+i, v=(f.value==null?'':String(f.value));
+    if(f.type==='textarea') return '<textarea id="'+id+'" placeholder="'+evEsc(f.ph||'')+'" style="'+inS+';height:120px;resize:vertical;line-height:1.6">'+evEsc(v)+'</textarea>';
+    if(f.type==='select'){ return '<select id="'+id+'" style="'+inS+'">'+(f.options||[]).map(function(o){var val=(typeof o==='object')?o.v:o,l=(typeof o==='object')?o.l:o;return '<option value="'+evEsc(String(val))+'"'+(String(val)===v?' selected':'')+'>'+evEsc(String(l))+'</option>';}).join('')+'</select>'; }
+    return '<input id="'+id+'" type="'+(f.type||'text')+'"'+(f.type==='number'?' inputmode="numeric"':'')+' value="'+evEsc(v)+'" placeholder="'+evEsc(f.ph||'')+'" style="'+inS+'">';
+  }
+  var body='', i=0;
+  while(i<fields.length){
+    if(fields[i].half && fields[i+1] && fields[i+1].half){
+      body+='<div style="display:flex;gap:10px"><div style="flex:1;min-width:0"><label style="'+lb+'">'+evEsc(fields[i].label)+'</label>'+ctrl(fields[i],i)+'</div><div style="flex:1;min-width:0"><label style="'+lb+'">'+evEsc(fields[i+1].label)+'</label>'+ctrl(fields[i+1],i+1)+'</div></div>';
+      i+=2;
+    } else {
+      var f=fields[i];
+      body+='<label style="'+lb+'">'+evEsc(f.label)+'</label>'+ctrl(f,i)+(f.hint?'<div style="font-size:10.5px;color:var(--text-dim);margin:-8px 0 12px;line-height:1.5">'+evEsc(f.hint)+'</div>':'');
+      i++;
+    }
+  }
+  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='glModal';
+  ov.onclick=function(e){ if(e.target===ov) _glCloseModal(); };
+  ov.innerHTML='<div class="ms-sheet gl-form-sheet" style="max-height:86vh;overflow-y:auto"><div class="ms-grip"></div>'
+    +'<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+title+'</div></div><span class="ms-x" onclick="_glCloseModal()">✕</span></div>'
+    +'<div style="padding:4px 16px 16px">'+body
+    +'<div style="display:flex;gap:9px;margin-top:6px">'
+    +'<button type="button" id="_gfSave" style="flex:1;padding:13px;border-radius:11px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;cursor:pointer">保存</button>'
+    +'<button type="button" onclick="_glCloseModal()" style="flex:none;padding:13px 18px;border-radius:11px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer">キャンセル</button>'
+    +'</div></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+  document.getElementById('_gfSave').onclick=function(){
+    var vals=fields.map(function(f,idx){ var el=document.getElementById('_gf'+idx); return el?el.value:''; });
+    _glCloseModal();
+    onSave(vals);
+  };
+  setTimeout(function(){ var first=document.getElementById('_gf0'); if(first && fields[0].type!=='select'){ try{ first.focus(); if(first.select) first.select(); }catch(e){} } }, 260);
+}
 function glEditGoal(){
   var p=state.goals.plan;
   var keys=Object.keys(p.frontTable||{});
@@ -9861,17 +9948,25 @@ function glSaveGoalModal(){
 }
 function glSetPipeline(){
   var p=state.goals.plan;
-  var v=prompt('育成パイプライン月数（LOI→BRまで何ヶ月？）', p.pipeline); if(v===null)return;
-  var n=parseInt(v,10); if(n>=0&&n<=12){ p.pipeline=n; saveGoals(); renderGoals(); }
+  glForm('🔁 育成パイプライン',[
+    {label:'LOI→BRまでの月数',type:'number',value:p.pipeline,hint:'LOI→Q2→Q3→BR。既定は3ヶ月'}
+  ],function(v){
+    var n=parseInt(v[0],10);
+    if(n>=0&&n<=12){ p.pipeline=n; saveGoals(); renderGoals(); }
+    else toast('0〜12で入力してください');
+  });
 }
 function glEditMsDeadline(id){
   var m=(state.goals.milestones||[]).find(function(x){return x.id===id;}); if(!m)return;
   var t=_glProg(m.tmplId)||{};
-  var v=prompt('BR必達の年月（YYYY-MM）', m.brYm||t.brYm||''); if(v===null)return;
-  if(v.trim()&&!/^\d{4}-\d{2}$/.test(v.trim())){ toast('YYYY-MM で入力してください'); return; }
-  m.brYm=v.trim();
-  var rt=prompt('到達タイトル（ルビー等）', m.reqTitle||t.reqTitle||'ルビー'); if(rt!==null&&rt.trim()) m.reqTitle=rt.trim();
-  saveGoals(); renderGoals();
+  glForm('🚩 通過点の条件',[
+    {label:'BR必達の年月',type:'month',value:m.brYm||t.brYm||''},
+    {label:'到達タイトル',value:m.reqTitle||t.reqTitle||'ルビー',ph:'ルビー など'}
+  ],function(v){
+    if(v[0]&&!/^\d{4}-\d{2}$/.test(v[0])){ toast('年月を選択してください'); return; }
+    m.brYm=v[0]; if(v[1].trim()) m.reqTitle=v[1].trim();
+    saveGoals(); renderGoals();
+  });
 }
 function glFocusToTasks(){
   if(!eventsUid()){ toast('ログインが必要です'); return; }
@@ -9883,26 +9978,34 @@ function glFocusToTasks(){
 }
 function glSetFrontTable(){
   var p=state.goals.plan; var keys=Object.keys(p.frontTable);
-  var cur=keys.map(function(k){return k+':'+p.frontTable[k];}).join(', ');
-  var v=prompt('タイトル→必要フロント数（カンマ区切り）', cur); if(v===null)return;
-  v.split(',').forEach(function(pair){ var kv=pair.split(':'); if(kv.length===2){ var k=kv[0].trim(); var n=parseInt(kv[1],10); if(k&&!isNaN(n)) p.frontTable[k]=n; } });
-  var im=prompt('理想フロント数（空欄=必達と同じ）', p.frontIdeal!=null?p.frontIdeal:''); if(im!==null){ p.frontIdeal = im.trim()===''?null:(parseInt(im,10)||0); }
-  var mf=prompt('今月つくるフロント数を手動指定する場合（空欄=自動）', p.monthlyFront!=null?p.monthlyFront:''); if(mf!==null){ p.monthlyFront = mf.trim()===''?null:(parseInt(mf,10)||0); }
-  saveGoals(); renderGoals();
+  var fields=keys.map(function(k){ return {label:k,type:'number',value:p.frontTable[k],half:true}; });
+  fields.push({label:'理想フロント数（空欄=必達と同じ）',type:'number',value:p.frontIdeal!=null?p.frontIdeal:''});
+  fields.push({label:'今月つくるフロント数（空欄=自動計算）',type:'number',value:p.monthlyFront!=null?p.monthlyFront:''});
+  glForm('👥 タイトル→必要フロント数',fields,function(v){
+    keys.forEach(function(k,i){ var n=parseInt(v[i],10); if(!isNaN(n)) p.frontTable[k]=n; });
+    p.frontIdeal = v[keys.length].trim()===''?null:(parseInt(v[keys.length],10)||0);
+    p.monthlyFront = v[keys.length+1].trim()===''?null:(parseInt(v[keys.length+1],10)||0);
+    saveGoals(); renderGoals();
+  });
 }
 function glSetAdp(){
   var p=state.goals.plan;
-  var r=prompt('流通の目標ポイント（例:3000）', p.ryutsu); if(r===null)return;
-  var u=prompt('1 ADP あたりの流通ポイント（人により単価が違う場合はここを変更）', p.adpUnit); if(u===null)return;
-  p.ryutsu=parseInt(String(r).replace(/[^0-9]/g,''),10)||0; p.adpUnit=parseInt(String(u).replace(/[^0-9]/g,''),10)||100;
-  saveGoals(); renderGoals();
+  glForm('🛒 流通とADP',[
+    {label:'流通の目標ポイント',type:'number',value:p.ryutsu,half:true},
+    {label:'1 ADPあたりのポイント',type:'number',value:p.adpUnit,half:true}
+  ],function(v){
+    p.ryutsu=parseInt(String(v[0]).replace(/[^0-9]/g,''),10)||0;
+    p.adpUnit=parseInt(String(v[1]).replace(/[^0-9]/g,''),10)||100;
+    saveGoals(); renderGoals();
+  });
 }
 function glSetFunnel(){
   var p=state.goals.plan;
-  GL_STAGES.forEach(function(s){
-    var v=prompt(s.label+'：フロント1人あたり何回？', p.funnel[s.k]); if(v!==null){ var n=parseInt(v,10); if(!isNaN(n)) p.funnel[s.k]=n; }
+  var fields=GL_STAGES.map(function(st){ return {label:st.label,type:'number',value:p.funnel[st.k],half:true}; });
+  glForm('⚙️ 係数（フロント1人あたりの必要数）',fields,function(v){
+    GL_STAGES.forEach(function(st,i){ var n=parseInt(v[i],10); if(!isNaN(n)) p.funnel[st.k]=n; });
+    saveGoals(); renderGoals();
   });
-  saveGoals(); renderGoals();
 }
 function glSetActual(stage, val){
   var p=state.goals.plan; var ym=_glCurYm();
