@@ -409,7 +409,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 /* name */
 .nm{font-size:16px;font-weight:700;line-height:1.2}
-.nm.male{color:var(--male)}
+.nm.male{color:var(--text)} /* モバイル：男性名はプレーン色（性別はアバターで判別） */
 .nm.female{color:var(--female)}
 .nm-sub{font-size:10px;color:var(--text-dim);margin-top:1px}
 
@@ -865,6 +865,7 @@ tr.ot-done{opacity:.5}
 .sd-card-org{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sd-card-name{font-size:12px;color:var(--text-mid);margin-bottom:6px}
 .sd-card-tags{display:flex;gap:4px;flex-wrap:wrap}
+.sd-card-seen{font-size:11px;color:var(--text-mid);margin-top:7px;font-family:'IBM Plex Mono',monospace}
 .sd-card-tag{font-size:10px;padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace}
 .sd-card-tag.union{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(139,124,255,.3)}
 .sd-card-tag.area{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(44,229,184,.3)}
@@ -1777,7 +1778,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v267</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v268</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4044,7 +4045,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v267';
+  var DATA_VERSION = 'v268';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4601,7 +4602,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v267', d:'2026-07-14', items:['メンバー編集のタスクをその場でチェック（消込）できるように','現状MAPからメンバーのOLをポップアップで閲覧＆記録（MAPの位置を保持）','研修生ファネルのAさん別（BC/ユーザー/流れた/進行中）をタップ→内訳→現状MAPへジャンプ','データのマケ・PG/DLR動員/B1を月度で正しく集計（前月引き継ぎを修正）','PCのデータタブ：当月が空ならデータのある一番左の月から表示','メンバーにLINE ID/URLを登録して💬LINEボタンから直接トークを開ける','GOALのSUMMIT入力を一括フォームに刷新（期限・目標・月収→タイトル自動判定・流通量・客単価→客数自動）','クイック記録に「↩直前を取り消す」を追加','メンバータブは設定で表示/非表示を選択可能に'] },
+  { v:'v268', d:'2026-07-14', items:['メンバー編集のタスクをその場でチェック（消込）できるように','現状MAPからメンバーのOLをポップアップで閲覧＆記録（MAPの位置を保持）','研修生ファネルのAさん別（BC/ユーザー/流れた/進行中）をタップ→内訳→現状MAPへジャンプ','データのマケ・PG/DLR動員/B1を月度で正しく集計（前月引き継ぎを修正）','PCのデータタブ：当月が空ならデータのある一番左の月から表示','メンバーにLINE ID/URLを登録して💬LINEボタンから直接トークを開ける','GOALのSUMMIT入力を一括フォームに刷新（期限・目標・月収→タイトル自動判定・流通量・客単価→客数自動）','クイック記録に「↩直前を取り消す」を追加','メンバータブは設定で表示/非表示を選択可能に'] },
   { v:'v264', d:'2026-07-14', items:['所属ユニオンを自由入力から選択制に変更（入力揺れを防止）','ユニオンを選ぶとUPBD欄にユニオン管理者名を自動表示（あとから編集可）','既存ユーザーもユニオンを選び直すまで利用不可（プロフィールで再選択）'] },
   { v:'v263', d:'2026-07-14', items:['GOAL/今月/MAPの全入力をブラウザのprompt から専用フォームに刷新（価値観・数値目標・カウンター・係数・GSV・メモ等）','PC版のGOAL/今月を画面幅いっぱいに拡大・文字も大きく'] },
   { v:'v262', d:'2026-07-14', items:['🔔お知らせ機能を追加：ホームのベル/右下のバージョン番号から更新内容を確認できます'] },
@@ -12522,6 +12523,12 @@ function loginSuccess(user) {
   enforceProfileGate();
   // 管理者：承認待ち件数を通知
   checkPendingApprovals();
+  // ログインステータス記録（共有相手に最終ログインが見える）
+  updateLastSeen();
+  if (!window._seenTimer) {
+    window._seenTimer = setInterval(updateLastSeen, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) updateLastSeen(); });
+  }
   // 起動画面は「今日」ホーム
   switchView('home');
 }
@@ -13033,6 +13040,31 @@ function renderSharedCards() {
   if (cnt) cnt.textContent = filtered.length + ' / ' + sharedOwners.length + '件';
 }
 
+// ── ログインステータス：自分のlastSeenAtを記録（5分に1回まで） ──
+var _lastSeenWriteAt = 0;
+function updateLastSeen() {
+  try {
+    if (!db || !currentUser || !currentUser.uid) return;
+    var now = Date.now();
+    if (now - _lastSeenWriteAt < 5 * 60 * 1000) return;
+    _lastSeenWriteAt = now;
+    fsSet('users/' + currentUser.uid, { lastSeenAt: new Date().toISOString() }).catch(function(){});
+  } catch(e) {}
+}
+function fmtLastSeen(iso) {
+  if (!iso) return '<span style="color:var(--text-dim)">最終ログイン 不明</span>';
+  var t = new Date(iso).getTime();
+  if (!t || isNaN(t)) return '';
+  var diff = Date.now() - t;
+  if (diff < 10 * 60 * 1000) return '<span style="color:var(--accent);font-weight:700">🟢 オンライン</span>';
+  var m = Math.floor(diff / 60000);
+  if (m < 60) return '最終ログイン ' + m + '分前';
+  var h = Math.floor(m / 60);
+  if (h < 24) return '最終ログイン ' + h + '時間前';
+  var d2 = Math.floor(h / 24);
+  if (d2 <= 30) return '最終ログイン <span style="color:' + (d2 >= 7 ? 'var(--go-rose)' : 'var(--text-mid)') + '">' + d2 + '日前</span>';
+  return '最終ログイン ' + new Date(t).toLocaleDateString();
+}
 function buildSharedCard(owner) {
   var card = document.createElement('div');
   card.className = 'sd-card' + (viewingOwnerUid === owner.uid ? ' viewing' : '');
@@ -13070,6 +13102,20 @@ function buildSharedCard(owner) {
   pt.textContent = owner.perm === 'edit' ? '編集可' : '閲覧のみ';
   tags.appendChild(pt);
   card.appendChild(tags);
+
+  // ログインステータス（最終ログイン時刻・オンライン表示）
+  var seen = document.createElement('div');
+  seen.className = 'sd-card-seen';
+  seen.id = 'sdseen-' + owner.uid;
+  seen.textContent = '…';
+  card.appendChild(seen);
+  fsGet('users/' + owner.uid).then(function(u) {
+    var el = document.getElementById('sdseen-' + owner.uid);
+    if (el) el.innerHTML = fmtLastSeen(u && u.lastSeenAt);
+  }).catch(function() {
+    var el = document.getElementById('sdseen-' + owner.uid);
+    if (el) el.textContent = '';
+  });
 
   // 結合ボタン（自分のMAPに下位ツリーを合成）
   var merged = isMerged(owner.uid);
