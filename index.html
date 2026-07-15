@@ -1777,7 +1777,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v264</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v267</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2079,6 +2079,13 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="rb" id="rbThemeLight" onclick="setTheme('light')">☀️ ライト</div>
       </div>
     </div>
+    <div class="fr">
+      <label class="fl">メンバータブ<br><span style="font-size:10px;color:var(--text-dim);font-weight:400">MAPと同じ内容の一覧</span></label>
+      <div class="rg">
+        <div class="rb" id="rbMembersOn" onclick="setMembersTabVisible(true)">表示</div>
+        <div class="rb" id="rbMembersOff" onclick="setMembersTabVisible(false)">非表示</div>
+      </div>
+    </div>
     <div id="profileAdminWrap" style="display:none;margin-top:4px;margin-bottom:4px">
       <button class="btn-c" style="width:100%;border-color:var(--purple);color:var(--purple)" onclick="openAdminPanel()">🛡 アカウント管理</button>
     </div>
@@ -2106,6 +2113,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxEdit()">✏️ 編集</div>
   <div class="ctx-item" id="ctxInsta" onclick="ctxOpenInsta()" style="display:none">📷 Instagramを開く</div>
+  <div class="ctx-item" id="ctxLine" onclick="ctxOpenLine()" style="display:none">💬 LINEを開く</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item danger" onclick="ctxDelete()">🗑 削除</div>
 </div>
@@ -2295,6 +2303,14 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <span class="ed-l">Instagram</span>
             <div class="ed-ctrl"><input class="ed-in" id="fInsta" placeholder="URL"></div>
           </div>
+          <div class="ed-row">
+            <span class="ed-l">LINE<span class="ed-q" onclick="edHelp(event,'h_line')">?</span></span>
+            <div class="ed-ctrl" style="display:flex;gap:6px;align-items:center">
+              <input class="ed-in" id="fLine" placeholder="LINE ID または URL" style="flex:1">
+              <button type="button" onclick="openLineChatFromEdit()" style="flex-shrink:0;padding:8px 12px;border:none;border-radius:8px;background:#06C755;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💬 LINE</button>
+            </div>
+          </div>
+          <div class="ed-help" id="h_line">LINE ID（英数字）か、友だち追加URLを入力。ボタンでLINEを開けます。</div>
           <div class="ed-row">
             <span class="ed-l">登録月<span class="ed-q" onclick="edHelp(event,'h_start')">?</span></span>
             <div class="ed-ctrl"><input class="ed-in" id="fStartMonth" type="month"></div>
@@ -2699,6 +2715,30 @@ function copyToNextMonth() {
 
   // プレビュー確認 → 確定でコミット
   _showCopyPreview(cur, nextMonth, changes, function() {
+    // リザルト用データを「リセット前」に収集（Phase B）
+    var _rd = null;
+    try {
+      var _p = state.goals && state.goals.plan;
+      var _ym = _glCurYm();
+      var _roots = (state.members || []).filter(function(m){ return !m.parentId && !m.deleted; });
+      var _g = getGame();
+      var _rec = 0; for (var _k in (_g.gameDays || {})) { if (_k.slice(0,7) === _ym) _rec++; }
+      _rd = {
+        ymLabel: cur.replace('.', '年') + '月',
+        name: (currentUser && currentUser.name) || '',
+        org: (currentUser && currentUser.org) || '',
+        title: (_p && _p.titleNow) || '',
+        frontA: _p ? _glMonthActual(_p, _ym, 'b1') : 0,
+        frontT: _p ? _glMonthlyFront(_p) : 0,
+        gsv: _roots[0] ? (_roots[0].ptCurrent || 0) : 0,
+        ct: _p ? _glMonthActual(_p, _ym, 'ct') : 0,
+        action: _p ? _glMonthActual(_p, _ym, 'action') : 0,
+        recDays: _rec,
+        dim: new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate(),
+        streak: _g.streak || 0,
+        promos: changes.filter(function(c){ return c.kind === 'promote' || c.kind === 'advance'; })
+      };
+    } catch(e) { _rd = null; }
     // 翌月に切り替え
     state.currentMonth = nextMonth;
     if (state.months.indexOf(nextMonth) < 0) state.months.unshift(nextMonth);
@@ -2733,7 +2773,122 @@ function copyToNextMonth() {
     var dn = changes.filter(function(c){ return c.kind === 'demote'; }).length;
     var extra = (up || dn) ? '（🎉' + up + ' / ⚠️' + dn + '）' : '';
     toast(nextMonth + ' にコピーしました ✓ ' + extra);
+    // 月末リザルト（Phase B）：先月の成績表を全画面表示
+    if (_rd) setTimeout(function(){ showMonthlyResult(_rd); }, 350);
   });
+}
+
+// ── 月末リザルト＋シェア画像（Phase B） ──
+function _closeResultOv(){ var el=document.getElementById('resultOv'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
+function showMonthlyResult(rd) {
+  _closeResultOv();
+  var hit = rd.frontT > 0 && rd.frontA >= rd.frontT;
+  var stat = function(lb, v, sub){
+    return '<div style="background:var(--surface2);border-radius:12px;padding:11px 12px"><div style="font-size:11px;color:var(--text-dim)">' + lb + '</div>'
+      + '<div style="font-size:21px;font-weight:800;font-family:IBM Plex Mono,monospace">' + v + (sub ? '<span style="font-size:11px;color:var(--text-dim);font-weight:500"> ' + sub + '</span>' : '') + '</div></div>';
+  };
+  var promoHtml = '';
+  if (rd.promos && rd.promos.length) {
+    promoHtml = '<div style="font-size:12px;font-weight:700;margin:12px 0 6px">今月の昇格・前進</div><div style="display:flex;flex-wrap:wrap;gap:6px">'
+      + rd.promos.map(function(c){ return '<span style="background:var(--purple-dim);color:var(--purple);border-radius:16px;padding:5px 11px;font-size:12px;font-weight:700">↗ ' + evEsc(c.name) + ' ' + evEsc(c.from||'') + '→' + evEsc(c.to||'') + '</span>'; }).join('')
+      + '</div>';
+  }
+  var ov = document.createElement('div'); ov.id = 'resultOv';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(5,8,16,.82);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto';
+  ov.onclick = function(e){ if (e.target === ov) _closeResultOv(); };
+  ov.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border2);border-radius:20px;max-width:420px;width:100%;padding:20px 18px;max-height:90vh;overflow-y:auto">'
+    + '<div style="text-align:center;margin-bottom:12px"><div style="font-size:11px;letter-spacing:2.5px;color:var(--text-dim);font-weight:800">MONTHLY RESULT</div>'
+    + '<div style="font-size:22px;font-weight:900;margin-top:2px">' + evEsc(rd.ymLabel) + ' リザルト</div>'
+    + '<div style="font-size:12px;color:var(--text-mid);margin-top:2px">' + evEsc(rd.name) + (rd.org ? '（' + evEsc(rd.org) + '）' : '') + (rd.title ? ' ・ ' + evEsc(rd.title) : '') + '</div></div>'
+    + '<div style="display:flex;align-items:center;justify-content:center;gap:8px;background:' + (hit ? 'var(--gold-dim)' : 'var(--surface2)') + ';border:1px solid ' + (hit ? 'var(--gold)' : 'var(--border)') + ';border-radius:14px;padding:12px;margin-bottom:12px">'
+    + '<span style="font-size:22px">' + (hit ? '🏆' : '🧗') + '</span><span style="font-size:15px;font-weight:800;color:' + (hit ? 'var(--gold)' : 'var(--text)') + '">フロント ' + rd.frontA + (rd.frontT ? ' / ' + rd.frontT : '') + (hit ? '　月間目標 達成！' : '　来月へ続く') + '</span></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + stat('GSV', (rd.gsv||0).toLocaleString(), '')
+    + stat('CT実施', rd.ct, '件')
+    + stat('アクション', rd.action, '件')
+    + stat('記録日数', rd.recDays, '/' + rd.dim + '日')
+    + '</div>'
+    + promoHtml
+    + '<button type="button" onclick="generateResultImage()" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:16px">📸 画像でシェア（LINEに貼れる）</button>'
+    + '<button type="button" onclick="_closeResultOv()" style="width:100%;padding:11px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:var(--text-mid);font-size:13px;margin-top:8px">閉じて' + '新しい月へ →</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  window._lastResultData = rd;
+  if (hit) setTimeout(function(){ gameConfetti(); }, 250);
+}
+function generateResultImage() {
+  var rd = window._lastResultData; if (!rd) return;
+  var W = 1080, H = 1350;
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var x = cv.getContext('2d');
+  // 背景（SUMMITネイビー）
+  x.fillStyle = '#0B0E15'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#141A28'; _rrect(x, 60, 60, W-120, H-120, 36); x.fill();
+  x.strokeStyle = '#33405C'; x.lineWidth = 2; _rrect(x, 60, 60, W-120, H-120, 36); x.stroke();
+  var cxm = W / 2;
+  x.textAlign = 'center';
+  x.fillStyle = '#7E8AA6'; x.font = '800 34px "Noto Sans JP", sans-serif';
+  x.fillText('M O N T H L Y   R E S U L T', cxm, 160);
+  x.fillStyle = '#F4F6FB'; x.font = '900 88px "Noto Sans JP", sans-serif';
+  x.fillText(rd.ymLabel, cxm, 270);
+  x.fillStyle = '#AAB6CF'; x.font = '600 40px "Noto Sans JP", sans-serif';
+  x.fillText(rd.name + (rd.title ? ' ・ ' + rd.title : ''), cxm, 340);
+  // 達成バナー
+  var hit = rd.frontT > 0 && rd.frontA >= rd.frontT;
+  x.fillStyle = hit ? 'rgba(255,180,84,.16)' : '#1B2232'; _rrect(x, 120, 400, W-240, 130, 24); x.fill();
+  x.strokeStyle = hit ? '#FFB454' : '#33405C'; _rrect(x, 120, 400, W-240, 130, 24); x.stroke();
+  x.fillStyle = hit ? '#FFB454' : '#F4F6FB'; x.font = '900 52px "Noto Sans JP", sans-serif';
+  x.fillText((hit ? '🏆 ' : '🧗 ') + 'フロント ' + rd.frontA + (rd.frontT ? ' / ' + rd.frontT : '') + (hit ? '  達成！' : ''), cxm, 485);
+  // 統計 2×2
+  var stats = [['GSV', (rd.gsv||0).toLocaleString()], ['CT実施', rd.ct + '件'], ['アクション', rd.action + '件'], ['記録日数', rd.recDays + '/' + rd.dim + '日']];
+  for (var i = 0; i < 4; i++) {
+    var gx = 120 + (i % 2) * ((W-240)/2 + 0), gy = 580 + Math.floor(i/2) * 190;
+    var gw = (W-260)/2, gh = 170;
+    if (i % 2 === 1) gx = 120 + gw + 20;
+    x.fillStyle = '#1B2232'; _rrect(x, gx, gy, gw, gh, 20); x.fill();
+    x.fillStyle = '#7E8AA6'; x.font = '600 30px "Noto Sans JP", sans-serif'; x.textAlign = 'left';
+    x.fillText(stats[i][0], gx + 32, gy + 56);
+    x.fillStyle = '#2CE5B8'; x.font = '900 62px "IBM Plex Mono", monospace';
+    x.fillText(String(stats[i][1]), gx + 32, gy + 136);
+  }
+  // 昇格
+  x.textAlign = 'center';
+  var py = 1010;
+  if (rd.promos && rd.promos.length) {
+    x.fillStyle = '#8B7CFF'; x.font = '800 34px "Noto Sans JP", sans-serif';
+    var pl = rd.promos.slice(0, 3).map(function(c){ return c.name + ' ' + (c.from||'') + '→' + (c.to||''); }).join('　');
+    x.fillText('↗ ' + pl, cxm, py);
+    py += 70;
+  }
+  x.fillStyle = '#FFB454'; x.font = '800 36px "Noto Sans JP", sans-serif';
+  x.fillText('🔥 ストリーク ' + rd.streak + '日', cxm, py + 20);
+  x.fillStyle = '#3D465C'; x.font = '800 30px "Noto Sans JP", sans-serif';
+  x.fillText('▲ GROOVE MAP', cxm, H - 110);
+  // 共有 or ダウンロード
+  cv.toBlob(function(blob) {
+    if (!blob) { toast('画像の生成に失敗しました'); return; }
+    var file;
+    try { file = new File([blob], 'result.png', { type: 'image/png' }); } catch(e) { file = null; }
+    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: rd.ymLabel + ' リザルト' }).catch(function(){});
+    } else {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'groove_result.png';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(a.href); }, 800);
+      toast('画像を保存しました（LINEに貼ってシェア！）');
+    }
+  }, 'image/png');
+}
+function _rrect(x, px, py, w, h, r) {
+  x.beginPath();
+  x.moveTo(px + r, py);
+  x.arcTo(px + w, py, px + w, py + h, r);
+  x.arcTo(px + w, py + h, px, py + h, r);
+  x.arcTo(px, py + h, px, py, r);
+  x.arcTo(px, py, px + w, py, r);
+  x.closePath();
 }
 
 // ログイン後にコピーボタンを表示
@@ -3227,10 +3382,14 @@ function openCtxMenu(memberId, x, y) {
   menu.style.top  = y + 'px';
   menu.classList.add('open');
 
-  // インスタボタンの表示切替
+  // インスタ・LINEボタンの表示切替
   var instaBtn = document.getElementById('ctxInsta');
   if (instaBtn) {
     instaBtn.style.display = (m && m.instaUrl) ? '' : 'none';
+  }
+  var lineBtn = document.getElementById('ctxLine');
+  if (lineBtn) {
+    lineBtn.style.display = (m && m.lineId) ? '' : 'none';
   }
 
   // メニュー外クリックで閉じる（contextmenuは除外）
@@ -3267,6 +3426,35 @@ function ctxOpenInsta() {
       return;
     }
   }
+}
+// ── LINE：ID または URL から LINE を開く ──
+function _lineUrl(v) {
+  v = (v || '').trim();
+  if (!v) return '';
+  if (/^https?:\/\//i.test(v)) return v;            // フルURLはそのまま
+  if (/^line:\/\//i.test(v)) return v;              // アプリスキーム
+  var id = v.replace(/^~/, '').replace(/^@/, '');   // 先頭の ~ や @ は除去
+  return 'https://line.me/R/ti/p/~' + encodeURIComponent(id);
+}
+function openLineChat(v) {
+  var u = _lineUrl(v);
+  if (u) window.open(u, '_blank');
+  else if (typeof toast === 'function') toast('LINE ID / URL が未設定です');
+}
+function openLineChatFromEdit() {
+  var el = document.getElementById('fLine');
+  openLineChat(el ? el.value : '');
+}
+function openLineChatById(mid) {
+  var members = state.members.concat(state.idealMembers || []);
+  for (var i=0; i<members.length; i++) {
+    if (members[i].id === mid) { openLineChat(members[i].lineId); return; }
+  }
+}
+function ctxOpenLine() {
+  var tid = _ctxTargetId;
+  closeCtxMenu();
+  openLineChatById(tid);
 }
 
 function ctxDelete() {
@@ -3528,6 +3716,26 @@ function initTheme() {
   if (t === 'light') document.body.classList.add('light');
   syncThemeButtons();
 }
+// ── メンバータブ 表示/非表示（MAPとほぼ同じ内容のため任意で畳める） ──
+function membersTabHidden() {
+  try { return localStorage.getItem('gm_hideMembersTab') === '1'; } catch(e){ return false; }
+}
+function applyMembersTabVisible() {
+  var hide = membersTabHidden();
+  var it = document.querySelector('.pcs-item[data-view="members"]');
+  if (it) it.style.display = hide ? 'none' : '';
+  var mt = document.querySelector('.mtab[data-view="members"]');
+  if (mt) mt.style.display = hide ? 'none' : '';
+  // 非表示中に開いていたら MAP に戻す
+  if (hide && typeof currentView !== 'undefined' && currentView === 'members') switchView('current');
+  var on = document.getElementById('rbMembersOn'), off = document.getElementById('rbMembersOff');
+  if (on) on.classList.toggle('sel', !hide);
+  if (off) off.classList.toggle('sel', hide);
+}
+function setMembersTabVisible(v) {
+  try { localStorage.setItem('gm_hideMembersTab', v ? '0' : '1'); } catch(e){}
+  applyMembersTabVisible();
+}
 
 // ── プロフィール設定 ──
 var _profileMandatory = false; // 必須項目未入力 → 強制入力モード（閉じられない）
@@ -3758,6 +3966,7 @@ function openProfileModal() {
   var perr = el('profileError'); if (perr) perr.style.display = 'none';
   var adm = el('profileAdminWrap'); if (adm) adm.style.display = (!_profileMandatory && isCurrentAdmin()) ? '' : 'none';
   syncThemeButtons();
+  if (typeof applyMembersTabVisible === 'function') applyMembersTabVisible();
   var m = document.getElementById('profileModal');
   if (m) m.classList.add('open');
 }
@@ -3835,7 +4044,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v264';
+  var DATA_VERSION = 'v267';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4392,6 +4601,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v267', d:'2026-07-14', items:['メンバー編集のタスクをその場でチェック（消込）できるように','現状MAPからメンバーのOLをポップアップで閲覧＆記録（MAPの位置を保持）','研修生ファネルのAさん別（BC/ユーザー/流れた/進行中）をタップ→内訳→現状MAPへジャンプ','データのマケ・PG/DLR動員/B1を月度で正しく集計（前月引き継ぎを修正）','PCのデータタブ：当月が空ならデータのある一番左の月から表示','メンバーにLINE ID/URLを登録して💬LINEボタンから直接トークを開ける','GOALのSUMMIT入力を一括フォームに刷新（期限・目標・月収→タイトル自動判定・流通量・客単価→客数自動）','クイック記録に「↩直前を取り消す」を追加','メンバータブは設定で表示/非表示を選択可能に'] },
   { v:'v264', d:'2026-07-14', items:['所属ユニオンを自由入力から選択制に変更（入力揺れを防止）','ユニオンを選ぶとUPBD欄にユニオン管理者名を自動表示（あとから編集可）','既存ユーザーもユニオンを選び直すまで利用不可（プロフィールで再選択）'] },
   { v:'v263', d:'2026-07-14', items:['GOAL/今月/MAPの全入力をブラウザのprompt から専用フォームに刷新（価値観・数値目標・カウンター・係数・GSV・メモ等）','PC版のGOAL/今月を画面幅いっぱいに拡大・文字も大きく'] },
   { v:'v262', d:'2026-07-14', items:['🔔お知らせ機能を追加：ホームのベル/右下のバージョン番号から更新内容を確認できます'] },
@@ -4636,6 +4846,7 @@ function _qrToday(stage) {
   var da = state.goals.plan.dailyActuals || {};
   return parseInt((da[evTodayYmd()] || {})[stage] || 0, 10) || 0;
 }
+var _lastQuickRec = null; // 直前のクイック記録（押し間違い取り消し用）
 function quickRecord(stage) {
   if (!state.goals) state.goals = _glDefault();
   if (!state.goals.plan) state.goals.plan = _glDefaultPlan();
@@ -4654,6 +4865,26 @@ function quickRecord(stage) {
   var after = gameLevelInfo(g.xp).level;
   if (after > before) gameLevelUp(after);
   gameAward(true);
+  _lastQuickRec = { day: k, stage: stage, xp: xp }; // 取り消し用に記憶
+  if (currentView === 'home') renderHome();
+}
+// 直前のクイック記録を1件取り消す（押し間違い修正）
+function quickRecordUndo() {
+  if (!_lastQuickRec) { if (typeof toast === 'function') toast('取り消せる記録がありません'); return; }
+  var r = _lastQuickRec;
+  var p = state.goals && state.goals.plan;
+  if (p && p.dailyActuals && p.dailyActuals[r.day]) {
+    var cur = parseInt(p.dailyActuals[r.day][r.stage] || 0, 10) || 0;
+    p.dailyActuals[r.day][r.stage] = Math.max(0, cur - 1);
+    saveGoals();
+  }
+  var g = getGame();
+  g.xp = Math.max(0, (g.xp || 0) - (r.xp || 0));
+  g.weekXp = Math.max(0, (g.weekXp || 0) - (r.xp || 0));
+  saveGame();
+  var lbl = (QUICK_STAGES.filter(function(s){ return s.k === r.stage; })[0] || {}).label || r.stage;
+  if (typeof toast === 'function') toast('↩ ' + lbl + ' を1件取り消しました');
+  _lastQuickRec = null;
   if (currentView === 'home') renderHome();
 }
 // 夜の締め：今日の合計を見て1タップで確定
@@ -5107,8 +5338,9 @@ function openMemberActions(mid) {
   var prioChips = ['高','中','低',''].map(function(p){ return '<span class="ms-pchip' + ((m.priority||'')===p?' on':'') + '" onclick="setMemberPriority(\'' + mid + '\',\'' + p + '\')">' + (p||'なし') + '</span>'; }).join('');
   var rows = '';
   if (group === 'trainee') rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'trainee\')"><span class="ms-aic">📝</span>研修ステップを記録<span class="ms-ch">›</span></div>';
-  if (group === 'fresh')   rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'fresh\')"><span class="ms-aic">📋</span>OLを記録<span class="ms-ch">›</span></div>';
+  if (group === 'fresh')   rows += '<div class="ms-act" onclick="closeMemberActions();openOlPopup(\'' + mid + '\')"><span class="ms-aic">📋</span>OLを見る・記録<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMemberActions();ckAddTask(\'' + mid + '\')"><span class="ms-aic">➕</span>タスクを追加<span class="ms-ch">›</span></div>';
+  if (m.lineId) rows += '<div class="ms-act" onclick="closeMemberActions();openLineChatById(\'' + mid + '\')"><span class="ms-aic">💬</span>LINEを開く<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMemberActions();openEdit(\'' + mid + '\')"><span class="ms-aic">📄</span>詳細・編集<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
   ov.className = 'ms-overlay';
@@ -5149,7 +5381,8 @@ function openMemberDetail(mid) {
     + _dRow('適用MAP', m.mapType==='ideal'?'理想':(m.mapType==='both'?'両方':'現状'))
     + _dRow('アップライン', parent ? ((parent.lastName||'')+(parent.firstName||'')) : 'トップ直下')
     + _dRow('金の船', m.goldShip ? '⛴ 金の船' : '—')
-    + (m.instaUrl ? _dRow('Instagram', m.instaUrl) : '');
+    + (m.instaUrl ? _dRow('Instagram', m.instaUrl) : '')
+    + (m.lineId ? '<div class="md-row"><span class="md-l">LINE</span><span class="md-v" style="text-align:right"><span onclick="openLineChatById(\'' + m.id + '\')" style="color:#06C755;font-weight:600;cursor:pointer">💬 LINEを開く</span></span></div>' : '');
   var monthly = _dRow('現状GSV', m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0')
     + _dRow('固定PT', m.ptFixed>0 ? m.ptFixed.toLocaleString() : '—')
     + _dRow('稼働タイプ', m.activity ? (m.activity==='S'?'S（120%）':(m.activity+(m.actRate?' '+m.actRate+'%':''))) : '—')
@@ -5271,7 +5504,7 @@ function renderHome() {
     comebackHtml = '<div class="home-comeback">🌅 <b>おかえりなさい！</b><br>今日1つ記録すれば、ストリーク<b>' + Math.max(1, Math.floor(g.streak / 2)) + '日</b>から再開できます</div>';
   }
   // クイック記録グリッド
-  var qrHtml = '<div class="home-sec-label"><span>⚡ クイック記録</span><span style="color:var(--text-dim);font-weight:400;font-size:11px">押すだけ・詳細はあとでOK</span></div>'
+  var qrHtml = '<div class="home-sec-label"><span>⚡ クイック記録</span><span onclick="quickRecordUndo()" style="color:var(--text-dim);font-weight:600;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:12px;padding:3px 10px">↩ 直前を取り消す</span></div>'
     + '<div class="qr-grid">' + QUICK_STAGES.map(function(s){
         return '<button type="button" class="qr-btn" onclick="quickRecord(\'' + s.k + '\')"><span class="qr-ic">' + s.ic + '</span><span class="qr-lb">＋ ' + s.label + '</span><span class="qr-n">今日 ' + _qrToday(s.k) + '</span></button>';
       }).join('') + '</div>';
@@ -7491,7 +7724,7 @@ function olRecordModalDelete(mid, editIdx){
   if(typeof editIdx!=='number' || editIdx<0) return;
   if(!confirm('この記録を削除しますか？')) return;
   var log=freshOlLog(mid); if(log[editIdx]) log.splice(editIdx,1);
-  autoSave(); closeOlRecordModal(); renderStats();
+  autoSave(); closeOlRecordModal(); renderStats(); _olAfterRecordChange(mid);
 }
 function olRecordModalSave(mid, editIdx){
   var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
@@ -7505,6 +7738,35 @@ function olRecordModalSave(mid, editIdx){
   autoSave();
   closeOlRecordModal();
   renderStats();
+  _olAfterRecordChange(mid);
+}
+// ── OLポップアップ（現状MAP起点でOL閲覧＋記録、MAPの位置を保持） ──
+function openOlPopup(mid){
+  var m = (typeof _findMember==='function') ? _findMember(mid) : null;
+  if(!m) return;
+  var nm = _olNm(m);
+  var fd = (state.freshData && state.freshData[mid]) || {};
+  var listSt = (typeof freshNorm==='function') ? freshNorm(fd['リスト']) : (fd['リスト']||{});
+  var statusTxt = listSt.done ? '✓ 完了' : (listSt.date ? ('予定 '+listSt.date) : '未着手');
+  closeOlPopup();
+  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='olPopupOv';
+  ov.onclick=function(e){ if(e.target===ov) closeOlPopup(); };
+  ov.innerHTML='<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📋 '+evEsc(nm)+' のOL</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">リストOL: '+evEsc(statusTxt)+'</div></div>'
+    + '<span class="ms-x" onclick="closeOlPopup()">✕</span></div>'
+    + '<div style="padding:4px 16px 16px">'+_olRecordsHtml(m)+'</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function closeOlPopup(){ var ov=document.getElementById('olPopupOv'); if(ov){ ov.classList.remove('show'); setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); },200); } }
+// OL記録の保存/削除後に、開いているOLポップアップ・編集パネルのOL欄を最新化
+function _olAfterRecordChange(mid){
+  if(document.getElementById('olPopupOv')) openOlPopup(mid);
+  if(typeof editingId!=='undefined' && editingId===mid){
+    var modal=document.getElementById('modal');
+    if(modal && modal.classList.contains('open')){ var mm=(typeof _findMember==='function')?_findMember(mid):null; if(mm && typeof meRenderExtras==='function') meRenderExtras(mm); }
+  }
 }
 // ── OL育成ダッシュボード（PCテーブル / モバイルカード） ──
 var _olExpandMid='';
@@ -7682,6 +7944,38 @@ function monthTrainees(mon) {  // 表示中の月に「活動 or 結果確定」
     return traineeActiveInMonth(m, mon) || traineeDecidedMonth(m) === mon;
   });
 }
+// ── 研修生ファネル ドリルダウン（内訳→現状MAPへジャンプ） ──
+function showTraineeDrill(asan, catLabel, members) {
+  members = members || [];
+  var body;
+  if (!members.length) body = '<div class="ev-empty" style="padding:18px">該当する研修生はいません</div>';
+  else body = members.map(function(m){
+    var name = ((m.lastName||'') + (m.firstName||'')).trim() || '(無名)';
+    var sub = (m.title||'') + (m.activity ? ' ・ ' + m.activity : '');
+    return '<div onclick="_traineeDrillJump(\'' + m.id + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:13px 12px;border-bottom:1px solid var(--border);cursor:pointer">'
+      + '<div><div style="font-weight:600">' + evEsc(name) + '</div>'
+      + (sub.trim() ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">' + evEsc(sub) + '</div>' : '')
+      + '</div><div style="color:var(--accent);font-size:12px;white-space:nowrap">MAPへ ›</div></div>';
+  }).join('');
+  closeTraineeDrill();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'traineeDrillOv';
+  ov.onclick = function(e){ if (e.target === ov) closeTraineeDrill(); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:74vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(asan) + ' ・ ' + evEsc(catLabel) + '</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">' + members.length + '人 ・ タップで現状MAPへ</div></div>'
+    + '<span class="ms-x" onclick="closeTraineeDrill()">✕</span></div>'
+    + body + '</div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function closeTraineeDrill() {
+  var ov = document.getElementById('traineeDrillOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+}
+function _traineeDrillJump(id) {
+  closeTraineeDrill();
+  if (typeof jumpToMember === 'function') jumpToMember(id);
+}
 
 function buildAutoStats() {
   // 現状MAPから稼働/研修生ステータスを自動集計して state.stats.monthly に反映
@@ -7700,6 +7994,7 @@ function buildAutoStats() {
     while (row.vals.length > 12) row.vals.shift();
   });
   
+  var fmon = now2; // 表示中の月（'YYYY.MM'）。B1/マケPG/DLRはこの月の実績だけ数える
   var counts = {S:0, A:0, B:0, C:0, B1:0, make:0, dlr:0};
   // 全メンバーを対象（研修履歴があるBAも研修生としてカウント）
   var allMembersForStats = state.members;
@@ -7708,13 +8003,12 @@ function buildAutoStats() {
     else if (m.activity === 'A') counts.A++;
     else if (m.activity === 'B') counts.B++;
     else if (m.activity === 'C') counts.C++;
-    // 研修経験者判定：trainee=true、研修結果あり、または研修履歴がある人
-    var isTrainee = m.trainee || !!m.traineeResult || (m.traineeHistory && m.traineeHistory.length > 0);
-    if (isTrainee && m.traineeResult === 'BC') counts.B1++;
-    // マケ・PG = 履歴にマケまたはPGが含まれる人数
+    // B1 = 「その月に」BC決定した研修生のみ（前月分は当月にカウントしない）
+    if (m.traineeResult === 'BC' && traineeDecidedMonth(m) === fmon) counts.B1++;
+    // マケ・PG / DLR = 「その月の」履歴だけをカウント（月度管理）
     var hist = m.traineeHistory || [];
-    var hasMake = hist.some(function(h){ return h.status==='マケ' || h.status==='PG'; });
-    var hasDLR  = hist.some(function(h){ return h.status==='DLR'; });
+    var hasMake = hist.some(function(h){ return (h.status==='マケ' || h.status==='PG') && _ymToMon(h.date) === fmon; });
+    var hasDLR  = hist.some(function(h){ return h.status==='DLR' && _ymToMon(h.date) === fmon; });
     if (hasMake) counts.make++;
     if (hasDLR)  counts.dlr++;
   });
@@ -7790,7 +8084,7 @@ function renderStats() {
   var thead = document.getElementById('statsTblHead');
   if (thead) {
     thead.innerHTML = '<tr><th style="text-align:left;padding-left:12px;min-width:80px;position:sticky;left:0;background:var(--surface2);z-index:1">項目</th>'
-      + monthLabels.map(function(ml, mi){ return '<th style="min-width:60px" class="' + (mi < 9 ? 'hide-mobile' : '') + '">' + ml + '</th>'; }).join('')
+      + monthLabels.map(function(ml, mi){ return '<th id="statsCol' + mi + '" style="min-width:60px" class="' + (mi < 9 ? 'hide-mobile' : '') + '">' + ml + '</th>'; }).join('')
       + '</tr>';
     // #5 モバイル用クラス
     var statsCard = thead.closest('.card');
@@ -8156,10 +8450,11 @@ function renderStats() {
       asanKeys.forEach(function(asan) {
         var group = Object.values ? Object.values(asanMap[asan].trainees) : Object.keys(asanMap[asan].trainees).map(function(k){ return asanMap[asan].trainees[k]; });
         var gt = group.length;
-        var bc = group.filter(function(g){ return g.m.traineeResult==='BC' && traineeDecidedMonth(g.m)===amon; }).length;
-        var user = group.filter(function(g){ return g.m.traineeResult==='ユーザー' && traineeDecidedMonth(g.m)===amon; }).length;
-        var ng = group.filter(function(g){ return g.m.traineeResult==='流れた' && traineeDecidedMonth(g.m)===amon; }).length;
-        var inProg = gt - bc - user - ng;
+        var bcList = group.filter(function(g){ return g.m.traineeResult==='BC' && traineeDecidedMonth(g.m)===amon; }).map(function(g){ return g.m; });
+        var userList = group.filter(function(g){ return g.m.traineeResult==='ユーザー' && traineeDecidedMonth(g.m)===amon; }).map(function(g){ return g.m; });
+        var ngList = group.filter(function(g){ return g.m.traineeResult==='流れた' && traineeDecidedMonth(g.m)===amon; }).map(function(g){ return g.m; });
+        var inProgList = group.filter(function(g){ return !(g.m.traineeResult && traineeDecidedMonth(g.m)===amon); }).map(function(g){ return g.m; });
+        var bc = bcList.length, user = userList.length, ng = ngList.length, inProg = inProgList.length;
         var bcRate = gt > 0 ? Math.round(bc/gt*100) : 0;
 
         var block = document.createElement('div');
@@ -8171,11 +8466,22 @@ function renderStats() {
         block.appendChild(hdr);
         var summary = document.createElement('div');
         summary.style.cssText = 'display:flex;gap:12px;margin-bottom:10px';
-        summary.innerHTML =
-          '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#2CE5B8">' + bc + '</div><div style="font-size:10px;color:var(--text-dim)">BC ' + bcRate + '%</div></div>'
-          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#FFB454">' + user + '</div><div style="font-size:10px;color:var(--text-dim)">ユーザー</div></div>'
-          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:#FF5D73">' + ng + '</div><div style="font-size:10px;color:var(--text-dim)">流れた</div></div>'
-          + '<div style="text-align:center"><div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:var(--text-dim)">' + inProg + '</div><div style="font-size:10px;color:var(--text-dim)">進行中</div></div>';
+        // 各タイルをタップ → その内訳（誰の研修生か）→ さらにタップで現状MAPへ
+        var _tiles = [
+          {n:bc,     lbl:'BC ' + bcRate + '%', col:'#2CE5B8',        cat:'BC（成約）',   list:bcList},
+          {n:user,   lbl:'ユーザー',            col:'#FFB454',        cat:'ユーザー',      list:userList},
+          {n:ng,     lbl:'流れた',              col:'#FF5D73',        cat:'流れた',        list:ngList},
+          {n:inProg, lbl:'進行中',              col:'var(--text-dim)', cat:'進行中',       list:inProgList}
+        ];
+        _tiles.forEach(function(t){
+          var cell = document.createElement('div');
+          var clickable = t.list.length > 0;
+          cell.style.cssText = 'text-align:center;flex:1;border-radius:8px;padding:2px 0;' + (clickable ? 'cursor:pointer' : 'opacity:.85');
+          cell.innerHTML = '<div style="font-family:IBM Plex Mono,monospace;font-size:20px;font-weight:700;color:' + t.col + '">' + t.n + (clickable ? '<span style="font-size:10px;color:var(--text-dim)"> ›</span>' : '') + '</div>'
+            + '<div style="font-size:10px;color:var(--text-dim)">' + t.lbl + '</div>';
+          if (clickable) cell.onclick = (function(tt){ return function(){ showTraineeDrill(asan, tt.cat, tt.list); }; })(t);
+          summary.appendChild(cell);
+        });
         block.appendChild(summary);
         var stepDiv = document.createElement('div');
         stepDiv.style.cssText = 'margin-top:6px';
@@ -8229,12 +8535,29 @@ function renderStats() {
     selectChartRow(defLabel);
   }
 
-  // テーブルを右端（最新月）にスクロール
+  // スクロール位置：最新月にデータがあれば右端。無ければデータのある一番左の月を表示（PC）
   setTimeout(function() {
+    var firstCol = -1, lastCol = -1;
+    (s.monthly||[]).concat(s.powerline||[]).forEach(function(row){
+      (row.vals||[]).forEach(function(v, i){
+        if (v!=='' && v!==null && v!==undefined) {
+          if (firstCol<0 || i<firstCol) firstCol = i;
+          if (i>lastCol) lastCol = i;
+        }
+      });
+    });
     var tblWrap = document.querySelector('#statsTbl')&&document.querySelector('#statsTbl').closest('.card');
-    if (tblWrap) tblWrap.scrollLeft = 9999;
     var plWrap = document.querySelector('#plTbl')&&document.querySelector('#plTbl').closest('.card');
-    if (plWrap) plWrap.scrollLeft = 9999;
+    if (lastCol === 11 || firstCol < 0) {
+      // 最新月にデータあり／全て空 → 従来どおり右端（最新月）
+      if (tblWrap) tblWrap.scrollLeft = 9999;
+      if (plWrap) plWrap.scrollLeft = 9999;
+    } else {
+      // 最新月が空 → データが入っている一番左の月へスクロール
+      var hc = document.getElementById('statsCol' + firstCol);
+      if (tblWrap) tblWrap.scrollLeft = hc ? Math.max(0, hc.offsetLeft - 90) : 0;
+      if (plWrap) plWrap.scrollLeft = tblWrap ? tblWrap.scrollLeft : 0;
+    }
   }, 50);
 }
 
@@ -8729,14 +9052,29 @@ function meRenderExtras(m) {
   var olHtml = _dRow('リストOL', listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手'));
   if (!olog.length) olHtml += '<div class="md-empty">OL記録はまだありません</div>';
   else olHtml += olog.slice().reverse().map(function(e){ return '<div class="me-ol"><div style="color:var(--text-dim);font-size:12px">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div style="margin-top:3px">' + evEsc(e.what) + '</div>':'') + (e.note?'<div style="margin-top:3px;color:var(--text-mid);font-size:12px">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
-  olHtml += '<div class="me-add-btn" onclick="closeMemberEdit();ckRecord(\'' + mid + '\',\'fresh\')">＋ OLを記録する</div>';
+  olHtml += '<div class="me-add-btn" onclick="openOlRecordModal(\'' + mid + '\')">＋ OLを記録する</div>';
   olBox.innerHTML = olHtml;
   var evs = (state.events || []).filter(function(e){ return e.memberId === mid && !e.deleted; });
   var tkHtml = '';
   if (!evs.length) tkHtml += '<div class="md-empty">紐付くタスク・予定はありません</div>';
-  else tkHtml += evs.map(function(e){ var ic = e.type === 'task' ? (e.done?'✅':'⬜') : '📅'; var d = e.date ? e.date.split('-').slice(1).join('/') : ''; return '<div class="me-task"><span>' + ic + '</span> <span style="' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span> <span style="color:var(--text-dim);font-size:12px">' + d + '</span></div>'; }).join('');
+  else tkHtml += evs.map(function(e){ var isTask = e.type === 'task'; var ic = isTask ? (e.done?'✅':'⬜') : '📅'; var d = e.date ? e.date.split('-').slice(1).join('/') : ''; var clickAttr = isTask ? (' onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')" style="cursor:pointer"') : ''; return '<div class="me-task"' + clickAttr + '><span>' + ic + '</span> <span style="' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span> <span style="color:var(--text-dim);font-size:12px">' + d + '</span></div>'; }).join('');
   tkHtml += '<div class="me-add-btn" onclick="closeMemberEdit();ckAddTask(\'' + mid + '\')">＋ タスクを追加する</div>';
   tkBox.innerHTML = tkHtml;
+}
+// MAP編集パネルのタスクをその場で消込（完了/未完了トグル）
+function meToggleTask(id, mid) {
+  var e = findEvent(id);
+  if (!e || e.type !== 'task') return;
+  e.done = !e.done;
+  e.completedAt = e.done ? new Date().toISOString() : '';
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
+  updateEventsBadge();
+  if (e.done && typeof gameCheck === 'function') gameCheck();
+  if (typeof toast === 'function') toast(e.done ? '✅ タスク完了' : '⬜ 未完了に戻しました');
+  var m = (state.members || []).filter(function(x){ return x.id === mid; })[0];
+  if (m) meRenderExtras(m); // パネルを再描画してチェック状態を反映
 }
 function openAdd() {
   if (!state.isEditor) return;
@@ -8821,6 +9159,7 @@ function openEdit(id) {
     set('fNextDate', m.nextDate);
     set('fASan', m.aSan);
     set('fInsta', m.instaUrl);
+    set('fLine', m.lineId);
     set('fRegion', m.region);
     syncRegionSelect(m.region);
     set('fBirth', m.birthday);
@@ -8890,7 +9229,7 @@ function openEdit(id) {
   }
 }
 function clearForm() {
-  ['fLast','fFirst','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta','fRegion'].forEach(function(id){
+  ['fLast','fFirst','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta','fLine','fRegion'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value='';
   });
@@ -9051,6 +9390,7 @@ function saveMember() {
     nextDate: (document.getElementById('fNextDate')||{}).value||'',
     aSan: (document.getElementById('fASan')||{}).value||'',
     instaUrl: (document.getElementById('fInsta')||{}).value||'',
+    lineId: (document.getElementById('fLine')||{}).value||'',
     goldShip: fGoldShip,
     traineeStatus: (function(){ var m2=null; for(var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}} return m2 ? getLatestStatus(m2) : ''; })(),
     traineeHistory: (function(){
@@ -9201,7 +9541,7 @@ var _glBoard = 'self';
 function genGoalId(){ return 'gl_' + Date.now() + '_' + Math.floor(Math.random()*100000); }
 function goalsUid(){ return (currentUser && currentUser.uid) ? currentUser.uid : null; }
 function _glDefaultPlan(){ return {
-  deadline:'', income:0, title:'', titleNow:'', incomeNow:0,
+  deadline:'', income:0, title:'', what:'', titleNow:'', incomeNow:0,
   frontMust:null, frontIdeal:null, pipeline:3,
   frontTable:{ 'ルビー':6, 'エメラルド':8, 'ダイヤモンド':10, 'ブルーダイヤモンド':12, 'チームエリート':15 },
   brTable:{ 'ルビー':4, 'エメラルド':6, 'ダイヤモンド':8, 'ブルーダイヤモンド':10, 'チームエリート':12 },
@@ -9210,6 +9550,22 @@ function _glDefaultPlan(){ return {
   actuals:{}, dailyActuals:{}
 }; }
 var GL_TITLE_ORDER=['','LOI','ブランドレプリゼンタティブ','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','チームエリート'];
+// 必要月収（円）→ 必要タイトル 自動判定。境界は各バンドの下限（円）。
+var GL_INCOME_TITLE=[
+  {min:3010000, t:'チームエリート'},      // 301万〜
+  {min:1010000, t:'ブルーダイヤモンド'},  // 101〜300万
+  {min:510000,  t:'ダイヤモンド'},        // 51〜100万
+  {min:260000,  t:'エメラルド'},          // 26〜50万
+  {min:170000,  t:'ルビー'},              // 17〜25万
+  {min:110000,  t:'ラピス'},              // 11〜16万
+  {min:60000,   t:'ゴールド'},            // 6〜10万
+  {min:0,       t:'ブランドレプリゼンタティブ'} // 〜5万
+];
+function glTitleFromIncome(inc){
+  inc = parseInt(inc,10) || 0;
+  for(var i=0;i<GL_INCOME_TITLE.length;i++){ if(inc >= GL_INCOME_TITLE[i].min) return GL_INCOME_TITLE[i].t; }
+  return 'ブランドレプリゼンタティブ';
+}
 function _glNormPlan(p){
   var d=_glDefaultPlan(); p=p||{};
   // 旧既定(B1=2始まり)を保存していたら、新既定(B1=フロント=1始まり)へ自動移行
@@ -9479,7 +9835,8 @@ function _glPlannerHtml(){
   // ===== SUMMIT =====
   h+='<div class="go-summit" onclick="glEditGoal()"><div class="go-sk">🏔 最重要目標 — MY SUMMIT</div>';
   if(hasGoal){
-    h+='<div class="go-title">'+(p.income?('月収 <span class="amt go-tnum">'+_glFmtYen(p.income)+'</span>円'):'')+(p.income&&p.title?'・':'')+(p.title?('<span class="amt">'+evEsc(p.title)+'</span>'):'')+'</div>';
+    if(p.what) h+='<div class="go-title" style="font-size:20px;margin-bottom:2px">'+evEsc(p.what)+'</div>';
+    h+='<div class="go-title"'+(p.what?' style="font-size:15px;opacity:.85"':'')+'>'+(p.income?('月収 <span class="amt go-tnum">'+_glFmtYen(p.income)+'</span>円'):'')+(p.income&&p.title?'・':'')+(p.title?('<span class="amt">'+evEsc(p.title)+'</span>'):'')+'</div>';
     h+='<div class="go-sub">'+(p.deadline?(p.deadline.replace('-','年')+'月まで'):'期限未設定')+' ／ <b>これが最終到達点</b>。すべての行動はここへ向かう。</div>';
     var tPct=_glTitleRank(p.title)>0?Math.min(100,Math.round(_glTitleRank(p.titleNow)/_glTitleRank(p.title)*100)):0;
     var iPct=p.income>0?Math.min(100,Math.round((p.incomeNow||0)/p.income*100)):0;
@@ -9968,30 +10325,50 @@ function glEditGoal(){
   var opt=function(sel){ var ks=keys.slice(); if(sel && ks.indexOf(sel)<0) ks.unshift(sel); return '<option value="">未設定</option>'+ks.map(function(k){ return '<option value="'+evEsc(k)+'"'+(k===sel?' selected':'')+'>'+evEsc(k)+'</option>'; }).join(''); };
   var inS='box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px;outline:none;-webkit-appearance:none;margin:4px 0 12px';
   var lb='font-size:12px;color:var(--text-dim);font-weight:700';
+  var autoBox='box-sizing:border-box;width:100%;background:var(--accent-dim,rgba(44,229,184,.1));border:1px solid var(--accent);border-radius:10px;color:var(--accent);padding:11px 12px;font-size:16px;font-weight:800;margin:4px 0 12px;display:flex;align-items:center;justify-content:space-between';
+  var initTitle = p.income>0 ? glTitleFromIncome(p.income) : '—';
+  var initCnt = (p.adpUnit>0) ? Math.ceil((p.ryutsu||0)/p.adpUnit) : 0;
   var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='glModal';
   ov.onclick=function(e){ if(e.target===ov) _glCloseModal(); };
-  ov.innerHTML='<div class="ms-sheet" style="max-height:86vh;overflow-y:auto">'
+  ov.innerHTML='<div class="ms-sheet" style="max-height:88vh;overflow-y:auto">'
     +'<div class="ms-grip"></div>'
-    +'<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🏔 最重要目標（MY SUMMIT）</div></div><span class="ms-x" onclick="_glCloseModal()">✕</span></div>'
+    +'<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🏔 最重要目標（MY SUMMIT）</div><div style="font-size:11px;color:var(--text-dim)">下から順に入力するだけ。タイトルと客数は自動</div></div><span class="ms-x" onclick="_glCloseModal()">✕</span></div>'
     +'<div style="padding:4px 16px 16px">'
-    +'<label style="'+lb+'">目標タイトル</label><select id="_glTitle" style="'+inS+'">'+opt(p.title)+'</select>'
-    +'<label style="'+lb+'">目標の月収（円）</label><input id="_glInc" type="number" inputmode="numeric" placeholder="例: 2000000" value="'+(p.income||'')+'" style="'+inS+'">'
-    +'<label style="'+lb+'">達成期限</label><input id="_glDl" type="month" value="'+(p.deadline||'')+'" style="'+inS+'">'
+    +'<label style="'+lb+'">① いつまでに</label><input id="_glDl" type="month" value="'+(p.deadline||'')+'" style="'+inS+'">'
+    +'<label style="'+lb+'">② 何をする（目標）</label><input id="_glWhat" type="text" placeholder="例: 経済的自由を手に入れる" value="'+evEsc(p.what||'')+'" style="'+inS+'">'
+    +'<label style="'+lb+'">③ 必要月収（円）</label><input id="_glInc" type="number" inputmode="numeric" oninput="_glGoalFormRecalc()" placeholder="例: 2000000" value="'+(p.income||'')+'" style="'+inS+'">'
+    +'<label style="'+lb+'">必要タイトル（月収から自動判定）</label><div style="'+autoBox+'"><span>🏅 必要タイトル</span><span id="_glTitleAuto">'+evEsc(initTitle)+'</span></div>'
     +'<div style="border-top:1px solid var(--border);margin:2px 0 12px"></div>'
-    +'<label style="'+lb+'">今の自分のタイトル（進捗表示用）</label><select id="_glTitleNow" style="'+inS+'">'+opt(p.titleNow)+'</select>'
-    +'<label style="'+lb+'">今の月収（円）</label><input id="_glIncNow" type="number" inputmode="numeric" placeholder="例: 50000" value="'+(p.incomeNow||'')+'" style="'+inS+'">'
+    +'<label style="'+lb+'">④ 必要流通量（P）</label><input id="_glRyutsu" type="number" inputmode="numeric" oninput="_glGoalFormRecalc()" placeholder="3000" value="'+(p.ryutsu||3000)+'" style="'+inS+'">'
+    +'<label style="'+lb+'">⑤ 客単価（1人あたりP）</label><input id="_glAdpUnit" type="number" inputmode="numeric" oninput="_glGoalFormRecalc()" placeholder="100" value="'+(p.adpUnit||100)+'" style="'+inS+'">'
+    +'<label style="'+lb+'">必要客数（流通量 ÷ 客単価で自動計算）</label><div style="'+autoBox+'"><span>👥 必要客数</span><span id="_glKyakusu">'+(initCnt>0?(initCnt+'人'):'—')+'</span></div>'
+    +'<div style="border-top:1px solid var(--border);margin:2px 0 12px"></div>'
+    +'<label style="'+lb+'">今の自分のタイトル（進捗表示用・任意）</label><select id="_glTitleNow" style="'+inS+'">'+opt(p.titleNow)+'</select>'
+    +'<label style="'+lb+'">今の月収（円・任意）</label><input id="_glIncNow" type="number" inputmode="numeric" placeholder="例: 50000" value="'+(p.incomeNow||'')+'" style="'+inS+'">'
     +'<button type="button" onclick="glSaveGoalModal()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink,#08121a);font-size:15px;font-weight:800;margin-top:4px">保存</button>'
     +'</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
+// SUMMITフォームのライブ計算（必要タイトル・必要客数）
+function _glGoalFormRecalc(){
+  var gv=function(id){ var el=document.getElementById(id); return el?String(el.value||'').replace(/[^0-9]/g,''):''; };
+  var inc=parseInt(gv('_glInc'),10)||0;
+  var td=document.getElementById('_glTitleAuto'); if(td) td.textContent = inc>0 ? glTitleFromIncome(inc) : '—';
+  var ry=parseInt(gv('_glRyutsu'),10)||0, unit=parseInt(gv('_glAdpUnit'),10)||0;
+  var cnt=unit>0?Math.ceil(ry/unit):0;
+  var cd=document.getElementById('_glKyakusu'); if(cd) cd.textContent = cnt>0 ? (cnt+'人') : '—';
+}
 function glSaveGoalModal(){
   var p=state.goals.plan, g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
   var d=(g('_glDl')||'').trim();
   if(d && !/^\d{4}-\d{2}$/.test(d)){ toast('期限を選び直してください'); return; }
-  p.title=(g('_glTitle')||'').trim();
-  p.income=parseInt(String(g('_glInc')).replace(/[^0-9]/g,''),10)||0;
   p.deadline=d;
+  p.what=(g('_glWhat')||'').trim();
+  p.income=parseInt(String(g('_glInc')).replace(/[^0-9]/g,''),10)||0;
+  p.title=p.income>0 ? glTitleFromIncome(p.income) : ''; // 月収から自動判定
+  var ry=parseInt(String(g('_glRyutsu')).replace(/[^0-9]/g,''),10); p.ryutsu=(ry>0?ry:3000);
+  var unit=parseInt(String(g('_glAdpUnit')).replace(/[^0-9]/g,''),10); p.adpUnit=(unit>0?unit:100);
   p.titleNow=(g('_glTitleNow')||'').trim();
   p.incomeNow=parseInt(String(g('_glIncNow')).replace(/[^0-9]/g,''),10)||0;
   _glCloseModal(); saveGoals(); renderGoals();
@@ -13048,6 +13425,7 @@ function fsSaveToFirestore(uid) {
 // ── START ──
 try {
   initTheme();
+  applyMembersTabVisible();
   init();
   checkAuth();
 } catch(e) {
