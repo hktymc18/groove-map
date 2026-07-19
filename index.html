@@ -53,6 +53,8 @@ body.light{
   --col-band:#000000;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* キーボード操作時の視認可能なフォーカスリング（マウス/タップでは出ない） */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 html,body{height:100%;overflow:hidden}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
 
@@ -60,7 +62,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--border);z-index:50;padding-top:env(safe-area-inset-top)}
 .hdr-top{display:flex;align-items:center;gap:8px;padding:10px 14px 0;flex-wrap:wrap}
 .logo{font-family:'Inter','IBM Plex Mono',monospace;font-size:17px;color:var(--accent);letter-spacing:2px;font-weight:700}
-.month-sel{margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 8px;border-radius:var(--rxs);font-family:'Inter','IBM Plex Mono',monospace}
+.month-sel{margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;padding:9px 8px;border-radius:var(--rsm);font-family:'Inter','IBM Plex Mono',monospace}
 .user-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim)}
 .user-dot.editor{background:var(--accent)}
 .tab-bar{display:flex;gap:5px;padding:8px 14px 10px}
@@ -941,9 +943,11 @@ tr.ot-done{opacity:.5}
 .ev-item.is-overdue{border-left-color:var(--red)}
 .ev-item.is-done{opacity:.5}
 .ev-item.is-done .ev-i-title{text-decoration:line-through}
-.ev-check{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent;margin-top:1px}
-.ev-check.checked{background:var(--accent);border-color:var(--accent);color:#000}
-.ev-item.t-event .ev-check{visibility:hidden}
+.ev-check{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;margin-top:1px}
+.ev-check.checked{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
+/* 予定の消込（実行済み）は紫系でタスクと区別 */
+.ev-check-event{border-color:var(--purple)}
+.ev-check-event.checked{background:var(--purple);border-color:var(--purple);color:#fff}
 .ev-i-body{flex:1;min-width:0;cursor:pointer}
 .ev-i-title{font-size:14px;font-weight:600;color:var(--text);word-break:break-word}
 .ev-i-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px;font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
@@ -1145,7 +1149,7 @@ tr.ot-done{opacity:.5}
 .trophy-ov{position:fixed;inset:0;z-index:560;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center}
 .trophy-sheet{width:100%;max-width:560px;max-height:82vh;overflow-y:auto;background:var(--surface);border-radius:20px 20px 0 0;border:1px solid var(--border);padding:14px 16px 26px;-webkit-overflow-scrolling:touch}
 .ts-hd{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:900;color:var(--text);margin-bottom:12px}
-.ts-x{font-size:15px;color:var(--text-dim);cursor:pointer;padding:4px 8px}
+.ts-x{font-size:15px;color:var(--text-dim);cursor:pointer;padding:12px 14px;margin:-8px -6px}
 .ts-stats{display:flex;gap:9px;margin-bottom:14px}
 .ts-st{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 11px;min-width:0}
 .ts-st .k{font-size:11px;font-weight:800;color:var(--text-dim)}
@@ -1182,7 +1186,7 @@ tr.ot-done{opacity:.5}
 .ck-badge.mid{color:#FFB454;background:rgba(255,180,84,.13);border:1px solid rgba(255,180,84,.4)}
 .ck-badge.warn{color:var(--text-mid);background:var(--surface3);border:1px solid var(--border2)}
 .ck-actions{flex:none;display:flex;flex-direction:column;gap:5px}
-.ck-btn{padding:7px 10px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid)}
+.ck-btn{padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid)}
 .ck-btn.task{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
 .ck-btn:active{background:var(--surface3)}
 .ck-more{font-size:12px;color:var(--text-dim);text-align:center;padding:6px;cursor:pointer;text-decoration:underline;margin-bottom:6px}
@@ -1441,7 +1445,8 @@ tr.ot-done{opacity:.5}
 .mc-plus .t{font-size:9px;font-weight:800;color:var(--text-mid)}
 .mc-plus .td{font-size:11px;font-weight:900;color:var(--accent)}
 .mc-foot{display:flex;align-items:center;gap:7px;padding:7px 11px;border-top:1px solid var(--border);background:var(--surface2)}
-.mc-undo{font-size:11px;font-weight:700;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:4px 9px;cursor:pointer}
+.mc-undo{font-size:12px;font-weight:700;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;cursor:pointer}
+.mc-undo.danger{color:var(--red);border-color:rgba(255,93,115,.4)}
 .mc-task{display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px}
 .mc-task:last-child{border-bottom:0}
 .go-seg{display:inline-flex;background:var(--surface3);border:1px solid var(--border);border-radius:9px;padding:2px;margin:2px 0 10px}
@@ -1526,7 +1531,7 @@ tr.ot-done{opacity:.5}
 .ms-badges{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
 .msb{font-size:10px;color:var(--text-mid);background:var(--surface2);border-radius:5px;padding:1px 6px}
 .msb.hi{color:#FF5D73;background:rgba(255,93,115,.13)}
-.ms-x{width:28px;height:28px;border-radius:8px;background:var(--surface2);color:var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none;cursor:pointer}
+.ms-x{width:40px;height:40px;border-radius:11px;background:var(--surface2);color:var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;cursor:pointer}
 .ms-plabel{font-size:11px;color:var(--text-dim);margin-bottom:7px}
 .ms-prio{display:flex;gap:6px;margin-bottom:16px}
 .ms-pchip{flex:1;text-align:center;font-size:13px;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 0;cursor:pointer}
@@ -1787,7 +1792,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v270</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v271</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4062,7 +4067,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v270';
+  var DATA_VERSION = 'v271';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4650,6 +4655,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v271', d:'2026-07-19', items:['UI/UX総点検リニューアル 第3弾','✅予定（イベント）も「実行済み」チェックで消込できるように（アジェンダ・日別シート・メンバー編集パネル）。予定は紫チェックで区別、完了済みへまとめて表示','期限切れセクションを「期限切れ・終了」に改称（過去の予定も含むため）','タップしやすさ改善：✕閉じるボタン40px化・年月セレクタ・カウンター操作ボタンを拡大','カウンターの🗑を「🗑 削除」として赤で分離（誤タップ防止）','キーボード操作時のフォーカスリング表示（アクセシビリティ）','はじめの4ステップ「今日1つ記録する」がクイック記録へスクロールするように'] },
   { v:'v270', d:'2026-07-18', items:['UI/UX総点検リニューアル 第2弾','🏠HOMEヒーロー化：「今日のルーチン」を最上部の主役カードに（→クイック記録→ゲージの順）','⚡MAPツリーの遅延描画：閉じた枝は開いた瞬間に構築（大組織の初期表示を大幅軽量化）','ジャンプ検索・全段表示も遅延描画に対応','PC：SUMMITの統計3列グリッド・カウンター3列・ジャーニーを幅いっぱいに','モバイル：ジャーニーに「→スワイプ」ヒント表示','シート/モーダルの背景・角丸・ぼかしを統一','カードに📍地域チップ表示・編集ヒントを「✎ボタンで編集」に更新'] },
   { v:'v269', d:'2026-07-18', items:['UI/UX総点検リニューアル 第1弾','📱下部ナビに「☰メニュー」追加（GOAL/今月/OL/メンバーへ常設導線・現在地も点灯）','🔍MAPに名前ジャンプ検索（階層のままスクロール＆ハイライト）','🔀アップライン変更機能（配下ごと付け替え・削除不要に）','✎モバイルのカードに編集ボタンを常設（ダブルタップ不要）','🏅タイトル別カラー（ゴールド/ラピス/ルビー/エメ/ダイヤ/BD/TE）＋長い称号は略称表示＋⛴金の船マーク','GOAL逆算がBR〜ラピス目標でも正しく計算されるように（フロント表を全タイトル対応）','入力フォームのエラー時に入力内容が消えないように','共有の失敗を「共有しました」と誤表示していたのを修正','共有MAP閲覧中/合算中はデータタブに「閲覧のみ」バナー＋入力を無効化','データ表に凡例（✏️入力可/自動集計）とモバイル3ヶ月表示の注記・入力欄を見える化・選択行ハイライト','ファネルに実際の月を表示・Aさん別の数字をボタン化（タップで内訳）','パワーラインは履歴が貯まるまでランキング表示','OL：未接触は黄色区別・モバイルにも要フォロー人数を表示','カレンダーの予定4件以上が無言で隠れていたのを「他N件」表示に修正','予定に押せない✓が出ていたのを修正・カテゴリ色でもタスク/予定が判別可能に','Google同期に最終同期時刻を表示・連携中は手動📅を非表示（二重登録防止）','クイック記録直後に「↩取り消す」トースト','HOMEを整理（重複カード削除・助言系を1つのインサイトに統合・軽量化）','ピンチズーム解禁・小さい文字のコントラスト改善','ホームのメニュー計算の無駄を削除して高速化'] },
   { v:'v268', d:'2026-07-14', items:['メンバー編集のタスクをその場でチェック（消込）できるように','現状MAPからメンバーのOLをポップアップで閲覧＆記録（MAPの位置を保持）','研修生ファネルのAさん別（BC/ユーザー/流れた/進行中）をタップ→内訳→現状MAPへジャンプ','データのマケ・PG/DLR動員/B1を月度で正しく集計（前月引き継ぎを修正）','PCのデータタブ：当月が空ならデータのある一番左の月から表示','メンバーにLINE ID/URLを登録して💬LINEボタンから直接トークを開ける','GOALのSUMMIT入力を一括フォームに刷新（期限・目標・月収→タイトル自動判定・流通量・客単価→客数自動）','クイック記録に「↩直前を取り消す」を追加','メンバータブは設定で表示/非表示を選択可能に'] },
@@ -5508,7 +5514,7 @@ function renderHome() {
         { ok: _hasRoot, label: '自分をマップに置く', act: "switchView('current')" },
         { ok: _mAll.length >= 4, label: 'メンバーを3人追加する（' + Math.max(0, Math.min(3, _mAll.length - 1)) + '/3）', act: "switchView('current')" },
         { ok: !!_p3, label: '頂上（目標）を決める', act: "switchView('goals');setTimeout(function(){if(typeof glEditGoal==='function')glEditGoal()},300)" },
-        { ok: !!(g.gameDays && g.gameDays[today]), label: '今日1つ記録する（クイック記録でOK）', act: '' }
+        { ok: !!(g.gameDays && g.gameDays[today]), label: '今日1つ記録する（クイック記録でOK）', act: "var q=document.querySelector('.qr-grid');if(q)q.scrollIntoView({behavior:'smooth',block:'center'})" }
       ];
       var doneN = steps.filter(function(s){ return s.ok; }).length;
       if (doneN === steps.length) {
@@ -9223,14 +9229,14 @@ function meRenderExtras(m) {
   var evs = (state.events || []).filter(function(e){ return e.memberId === mid && !e.deleted; });
   var tkHtml = '';
   if (!evs.length) tkHtml += '<div class="md-empty">紐付くタスク・予定はありません</div>';
-  else tkHtml += evs.map(function(e){ var isTask = e.type === 'task'; var ic = isTask ? (e.done?'✅':'⬜') : '📅'; var d = e.date ? e.date.split('-').slice(1).join('/') : ''; var clickAttr = isTask ? (' onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')" style="cursor:pointer"') : ''; return '<div class="me-task"' + clickAttr + '><span>' + ic + '</span> <span style="' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span> <span style="color:var(--text-dim);font-size:12px">' + d + '</span></div>'; }).join('');
+  else tkHtml += evs.map(function(e){ var isTask = e.type === 'task'; var ic = isTask ? (e.done?'✅':'⬜') : (e.done?'✅':'📅'); var d = e.date ? e.date.split('-').slice(1).join('/') : ''; var clickAttr = ' onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')" style="cursor:pointer"'; return '<div class="me-task"' + clickAttr + '><span>' + ic + '</span> <span style="' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span> <span style="color:var(--text-dim);font-size:12px">' + d + '</span></div>'; }).join('');
   tkHtml += '<div class="me-add-btn" onclick="ckAddTask(\'' + mid + '\')">＋ タスクを追加する</div>';
   tkBox.innerHTML = tkHtml;
 }
 // MAP編集パネルのタスクをその場で消込（完了/未完了トグル）
 function meToggleTask(id, mid) {
   var e = findEvent(id);
-  if (!e || e.type !== 'task') return;
+  if (!e) return; // 予定も実行済みにできる
   e.done = !e.done;
   e.completedAt = e.done ? new Date().toISOString() : '';
   e.updatedAt = new Date().toISOString();
@@ -10428,7 +10434,7 @@ function _mcCardHtml(c, ym){
   h+='<div class="mc-foot"><span class="mc-undo" onclick="mcMinus(\''+c.id+'\')">− 戻す</span>'
     +'<span class="mc-undo" onclick="mcToggleView(\''+c.id+'\')">'+(c.view==='cal'?'🎫 スタンプ表示':'🗓 カレンダー表示')+'</span>'
     +'<span class="mc-undo" onclick="mcEdit(\''+c.id+'\')">✎ 編集</span>'
-    +'<span class="mc-undo" style="margin-left:auto" onclick="mcDel(\''+c.id+'\')">🗑</span></div>';
+    +'<span class="mc-undo danger" style="margin-left:auto" onclick="mcDel(\''+c.id+'\')">🗑 削除</span></div>';
   h+='</div>';
   return h;
 }
@@ -11251,9 +11257,9 @@ function evBarHtml(e) {
   if (cat) { style = ' style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '"'; }
   else if (overdue) cls += ' bar-overdue';
   else cls += (e.type === 'task') ? ' bar-task' : ' bar-event';
-  if (e.type === 'task' && e.done) cls += ' bar-done';
-  // カテゴリ色を付けてもタスク/予定の種別が読めるように、タスクは□/✓を常に前置
-  var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : '';
+  if (e.done) cls += ' bar-done';
+  // カテゴリ色を付けてもタスク/予定の種別が読めるように、タスクは□/✓を前置。実行済み予定は✓
+  var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : (e.done ? '✓ ' : '');
   var title = mark + (e.title || '');
   return '<div class="' + cls + '"' + style + '>' + evEsc(title) + '</div>';
 }
@@ -11621,7 +11627,7 @@ function evItemHtml(e) {
   var overdue = isTask && !e.done && e.date && e.date < t;
   var cls = 'ev-item ' + (isTask ? 't-task' : 't-event');
   if (overdue) cls += ' is-overdue';
-  if (isTask && e.done) cls += ' is-done';
+  if (e.done) cls += ' is-done';
   var checkCls = 'ev-check' + (e.done ? ' checked' : '');
   var memberName = '';
   if (e.memberId) {
@@ -11633,9 +11639,8 @@ function evItemHtml(e) {
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
   var styleAttr = cat ? ' style="border-left-color:' + cat.color + '"' : '';
   var h = '<div class="' + cls + '"' + styleAttr + '>';
-  // チェックボックスはタスクのみ（予定に押せない✓を出さない）。予定は種別ドットを表示
-  if (isTask) h += '<div class="' + checkCls + '" onclick="toggleEventDone(\'' + e.id + '\')">✓</div>';
-  else h += '<div style="width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:13px" title="予定">●</div>';
+  // タスクも予定もチェックで消込できる（予定＝実行済みの記録）。予定は紫系で種別を区別
+  h += '<div class="' + checkCls + (isTask ? '' : ' ev-check-event') + '" onclick="toggleEventDone(\'' + e.id + '\')" title="' + (isTask ? '完了にする' : '実行済みにする') + '">✓</div>';
   h += '<div class="ev-i-body" onclick="openEventEdit(\'' + e.id + '\')">';
   h += '<div class="ev-i-title">' + evEsc(e.title || '(無題)') + '</div>';
   h += '<div class="ev-i-meta">';
@@ -11658,7 +11663,7 @@ function renderAgenda() {
   var weekEnd = evYmd(evAddDays(new Date(), 6));
   var overdue = [], today = [], week = [], later = [], noDate = [], done = [];
   evs.forEach(function(e) {
-    if (e.type === 'task' && e.done) { done.push(e); return; }
+    if (e.done) { done.push(e); return; } // 実行済みの予定も完了済みへまとめる
     if (!e.date) { noDate.push(e); return; }
     if (e.date < t) overdue.push(e);
     else if (e.date === t) today.push(e);
@@ -11666,7 +11671,7 @@ function renderAgenda() {
     else later.push(e);
   });
   var html = '';
-  if (overdue.length) html += evGrpLabel('期限切れ','overdue', overdue.length) + overdue.map(evItemHtml).join('');
+  if (overdue.length) html += evGrpLabel('期限切れ・終了','overdue', overdue.length) + overdue.map(evItemHtml).join('');
   if (today.length)   html += evGrpLabel('今日','today', today.length) + today.map(evItemHtml).join('');
   if (week.length)    html += evGrpLabel('今週','', week.length) + week.map(evItemHtml).join('');
   if (later.length)   html += evGrpLabel('これから','', later.length) + later.map(evItemHtml).join('');
@@ -11757,7 +11762,7 @@ function renderCalDayList() {
 // ── 完了トグル ──
 function toggleEventDone(id) {
   var e = findEvent(id);
-  if (!e || e.type !== 'task') return;
+  if (!e) return; // タスクも予定も「実行済み」にできる（終わった予定の消込）
   e.done = !e.done;
   e.completedAt = e.done ? new Date().toISOString() : '';
   e.updatedAt = new Date().toISOString();
@@ -11875,7 +11880,7 @@ function saveEvent() {
   var rbVal  = document.getElementById('evRemind').value;
   e.remindBefore = (rbVal === '') ? '' : (parseInt(rbVal, 10) || 0);
   e.updatedAt = new Date().toISOString();
-  if (e.type === 'event') e.done = false;
+  // 予定の done（実行済み）は編集しても維持する
   saveEventDoc(e).then(function(){ toast('保存しました ✓'); });
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   closeEventModal();
