@@ -76,6 +76,9 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 .pcs-item:hover{background:var(--surface)}
 .pcs-item.active{background:var(--surface2)}
 .pcs-ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;transition:filter .15s}
+/* ナビ用SVGアイコン（端末絵文字の見た目差を排除） */
+.nav-svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-svg.mnav{width:22px;height:22px;stroke:currentColor}
 .pcs-item:not(.active) .pcs-ic{filter:saturate(.8) brightness(.94)}
 .pcs-lb{font-size:9px;font-weight:600;color:var(--text-dim);letter-spacing:.2px;line-height:1;white-space:nowrap}
 .pcs-item.active .pcs-lb{color:var(--text)}
@@ -1771,14 +1774,15 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
 <!-- PC左サイドバー（≥768px） -->
 <aside class="pc-sidebar" id="pcSidebar">
-  <div class="pcs-item" data-view="home" onclick="switchView('home')" title="ホーム"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#4ADE80;box-shadow:0 3px 12px rgba(74,222,128,.5)">🏠</span><span class="pcs-lb">HOME</span></div>
-  <div class="pcs-item" data-view="current" onclick="switchView('current')" title="組織MAP"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#2CE5B8;box-shadow:0 3px 12px rgba(44,229,184,.55)">🗺</span><span class="pcs-lb">MAP</span></div>
-  <div class="pcs-item" data-view="members" onclick="switchView('members')" title="メンバー"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#5AD7FF;box-shadow:0 3px 12px rgba(59,130,246,.5)">👥</span><span class="pcs-lb">メンバー</span></div>
-  <div class="pcs-item" data-view="ol" onclick="switchView('ol')" title="OL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#8B7CFF;box-shadow:0 3px 12px rgba(139,124,255,.5)">📋</span><span class="pcs-lb">OL</span></div>
-  <div class="pcs-item" data-view="events" onclick="switchView('events')" title="予定"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#FFB454;box-shadow:0 3px 12px rgba(255,180,84,.5)">📅</span><span class="pcs-lb">予定</span></div>
-  <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#4ADE80;box-shadow:0 3px 12px rgba(16,185,129,.5)">📊</span><span class="pcs-lb">データ</span></div>
-  <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)">🧭</span><span class="pcs-lb">GOAL</span></div>
-  <div class="pcs-item" data-view="month" onclick="switchView('month')" title="今月"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#3ED5C4;box-shadow:0 3px 12px rgba(20,184,166,.5)">📆</span><span class="pcs-lb">今月</span></div>
+  <!-- アイコンはOS絵文字でなくSVG（端末による見た目差をなくす） -->
+  <div class="pcs-item" data-view="home" onclick="switchView('home')" title="ホーム"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#4ADE80;box-shadow:0 3px 12px rgba(74,222,128,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg></span><span class="pcs-lb">HOME</span></div>
+  <div class="pcs-item" data-view="current" onclick="switchView('current')" title="組織MAP"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#2CE5B8;box-shadow:0 3px 12px rgba(44,229,184,.55)"><svg class="nav-svg" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="19" r="2.6"/><circle cx="19" cy="19" r="2.6"/><path d="M12 7.6V12M12 12l-5.5 4.8M12 12l5.5 4.8"/></svg></span><span class="pcs-lb">MAP</span></div>
+  <div class="pcs-item" data-view="members" onclick="switchView('members')" title="メンバー"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#5AD7FF;box-shadow:0 3px 12px rgba(59,130,246,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5.5a3.2 3.2 0 010 6.2M18 14.5c2.3.7 3.7 2.6 3.7 5.5"/></svg></span><span class="pcs-lb">メンバー</span></div>
+  <div class="pcs-item" data-view="ol" onclick="switchView('ol')" title="OL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#8B7CFF;box-shadow:0 3px 12px rgba(139,124,255,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="18" rx="2"/><path d="M9 2.5h6v3.5H9z"/><path d="M8 11h8M8 15h8M8 19h5"/></svg></span><span class="pcs-lb">OL</span></div>
+  <div class="pcs-item" data-view="events" onclick="switchView('events')" title="予定"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#FFB454;box-shadow:0 3px 12px rgba(255,180,84,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg></span><span class="pcs-lb">予定</span></div>
+  <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#4ADE80;box-shadow:0 3px 12px rgba(16,185,129,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span class="pcs-lb">データ</span></div>
+  <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3z"/></svg></span><span class="pcs-lb">GOAL</span></div>
+  <div class="pcs-item" data-view="month" onclick="switchView('month')" title="今月"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#3ED5C4;box-shadow:0 3px 12px rgba(20,184,166,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/><path d="M8.5 16l2.5 2.5 4.5-4.5"/></svg></span><span class="pcs-lb">今月</span></div>
   <div class="pcs-spacer"></div>
 </aside>
 
@@ -1792,7 +1796,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v271</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v272</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1997,7 +2001,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="ev-toolbar">
       <div class="ev-seg">
         <div class="ev-seg-btn active" id="evSegAgenda" onclick="setEventsMode('agenda')">アジェンダ</div>
-        <div class="ev-seg-btn" id="evSegCal" onclick="setEventsMode('calendar')">カレンダー</div>
+        <div class="ev-seg-btn" id="evSegWeek" onclick="setEventsMode('week')">週</div>
+        <div class="ev-seg-btn" id="evSegCal" onclick="setEventsMode('calendar')">月</div>
       </div>
       <div class="ev-actions">
         <div class="ev-notif" id="evInstallBtn" onclick="installPWA()" style="display:none">📲 アプリとして追加</div>
@@ -2011,6 +2016,16 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <!-- アジェンダ -->
     <div id="evAgenda">
       <div id="evAgendaList"></div>
+    </div>
+
+    <!-- 週表示 -->
+    <div id="evWeek" style="display:none">
+      <div class="ev-cal-hdr">
+        <div class="ev-cal-nav" onclick="weekShift(-1)">‹</div>
+        <div class="ev-cal-title" id="evWeekTitle" onclick="weekShift(0)" style="cursor:pointer" title="タップで今週へ"></div>
+        <div class="ev-cal-nav" onclick="weekShift(1)">›</div>
+      </div>
+      <div id="evWeekList"></div>
     </div>
 
     <!-- 月カレンダー -->
@@ -2074,11 +2089,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
 <!-- モバイル下部固定ナビ（ドック風・常時表示）-->
 <nav class="mobile-tabbar" id="mobileTabbar">
-  <div class="mtab" data-view="home" onclick="switchView('home')"><span class="mtab-ic">🏠</span><span class="mtab-lb">HOME</span></div>
-  <div class="mtab" data-view="current" onclick="switchView('current')"><span class="mtab-ic">🗺</span><span class="mtab-lb">MAP</span></div>
-  <div class="mtab" data-view="events" onclick="switchView('events')"><span class="mtab-ic">📅</span><span class="mtab-lb">予定</span></div>
-  <div class="mtab" data-view="stats" onclick="switchView('stats')"><span class="mtab-ic">📊</span><span class="mtab-lb">データ</span></div>
-  <div class="mtab" data-view="more" onclick="openMobileMenu()"><span class="mtab-ic">☰</span><span class="mtab-lb">メニュー</span></div>
+  <div class="mtab" data-view="home" onclick="switchView('home')"><span class="mtab-ic"><svg class="nav-svg mnav" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg></span><span class="mtab-lb">HOME</span></div>
+  <div class="mtab" data-view="current" onclick="switchView('current')"><span class="mtab-ic"><svg class="nav-svg mnav" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="19" r="2.6"/><circle cx="19" cy="19" r="2.6"/><path d="M12 7.6V12M12 12l-5.5 4.8M12 12l5.5 4.8"/></svg></span><span class="mtab-lb">MAP</span></div>
+  <div class="mtab" data-view="events" onclick="switchView('events')"><span class="mtab-ic"><svg class="nav-svg mnav" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg></span><span class="mtab-lb">予定</span></div>
+  <div class="mtab" data-view="stats" onclick="switchView('stats')"><span class="mtab-ic"><svg class="nav-svg mnav" viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span class="mtab-lb">データ</span></div>
+  <div class="mtab" data-view="more" onclick="openMobileMenu()"><span class="mtab-ic"><svg class="nav-svg mnav" viewBox="0 0 24 24"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg></span><span class="mtab-lb">メニュー</span></div>
 </nav>
 <!-- PC MAPツールチップ -->
 <div class="pc-tooltip" id="pcTooltip"></div>
@@ -4067,7 +4082,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v271';
+  var DATA_VERSION = 'v272';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4655,6 +4670,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v272', d:'2026-07-19', items:['📅予定タブに「週」表示を追加：月曜はじまりの7日を時系列で一覧。‹›で前後の週へ、タイトルタップで今週に戻る。各日の「＋追加」でその日に直接予定作成','ナビのアイコンをSVG化（PCサイドバー＋モバイル下部ナビ）：iPhone/Androidで見た目が揃い、シャープに表示'] },
   { v:'v271', d:'2026-07-19', items:['UI/UX総点検リニューアル 第3弾','✅予定（イベント）も「実行済み」チェックで消込できるように（アジェンダ・日別シート・メンバー編集パネル）。予定は紫チェックで区別、完了済みへまとめて表示','期限切れセクションを「期限切れ・終了」に改称（過去の予定も含むため）','タップしやすさ改善：✕閉じるボタン40px化・年月セレクタ・カウンター操作ボタンを拡大','カウンターの🗑を「🗑 削除」として赤で分離（誤タップ防止）','キーボード操作時のフォーカスリング表示（アクセシビリティ）','はじめの4ステップ「今日1つ記録する」がクイック記録へスクロールするように'] },
   { v:'v270', d:'2026-07-18', items:['UI/UX総点検リニューアル 第2弾','🏠HOMEヒーロー化：「今日のルーチン」を最上部の主役カードに（→クイック記録→ゲージの順）','⚡MAPツリーの遅延描画：閉じた枝は開いた瞬間に構築（大組織の初期表示を大幅軽量化）','ジャンプ検索・全段表示も遅延描画に対応','PC：SUMMITの統計3列グリッド・カウンター3列・ジャーニーを幅いっぱいに','モバイル：ジャーニーに「→スワイプ」ヒント表示','シート/モーダルの背景・角丸・ぼかしを統一','カードに📍地域チップ表示・編集ヒントを「✎ボタンで編集」に更新'] },
   { v:'v269', d:'2026-07-18', items:['UI/UX総点検リニューアル 第1弾','📱下部ナビに「☰メニュー」追加（GOAL/今月/OL/メンバーへ常設導線・現在地も点灯）','🔍MAPに名前ジャンプ検索（階層のままスクロール＆ハイライト）','🔀アップライン変更機能（配下ごと付け替え・削除不要に）','✎モバイルのカードに編集ボタンを常設（ダブルタップ不要）','🏅タイトル別カラー（ゴールド/ラピス/ルビー/エメ/ダイヤ/BD/TE）＋長い称号は略称表示＋⛴金の船マーク','GOAL逆算がBR〜ラピス目標でも正しく計算されるように（フロント表を全タイトル対応）','入力フォームのエラー時に入力内容が消えないように','共有の失敗を「共有しました」と誤表示していたのを修正','共有MAP閲覧中/合算中はデータタブに「閲覧のみ」バナー＋入力を無効化','データ表に凡例（✏️入力可/自動集計）とモバイル3ヶ月表示の注記・入力欄を見える化・選択行ハイライト','ファネルに実際の月を表示・Aさん別の数字をボタン化（タップで内訳）','パワーラインは履歴が貯まるまでランキング表示','OL：未接触は黄色区別・モバイルにも要フォロー人数を表示','カレンダーの予定4件以上が無言で隠れていたのを「他N件」表示に修正','予定に押せない✓が出ていたのを修正・カテゴリ色でもタスク/予定が判別可能に','Google同期に最終同期時刻を表示・連携中は手動📅を非表示（二重登録防止）','クイック記録直後に「↩取り消す」トースト','HOMEを整理（重複カード削除・助言系を1つのインサイトに統合・軽量化）','ピンチズーム解禁・小さい文字のコントラスト改善','ホームのメニュー計算の無駄を削除して高速化'] },
@@ -11572,12 +11588,16 @@ if ('serviceWorker' in navigator) {
 function setEventsMode(mode) {
   _evMode = mode;
   var a = document.getElementById('evSegAgenda');
+  var w = document.getElementById('evSegWeek');
   var c = document.getElementById('evSegCal');
   if (a) a.classList.toggle('active', mode === 'agenda');
+  if (w) w.classList.toggle('active', mode === 'week');
   if (c) c.classList.toggle('active', mode === 'calendar');
   var ea = document.getElementById('evAgenda');
+  var ew = document.getElementById('evWeek');
   var ec = document.getElementById('evCalendar');
   if (ea) ea.style.display = mode === 'agenda' ? '' : 'none';
+  if (ew) ew.style.display = mode === 'week' ? '' : 'none';
   if (ec) ec.style.display = mode === 'calendar' ? '' : 'none';
   if (mode !== 'calendar') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
   renderEvents();
@@ -11590,7 +11610,54 @@ function renderEvents() {
   var addBtn = document.getElementById('evAddBtn');
   if (addBtn) addBtn.style.display = eventsUid() ? '' : 'none';
   if (_evMode === 'agenda') renderAgenda();
+  else if (_evMode === 'week') renderWeek();
   else renderCalendar();
+}
+
+// ── 週表示（月曜はじまり・アポの多い日を時系列で把握） ──
+var _weekOffset = 0; // 0=今週、±1で前後の週
+function weekShift(delta) {
+  _weekOffset = (delta === 0) ? 0 : _weekOffset + delta;
+  renderWeek();
+}
+function renderWeek() {
+  var list = document.getElementById('evWeekList');
+  var title = document.getElementById('evWeekTitle');
+  if (!list) return;
+  var t = evTodayYmd();
+  // 週の起点＝月曜
+  var base = new Date(); base.setHours(0,0,0,0);
+  var dow = (base.getDay() + 6) % 7; // 月=0
+  base.setDate(base.getDate() - dow + _weekOffset * 7);
+  var days = [];
+  for (var i = 0; i < 7; i++) { var d = new Date(base.getTime()); d.setDate(d.getDate() + i); days.push(d); }
+  var first = days[0], last = days[6];
+  if (title) {
+    title.textContent = (first.getMonth()+1) + '/' + first.getDate() + ' 〜 ' + (last.getMonth()+1) + '/' + last.getDate()
+      + (_weekOffset === 0 ? '（今週）' : (_weekOffset === 1 ? '（来週）' : (_weekOffset === -1 ? '（先週）' : '')));
+  }
+  // 日付→イベントの索引
+  var byDate = {};
+  (state.events || []).forEach(function(e){ if (e.date && !e.deleted) (byDate[e.date] || (byDate[e.date] = [])).push(e); });
+  var WD = ['月','火','水','木','金','土','日'];
+  var html = '';
+  days.forEach(function(d, i){
+    var ymd = evYmd(d);
+    var isToday = ymd === t;
+    var evs = (byDate[ymd] || []).slice().sort(evSortFn);
+    var wdCol = i === 5 ? 'color:var(--go-sky)' : (i === 6 ? 'color:var(--red)' : '');
+    html += '<div style="margin-bottom:4px">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:9px 4px 5px;' + (isToday ? '' : '') + '">'
+      + '<span style="font-weight:800;font-size:14px;' + (isToday ? 'color:var(--go-ink);background:var(--accent);border-radius:10px;padding:3px 12px' : wdCol) + '">'
+      + (d.getMonth()+1) + '/' + d.getDate() + '（' + WD[i] + '）' + (isToday ? ' 今日' : '') + '</span>'
+      + '<span style="font-size:11px;color:var(--text-dim)">' + (evs.length ? evs.length + '件' : '') + '</span>'
+      + '<span onclick="openEventAddDate(\'' + ymd + '\')" style="margin-left:auto;font-size:12px;color:var(--accent);cursor:pointer;padding:6px 10px;font-weight:700">＋追加</span>'
+      + '</div>';
+    if (evs.length) html += evs.map(evItemHtml).join('');
+    else html += '<div style="padding:4px 8px 10px;font-size:12px;color:var(--text-dim);opacity:.6;border-bottom:1px dashed var(--border)">予定なし</div>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
 }
 
 // ── 並び替え ──
