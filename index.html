@@ -1207,6 +1207,27 @@ tr.ot-done{opacity:.5}
 .gl-vision{background:linear-gradient(135deg,rgba(14,165,233,.14),var(--surface) 65%);border:1px solid rgba(14,165,233,.4);border-radius:14px;padding:14px 16px;margin-bottom:16px;cursor:pointer}
 .gl-vision-l{font-size:11px;font-weight:700;letter-spacing:1px;color:#0ea5e9;margin-bottom:5px}
 .gl-vision-t{font-size:15px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word;max-width:72ch}
+/* ── 逆算マップ：背骨スパイン（価値観→頂上→今年→今月→今日を1本の線で接続） ── */
+.gl-spine{position:relative;padding-left:21px}
+.gl-spine::before{content:'';position:absolute;left:7px;top:16px;bottom:16px;width:2.5px;border-radius:2px;background:linear-gradient(180deg,var(--accent),var(--gold) 42%,var(--go-sky) 72%,var(--purple));opacity:.85}
+.gl-nd{position:relative;margin-bottom:14px}
+.gl-nd::before{content:'';position:absolute;left:-19px;top:19px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:3px solid var(--nd,#2CE5B8)}
+.gl-why{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px 10px;margin-bottom:8px}
+.gl-why b{color:var(--text-mid)}
+.gl-ndl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.6px;color:var(--text-dim);text-transform:uppercase;display:block;margin-bottom:6px}
+.gl-formula{font-size:12px;color:var(--text-dim);background:var(--surface2);border-radius:9px;padding:7px 11px;margin-top:8px;line-height:1.6}
+.gl-formula b{color:var(--go-sky)}
+.gl-krow{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:7px}
+.gl-krow .bar{flex:1;height:6px;border-radius:3px;background:var(--surface3);overflow:hidden}
+.gl-krow .bar i{display:block;height:100%;background:var(--go-sky);border-radius:3px}
+.gl-krow .n{width:70px;text-align:right;font-size:11px;color:var(--text-mid);font-family:'IBM Plex Mono',monospace}
+.gl-tdrow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px dashed var(--border);font-size:13px}
+.gl-tdrow:first-of-type{border-top:0}
+.gl-wzbtn{display:block;text-align:center;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;border-radius:13px;padding:14px;margin:14px 0;cursor:pointer}
+.gl-wzredo{display:block;text-align:center;font-size:12px;color:var(--text-dim);padding:10px;cursor:pointer;text-decoration:underline}
+.wz-dots{display:flex;gap:6px;justify-content:center;margin:2px 0 12px}
+.wz-dots i{width:26px;height:5px;border-radius:3px;background:var(--surface3)}
+.wz-dots i.on{background:var(--accent)}
 .gl-vision-t.ph{color:var(--text-dim)}
 .gl-goal{border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:12px 13px;margin-bottom:12px}
 .gl-goal-hd{display:flex;align-items:center;gap:8px;margin-bottom:2px}
@@ -1796,7 +1817,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v272</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v273</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4082,7 +4103,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v272';
+  var DATA_VERSION = 'v273';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4670,6 +4691,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v273', d:'2026-07-19', items:['🧭 GOALタブを「逆算マップ」に全面刷新（フランクリン・プランナー式）','価値観→頂上→今年→今月→今日を1本の背骨ラインで接続。各カードに「↑なぜ」チップ','数字の根拠を表示（残りフロント÷残り月数=今月N人）','今月カードにKPIバー・自分の月間目標・タスクを集約。今日カードに「今日の一歩」（1日あたりの必要数＋その場＋1記録）と習慣チェック','初回セットアップは4ステップウィザードに一本化（価値観→頂上→今年の道のり自動生成→今月と習慣）。やり直しもいつでも可能','既存の目標・習慣・実績データはそのまま引き継ぎ'] },
   { v:'v272', d:'2026-07-19', items:['📅予定タブに「週」表示を追加：月曜はじまりの7日を時系列で一覧。‹›で前後の週へ、タイトルタップで今週に戻る。各日の「＋追加」でその日に直接予定作成','ナビのアイコンをSVG化（PCサイドバー＋モバイル下部ナビ）：iPhone/Androidで見た目が揃い、シャープに表示'] },
   { v:'v271', d:'2026-07-19', items:['UI/UX総点検リニューアル 第3弾','✅予定（イベント）も「実行済み」チェックで消込できるように（アジェンダ・日別シート・メンバー編集パネル）。予定は紫チェックで区別、完了済みへまとめて表示','期限切れセクションを「期限切れ・終了」に改称（過去の予定も含むため）','タップしやすさ改善：✕閉じるボタン40px化・年月セレクタ・カウンター操作ボタンを拡大','カウンターの🗑を「🗑 削除」として赤で分離（誤タップ防止）','キーボード操作時のフォーカスリング表示（アクセシビリティ）','はじめの4ステップ「今日1つ記録する」がクイック記録へスクロールするように'] },
   { v:'v270', d:'2026-07-18', items:['UI/UX総点検リニューアル 第2弾','🏠HOMEヒーロー化：「今日のルーチン」を最上部の主役カードに（→クイック記録→ゲージの順）','⚡MAPツリーの遅延描画：閉じた枝は開いた瞬間に構築（大組織の初期表示を大幅軽量化）','ジャンプ検索・全段表示も遅延描画に対応','PC：SUMMITの統計3列グリッド・カウンター3列・ジャーニーを幅いっぱいに','モバイル：ジャーニーに「→スワイプ」ヒント表示','シート/モーダルの背景・角丸・ぼかしを統一','カードに📍地域チップ表示・編集ヒントを「✎ボタンで編集」に更新'] },
@@ -9909,7 +9931,7 @@ function renderGoals(){
   if(!state.goals.milestones) state.goals.milestones=[];
   var g=state.goals;
   var h='<div class="gl-wrap">';
-  h+='<div class="gl-head"><div class="gl-title">🧭 GOAL</div>'
+  h+='<div class="gl-head"><div class="gl-title">🧭 逆算マップ</div>'
    + '<div class="gl-boards"><span class="gl-board'+(_glBoard==='self'?' on':'')+'" onclick="glBoard(\'self\')">👤 自分</span>'
    + '<span class="gl-board'+(_glBoard==='org'?' on':'')+'" onclick="glBoard(\'org\')">🏢 組織</span></div>'
    + '<span class="gl-year" onclick="glEditYear()">'+g.year+'年 ▼</span></div>';
@@ -9919,54 +9941,129 @@ function renderGoals(){
     el.innerHTML=h; return;
   }
 
-  // 価値観
-  var vt = g.vision ? ('<div class="gl-vision-t">'+evEsc(g.vision)+'</div>') : '<div class="gl-vision-t ph">タップして「価値観・理想の人生」を書く（ここが全ての起点）</div>';
-  h+='<div class="gl-vision" onclick="glEditVision()"><div class="gl-vision-l">🌱 価値観 / 理想の人生</div>'+vt+'</div>';
+  var p=g.plan;
+  var hasGoal = p.title || p.income || p.deadline;
 
-  // 逆算プランナー（頂上→道のり→今月のフォーカス。通過点も内包）
-  h+=_glPlannerHtml();
-
-  // GOALツリー
-  var goals=_glItems('goal');
-  if(!goals.length){
-    h+='<div class="gl-empty">まだ目標がありません。<br>「理想の人生」から逆算して、まず大きな GOAL を1つ立ててみましょう。</div>';
+  // 初回：4ステップウィザードへ誘導
+  if(!g.vision && !hasGoal){
+    h+='<div class="gl-empty" style="margin-top:10px">フランクリン・プランナー式に、<b>価値観 → 頂上 → 今年 → 今月 → 今日</b> を1本の線でつなぎます。<br>まずは4ステップ（約3分）でセットアップ。</div>';
+    h+='<span class="gl-wzbtn" onclick="glWizard(1)">🚀 4ステップでセットアップを始める</span>';
+    h+='</div>'; el.innerHTML=h; return;
   }
-  goals.forEach(function(go){
-    h+='<div class="gl-goal"><div class="gl-goal-hd"><span class="gl-goal-ic">🎯</span><span class="gl-goal-t">'+evEsc(go.title)+'</span>'
-      +'<span class="gl-actions"><span class="gl-mini" onclick="glEditItem(\''+go.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+go.id+'\')">🗑</span></span></div>';
-    // 年間
-    _glItems('annual', go.id).forEach(function(an){
-      h+='<div class="gl-annual"><div class="gl-annual-hd"><span>📅</span><span class="gl-annual-t">'+evEsc(an.title)+'</span>'
-        +'<span class="gl-actions"><span class="gl-mini" onclick="glEditItem(\''+an.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+an.id+'\')">🗑</span></span></div>';
-      h+=_glMetricHtml(an);
-      // 月間
-      _glItems('monthly', an.id).sort(function(a,b){return (a.month||0)-(b.month||0);}).forEach(function(mo){
-        h+='<div class="gl-month"><span class="gl-mtag">'+(mo.month||'-')+'月</span><div class="gl-mbody">'
-          +'<div class="gl-mtitle">'+evEsc(mo.title)+' <span class="gl-mini" onclick="glEditItem(\''+mo.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+mo.id+'\')">🗑</span></div>'
-          + _glMetricHtml(mo);
-        // 紐付くタスク（既存MAPタスク）
-        _glGoalTasks(mo.id).forEach(function(e){
-          h+='<div class="gl-task"><span class="gl-tcheck'+(e.done?' on':'')+'" onclick="glToggleTask(\''+e.id+'\')">'+(e.done?'✓':'')+'</span>'
-            +'<span class="gl-ttitle'+(e.done?' done':'')+'">'+evEsc(e.title||'(無題)')+'</span></div>';
-        });
-        h+='<span class="gl-add" onclick="glAddTask(\''+mo.id+'\')">＋タスク</span>';
-        h+='</div></div>';
+
+  // ═══ 背骨スパイン：価値観→頂上→今年→今月→今日 ═══
+  h+='<div class="gl-spine">';
+
+  // ── 🌱 価値観 ──
+  var vt = g.vision ? ('<div class="gl-vision-t">'+evEsc(g.vision)+'</div>') : '<div class="gl-vision-t ph">タップして「価値観・理想の人生」を書く（ここが全ての起点）</div>';
+  h+='<div class="gl-nd" style="--nd:var(--accent)"><div class="gl-vision" onclick="glEditVision()" style="margin:0"><div class="gl-vision-l">🌱 価値観 — なぜやるのか</div>'+vt+'</div></div>';
+
+  // ── 🏔 頂上（SUMMIT） ──
+  h+='<div class="gl-nd" style="--nd:var(--accent)"><div class="go-summit" onclick="glEditGoal()" style="margin:0"><div class="go-sk">🏔 頂上 — MY SUMMIT</div>';
+  if(hasGoal){
+    if(p.what) h+='<div class="go-title" style="font-size:20px;margin-bottom:2px">'+evEsc(p.what)+'</div>';
+    h+='<div class="go-title"'+(p.what?' style="font-size:15px;opacity:.85"':'')+'>'+(p.income?('月収 <span class="amt go-tnum">'+_glFmtYen(p.income)+'</span>円'):'')+(p.income&&p.title?'・':'')+(p.title?('<span class="amt">'+evEsc(p.title)+'</span>'):'')+'</div>';
+    var tPct=_glTitleRank(p.title)>0?Math.min(100,Math.round(_glTitleRank(p.titleNow)/_glTitleRank(p.title)*100)):0;
+    var iPct=p.income>0?Math.min(100,Math.round((p.incomeNow||0)/p.income*100)):0;
+    var cd=_glMonthsUntil(p.deadline);
+    h+='<div class="go-sub">'+(p.deadline?(p.deadline.replace('-','年')+'月まで'):'期限未設定')+'　残り <b class="go-tnum">'+(cd>0?cd:'—')+'</b>ヶ月</div>';
+    h+='<div class="go-sstats">'
+      +'<div class="go-stat"><div class="k">タイトル</div><div class="row"><span class="now">今：'+(p.titleNow?evEsc(p.titleNow):'—')+'</span><span class="gl a">'+(p.title?evEsc(p.title):'—')+'</span></div><div class="go-prog"><i style="width:'+tPct+'%"></i></div></div>'
+      +'<div class="go-stat"><div class="k">月収</div><div class="row"><span class="now go-tnum">今：'+_glFmtYen(p.incomeNow)+'</span><span class="gl s go-tnum">'+_glFmtYen(p.income)+'</span></div><div class="go-prog"><i style="width:'+iPct+'%"></i></div></div>'
+      +'<div class="go-cd"><span class="k">期限まで</span><span class="big go-tnum">'+(cd>0?cd:'—')+'<small>'+(cd>0?'ヶ月':'')+'</small></span></div></div>';
+  } else {
+    h+='<div class="go-title"><span class="ph">タップして頂上を設定（いつまでに・何を・月収→タイトル自動）</span></div>';
+  }
+  // 中長期の目標（旧GOALレベル）はチップで頂上に同居
+  var goalsL=_glItems('goal');
+  if(goalsL.length || hasGoal){
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px" onclick="event.stopPropagation()">';
+    goalsL.forEach(function(go){ h+='<span style="font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:4px 10px" onclick="glEditItem(\''+go.id+'\')">🎯 '+evEsc(go.title)+'</span>'; });
+    h+='<span class="gl-add" onclick="glAddGoal()">＋中長期</span></div>';
+  }
+  h+='</div></div>';
+
+  if(hasGoal){
+    var curYm=_glCurYm(), curMonth=parseInt(curYm.slice(5,7),10);
+    var mFront=_glMonthlyFront(p), remainF=_glRemainFront(p), rem=_glMonthsUntil(p.deadline);
+
+    // ── 📍 今年のマイルストーン（レール＋年間目標） ──
+    h+='<div class="gl-nd" style="--nd:var(--gold)">'
+      +'<span class="gl-why">↑ <b>'+(p.deadline?p.deadline.replace('-','年')+'月':'頂上')+' '+evEsc(p.title||'')+'</b> のため</span>'
+      +_glJourneyHtml(p);
+    var annuals=_glItems('annual');
+    if(annuals.length){
+      h+='<div class="go-panel" style="margin-top:8px;padding:11px 14px"><span class="gl-ndl">📅 '+g.year+'年の目標</span>';
+      annuals.forEach(function(an){
+        h+='<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0;border-top:1px dashed var(--border)">'
+          +'<span style="flex:1">'+evEsc(an.title)+'</span>'
+          +'<span class="gl-mini" onclick="glEditItem(\''+an.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+an.id+'\')">🗑</span></div>'
+          +_glMetricHtml(an);
       });
-      // 習慣
-      (g.habits||[]).filter(function(hb){return hb.parentId===an.id;}).forEach(function(hb){
-        var wc=_glHabitWeekCount(hb), st=_glHabitStreak(hb), done=(hb.log||{})[evTodayYmd()];
-        h+='<div class="gl-habit"><span class="gl-hcheck'+(done?' on':'')+'" onclick="glToggleHabit(\''+hb.id+'\')">'+(done?'✓':'')+'</span>'
-          +'<div class="gl-hbody"><div class="gl-htitle">🔁 '+evEsc(hb.title)+' <span class="gl-mini" onclick="glDelHabit(\''+hb.id+'\')">🗑</span></div>'
-          +'<div class="gl-hmeta">今週 '+wc+'/'+(hb.perWeek||7)+'回'+(st>1?('　🔥'+st+'日連続'):'')+'</div></div></div>';
-      });
-      h+='<div class="gl-chain">'+_glChain(an)+'</div>';
-      h+='<div><span class="gl-add" onclick="glAddMonthly(\''+an.id+'\')">＋月間目標</span> <span class="gl-add" onclick="glAddHabit(\''+an.id+'\')">＋習慣</span></div>';
-      h+='</div>';
-    });
-    h+='<span class="gl-add" onclick="glAddAnnual(\''+go.id+'\')">＋年間目標</span>';
+      h+='<div style="margin-top:6px"><span class="gl-add" onclick="glAddAnnual(null)">＋年間目標</span></div></div>';
+    } else {
+      h+='<div style="margin-top:8px"><span class="gl-add" onclick="glAddAnnual(null)">＋自分の年間目標を足す</span></div>';
+    }
     h+='</div>';
-  });
-  h+='<div class="gl-addgoal" onclick="glAddGoal()">＋ 目標（GOAL）を追加</div>';
+
+    // ── 📆 今月 ──
+    var dates=_glStageDates(p);
+    h+='<div class="gl-nd" style="--nd:var(--go-sky)">'
+      +'<span class="gl-why">↑ '+g.year+'年のマイルストーンのため</span>'
+      +'<div class="go-panel" style="padding:13px 15px">'
+      +'<span class="gl-ndl">📆 今月（'+curMonth+'月）— フロントを <b style="color:var(--go-sky);font-size:14px">'+mFront+'人</b> つくる</span>'
+      +'<div class="gl-formula">残りフロント <b>'+remainF+'人</b> ÷ 期限まで '+(rem>0?rem:1)+'ヶ月 = 今月 <b>'+mFront+'人</b>（B1期日 '+_glMDStr(dates.b1)+'）</div>';
+    // KPI上位3行（詳細は今月タブ）
+    [{k:'action',l:'アクション'},{k:'ctget',l:'CT取り'},{k:'b1',l:'フロント'}].forEach(function(s){
+      var tgt=mFront*(p.funnel[s.k]||0), act=_glMonthActualShown(p,curYm,s.k);
+      var pct=tgt>0?Math.min(100,Math.round(act/tgt*100)):0;
+      h+='<div class="gl-krow"><span style="width:62px">'+s.l+'</span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="n">'+act+'/'+tgt+'</span></div>';
+    });
+    // 今月の自分の目標
+    var monthlies=_glItems('monthly').filter(function(mo){ return (mo.month||0)===curMonth; });
+    monthlies.forEach(function(mo){
+      h+='<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:7px 0;border-top:1px dashed var(--border);margin-top:6px">'
+        +'<span style="flex:1">📝 '+evEsc(mo.title)+'</span>'
+        +'<span class="gl-mini" onclick="glEditItem(\''+mo.id+'\')">✎</span><span class="gl-mini" onclick="glDelItem(\''+mo.id+'\')">🗑</span></div>'
+        +_glMetricHtml(mo);
+      _glGoalTasks(mo.id).forEach(function(e){
+        h+='<div class="gl-task"><span class="gl-tcheck'+(e.done?' on':'')+'" onclick="glToggleTask(\''+e.id+'\')">'+(e.done?'✓':'')+'</span>'
+          +'<span class="gl-ttitle'+(e.done?' done':'')+'">'+evEsc(e.title||'(無題)')+'</span></div>';
+      });
+    });
+    h+='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="gl-add" onclick="glAddMonthly(null)">＋今月の目標</span>'
+      +'<span class="gl-add" onclick="switchView(\'month\')" style="margin-left:auto;color:var(--go-sky)">📆 詳細・入力は今月タブ ›</span></div>'
+      +'</div></div>';
+
+    // ── ✅ 今日の一歩 ──
+    var _dLeft=Math.max(1,_glDaysUntilD(_glMonthEndDate()));
+    h+='<div class="gl-nd" style="--nd:var(--purple)">'
+      +'<span class="gl-why">↑ 今月フロント'+mFront+'人のため</span>'
+      +'<div class="go-panel" style="padding:13px 15px">'
+      +'<span class="gl-ndl">✅ 今日の一歩</span>';
+    var _tdAny=false;
+    [{k:'action',l:'アクション'},{k:'ctget',l:'CT取り'},{k:'ct',l:'CT'},{k:'ft',l:'FT'}].forEach(function(s){
+      var tgt=mFront*(p.funnel[s.k]||0), act=_glMonthActualShown(p,curYm,s.k);
+      var perDay=(tgt-act)>0?Math.ceil((tgt-act)/_dLeft):0;
+      if(perDay<=0) return; _tdAny=true;
+      h+='<div class="gl-tdrow"><span style="flex:1">'+s.l+' <b class="go-tnum">'+perDay+'</b>件</span>'
+        +'<span class="gl-add" onclick="glStepMonthly(\''+s.k+'\',1)" style="font-family:IBM Plex Mono,monospace">＋1 記録</span></div>';
+    });
+    if(!_tdAny) h+='<div style="font-size:12.5px;color:var(--green);padding:4px 0">🎉 今月のKPIはすべて達成ペースです</div>';
+    // 習慣
+    (g.habits||[]).forEach(function(hb){
+      var wc=_glHabitWeekCount(hb), st=_glHabitStreak(hb), done=(hb.log||{})[evTodayYmd()];
+      h+='<div class="gl-tdrow"><span class="gl-hcheck'+(done?' on':'')+'" onclick="glToggleHabit(\''+hb.id+'\')">'+(done?'✓':'')+'</span>'
+        +'<span style="flex:1">🔁 '+evEsc(hb.title)+'<small style="color:var(--text-dim);margin-left:6px">今週'+wc+'/'+(hb.perWeek||7)+(st>1?'・🔥'+st+'日':'')+'</small></span>'
+        +'<span class="gl-mini" onclick="glDelHabit(\''+hb.id+'\')">🗑</span></div>';
+    });
+    h+='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="gl-add" onclick="glAddHabit(null)">＋習慣</span>'
+      +'<span class="gl-add" onclick="glFocusToTasks()" style="color:var(--purple)">＋今日のタスクに落とす（予定タブ）</span></div>'
+      +'</div></div>';
+  }
+
+  h+='</div>'; // gl-spine
+  h+='<span class="gl-wzredo" onclick="glWizard(1)">↻ 4ステップでセットアップをやり直す</span>';
   h+='</div>';
   el.innerHTML=h;
 }
@@ -9978,6 +10075,86 @@ function _glMetricHtml(it){
   var pct=it.tgt>0?Math.min(100,Math.round(cur/it.tgt*100)):0;
   return '<div class="gl-bar"><i style="width:'+pct+'%"></i></div>'
     + '<div class="gl-metric" onclick="glSetMetric(\''+it.id+'\')"><b>'+cur.toLocaleString()+'</b> / '+it.tgt.toLocaleString()+' '+evEsc(it.unit||'')+'　('+pct+'%)</div>';
+}
+
+// ── 4ステップ・セットアップウィザード（価値観→頂上→今年→今月/習慣） ──
+function _wzClose(){ var el=document.getElementById('glWzOv'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
+function _wzVal(id){ var el=document.getElementById(id); return el?el.value:''; }
+function glWizard(step){
+  _wzClose();
+  var g=state.goals, p=g.plan;
+  var inS='box-sizing:border-box;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:16px;outline:none;-webkit-appearance:none;margin:4px 0 12px;font-family:inherit';
+  var lb='font-size:12px;color:var(--text-dim);font-weight:700';
+  var dots='<div class="wz-dots">'+[1,2,3,4].map(function(i){return '<i class="'+(i<=step?'on':'')+'"></i>';}).join('')+'</div>';
+  var body='', title='';
+  if(step===1){
+    title='STEP 1/4 🌱 価値観';
+    body='<label style="'+lb+'">なぜやるのか・理想の人生（1〜2行でOK、あとで変えられます）</label>'
+      +'<textarea id="_wzVision" rows="3" style="'+inS+';resize:vertical" placeholder="例：家族と自由に生きる。仲間の人生を変える。">'+evEsc(g.vision||'')+'</textarea>';
+  } else if(step===2){
+    title='STEP 2/4 🏔 頂上';
+    var initTitle=p.income>0?glTitleFromIncome(p.income):'—';
+    body='<label style="'+lb+'">① いつまでに</label><input id="_wzDl" type="month" value="'+(p.deadline||'')+'" style="'+inS+'">'
+      +'<label style="'+lb+'">② 何をする（目標）</label><input id="_wzWhat" type="text" placeholder="例: 経済的自由を手に入れる" value="'+evEsc(p.what||'')+'" style="'+inS+'">'
+      +'<label style="'+lb+'">③ 必要月収（円）</label><input id="_wzInc" type="number" inputmode="numeric" placeholder="例: 1000000" value="'+(p.income||'')+'" oninput="var t=document.getElementById(\'_wzTitleAuto\');if(t)t.textContent=this.value>0?glTitleFromIncome(this.value):\'—\'" style="'+inS+'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:11px 12px;margin-bottom:12px;font-weight:800;color:var(--accent)"><span>🏅 必要タイトル（自動）</span><span id="_wzTitleAuto">'+evEsc(initTitle)+'</span></div>';
+  } else if(step===3){
+    title='STEP 3/4 📍 今年の道のり（自動生成）';
+    var dl=p.deadline, yr2=(dl&&/^\d{4}/.test(dl))?dl.slice(0,4):String((new Date()).getFullYear());
+    var sumM=(dl&&dl.slice(0,4)===yr2)?parseInt(dl.slice(5,7),10):12;
+    var pipe=parseInt(p.pipeline,10)||3, loiM=Math.max(1,sumM-pipe);
+    var mF=_glMonthlyFront(p), remF=_glRemainFront(p);
+    body='<div style="font-size:13px;color:var(--text-mid);line-height:1.8;background:var(--surface2);border-radius:11px;padding:12px 14px;margin-bottom:12px">'
+      +'頂上から逆算した今年のマイルストーン：<br>'
+      +'🏔 <b>'+sumM+'月</b>：'+evEsc(p.title||'頂上')+'（必要フロント '+_glFrontMust(p)+'人）<br>'
+      +'🚩 <b>'+loiM+'月</b>：最終LOIカウント月（育成'+pipe+'ヶ月を逆算）<br>'
+      +'📆 毎月：フロント <b>'+mF+'人</b>（残り'+remF+'人から自動計算）<br>'
+      +'<small style="color:var(--text-dim)">トリップ/アカデミー等のマイルストーンは、マップの「＋マイルストーンを追加」でいつでも足せます</small></div>'
+      +'<label style="'+lb+'">今年の目標をことばで（任意）</label><input id="_wzAnnual" type="text" placeholder="例: ルビーになる・組織50人" style="'+inS+'">';
+  } else {
+    title='STEP 4/4 📆 今月と習慣';
+    body='<label style="'+lb+'">今月の目標（任意）</label><input id="_wzMonthly" type="text" placeholder="例: フロント1人・OL10件" style="'+inS+'">'
+      +'<label style="'+lb+'">毎日の習慣（任意）</label><input id="_wzHabit" type="text" placeholder="例: 本を読む / ATTACK LISTを見る" style="'+inS+'">'
+      +'<div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">完了すると逆算マップに「価値観→頂上→今年→今月→今日」が1本の線でつながります。</div>';
+  }
+  var back = step>1 ? '<button type="button" onclick="glWizardNext('+step+',-1)" style="flex:none;padding:13px 18px;border-radius:11px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer">← 戻る</button>' : '';
+  var next = '<button type="button" onclick="glWizardNext('+step+',1)" style="flex:1;padding:13px;border-radius:11px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;cursor:pointer">'+(step===4?'✅ 完了':'次へ →')+'</button>';
+  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='glWzOv';
+  ov.onclick=function(e){ if(e.target===ov) _wzClose(); };
+  ov.innerHTML='<div class="ms-sheet gl-form-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
+    +'<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+title+'</div></div><span class="ms-x" onclick="_wzClose()">✕</span></div>'
+    +dots+'<div style="padding:0 16px 16px">'+body
+    +'<div style="display:flex;gap:9px;margin-top:4px">'+back+next+'</div></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function glWizardNext(step, dir){
+  var g=state.goals, p=g.plan;
+  // 各ステップの入力を保存してから移動（戻るでも保存）
+  if(step===1){ g.vision=(_wzVal('_wzVision')||'').trim(); }
+  else if(step===2){
+    var d=(_wzVal('_wzDl')||'').trim();
+    if(dir>0 && d && !/^\d{4}-\d{2}$/.test(d)){ toast('期限（年月）を選択してください'); return; }
+    p.deadline=d; p.what=(_wzVal('_wzWhat')||'').trim();
+    p.income=parseInt(String(_wzVal('_wzInc')).replace(/[^0-9]/g,''),10)||0;
+    p.title=p.income>0?glTitleFromIncome(p.income):'';
+    if(dir>0 && !p.deadline && !p.income){ toast('「いつまでに」か「必要月収」のどちらかは入れてください'); return; }
+  }
+  else if(step===3){
+    var at=(_wzVal('_wzAnnual')||'').trim();
+    if(at) g.items.push({id:genGoalId(),level:'annual',parentId:null,title:at});
+  }
+  else if(step===4){
+    var mt=(_wzVal('_wzMonthly')||'').trim();
+    if(mt) g.items.push({id:genGoalId(),level:'monthly',parentId:null,title:mt,month:(new Date()).getMonth()+1});
+    var ht=(_wzVal('_wzHabit')||'').trim();
+    if(ht){ g.habits=g.habits||[]; g.habits.push({id:genGoalId(),title:ht,parentId:null,perWeek:7,log:{}}); }
+  }
+  saveGoals();
+  var nx=step+dir;
+  if(nx<1) nx=1;
+  if(nx>4){ _wzClose(); renderGoals(); toast('🎉 セットアップ完了！逆算マップができました'); if(typeof gameConfetti==='function') gameConfetti(); return; }
+  glWizard(nx);
 }
 
 // ── 操作 ──
