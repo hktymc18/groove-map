@@ -407,6 +407,10 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 /* avatar */
 .av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;border:2px solid var(--border)}
+/* 写真アバター：リング=タイトル色、右下バッジで略称（フレッシュ帯を色分け・BR以上同色） */
+.av-photo{position:relative;padding:0;overflow:visible;background:var(--surface3)}
+.av-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.av-badge{position:absolute;right:-5px;bottom:-4px;font-size:8px;font-weight:800;color:#08121a;border-radius:8px;padding:1px 4px;line-height:1.3;border:1.5px solid var(--bg);font-family:'IBM Plex Mono',monospace;letter-spacing:0;white-space:nowrap}
 .av.male{background:rgba(147,197,253,.1);color:var(--male);border-color:rgba(147,197,253,.3)}
 .av.female{background:rgba(249,168,212,.1);color:var(--female);border-color:rgba(249,168,212,.3)}
 .av.trainee-av{background:linear-gradient(135deg,#0891b2,#5AD7FF) !important;border-color:#5AD7FF !important;color:#fff !important}
@@ -1817,7 +1821,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v275</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v276</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2296,6 +2300,16 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <span class="ed-l">名</span>
             <div class="ed-ctrl"><input class="ed-in" id="fFirst" placeholder="未入力"></div>
           </div>
+          <div class="ed-row">
+            <span class="ed-l">写真<span class="ed-q" onclick="edHelp(event,'h_photo')">?</span></span>
+            <div class="ed-ctrl" style="align-items:center;gap:10px">
+              <span id="fPhotoPrev" style="width:44px;height:44px;border-radius:50%;background:var(--surface3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex:none">📷</span>
+              <input type="file" id="fPhotoFile" accept="image/*" style="display:none" onchange="onPhotoPicked(this)">
+              <button type="button" onclick="document.getElementById('fPhotoFile').click()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">選択</button>
+              <button type="button" id="fPhotoDel" onclick="removeMemberPhoto()" style="display:none;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,93,115,.4);background:transparent;color:var(--red);font-size:13px;font-weight:700;cursor:pointer">削除</button>
+            </div>
+          </div>
+          <div class="ed-help" id="h_photo">端末内で64pxに自動圧縮してから保存されます（1枚 約3KB）。MAPカードの丸アイコンに表示され、タイトルはリング色と右下バッジで分かります。</div>
           <div class="ed-row">
             <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
             <div class="ed-ctrl ed-birth"><input class="ed-in" id="fBirth" type="date" min="1900-01-01" onchange="this.classList.toggle('has-value',!!this.value)"><span class="ed-bph">未設定</span></div>
@@ -4177,7 +4191,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v275';
+  var DATA_VERSION = 'v276';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4769,6 +4783,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v276', d:'2026-07-26', items:['📷メンバーに写真を設定できるように（編集→基本タブ→写真）。端末内で64pxに自動圧縮（1枚約3KB・500人規模でも無料枠に余裕）','写真アバターは「リング色＋右下バッジ」でタイトル表示：研修生=水色/LOI=緑/Q2=ライム/Q3=アンバー/B1〜=紫、BR以上は同色（フレッシュ帯の見分け優先）','写真なしのメンバーは従来のタイトル文字アイコンのまま。メンバー一覧・共有MAPにも写真表示','タイトル色アイコンも同ルールに統一（BR以上の宝石色分けを廃止しシンプルに）'] },
   { v:'v275', d:'2026-07-26', items:['📉Firestore読み取りダイエット（無料枠超過対策）：オフライン永続キャッシュを有効化（2回目以降の起動は差分だけ読む）','ランキングを10分キャッシュ・「先月からの変化」はセッション内1回だけ取得','📦管理者パネルに「データ使用状況を集計」ボタン（ユーザー別の概算サイズランキング）','※ATTACK LIST/目標シート側も同時に読み取り削減を実施'] },
   { v:'v274', d:'2026-07-19', items:['🚪カテゴリBAにタイトル「OUT」を追加：アウトしたメンバーは削除せず当月の記録として残せます。翌月コピー時は自動で持ち越されません（配下は上位に付け替え）。カードはグレー表示','🎂「年齢のみ」入力欄を追加：生年月日が分からない場合は年齢だけ登録可能（生年月日を入れた場合はそちらを優先して自動計算）','🔗メンバータブに結合（共有）したダウンラインも表示されるように修正（🔗バッジ付き・タップで相手のMAPへ）'] },
   { v:'v273', d:'2026-07-19', items:['🧭 GOALタブを「逆算マップ」に全面刷新（フランクリン・プランナー式）','価値観→頂上→今年→今月→今日を1本の背骨ラインで接続。各カードに「↑なぜ」チップ','数字の根拠を表示（残りフロント÷残り月数=今月N人）','今月カードにKPIバー・自分の月間目標・タスクを集約。今日カードに「今日の一歩」（1日あたりの必要数＋その場＋1記録）と習慣チェック','初回セットアップは4ステップウィザードに一本化（価値観→頂上→今年の道のり自動生成→今月と習慣）。やり直しもいつでも可能','既存の目標・習慣・実績データはそのまま引き継ぎ'] },
@@ -5477,7 +5492,9 @@ function renderMembers() {
     var dotCls = pr === 3 ? 'high' : (pr === 2 ? 'mid' : (pr === 1 ? 'low' : 'none'));
     var accent = pr === 3 ? '#FF5D73' : (memberCat(m) === '研修生' ? '#FFB454' : (m.goldShip ? '#8B7CFF' : '#5AD7FF'));
     return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openMemberCard(\'' + m.id + '\')">'
-      + '<span class="ml-avatar">' + evEsc(ini) + '</span>'
+      + (_avatars[m.id]
+          ? '<span class="ml-avatar" style="padding:0;overflow:hidden;border:2px solid ' + titleRingColor(m.title) + '"><img src="' + _avatars[m.id] + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""></span>'
+          : '<span class="ml-avatar">' + evEsc(ini) + '</span>')
       + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span>' + (/^MG_/.test(m.id) ? '<span class="merged-badge" style="margin-left:4px">🔗' + evEsc(m._ownerName || '結合') + '</span>' : '') + '</div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
       + '<span class="ml-dot ' + dotCls + '"></span>'
       + '<span class="ml-chev">›</span>'
@@ -6811,7 +6828,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
     + expandArrow
     + '</div>'
-    + '<div class="av ' + g + (isLOI ? ' loi-av' : (m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + avStyle + '" title="' + evEsc(m.title||'') + '">' + titleAbbr(m.title||'&#x2013;') + '</div>'
+    + (photoAvatarHtml(m) || ('<div class="av ' + g + (isLOI ? ' loi-av' : (m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + avStyle + '" title="' + evEsc(m.title||'') + '">' + titleAbbr(m.title||'&#x2013;') + '</div>'))
     + '<div style="flex:1;min-width:0;overflow:hidden">'
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
     + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
@@ -6837,6 +6854,82 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
 var DEPTH_COLORS = ['#2CE5B8','#8B7CFF','#5AD7FF','#FFB454','#FF87B3'];
 
 
+// ── 写真アバター：リング/バッジ色（フレッシュ帯を色分け・BR以上は同色） ──
+function titleRingColor(title) {
+  var t = (title||'').trim().toUpperCase();
+  var raw = (title||'').trim();
+  if (t==='マケ'||raw==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||raw==='面談'||t==='CO') return '#5AD7FF'; // 研修生
+  if (t==='LOI'||t==='Q1') return '#4ADE80';
+  if (t==='Q2') return '#A3E635';
+  if (t==='Q3'||t==='Q4') return '#FBBF24';
+  if (t==='B1') return '#C583FF';
+  if (t==='B2'||t==='B3') return '#a78bfa';
+  if (t==='OUT') return '#5b6478';
+  var BR_ALL = ['BR','G','ゴールド','L','ラピス','R','ルビー','E','エメラルド','D','ダイヤモンド','BD','ブルーダイヤモンド','PD','チームエリート'];
+  if (BR_ALL.indexOf(raw) >= 0 || BR_ALL.indexOf(t) >= 0) return '#a8a29e'; // BR以上は同色
+  return '#8D9AB8';
+}
+
+// ── 写真アバター保存（Firestore base64・8分割チャンクで1MiB上限を回避） ──
+// maps/{uid}/meta/avatars0..7 に {memberId: dataUrl} で格納。
+// メンバーIDに紐づくため翌月コピーでも複製されず1人1枚のまま。
+var _avatars = {}, _avatarsUid = '';
+function _avChunk(mid) {
+  var s = 0; for (var i = 0; i < mid.length; i++) s = (s + mid.charCodeAt(i)) % 8;
+  return 'avatars' + s;
+}
+function loadAvatars(uid) {
+  if (!db || !uid || _avatarsUid === uid) return Promise.resolve();
+  _avatarsUid = uid; _avatars = {};
+  var jobs = [];
+  for (var i = 0; i < 8; i++) {
+    (function(n){
+      jobs.push(fsGet('maps/' + uid + '/meta/avatars' + n).then(function(d) {
+        if (!d) return;
+        for (var k in d) { if (k !== 'updatedAt' && typeof d[k] === 'string' && d[k].indexOf('data:image') === 0) _avatars[k] = d[k]; }
+      }).catch(function(){}));
+    })(i);
+  }
+  return Promise.all(jobs).then(function(){ if (typeof renderCurrentView === 'function' && (currentView==='current'||currentView==='ideal'||currentView==='members')) renderCurrentView(); });
+}
+function saveAvatar(mid, dataUrl) {
+  var uid = viewingOwnerUid || (currentUser && currentUser.uid);
+  if (!db || !uid || !mid) return Promise.resolve();
+  var path = 'maps/' + uid + '/meta/' + _avChunk(mid);
+  var patch = {};
+  patch[mid] = dataUrl ? dataUrl : firebase.firestore.FieldValue.delete();
+  if (dataUrl) _avatars[mid] = dataUrl; else delete _avatars[mid];
+  return db.doc(path).set(patch, { merge: true }).catch(function(){});
+}
+// 端末側で64x64にカバートリミング→JPEG圧縮（1枚2〜4KB程度）
+function compressAvatar(file, cb) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var S = 64, c = document.createElement('canvas');
+      c.width = S; c.height = S;
+      var ctx = c.getContext('2d');
+      var side = Math.min(img.width, img.height);
+      var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, S, S);
+      cb(c.toDataURL('image/jpeg', 0.62));
+    };
+    img.onerror = function(){ toast('画像を読み込めませんでした'); };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+// 写真つき丸アバターHTML（リング=タイトル色、右下にタイトル略称バッジ）
+function photoAvatarHtml(m, extraCls) {
+  var ph = _avatars[m.id];
+  if (!ph) return '';
+  var col = titleRingColor(m.title);
+  return '<div class="av av-photo ' + (extraCls||'') + '" style="border-color:' + col + '" title="' + evEsc(m.title||'') + '">'
+    + '<img src="' + ph + '" alt="">'
+    + '<span class="av-badge" style="background:' + col + '">' + evEsc(titleAbbr(m.title||'—')) + '</span></div>';
+}
+
 // 長いタイトルは丸アバター内で略称表示（正式名はカード/編集画面で確認できる）
 function titleAbbr(title) {
   var t = (title||'').trim();
@@ -6848,31 +6941,18 @@ function titleAvatarStyle(title) {
   // 研修ステータス系
   if (t==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||t==='面談'||t==='CO')
     return 'background:rgba(34,211,238,0.15);color:#5AD7FF;border-color:rgba(34,211,238,0.4)';
-  // BR以上：タイトルごとにメタル/宝石カラー（一目でランクが分かるように）
+  // BR以上は全て同色（重要なのはフレッシュ帯の見分け。ランク詳細はカード/編集画面で）
   var raw = (title||'').trim();
-  var RANK_STYLES = {
-    'BR':        'background:linear-gradient(135deg,#292524,#57534e);color:#d6d3d1;border-color:#78716c',
-    'ゴールド':   'background:linear-gradient(135deg,#5b3a06,#b8860b);color:#ffe9a8;border-color:#f0c34e',
-    'G':         'background:linear-gradient(135deg,#5b3a06,#b8860b);color:#ffe9a8;border-color:#f0c34e',
-    'ラピス':     'background:linear-gradient(135deg,#1e2a78,#3b5bdb);color:#c5d4ff;border-color:#5c7cfa',
-    'L':         'background:linear-gradient(135deg,#1e2a78,#3b5bdb);color:#c5d4ff;border-color:#5c7cfa',
-    'ルビー':     'background:linear-gradient(135deg,#5f0a1e,#c2184b);color:#ffc2d1;border-color:#f0567f',
-    'R':         'background:linear-gradient(135deg,#5f0a1e,#c2184b);color:#ffc2d1;border-color:#f0567f',
-    'エメラルド': 'background:linear-gradient(135deg,#043927,#0f9d58);color:#a8f0c6;border-color:#34d399',
-    'E':         'background:linear-gradient(135deg,#043927,#0f9d58);color:#a8f0c6;border-color:#34d399',
-    'ダイヤモンド':'background:linear-gradient(135deg,#155e75,#22d3ee);color:#e0fbff;border-color:#67e8f9',
-    'D':         'background:linear-gradient(135deg,#155e75,#22d3ee);color:#e0fbff;border-color:#67e8f9',
-    'ブルーダイヤモンド':'background:linear-gradient(135deg,#0b2a6b,#1d4ed8);color:#c7dbff;border-color:#3b82f6',
-    'BD':        'background:linear-gradient(135deg,#0b2a6b,#1d4ed8);color:#c7dbff;border-color:#3b82f6',
-    'PD':        'background:linear-gradient(135deg,#3f3f46,#a1a1aa);color:#f4f4f5;border-color:#d4d4d8',
-    'チームエリート':'background:linear-gradient(135deg,#1c1917,#854d0e);color:#fde68a;border-color:#eab308'
-  };
-  if (RANK_STYLES[raw]) return RANK_STYLES[raw];
-  if (RANK_STYLES[t]) return RANK_STYLES[t];
+  var BR_ALL = ['BR','G','ゴールド','L','ラピス','R','ルビー','E','エメラルド','D','ダイヤモンド','BD','ブルーダイヤモンド','PD','チームエリート'];
+  if (BR_ALL.indexOf(raw) >= 0 || BR_ALL.indexOf(t) >= 0)
+    return 'background:linear-gradient(135deg,#292524,#57534e);color:#d6d3d1;border-color:#78716c';
   // OUT（当月アウト）：グレーで打ち消し感を出す
   if (t==='OUT') return 'background:var(--surface3);color:var(--text-dim);border-color:var(--border2);text-decoration:line-through';
   // LOI / Q系
-  if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;border-color:#4ADE80';
+  // フレッシュ帯こそ色分け：LOI=緑、Q2=ライム、Q3/Q4=アンバー
+  if (t==='LOI'||t==='Q1') return 'background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;border-color:#4ADE80';
+  if (t==='Q2') return 'background:linear-gradient(135deg,#1a2e05,#65a30d);color:#d9f99d;border-color:#A3E635';
+  if (t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#451a03,#d97706);color:#fde68a;border-color:#FBBF24';
   // B1
   if (t==='B1')  return 'background:linear-gradient(135deg,#4c1d95,#9333ea);color:#e9d5ff;border-color:#C583FF';
   // B2 B3
@@ -9371,6 +9451,35 @@ function meRenderExtras(m) {
   tkHtml += '<div class="me-add-btn" onclick="ckAddTask(\'' + mid + '\')">＋ タスクを追加する</div>';
   tkBox.innerHTML = tkHtml;
 }
+// ── 編集パネル：写真の選択/削除 ──
+var _pendingPhoto = null; // 新規追加時（IDが未確定）の一時保持
+function _photoPrevSet(dataUrl) {
+  var pv = document.getElementById('fPhotoPrev');
+  var del = document.getElementById('fPhotoDel');
+  if (pv) pv.innerHTML = dataUrl ? '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover" alt="">' : '📷';
+  if (del) del.style.display = dataUrl ? '' : 'none';
+}
+function onPhotoPicked(inp) {
+  var f = inp.files && inp.files[0];
+  inp.value = '';
+  if (!f) return;
+  compressAvatar(f, function(dataUrl) {
+    _photoPrevSet(dataUrl);
+    if (typeof editingId !== 'undefined' && editingId) {
+      saveAvatar(editingId, dataUrl).then(function(){ toast('📷 写真を保存しました'); renderCurrentView(); });
+    } else {
+      _pendingPhoto = dataUrl; // 保存時に反映
+      toast('📷 メンバー保存時に写真も保存されます');
+    }
+  });
+}
+function removeMemberPhoto() {
+  _photoPrevSet(null);
+  _pendingPhoto = null;
+  if (typeof editingId !== 'undefined' && editingId && _avatars[editingId]) {
+    saveAvatar(editingId, null).then(function(){ toast('写真を削除しました'); renderCurrentView(); });
+  }
+}
 // MAP編集パネルのタスクをその場で消込（完了/未完了トグル）
 function meToggleTask(id, mid) {
   var e = findEvent(id);
@@ -9474,6 +9583,7 @@ function openEdit(id) {
     syncRegionSelect(m.region);
     set('fBirth', m.birthday);
     set('fAge', m.age || '');
+    _pendingPhoto = null; _photoPrevSet(_avatars[m.id] || null);
     var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
     if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
@@ -9547,6 +9657,7 @@ function clearForm() {
     if (el) el.value='';
   });
   syncRegionSelect(''); // 地域プルダウンを未設定にリセット
+  _pendingPhoto = null; _photoPrevSet(null);
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
   var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
@@ -9820,6 +9931,8 @@ function saveMember() {
   autoSave();
   gameCheck();
   gameCheckPromotion(_prevMember, m);
+  // 新規追加時に選んでいた写真をIDに紐づけて保存
+  if (_pendingPhoto && m.id) { saveAvatar(m.id, _pendingPhoto); _pendingPhoto = null; }
 }
 function deleteMember() {
   if (!editingId || !confirm('削除しますか？')) return;
@@ -13450,6 +13563,7 @@ function fsLoadSharedMap(ownerUid) {
   var month = state.currentMonth;
   stopSharedLiveSync();
   toast('共有MAPを読み込み中...');
+  loadAvatars(ownerUid); // 相手のMAPの写真アバター
   // 共有されたMAPのデータを直接読む
   // セキュリティルール上、sharedWithを経由して許可する
   var p1 = fsGet('maps/' + ownerUid + '/months/' + month + '_current');
@@ -14034,6 +14148,7 @@ function checkAuth() {
 function fsLoadFromFirestore(uid) {
   var month = state.currentMonth;
   toast('データを読み込み中...');
+  loadAvatars(uid); // 写真アバター（月に依存しない・同一uidなら再取得しない）
 
   // 旧形式（2026.01）を削除して新形式に移行
   if (db) {
