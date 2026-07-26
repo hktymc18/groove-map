@@ -1817,7 +1817,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v273</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v275</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2089,6 +2089,10 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="sd-search">
     <input class="sd-search-input" id="adminSearch" placeholder="名前・ユニオン・地域・メールで検索" oninput="renderAdminList()">
   </div>
+  <div style="padding:8px 14px 0">
+    <button class="btn-c" style="width:100%" onclick="adminUsageReport()">📦 データ使用状況を集計（読み取りが発生します）</button>
+    <div id="adminUsageBox" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.7"></div>
+  </div>
   <div class="sd-body" id="adminBody"></div>
 </div>
 
@@ -2296,6 +2300,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
             <div class="ed-ctrl ed-birth"><input class="ed-in" id="fBirth" type="date" min="1900-01-01" onchange="this.classList.toggle('has-value',!!this.value)"><span class="ed-bph">未設定</span></div>
           </div>
+          <div class="ed-row">
+            <span class="ed-l">年齢のみ<span class="ed-q" onclick="edHelp(event,'h_age')">?</span></span>
+            <div class="ed-ctrl"><input class="ed-in" id="fAge" type="number" inputmode="numeric" min="0" max="120" placeholder="例: 27" style="width:90px"><span style="font-size:12px;color:var(--text-dim);margin-left:6px">歳</span></div>
+          </div>
+          <div class="ed-help" id="h_age">生年月日が分からない時はこちらに年齢だけ。生年月日を入れた場合はそちらが優先されます。</div>
           <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
           <div class="ed-row">
             <span class="ed-l">地域<span class="ed-q" onclick="edHelp(event,'h_region')">?</span></span>
@@ -2532,6 +2541,9 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 
 var db   = typeof firebase !== 'undefined' ? firebase.firestore() : null;
 var auth = typeof firebase !== 'undefined' ? firebase.auth()      : null;
+// オフライン永続キャッシュ：2回目以降の起動・リスナー再接続はローカルから読み、
+// 変更ぶんだけサーバー読み取り＝Firestoreの読み取り課金を大幅削減（他のfirestore呼び出しより先に実行）
+try { if (db) db.enablePersistence({ synchronizeTabs: true }).catch(function(){}); } catch(e) {}
 
 // Firestore保存
 function fsSet(path, data) {
@@ -2754,6 +2766,20 @@ function copyToNextMonth() {
   // メンバーをディープコピー
   var copyMembers = JSON.parse(JSON.stringify(state.members));
   var copyIdeal   = JSON.parse(JSON.stringify(state.idealMembers || []));
+
+  // OUT（当月アウト）は当月の記録として残し、翌月には持ち越さない。
+  // 配下がいる場合はOUTメンバーの上位に付け替えてから除外する。
+  var outIds = {};
+  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT') outIds[mm.id] = mm.parentId || ''; });
+  if (Object.keys(outIds).length) {
+    copyMembers.forEach(function(mm){
+      var guard = 0;
+      while (outIds.hasOwnProperty(mm.parentId) && guard++ < 30) mm.parentId = outIds[mm.parentId];
+    });
+    var outNames = copyMembers.filter(function(mm){ return outIds.hasOwnProperty(mm.id); }).map(function(mm){ return mcName(mm); });
+    copyMembers = copyMembers.filter(function(mm){ return !outIds.hasOwnProperty(mm.id); });
+    if (outNames.length) toast('🚪 OUT ' + outNames.length + '人（' + outNames.slice(0,3).join('・') + (outNames.length>3?' ほか':'') + '）は翌月に持ち越しません');
+  }
 
   // 今月の確定GSVで判定（リセット前に積み上げを確定）
   recalcGSV(copyMembers);
@@ -3830,6 +3856,54 @@ function _adminFindUser(uid) {
   for (var i=0;i<_adminUsers.length;i++) if (_adminUsers[i].id === uid) return _adminUsers[i];
   return null;
 }
+// ── 📦 データ使用状況レポート（管理者・手動実行のみ） ──
+// 各ユーザーの当月MAP/データ/GOALドキュメントを読んでJSONサイズを概算集計。
+// 実行にはユーザー数×3回の読み取りが発生するため、ボタンを押した時だけ動く。
+function _fmtKB(bytes) {
+  if (bytes >= 1048576) return (bytes/1048576).toFixed(2) + ' MB';
+  if (bytes >= 1024) return (bytes/1024).toFixed(1) + ' KB';
+  return bytes + ' B';
+}
+function adminUsageReport() {
+  if (!isCurrentAdmin()) { toast('権限がありません'); return; }
+  var box = document.getElementById('adminUsageBox');
+  if (!box) return;
+  var users = _adminUsers || [];
+  if (!users.length) { toast('先にユーザー一覧を読み込んでください'); return; }
+  var month = state.currentMonth || currentMonthStr();
+  box.style.display = '';
+  box.innerHTML = '集計中…（' + users.length + '人 × 3ドキュメント）';
+  var rows = [], done = 0;
+  var jobs = users.map(function(u) {
+    var uid = u.id;
+    var paths = ['maps/'+uid+'/months/'+month+'_current', 'maps/'+uid+'/stats/'+month, 'maps/'+uid+'/meta/goals'];
+    return Promise.all(paths.map(function(pth){
+      return fsGet(pth).then(function(d){ return d ? JSON.stringify(d).length : 0; }).catch(function(){ return 0; });
+    })).then(function(sizes) {
+      var mapB = sizes[0], statB = sizes[1], goalB = sizes[2];
+      rows.push({ name: u.name || u.email || uid.slice(0,6), total: mapB + statB + goalB, map: mapB, stat: statB, goal: goalB });
+      done++;
+      if (done % 5 === 0) box.innerHTML = '集計中… ' + done + '/' + users.length;
+    });
+  });
+  Promise.all(jobs).then(function() {
+    rows.sort(function(a,b){ return b.total - a.total; });
+    var total = rows.reduce(function(s,r){ return s + r.total; }, 0);
+    var h = '<b>📦 当月データの概算サイズ</b>（' + month + '・' + users.length + '人）<br>'
+      + '合計 <b style="color:var(--accent)">' + _fmtKB(total) + '</b>'
+      + ' <small style="color:var(--text-dim)">／ 無料枠1GBの ' + (total/1073741824*100).toFixed(2) + '%（当月分のみ・過去月とATTACK LIST等は含まず）</small>'
+      + '<div style="border-top:1px solid var(--border);margin:8px 0"></div>';
+    rows.slice(0, 15).forEach(function(r, i) {
+      h += '<div style="display:flex;justify-content:space-between;gap:8px"><span>' + (i+1) + '. ' + evEsc(r.name) + '</span>'
+        + '<span style="font-family:IBM Plex Mono,monospace;color:var(--text-mid)">' + _fmtKB(r.total) + '</span></div>';
+    });
+    if (rows.length > 15) h += '<div style="color:var(--text-dim)">…ほか' + (rows.length-15) + '人</div>';
+    h += '<div style="color:var(--text-dim);margin-top:8px;font-size:11px">※JSONサイズの概算（インデックス等は含まないため実際より小さめ）。正確な合計は Firebaseコンソール → 使用量 で確認できます。</div>';
+    box.innerHTML = h;
+  }).catch(function(e) {
+    box.innerHTML = '集計に失敗しました: ' + evEsc(e && e.message || '');
+  });
+}
 function renderAdminList() {
   var body = document.getElementById('adminBody');
   if (!body) return;
@@ -4103,7 +4177,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v273';
+  var DATA_VERSION = 'v275';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4643,8 +4717,11 @@ function gameToggleRank() {
   if (currentView === 'home') renderHome();
 }
 // 全ユーザーを取得し、今週XP降順で返す。
+// users全件読みは高コストのため10分キャッシュ（読み取り課金対策）
+var _rankFetchCache = null, _rankFetchAt = 0;
 function gameFetchRanking(cb) {
   if (!db) { cb([]); return; }
+  if (_rankFetchCache && (Date.now() - _rankFetchAt) < 10 * 60 * 1000) { cb(_rankFetchCache); return; }
   var myUid = gameMyUid(), wk = gameWeekStart();
   db.collection('users').get().then(function(snap){
     var rows = [];
@@ -4657,6 +4734,7 @@ function gameFetchRanking(cb) {
         level: gameLevelInfo(g.xp || 0).level, streak: g.streak || 0, isSelf: isSelf });
     });
     rows.sort(function(a,b){ return b.wxp - a.wxp || b.level - a.level; });
+    _rankFetchCache = rows; _rankFetchAt = Date.now();
     cb(rows);
   }).catch(function(){ cb([]); });
 }
@@ -4691,6 +4769,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v275', d:'2026-07-26', items:['📉Firestore読み取りダイエット（無料枠超過対策）：オフライン永続キャッシュを有効化（2回目以降の起動は差分だけ読む）','ランキングを10分キャッシュ・「先月からの変化」はセッション内1回だけ取得','📦管理者パネルに「データ使用状況を集計」ボタン（ユーザー別の概算サイズランキング）','※ATTACK LIST/目標シート側も同時に読み取り削減を実施'] },
+  { v:'v274', d:'2026-07-19', items:['🚪カテゴリBAにタイトル「OUT」を追加：アウトしたメンバーは削除せず当月の記録として残せます。翌月コピー時は自動で持ち越されません（配下は上位に付け替え）。カードはグレー表示','🎂「年齢のみ」入力欄を追加：生年月日が分からない場合は年齢だけ登録可能（生年月日を入れた場合はそちらを優先して自動計算）','🔗メンバータブに結合（共有）したダウンラインも表示されるように修正（🔗バッジ付き・タップで相手のMAPへ）'] },
   { v:'v273', d:'2026-07-19', items:['🧭 GOALタブを「逆算マップ」に全面刷新（フランクリン・プランナー式）','価値観→頂上→今年→今月→今日を1本の背骨ラインで接続。各カードに「↑なぜ」チップ','数字の根拠を表示（残りフロント÷残り月数=今月N人）','今月カードにKPIバー・自分の月間目標・タスクを集約。今日カードに「今日の一歩」（1日あたりの必要数＋その場＋1記録）と習慣チェック','初回セットアップは4ステップウィザードに一本化（価値観→頂上→今年の道のり自動生成→今月と習慣）。やり直しもいつでも可能','既存の目標・習慣・実績データはそのまま引き継ぎ'] },
   { v:'v272', d:'2026-07-19', items:['📅予定タブに「週」表示を追加：月曜はじまりの7日を時系列で一覧。‹›で前後の週へ、タイトルタップで今週に戻る。各日の「＋追加」でその日に直接予定作成','ナビのアイコンをSVG化（PCサイドバー＋モバイル下部ナビ）：iPhone/Androidで見た目が揃い、シャープに表示'] },
   { v:'v271', d:'2026-07-19', items:['UI/UX総点検リニューアル 第3弾','✅予定（イベント）も「実行済み」チェックで消込できるように（アジェンダ・日別シート・メンバー編集パネル）。予定は紫チェックで区別、完了済みへまとめて表示','期限切れセクションを「期限切れ・終了」に改称（過去の予定も含むため）','タップしやすさ改善：✕閉じるボタン40px化・年月セレクタ・カウンター操作ボタンを拡大','カウンターの🗑を「🗑 削除」として赤で分離（誤タップ防止）','キーボード操作時のフォーカスリング表示（アクセシビリティ）','はじめの4ステップ「今日1つ記録する」がクイック記録へスクロールするように'] },
@@ -5295,12 +5375,17 @@ function computeMonthlyChanges(prev, cur) {
   out.sort(function(a,b){ return b.pr - a.pr; });
   return out;
 }
+var _mcPrevCache = { key: '', members: null }; // 前月データはセッション内1回だけ取得（ホーム再描画のたびに読まない）
 function renderMonthlyChanges() {
   var box = document.getElementById('homeChanges'); if (!box) return;
   var uid = (currentUser && currentUser.uid) ? currentUser.uid : (typeof eventsUid === 'function' ? eventsUid() : '');
   var prev = mcPrevMonth(state.currentMonth);
   if (!db || !uid || !prev) { box.innerHTML = '<div class="ck-empty">前月データがありません</div>'; return; }
-  fsGet('maps/' + uid + '/months/' + prev + '_current').then(function(data) {
+  var _mcKey = uid + '|' + prev;
+  var _mcFetch = (_mcPrevCache.key === _mcKey && _mcPrevCache.members !== null)
+    ? Promise.resolve({ members: _mcPrevCache.members })
+    : fsGet('maps/' + uid + '/months/' + prev + '_current').then(function(d){ _mcPrevCache = { key: _mcKey, members: (d && d.members) || [] }; return d; });
+  _mcFetch.then(function(data) {
     var pm = (data && data.members) ? data.members : [];
     if (!pm.length) { box.innerHTML = '<div class="ck-empty">前月（' + prev + '）のデータがありません<br><span>月をまたいで使うと自動で変化が出ます</span></div>'; return; }
     var ch = computeMonthlyChanges(pm, (typeof gameActiveMembers === 'function' ? gameActiveMembers() : (state.members||[])));
@@ -5365,7 +5450,8 @@ function memberMatchesFilter(m, f) {
 function memberPriorityRank(m) { return m.priority === '高' ? 3 : (m.priority === '中' ? 2 : (m.priority === '低' ? 1 : 0)); }
 function renderMembers() {
   var wrap = document.getElementById('view-members'); if (!wrap) return;
-  var all = membersForMap('current').filter(function(m){ return !m.deleted; });
+  // 結合（共有）したダウンラインも一覧に含める（MAPと同じ合成リスト）
+  var all = composeMergedInto(membersForMap('current'), 'current').filter(function(m){ return !m.deleted; });
   var cAll = all.length, cTr = 0, cFr = 0, cGo = 0, cBr = 0;
   all.forEach(function(m){
     if (memberCat(m) === '研修生') cTr++;
@@ -5392,7 +5478,7 @@ function renderMembers() {
     var accent = pr === 3 ? '#FF5D73' : (memberCat(m) === '研修生' ? '#FFB454' : (m.goldShip ? '#8B7CFF' : '#5AD7FF'));
     return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openMemberCard(\'' + m.id + '\')">'
       + '<span class="ml-avatar">' + evEsc(ini) + '</span>'
-      + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span></div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
+      + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span>' + (/^MG_/.test(m.id) ? '<span class="merged-badge" style="margin-left:4px">🔗' + evEsc(m._ownerName || '結合') + '</span>' : '') + '</div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
       + '<span class="ml-dot ' + dotCls + '"></span>'
       + '<span class="ml-chev">›</span>'
       + '</div>';
@@ -5457,6 +5543,17 @@ function openMemberActions(mid) {
 var _mdPage = 0, _mdMid = '', _mdX0 = 0;
 function _mFind(mid) { for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid) return state.members[i]; } return null; }
 function _dRow(l, v) { return '<div class="md-row"><span class="md-l">' + evEsc(l) + '</span><span class="md-v">' + ((v===''||v==null) ? '—' : evEsc(String(v))) + '</span></div>'; }
+// 年齢：生年月日があれば計算値を優先、無ければ手入力の年齢（m.age）
+function _memberAge(m) {
+  if (m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) {
+    var b = new Date(m.birthday.replace(/-/g, '/')), t = new Date();
+    var a = t.getFullYear() - b.getFullYear();
+    if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
+    return (a >= 0 && a < 130) ? a : null;
+  }
+  var n = parseInt(m.age, 10);
+  return (n > 0 && n < 130) ? n : null;
+}
 function closeMemberDetail() { var el=document.getElementById('mdOverlay'); if (el&&el.parentNode) el.parentNode.removeChild(el); }
 function mdGo(i) {
   i = Math.max(0, Math.min(4, i)); _mdPage = i;
@@ -5479,6 +5576,7 @@ function openMemberDetail(mid) {
     + _dRow('適用MAP', m.mapType==='ideal'?'理想':(m.mapType==='both'?'両方':'現状'))
     + _dRow('アップライン', parent ? ((parent.lastName||'')+(parent.firstName||'')) : 'トップ直下')
     + _dRow('金の船', m.goldShip ? '⛴ 金の船' : '—')
+    + (function(){ var a=_memberAge(m); return a!==null ? _dRow('年齢', a + '歳' + (m.birthday?'':'（入力値）')) : ''; })()
     + (m.instaUrl ? _dRow('Instagram', m.instaUrl) : '')
     + (m.lineId ? '<div class="md-row"><span class="md-l">LINE</span><span class="md-v" style="text-align:right"><span onclick="openLineChatById(\'' + m.id + '\')" style="color:#06C755;font-weight:600;cursor:pointer">💬 LINEを開く</span></span></div>' : '');
   var monthly = _dRow('現状GSV', m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0')
@@ -6771,6 +6869,8 @@ function titleAvatarStyle(title) {
   };
   if (RANK_STYLES[raw]) return RANK_STYLES[raw];
   if (RANK_STYLES[t]) return RANK_STYLES[t];
+  // OUT（当月アウト）：グレーで打ち消し感を出す
+  if (t==='OUT') return 'background:var(--surface3);color:var(--text-dim);border-color:var(--border2);text-decoration:line-through';
   // LOI / Q系
   if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;border-color:#4ADE80';
   // B1
@@ -9373,6 +9473,7 @@ function openEdit(id) {
     set('fRegion', m.region);
     syncRegionSelect(m.region);
     set('fBirth', m.birthday);
+    set('fAge', m.age || '');
     var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
     if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
@@ -9441,7 +9542,7 @@ function openEdit(id) {
   }
 }
 function clearForm() {
-  ['fLast','fFirst','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta','fLine','fRegion'].forEach(function(id){
+  ['fLast','fFirst','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta','fLine','fRegion','fAge'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value='';
   });
@@ -9478,7 +9579,7 @@ function buildParentSelect(selectedId, excludeId) {
 }
 var TITLE_OPTIONS = {
   '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO'],
-  'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM'],
+  'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート'],
 };
 var fCategory = '';
@@ -9675,6 +9776,7 @@ function saveMember() {
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
     region: normalizeRegionValue((document.getElementById('fRegion')||{}).value || ''),
     birthday: (document.getElementById('fBirth')||{}).value || '',
+    age: parseInt((document.getElementById('fAge')||{}).value, 10) || '',
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
       var v = el ? el.value : ''; // 'YYYY-MM'
@@ -12484,7 +12586,7 @@ function closeSearchModal(e) {
 
 var CATEGORY_TITLES = {
   '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO'],
-  'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM'],
+  'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート'],
 };
 
