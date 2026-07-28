@@ -1213,6 +1213,7 @@ tr.ot-done{opacity:.5}
 .gl-vision-t{font-size:15px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word;max-width:72ch}
 /* ── 逆算マップ：背骨スパイン（価値観→頂上→今年→今月→今日を1本の線で接続） ── */
 .gl-spine{position:relative;padding-left:21px}
+@media(min-width:1000px){.gl-spine{max-width:760px}} /* PCで進捗バーが1m級に伸びるのを防ぐ */
 .gl-spine::before{content:'';position:absolute;left:7px;top:16px;bottom:16px;width:2.5px;border-radius:2px;background:linear-gradient(180deg,var(--accent),var(--gold) 42%,var(--go-sky) 72%,var(--purple));opacity:.85}
 .gl-nd{position:relative;margin-bottom:14px}
 .gl-nd::before{content:'';position:absolute;left:-19px;top:19px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:3px solid var(--nd,#2CE5B8)}
@@ -1821,7 +1822,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v277</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v281</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2303,23 +2304,23 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-row">
             <span class="ed-l">写真<span class="ed-q" onclick="edHelp(event,'h_photo')">?</span></span>
             <div class="ed-ctrl" style="align-items:center;gap:10px">
-              <span id="fPhotoPrev" style="width:44px;height:44px;border-radius:50%;background:var(--surface3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex:none">📷</span>
+              <span id="fPhotoPrev" onclick="recropPhoto()" title="タップで切り抜きを調整" style="width:44px;height:44px;border-radius:50%;background:var(--surface3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex:none;cursor:pointer">📷</span>
               <input type="file" id="fPhotoFile" accept="image/*" style="display:none" onchange="onPhotoPicked(this)">
               <button type="button" onclick="document.getElementById('fPhotoFile').click()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">選択</button>
               <button type="button" id="fPhotoDel" onclick="removeMemberPhoto()" style="display:none;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,93,115,.4);background:transparent;color:var(--red);font-size:13px;font-weight:700;cursor:pointer">削除</button>
             </div>
           </div>
-          <div class="ed-help" id="h_photo">端末内で64pxに自動圧縮してから保存されます（1枚 約3KB）。MAPカードの丸アイコンに表示され、タイトルはリング色と右下バッジで分かります。</div>
+          <div class="ed-help" id="h_photo">端末内で圧縮してから保存されます（1枚 約8KB）。ドラッグとピンチで表示範囲を調整。写真をタップすると切り抜きをやり直せます。</div>
           <div class="ed-row">
             <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
-            <div class="ed-ctrl ed-birth"><input class="ed-in" id="fBirth" type="date" min="1900-01-01" onchange="this.classList.toggle('has-value',!!this.value)"><span class="ed-bph">未設定</span></div>
+            <div class="ed-ctrl ed-birth"><input class="ed-in" id="fBirth" type="date" min="1900-01-01" onchange="this.classList.toggle('has-value',!!this.value);syncAgeField()"><span class="ed-bph">未設定</span></div>
           </div>
+          <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
           <div class="ed-row">
             <span class="ed-l">年齢のみ<span class="ed-q" onclick="edHelp(event,'h_age')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fAge" type="number" inputmode="numeric" min="0" max="120" placeholder="例: 27" style="width:90px"><span style="font-size:12px;color:var(--text-dim);margin-left:6px">歳</span></div>
+            <div class="ed-ctrl"><input class="ed-in" id="fAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例: 27" style="width:90px"><span id="fAgeNote" style="font-size:12px;color:var(--text-dim);margin-left:6px">歳</span></div>
           </div>
           <div class="ed-help" id="h_age">生年月日が分からない時はこちらに年齢だけ。生年月日を入れた場合はそちらが優先されます。</div>
-          <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
           <div class="ed-row">
             <span class="ed-l">地域<span class="ed-q" onclick="edHelp(event,'h_region')">?</span></span>
             <div class="ed-ctrl" style="flex-direction:column;align-items:stretch;gap:6px">
@@ -2735,12 +2736,14 @@ function _showCopyPreview(cur, nextMonth, changes, onConfirm) {
   var ups   = changes.filter(function(c){ return c.kind === 'promote'; });
   var downs = changes.filter(function(c){ return c.kind === 'demote'; });
   var advs  = changes.filter(function(c){ return c.kind === 'advance'; });
+  var outs  = changes.filter(function(c){ return c.kind === 'out'; });
 
   var body = '';
   body += sect('🎉 昇格', ups, '#2CE5B8');
   body += sect('⚠️ 降格', downs, '#FF5D73');
   body += sect('▶ 審査継続', advs, '#FFB454');
-  if (!ups.length && !downs.length && !advs.length) {
+  body += sect('🚪 OUT（翌月に持ち越しません・配下は上位に付け替え）', outs, '#8D9AB8');
+  if (!ups.length && !downs.length && !advs.length && !outs.length) {
     body = '<div style="color:var(--text-dim,#8a94a6);font-size:13px;padding:8px 0">タイトルの自動変更はありません。</div>';
   }
 
@@ -2783,16 +2786,27 @@ function copyToNextMonth() {
 
   // OUT（当月アウト）は当月の記録として残し、翌月には持ち越さない。
   // 配下がいる場合はOUTメンバーの上位に付け替えてから除外する。
+  // ※ルート（自分）はOUT除外の対象外（消すとMAP構造が壊れるため）
   var outIds = {};
-  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT') outIds[mm.id] = mm.parentId || ''; });
+  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT' && mm.parentId) outIds[mm.id] = mm.parentId; });
+  var _outChanges = [];
   if (Object.keys(outIds).length) {
     copyMembers.forEach(function(mm){
       var guard = 0;
-      while (outIds.hasOwnProperty(mm.parentId) && guard++ < 30) mm.parentId = outIds[mm.parentId];
+      while (outIds.hasOwnProperty(mm.parentId) && guard++ < 60) mm.parentId = outIds[mm.parentId];
     });
-    var outNames = copyMembers.filter(function(mm){ return outIds.hasOwnProperty(mm.id); }).map(function(mm){ return mcName(mm); });
+    copyMembers.filter(function(mm){ return outIds.hasOwnProperty(mm.id); }).forEach(function(mm){
+      _outChanges.push({ name: mcName(mm), from: 'OUT', to: '翌月から除外', kind: 'out' });
+    });
     copyMembers = copyMembers.filter(function(mm){ return !outIds.hasOwnProperty(mm.id); });
-    if (outNames.length) toast('🚪 OUT ' + outNames.length + '人（' + outNames.slice(0,3).join('・') + (outNames.length>3?' ほか':'') + '）は翌月に持ち越しません');
+    // 付け替え先が消えている等の孤児はルート直下へ退避（見えないメンバーを作らない）
+    var _ids = {}; copyMembers.forEach(function(mm){ _ids[mm.id] = true; });
+    copyMembers.forEach(function(mm){ if (mm.parentId && !_ids[mm.parentId]) mm.parentId = ''; });
+    var _roots2 = copyMembers.filter(function(mm){ return !mm.parentId && !mm.deleted; });
+    if (_roots2.length > 1) { // ルートは1人だけ：あふれた分は本来のルート直下へ
+      var _mainRoot = _roots2[0];
+      _roots2.slice(1).forEach(function(mm){ mm.parentId = _mainRoot.id; });
+    }
   }
 
   // 今月の確定GSVで判定（リセット前に積み上げを確定）
@@ -2813,7 +2827,7 @@ function copyToNextMonth() {
   });
 
   // プレビュー確認 → 確定でコミット
-  _showCopyPreview(cur, nextMonth, changes, function() {
+  _showCopyPreview(cur, nextMonth, changes.concat(_outChanges), function() {
     // リザルト用データを「リセット前」に収集（Phase B）
     var _rd = null;
     try {
@@ -3164,6 +3178,9 @@ function renderPCMap(mapType) {
   outer.appendChild(svg);
   var svgDefs = document.createElementNS('http://www.w3.org/2000/svg','defs'); // 写真アバターの円形クリップ用
   svg.appendChild(svgDefs);
+  // 写真ノードが非常に多い場合、開閉のたびのSVG再構築でbase64デコードが集中しフリーズするため
+  // PC地図では150枚を超えたら文字アバターへフォールバック（モバイルカード表示は影響なし）
+  var _pcPhotoOk = Object.keys((typeof _avatars !== 'undefined' && _avatars) || {}).length <= 150;
 
   // 段ルーラー位置更新
   function updateRuler() {
@@ -3321,7 +3338,7 @@ function renderPCMap(mapType) {
       g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
     }
     // 写真アバター（あれば左端に丸表示し、テキストを右へずらす）
-    var _pcPh = (typeof _avatars !== 'undefined') ? _avatars[m.id] : null;
+    var _pcPh = (_pcPhotoOk && typeof _avatars !== 'undefined') ? _avatars[m.id] : null;
     var _pcTx = rx + 16;
     if (_pcPh) {
       var _avR = 19, _avCx = rx + 14 + _avR, _avCy = ry2 + NODE_H/2;
@@ -3640,6 +3657,11 @@ function expandToLevel(n) {
   var mapType = (currentView === 'ideal') ? 'ideal' : 'current';
   // 結合(MG_)ノードも含めた合成後リストで開閉フラグを立てる（全段表示が結合ツリーにも効くように）
   var members = composeMergedInto(membersForMap(mapType), mapType);
+  // 大組織の全展開は以後の再描画がすべて重くなるため確認（レベル選択でいつでも畳み直せる）
+  if (n === 'all' && members.length > 300 && !confirm(members.length + '人すべて展開すると動作が重くなる場合があります。展開しますか？\n（レベル選択でいつでも畳み直せます）')) {
+    if (typeof buildLevelSelector === 'function') buildLevelSelector(members); // セレクタ表示を元に戻す
+    return;
+  }
   if (!window._treeOpen) window._treeOpen = {};
   members.forEach(function(m){
     var d = calcMemberDepth(m, members);
@@ -3719,10 +3741,10 @@ function applyRegionDim() {
     var ok = !regionFilter || (r === regionFilter);
     nodes[i].style.opacity = ok ? '1' : '0.22';
   }
-  // モバイルツリーカード（HTML）
+  // モバイルツリーカード（HTML）※結合ノードも合成リストで解決
   var cards = document.querySelectorAll('.nc[data-cid]');
   for (var j=0;j<cards.length;j++){
-    var m = _findMember(cards[j].getAttribute('data-cid'));
+    var m = _findMemberComposed(cards[j].getAttribute('data-cid'));
     var rr = (m && m.region) ? m.region : '';
     var ok2 = !regionFilter || (rr === regionFilter);
     cards[j].style.opacity = ok2 ? '' : '0.3';
@@ -3783,6 +3805,13 @@ function syncRegionSelect(region) {
 // ── カテゴリ絞り込み（メンバータブを現状に統合）──
 var mapCatFilter = '';
 function _findMember(mid){ for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid) return state.members[i]; } return null; }
+// 絞り込み用：結合（MG_）ノードも含めた合成リストから探す（結合メンバーが誤って薄暗くなるのを防ぐ）
+function _findMemberComposed(mid){
+  if (!/^MG_/.test(mid)) return _findMember(mid);
+  var list = composeMergedInto(membersForMap('current'), 'current');
+  for (var i=0;i<list.length;i++){ if (list[i].id===mid) return list[i]; }
+  return null;
+}
 function buildMapCatChips(members) {
   var wrap = document.getElementById('mapCatChips');
   if (!wrap) return;
@@ -3802,17 +3831,17 @@ function buildMapCatChips(members) {
 }
 function setMapCatFilter(f) { mapCatFilter = f; renderCurrentView(); setTimeout(applyMapCatDim, 180); }
 function applyMapCatDim() {
-  // PC組織図ノード
+  // PC組織図ノード ※結合ノードも合成リストで解決
   var nodes = document.querySelectorAll('.oval-node');
   for (var i=0;i<nodes.length;i++){
-    var m = _findMember(nodes[i].getAttribute('data-mid'));
+    var m = _findMemberComposed(nodes[i].getAttribute('data-mid'));
     var ok = !mapCatFilter || (m && memberMatchesFilter(m, mapCatFilter));
     nodes[i].style.opacity = ok ? '1' : '0.2';
   }
   // モバイルツリーカード
   var cards = document.querySelectorAll('.nc[data-cid]');
   for (var j=0;j<cards.length;j++){
-    var m2 = _findMember(cards[j].getAttribute('data-cid'));
+    var m2 = _findMemberComposed(cards[j].getAttribute('data-cid'));
     var ok2 = !mapCatFilter || (m2 && memberMatchesFilter(m2, mapCatFilter));
     cards[j].style.opacity = ok2 ? '' : '0.3';
   }
@@ -3851,8 +3880,7 @@ function applyMembersTabVisible() {
   var hide = membersTabHidden();
   var it = document.querySelector('.pcs-item[data-view="members"]');
   if (it) it.style.display = hide ? 'none' : '';
-  var mt = document.querySelector('.mtab[data-view="members"]');
-  if (mt) mt.style.display = hide ? 'none' : '';
+  // ※モバイル下部ナビにメンバータブは存在しない（☰メニュー内で openMobileMenu が同フラグを参照）
   // 非表示中に開いていたら MAP に戻す
   if (hide && typeof currentView !== 'undefined' && currentView === 'members') switchView('current');
   var on = document.getElementById('rbMembersOn'), off = document.getElementById('rbMembersOff');
@@ -3879,6 +3907,7 @@ function openAdminPanel() {
   if (!isCurrentAdmin()) { toast('権限がありません'); return; }
   closeProfileModal(null);
   document.getElementById('adminPanel').classList.add('open');
+  var ub = document.getElementById('adminUsageBox'); if (ub) { ub.style.display = 'none'; ub.innerHTML = ''; } // 前回の古い集計を出さない
   loadAdminUsers();
 }
 function closeAdminPanel() {
@@ -3906,54 +3935,69 @@ function _fmtKB(bytes) {
   if (bytes >= 1024) return (bytes/1024).toFixed(1) + ' KB';
   return bytes + ' B';
 }
+var _adminUsageBusy = false;
 function adminUsageReport() {
   if (!isCurrentAdmin()) { toast('権限がありません'); return; }
+  if (_adminUsageBusy) { toast('集計中です…'); return; }
   var box = document.getElementById('adminUsageBox');
   if (!box) return;
-  var users = _adminUsers || [];
+  // 一覧と同じ権限スコープ（ユニオンリーダーは自ユニオンのみ）
+  var users = _adminScopedUsers();
   if (!users.length) { toast('先にユーザー一覧を読み込んでください'); return; }
+  _adminUsageBusy = true;
   var month = state.currentMonth || currentMonthStr();
   box.style.display = '';
-  box.innerHTML = '集計中…（' + users.length + '人 × 3ドキュメント）';
+  box.innerHTML = '集計中… 0/' + users.length + '人';
   var rows = [], done = 0;
   var jobs = users.map(function(u) {
     var uid = u.id;
     var paths = ['maps/'+uid+'/months/'+month+'_current', 'maps/'+uid+'/stats/'+month, 'maps/'+uid+'/meta/goals'];
+    for (var ai = 0; ai < 8; ai++) paths.push('maps/'+uid+'/meta/avatars'+ai); // 写真チャンクも計測
     return Promise.all(paths.map(function(pth){
-      return fsGet(pth).then(function(d){ return d ? JSON.stringify(d).length : 0; }).catch(function(){ return 0; });
+      return fsGet(pth).then(function(d){ return d ? JSON.stringify(d).length : 0; }).catch(function(){ return null; });
     })).then(function(sizes) {
-      var mapB = sizes[0], statB = sizes[1], goalB = sizes[2];
-      rows.push({ name: u.name || u.email || uid.slice(0,6), total: mapB + statB + goalB, map: mapB, stat: statB, goal: goalB });
+      var err = sizes.every(function(s){ return s === null; });
+      var n = function(x){ return x || 0; };
+      var mapB = n(sizes[0]), statB = n(sizes[1]), goalB = n(sizes[2]);
+      var phB = 0; for (var pi = 3; pi < sizes.length; pi++) phB += n(sizes[pi]);
+      rows.push({ name: u.name || u.email || uid.slice(0,6), total: mapB + statB + goalB + phB, map: mapB, stat: statB, goal: goalB, photo: phB, err: err });
       done++;
-      if (done % 5 === 0) box.innerHTML = '集計中… ' + done + '/' + users.length;
+      box.innerHTML = '集計中… ' + done + '/' + users.length + '人';
     });
   });
   Promise.all(jobs).then(function() {
+    _adminUsageBusy = false;
     rows.sort(function(a,b){ return b.total - a.total; });
     var total = rows.reduce(function(s,r){ return s + r.total; }, 0);
-    var h = '<b>📦 当月データの概算サイズ</b>（' + month + '・' + users.length + '人）<br>'
+    var photoTotal = rows.reduce(function(s,r){ return s + r.photo; }, 0);
+    var now = new Date();
+    var h = '<b>📦 当月データの概算サイズ</b>（' + month + '・' + users.length + '人・' + (now.getMonth()+1) + '/' + now.getDate() + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + '時点）<br>'
       + '合計 <b style="color:var(--accent)">' + _fmtKB(total) + '</b>'
-      + ' <small style="color:var(--text-dim)">／ 無料枠1GBの ' + (total/1073741824*100).toFixed(2) + '%（当月分のみ・過去月とATTACK LIST等は含まず）</small>'
+      + ' <small style="color:var(--text-dim)">うち写真 ' + _fmtKB(photoTotal) + '／当月分のみ・過去月とATTACK LIST等は含まず</small>'
       + '<div style="border-top:1px solid var(--border);margin:8px 0"></div>';
     rows.slice(0, 15).forEach(function(r, i) {
-      h += '<div style="display:flex;justify-content:space-between;gap:8px"><span>' + (i+1) + '. ' + evEsc(r.name) + '</span>'
-        + '<span style="font-family:IBM Plex Mono,monospace;color:var(--text-mid)">' + _fmtKB(r.total) + '</span></div>';
+      h += '<div style="display:flex;justify-content:space-between;gap:8px"><span>' + (i+1) + '. ' + evEsc(r.name) + (r.err ? ' <small style="color:var(--text-dim)">(取得不可)</small>' : '') + '</span>'
+        + '<span style="font-family:IBM Plex Mono,monospace;color:var(--text-mid)">' + (r.err ? '—' : _fmtKB(r.total) + (r.photo ? ' <small style="color:var(--text-dim)">📷' + _fmtKB(r.photo) + '</small>' : '')) + '</span></div>';
     });
     if (rows.length > 15) h += '<div style="color:var(--text-dim)">…ほか' + (rows.length-15) + '人</div>';
     h += '<div style="color:var(--text-dim);margin-top:8px;font-size:11px">※JSONサイズの概算（インデックス等は含まないため実際より小さめ）。正確な合計は Firebaseコンソール → 使用量 で確認できます。</div>';
     box.innerHTML = h;
   }).catch(function(e) {
+    _adminUsageBusy = false;
     box.innerHTML = '集計に失敗しました: ' + evEsc(e && e.message || '');
   });
+}
+// 権限スコープ：オーナーは全体、ユニオンリーダー(admin)は自ユニオンのみ（一覧と集計で共通）
+function _adminScopedUsers() {
+  var owner = (currentUser && currentUser.uid === OWNER_UID);
+  var myUnion = (currentUser && currentUser.union) ? currentUser.union : '';
+  return owner ? _adminUsers : _adminUsers.filter(function(u){ return (u.union||'') === myUnion; });
 }
 function renderAdminList() {
   var body = document.getElementById('adminBody');
   if (!body) return;
   var q = ((document.getElementById('adminSearch')||{}).value||'').toLowerCase();
-  // オーナーは全体、ユニオンリーダー(admin)は自ユニオンのみ
-  var owner = (currentUser && currentUser.uid === OWNER_UID);
-  var myUnion = (currentUser && currentUser.union) ? currentUser.union : '';
-  var scoped = owner ? _adminUsers : _adminUsers.filter(function(u){ return (u.union||'') === myUnion; });
+  var scoped = _adminScopedUsers();
   var list = scoped.filter(function(u) {
     if (!q) return true;
     return ((u.name||'')+(u.union||'')+(u.area||'')+(u.email||'')+(u.upRuby||'')+(u.upBd||'')).toLowerCase().indexOf(q) >= 0;
@@ -4219,7 +4263,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v277';
+  var DATA_VERSION = 'v281';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4407,12 +4451,15 @@ function openMobileMenu() {
     { v:'goals',   ic:'🧭', lb:'GOAL',    sub:'頂上と逆算プラン' },
     { v:'month',   ic:'📆', lb:'今月',    sub:'月間目標・カウンター' },
     { v:'ol',      ic:'📋', lb:'OL',      sub:'フレッシュ・金の船' },
-    { v:'members', ic:'👥', lb:'メンバー', sub:'一覧・絞り込み' }
+    { v:'members', ic:'👥', lb:'メンバー', sub:'一覧・絞り込み' },
+    { v:'ideal',   ic:'🎯', lb:'理想MAP', sub:'ありたい組織図' }
   ].filter(function(it){ return !(it.v==='members' && typeof membersTabHidden==='function' && membersTabHidden()); });
   var rows = items.map(function(it){
     var on = currentView === it.v;
-    return '<div class="ms-act" onclick="closeMobileMenu();switchView(\'' + it.v + '\')" style="' + (on?'color:var(--accent)':'') + '"><span class="ms-aic">' + it.ic + '</span>' + it.lb + '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + it.sub + '</span><span class="ms-ch">›</span></div>';
+    return '<div class="ms-act" onclick="closeMobileMenu();switchView(\'' + it.v + '\')" style="' + (on?'color:var(--accent)':'') + '"><span class="ms-aic">' + it.ic + '</span>' + it.lb + (on?' <span style="color:var(--accent)">✓</span>':'') + '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + it.sub + '</span><span class="ms-ch">›</span></div>';
   }).join('');
+  if (sharedOwners && sharedOwners.length) rows += '<div class="ms-act" onclick="closeMobileMenu();openSharedDashboard()"><span class="ms-aic">🤝</span>共有MAP<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + sharedOwners.length + '件</span><span class="ms-ch">›</span></div>';
+  if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) rows += '<div class="ms-act" onclick="closeMobileMenu();openAdminPanel()"><span class="ms-aic">🛡</span>アカウント管理<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMobileMenu();openProfileModal()"><span class="ms-aic">⚙️</span>設定・プロフィール<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
   ov.className = 'ms-overlay'; ov.id = 'mobileMenuOv';
@@ -4427,6 +4474,35 @@ function closeMobileMenu() {
   var ov = document.getElementById('mobileMenuOv');
   if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
 }
+// ── Android等の「戻る」でシート/モーダルを閉じる（アプリ終了を防ぐ） ──
+try { history.pushState({ gm: 1 }, ''); } catch(e) {}
+window.addEventListener('popstate', function() {
+  var closed = false;
+  // ボトムシート系（最前面から）
+  var ms = document.querySelector('.ms-overlay.show');
+  if (ms) {
+    ms.classList.remove('show');
+    setTimeout(function(){ if (ms.parentNode) ms.parentNode.removeChild(ms); }, 200);
+    closed = true;
+  } else {
+    // 全画面モーダル系（必須プロフィール入力中は閉じない）
+    var opens = document.querySelectorAll('.overlay.open');
+    for (var i = opens.length - 1; i >= 0; i--) {
+      var o = opens[i];
+      if (o.id === 'profileModal' && typeof _profileMandatory !== 'undefined' && _profileMandatory) continue;
+      if (o.id === 'modal') { if (typeof closeMemberEdit === 'function') closeMemberEdit(); else o.classList.remove('open'); }
+      else o.classList.remove('open');
+      closed = true;
+      break;
+    }
+    if (!closed) {
+      var sd = document.querySelector('.sd-overlay.open');
+      if (sd) { sd.classList.remove('open'); closed = true; }
+    }
+  }
+  if (closed) { try { history.pushState({ gm: 1 }, ''); } catch(e) {} }
+  // 何も開いていなければ状態を消費＝次の「戻る」で通常どおりアプリを離れる
+});
 // ============================================================
 //  報酬プラン定数（資料: 販売報酬プラン＋エリートLOI / 2026-07確認）
 // ============================================================
@@ -4584,6 +4660,20 @@ function saveGame() {
   var uid = eventsUid();
   if (currentUser) currentUser.game = state.game;
   if (uid && db) fsSet('users/' + uid, { game: state.game });
+  // ランキングキャッシュ内の自分の行を即時更新（XP獲得直後に自分だけ古いのを防ぐ）
+  try {
+    if (typeof _rankFetchCache !== 'undefined' && _rankFetchCache) {
+      for (var ri = 0; ri < _rankFetchCache.length; ri++) {
+        if (_rankFetchCache[ri].isSelf) {
+          _rankFetchCache[ri].wxp = state.game.weekXp || 0;
+          _rankFetchCache[ri].level = gameLevelInfo(state.game.xp || 0).level;
+          _rankFetchCache[ri].streak = state.game.streak || 0;
+          break;
+        }
+      }
+      _rankFetchCache.sort(function(a,b){ return b.wxp - a.wxp || b.level - a.level; });
+    }
+  } catch(e) {}
 }
 var GAME_MAX_LEVEL = 99;
 // レベルL→L+1に必要なXP = 50 + (L-1)*4。Lv99で打ち止め。
@@ -4792,13 +4882,21 @@ function gameRankRowHtml(r, i) {
     + '<div class="rank-xp">' + r.wxp + ' XP</div></div>';
 }
 function gameRankExpand() { gameRankShown = GAME_RANK_MAX; gameRankPaint(); }
+function gameRankRefresh() {
+  _rankFetchCache = null; _rankFetchAt = 0;
+  gameRenderRanking();
+}
 function gameRankPaint() {
   var box = document.getElementById('homeRank');
   if (!box || !gameRankCache) return;
   var rows = gameRankCache, limit = Math.min(gameRankShown, GAME_RANK_MAX);
   var selfIdx = -1;
   for (var k = 0; k < rows.length; k++) { if (rows[k].isSelf) { selfIdx = k; break; } }
-  var html = rows.slice(0, limit).map(function(r, i){ return gameRankRowHtml(r, i); }).join('');
+  // 鮮度表示＋手動更新（キャッシュが見えない不信感を防ぐ）
+  var ageMin = _rankFetchAt ? Math.floor((Date.now() - _rankFetchAt) / 60000) : 0;
+  var html = '<div style="display:flex;justify-content:flex-end;font-size:10.5px;color:var(--text-dim);padding:0 2px 6px">'
+    + (ageMin > 0 ? ageMin + '分前の情報 ' : '') + '<span onclick="gameRankRefresh()" style="cursor:pointer;color:var(--text-mid);font-weight:700;margin-left:6px">↻ 更新</span></div>';
+  html += rows.slice(0, limit).map(function(r, i){ return gameRankRowHtml(r, i); }).join('');
   // 自分が表示範囲外なら末尾に自分の順位を追記
   if (selfIdx >= limit) html += '<div style="margin-top:4px">' + gameRankRowHtml(rows[selfIdx], selfIdx) + '</div>';
   // もっと見る（まだ表示できる人がいる & 上限未満）
@@ -4811,6 +4909,10 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v281', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
+  { v:'v280', d:'2026-07-27', items:['🔧磨きこみリリース','🧭タイトル進捗を「あとNランク」＋段階バーに（%のズレ感を解消）・頂上/価値観に✎を常設・セットアップに「今のタイトル/月収」を追加','✅今日の一歩の＋1に「↩取り消す」・今月タブの−が過去日の記録から正しく引けるように','🗓週表示：今日の行を背景ハイライト・空の週は1つの案内に・「未完了N/全M件」表示','🏆ランキングに「◯分前の情報↻更新」・自分のXPは獲得した瞬間に反映','📊先月からの変化にも↻更新ボタン','🚪OUTをBRカテゴリからも選択可能に・メンバータブの人数からOUTを分離（🚪OUTピルで確認）','🎂年齢の入力チェック（1〜120）・生年月日を入れると年齢欄は自動計算表示に','🖥PC：逆算マップの横幅を適正化','📦管理画面を開いた時に前回の古い集計を消去'] },
+  { v:'v279', d:'2026-07-27', items:['✨体験改善リリース','✅今日の一歩：月末に不足分が全部乗る「絶壁」を解消（均等ペース×2を上限に・超過分は⚠️遅れバッジ）','⏰期限切れの頂上は「期限を更新する」案内に（架空の逆算を表示しない）','📍道のりレールは常に今年を表示：来年以降の頂上・最終LOIも年付きで正しく逆算（複数年ゴール対応）','📆今月のフロント行に「MAP上の実数」を併記（手入力とのズレが見える）','🗓週表示：開くたび今週にリセット・別の週では「今週へ」ボタン表示','📷写真を高精細化（128px）・2本指ピンチで拡大・写真タップで切り抜きやり直し','🔗結合したメンバーの写真も表示されるように','☰メニューに理想MAP・共有MAP・アカウント管理を追加・現在地に✓','◀Androidの戻るボタンでシートが閉じるように（アプリが終了しない）','🌳300人超の「全て展開」は確認してから（重さ対策）'] },
+  { v:'v278', d:'2026-07-27', items:['🛠 バグ修正リリース','🧮逆算マップの「現状フロント数」が常に1になっていた重大バグを修正（自分の直下人数を正しくカウント。残り人数・今月・今日の数字が正確に）','🚪OUT関連：ルート（自分）は翌月コピーの除外対象外に／OUT除外を確認画面に表示（先走りトーストを廃止）／孤児メンバーの発生防止','📷写真の保存失敗時に「保存しました」と出ていたのを修正（エラー表示＋プレビュー復元）／メンバー削除時に写真も削除','🔍絞り込みフィルタが後から開いた枝に効かない・結合メンバーが誤って薄暗くなる問題を修正','🏠共有MAP閲覧中のホームに嘘の「先月からの変化」が出ていたのを修正','🧭セットアップやり直しで年間目標・習慣が重複／頂上設定が消える問題を修正','🎉未設定なのに「達成ペースです」と出ていたのを修正（設定への案内を表示）','📦管理者の容量集計：ユニオン権限でスコープ／写真も計測／多重実行防止・進捗表示','👥メンバータブの人数を「自分N人＋🔗結合M人」に分離（LTSVと一致）・🔗結合の絞り込み追加'] },
   { v:'v277', d:'2026-07-26', items:['📷写真の切り抜き（表示範囲指定）：ドラッグで位置・スライダーで拡大してから保存','🖥PC版のMAPにも写真アバターを表示（丸写真＋タイトル色リング）','タップ/ホバーの情報表示に写真を追加（カード情報ボックス・アクションシート・PCツールチップ）','フレッシュ帯の色を統一：LOI/Q2/Q3/Q4はすべて緑'] },
   { v:'v276', d:'2026-07-26', items:['📷メンバーに写真を設定できるように（編集→基本タブ→写真）。端末内で64pxに自動圧縮（1枚約3KB・500人規模でも無料枠に余裕）','写真アバターは「リング色＋右下バッジ」でタイトル表示：研修生=水色/LOI=緑/Q2=ライム/Q3=アンバー/B1〜=紫、BR以上は同色（フレッシュ帯の見分け優先）','写真なしのメンバーは従来のタイトル文字アイコンのまま。メンバー一覧・共有MAPにも写真表示','タイトル色アイコンも同ルールに統一（BR以上の宝石色分けを廃止しシンプルに）'] },
   { v:'v275', d:'2026-07-26', items:['📉Firestore読み取りダイエット（無料枠超過対策）：オフライン永続キャッシュを有効化（2回目以降の起動は差分だけ読む）','ランキングを10分キャッシュ・「先月からの変化」はセッション内1回だけ取得','📦管理者パネルに「データ使用状況を集計」ボタン（ユーザー別の概算サイズランキング）','※ATTACK LIST/目標シート側も同時に読み取り削減を実施'] },
@@ -5422,6 +5524,11 @@ function computeMonthlyChanges(prev, cur) {
 var _mcPrevCache = { key: '', members: null }; // 前月データはセッション内1回だけ取得（ホーム再描画のたびに読まない）
 function renderMonthlyChanges() {
   var box = document.getElementById('homeChanges'); if (!box) return;
+  // 共有MAP閲覧中は state.members が相手の組織＝自分の前月と比較すると嘘の変化が出るため表示しない
+  if (typeof viewingOwnerUid !== 'undefined' && viewingOwnerUid) {
+    box.innerHTML = '<div class="ck-empty">共有MAP閲覧中は表示されません<br><span>自分のMAPに戻ると再表示されます</span></div>';
+    return;
+  }
   var uid = (currentUser && currentUser.uid) ? currentUser.uid : (typeof eventsUid === 'function' ? eventsUid() : '');
   var prev = mcPrevMonth(state.currentMonth);
   if (!db || !uid || !prev) { box.innerHTML = '<div class="ck-empty">前月データがありません</div>'; return; }
@@ -5489,24 +5596,38 @@ function memberMatchesFilter(m, f) {
   if (f === 'fresh') return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
   if (f === 'br') return memberCat(m) === 'BR';
   if (f === 'gold') return !!m.goldShip;
+  if (f === 'merged') return /^MG_/.test(m.id || '');
+  if (f === 'out') return (m.title||'').trim() === 'OUT';
   return true;
 }
 function memberPriorityRank(m) { return m.priority === '高' ? 3 : (m.priority === '中' ? 2 : (m.priority === '低' ? 1 : 0)); }
 function renderMembers() {
   var wrap = document.getElementById('view-members'); if (!wrap) return;
-  // 結合（共有）したダウンラインも一覧に含める（MAPと同じ合成リスト）
+  // 結合（共有）したダウンラインも一覧に含める（MAPと同じ合成リスト）。
+  // ただし件数はLTSV/データタブと揃えるため「自分」と「結合」を分けて表示する
   var all = composeMergedInto(membersForMap('current'), 'current').filter(function(m){ return !m.deleted; });
-  var cAll = all.length, cTr = 0, cFr = 0, cGo = 0, cBr = 0;
-  all.forEach(function(m){
+  var ownList = all.filter(function(m){ return !/^MG_/.test(m.id || ''); });
+  var mergedCt = all.length - ownList.length;
+  var cOut = ownList.filter(function(m){ return (m.title||'').trim() === 'OUT'; }).length;
+  var ownActive = ownList.filter(function(m){ return (m.title||'').trim() !== 'OUT'; });
+  var cAll = ownActive.length, cTr = 0, cFr = 0, cGo = 0, cBr = 0;
+  ownActive.forEach(function(m){
     if (memberCat(m) === '研修生') cTr++;
     if (CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0) cFr++;
     if (memberCat(m) === 'BR') cBr++;
     if (m.goldShip) cGo++;
   });
   var filters = [['all','すべて',cAll],['trainee','研修生',cTr],['fresh','フレッシュ',cFr],['br','BR',cBr],['gold','金の船',cGo]];
-  var list = all.filter(function(m){ return memberMatchesFilter(m, _memberFilter); });
+  if (cOut > 0) filters.push(['out','🚪OUT',cOut]);
+  if (mergedCt > 0) filters.push(['merged','🔗結合',mergedCt]);
+  var list = all.filter(function(m){
+    // 自分系フィルタは自分のメンバーだけ・🔗結合は結合分だけ・すべて＝OUT以外（OUTは🚪ピルから）
+    if (_memberFilter === 'all') return /^MG_/.test(m.id || '') || (m.title||'').trim() !== 'OUT';
+    if (_memberFilter === 'merged') return /^MG_/.test(m.id || '');
+    return !/^MG_/.test(m.id || '') && memberMatchesFilter(m, _memberFilter);
+  });
   list.sort(function(a,b){ return (memberPriorityRank(b) - memberPriorityRank(a)) || ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||'')); });
-  var html = '<div class="ml-head"><span class="ml-title">👥 メンバー</span><span class="ml-count">' + list.length + '人</span></div>';
+  var html = '<div class="ml-head"><span class="ml-title">👥 メンバー</span><span class="ml-count">自分 ' + cAll + '人' + (mergedCt ? ' ＋ 🔗結合 ' + mergedCt + '人' : '') + '</span></div>';
   html += '<div class="ml-filters">' + filters.map(function(f){
     return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
   }).join('') + '</div>';
@@ -5593,6 +5714,15 @@ function openMemberActions(mid) {
 var _mdPage = 0, _mdMid = '', _mdX0 = 0;
 function _mFind(mid) { for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid) return state.members[i]; } return null; }
 function _dRow(l, v) { return '<div class="md-row"><span class="md-l">' + evEsc(l) + '</span><span class="md-v">' + ((v===''||v==null) ? '—' : evEsc(String(v))) + '</span></div>'; }
+// 生年月日が入っている間は年齢欄を無効化（優先ルールをその場で見せる）
+function syncAgeField() {
+  var b = document.getElementById('fBirth'), a = document.getElementById('fAge'), n = document.getElementById('fAgeNote');
+  if (!a) return;
+  var hasBirth = !!(b && b.value);
+  a.disabled = hasBirth;
+  a.style.opacity = hasBirth ? '.45' : '';
+  if (n) n.textContent = hasBirth ? '歳（生年月日から自動計算中）' : '歳';
+}
 // 年齢：生年月日があれば計算値を優先、無ければ手入力の年齢（m.age）
 function _memberAge(m) {
   if (m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) {
@@ -5797,7 +5927,7 @@ function renderHome() {
     + coachHtml
     + wkHtml
     + insightsHtml()
-    + '<div class="home-sec-label">📊 先月からの変化</div>'
+    + '<div class="home-sec-label"><span>📊 先月からの変化</span><span onclick="_mcPrevCache={key:\'\',members:null};renderMonthlyChanges()" style="color:var(--text-dim);font-weight:700;font-size:11px;cursor:pointer;padding:4px 10px">↻ 更新</span></div>'
     + '<div id="homeChanges" class="home-changes"><div class="ck-empty" style="color:var(--text-dim)">読み込み中…</div></div>'
     + '</details>'
     + '</div>';
@@ -6895,10 +7025,11 @@ function titleRingColor(title) {
   if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return '#4ADE80';
   if (t==='B1') return '#C583FF';
   if (t==='B2'||t==='B3') return '#a78bfa';
-  if (t==='OUT') return '#5b6478';
+  var isLight = document.body.classList.contains('light');
+  if (t==='OUT') return isLight ? '#6b7280' : '#5b6478';
   var BR_ALL = ['BR','G','ゴールド','L','ラピス','R','ルビー','E','エメラルド','D','ダイヤモンド','BD','ブルーダイヤモンド','PD','チームエリート'];
-  if (BR_ALL.indexOf(raw) >= 0 || BR_ALL.indexOf(t) >= 0) return '#a8a29e'; // BR以上は同色
-  return '#8D9AB8';
+  if (BR_ALL.indexOf(raw) >= 0 || BR_ALL.indexOf(t) >= 0) return isLight ? '#78716c' : '#a8a29e'; // BR以上は同色（テーマ別に濃度調整）
+  return isLight ? '#64748b' : '#8D9AB8';
 }
 
 // ── 写真アバター保存（Firestore base64・8分割チャンクで1MiB上限を回避） ──
@@ -6925,47 +7056,34 @@ function loadAvatars(uid) {
 }
 function saveAvatar(mid, dataUrl) {
   var uid = viewingOwnerUid || (currentUser && currentUser.uid);
-  if (!db || !uid || !mid) return Promise.resolve();
+  if (!db || !uid || !mid) return Promise.reject(new Error('not-signed-in'));
   var path = 'maps/' + uid + '/meta/' + _avChunk(mid);
   var patch = {};
   patch[mid] = dataUrl ? dataUrl : firebase.firestore.FieldValue.delete();
-  if (dataUrl) _avatars[mid] = dataUrl; else delete _avatars[mid];
-  return db.doc(path).set(patch, { merge: true }).catch(function(){});
+  // 書き込み成功後にローカルへ反映（失敗時に「保存された風」に見せない）
+  return db.doc(path).set(patch, { merge: true }).then(function() {
+    if (dataUrl) _avatars[mid] = dataUrl; else delete _avatars[mid];
+  });
 }
-// 端末側で64x64にカバートリミング→JPEG圧縮（1枚2〜4KB程度）
-function compressAvatar(file, cb) {
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = new Image();
-    img.onload = function() {
-      var S = 64, c = document.createElement('canvas');
-      c.width = S; c.height = S;
-      var ctx = c.getContext('2d');
-      var side = Math.min(img.width, img.height);
-      var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
-      ctx.drawImage(img, sx, sy, side, side, 0, 0, S, S);
-      cb(c.toDataURL('image/jpeg', 0.62));
-    };
-    img.onerror = function(){ toast('画像を読み込めませんでした'); };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
+// （旧compressAvatarは切り抜きシート(openPhotoCrop)に置き換えのため削除）
 // 写真つき丸アバターHTML（リング=タイトル色、右下にタイトル略称バッジ）
 function photoAvatarHtml(m, extraCls) {
   var ph = _avatars[m.id];
   if (!ph) return '';
   var col = titleRingColor(m.title);
+  var ink = (typeof catTextColor === 'function') ? catTextColor(col) : '#08121a'; // バッジ文字色は背景に応じて自動（ライトテーマの低コントラスト対策）
   return '<div class="av av-photo ' + (extraCls||'') + '" style="border-color:' + col + '" title="' + evEsc(m.title||'') + '">'
     + '<img src="' + ph + '" alt="">'
-    + '<span class="av-badge" style="background:' + col + '">' + evEsc(titleAbbr(m.title||'—')) + '</span></div>';
+    + '<span class="av-badge" style="background:' + col + ';color:' + ink + '">' + evEsc(titleAbbr(m.title||'—')) + '</span></div>';
 }
 
 // 長いタイトルは丸アバター内で略称表示（正式名はカード/編集画面で確認できる）
 function titleAbbr(title) {
   var t = (title||'').trim();
   var MAP = { 'ブランドレプリゼンタティブ':'BR','ゴールド':'G','ラピス':'L','ルビー':'R','エメラルド':'E','ダイヤモンド':'D','ブルーダイヤモンド':'BD','チームエリート':'TE' };
-  return MAP[t] || t;
+  if (MAP[t]) return MAP[t];
+  // 自由入力の長いタイトルはバッジ/丸アバターからはみ出すため3文字＋…に切り詰め
+  return t.length > 4 ? t.slice(0, 3) + '…' : t;
 }
 function titleAvatarStyle(title) {
   var t = (title||'').toUpperCase().replace(/\s/g,'');
@@ -7054,6 +7172,9 @@ function _lazyBuildChildren(ch, pid) {
   for (var i = 0; i < kids.length; i++) html += buildNodeHTML(kids[i], members, mt, depth + 1, fc, inF, {}, false);
   ch.innerHTML = html;
   ch.removeAttribute('data-lazy');
+  // 絞り込み中に開いた枝にもフィルタの薄暗を適用（適用漏れ＝フィルタが嘘をつくのを防ぐ）
+  if (typeof mapCatFilter !== 'undefined' && mapCatFilter && typeof applyMapCatDim === 'function') applyMapCatDim();
+  if (typeof regionFilter !== 'undefined' && regionFilter && typeof applyRegionDim === 'function') applyRegionDim();
 }
 function toggleExpand(id) {
   if (!window._treeOpen) window._treeOpen = {};
@@ -9495,14 +9616,26 @@ function _photoPrevSet(dataUrl) {
   if (pv) pv.innerHTML = dataUrl ? '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover" alt="">' : '📷';
   if (del) del.style.display = dataUrl ? '' : 'none';
 }
+var _cropSrcByMid = {}; // セッション内の元画像（再切り抜き用）
 function onPhotoPicked(inp) {
   var f = inp.files && inp.files[0];
   inp.value = '';
   if (!f) return;
+  if (f.size > 20 * 1048576) { toast('画像が大きすぎます（20MBまで）'); return; }
   // 元画像を読み込んで切り抜きシートへ（表示範囲を自分で指定できる）
   var reader = new FileReader();
-  reader.onload = function(e) { openPhotoCrop(e.target.result); };
+  reader.onload = function(e) {
+    if (typeof editingId !== 'undefined' && editingId) _cropSrcByMid[editingId] = e.target.result;
+    openPhotoCrop(e.target.result);
+  };
   reader.readAsDataURL(f);
+}
+// 保存済み写真の切り抜き調整（セッション内なら元画像、無ければ保存済み画像から）
+function recropPhoto() {
+  var mid = (typeof editingId !== 'undefined') ? editingId : null;
+  var src = (mid && _cropSrcByMid[mid]) || _pendingPhoto || (mid && _avatars[mid]) || null;
+  if (!src) { var fi = document.getElementById('fPhotoFile'); if (fi) fi.click(); return; }
+  openPhotoCrop(src);
 }
 // ── 写真の切り抜き（ドラッグで位置・スライダーで拡大） ──
 var _cropImg = null, _cropZ = 1, _cropOx = 0, _cropOy = 0, _cropS0 = 1, _cropDrag = null;
@@ -9526,7 +9659,7 @@ function openPhotoCrop(srcDataUrl) {
       + '<img id="cropImgEl" src="' + srcDataUrl + '" style="position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;max-width:none" alt="">'
       + '</div></div>'
       + '<div style="display:flex;align-items:center;gap:10px;padding:10px 22px"><span style="font-size:16px">🔍</span>'
-      + '<input id="cropZoom" type="range" min="100" max="300" value="100" oninput="cropSetZoom(this.value)" style="flex:1;accent-color:var(--accent)"></div>'
+      + '<input id="cropZoom" type="range" min="100" max="500" value="100" aria-label="拡大率" oninput="cropSetZoom(this.value)" style="flex:1;accent-color:var(--accent)"></div>'
       + '<div style="display:flex;gap:9px;padding:4px 16px 16px">'
       + '<button type="button" onclick="cropConfirm()" style="flex:1;padding:13px;border-radius:11px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;cursor:pointer">この範囲で決定</button>'
       + '<button type="button" onclick="closePhotoCrop()" style="flex:none;padding:13px 18px;border-radius:11px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer">キャンセル</button>'
@@ -9534,11 +9667,46 @@ function openPhotoCrop(srcDataUrl) {
     document.body.appendChild(ov);
     requestAnimationFrame(function(){ ov.classList.add('show'); });
     _cropApply();
+    // ドラッグ＝移動、2本指ピンチ＝拡大縮小
     var vp = document.getElementById('cropVp');
-    vp.addEventListener('pointerdown', function(e){ _cropDrag = { x: e.clientX, y: e.clientY, ox: _cropOx, oy: _cropOy }; vp.setPointerCapture(e.pointerId); e.preventDefault(); });
-    vp.addEventListener('pointermove', function(e){ if (!_cropDrag) return; _cropOx = _cropDrag.ox + (e.clientX - _cropDrag.x); _cropOy = _cropDrag.oy + (e.clientY - _cropDrag.y); _cropApply(); });
-    vp.addEventListener('pointerup', function(){ _cropDrag = null; });
-    vp.addEventListener('pointercancel', function(){ _cropDrag = null; });
+    var pts = {}; var pinch = null;
+    function ptArr(){ var a=[]; for (var k in pts) a.push(pts[k]); return a; }
+    vp.addEventListener('pointerdown', function(e){
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      try { vp.setPointerCapture(e.pointerId); } catch(err) {}
+      var a = ptArr();
+      if (a.length === 2) {
+        pinch = { d: Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y), z: _cropZ };
+        _cropDrag = null;
+      } else {
+        _cropDrag = { x: e.clientX, y: e.clientY, ox: _cropOx, oy: _cropOy };
+      }
+      e.preventDefault();
+    });
+    vp.addEventListener('pointermove', function(e){
+      if (!pts[e.pointerId]) return;
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var a = ptArr();
+      if (a.length >= 2 && pinch) {
+        var d = Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y);
+        var z = Math.min(5, Math.max(1, pinch.z * (d / (pinch.d || 1))));
+        var sl = document.getElementById('cropZoom'); if (sl) sl.value = Math.round(z * 100);
+        cropSetZoom(Math.round(z * 100));
+      } else if (_cropDrag) {
+        _cropOx = _cropDrag.ox + (e.clientX - _cropDrag.x);
+        _cropOy = _cropDrag.oy + (e.clientY - _cropDrag.y);
+        _cropApply();
+      }
+    });
+    function endPt(e){
+      delete pts[e.pointerId];
+      var a = ptArr();
+      if (a.length < 2) pinch = null;
+      if (a.length === 1) _cropDrag = { x: a[0].x, y: a[0].y, ox: _cropOx, oy: _cropOy };
+      else if (!a.length) _cropDrag = null;
+    }
+    vp.addEventListener('pointerup', endPt);
+    vp.addEventListener('pointercancel', endPt);
   };
   img.onerror = function(){ toast('画像を読み込めませんでした'); };
   img.src = srcDataUrl;
@@ -9565,7 +9733,7 @@ function cropSetZoom(v) {
 }
 function cropConfirm() {
   if (!_cropImg) return;
-  var s = _cropS0 * _cropZ, S = 64;
+  var s = _cropS0 * _cropZ, S = 128; // 高解像度画面でもボケないサイズ（1枚約8KB）
   var c = document.createElement('canvas'); c.width = S; c.height = S;
   var ctx = c.getContext('2d');
   ctx.drawImage(_cropImg, (-_cropOx)/s, (-_cropOy)/s, CROP_V/s, CROP_V/s, 0, 0, S, S);
@@ -9573,7 +9741,9 @@ function cropConfirm() {
   closePhotoCrop();
   _photoPrevSet(dataUrl);
   if (typeof editingId !== 'undefined' && editingId) {
-    saveAvatar(editingId, dataUrl).then(function(){ toast('📷 写真を保存しました'); renderCurrentView(); });
+    saveAvatar(editingId, dataUrl)
+      .then(function(){ toast('📷 写真を保存しました'); renderCurrentView(); })
+      .catch(function(){ toast('⚠️ 写真を保存できませんでした（通信・ログイン状態を確認してください）'); _photoPrevSet(_avatars[editingId] || null); });
   } else {
     _pendingPhoto = dataUrl;
     toast('📷 メンバー保存時に写真も保存されます');
@@ -9588,7 +9758,9 @@ function removeMemberPhoto() {
   _photoPrevSet(null);
   _pendingPhoto = null;
   if (typeof editingId !== 'undefined' && editingId && _avatars[editingId]) {
-    saveAvatar(editingId, null).then(function(){ toast('写真を削除しました'); renderCurrentView(); });
+    saveAvatar(editingId, null)
+      .then(function(){ toast('写真を削除しました'); renderCurrentView(); })
+      .catch(function(){ toast('⚠️ 写真を削除できませんでした'); _photoPrevSet(_avatars[editingId] || null); });
   }
 }
 // MAP編集パネルのタスクをその場で消込（完了/未完了トグル）
@@ -9695,6 +9867,7 @@ function openEdit(id) {
     set('fBirth', m.birthday);
     set('fAge', m.age || '');
     _pendingPhoto = null; _photoPrevSet(_avatars[m.id] || null);
+    if (typeof syncAgeField === 'function') syncAgeField();
     var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
     if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
@@ -9773,6 +9946,7 @@ function clearForm() {
   document.getElementById('fMorale').value='1';
   var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
   var _fb=document.getElementById('fBirth'); if(_fb){ _fb.value=''; _fb.classList.remove('has-value'); _fb.max=(typeof evTodayYmd==='function')?evTodayYmd():new Date().toISOString().slice(0,10); }
+  if (typeof syncAgeField === 'function') syncAgeField();
   var _fsm=document.getElementById('fStartMonth'); if(_fsm) _fsm.value=(state.currentMonth||currentMonthStr()).replace('.', '-');
   fCategory='';
   ['研修生','BA','BR'].forEach(function(k){
@@ -9802,7 +9976,7 @@ function buildParentSelect(selectedId, excludeId) {
 var TITLE_OPTIONS = {
   '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO'],
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
-  'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート'],
+  'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート','OUT'],
 };
 var fCategory = '';
 
@@ -9998,7 +10172,7 @@ function saveMember() {
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
     region: normalizeRegionValue((document.getElementById('fRegion')||{}).value || ''),
     birthday: (document.getElementById('fBirth')||{}).value || '',
-    age: parseInt((document.getElementById('fAge')||{}).value, 10) || '',
+    age: (function(){ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
       var v = el ? el.value : ''; // 'YYYY-MM'
@@ -10048,6 +10222,8 @@ function saveMember() {
 function deleteMember() {
   if (!editingId || !confirm('削除しますか？')) return;
   var delId = editingId;
+  // 写真も掃除（孤児データがavatarsチャンクに溜まり続けるのを防ぐ）
+  if (_avatars[delId]) saveAvatar(delId, null).catch(function(){});
   var delParent = '';
   for (var di=0; di<state.members.length; di++) {
     if (state.members[di].id === delId) {
@@ -10257,9 +10433,9 @@ function renderGoals(){
   if(!state.goals.milestones) state.goals.milestones=[];
   var g=state.goals;
   var h='<div class="gl-wrap">';
-  h+='<div class="gl-head"><div class="gl-title">🧭 逆算マップ</div>'
+  h+='<div class="gl-head"><div class="gl-title">🧭 GOAL <span style="font-size:12px;color:var(--text-dim);font-weight:600">逆算マップ</span></div>'
    + '<div class="gl-boards"><span class="gl-board'+(_glBoard==='self'?' on':'')+'" onclick="glBoard(\'self\')">👤 自分</span>'
-   + '<span class="gl-board'+(_glBoard==='org'?' on':'')+'" onclick="glBoard(\'org\')">🏢 組織</span></div>'
+   + '<span class="gl-board" style="opacity:.45;cursor:default" title="準備中（Phase 3）">🏢 組織 <small style="font-size:9px;background:var(--surface3);border-radius:6px;padding:1px 5px">準備中</small></span></div>'
    + '<span class="gl-year" onclick="glEditYear()">'+g.year+'年 ▼</span></div>';
 
   if(_glBoard==='org'){
@@ -10282,10 +10458,11 @@ function renderGoals(){
 
   // ── 🌱 価値観 ──
   var vt = g.vision ? ('<div class="gl-vision-t">'+evEsc(g.vision)+'</div>') : '<div class="gl-vision-t ph">タップして「価値観・理想の人生」を書く（ここが全ての起点）</div>';
-  h+='<div class="gl-nd" style="--nd:var(--accent)"><div class="gl-vision" onclick="glEditVision()" style="margin:0"><div class="gl-vision-l">🌱 価値観 — なぜやるのか</div>'+vt+'</div></div>';
+  h+='<div class="gl-nd" style="--nd:var(--accent)"><div class="gl-vision" onclick="glEditVision()" style="margin:0;position:relative"><div class="gl-vision-l">🌱 価値観 — なぜやるのか</div>'+vt
+    +'<span style="position:absolute;top:10px;right:12px;font-size:13px;color:var(--text-dim)">✎</span></div></div>';
 
   // ── 🏔 頂上（SUMMIT） ──
-  h+='<div class="gl-nd" style="--nd:var(--accent)"><div class="go-summit" onclick="glEditGoal()" style="margin:0"><div class="go-sk">🏔 頂上 — MY SUMMIT</div>';
+  h+='<div class="gl-nd" style="--nd:var(--accent)"><div class="go-summit" onclick="glEditGoal()" style="margin:0"><div class="go-sk">🏔 頂上 — MY SUMMIT<span style="float:right;font-size:13px;color:var(--text-dim);font-weight:400">✎ 編集</span></div>';
   if(hasGoal){
     if(p.what) h+='<div class="go-title" style="font-size:20px;margin-bottom:2px">'+evEsc(p.what)+'</div>';
     h+='<div class="go-title"'+(p.what?' style="font-size:15px;opacity:.85"':'')+'>'+(p.income?('月収 <span class="amt go-tnum">'+_glFmtYen(p.income)+'</span>円'):'')+(p.income&&p.title?'・':'')+(p.title?('<span class="amt">'+evEsc(p.title)+'</span>'):'')+'</div>';
@@ -10293,8 +10470,16 @@ function renderGoals(){
     var iPct=p.income>0?Math.min(100,Math.round((p.incomeNow||0)/p.income*100)):0;
     var cd=_glMonthsUntil(p.deadline);
     h+='<div class="go-sub">'+(p.deadline?(p.deadline.replace('-','年')+'月まで'):'期限未設定')+'　残り <b class="go-tnum">'+(cd>0?cd:'—')+'</b>ヶ月</div>';
+    // タイトル進捗は%でなく「あとNランク」＋段階ピップ（指数比の%は実感とズレるため）
+    var _rNow=_glTitleRank(p.titleNow), _rGoal=_glTitleRank(p.title);
+    var _pips='';
+    if(_rGoal>0){
+      for(var _pi=1;_pi<=_rGoal;_pi++) _pips+='<i style="flex:1;height:6px;border-radius:3px;background:'+(_pi<=_rNow?'var(--accent)':'var(--surface3)')+'"></i>';
+      _pips='<div style="display:flex;gap:3px;margin-top:7px">'+_pips+'</div>';
+    }
+    var _rankTxt=_rGoal>0?(_rNow>=_rGoal?'🎉 到達！':'あと'+(_rGoal-_rNow)+'ランク'):'—';
     h+='<div class="go-sstats">'
-      +'<div class="go-stat"><div class="k">タイトル</div><div class="row"><span class="now">今：'+(p.titleNow?evEsc(p.titleNow):'—')+'</span><span class="gl a">'+(p.title?evEsc(p.title):'—')+'</span></div><div class="go-prog"><i style="width:'+tPct+'%"></i></div></div>'
+      +'<div class="go-stat"><div class="k">タイトル</div><div class="row"><span class="now">今：'+(p.titleNow?evEsc(p.titleNow):'—')+'</span><span class="gl a">'+(p.title?evEsc(p.title):'—')+'</span></div>'+_pips+'<div style="font-size:10px;color:var(--text-dim);margin-top:3px">'+_rankTxt+'</div></div>'
       +'<div class="go-stat"><div class="k">月収</div><div class="row"><span class="now go-tnum">今：'+_glFmtYen(p.incomeNow)+'</span><span class="gl s go-tnum">'+_glFmtYen(p.income)+'</span></div><div class="go-prog"><i style="width:'+iPct+'%"></i></div></div>'
       +'<div class="go-cd"><span class="k">期限まで</span><span class="big go-tnum">'+(cd>0?cd:'—')+'<small>'+(cd>0?'ヶ月':'')+'</small></span></div></div>';
   } else {
@@ -10309,6 +10494,19 @@ function renderGoals(){
   }
   h+='</div></div>';
 
+  // 期限切れ：架空の逆算を出さず、期限更新を促す（今年/今月/今日は非表示）
+  if(hasGoal && p.deadline && _glMonthsUntil(p.deadline) <= 0){
+    h+='<div class="gl-nd" style="--nd:var(--red)"><div class="go-panel" style="padding:16px;border-color:rgba(255,93,115,.5)">'
+      +'<div style="font-size:15px;font-weight:800;color:var(--red)">⏰ 期限（'+evEsc(p.deadline.replace('-','年'))+'月）を過ぎています</div>'
+      +'<div style="font-size:12.5px;color:var(--text-mid);margin:6px 0 12px;line-height:1.7">お疲れさまでした。次の頂上を決めて、逆算をつくり直しましょう。</div>'
+      +'<span class="gl-wzbtn" style="margin:0" onclick="glEditGoal()">🏔 期限・頂上を更新する</span>'
+      +'</div></div>';
+    h+='</div>'; // gl-spine
+    h+='<span class="gl-wzredo" onclick="glWizard(1)">↻ 4ステップでセットアップをやり直す</span>';
+    h+='</div>';
+    el.innerHTML=h;
+    return;
+  }
   if(hasGoal){
     var curYm=_glCurYm(), curMonth=parseInt(curYm.slice(5,7),10);
     var mFront=_glMonthlyFront(p), remainF=_glRemainFront(p), rem=_glMonthsUntil(p.deadline);
@@ -10339,11 +10537,12 @@ function renderGoals(){
       +'<div class="go-panel" style="padding:13px 15px">'
       +'<span class="gl-ndl">📆 今月（'+curMonth+'月）— フロントを <b style="color:var(--go-sky);font-size:14px">'+mFront+'人</b> つくる</span>'
       +'<div class="gl-formula">残りフロント <b>'+remainF+'人</b> ÷ 期限まで '+(rem>0?rem:1)+'ヶ月 = 今月 <b>'+mFront+'人</b>（B1期日 '+_glMDStr(dates.b1)+'）</div>';
-    // KPI上位3行（詳細は今月タブ）
+    // KPI上位3行（詳細は今月タブ）。フロント行はMAP上の実数も併記して二重帳簿の混乱を防ぐ
     [{k:'action',l:'アクション'},{k:'ctget',l:'CT取り'},{k:'b1',l:'フロント'}].forEach(function(s){
       var tgt=mFront*(p.funnel[s.k]||0), act=_glMonthActualShown(p,curYm,s.k);
       var pct=tgt>0?Math.min(100,Math.round(act/tgt*100)):0;
-      h+='<div class="gl-krow"><span style="width:62px">'+s.l+'</span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="n">'+act+'/'+tgt+'</span></div>';
+      var extra = (s.k==='b1') ? '<small style="color:var(--text-dim)">・MAP上 '+_glCurrentFront()+'人</small>' : '';
+      h+='<div class="gl-krow"><span style="width:62px">'+s.l+'</span><span class="bar"><i style="width:'+pct+'%"></i></span><span class="n">'+act+'/'+tgt+'</span>'+extra+'</div>';
     });
     // 今月の自分の目標
     var monthlies=_glItems('monthly').filter(function(mo){ return (mo.month||0)===curMonth; });
@@ -10368,14 +10567,23 @@ function renderGoals(){
       +'<div class="go-panel" style="padding:13px 15px">'
       +'<span class="gl-ndl">✅ 今日の一歩</span>';
     var _tdAny=false;
+    var _dim=new Date(); _dim=new Date(_dim.getFullYear(),_dim.getMonth()+1,0).getDate(); // 今月の日数
     [{k:'action',l:'アクション'},{k:'ctget',l:'CT取り'},{k:'ct',l:'CT'},{k:'ft',l:'FT'}].forEach(function(s){
       var tgt=mFront*(p.funnel[s.k]||0), act=_glMonthActualShown(p,curYm,s.k);
       var perDay=(tgt-act)>0?Math.ceil((tgt-act)/_dLeft):0;
       if(perDay<=0) return; _tdAny=true;
-      h+='<div class="gl-tdrow"><span style="flex:1">'+s.l+' <b class="go-tnum">'+perDay+'</b>件</span>'
-        +'<span class="gl-add" onclick="glStepMonthly(\''+s.k+'\',1)" style="font-family:IBM Plex Mono,monospace">＋1 記録</span></div>';
+      // 月末の絶壁防止：表示は「均等ペース×2」を上限にし、超過分は「遅れ」バッジで示す
+      var ideal=Math.max(1,Math.ceil(tgt/_dim));
+      var shown=Math.min(perDay, ideal*2);
+      var lateBadge = perDay>shown ? '<small style="color:var(--gold);font-weight:800;margin-left:4px">⚠️遅れ +'+(perDay-shown)+'</small>' : '';
+      h+='<div class="gl-tdrow"><span style="flex:1">'+s.l+' <b class="go-tnum">'+shown+'</b>件'+lateBadge+'</span>'
+        +'<span class="gl-add" onclick="glStepPlus(\''+s.k+'\')" style="font-family:IBM Plex Mono,monospace">＋1 記録</span></div>';
     });
-    if(!_tdAny) h+='<div style="font-size:12.5px;color:var(--green);padding:4px 0">🎉 今月のKPIはすべて達成ペースです</div>';
+    if(!_tdAny){
+      // 未設定（必要フロント0）なのに祝わない：設定への導線を出す
+      if(mFront>0) h+='<div style="font-size:12.5px;color:var(--green);padding:4px 0">🎉 今月のKPIはすべて達成ペースです</div>';
+      else h+='<div style="font-size:12.5px;color:var(--text-dim);padding:4px 0">頂上の<b>必要月収</b>を入れると、必要フロント数と今日やる件数が自動計算されます <span class="gl-add" onclick="glEditGoal()" style="margin-left:6px">⚙ 設定する</span></div>';
+    }
     // 習慣
     (g.habits||[]).forEach(function(hb){
       var wc=_glHabitWeekCount(hb), st=_glHabitStreak(hb), done=(hb.log||{})[evTodayYmd()];
@@ -10423,7 +10631,11 @@ function glWizard(step){
     body='<label style="'+lb+'">① いつまでに</label><input id="_wzDl" type="month" value="'+(p.deadline||'')+'" style="'+inS+'">'
       +'<label style="'+lb+'">② 何をする（目標）</label><input id="_wzWhat" type="text" placeholder="例: 経済的自由を手に入れる" value="'+evEsc(p.what||'')+'" style="'+inS+'">'
       +'<label style="'+lb+'">③ 必要月収（円）</label><input id="_wzInc" type="number" inputmode="numeric" placeholder="例: 1000000" value="'+(p.income||'')+'" oninput="var t=document.getElementById(\'_wzTitleAuto\');if(t)t.textContent=this.value>0?glTitleFromIncome(this.value):\'—\'" style="'+inS+'">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:11px 12px;margin-bottom:12px;font-weight:800;color:var(--accent)"><span>🏅 必要タイトル（自動）</span><span id="_wzTitleAuto">'+evEsc(initTitle)+'</span></div>';
+      +'<div style="display:flex;align-items:center;justify-content:space-between;background:var(--accent-dim);border:1px solid var(--accent);border-radius:10px;padding:11px 12px;margin-bottom:12px;font-weight:800;color:var(--accent)"><span>🏅 必要タイトル（自動）</span><span id="_wzTitleAuto">'+evEsc(initTitle)+'</span></div>'
+      +'<div style="border-top:1px solid var(--border);margin:2px 0 12px"></div>'
+      +'<label style="'+lb+'">今の自分のタイトル（進捗表示に使います・任意）</label>'
+      +'<select id="_wzTitleNow" style="'+inS+'"><option value="">未設定</option>'+Object.keys(p.frontTable||{}).map(function(k){return '<option value="'+evEsc(k)+'"'+(k===p.titleNow?' selected':'')+'>'+evEsc(k)+'</option>';}).join('')+'</select>'
+      +'<label style="'+lb+'">今の月収（円・任意）</label><input id="_wzIncNow" type="number" inputmode="numeric" placeholder="例: 50000" value="'+(p.incomeNow||'')+'" style="'+inS+'">';
   } else if(step===3){
     title='STEP 3/4 📍 今年の道のり（自動生成）';
     var dl=p.deadline, yr2=(dl&&/^\d{4}/.test(dl))?dl.slice(0,4):String((new Date()).getFullYear());
@@ -10457,24 +10669,35 @@ function glWizard(step){
 function glWizardNext(step, dir){
   var g=state.goals, p=g.plan;
   // 各ステップの入力を保存してから移動（戻るでも保存）
-  if(step===1){ g.vision=(_wzVal('_wzVision')||'').trim(); }
+  if(step===1){
+    var vz=(_wzVal('_wzVision')||'').trim();
+    if(vz) g.vision=vz; // 空で既存を消さない
+  }
   else if(step===2){
     var d=(_wzVal('_wzDl')||'').trim();
     if(dir>0 && d && !/^\d{4}-\d{2}$/.test(d)){ toast('期限（年月）を選択してください'); return; }
-    p.deadline=d; p.what=(_wzVal('_wzWhat')||'').trim();
-    p.income=parseInt(String(_wzVal('_wzInc')).replace(/[^0-9]/g,''),10)||0;
-    p.title=p.income>0?glTitleFromIncome(p.income):'';
+    // 空欄は既存設定を保持（やり直しで頂上が消えないように）
+    if(d) p.deadline=d;
+    var wh=(_wzVal('_wzWhat')||'').trim(); if(wh) p.what=wh;
+    var inc=parseInt(String(_wzVal('_wzInc')).replace(/[^0-9]/g,''),10)||0;
+    if(inc>0){ p.income=inc; p.title=glTitleFromIncome(inc); }
+    var tn=(_wzVal('_wzTitleNow')||'').trim(); if(tn) p.titleNow=tn;
+    var incNow=parseInt(String(_wzVal('_wzIncNow')).replace(/[^0-9]/g,''),10)||0; if(incNow>0) p.incomeNow=incNow;
     if(dir>0 && !p.deadline && !p.income){ toast('「いつまでに」か「必要月収」のどちらかは入れてください'); return; }
   }
-  else if(step===3){
+  else if(step===3 && dir>0){
     var at=(_wzVal('_wzAnnual')||'').trim();
-    if(at) g.items.push({id:genGoalId(),level:'annual',parentId:null,title:at});
+    // 同名の年間目標が既にあれば追加しない（戻る/やり直しでの重複防止）
+    if(at && !(g.items||[]).some(function(it){ return it.level==='annual' && it.title===at; }))
+      g.items.push({id:genGoalId(),level:'annual',parentId:null,title:at});
   }
-  else if(step===4){
+  else if(step===4 && dir>0){
     var mt=(_wzVal('_wzMonthly')||'').trim();
-    if(mt) g.items.push({id:genGoalId(),level:'monthly',parentId:null,title:mt,month:(new Date()).getMonth()+1});
+    var cm2=(new Date()).getMonth()+1;
+    if(mt && !(g.items||[]).some(function(it){ return it.level==='monthly' && it.month===cm2 && it.title===mt; }))
+      g.items.push({id:genGoalId(),level:'monthly',parentId:null,title:mt,month:cm2});
     var ht=(_wzVal('_wzHabit')||'').trim();
-    if(ht){ g.habits=g.habits||[]; g.habits.push({id:genGoalId(),title:ht,parentId:null,perWeek:7,log:{}}); }
+    if(ht){ g.habits=g.habits||[]; if(!g.habits.some(function(hb){ return hb.title===ht; })) g.habits.push({id:genGoalId(),title:ht,parentId:null,perWeek:7,log:{}}); }
   }
   saveGoals();
   var nx=step+dir;
@@ -10575,8 +10798,16 @@ function _glFrontMust(p){ return (p.frontMust!=null)?p.frontMust:(p.frontTable[p
 function _glFrontIdeal(p){ return (p.frontIdeal!=null)?p.frontIdeal:_glFrontMust(p); }
 // 現状MAPの1段目（parentId無し＝フロント）の人数
 function _glCurrentFront(){
-  var arr=state.members||[], n=0;
-  for(var i=0;i<arr.length;i++){ var m=arr[i]; if(m && !m.deleted && !m.parentId) n++; }
+  // 現状フロント＝「自分（ルート）の直下」の人数。
+  // ※旧実装はルート自身（parentIdなし＝自分）を数えていて常に1になっていた
+  var arr=state.members||[], root=null;
+  for(var i=0;i<arr.length;i++){ if(arr[i] && !arr[i].deleted && !arr[i].parentId){ root=arr[i]; break; } }
+  if(!root) return 0;
+  var n=0;
+  for(var j=0;j<arr.length;j++){
+    var m=arr[j];
+    if(m && !m.deleted && m.parentId===root.id && (m.title||'').trim()!=='OUT') n++;
+  }
   return n;
 }
 function _glRemainFront(p){ return Math.max(0, _glFrontMust(p) - _glCurrentFront()); }
@@ -10630,31 +10861,40 @@ function _glEvents(p){
   return p.events;
 }
 function _glJourneyHtml(p){
+  // レールは常に「今年」を描画（複数年ゴールでも現在地とゲージが機能する）。
+  // 頂上・最終LOIが来年以降のときはレール右端に年付きで示す。
   var events=_glEvents(p).slice().filter(function(e){return e&&e.month;}).sort(function(a,b){return a.month-b.month;});
-  var dl=p.deadline, yr=(dl&&/^\d{4}/.test(dl))?dl.slice(0,4):String((new Date()).getFullYear());
-  var nowYm=_glCurYm();
-  var curM=(nowYm.slice(0,4)===yr)?parseInt(nowYm.slice(5,7),10):0;
-  var sumM=(dl&&dl.slice(0,4)===yr)?parseInt(dl.slice(5,7),10):12;
-  var pipe=parseInt(p.pipeline,10)||3, loiM=Math.max(1,sumM-pipe);
+  var dl=p.deadline;
+  var nowD=new Date(), curYear=nowD.getFullYear();
+  var curM=nowD.getMonth()+1;
+  var dlY=(dl&&/^\d{4}/.test(dl))?+dl.slice(0,4):curYear;
+  var dlM=(dl&&/^\d{4}-\d{2}$/.test(dl))?+dl.slice(5,7):12;
+  var sumOn=(dlY===curYear)?dlM:null; // 今年のレール上に頂上があるか
+  var pipe=parseInt(p.pipeline,10)||3;
+  // 最終LOIカウント月＝期限−育成月数（年跨ぎ対応）
+  var loiTot=(dlY*12+dlM)-pipe;
+  var loiY=Math.floor((loiTot-1)/12), loiMo=((loiTot-1)%12)+1;
+  var loiOn=(loiY===curYear)?loiMo:null;
   function X(m){ return (1.5+(m-0.5)/12*97).toFixed(2); }
-  var h='<div class="go-eyebrow gold">頂上への道のり ― マイルストーン</div><div class="go-panel gj-panel">';
-  h+='<div class="gj-head">'+evEsc(p.titleNow||'現在地')+' <span class="ar">→</span> <b>'+evEsc(p.title||'頂上')+'</b><small>頂上まで '+(_glMonthsUntil(dl)>0?_glMonthsUntil(dl):'—')+'ヶ月（'+sumM+'月）</small></div>';
+  var h='<div class="go-eyebrow gold">頂上への道のり ― マイルストーン（'+curYear+'年）</div><div class="go-panel gj-panel">';
+  h+='<div class="gj-head">'+evEsc(p.titleNow||'現在地')+' <span class="ar">→</span> <b>'+evEsc(p.title||'頂上')+'</b><small>頂上まで '+(_glMonthsUntil(dl)>0?_glMonthsUntil(dl):'—')+'ヶ月（'+dlY+'年'+dlM+'月）</small></div>';
   h+='<div class="gj-scroll"><div class="gj-tl"><div class="gj-track"></div>';
-  if(curM>0) h+='<div class="gj-fill" style="width:'+(X(curM)-1.5)+'%"></div>';
+  h+='<div class="gj-fill" style="width:'+(X(curM)-1.5)+'%"></div>';
   events.forEach(function(e){ h+='<div class="gj-ev" style="left:'+X(e.month)+'%" onclick="openSeasonPanel(\''+e.id+'\')"><span class="gj-chip">'+(e.emoji||'📌')+' '+evEsc(e.name)+'</span><span class="gj-line"></span></div>'; });
-  for(var m=1;m<=12;m++){ var isLoi=m===loiM,isSum=m===sumM,isCur=m===curM,big=isLoi||isSum||isCur;
-    var col=isLoi?'var(--go-rose)':(isSum?'var(--accent)':((curM>0&&m<=curM)?'var(--accent)':'var(--surface3)'));
+  for(var m=1;m<=12;m++){ var isLoi=m===loiOn,isSum=m===sumOn,isCur=m===curM,big=isLoi||isSum||isCur;
+    var col=isLoi?'var(--go-rose)':(isSum?'var(--accent)':((m<=curM)?'var(--accent)':'var(--surface3)'));
     var sz=big?18:10;
     h+='<div class="gj-dot" style="left:'+X(m)+'%;width:'+sz+'px;height:'+sz+'px;background:'+col+'"></div>';
     h+='<div class="gj-molab" style="left:'+X(m)+'%;color:'+(isLoi?'var(--go-rose)':(isSum?'var(--accent)':'var(--text-mid)'))+';font-weight:'+(big?'800':'600')+'">'+m+'月</div>';
   }
-  if(curM>0) h+='<div class="gj-mk" style="left:'+X(curM)+'%;color:var(--accent)">📍現在地</div>';
-  h+='<div class="gj-mk" style="left:'+X(loiM)+'%;color:var(--go-rose)">🚩最終LOI</div>';
-  h+='<div class="gj-mk peak" style="left:'+X(sumM)+'%;color:var(--accent)">🏔頂上</div>';
+  h+='<div class="gj-mk" style="left:'+X(curM)+'%;color:var(--accent)">📍現在地</div>';
+  if(loiOn) h+='<div class="gj-mk" style="left:'+X(loiOn)+'%;color:var(--go-rose)">🚩最終LOI</div>';
+  if(sumOn) h+='<div class="gj-mk peak" style="left:'+X(sumOn)+'%;color:var(--accent)">🏔頂上</div>';
+  else h+='<div class="gj-mk peak" style="left:'+X(12)+'%;color:var(--accent)">🏔'+dlY+'年'+dlM+'月 →</div>';
   h+='</div></div>';
-  h+='<div class="gj-loi"><span class="ic">🚩</span><div class="tx"><div class="lb">最終LOIカウント月</div><div class="bg"><b>'+loiM+'月</b>まで<small>ここを過ぎると'+sumM+'月「'+evEsc(p.title||'頂上')+'」に間に合わない</small></div></div></div>';
+  h+='<div class="gj-loi"><span class="ic">🚩</span><div class="tx"><div class="lb">最終LOIカウント月</div><div class="bg"><b>'+(loiY===curYear?(loiMo+'月'):(loiY+'年'+loiMo+'月'))+'</b>まで<small>ここを過ぎると'+dlY+'年'+dlM+'月「'+evEsc(p.title||'頂上')+'」に間に合わない</small></div></div></div>';
   h+='<div class="gj-pipe"><span class="lab">🔁 育成パイプライン</span><span class="n">LOI</span><i>▶</i><span class="n">Q2</span><i>▶</i><span class="n">Q3</span><i>▶</i><span class="n">BR</span><span class="t">＝'+pipe+'ヶ月</span><span class="ed" onclick="glSetPipeline()">編集</span></div>';
-  h+='<div class="gj-note">頂上（'+sumM+'月）から育成'+pipe+'ヶ月を逆算 →<b> '+loiM+'月</b>が最終LOIカウント月。</div>';
+  h+='<div class="gj-note">頂上（'+dlY+'年'+dlM+'月）から育成'+pipe+'ヶ月を逆算 →<b> '+(loiY===curYear?(loiMo+'月'):(loiY+'年'+loiMo+'月'))+'</b>が最終LOIカウント月。</div>';
   h+='<div class="go-madd"><span class="gl-add" onclick="glAddEvent()">＋ マイルストーンを追加</span></div>';
   h+='</div>';
   return h;
@@ -10816,7 +11056,28 @@ function glSetMonthlyActual(st,val){
   p.dailyActuals[k][st]=Math.max(0,todayV+delta); // 今日ぶんに差分を反映（他日の記録は崩さない）
   saveGoals(); renderGoals();
 }
-function glStepMonthly(st,delta){ var p=state.goals.plan, ym=_glCurYm(); glSetMonthlyActual(st, Math.max(0,_glMonthActualShown(p,ym,st)+delta)); }
+function glStepMonthly(st,delta){
+  var p=state.goals.plan, ym=_glCurYm(), k=evTodayYmd();
+  p.dailyActuals=p.dailyActuals||{};
+  if(delta>0){
+    p.dailyActuals[k]=p.dailyActuals[k]||{};
+    p.dailyActuals[k][st]=(parseInt(p.dailyActuals[k][st]||0,10)||0)+delta;
+  } else {
+    // −は「当月で最後に記録した日」から引く（今日が0でも月合計をちゃんと減らせる）
+    var days=Object.keys(p.dailyActuals).filter(function(d){ return d.slice(0,7)===ym && (parseInt((p.dailyActuals[d]||{})[st]||0,10)||0)>0; }).sort();
+    if(!days.length) return;
+    var last=days[days.length-1];
+    var v=(parseInt(p.dailyActuals[last][st],10)||0)-1;
+    if(v<=0) delete p.dailyActuals[last][st]; else p.dailyActuals[last][st]=v;
+  }
+  saveGoals(); renderGoals();
+}
+// 今日の一歩の＋1：取り消しアクション付き
+function glStepPlus(st){
+  glStepMonthly(st,1);
+  var lbl=(GL_STAGES.filter(function(s){return s.k===st;})[0]||{}).label||st;
+  if(typeof toastAction==='function') toastAction(lbl.replace(/（.*）/,'')+' +1 記録','↩ 取り消す',function(){ glStepMonthly(st,-1); });
+}
 function glSetB1Day(){ var p=state.goals.plan, end=_glMonthEndDate(), def=p.b1Day||_glYmdOfD(_glAddDaysD(end,-2)); glForm('⏱ B1（LOI）の期日',[{label:'期日（当月内）',type:'date',value:def,hint:'ここから各アクションの期日を逆算します'}],function(v){ if(v[0]&&!/^\d{4}-\d{2}-\d{2}$/.test(v[0])){ toast('日付を選択してください'); return false; } p.b1Day=v[0]; saveGoals(); renderGoals(); }); }
 
 // ============================================================
@@ -12102,6 +12363,7 @@ function setEventsMode(mode) {
   if (ea) ea.style.display = mode === 'agenda' ? '' : 'none';
   if (ew) ew.style.display = mode === 'week' ? '' : 'none';
   if (ec) ec.style.display = mode === 'calendar' ? '' : 'none';
+  if (mode === 'week') _weekOffset = 0; // 週表示を開いたら必ず今週から
   if (mode !== 'calendar') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
   renderEvents();
 }
@@ -12136,25 +12398,38 @@ function renderWeek() {
   for (var i = 0; i < 7; i++) { var d = new Date(base.getTime()); d.setDate(d.getDate() + i); days.push(d); }
   var first = days[0], last = days[6];
   if (title) {
-    title.textContent = (first.getMonth()+1) + '/' + first.getDate() + ' 〜 ' + (last.getMonth()+1) + '/' + last.getDate()
-      + (_weekOffset === 0 ? '（今週）' : (_weekOffset === 1 ? '（来週）' : (_weekOffset === -1 ? '（先週）' : '')));
+    var suffix = _weekOffset === 0 ? '（今週）' : (_weekOffset === 1 ? '（来週）' : (_weekOffset === -1 ? '（先週）' : (_weekOffset > 0 ? '（＋' + _weekOffset + '週）' : '（−' + (-_weekOffset) + '週）')));
+    title.innerHTML = evEsc((first.getMonth()+1) + '/' + first.getDate() + ' 〜 ' + (last.getMonth()+1) + '/' + last.getDate() + suffix)
+      + (_weekOffset !== 0 ? ' <span onclick="event.stopPropagation();weekShift(0)" style="display:inline-block;font-size:12px;font-weight:800;color:var(--go-ink);background:var(--accent);border-radius:12px;padding:4px 12px;margin-left:6px;cursor:pointer">今週へ</span>' : '');
   }
   // 日付→イベントの索引
   var byDate = {};
   (state.events || []).forEach(function(e){ if (e.date && !e.deleted) (byDate[e.date] || (byDate[e.date] = [])).push(e); });
   var WD = ['月','火','水','木','金','土','日'];
   var html = '';
+  var weekTotal = 0;
+  days.forEach(function(d){ weekTotal += (byDate[evYmd(d)] || []).length; });
+  if (!weekTotal) {
+    // 空の週は「予定なし」7連発でなく1つの空状態に
+    list.innerHTML = '<div class="ev-empty" style="padding:28px 16px">この週の予定・タスクはありません'
+      + (eventsUid() ? '<br><span onclick="openEventAddDate(\'' + evYmd(days[0]) + '\')" style="display:inline-block;margin-top:10px;color:var(--accent);font-weight:800;cursor:pointer;padding:8px 16px;border:1px solid var(--accent);border-radius:12px">＋ この週に追加</span>' : '')
+      + '</div>';
+    return;
+  }
   days.forEach(function(d, i){
     var ymd = evYmd(d);
     var isToday = ymd === t;
     var evs = (byDate[ymd] || []).slice().sort(evSortFn);
+    var undone = evs.filter(function(e){ return !e.done; }).length;
+    var cntTxt = evs.length ? (undone < evs.length ? ('未完了' + undone + ' / 全' + evs.length + '件') : (evs.length + '件')) : '';
     var wdCol = i === 5 ? 'color:var(--go-sky)' : (i === 6 ? 'color:var(--red)' : '');
-    html += '<div style="margin-bottom:4px">'
-      + '<div style="display:flex;align-items:center;gap:8px;padding:9px 4px 5px;' + (isToday ? '' : '') + '">'
+    // 今日の行はブロックごと背景ハイライト（チップだけでは一覧で見落とすため）
+    html += '<div style="margin-bottom:4px;' + (isToday ? 'background:var(--accent-dim);border:1px solid rgba(44,229,184,.3);border-radius:14px;padding:0 8px 6px' : '') + '">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:9px 4px 5px">'
       + '<span style="font-weight:800;font-size:14px;' + (isToday ? 'color:var(--go-ink);background:var(--accent);border-radius:10px;padding:3px 12px' : wdCol) + '">'
       + (d.getMonth()+1) + '/' + d.getDate() + '（' + WD[i] + '）' + (isToday ? ' 今日' : '') + '</span>'
-      + '<span style="font-size:11px;color:var(--text-dim)">' + (evs.length ? evs.length + '件' : '') + '</span>'
-      + '<span onclick="openEventAddDate(\'' + ymd + '\')" style="margin-left:auto;font-size:12px;color:var(--accent);cursor:pointer;padding:6px 10px;font-weight:700">＋追加</span>'
+      + '<span style="font-size:11px;color:var(--text-dim)">' + cntTxt + '</span>'
+      + (eventsUid() ? '<span onclick="openEventAddDate(\'' + ymd + '\')" style="margin-left:auto;font-size:12px;color:var(--accent);cursor:pointer;padding:6px 10px;font-weight:700">＋追加</span>' : '')
       + '</div>';
     if (evs.length) html += evs.map(evItemHtml).join('');
     else html += '<div style="padding:4px 8px 10px;font-size:12px;color:var(--text-dim);opacity:.6;border-bottom:1px dashed var(--border)">予定なし</div>';
@@ -12811,7 +13086,7 @@ function closeSearchModal(e) {
 var CATEGORY_TITLES = {
   '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO'],
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
-  'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート'],
+  'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート','OUT'],
 };
 
 var SEARCH_FIELDS = [
@@ -14111,9 +14386,29 @@ function startAllMergeListeners() {
   state.mergedData = state.mergedData || {};
   state.mergedMaps.forEach(function(mm) { startMergeListener(mm.uid); });
 }
+// 結合相手の写真アバターを取得し、MG_プレフィックス付きIDで_avatarsへ合流させる
+var _mgAvatarsLoaded = {};
+function loadMergedAvatars(uid) {
+  if (!db || !uid || _mgAvatarsLoaded[uid]) return;
+  _mgAvatarsLoaded[uid] = true;
+  var pre = 'MG_' + String(uid).substring(0, 6) + '_';
+  for (var i = 0; i < 8; i++) {
+    (function(n){
+      fsGet('maps/' + uid + '/meta/avatars' + n).then(function(d) {
+        if (!d) return;
+        var got = false;
+        for (var k in d) {
+          if (k !== 'updatedAt' && typeof d[k] === 'string' && d[k].indexOf('data:image') === 0) { _avatars[pre + k] = d[k]; got = true; }
+        }
+        if (got && (currentView === 'current' || currentView === 'members')) renderCurrentView();
+      }).catch(function(){});
+    })(i);
+  }
+}
 function startMergeListener(uid) {
   if (!db || viewingOwnerUid) return; // 他人MAP閲覧中は購読しない
   if (_mergeUnsub[uid]) { try { _mergeUnsub[uid](); } catch(e){} }
+  loadMergedAvatars(uid); // 結合メンバーの写真も表示
   var month = state.currentMonth;
   state.mergedData = state.mergedData || {};
   var ref = db.doc('maps/' + uid + '/months/' + month + '_current');
