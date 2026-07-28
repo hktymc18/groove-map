@@ -1821,7 +1821,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v276</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v277</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3162,6 +3162,8 @@ function renderPCMap(mapType) {
   svg.setAttribute('height', SVG_H);
   svg.style.cssText = 'display:block;background:var(--bg);user-select:none';
   outer.appendChild(svg);
+  var svgDefs = document.createElementNS('http://www.w3.org/2000/svg','defs'); // 写真アバターの円形クリップ用
+  svg.appendChild(svgDefs);
 
   // 段ルーラー位置更新
   function updateRuler() {
@@ -3318,8 +3320,34 @@ function renderPCMap(mapType) {
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
       g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
     }
+    // 写真アバター（あれば左端に丸表示し、テキストを右へずらす）
+    var _pcPh = (typeof _avatars !== 'undefined') ? _avatars[m.id] : null;
+    var _pcTx = rx + 16;
+    if (_pcPh) {
+      var _avR = 19, _avCx = rx + 14 + _avR, _avCy = ry2 + NODE_H/2;
+      var clipId = 'pcav-' + String(m.id).replace(/[^a-zA-Z0-9_-]/g, '');
+      var cp = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
+      cp.setAttribute('id', clipId);
+      var cc2 = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      cc2.setAttribute('cx',_avCx); cc2.setAttribute('cy',_avCy); cc2.setAttribute('r',_avR);
+      cp.appendChild(cc2); svgDefs.appendChild(cp);
+      var im = document.createElementNS('http://www.w3.org/2000/svg','image');
+      im.setAttribute('href', _pcPh);
+      im.setAttribute('x', _avCx - _avR); im.setAttribute('y', _avCy - _avR);
+      im.setAttribute('width', _avR*2); im.setAttribute('height', _avR*2);
+      im.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+      im.setAttribute('clip-path', 'url(#' + clipId + ')');
+      im.setAttribute('pointer-events', 'none');
+      g.appendChild(im);
+      var ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ring.setAttribute('cx',_avCx); ring.setAttribute('cy',_avCy); ring.setAttribute('r',_avR);
+      ring.setAttribute('fill','none'); ring.setAttribute('stroke', titleRingColor(m.title)); ring.setAttribute('stroke-width','2.5');
+      ring.setAttribute('pointer-events','none');
+      g.appendChild(ring);
+      _pcTx = _avCx + _avR + 9;
+    }
     // 1行目: 名前 + 稼働
-    g.appendChild(txt(rx+16, ry2+30, nameStr, nameColor, nameFs, '700', 'Noto Sans JP,Inter,sans-serif'));
+    g.appendChild(txt(_pcTx, ry2+30, nameStr, nameColor, nameFs, '700', 'Noto Sans JP,Inter,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#2CE5B8':m.activity==='A'?'#8B7CFF':m.activity==='B'?'#5AD7FF':'#FFB454';
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
@@ -3328,7 +3356,7 @@ function renderPCMap(mapType) {
     // 2行目: タイトル + GSV(固定)
     var titleStr = m.title||'-';
     var titleFs = titleStr.length<=6 ? 16 : (titleStr.length<=8 ? 14 : 12); // 長いタイトル(ブルーダイヤ等)は縮小
-    g.appendChild(txt(rx+16, ry2+55, titleStr, cc, titleFs, '600', 'Inter,Noto Sans JP,sans-serif'));
+    g.appendChild(txt(_pcTx, ry2+55, titleStr, cc, titleFs, '600', 'Inter,Noto Sans JP,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
@@ -4191,7 +4219,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v276';
+  var DATA_VERSION = 'v277';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4783,6 +4811,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v277', d:'2026-07-26', items:['📷写真の切り抜き（表示範囲指定）：ドラッグで位置・スライダーで拡大してから保存','🖥PC版のMAPにも写真アバターを表示（丸写真＋タイトル色リング）','タップ/ホバーの情報表示に写真を追加（カード情報ボックス・アクションシート・PCツールチップ）','フレッシュ帯の色を統一：LOI/Q2/Q3/Q4はすべて緑'] },
   { v:'v276', d:'2026-07-26', items:['📷メンバーに写真を設定できるように（編集→基本タブ→写真）。端末内で64pxに自動圧縮（1枚約3KB・500人規模でも無料枠に余裕）','写真アバターは「リング色＋右下バッジ」でタイトル表示：研修生=水色/LOI=緑/Q2=ライム/Q3=アンバー/B1〜=紫、BR以上は同色（フレッシュ帯の見分け優先）','写真なしのメンバーは従来のタイトル文字アイコンのまま。メンバー一覧・共有MAPにも写真表示','タイトル色アイコンも同ルールに統一（BR以上の宝石色分けを廃止しシンプルに）'] },
   { v:'v275', d:'2026-07-26', items:['📉Firestore読み取りダイエット（無料枠超過対策）：オフライン永続キャッシュを有効化（2回目以降の起動は差分だけ読む）','ランキングを10分キャッシュ・「先月からの変化」はセッション内1回だけ取得','📦管理者パネルに「データ使用状況を集計」ボタン（ユーザー別の概算サイズランキング）','※ATTACK LIST/目標シート側も同時に読み取り削減を実施'] },
   { v:'v274', d:'2026-07-19', items:['🚪カテゴリBAにタイトル「OUT」を追加：アウトしたメンバーは削除せず当月の記録として残せます。翌月コピー時は自動で持ち越されません（配下は上位に付け替え）。カードはグレー表示','🎂「年齢のみ」入力欄を追加：生年月日が分からない場合は年齢だけ登録可能（生年月日を入れた場合はそちらを優先して自動計算）','🔗メンバータブに結合（共有）したダウンラインも表示されるように修正（🔗バッジ付き・タップで相手のMAPへ）'] },
@@ -5548,7 +5577,11 @@ function openMemberActions(mid) {
   ov.onclick = function(e){ if (e.target === ov) closeMemberActions(); };
   ov.innerHTML = '<div class="ms-sheet">'
     + '<div class="ms-grip"></div>'
-    + '<div class="ms-hd"><span class="ms-avatar">' + evEsc(ini) + '</span><div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + '</div><div class="ms-badges">' + badges + '</div></div><span class="ms-x" onclick="closeMemberActions()">✕</span></div>'
+    + '<div class="ms-hd">'
+    + (_avatars[mid]
+        ? '<span class="ms-avatar" style="padding:0;overflow:hidden;border:2px solid ' + titleRingColor(m.title) + '"><img src="' + _avatars[mid] + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""></span>'
+        : '<span class="ms-avatar">' + evEsc(ini) + '</span>')
+    + '<div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + '</div><div class="ms-badges">' + badges + '</div></div><span class="ms-x" onclick="closeMemberActions()">✕</span></div>'
     + '<div class="ms-plabel">優先度（フォロー注力度）</div><div class="ms-prio">' + prioChips + '</div>'
     + '<div class="ms-list">' + rows + '</div>'
     + '</div>';
@@ -6859,9 +6892,7 @@ function titleRingColor(title) {
   var t = (title||'').trim().toUpperCase();
   var raw = (title||'').trim();
   if (t==='マケ'||raw==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||raw==='面談'||t==='CO') return '#5AD7FF'; // 研修生
-  if (t==='LOI'||t==='Q1') return '#4ADE80';
-  if (t==='Q2') return '#A3E635';
-  if (t==='Q3'||t==='Q4') return '#FBBF24';
+  if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return '#4ADE80';
   if (t==='B1') return '#C583FF';
   if (t==='B2'||t==='B3') return '#a78bfa';
   if (t==='OUT') return '#5b6478';
@@ -6949,10 +6980,8 @@ function titleAvatarStyle(title) {
   // OUT（当月アウト）：グレーで打ち消し感を出す
   if (t==='OUT') return 'background:var(--surface3);color:var(--text-dim);border-color:var(--border2);text-decoration:line-through';
   // LOI / Q系
-  // フレッシュ帯こそ色分け：LOI=緑、Q2=ライム、Q3/Q4=アンバー
-  if (t==='LOI'||t==='Q1') return 'background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;border-color:#4ADE80';
-  if (t==='Q2') return 'background:linear-gradient(135deg,#1a2e05,#65a30d);color:#d9f99d;border-color:#A3E635';
-  if (t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#451a03,#d97706);color:#fde68a;border-color:#FBBF24';
+  // フレッシュ帯（LOI〜Q4）は同色の緑
+  if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;border-color:#4ADE80';
   // B1
   if (t==='B1')  return 'background:linear-gradient(135deg,#4c1d95,#9333ea);color:#e9d5ff;border-color:#C583FF';
   // B2 B3
@@ -7059,6 +7088,12 @@ function cardSingleTap(id, e) {
 // カードのミニ情報（メモ＋次の予定＋OL記録）— モバイルで名前タップ時に表示
 function memberInfoHtml(m) {
   var html = '';
+  // 写真（あれば情報ボックスの先頭に大きめ表示）
+  if (_avatars[m.id]) {
+    html += '<div style="display:flex;align-items:center;gap:10px;margin:2px 0 7px">'
+      + '<img src="' + _avatars[m.id] + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + '" alt="">'
+      + '<span style="font-size:12px;color:var(--text-mid)">' + evEsc(m.title||'') + '</span></div>';
+  }
   var lastAct = memberLastActivity(m);
   if (lastAct) {
     var lvl = memberActivityLevel(m);
@@ -9274,7 +9309,8 @@ function showPcTooltip(mid, ev) {
   } else if (m.nextDate) {
     planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454">📅 次回予定：' + evEsc(m.nextDate.split('-').slice(1).join('/')) + '</div>';
   }
-  tip.innerHTML = '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
+  tip.innerHTML = (_avatars[m.id] ? '<img src="' + _avatars[m.id] + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + ';display:block;margin-bottom:7px" alt="">' : '')
+    + '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">GSV</span><span class="pc-tooltip-val" style="color:var(--text)">' + gsvDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">固定PT</span><span class="pc-tooltip-val" style="color:var(--accent)">' + fixDisplay + '</span></div>'
@@ -9463,15 +9499,90 @@ function onPhotoPicked(inp) {
   var f = inp.files && inp.files[0];
   inp.value = '';
   if (!f) return;
-  compressAvatar(f, function(dataUrl) {
-    _photoPrevSet(dataUrl);
-    if (typeof editingId !== 'undefined' && editingId) {
-      saveAvatar(editingId, dataUrl).then(function(){ toast('📷 写真を保存しました'); renderCurrentView(); });
-    } else {
-      _pendingPhoto = dataUrl; // 保存時に反映
-      toast('📷 メンバー保存時に写真も保存されます');
-    }
-  });
+  // 元画像を読み込んで切り抜きシートへ（表示範囲を自分で指定できる）
+  var reader = new FileReader();
+  reader.onload = function(e) { openPhotoCrop(e.target.result); };
+  reader.readAsDataURL(f);
+}
+// ── 写真の切り抜き（ドラッグで位置・スライダーで拡大） ──
+var _cropImg = null, _cropZ = 1, _cropOx = 0, _cropOy = 0, _cropS0 = 1, _cropDrag = null;
+var CROP_V = 240; // ビューポート(px)
+function openPhotoCrop(srcDataUrl) {
+  var img = new Image();
+  img.onload = function() {
+    _cropImg = img; _cropZ = 1;
+    _cropS0 = CROP_V / Math.min(img.width, img.height); // カバー基準
+    _cropOx = (CROP_V - img.width * _cropS0) / 2;       // 中央スタート
+    _cropOy = (CROP_V - img.height * _cropS0) / 2;
+    var ov = document.createElement('div');
+    ov.className = 'ms-overlay'; ov.id = 'photoCropOv'; ov.style.zIndex = '640';
+    ov.onclick = function(e){ if (e.target === ov) closePhotoCrop(); };
+    ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
+      + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📷 表示範囲を調整</div>'
+      + '<div style="font-size:11px;color:var(--text-dim)">ドラッグで位置・スライダーで拡大</div></div>'
+      + '<span class="ms-x" onclick="closePhotoCrop()">✕</span></div>'
+      + '<div style="display:flex;justify-content:center;padding:6px 0 4px">'
+      + '<div id="cropVp" style="width:' + CROP_V + 'px;height:' + CROP_V + 'px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);position:relative;touch-action:none;cursor:grab;background:#000">'
+      + '<img id="cropImgEl" src="' + srcDataUrl + '" style="position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;max-width:none" alt="">'
+      + '</div></div>'
+      + '<div style="display:flex;align-items:center;gap:10px;padding:10px 22px"><span style="font-size:16px">🔍</span>'
+      + '<input id="cropZoom" type="range" min="100" max="300" value="100" oninput="cropSetZoom(this.value)" style="flex:1;accent-color:var(--accent)"></div>'
+      + '<div style="display:flex;gap:9px;padding:4px 16px 16px">'
+      + '<button type="button" onclick="cropConfirm()" style="flex:1;padding:13px;border-radius:11px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;cursor:pointer">この範囲で決定</button>'
+      + '<button type="button" onclick="closePhotoCrop()" style="flex:none;padding:13px 18px;border-radius:11px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:700;cursor:pointer">キャンセル</button>'
+      + '</div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ ov.classList.add('show'); });
+    _cropApply();
+    var vp = document.getElementById('cropVp');
+    vp.addEventListener('pointerdown', function(e){ _cropDrag = { x: e.clientX, y: e.clientY, ox: _cropOx, oy: _cropOy }; vp.setPointerCapture(e.pointerId); e.preventDefault(); });
+    vp.addEventListener('pointermove', function(e){ if (!_cropDrag) return; _cropOx = _cropDrag.ox + (e.clientX - _cropDrag.x); _cropOy = _cropDrag.oy + (e.clientY - _cropDrag.y); _cropApply(); });
+    vp.addEventListener('pointerup', function(){ _cropDrag = null; });
+    vp.addEventListener('pointercancel', function(){ _cropDrag = null; });
+  };
+  img.onerror = function(){ toast('画像を読み込めませんでした'); };
+  img.src = srcDataUrl;
+}
+function _cropApply() {
+  if (!_cropImg) return;
+  var s = _cropS0 * _cropZ;
+  // 円が常に画像で埋まるよう移動範囲をクランプ
+  _cropOx = Math.min(0, Math.max(CROP_V - _cropImg.width * s, _cropOx));
+  _cropOy = Math.min(0, Math.max(CROP_V - _cropImg.height * s, _cropOy));
+  var el = document.getElementById('cropImgEl');
+  if (el) el.style.transform = 'translate(' + _cropOx + 'px,' + _cropOy + 'px) scale(' + s + ')';
+}
+function cropSetZoom(v) {
+  if (!_cropImg) return;
+  var zNew = (parseInt(v,10)||100) / 100;
+  var sOld = _cropS0 * _cropZ, sNew = _cropS0 * zNew;
+  // 中心を保って拡大縮小
+  var cx = (CROP_V/2 - _cropOx) / sOld, cy = (CROP_V/2 - _cropOy) / sOld;
+  _cropZ = zNew;
+  _cropOx = CROP_V/2 - cx * sNew;
+  _cropOy = CROP_V/2 - cy * sNew;
+  _cropApply();
+}
+function cropConfirm() {
+  if (!_cropImg) return;
+  var s = _cropS0 * _cropZ, S = 64;
+  var c = document.createElement('canvas'); c.width = S; c.height = S;
+  var ctx = c.getContext('2d');
+  ctx.drawImage(_cropImg, (-_cropOx)/s, (-_cropOy)/s, CROP_V/s, CROP_V/s, 0, 0, S, S);
+  var dataUrl = c.toDataURL('image/jpeg', 0.62);
+  closePhotoCrop();
+  _photoPrevSet(dataUrl);
+  if (typeof editingId !== 'undefined' && editingId) {
+    saveAvatar(editingId, dataUrl).then(function(){ toast('📷 写真を保存しました'); renderCurrentView(); });
+  } else {
+    _pendingPhoto = dataUrl;
+    toast('📷 メンバー保存時に写真も保存されます');
+  }
+}
+function closePhotoCrop() {
+  var ov = document.getElementById('photoCropOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+  _cropImg = null; _cropDrag = null;
 }
 function removeMemberPhoto() {
   _photoPrevSet(null);
