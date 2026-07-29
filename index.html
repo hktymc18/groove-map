@@ -1831,7 +1831,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v282</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v283</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3814,7 +3814,16 @@ function syncRegionSelect(region) {
 
 // ── カテゴリ絞り込み（メンバータブを現状に統合）──
 var mapCatFilter = '';
-function _findMember(mid){ for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid) return state.members[i]; } return null; }
+// IDマップで O(1) 検索（数百人規模のO(n²)対策）。配列の差し替え/件数変化で再構築
+var _memMap = null, _memMapSrc = null, _memMapN = -1;
+function _findMember(mid){
+  var ms = state.members || [];
+  if (!_memMap || _memMapSrc !== ms || _memMapN !== ms.length) {
+    _memMap = {}; _memMapSrc = ms; _memMapN = ms.length;
+    for (var i = 0; i < ms.length; i++) _memMap[ms[i].id] = ms[i];
+  }
+  return _memMap[mid] || null;
+}
 // 絞り込み用：結合（MG_）ノードも含めた合成リストから探す（結合メンバーが誤って薄暗くなるのを防ぐ）
 function _findMemberComposed(mid){
   if (!/^MG_/.test(mid)) return _findMember(mid);
@@ -4274,7 +4283,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v282';
+  var DATA_VERSION = 'v283';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4567,15 +4576,31 @@ function _migrateGSVSelf(members) {
     }
   });
 }
-// ptSelf から ptCurrent(GSV) を全再計算（深い順＝子を先に確定）
+// ptSelf から ptCurrent(GSV) を全再計算（子インデックス＋帰りがけ順で O(n)）
 function recalcGSV(members) {
   if (!members || !members.length) return;
-  var arr = members.slice().sort(function(a, b) { return _gsvDepth(b, members) - _gsvDepth(a, members); });
-  arr.forEach(function(m) {
+  var kids = {};
+  members.forEach(function(m) {
     if (m.deleted) return;
     if (typeof m.ptSelf !== 'number') m.ptSelf = m.ptCurrent || 0;
-    m.ptCurrent = (m.ptSelf || 0) + sumChildGSV(m.id, members);
+    var p = m.parentId || '';
+    (kids[p] = kids[p] || []).push(m);
   });
+  var visiting = {};
+  function calc(m) {
+    if (visiting[m.id]) return 0; // 循環ガード
+    visiting[m.id] = 1;
+    var s = m.ptSelf || 0;
+    (kids[m.id] || []).forEach(function(c) {
+      var cv = calc(c);
+      if (!isBROrAbove(c.title)) s += cv; // BR以上はブレイクアウェイで除外
+    });
+    m.ptCurrent = s;
+    return s;
+  }
+  (kids[''] || []).forEach(calc);
+  // 親不明の孤児も個別に計算
+  members.forEach(function(m) { if (!m.deleted && !visiting[m.id]) calc(m); });
 }
 function recalcAllGSV() {
   _migrateGSVSelf(state.members);
@@ -4593,7 +4618,9 @@ function _arrOf(m) {
   return state.members;
 }
 
-function renderCurrentView() {
+// 再描画の実体。直接呼ばず renderCurrentView()（デバウンス版）を使うこと
+function _renderCurrentViewNow() {
+  _evLastActMap = null; // 活動レベル用イベント集計を再構築させる
   recalcAllGSV();
   // 自分のMAPのみ：地域の表記ゆれ（愛知/愛知県→名古屋）を統一し、変換時のみ保存
   if (!viewingOwnerUid && typeof migrateRegions === 'function' && migrateRegions()) autoSave();
@@ -4602,6 +4629,37 @@ function renderCurrentView() {
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
   else if (currentView === 'stats') renderStats();
   else if (currentView === 'ol') renderOL();
+  _hideSwitching();
+}
+// デバウンス：連続呼び出し（結合リスナー多重発火等）を1フレームにまとめる。
+// 直近150ms実行が無ければ即時（操作の体感を守る）、連打中は120ms後に1回だけ。
+var _rcvTimer = null, _rcvLastRun = 0;
+function renderCurrentView() {
+  var now = Date.now();
+  if (!_rcvTimer && now - _rcvLastRun > 150) {
+    _rcvLastRun = now;
+    _renderCurrentViewNow();
+    return;
+  }
+  if (_rcvTimer) return;
+  _rcvTimer = setTimeout(function() {
+    _rcvTimer = null;
+    _rcvLastRun = Date.now();
+    _renderCurrentViewNow();
+  }, 120);
+}
+// MAP切替中のスピナー（重い読込の体感対策）
+function _showSwitching(msg) {
+  _hideSwitching();
+  var el = document.createElement('div'); el.id = 'switchingOv';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(5,8,16,.55);display:flex;align-items:center;justify-content:center';
+  el.innerHTML = '<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px;padding:16px 26px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px"><span class="spin"></span>' + (msg || 'MAPを切り替え中…') + '</div>';
+  document.body.appendChild(el);
+  setTimeout(_hideSwitching, 15000); // 読み込み失敗時に出っぱなしにならない保険
+}
+function _hideSwitching() {
+  var el = document.getElementById('switchingOv');
+  if (el && el.parentNode) el.parentNode.removeChild(el);
 }
 
 // ============================================================
@@ -4920,7 +4978,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v282', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
+  { v:'v283', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
   { v:'v280', d:'2026-07-27', items:['🔧磨きこみリリース','🧭タイトル進捗を「あとNランク」＋段階バーに（%のズレ感を解消）・頂上/価値観に✎を常設・セットアップに「今のタイトル/月収」を追加','✅今日の一歩の＋1に「↩取り消す」・今月タブの−が過去日の記録から正しく引けるように','🗓週表示：今日の行を背景ハイライト・空の週は1つの案内に・「未完了N/全M件」表示','🏆ランキングに「◯分前の情報↻更新」・自分のXPは獲得した瞬間に反映','📊先月からの変化にも↻更新ボタン','🚪OUTをBRカテゴリからも選択可能に・メンバータブの人数からOUTを分離（🚪OUTピルで確認）','🎂年齢の入力チェック（1〜120）・生年月日を入れると年齢欄は自動計算表示に','🖥PC：逆算マップの横幅を適正化','📦管理画面を開いた時に前回の古い集計を消去'] },
   { v:'v279', d:'2026-07-27', items:['✨体験改善リリース','✅今日の一歩：月末に不足分が全部乗る「絶壁」を解消（均等ペース×2を上限に・超過分は⚠️遅れバッジ）','⏰期限切れの頂上は「期限を更新する」案内に（架空の逆算を表示しない）','📍道のりレールは常に今年を表示：来年以降の頂上・最終LOIも年付きで正しく逆算（複数年ゴール対応）','📆今月のフロント行に「MAP上の実数」を併記（手入力とのズレが見える）','🗓週表示：開くたび今週にリセット・別の週では「今週へ」ボタン表示','📷写真を高精細化（128px）・2本指ピンチで拡大・写真タップで切り抜きやり直し','🔗結合したメンバーの写真も表示されるように','☰メニューに理想MAP・共有MAP・アカウント管理を追加・現在地に✓','◀Androidの戻るボタンでシートが閉じるように（アプリが終了しない）','🌳300人超の「全て展開」は確認してから（重さ対策）'] },
   { v:'v278', d:'2026-07-27', items:['🛠 バグ修正リリース','🧮逆算マップの「現状フロント数」が常に1になっていた重大バグを修正（自分の直下人数を正しくカウント。残り人数・今月・今日の数字が正確に）','🚪OUT関連：ルート（自分）は翌月コピーの除外対象外に／OUT除外を確認画面に表示（先走りトーストを廃止）／孤児メンバーの発生防止','📷写真の保存失敗時に「保存しました」と出ていたのを修正（エラー表示＋プレビュー復元）／メンバー削除時に写真も削除','🔍絞り込みフィルタが後から開いた枝に効かない・結合メンバーが誤って薄暗くなる問題を修正','🏠共有MAP閲覧中のホームに嘘の「先月からの変化」が出ていたのを修正','🧭セットアップやり直しで年間目標・習慣が重複／頂上設定が消える問題を修正','🎉未設定なのに「達成ペースです」と出ていたのを修正（設定への案内を表示）','📦管理者の容量集計：ユニオン権限でスコープ／写真も計測／多重実行防止・進捗表示','👥メンバータブの人数を「自分N人＋🔗結合M人」に分離（LTSVと一致）・🔗結合の絞り込み追加'] },
@@ -5612,6 +5670,10 @@ function memberMatchesFilter(m, f) {
   return true;
 }
 function memberPriorityRank(m) { return m.priority === '高' ? 3 : (m.priority === '中' ? 2 : (m.priority === '低' ? 1 : 0)); }
+function toggleMemberIncMerged() {
+  window._memberIncMerged = (window._memberIncMerged === false); // 既定ON→OFF→ON…
+  renderMembers();
+}
 function renderMembers() {
   var wrap = document.getElementById('view-members'); if (!wrap) return;
   // 結合（共有）したダウンラインも一覧に含める（MAPと同じ合成リスト）。
@@ -5619,10 +5681,13 @@ function renderMembers() {
   var all = composeMergedInto(membersForMap('current'), 'current').filter(function(m){ return !m.deleted; });
   var ownList = all.filter(function(m){ return !/^MG_/.test(m.id || ''); });
   var mergedCt = all.length - ownList.length;
-  var cOut = ownList.filter(function(m){ return (m.title||'').trim() === 'OUT'; }).length;
-  var ownActive = ownList.filter(function(m){ return (m.title||'').trim() !== 'OUT'; });
-  var cAll = ownActive.length, cTr = 0, cFr = 0, cGo = 0, cBr = 0;
-  ownActive.forEach(function(m){
+  // ④結合（共有）メンバーを集計・カテゴリに含める（既定ON・ピルで切替可）
+  var incM = (window._memberIncMerged !== false) && mergedCt > 0;
+  var base = incM ? all : ownList;
+  var cOut = base.filter(function(m){ return (m.title||'').trim() === 'OUT'; }).length;
+  var baseActive = base.filter(function(m){ return (m.title||'').trim() !== 'OUT'; });
+  var cAll = baseActive.length, cTr = 0, cFr = 0, cGo = 0, cBr = 0;
+  baseActive.forEach(function(m){
     if (memberCat(m) === '研修生') cTr++;
     if (CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0) cFr++;
     if (memberCat(m) === 'BR') cBr++;
@@ -5632,16 +5697,19 @@ function renderMembers() {
   if (cOut > 0) filters.push(['out','🚪OUT',cOut]);
   if (mergedCt > 0) filters.push(['merged','🔗結合',mergedCt]);
   var list = all.filter(function(m){
-    // 自分系フィルタは自分のメンバーだけ・🔗結合は結合分だけ・すべて＝OUT以外（OUTは🚪ピルから）
-    if (_memberFilter === 'all') return /^MG_/.test(m.id || '') || (m.title||'').trim() !== 'OUT';
-    if (_memberFilter === 'merged') return /^MG_/.test(m.id || '');
-    return !/^MG_/.test(m.id || '') && memberMatchesFilter(m, _memberFilter);
+    var isMg = /^MG_/.test(m.id || '');
+    if (_memberFilter === 'all') return isMg || (m.title||'').trim() !== 'OUT';
+    if (_memberFilter === 'merged') return isMg;
+    if (isMg) return incM && memberMatchesFilter(m, _memberFilter); // 結合込みならカテゴリにも表示
+    return memberMatchesFilter(m, _memberFilter);
   });
   list.sort(function(a,b){ return (memberPriorityRank(b) - memberPriorityRank(a)) || ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||'')); });
   var html = '<div class="ml-head"><span class="ml-title">👥 メンバー</span><span class="ml-count">自分 ' + cAll + '人' + (mergedCt ? ' ＋ 🔗結合 ' + mergedCt + '人' : '') + '</span></div>';
   html += '<div class="ml-filters">' + filters.map(function(f){
     return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
-  }).join('') + '</div>';
+  }).join('')
+    + (mergedCt > 0 ? '<span class="ml-pill" style="border-style:dashed;color:' + (incM ? 'var(--accent)' : 'var(--text-dim)') + '" onclick="toggleMemberIncMerged()" title="集計・カテゴリに結合メンバーを含めるか">' + (incM ? '🔗結合込み ✓' : '🔗結合除外') + '</span>' : '')
+    + '</div>';
   if (!list.length) { wrap.innerHTML = html + '<div class="ck-empty">該当するメンバーがいません</div>'; return; }
   html += '<div class="ml-list">' + list.map(function(m){
     var nm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
@@ -7811,6 +7879,7 @@ function setStepResult(idx, result) {
   if (!m || !m.traineeHistory || !m.traineeHistory[idx]) return;
   m.traineeHistory[idx].result = result;
   m.traineeStatus = getLatestStatus(m);
+  syncTraineeTitle(m); // 予定→進んだ確定時もタイトルへ反映
   autoSave();
   renderTraineeHistory(null);
   if (typeof getGame === 'function') getGame().stepUpdatedDate = gameToday();
@@ -7899,6 +7968,25 @@ function selDetailResult(val) {
   if (n) { n.classList.remove('sel-next'); if (val==='next') n.classList.add('sel-next'); }
   if (l) { l.classList.remove('sel-left'); if (val==='left') l.classList.add('sel-left'); }
 }
+// ③二度手間解消：研修ステップを記録したら、研修生カテゴリの間はタイトルを最新ステップに自動同期
+function syncTraineeTitle(m) {
+  try {
+    var t = (m.title || '').trim();
+    if (t && detectCategory(t) !== '研修生') return; // LOI以降・BR等は触らない
+    var steps = TITLE_OPTIONS['研修生'] || [];
+    var best = -1;
+    (m.traineeHistory || []).forEach(function(h) {
+      if (h.result === 'planned') return; // 予定はまだ進んでいない
+      var i = steps.indexOf(h.status);
+      if (i > best) best = i;
+    });
+    if (best >= 0 && steps[best] !== t) {
+      m.title = steps[best];
+      var ft = document.getElementById('fTitle');
+      if (ft) ft.value = m.title; // 編集モーダルが開いていれば基本タブの表示も揃える
+    }
+  } catch(e) {}
+}
 function confirmAddHistory() {
   if (!_selectedStep) return;
   var m = getTraineeMember();
@@ -7918,6 +8006,7 @@ function confirmAddHistory() {
   // 予定なら次回予定として同期（気になるメンバーの「予定なし」に出さない）
   if (res === 'planned') { m.nextDate = date; if (aSan) m.aSan = aSan; }
   m.traineeStatus = getLatestStatus(m);
+  syncTraineeTitle(m); // タイトル欄への二度目の入力を不要に
   autoSave();
   renderTraineeHistory(null);
   toast(addedStep + (res === 'planned' ? ' の予定を追加しました' : ' を追加しました'));
@@ -14338,6 +14427,7 @@ function buildSharedCard(owner) {
 }
 
 function switchToOwner(ownerUid, perm) {
+  _showSwitching(ownerUid ? '相手のMAPに切り替え中…' : '自分のMAPに戻っています…');
   _aggActive = false; _aggSelArr = []; // 合算表示を解除
   viewingOwnerUid = ownerUid;
 
@@ -14469,18 +14559,18 @@ function mgResolve(mid) {
 function mgNodeClick(mid) {
   var r = mgResolve(mid);
   if (!r || !currentUser) { toast('結合メンバーを特定できませんでした'); return; }
+  // 確認は即時に出す（通信を待たない）。権限の正確な検証は確認後に実施
+  var _own = (sharedOwners||[]).filter(function(x){ return x.uid === r.uid; })[0];
+  var _onm = (_own && (_own.ownerOrg || _own.ownerName)) || '相手';
+  if (!confirm(_onm + ' さんのMAPに切り替えて編集します。よろしいですか？')) return;
+  _showSwitching(_onm + ' さんのMAPに切り替え中…');
   // 権限はオーナー側の正データ（maps/{owner}/shared/{自分}）で確認
   fsGet('maps/' + r.uid + '/shared/' + currentUser.uid).then(function(d) {
-    var perm = (d && d.perm) || (function(){ var o=(sharedOwners||[]).filter(function(x){return x.uid===r.uid;})[0]; return o?o.perm:'view'; })();
-    if (perm !== 'edit') { toast('👁 閲覧のみで共有されています（編集するには相手に「編集」で共有してもらってください）'); return; }
-    // 画面ごと相手のMAPに切り替わる大きな操作なので、無言で飛ばず確認する
-    var _own = (sharedOwners||[]).filter(function(x){ return x.uid === r.uid; })[0];
-    var _onm = (_own && (_own.ownerOrg || _own.ownerName)) || '相手';
-    if (!confirm(_onm + ' さんのMAPに切り替えて編集します。よろしいですか？')) return;
-    toast('相手のMAPに切り替えて編集します…');
+    var perm = (d && d.perm) || (_own ? _own.perm : 'view');
+    if (perm !== 'edit') { _hideSwitching(); toast('👁 閲覧のみで共有されています（編集するには相手に「編集」で共有してもらってください）'); return; }
     _pendingSharedEditId = r.srcId;
     switchToOwner(r.uid, 'edit');
-  }).catch(function(){ toast('権限を確認できませんでした'); });
+  }).catch(function(){ _hideSwitching(); toast('権限を確認できませんでした'); });
 }
 // 自分のメンバー配列に、結合中の下位ツリーを接続点(graftId)の下へ差し込む（現状MAPのみ）
 function composeMergedInto(ownMembers, mapType) {
