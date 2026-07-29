@@ -945,6 +945,15 @@ tr.ot-done{opacity:.5}
 .ev-group-label.overdue{color:var(--red)}
 .ev-group-label.today{color:var(--accent)}
 .ev-item{display:flex;align-items:flex-start;gap:10px;margin:0 14px 8px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);border-left:3px solid var(--border)}
+/* 過去の完了：月別折りたたみ */
+.ev-mgrp{margin:0 14px 8px}
+.ev-mgrp summary{display:flex;align-items:center;gap:8px;padding:11px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);font-size:13px;font-weight:700;cursor:pointer;list-style:none;color:var(--text-mid)}
+.ev-mgrp summary::-webkit-details-marker{display:none}
+.ev-mgrp-n{margin-left:auto;font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.ev-mgrp-ar{font-size:10px;color:var(--text-dim);transition:transform .15s}
+.ev-mgrp[open] .ev-mgrp-ar{transform:rotate(90deg)}
+.ev-mgrp[open] summary{margin-bottom:8px;border-color:var(--border2)}
+.ev-mgrp .ev-item{margin-left:0;margin-right:0;opacity:.75}
 .ev-item.t-task{border-left-color:var(--accent)}
 .ev-item.t-event{border-left-color:var(--purple)}
 .ev-item.is-overdue{border-left-color:var(--red)}
@@ -1822,7 +1831,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v281</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v282</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2878,7 +2887,8 @@ function copyToNextMonth() {
     });
     state.freshData = JSON.parse(JSON.stringify(state.freshData || {}));
 
-    // 保存
+    // 保存（翌月への全置換コピー：マージで旧データを復活させない）
+    window._skipMergeOnce = true;
     buildMonthSelector();
     autoSave();
     renderCurrentView();
@@ -4211,6 +4221,7 @@ function clearMapData() {
   state.members = [];
   state.idealMembers = [];
   state.freshData = {};
+  window._skipMergeOnce = true; // 意図的な全消し：共同編集マージで復活させない
   if (typeof autoSave === 'function') autoSave();
   if (typeof closeProfileModal === 'function') closeProfileModal(null);
   if (typeof switchView === 'function') switchView('current'); else if (typeof renderCurrentView === 'function') renderCurrentView();
@@ -4263,7 +4274,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v281';
+  var DATA_VERSION = 'v282';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4909,7 +4920,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v281', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
+  { v:'v282', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
   { v:'v280', d:'2026-07-27', items:['🔧磨きこみリリース','🧭タイトル進捗を「あとNランク」＋段階バーに（%のズレ感を解消）・頂上/価値観に✎を常設・セットアップに「今のタイトル/月収」を追加','✅今日の一歩の＋1に「↩取り消す」・今月タブの−が過去日の記録から正しく引けるように','🗓週表示：今日の行を背景ハイライト・空の週は1つの案内に・「未完了N/全M件」表示','🏆ランキングに「◯分前の情報↻更新」・自分のXPは獲得した瞬間に反映','📊先月からの変化にも↻更新ボタン','🚪OUTをBRカテゴリからも選択可能に・メンバータブの人数からOUTを分離（🚪OUTピルで確認）','🎂年齢の入力チェック（1〜120）・生年月日を入れると年齢欄は自動計算表示に','🖥PC：逆算マップの横幅を適正化','📦管理画面を開いた時に前回の古い集計を消去'] },
   { v:'v279', d:'2026-07-27', items:['✨体験改善リリース','✅今日の一歩：月末に不足分が全部乗る「絶壁」を解消（均等ペース×2を上限に・超過分は⚠️遅れバッジ）','⏰期限切れの頂上は「期限を更新する」案内に（架空の逆算を表示しない）','📍道のりレールは常に今年を表示：来年以降の頂上・最終LOIも年付きで正しく逆算（複数年ゴール対応）','📆今月のフロント行に「MAP上の実数」を併記（手入力とのズレが見える）','🗓週表示：開くたび今週にリセット・別の週では「今週へ」ボタン表示','📷写真を高精細化（128px）・2本指ピンチで拡大・写真タップで切り抜きやり直し','🔗結合したメンバーの写真も表示されるように','☰メニューに理想MAP・共有MAP・アカウント管理を追加・現在地に✓','◀Androidの戻るボタンでシートが閉じるように（アプリが終了しない）','🌳300人超の「全て展開」は確認してから（重さ対策）'] },
   { v:'v278', d:'2026-07-27', items:['🛠 バグ修正リリース','🧮逆算マップの「現状フロント数」が常に1になっていた重大バグを修正（自分の直下人数を正しくカウント。残り人数・今月・今日の数字が正確に）','🚪OUT関連：ルート（自分）は翌月コピーの除外対象外に／OUT除外を確認画面に表示（先走りトーストを廃止）／孤児メンバーの発生防止','📷写真の保存失敗時に「保存しました」と出ていたのを修正（エラー表示＋プレビュー復元）／メンバー削除時に写真も削除','🔍絞り込みフィルタが後から開いた枝に効かない・結合メンバーが誤って薄暗くなる問題を修正','🏠共有MAP閲覧中のホームに嘘の「先月からの変化」が出ていたのを修正','🧭セットアップやり直しで年間目標・習慣が重複／頂上設定が消える問題を修正','🎉未設定なのに「達成ペースです」と出ていたのを修正（設定への案内を表示）','📦管理者の容量集計：ユニオン権限でスコープ／写真も計測／多重実行防止・進捗表示','👥メンバータブの人数を「自分N人＋🔗結合M人」に分離（LTSVと一致）・🔗結合の絞り込み追加'] },
@@ -12515,13 +12526,36 @@ function renderAgenda() {
     else if (e.date <= weekEnd) week.push(e);
     else later.push(e);
   });
+  // 新しい日付が上（期限切れ・完了済みは直近のものから表示）
+  var descByDate = function(a, b){ return (b.date||'').localeCompare(a.date||''); };
+  overdue.sort(descByDate);
+  // 完了済み：1ヶ月以内は通常表示、それより古いものは月ごとに折りたたみ
+  var oneMonthAgo = evYmd(evAddDays(new Date(), -30));
+  var doneRecent = [], doneOldByMonth = {};
+  done.forEach(function(e) {
+    var d = e.date || '';
+    if (d && d < oneMonthAgo) { var ym = d.slice(0, 7); (doneOldByMonth[ym] = doneOldByMonth[ym] || []).push(e); }
+    else doneRecent.push(e);
+  });
+  doneRecent.sort(descByDate);
   var html = '';
   if (overdue.length) html += evGrpLabel('期限切れ・終了','overdue', overdue.length) + overdue.map(evItemHtml).join('');
   if (today.length)   html += evGrpLabel('今日','today', today.length) + today.map(evItemHtml).join('');
   if (week.length)    html += evGrpLabel('今週','', week.length) + week.map(evItemHtml).join('');
   if (later.length)   html += evGrpLabel('これから','', later.length) + later.map(evItemHtml).join('');
   if (noDate.length)  html += evGrpLabel('日付なし','', noDate.length) + noDate.map(evItemHtml).join('');
-  if (done.length)    html += evGrpLabel('完了済み','', done.length) + done.map(evItemHtml).join('');
+  if (doneRecent.length) html += evGrpLabel('完了済み','', doneRecent.length) + doneRecent.map(evItemHtml).join('');
+  // 月別アーカイブ（新しい月から・タップで展開）
+  var oldMonths = Object.keys(doneOldByMonth).sort(function(a,b){ return b.localeCompare(a); });
+  if (oldMonths.length) {
+    html += evGrpLabel('過去の完了（月別）','', oldMonths.reduce(function(s,k){ return s + doneOldByMonth[k].length; }, 0));
+    oldMonths.forEach(function(ym) {
+      var list = doneOldByMonth[ym]; list.sort(descByDate);
+      var lbl = parseInt(ym.slice(0,4),10) + '年' + parseInt(ym.slice(5,7),10) + '月';
+      html += '<details class="ev-mgrp"><summary>📁 ' + lbl + '<span class="ev-mgrp-n">✓ ' + list.length + '件</span><span class="ev-mgrp-ar">▶</span></summary>'
+        + list.map(evItemHtml).join('') + '</details>';
+    });
+  }
   if (!html) html = '<div class="ev-empty">予定・タスクはまだありません。<br>「＋ 予定・タスク」から追加できます。</div>';
   wrap.innerHTML = html;
 }
@@ -13958,6 +13992,7 @@ function fsLoadSharedMap(ownerUid) {
 
   p1.then(function(data) {
     state.members = (data && data.members) ? data.members : [];
+    _mergeSnap = null; // マージ基準を再初期化（共有MAP読込）
     return p2;
   }).then(function(data) {
     state.idealMembers = (data && data.members) ? data.members : [];
@@ -14600,6 +14635,7 @@ function fsLoadFromFirestore(uid) {
     // 現状MAPメンバー
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
       state.members = loaded.current.members;
+      _mergeSnap = null; // マージ基準を再初期化（自分のMAP読込・月切替）
     } else {
       state.members = [];
     }
@@ -14644,12 +14680,55 @@ function fsLoadFromFirestore(uid) {
 }
 
 // Firestoreに保存（現状・理想・statsを別パスで保存）
+// ── 共同編集マージ（Phase F-3）：メンバー単位のlast-write-wins ──
+// 変更されたメンバーに updatedAt を刻印（前回保存時とのJSON比較・全編集箇所を自動カバー）
+var _mergeSnap = null;
+function _stampUpdatedMembers(members) {
+  var snap = {}, now = new Date().toISOString();
+  (members || []).forEach(function(m) {
+    var j = JSON.stringify(m);
+    if (_mergeSnap && _mergeSnap[m.id] !== j) { m.updatedAt = now; j = JSON.stringify(m); }
+    snap[m.id] = j;
+  });
+  _mergeSnap = snap;
+}
+// 保存前にremoteと合成：他人が足した/更新したメンバーを消さない（新しいupdatedAtが勝つ）
+function mergeMembers(localArr, remoteArr) {
+  var map = {}, order = [];
+  (remoteArr || []).forEach(function(rm) { map[rm.id] = rm; order.push(rm.id); });
+  (localArr || []).forEach(function(lm) {
+    if (!map[lm.id]) { map[lm.id] = lm; order.push(lm.id); return; }
+    var lu = lm.updatedAt || '', ru = map[lm.id].updatedAt || '';
+    if (lu >= ru) map[lm.id] = lm; // 同時刻・不明はローカル優先
+  });
+  return order.map(function(id) { return map[id]; });
+}
 function fsSaveToFirestore(uid) {
   var month = state.currentMonth;
-  var p1 = fsSet('maps/' + uid + '/months/' + month + '_current', {
-    members: state.members,
-    updatedAt: new Date().toISOString()
-  });
+  var curPath = 'maps/' + uid + '/months/' + month + '_current';
+  _stampUpdatedMembers(state.members);
+  var p1;
+  if (window._skipMergeOnce) {
+    // 全消し等の意図的な全置換はマージしない
+    window._skipMergeOnce = false;
+    p1 = fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
+  } else {
+    p1 = fsGet(curPath).then(function(remote) {
+      if (remote && remote.members && remote.members.length) {
+        var merged = mergeMembers(state.members, remote.members);
+        if (merged.length !== state.members.length) {
+          state.members = merged;
+          _stampUpdatedMembers(state.members);
+          if (typeof renderCurrentView === 'function') setTimeout(renderCurrentView, 50);
+        } else {
+          state.members = merged;
+        }
+      }
+      return fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
+    }).catch(function() {
+      return fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
+    });
+  }
   var p2 = fsSet('maps/' + uid + '/months/' + month + '_ideal', {
     members: state.idealMembers || [],
     updatedAt: new Date().toISOString()
