@@ -1831,7 +1831,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v283</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v284</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -1841,6 +1841,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <!-- 共有MAP閲覧中バー -->
 <div class="sd-viewing-bar" id="sdViewingBar">
   <div class="sd-viewing-name" id="sdViewingName"></div>
+  <div class="sd-viewing-list" onclick="refreshSharedMap()" title="相手の最新の変更を取り込む">🔄 最新</div>
   <div class="sd-viewing-list" onclick="openSharedDashboard()">一覧</div>
   <div class="sd-viewing-back" onclick="switchToOwner(null)">自分に戻る</div>
 </div>
@@ -4283,7 +4284,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v283';
+  var DATA_VERSION = 'v284';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4978,7 +4979,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v283', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
+  { v:'v284', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
   { v:'v280', d:'2026-07-27', items:['🔧磨きこみリリース','🧭タイトル進捗を「あとNランク」＋段階バーに（%のズレ感を解消）・頂上/価値観に✎を常設・セットアップに「今のタイトル/月収」を追加','✅今日の一歩の＋1に「↩取り消す」・今月タブの−が過去日の記録から正しく引けるように','🗓週表示：今日の行を背景ハイライト・空の週は1つの案内に・「未完了N/全M件」表示','🏆ランキングに「◯分前の情報↻更新」・自分のXPは獲得した瞬間に反映','📊先月からの変化にも↻更新ボタン','🚪OUTをBRカテゴリからも選択可能に・メンバータブの人数からOUTを分離（🚪OUTピルで確認）','🎂年齢の入力チェック（1〜120）・生年月日を入れると年齢欄は自動計算表示に','🖥PC：逆算マップの横幅を適正化','📦管理画面を開いた時に前回の古い集計を消去'] },
   { v:'v279', d:'2026-07-27', items:['✨体験改善リリース','✅今日の一歩：月末に不足分が全部乗る「絶壁」を解消（均等ペース×2を上限に・超過分は⚠️遅れバッジ）','⏰期限切れの頂上は「期限を更新する」案内に（架空の逆算を表示しない）','📍道のりレールは常に今年を表示：来年以降の頂上・最終LOIも年付きで正しく逆算（複数年ゴール対応）','📆今月のフロント行に「MAP上の実数」を併記（手入力とのズレが見える）','🗓週表示：開くたび今週にリセット・別の週では「今週へ」ボタン表示','📷写真を高精細化（128px）・2本指ピンチで拡大・写真タップで切り抜きやり直し','🔗結合したメンバーの写真も表示されるように','☰メニューに理想MAP・共有MAP・アカウント管理を追加・現在地に✓','◀Androidの戻るボタンでシートが閉じるように（アプリが終了しない）','🌳300人超の「全て展開」は確認してから（重さ対策）'] },
   { v:'v278', d:'2026-07-27', items:['🛠 バグ修正リリース','🧮逆算マップの「現状フロント数」が常に1になっていた重大バグを修正（自分の直下人数を正しくカウント。残り人数・今月・今日の数字が正確に）','🚪OUT関連：ルート（自分）は翌月コピーの除外対象外に／OUT除外を確認画面に表示（先走りトーストを廃止）／孤児メンバーの発生防止','📷写真の保存失敗時に「保存しました」と出ていたのを修正（エラー表示＋プレビュー復元）／メンバー削除時に写真も削除','🔍絞り込みフィルタが後から開いた枝に効かない・結合メンバーが誤って薄暗くなる問題を修正','🏠共有MAP閲覧中のホームに嘘の「先月からの変化」が出ていたのを修正','🧭セットアップやり直しで年間目標・習慣が重複／頂上設定が消える問題を修正','🎉未設定なのに「達成ペースです」と出ていたのを修正（設定への案内を表示）','📦管理者の容量集計：ユニオン権限でスコープ／写真も計測／多重実行防止・進捗表示','👥メンバータブの人数を「自分N人＋🔗結合M人」に分離（LTSVと一致）・🔗結合の絞り込み追加'] },
@@ -14079,34 +14080,41 @@ function fsLoadSharedMap(ownerUid) {
   var p2 = fsGet('maps/' + ownerUid + '/months/' + month + '_ideal');
   var p3 = fsGet('maps/' + ownerUid + '/stats/' + month);
 
+  // 本体（現状メンバー）が届いた時点で即表示＆編集パネルを開く（理想/統計/予定を待たない）
   p1.then(function(data) {
     state.members = (data && data.members) ? data.members : [];
     _mergeSnap = null; // マージ基準を再初期化（共有MAP読込）
-    return p2;
-  }).then(function(data) {
-    state.idealMembers = (data && data.members) ? data.members : [];
-    return p3;
-  }).then(function(data) {
-    if (data) {
-      state.stats = data.stats || getDefaultStats();
-      state.commission = data.commission || getDefaultCommission();
-      state.freshData = data.freshData || {};
-    }
     renderCurrentView();
     toast('共有MAPを読み込みました ✓');
     // 結合ノードからの編集ジャンプ：対象メンバーの編集パネルを開く
     if (_pendingSharedEditId) {
       var _eid = _pendingSharedEditId; _pendingSharedEditId = null;
-      setTimeout(function(){ if (typeof openEdit === 'function') openEdit(_eid); }, 200);
+      setTimeout(function(){ if (typeof openEdit === 'function') openEdit(_eid); }, 80);
     }
-    // 共有MAPの変更をリアルタイム反映（閲覧・共同編集どちらも）
-    startSharedLiveSync(ownerUid);
   }).catch(function(e) {
     toast('読み込みエラー: ' + e.message);
     console.error('shared map load error:', e);
   });
-  // 予定も共有MAPのものを表示（編集も可）
+  // 残りは裏で並列取得（届き次第反映）
+  p2.then(function(data) { state.idealMembers = (data && data.members) ? data.members : []; }).catch(function(){});
+  p3.then(function(data) {
+    if (data) {
+      state.stats = data.stats || getDefaultStats();
+      state.commission = data.commission || getDefaultCommission();
+      state.freshData = data.freshData || {};
+      renderCurrentView();
+    }
+  }).catch(function(){});
+  // 予定も並列で取得
   loadEvents(ownerUid);
+  // ※リアルタイム購読は速度優先で廃止（保存時のメンバー単位マージで競合は解決）。
+  //   最新を見たい時は閲覧バーの「🔄 最新」で再読込。
+}
+// 共有MAP閲覧中の手動リフレッシュ
+function refreshSharedMap() {
+  if (!viewingOwnerUid) return;
+  _showSwitching('最新を取得中…');
+  fsLoadSharedMap(viewingOwnerUid);
 }
 
 // ── 共同編集：共有MAP閲覧中のリアルタイム同期 ──
@@ -14423,6 +14431,16 @@ function buildSharedCard(owner) {
   };
   card.appendChild(mergeBtn);
 
+  // 結合中は「ツリーに表示するか」を個別に切替できる（複数結合の被り対策）
+  if (merged) {
+    var mcfg = (state.mergedMaps || []).filter(function(x){ return x.uid === owner.uid; })[0];
+    var visBtn = document.createElement('button');
+    visBtn.className = 'sd-merge-btn';
+    visBtn.textContent = (mcfg && mcfg.hidden) ? '🙈 ツリー非表示中（タップで表示）' : '👁 ツリーに表示中（タップで非表示）';
+    visBtn.onclick = function(e) { e.stopPropagation(); toggleMergeVisible(owner.uid); };
+    card.appendChild(visBtn);
+  }
+
   return card;
 }
 
@@ -14580,6 +14598,7 @@ function composeMergedInto(ownMembers, mapType) {
   var ownIds = {}; ownMembers.forEach(function(m) { ownIds[m.id] = true; });
   var out = ownMembers.slice();
   mm.forEach(function(cfg) {
+    if (cfg.hidden) return; // 表示OFFの結合はツリーに合成しない（被り対策）
     if (!ownIds[cfg.graftId]) return; // 接続先ノードが自分のMAPに無ければスキップ
     var foreign = (state.mergedData && state.mergedData[cfg.uid]) ? state.mergedData[cfg.uid] : [];
     if (!foreign.length) return;
@@ -14636,6 +14655,16 @@ function confirmMerge(uid, graftId) {
   startMergeListener(uid);
   closeMergePicker();
   toast('結合しました ✓');
+  renderSharedCards();
+  if (currentView === 'current') renderCurrentView();
+}
+// 結合の表示ON/OFF（結合設定は維持したままツリー合成だけ止める）
+function toggleMergeVisible(uid) {
+  var cfg = (state.mergedMaps || []).filter(function(x){ return x.uid === uid; })[0];
+  if (!cfg) return;
+  cfg.hidden = !cfg.hidden;
+  saveMergedConfig();
+  toast(cfg.hidden ? '結合ツリーを非表示にしました（🔗結合は維持）' : '結合ツリーを表示します');
   renderSharedCards();
   if (currentView === 'current') renderCurrentView();
 }
