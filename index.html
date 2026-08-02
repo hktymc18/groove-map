@@ -983,7 +983,7 @@ tr.ot-done{opacity:.5}
 .ev-cal-weekdays .ev-sat{color:var(--b)}
 .ev-cal-weekdays .ev-sun{color:var(--red)}
 .ev-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px}
-.ev-cell{position:relative;min-height:60px;border:1px solid var(--border);border-radius:6px;background:var(--surface);display:flex;flex-direction:column;align-items:stretch;padding:2px;cursor:pointer;overflow:hidden}
+.ev-cell{position:relative;min-height:64px;border:1px solid var(--border);border-radius:6px;background:var(--surface);display:flex;flex-direction:column;align-items:stretch;padding:2px;cursor:pointer;overflow:hidden}
 .ev-cell.empty{background:transparent;border-color:transparent;cursor:default}
 .ev-cell.today{border-color:var(--accent)}
 .ev-cell.sel{background:var(--accent-dim);border-color:var(--accent)}
@@ -992,12 +992,20 @@ tr.ot-done{opacity:.5}
 .ev-cell-num.sat{color:var(--b)}
 .ev-cell.today .ev-cell-num{color:var(--accent);font-weight:700}
 .ev-cell-bars{display:flex;flex-direction:column;gap:1px;margin-top:1px;width:100%}
-.ev-bar{font-size:9px;line-height:1.4;padding:0 3px;border-radius:3px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;text-align:left}
-.ev-bar.bar-task{background:var(--accent);color:#000}
-.ev-bar.bar-event{background:var(--purple);color:#fff}
-.ev-bar.bar-overdue{background:var(--red);color:#fff}
-.ev-bar.bar-done{opacity:.5}
+.ev-bar{font-size:9px;line-height:1.5;padding:0 3px;border-radius:3px;border-left:2px solid transparent;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;text-align:left}
+.ev-bar b{font-weight:700;font-family:'IBM Plex Mono',monospace}
+.ev-bar.bar-task{background:var(--accent-dim);color:var(--accent);border-left-color:var(--accent)}
+.ev-bar.bar-event{background:var(--purple-dim);color:var(--purple);border-left-color:var(--purple)}
+.ev-bar.bar-overdue{background:rgba(255,93,115,.16);color:var(--red);border-left-color:var(--red)}
+.ev-bar.bar-done{opacity:.45;text-decoration:line-through}
 .ev-more{font-size:8px;color:var(--text-dim);padding-left:2px}
+/* 選択日パネル（CAL-1：ボトムシート→カレンダー直下のインライン表示） */
+.ev-day-panel{margin:10px 14px calc(env(safe-area-inset-bottom) + 90px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 12px}
+.ev-day-panel-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 2px 6px;border-bottom:1px solid var(--border)}
+.ev-day-panel-hdr .lb{font-size:14px;font-weight:800}
+.ev-day-panel-add{flex:none;background:var(--accent);color:var(--go-ink);border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
+.ev-day-panel .ev-item{margin-left:0;margin-right:0}
+.ev-day-panel .ev-item:first-of-type{margin-top:10px}
 .ev-cal-daylabel{font-size:15px;font-weight:700;color:var(--text)}
 /* 選んだ日の予定：ボトムシート */
 .ev-day-sheet{display:none}
@@ -1033,7 +1041,7 @@ tr.ot-done{opacity:.5}
 .cat-color.sel{border-color:var(--text)}
 /* カレンダーを画面いっぱいに（PC・スマホ共通）。残り画面高をグリッドに与え、
    行(grid-auto-rows:1fr)を均等に伸ばす → 予定の有無に関わらず全マス均等＆全画面。 */
-#view-events #evCalGrid{height:calc(100vh - 222px);height:calc(100dvh - 222px);grid-auto-rows:1fr}
+#view-events #evCalGrid{grid-auto-rows:auto} /* CAL-1: 7件チップ表示のためセル高さ可変・ページスクロール */
 /* スマホ：ツールバー等をコンパクト化して上の余白を削減 */
 @media(max-width:767px){
   #view-events .ev-toolbar{padding:6px 10px 2px;gap:6px}
@@ -1831,7 +1839,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v284</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v285</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2075,6 +2083,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span class="ev-sun">日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span>
       </div>
       <div class="ev-cal-grid" id="evCalGrid"></div>
+      <div class="ev-day-panel" id="evDayPanel" style="display:none"></div>
     </div>
   </div>
 
@@ -4284,7 +4293,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v284';
+  var DATA_VERSION = 'v285';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4979,7 +4988,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v284', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
+  { v:'v285', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
   { v:'v280', d:'2026-07-27', items:['🔧磨きこみリリース','🧭タイトル進捗を「あとNランク」＋段階バーに（%のズレ感を解消）・頂上/価値観に✎を常設・セットアップに「今のタイトル/月収」を追加','✅今日の一歩の＋1に「↩取り消す」・今月タブの−が過去日の記録から正しく引けるように','🗓週表示：今日の行を背景ハイライト・空の週は1つの案内に・「未完了N/全M件」表示','🏆ランキングに「◯分前の情報↻更新」・自分のXPは獲得した瞬間に反映','📊先月からの変化にも↻更新ボタン','🚪OUTをBRカテゴリからも選択可能に・メンバータブの人数からOUTを分離（🚪OUTピルで確認）','🎂年齢の入力チェック（1〜120）・生年月日を入れると年齢欄は自動計算表示に','🖥PC：逆算マップの横幅を適正化','📦管理画面を開いた時に前回の古い集計を消去'] },
   { v:'v279', d:'2026-07-27', items:['✨体験改善リリース','✅今日の一歩：月末に不足分が全部乗る「絶壁」を解消（均等ペース×2を上限に・超過分は⚠️遅れバッジ）','⏰期限切れの頂上は「期限を更新する」案内に（架空の逆算を表示しない）','📍道のりレールは常に今年を表示：来年以降の頂上・最終LOIも年付きで正しく逆算（複数年ゴール対応）','📆今月のフロント行に「MAP上の実数」を併記（手入力とのズレが見える）','🗓週表示：開くたび今週にリセット・別の週では「今週へ」ボタン表示','📷写真を高精細化（128px）・2本指ピンチで拡大・写真タップで切り抜きやり直し','🔗結合したメンバーの写真も表示されるように','☰メニューに理想MAP・共有MAP・アカウント管理を追加・現在地に✓','◀Androidの戻るボタンでシートが閉じるように（アプリが終了しない）','🌳300人超の「全て展開」は確認してから（重さ対策）'] },
   { v:'v278', d:'2026-07-27', items:['🛠 バグ修正リリース','🧮逆算マップの「現状フロント数」が常に1になっていた重大バグを修正（自分の直下人数を正しくカウント。残り人数・今月・今日の数字が正確に）','🚪OUT関連：ルート（自分）は翌月コピーの除外対象外に／OUT除外を確認画面に表示（先走りトーストを廃止）／孤児メンバーの発生防止','📷写真の保存失敗時に「保存しました」と出ていたのを修正（エラー表示＋プレビュー復元）／メンバー削除時に写真も削除','🔍絞り込みフィルタが後から開いた枝に効かない・結合メンバーが誤って薄暗くなる問題を修正','🏠共有MAP閲覧中のホームに嘘の「先月からの変化」が出ていたのを修正','🧭セットアップやり直しで年間目標・習慣が重複／頂上設定が消える問題を修正','🎉未設定なのに「達成ペースです」と出ていたのを修正（設定への案内を表示）','📦管理者の容量集計：ユニオン権限でスコープ／写真も計測／多重実行防止・進捗表示','👥メンバータブの人数を「自分N人＋🔗結合M人」に分離（LTSVと一致）・🔗結合の絞り込み追加'] },
@@ -12135,14 +12144,15 @@ function evBarHtml(e) {
   var overdue = e.type === 'task' && !e.done && e.date && e.date < t;
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
   var cls = 'ev-bar', style = '';
-  if (cat) { style = ' style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '"'; }
+  if (cat) { style = ' style="background:color-mix(in srgb,' + cat.color + ' 20%,transparent);color:' + cat.color + ';border-left-color:' + cat.color + '"'; }
   else if (overdue) cls += ' bar-overdue';
   else cls += (e.type === 'task') ? ' bar-task' : ' bar-event';
   if (e.done) cls += ' bar-done';
   // カテゴリ色を付けてもタスク/予定の種別が読めるように、タスクは□/✓を前置。実行済み予定は✓
   var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : (e.done ? '✓ ' : '');
+  var tm = (e.time && !e.done) ? '<b>' + evEsc(String(e.time).slice(0,5)) + '</b> ' : '';
   var title = mark + (e.title || '');
-  return '<div class="' + cls + '"' + style + '>' + evEsc(title) + '</div>';
+  return '<div class="' + cls + '"' + style + '>' + tm + evEsc(title) + '</div>';
 }
 
 // イベントモーダルのカテゴリ表示更新
@@ -12660,6 +12670,11 @@ function calShiftMonth(delta) {
 }
 function renderCalendar() {
   if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
+  // CAL-1: 未選択なら今日（表示月に今日が無ければ1日）を自動選択して下のパネルを常時表示
+  if (!_calSelDate) {
+    var _tt = evTodayYmd();
+    _calSelDate = (_tt.slice(0,7) === (_calYear + '-' + evPad2(_calMonth+1))) ? _tt : (_calYear + '-' + evPad2(_calMonth+1) + '-01');
+  }
   var title = document.getElementById('evCalTitle');
   if (title) title.textContent = _calYear + '年 ' + (_calMonth+1) + '月';
   var grid = document.getElementById('evCalGrid');
@@ -12684,10 +12699,10 @@ function renderCalendar() {
     var numCls = 'ev-cell-num' + (dow === 0 ? ' sun' : (dow === 6 ? ' sat' : ''));
     var dayList = (byDate[ds] || []).slice();
     dayList.sort(evSortFn);
-    var MAXBARS = 3; // セル高さに実際に収まる本数。4件目以降は必ず「他N件」で可視化（無言の見切れ防止）
+    var MAXBARS = 7; // CAL-1: 詳細を開かなくても1日7件まで直接表示（8件目から+N）
     var bars = '';
     for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi]);
-    if (dayList.length > MAXBARS) bars += '<div class="ev-more">他' + (dayList.length - MAXBARS) + '件</div>';
+    if (dayList.length > MAXBARS) bars += '<div class="ev-more">+' + (dayList.length - MAXBARS) + '件</div>';
     html += '<div class="' + cls + '" onclick="selCalDay(\'' + ds + '\')">'
       + '<span class="' + numCls + '">' + d + '</span>'
       + '<div class="ev-cell-bars">' + bars + '</div></div>';
@@ -12696,36 +12711,29 @@ function renderCalendar() {
   renderCalDayList();
 }
 function selCalDay(ds) {
-  _calSelDate = (ds === _calSelDate) ? '' : ds;
+  _calSelDate = ds; // CAL-1: パネル常時表示型なのでトグルオフしない
   renderCalendar();
 }
 function closeDaySheet() {
-  _calSelDate = '';
-  renderCalendar();
+  var sh = document.getElementById('evDaySheet');
+  if (sh) sh.classList.remove('open');
 }
+// CAL-1: 選択日の予定を「カレンダー直下のインラインパネル」に表示（旧ボトムシートは廃止）
 function renderCalDayList() {
-  var sheet = document.getElementById('evDaySheet');
-  var label = document.getElementById('evCalDayLabel');
-  var wrap = document.getElementById('evCalDayList');
-  var foot = document.getElementById('evDaySheetFoot');
-  if (!wrap || !label || !sheet) return;
-  if (!_calSelDate) { // 未選択 → シートを閉じる
-    sheet.classList.remove('open');
-    label.textContent = ''; wrap.innerHTML = ''; if (foot) foot.innerHTML = '';
-    return;
-  }
-  label.textContent = fmtEvDate(_calSelDate, '') + ' の予定';
+  var panel = document.getElementById('evDayPanel');
+  if (!panel) return;
+  if (!_calSelDate) { panel.style.display = 'none'; return; }
   var list = (state.events||[]).filter(function(e){ return e.date === _calSelDate; });
   list.sort(evSortFn);
-  wrap.innerHTML = list.length
+  var items = list.length
     ? list.map(evItemHtml).join('')
-    : '<div class="ev-empty" style="padding:24px 16px">この日に予定はありません</div>';
-  if (foot) {
-    foot.innerHTML = eventsUid()
-      ? '<button class="ev-day-add-btn" onclick="openEventAddDate(\'' + _calSelDate + '\')"><span style="font-size:18px">＋</span> この日に予定・タスクを追加</button>'
-      : '';
-  }
-  sheet.classList.add('open'); // 画面下からせり上げ
+    : '<div class="ev-empty" style="padding:18px 8px">この日に予定はありません</div>';
+  panel.innerHTML = '<div class="ev-day-panel-hdr">'
+    + '<span class="lb">' + fmtEvDate(_calSelDate, '') + '</span>'
+    + (eventsUid() ? '<button type="button" class="ev-day-panel-add" onclick="openEventAddDate(\'' + _calSelDate + '\')">＋ この日に追加</button>' : '')
+    + '</div>'
+    + items;
+  panel.style.display = '';
 }
 
 // ── 完了トグル ──
