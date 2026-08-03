@@ -1024,7 +1024,14 @@ tr.ot-done{opacity:.5}
 .ev-day-panel{margin:10px 14px calc(env(safe-area-inset-bottom) + 90px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 12px}
 /* CAL-FS: 月カレンダー全画面モード（画面いっぱいに表示・タップ数削減） */
 .ev-cal-x,.ev-cal-today,.ev-cal-addbtn{display:none}
-#evCalendar.full{position:fixed;inset:0;z-index:280;background:var(--bg);display:flex!important;flex-direction:column;padding-top:env(safe-area-inset-top)}
+/* 全画面中はアプリのヘッダー/戻るバー/下部ナビ/FAB/PCサイドバーを丸ごと消して文字どおり全画面に */
+body.cal-fs header{display:none!important}
+body.cal-fs .back-home-bar{display:none!important}
+body.cal-fs .mobile-tabbar{display:none!important}
+body.cal-fs .fab{display:none!important}
+body.cal-fs .pc-sidebar{display:none!important}
+body.cal-fs .pc-toolbar{display:none!important}
+#evCalendar.full{position:fixed;inset:0;z-index:290;background:var(--bg);display:flex!important;flex-direction:column;padding-top:env(safe-area-inset-top)}
 #evCalendar.full .ev-cal-hdr{flex:none;justify-content:flex-start;gap:8px;padding:10px 12px 8px}
 #evCalendar.full .ev-cal-title{flex:1;min-width:0}
 #evCalendar.full .ev-cal-x{display:flex;flex:none;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;font-size:16px;color:var(--text-mid);cursor:pointer;border:1px solid var(--border);background:var(--surface)}
@@ -1033,8 +1040,7 @@ tr.ot-done{opacity:.5}
 #evCalendar.full .ev-cal-weekdays{flex:none}
 #evCalendar.full .ev-cal-grid{flex:1;grid-auto-rows:1fr!important;min-height:0;overflow:hidden;padding-bottom:4px;align-content:stretch}
 #evCalendar.full .ev-cell{min-height:0}
-#evCalendar.full .ev-day-panel{position:absolute;left:0;right:0;bottom:0;margin:0;max-height:46%;overflow-y:auto;border-radius:16px 16px 0 0;border:none;border-top:1px solid var(--border);box-shadow:0 -10px 30px rgba(0,0,0,.45);padding-bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:5}
-body.light #evCalendar.full .ev-day-panel{box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+#evCalendar.full .ev-day-panel{flex:none;margin:6px 8px calc(env(safe-area-inset-bottom) + 8px);max-height:40%;overflow-y:auto;border-radius:14px;border:1px solid var(--border)}
 .ev-day-panel-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 2px 6px;border-bottom:1px solid var(--border)}
 .ev-day-panel-hdr .lb{font-size:14px;font-weight:800}
 .ev-day-panel-add{flex:none;background:var(--accent);color:var(--go-ink);border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
@@ -1878,7 +1884,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v288</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v289</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4347,7 +4353,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v288';
+  var DATA_VERSION = 'v289';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4497,8 +4503,10 @@ function switchView(v) {
     if (dv === 'more') on = (_mainTabs.indexOf(v) < 0 && v !== 'ideal');
     it.classList.toggle('active', on);
   });
-  // CAL-FS: 予定タブは前回の表示モード（月なら全画面カレンダー）で直接開く
+  // CAL-FS: 予定タブは前回の表示モード（月なら全画面カレンダー）で直接開く。
+  //         他のタブへ移る時は全画面用のヘッダー/ナビ非表示を必ず解除（ナビ喪失防止）
   if (v === 'events' && typeof setEventsMode === 'function') setEventsMode(_evMode);
+  else document.body.classList.remove('cal-fs');
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
   if (bh) {
@@ -5049,6 +5057,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v289', d:'2026-08-03', items:['🗓全画面カレンダーの表示バグを修正：ヘッダー・下部ナビが上に重なって見切れていた問題を解消。全画面中はアプリのヘッダー/フッターも非表示になり文字どおり画面全体がカレンダーに','選択日パネルがカレンダーに覆い被さって月末の週が隠れる問題も修正（グリッドとパネルで画面を分け合うレイアウトに）','✕またはAndroidの戻るで通常画面に戻ります'] },
   { v:'v288', d:'2026-08-03', items:['🗓月カレンダーを全画面表示に刷新：「月」を選ぶと画面いっぱいのカレンダーが開き、日付マスが大きく見やすく。選択日の予定は下からスライドするパネルに表示','⚡タップ数削減：予定タブは前回の表示（月/週/アジェンダ）で直接開く・選択中の日をもう1度タップでその日に即追加・ヘッダに「今日」「＋」ボタン・左右スワイプで月移動','◀Androidの戻るボタンで全画面カレンダーを閉じられます（✕でも可）'] },
   { v:'v287', d:'2026-08-03', items:['📝ToDoビュー刷新（CAL-3・リマインダー風）：アジェンダ最上部に即入力ボックス（入力してEnter→今日のタスクとして即作成）','⭐星付き：各カードの☆でトグル。期日が先・日付なしの星付きは「⭐星付き」グループに集約（期限切れ/今日/次の7日間は緊急度優先でそのまま）','☑サブタスク（チェックリスト）：編集画面で追加・チェック・削除。一覧カードに進捗「2/4」＋ミニバー表示、タップで展開してその場でチェック','「今週」グループを「次の7日間」に改称','完了済みの月別アーカイブは従来どおり'] },
   { v:'v286', d:'2026-08-03', items:['📌予定テンプレート機能（CAL-2）：予定・タスク追加の最上部にテンプレチップ（📲CT取り/☕CT/🎤FT/🎓PG同席/🎪DLR動員/🏛ミーティング）。タップで内容・所要時間・通知をまとめてプリフィル','👤メンバー選択と連動：タイトルの{name}が選んだメンバー名に自動置換（例：ななみCT）','✎チップ列右端の✎からテンプレの編集・追加・削除（名前/絵文字/種別/所要分/通知/雛形/対応ステージ）','📊テンプレから作った予定を完了すると、MAP実績（今日の一歩）へ自動+1＆XP獲得（二重加算なし・自分のMAPのみ）。CT/FT完了時は「OL記録つける？」も表示','🗺メンバー情報パネルに「📅＋予定を入れる」ボタン'] },
@@ -12552,8 +12561,9 @@ function setEventsMode(mode) {
   if (ec) ec.style.display = mode === 'calendar' ? '' : 'none';
   if (mode === 'week') _weekOffset = 0; // 週表示を開いたら必ず今週から
   if (mode !== 'calendar') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
-  // CAL-FS: カレンダーモードは全画面化＋モードを記憶
+  // CAL-FS: カレンダーモードは全画面化（ヘッダー/下部ナビも非表示）＋モードを記憶
   if (ec) ec.classList.toggle('full', mode === 'calendar');
+  document.body.classList.toggle('cal-fs', mode === 'calendar' && currentView === 'events');
   if (mode === 'calendar') _calSwipeInit();
   try { localStorage.setItem('gm_evMode', mode); } catch(e) {}
   renderEvents();
