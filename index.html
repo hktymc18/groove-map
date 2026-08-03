@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>MAP</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
@@ -552,6 +552,15 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .fl{font-size:11px;color:var(--text-dim);margin-bottom:3px;display:block}
 .fi,.fs,.fta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);padding:9px 11px;font-size:15px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .15s}
 .fi:focus,.fs:focus,.fta:focus{border-color:var(--accent)}
+/* iOS: 入力欄が16px未満だとフォーカス時に画面が自動ズームされ、スクロール時に横ズレする。
+   iOS(WebKit)のみ入力系を16pxに引き上げてズーム自体を発生させない */
+@supports (-webkit-touch-callout: none) {
+  .fi,.fs,.fta,.ev-quick-add input,.sd-search-input,
+  .sheet input,.sheet select,.sheet textarea,
+  .ms-sheet input,.ms-sheet select,.ms-sheet textarea{font-size:16px!important}
+}
+/* モーダル内で何かがはみ出しても横スクロールは発生させない */
+.sheet,.ms-sheet{overflow-x:hidden}
 .fs option{background:var(--bg)}
 .fta{resize:none;height:74px;font-size:13px}
 .fr-row{display:flex;gap:8px;margin-bottom:12px}
@@ -1884,7 +1893,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v290</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v291</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4353,7 +4362,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v290';
+  var DATA_VERSION = 'v291';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5057,6 +5066,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v291', d:'2026-08-03', items:['📱iPhoneで入力中に画面が勝手に拡大されて横にズレる問題を修正：入力欄にフォーカスしてもズームが発生しないようにしました（入力文字も少し大きく見やすく）','モーダル内の横スクロールを完全に禁止（はみ出し防止）'] },
   { v:'v290', d:'2026-08-03', items:['🗑タスクの削除がどこからでも：メンバー編集パネルのタスク欄の各行に「✎編集」「🗑削除」ボタンを追加（今までは完了にするしかできませんでした）','編集・削除の結果はパネルに即反映','パネルからタスクを完了した場合も、テンプレ由来ならMAP実績への自動+1が効くように統一'] },
   { v:'v289', d:'2026-08-03', items:['🗓全画面カレンダーの表示バグを修正：ヘッダー・下部ナビが上に重なって見切れていた問題を解消。全画面中はアプリのヘッダー/フッターも非表示になり文字どおり画面全体がカレンダーに','選択日パネルがカレンダーに覆い被さって月末の週が隠れる問題も修正（グリッドとパネルで画面を分け合うレイアウトに）','✕またはAndroidの戻るで通常画面に戻ります'] },
   { v:'v288', d:'2026-08-03', items:['🗓月カレンダーを全画面表示に刷新：「月」を選ぶと画面いっぱいのカレンダーが開き、日付マスが大きく見やすく。選択日の予定は下からスライドするパネルに表示','⚡タップ数削減：予定タブは前回の表示（月/週/アジェンダ）で直接開く・選択中の日をもう1度タップでその日に即追加・ヘッダに「今日」「＋」ボタン・左右スワイプで月移動','◀Androidの戻るボタンで全画面カレンダーを閉じられます（✕でも可）'] },
