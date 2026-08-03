@@ -1910,7 +1910,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v294</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v295</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3190,6 +3190,13 @@ function renderPCMap(mapType) {
 
   // 折りたたみ状態
   if (!window._pcCollapsed) window._pcCollapsed = {};
+  // 大規模MAP（150人超）は初期表示を3段目までに自動折りたたみ（描画時間を大幅短縮）
+  var _bigKey = (viewingOwnerUid || 'own') + '|' + (state.currentMonth || '') + '|' + mapType + '|' + (members.length > 150 ? 'big' : 'small');
+  if (members.length > 150 && window._pcAutoCollapsedKey !== _bigKey) {
+    window._pcAutoCollapsedKey = _bigKey;
+    members.forEach(function(m) { if ((nodeDepth[m.id] || 0) >= 2) window._pcCollapsed[m.id] = true; });
+    toast('大きなMAPのため3段目まで表示しています（ノードをクリックで展開）');
+  }
   function visKids(id) { return window._pcCollapsed[id] ? [] : kids(id); }
 
   // ── レイアウト（横レイヤード：左→右） ──
@@ -4403,7 +4410,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v294';
+  var DATA_VERSION = 'v295';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4505,6 +4512,7 @@ function buildMonthSelector() {
 }
 
 function onYearMonthChange() {
+  flushPendingSave(); // 月が変わる前に未保存分を旧月へ確定
   var y = document.getElementById('selYear').value;
   var m = document.getElementById('selMonth').value;
   var mm = String(m).padStart(2,'0');
@@ -4758,7 +4766,7 @@ function _renderCurrentViewNow() {
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
   else if (currentView === 'stats') renderStats();
   else if (currentView === 'ol') renderOL();
-  _hideSwitching();
+  if (!window._keepSpinner) _hideSwitching(); // 共有MAP読込中は全データが揃うまで維持
 }
 // デバウンス：連続呼び出し（結合リスナー多重発火等）を1フレームにまとめる。
 // 直近150ms実行が無ければ即時（操作の体感を守る）、連打中は120ms後に1回だけ。
@@ -4784,7 +4792,7 @@ function _showSwitching(msg) {
   el.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(5,8,16,.55);display:flex;align-items:center;justify-content:center';
   el.innerHTML = '<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px;padding:16px 26px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px"><span class="spin"></span>' + (msg || 'MAPを切り替え中…') + '</div>';
   document.body.appendChild(el);
-  setTimeout(_hideSwitching, 15000); // 読み込み失敗時に出っぱなしにならない保険
+  setTimeout(function(){ window._keepSpinner = false; _hideSwitching(); }, 15000); // 読み込み失敗時に出っぱなしにならない保険
 }
 function _hideSwitching() {
   var el = document.getElementById('switchingOv');
@@ -5107,7 +5115,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v294', d:'2026-08-03', items:['🔁繰り返し予定に対応：毎日/毎週/隔週/毎月＋終了日（未指定は3ヶ月先まで・最大60件）。毎週のミーティングを1回の入力で登録できます','繰り返しの予定は🔁マーク付き。操作シートから「この回のみ削除」「以降すべて削除」を選べます','🔍検索機能：リスト上部の入力ボックスに文字を打つと、タイトル・メモ・メンバー名で即絞り込み。そのままEnterすれば今日のタスクとして追加'] },
+  { v:'v295', d:'2026-08-03', items:['🔁繰り返し予定に対応：毎日/毎週/隔週/毎月＋終了日（未指定は3ヶ月先まで・最大60件）。毎週のミーティングを1回の入力で登録できます','繰り返しの予定は🔁マーク付き。操作シートから「この回のみ削除」「以降すべて削除」を選べます','🔍検索機能：リスト上部の入力ボックスに文字を打つと、タイトル・メモ・メンバー名で即絞り込み。そのままEnterすれば今日のタスクとして追加'] },
   { v:'v293', d:'2026-08-03', items:['🎨予定タブのミニマル刷新 第2弾（操作編）','📝追加フォームを2段構えに：普段は「テンプレ・種別・タイトル・日付・時刻」だけのすっきり表示。カテゴリ・メンバー・通知・サブタスク・メモは「▾詳細」から（値が入っている時は自動で開きます）','⏰時刻入力をスマホ標準のホイールに刷新＋「開始〜終了」に対応（一覧にも 9:00〜10:00 と表示）','🗓全画面カレンダーの中に「月/週/リスト」切替を内蔵','👆一覧の行タップは操作シートに：完了・スター・編集・削除へ大きなボタンで（誤タップ防止・削除が2タップに）'] },
   { v:'v292', d:'2026-08-03', items:['🎨予定タブをミニマルデザインに刷新（第1弾）','🗓月カレンダー：マスの枠・箱をやめて罫線だけのすっきりしたグリッドに。予定チップはベタ塗り＋読める文字サイズへ。今日は数字を丸で強調','🇯🇵日本の祝日を表示（赤数字＋祝日名。2026〜2028年内蔵）','📋タスク・予定の行をコンパクト化：カード型→罫線区切りの行に（1画面に入る件数が約2倍）。行の📅ボタンは編集画面内のリンクへ移設','⚙週の始まりを設定可能に（月曜/日曜・全画面カレンダーの⚙から。月と週で始まりがズレていたのも統一）','見出しの英字・等幅表記をやめ日本語のシンプルな見出しに'] },
   { v:'v291', d:'2026-08-03', items:['📱iPhoneで入力中に画面が勝手に拡大されて横にズレる問題を修正：入力欄にフォーカスしてもズームが発生しないようにしました（入力文字も少し大きく見やすく）','モーダル内の横スクロールを完全に禁止（はみ出し防止）'] },
@@ -9515,21 +9523,33 @@ function exportCSV(type) {
 
 // ── SAVE TO GAS ──
 
+// 保存のまとめ書き：連続編集を1.5秒デバウンスして1回のアップロードに（大規模MAPの固まり対策）
+var _saveTimer = null, _savePendingUid = null;
 function autoSave() {
   // 合算表示中は保存しない（合算コピーで自分のデータを上書きしない）
   if (_aggActive) return;
   // 共有MAPを閲覧中で編集権が無ければ保存しない（自分・他人のデータを壊さない）
   if (viewingOwnerUid && !state.isEditor) return;
-  if (!viewingOwnerUid) lsSave(); // 自分のMAPだけローカルキャッシュ
+  if (!viewingOwnerUid) lsSave(); // 自分のMAPだけローカルキャッシュ（即時）
   var uid = mapTargetUid();
-  if (USE_FIREBASE && uid) {
-    fsSaveToFirestore(uid)
-      .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); recordHistory(); })
-      .catch(function(e) { console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
-  } else {
-    updateLastSaved();
-    toast('保存しました ✓');
-  }
+  if (!(USE_FIREBASE && uid)) { updateLastSaved(); toast('保存しました ✓'); return; }
+  _savePendingUid = uid;
+  updateLastSaved(); // 体感は即時
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function() { _saveTimer = null; _doSaveNow(); }, 1500);
+}
+function _doSaveNow() {
+  var uid = _savePendingUid;
+  if (!uid) return;
+  _savePendingUid = null;
+  fsSaveToFirestore(uid)
+    .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); recordHistory(); })
+    .catch(function(e) { console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
+}
+// 画面切替・終了前に未保存分を確定させる
+function flushPendingSave() {
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+  if (_savePendingUid) _doSaveNow();
 }
 
 // ── 変更履歴（Phase F）：メンバーの追加/削除/タイトル変更を自動記録 ──
@@ -12635,6 +12655,7 @@ function showUpdateBanner() {
   b.innerHTML = '<span>🔄 新しいバージョンがあります</span><span style="color:var(--accent);font-weight:800;cursor:pointer" onclick="location.reload()">更新</span>';
   document.body.appendChild(b);
 }
+window.addEventListener('pagehide', function(){ try { flushPendingSave(); } catch(e){} });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('sw.js').then(function(reg) {
@@ -14656,6 +14677,7 @@ function _resetAuthErrMsg(code) {
 }
 function doLogout() {
   if (!confirm('ログアウトしますか？')) return;
+  flushPendingSave();
   if (auth) {
     auth.signOut().then(function() { location.reload(); }).catch(function(e) { alert('ログアウトに失敗しました: ' + e.message); });
   } else {
@@ -14888,41 +14910,44 @@ var viewingOwnerUid = null; // 現在閲覧中のオーナーUID（nullなら自
 function fsLoadSharedMap(ownerUid) {
   var month = state.currentMonth;
   stopSharedLiveSync();
-  toast('共有MAPを読み込み中...');
-  loadAvatars(ownerUid); // 相手のMAPの写真アバター
-  // 共有されたMAPのデータを直接読む
-  // セキュリティルール上、sharedWithを経由して許可する
+  flushPendingSave(); // 切替前に前のMAPへの保存を確定（誤宛先防止）
+  window._keepSpinner = true; // 全データが揃うまでスピナーを維持（途中で止まった風にしない）
+  // 3並列で取得し「描画は1回だけ」（途中描画のカクつきを排除）
   var p1 = fsGet('maps/' + ownerUid + '/months/' + month + '_current');
   var p2 = fsGet('maps/' + ownerUid + '/months/' + month + '_ideal');
   var p3 = fsGet('maps/' + ownerUid + '/stats/' + month);
-
-  // 本体（現状メンバー）が届いた時点で即表示＆編集パネルを開く（理想/統計/予定を待たない）
-  p1.then(function(data) {
-    state.members = (data && data.members) ? data.members : [];
+  var left = 3, failed = false;
+  function done() {
+    left--;
+    if (left > 0) return;
+    window._keepSpinner = false;
+    if (failed) { _hideSwitching(); toast('読み込みエラー。もう一度お試しください'); return; }
     _mergeSnap = null; // マージ基準を再初期化（共有MAP読込）
-    renderCurrentView();
+    _lastMergeCheck = Date.now(); // 直後の保存はマージ読取り不要（読みたて＝最新）
+    renderCurrentView(); // ← この1回で描画完了＆スピナー自動解除
     toast('共有MAPを読み込みました ✓');
     // 結合ノードからの編集ジャンプ：対象メンバーの編集パネルを開く
     if (_pendingSharedEditId) {
       var _eid = _pendingSharedEditId; _pendingSharedEditId = null;
-      setTimeout(function(){ if (typeof openEdit === 'function') openEdit(_eid); }, 80);
+      setTimeout(function(){ if (typeof openEdit === 'function') openEdit(_eid); }, 120);
     }
-  }).catch(function(e) {
-    toast('読み込みエラー: ' + e.message);
-    console.error('shared map load error:', e);
-  });
-  // 残りは裏で並列取得（届き次第反映）
-  p2.then(function(data) { state.idealMembers = (data && data.members) ? data.members : []; }).catch(function(){});
+    // 重要でないデータ（予定・アバター）は編集可能になった後に裏で読む
+    setTimeout(function() {
+      if (viewingOwnerUid === ownerUid) { loadEvents(ownerUid); loadAvatars(ownerUid); }
+    }, 900);
+  }
+  p1.then(function(data) { state.members = (data && data.members) ? data.members : []; done(); })
+    .catch(function(e) { failed = true; console.error('shared map load error:', e); done(); });
+  p2.then(function(data) { state.idealMembers = (data && data.members) ? data.members : []; done(); })
+    .catch(function() { done(); });
   p3.then(function(data) {
     if (data) {
       state.stats = data.stats || getDefaultStats();
       state.commission = data.commission || getDefaultCommission();
       state.freshData = data.freshData || {};
-      renderCurrentView();
     }
-  }).catch(function(){});
-  // 予定も並列で取得
-  loadEvents(ownerUid);
+    done();
+  }).catch(function() { done(); });
   // ※リアルタイム購読は速度優先で廃止（保存時のメンバー単位マージで競合は解決）。
   //   最新を見たい時は閲覧バーの「🔄 最新」で再読込。
 }
@@ -15261,6 +15286,7 @@ function buildSharedCard(owner) {
 }
 
 function switchToOwner(ownerUid, perm) {
+  flushPendingSave(); // 切替前に未保存分を確定（宛先は予約時にキャプチャ済み）
   _showSwitching(ownerUid ? '相手のMAPに切り替え中…' : '自分のMAPに戻っています…');
   _aggActive = false; _aggSelArr = []; // 合算表示を解除
   viewingOwnerUid = ownerUid;
@@ -15571,6 +15597,7 @@ function fsLoadFromFirestore(uid) {
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
       state.members = loaded.current.members;
       _mergeSnap = null; // マージ基準を再初期化（自分のMAP読込・月切替）
+      _lastMergeCheck = Date.now(); // 読みたて＝直後の保存はマージ読取り不要
     } else {
       state.members = [];
     }
@@ -15638,6 +15665,8 @@ function mergeMembers(localArr, remoteArr) {
   });
   return order.map(function(id) { return map[id]; });
 }
+// 保存前マージ読取りの間引き：直近60秒以内に読取り/読込済みならスキップ（大規模MAPの往復半減）
+var _lastMergeCheck = 0;
 function fsSaveToFirestore(uid) {
   var month = state.currentMonth;
   var curPath = 'maps/' + uid + '/months/' + month + '_current';
@@ -15647,7 +15676,11 @@ function fsSaveToFirestore(uid) {
     // 全消し等の意図的な全置換はマージしない
     window._skipMergeOnce = false;
     p1 = fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
+  } else if (Date.now() - _lastMergeCheck < 60000) {
+    // 直近に読んだばかり＝リモートはほぼ最新。アップロードのみの高速パス
+    p1 = fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
   } else {
+    _lastMergeCheck = Date.now();
     p1 = fsGet(curPath).then(function(remote) {
       if (remote && remote.members && remote.members.length) {
         var merged = mergeMembers(state.members, remote.members);
