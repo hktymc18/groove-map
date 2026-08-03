@@ -1884,7 +1884,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v289</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v290</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4353,7 +4353,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v289';
+  var DATA_VERSION = 'v290';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5057,6 +5057,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v290', d:'2026-08-03', items:['🗑タスクの削除がどこからでも：メンバー編集パネルのタスク欄の各行に「✎編集」「🗑削除」ボタンを追加（今までは完了にするしかできませんでした）','編集・削除の結果はパネルに即反映','パネルからタスクを完了した場合も、テンプレ由来ならMAP実績への自動+1が効くように統一'] },
   { v:'v289', d:'2026-08-03', items:['🗓全画面カレンダーの表示バグを修正：ヘッダー・下部ナビが上に重なって見切れていた問題を解消。全画面中はアプリのヘッダー/フッターも非表示になり文字どおり画面全体がカレンダーに','選択日パネルがカレンダーに覆い被さって月末の週が隠れる問題も修正（グリッドとパネルで画面を分け合うレイアウトに）','✕またはAndroidの戻るで通常画面に戻ります'] },
   { v:'v288', d:'2026-08-03', items:['🗓月カレンダーを全画面表示に刷新：「月」を選ぶと画面いっぱいのカレンダーが開き、日付マスが大きく見やすく。選択日の予定は下からスライドするパネルに表示','⚡タップ数削減：予定タブは前回の表示（月/週/アジェンダ）で直接開く・選択中の日をもう1度タップでその日に即追加・ヘッダに「今日」「＋」ボタン・左右スワイプで月移動','◀Androidの戻るボタンで全画面カレンダーを閉じられます（✕でも可）'] },
   { v:'v287', d:'2026-08-03', items:['📝ToDoビュー刷新（CAL-3・リマインダー風）：アジェンダ最上部に即入力ボックス（入力してEnter→今日のタスクとして即作成）','⭐星付き：各カードの☆でトグル。期日が先・日付なしの星付きは「⭐星付き」グループに集約（期限切れ/今日/次の7日間は緊急度優先でそのまま）','☑サブタスク（チェックリスト）：編集画面で追加・チェック・削除。一覧カードに進捗「2/4」＋ミニバー表示、タップで展開してその場でチェック','「今週」グループを「次の7日間」に改称','完了済みの月別アーカイブは従来どおり'] },
@@ -9797,7 +9798,19 @@ function meRenderExtras(m) {
   var evs = (state.events || []).filter(function(e){ return e.memberId === mid && !e.deleted; });
   var tkHtml = '';
   if (!evs.length) tkHtml += '<div class="md-empty">紐付くタスク・予定はありません</div>';
-  else tkHtml += evs.map(function(e){ var isTask = e.type === 'task'; var ic = isTask ? (e.done?'✅':'⬜') : (e.done?'✅':'📅'); var d = e.date ? e.date.split('-').slice(1).join('/') : ''; var clickAttr = ' onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')" style="cursor:pointer"'; return '<div class="me-task"' + clickAttr + '><span>' + ic + '</span> <span style="' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span> <span style="color:var(--text-dim);font-size:12px">' + d + '</span></div>'; }).join('');
+  else tkHtml += evs.map(function(e){
+    var isTask = e.type === 'task';
+    var ic = isTask ? (e.done?'✅':'⬜') : (e.done?'✅':'📅');
+    var d = e.date ? e.date.split('-').slice(1).join('/') : '';
+    // 誤入力をその場で直せるよう、完了トグルに加えて ✎編集・🗑削除 を各行に用意
+    return '<div class="me-task" style="display:flex;align-items:center;gap:4px">'
+      + '<span style="flex:1;display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0" onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')">'
+      + '<span>' + ic + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span>'
+      + '<span style="color:var(--text-dim);font-size:12px;flex:none">' + d + '</span></span>'
+      + '<span onclick="openEventEdit(\'' + e.id + '\')" style="flex:none;padding:6px 8px;color:var(--text-dim);cursor:pointer" title="編集">✎</span>'
+      + '<span onclick="meDeleteTask(\'' + e.id + '\',\'' + mid + '\')" style="flex:none;padding:6px 8px;color:var(--red);cursor:pointer" title="削除">🗑</span>'
+      + '</div>';
+  }).join('');
   tkHtml += '<div class="me-add-btn" onclick="ckAddTask(\'' + mid + '\')">＋ タスクを追加する</div>';
   tkBox.innerHTML = tkHtml;
 }
@@ -9963,13 +9976,30 @@ function meToggleTask(id, mid) {
   e.done = !e.done;
   e.completedAt = e.done ? new Date().toISOString() : '';
   e.updatedAt = new Date().toISOString();
+  // CAL-2: テンプレ由来ならパネルからの完了でもMAP実績へ還元（トーストは還元側を優先）
+  var _rw = (e.done && typeof _evRewardOnDone === 'function') ? _evRewardOnDone(e) : false;
   saveEventDoc(e);
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   if (e.done && typeof gameCheck === 'function') gameCheck();
-  if (typeof toast === 'function') toast(e.done ? '✅ タスク完了' : '⬜ 未完了に戻しました');
+  if (typeof toast === 'function' && !_rw) toast(e.done ? '✅ タスク完了' : '⬜ 未完了に戻しました');
   var m = (state.members || []).filter(function(x){ return x.id === mid; })[0];
   if (m) meRenderExtras(m); // パネルを再描画してチェック状態を反映
+}
+// メンバー編集パネルから誤入力タスクをその場で削除
+function meDeleteTask(eid, mid) {
+  var e = findEvent(eid);
+  if (!e) return;
+  if (!confirm('「' + (e.title || '(無題)') + '」を削除しますか？')) return;
+  for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === eid) { state.events.splice(i, 1); break; } }
+  if (state.gcalConnected) gcalDeleteRemote(e);
+  var uid = eventsUid();
+  if (uid && db) db.doc('maps/' + uid + '/events/' + eid).delete().catch(function(){});
+  updateEventsBadge();
+  if (currentView === 'events') renderEvents();
+  var m = _mFind(mid);
+  if (m) meRenderExtras(m);
+  toast('削除しました');
 }
 function openAdd() {
   if (!state.isEditor) return;
@@ -13365,6 +13395,14 @@ function deleteEvent() {
   closeEventModal();
   updateEventsBadge();
   renderEvents();
+  // メンバー編集パネルを開いたまま削除した場合、パネルのタスク一覧を即時更新
+  try {
+    var _mm2 = document.getElementById('modal');
+    if (_mm2 && _mm2.classList.contains('open') && typeof editingId !== 'undefined' && editingId && removed && removed.memberId === editingId) {
+      var _tm2 = _mFind(editingId);
+      if (_tm2 && typeof meRenderExtras === 'function') meRenderExtras(_tm2);
+    }
+  } catch(err2) {}
   toast('削除しました');
 }
 function openTaskForMember() {
