@@ -957,6 +957,27 @@ tr.ot-done{opacity:.5}
 .ev-item.t-task{border-left-color:var(--accent)}
 .ev-item.t-event{border-left-color:var(--purple)}
 .ev-item.is-overdue{border-left-color:var(--red)}
+/* CAL-3: 即入力ボックス・星付き・サブタスク */
+.ev-quick-add{padding:10px 14px 0}
+.ev-quick-add input{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-family:inherit;outline:none;box-sizing:border-box}
+.ev-quick-add input:focus{border-color:var(--accent)}
+.ev-quick-add input::placeholder{color:var(--text-dim)}
+.ev-group-label.starred{color:var(--gold)}
+.ev-i-star{flex:none;font-size:17px;color:var(--text-dim);cursor:pointer;padding:2px 4px;line-height:1;align-self:center}
+.ev-i-star.on{color:var(--gold)}
+.ev-i-sub{display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:var(--text-mid);font-weight:700}
+.ev-subbar{display:inline-block;width:34px;height:4px;border-radius:2px;background:var(--surface3);overflow:hidden;font-style:normal}
+.ev-subbar i{display:block;height:100%;background:var(--accent);border-radius:2px;font-style:normal}
+.ev-sub-block{margin:-4px 14px 8px 44px}
+.ev-mgrp .ev-sub-block{margin-left:30px;margin-right:0}
+.ev-sub-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px dashed var(--border);cursor:pointer;font-size:13px}
+.ev-sub-row:last-child{border-bottom:none}
+.ev-sub-chk{flex:none;width:18px;height:18px;border-radius:6px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;color:#000;background:transparent}
+.ev-sub-row.done .ev-sub-chk{background:var(--accent);border-color:var(--accent)}
+.ev-sub-row.done .ev-sub-t{text-decoration:line-through;color:var(--text-dim)}
+.ev-sub-edit-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ev-sub-edit-row .ev-sub-chk{cursor:pointer}
+.ev-sub-x{flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:var(--text-dim);cursor:pointer;font-size:14px}
 .ev-item.is-done{opacity:.5}
 .ev-item.is-done .ev-i-title{text-decoration:line-through}
 .ev-check{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;margin-top:1px}
@@ -1004,6 +1025,11 @@ tr.ot-done{opacity:.5}
 .ev-day-panel-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 2px 6px;border-bottom:1px solid var(--border)}
 .ev-day-panel-hdr .lb{font-size:14px;font-weight:800}
 .ev-day-panel-add{flex:none;background:var(--accent);color:var(--go-ink);border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
+/* CAL-2: 予定テンプレチップ（タップで内容・時間・通知をプリフィル） */
+.ev-tpl-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0 2px;-webkit-overflow-scrolling:touch}
+.ev-tpl-chip{flex:none;display:flex;align-items:center;gap:4px;padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s}
+.ev-tpl-chip.sel{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.ev-tpl-chip.mgr{color:var(--text-dim);padding:7px 10px}
 .ev-day-panel .ev-item{margin-left:0;margin-right:0}
 .ev-day-panel .ev-item:first-of-type{margin-top:10px}
 .ev-cal-daylabel{font-size:15px;font-weight:700;color:var(--text)}
@@ -1839,7 +1865,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v285</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v287</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2059,6 +2085,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
     <!-- アジェンダ -->
     <div id="evAgenda">
+      <div class="ev-quick-add" id="evQuickAdd" style="display:none">
+        <input id="evQuickInput" placeholder="＋ タスクを入力してEnter（今日のタスクに追加）" onkeydown="evQuickKey(event)" autocomplete="off">
+      </div>
       <div id="evAgendaList"></div>
     </div>
 
@@ -2476,6 +2505,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <div class="overlay" id="eventModal" onclick="onEventOverlayClick(event)">
   <div class="sheet">
     <div class="sh-title" id="evShTitle">予定・タスク</div>
+    <div class="fr" id="evTplRow" style="display:none"></div>
     <div class="fr">
       <label class="fl">種別</label>
       <div class="rg">
@@ -2504,7 +2534,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div class="fr">
       <label class="fl">関連メンバー（任意）</label>
-      <select class="fi" id="evMember"></select>
+      <select class="fi" id="evMember" onchange="evTplOnMemberChange()"></select>
     </div>
     <div class="fr">
       <label class="fl">リマインド通知（任意・時刻未指定は9:00基準）</label>
@@ -2522,6 +2552,14 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="rg">
         <div class="rb sel" id="evPrioNormal" onclick="selEvPrio('normal')">通常</div>
         <div class="rb" id="evPrioHigh" onclick="selEvPrio('high')">⚑ 重要</div>
+      </div>
+    </div>
+    <div class="fr">
+      <label class="fl">サブタスク（チェックリスト・任意）</label>
+      <div id="evSubList"></div>
+      <div style="display:flex;gap:6px">
+        <input class="fi" id="evSubNew" placeholder="＋ サブタスクを追加してEnter" onkeydown="evSubNewKey(event)" style="flex:1" autocomplete="off">
+        <button class="btn-c" style="flex:none;padding:0 14px" onclick="evSubAdd()">追加</button>
       </div>
     </div>
     <div class="fr"><label class="fl">メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
@@ -4293,7 +4331,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v285';
+  var DATA_VERSION = 'v287';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4988,6 +5026,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v287', d:'2026-08-03', items:['📝ToDoビュー刷新（CAL-3・リマインダー風）：アジェンダ最上部に即入力ボックス（入力してEnter→今日のタスクとして即作成）','⭐星付き：各カードの☆でトグル。期日が先・日付なしの星付きは「⭐星付き」グループに集約（期限切れ/今日/次の7日間は緊急度優先でそのまま）','☑サブタスク（チェックリスト）：編集画面で追加・チェック・削除。一覧カードに進捗「2/4」＋ミニバー表示、タップで展開してその場でチェック','「今週」グループを「次の7日間」に改称','完了済みの月別アーカイブは従来どおり'] },
+  { v:'v286', d:'2026-08-03', items:['📌予定テンプレート機能（CAL-2）：予定・タスク追加の最上部にテンプレチップ（📲CT取り/☕CT/🎤FT/🎓PG同席/🎪DLR動員/🏛ミーティング）。タップで内容・所要時間・通知をまとめてプリフィル','👤メンバー選択と連動：タイトルの{name}が選んだメンバー名に自動置換（例：ななみCT）','✎チップ列右端の✎からテンプレの編集・追加・削除（名前/絵文字/種別/所要分/通知/雛形/対応ステージ）','📊テンプレから作った予定を完了すると、MAP実績（今日の一歩）へ自動+1＆XP獲得（二重加算なし・自分のMAPのみ）。CT/FT完了時は「OL記録つける？」も表示','🗺メンバー情報パネルに「📅＋予定を入れる」ボタン'] },
   { v:'v285', d:'2026-07-27', items:['🎨仕上げリリース（総点検の最終回）','📷写真バッジ：ライトテーマでの色を最適化・文字色を背景に応じて自動調整','長い自由入力タイトルはバッジ/アイコンで「3文字＋…」に切り詰め（はみ出し防止）','🖥PC地図：写真150枚超は文字アイコンに自動切替（大組織のフリーズ防止）','🏢組織ボードは「準備中」表示に（押しても何も起きないボタンを解消）','内部の未使用コードを整理'] },
   { v:'v280', d:'2026-07-27', items:['🔧磨きこみリリース','🧭タイトル進捗を「あとNランク」＋段階バーに（%のズレ感を解消）・頂上/価値観に✎を常設・セットアップに「今のタイトル/月収」を追加','✅今日の一歩の＋1に「↩取り消す」・今月タブの−が過去日の記録から正しく引けるように','🗓週表示：今日の行を背景ハイライト・空の週は1つの案内に・「未完了N/全M件」表示','🏆ランキングに「◯分前の情報↻更新」・自分のXPは獲得した瞬間に反映','📊先月からの変化にも↻更新ボタン','🚪OUTをBRカテゴリからも選択可能に・メンバータブの人数からOUTを分離（🚪OUTピルで確認）','🎂年齢の入力チェック（1〜120）・生年月日を入れると年齢欄は自動計算表示に','🖥PC：逆算マップの横幅を適正化','📦管理画面を開いた時に前回の古い集計を消去'] },
   { v:'v279', d:'2026-07-27', items:['✨体験改善リリース','✅今日の一歩：月末に不足分が全部乗る「絶壁」を解消（均等ペース×2を上限に・超過分は⚠️遅れバッジ）','⏰期限切れの頂上は「期限を更新する」案内に（架空の逆算を表示しない）','📍道のりレールは常に今年を表示：来年以降の頂上・最終LOIも年付きで正しく逆算（複数年ゴール対応）','📆今月のフロント行に「MAP上の実数」を併記（手入力とのズレが見える）','🗓週表示：開くたび今週にリセット・別の週では「今週へ」ボタン表示','📷写真を高精細化（128px）・2本指ピンチで拡大・写真タップで切り抜きやり直し','🔗結合したメンバーの写真も表示されるように','☰メニューに理想MAP・共有MAP・アカウント管理を追加・現在地に✓','◀Androidの戻るボタンでシートが閉じるように（アプリが終了しない）','🌳300人超の「全て展開」は確認してから（重さ対策）'] },
@@ -5247,13 +5287,14 @@ function _qrToday(stage) {
   return parseInt((da[evTodayYmd()] || {})[stage] || 0, 10) || 0;
 }
 var _lastQuickRec = null; // 直前のクイック記録（押し間違い取り消し用）
-function quickRecord(stage) {
+// dailyActuals への+1記録＋即時XP報酬（クイック記録／CAL-2テンプレ完了還元の共通実体）
+function _stageRecord(stage, day) {
   if (!state.goals) state.goals = _glDefault();
   if (!state.goals.plan) state.goals.plan = _glDefaultPlan();
-  var p = state.goals.plan, k = evTodayYmd();
+  var p = state.goals.plan;
   p.dailyActuals = p.dailyActuals || {};
-  p.dailyActuals[k] = p.dailyActuals[k] || {};
-  p.dailyActuals[k][stage] = (parseInt(p.dailyActuals[k][stage] || 0, 10) || 0) + 1;
+  p.dailyActuals[day] = p.dailyActuals[day] || {};
+  p.dailyActuals[day][stage] = (parseInt(p.dailyActuals[day][stage] || 0, 10) || 0) + 1;
   saveGoals();
   // 即時報酬
   var g = getGame(), xp = GAME_XP[stage] || 2;
@@ -5265,8 +5306,13 @@ function quickRecord(stage) {
   var after = gameLevelInfo(g.xp).level;
   if (after > before) gameLevelUp(after);
   gameAward(true);
-  _lastQuickRec = { day: k, stage: stage, xp: xp }; // 取り消し用に記憶
   if (currentView === 'home') renderHome();
+  return xp;
+}
+function quickRecord(stage) {
+  var k = evTodayYmd();
+  var xp = _stageRecord(stage, k);
+  _lastQuickRec = { day: k, stage: stage, xp: xp }; // 取り消し用に記憶
   // 押し間違いをその場でリカバリー（親指の届くトーストにアクションを付与）
   var _qs = QUICK_STAGES.filter(function(s){ return s.k === stage; })[0];
   if (typeof toastAction === 'function') toastAction((_qs ? _qs.ic + ' ' + _qs.label : '') + ' +1 記録', '↩ 取り消す', quickRecordUndo);
@@ -7333,6 +7379,10 @@ function memberInfoHtml(m) {
     }).join('');
   }
   if (!html) html = '<div class="ci-empty">メモ・OL・予定なし（ダブルタップで編集）</div>';
+  // CAL-2: この人との予定をテンプレから即作成（結合メンバーは相手MAP編集ボタンを優先）
+  if (!/^MG_/.test(m.id) && eventsUid()) {
+    html += '<div style="margin-top:8px"><button style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openEventAdd(\'' + m.id + '\')">📅 ＋予定を入れる</button></div>';
+  }
   // 結合メンバー：モバイルからも編集へ飛べるボタンを表示
   if (/^MG_/.test(m.id)) {
     html += '<div style="margin-top:8px"><button style="width:100%;padding:9px;border-radius:9px;border:1px solid var(--purple);background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer" onclick="event.stopPropagation();mgNodeClick(\'' + m.id + '\')">✏️ このメンバーを編集（相手のMAPで開く）</button></div>';
@@ -12485,6 +12535,8 @@ function renderEvents() {
   updateGcalBtn();
   var addBtn = document.getElementById('evAddBtn');
   if (addBtn) addBtn.style.display = eventsUid() ? '' : 'none';
+  var qa = document.getElementById('evQuickAdd');
+  if (qa) qa.style.display = eventsUid() ? '' : 'none';
   if (_evMode === 'agenda') renderAgenda();
   else if (_evMode === 'week') renderWeek();
   else renderCalendar();
@@ -12577,6 +12629,53 @@ function evGrpLabel(text, cls, count) {
   return '<div class="ev-group-label ' + cls + '">' + text
     + ' <span style="opacity:.55">(' + count + ')</span></div>';
 }
+// CAL-3: 即入力ボックス（Enterで今日のタスクとして即作成）
+function evQuickKey(ev) {
+  if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); evQuickCreate(); }
+}
+function evQuickCreate() {
+  var inp = document.getElementById('evQuickInput');
+  if (!inp) return;
+  var title = (inp.value || '').trim();
+  if (!title) return;
+  if (!eventsUid()) { toast('ログインが必要です'); return; }
+  var e = { id: genEventId(), done: false, createdAt: new Date().toISOString(),
+    type: 'task', title: title, date: evTodayYmd(), time: '', memberId: '', categoryId: '',
+    priority: 'normal', memo: '', updatedAt: new Date().toISOString() };
+  state.events.push(e);
+  saveEventDoc(e);
+  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
+  inp.value = '';
+  updateEventsBadge();
+  renderEvents();
+  inp.focus(); // 連続入力できるようフォーカス維持（リストのみ再描画のため入力欄は消えない）
+  gameCheck();
+}
+// CAL-3: 星付きトグル
+function toggleEventStar(id) {
+  var e = findEvent(id);
+  if (!e) return;
+  e.star = !e.star;
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  renderEvents();
+}
+// CAL-3: サブタスク（一覧側）：進捗チップで展開し、その場でチェックできる
+var _evExpandedSubs = {};
+function evSubExpandToggle(id) {
+  _evExpandedSubs[id] = !_evExpandedSubs[id];
+  renderEvents();
+}
+function evSubToggle(eid, sid) {
+  var e = findEvent(eid);
+  if (!e || !e.subtasks) return;
+  for (var i = 0; i < e.subtasks.length; i++) {
+    if (e.subtasks[i].id === sid) { e.subtasks[i].done = !e.subtasks[i].done; break; }
+  }
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  renderEvents();
+}
 function evItemHtml(e) {
   var t = evTodayYmd();
   var isTask = e.type === 'task';
@@ -12604,10 +12703,29 @@ function evItemHtml(e) {
   if (cat) h += '<span class="ev-i-cat" style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">⚑ 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
+  // CAL-3: サブタスク進捗（2/4＋ミニバー）。タップでカード直下に展開してチェックできる
+  var subs = e.subtasks || [];
+  if (subs.length) {
+    var subDone = subs.filter(function(s){ return s.done; }).length;
+    var subPct = Math.round(subDone / subs.length * 100);
+    h += '<span class="ev-i-sub" onclick="event.stopPropagation();evSubExpandToggle(\'' + e.id + '\')">☑ ' + subDone + '/' + subs.length
+      + '<i class="ev-subbar"><i style="width:' + subPct + '%"></i></i>'
+      + (_evExpandedSubs[e.id] ? '▴' : '▾') + '</span>';
+  }
   h += '</div></div>';
+  // CAL-3: 星付きトグル（リマインダー風の重要マーク）
+  h += '<div class="ev-i-star' + (e.star ? ' on' : '') + '" onclick="event.stopPropagation();toggleEventStar(\'' + e.id + '\')" title="' + (e.star ? '星を外す' : '星付きにする') + '">' + (e.star ? '★' : '☆') + '</div>';
   // 📅 手動追加テンプレは「未連携のときだけ」表示（連携済みは自動同期＝二重登録防止）
   if (e.date && !state.gcalConnected) h += '<div class="ev-gcal-btn" onclick="event.stopPropagation();gcalOpenTemplate(\'' + e.id + '\')" title="Googleカレンダーに追加">&#x1F4C5;</div>';
   h += '</div>';
+  // CAL-3: 展開中はサブタスクをカード直下に表示（一覧からそのままチェック）
+  if (subs.length && _evExpandedSubs[e.id]) {
+    h += '<div class="ev-sub-block">' + subs.map(function(s){
+      return '<div class="ev-sub-row' + (s.done ? ' done' : '') + '" onclick="evSubToggle(\'' + e.id + '\',\'' + evEsc(s.id) + '\')">'
+        + '<span class="ev-sub-chk">' + (s.done ? '✓' : '') + '</span>'
+        + '<span class="ev-sub-t">' + evEsc(s.t || '') + '</span></div>';
+    }).join('') + '</div>';
+  }
   return h;
 }
 function renderAgenda() {
@@ -12617,14 +12735,16 @@ function renderAgenda() {
   evs.sort(evSortFn);
   var t = evTodayYmd();
   var weekEnd = evYmd(evAddDays(new Date(), 6));
-  var overdue = [], today = [], week = [], later = [], noDate = [], done = [];
+  var overdue = [], today = [], week = [], starred = [], later = [], noDate = [], done = [];
   evs.forEach(function(e) {
     if (e.done) { done.push(e); return; } // 実行済みの予定も完了済みへまとめる
-    if (!e.date) { noDate.push(e); return; }
+    // CAL-3: 期日が迫っていない星付き（8日以降・日付なし）は⭐グループへ集約。
+    //        期限切れ/今日/次の7日間の星付きは緊急度優先でそのまま（★は各カードに表示）
+    if (!e.date) { (e.star ? starred : noDate).push(e); return; }
     if (e.date < t) overdue.push(e);
     else if (e.date === t) today.push(e);
     else if (e.date <= weekEnd) week.push(e);
-    else later.push(e);
+    else (e.star ? starred : later).push(e);
   });
   // 新しい日付が上（期限切れ・完了済みは直近のものから表示）
   var descByDate = function(a, b){ return (b.date||'').localeCompare(a.date||''); };
@@ -12641,7 +12761,8 @@ function renderAgenda() {
   var html = '';
   if (overdue.length) html += evGrpLabel('期限切れ・終了','overdue', overdue.length) + overdue.map(evItemHtml).join('');
   if (today.length)   html += evGrpLabel('今日','today', today.length) + today.map(evItemHtml).join('');
-  if (week.length)    html += evGrpLabel('今週','', week.length) + week.map(evItemHtml).join('');
+  if (week.length)    html += evGrpLabel('次の7日間','', week.length) + week.map(evItemHtml).join('');
+  if (starred.length) html += evGrpLabel('⭐ 星付き','starred', starred.length) + starred.map(evItemHtml).join('');
   if (later.length)   html += evGrpLabel('これから','', later.length) + later.map(evItemHtml).join('');
   if (noDate.length)  html += evGrpLabel('日付なし','', noDate.length) + noDate.map(evItemHtml).join('');
   if (doneRecent.length) html += evGrpLabel('完了済み','', doneRecent.length) + doneRecent.map(evItemHtml).join('');
@@ -12743,11 +12864,27 @@ function toggleEventDone(id) {
   e.done = !e.done;
   e.completedAt = e.done ? new Date().toISOString() : '';
   e.updatedAt = new Date().toISOString();
+  if (e.done) _evRewardOnDone(e); // CAL-2: rewarded フラグを立ててから1回の書き込みにまとめる
   saveEventDoc(e);
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   renderEvents();
   if (e.done) gameCheck();
+}
+// CAL-2: テンプレ由来の予定を完了したら、MAP実績（dailyActuals）へ自動還元＋XP
+function _evRewardOnDone(e) {
+  if (!e.templateStage || e.rewarded) return false;
+  if (viewingOwnerUid) return false; // 共有MAP閲覧・編集中は相手の予定なので自分の実績に入れない
+  var xp = _stageRecord(e.templateStage, evTodayYmd());
+  e.rewarded = true; // 二重加算防止（チェックを外して付け直しても再加算しない）
+  var lbl = _evTplStageLabel(e.templateStage);
+  if ((e.templateStage === 'ct' || e.templateStage === 'ft') && e.memberId && typeof openOlRecordModal === 'function') {
+    var mid = e.memberId;
+    toastAction('📊 ' + lbl + ' +1 をMAP実績に記録 (+' + xp + 'XP)', '📝 OL記録', function(){ openOlRecordModal(mid); }, 6000);
+  } else {
+    toast('📊 ' + lbl + ' +1 をMAP実績に記録 (+' + xp + 'XP)');
+  }
+  return true;
 }
 
 // ── モーダル ──
@@ -12809,6 +12946,250 @@ function readTimeSelects() {
   if (th === '') return '';
   return (th.length < 2 ? '0' + th : th) + ':' + (tm.length < 2 ? '0' + tm : tm);
 }
+
+// ── CAL-2: 予定テンプレート（タップで内容・時間・通知をプリフィル → 完了でMAP実績へ還元） ──
+var _evTpl = null;          // 読み込み済みテンプレ配列（null=未読込）
+var _evTplSel = null;       // モーダルで選択中のテンプレ
+var _evTplTitleAuto = '';   // テンプレが自動生成したタイトル（手入力を上書きしない判定用）
+function _evTplDefaults() {
+  return [
+    { id:'tpl_ctget', name:'CT取り',      emoji:'📲', type:'task',  durationMin:30,  defaultTime:'', notifyOffset:'', titleTpl:'{name}CT取り',  categoryId:'', stage:'ctget', memo:'' },
+    { id:'tpl_ct',    name:'CT',          emoji:'☕', type:'event', durationMin:60,  defaultTime:'', notifyOffset:30, titleTpl:'{name}CT',      categoryId:'', stage:'ct',    memo:'' },
+    { id:'tpl_ft',    name:'FT',          emoji:'🎤', type:'event', durationMin:60,  defaultTime:'', notifyOffset:30, titleTpl:'{name}FT',      categoryId:'', stage:'ft',    memo:'' },
+    { id:'tpl_pg',    name:'PG同席',      emoji:'🎓', type:'event', durationMin:120, defaultTime:'', notifyOffset:60, titleTpl:'{name}PG同席',  categoryId:'', stage:'pg',    memo:'' },
+    { id:'tpl_dlr',   name:'DLR動員',     emoji:'🎪', type:'event', durationMin:180, defaultTime:'', notifyOffset:60, titleTpl:'{name}DLR動員', categoryId:'', stage:'dlr',   memo:'' },
+    { id:'tpl_mtg',   name:'ミーティング', emoji:'🏛', type:'event', durationMin:60,  defaultTime:'', notifyOffset:30, titleTpl:'ミーティング',   categoryId:'', stage:'',      memo:'' }
+  ];
+}
+function _evTplEnsure() {
+  if (_evTpl) return Promise.resolve(_evTpl);
+  var uid = goalsUid();
+  if (!uid || !db) { _evTpl = _evTplDefaults(); return Promise.resolve(_evTpl); }
+  return fsGet('maps/' + uid + '/meta/evTemplates').then(function(d){
+    _evTpl = (d && d.items && d.items.length) ? d.items : _evTplDefaults();
+    return _evTpl;
+  }).catch(function(){ _evTpl = _evTplDefaults(); return _evTpl; });
+}
+function _evTplSaveAll() {
+  var uid = goalsUid();
+  if (!uid || !db || !_evTpl) return;
+  fsSet('maps/' + uid + '/meta/evTemplates', { items: _evTpl }).catch(function(){});
+}
+function _evTplFind(id) {
+  var arr = _evTpl || [];
+  for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
+  return null;
+}
+function _evTplStageLabel(k) {
+  var s = GL_STAGES.filter(function(x){ return x.k === k; })[0];
+  return s ? s.label.replace(/（.*）/, '') : k;
+}
+function evTplRenderRow() {
+  var row = document.getElementById('evTplRow');
+  if (!row) return;
+  if (_evEditId) { row.style.display = 'none'; row.innerHTML = ''; return; } // 新規追加時のみ表示
+  var arr = _evTpl || [];
+  var h = '<label class="fl">テンプレから作成（任意）</label><div class="ev-tpl-row">';
+  arr.forEach(function(t){
+    var sel = (_evTplSel && _evTplSel.id === t.id) ? ' sel' : '';
+    h += '<div class="ev-tpl-chip' + sel + '" onclick="evTplPick(\'' + evEsc(t.id) + '\')">' + evEsc(t.emoji || '📌') + ' ' + evEsc(t.name || '') + '</div>';
+  });
+  h += '<div class="ev-tpl-chip mgr" onclick="openEvTplManager()" title="テンプレを編集">✎</div></div>';
+  row.innerHTML = h;
+  row.style.display = '';
+}
+function evTplMemberName() {
+  var mid = (document.getElementById('evMember')||{}).value || '';
+  if (!mid) return '';
+  var m = findMemberAny(mid);
+  if (!m) return '';
+  return String(m.firstName || m.lastName || '').trim();
+}
+// 通知セレクトへ分数を反映（選択肢に無い分数は追加してでも選ぶ）
+function _evSetRemind(off) {
+  var sel = document.getElementById('evRemind');
+  if (!sel) return;
+  var v = (off === '' || off === undefined || off === null) ? '' : String(off);
+  sel.value = v;
+  if (sel.value !== v) {
+    var o = document.createElement('option');
+    o.value = v; o.textContent = v + '分前';
+    sel.appendChild(o);
+    sel.value = v;
+  }
+}
+function evTplPick(id) {
+  var t = _evTplFind(id);
+  if (!t) return;
+  if (_evTplSel && _evTplSel.id === id) { // 同じチップ再タップで解除
+    _evTplSel = null; _evTplTitleAuto = '';
+    evTplRenderRow();
+    return;
+  }
+  _evTplSel = t;
+  selEvType(t.type === 'event' ? 'event' : 'task');
+  var titleEl = document.getElementById('evTitle');
+  var newTitle = String(t.titleTpl || t.name || '').replace(/\{name\}/g, evTplMemberName());
+  if (titleEl && (!titleEl.value || titleEl.value === _evTplTitleAuto)) titleEl.value = newTitle; // 手入力は尊重
+  _evTplTitleAuto = newTitle;
+  if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime);
+  _evSetRemind(t.notifyOffset);
+  if (t.categoryId && findCategory(t.categoryId)) { _evCategoryId = t.categoryId; updateEvCategoryDisplay(); }
+  var memoEl = document.getElementById('evMemo');
+  if (t.memo && memoEl && !memoEl.value) memoEl.value = t.memo;
+  evTplRenderRow();
+}
+// メンバー選択と連動：テンプレ選択中は {name} を選び直したメンバー名で再生成
+function evTplOnMemberChange() {
+  if (!_evTplSel) return;
+  var titleEl = document.getElementById('evTitle');
+  if (!titleEl) return;
+  var newTitle = String(_evTplSel.titleTpl || _evTplSel.name || '').replace(/\{name\}/g, evTplMemberName());
+  if (!titleEl.value || titleEl.value === _evTplTitleAuto) titleEl.value = newTitle;
+  _evTplTitleAuto = newTitle;
+}
+// ── テンプレ管理シート（一覧 → 編集/作成フォーム） ──
+function closeEvTplManager() {
+  var ov = document.getElementById('evTplMgrOv');
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+}
+function openEvTplManager() {
+  _evTplEnsure().then(function(){
+    closeEvTplManager();
+    var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evTplMgrOv';
+    ov.onclick = function(e){ if (e.target === ov) closeEvTplManager(); };
+    var rows = (_evTpl || []).map(function(t){
+      return '<div class="fol-log-row" onclick="openEvTplEdit(\'' + evEsc(t.id) + '\')">'
+        + '<span style="font-size:18px">' + evEsc(t.emoji || '📌') + '</span>'
+        + '<span class="fol-log-main"><span class="fol-log-ttl">' + evEsc(t.name || '') + '</span>'
+        + '<span class="fol-log-sub">' + (t.type === 'event' ? '📅予定' : '✅タスク') + '・' + (t.durationMin || 0) + '分'
+        + (t.stage ? ('・実績: ' + evEsc(_evTplStageLabel(t.stage))) : '') + '</span></span>'
+        + '<span class="fol-log-arrow">›</span></div>';
+    }).join('');
+    ov.innerHTML = '<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
+      + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📌 予定テンプレート</div>'
+      + '<div style="font-size:11px;color:var(--text-dim)">タップで編集。対応ステージ付きは完了時にMAP実績へ自動加算</div></div>'
+      + '<span class="ms-x" onclick="closeEvTplManager()">✕</span></div>'
+      + '<div style="padding:4px 16px 16px">' + rows
+      + '<button class="fol-add" onclick="openEvTplEdit(\'\')">＋ テンプレ作成</button></div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ ov.classList.add('show'); });
+  });
+}
+function closeEvTplEdit(backToList) {
+  var ov = document.getElementById('evTplEditOv');
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  if (backToList) openEvTplManager();
+}
+function openEvTplEdit(id) {
+  var t = id ? _evTplFind(id) : null;
+  closeEvTplManager();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evTplEditOv';
+  ov.onclick = function(e){ if (e.target === ov) closeEvTplEdit(true); };
+  function fld(label, inner) { return '<div class="fr"><label class="fl">' + label + '</label>' + inner + '</div>'; }
+  var typeOpts = '<option value="task"' + (!t || t.type !== 'event' ? ' selected' : '') + '>✅ タスク</option>'
+    + '<option value="event"' + (t && t.type === 'event' ? ' selected' : '') + '>📅 予定</option>';
+  var stageOpts = '<option value="">（なし・実績に入れない）</option>';
+  GL_STAGES.forEach(function(s){
+    stageOpts += '<option value="' + s.k + '"' + (t && t.stage === s.k ? ' selected' : '') + '>' + evEsc(s.label) + '</option>';
+  });
+  var ntf = t ? t.notifyOffset : 30;
+  var ntfV = (ntf === '' || ntf === undefined || ntf === null) ? '' : String(ntf);
+  var ntfList = [['', 'なし'], ['0', '時刻ちょうど'], ['10', '10分前'], ['30', '30分前'], ['60', '1時間前'], ['1440', '前日']];
+  var ntfHas = false, ntfOpts = '';
+  ntfList.forEach(function(p){ if (p[0] === ntfV) ntfHas = true; ntfOpts += '<option value="' + p[0] + '"' + (p[0] === ntfV ? ' selected' : '') + '>' + p[1] + '</option>'; });
+  if (!ntfHas) ntfOpts += '<option value="' + evEsc(ntfV) + '" selected>' + evEsc(ntfV) + '分前</option>';
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (t ? '✎ テンプレを編集' : '＋ テンプレ作成') + '</div></div>'
+    + '<span class="ms-x" onclick="closeEvTplEdit(true)">✕</span></div>'
+    + '<div style="padding:4px 16px 16px">'
+    + '<div style="display:flex;gap:8px">'
+    + '<div style="flex:0 0 74px">' + fld('絵文字', '<input class="fi" id="evtF_emoji" maxlength="4" value="' + evEsc(t ? (t.emoji || '') : '📌') + '" style="text-align:center">') + '</div>'
+    + '<div style="flex:1">' + fld('名前', '<input class="fi" id="evtF_name" placeholder="例：CT" value="' + evEsc(t ? (t.name || '') : '') + '">') + '</div>'
+    + '</div>'
+    + fld('種別', '<select class="fi" id="evtF_type">' + typeOpts + '</select>')
+    + '<div style="display:flex;gap:8px">'
+    + '<div style="flex:1">' + fld('所要（分）', '<input class="fi" id="evtF_dur" type="number" min="0" step="15" value="' + (t ? (t.durationMin || 0) : 60) + '">') + '</div>'
+    + '<div style="flex:1">' + fld('開始時刻の既定（任意）', '<input class="fi" id="evtF_time" type="time" value="' + evEsc(t ? (t.defaultTime || '') : '') + '">') + '</div>'
+    + '</div>'
+    + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
+    + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
+    + fld('対応ステージ（完了でMAP実績+1）', '<select class="fi" id="evtF_stage">' + stageOpts + '</select>')
+    + fld('メモの既定（任意）', '<input class="fi" id="evtF_memo" value="' + evEsc(t ? (t.memo || '') : '') + '">')
+    + '<div class="btn-row">'
+    + '<button class="btn-c" onclick="closeEvTplEdit(true)">キャンセル</button>'
+    + (t ? '<button class="btn-d" onclick="deleteEvTplForm(\'' + evEsc(t.id) + '\')">削除</button>' : '')
+    + '<button class="btn-p" onclick="saveEvTplForm(\'' + evEsc(id || '') + '\')">保存</button>'
+    + '</div></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function saveEvTplForm(id) {
+  var name = (document.getElementById('evtF_name')||{}).value || '';
+  name = name.trim();
+  if (!name) { toast('名前を入力してください'); return; }
+  var ntfRaw = (document.getElementById('evtF_ntf')||{}).value;
+  var t = id ? _evTplFind(id) : null;
+  if (!t) {
+    t = { id: 'tpl_' + Date.now() + '_' + Math.floor(Math.random()*1000), categoryId: '' };
+    _evTpl = _evTpl || [];
+    _evTpl.push(t);
+  }
+  t.name = name;
+  t.emoji = ((document.getElementById('evtF_emoji')||{}).value || '').trim();
+  t.type = ((document.getElementById('evtF_type')||{}).value === 'event') ? 'event' : 'task';
+  t.durationMin = parseInt((document.getElementById('evtF_dur')||{}).value, 10) || 0;
+  t.defaultTime = (document.getElementById('evtF_time')||{}).value || '';
+  t.notifyOffset = (ntfRaw === '' || ntfRaw === undefined) ? '' : (parseInt(ntfRaw, 10) || 0);
+  t.titleTpl = ((document.getElementById('evtF_tpl')||{}).value || '').trim() || name;
+  t.stage = (document.getElementById('evtF_stage')||{}).value || '';
+  t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
+  _evTplSaveAll();
+  closeEvTplEdit(false);
+  openEvTplManager();
+  evTplRenderRow(); // 背後のモーダルのチップ列も更新
+  toast('テンプレを保存しました ✓');
+}
+function deleteEvTplForm(id) {
+  if (!confirm('このテンプレを削除しますか？（作成済みの予定はそのまま残ります）')) return;
+  _evTpl = (_evTpl || []).filter(function(t){ return t.id !== id; });
+  if (_evTplSel && _evTplSel.id === id) { _evTplSel = null; _evTplTitleAuto = ''; }
+  _evTplSaveAll();
+  closeEvTplEdit(false);
+  openEvTplManager();
+  evTplRenderRow();
+  toast('削除しました');
+}
+// ── CAL-3: サブタスク編集（モーダル内チェックリスト） ──
+var _evSubs = []; // モーダルで編集中のサブタスク（保存で e.subtasks へ反映）
+function evSubsRenderList() {
+  var box = document.getElementById('evSubList');
+  if (!box) return;
+  var h = '';
+  _evSubs.forEach(function(s, i) {
+    h += '<div class="ev-sub-edit-row">'
+      + '<span class="ev-sub-chk" style="cursor:pointer;' + (s.done ? 'background:var(--accent);border-color:var(--accent)' : '') + '" onclick="evSubEditToggle(' + i + ')">' + (s.done ? '✓' : '') + '</span>'
+      + '<input class="fi" style="flex:1;' + (s.done ? 'text-decoration:line-through;color:var(--text-dim)' : '') + '" value="' + evEsc(s.t || '') + '" onchange="evSubEditText(' + i + ',this.value)">'
+      + '<span class="ev-sub-x" onclick="evSubEditDel(' + i + ')">✕</span></div>';
+  });
+  box.innerHTML = h;
+}
+function evSubEditToggle(i) { if (_evSubs[i]) { _evSubs[i].done = !_evSubs[i].done; evSubsRenderList(); } }
+function evSubEditText(i, v) { if (_evSubs[i]) _evSubs[i].t = v; }
+function evSubEditDel(i) { _evSubs.splice(i, 1); evSubsRenderList(); }
+function evSubAdd() {
+  var inp = document.getElementById('evSubNew');
+  if (!inp) return;
+  var v = (inp.value || '').trim();
+  if (!v) { inp.focus(); return; }
+  _evSubs.push({ id: 'st_' + Date.now() + '_' + Math.floor(Math.random() * 10000), t: v, done: false });
+  inp.value = '';
+  evSubsRenderList();
+  inp.focus();
+}
+function evSubNewKey(ev) {
+  if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); evSubAdd(); }
+}
 function openEventModal(id, presetMember, presetDate) {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   _evEditId = id;
@@ -12826,10 +13207,26 @@ function openEventModal(id, presetMember, presetDate) {
   _evCategoryId = e ? (e.categoryId || '') : '';
   updateEvCategoryDisplay();
   buildEvMemberOptions(e ? (e.memberId || '') : (presetMember || ''));
+  // CAL-3: サブタスクを編集用にコピー（保存するまで元データは変えない）
+  _evSubs = (e && e.subtasks ? e.subtasks : []).map(function(s){ return { id: s.id, t: s.t, done: !!s.done }; });
+  var _subNew = document.getElementById('evSubNew');
+  if (_subNew) _subNew.value = '';
+  evSubsRenderList();
+  // CAL-2: 新規追加時のみテンプレチップ列を表示（読み込みは初回のみ）
+  _evTplSel = null; _evTplTitleAuto = '';
+  var _tplRow = document.getElementById('evTplRow');
+  if (_tplRow) { _tplRow.style.display = 'none'; _tplRow.innerHTML = ''; }
+  if (!id) {
+    _evTplEnsure().then(function(){
+      var mo = document.getElementById('eventModal');
+      if (mo && mo.classList.contains('open') && !_evEditId) evTplRenderRow();
+    });
+  }
   document.getElementById('eventModal').classList.add('open');
 }
 function closeEventModal() {
   document.getElementById('eventModal').classList.remove('open');
+  _evTplSel = null; _evTplTitleAuto = '';
 }
 function onEventOverlayClick(ev) {
   if (ev.target === document.getElementById('eventModal')) closeEventModal();
@@ -12854,8 +13251,25 @@ function saveEvent() {
   e.categoryId = _evCategoryId || '';
   e.priority = (_evType === 'task') ? _evPrio : 'normal';
   e.memo     = document.getElementById('evMemo').value.trim();
+  // CAL-3: サブタスク（空行は除外）。入力欄に打ちかけの1行があれば拾う
+  var _subPend = document.getElementById('evSubNew');
+  if (_subPend && _subPend.value.trim()) {
+    _evSubs.push({ id: 'st_' + Date.now() + '_' + Math.floor(Math.random() * 10000), t: _subPend.value.trim(), done: false });
+    _subPend.value = '';
+  }
+  e.subtasks = _evSubs.filter(function(s){ return (s.t || '').trim(); })
+    .map(function(s){ return { id: s.id, t: s.t.trim(), done: !!s.done }; });
   var rbVal  = document.getElementById('evRemind').value;
   e.remindBefore = (rbVal === '') ? '' : (parseInt(rbVal, 10) || 0);
+  // CAL-2: テンプレから作成した場合、対応ステージ（完了時のMAP実績還元用）と終了時刻を保存
+  if (!_evEditId && _evTplSel) {
+    if (_evTplSel.stage) e.templateStage = _evTplSel.stage;
+    if (e.time && _evTplSel.durationMin) {
+      var _hm = e.time.split(':');
+      var _tot = (parseInt(_hm[0], 10) || 0) * 60 + (parseInt(_hm[1], 10) || 0) + _evTplSel.durationMin;
+      if (_tot < 1440) e.endTime = evPad2(Math.floor(_tot / 60)) + ':' + evPad2(_tot % 60);
+    }
+  }
   e.updatedAt = new Date().toISOString();
   // 予定の done（実行済み）は編集しても維持する
   saveEventDoc(e).then(function(){ toast('保存しました ✓'); });
