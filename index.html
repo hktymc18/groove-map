@@ -1035,6 +1035,19 @@ tr.ot-done{opacity:.5}
 /* 選択日パネル（CAL-1：ボトムシート→カレンダー直下のインライン表示） */
 .ev-day-panel{margin:10px 14px calc(env(safe-area-inset-bottom) + 90px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 12px}
 /* CAL-FS: 月カレンダー全画面モード（画面いっぱいに表示・タップ数削減） */
+/* A1: 追加フォームの詳細折りたたみ */
+.ev-adv-toggle{margin:2px 0 12px;padding:10px 12px;border:1px dashed var(--border);border-radius:10px;font-size:12.5px;font-weight:700;color:var(--text-dim);cursor:pointer;text-align:center}
+.ev-adv-toggle.open{color:var(--accent);border-color:var(--accent);border-style:solid;background:var(--accent-dim)}
+/* A3: 全画面カレンダー内のビュー切替（月/週/リスト） */
+.ev-cal-views{display:none}
+#evCalendar.full .ev-cal-views{display:flex;gap:6px;padding:0 12px 8px}
+.ev-cal-view-chip{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text-dim);font-size:12.5px;font-weight:700;cursor:pointer}
+.ev-cal-view-chip.active{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
+/* A4: 行タップの操作ミニシート */
+.ev-act-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ev-act-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:15px 8px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer}
+.ev-act-btn.danger{color:var(--red);border-color:rgba(255,93,115,.4)}
+.ev-act-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
 .ev-cal-x,.ev-cal-today,.ev-cal-addbtn,.ev-cal-set{display:none}
 #evCalendar.full .ev-cal-set{display:flex;flex:none;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;font-size:15px;color:var(--text-dim);border:1px solid var(--border);background:var(--surface);cursor:pointer}
 /* 全画面中はアプリのヘッダー/戻るバー/下部ナビ/FAB/PCサイドバーを丸ごと消して文字どおり全画面に */
@@ -1897,7 +1910,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v292</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v294</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2118,7 +2131,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <!-- アジェンダ -->
     <div id="evAgenda">
       <div class="ev-quick-add" id="evQuickAdd" style="display:none">
-        <input id="evQuickInput" placeholder="＋ タスクを入力してEnter（今日のタスクに追加）" onkeydown="evQuickKey(event)" autocomplete="off">
+        <input id="evQuickInput" type="search" placeholder="＋ タスク追加（Enter）／入力すると検索" onkeydown="evQuickKey(event)" oninput="evQuickFilterChange(this.value)" autocomplete="off">
       </div>
       <div id="evAgendaList"></div>
     </div>
@@ -2143,6 +2156,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-cal-today" onclick="calGoToday()">今日</div>
         <div class="ev-cal-set" onclick="openCalSettings()" title="表示設定">⚙</div>
         <div class="ev-cal-addbtn" onclick="openEventAddDate(_calSelDate || evTodayYmd())" title="選択日に追加">＋</div>
+      </div>
+      <div class="ev-cal-views" id="evCalViews">
+        <div class="ev-cal-view-chip active">月</div>
+        <div class="ev-cal-view-chip" onclick="setEventsMode('week')">週</div>
+        <div class="ev-cal-view-chip" onclick="setEventsMode('agenda')">リスト</div>
       </div>
       <div class="ev-cal-weekdays" id="evCalWeekdays">
         <span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span><span class="ev-sun">日</span>
@@ -2552,54 +2570,71 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
     <div class="ev-dt-row">
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
-      <div class="fr" style="flex:1.1;margin-bottom:0"><label class="fl">時刻（任意・15分）</label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <select class="fi ev-dt" id="evTimeH" style="flex:1;padding-right:6px"></select>
-          <span style="color:var(--text-dim);font-weight:700">:</span>
-          <select class="fi ev-dt" id="evTimeM" style="flex:1;padding-right:6px"></select>
+      <div class="fr" style="flex:1.2;margin-bottom:0"><label class="fl">時刻（任意）開始〜終了</label>
+        <div style="display:flex;gap:5px;align-items:center">
+          <input class="fi ev-dt" id="evTime" type="time" step="900" style="flex:1;min-width:0">
+          <span style="color:var(--text-dim);font-weight:700">〜</span>
+          <input class="fi ev-dt" id="evTimeEnd" type="time" step="900" style="flex:1;min-width:0">
         </div>
       </div>
     </div>
-    <div class="fr">
-      <label class="fl">カテゴリ（色分け）</label>
-      <div class="ev-cat-field" id="evCatField" onclick="openCategorySheet(true)">
-        <span class="cat-swatch" id="evCatSwatch" style="background:#9ca3af"></span>
-        <span id="evCatName" style="flex:1">未分類</span>
-        <span style="color:var(--text-dim)">▾</span>
+    <!-- B1: 繰り返し（新規作成時のみ表示。保存時に実体を展開） -->
+    <div class="ev-dt-row" id="evRepeatRow">
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">繰り返し</label>
+        <select class="fi" id="evRepeat" onchange="evRepeatChanged()">
+          <option value="">なし</option>
+          <option value="d">毎日</option>
+          <option value="w">毎週</option>
+          <option value="2w">隔週</option>
+          <option value="m">毎月</option>
+        </select>
       </div>
+      <div class="fr" style="flex:1;margin-bottom:0;visibility:hidden" id="evRepeatUntilWrap"><label class="fl">繰り返し終了日</label><input class="fi ev-dt" id="evRepeatUntil" type="date"></div>
     </div>
-    <div class="fr">
-      <label class="fl">関連メンバー（任意）</label>
-      <select class="fi" id="evMember" onchange="evTplOnMemberChange()"></select>
-    </div>
-    <div class="fr">
-      <label class="fl">リマインド通知（任意・時刻未指定は9:00基準）</label>
-      <select class="fi" id="evRemind">
-        <option value="">なし</option>
-        <option value="0">時刻ちょうど</option>
-        <option value="10">10分前</option>
-        <option value="30">30分前</option>
-        <option value="60">1時間前</option>
-        <option value="1440">前日</option>
-      </select>
-    </div>
-    <div class="fr" id="evPrioRow">
-      <label class="fl">優先度</label>
-      <div class="rg">
-        <div class="rb sel" id="evPrioNormal" onclick="selEvPrio('normal')">通常</div>
-        <div class="rb" id="evPrioHigh" onclick="selEvPrio('high')">⚑ 重要</div>
+    <!-- A1: 詳細はデフォルト格納（ミニマル）。値が入っている時は自動で開く -->
+    <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（カテゴリ・メンバー・通知・サブタスクなど）</div>
+    <div id="evAdvWrap" style="display:none">
+      <div class="fr">
+        <label class="fl">カテゴリ（色分け）</label>
+        <div class="ev-cat-field" id="evCatField" onclick="openCategorySheet(true)">
+          <span class="cat-swatch" id="evCatSwatch" style="background:#9ca3af"></span>
+          <span id="evCatName" style="flex:1">未分類</span>
+          <span style="color:var(--text-dim)">▾</span>
+        </div>
       </div>
-    </div>
-    <div class="fr">
-      <label class="fl">サブタスク（チェックリスト・任意）</label>
-      <div id="evSubList"></div>
-      <div style="display:flex;gap:6px">
-        <input class="fi" id="evSubNew" placeholder="＋ サブタスクを追加してEnter" onkeydown="evSubNewKey(event)" style="flex:1" autocomplete="off">
-        <button class="btn-c" style="flex:none;padding:0 14px" onclick="evSubAdd()">追加</button>
+      <div class="fr">
+        <label class="fl">関連メンバー（任意）</label>
+        <select class="fi" id="evMember" onchange="evTplOnMemberChange()"></select>
       </div>
+      <div class="fr">
+        <label class="fl">リマインド通知（任意・時刻未指定は9:00基準）</label>
+        <select class="fi" id="evRemind">
+          <option value="">なし</option>
+          <option value="0">時刻ちょうど</option>
+          <option value="10">10分前</option>
+          <option value="30">30分前</option>
+          <option value="60">1時間前</option>
+          <option value="1440">前日</option>
+        </select>
+      </div>
+      <div class="fr" id="evPrioRow">
+        <label class="fl">優先度</label>
+        <div class="rg">
+          <div class="rb sel" id="evPrioNormal" onclick="selEvPrio('normal')">通常</div>
+          <div class="rb" id="evPrioHigh" onclick="selEvPrio('high')">⚑ 重要</div>
+        </div>
+      </div>
+      <div class="fr">
+        <label class="fl">サブタスク（チェックリスト・任意）</label>
+        <div id="evSubList"></div>
+        <div style="display:flex;gap:6px">
+          <input class="fi" id="evSubNew" placeholder="＋ サブタスクを追加してEnter" onkeydown="evSubNewKey(event)" style="flex:1" autocomplete="off">
+          <button class="btn-c" style="flex:none;padding:0 14px" onclick="evSubAdd()">追加</button>
+        </div>
+      </div>
+      <div class="fr"><label class="fl">メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
+      <div class="fr" id="evGcalRow" style="display:none"></div>
     </div>
-    <div class="fr"><label class="fl">メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
-    <div class="fr" id="evGcalRow" style="display:none"></div>
     <div class="btn-row">
       <button class="btn-c" onclick="closeEventModal()">キャンセル</button>
       <button class="btn-d" id="evBtnDel" onclick="deleteEvent()" style="display:none">削除</button>
@@ -4368,7 +4403,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v292';
+  var DATA_VERSION = 'v294';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5072,6 +5107,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v294', d:'2026-08-03', items:['🔁繰り返し予定に対応：毎日/毎週/隔週/毎月＋終了日（未指定は3ヶ月先まで・最大60件）。毎週のミーティングを1回の入力で登録できます','繰り返しの予定は🔁マーク付き。操作シートから「この回のみ削除」「以降すべて削除」を選べます','🔍検索機能：リスト上部の入力ボックスに文字を打つと、タイトル・メモ・メンバー名で即絞り込み。そのままEnterすれば今日のタスクとして追加'] },
+  { v:'v293', d:'2026-08-03', items:['🎨予定タブのミニマル刷新 第2弾（操作編）','📝追加フォームを2段構えに：普段は「テンプレ・種別・タイトル・日付・時刻」だけのすっきり表示。カテゴリ・メンバー・通知・サブタスク・メモは「▾詳細」から（値が入っている時は自動で開きます）','⏰時刻入力をスマホ標準のホイールに刷新＋「開始〜終了」に対応（一覧にも 9:00〜10:00 と表示）','🗓全画面カレンダーの中に「月/週/リスト」切替を内蔵','👆一覧の行タップは操作シートに：完了・スター・編集・削除へ大きなボタンで（誤タップ防止・削除が2タップに）'] },
   { v:'v292', d:'2026-08-03', items:['🎨予定タブをミニマルデザインに刷新（第1弾）','🗓月カレンダー：マスの枠・箱をやめて罫線だけのすっきりしたグリッドに。予定チップはベタ塗り＋読める文字サイズへ。今日は数字を丸で強調','🇯🇵日本の祝日を表示（赤数字＋祝日名。2026〜2028年内蔵）','📋タスク・予定の行をコンパクト化：カード型→罫線区切りの行に（1画面に入る件数が約2倍）。行の📅ボタンは編集画面内のリンクへ移設','⚙週の始まりを設定可能に（月曜/日曜・全画面カレンダーの⚙から。月と週で始まりがズレていたのも統一）','見出しの英字・等幅表記をやめ日本語のシンプルな見出しに'] },
   { v:'v291', d:'2026-08-03', items:['📱iPhoneで入力中に画面が勝手に拡大されて横にズレる問題を修正：入力欄にフォーカスしてもズームが発生しないようにしました（入力文字も少し大きく見やすく）','モーダル内の横スクロールを完全に禁止（はみ出し防止）'] },
   { v:'v290', d:'2026-08-03', items:['🗑タスクの削除がどこからでも：メンバー編集パネルのタスク欄の各行に「✎編集」「🗑削除」ボタンを追加（今までは完了にするしかできませんでした）','編集・削除の結果はパネルに即反映','パネルからタスクを完了した場合も、テンプレ由来ならMAP実績への自動+1が効くように統一'] },
@@ -12789,6 +12826,12 @@ function evGrpLabel(text, cls, count) {
     + ' <span style="opacity:.55;font-weight:600">' + count + '</span></div>';
 }
 // CAL-3: 即入力ボックス（Enterで今日のタスクとして即作成）
+// B3: 入力中はそのまま検索ボックスとしても機能（タイトル・メモ・メンバー名で絞り込み）
+var _evQuickFilter = '';
+function evQuickFilterChange(v) {
+  _evQuickFilter = (v || '').trim();
+  renderAgenda();
+}
 function evQuickKey(ev) {
   if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); evQuickCreate(); }
 }
@@ -12805,6 +12848,7 @@ function evQuickCreate() {
   saveEventDoc(e);
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   inp.value = '';
+  _evQuickFilter = ''; // 検索絞り込みを解除して通常リストに戻す
   updateEventsBadge();
   renderEvents();
   inp.focus(); // 連続入力できるようフォーカス維持（リストのみ再描画のため入力欄は消えない）
@@ -12818,6 +12862,77 @@ function toggleEventStar(id) {
   e.updatedAt = new Date().toISOString();
   saveEventDoc(e);
   renderEvents();
+}
+// A4: 行タップの操作ミニシート（誤タップせず 完了/スター/編集/削除 へ大ボタンで）
+function closeEventActions() {
+  var ov = document.getElementById('evActOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+}
+function openEventActions(id) {
+  var e = findEvent(id);
+  if (!e) return;
+  closeEventActions();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evActOv';
+  ov.onclick = function(ev){ if (ev.target === ov) closeEventActions(); };
+  var cat = e.categoryId ? findCategory(e.categoryId) : null;
+  var mName = '';
+  if (e.memberId) { var m = findMemberAny(e.memberId); if (m) mName = ((m.lastName||'') + (m.firstName||'')).trim(); }
+  var metaParts = [];
+  var dl = fmtEvDate(e.date, e.time);
+  if (dl && e.time && e.endTime) dl += '〜' + e.endTime;
+  if (dl) metaParts.push(dl);
+  if (cat) metaParts.push(cat.name);
+  if (mName) metaParts.push('👤' + mName);
+  var subs = e.subtasks || [];
+  if (subs.length) metaParts.push('☑' + subs.filter(function(s){ return s.done; }).length + '/' + subs.length);
+  if (e.seriesId) metaParts.push('🔁繰り返し');
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (e.type === 'task' ? '✅ ' : '📅 ') + evEsc(e.title || '(無題)') + '</div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim);margin-top:2px">' + evEsc(metaParts.join('　')) + '</div></div>'
+    + '<span class="ms-x" onclick="closeEventActions()">✕</span></div>'
+    + '<div style="padding:0 16px 20px">'
+    + (e.memo ? '<div style="font-size:12.5px;color:var(--text-mid);padding:4px 2px 0;white-space:pre-wrap">' + evEsc(e.memo) + '</div>' : '')
+    + '<div class="ev-act-grid">'
+    + '<div class="ev-act-btn primary" onclick="closeEventActions();toggleEventDone(\'' + id + '\')">' + (e.done ? '↩ 未完了に戻す' : '✓ 完了にする') + '</div>'
+    + '<div class="ev-act-btn" onclick="closeEventActions();toggleEventStar(\'' + id + '\')">' + (e.star ? '★ スターを外す' : '☆ スターを付ける') + '</div>'
+    + '<div class="ev-act-btn" onclick="closeEventActions();openEventEdit(\'' + id + '\')">✎ 編集</div>'
+    + (e.seriesId
+      ? '<div class="ev-act-btn danger" onclick="evActDelete(\'' + id + '\')">🗑 この回のみ削除</div>'
+        + '<div class="ev-act-btn danger" onclick="evActDeleteSeries(\'' + id + '\')">🗑 以降すべて削除</div>'
+      : '<div class="ev-act-btn danger" onclick="evActDelete(\'' + id + '\')">🗑 削除</div>')
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function evActDelete(id) {
+  var e = findEvent(id);
+  if (!e) return;
+  if (!confirm('「' + (e.title || '(無題)') + '」を削除しますか？')) return;
+  closeEventActions();
+  for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === id) { state.events.splice(i, 1); break; } }
+  if (state.gcalConnected) gcalDeleteRemote(e);
+  var uid = eventsUid();
+  if (uid && db) db.doc('maps/' + uid + '/events/' + id).delete().catch(function(){});
+  updateEventsBadge();
+  renderEvents();
+  toast('削除しました');
+}
+// B1: 繰り返しシリーズの「この回＋以降」を一括削除
+function evActDeleteSeries(id) {
+  var e = findEvent(id);
+  if (!e || !e.seriesId) return;
+  var list = (state.events || []).filter(function(x){ return x.seriesId === e.seriesId && (x.date || '') >= (e.date || ''); });
+  if (!confirm('この回を含む以降の繰り返し ' + list.length + '件 を削除しますか？')) return;
+  closeEventActions();
+  var uid = eventsUid();
+  list.forEach(function(x){
+    for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === x.id) { state.events.splice(i, 1); break; } }
+    if (state.gcalConnected) gcalDeleteRemote(x);
+    if (uid && db) db.doc('maps/' + uid + '/events/' + x.id).delete().catch(function(){});
+  });
+  updateEventsBadge();
+  renderEvents();
+  toast('🔁 ' + list.length + '件削除しました');
 }
 // CAL-3: サブタスク（一覧側）：進捗チップで展開し、その場でチェックできる
 var _evExpandedSubs = {};
@@ -12849,19 +12964,22 @@ function evItemHtml(e) {
     if (m) memberName = ((m.lastName||'') + (m.firstName||'')).trim();
   }
   var dateLabel = fmtEvDate(e.date, e.time);
+  if (dateLabel && e.time && e.endTime) dateLabel += '〜' + e.endTime; // A2: 終了時刻も表示
   var dueCls = overdue ? 'due-overdue' : (e.date === t ? 'due-today' : '');
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
   var styleAttr = cat ? ' style="border-left-color:' + cat.color + '"' : '';
   var h = '<div class="' + cls + '"' + styleAttr + '>';
   // タスクも予定もチェックで消込できる（予定＝実行済みの記録）。予定は紫系で種別を区別
   h += '<div class="' + checkCls + (isTask ? '' : ' ev-check-event') + '" onclick="toggleEventDone(\'' + e.id + '\')" title="' + (isTask ? '完了にする' : '実行済みにする') + '">✓</div>';
-  h += '<div class="ev-i-body" onclick="openEventEdit(\'' + e.id + '\')">';
+  // A4: 本文タップは操作ミニシート（完了/スター/編集/削除に大きなボタンで到達）
+  h += '<div class="ev-i-body" onclick="openEventActions(\'' + e.id + '\')">';
   h += '<div class="ev-i-title">' + evEsc(e.title || '(無題)') + '</div>';
   h += '<div class="ev-i-meta">';
   if (dateLabel) h += '<span class="' + dueCls + '">' + (isTask && e.date && e.date <= t && !e.done ? '⏰ ' : '') + evEsc(dateLabel) + '</span>';
   if (cat) h += '<span class="ev-i-cat" style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">⚑ 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
+  if (e.seriesId) h += '<span title="繰り返し">🔁</span>';
   // CAL-3: サブタスク進捗（2/4＋ミニバー）。タップでカード直下に展開してチェックできる
   var subs = e.subtasks || [];
   if (subs.length) {
@@ -12889,6 +13007,23 @@ function evItemHtml(e) {
 function renderAgenda() {
   var wrap = document.getElementById('evAgendaList');
   if (!wrap) return;
+  // B3: 検索モード（即入力ボックスに文字がある間は絞り込み表示）
+  if (_evQuickFilter) {
+    var q = _evQuickFilter.toLowerCase();
+    var hits = (state.events || []).filter(function(e){
+      var mn = '';
+      if (e.memberId) { var mm = findMemberAny(e.memberId); if (mm) mn = ((mm.lastName||'') + (mm.firstName||'')); }
+      return ((e.title||'') + ' ' + (e.memo||'') + ' ' + mn).toLowerCase().indexOf(q) >= 0;
+    });
+    hits.sort(evSortFn);
+    var hitUndone = hits.filter(function(e){ return !e.done; });
+    var hitDone = hits.filter(function(e){ return e.done; });
+    var sh = evGrpLabel('🔍 検索結果', '', hits.length) + hitUndone.map(evItemHtml).join('');
+    if (hitDone.length) sh += evGrpLabel('完了済み', '', hitDone.length) + hitDone.map(evItemHtml).join('');
+    if (!hits.length) sh += '<div class="ev-empty" style="padding:24px 16px">「' + evEsc(_evQuickFilter) + '」に一致する予定・タスクはありません<br><span style="font-size:11.5px">Enterでこの内容を今日のタスクとして追加できます</span></div>';
+    wrap.innerHTML = sh;
+    return;
+  }
   var evs = (state.events||[]).slice();
   evs.sort(evSortFn);
   var t = evTodayYmd();
@@ -13090,33 +13225,85 @@ function buildEvMemberOptions(sel) {
 function openEventAdd(memberId) { openEventModal(null, memberId, ''); }
 function openEventAddDate(date) { openEventModal(null, '', date); }
 function openEventEdit(id) { openEventModal(id, '', ''); }
-// 時刻を「時」「分(15分刻み)」の2セレクト（ホイール）で生成。selected='HH:MM' or ''
-function buildTimeSelects(selected) {
-  var hSel = document.getElementById('evTimeH');
-  var mSel = document.getElementById('evTimeM');
-  if (!hSel || !mSel) return;
-  var selH = '', selM = '00';
-  if (selected && selected.indexOf(':') >= 0) {
-    var p = selected.split(':');
-    selH = String(parseInt(p[0], 10));
-    selM = (p[1].length < 2 ? ('0' + p[1]) : p[1]).slice(0, 2);
-  }
-  var hHtml = '<option value="">なし</option>';
-  for (var h = 0; h < 24; h++) hHtml += '<option value="' + h + '">' + (h < 10 ? '0' + h : h) + '時</option>';
-  hSel.innerHTML = hHtml;
-  hSel.value = selH;
-  var mins = ['00','15','30','45'], hasM = false, mHtml = '';
-  for (var i=0;i<mins.length;i++) { if (mins[i] === selM) hasM = true; mHtml += '<option value="' + mins[i] + '">' + mins[i] + '分</option>'; }
-  if (selH && selM && !hasM) mHtml += '<option value="' + selM + '">' + selM + '分</option>'; // 端数分を保持
-  mSel.innerHTML = mHtml;
-  mSel.value = selM;
+// A2: 時刻はネイティブの time input（iOSはホイール）。開始〜終了の2つ
+function buildTimeSelects(start, end) {
+  var s = document.getElementById('evTime');
+  var en = document.getElementById('evTimeEnd');
+  if (s) s.value = (start || '').slice(0, 5);
+  if (en) en.value = (end || '').slice(0, 5);
 }
-// 2セレクトから 'HH:MM' を取得（時が「なし」なら ''）
 function readTimeSelects() {
-  var th = (document.getElementById('evTimeH')||{}).value || '';
-  var tm = (document.getElementById('evTimeM')||{}).value || '00';
-  if (th === '') return '';
-  return (th.length < 2 ? '0' + th : th) + ':' + (tm.length < 2 ? '0' + tm : tm);
+  return ((document.getElementById('evTime') || {}).value || '').slice(0, 5);
+}
+function readTimeEnd() {
+  return ((document.getElementById('evTimeEnd') || {}).value || '').slice(0, 5);
+}
+// B1: 繰り返し予定（保存時に実体展開。最大60件・終了日未指定は3ヶ月先まで）
+function evRepeatChanged() {
+  var v = (document.getElementById('evRepeat') || {}).value || '';
+  var w = document.getElementById('evRepeatUntilWrap');
+  if (w) w.style.visibility = v ? 'visible' : 'hidden';
+  var u = document.getElementById('evRepeatUntil');
+  if (v && u && !u.value) {
+    var base = (document.getElementById('evDate') || {}).value || evTodayYmd();
+    var p = base.split('-');
+    var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+    d.setMonth(d.getMonth() + 3);
+    u.value = evYmd(d);
+  }
+}
+function _evCreateSeries(base, rep, untilYmd) {
+  var p = base.date.split('-');
+  var cur = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+  var until;
+  if (untilYmd && /^\d{4}-\d{2}-\d{2}$/.test(untilYmd)) {
+    var q = untilYmd.split('-');
+    until = new Date(parseInt(q[0],10), parseInt(q[1],10)-1, parseInt(q[2],10));
+  } else {
+    until = new Date(cur.getTime());
+    until.setMonth(until.getMonth() + 3);
+  }
+  var sid = 'sr_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+  base.seriesId = sid;
+  var domBase = cur.getDate(); // 毎月は同じ「日」。無い月は月末に丸める
+  var count = 1, mi = 0;
+  while (count < 60) {
+    if (rep === 'd') cur.setDate(cur.getDate() + 1);
+    else if (rep === 'w') cur.setDate(cur.getDate() + 7);
+    else if (rep === '2w') cur.setDate(cur.getDate() + 14);
+    else if (rep === 'm') {
+      mi++;
+      var nm = new Date(parseInt(p[0],10), parseInt(p[1],10)-1 + mi, 1);
+      var last = new Date(nm.getFullYear(), nm.getMonth() + 1, 0).getDate();
+      cur = new Date(nm.getFullYear(), nm.getMonth(), Math.min(domBase, last));
+    } else break;
+    if (cur > until) break;
+    var inst = {
+      id: genEventId() + '_' + count, seriesId: sid, done: false,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      type: base.type, title: base.title, date: evYmd(cur), time: base.time, endTime: base.endTime || '',
+      memberId: base.memberId, categoryId: base.categoryId, priority: base.priority,
+      memo: base.memo, remindBefore: base.remindBefore
+    };
+    if (base.templateStage) inst.templateStage = base.templateStage;
+    if (base.subtasks && base.subtasks.length) inst.subtasks = base.subtasks.map(function(s){ return { id: s.id, t: s.t, done: false }; });
+    state.events.push(inst);
+    saveEventDoc(inst);
+    count++;
+  }
+  return count;
+}
+// A1: 詳細折りたたみ
+var _evAdvOpen = false;
+function evToggleAdv(force) {
+  _evAdvOpen = (force === true || force === false) ? force : !_evAdvOpen;
+  var w = document.getElementById('evAdvWrap');
+  var t = document.getElementById('evAdvToggle');
+  if (w) w.style.display = _evAdvOpen ? '' : 'none';
+  if (t) {
+    t.classList.toggle('open', _evAdvOpen);
+    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（カテゴリ・メンバー・通知・サブタスクなど）';
+  }
 }
 
 // ── CAL-2: 予定テンプレート（タップで内容・時間・通知をプリフィル → 完了でMAP実績へ還元） ──
@@ -13204,7 +13391,7 @@ function evTplPick(id) {
   var newTitle = String(t.titleTpl || t.name || '').replace(/\{name\}/g, evTplMemberName());
   if (titleEl && (!titleEl.value || titleEl.value === _evTplTitleAuto)) titleEl.value = newTitle; // 手入力は尊重
   _evTplTitleAuto = newTitle;
-  if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime);
+  if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, readTimeEnd());
   _evSetRemind(t.notifyOffset);
   if (t.categoryId && findCategory(t.categoryId)) { _evCategoryId = t.categoryId; updateEvCategoryDisplay(); }
   var memoEl = document.getElementById('evMemo');
@@ -13372,7 +13559,19 @@ function openEventModal(id, presetMember, presetDate) {
   selEvPrio(e ? (e.priority || 'normal') : 'normal');
   document.getElementById('evTitle').value = e ? (e.title || '') : '';
   document.getElementById('evDate').value  = e ? (e.date || '') : (presetDate || evTodayYmd());
-  buildTimeSelects(e ? (e.time || '') : '');
+  buildTimeSelects(e ? (e.time || '') : '', e ? (e.endTime || '') : '');
+  // B1: 繰り返しは新規作成時のみ（編集は1回分ずつ。まとめて消すのは操作シートから）
+  var _rr = document.getElementById('evRepeatRow');
+  if (_rr) _rr.style.display = id ? 'none' : '';
+  var _rs = document.getElementById('evRepeat');
+  if (_rs) _rs.value = '';
+  var _ru = document.getElementById('evRepeatUntil');
+  if (_ru) _ru.value = '';
+  var _rw = document.getElementById('evRepeatUntilWrap');
+  if (_rw) _rw.style.visibility = 'hidden';
+  // A1: 詳細に値が入っている時だけ自動で開く（新規はミニマル表示）
+  var _hasAdv = !!(e && ((e.categoryId) || (e.memberId) || (e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null) || e.priority === 'high' || (e.subtasks && e.subtasks.length) || e.memo));
+  evToggleAdv(_hasAdv || !!presetMember);
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : '';
   document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
@@ -13427,6 +13626,7 @@ function saveEvent() {
   e.title    = title;
   e.date     = document.getElementById('evDate').value;
   e.time     = readTimeSelects();
+  e.endTime  = readTimeEnd();
   e.memberId = document.getElementById('evMember').value;
   e.categoryId = _evCategoryId || '';
   e.priority = (_evType === 'task') ? _evPrio : 'normal';
@@ -13444,15 +13644,21 @@ function saveEvent() {
   // CAL-2: テンプレから作成した場合、対応ステージ（完了時のMAP実績還元用）と終了時刻を保存
   if (!_evEditId && _evTplSel) {
     if (_evTplSel.stage) e.templateStage = _evTplSel.stage;
-    if (e.time && _evTplSel.durationMin) {
+    if (!e.endTime && e.time && _evTplSel.durationMin) {
       var _hm = e.time.split(':');
       var _tot = (parseInt(_hm[0], 10) || 0) * 60 + (parseInt(_hm[1], 10) || 0) + _evTplSel.durationMin;
       if (_tot < 1440) e.endTime = evPad2(Math.floor(_tot / 60)) + ':' + evPad2(_tot % 60);
     }
   }
   e.updatedAt = new Date().toISOString();
+  // B1: 繰り返し指定があれば実体を展開（新規のみ）
+  var _repMade = 0;
+  if (!_evEditId && e.date) {
+    var _rep = (document.getElementById('evRepeat') || {}).value || '';
+    if (_rep) _repMade = _evCreateSeries(e, _rep, (document.getElementById('evRepeatUntil') || {}).value || '');
+  }
   // 予定の done（実行済み）は編集しても維持する
-  saveEventDoc(e).then(function(){ toast('保存しました ✓'); });
+  saveEventDoc(e).then(function(){ toast(_repMade > 1 ? ('🔁 繰り返し予定を' + _repMade + '件作成しました ✓') : '保存しました ✓'); });
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   closeEventModal();
   updateEventsBadge();
