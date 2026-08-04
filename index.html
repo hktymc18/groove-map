@@ -561,6 +561,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 }
 /* モーダル内で何かがはみ出しても横スクロールは発生させない */
 .sheet,.ms-sheet{overflow-x:hidden}
+/* v297: 日別シート(ms-overlay z520)の上から編集できるよう、予定モーダルとカテゴリ選択を最前面に */
+#eventModal{z-index:540}
+#catSheet{z-index:545}
 .fs option{background:var(--bg)}
 .fta{resize:none;height:74px;font-size:13px}
 .fr-row{display:flex;gap:8px;margin-bottom:12px}
@@ -990,7 +993,7 @@ tr.ot-done{opacity:.5}
 .ev-sub-x{flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:var(--text-dim);cursor:pointer;font-size:14px}
 .ev-item.is-done{opacity:.5}
 .ev-item.is-done .ev-i-title{text-decoration:line-through}
-.ev-check{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent}
+.ev-check{flex:none;width:25px;height:25px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:transparent}
 .ev-check.checked{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
 /* 予定の消込（実行済み）は紫系でタスクと区別 */
 .ev-check-event{border-color:var(--purple)}
@@ -1912,7 +1915,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v296</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v297</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2117,7 +2120,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div id="view-events" style="display:none">
     <div class="ev-toolbar">
       <div class="ev-seg">
-        <div class="ev-seg-btn active" id="evSegAgenda" onclick="setEventsMode('agenda')">アジェンダ</div>
+        <div class="ev-seg-btn active" id="evSegAgenda" onclick="setEventsMode('agenda')">ToDo</div>
         <div class="ev-seg-btn" id="evSegWeek" onclick="setEventsMode('week')">週</div>
         <div class="ev-seg-btn" id="evSegCal" onclick="setEventsMode('calendar')">月</div>
       </div>
@@ -2162,7 +2165,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="ev-cal-views" id="evCalViews">
         <div class="ev-cal-view-chip active">月</div>
         <div class="ev-cal-view-chip" onclick="setEventsMode('week')">週</div>
-        <div class="ev-cal-view-chip" onclick="setEventsMode('agenda')">リスト</div>
+        <div class="ev-cal-view-chip" onclick="setEventsMode('agenda')">✅ ToDo</div>
       </div>
       <div class="ev-cal-weekdays" id="evCalWeekdays">
         <span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span><span class="ev-sun">日</span>
@@ -4412,7 +4415,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v296';
+  var DATA_VERSION = 'v297';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4563,9 +4566,9 @@ function switchView(v) {
     if (dv === 'more') on = (_mainTabs.indexOf(v) < 0 && v !== 'ideal');
     it.classList.toggle('active', on);
   });
-  // CAL-FS: 予定タブは前回の表示モード（月なら全画面カレンダー）で直接開く。
-  //         他のタブへ移る時は全画面用のヘッダー/ナビ非表示を必ず解除（ナビ喪失防止）
-  if (v === 'events' && typeof setEventsMode === 'function') setEventsMode(_evMode);
+  // v297: モバイルは予定タブを開いた瞬間、常に全画面の月カレンダー（タップ数最小化）。
+  //       PCは前回モードを記憶。他タブへ移る時は全画面用の非表示を必ず解除（ナビ喪失防止）
+  if (v === 'events' && typeof setEventsMode === 'function') setEventsMode(isPCMode() ? _evMode : 'calendar');
   else document.body.classList.remove('cal-fs');
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
@@ -4632,13 +4635,26 @@ function closeMobileMenu() {
 try { history.pushState({ gm: 1 }, ''); } catch(e) {}
 window.addEventListener('popstate', function() {
   var closed = false;
-  // ボトムシート系（最前面から）
-  var ms = document.querySelector('.ms-overlay.show');
+  // v297: 前面順に閉じる。カテゴリ選択(z545) → 予定モーダル(z540) → ボトムシート(z520) → その他
+  var _cs = document.getElementById('catSheet');
+  var _em = document.getElementById('eventModal');
+  var ms = null;
+  if (_cs && _cs.classList.contains('open')) {
+    _cs.classList.remove('open');
+    closed = true;
+  } else if (_em && _em.classList.contains('open')) {
+    if (typeof closeEventModal === 'function') closeEventModal(); else _em.classList.remove('open');
+    closed = true;
+  } else {
+    // ボトムシート系（最前面＝最後に開いたものから閉じる）
+    var _msAll = document.querySelectorAll('.ms-overlay.show');
+    ms = _msAll.length ? _msAll[_msAll.length - 1] : null;
+  }
   if (ms) {
     ms.classList.remove('show');
     setTimeout(function(){ if (ms.parentNode) ms.parentNode.removeChild(ms); }, 200);
     closed = true;
-  } else {
+  } else if (!closed) {
     // 全画面モーダル系（必須プロフィール入力中は閉じない）
     var opens = document.querySelectorAll('.overlay.open');
     for (var i = opens.length - 1; i >= 0; i--) {
@@ -5117,6 +5133,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v297', d:'2026-08-04', items:['🗓予定タブを開いた瞬間、全画面の月カレンダーが開くように（スマホ・タップ数最小化）','📏一覧性アップ：日別パネルの常時表示をやめてマスの高さ約2倍に。1日7件まで予定を直接表示','👆日にちをタップ→下から日別シート（📅予定＋✅その日が期日のタスク）。同じ日をもう1度タップで即追加','✅カレンダーとToDoを分離：月カレンダーは「予定」だけ、タスクは「ToDo」タブでiPhoneリマインダー風に管理（グループ見出しタップで開閉・チェック丸を大きく）','🎨カテゴリの色を見分けやすい12色に整理（既存の色はそのまま）'] },
   { v:'v296', d:'2026-08-03', items:['🔁繰り返し予定に対応：毎日/毎週/隔週/毎月＋終了日（未指定は3ヶ月先まで・最大60件）。毎週のミーティングを1回の入力で登録できます','繰り返しの予定は🔁マーク付き。操作シートから「この回のみ削除」「以降すべて削除」を選べます','🔍検索機能：リスト上部の入力ボックスに文字を打つと、タイトル・メモ・メンバー名で即絞り込み。そのままEnterすれば今日のタスクとして追加'] },
   { v:'v293', d:'2026-08-03', items:['🎨予定タブのミニマル刷新 第2弾（操作編）','📝追加フォームを2段構えに：普段は「テンプレ・種別・タイトル・日付・時刻」だけのすっきり表示。カテゴリ・メンバー・通知・サブタスク・メモは「▾詳細」から（値が入っている時は自動で開きます）','⏰時刻入力をスマホ標準のホイールに刷新＋「開始〜終了」に対応（一覧にも 9:00〜10:00 と表示）','🗓全画面カレンダーの中に「月/週/リスト」切替を内蔵','👆一覧の行タップは操作シートに：完了・スター・編集・削除へ大きなボタンで（誤タップ防止・削除が2タップに）'] },
   { v:'v292', d:'2026-08-03', items:['🎨予定タブをミニマルデザインに刷新（第1弾）','🗓月カレンダー：マスの枠・箱をやめて罫線だけのすっきりしたグリッドに。予定チップはベタ塗り＋読める文字サイズへ。今日は数字を丸で強調','🇯🇵日本の祝日を表示（赤数字＋祝日名。2026〜2028年内蔵）','📋タスク・予定の行をコンパクト化：カード型→罫線区切りの行に（1画面に入る件数が約2倍）。行の📅ボタンは編集画面内のリンクへ移設','⚙週の始まりを設定可能に（月曜/日曜・全画面カレンダーの⚙から。月と週で始まりがズレていたのも統一）','見出しの英字・等幅表記をやめ日本語のシンプルな見出しに'] },
@@ -12302,7 +12319,8 @@ function notifyDueEvents() {
 // ============================================================
 //  カテゴリ（色分け）
 // ============================================================
-var CAT_COLORS = ['#f9a8d4','#FF87B3','#FF5D73','#FFB454','#FFD166','#4ADE80','#3ED5C4','#5AD7FF','#6366f1','#C583FF','#a87c5a','#9ca3af'];
+/* C2: Lifebear風の見分けやすい12色（既存カテゴリの色はそのまま保持される） */
+var CAT_COLORS = ['#FF5D73','#FF87B3','#FFB454','#FFD166','#8BC34A','#4ADE80','#3ED5C4','#5AD7FF','#6366f1','#C583FF','#a87c5a','#9ca3af'];
 var UNCAT_COLOR = '#9ca3af';
 var _evCategoryId = '';     // イベントモーダルで選択中のカテゴリ
 var _catPickMode  = false;  // シートが「イベントへ割当」モードか
@@ -12855,6 +12873,9 @@ function evGrpLabel(text, cls, count) {
   return '<div class="ev-group-label ' + cls + '">' + text
     + ' <span style="opacity:.55;font-weight:600">' + count + '</span></div>';
 }
+// v297: ToDoグループの開閉状態（セッション内）
+var _evGrpCol = {};
+function evGrpToggle(k) { _evGrpCol[k] = !_evGrpCol[k]; renderAgenda(); }
 // CAL-3: 即入力ボックス（Enterで今日のタスクとして即作成）
 // B3: 入力中はそのまま検索ボックスとしても機能（タイトル・メモ・メンバー名で絞り込み）
 var _evQuickFilter = '';
@@ -13061,6 +13082,7 @@ function renderAgenda() {
   var overdue = [], today = [], week = [], starred = [], later = [], noDate = [], done = [];
   evs.forEach(function(e) {
     if (e.done) { done.push(e); return; } // 実行済みの予定も完了済みへまとめる
+    if (e.type !== 'task') return; // v297: ToDoはタスク専用（予定はカレンダーで管理）
     // CAL-3: 期日が迫っていない星付き（8日以降・日付なし）は⭐グループへ集約。
     //        期限切れ/今日/次の7日間の星付きは緊急度優先でそのまま（★は各カードに表示）
     if (!e.date) { (e.star ? starred : noDate).push(e); return; }
@@ -13081,14 +13103,23 @@ function renderAgenda() {
     else doneRecent.push(e);
   });
   doneRecent.sort(descByDate);
+  // v297: リマインダー風＝グループ見出しタップで開閉
+  function grpSect(label, cls, arr, key) {
+    var col = !!_evGrpCol[key];
+    var s = '<div class="ev-group-label ' + cls + '" style="cursor:pointer" onclick="evGrpToggle(\'' + key + '\')">' + label
+      + ' <span style="opacity:.55;font-weight:600">' + arr.length + '</span>'
+      + '<span style="margin-left:auto;font-size:10px;opacity:.5">' + (col ? '▸' : '▾') + '</span></div>';
+    if (!col) s += arr.map(evItemHtml).join('');
+    return s;
+  }
   var html = '';
-  if (overdue.length) html += evGrpLabel('期限切れ・終了','overdue', overdue.length) + overdue.map(evItemHtml).join('');
-  if (today.length)   html += evGrpLabel('今日','today', today.length) + today.map(evItemHtml).join('');
-  if (week.length)    html += evGrpLabel('次の7日間','', week.length) + week.map(evItemHtml).join('');
-  if (starred.length) html += evGrpLabel('⭐ 星付き','starred', starred.length) + starred.map(evItemHtml).join('');
-  if (later.length)   html += evGrpLabel('これから','', later.length) + later.map(evItemHtml).join('');
-  if (noDate.length)  html += evGrpLabel('日付なし','', noDate.length) + noDate.map(evItemHtml).join('');
-  if (doneRecent.length) html += evGrpLabel('完了済み','', doneRecent.length) + doneRecent.map(evItemHtml).join('');
+  if (overdue.length) html += grpSect('期限切れ','overdue', overdue, 'od');
+  if (today.length)   html += grpSect('今日','today', today, 'td');
+  if (week.length)    html += grpSect('次の7日間','', week, 'wk');
+  if (starred.length) html += grpSect('⭐ 星付き','starred', starred, 'st');
+  if (later.length)   html += grpSect('これから','', later, 'lt');
+  if (noDate.length)  html += grpSect('日付なし','', noDate, 'nd');
+  if (doneRecent.length) html += grpSect('完了済み','', doneRecent, 'dn');
   // 月別アーカイブ（新しい月から・タップで展開）
   var oldMonths = Object.keys(doneOldByMonth).sort(function(a,b){ return b.localeCompare(a); });
   if (oldMonths.length) {
@@ -13114,11 +13145,7 @@ function calShiftMonth(delta) {
 }
 function renderCalendar() {
   if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
-  // CAL-1: 未選択なら今日（表示月に今日が無ければ1日）を自動選択して下のパネルを常時表示
-  if (!_calSelDate) {
-    var _tt = evTodayYmd();
-    _calSelDate = (_tt.slice(0,7) === (_calYear + '-' + evPad2(_calMonth+1))) ? _tt : (_calYear + '-' + evPad2(_calMonth+1) + '-01');
-  }
+  // v297: 日別は自動表示しない（日タップでボトムシート）。グリッドが常に全画面を使える
   var title = document.getElementById('evCalTitle');
   if (title) title.textContent = _calYear + '年 ' + (_calMonth+1) + '月';
   var grid = document.getElementById('evCalGrid');
@@ -13139,6 +13166,7 @@ function renderCalendar() {
   var byDate = {};
   (state.events||[]).forEach(function(e) {
     if (!e.date) return;
+    if (e.type === 'task') return; // v297: 月カレンダーは予定のみ。タスクはToDoと日別シートで
     if (!byDate[e.date]) byDate[e.date] = [];
     byDate[e.date].push(e);
   });
@@ -13167,31 +13195,59 @@ function renderCalendar() {
   renderCalDayList();
 }
 function selCalDay(ds) {
-  // CAL-FS: 選択済みの日をもう一度タップ→その日に即追加（タップ数削減）
-  if (ds === _calSelDate && eventsUid()) { openEventAddDate(ds); return; }
-  _calSelDate = ds; // CAL-1: パネル常時表示型なのでトグルオフしない
+  // v297: 日タップ→日別ボトムシート。シート表示中に同じ日を再タップ→その日に即追加
+  if (ds === _calSelDate && document.getElementById('dayShOv') && eventsUid()) {
+    closeCalDaySheet(true);
+    openEventAddDate(ds);
+    return;
+  }
+  _calSelDate = ds;
   renderCalendar();
+  openCalDaySheet(ds);
+}
+// v297: 日別ボトムシート（📅その日の予定 ＋ ✅その日が期日のタスク）
+function _daySheetHtml(ds) {
+  var evs = (state.events || []).filter(function(e){ return e.date === ds && e.type !== 'task'; });
+  var tks = (state.events || []).filter(function(e){ return e.date === ds && e.type === 'task'; });
+  evs.sort(evSortFn); tks.sort(evSortFn);
+  var h = '';
+  if (!evs.length && !tks.length) {
+    h += '<div class="ev-empty" style="padding:22px 8px">この日の予定・タスクはありません</div>';
+  } else {
+    if (evs.length) h += '<div class="ev-group-label" style="padding-top:6px">📅 予定 <span style="opacity:.55;font-weight:600">' + evs.length + '</span></div>' + evs.map(evItemHtml).join('');
+    if (tks.length) h += '<div class="ev-group-label" style="padding-top:' + (evs.length ? '12px' : '6px') + '">✅ タスク <span style="opacity:.55;font-weight:600">' + tks.length + '</span></div>' + tks.map(evItemHtml).join('');
+  }
+  if (eventsUid()) h += '<button class="fol-add" style="margin-top:12px" onclick="closeCalDaySheet(true);openEventAddDate(\'' + ds + '\')">＋ この日に追加</button>';
+  return h;
+}
+function closeCalDaySheet(keepSel) {
+  var ov = document.getElementById('dayShOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+  if (!keepSel) { _calSelDate = ''; renderCalendar(); }
+}
+function openCalDaySheet(ds) {
+  var old = document.getElementById('dayShOv');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'dayShOv';
+  ov.onclick = function(e){ if (e.target === ov) closeCalDaySheet(); };
+  var hol = jpHoliday(ds);
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:58vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + fmtEvDate(ds, '') + (hol ? ' <span style="font-size:11.5px;color:var(--red);font-weight:700">' + evEsc(hol) + '</span>' : '') + '</div></div>'
+    + '<span class="ms-x" onclick="closeCalDaySheet()">✕</span></div>'
+    + '<div style="padding:0 6px 16px" id="dayShList">' + _daySheetHtml(ds) + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
 function closeDaySheet() {
   var sh = document.getElementById('evDaySheet');
   if (sh) sh.classList.remove('open');
 }
-// CAL-1: 選択日の予定を「カレンダー直下のインラインパネル」に表示（旧ボトムシートは廃止）
+// v297: 旧インラインパネルは廃止（常に非表示）。開いている日別シートの中身だけ最新化
 function renderCalDayList() {
   var panel = document.getElementById('evDayPanel');
-  if (!panel) return;
-  if (!_calSelDate) { panel.style.display = 'none'; return; }
-  var list = (state.events||[]).filter(function(e){ return e.date === _calSelDate; });
-  list.sort(evSortFn);
-  var items = list.length
-    ? list.map(evItemHtml).join('')
-    : '<div class="ev-empty" style="padding:18px 8px">この日に予定はありません</div>';
-  panel.innerHTML = '<div class="ev-day-panel-hdr">'
-    + '<span class="lb">' + fmtEvDate(_calSelDate, '') + '</span>'
-    + (eventsUid() ? '<button type="button" class="ev-day-panel-add" onclick="openEventAddDate(\'' + _calSelDate + '\')">＋ この日に追加</button>' : '')
-    + '</div>'
-    + items;
-  panel.style.display = '';
+  if (panel) panel.style.display = 'none';
+  var list = document.getElementById('dayShList');
+  if (list && _calSelDate) list.innerHTML = _daySheetHtml(_calSelDate);
 }
 
 // ── 完了トグル ──
