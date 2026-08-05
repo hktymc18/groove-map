@@ -1017,8 +1017,14 @@ tr.ot-done{opacity:.5}
 .ev-cal-weekdays span{text-align:center;font-size:11px;font-weight:600;color:var(--text-dim);padding:2px 0 4px}
 .ev-cal-weekdays .ev-sat{color:var(--b)}
 .ev-cal-weekdays .ev-sun{color:var(--red)}
-.ev-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;padding:0}
-.ev-cell{position:relative;min-height:64px;border:none;border-bottom:1px solid var(--border);border-right:1px solid var(--border);border-radius:0;background:transparent;display:flex;flex-direction:column;align-items:stretch;padding:0 1px 2px;cursor:pointer;overflow:hidden}
+/* v298: Lifebear式・縦に無限スクロールする連続週カレンダー（1画面5週） */
+.ev-cal-grid{display:block;overflow-y:auto;padding:0;height:72vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.ev-wkrow{display:grid;grid-template-columns:repeat(7,1fr);height:20%}
+.ev-cell{position:relative;min-height:0;height:100%;border:none;border-bottom:1px solid var(--border);border-right:1px solid var(--border);border-radius:0;background:transparent;display:flex;flex-direction:column;align-items:stretch;padding:0 1px 2px;cursor:pointer;overflow:hidden}
+.ev-cell.alt{background:rgba(126,138,166,.08)}
+body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
+.ev-cell-num.m1{width:auto;padding:0 7px;font-weight:800;background:var(--surface3);align-self:center}
+.ev-cell.today .ev-cell-num.m1{background:var(--accent)}
 .ev-cell:nth-child(7n){border-right:none}
 .ev-cell.empty{background:transparent;cursor:default}
 .ev-cell.sel{background:var(--accent-dim)}
@@ -1067,7 +1073,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 #evCalendar.full .ev-cal-today{display:block;flex:none;font-size:12px;font-weight:800;color:var(--accent);border:1px solid var(--accent);border-radius:10px;padding:8px 11px;cursor:pointer;background:var(--accent-dim)}
 #evCalendar.full .ev-cal-addbtn{display:flex;flex:none;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--go-ink);background:var(--accent);cursor:pointer}
 #evCalendar.full .ev-cal-weekdays{flex:none}
-#evCalendar.full .ev-cal-grid{flex:1;grid-auto-rows:1fr!important;min-height:0;overflow:hidden;padding-bottom:4px;align-content:stretch}
+#evCalendar.full .ev-cal-grid{flex:1;min-height:0;height:auto}
 #evCalendar.full .ev-cell{min-height:0}
 #evCalendar.full .ev-day-panel{flex:none;margin:6px 8px calc(env(safe-area-inset-bottom) + 8px);max-height:40%;overflow-y:auto;border-radius:14px;border:1px solid var(--border)}
 .ev-day-panel-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 2px 6px;border-bottom:1px solid var(--border)}
@@ -1115,7 +1121,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .cat-color.sel{border-color:var(--text)}
 /* カレンダーを画面いっぱいに（PC・スマホ共通）。残り画面高をグリッドに与え、
    行(grid-auto-rows:1fr)を均等に伸ばす → 予定の有無に関わらず全マス均等＆全画面。 */
-#view-events #evCalGrid{grid-auto-rows:auto} /* CAL-1: 7件チップ表示のためセル高さ可変・ページスクロール */
+/* v298: 連続スクロール化により grid-auto-rows 指定は廃止 */
 /* スマホ：ツールバー等をコンパクト化して上の余白を削減 */
 @media(max-width:767px){
   #view-events .ev-toolbar{padding:6px 10px 2px;gap:6px}
@@ -1124,8 +1130,17 @@ body.cal-fs .pc-toolbar{display:none!important}
   #view-events .ev-cal-hdr{padding:2px 14px;gap:12px}
   #view-events .ev-cal-nav{width:30px;height:30px;font-size:16px}
   #view-events .ev-cal-title{font-size:14px;min-width:110px}
-  #view-events .ev-cal-grid{gap:3px;padding:0 8px 8px}
 }
+/* v298: Lifebear式 時刻テンキー（予定モーダルz540の上） */
+.tp-ov{position:fixed;inset:0;z-index:560;background:rgba(0,0,0,.25);display:flex;align-items:flex-end}
+.tp-sheet{width:100%;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:10px 12px calc(env(safe-area-inset-bottom) + 12px)}
+.tp-hd{display:flex;align-items:center;gap:12px;padding:2px 6px 10px}
+.tp-disp{font-size:26px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex:1;color:var(--text)}
+.tp-clr{font-size:13px;font-weight:700;color:var(--text-dim);cursor:pointer;padding:8px}
+.tp-done{font-size:15px;font-weight:800;color:var(--accent);cursor:pointer;padding:8px 4px}
+.tp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tp-key{padding:16px 0;text-align:center;font-size:20px;font-weight:700;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text)}
+.tp-key:active{background:var(--accent-dim);border-color:var(--accent)}
 /* 編集モーダル内 +タスク */
 .ev-member-add{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:9px;border:1px dashed var(--accent);border-radius:var(--rsm);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
 /* ===== 今日（ホーム）・ゲーミフィケーション ===== */
@@ -1915,7 +1930,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v297</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v298</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2577,9 +2592,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
       <div class="fr" style="flex:1.2;margin-bottom:0"><label class="fl">時刻（任意）開始〜終了</label>
         <div style="display:flex;gap:5px;align-items:center">
-          <input class="fi ev-dt" id="evTime" type="time" step="900" style="flex:1;min-width:0">
+          <input class="fi ev-dt" id="evTime" type="text" readonly placeholder="なし" onclick="openTimePad('evTime')" style="flex:1;min-width:0;cursor:pointer;text-align:center">
           <span style="color:var(--text-dim);font-weight:700">〜</span>
-          <input class="fi ev-dt" id="evTimeEnd" type="time" step="900" style="flex:1;min-width:0">
+          <input class="fi ev-dt" id="evTimeEnd" type="text" readonly placeholder="なし" onclick="openTimePad('evTimeEnd')" style="flex:1;min-width:0;cursor:pointer;text-align:center">
         </div>
       </div>
     </div>
@@ -4415,7 +4430,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v297';
+  var DATA_VERSION = 'v298';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4635,6 +4650,13 @@ function closeMobileMenu() {
 try { history.pushState({ gm: 1 }, ''); } catch(e) {}
 window.addEventListener('popstate', function() {
   var closed = false;
+  // v298: 時刻テンキー(z560)が開いていれば確定して閉じるだけ
+  var _tp = document.getElementById('tpOv');
+  if (_tp) {
+    closeTimePad(true);
+    try { history.pushState({ gm: 1 }, ''); } catch(e2) {}
+    return;
+  }
   // v297: 前面順に閉じる。カテゴリ選択(z545) → 予定モーダル(z540) → ボトムシート(z520) → その他
   var _cs = document.getElementById('catSheet');
   var _em = document.getElementById('eventModal');
@@ -5133,6 +5155,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v298', d:'2026-08-04', items:['🗓カレンダーがLifebear式の縦スクロールに：1画面5週表示のまま、上下にスクロールすると前月・翌月へシームレスに繋がります（前6ヶ月〜先12ヶ月）','スクロールに合わせて上の年月表示が自動で切替。‹›は月単位ジャンプ・「今日」で今日の週へ。月の変わり目は薄い縞と「8/1」表記でわかります','⏰時刻入力がLifebear式テンキーに：数字を打つだけ（19→00で19:00）。開始を入れると終了は自動で+1時間・「消去」で時刻なしに'] },
   { v:'v297', d:'2026-08-04', items:['🗓予定タブを開いた瞬間、全画面の月カレンダーが開くように（スマホ・タップ数最小化）','📏一覧性アップ：日別パネルの常時表示をやめてマスの高さ約2倍に。1日7件まで予定を直接表示','👆日にちをタップ→下から日別シート（📅予定＋✅その日が期日のタスク）。同じ日をもう1度タップで即追加','✅カレンダーとToDoを分離：月カレンダーは「予定」だけ、タスクは「ToDo」タブでiPhoneリマインダー風に管理（グループ見出しタップで開閉・チェック丸を大きく）','🎨カテゴリの色を見分けやすい12色に整理（既存の色はそのまま）'] },
   { v:'v296', d:'2026-08-03', items:['🔁繰り返し予定に対応：毎日/毎週/隔週/毎月＋終了日（未指定は3ヶ月先まで・最大60件）。毎週のミーティングを1回の入力で登録できます','繰り返しの予定は🔁マーク付き。操作シートから「この回のみ削除」「以降すべて削除」を選べます','🔍検索機能：リスト上部の入力ボックスに文字を打つと、タイトル・メモ・メンバー名で即絞り込み。そのままEnterすれば今日のタスクとして追加'] },
   { v:'v293', d:'2026-08-03', items:['🎨予定タブのミニマル刷新 第2弾（操作編）','📝追加フォームを2段構えに：普段は「テンプレ・種別・タイトル・日付・時刻」だけのすっきり表示。カテゴリ・メンバー・通知・サブタスク・メモは「▾詳細」から（値が入っている時は自動で開きます）','⏰時刻入力をスマホ標準のホイールに刷新＋「開始〜終了」に対応（一覧にも 9:00〜10:00 と表示）','🗓全画面カレンダーの中に「月/週/リスト」切替を内蔵','👆一覧の行タップは操作シートに：完了・スター・編集・削除へ大きなボタンで（誤タップ防止・削除が2タップに）'] },
@@ -12751,8 +12774,9 @@ function setWeekStart(v) {
 function calGoToday() {
   var n = new Date();
   _calYear = n.getFullYear(); _calMonth = n.getMonth();
-  _calSelDate = evTodayYmd();
-  renderCalendar();
+  var title = document.getElementById('evCalTitle');
+  if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
+  _calScrollToYmd(evTodayYmd(), true); // v298: 今日の週へスクロール
 }
 // CAL-FS: 左右スワイプで月移動（全画面カレンダー）
 var _calTS = null;
@@ -13141,7 +13165,10 @@ function calShiftMonth(delta) {
   _calMonth += delta;
   if (_calMonth < 0) { _calMonth = 11; _calYear--; }
   else if (_calMonth > 11) { _calMonth = 0; _calYear++; }
-  renderCalendar();
+  var title = document.getElementById('evCalTitle');
+  if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
+  // v298: 再描画せずその月の1日の週へスクロール（連続カレンダー）
+  _calScrollToYmd(_calYear + '-' + evPad2(_calMonth + 1) + '-01', true);
 }
 function renderCalendar() {
   if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
@@ -13160,8 +13187,15 @@ function renderCalendar() {
     }
     wdRow.innerHTML = wdh;
   }
-  var startDow = (new Date(_calYear, _calMonth, 1).getDay() - _weekStart + 7) % 7;
-  var daysInMonth = new Date(_calYear, _calMonth+1, 0).getDate();
+  // v298: Lifebear式＝縦スクロールで前後の月へシームレスに繋がる連続週カレンダー
+  //       描画範囲は「今日の前6ヶ月の月初〜先12ヶ月の月末」を含む週（1画面5週）
+  var now = new Date();
+  var rs = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+  rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
+  rs.setHours(0, 0, 0, 0);
+  var re = new Date(now.getFullYear(), now.getMonth() + 13, 0);
+  _calRangeStart = rs;
+  _calRangeWeeks = Math.ceil((Math.round((re - rs) / 86400000) + 1) / 7);
   var t = evTodayYmd();
   var byDate = {};
   (state.events||[]).forEach(function(e) {
@@ -13171,28 +13205,85 @@ function renderCalendar() {
     byDate[e.date].push(e);
   });
   var html = '';
-  for (var i=0;i<startDow;i++) html += '<div class="ev-cell empty"></div>';
-  for (var d=1; d<=daysInMonth; d++) {
-    var ds = _calYear + '-' + evPad2(_calMonth+1) + '-' + evPad2(d);
-    var cls = 'ev-cell';
-    if (ds === t) cls += ' today';
-    if (ds === _calSelDate) cls += ' sel';
-    // S4: 色分け・祝日は実際の曜日/祝日テーブルから判定
-    var dowReal = new Date(_calYear, _calMonth, d).getDay();
-    var hol = jpHoliday(ds);
-    var numCls = 'ev-cell-num' + (dowReal === 0 ? ' sun' : (dowReal === 6 ? ' sat' : '')) + (hol ? ' hol' : '');
-    var dayList = (byDate[ds] || []).slice();
-    dayList.sort(evSortFn);
-    var MAXBARS = 7; // CAL-1: 詳細を開かなくても1日7件まで直接表示（8件目から+N）
-    var bars = hol ? '<div class="ev-bar ev-hol">' + evEsc(hol) + '</div>' : '';
-    for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi]);
-    if (dayList.length > MAXBARS) bars += '<div class="ev-more">+' + (dayList.length - MAXBARS) + '件</div>';
-    html += '<div class="' + cls + '" onclick="selCalDay(\'' + ds + '\')">'
-      + '<span class="' + numCls + '">' + d + '</span>'
-      + '<div class="ev-cell-bars">' + bars + '</div></div>';
+  var cur = new Date(rs.getTime());
+  for (var w = 0; w < _calRangeWeeks; w++) {
+    html += '<div class="ev-wkrow">';
+    for (var i = 0; i < 7; i++) {
+      var ds = evYmd(cur);
+      var d = cur.getDate();
+      var cls = 'ev-cell';
+      if (cur.getMonth() % 2 === 1) cls += ' alt'; // 月ごとの縞で切れ目が分かる
+      if (ds === t) cls += ' today';
+      if (ds === _calSelDate) cls += ' sel';
+      var dowReal = cur.getDay();
+      var hol = jpHoliday(ds);
+      var numCls = 'ev-cell-num' + (dowReal === 0 ? ' sun' : (dowReal === 6 ? ' sat' : '')) + (hol ? ' hol' : '') + (d === 1 ? ' m1' : '');
+      var dayList = (byDate[ds] || []).slice();
+      dayList.sort(evSortFn);
+      var MAXBARS = 7; // 1日7件まで直接表示（8件目から+N）
+      var bars = hol ? '<div class="ev-bar ev-hol">' + evEsc(hol) + '</div>' : '';
+      for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi]);
+      if (dayList.length > MAXBARS) bars += '<div class="ev-more">+' + (dayList.length - MAXBARS) + '件</div>';
+      html += '<div class="' + cls + '" onclick="selCalDay(\'' + ds + '\')">'
+        + '<span class="' + numCls + '">' + (d === 1 ? ((cur.getMonth()+1) + '/1') : d) + '</span>'
+        + '<div class="ev-cell-bars">' + bars + '</div></div>';
+      cur.setDate(cur.getDate() + 1);
+    }
+    html += '</div>';
   }
+  var keepTop = grid.scrollTop;
   grid.innerHTML = html;
+  if (!grid._calScrollBound) {
+    grid._calScrollBound = true;
+    grid.addEventListener('scroll', _calOnScroll, { passive: true });
+  }
+  if (!_calScrollInit) {
+    // 非表示中(clientHeight=0)はスクロールできないため、見えるようになった描画時に初期化
+    if (grid.clientHeight > 0) {
+      _calScrollInit = true;
+      _calScrollToYmd(t, false); // 初期位置＝今日の週が最上段
+    }
+  } else {
+    grid.scrollTop = keepTop; // 再描画してもスクロール位置を維持
+  }
   renderCalDayList();
+}
+// v298: 連続カレンダーのスクロール制御
+var _calRangeStart = null; // 描画範囲の先頭（週の開始日）
+var _calRangeWeeks = 0;
+var _calScrollInit = false;
+var _calScrRaf = false;
+function _calScrollToYmd(ymd, smooth) {
+  var g = document.getElementById('evCalGrid');
+  if (!g || !_calRangeStart) return;
+  var p = String(ymd).split('-');
+  var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10) || 1);
+  var idx = Math.floor(Math.round((d - _calRangeStart) / 86400000) / 7);
+  if (idx < 0) idx = 0;
+  if (idx > _calRangeWeeks - 1) idx = _calRangeWeeks - 1;
+  var top = Math.round(idx * (g.scrollHeight / Math.max(1, _calRangeWeeks)));
+  if (smooth && g.scrollTo) { try { g.scrollTo({ top: top, behavior: 'smooth' }); return; } catch(e) {} }
+  g.scrollTop = top;
+}
+function _calOnScroll() {
+  if (_calScrRaf) return;
+  _calScrRaf = true;
+  requestAnimationFrame(function(){
+    _calScrRaf = false;
+    var g = document.getElementById('evCalGrid');
+    if (!g || !_calRangeStart) return;
+    // 2段目あたりの週の中日でヘッダの年月を更新
+    var rowH = g.scrollHeight / Math.max(1, _calRangeWeeks);
+    var idx = Math.round(g.scrollTop / rowH) + 1;
+    var d = new Date(_calRangeStart.getTime());
+    d.setDate(d.getDate() + idx * 7 + 3);
+    if (d.getFullYear() !== _calYear || d.getMonth() !== _calMonth) {
+      _calYear = d.getFullYear();
+      _calMonth = d.getMonth();
+      var title = document.getElementById('evCalTitle');
+      if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
+    }
+  });
 }
 function selCalDay(ds) {
   // v297: 日タップ→日別ボトムシート。シート表示中に同じ日を再タップ→その日に即追加
@@ -13378,6 +13469,75 @@ function _evCreateSeries(base, rep, untilYmd) {
     count++;
   }
   return count;
+}
+// v298: Lifebear式・時刻テンキー（7 8 9 / 4 5 6 / 1 2 3 / 0 00 30）
+var _tpTarget = null, _tpBuf = '';
+function openTimePad(targetId) {
+  closeTimePad(false);
+  _tpTarget = targetId;
+  _tpBuf = ((document.getElementById(targetId) || {}).value || '').replace(':', '');
+  var ov = document.createElement('div');
+  ov.className = 'tp-ov'; ov.id = 'tpOv';
+  ov.onclick = function(e){ if (e.target === ov) closeTimePad(true); };
+  function k(v) { return '<div class="tp-key" onclick="tpKey(\'' + v + '\')">' + v + '</div>'; }
+  ov.innerHTML = '<div class="tp-sheet">'
+    + '<div class="tp-hd"><span class="tp-disp" id="tpDisp"></span>'
+    + '<span class="tp-clr" onclick="tpClear()">消去</span>'
+    + '<span class="tp-done" onclick="closeTimePad(true)">完了</span></div>'
+    + '<div class="tp-grid">'
+    + k('7') + k('8') + k('9')
+    + k('4') + k('5') + k('6')
+    + k('1') + k('2') + k('3')
+    + k('0') + k('00') + k('30')
+    + '</div></div>';
+  document.body.appendChild(ov);
+  tpRender();
+}
+function tpRender() {
+  var el = document.getElementById('tpDisp');
+  if (!el) return;
+  var b = _tpBuf, s = '--:--';
+  if (b.length === 1 || b.length === 2) s = b + ':--';
+  else if (b.length === 3) s = b.charAt(0) + ':' + b.slice(1);
+  else if (b.length >= 4) s = b.slice(0, 2) + ':' + b.slice(2, 4);
+  el.textContent = s;
+}
+function tpKey(v) {
+  if (v === '00' || v === '30') {
+    // 「時」まで入っていれば分として確定入力（19→00 で 19:00）
+    _tpBuf = (_tpBuf === '' ? '0' : _tpBuf.slice(0, 2)) + v;
+  } else {
+    if (_tpBuf.length >= 4) _tpBuf = '';
+    _tpBuf += v;
+  }
+  tpRender();
+}
+function tpClear() { _tpBuf = ''; tpRender(); }
+function closeTimePad(commit) {
+  var ov = document.getElementById('tpOv');
+  if (commit && _tpTarget) {
+    var inp = document.getElementById(_tpTarget);
+    if (inp) {
+      var b = _tpBuf, val = '';
+      if (b.length) {
+        var h, m;
+        if (b.length <= 2) { h = parseInt(b, 10) || 0; m = 0; }
+        else if (b.length === 3) { h = parseInt(b.charAt(0), 10) || 0; m = parseInt(b.slice(1), 10) || 0; }
+        else { h = parseInt(b.slice(0, 2), 10) || 0; m = parseInt(b.slice(2, 4), 10) || 0; }
+        if (h > 23) h = 23;
+        if (m > 59) m = 59;
+        val = evPad2(h) + ':' + evPad2(m);
+        // 開始を入れて終了が空なら「+1時間」を自動セット（Lifebearの既定と同じ）
+        if (_tpTarget === 'evTime') {
+          var en = document.getElementById('evTimeEnd');
+          if (en && !en.value) en.value = evPad2((h + 1) % 24) + ':' + evPad2(m);
+        }
+      }
+      inp.value = val;
+    }
+  }
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  _tpTarget = null; _tpBuf = '';
 }
 // A1: 詳細折りたたみ
 var _evAdvOpen = false;
