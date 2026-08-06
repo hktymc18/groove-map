@@ -1,7 +1,7 @@
 {
   "name": "groove-map-functions",
   "description": "GROOVE MAP push notification sender (CAL-4)",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "main": "index.js",
   "dependencies": {
     "firebase-admin": "^12.1.0",
