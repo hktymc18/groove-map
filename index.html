@@ -1855,6 +1855,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <!-- Google Identity Services（Googleカレンダー連携） -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -1934,7 +1935,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v299</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v300</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4438,7 +4439,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v299';
+  var DATA_VERSION = 'v300';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5175,6 +5176,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v300', d:'2026-08-04', items:['🔔プッシュ通知に対応（CAL-4）：アプリを閉じていても、リマインド設定した予定・タスクの通知がスマホに届くようになりました','有効化：予定タブの「🔔通知をオン」または全画面カレンダーの⚙設定から。※iPhoneは「ホーム画面に追加」したアプリで開いた場合のみ届きます（iOS16.4以降）','リマインド時刻（◯分前・前日など）に合わせて配信。予定の変更・削除・完了で通知も自動キャンセル','通知をタップするとアプリが開きます'] },
   { v:'v299', d:'2026-08-04', items:['🛠タップずれバグを修正：入力キーボードを閉じた直後に「押した場所と違うボタンが反応する」（テンキーの2で7が入る・保存で詳細が開く等）iOS由来の問題を解消。保存の失敗も検知して⚠️表示するように','📅終日・連日予定に対応：追加画面に「終日」チップと「終了日」欄。連日予定はカレンダー上で色の帯が日をまたいで繋がって表示（例：3泊のハワイ）','👆長押しで即追加：カレンダーの日付マスを長押しすると、その日の追加画面が直接開きます','👉ToDoのスワイプ操作：右スワイプ＝完了／左スワイプ＝削除（iPhoneリマインダーと同じ）','🎨テンプレに自動で色が付くように：CT=緑・CT取り=水色・FT=オレンジ・PG=青紫・DLR=紫・MTG=グレー。カレンダーがLifebearのような多色表示に'] },
   { v:'v298', d:'2026-08-04', items:['🗓カレンダーがLifebear式の縦スクロールに：1画面5週表示のまま、上下にスクロールすると前月・翌月へシームレスに繋がります（前6ヶ月〜先12ヶ月）','スクロールに合わせて上の年月表示が自動で切替。‹›は月単位ジャンプ・「今日」で今日の週へ。月の変わり目は薄い縞と「8/1」表記でわかります','⏰時刻入力がLifebear式テンキーに：数字を打つだけ（19→00で19:00）。開始を入れると終了は自動で+1時間・「消去」で時刻なしに'] },
   { v:'v297', d:'2026-08-04', items:['🗓予定タブを開いた瞬間、全画面の月カレンダーが開くように（スマホ・タップ数最小化）','📏一覧性アップ：日別パネルの常時表示をやめてマスの高さ約2倍に。1日7件まで予定を直接表示','👆日にちをタップ→下から日別シート（📅予定＋✅その日が期日のタスク）。同じ日をもう1度タップで即追加','✅カレンダーとToDoを分離：月カレンダーは「予定」だけ、タスクは「ToDo」タブでiPhoneリマインダー風に管理（グループ見出しタップで開閉・チェック丸を大きく）','🎨カテゴリの色を見分けやすい12色に整理（既存の色はそのまま）'] },
@@ -10133,6 +10135,7 @@ function meDeleteTask(eid, mid) {
   if (state.gcalConnected) gcalDeleteRemote(e);
   var uid = eventsUid();
   if (uid && db) db.doc('maps/' + uid + '/events/' + eid).delete().catch(function(){});
+  _notifQueueDelete(eid); // CAL-4: 通知予約も削除
   updateEventsBadge();
   if (currentView === 'events') renderEvents();
   var m = _mFind(mid);
@@ -11983,8 +11986,71 @@ function saveEventDoc(e) {
   // undefined を含むと Firestore が保存を拒否するため除去（保存されない事故の防止）
   var clean = {};
   for (var k in e) { if (e.hasOwnProperty(k) && e[k] !== undefined) clean[k] = e[k]; }
+  try { _notifSync(clean); } catch(err) {} // CAL-4: 通知予約を同期
   return fsSet('maps/' + uid + '/events/' + e.id, clean);
 }
+// ── CAL-4: プッシュ通知 ──────────────────────────────
+// 予約: notifQueue/{自分のuid_イベントid} に fireAt(ISO) を書く → Cloud Functionsが5分毎に発射
+var FCM_VAPID_KEY = 'BF3BgLtdy0ANjYfZxldi_bsJ3ae3r22SkEr493WqJvLN5Z9qcvz2Ll-uxpk1Tsw-BMpLeyjywAlsI7KJBftS6UA';
+function _notifQid(eventId) { return (currentUser && currentUser.uid ? currentUser.uid : 'x') + '_' + eventId; }
+function _notifQueueDelete(eventId) {
+  if (!db || !currentUser || !currentUser.uid) return;
+  db.doc('notifQueue/' + _notifQid(eventId)).delete().catch(function(){});
+}
+function _notifRbLabel(rb) {
+  rb = parseInt(rb, 10) || 0;
+  if (rb >= 1440) return '前日';
+  if (rb >= 60) return (rb / 60) + '時間前';
+  return rb + '分前';
+}
+function _notifSync(e) {
+  if (!db || !currentUser || !currentUser.uid || !e || !e.id) return;
+  var need = !e.done && e.date && e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null;
+  if (need) {
+    var tm = e.time || '09:00'; // 時刻なしは9:00基準（既存のアプリ内リマインドと同じ）
+    var p = String(e.date).split('-'), q = String(tm).split(':');
+    var dt = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), parseInt(q[0],10)||0, parseInt(q[1],10)||0, 0);
+    dt = new Date(dt.getTime() - (parseInt(e.remindBefore,10)||0)*60000);
+    if (dt.getTime() > Date.now()) {
+      var md = parseInt(p[1],10) + '/' + parseInt(p[2],10);
+      fsSet('notifQueue/' + _notifQid(e.id), {
+        uid: currentUser.uid,
+        eventId: e.id,
+        fireAt: dt.toISOString(),
+        title: (e.type === 'task' ? '✅ ' : '📅 ') + (e.title || '予定'),
+        body: md + (e.time ? ' ' + e.time + '〜' : '') + (parseInt(e.remindBefore,10) > 0 ? '（' + _notifRbLabel(e.remindBefore) + '）' : ' 開始時刻です')
+      }).catch(function(){});
+      return;
+    }
+  }
+  _notifQueueDelete(e.id);
+}
+// 端末登録: 許可→FCMトークン取得→users/{uid}/fcmTokens/{token} に保存
+var _fcmBusy = false;
+function fcmRegister() {
+  if (_fcmBusy) return Promise.resolve(false);
+  if (!db || !currentUser || !currentUser.uid) return Promise.resolve(false);
+  if (!('serviceWorker' in navigator)) return Promise.resolve(false);
+  try {
+    if (!firebase.messaging || !firebase.messaging.isSupported || !firebase.messaging.isSupported()) return Promise.resolve(false);
+  } catch(e0) { return Promise.resolve(false); }
+  _fcmBusy = true;
+  return navigator.serviceWorker.ready.then(function(reg){
+    return firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
+  }).then(function(tok){
+    if (!tok) { _fcmBusy = false; return false; }
+    return fsSet('users/' + currentUser.uid + '/fcmTokens/' + tok, {
+      ua: String(navigator.userAgent || '').slice(0, 180),
+      updatedAt: new Date().toISOString()
+    }).then(function(){ _fcmBusy = false; return true; });
+  }).catch(function(){ _fcmBusy = false; return false; });
+}
+// 起動時: 許可済み端末はトークンを最新化（失効・機種変更対策）
+setTimeout(function(){
+  try {
+    if (('Notification' in window) && Notification.permission === 'granted') fcmRegister();
+  } catch(e) {}
+}, 7000);
 
 // ============================================================
 //  Googleカレンダー連携（一方向 GROOVE→Google / クライアントのみ / 専用カレンダー「MAP予定」）
@@ -12603,6 +12669,10 @@ function requestNotifPermission() {
       toast('通知をオンにしました 🔔');
       showBrowserNotif('通知をオンにしました', '期限・予定の時刻にお知らせします', 'gm-welcome');
       checkReminders();
+      // CAL-4: アプリを閉じていても届くプッシュ通知として端末を登録
+      fcmRegister().then(function(ok){
+        if (ok) toast('🔔 この端末をプッシュ通知に登録しました（アプリを閉じていても届きます）');
+      });
     } else {
       toast('通知は許可されませんでした');
     }
@@ -12784,7 +12854,12 @@ function openCalSettings() {
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚙ カレンダー設定</div></div>'
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
     + '<div style="padding:4px 16px 20px"><div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
-    + '<div class="rg">' + wsBtn(1, '月曜はじまり') + wsBtn(0, '日曜はじまり') + '</div></div></div></div>';
+    + '<div class="rg">' + wsBtn(1, '月曜はじまり') + wsBtn(0, '日曜はじまり') + '</div></div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（アプリを閉じていても届く）</label>'
+    + ((('Notification' in window) && Notification.permission === 'granted')
+      ? '<div style="font-size:13px;color:var(--accent);font-weight:700;padding:4px 2px">🔔 この端末では有効です</div>'
+      : '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();requestNotifPermission()">🔔 プッシュ通知を有効にする</button>')
+    + '</div></div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
@@ -13026,6 +13101,7 @@ function _evDeleteById(id) {
   if (state.gcalConnected) gcalDeleteRemote(e);
   var uid = eventsUid();
   if (uid && db) db.doc('maps/' + uid + '/events/' + id).delete().catch(function(){});
+  _notifQueueDelete(id); // CAL-4: 通知予約も削除
   updateEventsBadge();
   renderEvents();
   toast('削除しました');
@@ -13049,6 +13125,7 @@ function evActDeleteSeries(id) {
     for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === x.id) { state.events.splice(i, 1); break; } }
     if (state.gcalConnected) gcalDeleteRemote(x);
     if (uid && db) db.doc('maps/' + uid + '/events/' + x.id).delete().catch(function(){});
+    _notifQueueDelete(x.id); // CAL-4: 通知予約も削除
   });
   updateEventsBadge();
   renderEvents();
@@ -14115,6 +14192,7 @@ function deleteEvent() {
   }
   if (state.gcalConnected && removed) gcalDeleteRemote(removed);
   if (uid && db) db.doc('maps/' + uid + '/events/' + _evEditId).delete().catch(function(){});
+  _notifQueueDelete(_evEditId); // CAL-4: 通知予約も削除
   closeEventModal();
   updateEventsBadge();
   renderEvents();

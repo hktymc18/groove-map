@@ -3,7 +3,49 @@
  * HTML はネットワーク優先（デプロイ反映）、失敗時にキャッシュへフォールバック。
  * Firebase/gstatic 等の外部オリジンは素通し（キャッシュしない）。
  * 注意: バージョンを上げたら CACHE 名も更新すること（古いキャッシュを破棄）。 */
-var CACHE = 'groove-map-v299';
+/* ── CAL-4: プッシュ通知（FCM）バックグラウンド受信 ──
+ * データメッセージ {data:{title,body}} を受けてOS通知を表示。
+ * 読み込み失敗（オフライン更新時など）でもSW本体は動くよう try/catch。 */
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+  firebase.initializeApp({
+    apiKey: "AIzaSyBHLz19p4wsSi043V0hhE-Crjwv6VBKBro",
+    authDomain: "hotlist-21865.firebaseapp.com",
+    projectId: "hotlist-21865",
+    storageBucket: "hotlist-21865.firebasestorage.app",
+    messagingSenderId: "565556414915",
+    appId: "1:565556414915:web:f8c3489260e8d9d6e49576"
+  });
+  var _fcm = firebase.messaging();
+  _fcm.onBackgroundMessage(function (payload) {
+    var n = (payload && payload.notification) || {};
+    var d = (payload && payload.data) || {};
+    var title = n.title || d.title || 'GROOVE MAP';
+    var body = n.body || d.body || '';
+    return self.registration.showNotification(title, {
+      body: body,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      tag: 'gm-' + (d.eventId || 'push'),
+      data: { url: './' }
+    });
+  });
+} catch (e) {}
+
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        if ('focus' in list[i]) return list[i].focus();
+      }
+      if (clients.openWindow) return clients.openWindow('./');
+    })
+  );
+});
+
+var CACHE = 'groove-map-v300';
 var ASSETS = [
   './',
   './index.html',
