@@ -1028,12 +1028,12 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cell:nth-child(7n){border-right:none}
 .ev-cell.empty{background:transparent;cursor:default}
 .ev-cell.sel{background:var(--accent-dim)}
-.ev-cell-num{font-size:12px;font-weight:600;color:var(--text);width:22px;height:22px;line-height:22px;border-radius:50%;margin:2px auto 1px;padding:0;text-align:center}
+.ev-cell-num{font-size:11px;font-weight:600;color:var(--text);width:18px;height:18px;line-height:18px;border-radius:50%;margin:1px auto;padding:0;text-align:center}
 .ev-cell-num.sun,.ev-cell-num.hol{color:var(--red)}
 .ev-cell-num.sat{color:var(--b)}
 .ev-cell.today .ev-cell-num{background:var(--accent);color:var(--go-ink);font-weight:800}
 .ev-cell-bars{display:flex;flex-direction:column;gap:1px;margin-top:1px;width:100%}
-.ev-bar{font-size:10px;font-weight:600;line-height:1.55;padding:0 3px;border-radius:3px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;text-align:left}
+.ev-bar{font-size:9.5px;font-weight:600;line-height:1.32;padding:0 2px;border-radius:2.5px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;text-align:left}
 .ev-bar b{font-weight:800;font-family:'IBM Plex Mono',monospace}
 .ev-bar.bar-task{background:var(--accent);color:var(--go-ink)}
 .ev-bar.bar-event{background:var(--purple);color:#fff}
@@ -1935,7 +1935,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v300</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v301</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4439,7 +4439,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v300';
+  var DATA_VERSION = 'v301';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5176,6 +5176,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v301', d:'2026-08-05', items:['🗓月カレンダーの一覧性をさらにアップ：1日に10件まで予定を直接表示（11件目から+N）','チップの時刻は「時」だけの表示に（19:30→19）。件名が長く読めるように','日付数字とチップを少しコンパクト化してマス内のスペースを拡大'] },
   { v:'v300', d:'2026-08-04', items:['🔔プッシュ通知に対応（CAL-4）：アプリを閉じていても、リマインド設定した予定・タスクの通知がスマホに届くようになりました','有効化：予定タブの「🔔通知をオン」または全画面カレンダーの⚙設定から。※iPhoneは「ホーム画面に追加」したアプリで開いた場合のみ届きます（iOS16.4以降）','リマインド時刻（◯分前・前日など）に合わせて配信。予定の変更・削除・完了で通知も自動キャンセル','通知をタップするとアプリが開きます'] },
   { v:'v299', d:'2026-08-04', items:['🛠タップずれバグを修正：入力キーボードを閉じた直後に「押した場所と違うボタンが反応する」（テンキーの2で7が入る・保存で詳細が開く等）iOS由来の問題を解消。保存の失敗も検知して⚠️表示するように','📅終日・連日予定に対応：追加画面に「終日」チップと「終了日」欄。連日予定はカレンダー上で色の帯が日をまたいで繋がって表示（例：3泊のハワイ）','👆長押しで即追加：カレンダーの日付マスを長押しすると、その日の追加画面が直接開きます','👉ToDoのスワイプ操作：右スワイプ＝完了／左スワイプ＝削除（iPhoneリマインダーと同じ）','🎨テンプレに自動で色が付くように：CT=緑・CT取り=水色・FT=オレンジ・PG=青紫・DLR=紫・MTG=グレー。カレンダーがLifebearのような多色表示に'] },
   { v:'v298', d:'2026-08-04', items:['🗓カレンダーがLifebear式の縦スクロールに：1画面5週表示のまま、上下にスクロールすると前月・翌月へシームレスに繋がります（前6ヶ月〜先12ヶ月）','スクロールに合わせて上の年月表示が自動で切替。‹›は月単位ジャンプ・「今日」で今日の週へ。月の変わり目は薄い縞と「8/1」表記でわかります','⏰時刻入力がLifebear式テンキーに：数字を打つだけ（19→00で19:00）。開始を入れると終了は自動で+1時間・「消去」で時刻なしに'] },
@@ -12502,7 +12503,8 @@ function evBarHtml(e, span) {
   if (span) cls += ' span-' + span; // v299: 連日帯（s=開始/m=中日/e=最終日）
   // カテゴリ色を付けてもタスク/予定の種別が読めるように、タスクは□/✓を前置。実行済み予定は✓
   var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : (e.done ? '✓ ' : '');
-  var tm = (e.time && !e.done) ? '<b>' + evEsc(String(e.time).slice(0,5)) + '</b> ' : '';
+  // v301: 月表示は「時」だけ表示（19:30→19）して件名のスペースを優先
+  var tm = (e.time && !e.done) ? '<b>' + (parseInt(String(e.time).split(':')[0], 10) || 0) + '</b> ' : '';
   var body = (span === 'm' || span === 'e') ? '&nbsp;' : (tm + evEsc(mark + (e.title || '')));
   return '<div class="' + cls + '"' + style + '>' + body + '</div>';
 }
@@ -13402,7 +13404,7 @@ function renderCalendar() {
         if (sa !== sb) return sa - sb;
         return evSortFn(a.ev, b.ev);
       });
-      var MAXBARS = 7; // 1日7件まで直接表示（8件目から+N）
+      var MAXBARS = 10; // v301: Lifebear同様1日10件まで直接表示（11件目から+N）
       var bars = hol ? '<div class="ev-bar ev-hol">' + evEsc(hol) + '</div>' : '';
       for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi].ev, dayList[bi].span);
       if (dayList.length > MAXBARS) bars += '<div class="ev-more">+' + (dayList.length - MAXBARS) + '件</div>';
