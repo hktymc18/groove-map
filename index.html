@@ -1018,7 +1018,7 @@ tr.ot-done{opacity:.5}
 .ev-cal-weekdays .ev-sat{color:var(--b)}
 .ev-cal-weekdays .ev-sun{color:var(--red)}
 /* v298: Lifebear式・縦に無限スクロールする連続週カレンダー（1画面5週） */
-.ev-cal-grid{display:block;overflow-y:auto;padding:0;height:72vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.ev-cal-grid{display:block;overflow-y:auto;padding:0;height:72vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .ev-wkrow{display:grid;grid-template-columns:repeat(7,1fr);height:20%}
 .ev-cell{position:relative;min-height:0;height:100%;border:none;border-bottom:1px solid var(--border);border-right:1px solid var(--border);border-radius:0;background:transparent;display:flex;flex-direction:column;align-items:stretch;padding:0 1px 2px;cursor:pointer;overflow:hidden}
 .ev-cell.alt{background:rgba(126,138,166,.08)}
@@ -1040,6 +1040,10 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-bar.bar-overdue{background:var(--red);color:#fff}
 .ev-bar.bar-done{opacity:.4;text-decoration:line-through}
 .ev-bar.ev-hol{background:transparent;color:var(--red);font-weight:700;padding:0 2px}
+/* v299: 連日予定の帯（マスの境界を跨いで繋がって見えるように角と余白を調整） */
+.ev-bar.span-s{border-radius:3px 0 0 3px;margin-right:-3px}
+.ev-bar.span-m{border-radius:0;margin-left:-3px;margin-right:-3px;width:auto}
+.ev-bar.span-e{border-radius:0 3px 3px 0;margin-left:-3px;width:auto}
 .ev-more{font-size:9px;color:var(--text-dim);padding-left:3px}
 /* 選択日パネル（CAL-1：ボトムシート→カレンダー直下のインライン表示） */
 .ev-day-panel{margin:10px 14px calc(env(safe-area-inset-bottom) + 90px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 12px}
@@ -1930,7 +1934,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v298</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v299</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2590,11 +2594,15 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
     <div class="ev-dt-row">
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
-      <div class="fr" style="flex:1.2;margin-bottom:0"><label class="fl">時刻（任意）開始〜終了</label>
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">終了日（連日・任意）</label><input class="fi ev-dt" id="evDateEnd" type="date"></div>
+    </div>
+    <div class="ev-dt-row">
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">時刻（任意）開始〜終了</label>
         <div style="display:flex;gap:5px;align-items:center">
           <input class="fi ev-dt" id="evTime" type="text" readonly placeholder="なし" onclick="openTimePad('evTime')" style="flex:1;min-width:0;cursor:pointer;text-align:center">
           <span style="color:var(--text-dim);font-weight:700">〜</span>
           <input class="fi ev-dt" id="evTimeEnd" type="text" readonly placeholder="なし" onclick="openTimePad('evTimeEnd')" style="flex:1;min-width:0;cursor:pointer;text-align:center">
+          <div class="rb" id="evAllDayChip" onclick="evToggleAllDay()" style="flex:none;padding:9px 11px;font-size:12px">終日</div>
         </div>
       </div>
     </div>
@@ -4430,7 +4438,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v298';
+  var DATA_VERSION = 'v299';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4646,6 +4654,18 @@ function closeMobileMenu() {
   var ov = document.getElementById('mobileMenuOv');
   if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
 }
+// ── iOS: キーボードを閉じた直後、固定表示のタップ判定が上にズレる問題の対策 ──
+// （タイトル入力→キーボード収納直後に「2を押すと7」「保存を押すと詳細が開く」誤ヒットが起きる）
+// 入力欄からフォーカスが外れたら、キーボードで押し上げられたスクロールを必ず0に戻す
+document.addEventListener('focusout', function() {
+  setTimeout(function() {
+    try {
+      var se = document.scrollingElement || document.documentElement;
+      if (se && se.scrollTop) se.scrollTop = 0;
+      if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
+    } catch(e0) {}
+  }, 60);
+}, true);
 // ── Android等の「戻る」でシート/モーダルを閉じる（アプリ終了を防ぐ） ──
 try { history.pushState({ gm: 1 }, ''); } catch(e) {}
 window.addEventListener('popstate', function() {
@@ -5155,6 +5175,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v299', d:'2026-08-04', items:['🛠タップずれバグを修正：入力キーボードを閉じた直後に「押した場所と違うボタンが反応する」（テンキーの2で7が入る・保存で詳細が開く等）iOS由来の問題を解消。保存の失敗も検知して⚠️表示するように','📅終日・連日予定に対応：追加画面に「終日」チップと「終了日」欄。連日予定はカレンダー上で色の帯が日をまたいで繋がって表示（例：3泊のハワイ）','👆長押しで即追加：カレンダーの日付マスを長押しすると、その日の追加画面が直接開きます','👉ToDoのスワイプ操作：右スワイプ＝完了／左スワイプ＝削除（iPhoneリマインダーと同じ）','🎨テンプレに自動で色が付くように：CT=緑・CT取り=水色・FT=オレンジ・PG=青紫・DLR=紫・MTG=グレー。カレンダーがLifebearのような多色表示に'] },
   { v:'v298', d:'2026-08-04', items:['🗓カレンダーがLifebear式の縦スクロールに：1画面5週表示のまま、上下にスクロールすると前月・翌月へシームレスに繋がります（前6ヶ月〜先12ヶ月）','スクロールに合わせて上の年月表示が自動で切替。‹›は月単位ジャンプ・「今日」で今日の週へ。月の変わり目は薄い縞と「8/1」表記でわかります','⏰時刻入力がLifebear式テンキーに：数字を打つだけ（19→00で19:00）。開始を入れると終了は自動で+1時間・「消去」で時刻なしに'] },
   { v:'v297', d:'2026-08-04', items:['🗓予定タブを開いた瞬間、全画面の月カレンダーが開くように（スマホ・タップ数最小化）','📏一覧性アップ：日別パネルの常時表示をやめてマスの高さ約2倍に。1日7件まで予定を直接表示','👆日にちをタップ→下から日別シート（📅予定＋✅その日が期日のタスク）。同じ日をもう1度タップで即追加','✅カレンダーとToDoを分離：月カレンダーは「予定」だけ、タスクは「ToDo」タブでiPhoneリマインダー風に管理（グループ見出しタップで開閉・チェック丸を大きく）','🎨カテゴリの色を見分けやすい12色に整理（既存の色はそのまま）'] },
   { v:'v296', d:'2026-08-03', items:['🔁繰り返し予定に対応：毎日/毎週/隔週/毎月＋終了日（未指定は3ヶ月先まで・最大60件）。毎週のミーティングを1回の入力で登録できます','繰り返しの予定は🔁マーク付き。操作シートから「この回のみ削除」「以降すべて削除」を選べます','🔍検索機能：リスト上部の入力ボックスに文字を打つと、タイトル・メモ・メンバー名で即絞り込み。そのままEnterすれば今日のタスクとして追加'] },
@@ -11959,7 +11980,10 @@ function loadEvents(uid) {
 function saveEventDoc(e) {
   var uid = eventsUid();
   if (!uid || !db) return Promise.resolve();
-  return fsSet('maps/' + uid + '/events/' + e.id, e);
+  // undefined を含むと Firestore が保存を拒否するため除去（保存されない事故の防止）
+  var clean = {};
+  for (var k in e) { if (e.hasOwnProperty(k) && e[k] !== undefined) clean[k] = e[k]; }
+  return fsSet('maps/' + uid + '/events/' + e.id, clean);
 }
 
 // ============================================================
@@ -12399,7 +12423,7 @@ function saveCategories() {
 }
 
 // カレンダーのバー1本
-function evBarHtml(e) {
+function evBarHtml(e, span) {
   var t = evTodayYmd();
   var overdue = e.type === 'task' && !e.done && e.date && e.date < t;
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
@@ -12409,11 +12433,12 @@ function evBarHtml(e) {
   else if (overdue) cls += ' bar-overdue';
   else cls += (e.type === 'task') ? ' bar-task' : ' bar-event';
   if (e.done) cls += ' bar-done';
+  if (span) cls += ' span-' + span; // v299: 連日帯（s=開始/m=中日/e=最終日）
   // カテゴリ色を付けてもタスク/予定の種別が読めるように、タスクは□/✓を前置。実行済み予定は✓
   var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : (e.done ? '✓ ' : '');
   var tm = (e.time && !e.done) ? '<b>' + evEsc(String(e.time).slice(0,5)) + '</b> ' : '';
-  var title = mark + (e.title || '');
-  return '<div class="' + cls + '"' + style + '>' + tm + evEsc(title) + '</div>';
+  var body = (span === 'm' || span === 'e') ? '&nbsp;' : (tm + evEsc(mark + (e.title || '')));
+  return '<div class="' + cls + '"' + style + '>' + body + '</div>';
 }
 
 // イベントモーダルのカテゴリ表示更新
@@ -12830,9 +12855,24 @@ function renderWeek() {
     title.innerHTML = evEsc((first.getMonth()+1) + '/' + first.getDate() + ' 〜 ' + (last.getMonth()+1) + '/' + last.getDate() + suffix)
       + (_weekOffset !== 0 ? ' <span onclick="event.stopPropagation();weekShift(0)" style="display:inline-block;font-size:12px;font-weight:800;color:var(--go-ink);background:var(--accent);border-radius:12px;padding:4px 12px;margin-left:6px;cursor:pointer">今週へ</span>' : '');
   }
-  // 日付→イベントの索引
+  // 日付→イベントの索引（連日予定は期間中の毎日に展開）
   var byDate = {};
-  (state.events || []).forEach(function(e){ if (e.date && !e.deleted) (byDate[e.date] || (byDate[e.date] = [])).push(e); });
+  (state.events || []).forEach(function(e){
+    if (!e.date || e.deleted) return;
+    if (e.endDate && e.endDate > e.date) {
+      var p1 = e.date.split('-');
+      var dd = new Date(parseInt(p1[0],10), parseInt(p1[1],10)-1, parseInt(p1[2],10));
+      var g1 = 0;
+      while (g1++ < 60) {
+        var k2 = evYmd(dd);
+        if (k2 > e.endDate) break;
+        (byDate[k2] = byDate[k2] || []).push(e);
+        dd.setDate(dd.getDate() + 1);
+      }
+    } else {
+      (byDate[e.date] = byDate[e.date] || []).push(e);
+    }
+  });
   var WD = ['日','月','火','水','木','金','土'];
   var html = '';
   var weekTotal = 0;
@@ -12979,11 +13019,9 @@ function openEventActions(id) {
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
-function evActDelete(id) {
+function _evDeleteById(id) {
   var e = findEvent(id);
   if (!e) return;
-  if (!confirm('「' + (e.title || '(無題)') + '」を削除しますか？')) return;
-  closeEventActions();
   for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === id) { state.events.splice(i, 1); break; } }
   if (state.gcalConnected) gcalDeleteRemote(e);
   var uid = eventsUid();
@@ -12991,6 +13029,13 @@ function evActDelete(id) {
   updateEventsBadge();
   renderEvents();
   toast('削除しました');
+}
+function evActDelete(id) {
+  var e = findEvent(id);
+  if (!e) return;
+  if (!confirm('「' + (e.title || '(無題)') + '」を削除しますか？')) return;
+  closeEventActions();
+  _evDeleteById(id);
 }
 // B1: 繰り返しシリーズの「この回＋以降」を一括削除
 function evActDeleteSeries(id) {
@@ -13040,10 +13085,12 @@ function evItemHtml(e) {
   }
   var dateLabel = fmtEvDate(e.date, e.time);
   if (dateLabel && e.time && e.endTime) dateLabel += '〜' + e.endTime; // A2: 終了時刻も表示
+  if (dateLabel && e.endDate) dateLabel += '〜' + parseInt(e.endDate.slice(5,7),10) + '/' + parseInt(e.endDate.slice(8,10),10); // v299: 連日
+  if (e.allDay) dateLabel += ' 終日';
   var dueCls = overdue ? 'due-overdue' : (e.date === t ? 'due-today' : '');
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
   var styleAttr = cat ? ' style="border-left-color:' + cat.color + '"' : '';
-  var h = '<div class="' + cls + '"' + styleAttr + '>';
+  var h = '<div class="' + cls + '" data-eid="' + e.id + '"' + styleAttr + '>';
   // タスクも予定もチェックで消込できる（予定＝実行済みの記録）。予定は紫系で種別を区別
   h += '<div class="' + checkCls + (isTask ? '' : ' ev-check-event') + '" onclick="toggleEventDone(\'' + e.id + '\')" title="' + (isTask ? '完了にする' : '実行済みにする') + '">✓</div>';
   // A4: 本文タップは操作ミニシート（完了/スター/編集/削除に大きなボタンで到達）
@@ -13082,6 +13129,47 @@ function evItemHtml(e) {
 function renderAgenda() {
   var wrap = document.getElementById('evAgendaList');
   if (!wrap) return;
+  // v299: リマインダー風スワイプ操作（右＝完了/戻す・左＝削除）。1回だけ委譲バインド
+  if (!wrap._swBound) {
+    wrap._swBound = true;
+    var swRow = null, swX = 0, swY = 0, swDx = 0, swActive = false;
+    wrap.addEventListener('touchstart', function(ev){
+      var r = (ev.target && ev.target.closest) ? ev.target.closest('.ev-item') : null;
+      if (!r || !r.getAttribute('data-eid')) { swRow = null; return; }
+      swRow = r;
+      var tt = ev.touches[0];
+      swX = tt.clientX; swY = tt.clientY; swDx = 0; swActive = false;
+    }, { passive: true });
+    wrap.addEventListener('touchmove', function(ev){
+      if (!swRow) return;
+      var tt = ev.touches[0];
+      var dx = tt.clientX - swX, dy = tt.clientY - swY;
+      if (!swActive) {
+        if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) { swRow = null; return; } // 縦スクロール優先
+        if (Math.abs(dx) > 14) swActive = true;
+      }
+      if (swActive) {
+        swDx = Math.max(-110, Math.min(110, dx));
+        swRow.style.transition = 'none';
+        swRow.style.transform = 'translateX(' + swDx + 'px)';
+      }
+    }, { passive: true });
+    wrap.addEventListener('touchend', function(){
+      if (!swRow) return;
+      var r = swRow, dx = swDx, act = swActive;
+      swRow = null;
+      r.style.transition = 'transform .18s';
+      r.style.transform = '';
+      if (!act) return;
+      var eid = r.getAttribute('data-eid');
+      if (dx > 70) {
+        toggleEventDone(eid); // 右スワイプ＝完了/未完了
+      } else if (dx < -70) {
+        var e2 = findEvent(eid);
+        if (e2 && confirm('「' + (e2.title || '(無題)') + '」を削除しますか？')) _evDeleteById(eid);
+      }
+    }, { passive: true });
+  }
   // B3: 検索モード（即入力ボックスに文字がある間は絞り込み表示）
   if (_evQuickFilter) {
     var q = _evQuickFilter.toLowerCase();
@@ -13201,8 +13289,20 @@ function renderCalendar() {
   (state.events||[]).forEach(function(e) {
     if (!e.date) return;
     if (e.type === 'task') return; // v297: 月カレンダーは予定のみ。タスクはToDoと日別シートで
-    if (!byDate[e.date]) byDate[e.date] = [];
-    byDate[e.date].push(e);
+    if (e.endDate && e.endDate > e.date) {
+      // v299: 複数日予定は期間中の毎日に帯として表示（最大60日）
+      var p1 = e.date.split('-');
+      var dd = new Date(parseInt(p1[0],10), parseInt(p1[1],10)-1, parseInt(p1[2],10));
+      var g1 = 0;
+      while (g1++ < 60) {
+        var dsX = evYmd(dd);
+        if (dsX > e.endDate) break;
+        (byDate[dsX] = byDate[dsX] || []).push({ ev: e, span: (dsX === e.date ? 's' : (dsX === e.endDate ? 'e' : 'm')) });
+        dd.setDate(dd.getDate() + 1);
+      }
+    } else {
+      (byDate[e.date] = byDate[e.date] || []).push({ ev: e, span: '' });
+    }
   });
   var html = '';
   var cur = new Date(rs.getTime());
@@ -13219,12 +13319,17 @@ function renderCalendar() {
       var hol = jpHoliday(ds);
       var numCls = 'ev-cell-num' + (dowReal === 0 ? ' sun' : (dowReal === 6 ? ' sat' : '')) + (hol ? ' hol' : '') + (d === 1 ? ' m1' : '');
       var dayList = (byDate[ds] || []).slice();
-      dayList.sort(evSortFn);
+      // 連日帯を先頭に（Lifebearと同じく帯→時刻順）
+      dayList.sort(function(a, b) {
+        var sa = a.span ? 0 : 1, sb = b.span ? 0 : 1;
+        if (sa !== sb) return sa - sb;
+        return evSortFn(a.ev, b.ev);
+      });
       var MAXBARS = 7; // 1日7件まで直接表示（8件目から+N）
       var bars = hol ? '<div class="ev-bar ev-hol">' + evEsc(hol) + '</div>' : '';
-      for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi]);
+      for (var bi = 0; bi < dayList.length && bi < MAXBARS; bi++) bars += evBarHtml(dayList[bi].ev, dayList[bi].span);
       if (dayList.length > MAXBARS) bars += '<div class="ev-more">+' + (dayList.length - MAXBARS) + '件</div>';
-      html += '<div class="' + cls + '" onclick="selCalDay(\'' + ds + '\')">'
+      html += '<div class="' + cls + '" data-ds="' + ds + '" onclick="selCalDay(\'' + ds + '\')">'
         + '<span class="' + numCls + '">' + (d === 1 ? ((cur.getMonth()+1) + '/1') : d) + '</span>'
         + '<div class="ev-cell-bars">' + bars + '</div></div>';
       cur.setDate(cur.getDate() + 1);
@@ -13236,6 +13341,33 @@ function renderCalendar() {
   if (!grid._calScrollBound) {
     grid._calScrollBound = true;
     grid.addEventListener('scroll', _calOnScroll, { passive: true });
+  }
+  // v299: 日マスの長押し→その日に即追加（Lifebearと同じ）
+  if (!grid._calLpBound) {
+    grid._calLpBound = true;
+    var lpT = null, lpDs = '', lpX = 0, lpY = 0;
+    grid.addEventListener('touchstart', function(ev){
+      var cell = (ev.target && ev.target.closest) ? ev.target.closest('.ev-cell') : null;
+      if (!cell || !cell.getAttribute('data-ds')) return;
+      lpDs = cell.getAttribute('data-ds');
+      var tt = ev.touches[0]; lpX = tt.clientX; lpY = tt.clientY;
+      if (lpT) clearTimeout(lpT);
+      lpT = setTimeout(function(){
+        lpT = null;
+        if (!eventsUid()) return;
+        window._calLpFired = true;
+        if (navigator.vibrate) try { navigator.vibrate(10); } catch(e2) {}
+        openEventAddDate(lpDs);
+        setTimeout(function(){ window._calLpFired = false; }, 600);
+      }, 500);
+    }, { passive: true });
+    grid.addEventListener('touchmove', function(ev){
+      if (!lpT) return;
+      var tt = ev.touches[0];
+      if (Math.abs(tt.clientX - lpX) > 10 || Math.abs(tt.clientY - lpY) > 10) { clearTimeout(lpT); lpT = null; }
+    }, { passive: true });
+    grid.addEventListener('touchend', function(){ if (lpT) { clearTimeout(lpT); lpT = null; } }, { passive: true });
+    grid.addEventListener('scroll', function(){ if (lpT) { clearTimeout(lpT); lpT = null; } }, { passive: true });
   }
   if (!_calScrollInit) {
     // 非表示中(clientHeight=0)はスクロールできないため、見えるようになった描画時に初期化
@@ -13286,6 +13418,7 @@ function _calOnScroll() {
   });
 }
 function selCalDay(ds) {
+  if (window._calLpFired) return; // 長押し直後のクリックは無視（二重で開かない）
   // v297: 日タップ→日別ボトムシート。シート表示中に同じ日を再タップ→その日に即追加
   if (ds === _calSelDate && document.getElementById('dayShOv') && eventsUid()) {
     closeCalDaySheet(true);
@@ -13298,7 +13431,10 @@ function selCalDay(ds) {
 }
 // v297: 日別ボトムシート（📅その日の予定 ＋ ✅その日が期日のタスク）
 function _daySheetHtml(ds) {
-  var evs = (state.events || []).filter(function(e){ return e.date === ds && e.type !== 'task'; });
+  var evs = (state.events || []).filter(function(e){
+    if (e.type === 'task') return false;
+    return e.date === ds || (e.endDate && e.date <= ds && ds <= e.endDate); // 連日予定は期間中の毎日に表示
+  });
   var tks = (state.events || []).filter(function(e){ return e.date === ds && e.type === 'task'; });
   evs.sort(evSortFn); tks.sort(evSortFn);
   var h = '';
@@ -13474,6 +13610,14 @@ function _evCreateSeries(base, rep, untilYmd) {
 var _tpTarget = null, _tpBuf = '';
 function openTimePad(targetId) {
   closeTimePad(false);
+  // キーボードが出たままだとタップ位置がズレるため、確実に閉じてスクロールを戻してから表示
+  try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch(e0) {}
+  try {
+    var _se = document.scrollingElement || document.documentElement;
+    if (_se && _se.scrollTop) _se.scrollTop = 0;
+    window.scrollTo(0, 0);
+  } catch(e1) {}
+  if (typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
   _tpTarget = targetId;
   _tpBuf = ((document.getElementById(targetId) || {}).value || '').replace(':', '');
   var ov = document.createElement('div');
@@ -13539,6 +13683,17 @@ function closeTimePad(commit) {
   if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
   _tpTarget = null; _tpBuf = '';
 }
+// v299: 終日トグル（ONで時刻を消して薄く表示）
+var _evAllDay = false;
+function evToggleAllDay(force) {
+  _evAllDay = (force === true || force === false) ? force : !_evAllDay;
+  var c = document.getElementById('evAllDayChip');
+  if (c) c.classList.toggle('sel', _evAllDay);
+  var s = document.getElementById('evTime'), en = document.getElementById('evTimeEnd');
+  if (_evAllDay) { if (s) s.value = ''; if (en) en.value = ''; }
+  if (s) s.style.opacity = _evAllDay ? '.35' : '';
+  if (en) en.style.opacity = _evAllDay ? '.35' : '';
+}
 // A1: 詳細折りたたみ
 var _evAdvOpen = false;
 function evToggleAdv(force) {
@@ -13588,6 +13743,21 @@ function _evTplFind(id) {
 function _evTplStageLabel(k) {
   var s = GL_STAGES.filter(function(x){ return x.k === k; })[0];
   return s ? s.label.replace(/（.*）/, '') : k;
+}
+// v299: テンプレに自動でカテゴリ色を付与（Lifebearのような多色カレンダーに）
+// 同名カテゴリがあれば再利用、無ければ初回使用時に作成して永続化
+var _TPL_CAT_COLORS = { 'CT取り':'#5AD7FF', 'CT':'#2FB56B', 'FT':'#FFB454', 'PG同席':'#6366f1', 'DLR動員':'#C583FF', 'ミーティング':'#9ca3af' };
+function _evTplAutoCat(t) {
+  if (t.categoryId && findCategory(t.categoryId)) return t.categoryId;
+  var col = _TPL_CAT_COLORS[t.name];
+  if (!col || !state.categories) return '';
+  for (var i = 0; i < state.categories.length; i++) {
+    if (state.categories[i].name === t.name) return state.categories[i].id;
+  }
+  var c = { id: 'cat_' + Date.now() + '_' + Math.floor(Math.random() * 100000), name: t.name, color: col };
+  state.categories.push(c);
+  saveCategories();
+  return c.id;
 }
 function evTplRenderRow() {
   var row = document.getElementById('evTplRow');
@@ -13639,7 +13809,8 @@ function evTplPick(id) {
   _evTplTitleAuto = newTitle;
   if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, readTimeEnd());
   _evSetRemind(t.notifyOffset);
-  if (t.categoryId && findCategory(t.categoryId)) { _evCategoryId = t.categoryId; updateEvCategoryDisplay(); }
+  var _acId = _evTplAutoCat(t); // v299: カテゴリ未設定テンプレは自動色分け
+  if (_acId) { _evCategoryId = _acId; updateEvCategoryDisplay(); }
   var memoEl = document.getElementById('evMemo');
   if (t.memo && memoEl && !memoEl.value) memoEl.value = t.memo;
   evTplRenderRow();
@@ -13806,6 +13977,10 @@ function openEventModal(id, presetMember, presetDate) {
   document.getElementById('evTitle').value = e ? (e.title || '') : '';
   document.getElementById('evDate').value  = e ? (e.date || '') : (presetDate || evTodayYmd());
   buildTimeSelects(e ? (e.time || '') : '', e ? (e.endTime || '') : '');
+  // v299: 終日・終了日（連日）
+  evToggleAllDay(e ? !!e.allDay : false);
+  var _dEnd = document.getElementById('evDateEnd');
+  if (_dEnd) _dEnd.value = e ? (e.endDate || '') : '';
   // B1: 繰り返しは新規作成時のみ（編集は1回分ずつ。まとめて消すのは操作シートから）
   var _rr = document.getElementById('evRepeatRow');
   if (_rr) _rr.style.display = id ? 'none' : '';
@@ -13873,6 +14048,15 @@ function saveEvent() {
   e.date     = document.getElementById('evDate').value;
   e.time     = readTimeSelects();
   e.endTime  = readTimeEnd();
+  // 不正な時刻文字列は捨てる（保存不能・表示崩れの防止）
+  if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(e.time)) e.time = '';
+  if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(e.endTime)) e.endTime = '';
+  if (e.time && e.endTime && e.endTime < e.time) e.endTime = '';
+  // v299: 終日・連日
+  e.allDay = !!_evAllDay;
+  if (e.allDay) { e.time = ''; e.endTime = ''; }
+  var _dEndV = ((document.getElementById('evDateEnd') || {}).value || '');
+  e.endDate = (_dEndV && e.date && _dEndV > e.date) ? _dEndV : '';
   e.memberId = document.getElementById('evMember').value;
   e.categoryId = _evCategoryId || '';
   e.priority = (_evType === 'task') ? _evPrio : 'normal';
@@ -13904,7 +14088,8 @@ function saveEvent() {
     if (_rep) _repMade = _evCreateSeries(e, _rep, (document.getElementById('evRepeatUntil') || {}).value || '');
   }
   // 予定の done（実行済み）は編集しても維持する
-  saveEventDoc(e).then(function(){ toast(_repMade > 1 ? ('🔁 繰り返し予定を' + _repMade + '件作成しました ✓') : '保存しました ✓'); });
+  saveEventDoc(e).then(function(){ toast(_repMade > 1 ? ('🔁 繰り返し予定を' + _repMade + '件作成しました ✓') : '保存しました ✓'); })
+    .catch(function(){ toast('⚠️ 保存に失敗しました（通信状態を確認してください）'); });
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   closeEventModal();
   updateEventsBadge();
