@@ -9,7 +9,8 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 exports.sendReminders = onSchedule(
-  { schedule: 'every 5 minutes', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
+  // v307: 通知遅延を最大1分程度に短縮（毎分起動でも無料枠の2%程度）
+  { schedule: 'every 1 minutes', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
   async () => {
     const db = admin.firestore();
     const nowIso = new Date().toISOString();
