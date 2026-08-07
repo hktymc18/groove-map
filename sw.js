@@ -28,24 +28,29 @@ try {
       icon: './icon-192.png',
       badge: './icon-192.png',
       tag: 'gm-' + (d.eventId || 'push'),
-      data: { url: './' }
+      data: { url: './', eventId: d.eventId || '' }
     });
   });
 } catch (e) {}
 
 self.addEventListener('notificationclick', function (e) {
   e.notification.close();
+  // v307: 通知タップ→アプリを開き、該当予定の詳細シートを表示
+  var evId = (e.notification && e.notification.data && e.notification.data.eventId) || '';
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {
-        if ('focus' in list[i]) return list[i].focus();
+        if ('focus' in list[i]) {
+          try { list[i].postMessage({ type: 'gmOpenEvent', eventId: evId }); } catch (err) {}
+          return list[i].focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow('./');
+      if (clients.openWindow) return clients.openWindow('./' + (evId ? '?ev=' + encodeURIComponent(evId) : ''));
     })
   );
 });
 
-var CACHE = 'groove-map-v306';
+var CACHE = 'groove-map-v307';
 var ASSETS = [
   './',
   './index.html',

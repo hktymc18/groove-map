@@ -1975,7 +1975,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v306</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v307</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4512,7 +4512,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v306';
+  var DATA_VERSION = 'v307';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5270,6 +5270,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v307', d:'2026-08-05', items:['🔔プッシュ通知をタップすると、その予定の詳細シートが直接開くように','⏱通知の配信間隔を5分→1分ごとのチェックに短縮（遅れがほぼ1分以内に）※要Functions再デプロイ'] },
   { v:'v306', d:'2026-08-05', items:['⚙カレンダー設定を拡充：プッシュ通知を🔔オン/🔕オフで切替可能に（オフ＝この端末への配信停止）','✂️Googleカレンダー連携を解除できるように（「今すぐ同期」と「連携を解除」に分離。Google側に作成済みの予定は残ります）','📌ワンタップ登録テンプレの編集・追加も設定から開けるように'] },
   { v:'v305', d:'2026-08-05', items:['🛠「保存ボタンが反応しない」を修正：キーボードを閉じた後にタップ位置の判定がズレたまま残るiOSの問題への対策を強化（復元を複数回実行＋タップした瞬間にも自動補正）','万一保存処理でエラーが起きた場合は必ず⚠️メッセージを表示するように（無反応をなくす）'] },
   { v:'v304', d:'2026-08-05', items:['🌙深夜対応：時刻を29時まで入力可能に（25時=翌1時など。24時を超えても「その日の予定」として表示・通知も正しい時刻に届きます）。日・週の時間軸も29時台まで延長','📆週ビューをLifebear式に全面刷新：7列×縦時間軸のタイムライン。終日帯・今日列のハイライト・現在時刻ライン・空き枠タップで作成・ブロックタップで操作','🎨月/週/日のデザイン統一：共通ヘッダー（✕ ‹ タイトル › 🗓▾）＋共通下部バー（✅ToDo・＋・⚙設定）。🗓▾からどのビューへも1タップ','⚙設定に「Googleカレンダー同期」「カテゴリ管理」を集約（週表示などからボタンを削減してすっきり）'] },
@@ -12136,6 +12137,32 @@ function fcmRegister() {
     }).then(function(){ _fcmBusy = false; return true; });
   }).catch(function(){ _fcmBusy = false; return false; });
 }
+// v307: 通知タップ→該当予定の詳細シートを開く（起動直後はデータ読込完了までリトライ）
+function gmOpenEventFromPush(id, tries) {
+  if (!id) return;
+  tries = tries || 0;
+  var e = (typeof findEvent === 'function') ? findEvent(id) : null;
+  if (e) {
+    if (typeof currentView !== 'undefined' && currentView !== 'events') switchView('events');
+    setTimeout(function(){ openEventActions(id); }, 250);
+  } else if (tries < 24) {
+    setTimeout(function(){ gmOpenEventFromPush(id, tries + 1); }, 500);
+  }
+}
+if ('serviceWorker' in navigator) {
+  try {
+    navigator.serviceWorker.addEventListener('message', function(ev){
+      if (ev && ev.data && ev.data.type === 'gmOpenEvent' && ev.data.eventId) gmOpenEventFromPush(ev.data.eventId);
+    });
+  } catch(eSW) {}
+}
+try {
+  var _pmEv = /[?&]ev=([^&]+)/.exec(location.search || '');
+  if (_pmEv) {
+    gmOpenEventFromPush(decodeURIComponent(_pmEv[1]));
+    if (history.replaceState) history.replaceState(null, '', location.pathname); // URLを綺麗に戻す
+  }
+} catch(ePM) {}
 // 起動時: 許可済み端末はトークンを最新化（失効・機種変更対策）。オフ設定の端末は登録しない
 setTimeout(function(){
   try {
