@@ -1982,7 +1982,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v308</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v309</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4531,7 +4531,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v308';
+  var DATA_VERSION = 'v309';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5297,6 +5297,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v309', d:'2026-08-05', items:['🧊3D組織マップを大幅強化','📷写真設定済みのメンバーは、タイトル色リング付きの丸写真で表示','🔵系譜ラインをサイバーブルーの発光ラインに（視認性UP）','🔥やる気レベル（稼働S/A/B）で発光：B=青・A=緑・S=金のオーラ、Sは鼓動アニメーション。情報カードにも表示','⚪フロント数（直下の人数）が多いほど球・写真が大きく表示','📶段数がひと目で分かるように：各階層に光るリング＋「1段目・2段目…」ラベルを追加'] },
   { v:'v308', d:'2026-08-05', items:['🧊3D組織マップ（プロトタイプ）：MAPタブ左下の「🧊3D」ボタンで、組織ツリーを3D空間で表示。指でグリグリ回転・ピンチでズーム','メンバーはタイトル色の球＋名前ラベル（写真設定済みなら丸写真付き）。タップで情報カード→そのまま編集へ','結合メンバーも表示（🔗マーク）・OUTは非表示・「視点リセット」ボタン付き・✕か戻るボタンで2Dへ','※3D表示は初回に少しだけ読み込み時間があります（ライブラリを初回のみダウンロード）'] },
   { v:'v307', d:'2026-08-05', items:['🔔プッシュ通知をタップすると、その予定の詳細シートが直接開くように','⏱通知の配信間隔を5分→1分ごとのチェックに短縮（遅れがほぼ1分以内に）※要Functions再デプロイ'] },
   { v:'v306', d:'2026-08-05', items:['⚙カレンダー設定を拡充：プッシュ通知を🔔オン/🔕オフで切替可能に（オフ＝この端末への配信停止）','✂️Googleカレンダー連携を解除できるように（「今すぐ同期」と「連携を解除」に分離。Google側に作成済みの予定は残ります）','📌ワンタップ登録テンプレの編集・追加も設定から開けるように'] },
@@ -13127,7 +13128,7 @@ function map3dResetView() {
   if (_m3Cam) _m3Cam.position.set(0, 260, 640);
   if (_m3Controls) _m3Controls.target.set(0, -140, 0);
 }
-// 名前ラベル（写真があれば丸写真も合成）のスプライト
+// 名前ラベルのスプライト
 function _m3MakeSprite(m) {
   try {
     var cv = document.createElement('canvas');
@@ -13143,24 +13144,64 @@ function _m3MakeSprite(m) {
     cx.fillStyle = '#F4F6FB';
     cx.fillText(name, 64, 32);
     var tex = new THREE.CanvasTexture(cv);
-    if (typeof _avatars !== 'undefined' && _avatars[m.id]) {
-      var img = new Image();
-      img.onload = function(){
-        try {
-          cx.save();
-          cx.beginPath(); cx.arc(20, 24, 18, 0, Math.PI * 2); cx.clip();
-          cx.drawImage(img, 2, 6, 36, 36);
-          cx.restore();
-          tex.needsUpdate = true;
-        } catch(e2) {}
-      };
-      img.src = _avatars[m.id];
-    }
     var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
     sp.scale.set(64, 24, 1);
     return sp;
   } catch(e) { return null; }
 }
+// v309: 写真持ちメンバー＝タイトル色リング付きの丸写真ノード（常にカメラ正面を向く）
+function _m3PhotoNode(m, size) {
+  try {
+    var cv = document.createElement('canvas');
+    cv.width = 128; cv.height = 128;
+    var cx = cv.getContext('2d');
+    var ring = titleRingColor(m.title || '') || '#7E8AA6';
+    cx.beginPath(); cx.arc(64, 64, 62, 0, Math.PI * 2); cx.fillStyle = ring; cx.fill();
+    cx.beginPath(); cx.arc(64, 64, 55, 0, Math.PI * 2); cx.fillStyle = '#101623'; cx.fill();
+    var tex = new THREE.CanvasTexture(cv);
+    var img = new Image();
+    img.onload = function(){
+      try {
+        cx.save();
+        cx.beginPath(); cx.arc(64, 64, 55, 0, Math.PI * 2); cx.clip();
+        cx.drawImage(img, 9, 9, 110, 110);
+        cx.restore();
+        tex.needsUpdate = true;
+      } catch(e2) {}
+    };
+    img.src = _avatars[m.id];
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+    sp.scale.set(size, size, 1);
+    return sp;
+  } catch(e) { return null; }
+}
+// v309: やる気レベル（稼働タイプ S/A/B/C → 3/2/1/0）
+function _m3Moti(m) {
+  var a = (m.activity || '').trim();
+  if (a === 'S') return 3;
+  if (a === 'A') return 2;
+  if (a === 'B') return 1;
+  return 0;
+}
+// v309: 発光ハロー用のテクスチャ（色ごとにキャッシュ）
+var _m3HaloTexCache = {};
+function _m3HaloTex(color) {
+  if (_m3HaloTexCache[color]) return _m3HaloTexCache[color];
+  var cv = document.createElement('canvas');
+  cv.width = 64; cv.height = 64;
+  var cx = cv.getContext('2d');
+  var g = cx.createRadialGradient(32, 32, 2, 32, 32, 32);
+  g.addColorStop(0, color);
+  g.addColorStop(0.35, color);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.globalAlpha = 0.85;
+  cx.fillStyle = g;
+  cx.fillRect(0, 0, 64, 64);
+  var tex = new THREE.CanvasTexture(cv);
+  _m3HaloTexCache[color] = tex;
+  return tex;
+}
+var _m3Halos = [];
 function m3Build() {
   var wrap = document.getElementById('map3dCanvasWrap');
   if (!wrap || typeof THREE === 'undefined') return;
@@ -13237,20 +13278,70 @@ function m3Build() {
     place(r.id, 0, ra, ra + span, x, 0, z);
     ra += span;
   });
+  // v309: エッジ＝サイバーブルーの発光ライン（加算合成でネオン感）
   var eg = new THREE.BufferGeometry();
   eg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
-  _m3Scene.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color: 0x2a3550, transparent: true, opacity: 0.75 })));
-  var sg = new THREE.SphereGeometry(11, 14, 14);
-  var matCache = {};
-  _m3Nodes.forEach(function(n){
-    var col = titleRingColor(n.m.title || '') || '#7E8AA6';
-    if (!matCache[col]) matCache[col] = new THREE.MeshLambertMaterial({ color: new THREE.Color(col) });
-    var mesh = new THREE.Mesh(sg, matCache[col]);
-    mesh.position.set(n.x, n.y, n.z);
-    mesh.userData.mid = n.m.id;
-    _m3Scene.add(mesh);
+  _m3Scene.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })));
+  // v309: 段数を可視化＝各階層に同心リング＋「N段目」ラベル
+  var maxDepth = 0;
+  _m3Nodes.forEach(function(n){ var d = Math.round(-n.y / LY); if (d > maxDepth) maxDepth = d; });
+  for (var dp = 1; dp <= maxDepth; dp++) {
+    var rg = new THREE.RingGeometry(dp * LR - 1.6, dp * LR + 1.6, 72);
+    var rm = new THREE.MeshBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.16, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+    var ring = new THREE.Mesh(rg, rm);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = -dp * LY;
+    _m3Scene.add(ring);
+    var lc = document.createElement('canvas'); lc.width = 128; lc.height = 40;
+    var lcx = lc.getContext('2d');
+    lcx.font = 'bold 24px sans-serif';
+    lcx.fillStyle = 'rgba(53,213,255,0.9)';
+    lcx.textAlign = 'center';
+    lcx.fillText(dp + '段目', 64, 28);
+    var ls = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lc), transparent: true, depthWrite: false }));
+    ls.scale.set(70, 22, 1);
+    ls.position.set(dp * LR + 46, -dp * LY, 0);
+    _m3Scene.add(ls);
+  }
+  // v309: ノード＝フロント数でサイズ・やる気レベルで発光・写真持ちは丸写真
+  var kidCt = {};
+  members.forEach(function(m){ if (m.parentId && byId[m.parentId]) kidCt[m.parentId] = (kidCt[m.parentId] || 0) + 1; });
+  var MOTI_COLORS = ['', '#5AD7FF', '#2CE5B8', '#FFB454']; // B=青/A=緑/S=金
+  var geoCache = {}, matCache = {};
+  _m3Halos = [];
+  _m3Nodes.forEach(function(n, ni){
+    var fronts = kidCt[n.m.id] || 0;
+    var R = 9 + Math.min(14, fronts * 2); // フロント数→球サイズ
+    var lvl = _m3Moti(n.m);
+    var hasPhoto = (typeof _avatars !== 'undefined') && _avatars[n.m.id];
+    var nodeObj;
+    if (hasPhoto) {
+      nodeObj = _m3PhotoNode(n.m, R * 3.4);
+    } else {
+      var col = titleRingColor(n.m.title || '') || '#7E8AA6';
+      if (!geoCache[R]) geoCache[R] = new THREE.SphereGeometry(R, 14, 14);
+      var mk = col + '_' + lvl;
+      if (!matCache[mk]) {
+        matCache[mk] = new THREE.MeshLambertMaterial({ color: new THREE.Color(col) });
+        if (lvl > 0) { matCache[mk].emissive = new THREE.Color(col); matCache[mk].emissiveIntensity = 0.25 * lvl; }
+      }
+      nodeObj = new THREE.Mesh(geoCache[R], matCache[mk]);
+    }
+    if (!nodeObj) return;
+    nodeObj.position.set(n.x, n.y, n.z);
+    nodeObj.userData.mid = n.m.id;
+    _m3Scene.add(nodeObj);
+    n.obj = nodeObj;
+    if (lvl > 0) {
+      var halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: _m3HaloTex(MOTI_COLORS[lvl]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+      var hb = R * (3.2 + lvl * 1.1);
+      halo.scale.set(hb, hb, 1);
+      halo.position.set(n.x, n.y, n.z);
+      _m3Scene.add(halo);
+      _m3Halos.push({ sp: halo, base: hb, lvl: lvl, ph: ni * 0.7 });
+    }
     var sp = _m3MakeSprite(n.m);
-    if (sp) { sp.position.set(n.x, n.y + 24, n.z); _m3Scene.add(sp); }
+    if (sp) { sp.position.set(n.x, n.y + R + 18, n.z); _m3Scene.add(sp); }
   });
   var titleEl = document.getElementById('map3dTitle');
   if (titleEl) titleEl.textContent = '🧊 3D組織マップ（' + members.length + '人）';
@@ -13277,6 +13368,15 @@ function m3Build() {
   var loop = function(){
     _m3Raf = requestAnimationFrame(loop);
     if (_m3Controls) _m3Controls.update();
+    // v309: やる気S(レベル3)のハローは鼓動アニメーション
+    var tNow = Date.now();
+    for (var hi2 = 0; hi2 < _m3Halos.length; hi2++) {
+      var hh = _m3Halos[hi2];
+      if (hh.lvl >= 3) {
+        var s2 = hh.base * (1 + 0.14 * Math.sin(tNow / 380 + hh.ph));
+        hh.sp.scale.set(s2, s2, 1);
+      }
+    }
     _m3Renderer.render(_m3Scene, _m3Cam);
   };
   loop();
@@ -13293,7 +13393,8 @@ function m3ShowInfo(mid) {
   info.innerHTML = '<div style="display:flex;align-items:center;gap:10px">'
     + ((typeof _avatars !== 'undefined' && _avatars[m.id]) ? '<img src="' + _avatars[m.id] + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid ' + titleRingColor(m.title || '') + '" alt="">' : '')
     + '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15px">' + evEsc(name) + (isMg ? ' <span style="font-size:10px;color:var(--purple)">🔗結合</span>' : '') + '</div>'
-    + '<div style="font-size:12px;color:var(--text-mid)">' + evEsc(m.title || '—') + (m.ptCurrent ? '　' + Number(m.ptCurrent).toLocaleString() + 'pt' : '') + '</div></div>'
+    + '<div style="font-size:12px;color:var(--text-mid)">' + evEsc(m.title || '—') + (m.ptCurrent ? '　' + Number(m.ptCurrent).toLocaleString() + 'pt' : '')
+    + (m.activity ? '　🔥やる気' + evEsc(m.activity) + (m.actRate ? '(' + evEsc(String(m.actRate)) + '%)' : '') : '') + '</div></div>'
     + (!isMg ? '<button class="fol-add" style="margin:0;flex:none;padding:8px 12px" onclick="close3DMap();openEdit(\'' + m.id + '\')">✎ 編集</button>' : '')
     + '<span class="ms-x" style="width:32px;height:32px" onclick="document.getElementById(\'map3dInfo\').style.display=\'none\'">✕</span>'
     + '</div>';
