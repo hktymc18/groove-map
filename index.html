@@ -1975,7 +1975,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v304</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v305</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4512,7 +4512,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v304';
+  var DATA_VERSION = 'v305';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4729,17 +4729,29 @@ function closeMobileMenu() {
   if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
 }
 // ── iOS: キーボードを閉じた直後、固定表示のタップ判定が上にズレる問題の対策 ──
-// （タイトル入力→キーボード収納直後に「2を押すと7」「保存を押すと詳細が開く」誤ヒットが起きる）
-// 入力欄からフォーカスが外れたら、キーボードで押し上げられたスクロールを必ず0に戻す
+// （タイトル入力→キーボード収納直後に「保存が反応しない」「違うボタンが反応する」誤ヒットが起きる）
+// キーボードで押し上げられたスクロールを必ず0に戻す。入力中（キーボード表示中）は触らない
+function _iosViewportReset() {
+  try {
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return;
+    var se = document.scrollingElement || document.documentElement;
+    if (se && se.scrollTop) se.scrollTop = 0;
+    if (document.body && document.body.scrollTop) document.body.scrollTop = 0;
+    if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
+  } catch(e0) {}
+}
+// v305: 収納アニメ(約300ms)の後にiOSが再度ズラすことがあるため、複数回に分けて復元
 document.addEventListener('focusout', function() {
-  setTimeout(function() {
-    try {
-      var se = document.scrollingElement || document.documentElement;
-      if (se && se.scrollTop) se.scrollTop = 0;
-      if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
-    } catch(e0) {}
-  }, 60);
+  setTimeout(_iosViewportReset, 100);
+  setTimeout(_iosViewportReset, 400);
+  setTimeout(_iosViewportReset, 800);
 }, true);
+// v305: それでもズレが残っていた場合、次のタップの「指が触れた瞬間」に補正
+//（touchstart時に直せば、そのタップ自体が正しいボタンに当たる）
+document.addEventListener('touchstart', function() {
+  _iosViewportReset();
+}, { passive: true, capture: true });
 // ── Android等の「戻る」でシート/モーダルを閉じる（アプリ終了を防ぐ） ──
 try { history.pushState({ gm: 1 }, ''); } catch(e) {}
 window.addEventListener('popstate', function() {
@@ -5258,6 +5270,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v305', d:'2026-08-05', items:['🛠「保存ボタンが反応しない」を修正：キーボードを閉じた後にタップ位置の判定がズレたまま残るiOSの問題への対策を強化（復元を複数回実行＋タップした瞬間にも自動補正）','万一保存処理でエラーが起きた場合は必ず⚠️メッセージを表示するように（無反応をなくす）'] },
   { v:'v304', d:'2026-08-05', items:['🌙深夜対応：時刻を29時まで入力可能に（25時=翌1時など。24時を超えても「その日の予定」として表示・通知も正しい時刻に届きます）。日・週の時間軸も29時台まで延長','📆週ビューをLifebear式に全面刷新：7列×縦時間軸のタイムライン。終日帯・今日列のハイライト・現在時刻ライン・空き枠タップで作成・ブロックタップで操作','🎨月/週/日のデザイン統一：共通ヘッダー（✕ ‹ タイトル › 🗓▾）＋共通下部バー（✅ToDo・＋・⚙設定）。🗓▾からどのビューへも1タップ','⚙設定に「Googleカレンダー同期」「カテゴリ管理」を集約（週表示などからボタンを削減してすっきり）'] },
   { v:'v303', d:'2026-08-05', items:['📅バーチカル日ビューを追加：🗓▾メニューの「日」で、縦の時間軸に予定がブロックで並ぶ1日表示（Googleカレンダーの日表示風）。空き時間がひと目で分かります','時間軸の空いている所をタップ→その時刻で予定作成。ブロックタップで操作シート。‹›で前後の日・現在時刻の赤ライン付き','↩削除の取り消し（Undo）：削除時の確認ダイアログを廃止し、削除後6秒間「元に戻す」で復元できる方式に（リマインダー式・通知予約も一緒に復元）','✨完了時にタスクがふわっと消えるアニメーション＋完了/削除時の振動フィードバック（Android）'] },
   { v:'v302', d:'2026-08-05', items:['🗓全画面カレンダーをLifebear型レイアウトに刷新：ヘッダーは「✕ ‹ 年月 › 🗓▾」の1行だけに圧縮し、どのスマホでも1日10件が確実に入るように','右上の🗓▾から 月/週/日/検索 を切替（月週ボタン行と今日ボタンは廃止・年月タップで今日へ）','下部にLifebear式バー：✅ToDo・＋追加・⚙設定を1行で','⏰チップをマス内の時間帯に応じた高さに配置（18時≒中央）。空いている段＝空き時間がひと目で分かります','件名は「…」で省略せず表示できる文字まで表示（時+件名・詰め字化）'] },
@@ -14409,6 +14422,12 @@ function onEventOverlayClick(ev) {
   if (ev.target === document.getElementById('eventModal')) closeEventModal();
 }
 function saveEvent() {
+  try { _saveEventBody(); } catch(err) {
+    // v305: 万一の内部エラーは必ず可視化（「押しても無反応」を起こさない）
+    toast('⚠️ 保存エラー: ' + (err && err.message ? err.message : err));
+  }
+}
+function _saveEventBody() {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   var title = document.getElementById('evTitle').value.trim();
   if (!title) { toast('タイトルを入力してください'); return; }
