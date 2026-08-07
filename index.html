@@ -1975,7 +1975,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v305</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v306</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4512,7 +4512,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v305';
+  var DATA_VERSION = 'v306';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5270,6 +5270,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v306', d:'2026-08-05', items:['⚙カレンダー設定を拡充：プッシュ通知を🔔オン/🔕オフで切替可能に（オフ＝この端末への配信停止）','✂️Googleカレンダー連携を解除できるように（「今すぐ同期」と「連携を解除」に分離。Google側に作成済みの予定は残ります）','📌ワンタップ登録テンプレの編集・追加も設定から開けるように'] },
   { v:'v305', d:'2026-08-05', items:['🛠「保存ボタンが反応しない」を修正：キーボードを閉じた後にタップ位置の判定がズレたまま残るiOSの問題への対策を強化（復元を複数回実行＋タップした瞬間にも自動補正）','万一保存処理でエラーが起きた場合は必ず⚠️メッセージを表示するように（無反応をなくす）'] },
   { v:'v304', d:'2026-08-05', items:['🌙深夜対応：時刻を29時まで入力可能に（25時=翌1時など。24時を超えても「その日の予定」として表示・通知も正しい時刻に届きます）。日・週の時間軸も29時台まで延長','📆週ビューをLifebear式に全面刷新：7列×縦時間軸のタイムライン。終日帯・今日列のハイライト・現在時刻ライン・空き枠タップで作成・ブロックタップで操作','🎨月/週/日のデザイン統一：共通ヘッダー（✕ ‹ タイトル › 🗓▾）＋共通下部バー（✅ToDo・＋・⚙設定）。🗓▾からどのビューへも1タップ','⚙設定に「Googleカレンダー同期」「カテゴリ管理」を集約（週表示などからボタンを削減してすっきり）'] },
   { v:'v303', d:'2026-08-05', items:['📅バーチカル日ビューを追加：🗓▾メニューの「日」で、縦の時間軸に予定がブロックで並ぶ1日表示（Googleカレンダーの日表示風）。空き時間がひと目で分かります','時間軸の空いている所をタップ→その時刻で予定作成。ブロックタップで操作シート。‹›で前後の日・現在時刻の赤ライン付き','↩削除の取り消し（Undo）：削除時の確認ダイアログを廃止し、削除後6秒間「元に戻す」で復元できる方式に（リマインダー式・通知予約も一緒に復元）','✨完了時にタスクがふわっと消えるアニメーション＋完了/削除時の振動フィードバック（Android）'] },
@@ -12128,16 +12129,19 @@ function fcmRegister() {
     return firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
   }).then(function(tok){
     if (!tok) { _fcmBusy = false; return false; }
+    try { localStorage.setItem('gm_fcmToken', tok); } catch(eT) {} // オフ切替時の削除用に保持
     return fsSet('users/' + currentUser.uid + '/fcmTokens/' + tok, {
       ua: String(navigator.userAgent || '').slice(0, 180),
       updatedAt: new Date().toISOString()
     }).then(function(){ _fcmBusy = false; return true; });
   }).catch(function(){ _fcmBusy = false; return false; });
 }
-// 起動時: 許可済み端末はトークンを最新化（失効・機種変更対策）
+// 起動時: 許可済み端末はトークンを最新化（失効・機種変更対策）。オフ設定の端末は登録しない
 setTimeout(function(){
   try {
-    if (('Notification' in window) && Notification.permission === 'granted') fcmRegister();
+    var _pOff = false;
+    try { _pOff = localStorage.getItem('gm_pushOff') === '1'; } catch(e2) {}
+    if (!_pOff && ('Notification' in window) && Notification.permission === 'granted') fcmRegister();
   } catch(e) {}
 }, 7000);
 
@@ -12945,24 +12949,86 @@ function openCalSettings() {
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'calSetOv';
   ov.onclick = function(e){ if (e.target === ov) closeCalSettings(); };
   function wsBtn(v, lbl) { return '<div class="rb' + (_weekStart === v ? ' sel' : '') + '" onclick="setWeekStart(' + v + ')">' + lbl + '</div>'; }
-  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+  // v306: 通知のオン/オフトグル（オフ＝この端末のプッシュ登録を解除）
+  var pushGranted = ('Notification' in window) && Notification.permission === 'granted';
+  var pushDenied = ('Notification' in window) && Notification.permission === 'denied';
+  var pushOff = false;
+  try { pushOff = localStorage.getItem('gm_pushOff') === '1'; } catch(e0) {}
+  var pushOn = pushGranted && !pushOff;
+  var pushRow;
+  if (pushDenied) {
+    pushRow = '<div style="font-size:12px;color:var(--text-dim);padding:4px 2px">ブラウザ側で通知がブロックされています。iPhoneの設定→通知（またはSafariの設定）から許可してください</div>';
+  } else {
+    pushRow = '<div class="rg">'
+      + '<div class="rb' + (pushOn ? ' sel' : '') + '" onclick="pushSetEnabled(true)">🔔 オン</div>'
+      + '<div class="rb' + (!pushOn ? ' sel' : '') + '" onclick="pushSetEnabled(false)">🔕 オフ</div>'
+      + '</div>';
+  }
+  // v306: Google連携は「同期」と「解除」を分離（オフにできるように）
+  var gcalRow = state.gcalConnected
+    ? '<div style="display:flex;gap:8px">'
+      + '<button class="fol-add" style="margin-top:0;flex:1" onclick="closeCalSettings();if(confirm(\'既存の予定・タスクを「MAP予定」へまとめて同期しますか？\'))gcalSyncAll()">🔄 今すぐ同期</button>'
+      + '<button class="fol-add" style="margin-top:0;flex:1;color:var(--red);border-color:var(--red)" onclick="gcalDisconnectAsk()">✂️ 連携を解除</button>'
+      + '</div>'
+    : '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();gcalConnect()">🔗 Googleカレンダーと連携する</button>';
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚙ カレンダー設定</div></div>'
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
     + '<div style="padding:4px 16px 20px"><div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
     + '<div class="rg">' + wsBtn(1, '月曜はじまり') + wsBtn(0, '日曜はじまり') + '</div></div>'
-    + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（アプリを閉じていても届く）</label>'
-    + ((('Notification' in window) && Notification.permission === 'granted')
-      ? '<div style="font-size:13px;color:var(--accent);font-weight:700;padding:4px 2px">🔔 この端末では有効です</div>'
-      : '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();requestNotifPermission()">🔔 プッシュ通知を有効にする</button>')
+    + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
+    + pushRow
+    + '</div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">ワンタップ登録テンプレ（CT・FTなど）</label>'
+    + '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openEvTplManager()">📌 テンプレを編集・追加</button>'
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
-    + '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();gcalBtnClick()">' + (state.gcalConnected ? '🔗 連携中（タップで管理・手動同期）' : '🔗 Googleカレンダーと連携する') + '</button>'
+    + gcalRow
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">カテゴリ（色分け）の管理</label>'
     + '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openCategorySheet(false)">🏷 カテゴリを編集</button>'
     + '</div></div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+// v306: プッシュ通知のオン/オフ（オフ＝この端末のトークンを削除して配信停止）
+function pushSetEnabled(on) {
+  try { if (on) localStorage.removeItem('gm_pushOff'); else localStorage.setItem('gm_pushOff', '1'); } catch(e0) {}
+  if (on) {
+    if (('Notification' in window) && Notification.permission === 'granted') {
+      fcmRegister().then(function(ok){
+        toast(ok ? '🔔 この端末への通知をオンにしました' : '⚠️ 通知の登録に失敗しました（通信を確認してください）');
+        openCalSettings();
+      });
+    } else {
+      closeCalSettings();
+      requestNotifPermission(); // 未許可→許可ダイアログ→登録
+    }
+  } else {
+    var tok = '';
+    try { tok = localStorage.getItem('gm_fcmToken') || ''; } catch(e1) {}
+    if (tok && db && currentUser && currentUser.uid) {
+      db.doc('users/' + currentUser.uid + '/fcmTokens/' + tok).delete().catch(function(){});
+    }
+    toast('🔕 この端末への通知をオフにしました');
+    openCalSettings();
+  }
+}
+// v306: Google連携の解除（Google側に作成済みの予定はそのまま残す）
+function gcalDisconnectAsk() {
+  if (!confirm('Googleカレンダー連携を解除しますか？\n（「MAP予定」に作成済みの予定はGoogle側にそのまま残ります）')) return;
+  closeCalSettings();
+  gcalDisconnect();
+}
+function gcalDisconnect() {
+  state.gcalConnected = false;
+  state.gcalCalendarId = '';
+  if (currentUser) currentUser.gcalConnected = false;
+  var uid = eventsUid();
+  if (uid && db) fsSet('users/' + uid, { gcalConnected: false }).catch(function(){});
+  _gcalToken = ''; _gcalTokenExp = 0;
+  if (typeof updateGcalBtn === 'function') updateGcalBtn();
+  toast('✂️ Googleカレンダー連携を解除しました');
 }
 function setWeekStart(v) {
   _weekStart = v;
