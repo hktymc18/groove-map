@@ -1087,6 +1087,13 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .dayv-ev .t{font-size:9.5px;opacity:.85;font-family:'IBM Plex Mono',monospace}
 .dayv-now{position:absolute;left:-3px;right:0;border-top:2px solid var(--red);z-index:4;pointer-events:none}
 .dayv-now i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--red)}
+/* v308: 3D組織マップ */
+.map3d-btn{position:fixed;left:14px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:150;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:20px;cursor:pointer;box-shadow:var(--shadow)}
+#map3dPane{position:fixed;inset:0;z-index:290;background:#05070c;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+#map3dPane .ev-cal-title{color:#F4F6FB}
+#map3dCanvasWrap{flex:1;min-height:0;position:relative;overflow:hidden}
+#map3dCanvasWrap canvas{display:block;touch-action:none}
+#map3dInfo{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:295;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
 /* v303: 完了時のふわっと消えるアニメ */
 .ev-item.done-anim{transition:opacity .22s ease,transform .22s ease;opacity:.12;transform:translateX(34px)}
 .ev-cal-vmenu{position:fixed;top:calc(env(safe-area-inset-top) + 50px);right:10px;z-index:296;background:var(--surface2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;min-width:132px}
@@ -1975,7 +1982,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v307</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v308</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2269,6 +2276,18 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 
 </div><!-- /scroll-area -->
+
+<!-- v308: 3D組織マップ（MAPタブの🧊3Dボタンで切替） -->
+<div class="map3d-btn" id="map3dBtn" onclick="open3DMap()" style="display:none">🧊 3D</div>
+<div id="map3dPane" class="full" style="display:none">
+  <div class="ev-cal-hdr">
+    <div class="ev-cal-x" onclick="close3DMap()" title="2D表示へ戻る">✕</div>
+    <div class="ev-cal-title" id="map3dTitle">🧊 3D組織マップ</div>
+    <div class="ev-cal-nav" onclick="map3dResetView()" title="視点リセット" style="width:auto;padding:0 14px;border-radius:12px;font-size:12px">視点リセット</div>
+  </div>
+  <div id="map3dCanvasWrap"></div>
+  <div id="map3dInfo" style="display:none"></div>
+</div>
 
 <!-- 共有MAPダッシュボード -->
 <div class="sd-overlay" id="sharedDashboard">
@@ -4512,7 +4531,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v307';
+  var DATA_VERSION = 'v308';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4667,6 +4686,9 @@ function switchView(v) {
   //       PCは前回モードを記憶。他タブへ移る時は全画面用の非表示を必ず解除（ナビ喪失防止）
   if (v === 'events' && typeof setEventsMode === 'function') setEventsMode(isPCMode() ? _evMode : 'calendar');
   else document.body.classList.remove('cal-fs');
+  // v308: 🧊3DボタンはMAP（現状）でのみ表示
+  var _m3b = document.getElementById('map3dBtn');
+  if (_m3b) _m3b.style.display = (v === 'current') ? '' : 'none';
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
   if (bh) {
@@ -4796,6 +4818,11 @@ window.addEventListener('popstate', function() {
     if (!closed) {
       var sd = document.querySelector('.sd-overlay.open');
       if (sd) { sd.classList.remove('open'); closed = true; }
+    }
+    // v308: 3D組織マップ表示中は2Dへ戻る
+    if (!closed) {
+      var _m3p = document.getElementById('map3dPane');
+      if (_m3p && _m3p.style.display !== 'none') { close3DMap(); closed = true; }
     }
     // v303/304: 日・週ビュー表示中は月へ戻る
     if (!closed) {
@@ -5270,6 +5297,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v308', d:'2026-08-05', items:['🧊3D組織マップ（プロトタイプ）：MAPタブ左下の「🧊3D」ボタンで、組織ツリーを3D空間で表示。指でグリグリ回転・ピンチでズーム','メンバーはタイトル色の球＋名前ラベル（写真設定済みなら丸写真付き）。タップで情報カード→そのまま編集へ','結合メンバーも表示（🔗マーク）・OUTは非表示・「視点リセット」ボタン付き・✕か戻るボタンで2Dへ','※3D表示は初回に少しだけ読み込み時間があります（ライブラリを初回のみダウンロード）'] },
   { v:'v307', d:'2026-08-05', items:['🔔プッシュ通知をタップすると、その予定の詳細シートが直接開くように','⏱通知の配信間隔を5分→1分ごとのチェックに短縮（遅れがほぼ1分以内に）※要Functions再デプロイ'] },
   { v:'v306', d:'2026-08-05', items:['⚙カレンダー設定を拡充：プッシュ通知を🔔オン/🔕オフで切替可能に（オフ＝この端末への配信停止）','✂️Googleカレンダー連携を解除できるように（「今すぐ同期」と「連携を解除」に分離。Google側に作成済みの予定は残ります）','📌ワンタップ登録テンプレの編集・追加も設定から開けるように'] },
   { v:'v305', d:'2026-08-05', items:['🛠「保存ボタンが反応しない」を修正：キーボードを閉じた後にタップ位置の判定がズレたまま残るiOSの問題への対策を強化（復元を複数回実行＋タップした瞬間にも自動補正）','万一保存処理でエラーが起きた場合は必ず⚠️メッセージを表示するように（無反応をなくす）'] },
@@ -13056,6 +13084,219 @@ function gcalDisconnect() {
   _gcalToken = ''; _gcalTokenExp = 0;
   if (typeof updateGcalBtn === 'function') updateGcalBtn();
   toast('✂️ Googleカレンダー連携を解除しました');
+}
+
+// ── v308: 3D組織マップ（Three.js・初回オープン時に遅延読込） ──
+var _m3Ready = false, _m3Loading = false;
+var _m3Scene, _m3Cam, _m3Renderer, _m3Controls, _m3Raf = 0, _m3Nodes = [], _m3Ray, _m3Pointer;
+function _m3LoadScript(src, cb) {
+  var s = document.createElement('script');
+  s.src = src;
+  s.onload = function(){ cb(true); };
+  s.onerror = function(){ cb(false); };
+  document.head.appendChild(s);
+}
+function open3DMap() {
+  var pane = document.getElementById('map3dPane');
+  if (!pane) return;
+  pane.style.display = 'flex';
+  document.body.classList.add('cal-fs'); // ヘッダ/下部ナビ非表示を流用して文字どおり全画面に
+  if (_m3Ready) { m3Build(); return; }
+  if (_m3Loading) return;
+  _m3Loading = true;
+  toast('🧊 3D表示を読み込み中...');
+  _m3LoadScript('https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js', function(ok){
+    if (!ok) { _m3Loading = false; toast('⚠️ 3Dライブラリの読み込みに失敗しました（通信を確認）'); close3DMap(); return; }
+    _m3LoadScript('https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js', function(ok2){
+      _m3Loading = false;
+      if (!ok2) { toast('⚠️ 3D操作ライブラリの読み込みに失敗しました'); close3DMap(); return; }
+      _m3Ready = true;
+      m3Build();
+    });
+  });
+}
+function close3DMap() {
+  var pane = document.getElementById('map3dPane');
+  if (pane) pane.style.display = 'none';
+  document.body.classList.remove('cal-fs');
+  if (_m3Raf) { cancelAnimationFrame(_m3Raf); _m3Raf = 0; }
+  var info = document.getElementById('map3dInfo');
+  if (info) info.style.display = 'none';
+}
+function map3dResetView() {
+  if (_m3Cam) _m3Cam.position.set(0, 260, 640);
+  if (_m3Controls) _m3Controls.target.set(0, -140, 0);
+}
+// 名前ラベル（写真があれば丸写真も合成）のスプライト
+function _m3MakeSprite(m) {
+  try {
+    var cv = document.createElement('canvas');
+    cv.width = 128; cv.height = 48;
+    var cx = cv.getContext('2d');
+    var name = ((m.lastName || '') + (m.firstName || '')).trim() || '(無名)';
+    if (name.length > 6) name = name.slice(0, 6);
+    cx.font = 'bold 20px sans-serif';
+    cx.textAlign = 'center';
+    cx.fillStyle = 'rgba(5,7,12,0.6)';
+    var w = Math.min(124, cx.measureText(name).width + 16);
+    cx.fillRect(64 - w / 2, 10, w, 30);
+    cx.fillStyle = '#F4F6FB';
+    cx.fillText(name, 64, 32);
+    var tex = new THREE.CanvasTexture(cv);
+    if (typeof _avatars !== 'undefined' && _avatars[m.id]) {
+      var img = new Image();
+      img.onload = function(){
+        try {
+          cx.save();
+          cx.beginPath(); cx.arc(20, 24, 18, 0, Math.PI * 2); cx.clip();
+          cx.drawImage(img, 2, 6, 36, 36);
+          cx.restore();
+          tex.needsUpdate = true;
+        } catch(e2) {}
+      };
+      img.src = _avatars[m.id];
+    }
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+    sp.scale.set(64, 24, 1);
+    return sp;
+  } catch(e) { return null; }
+}
+function m3Build() {
+  var wrap = document.getElementById('map3dCanvasWrap');
+  if (!wrap || typeof THREE === 'undefined') return;
+  if (_m3Renderer) {
+    try { wrap.removeChild(_m3Renderer.domElement); } catch(e0) {}
+    try { _m3Renderer.dispose(); } catch(e1) {}
+    _m3Renderer = null;
+  }
+  var W = wrap.clientWidth || window.innerWidth;
+  var H = wrap.clientHeight || (window.innerHeight - 60);
+  _m3Scene = new THREE.Scene();
+  _m3Scene.background = new THREE.Color(0x05070c);
+  _m3Scene.fog = new THREE.Fog(0x05070c, 900, 2600);
+  _m3Cam = new THREE.PerspectiveCamera(60, W / H, 1, 5000);
+  _m3Cam.position.set(0, 260, 640);
+  _m3Renderer = new THREE.WebGLRenderer({ antialias: true });
+  _m3Renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  _m3Renderer.setSize(W, H);
+  wrap.appendChild(_m3Renderer.domElement);
+  _m3Controls = new THREE.OrbitControls(_m3Cam, _m3Renderer.domElement);
+  _m3Controls.enableDamping = true;
+  _m3Controls.dampingFactor = 0.08;
+  _m3Controls.target.set(0, -140, 0);
+  _m3Scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+  var dl = new THREE.DirectionalLight(0xffffff, 0.5);
+  dl.position.set(200, 400, 300);
+  _m3Scene.add(dl);
+  // データ（現状MAP＋結合・OUT除外）
+  var members = composeMergedInto(membersForMap('current'), 'current').filter(function(m){ return !m.deleted && (m.title || '').trim() !== 'OUT'; });
+  var byParent = {}, byId = {};
+  members.forEach(function(m){ byId[m.id] = m; });
+  members.forEach(function(m){
+    var p = (m.parentId && byId[m.parentId]) ? m.parentId : '__root__';
+    (byParent[p] = byParent[p] || []).push(m);
+  });
+  var leafCt = {};
+  function countLeaves(id) {
+    var kids = byParent[id] || [];
+    if (!kids.length) { leafCt[id] = 1; return 1; }
+    var s = 0;
+    kids.forEach(function(k){ s += countLeaves(k.id); });
+    leafCt[id] = s;
+    return s;
+  }
+  countLeaves('__root__');
+  _m3Nodes = [];
+  var edges = [];
+  var LY = 150, LR = 190; // 1階層ごとの高さ・半径
+  function place(id, depth, a0, a1, px, py, pz) {
+    var kids = byParent[id] || [];
+    var total = 0;
+    kids.forEach(function(k){ total += leafCt[k.id] || 1; });
+    var a = a0;
+    kids.forEach(function(k){
+      var span = (a1 - a0) * ((leafCt[k.id] || 1) / (total || 1));
+      var ang = a + span / 2;
+      var r = (depth + 1) * LR;
+      var x = Math.cos(ang) * r, z = Math.sin(ang) * r, y = -(depth + 1) * LY;
+      _m3Nodes.push({ m: k, x: x, y: y, z: z });
+      edges.push(px, py, pz, x, y, z);
+      place(k.id, depth + 1, a, a + span, x, y, z);
+      a += span;
+    });
+  }
+  var roots = byParent['__root__'] || [];
+  var rTotal = 0;
+  roots.forEach(function(r){ rTotal += leafCt[r.id] || 1; });
+  var ra = 0;
+  roots.forEach(function(r){
+    var span = Math.PI * 2 * ((leafCt[r.id] || 1) / (rTotal || 1));
+    var x = roots.length > 1 ? Math.cos(ra + span / 2) * 60 : 0;
+    var z = roots.length > 1 ? Math.sin(ra + span / 2) * 60 : 0;
+    _m3Nodes.push({ m: r, x: x, y: 0, z: z });
+    place(r.id, 0, ra, ra + span, x, 0, z);
+    ra += span;
+  });
+  var eg = new THREE.BufferGeometry();
+  eg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
+  _m3Scene.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color: 0x2a3550, transparent: true, opacity: 0.75 })));
+  var sg = new THREE.SphereGeometry(11, 14, 14);
+  var matCache = {};
+  _m3Nodes.forEach(function(n){
+    var col = titleRingColor(n.m.title || '') || '#7E8AA6';
+    if (!matCache[col]) matCache[col] = new THREE.MeshLambertMaterial({ color: new THREE.Color(col) });
+    var mesh = new THREE.Mesh(sg, matCache[col]);
+    mesh.position.set(n.x, n.y, n.z);
+    mesh.userData.mid = n.m.id;
+    _m3Scene.add(mesh);
+    var sp = _m3MakeSprite(n.m);
+    if (sp) { sp.position.set(n.x, n.y + 24, n.z); _m3Scene.add(sp); }
+  });
+  var titleEl = document.getElementById('map3dTitle');
+  if (titleEl) titleEl.textContent = '🧊 3D組織マップ（' + members.length + '人）';
+  _m3Ray = new THREE.Raycaster();
+  _m3Pointer = new THREE.Vector2();
+  var el = _m3Renderer.domElement;
+  var downX = 0, downY = 0;
+  el.addEventListener('pointerdown', function(ev){ downX = ev.clientX; downY = ev.clientY; });
+  el.addEventListener('pointerup', function(ev){
+    if (Math.abs(ev.clientX - downX) > 8 || Math.abs(ev.clientY - downY) > 8) return; // ドラッグは選択しない
+    var rect = el.getBoundingClientRect();
+    _m3Pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    _m3Pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+    _m3Ray.setFromCamera(_m3Pointer, _m3Cam);
+    var hits = _m3Ray.intersectObjects(_m3Scene.children, false);
+    for (var hi = 0; hi < hits.length; hi++) {
+      var mid = hits[hi].object.userData && hits[hi].object.userData.mid;
+      if (mid) { m3ShowInfo(mid); return; }
+    }
+    var info = document.getElementById('map3dInfo');
+    if (info) info.style.display = 'none';
+  });
+  if (_m3Raf) cancelAnimationFrame(_m3Raf);
+  var loop = function(){
+    _m3Raf = requestAnimationFrame(loop);
+    if (_m3Controls) _m3Controls.update();
+    _m3Renderer.render(_m3Scene, _m3Cam);
+  };
+  loop();
+}
+function m3ShowInfo(mid) {
+  var m = null;
+  for (var i = 0; i < _m3Nodes.length; i++) { if (_m3Nodes[i].m.id === mid) { m = _m3Nodes[i].m; break; } }
+  if (!m) return;
+  var info = document.getElementById('map3dInfo');
+  if (!info) return;
+  var name = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+  var isMg = /^MG_/.test(m.id);
+  info.style.display = '';
+  info.innerHTML = '<div style="display:flex;align-items:center;gap:10px">'
+    + ((typeof _avatars !== 'undefined' && _avatars[m.id]) ? '<img src="' + _avatars[m.id] + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid ' + titleRingColor(m.title || '') + '" alt="">' : '')
+    + '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15px">' + evEsc(name) + (isMg ? ' <span style="font-size:10px;color:var(--purple)">🔗結合</span>' : '') + '</div>'
+    + '<div style="font-size:12px;color:var(--text-mid)">' + evEsc(m.title || '—') + (m.ptCurrent ? '　' + Number(m.ptCurrent).toLocaleString() + 'pt' : '') + '</div></div>'
+    + (!isMg ? '<button class="fol-add" style="margin:0;flex:none;padding:8px 12px" onclick="close3DMap();openEdit(\'' + m.id + '\')">✎ 編集</button>' : '')
+    + '<span class="ms-x" style="width:32px;height:32px" onclick="document.getElementById(\'map3dInfo\').style.display=\'none\'">✕</span>'
+    + '</div>';
 }
 function setWeekStart(v) {
   _weekStart = v;
