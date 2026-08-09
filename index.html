@@ -1094,6 +1094,8 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 #map3dCanvasWrap{flex:1;min-height:0;position:relative;overflow:hidden}
 #map3dCanvasWrap canvas{display:block;touch-action:none}
 #map3dInfo{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:295;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+#map3dPane .m3hbtn{background:var(--surface);color:var(--text);font-size:15px}
+#m3TimeLabel{position:fixed;top:calc(env(safe-area-inset-top) + 62px);left:0;right:0;text-align:center;z-index:294;font-size:22px;font-weight:800;color:#35d5ff;pointer-events:none;text-shadow:0 2px 14px rgba(0,0,0,.7);font-family:'IBM Plex Mono',monospace}
 /* v303: 完了時のふわっと消えるアニメ */
 .ev-item.done-anim{transition:opacity .22s ease,transform .22s ease;opacity:.12;transform:translateX(34px)}
 .ev-cal-vmenu{position:fixed;top:calc(env(safe-area-inset-top) + 50px);right:10px;z-index:296;background:var(--surface2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;min-width:132px}
@@ -1982,7 +1984,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v309</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v310</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2283,8 +2285,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="ev-cal-hdr">
     <div class="ev-cal-x" onclick="close3DMap()" title="2D表示へ戻る">✕</div>
     <div class="ev-cal-title" id="map3dTitle">🧊 3D組織マップ</div>
-    <div class="ev-cal-nav" onclick="map3dResetView()" title="視点リセット" style="width:auto;padding:0 14px;border-radius:12px;font-size:12px">視点リセット</div>
+    <div class="ev-cal-nav m3hbtn" onclick="map3dResetView()" title="視点リセット">🎯</div>
+    <div class="ev-cal-nav m3hbtn" id="m3AutoBtn" onclick="m3ToggleAuto()" title="自動回転プレゼン">▶</div>
+    <div class="ev-cal-nav m3hbtn" onclick="m3TimeTravel()" title="成長タイムトラベル再生">⏳</div>
+    <div class="ev-cal-nav m3hbtn" onclick="m3CycleLens()" title="ヒートモード切替">🎨</div>
   </div>
+  <div id="m3TimeLabel" style="display:none"></div>
   <div id="map3dCanvasWrap"></div>
   <div id="map3dInfo" style="display:none"></div>
 </div>
@@ -4531,7 +4537,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v309';
+  var DATA_VERSION = 'v310';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5297,6 +5303,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v310', d:'2026-08-05', items:['🧊3D組織マップ 第3弾（本格機能）','✨系譜スポットライト：メンバーをタップすると、その人から自分までの系譜ラインが金色に発光（他は減光）。何もない所をタップで解除','▶自動回転プレゼンモード：ヘッダの▶で組織がゆっくり回転（セミナー上映用）','⏳成長タイムトラベル：入会月順に組織が伸びていく様子を再生（もう一度⏳で停止）','🎨ヒートモード切替：標準→LTSVヒート（青=少→赤=多）→停滞ヒート（緑=活動中→赤=30日停滞）','🥽WebXR対応：Meta Quest等のブラウザで開くと「ENTER VR」ボタンが出現、目の前の空間に組織が浮かびます'] },
   { v:'v309', d:'2026-08-05', items:['🧊3D組織マップを大幅強化','📷写真設定済みのメンバーは、タイトル色リング付きの丸写真で表示','🔵系譜ラインをサイバーブルーの発光ラインに（視認性UP）','🔥やる気レベル（稼働S/A/B）で発光：B=青・A=緑・S=金のオーラ、Sは鼓動アニメーション。情報カードにも表示','⚪フロント数（直下の人数）が多いほど球・写真が大きく表示','📶段数がひと目で分かるように：各階層に光るリング＋「1段目・2段目…」ラベルを追加'] },
   { v:'v308', d:'2026-08-05', items:['🧊3D組織マップ（プロトタイプ）：MAPタブ左下の「🧊3D」ボタンで、組織ツリーを3D空間で表示。指でグリグリ回転・ピンチでズーム','メンバーはタイトル色の球＋名前ラベル（写真設定済みなら丸写真付き）。タップで情報カード→そのまま編集へ','結合メンバーも表示（🔗マーク）・OUTは非表示・「視点リセット」ボタン付き・✕か戻るボタンで2Dへ','※3D表示は初回に少しだけ読み込み時間があります（ライブラリを初回のみダウンロード）'] },
   { v:'v307', d:'2026-08-05', items:['🔔プッシュ通知をタップすると、その予定の詳細シートが直接開くように','⏱通知の配信間隔を5分→1分ごとのチェックに短縮（遅れがほぼ1分以内に）※要Functions再デプロイ'] },
@@ -13109,10 +13116,13 @@ function open3DMap() {
   _m3LoadScript('https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js', function(ok){
     if (!ok) { _m3Loading = false; toast('⚠️ 3Dライブラリの読み込みに失敗しました（通信を確認）'); close3DMap(); return; }
     _m3LoadScript('https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js', function(ok2){
-      _m3Loading = false;
-      if (!ok2) { toast('⚠️ 3D操作ライブラリの読み込みに失敗しました'); close3DMap(); return; }
-      _m3Ready = true;
-      m3Build();
+      if (!ok2) { _m3Loading = false; toast('⚠️ 3D操作ライブラリの読み込みに失敗しました'); close3DMap(); return; }
+      // v310: WebXR(VRゴーグル)用ボタン。読み込めなくても3D自体は動かす
+      _m3LoadScript('https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/webxr/VRButton.js', function(){
+        _m3Loading = false;
+        _m3Ready = true;
+        m3Build();
+      });
     });
   });
 }
@@ -13120,6 +13130,9 @@ function close3DMap() {
   var pane = document.getElementById('map3dPane');
   if (pane) pane.style.display = 'none';
   document.body.classList.remove('cal-fs');
+  if (_m3TT) _m3TTEnd();
+  _m3ClearSpot();
+  if (_m3Renderer) { try { _m3Renderer.setAnimationLoop(null); } catch(eA) {} }
   if (_m3Raf) { cancelAnimationFrame(_m3Raf); _m3Raf = 0; }
   var info = document.getElementById('map3dInfo');
   if (info) info.style.display = 'none';
@@ -13225,10 +13238,33 @@ function m3Build() {
   _m3Controls.enableDamping = true;
   _m3Controls.dampingFactor = 0.08;
   _m3Controls.target.set(0, -140, 0);
+  var _ab = document.getElementById('m3AutoBtn');
+  if (_ab) _ab.textContent = '▶';
   _m3Scene.add(new THREE.AmbientLight(0xffffff, 0.85));
   var dl = new THREE.DirectionalLight(0xffffff, 0.5);
   dl.position.set(200, 400, 300);
   _m3Scene.add(dl);
+  // v310: 全コンテンツをWorldグループに（VR時に縮小配置するため）
+  _m3World = new THREE.Group();
+  _m3Scene.add(_m3World);
+  if (_m3TT) _m3TTEnd(); // 再構築時は走行中のタイムトラベルを停止
+  _m3Spot = null;
+  // v310: WebXR（Meta Quest等のブラウザで「VRに入る」ボタン）
+  if (navigator.xr && THREE.VRButton) {
+    try {
+      _m3Renderer.xr.enabled = true;
+      var vb = THREE.VRButton.createButton(_m3Renderer);
+      wrap.appendChild(vb);
+      _m3Renderer.xr.addEventListener('sessionstart', function(){
+        _m3World.scale.setScalar(0.0045);
+        _m3World.position.set(0, 1.3, -1.6);
+      });
+      _m3Renderer.xr.addEventListener('sessionend', function(){
+        _m3World.scale.setScalar(1);
+        _m3World.position.set(0, 0, 0);
+      });
+    } catch(eXR) {}
+  }
   // データ（現状MAP＋結合・OUT除外）
   var members = composeMergedInto(membersForMap('current'), 'current').filter(function(m){ return !m.deleted && (m.title || '').trim() !== 'OUT'; });
   var byParent = {}, byId = {};
@@ -13260,7 +13296,7 @@ function m3Build() {
       var ang = a + span / 2;
       var r = (depth + 1) * LR;
       var x = Math.cos(ang) * r, z = Math.sin(ang) * r, y = -(depth + 1) * LY;
-      _m3Nodes.push({ m: k, x: x, y: y, z: z });
+      _m3Nodes.push({ m: k, x: x, y: y, z: z, edge6: [px, py, pz, x, y, z] }); // v310: タイムトラベル用に自分のエッジを保持
       edges.push(px, py, pz, x, y, z);
       place(k.id, depth + 1, a, a + span, x, y, z);
       a += span;
@@ -13281,7 +13317,9 @@ function m3Build() {
   // v309: エッジ＝サイバーブルーの発光ライン（加算合成でネオン感）
   var eg = new THREE.BufferGeometry();
   eg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
-  _m3Scene.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })));
+  _m3EdgeMat = new THREE.LineBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+  _m3EdgeMesh = new THREE.LineSegments(eg, _m3EdgeMat);
+  _m3World.add(_m3EdgeMesh);
   // v309: 段数を可視化＝各階層に同心リング＋「N段目」ラベル
   var maxDepth = 0;
   _m3Nodes.forEach(function(n){ var d = Math.round(-n.y / LY); if (d > maxDepth) maxDepth = d; });
@@ -13291,7 +13329,7 @@ function m3Build() {
     var ring = new THREE.Mesh(rg, rm);
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = -dp * LY;
-    _m3Scene.add(ring);
+    _m3World.add(ring);
     var lc = document.createElement('canvas'); lc.width = 128; lc.height = 40;
     var lcx = lc.getContext('2d');
     lcx.font = 'bold 24px sans-serif';
@@ -13301,7 +13339,7 @@ function m3Build() {
     var ls = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lc), transparent: true, depthWrite: false }));
     ls.scale.set(70, 22, 1);
     ls.position.set(dp * LR + 46, -dp * LY, 0);
-    _m3Scene.add(ls);
+    _m3World.add(ls);
   }
   // v309: ノード＝フロント数でサイズ・やる気レベルで発光・写真持ちは丸写真
   var kidCt = {};
@@ -13309,42 +13347,49 @@ function m3Build() {
   var MOTI_COLORS = ['', '#5AD7FF', '#2CE5B8', '#FFB454']; // B=青/A=緑/S=金
   var geoCache = {}, matCache = {};
   _m3Halos = [];
+  // v310: ヒートモード用の最大LTSV
+  var maxPt = 0;
+  members.forEach(function(m){ var v = Number(m.ptCurrent || 0); if (v > maxPt) maxPt = v; });
   _m3Nodes.forEach(function(n, ni){
     var fronts = kidCt[n.m.id] || 0;
     var R = 9 + Math.min(14, fronts * 2); // フロント数→球サイズ
     var lvl = _m3Moti(n.m);
-    var hasPhoto = (typeof _avatars !== 'undefined') && _avatars[n.m.id];
+    var lensCol = (_m3Lens !== 'std') ? _m3LensColor(n.m, maxPt) : null;
+    var hasPhoto = !lensCol && (typeof _avatars !== 'undefined') && _avatars[n.m.id];
     var nodeObj;
     if (hasPhoto) {
       nodeObj = _m3PhotoNode(n.m, R * 3.4);
     } else {
-      var col = titleRingColor(n.m.title || '') || '#7E8AA6';
+      var col = lensCol || titleRingColor(n.m.title || '') || '#7E8AA6';
       if (!geoCache[R]) geoCache[R] = new THREE.SphereGeometry(R, 14, 14);
-      var mk = col + '_' + lvl;
+      var mk = col + '_' + (lensCol ? 'L' : lvl);
       if (!matCache[mk]) {
         matCache[mk] = new THREE.MeshLambertMaterial({ color: new THREE.Color(col) });
-        if (lvl > 0) { matCache[mk].emissive = new THREE.Color(col); matCache[mk].emissiveIntensity = 0.25 * lvl; }
+        if (!lensCol && lvl > 0) { matCache[mk].emissive = new THREE.Color(col); matCache[mk].emissiveIntensity = 0.25 * lvl; }
       }
       nodeObj = new THREE.Mesh(geoCache[R], matCache[mk]);
     }
     if (!nodeObj) return;
     nodeObj.position.set(n.x, n.y, n.z);
     nodeObj.userData.mid = n.m.id;
-    _m3Scene.add(nodeObj);
+    _m3World.add(nodeObj);
     n.obj = nodeObj;
-    if (lvl > 0) {
+    if (!lensCol && lvl > 0) {
       var halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: _m3HaloTex(MOTI_COLORS[lvl]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
       var hb = R * (3.2 + lvl * 1.1);
       halo.scale.set(hb, hb, 1);
       halo.position.set(n.x, n.y, n.z);
-      _m3Scene.add(halo);
+      _m3World.add(halo);
       _m3Halos.push({ sp: halo, base: hb, lvl: lvl, ph: ni * 0.7 });
+      n.halo = halo;
     }
     var sp = _m3MakeSprite(n.m);
-    if (sp) { sp.position.set(n.x, n.y + R + 18, n.z); _m3Scene.add(sp); }
+    if (sp) { sp.position.set(n.x, n.y + R + 18, n.z); _m3World.add(sp); n.label = sp; }
   });
   var titleEl = document.getElementById('map3dTitle');
-  if (titleEl) titleEl.textContent = '🧊 3D組織マップ（' + members.length + '人）';
+  var lensName = '';
+  for (var li2 = 0; li2 < _M3_LENSES.length; li2++) { if (_M3_LENSES[li2][0] === _m3Lens && _m3Lens !== 'std') lensName = '・' + _M3_LENSES[li2][1]; }
+  if (titleEl) titleEl.textContent = '🧊 3D組織マップ（' + members.length + '人）' + lensName;
   _m3Ray = new THREE.Raycaster();
   _m3Pointer = new THREE.Vector2();
   var el = _m3Renderer.domElement;
@@ -13356,17 +13401,17 @@ function m3Build() {
     _m3Pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
     _m3Pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
     _m3Ray.setFromCamera(_m3Pointer, _m3Cam);
-    var hits = _m3Ray.intersectObjects(_m3Scene.children, false);
+    var hits = _m3Ray.intersectObjects(_m3World.children, false);
     for (var hi = 0; hi < hits.length; hi++) {
       var mid = hits[hi].object.userData && hits[hi].object.userData.mid;
       if (mid) { m3ShowInfo(mid); return; }
     }
+    _m3ClearSpot(); // 何もない所をタップ→スポットライト解除
     var info = document.getElementById('map3dInfo');
     if (info) info.style.display = 'none';
   });
-  if (_m3Raf) cancelAnimationFrame(_m3Raf);
-  var loop = function(){
-    _m3Raf = requestAnimationFrame(loop);
+  // v310: XR対応のためsetAnimationLoop（VRセッション中も描画される）
+  _m3Renderer.setAnimationLoop(function(){
     if (_m3Controls) _m3Controls.update();
     // v309: やる気S(レベル3)のハローは鼓動アニメーション
     var tNow = Date.now();
@@ -13378,8 +13423,127 @@ function m3Build() {
       }
     }
     _m3Renderer.render(_m3Scene, _m3Cam);
-  };
-  loop();
+  });
+}
+// ── v310: 系譜スポットライト・自動回転・タイムトラベル・ヒートモード ──
+var _m3World = null, _m3EdgeMesh = null, _m3EdgeMat = null, _m3Spot = null, _m3TT = null;
+var _m3Lens = 'std';
+var _M3_LENSES = [['std', '標準'], ['ltsv', 'LTSVヒート'], ['stale', '停滞ヒート']];
+function _m3ClearSpot() {
+  if (_m3Spot && _m3World) { _m3World.remove(_m3Spot); _m3Spot = null; }
+  if (_m3EdgeMat) _m3EdgeMat.opacity = 0.9;
+}
+// タップした人から自分（ルート）までの系譜を金色に発光させ、他を減光
+function _m3Spotlight(mid) {
+  _m3ClearSpot();
+  if (!_m3World || typeof THREE === 'undefined') return;
+  var byIdN = {};
+  for (var i = 0; i < _m3Nodes.length; i++) byIdN[_m3Nodes[i].m.id] = _m3Nodes[i];
+  var cur = byIdN[mid];
+  var pts = [], guard = 0;
+  while (cur && guard++ < 30) {
+    pts.push(new THREE.Vector3(cur.x, cur.y, cur.z));
+    cur = cur.m.parentId ? byIdN[cur.m.parentId] : null;
+  }
+  if (pts.length < 2) return;
+  var g = new THREE.BufferGeometry().setFromPoints(pts);
+  _m3Spot = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xFFB454, transparent: true, opacity: 1, blending: THREE.AdditiveBlending }));
+  _m3World.add(_m3Spot);
+  if (_m3EdgeMat) _m3EdgeMat.opacity = 0.16;
+}
+function m3ToggleAuto() {
+  if (!_m3Controls) return;
+  _m3Controls.autoRotate = !_m3Controls.autoRotate;
+  _m3Controls.autoRotateSpeed = 1.4;
+  var b = document.getElementById('m3AutoBtn');
+  if (b) b.textContent = _m3Controls.autoRotate ? '⏸' : '▶';
+}
+function m3CycleLens() {
+  var idx = 0;
+  for (var i = 0; i < _M3_LENSES.length; i++) if (_M3_LENSES[i][0] === _m3Lens) idx = i;
+  var next = _M3_LENSES[(idx + 1) % _M3_LENSES.length];
+  _m3Lens = next[0];
+  m3Build();
+  toast('🎨 ' + next[1] + (next[0] === 'ltsv' ? '（青=少→赤=多）' : (next[0] === 'stale' ? '（緑=活動中→赤=30日以上停滞）' : '')));
+}
+function _m3LensColor(m, maxPt) {
+  if (_m3Lens === 'ltsv') {
+    var v = Number(m.ptCurrent || 0);
+    var t = maxPt > 0 ? Math.sqrt(v / maxPt) : 0;
+    return 'hsl(' + Math.round(210 - 210 * t) + ',85%,55%)'; // 青→赤
+  }
+  if (_m3Lens === 'stale') {
+    var la = (typeof memberLastActivity === 'function') ? memberLastActivity(m) : '';
+    var d = la ? _olDaysSince(la) : null;
+    if (d === null) return '#5b6785';
+    if (d <= 7) return '#2CE5B8';
+    if (d <= 14) return '#FFD166';
+    if (d <= 30) return '#FFB454';
+    return '#FF5D73';
+  }
+  return null;
+}
+// 入会月（startMonth）順に組織が伸びていく成長リプレイ
+function m3TimeTravel() {
+  if (!_m3World || !_m3Nodes.length) return;
+  if (_m3TT) { _m3TTEnd(); return; } // 再タップで停止
+  _m3ClearSpot();
+  var monthsSet = {};
+  _m3Nodes.forEach(function(n){ monthsSet[(n.m.startMonth || '0000-00')] = 1; });
+  var keys = [];
+  for (var k in monthsSet) if (monthsSet.hasOwnProperty(k)) keys.push(k);
+  keys.sort();
+  if (keys.length < 2) { toast('入会月（開始月）のデータが少ないため再生できません'); return; }
+  _m3Nodes.forEach(function(n){
+    if (n.obj) n.obj.visible = false;
+    if (n.label) n.label.visible = false;
+    if (n.halo) n.halo.visible = false;
+  });
+  if (_m3EdgeMesh) _m3EdgeMesh.visible = false;
+  var dynEdges = [];
+  var dyn = new THREE.LineSegments(
+    new THREE.BufferGeometry(),
+    new THREE.LineBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })
+  );
+  _m3World.add(dyn);
+  var lbl = document.getElementById('m3TimeLabel');
+  var step = 0, shown = 0;
+  var iv = setInterval(function(){
+    if (step >= keys.length) { _m3TTEnd(); if (lbl) { lbl.style.display = ''; lbl.textContent = '現在 ' + _m3Nodes.length + '人 🎉'; setTimeout(function(){ lbl.style.display = 'none'; }, 2500); } return; }
+    var mo = keys[step];
+    _m3Nodes.forEach(function(n){
+      if ((n.m.startMonth || '0000-00') !== mo) return;
+      if (n.obj) n.obj.visible = true;
+      if (n.label) n.label.visible = true;
+      if (n.halo) n.halo.visible = true;
+      if (n.edge6) { for (var q = 0; q < 6; q++) dynEdges.push(n.edge6[q]); }
+      shown++;
+    });
+    var ng = new THREE.BufferGeometry();
+    ng.setAttribute('position', new THREE.Float32BufferAttribute(dynEdges.slice(), 3));
+    dyn.geometry.dispose();
+    dyn.geometry = ng;
+    if (lbl) {
+      lbl.style.display = '';
+      lbl.textContent = (mo === '0000-00' ? 'はじまり' : (parseInt(mo.slice(0, 4), 10) + '年' + parseInt(mo.slice(5, 7), 10) + '月')) + '　' + shown + '人';
+    }
+    step++;
+  }, 750);
+  _m3TT = { iv: iv, dyn: dyn };
+}
+function _m3TTEnd() {
+  if (!_m3TT) return;
+  clearInterval(_m3TT.iv);
+  if (_m3World && _m3TT.dyn) _m3World.remove(_m3TT.dyn);
+  _m3TT = null;
+  _m3Nodes.forEach(function(n){
+    if (n.obj) n.obj.visible = true;
+    if (n.label) n.label.visible = true;
+    if (n.halo) n.halo.visible = true;
+  });
+  if (_m3EdgeMesh) _m3EdgeMesh.visible = true;
+  var lbl = document.getElementById('m3TimeLabel');
+  if (lbl) lbl.style.display = 'none';
 }
 function m3ShowInfo(mid) {
   var m = null;
@@ -13389,6 +13553,7 @@ function m3ShowInfo(mid) {
   if (!info) return;
   var name = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
   var isMg = /^MG_/.test(m.id);
+  _m3Spotlight(mid); // v310: 系譜スポットライト（自分までの上位ラインを金色発光）
   info.style.display = '';
   info.innerHTML = '<div style="display:flex;align-items:center;gap:10px">'
     + ((typeof _avatars !== 'undefined' && _avatars[m.id]) ? '<img src="' + _avatars[m.id] + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid ' + titleRingColor(m.title || '') + '" alt="">' : '')
@@ -13396,7 +13561,7 @@ function m3ShowInfo(mid) {
     + '<div style="font-size:12px;color:var(--text-mid)">' + evEsc(m.title || '—') + (m.ptCurrent ? '　' + Number(m.ptCurrent).toLocaleString() + 'pt' : '')
     + (m.activity ? '　🔥やる気' + evEsc(m.activity) + (m.actRate ? '(' + evEsc(String(m.actRate)) + '%)' : '') : '') + '</div></div>'
     + (!isMg ? '<button class="fol-add" style="margin:0;flex:none;padding:8px 12px" onclick="close3DMap();openEdit(\'' + m.id + '\')">✎ 編集</button>' : '')
-    + '<span class="ms-x" style="width:32px;height:32px" onclick="document.getElementById(\'map3dInfo\').style.display=\'none\'">✕</span>'
+    + '<span class="ms-x" style="width:32px;height:32px" onclick="_m3ClearSpot();document.getElementById(\'map3dInfo\').style.display=\'none\'">✕</span>'
     + '</div>';
 }
 function setWeekStart(v) {
