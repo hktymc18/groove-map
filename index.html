@@ -1997,7 +1997,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v312</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v313</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4553,7 +4553,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v312';
+  var DATA_VERSION = 'v313';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5319,6 +5319,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v313', d:'2026-08-06', items:['💾テンプレ作成がLifebear式に：予定フォームに内容を入力→チップ列の「💾＋」でそのままテンプレとして保存（タイトル・時刻・所要・通知・色・メモを引き継ぎ）','🎨色の種類を12→18色に拡張。テンプレ編集画面にも色パレットを追加（選んだ色がカレンダーのチップ色になります）','テンプレチップに色の左ボーダー表示（どのテンプレが何色か一目で分かる）'] },
   { v:'v312', d:'2026-08-06', items:['👆予定チップを長押し→そのままドラッグで別の日へ移動（月表示・↩元に戻す付き。空きマスの長押しは今までどおり新規作成）','👉日ビュー・週ビューは左右スワイプで前後の日/週へ','⧉操作シートに「複製」：同じ内容で日付だけ変えてサッと登録（MAP実績連動も引き継ぎ）','🔁繰り返しの予定を編集するとき「この回のみ／以降すべてに適用」を選べるように','🔴下部バーのToDoボタンに未完了バッジ（今日＋期限切れの件数）','▶月表示の上部に「次の予定 19:00 ◯◯CT（あと2時間）」カウントダウン表示（タップで詳細）'] },
   { v:'v311', d:'2026-08-06', items:['🗓月表示を1日8件に調整（10件は詰まりすぎのため）・時刻と件名の間にスペース','📅カレンダーからの追加は「予定」専用・✅タスクはToDoタブから追加に整理（種別選択チップを廃止＝迷わない）','⏰開始時刻を入れると、終了時刻のテンキーが自動で続けて開くように','予定から完了チェックを廃止（ToDoに予定は出ません）。CT等のテンプレ予定だけ操作シートに「📊実施済み（実績+1）」を残しました','📱iPhoneで日付・時刻の入力枠が画面からはみ出す問題を修正'] },
   { v:'v310', d:'2026-08-05', items:['🧊3D組織マップ 第3弾（本格機能）','✨系譜スポットライト：メンバーをタップすると、その人から自分までの系譜ラインが金色に発光（他は減光）。何もない所をタップで解除','▶自動回転プレゼンモード：ヘッダの▶で組織がゆっくり回転（セミナー上映用）','⏳成長タイムトラベル：入会月順に組織が伸びていく様子を再生（もう一度⏳で停止）','🎨ヒートモード切替：標準→LTSVヒート（青=少→赤=多）→停滞ヒート（緑=活動中→赤=30日停滞）','🥽WebXR対応：Meta Quest等のブラウザで開くと「ENTER VR」ボタンが出現、目の前の空間に組織が浮かびます'] },
@@ -12614,8 +12615,8 @@ function notifyDueEvents() {
 // ============================================================
 //  カテゴリ（色分け）
 // ============================================================
-/* C2: Lifebear風の見分けやすい12色（既存カテゴリの色はそのまま保持される） */
-var CAT_COLORS = ['#FF5D73','#FF87B3','#FFB454','#FFD166','#8BC34A','#4ADE80','#3ED5C4','#5AD7FF','#6366f1','#C583FF','#a87c5a','#9ca3af'];
+/* v313: 色の種類を18色に拡張（既存カテゴリの色はそのまま保持される） */
+var CAT_COLORS = ['#FF5D73','#F97316','#FFB454','#FFD166','#84CC16','#8BC34A','#4ADE80','#14B8A6','#3ED5C4','#5AD7FF','#0EA5E9','#6366f1','#8B5CF6','#C583FF','#EC4899','#FF87B3','#a87c5a','#9ca3af'];
 var UNCAT_COLOR = '#9ca3af';
 var _evCategoryId = '';     // イベントモーダルで選択中のカテゴリ
 var _catPickMode  = false;  // シートが「イベントへ割当」モードか
@@ -14939,8 +14940,12 @@ function evTplRenderRow() {
   var h = '<label class="fl">テンプレから作成（任意）</label><div class="ev-tpl-row">';
   arr.forEach(function(t){
     var sel = (_evTplSel && _evTplSel.id === t.id) ? ' sel' : '';
-    h += '<div class="ev-tpl-chip' + sel + '" onclick="evTplPick(\'' + evEsc(t.id) + '\')">' + evEsc(t.emoji || '📌') + ' ' + evEsc(t.name || '') + '</div>';
+    // v313: テンプレの色をチップの左ボーダーで表示
+    var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '';
+    h += '<div class="ev-tpl-chip' + sel + '"' + (tc ? ' style="border-left:3px solid ' + tc + '"' : '') + ' onclick="evTplPick(\'' + evEsc(t.id) + '\')">' + evEsc(t.emoji || '📌') + ' ' + evEsc(t.name || '') + '</div>';
   });
+  // v313: Lifebear式＝今フォームに入れた内容をそのままテンプレとして保存
+  h += '<div class="ev-tpl-chip mgr" onclick="evTplSaveFromForm()" title="今の入力内容をテンプレに保存">💾＋</div>';
   h += '<div class="ev-tpl-chip mgr" onclick="openEvTplManager()" title="テンプレを編集">✎</div></div>';
   row.innerHTML = h;
   row.style.display = '';
@@ -14997,6 +15002,37 @@ function evTplOnMemberChange() {
   if (!titleEl.value || titleEl.value === _evTplTitleAuto) titleEl.value = newTitle;
   _evTplTitleAuto = newTitle;
 }
+// v313: Lifebear式＝予定フォームの入力内容をそのままテンプレとして保存
+function evTplSaveFromForm() {
+  var title = ((document.getElementById('evTitle') || {}).value || '').trim();
+  if (!title) { toast('先にタイトルなど内容を入力してください'); return; }
+  var st = readTimeSelects(), en = readTimeEnd();
+  var dur = 60;
+  if (st && en) {
+    var sp1 = st.split(':'), sp2 = en.split(':');
+    dur = ((parseInt(sp2[0],10)||0) * 60 + (parseInt(sp2[1],10)||0)) - ((parseInt(sp1[0],10)||0) * 60 + (parseInt(sp1[1],10)||0));
+    if (dur <= 0) dur = 60;
+  }
+  var rb = (document.getElementById('evRemind') || {}).value;
+  var t = {
+    id: 'tpl_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+    name: title.slice(0, 8),
+    emoji: '📌',
+    type: _evType === 'event' ? 'event' : 'task',
+    durationMin: dur,
+    defaultTime: st || '',
+    notifyOffset: (rb === '' || rb === undefined) ? '' : (parseInt(rb, 10) || 0),
+    titleTpl: title,
+    categoryId: _evCategoryId || '',
+    stage: '',
+    memo: ((document.getElementById('evMemo') || {}).value || '').trim()
+  };
+  _evTpl = _evTpl || [];
+  _evTpl.push(t);
+  _evTplSaveAll();
+  evTplRenderRow();
+  toast('💾 テンプレに保存しました（✎から名前・色・実績連動を調整できます）');
+}
 // ── テンプレ管理シート（一覧 → 編集/作成フォーム） ──
 function closeEvTplManager() {
   var ov = document.getElementById('evTplMgrOv');
@@ -15048,6 +15084,13 @@ function openEvTplEdit(id) {
   var ntfHas = false, ntfOpts = '';
   ntfList.forEach(function(p){ if (p[0] === ntfV) ntfHas = true; ntfOpts += '<option value="' + p[0] + '"' + (p[0] === ntfV ? ' selected' : '') + '>' + p[1] + '</option>'; });
   if (!ntfHas) ntfOpts += '<option value="' + evEsc(ntfV) + '" selected>' + evEsc(ntfV) + '分前</option>';
+  // v313: 色パレット（18色）。現在の色＝テンプレのカテゴリ色
+  var colorNow = '';
+  if (t && t.categoryId && findCategory(t.categoryId)) colorNow = findCategory(t.categoryId).color;
+  window._evtColorSel = colorNow;
+  var palHtml = CAT_COLORS.map(function(col){
+    return '<span class="cat-color' + (col === colorNow ? ' sel' : '') + '" data-col="' + col + '" style="background:' + col + '" onclick="evtPickColor(this)"></span>';
+  }).join('');
   ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (t ? '✎ テンプレを編集' : '＋ テンプレ作成') + '</div></div>'
     + '<span class="ms-x" onclick="closeEvTplEdit(true)">✕</span></div>'
@@ -15063,6 +15106,7 @@ function openEvTplEdit(id) {
     + '</div>'
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
     + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
+    + fld('カレンダーでの色', '<div class="cat-palette" id="evtF_pal">' + palHtml + '</div>')
     + fld('対応ステージ（完了でMAP実績+1）', '<select class="fi" id="evtF_stage">' + stageOpts + '</select>')
     + fld('メモの既定（任意）', '<input class="fi" id="evtF_memo" value="' + evEsc(t ? (t.memo || '') : '') + '">')
     + '<div class="btn-row">'
@@ -15072,6 +15116,13 @@ function openEvTplEdit(id) {
     + '</div></div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+// v313: テンプレ編集の色選択
+function evtPickColor(el) {
+  window._evtColorSel = el.getAttribute('data-col') || '';
+  var all = document.querySelectorAll('#evtF_pal .cat-color');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('sel');
+  el.classList.add('sel');
 }
 function saveEvTplForm(id) {
   var name = (document.getElementById('evtF_name')||{}).value || '';
@@ -15093,6 +15144,24 @@ function saveEvTplForm(id) {
   t.titleTpl = ((document.getElementById('evtF_tpl')||{}).value || '').trim() || name;
   t.stage = (document.getElementById('evtF_stage')||{}).value || '';
   t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
+  // v313: 選んだ色をテンプレのカテゴリに反映（既存カテゴリは色更新・無ければ同名カテゴリを作成）
+  var _col = window._evtColorSel || '';
+  if (_col && state.categories) {
+    var _cat = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId) : null;
+    if (!_cat) {
+      for (var _ci = 0; _ci < state.categories.length; _ci++) {
+        if (state.categories[_ci].name === t.name) { _cat = state.categories[_ci]; break; }
+      }
+    }
+    if (_cat) { _cat.color = _col; }
+    else {
+      _cat = { id: 'cat_' + Date.now() + '_' + Math.floor(Math.random() * 100000), name: t.name, color: _col };
+      state.categories.push(_cat);
+    }
+    t.categoryId = _cat.id;
+    saveCategories();
+    if (currentView === 'events') renderEvents();
+  }
   _evTplSaveAll();
   closeEvTplEdit(false);
   openEvTplManager();
