@@ -1145,6 +1145,18 @@ body.cal-fs .pc-toolbar{display:none!important}
 .ev-day-panel-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 2px 6px;border-bottom:1px solid var(--border)}
 .ev-day-panel-hdr .lb{font-size:14px;font-weight:800}
 .ev-day-panel-add{flex:none;background:var(--accent);color:var(--go-ink);border:none;border-radius:10px;padding:7px 13px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
+/* v314: Lifebear式テンプレ/履歴パネル */
+.ev-tpl-toggle{flex:none;width:44px;display:flex;align-items:center;justify-content:center;gap:2px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);cursor:pointer;font-size:15px;color:var(--text-mid)}
+.tplp{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:8px;background:var(--surface)}
+.tplp-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;font-size:11.5px;color:var(--text-dim);background:var(--surface2);font-weight:700}
+.tplp-mk{color:var(--accent);font-weight:800;cursor:pointer;padding:2px 8px;border:1px solid var(--accent);border-radius:8px;font-size:11px}
+.tplp-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--border);cursor:pointer}
+.tplp-time{flex:none;width:46px;font-size:10.5px;line-height:1.35;color:var(--text-mid);font-family:'IBM Plex Mono',monospace;text-align:right}
+.tplp-dot{flex:none;width:12px;height:12px;border-radius:50%}
+.tplp-ttl{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tplp-bell{flex:none;font-size:12px;opacity:.6}
+.tplp-x{flex:none;padding:6px 8px;color:var(--text-dim);cursor:pointer;font-size:13px}
+.tplp-empty{padding:10px 12px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border)}
 /* CAL-2: 予定テンプレチップ（タップで内容・時間・通知をプリフィル） */
 .ev-tpl-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0 2px;-webkit-overflow-scrolling:touch}
 .ev-tpl-chip{flex:none;display:flex;align-items:center;gap:4px;padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s}
@@ -1997,7 +2009,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v313</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v314</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2696,7 +2708,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <div class="overlay" id="eventModal" onclick="onEventOverlayClick(event)">
   <div class="sheet">
     <div class="sh-title" id="evShTitle">予定・タスク</div>
-    <div class="fr" id="evTplRow" style="display:none"></div>
     <!-- v311: 種別チップは廃止（カレンダーから＝予定、ToDoから＝タスク、と入口で自動決定） -->
     <!-- v312: 繰り返しシリーズの一括編集トグル（シリーズの回を編集中のみ表示） -->
     <div class="fr" id="evSeriesRow" style="display:none">
@@ -2706,7 +2717,14 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="rb" id="evSeriesAll" onclick="evSeriesScope(true)">以降すべてに適用</div>
       </div>
     </div>
-    <div class="fr"><label class="fl">タイトル</label><input class="fi" id="evTitle" placeholder="例：作戦会議"></div>
+    <!-- v314: Lifebear式＝タイトル横の⧉でテンプレ/履歴パネルを開閉 -->
+    <div class="fr"><label class="fl">タイトル</label>
+      <div style="display:flex;gap:6px;align-items:stretch">
+        <input class="fi" id="evTitle" placeholder="例：作戦会議" style="flex:1;min-width:0">
+        <div class="ev-tpl-toggle" id="evTplToggle" onclick="evTplPanelToggle()" title="テンプレ・履歴から入力">⧉<span style="font-size:9px">▾</span></div>
+      </div>
+      <div id="evTplRow" style="display:none"></div>
+    </div>
     <div class="ev-dt-row">
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">終了日（連日・任意）</label><input class="fi ev-dt" id="evDateEnd" type="date"></div>
@@ -4553,7 +4571,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v313';
+  var DATA_VERSION = 'v314';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5319,6 +5337,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v314', d:'2026-08-06', items:['⧉テンプレ/履歴パネル（Lifebearと同じUI）：タイトル横の⧉で「テンプレート」と「履歴（最近作った予定）」のリストが開き、行をタップするだけで全部入力されます（新規作成時は最初から表示）','「作成」ボタン＝今の入力内容を初期値にテンプレ作成。履歴は✕で個別に消せます','テンプレの絵文字を廃止（色ドット表示に統一）','⏰時刻テンキーの入力制限：61:00などありえない時刻はそもそも打てないように（無効キーは赤点滅＋振動）'] },
   { v:'v313', d:'2026-08-06', items:['💾テンプレ作成がLifebear式に：予定フォームに内容を入力→チップ列の「💾＋」でそのままテンプレとして保存（タイトル・時刻・所要・通知・色・メモを引き継ぎ）','🎨色の種類を12→18色に拡張。テンプレ編集画面にも色パレットを追加（選んだ色がカレンダーのチップ色になります）','テンプレチップに色の左ボーダー表示（どのテンプレが何色か一目で分かる）'] },
   { v:'v312', d:'2026-08-06', items:['👆予定チップを長押し→そのままドラッグで別の日へ移動（月表示・↩元に戻す付き。空きマスの長押しは今までどおり新規作成）','👉日ビュー・週ビューは左右スワイプで前後の日/週へ','⧉操作シートに「複製」：同じ内容で日付だけ変えてサッと登録（MAP実績連動も引き継ぎ）','🔁繰り返しの予定を編集するとき「この回のみ／以降すべてに適用」を選べるように','🔴下部バーのToDoボタンに未完了バッジ（今日＋期限切れの件数）','▶月表示の上部に「次の予定 19:00 ◯◯CT（あと2時間）」カウントダウン表示（タップで詳細）'] },
   { v:'v311', d:'2026-08-06', items:['🗓月表示を1日8件に調整（10件は詰まりすぎのため）・時刻と件名の間にスペース','📅カレンダーからの追加は「予定」専用・✅タスクはToDoタブから追加に整理（種別選択チップを廃止＝迷わない）','⏰開始時刻を入れると、終了時刻のテンキーが自動で続けて開くように','予定から完了チェックを廃止（ToDoに予定は出ません）。CT等のテンプレ予定だけ操作シートに「📊実施済み（実績+1）」を残しました','📱iPhoneで日付・時刻の入力枠が画面からはみ出す問題を修正'] },
@@ -14799,22 +14818,70 @@ function openTimePad(targetId) {
   document.body.appendChild(ov);
   tpRender();
 }
+// v314: ありえない時刻は打鍵の時点で拒否（61:00等は入力自体できない）
+// 先頭が3〜9＝1桁時（以降は分）、先頭0〜2＝2桁時（〜29時）→分、という解釈で常に正しい時刻だけを受け付ける
 function tpRender() {
   var el = document.getElementById('tpDisp');
   if (!el) return;
   var b = _tpBuf, s = '--:--';
-  if (b.length === 1 || b.length === 2) s = b + ':--';
-  else if (b.length === 3) s = b.charAt(0) + ':' + b.slice(1);
-  else if (b.length >= 4) s = b.slice(0, 2) + ':' + b.slice(2, 4);
+  if (b.length) {
+    var f = parseInt(b.charAt(0), 10);
+    if (f >= 3) {
+      // 1桁時 H:MM
+      if (b.length === 1) s = f + ':--';
+      else if (b.length === 2) s = f + ':' + b.charAt(1) + '0';
+      else s = f + ':' + b.slice(1, 3);
+    } else {
+      // 2桁時 HH:MM
+      if (b.length === 1) s = b + '-:--';
+      else if (b.length === 2) s = b + ':--';
+      else if (b.length === 3) s = b.slice(0, 2) + ':' + b.charAt(2) + '0';
+      else s = b.slice(0, 2) + ':' + b.slice(2, 4);
+    }
+  }
   el.textContent = s;
 }
+function _tpReject() {
+  if (navigator.vibrate) try { navigator.vibrate(35); } catch(e0) {}
+  var el = document.getElementById('tpDisp');
+  if (el) {
+    el.style.color = 'var(--red)';
+    setTimeout(function(){ el.style.color = ''; }, 250);
+  }
+}
 function tpKey(v) {
+  var b = _tpBuf;
+  var f = b.length ? parseInt(b.charAt(0), 10) : -1;
   if (v === '00' || v === '30') {
-    // 「時」まで入っていれば分として確定入力（19→00 で 19:00）
-    _tpBuf = (_tpBuf === '' ? '0' : _tpBuf.slice(0, 2)) + v;
+    // 「時」まで入った状態から分を確定（19→00 で 19:00）
+    var hp;
+    if (!b.length) hp = '0';
+    else if (f >= 3) hp = b.charAt(0);
+    else hp = b.slice(0, 2);
+    _tpBuf = hp + v;
+    tpRender();
+    return;
+  }
+  var d = parseInt(v, 10);
+  if (!b.length) {
+    _tpBuf = v;
+  } else if (f >= 3) {
+    // 1桁時：次は分（十の位0〜5→一の位）
+    if (b.length === 1) { if (d > 5) { _tpReject(); return; } _tpBuf += v; }
+    else if (b.length === 2) { _tpBuf += v; }
+    else { _tpReject(); return; }
   } else {
-    if (_tpBuf.length >= 4) _tpBuf = '';
-    _tpBuf += v;
+    // 2桁時（00〜29）→分
+    if (b.length === 1) {
+      var hh = f * 10 + d;
+      if (hh > 29) { _tpReject(); return; }
+      _tpBuf += v;
+    } else if (b.length === 2) {
+      if (d > 5) { _tpReject(); return; }
+      _tpBuf += v;
+    } else if (b.length === 3) {
+      _tpBuf += v;
+    } else { _tpReject(); return; }
   }
   tpRender();
 }
@@ -14826,10 +14893,22 @@ function closeTimePad(commit) {
     if (inp) {
       var b = _tpBuf, val = '';
       if (b.length) {
+        // v314: 打鍵ルールと同じ解釈（先頭3〜9＝1桁時、0〜2＝2桁時。分が途中なら十の位として確定）
         var h, m;
-        if (b.length <= 2) { h = parseInt(b, 10) || 0; m = 0; }
-        else if (b.length === 3) { h = parseInt(b.charAt(0), 10) || 0; m = parseInt(b.slice(1), 10) || 0; }
-        else { h = parseInt(b.slice(0, 2), 10) || 0; m = parseInt(b.slice(2, 4), 10) || 0; }
+        var f2 = parseInt(b.charAt(0), 10);
+        if (f2 >= 3) {
+          h = f2;
+          if (b.length === 1) m = 0;
+          else if (b.length === 2) m = (parseInt(b.charAt(1), 10) || 0) * 10;
+          else m = parseInt(b.slice(1, 3), 10) || 0;
+        } else if (b.length === 1) {
+          h = f2; m = 0;
+        } else {
+          h = parseInt(b.slice(0, 2), 10) || 0;
+          if (b.length === 2) m = 0;
+          else if (b.length === 3) m = (parseInt(b.charAt(2), 10) || 0) * 10;
+          else m = parseInt(b.slice(2, 4), 10) || 0;
+        }
         if (h > 29) h = 29; // v304: 深夜は29時まで（24〜29時＝翌0〜5時を当日の予定として扱う）
         if (m > 59) m = 59;
         val = evPad2(h) + ':' + evPad2(m);
@@ -14932,21 +15011,103 @@ function _evTplAutoCat(t) {
   saveCategories();
   return c.id;
 }
+// v314: Lifebear式パネル（テンプレート＋履歴。行タップで即入力）
+var _evTplPanelOpen = false;
+function evTplPanelToggle() {
+  _evTplPanelOpen = !_evTplPanelOpen;
+  if (_evTplPanelOpen && !_evTpl) { _evTplEnsure().then(function(){ evTplRenderRow(); }); }
+  evTplRenderRow();
+}
+function _tplpTimeHtml(st, en, allday) {
+  if (allday) return '終日';
+  if (!st) return '—';
+  return evEsc(st) + (en ? '<br>' + evEsc(en) : '');
+}
+function _tplpAddMin(st, mins) {
+  if (!st || !mins) return '';
+  var p = st.split(':');
+  var tot = (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0) + mins;
+  if (tot > 29 * 60 + 59) return '';
+  return evPad2(Math.floor(tot / 60)) + ':' + evPad2(tot % 60);
+}
+// 履歴＝最近作成した予定/タスク（タイトル＋時刻で重複除去・✕で非表示化）
+function _evHistList() {
+  var hide = {};
+  try { (JSON.parse(localStorage.getItem('gm_histHide') || '[]') || []).forEach(function(id){ hide[id] = 1; }); } catch(e0) {}
+  var arr = (state.events || []).slice().sort(function(a, b){ return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+  var seen = {}, out = [];
+  var wantTask = (_evType === 'task');
+  for (var i = 0; i < arr.length && out.length < 8; i++) {
+    var e = arr[i];
+    if (((e.type === 'task') !== wantTask) || hide[e.id]) continue;
+    var key = (e.title || '') + '|' + (e.time || '') + '|' + (e.allDay ? 1 : 0);
+    if (seen[key]) continue;
+    seen[key] = 1;
+    out.push(e);
+  }
+  return out;
+}
+function evHistHide(id) {
+  try {
+    var list = JSON.parse(localStorage.getItem('gm_histHide') || '[]') || [];
+    list.push(id);
+    if (list.length > 200) list = list.slice(-200);
+    localStorage.setItem('gm_histHide', JSON.stringify(list));
+  } catch(e0) {}
+  evTplRenderRow();
+}
+function evHistApply(id) {
+  var src = findEvent(id);
+  if (!src) return;
+  document.getElementById('evTitle').value = src.title || '';
+  buildTimeSelects(src.time || '', src.endTime || '');
+  evToggleAllDay(!!src.allDay);
+  _evCategoryId = src.categoryId || '';
+  updateEvCategoryDisplay();
+  _evSetRemind((src.remindBefore === undefined || src.remindBefore === null) ? '' : src.remindBefore);
+  if (src.memo) document.getElementById('evMemo').value = src.memo;
+  if (src.memberId) { var s = document.getElementById('evMember'); if (s) s.value = src.memberId; }
+  _evDupStage = src.templateStage || '';
+  _evTplPanelOpen = false;
+  evTplRenderRow();
+}
 function evTplRenderRow() {
   var row = document.getElementById('evTplRow');
+  var tg = document.getElementById('evTplToggle');
+  if (tg) tg.innerHTML = '⧉<span style="font-size:9px">' + (_evTplPanelOpen ? '▴' : '▾') + '</span>';
   if (!row) return;
-  if (_evEditId) { row.style.display = 'none'; row.innerHTML = ''; return; } // 新規追加時のみ表示
+  if (!_evTplPanelOpen) { row.style.display = 'none'; row.innerHTML = ''; return; }
+  var h = '<div class="tplp">';
+  // ── テンプレート ──
+  h += '<div class="tplp-hd">テンプレート<span class="tplp-mk" onclick="evTplCreateFromForm()">作成</span></div>';
   var arr = _evTpl || [];
-  var h = '<label class="fl">テンプレから作成（任意）</label><div class="ev-tpl-row">';
+  if (!arr.length) h += '<div class="tplp-empty">テンプレートはまだありません。「作成」で今の入力内容から作れます</div>';
   arr.forEach(function(t){
-    var sel = (_evTplSel && _evTplSel.id === t.id) ? ' sel' : '';
-    // v313: テンプレの色をチップの左ボーダーで表示
-    var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '';
-    h += '<div class="ev-tpl-chip' + sel + '"' + (tc ? ' style="border-left:3px solid ' + tc + '"' : '') + ' onclick="evTplPick(\'' + evEsc(t.id) + '\')">' + evEsc(t.emoji || '📌') + ' ' + evEsc(t.name || '') + '</div>';
+    var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '#9ca3af';
+    var en = _tplpAddMin(t.defaultTime || '', t.durationMin || 0);
+    h += '<div class="tplp-row" onclick="evTplPick(\'' + evEsc(t.id) + '\')">'
+      + '<span class="tplp-time">' + _tplpTimeHtml(t.defaultTime || '', en, false) + '</span>'
+      + '<span class="tplp-dot" style="background:' + tc + '"></span>'
+      + '<span class="tplp-ttl">' + evEsc(t.name || '') + '</span>'
+      + (t.notifyOffset !== '' && t.notifyOffset !== undefined && t.notifyOffset !== null ? '<span class="tplp-bell">🔔</span>' : '')
+      + '<span class="tplp-x" onclick="event.stopPropagation();openEvTplEdit(\'' + evEsc(t.id) + '\')">✎</span>'
+      + '</div>';
   });
-  // v313: Lifebear式＝今フォームに入れた内容をそのままテンプレとして保存
-  h += '<div class="ev-tpl-chip mgr" onclick="evTplSaveFromForm()" title="今の入力内容をテンプレに保存">💾＋</div>';
-  h += '<div class="ev-tpl-chip mgr" onclick="openEvTplManager()" title="テンプレを編集">✎</div></div>';
+  // ── 履歴 ──
+  h += '<div class="tplp-hd">履歴</div>';
+  var hist = _evHistList();
+  if (!hist.length) h += '<div class="tplp-empty">履歴はまだありません</div>';
+  hist.forEach(function(e){
+    var tc = (e.categoryId && findCategory(e.categoryId)) ? findCategory(e.categoryId).color : '#9ca3af';
+    h += '<div class="tplp-row" onclick="evHistApply(\'' + evEsc(e.id) + '\')">'
+      + '<span class="tplp-time">' + _tplpTimeHtml(e.time || '', e.endTime || '', !!e.allDay || !e.time) + '</span>'
+      + '<span class="tplp-dot" style="background:' + tc + '"></span>'
+      + '<span class="tplp-ttl">' + evEsc(e.title || '') + '</span>'
+      + (e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null ? '<span class="tplp-bell">🔔</span>' : '')
+      + '<span class="tplp-x" onclick="event.stopPropagation();evHistHide(\'' + evEsc(e.id) + '\')">✕</span>'
+      + '</div>';
+  });
+  h += '</div>';
   row.innerHTML = h;
   row.style.display = '';
 }
@@ -14991,6 +15152,7 @@ function evTplPick(id) {
   if (_acId) { _evCategoryId = _acId; updateEvCategoryDisplay(); }
   var memoEl = document.getElementById('evMemo');
   if (t.memo && memoEl && !memoEl.value) memoEl.value = t.memo;
+  _evTplPanelOpen = false; // v314: 選んだらパネルを閉じてフォームを見せる
   evTplRenderRow();
 }
 // メンバー選択と連動：テンプレ選択中は {name} を選び直したメンバー名で再生成
@@ -15002,10 +15164,9 @@ function evTplOnMemberChange() {
   if (!titleEl.value || titleEl.value === _evTplTitleAuto) titleEl.value = newTitle;
   _evTplTitleAuto = newTitle;
 }
-// v313: Lifebear式＝予定フォームの入力内容をそのままテンプレとして保存
-function evTplSaveFromForm() {
+// v314: Lifebear式「作成」＝今の入力内容を初期値にしたテンプレ作成フォームを開く
+function evTplCreateFromForm() {
   var title = ((document.getElementById('evTitle') || {}).value || '').trim();
-  if (!title) { toast('先にタイトルなど内容を入力してください'); return; }
   var st = readTimeSelects(), en = readTimeEnd();
   var dur = 60;
   if (st && en) {
@@ -15014,10 +15175,8 @@ function evTplSaveFromForm() {
     if (dur <= 0) dur = 60;
   }
   var rb = (document.getElementById('evRemind') || {}).value;
-  var t = {
-    id: 'tpl_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-    name: title.slice(0, 8),
-    emoji: '📌',
+  window._evtPre = {
+    name: title.slice(0, 12),
     type: _evType === 'event' ? 'event' : 'task',
     durationMin: dur,
     defaultTime: st || '',
@@ -15027,11 +15186,7 @@ function evTplSaveFromForm() {
     stage: '',
     memo: ((document.getElementById('evMemo') || {}).value || '').trim()
   };
-  _evTpl = _evTpl || [];
-  _evTpl.push(t);
-  _evTplSaveAll();
-  evTplRenderRow();
-  toast('💾 テンプレに保存しました（✎から名前・色・実績連動を調整できます）');
+  openEvTplEdit('');
 }
 // ── テンプレ管理シート（一覧 → 編集/作成フォーム） ──
 function closeEvTplManager() {
@@ -15044,8 +15199,9 @@ function openEvTplManager() {
     var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evTplMgrOv';
     ov.onclick = function(e){ if (e.target === ov) closeEvTplManager(); };
     var rows = (_evTpl || []).map(function(t){
+      var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '#9ca3af';
       return '<div class="fol-log-row" onclick="openEvTplEdit(\'' + evEsc(t.id) + '\')">'
-        + '<span style="font-size:18px">' + evEsc(t.emoji || '📌') + '</span>'
+        + '<span class="tplp-dot" style="background:' + tc + '"></span>'
         + '<span class="fol-log-main"><span class="fol-log-ttl">' + evEsc(t.name || '') + '</span>'
         + '<span class="fol-log-sub">' + (t.type === 'event' ? '📅予定' : '✅タスク') + '・' + (t.durationMin || 0) + '分'
         + (t.stage ? ('・実績: ' + evEsc(_evTplStageLabel(t.stage))) : '') + '</span></span>'
@@ -15067,7 +15223,10 @@ function closeEvTplEdit(backToList) {
   if (backToList) openEvTplManager();
 }
 function openEvTplEdit(id) {
-  var t = id ? _evTplFind(id) : null;
+  // v314: id無し＝新規。フォームからの「作成」は window._evtPre を初期値に使う
+  var isEdit = !!id;
+  var t = id ? _evTplFind(id) : (window._evtPre || null);
+  window._evtPre = null;
   closeEvTplManager();
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evTplEditOv';
   ov.onclick = function(e){ if (e.target === ov) closeEvTplEdit(true); };
@@ -15092,13 +15251,10 @@ function openEvTplEdit(id) {
     return '<span class="cat-color' + (col === colorNow ? ' sel' : '') + '" data-col="' + col + '" style="background:' + col + '" onclick="evtPickColor(this)"></span>';
   }).join('');
   ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (t ? '✎ テンプレを編集' : '＋ テンプレ作成') + '</div></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (isEdit ? '✎ テンプレを編集' : '＋ テンプレ作成') + '</div></div>'
     + '<span class="ms-x" onclick="closeEvTplEdit(true)">✕</span></div>'
     + '<div style="padding:4px 16px 16px">'
-    + '<div style="display:flex;gap:8px">'
-    + '<div style="flex:0 0 74px">' + fld('絵文字', '<input class="fi" id="evtF_emoji" maxlength="4" value="' + evEsc(t ? (t.emoji || '') : '📌') + '" style="text-align:center">') + '</div>'
-    + '<div style="flex:1">' + fld('名前', '<input class="fi" id="evtF_name" placeholder="例：CT" value="' + evEsc(t ? (t.name || '') : '') + '">') + '</div>'
-    + '</div>'
+    + fld('名前', '<input class="fi" id="evtF_name" placeholder="例：CT" value="' + evEsc(t ? (t.name || '') : '') + '">')
     + fld('種別', '<select class="fi" id="evtF_type">' + typeOpts + '</select>')
     + '<div style="display:flex;gap:8px">'
     + '<div style="flex:1">' + fld('所要（分）', '<input class="fi" id="evtF_dur" type="number" min="0" step="15" value="' + (t ? (t.durationMin || 0) : 60) + '">') + '</div>'
@@ -15111,7 +15267,7 @@ function openEvTplEdit(id) {
     + fld('メモの既定（任意）', '<input class="fi" id="evtF_memo" value="' + evEsc(t ? (t.memo || '') : '') + '">')
     + '<div class="btn-row">'
     + '<button class="btn-c" onclick="closeEvTplEdit(true)">キャンセル</button>'
-    + (t ? '<button class="btn-d" onclick="deleteEvTplForm(\'' + evEsc(t.id) + '\')">削除</button>' : '')
+    + (isEdit ? '<button class="btn-d" onclick="deleteEvTplForm(\'' + evEsc(t.id) + '\')">削除</button>' : '')
     + '<button class="btn-p" onclick="saveEvTplForm(\'' + evEsc(id || '') + '\')">保存</button>'
     + '</div></div></div>';
   document.body.appendChild(ov);
@@ -15136,7 +15292,7 @@ function saveEvTplForm(id) {
     _evTpl.push(t);
   }
   t.name = name;
-  t.emoji = ((document.getElementById('evtF_emoji')||{}).value || '').trim();
+  t.emoji = ''; // v314: 絵文字は廃止
   t.type = ((document.getElementById('evtF_type')||{}).value === 'event') ? 'event' : 'task';
   t.durationMin = parseInt((document.getElementById('evtF_dur')||{}).value, 10) || 0;
   t.defaultTime = (document.getElementById('evtF_time')||{}).value || '';
@@ -15263,16 +15419,14 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   var _subNew = document.getElementById('evSubNew');
   if (_subNew) _subNew.value = '';
   evSubsRenderList();
-  // CAL-2: 新規追加時のみテンプレチップ列を表示（読み込みは初回のみ）
+  // v314: テンプレ/履歴パネル（新規＝最初から開く・編集＝閉じた状態で⧉から開ける）
   _evTplSel = null; _evTplTitleAuto = '';
-  var _tplRow = document.getElementById('evTplRow');
-  if (_tplRow) { _tplRow.style.display = 'none'; _tplRow.innerHTML = ''; }
-  if (!id) {
-    _evTplEnsure().then(function(){
-      var mo = document.getElementById('eventModal');
-      if (mo && mo.classList.contains('open') && !_evEditId) evTplRenderRow();
-    });
-  }
+  _evTplPanelOpen = !id;
+  evTplRenderRow();
+  _evTplEnsure().then(function(){
+    var mo = document.getElementById('eventModal');
+    if (mo && mo.classList.contains('open')) evTplRenderRow();
+  });
   document.getElementById('eventModal').classList.add('open');
 }
 function closeEventModal() {
