@@ -2039,7 +2039,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v319</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v320</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4619,7 +4619,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v319';
+  var DATA_VERSION = 'v320';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5385,6 +5385,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v320', d:'2026-08-13', items:['🗓月表示のスクロール方式を選べるように：⚙カレンダー設定に「↔ 横（1ヶ月ずつ）／↕ 縦（連続）」を追加。既定は横＝1ヶ月が1画面にきっちり収まり、左右スワイプか‹›で月をページ送り','横モードでは前後の月のはみ出し日が薄い色になり、今月がひと目で分かります','縦（連続）を選ぶと今まで通りLifebear式のシームレス縦スクロールに'] },
   { v:'v319', d:'2026-08-13', items:['📌テンプレのワンタップ即登録：月カレンダーで日付をタップ→日シートの下部にテンプレのチップが並び、タップするだけでその日に即登録（編集画面を開かない。時刻・所要・通知・色・MAP実績連動もそのまま適用。↩取消付き）','⚡タスクの連続追加モード：タスクを保存すると画面を閉じずにタスク名がクリアされ、続けて次のタスクを入力可能（期限・リスト・ラベル・通知は引き継ぎ。終わったらキャンセルか画面外タップで閉じる）','📆ワンタップでリスケ：予定・タスクの操作シートに「今日/明日/来週」の移動チップを追加（編集画面を開かず日付変更・↩元に戻す付き。連日予定は期間の長さを保って移動）','✍️入力途中の下書きを自動保護：誤って画面外をタップしたり戻るボタンで閉じてしまっても、次に開いた時に入力内容を復元（キャンセルボタンで閉じた時は破棄）'] },
   { v:'v318', d:'2026-08-13', items:['📱タスク入力画面が上に見切れる問題を修正（画面の高さに収めて中でスクロール）','⌨️タスク追加を開いたら、タスク名に自動でカーソルが入りすぐ打ち込めるように','🏷リスト/ラベルの選択シートがタスク編集画面の後ろに隠れて「選択しても何も起こらない」ように見える問題を修正（前面に表示）','＋リスト/ラベルの作成が入力欄に直接打ち込む方式に（ポップアップ廃止。ToDoホームと選択シートのどちらからでも、入力→追加ですぐ作成。選択シートから作った場合はそのまま選択されます）'] },
   { v:'v317', d:'2026-08-13', items:['🛠テンプレ編集画面の不具合を修正：予定入力の⧉パネルから✎/作成を押すと、編集画面が予定入力の後ろに隠れて開いてしまい「反応しない→あとから出てくる→✕で閉じない」状態になっていました。前面に表示＋多重に重なったシートを一括で閉じるように修正','⚙カレンダー設定から「テンプレを編集・追加」「カテゴリを編集」を削除してすっきり（テンプレは予定入力の⧉パネルの✎から、カテゴリは詳細のカテゴリ欄から編集できます）','テンプレ保存/削除後は、開いた場所に応じて元の画面に戻るように（一覧から開いた時だけ一覧へ戻る）'] },
@@ -10865,6 +10866,9 @@ try { var _evM0 = localStorage.getItem('gm_evMode'); if (_evM0 === 'calendar' ||
 // S3: 週の始まり（1=月曜/0=日曜。月・週ビュー共通）
 var _weekStart = 1;
 try { var _ws0 = localStorage.getItem('gm_weekStart'); if (_ws0 === '0' || _ws0 === '1') _weekStart = parseInt(_ws0, 10); } catch(e) {}
+// v320: 月表示のスクロール方式（h=横＝1ヶ月ずつページ送り（既定）/ v=縦＝連続スクロール）
+var _calScrollMode = 'h';
+try { var _cs0 = localStorage.getItem('gm_calScroll'); if (_cs0 === 'h' || _cs0 === 'v') _calScrollMode = _cs0; } catch(e) {}
 // S4: 日本の祝日（2026〜2028を内蔵。2029以降は年が近づいたら追記）
 var JP_HOLIDAYS = {
   '2026-01-01':'元日','2026-01-12':'成人の日','2026-02-11':'建国記念の日','2026-02-23':'天皇誕生日',
@@ -13138,6 +13142,11 @@ function openCalSettings() {
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
     + '<div style="padding:4px 16px 20px"><div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
     + '<div class="rg">' + wsBtn(1, '月曜はじまり') + wsBtn(0, '日曜はじまり') + '</div></div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">月表示のスクロール</label>'
+    + '<div class="rg">'
+    + '<div class="rb' + (_calScrollMode !== 'v' ? ' sel' : '') + '" onclick="setCalScroll(\'h\')">↔ 横（1ヶ月ずつ）</div>'
+    + '<div class="rb' + (_calScrollMode === 'v' ? ' sel' : '') + '" onclick="setCalScroll(\'v\')">↕ 縦（連続）</div>'
+    + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
     + '</div>'
@@ -13664,6 +13673,15 @@ function setWeekStart(v) {
   renderEvents();
   toast(v === 1 ? '月曜はじまりにしました' : '日曜はじまりにしました');
 }
+// v320: 月表示のスクロール方式（h=横ページ送り/v=縦連続）
+function setCalScroll(v) {
+  _calScrollMode = (v === 'v') ? 'v' : 'h';
+  try { localStorage.setItem('gm_calScroll', _calScrollMode); } catch(e) {}
+  _calScrollInit = false; // 縦へ切替時は今日の週へスクロールし直す
+  closeCalSettings();
+  renderEvents();
+  toast(_calScrollMode === 'v' ? '縦スクロール（連続）にしました' : '横スクロール（1ヶ月ずつ）にしました');
+}
 // v302: 右上ビュー切替メニュー（月/週/日/検索）
 function calViewMenuToggle() {
   var m = document.getElementById('evCalVMenu');
@@ -13676,6 +13694,8 @@ function calViewMenuClose() {
 function calOpenTodaySheet() {
   var t = evTodayYmd();
   _calSelDate = t;
+  var n0 = new Date();
+  _calYear = n0.getFullYear(); _calMonth = n0.getMonth(); // v320: 今日の月を表示してから
   renderCalendar();
   _calScrollToYmd(t, false);
   openCalDaySheet(t);
@@ -13690,6 +13710,7 @@ function calGoToday() {
   _calYear = n.getFullYear(); _calMonth = n.getMonth();
   var title = document.getElementById('evCalTitle');
   if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
+  if (_calScrollMode !== 'v') { renderCalendar(); return; } // v320: 横モード＝今月を描画
   _calScrollToYmd(evTodayYmd(), true); // v298: 今日の週へスクロール
 }
 // CAL-FS: 左右スワイプで月移動（全画面カレンダー）
@@ -14488,7 +14509,9 @@ function calShiftMonth(delta) {
   else if (_calMonth > 11) { _calMonth = 0; _calYear++; }
   var title = document.getElementById('evCalTitle');
   if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
-  // v298: 再描画せずその月の1日の週へスクロール（連続カレンダー）
+  // v320: 横モード＝その月だけを描画し直す（ページ送り）
+  if (_calScrollMode !== 'v') { renderCalendar(); return; }
+  // v298: 縦モード＝再描画せずその月の1日の週へスクロール（連続カレンダー）
   _calScrollToYmd(_calYear + '-' + evPad2(_calMonth + 1) + '-01', true);
 }
 function renderCalendar() {
@@ -14508,13 +14531,22 @@ function renderCalendar() {
     }
     wdRow.innerHTML = wdh;
   }
-  // v298: Lifebear式＝縦スクロールで前後の月へシームレスに繋がる連続週カレンダー
-  //       描画範囲は「今日の前6ヶ月の月初〜先12ヶ月の月末」を含む週（1画面5週）
+  // v320: 横（既定）＝表示中の月だけを描画し、左右スワイプ/‹›でページ送り
+  // v298: 縦＝前後の月へシームレスに繋がる連続週カレンダー（前6ヶ月〜先12ヶ月）
+  var _hMode = (_calScrollMode !== 'v');
   var now = new Date();
-  var rs = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-  rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
-  rs.setHours(0, 0, 0, 0);
-  var re = new Date(now.getFullYear(), now.getMonth() + 13, 0);
+  var rs, re;
+  if (_hMode) {
+    rs = new Date(_calYear, _calMonth, 1);
+    rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
+    rs.setHours(0, 0, 0, 0);
+    re = new Date(_calYear, _calMonth + 1, 0);
+  } else {
+    rs = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+    rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
+    rs.setHours(0, 0, 0, 0);
+    re = new Date(now.getFullYear(), now.getMonth() + 13, 0);
+  }
   _calRangeStart = rs;
   _calRangeWeeks = Math.ceil((Math.round((re - rs) / 86400000) + 1) / 7);
   var t = evTodayYmd();
@@ -14540,12 +14572,13 @@ function renderCalendar() {
   var html = '';
   var cur = new Date(rs.getTime());
   for (var w = 0; w < _calRangeWeeks; w++) {
-    html += '<div class="ev-wkrow">';
+    html += '<div class="ev-wkrow"' + (_hMode ? ' style="height:' + (100 / _calRangeWeeks) + '%"' : '') + '>';
     for (var i = 0; i < 7; i++) {
       var ds = evYmd(cur);
       var d = cur.getDate();
       var cls = 'ev-cell';
-      if (cur.getMonth() % 2 === 1) cls += ' alt'; // 月ごとの縞で切れ目が分かる
+      if (_hMode) { if (cur.getMonth() !== _calMonth) cls += ' alt'; } // 横：前後月のはみ出し日を薄く
+      else if (cur.getMonth() % 2 === 1) cls += ' alt'; // 縦：月ごとの縞で切れ目が分かる
       if (ds === t) cls += ' today';
       if (ds === _calSelDate) cls += ' sel';
       var dowReal = cur.getDay();
@@ -14593,6 +14626,7 @@ function renderCalendar() {
   }
   var keepTop = grid.scrollTop;
   grid.innerHTML = html;
+  grid.style.overflowY = _hMode ? 'hidden' : ''; // 横モードは縦スクロールなし（1ヶ月で1画面）
   if (!grid._calScrollBound) {
     grid._calScrollBound = true;
     grid.addEventListener('scroll', _calOnScroll, { passive: true });
@@ -14662,7 +14696,9 @@ function renderCalendar() {
     }, { passive: true });
     grid.addEventListener('scroll', function(){ if (lpT) { clearTimeout(lpT); lpT = null; } }, { passive: true });
   }
-  if (!_calScrollInit) {
+  if (_hMode) {
+    grid.scrollTop = 0; // 横モードは常に月の先頭から（スクロールしない）
+  } else if (!_calScrollInit) {
     // 非表示中(clientHeight=0)はスクロールできないため、見えるようになった描画時に初期化
     if (grid.clientHeight > 0) {
       _calScrollInit = true;
@@ -14680,6 +14716,7 @@ var _calRangeWeeks = 0;
 var _calScrollInit = false;
 var _calScrRaf = false;
 function _calScrollToYmd(ymd, smooth) {
+  if (_calScrollMode !== 'v') return; // v320: 横モードはスクロール制御なし
   var g = document.getElementById('evCalGrid');
   if (!g || !_calRangeStart) return;
   var p = String(ymd).split('-');
@@ -14692,6 +14729,7 @@ function _calScrollToYmd(ymd, smooth) {
   g.scrollTop = top;
 }
 function _calOnScroll() {
+  if (_calScrollMode !== 'v') return; // v320: 横モードはスクロールで年月を変えない
   if (_calScrRaf) return;
   _calScrRaf = true;
   requestAnimationFrame(function(){
