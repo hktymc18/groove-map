@@ -1232,6 +1232,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 /* v298: Lifebear式 時刻テンキー（予定モーダルz540の上） */
 .tp-ov{position:fixed;inset:0;z-index:560;background:rgba(0,0,0,.25);display:flex;align-items:flex-end}
 .tp-sheet{width:100%;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:10px 12px calc(env(safe-area-inset-bottom) + 12px)}
+.tp-which{font-size:12.5px;font-weight:800;color:var(--accent);padding:6px 6px 0}
 .tp-hd{display:flex;align-items:center;gap:12px;padding:2px 6px 10px}
 .tp-disp{font-size:26px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex:1;color:var(--text)}
 .tp-clr{font-size:13px;font-weight:700;color:var(--text-dim);cursor:pointer;padding:8px}
@@ -2029,7 +2030,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v315</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v316</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2737,9 +2738,10 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="rb" id="evSeriesAll" onclick="evSeriesScope(true)">以降すべてに適用</div>
       </div>
     </div>
-    <!-- v314: Lifebear式＝タイトル横の⧉でテンプレ/履歴パネルを開閉 -->
-    <div class="fr"><label class="fl">タイトル</label>
-      <div style="display:flex;gap:6px;align-items:stretch">
+    <!-- v314: Lifebear式＝タイトル横の⧉でテンプレ/履歴パネルを開閉（v316: タスクは○＋タスク名＋☆のみ） -->
+    <div class="fr"><label class="fl" id="evTitleLbl">タイトル</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="evTaskCircle" style="display:none;flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);box-sizing:border-box"></span>
         <input class="fi" id="evTitle" placeholder="例：作戦会議" style="flex:1;min-width:0">
         <div class="ev-tpl-toggle" id="evStarBtn" onclick="evStarToggle()" title="星付き" style="display:none">☆</div>
         <div class="ev-tpl-toggle" id="evTplToggle" onclick="evTplPanelToggle()" title="テンプレ・履歴から入力">⧉<span style="font-size:9px">▾</span></div>
@@ -2747,22 +2749,49 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div id="evTplRow" style="display:none"></div>
     </div>
     <div class="ev-dt-row">
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">終了日（連日・任意）</label><input class="fi ev-dt" id="evDateEnd" type="date"></div>
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl" id="evDateLbl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
+      <div class="fr" style="flex:1;margin-bottom:0" id="evDateEndWrap"><label class="fl">終了日（連日・任意）</label><input class="fi ev-dt" id="evDateEnd" type="date"></div>
     </div>
     <div class="ev-dt-row">
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">時刻（任意）開始〜終了</label>
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl" id="evTimeLbl">時刻（任意）開始〜終了</label>
         <div style="display:flex;gap:5px;align-items:center">
           <input class="fi ev-dt" id="evTime" type="text" readonly placeholder="なし" onclick="openTimePad('evTime')" style="flex:1;min-width:0;cursor:pointer;text-align:center">
-          <span style="color:var(--text-dim);font-weight:700">〜</span>
+          <span style="color:var(--text-dim);font-weight:700" id="evTimeTilde">〜</span>
           <input class="fi ev-dt" id="evTimeEnd" type="text" readonly placeholder="なし" onclick="openTimePad('evTimeEnd')" style="flex:1;min-width:0;cursor:pointer;text-align:center">
           <div class="rb" id="evAllDayChip" onclick="evToggleAllDay()" style="flex:none;padding:9px 11px;font-size:12px">終日</div>
         </div>
       </div>
     </div>
-    <!-- B1: 繰り返し（新規作成時のみ表示。保存時に実体を展開） -->
-    <div class="ev-dt-row" id="evRepeatRow">
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">繰り返し</label>
+    <!-- v315/v316: タスクのみ＝Lifebear式のリスト/ラベル -->
+    <div class="ev-dt-row" id="evTaskMetaRow" style="display:none">
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">📄 リスト</label>
+        <div class="ev-cat-field" onclick="openTodoPicker('list')">
+          <span class="cat-swatch" id="evListSwatch" style="background:#9ca3af"></span>
+          <span id="evListName" style="flex:1">マイリスト</span>
+          <span style="color:var(--text-dim)">▾</span>
+        </div>
+      </div>
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">🏷 ラベル</label>
+        <div class="ev-cat-field" onclick="openTodoPicker('label')">
+          <span class="cat-swatch" id="evLabelSwatch" style="background:#9ca3af"></span>
+          <span id="evLabelName" style="flex:1">なし</span>
+          <span style="color:var(--text-dim)">▾</span>
+        </div>
+      </div>
+    </div>
+    <!-- v316: 通知・繰り返しをLifebearと同じくフォーム直下の1行に（繰り返しは新規作成時のみ） -->
+    <div class="ev-dt-row">
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">🔔 通知</label>
+        <select class="fi" id="evRemind">
+          <option value="">なし</option>
+          <option value="0">時刻ちょうど</option>
+          <option value="10">10分前</option>
+          <option value="30">30分前</option>
+          <option value="60">1時間前</option>
+          <option value="1440">前日</option>
+        </select>
+      </div>
+      <div class="fr" style="flex:1;margin-bottom:0" id="evRepeatRow"><label class="fl">🔁 繰り返し</label>
         <select class="fi" id="evRepeat" onchange="evRepeatChanged()">
           <option value="">なし</option>
           <option value="d">毎日</option>
@@ -2771,27 +2800,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <option value="m">毎月</option>
         </select>
       </div>
-      <div class="fr" style="flex:1;margin-bottom:0;visibility:hidden" id="evRepeatUntilWrap"><label class="fl">繰り返し終了日</label><input class="fi ev-dt" id="evRepeatUntil" type="date"></div>
     </div>
-    <!-- v315: タスクのみ＝Lifebear式のリスト/ラベル -->
-    <div class="ev-dt-row" id="evTaskMetaRow" style="display:none">
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">リスト</label>
-        <div class="ev-cat-field" onclick="openTodoPicker('list')">
-          <span class="cat-swatch" id="evListSwatch" style="background:#9ca3af"></span>
-          <span id="evListName" style="flex:1">マイリスト</span>
-          <span style="color:var(--text-dim)">▾</span>
-        </div>
-      </div>
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">ラベル</label>
-        <div class="ev-cat-field" onclick="openTodoPicker('label')">
-          <span class="cat-swatch" id="evLabelSwatch" style="background:#9ca3af"></span>
-          <span id="evLabelName" style="flex:1">なし</span>
-          <span style="color:var(--text-dim)">▾</span>
-        </div>
-      </div>
-    </div>
+    <div class="fr" id="evRepeatUntilWrap" style="display:none"><label class="fl">繰り返し終了日</label><input class="fi ev-dt" id="evRepeatUntil" type="date"></div>
+    <div class="fr"><label class="fl">📝 メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
     <!-- A1: 詳細はデフォルト格納（ミニマル）。値が入っている時は自動で開く -->
-    <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（カテゴリ・メンバー・通知・サブタスクなど）</div>
+    <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（カテゴリ・メンバー・優先度・サブタスク）</div>
     <div id="evAdvWrap" style="display:none">
       <div class="fr">
         <label class="fl">カテゴリ（色分け）</label>
@@ -2804,17 +2817,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="fr">
         <label class="fl">関連メンバー（任意）</label>
         <select class="fi" id="evMember" onchange="evTplOnMemberChange()"></select>
-      </div>
-      <div class="fr">
-        <label class="fl">リマインド通知（任意・時刻未指定は9:00基準）</label>
-        <select class="fi" id="evRemind">
-          <option value="">なし</option>
-          <option value="0">時刻ちょうど</option>
-          <option value="10">10分前</option>
-          <option value="30">30分前</option>
-          <option value="60">1時間前</option>
-          <option value="1440">前日</option>
-        </select>
       </div>
       <div class="fr" id="evPrioRow">
         <label class="fl">優先度</label>
@@ -2831,7 +2833,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <button class="btn-c" style="flex:none;padding:0 14px" onclick="evSubAdd()">追加</button>
         </div>
       </div>
-      <div class="fr"><label class="fl">メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
       <div class="fr" id="evGcalRow" style="display:none"></div>
     </div>
     <div class="btn-row">
@@ -4609,7 +4610,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v315';
+  var DATA_VERSION = 'v316';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5375,6 +5376,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v316', d:'2026-08-13', items:['✅タスク作成画面をLifebearと同じミニマル構成に：○タスク名＋☆／期限（日付・時刻・終日）／リスト／ラベル／通知／繰り返し／メモだけのスクロール不要な画面に（終了日・終了時刻・テンプレはタスクでは非表示）','⧉予定のテンプレ/履歴パネルは、⧉ボタンを押した時だけ開くように（デフォルトで閉じた状態）','⏰時刻テンキーの上部に「開始時刻」「終了時刻（開始 19:00〜）」と入力中の対象を表示（どっちを入力中か迷わない）','🔔通知と📝メモは「詳細」を開かなくても入力できるように（予定・タスク共通）'] },
   { v:'v315', d:'2026-08-12', items:['✅ToDoタブをLifebearと同じUIに全面刷新：ホームは「マイリスト・★星付き・📅次の7日間」＋「リスト」「ラベル」「完了済み」の一覧（未完了件数バッジ付き）。行をタップでそのリストのタスク一覧へ','📄「＋リストを作成」「＋ラベルを作成」で自分のリスト/ラベルを追加（色は自動で割り当て）。タスク編集画面にリスト・ラベル欄（タスクのみ表示）','⭐タイトル横の☆でそのまま星付きに。タスク行の右端の☆でもワンタップ切替','🔍上の入力欄は検索専用に（タスク名・メモで検索。追加は「＋タスク」から）','期日は「8月12日(火) 19:00」形式・期限切れは赤表示・サブタスク進捗☑とラベル◎も行に表示','完了タスクは「完了済み→完了タスク」にまとめて表示（完了日の新しい順）'] },
   { v:'v314', d:'2026-08-06', items:['⧉テンプレ/履歴パネル（Lifebearと同じUI）：タイトル横の⧉で「テンプレート」と「履歴（最近作った予定）」のリストが開き、行をタップするだけで全部入力されます（新規作成時は最初から表示）','「作成」ボタン＝今の入力内容を初期値にテンプレ作成。履歴は✕で個別に消せます','テンプレの絵文字を廃止（色ドット表示に統一）','⏰時刻テンキーの入力制限：61:00などありえない時刻はそもそも打てないように（無効キーは赤点滅＋振動）'] },
   { v:'v313', d:'2026-08-06', items:['💾テンプレ作成がLifebear式に：予定フォームに内容を入力→チップ列の「💾＋」でそのままテンプレとして保存（タイトル・時刻・所要・通知・色・メモを引き継ぎ）','🎨色の種類を12→18色に拡張。テンプレ編集画面にも色パレットを追加（選んだ色がカレンダーのチップ色になります）','テンプレチップに色の左ボーダー表示（どのテンプレが何色か一目で分かる）'] },
@@ -14185,7 +14187,7 @@ function evActDuplicate(id) {
   // v315: ★・リスト・ラベルも複製に引き継ぐ
   _evStar = !!src.star; _evListId = src.listId || ''; _evLabelId = src.labelId || '';
   _evStarRender(); updateTodoMetaDisplay();
-  evToggleAdv(!!(src.categoryId || src.memberId || src.memo || (src.subtasks || []).length || src.priority === 'high' || (src.remindBefore !== '' && src.remindBefore !== undefined && src.remindBefore !== null)));
+  evToggleAdv(!!(src.categoryId || src.memberId || (src.subtasks || []).length || src.priority === 'high'));
   toast('⧉ 内容をコピーしました。日付を変えて保存してください');
 }
 // B1: 繰り返しシリーズの「この回＋以降」を一括削除
@@ -14809,6 +14811,33 @@ function selEvType(t) {
   if (tm) tm.style.display = (t === 'task') ? '' : 'none';
   var sb = document.getElementById('evStarBtn');
   if (sb) sb.style.display = (t === 'task') ? '' : 'none';
+  // v316: タスクはLifebearのタスク作成と同じミニマル構成
+  // （○＋タスク名＋☆／期限＝日付+時刻+終日／リスト・ラベル。終了日・終了時刻・テンプレは出さない）
+  var isTask = (t === 'task');
+  var tl = document.getElementById('evTitleLbl');
+  if (tl) tl.textContent = isTask ? 'タスク名' : 'タイトル';
+  var ti = document.getElementById('evTitle');
+  if (ti) ti.placeholder = isTask ? 'タスク名' : '例：作戦会議';
+  var tc = document.getElementById('evTaskCircle');
+  if (tc) tc.style.display = isTask ? '' : 'none';
+  var dl = document.getElementById('evDateLbl');
+  if (dl) dl.textContent = isTask ? '期限（任意）' : '日付';
+  var dew = document.getElementById('evDateEndWrap');
+  if (dew) dew.style.display = isTask ? 'none' : '';
+  var tld = document.getElementById('evTimeTilde');
+  if (tld) tld.style.display = isTask ? 'none' : '';
+  var te = document.getElementById('evTimeEnd');
+  if (te) te.style.display = isTask ? 'none' : '';
+  var tml = document.getElementById('evTimeLbl');
+  if (tml) tml.textContent = isTask ? '時刻（任意）' : '時刻（任意）開始〜終了';
+  // v316: タスクにテンプレは不要（⧉ボタン・パネルごと非表示）
+  var tt = document.getElementById('evTplToggle');
+  if (tt) tt.style.display = isTask ? 'none' : '';
+  if (isTask) {
+    _evTplPanelOpen = false;
+    var tr = document.getElementById('evTplRow');
+    if (tr) { tr.style.display = 'none'; tr.innerHTML = ''; }
+  }
 }
 // v315: 編集フォームの ★（星付き）・リスト・ラベル
 var _evStar = false, _evListId = '', _evLabelId = '';
@@ -14911,7 +14940,7 @@ function readTimeEnd() {
 function evRepeatChanged() {
   var v = (document.getElementById('evRepeat') || {}).value || '';
   var w = document.getElementById('evRepeatUntilWrap');
-  if (w) w.style.visibility = v ? 'visible' : 'hidden';
+  if (w) w.style.display = v ? '' : 'none';
   var u = document.getElementById('evRepeatUntil');
   if (v && u && !u.value) {
     var base = (document.getElementById('evDate') || {}).value || evTodayYmd();
@@ -14980,7 +15009,19 @@ function openTimePad(targetId) {
   ov.className = 'tp-ov'; ov.id = 'tpOv';
   ov.onclick = function(e){ if (e.target === ov) closeTimePad(true); };
   function k(v) { return '<div class="tp-key" onclick="tpKey(\'' + v + '\')">' + v + '</div>'; }
+  // v316: どちらの時刻を入力中かをテンキー上部に明示（終了入力時は開始時刻も添える）
+  var which;
+  if (targetId === 'evTimeEnd') {
+    which = '⏱ 終了時刻';
+    var _sv = ((document.getElementById('evTime') || {}).value || '');
+    if (_sv) which += '（開始 ' + _sv + ' 〜）';
+  } else if (_evType === 'task') {
+    which = '⏰ 期限の時刻';
+  } else {
+    which = '⏰ 開始時刻';
+  }
   ov.innerHTML = '<div class="tp-sheet">'
+    + '<div class="tp-which">' + which + '</div>'
     + '<div class="tp-hd"><span class="tp-disp" id="tpDisp"></span>'
     + '<span class="tp-clr" onclick="tpClear()">消去</span>'
     + '<span class="tp-done" onclick="closeTimePad(true)">完了</span></div>'
@@ -15087,15 +15128,15 @@ function closeTimePad(commit) {
         if (h > 29) h = 29; // v304: 深夜は29時まで（24〜29時＝翌0〜5時を当日の予定として扱う）
         if (m > 59) m = 59;
         val = evPad2(h) + ':' + evPad2(m);
-        // 開始を入れて終了が空なら「+1時間」を自動セット（Lifebearの既定と同じ）
-        if (_tpTarget === 'evTime') {
+        // 開始を入れて終了が空なら「+1時間」を自動セット（Lifebearの既定と同じ）。v316: タスクは終了時刻なし
+        if (_tpTarget === 'evTime' && _evType !== 'task') {
           var en = document.getElementById('evTimeEnd');
           if (en && !en.value) en.value = evPad2(Math.min(h + 1, 29)) + ':' + evPad2(m);
         }
       }
       inp.value = val;
-      // v311: 開始時刻を確定したら、続けて終了時刻のテンキーを自動で開く
-      if (_tpTarget === 'evTime' && val) {
+      // v311: 開始時刻を確定したら、続けて終了時刻のテンキーを自動で開く（v316: タスクは開かない）
+      if (_tpTarget === 'evTime' && val && _evType !== 'task') {
         setTimeout(function(){ openTimePad('evTimeEnd'); }, 60);
       }
     }
@@ -15130,7 +15171,7 @@ function evToggleAdv(force) {
   if (w) w.style.display = _evAdvOpen ? '' : 'none';
   if (t) {
     t.classList.toggle('open', _evAdvOpen);
-    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（カテゴリ・メンバー・通知・サブタスクなど）';
+    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（カテゴリ・メンバー・優先度・サブタスク）';
   }
 }
 
@@ -15571,9 +15612,9 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   var _ru = document.getElementById('evRepeatUntil');
   if (_ru) _ru.value = '';
   var _rw = document.getElementById('evRepeatUntilWrap');
-  if (_rw) _rw.style.visibility = 'hidden';
-  // A1: 詳細に値が入っている時だけ自動で開く（新規はミニマル表示）
-  var _hasAdv = !!(e && ((e.categoryId) || (e.memberId) || (e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null) || e.priority === 'high' || (e.subtasks && e.subtasks.length) || e.memo));
+  if (_rw) _rw.style.display = 'none';
+  // A1: 詳細に値が入っている時だけ自動で開く（新規はミニマル表示）。v316: 通知・メモは常時表示になったため条件から除外
+  var _hasAdv = !!(e && ((e.categoryId) || (e.memberId) || e.priority === 'high' || (e.subtasks && e.subtasks.length)));
   evToggleAdv(_hasAdv || !!presetMember);
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : '';
@@ -15600,9 +15641,9 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   var _subNew = document.getElementById('evSubNew');
   if (_subNew) _subNew.value = '';
   evSubsRenderList();
-  // v314: テンプレ/履歴パネル（新規＝最初から開く・編集＝閉じた状態で⧉から開ける）
+  // v316: テンプレ/履歴パネルは常に閉じた状態で開始（⧉を押した時だけ開く）
   _evTplSel = null; _evTplTitleAuto = '';
-  _evTplPanelOpen = !id;
+  _evTplPanelOpen = false;
   evTplRenderRow();
   _evTplEnsure().then(function(){
     var mo = document.getElementById('eventModal');
@@ -15649,6 +15690,8 @@ function _saveEventBody() {
   if (e.allDay) { e.time = ''; e.endTime = ''; }
   var _dEndV = ((document.getElementById('evDateEnd') || {}).value || '');
   e.endDate = (_dEndV && e.date && _dEndV > e.date) ? _dEndV : '';
+  // v316: タスクは期限のみ（終了時刻・終了日は持たない。入力欄も非表示）
+  if (_evType === 'task') { e.endTime = ''; e.endDate = ''; }
   e.memberId = document.getElementById('evMember').value;
   e.categoryId = _evCategoryId || '';
   e.priority = (_evType === 'task') ? _evPrio : 'normal';
