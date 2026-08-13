@@ -1132,6 +1132,11 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .td-back{font-size:13.5px;font-weight:700;color:var(--accent);padding:12px 14px 0;cursor:pointer}
 .td-newinp{flex:1;min-width:0;padding:8px 10px;font-size:13.5px}
 .td-newbtn{flex:none;padding:8px 14px;font-size:12.5px}
+/* v321: リスト内のその場即追加行と、リスト削除ボタン */
+.td-qadd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.td-qadd input{flex:1;min-width:0;font-size:14px}
+.td-qadd-adv{flex:none;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer;padding:8px 4px}
+.td-del{margin-left:auto;font-size:15px;cursor:pointer;padding:4px 6px;opacity:.75}
 .ev-cal-vmenu{position:fixed;top:calc(env(safe-area-inset-top) + 50px);right:10px;z-index:296;background:var(--surface2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;min-width:132px}
 .ev-cal-vitem{padding:12px 16px;font-size:13.5px;font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border)}
 .ev-cal-vitem:last-child{border-bottom:none}
@@ -1161,7 +1166,11 @@ body.cal-fs .mobile-tabbar{display:none!important}
 body.cal-fs .fab{display:none!important}
 body.cal-fs .pc-sidebar{display:none!important}
 body.cal-fs .pc-toolbar{display:none!important}
-#evCalendar.full,#evDayV.full,#evWeek.full{position:fixed;inset:0;z-index:290;background:var(--bg);display:flex!important;flex-direction:column;padding-top:env(safe-area-inset-top)}
+#evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full{position:fixed;inset:0;z-index:290;background:var(--bg);display:flex!important;flex-direction:column;padding-top:env(safe-area-inset-top)}
+/* v321: ToDoも全画面（リストが中でスクロール・下部バー固定） */
+#evAgenda.full #evAgendaList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#evAgenda.full .ev-quick-add{flex:none;padding-bottom:8px}
+#evAgenda:not(.full) .ev-cal-hdr,#evAgenda:not(.full) .ev-cal-bottom{display:none}
 .full .ev-cal-hdr{flex:none;justify-content:flex-start;gap:6px;padding:6px 10px 4px}
 .full .ev-cal-title{flex:1;min-width:0}
 .full .ev-cal-x{display:flex;flex:none;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;font-size:16px;color:var(--text-mid);cursor:pointer;border:1px solid var(--border);background:var(--surface)}
@@ -2039,7 +2048,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v320</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v321</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2242,7 +2251,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- ====== 予定（カレンダー） ====== -->
   <div id="view-events" style="display:none">
-    <div class="ev-toolbar">
+    <!-- v321: 旧ツールバー（ToDo/週/月・カテゴリ・＋タスク）は廃止（全画面ヘッダー＋下部バーに統合） -->
+    <div class="ev-toolbar" style="display:none">
       <div class="ev-seg">
         <div class="ev-seg-btn active" id="evSegAgenda" onclick="setEventsMode('agenda')">ToDo</div>
         <div class="ev-seg-btn" id="evSegWeek" onclick="setEventsMode('week')">週</div>
@@ -2251,16 +2261,26 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="ev-actions">
         <div class="ev-notif" id="evInstallBtn" onclick="installPWA()" style="display:none">📲 アプリとして追加</div>
         <div class="ev-notif" id="evCatBtn" onclick="openCategorySheet(false)">🏷 カテゴリ</div>
-        <div class="ev-add" id="evAddBtn" onclick="openTaskAdd()">＋ タスク</div>
+        <div class="ev-add" id="evAddBtn" onclick="openTaskAdd()" style="display:none">＋ タスク</div>
       </div>
     </div>
 
-    <!-- アジェンダ -->
+    <!-- アジェンダ（v321: 月表示と同じ全画面。ヘッダー＝‹/✕・タイトル・🗓▾、下部バー付き） -->
     <div id="evAgenda">
+      <div class="ev-cal-hdr">
+        <div class="ev-cal-x" id="tdHdrX" onclick="todoHdrBack()" title="閉じる">✕</div>
+        <div class="ev-cal-title" id="tdHdrTitle" onclick="todoNavTo('home')">✅ ToDo</div>
+        <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替">🗓<span style="font-size:9px;margin-left:2px">▾</span></div>
+      </div>
       <div class="ev-quick-add" id="evQuickAdd" style="display:none">
         <input id="evQuickInput" type="search" placeholder="🔍 タスク名、メモなど" onkeydown="evQuickKey(event)" oninput="evQuickFilterChange(this.value)" autocomplete="off">
       </div>
       <div id="evAgendaList"></div>
+      <div class="ev-cal-bottom">
+        <div class="ev-cal-bbtn" onclick="todoNavTo('home')"><span class="ic">✅<i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
+        <div class="ev-cal-badd" onclick="openTaskAdd()" title="タスクを追加">＋</div>
+        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic">⚙</span><span>設定</span></div>
+      </div>
     </div>
 
     <!-- 週表示 -->
@@ -4619,7 +4639,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v320';
+  var DATA_VERSION = 'v321';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4925,6 +4945,15 @@ window.addEventListener('popstate', function() {
     if (!closed) {
       var cf = document.getElementById('evCalendar');
       if (cf && cf.classList.contains('full') && currentView === 'events') { setEventsMode('agenda'); closed = true; }
+    }
+    // v321: 全画面ToDo表示中＝リスト内なら一覧へ、一覧ならメニューへ（アプリ終了を防ぐ）
+    if (!closed) {
+      var af = document.getElementById('evAgenda');
+      if (af && af.classList.contains('full') && currentView === 'events') {
+        if (_todoNav && _todoNav.type !== 'home') todoNavTo('home');
+        else switchView('home');
+        closed = true;
+      }
     }
   }
   if (closed) { try { history.pushState({ gm: 1 }, ''); } catch(e) {} }
@@ -5385,6 +5414,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v321', d:'2026-08-13', items:['✅ToDoも月表示と同じ全画面に：上のヘッダー・下のタブバーを消して、✕/‹・タイトル・🗓▾のヘッダーと「ToDo・＋・設定」の下部バーに統一（メニューに戻るバーも廃止）','旧ヘッダーの「ToDo/週/月・カテゴリ・＋タスク」ボタン行を削除してすっきり（表示切替は🗓▾・追加は下部の＋から）','⚡リストを開いたら検索欄の代わりに「＋タスクを追加」欄：打ってEnterで画面遷移なしの即追加（そのリスト/ラベル/星付き/次の7日間に合った状態で入ります）。詳しく設定したい時は隣の「⤢詳細」でフル入力画面へ（打ちかけのタイトルも引き継ぎ）','‹で一覧へ・画面左端から右スワイプでも戻れるように（ヘッダータイトルにも今いるリスト名を表示）','🗑リスト/ラベルを削除できるように：リストを開いて右上の🗑（中のタスクは消えずマイリストへ移動）','🔍検索はToDoホームの検索ボックスで（🗓▾→検索からも開けます）'] },
   { v:'v320', d:'2026-08-13', items:['🗓月表示のスクロール方式を選べるように：⚙カレンダー設定に「↔ 横（1ヶ月ずつ）／↕ 縦（連続）」を追加。既定は横＝1ヶ月が1画面にきっちり収まり、左右スワイプか‹›で月をページ送り','横モードでは前後の月のはみ出し日が薄い色になり、今月がひと目で分かります','縦（連続）を選ぶと今まで通りLifebear式のシームレス縦スクロールに'] },
   { v:'v319', d:'2026-08-13', items:['📌テンプレのワンタップ即登録：月カレンダーで日付をタップ→日シートの下部にテンプレのチップが並び、タップするだけでその日に即登録（編集画面を開かない。時刻・所要・通知・色・MAP実績連動もそのまま適用。↩取消付き）','⚡タスクの連続追加モード：タスクを保存すると画面を閉じずにタスク名がクリアされ、続けて次のタスクを入力可能（期限・リスト・ラベル・通知は引き継ぎ。終わったらキャンセルか画面外タップで閉じる）','📆ワンタップでリスケ：予定・タスクの操作シートに「今日/明日/来週」の移動チップを追加（編集画面を開かず日付変更・↩元に戻す付き。連日予定は期間の長さを保って移動）','✍️入力途中の下書きを自動保護：誤って画面外をタップしたり戻るボタンで閉じてしまっても、次に開いた時に入力内容を復元（キャンセルボタンで閉じた時は破棄）'] },
   { v:'v318', d:'2026-08-13', items:['📱タスク入力画面が上に見切れる問題を修正（画面の高さに収めて中でスクロール）','⌨️タスク追加を開いたら、タスク名に自動でカーソルが入りすぐ打ち込めるように','🏷リスト/ラベルの選択シートがタスク編集画面の後ろに隠れて「選択しても何も起こらない」ように見える問題を修正（前面に表示）','＋リスト/ラベルの作成が入力欄に直接打ち込む方式に（ポップアップ廃止。ToDoホームと選択シートのどちらからでも、入力→追加ですぐ作成。選択シートから作った場合はそのまま選択されます）'] },
@@ -13095,11 +13125,12 @@ function setEventsMode(mode) {
   if (ed) ed.style.display = mode === 'day' ? '' : 'none';
   if (mode === 'week') _weekOffset = 0; // 週表示を開いたら必ず今週から
   if (mode !== 'calendar') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
-  // CAL-FS: カレンダー/週/日ビューは全画面化（ヘッダー/下部ナビも非表示）＋モードを記憶
+  // CAL-FS: カレンダー/週/日/ToDoは全画面化（ヘッダー/下部ナビも非表示）＋モードを記憶
   if (ec) ec.classList.toggle('full', mode === 'calendar');
   if (ed) ed.classList.toggle('full', mode === 'day');
   if (ew) ew.classList.toggle('full', mode === 'week');
-  document.body.classList.toggle('cal-fs', (mode === 'calendar' || mode === 'day' || mode === 'week') && currentView === 'events');
+  if (ea) ea.classList.toggle('full', mode === 'agenda'); // v321: ToDoも全画面
+  document.body.classList.toggle('cal-fs', (mode === 'calendar' || mode === 'day' || mode === 'week' || mode === 'agenda') && currentView === 'events');
   if (mode === 'calendar') _calSwipeInit();
   if (mode === 'day' && !_dayVDate) _dayVDate = evTodayYmd();
   try { localStorage.setItem('gm_evMode', mode); } catch(e) {}
@@ -13701,6 +13732,7 @@ function calOpenTodaySheet() {
   openCalDaySheet(t);
 }
 function calOpenSearch() {
+  _todoNav = { type: 'home' }; // v321: 検索ボックスはToDoホームにある
   setEventsMode('agenda');
   setTimeout(function(){ var i = document.getElementById('evQuickInput'); if (i) i.focus(); }, 150);
 }
@@ -14071,6 +14103,80 @@ function todoNavTo(type, id) {
   _todoNav = { type: type, id: id || '' };
   renderAgenda();
 }
+// v321: 全画面ToDoヘッダーの左ボタン（リスト内＝‹一覧へ／一覧＝✕メニューへ）
+function todoHdrBack() {
+  if (_todoNav && _todoNav.type !== 'home') { todoNavTo('home'); return; }
+  switchView('home');
+}
+// v321: リスト内のその場即追加（今見ているリスト/ラベル/星付き/次の7日間に合わせた初期値）
+function _todoQuickBase() {
+  var b = { listId: '', labelId: '', star: false, date: '' };
+  var nav = _todoNav || {};
+  if (nav.type === 'list') b.listId = nav.id || '';
+  else if (nav.type === 'label') b.labelId = nav.id || '';
+  else if (nav.type === 'smart' && nav.id === 'star') b.star = true;
+  else if (nav.type === 'smart' && nav.id === 'week') b.date = evTodayYmd();
+  return b;
+}
+function todoQuickKey(ev) {
+  if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); todoQuickAddSubmit(); }
+}
+function todoQuickAddSubmit() {
+  var inp = document.getElementById('tdQuickNew');
+  if (!inp) return;
+  var title = (inp.value || '').trim();
+  if (!title) { inp.focus(); return; }
+  if (!eventsUid()) { toast('ログインが必要です'); return; }
+  var b = _todoQuickBase();
+  var e = { id: genEventId(), done: false, createdAt: new Date().toISOString(),
+    type: 'task', title: title, date: b.date, time: '', endTime: '', endDate: '',
+    memberId: '', categoryId: '', priority: 'normal', memo: '',
+    star: b.star, listId: b.listId, labelId: b.labelId,
+    updatedAt: new Date().toISOString() };
+  state.events.push(e);
+  saveEventDoc(e);
+  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
+  updateEventsBadge();
+  renderEvents();
+  var inp2 = document.getElementById('tdQuickNew');
+  if (inp2) { inp2.value = ''; try { inp2.focus(); } catch(e2) {} } // 連続入力
+  gameCheck();
+}
+// v321: ⤢詳細＝打ちかけのタイトルと今のリスト等を引き継いでフル入力画面へ
+function todoQuickAdvanced() {
+  var inp = document.getElementById('tdQuickNew');
+  var val = inp ? (inp.value || '').trim() : '';
+  _evDraft = null;
+  openTaskAdd();
+  var b = _todoQuickBase();
+  if (b.listId) _evListId = b.listId;
+  if (b.labelId) _evLabelId = b.labelId;
+  if (b.star) { _evStar = true; _evStarRender(); }
+  updateTodoMetaDisplay();
+  if (b.date) { var dEl = document.getElementById('evDate'); if (dEl) dEl.value = b.date; }
+  if (val) document.getElementById('evTitle').value = val;
+}
+// v321: リスト/ラベルの削除（タスク自体は消さない）
+function todoDeleteList(kind, id) {
+  var it = kind === 'label' ? _todoLabelById(id) : _todoListById(id);
+  if (!it || !_todoMeta) return;
+  var msg = kind === 'label'
+    ? 'ラベル「' + it.name + '」を削除しますか？\n（タスク自体は残り、ラベルだけ外れます）'
+    : 'リスト「' + it.name + '」を削除しますか？\n（中のタスクは消えずマイリストに移動します）';
+  if (!confirm(msg)) return;
+  var arr = kind === 'label' ? _todoMeta.labels : _todoMeta.lists;
+  for (var i = 0; i < arr.length; i++) { if (arr[i].id === id) { arr.splice(i, 1); break; } }
+  _todoMetaSave();
+  (state.events || []).forEach(function(e){
+    if (kind === 'label' ? (e.labelId === id) : (e.listId === id)) {
+      if (kind === 'label') e.labelId = ''; else e.listId = '';
+      e.updatedAt = new Date().toISOString();
+      saveEventDoc(e);
+    }
+  });
+  todoNavTo('home');
+  toast('🗑 ' + (kind === 'label' ? 'ラベル' : 'リスト') + '「' + it.name + '」を削除しました');
+}
 // CAL-3: 即入力ボックス（Enterで今日のタスクとして即作成）
 // B3: 入力中はそのまま検索ボックスとしても機能（タイトル・メモ・メンバー名で絞り込み）
 var _evQuickFilter = '';
@@ -14404,7 +14510,12 @@ function renderAgenda() {
   if (!wrap._swBound) {
     wrap._swBound = true;
     var swRow = null, swX = 0, swY = 0, swDx = 0, swActive = false;
+    var edgeOn = false, edgeX0 = 0; // v321: 画面左端から右スワイプ＝ToDo一覧へ戻る
     wrap.addEventListener('touchstart', function(ev){
+      var tt0 = ev.touches[0];
+      edgeOn = (tt0.clientX < 32 && _todoNav && _todoNav.type !== 'home');
+      edgeX0 = tt0.clientX;
+      if (edgeOn) { swRow = null; return; } // 端スワイプ時は行スワイプを無効化
       var r = (ev.target && ev.target.closest) ? ev.target.closest('.td-row') : null;
       if (!r || !r.getAttribute('data-eid')) { swRow = null; return; }
       swRow = r;
@@ -14425,7 +14536,13 @@ function renderAgenda() {
         swRow.style.transform = 'translateX(' + swDx + 'px)';
       }
     }, { passive: true });
-    wrap.addEventListener('touchend', function(){
+    wrap.addEventListener('touchend', function(ev){
+      if (edgeOn) {
+        edgeOn = false;
+        var ct = ev.changedTouches && ev.changedTouches[0];
+        if (ct && (ct.clientX - edgeX0) > 60) todoNavTo('home'); // v321: 左端から右へ＝戻る
+        return;
+      }
       if (!swRow) return;
       var r = swRow, dx = swDx, act = swActive;
       swRow = null;
@@ -14437,6 +14554,15 @@ function renderAgenda() {
       else if (dx < -70) _evDeleteById(eid);
     }, { passive: true });
   }
+  // v321: 全画面ヘッダー（ホーム＝✕とタイトル固定・リスト内＝‹で戻る）と検索欄（ホームのみ）の状態更新
+  var _navH = _todoNav || { type: 'home' };
+  var _atHome = (_navH.type === 'home');
+  var _hx = document.getElementById('tdHdrX');
+  if (_hx) { _hx.textContent = _atHome ? '✕' : '‹'; _hx.title = _atHome ? '閉じる' : 'ToDoへ戻る'; }
+  var _ht = document.getElementById('tdHdrTitle');
+  if (_ht) _ht.textContent = '✅ ToDo';
+  var _qa = document.getElementById('evQuickAdd');
+  if (_qa) _qa.style.display = (_atHome && eventsUid()) ? '' : 'none';
   var tasks = _todoTasksAll();
   var t = evTodayYmd();
   // ── 検索モード（検索ボックスに文字がある間） ──
@@ -14467,9 +14593,19 @@ function renderAgenda() {
     else if (nav.type === 'list') { var L = _todoListById(nav.id); title = (L ? L.name : 'リスト'); accent = L ? L.color : ''; list = undone.filter(function(e){ return e.listId === nav.id; }); }
     else if (nav.type === 'label') { var LB = _todoLabelById(nav.id); title = (LB ? '◎' + LB.name : 'ラベル'); accent = LB ? LB.color : ''; list = undone.filter(function(e){ return e.labelId === nav.id; }); }
     if (nav.id !== 'done') list = list.slice().sort(_todoSortDue);
-    var h2 = '<div class="td-back" onclick="todoNavTo(\'home\')">‹ ToDo</div>'
-      + '<div class="td-sechd">' + (accent ? '<span class="tplp-dot" style="background:' + accent + ';margin-right:6px"></span>' : '') + evEsc(title) + '　<span style="opacity:.6">' + list.length + '件</span></div>'
-      + (list.length ? list.map(todoRowHtml).join('') : '<div class="ev-empty" style="padding:26px 16px">タスクはありません</div>');
+    // v321: ヘッダーのタイトル＝今いるリスト名（‹で一覧へ）
+    var _ht2 = document.getElementById('tdHdrTitle');
+    if (_ht2) _ht2.textContent = title;
+    var canDel = (nav.type === 'list' || nav.type === 'label');
+    var h2 = '<div class="td-sechd">' + (accent ? '<span class="tplp-dot" style="background:' + accent + ';margin-right:6px"></span>' : '') + evEsc(title) + '　<span style="opacity:.6">' + list.length + '件</span>'
+      + (canDel ? '<span class="td-del" onclick="todoDeleteList(\'' + nav.type + '\',\'' + nav.id + '\')" title="このリストを削除">🗑</span>' : '')
+      + '</div>';
+    // v321: 画面遷移なしでその場に即追加（Enterで保存・⤢詳細でフル入力へ）。完了タスク一覧を除く
+    if (nav.id !== 'done' && eventsUid()) {
+      h2 += '<div class="td-qadd"><input class="fi" id="tdQuickNew" placeholder="＋ タスクを追加（Enterで保存）" autocomplete="off" onkeydown="todoQuickKey(event)">'
+        + '<span class="td-qadd-adv" onclick="todoQuickAdvanced()">⤢ 詳細</span></div>';
+    }
+    h2 += (list.length ? list.map(todoRowHtml).join('') : '<div class="ev-empty" style="padding:26px 16px">タスクはありません</div>');
     wrap.innerHTML = h2;
     return;
   }
