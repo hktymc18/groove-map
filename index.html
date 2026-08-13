@@ -2030,7 +2030,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v316</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v317</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4610,7 +4610,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v316';
+  var DATA_VERSION = 'v317';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5376,6 +5376,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v317', d:'2026-08-13', items:['🛠テンプレ編集画面の不具合を修正：予定入力の⧉パネルから✎/作成を押すと、編集画面が予定入力の後ろに隠れて開いてしまい「反応しない→あとから出てくる→✕で閉じない」状態になっていました。前面に表示＋多重に重なったシートを一括で閉じるように修正','⚙カレンダー設定から「テンプレを編集・追加」「カテゴリを編集」を削除してすっきり（テンプレは予定入力の⧉パネルの✎から、カテゴリは詳細のカテゴリ欄から編集できます）','テンプレ保存/削除後は、開いた場所に応じて元の画面に戻るように（一覧から開いた時だけ一覧へ戻る）'] },
   { v:'v316', d:'2026-08-13', items:['✅タスク作成画面をLifebearと同じミニマル構成に：○タスク名＋☆／期限（日付・時刻・終日）／リスト／ラベル／通知／繰り返し／メモだけのスクロール不要な画面に（終了日・終了時刻・テンプレはタスクでは非表示）','⧉予定のテンプレ/履歴パネルは、⧉ボタンを押した時だけ開くように（デフォルトで閉じた状態）','⏰時刻テンキーの上部に「開始時刻」「終了時刻（開始 19:00〜）」と入力中の対象を表示（どっちを入力中か迷わない）','🔔通知と📝メモは「詳細」を開かなくても入力できるように（予定・タスク共通）'] },
   { v:'v315', d:'2026-08-12', items:['✅ToDoタブをLifebearと同じUIに全面刷新：ホームは「マイリスト・★星付き・📅次の7日間」＋「リスト」「ラベル」「完了済み」の一覧（未完了件数バッジ付き）。行をタップでそのリストのタスク一覧へ','📄「＋リストを作成」「＋ラベルを作成」で自分のリスト/ラベルを追加（色は自動で割り当て）。タスク編集画面にリスト・ラベル欄（タスクのみ表示）','⭐タイトル横の☆でそのまま星付きに。タスク行の右端の☆でもワンタップ切替','🔍上の入力欄は検索専用に（タスク名・メモで検索。追加は「＋タスク」から）','期日は「8月12日(火) 19:00」形式・期限切れは赤表示・サブタスク進捗☑とラベル◎も行に表示','完了タスクは「完了済み→完了タスク」にまとめて表示（完了日の新しい順）'] },
   { v:'v314', d:'2026-08-06', items:['⧉テンプレ/履歴パネル（Lifebearと同じUI）：タイトル横の⧉で「テンプレート」と「履歴（最近作った予定）」のリストが開き、行をタップするだけで全部入力されます（新規作成時は最初から表示）','「作成」ボタン＝今の入力内容を初期値にテンプレ作成。履歴は✕で個別に消せます','テンプレの絵文字を廃止（色ドット表示に統一）','⏰時刻テンキーの入力制限：61:00などありえない時刻はそもそも打てないように（無効キーは赤点滅＋振動）'] },
@@ -13129,14 +13130,8 @@ function openCalSettings() {
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
     + '</div>'
-    + '<div class="fr" style="margin-top:4px"><label class="fl">ワンタップ登録テンプレ（CT・FTなど）</label>'
-    + '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openEvTplManager()">📌 テンプレを編集・追加</button>'
-    + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
     + gcalRow
-    + '</div>'
-    + '<div class="fr" style="margin-top:4px"><label class="fl">カテゴリ（色分け）の管理</label>'
-    + '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openCategorySheet(false)">🏷 カテゴリを編集</button>'
     + '</div></div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
@@ -15406,13 +15401,17 @@ function evTplCreateFromForm() {
 }
 // ── テンプレ管理シート（一覧 → 編集/作成フォーム） ──
 function closeEvTplManager() {
-  var ov = document.getElementById('evTplMgrOv');
-  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  // v317: 多重タップで同じシートが重なっても全部消す（✕が効かなくなる不具合対策）
+  var ov;
+  while ((ov = document.getElementById('evTplMgrOv'))) {
+    if (ov.parentNode) ov.parentNode.removeChild(ov); else break;
+  }
 }
 function openEvTplManager() {
   _evTplEnsure().then(function(){
     closeEvTplManager();
     var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evTplMgrOv';
+    ov.style.zIndex = '550'; // v317: 予定モーダル(540)より前面に（下に隠れて無反応に見える不具合対策）
     ov.onclick = function(e){ if (e.target === ov) closeEvTplManager(); };
     var rows = (_evTpl || []).map(function(t){
       var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '#9ca3af';
@@ -15434,17 +15433,24 @@ function openEvTplManager() {
   });
 }
 function closeEvTplEdit(backToList) {
-  var ov = document.getElementById('evTplEditOv');
-  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
-  if (backToList) openEvTplManager();
+  // v317: 重なった編集シートを全部消す（1枚しか消えず「✕が効かない」状態になる不具合対策）
+  var ov;
+  while ((ov = document.getElementById('evTplEditOv'))) {
+    if (ov.parentNode) ov.parentNode.removeChild(ov); else break;
+  }
+  // v317: テンプレ一覧から開いた時だけ一覧へ戻る（⧉パネルから開いた時は閉じるだけ）
+  if (backToList && window._evtFromMgr) openEvTplManager();
 }
 function openEvTplEdit(id) {
   // v314: id無し＝新規。フォームからの「作成」は window._evtPre を初期値に使う
   var isEdit = !!id;
   var t = id ? _evTplFind(id) : (window._evtPre || null);
   window._evtPre = null;
+  window._evtFromMgr = !!document.getElementById('evTplMgrOv');
   closeEvTplManager();
+  closeEvTplEdit(false); // 既に開いていたら閉じてから（多重防止）
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evTplEditOv';
+  ov.style.zIndex = '550'; // v317: 予定モーダル(540)より前面に。⧉パネルの✎から開いても見える
   ov.onclick = function(e){ if (e.target === ov) closeEvTplEdit(true); };
   function fld(label, inner) { return '<div class="fr"><label class="fl">' + label + '</label>' + inner + '</div>'; }
   var typeOpts = '<option value="task"' + (!t || t.type !== 'event' ? ' selected' : '') + '>✅ タスク</option>'
@@ -15536,7 +15542,7 @@ function saveEvTplForm(id) {
   }
   _evTplSaveAll();
   closeEvTplEdit(false);
-  openEvTplManager();
+  if (window._evtFromMgr) openEvTplManager(); // v317: 一覧から来た時だけ一覧へ戻る
   evTplRenderRow(); // 背後のモーダルのチップ列も更新
   toast('テンプレを保存しました ✓');
 }
@@ -15546,7 +15552,7 @@ function deleteEvTplForm(id) {
   if (_evTplSel && _evTplSel.id === id) { _evTplSel = null; _evTplTitleAuto = ''; }
   _evTplSaveAll();
   closeEvTplEdit(false);
-  openEvTplManager();
+  if (window._evtFromMgr) openEvTplManager(); // v317: 一覧から来た時だけ一覧へ戻る
   evTplRenderRow();
   toast('削除しました');
 }
