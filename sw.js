@@ -36,7 +36,9 @@ try {
 self.addEventListener('notificationclick', function (e) {
   e.notification.close();
   // v307: 通知タップ→アプリを開き、該当予定の詳細シートを表示
-  var evId = (e.notification && e.notification.data && e.notification.data.eventId) || '';
+  // v330: notification付き配信（FCM自動表示）の場合は data.FCM_MSG.data 側に入る
+  var d = (e.notification && e.notification.data) || {};
+  var evId = d.eventId || (d.FCM_MSG && d.FCM_MSG.data && d.FCM_MSG.data.eventId) || '';
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {
@@ -50,7 +52,7 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v329';
+var CACHE = 'groove-map-v330';
 var ASSETS = [
   './',
   './index.html',

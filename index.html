@@ -2060,7 +2060,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v329</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v330</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4667,7 +4667,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v329';
+  var DATA_VERSION = 'v330';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5508,6 +5508,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v330', d:'2026-08-14', items:['🔔プッシュ通知がiOS 26で届かない問題を修正：通知の送り方を「データのみ」→「通知本文付き」に変更しました。iOSはこの形式でないとロック画面・バナーに表示しないため、届かなくなっていました（※反映にはCloud Functionsの再デプロイが必要です）','ロック画面に直接表示され、タップするとその予定の詳細が開きます'] },
   { v:'v329', d:'2026-08-14', items:['⏰時刻入力を完全Lifebear式に：1つのテンキーで「16 00」と打つと開始が確定して自動で終了へカーソル移動→続けて終了を入力（完了ボタン不要。上の開始/終了をタップして修正もできます。終了まで入れると自動で閉じます）','🎨色の巻き添え問題を修正：予定の色は保存した時点の色が予定自体に記録されるようになり、後からカテゴリやテンプレの色を変えても既存の予定の色は変わりません','📍詳細に「場所」欄を追加（予定の詳細シートにも表示）','🗓今日のマスを枠ごと色付け＋緑の枠線で一目で分かるように','✅予定の編集画面からサブタスク欄を非表示に（タスクのみ）','下部バーのToDo・カレンダー・設定などの絵文字を線画アイコンに刷新＋MAP・データ・メニューボタンを追加（予定タブから直接他のタブへ移動可能に）','🏠HOMEタブを既定で非表示に（⚙設定の「下部タブの表示」でHOME/MAP/データの表示を選べます）','🚀アプリを開いたときの初期表示が予定タブ（月カレンダー）になりました'] },
   { v:'v328', d:'2026-08-14', items:['🗓月表示の✕ボタンで直接メニューへ戻るように（今まではToDo画面を経由して✕を2回押す必要がありました）。Androidの戻るボタンも同じ動きに','週・日ビューの✕は今まで通り月表示へ（月→メニューの階層はそのまま）'] },
   { v:'v327', d:'2026-08-14', items:['📱下の空白バグを解消（iOS 26対応）：画面診断の結果、空白の正体は「ステータスバーの下まで画面を広げる」旧iOS向け設定をiOS 26が誤処理し、その62pt分を画面下のタップ不能な空白として付けてしまうものでした。設定を標準方式に変更し、上のステータスバー分として正しく消費されるようにしました','※反映にはホーム画面のアイコンを一度削除→Safariで開いて「ホーム画面に追加」のやり直しが必要です（アプリのデータは消えません）','自動リカバリ（画面ゆすり）は本当に異常な時だけ・最大2回に制限（開いた時のカクつき対策）'] },
