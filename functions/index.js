@@ -16,6 +16,7 @@ exports.sendReminders = onSchedule(
     const nowIso = new Date().toISOString();
     const snap = await db.collection('notifQueue').where('fireAt', '<=', nowIso).limit(300).get();
     if (snap.empty) return;
+    console.log(`sendReminders: queue=${snap.size}`); // v332: 原因調査用ログ
 
     // ユーザーごとにまとめてトークンを1回だけ読む
     const byUid = {};
@@ -30,7 +31,8 @@ exports.sendReminders = onSchedule(
       try {
         const toksSnap = await db.collection('users').doc(uid).collection('fcmTokens').get();
         tokens = toksSnap.docs.map((t) => t.id);
-      } catch (e) { /* トークン取得失敗でもキューは消化する */ }
+      } catch (e) { console.log(`token read error uid=${uid}: ${e}`); }
+      console.log(`uid=${uid} tokens=${tokens.length}`); // v332: トークン0ならこの端末が未登録
 
       for (const item of byUid[uid]) {
         if (tokens.length) {
@@ -55,16 +57,18 @@ exports.sendReminders = onSchedule(
                 fcmOptions: { link: 'https://hktymc18.github.io/groove-map/' + (eventId ? '?ev=' + encodeURIComponent(eventId) : '') },
               },
             });
+            console.log(`sent "${item.q.title}": ok=${res.successCount} ng=${res.failureCount}`); // v332
             // 失効トークンの掃除
             res.responses.forEach((r, i) => {
               if (!r.success && r.error) {
                 const code = String(r.error.code || r.error);
+                console.log(`token#${i} error=${code}`); // v332
                 if (code.includes('registration-token-not-registered') || code.includes('invalid-argument')) {
                   db.collection('users').doc(uid).collection('fcmTokens').doc(tokens[i]).delete().catch(() => {});
                 }
               }
             });
-          } catch (e) { /* 送信失敗してもキューは削除（無限リトライ防止） */ }
+          } catch (e) { console.log(`send error: ${e}`); }
         }
         await item.ref.delete().catch(() => {});
       }
