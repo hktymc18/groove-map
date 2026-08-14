@@ -2068,7 +2068,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v335</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v336</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4679,7 +4679,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v335';
+  var DATA_VERSION = 'v336';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5520,6 +5520,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v336', d:'2026-08-14', items:['✅ToDoをさらにシンプルに：ホームから「マイリスト・星付き・次の7日間・リスト・ラベル」のメニューを廃止し、開いた瞬間に未完了タスクが期日順でそのまま並ぶ一覧にしました（期限切れ・今日が自然に上に来ます）','各行にリスト●とラベル◎を色付きで表示（どのリストのタスクかは一覧で分かります）。リスト/ラベルの選択・作成は＋ボタンのクイックシートとタスク編集画面から','⭐星付き機能を廃止（重要なタスクは編集画面の「⚑重要」をお使いください）','完了したタスクは一番下の「✓完了タスク」から'] },
   { v:'v335', d:'2026-08-14', items:['✅タスク入力を全面的に高速化・明確化：','①保存＝1タップで1件確定して画面が閉じるように（「タイトルが消えて保存されたか分からない」連続追加モードを廃止。続けて入れたい時は保存後のトーストの「＋続けて追加」から）','②ToDoホームの一番上に「＋タスクを追加」欄を常設：開いた瞬間に打ってEnterで即マイリストへ（Enter後も続けて入力可能）。検索は右の🔍ボタンに格納','③下部バーの＋が1行クイックシートに：タスク名＋期限チップ（なし/今日/明日）＋リスト選択でEnter即保存。作り込みたい時は「⤢詳細入力」でフル画面へ（入力内容は引き継ぎ）','④サブタスクのチェックが編集画面不要に：ToDo行の「☑1/3」をタップ→行の下に展開してその場でチェック。タスクをタップした詳細シートにもチェックリストを表示（追加・削除は今まで通り編集画面の詳細から）'] },
   { v:'v334', d:'2026-08-14', items:['🔔同じ通知が2件届く問題の対策：1台の端末に古い通知登録（Safariで開いた時や再インストール前のもの）が残ると2重に届くため、新しい登録時に古い登録を自動削除するようにしました','⚙設定に「🧹 通知が2重に届く時はこちら（古い登録を掃除）」ボタンを追加：今使っている端末の登録だけを残して他を解除します'] },
   { v:'v333', d:'2026-08-14', items:['🛠「テスト通知を送る」を押しても何も起こらないように見える問題を修正：メッセージ（トースト）が設定画面の裏に隠れていました。トーストを常に最前面に表示するよう変更','トークン取得に失敗した場合、具体的な失敗理由（エラー内容）をそのまま表示するように（原因特定用）'] },
@@ -14612,7 +14613,6 @@ function openEventActions(id) {
       : (e.templateStage
         ? '<div class="ev-act-btn primary" onclick="closeEventActions();toggleEventDone(\'' + id + '\')">' + (e.done ? '↩ 実施を取り消す' : '📊 実施済みにする（実績+1）') + '</div>'
         : ''))
-    + '<div class="ev-act-btn" onclick="closeEventActions();toggleEventStar(\'' + id + '\')">' + (e.star ? '★ スターを外す' : '☆ スターを付ける') + '</div>'
     + '<div class="ev-act-btn" onclick="closeEventActions();openEventEdit(\'' + id + '\')">✎ 編集</div>'
     + '<div class="ev-act-btn" onclick="evActDuplicate(\'' + id + '\')">⧉ 複製</div>'
     + (e.seriesId
@@ -14812,8 +14812,7 @@ function evItemHtml(e) {
       + (_evExpandedSubs[e.id] ? '▴' : '▾') + '</span>';
   }
   h += '</div></div>';
-  // CAL-3: 星付きトグル（リマインダー風の重要マーク）
-  h += '<div class="ev-i-star' + (e.star ? ' on' : '') + '" onclick="event.stopPropagation();toggleEventStar(\'' + e.id + '\')" title="' + (e.star ? '星を外す' : '星付きにする') + '">' + (e.star ? '★' : '☆') + '</div>';
+  // v336: ★（星付き）機能は廃止（優先度⚑で代替）
   // S2: 行の📅Googleカレンダーボタンは廃止（編集モーダル内のリンクへ移設して行をミニマルに）
   h += '</div>';
   // CAL-3: 展開中はサブタスクをカード直下に表示（一覧からそのままチェック）
@@ -14846,13 +14845,13 @@ function todoRowHtml(e) {
     ? ('<span class="td-subs" onclick="event.stopPropagation();evSubExpandToggle(\'' + e.id + '\')">☑' + subs.filter(function(s){ return s.done; }).length + '/' + subs.length + (_evExpandedSubs[e.id] ? ' ▴' : ' ▾') + '</span>')
     : '';
   var lb = e.labelId ? _todoLabelById(e.labelId) : null;
+  var ls = e.listId ? _todoListById(e.listId) : null; // v336: どのリストのタスクか行内に表示
   var h = '<div class="td-row' + (e.done ? ' done' : '') + '" data-eid="' + e.id + '">'
     + '<div class="td-chk' + (e.done ? ' on' : '') + '" onclick="toggleEventDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</div>'
     + '<div class="td-body" onclick="openEventActions(\'' + e.id + '\')">'
     + '<div class="td-ttl">' + evEsc(e.title || '(無題)') + '</div>'
-    + ((due || subTx || lb) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + evEsc(due) + (subTx ? ' ' + subTx : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
+    + ((due || subTx || lb || ls) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + evEsc(due) + (subTx ? ' ' + subTx : '') + (ls ? ' <span style="color:' + ls.color + '">●' + evEsc(ls.name) + '</span>' : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
     + '</div>'
-    + '<span class="td-star' + (e.star ? ' on' : '') + '" onclick="toggleEventStar(\'' + e.id + '\')">' + (e.star ? '★' : '☆') + '</span>'
     + '</div>';
   if (subs.length && _evExpandedSubs[e.id]) {
     h += '<div class="ev-sub-block" style="margin:2px 14px 8px 42px">' + subs.map(function(s){
@@ -14982,30 +14981,15 @@ function renderAgenda() {
     wrap.innerHTML = h2;
     return;
   }
-  // ── ToDoホーム（Lifebear式） ──
-  var undoneAll = tasks.filter(function(e){ return !e.done; });
-  var myCt = undoneAll.filter(function(e){ return !e.listId; }).length;
-  var starCt = undoneAll.filter(function(e){ return e.star; }).length;
-  var weekEnd2 = evYmd(evAddDays(new Date(), 7));
-  var weekCt = undoneAll.filter(function(e){ return e.date && e.date <= weekEnd2; }).length;
+  // ── ToDoホーム（v336: ナビ画面を廃止し、未完了タスクを期日順で直接表示するシンプル一覧に） ──
+  var undoneAll = tasks.filter(function(e){ return !e.done; }).slice().sort(_todoSortDue);
+  var doneCt = tasks.length - undoneAll.length;
   var h = '';
-  h += _todoHomeRow('', 'マイリスト', myCt, "todoNavTo('smart','my')", '#9ca3af');
-  h += _todoHomeRow('★', '星付き', starCt, "todoNavTo('smart','star')");
-  h += _todoHomeRow('📅', '次の7日間', weekCt, "todoNavTo('smart','week')");
-  h += '<div class="td-secttl">リスト</div>';
-  ((_todoMeta && _todoMeta.lists) || []).forEach(function(L){
-    var ct = undoneAll.filter(function(e){ return e.listId === L.id; }).length;
-    h += _todoHomeRow('', L.name, ct, "todoNavTo('list','" + L.id + "')", L.color);
-  });
-  h += '<div class="td-home-row mk"><span class="td-hicon">＋</span><input class="fi td-newinp" id="tdNewList" placeholder="リストを作成" autocomplete="off" onkeydown="todoCreateKey(event,\'list\',\'tdNewList\',false)"><button class="btn-c td-newbtn" onclick="todoCreateSubmit(\'list\',\'tdNewList\',false)">追加</button></div>';
-  h += '<div class="td-secttl">ラベル</div>';
-  ((_todoMeta && _todoMeta.labels) || []).forEach(function(LB){
-    var ct2 = undoneAll.filter(function(e){ return e.labelId === LB.id; }).length;
-    h += _todoHomeRow('', LB.name, ct2, "todoNavTo('label','" + LB.id + "')", LB.color);
-  });
-  h += '<div class="td-home-row mk"><span class="td-hicon">＋</span><input class="fi td-newinp" id="tdNewLabel" placeholder="ラベルを作成" autocomplete="off" onkeydown="todoCreateKey(event,\'label\',\'tdNewLabel\',false)"><button class="btn-c td-newbtn" onclick="todoCreateSubmit(\'label\',\'tdNewLabel\',false)">追加</button></div>';
+  h += undoneAll.length
+    ? undoneAll.map(todoRowHtml).join('')
+    : '<div class="ev-empty" style="padding:28px 16px">タスクはありません。上の入力欄に打ってEnterですぐ追加できます</div>';
   h += '<div class="td-secttl">完了済み</div>';
-  h += _todoHomeRow('✓', '完了タスク', 0, "todoNavTo('smart','done')");
+  h += _todoHomeRow('✓', '完了タスク', doneCt, "todoNavTo('smart','done')");
   wrap.innerHTML = h;
 }
 
@@ -15465,11 +15449,11 @@ function selEvType(t) {
   if (b) b.classList.toggle('sel', t === 'event');
   var pr = document.getElementById('evPrioRow');
   if (pr) pr.style.display = (t === 'task') ? '' : 'none';
-  // v315: リスト/ラベル/★はタスクのみ（Lifebear式）
+  // v315: リスト/ラベルはタスクのみ（Lifebear式）。v336: ★（星付き）機能は廃止＝常に非表示
   var tm = document.getElementById('evTaskMetaRow');
   if (tm) tm.style.display = (t === 'task') ? '' : 'none';
   var sb = document.getElementById('evStarBtn');
-  if (sb) sb.style.display = (t === 'task') ? '' : 'none';
+  if (sb) sb.style.display = 'none';
   // v316: タスクはLifebearのタスク作成と同じミニマル構成
   // （○＋タスク名＋☆／期限＝日付+時刻+終日／リスト・ラベル。終了日・終了時刻・テンプレは出さない）
   var isTask = (t === 'task');
