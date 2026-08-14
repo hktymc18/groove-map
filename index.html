@@ -2051,7 +2051,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v325</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v326</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4642,7 +4642,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v325';
+  var DATA_VERSION = 'v326';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,29 @@ _vvhUpdate();
 setTimeout(_vvhUpdate, 300); setTimeout(_vvhUpdate, 1000); setTimeout(_vvhUpdate, 3000);
 window.addEventListener('pageshow', _vvhUpdate);
 window.addEventListener('resize', _vvhUpdate);
+// v326: ホーム画面アプリなのに画面が縦に縮んだまま（下に空白・その領域はタップ不可）の場合、
+// 「指でスクロールすると直る」＝再計算で直せるため、自動で1pxスクロールを往復してiOSに再計算させる
+function _iosGapKick() {
+  try {
+    var sa = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    if (!sa) return;
+    if ((screen.height - window.innerHeight) <= 40) return; // 大きな不足がある時だけ
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return;
+    var spacer = document.createElement('div');
+    spacer.style.cssText = 'position:absolute;left:0;top:0;width:1px;height:calc(100vh + 3px);pointer-events:none;visibility:hidden';
+    document.body.appendChild(spacer);
+    window.scrollTo(0, 2);
+    setTimeout(function(){
+      window.scrollTo(0, 0);
+      if (spacer.parentNode) spacer.parentNode.removeChild(spacer);
+      _vvhUpdate();
+    }, 80);
+  } catch(eK) {}
+}
+setTimeout(_iosGapKick, 600); setTimeout(_iosGapKick, 2500);
+window.addEventListener('pageshow', function(){ setTimeout(_iosGapKick, 300); });
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) setTimeout(_iosGapKick, 300); });
 window.addEventListener('orientationchange', function(){ setTimeout(_vvhUpdate, 250); });
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', _vvhUpdate);
@@ -5456,6 +5479,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v326', d:'2026-08-14', items:['📱下部空白バグへの自動リカバリを追加：iOSがホーム画面アプリの画面を狭く扱ったままになる不具合（空白部分はタップも効かないOS側のバグ）を検知したら、自動で画面を1pxだけスクロールして往復させ、iOSに高さを再計算させます（起動時・アプリ復帰時にチェック。「指で引っ張って直す」のを自動化）','⚙設定の一番下に「画面診断」を表示：アプリ/ブラウザ判定と画面・表示サイズが見られます（不具合報告用）'] },
   { v:'v325', d:'2026-08-14', items:['🛠v324で下部タブバーが画面の外へ押し出されて隠れる／タップできなくなる問題を修正：v324の「画面サイズで強制補正」を撤回し、実測の表示領域（visualViewport）だけを使う安全な方式に統一しました','ホーム画面アプリの再追加でiOS側の画面高さの異常はリセットされるため、空白が再発した場合はアイコンを削除→Safariで開いて「ホーム画面に追加」をやり直してください'] },
   { v:'v324', d:'2026-08-14', items:['📱下の空白の追加修正：ホーム画面アプリなのにiOSが「存在しないSafariツールバー分」画面を狭く報告する既知バグへの対策。縦画面のホーム画面アプリでは画面の本当の高さ（screen.height）を正として全画面表示・下部バーを最下部まで届かせるようにしました','起動直後・アプリ復帰時にも高さを取り直すように（pageshow対応）','※Safariで開いた場合は下のアドレスバーはブラウザ自体のUIのため消せません。全画面で使うにはホーム画面に追加したアプリからご利用ください'] },
   { v:'v323', d:'2026-08-14', items:['📱「画面の下に空白が残る」をアプリ全体で根本修正：実際に見えている画面の高さを常に測って、カレンダー/ToDo/週/日/3Dの全画面表示と下部タブバーをその高さぴったりに合わせるようにしました（Lifebearと同じく最下部まで表示。指で動かして直す必要なし）','キーボードの開閉・画面回転・ブラウザUIの変化にも自動追従します'] },
@@ -13233,7 +13257,18 @@ function openCalSettings() {
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
     + gcalRow
-    + '</div></div></div>';
+    + '</div>'
+    + (function(){
+        // v326: 画面高さの診断表示（下部空白バグの原因特定用）
+        try {
+          var sa = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+          var vvH = window.visualViewport ? Math.round(window.visualViewport.height) : '-';
+          return '<div style="font-size:10px;color:var(--text-dim);margin-top:10px;font-family:IBM Plex Mono,monospace">画面診断: '
+            + (sa ? 'アプリ(全画面)' : 'ブラウザ') + ' / 画面' + screen.width + '×' + screen.height
+            + ' / 表示' + window.innerWidth + '×' + window.innerHeight + ' / vv' + vvH + '</div>';
+        } catch(eD) { return ''; }
+      })()
+    + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
