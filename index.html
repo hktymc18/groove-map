@@ -2060,7 +2060,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v333</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v334</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4663,7 +4663,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v333';
+  var DATA_VERSION = 'v334';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5504,6 +5504,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v334', d:'2026-08-14', items:['🔔同じ通知が2件届く問題の対策：1台の端末に古い通知登録（Safariで開いた時や再インストール前のもの）が残ると2重に届くため、新しい登録時に古い登録を自動削除するようにしました','⚙設定に「🧹 通知が2重に届く時はこちら（古い登録を掃除）」ボタンを追加：今使っている端末の登録だけを残して他を解除します'] },
   { v:'v333', d:'2026-08-14', items:['🛠「テスト通知を送る」を押しても何も起こらないように見える問題を修正：メッセージ（トースト）が設定画面の裏に隠れていました。トーストを常に最前面に表示するよう変更','トークン取得に失敗した場合、具体的な失敗理由（エラー内容）をそのまま表示するように（原因特定用）'] },
   { v:'v332', d:'2026-08-14', items:['🔔通知の原因調査ツールを追加：⚙設定に「📨テスト通知を送る」ボタン（押して1〜2分でロック画面に届くかを直接テスト）と、画面診断に「通知診断」（許可状態・端末トークンの有無）を追加','Cloud Functionsに送信ログを追加（要再デプロイ。トークン未登録・送信エラーがログで特定できます）'] },
   { v:'v331', d:'2026-08-14', items:['予定タブの下部バー（月・週・日・ToDo共通）から「データ」ボタンを削除してすっきり（データはメニューまたは下部タブから開けます）'] },
@@ -12397,6 +12398,12 @@ function fcmRegister() {
     return firebase.messaging().getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
   }).then(function(tok){
     if (!tok) { _fcmBusy = false; window._fcmLastErr = 'トークンが空'; return false; }
+    // v334: この画面（コンテキスト）の古いトークンが残っていたら削除（同じ端末に2重で届く問題の対策）
+    var _oldTok = '';
+    try { _oldTok = localStorage.getItem('gm_fcmToken') || ''; } catch(eO) {}
+    if (_oldTok && _oldTok !== tok) {
+      db.doc('users/' + currentUser.uid + '/fcmTokens/' + _oldTok).delete().catch(function(){});
+    }
     try { localStorage.setItem('gm_fcmToken', tok); } catch(eT) {} // オフ切替時の削除用に保持
     return fsSet('users/' + currentUser.uid + '/fcmTokens/' + tok, {
       ua: String(navigator.userAgent || '').slice(0, 180),
@@ -12430,6 +12437,21 @@ try {
     if (history.replaceState) history.replaceState(null, '', location.pathname); // URLを綺麗に戻す
   }
 } catch(ePM) {}
+// v334: 重複した通知登録の掃除＝この端末の現在の登録だけを残して他を削除
+// （Safariで開いた時の登録・再インストール前の古い登録が残ると、同じ通知が2件届くため）
+function pushClearOtherTokens() {
+  if (!db || !currentUser || !currentUser.uid) { toast('⚠️ ログインが必要です'); return; }
+  var cur = '';
+  try { cur = localStorage.getItem('gm_fcmToken') || ''; } catch(e0) {}
+  if (!cur) { toast('⚠️ 先にこの端末の通知を🔔オンにしてください'); return; }
+  db.collection('users/' + currentUser.uid + '/fcmTokens').get().then(function(ss){
+    var n = 0;
+    ss.forEach(function(d){
+      if (d.id !== cur) { d.ref.delete().catch(function(){}); n++; }
+    });
+    toast(n ? ('🧹 古い登録を' + n + '件解除しました。今後はこの端末に1件だけ届きます') : '✓ 登録はこの端末の1件だけです（重複なし）');
+  }).catch(function(){ toast('⚠️ 登録一覧の取得に失敗しました'); });
+}
 // v332: テスト通知（notifQueueに即時発火の予約を書く→Functionsが1分以内に配信。原因切り分け用）
 function pushSendTest() {
   if (!db || !currentUser || !currentUser.uid) { toast('⚠️ ログインが必要です'); return; }
@@ -13330,6 +13352,7 @@ function openCalSettings() {
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
     + '<button class="fol-add" style="margin-top:8px" onclick="pushSendTest()">📨 テスト通知を送る（1〜2分後に届きます）</button>'
+    + '<button class="fol-add" style="margin-top:8px" onclick="pushClearOtherTokens()">🧹 通知が2重に届く時はこちら（古い登録を掃除）</button>'
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
     + gcalRow
