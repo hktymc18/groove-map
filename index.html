@@ -9,7 +9,9 @@
 <meta name="theme-color" content="#0d0f14">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- v327: iOS 26でblack-translucent（ステータスバー下まで拡張）が機能せず、その62pt分が
+     画面下の「タップも効かない空白」になるため、標準のステータスバー方式に変更 -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MAP">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -2051,7 +2053,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v326</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v327</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4642,7 +4644,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v326';
+  var DATA_VERSION = 'v327';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4884,11 +4886,15 @@ window.addEventListener('pageshow', _vvhUpdate);
 window.addEventListener('resize', _vvhUpdate);
 // v326: ホーム画面アプリなのに画面が縦に縮んだまま（下に空白・その領域はタップ不可）の場合、
 // 「指でスクロールすると直る」＝再計算で直せるため、自動で1pxスクロールを往復してiOSに再計算させる
+var _gapKicked = 0;
 function _iosGapKick() {
   try {
     var sa = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
     if (!sa) return;
-    if ((screen.height - window.innerHeight) <= 40) return; // 大きな不足がある時だけ
+    // v327: ステータスバー分（約60pt）の差は正常。それを大きく超える不足（幻のツールバー等）だけ蹴る
+    if ((screen.height - window.innerHeight) <= 110) return;
+    if (_gapKicked >= 2) return; // 何度もカクつかせない
+    _gapKicked++;
     var ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return;
     var spacer = document.createElement('div');
@@ -5479,6 +5485,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v327', d:'2026-08-14', items:['📱下の空白バグを解消（iOS 26対応）：画面診断の結果、空白の正体は「ステータスバーの下まで画面を広げる」旧iOS向け設定をiOS 26が誤処理し、その62pt分を画面下のタップ不能な空白として付けてしまうものでした。設定を標準方式に変更し、上のステータスバー分として正しく消費されるようにしました','※反映にはホーム画面のアイコンを一度削除→Safariで開いて「ホーム画面に追加」のやり直しが必要です（アプリのデータは消えません）','自動リカバリ（画面ゆすり）は本当に異常な時だけ・最大2回に制限（開いた時のカクつき対策）'] },
   { v:'v326', d:'2026-08-14', items:['📱下部空白バグへの自動リカバリを追加：iOSがホーム画面アプリの画面を狭く扱ったままになる不具合（空白部分はタップも効かないOS側のバグ）を検知したら、自動で画面を1pxだけスクロールして往復させ、iOSに高さを再計算させます（起動時・アプリ復帰時にチェック。「指で引っ張って直す」のを自動化）','⚙設定の一番下に「画面診断」を表示：アプリ/ブラウザ判定と画面・表示サイズが見られます（不具合報告用）'] },
   { v:'v325', d:'2026-08-14', items:['🛠v324で下部タブバーが画面の外へ押し出されて隠れる／タップできなくなる問題を修正：v324の「画面サイズで強制補正」を撤回し、実測の表示領域（visualViewport）だけを使う安全な方式に統一しました','ホーム画面アプリの再追加でiOS側の画面高さの異常はリセットされるため、空白が再発した場合はアイコンを削除→Safariで開いて「ホーム画面に追加」をやり直してください'] },
   { v:'v324', d:'2026-08-14', items:['📱下の空白の追加修正：ホーム画面アプリなのにiOSが「存在しないSafariツールバー分」画面を狭く報告する既知バグへの対策。縦画面のホーム画面アプリでは画面の本当の高さ（screen.height）を正として全画面表示・下部バーを最下部まで届かせるようにしました','起動直後・アプリ復帰時にも高さを取り直すように（pageshow対応）','※Safariで開いた場合は下のアドレスバーはブラウザ自体のUIのため消せません。全画面で使うにはホーム画面に追加したアプリからご利用ください'] },
