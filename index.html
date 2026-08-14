@@ -1049,10 +1049,11 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-bar.bar-overdue{background:var(--red);color:#fff}
 .ev-bar.bar-done{opacity:.4;text-decoration:line-through}
 .ev-bar.ev-hol{background:transparent;color:var(--red);font-weight:700;padding:0 2px}
-/* v299: 連日予定の帯（マスの境界を跨いで繋がって見えるように角と余白を調整） */
+/* v299/v322: 連日予定の帯＝Lifebear式にマスの境界を跨いで1本の帯として繋がる
+ * （span-m/e が内容幅に潰れて細切れに見えるバグを flex:1 で修正） */
 .ev-bar.span-s{border-radius:3px 0 0 3px;margin-right:-3px}
-.ev-bar.span-m{border-radius:0;margin-left:-3px;margin-right:-3px;width:auto}
-.ev-bar.span-e{border-radius:0 3px 3px 0;margin-left:-3px;width:auto}
+.ev-bar.span-m{border-radius:0;margin-left:-3px;margin-right:-3px;width:auto;flex:1 1 auto;min-width:0}
+.ev-bar.span-e{border-radius:0 3px 3px 0;margin-left:-3px;width:auto;flex:1 1 auto;min-width:0}
 .ev-more{font-size:9px;color:var(--text-dim);padding-left:3px}
 /* 選択日パネル（CAL-1：ボトムシート→カレンダー直下のインライン表示） */
 .ev-day-panel{margin:10px 14px calc(env(safe-area-inset-bottom) + 90px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 12px}
@@ -2048,7 +2049,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v321</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v322</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2277,7 +2278,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
       <div id="evAgendaList"></div>
       <div class="ev-cal-bottom">
-        <div class="ev-cal-bbtn" onclick="todoNavTo('home')"><span class="ic">✅<i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
+        <div class="ev-cal-bbtn" onclick="setEventsMode('calendar')"><span class="ic">🗓</span><span>カレンダー</span></div>
         <div class="ev-cal-badd" onclick="openTaskAdd()" title="タスクを追加">＋</div>
         <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic">⚙</span><span>設定</span></div>
       </div>
@@ -4639,7 +4640,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v321';
+  var DATA_VERSION = 'v322';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4883,20 @@ document.addEventListener('focusout', function() {
 document.addEventListener('touchstart', function() {
   _iosViewportReset();
 }, { passive: true, capture: true });
+// v322: キーボードの開閉でビューポートの高さが変わった瞬間にも自動復元
+//（全画面カレンダー/ToDoの下に空白が残り「指で動かすまで直らない」問題への対策。触らなくても直る）
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return; // 入力中は触らない
+    setTimeout(_iosViewportReset, 60);
+    // 全画面ペインの高さを取り直させる（fixed要素が古い高さのまま残るiOSの描画をリフロー）
+    setTimeout(function() {
+      var p = document.querySelector('#evCalendar.full,#evWeek.full,#evDayV.full,#evAgenda.full');
+      if (p) { p.style.bottom = '0.5px'; void p.offsetHeight; p.style.bottom = ''; }
+    }, 120);
+  });
+}
 // ── Android等の「戻る」でシート/モーダルを閉じる（アプリ終了を防ぐ） ──
 try { history.pushState({ gm: 1 }, ''); } catch(e) {}
 window.addEventListener('popstate', function() {
@@ -5414,6 +5429,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v322', d:'2026-08-14', items:['📅連日予定の帯をLifebear式に修正：2日目以降が細い切れ端になっていたのを、日をまたいで1本につながる帯に（週をまたいだ先頭マスにはタイトルを再表示・複数の連日予定が並んでも段がズレないように）','📱全画面カレンダー/ToDoの下に空白が残り「指で動かすまで直らない」問題を修正：キーボード開閉を検知して自動で画面の高さを復元','✅ToDo⇄🗓月表示がワンタップに：ToDoの下部バー左が「🗓カレンダー」ボタンになりました（月表示側の「✅ToDo」と対に）'] },
   { v:'v321', d:'2026-08-13', items:['✅ToDoも月表示と同じ全画面に：上のヘッダー・下のタブバーを消して、✕/‹・タイトル・🗓▾のヘッダーと「ToDo・＋・設定」の下部バーに統一（メニューに戻るバーも廃止）','旧ヘッダーの「ToDo/週/月・カテゴリ・＋タスク」ボタン行を削除してすっきり（表示切替は🗓▾・追加は下部の＋から）','⚡リストを開いたら検索欄の代わりに「＋タスクを追加」欄：打ってEnterで画面遷移なしの即追加（そのリスト/ラベル/星付き/次の7日間に合った状態で入ります）。詳しく設定したい時は隣の「⤢詳細」でフル入力画面へ（打ちかけのタイトルも引き継ぎ）','‹で一覧へ・画面左端から右スワイプでも戻れるように（ヘッダータイトルにも今いるリスト名を表示）','🗑リスト/ラベルを削除できるように：リストを開いて右上の🗑（中のタスクは消えずマイリストへ移動）','🔍検索はToDoホームの検索ボックスで（🗓▾→検索からも開けます）'] },
   { v:'v320', d:'2026-08-13', items:['🗓月表示のスクロール方式を選べるように：⚙カレンダー設定に「↔ 横（1ヶ月ずつ）／↕ 縦（連続）」を追加。既定は横＝1ヶ月が1画面にきっちり収まり、左右スワイプか‹›で月をページ送り','横モードでは前後の月のはみ出し日が薄い色になり、今月がひと目で分かります','縦（連続）を選ぶと今まで通りLifebear式のシームレス縦スクロールに'] },
   { v:'v319', d:'2026-08-13', items:['📌テンプレのワンタップ即登録：月カレンダーで日付をタップ→日シートの下部にテンプレのチップが並び、タップするだけでその日に即登録（編集画面を開かない。時刻・所要・通知・色・MAP実績連動もそのまま適用。↩取消付き）','⚡タスクの連続追加モード：タスクを保存すると画面を閉じずにタスク名がクリアされ、続けて次のタスクを入力可能（期限・リスト・ラベル・通知は引き継ぎ。終わったらキャンセルか画面外タップで閉じる）','📆ワンタップでリスケ：予定・タスクの操作シートに「今日/明日/来週」の移動チップを追加（編集画面を開かず日付変更・↩元に戻す付き。連日予定は期間の長さを保って移動）','✍️入力途中の下書きを自動保護：誤って画面外をタップしたり戻るボタンで閉じてしまっても、次に開いた時に入力内容を復元（キャンセルボタンで閉じた時は破棄）'] },
@@ -12778,7 +12794,7 @@ function saveCategories() {
 }
 
 // カレンダーのバー1本
-function evBarHtml(e, span) {
+function evBarHtml(e, span, contTitle) {
   var t = evTodayYmd();
   var overdue = e.type === 'task' && !e.done && e.date && e.date < t;
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
@@ -12793,7 +12809,10 @@ function evBarHtml(e, span) {
   var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : (e.done ? '✓ ' : '');
   // v301: 月表示は「時」だけ表示（19:30→19）。v311: 時と件名の間に確実なスペース
   var tm = (e.time && !e.done) ? '<b>' + (parseInt(String(e.time).split(':')[0], 10) || 0) + '</b>&nbsp;' : '';
-  var body = (span === 'm' || span === 'e') ? '&nbsp;' : (tm + evEsc(mark + (e.title || '')));
+  // v322: 連日帯の中日/最終日は通常無地だが、週の先頭マスではタイトルを再表示（Lifebearと同じ）
+  var body = (span === 'm' || span === 'e')
+    ? (contTitle ? evEsc(e.title || '') : '&nbsp;')
+    : (tm + evEsc(mark + (e.title || '')));
   return '<div class="' + cls + '" data-eid="' + e.id + '"' + style + '>' + body + '</div>'; // v312: 長押しドラッグ用ID
 }
 
@@ -13135,6 +13154,7 @@ function setEventsMode(mode) {
   if (mode === 'day' && !_dayVDate) _dayVDate = evTodayYmd();
   try { localStorage.setItem('gm_evMode', mode); } catch(e) {}
   renderEvents();
+  setTimeout(_iosViewportReset, 50); // v322: モード切替直後に高さ/スクロールを正す
 }
 // S3: カレンダー設定（週の始まり）
 function closeCalSettings() {
@@ -14721,10 +14741,14 @@ function renderCalendar() {
       var hol = jpHoliday(ds);
       var numCls = 'ev-cell-num' + (dowReal === 0 ? ' sun' : (dowReal === 6 ? ' sat' : '')) + (hol ? ' hol' : '') + (d === 1 ? ' m1' : '');
       var dayList = (byDate[ds] || []).slice();
-      // 連日帯を先頭に（Lifebearと同じく帯→時刻順）
+      // 連日帯を先頭に（Lifebearと同じく帯→時刻順）。v322: 帯同士は開始日+IDで安定順＝日をまたいでも段がズレない
       dayList.sort(function(a, b) {
         var sa = a.span ? 0 : 1, sb = b.span ? 0 : 1;
         if (sa !== sb) return sa - sb;
+        if (a.span && b.span) {
+          var k1 = (a.ev.date || '') + '|' + a.ev.id, k2 = (b.ev.date || '') + '|' + b.ev.id;
+          return k1 < k2 ? -1 : (k1 > k2 ? 1 : 0);
+        }
         return evSortFn(a.ev, b.ev);
       });
       // v311: マスを8スロットの時間帯グリッドに（10件は詰まりすぎのため8件へ。18時≒中央基準）
@@ -14747,7 +14771,8 @@ function renderCalendar() {
         for (var si = want; si < 8; si++) { if (!slots[si]) { placed = si; break; } }
         if (placed < 0) { for (var si2 = want - 1; si2 >= 0; si2--) { if (!slots[si2]) { placed = si2; break; } } }
         if (placed < 0) { extra++; continue; }
-        slots[placed] = evBarHtml(w2.ev, w2.span);
+        // v322: 週の先頭マス（i===0）では連日帯にタイトルを再表示
+        slots[placed] = evBarHtml(w2.ev, w2.span, (w2.span === 'm' || w2.span === 'e') && i === 0);
         if (w2.span || !w2.ev.time) topFill = placed + 1;
       }
       var bars = '';
