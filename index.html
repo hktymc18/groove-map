@@ -2060,7 +2060,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v331</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v332</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4663,7 +4663,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v331';
+  var DATA_VERSION = 'v332';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5504,6 +5504,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v332', d:'2026-08-14', items:['🔔通知の原因調査ツールを追加：⚙設定に「📨テスト通知を送る」ボタン（押して1〜2分でロック画面に届くかを直接テスト）と、画面診断に「通知診断」（許可状態・端末トークンの有無）を追加','Cloud Functionsに送信ログを追加（要再デプロイ。トークン未登録・送信エラーがログで特定できます）'] },
   { v:'v331', d:'2026-08-14', items:['予定タブの下部バー（月・週・日・ToDo共通）から「データ」ボタンを削除してすっきり（データはメニューまたは下部タブから開けます）'] },
   { v:'v330', d:'2026-08-14', items:['🔔プッシュ通知がiOS 26で届かない問題を修正：通知の送り方を「データのみ」→「通知本文付き」に変更しました。iOSはこの形式でないとロック画面・バナーに表示しないため、届かなくなっていました（※反映にはCloud Functionsの再デプロイが必要です）','ロック画面に直接表示され、タップするとその予定の詳細が開きます'] },
   { v:'v329', d:'2026-08-14', items:['⏰時刻入力を完全Lifebear式に：1つのテンキーで「16 00」と打つと開始が確定して自動で終了へカーソル移動→続けて終了を入力（完了ボタン不要。上の開始/終了をタップして修正もできます。終了まで入れると自動で閉じます）','🎨色の巻き添え問題を修正：予定の色は保存した時点の色が予定自体に記録されるようになり、後からカテゴリやテンプレの色を変えても既存の予定の色は変わりません','📍詳細に「場所」欄を追加（予定の詳細シートにも表示）','🗓今日のマスを枠ごと色付け＋緑の枠線で一目で分かるように','✅予定の編集画面からサブタスク欄を非表示に（タスクのみ）','下部バーのToDo・カレンダー・設定などの絵文字を線画アイコンに刷新＋MAP・データ・メニューボタンを追加（予定タブから直接他のタブへ移動可能に）','🏠HOMEタブを既定で非表示に（⚙設定の「下部タブの表示」でHOME/MAP/データの表示を選べます）','🚀アプリを開いたときの初期表示が予定タブ（月カレンダー）になりました'] },
@@ -12425,6 +12426,28 @@ try {
     if (history.replaceState) history.replaceState(null, '', location.pathname); // URLを綺麗に戻す
   }
 } catch(ePM) {}
+// v332: テスト通知（notifQueueに即時発火の予約を書く→Functionsが1分以内に配信。原因切り分け用）
+function pushSendTest() {
+  if (!db || !currentUser || !currentUser.uid) { toast('ログインが必要です'); return; }
+  if (!('Notification' in window) || Notification.permission !== 'granted') {
+    toast('⚠️ この端末はまだ通知が許可されていません。先に通知を🔔オンにしてください');
+    return;
+  }
+  toast('登録を確認中…');
+  fcmRegister().then(function(ok){
+    if (!ok) { toast('⚠️ この端末の通知登録（トークン取得）に失敗しました'); return; }
+    var qid = currentUser.uid + '_test' + Date.now();
+    fsSet('notifQueue/' + qid, {
+      uid: currentUser.uid, eventId: '',
+      fireAt: new Date(Date.now() - 1000).toISOString(),
+      title: '🔔 テスト通知',
+      body: 'これが見えればプッシュ通知は正常です'
+    }).then(function(){
+      closeCalSettings();
+      toast('📨 テスト通知を予約しました。アプリを閉じて1〜2分お待ちください');
+    }).catch(function(){ toast('⚠️ 予約の書き込みに失敗しました（通信状態を確認）'); });
+  });
+}
 // 起動時: 許可済み端末はトークンを最新化（失効・機種変更対策）。オフ設定の端末は登録しない
 setTimeout(function(){
   try {
@@ -13301,6 +13324,7 @@ function openCalSettings() {
     + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
+    + '<button class="fol-add" style="margin-top:8px" onclick="pushSendTest()">📨 テスト通知を送る（1〜2分後に届きます）</button>'
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
     + gcalRow
@@ -13310,9 +13334,13 @@ function openCalSettings() {
         try {
           var sa = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
           var vvH = window.visualViewport ? Math.round(window.visualViewport.height) : '-';
+          var perm = ('Notification' in window) ? Notification.permission : 'なし';
+          var tok = '';
+          try { tok = localStorage.getItem('gm_fcmToken') || ''; } catch(eT9) {}
           return '<div style="font-size:10px;color:var(--text-dim);margin-top:10px;font-family:IBM Plex Mono,monospace">画面診断: '
             + (sa ? 'アプリ(全画面)' : 'ブラウザ') + ' / 画面' + screen.width + '×' + screen.height
-            + ' / 表示' + window.innerWidth + '×' + window.innerHeight + ' / vv' + vvH + '</div>';
+            + ' / 表示' + window.innerWidth + '×' + window.innerHeight + ' / vv' + vvH
+            + '<br>通知診断: 許可=' + perm + ' / トークン=' + (tok ? '…' + tok.slice(-8) : 'なし') + '</div>';
         } catch(eD) { return ''; }
       })()
     + '</div></div>';
