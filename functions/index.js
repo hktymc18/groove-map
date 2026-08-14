@@ -35,14 +35,25 @@ exports.sendReminders = onSchedule(
       for (const item of byUid[uid]) {
         if (tokens.length) {
           try {
+            const title = String(item.q.title || 'GROOVE MAP');
+            const body = String(item.q.body || '');
+            const eventId = String(item.q.eventId || '');
             const res = await admin.messaging().sendEachForMulticast({
               tokens,
-              data: {
-                title: String(item.q.title || 'GROOVE MAP'),
-                body: String(item.q.body || ''),
-                eventId: String(item.q.eventId || ''),
+              data: { title, body, eventId },
+              // v330: iOS(26)はデータのみのWebプッシュを表示しないため、notification付きで送る
+              // （ロック画面・バナーにOSが直接表示。タップでリンクの ?ev= から該当予定を開く）
+              webpush: {
+                headers: { Urgency: 'high', TTL: '3600' },
+                notification: {
+                  title,
+                  body,
+                  icon: 'https://hktymc18.github.io/groove-map/icon-192.png',
+                  badge: 'https://hktymc18.github.io/groove-map/icon-192.png',
+                  tag: 'gm-' + (eventId || 'push'),
+                },
+                fcmOptions: { link: 'https://hktymc18.github.io/groove-map/' + (eventId ? '?ev=' + encodeURIComponent(eventId) : '') },
               },
-              webpush: { headers: { Urgency: 'high', TTL: '3600' } },
             });
             // 失効トークンの掃除
             res.responses.forEach((r, i) => {
