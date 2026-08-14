@@ -2053,7 +2053,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v327</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v328</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2311,7 +2311,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <!-- 月カレンダー（CAL-FS: カレンダーモード時は全画面表示） -->
     <div id="evCalendar" style="display:none">
       <div class="ev-cal-hdr">
-        <div class="ev-cal-x" onclick="setEventsMode('agenda')" title="カレンダーを閉じる">✕</div>
+        <div class="ev-cal-x" onclick="switchView('home')" title="メニューへ戻る">✕</div>
         <div class="ev-cal-nav" onclick="calShiftMonth(-1)">‹</div>
         <div class="ev-cal-title" id="evCalTitle" onclick="calGoToday()" title="タップで今日へ"></div>
         <div class="ev-cal-nav" onclick="calShiftMonth(1)">›</div>
@@ -4644,7 +4644,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v327';
+  var DATA_VERSION = 'v328';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5012,10 +5012,10 @@ window.addEventListener('popstate', function() {
       var wv = document.getElementById('evWeek');
       if (wv && wv.classList.contains('full') && currentView === 'events') { setEventsMode('calendar'); closed = true; }
     }
-    // CAL-FS: 全画面カレンダー表示中はアジェンダに戻る（アプリ終了を防ぐ）
+    // CAL-FS: 全画面カレンダー表示中は「戻る」でメニューへ（v328: ✕と同じ動き。ToDoを経由しない）
     if (!closed) {
       var cf = document.getElementById('evCalendar');
-      if (cf && cf.classList.contains('full') && currentView === 'events') { setEventsMode('agenda'); closed = true; }
+      if (cf && cf.classList.contains('full') && currentView === 'events') { switchView('home'); closed = true; }
     }
     // v321: 全画面ToDo表示中＝リスト内なら一覧へ、一覧ならメニューへ（アプリ終了を防ぐ）
     if (!closed) {
@@ -5485,6 +5485,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v328', d:'2026-08-14', items:['🗓月表示の✕ボタンで直接メニューへ戻るように（今まではToDo画面を経由して✕を2回押す必要がありました）。Androidの戻るボタンも同じ動きに','週・日ビューの✕は今まで通り月表示へ（月→メニューの階層はそのまま）'] },
   { v:'v327', d:'2026-08-14', items:['📱下の空白バグを解消（iOS 26対応）：画面診断の結果、空白の正体は「ステータスバーの下まで画面を広げる」旧iOS向け設定をiOS 26が誤処理し、その62pt分を画面下のタップ不能な空白として付けてしまうものでした。設定を標準方式に変更し、上のステータスバー分として正しく消費されるようにしました','※反映にはホーム画面のアイコンを一度削除→Safariで開いて「ホーム画面に追加」のやり直しが必要です（アプリのデータは消えません）','自動リカバリ（画面ゆすり）は本当に異常な時だけ・最大2回に制限（開いた時のカクつき対策）'] },
   { v:'v326', d:'2026-08-14', items:['📱下部空白バグへの自動リカバリを追加：iOSがホーム画面アプリの画面を狭く扱ったままになる不具合（空白部分はタップも効かないOS側のバグ）を検知したら、自動で画面を1pxだけスクロールして往復させ、iOSに高さを再計算させます（起動時・アプリ復帰時にチェック。「指で引っ張って直す」のを自動化）','⚙設定の一番下に「画面診断」を表示：アプリ/ブラウザ判定と画面・表示サイズが見られます（不具合報告用）'] },
   { v:'v325', d:'2026-08-14', items:['🛠v324で下部タブバーが画面の外へ押し出されて隠れる／タップできなくなる問題を修正：v324の「画面サイズで強制補正」を撤回し、実測の表示領域（visualViewport）だけを使う安全な方式に統一しました','ホーム画面アプリの再追加でiOS側の画面高さの異常はリセットされるため、空白が再発した場合はアイコンを削除→Safariで開いて「ホーム画面に追加」をやり直してください'] },
