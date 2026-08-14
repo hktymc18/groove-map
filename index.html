@@ -1030,6 +1030,8 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cell:nth-child(7n){border-right:none}
 .ev-cell.empty{background:transparent;cursor:default}
 .ev-cell.sel{background:var(--accent-dim)}
+/* v329: 今日はマス全体を色付け＋枠線で一目で分かるように（Lifebear式） */
+.ev-cell.today{background:var(--accent-dim)!important;box-shadow:inset 0 0 0 1.5px var(--accent)}
 .ev-cell.drop-target{background:rgba(255,180,84,.28)!important;outline:2px dashed var(--gold);outline-offset:-2px}
 /* v312: 次の予定カウントダウンバー */
 #calNextBar{flex:none;padding:3px 14px 6px;font-size:11.5px;color:var(--accent);font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1143,9 +1145,12 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cal-vmenu{position:fixed;top:calc(env(safe-area-inset-top) + 50px);right:10px;z-index:296;background:var(--surface2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;min-width:132px}
 .ev-cal-vitem{padding:12px 16px;font-size:13.5px;font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border)}
 .ev-cal-vitem:last-child{border-bottom:none}
-.full .ev-cal-bottom{display:flex;flex:none;align-items:center;justify-content:space-around;border-top:1px solid var(--border);background:var(--surface);padding:5px 26px calc(env(safe-area-inset-bottom) + 5px)}
-.ev-cal-bbtn{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10px;font-weight:700;color:var(--text-mid);cursor:pointer;padding:2px 10px}
-.ev-cal-bbtn .ic{font-size:17px;position:relative}
+.full .ev-cal-bottom{display:flex;flex:none;align-items:center;justify-content:space-around;border-top:1px solid var(--border);background:var(--surface);padding:5px 4px calc(env(safe-area-inset-bottom) + 5px)}
+.ev-cal-bbtn{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:9.5px;font-weight:700;color:var(--text-mid);cursor:pointer;padding:2px 5px}
+.ev-cal-bbtn .ic{font-size:17px;position:relative;display:flex;align-items:center;justify-content:center;height:20px}
+/* v329: 下部バー・ヘッダーのアイコンを絵文字→線画SVGに統一 */
+.ev-cal-bbtn .ic svg,.ev-cal-view svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+.ev-cal-view{display:flex;align-items:center;gap:2px}
 .bb-badge{position:absolute;top:-6px;right:-13px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:1px 5px;line-height:1.3;font-style:normal}
 .ev-cal-badd{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--go-ink);font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 12px rgba(44,229,184,.35)}
 /* A4: 行タップの操作ミニシート */
@@ -1255,9 +1260,11 @@ body.cal-fs .pc-toolbar{display:none!important}
 /* v298: Lifebear式 時刻テンキー（予定モーダルz540の上） */
 .tp-ov{position:fixed;inset:0;z-index:560;background:rgba(0,0,0,.25);display:flex;align-items:flex-end}
 .tp-sheet{width:100%;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:10px 12px calc(env(safe-area-inset-bottom) + 12px)}
-.tp-which{font-size:12.5px;font-weight:800;color:var(--accent);padding:6px 6px 0}
-.tp-hd{display:flex;align-items:center;gap:12px;padding:2px 6px 10px}
-.tp-disp{font-size:26px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex:1;color:var(--text)}
+.tp-which{font-size:11.5px;font-weight:800;color:var(--text-dim);padding:6px 6px 0}
+.tp-hd{display:flex;align-items:center;gap:8px;padding:2px 6px 10px}
+.tp-disp{font-size:24px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex:none;color:var(--text-dim);cursor:pointer;border-bottom:2.5px solid transparent;line-height:1.3}
+.tp-disp.on{color:var(--text);border-bottom-color:var(--accent)}
+.tp-arr{font-size:20px;font-weight:800;color:var(--text-dim)}
 .tp-clr{font-size:13px;font-weight:700;color:var(--text-dim);cursor:pointer;padding:8px}
 .tp-done{font-size:15px;font-weight:800;color:var(--accent);cursor:pointer;padding:8px 4px}
 .tp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -2053,7 +2060,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v328</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v329</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2275,16 +2282,19 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="ev-cal-hdr">
         <div class="ev-cal-x" id="tdHdrX" onclick="todoHdrBack()" title="閉じる">✕</div>
         <div class="ev-cal-title" id="tdHdrTitle" onclick="todoNavTo('home')">✅ ToDo</div>
-        <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替">🗓<span style="font-size:9px;margin-left:2px">▾</span></div>
+        <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg><span style="font-size:9px;margin-left:2px">▾</span></div>
       </div>
       <div class="ev-quick-add" id="evQuickAdd" style="display:none">
         <input id="evQuickInput" type="search" placeholder="🔍 タスク名、メモなど" onkeydown="evQuickKey(event)" oninput="evQuickFilterChange(this.value)" autocomplete="off">
       </div>
       <div id="evAgendaList"></div>
       <div class="ev-cal-bottom">
-        <div class="ev-cal-bbtn" onclick="setEventsMode('calendar')"><span class="ic">🗓</span><span>カレンダー</span></div>
-        <div class="ev-cal-badd" onclick="openTaskAdd()" title="タスクを追加">＋</div>
-        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic">⚙</span><span>設定</span></div>
+        <div class="ev-cal-bbtn" onclick="setEventsMode('calendar')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg></span><span>カレンダー</span></div>
+        <div class="ev-cal-bbtn" onclick="switchView('current')"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="19" r="2.6"/><circle cx="19" cy="19" r="2.6"/><path d="M12 7.6V12M12 12l-5.5 4.8M12 12l5.5 4.8"/></svg></span><span>MAP</span></div>
+        <div class="ev-cal-badd" onclick="openTaskAdd()" title="追加">＋</div>
+        <div class="ev-cal-bbtn" onclick="switchView('stats')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span>データ</span></div>
+        <div class="ev-cal-bbtn" onclick="openMobileMenu()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg></span><span>メニュー</span></div>
+        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>設定</span></div>
       </div>
     </div>
 
@@ -2296,15 +2306,18 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-cal-nav" onclick="weekShift(-1)">‹</div>
         <div class="ev-cal-title" id="evWeekTitle" onclick="weekShift(0)" title="タップで今週へ"></div>
         <div class="ev-cal-nav" onclick="weekShift(1)">›</div>
-        <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替">🗓<span style="font-size:9px;margin-left:2px">▾</span></div>
+        <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg><span style="font-size:9px;margin-left:2px">▾</span></div>
       </div>
       <div class="wkv-days" id="wkvDays"></div>
       <div class="wkv-allday" id="wkvAllday" style="display:none"></div>
       <div class="dayv-scroll" id="wkvScroll"><div class="wkv-canvas" id="wkvCanvas"></div></div>
       <div class="ev-cal-bottom">
-        <div class="ev-cal-bbtn" onclick="setEventsMode('agenda')"><span class="ic">✅<i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
-        <div class="ev-cal-badd" onclick="openEventAddDate(evTodayYmd())" title="予定を追加">＋</div>
-        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic">⚙</span><span>設定</span></div>
+        <div class="ev-cal-bbtn" onclick="setEventsMode('agenda')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12l2.5 2.5 5-5.5"/></svg><i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
+        <div class="ev-cal-bbtn" onclick="switchView('current')"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="19" r="2.6"/><circle cx="19" cy="19" r="2.6"/><path d="M12 7.6V12M12 12l-5.5 4.8M12 12l5.5 4.8"/></svg></span><span>MAP</span></div>
+        <div class="ev-cal-badd" onclick="openEventAddDate(evTodayYmd())" title="追加">＋</div>
+        <div class="ev-cal-bbtn" onclick="switchView('stats')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span>データ</span></div>
+        <div class="ev-cal-bbtn" onclick="openMobileMenu()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg></span><span>メニュー</span></div>
+        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>設定</span></div>
       </div>
     </div>
 
@@ -2315,7 +2328,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-cal-nav" onclick="calShiftMonth(-1)">‹</div>
         <div class="ev-cal-title" id="evCalTitle" onclick="calGoToday()" title="タップで今日へ"></div>
         <div class="ev-cal-nav" onclick="calShiftMonth(1)">›</div>
-        <div class="ev-cal-view" id="evCalViewBtn" onclick="calViewMenuToggle()" title="表示切替">🗓<span style="font-size:9px;margin-left:2px">▾</span></div>
+        <div class="ev-cal-view" id="evCalViewBtn" onclick="calViewMenuToggle()" title="表示切替"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg><span style="font-size:9px;margin-left:2px">▾</span></div>
       </div>
       <div id="calNextBar" style="display:none"></div>
       <div class="ev-cal-weekdays" id="evCalWeekdays">
@@ -2325,9 +2338,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="ev-day-panel" id="evDayPanel" style="display:none"></div>
       <!-- v302: Lifebear式の下部バー（ToDo・＋・設定を1行に） -->
       <div class="ev-cal-bottom">
-        <div class="ev-cal-bbtn" onclick="setEventsMode('agenda')"><span class="ic">✅<i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
-        <div class="ev-cal-badd" onclick="openEventAddDate(_calSelDate || evTodayYmd())" title="予定を追加">＋</div>
-        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic">⚙</span><span>設定</span></div>
+        <div class="ev-cal-bbtn" onclick="setEventsMode('agenda')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12l2.5 2.5 5-5.5"/></svg><i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
+        <div class="ev-cal-bbtn" onclick="switchView('current')"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="19" r="2.6"/><circle cx="19" cy="19" r="2.6"/><path d="M12 7.6V12M12 12l-5.5 4.8M12 12l5.5 4.8"/></svg></span><span>MAP</span></div>
+        <div class="ev-cal-badd" onclick="openEventAddDate(_calSelDate || evTodayYmd())" title="追加">＋</div>
+        <div class="ev-cal-bbtn" onclick="switchView('stats')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span>データ</span></div>
+        <div class="ev-cal-bbtn" onclick="openMobileMenu()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg></span><span>メニュー</span></div>
+        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>設定</span></div>
       </div>
     </div>
 
@@ -2338,14 +2354,17 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-cal-nav" onclick="dayVShift(-1)">‹</div>
         <div class="ev-cal-title" id="dayVTitle" onclick="dayVToday()" title="タップで今日へ"></div>
         <div class="ev-cal-nav" onclick="dayVShift(1)">›</div>
-        <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替">🗓<span style="font-size:9px;margin-left:2px">▾</span></div>
+        <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg><span style="font-size:9px;margin-left:2px">▾</span></div>
       </div>
       <div class="dayv-allday" id="dayVAllday" style="display:none"></div>
       <div class="dayv-scroll" id="dayVScroll"><div class="dayv-canvas" id="dayVCanvas"></div></div>
       <div class="ev-cal-bottom">
-        <div class="ev-cal-bbtn" onclick="setEventsMode('agenda')"><span class="ic">✅<i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
-        <div class="ev-cal-badd" onclick="openEventAddDate(_dayVDate || evTodayYmd())" title="この日に追加">＋</div>
-        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic">⚙</span><span>設定</span></div>
+        <div class="ev-cal-bbtn" onclick="setEventsMode('agenda')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12l2.5 2.5 5-5.5"/></svg><i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
+        <div class="ev-cal-bbtn" onclick="switchView('current')"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6"/><circle cx="5" cy="19" r="2.6"/><circle cx="19" cy="19" r="2.6"/><path d="M12 7.6V12M12 12l-5.5 4.8M12 12l5.5 4.8"/></svg></span><span>MAP</span></div>
+        <div class="ev-cal-badd" onclick="openEventAddDate(_dayVDate || evTodayYmd())" title="追加">＋</div>
+        <div class="ev-cal-bbtn" onclick="switchView('stats')"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span>データ</span></div>
+        <div class="ev-cal-bbtn" onclick="openMobileMenu()"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17"/></svg></span><span>メニュー</span></div>
+        <div class="ev-cal-bbtn" onclick="openCalSettings()"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>設定</span></div>
       </div>
     </div>
 
@@ -2859,7 +2878,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="rb" id="evPrioHigh" onclick="selEvPrio('high')">⚑ 重要</div>
         </div>
       </div>
-      <div class="fr">
+      <div class="fr" id="evPlaceRow">
+        <label class="fl">📍 場所（任意）</label>
+        <input class="fi" id="evPlace" placeholder="例：天神 ○○カフェ">
+      </div>
+      <div class="fr" id="evSubRow">
         <label class="fl">サブタスク（チェックリスト・任意）</label>
         <div id="evSubList"></div>
         <div style="display:flex;gap:6px">
@@ -4644,7 +4667,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v328';
+  var DATA_VERSION = 'v329';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5485,6 +5508,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v329', d:'2026-08-14', items:['⏰時刻入力を完全Lifebear式に：1つのテンキーで「16 00」と打つと開始が確定して自動で終了へカーソル移動→続けて終了を入力（完了ボタン不要。上の開始/終了をタップして修正もできます。終了まで入れると自動で閉じます）','🎨色の巻き添え問題を修正：予定の色は保存した時点の色が予定自体に記録されるようになり、後からカテゴリやテンプレの色を変えても既存の予定の色は変わりません','📍詳細に「場所」欄を追加（予定の詳細シートにも表示）','🗓今日のマスを枠ごと色付け＋緑の枠線で一目で分かるように','✅予定の編集画面からサブタスク欄を非表示に（タスクのみ）','下部バーのToDo・カレンダー・設定などの絵文字を線画アイコンに刷新＋MAP・データ・メニューボタンを追加（予定タブから直接他のタブへ移動可能に）','🏠HOMEタブを既定で非表示に（⚙設定の「下部タブの表示」でHOME/MAP/データの表示を選べます）','🚀アプリを開いたときの初期表示が予定タブ（月カレンダー）になりました'] },
   { v:'v328', d:'2026-08-14', items:['🗓月表示の✕ボタンで直接メニューへ戻るように（今まではToDo画面を経由して✕を2回押す必要がありました）。Androidの戻るボタンも同じ動きに','週・日ビューの✕は今まで通り月表示へ（月→メニューの階層はそのまま）'] },
   { v:'v327', d:'2026-08-14', items:['📱下の空白バグを解消（iOS 26対応）：画面診断の結果、空白の正体は「ステータスバーの下まで画面を広げる」旧iOS向け設定をiOS 26が誤処理し、その62pt分を画面下のタップ不能な空白として付けてしまうものでした。設定を標準方式に変更し、上のステータスバー分として正しく消費されるようにしました','※反映にはホーム画面のアイコンを一度削除→Safariで開いて「ホーム画面に追加」のやり直しが必要です（アプリのデータは消えません）','自動リカバリ（画面ゆすり）は本当に異常な時だけ・最大2回に制限（開いた時のカクつき対策）'] },
   { v:'v326', d:'2026-08-14', items:['📱下部空白バグへの自動リカバリを追加：iOSがホーム画面アプリの画面を狭く扱ったままになる不具合（空白部分はタップも効かないOS側のバグ）を検知したら、自動で画面を1pxだけスクロールして往復させ、iOSに高さを再計算させます（起動時・アプリ復帰時にチェック。「指で引っ張って直す」のを自動化）','⚙設定の一番下に「画面診断」を表示：アプリ/ブラウザ判定と画面・表示サイズが見られます（不具合報告用）'] },
@@ -12855,14 +12879,21 @@ function saveCategories() {
   });
 }
 
+// v329: 予定の表示色＝保存時に焼き付けた色(e.color)を最優先。無ければカテゴリの現在色
+// （カテゴリやテンプレの色を後から変えても、既存の予定の色が巻き添えで変わらないようにする）
+function evColorOf(e) {
+  if (e && e.color) return e.color;
+  var c = (e && e.categoryId) ? findCategory(e.categoryId) : null;
+  return c ? c.color : '';
+}
 // カレンダーのバー1本
 function evBarHtml(e, span, contTitle) {
   var t = evTodayYmd();
   var overdue = e.type === 'task' && !e.done && e.date && e.date < t;
-  var cat = e.categoryId ? findCategory(e.categoryId) : null;
   var cls = 'ev-bar', style = '';
   // S1: 薄い色付き→ベタ塗り＋コントラスト文字色（暗背景でも読めるLifebear方式）
-  if (cat) { style = ' style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '"'; }
+  var _col = evColorOf(e);
+  if (_col) { style = ' style="background:' + _col + ';color:' + catTextColor(_col) + '"'; }
   else if (overdue) cls += ' bar-overdue';
   else cls += (e.type === 'task') ? ' bar-task' : ' bar-event';
   if (e.done) cls += ' bar-done';
@@ -13259,6 +13290,16 @@ function openCalSettings() {
     + '<div class="rg">'
     + '<div class="rb' + (_calScrollMode !== 'v' ? ' sel' : '') + '" onclick="setCalScroll(\'h\')">↔ 横（1ヶ月ずつ）</div>'
     + '<div class="rb' + (_calScrollMode === 'v' ? ' sel' : '') + '" onclick="setCalScroll(\'v\')">↕ 縦（連続）</div>'
+    + '</div></div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">下部タブの表示（タップで表示⇄非表示。予定・メニューは常時）</label>'
+    + '<div class="rg">'
+    + (function(){
+        function tb(v, lbl) {
+          var on = _tabsHidden().indexOf(v) < 0;
+          return '<div class="rb' + (on ? ' sel' : '') + '" onclick="toggleTabPref(\'' + v + '\')">' + lbl + '</div>';
+        }
+        return tb('home', 'HOME') + tb('current', 'MAP') + tb('stats', 'データ');
+      })()
     + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
@@ -13797,6 +13838,31 @@ function setWeekStart(v) {
   renderEvents();
   toast(v === 1 ? '月曜はじまりにしました' : '日曜はじまりにしました');
 }
+// v329: 下部タブの表示/非表示（既定＝HOME非表示。予定・メニューは常に表示）
+function _tabsHidden() {
+  try {
+    var v = JSON.parse(localStorage.getItem('gm_tabsHidden') || 'null');
+    if (v && typeof v.length === 'number') return v;
+  } catch(e) {}
+  return ['home'];
+}
+function applyTabPrefs() {
+  var hid = _tabsHidden();
+  var tabs = document.querySelectorAll('.mtab');
+  for (var i = 0; i < tabs.length; i++) {
+    var dv = tabs[i].getAttribute('data-view');
+    if (!dv || dv === 'more' || dv === 'events') continue; // 予定とメニューは常時表示
+    tabs[i].style.display = (hid.indexOf(dv) >= 0) ? 'none' : '';
+  }
+}
+function toggleTabPref(v) {
+  var hid = _tabsHidden();
+  var ix = hid.indexOf(v);
+  if (ix >= 0) hid.splice(ix, 1); else hid.push(v);
+  try { localStorage.setItem('gm_tabsHidden', JSON.stringify(hid)); } catch(e) {}
+  applyTabPrefs();
+  openCalSettings(); // トグル表示を更新
+}
 // v320: 月表示のスクロール方式（h=横ページ送り/v=縦連続）
 function setCalScroll(v) {
   _calScrollMode = (v === 'v') ? 'v' : 'h';
@@ -13902,8 +13968,8 @@ function renderDayV() {
     if (bands.length) {
       alldayEl.style.display = '';
       alldayEl.innerHTML = bands.map(function(e){
-        var cat = e.categoryId ? findCategory(e.categoryId) : null;
-        var st = cat ? ('background:' + cat.color + ';color:' + catTextColor(cat.color)) : 'background:var(--purple);color:#fff';
+        var _c9 = evColorOf(e);
+        var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
         return '<div class="ev-bar" style="' + st + '" onclick="openEventActions(\'' + e.id + '\')">' + (e.done ? '✓ ' : '') + evEsc(e.title || '') + (e.endDate ? '（〜' + parseInt(e.endDate.slice(5,7),10) + '/' + parseInt(e.endDate.slice(8,10),10) + '）' : '') + '</div>';
       }).join('');
     } else { alldayEl.style.display = 'none'; alldayEl.innerHTML = ''; }
@@ -13942,8 +14008,8 @@ function renderDayV() {
     lanes[lane] = eMin;
     var top = (sMin - startH * 60) / 60 * HH;
     var hgt = Math.max(26, (eMin - sMin) / 60 * HH - 2);
-    var cat = e.categoryId ? findCategory(e.categoryId) : null;
-    var st = cat ? ('background:' + cat.color + ';color:' + catTextColor(cat.color)) : 'background:var(--purple);color:#fff';
+    var _c9 = evColorOf(e);
+    var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
     var left = lane * 26;
     h += '<div class="dayv-ev" style="top:' + top + 'px;height:' + hgt + 'px;left:' + left + '%;right:2px;' + st + (e.done ? ';opacity:.45' : '') + '" onclick="event.stopPropagation();openEventActions(\'' + e.id + '\')">'
       + '<span class="t">' + evEsc(e.time) + (e.endTime ? '-' + evEsc(e.endTime) : '') + '</span> ' + (e.done ? '✓ ' : '') + evEsc(e.title || '')
@@ -14026,8 +14092,8 @@ function renderWeek() {
     });
     if (bands.length) anyBand = true;
     adH += '<div class="wa-cell">' + bands.slice(0, 3).map(function(e){
-      var cat = e.categoryId ? findCategory(e.categoryId) : null;
-      var st = cat ? ('background:' + cat.color + ';color:' + catTextColor(cat.color)) : 'background:var(--purple);color:#fff';
+      var _c9 = evColorOf(e);
+      var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
       return '<div class="ev-bar" style="' + st + '" onclick="openEventActions(\'' + e.id + '\')">' + evEsc(e.title || '') + '</div>';
     }).join('') + (bands.length > 3 ? '<div style="font-size:8px;color:var(--text-dim)">+' + (bands.length - 3) + '</div>' : '') + '</div>';
   });
@@ -14071,8 +14137,8 @@ function renderWeek() {
       lanes[lane] = eMin;
       var top = (sMin - startH * 60) / 60 * HH;
       var hgt = Math.max(20, (eMin - sMin) / 60 * HH - 2);
-      var cat = e.categoryId ? findCategory(e.categoryId) : null;
-      var st = cat ? ('background:' + cat.color + ';color:' + catTextColor(cat.color)) : 'background:var(--purple);color:#fff';
+      var _c9 = evColorOf(e);
+      var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
       col += '<div class="dayv-ev" style="top:' + top + 'px;height:' + hgt + 'px;left:' + (lane * 30) + '%;right:1px;' + st + (e.done ? ';opacity:.45' : '') + '" onclick="event.stopPropagation();openEventActions(\'' + e.id + '\')">'
         + '<span class="t">' + evEsc(e.time) + '</span>' + (e.done ? '✓' : '') + evEsc(e.title || '') + '</div>';
     });
@@ -14328,6 +14394,7 @@ function openEventActions(id) {
   if (dl && e.time && e.endTime) dl += '〜' + e.endTime;
   if (dl) metaParts.push(dl);
   if (cat) metaParts.push(cat.name);
+  if (e.place) metaParts.push('📍' + e.place); // v329: 場所
   if (mName) metaParts.push('👤' + mName);
   var subs = e.subtasks || [];
   if (subs.length) metaParts.push('☑' + subs.filter(function(s){ return s.done; }).length + '/' + subs.length);
@@ -14453,6 +14520,8 @@ function evActDuplicate(id) {
   _evCategoryId = src.categoryId || '';
   updateEvCategoryDisplay();
   document.getElementById('evMemo').value = src.memo || '';
+  var _dpl = document.getElementById('evPlace');
+  if (_dpl) _dpl.value = src.place || ''; // v329: 場所も複製
   _evSetRemind((src.remindBefore === undefined || src.remindBefore === null) ? '' : src.remindBefore);
   if (src.priority === 'high') selEvPrio('high');
   _evSubs = (src.subtasks || []).map(function(s, i){
@@ -14519,17 +14588,18 @@ function evItemHtml(e) {
   if (e.allDay) dateLabel += ' 終日';
   var dueCls = overdue ? 'due-overdue' : (e.date === t ? 'due-today' : '');
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
-  var styleAttr = cat ? ' style="border-left-color:' + cat.color + '"' : '';
+  var _ic = evColorOf(e);
+  var styleAttr = _ic ? ' style="border-left-color:' + _ic + '"' : '';
   var h = '<div class="' + cls + '" data-eid="' + e.id + '"' + styleAttr + '>';
   // v311: チェックはタスクのみ。予定は完了概念なし＝カテゴリ色ドットで表示
   if (isTask) h += '<div class="' + checkCls + '" onclick="toggleEventDone(\'' + e.id + '\')" title="完了にする">✓</div>';
-  else h += '<div class="ev-i-dot" style="background:' + (cat ? cat.color : 'var(--purple)') + '"></div>';
+  else h += '<div class="ev-i-dot" style="background:' + (_ic || 'var(--purple)') + '"></div>';
   // A4: 本文タップは操作ミニシート（完了/スター/編集/削除に大きなボタンで到達）
   h += '<div class="ev-i-body" onclick="openEventActions(\'' + e.id + '\')">';
   h += '<div class="ev-i-title">' + evEsc(e.title || '(無題)') + '</div>';
   h += '<div class="ev-i-meta">';
   if (dateLabel) h += '<span class="' + dueCls + '">' + (isTask && e.date && e.date <= t && !e.done ? '⏰ ' : '') + evEsc(dateLabel) + '</span>';
-  if (cat) h += '<span class="ev-i-cat" style="background:' + cat.color + ';color:' + catTextColor(cat.color) + '">' + evEsc(cat.name) + '</span>';
+  if (cat) h += '<span class="ev-i-cat" style="background:' + (_ic || cat.color) + ';color:' + catTextColor(_ic || cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">⚑ 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
   if (e.seriesId) h += '<span title="繰り返し">🔁</span>';
@@ -15091,6 +15161,8 @@ function evTplQuickAdd(tplId, ds) {
   }
   var _ac = _evTplAutoCat(t);
   e.categoryId = _ac || t.categoryId || '';
+  var _qc = e.categoryId ? findCategory(e.categoryId) : null;
+  e.color = _qc ? _qc.color : ''; // v329: 色を焼き付け
   e.remindBefore = (t.notifyOffset === '' || t.notifyOffset === undefined || t.notifyOffset === null) ? '' : t.notifyOffset;
   if (t.stage) e.templateStage = t.stage;
   state.events.push(e);
@@ -15210,6 +15282,9 @@ function selEvType(t) {
   // v316: タスクにテンプレは不要（⧉ボタン・パネルごと非表示）
   var tt = document.getElementById('evTplToggle');
   if (tt) tt.style.display = isTask ? 'none' : '';
+  // v329: サブタスクはタスク専用（予定の編集画面には出さない）
+  var sr = document.getElementById('evSubRow');
+  if (sr) sr.style.display = isTask ? '' : 'none';
   if (isTask) {
     _evTplPanelOpen = false;
     var tr = document.getElementById('evTplRow');
@@ -15355,7 +15430,8 @@ function _evCreateSeries(base, rep, untilYmd) {
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       type: base.type, title: base.title, date: evYmd(cur), time: base.time, endTime: base.endTime || '',
       memberId: base.memberId, categoryId: base.categoryId, priority: base.priority,
-      memo: base.memo, remindBefore: base.remindBefore
+      memo: base.memo, remindBefore: base.remindBefore,
+      color: base.color || '', place: base.place || ''
     };
     if (base.templateStage) inst.templateStage = base.templateStage;
     if (base.subtasks && base.subtasks.length) inst.subtasks = base.subtasks.map(function(s){ return { id: s.id, t: s.t, done: false }; });
@@ -15365,8 +15441,49 @@ function _evCreateSeries(base, rep, untilYmd) {
   }
   return count;
 }
-// v298: Lifebear式・時刻テンキー（7 8 9 / 4 5 6 / 1 2 3 / 0 00 30）
+// v298/v329: Lifebear式・時刻テンキー（7 8 9 / 4 5 6 / 1 2 3 / 0 00 30）
+// v329: 開始→終了を1つのテンキーで連続入力（開始の分まで入れると自動で終了へカーソル移動＝Lifebearと同じ）
 var _tpTarget = null, _tpBuf = '';
+// 打鍵ルール: 先頭3〜9＝1桁時（以降は分）、先頭0〜2＝2桁時（〜29時）→分。常に正しい時刻だけを受け付ける
+function _tpProg(b) {
+  if (!b.length) return '--:--';
+  var f = parseInt(b.charAt(0), 10);
+  if (f >= 3) {
+    if (b.length === 1) return f + ':--';
+    if (b.length === 2) return f + ':' + b.charAt(1) + '0';
+    return f + ':' + b.slice(1, 3);
+  }
+  if (b.length === 1) return b + '-:--';
+  if (b.length === 2) return b + ':--';
+  if (b.length === 3) return b.slice(0, 2) + ':' + b.charAt(2) + '0';
+  return b.slice(0, 2) + ':' + b.slice(2, 4);
+}
+function _tpParse(b) {
+  if (!b.length) return '';
+  var h, m;
+  var f2 = parseInt(b.charAt(0), 10);
+  if (f2 >= 3) {
+    h = f2;
+    if (b.length === 1) m = 0;
+    else if (b.length === 2) m = (parseInt(b.charAt(1), 10) || 0) * 10;
+    else m = parseInt(b.slice(1, 3), 10) || 0;
+  } else if (b.length === 1) {
+    h = f2; m = 0;
+  } else {
+    h = parseInt(b.slice(0, 2), 10) || 0;
+    if (b.length === 2) m = 0;
+    else if (b.length === 3) m = (parseInt(b.charAt(2), 10) || 0) * 10;
+    else m = parseInt(b.slice(2, 4), 10) || 0;
+  }
+  if (h > 29) h = 29; // v304: 深夜は29時まで
+  if (m > 59) m = 59;
+  return evPad2(h) + ':' + evPad2(m);
+}
+function _tpComplete(b) {
+  if (!b.length) return false;
+  var f = parseInt(b.charAt(0), 10);
+  return f >= 3 ? b.length >= 3 : b.length >= 4;
+}
 function openTimePad(targetId) {
   closeTimePad(false);
   // キーボードが出たままだとタップ位置がズレるため、確実に閉じてスクロールを戻してから表示
@@ -15378,25 +15495,21 @@ function openTimePad(targetId) {
   } catch(e1) {}
   if (typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
   _tpTarget = targetId;
-  _tpBuf = ((document.getElementById(targetId) || {}).value || '').replace(':', '');
+  _tpBuf = '';
   var ov = document.createElement('div');
   ov.className = 'tp-ov'; ov.id = 'tpOv';
   ov.onclick = function(e){ if (e.target === ov) closeTimePad(true); };
   function k(v) { return '<div class="tp-key" onclick="tpKey(\'' + v + '\')">' + v + '</div>'; }
-  // v316: どちらの時刻を入力中かをテンキー上部に明示（終了入力時は開始時刻も添える）
-  var which;
-  if (targetId === 'evTimeEnd') {
-    which = '⏱ 終了時刻';
-    var _sv = ((document.getElementById('evTime') || {}).value || '');
-    if (_sv) which += '（開始 ' + _sv + ' 〜）';
-  } else if (_evType === 'task') {
-    which = '⏰ 期限の時刻';
-  } else {
-    which = '⏰ 開始時刻';
-  }
+  var isTask = (_evType === 'task');
+  var disp = isTask
+    ? '<span class="tp-disp on" id="tpDispS"></span>'
+    : '<span class="tp-disp" id="tpDispS" onclick="tpFocus(\'evTime\')"></span>'
+      + '<span class="tp-arr">›</span>'
+      + '<span class="tp-disp" id="tpDispE" onclick="tpFocus(\'evTimeEnd\')"></span>';
   ov.innerHTML = '<div class="tp-sheet">'
-    + '<div class="tp-which">' + which + '</div>'
-    + '<div class="tp-hd"><span class="tp-disp" id="tpDisp"></span>'
+    + '<div class="tp-which">' + (isTask ? '期限の時刻' : '開始 › 終了（続けて入力できます）') + '</div>'
+    + '<div class="tp-hd">' + disp
+    + '<span style="flex:1"></span>'
     + '<span class="tp-clr" onclick="tpClear()">消去</span>'
     + '<span class="tp-done" onclick="closeTimePad(true)">完了</span></div>'
     + '<div class="tp-grid">'
@@ -15408,35 +15521,64 @@ function openTimePad(targetId) {
   document.body.appendChild(ov);
   tpRender();
 }
-// v314: ありえない時刻は打鍵の時点で拒否（61:00等は入力自体できない）
-// 先頭が3〜9＝1桁時（以降は分）、先頭0〜2＝2桁時（〜29時）→分、という解釈で常に正しい時刻だけを受け付ける
+// タップで開始/終了の編集対象を切替（入力途中の値は確定してから移動）
+function tpFocus(targetId) {
+  if (_tpTarget === targetId) return;
+  _tpCommitCurrent();
+  _tpTarget = targetId;
+  _tpBuf = '';
+  tpRender();
+}
+function _tpCommitCurrent() {
+  if (!_tpTarget || !_tpBuf.length) return;
+  var inp = document.getElementById(_tpTarget);
+  if (inp) inp.value = _tpParse(_tpBuf);
+  _tpBuf = '';
+}
 function tpRender() {
-  var el = document.getElementById('tpDisp');
-  if (!el) return;
-  var b = _tpBuf, s = '--:--';
-  if (b.length) {
-    var f = parseInt(b.charAt(0), 10);
-    if (f >= 3) {
-      // 1桁時 H:MM
-      if (b.length === 1) s = f + ':--';
-      else if (b.length === 2) s = f + ':' + b.charAt(1) + '0';
-      else s = f + ':' + b.slice(1, 3);
-    } else {
-      // 2桁時 HH:MM
-      if (b.length === 1) s = b + '-:--';
-      else if (b.length === 2) s = b + ':--';
-      else if (b.length === 3) s = b.slice(0, 2) + ':' + b.charAt(2) + '0';
-      else s = b.slice(0, 2) + ':' + b.slice(2, 4);
-    }
+  var s = document.getElementById('tpDispS');
+  var en = document.getElementById('tpDispE');
+  var vs = ((document.getElementById('evTime') || {}).value || '');
+  var ve = ((document.getElementById('evTimeEnd') || {}).value || '');
+  if (s) {
+    s.textContent = (_tpTarget === 'evTime' && _tpBuf.length) ? _tpProg(_tpBuf) : (vs || '--:--');
+    s.className = 'tp-disp' + (_tpTarget === 'evTime' ? ' on' : '');
+    if (_evType === 'task') s.className = 'tp-disp on';
   }
-  el.textContent = s;
+  if (en) {
+    en.textContent = (_tpTarget === 'evTimeEnd' && _tpBuf.length) ? _tpProg(_tpBuf) : (ve || '--:--');
+    en.className = 'tp-disp' + (_tpTarget === 'evTimeEnd' ? ' on' : '');
+  }
 }
 function _tpReject() {
   if (navigator.vibrate) try { navigator.vibrate(35); } catch(e0) {}
-  var el = document.getElementById('tpDisp');
+  var el = document.getElementById(_tpTarget === 'evTimeEnd' ? 'tpDispE' : 'tpDispS');
   if (el) {
     el.style.color = 'var(--red)';
     setTimeout(function(){ el.style.color = ''; }, 250);
+  }
+}
+// 入力が確定桁数に達したら自動で確定→開始なら終了へカーソル移動（Lifebearと同じ）
+function _tpAutoNext() {
+  if (!_tpComplete(_tpBuf)) return;
+  var val = _tpParse(_tpBuf);
+  var inp = document.getElementById(_tpTarget);
+  if (inp) inp.value = val;
+  _tpBuf = '';
+  if (_tpTarget === 'evTime' && _evType !== 'task') {
+    // 終了が空なら+1時間を仮セットして、終了の入力へ移動
+    var en = document.getElementById('evTimeEnd');
+    if (en && !en.value && val) {
+      var hm = val.split(':');
+      en.value = evPad2(Math.min((parseInt(hm[0], 10) || 0) + 1, 29)) + ':' + hm[1];
+    }
+    _tpTarget = 'evTimeEnd';
+    if (navigator.vibrate) try { navigator.vibrate(8); } catch(e2) {}
+    tpRender();
+  } else {
+    // 終了（またはタスクの期限時刻）まで入れたら自動で閉じる
+    tpRender();
+    setTimeout(function(){ closeTimePad(false); }, 180);
   }
 }
 function tpKey(v) {
@@ -15448,8 +15590,9 @@ function tpKey(v) {
     if (!b.length) hp = '0';
     else if (f >= 3) hp = b.charAt(0);
     else hp = b.slice(0, 2);
-    _tpBuf = hp + v;
+    _tpBuf = (hp.length === 1 && parseInt(hp, 10) < 3) ? ('0' + hp + v) : (hp + v);
     tpRender();
+    _tpAutoNext();
     return;
   }
   var d = parseInt(v, 10);
@@ -15474,47 +15617,18 @@ function tpKey(v) {
     } else { _tpReject(); return; }
   }
   tpRender();
+  _tpAutoNext();
 }
-function tpClear() { _tpBuf = ''; tpRender(); }
+function tpClear() {
+  // 編集中の欄をクリア（入力途中があれば破棄、確定値も消す）
+  _tpBuf = '';
+  var inp = document.getElementById(_tpTarget);
+  if (inp) inp.value = '';
+  tpRender();
+}
 function closeTimePad(commit) {
   var ov = document.getElementById('tpOv');
-  if (commit && _tpTarget) {
-    var inp = document.getElementById(_tpTarget);
-    if (inp) {
-      var b = _tpBuf, val = '';
-      if (b.length) {
-        // v314: 打鍵ルールと同じ解釈（先頭3〜9＝1桁時、0〜2＝2桁時。分が途中なら十の位として確定）
-        var h, m;
-        var f2 = parseInt(b.charAt(0), 10);
-        if (f2 >= 3) {
-          h = f2;
-          if (b.length === 1) m = 0;
-          else if (b.length === 2) m = (parseInt(b.charAt(1), 10) || 0) * 10;
-          else m = parseInt(b.slice(1, 3), 10) || 0;
-        } else if (b.length === 1) {
-          h = f2; m = 0;
-        } else {
-          h = parseInt(b.slice(0, 2), 10) || 0;
-          if (b.length === 2) m = 0;
-          else if (b.length === 3) m = (parseInt(b.charAt(2), 10) || 0) * 10;
-          else m = parseInt(b.slice(2, 4), 10) || 0;
-        }
-        if (h > 29) h = 29; // v304: 深夜は29時まで（24〜29時＝翌0〜5時を当日の予定として扱う）
-        if (m > 59) m = 59;
-        val = evPad2(h) + ':' + evPad2(m);
-        // 開始を入れて終了が空なら「+1時間」を自動セット（Lifebearの既定と同じ）。v316: タスクは終了時刻なし
-        if (_tpTarget === 'evTime' && _evType !== 'task') {
-          var en = document.getElementById('evTimeEnd');
-          if (en && !en.value) en.value = evPad2(Math.min(h + 1, 29)) + ':' + evPad2(m);
-        }
-      }
-      inp.value = val;
-      // v311: 開始時刻を確定したら、続けて終了時刻のテンキーを自動で開く（v316: タスクは開かない）
-      if (_tpTarget === 'evTime' && val && _evType !== 'task') {
-        setTimeout(function(){ openTimePad('evTimeEnd'); }, 60);
-      }
-    }
-  }
+  if (commit) _tpCommitCurrent(); // 入力途中の値も確定して閉じる（完了ボタン）
   if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
   _tpTarget = null; _tpBuf = '';
 }
@@ -15999,7 +16113,10 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   var _rw = document.getElementById('evRepeatUntilWrap');
   if (_rw) _rw.style.display = 'none';
   // A1: 詳細に値が入っている時だけ自動で開く（新規はミニマル表示）。v316: 通知・メモは常時表示になったため条件から除外
-  var _hasAdv = !!(e && ((e.categoryId) || (e.memberId) || e.priority === 'high' || (e.subtasks && e.subtasks.length)));
+  var _hasAdv = !!(e && ((e.categoryId) || (e.memberId) || e.priority === 'high' || (e.subtasks && e.subtasks.length) || e.place));
+  // v329: 場所
+  var _pl = document.getElementById('evPlace');
+  if (_pl) _pl.value = e ? (e.place || '') : '';
   evToggleAdv(_hasAdv || !!presetMember);
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : '';
@@ -16114,6 +16231,10 @@ function _saveEventBody() {
   if (_evType === 'task') { e.endTime = ''; e.endDate = ''; }
   e.memberId = document.getElementById('evMember').value;
   e.categoryId = _evCategoryId || '';
+  // v329: 色は保存時点のカテゴリ色を予定自体に焼き付ける（後からカテゴリ/テンプレの色を変えても既存の予定の色は変わらない）
+  e.color = '';
+  if (e.categoryId) { var _cc = findCategory(e.categoryId); if (_cc) e.color = _cc.color; }
+  e.place = ((document.getElementById('evPlace') || {}).value || '').trim();
   e.priority = (_evType === 'task') ? _evPrio : 'normal';
   // v315: ★・リスト・ラベル（リスト/ラベルはタスクのみ）
   e.star = !!_evStar;
@@ -17145,8 +17266,9 @@ function loginSuccess(user) {
     window._seenTimer = setInterval(updateLastSeen, 5 * 60 * 1000);
     document.addEventListener('visibilitychange', function() { if (!document.hidden) updateLastSeen(); });
   }
-  // 起動画面は「今日」ホーム
-  switchView('home');
+  // v329: 起動画面はモバイル＝予定タブ（月カレンダー）。PCは従来どおりホーム
+  applyTabPrefs();
+  switchView(isPCMode() ? 'home' : 'events');
 }
 
 function _resetAuthErrMsg(code) {
