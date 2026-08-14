@@ -1168,6 +1168,9 @@ body.cal-fs .fab{display:none!important}
 body.cal-fs .pc-sidebar{display:none!important}
 body.cal-fs .pc-toolbar{display:none!important}
 #evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full{position:fixed;inset:0;z-index:290;background:var(--bg);display:flex!important;flex-direction:column;padding-top:env(safe-area-inset-top)}
+/* v323: 「下に空白が残る」根本対策＝実際に見えている高さ(visualViewport→--vvh)をそのまま使う */
+#evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full,#map3dPane{height:var(--vvh,100dvh);bottom:auto}
+.mobile-tabbar{transform:translateY(var(--vvoff,0px))}
 /* v321: ToDoも全画面（リストが中でスクロール・下部バー固定） */
 #evAgenda.full #evAgendaList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #evAgenda.full .ev-quick-add{flex:none;padding-bottom:8px}
@@ -2049,7 +2052,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v322</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v323</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4640,7 +4643,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v322';
+  var DATA_VERSION = 'v323';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4861,8 +4864,29 @@ function closeMobileMenu() {
 }
 // ── iOS: キーボードを閉じた直後、固定表示のタップ判定が上にズレる問題の対策 ──
 // （タイトル入力→キーボード収納直後に「保存が反応しない」「違うボタンが反応する」誤ヒットが起きる）
+// v323: 実際に見えている高さ(visualViewport)をCSS変数 --vvh に反映
+// （iOSでキーボードやブラウザUIの後、レイアウト上の高さが古いまま残り「下に空白」が出る問題の根本対策。
+//   全画面ペインは height:var(--vvh) で常に見えている高さぴったりに、下部タブは --vvoff で画面最下部へ）
+function _vvhUpdate() {
+  try {
+    var vv = window.visualViewport;
+    var h = vv ? Math.round(vv.height) : window.innerHeight;
+    var root = document.documentElement;
+    root.style.setProperty('--vvh', h + 'px');
+    var off = Math.round(h - window.innerHeight);
+    root.style.setProperty('--vvoff', (off > 0 ? off : 0) + 'px');
+  } catch(e9) {}
+}
+_vvhUpdate();
+window.addEventListener('resize', _vvhUpdate);
+window.addEventListener('orientationchange', function(){ setTimeout(_vvhUpdate, 250); });
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', _vvhUpdate);
+  window.visualViewport.addEventListener('scroll', _vvhUpdate);
+}
 // キーボードで押し上げられたスクロールを必ず0に戻す。入力中（キーボード表示中）は触らない
 function _iosViewportReset() {
+  _vvhUpdate();
   try {
     var ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return;
@@ -5429,6 +5453,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v323', d:'2026-08-14', items:['📱「画面の下に空白が残る」をアプリ全体で根本修正：実際に見えている画面の高さを常に測って、カレンダー/ToDo/週/日/3Dの全画面表示と下部タブバーをその高さぴったりに合わせるようにしました（Lifebearと同じく最下部まで表示。指で動かして直す必要なし）','キーボードの開閉・画面回転・ブラウザUIの変化にも自動追従します'] },
   { v:'v322', d:'2026-08-14', items:['📅連日予定の帯をLifebear式に修正：2日目以降が細い切れ端になっていたのを、日をまたいで1本につながる帯に（週をまたいだ先頭マスにはタイトルを再表示・複数の連日予定が並んでも段がズレないように）','📱全画面カレンダー/ToDoの下に空白が残り「指で動かすまで直らない」問題を修正：キーボード開閉を検知して自動で画面の高さを復元','✅ToDo⇄🗓月表示がワンタップに：ToDoの下部バー左が「🗓カレンダー」ボタンになりました（月表示側の「✅ToDo」と対に）'] },
   { v:'v321', d:'2026-08-13', items:['✅ToDoも月表示と同じ全画面に：上のヘッダー・下のタブバーを消して、✕/‹・タイトル・🗓▾のヘッダーと「ToDo・＋・設定」の下部バーに統一（メニューに戻るバーも廃止）','旧ヘッダーの「ToDo/週/月・カテゴリ・＋タスク」ボタン行を削除してすっきり（表示切替は🗓▾・追加は下部の＋から）','⚡リストを開いたら検索欄の代わりに「＋タスクを追加」欄：打ってEnterで画面遷移なしの即追加（そのリスト/ラベル/星付き/次の7日間に合った状態で入ります）。詳しく設定したい時は隣の「⤢詳細」でフル入力画面へ（打ちかけのタイトルも引き継ぎ）','‹で一覧へ・画面左端から右スワイプでも戻れるように（ヘッダータイトルにも今いるリスト名を表示）','🗑リスト/ラベルを削除できるように：リストを開いて右上の🗑（中のタスクは消えずマイリストへ移動）','🔍検索はToDoホームの検索ボックスで（🗓▾→検索からも開けます）'] },
   { v:'v320', d:'2026-08-13', items:['🗓月表示のスクロール方式を選べるように：⚙カレンダー設定に「↔ 横（1ヶ月ずつ）／↕ 縦（連続）」を追加。既定は横＝1ヶ月が1画面にきっちり収まり、左右スワイプか‹›で月をページ送り','横モードでは前後の月のはみ出し日が薄い色になり、今月がひと目で分かります','縦（連続）を選ぶと今まで通りLifebear式のシームレス縦スクロールに'] },
