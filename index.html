@@ -541,7 +541,10 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .tap-edit:active{background:rgba(255,255,255,.1)}
 /* 予定モーダルの日付・時刻：高さを揃えてかぶり防止 */
 .ev-dt{height:46px;box-sizing:border-box;min-width:0}
-.ev-dt-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+/* v343: 開始日・終了日は折り返さず必ず横並び1行（iOSのdate入力の最小幅で折れないように縮小許可） */
+.ev-dt-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:nowrap}
+.ev-dt-row .fr{min-width:0}
+.ev-dt-row .fi{min-width:0;width:100%}
 @media(max-width:767px){.ev-dt-row>.fr{flex:1 1 100%!important}}
 .overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .22s}
 .overlay.open{opacity:1;pointer-events:all}
@@ -1021,6 +1024,9 @@ tr.ot-done{opacity:.5}
 .ev-cal-weekdays .ev-sun{color:var(--red)}
 /* v298: Lifebear式・縦に無限スクロールする連続週カレンダー（1画面5週） */
 .ev-cal-grid{display:block;overflow-y:auto;padding:0;height:72vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* v343: 月ページ送り時のふわっとフェードイン */
+.ev-cal-grid.cal-fade{animation:calFadeIn .28s ease}
+@keyframes calFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .ev-wkrow{display:grid;grid-template-columns:repeat(7,1fr);height:20%}
 .ev-cell{position:relative;min-height:0;height:100%;border:none;border-bottom:1px solid var(--border);border-right:1px solid var(--border);border-radius:0;background:transparent;display:flex;flex-direction:column;align-items:stretch;padding:0 1px 2px;cursor:pointer;overflow:hidden}
 .ev-cell.alt{background:rgba(126,138,166,.08)}
@@ -1137,6 +1143,11 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .td-back{font-size:13.5px;font-weight:700;color:var(--accent);padding:12px 14px 0;cursor:pointer}
 .td-newinp{flex:1;min-width:0;padding:8px 10px;font-size:13.5px}
 .td-newbtn{flex:none;padding:8px 14px;font-size:12.5px}
+/* v337: ホームの絞り込みチップ（すべて/今日/リスト/ラベル） */
+.td-filters{display:flex;gap:7px;overflow-x:auto;padding:9px 14px 5px;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border)}
+.td-fchip{flex:none;display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1px solid var(--border);border-radius:15px;background:var(--surface2);font-size:12.5px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap}
+.td-fchip.sel{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
+.td-fchip i{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
 /* v335: ホームのクイック追加バーと検索切替ボタン */
 .td-srchbtn{flex:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--text-dim);cursor:pointer;font-size:15px}
 .td-srchbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
@@ -1266,8 +1277,11 @@ body.cal-fs .pc-toolbar{display:none!important}
   #view-events .ev-cal-title{font-size:14px;min-width:110px}
 }
 /* v298: Lifebear式 時刻テンキー（予定モーダルz540の上） */
-.tp-ov{position:fixed;inset:0;z-index:560;background:rgba(0,0,0,.25);display:flex;align-items:flex-end}
-.tp-sheet{width:100%;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:10px 12px calc(env(safe-area-inset-bottom) + 12px)}
+/* v343: テンキーもふわっとフェードイン/アウト */
+.tp-ov{position:fixed;inset:0;z-index:560;background:rgba(0,0,0,0);display:flex;align-items:flex-end;opacity:0;transition:opacity .22s ease,background .22s ease}
+.tp-ov.show{opacity:1;background:rgba(0,0,0,.25)}
+.tp-sheet{width:100%;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:10px 12px calc(env(safe-area-inset-bottom) + 12px);transform:translateY(26px);transition:transform .22s ease}
+.tp-ov.show .tp-sheet{transform:none}
 .tp-which{font-size:11.5px;font-weight:800;color:var(--text-dim);padding:6px 6px 0}
 .tp-hd{display:flex;align-items:center;gap:8px;padding:2px 6px 10px}
 .tp-disp{font-size:24px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex:none;color:var(--text-dim);cursor:pointer;border-bottom:2.5px solid transparent;line-height:1.3}
@@ -2068,7 +2082,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v336</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v343</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2631,21 +2645,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
               <div class="rb" id="rbFemale" onclick="selGender('female')">♀ 女性</div>
             </div>
           </div>
-          <div class="ed-row">
-            <span class="ed-l">カテゴリ<span class="ed-q" onclick="edHelp(event,'h_cat')">?</span></span>
-            <div class="ed-chips">
-              <div class="rb" id="rbCatTrainee" onclick="selCategory('研修生')">研修生</div>
-              <div class="rb" id="rbCatBA" onclick="selCategory('BA')">BA</div>
-              <div class="rb" id="rbCatBR" onclick="selCategory('BR')">BR</div>
-            </div>
-          </div>
-          <div class="ed-help" id="h_cat">研修生／BA／BR。下の「タイトル」を選ぶと自動で判定されます。</div>
-          <div class="ed-row">
-            <span class="ed-l">タイトル</span>
-            <div class="ed-ctrl"><select class="ed-in" id="fTitle" onchange="onTitleChange()">
-              <option value="">カテゴリを選択</option>
-            </select><span class="ed-chev">▾</span></div>
-          </div>
+          <!-- v342: カテゴリ・タイトルは月次タブの一番上へ移動 -->
           <div style="display:none">
             <div class="rb sel" id="rbTraNo" onclick="selTrainee(false)">いいえ</div>
             <div class="rb" id="rbTraYes" onclick="selTrainee(true)">研修生（水色）</div>
@@ -2688,6 +2688,22 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
         <!-- Page 1: 月次 -->
         <div class="me-page">
+          <!-- v342: タイトル（とカテゴリ）を月次の一番上へ（毎月の昇降格と一緒に触る項目のため） -->
+          <div class="ed-row">
+            <span class="ed-l">カテゴリ<span class="ed-q" onclick="edHelp(event,'h_cat')">?</span></span>
+            <div class="ed-chips">
+              <div class="rb" id="rbCatTrainee" onclick="selCategory('研修生')">研修生</div>
+              <div class="rb" id="rbCatBA" onclick="selCategory('BA')">BA</div>
+              <div class="rb" id="rbCatBR" onclick="selCategory('BR')">BR</div>
+            </div>
+          </div>
+          <div class="ed-help" id="h_cat">研修生／BA／BR。下の「タイトル」を選ぶと自動で判定されます。</div>
+          <div class="ed-row">
+            <span class="ed-l">タイトル</span>
+            <div class="ed-ctrl"><select class="ed-in" id="fTitle" onchange="onTitleChange()">
+              <option value="">カテゴリを選択</option>
+            </select><span class="ed-chev">▾</span></div>
+          </div>
           <div class="ed-row">
             <span class="ed-l">現状GSV<span class="ed-q" onclick="edHelp(event,'h_fPtC')">?</span></span>
             <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力"></div>
@@ -3080,6 +3096,11 @@ function copyCurrentToIdeal() {
 }
 // 1メンバーのタイトル遷移を判定（GSV基準・資料ルール）
 // 返り値: { to:新タイトル, kind:'promote'|'advance'|'demote'|null, cum:審査累計pt, reason }
+// v340: 降格先のBタイトル。登録月不明（B系タイトルからの逆算も不可）は一律BM扱い
+function demoteTitleFor(m, nextMonth) {
+  if (!m.startMonth && !/^B\d+$/.test((m.title || '').trim())) return 'BM';
+  return bTitleFor(activityMonths(m, nextMonth));
+}
 function _computeTitleTransition(m, nextMonth) {
   var gsv = m.ptCurrent || 0;
   var t = (m.title || '').trim();
@@ -3090,7 +3111,7 @@ function _computeTitleTransition(m, nextMonth) {
       // 審査中
       var cum = (m.loiCumPt || 0) + gsv;
       if (gsv < LOI_MONTHLY_MIN) {
-        return { to: bTitleFor(activityMonths(m, nextMonth)), kind: 'demote', cum: 0, reason: '審査脱落（今月 ' + gsv.toLocaleString() + 'pt < ' + LOI_MONTHLY_MIN.toLocaleString() + '）' };
+        return { to: demoteTitleFor(m, nextMonth), kind: 'demote', cum: 0, reason: '審査脱落（今月 ' + gsv.toLocaleString() + 'pt < ' + LOI_MONTHLY_MIN.toLocaleString() + '）' };
       }
       if (cum >= BR_PROMOTE_CUM) {
         return { to: 'BR', kind: 'promote', cum: 0, reason: '審査累計 ' + cum.toLocaleString() + 'pt 達成' };
@@ -3099,7 +3120,7 @@ function _computeTitleTransition(m, nextMonth) {
         return { to: ['Q2', 'Q3', 'Q4'][qi], kind: 'advance', cum: cum, reason: '審査継続（累計 ' + cum.toLocaleString() + 'pt）' };
       }
       // Q4終了で5000未達
-      return { to: bTitleFor(activityMonths(m, nextMonth)), kind: 'demote', cum: 0, reason: '審査4ヶ月終了・累計 ' + cum.toLocaleString() + 'pt 未達' };
+      return { to: demoteTitleFor(m, nextMonth), kind: 'demote', cum: 0, reason: '審査4ヶ月終了・累計 ' + cum.toLocaleString() + 'pt 未達' };
     }
     if (t !== 'BM') {
       // B系：活動月数に応じて自動更新（BMは到達点なので維持）
@@ -3110,7 +3131,7 @@ function _computeTitleTransition(m, nextMonth) {
   if (t === 'BR') {
     // BR維持判定（ゴールド以上は要件が異なるため自動変更しない）
     if (gsv < BR_MAINTAIN) {
-      return { to: bTitleFor(activityMonths(m, nextMonth)), kind: 'demote', cum: 0, reason: 'BR維持失敗（今月 ' + gsv.toLocaleString() + 'pt < ' + BR_MAINTAIN.toLocaleString() + '）' };
+      return { to: demoteTitleFor(m, nextMonth), kind: 'demote', cum: 0, reason: 'BR維持失敗（今月 ' + gsv.toLocaleString() + 'pt < ' + BR_MAINTAIN.toLocaleString() + '）' };
     }
     return { to: t, kind: null, cum: 0 };
   }
@@ -3127,7 +3148,9 @@ function _showCopyPreview(cur, nextMonth, changes, onConfirm) {
         + '<div style="font-weight:600;font-size:14px">' + esc(c.name) + '</div>'
         + '<div style="font-size:12px;color:var(--text-dim,#8a94a6);margin-top:2px">'
         + esc(c.from || '—') + ' → <span style="color:' + color + ';font-weight:600">' + esc(c.to) + '</span>'
-        + (c.reason ? '　' + esc(c.reason) : '') + '</div></div>';
+        + (c.reason ? '　' + esc(c.reason) : '') + '</div>'
+        + (c.noStart ? '<div style="font-size:11px;color:#FFB454;margin-top:4px">⚠️ 登録月が未入力のため活動月数が分からず、一旦BMとして扱っています。メンバー編集で登録月を入力してからやり直すと正しいB番号になります</div>' : '')
+        + '</div>';
     }).join('');
     return '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:' + color + ';margin-bottom:6px">' + title + '（' + list.length + '）</div>' + rows + '</div>';
   }
@@ -3214,9 +3237,12 @@ function copyToNextMonth() {
   var changes = [];
   copyMembers.forEach(function(mm) {
     if (mm.traineeResult) mm.trainee = false; // 研修結果確定済みは翌月の決定率にカウントしない
+    mm.memo = ''; // v342: メモは月ごと＝翌月に持ち越さない
     var tr = _computeTitleTransition(mm, nextMonth);
     if (tr.kind === 'promote' || tr.kind === 'demote' || tr.kind === 'advance') {
-      changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: tr.reason || '' });
+      // v339: 登録月が未入力（かつB系タイトルから逆算もできない）人の降格は、活動月数が1ヶ月目扱い＝B1になるため警告
+      var _noSm = (tr.kind === 'demote' && !mm.startMonth && !/^B\d+$/.test((mm.title || '').trim()));
+      changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: tr.reason || '', noStart: _noSm });
     }
     mm.title = tr.to;
     mm.loiCumPt = tr.cum;
@@ -4679,7 +4705,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v336';
+  var DATA_VERSION = 'v343';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5520,6 +5546,13 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v343', d:'2026-08-14', items:['🗓月表示のページ送り（横スワイプ/‹›/今日）で、翌月がふわっとフェードインするように','📅予定編集の「日付・終了日」を必ず横並び1行に（画面幅が狭くても折り返しません）','⏰時刻テンキーの表示/非表示もふわっとフェードイン・フェードアウトに'] },
+  { v:'v342', d:'2026-08-14', items:['📝翌月コピー時にメンバーのメモをクリアするようにしました（メモは月ごとの記録として当月に残ります）','🏷メンバー編集の「カテゴリ・タイトル」を月次タブの一番上に移動（毎月の昇降格・GSV入力と同じ画面で完結）'] },
+  { v:'v341', d:'2026-08-14', items:['🛠MAPのGSVを0で保存すると「保存されていない」ように見える問題を修正：保存自体はされていましたが、編集画面を開き直した時に0が空欄で表示されていました。0はちゃんと「0」と表示されます','ℹ️配下がptを持っているメンバーのGSVは「配下合計＋自分の分」で表示される仕様のため、0を入力しても配下分は残ります。その場合は保存時に説明が出るようにしました'] },
+  { v:'v340', d:'2026-08-14', items:['翌月コピーの降格判定：登録月が未入力（B系タイトルからの逆算もできない）メンバーは、降格時に一旦「BM」として扱うようにしました（従来はB1扱い。プレビューの⚠️警告もBM表記に更新）'] },
+  { v:'v339', d:'2026-08-14', items:['⚠️翌月コピーの降格プレビューに「登録月未入力」警告を追加：登録月が入っていない（かつB系タイトルからの逆算もできない）メンバーが降格する場合、活動月数が1ヶ月目扱い＝B1になってしまうことを事前に警告します（登録月を入力してからやり直せば正しいB番号になります）'] },
+  { v:'v338', d:'2026-08-14', items:['🏷初期カテゴリ（ハウディ/OL/CT/ST/サイドの仕事）を廃止：最初から入っているカテゴリをなくし、必要なものだけ自分で作る方式に（残っていた初期カテゴリは自動で削除。自分で作ったカテゴリはそのまま残ります）','📌初期テンプレ（CT取り/CT/FT/PG同席/DLR動員/ミーティング）も同様に廃止（自作テンプレはそのまま残ります）'] },
+  { v:'v337', d:'2026-08-14', items:['🔖ToDo一覧の上に絞り込みチップを追加：「すべて／今日／リスト／ラベル」をワンタップで切替（画面遷移なし。今日は期限切れも含みます）','⚡絞り込み中のクイック追加はその文脈で入ります：「今日」で絞って追加→期限今日、リストで絞って追加→そのリストへ','🗑リスト/ラベルの削除ができるように：選択ピッカー（＋ボタンや編集画面のリスト/ラベル欄）の各行に🗑（タスクは消えません）','⚑重要タスクは行頭に赤い⚑が付き、同じ日の中で上に並ぶようになりました'] },
   { v:'v336', d:'2026-08-14', items:['✅ToDoをさらにシンプルに：ホームから「マイリスト・星付き・次の7日間・リスト・ラベル」のメニューを廃止し、開いた瞬間に未完了タスクが期日順でそのまま並ぶ一覧にしました（期限切れ・今日が自然に上に来ます）','各行にリスト●とラベル◎を色付きで表示（どのリストのタスクかは一覧で分かります）。リスト/ラベルの選択・作成は＋ボタンのクイックシートとタスク編集画面から','⭐星付き機能を廃止（重要なタスクは編集画面の「⚑重要」をお使いください）','完了したタスクは一番下の「✓完了タスク」から'] },
   { v:'v335', d:'2026-08-14', items:['✅タスク入力を全面的に高速化・明確化：','①保存＝1タップで1件確定して画面が閉じるように（「タイトルが消えて保存されたか分からない」連続追加モードを廃止。続けて入れたい時は保存後のトーストの「＋続けて追加」から）','②ToDoホームの一番上に「＋タスクを追加」欄を常設：開いた瞬間に打ってEnterで即マイリストへ（Enter後も続けて入力可能）。検索は右の🔍ボタンに格納','③下部バーの＋が1行クイックシートに：タスク名＋期限チップ（なし/今日/明日）＋リスト選択でEnter即保存。作り込みたい時は「⤢詳細入力」でフル画面へ（入力内容は引き継ぎ）','④サブタスクのチェックが編集画面不要に：ToDo行の「☑1/3」をタップ→行の下に展開してその場でチェック。タスクをタップした詳細シートにもチェックリストを表示（追加・削除は今まで通り編集画面の詳細から）'] },
   { v:'v334', d:'2026-08-14', items:['🔔同じ通知が2件届く問題の対策：1台の端末に古い通知登録（Safariで開いた時や再インストール前のもの）が残ると2重に届くため、新しい登録時に古い登録を自動削除するようにしました','⚙設定に「🧹 通知が2重に届く時はこちら（古い登録を掃除）」ボタンを追加：今使っている端末の登録だけを残して他を解除します'] },
@@ -10580,7 +10613,7 @@ function openEdit(id) {
 
     var set = function(elId, val) {
       var el = document.getElementById(elId);
-      if (el) el.value = val||'';
+      if (el) el.value = (val === 0) ? '0' : (val || ''); // v341: 0が空欄に化けて「保存されていない」ように見える問題を修正
     };
     var _mnm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || 'メンバー編集';
     document.getElementById('shTitle').textContent = _mnm;
@@ -10949,8 +10982,11 @@ function saveMember() {
   }
   // 入力されたGSVを「自分の分(ptSelf)」に変換し、配下合計を差し引いてアップラインへ反映
   var _gsvIn = parseInt(document.getElementById('fPtC').value)||0;
-  m.ptSelf = Math.max(0, _gsvIn - sumChildGSV(m.id, state.members));
+  var _chSum = sumChildGSV(m.id, state.members);
+  m.ptSelf = Math.max(0, _gsvIn - _chSum);
   recalcAllGSV();
+  // v341: 配下がpt持ちの場合、GSVは「配下合計＋自分の分」のため入力値より大きく表示される（0にしても配下分は残る）ことを明示
+  if (_gsvIn < _chSum) setTimeout(function(){ toast('ℹ️ 配下の合計 ' + _chSum.toLocaleString() + 'pt があるため、GSVは配下合計＋自分の分（' + _chSum.toLocaleString() + 'pt〜）で表示されます'); }, 400);
   closeModal();
   renderCurrentView();
   autoSave();
@@ -12333,6 +12369,10 @@ function loadEvents(uid) {
     return fsGet('maps/' + uid + '/meta/eventCategories');
   }).then(function(catDoc) {
     if (catDoc && catDoc.list) {
+      // v338: 保存済みデータに旧・初期カテゴリ（cat_def_*）が残っていたら除去（自作カテゴリは残る）
+      var _bc = catDoc.list.length;
+      catDoc.list = catDoc.list.filter(function(c){ return !(c && c.id && String(c.id).indexOf('cat_def_') === 0); });
+      if (catDoc.list.length !== _bc) { state.categories = catDoc.list; saveCategories(); }
       if (categoriesAreOldDefault(catDoc.list)) {
         // 旧デフォルトのまま未編集 → 新デフォルトへ自動移行
         state.categories = defaultCategories();
@@ -12470,7 +12510,10 @@ function tdHomeSubmit() {
   var title = (inp.value || '').trim();
   if (!title) { try { inp.focus(); } catch(e0) {} return; }
   if (!eventsUid()) { toast('ログインが必要です'); return; }
-  var e = _tdMakeTask(title, '', '');
+  // v337: 絞り込み中はその文脈で追加（今日→期限今日 / リスト→そのリスト / ラベル→そのラベル）
+  var F = _todoFilter || { type: 'all' };
+  var e = _tdMakeTask(title, (F.type === 'today') ? evTodayYmd() : '', (F.type === 'list') ? F.id : '');
+  if (F.type === 'label') e.labelId = F.id;
   state.events.push(e);
   saveEventDoc(e);
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
@@ -12478,7 +12521,11 @@ function tdHomeSubmit() {
   renderEvents();
   var inp2 = document.getElementById('tdHomeNew');
   if (inp2) { inp2.value = ''; try { inp2.focus(); } catch(e1) {} }
-  toast('✓ 「' + title + '」をマイリストに追加しました');
+  var _dest = 'マイリスト';
+  if (F.type === 'today') _dest = '今日';
+  else if (F.type === 'list') { var _L9 = _todoListById(F.id); if (_L9) _dest = _L9.name; }
+  else if (F.type === 'label') { var _B9 = _todoLabelById(F.id); if (_B9) _dest = '◎' + _B9.name; }
+  toast('✓ 「' + title + '」を' + _dest + 'に追加しました');
   gameCheck();
 }
 function todoSearchToggle(on) {
@@ -13020,12 +13067,8 @@ function findCategory(id) {
 }
 // 初回のみ投入する初期カテゴリ候補（ユーザーは自由に編集・削除可）
 function defaultCategories() {
+  // v338: 初期カテゴリの自動投入は廃止（必要なカテゴリは自分で作る）
   return [
-    { id: 'cat_def_howdy', name: 'ハウディ',     color: '#5AD7FF' }, // 青
-    { id: 'cat_def_ol',    name: 'OL',           color: '#4ADE80' }, // 緑
-    { id: 'cat_def_ct',    name: 'CT',           color: '#FF87B3' }, // ピンク
-    { id: 'cat_def_st',    name: 'ST',           color: '#FFB454' }, // オレンジ
-    { id: 'cat_def_side',  name: 'サイドの仕事', color: '#FFD166' }  // 黄色
   ];
 }
 // 旧デフォルト（v152〜v158で投入された5種）。未編集ならこれを検出して新デフォルトへ自動移行する。
@@ -14089,8 +14132,16 @@ function calGoToday() {
   _calYear = n.getFullYear(); _calMonth = n.getMonth();
   var title = document.getElementById('evCalTitle');
   if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
-  if (_calScrollMode !== 'v') { renderCalendar(); return; } // v320: 横モード＝今月を描画
+  if (_calScrollMode !== 'v') { renderCalendar(); _calFadeGrid(); return; } // v320: 横モード＝今月を描画
   _calScrollToYmd(evTodayYmd(), true); // v298: 今日の週へスクロール
+}
+// v343: 月ページ送り時のフェードイン（アニメを一度外して再付与）
+function _calFadeGrid() {
+  var g = document.getElementById('evCalGrid');
+  if (!g) return;
+  g.classList.remove('cal-fade');
+  void g.offsetWidth; // reflowでアニメをリセット
+  g.classList.add('cal-fade');
 }
 // CAL-FS: 左右スワイプで月移動（全画面カレンダー）
 var _calTS = null;
@@ -14400,6 +14451,11 @@ function evGrpToggle(k) { _evGrpCol[k] = !_evGrpCol[k]; renderAgenda(); }
 // ── v315: Lifebear式ToDo＝リスト/ラベル（maps/{uid}/meta/todoMeta に保存） ──
 var _todoMeta = null; // {lists:[{id,name,color}], labels:[{id,name,color}]}
 var _todoNav = { type: 'home' }; // home | {type:'smart',key:'my'|'star'|'week'|'done'} | {type:'list',id} | {type:'label',id}
+var _todoFilter = { type: 'all', id: '' }; // v337: ホーム一覧の絞り込み（all|today|list|label）
+function todoSetFilter(type, id) {
+  _todoFilter = { type: type || 'all', id: id || '' };
+  renderAgenda();
+}
 function _todoMetaEnsure() {
   if (_todoMeta) return Promise.resolve(_todoMeta);
   var uid = goalsUid();
@@ -14502,6 +14558,33 @@ function todoQuickAdvanced() {
   updateTodoMetaDisplay();
   if (b.date) { var dEl = document.getElementById('evDate'); if (dEl) dEl.value = b.date; }
   if (val) document.getElementById('evTitle').value = val;
+}
+// v337: 選択ピッカー内からのリスト/ラベル削除（ピッカーを開いたまま更新）
+function todoPickDel(kind, id) {
+  var it = kind === 'label' ? _todoLabelById(id) : _todoListById(id);
+  if (!it || !_todoMeta) return;
+  var msg = kind === 'label'
+    ? 'ラベル「' + it.name + '」を削除しますか？\n（タスク自体は残り、ラベルだけ外れます）'
+    : 'リスト「' + it.name + '」を削除しますか？\n（中のタスクは消えずマイリストに移動します）';
+  if (!confirm(msg)) return;
+  var arr = kind === 'label' ? _todoMeta.labels : _todoMeta.lists;
+  for (var i = 0; i < arr.length; i++) { if (arr[i].id === id) { arr.splice(i, 1); break; } }
+  _todoMetaSave();
+  (state.events || []).forEach(function(e){
+    if (kind === 'label' ? (e.labelId === id) : (e.listId === id)) {
+      if (kind === 'label') e.labelId = ''; else e.listId = '';
+      e.updatedAt = new Date().toISOString();
+      saveEventDoc(e);
+    }
+  });
+  // 編集中/クイックシート/絞り込みで参照していたら解除
+  if (kind === 'label' && _evLabelId === id) { _evLabelId = ''; updateTodoMetaDisplay(); }
+  if (kind === 'list' && _evListId === id) { _evListId = ''; updateTodoMetaDisplay(); }
+  if (typeof _tqListId !== 'undefined' && _tqListId === id) { _tqListId = ''; _tqRenderChips(); }
+  if (_todoFilter && _todoFilter.type === kind && _todoFilter.id === id) _todoFilter = { type: 'all', id: '' };
+  renderAgenda();
+  _todoPickerRender(kind);
+  toast('🗑 ' + (kind === 'label' ? 'ラベル' : 'リスト') + '「' + it.name + '」を削除しました');
 }
 // v321: リスト/ラベルの削除（タスク自体は消さない）
 function todoDeleteList(kind, id) {
@@ -14849,7 +14932,7 @@ function todoRowHtml(e) {
   var h = '<div class="td-row' + (e.done ? ' done' : '') + '" data-eid="' + e.id + '">'
     + '<div class="td-chk' + (e.done ? ' on' : '') + '" onclick="toggleEventDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</div>'
     + '<div class="td-body" onclick="openEventActions(\'' + e.id + '\')">'
-    + '<div class="td-ttl">' + evEsc(e.title || '(無題)') + '</div>'
+    + '<div class="td-ttl">' + (e.priority === 'high' ? '<span style="color:var(--red);font-weight:800">⚑ </span>' : '') + evEsc(e.title || '(無題)') + '</div>'
     + ((due || subTx || lb || ls) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + evEsc(due) + (subTx ? ' ' + subTx : '') + (ls ? ' <span style="color:' + ls.color + '">●' + evEsc(ls.name) + '</span>' : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
     + '</div>'
     + '</div>';
@@ -14865,6 +14948,9 @@ function todoRowHtml(e) {
 function _todoSortDue(a, b) {
   var da = a.date || '9999-99-99', db2 = b.date || '9999-99-99';
   if (da !== db2) return da < db2 ? -1 : 1;
+  // v337: 同じ日の中では ⚑重要 を上に
+  var pa = a.priority === 'high' ? 0 : 1, pb = b.priority === 'high' ? 0 : 1;
+  if (pa !== pb) return pa - pb;
   return (a.time || '99:99') < (b.time || '99:99') ? -1 : 1;
 }
 function _todoHomeRow(icon, name, count, onclick, colorDot) {
@@ -14984,10 +15070,31 @@ function renderAgenda() {
   // ── ToDoホーム（v336: ナビ画面を廃止し、未完了タスクを期日順で直接表示するシンプル一覧に） ──
   var undoneAll = tasks.filter(function(e){ return !e.done; }).slice().sort(_todoSortDue);
   var doneCt = tasks.length - undoneAll.length;
-  var h = '';
-  h += undoneAll.length
-    ? undoneAll.map(todoRowHtml).join('')
-    : '<div class="ev-empty" style="padding:28px 16px">タスクはありません。上の入力欄に打ってEnterですぐ追加できます</div>';
+  // v337: 絞り込みチップ（すべて/今日/リスト/ラベル）。削除済みリストの絞り込みは自動解除
+  var F = _todoFilter || { type: 'all', id: '' };
+  if ((F.type === 'list' && !_todoListById(F.id)) || (F.type === 'label' && !_todoLabelById(F.id))) {
+    F = _todoFilter = { type: 'all', id: '' };
+  }
+  function fchip(sel, onclick, inner) { return '<div class="td-fchip' + (sel ? ' sel' : '') + '" onclick="' + onclick + '">' + inner + '</div>'; }
+  var fch = '<div class="td-filters">'
+    + fchip(F.type === 'all', "todoSetFilter('all')", 'すべて')
+    + fchip(F.type === 'today', "todoSetFilter('today')", '今日');
+  ((_todoMeta && _todoMeta.lists) || []).forEach(function(L){
+    fch += fchip(F.type === 'list' && F.id === L.id, "todoSetFilter('list','" + L.id + "')", '<i style="background:' + L.color + '"></i>' + evEsc(L.name));
+  });
+  ((_todoMeta && _todoMeta.labels) || []).forEach(function(LB){
+    fch += fchip(F.type === 'label' && F.id === LB.id, "todoSetFilter('label','" + LB.id + "')", '<i style="background:' + LB.color + ';border-radius:50%"></i>' + evEsc(LB.name));
+  });
+  fch += '</div>';
+  var t9 = evTodayYmd();
+  var shown = undoneAll;
+  if (F.type === 'today') shown = undoneAll.filter(function(e){ return e.date && e.date <= t9; }); // 期限切れも含む
+  else if (F.type === 'list') shown = undoneAll.filter(function(e){ return e.listId === F.id; });
+  else if (F.type === 'label') shown = undoneAll.filter(function(e){ return e.labelId === F.id; });
+  var h = fch;
+  h += shown.length
+    ? shown.map(todoRowHtml).join('')
+    : '<div class="ev-empty" style="padding:28px 16px">' + (F.type === 'all' ? 'タスクはありません。上の入力欄に打ってEnterですぐ追加できます' : 'この絞り込みに該当するタスクはありません') + '</div>';
   h += '<div class="td-secttl">完了済み</div>';
   h += _todoHomeRow('✓', '完了タスク', doneCt, "todoNavTo('smart','done')");
   wrap.innerHTML = h;
@@ -15002,8 +15109,8 @@ function calShiftMonth(delta) {
   else if (_calMonth > 11) { _calMonth = 0; _calYear++; }
   var title = document.getElementById('evCalTitle');
   if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
-  // v320: 横モード＝その月だけを描画し直す（ページ送り）
-  if (_calScrollMode !== 'v') { renderCalendar(); return; }
+  // v320: 横モード＝その月だけを描画し直す（ページ送り）。v343: ふわっとフェードイン
+  if (_calScrollMode !== 'v') { renderCalendar(); _calFadeGrid(); return; }
   // v298: 縦モード＝再描画せずその月の1日の週へスクロール（連続カレンダー）
   _calScrollToYmd(_calYear + '-' + evPad2(_calMonth + 1) + '-01', true);
 }
@@ -15526,7 +15633,8 @@ function _todoPickerRender(kind) {
     + '<div style="padding:0 8px 20px">'
     + '<div class="td-home-row" onclick="todoPickSet(\'' + kind + '\',\'\')"><span class="td-hicon" style="background:#9ca3af;width:12px;height:12px;border-radius:50%"></span><span class="td-hname">' + (kind === 'label' ? 'なし' : 'マイリスト（既定）') + '</span>' + (cur === '' ? '<span style="color:var(--accent);font-weight:800">✓</span>' : '') + '</div>';
   arr.forEach(function(it){
-    h += '<div class="td-home-row" onclick="todoPickSet(\'' + kind + '\',\'' + it.id + '\')"><span class="tplp-dot" style="background:' + it.color + '"></span><span class="td-hname">' + evEsc(it.name) + '</span>' + (cur === it.id ? '<span style="color:var(--accent);font-weight:800">✓</span>' : '') + '</div>';
+    h += '<div class="td-home-row" onclick="todoPickSet(\'' + kind + '\',\'' + it.id + '\')"><span class="tplp-dot" style="background:' + it.color + '"></span><span class="td-hname">' + evEsc(it.name) + '</span>' + (cur === it.id ? '<span style="color:var(--accent);font-weight:800">✓</span>' : '')
+      + '<span class="td-del" style="margin-left:8px" onclick="event.stopPropagation();todoPickDel(\'' + kind + '\',\'' + it.id + '\')" title="削除">🗑</span></div>'; // v337: ピッカーから削除可能
   });
   h += '<div class="td-home-row mk"><span class="td-hicon">＋</span><input class="fi td-newinp" id="tdPickNew" placeholder="' + (kind === 'label' ? 'ラベルを作成' : 'リストを作成') + '" autocomplete="off" onkeydown="todoCreateKey(event,\'' + kind + '\',\'tdPickNew\',true)"><button class="btn-c td-newbtn" onclick="todoCreateSubmit(\'' + kind + '\',\'tdPickNew\',true)">追加</button></div>'
     + '</div></div>';
@@ -15720,6 +15828,7 @@ function openTimePad(targetId) {
     + k('0') + k('00') + k('30')
     + '</div></div>';
   document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); }); // v343: ふわっとフェードイン
   tpRender();
 }
 // タップで開始/終了の編集対象を切替（入力途中の値は確定してから移動）
@@ -15830,7 +15939,12 @@ function tpClear() {
 function closeTimePad(commit) {
   var ov = document.getElementById('tpOv');
   if (commit) _tpCommitCurrent(); // 入力途中の値も確定して閉じる（完了ボタン）
-  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  if (ov) {
+    // v343: ふわっとフェードアウト（idを外して、フェード中でも次のパッドをすぐ開けるように）
+    ov.id = '';
+    ov.classList.remove('show');
+    setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 240);
+  }
   _tpTarget = null; _tpBuf = '';
 }
 // v299: 終日トグル（ONで時刻を消して薄く表示）
@@ -15868,24 +15982,21 @@ function evToggleAdv(force) {
 var _evTpl = null;          // 読み込み済みテンプレ配列（null=未読込）
 var _evTplSel = null;       // モーダルで選択中のテンプレ
 var _evTplTitleAuto = '';   // テンプレが自動生成したタイトル（手入力を上書きしない判定用）
-function _evTplDefaults() {
-  return [
-    { id:'tpl_ctget', name:'CT取り',      emoji:'📲', type:'task',  durationMin:30,  defaultTime:'', notifyOffset:'', titleTpl:'{name}CT取り',  categoryId:'', stage:'ctget', memo:'' },
-    { id:'tpl_ct',    name:'CT',          emoji:'☕', type:'event', durationMin:60,  defaultTime:'', notifyOffset:30, titleTpl:'{name}CT',      categoryId:'', stage:'ct',    memo:'' },
-    { id:'tpl_ft',    name:'FT',          emoji:'🎤', type:'event', durationMin:60,  defaultTime:'', notifyOffset:30, titleTpl:'{name}FT',      categoryId:'', stage:'ft',    memo:'' },
-    { id:'tpl_pg',    name:'PG同席',      emoji:'🎓', type:'event', durationMin:120, defaultTime:'', notifyOffset:60, titleTpl:'{name}PG同席',  categoryId:'', stage:'pg',    memo:'' },
-    { id:'tpl_dlr',   name:'DLR動員',     emoji:'🎪', type:'event', durationMin:180, defaultTime:'', notifyOffset:60, titleTpl:'{name}DLR動員', categoryId:'', stage:'dlr',   memo:'' },
-    { id:'tpl_mtg',   name:'ミーティング', emoji:'🏛', type:'event', durationMin:60,  defaultTime:'', notifyOffset:30, titleTpl:'ミーティング',   categoryId:'', stage:'',      memo:'' }
-  ];
-}
+// v338: 初期テンプレ（CT取り/CT/FT/PG同席/DLR動員/ミーティング）は廃止＝自分で作ったものだけ
+function _evTplDefaults() { return []; }
+var _TPL_OLD_DEF_IDS = { tpl_ctget: 1, tpl_ct: 1, tpl_ft: 1, tpl_pg: 1, tpl_dlr: 1, tpl_mtg: 1 };
 function _evTplEnsure() {
   if (_evTpl) return Promise.resolve(_evTpl);
   var uid = goalsUid();
-  if (!uid || !db) { _evTpl = _evTplDefaults(); return Promise.resolve(_evTpl); }
+  if (!uid || !db) { _evTpl = []; return Promise.resolve(_evTpl); }
   return fsGet('maps/' + uid + '/meta/evTemplates').then(function(d){
-    _evTpl = (d && d.items && d.items.length) ? d.items : _evTplDefaults();
+    _evTpl = (d && d.items) ? d.items : [];
+    // v338: 保存済みデータに旧・初期テンプレが残っていたら除去（自作テンプレは残る）
+    var _b = _evTpl.length;
+    _evTpl = _evTpl.filter(function(t){ return !(t && _TPL_OLD_DEF_IDS[t.id]); });
+    if (_evTpl.length !== _b) _evTplSaveAll();
     return _evTpl;
-  }).catch(function(){ _evTpl = _evTplDefaults(); return _evTpl; });
+  }).catch(function(){ _evTpl = []; return _evTpl; });
 }
 function _evTplSaveAll() {
   var uid = goalsUid();
