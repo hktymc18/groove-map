@@ -1028,7 +1028,7 @@ tr.ot-done{opacity:.5}
 .ev-cal-grid.cal-fade{animation:calFadeIn .28s ease}
 @keyframes calFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .ev-wkrow{display:grid;grid-template-columns:repeat(7,1fr);height:20%}
-.ev-cell{position:relative;min-height:0;height:100%;border:none;border-bottom:1px solid var(--border);border-right:1px solid var(--border);border-radius:0;background:transparent;display:flex;flex-direction:column;align-items:stretch;padding:0 1px 2px;cursor:pointer;overflow:hidden}
+.ev-cell{position:relative;min-height:0;height:100%;border:none;border-bottom:1px solid var(--border);border-right:1px solid var(--border);border-radius:0;background:transparent;display:flex;flex-direction:column;align-items:stretch;padding:0 1px 2px;cursor:pointer;overflow:visible} /* v344: 連日帯を境界の上まで描くためvisibleに */
 .ev-cell.alt{background:rgba(126,138,166,.08)}
 body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cell-num.m1{width:auto;padding:0 7px;font-weight:800;background:var(--surface3);align-self:center}
@@ -1061,9 +1061,9 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-bar.ev-hol{background:transparent;color:var(--red);font-weight:700;padding:0 2px}
 /* v299/v322: 連日予定の帯＝Lifebear式にマスの境界を跨いで1本の帯として繋がる
  * （span-m/e が内容幅に潰れて細切れに見えるバグを flex:1 で修正） */
-.ev-bar.span-s{border-radius:3px 0 0 3px;margin-right:-3px}
-.ev-bar.span-m{border-radius:0;margin-left:-3px;margin-right:-3px;width:auto;flex:1 1 auto;min-width:0}
-.ev-bar.span-e{border-radius:0 3px 3px 0;margin-left:-3px;width:auto;flex:1 1 auto;min-width:0}
+.ev-bar.span-s{border-radius:3px 0 0 3px;margin-right:-3px;position:relative;z-index:2}
+.ev-bar.span-m{border-radius:0;margin-left:-3px;margin-right:-3px;width:auto;flex:1 1 auto;min-width:0;position:relative;z-index:2}
+.ev-bar.span-e{border-radius:0 3px 3px 0;margin-left:-3px;width:auto;flex:1 1 auto;min-width:0;position:relative;z-index:2}
 .ev-more{font-size:9px;color:var(--text-dim);padding-left:3px}
 /* 選択日パネル（CAL-1：ボトムシート→カレンダー直下のインライン表示） */
 .ev-day-panel{margin:10px 14px calc(env(safe-area-inset-bottom) + 90px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 12px}
@@ -1161,6 +1161,9 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-act-subs{margin-top:10px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface2)}
 .ev-act-subs .ev-sub-row{padding:11px 12px;border-bottom:1px solid var(--border)}
 .ev-act-subs .ev-sub-row:last-child{border-bottom:none}
+/* v344: 詳細シートのサブタスク追加欄 */
+.ev-act-subadd{display:flex;gap:8px;margin-top:10px}
+.ev-act-subadd input{flex:1;min-width:0}
 .ev-cal-vmenu{position:fixed;top:calc(env(safe-area-inset-top) + 50px);right:10px;z-index:296;background:var(--surface2);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden;min-width:132px}
 .ev-cal-vitem{padding:12px 16px;font-size:13.5px;font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border)}
 .ev-cal-vitem:last-child{border-bottom:none}
@@ -2082,7 +2085,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v343</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v344</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2831,7 +2834,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div class="ev-dt-row">
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl" id="evDateLbl">日付</label><input class="fi ev-dt" id="evDate" type="date"></div>
-      <div class="fr" style="flex:1;margin-bottom:0" id="evDateEndWrap"><label class="fl">終了日（連日・任意）</label><input class="fi ev-dt" id="evDateEnd" type="date"></div>
+      <div class="fr" style="flex:1;margin-bottom:0" id="evDateEndWrap"><label class="fl">終了日（連日・任意）</label><input class="fi ev-dt" id="evDateEnd" type="date" onfocus="evDateEndFocus()"></div>
     </div>
     <div class="ev-dt-row">
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl" id="evTimeLbl">時刻（任意）開始〜終了</label>
@@ -2844,18 +2847,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
     </div>
     <!-- v315/v316: タスクのみ＝Lifebear式のリスト/ラベル -->
+    <!-- v344: ラベル欄は廃止（リストのみ） -->
     <div class="ev-dt-row" id="evTaskMetaRow" style="display:none">
       <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">📄 リスト</label>
         <div class="ev-cat-field" onclick="openTodoPicker('list')">
           <span class="cat-swatch" id="evListSwatch" style="background:#9ca3af"></span>
           <span id="evListName" style="flex:1">マイリスト</span>
-          <span style="color:var(--text-dim)">▾</span>
-        </div>
-      </div>
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">🏷 ラベル</label>
-        <div class="ev-cat-field" onclick="openTodoPicker('label')">
-          <span class="cat-swatch" id="evLabelSwatch" style="background:#9ca3af"></span>
-          <span id="evLabelName" style="flex:1">なし</span>
           <span style="color:var(--text-dim)">▾</span>
         </div>
       </div>
@@ -4705,7 +4702,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v343';
+  var DATA_VERSION = 'v344';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5546,6 +5543,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v344', d:'2026-08-15', items:['📌テンプレの開始時刻も15分刻みに','📅連日予定の帯が日の境界線の上まで隙間なくつながるように（Lifebearと同じ見た目）','🎨色パレットを18色→38色に拡張','終了日欄をタップすると自動で「開始日の翌日」が入るように（連日入力の手間削減）','🔔新規タスクの通知は既定で「時刻ちょうど」に','✅タスク編集からラベル欄を削除（リストのみに）','✅サブタスクは編集画面から廃止し、タスクをタップした詳細シートで追加・チェック・✕削除が完結するように','📄新規タスクのリストは「直近に使ったリスト」が自動で選ばれるように'] },
   { v:'v343', d:'2026-08-14', items:['🗓月表示のページ送り（横スワイプ/‹›/今日）で、翌月がふわっとフェードインするように','📅予定編集の「日付・終了日」を必ず横並び1行に（画面幅が狭くても折り返しません）','⏰時刻テンキーの表示/非表示もふわっとフェードイン・フェードアウトに'] },
   { v:'v342', d:'2026-08-14', items:['📝翌月コピー時にメンバーのメモをクリアするようにしました（メモは月ごとの記録として当月に残ります）','🏷メンバー編集の「カテゴリ・タイトル」を月次タブの一番上に移動（毎月の昇降格・GSV入力と同じ画面で完結）'] },
   { v:'v341', d:'2026-08-14', items:['🛠MAPのGSVを0で保存すると「保存されていない」ように見える問題を修正：保存自体はされていましたが、編集画面を開き直した時に0が空欄で表示されていました。0はちゃんと「0」と表示されます','ℹ️配下がptを持っているメンバーのGSVは「配下合計＋自分の分」で表示される仕様のため、0を入力しても配下分は残ります。その場合は保存時に説明が出るようにしました'] },
@@ -12597,6 +12595,7 @@ function tqSave() {
   var title = (inp.value || '').trim();
   if (!title) { try { inp.focus(); } catch(e0) {} return; }
   var e = _tdMakeTask(title, _tqDate, _tqListId);
+  if (e.listId) try { localStorage.setItem('gm_lastListId', e.listId); } catch(eLS) {} // v344: 直近リストを記憶
   state.events.push(e);
   saveEventDoc(e);
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
@@ -13053,7 +13052,7 @@ function notifyDueEvents() {
 //  カテゴリ（色分け）
 // ============================================================
 /* v313: 色の種類を18色に拡張（既存カテゴリの色はそのまま保持される） */
-var CAT_COLORS = ['#FF5D73','#F97316','#FFB454','#FFD166','#84CC16','#8BC34A','#4ADE80','#14B8A6','#3ED5C4','#5AD7FF','#0EA5E9','#6366f1','#8B5CF6','#C583FF','#EC4899','#FF87B3','#a87c5a','#9ca3af'];
+var CAT_COLORS = ['#FF5D73','#F97316','#FFB454','#FFD166','#84CC16','#8BC34A','#4ADE80','#14B8A6','#3ED5C4','#5AD7FF','#0EA5E9','#6366f1','#8B5CF6','#C583FF','#EC4899','#FF87B3','#a87c5a','#9ca3af','#DC2626','#B91C1C','#EA580C','#D97706','#CA8A04','#EAB308','#65A30D','#16A34A','#059669','#0D9488','#0891B2','#0284C7','#2563EB','#4F46E5','#7C3AED','#9333EA','#C026D3','#DB2777','#E11D48','#78716C'];
 var UNCAT_COLOR = '#9ca3af';
 var _evCategoryId = '';     // イベントモーダルで選択中のカテゴリ
 var _catPickMode  = false;  // シートが「イベントへ割当」モードか
@@ -14680,8 +14679,13 @@ function openEventActions(id) {
       ? '<div class="ev-act-subs">' + subs.map(function(s){
           return '<div class="ev-sub-row' + (s.done ? ' done' : '') + '" onclick="evActSubToggle(\'' + id + '\',\'' + evEsc(s.id) + '\')">'
             + '<span class="ev-sub-chk">' + (s.done ? '✓' : '') + '</span>'
-            + '<span class="ev-sub-t">' + evEsc(s.t || '') + '</span></div>';
+            + '<span class="ev-sub-t">' + evEsc(s.t || '') + '</span>'
+            + '<span class="ev-sub-x" onclick="event.stopPropagation();evActSubDel(\'' + id + '\',\'' + evEsc(s.id) + '\')">✕</span></div>';
         }).join('') + '</div>'
+      : '')
+    // v344: サブタスクの追加もここから（編集画面の追加欄は廃止）
+    + (e.type === 'task'
+      ? '<div class="ev-act-subadd"><input class="fi" id="evActSubNew" placeholder="＋ サブタスクを追加（Enter）" autocomplete="off" onkeydown="evActSubKey(event,\'' + id + '\')"><button class="btn-c" style="flex:none;padding:9px 14px" onclick="evActSubAdd(\'' + id + '\')">追加</button></div>'
       : '')
     // v319: ワンタップで日付移動（編集画面を開かずリスケ）
     + '<div class="ev-act-move"><span class="ev-act-mvttl">📆 移動:</span>'
@@ -14839,6 +14843,34 @@ function evSubExpandToggle(id) {
 // v335: 操作シート内のサブタスクチェック（トグル後にシートを開き直して表示を更新）
 function evActSubToggle(eid, sid) {
   evSubToggle(eid, sid);
+  openEventActions(eid);
+}
+// v344: 詳細シートからサブタスクを追加・削除
+function evActSubKey(ev, id) {
+  if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); evActSubAdd(id); }
+}
+function evActSubAdd(id) {
+  var inp = document.getElementById('evActSubNew');
+  if (!inp) return;
+  var t = (inp.value || '').trim();
+  if (!t) { try { inp.focus(); } catch(e0) {} return; }
+  var e = findEvent(id);
+  if (!e) return;
+  e.subtasks = e.subtasks || [];
+  e.subtasks.push({ id: 'st_' + Date.now() + '_' + Math.floor(Math.random() * 10000), t: t, done: false });
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  renderEvents();
+  openEventActions(id); // シートを更新
+  setTimeout(function(){ var i2 = document.getElementById('evActSubNew'); if (i2) try { i2.focus(); } catch(e1) {} }, 80); // 連続入力
+}
+function evActSubDel(eid, sid) {
+  var e = findEvent(eid);
+  if (!e || !e.subtasks) return;
+  e.subtasks = e.subtasks.filter(function(s){ return s.id !== sid; });
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  renderEvents();
   openEventActions(eid);
 }
 function evSubToggle(eid, sid) {
@@ -15583,9 +15615,9 @@ function selEvType(t) {
   // v316: タスクにテンプレは不要（⧉ボタン・パネルごと非表示）
   var tt = document.getElementById('evTplToggle');
   if (tt) tt.style.display = isTask ? 'none' : '';
-  // v329: サブタスクはタスク専用（予定の編集画面には出さない）
+  // v344: サブタスクの追加は編集画面から廃止（タスクの詳細シートで追加・チェック・削除）
   var sr = document.getElementById('evSubRow');
-  if (sr) sr.style.display = isTask ? '' : 'none';
+  if (sr) sr.style.display = 'none';
   if (isTask) {
     _evTplPanelOpen = false;
     var tr = document.getElementById('evTplRow');
@@ -15947,6 +15979,16 @@ function closeTimePad(commit) {
   }
   _tpTarget = null; _tpBuf = '';
 }
+// v344: 終了日欄をタップしたら、空なら開始日の翌日を自動セット（連日入力の手間を削減）
+function evDateEndFocus() {
+  var s = document.getElementById('evDate');
+  var en = document.getElementById('evDateEnd');
+  if (!s || !en || en.value || !s.value) return;
+  var p = s.value.split('-');
+  var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+  d.setDate(d.getDate() + 1);
+  en.value = evYmd(d);
+}
 // v299: 終日トグル（ONで時刻を消して薄く表示）
 var _evAllDay = false;
 function evToggleAllDay(force) {
@@ -16285,7 +16327,7 @@ function openEvTplEdit(id) {
     + fld('種別', '<select class="fi" id="evtF_type">' + typeOpts + '</select>')
     + '<div style="display:flex;gap:8px">'
     + '<div style="flex:1">' + fld('所要（分）', '<input class="fi" id="evtF_dur" type="number" min="0" step="15" value="' + (t ? (t.durationMin || 0) : 60) + '">') + '</div>'
-    + '<div style="flex:1">' + fld('開始時刻の既定（任意）', '<input class="fi" id="evtF_time" type="time" value="' + evEsc(t ? (t.defaultTime || '') : '') + '">') + '</div>'
+    + '<div style="flex:1">' + fld('開始時刻の既定（任意）', '<input class="fi" id="evtF_time" type="time" step="900" value="' + evEsc(t ? (t.defaultTime || '') : '') + '">') + '</div>'
     + '</div>'
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
     + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
@@ -16431,7 +16473,7 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   if (_pl) _pl.value = e ? (e.place || '') : '';
   evToggleAdv(_hasAdv || !!presetMember);
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
-  var rb = e ? e.remindBefore : '';
+  var rb = e ? e.remindBefore : (effType === 'task' ? 0 : ''); // v344: 新規タスクは通知「時刻ちょうど」が既定
   document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
   // S2: 行から移設した「Googleカレンダーに追加」リンク（未連携＆日付ありの既存予定のみ）
   var _gr = document.getElementById('evGcalRow');
@@ -16447,6 +16489,13 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   _evStar = e ? !!e.star : false;
   _evListId = e ? (e.listId || '') : '';
   _evLabelId = e ? (e.labelId || '') : '';
+  // v344: 新規タスクのリストは「直近に使ったリスト」を既定に
+  if (!id && effType === 'task' && !_evListId) {
+    try {
+      var _ll = localStorage.getItem('gm_lastListId') || '';
+      if (_ll && _todoListById(_ll)) _evListId = _ll;
+    } catch(eLL) {}
+  }
   _evStarRender();
   updateTodoMetaDisplay();
   buildEvMemberOptions(e ? (e.memberId || '') : (presetMember || ''));
@@ -16552,6 +16601,7 @@ function _saveEventBody() {
   e.star = !!_evStar;
   e.listId = (_evType === 'task') ? (_evListId || '') : '';
   e.labelId = (_evType === 'task') ? (_evLabelId || '') : '';
+  if (e.listId) try { localStorage.setItem('gm_lastListId', e.listId); } catch(eLS) {} // v344: 直近リストを記憶
   e.memo     = document.getElementById('evMemo').value.trim();
   // CAL-3: サブタスク（空行は除外）。入力欄に打ちかけの1行があれば拾う
   var _subPend = document.getElementById('evSubNew');
