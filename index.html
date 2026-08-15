@@ -1025,7 +1025,7 @@ tr.ot-done{opacity:.5}
 /* v298: Lifebear式・縦に無限スクロールする連続週カレンダー（1画面5週） */
 .ev-cal-grid{display:block;overflow-y:auto;padding:0;height:72vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 /* v343: 月ページ送り時のふわっとフェードイン */
-.ev-cal-grid.cal-fade{animation:calFadeIn .28s ease}
+.ev-cal-grid.cal-fade{animation:calFadeIn .55s ease} /* v345: もう少しゆっくり */
 @keyframes calFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .ev-wkrow{display:grid;grid-template-columns:repeat(7,1fr);height:20%}
 .ev-cell{position:relative;min-height:0;height:100%;border:none;border-bottom:1px solid var(--border);border-right:1px solid var(--border);border-radius:0;background:transparent;display:flex;flex-direction:column;align-items:stretch;padding:0 1px 2px;cursor:pointer;overflow:visible} /* v344: 連日帯を境界の上まで描くためvisibleに */
@@ -2085,7 +2085,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v344</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v345</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4702,7 +4702,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v344';
+  var DATA_VERSION = 'v345';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5543,6 +5543,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v345', d:'2026-08-15', items:['🗓月表示のページ送りのフェードインをよりゆっくりに（0.28秒→0.55秒）','✅ToDoの＋ボタンからのタスク追加でも「直近に使ったリスト」が最初から選ばれるように（リスト絞り込み中はそのリストを優先）'] },
   { v:'v344', d:'2026-08-15', items:['📌テンプレの開始時刻も15分刻みに','📅連日予定の帯が日の境界線の上まで隙間なくつながるように（Lifebearと同じ見た目）','🎨色パレットを18色→38色に拡張','終了日欄をタップすると自動で「開始日の翌日」が入るように（連日入力の手間削減）','🔔新規タスクの通知は既定で「時刻ちょうど」に','✅タスク編集からラベル欄を削除（リストのみに）','✅サブタスクは編集画面から廃止し、タスクをタップした詳細シートで追加・チェック・✕削除が完結するように','📄新規タスクのリストは「直近に使ったリスト」が自動で選ばれるように'] },
   { v:'v343', d:'2026-08-14', items:['🗓月表示のページ送り（横スワイプ/‹›/今日）で、翌月がふわっとフェードインするように','📅予定編集の「日付・終了日」を必ず横並び1行に（画面幅が狭くても折り返しません）','⏰時刻テンキーの表示/非表示もふわっとフェードイン・フェードアウトに'] },
   { v:'v342', d:'2026-08-14', items:['📝翌月コピー時にメンバーのメモをクリアするようにしました（メモは月ごとの記録として当月に残ります）','🏷メンバー編集の「カテゴリ・タイトル」を月次タブの一番上に移動（毎月の昇降格・GSV入力と同じ画面で完結）'] },
@@ -12552,6 +12553,14 @@ function openTaskQuickSheet() {
   closeTaskQuickSheet();
   _tqDate = '';
   _tqListId = (_todoNav && _todoNav.type === 'list' && _todoNav.id) ? _todoNav.id : '';
+  // v345: リスト画面以外から開いた時は「直近に使ったリスト」を既定に
+  if (!_tqListId && _todoFilter && _todoFilter.type === 'list') _tqListId = _todoFilter.id; // 絞り込み中はそのリスト
+  if (!_tqListId) {
+    try {
+      var _ll = localStorage.getItem('gm_lastListId') || '';
+      if (_ll && _todoListById(_ll)) _tqListId = _ll;
+    } catch(e9) {}
+  }
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'tqOv';
   ov.onclick = function(e){ if (e.target === ov) closeTaskQuickSheet(); };
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
@@ -12567,7 +12576,16 @@ function openTaskQuickSheet() {
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
   _tqRenderChips();
-  if (!_todoMeta) _todoMetaEnsure().then(function(){ _tqRenderChips(); }); // リスト名表示用
+  if (!_todoMeta) _todoMetaEnsure().then(function(){
+    // v345: メタ読込後にもう一度「直近リスト」を適用（読込前はリストの実在確認ができないため）
+    if (!_tqListId) {
+      try {
+        var _ll2 = localStorage.getItem('gm_lastListId') || '';
+        if (_ll2 && _todoListById(_ll2)) _tqListId = _ll2;
+      } catch(e8) {}
+    }
+    _tqRenderChips();
+  });
   var t = document.getElementById('tqTitle');
   if (t) try { t.focus(); } catch(e0) {}
 }
