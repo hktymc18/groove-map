@@ -568,7 +568,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .sheet,.ms-sheet{overflow-x:hidden}
 /* v297: 日別シート(ms-overlay z520)の上から編集できるよう、予定モーダルとカテゴリ選択を最前面に */
 #eventModal{z-index:540}
-#catSheet{z-index:545}
+#catSheet{z-index:556} /* v347: テンプレ編集シート(550)の上に */
 .fs option{background:var(--bg)}
 .fta{resize:none;height:74px;font-size:13px}
 .fr-row{display:flex;gap:8px;margin-bottom:12px}
@@ -2085,7 +2085,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v346</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v347</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4702,7 +4702,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v346';
+  var DATA_VERSION = 'v347';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5543,6 +5543,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v347', d:'2026-08-15', items:['📌テンプレ作成画面を刷新：「所要（分）」をやめて、予定と同じ「開始時刻・終了時刻」を1行で入力する方式に（どちらも15分刻み）','「対応ステージ」欄を削除（既存テンプレに設定済みの実績連動はそのまま動きます）','色は「カテゴリ（色分け）」に統一：テンプレ作成画面からカテゴリを選択・その場で「＋新しいカテゴリ」も作成できます（予定の色分けと同じ仕組みに一本化）'] },
   { v:'v346', d:'2026-08-15', items:['🗓月表示で曜日（日）によってマスの幅が変わってしまう問題を修正：予定名の長さに引っ張られて列幅が伸びていたのを、必ず7列等幅になるようにしました（v344の連日帯の隙間なし表示はそのまま）'] },
   { v:'v345', d:'2026-08-15', items:['🗓月表示のページ送りのフェードインをよりゆっくりに（0.28秒→0.55秒）','✅ToDoの＋ボタンからのタスク追加でも「直近に使ったリスト」が最初から選ばれるように（リスト絞り込み中はそのリストを優先）'] },
   { v:'v344', d:'2026-08-15', items:['📌テンプレの開始時刻も15分刻みに','📅連日予定の帯が日の境界線の上まで隙間なくつながるように（Lifebearと同じ見た目）','🎨色パレットを18色→38色に拡張','終了日欄をタップすると自動で「開始日の翌日」が入るように（連日入力の手間削減）','🔔新規タスクの通知は既定で「時刻ちょうど」に','✅タスク編集からラベル欄を削除（リストのみに）','✅サブタスクは編集画面から廃止し、タスクをタップした詳細シートで追加・チェック・✕削除が完結するように','📄新規タスクのリストは「直近に使ったリスト」が自動で選ばれるように'] },
@@ -13176,6 +13177,7 @@ function openCategorySheet(pickMode) {
   document.getElementById('catSheet').classList.add('open');
 }
 function closeCategorySheet() {
+  window._catPickCb = null; // v347: 使い残しのコールバックを掃除
   document.getElementById('catSheet').classList.remove('open');
 }
 function onCatSheetClick(e) {
@@ -13218,9 +13220,28 @@ function renderCatPalette() {
 function catPickColor(col) { _catFormColor = col; renderCatPalette(); }
 
 function selectCategoryForEvent(catId) {
+  // v347: テンプレ編集などコールバック指定で開かれた場合はそちらへ返す
+  if (window._catPickCb) {
+    var cb = window._catPickCb; window._catPickCb = null;
+    closeCategorySheet();
+    cb(catId || '');
+    return;
+  }
   _evCategoryId = catId || '';
   updateEvCategoryDisplay();
   closeCategorySheet();
+}
+// v347: テンプレ編集のカテゴリ選択（新規カテゴリもシート内の「＋新しいカテゴリ」から作成可能）
+function evtOpenCatPick() {
+  window._catPickCb = function(catId){
+    window._evtCatSel = catId || '';
+    var c = catId ? findCategory(catId) : null;
+    var sw = document.getElementById('evtCatSwatch');
+    var nm = document.getElementById('evtCatName');
+    if (sw) sw.style.background = c ? c.color : '#9ca3af';
+    if (nm) nm.textContent = c ? c.name : '未分類';
+  };
+  openCategorySheet(true);
 }
 
 function catShowForm(id) {
@@ -15506,7 +15527,9 @@ function evTplQuickAdd(tplId, ds) {
     memberId: '', categoryId: '', priority: 'normal', memo: t.memo || '',
     star: false, listId: '', labelId: '',
     updatedAt: new Date().toISOString() };
-  if (e.time && t.durationMin) {
+  if (e.time && t.defaultTimeEnd) {
+    e.endTime = t.defaultTimeEnd; // v347: テンプレの終了時刻をそのまま
+  } else if (e.time && t.durationMin) {
     var _hm = e.time.split(':');
     var _tot = (parseInt(_hm[0], 10) || 0) * 60 + (parseInt(_hm[1], 10) || 0) + t.durationMin;
     if (_tot < 1800) e.endTime = evPad2(Math.floor(_tot / 60)) + ':' + evPad2(_tot % 60); // 29時台まで
@@ -16161,7 +16184,7 @@ function evTplRenderRow() {
   if (!arr.length) h += '<div class="tplp-empty">テンプレートはまだありません。「作成」で今の入力内容から作れます</div>';
   arr.forEach(function(t){
     var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '#9ca3af';
-    var en = _tplpAddMin(t.defaultTime || '', t.durationMin || 0);
+    var en = t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0);
     h += '<div class="tplp-row" onclick="evTplPick(\'' + evEsc(t.id) + '\')">'
       + '<span class="tplp-time">' + _tplpTimeHtml(t.defaultTime || '', en, false) + '</span>'
       + '<span class="tplp-dot" style="background:' + tc + '"></span>'
@@ -16223,7 +16246,7 @@ function evTplPick(id) {
   var newTitle = String(t.titleTpl || t.name || '').replace(/\{name\}/g, evTplMemberName());
   if (titleEl && (!titleEl.value || titleEl.value === _evTplTitleAuto)) titleEl.value = newTitle; // 手入力は尊重
   _evTplTitleAuto = newTitle;
-  if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, readTimeEnd());
+  if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
   _evSetRemind(t.notifyOffset);
   var _acId = _evTplAutoCat(t); // v299: カテゴリ未設定テンプレは自動色分け
   if (_acId) { _evCategoryId = _acId; updateEvCategoryDisplay(); }
@@ -16284,8 +16307,8 @@ function openEvTplManager() {
       return '<div class="fol-log-row" onclick="openEvTplEdit(\'' + evEsc(t.id) + '\')">'
         + '<span class="tplp-dot" style="background:' + tc + '"></span>'
         + '<span class="fol-log-main"><span class="fol-log-ttl">' + evEsc(t.name || '') + '</span>'
-        + '<span class="fol-log-sub">' + (t.type === 'event' ? '📅予定' : '✅タスク') + '・' + (t.durationMin || 0) + '分'
-        + (t.stage ? ('・実績: ' + evEsc(_evTplStageLabel(t.stage))) : '') + '</span></span>'
+        + '<span class="fol-log-sub">' + (t.type === 'event' ? '📅予定' : '✅タスク')
+        + (t.defaultTime ? ('・' + t.defaultTime + (t.defaultTimeEnd ? '〜' + t.defaultTimeEnd : '')) : '') + '</span></span>'
         + '<span class="fol-log-arrow">›</span></div>';
     }).join('');
     ov.innerHTML = '<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
@@ -16331,13 +16354,9 @@ function openEvTplEdit(id) {
   var ntfHas = false, ntfOpts = '';
   ntfList.forEach(function(p){ if (p[0] === ntfV) ntfHas = true; ntfOpts += '<option value="' + p[0] + '"' + (p[0] === ntfV ? ' selected' : '') + '>' + p[1] + '</option>'; });
   if (!ntfHas) ntfOpts += '<option value="' + evEsc(ntfV) + '" selected>' + evEsc(ntfV) + '分前</option>';
-  // v313: 色パレット（18色）。現在の色＝テンプレのカテゴリ色
-  var colorNow = '';
-  if (t && t.categoryId && findCategory(t.categoryId)) colorNow = findCategory(t.categoryId).color;
-  window._evtColorSel = colorNow;
-  var palHtml = CAT_COLORS.map(function(col){
-    return '<span class="cat-color' + (col === colorNow ? ' sel' : '') + '" data-col="' + col + '" style="background:' + col + '" onclick="evtPickColor(this)"></span>';
-  }).join('');
+  // v347: 色はカテゴリで統一（テンプレはカテゴリを直接持つ）
+  var catNow = (t && t.categoryId) ? findCategory(t.categoryId) : null;
+  window._evtCatSel = (t && t.categoryId && catNow) ? t.categoryId : '';
   ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (isEdit ? '✎ テンプレを編集' : '＋ テンプレ作成') + '</div></div>'
     + '<span class="ms-x" onclick="closeEvTplEdit(true)">✕</span></div>'
@@ -16345,13 +16364,15 @@ function openEvTplEdit(id) {
     + fld('名前', '<input class="fi" id="evtF_name" placeholder="例：CT" value="' + evEsc(t ? (t.name || '') : '') + '">')
     + fld('種別', '<select class="fi" id="evtF_type">' + typeOpts + '</select>')
     + '<div style="display:flex;gap:8px">'
-    + '<div style="flex:1">' + fld('所要（分）', '<input class="fi" id="evtF_dur" type="number" min="0" step="15" value="' + (t ? (t.durationMin || 0) : 60) + '">') + '</div>'
-    + '<div style="flex:1">' + fld('開始時刻の既定（任意）', '<input class="fi" id="evtF_time" type="time" step="900" value="' + evEsc(t ? (t.defaultTime || '') : '') + '">') + '</div>'
+    + '<div style="flex:1">' + fld('開始時刻（任意）', '<input class="fi" id="evtF_time" type="time" step="900" value="' + evEsc(t ? (t.defaultTime || '') : '') + '">') + '</div>'
+    + '<div style="flex:1">' + fld('終了時刻（任意）', '<input class="fi" id="evtF_timeEnd" type="time" step="900" value="' + evEsc(t ? (t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0) || '') : '') + '">') + '</div>'
     + '</div>'
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
     + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
-    + fld('カレンダーでの色', '<div class="cat-palette" id="evtF_pal">' + palHtml + '</div>')
-    + fld('対応ステージ（完了でMAP実績+1）', '<select class="fi" id="evtF_stage">' + stageOpts + '</select>')
+    + fld('カテゴリ（色分け）', '<div class="ev-cat-field" onclick="evtOpenCatPick()">'
+      + '<span class="cat-swatch" id="evtCatSwatch" style="background:' + (catNow ? catNow.color : '#9ca3af') + '"></span>'
+      + '<span id="evtCatName" style="flex:1">' + evEsc(catNow ? catNow.name : '未分類') + '</span>'
+      + '<span style="color:var(--text-dim)">▾</span></div>')
     + fld('メモの既定（任意）', '<input class="fi" id="evtF_memo" value="' + evEsc(t ? (t.memo || '') : '') + '">')
     + '<div class="btn-row">'
     + '<button class="btn-c" onclick="closeEvTplEdit(true)">キャンセル</button>'
@@ -16382,30 +16403,22 @@ function saveEvTplForm(id) {
   t.name = name;
   t.emoji = ''; // v314: 絵文字は廃止
   t.type = ((document.getElementById('evtF_type')||{}).value === 'event') ? 'event' : 'task';
-  t.durationMin = parseInt((document.getElementById('evtF_dur')||{}).value, 10) || 0;
   t.defaultTime = (document.getElementById('evtF_time')||{}).value || '';
+  t.defaultTimeEnd = (document.getElementById('evtF_timeEnd')||{}).value || '';
+  // v347: 所要（分）は開始/終了から自動計算（テンプレ適用時の互換用）
+  t.durationMin = 0;
+  if (t.defaultTime && t.defaultTimeEnd) {
+    var _s9 = t.defaultTime.split(':'), _e9 = t.defaultTimeEnd.split(':');
+    var _dm = ((parseInt(_e9[0],10)||0)*60 + (parseInt(_e9[1],10)||0)) - ((parseInt(_s9[0],10)||0)*60 + (parseInt(_s9[1],10)||0));
+    if (_dm > 0) t.durationMin = _dm;
+  }
   t.notifyOffset = (ntfRaw === '' || ntfRaw === undefined) ? '' : (parseInt(ntfRaw, 10) || 0);
   t.titleTpl = ((document.getElementById('evtF_tpl')||{}).value || '').trim() || name;
-  t.stage = (document.getElementById('evtF_stage')||{}).value || '';
+  var _stEl = document.getElementById('evtF_stage');
+  if (_stEl) t.stage = _stEl.value || ''; // v347: 対応ステージのUIは廃止（既存テンプレの値は維持）
   t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
-  // v313: 選んだ色をテンプレのカテゴリに反映（既存カテゴリは色更新・無ければ同名カテゴリを作成）
-  var _col = window._evtColorSel || '';
-  if (_col && state.categories) {
-    var _cat = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId) : null;
-    if (!_cat) {
-      for (var _ci = 0; _ci < state.categories.length; _ci++) {
-        if (state.categories[_ci].name === t.name) { _cat = state.categories[_ci]; break; }
-      }
-    }
-    if (_cat) { _cat.color = _col; }
-    else {
-      _cat = { id: 'cat_' + Date.now() + '_' + Math.floor(Math.random() * 100000), name: t.name, color: _col };
-      state.categories.push(_cat);
-    }
-    t.categoryId = _cat.id;
-    saveCategories();
-    if (currentView === 'events') renderEvents();
-  }
+  // v347: 色分けはカテゴリで統一（選んだカテゴリをそのまま保存）
+  t.categoryId = window._evtCatSel || '';
   _evTplSaveAll();
   closeEvTplEdit(false);
   if (window._evtFromMgr) openEvTplManager(); // v317: 一覧から来た時だけ一覧へ戻る
