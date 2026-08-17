@@ -323,6 +323,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 }
 .parent-chip-arrow{opacity:.5}
 .children{padding-left:0;border-left:none;margin-left:0;margin-top:4px;display:block}
+/* v349: 深い段でもカードが潰れて名前が縦書きにならないよう最小幅を保証。はみ出しは横スクロールで見る */
+.mobile-tree{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.nc{min-width:250px}
 .children.closed{display:none}
 
 /* 深さ別：左ボーダーラインのみで階層表現（インデントなし） */
@@ -1048,7 +1051,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cell.today .ev-cell-num{background:var(--accent);color:var(--go-ink);font-weight:800}
 /* v302: マス内を10スロットの時間帯グリッドに（18時≒中央。空きスロット＝空き時間が見える） */
 .ev-cell-bars{display:flex;flex-direction:column;flex:1;min-height:0;gap:0;margin-top:0;width:100%}
-.ev-slot{flex:1 1 0;min-height:0;overflow:hidden;display:flex;align-items:stretch;padding-bottom:1px}
+.ev-slot{flex:1 1 0;min-height:0;overflow:visible;display:flex;align-items:stretch;padding-bottom:1px} /* v350: 連日帯が罫線の上まで塗れるようvisible（文字は.ev-bar側でクリップ） */
 .ev-slot .ev-bar{height:auto;display:flex;align-items:center;line-height:1}
 .ev-more-badge{position:absolute;right:1px;bottom:1px;font-size:8px;font-weight:800;color:var(--text-dim);background:var(--surface3);border-radius:6px;padding:1px 4px;line-height:1.2;z-index:2}
 /* v302: はみ出しは「…」でなくクリップ（表示できる文字まで見せる）。v311: 8段化に合わせ少し大きく */
@@ -1122,7 +1125,10 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 /* v303: 完了時のふわっと消えるアニメ */
 .ev-item.done-anim,.td-row.done-anim{transition:opacity .22s ease,transform .22s ease;opacity:.12;transform:translateX(34px)}
 /* v315: Lifebear式ToDo（ホーム＝スマートリスト/リスト/ラベル、行＝丸チェック＋期日＋★） */
-.td-row{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--surface);cursor:pointer}
+/* v350: スワイプ削除＝🗑ボタンを出してからタップで確定 */
+.td-wrap{position:relative;overflow:hidden}
+.td-delbtn{position:absolute;top:0;right:0;bottom:1px;width:84px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer}
+.td-row{position:relative;z-index:1;display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--surface);cursor:pointer}
 .td-row.done .td-ttl{text-decoration:line-through;color:var(--text-dim)}
 .td-chk{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--go-ink);box-sizing:border-box}
 .td-chk.on{background:var(--accent);border-color:var(--accent)}
@@ -1278,6 +1284,16 @@ body.cal-fs .pc-toolbar{display:none!important}
   #view-events .ev-cal-hdr{padding:2px 14px;gap:12px}
   #view-events .ev-cal-nav{width:30px;height:30px;font-size:16px}
   #view-events .ev-cal-title{font-size:14px;min-width:110px}
+}
+/* v350: PC最適化＝ボトムシート類を中央のダイアログ表示に（横に伸び切らず入力しやすく） */
+@media (min-width: 768px) {
+  .overlay{align-items:center;padding:24px}
+  .sheet{max-width:620px;border-radius:20px;border:1px solid var(--border);max-height:86vh}
+  .ms-overlay{align-items:center;padding:24px}
+  .ms-sheet{max-width:620px;border-radius:20px;border:1px solid var(--border2);padding-bottom:22px}
+  .tp-ov{align-items:center;padding:24px}
+  .tp-sheet{max-width:440px;border-radius:20px;border:1px solid var(--border);padding-bottom:14px}
+  .toast{bottom:40px}
 }
 /* v298: Lifebear式 時刻テンキー（予定モーダルz540の上） */
 /* v343: テンキーもふわっとフェードイン/アウト */
@@ -2085,7 +2101,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v347</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v350</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2880,21 +2896,25 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
     </div>
     <div class="fr" id="evRepeatUntilWrap" style="display:none"><label class="fl">繰り返し終了日</label><input class="fi ev-dt" id="evRepeatUntil" type="date"></div>
-    <div class="fr"><label class="fl">📝 メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
+    <!-- v350: カテゴリは通知・繰り返しの下のメイン項目に（メモは詳細へ移動） -->
+    <div class="fr">
+      <label class="fl">🎨 カテゴリ（色分け）</label>
+      <div class="ev-cat-field" id="evCatField" onclick="openCategorySheet(true)">
+        <span class="cat-swatch" id="evCatSwatch" style="background:#9ca3af"></span>
+        <span id="evCatName" style="flex:1">未分類</span>
+        <span style="color:var(--text-dim)">▾</span>
+      </div>
+    </div>
     <!-- A1: 詳細はデフォルト格納（ミニマル）。値が入っている時は自動で開く -->
-    <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（カテゴリ・メンバー・優先度・サブタスク）</div>
+    <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（メンバー・優先度・メモ・場所）</div>
     <div id="evAdvWrap" style="display:none">
       <div class="fr">
-        <label class="fl">カテゴリ（色分け）</label>
-        <div class="ev-cat-field" id="evCatField" onclick="openCategorySheet(true)">
-          <span class="cat-swatch" id="evCatSwatch" style="background:#9ca3af"></span>
-          <span id="evCatName" style="flex:1">未分類</span>
+        <label class="fl">関連メンバー（複数可・任意）</label>
+        <!-- v348: 複数選択＋名前検索のピッカーに変更 -->
+        <div class="ev-cat-field" onclick="openMemberPick()">
+          <span id="evMemberNames" style="flex:1;color:var(--text-dim)">（なし）</span>
           <span style="color:var(--text-dim)">▾</span>
         </div>
-      </div>
-      <div class="fr">
-        <label class="fl">関連メンバー（任意）</label>
-        <select class="fi" id="evMember" onchange="evTplOnMemberChange()"></select>
       </div>
       <div class="fr" id="evPrioRow">
         <label class="fl">優先度</label>
@@ -2903,6 +2923,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="rb" id="evPrioHigh" onclick="selEvPrio('high')">⚑ 重要</div>
         </div>
       </div>
+      <div class="fr"><label class="fl">📝 メモ（任意）</label><textarea class="fta" id="evMemo" placeholder="補足"></textarea></div>
       <div class="fr" id="evPlaceRow">
         <label class="fl">📍 場所（任意）</label>
         <input class="fi" id="evPlace" placeholder="例：天神 ○○カフェ">
@@ -4702,7 +4723,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v347';
+  var DATA_VERSION = 'v350';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5543,6 +5564,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v350', d:'2026-08-15', items:['🎨予定入力の「カテゴリ（色分け）」を通知・繰り返しの下のメイン項目に移動（メモは「詳細」の中へ）','📅連日予定の帯が罫線部分で途切れて見えた問題を修正（罫線の上まで塗りつぶし）','✅当日完了したタスクは完了済みボックスへすぐ移さず、一覧の下部に取り消し線付きで残るように（翌日から完了タスクへ）','🗑スワイプ削除を安全に：左フリックでごみ箱ボタンが出て、タップして初めて削除（いきなり消えません）。右フリック＝完了は従来どおり','↩「元に戻す」ボタンが押せなかった問題を修正（トーストがタップを受け付けない設定になっていました）','💻PC版の入力画面を最適化：予定・タスク・各種シートが画面下に横いっぱいに伸びる形をやめ、中央のダイアログ表示に（マウスでも入力しやすく）'] },
+  { v:'v349', d:'2026-08-15', items:['🗺MAPの深い段で名前が縦書きに潰れる問題を対策：カードに最小幅（250px）を保証し、画面からはみ出す分は横スクロールで見られるようにしました（名前は常に横書き）','📌テンプレは「よく使う順」で自動的に並ぶようになりました（使うたびに記録）。6件以上ある場合は上位5件＋「▾すべて表示」の2段表示ですっきり','▲▼で手動並べ替えをした端末は、手動の順番が優先されます（自動の頻度順はオフ）'] },
+  { v:'v348', d:'2026-08-15', items:['🛠MAPのモバイル版でタイトル未入力メンバーの丸アイコンが「&#x…」と文字化けする問題を修正。タイトル未入力でも研修ステータス（PA等）があればそれを表示し、色も研修系の水色になります（PCの「-」のみ表示も同様に改善）','👥タスク/予定の「関連メンバー」が複数人選べるように＋🔍名前検索付きのピッカーに刷新（選んだ全員がメンバー別のタスク一覧・詳細シートに反映されます）','📌テンプレの並べ替え：⧉パネルの各テンプレに▲▼ボタンを追加（タップで順番を入れ替えて保存）'] },
   { v:'v347', d:'2026-08-15', items:['📌テンプレ作成画面を刷新：「所要（分）」をやめて、予定と同じ「開始時刻・終了時刻」を1行で入力する方式に（どちらも15分刻み）','「対応ステージ」欄を削除（既存テンプレに設定済みの実績連動はそのまま動きます）','色は「カテゴリ（色分け）」に統一：テンプレ作成画面からカテゴリを選択・その場で「＋新しいカテゴリ」も作成できます（予定の色分けと同じ仕組みに一本化）'] },
   { v:'v346', d:'2026-08-15', items:['🗓月表示で曜日（日）によってマスの幅が変わってしまう問題を修正：予定名の長さに引っ張られて列幅が伸びていたのを、必ず7列等幅になるようにしました（v344の連日帯の隙間なし表示はそのまま）'] },
   { v:'v345', d:'2026-08-15', items:['🗓月表示のページ送りのフェードインをよりゆっくりに（0.28秒→0.55秒）','✅ToDoの＋ボタンからのタスク追加でも「直近に使ったリスト」が最初から選ばれるように（リスト絞り込み中はそのリストを優先）'] },
@@ -7701,7 +7725,13 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div class="depth-num" style="background:' + depthColor + '1a;color:' + depthColor + ';border:1px solid ' + depthColor + '40">' + depth + '</div>'
     + expandArrow
     + '</div>'
-    + (photoAvatarHtml(m) || ('<div class="av ' + g + (isLOI ? ' loi-av' : (m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + avStyle + '" title="' + evEsc(m.title||'') + '">' + titleAbbr(m.title||'&#x2013;') + '</div>'))
+    + (photoAvatarHtml(m) || (function(){
+        // v348: タイトル未入力の文字化け（&#x…表示）を修正。未入力時は研修ステータス（PA等）を表示、無ければ「–」
+        var _tShow = (m.title || (typeof getLatestStatus === 'function' ? (getLatestStatus(m) || '') : '') || '').trim();
+        var _ab = titleAbbr(_tShow) || '\u2013';
+        var _st = _tShow ? titleAvatarStyle(_tShow) : avStyle;
+        return '<div class="av ' + g + (isLOI ? ' loi-av' : (m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + _st + '" title="' + evEsc(_tShow) + '">' + evEsc(_ab) + '</div>';
+      })())
     + '<div style="flex:1;min-width:0;overflow:hidden">'
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
     + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
@@ -9486,7 +9516,7 @@ function renderStats() {
       var allEvents = state.events || [];
       goldWrap.innerHTML = '<div class="gold-grid">' + goldMembers.map(function(m){
         var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/^\s+|\s+$/g,'') || '(無名)';
-        var evs = allEvents.filter(function(e){ return e.memberId === m.id; });
+        var evs = allEvents.filter(function(e){ return evHasMember(e, m.id); });
         evs.sort(evSortFn);
         var tasksHtml = evs.length
           ? evs.map(evItemHtml).join('')
@@ -10129,7 +10159,7 @@ function showPcTooltip(mid, ev) {
   var gsvDisplay = m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0';
   var fixDisplay = m.ptFixed>0 ? m.ptFixed.toLocaleString() : '-';
   // このメンバーに紐づく予定・タスク
-  var myEv = (state.events || []).filter(function(e){ return e.memberId === m.id && !e.deleted; });
+  var myEv = (state.events || []).filter(function(e){ return evHasMember(e, m.id) && !e.deleted; });
   myEv.sort(function(a, b){
     var ad = (a.type === 'task' && a.done) ? 1 : 0, bd = (b.type === 'task' && b.done) ? 1 : 0;
     if (ad !== bd) return ad - bd;            // 未完了を上に
@@ -10349,7 +10379,7 @@ function meRenderExtras(m) {
   else olHtml += olog.slice().reverse().map(function(e){ return '<div class="me-ol"><div style="color:var(--text-dim);font-size:12px">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div style="margin-top:3px">' + evEsc(e.what) + '</div>':'') + (e.note?'<div style="margin-top:3px;color:var(--text-mid);font-size:12px">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
   olHtml += '<div class="me-add-btn" onclick="openOlRecordModal(\'' + mid + '\')">＋ OLを記録する</div>';
   olBox.innerHTML = olHtml;
-  var evs = (state.events || []).filter(function(e){ return e.memberId === mid && !e.deleted; });
+  var evs = (state.events || []).filter(function(e){ return evHasMember(e, mid) && !e.deleted; });
   var tkHtml = '';
   if (!evs.length) tkHtml += '<div class="md-empty">紐付くタスク・予定はありません</div>';
   else tkHtml += evs.map(function(e){
@@ -11031,6 +11061,7 @@ function deleteMember() {
 function toast(msg, dur) {
   if (dur === undefined) dur = 2200;
   var el = document.getElementById('toast');
+  el.style.pointerEvents = 'none';
   el.textContent = msg; el.classList.add('show');
   setTimeout(function(){el.classList.remove('show');}, dur);
 }
@@ -11038,6 +11069,7 @@ function toast(msg, dur) {
 function toastAction(msg, label, fn, dur) {
   if (dur === undefined) dur = 3500;
   var el = document.getElementById('toast');
+  el.style.pointerEvents = 'auto'; // v350: .toastはpointer-events:noneのためボタンが押せなかった不具合を修正
   el.innerHTML = evEsc(msg) + ' <span id="_toastAct" style="display:inline-block;margin-left:10px;padding:6px 14px;border-radius:14px;background:var(--surface3);color:var(--accent);font-weight:800;cursor:pointer">' + evEsc(label) + '</span>';
   var a = document.getElementById('_toastAct');
   if (a) a.onclick = function(e){ e.stopPropagation(); el.classList.remove('show'); el.textContent=''; if (fn) fn(); };
@@ -14698,7 +14730,10 @@ function openEventActions(id) {
   ov.onclick = function(ev){ if (ev.target === ov) closeEventActions(); };
   var cat = e.categoryId ? findCategory(e.categoryId) : null;
   var mName = '';
-  if (e.memberId) { var m = findMemberAny(e.memberId); if (m) mName = ((m.lastName||'') + (m.firstName||'')).trim(); }
+  var _mids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
+  if (_mids.length) {
+    mName = _mids.map(function(mid2){ var m2 = findMemberAny(mid2); return m2 ? ((m2.lastName||'') + (m2.firstName||'')).trim() : ''; }).filter(Boolean).join('、');
+  }
   var metaParts = [];
   var dl = fmtEvDate(e.date, e.time);
   if (dl && e.time && e.endTime) dl += '〜' + e.endTime;
@@ -14801,7 +14836,7 @@ function _evDeleteById(id) {
   // メンバー編集パネルを開いたまま削除した場合は一覧を即時更新
   try {
     var _mm3 = document.getElementById('modal');
-    if (_mm3 && _mm3.classList.contains('open') && typeof editingId !== 'undefined' && editingId && bak.memberId === editingId) {
+    if (_mm3 && _mm3.classList.contains('open') && typeof editingId !== 'undefined' && editingId && evHasMember(bak, editingId)) {
       var _tm3 = _mFind(editingId);
       if (_tm3 && typeof meRenderExtras === 'function') meRenderExtras(_tm3);
     }
@@ -14813,7 +14848,7 @@ function _evDeleteById(id) {
     renderEvents();
     try {
       var _mm4 = document.getElementById('modal');
-      if (_mm4 && _mm4.classList.contains('open') && typeof editingId !== 'undefined' && editingId && bak.memberId === editingId) {
+      if (_mm4 && _mm4.classList.contains('open') && typeof editingId !== 'undefined' && editingId && evHasMember(bak, editingId)) {
         var _tm4 = _mFind(editingId);
         if (_tm4 && typeof meRenderExtras === 'function') meRenderExtras(_tm4);
       }
@@ -14982,6 +15017,15 @@ function evItemHtml(e) {
 }
 // ── v315: Lifebear式ToDo ──
 function _todoUndone(list) { return list.filter(function(e){ return !e.done; }); }
+// v350: スワイプで出した🗑ボタンからの削除（↩元に戻すトースト付き）
+function tdSwipeDelete(id) {
+  _evDeleteById(id);
+}
+// v350: 「今日完了した」判定（completedAtを端末ローカル日付で比較）
+function _todoDoneToday(e) {
+  if (!e || !e.done || !e.completedAt) return false;
+  try { return evYmd(new Date(e.completedAt)) === evTodayYmd(); } catch(err) { return false; }
+}
 function _todoTasksAll() {
   return (state.events || []).filter(function(e){ return e.type === 'task'; });
 }
@@ -15001,13 +15045,14 @@ function todoRowHtml(e) {
     : '';
   var lb = e.labelId ? _todoLabelById(e.labelId) : null;
   var ls = e.listId ? _todoListById(e.listId) : null; // v336: どのリストのタスクか行内に表示
-  var h = '<div class="td-row' + (e.done ? ' done' : '') + '" data-eid="' + e.id + '">'
+  var h = '<div class="td-wrap"><div class="td-delbtn" onclick="tdSwipeDelete(\'' + e.id + '\')" title="削除">🗑</div>'
+    + '<div class="td-row' + (e.done ? ' done' : '') + '" data-eid="' + e.id + '">'
     + '<div class="td-chk' + (e.done ? ' on' : '') + '" onclick="toggleEventDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</div>'
     + '<div class="td-body" onclick="openEventActions(\'' + e.id + '\')">'
     + '<div class="td-ttl">' + (e.priority === 'high' ? '<span style="color:var(--red);font-weight:800">⚑ </span>' : '') + evEsc(e.title || '(無題)') + '</div>'
     + ((due || subTx || lb || ls) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + evEsc(due) + (subTx ? ' ' + subTx : '') + (ls ? ' <span style="color:' + ls.color + '">●' + evEsc(ls.name) + '</span>' : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
     + '</div>'
-    + '</div>';
+    + '</div></div>'; // .td-row 閉じ + .td-wrap 閉じ
   if (subs.length && _evExpandedSubs[e.id]) {
     h += '<div class="ev-sub-block" style="margin:2px 14px 8px 42px">' + subs.map(function(s){
       return '<div class="ev-sub-row' + (s.done ? ' done' : '') + '" onclick="evSubToggle(\'' + e.id + '\',\'' + evEsc(s.id) + '\')">'
@@ -15041,12 +15086,21 @@ function renderAgenda() {
     wrap._swBound = true;
     var swRow = null, swX = 0, swY = 0, swDx = 0, swActive = false;
     var edgeOn = false, edgeX0 = 0; // v321: 画面左端から右スワイプ＝ToDo一覧へ戻る
+    var openRow = null; // v350: 左スワイプでごみ箱を出したままの行
+    function closeOpenRow() {
+      if (!openRow) return;
+      openRow.style.transition = 'transform .18s';
+      openRow.style.transform = '';
+      openRow._swOpen = false;
+      openRow = null;
+    }
     wrap.addEventListener('touchstart', function(ev){
       var tt0 = ev.touches[0];
       edgeOn = (tt0.clientX < 32 && _todoNav && _todoNav.type !== 'home');
       edgeX0 = tt0.clientX;
       if (edgeOn) { swRow = null; return; } // 端スワイプ時は行スワイプを無効化
       var r = (ev.target && ev.target.closest) ? ev.target.closest('.td-row') : null;
+      if (openRow && r !== openRow) closeOpenRow(); // 別の行を触ったら開いているごみ箱を閉じる
       if (!r || !r.getAttribute('data-eid')) { swRow = null; return; }
       swRow = r;
       var tt = ev.touches[0];
@@ -15061,7 +15115,8 @@ function renderAgenda() {
         if (Math.abs(dx) > 14) swActive = true;
       }
       if (swActive) {
-        swDx = Math.max(-110, Math.min(110, dx));
+        var base = swRow._swOpen ? -84 : 0; // ごみ箱表示中は-84pxが基準
+        swDx = Math.max(-110, Math.min(110, base + dx));
         swRow.style.transition = 'none';
         swRow.style.transform = 'translateX(' + swDx + 'px)';
       }
@@ -15076,12 +15131,21 @@ function renderAgenda() {
       if (!swRow) return;
       var r = swRow, dx = swDx, act = swActive;
       swRow = null;
-      r.style.transition = 'transform .18s';
-      r.style.transform = '';
       if (!act) return;
       var eid = r.getAttribute('data-eid');
+      // v350: 左＝いきなり削除せず🗑ボタンを出して待機。右＝完了/戻す（従来どおり）
+      if (dx < -55) {
+        r.style.transition = 'transform .18s';
+        r.style.transform = 'translateX(-84px)';
+        r._swOpen = true;
+        openRow = r;
+        return;
+      }
+      r.style.transition = 'transform .18s';
+      r.style.transform = '';
+      r._swOpen = false;
+      if (openRow === r) openRow = null;
       if (dx > 70) toggleEventDone(eid);
-      else if (dx < -70) _evDeleteById(eid);
     }, { passive: true });
   }
   // v321: 全画面ヘッダー（ホーム＝✕とタイトル固定・リスト内＝‹で戻る）と検索欄（ホームのみ）の状態更新
@@ -15118,7 +15182,8 @@ function renderAgenda() {
     }
     else if (nav.type === 'smart' && nav.id === 'done') {
       title = '✓ 完了タスク';
-      list = tasks.filter(function(e){ return e.done; }).sort(function(a,b){ return (b.completedAt||'').localeCompare(a.completedAt||''); }).slice(0, 100);
+      // v350: 当日完了した分はまだホーム一覧に残すため、ここには翌日以降に入る
+      list = tasks.filter(function(e){ return e.done && !_todoDoneToday(e); }).sort(function(a,b){ return (b.completedAt||'').localeCompare(a.completedAt||''); }).slice(0, 100);
     }
     else if (nav.type === 'list') { var L = _todoListById(nav.id); title = (L ? L.name : 'リスト'); accent = L ? L.color : ''; list = undone.filter(function(e){ return e.listId === nav.id; }); }
     else if (nav.type === 'label') { var LB = _todoLabelById(nav.id); title = (LB ? '◎' + LB.name : 'ラベル'); accent = LB ? LB.color : ''; list = undone.filter(function(e){ return e.labelId === nav.id; }); }
@@ -15140,8 +15205,10 @@ function renderAgenda() {
     return;
   }
   // ── ToDoホーム（v336: ナビ画面を廃止し、未完了タスクを期日順で直接表示するシンプル一覧に） ──
+  // v350: 当日完了したタスクは完了済みボックスへ移さず、一覧の下部に取り消し線付きで残す
   var undoneAll = tasks.filter(function(e){ return !e.done; }).slice().sort(_todoSortDue);
-  var doneCt = tasks.length - undoneAll.length;
+  var doneTodayAll = tasks.filter(_todoDoneToday).slice().sort(_todoSortDue);
+  var doneCt = tasks.filter(function(e){ return e.done && !_todoDoneToday(e); }).length;
   // v337: 絞り込みチップ（すべて/今日/リスト/ラベル）。削除済みリストの絞り込みは自動解除
   var F = _todoFilter || { type: 'all', id: '' };
   if ((F.type === 'list' && !_todoListById(F.id)) || (F.type === 'label' && !_todoLabelById(F.id))) {
@@ -15159,14 +15226,19 @@ function renderAgenda() {
   });
   fch += '</div>';
   var t9 = evTodayYmd();
-  var shown = undoneAll;
-  if (F.type === 'today') shown = undoneAll.filter(function(e){ return e.date && e.date <= t9; }); // 期限切れも含む
-  else if (F.type === 'list') shown = undoneAll.filter(function(e){ return e.listId === F.id; });
-  else if (F.type === 'label') shown = undoneAll.filter(function(e){ return e.labelId === F.id; });
+  function _applyChip(list0) {
+    if (F.type === 'today') return list0.filter(function(e){ return e.date && e.date <= t9; }); // 期限切れも含む
+    if (F.type === 'list') return list0.filter(function(e){ return e.listId === F.id; });
+    if (F.type === 'label') return list0.filter(function(e){ return e.labelId === F.id; });
+    return list0;
+  }
+  var shown = _applyChip(undoneAll);
+  var shownDone = _applyChip(doneTodayAll); // v350: 今日完了した分は下に残す
   var h = fch;
   h += shown.length
     ? shown.map(todoRowHtml).join('')
     : '<div class="ev-empty" style="padding:28px 16px">' + (F.type === 'all' ? 'タスクはありません。上の入力欄に打ってEnterですぐ追加できます' : 'この絞り込みに該当するタスクはありません') + '</div>';
+  h += shownDone.map(todoRowHtml).join('');
   h += '<div class="td-secttl">完了済み</div>';
   h += _todoHomeRow('✓', '完了タスク', doneCt, "todoNavTo('smart','done')");
   wrap.innerHTML = h;
@@ -15520,6 +15592,7 @@ function evTplQuickAdd(tplId, ds) {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   var t = _evTplFind(tplId);
   if (!t) return;
+  t.useCount = (t.useCount || 0) + 1; _evTplSaveAll(); // v349: 使用回数（頻度順表示用）
   var e = { id: genEventId(), done: false, createdAt: new Date().toISOString(),
     type: (t.type === 'event') ? 'event' : 'task',
     title: String(t.titleTpl || t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
@@ -15735,16 +15808,68 @@ function selEvPrio(p) {
   if (a) a.classList.toggle('sel', p === 'normal');
   if (b) b.classList.toggle('sel', p === 'high');
 }
-function buildEvMemberOptions(sel) {
-  var s = document.getElementById('evMember');
-  if (!s) return;
-  var html = '<option value="">（なし）</option>';
-  (state.members||[]).forEach(function(m) {
-    var name = ((m.lastName||'') + ' ' + (m.firstName||'')).trim();
-    html += '<option value="' + m.id + '">' + evEsc(name || '(無名)') + '</option>';
+// v348: 関連メンバー＝複数選択＋名前検索のピッカー
+var _evMemberIds = [];
+function evHasMember(e, id) {
+  if (!e || !id) return false;
+  return e.memberId === id || (e.memberIds && e.memberIds.indexOf(id) >= 0);
+}
+function updateEvMemberDisplay() {
+  var el = document.getElementById('evMemberNames');
+  if (!el) return;
+  if (!_evMemberIds.length) { el.textContent = '（なし）'; el.style.color = 'var(--text-dim)'; return; }
+  el.style.color = '';
+  el.textContent = _evMemberIds.map(function(id){
+    var m = findMemberAny(id);
+    return m ? ((m.lastName||'') + (m.firstName||'')).trim() : '?';
+  }).join('、');
+}
+function closeMemberPick() {
+  var ov = document.getElementById('mpOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+  updateEvMemberDisplay();
+}
+function openMemberPick() {
+  closeMemberPick();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'mpOv';
+  ov.style.zIndex = '550'; // 予定モーダル(540)より前面
+  ov.onclick = function(e){ if (e.target === ov) closeMemberPick(); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:78vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">👤 関連メンバーを選択（複数可）</div></div>'
+    + '<span class="ms-x" onclick="closeMemberPick()">✕</span></div>'
+    + '<div style="padding:0 16px 20px">'
+    + '<input class="fi" id="mpSearch" placeholder="🔍 名前で検索" autocomplete="off" oninput="_mpRenderList(this.value)">'
+    + '<div id="mpList" style="margin-top:8px"></div>'
+    + '<div class="btn-row" style="margin-top:12px"><button class="btn-p" style="flex:1" onclick="closeMemberPick()">完了</button></div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+  _mpRenderList('');
+}
+function _mpRenderList(q) {
+  var box = document.getElementById('mpList');
+  if (!box) return;
+  q = (q || '').trim().toLowerCase().replace(/\s+/g, '');
+  var h = '';
+  (state.members || []).forEach(function(m){
+    if (m.deleted) return;
+    var name = ((m.lastName||'') + ' ' + (m.firstName||'')).trim() || '(無名)';
+    if (q && name.toLowerCase().replace(/\s+/g, '').indexOf(q) < 0) return;
+    var on = _evMemberIds.indexOf(m.id) >= 0;
+    h += '<div class="td-home-row" onclick="mpToggle(\'' + m.id + '\')">'
+      + '<span class="td-chk' + (on ? ' on' : '') + '" style="width:22px;height:22px;font-size:12px">' + (on ? '✓' : '') + '</span>'
+      + '<span class="td-hname">' + evEsc(name) + (m.title ? ' <span style="font-size:11px;color:var(--text-dim)">' + evEsc(m.title) + '</span>' : '') + '</span>'
+      + '</div>';
   });
-  s.innerHTML = html;
-  s.value = sel || '';
+  box.innerHTML = h || '<div class="ev-empty" style="padding:14px">該当するメンバーがいません</div>';
+}
+function mpToggle(id) {
+  var ix = _evMemberIds.indexOf(id);
+  if (ix >= 0) _evMemberIds.splice(ix, 1); else _evMemberIds.push(id);
+  var s = document.getElementById('mpSearch');
+  _mpRenderList(s ? s.value : '');
+  updateEvMemberDisplay();
+  if (typeof evTplOnMemberChange === 'function') evTplOnMemberChange(); // {name}置換を更新
 }
 // v311: 入口で種別を自動決定（カレンダー系＝予定、ToDo＝タスク）
 function openEventAdd(memberId) { openEventModal(null, memberId, '', 'event'); }
@@ -16058,7 +16183,7 @@ function evToggleAdv(force) {
   if (w) w.style.display = _evAdvOpen ? '' : 'none';
   if (t) {
     t.classList.toggle('open', _evAdvOpen);
-    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（カテゴリ・メンバー・優先度・サブタスク）';
+    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（メンバー・優先度・メモ・場所）';
   }
 }
 
@@ -16166,7 +16291,8 @@ function evHistApply(id) {
   updateEvCategoryDisplay();
   _evSetRemind((src.remindBefore === undefined || src.remindBefore === null) ? '' : src.remindBefore);
   if (src.memo) document.getElementById('evMemo').value = src.memo;
-  if (src.memberId) { var s = document.getElementById('evMember'); if (s) s.value = src.memberId; }
+  _evMemberIds = (src.memberIds && src.memberIds.length) ? src.memberIds.slice() : (src.memberId ? [src.memberId] : []);
+  updateEvMemberDisplay();
   _evDupStage = src.templateStage || '';
   _evTplPanelOpen = false;
   evTplRenderRow();
@@ -16180,9 +16306,11 @@ function evTplRenderRow() {
   var h = '<div class="tplp">';
   // ── テンプレート ──
   h += '<div class="tplp-hd">テンプレート<span class="tplp-mk" onclick="evTplCreateFromForm()">作成</span></div>';
-  var arr = _evTpl || [];
+  var arr = _evTplDisplayList(); // v349: 使用頻度順（手動順モードなら手動順）
   if (!arr.length) h += '<div class="tplp-empty">テンプレートはまだありません。「作成」で今の入力内容から作れます</div>';
-  arr.forEach(function(t){
+  var _showAll = window._tplpShowAll === true;
+  var vis = _showAll ? arr : arr.slice(0, 5); // v349: 多い時は上位5件＋「すべて表示」
+  vis.forEach(function(t){
     var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '#9ca3af';
     var en = t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0);
     h += '<div class="tplp-row" onclick="evTplPick(\'' + evEsc(t.id) + '\')">'
@@ -16190,9 +16318,15 @@ function evTplRenderRow() {
       + '<span class="tplp-dot" style="background:' + tc + '"></span>'
       + '<span class="tplp-ttl">' + evEsc(t.name || '') + '</span>'
       + (t.notifyOffset !== '' && t.notifyOffset !== undefined && t.notifyOffset !== null ? '<span class="tplp-bell">🔔</span>' : '')
+      + '<span class="tplp-x" onclick="event.stopPropagation();evTplMove(\'' + evEsc(t.id) + '\',-1)" title="上へ">▲</span>'
+      + '<span class="tplp-x" onclick="event.stopPropagation();evTplMove(\'' + evEsc(t.id) + '\',1)" title="下へ">▼</span>'
       + '<span class="tplp-x" onclick="event.stopPropagation();openEvTplEdit(\'' + evEsc(t.id) + '\')">✎</span>'
       + '</div>';
   });
+  if (arr.length > 5) {
+    h += '<div class="tplp-row" onclick="event.stopPropagation();_tplpToggleAll()" style="justify-content:center;color:var(--accent);font-weight:800">'
+      + (_showAll ? '▴ 折りたたむ' : '▾ すべて表示（' + arr.length + '件）') + '</div>';
+  }
   // ── 履歴 ──
   h += '<div class="tplp-hd">履歴</div>';
   var hist = _evHistList();
@@ -16211,8 +16345,40 @@ function evTplRenderRow() {
   row.innerHTML = h;
   row.style.display = '';
 }
+// v349: 表示順＝使用回数の多い順（▲▼で手動並べ替えした端末は手動順を優先）
+function _evTplDisplayList() {
+  var arr = (_evTpl || []).slice();
+  var manual = false;
+  try { manual = localStorage.getItem('gm_tplManualOrder') === '1'; } catch(e0) {}
+  if (manual) return arr;
+  var idx = {};
+  arr.forEach(function(t, i){ idx[t.id] = i; });
+  arr.sort(function(a, b){
+    var d = (b.useCount || 0) - (a.useCount || 0);
+    return d !== 0 ? d : (idx[a.id] - idx[b.id]);
+  });
+  return arr;
+}
+function _tplpToggleAll() { window._tplpShowAll = window._tplpShowAll !== true; evTplRenderRow(); }
+// v348/v349: テンプレの並べ替え（初回の▲▼で「今見えている順」を確定してから手動順モードへ）
+function evTplMove(id, dir) {
+  if (!_evTpl) return;
+  var manual = false;
+  try { manual = localStorage.getItem('gm_tplManualOrder') === '1'; } catch(e1) {}
+  if (!manual) {
+    _evTpl = _evTplDisplayList();
+    try { localStorage.setItem('gm_tplManualOrder', '1'); } catch(e2) {}
+  }
+  var ix = -1;
+  for (var i = 0; i < _evTpl.length; i++) { if (_evTpl[i].id === id) { ix = i; break; } }
+  var to = ix + dir;
+  if (ix < 0 || to < 0 || to >= _evTpl.length) return;
+  var tmp = _evTpl[ix]; _evTpl[ix] = _evTpl[to]; _evTpl[to] = tmp;
+  _evTplSaveAll();
+  evTplRenderRow();
+}
 function evTplMemberName() {
-  var mid = (document.getElementById('evMember')||{}).value || '';
+  var mid = _evMemberIds[0] || '';
   if (!mid) return '';
   var m = findMemberAny(mid);
   if (!m) return '';
@@ -16240,6 +16406,7 @@ function evTplPick(id) {
     return;
   }
   _evTplSel = t;
+  t.useCount = (t.useCount || 0) + 1; _evTplSaveAll(); // v349: 使用回数（頻度順表示用）
   // v311: 入口で種別が決まっている場合はテンプレの種別で上書きしない（カレンダー＝予定固定）
   selEvType(_evForceType || (t.type === 'event' ? 'event' : 'task'));
   var titleEl = document.getElementById('evTitle');
@@ -16499,7 +16666,7 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   var _rw = document.getElementById('evRepeatUntilWrap');
   if (_rw) _rw.style.display = 'none';
   // A1: 詳細に値が入っている時だけ自動で開く（新規はミニマル表示）。v316: 通知・メモは常時表示になったため条件から除外
-  var _hasAdv = !!(e && ((e.categoryId) || (e.memberId) || e.priority === 'high' || (e.subtasks && e.subtasks.length) || e.place));
+  var _hasAdv = !!(e && ((e.memberId) || (e.memberIds && e.memberIds.length) || e.priority === 'high' || e.memo || e.place)); // v350: カテゴリはメイン項目化・メモは詳細へ
   // v329: 場所
   var _pl = document.getElementById('evPlace');
   if (_pl) _pl.value = e ? (e.place || '') : '';
@@ -16530,7 +16697,10 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   }
   _evStarRender();
   updateTodoMetaDisplay();
-  buildEvMemberOptions(e ? (e.memberId || '') : (presetMember || ''));
+  _evMemberIds = e
+    ? ((e.memberIds && e.memberIds.length) ? e.memberIds.slice() : (e.memberId ? [e.memberId] : []))
+    : (presetMember ? [presetMember] : []);
+  updateEvMemberDisplay();
   // CAL-3: サブタスクを編集用にコピー（保存するまで元データは変えない）
   _evSubs = (e && e.subtasks ? e.subtasks : []).map(function(s){ return { id: s.id, t: s.t, done: !!s.done }; });
   var _subNew = document.getElementById('evSubNew');
@@ -16622,7 +16792,8 @@ function _saveEventBody() {
   e.endDate = (_dEndV && e.date && _dEndV > e.date) ? _dEndV : '';
   // v316: タスクは期限のみ（終了時刻・終了日は持たない。入力欄も非表示）
   if (_evType === 'task') { e.endTime = ''; e.endDate = ''; }
-  e.memberId = document.getElementById('evMember').value;
+  e.memberIds = _evMemberIds.slice(); // v348: 複数メンバー
+  e.memberId = _evMemberIds[0] || '';  // 互換（実績連動・既存表示用の代表1人）
   e.categoryId = _evCategoryId || '';
   // v329: 色は保存時点のカテゴリ色を予定自体に焼き付ける（後からカテゴリ/テンプレの色を変えても既存の予定の色は変わらない）
   e.color = '';
@@ -16701,7 +16872,7 @@ function _saveEventBody() {
   // メンバー編集パネルを開いたままタスク追加した場合、パネルのタスク一覧を即時更新
   try {
     var _mm = document.getElementById('modal');
-    if (_mm && _mm.classList.contains('open') && typeof editingId !== 'undefined' && editingId && e.memberId === editingId) {
+    if (_mm && _mm.classList.contains('open') && typeof editingId !== 'undefined' && editingId && evHasMember(e, editingId)) {
       var _tm = null; for (var ti=0; ti<state.members.length; ti++){ if (state.members[ti].id===editingId){ _tm=state.members[ti]; break; } }
       if (_tm && typeof meRenderExtras === 'function') meRenderExtras(_tm);
     }
