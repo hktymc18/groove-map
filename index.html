@@ -1049,6 +1049,8 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cell-num.sun,.ev-cell-num.hol{color:var(--red)}
 .ev-cell-num.sat{color:var(--b)}
 .ev-cell.today .ev-cell-num{background:var(--accent);color:var(--go-ink);font-weight:800}
+/* v356: 予定タブの数字をMAPと同じ等幅フォント(IBM Plex Mono)に統一（日付・時刻の視認性）。かなはNotoへフォールバック */
+.ev-cell-num,.wkv-days span,.ev-bar b,.ev-i-meta,.td-due,.ev-cal-daylabel{font-family:'IBM Plex Mono','Noto Sans JP',monospace}
 /* v302: マス内を10スロットの時間帯グリッドに（18時≒中央。空きスロット＝空き時間が見える） */
 .ev-cell-bars{display:flex;flex-direction:column;flex:1;min-height:0;gap:0;margin-top:0;width:100%}
 .ev-slot{flex:1 1 0;min-height:0;overflow:visible;display:flex;align-items:stretch;padding-bottom:1px} /* v350: 連日帯が罫線の上まで塗れるようvisible（文字は.ev-bar側でクリップ） */
@@ -1291,6 +1293,24 @@ body.cal-fs .pc-toolbar{display:none!important}
   #view-events .ev-cal-title{font-size:14px;min-width:110px}
 }
 #pcDayPanel{display:none;position:absolute;top:54px;right:0;bottom:0;width:320px;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;padding:12px 14px 20px;z-index:2}
+/* v357: PC版ToDo 3カラム（左=リスト/フィルタ・中央=タスク・右=詳細） */
+#pcTdSide,#pcTdDetail{display:none;position:absolute;top:54px;bottom:0;background:var(--surface);z-index:2;overflow-y:auto}
+#pcTdSide{left:0;width:212px;border-right:1px solid var(--border);padding:6px 8px 20px}
+#pcTdDetail{right:0;width:320px;border-left:1px solid var(--border);padding:10px 14px 24px;box-sizing:border-box}
+.pcts-ttl{font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:1px;padding:12px 10px 4px}
+.pcts-row{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:var(--text-mid)}
+.pcts-row:hover{background:var(--surface2)}
+.pcts-row.sel{background:var(--accent-dim);color:var(--accent)}
+.pcts-row.droptgt{outline:2px dashed var(--accent);outline-offset:-2px}
+.pcts-row i.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.pcts-row .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcts-row .ct{flex:none;font-size:11px;font-weight:800;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.pctd-lbl{font-size:10.5px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;margin:14px 0 5px}
+.pctd-empty{color:var(--text-dim);font-size:12.5px;padding:34px 6px;text-align:center;line-height:1.9}
+.td-hovacts{display:none;flex:none;gap:2px;align-items:center}
+.td-hovacts span{padding:4px 6px;border-radius:8px;cursor:pointer;font-size:13px;opacity:.6}
+.td-hovacts span:hover{background:var(--surface2);opacity:1}
+.td-row.kbsel{outline:2px solid var(--accent);outline-offset:-2px}
 .pc-only{display:none!important}
 /* v350: PC最適化＝ボトムシート類を中央のダイアログ表示に（横に伸び切らず入力しやすく） */
 @media (min-width: 768px) {
@@ -1298,6 +1318,16 @@ body.cal-fs .pc-toolbar{display:none!important}
   .full .ev-cal-bottom{display:none!important} /* v354: PCは下部バー廃止（ヘッダーと左メニューへ） */
   #evCalendar.full .ev-cal-weekdays,#evCalendar.full .ev-cal-grid,#evCalendar.full #calNextBar{margin-right:320px} /* v354: 2ペイン */
   #evCalendar.full #pcDayPanel{display:block}
+  /* v357: ToDo 3カラム＋1行レイアウト＋ホバー操作 */
+  #evAgenda.full #pcTdSide,#evAgenda.full #pcTdDetail{display:block}
+  #evAgenda.full #evAgendaList,#evAgenda.full .ev-quick-add{margin-left:212px;margin-right:320px}
+  #evAgenda.full #evAgendaList{padding-left:max(0px,calc((100% - 1212px)/2));padding-right:max(0px,calc((100% - 1212px)/2))}
+  #evAgenda.full .ev-quick-add{padding-left:max(14px,calc((100% - 1212px)/2));padding-right:max(14px,calc((100% - 1212px)/2))}
+  #evAgenda.full .td-filters{display:none} /* 絞り込みは左カラムへ */
+  #evAgenda.full .td-row:hover .td-hovacts{display:flex}
+  #evAgenda.full .td-body{display:flex;align-items:center;gap:12px}
+  #evAgenda.full .td-ttl{flex:1;min-width:0}
+  #evAgenda.full .td-due{margin-top:0;flex:none;max-width:48%;text-align:right}
   .overlay{align-items:center;padding:24px}
   .sheet{max-width:620px;border-radius:20px;border:1px solid var(--border);max-height:86vh}
   .ms-overlay{align-items:center;padding:24px}
@@ -2112,7 +2142,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v355</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v357</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2349,6 +2379,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="td-srchbtn" onclick="todoSearchToggle(false)" title="検索を閉じる">✕</div>
         </div>
       </div>
+      <div id="pcTdSide"></div>
+      <div id="pcTdDetail"></div>
       <div id="evAgendaList"></div>
       <div class="ev-cal-bottom">
         <div class="ev-cal-bbtn" onclick="setEventsMode('calendar')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg></span><span>カレンダー</span></div>
@@ -4741,7 +4773,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v355';
+  var DATA_VERSION = 'v357';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5598,6 +5630,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v357', d:'2026-08-17', items:['💻PC版ToDoを3カラム化：左に「今日/すべて/リスト/ラベル/完了」（未完了件数付き・リスト作成もここから）、中央にタスク一覧（読みやすい幅に）、右に詳細パネル','💻タスクをクリックすると右パネルでそのまま編集：タイトル・期限・⚑重要・リスト・サブタスク・メモを画面遷移なしで変更できます','💻マウス操作：行にカーソルを乗せると ⚑/🗑 ボタン表示。行をドラッグして左のリストへ落とすと移動（「今日」に落とすと期限が今日に）','💻キーボード操作：↑↓で選択・Spaceで完了・Enterでタイトル編集・Deleteで削除','今日完了したタスクは「▾ 今日完了した◯件」の折りたたみ見出し付きに（タップで開閉）'] },
+  { v:'v356', d:'2026-08-17', items:['🔢予定タブの数字フォントをMAPと同じ等幅フォント(IBM Plex Mono)に統一：月の日付・週ヘッダー・時刻・期限表示が見やすくなりました'] },
   { v:'v355', d:'2026-08-17', items:['🤝MAPの連鎖共有：結合したMAPを含めて丸ごと共有できるようになりました。自分のMAPを共有した相手にも、結合中の下位MAPが自動で閲覧専用共有され、相手の画面でも結合ツリーごと表示されます','🔗下位の方が共有を解除すると、連鎖先でも自動的に見えなくなります（権限はコピーせず連動）','共有設定リストに「👁 🔗◯◯経由」の自動共有が表示されます（経由元の解除で自動的に消えるため、手動の削除ボタンはありません）','⚠️反映にはセキュリティルールの更新が必要です（firestore.rules をデプロイ）'] },
   { v:'v354', d:'2026-08-17', items:['💻PC版の予定タブを2ペイン化：月カレンダーの右側にパネルを常時表示。日付をクリックするとその日の予定と今日のToDo（期限切れ含む）が右パネルに表示されます','💻日付マスをダブルクリックでその日の予定を新規作成できます','💻予定バーをマウスでドラッグして別の日へ移動できます（6px以上動かすとドラッグ開始）','💻時刻入力はPCではキーボードで直接入力OK（例:1930→19:30に自動整形）。予定バーにマウスを乗せると時間とタイトルのツールチップが出ます','💻下部の操作バーはPCでは廃止し、ヘッダーに「＋予定」「ToDo」「設定」ボタンを配置しました'] },
   { v:'v353', d:'2026-08-15', items:['💻PC版の月表示で横スクロールバーが出る問題を修正（予定バーが文字の長さで横にはみ出していました。バーは必ずマス幅に収まります）','💻PC版は全画面カレンダー/ToDo表示中も左側のメニュー（HOME/MAP/予定/データ）が常時表示されるようになりました'] },
@@ -14791,6 +14825,9 @@ function closeEventActions() {
 function openEventActions(id) {
   var e = findEvent(id);
   if (!e) return;
+  // v357: PCの全画面ToDoでは操作シートを開かず、右の詳細パネルで編集
+  var _ag357 = document.getElementById('evAgenda');
+  if (isPCMode() && _ag357 && _ag357.classList.contains('full')) { tdSelect(id); return; }
   closeEventActions();
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'evActOv';
   ov.onclick = function(ev){ if (ev.target === ov) closeEventActions(); };
@@ -15112,12 +15149,14 @@ function todoRowHtml(e) {
   var lb = e.labelId ? _todoLabelById(e.labelId) : null;
   var ls = e.listId ? _todoListById(e.listId) : null; // v336: どのリストのタスクか行内に表示
   var h = '<div class="td-wrap"><div class="td-delbtn" onclick="tdSwipeDelete(\'' + e.id + '\')" title="削除">🗑</div>'
-    + '<div class="td-row' + (e.done ? ' done' : '') + '" data-eid="' + e.id + '">'
+    + '<div class="td-row' + (e.done ? ' done' : '') + '" data-eid="' + e.id + '" draggable="true">'
     + '<div class="td-chk' + (e.done ? ' on' : '') + '" onclick="toggleEventDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</div>'
     + '<div class="td-body" onclick="openEventActions(\'' + e.id + '\')">'
     + '<div class="td-ttl">' + (e.priority === 'high' ? '<span style="color:var(--red);font-weight:800">⚑ </span>' : '') + evEsc(e.title || '(無題)') + '</div>'
     + ((due || subTx || lb || ls) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + evEsc(due) + (subTx ? ' ' + subTx : '') + (ls ? ' <span style="color:' + ls.color + '">●' + evEsc(ls.name) + '</span>' : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
     + '</div>'
+    // v357: PCはホバーで ⚑重要/🗑削除（スワイプの代替。CSSでPC+hover時のみ表示）
+    + '<div class="td-hovacts"><span onclick="event.stopPropagation();tdTogglePrio(\'' + e.id + '\')" title="⚑重要の切替">⚑</span><span onclick="event.stopPropagation();tdSwipeDelete(\'' + e.id + '\')" title="削除">🗑</span></div>'
     + '</div></div>'; // .td-row 閉じ + .td-wrap 閉じ
   if (subs.length && _evExpandedSubs[e.id]) {
     h += '<div class="ev-sub-block" style="margin:2px 14px 8px 42px">' + subs.map(function(s){
@@ -15143,7 +15182,8 @@ function _todoHomeRow(icon, name, count, onclick, colorDot) {
     + (count > 0 ? '<span class="td-hcount">' + count + '</span>' : '')
     + '<span class="fol-log-arrow">›</span></div>';
 }
-function renderAgenda() {
+function renderAgenda() { _renderAgendaCore(); _pcTdAfterRender(); } // v357: PC 3カラム（左リスト/右詳細）も同時更新
+function _renderAgendaCore() {
   var wrap = document.getElementById('evAgendaList');
   if (!wrap) return;
   if (!_todoMeta) { _todoMetaEnsure().then(function(){ renderAgenda(); }); }
@@ -15304,12 +15344,238 @@ function renderAgenda() {
   h += shown.length
     ? shown.map(todoRowHtml).join('')
     : '<div class="ev-empty" style="padding:28px 16px">' + (F.type === 'all' ? 'タスクはありません。上の入力欄に打ってEnterですぐ追加できます' : 'この絞り込みに該当するタスクはありません') + '</div>';
-  h += shownDone.map(todoRowHtml).join('');
+  if (shownDone.length) {
+    // v357: 今日完了した分は見出し付きの折りたたみに（タップ/クリックで開閉・既定は開）
+    var _dtOpen = localStorage.getItem('gm_tdDoneOpen') !== '0';
+    h += '<div class="td-secttl" style="cursor:pointer;user-select:none" onclick="tdDoneTodayToggle()">' + (_dtOpen ? '▾' : '▸') + ' 今日完了した ' + shownDone.length + '件</div>';
+    if (_dtOpen) h += shownDone.map(todoRowHtml).join('');
+  }
   h += '<div class="td-secttl">完了済み</div>';
   h += _todoHomeRow('✓', '完了タスク', doneCt, "todoNavTo('smart','done')");
   wrap.innerHTML = h;
 }
 
+// ============================================================
+//  v357: PC版ToDo 3カラム（左=リスト/フィルタ・中央=一覧・右=詳細）＋マウス/キーボード操作
+// ============================================================
+var _tdSelId = ''; // 右パネルで選択中のタスクID
+function _pcTdActive() {
+  var ag = document.getElementById('evAgenda');
+  return isPCMode() && ag && ag.classList.contains('full');
+}
+function tdTogglePrio(id) {
+  var e = findEvent(id); if (!e) return;
+  e.priority = (e.priority === 'high') ? 'normal' : 'high';
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e); renderAgenda();
+}
+function tdDoneTodayToggle() {
+  localStorage.setItem('gm_tdDoneOpen', localStorage.getItem('gm_tdDoneOpen') === '0' ? '1' : '0');
+  renderAgenda();
+}
+function tdSelect(id) {
+  _tdSelId = id;
+  var rows = document.querySelectorAll('#evAgendaList .td-row.kbsel');
+  for (var i = 0; i < rows.length; i++) rows[i].classList.remove('kbsel');
+  var r = document.querySelector('#evAgendaList .td-row[data-eid="' + id + '"]');
+  if (r) r.classList.add('kbsel');
+  _pcTdRenderDetail();
+}
+function _pcTdAfterRender() {
+  if (!_pcTdActive()) return;
+  _pcTdRenderSide();
+  _pcTdRenderDetail();
+  _pcTdBindDnd();
+  if (_tdSelId) {
+    var r = document.querySelector('#evAgendaList .td-row[data-eid="' + _tdSelId + '"]');
+    if (r) r.classList.add('kbsel');
+  }
+}
+function pcTdSideGo(type, id) {
+  _todoNav = { type: 'home' };
+  _evQuickFilter = '';
+  var qi = document.getElementById('evQuickInput'); if (qi) qi.value = '';
+  todoSetFilter(type, id);
+}
+function _pcTdRenderSide() {
+  var side = document.getElementById('pcTdSide');
+  if (!side || !_pcTdActive()) return;
+  var tasks = _todoTasksAll();
+  var undone = tasks.filter(function(e){ return !e.done; });
+  var t = evTodayYmd();
+  var F = _todoFilter || { type: 'all', id: '' };
+  var home = (!_todoNav || _todoNav.type === 'home');
+  function row(sel, onclick, icon, name, ct, dot, drop) {
+    return '<div class="pcts-row' + (sel ? ' sel' : '') + '"' + (drop ? ' ' + drop : '') + ' onclick="' + onclick + '">'
+      + (dot ? '<i class="dot" style="background:' + dot + '"></i>' : '<span style="flex:none;width:16px;text-align:center">' + icon + '</span>')
+      + '<span class="n">' + evEsc(name) + '</span>'
+      + (ct > 0 ? '<span class="ct">' + ct + '</span>' : '') + '</div>';
+  }
+  var h = '<div class="pcts-ttl">表示</div>';
+  h += row(home && F.type === 'today', "pcTdSideGo('today')", '☀️', '今日', undone.filter(function(e){ return e.date && e.date <= t; }).length, '', 'data-drop="today"');
+  h += row(home && F.type === 'all', "pcTdSideGo('all')", '📥', 'すべて', undone.length, '', '');
+  var lists = (_todoMeta && _todoMeta.lists) || [];
+  if (lists.length) h += '<div class="pcts-ttl">リスト（ドラッグで移動）</div>';
+  lists.forEach(function(L){
+    h += row(home && F.type === 'list' && F.id === L.id, "pcTdSideGo('list','" + L.id + "')", '', L.name, undone.filter(function(e){ return e.listId === L.id; }).length, L.color, 'data-drop="list:' + L.id + '"');
+  });
+  var labels = (_todoMeta && _todoMeta.labels) || [];
+  if (labels.length) h += '<div class="pcts-ttl">ラベル</div>';
+  labels.forEach(function(LB){
+    h += row(home && F.type === 'label' && F.id === LB.id, "pcTdSideGo('label','" + LB.id + "')", '', '◎' + LB.name, undone.filter(function(e){ return e.labelId === LB.id; }).length, LB.color, '');
+  });
+  h += '<div class="pcts-ttl">その他</div>';
+  h += row(_todoNav && _todoNav.type === 'smart' && _todoNav.id === 'done', "todoNavTo('smart','done')", '✓', '完了タスク', tasks.filter(function(e){ return e.done && !_todoDoneToday(e); }).length, '', '');
+  h += '<div style="padding:10px 8px 0"><input class="fi" id="pcTdNewList" placeholder="＋ リスト作成（Enter）" autocomplete="off" style="width:100%;box-sizing:border-box;font-size:12px;padding:8px 9px" onkeydown="todoCreateKey(event,\'list\',\'pcTdNewList\',false)"></div>';
+  side.innerHTML = h;
+  _pcTdBindSideDnd(side);
+}
+// ── ドラッグ&ドロップ（行→左カラムのリスト/今日へ） ──
+function _pcTdBindDnd() {
+  var wrap = document.getElementById('evAgendaList');
+  if (!wrap || wrap._dndBound) return;
+  wrap._dndBound = true;
+  wrap.addEventListener('dragstart', function(ev){
+    var r = (ev.target && ev.target.closest) ? ev.target.closest('.td-row[data-eid]') : null;
+    if (!r) return;
+    try { ev.dataTransfer.setData('text/plain', r.getAttribute('data-eid')); ev.dataTransfer.effectAllowed = 'move'; } catch(e0) {}
+  });
+}
+function _pcTdBindSideDnd(side) {
+  if (side._dndBound) return;
+  side._dndBound = true;
+  side.addEventListener('dragover', function(ev){
+    var r = (ev.target && ev.target.closest) ? ev.target.closest('.pcts-row[data-drop]') : null;
+    if (!r) return;
+    ev.preventDefault();
+    try { ev.dataTransfer.dropEffect = 'move'; } catch(e0) {}
+    r.classList.add('droptgt');
+  });
+  side.addEventListener('dragleave', function(ev){
+    var r = (ev.target && ev.target.closest) ? ev.target.closest('.pcts-row[data-drop]') : null;
+    if (r) r.classList.remove('droptgt');
+  });
+  side.addEventListener('drop', function(ev){
+    var r = (ev.target && ev.target.closest) ? ev.target.closest('.pcts-row[data-drop]') : null;
+    if (!r) return;
+    ev.preventDefault();
+    r.classList.remove('droptgt');
+    var eid = '';
+    try { eid = ev.dataTransfer.getData('text/plain') || ''; } catch(e0) {}
+    var e = eid ? findEvent(eid) : null;
+    if (!e) return;
+    var d = r.getAttribute('data-drop') || '';
+    if (d === 'today') { e.date = evTodayYmd(); toast('☀️ 期限を今日にしました'); }
+    else if (d.indexOf('list:') === 0) { e.listId = d.slice(5); var L = _todoListById(e.listId); toast('📄 「' + ((L && L.name) || 'リスト') + '」へ移動しました'); }
+    else return;
+    e.updatedAt = new Date().toISOString();
+    saveEventDoc(e);
+    renderAgenda();
+  });
+}
+// ── 右詳細パネル（クリックした行をその場で編集。モーダルを開かない） ──
+function _pcTdRenderDetail() {
+  var box = document.getElementById('pcTdDetail');
+  if (!box || !_pcTdActive()) return;
+  var e = _tdSelId ? findEvent(_tdSelId) : null;
+  if (!e) { box.innerHTML = '<div class="pctd-empty">タスクをクリック（または ↑↓ キー）で選択すると<br>ここでそのまま編集できます<br><br><span style="font-size:11px">Space=完了切替　Enter=タイトル編集<br>Delete=削除　行のドラッグ=リストへ移動</span></div>'; return; }
+  var isTask = e.type === 'task';
+  var selChip = 'background:var(--accent-dim);border-color:var(--accent);color:var(--accent)';
+  var h = '<div class="pctd-lbl" style="margin-top:2px">' + (isTask ? '✅ タスク' : '📅 予定') + '</div>';
+  h += '<input class="fi" id="pcTdTitle" style="width:100%;box-sizing:border-box;font-weight:700" value="' + evEsc(e.title || '') + '" onchange="_pcTdSave(\'title\',this.value)">';
+  if (isTask) h += '<button class="btn-p" style="width:100%;margin-top:10px' + (e.done ? ';opacity:.7' : '') + '" onclick="toggleEventDone(\'' + e.id + '\')">' + (e.done ? '↩ 未完了に戻す' : '✓ 完了にする') + '</button>';
+  h += '<div class="pctd-lbl">期限</div>'
+    + '<div style="display:flex;gap:8px"><input type="date" class="fi" style="flex:1;min-width:0" value="' + evEsc(e.date || '') + '" onchange="_pcTdSave(\'date\',this.value)">'
+    + '<input type="time" class="fi" style="width:108px" value="' + evEsc(e.time || '') + '" onchange="_pcTdSave(\'time\',this.value)"></div>';
+  if (isTask) {
+    h += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'
+      + '<span class="ev-act-chip" onclick="_pcTdSave(\'date\',\'\')">期限なし</span>'
+      + '<span class="ev-act-chip" style="' + (e.priority === 'high' ? selChip : '') + '" onclick="tdTogglePrio(\'' + e.id + '\')">⚑ 重要</span>'
+      + '</div>';
+    h += '<div class="pctd-lbl">リスト</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
+    h += '<span class="ev-act-chip" style="' + (!e.listId ? selChip : '') + '" onclick="_pcTdSave(\'listId\',\'\')">なし</span>';
+    (((_todoMeta && _todoMeta.lists) || [])).forEach(function(L){
+      h += '<span class="ev-act-chip" style="' + (e.listId === L.id ? selChip : '') + '" onclick="_pcTdSave(\'listId\',\'' + L.id + '\')"><i style="display:inline-block;width:9px;height:9px;border-radius:3px;background:' + L.color + ';margin-right:5px"></i>' + evEsc(L.name) + '</span>';
+    });
+    h += '</div>';
+    var subs = e.subtasks || [];
+    h += '<div class="pctd-lbl">サブタスク' + (subs.length ? '（' + subs.filter(function(sx){ return sx.done; }).length + '/' + subs.length + '）' : '') + '</div>';
+    if (subs.length) {
+      h += '<div class="ev-act-subs">' + subs.map(function(sx){
+        return '<div class="ev-sub-row' + (sx.done ? ' done' : '') + '" onclick="pcTdSubToggle(\'' + e.id + '\',\'' + evEsc(sx.id) + '\')">'
+          + '<span class="ev-sub-chk">' + (sx.done ? '✓' : '') + '</span>'
+          + '<span class="ev-sub-t">' + evEsc(sx.t || '') + '</span>'
+          + '<span class="ev-sub-x" onclick="event.stopPropagation();pcTdSubDel(\'' + e.id + '\',\'' + evEsc(sx.id) + '\')">✕</span></div>';
+      }).join('') + '</div>';
+    }
+    h += '<div class="ev-act-subadd"><input class="fi" id="pcTdSubNew" placeholder="＋ サブタスク（Enter）" autocomplete="off" onkeydown="pcTdSubKey(event)"><button class="btn-c" style="flex:none;padding:9px 12px" onclick="pcTdSubAdd()">追加</button></div>';
+  }
+  h += '<div class="pctd-lbl">メモ</div><textarea class="fi" style="width:100%;box-sizing:border-box;min-height:72px;resize:vertical" onchange="_pcTdSave(\'memo\',this.value)">' + evEsc(e.memo || '') + '</textarea>';
+  h += '<div class="ev-act-grid" style="margin-top:12px">'
+    + '<div class="ev-act-btn" onclick="openEventEdit(\'' + e.id + '\')">✎ 詳細編集</div>'
+    + '<div class="ev-act-btn danger" onclick="tdSwipeDelete(\'' + e.id + '\')">🗑 削除</div></div>';
+  box.innerHTML = h;
+}
+function _pcTdSave(field, val) {
+  var e = _tdSelId ? findEvent(_tdSelId) : null;
+  if (!e) return;
+  if (field === 'title') { var tv = String(val || '').trim(); if (tv) e.title = tv; }
+  else if (field === 'date') { e.date = val || ''; if (!e.date) { e.time = ''; e.endDate = ''; } }
+  else if (field === 'time') e.time = val || '';
+  else if (field === 'listId') e.listId = val || '';
+  else if (field === 'memo') e.memo = val;
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  renderAgenda();
+}
+function pcTdSubToggle(eid, sid) { evSubToggle(eid, sid); _pcTdAfterRender(); }
+function pcTdSubDel(eid, sid) {
+  var e = findEvent(eid); if (!e || !e.subtasks) return;
+  e.subtasks = e.subtasks.filter(function(sx){ return sx.id !== sid; });
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e); renderAgenda();
+}
+function pcTdSubAdd() {
+  var inp = document.getElementById('pcTdSubNew');
+  var e = _tdSelId ? findEvent(_tdSelId) : null;
+  if (!inp || !e) return;
+  var t = (inp.value || '').trim();
+  if (!t) { try { inp.focus(); } catch(e0) {} return; }
+  e.subtasks = e.subtasks || [];
+  e.subtasks.push({ id: 'st_' + Date.now() + '_' + Math.floor(Math.random() * 10000), t: t, done: false });
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e); renderAgenda();
+  setTimeout(function(){ var i2 = document.getElementById('pcTdSubNew'); if (i2) try { i2.focus(); } catch(e1) {} }, 60);
+}
+function pcTdSubKey(ev) { if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); pcTdSubAdd(); } }
+// ── キーボード操作（↑↓=選択 / Space=完了 / Enter=タイトル編集 / Delete=削除） ──
+function _pcTdKeys(ev) {
+  if (!_pcTdActive()) return;
+  var a = document.activeElement;
+  if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  if (document.getElementById('evActOv') || document.querySelector('.overlay.open')) return;
+  var rows = [].slice.call(document.querySelectorAll('#evAgendaList .td-row[data-eid]'));
+  if (!rows.length) return;
+  var idx = -1;
+  for (var i = 0; i < rows.length; i++) { if (rows[i].getAttribute('data-eid') === _tdSelId) { idx = i; break; } }
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    idx = (ev.key === 'ArrowDown') ? Math.min(rows.length - 1, idx + 1) : Math.max(0, (idx < 0 ? 0 : idx - 1));
+    tdSelect(rows[idx].getAttribute('data-eid'));
+    try { rows[idx].scrollIntoView({ block: 'nearest' }); } catch(e0) {}
+  } else if (ev.key === ' ' && _tdSelId) {
+    ev.preventDefault();
+    toggleEventDone(_tdSelId);
+  } else if (ev.key === 'Enter' && _tdSelId) {
+    ev.preventDefault();
+    var ti = document.getElementById('pcTdTitle');
+    if (ti) { try { ti.focus(); ti.select(); } catch(e1) {} }
+  } else if ((ev.key === 'Delete' || ev.key === 'Backspace') && _tdSelId) {
+    ev.preventDefault();
+    tdSwipeDelete(_tdSelId);
+  }
+}
+document.addEventListener('keydown', _pcTdKeys);
 // ── 月カレンダー ──
 function calShiftMonth(delta) {
   if (typeof calViewMenuClose === 'function') calViewMenuClose();
@@ -15675,7 +15941,7 @@ function renderPcDayPanel() {
   var t = evTodayYmd();
   var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t; }).sort(_todoSortDue);
   var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-    + '<div style="font-size:14.5px;font-weight:800;flex:1">' + evEsc(fmtEvDate(ds, '')) + '</div>'
+    + '<div style="font-size:14.5px;font-weight:800;flex:1;font-family:\'IBM Plex Mono\',\'Noto Sans JP\',monospace">' + evEsc(fmtEvDate(ds, '')) + '</div>'
     + '<button class="btn-p" style="flex:none;padding:7px 13px;font-size:12.5px" onclick="openEventAddDate(\'' + ds + '\')">＋ 予定</button>'
     + '</div>'
     + '<div id="pcDayList">' + _daySheetHtml(ds) + '</div>'
@@ -15770,7 +16036,7 @@ function openCalDaySheet(ds) {
   ov.onclick = function(e){ if (e.target === ov) closeCalDaySheet(); };
   var hol = jpHoliday(ds);
   ov.innerHTML = '<div class="ms-sheet" style="max-height:58vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + fmtEvDate(ds, '') + (hol ? ' <span style="font-size:11.5px;color:var(--red);font-weight:700">' + evEsc(hol) + '</span>' : '') + '</div></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name" style="font-family:\'IBM Plex Mono\',\'Noto Sans JP\',monospace">' + fmtEvDate(ds, '') + (hol ? ' <span style="font-size:11.5px;color:var(--red);font-weight:700">' + evEsc(hol) + '</span>' : '') + '</div></div>'
     + '<span class="ms-x" onclick="closeCalDaySheet()">✕</span></div>'
     + '<div style="padding:0 6px 16px" id="dayShList">' + _daySheetHtml(ds) + '</div></div>';
   document.body.appendChild(ov);
