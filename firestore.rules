@@ -109,17 +109,25 @@ service cloud.firestore {
     }
 
     // ============ MAP本体（months/stats/events/meta/shared） ============
+    // 自分宛ての共有ドキュメント
+    function myShareDoc(uid) {
+      return get(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid)).data;
+    }
     // 共有された相手（閲覧以上）：maps/{uid}/shared/{自分} が存在する
+    // v355 連鎖共有: 結合経由の派生共有(derived)は「経由元(via)の共有が生きている間」のみ有効。
+    //   （下位が経由元への共有を解除すると、連鎖先も自動的に読めなくなる）
     function isSharedToMap(uid) {
       return signedIn() && notDisabled(uid)
-          && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid));
+          && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
+          && ( myShareDoc(uid).get('derived', false) != true
+               || exists(/databases/$(database)/documents/maps/$(uid)/shared/$(myShareDoc(uid).get('via', '__none'))) );
     }
-    // 共有編集者：上記に加え perm=='edit'（＝共同編集）
+    // 共有編集者：上記に加え perm=='edit'（＝共同編集）。派生共有は常に閲覧のみ。
     function canEditMap(uid) {
       return signedIn() && notDisabled(uid) && notDisabled(request.auth.uid)
           && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
-          && get(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
-               .data.get('perm','view') == 'edit';
+          && myShareDoc(uid).get('derived', false) != true
+          && myShareDoc(uid).get('perm', 'view') == 'edit';
     }
 
     // データ本体：read=オーナー/管理者/共有された人、write=オーナー/管理者/共有編集者
@@ -140,9 +148,22 @@ service cloud.firestore {
       allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
     }
     // 共有設定サブコレクション：作成・変更はオーナー/管理者のみ（共有編集者でも変更不可）
+    // v355 連鎖共有: このMAPの共有を受けている人は、自分の共有相手向けに
+    //   「閲覧専用の派生共有(derived:true, via:自分)」を作成・削除できる。
+    //   既存の直接共有ドキュメントは上書き不可（derived==true のものだけ更新可）＝権限の格下げ防止。
     match /maps/{uid}/shared/{rid} {
       allow read:  if isAdmin() || ownerActive(uid) || isSelf(rid);
-      allow write: if isAdmin() || ownerActive(uid);
+      allow create, update: if isAdmin() || ownerActive(uid)
+        || ( signedIn() && notDisabled(request.auth.uid)
+             && request.resource.data.get('derived', false) == true
+             && request.resource.data.get('via', '') == request.auth.uid
+             && request.resource.data.get('perm', 'view') == 'view'
+             && rid != request.auth.uid
+             && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
+             && (resource == null || resource.data.get('derived', false) == true) );
+      allow delete: if isAdmin() || ownerActive(uid)
+        || ( signedIn() && resource.data.get('derived', false) == true
+             && resource.data.get('via', '') == request.auth.uid );
     }
 
     // ============ MAP 受信側の共有インデックス ============
