@@ -2101,7 +2101,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v350</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v352</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4723,7 +4723,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v350';
+  var DATA_VERSION = 'v352';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5564,6 +5564,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v352', d:'2026-08-15', items:['✅＋ボタンのタスク追加：「明日」チップを廃止し、日付を直接選べる欄に変更（カレンダーから好きな日を選択）。既定は今日の日付が入っています。「期限なし」チップで期限をクリアできます'] },
+  { v:'v351', d:'2026-08-15', items:['🔔アプリを開いた時の「期限のタスク」通知をタップすると該当へ飛ぶように：1件ならそのタスクの詳細シート、複数ならToDoの「今日」絞り込み一覧が開きます','iOSのホーム画面アプリでもこの通知が表示されるように（Service Worker経由の表示に対応）'] },
   { v:'v350', d:'2026-08-15', items:['🎨予定入力の「カテゴリ（色分け）」を通知・繰り返しの下のメイン項目に移動（メモは「詳細」の中へ）','📅連日予定の帯が罫線部分で途切れて見えた問題を修正（罫線の上まで塗りつぶし）','✅当日完了したタスクは完了済みボックスへすぐ移さず、一覧の下部に取り消し線付きで残るように（翌日から完了タスクへ）','🗑スワイプ削除を安全に：左フリックでごみ箱ボタンが出て、タップして初めて削除（いきなり消えません）。右フリック＝完了は従来どおり','↩「元に戻す」ボタンが押せなかった問題を修正（トーストがタップを受け付けない設定になっていました）','💻PC版の入力画面を最適化：予定・タスク・各種シートが画面下に横いっぱいに伸びる形をやめ、中央のダイアログ表示に（マウスでも入力しやすく）'] },
   { v:'v349', d:'2026-08-15', items:['🗺MAPの深い段で名前が縦書きに潰れる問題を対策：カードに最小幅（250px）を保証し、画面からはみ出す分は横スクロールで見られるようにしました（名前は常に横書き）','📌テンプレは「よく使う順」で自動的に並ぶようになりました（使うたびに記録）。6件以上ある場合は上位5件＋「▾すべて表示」の2段表示ですっきり','▲▼で手動並べ替えをした端末は、手動の順番が優先されます（自動の頻度順はオフ）'] },
   { v:'v348', d:'2026-08-15', items:['🛠MAPのモバイル版でタイトル未入力メンバーの丸アイコンが「&#x…」と文字化けする問題を修正。タイトル未入力でも研修ステータス（PA等）があればそれを表示し、色も研修系の水色になります（PCの「-」のみ表示も同様に改善）','👥タスク/予定の「関連メンバー」が複数人選べるように＋🔍名前検索付きのピッカーに刷新（選んだ全員がメンバー別のタスク一覧・詳細シートに反映されます）','📌テンプレの並べ替え：⧉パネルの各テンプレに▲▼ボタンを追加（タップで順番を入れ替えて保存）'] },
@@ -12518,6 +12520,7 @@ if ('serviceWorker' in navigator) {
   try {
     navigator.serviceWorker.addEventListener('message', function(ev){
       if (ev && ev.data && ev.data.type === 'gmOpenEvent' && ev.data.eventId) gmOpenEventFromPush(ev.data.eventId);
+      if (ev && ev.data && ev.data.type === 'gmOpenTodo') setTimeout(gmOpenDueTodos, 400); // v351: まとめ通知タップ→ToDoの今日へ
     });
   } catch(eSW) {}
 }
@@ -12526,6 +12529,10 @@ try {
   if (_pmEv) {
     gmOpenEventFromPush(decodeURIComponent(_pmEv[1]));
     if (history.replaceState) history.replaceState(null, '', location.pathname); // URLを綺麗に戻す
+  }
+  if (/[?&]todo=1/.test(location.search || '')) { // v351: 通知から新規起動した場合
+    setTimeout(gmOpenDueTodos, 1200);
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
   }
 } catch(ePM) {}
 // v335: ホーム最上部のクイック追加（Enterで即マイリストへ・連続入力可）と検索の切替
@@ -12585,7 +12592,7 @@ function closeTaskQuickSheet() {
 function openTaskQuickSheet() {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   closeTaskQuickSheet();
-  _tqDate = '';
+  _tqDate = evTodayYmd(); // v352: 既定＝今日（期限なしにしたい時はチップで解除）
   _tqListId = (_todoNav && _todoNav.type === 'list' && _todoNav.id) ? _todoNav.id : '';
   // v345: リスト画面以外から開いた時は「直近に使ったリスト」を既定に
   if (!_tqListId && _todoFilter && _todoFilter.type === 'list') _tqListId = _todoFilter.id; // 絞り込み中はそのリスト
@@ -12626,16 +12633,16 @@ function openTaskQuickSheet() {
 function _tqRenderChips() {
   var c = document.getElementById('tqChips');
   if (!c) return;
-  var t = evTodayYmd();
-  var tm = evYmd(evAddDays(new Date(), 1));
-  function dchip(v, lbl) { return '<div class="rb' + (_tqDate === v ? ' sel' : '') + '" onclick="tqSetDate(\'' + v + '\')" style="padding:8px 12px;font-size:12.5px">' + lbl + '</div>'; }
+  // v352: 「明日」チップを廃止し、日付を直接選べる欄に（既定＝今日）
   var L = _tqListId ? _todoListById(_tqListId) : null;
-  c.innerHTML = dchip('', '期限なし') + dchip(t, '今日') + dchip(tm, '明日')
+  c.innerHTML = '<div class="rb' + (_tqDate === '' ? ' sel' : '') + '" onclick="tqSetDate(\'\')" style="padding:8px 12px;font-size:12.5px">期限なし</div>'
+    + '<input type="date" class="fi" id="tqDate" value="' + evEsc(_tqDate || '') + '" onchange="tqDateChange(this.value)" style="flex:1;min-width:130px;padding:8px 10px;font-size:13px' + (_tqDate ? ';border-color:var(--accent)' : '') + '">'
     + '<div class="ev-cat-field" style="flex:1;min-width:120px" onclick="tqPickList()">'
     + '<span class="cat-swatch" style="background:' + (L ? L.color : '#9ca3af') + '"></span>'
     + '<span style="flex:1">' + evEsc(L ? L.name : 'マイリスト') + '</span><span style="color:var(--text-dim)">▾</span></div>';
 }
 function tqSetDate(v) { _tqDate = v; _tqRenderChips(); }
+function tqDateChange(v) { _tqDate = v || ''; _tqRenderChips(); }
 function tqPickList() {
   window._tdPickCb = function(kind, id){ _tqListId = id; _tqRenderChips(); };
   openTodoPicker('list');
@@ -13089,13 +13096,17 @@ function updateEventsBadge() {
 function notifyDueEvents() {
   if (_evNotified) return;
   _evNotified = true;
-  var n = dueTaskCount();
+  var t = evTodayYmd();
+  var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t; });
+  var n = due.length;
   if (n > 0) {
     setTimeout(function() {
       toast('⏰ 期限が来ているタスクが ' + n + ' 件あります', 3500);
     }, 900);
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      showBrowserNotif('期限のタスク ' + n + ' 件', '今日まで未完了のタスクがあります', 'gm-due-summary');
+      // v351: タップで該当へ（1件＝そのタスクの詳細 / 複数＝ToDoの「今日」一覧）
+      if (n === 1) showBrowserNotif('期限のタスク: ' + (due[0].title || ''), 'タップで詳細を開きます', 'gm-due-summary', due[0].id);
+      else showBrowserNotif('期限のタスク ' + n + ' 件', 'タップで一覧を開きます', 'gm-due-summary');
     }
   }
 }
@@ -13384,19 +13395,37 @@ function requestNotifPermission() {
   }
 }
 
-function showBrowserNotif(title, body, tag) {
+// v351: 通知タップで該当タスク（1件時）またはToDoの「今日」一覧へ飛ぶ。iOS等はSW経由で表示
+function gmOpenDueTodos() {
+  switchView('events');
+  setEventsMode('agenda');
+  _todoNav = { type: 'home' };
+  todoSetFilter('today');
+}
+function showBrowserNotif(title, body, tag, eventId) {
   if (!notifSupported() || Notification.permission !== 'granted') return;
+  var opts = { body: body || '', icon: './icon-192.png', badge: './icon-192.png', data: { eventId: eventId || '', todo: !eventId } };
+  if (tag) opts.tag = tag;
+  var shown = false;
   try {
-    var opts = { body: body || '' };
-    if (tag) opts.tag = tag;
     var n = new Notification('🔔 ' + title, opts);
+    shown = true;
     n.onclick = function() {
       try { window.focus(); } catch (_) {}
-      switchView('events');
+      if (eventId) gmOpenEventFromPush(eventId);
+      else gmOpenDueTodos();
       try { n.close(); } catch (_) {}
     };
     setTimeout(function() { try { n.close(); } catch (_) {} }, 12000);
   } catch (err) {}
+  if (!shown && ('serviceWorker' in navigator)) {
+    // iOSのホーム画面アプリは Notification コンストラクタ不可 → SW経由（タップはsw.jsのnotificationclickが処理）
+    try {
+      navigator.serviceWorker.ready.then(function(reg){
+        return reg.showNotification('🔔 ' + title, opts);
+      }).catch(function(){});
+    } catch (e2) {}
+  }
 }
 
 // 予定の日時オブジェクト（時刻未指定は9:00基準）

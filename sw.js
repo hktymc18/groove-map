@@ -39,20 +39,21 @@ self.addEventListener('notificationclick', function (e) {
   // v330: notification付き配信（FCM自動表示）の場合は data.FCM_MSG.data 側に入る
   var d = (e.notification && e.notification.data) || {};
   var evId = d.eventId || (d.FCM_MSG && d.FCM_MSG.data && d.FCM_MSG.data.eventId) || '';
+  var isTodo = !!(d.todo && !evId); // v351: 期限まとめ通知→ToDoの今日一覧へ
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {
         if ('focus' in list[i]) {
-          try { list[i].postMessage({ type: 'gmOpenEvent', eventId: evId }); } catch (err) {}
+          try { list[i].postMessage(isTodo ? { type: 'gmOpenTodo' } : { type: 'gmOpenEvent', eventId: evId }); } catch (err) {}
           return list[i].focus();
         }
       }
-      if (clients.openWindow) return clients.openWindow('./' + (evId ? '?ev=' + encodeURIComponent(evId) : ''));
+      if (clients.openWindow) return clients.openWindow('./' + (evId ? '?ev=' + encodeURIComponent(evId) : (isTodo ? '?todo=1' : '')));
     })
   );
 });
 
-var CACHE = 'groove-map-v350';
+var CACHE = 'groove-map-v352';
 var ASSETS = [
   './',
   './index.html',
