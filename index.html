@@ -1026,7 +1026,7 @@ tr.ot-done{opacity:.5}
 .ev-cal-weekdays .ev-sat{color:var(--b)}
 .ev-cal-weekdays .ev-sun{color:var(--red)}
 /* v298: Lifebear式・縦に無限スクロールする連続週カレンダー（1画面5週） */
-.ev-cal-grid{display:block;overflow-y:auto;padding:0;height:72vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.ev-cal-grid{display:block;overflow-y:auto;overflow-x:hidden;padding:0;height:72vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} /* v353: 端の帯のはみ出しでページに横スクロールが出ないように */
 /* v343: 月ページ送り時のふわっとフェードイン */
 .ev-cal-grid.cal-fade{animation:calFadeIn .55s ease} /* v345: もう少しゆっくり */
 @keyframes calFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -1052,7 +1052,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 /* v302: マス内を10スロットの時間帯グリッドに（18時≒中央。空きスロット＝空き時間が見える） */
 .ev-cell-bars{display:flex;flex-direction:column;flex:1;min-height:0;gap:0;margin-top:0;width:100%}
 .ev-slot{flex:1 1 0;min-height:0;overflow:visible;display:flex;align-items:stretch;padding-bottom:1px} /* v350: 連日帯が罫線の上まで塗れるようvisible（文字は.ev-bar側でクリップ） */
-.ev-slot .ev-bar{height:auto;display:flex;align-items:center;line-height:1}
+.ev-slot .ev-bar{height:auto;display:flex;align-items:center;line-height:1;min-width:0;max-width:100%} /* v353: slotをvisibleにした副作用で文字幅に広がるのを防止 */
 .ev-more-badge{position:absolute;right:1px;bottom:1px;font-size:8px;font-weight:800;color:var(--text-dim);background:var(--surface3);border-radius:6px;padding:1px 4px;line-height:1.2;z-index:2}
 /* v302: はみ出しは「…」でなくクリップ（表示できる文字まで見せる）。v311: 8段化に合わせ少し大きく */
 .ev-bar{font-size:9.5px;font-weight:600;letter-spacing:-0.2px;line-height:1.3;padding:0 1px 0 2px;border-radius:2.5px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:clip;box-sizing:border-box;text-align:left}
@@ -1201,6 +1201,11 @@ body.cal-fs .back-home-bar{display:none!important}
 body.cal-fs .mobile-tabbar{display:none!important}
 body.cal-fs .fab{display:none!important}
 body.cal-fs .pc-sidebar{display:none!important}
+/* v353: PCは全画面カレンダー/ToDo中も左メニューを常時表示（ペインはサイドバー分右から） */
+@media (min-width: 768px) {
+  body.cal-fs .pc-sidebar{display:flex!important}
+  #evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full{left:68px}
+}
 body.cal-fs .pc-toolbar{display:none!important}
 #evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full{position:fixed;inset:0;z-index:290;background:var(--bg);display:flex!important;flex-direction:column;padding-top:env(safe-area-inset-top)}
 /* v323: 「下に空白が残る」根本対策＝実際に見えている高さ(visualViewport→--vvh)をそのまま使う */
@@ -1285,8 +1290,14 @@ body.cal-fs .pc-toolbar{display:none!important}
   #view-events .ev-cal-nav{width:30px;height:30px;font-size:16px}
   #view-events .ev-cal-title{font-size:14px;min-width:110px}
 }
+#pcDayPanel{display:none;position:absolute;top:54px;right:0;bottom:0;width:320px;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;padding:12px 14px 20px;z-index:2}
+.pc-only{display:none!important}
 /* v350: PC最適化＝ボトムシート類を中央のダイアログ表示に（横に伸び切らず入力しやすく） */
 @media (min-width: 768px) {
+  .pc-only{display:flex!important}
+  .full .ev-cal-bottom{display:none!important} /* v354: PCは下部バー廃止（ヘッダーと左メニューへ） */
+  #evCalendar.full .ev-cal-weekdays,#evCalendar.full .ev-cal-grid,#evCalendar.full #calNextBar{margin-right:320px} /* v354: 2ペイン */
+  #evCalendar.full #pcDayPanel{display:block}
   .overlay{align-items:center;padding:24px}
   .sheet{max-width:620px;border-radius:20px;border:1px solid var(--border);max-height:86vh}
   .ms-overlay{align-items:center;padding:24px}
@@ -2101,7 +2112,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v352</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v355</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2323,6 +2334,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="ev-cal-hdr">
         <div class="ev-cal-x" id="tdHdrX" onclick="todoHdrBack()" title="閉じる">✕</div>
         <div class="ev-cal-title" id="tdHdrTitle" onclick="todoNavTo('home')">✅ ToDo</div>
+        <div class="ev-cal-nav pc-only" onclick="openTaskQuickSheet()" title="タスクを追加" style="background:var(--accent);color:var(--go-ink);border-color:var(--accent);font-weight:800">＋</div>
+        <div class="ev-cal-nav pc-only" onclick="setEventsMode('calendar')" title="カレンダー"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg></div>
         <div class="ev-cal-view" onclick="calViewMenuToggle()" title="表示切替"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg><span style="font-size:9px;margin-left:2px">▾</span></div>
       </div>
       <!-- v335: ホーム最上部＝常設クイック追加（iPhoneリマインダー式）。検索は🔍に格納 -->
@@ -2375,6 +2388,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-cal-nav" onclick="calShiftMonth(-1)">‹</div>
         <div class="ev-cal-title" id="evCalTitle" onclick="calGoToday()" title="タップで今日へ"></div>
         <div class="ev-cal-nav" onclick="calShiftMonth(1)">›</div>
+        <div class="ev-cal-nav pc-only" onclick="openEventAddDate(_calSelDate || evTodayYmd())" title="予定を追加" style="background:var(--accent);color:var(--go-ink);border-color:var(--accent);font-weight:800">＋</div>
+        <div class="ev-cal-nav pc-only" onclick="setEventsMode('agenda')" title="ToDo"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12l2.5 2.5 5-5.5"/></svg></div>
+        <div class="ev-cal-nav pc-only" onclick="openCalSettings()" title="設定"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
         <div class="ev-cal-view" id="evCalViewBtn" onclick="calViewMenuToggle()" title="表示切替"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg><span style="font-size:9px;margin-left:2px">▾</span></div>
       </div>
       <div id="calNextBar" style="display:none"></div>
@@ -2383,6 +2399,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
       <div class="ev-cal-grid" id="evCalGrid"></div>
       <div class="ev-day-panel" id="evDayPanel" style="display:none"></div>
+      <!-- v354: PC用サイドパネル（選択日の予定＋今日のToDoを常時表示） -->
+      <div id="pcDayPanel"></div>
       <!-- v302: Lifebear式の下部バー（ToDo・＋・設定を1行に） -->
       <div class="ev-cal-bottom">
         <div class="ev-cal-bbtn" onclick="setEventsMode('agenda')"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12l2.5 2.5 5-5.5"/></svg><i class="bb-badge" style="display:none"></i></span><span>ToDo</span></div>
@@ -4723,7 +4741,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v352';
+  var DATA_VERSION = 'v355';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4958,6 +4976,22 @@ function _vvhUpdate() {
     root.style.setProperty('--vvoff', '0px');
   } catch(e9) {}
 }
+// v354: PCは時刻をキーボードで直接入力可（1600→16:00に自動整形。モバイルは従来のテンキー）
+function _pcTimeInputs() {
+  if (typeof isPCMode !== 'function' || !isPCMode()) return;
+  ['evTime', 'evTimeEnd'].forEach(function(idn){
+    var el = document.getElementById(idn);
+    if (!el) return;
+    el.readOnly = false;
+    el.onclick = null; // テンキーは開かない
+    el.placeholder = '例 1930';
+    el.onblur = function(){
+      var v = (el.value || '').replace(/[^0-9]/g, '');
+      el.value = v ? _tpParse(v) : '';
+    };
+  });
+}
+setTimeout(_pcTimeInputs, 800);
 _vvhUpdate();
 // iOSは起動直後にviewportが数回変わることがあるため、落ち着くまで数回取り直す
 setTimeout(_vvhUpdate, 300); setTimeout(_vvhUpdate, 1000); setTimeout(_vvhUpdate, 3000);
@@ -5564,6 +5598,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v355', d:'2026-08-17', items:['🤝MAPの連鎖共有：結合したMAPを含めて丸ごと共有できるようになりました。自分のMAPを共有した相手にも、結合中の下位MAPが自動で閲覧専用共有され、相手の画面でも結合ツリーごと表示されます','🔗下位の方が共有を解除すると、連鎖先でも自動的に見えなくなります（権限はコピーせず連動）','共有設定リストに「👁 🔗◯◯経由」の自動共有が表示されます（経由元の解除で自動的に消えるため、手動の削除ボタンはありません）','⚠️反映にはセキュリティルールの更新が必要です（firestore.rules をデプロイ）'] },
+  { v:'v354', d:'2026-08-17', items:['💻PC版の予定タブを2ペイン化：月カレンダーの右側にパネルを常時表示。日付をクリックするとその日の予定と今日のToDo（期限切れ含む）が右パネルに表示されます','💻日付マスをダブルクリックでその日の予定を新規作成できます','💻予定バーをマウスでドラッグして別の日へ移動できます（6px以上動かすとドラッグ開始）','💻時刻入力はPCではキーボードで直接入力OK（例:1930→19:30に自動整形）。予定バーにマウスを乗せると時間とタイトルのツールチップが出ます','💻下部の操作バーはPCでは廃止し、ヘッダーに「＋予定」「ToDo」「設定」ボタンを配置しました'] },
+  { v:'v353', d:'2026-08-15', items:['💻PC版の月表示で横スクロールバーが出る問題を修正（予定バーが文字の長さで横にはみ出していました。バーは必ずマス幅に収まります）','💻PC版は全画面カレンダー/ToDo表示中も左側のメニュー（HOME/MAP/予定/データ）が常時表示されるようになりました'] },
   { v:'v352', d:'2026-08-15', items:['✅＋ボタンのタスク追加：「明日」チップを廃止し、日付を直接選べる欄に変更（カレンダーから好きな日を選択）。既定は今日の日付が入っています。「期限なし」チップで期限をクリアできます'] },
   { v:'v351', d:'2026-08-15', items:['🔔アプリを開いた時の「期限のタスク」通知をタップすると該当へ飛ぶように：1件ならそのタスクの詳細シート、複数ならToDoの「今日」絞り込み一覧が開きます','iOSのホーム画面アプリでもこの通知が表示されるように（Service Worker経由の表示に対応）'] },
   { v:'v350', d:'2026-08-15', items:['🎨予定入力の「カテゴリ（色分け）」を通知・繰り返しの下のメイン項目に移動（メモは「詳細」の中へ）','📅連日予定の帯が罫線部分で途切れて見えた問題を修正（罫線の上まで塗りつぶし）','✅当日完了したタスクは完了済みボックスへすぐ移さず、一覧の下部に取り消し線付きで残るように（翌日から完了タスクへ）','🗑スワイプ削除を安全に：左フリックでごみ箱ボタンが出て、タップして初めて削除（いきなり消えません）。右フリック＝完了は従来どおり','↩「元に戻す」ボタンが押せなかった問題を修正（トーストがタップを受け付けない設定になっていました）','💻PC版の入力画面を最適化：予定・タスク・各種シートが画面下に横いっぱいに伸びる形をやめ、中央のダイアログ表示に（マウスでも入力しやすく）'] },
@@ -8172,7 +8209,7 @@ function enterAggregate(sel){
   if(!currentUser){ toast('ログインが必要です'); return; }
   var month=state.currentMonth;
   toast('合算データを読み込み中...');
-  stopSharedLiveSync(); stopAllMergeListeners();
+  stopSharedLiveSync(); stopAllMergeListeners(); stopViewMergedSync();
   var teams=sel.map(function(u){
     if(u==='') return { uid:currentUser.uid, name:'自分' };
     var o=(sharedOwners||[]).filter(function(x){return x.uid===u;})[0];
@@ -13193,7 +13230,7 @@ function evBarHtml(e, span, contTitle) {
   var body = (span === 'm' || span === 'e')
     ? (contTitle ? evEsc(e.title || '') : '&nbsp;')
     : (tm + evEsc(mark + (e.title || '')));
-  return '<div class="' + cls + '" data-eid="' + e.id + '"' + style + '>' + body + '</div>'; // v312: 長押しドラッグ用ID
+  return '<div class="' + cls + '" data-eid="' + e.id + '"' + style + ' title="' + evEsc((e.time ? e.time + (e.endTime ? '〜' + e.endTime : '') + ' ' : '') + (e.title || '')) + '">' + body + '</div>'; // v312: 長押しドラッグ用ID / v354: ホバーで全文表示
 }
 
 // イベントモーダルのカテゴリ表示更新
@@ -15395,7 +15432,7 @@ function renderCalendar() {
       var bars = '';
       for (var si3 = 0; si3 < 8; si3++) bars += '<div class="ev-slot">' + (slots[si3] || '') + '</div>';
       if (extra > 0) bars += '<div class="ev-more-badge">+' + extra + '</div>';
-      html += '<div class="' + cls + '" data-ds="' + ds + '" onclick="selCalDay(\'' + ds + '\')">'
+      html += '<div class="' + cls + '" data-ds="' + ds + '" onclick="selCalDay(\'' + ds + '\')" ondblclick="evCellDblPC(\'' + ds + '\')">'
         + '<span class="' + numCls + '">' + (d === 1 ? ((cur.getMonth()+1) + '/1') : d) + '</span>'
         + '<div class="ev-cell-bars">' + bars + '</div></div>';
       cur.setDate(cur.getDate() + 1);
@@ -15473,6 +15510,40 @@ function renderCalendar() {
       }
     }, { passive: true });
     grid.addEventListener('scroll', function(){ if (lpT) { clearTimeout(lpT); lpT = null; } }, { passive: true });
+    // v354: PCマウスでチップをドラッグして日付移動（6px動いたらドラッグ開始）
+    var mDrag = null, mEl = null, mDropCell = null, mSx = 0, mSy = 0;
+    grid.addEventListener('mousedown', function(ev){
+      var bar = (ev.target && ev.target.closest) ? ev.target.closest('.ev-bar[data-eid]') : null;
+      if (!bar || !state.isEditor) return;
+      var cell0 = bar.closest ? bar.closest('.ev-cell') : null;
+      mDrag = { eid: bar.getAttribute('data-eid'), from: cell0 ? cell0.getAttribute('data-ds') : '', started: false };
+      mEl = bar; mSx = ev.clientX; mSy = ev.clientY;
+      ev.preventDefault();
+    });
+    document.addEventListener('mousemove', function(ev){
+      if (!mDrag) return;
+      if (!mDrag.started) {
+        if (Math.abs(ev.clientX - mSx) < 6 && Math.abs(ev.clientY - mSy) < 6) return;
+        mDrag.started = true;
+        if (mEl) mEl.style.outline = '2px solid #FFB454';
+      }
+      var el2 = document.elementFromPoint(ev.clientX, ev.clientY);
+      var c2 = (el2 && el2.closest) ? el2.closest('.ev-cell') : null;
+      if (mDropCell && mDropCell !== c2) mDropCell.classList.remove('drop-target');
+      mDropCell = (c2 && c2.getAttribute('data-ds')) ? c2 : null;
+      if (mDropCell) mDropCell.classList.add('drop-target');
+    });
+    document.addEventListener('mouseup', function(){
+      if (!mDrag) return;
+      var drag = mDrag; mDrag = null;
+      if (mEl) { mEl.style.outline = ''; mEl = null; }
+      var targetDs = mDropCell ? mDropCell.getAttribute('data-ds') : '';
+      if (mDropCell) { mDropCell.classList.remove('drop-target'); mDropCell = null; }
+      if (drag.started && targetDs && targetDs !== drag.from) {
+        window._calLpFired = true; setTimeout(function(){ window._calLpFired = false; }, 300);
+        _calMoveEvent(drag.eid, targetDs);
+      }
+    });
   }
   if (_hMode) {
     grid.scrollTop = 0; // 横モードは常に月の先頭から（スクロールしない）
@@ -15578,6 +15649,13 @@ function _calMoveEvent(eid, newDs) {
 function selCalDay(ds) {
   calViewMenuClose(); // メニューが開いていたら閉じる
   if (window._calLpFired) return; // 長押し直後のクリックは無視（二重で開かない）
+  // v354: PCはボトムシートではなく右のサイドパネルを更新（ダブルクリックで即追加）
+  if (typeof isPCMode === 'function' && isPCMode()) {
+    _calSelDate = ds;
+    renderCalendar();
+    renderPcDayPanel();
+    return;
+  }
   // v297: 日タップ→日別ボトムシート。シート表示中に同じ日を再タップ→その日に即追加
   if (ds === _calSelDate && document.getElementById('dayShOv') && eventsUid()) {
     closeCalDaySheet(true);
@@ -15587,6 +15665,28 @@ function selCalDay(ds) {
   _calSelDate = ds;
   renderCalendar();
   openCalDaySheet(ds);
+}
+// v354: PC右パネル（選択日の予定リスト＋今日のToDo）
+function renderPcDayPanel() {
+  var p = document.getElementById('pcDayPanel');
+  if (!p) return;
+  if (typeof isPCMode === 'function' && !isPCMode()) return;
+  var ds = _calSelDate || evTodayYmd();
+  var t = evTodayYmd();
+  var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t; }).sort(_todoSortDue);
+  var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+    + '<div style="font-size:14.5px;font-weight:800;flex:1">' + evEsc(fmtEvDate(ds, '')) + '</div>'
+    + '<button class="btn-p" style="flex:none;padding:7px 13px;font-size:12.5px" onclick="openEventAddDate(\'' + ds + '\')">＋ 予定</button>'
+    + '</div>'
+    + '<div id="pcDayList">' + _daySheetHtml(ds) + '</div>'
+    + '<div class="td-secttl" style="padding:16px 0 6px">✅ 今日のToDo（期限切れ含む）</div>'
+    + (due.length ? due.map(todoRowHtml).join('') : '<div class="ev-empty" style="padding:10px 0">未完了のタスクはありません</div>');
+  p.innerHTML = h;
+}
+// v354: PCの空きマスはダブルクリックで即・予定作成
+function evCellDblPC(ds) {
+  if (typeof isPCMode === 'function' && !isPCMode()) return;
+  openEventAddDate(ds);
 }
 // v297: 日別ボトムシート（📅その日の予定 ＋ ✅その日が期日のタスク）
 function _daySheetHtml(ds) {
@@ -15688,6 +15788,7 @@ function renderCalDayList() {
   if (panel) panel.style.display = 'none';
   var list = document.getElementById('dayShList');
   if (list && _calSelDate) list.innerHTML = _daySheetHtml(_calSelDate);
+  if (typeof renderPcDayPanel === 'function') renderPcDayPanel(); // v354: PC右パネルも更新
 }
 
 // ── 完了トグル ──
@@ -17989,7 +18090,7 @@ function loadShareUserList() {
       return;
     }
     // #6 共有チップ用にデータ保存
-    state.shareUsers = docs.map(function(d) { return { email: d.email || '', perm: d.perm || 'view' }; });
+    state.shareUsers = docs.filter(function(d) { return !d.derived; }).map(function(d) { return { email: d.email || '', perm: d.perm || 'view' }; });
     renderShareChips();
     docs.forEach(function(d) {
       var row = document.createElement('div');
@@ -17999,14 +18100,14 @@ function loadShareUserList() {
       emailEl.textContent = d.email || '';
       var permEl = document.createElement('div');
       permEl.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:IBM Plex Mono,monospace';
-      permEl.textContent = d.perm === 'edit' ? '編集可' : '閲覧のみ';
+      permEl.textContent = d.derived ? ('👁 🔗' + (d.viaName ? d.viaName + '経由' : '結合経由')) : (d.perm === 'edit' ? '編集可' : '閲覧のみ');
       var delEl = document.createElement('div');
       delEl.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 6px';
       delEl.textContent = '✕';
       (function(id){ delEl.onclick = function(){ removeShareUser(id); }; })(d.id);
       row.appendChild(emailEl);
       row.appendChild(permEl);
-      row.appendChild(delEl);
+      if (!d.derived) row.appendChild(delEl); // v355: 連鎖共有(自動配布)は経由元の解除で消えるため手動削除なし
       listEl.appendChild(row);
     });
   });
@@ -18057,6 +18158,7 @@ function addShareUser() {
       toast('✅ ' + email + ' に共有しました');
       document.getElementById('shareEmail').value = '';
       loadShareUserList();
+      propagateDerivedShares(); // v355: 結合中の下位MAPへの閲覧共有も自動配布
     }).catch(function(e) {
       // 失敗を成功と誤報しない（権限・ネットワークエラーを明示）
       console.log('share error:', e.message);
@@ -18071,6 +18173,10 @@ function addShareUser() {
 function removeShareUser(id) {
   if (!db || !currentUser) return;
   db.doc('maps/' + currentUser.uid + '/shared/' + id).delete().then(function() {
+    // v355: 連鎖共有の後片付け — この相手に配った結合先の派生共有も削除（直接共有はルールが守るので消えない）
+    (state.mergedMaps || []).forEach(function(cfg) {
+      db.doc('maps/' + cfg.uid + '/shared/' + id).delete().catch(function(){});
+    });
     toast('共有を解除しました');
     loadShareUserList();
   });
@@ -18106,6 +18212,7 @@ var viewingOwnerUid = null; // 現在閲覧中のオーナーUID（nullなら自
 function fsLoadSharedMap(ownerUid) {
   var month = state.currentMonth;
   stopSharedLiveSync();
+  startViewMergedSync(ownerUid); // v355: 連鎖共有 — 閲覧先の結合ツリーも合成表示する
   flushPendingSave(); // 切替前に前のMAPへの保存を確定（誤宛先防止）
   window._keepSpinner = true; // 全データが揃うまでスピナーを維持（途中で止まった風にしない）
   // 3並列で取得し「描画は1回だけ」（途中描画のカクつきを排除）
@@ -18509,6 +18616,7 @@ function switchToOwner(ownerUid, perm) {
   if (!ownerUid) {
     // 自分のMAPに戻る
     stopSharedLiveSync();
+    stopViewMergedSync(); // v355
     state.isEditor = true;
     fsLoadFromFirestore(currentUser.uid);
     loadEvents(currentUser.uid);
@@ -18551,6 +18659,7 @@ function loadMergedConfig() {
   fsGet(mergedConfigPath()).then(function(d) {
     state.mergedMaps = (d && d.maps) ? d.maps : [];
     startAllMergeListeners();
+    propagateDerivedShares(); // v355: ログイン時に連鎖共有の配布状態を同期
   }).catch(function() { state.mergedMaps = []; });
 }
 function saveMergedConfig() {
@@ -18605,7 +18714,7 @@ function isMerged(uid) {
 // ── 結合ノードの編集ジャンプ（編集権限があれば相手MAPへ切替して編集を開く） ──
 var _pendingSharedEditId = null;
 function mgResolve(mid) {
-  var mm = state.mergedMaps || [];
+  var mm = (viewingOwnerUid ? (_viewMerged && _viewMerged.maps) : state.mergedMaps) || [];
   for (var i = 0; i < mm.length; i++) {
     var pre = 'MG_' + String(mm[i].uid).substring(0, 6) + '_';
     if (mid.indexOf(pre) === 0) return { uid: mm[i].uid, srcId: mid.slice(pre.length) };
@@ -18630,15 +18739,17 @@ function mgNodeClick(mid) {
 }
 // 自分のメンバー配列に、結合中の下位ツリーを接続点(graftId)の下へ差し込む（現状MAPのみ）
 function composeMergedInto(ownMembers, mapType) {
-  if (mapType !== 'current' || viewingOwnerUid) return ownMembers;
-  var mm = state.mergedMaps || [];
+  if (mapType !== 'current') return ownMembers;
+  // v355: 連鎖共有 — 共有MAP閲覧中は「閲覧先の結合構成」で合成する
+  var mm = viewingOwnerUid ? ((_viewMerged && _viewMerged.maps) || []) : (state.mergedMaps || []);
+  var _mgStore = viewingOwnerUid ? ((_viewMerged && _viewMerged.data) || {}) : (state.mergedData || {});
   if (!mm.length) return ownMembers;
   var ownIds = {}; ownMembers.forEach(function(m) { ownIds[m.id] = true; });
   var out = ownMembers.slice();
   mm.forEach(function(cfg) {
     if (cfg.hidden) return; // 表示OFFの結合はツリーに合成しない（被り対策）
     if (!ownIds[cfg.graftId]) return; // 接続先ノードが自分のMAPに無ければスキップ
-    var foreign = (state.mergedData && state.mergedData[cfg.uid]) ? state.mergedData[cfg.uid] : [];
+    var foreign = _mgStore[cfg.uid] || [];
     if (!foreign.length) return;
     var pre = 'MG_' + String(cfg.uid).substring(0, 6) + '_';
     foreign.forEach(function(fm) {
@@ -18655,6 +18766,53 @@ function composeMergedInto(ownMembers, mapType) {
     });
   });
   return out;
+}
+// ============================================================
+//  v355: 連鎖共有（透過共有）
+//  結合中の下位MAPを、自分のMAPの共有相手にも「閲覧専用」で自動共有する。
+//  データはコピーせず、権限ドキュメント(maps/{下位}/shared/{相手} derived:true)だけを配る。
+//  下位→自分の共有が切れると、ルール側のチェーン検証で連鎖先も自動的に読めなくなる。
+// ============================================================
+function propagateDerivedShares() {
+  if (!db || !currentUser) return;
+  var mm = state.mergedMaps || [];
+  if (!mm.length) return;
+  fsGetCol('maps/' + currentUser.uid + '/shared').then(function(docs) {
+    docs.forEach(function(r) {
+      var rid = r.recipientUid || r.id;
+      if (!rid) return;
+      mm.forEach(function(cfg) {
+        if (rid === cfg.uid) return; // 結合元本人は自分のMAPなので不要
+        fsSet('maps/' + cfg.uid + '/shared/' + rid, {
+          derived: true, via: currentUser.uid,
+          viaName: currentUser.org || currentUser.name || '',
+          perm: 'view', email: r.email || '', recipientUid: rid,
+          addedAt: new Date().toISOString()
+        }).catch(function(){}); // 相手が直接共有済みの場合等はルールが拒否（既存の権限を守る）
+      });
+    });
+  }).catch(function(){});
+}
+// 共有MAP閲覧中：閲覧先の結合構成(meta/merged)を読み、結合先ツリーのデータも取得して合成する
+var _viewMerged = { owner: null, maps: [], data: {} };
+function stopViewMergedSync() { _viewMerged = { owner: null, maps: [], data: {} }; }
+function startViewMergedSync(ownerUid) {
+  _viewMerged = { owner: ownerUid, maps: [], data: {} };
+  if (!db) return;
+  var month = state.currentMonth;
+  fsGet('maps/' + ownerUid + '/meta/merged').then(function(d) {
+    if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
+    _viewMerged.maps = (d && d.maps) ? d.maps : [];
+    _viewMerged.maps.forEach(function(mmCfg) {
+      if (mmCfg.hidden) return;
+      loadMergedAvatars(mmCfg.uid); // 結合メンバーの写真も表示
+      fsGet('maps/' + mmCfg.uid + '/months/' + month + '_current').then(function(md) {
+        if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
+        _viewMerged.data[mmCfg.uid] = (md && md.members) ? md.members : [];
+        if (currentView === 'current' || currentView === 'members') renderCurrentView();
+      }).catch(function(e) { console.log('view merge load:', e && e.message); }); // 権限未反映(旧ルール)なら黙ってスキップ
+    });
+  }).catch(function(){});
 }
 // ── 結合UI ──
 function openMergePicker(owner) {
@@ -18690,6 +18848,7 @@ function confirmMerge(uid, graftId) {
   state.mergedMaps = (state.mergedMaps || []).filter(function(x) { return x.uid !== uid; });
   state.mergedMaps.push({ uid: uid, name: owner.name || owner.org || '', graftId: graftId });
   saveMergedConfig();
+  propagateDerivedShares(); // v355: 既に共有している相手にも結合先の閲覧共有を配布
   startMergeListener(uid);
   closeMergePicker();
   toast('結合しました ✓');
@@ -18708,6 +18867,15 @@ function toggleMergeVisible(uid) {
 }
 function unmergeMap(uid) {
   state.mergedMaps = (state.mergedMaps || []).filter(function(x) { return x.uid !== uid; });
+  // v355: 連鎖共有の後片付け — 自分の共有相手に配っていた派生共有を削除（ベストエフォート）
+  if (db && currentUser) {
+    fsGetCol('maps/' + currentUser.uid + '/shared').then(function(docs) {
+      docs.forEach(function(r) {
+        var rid = r.recipientUid || r.id;
+        if (rid) db.doc('maps/' + uid + '/shared/' + rid).delete().catch(function(){});
+      });
+    }).catch(function(){});
+  }
   if (_mergeUnsub[uid]) { try { _mergeUnsub[uid](); } catch(e){} delete _mergeUnsub[uid]; }
   if (state.mergedData) delete state.mergedData[uid];
   saveMergedConfig();
