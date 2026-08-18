@@ -2159,7 +2159,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v369</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v370</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4795,7 +4795,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v369';
+  var DATA_VERSION = 'v370';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5653,6 +5653,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v370', d:'2026-08-18', items:['🔒共有の重要修正：共有を解除しても相手の「共有MAP」一覧にカードが残り続ける不具合（幽霊カード）を修正しました。原因は解除時に受信側の一覧データを消し忘れていたことです','🔒共有MAP一覧は表示前に「本当に共有されているか」をオーナー側の正データで毎回検証するようになりました。実体の無いカードは自動で削除されます（過去に溜まった幽霊カードもアプリを開き直すと消えます）。※データ本体は元からセキュリティルールで守られており、幽霊カードから中身は読めません','🔒共有の再登録時に連鎖共有の内部フラグの残骸を確実に消すようにしました（自動処理に誤って削除される可能性を排除）'] },
   { v:'v369', d:'2026-08-18', items:['🔔通知の重複対策を強化：⚙設定の「🧹古い登録を掃除」が削除の成否を確認してから結果を表示するようになりました（今までは削除が拒否されても「解除しました」と出ることがありました）。失敗時は件数と理由を表示します','🔍⚙設定の通知診断に「登録端末数」を追加：この数＝同じ通知が届く件数です。2以上が赤字で表示されたら🧹を押してください'] },
   { v:'v368', d:'2026-08-18', items:['🗺MAPカードの「次の予定」を修正：予定を作ってもカードに反映されない問題を改修——(1)過去日になった研修予定が出続けて枠を塞いでいたのを除外 (2)カレンダー分は「🗓次の予定」と「✅次のタスク」を別々の行で表示するように（タスクの方が近い日だと予定が隠れていました）','📝新規登録画面が下までスクロールできるようになりました（入力欄が画面より多い時に登録ボタンが押せなかった問題）','📝新規登録のエラーメッセージは、該当項目を入力し直すとすぐ消えるようになりました（エラー表示時は自動でエラー位置までスクロール）'] },
   { v:'v367', d:'2026-08-18', items:['🔢アプリ全体の数字・英字フォントをInterに統一：予定バーの件名内の数字も含め、すべての数字がMAPと同じすっきりした字形になりました（かな・漢字は従来どおり）','🔔アプリを閉じていてもプッシュ通知が届くように修正：連鎖共有の導入時（v355）に初めて適用したセキュリティルールに、通知予約（notifQueue）と端末登録（fcmTokens）の許可が漏れており、通知の予約が保存できなくなっていました。⚠️反映にはfirestore.rulesの再デプロイが必要です'] },
@@ -19460,6 +19461,7 @@ function addShareUser() {
       perm: sharePerm,
       ownerUid: currentUser.uid,
       ownerName: currentUser.org || currentUser.name || '',
+      derived: false, via: '', // v370: 過去に自動配布(derived)だった場合の残骸を明示的に打ち消す（merge保存で残ると連鎖の後片付けに誤削除されるため）
       addedAt: new Date().toISOString()
     });
 
@@ -19496,6 +19498,9 @@ function addShareUser() {
 function removeShareUser(id) {
   if (!db || !currentUser) return;
   db.doc('maps/' + currentUser.uid + '/shared/' + id).delete().then(function() {
+    // v370: 受信側インデックス(sharedWith/{相手}/from/{自分})も必ず削除。
+    // これを消し忘れていたため、解除後も相手の共有MAP一覧に自分のカードが残り続けていた（幽霊カード）
+    db.doc('sharedWith/' + id + '/from/' + currentUser.uid).delete().catch(function(){});
     // v355: 連鎖共有の後片付け — この相手に配った結合先の派生共有も削除（直接共有はルールが守るので消えない）
     (state.mergedMaps || []).forEach(function(cfg) {
       db.doc('maps/' + cfg.uid + '/shared/' + id).delete().catch(function(){});
@@ -19625,10 +19630,13 @@ function checkSharedMaps() {
 
   // sharedWith/{自分のuid}/from/ を読む
   fsGetCol('sharedWith/' + currentUser.uid + '/from').then(function(docs) {
-    sharedOwners = [];
+    // v370: オーナー側の正データ(maps/{owner}/shared/{自分})が実在するかを必ず検証。
+    // 共有解除時に受信側インデックス(sharedWith)が残る不具合で「共有されていないMAPのカード」が
+    // 表示され続けていたため、実体の無いカード（幽霊）はここで自動削除する。
+    var cands = [];
     docs.forEach(function(d) {
       if (d.ownerUid) {
-        sharedOwners.push({
+        cands.push({
           uid: d.ownerUid,
           perm: d.perm || 'view',
           name: d.ownerName || '',
@@ -19639,6 +19647,31 @@ function checkSharedMaps() {
         });
       }
     });
+    sharedOwners = [];
+    var vLeft = cands.length;
+    if (!vLeft) return;
+    cands.forEach(function(c) {
+      fsGet('maps/' + c.uid + '/shared/' + currentUser.uid).then(function(real) {
+        if (real) {
+          c.perm = real.perm || c.perm; // 権限もオーナー側の正データに合わせる
+          if (real.derived) c.viaName = real.viaName || ''; // 連鎖共有（自動配布）経由
+          sharedOwners.push(c);
+        } else {
+          // 幽霊: オーナー側に共有が無い → 受信側インデックスを削除してカードを消す
+          db.doc('sharedWith/' + currentUser.uid + '/from/' + c.uid).delete().catch(function(){});
+          console.log('ghost share cleaned:', c.uid);
+        }
+        if (--vLeft <= 0) _sharedOwnersReady();
+      }).catch(function() {
+        // 読み取り不可＝アクセス権なし → 表示しない（削除はしない: 一時的な通信エラーの可能性）
+        if (--vLeft <= 0) _sharedOwnersReady();
+      });
+    });
+  }).catch(function(e) {
+    console.log('shared check error:', e.message);
+  });
+}
+function _sharedOwnersReady() {
     if (sharedOwners.length > 0) {
       // Firestoreからプロフィール最新情報を取得
       var pending = sharedOwners.length;
@@ -19657,16 +19690,15 @@ function checkSharedMaps() {
           if (pending <= 0) showSharedButton();
         });
       });
+    } else {
+      showSharedButton();
     }
-  }).catch(function(e) {
-    console.log('shared check error:', e.message);
-  });
 }
 
 function showSharedButton() {
   var btn = document.getElementById('sharedMapBtn');
   if (btn) {
-    btn.style.display = '';
+    btn.style.display = sharedOwners.length ? '' : 'none'; // v370: 幽霊掃除後に0件ならボタンも消す
     var cnt = document.getElementById('sharedMapCount');
     if (cnt) cnt.textContent = sharedOwners.length;
   }
@@ -20104,7 +20136,7 @@ function propagateDerivedShares() {
   fsGetCol('maps/' + currentUser.uid + '/shared').then(function(docs) {
     docs.forEach(function(r) {
       var rid = r.recipientUid || r.id;
-      if (!rid) return;
+      if (!rid || rid === currentUser.uid) return; // v370: 自分自身への配布は不要
       mm.forEach(function(cfg) {
         if (rid === cfg.uid) return; // 結合元本人は自分のMAPなので不要
         fsSet('maps/' + cfg.uid + '/shared/' + rid, {
