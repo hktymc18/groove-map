@@ -30,7 +30,18 @@ exports.sendReminders = onSchedule(
       let tokens = [];
       try {
         const toksSnap = await db.collection('users').doc(uid).collection('fcmTokens').get();
-        tokens = toksSnap.docs.map((t) => t.id);
+        // v375: 45日以上更新のない登録は配信せず削除（再インストール前の残骸による重複通知の対策。
+        //        アプリを開くたびに updatedAt が更新されるため、現役の端末は消えない）
+        const cutoff = new Date(Date.now() - 45 * 86400000).toISOString();
+        toksSnap.docs.forEach((t) => {
+          const ts = (t.data() || {}).updatedAt || '';
+          if (ts && ts < cutoff) {
+            t.ref.delete().catch(() => {});
+            console.log(`stale token pruned uid=${uid}`);
+            return;
+          }
+          tokens.push(t.id);
+        });
       } catch (e) { console.log(`token read error uid=${uid}: ${e}`); }
       console.log(`uid=${uid} tokens=${tokens.length}`); // v332: トークン0ならこの端末が未登録
 
