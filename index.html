@@ -2153,7 +2153,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v360</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v361</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2665,7 +2665,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <span class="me-tab on" onclick="meGo(1)">月次</span>
       <span class="me-tab" id="meTabTrainee" onclick="meGo(2)">研修</span>
       <span class="me-tab" onclick="meGo(3)">OL</span>
-      <span class="me-tab" onclick="meGo(4)">タスク</span>
+      <span class="me-tab" onclick="meGo(4)">活動</span>
     </div>
     <div class="me-vp" id="meVp">
       <div class="me-track" id="meTrack">
@@ -2975,6 +2975,13 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-cat-field" onclick="openMemberPick()">
           <span id="evMemberNames" style="flex:1;color:var(--text-dim)">（なし）</span>
           <span style="color:var(--text-dim)">▾</span>
+        </div>
+      </div>
+      <div class="fr" id="evSelfShowRow" style="display:none">
+        <label class="fl">この予定・タスクの扱い（メンバー選択時）</label>
+        <div class="rg">
+          <div class="rb sel" id="evSelfShowOff" onclick="selEvSelfShow(false)">👤 メンバー専用（自分の画面に出さない）</div>
+          <div class="rb" id="evSelfShowOn" onclick="selEvSelfShow(true)">🗓 自分の予定/ToDoにも表示</div>
         </div>
       </div>
       <div class="fr" id="evPrioRow">
@@ -4784,7 +4791,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v360';
+  var DATA_VERSION = 'v361';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4988,6 +4995,7 @@ function openMobileMenu() {
     return '<div class="ms-act" onclick="closeMobileMenu();switchView(\'' + it.v + '\')" style="' + (on?'color:var(--accent)':'') + '"><span class="ms-aic">' + it.ic + '</span>' + it.lb + (on?' <span style="color:var(--accent)">✓</span>':'') + '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + it.sub + '</span><span class="ms-ch">›</span></div>';
   }).join('');
   if (sharedOwners && sharedOwners.length) rows += '<div class="ms-act" onclick="closeMobileMenu();openSharedDashboard()"><span class="ms-aic">🤝</span>共有MAP<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + sharedOwners.length + '件</span><span class="ms-ch">›</span></div>';
+  rows += '<div class="ms-act" onclick="closeMobileMenu();openReapproachSheet()"><span class="ms-aic">🔄</span>再アプローチ' + ((_reapproach && _reapproach.length) ? '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + _reapproach.length + '件</span>' : '') + '<span class="ms-ch">›</span></div>'; // v361
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) rows += '<div class="ms-act" onclick="closeMobileMenu();openAdminPanel()"><span class="ms-aic">🛡</span>アカウント管理<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMobileMenu();openProfileModal()"><span class="ms-aic">⚙️</span>設定・プロフィール<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
@@ -5641,6 +5649,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v361', d:'2026-08-18', items:['👤メンバー担当タスクと自分のタスクを分離：メンバーに紐付けた予定/タスクは既定で「メンバー専用」になり、自分のカレンダー/ToDo/通知に混ざりません。作成時に「🗓自分の予定/ToDoにも表示」を選べば従来どおり自分にも表示（既存データのカレンダー表示は維持）','✅ToDoに「👤メンバー」絞り込みを追加：メンバー担当分はここでまとめて確認（PC版は左カラムにも）','📋メンバー編集の「タスク」タブが「活動」タブに：OL・タスク・予定・研修予定を1本の時系列で表示し、上の3ボタン（📅予定/✅タスク/📝OL）からすぐ追加。MAPカードのボタンも同じ3択になりました','🐛メンバーからの「＋タスクを追加」が予定として作成されるバグを修正','📅カードの「次の予定」に、研修ファネルの予定・カレンダーの予定・OL予定をすべて表示するようになりました','📝OL記録に「実施済み/予定」の種別を追加：予定のOLは黄色の「予定」バッジ付きで表示されます','🔄再アプローチリスト新設：研修結果「✗流れた」を選ぶと自動でリストに記録（メニュー→🔄再アプローチ）。経過日数を表示し、90日で「再アプローチ時期」バッジ。📋で今日のタスクに追加できます','🎓研修生のタイトル選択肢にOUTを追加','🗺地域絞り込みの薄表示が、画面の再描画（結合の更新・写真読込など）で解除されてしまうバグを修正'] },
   { v:'v360', d:'2026-08-18', items:['📌テンプレの並べ替え：▲▼ボタンを廃止し、行を長押し→ドラッグで好きな位置へ（離すと保存。以降その順で表示）','⏰テンプレの時刻入力を15分刻みのプルダウンに（iOSでは従来の入力欄が1分刻みになってしまうため）','🗑タスクの横フリック→ゴミ箱タップで、編集画面が出ずに即削除されるように修正（削除後は「元に戻す」トースト）','⚠️期限切れタスクが一目で分かるように：薄赤の帯＋左の赤バー＋「◯日超過」ピル、一覧の先頭に「⚠️期限切れ◯件」見出し','💬トースト（登録しました等）はタップか横フリックですぐ消せるようになりました'] },
   { v:'v359', d:'2026-08-17', items:['🎨「設定したカテゴリの色がリセットされる」問題を修正：初期カテゴリ（仕事/アポ/研修/締切/プライベート）を色や名前を変えて使っている場合に、アプリを開くたび自動削除されてしまい、割り当てたテンプレ・予定がグレーに戻っていました。編集済みのカテゴリは今後削除されません（※一度消えてしまった色の設定は復元できないため、お手数ですがもう一度カテゴリを作成してテンプレに割り当ててください。今回からは保持されます）','旧・初期テンプレの自動削除も廃止（編集して使っているテンプレが消えないように）'] },
   { v:'v358', d:'2026-08-17', items:['🎨連日予定の帯：3日以上の予定で中日の境界に白い線が入っていたのを修正（何日でも隙間なく繋がります）','🎨連日予定のタイトルが開始マスで切れず、帯の上に最後まで表示されるようになりました（例:「NS LIVE グローバル」）','✅タスク追加：「追加」を押すと自動で閉じるようになりました（✕を押す手間を廃止）。続けて入れたい時はトーストの「＋続けて追加」','📳設定に「シェイクで元に戻す」を追加：有効にすると、スマホを振ると直前のトースト操作（削除の取り消し等）を実行します。※iOS標準の「取り消す-入力」ダイアログは文字入力専用のOS機能のため連動はできません','🔔起動時の「期限のタスク◯件」通知：タップでToDoの今日一覧が確実に開くよう修正（sw.jsも更新）','🔢数字フォント（IBM Plex Mono）の太字を追加読み込み（日付数字がよりくっきり）'] },
@@ -6133,7 +6142,7 @@ function ckCollect() {
 }
 function ckToggle(k) { ckExpanded[k] = !ckExpanded[k]; renderHome(); }
 function ckAddTask(mid) {
-  if (typeof openEventModal === 'function') openEventModal(null, mid, ''); // 新規は既定でタスク・メンバー紐付け
+  if (typeof openEventModal === 'function') openEventModal(null, mid, '', 'task'); // v361: 種別を明示（予定になってしまうバグ修正）
 }
 // 記録ワンタップ深リンク：研修生→編集モーダルの研修情報、フレッシュ→OLタブでOL記録追加
 function ckRecord(mid, group) {
@@ -8001,6 +8010,7 @@ function _lazyBuildChildren(ch, pid) {
   ch.removeAttribute('data-lazy');
   // 絞り込み中に開いた枝にもフィルタの薄暗を適用（適用漏れ＝フィルタが嘘をつくのを防ぐ）
   if (typeof mapCatFilter !== 'undefined' && mapCatFilter && typeof applyMapCatDim === 'function') applyMapCatDim();
+  if (typeof regionFilter !== 'undefined' && regionFilter && typeof applyRegionDim === 'function') applyRegionDim(); // v361: 再描画（結合更新・写真読込等）で地域の薄表示が解除されるバグ修正
   if (typeof regionFilter !== 'undefined' && regionFilter && typeof applyRegionDim === 'function') applyRegionDim();
 }
 function toggleExpand(id) {
@@ -8058,22 +8068,24 @@ function memberInfoHtml(m) {
       html += '<div class="ci-plan" style="color:var(--text-dim);font-size:11px">💰 GSV内訳：' + _gp.join(' ＋ ') + (_gex ? '（BR系列' + _gex + '件は除外）' : '') + ' ＝ ' + (m.ptCurrent||0).toLocaleString() + '</div>';
     }
   } catch(e) {}
-  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
-  if (plan) html += '<div class="ci-plan">📅 次の予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : '') + '</div>';
-  else if (m.nextDate) html += '<div class="ci-plan">📅 次回予定：' + evEsc(m.nextDate) + '</div>';
+  memberNextPlanLines(m).forEach(function(ln){ html += '<div class="ci-plan">' + ln + '</div>'; }); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
   var fd = (state.freshData && state.freshData[m.id]) || {};
   var olog = (fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
   if (olog.length) {
     html += '<div class="ci-ol-lbl">📝 OL記録</div>';
     html += olog.slice(0, 5).map(function(e){
       var d = e.date ? e.date.split('-').slice(1).join('/') : '';
-      return '<div class="ci-ol">' + (d ? '<span class="ci-ol-d">' + d + '</span> ' : '') + (e.to ? '<b>' + evEsc(e.to) + '</b> ' : '') + (e.what ? evEsc(e.what) : '') + (e.note ? '<div class="ci-ol-note">↳ ' + evEsc(e.note) + '</div>' : '') + '</div>';
+      return '<div class="ci-ol">' + (e.st === 'planned' ? '<span style="background:var(--gold);color:#08121a;font-size:9px;font-weight:800;border-radius:6px;padding:0 5px;margin-right:3px">予定</span>' : '') + (d ? '<span class="ci-ol-d">' + d + '</span> ' : '') + (e.to ? '<b>' + evEsc(e.to) + '</b> ' : '') + (e.what ? evEsc(e.what) : '') + (e.note ? '<div class="ci-ol-note">↳ ' + evEsc(e.note) + '</div>' : '') + '</div>';
     }).join('');
   }
   if (!html) html = '<div class="ci-empty">メモ・OL・予定なし（ダブルタップで編集）</div>';
   // CAL-2: この人との予定をテンプレから即作成（結合メンバーは相手MAP編集ボタンを優先）
   if (!/^MG_/.test(m.id) && eventsUid()) {
-    html += '<div style="margin-top:8px"><button style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openEventAdd(\'' + m.id + '\')">📅 ＋予定を入れる</button></div>';
+    html += '<div style="margin-top:8px;display:flex;gap:6px">'
+      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openEventAdd(\'' + m.id + '\')">📅 予定</button>'
+      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();ckAddTask(\'' + m.id + '\')">✅ タスク</button>'
+      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openOlRecordModal(\'' + m.id + '\')">📝 OL</button>'
+      + '</div>';
   }
   // 結合メンバー：モバイルからも編集へ飛べるボタンを表示
   if (/^MG_/.test(m.id)) {
@@ -9038,6 +9050,11 @@ function openOlRecordModal(mid, editIdx){
     + '<div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+(editing?'OL記録を編集':'OL記録を追加')+(nm?'（'+v(nm)+'）':'')+'</div></div><span class="ms-x" onclick="closeOlRecordModal()">✕</span></div>'
     + '<div style="padding:4px 16px 16px">'
+    + '<label style="'+lbStyle+'">種別</label>'
+    + '<div style="display:flex;gap:8px;margin:4px 0 10px">'
+    + '<div class="rb'+(rec.st==='planned'?'':' sel')+'" id="_olrStDone" onclick="_olrSetSt(\'done\')" style="flex:1;text-align:center">✓ 実施済み</div>'
+    + '<div class="rb'+(rec.st==='planned'?' sel':'')+'" id="_olrStPlan" onclick="_olrSetSt(\'planned\')" style="flex:1;text-align:center">📅 予定</div>'
+    + '</div>'
     + '<label style="'+lbStyle+'">日付</label>'
     + '<input id="_olrDate" type="date" value="'+(rec.date||today)+'" style="'+inStyle+'">'
     + '<label style="'+lbStyle+'">Aさん</label>'
@@ -9049,8 +9066,16 @@ function openOlRecordModal(mid, editIdx){
     + '<button onclick="olRecordModalSave(\''+mid+'\','+(editing?editIdx:'-1')+')" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent,#2CE5B8);color:#08121a;font-size:15px;font-weight:700;margin-top:4px">保存</button>'
     + (editing ? '<button onclick="olRecordModalDelete(\''+mid+'\','+editIdx+')" style="width:100%;padding:11px;border-radius:10px;border:1px solid #FF5D73;color:#FF5D73;background:transparent;font-size:14px;font-weight:600;margin-top:8px">この記録を削除</button>' : '')
     + '</div></div>';
+  window._olrSt = (rec.st === 'planned') ? 'planned' : 'done'; // v361
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); setTimeout(function(){ var f=document.getElementById('_olrWhat'); if(f&&!editing) f.focus(); },80); });
+}
+window._olrSt = 'done';
+function _olrSetSt(v){
+  window._olrSt = (v === 'planned') ? 'planned' : 'done';
+  var a = document.getElementById('_olrStDone'), b = document.getElementById('_olrStPlan');
+  if (a) a.classList.toggle('sel', window._olrSt === 'done');
+  if (b) b.classList.toggle('sel', window._olrSt === 'planned');
 }
 function olRecordModalDelete(mid, editIdx){
   if(typeof editIdx!=='number' || editIdx<0) return;
@@ -9061,11 +9086,11 @@ function olRecordModalDelete(mid, editIdx){
 function olRecordModalSave(mid, editIdx){
   var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
   var log=freshOlLog(mid);
-  var data={ date:g('_olrDate'), asan:(g('_olrAsan')||'').trim(), what:(g('_olrWhat')||'').trim(), note:(g('_olrNote')||'').trim() };
+  var data={ date:g('_olrDate'), asan:(g('_olrAsan')||'').trim(), what:(g('_olrWhat')||'').trim(), note:(g('_olrNote')||'').trim(), st:(window._olrSt==='planned'?'planned':'done') };
   if(typeof editIdx==='number' && editIdx>=0 && log[editIdx]){
-    log[editIdx].date=data.date; log[editIdx].asan=data.asan; log[editIdx].what=data.what; log[editIdx].note=data.note;
+    log[editIdx].date=data.date; log[editIdx].asan=data.asan; log[editIdx].what=data.what; log[editIdx].note=data.note; log[editIdx].st=data.st;
   } else {
-    log.unshift({ date:data.date, asan:data.asan, to:'', what:data.what, note:data.note });
+    log.unshift({ date:data.date, asan:data.asan, to:'', what:data.what, note:data.note, st:data.st });
   }
   autoSave();
   closeOlRecordModal();
@@ -10288,12 +10313,8 @@ function showPcTooltip(mid, ev) {
   }
   // 次の予定（研修の予定ステップ or 次回予定日）
   var planHtml = '';
-  var _plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
-  if (_plan) {
-    planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454">📅 次の予定：' + evEsc(_plan.status||'') + (_plan.date ? '（' + _plan.date.split('-').slice(1).join('/') + '）' : '') + (_plan.aSan ? ' A:' + evEsc(_plan.aSan) : '') + '</div>';
-  } else if (m.nextDate) {
-    planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454">📅 次回予定：' + evEsc(m.nextDate.split('-').slice(1).join('/')) + '</div>';
-  }
+  var _npls = memberNextPlanLines(m); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
+  if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454;line-height:1.7">' + _npls.join('<br>') + '</div>';
   tip.innerHTML = (_avatars[m.id] ? '<img src="' + _avatars[m.id] + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + ';display:block;margin-bottom:7px" alt="">' : '')
     + '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + '</span></div>'
@@ -10466,23 +10487,52 @@ function meRenderExtras(m) {
   else olHtml += olog.slice().reverse().map(function(e){ return '<div class="me-ol"><div style="color:var(--text-dim);font-size:12px">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div style="margin-top:3px">' + evEsc(e.what) + '</div>':'') + (e.note?'<div style="margin-top:3px;color:var(--text-mid);font-size:12px">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
   olHtml += '<div class="me-add-btn" onclick="openOlRecordModal(\'' + mid + '\')">＋ OLを記録する</div>';
   olBox.innerHTML = olHtml;
-  var evs = (state.events || []).filter(function(e){ return evHasMember(e, mid) && !e.deleted; });
-  var tkHtml = '';
-  if (!evs.length) tkHtml += '<div class="md-empty">紐付くタスク・予定はありません</div>';
-  else tkHtml += evs.map(function(e){
-    var isTask = e.type === 'task';
-    var ic = isTask ? (e.done?'✅':'⬜') : (e.done?'✅':'📅');
-    var d = e.date ? e.date.split('-').slice(1).join('/') : '';
-    // 誤入力をその場で直せるよう、完了トグルに加えて ✎編集・🗑削除 を各行に用意
+  // v361: 「活動」タブ＝OL・タスク・予定・研修予定を1本の時系列で表示（新しい順）
+  var items = [];
+  (state.events || []).forEach(function(e){
+    if (!evHasMember(e, mid) || e.deleted) return;
+    items.push({ d: e.date || '', kind: (e.type === 'task' ? 'task' : 'ev'), e: e });
+  });
+  (fd.olLog || []).forEach(function(o, oi){
+    if (!(o.date || o.what || o.note)) return;
+    items.push({ d: o.date || '', kind: 'ol', o: o, oi: oi });
+  });
+  (m.traineeHistory || []).forEach(function(hh){
+    if (hh.result === 'planned' && hh.date) items.push({ d: hh.date, kind: 'tr', h: hh });
+  });
+  items.sort(function(a, b){ return (b.d || '').localeCompare(a.d || ''); });
+  var tkHtml = '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openEventAdd(\'' + mid + '\')">📅 予定</button>'
+    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="ckAddTask(\'' + mid + '\')">✅ タスク</button>'
+    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openOlRecordModal(\'' + mid + '\')">📝 OL</button>'
+    + '</div>';
+  var _npl = memberNextPlanLines(m);
+  if (_npl.length) tkHtml += '<div style="font-size:12px;color:var(--gold);margin-bottom:8px;line-height:1.7">' + _npl.join('<br>') + '</div>';
+  if (!items.length) tkHtml += '<div class="md-empty">活動はまだありません</div>';
+  else tkHtml += items.map(function(it){
+    var d = it.d ? it.d.split('-').slice(1).join('/') : '—';
+    var dTag = '<span style="color:var(--text-dim);font-size:11.5px;flex:none;width:40px;font-family:\'IBM Plex Mono\',monospace">' + d + '</span>';
+    if (it.kind === 'ol') {
+      var pl = it.o.st === 'planned';
+      return '<div class="me-task" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openOlRecordModal(\'' + mid + '\',' + it.oi + ')">'
+        + dTag + '<span>📝</span>'
+        + (pl ? '<span style="flex:none;background:var(--gold);color:#08121a;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">予定</span>' : '')
+        + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(it.o.what || it.o.note || 'OL') + (it.o.asan ? ' <span style="color:var(--text-dim);font-size:11px">A:' + evEsc(it.o.asan) + '</span>' : '') + '</span></div>';
+    }
+    if (it.kind === 'tr') {
+      return '<div class="me-task" style="display:flex;align-items:center;gap:6px">' + dTag + '<span>🎓</span>'
+        + '<span style="flex:none;background:var(--gold);color:#08121a;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">予定</span>'
+        + '<span style="flex:1">' + evEsc(it.h.status || '研修') + (it.h.aSan ? ' <span style="color:var(--text-dim);font-size:11px">A:' + evEsc(it.h.aSan) + '</span>' : '') + '</span></div>';
+    }
+    var e = it.e, isTask = it.kind === 'task';
+    var ic = isTask ? (e.done ? '✅' : '⬜') : (e.done ? '✅' : '📅');
     return '<div class="me-task" style="display:flex;align-items:center;gap:4px">'
       + '<span style="flex:1;display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0" onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')">'
-      + '<span>' + ic + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span>'
-      + '<span style="color:var(--text-dim);font-size:12px;flex:none">' + d + '</span></span>'
+      + dTag + '<span>' + ic + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span></span>'
       + '<span onclick="openEventEdit(\'' + e.id + '\')" style="flex:none;padding:6px 8px;color:var(--text-dim);cursor:pointer" title="編集">✎</span>'
       + '<span onclick="meDeleteTask(\'' + e.id + '\',\'' + mid + '\')" style="flex:none;padding:6px 8px;color:var(--red);cursor:pointer" title="削除">🗑</span>'
       + '</div>';
   }).join('');
-  tkHtml += '<div class="me-add-btn" onclick="ckAddTask(\'' + mid + '\')">＋ タスクを追加する</div>';
   tkBox.innerHTML = tkHtml;
 }
 // ── 編集パネル：写真の選択/削除 ──
@@ -10865,7 +10915,7 @@ function buildParentSelect(selectedId, excludeId) {
   });
 }
 var TITLE_OPTIONS = {
-  '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO'],
+  '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO','OUT'],
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート','OUT'],
 };
@@ -11110,6 +11160,8 @@ function saveMember() {
   autoSave();
   gameCheck();
   gameCheckPromotion(_prevMember, m);
+  // v361: 研修結果「流れた」→ 再アプローチリストへ自動追加（重複は内部でスキップ）
+  if (m.traineeResult === '流れた' && (!_prevMember || _prevMember.traineeResult !== '流れた')) { try { _reapproachAdd(m); } catch(eRA) {} }
   // 新規追加時に選んでいた写真をIDに紐づけて保存
   if (_pendingPhoto && m.id) { saveAvatar(m.id, _pendingPhoto); _pendingPhoto = null; }
 }
@@ -12841,6 +12893,82 @@ setTimeout(function(){
     else { el.style.transition = ''; el.style.transform = ''; }
   }, { passive: true });
 }, 1200);
+// ============================================================
+//  v361: 再アプローチリスト（研修結果「流れた」を貯めて、時機を見て再アプローチ）
+//  保存先: maps/{uid}/meta/reapproach {items:[{mid,name,date,month,memo}]}
+// ============================================================
+var _reapproach = null;
+function _reapproachPath(){ return 'maps/' + currentUser.uid + '/meta/reapproach'; }
+function _reapproachEnsure(){
+  if (_reapproach) return Promise.resolve(_reapproach);
+  if (!db || !currentUser) { _reapproach = []; return Promise.resolve(_reapproach); }
+  return fsGet(_reapproachPath()).then(function(d){ _reapproach = (d && d.items) || []; return _reapproach; })
+    .catch(function(){ _reapproach = []; return _reapproach; });
+}
+function _reapproachSave(){
+  if (!db || !currentUser) return;
+  fsSet(_reapproachPath(), { items: _reapproach || [], updatedAt: new Date().toISOString() }).catch(function(){});
+}
+function _reapproachAdd(m){
+  _reapproachEnsure().then(function(){
+    for (var i = 0; i < _reapproach.length; i++) { if (_reapproach[i].mid === m.id) return; } // 重複防止
+    var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').trim() || '(無名)';
+    _reapproach.unshift({ mid: m.id, name: nm, date: evTodayYmd(), month: state.currentMonth, memo: m.memo || '' });
+    _reapproachSave();
+    toast('🔄 「' + nm + '」を再アプローチリストに追加しました（メニューから確認）');
+  });
+}
+function closeReapproachSheet(){
+  var ov = document.getElementById('reapOv');
+  if (!ov) return;
+  ov.classList.remove('show');
+  setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200);
+}
+function openReapproachSheet(){
+  _reapproachEnsure().then(function(){
+    closeReapproachSheet();
+    var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'reapOv';
+    ov.onclick = function(e){ if (e.target === ov) closeReapproachSheet(); };
+    var t = evTodayYmd();
+    var rows = (_reapproach || []).map(function(r, i){
+      var days = 0;
+      try { var p1 = r.date.split('-'), p2 = t.split('-');
+        days = Math.round((new Date(p2[0], p2[1]-1, p2[2]) - new Date(p1[0], p1[1]-1, p1[2])) / 86400000); } catch(e0) {}
+      var hot = days >= 90; // 3ヶ月経過＝再アプローチの目安
+      return '<div class="fol-log-row" style="align-items:flex-start">'
+        + '<span class="fol-log-main"><span class="fol-log-ttl">' + evEsc(r.name) + (hot ? ' <span style="background:var(--gold);color:#08121a;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">再アプローチ時期</span>' : '') + '</span>'
+        + '<span class="fol-log-sub">' + evEsc((r.date || '').split('-').slice(1).join('/')) + ' に流れた・' + days + '日経過' + (r.memo ? '・' + evEsc(r.memo) : '') + '</span></span>'
+        + '<span onclick="reapMakeTask(' + i + ')" style="flex:none;padding:6px 8px;cursor:pointer" title="今日のタスクにする">📋</span>'
+        + '<span onclick="reapDelete(' + i + ')" style="flex:none;padding:6px 8px;color:var(--red);cursor:pointer" title="リストから削除">🗑</span>'
+        + '</div>';
+    }).join('');
+    ov.innerHTML = '<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
+      + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🔄 再アプローチリスト</div>'
+      + '<div style="font-size:11px;color:var(--text-dim)">研修結果「流れた」の人を自動で記録。📋で今日のタスクに追加できます</div></div>'
+      + '<span class="ms-x" onclick="closeReapproachSheet()">✕</span></div>'
+      + '<div style="padding:4px 16px 16px">' + (rows || '<div class="md-empty">まだ登録はありません<br>（研修結果で「✗流れた」を選ぶと自動で貯まります）</div>') + '</div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ ov.classList.add('show'); });
+  });
+}
+function reapMakeTask(i){
+  var r = (_reapproach || [])[i];
+  if (!r || !eventsUid()) return;
+  var e = { id: genEventId(), type: 'task', title: r.name + ' 再アプローチ', date: evTodayYmd(), time: '', endTime: '', endDate: '',
+    allDay: false, done: false, memberId: '', memberIds: [], categoryId: '', priority: 'high', memo: (r.memo || '') + '（' + (r.date || '') + ' に流れた）',
+    star: false, listId: '', labelId: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  state.events.push(e);
+  saveEventDoc(e);
+  updateEventsBadge();
+  toast('📋 今日のタスクに「' + r.name + ' 再アプローチ」を追加しました');
+}
+function reapDelete(i){
+  if (!_reapproach || !_reapproach[i]) return;
+  if (!confirm('「' + _reapproach[i].name + '」をリストから削除しますか？')) return;
+  _reapproach.splice(i, 1);
+  _reapproachSave();
+  openReapproachSheet();
+}
 // v334: 重複した通知登録の掃除＝この端末の現在の登録だけを残して他を削除
 // （Safariで開いた時の登録・再インストール前の古い登録が残ると、同じ通知が2件届くため）
 function pushClearOtherTokens() {
@@ -13237,10 +13365,35 @@ function gcalOpenTemplate(id) {
 }
 
 // ── アプリ内アラート ──
+// ============================================================
+//  v361: メンバー担当タスク/予定の表示区分
+//  ・メンバーに紐付けた予定/タスクは既定で「メンバー専用」（自分のカレンダー/ToDoに出さない）
+//  ・作成時に「自分にも表示」を選ぶと selfShow=true で自分の画面にも出る
+//  ・旧データ(selfShowなし)はカレンダーでは今までどおり表示（急に消えると混乱するため）、
+//    ToDo/通知/バッジは「個人＋自分にも表示」だけに整理
+// ============================================================
+function evIsMemberLinked(e) { return !!((e.memberIds && e.memberIds.length) || e.memberId); }
+function evShowMine(e) { return !evIsMemberLinked(e) || e.selfShow !== false; }        // カレンダー系（旧データは表示）
+function evTdMine(e)   { return !evIsMemberLinked(e) || e.selfShow === true; }         // ToDo/通知/バッジ（自分にも表示のみ）
+// v361: メンバーの「次の予定」行（研修ファネル予定＋カレンダー予定＋OL予定を全部返す）
+function memberNextPlanLines(m) {
+  var out = [];
+  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
+  if (plan) out.push('📅 次の予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
+  else if (m.nextDate) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')));
+  var t = evTodayYmd();
+  var evs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t; })
+    .sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
+  if (evs.length) out.push((evs[0].type === 'task' ? '✅' : '🗓') + ' 次の' + (evs[0].type === 'task' ? 'タスク' : '予定') + '：' + evEsc(evs[0].title||'') + '（' + evs[0].date.split('-').slice(1).join('/') + (evs[0].time ? ' ' + evs[0].time : '') + '）');
+  var fd = (state.freshData && state.freshData[m.id]) || {};
+  var olPlan = (fd.olLog || []).filter(function(o){ return o.st === 'planned' && o.date && o.date >= t; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
+  if (olPlan) out.push('📝 OL予定：' + (olPlan.what ? evEsc(olPlan.what) : '') + '（' + olPlan.date.split('-').slice(1).join('/') + (olPlan.asan ? ' A:' + evEsc(olPlan.asan) : '') + '）');
+  return out;
+}
 function dueTaskCount() {
   var t = evTodayYmd(), n = 0;
   (state.events||[]).forEach(function(e) {
-    if (e.type === 'task' && !e.done && e.date && e.date <= t) n++;
+    if (e.type === 'task' && !e.done && e.date && e.date <= t && evTdMine(e)) n++; // v361: メンバー専用は除外
   });
   return n;
 }
@@ -13262,7 +13415,7 @@ function notifyDueEvents() {
   if (_evNotified) return;
   _evNotified = true;
   var t = evTodayYmd();
-  var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t; });
+  var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t && evTdMine(e); }); // v361
   var n = due.length;
   if (n > 0) {
     setTimeout(function() {
@@ -14466,7 +14619,7 @@ function renderDayV() {
   // 終日・連日・時刻なし → 上の帯エリア（タスクはToDoで管理するため出さない）
   var alldayEl = document.getElementById('dayVAllday');
   var bands = (state.events || []).filter(function(e){
-    if (e.type === 'task') return false;
+    if (e.type === 'task' || !evShowMine(e)) return false;
     var inSpan = e.endDate && e.date <= ds && ds <= e.endDate;
     return (e.date === ds && !e.time) || inSpan;
   });
@@ -14481,7 +14634,7 @@ function renderDayV() {
     } else { alldayEl.style.display = 'none'; alldayEl.innerHTML = ''; }
   }
   // タイムライン: 時刻あり予定。既定6:00〜24:00、早朝の予定があれば上に拡張
-  var evs = (state.events || []).filter(function(e){ return e.type !== 'task' && e.date === ds && e.time; });
+  var evs = (state.events || []).filter(function(e){ return e.type !== 'task' && e.date === ds && e.time && evShowMine(e); });
   evs.sort(evSortFn);
   var HH = 52; // 1時間の高さ(px)
   var startH = 6;
@@ -14592,7 +14745,7 @@ function renderWeek() {
   days.forEach(function(d){
     var ymd = evYmd(d);
     var bands = (state.events || []).filter(function(e){
-      if (e.type === 'task') return false;
+      if (e.type === 'task' || !evShowMine(e)) return false;
       var inSpan = e.endDate && e.date <= ymd && ymd <= e.endDate;
       return (e.date === ymd && !e.time) || inSpan;
     });
@@ -14626,7 +14779,7 @@ function renderWeek() {
         col += '<div class="dayv-slotarea" style="top:' + ((sh - startH) * HH) + 'px;height:' + HH + 'px" onclick="openEventAddTime(\'' + ymd + '\',' + sh + ')"></div>';
       }
     }
-    var evs = (state.events || []).filter(function(e){ return e.type !== 'task' && e.date === ymd && e.time; });
+    var evs = (state.events || []).filter(function(e){ return e.type !== 'task' && e.date === ymd && e.time && evShowMine(e); });
     evs.sort(evSortFn);
     var lanes = [];
     evs.forEach(function(e){
@@ -15389,7 +15542,7 @@ function _renderAgendaCore() {
   // ── リスト内/スマートリスト画面 ──
   if (nav.type !== 'home') {
     var title = '', list = [], accent = '';
-    var undone = tasks.filter(function(e){ return !e.done; });
+    var undone = tasks.filter(function(e){ return !e.done && evTdMine(e); }); // v361: 個人タスクのみ
     if (nav.type === 'smart' && nav.id === 'my') { title = '● マイリスト'; list = undone.filter(function(e){ return !e.listId; }); }
     else if (nav.type === 'smart' && nav.id === 'star') { title = '★ 星付き'; list = undone.filter(function(e){ return e.star; }); }
     else if (nav.type === 'smart' && nav.id === 'week') {
@@ -15433,7 +15586,8 @@ function _renderAgendaCore() {
   function fchip(sel, onclick, inner) { return '<div class="td-fchip' + (sel ? ' sel' : '') + '" onclick="' + onclick + '">' + inner + '</div>'; }
   var fch = '<div class="td-filters">'
     + fchip(F.type === 'all', "todoSetFilter('all')", 'すべて')
-    + fchip(F.type === 'today', "todoSetFilter('today')", '今日');
+    + fchip(F.type === 'today', "todoSetFilter('today')", '今日')
+    + fchip(F.type === 'member', "todoSetFilter('member')", '👤メンバー'); // v361: メンバー担当タスク
   ((_todoMeta && _todoMeta.lists) || []).forEach(function(L){
     fch += fchip(F.type === 'list' && F.id === L.id, "todoSetFilter('list','" + L.id + "')", '<i style="background:' + L.color + '"></i>' + evEsc(L.name));
   });
@@ -15443,6 +15597,8 @@ function _renderAgendaCore() {
   fch += '</div>';
   var t9 = evTodayYmd();
   function _applyChip(list0) {
+    if (F.type === 'member') return list0.filter(evIsMemberLinked); // v361: メンバー担当分だけ
+    list0 = list0.filter(evTdMine); // v361: 既定＝個人タスク（＋「自分にも表示」のメンバータスク）のみ
     if (F.type === 'today') return list0.filter(function(e){ return e.date && e.date <= t9; }); // 期限切れも含む
     if (F.type === 'list') return list0.filter(function(e){ return e.listId === F.id; });
     if (F.type === 'label') return list0.filter(function(e){ return e.labelId === F.id; });
@@ -15529,18 +15685,20 @@ function _pcTdRenderSide() {
       + '<span class="n">' + evEsc(name) + '</span>'
       + (ct > 0 ? '<span class="ct">' + ct + '</span>' : '') + '</div>';
   }
+  var mine = undone.filter(evTdMine); // v361: 個人タスク基準
   var h = '<div class="pcts-ttl">表示</div>';
-  h += row(home && F.type === 'today', "pcTdSideGo('today')", '☀️', '今日', undone.filter(function(e){ return e.date && e.date <= t; }).length, '', 'data-drop="today"');
-  h += row(home && F.type === 'all', "pcTdSideGo('all')", '📥', 'すべて', undone.length, '', '');
+  h += row(home && F.type === 'today', "pcTdSideGo('today')", '☀️', '今日', mine.filter(function(e){ return e.date && e.date <= t; }).length, '', 'data-drop="today"');
+  h += row(home && F.type === 'all', "pcTdSideGo('all')", '📥', 'すべて', mine.length, '', '');
+  h += row(home && F.type === 'member', "pcTdSideGo('member')", '👤', 'メンバーのタスク', undone.filter(evIsMemberLinked).length, '', '');
   var lists = (_todoMeta && _todoMeta.lists) || [];
   if (lists.length) h += '<div class="pcts-ttl">リスト（ドラッグで移動）</div>';
   lists.forEach(function(L){
-    h += row(home && F.type === 'list' && F.id === L.id, "pcTdSideGo('list','" + L.id + "')", '', L.name, undone.filter(function(e){ return e.listId === L.id; }).length, L.color, 'data-drop="list:' + L.id + '"');
+    h += row(home && F.type === 'list' && F.id === L.id, "pcTdSideGo('list','" + L.id + "')", '', L.name, mine.filter(function(e){ return e.listId === L.id; }).length, L.color, 'data-drop="list:' + L.id + '"');
   });
   var labels = (_todoMeta && _todoMeta.labels) || [];
   if (labels.length) h += '<div class="pcts-ttl">ラベル</div>';
   labels.forEach(function(LB){
-    h += row(home && F.type === 'label' && F.id === LB.id, "pcTdSideGo('label','" + LB.id + "')", '', '◎' + LB.name, undone.filter(function(e){ return e.labelId === LB.id; }).length, LB.color, '');
+    h += row(home && F.type === 'label' && F.id === LB.id, "pcTdSideGo('label','" + LB.id + "')", '', '◎' + LB.name, mine.filter(function(e){ return e.labelId === LB.id; }).length, LB.color, '');
   });
   h += '<div class="pcts-ttl">その他</div>';
   h += row(_todoNav && _todoNav.type === 'smart' && _todoNav.id === 'done', "todoNavTo('smart','done')", '✓', '完了タスク', tasks.filter(function(e){ return e.done && !_todoDoneToday(e); }).length, '', '');
@@ -15748,6 +15906,7 @@ function renderCalendar() {
   (state.events||[]).forEach(function(e) {
     if (!e.date) return;
     if (e.type === 'task') return; // v297: 月カレンダーは予定のみ。タスクはToDoと日別シートで
+    if (!evShowMine(e)) return; // v361: メンバー専用予定は表示しない
     if (e.endDate && e.endDate > e.date) {
       // v299: 複数日予定は期間中の毎日に帯として表示（最大60日）
       var p1 = e.date.split('-');
@@ -15989,7 +16148,7 @@ function _calNextBarUpdate() {
   var t = evTodayYmd(), now = Date.now();
   var best = null, bestMs = 0;
   (state.events || []).forEach(function(e){
-    if (e.type === 'task' || e.done || e.date !== t || !e.time) return;
+    if (e.type === 'task' || e.done || e.date !== t || !e.time || !evShowMine(e)) return;
     var dt = evDateTime(e);
     if (!dt) return;
     var ms = dt.getTime();
@@ -16057,7 +16216,7 @@ function renderPcDayPanel() {
   if (typeof isPCMode === 'function' && !isPCMode()) return;
   var ds = _calSelDate || evTodayYmd();
   var t = evTodayYmd();
-  var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t; }).sort(_todoSortDue);
+  var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t && evTdMine(e); }).sort(_todoSortDue); // v361
   var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
     + '<div style="font-size:14.5px;font-weight:800;flex:1;font-family:\'IBM Plex Mono\',\'Noto Sans JP\',monospace">' + evEsc(fmtEvDate(ds, '')) + '</div>'
     + '<button class="btn-p" style="flex:none;padding:7px 13px;font-size:12.5px" onclick="openEventAddDate(\'' + ds + '\')">＋ 予定</button>'
@@ -16076,9 +16235,10 @@ function evCellDblPC(ds) {
 function _daySheetHtml(ds) {
   var evs = (state.events || []).filter(function(e){
     if (e.type === 'task') return false;
+    if (!evShowMine(e)) return false; // v361: メンバー専用は自分のカレンダーに出さない
     return e.date === ds || (e.endDate && e.date <= ds && ds <= e.endDate); // 連日予定は期間中の毎日に表示
   });
-  var tks = (state.events || []).filter(function(e){ return e.date === ds && e.type === 'task'; });
+  var tks = (state.events || []).filter(function(e){ return e.date === ds && e.type === 'task' && evTdMine(e); }); // v361
   evs.sort(evSortFn); tks.sort(evSortFn);
   var h = '';
   if (!evs.length && !tks.length) {
@@ -16324,11 +16484,20 @@ function selEvPrio(p) {
 }
 // v348: 関連メンバー＝複数選択＋名前検索のピッカー
 var _evMemberIds = [];
+var _evSelfShow = false; // v361: メンバー紐付け時に自分の画面にも出すか（既定: 出さない）
+function selEvSelfShow(v) {
+  _evSelfShow = (v === true);
+  var a = document.getElementById('evSelfShowOff'), b = document.getElementById('evSelfShowOn');
+  if (a) a.classList.toggle('sel', !_evSelfShow);
+  if (b) b.classList.toggle('sel', _evSelfShow);
+}
 function evHasMember(e, id) {
   if (!e || !id) return false;
   return e.memberId === id || (e.memberIds && e.memberIds.indexOf(id) >= 0);
 }
 function updateEvMemberDisplay() {
+  var _ssRow = document.getElementById('evSelfShowRow');
+  if (_ssRow) _ssRow.style.display = _evMemberIds.length ? '' : 'none'; // v361
   var el = document.getElementById('evMemberNames');
   if (!el) return;
   if (!_evMemberIds.length) { el.textContent = '（なし）'; el.style.color = 'var(--text-dim)'; return; }
@@ -17295,6 +17464,7 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   _evMemberIds = e
     ? ((e.memberIds && e.memberIds.length) ? e.memberIds.slice() : (e.memberId ? [e.memberId] : []))
     : (presetMember ? [presetMember] : []);
+  selEvSelfShow(e ? (e.selfShow !== false) : false); // v361: 新規は「メンバー専用」既定・旧データは表示扱い
   updateEvMemberDisplay();
   // CAL-3: サブタスクを編集用にコピー（保存するまで元データは変えない）
   _evSubs = (e && e.subtasks ? e.subtasks : []).map(function(s){ return { id: s.id, t: s.t, done: !!s.done }; });
@@ -17389,6 +17559,7 @@ function _saveEventBody() {
   if (_evType === 'task') { e.endTime = ''; e.endDate = ''; }
   e.memberIds = _evMemberIds.slice(); // v348: 複数メンバー
   e.memberId = _evMemberIds[0] || '';  // 互換（実績連動・既存表示用の代表1人）
+  e.selfShow = _evMemberIds.length ? (_evSelfShow === true) : ''; // v361: メンバー無しなら区分なし
   e.categoryId = _evCategoryId || '';
   // v329: 色は保存時点のカテゴリ色を予定自体に焼き付ける（後からカテゴリ/テンプレの色を変えても既存の予定の色は変わらない）
   e.color = '';
@@ -17806,7 +17977,7 @@ function closeSearchModal(e) {
 // 検索条件の定義
 
 var CATEGORY_TITLES = {
-  '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO'],
+  '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO','OUT'],
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート','OUT'],
 };
@@ -19125,6 +19296,7 @@ function loadMergedConfig() {
     state.mergedMaps = (d && d.maps) ? d.maps : [];
     startAllMergeListeners();
     propagateDerivedShares(); // v355: ログイン時に連鎖共有の配布状態を同期
+    _reapproachEnsure(); // v361: メニューの件数表示用に先読み
   }).catch(function() { state.mergedMaps = []; });
 }
 function saveMergedConfig() {
