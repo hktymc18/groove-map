@@ -1167,6 +1167,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .td-fchip{flex:none;display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1px solid var(--border);border-radius:15px;background:var(--surface2);font-size:12.5px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap}
 .td-fchip.sel{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
 .td-fchip i{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
+.td-fchip.chip-drag{opacity:.92;transform:scale(1.07);box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:5;position:relative} /* v366 */
 /* v335: ホームのクイック追加バーと検索切替ボタン */
 .td-srchbtn{flex:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--text-dim);cursor:pointer;font-size:15px}
 .td-srchbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
@@ -1254,7 +1255,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 /* v360: テンプレ長押しドラッグ並べ替え */
 .tplp-row.tpl-dragging{opacity:.92;background:var(--surface3);box-shadow:0 6px 18px rgba(0,0,0,.35);transform:scale(1.02);position:relative;z-index:5}
 /* v360: 期限切れタスクを一目で（薄赤の帯＋左の赤バー＋「◯日超過」ピル） */
-.td-row.od-row{background:rgba(255,93,115,.08);box-shadow:inset 3px 0 0 var(--red)}
+.td-row.od-row{background-color:var(--surface);background-image:linear-gradient(rgba(255,93,115,.08),rgba(255,93,115,.08));box-shadow:inset 3px 0 0 var(--red)} /* v365: 半透明だと裏の🗑が透けるため不透明に */
 .td-odpill{display:inline-block;background:var(--red);color:#fff;font-size:9.5px;font-weight:800;border-radius:8px;padding:1.5px 7px;margin-right:6px;vertical-align:1px;font-family:'Inter','Noto Sans JP',sans-serif}
 /* CAL-2: 予定テンプレチップ（タップで内容・時間・通知をプリフィル） */
 .ev-tpl-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0 2px;-webkit-overflow-scrolling:touch}
@@ -1956,8 +1957,8 @@ body.cal-fs .pc-toolbar{display:none!important}
 body:not(.light) .ed-l,body:not(.light) .md-l,body:not(.light) .pc-tooltip-label{color:#c6cdda}
 body:not(.light) .me-tab:not(.on),body:not(.light) .md-tab:not(.on){color:#c6cdda}
 .me-vp{flex:1;overflow:hidden;min-height:0}
-.me-track{display:flex;width:500%;height:100%;transition:transform .25s ease}
-.me-page{width:20%;flex:none;overflow-y:auto;padding:10px 14px 24px;-webkit-overflow-scrolling:touch}
+.me-track{display:flex;width:400%;height:100%;transition:transform .25s ease} /* v366: OLタブ統合で4ページ */
+.me-page{width:25%;flex:none;overflow-y:auto;padding:10px 14px 24px;-webkit-overflow-scrolling:touch}
 .me-dots{display:flex;justify-content:center;gap:7px;padding:9px 0;flex:none}
 #modal.no-trainee #meTabTrainee{display:none}
 #modal.no-trainee .me-dots .me-dot:nth-child(3){display:none}
@@ -2158,7 +2159,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v364</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v366</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2671,8 +2672,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <span class="me-tab" onclick="meGo(0)">基本</span>
       <span class="me-tab on" onclick="meGo(1)">月次</span>
       <span class="me-tab" id="meTabTrainee" onclick="meGo(2)">研修</span>
-      <span class="me-tab" onclick="meGo(3)">OL</span>
-      <span class="me-tab" onclick="meGo(4)">活動</span>
+      <span class="me-tab" onclick="meGo(3)">活動</span>
     </div>
     <div class="me-vp" id="meVp">
       <div class="me-track" id="meTrack">
@@ -2876,16 +2876,13 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           </div>
         </div>
 
-        <!-- Page 3: OL -->
-        <div class="me-page" id="mePageOL"></div>
-
-        <!-- Page 4: タスク -->
+        <!-- Page 3: 活動（OL・タスク・予定の統合タイムライン。v366でOLタブを統合） -->
         <div class="me-page" id="mePageTask"></div>
 
       </div>
     </div>
     <div class="me-dots">
-      <span class="me-dot on"></span><span class="me-dot"></span><span class="me-dot"></span><span class="me-dot"></span><span class="me-dot"></span>
+      <span class="me-dot on"></span><span class="me-dot"></span><span class="me-dot"></span><span class="me-dot"></span>
     </div>
     <div class="me-foot">
       <button class="btn-p" onclick="saveMember()">保存</button>
@@ -4798,7 +4795,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v364';
+  var DATA_VERSION = 'v366';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5656,6 +5653,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v366', d:'2026-08-18', items:['👤メンバー編集のOLタブを「活動」タブに統合して削除（重複のため）。リストOLの状態表示も活動タブへ移動しました','🎨リスト/ラベルの色を選べるように：作成直後に色パレットが自動で開き、後からもリスト選択画面の色●をタップして変更できます。パレットに2色追加（ピンク・ライム、計40色）','🔖ToDoホーム上部のリスト/ラベルのチップを長押し→左右ドラッグで並べ替えできるようになりました（リスト同士・ラベル同士で入替。PC左カラムにも同じ順で反映）'] },
+  { v:'v365', d:'2026-08-18', items:['🧊3D組織図がteamLab風に：なにもない空間をタップすると、そこに波紋が広がり花びらがパッと咲きます（触ると咲く）','⚡メンバーをタップすると、その人からトップまで系譜の線の上を光がツーッと流れます（エネルギーの流れ）','✨ドラッグでくるくる回すと指の軌跡にきらきらの尾。組織の線の上は常に小さな光の粒が流れ続けます（生きているネットワーク）','🦋ガーデンテーマに蝶が3匹ふわふわ・花はゆっくり呼吸／🪩ネオンにはホタルが明滅／🌸オーロラは背景の色がオーロラのようにゆっくり流れます','🌱今月入ったメンバー（✨付き）は最後に「開花」しながら登場。⏳成長リプレイも月ごとに咲きながら増え、最後は紙吹雪のフィナーレ','👤オーロラテーマでは写真のないメンバーがイニシャル入りのパステルアバターになりました','📸シェア画像に花のラインアート装飾が入りました','🗑期限切れタスクの行でゴミ箱ボタンが透けて見えていた不具合を修正（フリックした時だけ表示されます）'] },
   { v:'v364', d:'2026-08-18', items:['📌テンプレ作成の開始・終了時刻を、予定追加と同じテンキー入力に統一：欄をタップするとテンキーが開き、「1930」→19:30に自動整形。開始を入れると終了へ自動で移動（+1時間を仮セット）。PCではキーボードで直接入力もできます'] },
   { v:'v363', d:'2026-08-18', items:['🔢予定タブの数字フォントを変更：0の中に点が入るフォント(IBM Plex Mono)をやめ、MAPの情報表示と同じすっきりしたフォント(Inter)に統一しました（月の日付・月タイトル・週/日の時刻・期限・件数バッジなど）'] },
   { v:'v362', d:'2026-08-18', items:['🧊3D組織図を大幅パワーアップ！🌸ボタンでテーマを切替できます：「🌸オーロラ」（パステルグラデ×パールの新デフォルト級テーマ）／「🪩ネオン」（従来のサイバー系）／「🌿ガーデン」（組織が木として育つ：研修生🌱→BA🌸→BR🌺）','✨開いた瞬間にメンバーが中心からポンポンッと弾んで登場。テーマに合わせたきらきら粒子（星屑/花びら）がゆっくり舞います','📸ワンタップでストーリーズ向けの縦長画像（TEAM◯人＋月入りフレーム）を作成してそのまま共有できます','💳メンバーカードがホロカード風に（虹のグラデ枠＋タイトルバッジ）。タップするとカメラがその人へスーッと寄ります','🎉今月入ったメンバーに✨、今日が誕生日のメンバーに🎂が付きます','🫰初回だけ操作ガイドを表示。タップ時に軽い振動フィードバック（対応端末のみ）'] },
@@ -10443,11 +10442,11 @@ function closeFabMenu() {
 // ── メンバー編集スワイプ制御（追加・編集で共用）──
 var _mePage = 0, _meX0 = 0, _meY0 = 0;
 function meGo(i) {
-  if (i < 0) i = 0; if (i > 4) i = 4;
+  if (i < 0) i = 0; if (i > 3) i = 3; // v366: OLタブ統合で0〜3
   if (i === 2 && window._meHideTrainee) i = (i > _mePage) ? 3 : 1; // 研修タブ非表示時はスキップ
   _mePage = i;
   var tr = document.getElementById('meTrack');
-  if (tr) tr.style.transform = 'translateX(-' + (i * 20) + '%)';
+  if (tr) tr.style.transform = 'translateX(-' + (i * 25) + '%)';
   Array.prototype.forEach.call(document.querySelectorAll('#modal .me-tab'), function(x, k){ x.classList.toggle('on', k === i); });
   Array.prototype.forEach.call(document.querySelectorAll('#modal .me-dot'), function(x, k){ x.classList.toggle('on', k === i); });
   var pgs = document.querySelectorAll('#modal .me-page');
@@ -10480,23 +10479,16 @@ function edHelp(ev, id) {
   if (q && q.classList) q.classList.toggle('on', open);
 }
 function meRenderExtras(m) {
-  var olBox = document.getElementById('mePageOL');
+  // v366: OLタブは「活動」タブに統合（OL記録・タスク・予定・研修予定を1本の時系列で）
   var tkBox = document.getElementById('mePageTask');
-  if (!olBox || !tkBox) return;
+  if (!tkBox) return;
   if (!m || !m.id) {
-    olBox.innerHTML = '<div class="md-empty">メンバーを保存すると<br>OL記録を残せます</div>';
-    tkBox.innerHTML = '<div class="md-empty">メンバーを保存すると<br>タスクを追加できます</div>';
+    tkBox.innerHTML = '<div class="md-empty">メンバーを保存すると<br>予定・タスク・OLを記録できます</div>';
     return;
   }
   var mid = m.id;
   var fd = (state.freshData && state.freshData[mid]) || {};
   var listSt = (typeof freshNorm === 'function') ? freshNorm(fd['リスト']) : (fd['リスト'] || {});
-  var olog = fd.olLog || [];
-  var olHtml = _dRow('リストOL', listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手'));
-  if (!olog.length) olHtml += '<div class="md-empty">OL記録はまだありません</div>';
-  else olHtml += olog.slice().reverse().map(function(e){ return '<div class="me-ol"><div style="color:var(--text-dim);font-size:12px">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div style="margin-top:3px">' + evEsc(e.what) + '</div>':'') + (e.note?'<div style="margin-top:3px;color:var(--text-mid);font-size:12px">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
-  olHtml += '<div class="me-add-btn" onclick="openOlRecordModal(\'' + mid + '\')">＋ OLを記録する</div>';
-  olBox.innerHTML = olHtml;
   // v361: 「活動」タブ＝OL・タスク・予定・研修予定を1本の時系列で表示（新しい順）
   var items = [];
   (state.events || []).forEach(function(e){
@@ -10516,6 +10508,7 @@ function meRenderExtras(m) {
     + '<button class="me-add-btn" style="flex:1;margin:0" onclick="ckAddTask(\'' + mid + '\')">✅ タスク</button>'
     + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openOlRecordModal(\'' + mid + '\')">📝 OL</button>'
     + '</div>';
+  tkHtml += '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">📋 リストOL: ' + (listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手')) + '</div>'; // v366: 旧OLタブから移設
   var _npl = memberNextPlanLines(m);
   if (_npl.length) tkHtml += '<div style="font-size:12px;color:var(--gold);margin-bottom:8px;line-height:1.7">' + _npl.join('<br>') + '</div>';
   if (!items.length) tkHtml += '<div class="md-empty">活動はまだありません</div>';
@@ -13443,7 +13436,7 @@ function notifyDueEvents() {
 //  カテゴリ（色分け）
 // ============================================================
 /* v313: 色の種類を18色に拡張（既存カテゴリの色はそのまま保持される） */
-var CAT_COLORS = ['#FF5D73','#F97316','#FFB454','#FFD166','#84CC16','#8BC34A','#4ADE80','#14B8A6','#3ED5C4','#5AD7FF','#0EA5E9','#6366f1','#8B5CF6','#C583FF','#EC4899','#FF87B3','#a87c5a','#9ca3af','#DC2626','#B91C1C','#EA580C','#D97706','#CA8A04','#EAB308','#65A30D','#16A34A','#059669','#0D9488','#0891B2','#0284C7','#2563EB','#4F46E5','#7C3AED','#9333EA','#C026D3','#DB2777','#E11D48','#78716C'];
+var CAT_COLORS = ['#FF5D73','#F97316','#FFB454','#FFD166','#84CC16','#8BC34A','#4ADE80','#14B8A6','#3ED5C4','#5AD7FF','#0EA5E9','#6366f1','#8B5CF6','#C583FF','#EC4899','#FF87B3','#a87c5a','#9ca3af','#DC2626','#B91C1C','#EA580C','#D97706','#CA8A04','#EAB308','#65A30D','#16A34A','#059669','#0D9488','#0891B2','#0284C7','#2563EB','#4F46E5','#7C3AED','#9333EA','#C026D3','#DB2777','#E11D48','#78716C','#F472B6','#A3E635']; // v366: +2色（ピンク・ライム）
 var UNCAT_COLOR = '#9ca3af';
 var _evCategoryId = '';     // イベントモーダルで選択中のカテゴリ
 var _catPickMode  = false;  // シートが「イベントへ割当」モードか
@@ -14136,6 +14129,24 @@ function _m3EmojiNode(ch, size) {
     return sp;
   } catch(e){ return null; }
 }
+// v365: イニシャル生成アバター（パステル円＋白リング＋頭文字）
+function _m3InitialNode(m, size) {
+  try {
+    var cv = document.createElement('canvas'); cv.width = 128; cv.height = 128;
+    var cx = cv.getContext('2d');
+    var base = _m3Pastel(titleRingColor(m.title || '') || '#b8a6d9');
+    cx.beginPath(); cx.arc(64, 64, 60, 0, Math.PI * 2); cx.fillStyle = base; cx.fill();
+    cx.beginPath(); cx.arc(64, 64, 60, 0, Math.PI * 2); cx.lineWidth = 5; cx.strokeStyle = 'rgba(255,255,255,0.9)'; cx.stroke();
+    var ini = ((m.lastName || m.firstName || '？').trim() || '？').charAt(0);
+    cx.font = '800 58px "Noto Sans JP", sans-serif';
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillStyle = 'rgba(60,40,80,0.82)';
+    cx.fillText(ini, 64, 68);
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true }));
+    sp.scale.set(size, size, 1);
+    return sp;
+  } catch(e){ return null; }
+}
 // 登場アニメのイージング（ポンッと弾む）
 function _m3EaseBack(t) { var c = 1.70158; t = t - 1; return 1 + (t * t * ((c + 1) * t + c)); }
 var _m3Spawn = 0, _m3Pts = null, _m3Focus = null;
@@ -14215,6 +14226,172 @@ function _m3HaloTex(color) {
   return tex;
 }
 var _m3Halos = [];
+// ============================================================
+//  v365: teamLab的インタラクションFX
+//  タップで咲く波紋と花びら／系譜を流れる光／ドラッグの光の軌跡／
+//  エッジを常に流れるパルス／蝶・ホタル／呼吸／オーロラの色相シフト
+// ============================================================
+var _m3FX = { ripples: [], petals: [], pulses: [], trail: [], beings: [], edgePulses: [] };
+var _m3EdgeList = [];
+var _m3SpotPts = null;
+var _m3BgDraw = null;
+var _m3LastFrame = 0;
+var _m3RingTexCache = {};
+function _m3RingTex(color) {
+  if (_m3RingTexCache[color]) return _m3RingTexCache[color];
+  var cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
+  var cx = cv.getContext('2d');
+  cx.strokeStyle = color; cx.lineWidth = 4; cx.globalAlpha = 0.9;
+  cx.beginPath(); cx.arc(32, 32, 26, 0, Math.PI * 2); cx.stroke();
+  var t = new THREE.CanvasTexture(cv);
+  _m3RingTexCache[color] = t;
+  return t;
+}
+function _m3FxPalette() {
+  if (_m3Theme === 'neon') return ['#5AD7FF', '#8B7CFF', '#2CE5B8'];
+  if (_m3Theme === 'garden') return ['#ffb7d0', '#ffd6e8', '#c9f0d8', '#fff3b8'];
+  return ['#ffd6e8', '#e8d6ff', '#ffe9c7', '#ffffff'];
+}
+function _m3FxBlend() { return _m3T().light ? THREE.NormalBlending : THREE.AdditiveBlending; }
+// タップした場所に波紋＋花びらが咲く（teamLabの「触ると咲く」）
+function _m3Bloom(pos, scale) {
+  if (!_m3World || typeof THREE === 'undefined') return;
+  scale = scale || 1;
+  var pal = _m3FxPalette();
+  var bl = _m3FxBlend();
+  var rip = new THREE.Sprite(new THREE.SpriteMaterial({ map: _m3RingTex(pal[0]), transparent: true, opacity: 0.9, blending: bl, depthWrite: false }));
+  rip.position.copy(pos);
+  rip.scale.set(10, 10, 1);
+  _m3World.add(rip);
+  _m3FX.ripples.push({ sp: rip, t0: Date.now(), dur: 900, max: 150 * scale });
+  var n = Math.round(12 * scale);
+  for (var i = 0; i < n; i++) {
+    var col = pal[i % pal.length];
+    var pm = new THREE.SpriteMaterial({ map: _m3DotTex(col, _m3Theme === 'garden'), transparent: true, opacity: 1, blending: bl, depthWrite: false, rotation: Math.random() * Math.PI });
+    var pt = new THREE.Sprite(pm);
+    pt.position.copy(pos);
+    var sz = (7 + Math.random() * 8) * scale;
+    pt.scale.set(sz, sz, 1);
+    _m3World.add(pt);
+    var th = Math.random() * Math.PI * 2, phi = Math.random() * Math.PI;
+    var spd = (60 + Math.random() * 90) * scale;
+    _m3FX.petals.push({ sp: pt, t0: Date.now(), dur: 1100 + Math.random() * 500,
+      vx: Math.sin(phi) * Math.cos(th) * spd, vy: Math.abs(Math.cos(phi)) * spd * 0.8, vz: Math.sin(phi) * Math.sin(th) * spd });
+  }
+  if (_m3FX.petals.length > 160) { // 触りまくっても重くならない上限
+    var over = _m3FX.petals.splice(0, _m3FX.petals.length - 160);
+    over.forEach(function(o){ _m3World.remove(o.sp); });
+  }
+}
+// 最後に紙吹雪（タイムトラベルのフィナーレ）
+function _m3Confetti() {
+  if (!_m3World) return;
+  var pal = _m3FxPalette(), bl = _m3FxBlend();
+  for (var i = 0; i < 70; i++) {
+    var pm = new THREE.SpriteMaterial({ map: _m3DotTex(pal[i % pal.length], true), transparent: true, opacity: 1, blending: bl, depthWrite: false, rotation: Math.random() * Math.PI });
+    var pt = new THREE.Sprite(pm);
+    pt.position.set((Math.random() - 0.5) * 700, 220 + Math.random() * 160, (Math.random() - 0.5) * 700);
+    var sz = 9 + Math.random() * 9;
+    pt.scale.set(sz, sz, 1);
+    _m3World.add(pt);
+    _m3FX.petals.push({ sp: pt, t0: Date.now(), dur: 2600 + Math.random() * 1200,
+      vx: (Math.random() - 0.5) * 40, vy: -(30 + Math.random() * 50), vz: (Math.random() - 0.5) * 40, conf: true });
+  }
+}
+// 系譜を光が流れる（タップした人→トップへエネルギーが走る）
+function _m3LineagePulse(pts) {
+  if (!_m3World || !pts || pts.length < 2) return;
+  var pal = _m3FxPalette(), bl = _m3FxBlend();
+  for (var i = 0; i < 3; i++) {
+    var pm = new THREE.SpriteMaterial({ map: _m3DotTex(i === 0 ? '#FFB454' : pal[i % pal.length], false), transparent: true, opacity: 1, blending: bl, depthWrite: false });
+    var sp = new THREE.Sprite(pm);
+    sp.scale.set(16, 16, 1);
+    sp.position.copy(pts[0]);
+    _m3World.add(sp);
+    _m3FX.pulses.push({ sp: sp, pts: pts, t0: Date.now() + i * 260, dur: 350 * (pts.length - 1), loops: 2 });
+  }
+}
+// FXの毎フレーム更新
+function _m3FXUpdate(tNow, dt) {
+  var i, o, k;
+  for (i = _m3FX.ripples.length - 1; i >= 0; i--) {
+    o = _m3FX.ripples[i];
+    k = (tNow - o.t0) / o.dur;
+    if (k >= 1) { _m3World.remove(o.sp); _m3FX.ripples.splice(i, 1); continue; }
+    var rs = 10 + (o.max - 10) * (1 - Math.pow(1 - k, 2));
+    o.sp.scale.set(rs, rs, 1);
+    o.sp.material.opacity = 0.9 * (1 - k);
+  }
+  for (i = _m3FX.petals.length - 1; i >= 0; i--) {
+    o = _m3FX.petals[i];
+    k = (tNow - o.t0) / o.dur;
+    if (k >= 1) { _m3World.remove(o.sp); _m3FX.petals.splice(i, 1); continue; }
+    o.sp.position.x += o.vx * dt; o.sp.position.y += o.vy * dt; o.sp.position.z += o.vz * dt;
+    if (!o.conf) o.vy -= 110 * dt; // 花びらはふわっと落ちる
+    o.sp.material.rotation += dt * 1.5;
+    o.sp.material.opacity = 1 - k;
+  }
+  for (i = _m3FX.pulses.length - 1; i >= 0; i--) {
+    o = _m3FX.pulses[i];
+    var el2 = tNow - o.t0;
+    if (el2 < 0) continue;
+    k = el2 / o.dur;
+    if (k >= 1) {
+      if (--o.loops > 0) { o.t0 = tNow + 200; o.sp.position.copy(o.pts[0]); continue; }
+      _m3World.remove(o.sp); _m3FX.pulses.splice(i, 1); continue;
+    }
+    var seg = k * (o.pts.length - 1);
+    var si = Math.min(o.pts.length - 2, Math.floor(seg));
+    var f = seg - si;
+    o.sp.position.lerpVectors(o.pts[si], o.pts[si + 1], f);
+    o.sp.material.opacity = 1 - k * 0.4;
+  }
+  for (i = _m3FX.trail.length - 1; i >= 0; i--) {
+    o = _m3FX.trail[i];
+    k = (tNow - o.t0) / 650;
+    if (k >= 1) { _m3World.remove(o.sp); _m3FX.trail.splice(i, 1); continue; }
+    o.sp.material.opacity = 0.8 * (1 - k);
+    o.sp.position.y += 14 * dt;
+  }
+  for (i = 0; i < _m3FX.edgePulses.length; i++) {
+    o = _m3FX.edgePulses[i];
+    k = ((tNow - o.t0) % o.dur) / o.dur;
+    if (tNow - o.t0 > o.dur) { // 次のエッジへ
+      o.t0 = tNow; o.dur = 2200 + Math.random() * 2400;
+      o.e = _m3EdgeList.length ? _m3EdgeList[Math.floor(Math.random() * _m3EdgeList.length)] : null;
+      k = 0;
+    }
+    if (!o.e) continue;
+    o.sp.position.set(o.e[0] + (o.e[3] - o.e[0]) * k, o.e[1] + (o.e[4] - o.e[1]) * k, o.e[2] + (o.e[5] - o.e[2]) * k);
+    o.sp.material.opacity = 0.75 * Math.sin(Math.PI * k); // 端でふわっと消える
+  }
+  for (i = 0; i < _m3FX.beings.length; i++) {
+    o = _m3FX.beings[i];
+    if (o.kind === 'fly') { // 蝶：ふわふわ周回＋羽ばたき
+      var bt = tNow / 1000 * o.spd + o.ph;
+      o.sp.position.set(Math.cos(bt) * o.r, o.cy + Math.sin(bt * 1.7) * 55, Math.sin(bt) * o.r);
+      var flap = 0.55 + 0.45 * Math.abs(Math.sin(tNow / 90 + o.ph));
+      o.sp.scale.set(o.base * flap, o.base, 1);
+    } else { // ホタル：漂い＋明滅
+      o.sp.position.x += Math.sin(tNow / 1400 + o.ph) * 8 * dt;
+      o.sp.position.y += Math.cos(tNow / 1700 + o.ph * 2) * 6 * dt;
+      o.sp.position.z += Math.cos(tNow / 1500 + o.ph) * 8 * dt;
+      o.sp.material.opacity = 0.25 + 0.6 * (0.5 + 0.5 * Math.sin(tNow / 460 + o.ph * 3));
+    }
+  }
+  // 花の呼吸（ガーデン。登場アニメ完了後）
+  if (_m3Theme === 'garden' && !_m3Spawn) {
+    for (i = 0; i < _m3Nodes.length; i++) {
+      var nb = _m3Nodes[i];
+      if (nb.breathe && nb.obj && nb.obj.visible) {
+        var br = 1 + 0.045 * Math.sin(tNow / 1100 + i * 0.9);
+        nb.obj.scale.set((nb.bx || 1) * br, (nb.by || 1) * br, 1);
+      }
+    }
+  }
+  // オーロラの色相がゆっくり流れる
+  if (_m3BgDraw && tNow - (_m3BgDraw.last || 0) > 240) { _m3BgDraw.last = tNow; _m3BgDraw.fn(tNow); }
+}
 function m3Build() {
   var wrap = document.getElementById('map3dCanvasWrap');
   if (!wrap || typeof THREE === 'undefined') return;
@@ -14232,8 +14409,29 @@ function m3Build() {
   var _bgg = _bgx.createLinearGradient(0, 0, 0, 512);
   _bgg.addColorStop(0, TH.bgA); _bgg.addColorStop(0.55, TH.bgB); _bgg.addColorStop(1, TH.bgC);
   _bgx.fillStyle = _bgg; _bgx.fillRect(0, 0, 32, 512);
-  _m3Scene.background = new THREE.CanvasTexture(_bgc);
+  var _bgTex = new THREE.CanvasTexture(_bgc);
+  _m3Scene.background = _bgTex;
   _m3Scene.fog = new THREE.Fog(TH.fog, 900, 2600);
+  // v365: FXを初期化（再構築で古いスプライト参照を破棄）
+  _m3FX = { ripples: [], petals: [], pulses: [], trail: [], beings: [], edgePulses: [] };
+  _m3EdgeList = [];
+  _m3BgDraw = null;
+  if (_m3Theme === 'aurora') {
+    // オーロラ：2つの配色をゆっくりクロスフェード（本物のオーロラのように流れる）
+    _m3BgDraw = { last: 0, fn: function(tN){
+      try {
+        var f = 0.5 + 0.5 * Math.sin(tN / 14000);
+        var g1 = _bgx.createLinearGradient(0, 0, 0, 512);
+        g1.addColorStop(0, '#f3e6ff'); g1.addColorStop(0.55, '#ffd9ec'); g1.addColorStop(1, '#ffe9d6');
+        _bgx.globalAlpha = 1; _bgx.fillStyle = g1; _bgx.fillRect(0, 0, 32, 512);
+        var g2 = _bgx.createLinearGradient(0, 0, 0, 512);
+        g2.addColorStop(0, '#e0ecff'); g2.addColorStop(0.55, '#f3e0ff'); g2.addColorStop(1, '#ffe2ef');
+        _bgx.globalAlpha = f * 0.85; _bgx.fillStyle = g2; _bgx.fillRect(0, 0, 32, 512);
+        _bgx.globalAlpha = 1;
+        _bgTex.needsUpdate = true;
+      } catch(eBg) {}
+    } };
+  }
   var _paneEl = document.getElementById('map3dPane');
   if (_paneEl) _paneEl.style.background = TH.pane;
   var _ttlEl0 = document.getElementById('map3dTitle');
@@ -14330,6 +14528,35 @@ function m3Build() {
   _m3EdgeMat = new THREE.LineBasicMaterial({ color: TH.edge, transparent: true, opacity: TH.light ? 0.6 : 0.9, blending: TH.light ? THREE.NormalBlending : THREE.AdditiveBlending }); // v362: テーマ配色
   _m3EdgeMesh = new THREE.LineSegments(eg, _m3EdgeMat);
   _m3World.add(_m3EdgeMesh);
+  // v365: エッジ一覧を保持し、線の上を常に光の粒が流れる（組織＝生きているネットワーク）
+  for (var _ei = 0; _ei + 5 < edges.length; _ei += 6) _m3EdgeList.push([edges[_ei], edges[_ei+1], edges[_ei+2], edges[_ei+3], edges[_ei+4], edges[_ei+5]]);
+  if (_m3EdgeList.length) {
+    var _epCt = Math.min(30, Math.max(6, Math.round(_m3EdgeList.length / 3)));
+    var _epPal = _m3FxPalette(), _epBl = _m3FxBlend();
+    for (var _ep = 0; _ep < _epCt; _ep++) {
+      var _epm = new THREE.SpriteMaterial({ map: _m3DotTex(_epPal[_ep % _epPal.length], false), transparent: true, opacity: 0, blending: _epBl, depthWrite: false });
+      var _eps = new THREE.Sprite(_epm);
+      _eps.scale.set(9, 9, 1);
+      _m3World.add(_eps);
+      _m3FX.edgePulses.push({ sp: _eps, e: _m3EdgeList[Math.floor(Math.random() * _m3EdgeList.length)], t0: Date.now() - Math.random() * 2000, dur: 2200 + Math.random() * 2400 });
+    }
+  }
+  // v365: ガーデン＝蝶が3匹ふわふわ／ネオン＝ホタルが明滅（数を絞って上品に）
+  if (TH.petals) {
+    for (var _bf = 0; _bf < 3; _bf++) {
+      var _bsp = _m3EmojiNode('🦋', 30);
+      if (_bsp) { _m3World.add(_bsp); _m3FX.beings.push({ kind: 'fly', sp: _bsp, base: 30, r: 240 + _bf * 130, cy: -60 - _bf * 120, spd: 0.14 + _bf * 0.05, ph: _bf * 2.1 }); }
+    }
+  } else if (_m3Theme === 'neon') {
+    for (var _ff = 0; _ff < 6; _ff++) {
+      var _fm = new THREE.SpriteMaterial({ map: _m3DotTex('#d8f7a8', false), transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
+      var _fs = new THREE.Sprite(_fm);
+      _fs.scale.set(11, 11, 1);
+      _fs.position.set((Math.random() - 0.5) * 800, -Math.random() * 500, (Math.random() - 0.5) * 800);
+      _m3World.add(_fs);
+      _m3FX.beings.push({ kind: 'firefly', sp: _fs, ph: _ff * 1.7 });
+    }
+  }
   // v309: 段数を可視化＝各階層に同心リング＋「N段目」ラベル
   var maxDepth = 0;
   _m3Nodes.forEach(function(n){ var d = Math.round(-n.y / LY); if (d > maxDepth) maxDepth = d; });
@@ -14376,6 +14603,10 @@ function m3Build() {
       var cat = (typeof memberCat === 'function') ? memberCat(n.m) : '';
       var ch = !n.m.parentId ? '🌳' : (cat === '研修生' ? '🌱' : (cat === 'BR' ? '🌺' : '🌸'));
       nodeObj = _m3EmojiNode(ch, R * 3.1);
+      n.breathe = true; // v365: 花はゆっくり呼吸する
+    } else if (!lensCol && _m3Theme === 'aurora') {
+      // v365: オーロラ＝写真なしはイニシャルの生成アバター（パステル円＋頭文字）
+      nodeObj = _m3InitialNode(n.m, R * 3.1);
     } else {
       var col = lensCol || titleRingColor(n.m.title || '') || '#7E8AA6';
       if (!lensCol && TH.pastel) col = _m3Pastel(col); // v362: オーロラ＝パステル×パールっぽい光沢
@@ -14419,6 +14650,7 @@ function m3Build() {
     if (badge) {
       var bsp = _m3EmojiNode(badge, 26);
       if (bsp) { bsp.position.set(n.x + R + 12, n.y + R + 14, n.z); _m3World.add(bsp); n.badge = bsp; }
+      if (badge === '✨') { n.newFx = true; n.delay = 1250 + (ni % 5) * 240; } // v365: 新メンバーは最後に「開花」して登場
     }
     var sp = _m3MakeSprite(n.m);
     if (sp) { sp.position.set(n.x, n.y + R + 18, n.z); _m3World.add(sp); n.label = sp; }
@@ -14459,9 +14691,34 @@ function m3Build() {
   _m3Ray = new THREE.Raycaster();
   _m3Pointer = new THREE.Vector2();
   var el = _m3Renderer.domElement;
-  var downX = 0, downY = 0;
-  el.addEventListener('pointerdown', function(ev){ downX = ev.clientX; downY = ev.clientY; });
+  var downX = 0, downY = 0, _ptDown = false, _trailLast = 0;
+  el.addEventListener('pointerdown', function(ev){ downX = ev.clientX; downY = ev.clientY; _ptDown = true; });
+  // v365: ドラッグの軌跡にきらきらの尾（50msごと・上限40個）
+  el.addEventListener('pointermove', function(ev){
+    if (!_ptDown || !_m3Cam || !_m3World) return;
+    var now2 = Date.now();
+    if (now2 - _trailLast < 50 || _m3FX.trail.length > 40) return;
+    _trailLast = now2;
+    try {
+      var rect2 = el.getBoundingClientRect();
+      _m3Pointer.x = ((ev.clientX - rect2.left) / rect2.width) * 2 - 1;
+      _m3Pointer.y = -((ev.clientY - rect2.top) / rect2.height) * 2 + 1;
+      _m3Ray.setFromCamera(_m3Pointer, _m3Cam);
+      var dist2 = _m3Cam.position.distanceTo(_m3Controls.target);
+      var pt2 = new THREE.Vector3().copy(_m3Ray.ray.direction).multiplyScalar(dist2).add(_m3Ray.ray.origin);
+      var pal2 = _m3FxPalette();
+      var tm = new THREE.SpriteMaterial({ map: _m3DotTex(pal2[Math.floor(Math.random() * pal2.length)], false), transparent: true, opacity: 0.8, blending: _m3FxBlend(), depthWrite: false });
+      var ts = new THREE.Sprite(tm);
+      var tsz = 6 + Math.random() * 6;
+      ts.scale.set(tsz, tsz, 1);
+      ts.position.copy(pt2);
+      _m3World.add(ts);
+      _m3FX.trail.push({ sp: ts, t0: now2 });
+    } catch(eTr) {}
+  });
+  el.addEventListener('pointercancel', function(){ _ptDown = false; });
   el.addEventListener('pointerup', function(ev){
+    _ptDown = false;
     if (Math.abs(ev.clientX - downX) > 8 || Math.abs(ev.clientY - downY) > 8) return; // ドラッグは選択しない
     var rect = el.getBoundingClientRect();
     _m3Pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
@@ -14475,6 +14732,13 @@ function m3Build() {
     _m3ClearSpot(); // 何もない所をタップ→スポットライト解除
     var info = document.getElementById('map3dInfo');
     if (info) info.style.display = 'none';
+    // v365: 何もない空間をタップ→そこに波紋と花が咲く（teamLabの「触ると咲く」）
+    try {
+      var dist3 = _m3Cam.position.distanceTo(_m3Controls.target);
+      var pt3 = new THREE.Vector3().copy(_m3Ray.ray.direction).multiplyScalar(dist3).add(_m3Ray.ray.origin);
+      _m3Bloom(pt3, 1);
+      if (navigator.vibrate) navigator.vibrate(5);
+    } catch(eBm) {}
   });
   // v310: XR対応のためsetAnimationLoop（VRセッション中も描画される）
   _m3Renderer.setAnimationLoop(function(){
@@ -14499,6 +14763,7 @@ function m3Build() {
         var ss = tt <= 0 ? 0.001 : (tt >= 1 ? 1 : _m3EaseBack(tt));
         if (nn.obj.isSprite) nn.obj.scale.set((nn.bx || 1) * ss, (nn.by || 1) * ss, 1);
         else nn.obj.scale.setScalar(ss);
+        if (nn.newFx && tt > 0 && !nn._bloomed) { nn._bloomed = true; _m3Bloom(new THREE.Vector3(nn.x, nn.y, nn.z), 1.1); } // v365: 開花
       }
       if (allDone) _m3Spawn = 0;
     }
@@ -14507,6 +14772,10 @@ function m3Build() {
       _m3Pts.rotation.y = tNow / 42000;
       _m3Pts.position.y = Math.sin(tNow / 5200) * 16;
     }
+    // v365: teamLab FX（波紋・花びら・系譜パルス・軌跡・エッジの流れ・蝶/ホタル・呼吸・色相）
+    var _dt = _m3LastFrame ? Math.min(0.05, (tNow - _m3LastFrame) / 1000) : 0.016;
+    _m3LastFrame = tNow;
+    try { _m3FXUpdate(tNow, _dt); } catch(eFx) {}
     // v362: タップしたメンバーへカメラがスーッと寄る
     if (_m3Focus && _m3Controls) {
       var ft = (tNow - _m3Focus.t0) / 620;
@@ -14539,7 +14808,8 @@ function _m3Spotlight(mid) {
     pts.push(new THREE.Vector3(cur.x, cur.y, cur.z));
     cur = cur.m.parentId ? byIdN[cur.m.parentId] : null;
   }
-  if (pts.length < 2) return;
+  if (pts.length < 2) { _m3SpotPts = null; return; }
+  _m3SpotPts = pts; // v365: 系譜パルス用に保持
   var g = new THREE.BufferGeometry().setFromPoints(pts);
   _m3Spot = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xFFB454, transparent: true, opacity: 1, blending: THREE.AdditiveBlending }));
   _m3World.add(_m3Spot);
@@ -14604,9 +14874,10 @@ function m3TimeTravel() {
   _m3World.add(dyn);
   var lbl = document.getElementById('m3TimeLabel');
   if (lbl) lbl.style.color = THt.ttLabel; // v362: テーマに合わせた文字色
-  var step = 0, shown = 0;
+  var step = 0, shown = 0, _ttBloomed = 0;
   var iv = setInterval(function(){
-    if (step >= keys.length) { _m3TTEnd(); if (lbl) { lbl.style.display = ''; lbl.textContent = '現在 ' + _m3Nodes.length + '人 🎉'; setTimeout(function(){ lbl.style.display = 'none'; }, 2500); } return; }
+    _ttBloomed = 0;
+    if (step >= keys.length) { _m3TTEnd(); try { _m3Confetti(); } catch(eCf) {} if (lbl) { lbl.style.display = ''; lbl.textContent = '現在 ' + _m3Nodes.length + '人 🎉'; setTimeout(function(){ lbl.style.display = 'none'; }, 2500); } return; }
     var mo = keys[step];
     _m3Nodes.forEach(function(n){
       if ((n.m.startMonth || '0000-00') !== mo) return;
@@ -14615,6 +14886,7 @@ function m3TimeTravel() {
       if (n.halo) n.halo.visible = true;
       if (n.badge) n.badge.visible = true; // v362
       if (n.edge6) { for (var q = 0; q < 6; q++) dynEdges.push(n.edge6[q]); }
+      if (shown - _ttBloomed < 6) { try { _m3Bloom(new THREE.Vector3(n.x, n.y, n.z), 0.6); } catch(eTb) {} _ttBloomed++; } // v365: 咲きながら増える（負荷対策で月6件まで）
       shown++;
     });
     var ng = new THREE.BufferGeometry();
@@ -14653,6 +14925,10 @@ function m3ShowInfo(mid) {
   var name = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
   var isMg = /^MG_/.test(m.id);
   _m3Spotlight(mid); // v310: 系譜スポットライト（自分までの上位ラインを金色発光）
+  try {
+    if (_m3SpotPts) _m3LineagePulse(_m3SpotPts); // v365: その人からトップへ光が流れる
+    if (nd) _m3Bloom(new THREE.Vector3(nd.x, nd.y, nd.z), 0.7); // タップした人の足元にも小さく咲く
+  } catch(eLp) {}
   try { if (navigator.vibrate) navigator.vibrate(8); } catch(eV) {} // v362: ハプティクス
   if (nd) _m3Focus = { x: nd.x, y: nd.y, z: nd.z, t0: Date.now() }; // v362: カメラがスーッと寄る
   info.style.display = '';
@@ -14709,6 +14985,29 @@ function m3Share() {
     cx.fillText(String(state.currentMonth || '').replace('.', ' / '), W / 2, 530);
     cx.font = '800 34px "Inter", sans-serif';
     cx.fillText('GROOVE MAP', W / 2, H - 110);
+    // v365: コーナーの花ラインアート（コード描画・テーマのインク色）
+    function flower(fx, fy, fr, rot) {
+      cx.save(); cx.translate(fx, fy); cx.rotate(rot || 0);
+      cx.strokeStyle = sub; cx.lineWidth = 3;
+      for (var pi5 = 0; pi5 < 5; pi5++) {
+        cx.beginPath();
+        cx.ellipse(0, -fr * 0.62, fr * 0.3, fr * 0.62, 0, 0, Math.PI * 2);
+        cx.stroke();
+        cx.rotate(Math.PI * 2 / 5);
+      }
+      cx.beginPath(); cx.arc(0, 0, fr * 0.2, 0, Math.PI * 2); cx.stroke();
+      cx.restore();
+    }
+    flower(110, 120, 52, 0.3);
+    flower(200, 70, 30, -0.5);
+    flower(W - 120, H - 170, 56, 0.6);
+    flower(W - 210, H - 90, 32, -0.2);
+    cx.fillStyle = sub;
+    for (var sp5 = 0; sp5 < 18; sp5++) {
+      var sx5 = Math.random() * W, sy5 = Math.random() * 560 + (sp5 % 2 ? H - 620 : 40);
+      var sr5 = 2 + Math.random() * 3.5;
+      cx.beginPath(); cx.arc(sx5, sy5, sr5, 0, Math.PI * 2); cx.fill();
+    }
     cv.toBlob(function(blob){
       if (!blob) { toast('⚠️ 画像の作成に失敗しました'); return; }
       var file = null;
@@ -15116,6 +15415,7 @@ var _todoMeta = null; // {lists:[{id,name,color}], labels:[{id,name,color}]}
 var _todoNav = { type: 'home' }; // home | {type:'smart',key:'my'|'star'|'week'|'done'} | {type:'list',id} | {type:'label',id}
 var _todoFilter = { type: 'all', id: '' }; // v337: ホーム一覧の絞り込み（all|today|list|label）
 function todoSetFilter(type, id) {
+  if (window._tdChipDragJust && Date.now() - window._tdChipDragJust < 600) return; // v366: 並べ替え直後の誤タップ防止
   _todoFilter = { type: type || 'all', id: id || '' };
   renderAgenda();
 }
@@ -15152,6 +15452,40 @@ function _todoCreateItem(kind, name) {
   _todoMetaSave();
   return item;
 }
+// v366: リスト/ラベルの色を選ぶシート（作成直後に自動で開く。ピッカーの●タップでも変更可）
+function openTdColorPick(kind, id) {
+  var arr = (kind === 'label' ? (_todoMeta && _todoMeta.labels) : (_todoMeta && _todoMeta.lists)) || [];
+  var it = null;
+  for (var i = 0; i < arr.length; i++) if (arr[i].id === id) it = arr[i];
+  if (!it) return;
+  closeTdColorPick();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'tdColOv';
+  ov.style.zIndex = '565'; // ピッカー(550)より前面
+  ov.onclick = function(e){ if (e.target === ov) closeTdColorPick(); };
+  var pal = '';
+  CAT_COLORS.forEach(function(c){
+    pal += '<span class="cat-color' + (it.color === c ? ' sel' : '') + '" style="background:' + c + '" onclick="tdColorSet(\'' + kind + '\',\'' + id + '\',\'' + c + '\')"></span>';
+  });
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🎨 「' + evEsc(it.name) + '」の色を選ぶ</div></div>'
+    + '<span class="ms-x" onclick="closeTdColorPick()">✕</span></div>'
+    + '<div style="padding:0 16px 20px"><div class="cat-palette">' + pal + '</div></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function closeTdColorPick() {
+  var ov = document.getElementById('tdColOv');
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+}
+function tdColorSet(kind, id, c) {
+  var arr = (kind === 'label' ? (_todoMeta && _todoMeta.labels) : (_todoMeta && _todoMeta.lists)) || [];
+  for (var i = 0; i < arr.length; i++) if (arr[i].id === id) arr[i].color = c;
+  _todoMetaSave();
+  closeTdColorPick();
+  renderAgenda();
+  if (document.getElementById('tdPickOv')) _todoPickerRender(kind);
+  toast('🎨 色を変更しました');
+}
 function todoCreateSubmit(kind, inputId, fromPicker) {
   var inp = document.getElementById(inputId);
   if (!inp) return;
@@ -15159,6 +15493,7 @@ function todoCreateSubmit(kind, inputId, fromPicker) {
   if (!name) { inp.focus(); return; }
   var it = _todoCreateItem(kind, name);
   toast((kind === 'label' ? '🏷 ラベル' : '📄 リスト') + '「' + name + '」を作成しました');
+  setTimeout(function(){ openTdColorPick(kind, it.id); }, 260); // v366: 作成直後に色を選べる
   if (fromPicker) todoPickSet(kind, it.id); // 選択シートから作成＝そのまま選択して閉じる
   renderAgenda();
 }
@@ -15826,16 +16161,16 @@ function _renderAgendaCore() {
   if ((F.type === 'list' && !_todoListById(F.id)) || (F.type === 'label' && !_todoLabelById(F.id))) {
     F = _todoFilter = { type: 'all', id: '' };
   }
-  function fchip(sel, onclick, inner) { return '<div class="td-fchip' + (sel ? ' sel' : '') + '" onclick="' + onclick + '">' + inner + '</div>'; }
+  function fchip(sel, onclick, inner, attrs) { return '<div class="td-fchip' + (sel ? ' sel' : '') + '"' + (attrs ? ' ' + attrs : '') + ' onclick="' + onclick + '">' + inner + '</div>'; }
   var fch = '<div class="td-filters">'
     + fchip(F.type === 'all', "todoSetFilter('all')", 'すべて')
     + fchip(F.type === 'today', "todoSetFilter('today')", '今日')
     + fchip(F.type === 'member', "todoSetFilter('member')", '👤メンバー'); // v361: メンバー担当タスク
   ((_todoMeta && _todoMeta.lists) || []).forEach(function(L){
-    fch += fchip(F.type === 'list' && F.id === L.id, "todoSetFilter('list','" + L.id + "')", '<i style="background:' + L.color + '"></i>' + evEsc(L.name));
+    fch += fchip(F.type === 'list' && F.id === L.id, "todoSetFilter('list','" + L.id + "')", '<i style="background:' + L.color + '"></i>' + evEsc(L.name), 'data-ord="list:' + L.id + '"'); // v366: 長押しで並べ替え
   });
   ((_todoMeta && _todoMeta.labels) || []).forEach(function(LB){
-    fch += fchip(F.type === 'label' && F.id === LB.id, "todoSetFilter('label','" + LB.id + "')", '<i style="background:' + LB.color + ';border-radius:50%"></i>' + evEsc(LB.name));
+    fch += fchip(F.type === 'label' && F.id === LB.id, "todoSetFilter('label','" + LB.id + "')", '<i style="background:' + LB.color + ';border-radius:50%"></i>' + evEsc(LB.name), 'data-ord="label:' + LB.id + '"');
   });
   fch += '</div>';
   var t9 = evTodayYmd();
@@ -15870,6 +16205,7 @@ function _renderAgendaCore() {
   h += '<div class="td-secttl">完了済み</div>';
   h += _todoHomeRow('✓', '完了タスク', doneCt, "todoNavTo('smart','done')");
   wrap.innerHTML = h;
+  _tdChipDnd(wrap); // v366: チップの長押し並べ替え
 }
 
 // ============================================================
@@ -15885,6 +16221,82 @@ function tdTogglePrio(id) {
   e.priority = (e.priority === 'high') ? 'normal' : 'high';
   e.updatedAt = new Date().toISOString();
   saveEventDoc(e); renderAgenda();
+}
+// v366: ホームの絞り込みチップ（リスト/ラベル）を長押し→左右ドラッグで並べ替え
+function _tdChipDnd(wrap) {
+  if (!wrap || wrap._chipDnd) return;
+  wrap._chipDnd = true;
+  var lpTimer = null, dragChip = null, sx = 0, sy = 0;
+  function chipAt(x, y) {
+    var el = document.elementFromPoint(x, y);
+    return (el && el.closest) ? el.closest('.td-fchip[data-ord]') : null;
+  }
+  function kindOf(ch) { return (ch.getAttribute('data-ord') || '').split(':')[0]; }
+  function start(x, y, c) {
+    sx = x; sy = y;
+    lpTimer = setTimeout(function(){
+      dragChip = c;
+      c.classList.add('chip-drag');
+      try { if (navigator.vibrate) navigator.vibrate(10); } catch(e0) {}
+    }, 450);
+  }
+  function move(x, y, ev) {
+    if (!dragChip) {
+      if (lpTimer && (Math.abs(x - sx) > 8 || Math.abs(y - sy) > 8)) { clearTimeout(lpTimer); lpTimer = null; } // 横スクロール操作
+      return;
+    }
+    if (ev && ev.cancelable) ev.preventDefault();
+    var over = chipAt(x, y);
+    if (!over || over === dragChip || kindOf(over) !== kindOf(dragChip)) return; // 同じ種類（リスト同士/ラベル同士）の中だけ
+    var rc = over.getBoundingClientRect();
+    if (x < rc.left + rc.width / 2) over.parentNode.insertBefore(dragChip, over);
+    else over.parentNode.insertBefore(dragChip, over.nextSibling);
+  }
+  function end() {
+    if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+    if (!dragChip) return;
+    dragChip.classList.remove('chip-drag');
+    dragChip = null;
+    window._tdChipDragJust = Date.now();
+    // DOM順 → メタの並び順へ反映
+    var lids = [], lbids = [];
+    var chips = wrap.querySelectorAll('.td-fchip[data-ord]');
+    for (var i = 0; i < chips.length; i++) {
+      var od = (chips[i].getAttribute('data-ord') || '').split(':');
+      if (od[0] === 'list') lids.push(od[1]); else if (od[0] === 'label') lbids.push(od[1]);
+    }
+    function reorder(arr, ids) {
+      var by = {}; arr.forEach(function(x){ by[x.id] = x; });
+      var out = [];
+      ids.forEach(function(idn){ if (by[idn]) { out.push(by[idn]); delete by[idn]; } });
+      arr.forEach(function(x){ if (by[x.id]) out.push(x); });
+      return out;
+    }
+    if (_todoMeta) {
+      _todoMeta.lists = reorder(_todoMeta.lists || [], lids);
+      _todoMeta.labels = reorder(_todoMeta.labels || [], lbids);
+      _todoMetaSave();
+    }
+    renderAgenda();
+    toast('並び順を保存しました');
+  }
+  wrap.addEventListener('touchstart', function(ev){
+    var c = (ev.target && ev.target.closest) ? ev.target.closest('.td-fchip[data-ord]') : null;
+    if (!c) return;
+    start(ev.touches[0].clientX, ev.touches[0].clientY, c);
+  }, { passive: true });
+  wrap.addEventListener('touchmove', function(ev){ move(ev.touches[0].clientX, ev.touches[0].clientY, ev); }, { passive: false });
+  wrap.addEventListener('touchend', end, { passive: true });
+  wrap.addEventListener('touchcancel', end, { passive: true });
+  wrap.addEventListener('mousedown', function(ev){
+    var c = (ev.target && ev.target.closest) ? ev.target.closest('.td-fchip[data-ord]') : null;
+    if (!c) return;
+    start(ev.clientX, ev.clientY, c);
+    var mm = function(e2){ move(e2.clientX, e2.clientY, e2); };
+    var mu = function(){ document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); end(); };
+    document.addEventListener('mousemove', mm);
+    document.addEventListener('mouseup', mu);
+  });
 }
 function tdDoneTodayToggle() {
   localStorage.setItem('gm_tdDoneOpen', localStorage.getItem('gm_tdDoneOpen') === '0' ? '1' : '0');
@@ -16697,7 +17109,7 @@ function _todoPickerRender(kind) {
     + '<div style="padding:0 8px 20px">'
     + '<div class="td-home-row" onclick="todoPickSet(\'' + kind + '\',\'\')"><span class="td-hicon" style="background:#9ca3af;width:12px;height:12px;border-radius:50%"></span><span class="td-hname">' + (kind === 'label' ? 'なし' : 'マイリスト（既定）') + '</span>' + (cur === '' ? '<span style="color:var(--accent);font-weight:800">✓</span>' : '') + '</div>';
   arr.forEach(function(it){
-    h += '<div class="td-home-row" onclick="todoPickSet(\'' + kind + '\',\'' + it.id + '\')"><span class="tplp-dot" style="background:' + it.color + '"></span><span class="td-hname">' + evEsc(it.name) + '</span>' + (cur === it.id ? '<span style="color:var(--accent);font-weight:800">✓</span>' : '')
+    h += '<div class="td-home-row" onclick="todoPickSet(\'' + kind + '\',\'' + it.id + '\')"><span class="tplp-dot" style="background:' + it.color + ';cursor:pointer" onclick="event.stopPropagation();openTdColorPick(\'' + kind + '\',\'' + it.id + '\')" title="色を変更"></span><span class="td-hname">' + evEsc(it.name) + '</span>' + (cur === it.id ? '<span style="color:var(--accent);font-weight:800">✓</span>' : '')
       + '<span class="td-del" style="margin-left:8px" onclick="event.stopPropagation();todoPickDel(\'' + kind + '\',\'' + it.id + '\')" title="削除">🗑</span></div>'; // v337: ピッカーから削除可能
   });
   h += '<div class="td-home-row mk"><span class="td-hicon">＋</span><input class="fi td-newinp" id="tdPickNew" placeholder="' + (kind === 'label' ? 'ラベルを作成' : 'リストを作成') + '" autocomplete="off" onkeydown="todoCreateKey(event,\'' + kind + '\',\'tdPickNew\',true)"><button class="btn-c td-newbtn" onclick="todoCreateSubmit(\'' + kind + '\',\'tdPickNew\',true)">追加</button></div>'
