@@ -2159,7 +2159,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v372</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v374</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4795,7 +4795,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v372';
+  var DATA_VERSION = 'v374';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5653,6 +5653,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v374', d:'2026-08-19', items:['🏠HOMEの「📁メニュー」ショートカットカードを削除しました（下部の☰メニュータブと重複していたため。各画面へは☰メニューからどうぞ）'] },
+  { v:'v373', d:'2026-08-19', items:['🏠HOMEをスリム化：「🎯今日のルーチン」と「⚡クイック記録」のカードを廃止しました（記録はOL記録・テンプレ完了の実績連動・逆算マップの今日の一歩から。HOMEタブ自体は残ります）','🧊3Dのヒートモード（🎨）に2つのレンズを追加：「今月の新規」＝今月入ったメンバーだけ金色に光る／「研修生」＝研修生だけ水色に光る。リクルートと育成の進捗がひと目で分かります'] },
   { v:'v372', d:'2026-08-19', items:['🔖リスト/ラベルのチップとテンプレ行の長押し並べ替えが、iPhoneで効かないことがある問題を修正：長押しするとiOSの文字選択（ルーペ）が先に発動してドラッグが始まらないケースがあったため、文字選択を無効化し長押し判定も早めました（0.37秒）'] },
   { v:'v371', d:'2026-08-18', items:['🗑ToDoに「ゴミ箱」を追加：削除したタスク・予定は完全には消えず30日間ゴミ箱に保管されます（ホームの「完了タスク」の下）。↩復元・✕完全削除・「すべて完全削除」ができ、30日たつと自動で完全削除されます。繰り返しの一括削除もゴミ箱に入ります'] },
   { v:'v370', d:'2026-08-18', items:['🔒共有の重要修正：共有を解除しても相手の「共有MAP」一覧にカードが残り続ける不具合（幽霊カード）を修正しました。原因は解除時に受信側の一覧データを消し忘れていたことです','🔒共有MAP一覧は表示前に「本当に共有されているか」をオーナー側の正データで毎回検証するようになりました。実体の無いカードは自動で削除されます（過去に溜まった幽霊カードもアプリを開き直すと消えます）。※データ本体は元からセキュリティルールで守られており、幽霊カードから中身は読めません','🔒共有の再登録時に連鎖共有の内部フラグの残骸を確実に消すようにしました（自動処理に誤って削除される可能性を排除）'] },
@@ -6698,11 +6700,7 @@ function renderHome() {
   if (streak === 0 && (g.streak || 0) >= 7 && !g.gameDays[today]) {
     comebackHtml = '<div class="home-comeback">🌅 <b>おかえりなさい！</b><br>今日1つ記録すれば、ストリーク<b>' + Math.max(1, Math.floor(g.streak / 2)) + '日</b>から再開できます</div>';
   }
-  // クイック記録グリッド
-  var qrHtml = '<div class="home-sec-label"><span>⚡ クイック記録</span><span onclick="quickRecordUndo()" style="color:var(--text-mid);font-weight:700;font-size:12px;cursor:pointer;border:1px solid var(--border2);border-radius:14px;padding:8px 14px">↩ 直前を取り消す</span></div>'
-    + '<div class="qr-grid">' + QUICK_STAGES.map(function(s){
-        return '<button type="button" class="qr-btn" onclick="quickRecord(\'' + s.k + '\')"><span class="qr-ic">' + s.ic + '</span><span class="qr-lb">＋ ' + s.label + '</span><span class="qr-n">今日 ' + _qrToday(s.k) + '</span></button>';
-      }).join('') + '</div>';
+  // v373: クイック記録カードは廃止（quickRecord自体は他画面から利用可能なまま残す）
   // 夜の締めは「今日のルーチン」カードの行に一本化（重複カードを廃止）
   // 自動コーチング（Phase H）：データから「次の一手」を1行だけ提案
   function buildCoachLine() {
@@ -6757,16 +6755,14 @@ function renderHome() {
     +   '<div class="home-date">' + gameDateLabel() + '</div></div>'
     +   '<span class="home-bell" onclick="openReleaseNotes()" title="お知らせ（アップデート情報）">🔔' + (hasUnseenNotes() ? '<i class="bell-dot"></i>' : '') + '</span>'
     + '</div>'
-    // ヒーロー＝今日のルーチン→クイック記録。ゲージ（ストリップ）はその下
+    // v373: 「今日のルーチン」「クイック記録」は実務に合わないため廃止（記録はOL・テンプレ完了・今日の一歩から）
     + ftueHtml
     + comebackHtml
-    + dailyRoutineHtml(g, today)
-    + qrHtml
     + stripHtml
     + birthdayHtml()
     + cockpitHtml()
     + homeTasksHtml()
-    + homeMenuHtml()
+    // v374: HOMEの「📁メニュー」カードは☰メニュータブと重複のため廃止
     // 助言系（コーチ・週次・気づき・先月比）は1つの「インサイト」に統合（カード乱立を解消）
     + '<details class="home-insights" style="margin-top:14px"'+(coachHtml?' open':'')+'><summary style="cursor:pointer;font-size:12.5px;font-weight:800;color:var(--text-mid);padding:10px 2px;list-style-position:inside">📈 インサイト（コーチ・今週・先月からの変化）</summary>'
     + coachHtml
@@ -14832,7 +14828,7 @@ function m3Build() {
 // ── v310: 系譜スポットライト・自動回転・タイムトラベル・ヒートモード ──
 var _m3World = null, _m3EdgeMesh = null, _m3EdgeMat = null, _m3Spot = null, _m3TT = null;
 var _m3Lens = 'std';
-var _M3_LENSES = [['std', '標準'], ['ltsv', 'LTSVヒート'], ['stale', '停滞ヒート']];
+var _M3_LENSES = [['std', '標準'], ['ltsv', 'LTSVヒート'], ['stale', '停滞ヒート'], ['new', '今月の新規'], ['trainee', '研修生']]; // v373
 function _m3ClearSpot() {
   if (_m3Spot && _m3World) { _m3World.remove(_m3Spot); _m3Spot = null; }
   if (_m3EdgeMat) _m3EdgeMat.opacity = 0.9;
@@ -14869,7 +14865,8 @@ function m3CycleLens() {
   var next = _M3_LENSES[(idx + 1) % _M3_LENSES.length];
   _m3Lens = next[0];
   m3Build();
-  toast('🎨 ' + next[1] + (next[0] === 'ltsv' ? '（青=少→赤=多）' : (next[0] === 'stale' ? '（緑=活動中→赤=30日以上停滞）' : '')));
+  var _lensDesc = { ltsv: '（青=少→赤=多）', stale: '（緑=活動中→赤=30日以上停滞）', 'new': '（金色=今月入ったメンバー）', trainee: '（水色=研修生）' };
+  toast('🎨 ' + next[1] + (_lensDesc[next[0]] || ''));
 }
 function _m3LensColor(m, maxPt) {
   if (_m3Lens === 'ltsv') {
@@ -14885,6 +14882,21 @@ function _m3LensColor(m, maxPt) {
     if (d <= 14) return '#FFD166';
     if (d <= 30) return '#FFB454';
     return '#FF5D73';
+  }
+  // v373: 今月入ったメンバーだけ金色に光らせる（リクルート進捗が一目）
+  if (_m3Lens === 'new') {
+    try {
+      if (String(m.id).indexOf('id-') === 0 && typeof _tsDateFromId === 'function') {
+        var jd = _tsDateFromId(m.id, 'id-') || '';
+        if (String(jd).slice(0, 7) === evTodayYmd().slice(0, 7)) return '#FFD166';
+      }
+    } catch(eN) {}
+    return '#5b6785';
+  }
+  // v373: 研修生だけ水色に光らせる（育成中が一目）
+  if (_m3Lens === 'trainee') {
+    var cat3 = (typeof memberCat === 'function') ? memberCat(m) : '';
+    return cat3 === '研修生' ? '#5AD7FF' : '#5b6785';
   }
   return null;
 }
