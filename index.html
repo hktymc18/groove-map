@@ -1129,6 +1129,11 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 #map3dCanvasWrap canvas{display:block;touch-action:none}
 #map3dInfo{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:295;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
 #map3dPane .m3hbtn{background:var(--surface);color:var(--text);font-size:15px}
+/* v362: ホロカード風メンバーカード（虹のグラデ枠＋ガラス感） */
+#map3dInfo.m3holo{border:2px solid transparent;background:linear-gradient(var(--surface2),var(--surface2)) padding-box,linear-gradient(120deg,#ffd6e8,#d9c7ff,#c7f0ff,#ffe9c7,#ffd6e8) border-box;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.m3-title-pill{display:inline-block;font-size:10.5px;font-weight:800;border-radius:9px;padding:2px 8px;background:linear-gradient(120deg,#ffd6e8,#d9c7ff,#c7f0ff);color:#3b2a4a;margin-left:6px;vertical-align:1px}
+/* v362: 初回の操作ガイド */
+.m3-guide{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:296;background:rgba(20,16,30,.82);color:#fff;border-radius:16px;padding:18px 22px;font-size:13.5px;line-height:2;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.4);backdrop-filter:blur(4px);max-width:82%}
 #m3TimeLabel{position:fixed;top:calc(env(safe-area-inset-top) + 62px);left:0;right:0;text-align:center;z-index:294;font-size:22px;font-weight:800;color:#35d5ff;pointer-events:none;text-shadow:0 2px 14px rgba(0,0,0,.7);font-family:'IBM Plex Mono',monospace}
 /* v303: 完了時のふわっと消えるアニメ */
 .ev-item.done-anim,.td-row.done-anim{transition:opacity .22s ease,transform .22s ease;opacity:.12;transform:translateX(34px)}
@@ -2153,7 +2158,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v361</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v362</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2495,6 +2500,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="ev-cal-nav m3hbtn" id="m3AutoBtn" onclick="m3ToggleAuto()" title="自動回転プレゼン">▶</div>
     <div class="ev-cal-nav m3hbtn" onclick="m3TimeTravel()" title="成長タイムトラベル再生">⏳</div>
     <div class="ev-cal-nav m3hbtn" onclick="m3CycleLens()" title="ヒートモード切替">🎨</div>
+    <div class="ev-cal-nav m3hbtn" onclick="m3CycleTheme()" title="テーマ切替（オーロラ/ネオン/ガーデン）">🌸</div>
+    <div class="ev-cal-nav m3hbtn" onclick="m3Share()" title="画像にして共有（ストーリーズ向け縦長）">📸</div>
   </div>
   <div id="m3TimeLabel" style="display:none"></div>
   <div id="map3dCanvasWrap"></div>
@@ -4791,7 +4798,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v361';
+  var DATA_VERSION = 'v362';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5649,6 +5656,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v362', d:'2026-08-18', items:['🧊3D組織図を大幅パワーアップ！🌸ボタンでテーマを切替できます：「🌸オーロラ」（パステルグラデ×パールの新デフォルト級テーマ）／「🪩ネオン」（従来のサイバー系）／「🌿ガーデン」（組織が木として育つ：研修生🌱→BA🌸→BR🌺）','✨開いた瞬間にメンバーが中心からポンポンッと弾んで登場。テーマに合わせたきらきら粒子（星屑/花びら）がゆっくり舞います','📸ワンタップでストーリーズ向けの縦長画像（TEAM◯人＋月入りフレーム）を作成してそのまま共有できます','💳メンバーカードがホロカード風に（虹のグラデ枠＋タイトルバッジ）。タップするとカメラがその人へスーッと寄ります','🎉今月入ったメンバーに✨、今日が誕生日のメンバーに🎂が付きます','🫰初回だけ操作ガイドを表示。タップ時に軽い振動フィードバック（対応端末のみ）'] },
   { v:'v361', d:'2026-08-18', items:['👤メンバー担当タスクと自分のタスクを分離：メンバーに紐付けた予定/タスクは既定で「メンバー専用」になり、自分のカレンダー/ToDo/通知に混ざりません。作成時に「🗓自分の予定/ToDoにも表示」を選べば従来どおり自分にも表示（既存データのカレンダー表示は維持）','✅ToDoに「👤メンバー」絞り込みを追加：メンバー担当分はここでまとめて確認（PC版は左カラムにも）','📋メンバー編集の「タスク」タブが「活動」タブに：OL・タスク・予定・研修予定を1本の時系列で表示し、上の3ボタン（📅予定/✅タスク/📝OL）からすぐ追加。MAPカードのボタンも同じ3択になりました','🐛メンバーからの「＋タスクを追加」が予定として作成されるバグを修正','📅カードの「次の予定」に、研修ファネルの予定・カレンダーの予定・OL予定をすべて表示するようになりました','📝OL記録に「実施済み/予定」の種別を追加：予定のOLは黄色の「予定」バッジ付きで表示されます','🔄再アプローチリスト新設：研修結果「✗流れた」を選ぶと自動でリストに記録（メニュー→🔄再アプローチ）。経過日数を表示し、90日で「再アプローチ時期」バッジ。📋で今日のタスクに追加できます','🎓研修生のタイトル選択肢にOUTを追加','🗺地域絞り込みの薄表示が、画面の再描画（結合の更新・写真読込など）で解除されてしまうバグを修正'] },
   { v:'v360', d:'2026-08-18', items:['📌テンプレの並べ替え：▲▼ボタンを廃止し、行を長押し→ドラッグで好きな位置へ（離すと保存。以降その順で表示）','⏰テンプレの時刻入力を15分刻みのプルダウンに（iOSでは従来の入力欄が1分刻みになってしまうため）','🗑タスクの横フリック→ゴミ箱タップで、編集画面が出ずに即削除されるように修正（削除後は「元に戻す」トースト）','⚠️期限切れタスクが一目で分かるように：薄赤の帯＋左の赤バー＋「◯日超過」ピル、一覧の先頭に「⚠️期限切れ◯件」見出し','💬トースト（登録しました等）はタップか横フリックですぐ消せるようになりました'] },
   { v:'v359', d:'2026-08-17', items:['🎨「設定したカテゴリの色がリセットされる」問題を修正：初期カテゴリ（仕事/アポ/研修/締切/プライベート）を色や名前を変えて使っている場合に、アプリを開くたび自動削除されてしまい、割り当てたテンプレ・予定がグレーに戻っていました。編集済みのカテゴリは今後削除されません（※一度消えてしまった色の設定は復元できないため、お手数ですがもう一度カテゴリを作成してテンプレに割り当ててください。今回からは保持されます）','旧・初期テンプレの自動削除も廃止（編集して使っているテンプレが消えないように）'] },
@@ -14059,6 +14067,76 @@ function map3dResetView() {
   if (_m3Cam) _m3Cam.position.set(0, 260, 640);
   if (_m3Controls) _m3Controls.target.set(0, -140, 0);
 }
+// ============================================================
+//  v362: 3Dテーマ（🌸オーロラ / 🪩ネオン / 🌿ガーデン）
+// ============================================================
+var _m3Theme = 'aurora';
+try { var _t0 = localStorage.getItem('gm_m3Theme'); if (_t0 === 'neon' || _t0 === 'garden' || _t0 === 'aurora') _m3Theme = _t0; } catch(e){}
+var _M3_THEMES = [['aurora','🌸 オーロラ'],['neon','🪩 ネオン'],['garden','🌿 ガーデン']];
+function _m3T() {
+  if (_m3Theme === 'neon') return { light:false, bgA:'#05070c', bgB:'#080b14', bgC:'#05070c', fog:0x05070c,
+    edge:0x35d5ff, ring:0x35d5ff, ringOp:0.16, label:'#F4F6FB', labelBg:'rgba(5,7,12,0.6)', ringLabel:'rgba(53,213,255,0.9)',
+    particle:'#5AD7FF', pCount:130, pastel:false, petals:false, ttLabel:'#35d5ff', pane:'#05070c', titleCol:'#F4F6FB' };
+  if (_m3Theme === 'garden') return { light:true, bgA:'#eefbea', bgB:'#dcf3e4', bgC:'#fdf3dc', fog:0xdff2e4,
+    edge:0x76b98a, ring:0x8bc34a, ringOp:0.3, label:'#274633', labelBg:'rgba(255,255,255,0.78)', ringLabel:'rgba(60,130,80,0.95)',
+    particle:'#ffb7d0', pCount:170, pastel:true, petals:true, ttLabel:'#2f7d4f', pane:'#eefbea', titleCol:'#274633' };
+  return { light:true, bgA:'#f3e6ff', bgB:'#ffd9ec', bgC:'#ffe9d6', fog:0xf3dcef,
+    edge:0xb48ad6, ring:0xcf9ef0, ringOp:0.35, label:'#4a3355', labelBg:'rgba(255,255,255,0.74)', ringLabel:'rgba(150,100,190,0.95)',
+    particle:'#ffffff', pCount:200, pastel:true, petals:false, ttLabel:'#7a4f9e', pane:'#f6ebfa', titleCol:'#4a3355' };
+}
+function m3CycleTheme() {
+  var idx = 0;
+  for (var i = 0; i < _M3_THEMES.length; i++) if (_M3_THEMES[i][0] === _m3Theme) idx = i;
+  var next = _M3_THEMES[(idx + 1) % _M3_THEMES.length];
+  _m3Theme = next[0];
+  try { localStorage.setItem('gm_m3Theme', _m3Theme); } catch(e){}
+  m3Build();
+  toast(next[1] + ' テーマにしました');
+}
+// パステル化（色×白を混ぜてコスメっぽい淡さに）
+function _m3Pastel(hex) {
+  try {
+    if (!hex || hex.charAt(0) !== '#' || hex.length !== 7) return hex;
+    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    function mix(c){ return Math.round(c + (255 - c) * 0.45); }
+    return '#' + ((1<<24) + (mix(r)<<16) + (mix(g)<<8) + mix(b)).toString(16).slice(1);
+  } catch(e){ return hex; }
+}
+// きらきら粒子用テクスチャ（丸グロー/花びら）
+var _m3PtTexCache = {};
+function _m3DotTex(color, petal) {
+  var key = color + (petal ? '_p' : '');
+  if (_m3PtTexCache[key]) return _m3PtTexCache[key];
+  var cv = document.createElement('canvas'); cv.width = 48; cv.height = 48;
+  var cx = cv.getContext('2d');
+  if (petal) {
+    cx.fillStyle = color;
+    cx.globalAlpha = 0.9;
+    cx.beginPath(); cx.ellipse(24, 24, 14, 8, 0.7, 0, Math.PI * 2); cx.fill();
+  } else {
+    var g = cx.createRadialGradient(24, 24, 1, 24, 24, 22);
+    g.addColorStop(0, color); g.addColorStop(0.4, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+    cx.fillStyle = g; cx.fillRect(0, 0, 48, 48);
+  }
+  var tex = new THREE.CanvasTexture(cv);
+  _m3PtTexCache[key] = tex;
+  return tex;
+}
+// 絵文字ノード（ガーデンテーマ：つぼみ→花で育成感）
+function _m3EmojiNode(ch, size) {
+  try {
+    var cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
+    var cx = cv.getContext('2d');
+    cx.font = '72px sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillText(ch, 48, 54);
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true }));
+    sp.scale.set(size, size, 1);
+    return sp;
+  } catch(e){ return null; }
+}
+// 登場アニメのイージング（ポンッと弾む）
+function _m3EaseBack(t) { var c = 1.70158; t = t - 1; return 1 + (t * t * ((c + 1) * t + c)); }
+var _m3Spawn = 0, _m3Pts = null, _m3Focus = null;
 // 名前ラベルのスプライト
 function _m3MakeSprite(m) {
   try {
@@ -14067,12 +14145,14 @@ function _m3MakeSprite(m) {
     var cx = cv.getContext('2d');
     var name = ((m.lastName || '') + (m.firstName || '')).trim() || '(無名)';
     if (name.length > 6) name = name.slice(0, 6);
+    var TH = _m3T(); // v362: テーマの配色でラベル描画
     cx.font = 'bold 20px sans-serif';
     cx.textAlign = 'center';
-    cx.fillStyle = 'rgba(5,7,12,0.6)';
+    cx.fillStyle = TH.labelBg;
     var w = Math.min(124, cx.measureText(name).width + 16);
-    cx.fillRect(64 - w / 2, 10, w, 30);
-    cx.fillStyle = '#F4F6FB';
+    if (cx.roundRect) { cx.beginPath(); cx.roundRect(64 - w / 2, 10, w, 30, 8); cx.fill(); }
+    else cx.fillRect(64 - w / 2, 10, w, 30);
+    cx.fillStyle = TH.label;
     cx.fillText(name, 64, 32);
     var tex = new THREE.CanvasTexture(cv);
     var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
@@ -14144,8 +14224,18 @@ function m3Build() {
   var W = wrap.clientWidth || window.innerWidth;
   var H = wrap.clientHeight || (window.innerHeight - 60);
   _m3Scene = new THREE.Scene();
-  _m3Scene.background = new THREE.Color(0x05070c);
-  _m3Scene.fog = new THREE.Fog(0x05070c, 900, 2600);
+  var TH = _m3T(); // v362: テーマ
+  var _bgc = document.createElement('canvas'); _bgc.width = 32; _bgc.height = 512;
+  var _bgx = _bgc.getContext('2d');
+  var _bgg = _bgx.createLinearGradient(0, 0, 0, 512);
+  _bgg.addColorStop(0, TH.bgA); _bgg.addColorStop(0.55, TH.bgB); _bgg.addColorStop(1, TH.bgC);
+  _bgx.fillStyle = _bgg; _bgx.fillRect(0, 0, 32, 512);
+  _m3Scene.background = new THREE.CanvasTexture(_bgc);
+  _m3Scene.fog = new THREE.Fog(TH.fog, 900, 2600);
+  var _paneEl = document.getElementById('map3dPane');
+  if (_paneEl) _paneEl.style.background = TH.pane;
+  var _ttlEl0 = document.getElementById('map3dTitle');
+  if (_ttlEl0) _ttlEl0.style.color = TH.titleCol;
   _m3Cam = new THREE.PerspectiveCamera(60, W / H, 1, 5000);
   _m3Cam.position.set(0, 260, 640);
   _m3Renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -14235,7 +14325,7 @@ function m3Build() {
   // v309: エッジ＝サイバーブルーの発光ライン（加算合成でネオン感）
   var eg = new THREE.BufferGeometry();
   eg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
-  _m3EdgeMat = new THREE.LineBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
+  _m3EdgeMat = new THREE.LineBasicMaterial({ color: TH.edge, transparent: true, opacity: TH.light ? 0.6 : 0.9, blending: TH.light ? THREE.NormalBlending : THREE.AdditiveBlending }); // v362: テーマ配色
   _m3EdgeMesh = new THREE.LineSegments(eg, _m3EdgeMat);
   _m3World.add(_m3EdgeMesh);
   // v309: 段数を可視化＝各階層に同心リング＋「N段目」ラベル
@@ -14243,7 +14333,7 @@ function m3Build() {
   _m3Nodes.forEach(function(n){ var d = Math.round(-n.y / LY); if (d > maxDepth) maxDepth = d; });
   for (var dp = 1; dp <= maxDepth; dp++) {
     var rg = new THREE.RingGeometry(dp * LR - 1.6, dp * LR + 1.6, 72);
-    var rm = new THREE.MeshBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.16, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
+    var rm = new THREE.MeshBasicMaterial({ color: TH.ring, transparent: true, opacity: TH.ringOp, side: THREE.DoubleSide, blending: TH.light ? THREE.NormalBlending : THREE.AdditiveBlending }); // v362
     var ring = new THREE.Mesh(rg, rm);
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = -dp * LY;
@@ -14251,7 +14341,7 @@ function m3Build() {
     var lc = document.createElement('canvas'); lc.width = 128; lc.height = 40;
     var lcx = lc.getContext('2d');
     lcx.font = 'bold 24px sans-serif';
-    lcx.fillStyle = 'rgba(53,213,255,0.9)';
+    lcx.fillStyle = TH.ringLabel; // v362
     lcx.textAlign = 'center';
     lcx.fillText(dp + '段目', 64, 28);
     var ls = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lc), transparent: true, depthWrite: false }));
@@ -14268,6 +14358,8 @@ function m3Build() {
   // v310: ヒートモード用の最大LTSV
   var maxPt = 0;
   members.forEach(function(m){ var v = Number(m.ptCurrent || 0); if (v > maxPt) maxPt = v; });
+  var _thisMo = evTodayYmd().slice(0, 7);
+  var _todayMD = evTodayYmd().slice(5);
   _m3Nodes.forEach(function(n, ni){
     var fronts = kidCt[n.m.id] || 0;
     var R = 9 + Math.min(14, fronts * 2); // フロント数→球サイズ
@@ -14277,13 +14369,21 @@ function m3Build() {
     var nodeObj;
     if (hasPhoto) {
       nodeObj = _m3PhotoNode(n.m, R * 3.4);
+    } else if (!lensCol && TH.petals) {
+      // v362: ガーデンテーマ＝つぼみ→花で育成感（研修生🌱→BA🌸→BR🌺、トップは🌳）
+      var cat = (typeof memberCat === 'function') ? memberCat(n.m) : '';
+      var ch = !n.m.parentId ? '🌳' : (cat === '研修生' ? '🌱' : (cat === 'BR' ? '🌺' : '🌸'));
+      nodeObj = _m3EmojiNode(ch, R * 3.1);
     } else {
       var col = lensCol || titleRingColor(n.m.title || '') || '#7E8AA6';
+      if (!lensCol && TH.pastel) col = _m3Pastel(col); // v362: オーロラ＝パステル×パールっぽい光沢
       if (!geoCache[R]) geoCache[R] = new THREE.SphereGeometry(R, 14, 14);
-      var mk = col + '_' + (lensCol ? 'L' : lvl);
+      var mk = col + '_' + (lensCol ? 'L' : lvl) + '_' + _m3Theme;
       if (!matCache[mk]) {
-        matCache[mk] = new THREE.MeshLambertMaterial({ color: new THREE.Color(col) });
-        if (!lensCol && lvl > 0) { matCache[mk].emissive = new THREE.Color(col); matCache[mk].emissiveIntensity = 0.25 * lvl; }
+        matCache[mk] = TH.pastel
+          ? new THREE.MeshPhongMaterial({ color: new THREE.Color(col), shininess: 90, specular: new THREE.Color(0xffffff) })
+          : new THREE.MeshLambertMaterial({ color: new THREE.Color(col) });
+        if (!lensCol && lvl > 0) { matCache[mk].emissive = new THREE.Color(col); matCache[mk].emissiveIntensity = (TH.light ? 0.12 : 0.25) * lvl; }
       }
       nodeObj = new THREE.Mesh(geoCache[R], matCache[mk]);
     }
@@ -14292,8 +14392,12 @@ function m3Build() {
     nodeObj.userData.mid = n.m.id;
     _m3World.add(nodeObj);
     n.obj = nodeObj;
+    // v362: 登場アニメ（中心から順にポンッ）
+    n.delay = Math.min(1100, ni * 16);
+    if (nodeObj.isSprite) { n.bx = nodeObj.scale.x; n.by = nodeObj.scale.y; nodeObj.scale.set(0.001, 0.001, 1); }
+    else nodeObj.scale.setScalar(0.001);
     if (!lensCol && lvl > 0) {
-      var halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: _m3HaloTex(MOTI_COLORS[lvl]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+      var halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: _m3HaloTex(MOTI_COLORS[lvl]), transparent: true, opacity: TH.light ? 0.45 : 1, blending: TH.light ? THREE.NormalBlending : THREE.AdditiveBlending, depthWrite: false }));
       var hb = R * (3.2 + lvl * 1.1);
       halo.scale.set(hb, hb, 1);
       halo.position.set(n.x, n.y, n.z);
@@ -14301,9 +14405,51 @@ function m3Build() {
       _m3Halos.push({ sp: halo, base: hb, lvl: lvl, ph: ni * 0.7 });
       n.halo = halo;
     }
+    // v362: 今月入ったメンバー✨・今日が誕生日🎂バッジ
+    var badge = '';
+    try {
+      if (String(n.m.id).indexOf('id-') === 0 && typeof _tsDateFromId === 'function') {
+        var jd = _tsDateFromId(n.m.id, 'id-') || '';
+        if (String(jd).slice(0, 7) === _thisMo) badge = '✨';
+      }
+      if (n.m.birthday && String(n.m.birthday).slice(5) === _todayMD) badge = '🎂';
+    } catch(eBadge) {}
+    if (badge) {
+      var bsp = _m3EmojiNode(badge, 26);
+      if (bsp) { bsp.position.set(n.x + R + 12, n.y + R + 14, n.z); _m3World.add(bsp); n.badge = bsp; }
+    }
     var sp = _m3MakeSprite(n.m);
     if (sp) { sp.position.set(n.x, n.y + R + 18, n.z); _m3World.add(sp); n.label = sp; }
   });
+  _m3Spawn = Date.now(); // v362: 登場アニメ開始
+  // v362: きらきらパーティクル（テーマ色。端末負荷を考慮して人数が多い時は減量）
+  _m3Pts = null;
+  try {
+    var pCt = Math.max(60, TH.pCount - Math.floor(members.length / 3));
+    var pPos = [];
+    var pDepth = Math.max(2, maxDepth) * LY;
+    for (var pi = 0; pi < pCt; pi++) {
+      pPos.push((Math.random() - 0.5) * 1700, 150 - Math.random() * (pDepth + 450), (Math.random() - 0.5) * 1700);
+    }
+    var pg = new THREE.BufferGeometry();
+    pg.setAttribute('position', new THREE.Float32BufferAttribute(pPos, 3));
+    var pm = new THREE.PointsMaterial({ size: TH.petals ? 14 : 9, map: _m3DotTex(TH.particle, TH.petals), transparent: true, depthWrite: false, opacity: TH.light ? 0.75 : 0.65, blending: TH.light ? THREE.NormalBlending : THREE.AdditiveBlending, sizeAttenuation: true });
+    _m3Pts = new THREE.Points(pg, pm);
+    _m3World.add(_m3Pts);
+  } catch(ePt) {}
+  // v362: 初回だけ操作ガイド
+  try {
+    if (!localStorage.getItem('gm_m3Guide')) {
+      localStorage.setItem('gm_m3Guide', '1');
+      var gd = document.createElement('div');
+      gd.className = 'm3-guide';
+      gd.innerHTML = '🫰 <b>操作ガイド</b><br>ドラッグでくるくる回転・ピンチで拡大<br>メンバーをタップで詳細カード<br>🌸でテーマ切替・📸で画像シェア';
+      gd.onclick = function(){ if (gd.parentNode) gd.parentNode.removeChild(gd); };
+      var paneG = document.getElementById('map3dPane');
+      if (paneG) paneG.appendChild(gd);
+      setTimeout(function(){ if (gd.parentNode) gd.parentNode.removeChild(gd); }, 6000);
+    }
+  } catch(eGd) {}
   var titleEl = document.getElementById('map3dTitle');
   var lensName = '';
   for (var li2 = 0; li2 < _M3_LENSES.length; li2++) { if (_M3_LENSES[li2][0] === _m3Lens && _m3Lens !== 'std') lensName = '・' + _M3_LENSES[li2][1]; }
@@ -14338,6 +14484,34 @@ function m3Build() {
       if (hh.lvl >= 3) {
         var s2 = hh.base * (1 + 0.14 * Math.sin(tNow / 380 + hh.ph));
         hh.sp.scale.set(s2, s2, 1);
+      }
+    }
+    // v362: 登場アニメ（中心から順にポンッと弾んで出る）
+    if (_m3Spawn) {
+      var allDone = true;
+      for (var si = 0; si < _m3Nodes.length; si++) {
+        var nn = _m3Nodes[si];
+        if (!nn.obj) continue;
+        var tt = (tNow - _m3Spawn - (nn.delay || 0)) / 420;
+        if (tt < 1) allDone = false;
+        var ss = tt <= 0 ? 0.001 : (tt >= 1 ? 1 : _m3EaseBack(tt));
+        if (nn.obj.isSprite) nn.obj.scale.set((nn.bx || 1) * ss, (nn.by || 1) * ss, 1);
+        else nn.obj.scale.setScalar(ss);
+      }
+      if (allDone) _m3Spawn = 0;
+    }
+    // v362: きらきらパーティクルがゆっくり舞う
+    if (_m3Pts) {
+      _m3Pts.rotation.y = tNow / 42000;
+      _m3Pts.position.y = Math.sin(tNow / 5200) * 16;
+    }
+    // v362: タップしたメンバーへカメラがスーッと寄る
+    if (_m3Focus && _m3Controls) {
+      var ft = (tNow - _m3Focus.t0) / 620;
+      if (ft >= 1) { _m3Controls.target.set(_m3Focus.x, _m3Focus.y, _m3Focus.z); _m3Focus = null; }
+      else {
+        var fe = 1 - Math.pow(1 - ft, 3);
+        _m3Controls.target.lerp(new THREE.Vector3(_m3Focus.x, _m3Focus.y, _m3Focus.z), fe * 0.22 + 0.06);
       }
     }
     _m3Renderer.render(_m3Scene, _m3Cam);
@@ -14416,15 +14590,18 @@ function m3TimeTravel() {
     if (n.obj) n.obj.visible = false;
     if (n.label) n.label.visible = false;
     if (n.halo) n.halo.visible = false;
+    if (n.badge) n.badge.visible = false; // v362
   });
   if (_m3EdgeMesh) _m3EdgeMesh.visible = false;
   var dynEdges = [];
+  var THt = _m3T(); // v362: テーマ配色
   var dyn = new THREE.LineSegments(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: 0x35d5ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })
+    new THREE.LineBasicMaterial({ color: THt.edge, transparent: true, opacity: THt.light ? 0.6 : 0.9, blending: THt.light ? THREE.NormalBlending : THREE.AdditiveBlending })
   );
   _m3World.add(dyn);
   var lbl = document.getElementById('m3TimeLabel');
+  if (lbl) lbl.style.color = THt.ttLabel; // v362: テーマに合わせた文字色
   var step = 0, shown = 0;
   var iv = setInterval(function(){
     if (step >= keys.length) { _m3TTEnd(); if (lbl) { lbl.style.display = ''; lbl.textContent = '現在 ' + _m3Nodes.length + '人 🎉'; setTimeout(function(){ lbl.style.display = 'none'; }, 2500); } return; }
@@ -14434,6 +14611,7 @@ function m3TimeTravel() {
       if (n.obj) n.obj.visible = true;
       if (n.label) n.label.visible = true;
       if (n.halo) n.halo.visible = true;
+      if (n.badge) n.badge.visible = true; // v362
       if (n.edge6) { for (var q = 0; q < 6; q++) dynEdges.push(n.edge6[q]); }
       shown++;
     });
@@ -14458,29 +14636,92 @@ function _m3TTEnd() {
     if (n.obj) n.obj.visible = true;
     if (n.label) n.label.visible = true;
     if (n.halo) n.halo.visible = true;
+    if (n.badge) n.badge.visible = true; // v362
   });
   if (_m3EdgeMesh) _m3EdgeMesh.visible = true;
   var lbl = document.getElementById('m3TimeLabel');
   if (lbl) lbl.style.display = 'none';
 }
 function m3ShowInfo(mid) {
-  var m = null;
-  for (var i = 0; i < _m3Nodes.length; i++) { if (_m3Nodes[i].m.id === mid) { m = _m3Nodes[i].m; break; } }
+  var m = null, nd = null;
+  for (var i = 0; i < _m3Nodes.length; i++) { if (_m3Nodes[i].m.id === mid) { nd = _m3Nodes[i]; m = nd.m; break; } }
   if (!m) return;
   var info = document.getElementById('map3dInfo');
   if (!info) return;
   var name = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
   var isMg = /^MG_/.test(m.id);
   _m3Spotlight(mid); // v310: 系譜スポットライト（自分までの上位ラインを金色発光）
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch(eV) {} // v362: ハプティクス
+  if (nd) _m3Focus = { x: nd.x, y: nd.y, z: nd.z, t0: Date.now() }; // v362: カメラがスーッと寄る
   info.style.display = '';
-  info.innerHTML = '<div style="display:flex;align-items:center;gap:10px">'
-    + ((typeof _avatars !== 'undefined' && _avatars[m.id]) ? '<img src="' + _avatars[m.id] + '" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid ' + titleRingColor(m.title || '') + '" alt="">' : '')
-    + '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15px">' + evEsc(name) + (isMg ? ' <span style="font-size:10px;color:var(--purple)">🔗結合</span>' : '') + '</div>'
-    + '<div style="font-size:12px;color:var(--text-mid)">' + evEsc(m.title || '—') + (m.ptCurrent ? '　' + Number(m.ptCurrent).toLocaleString() + 'pt' : '')
-    + (m.activity ? '　🔥やる気' + evEsc(m.activity) + (m.actRate ? '(' + evEsc(String(m.actRate)) + '%)' : '') : '') + '</div></div>'
+  info.className = 'm3holo'; // v362: ホロカード風
+  info.innerHTML = '<div style="display:flex;align-items:center;gap:12px">'
+    + ((typeof _avatars !== 'undefined' && _avatars[m.id]) ? '<img src="' + _avatars[m.id] + '" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title || '') + '" alt="">' : '')
+    + '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15.5px">' + evEsc(name)
+    + (m.title ? '<span class="m3-title-pill">' + evEsc(m.title) + '</span>' : '')
+    + (isMg ? ' <span style="font-size:10px;color:var(--purple)">🔗結合</span>' : '') + '</div>'
+    + '<div style="font-size:12px;color:var(--text-mid);margin-top:2px">' + (m.ptCurrent ? '💎 ' + Number(m.ptCurrent).toLocaleString() + 'pt　' : '')
+    + (m.activity ? '🔥 やる気' + evEsc(m.activity) + (m.actRate ? '(' + evEsc(String(m.actRate)) + '%)' : '') : '') + '</div></div>'
     + (!isMg ? '<button class="fol-add" style="margin:0;flex:none;padding:8px 12px" onclick="close3DMap();openEdit(\'' + m.id + '\')">✎ 編集</button>' : '')
     + '<span class="ms-x" style="width:32px;height:32px" onclick="_m3ClearSpot();document.getElementById(\'map3dInfo\').style.display=\'none\'">✕</span>'
     + '</div>';
+}
+// v362: 📸 いまの3Dビューをストーリーズ向け縦長画像（1080×1920）にして共有
+function m3Share() {
+  if (!_m3Renderer || !_m3Cam || !_m3Scene) { toast('3D表示を開いてから押してください'); return; }
+  try {
+    _m3Renderer.render(_m3Scene, _m3Cam); // 描画直後にキャプチャ（preserveDrawingBuffer不要）
+    var src = _m3Renderer.domElement;
+    var W = 1080, H = 1920;
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var cx = cv.getContext('2d');
+    var TH = _m3T();
+    var g = cx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, TH.bgA); g.addColorStop(0.55, TH.bgB); g.addColorStop(1, TH.bgC);
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    // 3Dビューを中央帯にカバー配置
+    var sw = src.width, sh = src.height;
+    var sc = Math.max(W / sw, (H * 0.62) / sh);
+    var dw = sw * sc, dh = sh * sc;
+    cx.drawImage(src, (W - dw) / 2, H * 0.52 - dh / 2, dw, dh);
+    // 上下を背景色でふんわりフェード（切り抜き感を消す）
+    var gT = cx.createLinearGradient(0, 0, 0, 500);
+    gT.addColorStop(0, TH.bgA); gT.addColorStop(1, TH.bgA + '00');
+    cx.fillStyle = gT; cx.fillRect(0, 0, W, 500);
+    var gB = cx.createLinearGradient(0, H - 420, 0, H);
+    gB.addColorStop(0, TH.bgC + '00'); gB.addColorStop(1, TH.bgC);
+    cx.fillStyle = gB; cx.fillRect(0, H - 420, W, 420);
+    var ink = TH.light ? '#43304f' : '#F4F6FB';
+    var sub = TH.light ? 'rgba(67,48,79,0.65)' : 'rgba(244,246,251,0.65)';
+    cx.textAlign = 'center';
+    cx.fillStyle = sub;
+    cx.font = '800 40px "Noto Sans JP", sans-serif';
+    cx.fillText('MY TEAM', W / 2, 190);
+    cx.fillStyle = ink;
+    cx.font = '900 170px "Inter", "IBM Plex Mono", sans-serif';
+    cx.fillText(String(_m3Nodes.length), W / 2, 380);
+    cx.font = '800 46px "Noto Sans JP", sans-serif';
+    cx.fillText('人のなかまたち', W / 2, 460);
+    cx.fillStyle = sub;
+    cx.font = '700 36px "IBM Plex Mono", monospace';
+    cx.fillText(String(state.currentMonth || '').replace('.', ' / '), W / 2, 530);
+    cx.font = '800 34px "Inter", sans-serif';
+    cx.fillText('GROOVE MAP', W / 2, H - 110);
+    cv.toBlob(function(blob){
+      if (!blob) { toast('⚠️ 画像の作成に失敗しました'); return; }
+      var file = null;
+      try { file = new File([blob], 'groove-team.png', { type: 'image/png' }); } catch(eF) {}
+      if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'MY TEAM' }).catch(function(){});
+      } else {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'groove-team.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        toast('📸 画像を保存しました');
+      }
+    }, 'image/png');
+  } catch(err) { toast('⚠️ 書き出しエラー: ' + (err && err.message ? err.message : err)); }
 }
 function setWeekStart(v) {
   _weekStart = v;
