@@ -16,7 +16,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 /* ═══ SUMMIT デザインシステム（Phase 0）：夜の遠征ネイビー×行動ミント×報酬アンバー ═══ */
 :root{
   --bg:#0B0E15;
@@ -1069,6 +1069,12 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-bar.span-s{border-radius:3px 0 0 3px;margin-right:-3px;position:relative;z-index:2}
 .ev-bar.span-m{border-radius:0;margin-left:-3px;margin-right:-3px;width:auto;flex:1 1 auto;min-width:0;position:relative;z-index:2}
 .ev-bar.span-e{border-radius:0 3px 3px 0;margin-left:-3px;width:auto;flex:1 1 auto;min-width:0;position:relative;z-index:2}
+/* v358: v353のmax-width:100%が-3pxの重ね幅を打ち消し、3日以上の帯の中日境界に白線が出ていた → 帯だけ重ね分を許可 */
+.ev-slot .ev-bar.span-s{max-width:calc(100% + 3px)}
+.ev-slot .ev-bar.span-m{max-width:calc(100% + 6px)}
+.ev-slot .ev-bar.span-e{max-width:calc(100% + 3px)}
+/* v358: 連日帯のタイトルは開始マスで切らず帯の上に流す（同色の帯に重なるので読める） */
+.ev-bar.span-s,.ev-bar.span-cont{overflow:visible;text-overflow:clip;z-index:3}
 .ev-more{font-size:9px;color:var(--text-dim);padding-left:3px}
 /* 選択日パネル（CAL-1：ボトムシート→カレンダー直下のインライン表示） */
 .ev-day-panel{margin:10px 14px calc(env(safe-area-inset-bottom) + 90px);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 12px}
@@ -2142,7 +2148,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v357</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v359</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4773,7 +4779,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v357';
+  var DATA_VERSION = 'v359';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5630,6 +5636,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v359', d:'2026-08-17', items:['🎨「設定したカテゴリの色がリセットされる」問題を修正：初期カテゴリ（仕事/アポ/研修/締切/プライベート）を色や名前を変えて使っている場合に、アプリを開くたび自動削除されてしまい、割り当てたテンプレ・予定がグレーに戻っていました。編集済みのカテゴリは今後削除されません（※一度消えてしまった色の設定は復元できないため、お手数ですがもう一度カテゴリを作成してテンプレに割り当ててください。今回からは保持されます）','旧・初期テンプレの自動削除も廃止（編集して使っているテンプレが消えないように）'] },
+  { v:'v358', d:'2026-08-17', items:['🎨連日予定の帯：3日以上の予定で中日の境界に白い線が入っていたのを修正（何日でも隙間なく繋がります）','🎨連日予定のタイトルが開始マスで切れず、帯の上に最後まで表示されるようになりました（例:「NS LIVE グローバル」）','✅タスク追加：「追加」を押すと自動で閉じるようになりました（✕を押す手間を廃止）。続けて入れたい時はトーストの「＋続けて追加」','📳設定に「シェイクで元に戻す」を追加：有効にすると、スマホを振ると直前のトースト操作（削除の取り消し等）を実行します。※iOS標準の「取り消す-入力」ダイアログは文字入力専用のOS機能のため連動はできません','🔔起動時の「期限のタスク◯件」通知：タップでToDoの今日一覧が確実に開くよう修正（sw.jsも更新）','🔢数字フォント（IBM Plex Mono）の太字を追加読み込み（日付数字がよりくっきり）'] },
   { v:'v357', d:'2026-08-17', items:['💻PC版ToDoを3カラム化：左に「今日/すべて/リスト/ラベル/完了」（未完了件数付き・リスト作成もここから）、中央にタスク一覧（読みやすい幅に）、右に詳細パネル','💻タスクをクリックすると右パネルでそのまま編集：タイトル・期限・⚑重要・リスト・サブタスク・メモを画面遷移なしで変更できます','💻マウス操作：行にカーソルを乗せると ⚑/🗑 ボタン表示。行をドラッグして左のリストへ落とすと移動（「今日」に落とすと期限が今日に）','💻キーボード操作：↑↓で選択・Spaceで完了・Enterでタイトル編集・Deleteで削除','今日完了したタスクは「▾ 今日完了した◯件」の折りたたみ見出し付きに（タップで開閉）'] },
   { v:'v356', d:'2026-08-17', items:['🔢予定タブの数字フォントをMAPと同じ等幅フォント(IBM Plex Mono)に統一：月の日付・週ヘッダー・時刻・期限表示が見やすくなりました'] },
   { v:'v355', d:'2026-08-17', items:['🤝MAPの連鎖共有：結合したMAPを含めて丸ごと共有できるようになりました。自分のMAPを共有した相手にも、結合中の下位MAPが自動で閲覧専用共有され、相手の画面でも結合ツリーごと表示されます','🔗下位の方が共有を解除すると、連鎖先でも自動的に見えなくなります（権限はコピーせず連動）','共有設定リストに「👁 🔗◯◯経由」の自動共有が表示されます（経由元の解除で自動的に消えるため、手動の削除ボタンはありません）','⚠️反映にはセキュリティルールの更新が必要です（firestore.rules をデプロイ）'] },
@@ -11141,6 +11149,7 @@ function toast(msg, dur) {
 // アクション付きトースト（例：記録直後の「取り消す」）。親指の届く位置でリカバリー可能に
 function toastAction(msg, label, fn, dur) {
   if (dur === undefined) dur = 3500;
+  window._gmUndoFn = fn || null; window._gmUndoAt = Date.now(); // v358: 📳シェイクで直前の操作を呼び出せるように記録
   var el = document.getElementById('toast');
   el.style.pointerEvents = 'auto'; // v350: .toastはpointer-events:noneのためボタンが押せなかった不具合を修正
   el.innerHTML = evEsc(msg) + ' <span id="_toastAct" style="display:inline-block;margin-left:10px;padding:6px 14px;border-radius:14px;background:var(--surface3);color:var(--accent);font-weight:800;cursor:pointer">' + evEsc(label) + '</span>';
@@ -12475,9 +12484,18 @@ function loadEvents(uid) {
     return fsGet('maps/' + uid + '/meta/eventCategories');
   }).then(function(catDoc) {
     if (catDoc && catDoc.list) {
-      // v338: 保存済みデータに旧・初期カテゴリ（cat_def_*）が残っていたら除去（自作カテゴリは残る）
+      // v338: 保存済みデータに旧・初期カテゴリ（cat_def_*）が残っていたら除去
+      // v359: ただし「名前や色をカスタマイズ済み」のものは本人のカテゴリとして残す
+      //（IDだけで一律削除すると、初期カテゴリを色替えして使っている人の色が毎回リセットされるため）
       var _bc = catDoc.list.length;
-      catDoc.list = catDoc.list.filter(function(c){ return !(c && c.id && String(c.id).indexOf('cat_def_') === 0); });
+      catDoc.list = catDoc.list.filter(function(c){
+        if (!(c && c.id && String(c.id).indexOf('cat_def_') === 0)) return true;
+        for (var oi = 0; oi < OLD_DEFAULT_CATS.length; oi++) {
+          var ob = OLD_DEFAULT_CATS[oi];
+          if (ob.id === c.id) return !(c.name === ob.name && c.color === ob.color); // 出荷時のまま＝除去、編集済み＝残す
+        }
+        return true; // 対応する旧デフォルト定義が無い＝自作扱いで残す
+      });
       if (catDoc.list.length !== _bc) { state.categories = catDoc.list; saveCategories(); }
       if (categoriesAreOldDefault(catDoc.list)) {
         // 旧デフォルトのまま未編集 → 新デフォルトへ自動移行
@@ -12731,9 +12749,8 @@ function tqSave() {
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   renderEvents();
-  inp.value = '';
-  try { inp.focus(); } catch(e1) {} // 連続入力（期限・リストの選択は維持）
-  toast('✓ 「' + title + '」を追加しました');
+  closeTaskQuickSheet(); // v358: 追加したら自動で閉じる（✕を押す手間を廃止）
+  toastAction('✓ 「' + title + '」を追加しました', '＋ 続けて追加', function(){ openTaskQuickSheet(); }, 5000);
   gameCheck();
 }
 function tqAdvanced() {
@@ -12747,6 +12764,46 @@ function tqAdvanced() {
   if (d) { var dd = document.getElementById('evDate'); if (dd) dd.value = d; }
   if (l) { _evListId = l; updateTodoMetaDisplay(); }
 }
+// v358: 📳シェイクで「元に戻す」
+// iOS標準の「取り消す - 入力」ダイアログは文字入力の取り消し専用（OS機能）でWebから連動できないため、
+// アプリ独自にモーションセンサーでシェイクを検知し、直前のトースト操作（削除の取り消し等）を実行する。
+var _gmShakeLast = 0, _gmShakeOn = false;
+function _gmShakeHandler(ev) {
+  var a = ev.accelerationIncludingGravity || ev.acceleration;
+  if (!a) return;
+  var m = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
+  if (m < 45) return; // しっかり振った時だけ反応
+  var now = Date.now();
+  if (now - _gmShakeLast < 1500) return;
+  _gmShakeLast = now;
+  if (window._gmUndoFn && (now - (window._gmUndoAt || 0)) < 120000) {
+    var f = window._gmUndoFn; window._gmUndoFn = null;
+    try { f(); } catch(e0) {}
+    toast('📳↩ 直前の操作を実行しました（シェイク）');
+  }
+}
+function _gmShakeAttach() {
+  if (_gmShakeOn) return;
+  _gmShakeOn = true;
+  window.addEventListener('devicemotion', _gmShakeHandler);
+}
+function gmShakeEnable() {
+  try { localStorage.setItem('gm_shake', '1'); } catch(e0) {}
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(function(st){
+      if (st === 'granted') { _gmShakeAttach(); toast('📳 シェイクで「元に戻す」が有効になりました'); }
+      else toast('⚠️ モーションセンサーの許可が得られませんでした');
+    }).catch(function(){ toast('⚠️ モーションセンサーの許可が得られませんでした（もう一度お試しください）'); });
+  } else { _gmShakeAttach(); toast('📳 シェイクで「元に戻す」が有効になりました'); }
+}
+// 起動時: 有効化済みなら自動で再開（iOSは一度許可すると以降は確認なしでgrantedが返る）
+setTimeout(function(){
+  var on = false; try { on = localStorage.getItem('gm_shake') === '1'; } catch(e0) {}
+  if (!on) return;
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(function(st){ if (st === 'granted') _gmShakeAttach(); }).catch(function(){});
+  } else { _gmShakeAttach(); }
+}, 1200);
 // v334: 重複した通知登録の掃除＝この端末の現在の登録だけを残して他を削除
 // （Safariで開いた時の登録・再インストール前の古い登録が残ると、同じ通知が2件届くため）
 function pushClearOtherTokens() {
@@ -13256,6 +13313,7 @@ function evBarHtml(e, span, contTitle) {
   else cls += (e.type === 'task') ? ' bar-task' : ' bar-event';
   if (e.done) cls += ' bar-done';
   if (span) cls += ' span-' + span; // v299: 連日帯（s=開始/m=中日/e=最終日）
+  if ((span === 'm' || span === 'e') && contTitle) cls += ' span-cont'; // v358: 週先頭の再表示タイトルも帯に流す
   // カテゴリ色を付けてもタスク/予定の種別が読めるように、タスクは□/✓を前置。実行済み予定は✓
   var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : (e.done ? '✓ ' : '');
   // v301: 月表示は「時」だけ表示（19:30→19）。v311: 時と件名の間に確実なスペース
@@ -13701,6 +13759,7 @@ function openCalSettings() {
     + pushRow
     + '<button class="fol-add" style="margin-top:8px" onclick="pushSendTest()">📨 テスト通知を送る（1〜2分後に届きます）</button>'
     + '<button class="fol-add" style="margin-top:8px" onclick="pushClearOtherTokens()">🧹 通知が2重に届く時はこちら（古い登録を掃除）</button>'
+    + '<button class="fol-add" style="margin-top:8px" onclick="gmShakeEnable()">📳 シェイクで「元に戻す」を有効にする</button>'
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
     + gcalRow
@@ -16596,10 +16655,8 @@ function _evTplEnsure() {
   if (!uid || !db) { _evTpl = []; return Promise.resolve(_evTpl); }
   return fsGet('maps/' + uid + '/meta/evTemplates').then(function(d){
     _evTpl = (d && d.items) ? d.items : [];
-    // v338: 保存済みデータに旧・初期テンプレが残っていたら除去（自作テンプレは残る）
-    var _b = _evTpl.length;
-    _evTpl = _evTpl.filter(function(t){ return !(t && _TPL_OLD_DEF_IDS[t.id]); });
-    if (_evTpl.length !== _b) _evTplSaveAll();
+    // v338→v359: 旧・初期テンプレのID一律削除は廃止（編集して使っている人のテンプレまで消えるため。
+    //   初期投入自体はv338で廃止済みなので、新規ユーザーに増えることはない。不要なら手動で削除できる）
     return _evTpl;
   }).catch(function(){ _evTpl = []; return _evTpl; });
 }
