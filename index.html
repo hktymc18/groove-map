@@ -1164,7 +1164,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .td-newbtn{flex:none;padding:8px 14px;font-size:12.5px}
 /* v337: ホームの絞り込みチップ（すべて/今日/リスト/ラベル） */
 .td-filters{display:flex;gap:7px;overflow-x:auto;padding:9px 14px 5px;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border)}
-.td-fchip{flex:none;display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1px solid var(--border);border-radius:15px;background:var(--surface2);font-size:12.5px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap}
+.td-fchip{flex:none;display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1px solid var(--border);border-radius:15px;background:var(--surface2);font-size:12.5px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} /* v372: 長押し並べ替えがiOSの文字選択に横取りされないように */
 .td-fchip.sel{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
 .td-fchip i{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
 .td-fchip.chip-drag{opacity:.92;transform:scale(1.07);box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:5;position:relative} /* v366 */
@@ -1245,7 +1245,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .tplp{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:8px;background:var(--surface)}
 .tplp-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;font-size:11.5px;color:var(--text-dim);background:var(--surface2);font-weight:700}
 .tplp-mk{color:var(--accent);font-weight:800;cursor:pointer;padding:2px 8px;border:1px solid var(--accent);border-radius:8px;font-size:11px}
-.tplp-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--border);cursor:pointer}
+.tplp-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--border);cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none} /* v372 */
 .tplp-time{flex:none;width:46px;font-size:10.5px;line-height:1.35;color:var(--text-mid);font-family:'Inter','Noto Sans JP',sans-serif;text-align:right}
 .tplp-dot{flex:none;width:12px;height:12px;border-radius:50%}
 .tplp-ttl{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2159,7 +2159,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v370</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v372</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4795,7 +4795,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v370';
+  var DATA_VERSION = 'v372';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5653,6 +5653,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v372', d:'2026-08-19', items:['🔖リスト/ラベルのチップとテンプレ行の長押し並べ替えが、iPhoneで効かないことがある問題を修正：長押しするとiOSの文字選択（ルーペ）が先に発動してドラッグが始まらないケースがあったため、文字選択を無効化し長押し判定も早めました（0.37秒）'] },
+  { v:'v371', d:'2026-08-18', items:['🗑ToDoに「ゴミ箱」を追加：削除したタスク・予定は完全には消えず30日間ゴミ箱に保管されます（ホームの「完了タスク」の下）。↩復元・✕完全削除・「すべて完全削除」ができ、30日たつと自動で完全削除されます。繰り返しの一括削除もゴミ箱に入ります'] },
   { v:'v370', d:'2026-08-18', items:['🔒共有の重要修正：共有を解除しても相手の「共有MAP」一覧にカードが残り続ける不具合（幽霊カード）を修正しました。原因は解除時に受信側の一覧データを消し忘れていたことです','🔒共有MAP一覧は表示前に「本当に共有されているか」をオーナー側の正データで毎回検証するようになりました。実体の無いカードは自動で削除されます（過去に溜まった幽霊カードもアプリを開き直すと消えます）。※データ本体は元からセキュリティルールで守られており、幽霊カードから中身は読めません','🔒共有の再登録時に連鎖共有の内部フラグの残骸を確実に消すようにしました（自動処理に誤って削除される可能性を排除）'] },
   { v:'v369', d:'2026-08-18', items:['🔔通知の重複対策を強化：⚙設定の「🧹古い登録を掃除」が削除の成否を確認してから結果を表示するようになりました（今までは削除が拒否されても「解除しました」と出ることがありました）。失敗時は件数と理由を表示します','🔍⚙設定の通知診断に「登録端末数」を追加：この数＝同じ通知が届く件数です。2以上が赤字で表示されたら🧹を押してください'] },
   { v:'v368', d:'2026-08-18', items:['🗺MAPカードの「次の予定」を修正：予定を作ってもカードに反映されない問題を改修——(1)過去日になった研修予定が出続けて枠を塞いでいたのを除外 (2)カレンダー分は「🗓次の予定」と「✅次のタスク」を別々の行で表示するように（タスクの方が近い日だと予定が隠れていました）','📝新規登録画面が下までスクロールできるようになりました（入力欄が画面より多い時に登録ボタンが押せなかった問題）','📝新規登録のエラーメッセージは、該当項目を入力し直すとすぐ消えるようになりました（エラー表示時は自動でエラー位置までスクロール）'] },
@@ -12545,7 +12547,20 @@ function glMsQual(id, delta){
 function loadEvents(uid) {
   if (!uid || !db) { state.events = []; state.categories = []; updateEventsBadge(); return Promise.resolve(); }
   return fsGetCol('maps/' + uid + '/events').then(function(list) {
-    state.events = list || [];
+    // v371: ゴミ箱対応 — 削除済み(deleted)は別リストに分離し、30日経過で自動完全削除
+    var _all = list || [];
+    state.trashEvents = _all.filter(function(e){ return !!e.deleted; });
+    state.events = _all.filter(function(e){ return !e.deleted; });
+    try {
+      var _cut = new Date(Date.now() - 30 * 86400000).toISOString();
+      state.trashEvents = state.trashEvents.filter(function(e){
+        if ((e.deletedAt || '') && e.deletedAt < _cut) {
+          db.doc('maps/' + uid + '/events/' + e.id).delete().catch(function(){});
+          return false;
+        }
+        return true;
+      });
+    } catch(ePu) {}
     return fsGet('maps/' + uid + '/meta/eventCategories');
   }).then(function(catDoc) {
     if (catDoc && catDoc.list) {
@@ -12608,7 +12623,7 @@ function _notifRbLabel(rb) {
 }
 function _notifSync(e) {
   if (!db || !currentUser || !currentUser.uid || !e || !e.id) return;
-  var need = !e.done && e.date && e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null;
+  var need = !e.done && !e.deleted && e.date && e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null; // v371: ゴミ箱内は通知しない
   if (need) {
     var tm = e.time || '09:00'; // 時刻なしは9:00基準（既存のアプリ内リマインドと同じ）
     var p = String(e.date).split('-'), q = String(tm).split(':');
@@ -15780,12 +15795,16 @@ function evActMoveTo(id, addDays) {
 function _evDeleteById(id) {
   var e = findEvent(id);
   if (!e) return;
-  var bak = {};
-  for (var bk in e) { if (e.hasOwnProperty(bk)) bak[bk] = e[bk]; }
+  var bak = e;
   for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === id) { state.events.splice(i, 1); break; } }
   if (state.gcalConnected) gcalDeleteRemote(e);
-  var uid = eventsUid();
-  if (uid && db) db.doc('maps/' + uid + '/events/' + id).delete().catch(function(){});
+  // v371: 完全削除ではなくゴミ箱へ（30日保持。ToDoホーム→ゴミ箱から復元/完全削除できる）
+  e.deleted = true;
+  e.deletedAt = new Date().toISOString();
+  e.updatedAt = e.deletedAt;
+  state.trashEvents = state.trashEvents || [];
+  state.trashEvents.push(e);
+  saveEventDoc(e);
   _notifQueueDelete(id); // CAL-4: 通知予約も削除
   if (navigator.vibrate) try { navigator.vibrate(10); } catch(ev3) {}
   updateEventsBadge();
@@ -15799,6 +15818,8 @@ function _evDeleteById(id) {
     }
   } catch(err3) {}
   toastAction('🗑 「' + (bak.title || '(無題)') + '」を削除しました', '↩ 元に戻す', function(){
+    tdTrashTake(bak.id); // v371: ゴミ箱から取り出す
+    bak.deleted = ''; bak.deletedAt = '';
     state.events.push(bak);
     saveEventDoc(bak); // 通知予約も自動復元される
     updateEventsBadge();
@@ -15856,10 +15877,15 @@ function evActDeleteSeries(id) {
   if (!confirm('この回を含む以降の繰り返し ' + list.length + '件 を削除しますか？')) return;
   closeEventActions();
   var uid = eventsUid();
+  var _delAt = new Date().toISOString();
   list.forEach(function(x){
     for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === x.id) { state.events.splice(i, 1); break; } }
     if (state.gcalConnected) gcalDeleteRemote(x);
-    if (uid && db) db.doc('maps/' + uid + '/events/' + x.id).delete().catch(function(){});
+    // v371: 一括削除もゴミ箱へ（個別に復元できる）
+    x.deleted = true; x.deletedAt = _delAt; x.updatedAt = _delAt;
+    state.trashEvents = state.trashEvents || [];
+    state.trashEvents.push(x);
+    saveEventDoc(x);
     _notifQueueDelete(x.id); // CAL-4: 通知予約も削除
   });
   updateEventsBadge();
@@ -15975,6 +16001,45 @@ function evItemHtml(e) {
 // ── v315: Lifebear式ToDo ──
 function _todoUndone(list) { return list.filter(function(e){ return !e.done; }); }
 // v350: スワイプで出した🗑ボタンからの削除（↩元に戻すトースト付き）
+// ── v371: ゴミ箱（削除タスク・予定の30日保管） ──
+function tdTrashTake(id) {
+  var tr = state.trashEvents || [];
+  for (var i = 0; i < tr.length; i++) { if (tr[i].id === id) { return tr.splice(i, 1)[0]; } }
+  return null;
+}
+function tdTrashRestore(id) {
+  var e = tdTrashTake(id);
+  if (!e) return;
+  e.deleted = ''; e.deletedAt = '';
+  e.updatedAt = new Date().toISOString();
+  state.events.push(e);
+  saveEventDoc(e);
+  updateEventsBadge();
+  renderEvents();
+  toast('↩ 「' + (e.title || '(無題)') + '」を復元しました');
+}
+function tdTrashPurge(id) {
+  var tr = state.trashEvents || [];
+  var e = null;
+  for (var i = 0; i < tr.length; i++) { if (tr[i].id === id) { e = tr[i]; break; } }
+  if (!e) return;
+  if (!confirm('「' + (e.title || '(無題)') + '」を完全に削除しますか？（元に戻せません）')) return;
+  tdTrashTake(id);
+  var uid = eventsUid();
+  if (uid && db) db.doc('maps/' + uid + '/events/' + id).delete().catch(function(){});
+  renderEvents();
+  toast('完全に削除しました');
+}
+function tdTrashEmpty() {
+  var tr = state.trashEvents || [];
+  if (!tr.length) return;
+  if (!confirm('ゴミ箱の ' + tr.length + '件 をすべて完全に削除しますか？（元に戻せません）')) return;
+  var uid = eventsUid();
+  tr.forEach(function(e){ if (uid && db) db.doc('maps/' + uid + '/events/' + e.id).delete().catch(function(){}); });
+  state.trashEvents = [];
+  renderEvents();
+  toast('🗑 ゴミ箱を空にしました');
+}
 function tdSwipeDelete(id) {
   window._tdDelAt = Date.now(); // v360: 削除直後のゴーストタップで編集画面が開くのを防ぐ
   _evDeleteById(id);
@@ -16143,6 +16208,29 @@ function _renderAgendaCore() {
     return;
   }
   var nav = _todoNav || { type: 'home' };
+  // ── v371: ゴミ箱画面（復元・完全削除） ──
+  if (nav.type === 'smart' && nav.id === 'trash') {
+    var _tr = (state.trashEvents || []).slice().sort(function(a,b){ return (b.deletedAt || '').localeCompare(a.deletedAt || ''); });
+    var _ht3 = document.getElementById('tdHdrTitle');
+    if (_ht3) _ht3.textContent = '🗑 ゴミ箱';
+    var h3 = '<div class="td-sechd">🗑 ゴミ箱　<span style="opacity:.6">' + _tr.length + '件</span>'
+      + (_tr.length ? '<span class="td-del" style="color:var(--red)" onclick="tdTrashEmpty()">すべて完全削除</span>' : '')
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--text-dim);padding:0 14px 8px">削除から30日たつと自動的に完全削除されます</div>';
+    if (!_tr.length) h3 += '<div class="ev-empty" style="padding:26px 16px">ゴミ箱は空です</div>';
+    else h3 += _tr.map(function(e){
+      var dd = e.deletedAt ? (parseInt(e.deletedAt.slice(5,7),10) + '/' + parseInt(e.deletedAt.slice(8,10),10)) : '';
+      return '<div class="td-row" style="cursor:default">'
+        + '<span style="flex:none;font-size:15px">' + (e.type === 'task' ? '✅' : '📅') + '</span>'
+        + '<div class="td-body"><div class="td-ttl" style="color:var(--text-mid)">' + evEsc(e.title || '(無題)') + '</div>'
+        + '<div class="td-due">' + (e.date ? evEsc(e.date) + '　' : '') + '削除: ' + dd + '</div></div>'
+        + '<span onclick="tdTrashRestore(\'' + e.id + '\')" style="flex:none;padding:8px 6px;color:var(--accent);font-weight:800;cursor:pointer;font-size:12.5px">↩ 復元</span>'
+        + '<span onclick="tdTrashPurge(\'' + e.id + '\')" style="flex:none;padding:8px 6px;color:var(--red);cursor:pointer" title="完全削除">✕</span>'
+        + '</div>';
+    }).join('');
+    wrap.innerHTML = h3;
+    return;
+  }
   // ── リスト内/スマートリスト画面 ──
   if (nav.type !== 'home') {
     var title = '', list = [], accent = '';
@@ -16230,6 +16318,7 @@ function _renderAgendaCore() {
   }
   h += '<div class="td-secttl">完了済み</div>';
   h += _todoHomeRow('✓', '完了タスク', doneCt, "todoNavTo('smart','done')");
+  h += _todoHomeRow('🗑', 'ゴミ箱', (state.trashEvents || []).length, "todoNavTo('smart','trash')"); // v371
   wrap.innerHTML = h;
   _tdChipDnd(wrap); // v366: チップの長押し並べ替え
 }
@@ -16264,7 +16353,7 @@ function _tdChipDnd(wrap) {
       dragChip = c;
       c.classList.add('chip-drag');
       try { if (navigator.vibrate) navigator.vibrate(10); } catch(e0) {}
-    }, 450);
+    }, 370); // v372: iOSの文字選択(約500ms)より先に発動させる
   }
   function move(x, y, ev) {
     if (!dragChip) {
@@ -17728,7 +17817,7 @@ function _tplDndBind(container) {
       r.classList.add('tpl-dragging');
       window._tplDragJust = 0;
       try { if (navigator.vibrate) navigator.vibrate(10); } catch(e0) {}
-    }, 450);
+    }, 370); // v372: iOSの文字選択より先に発動
   }
   function move(x, y, ev) {
     if (!dragRow) {
