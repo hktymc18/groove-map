@@ -2159,7 +2159,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v368</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v369</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4795,7 +4795,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v368';
+  var DATA_VERSION = 'v369';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5653,6 +5653,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v369', d:'2026-08-18', items:['🔔通知の重複対策を強化：⚙設定の「🧹古い登録を掃除」が削除の成否を確認してから結果を表示するようになりました（今までは削除が拒否されても「解除しました」と出ることがありました）。失敗時は件数と理由を表示します','🔍⚙設定の通知診断に「登録端末数」を追加：この数＝同じ通知が届く件数です。2以上が赤字で表示されたら🧹を押してください'] },
   { v:'v368', d:'2026-08-18', items:['🗺MAPカードの「次の予定」を修正：予定を作ってもカードに反映されない問題を改修——(1)過去日になった研修予定が出続けて枠を塞いでいたのを除外 (2)カレンダー分は「🗓次の予定」と「✅次のタスク」を別々の行で表示するように（タスクの方が近い日だと予定が隠れていました）','📝新規登録画面が下までスクロールできるようになりました（入力欄が画面より多い時に登録ボタンが押せなかった問題）','📝新規登録のエラーメッセージは、該当項目を入力し直すとすぐ消えるようになりました（エラー表示時は自動でエラー位置までスクロール）'] },
   { v:'v367', d:'2026-08-18', items:['🔢アプリ全体の数字・英字フォントをInterに統一：予定バーの件名内の数字も含め、すべての数字がMAPと同じすっきりした字形になりました（かな・漢字は従来どおり）','🔔アプリを閉じていてもプッシュ通知が届くように修正：連鎖共有の導入時（v355）に初めて適用したセキュリティルールに、通知予約（notifQueue）と端末登録（fcmTokens）の許可が漏れており、通知の予約が保存できなくなっていました。⚠️反映にはfirestore.rulesの再デプロイが必要です'] },
   { v:'v366', d:'2026-08-18', items:['👤メンバー編集のOLタブを「活動」タブに統合して削除（重複のため）。リストOLの状態表示も活動タブへ移動しました','🎨リスト/ラベルの色を選べるように：作成直後に色パレットが自動で開き、後からもリスト選択画面の色●をタップして変更できます。パレットに2色追加（ピンク・ライム、計40色）','🔖ToDoホーム上部のリスト/ラベルのチップを長押し→左右ドラッグで並べ替えできるようになりました（リスト同士・ラベル同士で入替。PC左カラムにも同じ順で反映）'] },
@@ -12982,12 +12983,19 @@ function pushClearOtherTokens() {
   try { cur = localStorage.getItem('gm_fcmToken') || ''; } catch(e0) {}
   if (!cur) { toast('⚠️ 先にこの端末の通知を🔔オンにしてください'); return; }
   db.collection('users/' + currentUser.uid + '/fcmTokens').get().then(function(ss){
-    var n = 0;
+    // v369: 削除の成否を確認してから結果表示（以前は拒否されても「解除しました」と出ていた）
+    var jobs = [];
     ss.forEach(function(d){
-      if (d.id !== cur) { d.ref.delete().catch(function(){}); n++; }
+      if (d.id !== cur) jobs.push(d.ref.delete().then(function(){ return 1; }).catch(function(){ return 0; }));
     });
-    toast(n ? ('🧹 古い登録を' + n + '件解除しました。今後はこの端末に1件だけ届きます') : '✓ 登録はこの端末の1件だけです（重複なし）');
-  }).catch(function(){ toast('⚠️ 登録一覧の取得に失敗しました'); });
+    if (!jobs.length) { toast('✓ 登録はこの端末の1件だけです（重複なし）'); return; }
+    Promise.all(jobs).then(function(rs){
+      var ok = 0; rs.forEach(function(r){ ok += r; });
+      var ng = jobs.length - ok;
+      if (ng) toast('⚠️ ' + jobs.length + '件中 ' + ok + '件を解除、' + ng + '件は失敗しました（セキュリティルール未反映の可能性。アプリを開き直してもう一度お試しください）');
+      else toast('🧹 古い登録を' + ok + '件解除しました。今後はこの端末に1件だけ届きます');
+    });
+  }).catch(function(e1){ toast('⚠️ 登録一覧の取得に失敗しました: ' + (e1 && e1.code === 'permission-denied' ? 'アクセス拒否（ルール未反映）' : (e1 && e1.message || ''))); });
 }
 // v332: テスト通知（notifQueueに即時発火の予約を書く→Functionsが1分以内に配信。原因切り分け用）
 function pushSendTest() {
@@ -13975,12 +13983,22 @@ function openCalSettings() {
           return '<div style="font-size:10px;color:var(--text-dim);margin-top:10px;font-family:IBM Plex Mono,monospace">画面診断: '
             + (sa ? 'アプリ(全画面)' : 'ブラウザ') + ' / 画面' + screen.width + '×' + screen.height
             + ' / 表示' + window.innerWidth + '×' + window.innerHeight + ' / vv' + vvH
-            + '<br>通知診断: 許可=' + perm + ' / トークン=' + (tok ? '…' + tok.slice(-8) : 'なし') + '</div>';
+            + '<br>通知診断: 許可=' + perm + ' / トークン=' + (tok ? '…' + tok.slice(-8) : 'なし') + ' / 登録端末数=<span id="diagTokCt">…</span></div>';
         } catch(eD) { return ''; }
       })()
     + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
+  // v369: 登録端末数（=同じ通知が届く件数）を取得して診断行に表示
+  if (db && currentUser && currentUser.uid) {
+    db.collection('users/' + currentUser.uid + '/fcmTokens').get().then(function(ss){
+      var el2 = document.getElementById('diagTokCt');
+      if (el2) { el2.textContent = String(ss.size); el2.style.color = ss.size > 1 ? 'var(--red)' : ''; }
+    }).catch(function(){
+      var el3 = document.getElementById('diagTokCt');
+      if (el3) el3.textContent = '取得不可';
+    });
+  }
 }
 // v306: プッシュ通知のオン/オフ（オフ＝この端末のトークンを削除して配信停止）
 function pushSetEnabled(on) {
