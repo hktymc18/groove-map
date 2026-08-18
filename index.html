@@ -1018,7 +1018,7 @@ tr.ot-done{opacity:.5}
 .ev-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 20px}
 /* 月カレンダー */
 .ev-cal-hdr{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 14px}
-.ev-cal-title{font-size:15px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;min-width:130px;text-align:center}
+.ev-cal-title{font-size:15px;font-weight:700;color:var(--text);font-family:'Inter','Noto Sans JP',sans-serif;min-width:130px;text-align:center} /* v363 */
 .ev-cal-nav{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer}
 /* S1: Lifebear風＝罫線グリッド。箱・角丸・背景を廃し、色は予定ラベルにだけ使う */
 .ev-cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:0;padding:0;margin-bottom:0;border-bottom:1px solid var(--border)}
@@ -1050,7 +1050,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cell-num.sat{color:var(--b)}
 .ev-cell.today .ev-cell-num{background:var(--accent);color:var(--go-ink);font-weight:800}
 /* v356: 予定タブの数字をMAPと同じ等幅フォント(IBM Plex Mono)に統一（日付・時刻の視認性）。かなはNotoへフォールバック */
-.ev-cell-num,.wkv-days span,.ev-bar b,.ev-i-meta,.td-due,.ev-cal-daylabel{font-family:'IBM Plex Mono','Noto Sans JP',monospace}
+.ev-cell-num,.wkv-days span,.ev-bar b,.ev-i-meta,.td-due,.ev-cal-daylabel{font-family:'Inter','Noto Sans JP',sans-serif} /* v363: 0に点が入るPlex Mono→MAPと同じInterへ */
 /* v302: マス内を10スロットの時間帯グリッドに（18時≒中央。空きスロット＝空き時間が見える） */
 .ev-cell-bars{display:flex;flex-direction:column;flex:1;min-height:0;gap:0;margin-top:0;width:100%}
 .ev-slot{flex:1 1 0;min-height:0;overflow:visible;display:flex;align-items:stretch;padding-bottom:1px} /* v350: 連日帯が罫線の上まで塗れるようvisible（文字は.ev-bar側でクリップ） */
@@ -1114,11 +1114,11 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .dayv-allday .ev-bar{font-size:11px;padding:3px 8px;border-radius:6px;letter-spacing:0;cursor:pointer}
 .dayv-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dayv-canvas{position:relative;margin:8px 10px 24px 46px;border-left:1px solid var(--border)}
-.dayv-hour{position:absolute;left:-44px;width:38px;text-align:right;font-size:10px;color:var(--text-dim);transform:translateY(-50%);font-family:'IBM Plex Mono',monospace}
+.dayv-hour{position:absolute;left:-44px;width:38px;text-align:right;font-size:10px;color:var(--text-dim);transform:translateY(-50%);font-family:'Inter','Noto Sans JP',sans-serif}
 .dayv-line{position:absolute;left:0;right:0;border-top:1px solid var(--border);opacity:.5}
 .dayv-slotarea{position:absolute;left:0;right:0;z-index:1}
 .dayv-ev{position:absolute;border-radius:8px;padding:3px 8px;font-size:11.5px;font-weight:700;overflow:hidden;cursor:pointer;box-sizing:border-box;z-index:2;box-shadow:0 1px 4px rgba(0,0,0,.25)}
-.dayv-ev .t{font-size:9.5px;opacity:.85;font-family:'IBM Plex Mono',monospace}
+.dayv-ev .t{font-size:9.5px;opacity:.85;font-family:'Inter','Noto Sans JP',sans-serif}
 .dayv-now{position:absolute;left:-3px;right:0;border-top:2px solid var(--red);z-index:4;pointer-events:none}
 .dayv-now i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--red)}
 /* v308: 3D組織マップ */
@@ -1156,7 +1156,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .td-hicon{flex:none;width:20px;text-align:center;font-size:15px}
 .td-hname{flex:1;min-width:0;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .td-home-row.mk .td-hicon,.td-home-row.mk .td-hname{color:var(--accent);font-weight:700}
-.td-hcount{flex:none;background:var(--surface2);color:var(--text-mid);font-size:11px;font-weight:800;border-radius:10px;padding:2px 8px;font-family:'IBM Plex Mono',monospace}
+.td-hcount{flex:none;background:var(--surface2);color:var(--text-mid);font-size:11px;font-weight:800;border-radius:10px;padding:2px 8px;font-family:'Inter','Noto Sans JP',sans-serif}
 .td-secttl{font-size:11px;font-weight:800;color:var(--text-dim);padding:16px 14px 6px;letter-spacing:.5px}
 .td-sechd{font-size:13.5px;font-weight:800;color:var(--text);padding:12px 14px 8px;display:flex;align-items:center}
 .td-back{font-size:13.5px;font-weight:700;color:var(--accent);padding:12px 14px 0;cursor:pointer}
@@ -1245,7 +1245,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .tplp-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;font-size:11.5px;color:var(--text-dim);background:var(--surface2);font-weight:700}
 .tplp-mk{color:var(--accent);font-weight:800;cursor:pointer;padding:2px 8px;border:1px solid var(--accent);border-radius:8px;font-size:11px}
 .tplp-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--border);cursor:pointer}
-.tplp-time{flex:none;width:46px;font-size:10.5px;line-height:1.35;color:var(--text-mid);font-family:'IBM Plex Mono',monospace;text-align:right}
+.tplp-time{flex:none;width:46px;font-size:10.5px;line-height:1.35;color:var(--text-mid);font-family:'Inter','Noto Sans JP',sans-serif;text-align:right}
 .tplp-dot{flex:none;width:12px;height:12px;border-radius:50%}
 .tplp-ttl{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tplp-bell{flex:none;font-size:12px;opacity:.6}
@@ -1255,7 +1255,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .tplp-row.tpl-dragging{opacity:.92;background:var(--surface3);box-shadow:0 6px 18px rgba(0,0,0,.35);transform:scale(1.02);position:relative;z-index:5}
 /* v360: 期限切れタスクを一目で（薄赤の帯＋左の赤バー＋「◯日超過」ピル） */
 .td-row.od-row{background:rgba(255,93,115,.08);box-shadow:inset 3px 0 0 var(--red)}
-.td-odpill{display:inline-block;background:var(--red);color:#fff;font-size:9.5px;font-weight:800;border-radius:8px;padding:1.5px 7px;margin-right:6px;vertical-align:1px;font-family:'IBM Plex Mono','Noto Sans JP',monospace}
+.td-odpill{display:inline-block;background:var(--red);color:#fff;font-size:9.5px;font-weight:800;border-radius:8px;padding:1.5px 7px;margin-right:6px;vertical-align:1px;font-family:'Inter','Noto Sans JP',sans-serif}
 /* CAL-2: 予定テンプレチップ（タップで内容・時間・通知をプリフィル） */
 .ev-tpl-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0 2px;-webkit-overflow-scrolling:touch}
 .ev-tpl-chip{flex:none;display:flex;align-items:center;gap:4px;padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s}
@@ -1320,7 +1320,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .pcts-row.droptgt{outline:2px dashed var(--accent);outline-offset:-2px}
 .pcts-row i.dot{width:10px;height:10px;border-radius:50%;flex:none}
 .pcts-row .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pcts-row .ct{flex:none;font-size:11px;font-weight:800;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
+.pcts-row .ct{flex:none;font-size:11px;font-weight:800;color:var(--text-dim);font-family:'Inter','Noto Sans JP',sans-serif}
 .pctd-lbl{font-size:10.5px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;margin:14px 0 5px}
 .pctd-empty{color:var(--text-dim);font-size:12.5px;padding:34px 6px;text-align:center;line-height:1.9}
 .td-hovacts{display:none;flex:none;gap:2px;align-items:center}
@@ -2158,7 +2158,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v362</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v364</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4798,7 +4798,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v362';
+  var DATA_VERSION = 'v364';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5035,9 +5035,9 @@ function _vvhUpdate() {
   } catch(e9) {}
 }
 // v354: PCは時刻をキーボードで直接入力可（1600→16:00に自動整形。モバイルは従来のテンキー）
-function _pcTimeInputs() {
+function _pcTimeInputs(ids) {
   if (typeof isPCMode !== 'function' || !isPCMode()) return;
-  ['evTime', 'evTimeEnd'].forEach(function(idn){
+  (ids || ['evTime', 'evTimeEnd']).forEach(function(idn){
     var el = document.getElementById(idn);
     if (!el) return;
     el.readOnly = false;
@@ -5656,6 +5656,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v364', d:'2026-08-18', items:['📌テンプレ作成の開始・終了時刻を、予定追加と同じテンキー入力に統一：欄をタップするとテンキーが開き、「1930」→19:30に自動整形。開始を入れると終了へ自動で移動（+1時間を仮セット）。PCではキーボードで直接入力もできます'] },
+  { v:'v363', d:'2026-08-18', items:['🔢予定タブの数字フォントを変更：0の中に点が入るフォント(IBM Plex Mono)をやめ、MAPの情報表示と同じすっきりしたフォント(Inter)に統一しました（月の日付・月タイトル・週/日の時刻・期限・件数バッジなど）'] },
   { v:'v362', d:'2026-08-18', items:['🧊3D組織図を大幅パワーアップ！🌸ボタンでテーマを切替できます：「🌸オーロラ」（パステルグラデ×パールの新デフォルト級テーマ）／「🪩ネオン」（従来のサイバー系）／「🌿ガーデン」（組織が木として育つ：研修生🌱→BA🌸→BR🌺）','✨開いた瞬間にメンバーが中心からポンポンッと弾んで登場。テーマに合わせたきらきら粒子（星屑/花びら）がゆっくり舞います','📸ワンタップでストーリーズ向けの縦長画像（TEAM◯人＋月入りフレーム）を作成してそのまま共有できます','💳メンバーカードがホロカード風に（虹のグラデ枠＋タイトルバッジ）。タップするとカメラがその人へスーッと寄ります','🎉今月入ったメンバーに✨、今日が誕生日のメンバーに🎂が付きます','🫰初回だけ操作ガイドを表示。タップ時に軽い振動フィードバック（対応端末のみ）'] },
   { v:'v361', d:'2026-08-18', items:['👤メンバー担当タスクと自分のタスクを分離：メンバーに紐付けた予定/タスクは既定で「メンバー専用」になり、自分のカレンダー/ToDo/通知に混ざりません。作成時に「🗓自分の予定/ToDoにも表示」を選べば従来どおり自分にも表示（既存データのカレンダー表示は維持）','✅ToDoに「👤メンバー」絞り込みを追加：メンバー担当分はここでまとめて確認（PC版は左カラムにも）','📋メンバー編集の「タスク」タブが「活動」タブに：OL・タスク・予定・研修予定を1本の時系列で表示し、上の3ボタン（📅予定/✅タスク/📝OL）からすぐ追加。MAPカードのボタンも同じ3択になりました','🐛メンバーからの「＋タスクを追加」が予定として作成されるバグを修正','📅カードの「次の予定」に、研修ファネルの予定・カレンダーの予定・OL予定をすべて表示するようになりました','📝OL記録に「実施済み/予定」の種別を追加：予定のOLは黄色の「予定」バッジ付きで表示されます','🔄再アプローチリスト新設：研修結果「✗流れた」を選ぶと自動でリストに記録（メニュー→🔄再アプローチ）。経過日数を表示し、90日で「再アプローチ時期」バッジ。📋で今日のタスクに追加できます','🎓研修生のタイトル選択肢にOUTを追加','🗺地域絞り込みの薄表示が、画面の再描画（結合の更新・写真読込など）で解除されてしまうバグを修正'] },
   { v:'v360', d:'2026-08-18', items:['📌テンプレの並べ替え：▲▼ボタンを廃止し、行を長押し→ドラッグで好きな位置へ（離すと保存。以降その順で表示）','⏰テンプレの時刻入力を15分刻みのプルダウンに（iOSでは従来の入力欄が1分刻みになってしまうため）','🗑タスクの横フリック→ゴミ箱タップで、編集画面が出ずに即削除されるように修正（削除後は「元に戻す」トースト）','⚠️期限切れタスクが一目で分かるように：薄赤の帯＋左の赤バー＋「◯日超過」ピル、一覧の先頭に「⚠️期限切れ◯件」見出し','💬トースト（登録しました等）はタップか横フリックですぐ消せるようになりました'] },
@@ -10519,7 +10521,7 @@ function meRenderExtras(m) {
   if (!items.length) tkHtml += '<div class="md-empty">活動はまだありません</div>';
   else tkHtml += items.map(function(it){
     var d = it.d ? it.d.split('-').slice(1).join('/') : '—';
-    var dTag = '<span style="color:var(--text-dim);font-size:11.5px;flex:none;width:40px;font-family:\'IBM Plex Mono\',monospace">' + d + '</span>';
+    var dTag = '<span style="color:var(--text-dim);font-size:11.5px;flex:none;width:40px;font-family:\'Inter\',\'Noto Sans JP\',sans-serif">' + d + '</span>';
     if (it.kind === 'ol') {
       var pl = it.o.st === 'planned';
       return '<div class="me-task" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openOlRecordModal(\'' + mid + '\',' + it.oi + ')">'
@@ -16459,7 +16461,7 @@ function renderPcDayPanel() {
   var t = evTodayYmd();
   var due = (state.events || []).filter(function(e){ return e.type === 'task' && !e.done && e.date && e.date <= t && evTdMine(e); }).sort(_todoSortDue); // v361
   var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-    + '<div style="font-size:14.5px;font-weight:800;flex:1;font-family:\'IBM Plex Mono\',\'Noto Sans JP\',monospace">' + evEsc(fmtEvDate(ds, '')) + '</div>'
+    + '<div style="font-size:14.5px;font-weight:800;flex:1;font-family:\'Inter\',\'Noto Sans JP\',sans-serif">' + evEsc(fmtEvDate(ds, '')) + '</div>'
     + '<button class="btn-p" style="flex:none;padding:7px 13px;font-size:12.5px" onclick="openEventAddDate(\'' + ds + '\')">＋ 予定</button>'
     + '</div>'
     + '<div id="pcDayList">' + _daySheetHtml(ds) + '</div>'
@@ -16555,7 +16557,7 @@ function openCalDaySheet(ds) {
   ov.onclick = function(e){ if (e.target === ov) closeCalDaySheet(); };
   var hol = jpHoliday(ds);
   ov.innerHTML = '<div class="ms-sheet" style="max-height:58vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name" style="font-family:\'IBM Plex Mono\',\'Noto Sans JP\',monospace">' + fmtEvDate(ds, '') + (hol ? ' <span style="font-size:11.5px;color:var(--red);font-weight:700">' + evEsc(hol) + '</span>' : '') + '</div></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name" style="font-family:\'Inter\',\'Noto Sans JP\',sans-serif">' + fmtEvDate(ds, '') + (hol ? ' <span style="font-size:11.5px;color:var(--red);font-weight:700">' + evEsc(hol) + '</span>' : '') + '</div></div>'
     + '<span class="ms-x" onclick="closeCalDaySheet()">✕</span></div>'
     + '<div style="padding:0 6px 16px" id="dayShList">' + _daySheetHtml(ds) + '</div></div>';
   document.body.appendChild(ov);
@@ -16876,6 +16878,7 @@ function _evCreateSeries(base, rep, untilYmd) {
 // v298/v329: Lifebear式・時刻テンキー（7 8 9 / 4 5 6 / 1 2 3 / 0 00 30）
 // v329: 開始→終了を1つのテンキーで連続入力（開始の分まで入れると自動で終了へカーソル移動＝Lifebearと同じ）
 var _tpTarget = null, _tpBuf = '';
+var _tpStartId = 'evTime', _tpEndId = 'evTimeEnd', _tpIsTask = false; // v364: テンプレ作成でも同じテンキーを使うための対象ペア
 // 打鍵ルール: 先頭3〜9＝1桁時（以降は分）、先頭0〜2＝2桁時（〜29時）→分。常に正しい時刻だけを受け付ける
 function _tpProg(b) {
   if (!b.length) return '--:--';
@@ -16925,19 +16928,22 @@ function openTimePad(targetId) {
     if (_se && _se.scrollTop) _se.scrollTop = 0;
     window.scrollTo(0, 0);
   } catch(e1) {}
-  if (typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
+  // v364: 対象ペアを決定（テンプレ作成 or 予定追加）
+  if (targetId === 'evtF_time' || targetId === 'evtF_timeEnd') { _tpStartId = 'evtF_time'; _tpEndId = 'evtF_timeEnd'; _tpIsTask = false; }
+  else { _tpStartId = 'evTime'; _tpEndId = 'evTimeEnd'; _tpIsTask = (_evType === 'task'); }
+  if (_tpStartId === 'evTime' && typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
   _tpTarget = targetId;
   _tpBuf = '';
   var ov = document.createElement('div');
   ov.className = 'tp-ov'; ov.id = 'tpOv';
   ov.onclick = function(e){ if (e.target === ov) closeTimePad(true); };
   function k(v) { return '<div class="tp-key" onclick="tpKey(\'' + v + '\')">' + v + '</div>'; }
-  var isTask = (_evType === 'task');
+  var isTask = _tpIsTask;
   var disp = isTask
     ? '<span class="tp-disp on" id="tpDispS"></span>'
-    : '<span class="tp-disp" id="tpDispS" onclick="tpFocus(\'evTime\')"></span>'
+    : '<span class="tp-disp" id="tpDispS" onclick="tpFocus(\'' + _tpStartId + '\')"></span>'
       + '<span class="tp-arr">›</span>'
-      + '<span class="tp-disp" id="tpDispE" onclick="tpFocus(\'evTimeEnd\')"></span>';
+      + '<span class="tp-disp" id="tpDispE" onclick="tpFocus(\'' + _tpEndId + '\')"></span>';
   ov.innerHTML = '<div class="tp-sheet">'
     + '<div class="tp-which">' + (isTask ? '期限の時刻' : '開始 › 終了（続けて入力できます）') + '</div>'
     + '<div class="tp-hd">' + disp
@@ -16971,21 +16977,21 @@ function _tpCommitCurrent() {
 function tpRender() {
   var s = document.getElementById('tpDispS');
   var en = document.getElementById('tpDispE');
-  var vs = ((document.getElementById('evTime') || {}).value || '');
-  var ve = ((document.getElementById('evTimeEnd') || {}).value || '');
+  var vs = ((document.getElementById(_tpStartId) || {}).value || '');
+  var ve = ((document.getElementById(_tpEndId) || {}).value || '');
   if (s) {
-    s.textContent = (_tpTarget === 'evTime' && _tpBuf.length) ? _tpProg(_tpBuf) : (vs || '--:--');
-    s.className = 'tp-disp' + (_tpTarget === 'evTime' ? ' on' : '');
-    if (_evType === 'task') s.className = 'tp-disp on';
+    s.textContent = (_tpTarget === _tpStartId && _tpBuf.length) ? _tpProg(_tpBuf) : (vs || '--:--');
+    s.className = 'tp-disp' + (_tpTarget === _tpStartId ? ' on' : '');
+    if (_tpIsTask) s.className = 'tp-disp on';
   }
   if (en) {
-    en.textContent = (_tpTarget === 'evTimeEnd' && _tpBuf.length) ? _tpProg(_tpBuf) : (ve || '--:--');
-    en.className = 'tp-disp' + (_tpTarget === 'evTimeEnd' ? ' on' : '');
+    en.textContent = (_tpTarget === _tpEndId && _tpBuf.length) ? _tpProg(_tpBuf) : (ve || '--:--');
+    en.className = 'tp-disp' + (_tpTarget === _tpEndId ? ' on' : '');
   }
 }
 function _tpReject() {
   if (navigator.vibrate) try { navigator.vibrate(35); } catch(e0) {}
-  var el = document.getElementById(_tpTarget === 'evTimeEnd' ? 'tpDispE' : 'tpDispS');
+  var el = document.getElementById(_tpTarget === _tpEndId ? 'tpDispE' : 'tpDispS');
   if (el) {
     el.style.color = 'var(--red)';
     setTimeout(function(){ el.style.color = ''; }, 250);
@@ -16998,14 +17004,14 @@ function _tpAutoNext() {
   var inp = document.getElementById(_tpTarget);
   if (inp) inp.value = val;
   _tpBuf = '';
-  if (_tpTarget === 'evTime' && _evType !== 'task') {
+  if (_tpTarget === _tpStartId && !_tpIsTask) {
     // 終了が空なら+1時間を仮セットして、終了の入力へ移動
-    var en = document.getElementById('evTimeEnd');
+    var en = document.getElementById(_tpEndId);
     if (en && !en.value && val) {
       var hm = val.split(':');
       en.value = evPad2(Math.min((parseInt(hm[0], 10) || 0) + 1, 29)) + ':' + hm[1];
     }
-    _tpTarget = 'evTimeEnd';
+    _tpTarget = _tpEndId;
     if (navigator.vibrate) try { navigator.vibrate(8); } catch(e2) {}
     tpRender();
   } else {
@@ -17449,17 +17455,6 @@ function evTplCreateFromForm() {
   };
   openEvTplEdit('');
 }
-// v360: 15分刻みの時刻プルダウン（iOSのtime入力はstep=900を無視して1分刻みになるため）
-function _evtTimeOpts(sel) {
-  var h = '<option value=""' + (!sel ? ' selected' : '') + '>--:--</option>';
-  for (var m = 0; m < 30 * 60; m += 15) {
-    var v = evPad2(Math.floor(m / 60)) + ':' + evPad2(m % 60);
-    h += '<option value="' + v + '"' + (v === sel ? ' selected' : '') + '>' + v + '</option>';
-  }
-  // 既存データが15分刻み以外（例 9:10）の場合も値が消えないよう選択肢に足す
-  if (sel && h.indexOf('value="' + sel + '"') < 0) h += '<option value="' + evEsc(sel) + '" selected>' + evEsc(sel) + '</option>';
-  return h;
-}
 // ── テンプレ管理シート（一覧 → 編集/作成フォーム） ──
 function closeEvTplManager() {
   // v317: 多重タップで同じシートが重なっても全部消す（✕が効かなくなる不具合対策）
@@ -17536,8 +17531,8 @@ function openEvTplEdit(id) {
     + fld('名前', '<input class="fi" id="evtF_name" placeholder="例：CT" value="' + evEsc(t ? (t.name || '') : '') + '">')
     + fld('種別', '<select class="fi" id="evtF_type">' + typeOpts + '</select>')
     + '<div style="display:flex;gap:8px">'
-    + '<div style="flex:1">' + fld('開始時刻（任意）', '<select class="fi" id="evtF_time">' + _evtTimeOpts(t ? (t.defaultTime || '') : '') + '</select>') + '</div>'
-    + '<div style="flex:1">' + fld('終了時刻（任意）', '<select class="fi" id="evtF_timeEnd">' + _evtTimeOpts(t ? (t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0) || '') : '') + '</select>') + '</div>'
+    + '<div style="flex:1">' + fld('開始時刻（任意）', '<input class="fi" id="evtF_time" type="text" readonly placeholder="なし" onclick="openTimePad(\'evtF_time\')" style="cursor:pointer;text-align:center" value="' + evEsc(t ? (t.defaultTime || '') : '') + '">') + '</div>'
+    + '<div style="flex:1">' + fld('終了時刻（任意）', '<input class="fi" id="evtF_timeEnd" type="text" readonly placeholder="なし" onclick="openTimePad(\'evtF_timeEnd\')" style="cursor:pointer;text-align:center" value="' + evEsc(t ? (t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0) || '') : '') + '">') + '</div>'
     + '</div>'
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
     + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
@@ -17553,6 +17548,7 @@ function openEvTplEdit(id) {
     + '</div></div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
+  _pcTimeInputs(['evtF_time', 'evtF_timeEnd']); // v364: PCは予定入力と同じくキーボード直接入力（1930→19:30）
 }
 // v313: テンプレ編集の色選択
 function evtPickColor(el) {
