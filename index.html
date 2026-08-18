@@ -58,7 +58,7 @@ body.light{
 /* キーボード操作時の視認可能なフォーカスリング（マウス/タップでは出ない） */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 html,body{height:100%;overflow:hidden}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+body{font-family:'Inter','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
 
 /* ── HEADER ── */
 header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--border);z-index:50;padding-top:env(safe-area-inset-top)}
@@ -204,7 +204,7 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 .org-table .inline-input{background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:3px 6px;font-size:13px;font-family:Inter,sans-serif;width:80px;outline:none}
 .org-table .inline-select{background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:3px 4px;font-size:13px;font-family:Inter,sans-serif;outline:none;cursor:pointer}
 .org-table .inline-select option{background:var(--bg)}
-.org-table .inline-textarea{background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:3px 6px;font-size:12px;font-family:'Noto Sans JP',sans-serif;width:200px;min-height:50px;outline:none;resize:vertical}
+.org-table .inline-textarea{background:var(--bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);padding:3px 6px;font-size:12px;font-family:'Inter','Noto Sans JP',sans-serif;width:200px;min-height:50px;outline:none;resize:vertical}
 /* テーブルフィルター */
 .pc-filter-bar{display:none}
 @media(min-width:768px){.pc-filter-bar.show{display:block;position:sticky;top:46px;z-index:19;background:var(--bg);border-bottom:1px solid var(--border)}}
@@ -558,7 +558,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* form */
 .fr{margin-bottom:12px}
 .fl{font-size:11px;color:var(--text-dim);margin-bottom:3px;display:block}
-.fi,.fs,.fta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);padding:9px 11px;font-size:15px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .15s}
+.fi,.fs,.fta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);padding:9px 11px;font-size:15px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;transition:border-color .15s}
 .fi:focus,.fs:focus,.fta:focus{border-color:var(--accent)}
 /* iOS: 入力欄が16px未満だとフォーカス時に画面が自動ズームされ、スクロール時に横ズレする。
    iOS(WebKit)のみ入力系を16pxに引き上げてズーム自体を発生させない */
@@ -617,7 +617,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .fresh-sub{margin-top:8px;display:none}
 .fresh-sub.open{display:block}
 .fresh-sub-title{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'Inter','IBM Plex Mono',monospace}
-.fresh-fi{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);padding:7px 10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:6px}
+.fresh-fi{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);padding:7px 10px;font-size:13px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;margin-bottom:6px}
 .fresh-fi:focus{border-color:var(--accent)}
 .fresh-check-row{display:flex;align-items:center;gap:8px;margin-top:6px}
 .fresh-check{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
@@ -648,7 +648,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ol-f{display:flex;flex-direction:column;gap:3px;min-width:0;margin-bottom:8px;flex:1}
 .ol-f label{font-size:10px;color:var(--text-dim);display:flex;align-items:center;justify-content:space-between}
 .ol-add-t{color:var(--accent);font-weight:600;cursor:pointer}
-.ol-input{box-sizing:border-box;width:100%;height:42px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0 10px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none}
+.ol-input{box-sizing:border-box;width:100%;height:42px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0 10px;font-size:14px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none}
 .ol-input:focus{border-color:var(--accent)}
 /* OL育成ダッシュボード */
 .ot-funnel{display:flex;gap:7px;overflow-x:auto;padding:10px 10px 6px}
@@ -723,7 +723,7 @@ tr.ot-done{opacity:.5}
 .fresh-editor-row{display:flex;gap:8px;margin-bottom:8px}
 .fresh-editor-f{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .fresh-editor-f label{font-size:10px;color:var(--text-dim)}
-.fresh-editor-f input{box-sizing:border-box;width:100%;height:42px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0 10px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;line-height:normal}
+.fresh-editor-f input{box-sizing:border-box;width:100%;height:42px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0 10px;font-size:14px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;line-height:normal}
 .fresh-editor-f input[type=date]{display:block;min-height:42px}
 .fresh-editor-f input::-webkit-date-and-time-value{text-align:left;margin:0}
 .fresh-editor-f input:focus{border-color:var(--accent)}
@@ -878,7 +878,7 @@ tr.ot-done{opacity:.5}
 .sd-title{font-size:16px;font-weight:700;flex:1}
 .sd-count{font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace}
 .sd-search{padding:8px 14px;border-bottom:1px solid var(--border)}
-.sd-search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);padding:8px 14px;font-size:14px;outline:none;font-family:'Noto Sans JP',sans-serif}
+.sd-search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);padding:8px 14px;font-size:14px;outline:none;font-family:'Inter','Noto Sans JP',sans-serif}
 .sd-search-input:focus{border-color:var(--accent)}
 .sd-filters{display:flex;gap:6px;padding:8px 14px 4px;flex-wrap:wrap;overflow-x:auto}
 .sd-filter{padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);transition:all .15s;white-space:nowrap;font-family:'IBM Plex Mono',monospace}
@@ -1057,7 +1057,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-slot .ev-bar{height:auto;display:flex;align-items:center;line-height:1;min-width:0;max-width:100%} /* v353: slotをvisibleにした副作用で文字幅に広がるのを防止 */
 .ev-more-badge{position:absolute;right:1px;bottom:1px;font-size:8px;font-weight:800;color:var(--text-dim);background:var(--surface3);border-radius:6px;padding:1px 4px;line-height:1.2;z-index:2}
 /* v302: はみ出しは「…」でなくクリップ（表示できる文字まで見せる）。v311: 8段化に合わせ少し大きく */
-.ev-bar{font-size:9.5px;font-weight:600;letter-spacing:-0.2px;line-height:1.3;padding:0 1px 0 2px;border-radius:2.5px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:clip;box-sizing:border-box;text-align:left}
+.ev-bar{font-family:'Inter','Noto Sans JP',sans-serif;font-size:9.5px;font-weight:600;letter-spacing:-0.2px;line-height:1.3;padding:0 1px 0 2px;border-radius:2.5px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:clip;box-sizing:border-box;text-align:left}
 .ev-bar b{font-weight:800;font-family:'IBM Plex Mono',monospace}
 .ev-bar.bar-task{background:var(--accent);color:var(--go-ink)}
 .ev-bar.bar-event{background:var(--purple);color:#fff}
@@ -1527,7 +1527,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .ck-badge.mid{color:#FFB454;background:rgba(255,180,84,.13);border:1px solid rgba(255,180,84,.4)}
 .ck-badge.warn{color:var(--text-mid);background:var(--surface3);border:1px solid var(--border2)}
 .ck-actions{flex:none;display:flex;flex-direction:column;gap:5px}
-.ck-btn{padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid)}
+.ck-btn{padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif;white-space:nowrap;border:1px solid var(--border2);background:var(--surface2);color:var(--text-mid)}
 .ck-btn.task{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
 .ck-btn:active{background:var(--surface3)}
 .ck-more{font-size:12px;color:var(--text-dim);text-align:center;padding:6px;cursor:pointer;text-decoration:underline;margin-bottom:6px}
@@ -2029,7 +2029,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .ht-body{flex:1;min-width:0;cursor:pointer}
 .ht-title{font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ht-meta{font-size:11px;color:var(--text-dim);margin-top:2px;font-family:'IBM Plex Mono',monospace}
-.ht-meta .ht-over{color:var(--red,#FF5D73);font-weight:700;font-family:'Noto Sans JP',sans-serif}
+.ht-meta .ht-over{color:var(--red,#FF5D73);font-weight:700;font-family:'Inter','Noto Sans JP',sans-serif}
 /* ── 今日の気づき ── */
 .hi-item{font-size:13px;line-height:1.6;border-radius:10px;padding:11px 13px;margin-bottom:7px;border:1px solid var(--border);background:var(--surface);border-left-width:3px}
 .hi-item.warn{border-left-color:#FFB454}
@@ -2040,9 +2040,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .fresh-ol-lbl{font-size:11px;color:var(--text-dim);margin-bottom:6px;font-weight:700}
 .fol-row{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:start}
 .fol-row .fol-full{grid-column:1 / -1}
-.fol-in{box-sizing:border-box;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none}
+.fol-in{box-sizing:border-box;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none}
 .fol-x{flex:none;width:34px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-dim);border-radius:8px;font-size:14px;cursor:pointer}
-.fol-add{width:100%;padding:9px;border-radius:9px;border:1px dashed var(--border2);background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:2px}
+.fol-add{width:100%;padding:9px;border-radius:9px;border:1px dashed var(--border2);background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif;margin-top:2px}
 .fol-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:6px}
 /* OL履歴：一覧行（タップで詳細ポップアップ） */
 .fol-log-row{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:background .1s}
@@ -2063,13 +2063,13 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .nc.merged-node{border-style:dashed!important;opacity:.92}
 .nc.merged-node::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px var(--purple-dim)}
 .merged-badge{font-size:9px;font-weight:700;color:var(--purple);border:1px solid var(--purple);background:var(--purple-dim);border-radius:6px;padding:0 4px;white-space:nowrap;flex-shrink:0}
-.sd-merge-btn{margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1px solid var(--purple);background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.sd-merge-btn{margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1px solid var(--purple);background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif}
 .sd-merge-btn.active{border-color:var(--red,#FF5D73);background:rgba(255,93,115,.12);color:var(--red,#FF5D73)}
 .merge-pick-ov{position:fixed;inset:0;z-index:620;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
 .merge-pick-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;width:100%;max-width:360px;max-height:80vh;display:flex;flex-direction:column}
 .merge-pick-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.5;text-align:center}
 .merge-pick-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
-.merge-pick-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer;text-align:left;font-family:'Noto Sans JP',sans-serif}
+.merge-pick-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer;text-align:left;font-family:'Inter','Noto Sans JP',sans-serif}
 .merge-pick-item:active{background:var(--surface3)}
 .merge-pick-item .mp-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);min-width:42px}
 .merge-pick-item .mp-name{font-weight:600}
@@ -2086,8 +2086,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <body>
 
 
-<div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px">
-  <div style="width:100%;max-width:400px">
+<div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:32px 24px calc(env(safe-area-inset-bottom) + 40px)">
+  <div style="width:100%;max-width:400px;margin:auto 0"><!-- v368: 入力欄が画面より多い時にスクロールできるように（margin:autoで少ない時は中央寄せ） -->
     <!-- タイトル -->
     <div style="text-align:center;margin-bottom:40px">
       <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:3px;margin-bottom:8px">ORGANIZATION MANAGEMENT</div>
@@ -2104,24 +2104,24 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <!-- ログインフォーム -->
     <div id="loginForm">
       <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-bottom:16px">メールアドレスとパスワードでログイン</div>
-      <input id="loginEmail" type="email" placeholder="メールアドレス" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <input id="loginPass" type="password" placeholder="パスワード（6文字以上）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:20px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="loginEmail" type="email" placeholder="メールアドレス" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="loginPass" type="password" placeholder="パスワード（6文字以上）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:20px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <div id="loginError" style="color:#FF5D73;font-size:13px;text-align:center;margin-bottom:12px;display:none"></div>
-      <button onclick="doLogin()" style="width:100%;padding:16px;border-radius:12px;background:var(--accent);color:#000;font-size:17px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif">ログイン</button>
+      <button onclick="doLogin()" style="width:100%;padding:16px;border-radius:12px;background:var(--accent);color:#000;font-size:17px;font-weight:700;border:none;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif">ログイン</button>
       <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-dim);cursor:pointer" onclick="showForgotPass()">パスワードを忘れた方はこちら</div>
     </div>
 
     <!-- 新規登録フォーム -->
     <div id="signupForm" style="display:none">
       <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-bottom:16px">アカウントを作成してください</div>
-      <input id="signupName" type="text" placeholder="お名前" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <input id="signupOrg" type="text" placeholder="屋号" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <input id="signupArea" type="text" placeholder="活動地域（例：東京・大阪）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <select id="signupUnion" onchange="onUnionSelect(this,'signupUpBd')" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">所属ユニオンを選択</option></select>
-      <input id="signupUpRuby" type="text" placeholder="UPルビー" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <input id="signupUpBd" type="text" placeholder="UPBD" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <input id="signupEmail" type="email" placeholder="メールアドレス" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
-      <input id="signupPass" type="password" placeholder="パスワード（6文字以上）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:16px;font-family:'Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupName" type="text" placeholder="お名前" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupOrg" type="text" placeholder="屋号" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupArea" type="text" placeholder="活動地域（例：東京・大阪）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <select id="signupUnion" onchange="onUnionSelect(this,'signupUpBd')" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">所属ユニオンを選択</option></select>
+      <input id="signupUpRuby" type="text" placeholder="UPルビー" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupUpBd" type="text" placeholder="UPBD" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupEmail" type="email" placeholder="メールアドレス" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupPass" type="password" placeholder="パスワード（6文字以上）" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:16px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <!-- プライバシーポリシー同意 -->
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">
         <input type="checkbox" id="privacyCheck" style="width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex-shrink:0">
@@ -2130,7 +2130,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         </label>
       </div>
       <div id="signupError" style="color:#FF5D73;font-size:13px;text-align:center;margin-bottom:12px;display:none"></div>
-      <button onclick="doSignup()" style="width:100%;padding:16px;border-radius:12px;background:var(--accent);color:#000;font-size:17px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif">登録する</button>
+      <button onclick="doSignup()" style="width:100%;padding:16px;border-radius:12px;background:var(--accent);color:#000;font-size:17px;font-weight:700;border:none;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif">登録する</button>
     </div>
   </div>
 </div>
@@ -2159,7 +2159,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v366</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v368</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4795,7 +4795,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v366';
+  var DATA_VERSION = 'v368';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5653,6 +5653,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v368', d:'2026-08-18', items:['🗺MAPカードの「次の予定」を修正：予定を作ってもカードに反映されない問題を改修——(1)過去日になった研修予定が出続けて枠を塞いでいたのを除外 (2)カレンダー分は「🗓次の予定」と「✅次のタスク」を別々の行で表示するように（タスクの方が近い日だと予定が隠れていました）','📝新規登録画面が下までスクロールできるようになりました（入力欄が画面より多い時に登録ボタンが押せなかった問題）','📝新規登録のエラーメッセージは、該当項目を入力し直すとすぐ消えるようになりました（エラー表示時は自動でエラー位置までスクロール）'] },
+  { v:'v367', d:'2026-08-18', items:['🔢アプリ全体の数字・英字フォントをInterに統一：予定バーの件名内の数字も含め、すべての数字がMAPと同じすっきりした字形になりました（かな・漢字は従来どおり）','🔔アプリを閉じていてもプッシュ通知が届くように修正：連鎖共有の導入時（v355）に初めて適用したセキュリティルールに、通知予約（notifQueue）と端末登録（fcmTokens）の許可が漏れており、通知の予約が保存できなくなっていました。⚠️反映にはfirestore.rulesの再デプロイが必要です'] },
   { v:'v366', d:'2026-08-18', items:['👤メンバー編集のOLタブを「活動」タブに統合して削除（重複のため）。リストOLの状態表示も活動タブへ移動しました','🎨リスト/ラベルの色を選べるように：作成直後に色パレットが自動で開き、後からもリスト選択画面の色●をタップして変更できます。パレットに2色追加（ピンク・ライム、計40色）','🔖ToDoホーム上部のリスト/ラベルのチップを長押し→左右ドラッグで並べ替えできるようになりました（リスト同士・ラベル同士で入替。PC左カラムにも同じ順で反映）'] },
   { v:'v365', d:'2026-08-18', items:['🧊3D組織図がteamLab風に：なにもない空間をタップすると、そこに波紋が広がり花びらがパッと咲きます（触ると咲く）','⚡メンバーをタップすると、その人からトップまで系譜の線の上を光がツーッと流れます（エネルギーの流れ）','✨ドラッグでくるくる回すと指の軌跡にきらきらの尾。組織の線の上は常に小さな光の粒が流れ続けます（生きているネットワーク）','🦋ガーデンテーマに蝶が3匹ふわふわ・花はゆっくり呼吸／🪩ネオンにはホタルが明滅／🌸オーロラは背景の色がオーロラのようにゆっくり流れます','🌱今月入ったメンバー（✨付き）は最後に「開花」しながら登場。⏳成長リプレイも月ごとに咲きながら増え、最後は紙吹雪のフィナーレ','👤オーロラテーマでは写真のないメンバーがイニシャル入りのパステルアバターになりました','📸シェア画像に花のラインアート装飾が入りました','🗑期限切れタスクの行でゴミ箱ボタンが透けて見えていた不具合を修正（フリックした時だけ表示されます）'] },
   { v:'v364', d:'2026-08-18', items:['📌テンプレ作成の開始・終了時刻を、予定追加と同じテンキー入力に統一：欄をタップするとテンキーが開き、「1930」→19:30に自動整形。開始を入れると終了へ自動で移動（+1時間を仮セット）。PCではキーボードで直接入力もできます'] },
@@ -13381,13 +13383,18 @@ function evTdMine(e)   { return !evIsMemberLinked(e) || e.selfShow === true; }  
 // v361: メンバーの「次の予定」行（研修ファネル予定＋カレンダー予定＋OL予定を全部返す）
 function memberNextPlanLines(m) {
   var out = [];
-  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
-  if (plan) out.push('📅 次の予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
-  else if (m.nextDate) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')));
   var t = evTodayYmd();
-  var evs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t; })
+  // v368: 過去日の研修予定は「次の予定」に出さない（07/25の予定が今日を過ぎても出続けるバグ修正）
+  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned' && (!h.date || h.date >= t); }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
+  if (plan) out.push('🎓 研修予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
+  else if (m.nextDate && m.nextDate >= t) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')));
+  // v368: カレンダー分は「次の予定」「次のタスク」を別行で表示（タスクが近いと予定が隠れるバグ修正）
+  var futs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t; })
     .sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
-  if (evs.length) out.push((evs[0].type === 'task' ? '✅' : '🗓') + ' 次の' + (evs[0].type === 'task' ? 'タスク' : '予定') + '：' + evEsc(evs[0].title||'') + '（' + evs[0].date.split('-').slice(1).join('/') + (evs[0].time ? ' ' + evs[0].time : '') + '）');
+  var fEv = null, fTk = null;
+  futs.forEach(function(x){ if (x.type === 'task') { if (!fTk) fTk = x; } else { if (!fEv) fEv = x; } });
+  if (fEv) out.push('🗓 次の予定：' + evEsc(fEv.title||'') + '（' + fEv.date.split('-').slice(1).join('/') + (fEv.time ? ' ' + fEv.time : '') + '）');
+  if (fTk) out.push('✅ 次のタスク：' + evEsc(fTk.title||'') + '（' + fTk.date.split('-').slice(1).join('/') + (fTk.time ? ' ' + fTk.time : '') + '）');
   var fd = (state.freshData && state.freshData[m.id]) || {};
   var olPlan = (fd.olLog || []).filter(function(o){ return o.st === 'planned' && o.date && o.date >= t; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
   if (olPlan) out.push('📝 OL予定：' + (olPlan.what ? evEsc(olPlan.what) : '') + '（' + olPlan.date.split('-').slice(1).join('/') + (olPlan.asan ? ' A:' + evEsc(olPlan.asan) : '') + '）');
@@ -19093,6 +19100,19 @@ function doLogin() {
   }
 }
 
+// v368: 新規登録フォームの入力/変更でエラー表示を消す（「入力してもエラーが消えない」対策）
+(function(){
+  var f = document.getElementById('signupForm');
+  if (!f) return;
+  function clr(){ var e = document.getElementById('signupError'); if (e) e.style.display = 'none'; }
+  var els = f.querySelectorAll('input,select');
+  for (var i = 0; i < els.length; i++) { els[i].addEventListener('input', clr); els[i].addEventListener('change', clr); }
+})();
+function _sgErr(errEl, msg) {
+  errEl.textContent = msg;
+  errEl.style.display = '';
+  try { errEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch(e0) {}
+}
 function doSignup() {
   var v = function(id){ return ((document.getElementById(id)||{}).value||'').trim(); };
   var name  = v('signupName');
@@ -19105,15 +19125,15 @@ function doSignup() {
   var pass  = (document.getElementById('signupPass')||{}).value||'';
   var chk   = document.getElementById('privacyCheck');
   var errEl = document.getElementById('signupError');
-  if (!name)  { errEl.textContent='お名前を入力してください'; errEl.style.display=''; return; }
-  if (!org)   { errEl.textContent='屋号を入力してください'; errEl.style.display=''; return; }
-  if (!union) { errEl.textContent='所属ユニオンを入力してください'; errEl.style.display=''; return; }
-  if (!area)  { errEl.textContent='活動地域を入力してください'; errEl.style.display=''; return; }
-  if (!upRuby){ errEl.textContent='UPルビーを入力してください'; errEl.style.display=''; return; }
-  if (!upBd)  { errEl.textContent='UPBDを入力してください'; errEl.style.display=''; return; }
-  if (!email) { errEl.textContent='メールアドレスを入力してください'; errEl.style.display=''; return; }
-  if (pass.length < 6) { errEl.textContent='パスワードは6文字以上で入力してください'; errEl.style.display=''; return; }
-  if (!chk || !chk.checked) { errEl.textContent='プライバシーポリシーに同意してください'; errEl.style.display=''; return; }
+  if (!name)  { _sgErr(errEl, 'お名前を入力してください'); return; }
+  if (!org)   { _sgErr(errEl, '屋号を入力してください'); return; }
+  if (!union) { _sgErr(errEl, '所属ユニオンを選択してください'); return; }
+  if (!area)  { _sgErr(errEl, '活動地域を入力してください'); return; }
+  if (!upRuby){ _sgErr(errEl, 'UPルビーを入力してください'); return; }
+  if (!upBd)  { _sgErr(errEl, 'UPBDを入力してください'); return; }
+  if (!email) { _sgErr(errEl, 'メールアドレスを入力してください'); return; }
+  if (pass.length < 6) { _sgErr(errEl, 'パスワードは6文字以上で入力してください'); return; }
+  if (!chk || !chk.checked) { _sgErr(errEl, 'プライバシーポリシーに同意してください'); return; }
 
   if (auth) {
     var btn = document.querySelector('#signupForm button');

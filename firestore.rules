@@ -166,6 +166,22 @@ service cloud.firestore {
              && resource.data.get('via', '') == request.auth.uid );
     }
 
+    // ============ プッシュ通知（v366で追加。v355の初回ルール適用時に漏れており通知が止まっていた） ============
+    // 通知予約キュー: docId={uid}_{eventId}。本人が自分宛て(uid==自分)の予約だけ作成/更新/削除できる。
+    // 送信役のCloud FunctionはAdmin SDKのためルールの対象外（読み取り・削除は常に可能）。
+    match /notifQueue/{qid} {
+      allow read:   if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+                    && qid.matches(request.auth.uid + '_.*');
+      allow update: if signedIn() && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && qid.matches(request.auth.uid + '_.*');
+    }
+    // FCM端末トークン: 本人のみ登録・掃除できる
+    match /users/{uid}/fcmTokens/{tok} {
+      allow read, write: if isSelf(uid) || isAdmin();
+    }
+
     // ============ MAP 受信側の共有インデックス ============
     match /sharedWith/{uid}/from/{ownerUid} {
       allow read:   if isSelf(uid) || isAdmin();
