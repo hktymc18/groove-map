@@ -1168,6 +1168,10 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .td-fchip.sel{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}
 .td-fchip i{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
 .td-fchip.chip-drag{opacity:.92;transform:scale(1.07);box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:5;position:relative} /* v366 */
+/* v375: ⇅並べ替えシート（≡を掴んで即ドラッグ。長押し不要） */
+.tdo-row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border);background:var(--surface);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tdo-handle{flex:none;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-dim);cursor:grab;touch-action:none;border:1px solid var(--border);border-radius:9px;background:var(--surface2)}
+.tdo-name{flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* v335: ホームのクイック追加バーと検索切替ボタン */
 .td-srchbtn{flex:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--text-dim);cursor:pointer;font-size:15px}
 .td-srchbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
@@ -2159,7 +2163,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v374</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v375</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4795,7 +4799,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v374';
+  var DATA_VERSION = 'v375';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5653,6 +5657,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v375', d:'2026-08-19', items:['⇅リスト/ラベルの並べ替えを確実な方式に：ToDoのチップ列の右端に「⇅」ボタンを追加。開いたシートで左の≡をつかんで上下にドラッグするだけ（長押し不要）。チップの長押しも引き続き使えます','🔔通知の重複を自動解消：端末ごとにIDを付け、同じ端末の古い通知登録（再インストールやトークン更新の残骸）を通知オン時に自動削除。さらにサーバー側でも45日以上更新のない登録を配信時に自動削除します（※サーバー側はCloud Functionsの再デプロイが必要）','📳シェイクで元に戻すが、アプリを開き直すと効かなくなる問題を修正（iOSがアプリ起動時のセンサー許可の確認を拒否するため。最初のタップ時に許可を取り直す方式に変更）'] },
   { v:'v374', d:'2026-08-19', items:['🏠HOMEの「📁メニュー」ショートカットカードを削除しました（下部の☰メニュータブと重複していたため。各画面へは☰メニューからどうぞ）'] },
   { v:'v373', d:'2026-08-19', items:['🏠HOMEをスリム化：「🎯今日のルーチン」と「⚡クイック記録」のカードを廃止しました（記録はOL記録・テンプレ完了の実績連動・逆算マップの今日の一歩から。HOMEタブ自体は残ります）','🧊3Dのヒートモード（🎨）に2つのレンズを追加：「今月の新規」＝今月入ったメンバーだけ金色に光る／「研修生」＝研修生だけ水色に光る。リクルートと育成の進捗がひと目で分かります'] },
   { v:'v372', d:'2026-08-19', items:['🔖リスト/ラベルのチップとテンプレ行の長押し並べ替えが、iPhoneで効かないことがある問題を修正：長押しするとiOSの文字選択（ルーペ）が先に発動してドラッグが始まらないケースがあったため、文字選択を無効化し長押し判定も早めました（0.37秒）'] },
@@ -12663,10 +12668,28 @@ function fcmRegister() {
       db.doc('users/' + currentUser.uid + '/fcmTokens/' + _oldTok).delete().catch(function(){});
     }
     try { localStorage.setItem('gm_fcmToken', tok); } catch(eT) {} // オフ切替時の削除用に保持
+    // v375: 端末ID（この画面のストレージに固定）でトークンを紐付け、同じ端末の残骸を自動掃除
+    var _dev = '';
+    try {
+      _dev = localStorage.getItem('gm_deviceId') || '';
+      if (!_dev) { _dev = 'dv_' + Date.now() + '_' + Math.floor(Math.random() * 1000000); localStorage.setItem('gm_deviceId', _dev); }
+    } catch(eD) {}
     return fsSet('users/' + currentUser.uid + '/fcmTokens/' + tok, {
       ua: String(navigator.userAgent || '').slice(0, 180),
+      device: _dev,
       updatedAt: new Date().toISOString()
-    }).then(function(){ _fcmBusy = false; return true; });
+    }).then(function(){
+      // v375: 同じ端末の別トークン（再インストール・トークン更新の残骸）を自動削除＝重複通知の自動解消
+      if (_dev) {
+        db.collection('users/' + currentUser.uid + '/fcmTokens').get().then(function(ss){
+          ss.forEach(function(d){
+            var dd = d.data() || {};
+            if (d.id !== tok && dd.device === _dev) d.ref.delete().catch(function(){});
+          });
+        }).catch(function(){});
+      }
+      _fcmBusy = false; return true;
+    });
   }).catch(function(err){ _fcmBusy = false; window._fcmLastErr = String(err && err.message || err); return false; }); // v333: 失敗理由を保持して表示
 }
 // v307: 通知タップ→該当予定の詳細シートを開く（起動直後はデータ読込完了までリトライ）
@@ -12872,13 +12895,20 @@ function gmShakeEnable() {
     }).catch(function(){ toast('⚠️ モーションセンサーの許可が得られませんでした（もう一度お試しください）'); });
   } else { _gmShakeAttach(); toast('📳 シェイクで「元に戻す」が有効になりました'); }
 }
-// 起動時: 有効化済みなら自動で再開（iOSは一度許可すると以降は確認なしでgrantedが返る）
+// 起動時: 有効化済みなら自動で再開
+// v375: iOSは「操作なし」でrequestPermissionを呼ぶと拒否されるため、リスナーは無条件で張り
+//（許可済みならそのまま発火する）、最初のタップ時に許可状態を取り直す2段構えに修正
 setTimeout(function(){
   var on = false; try { on = localStorage.getItem('gm_shake') === '1'; } catch(e0) {}
   if (!on) return;
+  _gmShakeAttach();
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().then(function(st){ if (st === 'granted') _gmShakeAttach(); }).catch(function(){});
-  } else { _gmShakeAttach(); }
+    var _shakeOnce = function(){
+      document.removeEventListener('touchend', _shakeOnce);
+      DeviceMotionEvent.requestPermission().then(function(st){ if (st === 'granted') _gmShakeAttach(); }).catch(function(){});
+    };
+    document.addEventListener('touchend', _shakeOnce, { passive: true });
+  }
 }, 1200);
 // v360: トーストはタップ or 横フリックで即閉じできる（「登録しました」等が邪魔な時にすぐ消せる）
 setTimeout(function(){
@@ -16298,6 +16328,9 @@ function _renderAgendaCore() {
   ((_todoMeta && _todoMeta.labels) || []).forEach(function(LB){
     fch += fchip(F.type === 'label' && F.id === LB.id, "todoSetFilter('label','" + LB.id + "')", '<i style="background:' + LB.color + ';border-radius:50%"></i>' + evEsc(LB.name), 'data-ord="label:' + LB.id + '"');
   });
+  if ((((_todoMeta && _todoMeta.lists) || []).length + (((_todoMeta && _todoMeta.labels) || []).length)) >= 2) {
+    fch += '<div class="td-fchip" onclick="openTdOrderSheet()" title="リスト/ラベルの並べ替え">⇅</div>'; // v375
+  }
   fch += '</div>';
   var t9 = evTodayYmd();
   function _applyChip(list0) {
@@ -16348,6 +16381,104 @@ function tdTogglePrio(id) {
   e.priority = (e.priority === 'high') ? 'normal' : 'high';
   e.updatedAt = new Date().toISOString();
   saveEventDoc(e); renderAgenda();
+}
+// v375: ⇅並べ替えシート — ≡ハンドルを掴んだ瞬間にドラッグ開始（長押し不要・スクロールと競合しない確実な方式）
+function openTdOrderSheet() {
+  _todoMetaEnsure().then(function(){ _tdOrderRender(); });
+}
+function closeTdOrderSheet() {
+  var ov = document.getElementById('tdOrderOv');
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+}
+function _tdOrderRender() {
+  closeTdOrderSheet();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'tdOrderOv';
+  ov.onclick = function(e){ if (e.target === ov) closeTdOrderSheet(); };
+  function rows(kind) {
+    var arr = (kind === 'label' ? (_todoMeta && _todoMeta.labels) : (_todoMeta && _todoMeta.lists)) || [];
+    if (!arr.length) return '<div style="font-size:12px;color:var(--text-dim);padding:6px 4px">まだありません</div>';
+    return arr.map(function(it){
+      return '<div class="tdo-row" data-okind="' + kind + '" data-oid="' + it.id + '">'
+        + '<span class="tdo-handle">≡</span>'
+        + '<span class="tplp-dot" style="background:' + it.color + (kind === 'label' ? ';border-radius:50%' : '') + '"></span>'
+        + '<span class="tdo-name">' + evEsc(it.name) + '</span></div>';
+    }).join('');
+  }
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:80vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⇅ リスト/ラベルの並べ替え</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">左の ≡ をつかんで上下にドラッグ（離すと保存）</div></div>'
+    + '<span class="ms-x" onclick="closeTdOrderSheet()">✕</span></div>'
+    + '<div style="padding:0 16px 20px" id="tdOrderBody">'
+    + '<div class="pcts-ttl" style="padding-left:0">リスト</div>' + rows('list')
+    + '<div class="pcts-ttl" style="padding-left:0">ラベル</div>' + rows('label')
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+  _tdOrderBind(document.getElementById('tdOrderBody'));
+}
+function _tdOrderBind(body) {
+  if (!body || body._bound) return;
+  body._bound = true;
+  var drag = null;
+  function rowAt(x, y) {
+    var el = document.elementFromPoint(x, y);
+    return (el && el.closest) ? el.closest('.tdo-row') : null;
+  }
+  function move(x, y, ev) {
+    if (!drag) return;
+    if (ev && ev.cancelable) ev.preventDefault();
+    var over = rowAt(x, y);
+    if (!over || over === drag) return;
+    if (over.getAttribute('data-okind') !== drag.getAttribute('data-okind')) return; // リスト同士/ラベル同士のみ
+    var rc = over.getBoundingClientRect();
+    if (y < rc.top + rc.height / 2) over.parentNode.insertBefore(drag, over);
+    else over.parentNode.insertBefore(drag, over.nextSibling);
+  }
+  function end() {
+    if (!drag) return;
+    drag.classList.remove('tpl-dragging');
+    drag = null;
+    var lids = [], lbids = [];
+    var rs = body.querySelectorAll('.tdo-row');
+    for (var i = 0; i < rs.length; i++) {
+      var k = rs[i].getAttribute('data-okind'), idv = rs[i].getAttribute('data-oid');
+      if (k === 'label') lbids.push(idv); else lids.push(idv);
+    }
+    function reorder(arr, ids) {
+      var by = {}; arr.forEach(function(x){ by[x.id] = x; });
+      var out = [];
+      ids.forEach(function(n){ if (by[n]) { out.push(by[n]); delete by[n]; } });
+      arr.forEach(function(x){ if (by[x.id]) out.push(x); });
+      return out;
+    }
+    if (_todoMeta) {
+      _todoMeta.lists = reorder(_todoMeta.lists || [], lids);
+      _todoMeta.labels = reorder(_todoMeta.labels || [], lbids);
+      _todoMetaSave();
+    }
+    renderAgenda();
+    toast('並び順を保存しました');
+  }
+  body.addEventListener('touchstart', function(ev){
+    var h = (ev.target && ev.target.closest) ? ev.target.closest('.tdo-handle') : null;
+    if (!h) return;
+    drag = h.closest('.tdo-row');
+    if (drag) { drag.classList.add('tpl-dragging'); try { if (navigator.vibrate) navigator.vibrate(8); } catch(e0) {} }
+  }, { passive: true });
+  body.addEventListener('touchmove', function(ev){ move(ev.touches[0].clientX, ev.touches[0].clientY, ev); }, { passive: false });
+  body.addEventListener('touchend', end, { passive: true });
+  body.addEventListener('touchcancel', end, { passive: true });
+  body.addEventListener('mousedown', function(ev){
+    var h = (ev.target && ev.target.closest) ? ev.target.closest('.tdo-handle') : null;
+    if (!h) return;
+    ev.preventDefault();
+    drag = h.closest('.tdo-row');
+    if (drag) drag.classList.add('tpl-dragging');
+    var mm = function(e2){ move(e2.clientX, e2.clientY, e2); };
+    var mu = function(){ document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); end(); };
+    document.addEventListener('mousemove', mm);
+    document.addEventListener('mouseup', mu);
+  });
 }
 // v366: ホームの絞り込みチップ（リスト/ラベル）を長押し→左右ドラッグで並べ替え
 function _tdChipDnd(wrap) {
