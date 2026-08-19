@@ -329,6 +329,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* v378: 名前が縦書きになる問題の根治 — 名前は折り返さず、足りない分はカードごと横に伸びてスクロール */
 .mobile-tree .nc{width:max-content;min-width:100%}
 .mobile-tree .nm{white-space:nowrap}
+/* v383: メモ等の詳細ボックスはカード幅を引き伸ばさない（縦書き対策のmax-contentでメモの最長行までカードが広がっていた） */
+.mobile-tree .card-info{max-width:min(86vw,520px)}
+.mobile-tree .ci-memo{overflow-wrap:anywhere}
 .children.closed{display:none}
 
 /* 深さ別：左ボーダーラインのみで階層表現（インデントなし） */
@@ -2166,7 +2169,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v382</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v383</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4802,7 +4805,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v382';
+  var DATA_VERSION = 'v383';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5660,6 +5663,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v383', d:'2026-08-19', items:['\ud83d\udd17\u7d50\u5408MAP\u306e\u9023\u9396\u8868\u793a\u306b\u5bfe\u5fdc\uff1a\u7d50\u5408\u3057\u305f\u76f8\u624b\u304c\u3055\u3089\u306b\u7d50\u5408\u3057\u3066\u3044\u308bD\u30e9\u30a4\u30f3\uff08\u5b6b\u968e\u5c64\uff09\u3082\u3001\u5171\u6709MAP\u3092\u958b\u304b\u305a\u306b\u81ea\u5206\u306eMAP\u306e\u30c4\u30ea\u30fc\u306b\u305d\u306e\u307e\u307e\u8868\u793a\u3055\u308c\u308b\u3088\u3046\u306b\u306a\u308a\u307e\u3057\u305f','\ud83d\udcdd\u30e1\u30e2\u304c\u9577\u3044\u3068\u30ab\u30fc\u30c9\u304c\u6a2a\u306b\u5e83\u304c\u308a\u3059\u304e\u308b\u554f\u984c\u3092\u4fee\u6b63\uff08\u30e1\u30e2\u306f\u30ab\u30fc\u30c9\u5185\u3067\u6298\u308a\u8fd4\u3057\u3001\u540d\u524d\u306e\u6a2a\u66f8\u304d\u306f\u7dad\u6301\uff09'] },
   { v:'v382', d:'2026-08-19', items:['\ud83d\udd14\u540c\u3058\u901a\u77e5\u304c2\u901a\u5c4a\u304f\u554f\u984c\u306e\u6700\u7d42\u5bfe\u7b56\uff1a\u767b\u9332\u7aef\u672b\u304c1\u3064\u3067\u3082\u30011\u56de\u306e\u30d7\u30c3\u30b7\u30e5\u3092\u300cOS\u306e\u81ea\u52d5\u8868\u793a\u300d\u3068\u300c\u30a2\u30d7\u30ea\u5185\u90e8\u306e\u624b\u52d5\u8868\u793a\u300d\u306e\u4e21\u65b9\u304c\u8868\u793a\u3057\u3066\u3057\u307e\u3046\u7d4c\u8def\u304c\u3042\u308a\u307e\u3057\u305f\u3002\u624b\u52d5\u8868\u793a\u5074\u3092\u505c\u6b62\u3057\u30661\u901a\u306b\u7d71\u4e00\u3057\u307e\u3059','\ud83e\ude7a\u2699\u8a2d\u5b9a\u306e\u901a\u77e5\u8a3a\u65ad\u306b\u300c\u767b\u9332\u306e\u5185\u8a33\u300d\uff08\u7aef\u672bID\u30fb\u6700\u7d42\u66f4\u65b0\u65e5\u30fb\u30c8\u30fc\u30af\u30f3\u672b\u5c3e\uff09\u3092\u8868\u793a\u3002\u4e07\u4e00\u307e\u30602\u901a\u5c4a\u304f\u5834\u5408\u306e\u539f\u56e0\u7279\u5b9a\u304c\u4e00\u77ac\u3067\u3067\u304d\u307e\u3059','\ud83d\uddc4\u30b5\u30fc\u30d0\u30fc\u5074\u3082\u540c\u4e00\u7aef\u672b\u306b\u8907\u6570\u767b\u9332\u304c\u6b8b\u3063\u3066\u3044\u305f\u5834\u5408\u306f\u6700\u65b0\u306e1\u4ef6\u3060\u3051\u306b\u9001\u4fe1\uff08\u53e4\u3044\u767b\u9332\u306f\u81ea\u52d5\u524a\u9664\uff09'] },
   { v:'v381', d:'2026-08-19', items:['🔔iPhoneで同じ通知が2通届く問題の根本対策：iOSではSafariとホーム画面アプリが別々に通知登録を持ててしまい、🧹で消してもSafariで開くたびに復活していました。今後iOSでは「ホーム画面に追加」したアプリだけが通知登録し、Safariで開いた時は登録しない＋残っていたSafari分の登録を自動削除します（SafariでMAPを一度開くだけで掃除されます）'] },
   { v:'v380', d:'2026-08-19', items:['🔔同じリマインド通知が2通届く問題を修正：サーバーからのプッシュ通知と、アプリ内の古いローカルリマインダー（アプリを開いている間だけ動く仕組み）が両方発火していました。プッシュ登録済みの端末ではローカル側を止め、プッシュ1本に統一します（通知オフやプッシュ未登録の端末では従来どおりローカルで通知）'] },
@@ -20328,9 +20332,34 @@ function stopAllMergeListeners() {
 }
 function startAllMergeListeners() {
   stopAllMergeListeners();
+  _mergeSub = {};
   if (!db || !state.mergedMaps) return;
   state.mergedData = state.mergedData || {};
-  state.mergedMaps.forEach(function(mm) { startMergeListener(mm.uid); });
+  state.mergedMaps.forEach(function(mm) { startMergeListener(mm.uid); _loadMergeSub(mm.uid); });
+}
+// v383: 連鎖表示 — 結合相手がさらに結合しているMAP（孫階層）の構成とデータを読み込む。
+//        アクセス権は連鎖共有(propagateDerivedShares)の派生共有ドキュメントで担保される。
+var _mergeSub = {}; // 直接結合相手のuid -> { maps:[相手の結合構成], data:{孫uid:members} }
+function _loadMergeSub(uid) {
+  if (!db || !currentUser || viewingOwnerUid) return;
+  _mergeSub[uid] = { maps: [], data: {} };
+  var month = state.currentMonth;
+  fsGet('maps/' + uid + '/meta/merged').then(function(d) {
+    if (!_mergeSub[uid]) return;
+    var maps = (d && d.maps) ? d.maps : [];
+    _mergeSub[uid].maps = maps;
+    maps.forEach(function(sc) {
+      if (sc.hidden || !sc.uid) return;
+      if (sc.uid === currentUser.uid) return; // 自分のMAPが孫として現れるケースは合成しない（重複防止）
+      if (isMerged(sc.uid)) return;           // 直接結合済みの相手も重複防止
+      loadMergedAvatars(sc.uid);
+      fsGet('maps/' + sc.uid + '/months/' + month + '_current').then(function(md) {
+        if (!_mergeSub[uid]) return;
+        _mergeSub[uid].data[sc.uid] = (md && md.members) ? md.members : [];
+        if (currentView === 'current' && !viewingOwnerUid) renderCurrentView();
+      }).catch(function(e) { console.log('merge sub load:', e && e.message); }); // 派生共有が未配布なら黙ってスキップ
+    });
+  }).catch(function(){});
 }
 // 結合相手の写真アバターを取得し、MG_プレフィックス付きIDで_avatarsへ合流させる
 var _mgAvatarsLoaded = {};
@@ -20374,6 +20403,17 @@ function mgResolve(mid) {
   for (var i = 0; i < mm.length; i++) {
     var pre = 'MG_' + String(mm[i].uid).substring(0, 6) + '_';
     if (mid.indexOf(pre) === 0) return { uid: mm[i].uid, srcId: mid.slice(pre.length) };
+  }
+  // v383: 連鎖表示の孫階層（結合相手の結合先）も解決する
+  if (!viewingOwnerUid) {
+    for (var u2 in _mergeSub) {
+      var sm2 = (_mergeSub[u2] && _mergeSub[u2].maps) || [];
+      for (var j2 = 0; j2 < sm2.length; j2++) {
+        if (!sm2[j2].uid) continue;
+        var preS = 'MG_' + String(sm2[j2].uid).substring(0, 6) + '_';
+        if (mid.indexOf(preS) === 0) return { uid: sm2[j2].uid, srcId: mid.slice(preS.length) };
+      }
+    }
   }
   return null;
 }
@@ -20420,6 +20460,30 @@ function composeMergedInto(ownMembers, mapType) {
       copy.mapType = 'current';
       out.push(copy);
     });
+    // v383: 連鎖表示 — 結合相手がさらに結合しているMAP（孫階層）も自分のツリーへ合成
+    var sub = (!viewingOwnerUid && _mergeSub[cfg.uid]) ? _mergeSub[cfg.uid] : null;
+    if (sub && sub.maps.length) {
+      var fIds = {};
+      foreign.forEach(function(fm) { if (!fm.deleted) fIds[fm.id] = true; });
+      sub.maps.forEach(function(sc) {
+        if (sc.hidden || !sc.uid) return;
+        var sMembers = sub.data[sc.uid] || [];
+        if (!sMembers.length) return;
+        if (!fIds[sc.graftId]) return; // 接続先が相手MAP側に無ければスキップ
+        var pre2 = 'MG_' + String(sc.uid).substring(0, 6) + '_';
+        sMembers.forEach(function(sm) {
+          if (sm.deleted) return;
+          var c2 = {};
+          for (var k2 in sm) c2[k2] = sm[k2];
+          c2.id = pre2 + sm.id;
+          c2.parentId = sm.parentId ? (pre2 + sm.parentId) : (pre + sc.graftId);
+          c2._foreign = true;
+          c2._ownerName = sc.name || '';
+          c2.mapType = 'current';
+          out.push(c2);
+        });
+      });
+    }
   });
   return out;
 }
