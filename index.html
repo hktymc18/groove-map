@@ -326,6 +326,9 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* v349: 深い段でもカードが潰れて名前が縦書きにならないよう最小幅を保証。はみ出しは横スクロールで見る */
 .mobile-tree{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .nc{min-width:250px}
+/* v378: 名前が縦書きになる問題の根治 — 名前は折り返さず、足りない分はカードごと横に伸びてスクロール */
+.mobile-tree .nc{width:max-content;min-width:100%}
+.mobile-tree .nm{white-space:nowrap}
 .children.closed{display:none}
 
 /* 深さ別：左ボーダーラインのみで階層表現（インデントなし） */
@@ -2163,7 +2166,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v375</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v378</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4799,7 +4802,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v375';
+  var DATA_VERSION = 'v378';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5657,6 +5660,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v378', d:'2026-08-19', items:['🔗「＋続けて追加」でタスク/予定を追加すると関連メンバーの紐付けが外れるバグを修正（メンバーと種別を引き継いで開きます）','👥関連メンバーの選択に、結合中のDラインメンバー（🔗バッジ付き）も表示されるようになりました','🎓研修の「ステップを追加」で、前に開いたメンバーのステップの色（緑ハイライト）が引き継がれて表示されるバグを修正しました','📱モバイルのツリーで名前が縦書きになる問題を修正：名前は必ず横書きになり、収まらない場合はカードごと横に伸びてスクロールで見られます'] },
+  { v:'v377', d:'2026-08-19', items:['⇅並べ替えボタンをチップ列の左端（「すべて」の前）に移動しました。スクロールしなくても常に見えます'] },
+  { v:'v376', d:'2026-08-19', items:['⇅並べ替えボタンが「リスト/ラベル合計2個以上」の時しか表示されない条件だったのを、1個から表示するように変更しました（ボタンが見つからない問題の解消）'] },
   { v:'v375', d:'2026-08-19', items:['⇅リスト/ラベルの並べ替えを確実な方式に：ToDoのチップ列の右端に「⇅」ボタンを追加。開いたシートで左の≡をつかんで上下にドラッグするだけ（長押し不要）。チップの長押しも引き続き使えます','🔔通知の重複を自動解消：端末ごとにIDを付け、同じ端末の古い通知登録（再インストールやトークン更新の残骸）を通知オン時に自動削除。さらにサーバー側でも45日以上更新のない登録を配信時に自動削除します（※サーバー側はCloud Functionsの再デプロイが必要）','📳シェイクで元に戻すが、アプリを開き直すと効かなくなる問題を修正（iOSがアプリ起動時のセンサー許可の確認を拒否するため。最初のタップ時に許可を取り直す方式に変更）'] },
   { v:'v374', d:'2026-08-19', items:['🏠HOMEの「📁メニュー」ショートカットカードを削除しました（下部の☰メニュータブと重複していたため。各画面へは☰メニューからどうぞ）'] },
   { v:'v373', d:'2026-08-19', items:['🏠HOMEをスリム化：「🎯今日のルーチン」と「⚡クイック記録」のカードを廃止しました（記録はOL記録・テンプレ完了の実績連動・逆算マップの今日の一歩から。HOMEタブ自体は残ります）','🧊3Dのヒートモード（🎨）に2つのレンズを追加：「今月の新規」＝今月入ったメンバーだけ金色に光る／「研修生」＝研修生だけ水色に光る。リクルートと育成の進捗がひと目で分かります'] },
@@ -7844,7 +7850,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
         var _st = _tShow ? titleAvatarStyle(_tShow) : avStyle;
         return '<div class="av ' + g + (isLOI ? ' loi-av' : (m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + _st + '" title="' + evEsc(_tShow) + '">' + evEsc(_ab) + '</div>';
       })())
-    + '<div style="flex:1;min-width:0;overflow:hidden">'
+    + '<div style="flex:1;min-width:max-content">'
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
     + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
     + (m.goldShip ? '<span title="金の船" style="font-size:12px">⛴</span>' : '')
@@ -10828,7 +10834,13 @@ function openEdit(id) {
     var hw = document.getElementById('traineeHistoryWrap');
     if (hw) hw.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
     selStepResult('next');
-    if (hasTraineeData) { setTimeout(function(){ renderTraineeHistory(null); }, 60); }
+    // v378: 記録なしメンバーでも必ず再描画（前に開いたメンバーのステップ色が残るバグ修正）＋選択状態もリセット
+    _selectedStep = '';
+    var _sdp = document.getElementById('stepDetailPanel');
+    if (_sdp) _sdp.style.display = 'none';
+    var _sb = document.querySelectorAll('.step-btn');
+    for (var _sbi = 0; _sbi < _sb.length; _sbi++) _sb[_sbi].classList.remove('active');
+    setTimeout(function(){ renderTraineeHistory(null); }, 60);
 
     var pl = document.getElementById('parentLabel');
     if (pl) {
@@ -11293,6 +11305,7 @@ function findEvent(id) {
 function findMemberAny(id) {
   var arr = (state.members||[]).concat(state.idealMembers||[]);
   for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
+  if (/^MG_/.test(String(id)) && typeof _findMemberComposed === 'function') return _findMemberComposed(id); // v378: 結合メンバーの名前も解決
   return null;
 }
 function genEventId() {
@@ -16319,6 +16332,8 @@ function _renderAgendaCore() {
   }
   function fchip(sel, onclick, inner, attrs) { return '<div class="td-fchip' + (sel ? ' sel' : '') + '"' + (attrs ? ' ' + attrs : '') + ' onclick="' + onclick + '">' + inner + '</div>'; }
   var fch = '<div class="td-filters">'
+    + ((((_todoMeta && _todoMeta.lists) || []).length + (((_todoMeta && _todoMeta.labels) || []).length)) >= 1
+      ? '<div class="td-fchip" onclick="openTdOrderSheet()" title="リスト/ラベルの並べ替え" style="padding:7px 10px">⇅</div>' : '') // v377: 左端に常時見える位置へ
     + fchip(F.type === 'all', "todoSetFilter('all')", 'すべて')
     + fchip(F.type === 'today', "todoSetFilter('today')", '今日')
     + fchip(F.type === 'member', "todoSetFilter('member')", '👤メンバー'); // v361: メンバー担当タスク
@@ -16328,9 +16343,6 @@ function _renderAgendaCore() {
   ((_todoMeta && _todoMeta.labels) || []).forEach(function(LB){
     fch += fchip(F.type === 'label' && F.id === LB.id, "todoSetFilter('label','" + LB.id + "')", '<i style="background:' + LB.color + ';border-radius:50%"></i>' + evEsc(LB.name), 'data-ord="label:' + LB.id + '"');
   });
-  if ((((_todoMeta && _todoMeta.lists) || []).length + (((_todoMeta && _todoMeta.labels) || []).length)) >= 2) {
-    fch += '<div class="td-fchip" onclick="openTdOrderSheet()" title="リスト/ラベルの並べ替え">⇅</div>'; // v375
-  }
   fch += '</div>';
   var t9 = evTodayYmd();
   function _applyChip(list0) {
@@ -17447,14 +17459,18 @@ function _mpRenderList(q) {
   if (!box) return;
   q = (q || '').trim().toLowerCase().replace(/\s+/g, '');
   var h = '';
-  (state.members || []).forEach(function(m){
+  // v378: 結合中のDラインメンバー（🔗）も選択できるように合成リストを使う
+  var _mpBase = (typeof composeMergedInto === 'function') ? composeMergedInto(membersForMap('current'), 'current') : (state.members || []);
+  _mpBase.forEach(function(m){
     if (m.deleted) return;
     var name = ((m.lastName||'') + ' ' + (m.firstName||'')).trim() || '(無名)';
     if (q && name.toLowerCase().replace(/\s+/g, '').indexOf(q) < 0) return;
     var on = _evMemberIds.indexOf(m.id) >= 0;
+    var isMg = /^MG_/.test(m.id);
     h += '<div class="td-home-row" onclick="mpToggle(\'' + m.id + '\')">'
       + '<span class="td-chk' + (on ? ' on' : '') + '" style="width:22px;height:22px;font-size:12px">' + (on ? '✓' : '') + '</span>'
-      + '<span class="td-hname">' + evEsc(name) + (m.title ? ' <span style="font-size:11px;color:var(--text-dim)">' + evEsc(m.title) + '</span>' : '') + '</span>'
+      + '<span class="td-hname">' + evEsc(name) + (m.title ? ' <span style="font-size:11px;color:var(--text-dim)">' + evEsc(m.title) + '</span>' : '')
+      + (isMg ? ' <span class="merged-badge">🔗' + evEsc(m._ownerName || '結合') + '</span>' : '') + '</span>'
       + '</div>';
   });
   box.innerHTML = h || '<div class="ev-empty" style="padding:14px">該当するメンバーがいません</div>';
@@ -18530,9 +18546,15 @@ function _saveEventBody() {
   //        続けて入れたい時はトーストの「＋続けて追加」か、ToDoのクイック追加から
   var _newTask = (!_evEditId && _evType === 'task');
   var _savedTitle = e.title || '';
+  // v378: 「＋続けて追加」で関連メンバーの紐付けが外れるバグ修正（メンバー・種別を引き継いで再オープン）
+  var _contIds = (e.memberIds || []).slice();
+  var _contType = e.type;
   saveEventDoc(e).then(function(){
     if (_repMade > 1) toast('🔁 繰り返し予定を' + _repMade + '件作成しました ✓');
-    else if (_newTask) toastAction('✓ 「' + _savedTitle + '」を追加しました', '＋ 続けて追加', function(){ openTaskAdd(); }, 5000);
+    else if (_newTask) toastAction('✓ 「' + _savedTitle + '」を追加しました', '＋ 続けて追加', function(){
+      openEventModal(null, _contIds[0] || '', '', _contType);
+      if (_contIds.length > 1) { _evMemberIds = _contIds.slice(); updateEvMemberDisplay(); }
+    }, 5000);
     else toast('保存しました ✓');
   }).catch(function(){ toast('⚠️ 保存に失敗しました（通信状態を確認してください）'); });
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
