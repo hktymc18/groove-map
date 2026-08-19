@@ -2166,7 +2166,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v380</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v381</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4802,7 +4802,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v380';
+  var DATA_VERSION = 'v381';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5660,6 +5660,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v381', d:'2026-08-19', items:['🔔iPhoneで同じ通知が2通届く問題の根本対策：iOSではSafariとホーム画面アプリが別々に通知登録を持ててしまい、🧹で消してもSafariで開くたびに復活していました。今後iOSでは「ホーム画面に追加」したアプリだけが通知登録し、Safariで開いた時は登録しない＋残っていたSafari分の登録を自動削除します（SafariでMAPを一度開くだけで掃除されます）'] },
   { v:'v380', d:'2026-08-19', items:['🔔同じリマインド通知が2通届く問題を修正：サーバーからのプッシュ通知と、アプリ内の古いローカルリマインダー（アプリを開いている間だけ動く仕組み）が両方発火していました。プッシュ登録済みの端末ではローカル側を止め、プッシュ1本に統一します（通知オフやプッシュ未登録の端末では従来どおりローカルで通知）'] },
   { v:'v379', d:'2026-08-19', items:['🎓研修「ステップを追加」の色の引き継ぎバグを完全修正：前回の修正は既存メンバーを開いた時だけで、「メンバー追加」画面にリセットが抜けていました（研修生を連続で追加すると前の人の色が残る）。追加・編集どちらの入口でも、ステップの色・選択・研修結果チップを必ず初期化します'] },
   { v:'v378', d:'2026-08-19', items:['🔗「＋続けて追加」でタスク/予定を追加すると関連メンバーの紐付けが外れるバグを修正（メンバーと種別を引き継いで開きます）','👥関連メンバーの選択に、結合中のDラインメンバー（🔗バッジ付き）も表示されるようになりました','🎓研修の「ステップを追加」で、前に開いたメンバーのステップの色（緑ハイライト）が引き継がれて表示されるバグを修正しました','📱モバイルのツリーで名前が縦書きになる問題を修正：名前は必ず横書きになり、収まらない場合はカードごと横に伸びてスクロールで見られます'] },
@@ -12675,6 +12676,20 @@ function fcmRegister() {
   if (_fcmBusy) return Promise.resolve(false);
   if (!db || !currentUser || !currentUser.uid) return Promise.resolve(false);
   if (!('serviceWorker' in navigator)) return Promise.resolve(false);
+  // v381: iOSのSafari（ホーム画面アプリ以外）では通知登録しない。
+  // Safariとホーム画面アプリは別々の購読を持ち、同じiPhoneに同じ通知が2通届く原因になる。
+  // 🧹で消してもSafariで開くたびに復活していたため、Safari側は登録禁止＋残っていたら自動削除する。
+  if (typeof isIOS === 'function' && isIOS() && typeof isStandalone === 'function' && !isStandalone()) {
+    try {
+      var _sfTok = localStorage.getItem('gm_fcmToken') || '';
+      if (_sfTok) {
+        db.doc('users/' + currentUser.uid + '/fcmTokens/' + _sfTok).delete().catch(function(){});
+        localStorage.removeItem('gm_fcmToken');
+      }
+    } catch(eSf) {}
+    window._fcmLastErr = 'iPhoneでは「ホーム画面に追加」したアプリでのみ通知を受け取れます（Safariでの二重通知防止）';
+    return Promise.resolve(false);
+  }
   try {
     if (!firebase.messaging || !firebase.messaging.isSupported || !firebase.messaging.isSupported()) {
       window._fcmLastErr = 'この環境はFCM非対応';
@@ -14079,7 +14094,7 @@ function pushSetEnabled(on) {
   if (on) {
     if (('Notification' in window) && Notification.permission === 'granted') {
       fcmRegister().then(function(ok){
-        toast(ok ? '🔔 この端末への通知をオンにしました' : '⚠️ 通知の登録に失敗しました（通信を確認してください）');
+        toast(ok ? '🔔 この端末への通知をオンにしました' : '⚠️ ' + (window._fcmLastErr || '通知の登録に失敗しました（通信を確認してください）'));
         openCalSettings();
       });
     } else {
