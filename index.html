@@ -1132,6 +1132,22 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .map3d-btn{position:fixed;left:14px;bottom:calc(env(safe-area-inset-bottom) + 78px);z-index:150;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;font-weight:800;padding:9px 14px;border-radius:20px;cursor:pointer;box-shadow:var(--shadow)}
 #map3dPane{position:fixed;inset:0;z-index:290;background:#05070c;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
 #map3dPane .ev-cal-title{color:#F4F6FB}
+/* v385: 年表示（iPhone風）— 年月タイトルタップで縦スクロールの年カレンダー */
+#yearViewOv{position:fixed;inset:0;z-index:1300;background:var(--bg);display:flex;flex-direction:column}
+.yv-hdr{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;border-bottom:1px solid var(--border)}
+.yv-close{font-size:18px;color:var(--text-mid);cursor:pointer;padding:4px 10px}
+.yv-ttl{font-size:14px;font-weight:700;color:var(--text)}
+.yv-today{font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;padding:4px 10px}
+.yv-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 16px calc(env(safe-area-inset-bottom) + 30px)}
+.yv-ylabel{font-size:26px;font-weight:800;color:var(--text);padding:16px 2px 8px;border-bottom:1px solid var(--border);margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif}
+.yv-ylabel.cur{color:var(--accent)}
+.yv-mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 12px;margin-bottom:20px}
+@media(min-width:768px){.yv-mgrid{grid-template-columns:repeat(4,1fr);max-width:920px;margin-left:auto;margin-right:auto}}
+.yv-mname{font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif}
+.yv-mname.cur{color:var(--accent)}
+.yv-dgrid{display:grid;grid-template-columns:repeat(7,1fr);row-gap:1px}
+.yv-d{font-size:9.5px;font-weight:600;color:var(--text);text-align:center;line-height:16px;height:16px;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif;border-radius:50%}
+.yv-d.today{background:var(--accent);color:var(--go-ink);font-weight:800}
 #map3dCanvasWrap{flex:1;min-height:0;position:relative;overflow:hidden}
 #map3dCanvasWrap canvas{display:block;touch-action:none}
 #map3dInfo{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:295;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
@@ -2170,7 +2186,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v384</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v385</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2446,7 +2462,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="ev-cal-hdr">
         <div class="ev-cal-x" onclick="switchView('home')" title="メニューへ戻る">✕</div>
         <div class="ev-cal-nav" onclick="calShiftMonth(-1)">‹</div>
-        <div class="ev-cal-title" id="evCalTitle" onclick="calGoToday()" title="タップで今日へ"></div>
+        <div class="ev-cal-title" id="evCalTitle" onclick="openYearView()" title="タップで年表示"></div>
         <div class="ev-cal-nav" onclick="calShiftMonth(1)">›</div>
         <div class="ev-cal-nav pc-only" onclick="openEventAddDate(_calSelDate || evTodayYmd())" title="予定を追加" style="background:var(--accent);color:var(--go-ink);border-color:var(--accent);font-weight:800">＋</div>
         <div class="ev-cal-nav pc-only" onclick="setEventsMode('agenda')" title="ToDo"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8.5 12l2.5 2.5 5-5.5"/></svg></div>
@@ -4806,7 +4822,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v384';
+  var DATA_VERSION = 'v385';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5664,6 +5680,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v385', d:'2026-08-20', items:['\ud83d\udcc5 iPhone\u98a8\u306e\u5e74\u8868\u793a\u3092\u8ffd\u52a0\uff1a\u30ab\u30ec\u30f3\u30c0\u30fc\u4e0a\u90e8\u306e\u300c\u5e74\u6708\u300d\u3092\u30bf\u30c3\u30d7\u3059\u308b\u30681\u5e74\u5206\u306e\u30df\u30cb\u30ab\u30ec\u30f3\u30c0\u30fc\u304c\u7e26\u30b9\u30af\u30ed\u30fc\u30eb\u3067\u8868\u793a\u3055\u308c\u3001\u65e5\u4ed8\u3084\u6708\u3092\u30bf\u30c3\u30d7\u3059\u308b\u3068\u305d\u306e\u6708\u3078\u30b8\u30e3\u30f3\u30d7\u3067\u304d\u307e\u3059\uff08\u524d\u5f8c\u306e\u5e74\u306f\u81ea\u52d5\u3067\u8aad\u307f\u8db3\u3057\uff09\u3002\u300c\u4eca\u65e5\u3078\u300d\u306f\u5e74\u8868\u793a\u53f3\u4e0a\u306e\u300c\u4eca\u65e5\u300d\u30dc\u30bf\u30f3\u3078\u79fb\u52d5'] },
   { v:'v384', d:'2026-08-19', items:['\ud83d\udd22\u4e88\u5b9a\u30d0\u30fc\u306e\u6642\u523b\u306a\u3069\u3001\u53e4\u3044\u6570\u5b57\u30d5\u30a9\u30f3\u30c8\uff080\u306b\u70b9\u5165\u308a\uff09\u304c\u6b8b\u3063\u3066\u3044\u305f\u7b87\u6240\u3092\u5168\u3066\u63a2\u3057\u3066\u65e5\u4ed8\u3068\u540c\u3058\u30d5\u30a9\u30f3\u30c8\uff08Inter\uff09\u306b\u7d71\u4e00\u3057\u307e\u3057\u305f','\ud83d\udcc5\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u65e2\u5b9a\u3092\u65e5\u66dc\u59cb\u307e\u308a\u306b\u5909\u66f4\uff08\u2699\u8a2d\u5b9a\u3067\u6708\u66dc\u59cb\u307e\u308a\u306b\u3082\u623b\u305b\u307e\u3059\uff09','\ud83d\udd0d\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u65e5\u4ed8\u306e\u6570\u5b57\u3092\u62e1\u5927\uff08\u30e2\u30d0\u30a4\u30eb\u306f\u5c11\u3057\u3001PC\u306f\u3057\u3063\u304b\u308a\u5927\u304d\u304f\uff09'] },
   { v:'v383', d:'2026-08-19', items:['\ud83d\udd17\u7d50\u5408MAP\u306e\u9023\u9396\u8868\u793a\u306b\u5bfe\u5fdc\uff1a\u7d50\u5408\u3057\u305f\u76f8\u624b\u304c\u3055\u3089\u306b\u7d50\u5408\u3057\u3066\u3044\u308bD\u30e9\u30a4\u30f3\uff08\u5b6b\u968e\u5c64\uff09\u3082\u3001\u5171\u6709MAP\u3092\u958b\u304b\u305a\u306b\u81ea\u5206\u306eMAP\u306e\u30c4\u30ea\u30fc\u306b\u305d\u306e\u307e\u307e\u8868\u793a\u3055\u308c\u308b\u3088\u3046\u306b\u306a\u308a\u307e\u3057\u305f','\ud83d\udcdd\u30e1\u30e2\u304c\u9577\u3044\u3068\u30ab\u30fc\u30c9\u304c\u6a2a\u306b\u5e83\u304c\u308a\u3059\u304e\u308b\u554f\u984c\u3092\u4fee\u6b63\uff08\u30e1\u30e2\u306f\u30ab\u30fc\u30c9\u5185\u3067\u6298\u308a\u8fd4\u3057\u3001\u540d\u524d\u306e\u6a2a\u66f8\u304d\u306f\u7dad\u6301\uff09'] },
   { v:'v382', d:'2026-08-19', items:['\ud83d\udd14\u540c\u3058\u901a\u77e5\u304c2\u901a\u5c4a\u304f\u554f\u984c\u306e\u6700\u7d42\u5bfe\u7b56\uff1a\u767b\u9332\u7aef\u672b\u304c1\u3064\u3067\u3082\u30011\u56de\u306e\u30d7\u30c3\u30b7\u30e5\u3092\u300cOS\u306e\u81ea\u52d5\u8868\u793a\u300d\u3068\u300c\u30a2\u30d7\u30ea\u5185\u90e8\u306e\u624b\u52d5\u8868\u793a\u300d\u306e\u4e21\u65b9\u304c\u8868\u793a\u3057\u3066\u3057\u307e\u3046\u7d4c\u8def\u304c\u3042\u308a\u307e\u3057\u305f\u3002\u624b\u52d5\u8868\u793a\u5074\u3092\u505c\u6b62\u3057\u30661\u901a\u306b\u7d71\u4e00\u3057\u307e\u3059','\ud83e\ude7a\u2699\u8a2d\u5b9a\u306e\u901a\u77e5\u8a3a\u65ad\u306b\u300c\u767b\u9332\u306e\u5185\u8a33\u300d\uff08\u7aef\u672bID\u30fb\u6700\u7d42\u66f4\u65b0\u65e5\u30fb\u30c8\u30fc\u30af\u30f3\u672b\u5c3e\uff09\u3092\u8868\u793a\u3002\u4e07\u4e00\u307e\u30602\u901a\u5c4a\u304f\u5834\u5408\u306e\u539f\u56e0\u7279\u5b9a\u304c\u4e00\u77ac\u3067\u3067\u304d\u307e\u3059','\ud83d\uddc4\u30b5\u30fc\u30d0\u30fc\u5074\u3082\u540c\u4e00\u7aef\u672b\u306b\u8907\u6570\u767b\u9332\u304c\u6b8b\u3063\u3066\u3044\u305f\u5834\u5408\u306f\u6700\u65b0\u306e1\u4ef6\u3060\u3051\u306b\u9001\u4fe1\uff08\u53e4\u3044\u767b\u9332\u306f\u81ea\u52d5\u524a\u9664\uff09'] },
@@ -16842,6 +16859,68 @@ function calShiftMonth(delta) {
   if (_calScrollMode !== 'v') { renderCalendar(); _calFadeGrid(); return; }
   // v298: 縦モード＝再描画せずその月の1日の週へスクロール（連続カレンダー）
   _calScrollToYmd(_calYear + '-' + evPad2(_calMonth + 1) + '-01', true);
+}
+// v385: 年表示（iPhone風）— 年月タイトルタップで開く。縦スクロールで前後の年を自動読み足し。
+function openYearView() {
+  if (document.getElementById('yearViewOv')) { closeYearView(); return; }
+  if (!_calYear) { var n0 = new Date(); _calYear = n0.getFullYear(); _calMonth = n0.getMonth(); }
+  var today = evTodayYmd();
+  var ov = document.createElement('div');
+  ov.id = 'yearViewOv';
+  var html = '<div class="yv-hdr"><span class="yv-close" onclick="closeYearView()">✕</span><span class="yv-ttl">年表示</span><span class="yv-today" onclick="closeYearView();calGoToday()">今日</span></div><div class="yv-scroll" id="yvScroll">';
+  for (var y = _calYear - 2; y <= _calYear + 2; y++) html += _yvYearHtml(y, today);
+  html += '</div>';
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  var sc = document.getElementById('yvScroll');
+  var anchor = document.getElementById('yv-y' + _calYear);
+  if (anchor && sc) sc.scrollTop = anchor.offsetTop - sc.offsetTop;
+  if (sc) sc.addEventListener('scroll', function() {
+    if (sc.scrollTop < 150) {
+      var f = sc.firstElementChild;
+      if (!f) return;
+      var yPrev = parseInt(f.id.slice(4), 10) - 1;
+      var tmp = document.createElement('div'); tmp.innerHTML = _yvYearHtml(yPrev, today);
+      var h0 = sc.scrollHeight;
+      sc.insertBefore(tmp.firstElementChild, f);
+      sc.scrollTop += (sc.scrollHeight - h0);
+    } else if (sc.scrollTop + sc.clientHeight > sc.scrollHeight - 150) {
+      var l = sc.lastElementChild;
+      if (!l) return;
+      var yNext = parseInt(l.id.slice(4), 10) + 1;
+      var tmp2 = document.createElement('div'); tmp2.innerHTML = _yvYearHtml(yNext, today);
+      sc.appendChild(tmp2.firstElementChild);
+    }
+  });
+}
+function closeYearView() {
+  var ov = document.getElementById('yearViewOv');
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+}
+function _yvYearHtml(y, today) {
+  var now = new Date();
+  var h = '<div class="yv-year" id="yv-y' + y + '"><div class="yv-ylabel' + (y === now.getFullYear() ? ' cur' : '') + '">' + y + '年</div><div class="yv-mgrid">';
+  for (var m = 0; m < 12; m++) {
+    var lead = (new Date(y, m, 1).getDay() - _weekStart + 7) % 7;
+    var days = new Date(y, m + 1, 0).getDate();
+    h += '<div class="yv-month"><div class="yv-mname' + (y === now.getFullYear() && m === now.getMonth() ? ' cur' : '') + '" onclick="yvGo(' + y + ',' + m + ',\'\')">' + (m + 1) + '月</div><div class="yv-dgrid">';
+    for (var i = 0; i < lead; i++) h += '<span></span>';
+    for (var d = 1; d <= days; d++) {
+      var ds = y + '-' + evPad2(m + 1) + '-' + evPad2(d);
+      h += '<span class="yv-d' + (ds === today ? ' today' : '') + '" onclick="yvGo(' + y + ',' + m + ',\'' + ds + '\')">' + d + '</span>';
+    }
+    h += '</div></div>';
+  }
+  return h + '</div></div>';
+}
+function yvGo(y, m, ds) {
+  closeYearView();
+  if (ds) _calSelDate = ds;
+  _calYear = y; _calMonth = m;
+  var title = document.getElementById('evCalTitle');
+  if (title) title.textContent = _calYear + '年 ' + (_calMonth + 1) + '月';
+  if (_calScrollMode !== 'v') { renderCalendar(); if (typeof _calFadeGrid === 'function') _calFadeGrid(); }
+  else _calScrollToYmd(y + '-' + evPad2(m + 1) + '-' + (ds ? ds.slice(8, 10) : '01'), true);
 }
 function renderCalendar() {
   if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
