@@ -2166,7 +2166,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v379</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v380</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4802,7 +4802,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v379';
+  var DATA_VERSION = 'v380';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5660,6 +5660,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v380', d:'2026-08-19', items:['🔔同じリマインド通知が2通届く問題を修正：サーバーからのプッシュ通知と、アプリ内の古いローカルリマインダー（アプリを開いている間だけ動く仕組み）が両方発火していました。プッシュ登録済みの端末ではローカル側を止め、プッシュ1本に統一します（通知オフやプッシュ未登録の端末では従来どおりローカルで通知）'] },
   { v:'v379', d:'2026-08-19', items:['🎓研修「ステップを追加」の色の引き継ぎバグを完全修正：前回の修正は既存メンバーを開いた時だけで、「メンバー追加」画面にリセットが抜けていました（研修生を連続で追加すると前の人の色が残る）。追加・編集どちらの入口でも、ステップの色・選択・研修結果チップを必ず初期化します'] },
   { v:'v378', d:'2026-08-19', items:['🔗「＋続けて追加」でタスク/予定を追加すると関連メンバーの紐付けが外れるバグを修正（メンバーと種別を引き継いで開きます）','👥関連メンバーの選択に、結合中のDラインメンバー（🔗バッジ付き）も表示されるようになりました','🎓研修の「ステップを追加」で、前に開いたメンバーのステップの色（緑ハイライト）が引き継がれて表示されるバグを修正しました','📱モバイルのツリーで名前が縦書きになる問題を修正：名前は必ず横書きになり、収まらない場合はカードごと横に伸びてスクロールで見られます'] },
   { v:'v377', d:'2026-08-19', items:['⇅並べ替えボタンをチップ列の左端（「すべて」の前）に移動しました。スクロールしなくても常に見えます'] },
@@ -13848,6 +13849,12 @@ function evDateTime(e) {
 // リマインド通知チェック（60秒ごと＋随時呼び出し）
 function checkReminders() {
   if (!notifSupported() || Notification.permission !== 'granted') return;
+  // v380: この端末がPUSH登録済みならサーバーからの通知が届くため、アプリ内リマインダーは出さない。
+  //（両方生きていると、リマインド時刻にアプリを開いている時に同じ通知が2通届く。
+  //  ローカル通知はPUSH未登録・通知オフ端末向けのフォールバックとしてのみ残す）
+  try {
+    if (localStorage.getItem('gm_pushOff') !== '1' && localStorage.getItem('gm_fcmToken')) return;
+  } catch(eDup) {}
   var now = Date.now();
   var GRACE = 5 * 60000; // 予定時刻を5分過ぎたら以降は通知しない
   (state.events || []).forEach(function(e) {
