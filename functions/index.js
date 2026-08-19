@@ -33,14 +33,31 @@ exports.sendReminders = onSchedule(
         // v375: 45日以上更新のない登録は配信せず削除（再インストール前の残骸による重複通知の対策。
         //        アプリを開くたびに updatedAt が更新されるため、現役の端末は消えない）
         const cutoff = new Date(Date.now() - 45 * 86400000).toISOString();
+        const cand = [];
         toksSnap.docs.forEach((t) => {
-          const ts = (t.data() || {}).updatedAt || '';
+          const dd = t.data() || {};
+          const ts = dd.updatedAt || '';
           if (ts && ts < cutoff) {
             t.ref.delete().catch(() => {});
             console.log(`stale token pruned uid=${uid}`);
             return;
           }
-          tokens.push(t.id);
+          cand.push({ ref: t.ref, id: t.id, ts, dev: dd.device || '' });
+        });
+        // v382: 同じ端末ID(device)のトークンが複数残っている場合は最新の1件だけに送り、古い方は削除
+        //       （端末IDを持たないレガシー登録はそのまま送る）
+        const newestByDev = {};
+        cand.forEach((c) => {
+          if (!c.dev) { tokens.push(c.id); return; }
+          const cur = newestByDev[c.dev];
+          if (!cur || c.ts > cur.ts) newestByDev[c.dev] = c;
+        });
+        Object.keys(newestByDev).forEach((dv) => tokens.push(newestByDev[dv].id));
+        cand.forEach((c) => {
+          if (c.dev && newestByDev[c.dev].id !== c.id) {
+            c.ref.delete().catch(() => {});
+            console.log(`duplicate device token pruned uid=${uid}`);
+          }
         });
       } catch (e) { console.log(`token read error uid=${uid}: ${e}`); }
       console.log(`uid=${uid} tokens=${tokens.length}`); // v332: トークン0ならこの端末が未登録
