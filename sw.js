@@ -19,6 +19,9 @@ try {
   });
   var _fcm = firebase.messaging();
   _fcm.onBackgroundMessage(function (payload) {
+    // v382: notification付き配信はSDK/OSが自動表示するため、ここでも表示すると同じ通知が2通になる。
+    //        手動表示はデータのみのメッセージに限定（v330以降サーバーは常にnotification付きで送信）。
+    if (payload && payload.notification && (payload.notification.title || payload.notification.body)) return;
     var n = (payload && payload.notification) || {};
     var d = (payload && payload.data) || {};
     var title = n.title || d.title || 'GROOVE MAP';
@@ -55,7 +58,7 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v381';
+var CACHE = 'groove-map-v382';
 var ASSETS = [
   './',
   './index.html',
