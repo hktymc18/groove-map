@@ -1062,6 +1062,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-cell-bars{display:flex;flex-direction:column;flex:1;min-height:0;gap:0;margin-top:0;width:100%}
 .ev-slot{flex:1 1 0;min-height:0;overflow:visible;display:flex;align-items:stretch;padding-bottom:1px} /* v350: 連日帯が罫線の上まで塗れるようvisible（文字は.ev-bar側でクリップ） */
 .ev-slot .ev-bar{height:auto;display:flex;align-items:center;line-height:1;min-width:0;max-width:100%} /* v353: slotをvisibleにした副作用で文字幅に広がるのを防止 */
+.ev-slot .ev-bar.bar-tall{height:calc(100% - 1px);align-items:flex-start;padding-top:2px;white-space:normal;line-height:1.25;overflow:hidden} /* v386: 長時間予定の縦伸び帯 */
 .ev-more-badge{position:absolute;right:1px;bottom:1px;font-size:8px;font-weight:800;color:var(--text-dim);background:var(--surface3);border-radius:6px;padding:1px 4px;line-height:1.2;z-index:2}
 /* v302: はみ出しは「…」でなくクリップ（表示できる文字まで見せる）。v311: 8段化に合わせ少し大きく */
 .ev-bar{font-family:'Inter','Noto Sans JP',sans-serif;font-size:9.5px;font-weight:600;letter-spacing:-0.2px;line-height:1.3;padding:0 1px 0 2px;border-radius:2.5px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:clip;box-sizing:border-box;text-align:left}
@@ -2186,7 +2187,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v385</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v386</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4822,7 +4823,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v385';
+  var DATA_VERSION = 'v386';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5680,6 +5681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v386', d:'2026-08-20', items:['\u23f1\u6708\u8868\u793a\u3067\u3001\u4e88\u5b9a\u306e\u6642\u9593\u306e\u9577\u3055\u306b\u5fdc\u3058\u3066\u5e2f\u3092\u7e26\u306b\u4f38\u3070\u305b\u308b\u8a2d\u5b9a\u3092\u8ffd\u52a0\uff082\u6642\u9593\uff1d1\u884c\u30fb\u6700\u59274\u884c\u3002\u4f8b\uff1a4\u6642\u9593\u306e\u4e88\u5b9a\u306f2\u884c\u5206\u306e\u9ad8\u3055\uff09\u3002\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u2699\u8a2d\u5b9a\u2192\u300c\u4e88\u5b9a\u306e\u5e2f\u306e\u9ad8\u3055\u300d\u304b\u3089\u5207\u66ff\u3002\u65e2\u5b9a\u306f\u3053\u308c\u307e\u3067\u3069\u304a\u308a\u306e\u56fa\u5b9a1\u884c\u3067\u3059'] },
   { v:'v385', d:'2026-08-20', items:['\ud83d\udcc5 iPhone\u98a8\u306e\u5e74\u8868\u793a\u3092\u8ffd\u52a0\uff1a\u30ab\u30ec\u30f3\u30c0\u30fc\u4e0a\u90e8\u306e\u300c\u5e74\u6708\u300d\u3092\u30bf\u30c3\u30d7\u3059\u308b\u30681\u5e74\u5206\u306e\u30df\u30cb\u30ab\u30ec\u30f3\u30c0\u30fc\u304c\u7e26\u30b9\u30af\u30ed\u30fc\u30eb\u3067\u8868\u793a\u3055\u308c\u3001\u65e5\u4ed8\u3084\u6708\u3092\u30bf\u30c3\u30d7\u3059\u308b\u3068\u305d\u306e\u6708\u3078\u30b8\u30e3\u30f3\u30d7\u3067\u304d\u307e\u3059\uff08\u524d\u5f8c\u306e\u5e74\u306f\u81ea\u52d5\u3067\u8aad\u307f\u8db3\u3057\uff09\u3002\u300c\u4eca\u65e5\u3078\u300d\u306f\u5e74\u8868\u793a\u53f3\u4e0a\u306e\u300c\u4eca\u65e5\u300d\u30dc\u30bf\u30f3\u3078\u79fb\u52d5'] },
   { v:'v384', d:'2026-08-19', items:['\ud83d\udd22\u4e88\u5b9a\u30d0\u30fc\u306e\u6642\u523b\u306a\u3069\u3001\u53e4\u3044\u6570\u5b57\u30d5\u30a9\u30f3\u30c8\uff080\u306b\u70b9\u5165\u308a\uff09\u304c\u6b8b\u3063\u3066\u3044\u305f\u7b87\u6240\u3092\u5168\u3066\u63a2\u3057\u3066\u65e5\u4ed8\u3068\u540c\u3058\u30d5\u30a9\u30f3\u30c8\uff08Inter\uff09\u306b\u7d71\u4e00\u3057\u307e\u3057\u305f','\ud83d\udcc5\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u65e2\u5b9a\u3092\u65e5\u66dc\u59cb\u307e\u308a\u306b\u5909\u66f4\uff08\u2699\u8a2d\u5b9a\u3067\u6708\u66dc\u59cb\u307e\u308a\u306b\u3082\u623b\u305b\u307e\u3059\uff09','\ud83d\udd0d\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u65e5\u4ed8\u306e\u6570\u5b57\u3092\u62e1\u5927\uff08\u30e2\u30d0\u30a4\u30eb\u306f\u5c11\u3057\u3001PC\u306f\u3057\u3063\u304b\u308a\u5927\u304d\u304f\uff09'] },
   { v:'v383', d:'2026-08-19', items:['\ud83d\udd17\u7d50\u5408MAP\u306e\u9023\u9396\u8868\u793a\u306b\u5bfe\u5fdc\uff1a\u7d50\u5408\u3057\u305f\u76f8\u624b\u304c\u3055\u3089\u306b\u7d50\u5408\u3057\u3066\u3044\u308bD\u30e9\u30a4\u30f3\uff08\u5b6b\u968e\u5c64\uff09\u3082\u3001\u5171\u6709MAP\u3092\u958b\u304b\u305a\u306b\u81ea\u5206\u306eMAP\u306e\u30c4\u30ea\u30fc\u306b\u305d\u306e\u307e\u307e\u8868\u793a\u3055\u308c\u308b\u3088\u3046\u306b\u306a\u308a\u307e\u3057\u305f','\ud83d\udcdd\u30e1\u30e2\u304c\u9577\u3044\u3068\u30ab\u30fc\u30c9\u304c\u6a2a\u306b\u5e83\u304c\u308a\u3059\u304e\u308b\u554f\u984c\u3092\u4fee\u6b63\uff08\u30e1\u30e2\u306f\u30ab\u30fc\u30c9\u5185\u3067\u6298\u308a\u8fd4\u3057\u3001\u540d\u524d\u306e\u6a2a\u66f8\u304d\u306f\u7dad\u6301\uff09'] },
@@ -11284,6 +11286,15 @@ var _evMode    = 'agenda';   // 'agenda' | 'week' | 'calendar'
 try { var _evM0 = localStorage.getItem('gm_evMode'); if (_evM0 === 'calendar' || _evM0 === 'week' || _evM0 === 'agenda' || _evM0 === 'day') _evMode = _evM0; } catch(e) {}
 // S3: 週の始まり（1=月曜/0=日曜。月・週ビュー共通）
 var _weekStart = 0; // v384: 既定を日曜始まりに変更（設定で月曜へ切替可）
+// v386: 月表示で予定の帯を時間の長さに応じて縦に伸ばす（既定オフ＝1行固定）
+var _calBarDur = false;
+try { _calBarDur = localStorage.getItem('gm_barDur') === '1'; } catch(eBd) {}
+function setBarDur(v) {
+  _calBarDur = !!v;
+  try { localStorage.setItem('gm_barDur', v ? '1' : '0'); } catch(e) {}
+  renderCalendar();
+  openCalSettings(); // トグル表示を更新
+}
 try { var _ws0 = localStorage.getItem('gm_weekStart'); if (_ws0 === '0' || _ws0 === '1') _weekStart = parseInt(_ws0, 10); } catch(e) {}
 // v320: 月表示のスクロール方式（h=横＝1ヶ月ずつページ送り（既定）/ v=縦＝連続スクロール）
 var _calScrollMode = 'h';
@@ -13616,10 +13627,11 @@ function evColorOf(e) {
   return c ? c.color : '';
 }
 // カレンダーのバー1本
-function evBarHtml(e, span, contTitle) {
+function evBarHtml(e, span, contTitle, tall) {
   var t = evTodayYmd();
   var overdue = e.type === 'task' && !e.done && e.date && e.date < t;
   var cls = 'ev-bar', style = '';
+  if (tall) cls += ' bar-tall'; // v386: 時間の長さで縦に伸びた帯（タイトル折返し表示）
   // S1: 薄い色付き→ベタ塗り＋コントラスト文字色（暗背景でも読めるLifebear方式）
   var _col = evColorOf(e);
   if (_col) { style = ' style="background:' + _col + ';color:' + catTextColor(_col) + '"'; }
@@ -14064,6 +14076,11 @@ function openCalSettings() {
     + '<div class="rg">'
     + '<div class="rb' + (_calScrollMode !== 'v' ? ' sel' : '') + '" onclick="setCalScroll(\'h\')">↔ 横（1ヶ月ずつ）</div>'
     + '<div class="rb' + (_calScrollMode === 'v' ? ' sel' : '') + '" onclick="setCalScroll(\'v\')">↕ 縦（連続）</div>'
+    + '</div></div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">予定の帯の高さ（月表示）</label>'
+    + '<div class="rg">'
+    + '<div class="rb' + (!_calBarDur ? ' sel' : '') + '" onclick="setBarDur(false)">固定（1行）</div>'
+    + '<div class="rb' + (_calBarDur ? ' sel' : '') + '" onclick="setBarDur(true)">⏱ 時間の長さで伸ばす</div>'
     + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">下部タブの表示（タップで表示⇄非表示。予定・メニューは常時）</label>'
     + '<div class="rg">'
@@ -17006,6 +17023,7 @@ function renderCalendar() {
       });
       // v311: マスを8スロットの時間帯グリッドに（10件は詰まりすぎのため8件へ。18時≒中央基準）
       var slots = [null, null, null, null, null, null, null, null];
+      var slotSpan = [1, 1, 1, 1, 1, 1, 1, 1]; // v386: 帯が縦に占めるスロット数
       var extra = 0;
       var topFill = 0; // 祝日・帯・終日・時刻なしは上から詰める
       if (hol) { slots[0] = '<div class="ev-bar ev-hol">' + evEsc(hol) + '</div>'; topFill = 1; }
@@ -17024,12 +17042,29 @@ function renderCalendar() {
         for (var si = want; si < 8; si++) { if (!slots[si]) { placed = si; break; } }
         if (placed < 0) { for (var si2 = want - 1; si2 >= 0; si2--) { if (!slots[si2]) { placed = si2; break; } } }
         if (placed < 0) { extra++; continue; }
+        // v386: 設定オン時、時間の長さに応じて帯を縦に伸ばす（2時間=1行、最大4行、空きスロット分まで）
+        var lines = 1;
+        if (_calBarDur && !w2.span && w2.ev.time && w2.ev.endTime && !w2.ev.done) {
+          var _st9 = String(w2.ev.time).split(':'), _en9 = String(w2.ev.endTime).split(':');
+          var _dur9 = (parseInt(_en9[0], 10) * 60 + (parseInt(_en9[1], 10) || 0)) - (parseInt(_st9[0], 10) * 60 + (parseInt(_st9[1], 10) || 0));
+          if (_dur9 > 120) {
+            lines = Math.min(4, Math.ceil(_dur9 / 120));
+            var _avail9 = 1;
+            while (_avail9 < lines && placed + _avail9 < 8 && !slots[placed + _avail9]) _avail9++;
+            lines = _avail9;
+            for (var _k9 = 1; _k9 < lines; _k9++) slots[placed + _k9] = '__occ__';
+            slotSpan[placed] = lines;
+          }
+        }
         // v322: 週の先頭マス（i===0）では連日帯にタイトルを再表示
-        slots[placed] = evBarHtml(w2.ev, w2.span, (w2.span === 'm' || w2.span === 'e') && i === 0);
+        slots[placed] = evBarHtml(w2.ev, w2.span, (w2.span === 'm' || w2.span === 'e') && i === 0, lines > 1);
         if (w2.span || !w2.ev.time) topFill = placed + 1;
       }
       var bars = '';
-      for (var si3 = 0; si3 < 8; si3++) bars += '<div class="ev-slot">' + (slots[si3] || '') + '</div>';
+      for (var si3 = 0; si3 < 8; si3++) {
+        if (slots[si3] === '__occ__') continue; // v386: 伸びた帯が占有しているスロット
+        bars += '<div class="ev-slot"' + (slotSpan[si3] > 1 ? ' style="flex:' + slotSpan[si3] + ' 1 0"' : '') + '>' + (slots[si3] || '') + '</div>';
+      }
       if (extra > 0) bars += '<div class="ev-more-badge">+' + extra + '</div>';
       html += '<div class="' + cls + '" data-ds="' + ds + '" onclick="selCalDay(\'' + ds + '\')" ondblclick="evCellDblPC(\'' + ds + '\')">'
         + '<span class="' + numCls + '">' + (d === 1 ? ((cur.getMonth()+1) + '/1') : d) + '</span>'
