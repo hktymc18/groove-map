@@ -2166,7 +2166,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v378</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v379</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4802,7 +4802,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v378';
+  var DATA_VERSION = 'v379';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5660,6 +5660,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v379', d:'2026-08-19', items:['🎓研修「ステップを追加」の色の引き継ぎバグを完全修正：前回の修正は既存メンバーを開いた時だけで、「メンバー追加」画面にリセットが抜けていました（研修生を連続で追加すると前の人の色が残る）。追加・編集どちらの入口でも、ステップの色・選択・研修結果チップを必ず初期化します'] },
   { v:'v378', d:'2026-08-19', items:['🔗「＋続けて追加」でタスク/予定を追加すると関連メンバーの紐付けが外れるバグを修正（メンバーと種別を引き継いで開きます）','👥関連メンバーの選択に、結合中のDラインメンバー（🔗バッジ付き）も表示されるようになりました','🎓研修の「ステップを追加」で、前に開いたメンバーのステップの色（緑ハイライト）が引き継がれて表示されるバグを修正しました','📱モバイルのツリーで名前が縦書きになる問題を修正：名前は必ず横書きになり、収まらない場合はカードごと横に伸びてスクロールで見られます'] },
   { v:'v377', d:'2026-08-19', items:['⇅並べ替えボタンをチップ列の左端（「すべて」の前）に移動しました。スクロールしなくても常に見えます'] },
   { v:'v376', d:'2026-08-19', items:['⇅並べ替えボタンが「リスト/ラベル合計2個以上」の時しか表示されない条件だったのを、1個から表示するように変更しました（ボタンが見つからない問題の解消）'] },
@@ -8585,6 +8586,19 @@ function recalcCommission() {
 var TRAINEE_STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
 
 // ── 研修履歴UI（リニューアル） ──
+// v379: 研修ステップUIの完全リセット（開くたびに前のメンバーの色・選択・パネルを持ち越さない）
+function resetStepFlowUI() {
+  _selectedStep = '';
+  var p = document.getElementById('stepDetailPanel');
+  if (p) p.style.display = 'none';
+  var btns = document.querySelectorAll('.step-btn');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].classList.remove('active');
+    btns[i].style.background = '';
+    btns[i].style.borderColor = '';
+    btns[i].style.color = '';
+  }
+}
 function getTraineeMember() {
   var m = null;
   for (var j=0; j<state.members.length; j++) {
@@ -10745,6 +10759,8 @@ function openAdd() {
   var tsf = document.getElementById('traineeStatusFields');
   if (tsf) tsf.style.display = 'none'; // 新規追加時はリセット
   selStepResult('next');
+  resetStepFlowUI(); // v379: メンバー追加画面でも前のメンバーのステップ色を必ずリセット（v378の修正漏れ）
+  selTraineeResultChip(''); // 研修結果チップも初期化
   // 選択中の親を表示
   var pl = document.getElementById('parentLabel');
   if (selectedParentId) {
@@ -10834,12 +10850,7 @@ function openEdit(id) {
     var hw = document.getElementById('traineeHistoryWrap');
     if (hw) hw.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">まだ記録なし</div>';
     selStepResult('next');
-    // v378: 記録なしメンバーでも必ず再描画（前に開いたメンバーのステップ色が残るバグ修正）＋選択状態もリセット
-    _selectedStep = '';
-    var _sdp = document.getElementById('stepDetailPanel');
-    if (_sdp) _sdp.style.display = 'none';
-    var _sb = document.querySelectorAll('.step-btn');
-    for (var _sbi = 0; _sbi < _sb.length; _sbi++) _sb[_sbi].classList.remove('active');
+    resetStepFlowUI(); // v379: 前のメンバーの色・選択を即時リセット
     setTimeout(function(){ renderTraineeHistory(null); }, 60);
 
     var pl = document.getElementById('parentLabel');
