@@ -1926,6 +1926,9 @@ body.cal-fs .pc-toolbar{display:none!important}
 .ms-overlay.show{background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
 .ms-sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border2);padding:8px 16px calc(env(safe-area-inset-bottom) + 22px);transform:translateY(100%);transition:transform .25s ease}
 .ms-overlay.show .ms-sheet{transform:translateY(0)}
+/* v395: キーボード表示中はシートを画面上部へ（下端固定だとキーボードの裏に隠れるため） */
+.ms-overlay.kb-top{align-items:flex-start}
+.ms-overlay.kb-top .ms-sheet{border-radius:0 0 20px 20px;border-top:none;border-bottom:1px solid var(--border2);max-height:calc(var(--vvh,100dvh) - 10px)!important;overflow-y:auto}
 .ms-grip{width:38px;height:4px;border-radius:2px;background:var(--border2);margin:6px auto 14px}
 .ms-hd{display:flex;align-items:center;gap:11px;margin-bottom:16px}
 .ms-avatar{width:46px;height:46px;border-radius:12px;background:var(--surface3);color:var(--text-mid);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex:none}
@@ -2199,7 +2202,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v393</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v396</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3020,24 +3023,25 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span style="color:var(--text-dim)">▾</span>
       </div>
     </div>
+    <!-- v396: 関連メンバーは基本項目へ昇格（よく使うため） -->
+    <div class="fr">
+      <label class="fl">👤 関連メンバー（複数可・任意）</label>
+      <!-- v348: 複数選択＋名前検索のピッカーに変更 -->
+      <div class="ev-cat-field" onclick="openMemberPick()">
+        <span id="evMemberNames" style="flex:1;color:var(--text-dim)">（なし）</span>
+        <span style="color:var(--text-dim)">▾</span>
+      </div>
+    </div>
+    <div class="fr" id="evSelfShowRow" style="display:none">
+      <label class="fl">この予定・タスクの扱い（メンバー選択時）</label>
+      <div class="rg">
+        <div class="rb sel" id="evSelfShowOff" onclick="selEvSelfShow(false)">👤 メンバー専用（自分の画面に出さない）</div>
+        <div class="rb" id="evSelfShowOn" onclick="selEvSelfShow(true)">🗓 自分の予定/ToDoにも表示</div>
+      </div>
+    </div>
     <!-- A1: 詳細はデフォルト格納（ミニマル）。値が入っている時は自動で開く -->
-    <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（メンバー・優先度・メモ・場所）</div>
+    <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（優先度・メモ・場所）</div>
     <div id="evAdvWrap" style="display:none">
-      <div class="fr">
-        <label class="fl">関連メンバー（複数可・任意）</label>
-        <!-- v348: 複数選択＋名前検索のピッカーに変更 -->
-        <div class="ev-cat-field" onclick="openMemberPick()">
-          <span id="evMemberNames" style="flex:1;color:var(--text-dim)">（なし）</span>
-          <span style="color:var(--text-dim)">▾</span>
-        </div>
-      </div>
-      <div class="fr" id="evSelfShowRow" style="display:none">
-        <label class="fl">この予定・タスクの扱い（メンバー選択時）</label>
-        <div class="rg">
-          <div class="rb sel" id="evSelfShowOff" onclick="selEvSelfShow(false)">👤 メンバー専用（自分の画面に出さない）</div>
-          <div class="rb" id="evSelfShowOn" onclick="selEvSelfShow(true)">🗓 自分の予定/ToDoにも表示</div>
-        </div>
-      </div>
       <div class="fr" id="evPrioRow">
         <label class="fl">優先度</label>
         <div class="rg">
@@ -4920,7 +4924,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v393';
+  var DATA_VERSION = 'v396';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5859,6 +5863,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v396', d:'2026-08-20', items:['🐛月表示で、長い予定の後に登録した遅い時刻の予定が上の段に表示される（時系列が逆転する）バグを修正','👤「関連メンバー」を詳細から基本の入力項目に移動しました（よく使うため）','↕関連メンバーの選択リストが≡ハンドルのドラッグで並べ替えできるようになりました（並び順は保存されます）'] },
+  { v:'v395', d:'2026-08-20', items:['🐛予定の「関連メンバー」で名前検索するとシートがキーボードの裏に隠れるバグを修正：検索中はシートが画面上部に移動し、候補をタップしやすくなりました'] },
+  { v:'v394', d:'2026-08-20', items:['📳シェイクで「元に戻す」が最初から有効になりました（設定ボタンは不要のため削除）','⚙カレンダー設定から「テスト通知を送る」ボタンを削除してスッキリさせました'] },
   { v:'v393', d:'2026-08-20', items:['📍活動地域の選択肢を、メンバー編集の「地域」と同じリスト（東京・大阪・福岡・名古屋・熊本・大分・北九州＋その他自由入力）に統一しました','🏷ユニオンの選択肢にAMASIA・UPBDを追加（ATTACK LISTと同じリストに統一）'] },
   { v:'v392', d:'2026-08-20', items:['\ud83c\udfdb\u30e6\u30cb\u30aa\u30f3\u5171\u6709\u4e88\u5b9a\u3092\u65b0\u8a2d\uff1a\u30e6\u30cb\u30aa\u30f3\u7ba1\u7406\u8005\u304c\u4e88\u5b9a\u8ffd\u52a0\u3067\u300c\ud83c\udfdb\u30e6\u30cb\u30aa\u30f3\u5168\u54e1\u300d\u3092\u9078\u3076\u3068\u3001\u540c\u3058\u30e6\u30cb\u30aa\u30f3\uff08\u5fc5\u8981\u306a\u3089\u540c\u3058\u6d3b\u52d5\u5730\u57df\u9650\u5b9a\u3082\u53ef\uff09\u306e\u5168\u30e1\u30f3\u30d0\u30fc\u306e\u30ab\u30ec\u30f3\u30c0\u30fc\u306b\u81ea\u52d5\u8868\u793a\u3055\u308c\u307e\u3059\uff08\u5404\u81ea\u306e\u5165\u529b\u4e0d\u8981\u30fb\u5909\u66f4\u3082\u5373\u53cd\u6620\uff09','\ud83c\udfdb\u30e1\u30cb\u30e5\u30fc\u306b\u300c\u30e6\u30cb\u30aa\u30f3\u4e88\u5b9a\u300d\u4e00\u89a7\u3092\u8ffd\u52a0\u3002\u8868\u793a\u306e\u30aa\u30f3/\u30aa\u30d5\u3084\u3001\u4e88\u5b9a\u3054\u3068\u306e\u975e\u8868\u793a\u3082\u3067\u304d\u307e\u3059\uff08\ud83c\udfdb\u30d0\u30c3\u30b8\u3067\u81ea\u5206\u306e\u4e88\u5b9a\u3068\u533a\u5225\uff09','📍プロフィールの活動地域が選択式になりました（ATTACK LISTと同じ運用。既存の入力値はそのまま選択肢に表示）。ユニオン選択でUPBDが自動入力される仕組みは従来どおりです'] },
   { v:'v391', d:'2026-08-20', items:['\ud83d\udda5PC\u306e\u6708\u8868\u793a\uff1a\u4e88\u5b9a\u306e\u6bb5\u6570\u30928\u21926\u306b\u3057\u3066\u5e2f\u306b\u7e26\u306e\u3086\u3068\u308a\u3092\u78ba\u4fdd\uff08\u6587\u5b57\u30b5\u30a4\u30ba\u306f\u7dad\u6301\uff09','\ud83d\udd52\u4e88\u5b9a\u306e\u6642\u523b\u3092\u7d30\u5b57\u306b\u3057\u3066\u4ef6\u540d\u3068\u306e\u5dee\u3092\u660e\u78ba\u5316\u3002PC\u306f\u5206\u307e\u3067\u8868\u793a\uff08\u4f8b\uff1a19:45 \u54b2\u826f\u30de\u30b1\uff09','\ud83d\udccf\u6642\u523b\u30921\u6841\u30fb2\u6841\u3069\u3061\u3089\u3067\u3082\u4ef6\u540d\u306e\u958b\u59cb\u4f4d\u7f6e\u304c\u63c3\u3046\u3088\u3046\u306b\u56fa\u5b9a\u5e45\u30fb\u7b49\u5e45\u6570\u5b57\u5316\uff08PC\u30fb\u30e2\u30d0\u30a4\u30eb\u5171\u901a\uff09'] },
@@ -13364,7 +13371,7 @@ function gmShakeEnable() {
 // v375: iOSは「操作なし」でrequestPermissionを呼ぶと拒否されるため、リスナーは無条件で張り
 //（許可済みならそのまま発火する）、最初のタップ時に許可状態を取り直す2段構えに修正
 setTimeout(function(){
-  var on = false; try { on = localStorage.getItem('gm_shake') === '1'; } catch(e0) {}
+  var on = true; try { on = localStorage.getItem('gm_shake') !== '0'; } catch(e0) {} // v394: 既定オン（'0'で明示オフ）
   if (!on) return;
   _gmShakeAttach();
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -14490,9 +14497,7 @@ function openCalSettings() {
     + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
-    + '<button class="fol-add" style="margin-top:8px" onclick="pushSendTest()">📨 テスト通知を送る（1〜2分後に届きます）</button>'
     + '<button class="fol-add" style="margin-top:8px" onclick="pushClearOtherTokens()">🧹 通知が2重に届く時はこちら（古い登録を掃除）</button>'
-    + '<button class="fol-add" style="margin-top:8px" onclick="gmShakeEnable()">📳 シェイクで「元に戻す」を有効にする</button>'
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
     + gcalRow
@@ -16405,7 +16410,7 @@ function evActDuplicate(id) {
   // v315: ★・リスト・ラベルも複製に引き継ぐ
   _evStar = !!src.star; _evListId = src.listId || ''; _evLabelId = src.labelId || '';
   _evStarRender(); updateTodoMetaDisplay();
-  evToggleAdv(!!(src.categoryId || src.memberId || (src.subtasks || []).length || src.priority === 'high'));
+  evToggleAdv(!!((src.subtasks || []).length || src.priority === 'high')); // v396: メンバーは基本項目化
   toast('⧉ 内容をコピーしました。日付を変えて保存してください');
 }
 // B1: 繰り返しシリーズの「この回＋以降」を一括削除
@@ -17424,6 +17429,7 @@ function renderCalendar() {
       var slots = [], slotSpan = []; // v386: slotSpan=帯が縦に占めるスロット数 / v391: 段数はPC6・モバイル8
       for (var s0 = 0; s0 < _slotN; s0++) { slots.push(null); slotSpan.push(1); }
       var extra = 0;
+      var lastTimed = -1; // v396: 直前に置いた時刻付き予定の最下段（時系列の逆転防止）
       var topFill = 0; // 祝日・帯・終日・時刻なしは上から詰める
       if (hol) { slots[0] = '<div class="ev-bar ev-hol">' + evEsc(hol) + '</div>'; topFill = 1; }
       for (var bi = 0; bi < dayList.length; bi++) {
@@ -17438,8 +17444,16 @@ function renderCalendar() {
           if (want > _slotN - 1) want = _slotN - 1;
         }
         var placed = -1;
-        for (var si = want; si < _slotN; si++) { if (!slots[si]) { placed = si; break; } }
-        if (placed < 0) { for (var si2 = want - 1; si2 >= 0; si2--) { if (!slots[si2]) { placed = si2; break; } } }
+        if (!w2.span && w2.ev.time) {
+          // v396: 時系列の維持 — 先に置いた時刻付き予定より上の段には置かない
+          //（帯の伸長などで下段が埋まった時に、遅い時刻の予定が上へ繰り上がって順序が逆転していた）
+          if (want <= lastTimed) want = lastTimed + 1;
+          for (var si = want; si < _slotN; si++) { if (!slots[si]) { placed = si; break; } }
+          if (placed < 0) { for (var si2 = want - 1; si2 > lastTimed; si2--) { if (!slots[si2]) { placed = si2; break; } } }
+        } else {
+          for (var siA = want; siA < _slotN; siA++) { if (!slots[siA]) { placed = siA; break; } }
+          if (placed < 0) { for (var si2A = want - 1; si2A >= 0; si2A--) { if (!slots[si2A]) { placed = si2A; break; } } }
+        }
         if (placed < 0) { extra++; continue; }
         // v386: 設定オン時、時間の長さに応じて帯を縦に伸ばす（2時間=1行、最大4行、空きスロット分まで）
         var lines = 1;
@@ -17458,6 +17472,7 @@ function renderCalendar() {
         // v322: 週の先頭マス（i===0）では連日帯にタイトルを再表示
         slots[placed] = evBarHtml(w2.ev, w2.span, (w2.span === 'm' || w2.span === 'e') && i === 0, lines > 1);
         if (w2.span || !w2.ev.time) topFill = placed + 1;
+        else lastTimed = placed + lines - 1; // v396
       }
       var bars = '';
       for (var si3 = 0; si3 < _slotN; si3++) {
@@ -17973,6 +17988,81 @@ function selEvPrio(p) {
   if (a) a.classList.toggle('sel', p === 'normal');
   if (b) b.classList.toggle('sel', p === 'high');
 }
+// v396: 関連メンバーピッカーの並び順（≡ハンドルのドラッグで変更・保存）
+var _mpOrder = null, _mpOrderLoaded = false;
+function _mpOrderLoad() {
+  if (_mpOrderLoaded || !db || !currentUser) return;
+  _mpOrderLoaded = true;
+  fsGet('maps/' + currentUser.uid + '/meta/mpOrder').then(function(d) {
+    _mpOrder = (d && d.ids) ? d.ids : null;
+    var box = document.getElementById('mpList');
+    var sIn = document.getElementById('mpSearch');
+    if (box) _mpRenderList(sIn ? sIn.value : '');
+  }).catch(function(){});
+}
+function _mpOrderSave() {
+  if (!db || !currentUser || !_mpOrder) return;
+  fsSet('maps/' + currentUser.uid + '/meta/mpOrder', { ids: _mpOrder, updatedAt: new Date().toISOString() });
+}
+function _mpApplyOrder(list) {
+  if (!_mpOrder || !_mpOrder.length) return list;
+  var idx = {};
+  _mpOrder.forEach(function(id, i) { idx[id] = i; });
+  return list.slice().sort(function(a, b) {
+    var ai = (idx[a.id] !== undefined) ? idx[a.id] : 99999;
+    var bi = (idx[b.id] !== undefined) ? idx[b.id] : 99999;
+    return ai - bi;
+  });
+}
+function _mpDndBind(box) {
+  if (!box || box._mpDnd) return;
+  box._mpDnd = true;
+  var drag = null;
+  function rowAt(x, y) {
+    var el2 = document.elementFromPoint(x, y);
+    return (el2 && el2.closest) ? el2.closest('.mp-row') : null;
+  }
+  function move(x, y, ev) {
+    if (!drag) return;
+    if (ev && ev.cancelable) ev.preventDefault();
+    var over = rowAt(x, y);
+    if (!over || over === drag) return;
+    var rc = over.getBoundingClientRect();
+    if (y < rc.top + rc.height / 2) over.parentNode.insertBefore(drag, over);
+    else over.parentNode.insertBefore(drag, over.nextSibling);
+  }
+  function end() {
+    if (!drag) return;
+    drag.classList.remove('tpl-dragging');
+    drag = null;
+    var ids = [];
+    var rs = box.querySelectorAll('.mp-row');
+    for (var i = 0; i < rs.length; i++) ids.push(rs[i].getAttribute('data-mid'));
+    _mpOrder = ids;
+    _mpOrderSave();
+    toast('並び順を保存しました');
+  }
+  box.addEventListener('touchstart', function(ev) {
+    var h = (ev.target && ev.target.closest) ? ev.target.closest('.mp-handle') : null;
+    if (!h) return;
+    drag = h.closest('.mp-row');
+    if (drag) { drag.classList.add('tpl-dragging'); try { if (navigator.vibrate) navigator.vibrate(8); } catch(e0) {} }
+  }, { passive: true });
+  box.addEventListener('touchmove', function(ev) { if (drag) move(ev.touches[0].clientX, ev.touches[0].clientY, ev); }, { passive: false });
+  box.addEventListener('touchend', end, { passive: true });
+  box.addEventListener('touchcancel', end, { passive: true });
+  box.addEventListener('mousedown', function(ev) {
+    var h = (ev.target && ev.target.closest) ? ev.target.closest('.mp-handle') : null;
+    if (!h) return;
+    ev.preventDefault();
+    drag = h.closest('.mp-row');
+    if (drag) drag.classList.add('tpl-dragging');
+    var mm = function(e2) { move(e2.clientX, e2.clientY, e2); };
+    var mu = function() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); end(); };
+    document.addEventListener('mousemove', mm);
+    document.addEventListener('mouseup', mu);
+  });
+}
 // v348: 関連メンバー＝複数選択＋名前検索のピッカー
 var _evMemberIds = [];
 var _evSelfShow = false; // v361: メンバー紐付け時に自分の画面にも出すか（既定: 出さない）
@@ -18017,7 +18107,15 @@ function openMemberPick() {
     + '<div class="btn-row" style="margin-top:12px"><button class="btn-p" style="flex:1" onclick="closeMemberPick()">完了</button></div>'
     + '</div></div>';
   document.body.appendChild(ov);
+  // v395: 検索欄フォーカス中はシートを上部に移動（下端のままだとiOSキーボードの裏に沈むバグ）
+  if (typeof isPCMode !== 'function' || !isPCMode()) {
+    ov.addEventListener('focusin', function(e2){ if (e2.target && e2.target.id === 'mpSearch') ov.classList.add('kb-top'); });
+    ov.addEventListener('focusout', function(e2){
+      if (e2.target && e2.target.id === 'mpSearch') setTimeout(function(){ ov.classList.remove('kb-top'); }, 150);
+    });
+  }
   requestAnimationFrame(function(){ ov.classList.add('show'); });
+  _mpOrderLoad(); // v396: 保存済みの並び順を取得（取得後に再描画）
   _mpRenderList('');
 }
 function _mpRenderList(q) {
@@ -18027,19 +18125,23 @@ function _mpRenderList(q) {
   var h = '';
   // v378: 結合中のDラインメンバー（🔗）も選択できるように合成リストを使う
   var _mpBase = (typeof composeMergedInto === 'function') ? composeMergedInto(membersForMap('current'), 'current') : (state.members || []);
+  _mpBase = _mpApplyOrder(_mpBase); // v396: 保存した並び順を適用
+  var showHandle = !q; // 検索中はドラッグ並べ替え非表示
   _mpBase.forEach(function(m){
     if (m.deleted) return;
     var name = ((m.lastName||'') + ' ' + (m.firstName||'')).trim() || '(無名)';
     if (q && name.toLowerCase().replace(/\s+/g, '').indexOf(q) < 0) return;
     var on = _evMemberIds.indexOf(m.id) >= 0;
     var isMg = /^MG_/.test(m.id);
-    h += '<div class="td-home-row" onclick="mpToggle(\'' + m.id + '\')">'
+    h += '<div class="td-home-row mp-row" data-mid="' + m.id + '" onclick="mpToggle(\'' + m.id + '\')">'
       + '<span class="td-chk' + (on ? ' on' : '') + '" style="width:22px;height:22px;font-size:12px">' + (on ? '✓' : '') + '</span>'
       + '<span class="td-hname">' + evEsc(name) + (m.title ? ' <span style="font-size:11px;color:var(--text-dim)">' + evEsc(m.title) + '</span>' : '')
       + (isMg ? ' <span class="merged-badge">🔗' + evEsc(m._ownerName || '結合') + '</span>' : '') + '</span>'
+      + (showHandle ? '<span class="tdo-handle mp-handle" style="width:30px;height:30px;font-size:15px" onclick="event.stopPropagation()">≡</span>' : '')
       + '</div>';
   });
   box.innerHTML = h || '<div class="ev-empty" style="padding:14px">該当するメンバーがいません</div>';
+  _mpDndBind(box); // v396: ≡ドラッグで並べ替え
 }
 function mpToggle(id) {
   var ix = _evMemberIds.indexOf(id);
@@ -18919,11 +19021,11 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   var _rw = document.getElementById('evRepeatUntilWrap');
   if (_rw) _rw.style.display = 'none';
   // A1: 詳細に値が入っている時だけ自動で開く（新規はミニマル表示）。v316: 通知・メモは常時表示になったため条件から除外
-  var _hasAdv = !!(e && ((e.memberId) || (e.memberIds && e.memberIds.length) || e.priority === 'high' || e.memo || e.place)); // v350: カテゴリはメイン項目化・メモは詳細へ
+  var _hasAdv = !!(e && (e.priority === 'high' || e.memo || e.place)); // v396: メンバーは基本項目化
   // v329: 場所
   var _pl = document.getElementById('evPlace');
   if (_pl) _pl.value = e ? (e.place || '') : '';
-  evToggleAdv(_hasAdv || !!presetMember);
+  evToggleAdv(_hasAdv);
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : (effType === 'task' ? 0 : ''); // v344: 新規タスクは通知「時刻ちょうど」が既定
   document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
