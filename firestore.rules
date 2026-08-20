@@ -182,6 +182,17 @@ service cloud.firestore {
       allow read, write: if isSelf(uid) || isAdmin();
     }
 
+    // ============ v392: ユニオン共有予定（セミナー等の一括配信・購読型） ============
+    // 読み: 同じユニオンに所属するメンバー。書き: オーナー or 同ユニオンの管理者(role=='admin')。
+    match /unions/{un}/events/{eid} {
+      allow read: if signedIn() && profileExists(request.auth.uid)
+                  && profile(request.auth.uid).get('union', '') == un;
+      allow create, update, delete: if isOwnerAdmin()
+        || (signedIn() && profileExists(request.auth.uid)
+            && profile(request.auth.uid).get('role', '') == 'admin'
+            && profile(request.auth.uid).get('union', '') == un);
+    }
+
     // ============ MAP 受信側の共有インデックス ============
     match /sharedWith/{uid}/from/{ownerUid} {
       allow read:   if isSelf(uid) || isAdmin();
