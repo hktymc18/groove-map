@@ -2202,7 +2202,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v396</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v397</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4924,7 +4924,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v396';
+  var DATA_VERSION = 'v397';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5863,6 +5863,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v397', d:'2026-08-20', items:['🖥PC月表示の段割りを夜間中心に変更：〜13時台／14〜17／18〜19／20〜21／22〜23／24時以降 の6段になりました（22時半以降の予定もきちんと表示されます）'] },
   { v:'v396', d:'2026-08-20', items:['🐛月表示で、長い予定の後に登録した遅い時刻の予定が上の段に表示される（時系列が逆転する）バグを修正','👤「関連メンバー」を詳細から基本の入力項目に移動しました（よく使うため）','↕関連メンバーの選択リストが≡ハンドルのドラッグで並べ替えできるようになりました（並び順は保存されます）'] },
   { v:'v395', d:'2026-08-20', items:['🐛予定の「関連メンバー」で名前検索するとシートがキーボードの裏に隠れるバグを修正：検索中はシートが画面上部に移動し、候補をタップしやすくなりました'] },
   { v:'v394', d:'2026-08-20', items:['📳シェイクで「元に戻す」が最初から有効になりました（設定ボタンは不要のため削除）','⚙カレンダー設定から「テスト通知を送る」ボタンを削除してスッキリさせました'] },
@@ -17439,9 +17440,14 @@ function renderCalendar() {
           want = topFill;
         } else {
           var hh2 = parseInt(String(w2.ev.time).split(':')[0], 10) || 0;
-          want = Math.floor((hh2 - 8) / 3); // 8時以前=最上段、3時間で1段
-          if (want < 0) want = 0;
-          if (want > _slotN - 1) want = _slotN - 1;
+          if (_slotN === 6) {
+            // v397: PCの段割り＝〜13時台 / 14〜17 / 18〜19 / 20〜21 / 22〜23 / 24時以降（夜間を細かく）
+            want = hh2 <= 13 ? 0 : (hh2 <= 17 ? 1 : (hh2 <= 19 ? 2 : (hh2 <= 21 ? 3 : (hh2 <= 23 ? 4 : 5))));
+          } else {
+            want = Math.floor((hh2 - 8) / 3); // モバイル: 8時以前=最上段、3時間で1段
+            if (want < 0) want = 0;
+            if (want > _slotN - 1) want = _slotN - 1;
+          }
         }
         var placed = -1;
         if (!w2.span && w2.ev.time) {
