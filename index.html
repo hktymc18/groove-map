@@ -1052,7 +1052,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 #calNextBar{flex:none;padding:3px 14px 6px;font-size:11.5px;color:var(--accent);font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #calNextBar b{font-weight:800}
 .ev-cell-num{font-size:12px;font-weight:600;color:var(--text);width:20px;height:20px;line-height:20px;border-radius:50%;margin:1px auto;padding:0;text-align:center} /* v384: 日付数字を少し拡大 */
-@media(min-width:768px){.ev-cell-num{font-size:13.5px;width:23px;height:23px;line-height:23px}} /* v384: PCは大きく（v389: 帯の余白確保のためやや調整） */
+@media(min-width:768px){.ev-cell-num{font-size:13.5px;width:22px;height:22px;line-height:22px}} /* v384: PCは大きく（v391: 帯の余白確保で微調整） */
 /* v389: PCの帯は行送りを確保して文字が帯からはみ出さないように（line-height:1だと日本語グリフが背景の上下へはみ出す） */
 @media(min-width:768px){.ev-slot .ev-bar{line-height:1.35;font-size:10.5px;padding:0 3px;border-radius:3px}}
 .ev-cell-num.sun,.ev-cell-num.hol{color:var(--red)}
@@ -1068,7 +1068,9 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .ev-more-badge{position:absolute;right:1px;bottom:1px;font-size:8px;font-weight:800;color:var(--text-dim);background:var(--surface3);border-radius:6px;padding:1px 4px;line-height:1.2;z-index:2}
 /* v302: はみ出しは「…」でなくクリップ（表示できる文字まで見せる）。v311: 8段化に合わせ少し大きく */
 .ev-bar{font-family:'Inter','Noto Sans JP',sans-serif;font-size:9.5px;font-weight:600;letter-spacing:-0.2px;line-height:1.3;padding:0 1px 0 2px;border-radius:2.5px;width:100%;white-space:nowrap;overflow:hidden;text-overflow:clip;box-sizing:border-box;text-align:left}
-.ev-bar b{font-weight:800;font-family:'Inter','IBM Plex Mono',monospace}
+.ev-bar b{font-weight:400;font-family:'Inter','IBM Plex Mono',monospace;flex:none;text-align:left;font-variant-numeric:tabular-nums} /* v391: 時刻は細字＋等幅数字で件名と区別 */
+.ev-bar b.tmh{width:2.5ch} /* 時のみ（モバイル）: 1〜2桁でも件名の開始位置を揃える */
+.ev-bar b.tmf{width:5ch}   /* 時:分（PC） */
 .ev-bar.bar-task{background:var(--accent);color:var(--go-ink)}
 .ev-bar.bar-event{background:var(--purple);color:#fff}
 .ev-bar.bar-overdue{background:var(--red);color:#fff}
@@ -1151,6 +1153,12 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .yv-dgrid{display:grid;grid-template-columns:repeat(7,1fr);row-gap:1px}
 .yv-d{font-size:9.5px;font-weight:600;color:var(--text);text-align:center;line-height:16px;height:16px;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif;border-radius:50%}
 .yv-d.today{background:var(--accent);color:var(--go-ink);font-weight:800}
+/* v390: PC時刻ドロップダウン（Googleカレンダー式・15分刻み） */
+.pc-timedrop{position:fixed;z-index:4000;background:var(--surface);border:1px solid var(--border2);border-radius:10px;box-shadow:0 10px 32px rgba(0,0,0,.45);max-height:248px;overflow-y:auto}
+.tdr-row{height:31px;box-sizing:border-box;padding:7px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Inter','Noto Sans JP',sans-serif;color:var(--text)}
+.tdr-row:hover{background:var(--surface3)}
+.tdr-row.cur{color:var(--accent);font-weight:700}
+.tdr-hint{color:var(--text-dim);font-size:11px}
 /* v387: オフラインバナー（下部タブの上・操作の邪魔をしない細帯） */
 #netBanner{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom) + 62px);z-index:1250;background:#B8860B;color:#fff;font-size:11px;font-weight:700;line-height:1.4;padding:7px 12px;border-radius:10px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none}
 #map3dCanvasWrap{flex:1;min-height:0;position:relative;overflow:hidden}
@@ -2191,7 +2199,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v389</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v391</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4866,7 +4874,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v389';
+  var DATA_VERSION = 'v391';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5103,20 +5111,85 @@ function _vvhUpdate() {
   } catch(e9) {}
 }
 // v354: PCは時刻をキーボードで直接入力可（1600→16:00に自動整形。モバイルは従来のテンキー）
+// v390: クリックで15分刻みのドロップダウン（Googleカレンダー式）。直接入力も併用可
+var _tdrEl = null;
+function _pcTimeDropClose() {
+  if (_tdrEl && _tdrEl.parentNode) _tdrEl.parentNode.removeChild(_tdrEl);
+  _tdrEl = null;
+}
+function _pcTimeDropOpen(el, startPairId, endPairId) {
+  _pcTimeDropClose();
+  var startVal = startPairId ? ((document.getElementById(startPairId) || {}).value || '') : '';
+  var smin = -1;
+  if (startVal && /^\d{1,2}:\d{2}$/.test(startVal)) {
+    smin = parseInt(startVal.split(':')[0], 10) * 60 + parseInt(startVal.split(':')[1], 10);
+  }
+  var rows = '';
+  for (var i = 0; i < 96; i++) {
+    var hh = Math.floor(i / 4), mm = (i % 4) * 15;
+    var tv = (hh < 10 ? '0' + hh : '' + hh) + ':' + (mm === 0 ? '00' : '' + mm);
+    var hint = '';
+    if (smin >= 0) {
+      var dm = hh * 60 + mm - smin;
+      if (dm > 0) hint = '<span class="tdr-hint">' + (dm >= 60 ? (Math.floor(dm / 60) + '時間' + (dm % 60 ? (dm % 60) + '分' : '')) : dm + '分') + '</span>';
+    }
+    rows += '<div class="tdr-row' + (el.value === tv ? ' cur' : '') + '" data-tv="' + tv + '">' + tv + hint + '</div>';
+  }
+  var pop = document.createElement('div');
+  pop.className = 'pc-timedrop';
+  pop.innerHTML = rows;
+  var rect = el.getBoundingClientRect();
+  pop.style.left = Math.round(rect.left) + 'px';
+  pop.style.width = Math.round(Math.min(Math.max(rect.width, 130), 220)) + 'px';
+  var below = window.innerHeight - rect.bottom;
+  if (below < 260 && rect.top > 260) { pop.style.bottom = Math.round(window.innerHeight - rect.top + 4) + 'px'; }
+  else { pop.style.top = Math.round(rect.bottom + 4) + 'px'; }
+  pop.addEventListener('mousedown', function(ev){ ev.preventDefault(); }); // 行クリックでinputのblurを起こさない
+  pop.addEventListener('click', function(ev){
+    var r = (ev.target && ev.target.closest) ? ev.target.closest('.tdr-row') : null;
+    if (!r) return;
+    el.value = r.getAttribute('data-tv');
+    _pcTimeDropClose();
+    // 開始時刻を選んだら、終了時刻が空なら+1時間を自動セット
+    if (endPairId) {
+      var en = document.getElementById(endPairId);
+      if (en && !en.value && typeof _tplpAddMin === 'function') en.value = _tplpAddMin(el.value, 60) || '';
+    }
+  });
+  document.body.appendChild(pop);
+  _tdrEl = pop;
+  // 現在値（無ければ開始時刻→9:00）付近へスクロール
+  var tgt = el.value || startVal || '09:00';
+  var ti = (parseInt(tgt.split(':')[0], 10) || 9) * 4 + Math.floor((parseInt(tgt.split(':')[1], 10) || 0) / 15);
+  pop.scrollTop = Math.max(0, ti * 31 - 93);
+}
 function _pcTimeInputs(ids) {
   if (typeof isPCMode !== 'function' || !isPCMode()) return;
-  (ids || ['evTime', 'evTimeEnd']).forEach(function(idn){
+  var pair = ids || ['evTime', 'evTimeEnd'];
+  pair.forEach(function(idn, ix){
     var el = document.getElementById(idn);
     if (!el) return;
     el.readOnly = false;
-    el.onclick = null; // テンキーは開かない
     el.placeholder = '例 1930';
+    el.onclick = function(){ _pcTimeDropOpen(el, ix > 0 ? pair[0] : '', ix === 0 && pair.length > 1 ? pair[1] : ''); }; // v390: ドロップダウン
+    el.onkeydown = function(ev){ if (ev.key === 'Escape') _pcTimeDropClose(); };
     el.onblur = function(){
       var v = (el.value || '').replace(/[^0-9]/g, '');
       el.value = v ? _tpParse(v) : '';
+      setTimeout(_pcTimeDropClose, 120);
     };
   });
 }
+// v390: PCは日付欄クリックでカレンダー（ネイティブピッカー）を開く — アプリ内の全date入力に適用
+document.addEventListener('click', function(ev){
+  try {
+    if (typeof isPCMode !== 'function' || !isPCMode()) return;
+    var el = ev.target;
+    if (el && el.tagName === 'INPUT' && el.type === 'date' && !el.readOnly && !el.disabled && el.showPicker) {
+      el.showPicker();
+    }
+  } catch(ePk) {}
+}, true);
 setTimeout(_pcTimeInputs, 800);
 _vvhUpdate();
 // iOSは起動直後にviewportが数回変わることがあるため、落ち着くまで数回取り直す
@@ -5739,6 +5812,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v391', d:'2026-08-20', items:['\ud83d\udda5PC\u306e\u6708\u8868\u793a\uff1a\u4e88\u5b9a\u306e\u6bb5\u6570\u30928\u21926\u306b\u3057\u3066\u5e2f\u306b\u7e26\u306e\u3086\u3068\u308a\u3092\u78ba\u4fdd\uff08\u6587\u5b57\u30b5\u30a4\u30ba\u306f\u7dad\u6301\uff09','\ud83d\udd52\u4e88\u5b9a\u306e\u6642\u523b\u3092\u7d30\u5b57\u306b\u3057\u3066\u4ef6\u540d\u3068\u306e\u5dee\u3092\u660e\u78ba\u5316\u3002PC\u306f\u5206\u307e\u3067\u8868\u793a\uff08\u4f8b\uff1a19:45 \u54b2\u826f\u30de\u30b1\uff09','\ud83d\udccf\u6642\u523b\u30921\u6841\u30fb2\u6841\u3069\u3061\u3089\u3067\u3082\u4ef6\u540d\u306e\u958b\u59cb\u4f4d\u7f6e\u304c\u63c3\u3046\u3088\u3046\u306b\u56fa\u5b9a\u5e45\u30fb\u7b49\u5e45\u6570\u5b57\u5316\uff08PC\u30fb\u30e2\u30d0\u30a4\u30eb\u5171\u901a\uff09'] },
+  { v:'v390', d:'2026-08-20', items:['\ud83d\udda5PC\u306e\u65e5\u4ed8\u5165\u529b\uff1a\u6b04\u3092\u30af\u30ea\u30c3\u30af\u3059\u308b\u3060\u3051\u3067\u30ab\u30ec\u30f3\u30c0\u30fc\u304c\u958b\u304f\u3088\u3046\u306b\uff08\u30bf\u30b9\u30af\u671f\u9650\u30fb\u4e88\u5b9a\u30fb\u7e70\u308a\u8fd4\u3057\u7d42\u4e86\u65e5\u30fb\u8a95\u751f\u65e5\u30fb\u7814\u4fee\u65e5\u306a\u3069\u30a2\u30d7\u30ea\u5185\u306e\u5168\u3066\u306e\u65e5\u4ed8\u6b04\u306b\u9069\u7528\uff09','\ud83d\udda5PC\u306e\u6642\u523b\u5165\u529b\uff1a\u30af\u30ea\u30c3\u30af\u3067Google\u30ab\u30ec\u30f3\u30c0\u30fc\u5f0f\u306e15\u5206\u523b\u307f\u30c9\u30ed\u30c3\u30d7\u30c0\u30a6\u30f3\u3092\u8868\u793a\u3002\u7d42\u4e86\u6642\u523b\u306b\u306f\u6240\u8981\u6642\u9593\u306e\u30d2\u30f3\u30c8\u4ed8\u304d\u3001\u958b\u59cb\u3092\u9078\u3076\u3068\u7d42\u4e86\u306b+1\u6642\u9593\u3092\u81ea\u52d5\u30bb\u30c3\u30c8\u3002\u300c1930\u300d\u306e\u3088\u3046\u306a\u30ad\u30fc\u30dc\u30fc\u30c9\u76f4\u63a5\u5165\u529b\u3082\u5f15\u304d\u7d9a\u304d\u4f7f\u3048\u307e\u3059'] },
   { v:'v389', d:'2026-08-20', items:['\ud83d\udda5PC\u306e\u6708\u8868\u793a\u3067\u4e88\u5b9a\u306e\u6587\u5b57\u304c\u5e2f\u304b\u3089\u306f\u307f\u51fa\u3059\u554f\u984c\u3092\u4fee\u6b63\uff1a\u5e2f\u306e\u884c\u9001\u308a\u3092\u78ba\u4fdd\u3057\u3066\u6587\u5b57\u304c1\u884c\u306e\u5e2f\u306b\u53ce\u307e\u308b\u3088\u3046\u306b\u3057\u3001\u6587\u5b57\u3082\u5c11\u3057\u8aad\u307f\u3084\u3059\u304f\u62e1\u5927\u3002\u65e5\u4ed8\u306e\u6570\u5b57\u306f\u4f59\u767d\u78ba\u4fdd\u306e\u305f\u3081\u3084\u3084\u8abf\u6574\u3057\u307e\u3057\u305f'] },
   { v:'v388', d:'2026-08-20', items:['\ud83d\udee0\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u8868\u793a\u304c\u305f\u307e\u306b\u5d29\u308c\u308b\uff08\u753b\u9762\u4e0b\u534a\u5206\u304c\u7a7a\u767d\u306b\u306a\u308a\u4e88\u5b9a\u306e\u5e2f\u304c\u7e26\u306b\u6f70\u308c\u308b\uff09\u554f\u984c\u3092\u4fee\u6b63\uff1aiOS\u304c\u53e4\u3044\u753b\u9762\u306e\u9ad8\u3055\u3092\u8fd4\u3057\u7d9a\u3051\u308b\u72b6\u614b\u3092\u5e38\u6642\u76e3\u8996\u3057\u30014\u79d2\u4ee5\u5185\u306b\u81ea\u52d5\u5fa9\u65e7\u3059\u308b\u3088\u3046\u306b\u3057\u307e\u3057\u305f'] },
   { v:'v387', d:'2026-08-20', items:['\ud83d\udce1\u30aa\u30d5\u30e9\u30a4\u30f3\u5bfe\u5fdc\uff1a\u96fb\u6ce2\u304c\u306a\u3044\u5834\u6240\u3067\u3082\u30a2\u30d7\u30ea\u3092\u958b\u3051\u3070\u3001\u6700\u5f8c\u306b\u540c\u671f\u3057\u305f\u5185\u5bb9\uff08MAP\u30fb\u4e88\u5b9a\u30fb\u30e1\u30f3\u30d0\u30fc\uff09\u3092\u95b2\u89a7\u30fb\u7de8\u96c6\u3067\u304d\u307e\u3059\u3002\u7de8\u96c6\u306f\u30aa\u30f3\u30e9\u30a4\u30f3\u5fa9\u5e30\u6642\u306b\u81ea\u52d5\u540c\u671f','\ud83d\udce1\u30aa\u30d5\u30e9\u30a4\u30f3\u4e2d\u306f\u753b\u9762\u4e0b\u306b\u30d0\u30ca\u30fc\u3092\u8868\u793a\u3002\u4fdd\u5b58\u6642\u30fb\u5fa9\u5e30\u6642\u306b\u3082\u6848\u5185\u3092\u8868\u793a\u3057\u307e\u3059','\ud83d\uddc4\u30c7\u30fc\u30bf\u306e\u7aef\u672b\u5185\u30ad\u30e3\u30c3\u30b7\u30e5\u306e\u5bb9\u91cf\u4e0a\u9650\u3092\u64a4\u5ec3\uff08\u5199\u771f\u304c\u591a\u304f\u3066\u3082\u30aa\u30d5\u30e9\u30a4\u30f3\u8868\u793a\u304b\u3089\u6d88\u3048\u306a\u3044\u3088\u3046\u306b\uff09'] },
@@ -13703,8 +13778,13 @@ function evBarHtml(e, span, contTitle, tall) {
   if ((span === 'm' || span === 'e') && contTitle) cls += ' span-cont'; // v358: 週先頭の再表示タイトルも帯に流す
   // カテゴリ色を付けてもタスク/予定の種別が読めるように、タスクは□/✓を前置。実行済み予定は✓
   var mark = e.type === 'task' ? (e.done ? '✓ ' : '□ ') : (e.done ? '✓ ' : '');
-  // v301: 月表示は「時」だけ表示（19:30→19）。v311: 時と件名の間に確実なスペース
-  var tm = (e.time && !e.done) ? '<b>' + (parseInt(String(e.time).split(':')[0], 10) || 0) + '</b>&nbsp;' : '';
+  // v301: 月表示は「時」だけ表示（19:30→19）。v391: PCは分まで（19:45）。固定幅カラムで件名の開始位置を揃える
+  var tm = '';
+  if (e.time && !e.done) {
+    var _pcT9 = (typeof isPCMode === 'function' && isPCMode());
+    var _td9 = _pcT9 ? String(e.time).replace(/^0/, '') : String(parseInt(String(e.time).split(':')[0], 10) || 0);
+    tm = '<b class="' + (_pcT9 ? 'tmf' : 'tmh') + '">' + _td9 + '</b>';
+  }
   // v322: 連日帯の中日/最終日は通常無地だが、週の先頭マスではタイトルを再表示（Lifebearと同じ）
   var body = (span === 'm' || span === 'e')
     ? (contTitle ? evEsc(e.title || '') : '&nbsp;')
@@ -17056,6 +17136,7 @@ function renderCalendar() {
       (byDate[e.date] = byDate[e.date] || []).push({ ev: e, span: '' });
     }
   });
+  var _slotN = (typeof isPCMode === 'function' && isPCMode()) ? 6 : 8; // v391: PCは6段にして帯の縦にゆとり
   var html = '';
   var cur = new Date(rs.getTime());
   for (var w = 0; w < _calRangeWeeks; w++) {
@@ -17083,8 +17164,8 @@ function renderCalendar() {
         return evSortFn(a.ev, b.ev);
       });
       // v311: マスを8スロットの時間帯グリッドに（10件は詰まりすぎのため8件へ。18時≒中央基準）
-      var slots = [null, null, null, null, null, null, null, null];
-      var slotSpan = [1, 1, 1, 1, 1, 1, 1, 1]; // v386: 帯が縦に占めるスロット数
+      var slots = [], slotSpan = []; // v386: slotSpan=帯が縦に占めるスロット数 / v391: 段数はPC6・モバイル8
+      for (var s0 = 0; s0 < _slotN; s0++) { slots.push(null); slotSpan.push(1); }
       var extra = 0;
       var topFill = 0; // 祝日・帯・終日・時刻なしは上から詰める
       if (hol) { slots[0] = '<div class="ev-bar ev-hol">' + evEsc(hol) + '</div>'; topFill = 1; }
@@ -17095,12 +17176,12 @@ function renderCalendar() {
           want = topFill;
         } else {
           var hh2 = parseInt(String(w2.ev.time).split(':')[0], 10) || 0;
-          want = Math.floor((hh2 - 8) / 3); // 8時以前=最上段、3時間で1段、18時=4段目（中央）
+          want = Math.floor((hh2 - 8) / 3); // 8時以前=最上段、3時間で1段
           if (want < 0) want = 0;
-          if (want > 7) want = 7;
+          if (want > _slotN - 1) want = _slotN - 1;
         }
         var placed = -1;
-        for (var si = want; si < 8; si++) { if (!slots[si]) { placed = si; break; } }
+        for (var si = want; si < _slotN; si++) { if (!slots[si]) { placed = si; break; } }
         if (placed < 0) { for (var si2 = want - 1; si2 >= 0; si2--) { if (!slots[si2]) { placed = si2; break; } } }
         if (placed < 0) { extra++; continue; }
         // v386: 設定オン時、時間の長さに応じて帯を縦に伸ばす（2時間=1行、最大4行、空きスロット分まで）
@@ -17111,7 +17192,7 @@ function renderCalendar() {
           if (_dur9 > 120) {
             lines = Math.min(4, Math.ceil(_dur9 / 120));
             var _avail9 = 1;
-            while (_avail9 < lines && placed + _avail9 < 8 && !slots[placed + _avail9]) _avail9++;
+            while (_avail9 < lines && placed + _avail9 < _slotN && !slots[placed + _avail9]) _avail9++;
             lines = _avail9;
             for (var _k9 = 1; _k9 < lines; _k9++) slots[placed + _k9] = '__occ__';
             slotSpan[placed] = lines;
@@ -17122,7 +17203,7 @@ function renderCalendar() {
         if (w2.span || !w2.ev.time) topFill = placed + 1;
       }
       var bars = '';
-      for (var si3 = 0; si3 < 8; si3++) {
+      for (var si3 = 0; si3 < _slotN; si3++) {
         if (slots[si3] === '__occ__') continue; // v386: 伸びた帯が占有しているスロット
         bars += '<div class="ev-slot"' + (slotSpan[si3] > 1 ? ' style="flex:' + slotSpan[si3] + ' 1 0"' : '') + '>' + (slots[si3] || '') + '</div>';
       }
