@@ -1052,7 +1052,9 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 #calNextBar{flex:none;padding:3px 14px 6px;font-size:11.5px;color:var(--accent);font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #calNextBar b{font-weight:800}
 .ev-cell-num{font-size:12px;font-weight:600;color:var(--text);width:20px;height:20px;line-height:20px;border-radius:50%;margin:1px auto;padding:0;text-align:center} /* v384: 日付数字を少し拡大 */
-@media(min-width:768px){.ev-cell-num{font-size:14.5px;width:25px;height:25px;line-height:25px}} /* v384: PCはさらに大きく */
+@media(min-width:768px){.ev-cell-num{font-size:13.5px;width:23px;height:23px;line-height:23px}} /* v384: PCは大きく（v389: 帯の余白確保のためやや調整） */
+/* v389: PCの帯は行送りを確保して文字が帯からはみ出さないように（line-height:1だと日本語グリフが背景の上下へはみ出す） */
+@media(min-width:768px){.ev-slot .ev-bar{line-height:1.35;font-size:10.5px;padding:0 3px;border-radius:3px}}
 .ev-cell-num.sun,.ev-cell-num.hol{color:var(--red)}
 .ev-cell-num.sat{color:var(--b)}
 .ev-cell.today .ev-cell-num{background:var(--accent);color:var(--go-ink);font-weight:800}
@@ -2189,7 +2191,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v388</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v389</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4864,7 +4866,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v388';
+  var DATA_VERSION = 'v389';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5737,6 +5739,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v389', d:'2026-08-20', items:['\ud83d\udda5PC\u306e\u6708\u8868\u793a\u3067\u4e88\u5b9a\u306e\u6587\u5b57\u304c\u5e2f\u304b\u3089\u306f\u307f\u51fa\u3059\u554f\u984c\u3092\u4fee\u6b63\uff1a\u5e2f\u306e\u884c\u9001\u308a\u3092\u78ba\u4fdd\u3057\u3066\u6587\u5b57\u304c1\u884c\u306e\u5e2f\u306b\u53ce\u307e\u308b\u3088\u3046\u306b\u3057\u3001\u6587\u5b57\u3082\u5c11\u3057\u8aad\u307f\u3084\u3059\u304f\u62e1\u5927\u3002\u65e5\u4ed8\u306e\u6570\u5b57\u306f\u4f59\u767d\u78ba\u4fdd\u306e\u305f\u3081\u3084\u3084\u8abf\u6574\u3057\u307e\u3057\u305f'] },
   { v:'v388', d:'2026-08-20', items:['\ud83d\udee0\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u8868\u793a\u304c\u305f\u307e\u306b\u5d29\u308c\u308b\uff08\u753b\u9762\u4e0b\u534a\u5206\u304c\u7a7a\u767d\u306b\u306a\u308a\u4e88\u5b9a\u306e\u5e2f\u304c\u7e26\u306b\u6f70\u308c\u308b\uff09\u554f\u984c\u3092\u4fee\u6b63\uff1aiOS\u304c\u53e4\u3044\u753b\u9762\u306e\u9ad8\u3055\u3092\u8fd4\u3057\u7d9a\u3051\u308b\u72b6\u614b\u3092\u5e38\u6642\u76e3\u8996\u3057\u30014\u79d2\u4ee5\u5185\u306b\u81ea\u52d5\u5fa9\u65e7\u3059\u308b\u3088\u3046\u306b\u3057\u307e\u3057\u305f'] },
   { v:'v387', d:'2026-08-20', items:['\ud83d\udce1\u30aa\u30d5\u30e9\u30a4\u30f3\u5bfe\u5fdc\uff1a\u96fb\u6ce2\u304c\u306a\u3044\u5834\u6240\u3067\u3082\u30a2\u30d7\u30ea\u3092\u958b\u3051\u3070\u3001\u6700\u5f8c\u306b\u540c\u671f\u3057\u305f\u5185\u5bb9\uff08MAP\u30fb\u4e88\u5b9a\u30fb\u30e1\u30f3\u30d0\u30fc\uff09\u3092\u95b2\u89a7\u30fb\u7de8\u96c6\u3067\u304d\u307e\u3059\u3002\u7de8\u96c6\u306f\u30aa\u30f3\u30e9\u30a4\u30f3\u5fa9\u5e30\u6642\u306b\u81ea\u52d5\u540c\u671f','\ud83d\udce1\u30aa\u30d5\u30e9\u30a4\u30f3\u4e2d\u306f\u753b\u9762\u4e0b\u306b\u30d0\u30ca\u30fc\u3092\u8868\u793a\u3002\u4fdd\u5b58\u6642\u30fb\u5fa9\u5e30\u6642\u306b\u3082\u6848\u5185\u3092\u8868\u793a\u3057\u307e\u3059','\ud83d\uddc4\u30c7\u30fc\u30bf\u306e\u7aef\u672b\u5185\u30ad\u30e3\u30c3\u30b7\u30e5\u306e\u5bb9\u91cf\u4e0a\u9650\u3092\u64a4\u5ec3\uff08\u5199\u771f\u304c\u591a\u304f\u3066\u3082\u30aa\u30d5\u30e9\u30a4\u30f3\u8868\u793a\u304b\u3089\u6d88\u3048\u306a\u3044\u3088\u3046\u306b\uff09'] },
   { v:'v386', d:'2026-08-20', items:['\u23f1\u6708\u8868\u793a\u3067\u3001\u4e88\u5b9a\u306e\u6642\u9593\u306e\u9577\u3055\u306b\u5fdc\u3058\u3066\u5e2f\u3092\u7e26\u306b\u4f38\u3070\u305b\u308b\u8a2d\u5b9a\u3092\u8ffd\u52a0\uff082\u6642\u9593\uff1d1\u884c\u30fb\u6700\u59274\u884c\u3002\u4f8b\uff1a4\u6642\u9593\u306e\u4e88\u5b9a\u306f2\u884c\u5206\u306e\u9ad8\u3055\uff09\u3002\u30ab\u30ec\u30f3\u30c0\u30fc\u306e\u2699\u8a2d\u5b9a\u2192\u300c\u4e88\u5b9a\u306e\u5e2f\u306e\u9ad8\u3055\u300d\u304b\u3089\u5207\u66ff\u3002\u65e2\u5b9a\u306f\u3053\u308c\u307e\u3067\u3069\u304a\u308a\u306e\u56fa\u5b9a1\u884c\u3067\u3059'] },
