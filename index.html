@@ -2215,7 +2215,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v406</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v407</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4941,7 +4941,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v406';
+  var DATA_VERSION = 'v407';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5880,6 +5880,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v407', d:'2026-08-21', items:['🔗予定とOLの連携を開始：OL記録の「📅予定」がカレンダー（月表示・日別シート）にも📝紫の帯で表示され、タップでそのOL記録を開けます','🔗メンバーに紐付けた予定を完了にすると「📝OLとして記録しますか？」とワンタップで実施カルテ化できます（二重入力の解消）','⚙使いづらければカレンダー設定の「予定とOLの連携」からオフにできます（従来どおりの別管理に戻ります）'] },
   { v:'v406', d:'2026-08-21', items:['🔁繰り返しタスクがToDoに何十件も並ぶ問題を改善：一覧には「直近の1件」だけが🔁バッジ（毎週/毎日など）付きで表示され、完了すると次の回が自動で現れます。件数バッジもまとめた後の数に。カレンダーはこれまでどおり全回表示・完了タスクにも各回の記録が残ります'] },
   { v:'v405', d:'2026-08-21', items:['🎓研修履歴が入力順ではなく日付順で表示されるようになりました（同じ日付は入力順）'] },
   { v:'v404', d:'2026-08-21', items:['📅テンプレ作成に「🌞終日」を追加：終日テンプレを作れば適用・即登録も終日予定になります','📳「動作と方向」の許可ダイアログが毎回表示される問題を修正：一度キャンセルしたらもう表示しません（シェイク取り消しはオフのまま）','🐛メンバー編集で前に開いた人のカテゴリ・タイトルが引き継がれるバグを修正（OUTタイトルの誤判定も対策）','🎓研修履歴のあるメンバーはカテゴリをBA/BRに変えても研修タブの記録が見えるようになりました'] },
@@ -11592,6 +11593,16 @@ function setBarDur(v) {
   renderCalendar();
   openCalSettings(); // トグル表示を更新
 }
+// v407: 予定とOLの連携（OL予定をカレンダー表示・メンバー予定完了時にOL記録を提案）。オフで従来どおり
+var _olLink = true;
+try { _olLink = localStorage.getItem('gm_olLink') !== '0'; } catch(eOl0) {}
+function _olLinkOn() { return _olLink; }
+function setOlLink(v) {
+  _olLink = !!v;
+  try { localStorage.setItem('gm_olLink', v ? '1' : '0'); } catch(e) {}
+  renderCalendar();
+  openCalSettings();
+}
 try { var _ws0 = localStorage.getItem('gm_weekStart'); if (_ws0 === '0' || _ws0 === '1') _weekStart = parseInt(_ws0, 10); } catch(e) {}
 // v320: 月表示のスクロール方式（h=横＝1ヶ月ずつページ送り（既定）/ v=縦＝連続スクロール）
 var _calScrollMode = 'h';
@@ -14600,6 +14611,11 @@ function openCalSettings() {
     + '<div class="rb' + (!_calBarDur ? ' sel' : '') + '" onclick="setBarDur(false)">固定（1行）</div>'
     + '<div class="rb' + (_calBarDur ? ' sel' : '') + '" onclick="setBarDur(true)">⏱ 時間の長さで伸ばす</div>'
     + '</div></div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">予定とOLの連携（OL予定をカレンダー表示・メンバー予定の完了時にOL記録を提案）</label>'
+    + '<div class="rg">'
+    + '<div class="rb' + (_olLink ? ' sel' : '') + '" onclick="setOlLink(true)">🔗 オン</div>'
+    + '<div class="rb' + (!_olLink ? ' sel' : '') + '" onclick="setOlLink(false)">オフ</div>'
+    + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">下部タブの表示（タップで表示⇄非表示。予定・メニューは常時）</label>'
     + '<div class="rg">'
     + (function(){
@@ -16350,6 +16366,12 @@ function closeEventActions() {
 function openEventActions(id) {
   if (window._tdDelAt && Date.now() - window._tdDelAt < 400) return; // v360: 🗑直後の誤タップ防止
   if (/^UN_/.test(String(id))) { openUnionEventSheet(id); return; } // v392: ユニオン予定は専用シート
+  if (/^OL_/.test(String(id))) { // v407: OL予定バー→OL記録を開く
+    var _op = String(id).slice(3).split('_');
+    var _oIdx = parseInt(_op.pop(), 10) || 0;
+    openOlRecordModal(_op.join('_'), _oIdx);
+    return;
+  }
   var e = findEvent(id);
   if (!e) return;
   // v357: PCの全画面ToDoでは操作シートを開かず、右の詳細パネルで編集
@@ -17588,6 +17610,21 @@ function renderCalendar() {
       (byDate[e.date] = byDate[e.date] || []).push({ ev: e, span: '' });
     }
   });
+  // v407: OL予定（OL記録の📅予定）もカレンダーに表示（⚙設定の「予定とOLの連携」でオフ可）
+  if (_olLinkOn() && !viewingOwnerUid && state.freshData) {
+    for (var _omid in state.freshData) {
+      var _olog = (state.freshData[_omid] && state.freshData[_omid].olLog) || [];
+      for (var _oj = 0; _oj < _olog.length; _oj++) {
+        var _o = _olog[_oj];
+        if (!_o || !_o.date || _o.st !== 'planned') continue;
+        var _om = null;
+        for (var _omi = 0; _omi < state.members.length; _omi++) { if (state.members[_omi].id === _omid) { _om = state.members[_omi]; break; } }
+        if (!_om || _om.deleted) continue;
+        var _onm = ((_om.lastName || '') + (_om.firstName || '')).trim();
+        (byDate[_o.date] = byDate[_o.date] || []).push({ ev: { id: 'OL_' + _omid + '_' + _oj, type: 'event', date: _o.date, time: '', title: '📝OL ' + _onm + (_o.what ? '・' + _o.what : ''), color: '#B48CFF', _ol: true }, span: '' });
+      }
+    }
+  }
   var _slotN = (typeof isPCMode === 'function' && isPCMode()) ? 6 : 8; // v391: PCは6段にして帯の縦にゆとり
   var html = '';
   var cur = new Date(rs.getTime());
@@ -17941,12 +17978,32 @@ function _daySheetHtml(ds) {
   });
   var tks = (state.events || []).filter(function(e){ return e.date === ds && e.type === 'task' && evTdMine(e); }); // v361
   evs.sort(evSortFn); tks.sort(evSortFn);
+  // v407: OL予定もこの日のシートに表示（タップでOL記録を開く）
+  var ols = [];
+  if (typeof _olLinkOn === 'function' && _olLinkOn() && !viewingOwnerUid && state.freshData) {
+    for (var _dmid in state.freshData) {
+      var _dlog = (state.freshData[_dmid] && state.freshData[_dmid].olLog) || [];
+      for (var _dj = 0; _dj < _dlog.length; _dj++) {
+        var _do = _dlog[_dj];
+        if (!_do || _do.date !== ds || _do.st !== 'planned') continue;
+        var _dm = (typeof _findMember === 'function') ? _findMember(_dmid) : null;
+        if (!_dm || _dm.deleted) continue;
+        ols.push({ mid: _dmid, idx: _dj, name: ((_dm.lastName || '') + (_dm.firstName || '')).trim(), what: _do.what || '', asan: _do.asan || '' });
+      }
+    }
+  }
   var h = '';
-  if (!evs.length && !tks.length) {
+  if (!evs.length && !tks.length && !ols.length) {
     h += '<div class="ev-empty" style="padding:22px 8px">この日の予定・タスクはありません</div>';
   } else {
     if (evs.length) h += '<div class="ev-group-label" style="padding-top:6px">📅 予定 <span style="opacity:.55;font-weight:600">' + evs.length + '</span></div>' + evs.map(evItemHtml).join('');
     if (tks.length) h += '<div class="ev-group-label" style="padding-top:' + (evs.length ? '12px' : '6px') + '">✅ タスク <span style="opacity:.55;font-weight:600">' + tks.length + '</span></div>' + tks.map(evItemHtml).join('');
+    if (ols.length) h += '<div class="ev-group-label" style="padding-top:12px">📝 OL予定 <span style="opacity:.55;font-weight:600">' + ols.length + '</span></div>'
+      + ols.map(function(o){
+          return '<div style="padding:11px 13px;border:1px solid var(--border);border-radius:10px;margin-top:6px;cursor:pointer;background:var(--surface2);border-left:3px solid #B48CFF" onclick="closeCalDaySheet(true);openOlRecordModal(\'' + o.mid + '\',' + o.idx + ')">'
+            + '<span style="font-weight:700">📝 ' + evEsc(o.name) + (o.what ? '・' + evEsc(o.what) : '') + '</span>'
+            + (o.asan ? ' <span style="font-size:11px;color:var(--text-dim)">A:' + evEsc(o.asan) + '</span>' : '') + '</div>';
+        }).join('');
   }
   if (eventsUid()) h += '<button class="fol-add" style="margin-top:12px" onclick="closeCalDaySheet(true);openEventAddDate(\'' + ds + '\')">＋ この日に追加</button>';
   // v319: テンプレのワンタップ即登録（モーダルを開かず、その日に即保存）
@@ -18045,6 +18102,24 @@ function toggleEventDone(id) {
   e.updatedAt = new Date().toISOString();
   if (e.done) _evRewardOnDone(e); // CAL-2: rewarded フラグを立ててから1回の書き込みにまとめる
   saveEventDoc(e);
+  // v407: メンバー紐付きの予定を完了→ワンタップでOL記録化（⚙設定の「予定とOLの連携」でオフ可）
+  if (e.done && e.type === 'event' && typeof _olLinkOn === 'function' && _olLinkOn() && !viewingOwnerUid && !e.olLogged) {
+    var _olMid = e.memberId || ((e.memberIds && e.memberIds.length) ? e.memberIds[0] : '');
+    if (_olMid && !/^MG_/.test(_olMid)) {
+      (function(ev7, mid7){
+        setTimeout(function(){
+          toastAction('📝 「' + (ev7.title || '') + '」をOLとして記録しますか？', '記録する', function(){
+            var log7 = freshOlLog(mid7);
+            log7.unshift({ date: ev7.date || evTodayYmd(), asan: '', to: '', what: ev7.title || '', note: '', st: 'done' });
+            ev7.olLogged = true;
+            saveEventDoc(ev7);
+            autoSave();
+            toast('📝 OL記録に追加しました（反応はメンバーのOLから追記できます）');
+          }, 7000);
+        }, 500);
+      })(e, _olMid);
+    }
+  }
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   if (navigator.vibrate) try { navigator.vibrate(10); } catch(ev4) {} // v303: 触覚フィードバック（Android）
   // v303: 完了時はふわっと消えるアニメーションを見せてから再描画
