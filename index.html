@@ -2209,7 +2209,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v400</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v401</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2919,9 +2919,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
                 <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('EXP')">EXP</div></div>
                 <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('PA')">PA</div></div>
                 <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('面談')">面談</div></div>
+                <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('BPC')">BPC</div></div>
                 <div class="step-flow-item"><span class="step-arrow">▸</span><div class="step-btn" onclick="selectStep('CO')">CO</div></div>
               </div>
               <div id="stepDetailPanel" style="display:none"></div>
+              <button class="fol-add" style="margin-top:10px" onclick="openFollowRec()">📝 フォロー記録を追加（研修ステップ外）</button>
+              <div id="followRecPanel" style="display:none"></div>
             </div>
           </div>
         </div>
@@ -4931,7 +4934,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v400';
+  var DATA_VERSION = 'v401';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5870,6 +5873,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v401', d:'2026-08-20', items:['🎓研修ステップに「BPC」を追加（面談の後）：BPCを実施済みで記録すると研修結果が自動でBCになります','📝「フォロー記録」を追加：ごはんフォローなど研修ステップ外のイレギュラーな対応を自由な内容で履歴に残せます（📝付きで表示・ステップ集計や研修ステータスには影響しません。予定としても登録可）'] },
   { v:'v400', d:'2026-08-20', items:['🐛予定の「メンバー専用／自分にも表示」ボタンが画面の枠外にはみ出すバグを修正（文字を折り返し、ラベルも短縮）'] },
   { v:'v399', d:'2026-08-20', items:['↕並べ替えの手応えを大幅改善：グリップを⠿型に統一し、掴むと行が浮いて他の行が薄くなり、離すと一瞬光って保存されます（関連メンバーの選択・ToDoの⇅並べ替え共通）','⠿の使い方ヒントをリストの下に常時表示'] },
   { v:'v398', d:'2026-08-20', items:['📱モバイル月表示の段割りを夜間中心に変更：〜11時台／12〜14／15〜17／18〜19／20〜21／22〜23／24〜25／26時以降 の8段になりました（夜の連続予定が+nに落ちにくくなります）'] },
@@ -7716,7 +7720,7 @@ function renderKanban() {
 }
 
 function renderKanbanByStep(board, trainees) {
-  var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
+  var STEPS = ['マケ','PG','DLR','EXP','PA','面談','BPC','CO']; // v401
   var RESULTS = [
     { key: 'BC', label: 'BC（成約）', color: 'var(--accent)' },
     { key: 'ユーザー', label: 'ユーザー', color: 'var(--gold)' },
@@ -8111,7 +8115,7 @@ var DEPTH_COLORS = ['#2CE5B8','#8B7CFF','#5AD7FF','#FFB454','#FF87B3'];
 function titleRingColor(title) {
   var t = (title||'').trim().toUpperCase();
   var raw = (title||'').trim();
-  if (t==='マケ'||raw==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||raw==='面談'||t==='CO') return '#5AD7FF'; // 研修生
+  if (t==='マケ'||raw==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||raw==='面談'||t==='BPC'||t==='CO') return '#5AD7FF'; // 研修生
   if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return '#4ADE80';
   if (t==='B1') return '#C583FF';
   if (t==='B2'||t==='B3') return '#a78bfa';
@@ -8178,7 +8182,7 @@ function titleAbbr(title) {
 function titleAvatarStyle(title) {
   var t = (title||'').toUpperCase().replace(/\s/g,'');
   // 研修ステータス系
-  if (t==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||t==='面談'||t==='CO')
+  if (t==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||t==='面談'||t==='BPC'||t==='CO')
     return 'background:rgba(34,211,238,0.15);color:#5AD7FF;border-color:rgba(34,211,238,0.4)';
   // BR以上は全て同色（重要なのはフレッシュ帯の見分け。ランク詳細はカード/編集画面で）
   var raw = (title||'').trim();
@@ -8814,7 +8818,7 @@ function recalcCommission() {
 
 
 // ── 研修履歴 ──
-var TRAINEE_STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
+var TRAINEE_STEPS = ['マケ','PG','DLR','EXP','PA','面談','BPC','CO']; // v401: BPC追加（面談の後）
 
 // ── 研修履歴UI（リニューアル） ──
 // v379: 研修ステップUIの完全リセット（開くたびに前のメンバーの色・選択・パネルを持ち越さない）
@@ -8863,14 +8867,15 @@ function renderTraineeHistory(m) {
     entry.className = 'th-entry' + cls;
     var stepName = document.createElement('div');
     stepName.className = 'th-step-name';
-    stepName.textContent = (h.result === 'planned' ? '📅 ' : '') + (h.status || '');
+    if (h.ir) { entry.classList.add('th-ir'); stepName.style.color = 'var(--text-mid)'; } // v401: フォロー記録は控えめに
+    stepName.textContent = (h.result === 'planned' ? '📅 ' : '') + (h.ir ? '📝 ' : '') + (h.status || '');
     entry.appendChild(stepName);
     var meta = document.createElement('div');
     meta.className = 'th-meta';
     if (h.date) { var ds = document.createElement('span'); ds.textContent = h.date; meta.appendChild(ds); }
     if (h.aSan) { var as2 = document.createElement('span'); as2.textContent = 'A: ' + h.aSan; meta.appendChild(as2); }
     var rs = document.createElement('span');
-    rs.textContent = h.result === 'left' ? '✗ 離脱' : (h.result === 'planned' ? '📅 予定' : '✓ 進んだ');
+    rs.textContent = h.result === 'left' ? '✗ 離脱' : (h.result === 'planned' ? '📅 予定' : (h.ir ? '✓ 実施' : '✓ 進んだ'));
     rs.style.color = h.result === 'left' ? 'var(--red)' : (h.result === 'planned' ? '#FFB454' : 'var(--accent)');
     meta.appendChild(rs);
     entry.appendChild(meta);
@@ -8909,6 +8914,12 @@ function setStepResult(idx, result) {
   var m = getTraineeMember();
   if (!m || !m.traineeHistory || !m.traineeHistory[idx]) return;
   m.traineeHistory[idx].result = result;
+  // v401: BPCの予定を「進んだ」で確定した時も研修結果を自動でBCに
+  if (m.traineeHistory[idx].status === 'BPC' && result === 'next' && m.traineeResult !== 'BC') {
+    m.traineeResult = 'BC';
+    if (typeof selTraineeResultChip === 'function') selTraineeResultChip('BC');
+    setTimeout(function(){ toast('✅ BPC実施 → 研修結果を自動でBCにしました'); }, 900);
+  }
   m.traineeStatus = getLatestStatus(m);
   syncTraineeTitle(m); // 予定→進んだ確定時もタイトルへ反映
   autoSave();
@@ -8936,7 +8947,7 @@ function updateStepFlow(hist) {
 }
 
 function getLatestStatus(m) {
-  var hist = m.traineeHistory || [];
+  var hist = (m.traineeHistory || []).filter(function(h){ return !h.ir; }); // v401: フォロー記録はステータスにしない
   return hist.length > 0 ? hist[hist.length-1].status : '';
 }
 
@@ -9034,6 +9045,12 @@ function confirmAddHistory() {
   var addedStep = _selectedStep;
   var res = window._detailResult || 'planned';
   m.traineeHistory.push({ status: addedStep, date: date, aSan: aSan, result: res });
+  // v401: BPC（製品選び・クロージング・決済）を実施済みで記録したら、研修結果を自動でBCに
+  if (addedStep === 'BPC' && res === 'next' && m.traineeResult !== 'BC') {
+    m.traineeResult = 'BC';
+    if (typeof selTraineeResultChip === 'function') selTraineeResultChip('BC');
+    setTimeout(function(){ toast('✅ BPC実施 → 研修結果を自動でBCにしました'); }, 900);
+  }
   // 予定なら次回予定として同期（気になるメンバーの「予定なし」に出さない）
   if (res === 'planned') { m.nextDate = date; if (aSan) m.aSan = aSan; }
   m.traineeStatus = getLatestStatus(m);
@@ -9050,6 +9067,51 @@ function confirmAddHistory() {
   for (var i=0; i<btns.length; i++) btns[i].classList.remove('active');
 }
 
+// v401: フォロー記録（ごはん・個別対応などステップ外のイレギュラー対応。ファネル集計・ステータスには影響しない）
+function openFollowRec() {
+  var panel = document.getElementById('followRecPanel');
+  if (!panel) return;
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  panel.style.display = '';
+  panel.innerHTML = '<div class="step-detail">'
+    + '<div class="step-detail-hdr"><span class="step-detail-badge" style="background:var(--surface3);color:var(--text-mid)">📝</span><span style="font-size:12px;color:var(--text-dim)"> フォロー記録（ごはん・個別フォロー等）</span></div>'
+    + '<div style="margin-bottom:8px"><label class="fl">内容</label><input class="fi" id="frTitle" type="text" placeholder="例：ごはんフォロー" style="font-size:14px;padding:8px"></div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    + '<div style="flex:1"><label class="fl">日付</label><input class="fi" id="frDate" type="date" value="' + todayStr + '" style="font-size:14px;padding:8px" onchange="this.blur()"></div>'
+    + '<div style="flex:1"><label class="fl">Aさん</label><input class="fi" id="frASan" type="text" placeholder="名前" style="font-size:14px;padding:8px"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:12px"><div style="display:flex;gap:6px">'
+    + '<div class="result-chip sel-next" id="frDone" onclick="_frSetRes(\'next\')" style="flex:1;justify-content:center">✓ 実施済み</div>'
+    + '<div class="result-chip" id="frPlan" onclick="_frSetRes(\'planned\')" style="flex:1;justify-content:center">📅 予定</div>'
+    + '</div></div>'
+    + '<button class="btn-p" style="width:100%;padding:10px;font-size:14px" onclick="confirmAddFollowRec()">追加する</button>'
+    + '</div>';
+  window._frRes = 'next';
+}
+function _frSetRes(v) {
+  window._frRes = v;
+  var d = document.getElementById('frDone'), p = document.getElementById('frPlan');
+  if (d) d.classList.toggle('sel-next', v === 'next');
+  if (p) p.classList.toggle('sel-plan', v === 'planned');
+}
+function confirmAddFollowRec() {
+  var m = getTraineeMember();
+  if (!m) return;
+  var t = ((document.getElementById('frTitle') || {}).value || '').trim();
+  if (!t) { toast('内容を入力してください'); return; }
+  var date = (document.getElementById('frDate') || {}).value || '';
+  var aSan = ((document.getElementById('frASan') || {}).value || '').trim();
+  if (!m.traineeHistory) m.traineeHistory = [];
+  var res = window._frRes || 'next';
+  m.traineeHistory.push({ status: t, date: date, aSan: aSan, result: res, ir: true });
+  if (res === 'planned') { m.nextDate = date; if (aSan) m.aSan = aSan; }
+  autoSave();
+  renderTraineeHistory(null);
+  toast('📝 「' + t + '」を記録しました');
+  var panel = document.getElementById('followRecPanel');
+  if (panel) panel.style.display = 'none';
+}
 // 後方互換
 var _stepResult = 'next';
 function selStepResult(val) { _stepResult = val; }
@@ -10040,7 +10102,7 @@ function renderStats() {
   if (funnelWrap) {
     var fmon = state.currentMonth;
     var trainees = monthTrainees(fmon);
-    var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
+    var STEPS = ['マケ','PG','DLR','EXP','PA','面談','BPC','CO']; // v401
     var RESULTS = [
       {key:'BC',     label:'BC（成約）',  color:'#2CE5B8'},
       {key:'ユーザー', label:'ユーザー（△）', color:'#FFB454'},
@@ -10123,7 +10185,7 @@ function renderStats() {
     if (asanKeys.length === 0) {
       asanWrap.innerHTML = '<div class="ev-empty" style="padding:18px">今月の履歴にAさんが設定されていません</div>';
     } else {
-      var STEPS = ['マケ','PG','DLR','EXP','PA','面談','CO'];
+      var STEPS = ['マケ','PG','DLR','EXP','PA','面談','BPC','CO']; // v401
       asanKeys.forEach(function(asan) {
         var group = Object.values ? Object.values(asanMap[asan].trainees) : Object.keys(asanMap[asan].trainees).map(function(k){ return asanMap[asan].trainees[k]; });
         var gt = group.length;
@@ -11179,7 +11241,7 @@ function buildParentSelect(selectedId, excludeId) {
   });
 }
 var TITLE_OPTIONS = {
-  '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO','OUT'],
+  '研修生': ['マケ','PG','DLR','EXP','PA','面談','BPC','CO','OUT'],
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート','OUT'],
 };
@@ -19602,7 +19664,7 @@ function closeSearchModal(e) {
 // 検索条件の定義
 
 var CATEGORY_TITLES = {
-  '研修生': ['マケ','PG','DLR','EXP','PA','面談','CO','OUT'],
+  '研修生': ['マケ','PG','DLR','EXP','PA','面談','BPC','CO','OUT'],
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート','OUT'],
 };
