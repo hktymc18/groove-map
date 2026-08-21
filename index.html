@@ -585,6 +585,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .rg{display:flex;gap:6px}
 .rb{flex:1;padding:8px 0;text-align:center;border-radius:var(--rsm);border:1px solid var(--border);font-size:12px;cursor:pointer;background:transparent;color:var(--text-dim);transition:all .15s;white-space:nowrap}
 .rb.sel{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+#evSelfShowRow .rb{white-space:normal;line-height:1.35;min-width:0;padding:8px 6px} /* v400: 長文ラベルが枠外にはみ出すのを防止（折り返し許可） */
 
 /* btn */
 .btn-row{display:flex;gap:8px;margin-top:10px}
@@ -2208,7 +2209,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v399</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v400</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3041,8 +3042,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="fr" id="evSelfShowRow" style="display:none">
       <label class="fl">この予定・タスクの扱い（メンバー選択時）</label>
       <div class="rg">
-        <div class="rb sel" id="evSelfShowOff" onclick="selEvSelfShow(false)">👤 メンバー専用（自分の画面に出さない）</div>
-        <div class="rb" id="evSelfShowOn" onclick="selEvSelfShow(true)">🗓 自分の予定/ToDoにも表示</div>
+        <div class="rb sel" id="evSelfShowOff" onclick="selEvSelfShow(false)">👤 メンバー専用（自分に出さない）</div>
+        <div class="rb" id="evSelfShowOn" onclick="selEvSelfShow(true)">🗓 自分にも表示</div>
       </div>
     </div>
     <!-- A1: 詳細はデフォルト格納（ミニマル）。値が入っている時は自動で開く -->
@@ -4930,7 +4931,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v399';
+  var DATA_VERSION = 'v400';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5869,6 +5870,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v400', d:'2026-08-20', items:['🐛予定の「メンバー専用／自分にも表示」ボタンが画面の枠外にはみ出すバグを修正（文字を折り返し、ラベルも短縮）'] },
   { v:'v399', d:'2026-08-20', items:['↕並べ替えの手応えを大幅改善：グリップを⠿型に統一し、掴むと行が浮いて他の行が薄くなり、離すと一瞬光って保存されます（関連メンバーの選択・ToDoの⇅並べ替え共通）','⠿の使い方ヒントをリストの下に常時表示'] },
   { v:'v398', d:'2026-08-20', items:['📱モバイル月表示の段割りを夜間中心に変更：〜11時台／12〜14／15〜17／18〜19／20〜21／22〜23／24〜25／26時以降 の8段になりました（夜の連続予定が+nに落ちにくくなります）'] },
   { v:'v397', d:'2026-08-20', items:['🖥PC月表示の段割りを夜間中心に変更：〜13時台／14〜17／18〜19／20〜21／22〜23／24時以降 の6段になりました（22時半以降の予定もきちんと表示されます）'] },
