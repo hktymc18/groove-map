@@ -843,7 +843,7 @@ tr.ot-done{opacity:.5}
 .th-del:hover{opacity:1;color:var(--red)}
 
 /* ステップ選択UI */
-.step-flow{display:flex;gap:0;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.step-flow{display:flex;flex-wrap:wrap;gap:4px 0;margin-bottom:10px;overflow:visible;padding-bottom:4px} /* v403: 横スクロール廃止・折り返し表示（タブスワイプとの競合も解消） */
 .step-flow-item{display:flex;align-items:center;flex-shrink:0}
 .step-btn{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;font-family:'Inter','IBM Plex Mono',monospace;cursor:pointer;background:var(--surface3);border:1px solid var(--border);color:var(--text-dim);transition:all .15s;white-space:nowrap}
 .step-btn:active{transform:scale(0.95)}
@@ -1360,6 +1360,12 @@ body.cal-fs .pc-toolbar{display:none!important}
 /* v357: PC版ToDo 3カラム（左=リスト/フィルタ・中央=タスク・右=詳細） */
 #pcTdSide,#pcTdDetail{display:none;position:absolute;top:54px;bottom:0;background:var(--surface);z-index:2;overflow-y:auto}
 #pcTdSide{left:0;width:212px;border-right:1px solid var(--border);padding:6px 8px 20px}
+/* v402: PCの月カレンダーにもToDoと同じ左メニューを常設 */
+#pcCalSide{display:none}
+@media(min-width:768px){
+  #evCalendar.full #pcCalSide{display:block;position:absolute;top:54px;bottom:0;left:0;width:212px;border-right:1px solid var(--border);padding:6px 8px 20px;overflow-y:auto;background:var(--surface);z-index:2}
+  #evCalendar.full .ev-cal-weekdays,#evCalendar.full .ev-cal-grid,#evCalendar.full #calNextBar{margin-left:212px}
+}
 #pcTdDetail{right:0;width:320px;border-left:1px solid var(--border);padding:10px 14px 24px;box-sizing:border-box}
 .pcts-ttl{font-size:10px;font-weight:800;color:var(--text-dim);letter-spacing:1px;padding:12px 10px 4px}
 .pcts-row{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;color:var(--text-mid)}
@@ -2209,7 +2215,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v401</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v406</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2492,6 +2498,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-cal-nav pc-only" onclick="openCalSettings()" title="設定"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
         <div class="ev-cal-view" id="evCalViewBtn" onclick="calViewMenuToggle()" title="表示切替"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg><span style="font-size:9px;margin-left:2px">▾</span></div>
       </div>
+      <div id="pcCalSide"></div><!-- v402: PCカレンダーの常設左メニュー -->
       <div id="calNextBar" style="display:none"></div>
       <div class="ev-cal-weekdays" id="evCalWeekdays">
         <span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span class="ev-sat">土</span><span class="ev-sun">日</span>
@@ -4934,7 +4941,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v401';
+  var DATA_VERSION = 'v406';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5873,6 +5880,11 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v406', d:'2026-08-21', items:['🔁繰り返しタスクがToDoに何十件も並ぶ問題を改善：一覧には「直近の1件」だけが🔁バッジ（毎週/毎日など）付きで表示され、完了すると次の回が自動で現れます。件数バッジもまとめた後の数に。カレンダーはこれまでどおり全回表示・完了タスクにも各回の記録が残ります'] },
+  { v:'v405', d:'2026-08-21', items:['🎓研修履歴が入力順ではなく日付順で表示されるようになりました（同じ日付は入力順）'] },
+  { v:'v404', d:'2026-08-21', items:['📅テンプレ作成に「🌞終日」を追加：終日テンプレを作れば適用・即登録も終日予定になります','📳「動作と方向」の許可ダイアログが毎回表示される問題を修正：一度キャンセルしたらもう表示しません（シェイク取り消しはオフのまま）','🐛メンバー編集で前に開いた人のカテゴリ・タイトルが引き継がれるバグを修正（OUTタイトルの誤判定も対策）','🎓研修履歴のあるメンバーはカテゴリをBA/BRに変えても研修タブの記録が見えるようになりました'] },
+  { v:'v403', d:'2026-08-21', items:['🎓「ステップを追加」の横スクロールを廃止し、8ステップ全部を折り返しで常時表示に変更：スクロールで月次/活動タブに滑ってしまう問題が解消し、BPC・COも隠れず見えます'] },
+  { v:'v402', d:'2026-08-21', items:['🖥PCの月カレンダーにもToDoと同じ左メニューを常設：今日・すべて・メンバーのタスク・リスト・ラベル・完了タスクをいつでもワンクリックで開けます（クリックするとToDo画面の該当箇所へ移動）'] },
   { v:'v401', d:'2026-08-20', items:['🎓研修ステップに「BPC」を追加（面談の後）：BPCを実施済みで記録すると研修結果が自動でBCになります','📝「フォロー記録」を追加：ごはんフォローなど研修ステップ外のイレギュラーな対応を自由な内容で履歴に残せます（📝付きで表示・ステップ集計や研修ステータスには影響しません。予定としても登録可）'] },
   { v:'v400', d:'2026-08-20', items:['🐛予定の「メンバー専用／自分にも表示」ボタンが画面の枠外にはみ出すバグを修正（文字を折り返し、ラベルも短縮）'] },
   { v:'v399', d:'2026-08-20', items:['↕並べ替えの手応えを大幅改善：グリップを⠿型に統一し、掴むと行が浮いて他の行が薄くなり、離すと一瞬光って保存されます（関連メンバーの選択・ToDoの⇅並べ替え共通）','⠿の使い方ヒントをリストの下に常時表示'] },
@@ -8861,7 +8873,14 @@ function renderTraineeHistory(m) {
   // タイムライン表示
   var timeline = document.createElement('div');
   timeline.className = 'th-timeline';
-  hist.forEach(function(h, i) {
+  // v405: 表示は日付順（入力順ではなく）。削除・確定の操作は元の配列位置(i)で行うため添字を保持して並べ替える
+  var _disp = hist.map(function(hh, ii){ return { h: hh, i: ii }; });
+  _disp.sort(function(a, b){
+    var ka = a.h.date || '9999-99-99', kb = b.h.date || '9999-99-99';
+    return ka < kb ? -1 : (ka > kb ? 1 : (a.i - b.i));
+  });
+  _disp.forEach(function(_it) {
+    var h = _it.h, i = _it.i;
     var entry = document.createElement('div');
     var cls = h.result === 'left' ? ' result-left' : (h.result === 'planned' ? ' result-planned' : ' result-bc');
     entry.className = 'th-entry' + cls;
@@ -11177,8 +11196,15 @@ function openEdit(id) {
     // カテゴリ・タイトルはモーダル表示後にセット
     var _editTitle = m.title||'';
     var _detectedCat = detectCategory(_editTitle);
+    // v404: 「OUT」は全カテゴリ共通タイトルのため、研修データの無いメンバーが研修生と誤判定されるのを防止
+    if (_editTitle === 'OUT' && _detectedCat === '研修生' && !(m.trainee || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult)) _detectedCat = 'BA';
     setTimeout(function() {
       try {
+        // v404: 前のメンバーのカテゴリ・タイトルを持ち越さない（毎回リセットしてから設定）
+        fCategory = '';
+        ['rbCatTrainee', 'rbCatBA', 'rbCatBR'].forEach(function(cid){ var ce = document.getElementById(cid); if (ce) ce.classList.remove('sel'); });
+        var selR = document.getElementById('fTitle');
+        if (selR) selR.innerHTML = '<option value="">カテゴリを選択してください</option>';
         if (_detectedCat) {
           selCategory(_detectedCat);
         }
@@ -11272,7 +11298,13 @@ function selCategory(cat) {
       if (tsf) tsf.style.display = '';
     } else {
       selTrainee(false);
-      if (tsf) tsf.style.display = 'none';
+      // v404: 研修履歴/結果があるメンバーはBA/BRに変えても研修タブの記録を見えるまま維持
+      var _mTr = null;
+      if (typeof editingId !== 'undefined' && editingId) {
+        for (var q4 = 0; q4 < state.members.length; q4++) { if (state.members[q4].id === editingId) { _mTr = state.members[q4]; break; } }
+      }
+      var _keepTr = !!(_mTr && ((_mTr.traineeHistory && _mTr.traineeHistory.length) || _mTr.traineeResult));
+      if (tsf) tsf.style.display = _keepTr ? '' : 'none';
     }
     if (typeof meSyncTrainTab === 'function') meSyncTrainTab();
   } catch(e) {}
@@ -13448,9 +13480,19 @@ setTimeout(function(){
   if (!on) return;
   _gmShakeAttach();
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    // v404: 「動作と方向」の許可ダイアログが毎回出る問題への対策 — 一度断られたら二度と聞かない
+    //（許可済みの場合、requestPermissionはダイアログを出さずに即grantedを返すため再確認は無害）
+    var _mSt = '';
+    try { _mSt = localStorage.getItem('gm_motion') || ''; } catch(eM0) {}
+    if (_mSt === 'denied') return;
     var _shakeOnce = function(){
       document.removeEventListener('touchend', _shakeOnce);
-      DeviceMotionEvent.requestPermission().then(function(st){ if (st === 'granted') _gmShakeAttach(); }).catch(function(){});
+      DeviceMotionEvent.requestPermission().then(function(st){
+        try { localStorage.setItem('gm_motion', st === 'granted' ? 'granted' : 'denied'); } catch(eM1) {}
+        if (st === 'granted') _gmShakeAttach();
+      }).catch(function(){
+        try { localStorage.setItem('gm_motion', 'denied'); } catch(eM2) {}
+      });
     };
     document.addEventListener('touchend', _shakeOnce, { passive: true });
   }
@@ -16677,7 +16719,32 @@ function _todoDoneToday(e) {
   try { return evYmd(new Date(e.completedAt)) === evTodayYmd(); } catch(err) { return false; }
 }
 function _todoTasksAll() {
-  return (state.events || []).filter(function(e){ return e.type === 'task'; });
+  var list = (state.events || []).filter(function(e){ return e.type === 'task'; });
+  // v406: 繰り返しシリーズはToDoでは「直近の未完了1件」だけ表示（完了すると次の回が現れる）。
+  //        完了済みは実施記録としてそのまま。カレンダー表示は全回のまま（この関数を通らない）。
+  var next = {};
+  list.forEach(function(e){
+    if (!e.seriesId || e.done) return;
+    var cur = next[e.seriesId];
+    if (!cur || (e.date || '9999-99-99') < (cur.date || '9999-99-99')) next[e.seriesId] = e;
+  });
+  return list.filter(function(e){ return !e.seriesId || e.done || next[e.seriesId] === e; });
+}
+// v406: 繰り返しタスクの🔁バッジ（次の回との間隔から毎日/毎週/隔週/毎月を推定）
+function _tdSeriesMark(e) {
+  if (!e.seriesId) return '';
+  var lbl = '🔁';
+  try {
+    var nextD = '';
+    (state.events || []).forEach(function(x){
+      if (x.seriesId === e.seriesId && x.id !== e.id && x.date && e.date && x.date > e.date && (!nextD || x.date < nextD)) nextD = x.date;
+    });
+    if (nextD) {
+      var dd = Math.round((new Date(nextD) - new Date(e.date)) / 86400000);
+      lbl = dd === 1 ? '🔁毎日' : (dd === 7 ? '🔁毎週' : (dd === 14 ? '🔁隔週' : ((dd >= 28 && dd <= 31) ? '🔁毎月' : '🔁')));
+    }
+  } catch(eS) {}
+  return ' <span style="color:var(--purple);font-weight:700">' + lbl + '</span>';
 }
 function todoRowHtml(e) {
   var t = evTodayYmd();
@@ -16700,7 +16767,7 @@ function todoRowHtml(e) {
     + '<div class="td-chk' + (e.done ? ' on' : '') + '" onclick="toggleEventDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</div>'
     + '<div class="td-body" onclick="openEventActions(\'' + e.id + '\')">'
     + '<div class="td-ttl">' + (e.priority === 'high' ? '<span style="color:var(--red);font-weight:800">⚑ </span>' : '') + evEsc(e.title || '(無題)') + '</div>'
-    + ((due || subTx || lb || ls) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + (overdue ? '<span class="td-odpill">' + _tdOverdueDays(e.date) + '日超過</span>' : '') + evEsc(due) + (subTx ? ' ' + subTx : '') + (ls ? ' <span style="color:' + ls.color + '">●' + evEsc(ls.name) + '</span>' : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
+    + ((due || subTx || lb || ls || e.seriesId) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + (overdue ? '<span class="td-odpill">' + _tdOverdueDays(e.date) + '日超過</span>' : '') + evEsc(due) + _tdSeriesMark(e) + (subTx ? ' ' + subTx : '') + (ls ? ' <span style="color:' + ls.color + '">●' + evEsc(ls.name) + '</span>' : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
     + '</div>'
     // v357: PCはホバーで ⚑重要/🗑削除（スワイプの代替。CSSでPC+hover時のみ表示）
     + '<div class="td-hovacts"><span onclick="event.stopPropagation();tdTogglePrio(\'' + e.id + '\')" title="⚑重要の切替">⚑</span><span onclick="event.stopPropagation();tdSwipeDelete(\'' + e.id + '\')" title="削除">🗑</span></div>'
@@ -17156,6 +17223,52 @@ function _pcTdAfterRender() {
     if (r) r.classList.add('kbsel');
   }
 }
+// v402: PCカレンダーの左メニュー — クリックでToDoの該当画面へ移動
+function pcCalSideGo(type, id) {
+  setEventsMode('agenda');
+  setTimeout(function(){ try { pcTdSideGo(type, id || ''); } catch(e) {} }, 80);
+}
+function pcCalSideDone() {
+  setEventsMode('agenda');
+  setTimeout(function(){ try { todoNavTo('smart', 'done'); } catch(e) {} }, 80);
+}
+var _pcCalSideMetaAsked = false;
+function _pcCalRenderSide() {
+  var side = document.getElementById('pcCalSide');
+  if (!side) return;
+  if (typeof isPCMode !== 'function' || !isPCMode()) { side.innerHTML = ''; return; }
+  if (!_todoMeta && !_pcCalSideMetaAsked) {
+    _pcCalSideMetaAsked = true;
+    _todoMetaEnsure().then(function(){ _pcCalRenderSide(); }).catch(function(){});
+  }
+  var tasks = _todoTasksAll();
+  var undone = tasks.filter(function(e){ return !e.done; });
+  var t = evTodayYmd();
+  function row(onclick, icon, name, ct, dot) {
+    return '<div class="pcts-row" onclick="' + onclick + '">'
+      + (dot ? '<i class="dot" style="background:' + dot + '"></i>' : '<span style="flex:none;width:16px;text-align:center">' + icon + '</span>')
+      + '<span class="n">' + evEsc(name) + '</span>'
+      + (ct > 0 ? '<span class="ct">' + ct + '</span>' : '') + '</div>';
+  }
+  var mine = undone.filter(evTdMine);
+  var h = '<div class="pcts-ttl">ToDo</div>';
+  h += row("pcCalSideGo('today')", '☀️', '今日', mine.filter(function(e){ return e.date && e.date <= t; }).length, '');
+  h += row("pcCalSideGo('all')", '📥', 'すべて', mine.length, '');
+  h += row("pcCalSideGo('member')", '👤', 'メンバーのタスク', undone.filter(evIsMemberLinked).length, '');
+  var lists = (_todoMeta && _todoMeta.lists) || [];
+  if (lists.length) h += '<div class="pcts-ttl">リスト</div>';
+  lists.forEach(function(L){
+    h += row("pcCalSideGo('list','" + L.id + "')", '', L.name, mine.filter(function(e){ return e.listId === L.id; }).length, L.color);
+  });
+  var labels = (_todoMeta && _todoMeta.labels) || [];
+  if (labels.length) h += '<div class="pcts-ttl">ラベル</div>';
+  labels.forEach(function(LB){
+    h += row("pcCalSideGo('label','" + LB.id + "')", '', '◎' + LB.name, mine.filter(function(e){ return e.labelId === LB.id; }).length, LB.color);
+  });
+  h += '<div class="pcts-ttl">その他</div>';
+  h += row("pcCalSideDone()", '✓', '完了タスク', tasks.filter(function(e){ return e.done; }).length, '');
+  side.innerHTML = h;
+}
 function pcTdSideGo(type, id) {
   _todoNav = { type: 'home' };
   _evQuickFilter = '';
@@ -17572,6 +17685,7 @@ function renderCalendar() {
   var keepTop = grid.scrollTop;
   grid.innerHTML = html;
   grid.style.overflowY = _hMode ? 'hidden' : ''; // 横モードは縦スクロールなし（1ヶ月で1画面）
+  try { _pcCalRenderSide(); } catch(ePcs) {} // v402: PCの常設左メニュー
   if (!grid._calScrollBound) {
     grid._calScrollBound = true;
     grid.addEventListener('scroll', _calOnScroll, { passive: true });
@@ -17856,7 +17970,7 @@ function evTplQuickAdd(tplId, ds) {
   var e = { id: genEventId(), done: false, createdAt: new Date().toISOString(),
     type: (t.type === 'event') ? 'event' : 'task',
     title: String(t.titleTpl || t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
-    date: ds, time: t.defaultTime || '', endTime: '', endDate: '', allDay: false,
+    date: ds, time: t.allDay ? '' : (t.defaultTime || ''), endTime: '', endDate: '', allDay: !!t.allDay, // v404: 終日テンプレ対応
     memberId: '', categoryId: '', priority: 'normal', memo: t.memo || '',
     star: false, listId: '', labelId: '',
     updatedAt: new Date().toISOString() };
@@ -18684,7 +18798,7 @@ function evTplRenderRow() {
     var en = t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0);
     // v360: ▲▼を廃止。行の長押し→ドラッグで並べ替え（≡はつまみの目印）
     h += '<div class="tplp-row" data-tid="' + evEsc(t.id) + '" onclick="evTplPick(\'' + evEsc(t.id) + '\')">'
-      + '<span class="tplp-time">' + _tplpTimeHtml(t.defaultTime || '', en, false) + '</span>'
+      + '<span class="tplp-time">' + (t.allDay ? '終日' : _tplpTimeHtml(t.defaultTime || '', en, false)) + '</span>'
       + '<span class="tplp-dot" style="background:' + tc + '"></span>'
       + '<span class="tplp-ttl">' + evEsc(t.name || '') + '</span>'
       + (t.notifyOffset !== '' && t.notifyOffset !== undefined && t.notifyOffset !== null ? '<span class="tplp-bell">🔔</span>' : '')
@@ -18854,7 +18968,8 @@ function evTplPick(id) {
   var newTitle = String(t.titleTpl || t.name || '').replace(/\{name\}/g, evTplMemberName());
   if (titleEl && (!titleEl.value || titleEl.value === _evTplTitleAuto)) titleEl.value = newTitle; // 手入力は尊重
   _evTplTitleAuto = newTitle;
-  if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
+  if (t.allDay) evToggleAllDay(true); // v404: 終日テンプレ
+  else if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
   _evSetRemind(t.notifyOffset);
   var _acId = _evTplAutoCat(t); // v299: カテゴリ未設定テンプレは自動色分け
   if (_acId) { _evCategoryId = _acId; updateEvCategoryDisplay(); }
@@ -18886,6 +19001,7 @@ function evTplCreateFromForm() {
   window._evtPre = {
     name: title.slice(0, 12),
     type: _evType === 'event' ? 'event' : 'task',
+    allDay: !!_evAllDay,
     durationMin: dur,
     defaultTime: st || '',
     notifyOffset: (rb === '' || rb === undefined) ? '' : (parseInt(rb, 10) || 0),
@@ -18975,6 +19091,7 @@ function openEvTplEdit(id) {
     + '<div style="flex:1">' + fld('開始時刻（任意）', '<input class="fi" id="evtF_time" type="text" readonly placeholder="なし" onclick="openTimePad(\'evtF_time\')" style="cursor:pointer;text-align:center" value="' + evEsc(t ? (t.defaultTime || '') : '') + '">') + '</div>'
     + '<div style="flex:1">' + fld('終了時刻（任意）', '<input class="fi" id="evtF_timeEnd" type="text" readonly placeholder="なし" onclick="openTimePad(\'evtF_timeEnd\')" style="cursor:pointer;text-align:center" value="' + evEsc(t ? (t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0) || '') : '') + '">') + '</div>'
     + '</div>'
+    + '<div class="fr" style="margin-top:2px"><div class="rg"><div class="rb' + (t && t.allDay ? ' sel' : '') + '" id="evtF_allday" onclick="evtToggleAllDay()">🌞 終日（時刻なし）</div></div></div>'
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
     + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
     + fld('カテゴリ（色分け）', '<div class="ev-cat-field" onclick="evtOpenCatPick()">'
@@ -18990,6 +19107,7 @@ function openEvTplEdit(id) {
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
   _pcTimeInputs(['evtF_time', 'evtF_timeEnd']); // v364: PCは予定入力と同じくキーボード直接入力（1930→19:30）
+  if (t && t.allDay) { var _ta1 = document.getElementById('evtF_time'), _ta2 = document.getElementById('evtF_timeEnd'); if (_ta1) _ta1.style.opacity = '.4'; if (_ta2) _ta2.style.opacity = '.4'; } // v404
 }
 // v313: テンプレ編集の色選択
 function evtPickColor(el) {
@@ -18997,6 +19115,17 @@ function evtPickColor(el) {
   var all = document.querySelectorAll('#evtF_pal .cat-color');
   for (var i = 0; i < all.length; i++) all[i].classList.remove('sel');
   el.classList.add('sel');
+}
+// v404: テンプレの終日トグル
+function evtToggleAllDay() {
+  var b = document.getElementById('evtF_allday');
+  if (!b) return;
+  var on = !b.classList.contains('sel');
+  b.classList.toggle('sel', on);
+  var t1 = document.getElementById('evtF_time'), t2 = document.getElementById('evtF_timeEnd');
+  if (on) { if (t1) t1.value = ''; if (t2) t2.value = ''; }
+  if (t1) t1.style.opacity = on ? '.4' : '';
+  if (t2) t2.style.opacity = on ? '.4' : '';
 }
 function saveEvTplForm(id) {
   var name = (document.getElementById('evtF_name')||{}).value || '';
@@ -19021,6 +19150,10 @@ function saveEvTplForm(id) {
     var _dm = ((parseInt(_e9[0],10)||0)*60 + (parseInt(_e9[1],10)||0)) - ((parseInt(_s9[0],10)||0)*60 + (parseInt(_s9[1],10)||0));
     if (_dm > 0) t.durationMin = _dm;
   }
+  // v404: 終日テンプレ
+  var _adEl = document.getElementById('evtF_allday');
+  t.allDay = !!(_adEl && _adEl.classList.contains('sel'));
+  if (t.allDay) { t.defaultTime = ''; t.defaultTimeEnd = ''; t.durationMin = 0; }
   t.notifyOffset = (ntfRaw === '' || ntfRaw === undefined) ? '' : (parseInt(ntfRaw, 10) || 0);
   t.titleTpl = ((document.getElementById('evtF_tpl')||{}).value || '').trim() || name;
   var _stEl = document.getElementById('evtF_stage');
