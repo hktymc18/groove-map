@@ -2215,7 +2215,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v407</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v408</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4941,7 +4941,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v407';
+  var DATA_VERSION = 'v408';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5880,6 +5880,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v408', d:'2026-08-21', items:['📳シェイクで「元に戻す」を既定オフに変更し、カレンダー設定にオン/オフを復活：入力中のシェイクで出るのはiOS標準の「入力を取り消す」でありアプリの取り消しではないため混乱の元でした。オフにすれば「動作と方向」の許可ダイアログも一切出ません','🗓カレンダーの終日予定がマスの一番下に表示されることがある問題を修正：終日は連日帯の次＝上部に固定表示されます'] },
   { v:'v407', d:'2026-08-21', items:['🔗予定とOLの連携を開始：OL記録の「📅予定」がカレンダー（月表示・日別シート）にも📝紫の帯で表示され、タップでそのOL記録を開けます','🔗メンバーに紐付けた予定を完了にすると「📝OLとして記録しますか？」とワンタップで実施カルテ化できます（二重入力の解消）','⚙使いづらければカレンダー設定の「予定とOLの連携」からオフにできます（従来どおりの別管理に戻ります）'] },
   { v:'v406', d:'2026-08-21', items:['🔁繰り返しタスクがToDoに何十件も並ぶ問題を改善：一覧には「直近の1件」だけが🔁バッジ（毎週/毎日など）付きで表示され、完了すると次の回が自動で現れます。件数バッジもまとめた後の数に。カレンダーはこれまでどおり全回表示・完了タスクにも各回の記録が残ります'] },
   { v:'v405', d:'2026-08-21', items:['🎓研修履歴が入力順ではなく日付順で表示されるようになりました（同じ日付は入力順）'] },
@@ -13456,6 +13457,9 @@ function tqAdvanced() {
 // アプリ独自にモーションセンサーでシェイクを検知し、直前のトースト操作（削除の取り消し等）を実行する。
 var _gmShakeLast = 0, _gmShakeOn = false;
 function _gmShakeHandler(ev) {
+  // v408: 入力中はiOS標準の「入力を取り消す」ダイアログが優先されるため、アプリ側は反応しない
+  var ae8 = document.activeElement;
+  if (ae8 && (ae8.tagName === 'INPUT' || ae8.tagName === 'TEXTAREA' || ae8.tagName === 'SELECT')) return;
   var a = ev.accelerationIncludingGravity || ev.acceleration;
   if (!a) return;
   var m = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
@@ -13474,8 +13478,17 @@ function _gmShakeAttach() {
   _gmShakeOn = true;
   window.addEventListener('devicemotion', _gmShakeHandler);
 }
+function gmShakeDisable() {
+  try { localStorage.setItem('gm_shake', '0'); } catch(e0) {}
+  try { window.removeEventListener('devicemotion', _gmShakeHandler); } catch(e1) {}
+  _gmShakeOn = false;
+  toast('📳 シェイクで「元に戻す」をオフにしました');
+  if (typeof openCalSettings === 'function') openCalSettings();
+}
+function gmShakeEnableUI() { gmShakeEnable(); setTimeout(function(){ if (typeof openCalSettings === 'function') openCalSettings(); }, 150); }
 function gmShakeEnable() {
   try { localStorage.setItem('gm_shake', '1'); } catch(e0) {}
+  try { localStorage.removeItem('gm_motion'); } catch(e2) {} // 再有効化時は許可を取り直せるように
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
     DeviceMotionEvent.requestPermission().then(function(st){
       if (st === 'granted') { _gmShakeAttach(); toast('📳 シェイクで「元に戻す」が有効になりました'); }
@@ -13487,7 +13500,7 @@ function gmShakeEnable() {
 // v375: iOSは「操作なし」でrequestPermissionを呼ぶと拒否されるため、リスナーは無条件で張り
 //（許可済みならそのまま発火する）、最初のタップ時に許可状態を取り直す2段構えに修正
 setTimeout(function(){
-  var on = true; try { on = localStorage.getItem('gm_shake') !== '0'; } catch(e0) {} // v394: 既定オン（'0'で明示オフ）
+  var on = false; try { on = localStorage.getItem('gm_shake') === '1'; } catch(e0) {} // v408: 既定オフに戻す（iOS標準の「入力取り消し」ダイアログとの混同・許可ダイアログ多発のため。設定でオン可）
   if (!on) return;
   _gmShakeAttach();
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -14615,6 +14628,12 @@ function openCalSettings() {
     + '<div class="rg">'
     + '<div class="rb' + (_olLink ? ' sel' : '') + '" onclick="setOlLink(true)">🔗 オン</div>'
     + '<div class="rb' + (!_olLink ? ' sel' : '') + '" onclick="setOlLink(false)">オフ</div>'
+    + '</div></div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">📳 シェイクで「元に戻す」（入力中はiOS標準の取り消しが優先）</label>'
+    + '<div class="rg">'
+    + (function(){ var sh = false; try { sh = localStorage.getItem('gm_shake') === '1'; } catch(e9) {} return ''
+      + '<div class="rb' + (sh ? ' sel' : '') + '" onclick="gmShakeEnableUI()">オン</div>'
+      + '<div class="rb' + (!sh ? ' sel' : '') + '" onclick="gmShakeDisable()">オフ</div>'; })()
     + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">下部タブの表示（タップで表示⇄非表示。予定・メニューは常時）</label>'
     + '<div class="rg">'
@@ -17650,6 +17669,9 @@ function renderCalendar() {
           var k1 = (a.ev.date || '') + '|' + a.ev.id, k2 = (b.ev.date || '') + '|' + b.ev.id;
           return k1 < k2 ? -1 : (k1 > k2 ? 1 : 0);
         }
+        // v408: 終日（時刻なし）の予定は帯の次＝マスの上部に置く（時刻ありより先に処理して上の段を確保）
+        var ta8 = (a.ev.allDay || !a.ev.time) ? 0 : 1, tb8 = (b.ev.allDay || !b.ev.time) ? 0 : 1;
+        if (ta8 !== tb8) return ta8 - tb8;
         return evSortFn(a.ev, b.ev);
       });
       // v311: マスを8スロットの時間帯グリッドに（10件は詰まりすぎのため8件へ。18時≒中央基準）
