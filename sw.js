@@ -42,6 +42,8 @@ self.addEventListener('notificationclick', function (e) {
   // v330: notification付き配信（FCM自動表示）の場合は data.FCM_MSG.data 側に入る
   var d = (e.notification && e.notification.data) || {};
   var evId = d.eventId || (d.FCM_MSG && d.FCM_MSG.data && d.FCM_MSG.data.eventId) || '';
+  // v410: 定時リマインダー（eventId='due-digest'）はToDo一覧を開く
+  if (evId.indexOf('due') === 0) evId = '';
   // v351: 期限まとめ通知→ToDoの今日一覧へ / v358: dataが落ちる環境向けにタグ(gm-due〜)でも判定
   var tg = (e.notification && e.notification.tag) || '';
   var isTodo = !evId && (!!d.todo || tg.indexOf('gm-due') === 0);
@@ -58,7 +60,7 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v409';
+var CACHE = 'groove-map-v410';
 var ASSETS = [
   './',
   './index.html',

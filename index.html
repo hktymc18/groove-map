@@ -2215,7 +2215,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v409</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v410</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4941,7 +4941,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v409';
+  var DATA_VERSION = 'v410';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5880,6 +5880,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v410', d:'2026-08-21', items:['⏰定時リマインダーを新設：決めた時刻（既定 9:00/12:00/17:00/22:00）に「未完了タスク ◯件」をプッシュ通知します。アプリを開いていなくても届き、タップでToDo一覧へ。未完了0件の時は通知しません','⚙カレンダー設定からオン/オフと時刻（7・9・12・15・17・20・22時）を選べます'] },
   { v:'v409', d:'2026-08-21', items:['🏛テンプレに共有範囲を追加（ユニオン管理者のみ）：ユニオン全員/地域限定を保存でき、適用すると予定の共有範囲が自動セット、⚡即登録では確認ダイアログの上でそのままユニオン配信できます（🏛マーク付きチップ）'] },
   { v:'v408', d:'2026-08-21', items:['📳シェイクで「元に戻す」を既定オフに変更し、カレンダー設定にオン/オフを復活：入力中のシェイクで出るのはiOS標準の「入力を取り消す」でありアプリの取り消しではないため混乱の元でした。オフにすれば「動作と方向」の許可ダイアログも一切出ません','🗓カレンダーの終日予定がマスの一番下に表示されることがある問題を修正：終日は連日帯の次＝上部に固定表示されます'] },
   { v:'v407', d:'2026-08-21', items:['🔗予定とOLの連携を開始：OL記録の「📅予定」がカレンダー（月表示・日別シート）にも📝紫の帯で表示され、タップでそのOL記録を開けます','🔗メンバーに紐付けた予定を完了にすると「📝OLとして記録しますか？」とワンタップで実施カルテ化できます（二重入力の解消）','⚙使いづらければカレンダー設定の「予定とOLの連携」からオフにできます（従来どおりの別管理に戻ります）'] },
@@ -12965,6 +12966,7 @@ function loadEvents(uid) {
     notifyDueEvents();
     startReminderLoop();
     checkReminders();
+    try { _digestSync(); } catch(eDg) {} // v410: 起動時に定時リマインダーを予約
     // 起動時：Google連携済みなら未同期の予定・タスクを自動再送
     if (state.gcalConnected && !viewingOwnerUid) setTimeout(function(){ try { gcalSyncPending(); } catch(e){} }, 1500);
     return state.events;
@@ -12978,6 +12980,7 @@ function saveEventDoc(e) {
   var clean = {};
   for (var k in e) { if (e.hasOwnProperty(k) && e[k] !== undefined) clean[k] = e[k]; }
   try { _notifSync(clean); } catch(err) {} // CAL-4: 通知予約を同期
+  try { if (e && e.type === 'task') _digestScheduleSoon(); } catch(err2) {} // v410: 定時リマインダーの件数を貼り直し
   return fsSet('maps/' + uid + '/events/' + e.id, clean);
 }
 // ============================================================
@@ -13198,6 +13201,79 @@ function _notifRbLabel(rb) {
   if (rb >= 60) return (rb / 60) + '時間前';
   return rb + '分前';
 }
+// ============================================================
+//  v410: 定時リマインダー（未完了タスクのまとめ通知）
+//  指定時刻ごとに notifQueue へ予約 → 毎分動くCloud Functionが送信するので
+//  アプリを開いていなくても届く。件数は「予約した時点」の値を書き込み、
+//  タスクを増減するたび（＝アプリ操作時）に貼り直すので実態とズレない。
+// ============================================================
+var DIGEST_TIMES_ALL = ['07:00', '09:00', '12:00', '15:00', '17:00', '20:00', '22:00'];
+var _dgOn = false, _dgTimes = ['09:00', '12:00', '17:00', '22:00'];
+try {
+  _dgOn = localStorage.getItem('gm_digestOn') === '1';
+  var _dgTs = localStorage.getItem('gm_digestTimes');
+  if (_dgTs) _dgTimes = _dgTs.split(',').filter(function(x){ return !!x; });
+} catch(eDg0) {}
+function _dgPad(n) { return n < 10 ? '0' + n : '' + n; }
+function setDigestOn(v) {
+  _dgOn = !!v;
+  try { localStorage.setItem('gm_digestOn', v ? '1' : '0'); } catch(e) {}
+  _digestSync();
+  if (typeof openCalSettings === 'function') openCalSettings();
+  if (v) toast('⏰ 定時リマインダーをオンにしました（' + _dgTimes.join('・') + '）');
+}
+function toggleDigestTime(t) {
+  var i = _dgTimes.indexOf(t);
+  if (i >= 0) _dgTimes.splice(i, 1); else _dgTimes.push(t);
+  _dgTimes.sort();
+  try { localStorage.setItem('gm_digestTimes', _dgTimes.join(',')); } catch(e) {}
+  _digestSync();
+  if (typeof openCalSettings === 'function') openCalSettings();
+}
+var _dgTimer = null;
+function _digestScheduleSoon() {
+  if (_dgTimer) clearTimeout(_dgTimer);
+  _dgTimer = setTimeout(function(){ _dgTimer = null; try { _digestSync(); } catch(e) {} }, 4000);
+}
+function _digestSync() {
+  if (!db || !currentUser || !currentUser.uid || viewingOwnerUid) return;
+  // 前回貼った予約はいったん全部消してから貼り直す（件数を最新化するため）
+  var old = [];
+  try { old = JSON.parse(localStorage.getItem('gm_dgQ') || '[]'); } catch(e0) {}
+  old.forEach(function(qid){ db.doc('notifQueue/' + qid).delete().catch(function(){}); });
+  var written = [];
+  var pushOff = false;
+  try { pushOff = localStorage.getItem('gm_pushOff') === '1'; } catch(e1) {}
+  if (_dgOn && _dgTimes.length && !pushOff) {
+    var tasks = (state.events || []).filter(function(e){
+      return e.type === 'task' && !e.done && !e.deleted && e.date && evTdMine(e);
+    });
+    var now = new Date();
+    for (var d = 0; d < 3 && written.length < 8; d++) {
+      var day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d);
+      var ymd = day.getFullYear() + '-' + _dgPad(day.getMonth() + 1) + '-' + _dgPad(day.getDate());
+      for (var i = 0; i < _dgTimes.length && written.length < 8; i++) {
+        var hm = String(_dgTimes[i]).split(':');
+        var dt = new Date(day.getFullYear(), day.getMonth(), day.getDate(), parseInt(hm[0], 10) || 0, parseInt(hm[1], 10) || 0, 0);
+        if (dt.getTime() <= Date.now() + 60000) continue; // 直近1分以内は飛ばす
+        var due = tasks.filter(function(e){ return e.date <= ymd; });
+        if (!due.length) continue; // 0件の時は通知しない
+        var odN = 0;
+        for (var k = 0; k < due.length; k++) { if (due[k].date < ymd) odN++; }
+        var qid = currentUser.uid + '_dg' + day.getFullYear() + _dgPad(day.getMonth() + 1) + _dgPad(day.getDate()) + hm[0] + hm[1];
+        fsSet('notifQueue/' + qid, {
+          uid: currentUser.uid,
+          eventId: 'due-digest',
+          fireAt: dt.toISOString(),
+          title: '✅ 未完了タスク ' + due.length + '件',
+          body: (odN ? '⚠️ 期限切れ ' + odN + '件を含む・' : '') + 'タップして一覧を開く'
+        }).catch(function(){});
+        written.push(qid);
+      }
+    }
+  }
+  try { localStorage.setItem('gm_dgQ', JSON.stringify(written)); } catch(e2) {}
+}
 function _notifSync(e) {
   if (!db || !currentUser || !currentUser.uid || !e || !e.id) return;
   var need = !e.done && !e.deleted && e.date && e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null; // v371: ゴミ箱内は通知しない
@@ -13305,7 +13381,9 @@ if ('serviceWorker' in navigator) {
 try {
   var _pmEv = /[?&]ev=([^&]+)/.exec(location.search || '');
   if (_pmEv) {
-    gmOpenEventFromPush(decodeURIComponent(_pmEv[1]));
+    var _pmV = decodeURIComponent(_pmEv[1]);
+    if (_pmV.indexOf('due') === 0) setTimeout(gmOpenDueTodos, 1200); // v410: 定時リマインダー→ToDoの一覧へ
+    else gmOpenEventFromPush(_pmV);
     if (history.replaceState) history.replaceState(null, '', location.pathname); // URLを綺麗に戻す
   }
   if (/[?&]todo=1/.test(location.search || '')) { // v351: 通知から新規起動した場合
@@ -14649,6 +14727,17 @@ function openCalSettings() {
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
     + '<button class="fol-add" style="margin-top:8px" onclick="pushClearOtherTokens()">🧹 通知が2重に届く時はこちら（古い登録を掃除）</button>'
+    + '</div>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">⏰ 定時リマインダー（未完了タスクの件数をプッシュでお知らせ）</label>'
+    + '<div class="rg">'
+    + '<div class="rb' + (_dgOn ? ' sel' : '') + '" onclick="setDigestOn(true)">オン</div>'
+    + '<div class="rb' + (!_dgOn ? ' sel' : '') + '" onclick="setDigestOn(false)">オフ</div>'
+    + '</div>'
+    + (_dgOn ? ('<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'
+        + DIGEST_TIMES_ALL.map(function(tt){
+            return '<div class="rb' + (_dgTimes.indexOf(tt) >= 0 ? ' sel' : '') + '" style="flex:none;padding:7px 12px" onclick="toggleDigestTime(\'' + tt + '\')">' + tt + '</div>';
+          }).join('')
+        + '</div><div style="font-size:11px;color:var(--text-dim);margin-top:6px">未完了が0件の時は通知しません。iPhoneは「ホーム画面に追加」したアプリで通知オンが必要です</div>') : '')
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
     + gcalRow
