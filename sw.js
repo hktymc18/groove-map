@@ -58,7 +58,7 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v408';
+var CACHE = 'groove-map-v409';
 var ASSETS = [
   './',
   './index.html',

@@ -2215,7 +2215,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v408</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v409</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4941,7 +4941,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v408';
+  var DATA_VERSION = 'v409';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5880,6 +5880,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v409', d:'2026-08-21', items:['🏛テンプレに共有範囲を追加（ユニオン管理者のみ）：ユニオン全員/地域限定を保存でき、適用すると予定の共有範囲が自動セット、⚡即登録では確認ダイアログの上でそのままユニオン配信できます（🏛マーク付きチップ）'] },
   { v:'v408', d:'2026-08-21', items:['📳シェイクで「元に戻す」を既定オフに変更し、カレンダー設定にオン/オフを復活：入力中のシェイクで出るのはiOS標準の「入力を取り消す」でありアプリの取り消しではないため混乱の元でした。オフにすれば「動作と方向」の許可ダイアログも一切出ません','🗓カレンダーの終日予定がマスの一番下に表示されることがある問題を修正：終日は連日帯の次＝上部に固定表示されます'] },
   { v:'v407', d:'2026-08-21', items:['🔗予定とOLの連携を開始：OL記録の「📅予定」がカレンダー（月表示・日別シート）にも📝紫の帯で表示され、タップでそのOL記録を開けます','🔗メンバーに紐付けた予定を完了にすると「📝OLとして記録しますか？」とワンタップで実施カルテ化できます（二重入力の解消）','⚙使いづらければカレンダー設定の「予定とOLの連携」からオフにできます（従来どおりの別管理に戻ります）'] },
   { v:'v406', d:'2026-08-21', items:['🔁繰り返しタスクがToDoに何十件も並ぶ問題を改善：一覧には「直近の1件」だけが🔁バッジ（毎週/毎日など）付きで表示され、完了すると次の回が自動で現れます。件数バッジもまとめた後の数に。カレンダーはこれまでどおり全回表示・完了タスクにも各回の記録が残ります'] },
@@ -18034,7 +18035,7 @@ function _daySheetHtml(ds) {
     h += '<div class="dsh-tpl-ttl">📌 テンプレで即登録（1タップ）</div><div class="dsh-tpl">';
     _qtpls.forEach(function(t){
       var tc = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '#9ca3af';
-      h += '<span class="dsh-tpl-chip" onclick="evTplQuickAdd(\'' + evEsc(t.id) + '\',\'' + ds + '\')"><i style="background:' + tc + '"></i>' + evEsc(t.name || '') + '</span>';
+      h += '<span class="dsh-tpl-chip" onclick="evTplQuickAdd(\'' + evEsc(t.id) + '\',\'' + ds + '\')"><i style="background:' + tc + '"></i>' + (t.unionScope ? '🏛' : '') + evEsc(t.name || '') + '</span>';
     });
     h += '</div>';
   }
@@ -18045,6 +18046,37 @@ function evTplQuickAdd(tplId, ds) {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   var t = _evTplFind(tplId);
   if (!t) return;
+  // v409: ユニオン共有テンプレの即登録は、必ず確認してからユニオン予定として配信（誤爆防止）
+  if (t.unionScope) {
+    if (!(typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)) { toast('🏛 ユニオン共有テンプレはユニオン管理者のみ使えます'); return; }
+    var un9 = currentUser.union;
+    var area9 = t.unionAreaMine ? (currentUser.area || '') : '';
+    if (!confirm('🏛 「' + un9 + '」の' + (area9 ? '「' + area9 + '」地域の' : '全') + 'メンバーのカレンダーに「' + (t.name || '') + '」を登録します。よろしいですか？')) return;
+    var _cid9 = _evTplAutoCat(t) || t.categoryId || '';
+    var _qc9 = _cid9 ? findCategory(_cid9) : null;
+    var time9 = t.allDay ? '' : (t.defaultTime || '');
+    var end9 = '';
+    if (time9 && t.defaultTimeEnd) end9 = t.defaultTimeEnd;
+    else if (time9 && t.durationMin) {
+      var _hm9 = time9.split(':');
+      var _tt9 = (parseInt(_hm9[0], 10) || 0) * 60 + (parseInt(_hm9[1], 10) || 0) + t.durationMin;
+      if (_tt9 < 1800) end9 = evPad2(Math.floor(_tt9 / 60)) + ':' + evPad2(_tt9 % 60);
+    }
+    var id9 = 'ue_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    var doc9 = { id: id9, union: un9, area: area9,
+      title: String(t.titleTpl || t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
+      date: ds, endDate: '', time: time9, endTime: end9, allDay: !!t.allDay,
+      place: '', memo: t.memo || '', color: _qc9 ? _qc9.color : '',
+      createdBy: currentUser.uid, createdByName: currentUser.org || currentUser.name || '',
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    db.doc('unions/' + un9 + '/events/' + id9).set(doc9).then(function(){ toast('🏛 ユニオン予定を登録しました ✓'); })
+      .catch(function(err){ toast('⚠️ 登録できませんでした: ' + ((err && err.message) || '権限/通信を確認してください')); });
+    _unionRaw.push(doc9);
+    _unionApplyToState();
+    renderCalDayList();
+    t.useCount = (t.useCount || 0) + 1; _evTplSaveAll();
+    return;
+  }
   t.useCount = (t.useCount || 0) + 1; _evTplSaveAll(); // v349: 使用回数（頻度順表示用）
   var e = { id: genEventId(), done: false, createdAt: new Date().toISOString(),
     type: (t.type === 'event') ? 'event' : 'task',
@@ -19067,6 +19099,10 @@ function evTplPick(id) {
   _evTplTitleAuto = newTitle;
   if (t.allDay) evToggleAllDay(true); // v404: 終日テンプレ
   else if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
+  // v409: ユニオン共有テンプレ→共有範囲トグルを自動セット（管理者・新規予定のみ。保存時に通常の確認が出る）
+  if (t.unionScope && !_evEditId && typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union) {
+    try { evUnionScope(true); evUnionArea(!!t.unionAreaMine); } catch(eUn9) {}
+  }
   _evSetRemind(t.notifyOffset);
   var _acId = _evTplAutoCat(t); // v299: カテゴリ未設定テンプレは自動色分け
   if (_acId) { _evCategoryId = _acId; updateEvCategoryDisplay(); }
@@ -19189,6 +19225,15 @@ function openEvTplEdit(id) {
     + '<div style="flex:1">' + fld('終了時刻（任意）', '<input class="fi" id="evtF_timeEnd" type="text" readonly placeholder="なし" onclick="openTimePad(\'evtF_timeEnd\')" style="cursor:pointer;text-align:center" value="' + evEsc(t ? (t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0) || '') : '') + '">') + '</div>'
     + '</div>'
     + '<div class="fr" style="margin-top:2px"><div class="rg"><div class="rb' + (t && t.allDay ? ' sel' : '') + '" id="evtF_allday" onclick="evtToggleAllDay()">🌞 終日（時刻なし）</div></div></div>'
+    + ((typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)
+      ? '<div class="fr"><label class="fl">🏛 共有範囲（ユニオン管理者）</label><div class="rg">'
+        + '<div class="rb' + (!(t && t.unionScope) ? ' sel' : '') + '" id="evtF_un0" onclick="evtUnionScope(false)">自分のみ</div>'
+        + '<div class="rb' + ((t && t.unionScope) ? ' sel' : '') + '" id="evtF_un1" onclick="evtUnionScope(true)">🏛 ユニオン全員</div>'
+        + '</div><div class="rg" id="evtF_unaRow" style="margin-top:6px;display:' + ((t && t.unionScope) ? '' : 'none') + '">'
+        + '<div class="rb' + (!(t && t.unionAreaMine) ? ' sel' : '') + '" id="evtF_una0" onclick="evtUnionArea(false)">全地域</div>'
+        + '<div class="rb' + ((t && t.unionAreaMine) ? ' sel' : '') + '" id="evtF_una1" onclick="evtUnionArea(true)">📍 ' + evEsc((currentUser && currentUser.area) || '地域') + ' のみ</div>'
+        + '</div></div>'
+      : '')
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
     + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
     + fld('カテゴリ（色分け）', '<div class="ev-cat-field" onclick="evtOpenCatPick()">'
@@ -19212,6 +19257,18 @@ function evtPickColor(el) {
   var all = document.querySelectorAll('#evtF_pal .cat-color');
   for (var i = 0; i < all.length; i++) all[i].classList.remove('sel');
   el.classList.add('sel');
+}
+// v409: テンプレの共有範囲トグル（ユニオン管理者のみ表示）
+function evtUnionScope(on) {
+  var b0 = document.getElementById('evtF_un0'), b1 = document.getElementById('evtF_un1'), ar = document.getElementById('evtF_unaRow');
+  if (b0) b0.classList.toggle('sel', !on);
+  if (b1) b1.classList.toggle('sel', !!on);
+  if (ar) ar.style.display = on ? '' : 'none';
+}
+function evtUnionArea(mine) {
+  var a0 = document.getElementById('evtF_una0'), a1 = document.getElementById('evtF_una1');
+  if (a0) a0.classList.toggle('sel', !mine);
+  if (a1) a1.classList.toggle('sel', !!mine);
 }
 // v404: テンプレの終日トグル
 function evtToggleAllDay() {
@@ -19251,6 +19308,11 @@ function saveEvTplForm(id) {
   var _adEl = document.getElementById('evtF_allday');
   t.allDay = !!(_adEl && _adEl.classList.contains('sel'));
   if (t.allDay) { t.defaultTime = ''; t.defaultTimeEnd = ''; t.durationMin = 0; }
+  // v409: ユニオン共有テンプレ（管理者のみフォームに表示。要素が無ければfalse）
+  var _un1El = document.getElementById('evtF_un1');
+  t.unionScope = !!(_un1El && _un1El.classList.contains('sel'));
+  var _una1El = document.getElementById('evtF_una1');
+  t.unionAreaMine = !!(_una1El && _una1El.classList.contains('sel'));
   t.notifyOffset = (ntfRaw === '' || ntfRaw === undefined) ? '' : (parseInt(ntfRaw, 10) || 0);
   t.titleTpl = ((document.getElementById('evtF_tpl')||{}).value || '').trim() || name;
   var _stEl = document.getElementById('evtF_stage');
