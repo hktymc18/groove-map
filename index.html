@@ -2215,7 +2215,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v410</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v412</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3799,6 +3799,7 @@ function renderPCMap(mapType) {
   outerWrap.appendChild(zoomBar);
 
   var outer = document.createElement('div');
+  outer.id = 'pcTreeOuter'; // v412: 保存後に表示位置を復元するため
   outer.style.cssText = 'width:100%;height:'+viewH+'px;overflow:auto;cursor:grab;position:relative';
   outerWrap.appendChild(outer);
   wrap.appendChild(outerWrap);
@@ -4088,6 +4089,18 @@ function renderPCMap(mapType) {
 
   // 初期表示: 全段が横幅に収まるようフィット（縦はスクロール、文字は大きめ優先）
   setTimeout(function(){
+    // v412: メンバー編集の保存直後などは、直前に見ていた位置・倍率をそのまま復元（中央に戻さない）
+    var _kv = window._pcTreeKeepView;
+    if (_kv && (Date.now() - _kv.at) < 8000) {
+      window._pcTreeKeepView = null;
+      applyZoom(_kv.z || zoom);
+      outer.scrollLeft = _kv.sl;
+      outer.scrollTop = _kv.st;
+      updateRuler();
+      if (window._pcFocusLineage) applyFocus(window._pcFocusLineage);
+      applyRegionDim();
+      return;
+    }
     var fitZoom = Math.min((viewW - 30) / SVG_W, 1.25);
     fitZoom = Math.max(fitZoom, 0.55);
     applyZoom(fitZoom);
@@ -4941,7 +4954,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v410';
+  var DATA_VERSION = 'v412';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5880,6 +5893,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v412', d:'2026-08-21', items:['📝OL記録をメンバー複数選択で一括追加できるようになりました（「対象メンバー」＋メンバーを追加→検索して複数選択。同じ内容が全員の記録に入ります）','🖥PC版でメンバーを編集して保存した後、ツリーが中央に戻らず編集前の表示位置・拡大率のままになりました'] },
+  { v:'v411', d:'2026-08-21', items:['📳シェイクで「元に戻す」機能を廃止し、設定からも削除しました：iPhone標準の「入力の取り消し」と紛らわしく、モーションの許可ダイアログが繰り返し出るためです。操作の取り消しは今までどおりトーストの「↩取消」ボタンから行えます'] },
   { v:'v410', d:'2026-08-21', items:['⏰定時リマインダーを新設：決めた時刻（既定 9:00/12:00/17:00/22:00）に「未完了タスク ◯件」をプッシュ通知します。アプリを開いていなくても届き、タップでToDo一覧へ。未完了0件の時は通知しません','⚙カレンダー設定からオン/オフと時刻（7・9・12・15・17・20・22時）を選べます'] },
   { v:'v409', d:'2026-08-21', items:['🏛テンプレに共有範囲を追加（ユニオン管理者のみ）：ユニオン全員/地域限定を保存でき、適用すると予定の共有範囲が自動セット、⚡即登録では確認ダイアログの上でそのままユニオン配信できます（🏛マーク付きチップ）'] },
   { v:'v408', d:'2026-08-21', items:['📳シェイクで「元に戻す」を既定オフに変更し、カレンダー設定にオン/オフを復活：入力中のシェイクで出るのはiOS標準の「入力を取り消す」でありアプリの取り消しではないため混乱の元でした。オフにすれば「動作と方向」の許可ダイアログも一切出ません','🗓カレンダーの終日予定がマスの一番下に表示されることがある問題を修正：終日は連日帯の次＝上部に固定表示されます'] },
@@ -9402,6 +9417,8 @@ function openOlRecordModal(mid, editIdx){
     + '<div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+(editing?'OL記録を編集':'OL記録を追加')+(nm?'（'+v(nm)+'）':'')+'</div></div><span class="ms-x" onclick="closeOlRecordModal()">✕</span></div>'
     + '<div style="padding:4px 16px 16px">'
+    + (editing ? '' : ('<label style="'+lbStyle+'">対象メンバー（複数可）</label>'
+        + '<div id="_olrMemBox" style="margin:4px 0 10px"></div>')) // v412: 複数メンバーへ同じ記録を追加
     + '<label style="'+lbStyle+'">種別</label>'
     + '<div style="display:flex;gap:8px;margin:4px 0 10px">'
     + '<div class="rb'+(rec.st==='planned'?'':' sel')+'" id="_olrStDone" onclick="_olrSetSt(\'done\')" style="flex:1;text-align:center">✓ 実施済み</div>'
@@ -9419,10 +9436,85 @@ function openOlRecordModal(mid, editIdx){
     + (editing ? '<button onclick="olRecordModalDelete(\''+mid+'\','+editIdx+')" style="width:100%;padding:11px;border-radius:10px;border:1px solid #FF5D73;color:#FF5D73;background:transparent;font-size:14px;font-weight:600;margin-top:8px">この記録を削除</button>' : '')
     + '</div></div>';
   window._olrSt = (rec.st === 'planned') ? 'planned' : 'done'; // v361
+  window._olrMids = editing ? [mid] : [mid]; // v412: 対象メンバー（追加時は複数選択可）
   document.body.appendChild(ov);
+  if (!editing) _olrRenderMems();
   requestAnimationFrame(function(){ ov.classList.add('show'); setTimeout(function(){ var f=document.getElementById('_olrWhat'); if(f&&!editing) f.focus(); },80); });
 }
 window._olrSt = 'done';
+window._olrMids = [];
+// v412: OL記録の対象メンバー（複数可）
+function _olrNameOf(mid) {
+  var m = (typeof _findMember === 'function') ? _findMember(mid) : null;
+  return m ? ((((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '')) || '(無名)') : '(不明)';
+}
+function _olrRenderMems() {
+  var box = document.getElementById('_olrMemBox');
+  if (!box) return;
+  var h = '';
+  (window._olrMids || []).forEach(function(id, i){
+    h += '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:14px;padding:5px 10px;font-size:12.5px;font-weight:700;margin:0 6px 6px 0">'
+      + evEsc(_olrNameOf(id))
+      + (i > 0 ? '<span style="cursor:pointer;opacity:.8" onclick="_olrMemDel(\'' + id + '\')">✕</span>' : '') + '</span>';
+  });
+  h += '<span style="display:inline-flex;align-items:center;background:var(--surface2);border:1px dashed var(--border2);color:var(--text-mid);border-radius:14px;padding:5px 11px;font-size:12.5px;font-weight:700;cursor:pointer;margin-bottom:6px" onclick="_olrMemPick()">＋ メンバーを追加</span>';
+  box.innerHTML = h;
+}
+function _olrMemDel(id) {
+  window._olrMids = (window._olrMids || []).filter(function(x){ return x !== id; });
+  _olrRenderMems();
+}
+function _olrMemPick() {
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'olrPickOv';
+  ov.style.zIndex = '600';
+  ov.onclick = function(e){ if (e.target === ov) _olrMemPickClose(); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:80vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">👥 メンバーを選択（複数可）</div></div>'
+    + '<span class="ms-x" onclick="_olrMemPickClose()">✕</span></div>'
+    + '<div style="padding:0 16px 20px">'
+    + '<input class="fi" id="_olrSearch" placeholder="🔍 名前で検索" autocomplete="off" oninput="_olrPickList(this.value)">'
+    + '<div id="_olrPickList" style="margin-top:8px"></div>'
+    + '<div class="btn-row" style="margin-top:12px"><button class="btn-p" style="flex:1" onclick="_olrMemPickClose()">完了</button></div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  // 検索中はシートを上部へ（キーボードで隠れないように・v395と同じ対策）
+  if (typeof isPCMode !== 'function' || !isPCMode()) {
+    ov.addEventListener('focusin', function(e2){ if (e2.target && e2.target.id === '_olrSearch') ov.classList.add('kb-top'); });
+    ov.addEventListener('focusout', function(e2){ if (e2.target && e2.target.id === '_olrSearch') setTimeout(function(){ ov.classList.remove('kb-top'); }, 150); });
+  }
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+  _olrPickList('');
+}
+function _olrMemPickClose() {
+  var ov = document.getElementById('olrPickOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+  _olrRenderMems();
+}
+function _olrPickList(q) {
+  var box = document.getElementById('_olrPickList');
+  if (!box) return;
+  q = (q || '').trim().toLowerCase().replace(/\s+/g, '');
+  var h = '';
+  (state.members || []).forEach(function(m){
+    if (m.deleted) return;
+    var name = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+    if (q && name.toLowerCase().replace(/\s+/g, '').indexOf(q) < 0) return;
+    var on = (window._olrMids || []).indexOf(m.id) >= 0;
+    h += '<div class="td-home-row" onclick="_olrPickToggle(\'' + m.id + '\')">'
+      + '<span class="td-chk' + (on ? ' on' : '') + '" style="width:22px;height:22px;font-size:12px">' + (on ? '✓' : '') + '</span>'
+      + '<span class="td-hname">' + evEsc(name) + (m.title ? ' <span style="font-size:11px;color:var(--text-dim)">' + evEsc(m.title) + '</span>' : '') + '</span></div>';
+  });
+  box.innerHTML = h || '<div class="ev-empty" style="padding:14px">該当するメンバーがいません</div>';
+}
+function _olrPickToggle(id) {
+  var arr = window._olrMids || [];
+  var i = arr.indexOf(id);
+  if (i >= 0) { if (arr.length <= 1) { toast('1人以上選んでください'); return; } arr.splice(i, 1); }
+  else arr.push(id);
+  window._olrMids = arr;
+  var sIn = document.getElementById('_olrSearch');
+  _olrPickList(sIn ? sIn.value : '');
+}
 function _olrSetSt(v){
   window._olrSt = (v === 'planned') ? 'planned' : 'done';
   var a = document.getElementById('_olrStDone'), b = document.getElementById('_olrStPlan');
@@ -9442,7 +9534,12 @@ function olRecordModalSave(mid, editIdx){
   if(typeof editIdx==='number' && editIdx>=0 && log[editIdx]){
     log[editIdx].date=data.date; log[editIdx].asan=data.asan; log[editIdx].what=data.what; log[editIdx].note=data.note; log[editIdx].st=data.st;
   } else {
-    log.unshift({ date:data.date, asan:data.asan, to:'', what:data.what, note:data.note, st:data.st });
+    // v412: 選んだメンバー全員に同じ記録を追加
+    var mids = (window._olrMids && window._olrMids.length) ? window._olrMids : [mid];
+    mids.forEach(function(id9){
+      freshOlLog(id9).unshift({ date:data.date, asan:data.asan, to:'', what:data.what, note:data.note, st:data.st });
+    });
+    if (mids.length > 1) setTimeout(function(){ toast('📝 ' + mids.length + '人にOL記録を追加しました'); }, 300);
   }
   autoSave();
   closeOlRecordModal();
@@ -11436,8 +11533,16 @@ function confirmParentChange(mid, newPid) {
   }
   toast('🔀 ' + nm + ' さんを ' + pn + ' さんの直下へ移動しました');
 }
+// v412: PCツリーの表示位置（スクロール・倍率）を控える → 再描画後に復元
+window._pcTreeKeepView = null;
+function _pcTreeCaptureView() {
+  var o = document.getElementById('pcTreeOuter');
+  if (!o) return;
+  window._pcTreeKeepView = { sl: o.scrollLeft, st: o.scrollTop, z: o._currentZoom || 0, at: Date.now() };
+}
 function saveMember() {
   var _prevMember = null;
+  try { if (typeof isPCMode === 'function' && isPCMode()) _pcTreeCaptureView(); } catch(ePv) {}
   if (editingId) { for (var _pi=0; _pi<state.members.length; _pi++){ if (state.members[_pi].id===editingId){ _prevMember=state.members[_pi]; break; } } }
   var m = {
     id: editingId || 'id-'+Date.now(),
@@ -11569,7 +11674,7 @@ function toast(msg, dur) {
 // アクション付きトースト（例：記録直後の「取り消す」）。親指の届く位置でリカバリー可能に
 function toastAction(msg, label, fn, dur) {
   if (dur === undefined) dur = 3500;
-  window._gmUndoFn = fn || null; window._gmUndoAt = Date.now(); // v358: 📳シェイクで直前の操作を呼び出せるように記録
+  window._gmUndoFn = fn || null; window._gmUndoAt = Date.now(); // 直前の取り消し操作を保持（トーストの「↩取消」用）
   var el = document.getElementById('toast');
   el.style.pointerEvents = 'auto'; // v350: .toastはpointer-events:noneのためボタンが押せなかった不具合を修正
   el.innerHTML = evEsc(msg) + ' <span id="_toastAct" style="display:inline-block;margin-left:10px;padding:6px 14px;border-radius:14px;background:var(--surface3);color:var(--accent);font-weight:800;cursor:pointer">' + evEsc(label) + '</span>';
@@ -13532,74 +13637,8 @@ function tqAdvanced() {
   if (l) { _evListId = l; updateTodoMetaDisplay(); }
 }
 // v358: 📳シェイクで「元に戻す」
-// iOS標準の「取り消す - 入力」ダイアログは文字入力の取り消し専用（OS機能）でWebから連動できないため、
-// アプリ独自にモーションセンサーでシェイクを検知し、直前のトースト操作（削除の取り消し等）を実行する。
-var _gmShakeLast = 0, _gmShakeOn = false;
-function _gmShakeHandler(ev) {
-  // v408: 入力中はiOS標準の「入力を取り消す」ダイアログが優先されるため、アプリ側は反応しない
-  var ae8 = document.activeElement;
-  if (ae8 && (ae8.tagName === 'INPUT' || ae8.tagName === 'TEXTAREA' || ae8.tagName === 'SELECT')) return;
-  var a = ev.accelerationIncludingGravity || ev.acceleration;
-  if (!a) return;
-  var m = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
-  if (m < 45) return; // しっかり振った時だけ反応
-  var now = Date.now();
-  if (now - _gmShakeLast < 1500) return;
-  _gmShakeLast = now;
-  if (window._gmUndoFn && (now - (window._gmUndoAt || 0)) < 120000) {
-    var f = window._gmUndoFn; window._gmUndoFn = null;
-    try { f(); } catch(e0) {}
-    toast('📳↩ 直前の操作を実行しました（シェイク）');
-  }
-}
-function _gmShakeAttach() {
-  if (_gmShakeOn) return;
-  _gmShakeOn = true;
-  window.addEventListener('devicemotion', _gmShakeHandler);
-}
-function gmShakeDisable() {
-  try { localStorage.setItem('gm_shake', '0'); } catch(e0) {}
-  try { window.removeEventListener('devicemotion', _gmShakeHandler); } catch(e1) {}
-  _gmShakeOn = false;
-  toast('📳 シェイクで「元に戻す」をオフにしました');
-  if (typeof openCalSettings === 'function') openCalSettings();
-}
-function gmShakeEnableUI() { gmShakeEnable(); setTimeout(function(){ if (typeof openCalSettings === 'function') openCalSettings(); }, 150); }
-function gmShakeEnable() {
-  try { localStorage.setItem('gm_shake', '1'); } catch(e0) {}
-  try { localStorage.removeItem('gm_motion'); } catch(e2) {} // 再有効化時は許可を取り直せるように
-  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().then(function(st){
-      if (st === 'granted') { _gmShakeAttach(); toast('📳 シェイクで「元に戻す」が有効になりました'); }
-      else toast('⚠️ モーションセンサーの許可が得られませんでした');
-    }).catch(function(){ toast('⚠️ モーションセンサーの許可が得られませんでした（もう一度お試しください）'); });
-  } else { _gmShakeAttach(); toast('📳 シェイクで「元に戻す」が有効になりました'); }
-}
-// 起動時: 有効化済みなら自動で再開
-// v375: iOSは「操作なし」でrequestPermissionを呼ぶと拒否されるため、リスナーは無条件で張り
-//（許可済みならそのまま発火する）、最初のタップ時に許可状態を取り直す2段構えに修正
-setTimeout(function(){
-  var on = false; try { on = localStorage.getItem('gm_shake') === '1'; } catch(e0) {} // v408: 既定オフに戻す（iOS標準の「入力取り消し」ダイアログとの混同・許可ダイアログ多発のため。設定でオン可）
-  if (!on) return;
-  _gmShakeAttach();
-  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    // v404: 「動作と方向」の許可ダイアログが毎回出る問題への対策 — 一度断られたら二度と聞かない
-    //（許可済みの場合、requestPermissionはダイアログを出さずに即grantedを返すため再確認は無害）
-    var _mSt = '';
-    try { _mSt = localStorage.getItem('gm_motion') || ''; } catch(eM0) {}
-    if (_mSt === 'denied') return;
-    var _shakeOnce = function(){
-      document.removeEventListener('touchend', _shakeOnce);
-      DeviceMotionEvent.requestPermission().then(function(st){
-        try { localStorage.setItem('gm_motion', st === 'granted' ? 'granted' : 'denied'); } catch(eM1) {}
-        if (st === 'granted') _gmShakeAttach();
-      }).catch(function(){
-        try { localStorage.setItem('gm_motion', 'denied'); } catch(eM2) {}
-      });
-    };
-    document.addEventListener('touchend', _shakeOnce, { passive: true });
-  }
-}, 1200);
+// v411: シェイクで「元に戻す」機能は廃止（iOS標準の「入力の取り消し」と紛らわしく、
+//        モーション許可ダイアログが繰り返し出るため）。取り消しはトーストの「↩取消」から。
 // v360: トーストはタップ or 横フリックで即閉じできる（「登録しました」等が邪魔な時にすぐ消せる）
 setTimeout(function(){
   var el = document.getElementById('toast');
@@ -14707,12 +14746,6 @@ function openCalSettings() {
     + '<div class="rg">'
     + '<div class="rb' + (_olLink ? ' sel' : '') + '" onclick="setOlLink(true)">🔗 オン</div>'
     + '<div class="rb' + (!_olLink ? ' sel' : '') + '" onclick="setOlLink(false)">オフ</div>'
-    + '</div></div>'
-    + '<div class="fr" style="margin-top:4px"><label class="fl">📳 シェイクで「元に戻す」（入力中はiOS標準の取り消しが優先）</label>'
-    + '<div class="rg">'
-    + (function(){ var sh = false; try { sh = localStorage.getItem('gm_shake') === '1'; } catch(e9) {} return ''
-      + '<div class="rb' + (sh ? ' sel' : '') + '" onclick="gmShakeEnableUI()">オン</div>'
-      + '<div class="rb' + (!sh ? ' sel' : '') + '" onclick="gmShakeDisable()">オフ</div>'; })()
     + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">下部タブの表示（タップで表示⇄非表示。予定・メニューは常時）</label>'
     + '<div class="rg">'
