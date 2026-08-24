@@ -2217,7 +2217,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v414</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v415</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4956,7 +4956,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v414';
+  var DATA_VERSION = 'v415';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5899,6 +5899,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v415', d:'2026-08-21', items:['🐛研修のリスケ回数が二重にカウントされるバグを修正：日程未定にした後で日付を入れても回数は増えません（「決まっていた日程が流れた時」だけ1回として数えます）。元の日付の二重記録も修正'] },
   { v:'v414', d:'2026-08-21', items:['🖥PC版でメンバー編集の入力（名前・ポイント等）が重い問題を改修：iPhone用の画面補正処理がPCでも動いて入力欄を移動するたびにレイアウト再計算が走っていたのを停止し、編集パネルを独立レイヤー化＋影を軽量化して背後の組織図が描き直されないようにしました'] },
   { v:'v413', d:'2026-08-21', items:['🔄研修ステップの予定に「リスケ」を追加：新しい日付に変更でき、日程が決まっていない時は「📅 日程未定」を選べます（予定は消えずに「日程調整中」として残り、次の予定にも表示されます）','🔄リスケ回数と元の日付を履歴に表示。日程調整中が3日で橙・7日で赤の警告表示になり、決まったら「📅 日付を入れる」で通常の予定に戻せます'] },
   { v:'v412', d:'2026-08-21', items:['📝OL記録をメンバー複数選択で一括追加できるようになりました（「対象メンバー」＋メンバーを追加→検索して複数選択。同じ内容が全員の記録に入ります）','🖥PC版でメンバーを編集して保存した後、ツリーが中央に戻らず編集前の表示位置・拡大率のままになりました'] },
@@ -9001,13 +9002,19 @@ function stepReschedDo(idx, tbd) {
   var h = m.traineeHistory[idx];
   var nd = ((document.getElementById('_rsDate') || {}).value || '');
   if (!tbd && !nd) { toast('日付を選んでください'); return; }
-  h.rs = (h.rs || 0) + 1;
-  h.rsFrom = (h.rsFrom || []);
-  if (h.date) h.rsFrom.push(h.date);
+  // v415: リスケ回数は「決まっていた日程が流れた時」だけ数える。
+  //       日程調整中(tbd)の記録に日付を入れる操作は“保留中のリスケの日程が決まっただけ”なので数えない
+  //       （元の日付も既に記録済みなので二重に積まない）
+  var wasTbd = !!h.tbd;
+  if (!wasTbd) {
+    h.rs = (h.rs || 0) + 1;
+    h.rsFrom = (h.rsFrom || []);
+    if (h.date) h.rsFrom.push(h.date);
+  }
   h.result = 'planned';
   if (tbd) {
     h.tbd = true;
-    h.rsAt = new Date().toISOString(); // 調整中になった日（経過日数の警告用）
+    if (!wasTbd) h.rsAt = new Date().toISOString(); // 調整中になった日（経過日数の警告用。既に調整中なら維持）
   } else {
     h.tbd = false;
     h.rsAt = '';
@@ -9017,7 +9024,8 @@ function stepReschedDo(idx, tbd) {
   autoSave();
   closeStepResched();
   renderTraineeHistory(null);
-  toast(tbd ? '🔄 日程調整中にしました（決まったら「📅 日付を入れる」から）' : '🔄 ' + nd + ' にリスケしました');
+  toast(tbd ? '🔄 日程調整中にしました（決まったら「📅 日付を入れる」から）'
+            : (wasTbd ? '📅 ' + nd + ' に日程が決まりました' : '🔄 ' + nd + ' にリスケしました'));
 }
 // 予定ステップの結果を後から確定（進んだ/離脱）
 function setStepResult(idx, result) {
