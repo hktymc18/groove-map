@@ -2024,7 +2024,9 @@ body:not(.light) .me-tab:not(.on),body:not(.light) .md-tab:not(.on){color:#c6cdd
 /* PC：編集は右にドッキングするスライドパネル（組織図を見ながら編集）*/
 @media(min-width:768px){
   .overlay.me-mode{align-items:stretch;justify-content:flex-end;background:transparent;backdrop-filter:none;pointer-events:none}
-  .overlay.me-mode .me-sheet{width:400px;max-width:400px;height:100vh;height:100dvh;max-height:none;border-radius:0;border-left:1px solid var(--border);box-shadow:-14px 0 48px rgba(0,0,0,.48);transform:translateX(100%);transition:transform .26s ease;pointer-events:auto}
+  /* v414: 影を軽くし、パネルを独立レイヤー化（背後の巨大な組織図SVGを再描画させない＝入力のカクつき対策） */
+  .overlay.me-mode .me-sheet{width:400px;max-width:400px;height:100vh;height:100dvh;max-height:none;border-radius:0;border-left:1px solid var(--border);box-shadow:-4px 0 16px rgba(0,0,0,.4);transform:translateX(100%);transition:transform .26s ease;pointer-events:auto;will-change:transform;backface-visibility:hidden;contain:paint}
+  body.me-open #pcTreeOuter>svg{will-change:transform} /* 編集中だけ組織図を別レイヤーへ */
   .overlay.me-mode.open .me-sheet{transform:translateX(0)}
   .me-top{padding-top:16px}
   .me-foot{padding-bottom:16px}
@@ -2215,7 +2217,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v412</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v414</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4954,7 +4956,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v412';
+  var DATA_VERSION = 'v414';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5282,6 +5284,7 @@ window.addEventListener('resize', _vvhUpdate);
 var _gapKicked = 0;
 function _iosGapKick() {
   try {
+    if (typeof isPCMode === 'function' && isPCMode()) return; // v414: PCでは不要（無駄なレイアウト再計算を避ける）
     var sa = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
     if (!sa) return;
     // v327: ステータスバー分（約60pt）の差は正常。それを大きく超える不足（幻のツールバー等）だけ蹴る
@@ -5309,6 +5312,7 @@ document.addEventListener('visibilitychange', function(){ if (!document.hidden) 
 //        だったため復旧できなかった）。4秒ごとに実高さと--vvhのズレを検査して自動修正する。
 setInterval(function() {
   try {
+    if (typeof isPCMode === 'function' && isPCMode()) return; // v414: PCでは監視不要
     var ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return; // 入力中は触らない
     var vv = window.visualViewport;
@@ -5326,6 +5330,7 @@ if (window.visualViewport) {
 }
 // キーボードで押し上げられたスクロールを必ず0に戻す。入力中（キーボード表示中）は触らない
 function _iosViewportReset() {
+  if (typeof isPCMode === 'function' && isPCMode()) return; // v414: PCではキーボード補正が不要（入力のたびにレイアウト再計算が走り重くなる）
   _vvhUpdate();
   try {
     var ae = document.activeElement;
@@ -5338,6 +5343,7 @@ function _iosViewportReset() {
 }
 // v305: 収納アニメ(約300ms)の後にiOSが再度ズラすことがあるため、複数回に分けて復元
 document.addEventListener('focusout', function() {
+  if (typeof isPCMode === 'function' && isPCMode()) return; // v414: PCでは走らせない（欄の移動ごとに3回の再計算が発生していた）
   setTimeout(_iosViewportReset, 100);
   setTimeout(_iosViewportReset, 400);
   setTimeout(_iosViewportReset, 800);
@@ -5893,6 +5899,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v414', d:'2026-08-21', items:['🖥PC版でメンバー編集の入力（名前・ポイント等）が重い問題を改修：iPhone用の画面補正処理がPCでも動いて入力欄を移動するたびにレイアウト再計算が走っていたのを停止し、編集パネルを独立レイヤー化＋影を軽量化して背後の組織図が描き直されないようにしました'] },
+  { v:'v413', d:'2026-08-21', items:['🔄研修ステップの予定に「リスケ」を追加：新しい日付に変更でき、日程が決まっていない時は「📅 日程未定」を選べます（予定は消えずに「日程調整中」として残り、次の予定にも表示されます）','🔄リスケ回数と元の日付を履歴に表示。日程調整中が3日で橙・7日で赤の警告表示になり、決まったら「📅 日付を入れる」で通常の予定に戻せます'] },
   { v:'v412', d:'2026-08-21', items:['📝OL記録をメンバー複数選択で一括追加できるようになりました（「対象メンバー」＋メンバーを追加→検索して複数選択。同じ内容が全員の記録に入ります）','🖥PC版でメンバーを編集して保存した後、ツリーが中央に戻らず編集前の表示位置・拡大率のままになりました'] },
   { v:'v411', d:'2026-08-21', items:['📳シェイクで「元に戻す」機能を廃止し、設定からも削除しました：iPhone標準の「入力の取り消し」と紛らわしく、モーションの許可ダイアログが繰り返し出るためです。操作の取り消しは今までどおりトーストの「↩取消」ボタンから行えます'] },
   { v:'v410', d:'2026-08-21', items:['⏰定時リマインダーを新設：決めた時刻（既定 9:00/12:00/17:00/22:00）に「未完了タスク ◯件」をプッシュ通知します。アプリを開いていなくても届き、タップでToDo一覧へ。未完了0件の時は通知しません','⚙カレンダー設定からオン/オフと時刻（7・9・12・15・17・20・22時）を選べます'] },
@@ -8910,10 +8918,20 @@ function renderTraineeHistory(m) {
     entry.appendChild(stepName);
     var meta = document.createElement('div');
     meta.className = 'th-meta';
-    if (h.date) { var ds = document.createElement('span'); ds.textContent = h.date; meta.appendChild(ds); }
+    // v413: リスケ（日程調整中／リスケ回数・元の日付）
+    if (h.tbd) {
+      var tb = document.createElement('span');
+      var _tdD = h.rsAt ? Math.floor((Date.now() - new Date(h.rsAt).getTime()) / 86400000) : 0;
+      tb.textContent = '📅 日程調整中' + (_tdD >= 1 ? '（' + _tdD + '日）' : '');
+      tb.style.color = _tdD >= 7 ? 'var(--red)' : (_tdD >= 3 ? '#FFB454' : 'var(--text-mid)');
+      tb.style.fontWeight = '700';
+      meta.appendChild(tb);
+      if (h.date) { var ds0 = document.createElement('span'); ds0.textContent = '元 ' + h.date; ds0.style.opacity = '.7'; meta.appendChild(ds0); }
+    } else if (h.date) { var ds = document.createElement('span'); ds.textContent = h.date; meta.appendChild(ds); }
+    if (h.rs) { var rsB = document.createElement('span'); rsB.textContent = '🔄リスケ' + h.rs + '回'; rsB.style.color = h.rs >= 3 ? 'var(--red)' : 'var(--text-dim)'; meta.appendChild(rsB); }
     if (h.aSan) { var as2 = document.createElement('span'); as2.textContent = 'A: ' + h.aSan; meta.appendChild(as2); }
     var rs = document.createElement('span');
-    rs.textContent = h.result === 'left' ? '✗ 離脱' : (h.result === 'planned' ? '📅 予定' : (h.ir ? '✓ 実施' : '✓ 進んだ'));
+    rs.textContent = h.result === 'left' ? '✗ 離脱' : (h.result === 'planned' ? (h.tbd ? '📅 調整中' : '📅 予定') : (h.ir ? '✓ 実施' : '✓ 進んだ'));
     rs.style.color = h.result === 'left' ? 'var(--red)' : (h.result === 'planned' ? '#FFB454' : 'var(--accent)');
     meta.appendChild(rs);
     entry.appendChild(meta);
@@ -8926,7 +8944,9 @@ function renderTraineeHistory(m) {
         bN.onclick = function(){ setStepResult(idx, 'next'); };
         var bL = document.createElement('button'); bL.className = 'th-act-btn left'; bL.textContent = '✗ 離脱';
         bL.onclick = function(){ setStepResult(idx, 'left'); };
-        acts.appendChild(bN); acts.appendChild(bL);
+        var bR = document.createElement('button'); bR.className = 'th-act-btn'; bR.textContent = h.tbd ? '📅 日付を入れる' : '📅 リスケ'; // v413
+        bR.onclick = function(){ stepReschedule(idx); };
+        acts.appendChild(bN); acts.appendChild(bL); acts.appendChild(bR);
       })(i);
       entry.appendChild(acts);
     }
@@ -8947,11 +8967,64 @@ function renderTraineeHistory(m) {
   updateStepFlow(hist);
 }
 
+// v413: 予定ステップのリスケ（新しい日付 or 日程未定）。予定のまま維持し、回数と元の日付を記録する
+function stepReschedule(idx) {
+  var m = getTraineeMember();
+  if (!m || !m.traineeHistory || !m.traineeHistory[idx]) return;
+  var h = m.traineeHistory[idx];
+  closeStepResched();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'stepRsOv';
+  ov.style.zIndex = '600';
+  ov.onclick = function(e){ if (e.target === ov) closeStepResched(); };
+  var t9 = new Date();
+  var today9 = t9.getFullYear() + '-' + String(t9.getMonth() + 1).padStart(2, '0') + '-' + String(t9.getDate()).padStart(2, '0');
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🔄 ' + evEsc(h.status || '') + ' をリスケ</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">' + (h.date ? '現在の予定日：' + evEsc(h.date) : '日付未設定') + (h.rs ? '・これまで' + h.rs + '回リスケ' : '') + '</div></div>'
+    + '<span class="ms-x" onclick="closeStepResched()">✕</span></div>'
+    + '<div style="padding:4px 16px 18px">'
+    + '<label class="fl">新しい日付</label>'
+    + '<input class="fi" id="_rsDate" type="date" value="' + evEsc(h.tbd ? today9 : (h.date || today9)) + '" style="margin-bottom:10px">'
+    + '<button class="btn-p" style="width:100%;padding:12px;font-size:14px" onclick="stepReschedDo(' + idx + ',false)">この日に変更</button>'
+    + '<button class="fol-add" style="margin-top:8px" onclick="stepReschedDo(' + idx + ',true)">📅 日程未定（あとで決める）</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ ov.classList.add('show'); });
+}
+function closeStepResched() {
+  var ov = document.getElementById('stepRsOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+}
+function stepReschedDo(idx, tbd) {
+  var m = getTraineeMember();
+  if (!m || !m.traineeHistory || !m.traineeHistory[idx]) return;
+  var h = m.traineeHistory[idx];
+  var nd = ((document.getElementById('_rsDate') || {}).value || '');
+  if (!tbd && !nd) { toast('日付を選んでください'); return; }
+  h.rs = (h.rs || 0) + 1;
+  h.rsFrom = (h.rsFrom || []);
+  if (h.date) h.rsFrom.push(h.date);
+  h.result = 'planned';
+  if (tbd) {
+    h.tbd = true;
+    h.rsAt = new Date().toISOString(); // 調整中になった日（経過日数の警告用）
+  } else {
+    h.tbd = false;
+    h.rsAt = '';
+    h.date = nd;
+    m.nextDate = nd;
+  }
+  autoSave();
+  closeStepResched();
+  renderTraineeHistory(null);
+  toast(tbd ? '🔄 日程調整中にしました（決まったら「📅 日付を入れる」から）' : '🔄 ' + nd + ' にリスケしました');
+}
 // 予定ステップの結果を後から確定（進んだ/離脱）
 function setStepResult(idx, result) {
   var m = getTraineeMember();
   if (!m || !m.traineeHistory || !m.traineeHistory[idx]) return;
   m.traineeHistory[idx].result = result;
+  m.traineeHistory[idx].tbd = false; // v413: 結果が確定したら「日程調整中」は解除
   // v401: BPCの予定を「進んだ」で確定した時も研修結果を自動でBCに
   if (m.traineeHistory[idx].status === 'BPC' && result === 'next' && m.traineeResult !== 'BC') {
     m.traineeResult = 'BC';
@@ -11292,6 +11365,7 @@ function openEdit(id) {
     meGo(1);
     // モーダルを開く
     document.getElementById('modal').classList.add('open');
+    try { if (isPCMode()) document.body.classList.add('me-open'); } catch(eMo2) {} // v414: 入力中の再描画を軽くする
     if (isPCMode()) meBindOutside();
 
     // カテゴリ・タイトルはモーダル表示後にセット
@@ -11450,7 +11524,11 @@ function selGoldShip(v, silent) {
   var no=document.getElementById('rbGoldNo'); if(no) no.classList.toggle('sel', !v);
   var yes=document.getElementById('rbGoldYes'); if(yes) yes.classList.toggle('sel', !!v);
 }
-function closeModal() { meUnbindOutside(); document.getElementById('modal').classList.remove('open'); }
+function closeModal() {
+  meUnbindOutside();
+  document.getElementById('modal').classList.remove('open');
+  try { document.body.classList.remove('me-open'); } catch(eMo) {} // v414
+}
 // 閉じる時：編集中で名前があれば自動保存（saveMemberがcloseも実行）、なければ破棄して閉じる
 function closeMemberEdit() {
   var el = document.getElementById('modal');
@@ -14165,8 +14243,17 @@ function memberNextPlanLines(m) {
   var out = [];
   var t = evTodayYmd();
   // v368: 過去日の研修予定は「次の予定」に出さない（07/25の予定が今日を過ぎても出続けるバグ修正）
-  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned' && (!h.date || h.date >= t); }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
-  if (plan) out.push('🎓 研修予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
+  // v413: 日程調整中(tbd)は日付が過去でも「次の予定」に残す（追いかけるべき状態のため）
+  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned' && (h.tbd || !h.date || h.date >= t); })
+    .sort(function(a,b){ return (a.tbd ? 1 : 0) - (b.tbd ? 1 : 0) || (a.date||'').localeCompare(b.date||''); })[0];
+  if (plan) {
+    if (plan.tbd) {
+      var _dT = plan.rsAt ? Math.floor((Date.now() - new Date(plan.rsAt).getTime()) / 86400000) : 0;
+      out.push('🎓 研修予定：' + evEsc(plan.status||'') + '（📅 日程調整中' + (_dT >= 1 ? '・' + _dT + '日' : '') + '）' + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
+    } else {
+      out.push('🎓 研修予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
+    }
+  }
   else if (m.nextDate && m.nextDate >= t) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')));
   // v368: カレンダー分は「次の予定」「次のタスク」を別行で表示（タスクが近いと予定が隠れるバグ修正）
   var futs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t; })
