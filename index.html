@@ -1168,6 +1168,10 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 #map3dPane .m3hbtn{background:var(--surface);color:var(--text);font-size:15px}
 /* v362: ホロカード風メンバーカード（虹のグラデ枠＋ガラス感） */
 #map3dInfo.m3holo{border:2px solid transparent;background:linear-gradient(var(--surface2),var(--surface2)) padding-box,linear-gradient(120deg,#ffd6e8,#d9c7ff,#c7f0ff,#ffe9c7,#ffd6e8) border-box;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+/* v421: 編集ボタンの全幅指定(fol-addのwidth:100%)がカード内で暴れ、PCで名前が縦1文字折れになるバグ修正＋ホロ調に */
+#map3dInfo .fol-add{width:auto;white-space:nowrap;border:none;border-radius:11px;background:linear-gradient(120deg,#ffd6e8,#d9c7ff,#c7f0ff);color:#3b2a4a;font-weight:800;padding:9px 14px;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+#map3dInfo .m3-nm{font-weight:800;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:768px){#map3dInfo{left:50%;right:auto;transform:translateX(-50%);width:430px;max-width:calc(100vw - 40px);bottom:26px}}
 .m3-title-pill{display:inline-block;font-size:10.5px;font-weight:800;border-radius:9px;padding:2px 8px;background:linear-gradient(120deg,#ffd6e8,#d9c7ff,#c7f0ff);color:#3b2a4a;margin-left:6px;vertical-align:1px}
 /* v362: 初回の操作ガイド */
 .m3-guide{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:296;background:rgba(20,16,30,.82);color:#fff;border-radius:16px;padding:18px 22px;font-size:13.5px;line-height:2;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.4);backdrop-filter:blur(4px);max-width:82%}
@@ -2217,7 +2221,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v420</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v422</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5000,7 +5004,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v420';
+  var DATA_VERSION = 'v422';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5958,6 +5962,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v422', d:'2026-08-22', items:['🏷「何ヶ月目」表示は研修生にも出さないようにしました（表示されるのはQBR（LOI〜Q4）とBMのみ）'] },
+  { v:'v421', d:'2026-08-22', items:['🐛3D組織図でメンバーをクリックした時のカードがPCで崩れる（名前が縦1文字ずつになる）バグを修正。カードはPCでは画面下中央のコンパクトなホロカードになり、編集ボタンも虹グラデのオシャレなデザインになりました','🏷「何ヶ月目」表示はB1〜B11には出さないようにしました（Bの数字自体が開始月数のため）'] },
   { v:'v420', d:'2026-08-22', items:['🌳ツリーの並び順を「タイトル高い順（BD→BR→QBR(LOI〜Q4)→BM→…→NA）→フロント多い順→名前順」に統一（PC・モバイル共通）','🏷タイトル横に何ヶ月目かを表示：Q2（8ヶ月目）。登録月を1ヶ月目として研修生〜BM帯のみ・登録月入力済みの人に表示','📍地域絞り込みのバグ修正：表記ゆれ（前後の空白）で他地域が混ざる/対象が消える問題を修正し、「未設定」も選べるようになりました','🔗メンバーの繋がりの線を2倍の太さ・濃い色に','🌿直下3人以上いる人の配下に薄い色帯＋サブツリー間の余白を追加（どこまでが誰のNAか一目で分かります）','💎タイトルをひと目で識別：BR以上は宝石色（G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ）＋太枠太字、BM=紫、QBR=緑、NA=水色','📊データタブに「📍地域別 月次推移」を新設：地域を選ぶと過去12ヶ月の人数・研修生・QBR・BR以上を集計表示'] },
   { v:'v419', d:'2026-08-21', items:['🌿フレッシュの判定を「登録6ヶ月以内」に変更しました（これまでは3ヶ月以内）'] },
   { v:'v418', d:'2026-08-21', items:['🎓「次の研修予定」が出る人と出ない人がいた問題を修正：予定日を過ぎると非表示になる仕様だったため、結果が未確定のまま日付を過ぎた研修生だけ表示されていませんでした。今後は「◯日超過」の赤バッジ付きで表示します（PCツリーのカーソル表示・メンバーカード・活動タブ共通）'] },
@@ -8032,9 +8038,8 @@ function titleMonthsSuffix(m) {
   try {
     if (!m || !m.startMonth) return '';
     var t = (m.title || '').trim();
-    var band = ['LOI','Q1','Q2','Q3','Q4','BM','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11'];
-    var isTr = (typeof memberCat === 'function' && memberCat(m) === '研修生');
-    if (!isTr && band.indexOf(t) < 0) return '';
+    var band = ['LOI','Q1','Q2','Q3','Q4','BM']; // v421: B1〜B11は表示しない / v422: 研修生も表示しない
+    if (band.indexOf(t) < 0) return '';
     var n = (typeof activityMonths === 'function') ? activityMonths(m, state.currentMonth || currentMonthStr()) : 0;
     return n >= 1 ? '（' + n + 'ヶ月目）' : '';
   } catch(e) { return ''; }
@@ -16110,7 +16115,7 @@ function m3ShowInfo(mid) {
   info.className = 'm3holo'; // v362: ホロカード風
   info.innerHTML = '<div style="display:flex;align-items:center;gap:12px">'
     + ((typeof _avatars !== 'undefined' && _avatars[m.id]) ? '<img src="' + _avatars[m.id] + '" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title || '') + '" alt="">' : '')
-    + '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15.5px">' + evEsc(name)
+    + '<div style="flex:1;min-width:0"><div class="m3-nm">' + evEsc(name)
     + (m.title ? '<span class="m3-title-pill">' + evEsc(m.title) + '</span>' : '')
     + (isMg ? ' <span style="font-size:10px;color:var(--purple)">🔗結合</span>' : '') + '</div>'
     + '<div style="font-size:12px;color:var(--text-mid);margin-top:2px">' + (m.ptCurrent ? '💎 ' + Number(m.ptCurrent).toLocaleString() + 'pt　' : '')
