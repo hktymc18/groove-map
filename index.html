@@ -2217,7 +2217,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v418</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v419</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4956,7 +4956,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v418';
+  var DATA_VERSION = 'v419';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5914,6 +5914,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v419', d:'2026-08-21', items:['🌿フレッシュの判定を「登録6ヶ月以内」に変更しました（これまでは3ヶ月以内）'] },
   { v:'v418', d:'2026-08-21', items:['🎓「次の研修予定」が出る人と出ない人がいた問題を修正：予定日を過ぎると非表示になる仕様だったため、結果が未確定のまま日付を過ぎた研修生だけ表示されていませんでした。今後は「◯日超過」の赤バッジ付きで表示します（PCツリーのカーソル表示・メンバーカード・活動タブ共通）'] },
   { v:'v417', d:'2026-08-21', items:['🐛カテゴリが外れるバグをさらに修正：開いた直後にカテゴリを押すと復元処理に上書きされていたため同期適用に変更し、保存時もタイトル・研修データから補って空にならないようにしました（研修状況が「予定」だけの場合も維持されます）','🌿「気になるメンバー」のフレッシュ判定をタイトルではなく登録月（3ヶ月以内）に変更。あわせて「📋審査期間中（LOI〜Q4）」を新設し、研修生／フレッシュ／審査期間中の3区分になりました','🖥PC版の共有MAP切替を高速化：読み込みのたびに組織図を作り直していたのを、データが揃ってから1回にまとめました','🖥PC版でメンバーを削除した後も、ツリーが中央に戻らず元の表示位置を保つようにしました'] },
   { v:'v416', d:'2026-08-21', items:['🐛カテゴリ「研修生」にして研修ステップだけ入力・保存すると、開き直した時にカテゴリの選択が外れるバグを修正：これまでカテゴリはタイトルから逆算していたため、タイトル未選択だと復元できませんでした。今後はカテゴリ自体を保存し、既存データも研修履歴があれば研修生として復元します'] },
@@ -6398,7 +6399,7 @@ function updateHomeBadge() {
 // ============================================================
 var CK_FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
 // v417: フレッシュは「登録月から3ヶ月以内」で判定（タイトル依存だと2024年登録のQ2までフレになっていた）
-var CK_FRESH_MONTHS = 3;
+var CK_FRESH_MONTHS = 6; // v419: フレッシュ＝登録6ヶ月以内に変更
 var CK_EXAM_TITLES = ['LOI','Q2','Q3','Q4']; // 審査期間中
 function ckIsFreshByStart(m) {
   try {
@@ -6548,7 +6549,7 @@ function cockpitHtml() {
   }
   var groups = [
     { key:'trainee', ic:'🌱', label:'研修生' },
-    { key:'fresh',   ic:'🌿', label:'フレッシュ（登録3ヶ月以内）' },
+    { key:'fresh',   ic:'🌿', label:'フレッシュ（登録6ヶ月以内）' },
     { key:'exam',    ic:'📋', label:'審査期間中（LOI〜Q4）' },
     { key:'leader',  ic:'⛴', label:'リーダー格・金の船' }
   ];
