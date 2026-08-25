@@ -2217,7 +2217,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v419</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v420</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2388,6 +2388,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div style="font-size:10px;color:var(--text-dim);padding:0 4px 8px;font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase">CHART — 項目を選択</div>
       <canvas id="statsChart" height="160" style="width:100%;display:block"></canvas>
       <div id="chartBtnRow" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 4px 2px"></div>
+    </div>
+    <!-- v420: 地域別 月次推移 -->
+    <div class="sec-label">📍 地域別 月次推移</div>
+    <div class="card" style="padding:12px 12px 14px">
+      <div id="regTrendChips" style="display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px"></div>
+      <div id="regTrendBody" style="overflow-x:auto"><div style="font-size:12px;color:var(--text-dim)">地域を選ぶと、過去12ヶ月の人数・研修生・QBR・BR以上を地域別に集計します</div></div>
     </div>
     <!-- パワーライン -->
     <div class="sec-label">パワーライン</div>
@@ -3662,7 +3668,8 @@ function renderPCMap(mapType) {
   var root = roots[0];
 
   var COLORS = ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF'];
-  function kids(id) { return members.filter(function(m){ return m.parentId === id; }); }
+  var _kidsCmp = _treeSortCmp(members); // v420: タイトル高い順→フロント多い順
+  function kids(id) { return members.filter(function(m){ return m.parentId === id; }).sort(_kidsCmp); }
 
   // 深さ
   var maxD = 0;
@@ -3712,7 +3719,11 @@ function renderPCMap(mapType) {
       posY[id] = PAD_T + leafCursor * rowStep;
       leafCursor++;
     } else {
-      ch.forEach(function(c){ assignPos(c.id); });
+      // v420: 兄弟サブツリーの間に余白を入れる（どこまでが誰の配下か見やすく）
+      ch.forEach(function(c, ci){
+        assignPos(c.id);
+        if (ci < ch.length - 1 && (visKids(c.id).length || visKids(ch[ci + 1].id).length)) leafCursor += 0.45;
+      });
       posY[id] = (posY[ch[0].id] + posY[ch[ch.length-1].id]) / 2;
     }
   }
@@ -3903,6 +3914,34 @@ function renderPCMap(mapType) {
     }
   }
 
+  // v420: 直下3人以上のノードの配下に薄い色帯を敷く（どこまでが誰のNAか一目で分かるように）
+  (function(){
+    var bandG = document.createElementNS('http://www.w3.org/2000/svg','g');
+    svg.appendChild(bandG);
+    function subBounds(id, b) {
+      if (posY[id] < b.minY) b.minY = posY[id];
+      if (posY[id] > b.maxY) b.maxY = posY[id];
+      if (posX[id] > b.maxX) b.maxX = posX[id];
+      visKids(id).forEach(function(c){ subBounds(c.id, b); });
+      return b;
+    }
+    visMembers.forEach(function(m){
+      if (m.id === root.id) return;
+      var vk = visKids(m.id);
+      if (vk.length < 3) return;
+      var b = subBounds(m.id, { minY: posY[m.id], maxY: posY[m.id], maxX: posX[m.id] });
+      var r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      r.setAttribute('x', posX[m.id] - 8);
+      r.setAttribute('y', b.minY - 6);
+      r.setAttribute('width', (b.maxX + NODE_W) - posX[m.id] + 16);
+      r.setAttribute('height', (b.maxY + NODE_H) - b.minY + 12);
+      r.setAttribute('rx', 14);
+      r.setAttribute('fill', cmap[m.id] || '#8a94a6');
+      r.setAttribute('fill-opacity', '0.055');
+      r.setAttribute('pointer-events', 'none');
+      bandG.appendChild(r);
+    });
+  })();
   // ── コネクタ（エルボー） ──
   var lg=document.createElementNS('http://www.w3.org/2000/svg','g');
   svg.appendChild(lg);
@@ -3914,7 +3953,7 @@ function renderPCMap(mapType) {
     pt.setAttribute('d',elbow(px,py,cx,cy));
     pt.setAttribute('fill','none');
     pt.setAttribute('stroke',cmap[m.id]||'#444');
-    pt.setAttribute('stroke-width','1.5'); pt.setAttribute('stroke-opacity','0.5');
+    pt.setAttribute('stroke-width','3'); pt.setAttribute('stroke-opacity','0.78'); // v420: 繋がりの線を太く・濃く
     pt.setAttribute('class','pc-link');
     pt.setAttribute('data-lineage', lineageRoot[m.id]||'');
     lg.appendChild(pt);
@@ -3924,11 +3963,15 @@ function renderPCMap(mapType) {
   visMembers.forEach(function(m){
     var col=cmap[m.id]||COLORS[0];
     var isT=m.trainee||(m.traineeHistory&&m.traineeHistory.length>0);
-    var pcLOI=['LOI','Q2','Q3','Q4'];
+    var pcLOI=['LOI','Q1','Q2','Q3','Q4'];
     var isPcLOI=pcLOI.indexOf((m.title||'').trim())>=0;
     var isF=m.gender==='female';
     var nodeBaseFill = isLightTheme ? '#ffffff' : '#161920';
-    var cc=isPcLOI?'#4ADE80':isT?'#5AD7FF':col, cf=isPcLOI?'rgba(74,222,128,0.12)':isT?'rgba(90,215,255,0.22)':nodeBaseFill;
+    // v420: BR以上・BMはランク色（宝石色）で強調。QBR(LOI-Q4)=緑、研修生=水色
+    var _isBrUp = (typeof isBROrAbove === 'function') && isBROrAbove(m.title);
+    var _isBM = (m.title || '').trim() === 'BM';
+    var _rankCol = (_isBrUp || _isBM) ? titleRingColor(m.title) : '';
+    var cc=_rankCol?_rankCol:(isPcLOI?'#4ADE80':isT?'#5AD7FF':col), cf=isPcLOI?'rgba(74,222,128,0.12)':isT?'rgba(90,215,255,0.22)':nodeBaseFill;
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
@@ -3943,7 +3986,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('width',NODE_W); rect.setAttribute('height',NODE_H);
     rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
-    rect.setAttribute('stroke-width',isT||isPcLOI?'2':'1');
+    rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI?'2':'1'))); // v420: BR以上=太枠
     if (m._foreign) { rect.setAttribute('stroke','#8B7CFF'); rect.setAttribute('stroke-dasharray','5,3'); rect.setAttribute('stroke-width','1.5'); }
     g.appendChild(rect);
 
@@ -4005,10 +4048,10 @@ function renderPCMap(mapType) {
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
       g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
     }
-    // 2行目: タイトル + GSV(固定)
-    var titleStr = m.title||'-';
+    // 2行目: タイトル + GSV(固定)。v420: 何ヶ月目を併記＆BR以上/BMは太字
+    var titleStr = (m.title||'-') + titleMonthsSuffix(m);
     var titleFs = titleStr.length<=6 ? 16 : (titleStr.length<=8 ? 14 : 12); // 長いタイトル(ブルーダイヤ等)は縮小
-    g.appendChild(txt(_pcTx, ry2+55, titleStr, cc, titleFs, '600', 'Inter,Noto Sans JP,sans-serif'));
+    g.appendChild(txt(_pcTx, ry2+55, titleStr, cc, titleFs, (_isBrUp||_isBM)?'800':'600', 'Inter,Noto Sans JP,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
@@ -4368,12 +4411,13 @@ function buildRegionFilter(members, wrap) {
   regions.sort();
   var lbl = document.createElement('span'); lbl.textContent = '地域'; lbl.style.cssText = 'font-size:11px;color:var(--text-dim);align-self:center;margin-right:2px';
   wrap.appendChild(lbl);
-  var chips = ['__ALL__'].concat(regions);
+  var hasNone = members.some(function(m){ return !(m.region || '').trim() && !m.deleted; }); // v420: 未設定も選べるように
+  var chips = ['__ALL__'].concat(regions).concat(hasNone ? ['__NONE__'] : []);
   chips.forEach(function(r){
     var isAll = (r === '__ALL__');
     var active = isAll ? (regionFilter === '') : (regionFilter === r);
     var chip = document.createElement('div');
-    chip.textContent = isAll ? '📍全地域' : r;
+    chip.textContent = isAll ? '📍全地域' : (r === '__NONE__' ? '未設定' : r);
     chip.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;border:1px solid ' + (active?'#FF87B3':'var(--border)') + ';background:' + (active?'#FF87B3':'transparent') + ';color:' + (active?'#fff':'var(--text-dim)') + '';
     chip.onclick = function(){ regionFilter = isAll ? '' : r; renderCurrentView(); setTimeout(applyRegionDim, 160); };
     wrap.appendChild(chip);
@@ -4384,16 +4428,16 @@ function applyRegionDim() {
   // PC組織図ノード（SVG）
   var nodes = document.querySelectorAll('.oval-node');
   for (var i=0;i<nodes.length;i++){
-    var r = nodes[i].getAttribute('data-region') || '';
-    var ok = !regionFilter || (r === regionFilter);
+    var r = (nodes[i].getAttribute('data-region') || '').trim(); // v420: 表記ゆれ（前後スペース）で判定が狂うバグ修正
+    var ok = !regionFilter || (regionFilter === '__NONE__' ? !r : (r === regionFilter));
     nodes[i].style.opacity = ok ? '1' : '0.22';
   }
   // モバイルツリーカード（HTML）※結合ノードも合成リストで解決
   var cards = document.querySelectorAll('.nc[data-cid]');
   for (var j=0;j<cards.length;j++){
     var m = _findMemberComposed(cards[j].getAttribute('data-cid'));
-    var rr = (m && m.region) ? m.region : '';
-    var ok2 = !regionFilter || (rr === regionFilter);
+    var rr = ((m && m.region) ? m.region : '').trim(); // v420: 正規化
+    var ok2 = !regionFilter || (regionFilter === '__NONE__' ? !rr : (rr === regionFilter));
     cards[j].style.opacity = ok2 ? '' : '0.3';
   }
 }
@@ -4956,7 +5000,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v419';
+  var DATA_VERSION = 'v420';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5914,6 +5958,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v420', d:'2026-08-22', items:['🌳ツリーの並び順を「タイトル高い順（BD→BR→QBR(LOI〜Q4)→BM→…→NA）→フロント多い順→名前順」に統一（PC・モバイル共通）','🏷タイトル横に何ヶ月目かを表示：Q2（8ヶ月目）。登録月を1ヶ月目として研修生〜BM帯のみ・登録月入力済みの人に表示','📍地域絞り込みのバグ修正：表記ゆれ（前後の空白）で他地域が混ざる/対象が消える問題を修正し、「未設定」も選べるようになりました','🔗メンバーの繋がりの線を2倍の太さ・濃い色に','🌿直下3人以上いる人の配下に薄い色帯＋サブツリー間の余白を追加（どこまでが誰のNAか一目で分かります）','💎タイトルをひと目で識別：BR以上は宝石色（G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ）＋太枠太字、BM=紫、QBR=緑、NA=水色','📊データタブに「📍地域別 月次推移」を新設：地域を選ぶと過去12ヶ月の人数・研修生・QBR・BR以上を集計表示'] },
   { v:'v419', d:'2026-08-21', items:['🌿フレッシュの判定を「登録6ヶ月以内」に変更しました（これまでは3ヶ月以内）'] },
   { v:'v418', d:'2026-08-21', items:['🎓「次の研修予定」が出る人と出ない人がいた問題を修正：予定日を過ぎると非表示になる仕様だったため、結果が未確定のまま日付を過ぎた研修生だけ表示されていませんでした。今後は「◯日超過」の赤バッジ付きで表示します（PCツリーのカーソル表示・メンバーカード・活動タブ共通）'] },
   { v:'v417', d:'2026-08-21', items:['🐛カテゴリが外れるバグをさらに修正：開いた直後にカテゴリを押すと復元処理に上書きされていたため同期適用に変更し、保存時もタイトル・研修データから補って空にならないようにしました（研修状況が「予定」だけの場合も維持されます）','🌿「気になるメンバー」のフレッシュ判定をタイトルではなく登録月（3ヶ月以内）に変更。あわせて「📋審査期間中（LOI〜Q4）」を新設し、研修生／フレッシュ／審査期間中の3区分になりました','🖥PC版の共有MAP切替を高速化：読み込みのたびに組織図を作り直していたのを、データが揃ってから1回にまとめました','🖥PC版でメンバーを削除した後も、ツリーが中央に戻らず元の表示位置を保つようにしました'] },
@@ -7959,6 +8004,41 @@ function membersForMap(mapType) {
 // members 配列は描画ごとに新しい参照になるため、参照が変わったらインデックスを作り直す。
 // state.members そのもの（描画外でその場更新される）はキャッシュせず毎回組み直す＝常に正しい。
 var _childIdx = null, _childIdxSrc = null;
+// v420: タイトルランク（高い順ソート・視覚強調用）。QBR＝LOI〜Q4（BR審査期間）でBMより上位
+var TITLE_RANK_MAP = {'チームエリート':200,'PD':195,'BD':190,'ブルーダイヤモンド':190,'D':185,'ダイヤモンド':185,'E':180,'エメラルド':180,'R':175,'ルビー':175,'L':170,'ラピス':170,'G':165,'ゴールド':165,'BR':160,'Q4':155,'Q3':154,'Q2':153,'Q1':152,'LOI':151,'BM':150,'B11':149,'B10':148,'B9':147,'B8':146,'B7':145,'B6':144,'B5':143,'B4':142,'B3':141,'B2':140,'B1':139,'CO':120,'BPC':119,'面談':118,'PA':117,'EXP':116,'DLR':115,'PG':114,'マケ':113,'OUT':-1};
+function titleRank(t) {
+  t = (t || '').trim();
+  if (TITLE_RANK_MAP[t] !== undefined) return TITLE_RANK_MAP[t];
+  return t ? 100 : 50; // 不明タイトルはB帯の下・無題より上
+}
+// v420: 兄弟の並び順＝タイトル高い順→フロント（直下人数）多い順→名前順
+function _treeSortCmp(members) {
+  var cnt = {};
+  for (var ci = 0; ci < members.length; ci++) {
+    var p9 = members[ci].parentId || '';
+    cnt[p9] = (cnt[p9] || 0) + 1;
+  }
+  return function(a, b) {
+    var ra = titleRank(a.title), rb = titleRank(b.title);
+    if (ra !== rb) return rb - ra;
+    var fa = cnt[a.id] || 0, fb = cnt[b.id] || 0;
+    if (fa !== fb) return fb - fa;
+    var na = ((a.lastName || '') + (a.firstName || '')), nb = ((b.lastName || '') + (b.firstName || ''));
+    return na < nb ? -1 : (na > nb ? 1 : 0);
+  };
+}
+// v420: タイトル横の「何ヶ月目」（登録月=1ヶ月目。研修生〜QBR(LOI-Q4)〜BM帯のみ・登録月入力済みの人のみ）
+function titleMonthsSuffix(m) {
+  try {
+    if (!m || !m.startMonth) return '';
+    var t = (m.title || '').trim();
+    var band = ['LOI','Q1','Q2','Q3','Q4','BM','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11'];
+    var isTr = (typeof memberCat === 'function' && memberCat(m) === '研修生');
+    if (!isTr && band.indexOf(t) < 0) return '';
+    var n = (typeof activityMonths === 'function') ? activityMonths(m, state.currentMonth || currentMonthStr()) : 0;
+    return n >= 1 ? '（' + n + 'ヶ月目）' : '';
+  } catch(e) { return ''; }
+}
 function childrenOf(parentId, members) {
   if (members !== _childIdxSrc || members === state.members) {
     _childIdx = {};
@@ -7966,6 +8046,8 @@ function childrenOf(parentId, members) {
       var pid = members[i].parentId || '';
       (_childIdx[pid] || (_childIdx[pid] = [])).push(members[i]);
     }
+    var _cmp = _treeSortCmp(members); // v420: タイトル高い順→フロント多い順
+    for (var k in _childIdx) _childIdx[k].sort(_cmp);
     _childIdxSrc = members;
   }
   return _childIdx[parentId || ''] || [];
@@ -8201,8 +8283,11 @@ function titleRingColor(title) {
   if (t==='B2'||t==='B3') return '#a78bfa';
   var isLight = document.body.classList.contains('light');
   if (t==='OUT') return isLight ? '#6b7280' : '#5b6478';
-  var BR_ALL = ['BR','G','ゴールド','L','ラピス','R','ルビー','E','エメラルド','D','ダイヤモンド','BD','ブルーダイヤモンド','PD','チームエリート'];
-  if (BR_ALL.indexOf(raw) >= 0 || BR_ALL.indexOf(t) >= 0) return isLight ? '#78716c' : '#a8a29e'; // BR以上は同色（テーマ別に濃度調整）
+  // v420: BR以上は宝石色で識別（G=金/L=青/R=赤/E=緑/D=白銀/BD=青ダイヤ/PD=ピンク/TE=虹金）
+  var GEM = {'BR':'#38BDF8','G':'#FFD166','ゴールド':'#FFD166','L':'#60A5FA','ラピス':'#60A5FA','R':'#FF5D73','ルビー':'#FF5D73','E':'#34D399','エメラルド':'#34D399','D':(isLight?'#94A3B8':'#E5E7EB'),'ダイヤモンド':(isLight?'#94A3B8':'#E5E7EB'),'BD':'#3B82F6','ブルーダイヤモンド':'#3B82F6','PD':'#F0ABFC','チームエリート':'#FBBF24'};
+  if (GEM[raw] !== undefined) return GEM[raw];
+  if (GEM[t] !== undefined) return GEM[t];
+  if (t === 'BM') return '#C583FF'; // v420: BM=紫
   return isLight ? '#64748b' : '#8D9AB8';
 }
 
@@ -8264,11 +8349,13 @@ function titleAvatarStyle(title) {
   // 研修ステータス系
   if (t==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||t==='面談'||t==='BPC'||t==='CO')
     return 'background:rgba(34,211,238,0.15);color:#5AD7FF;border-color:rgba(34,211,238,0.4)';
-  // BR以上は全て同色（重要なのはフレッシュ帯の見分け。ランク詳細はカード/編集画面で）
+  // v420: BR以上は宝石色でひと目で分かるように（リング色と同じルール）
   var raw = (title||'').trim();
   var BR_ALL = ['BR','G','ゴールド','L','ラピス','R','ルビー','E','エメラルド','D','ダイヤモンド','BD','ブルーダイヤモンド','PD','チームエリート'];
-  if (BR_ALL.indexOf(raw) >= 0 || BR_ALL.indexOf(t) >= 0)
-    return 'background:linear-gradient(135deg,#292524,#57534e);color:#d6d3d1;border-color:#78716c';
+  if (BR_ALL.indexOf(raw) >= 0 || BR_ALL.indexOf(t) >= 0) {
+    var _gc = titleRingColor(raw);
+    return 'background:linear-gradient(135deg,#1c1917,#292524);color:' + _gc + ';border-color:' + _gc + ';font-weight:800';
+  }
   // OUT（当月アウト）：グレーで打ち消し感を出す
   if (t==='OUT') return 'background:var(--surface3);color:var(--text-dim);border-color:var(--border2);text-decoration:line-through';
   // LOI / Q系
@@ -8388,7 +8475,7 @@ function memberInfoHtml(m) {
   if (_avatars[m.id]) {
     html += '<div style="display:flex;align-items:center;gap:10px;margin:2px 0 7px">'
       + '<img src="' + _avatars[m.id] + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + '" alt="">'
-      + '<span style="font-size:12px;color:var(--text-mid)">' + evEsc(m.title||'') + '</span></div>';
+      + '<span style="font-size:12px;color:var(--text-mid)">' + evEsc((m.title||'') + titleMonthsSuffix(m)) + '</span></div>';
   }
   var lastAct = memberLastActivity(m);
   if (lastAct) {
@@ -9994,7 +10081,80 @@ function renderDataHub() {
     + '<div class="dh-cats">' + catHtml + '</div>'
     + '</div>';
 }
+// ============================================================
+//  v420: 地域別 月次推移（過去12ヶ月のmonthsドキュメントから集計）
+// ============================================================
+var _regTrendCache = {}, _regTrendSel = '';
+function _regTrendUid() { return viewingOwnerUid || (currentUser && currentUser.uid) || ''; }
+function regTrendInit() {
+  var wrap = document.getElementById('regTrendChips');
+  if (!wrap) return;
+  var seen = {}, regions = [];
+  (state.members || []).forEach(function(m){
+    if (m.deleted) return;
+    var r = (m.region || '').trim();
+    if (r && !seen[r]) { seen[r] = 1; regions.push(r); }
+  });
+  regions.sort();
+  var chips = ['__ALL__'].concat(regions);
+  wrap.innerHTML = chips.map(function(r){
+    var lbl = r === '__ALL__' ? '📍全体' : r;
+    var active = (_regTrendSel === (r === '__ALL__' ? '' : r));
+    return '<div onclick="regTrendPick(\'' + (r === '__ALL__' ? '' : r) + '\')" style="font-size:11px;padding:4px 11px;border-radius:10px;cursor:pointer;border:1px solid ' + (active ? '#FF87B3' : 'var(--border)') + ';background:' + (active ? '#FF87B3' : 'transparent') + ';color:' + (active ? '#fff' : 'var(--text-dim)') + '">' + evEsc(lbl) + '</div>';
+  }).join('');
+}
+function regTrendPick(r) {
+  _regTrendSel = r;
+  regTrendInit();
+  regTrendRender();
+}
+function regTrendRender() {
+  var body = document.getElementById('regTrendBody');
+  if (!body) return;
+  var uid = _regTrendUid();
+  if (!uid || !db) return;
+  body.innerHTML = '<div style="font-size:12px;color:var(--text-dim)">読み込み中...</div>';
+  var cur = state.currentMonth || currentMonthStr();
+  var mons = [];
+  for (var i = 11; i >= 0; i--) mons.push(addMonths(cur, -i));
+  Promise.all(mons.map(function(mon){
+    var key = uid + '|' + mon;
+    if (_regTrendCache[key]) return Promise.resolve(_regTrendCache[key]);
+    return fsGet('maps/' + uid + '/months/' + mon + '_current').then(function(d){
+      var arr = (d && d.members) ? d.members : [];
+      _regTrendCache[key] = arr;
+      return arr;
+    }).catch(function(){ return []; });
+  })).then(function(all){
+    var QBR = ['LOI','Q1','Q2','Q3','Q4'];
+    var rows = mons.map(function(mon, i){
+      var arr = (all[i] || []).filter(function(m){
+        if (m.deleted) return false;
+        if ((m.title || '').trim() === 'OUT') return false;
+        if (_regTrendSel && (m.region || '').trim() !== _regTrendSel) return false;
+        return true;
+      });
+      var nTr = 0, nQ = 0, nBr = 0;
+      arr.forEach(function(m){
+        var t = (m.title || '').trim();
+        if (typeof memberCat === 'function' && memberCat(m) === '研修生') nTr++;
+        if (QBR.indexOf(t) >= 0) nQ++;
+        if (typeof isBROrAbove === 'function' && isBROrAbove(t)) nBr++;
+      });
+      return { mon: mon, n: arr.length, tr: nTr, q: nQ, br: nBr };
+    });
+    var h = '<table class="tbl" style="min-width:520px"><thead><tr><th style="text-align:left;padding-left:10px">' + evEsc(_regTrendSel || '全体') + '</th>'
+      + rows.map(function(r){ return '<th style="font-family:Inter,sans-serif">' + r.mon.split('.')[1] + '月</th>'; }).join('') + '</tr></thead><tbody>';
+    [['人数（OUT除く）', 'n'], ['研修生', 'tr'], ['QBR（LOI〜Q4）', 'q'], ['BR以上', 'br']].forEach(function(rw){
+      h += '<tr><td style="text-align:left;padding-left:10px;white-space:nowrap">' + rw[0] + '</td>'
+        + rows.map(function(r){ return '<td style="text-align:center;font-family:Inter,sans-serif">' + (r[rw[1]] || (r[rw[1]] === 0 ? '0' : '')) + '</td>'; }).join('') + '</tr>';
+    });
+    h += '</tbody></table><div style="font-size:11px;color:var(--text-dim);margin-top:6px">※地域が未入力だった時期の月は、実際より少なく表示されます</div>';
+    body.innerHTML = h;
+  });
+}
 function renderStats() {
+  try { regTrendInit(); if (document.getElementById('regTrendBody') && (_regTrendSel || document.querySelector('#regTrendBody table'))) regTrendRender(); } catch(eRt) {} // v420
   renderTeamPickBars();
   renderTeamCompare();
   renderDataHub();
@@ -10887,7 +11047,7 @@ function showPcTooltip(mid, ev) {
   if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454;line-height:1.7">' + _npls.join('<br>') + '</div>';
   tip.innerHTML = (_avatars[m.id] ? '<img src="' + _avatars[m.id] + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + ';display:block;margin-bottom:7px" alt="">' : '')
     + '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
-    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + '</span></div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + titleMonthsSuffix(m) + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">GSV</span><span class="pc-tooltip-val" style="color:var(--text)">' + gsvDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">固定PT</span><span class="pc-tooltip-val" style="color:var(--accent)">' + fixDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">稼働</span><span class="pc-tooltip-val">' + actLabel + '</span></div>'
