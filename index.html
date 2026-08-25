@@ -2217,7 +2217,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v415</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v418</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4956,7 +4956,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v415';
+  var DATA_VERSION = 'v418';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5557,6 +5557,16 @@ function _renderCurrentViewNow() {
 var _rcvTimer = null, _rcvLastRun = 0;
 function renderCurrentView() {
   var now = Date.now();
+  // v417: MAP切替中は読込のたびに巨大なSVGを作り直していたため、落ち着くまで1回にまとめる
+  if (window._swBusy && typeof isPCMode === 'function' && isPCMode()) {
+    if (_rcvTimer) clearTimeout(_rcvTimer);
+    _rcvTimer = setTimeout(function() {
+      _rcvTimer = null;
+      _rcvLastRun = Date.now();
+      _renderCurrentViewNow();
+    }, 350);
+    return;
+  }
   if (!_rcvTimer && now - _rcvLastRun > 150) {
     _rcvLastRun = now;
     _renderCurrentViewNow();
@@ -5572,6 +5582,9 @@ function renderCurrentView() {
 // MAP切替中のスピナー（重い読込の体感対策）
 function _showSwitching(msg) {
   _hideSwitching();
+  window._swBusy = true; // v417
+  if (window._swBusyT) clearTimeout(window._swBusyT);
+  window._swBusyT = setTimeout(function(){ window._swBusy = false; }, 6000); // 保険（読込が終わらない場合）
   var el = document.createElement('div'); el.id = 'switchingOv';
   el.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(5,8,16,.55);display:flex;align-items:center;justify-content:center';
   el.innerHTML = '<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:16px;padding:16px 26px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px"><span class="spin"></span>' + (msg || 'MAPを切り替え中…') + '</div>';
@@ -5579,6 +5592,8 @@ function _showSwitching(msg) {
   setTimeout(function(){ window._keepSpinner = false; _hideSwitching(); }, 15000); // 読み込み失敗時に出っぱなしにならない保険
 }
 function _hideSwitching() {
+  window._swBusy = false; // v417
+  if (window._swBusyT) { clearTimeout(window._swBusyT); window._swBusyT = null; }
   var el = document.getElementById('switchingOv');
   if (el && el.parentNode) el.parentNode.removeChild(el);
 }
@@ -5899,6 +5914,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v418', d:'2026-08-21', items:['🎓「次の研修予定」が出る人と出ない人がいた問題を修正：予定日を過ぎると非表示になる仕様だったため、結果が未確定のまま日付を過ぎた研修生だけ表示されていませんでした。今後は「◯日超過」の赤バッジ付きで表示します（PCツリーのカーソル表示・メンバーカード・活動タブ共通）'] },
+  { v:'v417', d:'2026-08-21', items:['🐛カテゴリが外れるバグをさらに修正：開いた直後にカテゴリを押すと復元処理に上書きされていたため同期適用に変更し、保存時もタイトル・研修データから補って空にならないようにしました（研修状況が「予定」だけの場合も維持されます）','🌿「気になるメンバー」のフレッシュ判定をタイトルではなく登録月（3ヶ月以内）に変更。あわせて「📋審査期間中（LOI〜Q4）」を新設し、研修生／フレッシュ／審査期間中の3区分になりました','🖥PC版の共有MAP切替を高速化：読み込みのたびに組織図を作り直していたのを、データが揃ってから1回にまとめました','🖥PC版でメンバーを削除した後も、ツリーが中央に戻らず元の表示位置を保つようにしました'] },
+  { v:'v416', d:'2026-08-21', items:['🐛カテゴリ「研修生」にして研修ステップだけ入力・保存すると、開き直した時にカテゴリの選択が外れるバグを修正：これまでカテゴリはタイトルから逆算していたため、タイトル未選択だと復元できませんでした。今後はカテゴリ自体を保存し、既存データも研修履歴があれば研修生として復元します'] },
   { v:'v415', d:'2026-08-21', items:['🐛研修のリスケ回数が二重にカウントされるバグを修正：日程未定にした後で日付を入れても回数は増えません（「決まっていた日程が流れた時」だけ1回として数えます）。元の日付の二重記録も修正'] },
   { v:'v414', d:'2026-08-21', items:['🖥PC版でメンバー編集の入力（名前・ポイント等）が重い問題を改修：iPhone用の画面補正処理がPCでも動いて入力欄を移動するたびにレイアウト再計算が走っていたのを停止し、編集パネルを独立レイヤー化＋影を軽量化して背後の組織図が描き直されないようにしました'] },
   { v:'v413', d:'2026-08-21', items:['🔄研修ステップの予定に「リスケ」を追加：新しい日付に変更でき、日程が決まっていない時は「📅 日程未定」を選べます（予定は消えずに「日程調整中」として残り、次の予定にも表示されます）','🔄リスケ回数と元の日付を履歴に表示。日程調整中が3日で橙・7日で赤の警告表示になり、決まったら「📅 日付を入れる」で通常の予定に戻せます'] },
@@ -6379,6 +6397,23 @@ function updateHomeBadge() {
 //  「今フォローすべき人」を層別に抽出。カードからタスク化・詳細へ。
 // ============================================================
 var CK_FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
+// v417: フレッシュは「登録月から3ヶ月以内」で判定（タイトル依存だと2024年登録のQ2までフレになっていた）
+var CK_FRESH_MONTHS = 3;
+var CK_EXAM_TITLES = ['LOI','Q2','Q3','Q4']; // 審査期間中
+function ckIsFreshByStart(m) {
+  try {
+    var sm = (typeof memberStartMonth === 'function') ? memberStartMonth(m) : '';
+    if (!sm) return false;
+    var p = String(sm).replace('-', '.').split('.');
+    var y = parseInt(p[0], 10), mo = parseInt(p[1], 10);
+    if (!y || !mo) return false;
+    var nowS = (state.currentMonth || currentMonthStr()).replace('-', '.').split('.');
+    var ny = parseInt(nowS[0], 10), nm = parseInt(nowS[1], 10);
+    var diff = (ny - y) * 12 + (nm - mo); // 経過月数（登録月=0）
+    return diff >= 0 && diff < CK_FRESH_MONTHS;
+  } catch(e) { return false; }
+}
+function ckIsExam(m) { return CK_EXAM_TITLES.indexOf((m.title || '').trim()) >= 0; }
 var ckExpanded = { trainee:false, fresh:false, leader:false };
 function ckDaysSince(ymd) {
   if (!ymd) return 99999;
@@ -6402,7 +6437,8 @@ function ckGroup(m) {
   if (m.goldShip) return 'leader';
   var cat = (typeof memberCat === 'function') ? memberCat(m) : '';
   if (cat === '研修生') return 'trainee';
-  if (CK_FRESH_TITLES.indexOf((m.title || '').trim()) >= 0) return 'fresh';
+  if (ckIsFreshByStart(m)) return 'fresh';       // v417: 登録月から3ヶ月以内
+  if (ckIsExam(m)) return 'exam';                 // v417: 審査期間中（LOI〜Q4）
   return '';
 }
 // 自動検知の理由（時間ベースのみ）
@@ -6414,18 +6450,20 @@ function ckAutoReasons(m, group) {
     else if (d >= 3) r.push({ t:'研修' + d + '日停滞', c:'warn' });
     if (!m.nextDate) r.push({ t:'次回予定なし', c:'warn' });
     else if (m.nextDate < today) r.push({ t:'予定日超過', c:'warn' });
-  } else if (group === 'fresh') {
+  } else if (group === 'fresh' || group === 'exam') {
     var fl = ckFreshListState(m);
     if (!fl.done) {
       if (!fl.date) r.push({ t:'OL未着手', c:'warn' });
       else { var d2 = ckDaysSince(fl.date); if (d2 >= 7) r.push({ t:'OL' + d2 + '日停滞', c:'warn' }); }
     }
+    if (group === 'exam' && !m.nextDate) r.push({ t:'次回予定なし', c:'warn' }); // v417: 審査期間中は予定切れも拾う
+    else if (group === 'exam' && m.nextDate < today) r.push({ t:'予定日超過', c:'warn' });
   }
   return r;
 }
 // 層別に対象メンバーを収集（表示条件：優先度高 or 自動信号あり）
 function ckCollect() {
-  var g = { trainee:[], fresh:[], leader:[] };
+  var g = { trainee:[], fresh:[], exam:[], leader:[] }; // v417: 審査期間中を追加
   (typeof gameActiveMembers === 'function' ? gameActiveMembers() : (state.members || [])).forEach(function(m) {
     var grp = ckGroup(m);
     if (!grp) return;
@@ -6455,7 +6493,7 @@ function ckRecord(mid, group) {
     setTimeout(function() {
       if (typeof meGo === 'function') meGo(2); // 研修タブへ
     }, 160);
-  } else if (group === 'fresh') {
+  } else if (group === 'fresh' || group === 'exam') {
     switchView('ol');
     setTimeout(function() {
       openOlRecordModal(mid); // その場でポップアップ入力
@@ -6503,14 +6541,15 @@ function birthdayHtml() {
 }
 function cockpitHtml() {
   var g = ckCollect();
-  var total = g.trainee.length + g.fresh.length + g.leader.length;
+  var total = g.trainee.length + g.fresh.length + g.exam.length + g.leader.length; // v417
   var html = '<div class="home-sec-label"><span>👀 気になるメンバー</span><span style="color:var(--text-dim);font-weight:400;font-family:Inter,IBM Plex Mono,monospace">' + total + '人</span></div>';
   if (total === 0) {
     return html + '<div class="ck-empty">今フォローが必要なメンバーはいません 👍<br><span>優先度「高」・研修3日/OL7日停滞・予定切れの人がここに出ます</span></div>';
   }
   var groups = [
     { key:'trainee', ic:'🌱', label:'研修生' },
-    { key:'fresh',   ic:'🌿', label:'フレッシュ' },
+    { key:'fresh',   ic:'🌿', label:'フレッシュ（登録3ヶ月以内）' },
+    { key:'exam',    ic:'📋', label:'審査期間中（LOI〜Q4）' },
     { key:'leader',  ic:'⛴', label:'リーダー格・金の船' }
   ];
   groups.forEach(function(gr) {
@@ -6823,7 +6862,7 @@ function openMemberActions(mid) {
   var prioChips = ['高','中','低',''].map(function(p){ return '<span class="ms-pchip' + ((m.priority||'')===p?' on':'') + '" onclick="setMemberPriority(\'' + mid + '\',\'' + p + '\')">' + (p||'なし') + '</span>'; }).join('');
   var rows = '';
   if (group === 'trainee') rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'trainee\')"><span class="ms-aic">📝</span>研修ステップを記録<span class="ms-ch">›</span></div>';
-  if (group === 'fresh')   rows += '<div class="ms-act" onclick="closeMemberActions();openOlPopup(\'' + mid + '\')"><span class="ms-aic">📋</span>OLを見る・記録<span class="ms-ch">›</span></div>';
+  if (group === 'fresh' || group === 'exam') rows += '<div class="ms-act" onclick="closeMemberActions();openOlPopup(\'' + mid + '\')"><span class="ms-aic">📋</span>OLを見る・記録<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMemberActions();ckAddTask(\'' + mid + '\')"><span class="ms-aic">➕</span>タスクを追加<span class="ms-ch">›</span></div>';
   if (m.lineId) rows += '<div class="ms-act" onclick="closeMemberActions();openLineChatById(\'' + mid + '\')"><span class="ms-aic">💬</span>LINEを開く<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMemberActions();openEdit(\'' + mid + '\')"><span class="ms-aic">📄</span>詳細・編集<span class="ms-ch">›</span></div>';
@@ -11378,10 +11417,14 @@ function openEdit(id) {
 
     // カテゴリ・タイトルはモーダル表示後にセット
     var _editTitle = m.title||'';
-    var _detectedCat = detectCategory(_editTitle);
+    // v416: カテゴリはメンバーに保存した値を最優先（タイトル未選択でも外れない）。
+    //        旧データはタイトルから判定し、それも無ければ研修データの有無で研修生と判断する。
+    var _detectedCat = m.cat || detectCategory(_editTitle);
+    if (!_detectedCat && (m.trainee || m.traineeStatus || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult)) _detectedCat = '研修生';
     // v404: 「OUT」は全カテゴリ共通タイトルのため、研修データの無いメンバーが研修生と誤判定されるのを防止
     if (_editTitle === 'OUT' && _detectedCat === '研修生' && !(m.trainee || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult)) _detectedCat = 'BA';
-    setTimeout(function() {
+    // v417: 50ms後の適用だと「開いてすぐカテゴリを押した操作」が上書きで消えるため、同期実行に変更
+    (function() {
       try {
         // v404: 前のメンバーのカテゴリ・タイトルを持ち越さない（毎回リセットしてから設定）
         fCategory = '';
@@ -11406,7 +11449,7 @@ function openEdit(id) {
           }
         }
       } catch(e2) {}
-    }, 50);
+    })();
   } catch(e) {
     alert('編集エラー: ' + e.message);
   }
@@ -11636,6 +11679,19 @@ function saveMember() {
     firstName: document.getElementById('fFirst').value.trim(),
     gender: fGender,
     title: document.getElementById('fTitle').value.trim(),
+    // v416/v417: カテゴリを保存（タイトル未選択でも復元できるように）。
+    //             未選択のまま保存された場合もタイトル・研修データから補って空にしない
+    cat: (function(){
+      if (fCategory) return fCategory;
+      var _t7 = (document.getElementById('fTitle') || {}).value || '';
+      var _c7 = (typeof detectCategory === 'function') ? detectCategory(_t7.trim()) : '';
+      if (_c7) return _c7;
+      if (fTrainee) return '研修生';
+      var _m7 = null;
+      for (var _q7 = 0; _q7 < state.members.length; _q7++) { if (state.members[_q7].id === editingId) { _m7 = state.members[_q7]; break; } }
+      if (_m7 && ((_m7.traineeHistory && _m7.traineeHistory.length) || _m7.traineeResult || _m7.cat)) return _m7.cat || '研修生';
+      return '';
+    })(),
     activity: document.getElementById('fAct').value,
     actRate: document.getElementById('fActRate').value,
     morale: parseInt(document.getElementById('fMorale').value)||1,
@@ -11719,6 +11775,7 @@ function saveMember() {
   if (_pendingPhoto && m.id) { saveAvatar(m.id, _pendingPhoto); _pendingPhoto = null; }
 }
 function deleteMember() {
+  try { if (typeof isPCMode === 'function' && isPCMode()) _pcTreeCaptureView(); } catch(ePv2) {} // v417
   if (!editingId || !confirm('削除しますか？')) return;
   var delId = editingId;
   // 写真も掃除（孤児データがavatarsチャンクに溜まり続けるのを防ぐ）
@@ -14250,19 +14307,25 @@ function evTdMine(e)   { return !evIsMemberLinked(e) || e.selfShow === true; }  
 function memberNextPlanLines(m) {
   var out = [];
   var t = evTodayYmd();
-  // v368: 過去日の研修予定は「次の予定」に出さない（07/25の予定が今日を過ぎても出続けるバグ修正）
-  // v413: 日程調整中(tbd)は日付が過去でも「次の予定」に残す（追いかけるべき状態のため）
-  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned' && (h.tbd || !h.date || h.date >= t); })
+  // v413: 日程調整中(tbd)は日付が過去でも残す。
+  // v418: 予定日を過ぎた研修予定も「◯日超過」を付けて表示する（v368で非表示にしていたため、
+  //        結果が未確定のまま日付を過ぎた研修生だけ「次の研修予定が出ない」状態になっていた）
+  var plan = (m.traineeHistory || []).filter(function(h){ return h.result === 'planned'; })
     .sort(function(a,b){ return (a.tbd ? 1 : 0) - (b.tbd ? 1 : 0) || (a.date||'').localeCompare(b.date||''); })[0];
+  function _odTag(d0) { // 超過日数バッジ
+    if (!d0 || d0 >= t) return '';
+    var n0 = Math.floor((new Date(t) - new Date(d0)) / 86400000);
+    return ' <span style="color:var(--red);font-weight:700">' + (n0 > 0 ? n0 + '日超過' : '本日') + '</span>';
+  }
   if (plan) {
     if (plan.tbd) {
       var _dT = plan.rsAt ? Math.floor((Date.now() - new Date(plan.rsAt).getTime()) / 86400000) : 0;
       out.push('🎓 研修予定：' + evEsc(plan.status||'') + '（📅 日程調整中' + (_dT >= 1 ? '・' + _dT + '日' : '') + '）' + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
     } else {
-      out.push('🎓 研修予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
+      out.push('🎓 研修予定：' + evEsc(plan.status||'') + (plan.date ? '（' + plan.date.split('-').slice(1).join('/') + '）' : '') + _odTag(plan.date) + (plan.aSan ? ' A:' + evEsc(plan.aSan) : ''));
     }
   }
-  else if (m.nextDate && m.nextDate >= t) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')));
+  else if (m.nextDate) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')) + _odTag(m.nextDate));
   // v368: カレンダー分は「次の予定」「次のタスク」を別行で表示（タスクが近いと予定が隠れるバグ修正）
   var futs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t; })
     .sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
