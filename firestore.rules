@@ -182,6 +182,11 @@ service cloud.firestore {
       allow read, write: if isSelf(uid) || isAdmin();
     }
 
+    // ============ v424: マイトレーニング（本人のみ・共有経路とは完全分離） ============
+    match /fitness/{uid}/{doc=**} {
+      allow read, write: if isSelf(uid);
+    }
+
     // ============ v392: ユニオン共有予定（セミナー等の一括配信・購読型） ============
     // 読み: 同じユニオンに所属するメンバー。書き: オーナー or 同ユニオンの管理者(role=='admin')。
     match /unions/{un}/events/{eid} {

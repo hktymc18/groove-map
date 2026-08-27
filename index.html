@@ -1160,6 +1160,32 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .tdr-row:hover{background:var(--surface3)}
 .tdr-row.cur{color:var(--accent);font-weight:700}
 .tdr-hint{color:var(--text-dim);font-size:11px}
+/* v424: 💪マイトレーニング（オーナー専用パネル） */
+#fitPane{position:fixed;inset:0;z-index:1200;background:var(--bg);display:none;flex-direction:column}
+.fit-hd{flex:none;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 14px 8px;border-bottom:1px solid var(--border)}
+.fit-ttl{font-size:15px;font-weight:800}
+.fit-datebar{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:700;font-family:'Inter','Noto Sans JP',sans-serif}
+.fit-dnav{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:50%;cursor:pointer;color:var(--text-mid);font-size:16px}
+.fit-tabs{flex:none;display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border)}
+.fit-tab{flex:1;text-align:center;padding:9px 0;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--text-dim);background:var(--surface);border:1px solid var(--border);cursor:pointer}
+.fit-tab.sel{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
+.fit-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px calc(env(safe-area-inset-bottom) + 30px)}
+@media(min-width:768px){.fit-body{max-width:640px;margin:0 auto;width:100%}}
+.fit-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+.fit-card-t{font-size:13px;font-weight:800;margin-bottom:4px}
+.fit-pfc-row{display:flex;align-items:center;gap:8px;margin-top:7px}
+.fit-pfc-l{flex:none;width:34px;font-size:12px;font-weight:800;color:var(--text-mid);font-family:Inter,sans-serif}
+.fit-pfc-v{flex:none;width:52px;text-align:right;font-size:14px;font-weight:800;font-family:Inter,sans-serif}
+.fit-pfc-bar{flex:1;height:9px;border-radius:5px;background:var(--surface3);overflow:hidden}
+.fit-pfc-bar i{display:block;height:100%;border-radius:5px}
+.fit-pfc-p{flex:none;width:34px;font-size:10.5px;color:var(--text-dim);font-family:Inter,sans-serif;text-align:right}
+.fit-set-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.fit-set-row .fi{padding:8px 6px;font-size:14px;font-family:Inter,sans-serif}
+.fit-lim{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:9px;font-size:11px;font-weight:800;color:var(--text-dim);cursor:pointer}
+.fit-lim.on{background:var(--red);border-color:var(--red);color:#fff}
+.fit-food-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;border:1px solid transparent}
+.fit-food-row:hover{background:var(--surface2)}
+.fit-meal-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px}
 /* v387: オフラインバナー（下部タブの上・操作の邪魔をしない細帯） */
 #netBanner{position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom) + 62px);z-index:1250;background:#B8860B;color:#fff;font-size:11px;font-weight:700;line-height:1.4;padding:7px 12px;border-radius:10px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none}
 #map3dCanvasWrap{flex:1;min-height:0;position:relative;overflow:hidden}
@@ -2221,7 +2247,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v423</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v424</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5004,7 +5030,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v423';
+  var DATA_VERSION = 'v424';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5210,6 +5236,7 @@ function openMobileMenu() {
   if (sharedOwners && sharedOwners.length) rows += '<div class="ms-act" onclick="closeMobileMenu();openSharedDashboard()"><span class="ms-aic">🤝</span>共有MAP<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + sharedOwners.length + '件</span><span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMobileMenu();openReapproachSheet()"><span class="ms-aic">🔄</span>再アプローチ' + ((_reapproach && _reapproach.length) ? '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + _reapproach.length + '件</span>' : '') + '<span class="ms-ch">›</span></div>'; // v361
   if (currentUser && currentUser.union) rows += '<div class="ms-act" onclick="closeMobileMenu();openUnionListSheet()"><span class="ms-aic">🏛</span>ユニオン予定<span class="ms-ch">›</span></div>'; // v392
+  if (typeof _fitOwner === 'function' && _fitOwner()) rows += '<div class="ms-act" onclick="closeMobileMenu();fitOpen()"><span class="ms-aic">💪</span>トレーニング<span class="ms-ch">›</span></div>'; // v424: オーナー専用
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) rows += '<div class="ms-act" onclick="closeMobileMenu();openAdminPanel()"><span class="ms-aic">🛡</span>アカウント管理<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMobileMenu();openProfileModal()"><span class="ms-aic">⚙️</span>設定・プロフィール<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
@@ -5962,6 +5989,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v424', d:'2026-08-22', items:['💪（オーナー専用）マイトレーニングを新設：残りPFC・筋トレ記録（前回値の初期表示・+2kg提案）・食事記録（⭐頻用食材・前日コピー）・体重（条件タグ・7日移動平均グラフ）・種目別重量の推移。カレンダーにも💪バーとして自分にだけ表示されます'] },
   { v:'v423', d:'2026-08-22', items:['🔗メンバーの繋がりの線をさらに太く・濃くしました','🟠QBR（LOI〜Q4）の色を黄緑→オレンジに変更（NAの水色との混同防止。ノード枠・アバターバッジ共通）','🔗共有Dライン（結合メンバー）の枠が全員同じ紫だったのを、通常メンバーと同じタイトル/系列色ルールに変更（結合の印は点線で維持）','🏛ユニオン予定の編集が開けない/保存できないケースの対策：合成前でも原本から開き直し、月切替後も維持、失敗時は理由をトースト表示','📌テンプレ編集が反映されないケースの対策：編集対象を見失った時に黙って別テンプレを作らず明示エラーに、保存失敗も理由を表示、保存後は即登録チップも即時更新'] },
   { v:'v422', d:'2026-08-22', items:['🏷「何ヶ月目」表示は研修生にも出さないようにしました（表示されるのはQBR（LOI〜Q4）とBMのみ）'] },
   { v:'v421', d:'2026-08-22', items:['🐛3D組織図でメンバーをクリックした時のカードがPCで崩れる（名前が縦1文字ずつになる）バグを修正。カードはPCでは画面下中央のコンパクトなホロカードになり、編集ボタンも虹グラデのオシャレなデザインになりました','🏷「何ヶ月目」表示はB1〜B11には出さないようにしました（Bの数字自体が開始月数のため）'] },
@@ -13400,6 +13428,495 @@ function saveEventDoc(e) {
   return fsSet('maps/' + uid + '/events/' + e.id, clean);
 }
 // ============================================================
+//  v424: 💪 マイトレーニング（オーナー専用の隠しモジュール）
+//  データは fitness/{uid}/... に完全分離（ルールで本人のみ読み書き可）。
+//  共有経路（maps/*）には一切書かず、カレンダーへは表示時にFT_として合成する。
+// ============================================================
+function _fitOwner() { return !!(currentUser && currentUser.uid === OWNER_UID); }
+var _fitFoods = null, _fitExs = null, _fitTg = null, _fitCal = null;
+var _fitDay = null, _fitYmd = '', _fitTab = 'dash', _fitPrev = null, _fitPrevYmd = '';
+function _fitP(doc2) { return 'fitness/' + currentUser.uid + '/' + doc2; }
+function _fitToday() { var t = new Date(); return t.getFullYear() + '-' + evPad2(t.getMonth() + 1) + '-' + evPad2(t.getDate()); }
+var FIT_SPLITS = { A: 'A：押す', B: 'B：引く', C: 'C：肩・腕', run: 'ラン', rest: '休養' };
+function _fitSeedFoods() {
+  var F = function(n, u, ua, p, f, c, k, fav) { return { n: n, u: u, ua: ua, p: p, f: f, c: c, k: k, fav: !!fav }; };
+  return [
+    F('むね肉 皮あり', 'g', 100, 21.5, 6.0, 0, 133, 1), F('むね肉 皮なし', 'g', 100, 23.0, 1.5, 0, 116, 1),
+    F('もも肉 皮あり', 'g', 100, 18.6, 14.2, 0, 200), F('せせり', 'g', 100, 18.8, 13.0, 0, 195),
+    F('砂ずり', 'g', 100, 18.3, 1.8, 0, 94), F('ヤゲン軟骨 肉付き', 'g', 100, 17.9, 1.1, 0, 85),
+    F('鶏レバー', 'g', 100, 18.9, 3.1, 0, 100), F('鶏ハツ', 'g', 100, 14.5, 15.5, 0, 207),
+    F('鶏肩肉', 'g', 100, 21.0, 10.0, 0, 148), F('鶏ハラミ', 'g', 100, 18.0, 13.0, 0, 195),
+    F('ささみ', 'g', 100, 23.9, 0.8, 0, 105, 1),
+    F('米 炊上', 'g', 100, 2.4, 0.19, 36.7, 156, 1), F('米 0.8合(炊270g)', '回', 1, 6.5, 0.5, 99, 421, 1),
+    F('わかめうどん', '玉', 1, 6, 1, 42, 200), F('そば+つゆ', '玉', 1, 9.6, 1.5, 50, 260),
+    F('ちゃんぽん麺150g', '玉', 1, 7.4, 2.6, 55, 297), F('マルタイ棒ラーメン(油なし)', '袋', 1, 10.9, 2.6, 53.2, 280),
+    F('丸天', '枚', 1, 8, 2, 8, 118),
+    F('卵', '個', 1, 6, 5, 0, 76, 1), F('納豆45g', 'パック', 1, 7.4, 4, 5, 90, 1),
+    F('牛乳', '200ml', 1, 6, 7, 10, 130), F('ザバスミルクプロテイン', '本', 1, 20, 0, 6.9, 107),
+    F('ザバスP30', '本', 1, 30, 0, 11, 165), F('TRME', '杯', 1, 10, 0.8, 11.4, 81, 1),
+    F('モッツァレラ半玉', '個', 1, 9, 10, 0.5, 125), F('豆苗', 'g', 100, 3.8, 0.4, 3.2, 24),
+    F('みたらし団子', '本', 1, 1.5, 0.3, 31.9, 138, 1), F('豆大福(山崎)', '個', 1, 4.3, 0.3, 52.8, 231),
+    F('塩豆大福(あわしま堂)', '個', 1, 2.0, 0.2, 26.1, 108), F('つぶあん大福(アダチ)', '個', 1, 3.3, 0.4, 43.9, 218),
+    F('黒糖まん', '個', 1, 4.0, 0.4, 40.9, 183), F('どら焼き', '個', 1, 4.2, 3.1, 43.9, 218),
+    F('窯焼きプリン', '個', 1, 6.7, 9.4, 27.8, 223), F('クロボー', '本', 1, 0.7, 0.2, 14.5, 63),
+    F('梅ヶ枝餅', '個', 1, 2.5, 0.5, 33, 145),
+    F('いいちこ水割り', '杯', 1, 0, 0, 0, 70), F('ハイボール', '杯', 1, 0, 0, 0, 70),
+    F('ビール中ジョッキ', '杯', 1, 0, 0, 0, 176), F('レモンサワー', '杯', 1, 0, 0, 0, 150)
+  ];
+}
+function _fitSeedExs() {
+  var E = function(sp, n, kg, reps, sets, uni, note) { return { sp: sp, n: n, kg: kg, reps: reps, sets: sets, uni: !!uni, note: note || '' }; };
+  return [
+    E('A', 'ダンベルフロアプレス', 20, 0, 3, false, '限界まで・IV2分'),
+    E('A', 'ダンベルフライ', 12, 12, 3, false, 'IV90秒'),
+    E('A', 'ショルダープレス(座位)', 11.5, 12, 3, false, '必ず座位・背もたれ'),
+    E('A', 'サイドレイズ', 5.5, 15, 3, false, 'IV45-60秒'),
+    E('B', 'ワンハンドロウ', 22, 0, 3, true, '左から・限界まで'),
+    E('B', 'ダンベルプルオーバー', 17, 12, 3, false, ''),
+    E('B', 'リアレイズ', 5.5, 15, 3, false, ''),
+    E('B', 'ハンマーカール', 9, 0, 3, false, '限界まで'),
+    E('B', '立ちコロ', 0, 12, 3, false, '自重'),
+    E('C', 'サイドレイズ', 5.5, 15, 4, false, '最終トリプルドロップ'),
+    E('C', 'ダンベルカール', 10, 0, 3, true, '左から・限界まで'),
+    E('C', 'トライセプスエクステンション', 13.5, 12, 3, false, ''),
+    E('C', 'フェイスプル(バンド黄)', 0, 18, 2, false, '肩の後ろ側強化')
+  ];
+}
+function _fitDefTg() {
+  return { phase: 'bulk', phases: {
+    bulk: { kcal: 2600, p: 160, f: 70, c: 330, n: '増量' },
+    cut: { kcal: 2200, p: 160, f: 60, c: 240, n: '減量/イベント前3日' },
+    carb: { kcal: 2400, p: 150, f: 40, c: 290, n: 'カーボアップ(前日)' },
+    keep: { kcal: 1700, p: 130, f: 55, c: 190, n: '維持' } } };
+}
+function _fitEnsureMeta() {
+  if (_fitFoods && _fitExs && _fitTg && _fitCal) return Promise.resolve();
+  return Promise.all([
+    fsGet(_fitP('meta/foods')), fsGet(_fitP('meta/exercises')), fsGet(_fitP('meta/targets')), fsGet(_fitP('meta/calendar'))
+  ]).then(function(r) {
+    _fitFoods = (r[0] && r[0].items) ? r[0].items : null;
+    _fitExs = (r[1] && r[1].items) ? r[1].items : null;
+    _fitTg = r[2] || null;
+    _fitCal = (r[3] && r[3].days) ? r[3].days : {};
+    if (!_fitFoods) { _fitFoods = _fitSeedFoods(); fsSet(_fitP('meta/foods'), { items: _fitFoods }); }
+    if (!_fitExs) { _fitExs = _fitSeedExs(); fsSet(_fitP('meta/exercises'), { items: _fitExs }); }
+    if (!_fitTg) { _fitTg = _fitDefTg(); fsSet(_fitP('meta/targets'), _fitTg); }
+  });
+}
+function _fitDefDay() { return { meals: [], body: null, session: null, plan: null }; }
+function _fitLoadDay(ymd) {
+  return fsGet(_fitP('days/' + ymd)).then(function(d) {
+    _fitYmd = ymd;
+    _fitDay = d ? { meals: d.meals || [], body: d.body || null, session: d.session || null, plan: d.plan || null } : _fitDefDay();
+  });
+}
+function _fitSaveDay() {
+  if (!_fitYmd) return;
+  fsSet(_fitP('days/' + _fitYmd), { meals: _fitDay.meals, body: _fitDay.body, session: _fitDay.session, plan: _fitDay.plan, updatedAt: new Date().toISOString() });
+  // カレンダー合成・推移用サマリを更新（1ドキュメントに集約して読み取りを安く）
+  var e2 = {};
+  if (_fitDay.session && _fitDay.session.split) { e2.s = _fitDay.session.split; e2.done = 1; }
+  else if (_fitDay.plan && _fitDay.plan.split) { e2.s = _fitDay.plan.split; if (_fitDay.plan.time) e2.tm = _fitDay.plan.time; }
+  if (_fitDay.body && _fitDay.body.w) { e2.w = _fitDay.body.w; if (_fitDay.body.fat) e2.bf = _fitDay.body.fat; if (_fitDay.body.tag) e2.t = _fitDay.body.tag; }
+  var k9 = _fitDay.meals.reduce(function(a, m) { return a + m.items.reduce(function(b, it) { return b + (it.k || 0); }, 0); }, 0);
+  if (k9 > 0) e2.k = Math.round(k9);
+  _fitCal = _fitCal || {};
+  if (Object.keys(e2).length) _fitCal[_fitYmd] = e2; else delete _fitCal[_fitYmd];
+  fsSet(_fitP('meta/calendar'), { days: _fitCal, updatedAt: new Date().toISOString() });
+  try { if (currentView === 'events') renderEvents(); } catch(eR) {}
+}
+function _fitNextSplit() {
+  var order = ['A', 'B', 'C'];
+  var last = '';
+  var ds = Object.keys(_fitCal || {}).sort();
+  for (var i = ds.length - 1; i >= 0; i--) {
+    var e3 = _fitCal[ds[i]];
+    if (e3 && e3.done && order.indexOf(e3.s) >= 0 && ds[i] < _fitYmd) { last = e3.s; break; }
+  }
+  if (!last) return 'A';
+  return order[(order.indexOf(last) + 1) % 3];
+}
+function _fitConsumed() {
+  var t = { p: 0, f: 0, c: 0, k: 0 };
+  ((_fitDay && _fitDay.meals) || []).forEach(function(m) {
+    m.items.forEach(function(it) { t.p += it.p || 0; t.f += it.f || 0; t.c += it.c || 0; t.k += it.k || 0; });
+  });
+  return t;
+}
+function fitOpen(ymd) {
+  if (!_fitOwner()) return;
+  var pane = document.getElementById('fitPane');
+  if (!pane) {
+    pane = document.createElement('div');
+    pane.id = 'fitPane';
+    document.body.appendChild(pane);
+  }
+  pane.style.display = 'flex';
+  pane.innerHTML = '<div class="fit-hd"><span class="ms-x" onclick="fitClose()">✕</span><div class="fit-ttl">💪 マイトレーニング</div>'
+    + '<div class="fit-datebar"><span class="fit-dnav" onclick="fitShiftDay(-1)">‹</span><span id="fitDateLbl"></span><span class="fit-dnav" onclick="fitShiftDay(1)">›</span></div></div>'
+    + '<div class="fit-tabs">'
+    + ['dash|🏠', 'work|🏋️ 筋トレ', 'meal|🍚 食事', 'trend|📈 推移'].map(function(t) {
+        var p = t.split('|');
+        return '<div class="fit-tab" data-ft="' + p[0] + '" onclick="fitTab(\'' + p[0] + '\')">' + p[1] + '</div>';
+      }).join('')
+    + '</div><div class="fit-body" id="fitBody"><div style="padding:30px;text-align:center;color:var(--text-dim)">読み込み中...</div></div>';
+  var target = ymd || _fitYmd || _fitToday();
+  _fitEnsureMeta().then(function() { return _fitLoadDay(target); }).then(function() { fitTab(_fitTab || 'dash'); })
+    .catch(function(err) { toast('⚠️ 読み込めませんでした: ' + ((err && err.message) || 'ルールのデプロイを確認してください')); });
+}
+function fitClose() { var p = document.getElementById('fitPane'); if (p) p.style.display = 'none'; }
+function fitShiftDay(d) {
+  var p9 = _fitYmd.split('-');
+  var dt = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10) + d);
+  var ymd = dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1) + '-' + evPad2(dt.getDate());
+  _fitLoadDay(ymd).then(function() { fitTab(_fitTab); });
+}
+function fitTab(t) {
+  _fitTab = t;
+  var tabs = document.querySelectorAll('#fitPane .fit-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('sel', tabs[i].getAttribute('data-ft') === t);
+  var lbl = document.getElementById('fitDateLbl');
+  if (lbl) {
+    var p9 = _fitYmd.split('-');
+    var wd = ['日', '月', '火', '水', '木', '金', '土'][new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10)).getDay()];
+    lbl.textContent = parseInt(p9[1], 10) + '/' + parseInt(p9[2], 10) + '(' + wd + ')' + (_fitYmd === _fitToday() ? ' 今日' : '');
+  }
+  var b = document.getElementById('fitBody');
+  if (!b) return;
+  if (t === 'dash') b.innerHTML = _fitDashHtml();
+  else if (t === 'work') { b.innerHTML = _fitWorkHtml(); _fitLoadPrev(); }
+  else if (t === 'meal') b.innerHTML = _fitMealHtml();
+  else if (t === 'trend') { b.innerHTML = _fitTrendHtml(); setTimeout(function() { _fitDrawWeight(); _fitExTrendKick(); }, 60); }
+}
+function _fitPhase() { return (_fitTg && _fitTg.phases && _fitTg.phases[_fitTg.phase]) || _fitDefTg().phases.bulk; }
+function fitSetPhase(k) { _fitTg.phase = k; fsSet(_fitP('meta/targets'), _fitTg); fitTab('dash'); }
+function _fitBar(label, rem, total, col) {
+  var pct = total > 0 ? Math.max(0, Math.min(100, Math.round(rem / total * 100))) : 0;
+  return '<div class="fit-pfc-row"><span class="fit-pfc-l">' + label + '</span>'
+    + '<span class="fit-pfc-v" style="color:' + (rem < 0 ? 'var(--red)' : 'var(--text)') + '">' + (Math.round(rem * 10) / 10) + '</span>'
+    + '<div class="fit-pfc-bar"><i style="width:' + pct + '%;background:' + col + '"></i></div>'
+    + '<span class="fit-pfc-p">' + pct + '%</span></div>';
+}
+function _fitDashHtml() {
+  var tg = _fitPhase(), cs = _fitConsumed();
+  var nx = _fitNextSplit();
+  var w7 = _fitWeight7();
+  var h = '<div class="fit-card"><div class="fit-card-t">今日は【' + (FIT_SPLITS[nx] || nx) + '】' + (_fitDay.session ? ' <span style="color:var(--accent)">✓ ' + (FIT_SPLITS[_fitDay.session.split] || '') + ' 実施済み</span>' : '') + '</div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'
+    + Object.keys(_fitTg.phases).map(function(k) {
+        var ph = _fitTg.phases[k];
+        return '<div class="rb' + (_fitTg.phase === k ? ' sel' : '') + '" style="flex:none;padding:5px 10px;font-size:11px" onclick="fitSetPhase(\'' + k + '\')">' + ph.n + '</div>';
+      }).join('') + '</div></div>';
+  h += '<div class="fit-card"><div class="fit-card-t">残りPFC（' + tg.kcal + 'kcal・P' + tg.p + '/F' + tg.f + '/C' + tg.c + '）</div>'
+    + _fitBar('P', tg.p - cs.p, tg.p, '#4ADE80')
+    + _fitBar('F', tg.f - cs.f, tg.f, '#FFB454')
+    + _fitBar('C', tg.c - cs.c, tg.c, '#5AD7FF')
+    + _fitBar('kcal', tg.kcal - cs.k, tg.kcal, '#F472B6') + '</div>';
+  h += '<div class="fit-card"><div class="fit-card-t">体重</div>'
+    + '<div style="display:flex;align-items:baseline;gap:14px;margin-top:4px"><span style="font-size:26px;font-weight:800;font-family:Inter,sans-serif">' + (_fitDay.body && _fitDay.body.w ? _fitDay.body.w + 'kg' : '未記録') + '</span>'
+    + (w7 ? '<span style="font-size:13px;color:var(--text-mid)">7日平均 ' + w7 + 'kg</span>' : '') + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:8px">'
+    + '<input class="fi" id="fitW" type="number" step="0.1" placeholder="体重kg" value="' + (_fitDay.body ? _fitDay.body.w || '' : '') + '" style="flex:1">'
+    + '<input class="fi" id="fitBf" type="number" step="0.1" placeholder="体脂肪%" value="' + (_fitDay.body ? _fitDay.body.fat || '' : '') + '" style="flex:1">'
+    + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px" id="fitTagRow">'
+    + [['morning', '朝'], ['post_workout', '運動後'], ['post_alcohol', '飲酒翌日'], ['aircon', '冷房'], ['other', 'その他']].map(function(tg2) {
+        var on = _fitDay.body && _fitDay.body.tag === tg2[0];
+        return '<div class="rb' + (on ? ' sel' : '') + '" style="flex:none;padding:5px 10px;font-size:11px" onclick="fitBodyTag(\'' + tg2[0] + '\')">' + tg2[1] + '</div>';
+      }).join('')
+    + '</div><button class="btn-p" style="width:100%;margin-top:10px;padding:10px" onclick="fitSaveBody()">体重を保存</button></div>';
+  h += '<div class="fit-card"><div class="fit-card-t">明日の予定</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'
+    + ['A', 'B', 'C', 'run', 'rest'].map(function(k) { return '<div class="rb" style="flex:none;padding:6px 12px;font-size:12px" onclick="fitPlanTomorrow(\'' + k + '\')">' + FIT_SPLITS[k] + '</div>'; }).join('')
+    + '</div><div style="font-size:11px;color:var(--text-dim);margin-top:6px">タップで明日のカレンダーに💪バーが入ります（自分にだけ見えます）</div></div>';
+  return h;
+}
+var _fitTagSel = '';
+function fitBodyTag(t) { _fitTagSel = t; var r = document.getElementById('fitTagRow'); if (!r) return; var cs = r.children; for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].textContent === {morning:'朝',post_workout:'運動後',post_alcohol:'飲酒翌日',aircon:'冷房',other:'その他'}[t]); }
+function fitSaveBody() {
+  var w = parseFloat((document.getElementById('fitW') || {}).value) || 0;
+  if (!w) { toast('体重を入力してください'); return; }
+  _fitDay.body = { w: w, fat: parseFloat((document.getElementById('fitBf') || {}).value) || 0, tag: _fitTagSel || (_fitDay.body && _fitDay.body.tag) || 'morning' };
+  _fitSaveDay();
+  toast('体重を記録しました ✓');
+  fitTab('dash');
+}
+function fitPlanTomorrow(sp) {
+  var p9 = _fitToday().split('-');
+  var dt = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10) + 1);
+  var ymd = dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1) + '-' + evPad2(dt.getDate());
+  var cur = _fitYmd;
+  _fitLoadDay(ymd).then(function() {
+    _fitDay.plan = { split: sp, time: '' };
+    _fitSaveDay();
+    return _fitLoadDay(cur);
+  }).then(function() { toast('💪 明日の予定：' + FIT_SPLITS[sp]); fitTab('dash'); });
+}
+// ── 筋トレ記録（前回値の初期表示が本体） ──
+function _fitLoadPrev() {
+  var sp = (_fitDay.session && _fitDay.session.split) || _fitNextSplit();
+  var ds = Object.keys(_fitCal || {}).sort();
+  var prevYmd = '';
+  for (var i = ds.length - 1; i >= 0; i--) {
+    if (ds[i] >= _fitYmd) continue;
+    var e3 = _fitCal[ds[i]];
+    if (e3 && e3.done && e3.s === sp) { prevYmd = ds[i]; break; }
+  }
+  _fitPrev = null; _fitPrevYmd = prevYmd;
+  if (!prevYmd) { _fitWorkFill(); return; }
+  fsGet(_fitP('days/' + prevYmd)).then(function(d) {
+    _fitPrev = (d && d.session) ? d.session : null;
+    _fitWorkFill();
+  }).catch(function() { _fitWorkFill(); });
+}
+function fitWorkSplit(sp) {
+  if (!_fitDay.session) _fitDay.session = { split: sp, sets: [] };
+  else _fitDay.session.split = sp;
+  fitTab('work');
+}
+function _fitWorkHtml() {
+  var sp = (_fitDay.session && _fitDay.session.split) || _fitNextSplit();
+  var h = '<div class="fit-card"><div style="display:flex;gap:6px;flex-wrap:wrap">'
+    + ['A', 'B', 'C'].map(function(k) { return '<div class="rb' + (sp === k ? ' sel' : '') + '" style="flex:1;padding:8px 0;font-size:12px" onclick="fitWorkSplit(\'' + k + '\')">' + FIT_SPLITS[k] + '</div>'; }).join('')
+    + '</div><div id="fitPrevInfo" style="font-size:11px;color:var(--text-dim);margin-top:6px">前回値を読み込み中...</div></div>';
+  h += '<div id="fitExList"></div>';
+  h += '<button class="btn-p" style="width:100%;padding:13px;margin-top:4px" onclick="fitSaveSession()">セッションを保存</button>';
+  return h;
+}
+function _fitPrevSetsOf(exName) {
+  if (!_fitPrev || !_fitPrev.sets) return [];
+  return _fitPrev.sets.filter(function(st) { return st.ex === exName; });
+}
+function _fitWorkFill() {
+  var box = document.getElementById('fitExList');
+  if (!box) return;
+  var sp = (_fitDay.session && _fitDay.session.split) || _fitNextSplit();
+  var info = document.getElementById('fitPrevInfo');
+  if (info) info.textContent = _fitPrevYmd ? ('前回の' + FIT_SPLITS[sp] + '：' + _fitPrevYmd + '（グレー値＝前回。そのまま保存OK）') : ('この分割の記録はまだありません（初期値＝マスタの重量）');
+  var exs = (_fitExs || []).filter(function(e) { return e.sp === sp; });
+  var h = '';
+  exs.forEach(function(ex, xi) {
+    var prev = _fitPrevSetsOf(ex.n);
+    var cur = ((_fitDay.session && _fitDay.session.sets) || []).filter(function(st) { return st.ex === ex.n; });
+    var prevTxt = prev.length ? '前回 ' + prev.map(function(p2) { return (p2.side && p2.side !== 'both' ? (p2.side === 'left' ? '左' : '右') : '') + p2.kg + '×' + p2.reps + (p2.lim ? '!' : ''); }).join(', ') : '';
+    var sug = '';
+    if (prev.length && ex.reps > 0 && prev.every(function(p2) { return p2.reps >= ex.reps; })) sug = ' <span style="color:var(--accent);font-weight:700">💡 +2kg</span>';
+    h += '<div class="fit-card"><div class="fit-card-t">' + evEsc(ex.n) + (ex.uni ? ' <span style="font-size:10px;color:#FFB454">⚠️左から</span>' : '') + sug + '</div>'
+      + (ex.note ? '<div style="font-size:10.5px;color:var(--text-dim)">' + evEsc(ex.note) + '</div>' : '')
+      + (prevTxt ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">' + evEsc(prevTxt) + '</div>' : '')
+      + '<div id="fitSets_' + xi + '">';
+    var rows = cur.length ? cur : null;
+    var nSets = rows ? rows.length : ex.sets * (ex.uni ? 2 : 1);
+    for (var si = 0; si < nSets; si++) {
+      var side = ex.uni ? (si % 2 === 0 ? 'left' : 'right') : 'both';
+      var base = rows ? rows[si] : (prev[si] || { kg: ex.kg, reps: ex.reps || 10 });
+      h += _fitSetRow(xi, si, side, base ? base.kg : ex.kg, base ? base.reps : (ex.reps || 10), base && base.lim);
+    }
+    h += '</div><div style="display:flex;gap:8px;margin-top:6px"><button class="fol-add" style="margin:0;flex:1" onclick="fitAddSet(' + xi + ')">＋ セット追加</button></div></div>';
+  });
+  box.innerHTML = h;
+}
+function _fitSetRow(xi, si, side, kg, reps, lim) {
+  return '<div class="fit-set-row" data-fx="' + xi + '" data-fside="' + side + '">'
+    + (side !== 'both' ? '<span style="flex:none;width:24px;font-size:11px;font-weight:700;color:' + (side === 'left' ? '#FFB454' : 'var(--text-dim)') + '">' + (side === 'left' ? '左' : '右') + '</span>' : '')
+    + '<input class="fi fit-kg" type="number" step="0.5" value="' + kg + '" style="flex:1;text-align:center"><span style="font-size:10px;color:var(--text-dim)">kg</span>'
+    + '<input class="fi fit-reps" type="number" value="' + reps + '" style="flex:1;text-align:center"><span style="font-size:10px;color:var(--text-dim)">回</span>'
+    + '<span class="fit-lim' + (lim ? ' on' : '') + '" onclick="this.classList.toggle(\'on\')" title="限界まで">限</span>'
+    + '</div>';
+}
+function fitAddSet(xi) {
+  var box = document.getElementById('fitSets_' + xi);
+  if (!box) return;
+  var sp = (_fitDay.session && _fitDay.session.split) || _fitNextSplit();
+  var ex = (_fitExs || []).filter(function(e) { return e.sp === sp; })[xi];
+  var n = box.children.length;
+  var side = ex && ex.uni ? (n % 2 === 0 ? 'left' : 'right') : 'both';
+  var tmp = document.createElement('div');
+  tmp.innerHTML = _fitSetRow(xi, n, side, ex ? ex.kg : 10, ex ? (ex.reps || 10) : 10, false);
+  box.appendChild(tmp.firstChild);
+}
+function fitSaveSession() {
+  var sp = (_fitDay.session && _fitDay.session.split) || _fitNextSplit();
+  var exs = (_fitExs || []).filter(function(e) { return e.sp === sp; });
+  var sets = [];
+  var rows = document.querySelectorAll('#fitExList .fit-set-row');
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var xi = parseInt(r.getAttribute('data-fx'), 10);
+    var kg = parseFloat(r.querySelector('.fit-kg').value) || 0;
+    var reps = parseInt(r.querySelector('.fit-reps').value, 10) || 0;
+    if (!reps) continue;
+    sets.push({ ex: exs[xi] ? exs[xi].n : '', side: r.getAttribute('data-fside'), kg: kg, reps: reps, lim: r.querySelector('.fit-lim').classList.contains('on') });
+  }
+  if (!sets.length) { toast('セットを入力してください'); return; }
+  _fitDay.session = { split: sp, sets: sets, at: new Date().toISOString() };
+  _fitSaveDay();
+  toast('🏋️ ' + FIT_SPLITS[sp] + ' を記録しました ✓（' + sets.length + 'セット）');
+  fitTab('dash');
+}
+// ── 食事記録 ──
+var _fitMealLabel = '昼';
+function fitMealLabel(l) { _fitMealLabel = l; fitTab('meal'); }
+function _fitMealHtml() {
+  var tg = _fitPhase(), cs = _fitConsumed();
+  var h = '<div class="fit-card">'
+    + _fitBar('P', tg.p - cs.p, tg.p, '#4ADE80') + _fitBar('F', tg.f - cs.f, tg.f, '#FFB454')
+    + _fitBar('C', tg.c - cs.c, tg.c, '#5AD7FF') + _fitBar('kcal', tg.kcal - cs.k, tg.kcal, '#F472B6') + '</div>';
+  h += '<div class="fit-card"><div style="display:flex;gap:6px;flex-wrap:wrap">'
+    + ['朝', '昼', '間食', '夜', '就寝前'].map(function(l) { return '<div class="rb' + (_fitMealLabel === l ? ' sel' : '') + '" style="flex:1;padding:7px 0;font-size:12px" onclick="fitMealLabel(\'' + l + '\')">' + l + '</div>'; }).join('')
+    + '</div>'
+    + '<input class="fi" id="fitFoodQ" placeholder="🔍 食材を検索" autocomplete="off" oninput="_fitFoodList(this.value)" style="margin-top:8px">'
+    + '<div id="fitFoodList" style="margin-top:6px;max-height:200px;overflow-y:auto"></div>'
+    + '<button class="fol-add" style="margin-top:8px" onclick="fitCopyPrev()">⧉ 前日の「' + _fitMealLabel + '」をコピー</button></div>';
+  h += '<div class="fit-card"><div class="fit-card-t">今日の記録</div><div id="fitMealItems">' + _fitMealItemsHtml() + '</div></div>';
+  setTimeout(function() { _fitFoodList(''); }, 30);
+  return h;
+}
+function _fitMealItemsHtml() {
+  var h = '';
+  (_fitDay.meals || []).forEach(function(m, mi) {
+    m.items.forEach(function(it, ii) {
+      h += '<div class="fit-meal-row"><span style="flex:none;font-size:10px;color:var(--text-dim);width:36px">' + evEsc(m.label) + '</span>'
+        + '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(it.n) + ' ' + it.a + evEsc(it.u || '') + '</span>'
+        + '<span style="flex:none;font-size:10.5px;color:var(--text-mid);font-family:Inter,sans-serif">P' + (Math.round(it.p * 10) / 10) + ' F' + (Math.round(it.f * 10) / 10) + ' C' + (Math.round(it.c * 10) / 10) + ' ' + Math.round(it.k) + '</span>'
+        + '<span style="flex:none;color:var(--text-dim);cursor:pointer;padding:2px 6px" onclick="fitDelItem(' + mi + ',' + ii + ')">✕</span></div>';
+    });
+  });
+  return h || '<div style="font-size:12px;color:var(--text-dim);padding:6px 0">まだ記録がありません</div>';
+}
+function _fitFoodList(q) {
+  var box = document.getElementById('fitFoodList');
+  if (!box) return;
+  q = (q || '').trim().toLowerCase();
+  var list = (_fitFoods || []).filter(function(f) { return !q || f.n.toLowerCase().indexOf(q) >= 0; });
+  list.sort(function(a, b) { return (b.fav ? 1 : 0) - (a.fav ? 1 : 0); });
+  box.innerHTML = list.slice(0, 30).map(function(f) {
+    var fi = _fitFoods.indexOf(f);
+    return '<div class="fit-food-row" onclick="fitPickFood(' + fi + ')">' + (f.fav ? '⭐ ' : '') + evEsc(f.n)
+      + '<span style="margin-left:auto;font-size:10px;color:var(--text-dim)">P' + f.p + ' F' + f.f + ' C' + f.c + ' /' + f.ua + evEsc(f.u) + '</span></div>';
+  }).join('');
+}
+function fitPickFood(fi) {
+  var f = _fitFoods[fi];
+  if (!f) return;
+  var amt = prompt(f.n + ' の量（' + f.u + '）', String(f.ua));
+  if (amt === null) return;
+  var a = parseFloat(amt) || 0;
+  if (!a) return;
+  var r = a / f.ua;
+  var item = { n: f.n, a: a, u: f.u, p: f.p * r, f: f.f * r, c: f.c * r, k: f.k * r };
+  var meal = null;
+  (_fitDay.meals || []).forEach(function(m) { if (m.label === _fitMealLabel) meal = m; });
+  if (!meal) { meal = { label: _fitMealLabel, items: [] }; _fitDay.meals.push(meal); }
+  meal.items.push(item);
+  _fitSaveDay();
+  fitTab('meal');
+}
+function fitDelItem(mi, ii) {
+  if (!_fitDay.meals[mi]) return;
+  _fitDay.meals[mi].items.splice(ii, 1);
+  if (!_fitDay.meals[mi].items.length) _fitDay.meals.splice(mi, 1);
+  _fitSaveDay();
+  fitTab('meal');
+}
+function fitCopyPrev() {
+  var p9 = _fitYmd.split('-');
+  var dt = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10) - 1);
+  var prev = dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1) + '-' + evPad2(dt.getDate());
+  fsGet(_fitP('days/' + prev)).then(function(d) {
+    var src = null;
+    ((d && d.meals) || []).forEach(function(m) { if (m.label === _fitMealLabel) src = m; });
+    if (!src || !src.items.length) { toast('前日の「' + _fitMealLabel + '」の記録がありません'); return; }
+    var meal = null;
+    (_fitDay.meals || []).forEach(function(m) { if (m.label === _fitMealLabel) meal = m; });
+    if (!meal) { meal = { label: _fitMealLabel, items: [] }; _fitDay.meals.push(meal); }
+    src.items.forEach(function(it) { meal.items.push(JSON.parse(JSON.stringify(it))); });
+    _fitSaveDay();
+    toast('⧉ ' + src.items.length + '品をコピーしました');
+    fitTab('meal');
+  });
+}
+// ── 推移 ──
+function _fitWeight7() {
+  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].w; }).sort();
+  var recent = ds.filter(function(k) { return k <= _fitYmd; }).slice(-7);
+  if (!recent.length) return 0;
+  var sum = recent.reduce(function(a, k) { return a + _fitCal[k].w; }, 0);
+  return Math.round(sum / recent.length * 10) / 10;
+}
+function _fitTrendHtml() {
+  return '<div class="fit-card"><div class="fit-card-t">体重（点＝実測 / 線＝7日移動平均）</div>'
+    + '<canvas id="fitWChart" height="170" style="width:100%;display:block;margin-top:6px"></canvas>'
+    + '<div style="display:flex;gap:6px;margin-top:8px"><div class="rb" style="flex:none;padding:5px 10px;font-size:11px" id="fitTagF" onclick="this.classList.toggle(\'sel\');_fitDrawWeight()">朝の測定のみ</div></div></div>'
+    + '<div class="fit-card"><div class="fit-card-t">種目別の重量（直近のトップセット）</div><div id="fitExTrend" style="font-size:12.5px;line-height:2;margin-top:4px">'
+    + _fitExTrendHtml() + '</div></div>';
+}
+function _fitExTrendHtml() {
+  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; }).sort().slice(-15);
+  if (!ds.length) return '<span style="color:var(--text-dim)">セッションを記録するとここに表示されます</span>';
+  return '<span style="color:var(--text-dim)">詳細を読み込み中...</span>';
+}
+function _fitExTrendKick() {
+  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; }).sort().slice(-15);
+  if (ds.length) _fitExTrendLoad(ds);
+}
+function _fitExTrendLoad(ds) {
+  Promise.all(ds.map(function(ymd) { return fsGet(_fitP('days/' + ymd)).then(function(d) { return { ymd: ymd, s: d && d.session }; }).catch(function() { return null; }); }))
+    .then(function(all) {
+      var byEx = {};
+      all.filter(Boolean).forEach(function(r) {
+        if (!r.s || !r.s.sets) return;
+        r.s.sets.forEach(function(st) {
+          if (!byEx[st.ex]) byEx[st.ex] = [];
+          var last = byEx[st.ex][byEx[st.ex].length - 1];
+          if (!last || last.ymd !== r.ymd) byEx[st.ex].push({ ymd: r.ymd, kg: st.kg, reps: st.reps });
+          else if (st.kg > last.kg) { last.kg = st.kg; last.reps = st.reps; }
+        });
+      });
+      var box = document.getElementById('fitExTrend');
+      if (!box) return;
+      var h = '';
+      Object.keys(byEx).forEach(function(ex) {
+        var arr = byEx[ex].slice(-5);
+        h += '<div><b>' + evEsc(ex) + '</b>　' + arr.map(function(a) { return a.ymd.slice(5).replace('-', '/') + ' <span style="color:var(--accent);font-weight:700">' + a.kg + 'kg×' + a.reps + '</span>'; }).join(' → ') + '</div>';
+      });
+      box.innerHTML = h || '<span style="color:var(--text-dim)">記録なし</span>';
+    });
+}
+function _fitDrawWeight() {
+  var cv = document.getElementById('fitWChart');
+  if (!cv) return;
+  var morningOnly = document.getElementById('fitTagF') && document.getElementById('fitTagF').classList.contains('sel');
+  var ds = Object.keys(_fitCal || {}).filter(function(k) {
+    if (!_fitCal[k].w) return false;
+    if (morningOnly && _fitCal[k].t && _fitCal[k].t !== 'morning') return false;
+    return true;
+  }).sort().slice(-60);
+  var W = cv.clientWidth || 320, H = 170;
+  cv.width = W * 2; cv.height = H * 2;
+  var cx = cv.getContext('2d');
+  cx.scale(2, 2);
+  cx.clearRect(0, 0, W, H);
+  if (ds.length < 2) { cx.fillStyle = '#8D9AB8'; cx.font = '12px Inter'; cx.fillText('体重を2日以上記録するとグラフが出ます', 16, 80); return; }
+  var vals = ds.map(function(k) { return _fitCal[k].w; });
+  var min = Math.min.apply(null, vals) - 0.5, max = Math.max.apply(null, vals) + 0.5;
+  var X = function(i) { return 30 + (W - 44) * i / (ds.length - 1); };
+  var Y = function(v) { return 12 + (H - 34) * (1 - (v - min) / (max - min)); };
+  cx.strokeStyle = 'rgba(141,154,184,.25)';
+  cx.beginPath(); cx.moveTo(30, H - 22); cx.lineTo(W - 12, H - 22); cx.stroke();
+  cx.fillStyle = '#8D9AB8'; cx.font = '10px Inter';
+  cx.fillText(String(max - 0.5), 2, 18); cx.fillText(String(min + 0.5), 2, H - 26);
+  cx.fillText(ds[0].slice(5).replace('-', '/'), 30, H - 8); cx.fillText(ds[ds.length - 1].slice(5).replace('-', '/'), W - 48, H - 8);
+  ds.forEach(function(k, i) { cx.fillStyle = 'rgba(90,215,255,.5)'; cx.beginPath(); cx.arc(X(i), Y(vals[i]), 2.5, 0, 7); cx.fill(); });
+  cx.strokeStyle = '#2CE5B8'; cx.lineWidth = 2.2; cx.beginPath();
+  ds.forEach(function(k, i) {
+    var s = Math.max(0, i - 6);
+    var seg = vals.slice(s, i + 1);
+    var avg = seg.reduce(function(a, b) { return a + b; }, 0) / seg.length;
+    if (i === 0) cx.moveTo(X(i), Y(avg)); else cx.lineTo(X(i), Y(avg));
+  });
+  cx.stroke();
+}
+
+// ============================================================
 //  v392: ユニオン共有予定（購読型）
 //  原本は unions/{ユニオン名}/events/{id} に1つだけ。各メンバーは自分の
 //  所属ユニオン＆活動地域(&条件)で購読し、UN_プレフィックスで自分の予定に合成表示。
@@ -16836,6 +17353,7 @@ function closeEventActions() {
 function openEventActions(id) {
   if (window._tdDelAt && Date.now() - window._tdDelAt < 400) return; // v360: 🗑直後の誤タップ防止
   if (/^UN_/.test(String(id))) { openUnionEventSheet(id); return; } // v392: ユニオン予定は専用シート
+  if (/^FT_/.test(String(id))) { fitOpen(String(id).slice(3)); return; } // v424: 💪バー→トレーニングパネル
   if (/^OL_/.test(String(id))) { // v407: OL予定バー→OL記録を開く
     var _op = String(id).slice(3).split('_');
     var _oIdx = parseInt(_op.pop(), 10) || 0;
@@ -18095,6 +18613,14 @@ function renderCalendar() {
       }
     }
   }
+  // v424: 💪トレーニング予定/実績（オーナーの端末でだけ合成表示。共有データには存在しない）
+  if (typeof _fitOwner === 'function' && _fitOwner() && !viewingOwnerUid && _fitCal) {
+    for (var _fk in _fitCal) {
+      var _fe = _fitCal[_fk];
+      if (!_fe || !_fe.s) continue;
+      (byDate[_fk] = byDate[_fk] || []).push({ ev: { id: 'FT_' + _fk, type: 'event', date: _fk, time: _fe.tm || '', title: '💪' + (FIT_SPLITS[_fe.s] || _fe.s) + (_fe.done ? '✓' : ''), color: '#F472B6', _fit: true }, span: '' });
+    }
+  }
   var _slotN = (typeof isPCMode === 'function' && isPCMode()) ? 6 : 8; // v391: PCは6段にして帯の縦にゆとり
   var html = '';
   var cur = new Date(rs.getTime());
@@ -18471,6 +18997,11 @@ function _daySheetHtml(ds) {
   } else {
     if (evs.length) h += '<div class="ev-group-label" style="padding-top:6px">📅 予定 <span style="opacity:.55;font-weight:600">' + evs.length + '</span></div>' + evs.map(evItemHtml).join('');
     if (tks.length) h += '<div class="ev-group-label" style="padding-top:' + (evs.length ? '12px' : '6px') + '">✅ タスク <span style="opacity:.55;font-weight:600">' + tks.length + '</span></div>' + tks.map(evItemHtml).join('');
+    if (typeof _fitOwner === 'function' && _fitOwner() && !viewingOwnerUid && _fitCal && _fitCal[ds] && _fitCal[ds].s) {
+      var _fe2 = _fitCal[ds];
+      h += '<div style="padding:11px 13px;border:1px solid var(--border);border-radius:10px;margin-top:8px;cursor:pointer;background:var(--surface2);border-left:3px solid #F472B6" onclick="closeCalDaySheet(true);fitOpen(\'' + ds + '\')">'
+        + '<span style="font-weight:700">💪 ' + (FIT_SPLITS[_fe2.s] || _fe2.s) + (_fe2.done ? ' <span style="color:var(--accent)">✓実施済み</span>' : '（予定）') + '</span></div>';
+    }
     if (ols.length) h += '<div class="ev-group-label" style="padding-top:12px">📝 OL予定 <span style="opacity:.55;font-weight:600">' + ols.length + '</span></div>'
       + ols.map(function(o){
           return '<div style="padding:11px 13px;border:1px solid var(--border);border-radius:10px;margin-top:6px;cursor:pointer;background:var(--surface2);border-left:3px solid #B48CFF" onclick="closeCalDaySheet(true);openOlRecordModal(\'' + o.mid + '\',' + o.idx + ')">'
