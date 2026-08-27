@@ -2221,7 +2221,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v422</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v423</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3957,7 +3957,7 @@ function renderPCMap(mapType) {
     pt.setAttribute('d',elbow(px,py,cx,cy));
     pt.setAttribute('fill','none');
     pt.setAttribute('stroke',cmap[m.id]||'#444');
-    pt.setAttribute('stroke-width','3'); pt.setAttribute('stroke-opacity','0.78'); // v420: 繋がりの線を太く・濃く
+    pt.setAttribute('stroke-width','4.5'); pt.setAttribute('stroke-opacity','0.9'); // v423: さらに太く・濃く
     pt.setAttribute('class','pc-link');
     pt.setAttribute('data-lineage', lineageRoot[m.id]||'');
     lg.appendChild(pt);
@@ -3975,7 +3975,7 @@ function renderPCMap(mapType) {
     var _isBrUp = (typeof isBROrAbove === 'function') && isBROrAbove(m.title);
     var _isBM = (m.title || '').trim() === 'BM';
     var _rankCol = (_isBrUp || _isBM) ? titleRingColor(m.title) : '';
-    var cc=_rankCol?_rankCol:(isPcLOI?'#4ADE80':isT?'#5AD7FF':col), cf=isPcLOI?'rgba(74,222,128,0.12)':isT?'rgba(90,215,255,0.22)':nodeBaseFill;
+    var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':col), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':nodeBaseFill; // v423: QBR=オレンジ
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
@@ -3991,7 +3991,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
     rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI?'2':'1'))); // v420: BR以上=太枠
-    if (m._foreign) { rect.setAttribute('stroke','#8B7CFF'); rect.setAttribute('stroke-dasharray','5,3'); rect.setAttribute('stroke-width','1.5'); }
+    if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
     g.appendChild(rect);
 
     // 系列カラー左ボーダー
@@ -5004,7 +5004,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v422';
+  var DATA_VERSION = 'v423';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5962,6 +5962,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v423', d:'2026-08-22', items:['🔗メンバーの繋がりの線をさらに太く・濃くしました','🟠QBR（LOI〜Q4）の色を黄緑→オレンジに変更（NAの水色との混同防止。ノード枠・アバターバッジ共通）','🔗共有Dライン（結合メンバー）の枠が全員同じ紫だったのを、通常メンバーと同じタイトル/系列色ルールに変更（結合の印は点線で維持）','🏛ユニオン予定の編集が開けない/保存できないケースの対策：合成前でも原本から開き直し、月切替後も維持、失敗時は理由をトースト表示','📌テンプレ編集が反映されないケースの対策：編集対象を見失った時に黙って別テンプレを作らず明示エラーに、保存失敗も理由を表示、保存後は即登録チップも即時更新'] },
   { v:'v422', d:'2026-08-22', items:['🏷「何ヶ月目」表示は研修生にも出さないようにしました（表示されるのはQBR（LOI〜Q4）とBMのみ）'] },
   { v:'v421', d:'2026-08-22', items:['🐛3D組織図でメンバーをクリックした時のカードがPCで崩れる（名前が縦1文字ずつになる）バグを修正。カードはPCでは画面下中央のコンパクトなホロカードになり、編集ボタンも虹グラデのオシャレなデザインになりました','🏷「何ヶ月目」表示はB1〜B11には出さないようにしました（Bの数字自体が開始月数のため）'] },
   { v:'v420', d:'2026-08-22', items:['🌳ツリーの並び順を「タイトル高い順（BD→BR→QBR(LOI〜Q4)→BM→…→NA）→フロント多い順→名前順」に統一（PC・モバイル共通）','🏷タイトル横に何ヶ月目かを表示：Q2（8ヶ月目）。登録月を1ヶ月目として研修生〜BM帯のみ・登録月入力済みの人に表示','📍地域絞り込みのバグ修正：表記ゆれ（前後の空白）で他地域が混ざる/対象が消える問題を修正し、「未設定」も選べるようになりました','🔗メンバーの繋がりの線を2倍の太さ・濃い色に','🌿直下3人以上いる人の配下に薄い色帯＋サブツリー間の余白を追加（どこまでが誰のNAか一目で分かります）','💎タイトルをひと目で識別：BR以上は宝石色（G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ）＋太枠太字、BM=紫、QBR=緑、NA=水色','📊データタブに「📍地域別 月次推移」を新設：地域を選ぶと過去12ヶ月の人数・研修生・QBR・BR以上を集計表示'] },
@@ -8283,7 +8284,7 @@ function titleRingColor(title) {
   var t = (title||'').trim().toUpperCase();
   var raw = (title||'').trim();
   if (t==='マケ'||raw==='マケ'||t==='PG'||t==='DLR'||t==='EXP'||t==='PA'||raw==='面談'||t==='BPC'||t==='CO') return '#5AD7FF'; // 研修生
-  if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return '#4ADE80';
+  if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return '#FB923C'; // v423: QBR=オレンジ（NAの水色/緑と区別）
   if (t==='B1') return '#C583FF';
   if (t==='B2'||t==='B3') return '#a78bfa';
   var isLight = document.body.classList.contains('light');
@@ -8364,8 +8365,8 @@ function titleAvatarStyle(title) {
   // OUT（当月アウト）：グレーで打ち消し感を出す
   if (t==='OUT') return 'background:var(--surface3);color:var(--text-dim);border-color:var(--border2);text-decoration:line-through';
   // LOI / Q系
-  // フレッシュ帯（LOI〜Q4）は同色の緑
-  if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#052e16,#16a34a);color:#86efac;border-color:#4ADE80';
+  // v423: QBR帯（LOI〜Q4）はオレンジ（NAの水色・緑との混同防止）
+  if (t==='LOI'||t==='Q1'||t==='Q2'||t==='Q3'||t==='Q4') return 'background:linear-gradient(135deg,#431407,#c2410c);color:#fdba74;border-color:#FB923C';
   // B1
   if (t==='B1')  return 'background:linear-gradient(135deg,#4c1d95,#9333ea);color:#e9d5ff;border-color:#C583FF';
   // B2 B3
@@ -13383,6 +13384,7 @@ function loadEvents(uid) {
     try { _digestSync(); } catch(eDg) {} // v410: 起動時に定時リマインダーを予約
     // 起動時：Google連携済みなら未同期の予定・タスクを自動再送
     if (state.gcalConnected && !viewingOwnerUid) setTimeout(function(){ try { gcalSyncPending(); } catch(e){} }, 1500);
+    try { if (typeof _unionApplyToState === 'function') _unionApplyToState(); } catch(eUn) {} // v423: 月切替などの再読込後もユニオン予定を維持
     return state.events;
   }).catch(function() { state.events = []; state.categories = []; updateEventsBadge(); });
 }
@@ -13490,6 +13492,7 @@ function _unionRawById(id) {
   return null;
 }
 function _unionSaveFromModal(editRawId) {
+  try {
   var un = currentUser.union;
   var title = document.getElementById('evTitle').value.trim().replace(/^🏛/, '');
   if (!title) { toast('タイトルを入力してください'); return; }
@@ -13526,6 +13529,7 @@ function _unionSaveFromModal(editRawId) {
   _unionApplyToState();
   closeEventModal(true);
   renderEvents();
+  } catch(eUS) { toast('⚠️ ユニオン予定を保存できませんでした: ' + (eUS && eUS.message || eUS)); }
 }
 function unionDelete(rawId) {
   if (!confirm('🏛 このユニオン予定を削除しますか？（全メンバーのカレンダーから消えます）')) return;
@@ -19268,7 +19272,10 @@ function _evTplEnsure() {
 function _evTplSaveAll() {
   var uid = goalsUid();
   if (!uid || !db || !_evTpl) return;
-  fsSet('maps/' + uid + '/meta/evTemplates', { items: _evTpl }).catch(function(){});
+  // v423: 保存失敗を握りつぶさない（「変更が反映されない」の原因を可視化）
+  fsSet('maps/' + uid + '/meta/evTemplates', { items: _evTpl }).catch(function(err){
+    toast('⚠️ テンプレの保存に失敗しました: ' + ((err && err.message) || '通信を確認してください'));
+  });
 }
 function _evTplFind(id) {
   var arr = _evTpl || [];
@@ -19733,6 +19740,8 @@ function saveEvTplForm(id) {
   if (!name) { toast('名前を入力してください'); return; }
   var ntfRaw = (document.getElementById('evtF_ntf')||{}).value;
   var t = id ? _evTplFind(id) : null;
+  // v423: 編集対象が見つからない時に黙って新規を作ると「変更が反映されない（古いのが残る）」ように見えるため、明示エラーに
+  if (id && !t) { toast('⚠️ 編集対象のテンプレが見つかりません。一覧を開き直してください'); return; }
   if (!t) {
     t = { id: 'tpl_' + Date.now() + '_' + Math.floor(Math.random()*1000), categoryId: '' };
     _evTpl = _evTpl || [];
@@ -19770,6 +19779,7 @@ function saveEvTplForm(id) {
   closeEvTplEdit(false);
   if (window._evtFromMgr) openEvTplManager(); // v317: 一覧から来た時だけ一覧へ戻る
   evTplRenderRow(); // 背後のモーダルのチップ列も更新
+  try { if (typeof renderCalDayList === 'function') renderCalDayList(); } catch(eRc) {} // v423: 日別シートの即登録チップも即時更新
   toast('テンプレを保存しました ✓');
 }
 function deleteEvTplForm(id) {
@@ -19816,6 +19826,12 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   _evEditId = id;
   var e = id ? findEvent(id) : null;
+  // v423: ユニオン予定が合成前で見つからない場合は、原本から合成し直してもう一度探す
+  if (!e && id && /^UN_/.test(String(id))) {
+    try { _unionApplyToState(); } catch(eUA) {}
+    e = findEvent(id);
+    if (!e) { toast('⚠️ ユニオン予定を読み込めませんでした。メニュー→ユニオン予定から開き直してください'); return; }
+  }
   // v311: 種別は入口で決定（編集時は既存の種別を維持）
   _evForceType = forceType || '';
   _evDupStage = ''; // v312: 複製時はこの後で再セットされる
