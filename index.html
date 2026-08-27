@@ -2247,7 +2247,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v424</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v425</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5030,7 +5030,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v424';
+  var DATA_VERSION = 'v425';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5989,6 +5989,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v425', d:'2026-08-27', items:['\ud83d\udccc\u30c6\u30f3\u30d7\u30ec\u306e\u300c\u540d\u524d\u300d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306b\u53cd\u6620\u3055\u308c\u306a\u3044\u30d0\u30b0\u3092\u4fee\u6b63\uff1a\u30bf\u30a4\u30c8\u30eb\u96db\u5f62\u3092\u7a7a\u6b04\u3067\u4f5c\u3063\u305f\u30c6\u30f3\u30d7\u30ec\u306f\u3001\u4f5c\u6210\u6642\u306e\u540d\u524d\u304c\u96db\u5f62\u306b\u56fa\u5b9a\u30b3\u30d4\u30fc\u3055\u308c\u3066\u3044\u305f\u305f\u3081\u3001\u5f8c\u304b\u3089\u540d\u524d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306f\u65e7\u540d\u306e\u307e\u307e\u3067\u3057\u305f\u3002\u4eca\u5f8c\u306f\u96db\u5f62\u672a\u5165\u529b\u306e\u30c6\u30f3\u30d7\u30ec\u306f\u5e38\u306b\u6700\u65b0\u306e\u540d\u524d\u304c\u4f7f\u308f\u308c\u307e\u3059\uff08\u7de8\u96c6\u753b\u9762\u3067\u3082\u81ea\u52d5\u306e\u96db\u5f62\u306f\u7a7a\u6b04\u8868\u793a\u306b\u306a\u308a\u300c\u7a7a\u6b04\uff1d\u540d\u524d\u3068\u540c\u3058\u300d\u3068\u660e\u8a18\uff09'] },
   { v:'v424', d:'2026-08-22', items:['💪（オーナー専用）マイトレーニングを新設：残りPFC・筋トレ記録（前回値の初期表示・+2kg提案）・食事記録（⭐頻用食材・前日コピー）・体重（条件タグ・7日移動平均グラフ）・種目別重量の推移。カレンダーにも💪バーとして自分にだけ表示されます'] },
   { v:'v423', d:'2026-08-22', items:['🔗メンバーの繋がりの線をさらに太く・濃くしました','🟠QBR（LOI〜Q4）の色を黄緑→オレンジに変更（NAの水色との混同防止。ノード枠・アバターバッジ共通）','🔗共有Dライン（結合メンバー）の枠が全員同じ紫だったのを、通常メンバーと同じタイトル/系列色ルールに変更（結合の印は点線で維持）','🏛ユニオン予定の編集が開けない/保存できないケースの対策：合成前でも原本から開き直し、月切替後も維持、失敗時は理由をトースト表示','📌テンプレ編集が反映されないケースの対策：編集対象を見失った時に黙って別テンプレを作らず明示エラーに、保存失敗も理由を表示、保存後は即登録チップも即時更新'] },
   { v:'v422', d:'2026-08-22', items:['🏷「何ヶ月目」表示は研修生にも出さないようにしました（表示されるのはQBR（LOI〜Q4）とBMのみ）'] },
@@ -20219,7 +20220,7 @@ function openEvTplEdit(id) {
         + '</div></div>'
       : '')
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
-    + fld('タイトル雛形（{name}→選択メンバー名）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT" value="' + evEsc(t ? (t.titleTpl || '') : '') + '">')
+    + fld('タイトル雛形（{name}→選択メンバー名・空欄＝名前と同じ）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT（空欄＝名前をそのまま使用）" value="' + evEsc((t && t.titleTpl && t.titleTpl !== t.name) ? t.titleTpl : '') + '">')
     + fld('カテゴリ（色分け）', '<div class="ev-cat-field" onclick="evtOpenCatPick()">'
       + '<span class="cat-swatch" id="evtCatSwatch" style="background:' + (catNow ? catNow.color : '#9ca3af') + '"></span>'
       + '<span id="evtCatName" style="flex:1">' + evEsc(catNow ? catNow.name : '未分類') + '</span>'
@@ -20278,6 +20279,7 @@ function saveEvTplForm(id) {
     _evTpl = _evTpl || [];
     _evTpl.push(t);
   }
+  var _oldName = (t.name || ''); // v425: 雛形の自動追従判定用（旧名）
   t.name = name;
   t.emoji = ''; // v314: 絵文字は廃止
   t.type = ((document.getElementById('evtF_type')||{}).value === 'event') ? 'event' : 'task';
@@ -20300,7 +20302,10 @@ function saveEvTplForm(id) {
   var _una1El = document.getElementById('evtF_una1');
   t.unionAreaMine = !!(_una1El && _una1El.classList.contains('sel'));
   t.notifyOffset = (ntfRaw === '' || ntfRaw === undefined) ? '' : (parseInt(ntfRaw, 10) || 0);
-  t.titleTpl = ((document.getElementById('evtF_tpl')||{}).value || '').trim() || name;
+  var _tplIn = ((document.getElementById('evtF_tpl')||{}).value || '').trim();
+  // v425: 雛形が旧名のコピー（＝未入力で自動設定されたもの）なら、名前の変更に追従させる
+  if (_tplIn && _oldName && _tplIn === _oldName) _tplIn = '';
+  t.titleTpl = _tplIn || name;
   var _stEl = document.getElementById('evtF_stage');
   if (_stEl) t.stage = _stEl.value || ''; // v347: 対応ステージのUIは廃止（既存テンプレの値は維持）
   t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
