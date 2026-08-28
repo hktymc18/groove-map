@@ -1162,6 +1162,9 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .tdr-hint{color:var(--text-dim);font-size:11px}
 /* v424: 💪マイトレーニング（オーナー専用パネル） */
 #fitPane{position:fixed;inset:0;z-index:1200;background:var(--bg);display:none;flex-direction:column}
+@media(min-width:768px){
+  #fitPane{left:calc(50% + 34px);right:auto;top:16px;bottom:16px;transform:translateX(-50%);width:min(680px,calc(100vw - 100px));border:1px solid var(--border);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.55);overflow:hidden}
+}
 .fit-hd{flex:none;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 14px 8px;border-bottom:1px solid var(--border)}
 .fit-ttl{font-size:15px;font-weight:800}
 .fit-datebar{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:700;font-family:'Inter','Noto Sans JP',sans-serif}
@@ -2239,6 +2242,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#4ADE80;box-shadow:0 3px 12px rgba(16,185,129,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span class="pcs-lb">データ</span></div>
   <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3z"/></svg></span><span class="pcs-lb">GOAL</span></div>
   <div class="pcs-item" data-view="month" onclick="switchView('month')" title="今月"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#3ED5C4;box-shadow:0 3px 12px rgba(20,184,166,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/><path d="M8.5 16l2.5 2.5 4.5-4.5"/></svg></span><span class="pcs-lb">今月</span></div>
+  <div class="pcs-item" id="pcsFit" style="display:none" onclick="fitOpen()" title="マイトレーニング（オーナー専用）"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#F472B6;box-shadow:0 3px 12px rgba(244,114,182,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M2.5 12h2M19.5 12h2"/><rect x="4.5" y="8" width="3" height="8" rx="1"/><rect x="16.5" y="8" width="3" height="8" rx="1"/><path d="M7.5 12h9"/></svg></span><span class="pcs-lb">筋トレ</span></div>
   <div class="pcs-spacer"></div>
 </aside>
 
@@ -2252,7 +2256,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v429</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v431</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5070,7 +5074,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v429';
+  var DATA_VERSION = 'v431';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6029,6 +6033,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v431', d:'2026-08-28', items:['🐛🏛ユニオン予定「編集できない」バグの真の原因を修正：予定をタップした時に開くはずのシートが、表示用クラスの付け忘れで画面外に出たまま（＝完全に見えない）でした。v392以来ずっと不可視だったため「タップしても何も起きない」状態でした。メニューの🏛ユニオン予定一覧も同様に修正','🐛💪「📋Claudeに相談」で「記録を集めています」の後に何も出ないバグを修正：コピー用プレビューシートも同じクラス付け忘れで不可視でした'] },
+  { v:'v430', d:'2026-08-28', items:['💪PC版でもマイトレーニングが使えるようになりました：左サイドバーに💪ボタンを追加（オーナーのみ表示）。PCでは画面中央の大きめパネルで開き、筋トレ・食事・推移・メニュー編集・Claudeに相談まで全機能そのまま使えます'] },
   { v:'v429', d:'2026-08-28', items:['🏛ユニオン予定の編集バグ対策を強化：原本が読み込めていない時は自動で読み込み直してから開き、失敗理由を必ず表示します。編集・削除ボタンが出ない場合（＝アカウントがユニオン管理者ではない場合）はその旨をシートに明示するようにしました','📌テンプレ編集画面に「↺ 雛形を空欄（＝名前と同じ）に戻す」ボタンを追加：以前のバージョンで名前が雛形に固定されてしまったテンプレも、これで名前変更に追従するよう直せます'] },
   { v:'v428', d:'2026-08-28', items:['🐛「📋Claudeに相談」が押しても何も起きないように見えるバグを修正：完了などのお知らせ（トースト）が💪画面の後ろに隠れて見えなかったのを最前面に変更。コピーもテキストのプレビューシート（📋コピー/📤共有ボタン付き）から確実にできるようになりました（iOSが自動コピーをブロックする問題の対策）'] },
   { v:'v427', d:'2026-08-28', items:['💪筋トレ大幅アップデート①「📋Claudeに相談」：直近7日/30日の体重・筋トレ・食事をテキスト化してワンタップコピー。Claudeに貼り付けて相談できます','💪②メニュー編集：種目の追加・削除・名前/重量/回数/セット数/分割(A/B/C)の変更・並べ替えができるようになりました（筋トレタブ→⚙️メニューを編集）','💪③ドロップセット対応：各セットの「D+」で重量を落として続けた分を記録できます（前回表示・Claude用テキストにも「→」で反映）','💪④前回との比較：各セットの横に「前 20×12」のように前回値を常時表示（入力値は前回値が初期表示）','💪⑤「限」ボタンの反応を改善：限界（フェイル）まで追い込んだセットの印です。前回表示に「!」が付き、全セット目標回数到達で💡+2kg提案が出ます','💪⑥マッスルくん誕生🐣：トレーニングの累計ボリューム（重量×回数）でレベルアップして育つアバター。押す/引く/肩・腕の部位バランスで体つきも変わります（ホームと推移タブ）'] },
@@ -14307,6 +14313,7 @@ function _fitExportSheet(t) {
     + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px">コピーしてClaudeに貼り付けてください。📤共有からClaudeアプリへ直接送ることもできます</div>'
     + '</div></div>';
   document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); }); // v431: これが無いとシートが画面外のまま（不可視）
   var ta = document.getElementById('fitExpTa');
   if (ta) ta.value = t;
 }
@@ -14614,6 +14621,7 @@ function openUnionEventSheet(compId) {
          + '<button class="fol-add" style="width:100%;margin-top:0" onclick="unionHide(\'' + rawId + '\')">🙈 自分のカレンダーから非表示</button></div>')
     + '</div></div>';
   document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); }); // v431: 表示クラスの付け忘れでシートが不可視だった（＝編集できないバグの正体）
 }
 function openUnionListSheet() {
   closeUnionSheet();
@@ -14645,6 +14653,7 @@ function openUnionListSheet() {
     + (admin ? '<button class="fol-add" onclick="closeUnionSheet();openEventAddUnion()">＋ ユニオン予定を追加</button>' : '')
     + '</div></div>';
   document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); }); // v431
 }
 function openEventAddUnion() {
   openEventModal(null, '', '', 'event');
@@ -22083,6 +22092,8 @@ function loginSuccess(user) {
     nameEl.style.display = '';
   }
   showCopyBtn();
+  // v430: PCサイドバーの💪（オーナーのみ）
+  try { var _pf = document.getElementById('pcsFit'); if (_pf) _pf.style.display = (typeof _fitOwner === 'function' && _fitOwner()) ? '' : 'none'; } catch(eFt) {}
   // ログイン画面を非表示
   var ls = document.getElementById('loginScreen');
   if (ls) ls.style.display = 'none';
