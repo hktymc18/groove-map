@@ -2247,7 +2247,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v425</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v426</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2886,6 +2886,14 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
               <option value="">カテゴリを選択</option>
             </select><span class="ed-chev">▾</span></div>
           </div>
+          <div class="ed-row" id="outVisRow" style="display:none">
+            <span class="ed-l">OUT後の表示<span class="ed-q" onclick="edHelp(event,'h_outvis')">?</span></span>
+            <div class="ed-chips">
+              <div class="rb sel" id="rbOutShow" onclick="selOutVis(false)">ツリーに残す</div>
+              <div class="rb" id="rbOutHide" onclick="selOutVis(true)">🙈 非表示</div>
+            </div>
+          </div>
+          <div class="ed-help" id="h_outvis">OUTメンバーをツリーに出し続けるか選べます。「残す」＝復活の可能性がある人向け（翌月コピー後もMAPに残ります）。「非表示」＝ツリーから消えます（データは残り、メンバー一覧の「OUT」絞り込みからいつでも開けます）。どちらでも直下の組織は上のアップラインに移動します。</div>
           <div class="ed-row">
             <span class="ed-l">現状GSV<span class="ed-q" onclick="edHelp(event,'h_fPtC')">?</span></span>
             <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力"></div>
@@ -3447,7 +3455,7 @@ function copyToNextMonth() {
   // 配下がいる場合はOUTメンバーの上位に付け替えてから除外する。
   // ※ルート（自分）はOUT除外の対象外（消すとMAP構造が壊れるため）
   var outIds = {};
-  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT' && mm.parentId) outIds[mm.id] = mm.parentId; });
+  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT' && mm.parentId && mm.outHidden !== false) outIds[mm.id] = mm.parentId; }); // v426: 「ツリーに残す」を選んだOUTは翌月へ持ち越す
   var _outChanges = [];
   if (Object.keys(outIds).length) {
     copyMembers.forEach(function(mm){
@@ -3473,6 +3481,7 @@ function copyToNextMonth() {
 
   // タイトル遷移を計算＆適用、変更点を収集
   var changes = [];
+  var _ruDemoted = [], _ruPromoted = []; // v426: ロールアップ（BR維持失敗）／BR復帰
   copyMembers.forEach(function(mm) {
     if (mm.traineeResult) mm.trainee = false; // 研修結果確定済みは翌月の決定率にカウントしない
     mm.memo = ''; // v342: メモは月ごと＝翌月に持ち越さない
@@ -3482,11 +3491,37 @@ function copyToNextMonth() {
       var _noSm = (tr.kind === 'demote' && !mm.startMonth && !/^B\d+$/.test((mm.title || '').trim()));
       changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: tr.reason || '', noStart: _noSm });
     }
+    if (tr.kind === 'demote' && (mm.title || '').trim() === 'BR' && mm.parentId) _ruDemoted.push(mm); // v426
+    if (tr.kind === 'promote' && tr.to === 'BR' && mm.rollup && mm.rollup.at) _ruPromoted.push(mm); // v426
     mm.title = tr.to;
     mm.loiCumPt = tr.cum;
     mm.ptCurrent = 0;
     mm.ptSelf = 0;
   });
+
+  // v426: 自動ロールアップ＝BR維持失敗の降格者は直下メンバーを上のアップラインへ付け替え、リスタート記録を開始。
+  //        6ヶ月以内にBRへ復帰（審査クリア）した人は、記録していた組織を自動で直下に取り戻す。
+  (function() {
+    var snap = {};
+    _ruDemoted.forEach(function(mm) {
+      snap[mm.id] = { pid: mm.parentId || '', ks: copyMembers.filter(function(c) { return c.parentId === mm.id && !c.deleted; }) };
+    });
+    _ruDemoted.forEach(function(mm) {
+      var s = snap[mm.id];
+      mm.rollup = { at: nextMonth, kids: s.ks.map(function(c) { return c.id; }), fromTitle: 'BR' };
+      s.ks.forEach(function(c) { c.parentId = s.pid; });
+      changes.push({ name: mcName(mm), from: '直下 ' + s.ks.length + '人', to: '🔄 ロールアップ', kind: 'demote',
+        reason: 'BR維持失敗のため組織は上のアップラインへ。「リスタート1ヶ月目」開始（6ヶ月以内にBR復帰で取り戻せます）' });
+    });
+    _ruPromoted.forEach(function(mm) {
+      var n = _restartMonths(mm, nextMonth);
+      if (n >= 1 && n <= 6) {
+        var back = _rollupReclaim(copyMembers, mm);
+        if (back > 0) changes.push({ name: mcName(mm), from: 'リスタート' + n + 'ヶ月目', to: '👑 組織を取り戻す（' + back + '人）', kind: 'promote', reason: 'BR復帰' });
+      }
+      mm.rollup = '';
+    });
+  })();
 
   // プレビュー確認 → 確定でコミット
   _showCopyPreview(cur, nextMonth, changes.concat(_outChanges), function() {
@@ -3688,7 +3723,7 @@ function renderPCMap(mapType) {
   if (!wrap) return;
   wrap.innerHTML = '';
 
-  var members = composeMergedInto(membersForMap(mapType), mapType); // 結合中の下位ツリーを合成
+  var members = _treeVisibleMembers(composeMergedInto(membersForMap(mapType), mapType)); // 結合中の下位ツリーを合成（v426: OUT非表示を除外）
   if (!members || members.length === 0) {
     wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし</div>';
     return;
@@ -4079,7 +4114,7 @@ function renderPCMap(mapType) {
       g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
     }
     // 2行目: タイトル + GSV(固定)。v420: 何ヶ月目を併記＆BR以上/BMは太字
-    var titleStr = (m.title||'-') + titleMonthsSuffix(m);
+    var titleStr = (m.title||'-') + titleMonthsSuffix(m) + restartSuffix(m, true); // v426
     var titleFs = titleStr.length<=6 ? 16 : (titleStr.length<=8 ? 14 : 12); // 長いタイトル(ブルーダイヤ等)は縮小
     g.appendChild(txt(_pcTx, ry2+55, titleStr, cc, titleFs, (_isBrUp||_isBM)?'800':'600', 'Inter,Noto Sans JP,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
@@ -5030,7 +5065,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v425';
+  var DATA_VERSION = 'v426';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5989,6 +6024,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v426', d:'2026-08-28', items:['🔄自動ロールアップを新設：翌月コピーでBR維持（GSV1000pt）を満たせず降格した人は、直下の組織が自動で上のアップラインに付け替わります（タイトルは登録月からB◯/BM）。名前の横に「🔄リスタート◯ヶ月目」が表示され、6ヶ月目を過ぎると自動で消えます','👑6ヶ月以内にBRへ復帰（審査クリア）すると、ロールアップで移動していた組織を自動で直下に取り戻します。編集画面で手動でBR以上に変更した場合も確認の上で取り戻せます','🚪OUTの扱いを選べるように：OUTにすると直下の組織は上のアップラインへ移動し、「ツリーに残す／非表示」を編集画面で選択できます。「残す」を選ぶと翌月コピー後もMAPに残ります（復活の可能性がある人向け）。非表示にしてもメンバー一覧の「OUT」絞り込みからいつでも開いて戻せます'] },
   { v:'v425', d:'2026-08-27', items:['\ud83d\udccc\u30c6\u30f3\u30d7\u30ec\u306e\u300c\u540d\u524d\u300d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306b\u53cd\u6620\u3055\u308c\u306a\u3044\u30d0\u30b0\u3092\u4fee\u6b63\uff1a\u30bf\u30a4\u30c8\u30eb\u96db\u5f62\u3092\u7a7a\u6b04\u3067\u4f5c\u3063\u305f\u30c6\u30f3\u30d7\u30ec\u306f\u3001\u4f5c\u6210\u6642\u306e\u540d\u524d\u304c\u96db\u5f62\u306b\u56fa\u5b9a\u30b3\u30d4\u30fc\u3055\u308c\u3066\u3044\u305f\u305f\u3081\u3001\u5f8c\u304b\u3089\u540d\u524d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306f\u65e7\u540d\u306e\u307e\u307e\u3067\u3057\u305f\u3002\u4eca\u5f8c\u306f\u96db\u5f62\u672a\u5165\u529b\u306e\u30c6\u30f3\u30d7\u30ec\u306f\u5e38\u306b\u6700\u65b0\u306e\u540d\u524d\u304c\u4f7f\u308f\u308c\u307e\u3059\uff08\u7de8\u96c6\u753b\u9762\u3067\u3082\u81ea\u52d5\u306e\u96db\u5f62\u306f\u7a7a\u6b04\u8868\u793a\u306b\u306a\u308a\u300c\u7a7a\u6b04\uff1d\u540d\u524d\u3068\u540c\u3058\u300d\u3068\u660e\u8a18\uff09'] },
   { v:'v424', d:'2026-08-22', items:['💪（オーナー専用）マイトレーニングを新設：残りPFC・筋トレ記録（前回値の初期表示・+2kg提案）・食事記録（⭐頻用食材・前日コピー）・体重（条件タグ・7日移動平均グラフ）・種目別重量の推移。カレンダーにも💪バーとして自分にだけ表示されます'] },
   { v:'v423', d:'2026-08-22', items:['🔗メンバーの繋がりの線をさらに太く・濃くしました','🟠QBR（LOI〜Q4）の色を黄緑→オレンジに変更（NAの水色との混同防止。ノード枠・アバターバッジ共通）','🔗共有Dライン（結合メンバー）の枠が全員同じ紫だったのを、通常メンバーと同じタイトル/系列色ルールに変更（結合の印は点線で維持）','🏛ユニオン予定の編集が開けない/保存できないケースの対策：合成前でも原本から開き直し、月切替後も維持、失敗時は理由をトースト表示','📌テンプレ編集が反映されないケースの対策：編集対象を見失った時に黙って別テンプレを作らず明示エラーに、保存失敗も理由を表示、保存後は即登録チップも即時更新'] },
@@ -8074,6 +8110,58 @@ function titleMonthsSuffix(m) {
     return n >= 1 ? '（' + n + 'ヶ月目）' : '';
   } catch(e) { return ''; }
 }
+// ============================================================
+// v426: 自動ロールアップ（BR維持失敗）
+//   ・BRがGSV1000pt未達で降格 → 直下の組織を上のアップラインへ付け替え、rollup={at,kids,fromTitle}を記録
+//   ・名前横に「🔄リスタートnヶ月目」（ロールアップ月=1ヶ月目、6ヶ月目まで表示・7ヶ月目から自動非表示）
+//   ・6ヶ月以内にBR復帰 → 記録していた組織を直下に取り戻して記録をクリア
+// ============================================================
+function _restartMonths(m, curMonth) {
+  try {
+    if (!m || !m.rollup || !m.rollup.at) return 0;
+    var cur = curMonth || state.currentMonth || currentMonthStr();
+    var a = String(m.rollup.at).split('.'), b = String(cur).split('.');
+    return (parseInt(b[0], 10) - parseInt(a[0], 10)) * 12 + (parseInt(b[1], 10) - parseInt(a[1], 10)) + 1;
+  } catch(e) { return 0; }
+}
+function restartSuffix(m, short) {
+  var n = _restartMonths(m);
+  if (n < 1 || n > 6) return '';
+  return short ? '🔄' + n + 'ヶ月目' : '🔄リスタート' + n + 'ヶ月目';
+}
+// 配列内で aId が bId の子孫か（復帰付け替え時の循環防止）
+function _isDescendantIn(arr, aId, bId) {
+  var byId = {};
+  for (var i = 0; i < arr.length; i++) byId[arr[i].id] = arr[i];
+  var cur = byId[aId], g = 0;
+  while (cur && cur.parentId && g++ < 999) {
+    if (cur.parentId === bId) return true;
+    cur = byId[cur.parentId];
+  }
+  return false;
+}
+// rollup.kids に記録した直下メンバーを取り戻す（存在・未削除・OUT以外・循環しないものだけ）。戻した人数を返す
+function _rollupReclaim(arr, m) {
+  var back = 0;
+  (((m && m.rollup) && m.rollup.kids) || []).forEach(function(kid) {
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i].id === kid) {
+        var c = arr[i];
+        if (!c.deleted && c.id !== m.id && (c.title || '').trim() !== 'OUT' && !_isDescendantIn(arr, m.id, c.id)) {
+          c.parentId = m.id; back++;
+        }
+        break;
+      }
+    }
+  });
+  return back;
+}
+// v426: OUT非表示(outHidden)メンバーをツリー描画から除外（配下が残っている場合は孤児防止のため表示継続）
+function _treeVisibleMembers(arr) {
+  var hasKid = {};
+  for (var i = 0; i < arr.length; i++) { if (arr[i].parentId && !arr[i].deleted) hasKid[arr[i].parentId] = 1; }
+  return arr.filter(function(m) { return !(m.outHidden === true && !hasKid[m.id]); });
+}
 function childrenOf(parentId, members) {
   if (members !== _childIdxSrc || members === state.members) {
     _childIdx = {};
@@ -8094,7 +8182,7 @@ function renderTree(mapType) {
   var containerId = mapType === 'current' ? 'treeCurrent' : 'treeIdeal';
   var container = document.getElementById(containerId);
   var ownMembers = membersForMap(mapType);
-  var members = composeMergedInto(ownMembers, mapType); // 結合中の下位ツリーを合成（表示のみ）
+  var members = _treeVisibleMembers(composeMergedInto(ownMembers, mapType)); // 結合中の下位ツリーを合成（v426: OUT非表示を除外）（表示のみ）
   if (!isPCMode()) buildLevelSelector(members); // モバイル：レベル展開セレクタ
   if (mapType === 'current') { buildMapCatChips(ownMembers); setTimeout(applyMapCatDim, 200); } // カテゴリ絞り込み
   if (mapType === 'current') { buildRegionChipsInto(ownMembers, 'mapRegionChips'); setTimeout(applyRegionDim, 200); } // 地域絞り込み（モバイル）
@@ -8287,6 +8375,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
     + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
     + (m.goldShip ? '<span title="金の船" style="font-size:12px">⛴</span>' : '')
+    + (restartSuffix(m, true) ? '<span style="font-size:9px;font-weight:800;color:#FB923C;background:rgba(251,146,60,.13);border:1px solid rgba(251,146,60,.4);border-radius:6px;padding:1px 5px;white-space:nowrap">' + restartSuffix(m, true) + '</span>' : '')
     + (isForeign ? '<span class="merged-badge">🔗' + evEsc(m._ownerName || '下位') + '</span>' : '')
     + '</div>'
     + '<div style="display:flex;align-items:center;gap:4px;margin-top:2px">' + parentChip
@@ -8459,7 +8548,7 @@ var _lastTapTime = 0;
 function _lazyBuildChildren(ch, pid) {
   if (!ch || ch.getAttribute('data-lazy') !== '1' || ch.childElementCount > 0) return;
   var mt = ch.getAttribute('data-mt') || 'current';
-  var members = composeMergedInto(membersForMap(mt), mt);
+  var members = _treeVisibleMembers(composeMergedInto(membersForMap(mt), mt)); // v426: OUT非表示を除外
   var kids = childrenOf(pid, members);
   var depth = parseInt(ch.getAttribute('data-depth'), 10) || 0;
   var fc = ch.getAttribute('data-fc') || '#2CE5B8';
@@ -8510,7 +8599,7 @@ function memberInfoHtml(m) {
   if (_avatars[m.id]) {
     html += '<div style="display:flex;align-items:center;gap:10px;margin:2px 0 7px">'
       + '<img src="' + _avatars[m.id] + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + '" alt="">'
-      + '<span style="font-size:12px;color:var(--text-mid)">' + evEsc((m.title||'') + titleMonthsSuffix(m)) + '</span></div>';
+      + '<span style="font-size:12px;color:var(--text-mid)">' + evEsc((m.title||'') + titleMonthsSuffix(m) + restartSuffix(m)) + '</span></div>';
   }
   var lastAct = memberLastActivity(m);
   if (lastAct) {
@@ -11082,7 +11171,7 @@ function showPcTooltip(mid, ev) {
   if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454;line-height:1.7">' + _npls.join('<br>') + '</div>';
   tip.innerHTML = (_avatars[m.id] ? '<img src="' + _avatars[m.id] + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + ';display:block;margin-bottom:7px" alt="">' : '')
     + '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
-    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + titleMonthsSuffix(m) + '</span></div>'
+    + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + titleMonthsSuffix(m) + restartSuffix(m) + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">GSV</span><span class="pc-tooltip-val" style="color:var(--text)">' + gsvDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">固定PT</span><span class="pc-tooltip-val" style="color:var(--accent)">' + fixDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">稼働</span><span class="pc-tooltip-val">' + actLabel + '</span></div>'
@@ -11644,6 +11733,8 @@ function openEdit(id) {
             sel.value = _editTitle;
           }
         }
+        selOutVis(!!m.outHidden); // v426: OUT後の表示（残す/非表示）を復元
+        _outVisRowSync();
       } catch(e2) {}
     })();
   } catch(e) {
@@ -11664,6 +11755,8 @@ function clearForm() {
   if (typeof syncAgeField === 'function') syncAgeField();
   var _fsm=document.getElementById('fStartMonth'); if(_fsm) _fsm.value=(state.currentMonth||currentMonthStr()).replace('.', '-');
   fCategory='';
+  selOutVis(false);
+  var _ovr=document.getElementById('outVisRow'); if(_ovr) _ovr.style.display='none';
   ['研修生','BA','BR'].forEach(function(k){
     var el=document.getElementById('rbCat'+(k==='研修生'?'Trainee':k));
     if(el) el.classList.remove('sel');
@@ -11729,6 +11822,7 @@ function selCategory(cat) {
       if (tsf) tsf.style.display = _keepTr ? '' : 'none';
     }
     if (typeof meSyncTrainTab === 'function') meSyncTrainTab();
+    if (typeof _outVisRowSync === 'function') _outVisRowSync(); // v426
   } catch(e) {}
 }
 
@@ -11747,7 +11841,19 @@ function detectCategory(title) {
   return '';
 }
 
-function onTitleChange() {}
+// v426: タイトル=OUT の時だけ「OUT後の表示（残す/非表示）」行を出す
+function selOutVis(hide) {
+  var s = document.getElementById('rbOutShow'), h = document.getElementById('rbOutHide');
+  if (s) s.classList.toggle('sel', !hide);
+  if (h) h.classList.toggle('sel', !!hide);
+}
+function _outVisRowSync() {
+  var row = document.getElementById('outVisRow');
+  if (!row) return;
+  var t = ((document.getElementById('fTitle') || {}).value || '').trim();
+  row.style.display = (t === 'OUT') ? '' : 'none';
+}
+function onTitleChange() { _outVisRowSync(); }
 
 function selGender(g,silent) {
   fGender=g;
@@ -11926,6 +12032,14 @@ function saveMember() {
       if (editingId && _prevMember && _prevMember.startMonth) return _prevMember.startMonth;
       return state.currentMonth || currentMonthStr();
     })(),
+    // v426: ロールアップ記録は持ち越し（下の遷移処理で更新）。OUT後の表示はOUTの時だけチップから読む
+    rollup: (editingId && _prevMember) ? (_prevMember.rollup || '') : '',
+    outHidden: (function() {
+      if (((document.getElementById('fTitle') || {}).value || '').trim() !== 'OUT') return false;
+      var _rh = document.getElementById('rbOutHide');
+      if (_rh) return _rh.classList.contains('sel');
+      return !!(_prevMember && _prevMember.outHidden);
+    })(),
     month: state.currentMonth,
   };
   // 結果確定月のスタンプ（月次決定率の集計に使用）
@@ -11945,6 +12059,38 @@ function saveMember() {
     if (existRoots.length >= 1) {
       alert('0段目（自分）は1人だけです。カードを選択してからその直下に追加してください。');
       return;
+    }
+  }
+  // v426: 手動タイトル変更によるロールアップ／BR復帰／OUT時の組織付け替え
+  if (editingId && _prevMember) {
+    var _t0m = (_prevMember.title || '').trim(), _t1m = (m.title || '').trim();
+    var _nm6 = ((m.lastName || '') + (m.firstName || '')).trim();
+    var _liveKids6 = state.members.filter(function(c) { return c.parentId === m.id && !c.deleted; });
+    if (_t1m === 'OUT' && _t0m !== 'OUT') {
+      // OUT＝ビジネス終了。組織は上のアップラインへ（リスタートのカウントはしない）
+      if (m.parentId && _liveKids6.length) {
+        if (!confirm(_nm6 + 'さんをOUTにします。\n直下 ' + _liveKids6.length + '人 は上のアップラインの直下に移動します。よろしいですか？')) return;
+        _liveKids6.forEach(function(c) { c.parentId = m.parentId; });
+      }
+      m.rollup = '';
+    } else if (isBROrAbove(_t0m) && !isBROrAbove(_t1m) && _t1m !== 'OUT' && m.parentId) {
+      var _dt6 = demoteTitleFor(m, state.currentMonth || currentMonthStr());
+      if (confirm('🔄 ' + _nm6 + 'さんを「' + _t0m + '」から降格（ロールアップ）として処理しますか？\n\n・タイトルは登録月から自動で「' + _dt6 + '」になります\n・直下 ' + _liveKids6.length + '人 は上のアップラインの直下に移動します\n・「リスタート1ヶ月目」の表示が始まります（6ヶ月以内にBR復帰で組織を取り戻せます）\n\nキャンセル＝タイトルの変更だけ行い、組織はそのまま')) {
+        m.title = _dt6;
+        m.cat = detectCategory(_dt6) || m.cat;
+        m.rollup = { at: state.currentMonth || currentMonthStr(), kids: _liveKids6.map(function(c) { return c.id; }), fromTitle: _t0m };
+        _liveKids6.forEach(function(c) { c.parentId = m.parentId; });
+        setTimeout(function() { toast('🔄 ロールアップ：直下 ' + _liveKids6.length + '人 を上のアップラインへ移動しました'); }, 400);
+      }
+    } else if (!isBROrAbove(_t0m) && isBROrAbove(_t1m) && _prevMember.rollup && _prevMember.rollup.at) {
+      var _n6 = _restartMonths(_prevMember);
+      if (_n6 >= 1 && _n6 <= 6 && (_prevMember.rollup.kids || []).length) {
+        if (confirm('👑 BR復帰！ロールアップで上のアップラインに移動していた組織（' + _prevMember.rollup.kids.length + '人）を ' + _nm6 + 'さんの直下に戻しますか？')) {
+          var _back6 = _rollupReclaim(state.members, m);
+          setTimeout(function() { toast('👑 ' + _back6 + '人 を直下に戻しました'); }, 400);
+        }
+      }
+      m.rollup = '';
     }
   }
   if (editingId) {
