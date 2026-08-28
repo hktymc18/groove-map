@@ -760,7 +760,7 @@ tr.ot-done{opacity:.5}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* toast */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface3);border:1px solid var(--border2);border-radius:20px;padding:8px 18px;font-size:13px;color:var(--text);opacity:0;transition:all .25s;z-index:650;white-space:normal;max-width:88vw;text-align:center;pointer-events:none}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface3);border:1px solid var(--border2);border-radius:20px;padding:8px 18px;font-size:13px;color:var(--text);opacity:0;transition:all .25s;z-index:1300;white-space:normal;max-width:88vw;text-align:center;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* edit hint */
@@ -2252,7 +2252,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v427</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v429</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5070,7 +5070,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v427';
+  var DATA_VERSION = 'v429';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6029,6 +6029,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v429', d:'2026-08-28', items:['🏛ユニオン予定の編集バグ対策を強化：原本が読み込めていない時は自動で読み込み直してから開き、失敗理由を必ず表示します。編集・削除ボタンが出ない場合（＝アカウントがユニオン管理者ではない場合）はその旨をシートに明示するようにしました','📌テンプレ編集画面に「↺ 雛形を空欄（＝名前と同じ）に戻す」ボタンを追加：以前のバージョンで名前が雛形に固定されてしまったテンプレも、これで名前変更に追従するよう直せます'] },
+  { v:'v428', d:'2026-08-28', items:['🐛「📋Claudeに相談」が押しても何も起きないように見えるバグを修正：完了などのお知らせ（トースト）が💪画面の後ろに隠れて見えなかったのを最前面に変更。コピーもテキストのプレビューシート（📋コピー/📤共有ボタン付き）から確実にできるようになりました（iOSが自動コピーをブロックする問題の対策）'] },
   { v:'v427', d:'2026-08-28', items:['💪筋トレ大幅アップデート①「📋Claudeに相談」：直近7日/30日の体重・筋トレ・食事をテキスト化してワンタップコピー。Claudeに貼り付けて相談できます','💪②メニュー編集：種目の追加・削除・名前/重量/回数/セット数/分割(A/B/C)の変更・並べ替えができるようになりました（筋トレタブ→⚙️メニューを編集）','💪③ドロップセット対応：各セットの「D+」で重量を落として続けた分を記録できます（前回表示・Claude用テキストにも「→」で反映）','💪④前回との比較：各セットの横に「前 20×12」のように前回値を常時表示（入力値は前回値が初期表示）','💪⑤「限」ボタンの反応を改善：限界（フェイル）まで追い込んだセットの印です。前回表示に「!」が付き、全セット目標回数到達で💡+2kg提案が出ます','💪⑥マッスルくん誕生🐣：トレーニングの累計ボリューム（重量×回数）でレベルアップして育つアバター。押す/引く/肩・腕の部位バランスで体つきも変わります（ホームと推移タブ）'] },
   { v:'v426', d:'2026-08-28', items:['🔄自動ロールアップを新設：翌月コピーでBR維持（GSV1000pt）を満たせず降格した人は、直下の組織が自動で上のアップラインに付け替わります（タイトルは登録月からB◯/BM）。名前の横に「🔄リスタート◯ヶ月目」が表示され、6ヶ月目を過ぎると自動で消えます','👑6ヶ月以内にBRへ復帰（審査クリア）すると、ロールアップで移動していた組織を自動で直下に取り戻します。編集画面で手動でBR以上に変更した場合も確認の上で取り戻せます','🚪OUTの扱いを選べるように：OUTにすると直下の組織は上のアップラインへ移動し、「ツリーに残す／非表示」を編集画面で選択できます。「残す」を選ぶと翌月コピー後もMAPに残ります（復活の可能性がある人向け）。非表示にしてもメンバー一覧の「OUT」絞り込みからいつでも開いて戻せます'] },
   { v:'v425', d:'2026-08-27', items:['\ud83d\udccc\u30c6\u30f3\u30d7\u30ec\u306e\u300c\u540d\u524d\u300d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306b\u53cd\u6620\u3055\u308c\u306a\u3044\u30d0\u30b0\u3092\u4fee\u6b63\uff1a\u30bf\u30a4\u30c8\u30eb\u96db\u5f62\u3092\u7a7a\u6b04\u3067\u4f5c\u3063\u305f\u30c6\u30f3\u30d7\u30ec\u306f\u3001\u4f5c\u6210\u6642\u306e\u540d\u524d\u304c\u96db\u5f62\u306b\u56fa\u5b9a\u30b3\u30d4\u30fc\u3055\u308c\u3066\u3044\u305f\u305f\u3081\u3001\u5f8c\u304b\u3089\u540d\u524d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306f\u65e7\u540d\u306e\u307e\u307e\u3067\u3057\u305f\u3002\u4eca\u5f8c\u306f\u96db\u5f62\u672a\u5165\u529b\u306e\u30c6\u30f3\u30d7\u30ec\u306f\u5e38\u306b\u6700\u65b0\u306e\u540d\u524d\u304c\u4f7f\u308f\u308c\u307e\u3059\uff08\u7de8\u96c6\u753b\u9762\u3067\u3082\u81ea\u52d5\u306e\u96db\u5f62\u306f\u7a7a\u6b04\u8868\u793a\u306b\u306a\u308a\u300c\u7a7a\u6b04\uff1d\u540d\u524d\u3068\u540c\u3058\u300d\u3068\u660e\u8a18\uff09'] },
@@ -14283,8 +14285,59 @@ function fitExport(days) {
     });
     if (!any) { toast('この期間の記録がまだありません'); return; }
     t += '\n※「!」=限界まで、「→」=ドロップセット\nこの記録を見て、次のトレーニングメニューや食事のアドバイスをください。';
-    _fitCopyText(t);
+    _fitExportSheet(t); // v428: iOSは非同期後の自動コピーがブロックされるため、シートのボタンから確実にコピー
   });
+}
+// v428: エクスポート結果シート（プレビュー＋コピー/共有。ボタンのタップ直下でコピー＝iOSでも確実）
+function _fitExportSheet(t) {
+  var old = document.getElementById('fitExpOv');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  var ov = document.createElement('div');
+  ov.id = 'fitExpOv'; ov.className = 'ms-overlay';
+  ov.style.zIndex = '1290';
+  ov.onclick = function(e) { if (e.target === ov) fitExpClose(); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📋 Claudeに相談</div></div><span class="ms-x" onclick="fitExpClose()">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<textarea id="fitExpTa" readonly style="width:100%;height:170px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:11.5px;line-height:1.6;color:var(--text);resize:none;-webkit-user-select:text;user-select:text"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:10px">'
+    + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitExpCopy()">📋 コピー</button>'
+    + (navigator.share ? '<button class="fol-add" style="flex:1;margin:0" onclick="fitExpShare()">📤 共有</button>' : '')
+    + '</div>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px">コピーしてClaudeに貼り付けてください。📤共有からClaudeアプリへ直接送ることもできます</div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  var ta = document.getElementById('fitExpTa');
+  if (ta) ta.value = t;
+}
+function fitExpClose() {
+  var ov = document.getElementById('fitExpOv');
+  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+}
+function fitExpCopy() {
+  var ta = document.getElementById('fitExpTa');
+  if (!ta) return;
+  var ok = false;
+  try {
+    ta.readOnly = false;
+    ta.focus(); ta.select();
+    try { ta.setSelectionRange(0, ta.value.length); } catch(e8) {}
+    ok = document.execCommand('copy');
+    ta.readOnly = true;
+    ta.blur();
+  } catch(e9) {}
+  if (ok) { toast('📋 コピーしました。Claudeに貼り付けて相談できます'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value).then(function() { toast('📋 コピーしました。Claudeに貼り付けて相談できます'); },
+      function() { toast('⚠️ 自動コピーできませんでした。テキストを長押し→全選択→コピーしてください'); });
+    return;
+  }
+  toast('⚠️ 自動コピーできませんでした。テキストを長押し→全選択→コピーしてください');
+}
+function fitExpShare() {
+  var ta = document.getElementById('fitExpTa');
+  if (!ta) return;
+  try { navigator.share({ text: ta.value }); } catch(e9) { toast('⚠️ 共有を開けませんでした'); }
 }
 // ── v427: マッスルくん（累計ボリュームで育つアバター） ──
 var FIT_LV_NAMES = ['', 'もやし', 'ヒヨコ', 'トレーニー見習い', '駆け出しマッチョ', '中堅マッチョ', 'ゴリマッチョ候補', 'ゴリマッチョ', 'バケモノ', 'レジェンド', '山の神'];
@@ -14523,7 +14576,24 @@ function openUnionEventSheet(compId) {
   closeUnionSheet();
   var rawId = String(compId).replace(/^UN_/, '');
   var u = _unionRawById(rawId);
-  if (!u) return;
+  if (!u) {
+    // v429: 原本未読込で黙って何もしない、をやめる（読み込み直してリトライ→ダメなら理由を表示）
+    if (window._unRetry === rawId) {
+      window._unRetry = '';
+      toast('⚠️ この予定の原本が見つかりません（削除された可能性）。メニュー→🏛ユニオン予定から確認してください');
+      return;
+    }
+    if (typeof loadUnionEvents === 'function' && currentUser && currentUser.union) {
+      toast('🏛 ユニオン予定を読み込み直しています...');
+      window._unRetry = rawId;
+      loadUnionEvents();
+      setTimeout(function() { openUnionEventSheet(compId); }, 1200);
+    } else {
+      toast('⚠️ ユニオン情報を読み込めません（プロフィールの所属ユニオンが未設定の可能性）');
+    }
+    return;
+  }
+  window._unRetry = '';
   var admin = (typeof isCurrentAdmin === 'function') && isCurrentAdmin();
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'unSheetOv';
   ov.onclick = function(e) { if (e.target === ov) closeUnionSheet(); };
@@ -14540,7 +14610,8 @@ function openUnionEventSheet(compId) {
     + (admin
        ? '<button class="fol-add" style="flex:1;margin-top:0" onclick="closeUnionSheet();openEventModal(\'UN_' + rawId + '\')">✏️ 編集</button>'
          + '<button class="fol-add" style="flex:1;margin-top:0;color:var(--red);border-color:var(--red)" onclick="unionDelete(\'' + rawId + '\')">🗑 削除</button>'
-       : '<button class="fol-add" style="flex:1;margin-top:0" onclick="unionHide(\'' + rawId + '\')">🙈 自分のカレンダーから非表示</button>')
+       : '<div style="flex:1"><div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">✏️ 編集・削除はユニオン管理者のみ行えます（このアカウントは一般メンバー判定です。管理者のはずの場合はオーナーに「アカウント管理」での管理者付与を確認してください）</div>'
+         + '<button class="fol-add" style="width:100%;margin-top:0" onclick="unionHide(\'' + rawId + '\')">🙈 自分のカレンダーから非表示</button></div>')
     + '</div></div>';
   document.body.appendChild(ov);
 }
@@ -20677,6 +20748,7 @@ function openEvTplEdit(id) {
       : '')
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
     + fld('タイトル雛形（{name}→選択メンバー名・空欄＝名前と同じ）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT（空欄＝名前をそのまま使用）" value="' + evEsc((t && t.titleTpl && t.titleTpl !== t.name) ? t.titleTpl : '') + '">')
+    + '<div style="font-size:11px;color:var(--accent);margin:-6px 2px 12px;cursor:pointer;font-weight:700" onclick="evtTplResetTpl()">↺ 雛形を空欄（＝名前と同じ）に戻す</div>'
     + fld('カテゴリ（色分け）', '<div class="ev-cat-field" onclick="evtOpenCatPick()">'
       + '<span class="cat-swatch" id="evtCatSwatch" style="background:' + (catNow ? catNow.color : '#9ca3af') + '"></span>'
       + '<span id="evtCatName" style="flex:1">' + evEsc(catNow ? catNow.name : '未分類') + '</span>'
@@ -20721,6 +20793,11 @@ function evtToggleAllDay() {
   if (on) { if (t1) t1.value = ''; if (t2) t2.value = ''; }
   if (t1) t1.style.opacity = on ? '.4' : '';
   if (t2) t2.style.opacity = on ? '.4' : '';
+}
+// v429: 旧バージョンで名前が雛形に固定コピーされたテンプレの救済（空欄＝常に名前に追従）
+function evtTplResetTpl() {
+  var el = document.getElementById('evtF_tpl');
+  if (el) { el.value = ''; toast('↺ 雛形を「名前と同じ」に戻しました（保存で確定します）'); }
 }
 function saveEvTplForm(id) {
   var name = (document.getElementById('evtF_name')||{}).value || '';
