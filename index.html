@@ -1181,8 +1181,13 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .fit-pfc-p{flex:none;width:34px;font-size:10.5px;color:var(--text-dim);font-family:Inter,sans-serif;text-align:right}
 .fit-set-row{display:flex;align-items:center;gap:6px;margin-top:6px}
 .fit-set-row .fi{padding:8px 6px;font-size:14px;font-family:Inter,sans-serif}
-.fit-lim{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:9px;font-size:11px;font-weight:800;color:var(--text-dim);cursor:pointer}
+.fit-lim{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:9px;font-size:11px;font-weight:800;color:var(--text-dim);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .fit-lim.on{background:var(--red);border-color:var(--red);color:#fff}
+.fit-dbtn{flex:none;min-width:28px;height:34px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:9px;font-size:10px;font-weight:800;color:#F472B6;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;padding:0 4px}
+.fit-drop-row{margin-left:24px;position:relative}
+.fit-drop-row:before{content:'↳';position:absolute;left:-15px;top:8px;color:#F472B6;font-weight:800;font-size:13px}
+.fit-prev-s{flex:none;font-size:9.5px;color:var(--text-dim);min-width:44px;text-align:right;font-family:Inter,sans-serif}
+.fit-exed{border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px;background:var(--surface2)}
 .fit-food-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;border:1px solid transparent}
 .fit-food-row:hover{background:var(--surface2)}
 .fit-meal-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px}
@@ -2247,7 +2252,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v426</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v427</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5065,7 +5070,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v426';
+  var DATA_VERSION = 'v427';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6024,6 +6029,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v427', d:'2026-08-28', items:['💪筋トレ大幅アップデート①「📋Claudeに相談」：直近7日/30日の体重・筋トレ・食事をテキスト化してワンタップコピー。Claudeに貼り付けて相談できます','💪②メニュー編集：種目の追加・削除・名前/重量/回数/セット数/分割(A/B/C)の変更・並べ替えができるようになりました（筋トレタブ→⚙️メニューを編集）','💪③ドロップセット対応：各セットの「D+」で重量を落として続けた分を記録できます（前回表示・Claude用テキストにも「→」で反映）','💪④前回との比較：各セットの横に「前 20×12」のように前回値を常時表示（入力値は前回値が初期表示）','💪⑤「限」ボタンの反応を改善：限界（フェイル）まで追い込んだセットの印です。前回表示に「!」が付き、全セット目標回数到達で💡+2kg提案が出ます','💪⑥マッスルくん誕生🐣：トレーニングの累計ボリューム（重量×回数）でレベルアップして育つアバター。押す/引く/肩・腕の部位バランスで体つきも変わります（ホームと推移タブ）'] },
   { v:'v426', d:'2026-08-28', items:['🔄自動ロールアップを新設：翌月コピーでBR維持（GSV1000pt）を満たせず降格した人は、直下の組織が自動で上のアップラインに付け替わります（タイトルは登録月からB◯/BM）。名前の横に「🔄リスタート◯ヶ月目」が表示され、6ヶ月目を過ぎると自動で消えます','👑6ヶ月以内にBRへ復帰（審査クリア）すると、ロールアップで移動していた組織を自動で直下に取り戻します。編集画面で手動でBR以上に変更した場合も確認の上で取り戻せます','🚪OUTの扱いを選べるように：OUTにすると直下の組織は上のアップラインへ移動し、「ツリーに残す／非表示」を編集画面で選択できます。「残す」を選ぶと翌月コピー後もMAPに残ります（復活の可能性がある人向け）。非表示にしてもメンバー一覧の「OUT」絞り込みからいつでも開いて戻せます'] },
   { v:'v425', d:'2026-08-27', items:['\ud83d\udccc\u30c6\u30f3\u30d7\u30ec\u306e\u300c\u540d\u524d\u300d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306b\u53cd\u6620\u3055\u308c\u306a\u3044\u30d0\u30b0\u3092\u4fee\u6b63\uff1a\u30bf\u30a4\u30c8\u30eb\u96db\u5f62\u3092\u7a7a\u6b04\u3067\u4f5c\u3063\u305f\u30c6\u30f3\u30d7\u30ec\u306f\u3001\u4f5c\u6210\u6642\u306e\u540d\u524d\u304c\u96db\u5f62\u306b\u56fa\u5b9a\u30b3\u30d4\u30fc\u3055\u308c\u3066\u3044\u305f\u305f\u3081\u3001\u5f8c\u304b\u3089\u540d\u524d\u3092\u5909\u3048\u3066\u3082\u4e88\u5b9a\u306e\u30bf\u30a4\u30c8\u30eb\u306f\u65e7\u540d\u306e\u307e\u307e\u3067\u3057\u305f\u3002\u4eca\u5f8c\u306f\u96db\u5f62\u672a\u5165\u529b\u306e\u30c6\u30f3\u30d7\u30ec\u306f\u5e38\u306b\u6700\u65b0\u306e\u540d\u524d\u304c\u4f7f\u308f\u308c\u307e\u3059\uff08\u7de8\u96c6\u753b\u9762\u3067\u3082\u81ea\u52d5\u306e\u96db\u5f62\u306f\u7a7a\u6b04\u8868\u793a\u306b\u306a\u308a\u300c\u7a7a\u6b04\uff1d\u540d\u524d\u3068\u540c\u3058\u300d\u3068\u660e\u8a18\uff09'] },
   { v:'v424', d:'2026-08-22', items:['💪（オーナー専用）マイトレーニングを新設：残りPFC・筋トレ記録（前回値の初期表示・+2kg提案）・食事記録（⭐頻用食材・前日コピー）・体重（条件タグ・7日移動平均グラフ）・種目別重量の推移。カレンダーにも💪バーとして自分にだけ表示されます'] },
@@ -13662,7 +13668,15 @@ function _fitSaveDay() {
   fsSet(_fitP('days/' + _fitYmd), { meals: _fitDay.meals, body: _fitDay.body, session: _fitDay.session, plan: _fitDay.plan, updatedAt: new Date().toISOString() });
   // カレンダー合成・推移用サマリを更新（1ドキュメントに集約して読み取りを安く）
   var e2 = {};
-  if (_fitDay.session && _fitDay.session.split) { e2.s = _fitDay.session.split; e2.done = 1; }
+  if (_fitDay.session && _fitDay.session.split) {
+    e2.s = _fitDay.session.split; e2.done = 1;
+    var v9 = 0;
+    (_fitDay.session.sets || []).forEach(function(st9) {
+      v9 += (st9.kg || 0) * (st9.reps || 0);
+      (st9.drops || []).forEach(function(d9) { v9 += (d9.kg || 0) * (d9.reps || 0); });
+    });
+    if (v9 > 0) e2.v = Math.round(v9); // v427: マッスルくん用ボリューム（重量×回数）
+  }
   else if (_fitDay.plan && _fitDay.plan.split) { e2.s = _fitDay.plan.split; if (_fitDay.plan.time) e2.tm = _fitDay.plan.time; }
   if (_fitDay.body && _fitDay.body.w) { e2.w = _fitDay.body.w; if (_fitDay.body.fat) e2.bf = _fitDay.body.fat; if (_fitDay.body.tag) e2.t = _fitDay.body.tag; }
   var k9 = _fitDay.meals.reduce(function(a, m) { return a + m.items.reduce(function(b, it) { return b + (it.k || 0); }, 0); }, 0);
@@ -13732,6 +13746,7 @@ function fitTab(t) {
   if (!b) return;
   if (t === 'dash') b.innerHTML = _fitDashHtml();
   else if (t === 'work') { b.innerHTML = _fitWorkHtml(); _fitLoadPrev(); }
+  else if (t === 'exedit') b.innerHTML = _fitExEditHtml();
   else if (t === 'meal') b.innerHTML = _fitMealHtml();
   else if (t === 'trend') { b.innerHTML = _fitTrendHtml(); setTimeout(function() { _fitDrawWeight(); _fitExTrendKick(); }, 60); }
 }
@@ -13774,6 +13789,12 @@ function _fitDashHtml() {
   h += '<div class="fit-card"><div class="fit-card-t">明日の予定</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'
     + ['A', 'B', 'C', 'run', 'rest'].map(function(k) { return '<div class="rb" style="flex:none;padding:6px 12px;font-size:12px" onclick="fitPlanTomorrow(\'' + k + '\')">' + FIT_SPLITS[k] + '</div>'; }).join('')
     + '</div><div style="font-size:11px;color:var(--text-dim);margin-top:6px">タップで明日のカレンダーに💪バーが入ります（自分にだけ見えます）</div></div>';
+  h += _fitMuscleCard(false); // v427: マッスルくん
+  h += '<div class="fit-card"><div class="fit-card-t">📋 Claudeに相談</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">体重・筋トレ・食事の記録をテキスト化してコピーします。Claudeに貼り付けるとメニューや食事のアドバイスがもらえます</div>'
+    + '<div style="display:flex;gap:8px;margin-top:8px">'
+    + '<button class="fol-add" style="margin:0;flex:1" onclick="fitExport(7)">直近7日をコピー</button>'
+    + '<button class="fol-add" style="margin:0;flex:1" onclick="fitExport(30)">直近30日をコピー</button></div></div>';
   return h;
 }
 var _fitTagSel = '';
@@ -13823,7 +13844,9 @@ function _fitWorkHtml() {
   var sp = (_fitDay.session && _fitDay.session.split) || _fitNextSplit();
   var h = '<div class="fit-card"><div style="display:flex;gap:6px;flex-wrap:wrap">'
     + ['A', 'B', 'C'].map(function(k) { return '<div class="rb' + (sp === k ? ' sel' : '') + '" style="flex:1;padding:8px 0;font-size:12px" onclick="fitWorkSplit(\'' + k + '\')">' + FIT_SPLITS[k] + '</div>'; }).join('')
-    + '</div><div id="fitPrevInfo" style="font-size:11px;color:var(--text-dim);margin-top:6px">前回値を読み込み中...</div></div>';
+    + '</div><div id="fitPrevInfo" style="font-size:11px;color:var(--text-dim);margin-top:6px">前回値を読み込み中...</div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim);margin-top:4px">「限」＝限界（フェイル）まで追い込んだ印（前回表示の !）。「D+」＝ドロップセット追加（重量を落として続けた分）</div>'
+    + '<button class="fol-add" style="margin-top:8px" onclick="fitTab(\'exedit\')">⚙️ メニューを編集（種目の追加・変更・並べ替え）</button></div>';
   h += '<div id="fitExList"></div>';
   h += '<button class="btn-p" style="width:100%;padding:13px;margin-top:4px" onclick="fitSaveSession()">セッションを保存</button>';
   return h;
@@ -13843,7 +13866,7 @@ function _fitWorkFill() {
   exs.forEach(function(ex, xi) {
     var prev = _fitPrevSetsOf(ex.n);
     var cur = ((_fitDay.session && _fitDay.session.sets) || []).filter(function(st) { return st.ex === ex.n; });
-    var prevTxt = prev.length ? '前回 ' + prev.map(function(p2) { return (p2.side && p2.side !== 'both' ? (p2.side === 'left' ? '左' : '右') : '') + p2.kg + '×' + p2.reps + (p2.lim ? '!' : ''); }).join(', ') : '';
+    var prevTxt = prev.length ? '前回 ' + prev.map(function(p2) { return (p2.side && p2.side !== 'both' ? (p2.side === 'left' ? '左' : '右') : '') + p2.kg + '×' + p2.reps + (p2.lim ? '!' : '') + ((p2.drops || []).map(function(d2) { return '→' + d2.kg + '×' + d2.reps; }).join('')); }).join(', ') : '';
     var sug = '';
     if (prev.length && ex.reps > 0 && prev.every(function(p2) { return p2.reps >= ex.reps; })) sug = ' <span style="color:var(--accent);font-weight:700">💡 +2kg</span>';
     h += '<div class="fit-card"><div class="fit-card-t">' + evEsc(ex.n) + (ex.uni ? ' <span style="font-size:10px;color:#FFB454">⚠️左から</span>' : '') + sug + '</div>'
@@ -13855,26 +13878,58 @@ function _fitWorkFill() {
     for (var si = 0; si < nSets; si++) {
       var side = ex.uni ? (si % 2 === 0 ? 'left' : 'right') : 'both';
       var base = rows ? rows[si] : (prev[si] || { kg: ex.kg, reps: ex.reps || 10 });
-      h += _fitSetRow(xi, si, side, base ? base.kg : ex.kg, base ? base.reps : (ex.reps || 10), base && base.lim);
+      var pl = prev[si] ? ('前' + prev[si].kg + '×' + prev[si].reps + (prev[si].lim ? '!' : '')) : '';
+      h += _fitSetRow(xi, si, side, base ? base.kg : ex.kg, base ? base.reps : (ex.reps || 10), base && base.lim, false, pl);
+      var drs = (base && base.drops) || [];
+      for (var di = 0; di < drs.length; di++) h += _fitSetRow(xi, si, side, drs[di].kg, drs[di].reps, false, true, '');
     }
     h += '</div><div style="display:flex;gap:8px;margin-top:6px"><button class="fol-add" style="margin:0;flex:1" onclick="fitAddSet(' + xi + ')">＋ セット追加</button></div></div>';
   });
   box.innerHTML = h;
 }
-function _fitSetRow(xi, si, side, kg, reps, lim) {
-  return '<div class="fit-set-row" data-fx="' + xi + '" data-fside="' + side + '">'
-    + (side !== 'both' ? '<span style="flex:none;width:24px;font-size:11px;font-weight:700;color:' + (side === 'left' ? '#FFB454' : 'var(--text-dim)') + '">' + (side === 'left' ? '左' : '右') + '</span>' : '')
+function _fitSetRow(xi, si, side, kg, reps, lim, dr, prevLbl) {
+  return '<div class="fit-set-row' + (dr ? ' fit-drop-row' : '') + '" data-fx="' + xi + '" data-fside="' + side + '"' + (dr ? ' data-dr="1"' : '') + '>'
+    + (side !== 'both' && !dr ? '<span style="flex:none;width:24px;font-size:11px;font-weight:700;color:' + (side === 'left' ? '#FFB454' : 'var(--text-dim)') + '">' + (side === 'left' ? '左' : '右') + '</span>' : '')
     + '<input class="fi fit-kg" type="number" step="0.5" value="' + kg + '" style="flex:1;text-align:center"><span style="font-size:10px;color:var(--text-dim)">kg</span>'
     + '<input class="fi fit-reps" type="number" value="' + reps + '" style="flex:1;text-align:center"><span style="font-size:10px;color:var(--text-dim)">回</span>'
-    + '<span class="fit-lim' + (lim ? ' on' : '') + '" onclick="this.classList.toggle(\'on\')" title="限界まで">限</span>'
+    + (prevLbl ? '<span class="fit-prev-s">' + prevLbl + '</span>' : '')
+    + (dr
+       ? '<span class="fit-dbtn" style="color:var(--text-dim)" onclick="fitDelRow(event,this)" title="このドロップを削除">✕</span>'
+       : '<span class="fit-lim' + (lim ? ' on' : '') + '" onclick="fitToggleLim(event,this)" title="限界（フェイル）まで追い込んだ印">限</span>'
+         + '<span class="fit-dbtn" onclick="fitAddDrop(event,this)" title="ドロップセット（重量を落として続けた分）を追加">D+</span>')
     + '</div>';
+}
+// v427: 「限」＝限界（フェイル）まで追い込んだセットの印（前回表示の「!」・+2kg提案の材料）
+function fitToggleLim(ev, el) {
+  try { ev.preventDefault(); ev.stopPropagation(); } catch(e9) {}
+  el.classList.toggle('on');
+}
+// v427: ドロップセット＝同じセット内で重量を落として継続した分。↳行として親セットにぶら下がる
+function fitAddDrop(ev, el) {
+  try { ev.preventDefault(); ev.stopPropagation(); } catch(e9) {}
+  var row = el.closest('.fit-set-row');
+  if (!row) return;
+  var kg = parseFloat(row.querySelector('.fit-kg').value) || 0;
+  var dropKg = Math.max(0.5, Math.round(kg * 0.7 * 2) / 2);
+  var tmp = document.createElement('div');
+  tmp.innerHTML = _fitSetRow(parseInt(row.getAttribute('data-fx'), 10) || 0, 0, row.getAttribute('data-fside') || 'both', dropKg, 8, false, true, '');
+  var nr = tmp.firstChild;
+  var after = row;
+  while (after.nextElementSibling && after.nextElementSibling.getAttribute('data-dr') === '1') after = after.nextElementSibling;
+  after.parentNode.insertBefore(nr, after.nextSibling);
+  try { nr.querySelector('.fit-reps').focus(); } catch(e8) {}
+}
+function fitDelRow(ev, el) {
+  try { ev.preventDefault(); ev.stopPropagation(); } catch(e9) {}
+  var r = el.closest('.fit-set-row');
+  if (r && r.parentNode) r.parentNode.removeChild(r);
 }
 function fitAddSet(xi) {
   var box = document.getElementById('fitSets_' + xi);
   if (!box) return;
   var sp = (_fitDay.session && _fitDay.session.split) || _fitNextSplit();
   var ex = (_fitExs || []).filter(function(e) { return e.sp === sp; })[xi];
-  var n = box.children.length;
+  var n = box.querySelectorAll('.fit-set-row:not([data-dr])').length; // v427: ドロップ行は数えない
   var side = ex && ex.uni ? (n % 2 === 0 ? 'left' : 'right') : 'both';
   var tmp = document.createElement('div');
   tmp.innerHTML = _fitSetRow(xi, n, side, ex ? ex.kg : 10, ex ? (ex.reps || 10) : 10, false);
@@ -13891,7 +13946,13 @@ function fitSaveSession() {
     var kg = parseFloat(r.querySelector('.fit-kg').value) || 0;
     var reps = parseInt(r.querySelector('.fit-reps').value, 10) || 0;
     if (!reps) continue;
-    sets.push({ ex: exs[xi] ? exs[xi].n : '', side: r.getAttribute('data-fside'), kg: kg, reps: reps, lim: r.querySelector('.fit-lim').classList.contains('on') });
+    if (r.getAttribute('data-dr') === '1') { // v427: ドロップ行は直前のセットにぶら下げる
+      var lastSet = sets[sets.length - 1];
+      if (lastSet && lastSet.ex === (exs[xi] ? exs[xi].n : '')) (lastSet.drops = lastSet.drops || []).push({ kg: kg, reps: reps });
+      continue;
+    }
+    var limEl = r.querySelector('.fit-lim');
+    sets.push({ ex: exs[xi] ? exs[xi].n : '', side: r.getAttribute('data-fside'), kg: kg, reps: reps, lim: !!(limEl && limEl.classList.contains('on')) });
   }
   if (!sets.length) { toast('セットを入力してください'); return; }
   _fitDay.session = { split: sp, sets: sets, at: new Date().toISOString() };
@@ -13990,7 +14051,8 @@ function _fitWeight7() {
   return Math.round(sum / recent.length * 10) / 10;
 }
 function _fitTrendHtml() {
-  return '<div class="fit-card"><div class="fit-card-t">体重（点＝実測 / 線＝7日移動平均）</div>'
+  return _fitMuscleCard(true)
+    + '<div class="fit-card"><div class="fit-card-t">体重（点＝実測 / 線＝7日移動平均）</div>'
     + '<canvas id="fitWChart" height="170" style="width:100%;display:block;margin-top:6px"></canvas>'
     + '<div style="display:flex;gap:6px;margin-top:8px"><div class="rb" style="flex:none;padding:5px 10px;font-size:11px" id="fitTagF" onclick="this.classList.toggle(\'sel\');_fitDrawWeight()">朝の測定のみ</div></div></div>'
     + '<div class="fit-card"><div class="fit-card-t">種目別の重量（直近のトップセット）</div><div id="fitExTrend" style="font-size:12.5px;line-height:2;margin-top:4px">'
@@ -14018,6 +14080,22 @@ function _fitExTrendLoad(ds) {
           else if (st.kg > last.kg) { last.kg = st.kg; last.reps = st.reps; }
         });
       });
+      // v427: 旧セッション（ボリューム未記録）のサマリをこの機会に補完（マッスルくんが過去分も反映）
+      try {
+        var _chg9 = false;
+        all.filter(Boolean).forEach(function(r9) {
+          if (!r9.s || !r9.s.sets) return;
+          var c9 = _fitCal[r9.ymd];
+          if (!c9 || !c9.done || c9.v) return;
+          var v9 = 0;
+          r9.s.sets.forEach(function(st9) {
+            v9 += (st9.kg || 0) * (st9.reps || 0);
+            (st9.drops || []).forEach(function(d9) { v9 += (d9.kg || 0) * (d9.reps || 0); });
+          });
+          if (v9 > 0) { c9.v = Math.round(v9); _chg9 = true; }
+        });
+        if (_chg9) fsSet(_fitP('meta/calendar'), { days: _fitCal, updatedAt: new Date().toISOString() });
+      } catch(eBf) {}
       var box = document.getElementById('fitExTrend');
       if (!box) return;
       var h = '';
@@ -14061,6 +14139,238 @@ function _fitDrawWeight() {
     if (i === 0) cx.moveTo(X(i), Y(avg)); else cx.lineTo(X(i), Y(avg));
   });
   cx.stroke();
+}
+
+// ── v427: トレーニングメニュー編集（種目マスタ） ──
+function _fitExEdRow(ex) {
+  var spOpts = ['A', 'B', 'C'].map(function(s2) { return '<option value="' + s2 + '"' + (ex.sp === s2 ? ' selected' : '') + '>' + s2 + '</option>'; }).join('');
+  return '<div class="fit-exed">'
+    + '<div style="display:flex;gap:5px;align-items:center">'
+    + '<input class="fi fxe-n" value="' + evEsc(ex.n || '') + '" placeholder="種目名" style="flex:1;min-width:0;padding:7px 8px;font-size:13px">'
+    + '<select class="fi fxe-sp" style="flex:none;width:52px;padding:7px 2px;font-size:12px;text-align:center">' + spOpts + '</select>'
+    + '<span class="fit-dbtn" style="color:var(--text-mid)" onclick="fitExEdMove(event,this,-1)" title="上へ">▲</span>'
+    + '<span class="fit-dbtn" style="color:var(--text-mid)" onclick="fitExEdMove(event,this,1)" title="下へ">▼</span>'
+    + '<span class="fit-dbtn" style="color:var(--red)" onclick="fitExEdDel(event,this)" title="削除">✕</span></div>'
+    + '<div style="display:flex;gap:5px;align-items:center;margin-top:5px;flex-wrap:wrap">'
+    + '<input class="fi fxe-kg" type="number" step="0.5" value="' + (ex.kg || 0) + '" style="width:62px;padding:6px 4px;font-size:13px;text-align:center"><span style="font-size:10px;color:var(--text-dim)">kg</span>'
+    + '<input class="fi fxe-reps" type="number" value="' + (ex.reps || 0) + '" style="width:52px;padding:6px 4px;font-size:13px;text-align:center"><span style="font-size:10px;color:var(--text-dim)">回(0=限界)</span>'
+    + '<input class="fi fxe-sets" type="number" value="' + (ex.sets || 3) + '" style="width:44px;padding:6px 4px;font-size:13px;text-align:center"><span style="font-size:10px;color:var(--text-dim)">set</span>'
+    + '<span class="rb fxe-uni' + (ex.uni ? ' sel' : '') + '" style="flex:none;padding:5px 9px;font-size:11px" onclick="this.classList.toggle(\'sel\')" title="左右片方ずつ行う種目（⚠️左から）">片側ずつ</span></div>'
+    + '<input class="fi fxe-note" value="' + evEsc(ex.note || '') + '" placeholder="メモ（例：IV90秒・最終ドロップ）" style="margin-top:5px;padding:6px 8px;font-size:12px">'
+    + '</div>';
+}
+function _fitExEditHtml() {
+  var h = '<div class="fit-card"><div class="fit-card-t">⚙️ トレーニングメニュー編集</div>'
+    + '<div style="font-size:11px;color:var(--text-dim);line-height:1.7">種目名・重量・回数・セット数・分割（A/B/C）の変更、▲▼で並べ替え、追加・削除ができます。分割を変えると次回からその日のメニューに出ます。最後に「メニューを保存」を押してください。</div></div>';
+  ['A', 'B', 'C'].forEach(function(sp) {
+    h += '<div class="fit-card"><div class="fit-card-t">' + FIT_SPLITS[sp] + '</div><div id="fitExEd_' + sp + '">';
+    (_fitExs || []).forEach(function(ex) { if (ex.sp === sp) h += _fitExEdRow(ex); });
+    h += '</div><button class="fol-add" style="margin-top:8px" onclick="fitExEdAdd(\'' + sp + '\')">＋ 種目を追加</button></div>';
+  });
+  h += '<button class="btn-p" style="width:100%;padding:13px" onclick="fitExEdSave()">メニューを保存</button>'
+    + '<button class="fol-add" style="margin-top:8px" onclick="fitTab(\'work\')">← 保存せずに戻る</button>';
+  return h;
+}
+function fitExEdAdd(sp) {
+  var box = document.getElementById('fitExEd_' + sp);
+  if (!box) return;
+  var tmp = document.createElement('div');
+  tmp.innerHTML = _fitExEdRow({ sp: sp, n: '', kg: 0, reps: 10, sets: 3, uni: false, note: '' });
+  box.appendChild(tmp.firstChild);
+  try { box.lastChild.querySelector('.fxe-n').focus(); } catch(e9) {}
+}
+function fitExEdMove(ev, el, d) {
+  try { ev.preventDefault(); ev.stopPropagation(); } catch(e9) {}
+  var row = el.closest('.fit-exed');
+  if (!row) return;
+  if (d < 0 && row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling);
+  else if (d > 0 && row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row);
+}
+function fitExEdDel(ev, el) {
+  try { ev.preventDefault(); ev.stopPropagation(); } catch(e9) {}
+  var row = el.closest('.fit-exed');
+  if (row && confirm('この種目を削除しますか？（過去の記録は残ります）')) row.parentNode.removeChild(row);
+}
+function fitExEdSave() {
+  var out = [];
+  ['A', 'B', 'C'].forEach(function(sp) {
+    var box = document.getElementById('fitExEd_' + sp);
+    if (!box) return;
+    var rows = box.querySelectorAll('.fit-exed');
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var n = (r.querySelector('.fxe-n').value || '').trim();
+      if (!n) continue;
+      out.push({
+        sp: r.querySelector('.fxe-sp').value || sp,
+        n: n,
+        kg: parseFloat(r.querySelector('.fxe-kg').value) || 0,
+        reps: parseInt(r.querySelector('.fxe-reps').value, 10) || 0,
+        sets: parseInt(r.querySelector('.fxe-sets').value, 10) || 3,
+        uni: r.querySelector('.fxe-uni').classList.contains('sel'),
+        note: (r.querySelector('.fxe-note').value || '').trim()
+      });
+    }
+  });
+  if (!out.length) { toast('種目が1つもありません'); return; }
+  _fitExs = out;
+  fsSet(_fitP('meta/exercises'), { items: _fitExs }).catch(function(err) {
+    toast('⚠️ 保存に失敗しました: ' + ((err && err.message) || '通信を確認してください'));
+  });
+  toast('⚙️ メニューを保存しました ✓（' + out.length + '種目）');
+  fitTab('work');
+}
+// ── v427: Claudeに相談用テキストのコピー ──
+function _fitCopyFb(t) {
+  var ta = document.createElement('textarea');
+  ta.value = t;
+  ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch(e9) {}
+  document.body.removeChild(ta);
+}
+function _fitCopyText(t) {
+  var done = function() { toast('📋 コピーしました。Claudeに貼り付けて相談できます'); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function() { _fitCopyFb(t); done(); });
+      return;
+    }
+  } catch(e9) {}
+  _fitCopyFb(t); done();
+}
+var FIT_TAG_JP = { morning: '朝', post_workout: '運動後', post_alcohol: '飲酒翌日', aircon: '冷房', other: 'その他' };
+function fitExport(days) {
+  var list = [];
+  var p9 = (_fitYmd || _fitToday()).split('-');
+  for (var i = days - 1; i >= 0; i--) {
+    var dt = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10) - i);
+    list.push(dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1) + '-' + evPad2(dt.getDate()));
+  }
+  toast('📋 記録を集めています...');
+  Promise.all(list.map(function(ymd) {
+    return fsGet(_fitP('days/' + ymd)).then(function(d) { return { ymd: ymd, d: d }; }).catch(function() { return null; });
+  })).then(function(all) {
+    var tg = _fitPhase();
+    var t = '【トレーニング記録 ' + list[0].slice(5).replace('-', '/') + '〜' + list[list.length - 1].slice(5).replace('-', '/') + '】\n';
+    t += 'フェーズ: ' + tg.n + '（目標 ' + tg.kcal + 'kcal / P' + tg.p + ' F' + tg.f + ' C' + tg.c + '）\n';
+    t += 'メニュー: ' + ['A', 'B', 'C'].map(function(sp) {
+      return FIT_SPLITS[sp] + '=' + (_fitExs || []).filter(function(e) { return e.sp === sp; }).map(function(e) { return e.n; }).join('/');
+    }).join('　') + '\n';
+    var any = false;
+    all.filter(Boolean).forEach(function(r) {
+      var d = r.d;
+      if (!d) return;
+      var lines = [];
+      if (d.body && d.body.w) lines.push('体重 ' + d.body.w + 'kg' + (d.body.fat ? ' 体脂肪' + d.body.fat + '%' : '') + (d.body.tag ? '（' + (FIT_TAG_JP[d.body.tag] || d.body.tag) + '）' : ''));
+      if (d.session && d.session.sets && d.session.sets.length) {
+        lines.push('筋トレ【' + (FIT_SPLITS[d.session.split] || d.session.split) + '】');
+        d.session.sets.forEach(function(st) {
+          lines.push('　' + st.ex + (st.side && st.side !== 'both' ? (st.side === 'left' ? '(左)' : '(右)') : '')
+            + ' ' + st.kg + 'kg×' + st.reps + (st.lim ? '!' : '')
+            + ((st.drops || []).map(function(dd) { return '→' + dd.kg + 'kg×' + dd.reps; }).join('')));
+        });
+      } else if (d.plan && d.plan.split) {
+        if (d.plan.split === 'run' || d.plan.split === 'rest') lines.push(FIT_SPLITS[d.plan.split] || d.plan.split);
+      }
+      if (d.meals && d.meals.length) {
+        var s9 = { p: 0, f: 0, c: 0, k: 0 };
+        d.meals.forEach(function(m9) { m9.items.forEach(function(it9) { s9.p += it9.p || 0; s9.f += it9.f || 0; s9.c += it9.c || 0; s9.k += it9.k || 0; }); });
+        lines.push('食事 P' + Math.round(s9.p) + ' F' + Math.round(s9.f) + ' C' + Math.round(s9.c) + ' ' + Math.round(s9.k) + 'kcal');
+      }
+      if (lines.length) { any = true; t += '\n■' + r.ymd.slice(5).replace('-', '/') + '\n' + lines.join('\n') + '\n'; }
+    });
+    if (!any) { toast('この期間の記録がまだありません'); return; }
+    t += '\n※「!」=限界まで、「→」=ドロップセット\nこの記録を見て、次のトレーニングメニューや食事のアドバイスをください。';
+    _fitCopyText(t);
+  });
+}
+// ── v427: マッスルくん（累計ボリュームで育つアバター） ──
+var FIT_LV_NAMES = ['', 'もやし', 'ヒヨコ', 'トレーニー見習い', '駆け出しマッチョ', '中堅マッチョ', 'ゴリマッチョ候補', 'ゴリマッチョ', 'バケモノ', 'レジェンド', '山の神'];
+function _fitMuscleStats() {
+  var v = { A: 0, B: 0, C: 0, total: 0, sessions: 0 };
+  for (var k in (_fitCal || {})) {
+    var e = _fitCal[k];
+    if (e && e.done) {
+      v.sessions++;
+      if (e.v) { v.total += e.v; if (v[e.s] !== undefined) v[e.s] += e.v; }
+    }
+  }
+  v.lv = Math.min(10, 1 + Math.floor(Math.sqrt(v.total / 3000)));
+  return v;
+}
+function _fitMuscleSvg(ms, size) {
+  var pA = Math.min(1, (ms.A || 0) / 80000);  // 押す→胸
+  var pB = Math.min(1, (ms.B || 0) / 80000);  // 引く→背中
+  var pC = Math.min(1, (ms.C || 0) / 80000);  // 肩・腕
+  var sh = Math.round(20 + 14 * pC + 6 * pA);       // 肩の半幅
+  var arm = Math.round((5 + 7 * (0.4 * pB + 0.6 * pC)) * 10) / 10; // 腕の太さ
+  var chest = Math.round((10 + 10 * pA) * 10) / 10; // 胸まわり
+  var waist = Math.round(14 + 6 * pB);              // 背中の広がり(ラット)
+  var skin = '#F6C08B', dark = '#E8A968';
+  var face = ms.lv >= 9 ? '😎' : ms.lv >= 7 ? '🔥' : ms.lv >= 5 ? '😤' : ms.lv >= 3 ? '🙂' : '🐣';
+  var s2 = '<svg width="' + size + '" height="' + size + '" viewBox="-10 0 120 112" style="flex:none">';
+  if (ms.lv >= 8) s2 += '<circle cx="50" cy="55" r="48" fill="#FBBF24" opacity="0.14"/><circle cx="50" cy="55" r="38" fill="#FBBF24" opacity="0.12"/>';
+  // 両腕（ダブルバイセップスポーズ）
+  s2 += '<path d="M ' + (50 - sh) + ' 46 Q ' + (50 - sh - 12) + ' 44 ' + (50 - sh - 14) + ' 30" stroke="' + skin + '" stroke-width="' + (arm * 2) + '" fill="none" stroke-linecap="round"/>';
+  s2 += '<path d="M ' + (50 + sh) + ' 46 Q ' + (50 + sh + 12) + ' 44 ' + (50 + sh + 14) + ' 30" stroke="' + skin + '" stroke-width="' + (arm * 2) + '" fill="none" stroke-linecap="round"/>';
+  s2 += '<circle cx="' + (50 - sh - 14) + '" cy="27" r="' + (arm * 0.85) + '" fill="' + skin + '"/>';
+  s2 += '<circle cx="' + (50 + sh + 14) + '" cy="27" r="' + (arm * 0.85) + '" fill="' + skin + '"/>';
+  // 上腕二頭筋のふくらみ
+  s2 += '<circle cx="' + (50 - sh - 7) + '" cy="41" r="' + (arm * 0.75) + '" fill="' + dark + '" opacity="0.55"/>';
+  s2 += '<circle cx="' + (50 + sh + 7) + '" cy="41" r="' + (arm * 0.75) + '" fill="' + dark + '" opacity="0.55"/>';
+  // 胴体（肩→ラット→ウエスト）
+  s2 += '<path d="M ' + (50 - sh) + ' 40 Q 50 ' + (36 - pC * 4) + ' ' + (50 + sh) + ' 40 L ' + (50 + waist) + ' 72 Q 50 78 ' + (50 - waist) + ' 72 Z" fill="' + skin + '"/>';
+  // 大胸筋
+  s2 += '<ellipse cx="' + (50 - chest * 0.62) + '" cy="50" rx="' + chest * 0.62 + '" ry="' + chest * 0.5 + '" fill="' + dark + '" opacity="0.5"/>';
+  s2 += '<ellipse cx="' + (50 + chest * 0.62) + '" cy="50" rx="' + chest * 0.62 + '" ry="' + chest * 0.5 + '" fill="' + dark + '" opacity="0.5"/>';
+  // 腹筋（レベル5以上でシックスパック）
+  if (ms.lv >= 5) {
+    for (var ab = 0; ab < 3; ab++) {
+      s2 += '<rect x="43" y="' + (57 + ab * 5.5) + '" width="6" height="4" rx="1.6" fill="' + dark + '" opacity="0.5"/>';
+      s2 += '<rect x="51" y="' + (57 + ab * 5.5) + '" width="6" height="4" rx="1.6" fill="' + dark + '" opacity="0.5"/>';
+    }
+  }
+  // 短パン・脚
+  s2 += '<path d="M ' + (50 - waist) + ' 72 Q 50 78 ' + (50 + waist) + ' 72 L ' + (50 + waist - 2) + ' 84 L 52 84 L 52 78 L 48 78 L 48 84 L ' + (50 - waist + 2) + ' 84 Z" fill="#EF4444"/>';
+  s2 += '<rect x="' + (50 - waist + 3) + '" y="84" width="' + (7 + 3 * pB) + '" height="18" rx="3.5" fill="' + skin + '"/>';
+  s2 += '<rect x="' + (50 + waist - 10 - 3 * pB) + '" y="84" width="' + (7 + 3 * pB) + '" height="18" rx="3.5" fill="' + skin + '"/>';
+  // 頭・顔
+  s2 += '<circle cx="50" cy="24" r="11" fill="' + skin + '"/>';
+  s2 += '<text x="50" y="29" text-anchor="middle" font-size="13">' + face + '</text>';
+  if (ms.lv >= 10) s2 += '<text x="50" y="10" text-anchor="middle" font-size="11">👑</text>';
+  s2 += '</svg>';
+  return s2;
+}
+function _fitMuscleCard(big) {
+  var ms = _fitMuscleStats();
+  var prevAt = Math.pow(ms.lv - 1, 2) * 3000, nextAt = Math.pow(ms.lv, 2) * 3000;
+  var prog = ms.lv >= 10 ? 100 : Math.max(0, Math.min(100, Math.round((ms.total - prevAt) / (nextAt - prevAt) * 100)));
+  var tons = Math.round(ms.total / 100) / 10;
+  var h = '<div class="fit-card"' + (big ? '' : ' onclick="fitTab(\'trend\')" style="cursor:pointer"') + '>';
+  h += '<div style="display:flex;align-items:center;gap:12px">' + _fitMuscleSvg(ms, big ? 150 : 84);
+  h += '<div style="flex:1;min-width:0">'
+    + '<div style="font-weight:800;font-size:' + (big ? 15 : 13.5) + 'px">マッスルくん Lv.' + ms.lv + '<span style="color:var(--accent)">「' + FIT_LV_NAMES[ms.lv] + '」</span></div>'
+    + '<div style="font-size:11px;color:var(--text-mid);margin-top:2px">累計 ' + tons + 't 持ち上げ・' + ms.sessions + 'セッション</div>'
+    + (ms.lv >= 10
+       ? '<div style="font-size:11px;color:#FBBF24;font-weight:800;margin-top:4px">👑 MAXレベル！山の神！</div>'
+       : '<div style="margin-top:6px"><div style="height:8px;border-radius:4px;background:var(--surface3);overflow:hidden"><i style="display:block;height:100%;width:' + prog + '%;background:linear-gradient(90deg,#2CE5B8,#FBBF24)"></i></div>'
+         + '<div style="font-size:10px;color:var(--text-dim);margin-top:2px">次のレベルまで ' + Math.max(0, Math.round((nextAt - ms.total) / 100) / 10) + 't（トレーニングのボリューム＝重量×回数で育ちます）</div></div>')
+    + '</div></div>';
+  if (big) {
+    var mx = Math.max(ms.A, ms.B, ms.C, 1);
+    h += '<div style="margin-top:12px;font-size:11.5px">'
+      + [['A', '押す（胸・肩前）', '#4ADE80'], ['B', '引く（背中・二頭）', '#5AD7FF'], ['C', '肩・腕', '#F472B6']].map(function(p2) {
+          var val = ms[p2[0]] || 0;
+          return '<div style="display:flex;align-items:center;gap:8px;margin-top:5px"><span style="flex:none;width:110px;color:var(--text-mid)">' + p2[1] + '</span>'
+            + '<div style="flex:1;height:8px;border-radius:4px;background:var(--surface3);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round(val / mx * 100) + '%;background:' + p2[2] + '"></i></div>'
+            + '<span style="flex:none;width:44px;text-align:right;font-family:Inter,sans-serif;color:var(--text-mid)">' + (Math.round(val / 100) / 10) + 't</span></div>';
+        }).join('')
+      + '</div><div style="font-size:10px;color:var(--text-dim);margin-top:8px">部位のバランスでマッスルくんの体つきが変わります（胸→大胸筋・背中→広がり/脚・肩腕→肩幅と腕の太さ）。Lv5でシックスパック、Lv8でオーラ、Lv10で👑</div>';
+  }
+  h += '</div>';
+  return h;
 }
 
 // ============================================================
