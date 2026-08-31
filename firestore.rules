@@ -206,7 +206,7 @@ service cloud.firestore {
       allow delete: if isSelf(uid) || isSelf(ownerUid) || isAdmin();
     }
 
-    // ============ GROOVE CHECK-IN（ハウディ受付・稼働率管理） ============
+    // ============ BASE CHECK-IN（ハウディ受付・稼働率管理） ============
     // 設計: docs/seminar-attendance-design.md
     //   checkinUnions/{ユニオン名}      … 受付システムで有効化されたユニオン
     //   checkinMembers/{QRコード番号}   … 名簿（union フィールドで所属を分離）
