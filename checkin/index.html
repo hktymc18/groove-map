@@ -269,6 +269,7 @@ tr:last-child td{border-bottom:none;}
     <div class="toolrow">
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
+      <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
       <button class="primary" id="btnAddMember">＋ メンバー追加</button>
@@ -506,11 +507,10 @@ $('btnActivate').onclick = function(){
   });
 };
 
-function enterApp(){
-  showView('vApp');
+function setupHeaderUnionSel(){
   // ユニオン表示/切替（オーナーのみ切替可）
+  var sel = $('unionSel');
   if(isOwner() && gUnions.length > 1){
-    var sel = $('unionSel');
     sel.innerHTML = gUnions.map(function(u){
       return '<option' + (u === gUnion ? ' selected' : '') + '>' + esc(u) + '</option>';
     }).join('');
@@ -527,8 +527,14 @@ function enterApp(){
       loadStats();
     };
   } else {
+    sel.classList.add('hide');
+    $('unionBadge').classList.remove('hide');
     $('unionBadge').textContent = gUnion;
   }
+}
+function enterApp(){
+  showView('vApp');
+  setupHeaderUnionSel();
   gRosterUnion = gUnion;
   renderRosterUnionSel();
   loadMembers();
@@ -549,6 +555,29 @@ $('rosterUnionSel').onchange = function(){
   gRosterUnion = $('rosterUnionSel').value;
   gSel = {}; gMembersLoaded = false; gMembers = [];
   loadMembers();
+};
+/* オーナーのみ: 新しいユニオンを登録（横展開用） */
+$('btnAddUnion').onclick = function(){
+  modal('<h2>ユニオン追加</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">追加すると名簿の取込先・合同イベントの選択肢に表示されます。</p>'
+    + '<label>ユニオン名</label><input type="text" id="nuName" placeholder="例: BASE REVE">'
+    + '<div class="btns"><button id="nuCancel">キャンセル</button><button class="primary" id="nuGo">追加</button></div>');
+  $('nuCancel').onclick = closeModal;
+  $('nuGo').onclick = function(){
+    var name = $('nuName').value.trim();
+    if(!name){ toast('ユニオン名を入力してください'); return; }
+    if(gUnions.indexOf(name) >= 0){ toast('「' + name + '」は既に存在します'); return; }
+    db.collection('checkinUnions').doc(name).set({
+      name: name, createdBy: gUser.uid, createdAt: FV.serverTimestamp()
+    }).then(function(){
+      closeModal(); toast('「' + name + '」を追加しました');
+      gUnions.push(name); gUnions.sort();
+      gRosterUnion = name;
+      renderRosterUnionSel();
+      setupHeaderUnionSel();
+      gSel = {}; loadMembers();
+    }).catch(function(e){ toast(permMsg(e, 'ユニオン追加はオーナーまたはそのユニオンの管理者のみ可能です')); });
+  };
 };
 function canEditRoster(){
   return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === gRosterUnion);
@@ -590,6 +619,7 @@ function renderRoster(){
     + '<th>番号</th><th>氏名</th><th>系列</th><th>状態</th>' + (edit ? '<th>操作</th>' : '');
   $('roBadge').classList.toggle('hide', edit);
   $('bulkRow').classList.toggle('hide', !edit);
+  $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   var tb = $('rosterBody'), html = '', shown = 0;
