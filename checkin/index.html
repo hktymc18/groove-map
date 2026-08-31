@@ -1022,8 +1022,11 @@ function startReception(ev){
   $('recent').innerHTML = '<li style="color:var(--sub)">まだ受付はありません</li>';
   stageIdle();
 
-  // 参加ユニオン分の名簿をロード
-  var loads = (ev.unions || [gUnion]).map(function(u){
+  // 全ユニオンの名簿をロード（他ユニオンのメンバーもビジターとして1スキャンで受付できるように）
+  var unionSet = gUnions.slice();
+  (ev.unions || []).forEach(function(u){ if(unionSet.indexOf(u) < 0) unionSet.push(u); });
+  if(!unionSet.length) unionSet = [gUnion];
+  var loads = unionSet.map(function(u){
     return db.collection('checkinMembers').where('union', '==', u).get().then(function(qs){
       qs.forEach(function(d){
         var m = d.data(); m.no = d.id;
@@ -1115,19 +1118,23 @@ function scan(raw, method){
       + '<p class="hit-meta">' + esc(gRec.att[no].atLocal || '') + ' に受付済みです（記録は増えません）</p>');
     return;
   }
-  writeAttendance(no, {
+  // 参加ユニオン外のメンバーはビジターとして記録（受付操作は同じ）
+  var isVisitor = (gRec.ev.unions || []).indexOf(member.union) < 0;
+  var data = {
     no: no, name: member.name || '', group: member.group || '',
     union: member.union || gUnion, method: method
-  });
+  };
+  if(isVisitor) data.visitor = true;
+  writeAttendance(no, data);
   var joint = (gRec.ev.unions || []).length > 1;
   beep('ok');
   setStage('ok',
-    '<span class="hit-badge">✓ 出席</span>'
+    '<span class="hit-badge">✓ 出席' + (isVisitor ? '（ビジター）' : '') + '</span>'
     + '<div class="hit-name">' + esc(member.name) + '</div>'
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
-    + (joint ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
+    + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
     + '<p class="hit-meta">' + nowHM() + '</p>');
-  addRecent(member.name, member.group || member.union || '');
+  addRecent(member.name, isVisitor ? (member.union || 'ビジター') : (member.group || member.union || ''));
 }
 function writeAttendance(id, data){
   data.at = FV.serverTimestamp();
@@ -1192,6 +1199,9 @@ function renderTallies(){
   });
   $('total').textContent = total;
   $('ctr').textContent = total + '名';
+  // 合同イベント、またはビジターがいる場合はユニオン別を表示
+  $('unionTallyTile').classList.toggle('hide',
+    (gRec.ev.unions || []).length < 2 && Object.keys(byUnion).length < 2);
   $('unionTally').innerHTML = tallyHtml(byUnion);
   $('groupTally').innerHTML = tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:12.5px;margin:0;">まだ出席がありません</p>';
 }
@@ -1213,14 +1223,15 @@ function loadStats(){
   var key = monthKey(gMonth.y, gMonth.m);
   $('statBody').innerHTML = '<p style="color:var(--sub)">集計中…</p>';
   db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
-    var evs = [];
+    var evs = [], otherEvs = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
       if((ev.unions || []).indexOf(gStatUnion) >= 0) evs.push(ev);
+      else otherEvs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    if(!evs.length){
-      $('statBody').innerHTML = '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>';
+    if(!evs.length && !otherEvs.length){
+      $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
     }
     var attMaps = {};   // eventId -> {no: att}
@@ -1232,13 +1243,40 @@ function loadStats(){
           attMaps[ev.id] = m;
         });
     });
-    Promise.all(reads.concat([fetchMembers(gStatUnion)])).then(function(results){
-      renderStats(evs, attMaps, results[results.length - 1]);
+    // 参考: 他ユニオンのイベントに自ユニオンのメンバーが出席（ビジター）した記録
+    var visits = [];
+    var vreads = otherEvs.map(function(ev){
+      return db.collection('checkinEvents').doc(ev.id).collection('attendance')
+        .where('union', '==', gStatUnion).get().then(function(aqs){
+          aqs.forEach(function(d){
+            var a = d.data();
+            visits.push({ date: ev.date || '', evName: ev.name || '', host: ev.hostUnion || '', who: a.name || '' });
+          });
+        });
+    });
+    Promise.all(reads.concat(vreads).concat([fetchMembers(gStatUnion)])).then(function(results){
+      renderStats(evs, attMaps, results[results.length - 1], visits);
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
 }
-function renderStats(evs, attMaps, unionMembers){
+function renderStats(evs, attMaps, unionMembers, visits){
   var held = evs.length;
+  var visitsHtml = '';
+  if(visits && visits.length){
+    visits.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+    visitsHtml = '<div class="sectionhead"><h2>他ユニオンイベントへの出席（参考）</h2>'
+      + '<span class="note">' + esc(gStatUnion) + 'のメンバーがビジター参加した記録。稼働率には含まれません</span></div>'
+      + '<div class="tblwrap"><table><thead><tr><th>日付</th><th>イベント</th><th>主催</th><th>氏名</th></tr></thead><tbody>'
+      + visits.map(function(v){
+          return '<tr><td class="mono">' + esc((v.date || '').slice(5).replace('-', '/')) + '</td>'
+            + '<td>' + esc(v.evName) + '</td><td>' + esc(v.host) + '</td><td><b>' + esc(v.who) + '</b></td></tr>';
+        }).join('')
+      + '</tbody></table></div>';
+  }
+  if(!held){
+    $('statBody').innerHTML = '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>' + visitsHtml;
+    gStat = null; return;
+  }
   // 行: 有効メンバー + 出席したゲスト
   var rows = [];
   unionMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', member: true }); });
@@ -1282,7 +1320,8 @@ function renderStats(evs, attMaps, unionMembers){
           + r.marks.map(function(v){ return '<td class="mk">' + (v ? '<span class="y">●</span>' : '<span class="nn">・</span>') + '</td>'; }).join('')
           + '<td class="mono">' + r.count + '</td><td class="rate">' + (r.member ? r.rate + '%' : '—') + '</td></tr>';
       }).join('')
-    + '</tbody></table></div>';
+    + '</tbody></table></div>'
+    + visitsHtml;
   $('statBody').innerHTML = html;
 }
 $('btnStatCsv').onclick = function(){
