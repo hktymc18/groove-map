@@ -157,18 +157,43 @@ tr:last-child td{border-bottom:none;}
 /* スマホ会員証 */
 .cardwrap{max-width:360px;margin:6vh auto 0;padding:0 16px;text-align:center;}
 .membercard{
-  background:#fff;color:#1c1e19;border-radius:18px;padding:26px 20px 22px;
-  box-shadow:0 6px 24px rgba(0,0,0,.18);
+  background:#fff;color:#1c1e19;border-radius:18px;padding:24px 20px 22px;
+  box-shadow:0 6px 24px rgba(0,0,0,.18);position:relative;overflow:hidden;
 }
-.mc-brand{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:13px;letter-spacing:.14em;color:#c0392b;}
-.mc-name{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:26px;margin:2px 0 0;}
-.mc-group{font-size:13px;color:#6f6d63;margin-bottom:14px;}
-#mcQr{display:flex;justify-content:center;min-height:180px;align-items:center;}
-#mcQr img,#mcQr canvas{border:8px solid #fff;outline:1px solid #e2e0d8;}
+.mc-brand{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:12px;letter-spacing:.16em;color:#c0392b;}
+.mc-union{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:17px;letter-spacing:.06em;margin-top:1px;}
+.mc-grade{font-size:11px;font-weight:700;letter-spacing:.32em;margin-top:2px;min-height:1.1em;color:#8a6d1f;}
+.mc-name{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:26px;margin:8px 0 0;}
+.mc-group{font-size:13px;color:#6f6d63;margin-bottom:12px;}
+#mcQr{display:flex;justify-content:center;min-height:180px;align-items:center;position:relative;z-index:1;}
+#mcQr img,#mcQr canvas{border:8px solid #fff;outline:1px solid #e2e0d8;border-radius:4px;background:#fff;}
 .mc-no{font-size:12.5px;color:#6f6d63;margin-top:12px;}
-.mc-union{font-size:12px;font-weight:700;color:#2e6b52;margin-top:2px;}
 .mc-tip{font-size:12.5px;color:var(--sub);margin-top:16px;line-height:1.8;}
 .mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
+
+/* グレード別デザイン（BR未満=白 / BR=シルバー / ゴールド / プラチナ / ブラック） */
+.membercard.premium::after{
+  content:'';position:absolute;inset:-70%;pointer-events:none;
+  background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.38) 50%,transparent 58%);
+}
+.membercard.mc-silver{background:linear-gradient(135deg,#c9ced6,#f4f6f9 45%,#aeb5bf 80%,#d6dae1);color:#272b31;}
+.membercard.mc-silver .mc-brand{color:#565d68;}
+.membercard.mc-silver .mc-grade{color:#565d68;}
+.membercard.mc-silver .mc-group,.membercard.mc-silver .mc-no{color:#4c525b;}
+.membercard.mc-gold{background:linear-gradient(135deg,#96731d,#d9b544 38%,#f4e29b 55%,#c39c2a 85%,#e4c76a);color:#3a2c05;}
+.membercard.mc-gold .mc-brand{color:#5c4708;}
+.membercard.mc-gold .mc-grade{color:#5c4708;}
+.membercard.mc-gold .mc-group,.membercard.mc-gold .mc-no{color:#54430e;}
+.membercard.mc-platinum{background:linear-gradient(135deg,#b9bfcc,#eceef3 40%,#a6adbd 72%,#e3e6ee);color:#1f2430;}
+.membercard.mc-platinum .mc-brand{color:#4a5163;}
+.membercard.mc-platinum .mc-grade{color:#4a5163;letter-spacing:.4em;}
+.membercard.mc-platinum .mc-group,.membercard.mc-platinum .mc-no{color:#434a5b;}
+.membercard.mc-black{background:linear-gradient(145deg,#0b0b0d,#232427 52%,#0b0b0d);color:#ece4cd;}
+.membercard.mc-black::after{background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.14) 50%,transparent 56%);}
+.membercard.mc-black .mc-brand{color:#d4af37;}
+.membercard.mc-black .mc-union{color:#f1ead4;}
+.membercard.mc-black .mc-grade{color:#d4af37;letter-spacing:.42em;}
+.membercard.mc-black .mc-group,.membercard.mc-black .mc-no{color:#9d947c;}
 
 /* 紙カード印刷 */
 #printArea{display:none;}
@@ -359,13 +384,14 @@ tr:last-child td{border-bottom:none;}
 <!-- ═══ スマホ会員証（本人向け・ログイン不要） ═══ -->
 <div id="vCard" class="hide">
   <div class="cardwrap">
-    <div class="membercard">
+    <div class="membercard" id="memberCard">
       <div class="mc-brand">BASE CHECK-IN</div>
+      <div class="mc-union" id="mcUnion"></div>
+      <div class="mc-grade" id="mcGrade"></div>
       <div class="mc-name" id="mcName">…</div>
       <div class="mc-group" id="mcGroup"></div>
       <div id="mcQr"></div>
       <div class="mc-no mono" id="mcNo"></div>
-      <div class="mc-union" id="mcUnion"></div>
     </div>
     <p class="mc-tip">受付でこのQRコードをかざしてください。<br>画面を明るくすると読み取りやすくなります。<br>ブラウザの「ホーム画面に追加」をしておくと次回すぐ開けます。</p>
     <p class="mc-err" id="mcErr"></p>
@@ -449,6 +475,11 @@ function randToken(){
   return s;
 }
 function cardUrl(token){ return location.href.split('#')[0] + '#c=' + token; }
+
+/* ライセンスグレード → カードデザイン（名称は運用に合わせて変更可） */
+var GRADES = ['', 'BR', 'ゴールド', 'プラチナ', 'ブラック'];
+var GRADE_STYLES = { 'BR': 'mc-silver', 'ゴールド': 'mc-gold', 'プラチナ': 'mc-platinum', 'ブラック': 'mc-black' };
+var GRADE_LABELS = { 'BR': 'BR MEMBER', 'ゴールド': 'GOLD MEMBER', 'プラチナ': 'PLATINUM MEMBER', 'ブラック': 'BLACK MEMBER' };
 function modal(html){
   var host = $('modalHost');
   host.innerHTML = '<div class="modalback"><div class="modal">' + html + '</div></div>';
@@ -539,6 +570,15 @@ function renderCard(c){
   $('mcGroup').textContent = c.group || '';
   $('mcNo').textContent = 'No. ' + (c.no || '');
   $('mcUnion').textContent = c.union || '';
+  var card = $('memberCard');
+  card.className = 'membercard';
+  var style = GRADE_STYLES[c.grade || ''];
+  if(style){
+    card.classList.add(style, 'premium');
+    $('mcGrade').textContent = GRADE_LABELS[c.grade] || c.grade;
+  } else {
+    $('mcGrade').textContent = '';
+  }
   makeQr($('mcQr'), 'm:' + c.no + ':' + gCardToken.slice(0, 6), 180);
 }
 function showCardView(token){
@@ -550,7 +590,7 @@ function showCardView(token){
     if(snap.exists){
       var c = snap.data();
       renderCard(c);
-      try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union })); }catch(e){}
+      try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
       $('mcName').textContent = '—'; $('mcQr').innerHTML = ''; $('mcNo').textContent = ''; $('mcGroup').textContent = ''; $('mcUnion').textContent = '';
@@ -748,7 +788,8 @@ function renderRoster(){
     shown++;
     html += '<tr>'
       + (edit ? '<td><input type="checkbox" class="selchk" data-no="' + esc(m.no) + '"' + (gSel[m.no] ? ' checked' : '') + '></td>' : '')
-      + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b></td>'
+      + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b>'
+      + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '') + '</td>'
       + '<td>' + esc(m.group || '') + '</td>'
       + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
@@ -864,6 +905,11 @@ function memberForm(m){
     + '<label>氏名</label><input type="text" id="mfName" value="' + esc(m.name || '') + '">'
     + '<label>系列（UPBD）</label><input type="text" id="mfGroup" value="' + esc(m.group || '') + '">'
     + '<label>所属ユニオン</label>' + unionField
+    + '<label>ライセンスグレード（BR以上は会員証が特別デザインになります）</label>'
+    + '<select id="mfGrade">' + GRADES.map(function(g){
+        return '<option value="' + esc(g) + '"' + ((m.grade || '') === g ? ' selected' : '') + '>'
+          + (g === '' ? '（BR未満・一般）' : esc(g)) + '</option>';
+      }).join('') + '</select>'
     + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
@@ -875,11 +921,15 @@ function memberForm(m){
     var targetUnion = isOwner() ? $('mfUnion').value : curUnion;
     var data = {
       no: no, union: targetUnion, name: name, group: group,
+      grade: $('mfGrade').value,
       kana: $('mfKana').value.trim(),
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
     if(isNew) data.createdAt = FV.serverTimestamp();
     db.collection('checkinMembers').doc(no).set(data, {merge: true}).then(function(){
+      // 発行済みの会員証があれば内容（氏名・系列・ユニオン・グレード）を反映
+      return refreshCardDoc(m.cardToken, data);
+    }).then(function(){
       closeModal();
       toast('保存しました（所属: ' + targetUnion + '）');
       loadMembers();
@@ -922,6 +972,17 @@ $('rosterBody').addEventListener('click', function(e){
 });
 
 /* ── スマホ会員証の発行・管理 ── */
+// 会員証ドキュメントの内容を作り直す（URLとQRはそのまま。update権限を使わず delete→create で行う）
+function refreshCardDoc(token, m){
+  if(!token) return Promise.resolve();
+  var ref = db.collection('cards').doc(token);
+  return ref.delete().then(function(){
+    return ref.set({
+      no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
+      grade: m.grade || '', createdAt: FV.serverTimestamp()
+    });
+  }).catch(function(){});
+}
 function copyText(text){
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(text).then(function(){ toast('コピーしました'); },
@@ -936,7 +997,7 @@ function issueCard(m, cb){
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));   // 旧カードを無効化
   batch.set(db.collection('cards').doc(token), {
     no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-    createdAt: FV.serverTimestamp()
+    grade: m.grade || '', createdAt: FV.serverTimestamp()
   });
   batch.set(db.collection('checkinMembers').doc(m.no), {
     cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
@@ -1012,7 +1073,7 @@ $('btnCardBulk').onclick = function(){
         var m = targets[i], token = randToken();
         batch.set(db.collection('cards').doc(token), {
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-          createdAt: FV.serverTimestamp()
+          grade: m.grade || '', createdAt: FV.serverTimestamp()
         });
         batch.set(db.collection('checkinMembers').doc(m.no), {
           cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
@@ -1050,7 +1111,8 @@ $('btnPrintCards').onclick = function(){
     var area = $('printArea'), html = '';
     targets.forEach(function(m, idx){
       html += '<div class="pcard"><div class="pn">' + esc(m.name || '') + '</div>'
-        + '<div class="pg">' + esc(m.group || '') + '　' + esc(m.union || gRosterUnion) + '</div>'
+        + '<div class="pg">' + esc(m.group || '') + '　' + esc(m.union || gRosterUnion)
+        + (m.grade ? '　' + esc(m.grade) : '') + '</div>'
         + '<div class="pq" id="pq_' + idx + '"></div>'
         + '<div class="pno">No. ' + esc(m.no) + '</div></div>';
     });
@@ -1074,7 +1136,7 @@ $('btnCsvIn').onclick = function(){
     + '<div style="background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13.5px;margin-bottom:10px;">'
     + '⚠ 取り込む全員の所属ユニオンは ' + unionPicker + ' になります。<br>'
     + '複数ユニオンが混ざったCSVは、ユニオンごとに分けて取り込んでください。</div>'
-    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行1名。列: <b>番号,氏名,系列</b>（,かな は任意）。カンマ・タブ区切りどちらも可。既存番号は上書きされます。</p>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行1名。列: <b>番号,氏名,系列</b>（,かな,グレード は任意）。カンマ・タブ区切りどちらも可。既存番号は上書きされます。</p>'
     + '<textarea id="csvText" rows="10" placeholder="412211,馬越 雅哉,馬越BD"></textarea>'
     + '<div class="btns"><button id="csvCancel">キャンセル</button><button class="primary" id="csvGo">取り込む</button></div>'
   );
@@ -1089,7 +1151,7 @@ $('btnCsvIn').onclick = function(){
       var name = (c[1]||'').trim();
       if(!no || !name) return;
       if(/番号|氏名/.test(no + name)) return;   // ヘッダー行スキップ
-      rows.push({ no:no, name:name, group:(c[2]||'').trim(), kana:(c[3]||'').trim() });
+      rows.push({ no:no, name:name, group:(c[2]||'').trim(), kana:(c[3]||'').trim(), grade:(c[4]||'').trim() });
     });
     if(!rows.length){ toast('取り込める行がありません'); return; }
     $('csvGo').disabled = true;
@@ -1108,7 +1170,7 @@ $('btnCsvIn').onclick = function(){
         var r = rows[i];
         batch.set(db.collection('checkinMembers').doc(r.no), {
           no: r.no, union: target, name: r.name, group: r.group, kana: r.kana,
-          active: true, updatedAt: FV.serverTimestamp()
+          grade: r.grade, active: true, updatedAt: FV.serverTimestamp()
         }, {merge: true});
       }
       batch.commit().then(nextBatch).catch(function(e){
