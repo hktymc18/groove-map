@@ -170,6 +170,14 @@ tr:last-child td{border-bottom:none;}
 .mc-no{font-size:12.5px;color:#6f6d63;margin-top:12px;}
 .mc-tip{font-size:12.5px;color:var(--sub);margin-top:16px;line-height:1.8;}
 .mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
+/* セルフチェックイン（CLAVIS主催イベント等） */
+.selfevent{background:var(--card);border:2px solid var(--green);border-radius:14px;padding:16px;margin-top:16px;text-align:center;}
+.selfevent b{font-family:"Zen Kaku Gothic New",sans-serif;display:block;font-size:15px;margin-bottom:4px;}
+.se-sub{display:block;font-size:12.5px;color:var(--sub);margin-bottom:8px;}
+.selfevent input{width:160px;text-align:center;margin-bottom:8px;font-size:16px;letter-spacing:.2em;}
+.selfevent button{width:100%;padding:11px;font-size:15px;}
+.se-msg{color:var(--accent);font-size:12.5px;margin-top:8px;min-height:1em;}
+.se-done{color:var(--green);font-weight:900;font-size:18px;padding:6px 0;}
 
 /* グレード別デザイン（BR未満=白 / BR=シルバー / ゴールド / プラチナ / ブラック） */
 .membercard.premium::after{
@@ -393,6 +401,7 @@ tr:last-child td{border-bottom:none;}
       <div id="mcQr"></div>
       <div class="mc-no mono" id="mcNo"></div>
     </div>
+    <div id="selfArea"></div>
     <p class="mc-tip">受付でこのQRコードをかざしてください。<br>画面を明るくすると読み取りやすくなります。<br>ブラウザの「ホーム画面に追加」をしておくと次回すぐ開けます。</p>
     <p class="mc-err" id="mcErr"></p>
   </div>
@@ -595,6 +604,7 @@ function showCardView(token){
     if(snap.exists){
       var c = snap.data();
       renderCard(c);
+      renderSelfEvents(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
@@ -605,6 +615,54 @@ function showCardView(token){
     if(!cached) $('mcErr').textContent = '読み込みに失敗しました。電波の良いところで再読み込みしてください。';
   });
 }
+// 本日の「セルフチェックイン受付中」イベントを会員証の下に表示
+function renderSelfEvents(c){
+  db.collection('checkinEvents').where('date', '==', todayStr()).get().then(function(qs){
+    var evs = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if(ev.mode === 'self' && ev.selfOpen && (ev.unions || []).indexOf(c.union) >= 0) evs.push(ev);
+    });
+    if(!evs.length){ $('selfArea').innerHTML = ''; return; }
+    $('selfArea').innerHTML = evs.map(function(ev, i){
+      var done = false;
+      try{ done = !!localStorage.getItem('bci_ci_' + ev.id + '_' + c.no); }catch(e){}
+      return '<div class="selfevent" id="se_' + i + '">'
+        + '<b>' + esc(ev.hostLabel || 'CLAVIS') + '：' + esc(ev.name || '') + '</b>'
+        + '<span class="se-sub">' + esc(ev.date || '') + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</span>'
+        + (done
+          ? '<div class="se-done">✓ チェックイン済み</div>'
+          : (ev.requireCode ? '<input type="text" inputmode="numeric" maxlength="4" id="seCode_' + i + '" placeholder="会場コード4桁">' : '')
+            + '<button class="primary" id="seBtn_' + i + '">チェックインする</button>'
+            + '<div class="se-msg" id="seMsg_' + i + '"></div>')
+        + '</div>';
+    }).join('');
+    evs.forEach(function(ev, i){
+      var btn = $('seBtn_' + i);
+      if(!btn) return;
+      btn.onclick = function(){
+        var code = ev.requireCode ? ($('seCode_' + i).value || '').trim() : '';
+        if(ev.requireCode && code.length < 4){ $('seMsg_' + i).textContent = '会場コード（4桁）を入力してください'; return; }
+        btn.disabled = true;
+        db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
+          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+          method: 'self', cardToken: gCardToken, code: code,
+          at: FV.serverTimestamp(), atLocal: nowHM(), by: 'self'
+        }).then(function(){
+          try{ localStorage.setItem('bci_ci_' + ev.id + '_' + c.no, '1'); }catch(e){}
+          $('se_' + i).innerHTML = '<b>' + esc(ev.hostLabel || 'CLAVIS') + '：' + esc(ev.name || '') + '</b>'
+            + '<div class="se-done">✓ チェックインしました（' + nowHM() + '）</div>';
+        }).catch(function(){
+          btn.disabled = false;
+          $('seMsg_' + i).textContent = ev.requireCode
+            ? 'チェックインできません。会場コードが違うか、すでにチェックイン済みです。'
+            : 'チェックインできません。すでにチェックイン済みか、受付時間外です。';
+        });
+      };
+    });
+  }).catch(function(){});
+}
+
 if(gCardToken){ showCardView(gCardToken); }
 
 auth.onAuthStateChanged(function(u){
@@ -1231,16 +1289,21 @@ function renderEvents(){
     var others = (ev.unions || []).filter(function(u){ return u !== ev.hostUnion; });
     var joint = others.length
       ? '<span class="jointtag">合同: ' + esc((ev.unions||[]).join(' + ')) + '</span>' : '';
-    // 受付は 参加ユニオンのメンバー or オーナーのみ / 削除は主催ユニオンの管理者のみ
+    // 受付は 参加ユニオンのメンバー or オーナーのみ / 削除・セルフ受付の開閉は主催ユニオンの管理者のみ
     var canRec = isOwner() || (gProf && (ev.unions || []).indexOf(gProf.union) >= 0);
     var canDel = canEditUnion(ev.hostUnion);
+    var isSelf = ev.mode === 'self';
     html += '<div class="evrow' + (ev.date === t ? ' today' : '') + '">'
       + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
       + '<b>' + esc(ev.name || '') + '</b>'
       + (ev.speaker ? '<span style="color:var(--sub);font-size:13px;">🎤 ' + esc(ev.speaker) + '</span>' : '')
+      + (isSelf ? '<span class="jointtag" style="background:var(--green-soft);color:var(--green);">' + esc(ev.hostLabel || 'CLAVIS') + '主催・セルフ</span>' : '')
       + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
+      + (isSelf && ev.selfOpen ? '<span class="pill g">チェックイン受付中' + (ev.requireCode && canDel ? '・コード ' + esc(ev.venueCode || '') : '') + '</span>' : '')
       + '<span class="att" id="evCt_' + esc(ev.id) + '">…</span>'
+      + (isSelf && canDel ? '<button data-a="selftog" data-id="' + esc(ev.id) + '"' + (ev.selfOpen ? '' : ' class="primary"') + '>'
+          + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
       + '</div>';
@@ -1264,6 +1327,14 @@ $('evList').addEventListener('click', function(e){
   var ev = null; gEvents.forEach(function(x){ if(x.id === id) ev = x; });
   if(!ev) return;
   if(a === 'rec'){ startReception(ev); }
+  if(a === 'selftog'){
+    db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
+      .then(function(){
+        toast(ev.selfOpen ? 'チェックイン受付を終了しました' : 'チェックイン受付を開始しました。会員証を開くとチェックインボタンが表示されます');
+        loadEvents();
+      })
+      .catch(function(err){ toast(permMsg(err, '受付の開始/終了は主催ユニオンの管理者のみ可能です')); });
+  }
   if(a === 'del'){
     modal('<h2>イベント削除</h2><p>「' + esc(ev.date) + ' ' + esc(ev.name) + '」を削除しますか？<br>出席記録も見えなくなります。</p>'
       + '<div class="btns"><button id="delCancel">キャンセル</button><button class="primary" id="delGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
@@ -1287,19 +1358,36 @@ $('btnAddEvent').onclick = function(){
     + '<label>日付</label><input type="date" id="evDate" value="' + todayStr() + '">'
     + '<label>名称</label><input type="text" id="evName" placeholder="例: SYS / B-T / P&amp;P">'
     + '<label>スピーカー（任意）</label><input type="text" id="evSpeaker" placeholder="例: 馬越PD">'
+    + '<label>主催区分</label>'
+    + '<div class="chkrow"><input type="radio" name="evMode" id="evModeDesk" checked>'
+    + '<label for="evModeDesk" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">自ユニオン主催（受付でスキャン）</label></div>'
+    + '<div class="chkrow"><input type="radio" name="evMode" id="evModeSelf">'
+    + '<label for="evModeSelf" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">CLAVIS主催・セルフチェックイン</label></div>'
+    + '<div class="chkrow hide" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode">'
+    + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する（会場で案内された4桁を入れないとチェックインできない）</label></div>'
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">作成</button></div>'
   );
   $('evCancel').onclick = closeModal;
+  function updModeRow(){ $('rowReqCode').classList.toggle('hide', !$('evModeSelf').checked); }
+  $('evModeDesk').onchange = updModeRow;
+  $('evModeSelf').onchange = updModeRow;
   $('evSave').onclick = function(){
     var date = $('evDate').value, name = $('evName').value.trim();
     if(!date || !name){ toast('日付と名称は必須です'); return; }
     var unions = [gEventUnion];
     others.forEach(function(u, i){ if($('evU' + i) && $('evU' + i).checked) unions.push(u); });
+    var isSelf = $('evModeSelf').checked;
+    var reqCode = isSelf && $('evReqCode').checked;
     db.collection('checkinEvents').add({
       month: date.slice(0, 7), date: date, name: name,
       speaker: $('evSpeaker').value.trim(),
       hostUnion: gEventUnion, unions: unions,
+      mode: isSelf ? 'self' : '',
+      hostLabel: isSelf ? 'CLAVIS' : '',
+      selfOpen: false,
+      requireCode: reqCode,
+      venueCode: reqCode ? String(Math.floor(1000 + Math.random() * 9000)) : '',
       createdBy: gUser.uid, createdAt: FV.serverTimestamp()
     }).then(function(){
       closeModal(); toast('イベントを作成しました');
