@@ -261,5 +261,15 @@ service cloud.firestore {
                    .data.get('unions',[]).hasAny([ckMyUnion()]));
       }
     }
+
+    // スマホ会員証: トークン(URL)を知っている本人だけが自分のカードを表示できる。
+    // get のみ公開（list 不可＝一覧の抜き出しはできない）。発行・無効化は管理者のみ。
+    match /cards/{token} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isCkAdmin(request.resource.data.get('union',''));
+      allow delete: if isCkAdmin(resource.data.get('union',''));
+      allow update: if false;
+    }
   }
 }
