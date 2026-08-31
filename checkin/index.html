@@ -90,6 +90,13 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .recbar select{min-width:200px;}
 .manualrow{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .manualrow input{width:150px;}
+.sugbox{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--card);
+  border:1px solid var(--line);border-radius:8px;min-width:260px;max-height:240px;overflow:auto;
+  box-shadow:0 8px 22px rgba(0,0,0,.18);}
+.sugitem{padding:8px 12px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
+.sugitem:last-child{border-bottom:none;}
+.sugitem:hover{background:var(--paper);}
+.sugitem .su{color:var(--sub);font-size:12px;margin-left:6px;}
 .side{display:flex;flex-direction:column;gap:12px;min-width:0;}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
 .tile h3{margin:0 0 8px;font-size:12.5px;color:var(--sub);font-weight:700;letter-spacing:.06em;}
@@ -319,11 +326,21 @@ tr:last-child td{border-bottom:none;}
           <label for="numIn" style="font-size:12.5px;font-weight:700;color:var(--sub);">手入力:</label>
           <input type="text" id="numIn" inputmode="numeric" placeholder="番号を入力">
           <button id="btnManual">受付</button>
+          <span style="position:relative;display:inline-block;">
+            <input type="text" id="nameIn" placeholder="名前で検索して受付" style="width:170px;">
+            <div id="nameSug" class="sugbox hide"></div>
+          </span>
           <button id="btnGuest">ゲスト受付</button>
+        </div>
+        <div class="manualrow">
+          <label style="font-size:12.5px;font-weight:700;color:var(--sub);">登壇者:</label>
+          <button id="btnMC">MCを登録</button>
+          <button id="btnSpeaker">スピーカーを登録</button>
         </div>
       </div>
       <aside class="side">
         <div class="tile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div></div>
+        <div class="tile hide" id="roleTile"><h3>MC・スピーカー</h3><div id="roleList"></div></div>
         <div class="tile hide" id="unionTallyTile"><h3>ユニオン別</h3><div id="unionTally"></div></div>
         <div class="tile"><h3>系列別</h3><div id="groupTally"></div></div>
         <div class="tile"><h3>受付履歴</h3><ul class="recent" id="recent"></ul></div>
@@ -345,6 +362,7 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div class="toolrow hide" id="bulkRow">
       <span style="font-size:13px;font-weight:700;" id="selCount">選択中: 0名</span>
+      <button id="btnGradeSel" disabled>グレード変更</button>
       <button id="btnDelSel" disabled>選択を削除</button>
       <span style="flex:1"></span>
       <button id="btnCardBulk">会員証一括発行</button>
@@ -879,7 +897,57 @@ function updateSelCount(){
   $('selCount').textContent = '選択中: ' + selCount() + '名';
   $('btnDelSel').disabled = selCount() === 0;
   $('btnDelSel').textContent = selCount() ? '選択を削除（' + selCount() + '名）' : '選択を削除';
+  $('btnGradeSel').disabled = selCount() === 0;
+  $('btnGradeSel').textContent = selCount() ? 'グレード変更（' + selCount() + '名）' : 'グレード変更';
 }
+/* 選択メンバーのグレード一括変更（発行済み会員証にも反映） */
+$('btnGradeSel').onclick = function(){
+  var members = gMembers.filter(function(m){ return gSel[m.no]; });
+  if(!members.length) return;
+  modal('<h2>グレード一括変更</h2>'
+    + '<p>選択した <b>' + members.length + '名</b> のライセンスグレードを変更します。<br><small>発行済みの会員証のデザインにも自動反映されます（URL・QRは不変）。</small></p>'
+    + '<label>変更後のグレード</label>'
+    + '<select id="bgSel">' + GRADES.map(function(g){
+        return '<option value="' + esc(g) + '">' + esc(GRADE_MENU[g] || g) + '</option>';
+      }).join('') + '</select>'
+    + '<div class="btns"><button id="bgCancel">キャンセル</button><button class="primary" id="bgGo">変更する</button></div>');
+  $('bgCancel').onclick = closeModal;
+  $('bgGo').onclick = function(){
+    var grade = $('bgSel').value;
+    $('bgGo').disabled = true;
+    var i = 0;
+    function fail(e){ toast(permMsg(e, 'グレード変更はユニオン管理者のみ可能です')); }
+    function phase1(){   // グレード更新 + 旧カードドキュメント削除
+      if(i >= members.length){ i = 0; phase2(); return; }
+      var batch = db.batch(), end = Math.min(i + 150, members.length);
+      for(; i < end; i++){
+        var m = members[i];
+        batch.set(db.collection('checkinMembers').doc(m.no), { grade: grade, updatedAt: FV.serverTimestamp() }, { merge: true });
+        if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
+      }
+      batch.commit().then(phase1).catch(fail);
+    }
+    var withCards = members.filter(function(m){ return m.cardToken; });
+    function phase2(){   // カードドキュメントを新グレードで作り直し（同一トークン）
+      if(i >= withCards.length){
+        closeModal(); gSel = {};
+        toast(members.length + '名のグレードを変更しました');
+        loadMembers();
+        return;
+      }
+      var batch = db.batch(), end = Math.min(i + 150, withCards.length);
+      for(; i < end; i++){
+        var m = withCards[i];
+        batch.set(db.collection('cards').doc(m.cardToken), {
+          no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
+          grade: grade, createdAt: FV.serverTimestamp()
+        });
+      }
+      batch.commit().then(phase2).catch(fail);
+    }
+    phase1();
+  };
+};
 $('rosterHead').addEventListener('change', function(e){
   if(e.target && e.target.id === 'selAllChk'){
     var on = e.target.checked;
@@ -1305,6 +1373,7 @@ function renderEvents(){
       + (isSelf && canDel ? '<button data-a="selftog" data-id="' + esc(ev.id) + '"' + (ev.selfOpen ? '' : ' class="primary"') + '>'
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
+      + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
       + '</div>';
   });
@@ -1327,6 +1396,7 @@ $('evList').addEventListener('click', function(e){
   var ev = null; gEvents.forEach(function(x){ if(x.id === id) ev = x; });
   if(!ev) return;
   if(a === 'rec'){ startReception(ev); }
+  if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
       .then(function(){
@@ -1346,27 +1416,34 @@ $('evList').addEventListener('click', function(e){
     };
   }
 });
-$('btnAddEvent').onclick = function(){
-  var others = gUnions.filter(function(u){ return u !== gEventUnion; });
+$('btnAddEvent').onclick = function(){ eventForm(null); };
+function eventForm(ev){
+  var isNew = !ev;
+  var host = isNew ? gEventUnion : (ev.hostUnion || gEventUnion);
+  var evUnions = (ev && ev.unions) || [];
+  var others = gUnions.filter(function(u){ return u !== host; });
   var chk = others.length
     ? '<label>合同ユニオン（任意）</label>' + others.map(function(u, i){
-        return '<div class="chkrow"><input type="checkbox" id="evU' + i + '" value="' + esc(u) + '"><label for="evU' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc(u) + '</label></div>';
+        return '<div class="chkrow"><input type="checkbox" id="evU' + i + '" value="' + esc(u) + '"'
+          + (evUnions.indexOf(u) >= 0 ? ' checked' : '')
+          + '><label for="evU' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc(u) + '</label></div>';
       }).join('')
     : '';
+  var isSelfCur = ev && ev.mode === 'self';
   modal(
-    '<h2>新規イベント（主催: ' + esc(gEventUnion) + '）</h2>'
-    + '<label>日付</label><input type="date" id="evDate" value="' + todayStr() + '">'
-    + '<label>名称</label><input type="text" id="evName" placeholder="例: SYS / B-T / P&amp;P">'
-    + '<label>スピーカー（任意）</label><input type="text" id="evSpeaker" placeholder="例: 馬越PD">'
+    '<h2>' + (isNew ? '新規イベント' : 'イベント編集') + '（主催: ' + esc(host) + '）</h2>'
+    + '<label>日付</label><input type="date" id="evDate" value="' + esc(ev ? ev.date : todayStr()) + '">'
+    + '<label>名称</label><input type="text" id="evName" placeholder="例: SYS / B-T / P&amp;P" value="' + esc(ev ? ev.name || '' : '') + '">'
+    + '<label>スピーカー（任意）</label><input type="text" id="evSpeaker" placeholder="例: 馬越PD" value="' + esc(ev ? ev.speaker || '' : '') + '">'
     + '<label>主催区分</label>'
-    + '<div class="chkrow"><input type="radio" name="evMode" id="evModeDesk" checked>'
+    + '<div class="chkrow"><input type="radio" name="evMode" id="evModeDesk"' + (isSelfCur ? '' : ' checked') + '>'
     + '<label for="evModeDesk" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">自ユニオン主催（受付でスキャン）</label></div>'
-    + '<div class="chkrow"><input type="radio" name="evMode" id="evModeSelf">'
+    + '<div class="chkrow"><input type="radio" name="evMode" id="evModeSelf"' + (isSelfCur ? ' checked' : '') + '>'
     + '<label for="evModeSelf" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">CLAVIS主催・セルフチェックイン</label></div>'
-    + '<div class="chkrow hide" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode">'
+    + '<div class="chkrow' + (isSelfCur ? '' : ' hide') + '" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode"' + (ev && ev.requireCode ? ' checked' : '') + '>'
     + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する（会場で案内された4桁を入れないとチェックインできない）</label></div>'
     + chk
-    + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">作成</button></div>'
+    + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
   $('evCancel').onclick = closeModal;
   function updModeRow(){ $('rowReqCode').classList.toggle('hide', !$('evModeSelf').checked); }
@@ -1375,27 +1452,36 @@ $('btnAddEvent').onclick = function(){
   $('evSave').onclick = function(){
     var date = $('evDate').value, name = $('evName').value.trim();
     if(!date || !name){ toast('日付と名称は必須です'); return; }
-    var unions = [gEventUnion];
+    var unions = [host];
     others.forEach(function(u, i){ if($('evU' + i) && $('evU' + i).checked) unions.push(u); });
     var isSelf = $('evModeSelf').checked;
     var reqCode = isSelf && $('evReqCode').checked;
-    db.collection('checkinEvents').add({
+    var data = {
       month: date.slice(0, 7), date: date, name: name,
       speaker: $('evSpeaker').value.trim(),
-      hostUnion: gEventUnion, unions: unions,
+      unions: unions,
       mode: isSelf ? 'self' : '',
       hostLabel: isSelf ? 'CLAVIS' : '',
-      selfOpen: false,
       requireCode: reqCode,
-      venueCode: reqCode ? String(Math.floor(1000 + Math.random() * 9000)) : '',
-      createdBy: gUser.uid, createdAt: FV.serverTimestamp()
-    }).then(function(){
-      closeModal(); toast('イベントを作成しました');
+      venueCode: reqCode ? ((ev && ev.venueCode) || String(Math.floor(1000 + Math.random() * 9000))) : ''
+    };
+    var p;
+    if(isNew){
+      data.hostUnion = host;
+      data.selfOpen = false;
+      data.createdBy = gUser.uid;
+      data.createdAt = FV.serverTimestamp();
+      p = db.collection('checkinEvents').add(data);
+    } else {
+      p = db.collection('checkinEvents').doc(ev.id).set(data, { merge: true });
+    }
+    p.then(function(){
+      closeModal(); toast(isNew ? 'イベントを作成しました' : '保存しました');
       gMonth = { y: parseInt(date.slice(0,4), 10), m: parseInt(date.slice(5,7), 10) };
       loadEvents(); loadStats();
-    }).catch(function(e){ toast(permMsg(e, 'イベント作成はユニオン管理者のみ可能です')); });
+    }).catch(function(e){ toast(permMsg(e, 'イベントの作成・編集は主催ユニオンの管理者のみ可能です')); });
   };
-};
+}
 
 /* ---------- 受付 ---------- */
 function renderRecSelect(){
@@ -1525,7 +1611,29 @@ function scan(raw, method){
       + '<p class="stage-sub">名簿にない番号です。「ゲスト受付」から手動で登録できます。</p>');
     return;
   }
+  checkinMember(member, method, null);
+}
+function roleLabel(r){ return r === 'mc' ? 'MC' : (r === 'speaker' ? 'スピーカー' : ''); }
+// 名簿メンバーの受付（スキャン/手入力/名前検索/登壇者登録の共通処理）
+function checkinMember(member, method, role){
+  if(!gRec) return;
+  var no = member.no;
   if(gRec.att[no]){
+    if(role){
+      // すでに出席済み → 役割だけ付与
+      gRec.att[no].role = role;
+      renderTallies();
+      db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
+        .set({ role: role }, { merge: true })
+        .catch(function(e){ toast(permMsg(e, '記録権限がありません')); });
+      beep('ok');
+      setStage('ok',
+        '<span class="hit-badge">✓ ' + roleLabel(role) + 'に設定</span>'
+        + '<div class="hit-name">' + esc(member.name) + '</div>'
+        + '<div class="hit-group">' + esc(member.group || '') + '</div>'
+        + '<p class="hit-meta">出席済みの記録に役割を追加しました</p>');
+      return;
+    }
     beep('dup');
     setStage('dup',
       '<span class="hit-badge">出席済み</span>'
@@ -1541,16 +1649,106 @@ function scan(raw, method){
     union: member.union || gUnion, method: method
   };
   if(isVisitor) data.visitor = true;
+  if(role) data.role = role;
   writeAttendance(no, data);
   var joint = (gRec.ev.unions || []).length > 1;
   beep('ok');
   setStage('ok',
-    '<span class="hit-badge">✓ 出席' + (isVisitor ? '（ビジター）' : '') + '</span>'
+    '<span class="hit-badge">✓ 出席' + (role ? '（' + roleLabel(role) + '）' : (isVisitor ? '（ビジター）' : '')) + '</span>'
     + '<div class="hit-name">' + esc(member.name) + '</div>'
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
     + '<p class="hit-meta">' + nowHM() + '</p>');
-  addRecent(member.name, isVisitor ? (member.union || 'ビジター') : (member.group || member.union || ''));
+  addRecent(member.name, role ? roleLabel(role) : (isVisitor ? (member.union || 'ビジター') : (member.group || member.union || '')));
+}
+// 名簿の名前検索（全ユニオンの名簿から。スペース有無は無視）
+function searchRoster(q, limit){
+  var norm = q.replace(/[ 　]/g, '');
+  var out = [], keys = Object.keys(gRec.roster);
+  for(var i = 0; i < keys.length; i++){
+    var m = gRec.roster[keys[i]];
+    var nm = ((m.name || '') + (m.kana || '')).replace(/[ 　]/g, '');
+    if(nm.indexOf(norm) >= 0){
+      out.push(m);
+      if(out.length >= limit) break;
+    }
+  }
+  return out;
+}
+function sugItemHtml(m){
+  return '<div class="sugitem" data-no="' + esc(m.no) + '"><b>' + esc(m.name || '') + '</b>'
+    + '<span class="su">' + esc(m.group || '') + '・' + esc(m.union || '') + '</span></div>';
+}
+$('nameIn').addEventListener('input', function(){
+  var q = this.value.trim(), box = $('nameSug');
+  if(!gRec || !q){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  var hits = searchRoster(q, 10);
+  box.innerHTML = hits.length
+    ? hits.map(sugItemHtml).join('')
+    : '<div style="padding:8px 12px;color:var(--sub);font-size:13px;">該当なし</div>';
+  box.classList.remove('hide');
+});
+$('nameSug').addEventListener('mousedown', function(e){
+  var it = e.target.closest ? e.target.closest('.sugitem') : null;
+  if(!it) return;
+  var m = gRec && gRec.roster[it.getAttribute('data-no')];
+  $('nameIn').value = ''; $('nameSug').classList.add('hide'); $('nameSug').innerHTML = '';
+  if(m) checkinMember(m, 'manual', null);
+  focusScan();
+});
+$('nameIn').addEventListener('blur', function(){
+  setTimeout(function(){ $('nameSug').classList.add('hide'); }, 250);
+});
+// MC・スピーカー登録（名簿から名前検索。スピーカーは名簿外ゲストも可）
+$('btnMC').onclick = function(){ roleModal('mc'); };
+$('btnSpeaker').onclick = function(){ roleModal('speaker'); };
+function roleModal(role){
+  if(!gRec){ toast('先に受付を開始してください'); return; }
+  var lbl = roleLabel(role);
+  modal('<h2>' + lbl + 'を登録</h2>'
+    + '<label>名簿から名前検索（全ユニオン対象）</label>'
+    + '<input type="text" id="rmQ" placeholder="氏名の一部を入力">'
+    + '<div id="rmList" style="max-height:220px;overflow:auto;margin-top:6px;"></div>'
+    + (role === 'speaker'
+      ? '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px;">'
+        + '<label>名簿にいない場合（ゲストスピーカー）</label>'
+        + '<input type="text" id="rmGName" placeholder="氏名を入力">'
+        + '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button id="rmGuestGo">ゲストスピーカーとして登録</button></div>'
+        + '</div>'
+      : '')
+    + '<div class="btns"><button id="rmClose">閉じる</button></div>');
+  $('rmClose').onclick = function(){ closeModal(); focusScan(); };
+  $('rmQ').addEventListener('input', function(){
+    var q = this.value.trim(), el = $('rmList');
+    if(!q){ el.innerHTML = ''; return; }
+    var hits = searchRoster(q, 12);
+    el.innerHTML = hits.length
+      ? hits.map(sugItemHtml).join('')
+      : '<div style="padding:8px 12px;color:var(--sub);font-size:13px;">該当なし</div>';
+  });
+  $('rmList').onclick = function(e){
+    var it = e.target.closest ? e.target.closest('.sugitem') : null;
+    if(!it) return;
+    var m = gRec.roster[it.getAttribute('data-no')];
+    closeModal();
+    if(m) checkinMember(m, 'manual', role);
+    focusScan();
+  };
+  if(role === 'speaker'){
+    $('rmGuestGo').onclick = function(){
+      var nm = $('rmGName').value.trim();
+      if(!nm){ toast('氏名を入力してください'); return; }
+      var id = 'g' + Date.now();
+      writeAttendance(id, {
+        no: id, name: nm, group: 'ゲスト', union: '',
+        method: 'guest', guest: true, role: 'speaker'
+      });
+      beep('ok');
+      setStage('ok', '<span class="hit-badge">✓ スピーカー（ゲスト）</span><div class="hit-name">' + esc(nm) + '</div>');
+      addRecent(nm, '🎤 ゲスト');
+      closeModal(); focusScan();
+    };
+  }
 }
 function writeAttendance(id, data){
   data.at = FV.serverTimestamp();
@@ -1605,14 +1803,23 @@ function renderTallies(){
   var total = 0, byUnion = {}, byGroup = {};
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
+  var roles = [];
   Object.keys(gRec.att).forEach(function(id){
     var a = gRec.att[id]; total++;
-    byUnion[a.union || '?'] = (byUnion[a.union || '?'] || 0) + 1;
+    var uk = a.union || 'ゲスト';
+    byUnion[uk] = (byUnion[uk] || 0) + 1;
+    if(a.role) roles.push(a);
     if(a.union === tallyUnion){
       var g = a.group || 'その他';
       byGroup[g] = (byGroup[g] || 0) + 1;
     }
   });
+  $('roleTile').classList.toggle('hide', !roles.length);
+  $('roleList').innerHTML = roles.map(function(a){
+    return '<div style="font-size:13.5px;margin:4px 0;"><b>' + (a.role === 'mc' ? 'MC' : '🎤') + '</b> '
+      + esc(a.name || '') + '<span style="color:var(--sub);font-size:12px;margin-left:6px;">'
+      + esc(a.guest ? 'ゲスト' : (a.union || '')) + '</span></div>';
+  }).join('');
   $('total').textContent = total;
   $('ctr').textContent = total + '名';
   // 合同イベント、またはビジターがいる場合はユニオン別を表示
