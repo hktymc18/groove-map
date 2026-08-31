@@ -205,5 +205,60 @@ service cloud.firestore {
       allow write:  if isAdmin() || (isSelf(ownerUid) && notDisabled(ownerUid));
       allow delete: if isSelf(uid) || isSelf(ownerUid) || isAdmin();
     }
+
+    // ============ GROOVE CHECK-IN（ハウディ受付・稼働率管理） ============
+    // 設計: docs/seminar-attendance-design.md
+    //   checkinUnions/{ユニオン名}      … 受付システムで有効化されたユニオン
+    //   checkinMembers/{QRコード番号}   … 名簿（union フィールドで所属を分離）
+    //   checkinEvents/{eventId}        … イベント（unions 配列で合同対応、month で月管理）
+    //     └ attendance/{番号|gXXX}     … 出席レコード（union フィールドで集計分離）
+    // 権限: 管理 = オーナー or 同ユニオンの role=='admin'。
+    //       受付(出席の記録) = 参加ユニオンの有効メンバーなら誰でも可。
+
+    // オーナー or 指定ユニオンの管理者
+    function isCkAdmin(un) {
+      return isOwnerAdmin()
+        || (signedIn() && profileExists(request.auth.uid)
+            && profile(request.auth.uid).get('role','') == 'admin'
+            && profile(request.auth.uid).get('union','') == un);
+    }
+    // 自分のプロフィールの所属ユニオン
+    function ckMyUnion() {
+      return profileExists(request.auth.uid)
+        ? profile(request.auth.uid).get('union','') : '';
+    }
+
+    match /checkinUnions/{un} {
+      allow read: if signedIn();
+      allow create, update: if isCkAdmin(un);
+      allow delete: if isOwnerAdmin();
+    }
+
+    match /checkinMembers/{no} {
+      // 合同イベントの受付・MAP連携のため、ログイン済みなら閲覧可
+      allow read: if signedIn();
+      allow create: if isCkAdmin(request.resource.data.get('union',''));
+      allow update: if isCkAdmin(resource.data.get('union',''))
+                    && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')));
+      allow delete: if isCkAdmin(resource.data.get('union',''));
+    }
+
+    match /checkinEvents/{eid} {
+      allow read: if signedIn();
+      // 作成は主催ユニオンの管理者。主催は必ず参加ユニオンに含める
+      allow create: if isCkAdmin(request.resource.data.get('hostUnion',''))
+                    && request.resource.data.get('unions',[])
+                         .hasAny([request.resource.data.get('hostUnion','')]);
+      allow update, delete: if isCkAdmin(resource.data.get('hostUnion',''));
+
+      // 出席: 参加ユニオン(unions配列)に所属する有効メンバーなら記録できる
+      match /attendance/{aid} {
+        allow read: if signedIn();
+        allow create, update, delete: if signedIn()
+          && notDisabled(request.auth.uid)
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('unions',[]).hasAny([ckMyUnion()]);
+      }
+    }
   }
 }
