@@ -286,6 +286,16 @@ service cloud.firestore {
                  get(/databases/$(database)/documents/checkinEvents/$(eid))
                    .data.get('venueCode','__none'));
       }
+
+      // 会計（BASE集計表）: 参加ユニオンの有効メンバーが記録できる
+      match /finance/{fid} {
+        allow read: if signedIn();
+        allow create, update, delete: if isOwnerAdmin()
+          || (signedIn()
+              && notDisabled(request.auth.uid)
+              && get(/databases/$(database)/documents/checkinEvents/$(eid))
+                   .data.get('unions',[]).hasAny([ckMyUnion()]));
+      }
     }
 
     // スマホ会員証: トークン(URL)を知っている本人だけが自分のカードを表示できる。
