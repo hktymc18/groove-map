@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>BASE CHECK-IN</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
+  --accent:#c0392b; --accent-soft:#f7e6e2;
+  --green:#2e6b52; --green-soft:#e3efe8; --green-bar:#4d8b6f;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#2b5fa8;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#171915; --card:#22241f; --ink:#e9e7de; --sub:#a3a194; --line:#3a3c34;
+    --accent:#e0604f; --accent-soft:#3d2723;
+    --green:#79c29e; --green-soft:#243a2f; --green-bar:#4d8b6f;
+    --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;}
+body{background:var(--paper);color:var(--ink);
+  font-family:"Noto Sans JP",-apple-system,"Hiragino Sans",sans-serif;font-size:14.5px;line-height:1.7;}
+button{font-family:inherit;font-size:14px;cursor:pointer;border-radius:7px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;}
+button:hover{border-color:var(--sub);}
+button:disabled{opacity:.5;cursor:default;}
+button.primary{background:var(--green);border-color:var(--green);color:#fff;font-weight:700;}
+button.danger{color:var(--accent);}
+button.ghost{background:transparent;}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+input[type=text],input[type=search],input[type=email],input[type=password],input[type=date],select,textarea{
+  font-family:inherit;font-size:14px;padding:8px 12px;border-radius:7px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);}
+.mono{font-family:"IBM Plex Mono",monospace;}
+h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;}
+.hide{display:none !important;}
+
+/* topbar */
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;
+  background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+.brand{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:16px;}
+.brand .dot{color:var(--accent);}
+.unionchip{background:var(--paper);border:1px solid var(--line);border-radius:99px;
+  padding:2px 14px;font-weight:700;font-size:13px;}
+nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap;}
+nav button{border:none;background:transparent;padding:8px 12px;font-weight:700;color:var(--sub);border-radius:7px;}
+nav button.on{background:var(--paper);color:var(--ink);}
+main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
+.pane{display:none;}
+.pane.on{display:block;}
+
+/* auth / gate cards */
+.gate{max-width:400px;margin:8vh auto 0;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:28px 26px;}
+.gate h1{font-size:22px;margin:0 0 4px;}
+.gate p.s{color:var(--sub);font-size:13px;margin:0 0 18px;}
+.gate label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:12px 0 4px;}
+.gate input,.gate select{width:100%;}
+.gate button.primary{width:100%;margin-top:18px;padding:11px;}
+.gate .alt{text-align:center;margin-top:14px;font-size:13px;}
+.gate .alt a{color:var(--focus);cursor:pointer;text-decoration:underline;}
+.errmsg{color:var(--accent);font-size:13px;margin-top:10px;min-height:1.2em;}
+
+/* 受付 */
+.kiosk{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;}
+@media(max-width:860px){.kiosk{grid-template-columns:1fr;}}
+.scanstage{background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:320px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:32px 22px;position:relative;overflow:hidden;transition:background .15s;}
+.scanstage.ok{background:var(--green-soft);border-color:var(--green);}
+.scanstage.dup{background:var(--amber-soft);border-color:var(--amber);}
+.scanstage.ng{background:var(--accent-soft);border-color:var(--accent);}
+.wait-icon{font-size:42px;margin-bottom:6px;}
+.stage-sub{color:var(--sub);font-size:13.5px;margin:4px 0 0;}
+.hit-name{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:clamp(32px,6.5vw,52px);line-height:1.2;margin:4px 0 2px;overflow-wrap:anywhere;}
+.hit-group{font-size:18px;font-weight:700;}
+.hit-union{font-size:14px;color:var(--sub);font-weight:700;}
+.hit-meta{color:var(--sub);font-size:13.5px;margin-top:8px;}
+.hit-badge{display:inline-block;border-radius:99px;padding:3px 18px;font-weight:700;font-size:14px;margin-bottom:8px;}
+.ok .hit-badge{background:var(--green);color:#fff;}
+.dup .hit-badge{background:var(--amber);color:#fff;}
+.ng .hit-badge{background:var(--accent);color:#fff;}
+.counter{position:absolute;top:12px;right:16px;font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--sub);}
+#scanBuf{position:absolute;opacity:0.01;width:2px;height:2px;border:none;padding:0;left:-5px;top:-5px;}
+.recbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.recbar select{min-width:200px;}
+.manualrow{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.manualrow input{width:150px;}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0;}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
+.tile h3{margin:0 0 8px;font-size:12.5px;color:var(--sub);font-weight:700;letter-spacing:.06em;}
+.bignum{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:38px;line-height:1.1;font-variant-numeric:tabular-nums;}
+.bignum small{font-size:14px;font-weight:700;color:var(--sub);margin-left:4px;}
+.tallyrow{display:grid;grid-template-columns:6.5em 1fr 2.4em;gap:8px;align-items:center;font-size:13px;margin:6px 0;}
+.tallyrow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.meter{height:8px;border-radius:4px;background:var(--paper);overflow:hidden;}
+.meter i{display:block;height:100%;background:var(--green-bar);border-radius:4px;transition:width .3s;}
+.tallyrow .ct{text-align:right;font-variant-numeric:tabular-nums;color:var(--sub);}
+.recent{list-style:none;margin:0;padding:0;font-size:13px;}
+.recent li{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);align-items:baseline;}
+.recent li:last-child{border-bottom:none;}
+.recent .tm{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--sub);flex:0 0 auto;}
+.recent .who{font-weight:700;}
+.recent .gr{color:var(--sub);font-size:12px;margin-left:auto;white-space:nowrap;}
+
+/* tables */
+.tblwrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:620px;}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;white-space:nowrap;}
+th{font-size:12px;color:var(--sub);font-weight:700;letter-spacing:.05em;background:var(--card);}
+tr:last-child td{border-bottom:none;}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:99px;padding:1px 10px;}
+.pill.g{background:var(--green-soft);color:var(--green);}
+.pill.a{background:var(--amber-soft);color:var(--amber);}
+.pill.r{background:var(--accent-soft);color:var(--accent);}
+.pill.n{background:var(--paper);color:var(--sub);border:1px solid var(--line);}
+.rowbtns{display:flex;gap:6px;}
+.rowbtns button{padding:3px 10px;font-size:12.5px;}
+.toolrow{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;align-items:center;}
+.toolrow input[type=search]{flex:1;min-width:150px;}
+.monthnav{display:flex;gap:8px;align-items:center;margin:0 0 12px;}
+.monthnav b{font-size:16px;min-width:7.5em;text-align:center;}
+
+/* events */
+.evlist{display:grid;gap:10px;}
+.evrow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 15px;
+  display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.evrow.today{border-color:var(--green);}
+.evrow .d{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--sub);width:4.6em;}
+.evrow b{font-family:"Zen Kaku Gothic New",sans-serif;font-size:15px;}
+.evrow .att{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--sub);font-size:13px;}
+.jointtag{background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:700;border-radius:99px;padding:1px 10px;}
+
+/* stats */
+.stattiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
+.matrix td.mk{text-align:center;font-family:"IBM Plex Mono",monospace;}
+.mk .y{color:var(--green);font-weight:700;}
+.mk .nn{color:var(--line);}
+.rate{font-variant-numeric:tabular-nums;font-weight:700;}
+.sectionhead{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;flex-wrap:wrap;}
+.sectionhead h2{margin:0;font-size:16px;}
+.sectionhead .note{color:var(--sub);font-size:12.5px;}
+
+/* modal */
+.modalback{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--card);border-radius:14px;padding:22px;max-width:420px;width:100%;max-height:88vh;overflow:auto;}
+.modal h2{margin:0 0 14px;font-size:17px;}
+.modal label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:10px 0 4px;}
+.modal input[type=text],.modal input[type=date],.modal select,.modal textarea{width:100%;}
+.modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.chkrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
+  padding:9px 20px;border-radius:99px;font-size:13.5px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;}
+#toast.show{opacity:1;}
+.notice{background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<!-- ═══ ログイン ═══ -->
+<div id="vLogin" class="hide">
+  <div class="gate">
+    <h1>BASE CHECK-IN<span style="color:var(--accent)">●</span></h1>
+    <p class="s">セミナー受付・稼働率管理。GROOVE MAP と同じアカウントでログインできます。</p>
+    <div id="loginForm">
+      <label for="liEmail">メールアドレス</label><input type="email" id="liEmail" autocomplete="email">
+      <label for="liPw">パスワード</label><input type="password" id="liPw" autocomplete="current-password">
+      <button class="primary" id="btnLogin">ログイン</button>
+      <div class="alt">アカウントがない方は <a id="toSignup">新規登録</a></div>
+    </div>
+    <div id="signupForm" class="hide">
+      <label for="suName">名前</label><input type="text" id="suName">
+      <label for="suEmail">メールアドレス</label><input type="email" id="suEmail" autocomplete="email">
+      <label for="suPw">パスワード（6文字以上）</label><input type="password" id="suPw" autocomplete="new-password">
+      <label for="suUnion">所属ユニオン</label><input type="text" id="suUnion" placeholder="例: ANTARES">
+      <label for="suArea">活動地域</label><input type="text" id="suArea" placeholder="例: 福岡">
+      <label for="suUpRuby">アップRUBY</label><input type="text" id="suUpRuby">
+      <label for="suUpBd">アップBD</label><input type="text" id="suUpBd">
+      <button class="primary" id="btnSignup">登録する</button>
+      <div class="alt"><a id="toLogin">ログインに戻る</a></div>
+    </div>
+    <div class="errmsg" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ═══ プロフィール補完（旧アカウントで union 未設定の場合） ═══ -->
+<div id="vProfile" class="hide">
+  <div class="gate">
+    <h1>プロフィール登録</h1>
+    <p class="s">受付システムの利用には所属ユニオンの登録が必要です。</p>
+    <label for="pfName">名前</label><input type="text" id="pfName">
+    <label for="pfUnion">所属ユニオン</label><input type="text" id="pfUnion" placeholder="例: ANTARES">
+    <label for="pfArea">活動地域</label><input type="text" id="pfArea">
+    <label for="pfUpRuby">アップRUBY</label><input type="text" id="pfUpRuby">
+    <label for="pfUpBd">アップBD</label><input type="text" id="pfUpBd">
+    <button class="primary" id="btnProfile">登録する</button>
+    <div class="alt"><a id="pfLogout">ログアウト</a></div>
+    <div class="errmsg" id="pfErr"></div>
+  </div>
+</div>
+
+<!-- ═══ ユニオン有効化 ═══ -->
+<div id="vActivate" class="hide">
+  <div class="gate">
+    <h1>ユニオンの有効化</h1>
+    <p class="s" id="actMsg"></p>
+    <button class="primary hide" id="btnActivate">このユニオンを有効化する</button>
+    <div class="alt"><a id="actLogout">ログアウト</a></div>
+    <div class="errmsg" id="actErr"></div>
+  </div>
+</div>
+
+<!-- ═══ 本体 ═══ -->
+<div id="vApp" class="hide">
+  <div class="topbar">
+    <span class="brand">BASE CHECK-IN<span class="dot">●</span></span>
+    <span class="unionchip" id="unionBadge"></span>
+    <select id="unionSel" class="hide"></select>
+    <nav>
+      <button class="on" data-pane="pKiosk">受付</button>
+      <button data-pane="pRoster">名簿</button>
+      <button data-pane="pEvents">イベント</button>
+      <button data-pane="pStats">集計</button>
+      <button id="btnLogout" title="ログアウト">⎋</button>
+    </nav>
+  </div>
+  <main>
+
+  <!-- 受付 -->
+  <section class="pane on" id="pKiosk">
+    <div class="recbar">
+      <label for="recEvSel" style="font-weight:700;font-size:13px;">受付するイベント:</label>
+      <select id="recEvSel"><option value="">— 選択してください —</option></select>
+      <button class="primary" id="btnRecStart">受付を開始</button>
+      <button id="btnRecStop" class="hide">受付を終了</button>
+    </div>
+    <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
+    <div class="kiosk hide" id="recArea">
+      <div>
+        <div class="scanstage" id="stage">
+          <div class="counter mono" id="ctr">0名</div>
+          <div id="stageBody"></div>
+          <input id="scanBuf" autocomplete="off" aria-hidden="true" tabindex="-1">
+        </div>
+        <div class="manualrow">
+          <label for="numIn" style="font-size:12.5px;font-weight:700;color:var(--sub);">手入力:</label>
+          <input type="text" id="numIn" inputmode="numeric" placeholder="番号を入力">
+          <button id="btnManual">受付</button>
+          <button id="btnGuest">ゲスト受付</button>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="tile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div></div>
+        <div class="tile hide" id="unionTallyTile"><h3>ユニオン別</h3><div id="unionTally"></div></div>
+        <div class="tile"><h3>系列別（自ユニオン）</h3><div id="groupTally"></div></div>
+        <div class="tile"><h3>受付履歴</h3><ul class="recent" id="recent"></ul></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 名簿 -->
+  <section class="pane" id="pRoster">
+    <div class="toolrow">
+      <input type="search" id="q" placeholder="氏名・番号・系列で検索">
+      <button class="primary" id="btnAddMember">＋ メンバー追加</button>
+      <button id="btnCsvIn">CSV取込</button>
+      <button id="btnCsvOut">CSV出力</button>
+    </div>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>番号</th><th>氏名</th><th>系列</th><th>状態</th><th>操作</th></tr></thead>
+        <tbody id="rosterBody"></tbody>
+      </table>
+    </div>
+    <p style="color:var(--sub);font-size:12.5px;margin-top:8px;" id="rosterCount"></p>
+  </section>
+
+  <!-- イベント -->
+  <section class="pane" id="pEvents">
+    <div class="monthnav">
+      <button class="ghost" id="evPrev">◀</button><b id="evMonthLabel"></b><button class="ghost" id="evNext">▶</button>
+      <span style="flex:1"></span>
+      <button class="primary" id="btnAddEvent">＋ 新規イベント</button>
+    </div>
+    <div class="evlist" id="evList"></div>
+  </section>
+
+  <!-- 集計 -->
+  <section class="pane" id="pStats">
+    <div class="monthnav">
+      <button class="ghost" id="stPrev">◀</button><b id="stMonthLabel"></b><button class="ghost" id="stNext">▶</button>
+      <span style="flex:1"></span>
+      <button id="btnStatCsv">CSV出力</button>
+      <button id="btnStatReload">再集計</button>
+    </div>
+    <div id="statBody"><p style="color:var(--sub)">集計を読み込み中…</p></div>
+  </section>
+
+  </main>
+</div>
+
+<div id="modalHost"></div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+"use strict";
+var firebaseConfig = {
+  apiKey: "AIzaSyBHLz19p4wsSi043V0hhE-Crjwv6VBKBro",
+  authDomain: "hotlist-21865.firebaseapp.com",
+  projectId: "hotlist-21865",
+  storageBucket: "hotlist-21865.firebasestorage.app",
+  messagingSenderId: "565556414915",
+  appId: "1:565556414915:web:f8c3489260e8d9d6e49576"
+};
+var OWNER_UID = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
+
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
+try { db.enablePersistence({ synchronizeTabs: true }).catch(function(){}); } catch(e){}
+var FV = firebase.firestore.FieldValue;
+
+/* ---------- utils ---------- */
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function toast(msg){
+  var t = $('toast'); t.textContent = msg; t.className = 'show';
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(function(){ t.className = ''; }, 2800);
+}
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function nowHM(){ var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function todayStr(){ var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function monthKey(y, m){ return y + '-' + pad(m); }
+function monthLabel(y, m){ return y + '年' + m + '月'; }
+function beep(kind){
+  try{
+    var AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    if(!beep.ctx) beep.ctx = new AC();
+    var c = beep.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = 'square';
+    o.frequency.value = (kind === 'ok') ? 1760 : (kind === 'dup' ? 660 : 330);
+    g.gain.setValueAtTime(0.06, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.16);
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + 0.17);
+  }catch(e){}
+}
+function showView(id){
+  ['vLogin','vProfile','vActivate','vApp'].forEach(function(v){
+    $(v).classList.toggle('hide', v !== id);
+  });
+}
+function modal(html){
+  var host = $('modalHost');
+  host.innerHTML = '<div class="modalback"><div class="modal">' + html + '</div></div>';
+  host.firstChild.addEventListener('click', function(e){
+    if(e.target === host.firstChild) closeModal();
+  });
+  return host;
+}
+function closeModal(){ $('modalHost').innerHTML = ''; }
+function csvDownload(name, rows){
+  var lines = rows.map(function(r){
+    return r.map(function(c){
+      c = String(c == null ? '' : c);
+      return (c.indexOf(',') >= 0 || c.indexOf('"') >= 0 || c.indexOf('\n') >= 0)
+        ? '"' + c.replace(/"/g,'""') + '"' : c;
+    }).join(',');
+  });
+  var blob = new Blob(['﻿' + lines.join('\r\n')], {type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+/* ---------- state ---------- */
+var gUser = null, gProf = null;
+var gUnion = '';            // 操作対象ユニオン
+var gUnions = [];           // checkinUnions 一覧
+var gMembers = [];          // gUnion の名簿
+var gMembersLoaded = false;
+var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.getMonth()+1}; })();
+var gEvents = [];           // 表示月のイベント（gUnion 参加分）
+var gRec = null;            // 受付中 {ev, roster:{no:member}, att:{id:rec}, unsub}
+function isOwner(){ return gUser && gUser.uid === OWNER_UID; }
+function isAdminHere(){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === gUnion); }
+
+/* ---------- auth ---------- */
+$('toSignup').onclick = function(){ $('loginForm').classList.add('hide'); $('signupForm').classList.remove('hide'); $('authErr').textContent=''; };
+$('toLogin').onclick = function(){ $('signupForm').classList.add('hide'); $('loginForm').classList.remove('hide'); $('authErr').textContent=''; };
+function authMsg(e){
+  var c = e && e.code || '';
+  if(c.indexOf('invalid-credential') >= 0 || c.indexOf('wrong-password') >= 0 || c.indexOf('user-not-found') >= 0) return 'メールアドレスまたはパスワードが違います';
+  if(c.indexOf('email-already-in-use') >= 0) return 'このメールアドレスは登録済みです';
+  if(c.indexOf('weak-password') >= 0) return 'パスワードは6文字以上にしてください';
+  if(c.indexOf('invalid-email') >= 0) return 'メールアドレスの形式が正しくありません';
+  return 'エラー: ' + (e && e.message || e);
+}
+$('btnLogin').onclick = function(){
+  $('authErr').textContent = '';
+  auth.signInWithEmailAndPassword($('liEmail').value.trim(), $('liPw').value)
+    .catch(function(e){ $('authErr').textContent = authMsg(e); });
+};
+$('liPw').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('btnLogin').click(); });
+$('btnSignup').onclick = function(){
+  $('authErr').textContent = '';
+  var name = $('suName').value.trim(), un = $('suUnion').value.trim(),
+      area = $('suArea').value.trim(), ur = $('suUpRuby').value.trim(), ub = $('suUpBd').value.trim();
+  if(!name || !un || !area || !ur || !ub){ $('authErr').textContent = 'すべての項目を入力してください'; return; }
+  auth.createUserWithEmailAndPassword($('suEmail').value.trim(), $('suPw').value)
+    .then(function(cred){
+      return db.collection('users').doc(cred.user.uid).set({
+        name: name, union: un, area: area, upRuby: ur, upBd: ub,
+        role: 'member', status: 'pending', email: $('suEmail').value.trim()
+      });
+    })
+    .catch(function(e){ $('authErr').textContent = authMsg(e); });
+};
+$('btnLogout').onclick = function(){ auth.signOut(); };
+$('pfLogout').onclick = function(){ auth.signOut(); };
+$('actLogout').onclick = function(){ auth.signOut(); };
+
+auth.onAuthStateChanged(function(u){
+  gUser = u;
+  if(!u){ gProf = null; showView('vLogin'); return; }
+  db.collection('users').doc(u.uid).get().then(function(snap){
+    if(!snap.exists || !(snap.data().union)){
+      showView('vProfile'); return;
+    }
+    gProf = snap.data();
+    gUnion = gProf.union;
+    afterLogin();
+  }).catch(function(e){ toast('プロフィール読込エラー: ' + e.message); showView('vLogin'); });
+});
+
+$('btnProfile').onclick = function(){
+  $('pfErr').textContent = '';
+  var name = $('pfName').value.trim(), un = $('pfUnion').value.trim(),
+      area = $('pfArea').value.trim(), ur = $('pfUpRuby').value.trim(), ub = $('pfUpBd').value.trim();
+  if(!name || !un || !area || !ur || !ub){ $('pfErr').textContent = 'すべての項目を入力してください'; return; }
+  db.collection('users').doc(gUser.uid).set({
+    name: name, union: un, area: area, upRuby: ur, upBd: ub,
+    role: 'member', status: 'pending', email: gUser.email || ''
+  }).then(function(){
+    gProf = { name:name, union:un, area:area, role:'member', status:'pending' };
+    gUnion = un; afterLogin();
+  }).catch(function(e){ $('pfErr').textContent = 'エラー: ' + e.message; });
+};
+
+/* ---------- 起動 ---------- */
+function afterLogin(){
+  db.collection('checkinUnions').get().then(function(qs){
+    gUnions = [];
+    qs.forEach(function(d){ gUnions.push(d.data().name || d.id); });
+    gUnions.sort();
+    if(gUnions.indexOf(gUnion) < 0){
+      // 自ユニオンが未有効化
+      if(isOwner() && gUnions.length){ gUnion = gUnions[0]; enterApp(); return; }
+      $('actMsg').textContent = isAdminHere() || isOwner()
+        ? '「' + gUnion + '」はまだ受付システムで有効化されていません。有効化すると名簿の登録とイベント作成ができるようになります。'
+        : '「' + gUnion + '」はまだ受付システムで有効化されていません。ユニオンの管理者に有効化を依頼してください。';
+      $('btnActivate').classList.toggle('hide', !(isAdminHere() || isOwner()));
+      showView('vActivate');
+      return;
+    }
+    enterApp();
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+}
+$('btnActivate').onclick = function(){
+  $('actErr').textContent = '';
+  db.collection('checkinUnions').doc(gUnion).set({
+    name: gUnion, area: gProf && gProf.area || '',
+    createdBy: gUser.uid, createdAt: FV.serverTimestamp()
+  }).then(function(){ afterLogin(); })
+  .catch(function(e){
+    $('actErr').textContent = (e.code === 'permission-denied')
+      ? '権限がありません。ユニオン管理者（role=admin）のみ有効化できます。'
+      : 'エラー: ' + e.message;
+  });
+};
+
+function enterApp(){
+  showView('vApp');
+  // ユニオン表示/切替（オーナーのみ切替可）
+  if(isOwner() && gUnions.length > 1){
+    var sel = $('unionSel');
+    sel.innerHTML = gUnions.map(function(u){
+      return '<option' + (u === gUnion ? ' selected' : '') + '>' + esc(u) + '</option>';
+    }).join('');
+    sel.classList.remove('hide');
+    $('unionBadge').classList.add('hide');
+    sel.onchange = function(){
+      gUnion = sel.value;
+      gMembersLoaded = false; gMembers = [];
+      stopReception();
+      loadMembers(renderRoster);
+      loadEvents();
+      loadStats();
+    };
+  } else {
+    $('unionBadge').textContent = gUnion;
+  }
+  loadMembers(renderRoster);
+  loadEvents();
+  loadStats();
+}
+
+/* ---------- タブ ---------- */
+var tabs = document.querySelectorAll('nav button[data-pane]');
+Array.prototype.forEach.call(tabs, function(b){
+  b.onclick = function(){
+    Array.prototype.forEach.call(tabs, function(x){ x.classList.remove('on'); });
+    Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(p){ p.classList.remove('on'); });
+    b.classList.add('on');
+    $(b.getAttribute('data-pane')).classList.add('on');
+    if(b.getAttribute('data-pane') === 'pKiosk' && gRec) focusScan();
+  };
+});
+
+/* ---------- 名簿 ---------- */
+function loadMembers(cb){
+  db.collection('checkinMembers').where('union', '==', gUnion).get().then(function(qs){
+    gMembers = [];
+    qs.forEach(function(d){ var m = d.data(); m.no = d.id; gMembers.push(m); });
+    gMembers.sort(function(a,b){ return a.no < b.no ? -1 : 1; });
+    gMembersLoaded = true;
+    if(cb) cb();
+  }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
+}
+function renderRoster(){
+  var q = ($('q').value || '').trim();
+  var tb = $('rosterBody'), html = '', shown = 0;
+  gMembers.forEach(function(m){
+    var name = m.name || '';
+    if(q && name.indexOf(q) < 0 && m.no.indexOf(q) < 0 && (m.group||'').indexOf(q) < 0) return;
+    shown++;
+    html += '<tr><td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b></td>'
+      + '<td>' + esc(m.group || '') + '</td>'
+      + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>') + '</td>'
+      + '<td><div class="rowbtns">'
+      + '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
+      + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
+      + '</div></td></tr>';
+  });
+  tb.innerHTML = html || '<tr><td colspan="5" style="color:var(--sub)">メンバーがいません。「＋ メンバー追加」または「CSV取込」で登録してください。</td></tr>';
+  $('rosterCount').textContent = gUnion + '：' + gMembers.length + '名（表示 ' + shown + '名）';
+}
+$('q').addEventListener('input', renderRoster);
+
+function memberForm(m){
+  var isNew = !m;
+  m = m || {};
+  modal(
+    '<h2>' + (isNew ? 'メンバー追加' : 'メンバー編集') + '</h2>'
+    + '<label>番号（QRコード）</label><input type="text" id="mfNo" ' + (isNew ? '' : 'disabled ') + 'value="' + esc(m.no || '') + '">'
+    + '<label>氏名</label><input type="text" id="mfName" value="' + esc(m.name || '') + '">'
+    + '<label>系列（UPBD）</label><input type="text" id="mfGroup" value="' + esc(m.group || '') + '">'
+    + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
+    + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
+  );
+  $('mfCancel').onclick = closeModal;
+  $('mfSave').onclick = function(){
+    var no = (isNew ? $('mfNo').value : m.no).trim();
+    var name = $('mfName').value.trim(), group = $('mfGroup').value.trim();
+    if(!no || !name){ toast('番号と氏名は必須です'); return; }
+    var data = {
+      no: no, union: gUnion, name: name, group: group,
+      kana: $('mfKana').value.trim(),
+      active: (m.active !== false), updatedAt: FV.serverTimestamp()
+    };
+    if(isNew) data.createdAt = FV.serverTimestamp();
+    db.collection('checkinMembers').doc(no).set(data, {merge: true}).then(function(){
+      closeModal(); toast('保存しました');
+      loadMembers(renderRoster);
+    }).catch(function(e){ toast(permMsg(e, '名簿の編集はユニオン管理者のみ可能です')); });
+  };
+}
+function permMsg(e, hint){
+  return (e && e.code === 'permission-denied') ? hint : 'エラー: ' + (e && e.message || e);
+}
+$('btnAddMember').onclick = function(){ memberForm(null); };
+$('rosterBody').addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('button') : null;
+  if(!b) return;
+  var no = b.getAttribute('data-no'), a = b.getAttribute('data-a');
+  var m = null;
+  gMembers.forEach(function(x){ if(x.no === no) m = x; });
+  if(!m) return;
+  if(a === 'edit') memberForm(m);
+  if(a === 'tog'){
+    db.collection('checkinMembers').doc(no).set({active: !(m.active !== false)}, {merge:true})
+      .then(function(){ loadMembers(renderRoster); })
+      .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者のみ可能です')); });
+  }
+});
+
+$('btnCsvIn').onclick = function(){
+  modal(
+    '<h2>CSV取込（' + esc(gUnion) + '）</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行1名。列: <b>番号,氏名,系列</b>（,かな は任意）。カンマ・タブ区切りどちらも可。既存番号は上書きされます。</p>'
+    + '<textarea id="csvText" rows="10" placeholder="412211,馬越 雅哉,馬越BD"></textarea>'
+    + '<div class="btns"><button id="csvCancel">キャンセル</button><button class="primary" id="csvGo">取り込む</button></div>'
+  );
+  $('csvCancel').onclick = closeModal;
+  $('csvGo').onclick = function(){
+    var lines = $('csvText').value.split(/\r?\n/), rows = [];
+    lines.forEach(function(ln){
+      ln = ln.trim(); if(!ln) return;
+      var c = ln.indexOf('\t') >= 0 ? ln.split('\t') : ln.split(',');
+      var no = (c[0]||'').trim().replace(/\.0$/,'');
+      var name = (c[1]||'').trim();
+      if(!no || !name) return;
+      if(/番号|氏名/.test(no + name)) return;   // ヘッダー行スキップ
+      rows.push({ no:no, name:name, group:(c[2]||'').trim(), kana:(c[3]||'').trim() });
+    });
+    if(!rows.length){ toast('取り込める行がありません'); return; }
+    var i = 0, total = rows.length;
+    function nextBatch(){
+      if(i >= total){ closeModal(); toast(total + '名を取り込みました'); loadMembers(renderRoster); return; }
+      var batch = db.batch(), end = Math.min(i + 400, total);
+      for(; i < end; i++){
+        var r = rows[i];
+        batch.set(db.collection('checkinMembers').doc(r.no), {
+          no: r.no, union: gUnion, name: r.name, group: r.group, kana: r.kana,
+          active: true, updatedAt: FV.serverTimestamp()
+        }, {merge: true});
+      }
+      batch.commit().then(nextBatch).catch(function(e){
+        toast(permMsg(e, 'CSV取込はユニオン管理者のみ可能です'));
+      });
+    }
+    nextBatch();
+  };
+};
+$('btnCsvOut').onclick = function(){
+  var rows = [['番号','氏名','系列','かな','状態']];
+  gMembers.forEach(function(m){
+    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? '有効' : '無効']);
+  });
+  csvDownload('members_' + gUnion + '.csv', rows);
+};
+
+/* ---------- イベント（月単位） ---------- */
+function shiftMonth(d){
+  gMonth.m += d;
+  if(gMonth.m < 1){ gMonth.m = 12; gMonth.y--; }
+  if(gMonth.m > 12){ gMonth.m = 1; gMonth.y++; }
+  loadEvents(); loadStats();
+}
+$('evPrev').onclick = function(){ shiftMonth(-1); };
+$('evNext').onclick = function(){ shiftMonth(1); };
+$('stPrev').onclick = function(){ shiftMonth(-1); };
+$('stNext').onclick = function(){ shiftMonth(1); };
+
+function loadEvents(){
+  var key = monthKey(gMonth.y, gMonth.m);
+  $('evMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
+  $('stMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
+  db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+    gEvents = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if((ev.unions || []).indexOf(gUnion) >= 0) gEvents.push(ev);
+    });
+    gEvents.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    renderEvents();
+    renderRecSelect();
+  }).catch(function(e){ toast('イベント読込エラー: ' + e.message); });
+}
+function renderEvents(){
+  var t = todayStr(), html = '';
+  gEvents.forEach(function(ev){
+    var others = (ev.unions || []).filter(function(u){ return u !== ev.hostUnion; });
+    var joint = others.length
+      ? '<span class="jointtag">合同: ' + esc((ev.unions||[]).join(' + ')) + '</span>' : '';
+    html += '<div class="evrow' + (ev.date === t ? ' today' : '') + '">'
+      + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
+      + '<b>' + esc(ev.name || '') + '</b>' + joint
+      + (ev.date === t ? '<span class="pill g">本日</span>' : '')
+      + '<span class="att" id="evCt_' + esc(ev.id) + '">…</span>'
+      + '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>'
+      + '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>'
+      + '</div>';
+  });
+  $('evList').innerHTML = html || '<p style="color:var(--sub)">この月のイベントはまだありません。</p>';
+  // 出席数（count 集計）
+  gEvents.forEach(function(ev){
+    var q = db.collection('checkinEvents').doc(ev.id).collection('attendance');
+    try{
+      q.count().get().then(function(s){
+        var el = $('evCt_' + ev.id);
+        if(el) el.textContent = '出席 ' + s.data().count + '名';
+      }).catch(function(){ var el = $('evCt_' + ev.id); if(el) el.textContent = ''; });
+    }catch(e){ var el = $('evCt_' + ev.id); if(el) el.textContent = ''; }
+  });
+}
+$('evList').addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('button') : null;
+  if(!b) return;
+  var id = b.getAttribute('data-id'), a = b.getAttribute('data-a');
+  var ev = null; gEvents.forEach(function(x){ if(x.id === id) ev = x; });
+  if(!ev) return;
+  if(a === 'rec'){ startReception(ev); }
+  if(a === 'del'){
+    modal('<h2>イベント削除</h2><p>「' + esc(ev.date) + ' ' + esc(ev.name) + '」を削除しますか？<br>出席記録も見えなくなります。</p>'
+      + '<div class="btns"><button id="delCancel">キャンセル</button><button class="primary" id="delGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
+    $('delCancel').onclick = closeModal;
+    $('delGo').onclick = function(){
+      db.collection('checkinEvents').doc(id).delete().then(function(){
+        closeModal(); toast('削除しました'); loadEvents(); loadStats();
+      }).catch(function(err){ toast(permMsg(err, 'イベント削除は主催ユニオンの管理者のみ可能です')); });
+    };
+  }
+});
+$('btnAddEvent').onclick = function(){
+  var others = gUnions.filter(function(u){ return u !== gUnion; });
+  var chk = others.length
+    ? '<label>合同ユニオン（任意）</label>' + others.map(function(u, i){
+        return '<div class="chkrow"><input type="checkbox" id="evU' + i + '" value="' + esc(u) + '"><label for="evU' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc(u) + '</label></div>';
+      }).join('')
+    : '';
+  modal(
+    '<h2>新規イベント（主催: ' + esc(gUnion) + '）</h2>'
+    + '<label>日付</label><input type="date" id="evDate" value="' + todayStr() + '">'
+    + '<label>名称</label><input type="text" id="evName" placeholder="例: SYS / B-T / P&amp;P">'
+    + chk
+    + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">作成</button></div>'
+  );
+  $('evCancel').onclick = closeModal;
+  $('evSave').onclick = function(){
+    var date = $('evDate').value, name = $('evName').value.trim();
+    if(!date || !name){ toast('日付と名称は必須です'); return; }
+    var unions = [gUnion];
+    others.forEach(function(u, i){ if($('evU' + i) && $('evU' + i).checked) unions.push(u); });
+    db.collection('checkinEvents').add({
+      month: date.slice(0, 7), date: date, name: name,
+      hostUnion: gUnion, unions: unions,
+      createdBy: gUser.uid, createdAt: FV.serverTimestamp()
+    }).then(function(){
+      closeModal(); toast('イベントを作成しました');
+      gMonth = { y: parseInt(date.slice(0,4), 10), m: parseInt(date.slice(5,7), 10) };
+      loadEvents(); loadStats();
+    }).catch(function(e){ toast(permMsg(e, 'イベント作成はユニオン管理者のみ可能です')); });
+  };
+};
+
+/* ---------- 受付 ---------- */
+function renderRecSelect(){
+  var sel = $('recEvSel'), t = todayStr();
+  sel.innerHTML = '<option value="">— 選択してください —</option>' + gEvents.map(function(ev){
+    return '<option value="' + esc(ev.id) + '"' + (ev.date === t ? ' selected' : '') + '>'
+      + esc((ev.date || '').slice(5).replace('-', '/')) + ' ' + esc(ev.name || '')
+      + ((ev.unions || []).length > 1 ? '（合同）' : '') + '</option>';
+  }).join('');
+}
+$('btnRecStart').onclick = function(){
+  var id = $('recEvSel').value;
+  if(!id){ toast('イベントを選択してください'); return; }
+  var ev = null; gEvents.forEach(function(x){ if(x.id === id) ev = x; });
+  if(ev) startReception(ev);
+};
+$('btnRecStop').onclick = function(){ stopReception(); };
+
+function startReception(ev){
+  stopReception();
+  // タブを受付へ
+  Array.prototype.forEach.call(tabs, function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === 'pKiosk'); });
+  Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(p){ p.classList.remove('on'); });
+  $('pKiosk').classList.add('on');
+
+  gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null };
+  $('recNone').classList.add('hide');
+  $('recArea').classList.remove('hide');
+  $('btnRecStop').classList.remove('hide');
+  $('unionTallyTile').classList.toggle('hide', (ev.unions || []).length < 2);
+  $('recent').innerHTML = '<li style="color:var(--sub)">まだ受付はありません</li>';
+  stageIdle();
+
+  // 参加ユニオン分の名簿をロード
+  var loads = (ev.unions || [gUnion]).map(function(u){
+    return db.collection('checkinMembers').where('union', '==', u).get().then(function(qs){
+      qs.forEach(function(d){
+        var m = d.data(); m.no = d.id;
+        if(m.active !== false) gRec.roster[d.id] = m;
+      });
+    });
+  });
+  Promise.all(loads).then(function(){
+    toast('名簿を読み込みました（' + Object.keys(gRec.roster).length + '名）。受付を開始できます');
+  }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
+
+  // 出席のリアルタイム購読
+  gRec.unsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
+    .onSnapshot({ includeMetadataChanges: false }, function(qs){
+      if(!gRec) return;
+      gRec.att = {};
+      qs.forEach(function(d){ gRec.att[d.id] = d.data(); });
+      renderTallies();
+    }, function(e){ toast('同期エラー: ' + e.message); });
+
+  focusScan();
+}
+function stopReception(){
+  if(gRec && gRec.unsub) gRec.unsub();
+  gRec = null;
+  $('recArea').classList.add('hide');
+  $('recNone').classList.remove('hide');
+  $('btnRecStop').classList.add('hide');
+}
+
+var stageTimer = null;
+function stageIdle(){
+  var ev = gRec && gRec.ev;
+  $('stage').className = 'scanstage';
+  $('stageBody').innerHTML =
+    '<div class="wait-icon">🔴</div><h2 style="margin:0;font-size:22px;">カードをかざしてください</h2>'
+    + '<p class="stage-sub">' + (ev ? esc(ev.date + ' ' + ev.name) : '') + '　紙カード・スマホ会員証どちらもOK</p>';
+}
+function setStage(cls, html, sticky){
+  $('stage').className = 'scanstage ' + cls;
+  $('stageBody').innerHTML = html;
+  if(stageTimer) clearTimeout(stageTimer);
+  if(!sticky) stageTimer = setTimeout(stageIdle, 5000);
+}
+function focusScan(){ var b = $('scanBuf'); if(b) try{ b.focus(); }catch(e){} }
+$('stage').addEventListener('click', focusScan);
+// スキャナ入力（キーボードウェッジ）: 受付中は常に scanBuf へ
+document.addEventListener('keydown', function(e){
+  if(!gRec || !$('pKiosk').classList.contains('on')) return;
+  var tg = e.target;
+  var isField = tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA' || tg.tagName === 'SELECT');
+  if(isField && tg.id !== 'scanBuf') return;   // 手入力欄などはそのまま
+  if(!isField) focusScan();
+  if(e.key === 'Enter' && tg && tg.id === 'scanBuf'){
+    var v = tg.value.trim(); tg.value = '';
+    if(v) scan(v, 'scan');
+    e.preventDefault();
+  }
+});
+$('btnManual').onclick = function(){
+  var v = $('numIn').value.trim();
+  if(v){ scan(v, 'manual'); $('numIn').value = ''; }
+  focusScan();
+};
+$('numIn').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ $('btnManual').click(); } });
+
+function scan(raw, method){
+  if(!gRec) return;
+  // スマホ会員証形式 "m:412211:xxxx" にも対応（番号部分を抽出）
+  var no = raw;
+  var mm = /^m:(\w+):/.exec(raw);
+  if(mm) no = mm[1];
+  no = no.replace(/\.0$/, '');
+  var member = gRec.roster[no];
+  if(!member){
+    beep('ng');
+    setStage('ng',
+      '<span class="hit-badge">未登録の番号</span>'
+      + '<div class="hit-name mono" style="font-size:30px;">' + esc(no) + '</div>'
+      + '<p class="stage-sub">名簿にない番号です。「ゲスト受付」から手動で登録できます。</p>');
+    return;
+  }
+  if(gRec.att[no]){
+    beep('dup');
+    setStage('dup',
+      '<span class="hit-badge">出席済み</span>'
+      + '<div class="hit-name">' + esc(member.name) + '</div>'
+      + '<div class="hit-group">' + esc(member.group || '') + '</div>'
+      + '<p class="hit-meta">' + esc(gRec.att[no].atLocal || '') + ' に受付済みです（記録は増えません）</p>');
+    return;
+  }
+  writeAttendance(no, {
+    no: no, name: member.name || '', group: member.group || '',
+    union: member.union || gUnion, method: method
+  });
+  var joint = (gRec.ev.unions || []).length > 1;
+  beep('ok');
+  setStage('ok',
+    '<span class="hit-badge">✓ 出席</span>'
+    + '<div class="hit-name">' + esc(member.name) + '</div>'
+    + '<div class="hit-group">' + esc(member.group || '') + '</div>'
+    + (joint ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
+    + '<p class="hit-meta">' + nowHM() + '</p>');
+  addRecent(member.name, member.group || member.union || '');
+}
+function writeAttendance(id, data){
+  data.at = FV.serverTimestamp();
+  data.atLocal = nowHM();
+  data.by = gUser.uid;
+  // 楽観表示: 書込はバックグラウンド（オフライン時は自動キューイング）
+  gRec.att[id] = data; renderTallies();
+  db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(id)
+    .set(data)
+    .catch(function(e){
+      beep('ng');
+      toast(permMsg(e, '出席の記録権限がありません（参加ユニオンのメンバーのみ受付できます）'));
+    });
+}
+$('btnGuest').onclick = function(){
+  if(!gRec){ toast('先に受付を開始してください'); return; }
+  var unions = gRec.ev.unions || [gUnion];
+  modal(
+    '<h2>ゲスト受付</h2>'
+    + '<label>氏名</label><input type="text" id="gName">'
+    + '<label>所属ユニオン</label><select id="gUnion">'
+    + unions.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
+    + '</select>'
+    + '<label>系列（任意）</label><input type="text" id="gGroup" placeholder="紹介者の系列など">'
+    + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
+  );
+  $('gCancel').onclick = function(){ closeModal(); focusScan(); };
+  $('gGo').onclick = function(){
+    var name = $('gName').value.trim();
+    if(!name){ toast('氏名を入力してください'); return; }
+    var id = 'g' + Date.now();
+    writeAttendance(id, {
+      no: id, name: name, group: $('gGroup').value.trim() || 'ゲスト',
+      union: $('gUnion').value, method: 'guest', guest: true
+    });
+    beep('ok');
+    setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>');
+    addRecent(name, 'ゲスト');
+    closeModal(); focusScan();
+  };
+};
+function addRecent(name, sub){
+  var ul = $('recent');
+  if(ul.firstElementChild && ul.firstElementChild.textContent.indexOf('まだ') === 0) ul.innerHTML = '';
+  var li = document.createElement('li');
+  li.innerHTML = '<span class="tm">' + nowHM() + '</span><span class="who">' + esc(name) + '</span><span class="gr">' + esc(sub) + '</span>';
+  ul.insertBefore(li, ul.firstChild);
+  while(ul.children.length > 8) ul.removeChild(ul.lastChild);
+}
+function renderTallies(){
+  if(!gRec) return;
+  var total = 0, byUnion = {}, byGroup = {};
+  Object.keys(gRec.att).forEach(function(id){
+    var a = gRec.att[id]; total++;
+    byUnion[a.union || '?'] = (byUnion[a.union || '?'] || 0) + 1;
+    if(a.union === gUnion){
+      var g = a.group || 'その他';
+      byGroup[g] = (byGroup[g] || 0) + 1;
+    }
+  });
+  $('total').textContent = total;
+  $('ctr').textContent = total + '名';
+  $('unionTally').innerHTML = tallyHtml(byUnion);
+  $('groupTally').innerHTML = tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:12.5px;margin:0;">まだ出席がありません</p>';
+}
+function tallyHtml(map){
+  var keys = Object.keys(map).sort(function(a,b){ return map[b] - map[a]; });
+  var max = 1;
+  keys.forEach(function(k){ if(map[k] > max) max = map[k]; });
+  return keys.map(function(k){
+    return '<div class="tallyrow"><span class="nm">' + esc(k) + '</span>'
+      + '<span class="meter"><i style="width:' + (map[k] / max * 100) + '%"></i></span>'
+      + '<span class="ct">' + map[k] + '</span></div>';
+  }).join('');
+}
+
+/* ---------- 集計 ---------- */
+var gStat = null;
+$('btnStatReload').onclick = function(){ loadStats(); };
+function loadStats(){
+  var key = monthKey(gMonth.y, gMonth.m);
+  $('statBody').innerHTML = '<p style="color:var(--sub)">集計中…</p>';
+  db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+    var evs = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if((ev.unions || []).indexOf(gUnion) >= 0) evs.push(ev);
+    });
+    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    if(!evs.length){
+      $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
+      gStat = null; return;
+    }
+    var attMaps = {};   // eventId -> {no: att}
+    var reads = evs.map(function(ev){
+      return db.collection('checkinEvents').doc(ev.id).collection('attendance')
+        .where('union', '==', gUnion).get().then(function(aqs){
+          var m = {};
+          aqs.forEach(function(d){ m[d.id] = d.data(); });
+          attMaps[ev.id] = m;
+        });
+    });
+    var ensureMembers = gMembersLoaded ? Promise.resolve() : new Promise(function(res){ loadMembers(res); });
+    Promise.all(reads.concat([ensureMembers])).then(function(){
+      renderStats(evs, attMaps);
+    });
+  }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
+}
+function renderStats(evs, attMaps){
+  var held = evs.length;
+  // 行: 有効メンバー + 出席したゲスト
+  var rows = [];
+  gMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', member: true }); });
+  var known = {};
+  rows.forEach(function(r){ known[r.no] = true; });
+  evs.forEach(function(ev){
+    Object.keys(attMaps[ev.id]).forEach(function(no){
+      if(!known[no]){
+        known[no] = true;
+        var a = attMaps[ev.id][no];
+        rows.push({ no: no, name: a.name + (a.guest ? '（ゲスト）' : ''), group: a.group || '', member: !a.guest });
+      }
+    });
+  });
+  var totalAtt = 0, byGroup = {}, sumRate = 0, rateN = 0;
+  rows.forEach(function(r){
+    r.marks = evs.map(function(ev){ return attMaps[ev.id][r.no] ? 1 : 0; });
+    r.count = r.marks.reduce(function(a,b){ return a + b; }, 0);
+    r.rate = Math.round(r.count / held * 100);
+    totalAtt += r.count;
+    if(r.count > 0) byGroup[r.group || 'その他'] = (byGroup[r.group || 'その他'] || 0) + r.count;
+    if(r.member){ sumRate += r.rate; rateN++; }   // 平均稼働率はメンバーのみ（ゲスト除外）
+  });
+  var avgRate = rateN ? Math.round(sumRate / rateN) : 0;
+  rows.sort(function(a,b){ return b.count - a.count || (a.no < b.no ? -1 : 1); });
+  gStat = { evs: evs, rows: rows, held: held };
+
+  var html = '<div class="stattiles">'
+    + '<div class="tile"><h3>開催数</h3><div class="bignum">' + held + '<small>回</small></div></div>'
+    + '<div class="tile"><h3>のべ出席</h3><div class="bignum">' + totalAtt + '<small>名</small></div></div>'
+    + '<div class="tile"><h3>平均稼働率</h3><div class="bignum">' + avgRate + '<small>%</small></div></div>'
+    + '</div>'
+    + '<div class="sectionhead"><h2>系列別のべ出席</h2><span class="note">' + esc(gUnion) + '</span></div>'
+    + '<div class="tile">' + (tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷開催数</span></div>'
+    + '<div class="tblwrap"><table class="matrix"><thead><tr><th>氏名</th><th>系列</th>'
+    + evs.map(function(ev){ return '<th>' + esc((ev.date || '').slice(5).replace('-', '/')) + '</th>'; }).join('')
+    + '<th>回数</th><th>稼働率</th></tr></thead><tbody>'
+    + rows.map(function(r){
+        return '<tr><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.group) + '</td>'
+          + r.marks.map(function(v){ return '<td class="mk">' + (v ? '<span class="y">●</span>' : '<span class="nn">・</span>') + '</td>'; }).join('')
+          + '<td class="mono">' + r.count + '</td><td class="rate">' + (r.member ? r.rate + '%' : '—') + '</td></tr>';
+      }).join('')
+    + '</tbody></table></div>';
+  $('statBody').innerHTML = html;
+}
+$('btnStatCsv').onclick = function(){
+  if(!gStat){ toast('集計データがありません'); return; }
+  var head = ['番号','氏名','系列'].concat(gStat.evs.map(function(ev){ return ev.date + ' ' + ev.name; })).concat(['出席回数','稼働率%']);
+  var rows = [head];
+  gStat.rows.forEach(function(r){
+    rows.push([r.no, r.name, r.group].concat(r.marks.map(function(v){ return v ? 1 : 0; })).concat([r.count, r.rate]));
+  });
+  csvDownload('kadou_' + gUnion + '_' + monthKey(gMonth.y, gMonth.m) + '.csv', rows);
+};
+
+})();
+</script>
+</body>
+</html>
