@@ -240,6 +240,11 @@ service cloud.firestore {
       allow create: if isCkAdmin(request.resource.data.get('union',''));
       allow update: if isCkAdmin(resource.data.get('union',''))
                     && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')));
+      // 会員証の発行・再発行・無効化はログイン済みなら誰でも可
+      // （変更できるのはカード関連フィールドのみ。名簿本体の編集は管理者のみ）
+      allow update: if signedIn()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['cardToken','cardSig','cardStatus']);
       allow delete: if isCkAdmin(resource.data.get('union',''));
     }
 
@@ -284,12 +289,13 @@ service cloud.firestore {
     }
 
     // スマホ会員証: トークン(URL)を知っている本人だけが自分のカードを表示できる。
-    // get のみ公開（list 不可＝一覧の抜き出しはできない）。発行・無効化は管理者のみ。
+    // get のみ公開（list 不可＝一覧の抜き出しはできない）。
+    // 発行・再発行・無効化はログイン済みなら誰でも可（受付スタッフが配布できるように）。
     match /cards/{token} {
       allow get: if true;
       allow list: if false;
-      allow create: if isCkAdmin(request.resource.data.get('union',''));
-      allow delete: if isCkAdmin(resource.data.get('union',''));
+      allow create: if signedIn();
+      allow delete: if signedIn();
       allow update: if false;
     }
   }
