@@ -556,6 +556,7 @@ function renderRoster(){
       + '<td><div class="rowbtns">'
       + '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
       + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
+      + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
       + '</div></td></tr>';
   });
   tb.innerHTML = html || '<tr><td colspan="5" style="color:var(--sub)">メンバーがいません。「＋ メンバー追加」または「CSV取込」で登録してください。</td></tr>';
@@ -607,6 +608,20 @@ $('rosterBody').addEventListener('click', function(e){
     db.collection('checkinMembers').doc(no).set({active: !(m.active !== false)}, {merge:true})
       .then(function(){ loadMembers(renderRoster); })
       .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者のみ可能です')); });
+  }
+  if(a === 'del'){
+    modal('<h2>メンバー削除</h2>'
+      + '<p>「' + esc(m.name || '') + '」（' + esc(no) + '）を名簿から削除しますか？<br>'
+      + '<small>過去の出席記録は消えません。退会・休会の場合は削除ではなく「無効化」がおすすめです（集計から外れ、いつでも戻せます）。</small></p>'
+      + '<div class="btns"><button id="mdCancel">キャンセル</button>'
+      + '<button class="primary" id="mdGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
+    $('mdCancel').onclick = closeModal;
+    $('mdGo').onclick = function(){
+      db.collection('checkinMembers').doc(no).delete().then(function(){
+        closeModal(); toast('削除しました');
+        loadMembers(renderRoster);
+      }).catch(function(err){ toast(permMsg(err, '名簿の削除はユニオン管理者のみ可能です')); });
+    };
   }
 });
 
