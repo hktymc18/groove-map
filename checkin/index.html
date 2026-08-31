@@ -1380,6 +1380,7 @@ function renderEvents(){
       + (isSelf && canDel ? '<button data-a="selftog" data-id="' + esc(ev.id) + '"' + (ev.selfOpen ? '' : ' class="primary"') + '>'
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
+      + (canRec ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
       + '</div>';
@@ -1403,6 +1404,7 @@ $('evList').addEventListener('click', function(e){
   var ev = null; gEvents.forEach(function(x){ if(x.id === id) ev = x; });
   if(!ev) return;
   if(a === 'rec'){ startReception(ev); }
+  if(a === 'fin'){ financeModal(ev); }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
@@ -1488,6 +1490,119 @@ function eventForm(ev){
       loadEvents(); loadStats();
     }).catch(function(e){ toast(permMsg(e, 'イベントの作成・編集は主催ユニオンの管理者のみ可能です')); });
   };
+}
+
+/* ---------- 会計（BASE集計表のデジタル版） ---------- */
+function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
+function financeModal(ev){
+  db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main').get().then(function(snap){
+    var f = snap.exists ? snap.data() : {};
+    var inc = f.income || [
+      { label: 'ビジメン', unit: 1000, count: '' },
+      { label: 'ビジメン', unit: 500, count: '' },
+      { label: 'ビジメン（オンライン）', unit: 1000, count: '' },
+      { label: 'ビジメン（オンライン）', unit: 500, count: '' },
+      { label: '', unit: '', count: '' },
+      { label: '', unit: '', count: '' }
+    ];
+    var exp = f.expenses || [
+      { label: 'スピーカー差し入れ', note: '', amount: '', receipt: false },
+      { label: '会場使用料', note: '', amount: '', receipt: false },
+      { label: 'その他', note: '', amount: '', receipt: false },
+      { label: 'その他', note: '', amount: '', receipt: false },
+      { label: 'その他', note: '', amount: '', receipt: false },
+      { label: 'その他', note: '', amount: '', receipt: false }
+    ];
+    var incHtml = inc.map(function(r, i){
+      return '<div style="display:flex;gap:6px;align-items:center;margin:5px 0;">'
+        + '<input type="text" id="fiL' + i + '" value="' + esc(r.label) + '" placeholder="項目" style="flex:1;min-width:0;padding:6px 8px;">'
+        + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+        + '<input type="text" id="fiU' + i + '" inputmode="numeric" value="' + esc(r.unit) + '" style="width:58px;padding:6px 6px;text-align:right;">'
+        + '<span style="font-size:12px;color:var(--sub);">×</span>'
+        + '<input type="text" id="fiC' + i + '" inputmode="numeric" value="' + esc(r.count) + '" style="width:44px;padding:6px 6px;text-align:right;">'
+        + '<span style="font-size:12px;color:var(--sub);">名 =</span>'
+        + '<span id="fiA' + i + '" class="mono" style="width:72px;text-align:right;font-size:13px;">¥0</span>'
+        + '</div>';
+    }).join('');
+    var expHtml = exp.map(function(r, i){
+      return '<div style="display:flex;gap:6px;align-items:center;margin:5px 0;flex-wrap:wrap;">'
+        + '<input type="text" id="feL' + i + '" value="' + esc(r.label) + '" placeholder="項目" style="width:120px;padding:6px 8px;">'
+        + '<input type="text" id="feN' + i + '" value="' + esc(r.note) + '" placeholder="内容" style="flex:1;min-width:80px;padding:6px 8px;">'
+        + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+        + '<input type="text" id="feA' + i + '" inputmode="numeric" value="' + esc(r.amount) + '" style="width:70px;padding:6px 6px;text-align:right;">'
+        + '<label style="font-size:11.5px;color:var(--sub);white-space:nowrap;"><input type="checkbox" id="feR' + i + '"' + (r.receipt ? ' checked' : '') + '> 領収書</label>'
+        + '</div>';
+    }).join('');
+    modal(
+      '<h2>会計 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
+      + '<p style="font-size:12px;color:var(--sub);margin:0 0 8px;">'
+      + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
+      + '<label style="color:var(--green);">収入（＋）</label>' + incHtml
+      + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(+)計 <span id="fiTotal" class="mono">¥0</span></div>'
+      + '<label style="color:var(--accent);">支出（−）</label>' + expHtml
+      + '<div style="display:flex;gap:6px;align-items:center;margin:5px 0;">'
+      + '<span style="width:120px;font-size:13.5px;">不足金</span><span style="flex:1"></span>'
+      + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+      + '<input type="text" id="fnShort" inputmode="numeric" value="' + esc(f.shortage || '') + '" style="width:70px;padding:6px 6px;text-align:right;">'
+      + '</div>'
+      + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(−)計 <span id="feTotal" class="mono">¥0</span></div>'
+      + '<div style="text-align:right;font-family:\'Zen Kaku Gothic New\',sans-serif;font-weight:900;font-size:18px;border-top:2px solid var(--line);padding-top:8px;">'
+      + '計 <span id="fnNet" class="mono">¥0</span></div>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;">'
+      + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || '') + '" style="flex:1;min-width:0;">'
+      + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || '') + '" style="flex:1;min-width:0;">'
+      + '</div>'
+      + '<div class="btns"><button id="fnCancel">閉じる</button><button class="primary" id="fnSave">保存</button></div>'
+    );
+    // 出席数を参考表示
+    try{
+      db.collection('checkinEvents').doc(ev.id).collection('attendance').count().get().then(function(s){
+        var el = $('fnAtt'); if(el) el.textContent = '出席 ' + s.data().count + '名（参考）';
+      }).catch(function(){});
+    }catch(e){}
+    function num(v){ var n = parseInt(String(v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n; }
+    function recompute(){
+      var ti = 0;
+      inc.forEach(function(r, i){
+        var a = num($('fiU' + i).value) * num($('fiC' + i).value);
+        $('fiA' + i).textContent = yen(a);
+        ti += a;
+      });
+      var te = num($('fnShort').value);
+      exp.forEach(function(r, i){ te += num($('feA' + i).value); });
+      $('fiTotal').textContent = yen(ti);
+      $('feTotal').textContent = yen(te);
+      $('fnNet').textContent = yen(ti - te);
+      return { ti: ti, te: te };
+    }
+    document.querySelector('.modal').addEventListener('input', recompute);
+    recompute();
+    $('fnCancel').onclick = closeModal;
+    $('fnSave').onclick = function(){
+      var totals = recompute();
+      var income = inc.map(function(r, i){
+        return { label: $('fiL' + i).value.trim(), unit: num($('fiU' + i).value),
+                 count: num($('fiC' + i).value), amount: num($('fiU' + i).value) * num($('fiC' + i).value) };
+      });
+      var expenses = exp.map(function(r, i){
+        return { label: $('feL' + i).value.trim(), note: $('feN' + i).value.trim(),
+                 amount: num($('feA' + i).value), receipt: $('feR' + i).checked };
+      });
+      $('fnSave').disabled = true;
+      db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main').set({
+        income: income, expenses: expenses,
+        shortage: num($('fnShort').value),
+        incomeTotal: totals.ti, expenseTotal: totals.te, net: totals.ti - totals.te,
+        mcName: $('fnMc').value.trim(), receptionName: $('fnRc').value.trim(),
+        updatedAt: FV.serverTimestamp(), updatedBy: gUser.uid
+      }).then(function(){
+        closeModal(); toast('会計を保存しました（計 ' + yen(totals.ti - totals.te) + '）');
+      }).catch(function(e){
+        $('fnSave').disabled = false;
+        toast(permMsg(e, '会計の記録は参加ユニオンのメンバーのみ可能です'));
+      });
+    };
+  }).catch(function(e){ toast('会計の読込エラー: ' + e.message); });
 }
 
 /* ---------- 受付 ---------- */
@@ -1594,12 +1709,25 @@ $('btnManual').onclick = function(){
 };
 $('numIn').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ $('btnManual').click(); } });
 
+// リーダー読み取り時にIME(日本語入力)がONだと全角数字・全角コロン・かなに化けるため復元する
+function normalizeScan(raw){
+  var s = String(raw)
+    .replace(/[！-～]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })  // 全角英数記号→半角
+    .replace(/[　\s]/g, '')
+    .replace(/[あぁア]/g, 'a').replace(/[いぃイ]/g, 'i').replace(/[うぅウ]/g, 'u')
+    .replace(/[えぇエ]/g, 'e').replace(/[おぉオ]/g, 'o')   // ローマ字IMEで母音がかな化した場合の救済
+    .replace(/ー/g, '-');
+  return s;
+}
 function scan(raw, method){
   if(!gRec) return;
+  raw = normalizeScan(raw);
   // スマホ会員証形式 "m:412211:xxxx"（番号+署名）にも対応
   var no = raw, sig = null;
-  var mm = /^m:([\w-]+):(\w+)/.exec(raw);
+  var mm = /^m:([\w-]+):(\w*)/.exec(raw);
   if(mm){ no = mm[1]; sig = mm[2]; }
+  // 署名がIMEで復元不能に化けている場合は、署名なし（紙カード同等の扱い）として受付する
+  if(sig && !/^[0-9a-f]{4,}$/.test(sig)) sig = null;
   no = no.replace(/\.0$/, '');
   var member = gRec.roster[no];
   if(member && sig && member.cardSig && sig !== member.cardSig){
