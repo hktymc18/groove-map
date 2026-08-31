@@ -244,21 +244,42 @@ service cloud.firestore {
     }
 
     match /checkinEvents/{eid} {
-      allow read: if signedIn();
+      // セルフチェックイン(会員証ページ・未ログイン)からイベント情報を参照するため公開読取
+      allow read: if true;
       // 作成は主催ユニオンの管理者。主催は必ず参加ユニオンに含める
       allow create: if isCkAdmin(request.resource.data.get('hostUnion',''))
                     && request.resource.data.get('unions',[])
                          .hasAny([request.resource.data.get('hostUnion','')]);
       allow update, delete: if isCkAdmin(resource.data.get('hostUnion',''));
 
-      // 出席: オーナー、または参加ユニオン(unions配列)に所属する有効メンバーなら記録できる
       match /attendance/{aid} {
         allow read: if signedIn();
+        // 通常受付: オーナー、または参加ユニオン(unions配列)に所属する有効メンバー
         allow create, update, delete: if isOwnerAdmin()
           || (signedIn()
               && notDisabled(request.auth.uid)
               && get(/databases/$(database)/documents/checkinEvents/$(eid))
                    .data.get('unions',[]).hasAny([ckMyUnion()]));
+        // セルフチェックイン: 未ログインでも「有効な会員証トークンを持つ本人」が、
+        // セルフ受付中(mode=self かつ selfOpen=true)のイベントに自分の出席を1回だけ作成できる。
+        // 会場コード必須のイベントはコード一致も要求。update不可なので二重・改ざんは不可。
+        allow create: if request.auth == null
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('mode','') == 'self'
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('selfOpen', false) == true
+          && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+          && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+               .data.get('no','') == aid
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('unions',[])
+               .hasAny([get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+                          .data.get('union','')])
+          && (get(/databases/$(database)/documents/checkinEvents/$(eid))
+                .data.get('requireCode', false) != true
+              || request.resource.data.get('code','') ==
+                 get(/databases/$(database)/documents/checkinEvents/$(eid))
+                   .data.get('venueCode','__none'));
       }
     }
 
