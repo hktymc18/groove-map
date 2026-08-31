@@ -1236,7 +1236,9 @@ function renderEvents(){
     var canDel = canEditUnion(ev.hostUnion);
     html += '<div class="evrow' + (ev.date === t ? ' today' : '') + '">'
       + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
-      + '<b>' + esc(ev.name || '') + '</b>' + joint
+      + '<b>' + esc(ev.name || '') + '</b>'
+      + (ev.speaker ? '<span style="color:var(--sub);font-size:13px;">🎤 ' + esc(ev.speaker) + '</span>' : '')
+      + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
       + '<span class="att" id="evCt_' + esc(ev.id) + '">…</span>'
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
@@ -1284,6 +1286,7 @@ $('btnAddEvent').onclick = function(){
     '<h2>新規イベント（主催: ' + esc(gEventUnion) + '）</h2>'
     + '<label>日付</label><input type="date" id="evDate" value="' + todayStr() + '">'
     + '<label>名称</label><input type="text" id="evName" placeholder="例: SYS / B-T / P&amp;P">'
+    + '<label>スピーカー（任意）</label><input type="text" id="evSpeaker" placeholder="例: 馬越PD">'
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">作成</button></div>'
   );
@@ -1295,6 +1298,7 @@ $('btnAddEvent').onclick = function(){
     others.forEach(function(u, i){ if($('evU' + i) && $('evU' + i).checked) unions.push(u); });
     db.collection('checkinEvents').add({
       month: date.slice(0, 7), date: date, name: name,
+      speaker: $('evSpeaker').value.trim(),
       hostUnion: gEventUnion, unions: unions,
       createdBy: gUser.uid, createdAt: FV.serverTimestamp()
     }).then(function(){
@@ -1378,7 +1382,8 @@ function stageIdle(){
   $('stage').className = 'scanstage';
   $('stageBody').innerHTML =
     '<div class="wait-icon">🔴</div><h2 style="margin:0;font-size:22px;">カードをかざしてください</h2>'
-    + '<p class="stage-sub">' + (ev ? esc(ev.date + ' ' + ev.name) : '') + '　紙カード・スマホ会員証どちらもOK</p>';
+    + '<p class="stage-sub">' + (ev ? esc(ev.date + ' ' + ev.name) + (ev.speaker ? '（🎤 ' + esc(ev.speaker) + '）' : '') : '')
+    + '　紙カード・スマホ会員証どちらもOK</p>';
 }
 function setStage(cls, html, sticky){
   $('stage').className = 'scanstage ' + cls;
