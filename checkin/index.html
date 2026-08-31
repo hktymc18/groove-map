@@ -154,6 +154,40 @@ tr:last-child td{border-bottom:none;}
 .modal .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
 .chkrow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;}
 
+/* スマホ会員証 */
+.cardwrap{max-width:360px;margin:6vh auto 0;padding:0 16px;text-align:center;}
+.membercard{
+  background:#fff;color:#1c1e19;border-radius:18px;padding:26px 20px 22px;
+  box-shadow:0 6px 24px rgba(0,0,0,.18);
+}
+.mc-brand{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:13px;letter-spacing:.14em;color:#c0392b;}
+.mc-name{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:26px;margin:2px 0 0;}
+.mc-group{font-size:13px;color:#6f6d63;margin-bottom:14px;}
+#mcQr{display:flex;justify-content:center;min-height:180px;align-items:center;}
+#mcQr img,#mcQr canvas{border:8px solid #fff;outline:1px solid #e2e0d8;}
+.mc-no{font-size:12.5px;color:#6f6d63;margin-top:12px;}
+.mc-union{font-size:12px;font-weight:700;color:#2e6b52;margin-top:2px;}
+.mc-tip{font-size:12.5px;color:var(--sub);margin-top:16px;line-height:1.8;}
+.mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
+
+/* 紙カード印刷 */
+#printArea{display:none;}
+@media print{
+  body > *{display:none !important;}
+  #printArea{display:block !important;}
+  .pcard{
+    width:91mm;height:55mm;box-sizing:border-box;display:inline-flex;flex-direction:column;
+    align-items:center;justify-content:center;border:0.2mm dashed #bbb;
+    page-break-inside:avoid;overflow:hidden;color:#000;background:#fff;text-align:center;
+  }
+  .pcard .pn{font-weight:900;font-size:14pt;font-family:"Zen Kaku Gothic New",sans-serif;}
+  .pcard .pg{font-size:8pt;color:#555;}
+  .pcard .pq{margin:2mm 0;}
+  .pcard .pq img,.pcard .pq canvas{width:22mm !important;height:22mm !important;}
+  .pcard .pno{font-size:8pt;font-family:"IBM Plex Mono",monospace;color:#555;}
+}
+@page{size:A4;margin:8mm;}
+
 /* toast */
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
   padding:9px 20px;border-radius:99px;font-size:13.5px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;}
@@ -280,6 +314,9 @@ tr:last-child td{border-bottom:none;}
       <span style="font-size:13px;font-weight:700;" id="selCount">選択中: 0名</span>
       <button id="btnDelSel" disabled>選択を削除</button>
       <span style="flex:1"></span>
+      <button id="btnCardBulk">会員証一括発行</button>
+      <button id="btnCardUrls">会員証URL一覧</button>
+      <button id="btnPrintCards">カード印刷</button>
       <button id="btnDelAll" class="danger">全削除…</button>
     </div>
     <div class="tblwrap">
@@ -319,12 +356,30 @@ tr:last-child td{border-bottom:none;}
   </main>
 </div>
 
+<!-- ═══ スマホ会員証（本人向け・ログイン不要） ═══ -->
+<div id="vCard" class="hide">
+  <div class="cardwrap">
+    <div class="membercard">
+      <div class="mc-brand">BASE CHECK-IN</div>
+      <div class="mc-name" id="mcName">…</div>
+      <div class="mc-group" id="mcGroup"></div>
+      <div id="mcQr"></div>
+      <div class="mc-no mono" id="mcNo"></div>
+      <div class="mc-union" id="mcUnion"></div>
+    </div>
+    <p class="mc-tip">受付でこのQRコードをかざしてください。<br>画面を明るくすると読み取りやすくなります。<br>ブラウザの「ホーム画面に追加」をしておくと次回すぐ開けます。</p>
+    <p class="mc-err" id="mcErr"></p>
+  </div>
+</div>
+
+<div id="printArea"></div>
 <div id="modalHost"></div>
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -375,10 +430,25 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
 }
+function makeQr(el, text, size){
+  el.innerHTML = '';
+  if(window.QRCode){
+    new QRCode(el, { text: text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+  } else {
+    el.innerHTML = '<div class="mono" style="padding:20px;border:1px dashed #ccc;color:#555;">' + esc(text) + '</div>';
+  }
+}
+function randToken(){
+  var a = new Uint8Array(16), s = '';
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  for(var i = 0; i < a.length; i++) s += (a[i] < 16 ? '0' : '') + a[i].toString(16);
+  return s;
+}
+function cardUrl(token){ return location.href.split('#')[0] + '#c=' + token; }
 function modal(html){
   var host = $('modalHost');
   host.innerHTML = '<div class="modalback"><div class="modal">' + html + '</div></div>';
@@ -462,7 +532,38 @@ $('btnLogout').onclick = function(){ auth.signOut(); };
 $('pfLogout').onclick = function(){ auth.signOut(); };
 $('actLogout').onclick = function(){ auth.signOut(); };
 
+/* ── スマホ会員証モード（#c=トークン で開くとログイン不要の会員証表示） ── */
+var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
+function renderCard(c){
+  $('mcName').textContent = c.name || '';
+  $('mcGroup').textContent = c.group || '';
+  $('mcNo').textContent = 'No. ' + (c.no || '');
+  $('mcUnion').textContent = c.union || '';
+  makeQr($('mcQr'), 'm:' + c.no + ':' + gCardToken.slice(0, 6), 180);
+}
+function showCardView(token){
+  showView('vCard');
+  var cached = null;
+  try{ cached = JSON.parse(localStorage.getItem('bci_card_' + token) || 'null'); }catch(e){}
+  if(cached) renderCard(cached);
+  db.collection('cards').doc(token).get().then(function(snap){
+    if(snap.exists){
+      var c = snap.data();
+      renderCard(c);
+      try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union })); }catch(e){}
+    } else {
+      try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
+      $('mcName').textContent = '—'; $('mcQr').innerHTML = ''; $('mcNo').textContent = ''; $('mcGroup').textContent = ''; $('mcUnion').textContent = '';
+      $('mcErr').textContent = 'この会員証は無効です。再発行された可能性があります。ユニオンの管理者に確認してください。';
+    }
+  }).catch(function(){
+    if(!cached) $('mcErr').textContent = '読み込みに失敗しました。電波の良いところで再読み込みしてください。';
+  });
+}
+if(gCardToken){ showCardView(gCardToken); }
+
 auth.onAuthStateChanged(function(u){
+  if(gCardToken) return;   // 会員証モード中は通常画面に切り替えない
   gUser = u;
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
@@ -649,8 +750,10 @@ function renderRoster(){
       + (edit ? '<td><input type="checkbox" class="selchk" data-no="' + esc(m.no) + '"' + (gSel[m.no] ? ' checked' : '') + '></td>' : '')
       + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b></td>'
       + '<td>' + esc(m.group || '') + '</td>'
-      + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>') + '</td>'
+      + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>')
+      + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
       + (edit ? '<td><div class="rowbtns">'
+        + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
         + '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
         + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
         + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
@@ -794,6 +897,7 @@ $('rosterBody').addEventListener('click', function(e){
   var m = null;
   gMembers.forEach(function(x){ if(x.no === no) m = x; });
   if(!m) return;
+  if(a === 'card') cardModal(m);
   if(a === 'edit') memberForm(m);
   if(a === 'tog'){
     db.collection('checkinMembers').doc(no).set({active: !(m.active !== false)}, {merge:true})
@@ -816,6 +920,147 @@ $('rosterBody').addEventListener('click', function(e){
     };
   }
 });
+
+/* ── スマホ会員証の発行・管理 ── */
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast('コピーしました'); },
+      function(){ window.prompt('コピーしてください:', text); });
+  } else {
+    window.prompt('コピーしてください:', text);
+  }
+}
+function issueCard(m, cb){
+  var token = randToken();
+  var batch = db.batch();
+  if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));   // 旧カードを無効化
+  batch.set(db.collection('cards').doc(token), {
+    no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
+    createdAt: FV.serverTimestamp()
+  });
+  batch.set(db.collection('checkinMembers').doc(m.no), {
+    cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
+  }, { merge: true });
+  return batch.commit().then(function(){
+    m.cardToken = token; m.cardSig = token.slice(0, 6);
+    if(cb) cb(token);
+  }).catch(function(e){ toast(permMsg(e, '会員証の発行はユニオン管理者のみ可能です')); });
+}
+function revokeCard(m, cb){
+  var batch = db.batch();
+  if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
+  batch.set(db.collection('checkinMembers').doc(m.no), {
+    cardToken: FV.delete(), cardSig: FV.delete(), cardStatus: 'revoked'
+  }, { merge: true });
+  return batch.commit().then(function(){
+    delete m.cardToken; delete m.cardSig;
+    if(cb) cb();
+  }).catch(function(e){ toast(permMsg(e, '会員証の無効化はユニオン管理者のみ可能です')); });
+}
+function cardModal(m){
+  var body;
+  if(!m.cardToken){
+    body = '<p style="font-size:14px;">まだ発行されていません。発行するとこの人専用のURLが作られます。<br><small>URLをLINE等で本人に送るだけで会員証になります（ログイン不要）。</small></p>'
+      + '<div class="btns"><button id="cmClose">閉じる</button><button class="primary" id="cmIssue">発行する</button></div>';
+  } else {
+    var url = cardUrl(m.cardToken);
+    body = '<label>この人専用の会員証URL（LINE等で本人に送る）</label>'
+      + '<input type="text" id="cmUrl" readonly value="' + esc(url) + '" style="width:100%;font-size:12px;">'
+      + '<div class="btns" style="justify-content:flex-start;margin-top:10px;">'
+      + '<button class="primary" id="cmCopy">URLをコピー</button>'
+      + '<button id="cmReissue">再発行</button>'
+      + '<button id="cmRevoke" class="danger">無効化</button>'
+      + '</div>'
+      + '<p style="font-size:12px;color:var(--sub);margin-top:10px;">再発行=機種変更・紛失時（旧URLは即使えなくなります）。無効化=退会時。</p>'
+      + '<div class="btns"><button id="cmClose">閉じる</button></div>';
+  }
+  modal('<h2>スマホ会員証 — ' + esc(m.name || '') + '</h2>' + body);
+  $('cmClose').onclick = closeModal;
+  var bIssue = $('cmIssue'), bCopy = $('cmCopy'), bRe = $('cmReissue'), bRv = $('cmRevoke');
+  if(bIssue) bIssue.onclick = function(){
+    bIssue.disabled = true;
+    issueCard(m, function(){ toast('発行しました'); renderRoster(); cardModal(m); });
+  };
+  if(bCopy) bCopy.onclick = function(){ copyText($('cmUrl').value); };
+  if(bRe) bRe.onclick = function(){
+    if(!window.confirm(m.name + ' さんの会員証を再発行しますか？\n旧URLは使えなくなります。')) return;
+    issueCard(m, function(){ toast('再発行しました。新しいURLを送ってください'); renderRoster(); cardModal(m); });
+  };
+  if(bRv) bRv.onclick = function(){
+    if(!window.confirm(m.name + ' さんの会員証を無効化しますか？')) return;
+    revokeCard(m, function(){ toast('無効化しました'); renderRoster(); closeModal(); });
+  };
+}
+$('btnCardBulk').onclick = function(){
+  var targets = gMembers.filter(function(m){ return m.active !== false && !m.cardToken; });
+  if(!targets.length){ toast('未発行のメンバーはいません'); return; }
+  modal('<h2>会員証の一括発行</h2>'
+    + '<p>「' + esc(gRosterUnion) + '」の未発行メンバー <b>' + targets.length + '名</b> 分の会員証URLを発行します。<br><small>発行後「会員証URL一覧」でCSVを書き出して配布できます。</small></p>'
+    + '<div class="btns"><button id="cbCancel">キャンセル</button><button class="primary" id="cbGo">' + targets.length + '名分を発行</button></div>');
+  $('cbCancel').onclick = closeModal;
+  $('cbGo').onclick = function(){
+    $('cbGo').disabled = true;
+    var i = 0;
+    function nextBatch(){
+      if(i >= targets.length){
+        closeModal(); toast(targets.length + '名分を発行しました');
+        loadMembers();
+        return;
+      }
+      var batch = db.batch(), end = Math.min(i + 150, targets.length);
+      for(; i < end; i++){
+        var m = targets[i], token = randToken();
+        batch.set(db.collection('cards').doc(token), {
+          no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
+          createdAt: FV.serverTimestamp()
+        });
+        batch.set(db.collection('checkinMembers').doc(m.no), {
+          cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
+        }, { merge: true });
+      }
+      batch.commit().then(nextBatch).catch(function(e){
+        toast(permMsg(e, '会員証の発行はユニオン管理者のみ可能です'));
+      });
+    }
+    nextBatch();
+  };
+};
+$('btnCardUrls').onclick = function(){
+  var rows = [['番号','氏名','系列','会員証URL']];
+  gMembers.forEach(function(m){
+    if(m.cardToken) rows.push([m.no, m.name || '', m.group || '', cardUrl(m.cardToken)]);
+  });
+  if(rows.length === 1){ toast('発行済みの会員証がありません。先に「会員証一括発行」を実行してください'); return; }
+  csvDownload('card_urls_' + gRosterUnion + '.csv', rows);
+};
+$('btnPrintCards').onclick = function(){
+  var targets;
+  if(selCount() > 0){
+    targets = gMembers.filter(function(m){ return gSel[m.no]; });
+  } else {
+    targets = gMembers.filter(function(m){ return m.active !== false; });
+  }
+  if(!targets.length){ toast('印刷対象がいません'); return; }
+  modal('<h2>紙カード印刷</h2>'
+    + '<p>' + (selCount() > 0 ? '選択した' : '「' + esc(gRosterUnion) + '」の有効メンバー全') + ' <b>' + targets.length + '名</b> 分の名刺サイズカード（A4に10面）を印刷します。<br><small>印刷ダイアログで「PDFに保存」を選べばPDFにもできます。人数が多い場合はチェックボックスで絞ってからがおすすめです。</small></p>'
+    + '<div class="btns"><button id="ppCancel">キャンセル</button><button class="primary" id="ppGo">印刷</button></div>');
+  $('ppCancel').onclick = closeModal;
+  $('ppGo').onclick = function(){
+    closeModal();
+    var area = $('printArea'), html = '';
+    targets.forEach(function(m, idx){
+      html += '<div class="pcard"><div class="pn">' + esc(m.name || '') + '</div>'
+        + '<div class="pg">' + esc(m.group || '') + '　' + esc(m.union || gRosterUnion) + '</div>'
+        + '<div class="pq" id="pq_' + idx + '"></div>'
+        + '<div class="pno">No. ' + esc(m.no) + '</div></div>';
+    });
+    area.innerHTML = html;
+    targets.forEach(function(m, idx){
+      makeQr($('pq_' + idx), m.no, 90);   // 紙カードは既存カードと同じ「生番号」のQR
+    });
+    setTimeout(function(){ window.print(); }, 500);
+  };
+};
 
 $('btnCsvIn').onclick = function(){
   // 取込先ユニオン: オーナーは選択可、ユニオン管理者は自ユニオン固定
@@ -1095,12 +1340,20 @@ $('numIn').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ $('bt
 
 function scan(raw, method){
   if(!gRec) return;
-  // スマホ会員証形式 "m:412211:xxxx" にも対応（番号部分を抽出）
-  var no = raw;
-  var mm = /^m:(\w+):/.exec(raw);
-  if(mm) no = mm[1];
+  // スマホ会員証形式 "m:412211:xxxx"（番号+署名）にも対応
+  var no = raw, sig = null;
+  var mm = /^m:([\w-]+):(\w+)/.exec(raw);
+  if(mm){ no = mm[1]; sig = mm[2]; }
   no = no.replace(/\.0$/, '');
   var member = gRec.roster[no];
+  if(member && sig && member.cardSig && sig !== member.cardSig){
+    beep('ng');
+    setStage('ng',
+      '<span class="hit-badge">無効な会員証</span>'
+      + '<div class="hit-name">' + esc(member.name || '') + '</div>'
+      + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+    return;
+  }
   if(!member){
     beep('ng');
     setStage('ng',
