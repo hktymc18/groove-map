@@ -162,7 +162,7 @@ tr:last-child td{border-bottom:none;}
 }
 .mc-brand{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:12px;letter-spacing:.16em;color:#c0392b;}
 .mc-union{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:17px;letter-spacing:.06em;margin-top:1px;}
-.mc-grade{font-size:11px;font-weight:700;letter-spacing:.32em;margin-top:2px;min-height:1.1em;color:#8a6d1f;}
+.mc-grade{font-size:10.5px;font-weight:700;letter-spacing:.18em;margin-top:2px;min-height:1.1em;color:#8a6d1f;white-space:nowrap;}
 .mc-name{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:26px;margin:8px 0 0;}
 .mc-group{font-size:13px;color:#6f6d63;margin-bottom:12px;}
 #mcQr{display:flex;justify-content:center;min-height:180px;align-items:center;position:relative;z-index:1;}
@@ -192,7 +192,7 @@ tr:last-child td{border-bottom:none;}
 .membercard.mc-black::after{background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.14) 50%,transparent 56%);}
 .membercard.mc-black .mc-brand{color:#d4af37;}
 .membercard.mc-black .mc-union{color:#f1ead4;}
-.membercard.mc-black .mc-grade{color:#d4af37;letter-spacing:.42em;}
+.membercard.mc-black .mc-grade{color:#d4af37;letter-spacing:.3em;}
 .membercard.mc-black .mc-group,.membercard.mc-black .mc-no{color:#9d947c;}
 
 /* 紙カード印刷 */
@@ -476,10 +476,15 @@ function randToken(){
 }
 function cardUrl(token){ return location.href.split('#')[0] + '#c=' + token; }
 
-/* ライセンスグレード → カードデザイン（名称は運用に合わせて変更可） */
-var GRADES = ['', 'BR', 'ゴールド', 'プラチナ', 'ブラック'];
-var GRADE_STYLES = { 'BR': 'mc-silver', 'ゴールド': 'mc-gold', 'プラチナ': 'mc-platinum', 'ブラック': 'mc-black' };
-var GRADE_LABELS = { 'BR': 'BR MEMBER', 'ゴールド': 'GOLD MEMBER', 'プラチナ': 'PLATINUM MEMBER', 'ブラック': 'BLACK MEMBER' };
+/* ライセンスグレード → カードデザイン
+   BR = ゴールドカード（BRAND REPRESENTATIVE） / JETCLUB = ブラックカード（JETCLUB MEMBER）
+   ※旧名称（ゴールド/ブラック等）で登録済みのデータも同じデザインに解決する */
+var GRADES = ['', 'BR', 'JETCLUB'];
+var GRADE_MENU = { '': '（一般・白カード）', 'BR': 'BR（ゴールドカード）', 'JETCLUB': 'JETCLUB（ブラックカード）' };
+var GRADE_STYLES = { 'BR': 'mc-gold', 'JETCLUB': 'mc-black',
+                     'ゴールド': 'mc-gold', 'プラチナ': 'mc-black', 'ブラック': 'mc-black' };
+var GRADE_LABELS = { 'BR': 'BRAND REPRESENTATIVE', 'JETCLUB': 'JETCLUB MEMBER',
+                     'ゴールド': 'BRAND REPRESENTATIVE', 'プラチナ': 'JETCLUB MEMBER', 'ブラック': 'JETCLUB MEMBER' };
 function modal(html){
   var host = $('modalHost');
   host.innerHTML = '<div class="modalback"><div class="modal">' + html + '</div></div>';
@@ -905,11 +910,14 @@ function memberForm(m){
     + '<label>氏名</label><input type="text" id="mfName" value="' + esc(m.name || '') + '">'
     + '<label>系列（UPBD）</label><input type="text" id="mfGroup" value="' + esc(m.group || '') + '">'
     + '<label>所属ユニオン</label>' + unionField
-    + '<label>ライセンスグレード（BR以上は会員証が特別デザインになります）</label>'
+    + '<label>ライセンスグレード</label>'
     + '<select id="mfGrade">' + GRADES.map(function(g){
         return '<option value="' + esc(g) + '"' + ((m.grade || '') === g ? ' selected' : '') + '>'
-          + (g === '' ? '（BR未満・一般）' : esc(g)) + '</option>';
-      }).join('') + '</select>'
+          + esc(GRADE_MENU[g] || g) + '</option>';
+      }).join('')
+      + ((m.grade || '') && GRADES.indexOf(m.grade) < 0
+          ? '<option value="' + esc(m.grade) + '" selected>' + esc(m.grade) + '</option>' : '')
+      + '</select>'
     + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
