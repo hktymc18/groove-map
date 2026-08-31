@@ -258,7 +258,7 @@ tr:last-child td{border-bottom:none;}
       <aside class="side">
         <div class="tile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div></div>
         <div class="tile hide" id="unionTallyTile"><h3>ユニオン別</h3><div id="unionTally"></div></div>
-        <div class="tile"><h3>系列別（自ユニオン）</h3><div id="groupTally"></div></div>
+        <div class="tile"><h3>系列別</h3><div id="groupTally"></div></div>
         <div class="tile"><h3>受付履歴</h3><ul class="recent" id="recent"></ul></div>
       </aside>
     </div>
@@ -295,6 +295,8 @@ tr:last-child td{border-bottom:none;}
   <section class="pane" id="pEvents">
     <div class="monthnav">
       <button class="ghost" id="evPrev">◀</button><b id="evMonthLabel"></b><button class="ghost" id="evNext">▶</button>
+      <label for="evUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
+      <select id="evUnionSel"></select>
       <span style="flex:1"></span>
       <button class="primary" id="btnAddEvent">＋ 新規イベント</button>
     </div>
@@ -305,6 +307,8 @@ tr:last-child td{border-bottom:none;}
   <section class="pane" id="pStats">
     <div class="monthnav">
       <button class="ghost" id="stPrev">◀</button><b id="stMonthLabel"></b><button class="ghost" id="stNext">▶</button>
+      <label for="stUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
+      <select id="stUnionSel"></select>
       <span style="flex:1"></span>
       <button id="btnStatCsv">CSV出力</button>
       <button id="btnStatReload">再集計</button>
@@ -403,6 +407,8 @@ function csvDownload(name, rows){
 var gUser = null, gProf = null;
 var gUnion = '';            // 操作対象ユニオン（自分の所属）
 var gRosterUnion = '';      // 名簿タブで表示中のユニオン
+var gEventUnion = '';       // イベントタブで表示中のユニオン
+var gStatUnion = '';        // 集計タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
 var gMembers = [];          // gRosterUnion の名簿
 var gMembersLoaded = false;
@@ -412,6 +418,14 @@ var gEvents = [];           // 表示月のイベント（gUnion 参加分）
 var gRec = null;            // 受付中 {ev, roster:{no:member}, att:{id:rec}, unsub}
 function isOwner(){ return gUser && gUser.uid === OWNER_UID; }
 function isAdminHere(){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === gUnion); }
+function canEditUnion(un){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === un); }
+function fillUnionSel(sel, current){
+  var list = gUnions.slice();
+  if(list.indexOf(current) < 0) list.push(current);
+  sel.innerHTML = list.map(function(u){
+    return '<option' + (u === current ? ' selected' : '') + '>' + esc(u) + '</option>';
+  }).join('');
+}
 
 /* ---------- auth ---------- */
 $('toSignup').onclick = function(){ $('loginForm').classList.add('hide'); $('signupForm').classList.remove('hide'); $('authErr').textContent=''; };
@@ -518,10 +532,10 @@ function setupHeaderUnionSel(){
     $('unionBadge').classList.add('hide');
     sel.onchange = function(){
       gUnion = sel.value;
-      gRosterUnion = gUnion;
+      gRosterUnion = gUnion; gEventUnion = gUnion; gStatUnion = gUnion;
       gMembersLoaded = false; gMembers = []; gSel = {};
       stopReception();
-      renderRosterUnionSel();
+      refreshUnionSelectors();
       loadMembers();
       loadEvents();
       loadStats();
@@ -535,22 +549,28 @@ function setupHeaderUnionSel(){
 function enterApp(){
   showView('vApp');
   setupHeaderUnionSel();
-  gRosterUnion = gUnion;
-  renderRosterUnionSel();
+  gRosterUnion = gUnion; gEventUnion = gUnion; gStatUnion = gUnion;
+  refreshUnionSelectors();
   loadMembers();
   loadEvents();
   loadStats();
 }
 
-/* 名簿タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
-function renderRosterUnionSel(){
-  var sel = $('rosterUnionSel');
-  var list = gUnions.slice();
-  if(list.indexOf(gRosterUnion) < 0) list.push(gRosterUnion);
-  sel.innerHTML = list.map(function(u){
-    return '<option' + (u === gRosterUnion ? ' selected' : '') + '>' + esc(u) + '</option>';
-  }).join('');
+/* 各タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
+function renderRosterUnionSel(){ fillUnionSel($('rosterUnionSel'), gRosterUnion); }
+function refreshUnionSelectors(){
+  renderRosterUnionSel();
+  fillUnionSel($('evUnionSel'), gEventUnion);
+  fillUnionSel($('stUnionSel'), gStatUnion);
 }
+$('evUnionSel').onchange = function(){
+  gEventUnion = $('evUnionSel').value;
+  loadEvents();
+};
+$('stUnionSel').onchange = function(){
+  gStatUnion = $('stUnionSel').value;
+  loadStats();
+};
 $('rosterUnionSel').onchange = function(){
   gRosterUnion = $('rosterUnionSel').value;
   gSel = {}; gMembersLoaded = false; gMembers = [];
@@ -573,15 +593,13 @@ $('btnAddUnion').onclick = function(){
       closeModal(); toast('「' + name + '」を追加しました');
       gUnions.push(name); gUnions.sort();
       gRosterUnion = name;
-      renderRosterUnionSel();
+      refreshUnionSelectors();
       setupHeaderUnionSel();
       gSel = {}; loadMembers();
     }).catch(function(e){ toast(permMsg(e, 'ユニオン追加はオーナーまたはそのユニオンの管理者のみ可能です')); });
   };
 };
-function canEditRoster(){
-  return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === gRosterUnion);
-}
+function canEditRoster(){ return canEditUnion(gRosterUnion); }
 
 /* ---------- タブ ---------- */
 var tabs = document.querySelectorAll('nav button[data-pane]');
@@ -727,11 +745,22 @@ $('btnDelAll').onclick = function(){
 function memberForm(m){
   var isNew = !m;
   m = m || {};
+  var curUnion = m.union || gRosterUnion;
+  var unionField = isOwner()
+    ? '<select id="mfUnion">' + (function(){
+        var list = gUnions.slice();
+        if(list.indexOf(curUnion) < 0) list.push(curUnion);
+        return list.map(function(u){
+          return '<option' + (u === curUnion ? ' selected' : '') + '>' + esc(u) + '</option>';
+        }).join('');
+      })() + '</select>'
+    : '<input type="text" value="' + esc(curUnion) + '" disabled>';
   modal(
-    '<h2>' + (isNew ? 'メンバー追加' : 'メンバー編集') + '（' + esc(gRosterUnion) + '）</h2>'
+    '<h2>' + (isNew ? 'メンバー追加' : 'メンバー編集') + '</h2>'
     + '<label>番号（QRコード）</label><input type="text" id="mfNo" ' + (isNew ? '' : 'disabled ') + 'value="' + esc(m.no || '') + '">'
     + '<label>氏名</label><input type="text" id="mfName" value="' + esc(m.name || '') + '">'
     + '<label>系列（UPBD）</label><input type="text" id="mfGroup" value="' + esc(m.group || '') + '">'
+    + '<label>所属ユニオン</label>' + unionField
     + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
@@ -740,14 +769,16 @@ function memberForm(m){
     var no = (isNew ? $('mfNo').value : m.no).trim();
     var name = $('mfName').value.trim(), group = $('mfGroup').value.trim();
     if(!no || !name){ toast('番号と氏名は必須です'); return; }
+    var targetUnion = isOwner() ? $('mfUnion').value : curUnion;
     var data = {
-      no: no, union: gRosterUnion, name: name, group: group,
+      no: no, union: targetUnion, name: name, group: group,
       kana: $('mfKana').value.trim(),
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
     if(isNew) data.createdAt = FV.serverTimestamp();
     db.collection('checkinMembers').doc(no).set(data, {merge: true}).then(function(){
-      closeModal(); toast('保存しました');
+      closeModal();
+      toast('保存しました（所属: ' + targetUnion + '）');
       loadMembers();
     }).catch(function(e){ toast(permMsg(e, '名簿の編集はユニオン管理者のみ可能です')); });
   };
@@ -871,7 +902,7 @@ function loadEvents(){
     gEvents = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
-      if((ev.unions || []).indexOf(gUnion) >= 0) gEvents.push(ev);
+      if((ev.unions || []).indexOf(gEventUnion) >= 0) gEvents.push(ev);
     });
     gEvents.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
     renderEvents();
@@ -879,21 +910,25 @@ function loadEvents(){
   }).catch(function(e){ toast('イベント読込エラー: ' + e.message); });
 }
 function renderEvents(){
+  $('btnAddEvent').classList.toggle('hide', !canEditUnion(gEventUnion));
   var t = todayStr(), html = '';
   gEvents.forEach(function(ev){
     var others = (ev.unions || []).filter(function(u){ return u !== ev.hostUnion; });
     var joint = others.length
       ? '<span class="jointtag">合同: ' + esc((ev.unions||[]).join(' + ')) + '</span>' : '';
+    // 受付は 参加ユニオンのメンバー or オーナーのみ / 削除は主催ユニオンの管理者のみ
+    var canRec = isOwner() || (gProf && (ev.unions || []).indexOf(gProf.union) >= 0);
+    var canDel = canEditUnion(ev.hostUnion);
     html += '<div class="evrow' + (ev.date === t ? ' today' : '') + '">'
       + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
       + '<b>' + esc(ev.name || '') + '</b>' + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
       + '<span class="att" id="evCt_' + esc(ev.id) + '">…</span>'
-      + '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>'
-      + '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>'
+      + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
+      + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
       + '</div>';
   });
-  $('evList').innerHTML = html || '<p style="color:var(--sub)">この月のイベントはまだありません。</p>';
+  $('evList').innerHTML = html || '<p style="color:var(--sub)">この月の「' + esc(gEventUnion) + '」のイベントはまだありません。</p>';
   // 出席数（count 集計）
   gEvents.forEach(function(ev){
     var q = db.collection('checkinEvents').doc(ev.id).collection('attendance');
@@ -924,14 +959,14 @@ $('evList').addEventListener('click', function(e){
   }
 });
 $('btnAddEvent').onclick = function(){
-  var others = gUnions.filter(function(u){ return u !== gUnion; });
+  var others = gUnions.filter(function(u){ return u !== gEventUnion; });
   var chk = others.length
     ? '<label>合同ユニオン（任意）</label>' + others.map(function(u, i){
         return '<div class="chkrow"><input type="checkbox" id="evU' + i + '" value="' + esc(u) + '"><label for="evU' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc(u) + '</label></div>';
       }).join('')
     : '';
   modal(
-    '<h2>新規イベント（主催: ' + esc(gUnion) + '）</h2>'
+    '<h2>新規イベント（主催: ' + esc(gEventUnion) + '）</h2>'
     + '<label>日付</label><input type="date" id="evDate" value="' + todayStr() + '">'
     + '<label>名称</label><input type="text" id="evName" placeholder="例: SYS / B-T / P&amp;P">'
     + chk
@@ -941,11 +976,11 @@ $('btnAddEvent').onclick = function(){
   $('evSave').onclick = function(){
     var date = $('evDate').value, name = $('evName').value.trim();
     if(!date || !name){ toast('日付と名称は必須です'); return; }
-    var unions = [gUnion];
+    var unions = [gEventUnion];
     others.forEach(function(u, i){ if($('evU' + i) && $('evU' + i).checked) unions.push(u); });
     db.collection('checkinEvents').add({
       month: date.slice(0, 7), date: date, name: name,
-      hostUnion: gUnion, unions: unions,
+      hostUnion: gEventUnion, unions: unions,
       createdBy: gUser.uid, createdAt: FV.serverTimestamp()
     }).then(function(){
       closeModal(); toast('イベントを作成しました');
@@ -1145,10 +1180,12 @@ function addRecent(name, sub){
 function renderTallies(){
   if(!gRec) return;
   var total = 0, byUnion = {}, byGroup = {};
+  // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
+  var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
   Object.keys(gRec.att).forEach(function(id){
     var a = gRec.att[id]; total++;
     byUnion[a.union || '?'] = (byUnion[a.union || '?'] || 0) + 1;
-    if(a.union === gUnion){
+    if(a.union === tallyUnion){
       var g = a.group || 'その他';
       byGroup[g] = (byGroup[g] || 0) + 1;
     }
@@ -1179,23 +1216,23 @@ function loadStats(){
     var evs = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
-      if((ev.unions || []).indexOf(gUnion) >= 0) evs.push(ev);
+      if((ev.unions || []).indexOf(gStatUnion) >= 0) evs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
     if(!evs.length){
-      $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
+      $('statBody').innerHTML = '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>';
       gStat = null; return;
     }
     var attMaps = {};   // eventId -> {no: att}
     var reads = evs.map(function(ev){
       return db.collection('checkinEvents').doc(ev.id).collection('attendance')
-        .where('union', '==', gUnion).get().then(function(aqs){
+        .where('union', '==', gStatUnion).get().then(function(aqs){
           var m = {};
           aqs.forEach(function(d){ m[d.id] = d.data(); });
           attMaps[ev.id] = m;
         });
     });
-    Promise.all(reads.concat([fetchMembers(gUnion)])).then(function(results){
+    Promise.all(reads.concat([fetchMembers(gStatUnion)])).then(function(results){
       renderStats(evs, attMaps, results[results.length - 1]);
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
@@ -1234,7 +1271,7 @@ function renderStats(evs, attMaps, unionMembers){
     + '<div class="tile"><h3>のべ出席</h3><div class="bignum">' + totalAtt + '<small>名</small></div></div>'
     + '<div class="tile"><h3>平均稼働率</h3><div class="bignum">' + avgRate + '<small>%</small></div></div>'
     + '</div>'
-    + '<div class="sectionhead"><h2>系列別のべ出席</h2><span class="note">' + esc(gUnion) + '</span></div>'
+    + '<div class="sectionhead"><h2>系列別のべ出席</h2><span class="note">' + esc(gStatUnion) + '</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
     + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷開催数</span></div>'
     + '<div class="tblwrap"><table class="matrix"><thead><tr><th>氏名</th><th>系列</th>'
@@ -1255,7 +1292,7 @@ $('btnStatCsv').onclick = function(){
   gStat.rows.forEach(function(r){
     rows.push([r.no, r.name, r.group].concat(r.marks.map(function(v){ return v ? 1 : 0; })).concat([r.count, r.rate]));
   });
-  csvDownload('kadou_' + gUnion + '_' + monthKey(gMonth.y, gMonth.m) + '.csv', rows);
+  csvDownload('kadou_' + gStatUnion + '_' + monthKey(gMonth.y, gMonth.m) + '.csv', rows);
 };
 
 })();
