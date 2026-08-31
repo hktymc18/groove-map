@@ -2256,7 +2256,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v432</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v433</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5074,7 +5074,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v432';
+  var DATA_VERSION = 'v433';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6033,6 +6033,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v433', d:'2026-08-28', items:['📌テンプレ作成・編集の「タイトル雛形」欄を廃止しました：テンプレの名前がそのまま予定のタイトルになります（シンプル化）。既存テンプレも今後は名前がタイトルとして使われるため、「名前を変えたのに反映されない」は起こりません。※名前に{name}を入れると従来通り選択メンバー名に置き換わります'] },
   { v:'v432', d:'2026-08-28', items:['🎨カテゴリの色を変更した時、そのカテゴリが付いた既存の予定・タスクの色も自動で一括変更されるようになりました（これまでは作成時の色が固定のままでした）。何件変わったかもトーストでお知らせします'] },
   { v:'v431', d:'2026-08-28', items:['🐛🏛ユニオン予定「編集できない」バグの真の原因を修正：予定をタップした時に開くはずのシートが、表示用クラスの付け忘れで画面外に出たまま（＝完全に見えない）でした。v392以来ずっと不可視だったため「タップしても何も起きない」状態でした。メニューの🏛ユニオン予定一覧も同様に修正','🐛💪「📋Claudeに相談」で「記録を集めています」の後に何も出ないバグを修正：コピー用プレビューシートも同じクラス付け忘れで不可視でした'] },
   { v:'v430', d:'2026-08-28', items:['💪PC版でもマイトレーニングが使えるようになりました：左サイドバーに💪ボタンを追加（オーナーのみ表示）。PCでは画面中央の大きめパネルで開き、筋トレ・食事・推移・メニュー編集・Claudeに相談まで全機能そのまま使えます'] },
@@ -19605,7 +19606,7 @@ function evTplQuickAdd(tplId, ds) {
     }
     var id9 = 'ue_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
     var doc9 = { id: id9, union: un9, area: area9,
-      title: String(t.titleTpl || t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
+      title: String(t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
       date: ds, endDate: '', time: time9, endTime: end9, allDay: !!t.allDay,
       place: '', memo: t.memo || '', color: _qc9 ? _qc9.color : '',
       createdBy: currentUser.uid, createdByName: currentUser.org || currentUser.name || '',
@@ -19621,7 +19622,7 @@ function evTplQuickAdd(tplId, ds) {
   t.useCount = (t.useCount || 0) + 1; _evTplSaveAll(); // v349: 使用回数（頻度順表示用）
   var e = { id: genEventId(), done: false, createdAt: new Date().toISOString(),
     type: (t.type === 'event') ? 'event' : 'task',
-    title: String(t.titleTpl || t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
+    title: String(t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
     date: ds, time: t.allDay ? '' : (t.defaultTime || ''), endTime: '', endDate: '', allDay: !!t.allDay, // v404: 終日テンプレ対応
     memberId: '', categoryId: '', priority: 'normal', memo: t.memo || '',
     star: false, listId: '', labelId: '',
@@ -20638,7 +20639,7 @@ function evTplPick(id) {
   // v311: 入口で種別が決まっている場合はテンプレの種別で上書きしない（カレンダー＝予定固定）
   selEvType(_evForceType || (t.type === 'event' ? 'event' : 'task'));
   var titleEl = document.getElementById('evTitle');
-  var newTitle = String(t.titleTpl || t.name || '').replace(/\{name\}/g, evTplMemberName());
+  var newTitle = String(t.name || '').replace(/\{name\}/g, evTplMemberName()); // v433: テンプレ名がタイトル
   if (titleEl && (!titleEl.value || titleEl.value === _evTplTitleAuto)) titleEl.value = newTitle; // 手入力は尊重
   _evTplTitleAuto = newTitle;
   if (t.allDay) evToggleAllDay(true); // v404: 終日テンプレ
@@ -20660,7 +20661,7 @@ function evTplOnMemberChange() {
   if (!_evTplSel) return;
   var titleEl = document.getElementById('evTitle');
   if (!titleEl) return;
-  var newTitle = String(_evTplSel.titleTpl || _evTplSel.name || '').replace(/\{name\}/g, evTplMemberName());
+  var newTitle = String(_evTplSel.name || '').replace(/\{name\}/g, evTplMemberName());
   if (!titleEl.value || titleEl.value === _evTplTitleAuto) titleEl.value = newTitle;
   _evTplTitleAuto = newTitle;
 }
@@ -20676,7 +20677,7 @@ function evTplCreateFromForm() {
   }
   var rb = (document.getElementById('evRemind') || {}).value;
   window._evtPre = {
-    name: title.slice(0, 12),
+    name: title, // v433: 名前＝タイトルに一本化（切り詰めない）
     type: _evType === 'event' ? 'event' : 'task',
     allDay: !!_evAllDay,
     durationMin: dur,
@@ -20779,8 +20780,6 @@ function openEvTplEdit(id) {
         + '</div></div>'
       : '')
     + fld('リマインド通知', '<select class="fi" id="evtF_ntf">' + ntfOpts + '</select>')
-    + fld('タイトル雛形（{name}→選択メンバー名・空欄＝名前と同じ）', '<input class="fi" id="evtF_tpl" placeholder="例：{name}CT（空欄＝名前をそのまま使用）" value="' + evEsc((t && t.titleTpl && t.titleTpl !== t.name) ? t.titleTpl : '') + '">')
-    + '<div style="font-size:11px;color:var(--accent);margin:-6px 2px 12px;cursor:pointer;font-weight:700" onclick="evtTplResetTpl()">↺ 雛形を空欄（＝名前と同じ）に戻す</div>'
     + fld('カテゴリ（色分け）', '<div class="ev-cat-field" onclick="evtOpenCatPick()">'
       + '<span class="cat-swatch" id="evtCatSwatch" style="background:' + (catNow ? catNow.color : '#9ca3af') + '"></span>'
       + '<span id="evtCatName" style="flex:1">' + evEsc(catNow ? catNow.name : '未分類') + '</span>'
@@ -20826,11 +20825,6 @@ function evtToggleAllDay() {
   if (t1) t1.style.opacity = on ? '.4' : '';
   if (t2) t2.style.opacity = on ? '.4' : '';
 }
-// v429: 旧バージョンで名前が雛形に固定コピーされたテンプレの救済（空欄＝常に名前に追従）
-function evtTplResetTpl() {
-  var el = document.getElementById('evtF_tpl');
-  if (el) { el.value = ''; toast('↺ 雛形を「名前と同じ」に戻しました（保存で確定します）'); }
-}
 function saveEvTplForm(id) {
   var name = (document.getElementById('evtF_name')||{}).value || '';
   name = name.trim();
@@ -20844,7 +20838,6 @@ function saveEvTplForm(id) {
     _evTpl = _evTpl || [];
     _evTpl.push(t);
   }
-  var _oldName = (t.name || ''); // v425: 雛形の自動追従判定用（旧名）
   t.name = name;
   t.emoji = ''; // v314: 絵文字は廃止
   t.type = ((document.getElementById('evtF_type')||{}).value === 'event') ? 'event' : 'task';
@@ -20867,10 +20860,7 @@ function saveEvTplForm(id) {
   var _una1El = document.getElementById('evtF_una1');
   t.unionAreaMine = !!(_una1El && _una1El.classList.contains('sel'));
   t.notifyOffset = (ntfRaw === '' || ntfRaw === undefined) ? '' : (parseInt(ntfRaw, 10) || 0);
-  var _tplIn = ((document.getElementById('evtF_tpl')||{}).value || '').trim();
-  // v425: 雛形が旧名のコピー（＝未入力で自動設定されたもの）なら、名前の変更に追従させる
-  if (_tplIn && _oldName && _tplIn === _oldName) _tplIn = '';
-  t.titleTpl = _tplIn || name;
+  t.titleTpl = name; // v433: タイトル雛形の欄は廃止（テンプレ名＝予定タイトル。旧雛形データは以後使わない）
   var _stEl = document.getElementById('evtF_stage');
   if (_stEl) t.stage = _stEl.value || ''; // v347: 対応ステージのUIは廃止（既存テンプレの値は維持）
   t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
