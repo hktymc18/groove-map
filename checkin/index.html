@@ -267,14 +267,23 @@ tr:last-child td{border-bottom:none;}
   <!-- 名簿 -->
   <section class="pane" id="pRoster">
     <div class="toolrow">
+      <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
+      <select id="rosterUnionSel"></select>
+      <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
       <button class="primary" id="btnAddMember">＋ メンバー追加</button>
       <button id="btnCsvIn">CSV取込</button>
       <button id="btnCsvOut">CSV出力</button>
     </div>
+    <div class="toolrow hide" id="bulkRow">
+      <span style="font-size:13px;font-weight:700;" id="selCount">選択中: 0名</span>
+      <button id="btnDelSel" disabled>選択を削除</button>
+      <span style="flex:1"></span>
+      <button id="btnDelAll" class="danger">全削除…</button>
+    </div>
     <div class="tblwrap">
       <table>
-        <thead><tr><th>番号</th><th>氏名</th><th>系列</th><th>状態</th><th>操作</th></tr></thead>
+        <thead><tr id="rosterHead"></tr></thead>
         <tbody id="rosterBody"></tbody>
       </table>
     </div>
@@ -391,10 +400,12 @@ function csvDownload(name, rows){
 
 /* ---------- state ---------- */
 var gUser = null, gProf = null;
-var gUnion = '';            // 操作対象ユニオン
+var gUnion = '';            // 操作対象ユニオン（自分の所属）
+var gRosterUnion = '';      // 名簿タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
-var gMembers = [];          // gUnion の名簿
+var gMembers = [];          // gRosterUnion の名簿
 var gMembersLoaded = false;
+var gSel = {};              // 名簿の選択状態 {no: true}
 var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.getMonth()+1}; })();
 var gEvents = [];           // 表示月のイベント（gUnion 参加分）
 var gRec = null;            // 受付中 {ev, roster:{no:member}, att:{id:rec}, unsub}
@@ -507,18 +518,40 @@ function enterApp(){
     $('unionBadge').classList.add('hide');
     sel.onchange = function(){
       gUnion = sel.value;
-      gMembersLoaded = false; gMembers = [];
+      gRosterUnion = gUnion;
+      gMembersLoaded = false; gMembers = []; gSel = {};
       stopReception();
-      loadMembers(renderRoster);
+      renderRosterUnionSel();
+      loadMembers();
       loadEvents();
       loadStats();
     };
   } else {
     $('unionBadge').textContent = gUnion;
   }
-  loadMembers(renderRoster);
+  gRosterUnion = gUnion;
+  renderRosterUnionSel();
+  loadMembers();
   loadEvents();
   loadStats();
+}
+
+/* 名簿タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
+function renderRosterUnionSel(){
+  var sel = $('rosterUnionSel');
+  var list = gUnions.slice();
+  if(list.indexOf(gRosterUnion) < 0) list.push(gRosterUnion);
+  sel.innerHTML = list.map(function(u){
+    return '<option' + (u === gRosterUnion ? ' selected' : '') + '>' + esc(u) + '</option>';
+  }).join('');
+}
+$('rosterUnionSel').onchange = function(){
+  gRosterUnion = $('rosterUnionSel').value;
+  gSel = {}; gMembersLoaded = false; gMembers = [];
+  loadMembers();
+};
+function canEditRoster(){
+  return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === gRosterUnion);
 }
 
 /* ---------- タブ ---------- */
@@ -534,41 +567,138 @@ Array.prototype.forEach.call(tabs, function(b){
 });
 
 /* ---------- 名簿 ---------- */
+function fetchMembers(union){
+  return db.collection('checkinMembers').where('union', '==', union).get().then(function(qs){
+    var arr = [];
+    qs.forEach(function(d){ var m = d.data(); m.no = d.id; arr.push(m); });
+    arr.sort(function(a,b){ return a.no < b.no ? -1 : 1; });
+    return arr;
+  });
+}
 function loadMembers(cb){
-  db.collection('checkinMembers').where('union', '==', gUnion).get().then(function(qs){
-    gMembers = [];
-    qs.forEach(function(d){ var m = d.data(); m.no = d.id; gMembers.push(m); });
-    gMembers.sort(function(a,b){ return a.no < b.no ? -1 : 1; });
+  fetchMembers(gRosterUnion).then(function(arr){
+    gMembers = arr;
     gMembersLoaded = true;
+    renderRoster();
     if(cb) cb();
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 }
 function renderRoster(){
+  var edit = canEditRoster();
   var q = ($('q').value || '').trim();
+  $('rosterHead').innerHTML = (edit ? '<th style="width:2em;"><input type="checkbox" id="selAllChk" title="表示中を全選択"></th>' : '')
+    + '<th>番号</th><th>氏名</th><th>系列</th><th>状態</th>' + (edit ? '<th>操作</th>' : '');
+  $('roBadge').classList.toggle('hide', edit);
+  $('bulkRow').classList.toggle('hide', !edit);
+  $('btnAddMember').classList.toggle('hide', !edit);
+  $('btnCsvIn').classList.toggle('hide', !edit);
   var tb = $('rosterBody'), html = '', shown = 0;
   gMembers.forEach(function(m){
     var name = m.name || '';
     if(q && name.indexOf(q) < 0 && m.no.indexOf(q) < 0 && (m.group||'').indexOf(q) < 0) return;
     shown++;
-    html += '<tr><td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b></td>'
+    html += '<tr>'
+      + (edit ? '<td><input type="checkbox" class="selchk" data-no="' + esc(m.no) + '"' + (gSel[m.no] ? ' checked' : '') + '></td>' : '')
+      + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b></td>'
       + '<td>' + esc(m.group || '') + '</td>'
       + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>') + '</td>'
-      + '<td><div class="rowbtns">'
-      + '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
-      + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
-      + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
-      + '</div></td></tr>';
+      + (edit ? '<td><div class="rowbtns">'
+        + '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
+        + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
+        + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
+        + '</div></td>' : '')
+      + '</tr>';
   });
-  tb.innerHTML = html || '<tr><td colspan="5" style="color:var(--sub)">メンバーがいません。「＋ メンバー追加」または「CSV取込」で登録してください。</td></tr>';
-  $('rosterCount').textContent = gUnion + '：' + gMembers.length + '名（表示 ' + shown + '名）';
+  var cols = edit ? 6 : 4;
+  tb.innerHTML = html || '<tr><td colspan="' + cols + '" style="color:var(--sub)">メンバーがいません。'
+    + (edit ? '「＋ メンバー追加」または「CSV取込」で登録してください。' : '') + '</td></tr>';
+  $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名）'
+    + (edit ? '' : ' ※閲覧のみ（編集はこのユニオンの管理者が行えます）');
+  updateSelCount();
 }
 $('q').addEventListener('input', renderRoster);
+
+/* ── 選択・一括削除 ── */
+function selCount(){ return Object.keys(gSel).length; }
+function updateSelCount(){
+  $('selCount').textContent = '選択中: ' + selCount() + '名';
+  $('btnDelSel').disabled = selCount() === 0;
+  $('btnDelSel').textContent = selCount() ? '選択を削除（' + selCount() + '名）' : '選択を削除';
+}
+$('rosterHead').addEventListener('change', function(e){
+  if(e.target && e.target.id === 'selAllChk'){
+    var on = e.target.checked;
+    Array.prototype.forEach.call(document.querySelectorAll('#rosterBody .selchk'), function(c){
+      c.checked = on;
+      if(on) gSel[c.getAttribute('data-no')] = true;
+      else delete gSel[c.getAttribute('data-no')];
+    });
+    updateSelCount();
+  }
+});
+$('rosterBody').addEventListener('change', function(e){
+  var c = e.target;
+  if(c && c.className === 'selchk'){
+    if(c.checked) gSel[c.getAttribute('data-no')] = true;
+    else delete gSel[c.getAttribute('data-no')];
+    updateSelCount();
+  }
+});
+function deleteMany(nos, done){
+  var i = 0;
+  function nextBatch(){
+    if(i >= nos.length){ done(); return; }
+    var batch = db.batch(), end = Math.min(i + 400, nos.length);
+    for(; i < end; i++) batch.delete(db.collection('checkinMembers').doc(nos[i]));
+    batch.commit().then(nextBatch).catch(function(e){
+      toast(permMsg(e, '削除の権限がありません（そのユニオンの管理者のみ）'));
+    });
+  }
+  nextBatch();
+}
+$('btnDelSel').onclick = function(){
+  var nos = Object.keys(gSel);
+  if(!nos.length) return;
+  modal('<h2>選択したメンバーの削除</h2>'
+    + '<p>選択した <b style="color:var(--accent);font-size:18px;">' + nos.length + '名</b> を「' + esc(gRosterUnion) + '」の名簿から削除しますか？<br><small>この操作は取り消せません（過去の出席記録は残ります）。</small></p>'
+    + '<div class="btns"><button id="dsCancel">キャンセル</button>'
+    + '<button class="primary" id="dsGo" style="background:var(--accent);border-color:var(--accent)">' + nos.length + '名を削除</button></div>');
+  $('dsCancel').onclick = closeModal;
+  $('dsGo').onclick = function(){
+    $('dsGo').disabled = true;
+    deleteMany(nos, function(){
+      closeModal(); gSel = {};
+      toast(nos.length + '名を削除しました');
+      loadMembers();
+    });
+  };
+};
+$('btnDelAll').onclick = function(){
+  var total = gMembers.length;
+  if(!total){ toast('メンバーがいません'); return; }
+  modal('<h2 style="color:var(--accent)">全メンバー削除</h2>'
+    + '<p>「' + esc(gRosterUnion) + '」の名簿 <b style="color:var(--accent);font-size:18px;">全' + total + '名</b> をすべて削除します。<br><small>この操作は取り消せません（過去の出席記録は残ります）。</small></p>'
+    + '<div class="chkrow"><input type="checkbox" id="daConfirm"><label for="daConfirm" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">理解した上で全' + total + '名を削除します</label></div>'
+    + '<div class="btns"><button id="daCancel">キャンセル</button>'
+    + '<button class="primary" id="daGo" disabled style="background:var(--accent);border-color:var(--accent)">全削除する</button></div>');
+  $('daCancel').onclick = closeModal;
+  $('daConfirm').onchange = function(){ $('daGo').disabled = !$('daConfirm').checked; };
+  $('daGo').onclick = function(){
+    $('daGo').disabled = true;
+    var nos = gMembers.map(function(m){ return m.no; });
+    deleteMany(nos, function(){
+      closeModal(); gSel = {};
+      toast('全' + nos.length + '名を削除しました');
+      loadMembers();
+    });
+  };
+};
 
 function memberForm(m){
   var isNew = !m;
   m = m || {};
   modal(
-    '<h2>' + (isNew ? 'メンバー追加' : 'メンバー編集') + '</h2>'
+    '<h2>' + (isNew ? 'メンバー追加' : 'メンバー編集') + '（' + esc(gRosterUnion) + '）</h2>'
     + '<label>番号（QRコード）</label><input type="text" id="mfNo" ' + (isNew ? '' : 'disabled ') + 'value="' + esc(m.no || '') + '">'
     + '<label>氏名</label><input type="text" id="mfName" value="' + esc(m.name || '') + '">'
     + '<label>系列（UPBD）</label><input type="text" id="mfGroup" value="' + esc(m.group || '') + '">'
@@ -581,14 +711,14 @@ function memberForm(m){
     var name = $('mfName').value.trim(), group = $('mfGroup').value.trim();
     if(!no || !name){ toast('番号と氏名は必須です'); return; }
     var data = {
-      no: no, union: gUnion, name: name, group: group,
+      no: no, union: gRosterUnion, name: name, group: group,
       kana: $('mfKana').value.trim(),
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
     if(isNew) data.createdAt = FV.serverTimestamp();
     db.collection('checkinMembers').doc(no).set(data, {merge: true}).then(function(){
       closeModal(); toast('保存しました');
-      loadMembers(renderRoster);
+      loadMembers();
     }).catch(function(e){ toast(permMsg(e, '名簿の編集はユニオン管理者のみ可能です')); });
   };
 }
@@ -606,7 +736,7 @@ $('rosterBody').addEventListener('click', function(e){
   if(a === 'edit') memberForm(m);
   if(a === 'tog'){
     db.collection('checkinMembers').doc(no).set({active: !(m.active !== false)}, {merge:true})
-      .then(function(){ loadMembers(renderRoster); })
+      .then(function(){ loadMembers(); })
       .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者のみ可能です')); });
   }
   if(a === 'del'){
@@ -619,21 +749,32 @@ $('rosterBody').addEventListener('click', function(e){
     $('mdGo').onclick = function(){
       db.collection('checkinMembers').doc(no).delete().then(function(){
         closeModal(); toast('削除しました');
-        loadMembers(renderRoster);
+        delete gSel[no];
+        loadMembers();
       }).catch(function(err){ toast(permMsg(err, '名簿の削除はユニオン管理者のみ可能です')); });
     };
   }
 });
 
 $('btnCsvIn').onclick = function(){
+  // 取込先ユニオン: オーナーは選択可、ユニオン管理者は自ユニオン固定
+  var unionPicker = isOwner()
+    ? '<select id="csvUnion" style="font-weight:700;">' + gUnions.map(function(u){
+        return '<option' + (u === gRosterUnion ? ' selected' : '') + '>' + esc(u) + '</option>';
+      }).join('') + '</select>'
+    : '<b id="csvUnionFixed">' + esc(gRosterUnion) + '</b>';
   modal(
-    '<h2>CSV取込（' + esc(gUnion) + '）</h2>'
+    '<h2>CSV取込</h2>'
+    + '<div style="background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13.5px;margin-bottom:10px;">'
+    + '⚠ 取り込む全員の所属ユニオンは ' + unionPicker + ' になります。<br>'
+    + '複数ユニオンが混ざったCSVは、ユニオンごとに分けて取り込んでください。</div>'
     + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行1名。列: <b>番号,氏名,系列</b>（,かな は任意）。カンマ・タブ区切りどちらも可。既存番号は上書きされます。</p>'
     + '<textarea id="csvText" rows="10" placeholder="412211,馬越 雅哉,馬越BD"></textarea>'
     + '<div class="btns"><button id="csvCancel">キャンセル</button><button class="primary" id="csvGo">取り込む</button></div>'
   );
   $('csvCancel').onclick = closeModal;
   $('csvGo').onclick = function(){
+    var target = isOwner() ? $('csvUnion').value : gRosterUnion;
     var lines = $('csvText').value.split(/\r?\n/), rows = [];
     lines.forEach(function(ln){
       ln = ln.trim(); if(!ln) return;
@@ -645,18 +786,27 @@ $('btnCsvIn').onclick = function(){
       rows.push({ no:no, name:name, group:(c[2]||'').trim(), kana:(c[3]||'').trim() });
     });
     if(!rows.length){ toast('取り込める行がありません'); return; }
+    $('csvGo').disabled = true;
     var i = 0, total = rows.length;
     function nextBatch(){
-      if(i >= total){ closeModal(); toast(total + '名を取り込みました'); loadMembers(renderRoster); return; }
+      if(i >= total){
+        closeModal();
+        toast(total + '名を「' + target + '」として取り込みました');
+        if(target !== gRosterUnion){ gRosterUnion = target; renderRosterUnionSel(); }
+        gSel = {};
+        loadMembers();
+        return;
+      }
       var batch = db.batch(), end = Math.min(i + 400, total);
       for(; i < end; i++){
         var r = rows[i];
         batch.set(db.collection('checkinMembers').doc(r.no), {
-          no: r.no, union: gUnion, name: r.name, group: r.group, kana: r.kana,
+          no: r.no, union: target, name: r.name, group: r.group, kana: r.kana,
           active: true, updatedAt: FV.serverTimestamp()
         }, {merge: true});
       }
       batch.commit().then(nextBatch).catch(function(e){
+        $('csvGo').disabled = false;
         toast(permMsg(e, 'CSV取込はユニオン管理者のみ可能です'));
       });
     }
@@ -668,7 +818,7 @@ $('btnCsvOut').onclick = function(){
   gMembers.forEach(function(m){
     rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? '有効' : '無効']);
   });
-  csvDownload('members_' + gUnion + '.csv', rows);
+  csvDownload('members_' + gRosterUnion + '.csv', rows);
 };
 
 /* ---------- イベント（月単位） ---------- */
@@ -1015,17 +1165,16 @@ function loadStats(){
           attMaps[ev.id] = m;
         });
     });
-    var ensureMembers = gMembersLoaded ? Promise.resolve() : new Promise(function(res){ loadMembers(res); });
-    Promise.all(reads.concat([ensureMembers])).then(function(){
-      renderStats(evs, attMaps);
+    Promise.all(reads.concat([fetchMembers(gUnion)])).then(function(results){
+      renderStats(evs, attMaps, results[results.length - 1]);
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
 }
-function renderStats(evs, attMaps){
+function renderStats(evs, attMaps, unionMembers){
   var held = evs.length;
   // 行: 有効メンバー + 出席したゲスト
   var rows = [];
-  gMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', member: true }); });
+  unionMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', member: true }); });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
   evs.forEach(function(ev){
