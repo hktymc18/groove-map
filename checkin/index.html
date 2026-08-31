@@ -856,9 +856,14 @@ function renderRoster(){
   var edit = canEditRoster();
   var q = ($('q').value || '').trim();
   $('rosterHead').innerHTML = (edit ? '<th style="width:2em;"><input type="checkbox" id="selAllChk" title="表示中を全選択"></th>' : '')
-    + '<th>番号</th><th>氏名</th><th>系列</th><th>状態</th>' + (edit ? '<th>操作</th>' : '');
+    + '<th>番号</th><th>氏名</th><th>系列</th><th>状態</th><th>操作</th>';
   $('roBadge').classList.toggle('hide', edit);
-  $('bulkRow').classList.toggle('hide', !edit);
+  // 会員証の発行・印刷はログイン済みなら誰でも可。削除・グレード変更・取込は管理者のみ
+  $('bulkRow').classList.remove('hide');
+  $('selCount').classList.toggle('hide', !edit);
+  $('btnDelSel').classList.toggle('hide', !edit);
+  $('btnGradeSel').classList.toggle('hide', !edit);
+  $('btnDelAll').classList.toggle('hide', !edit);
   $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
@@ -874,15 +879,17 @@ function renderRoster(){
       + '<td>' + esc(m.group || '') + '</td>'
       + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
-      + (edit ? '<td><div class="rowbtns">'
-        + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
-        + '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
-        + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
-        + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
-        + '</div></td>' : '')
+      + '<td><div class="rowbtns">'
+      + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
+      + (edit
+        ? '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
+          + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
+          + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
+        : '')
+      + '</div></td>'
       + '</tr>';
   });
-  var cols = edit ? 6 : 4;
+  var cols = edit ? 6 : 5;
   tb.innerHTML = html || '<tr><td colspan="' + cols + '" style="color:var(--sub)">メンバーがいません。'
     + (edit ? '「＋ メンバー追加」または「CSV取込」で登録してください。' : '') + '</td></tr>';
   $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名）'
@@ -1139,7 +1146,7 @@ function issueCard(m, cb){
   return batch.commit().then(function(){
     m.cardToken = token; m.cardSig = token.slice(0, 6);
     if(cb) cb(token);
-  }).catch(function(e){ toast(permMsg(e, '会員証の発行はユニオン管理者のみ可能です')); });
+  }).catch(function(e){ toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）')); });
 }
 function revokeCard(m, cb){
   var batch = db.batch();
@@ -1150,7 +1157,7 @@ function revokeCard(m, cb){
   return batch.commit().then(function(){
     delete m.cardToken; delete m.cardSig;
     if(cb) cb();
-  }).catch(function(e){ toast(permMsg(e, '会員証の無効化はユニオン管理者のみ可能です')); });
+  }).catch(function(e){ toast(permMsg(e, '会員証の無効化に失敗しました（ログイン状態を確認してください）')); });
 }
 function cardModal(m){
   var body;
@@ -1214,7 +1221,7 @@ $('btnCardBulk').onclick = function(){
         }, { merge: true });
       }
       batch.commit().then(nextBatch).catch(function(e){
-        toast(permMsg(e, '会員証の発行はユニオン管理者のみ可能です'));
+        toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）'));
       });
     }
     nextBatch();
