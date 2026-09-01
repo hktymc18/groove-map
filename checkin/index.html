@@ -301,6 +301,7 @@ tr:last-child td{border-bottom:none;}
       <button class="on" data-pane="pKiosk">受付</button>
       <button data-pane="pRoster">名簿</button>
       <button data-pane="pEvents">イベント</button>
+      <button data-pane="pFin">会計</button>
       <button data-pane="pStats">集計</button>
       <button id="btnLogout" title="ログアウト">⎋</button>
     </nav>
@@ -406,6 +407,16 @@ tr:last-child td{border-bottom:none;}
     <div class="evlist" id="evList"></div>
   </section>
 
+  <!-- 会計 -->
+  <section class="pane" id="pFin">
+    <div class="monthnav">
+      <button class="ghost" id="fnPrev">◀</button><b id="fnMonthLabel"></b><button class="ghost" id="fnNext">▶</button>
+      <label for="finUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
+      <select id="finUnionSel"></select>
+    </div>
+    <div id="finBody"><p style="color:var(--sub)">読み込み中…</p></div>
+  </section>
+
   <!-- 集計 -->
   <section class="pane" id="pStats">
     <div class="monthnav">
@@ -435,6 +446,7 @@ tr:last-child td{border-bottom:none;}
       <div class="mc-no mono" id="mcNo"></div>
     </div>
     <div id="selfArea"></div>
+    <div id="onlineArea"></div>
     <p class="mc-tip">受付でこのQRコードをかざしてください。<br>画面を明るくすると読み取りやすくなります。<br>ブラウザの「ホーム画面に追加」をしておくと次回すぐ開けます。</p>
     <p class="mc-err" id="mcErr"></p>
   </div>
@@ -557,6 +569,7 @@ var gUnion = '';            // 操作対象ユニオン（自分の所属）
 var gRosterUnion = '';      // 名簿タブで表示中のユニオン
 var gEventUnion = '';       // イベントタブで表示中のユニオン
 var gStatUnion = '';        // 集計タブで表示中のユニオン
+var gFinUnion = '';         // 会計タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
 var gMembers = [];          // gRosterUnion の名簿
 var gMembersLoaded = false;
@@ -638,6 +651,7 @@ function showCardView(token){
       var c = snap.data();
       renderCard(c);
       renderSelfEvents(c);
+      renderOnlineEvents(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
@@ -690,6 +704,84 @@ function renderSelfEvents(c){
           $('seMsg_' + i).textContent = ev.requireCode
             ? 'チェックインできません。会場コードが違うか、すでにチェックイン済みです。'
             : 'チェックインできません。すでにチェックイン済みか、受付時間外です。';
+        });
+      };
+    });
+  }).catch(function(){});
+}
+
+// オンライン受講: 直近のオンライン受付イベントを会員証の下に表示（申請→承認待ち→Zoom参加）
+function renderOnlineEvents(c){
+  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
+    var evs = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if(ev.online && (ev.unions || []).indexOf(c.union) >= 0) evs.push(ev);
+    });
+    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    evs = evs.slice(0, 4);
+    if(!evs.length){ $('onlineArea').innerHTML = ''; return; }
+    $('onlineArea').innerHTML = evs.map(function(ev, i){
+      var mark = c['online_' + ev.id] || '';
+      var applied = false;
+      try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+      if(mark === 'reapply'){   // 申請が削除された → 再申請できる状態に戻す
+        try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+        mark = ''; applied = false;
+      }
+      var head = '<b>💻 オンライン受講：' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</b>'
+        + (ev.speaker ? '<span class="se-sub">🎤 ' + esc(ev.speaker) + '</span>' : '');
+      var body;
+      if(mark === 'approved'){
+        body = '<div class="se-done">✓ 受講が承認されました</div>'
+          + (ev.zoomUrl
+            ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する</a>'
+            : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoom URLは当日までにここに表示されます。開催時間に開き直してください。</p>');
+      } else if(mark === 'rejected'){
+        body = '<p style="color:var(--accent);font-weight:700;font-size:14px;">申請が承認されませんでした。<br><span style="font-weight:400;font-size:12.5px;">内容に不備があった可能性があります。Uラインまたは受付担当に確認してください。</span></p>';
+      } else if(applied){
+        body = '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請済み・承認待ちです</p>'
+          + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
+      } else {
+        body = '<button class="primary" id="olOpen_' + i + '">オンライン受講を申請する</button>'
+          + '<div class="hide" id="olForm_' + i + '" style="text-align:left;margin-top:10px;">'
+          + '<label style="display:block;font-size:12px;font-weight:700;color:var(--sub);margin:8px 0 3px;">環境責任者（受講許可をもらった方の名前）</label>'
+          + '<input type="text" id="olEnv_' + i + '" style="width:100%;" placeholder="例: 山内 北斗">'
+          + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPledge_' + i + '"><label for="olPledge_' + i + '" style="font-size:13px;">誓約書を提出済み（返信メールを受領済み）</label></div>'
+          + '<div class="chkrow"><input type="checkbox" id="olPay_' + i + '"><label for="olPay_' + i + '" style="font-size:13px;">受講料 ' + yen(ev.onlineFee || 1000) + ' をPayPayで送金済み'
+          + (ev.onlinePayTo ? '<br><span style="color:var(--sub);font-size:12px;">送金先: ' + esc(ev.onlinePayTo) + '</span>' : '') + '</label></div>'
+          + '<button class="primary" id="olGo_' + i + '" style="width:100%;margin-top:8px;">申請する</button>'
+          + '<div class="se-msg" id="olMsg_' + i + '"></div>'
+          + '</div>';
+      }
+      return '<div class="selfevent" id="ol_' + i + '" style="border-color:var(--focus);">' + head + body + '</div>';
+    }).join('');
+    evs.forEach(function(ev, i){
+      var op = $('olOpen_' + i);
+      if(op) op.onclick = function(){ op.classList.add('hide'); $('olForm_' + i).classList.remove('hide'); };
+      var go = $('olGo_' + i);
+      if(!go) return;
+      go.onclick = function(){
+        var env = $('olEnv_' + i).value.trim();
+        if(!env){ $('olMsg_' + i).textContent = '環境責任者の名前を入力してください'; return; }
+        if(!$('olPledge_' + i).checked || !$('olPay_' + i).checked){
+          $('olMsg_' + i).textContent = '誓約書とPayPay送金のチェックを入れてください'; return;
+        }
+        go.disabled = true;
+        db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
+          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+          method: 'online', status: 'pending',
+          fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
+          envApprover: env, pledged: true, paypaySent: true,
+          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), by: 'self-online'
+        }).then(function(){
+          try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
+          $('ol_' + i).innerHTML = '<b>💻 オンライン受講：' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</b>'
+            + '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請しました。承認をお待ちください</p>'
+            + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
+        }).catch(function(){
+          go.disabled = false;
+          $('olMsg_' + i).textContent = '申請できません。すでに申請済みか、受付が終了しています。';
         });
       };
     });
@@ -769,13 +861,14 @@ function setupHeaderUnionSel(){
     $('unionBadge').classList.add('hide');
     sel.onchange = function(){
       gUnion = sel.value;
-      gRosterUnion = gUnion; gEventUnion = gUnion; gStatUnion = gUnion;
+      gRosterUnion = gUnion; gEventUnion = gUnion; gStatUnion = gUnion; gFinUnion = gUnion;
       gMembersLoaded = false; gMembers = []; gSel = {};
       stopReception();
       refreshUnionSelectors();
       loadMembers();
       loadEvents();
       loadStats();
+      loadFinanceTab();
     };
   } else {
     sel.classList.add('hide');
@@ -786,11 +879,12 @@ function setupHeaderUnionSel(){
 function enterApp(){
   showView('vApp');
   setupHeaderUnionSel();
-  gRosterUnion = gUnion; gEventUnion = gUnion; gStatUnion = gUnion;
+  gRosterUnion = gUnion; gEventUnion = gUnion; gStatUnion = gUnion; gFinUnion = gUnion;
   refreshUnionSelectors();
   loadMembers();
   loadEvents();
   loadStats();
+  loadFinanceTab();
 }
 
 /* 各タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
@@ -799,7 +893,12 @@ function refreshUnionSelectors(){
   renderRosterUnionSel();
   fillUnionSel($('evUnionSel'), gEventUnion);
   fillUnionSel($('stUnionSel'), gStatUnion);
+  fillUnionSel($('finUnionSel'), gFinUnion);
 }
+$('finUnionSel').onchange = function(){
+  gFinUnion = $('finUnionSel').value;
+  loadFinanceTab();
+};
 $('evUnionSel').onchange = function(){
   gEventUnion = $('evUnionSel').value;
   loadEvents();
@@ -847,6 +946,7 @@ Array.prototype.forEach.call(tabs, function(b){
     b.classList.add('on');
     $(b.getAttribute('data-pane')).classList.add('on');
     if(b.getAttribute('data-pane') === 'pKiosk' && gRec) focusScan();
+    if(b.getAttribute('data-pane') === 'pFin') loadFinanceTab();
   };
 });
 
@@ -1350,12 +1450,14 @@ function shiftMonth(d){
   gMonth.m += d;
   if(gMonth.m < 1){ gMonth.m = 12; gMonth.y--; }
   if(gMonth.m > 12){ gMonth.m = 1; gMonth.y++; }
-  loadEvents(); loadStats();
+  loadEvents(); loadStats(); loadFinanceTab();
 }
 $('evPrev').onclick = function(){ shiftMonth(-1); };
 $('evNext').onclick = function(){ shiftMonth(1); };
 $('stPrev').onclick = function(){ shiftMonth(-1); };
 $('stNext').onclick = function(){ shiftMonth(1); };
+$('fnPrev').onclick = function(){ shiftMonth(-1); };
+$('fnNext').onclick = function(){ shiftMonth(1); };
 
 function loadEvents(){
   var key = monthKey(gMonth.y, gMonth.m);
@@ -1395,6 +1497,7 @@ function renderEvents(){
       + (isSelf && canDel ? '<button data-a="selftog" data-id="' + esc(ev.id) + '"' + (ev.selfOpen ? '' : ' class="primary"') + '>'
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
+      + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canRec ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
@@ -1410,6 +1513,15 @@ function renderEvents(){
         if(el) el.textContent = '出席 ' + s.data().count + '名';
       }).catch(function(){ var el = $('evCt_' + ev.id); if(el) el.textContent = ''; });
     }catch(e){ var el = $('evCt_' + ev.id); if(el) el.textContent = ''; }
+    // オンライン申請の承認待ち件数
+    if(ev.online){
+      q.where('method', '==', 'online').get().then(function(aqs){
+        var pending = 0;
+        aqs.forEach(function(d){ if(d.data().status === 'pending') pending++; });
+        var el = $('obCt_' + ev.id);
+        if(el && pending) el.innerHTML = ' <span class="pill r">' + pending + '件</span>';
+      }).catch(function(){});
+    }
   });
 }
 $('evList').addEventListener('click', function(e){
@@ -1420,6 +1532,7 @@ $('evList').addEventListener('click', function(e){
   if(!ev) return;
   if(a === 'rec'){ startReception(ev); }
   if(a === 'fin'){ financeModal(ev); }
+  if(a === 'online'){ onlineModal(ev); }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
@@ -1466,6 +1579,13 @@ function eventForm(ev){
     + '<label for="evModeSelf" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">CLAVIS主催・セルフチェックイン</label></div>'
     + '<div class="chkrow' + (isSelfCur ? '' : ' hide') + '" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode"' + (ev && ev.requireCode ? ' checked' : '') + '>'
     + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する（会場で案内された4桁を入れないとチェックインできない）</label></div>'
+    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evOnline"' + (ev && ev.online ? ' checked' : '') + '>'
+    + '<label for="evOnline" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">オンライン受講を受け付ける（会員証から申請→承認でZoom URL自動表示）</label></div>'
+    + '<div id="rowOnline" class="' + (ev && ev.online ? '' : 'hide') + '" style="margin-left:22px;">'
+    + '<label>オンライン受講料（¥）</label><input type="text" id="evOnFee" inputmode="numeric" value="' + esc(ev && ev.onlineFee != null ? ev.onlineFee : 1000) + '">'
+    + '<label>PayPay送金先（申請フォームに表示）</label><input type="text" id="evOnPay" value="' + esc((ev && ev.onlinePayTo) || '') + '" placeholder="例: PayPay ID xxxx（きむ）">'
+    + '<label>Zoom URL（あとからでも可。承認キュー画面でも入力できます）</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
+    + '</div>'
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
@@ -1473,6 +1593,7 @@ function eventForm(ev){
   function updModeRow(){ $('rowReqCode').classList.toggle('hide', !$('evModeSelf').checked); }
   $('evModeDesk').onchange = updModeRow;
   $('evModeSelf').onchange = updModeRow;
+  $('evOnline').onchange = function(){ $('rowOnline').classList.toggle('hide', !$('evOnline').checked); };
   $('evSave').onclick = function(){
     var date = $('evDate').value, name = $('evName').value.trim();
     if(!date || !name){ toast('日付と名称は必須です'); return; }
@@ -1487,7 +1608,11 @@ function eventForm(ev){
       mode: isSelf ? 'self' : '',
       hostLabel: isSelf ? 'CLAVIS' : '',
       requireCode: reqCode,
-      venueCode: reqCode ? ((ev && ev.venueCode) || String(Math.floor(1000 + Math.random() * 9000))) : ''
+      venueCode: reqCode ? ((ev && ev.venueCode) || String(Math.floor(1000 + Math.random() * 9000))) : '',
+      online: $('evOnline').checked,
+      onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
+      onlinePayTo: $('evOnPay').value.trim(),
+      zoomUrl: $('evZoom').value.trim()
     };
     var p;
     if(isNew){
@@ -1507,6 +1632,86 @@ function eventForm(ev){
   };
 }
 
+/* ---------- オンライン受講の承認キュー ---------- */
+function onlineModal(ev){
+  db.collection('checkinEvents').doc(ev.id).collection('attendance')
+    .where('method', '==', 'online').get().then(function(qs){
+    var apps = [];
+    qs.forEach(function(d){ var a = d.data(); a.id = d.id; apps.push(a); });
+    apps.sort(function(a, b){ return (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1); });
+    var rows = apps.map(function(a, i){
+      var st = a.status === 'pending' ? '<span class="pill a">承認待ち</span>'
+        : a.status === 'approved' ? '<span class="pill g">承認済み' + (a.approvedBy ? '（' + esc(a.approvedBy) + '）' : '') + '</span>'
+        : '<span class="pill r">却下</span>';
+      var detail = '環境責任者: ' + esc(a.envApprover || '—')
+        + '　誓約書: ' + (a.pledged ? '✓' : '—')
+        + '　PayPay送金申告: ' + (a.paypaySent ? '✓ ' + yen(a.fee || 0) : '—');
+      var btns = '';
+      if(a.status === 'pending'){
+        btns = '<button class="primary" data-ola="approve" data-i="' + i + '">承認（' + yen(a.fee || 0) + ' 受領確認済み）</button>'
+          + '<button data-ola="reject" data-i="' + i + '" class="danger">却下</button>';
+      } else if(a.status === 'rejected'){
+        btns = '<button data-ola="reset" data-i="' + i + '">申請を削除（再申請できるようにする）</button>';
+      }
+      return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;">'
+        + '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;">'
+        + '<b>' + esc(a.name || '') + '</b>'
+        + '<span style="color:var(--sub);font-size:12.5px;">' + esc(a.group || '') + '・' + esc(a.union || '') + '</span>'
+        + st + '</div>'
+        + '<div style="font-size:12.5px;color:var(--sub);margin:4px 0 6px;">' + detail + '</div>'
+        + '<div class="rowbtns" style="flex-wrap:wrap;">' + btns + '</div>'
+        + '</div>';
+    }).join('');
+    modal('<h2>💻 オンライン受講 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
+      + '<label>Zoom URL（保存すると承認済みの受講者の会員証に表示されます）</label>'
+      + '<div style="display:flex;gap:8px;"><input type="text" id="olZoom" value="' + esc(ev.zoomUrl || '') + '" style="flex:1;min-width:0;" placeholder="https://zoom.us/j/...">'
+      + '<button id="olZoomSave">保存</button></div>'
+      + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）</label>'
+      + (rows || '<p style="color:var(--sub);font-size:13px;">申請はまだありません。受講者は自分の会員証から申請できます。</p>')
+      + '<div class="btns"><button id="olClose">閉じる</button></div>',
+      true);
+    $('olClose').onclick = closeModal;
+    $('olZoomSave').onclick = function(){
+      db.collection('checkinEvents').doc(ev.id).set({ zoomUrl: $('olZoom').value.trim() }, { merge: true })
+        .then(function(){ ev.zoomUrl = $('olZoom').value.trim(); toast('Zoom URLを保存しました'); loadEvents(); })
+        .catch(function(e){ toast(permMsg(e, 'Zoom URLの保存権限がありません')); });
+    };
+    document.querySelector('.modal').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button[data-ola]') : null;
+      if(!b) return;
+      var a = apps[parseInt(b.getAttribute('data-i'), 10)];
+      var act = b.getAttribute('data-ola');
+      var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(a.id);
+      var done = function(msg){ toast(msg); closeModal(); onlineModal(ev); loadEvents(); };
+      var markCard = function(val){
+        if(!a.cardToken) return Promise.resolve();
+        var u = {}; u['online_' + ev.id] = val;
+        return db.collection('cards').doc(a.cardToken).set(u, { merge: true }).catch(function(){});
+      };
+      if(act === 'approve'){
+        b.disabled = true;
+        attRef.set({ status: 'approved', paid: true, approvedBy: (gProf && gProf.name) || '', approvedAt: FV.serverTimestamp() }, { merge: true })
+          .then(function(){ return markCard('approved'); })
+          .then(function(){ done(a.name + ' さんを承認しました。会員証にZoomボタンが表示されます'); })
+          .catch(function(e){ b.disabled = false; toast(permMsg(e, '承認権限がありません')); });
+      }
+      if(act === 'reject'){
+        if(!window.confirm(a.name + ' さんの申請を却下しますか？')) return;
+        attRef.set({ status: 'rejected', paid: false }, { merge: true })
+          .then(function(){ return markCard('rejected'); })
+          .then(function(){ done('却下しました'); })
+          .catch(function(e){ toast(permMsg(e, '権限がありません')); });
+      }
+      if(act === 'reset'){
+        attRef.delete()
+          .then(function(){ return markCard('reapply'); })
+          .then(function(){ done('申請を削除しました。本人は再申請できます'); })
+          .catch(function(e){ toast(permMsg(e, '権限がありません')); });
+      }
+    });
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+}
+
 /* ---------- 会計（BASE集計表のデジタル版） ---------- */
 function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
 function financeModal(ev){
@@ -1516,15 +1721,47 @@ function financeModal(ev){
     var snap = res[0];
     // 受付の徴収データからBA人数を自動集計（未保存の場合の初期値に使う）
     var attCount = 0, c1000 = 0, c500 = 0;
+    var adet = [], dCash = 0, dPp = 0, dUnpaid = 0;
     res[1].forEach(function(d){
-      attCount++;
       var a = d.data(), fee = a.fee || 0;
-      if(fee > 0 && a.paid !== false){
+      var pending = a.status === 'pending' || a.status === 'rejected';
+      if(!pending) attCount++;
+      if(fee > 0 || a.method === 'online'){
+        adet.push(a);
+        if(!pending && fee > 0){
+          if(a.paid === false){ dUnpaid += fee; }
+          else if(a.payMethod === 'paypay'){ dPp += fee - (a.refund || 0); }
+          else { dCash += fee - (a.refund || 0); }
+        }
+      }
+      if(!pending && fee > 0 && a.paid !== false && a.payMethod !== 'paypay'){
         var net = fee - (a.refund || 0);
         if(net === 1000) c1000++;
         else if(net === 500) c500++;
       }
     });
+    adet.sort(function(a, b){ return (a.atLocal || '') < (b.atLocal || '') ? -1 : 1; });
+    var detailHtml = adet.length
+      ? '<label style="margin-top:14px;">徴収明細（受付データ・自動）</label>'
+        + '<div style="max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 12px;">'
+        + adet.map(function(a){
+            var tags = '';
+            if(a.status === 'pending') tags = '<span class="pill a">承認待ち</span>';
+            else if(a.status === 'rejected') tags = '<span class="pill r">却下</span>';
+            else if(a.paid === false) tags = '<span class="pill r">未徴収</span>';
+            else tags = (a.payMethod === 'paypay' ? '<span class="pill a">PayPay</span>' : '<span class="pill g">現金</span>')
+              + (a.refund ? ' <span class="pill r">返金 ' + yen(a.refund) + '</span>' : '');
+            if(a.method === 'online') tags += ' <span class="pill n">オンライン</span>';
+            return '<div style="display:flex;gap:8px;align-items:baseline;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line);">'
+              + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(a.name || '') + '</span>'
+              + '<span class="mono" style="font-size:12px;">' + yen(a.fee || 0) + '</span>' + tags + '</div>';
+          }).join('')
+        + '</div>'
+        + '<div style="font-size:13px;text-align:right;margin:6px 0 4px;">'
+        + '現金計 <b class="mono">' + yen(dCash) + '</b>　PayPay計 <b class="mono">' + yen(dPp) + '</b>'
+        + (dUnpaid ? '　<span style="color:var(--accent);">未徴収 ' + yen(dUnpaid) + '</span>' : '')
+        + '</div>'
+      : '';
     var f = snap.exists ? snap.data() : {};
     var inc = f.income || [
       { label: 'BA', unit: 1000, count: c1000 || '' },
@@ -1581,7 +1818,15 @@ function financeModal(ev){
       + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || '') + '" style="flex:1;min-width:0;">'
       + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || '') + '" style="flex:1;min-width:0;">'
       + '</div>'
-      + '<div class="btns"><button id="fnCancel">閉じる</button><button class="primary" id="fnSave">保存</button></div>',
+      + detailHtml
+      + (f.locked
+        ? '<p style="margin-top:10px;"><span class="pill g">✓ 確定済み</span><span style="font-size:12.5px;color:var(--sub);margin-left:8px;">編集はロックされています</span></p>'
+        : '')
+      + '<div class="btns"><button id="fnCancel">閉じる</button>'
+      + (f.locked
+        ? (canEditUnion(ev.hostUnion) ? '<button id="fnUnlock" class="danger">確定を解除</button>' : '')
+        : '<button id="fnSave">保存</button><button class="primary" id="fnLock">保存して確定</button>')
+      + '</div>',
       true
     );
     $('fnAtt').textContent = '出席 ' + attCount + '名'
@@ -1604,7 +1849,19 @@ function financeModal(ev){
     document.querySelector('.modal').addEventListener('input', recompute);
     recompute();
     $('fnCancel').onclick = closeModal;
-    $('fnSave').onclick = function(){
+    if(f.locked){
+      // 確定済み: 入力を全てロック
+      Array.prototype.forEach.call(document.querySelectorAll('.modal input'), function(el){ el.disabled = true; });
+      var ub = $('fnUnlock');
+      if(ub) ub.onclick = function(){
+        if(!window.confirm('確定を解除して編集できるようにしますか？')) return;
+        finRef.set({ locked: false }, { merge: true }).then(function(){
+          toast('確定を解除しました'); closeModal(); financeModal(ev); loadFinanceTab();
+        }).catch(function(e){ toast(permMsg(e, '解除の権限がありません')); });
+      };
+      return;
+    }
+    function saveFinance(lock){
       var totals = recompute();
       var income = inc.map(function(r, i){
         return { label: $('fiL' + i).value.trim(), unit: num($('fiU' + i).value),
@@ -1614,21 +1871,92 @@ function financeModal(ev){
         return { label: $('feL' + i).value.trim(), note: $('feN' + i).value.trim(),
                  amount: num($('feA' + i).value), receipt: $('feR' + i).checked };
       });
-      $('fnSave').disabled = true;
-      db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main').set({
+      $('fnSave').disabled = true; $('fnLock').disabled = true;
+      finRef.set({
         income: income, expenses: expenses,
         shortage: num($('fnShort').value),
         incomeTotal: totals.ti, expenseTotal: totals.te, net: totals.ti - totals.te,
+        cashTotal: dCash, paypayTotal: dPp,
         mcName: $('fnMc').value.trim(), receptionName: $('fnRc').value.trim(),
+        locked: !!lock,
         updatedAt: FV.serverTimestamp(), updatedBy: gUser.uid
       }).then(function(){
-        closeModal(); toast('会計を保存しました（計 ' + yen(totals.ti - totals.te) + '）');
+        closeModal();
+        toast((lock ? '会計を確定しました' : '会計を保存しました') + '（計 ' + yen(totals.ti - totals.te) + '）');
+        loadFinanceTab();
       }).catch(function(e){
-        $('fnSave').disabled = false;
+        $('fnSave').disabled = false; $('fnLock').disabled = false;
         toast(permMsg(e, '会計の記録は参加ユニオンのメンバーのみ可能です'));
       });
-    };
+    }
+    $('fnSave').onclick = function(){ saveFinance(false); };
+    $('fnLock').onclick = function(){ saveFinance(true); };
   }).catch(function(e){ toast('会計の読込エラー: ' + e.message); });
+}
+
+/* 会計タブ: 月内イベントの会計状況一覧 */
+function loadFinanceTab(){
+  $('fnMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
+  var key = monthKey(gMonth.y, gMonth.m), body = $('finBody');
+  db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+    var evs = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if((ev.unions || []).indexOf(gFinUnion) >= 0) evs.push(ev);
+    });
+    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    if(!evs.length){
+      body.innerHTML = '<p style="color:var(--sub)">この月の「' + esc(gFinUnion) + '」のイベントはまだありません。</p>';
+      return;
+    }
+    Promise.all(evs.map(function(ev){
+      return db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main').get()
+        .then(function(s){ return s.exists ? s.data() : null; })
+        .catch(function(){ return null; });
+    })).then(function(fins){
+      var tIn = 0, tEx = 0, tNet = 0, tCash = 0, tPp = 0, html = '';
+      html += '<div class="evlist">';
+      evs.forEach(function(ev, i){
+        var f = fins[i], st, cells;
+        if(!f){
+          st = '<span class="pill n">未入力</span>';
+          cells = '<span style="color:var(--sub);font-size:13px;">— タップして入力</span>';
+        }else{
+          st = f.locked ? '<span class="pill g">✓ 確定</span>' : '<span class="pill a">入力中</span>';
+          var net = (f.incomeTotal || 0) - (f.expenseTotal || 0);
+          tIn += f.incomeTotal || 0; tEx += f.expenseTotal || 0; tNet += net;
+          tCash += f.cashTotal || 0; tPp += f.paypayTotal || 0;
+          cells = '<span class="mono" style="font-size:13px;color:var(--green);">+' + yen(f.incomeTotal || 0).slice(1) + '円</span>'
+            + '<span class="mono" style="font-size:13px;color:var(--accent);">−' + yen(f.expenseTotal || 0).slice(1) + '円</span>'
+            + '<b class="mono" style="font-size:14px;">計 ' + yen(net) + '</b>';
+        }
+        html += '<div class="evrow" data-id="' + esc(ev.id) + '" style="cursor:pointer;">'
+          + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
+          + '<b>' + esc(ev.name || '') + '</b>'
+          + (ev.online ? '<span class="jointtag">💻</span>' : '')
+          + '<span style="flex:1"></span>' + cells + st + '</div>';
+      });
+      html += '</div>'
+        + '<div style="display:flex;gap:16px;justify-content:flex-end;align-items:baseline;flex-wrap:wrap;'
+        + 'margin-top:12px;padding:10px 14px;border-top:2px solid var(--line);font-size:13.5px;">'
+        + '<span>月合計</span>'
+        + '<span>収入 <b class="mono" style="color:var(--green);">' + yen(tIn) + '</b></span>'
+        + '<span>支出 <b class="mono" style="color:var(--accent);">' + yen(tEx) + '</b></span>'
+        + '<span style="font-size:16px;">計 <b class="mono">' + yen(tNet) + '</b></span>'
+        + '<span style="font-size:12px;color:var(--sub);">（現金 ' + yen(tCash) + ' / PayPay ' + yen(tPp) + '）</span>'
+        + '</div>';
+      body.innerHTML = html;
+      Array.prototype.forEach.call(body.querySelectorAll('.evrow[data-id]'), function(row){
+        row.onclick = function(){
+          var id = row.getAttribute('data-id'), ev = null;
+          evs.forEach(function(x){ if(x.id === id) ev = x; });
+          if(ev) financeModal(ev);
+        };
+      });
+    });
+  }).catch(function(e){
+    body.innerHTML = '<p style="color:var(--sub)">読込エラー: ' + esc(e.message) + '</p>';
+  });
 }
 
 /* ---------- 受付 ---------- */
@@ -1646,7 +1974,12 @@ $('btnRecStart').onclick = function(){
   var ev = null; gEvents.forEach(function(x){ if(x.id === id) ev = x; });
   if(ev) startReception(ev);
 };
-$('btnRecStop').onclick = function(){ stopReception(); };
+$('btnRecStop').onclick = function(){
+  var ev = gRec && gRec.ev;
+  stopReception();
+  // 受付終了 → そのまま会計入力へ
+  if(ev && window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
+};
 
 function startReception(ev){
   stopReception();
@@ -2058,9 +2391,12 @@ function renderTallies(){
   var total = 0, byUnion = {}, byGroup = {};
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
-  var roles = [], cash = 0, paidCount = 0, refundCount = 0, unpaid = [];
+  var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [];
   Object.keys(gRec.att).forEach(function(id){
-    var a = gRec.att[id]; total++;
+    var a = gRec.att[id];
+    // オンライン申請の承認待ち・却下は集計に含めない
+    if(a.status === 'pending' || a.status === 'rejected') return;
+    total++;
     var uk = a.union || 'ゲスト';
     byUnion[uk] = (byUnion[uk] || 0) + 1;
     if(a.role) roles.push(a);
@@ -2069,7 +2405,8 @@ function renderTallies(){
       if(a.paid === false){
         unpaid.push({ no: id, name: a.name, fee: fee });
       } else {
-        cash += fee - (a.refund || 0);
+        if(a.payMethod === 'paypay') paypay += fee - (a.refund || 0);
+        else cash += fee - (a.refund || 0);
         paidCount++;
         if(a.refund) refundCount++;
       }
@@ -2083,6 +2420,7 @@ function renderTallies(){
   var unpaidSum = 0;
   unpaid.forEach(function(u){ unpaidSum += u.fee; });
   $('cashSub').textContent = '徴収 ' + paidCount + '名'
+    + (paypay ? ' ・ PayPay ' + yen(paypay) : '')
     + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
     + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
   $('unpaidList').innerHTML = unpaid.map(function(u){
@@ -2140,7 +2478,11 @@ function loadStats(){
       return db.collection('checkinEvents').doc(ev.id).collection('attendance')
         .where('union', '==', gStatUnion).get().then(function(aqs){
           var m = {};
-          aqs.forEach(function(d){ m[d.id] = d.data(); });
+          aqs.forEach(function(d){
+            var a = d.data();
+            if(a.status === 'pending' || a.status === 'rejected') return;
+            m[d.id] = a;
+          });
           attMaps[ev.id] = m;
         });
     });
@@ -2151,6 +2493,7 @@ function loadStats(){
         .where('union', '==', gStatUnion).get().then(function(aqs){
           aqs.forEach(function(d){
             var a = d.data();
+            if(a.status === 'pending' || a.status === 'rejected') return;
             visits.push({ date: ev.date || '', evName: ev.name || '', host: ev.hostUnion || '', who: a.name || '' });
           });
         });

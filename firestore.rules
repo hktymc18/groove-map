@@ -256,6 +256,10 @@ service cloud.firestore {
                     && request.resource.data.get('unions',[])
                          .hasAny([request.resource.data.get('hostUnion','')]);
       allow update, delete: if isCkAdmin(resource.data.get('hostUnion',''));
+      // Zoom URL の登録・変更はログイン済みメンバーなら可（オンライン受付の運用者向け）
+      allow update: if signedIn()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['zoomUrl']);
 
       match /attendance/{aid} {
         allow read: if signedIn();
@@ -285,6 +289,22 @@ service cloud.firestore {
               || request.resource.data.get('code','') ==
                  get(/databases/$(database)/documents/checkinEvents/$(eid))
                    .data.get('venueCode','__none'));
+        // オンライン受講申請: 未ログインでも「有効な会員証トークンを持つ本人」が、
+        // オンライン対応イベント(online=true)に承認待ち(status=pending, paid=false)の
+        // 申請を1回だけ作成できる。承認・却下はログイン済みメンバーが update で行う。
+        allow create: if request.auth == null
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('online', false) == true
+          && request.resource.data.get('method','') == 'online'
+          && request.resource.data.get('status','') == 'pending'
+          && request.resource.data.get('paid', true) == false
+          && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+          && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+               .data.get('no','') == aid
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('unions',[])
+               .hasAny([get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+                          .data.get('union','')]);
       }
 
       // 会計（BASE集計表）: 参加ユニオンの有効メンバーが記録できる
@@ -306,7 +326,8 @@ service cloud.firestore {
       allow list: if false;
       allow create: if signedIn();
       allow delete: if signedIn();
-      allow update: if false;
+      // オンライン申請の承認結果マーカー(online_<eventId>)の書込みに使用
+      allow update: if signedIn();
     }
   }
 }
