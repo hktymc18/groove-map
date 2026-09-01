@@ -208,11 +208,37 @@ tr:last-child td{border-bottom:none;}
 .membercard.mc-platinum .mc-grade{color:#4a5163;letter-spacing:.4em;}
 .membercard.mc-platinum .mc-group,.membercard.mc-platinum .mc-no{color:#434a5b;}
 .membercard.mc-black{background:linear-gradient(145deg,#0b0b0d,#232427 52%,#0b0b0d);color:#ece4cd;}
-.membercard.mc-black::after{background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.14) 50%,transparent 56%);}
 .membercard.mc-black .mc-brand{color:#d4af37;}
 .membercard.mc-black .mc-union{color:#f1ead4;}
-.membercard.mc-black .mc-grade{color:#d4af37;letter-spacing:.3em;}
+.membercard.mc-black .mc-grade{color:#d4af37;letter-spacing:.3em;text-shadow:0 0 14px rgba(212,175,55,.55);}
 .membercard.mc-black .mc-group,.membercard.mc-black .mc-no{color:#9d947c;}
+/* JETCLUB: 背景が光って動くプレミアム演出（回転する光条＋脈動する金のオーラ＋走る光沢） */
+.membercard.mc-black > *{position:relative;z-index:1;}
+.membercard.mc-black::before{
+  content:'';position:absolute;left:-50%;top:-50%;width:200%;height:200%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(212,175,55,.32), rgba(212,175,55,.10) 34%, transparent 60%),
+    repeating-conic-gradient(from 0deg at 50% 50%,
+      rgba(212,175,55,0) 0deg, rgba(240,214,126,.20) 6deg, rgba(212,175,55,0) 12deg,
+      rgba(212,175,55,0) 20deg, rgba(228,199,106,.12) 25deg, rgba(212,175,55,0) 30deg);
+  -webkit-mask-image:radial-gradient(circle at 50% 50%, #000 24%, transparent 64%);
+  mask-image:radial-gradient(circle at 50% 50%, #000 24%, transparent 64%);
+  animation:jetRays 18s linear infinite, jetPulse 3.6s ease-in-out infinite alternate;
+}
+.membercard.mc-black::after{
+  background:linear-gradient(115deg,transparent 42%,rgba(255,231,161,.20) 50%,transparent 58%);
+  z-index:2;
+  animation:jetSheen 5.5s ease-in-out infinite;
+}
+@keyframes jetRays{to{transform:rotate(360deg);}}
+@keyframes jetPulse{from{opacity:.5;}to{opacity:1;}}
+@keyframes jetSheen{
+  0%{transform:translateX(-65%);}
+  45%,100%{transform:translateX(65%);}
+}
+@media (prefers-reduced-motion: reduce){
+  .membercard.mc-black::before,.membercard.mc-black::after{animation:none;}
+}
 
 /* 紙カード印刷 */
 #printArea{display:none;}
