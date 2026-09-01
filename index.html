@@ -1192,6 +1192,8 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .fit-prev-s{flex:none;font-size:9.5px;color:var(--text-dim);min-width:44px;text-align:right;font-family:Inter,sans-serif}
 .fit-exed{border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px;background:var(--surface2)}
 .fit-exskip{opacity:.45}
+@keyframes pcFreshGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(255,209,102,.35))}50%{filter:drop-shadow(0 0 11px rgba(255,209,102,.9))}}
+.oval-node.pc-fresh{animation:pcFreshGlow 2.4s ease-in-out infinite}
 .fit-food-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;border:1px solid transparent}
 .fit-food-row:hover{background:var(--surface2)}
 .fit-meal-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px}
@@ -2257,7 +2259,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v434</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v437</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2904,6 +2906,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             </div>
           </div>
           <div class="ed-help" id="h_outvis">OUTメンバーをツリーに出し続けるか選べます。「残す」＝復活の可能性がある人向け（翌月コピー後もMAPに残ります）。「非表示」＝ツリーから消えます（データは残り、メンバー一覧の「OUT」絞り込みからいつでも開けます）。どちらでも直下の組織は上のアップラインに移動します。</div>
+          <div class="ed-row" id="restartRow" style="display:none">
+            <span class="ed-l">🔄 リスタート<span class="ed-q" onclick="edHelp(event,'h_restart')">?</span></span>
+            <div class="ed-ctrl"><div id="restartCtl" style="font-size:12.5px;line-height:1.8"></div></div>
+          </div>
+          <div class="ed-help" id="h_restart">BR維持失敗（ロールアップ）から再挑戦中のメンバーに「🔄リスタート◯ヶ月目」を表示します（開始月＝1ヶ月目、6ヶ月目まで自動表示）。翌月コピーの自動ロールアップでは自動設定されます。既に手動で組織を組み替え済みの場合は、ここから開始月を後付けで設定してください。</div>
           <div class="ed-row">
             <span class="ed-l">現状GSV<span class="ed-q" onclick="edHelp(event,'h_fPtC')">?</span></span>
             <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力"></div>
@@ -3518,10 +3525,11 @@ function copyToNextMonth() {
     });
     _ruDemoted.forEach(function(mm) {
       var s = snap[mm.id];
-      mm.rollup = { at: nextMonth, kids: s.ks.map(function(c) { return c.id; }), fromTitle: 'BR' };
-      s.ks.forEach(function(c) { c.parentId = s.pid; });
-      changes.push({ name: mcName(mm), from: '直下 ' + s.ks.length + '人', to: '🔄 ロールアップ', kind: 'demote',
-        reason: 'BR維持失敗のため組織は上のアップラインへ。「リスタート1ヶ月目」開始（6ヶ月以内にBR復帰で取り戻せます）' });
+      var mv = s.ks.filter(function(c) { return _ruLineHasBr(copyMembers, c.id); }); // v437: BRを含む系列のみ
+      mm.rollup = { at: nextMonth, kids: mv.map(function(c) { return c.id; }), fromTitle: 'BR' };
+      mv.forEach(function(c) { c.parentId = s.pid; });
+      changes.push({ name: mcName(mm), from: 'BRを含む系列 ' + mv.length + '/' + s.ks.length, to: '🔄 ロールアップ', kind: 'demote',
+        reason: 'BR維持失敗のためBRを含むDラインは上のアップラインへ' + (s.ks.length > mv.length ? '（BRのいない' + (s.ks.length - mv.length) + '系列は残留）' : '') + '。「リスタート1ヶ月目」開始（6ヶ月以内にBR復帰で取り戻せます）' });
     });
     _ruPromoted.forEach(function(mm) {
       var n = _restartMonths(mm, nextMonth);
@@ -4050,10 +4058,18 @@ function renderPCMap(mapType) {
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','oval-node' + (mapType === 'current' && typeof memberActivityLevel === 'function' ? (' ' + memberActivityLevel(m)) : ''));
+    g.setAttribute('class','oval-node' + (mapType === 'current' && typeof memberActivityLevel === 'function' ? (' ' + memberActivityLevel(m)) : '')
+      + ((mapType === 'current' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m)) ? ' pc-fresh' : '')); // v437: フレッシュは金色パルス
     g.setAttribute('data-mid',m.id);
     g.setAttribute('data-lineage', lineageRoot[m.id]||'');
     g.setAttribute('data-region', m.region||'');
+    // v437: 地域絞り込みは生成時にも即適用（applyRegionDimのタイマーと描画完了の競合で
+    //        後から描かれたノードが明るいまま残るバグの根治）
+    if (typeof regionFilter !== 'undefined' && regionFilter) {
+      var _rg9 = (m.region || '').trim();
+      var _rok9 = (regionFilter === '__NONE__') ? !_rg9 : (_rg9 === regionFilter);
+      if (!_rok9) g.style.opacity = '0.22';
+    }
     g.style.cursor='pointer';
 
     var rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
@@ -4089,6 +4105,9 @@ function renderPCMap(mapType) {
     if(m.morale>0){
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
       g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
+    }
+    if (mapType === 'current' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m)) {
+      g.appendChild(txt(rx + 24, ry2 - 3, '✨', '#FFD166', 15, null, 'Inter,sans-serif')); // v437: フレッシュ印
     }
     // 写真アバター（あれば左端に丸表示し、テキストを右へずらす）
     var _pcPh = (_pcPhotoOk && typeof _avatars !== 'undefined') ? _avatars[m.id] : null;
@@ -5075,7 +5094,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v434';
+  var DATA_VERSION = 'v437';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6034,6 +6053,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v437', d:'2026-08-28', items:['🎨テンプレのカテゴリ（色）を変更すると、そのテンプレから作った既存の予定の色もまとめて変更されるようになりました（カテゴリ自体の色変更はv432で対応済み。両方のパターンをカバー）','✨PCツリーでフレッシュ（登録6ヶ月以内）がひと目で分かるように：ノードが金色にやわらかく点滅し、カード左上に✨マークが付きます','📍地域絞り込みで他地域のメンバーが一部明るいまま残るバグを修正：PCの描画完了とフィルタ適用のタイミングずれが原因だったため、ノード生成時に即フィルタを適用するようにしました','🔄ロールアップの精度改善①：BRを含まないDライン（直下系列）はロールアップせず、降格したBMの下に残るようになりました（翌月コピー・手動どちらも）','🔄ロールアップの精度改善②：既に手動で組織を組み替え済みのメンバーに「リスタート表示」を後付けできるようになりました（メンバー編集→🔄リスタート→開始月を指定。解除も可能）'] },
+  { v:'v436', d:'2026-08-28', items:['💪記録した筋トレをあとから編集・削除できるようになりました：記録済みの日を開くと「✏️記録済み」バナーが出て、値を変えて保存すれば上書き、回数を0にしたセットは削除されます。「🗑 この日の記録を削除」でセッションごと削除もできます（カレンダーの💪バーも消えます）'] },
+  { v:'v435', d:'2026-08-28', items:['💪日付を選んで記録できるようになりました：ヘッダーの日付をタップするとカレンダーから任意の日を選べます（過去日の入力・日またぎの記録に）。「今日」ボタンでワンタップで今日に戻れます。‹›の1日移動も従来通り'] },
   { v:'v434', d:'2026-08-28', items:['💪マイトレーニング全面リニューアル：🍚食事機能を廃止し、筋トレ特化に','📚大項目（プログラム）を自由編成：A/B/Cの追加・名前変更・削除・並べ替え、種目の入れ替えが⚙️メニュー編集から自由にできます（既存メニューは自動移行）','📖種目マスターを新設：種目ごとに分類（押す/引く/肩・腕/体幹/脚/インナー＋任意追加）・デフォルト重量・回数・セット数・インターバル秒数を保持。分類チップで絞り込んで種目を選べます','⏭スキップ機能：やらない種目は「スキップ」で記録に残せます。逆に「＋この日だけ種目を追加」でノッた日の追加も','⏱インターバルタイマー：種目ごとのIV秒でカウントダウン→終了でバイブ通知','🗓カレンダー連携を強化：記録すると「Aトレ✓」バーが自動表示→タップでその日の記録へ直行。予定を入れたのにやらなかった日はグレー表示で一目瞭然','📊今週の実施回数をホームに表示、セッションメモ（体調・気づき）も記録可能に','🐣マッスルくんが分類ベースで成長：体幹→腹筋・脚→脚の太さにも反映されるようになりました'] },
   { v:'v433', d:'2026-08-28', items:['📌テンプレ作成・編集の「タイトル雛形」欄を廃止しました：テンプレの名前がそのまま予定のタイトルになります（シンプル化）。既存テンプレも今後は名前がタイトルとして使われるため、「名前を変えたのに反映されない」は起こりません。※名前に{name}を入れると従来通り選択メンバー名に置き換わります'] },
   { v:'v432', d:'2026-08-28', items:['🎨カテゴリの色を変更した時、そのカテゴリが付いた既存の予定・タスクの色も自動で一括変更されるようになりました（これまでは作成時の色が固定のままでした）。何件変わったかもトーストでお知らせします'] },
@@ -8173,6 +8195,17 @@ function _rollupReclaim(arr, m) {
     }
   });
   return back;
+}
+// v437: 直下系列（Dライン）にBR以上が含まれるか（含まない系列はロールアップで動かさない）
+function _ruLineHasBr(arr, rootId) {
+  var root = null;
+  for (var i = 0; i < arr.length; i++) { if (arr[i].id === rootId) { root = arr[i]; break; } }
+  if (!root || root.deleted) return false;
+  if (isBROrAbove(root.title)) return true;
+  for (var j = 0; j < arr.length; j++) {
+    if (arr[j].parentId === rootId && !arr[j].deleted && _ruLineHasBr(arr, arr[j].id)) return true;
+  }
+  return false;
 }
 // v426: OUT非表示(outHidden)メンバーをツリー描画から除外（配下が残っている場合は孤児防止のため表示継続）
 function _treeVisibleMembers(arr) {
@@ -11753,6 +11786,7 @@ function openEdit(id) {
         }
         selOutVis(!!m.outHidden); // v426: OUT後の表示（残す/非表示）を復元
         _outVisRowSync();
+        try { _restartRowRender(m); } catch(eRr) {} // v437
       } catch(e2) {}
     })();
   } catch(e) {
@@ -11775,6 +11809,7 @@ function clearForm() {
   fCategory='';
   selOutVis(false);
   var _ovr=document.getElementById('outVisRow'); if(_ovr) _ovr.style.display='none';
+  var _rsr=document.getElementById('restartRow'); if(_rsr) _rsr.style.display='none';
   ['研修生','BA','BR'].forEach(function(k){
     var el=document.getElementById('rbCat'+(k==='研修生'?'Trainee':k));
     if(el) el.classList.remove('sel');
@@ -11872,6 +11907,50 @@ function _outVisRowSync() {
   row.style.display = (t === 'OUT') ? '' : 'none';
 }
 function onTitleChange() { _outVisRowSync(); }
+// v437: 手動リスタート設定（既にロールアップ相当の組み替えを済ませたメンバー用）
+function _restartRowRender(m) {
+  var row = document.getElementById('restartRow'), ctl = document.getElementById('restartCtl');
+  if (!row || !ctl) return;
+  if (!m || !editingId) { row.style.display = 'none'; return; }
+  var t9 = (m.title || '').trim();
+  var show = (m.rollup && m.rollup.at) || (!isBROrAbove(t9) && t9 !== 'OUT');
+  row.style.display = show ? '' : 'none';
+  if (!show) return;
+  if (m.rollup && m.rollup.at) {
+    var n = _restartMonths(m);
+    ctl.innerHTML = '<span style="color:#FB923C;font-weight:700">開始 ' + evEsc(String(m.rollup.at)) + '（' + (n >= 1 ? (n + 'ヶ月目' + (n > 6 ? '・表示終了' : '')) : '開始前') + '）</span>'
+      + '<span onclick="memberRestartClear(\'' + m.id + '\')" style="margin-left:10px;padding:4px 12px;border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:11.5px">解除</span>';
+  } else {
+    ctl.innerHTML = '<span onclick="memberRestartSet(\'' + m.id + '\')" style="display:inline-block;padding:5px 13px;border:1px solid var(--accent);border-radius:12px;cursor:pointer;font-weight:700;color:var(--accent)">＋ リスタート表示を設定</span>';
+  }
+}
+function memberRestartSet(mid) {
+  var m = null;
+  for (var i = 0; i < state.members.length; i++) { if (state.members[i].id === mid) { m = state.members[i]; break; } }
+  if (!m) return;
+  var def = (state.currentMonth || currentMonthStr()).replace('.', '-');
+  var v = prompt('リスタート開始月（BRから降格した月）を YYYY-MM で入力\n例：2026-08', def);
+  if (!v) return;
+  v = v.trim().replace('.', '-').replace('/', '-');
+  if (!/^\d{4}-\d{1,2}$/.test(v)) { toast('YYYY-MM の形式で入力してください'); return; }
+  var pp = v.split('-');
+  m.rollup = { at: pp[0] + '.' + evPad2(parseInt(pp[1], 10)), kids: (m.rollup && m.rollup.kids) || [], fromTitle: (m.rollup && m.rollup.fromTitle) || 'BR', manual: true };
+  autoSave();
+  _restartRowRender(m);
+  renderCurrentView();
+  toast('🔄 リスタート表示を設定しました（' + m.rollup.at + ' 開始）');
+}
+function memberRestartClear(mid) {
+  var m = null;
+  for (var i = 0; i < state.members.length; i++) { if (state.members[i].id === mid) { m = state.members[i]; break; } }
+  if (!m || !m.rollup) return;
+  if (!confirm('🔄 リスタート表示を解除しますか？')) return;
+  m.rollup = '';
+  autoSave();
+  _restartRowRender(m);
+  renderCurrentView();
+  toast('解除しました');
+}
 
 function selGender(g,silent) {
   fGender=g;
@@ -12093,12 +12172,13 @@ function saveMember() {
       m.rollup = '';
     } else if (isBROrAbove(_t0m) && !isBROrAbove(_t1m) && _t1m !== 'OUT' && m.parentId) {
       var _dt6 = demoteTitleFor(m, state.currentMonth || currentMonthStr());
-      if (confirm('🔄 ' + _nm6 + 'さんを「' + _t0m + '」から降格（ロールアップ）として処理しますか？\n\n・タイトルは登録月から自動で「' + _dt6 + '」になります\n・直下 ' + _liveKids6.length + '人 は上のアップラインの直下に移動します\n・「リスタート1ヶ月目」の表示が始まります（6ヶ月以内にBR復帰で組織を取り戻せます）\n\nキャンセル＝タイトルの変更だけ行い、組織はそのまま')) {
+      var _mvKids6 = _liveKids6.filter(function(c) { return _ruLineHasBr(state.members, c.id); }); // v437: BRを含む系列のみ上へ
+      if (confirm('🔄 ' + _nm6 + 'さんを「' + _t0m + '」から降格（ロールアップ）として処理しますか？\n\n・タイトルは登録月から自動で「' + _dt6 + '」になります\n・直下のうちBRを含む系列 ' + _mvKids6.length + '/' + _liveKids6.length + ' は上のアップラインの直下に移動します（BRのいない系列は残ります）\n・「リスタート1ヶ月目」の表示が始まります（6ヶ月以内にBR復帰で組織を取り戻せます）\n\nキャンセル＝タイトルの変更だけ行い、組織はそのまま')) {
         m.title = _dt6;
         m.cat = detectCategory(_dt6) || m.cat;
-        m.rollup = { at: state.currentMonth || currentMonthStr(), kids: _liveKids6.map(function(c) { return c.id; }), fromTitle: _t0m };
-        _liveKids6.forEach(function(c) { c.parentId = m.parentId; });
-        setTimeout(function() { toast('🔄 ロールアップ：直下 ' + _liveKids6.length + '人 を上のアップラインへ移動しました'); }, 400);
+        m.rollup = { at: state.currentMonth || currentMonthStr(), kids: _mvKids6.map(function(c) { return c.id; }), fromTitle: _t0m };
+        _mvKids6.forEach(function(c) { c.parentId = m.parentId; });
+        setTimeout(function() { toast('🔄 ロールアップ：BRを含む ' + _mvKids6.length + '系列 を上のアップラインへ移動しました'); }, 400);
       }
     } else if (!isBROrAbove(_t0m) && isBROrAbove(_t1m) && _prevMember.rollup && _prevMember.rollup.at) {
       var _n6 = _restartMonths(_prevMember);
@@ -13758,7 +13838,12 @@ function fitOpen(ymd, tab) {
   }
   pane.style.display = 'flex';
   pane.innerHTML = '<div class="fit-hd"><span class="ms-x" onclick="fitClose()">✕</span><div class="fit-ttl">💪 マイトレーニング</div>'
-    + '<div class="fit-datebar"><span class="fit-dnav" onclick="fitShiftDay(-1)">‹</span><span id="fitDateLbl"></span><span class="fit-dnav" onclick="fitShiftDay(1)">›</span></div></div>'
+    + '<div class="fit-datebar"><span class="fit-dnav" onclick="fitShiftDay(-1)">‹</span>'
+    + '<span id="fitDateLbl" onclick="fitDatePick()" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px" title="タップで日付を選択"></span>'
+    + '<span class="fit-dnav" onclick="fitShiftDay(1)">›</span>'
+    + '<span class="fit-dnav" style="width:auto;padding:0 10px;font-size:11.5px;border-radius:17px" onclick="fitGoToday()">今日</span></div>'
+    + '<input type="date" id="fitDateInp" style="position:absolute;opacity:0;width:1px;height:1px;border:0;padding:0;left:50%;top:40px">'
+    + '</div>'
     + '<div class="fit-tabs">'
     + ['dash|🏠 ホーム', 'work|🏋️ 筋トレ', 'trend|📈 推移'].map(function(t) {
         var p = t.split('|');
@@ -13775,6 +13860,23 @@ function fitShiftDay(d) {
   var dt = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10) + d);
   var ymd = dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1) + '-' + evPad2(dt.getDate());
   _fitLoadDay(ymd).then(function() { fitTab(_fitTab); });
+}
+// v435: 日付を選んで移動（過去日の入力・日またぎの記録用）
+function fitDatePick() {
+  var inp = document.getElementById('fitDateInp');
+  if (!inp) return;
+  inp.value = _fitYmd || _fitToday();
+  inp.onchange = function() {
+    if (!inp.value) return;
+    _fitLoadDay(inp.value).then(function() { fitTab(_fitTab); });
+  };
+  try { if (inp.showPicker) { inp.showPicker(); return; } } catch(e9) {}
+  inp.style.opacity = '0';
+  inp.focus();
+  try { inp.click(); } catch(e8) {}
+}
+function fitGoToday() {
+  _fitLoadDay(_fitToday()).then(function() { fitTab(_fitTab); });
 }
 function fitTab(t) {
   _fitTab = t;
@@ -13818,7 +13920,7 @@ function _fitDashHtml() {
     + (_fitDay.session ? ' <span style="color:var(--accent)">✓ ' + evEsc(doneLbl) + ' 実施済み</span>' : '') + '</div>'
     + '<div style="font-size:12px;color:var(--text-mid);margin-top:4px">今週の筋トレ：<b style="color:var(--accent);font-family:Inter,sans-serif">' + wk.done + '回</b> 実施'
     + (wk.plan > wk.done ? '（予定 ' + wk.plan + '回）' : (wk.plan ? '（予定通り！）' : '')) + '</div>'
-    + '<button class="btn-p" style="width:100%;margin-top:10px;padding:11px" onclick="fitTab(\'work\')">🏋️ 今日の筋トレを記録する</button></div>';
+    + '<button class="btn-p" style="width:100%;margin-top:10px;padding:11px" onclick="fitTab(\'work\')">' + (_fitDay.session ? '✏️ この日の記録を編集する' : '🏋️ 今日の筋トレを記録する') + '</button></div>';
   h += '<div class="fit-card"><div class="fit-card-t">体重</div>'
     + '<div style="display:flex;align-items:baseline;gap:14px;margin-top:4px"><span style="font-size:26px;font-weight:800;font-family:Inter,sans-serif">' + (_fitDay.body && _fitDay.body.w ? _fitDay.body.w + 'kg' : '未記録') + '</span>'
     + (w7 ? '<span style="font-size:13px;color:var(--text-mid)">7日平均 ' + w7 + 'kg</span>' : '') + '</div>'
@@ -13909,6 +14011,13 @@ function _fitWorkHtml() {
     + '</div><div id="fitPrevInfo" style="font-size:11px;color:var(--text-dim);margin-top:6px">前回値を読み込み中...</div>'
     + '<div style="font-size:10.5px;color:var(--text-dim);margin-top:4px">「限」＝限界（フェイル）まで追い込んだ印（前回表示の !）。「D+」＝ドロップセット。「⏱」＝インターバルタイマー。やらない種目は「スキップ」で記録に残せます</div>'
     + '<button class="fol-add" style="margin-top:8px" onclick="fitTab(\'menu\')">⚙️ メニューを編集（大項目・種目マスター）</button></div>';
+  // v436: 記録済みの日は編集モードであることを明示＋削除ボタン
+  if (_fitDay.session) {
+    h += '<div class="fit-card" style="border-left:3px solid var(--accent)">'
+      + '<div style="font-size:12.5px;font-weight:700">✏️ この日は記録済み（' + evEsc(_fitDay.session.name || _fitLabelName(_fitDay.session.label || _fitDay.session.split)) + '・' + ((_fitDay.session.sets || []).length) + 'セット）</div>'
+      + '<div style="font-size:11px;color:var(--text-dim);margin-top:3px">内容を変えて「セッションを保存」で上書きされます。消したいセットは回数を0にして保存してください</div>'
+      + '<button class="fol-add" style="margin-top:8px;color:var(--red);border-color:var(--red)" onclick="fitDeleteSession()">🗑 この日の記録を削除</button></div>';
+  }
   h += '<div id="fitExList"></div>';
   h += '<div class="fit-card"><button class="fol-add" style="margin:0;width:100%" onclick="fitAddExToday()">＋ この日だけ種目を追加</button>'
     + '<input class="fi" id="fitSesNote" placeholder="メモ（体調・気づき。例：肩に違和感）" value="' + evEsc((_fitDay.session && _fitDay.session.note) || '') + '" style="margin-top:8px">'
@@ -14108,6 +14217,17 @@ function fitSaveSession() {
   _fitSaveDay();
   toast('🏋️ ' + prog.name + ' を記録しました ✓（' + sets.length + 'セット' + (skipped.length ? '・スキップ' + skipped.length : '') + '）');
   fitTab('dash');
+}
+// v436: 記録の削除（カレンダーサマリも更新され💪バーが消える/予定表示に戻る）
+function fitDeleteSession() {
+  if (!_fitDay.session) return;
+  var nm = _fitDay.session.name || _fitLabelName(_fitDay.session.label || _fitDay.session.split);
+  if (!confirm('🗑 ' + _fitYmd.slice(5).replace('-', '/') + ' の「' + nm + '」の記録を削除しますか？')) return;
+  _fitDay.session = null;
+  _fitSaveDay();
+  _fitWorkYmd = ''; // 次の表示で再シード（スキップ状態などをクリア）
+  toast('🗑 記録を削除しました');
+  fitTab('work');
 }
 // ── 種目ピッカー（分類チップで絞り込み） ──
 var _fitPickCat = '';
@@ -19808,7 +19928,7 @@ function evTplQuickAdd(tplId, ds) {
     return;
   }
   t.useCount = (t.useCount || 0) + 1; _evTplSaveAll(); // v349: 使用回数（頻度順表示用）
-  var e = { id: genEventId(), done: false, createdAt: new Date().toISOString(),
+  var e = { id: genEventId(), tplId: t.id, done: false, createdAt: new Date().toISOString(),
     type: (t.type === 'event') ? 'event' : 'task',
     title: String(t.name || '').replace(/\{name\}/g, '').trim() || (t.name || ''),
     date: ds, time: t.allDay ? '' : (t.defaultTime || ''), endTime: '', endDate: '', allDay: !!t.allDay, // v404: 終日テンプレ対応
@@ -21053,7 +21173,31 @@ function saveEvTplForm(id) {
   if (_stEl) t.stage = _stEl.value || ''; // v347: 対応ステージのUIは廃止（既存テンプレの値は維持）
   t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
   // v347: 色分けはカテゴリで統一（選んだカテゴリをそのまま保存）
+  var _oldCat9 = t.categoryId || '';
   t.categoryId = window._evtCatSel || '';
+  // v437: テンプレのカテゴリ変更を、このテンプレから作った既存の予定にも一括反映
+  //（tplId刻印済みはIDで、旧データはタイトル一致＋旧カテゴリ一致で対象化）
+  if (id && _oldCat9 !== (t.categoryId || '')) {
+    var _nc9 = t.categoryId ? findCategory(t.categoryId) : null;
+    var _uid9 = eventsUid();
+    var _n9 = 0;
+    (state.events || []).concat(state.trashEvents || []).forEach(function(e9) {
+      if (!e9 || /^UN_/.test(e9.id || '')) return;
+      var _match9 = e9.tplId ? (e9.tplId === t.id) : (e9.title === t.name && (e9.categoryId || '') === _oldCat9);
+      if (!_match9) return;
+      e9.categoryId = t.categoryId || '';
+      e9.color = _nc9 ? _nc9.color : '';
+      e9.updatedAt = new Date().toISOString();
+      _n9++;
+      if (_uid9 && db) {
+        var _cl9 = {};
+        for (var _k9 in e9) { if (e9.hasOwnProperty(_k9) && e9[_k9] !== undefined) _cl9[_k9] = e9[_k9]; }
+        fsSet('maps/' + _uid9 + '/events/' + e9.id, _cl9).catch(function(){});
+      }
+    });
+    if (_n9) setTimeout(function() { toast('🎨 このテンプレから作った既存の予定 ' + _n9 + '件の色も変更しました'); }, 700);
+    try { if (currentView === 'events') renderEvents(); } catch(eRv9) {}
+  }
   _evTplSaveAll();
   closeEvTplEdit(false);
   if (window._evtFromMgr) openEvTplManager(); // v317: 一覧から来た時だけ一覧へ戻る
@@ -21298,6 +21442,7 @@ function _saveEventBody() {
   e.remindBefore = (rbVal === '') ? '' : (parseInt(rbVal, 10) || 0);
   // CAL-2: テンプレから作成した場合、対応ステージ（完了時のMAP実績還元用）と終了時刻を保存
   if (!_evEditId && _evTplSel) {
+    e.tplId = _evTplSel.id; // v437: テンプレのカテゴリ変更を追従させるための刻印
     if (_evTplSel.stage) e.templateStage = _evTplSel.stage;
     if (!e.endTime && e.time && _evTplSel.durationMin) {
       var _hm = e.time.split(':');
