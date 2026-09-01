@@ -155,6 +155,7 @@ tr:last-child td{border-bottom:none;}
 /* modal */
 .modalback{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;}
 .modal{background:var(--card);border-radius:14px;padding:22px;max-width:420px;width:100%;max-height:88vh;overflow:auto;}
+.modal.wide{max-width:640px;}
 .modal h2{margin:0 0 14px;font-size:17px;}
 .modal label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:10px 0 4px;}
 .modal input[type=text],.modal input[type=date],.modal select,.modal textarea{width:100%;}
@@ -311,12 +312,20 @@ tr:last-child td{border-bottom:none;}
     <div class="recbar">
       <label for="recEvSel" style="font-weight:700;font-size:13px;">受付するイベント:</label>
       <select id="recEvSel"><option value="">— 選択してください —</option></select>
+      <select id="feeModeSel" title="料金モード">
+        <option value="normal">通常受付（1部 ¥1,000）</option>
+        <option value="venue">会場代のみ（¥500）</option>
+      </select>
       <button class="primary" id="btnRecStart">受付を開始</button>
       <button id="btnRecStop" class="hide">受付を終了</button>
     </div>
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
       <div>
+        <div class="manualrow" style="margin:0 0 10px;">
+          <span id="feeInfo" style="font-weight:700;font-size:14px;"></span>
+          <button id="btnPartToggle" class="hide"></button>
+        </div>
         <div class="scanstage" id="stage">
           <div class="counter mono" id="ctr">0名</div>
           <div id="stageBody"></div>
@@ -340,6 +349,12 @@ tr:last-child td{border-bottom:none;}
       </div>
       <aside class="side">
         <div class="tile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div></div>
+        <div class="tile">
+          <h3>手元金額（リアルタイム）</h3>
+          <div class="bignum" style="font-size:30px;"><span id="cashNow">¥0</span></div>
+          <div id="cashSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div>
+          <div id="unpaidList" style="margin-top:6px;"></div>
+        </div>
         <div class="tile hide" id="roleTile"><h3>MC・スピーカー</h3><div id="roleList"></div></div>
         <div class="tile hide" id="unionTallyTile"><h3>ユニオン別</h3><div id="unionTally"></div></div>
         <div class="tile"><h3>系列別</h3><div id="groupTally"></div></div>
@@ -512,9 +527,9 @@ var GRADE_STYLES = { 'BR': 'mc-gold', 'JETCLUB': 'mc-black',
                      'ゴールド': 'mc-gold', 'プラチナ': 'mc-black', 'ブラック': 'mc-black' };
 var GRADE_LABELS = { 'BR': 'BRAND REPRESENTATIVE', 'JETCLUB': 'JETCLUB MEMBER',
                      'ゴールド': 'BRAND REPRESENTATIVE', 'プラチナ': 'JETCLUB MEMBER', 'ブラック': 'JETCLUB MEMBER' };
-function modal(html){
+function modal(html, wide){
   var host = $('modalHost');
-  host.innerHTML = '<div class="modalback"><div class="modal">' + html + '</div></div>';
+  host.innerHTML = '<div class="modalback"><div class="modal' + (wide ? ' wide' : '') + '">' + html + '</div></div>';
   host.firstChild.addEventListener('click', function(e){
     if(e.target === host.firstChild) closeModal();
   });
@@ -1495,13 +1510,27 @@ function eventForm(ev){
 /* ---------- 会計（BASE集計表のデジタル版） ---------- */
 function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
 function financeModal(ev){
-  db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main').get().then(function(snap){
+  var finRef = db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main');
+  var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance');
+  Promise.all([finRef.get(), attRef.get()]).then(function(res){
+    var snap = res[0];
+    // 受付の徴収データからBA人数を自動集計（未保存の場合の初期値に使う）
+    var attCount = 0, c1000 = 0, c500 = 0;
+    res[1].forEach(function(d){
+      attCount++;
+      var a = d.data(), fee = a.fee || 0;
+      if(fee > 0 && a.paid !== false){
+        var net = fee - (a.refund || 0);
+        if(net === 1000) c1000++;
+        else if(net === 500) c500++;
+      }
+    });
     var f = snap.exists ? snap.data() : {};
     var inc = f.income || [
-      { label: 'ビジメン', unit: 1000, count: '' },
-      { label: 'ビジメン', unit: 500, count: '' },
-      { label: 'ビジメン（オンライン）', unit: 1000, count: '' },
-      { label: 'ビジメン（オンライン）', unit: 500, count: '' },
+      { label: 'BA', unit: 1000, count: c1000 || '' },
+      { label: 'BA', unit: 500, count: c500 || '' },
+      { label: 'BA（オンライン）', unit: 1000, count: '' },
+      { label: 'BA（オンライン）', unit: 500, count: '' },
       { label: '', unit: '', count: '' },
       { label: '', unit: '', count: '' }
     ];
@@ -1552,14 +1581,11 @@ function financeModal(ev){
       + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || '') + '" style="flex:1;min-width:0;">'
       + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || '') + '" style="flex:1;min-width:0;">'
       + '</div>'
-      + '<div class="btns"><button id="fnCancel">閉じる</button><button class="primary" id="fnSave">保存</button></div>'
+      + '<div class="btns"><button id="fnCancel">閉じる</button><button class="primary" id="fnSave">保存</button></div>',
+      true
     );
-    // 出席数を参考表示
-    try{
-      db.collection('checkinEvents').doc(ev.id).collection('attendance').count().get().then(function(s){
-        var el = $('fnAtt'); if(el) el.textContent = '出席 ' + s.data().count + '名（参考）';
-      }).catch(function(){});
-    }catch(e){}
+    $('fnAtt').textContent = '出席 ' + attCount + '名'
+      + (!snap.exists && (c1000 || c500) ? '（受付の徴収データからBA人数を自動入力しました）' : '（参考）');
     function num(v){ var n = parseInt(String(v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n; }
     function recompute(){
       var ti = 0;
@@ -1629,7 +1655,9 @@ function startReception(ev){
   Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(p){ p.classList.remove('on'); });
   $('pKiosk').classList.add('on');
 
-  gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null };
+  gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null,
+           feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1 };
+  renderFeeRow();
   $('recNone').classList.add('hide');
   $('recArea').classList.remove('hide');
   $('btnRecStop').classList.remove('hide');
@@ -1671,6 +1699,81 @@ function stopReception(){
   $('recNone').classList.remove('hide');
   $('btnRecStop').classList.add('hide');
 }
+
+/* ── 受付の料金（ピッと同時に自動計上） ── */
+function currentFee(){
+  if(!gRec) return 0;
+  if(gRec.feeMode === 'venue') return 500;          // 会場代のみ（ハウディ代はPayPay等）
+  return gRec.part === 2 ? 500 : 1000;              // 通常: 1部¥1000 / 2部から¥500
+}
+function renderFeeRow(){
+  if(!gRec) return;
+  if(gRec.feeMode === 'venue'){
+    $('feeInfo').textContent = '💰 会場代のみ受付中 — 新規 ¥500';
+    $('btnPartToggle').classList.add('hide');
+  } else {
+    $('feeInfo').textContent = '💰 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee());
+    var b = $('btnPartToggle');
+    b.classList.remove('hide');
+    b.textContent = gRec.part === 1 ? '第2部受付に切替（新規¥500）' : '第1部受付に戻す（新規¥1,000）';
+  }
+}
+$('btnPartToggle').onclick = function(){
+  if(!gRec) return;
+  gRec.part = gRec.part === 1 ? 2 : 1;
+  renderFeeRow();
+  toast('第' + gRec.part + '部受付に切り替えました（新規 ' + yen(currentFee()) + '）');
+  focusScan();
+};
+// 会計操作（未徴収⇔徴収済み・返金）
+function setPay(no, fields){
+  var a = gRec && gRec.att[no];
+  if(!a) return;
+  Object.keys(fields).forEach(function(k){ a[k] = fields[k]; });
+  renderTallies();
+  db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
+    .set(fields, { merge: true })
+    .catch(function(e){ toast(permMsg(e, '会計の記録権限がありません')); });
+}
+function payModal(no){
+  var a = gRec && gRec.att[no];
+  if(!a) return;
+  var fee = a.fee || 0, refund = a.refund || 0, paid = a.paid !== false;
+  var status = fee === 0 ? '徴収なし'
+    : (!paid ? '未徴収（' + yen(fee) + '）'
+      : '徴収済み ' + yen(fee) + (refund ? '（' + yen(refund) + ' 返金済み）' : ''));
+  var btns = '';
+  if(fee > 0){
+    btns += paid
+      ? '<button id="pmUnpaid">未徴収にする</button>'
+      : '<button class="primary" id="pmPaid">徴収済みにする（' + yen(fee) + ' 受領）</button>';
+    if(paid && !refund) btns += '<button id="pmRefund">¥500 返金する（2部不参加）</button>';
+    if(refund) btns += '<button id="pmUnrefund">返金を取り消す</button>';
+  } else {
+    btns += '<p style="font-size:13px;color:var(--sub);">この受付は徴収対象外です（登壇者・セルフ等）。</p>';
+  }
+  modal('<h2>会計操作 — ' + esc(a.name || '') + '</h2>'
+    + '<p style="font-size:14px;">現在: <b>' + status + '</b></p>'
+    + '<div class="btns" style="justify-content:flex-start;flex-wrap:wrap;">' + btns + '</div>'
+    + '<div class="btns"><button id="pmClose">閉じる</button></div>');
+  $('pmClose').onclick = function(){ closeModal(); focusScan(); };
+  var b;
+  if((b = $('pmUnpaid'))) b.onclick = function(){ setPay(no, { paid: false }); closeModal(); toast(a.name + ' さんを未徴収にしました'); focusScan(); };
+  if((b = $('pmPaid'))) b.onclick = function(){ setPay(no, { paid: true }); closeModal(); toast(a.name + ' さんから ' + yen(fee) + ' を徴収しました'); focusScan(); };
+  if((b = $('pmRefund'))) b.onclick = function(){ setPay(no, { refund: 500 }); closeModal(); toast(a.name + ' さんに ¥500 返金しました'); focusScan(); };
+  if((b = $('pmUnrefund'))) b.onclick = function(){ setPay(no, { refund: 0 }); closeModal(); toast('返金を取り消しました'); focusScan(); };
+}
+$('recent').addEventListener('click', function(e){
+  var li = e.target.closest ? e.target.closest('li[data-no]') : null;
+  if(li) payModal(li.getAttribute('data-no'));
+});
+$('unpaidList').addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('button[data-pno]') : null;
+  if(!b) return;
+  var no = b.getAttribute('data-pno');
+  var a = gRec && gRec.att[no];
+  if(a){ setPay(no, { paid: true }); toast(a.name + ' さんから ' + yen(a.fee || 0) + ' を徴収しました'); }
+});
 
 var stageTimer = null;
 function stageIdle(){
@@ -1779,9 +1882,11 @@ function checkinMember(member, method, role){
   }
   // 参加ユニオン外のメンバーはビジターとして記録（受付操作は同じ）
   var isVisitor = (gRec.ev.unions || []).indexOf(member.union) < 0;
+  var fee = role ? 0 : currentFee();   // 登壇者は徴収なし。お金を払ってからピッ＝スキャンと同時に計上
   var data = {
     no: no, name: member.name || '', group: member.group || '',
-    union: member.union || gUnion, method: method
+    union: member.union || gUnion, method: method,
+    fee: fee, paid: true, refund: 0
   };
   if(isVisitor) data.visitor = true;
   if(role) data.role = role;
@@ -1793,8 +1898,18 @@ function checkinMember(member, method, role){
     + '<div class="hit-name">' + esc(member.name) + '</div>'
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
-    + '<p class="hit-meta">' + nowHM() + '</p>');
-  addRecent(member.name, role ? roleLabel(role) : (isVisitor ? (member.union || 'ビジター') : (member.group || member.union || '')));
+    + '<p class="hit-meta">' + nowHM()
+    + (fee > 0 ? '　<b>' + yen(fee) + ' 徴収</b>' : '') + '</p>'
+    + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : ''));
+  var su = $('stgUnpaid');
+  if(su) su.onclick = function(){
+    setPay(no, { paid: false });
+    setStage('dup',
+      '<span class="hit-badge">未徴収</span>'
+      + '<div class="hit-name">' + esc(member.name) + '</div>'
+      + '<p class="hit-meta">' + yen(fee) + ' を未徴収として記録しました。受け取ったらサイドの「徴収済」を押してください</p>');
+  };
+  addRecent(member.name, role ? roleLabel(role) : (isVisitor ? (member.union || 'ビジター') : (member.group || member.union || '')), no);
 }
 // 名簿の名前検索（全ユニオンの名簿から。スペース有無は無視）
 function searchRoster(q, limit){
@@ -1876,11 +1991,12 @@ function roleModal(role){
       var id = 'g' + Date.now();
       writeAttendance(id, {
         no: id, name: nm, group: 'ゲスト', union: '',
-        method: 'guest', guest: true, role: 'speaker'
+        method: 'guest', guest: true, role: 'speaker',
+        fee: 0, paid: true, refund: 0
       });
       beep('ok');
       setStage('ok', '<span class="hit-badge">✓ スピーカー（ゲスト）</span><div class="hit-name">' + esc(nm) + '</div>');
-      addRecent(nm, '🎤 ゲスト');
+      addRecent(nm, '🎤 ゲスト', id);
       closeModal(); focusScan();
     };
   }
@@ -1915,20 +2031,24 @@ $('btnGuest').onclick = function(){
     var name = $('gName').value.trim();
     if(!name){ toast('氏名を入力してください'); return; }
     var id = 'g' + Date.now();
+    var gfee = currentFee();
     writeAttendance(id, {
       no: id, name: name, group: $('gGroup').value.trim() || 'ゲスト',
-      union: $('gUnion').value, method: 'guest', guest: true
+      union: $('gUnion').value, method: 'guest', guest: true,
+      fee: gfee, paid: true, refund: 0
     });
     beep('ok');
-    setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>');
-    addRecent(name, 'ゲスト');
+    setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>'
+      + (gfee > 0 ? '<p class="hit-meta"><b>' + yen(gfee) + ' 徴収</b></p>' : ''));
+    addRecent(name, 'ゲスト', id);
     closeModal(); focusScan();
   };
 };
-function addRecent(name, sub){
+function addRecent(name, sub, no){
   var ul = $('recent');
   if(ul.firstElementChild && ul.firstElementChild.textContent.indexOf('まだ') === 0) ul.innerHTML = '';
   var li = document.createElement('li');
+  if(no){ li.setAttribute('data-no', no); li.style.cursor = 'pointer'; li.title = 'タップで会計操作（未徴収・返金）'; }
   li.innerHTML = '<span class="tm">' + nowHM() + '</span><span class="who">' + esc(name) + '</span><span class="gr">' + esc(sub) + '</span>';
   ul.insertBefore(li, ul.firstChild);
   while(ul.children.length > 8) ul.removeChild(ul.lastChild);
@@ -1938,17 +2058,40 @@ function renderTallies(){
   var total = 0, byUnion = {}, byGroup = {};
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
-  var roles = [];
+  var roles = [], cash = 0, paidCount = 0, refundCount = 0, unpaid = [];
   Object.keys(gRec.att).forEach(function(id){
     var a = gRec.att[id]; total++;
     var uk = a.union || 'ゲスト';
     byUnion[uk] = (byUnion[uk] || 0) + 1;
     if(a.role) roles.push(a);
+    var fee = a.fee || 0;
+    if(fee > 0){
+      if(a.paid === false){
+        unpaid.push({ no: id, name: a.name, fee: fee });
+      } else {
+        cash += fee - (a.refund || 0);
+        paidCount++;
+        if(a.refund) refundCount++;
+      }
+    }
     if(a.union === tallyUnion){
       var g = a.group || 'その他';
       byGroup[g] = (byGroup[g] || 0) + 1;
     }
   });
+  $('cashNow').textContent = yen(cash);
+  var unpaidSum = 0;
+  unpaid.forEach(function(u){ unpaidSum += u.fee; });
+  $('cashSub').textContent = '徴収 ' + paidCount + '名'
+    + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
+    + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
+  $('unpaidList').innerHTML = unpaid.map(function(u){
+    return '<div style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0;">'
+      + '<span style="color:var(--accent);font-weight:700;">未</span>'
+      + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(u.name || '') + '</span>'
+      + '<span class="mono" style="font-size:12px;">' + yen(u.fee) + '</span>'
+      + '<button data-pno="' + esc(u.no) + '" style="padding:2px 8px;font-size:12px;">徴収済</button></div>';
+  }).join('');
   $('roleTile').classList.toggle('hide', !roles.length);
   $('roleList').innerHTML = roles.map(function(a){
     return '<div style="font-size:13.5px;margin:4px 0;"><b>' + (a.role === 'mc' ? 'MC' : '🎤') + '</b> '
