@@ -100,6 +100,9 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .side{display:flex;flex-direction:column;gap:12px;min-width:0;}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
 .tile h3{margin:0 0 8px;font-size:12.5px;color:var(--sub);font-weight:700;letter-spacing:.06em;}
+.tile.tap{cursor:pointer;}
+.tile.tap:hover{border-color:var(--focus);}
+.tile.tap h3::after{content:" ›";color:var(--sub);font-weight:400;}
 .bignum{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:38px;line-height:1.1;font-variant-numeric:tabular-nums;}
 .bignum small{font-size:14px;font-weight:700;color:var(--sub);margin-left:4px;}
 .tallyrow{display:grid;grid-template-columns:6.5em 1fr 2.4em;gap:8px;align-items:center;font-size:13px;margin:6px 0;}
@@ -349,17 +352,17 @@ tr:last-child td{border-bottom:none;}
         </div>
       </div>
       <aside class="side">
-        <div class="tile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div></div>
-        <div class="tile">
+        <div class="tile tap" id="totalTile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div></div>
+        <div class="tile tap" id="cashTile">
           <h3>手元金額（リアルタイム）</h3>
           <div class="bignum" style="font-size:30px;"><span id="cashNow">¥0</span></div>
           <div id="cashSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div>
           <div id="unpaidList" style="margin-top:6px;"></div>
         </div>
-        <div class="tile hide" id="roleTile"><h3>MC・スピーカー</h3><div id="roleList"></div></div>
-        <div class="tile hide" id="unionTallyTile"><h3>ユニオン別</h3><div id="unionTally"></div></div>
-        <div class="tile"><h3>系列別</h3><div id="groupTally"></div></div>
-        <div class="tile"><h3>受付履歴</h3><ul class="recent" id="recent"></ul></div>
+        <div class="tile tap hide" id="roleTile"><h3>MC・スピーカー</h3><div id="roleList"></div></div>
+        <div class="tile tap hide" id="unionTallyTile"><h3>ユニオン別</h3><div id="unionTally"></div></div>
+        <div class="tile tap" id="groupTile"><h3>系列別</h3><div id="groupTally"></div></div>
+        <div class="tile tap" id="recentTile"><h3>受付履歴</h3><ul class="recent" id="recent"></ul></div>
       </aside>
     </div>
   </section>
@@ -694,7 +697,7 @@ function renderSelfEvents(c){
         db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
           no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
           method: 'self', cardToken: gCardToken, code: code,
-          at: FV.serverTimestamp(), atLocal: nowHM(), by: 'self'
+          at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self'
         }).then(function(){
           try{ localStorage.setItem('bci_ci_' + ev.id + '_' + c.no, '1'); }catch(e){}
           $('se_' + i).innerHTML = '<b>' + esc(ev.hostLabel || 'CLAVIS') + '：' + esc(ev.name || '') + '</b>'
@@ -773,7 +776,7 @@ function renderOnlineEvents(c){
           method: 'online', status: 'pending',
           fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
           envApprover: env, pledged: true, paypaySent: true,
-          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), by: 'self-online'
+          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self-online'
         }).then(function(){
           try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
           $('ol_' + i).innerHTML = '<b>💻 オンライン受講：' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</b>'
@@ -2108,6 +2111,97 @@ $('unpaidList').addEventListener('click', function(e){
   if(a){ setPay(no, { paid: true }); toast(a.name + ' さんから ' + yen(a.fee || 0) + ' を徴収しました'); }
 });
 
+/* ── 集計タイルのタップ → 出席者一覧（閲覧・編集） ── */
+function attListModal(mode){
+  if(!gRec) return;
+  var items = [];
+  Object.keys(gRec.att).forEach(function(id){
+    var a = gRec.att[id];
+    if(a.status === 'pending' || a.status === 'rejected') return;
+    items.push({ id: id, a: a });
+  });
+  items.sort(function(x, y){ return attSortKey(y.a) - attSortKey(x.a); });
+  if(mode === 'roles') items = items.filter(function(x){ return x.a.role; });
+  if(mode === 'money') items = items.filter(function(x){ return (x.a.fee || 0) > 0; });
+  if(mode === 'group') items.sort(function(x, y){
+    var g = (x.a.group || '') < (y.a.group || '') ? -1 : ((x.a.group || '') > (y.a.group || '') ? 1 : 0);
+    return g !== 0 ? g : attSortKey(y.a) - attSortKey(x.a);
+  });
+  var title = mode === 'roles' ? 'MC・スピーカー'
+    : mode === 'money' ? '会計（徴収状況）'
+    : mode === 'group' ? '出席者一覧（系列順）' : '出席者一覧';
+  var rows = items.map(function(x){
+    var a = x.a, fee = a.fee || 0, tags = '';
+    if(a.role) tags += ' <span class="pill g">' + (a.role === 'mc' ? 'MC' : '🎤 スピーカー') + '</span>';
+    if(a.guest) tags += ' <span class="pill n">ゲスト</span>';
+    if(a.method === 'online') tags += ' <span class="pill n">💻 オンライン</span>';
+    var pay = '';
+    if(fee > 0){
+      pay = a.paid === false
+        ? '<span class="pill r">未徴収 ' + yen(fee) + '</span>'
+        : (a.payMethod === 'paypay'
+            ? '<span class="pill a">PayPay ' + yen(fee - (a.refund || 0)) + '</span>'
+            : '<span class="pill g">' + yen(fee - (a.refund || 0)) + '</span>')
+          + (a.refund ? ' <span class="pill r">返金 ' + yen(a.refund) + '</span>' : '');
+    }
+    return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap;">'
+      + '<span class="mono" style="font-size:11.5px;color:var(--sub);flex:0 0 auto;">' + esc(a.atLocal || '') + '</span>'
+      + '<div style="flex:1;min-width:140px;"><b>' + esc(a.name || '') + '</b>'
+      + '<span style="color:var(--sub);font-size:12px;margin-left:6px;">' + esc(a.group || '') + (a.union ? '・' + esc(a.union) : '') + '</span>'
+      + tags + '</div>'
+      + pay
+      + (fee > 0 ? '<button data-ala="pay" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">会計</button>' : '')
+      + (a.role && !a.guest ? '<button data-ala="unrole" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">役割解除</button>' : '')
+      + '<button data-ala="del" data-no="' + esc(x.id) + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">取消</button>'
+      + '</div>';
+  }).join('');
+  modal('<h2>' + title + '（' + items.length + '名）</h2>'
+    + '<div style="max-height:60vh;overflow:auto;">'
+    + (rows || '<p style="color:var(--sub);font-size:13.5px;">まだありません。</p>') + '</div>'
+    + '<div class="btns"><button id="alClose">閉じる</button></div>', true);
+  $('alClose').onclick = function(){ closeModal(); focusScan(); };
+  document.querySelector('.modal').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button[data-ala]') : null;
+    if(!b) return;
+    var no = b.getAttribute('data-no'), act = b.getAttribute('data-ala');
+    var a = gRec && gRec.att[no];
+    if(!a) return;
+    if(act === 'pay'){ closeModal(); payModal(no); }
+    if(act === 'unrole'){
+      if(!window.confirm(a.name + ' さんの役割（' + (a.role === 'mc' ? 'MC' : 'スピーカー') + '）を解除しますか？出席の記録は残ります。')) return;
+      a.role = '';
+      renderTallies();
+      db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
+        .set({ role: '' }, { merge: true })
+        .catch(function(e2){ toast(permMsg(e2, '変更権限がありません')); });
+      closeModal(); attListModal(mode);
+    }
+    if(act === 'del'){
+      if(!window.confirm(a.name + ' さんの受付を取り消しますか？出席・徴収の記録が削除されます。')) return;
+      delete gRec.att[no];
+      renderTallies();
+      db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
+        .delete()
+        .catch(function(e2){ toast(permMsg(e2, '取消の権限がありません')); });
+      toast(a.name + ' さんの受付を取り消しました');
+      closeModal(); attListModal(mode);
+    }
+  });
+}
+(function(){
+  var map = { totalTile: 'all', cashTile: 'money', roleTile: 'roles',
+              unionTallyTile: 'all', groupTile: 'group', recentTile: 'all' };
+  Object.keys(map).forEach(function(id){
+    var el = $(id);
+    if(!el) return;
+    el.addEventListener('click', function(e){
+      // タイル内のボタン・履歴行のタップは既存の操作（徴収済・会計操作）を優先
+      if(e.target.closest && (e.target.closest('button') || e.target.closest('li[data-no]'))) return;
+      attListModal(map[id]);
+    });
+  });
+})();
+
 var stageTimer = null;
 function stageIdle(){
   var ev = gRec && gRec.ev;
@@ -2242,7 +2336,6 @@ function checkinMember(member, method, role){
       + '<div class="hit-name">' + esc(member.name) + '</div>'
       + '<p class="hit-meta">' + yen(fee) + ' を未徴収として記録しました。受け取ったらサイドの「徴収済」を押してください</p>');
   };
-  addRecent(member.name, role ? roleLabel(role) : (isVisitor ? (member.union || 'ビジター') : (member.group || member.union || '')), no);
 }
 // 名簿の名前検索（全ユニオンの名簿から。スペース有無は無視）
 function searchRoster(q, limit){
@@ -2329,7 +2422,6 @@ function roleModal(role){
       });
       beep('ok');
       setStage('ok', '<span class="hit-badge">✓ スピーカー（ゲスト）</span><div class="hit-name">' + esc(nm) + '</div>');
-      addRecent(nm, '🎤 ゲスト', id);
       closeModal(); focusScan();
     };
   }
@@ -2337,6 +2429,7 @@ function roleModal(role){
 function writeAttendance(id, data){
   data.at = FV.serverTimestamp();
   data.atLocal = nowHM();
+  data.atMs = Date.now();
   data.by = gUser.uid;
   // 楽観表示: 書込はバックグラウンド（オフライン時は自動キューイング）
   gRec.att[id] = data; renderTallies();
@@ -2373,29 +2466,20 @@ $('btnGuest').onclick = function(){
     beep('ok');
     setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>'
       + (gfee > 0 ? '<p class="hit-meta"><b>' + yen(gfee) + ' 徴収</b></p>' : ''));
-    addRecent(name, 'ゲスト', id);
     closeModal(); focusScan();
   };
 };
-function addRecent(name, sub, no){
-  var ul = $('recent');
-  if(ul.firstElementChild && ul.firstElementChild.textContent.indexOf('まだ') === 0) ul.innerHTML = '';
-  var li = document.createElement('li');
-  if(no){ li.setAttribute('data-no', no); li.style.cursor = 'pointer'; li.title = 'タップで会計操作（未徴収・返金）'; }
-  li.innerHTML = '<span class="tm">' + nowHM() + '</span><span class="who">' + esc(name) + '</span><span class="gr">' + esc(sub) + '</span>';
-  ul.insertBefore(li, ul.firstChild);
-  while(ul.children.length > 8) ul.removeChild(ul.lastChild);
-}
 function renderTallies(){
   if(!gRec) return;
   var total = 0, byUnion = {}, byGroup = {};
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
-  var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [];
+  var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [], hist = [];
   Object.keys(gRec.att).forEach(function(id){
     var a = gRec.att[id];
     // オンライン申請の承認待ち・却下は集計に含めない
     if(a.status === 'pending' || a.status === 'rejected') return;
+    hist.push({ id: id, a: a });
     total++;
     var uk = a.union || 'ゲスト';
     byUnion[uk] = (byUnion[uk] || 0) + 1;
@@ -2443,6 +2527,23 @@ function renderTallies(){
     (gRec.ev.unions || []).length < 2 && Object.keys(byUnion).length < 2);
   $('unionTally').innerHTML = tallyHtml(byUnion);
   $('groupTally').innerHTML = tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:12.5px;margin:0;">まだ出席がありません</p>';
+  // 受付履歴: 購読データから毎回組み立てる（受付を開き直しても消えない）
+  hist.sort(function(x, y){ return attSortKey(y.a) - attSortKey(x.a); });
+  $('recent').innerHTML = hist.slice(0, 8).map(function(x){
+    var a = x.a;
+    var sub = a.guest ? 'ゲスト' : (a.group || a.union || '');
+    if(a.role) sub = (a.role === 'mc' ? 'MC' : '🎤') + ' ' + sub;
+    if(a.method === 'online') sub = '💻 ' + sub;
+    return '<li data-no="' + esc(x.id) + '" style="cursor:pointer;" title="タップで会計操作（未徴収・返金）">'
+      + '<span class="tm">' + esc(a.atLocal || '') + '</span><span class="who">' + esc(a.name || '') + '</span>'
+      + '<span class="gr">' + esc(sub) + '</span></li>';
+  }).join('') || '<li style="color:var(--sub)">まだ受付はありません</li>';
+}
+// 並び順キー: atMs（受付時に記録）→ なければ atLocal "HH:MM" から概算
+function attSortKey(a){
+  if(a.atMs) return a.atMs;
+  var m = /^(\d{1,2}):(\d{2})/.exec(a.atLocal || '');
+  return m ? (parseInt(m[1], 10) * 60 + parseInt(m[2], 10)) * 60000 : 0;
 }
 function tallyHtml(map){
   var keys = Object.keys(map).sort(function(a,b){ return map[b] - map[a]; });
