@@ -1192,7 +1192,7 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .fit-prev-s{flex:none;font-size:9.5px;color:var(--text-dim);min-width:44px;text-align:right;font-family:Inter,sans-serif}
 .fit-exed{border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px;background:var(--surface2)}
 .fit-exskip{opacity:.45}
-@keyframes pcFreshGlow{0%,100%{filter:drop-shadow(0 0 2px rgba(255,209,102,.35))}50%{filter:drop-shadow(0 0 11px rgba(255,209,102,.9))}}
+@keyframes pcFreshGlow{0%,100%{filter:drop-shadow(0 0 3px rgba(255,209,102,.5))}50%{filter:drop-shadow(0 0 15px rgba(255,209,102,1))}}
 .oval-node.pc-fresh{animation:pcFreshGlow 2.4s ease-in-out infinite}
 .fit-food-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;border:1px solid transparent}
 .fit-food-row:hover{background:var(--surface2)}
@@ -2259,7 +2259,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v437</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v438</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4107,7 +4107,17 @@ function renderPCMap(mapType) {
       g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
     }
     if (mapType === 'current' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m)) {
-      g.appendChild(txt(rx + 24, ry2 - 3, '✨', '#FFD166', 15, null, 'Inter,sans-serif')); // v437: フレッシュ印
+      // v438: 金色の「🌱フレ」バッジ（カード上辺の中央。✨より明示的に）
+      var fb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      fb9.setAttribute('x', rx + NODE_W/2 - 26); fb9.setAttribute('y', ry2 - 10);
+      fb9.setAttribute('width', 52); fb9.setAttribute('height', 18);
+      fb9.setAttribute('rx', 9);
+      fb9.setAttribute('fill', '#FFD166');
+      fb9.setAttribute('stroke', 'rgba(0,0,0,.25)');
+      fb9.setAttribute('stroke-width', '0.5');
+      fb9.setAttribute('pointer-events', 'none');
+      g.appendChild(fb9);
+      g.appendChild(txt(rx + NODE_W/2, ry2 + 3, '🌱フレ', '#5b3d00', 11, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
     }
     // 写真アバター（あれば左端に丸表示し、テキストを右へずらす）
     var _pcPh = (_pcPhotoOk && typeof _avatars !== 'undefined') ? _avatars[m.id] : null;
@@ -4208,7 +4218,14 @@ function renderPCMap(mapType) {
     var i;
     for (i=0;i<nodes.length;i++){
       var nl = nodes[i].getAttribute('data-lineage');
-      nodes[i].style.opacity = (!lin || nl===lin || nl==='') ? '1' : '0.6';
+      var fOk = (!lin || nl===lin || nl==='');
+      // v438: 系列フォーカスが地域絞り込みを上書きしないように（他地域は薄いまま維持）
+      var rOk = true;
+      if (typeof regionFilter !== 'undefined' && regionFilter) {
+        var rg9 = (nodes[i].getAttribute('data-region') || '').trim();
+        rOk = (regionFilter === '__NONE__') ? !rg9 : (rg9 === regionFilter);
+      }
+      nodes[i].style.opacity = !rOk ? '0.22' : (fOk ? '1' : '0.6');
     }
     for (i=0;i<links.length;i++){
       var ll = links[i].getAttribute('data-lineage');
@@ -4521,10 +4538,13 @@ function buildRegionFilter(members, wrap) {
 function applyRegionDim() {
   // PC組織図ノード（SVG）
   var nodes = document.querySelectorAll('.oval-node');
+  var _lin9 = (typeof window !== 'undefined' && window._pcFocusLineage) || ''; // v438: 系列フォーカスと両立
   for (var i=0;i<nodes.length;i++){
     var r = (nodes[i].getAttribute('data-region') || '').trim(); // v420: 表記ゆれ（前後スペース）で判定が狂うバグ修正
     var ok = !regionFilter || (regionFilter === '__NONE__' ? !r : (r === regionFilter));
-    nodes[i].style.opacity = ok ? '1' : '0.22';
+    var _nl9 = nodes[i].getAttribute('data-lineage');
+    var _fOk9 = (!_lin9 || _nl9 === _lin9 || _nl9 === '');
+    nodes[i].style.opacity = !ok ? '0.22' : (_fOk9 ? '1' : '0.6');
   }
   // モバイルツリーカード（HTML）※結合ノードも合成リストで解決
   var cards = document.querySelectorAll('.nc[data-cid]');
@@ -5094,7 +5114,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v437';
+  var DATA_VERSION = 'v438';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6053,6 +6073,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v438', d:'2026-08-28', items:['📍地域絞り込みバグの真因を修正：ノードをクリックした時の「系列フォーカス」が地域の薄表示を上書きして、同じ系列の他地域メンバーが明るく戻っていました。系列フォーカスと地域絞り込みが両立するようになりました','🌱PCツリーのフレッシュ表示を強化：カード上部に金色の「🌱フレ」バッジを表示（✨マークより一目で分かる形に）。金色の点滅も少し強くしました'] },
   { v:'v437', d:'2026-08-28', items:['🎨テンプレのカテゴリ（色）を変更すると、そのテンプレから作った既存の予定の色もまとめて変更されるようになりました（カテゴリ自体の色変更はv432で対応済み。両方のパターンをカバー）','✨PCツリーでフレッシュ（登録6ヶ月以内）がひと目で分かるように：ノードが金色にやわらかく点滅し、カード左上に✨マークが付きます','📍地域絞り込みで他地域のメンバーが一部明るいまま残るバグを修正：PCの描画完了とフィルタ適用のタイミングずれが原因だったため、ノード生成時に即フィルタを適用するようにしました','🔄ロールアップの精度改善①：BRを含まないDライン（直下系列）はロールアップせず、降格したBMの下に残るようになりました（翌月コピー・手動どちらも）','🔄ロールアップの精度改善②：既に手動で組織を組み替え済みのメンバーに「リスタート表示」を後付けできるようになりました（メンバー編集→🔄リスタート→開始月を指定。解除も可能）'] },
   { v:'v436', d:'2026-08-28', items:['💪記録した筋トレをあとから編集・削除できるようになりました：記録済みの日を開くと「✏️記録済み」バナーが出て、値を変えて保存すれば上書き、回数を0にしたセットは削除されます。「🗑 この日の記録を削除」でセッションごと削除もできます（カレンダーの💪バーも消えます）'] },
   { v:'v435', d:'2026-08-28', items:['💪日付を選んで記録できるようになりました：ヘッダーの日付をタップするとカレンダーから任意の日を選べます（過去日の入力・日またぎの記録に）。「今日」ボタンでワンタップで今日に戻れます。‹›の1日移動も従来通り'] },
