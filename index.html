@@ -1196,6 +1196,19 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .oval-node.pc-fresh{animation:pcFreshGlow 2.4s ease-in-out infinite}
 @keyframes pcCareTr{0%,100%{filter:drop-shadow(0 0 3px rgba(90,215,255,.5))}50%{filter:drop-shadow(0 0 15px rgba(90,215,255,1))}}
 .oval-node.pc-care-tr{animation:pcCareTr 2.4s ease-in-out infinite}
+.nc.out-member{opacity:.5;filter:grayscale(.55)}
+#fitIvBar{position:absolute;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:6;background:linear-gradient(135deg,#1b2130,#242c3f);border:1.5px solid var(--accent);border-radius:16px;padding:10px 14px 9px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.fiv-row{display:flex;align-items:center;gap:12px}
+.fiv-info{flex:1;min-width:0}
+.fiv-ex{font-size:12px;font-weight:700;color:#e6e8ec;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fiv-lbl{font-size:9.5px;color:#8a94a6}
+.fiv-time{font-size:36px;font-weight:800;font-family:Inter,sans-serif;letter-spacing:1px;color:var(--accent);font-variant-numeric:tabular-nums}
+.fiv-btn{flex:none;padding:10px 13px;border:1px solid var(--border2);border-radius:12px;font-size:12.5px;font-weight:700;color:#e6e8ec;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.fiv-x{color:#FF5D73;border-color:#FF5D73}
+.fiv-gauge{height:5px;border-radius:3px;background:rgba(141,154,184,.2);overflow:hidden;margin-top:8px}
+.fiv-gauge i{display:block;height:100%;background:linear-gradient(90deg,#2CE5B8,#FBBF24);transition:width .25s linear}
+.fiv-done{font-size:17px;font-weight:800;color:var(--accent);text-align:center;padding:10px 0;animation:fivFlash .5s ease-in-out 4}
+@keyframes fivFlash{50%{opacity:.3}}
 .fit-food-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;border:1px solid transparent}
 .fit-food-row:hover{background:var(--surface2)}
 .fit-meal-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px}
@@ -2261,7 +2274,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v439</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v441</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2891,6 +2904,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
               <div class="rb" id="rbCatTrainee" onclick="selCategory('研修生')">研修生</div>
               <div class="rb" id="rbCatBA" onclick="selCategory('BA')">BA</div>
               <div class="rb" id="rbCatBR" onclick="selCategory('BR')">BR</div>
+              <div class="rb" id="rbCatOut" onclick="selCategory('OUT')" style="color:var(--text-dim)">OUT</div>
             </div>
           </div>
           <div class="ed-help" id="h_cat">研修生／BA／BR。下の「タイトル」を選ぶと自動で判定されます。</div>
@@ -2907,7 +2921,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
               <div class="rb" id="rbOutHide" onclick="selOutVis(true)">🙈 非表示</div>
             </div>
           </div>
-          <div class="ed-help" id="h_outvis">OUTメンバーをツリーに出し続けるか選べます。「残す」＝復活の可能性がある人向け（翌月コピー後もMAPに残ります）。「非表示」＝ツリーから消えます（データは残り、メンバー一覧の「OUT」絞り込みからいつでも開けます）。どちらでも直下の組織は上のアップラインに移動します。</div>
+          <div class="ed-help" id="h_outvis">OUTメンバーをツリーに出し続けるか選べます。「残す」＝当月のMAPにグレー表示で残します（翌月コピーで自動的に外れます）。「非表示」＝ツリーから消えます（データは残り、メンバー一覧の「OUT」絞り込みからいつでも開けます）。どちらでも直下の組織は上のアップラインに移動します。</div>
           <div class="ed-row" id="restartRow" style="display:none">
             <span class="ed-l">🔄 リスタート<span class="ed-q" onclick="edHelp(event,'h_restart')">?</span></span>
             <div class="ed-ctrl"><div id="restartCtl" style="font-size:12.5px;line-height:1.8"></div></div>
@@ -3483,7 +3497,7 @@ function copyToNextMonth() {
   // 配下がいる場合はOUTメンバーの上位に付け替えてから除外する。
   // ※ルート（自分）はOUT除外の対象外（消すとMAP構造が壊れるため）
   var outIds = {};
-  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT' && mm.parentId && mm.outHidden !== false) outIds[mm.id] = mm.parentId; }); // v426: 「ツリーに残す」を選んだOUTは翌月へ持ち越す
+  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT' && mm.parentId) outIds[mm.id] = mm.parentId; }); // v440: OUTは当月のみ表示し、翌月コピーで常に除外
   var _outChanges = [];
   if (Object.keys(outIds).length) {
     copyMembers.forEach(function(mm){
@@ -4089,6 +4103,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
     rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI?'2':'1'))); // v420: BR以上=太枠
     if (_isBrUp) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
+    if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)'; // v440: OUTは当月ゴースト表示
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
     g.appendChild(rect);
 
@@ -5138,7 +5153,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v439';
+  var DATA_VERSION = 'v441';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6097,6 +6112,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v441', d:'2026-08-28', items:['💪📜トレーニング履歴：推移タブの最上部に「いつ・何トレ・何セット・何トン」の履歴一覧を追加。行をタップするとその日の記録に直行して編集もできます','💪⚙️メニュー編集を全面改良：大項目・種目とも畳んだ1行一覧になり、タップすると編集シートが開く方式に（長いスクロールと展開しっぱなしを解消）','💪⏱インターバルタイマーを大幅強化：開始すると画面下に大型タイマーバー（特大数字・進捗ゲージ・＋30秒/停止ボタン）。終了時にピピピッ♪＋バイブ、残り3秒からカウント音。タイマー中は画面が自動で消えないように（Wake Lock）※本体のサイレントスイッチON時は音が鳴らないためバイブと画面でお知らせ','🐣体幹・インナーのメーターを「回数」制に：立ちコロなど自重系は重さ0でメーターが貯まらなかったため、体幹とインナーは実施回数で貯まるようにしました（レベル用には1回=5kg換算で加算）。過去の立ちコロ・インナーの記録も初回起動時に自動で再計算して反映します'] },
+  { v:'v440', d:'2026-08-28', items:['🚪OUTをカテゴリの並びに独立ボタン化：研修生/BA/BRと並んで「OUT」を選べるようになりました（各タイトル一覧の中のOUTは廃止。選ぶとタイトルも自動でOUTに）','👋OUTにしたメンバーは当月のMAPにグレーのゴースト表示で残り（いなくなったことが分かる）、翌月コピーで自動的に翌月のMAPから外れます（表示/非表示の選択は当月の見え方のみに）'] },
   { v:'v439', d:'2026-08-28', items:['🌱PCツリーのケアバッジを整理：「🌱フレッシュ」（スタート6ヶ月以内・BR未満のみ。BRには付きません）と「🎓研修生」の2種類になりました。ケアしないと消えてしまう層がひと目で分かります','🎚バッジの手動付け外し：メンバー編集の「ケアバッジ」で 自動／表示／非表示 を選べます（条件外でもケアしたい人に付けたり、外したりできます）','👑BR以上の判別を強化：バッジではなく「宝石色の常時オーラ（静かな光）」を追加。点滅するフレッシュ／研修生（要ケア＝動）と対照的な、安定した上位者の表現にしました'] },
   { v:'v438', d:'2026-08-28', items:['📍地域絞り込みバグの真因を修正：ノードをクリックした時の「系列フォーカス」が地域の薄表示を上書きして、同じ系列の他地域メンバーが明るく戻っていました。系列フォーカスと地域絞り込みが両立するようになりました','🌱PCツリーのフレッシュ表示を強化：カード上部に金色の「🌱フレ」バッジを表示（✨マークより一目で分かる形に）。金色の点滅も少し強くしました'] },
   { v:'v437', d:'2026-08-28', items:['🎨テンプレのカテゴリ（色）を変更すると、そのテンプレから作った既存の予定の色もまとめて変更されるようになりました（カテゴリ自体の色変更はv432で対応済み。両方のパターンをカバー）','✨PCツリーでフレッシュ（登録6ヶ月以内）がひと目で分かるように：ノードが金色にやわらかく点滅し、カード左上に✨マークが付きます','📍地域絞り込みで他地域のメンバーが一部明るいまま残るバグを修正：PCの描画完了とフィルタ適用のタイミングずれが原因だったため、ノード生成時に即フィルタを適用するようにしました','🔄ロールアップの精度改善①：BRを含まないDライン（直下系列）はロールアップせず、降格したBMの下に残るようになりました（翌月コピー・手動どちらも）','🔄ロールアップの精度改善②：既に手動で組織を組み替え済みのメンバーに「リスタート表示」を後付けできるようになりました（メンバー編集→🔄リスタート→開始月を指定。解除も可能）'] },
@@ -8450,7 +8467,8 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
   var isLOI = LOI_TITLES.indexOf((m.title||'').trim()) >= 0;
   var ncClass = 'nc' + (isLOI ? ' loi-card' : m.trainee ? ' trainee' : '') +
     (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '') +
-    (mapType === 'current' ? (' ' + memberActivityLevel(m)) : '');
+    (mapType === 'current' ? (' ' + memberActivityLevel(m)) : '') +
+    (((m.title || '').trim() === 'OUT') ? ' out-member' : ''); // v440: OUTは当月ゴースト表示
 
   return '<div class="nw' + (isDefaultOpen && hasKids && !skipChildren ? ' open' : '') + '" id="nw-' + m.id + '">'
     + '<div class="' + ncClass + (isForeign ? ' merged-node' : '') + '" id="nc-' + m.id + '" data-cid="' + m.id + '" style="border-left:3px solid ' + depthColor + '">'
@@ -11804,7 +11822,7 @@ function openEdit(id) {
     var _detectedCat = m.cat || detectCategory(_editTitle);
     if (!_detectedCat && (m.trainee || m.traineeStatus || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult)) _detectedCat = '研修生';
     // v404: 「OUT」は全カテゴリ共通タイトルのため、研修データの無いメンバーが研修生と誤判定されるのを防止
-    if (_editTitle === 'OUT' && _detectedCat === '研修生' && !(m.trainee || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult)) _detectedCat = 'BA';
+    if (_editTitle === 'OUT') _detectedCat = 'OUT'; // v440: OUTはカテゴリ並列ボタンに
     // v417: 50ms後の適用だと「開いてすぐカテゴリを押した操作」が上書きで消えるため、同期実行に変更
     (function() {
       try {
@@ -11883,29 +11901,37 @@ function buildParentSelect(selectedId, excludeId) {
   });
 }
 var TITLE_OPTIONS = {
-  '研修生': ['マケ','PG','DLR','EXP','PA','面談','BPC','CO','OUT'],
-  'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM','OUT'],
-  'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート','OUT'],
+  '研修生': ['マケ','PG','DLR','EXP','PA','面談','BPC','CO'],
+  'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM'],
+  'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート'],
 };
 var fCategory = '';
 
 function selCategory(cat) {
   try {
     fCategory = cat;
-    var cats = ['研修生','BA','BR'];
-    var ids  = ['rbCatTrainee','rbCatBA','rbCatBR'];
+    var cats = ['研修生','BA','BR','OUT'];
+    var ids  = ['rbCatTrainee','rbCatBA','rbCatBR','rbCatOut'];
     for (var i=0; i<cats.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) el.classList.toggle('sel', cats[i]===cat);
     }
     var sel = document.getElementById('fTitle');
     if (sel) {
-      sel.innerHTML = '<option value="">選択してください</option>';
-      var opts = TITLE_OPTIONS[cat] || [];
-      for (var j=0; j<opts.length; j++) {
-        var opt = document.createElement('option');
-        opt.value = opt.textContent = opts[j];
-        sel.appendChild(opt);
+      if (cat === 'OUT') { // v440: OUTはカテゴリ直結（タイトルも自動でOUT）
+        sel.innerHTML = '';
+        var oOut = document.createElement('option');
+        oOut.value = oOut.textContent = 'OUT';
+        sel.appendChild(oOut);
+        sel.value = 'OUT';
+      } else {
+        sel.innerHTML = '<option value="">選択してください</option>';
+        var opts = TITLE_OPTIONS[cat] || [];
+        for (var j=0; j<opts.length; j++) {
+          var opt = document.createElement('option');
+          opt.value = opt.textContent = opts[j];
+          sel.appendChild(opt);
+        }
       }
     }
     var tsf = document.getElementById('traineeStatusFields');
@@ -13747,6 +13773,8 @@ var _fitWorkCards = []; // 表示中の種目カード（マスター項目の�
 function _fitP(doc2) { return 'fitness/' + currentUser.uid + '/' + doc2; }
 function _fitToday() { var t = new Date(); return t.getFullYear() + '-' + evPad2(t.getMonth() + 1) + '-' + evPad2(t.getDate()); }
 var FIT_DEF_CATS = ['押す', '引く', '肩・腕', '体幹', '脚', 'インナー'];
+var FIT_REP_CATS = { '体幹': 1, 'インナー': 1 }; // v441: 自重系は重量でなく回数でメーターが貯まる
+var _fitCalVer = 0; // meta/calendarの集計ルールver（2=回数制対応済み）
 // カレンダー・サマリ表示名（s=プログラムの短縮ラベル or run/rest）
 function _fitLabelName(s) {
   if (s === 'run') return 'ラン';
@@ -13813,6 +13841,7 @@ function _fitEnsureMeta() {
     var exDoc = r[0];
     _fitProgs = (r[1] && r[1].items) ? r[1].items : null;
     _fitCal = (r[2] && r[2].days) ? r[2].days : {};
+    _fitCalVer = (r[2] && r[2].vcv) || 0;
     _fitCats = (exDoc && exDoc.cats && exDoc.cats.length) ? exDoc.cats : null;
     var items = (exDoc && exDoc.items) ? exDoc.items : null;
     if (items && items.length && !items[0].id) {
@@ -13834,7 +13863,57 @@ function _fitEnsureMeta() {
     }
     if (!_fitCats) _fitCats = FIT_DEF_CATS.slice();
     if (!_fitProgs || !_fitProgs.length) { _fitProgs = [{ id: 'pg_A', label: 'A', name: 'A：トレーニング', exIds: [] }]; _fitSaveProgs(); }
+    if (_fitCalVer !== 2) setTimeout(_fitVcMigrate, 900); else window._fitVcMigRun = true; // v441: 過去記録を回数制ルールで再計算
   });
+}
+// v441: ボリューム集計（重量系=kg×回 / 体幹・インナー=回数。レベル用には1回=5kg換算）
+function _fitCalcVc(sets) {
+  var v = 0, vc = {};
+  (sets || []).forEach(function(st) {
+    var ex = _fitExByName(st.ex);
+    var cat = ex ? (ex.cat || '押す') : '押す';
+    if (FIT_REP_CATS[cat]) {
+      var reps = (st.reps || 0);
+      (st.drops || []).forEach(function(d) { reps += (d.reps || 0); });
+      v += reps * 5;
+      vc[cat] = (vc[cat] || 0) + reps;
+    } else {
+      var sv = (st.kg || 0) * (st.reps || 0);
+      (st.drops || []).forEach(function(d) { sv += (d.kg || 0) * (d.reps || 0); });
+      v += sv;
+      vc[cat] = (vc[cat] || 0) + sv;
+    }
+  });
+  var out = { v: Math.round(v), vc: {} };
+  for (var k in vc) out.vc[k] = Math.round(vc[k]);
+  return out;
+}
+// v441: 過去の全セッションを新ルールで一括再計算（初回のみ。履歴用のセット数等も補完）
+function _fitVcMigrate() {
+  if (window._fitVcMigRun) return;
+  window._fitVcMigRun = true;
+  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; });
+  var fin = function() {
+    _fitCalVer = 2;
+    fsSet(_fitP('meta/calendar'), { days: _fitCal, vcv: 2, updatedAt: new Date().toISOString() });
+  };
+  if (!ds.length) { fin(); return; }
+  Promise.all(ds.map(function(d) { return fsGet(_fitP('days/' + d)).then(function(doc) { return { d: d, doc: doc }; }).catch(function() { return null; }); }))
+    .then(function(all) {
+      all.filter(Boolean).forEach(function(r) {
+        var s = r.doc && r.doc.session;
+        var c = _fitCal[r.d];
+        if (!s || !s.sets || !c) return;
+        var res = _fitCalcVc(s.sets);
+        if (res.v > 0) { c.v = res.v; c.vc = res.vc; }
+        c.st = s.sets.length;
+        if ((s.skipped || []).length) c.sk = s.skipped.length;
+        if (s.note) c.mo = 1;
+      });
+      fin();
+      toast('💪 マッスルくんのメーターを新ルール（体幹・インナー＝回数）で再計算しました');
+      try { var _fp9 = document.getElementById('fitPane'); if (_fp9 && _fp9.style.display !== 'none' && (_fitTab === 'trend' || _fitTab === 'dash')) fitTab(_fitTab); } catch(e9) {}
+    });
 }
 function _fitDefDay() { return { meals: [], body: null, session: null, plan: null }; }
 function _fitLoadDay(ymd) {
@@ -13851,16 +13930,11 @@ function _fitSaveDay() {
   if (_fitDay.session && (_fitDay.session.label || _fitDay.session.split)) {
     e2.s = _fitDay.session.label || _fitDay.session.split;
     e2.done = 1;
-    var v9 = 0, vc9 = {};
-    (_fitDay.session.sets || []).forEach(function(st9) {
-      var sv = (st9.kg || 0) * (st9.reps || 0);
-      (st9.drops || []).forEach(function(d9) { sv += (d9.kg || 0) * (d9.reps || 0); });
-      v9 += sv;
-      var ex9 = _fitExByName(st9.ex);
-      var c9 = ex9 ? (ex9.cat || '押す') : '押す';
-      vc9[c9] = (vc9[c9] || 0) + sv;
-    });
-    if (v9 > 0) { e2.v = Math.round(v9); e2.vc = {}; for (var ck in vc9) e2.vc[ck] = Math.round(vc9[ck]); }
+    var res9 = _fitCalcVc(_fitDay.session.sets); // v441: 体幹・インナーは回数制
+    if (res9.v > 0) { e2.v = res9.v; e2.vc = res9.vc; }
+    e2.st = (_fitDay.session.sets || []).length;
+    if ((_fitDay.session.skipped || []).length) e2.sk = _fitDay.session.skipped.length;
+    if (_fitDay.session.note) e2.mo = 1;
   } else if (_fitDay.plan && _fitDay.plan.split) {
     e2.s = _fitDay.plan.split;
     if (_fitDay.plan.time) e2.tm = _fitDay.plan.time;
@@ -13868,7 +13942,7 @@ function _fitSaveDay() {
   if (_fitDay.body && _fitDay.body.w) { e2.w = _fitDay.body.w; if (_fitDay.body.fat) e2.bf = _fitDay.body.fat; if (_fitDay.body.tag) e2.t = _fitDay.body.tag; }
   _fitCal = _fitCal || {};
   if (Object.keys(e2).length) _fitCal[_fitYmd] = e2; else delete _fitCal[_fitYmd];
-  fsSet(_fitP('meta/calendar'), { days: _fitCal, updatedAt: new Date().toISOString() });
+  fsSet(_fitP('meta/calendar'), { days: _fitCal, vcv: (_fitCalVer || 0), updatedAt: new Date().toISOString() });
   try { if (currentView === 'events') renderEvents(); } catch(eR) {}
 }
 // 次のプログラム（配列順ローテーション。前回実施ラベルの次）
@@ -14211,37 +14285,97 @@ function fitAddExToday() {
     toast('＋ 種目を追加しました（この日だけ）');
   });
 }
-// ⏱ インターバルタイマー（1本だけ。ボタン自体がカウントダウン表示になる）
-var _fitIv = null;
+// ⏱ インターバルタイマー v2（大型バー・音・バイブ・Wake Lock）
+var _fitIv = null, _fitAC = null, _fitWake = null;
+function _fitBeep(kind) {
+  try {
+    _fitAC = _fitAC || new (window.AudioContext || window.webkitAudioContext)();
+    if (_fitAC.state === 'suspended') _fitAC.resume();
+    var t0 = _fitAC.currentTime + 0.01;
+    var seq = kind === 'end' ? [[880, 0, 0.25], [880, 0.3, 0.25], [1174, 0.6, 0.5]] : [[660, 0, 0.12]];
+    seq.forEach(function(sp) {
+      var o = _fitAC.createOscillator(), gn = _fitAC.createGain();
+      o.type = 'sine'; o.frequency.value = sp[0];
+      gn.gain.setValueAtTime(0.0001, t0 + sp[1]);
+      gn.gain.exponentialRampToValueAtTime(0.6, t0 + sp[1] + 0.02);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t0 + sp[1] + sp[2]);
+      o.connect(gn); gn.connect(_fitAC.destination);
+      o.start(t0 + sp[1]); o.stop(t0 + sp[1] + sp[2] + 0.05);
+    });
+  } catch(e9) {}
+}
+function _fitWakeOn() {
+  try {
+    if (navigator.wakeLock && navigator.wakeLock.request) {
+      navigator.wakeLock.request('screen').then(function(wl) { _fitWake = wl; }).catch(function() {});
+    }
+  } catch(e9) {}
+}
+function _fitWakeOff() {
+  try { if (_fitWake) { _fitWake.release().catch(function() {}); _fitWake = null; } } catch(e9) {}
+}
+try {
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && _fitIv) { _fitWakeOn(); _fitIvTick(); } // 復帰時にWakeLock再取得＆即時更新
+  });
+} catch(eVc9) {}
+function _fitIvBtnsReset() {
+  var btns = document.querySelectorAll('[id^="fitIv_"]');
+  for (var i = 0; i < btns.length; i++) {
+    var xi9 = parseInt(String(btns[i].id).slice(6), 10);
+    btns[i].textContent = '⏱' + (((_fitWorkCards[xi9] || {}).iv) || 90) + '秒';
+  }
+}
+function _fitIvStop() {
+  if (_fitIv) { clearInterval(_fitIv.t); _fitIv = null; }
+  _fitWakeOff();
+  var bar = document.getElementById('fitIvBar');
+  if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
+  _fitIvBtnsReset();
+}
+function fitIvPlus() { if (_fitIv) { _fitIv.end += 30000; _fitIvTick(); } }
+function _fitIvTick() {
+  if (!_fitIv) return;
+  var rem = Math.ceil((_fitIv.end - Date.now()) / 1000);
+  var pane = document.getElementById('fitPane');
+  var bar = document.getElementById('fitIvBar');
+  if (!bar && pane) {
+    bar = document.createElement('div');
+    bar.id = 'fitIvBar';
+    pane.appendChild(bar);
+  }
+  if (rem <= 0) {
+    _fitBeep('end');
+    if (navigator.vibrate) try { navigator.vibrate([300, 120, 300, 120, 450]); } catch(e9) {}
+    if (bar) bar.innerHTML = '<div class="fiv-done">⏱ インターバル終了！次のセットへ💪</div>';
+    clearInterval(_fitIv.t); _fitIv = null;
+    _fitWakeOff();
+    _fitIvBtnsReset();
+    setTimeout(function() { var b2 = document.getElementById('fitIvBar'); if (b2 && b2.parentNode && !_fitIv) b2.parentNode.removeChild(b2); }, 4000);
+    return;
+  }
+  if (rem <= 3 && rem !== _fitIv.lastBeep) { _fitIv.lastBeep = rem; _fitBeep('tick'); }
+  if (bar) {
+    var pct = Math.max(0, Math.min(100, Math.round(rem / _fitIv.sec * 100)));
+    bar.innerHTML = '<div class="fiv-row">'
+      + '<div class="fiv-info"><div class="fiv-ex">' + evEsc(_fitIv.name || '') + '</div><div class="fiv-lbl">インターバル</div></div>'
+      + '<div class="fiv-time">' + Math.floor(rem / 60) + ':' + evPad2(rem % 60) + '</div>'
+      + '<div class="fiv-btn" onclick="fitIvPlus()">＋30秒</div>'
+      + '<div class="fiv-btn fiv-x" onclick="_fitIvStop()">✕</div>'
+      + '</div><div class="fiv-gauge"><i style="width:' + pct + '%"></i></div>';
+  }
+  var b9 = document.getElementById('fitIv_' + _fitIv.xi);
+  if (b9) b9.textContent = '⏱ ' + Math.floor(rem / 60) + ':' + evPad2(rem % 60);
+}
 function fitIvStart(xi) {
   var card = _fitWorkCards[xi];
   var sec = (card && card.iv) || 90;
-  if (_fitIv && _fitIv.xi === xi) {
-    clearInterval(_fitIv.t); _fitIv = null;
-    var b0 = document.getElementById('fitIv_' + xi);
-    if (b0) b0.textContent = '⏱' + sec + '秒';
-    return;
-  }
-  if (_fitIv) {
-    clearInterval(_fitIv.t);
-    var ob = document.getElementById('fitIv_' + _fitIv.xi);
-    if (ob) ob.textContent = '⏱' + (((_fitWorkCards[_fitIv.xi] || {}).iv) || 90) + '秒';
-    _fitIv = null;
-  }
-  var end = Date.now() + sec * 1000;
-  var t9 = setInterval(function() {
-    var rem = Math.ceil((end - Date.now()) / 1000);
-    var b2 = document.getElementById('fitIv_' + xi);
-    if (rem <= 0) {
-      clearInterval(t9); _fitIv = null;
-      if (b2) b2.textContent = '⏱' + sec + '秒';
-      if (navigator.vibrate) try { navigator.vibrate([200, 100, 200]); } catch(e9) {}
-      toast('⏱ インターバル終了！次のセットへ💪');
-      return;
-    }
-    if (b2) b2.textContent = '⏱ ' + Math.floor(rem / 60) + ':' + evPad2(rem % 60);
-  }, 250);
-  _fitIv = { xi: xi, t: t9 };
+  if (_fitIv && _fitIv.xi === xi) { _fitIvStop(); return; } // 同じボタン再タップ＝停止
+  if (_fitIv) _fitIvStop();
+  _fitBeep('tick'); // ユーザー操作でAudioContextを起動（iOSで終了音を鳴らすため必須）
+  _fitWakeOn();     // タイマー中は画面を自動で消さない（対応端末のみ）
+  _fitIv = { xi: xi, sec: sec, end: Date.now() + sec * 1000, name: (card && card.n) || '', lastBeep: -1, t: setInterval(_fitIvTick, 250) };
+  _fitIvTick();
 }
 function fitSaveSession() {
   var prog = _fitSelProg();
@@ -14344,157 +14478,99 @@ function fitExPickNew() {
   fitExPickSel(ex.id);
   toast('種目マスターに「' + ex.n + '」を登録しました（重量などは⚙️メニュー編集で設定）');
 }
-// ── ⚙️ メニュー編集（大項目＋種目マスター。すべて即保存） ──
+// ── ⚙️ メニュー編集（コンパクト1行一覧＋タップで編集シート） ──
 function _fitMenuHtml() {
   var h = '<div class="fit-card"><div class="fit-card-t">⚙️ メニュー編集</div>'
-    + '<div style="font-size:11px;color:var(--text-dim);line-height:1.7">変更は自動保存されます。上段＝大項目（トレーニングの日単位のまとまり）、下段＝種目マスター（全種目のデフォルト値）。</div>'
+    + '<div style="font-size:11px;color:var(--text-dim);line-height:1.7">行をタップすると編集シートが開きます（大項目＝日単位のまとまり／種目マスター＝全種目のデフォルト値）。</div>'
     + '<button class="fol-add" style="margin-top:8px" onclick="fitTab(\'work\')">← 筋トレ記録に戻る</button></div>';
-  // 大項目
   h += '<div class="fit-card"><div class="fit-card-t">📚 大項目（プログラム）</div>';
-  (_fitProgs || []).forEach(function(p, pi) {
-    h += '<div class="fit-exed">'
-      + '<div style="display:flex;gap:5px;align-items:center">'
-      + '<input class="fi" value="' + evEsc(p.label) + '" maxlength="3" placeholder="A" style="flex:none;width:44px;padding:7px 4px;font-size:13px;text-align:center;font-weight:800" onchange="fitPgSet(\'' + p.id + '\',\'label\',this.value)" title="カレンダー表示用の短縮ラベル（Aトレ等）">'
-      + '<input class="fi" value="' + evEsc(p.name) + '" placeholder="A：押す" style="flex:1;min-width:0;padding:7px 8px;font-size:13px" onchange="fitPgSet(\'' + p.id + '\',\'name\',this.value)">'
-      + '<span class="fit-dbtn" style="color:var(--text-mid)" onclick="fitPgMove(\'' + p.id + '\',-1)">▲</span>'
-      + '<span class="fit-dbtn" style="color:var(--text-mid)" onclick="fitPgMove(\'' + p.id + '\',1)">▼</span>'
-      + '<span class="fit-dbtn" style="color:var(--red)" onclick="fitPgDel(\'' + p.id + '\')">✕</span></div>';
-    (p.exIds || []).forEach(function(exId, ei) {
-      var ex = _fitExById(exId);
-      h += '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;padding:5px 8px;background:var(--surface);border:1px solid var(--border);border-radius:8px">'
-        + '<span style="flex:1;min-width:0;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (ex ? evEsc(ex.n) : '(削除された種目)') + '</span>'
-        + (ex ? '<span style="flex:none;font-size:9.5px;color:var(--text-dim)">' + evEsc(ex.cat || '') + '</span>' : '')
-        + '<span class="fit-dbtn" style="height:26px;color:var(--text-mid)" onclick="fitPgMvEx(\'' + p.id + '\',' + ei + ',-1)">▲</span>'
-        + '<span class="fit-dbtn" style="height:26px;color:var(--text-mid)" onclick="fitPgMvEx(\'' + p.id + '\',' + ei + ',1)">▼</span>'
-        + '<span class="fit-dbtn" style="height:26px;color:var(--red)" onclick="fitPgRmEx(\'' + p.id + '\',' + ei + ')">✕</span></div>';
-    });
-    h += '<button class="fol-add" style="margin-top:6px" onclick="fitPgAddEx(\'' + p.id + '\')">＋ 種目を追加（マスターから選択）</button></div>';
+  (_fitProgs || []).forEach(function(p) {
+    var exNames = (p.exIds || []).map(function(id) { var ex = _fitExById(id); return ex ? ex.n : ''; }).filter(Boolean);
+    h += '<div class="fol-log" style="cursor:pointer" onclick="fitPgSheet(\'' + p.id + '\')">'
+      + '<span class="fol-log-main"><span class="fol-log-ttl">' + evEsc(p.name) + ' <span style="font-size:10px;color:var(--text-dim)">［' + evEsc(p.label) + '］</span></span>'
+      + '<span class="fol-log-sub">' + (exNames.length ? evEsc(exNames.join('・')) : '種目なし') + '</span></span>'
+      + '<span style="color:var(--text-dim)">›</span></div>';
   });
   h += '<button class="fol-add" style="margin-top:8px" onclick="fitPgAdd()">＋ 大項目を追加</button></div>';
-  // 種目マスター
   h += '<div class="fit-card"><div class="fit-card-t">📖 種目マスター</div>'
-    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px">'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px">'
     + '<div class="rb' + (!_fitPickCat ? ' sel' : '') + '" style="flex:none;padding:5px 10px;font-size:11px" onclick="fitMenuCat(\'\')">全て</div>'
     + (_fitCats || []).map(function(c) { return '<div class="rb' + (_fitPickCat === c ? ' sel' : '') + '" style="flex:none;padding:5px 10px;font-size:11px" onclick="fitMenuCat(\'' + evEsc(c) + '\')">' + evEsc(c) + '</div>'; }).join('')
     + '<div class="rb" style="flex:none;padding:5px 10px;font-size:11px;border-style:dashed" onclick="fitCatAdd()">＋分類</div>'
     + '</div>';
   (_fitExs || []).forEach(function(ex) {
     if (_fitPickCat && ex.cat !== _fitPickCat) return;
-    var catOpts = (_fitCats || []).map(function(c) { return '<option value="' + evEsc(c) + '"' + (ex.cat === c ? ' selected' : '') + '>' + evEsc(c) + '</option>'; }).join('');
-    h += '<div class="fit-exed">'
-      + '<div style="display:flex;gap:5px;align-items:center">'
-      + '<input class="fi" value="' + evEsc(ex.n) + '" placeholder="種目名" style="flex:1;min-width:0;padding:7px 8px;font-size:13px" onchange="fitExSet(\'' + ex.id + '\',\'n\',this.value)">'
-      + '<select class="fi" style="flex:none;width:88px;padding:7px 2px;font-size:11.5px" onchange="fitExSet(\'' + ex.id + '\',\'cat\',this.value)">' + catOpts + '</select>'
-      + '<span class="fit-dbtn" style="color:var(--red)" onclick="fitExDel(\'' + ex.id + '\')">✕</span></div>'
-      + '<div style="display:flex;gap:5px;align-items:center;margin-top:5px;flex-wrap:wrap">'
-      + '<input class="fi" type="number" step="0.5" value="' + (ex.kg || 0) + '" style="width:60px;padding:6px 4px;font-size:13px;text-align:center" onchange="fitExSet(\'' + ex.id + '\',\'kg\',this.value)"><span style="font-size:10px;color:var(--text-dim)">kg</span>'
-      + '<input class="fi" type="number" value="' + (ex.reps || 0) + '" style="width:48px;padding:6px 4px;font-size:13px;text-align:center" onchange="fitExSet(\'' + ex.id + '\',\'reps\',this.value)"><span style="font-size:10px;color:var(--text-dim)">回(0=限界)</span>'
-      + '<input class="fi" type="number" value="' + (ex.sets || 3) + '" style="width:42px;padding:6px 4px;font-size:13px;text-align:center" onchange="fitExSet(\'' + ex.id + '\',\'sets\',this.value)"><span style="font-size:10px;color:var(--text-dim)">set</span>'
-      + '<input class="fi" type="number" value="' + (ex.iv || 90) + '" style="width:52px;padding:6px 4px;font-size:13px;text-align:center" onchange="fitExSet(\'' + ex.id + '\',\'iv\',this.value)"><span style="font-size:10px;color:var(--text-dim)">IV秒</span>'
-      + '<span class="rb' + (ex.uni ? ' sel' : '') + '" style="flex:none;padding:5px 9px;font-size:11px" onclick="fitExUni(\'' + ex.id + '\',this)" title="左右片方ずつ行う種目（⚠️左から）">片側ずつ</span></div>'
-      + '<input class="fi" value="' + evEsc(ex.note || '') + '" placeholder="メモ（例：IV90秒・座位で）" style="margin-top:5px;padding:6px 8px;font-size:12px" onchange="fitExSet(\'' + ex.id + '\',\'note\',this.value)">'
-      + '</div>';
+    h += '<div class="fol-log" style="cursor:pointer" onclick="fitExSheet(\'' + ex.id + '\')">'
+      + '<span class="fol-log-main"><span class="fol-log-ttl">' + evEsc(ex.n || '(無名)') + (ex.uni ? ' <span style="font-size:9px;color:#FFB454">片側</span>' : '') + '</span>'
+      + '<span class="fol-log-sub">' + evEsc(ex.cat || '') + '・' + (ex.kg || 0) + 'kg × ' + (ex.reps || '限界') + ' × ' + (ex.sets || 3) + 'set・IV' + (ex.iv || 90) + '秒</span></span>'
+      + '<span style="color:var(--text-dim)">›</span></div>';
   });
   h += '<button class="fol-add" style="margin-top:8px" onclick="fitExAdd()">＋ 種目を追加</button></div>';
   return h;
 }
 function fitMenuCat(c) { _fitPickCat = c; fitTab('menu'); }
-function fitPgSet(pid, field, val) {
-  var p = _fitProgById(pid);
-  if (!p) return;
-  val = String(val || '').trim();
-  if (field === 'label') { if (!val) { toast('ラベルは1文字以上'); fitTab('menu'); return; } p.label = val.slice(0, 3); }
-  else if (field === 'name') { if (!val) { toast('名前を入力してください'); fitTab('menu'); return; } p.name = val; }
-  _fitSaveProgs();
-}
-function fitPgAdd() {
-  var used = (_fitProgs || []).map(function(p) { return p.label; });
-  var lab = '';
-  'ABCDEFGH'.split('').forEach(function(ch) { if (!lab && used.indexOf(ch) < 0) lab = ch; });
-  _fitProgs.push({ id: 'pg_' + Date.now().toString(36), label: lab || 'X', name: (lab || 'X') + '：新メニュー', exIds: [] });
-  _fitSaveProgs();
-  fitTab('menu');
-}
-function fitPgDel(pid) {
-  var p = _fitProgById(pid);
-  if (!p) return;
-  if (!confirm('大項目「' + p.name + '」を削除しますか？（種目マスター・過去の記録は残ります）')) return;
-  _fitProgs = _fitProgs.filter(function(x) { return x.id !== pid; });
-  if (_fitProgSel === pid) _fitProgSel = '';
-  _fitSaveProgs();
-  fitTab('menu');
-}
-function fitPgMove(pid, d) {
-  var i = -1;
-  for (var j = 0; j < _fitProgs.length; j++) if (_fitProgs[j].id === pid) { i = j; break; }
-  var k = i + d;
-  if (i < 0 || k < 0 || k >= _fitProgs.length) return;
-  var tmp = _fitProgs[i]; _fitProgs[i] = _fitProgs[k]; _fitProgs[k] = tmp;
-  _fitSaveProgs();
-  fitTab('menu');
-}
-function fitPgAddEx(pid) {
-  fitExPick(function(exId) {
-    var p = _fitProgById(pid);
-    if (!p) return;
-    p.exIds = p.exIds || [];
-    if (p.exIds.indexOf(exId) >= 0) { toast('既に入っています'); return; }
-    p.exIds.push(exId);
-    _fitSaveProgs();
-    fitTab('menu');
-  });
-}
-function fitPgRmEx(pid, i) {
-  var p = _fitProgById(pid);
-  if (!p || !p.exIds) return;
-  p.exIds.splice(i, 1);
-  _fitSaveProgs();
-  fitTab('menu');
-}
-function fitPgMvEx(pid, i, d) {
-  var p = _fitProgById(pid);
-  if (!p || !p.exIds) return;
-  var k = i + d;
-  if (k < 0 || k >= p.exIds.length) return;
-  var tmp = p.exIds[i]; p.exIds[i] = p.exIds[k]; p.exIds[k] = tmp;
-  _fitSaveProgs();
-  fitTab('menu');
-}
-function fitExSet(exId, field, val) {
+function _fitSheetClose(id) { var ov = document.getElementById(id); if (ov && ov.parentNode) ov.parentNode.removeChild(ov); }
+// 種目編集シート
+function fitExSheet(exId) {
   var ex = _fitExById(exId);
   if (!ex) return;
-  if (field === 'n') {
-    var nv = String(val || '').trim();
-    if (!nv) { toast('種目名を入力してください'); fitTab('menu'); return; }
-    ex.n = nv;
-  } else if (field === 'cat') ex.cat = val;
-  else if (field === 'note') ex.note = String(val || '').trim();
-  else if (field === 'kg') ex.kg = parseFloat(val) || 0;
-  else if (field === 'iv') ex.iv = parseInt(val, 10) || 90;
-  else if (field === 'reps') ex.reps = parseInt(val, 10) || 0;
-  else if (field === 'sets') ex.sets = parseInt(val, 10) || 3;
-  _fitSaveExs();
+  _fitSheetClose('fitExShOv');
+  var catOpts = (_fitCats || []).map(function(c) { return '<option value="' + evEsc(c) + '"' + (ex.cat === c ? ' selected' : '') + '>' + evEsc(c) + '</option>'; }).join('');
+  var ov = document.createElement('div');
+  ov.id = 'fitExShOv'; ov.className = 'ms-overlay'; ov.style.zIndex = '1291';
+  ov.onclick = function(e) { if (e.target === ov) _fitSheetClose('fitExShOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📖 種目を編集</div></div><span class="ms-x" onclick="_fitSheetClose(\'fitExShOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<input class="fi" id="fxs_n" placeholder="種目名" value="' + evEsc(ex.n || '') + '">'
+    + '<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
+    + '<select class="fi" id="fxs_cat" style="flex:1">' + catOpts + '</select>'
+    + '<span class="rb' + (ex.uni ? ' sel' : '') + '" id="fxs_uni" style="flex:none;padding:9px 13px;font-size:12px" onclick="this.classList.toggle(\'sel\')">片側ずつ</span></div>'
+    + '<div style="display:flex;gap:8px;margin-top:8px">'
+    + '<div style="flex:1"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">重量kg</div><input class="fi" id="fxs_kg" type="number" step="0.5" value="' + (ex.kg || 0) + '" style="text-align:center"></div>'
+    + '<div style="flex:1"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">回(0=限界)</div><input class="fi" id="fxs_reps" type="number" value="' + (ex.reps || 0) + '" style="text-align:center"></div>'
+    + '<div style="flex:1"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">セット</div><input class="fi" id="fxs_sets" type="number" value="' + (ex.sets || 3) + '" style="text-align:center"></div>'
+    + '<div style="flex:1"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">IV秒</div><input class="fi" id="fxs_iv" type="number" value="' + (ex.iv || 90) + '" style="text-align:center"></div></div>'
+    + '<input class="fi" id="fxs_note" placeholder="メモ（例：座位で・最終ドロップ）" value="' + evEsc(ex.note || '') + '" style="margin-top:8px">'
+    + '<div style="display:flex;gap:8px;margin-top:12px">'
+    + '<button class="fol-add" style="margin:0;flex:none;color:var(--red);border-color:var(--red);padding:0 16px" onclick="fitExDel(\'' + ex.id + '\')">🗑</button>'
+    + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitExSheetSave(\'' + ex.id + '\')">保存</button></div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
 }
-function fitExUni(exId, el) {
+function fitExSheetSave(exId) {
   var ex = _fitExById(exId);
   if (!ex) return;
-  ex.uni = !ex.uni;
-  el.classList.toggle('sel', ex.uni);
+  var n = ((document.getElementById('fxs_n') || {}).value || '').trim();
+  if (!n) { toast('種目名を入力してください'); return; }
+  ex.n = n;
+  ex.cat = (document.getElementById('fxs_cat') || {}).value || ex.cat;
+  ex.kg = parseFloat((document.getElementById('fxs_kg') || {}).value) || 0;
+  ex.reps = parseInt((document.getElementById('fxs_reps') || {}).value, 10) || 0;
+  ex.sets = parseInt((document.getElementById('fxs_sets') || {}).value, 10) || 3;
+  ex.iv = parseInt((document.getElementById('fxs_iv') || {}).value, 10) || 90;
+  var u9 = document.getElementById('fxs_uni');
+  ex.uni = !!(u9 && u9.classList.contains('sel'));
+  ex.note = ((document.getElementById('fxs_note') || {}).value || '').trim();
   _fitSaveExs();
+  _fitSheetClose('fitExShOv');
+  toast('保存しました ✓');
+  fitTab('menu');
 }
 function fitExAdd() {
   var ex = { id: 'ex_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000), n: '', cat: _fitPickCat || (_fitCats || FIT_DEF_CATS)[0], kg: 0, reps: 10, sets: 3, iv: 90, uni: false, note: '' };
   _fitExs.push(ex);
-  fitTab('menu');
-  setTimeout(function() { var b = document.getElementById('fitBody'); if (b) b.scrollTop = b.scrollHeight; }, 50);
+  fitExSheet(ex.id);
 }
 function fitExDel(exId) {
   var ex = _fitExById(exId);
   if (!ex) return;
-  if (!confirm('種目「' + (ex.n || '(無名)') + '」をマスターから削除しますか？（大項目からも外れます。過去の記録は残ります）')) return;
+  if (ex.n && !confirm('種目「' + ex.n + '」をマスターから削除しますか？（大項目からも外れます。過去の記録は残ります）')) return;
   _fitExs = _fitExs.filter(function(x) { return x.id !== exId; });
   (_fitProgs || []).forEach(function(p) { p.exIds = (p.exIds || []).filter(function(id) { return id !== exId; }); });
   _fitSaveExs(); _fitSaveProgs();
+  _fitSheetClose('fitExShOv');
   fitTab('menu');
 }
 function fitCatAdd() {
@@ -14506,6 +14582,112 @@ function fitCatAdd() {
   _fitSaveExs();
   fitTab('menu');
 }
+// 大項目編集シート
+function fitPgSheet(pid) {
+  var p = _fitProgById(pid);
+  if (!p) return;
+  _fitSheetClose('fitPgShOv');
+  var rows = '';
+  (p.exIds || []).forEach(function(exId, ei) {
+    var ex = _fitExById(exId);
+    rows += '<div style="display:flex;align-items:center;gap:6px;margin-top:5px;padding:6px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:8px">'
+      + '<span style="flex:1;min-width:0;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (ex ? evEsc(ex.n) : '(削除された種目)') + '</span>'
+      + (ex ? '<span style="flex:none;font-size:9.5px;color:var(--text-dim)">' + evEsc(ex.cat || '') + '</span>' : '')
+      + '<span class="fit-dbtn" style="height:28px;color:var(--text-mid)" onclick="fitPgMvEx(\'' + pid + '\',' + ei + ',-1)">▲</span>'
+      + '<span class="fit-dbtn" style="height:28px;color:var(--text-mid)" onclick="fitPgMvEx(\'' + pid + '\',' + ei + ',1)">▼</span>'
+      + '<span class="fit-dbtn" style="height:28px;color:var(--red)" onclick="fitPgRmEx(\'' + pid + '\',' + ei + ')">✕</span></div>';
+  });
+  var ov = document.createElement('div');
+  ov.id = 'fitPgShOv'; ov.className = 'ms-overlay'; ov.style.zIndex = '1289';
+  ov.onclick = function(e) { if (e.target === ov) _fitSheetClose('fitPgShOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:84vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📚 大項目を編集</div></div><span class="ms-x" onclick="_fitSheetClose(\'fitPgShOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div style="display:flex;gap:8px">'
+    + '<div style="flex:none;width:72px"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">ラベル（カレンダー用）</div><input class="fi" id="fps_label" maxlength="3" value="' + evEsc(p.label) + '" style="text-align:center;font-weight:800"></div>'
+    + '<div style="flex:1"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">名前</div><input class="fi" id="fps_name" value="' + evEsc(p.name) + '"></div></div>'
+    + '<div style="font-size:10px;color:var(--text-dim);margin:10px 0 2px">種目（上から表示順）</div>'
+    + (rows || '<div style="font-size:12px;color:var(--text-dim);padding:6px 0">種目がありません</div>')
+    + '<button class="fol-add" onclick="fitPgAddEx(\'' + pid + '\')">＋ 種目を追加（マスターから選択）</button>'
+    + '<div style="display:flex;gap:8px;margin-top:12px">'
+    + '<button class="fol-add" style="margin:0;flex:none;padding:0 12px" onclick="fitPgMove(\'' + pid + '\',-1)" title="表示順を上へ">▲</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;padding:0 12px" onclick="fitPgMove(\'' + pid + '\',1)" title="表示順を下へ">▼</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;color:var(--red);border-color:var(--red);padding:0 16px" onclick="fitPgDel(\'' + pid + '\')">🗑</button>'
+    + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitPgSheetSave(\'' + pid + '\')">保存</button></div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function fitPgSheetSave(pid) {
+  var p = _fitProgById(pid);
+  if (!p) return;
+  var lab = ((document.getElementById('fps_label') || {}).value || '').trim();
+  var nm = ((document.getElementById('fps_name') || {}).value || '').trim();
+  if (!lab || !nm) { toast('ラベルと名前を入力してください'); return; }
+  p.label = lab.slice(0, 3);
+  p.name = nm;
+  _fitSaveProgs();
+  _fitSheetClose('fitPgShOv');
+  toast('保存しました ✓');
+  fitTab('menu');
+}
+function fitPgAdd() {
+  var used = (_fitProgs || []).map(function(p) { return p.label; });
+  var lab = '';
+  'ABCDEFGH'.split('').forEach(function(ch) { if (!lab && used.indexOf(ch) < 0) lab = ch; });
+  var p = { id: 'pg_' + Date.now().toString(36), label: lab || 'X', name: (lab || 'X') + '：新メニュー', exIds: [] };
+  _fitProgs.push(p);
+  _fitSaveProgs();
+  fitTab('menu');
+  fitPgSheet(p.id);
+}
+function fitPgDel(pid) {
+  var p = _fitProgById(pid);
+  if (!p) return;
+  if (!confirm('大項目「' + p.name + '」を削除しますか？（種目マスター・過去の記録は残ります）')) return;
+  _fitProgs = _fitProgs.filter(function(x) { return x.id !== pid; });
+  if (_fitProgSel === pid) _fitProgSel = '';
+  _fitSaveProgs();
+  _fitSheetClose('fitPgShOv');
+  fitTab('menu');
+}
+function fitPgMove(pid, d) {
+  var i = -1;
+  for (var j = 0; j < _fitProgs.length; j++) if (_fitProgs[j].id === pid) { i = j; break; }
+  var k = i + d;
+  if (i < 0 || k < 0 || k >= _fitProgs.length) return;
+  var tmp = _fitProgs[i]; _fitProgs[i] = _fitProgs[k]; _fitProgs[k] = tmp;
+  _fitSaveProgs();
+  fitTab('menu');
+  toast(d < 0 ? '▲ 上に移動しました' : '▼ 下に移動しました');
+}
+function fitPgAddEx(pid) {
+  fitExPick(function(exId) {
+    var p = _fitProgById(pid);
+    if (!p) return;
+    p.exIds = p.exIds || [];
+    if (p.exIds.indexOf(exId) >= 0) { toast('既に入っています'); fitPgSheet(pid); return; }
+    p.exIds.push(exId);
+    _fitSaveProgs();
+    fitPgSheet(pid);
+  });
+}
+function fitPgRmEx(pid, i) {
+  var p = _fitProgById(pid);
+  if (!p || !p.exIds) return;
+  p.exIds.splice(i, 1);
+  _fitSaveProgs();
+  fitPgSheet(pid);
+}
+function fitPgMvEx(pid, i, d) {
+  var p = _fitProgById(pid);
+  if (!p || !p.exIds) return;
+  var k = i + d;
+  if (k < 0 || k >= p.exIds.length) return;
+  var tmp = p.exIds[i]; p.exIds[i] = p.exIds[k]; p.exIds[k] = tmp;
+  _fitSaveProgs();
+  fitPgSheet(pid);
+}
 // ── 推移 ──
 function _fitWeight7() {
   var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].w; }).sort();
@@ -14514,8 +14696,37 @@ function _fitWeight7() {
   var sum = recent.reduce(function(a, k) { return a + _fitCal[k].w; }, 0);
   return Math.round(sum / recent.length * 10) / 10;
 }
+var _fitHistLimit = 20;
+function _fitProgNameByLabel(s) {
+  var nm = '';
+  (_fitProgs || []).forEach(function(p) { if (p.label === s) nm = p.name; });
+  return nm || _fitLabelName(s);
+}
+// v441: トレーニング履歴（サマリから即表示。行タップでその日の記録へ）
+function _fitHistHtml() {
+  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; }).sort().reverse();
+  var rows = '';
+  ds.slice(0, _fitHistLimit).forEach(function(k) {
+    var e = _fitCal[k];
+    var p9 = k.split('-');
+    var wd = ['日', '月', '火', '水', '木', '金', '土'][new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10)).getDay()];
+    var meta = [];
+    if (e.st) meta.push(e.st + 'セット');
+    if (e.v) meta.push((Math.round(e.v / 100) / 10) + 't');
+    if (e.sk) meta.push('⏭スキップ' + e.sk);
+    rows += '<div class="fol-log" style="cursor:pointer" onclick="fitHistGo(\'' + k + '\')">'
+      + '<span class="fol-log-main"><span class="fol-log-ttl">' + parseInt(p9[1], 10) + '/' + parseInt(p9[2], 10) + '(' + wd + ')　' + evEsc(_fitProgNameByLabel(e.s)) + '</span>'
+      + '<span class="fol-log-sub">' + (meta.join('・') || '記録あり') + (e.mo ? '・📝メモ' : '') + '</span></span>'
+      + '<span style="color:var(--text-dim)">›</span></div>';
+  });
+  if (!rows) rows = '<div style="font-size:12px;color:var(--text-dim);padding:6px 0">まだ記録がありません</div>';
+  var more = ds.length > _fitHistLimit ? '<button class="fol-add" style="margin-top:8px" onclick="_fitHistLimit += 30; fitTab(\'trend\')">もっと見る（あと ' + (ds.length - _fitHistLimit) + '回）</button>' : '';
+  return '<div class="fit-card"><div class="fit-card-t">📜 トレーニング履歴</div><div style="font-size:10.5px;color:var(--text-dim)">タップでその日の記録へ（そのまま編集もできます）</div>' + rows + more + '</div>';
+}
+function fitHistGo(ymd) { _fitLoadDay(ymd).then(function() { fitTab('work'); }); }
 function _fitTrendHtml() {
-  return _fitMuscleCard(true)
+  return _fitHistHtml()
+    + _fitMuscleCard(true)
     + '<div class="fit-card"><div class="fit-card-t">体重（点＝実測 / 線＝7日移動平均）</div>'
     + '<canvas id="fitWChart" height="170" style="width:100%;display:block;margin-top:6px"></canvas>'
     + '<div style="display:flex;gap:6px;margin-top:8px"><div class="rb" style="flex:none;padding:5px 10px;font-size:11px" id="fitTagF" onclick="this.classList.toggle(\'sel\');_fitDrawWeight()">朝の測定のみ</div></div></div>'
@@ -14724,7 +14935,7 @@ function _fitMuscleSvg(ms, size) {
   var pA = Math.min(1, (vc['押す'] || 0) / 80000);    // 胸
   var pB = Math.min(1, (vc['引く'] || 0) / 80000);    // 背中
   var pC = Math.min(1, (vc['肩・腕'] || 0) / 80000);  // 肩幅・腕
-  var pAbs = Math.min(1, (vc['体幹'] || 0) / 40000);  // 腹筋
+  var pAbs = Math.min(1, (vc['体幹'] || 0) / 1500);  // 腹筋（v441: 回数ベース）
   var pLeg = Math.min(1, (vc['脚'] || 0) / 60000);    // 脚
   var sh = Math.round(20 + 14 * pC + 6 * pA);
   var arm = Math.round((5 + 7 * (0.4 * pB + 0.6 * pC)) * 10) / 10;
@@ -14779,16 +14990,17 @@ function _fitMuscleCard(big) {
     var cats9 = [];
     (['押す', '引く', '肩・腕', '体幹', '脚', 'インナー'].concat(Object.keys(ms.vc || {}))).forEach(function(c) { if (cats9.indexOf(c) < 0) cats9.push(c); });
     var COLS9 = ['#4ADE80', '#5AD7FF', '#F472B6', '#FFB454', '#C583FF', '#8B7CFF', '#FF5D73', '#FFD166'];
-    var mx = 1;
-    cats9.forEach(function(c) { if ((ms.vc[c] || 0) > mx) mx = ms.vc[c]; });
+    var mxW = 1, mxR = 1; // v441: 重量系(t)と回数系(回)は別軸で正規化
+    cats9.forEach(function(c) { var v0 = ms.vc[c] || 0; if (FIT_REP_CATS[c]) { if (v0 > mxR) mxR = v0; } else if (v0 > mxW) mxW = v0; });
     h += '<div style="margin-top:12px;font-size:11.5px">'
       + cats9.map(function(c, ci) {
           var val = ms.vc[c] || 0;
+          var isRep = !!FIT_REP_CATS[c];
           return '<div style="display:flex;align-items:center;gap:8px;margin-top:5px"><span style="flex:none;width:70px;color:var(--text-mid)">' + evEsc(c) + '</span>'
-            + '<div style="flex:1;height:8px;border-radius:4px;background:var(--surface3);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round(val / mx * 100) + '%;background:' + COLS9[ci % COLS9.length] + '"></i></div>'
-            + '<span style="flex:none;width:44px;text-align:right;font-family:Inter,sans-serif;color:var(--text-mid)">' + (Math.round(val / 100) / 10) + 't</span></div>';
+            + '<div style="flex:1;height:8px;border-radius:4px;background:var(--surface3);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round(val / (isRep ? mxR : mxW) * 100) + '%;background:' + COLS9[ci % COLS9.length] + '"></i></div>'
+            + '<span style="flex:none;width:48px;text-align:right;font-family:Inter,sans-serif;color:var(--text-mid)">' + (isRep ? (val + '回') : ((Math.round(val / 100) / 10) + 't')) + '</span></div>';
         }).join('')
-      + '</div><div style="font-size:10px;color:var(--text-dim);margin-top:8px">分類のバランスで体つきが変わります（押す→胸・引く→背中・肩腕→肩幅と腕・体幹→腹筋・脚→脚の太さ）。Lv5で腹筋、Lv8でオーラ、Lv10で👑</div>';
+      + '</div><div style="font-size:10px;color:var(--text-dim);margin-top:8px">分類のバランスで体つきが変わります（押す→胸・引く→背中・肩腕→肩幅と腕・体幹→腹筋・脚→脚の太さ）。体幹とインナーは重さではなく回数で育ちます。Lv5で腹筋、Lv8でオーラ、Lv10で👑</div>';
   }
   h += '</div>';
   return h;
