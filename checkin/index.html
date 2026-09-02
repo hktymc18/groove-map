@@ -466,19 +466,19 @@ tr:last-child td{border-bottom:none;}
 <div id="vCard" class="hide">
   <div class="cardwrap">
     <div class="membercard" id="memberCard">
-      <!-- JETCLUB専用の背景装飾（自転するスケルトン地球儀＋周回する飛行機） -->
+      <!-- JETCLUB専用の背景装飾（自転するスケルトン地球儀） -->
       <svg class="mc-deco" viewBox="0 0 220 220" aria-hidden="true">
         <defs><clipPath id="mcGclip"><circle cx="110" cy="110" r="88"/></clipPath></defs>
-        <g transform="rotate(-14 110 110)" stroke="#d4af37" fill="none" stroke-width="1">
-          <circle cx="110" cy="110" r="88" opacity=".75"/>
-          <g opacity=".55">
+        <g transform="rotate(-14 110 110)" stroke="#e8e5da" fill="none" stroke-width="1">
+          <circle cx="110" cy="110" r="88" opacity=".4"/>
+          <g opacity=".28">
             <ellipse cx="110" cy="110" rx="88" ry="18"/>
             <ellipse cx="110" cy="76"  rx="81" ry="16"/>
             <ellipse cx="110" cy="144" rx="81" ry="16"/>
             <ellipse cx="110" cy="48"  rx="62" ry="12"/>
             <ellipse cx="110" cy="172" rx="62" ry="12"/>
           </g>
-          <g clip-path="url(#mcGclip)" opacity=".5">
+          <g clip-path="url(#mcGclip)" opacity=".24">
             <g class="g-mer">
               <ellipse cx="-10" cy="110" rx="30" ry="88"/><ellipse cx="20" cy="110" rx="30" ry="88"/>
               <ellipse cx="50" cy="110" rx="30" ry="88"/><ellipse cx="80" cy="110" rx="30" ry="88"/>
@@ -486,16 +486,6 @@ tr:last-child td{border-bottom:none;}
               <ellipse cx="170" cy="110" rx="30" ry="88"/><ellipse cx="200" cy="110" rx="30" ry="88"/>
               <ellipse cx="230" cy="110" rx="30" ry="88"/><ellipse cx="260" cy="110" rx="30" ry="88"/>
             </g>
-          </g>
-        </g>
-        <g transform="rotate(-16 110 110)">
-          <path id="mcOrbit" d="M 6 110 a 104 34 0 1 0 208 0 a 104 34 0 1 0 -208 0"
-                fill="none" stroke="#d4af37" stroke-width="1" stroke-dasharray="3 6" opacity=".45"/>
-          <g fill="#f0d67e" opacity=".95">
-            <path d="M12 0 L4 2 L-4 1.5 L-8 5 L-10 5 L-7.5 1.2 L-11 .8 L-13 2.2 L-14 2.2 L-12.6 0 L-14 -2.2 L-13 -2.2 L-11 -.8 L-7.5 -1.2 L-10 -5 L-8 -5 L-4 -1.5 L4 -2 Z"/>
-            <animateMotion dur="9s" repeatCount="indefinite" rotate="auto">
-              <mpath href="#mcOrbit" xlink:href="#mcOrbit"/>
-            </animateMotion>
           </g>
         </g>
       </svg>
