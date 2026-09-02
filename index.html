@@ -13,8 +13,8 @@
      画面下の「タップも効かない空白」になるため、標準のステータスバー方式に変更 -->
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MAP">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png?v=448">
+<link rel="icon" type="image/png" href="icon-192.png?v=448">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 /* ═══ SUMMIT デザインシステム（Phase 0）：夜の遠征ネイビー×行動ミント×報酬アンバー ═══ */
@@ -2285,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v447</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v448</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5164,7 +5164,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v447';
+  var DATA_VERSION = 'v448';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6123,6 +6123,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v448', d:'2026-09-02', items:['🖼 ホーム画面アイコンが古い画像のまま残る問題の対策：iOSがアイコンをURL単位で強くキャッシュするため、アイコンURLにバージョンを付けて取り直させるようにしました（アップロード後にホーム画面から削除→再追加してください）'] },
   { v:'v447', d:'2026-09-02', items:['🐛筋トレ記録の入力消失を修正：入力途中に「スキップ」や「＋この日だけ種目を追加」を押すと、他の種目で変えた重量・回数・限界マーク・ドロップセットが初期値に戻ってしまう問題を根治しました（保存前の入力を保持したまま再描画します）','🔧同名種目の重複を自動統合：種目マスターに同じ名前が2つあると「編集しても反映されない」原因になるため、読み込み時に1つへ統合し、大項目の参照も自動で張り替えます。新規登録・名前変更時も同名の重複を防止','📣アイコン・アプリ名がMAPのままの方へ：manifest.webmanifest とアイコン画像4枚のアップロードが必要です（今回の配布ファイルに同梱）'] },
   { v:'v446', d:'2026-09-02', items:['💪🗓ホームタブが月カレンダーになりました：実施日は緑「A✓」、予定はピンク、予定のままやらなかった日はグレーで一目瞭然。日付をタップすると、予定を入れる（大項目/ラン/休養をワンタップ）・内容をその場で見る・後追いで記録を入力ができます。月間の実施回数と累計トン数も表示','📋「Claudeに相談」を廃止し、履歴に「この日をコピー」ボタンを追加：種目ごとのインターバル秒数付きでその日の内容をコピーできます（履歴の展開内と、ホームカレンダーの日詳細の両方から）'] },
   { v:'v445', d:'2026-09-02', items:['💪📊推移タブを筋トレ可視化にリニューアル：①週別ボリューム積み上げ棒（分類色分け・直近12週、体幹/インナーは回数ミニバー）②種目別トップ重量＋推定1RMの折れ線（チップで種目切替）③継続ヒートマップ（過去15週の草）をグラフとして最上部に表示','📜履歴はタップするとその場で内容が展開表示されるようになりました（編集画面には飛びません。編集したい時だけ展開内の✏️ボタンから）','⚖️使っていなかった体重・体脂肪の入力欄とグラフを削除しました（過去のデータは残っています）'] },
