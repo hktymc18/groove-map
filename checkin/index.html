@@ -227,14 +227,14 @@ tr:last-child td{border-bottom:none;}
   animation:jetPulse 3.6s ease-in-out infinite alternate;
 }
 .membercard.mc-black::after{
-  background:linear-gradient(115deg,transparent 42%,rgba(255,231,161,.20) 50%,transparent 58%);
+  background:linear-gradient(45deg,transparent 42%,rgba(255,231,161,.20) 50%,transparent 58%);
   z-index:2;
   animation:jetSheen 5.5s ease-in-out infinite;
 }
 @keyframes jetPulse{from{opacity:.5;}to{opacity:1;}}
 @keyframes jetSheen{
-  0%{transform:translateX(-65%);}
-  45%,100%{transform:translateX(65%);}
+  0%{transform:translate(-65%,65%);}
+  45%,100%{transform:translate(65%,-65%);}
 }
 @media (prefers-reduced-motion: reduce){
   .membercard.mc-black::before,.membercard.mc-black::after,.mc-deco .g-mer{animation:none;}
