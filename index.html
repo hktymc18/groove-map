@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>MAP</title>
+<title>NAVIGATOR</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0d0f14">
@@ -1456,7 +1456,7 @@ body.cal-fs .pc-toolbar{display:none!important}
   #evAgenda.full .td-due{margin-top:0;flex:none;max-width:48%;text-align:right}
   .overlay{align-items:center;padding:24px}
   .sheet{max-width:620px;border-radius:20px;border:1px solid var(--border);max-height:86vh}
-  .ms-overlay{align-items:center;padding:24px}
+  .ms-overlay{align-items:center;justify-content:center;padding:24px}
   .ms-sheet{max-width:620px;border-radius:20px;border:1px solid var(--border2);padding-bottom:22px}
   .tp-ov{align-items:center;padding:24px}
   .tp-sheet{max-width:440px;border-radius:20px;border:1px solid var(--border);padding-bottom:14px}
@@ -2204,8 +2204,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div style="width:100%;max-width:400px;margin:auto 0"><!-- v368: 入力欄が画面より多い時にスクロールできるように（margin:autoで少ない時は中央寄せ） -->
     <!-- タイトル -->
     <div style="text-align:center;margin-bottom:40px">
+      <img src="icon-192.png" alt="" style="width:92px;height:92px;border-radius:22px;margin-bottom:14px;background:#fff">
       <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:3px;margin-bottom:8px">ORGANIZATION MANAGEMENT</div>
-      <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:36px;font-weight:700;color:var(--accent);letter-spacing:4px;line-height:1">MAP</div>
+      <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:27px;font-weight:700;color:var(--accent);letter-spacing:3px;line-height:1">NAVIGATOR</div>
       <div style="font-size:12px;color:var(--text-dim);margin-top:6px;font-family:'Inter','IBM Plex Mono',monospace">ver.2.0</div>
     </div>
 
@@ -2266,7 +2267,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
 <header>
   <div class="hdr-top">
-    <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer;flex-shrink:0;max-width:100%;overflow:hidden" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">MAP</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%"></div></div>
+    <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer;flex-shrink:0;max-width:100%;overflow:hidden" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">NAVIGATOR</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%"></div></div>
 <div style="display:flex;gap:4px;align-items:center">
       <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
@@ -2274,7 +2275,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v441</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v444</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3717,7 +3718,7 @@ function generateResultImage() {
   x.fillStyle = '#FFB454'; x.font = '800 36px "Noto Sans JP", sans-serif';
   x.fillText('🔥 ストリーク ' + rd.streak + '日', cxm, py + 20);
   x.fillStyle = '#3D465C'; x.font = '800 30px "Noto Sans JP", sans-serif';
-  x.fillText('▲ GROOVE MAP', cxm, H - 110);
+  x.fillText('▲ NAVIGATOR', cxm, H - 110);
   // 共有 or ダウンロード
   cv.toBlob(function(blob) {
     if (!blob) { toast('画像の生成に失敗しました'); return; }
@@ -5128,7 +5129,7 @@ function saveProfile() {
 
   // ヘッダー更新
   var logo = document.getElementById('appLogo');
-  if (logo) logo.textContent = currentUser.org || 'MAP';
+  if (logo) logo.textContent = currentUser.org || 'NAVIGATOR';
   var nameEl = document.getElementById('appUserName');
   if (nameEl) {
     var infoText = currentUser.name;
@@ -5153,7 +5154,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v441';
+  var DATA_VERSION = 'v444';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6112,6 +6113,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v444', d:'2026-09-02', items:['🐛PC版でボトムシート（種目編集・各種メニュー）が画面左に寄って表示されていたのを中央表示に修正','🐛💪種目編集シートの🗑削除ボタンが横いっぱいに崩れて保存ボタンが潰れていたレイアウトバグを修正（大項目シートの▲▼🗑も同様）'] },
+  { v:'v443', d:'2026-09-02', items:['🎨NAVIGATORのロゴを提供いただいたオリジナル画像そのものに差し替えました（アイコン・ログイン画面）。ホーム画面のアイコンが変わらない場合は、一度削除して「ホーム画面に追加」し直してください'] },
+  { v:'v442', d:'2026-09-02', items:['🚀アプリ名が「MAP」から「NAVIGATOR」になりました！新しいNロゴのアイコン・ログイン画面にリニューアル。ホーム画面のアイコンと名前も新しくなります（反映されない場合は一度ホーム画面から削除して追加し直してください）。組織図タブや「共有MAP」などの機能名は今まで通りです'] },
   { v:'v441', d:'2026-08-28', items:['💪📜トレーニング履歴：推移タブの最上部に「いつ・何トレ・何セット・何トン」の履歴一覧を追加。行をタップするとその日の記録に直行して編集もできます','💪⚙️メニュー編集を全面改良：大項目・種目とも畳んだ1行一覧になり、タップすると編集シートが開く方式に（長いスクロールと展開しっぱなしを解消）','💪⏱インターバルタイマーを大幅強化：開始すると画面下に大型タイマーバー（特大数字・進捗ゲージ・＋30秒/停止ボタン）。終了時にピピピッ♪＋バイブ、残り3秒からカウント音。タイマー中は画面が自動で消えないように（Wake Lock）※本体のサイレントスイッチON時は音が鳴らないためバイブと画面でお知らせ','🐣体幹・インナーのメーターを「回数」制に：立ちコロなど自重系は重さ0でメーターが貯まらなかったため、体幹とインナーは実施回数で貯まるようにしました（レベル用には1回=5kg換算で加算）。過去の立ちコロ・インナーの記録も初回起動時に自動で再計算して反映します'] },
   { v:'v440', d:'2026-08-28', items:['🚪OUTをカテゴリの並びに独立ボタン化：研修生/BA/BRと並んで「OUT」を選べるようになりました（各タイトル一覧の中のOUTは廃止。選ぶとタイトルも自動でOUTに）','👋OUTにしたメンバーは当月のMAPにグレーのゴースト表示で残り（いなくなったことが分かる）、翌月コピーで自動的に翌月のMAPから外れます（表示/非表示の選択は当月の見え方のみに）'] },
   { v:'v439', d:'2026-08-28', items:['🌱PCツリーのケアバッジを整理：「🌱フレッシュ」（スタート6ヶ月以内・BR未満のみ。BRには付きません）と「🎓研修生」の2種類になりました。ケアしないと消えてしまう層がひと目で分かります','🎚バッジの手動付け外し：メンバー編集の「ケアバッジ」で 自動／表示／非表示 を選べます（条件外でもケアしたい人に付けたり、外したりできます）','👑BR以上の判別を強化：バッジではなく「宝石色の常時オーラ（静かな光）」を追加。点滅するフレッシュ／研修生（要ケア＝動）と対照的な、安定した上位者の表現にしました'] },
@@ -14533,7 +14537,7 @@ function fitExSheet(exId) {
     + '<div style="flex:1"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">IV秒</div><input class="fi" id="fxs_iv" type="number" value="' + (ex.iv || 90) + '" style="text-align:center"></div></div>'
     + '<input class="fi" id="fxs_note" placeholder="メモ（例：座位で・最終ドロップ）" value="' + evEsc(ex.note || '') + '" style="margin-top:8px">'
     + '<div style="display:flex;gap:8px;margin-top:12px">'
-    + '<button class="fol-add" style="margin:0;flex:none;color:var(--red);border-color:var(--red);padding:0 16px" onclick="fitExDel(\'' + ex.id + '\')">🗑</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;color:var(--red);border-color:var(--red);padding:10px 18px" onclick="fitExDel(\'' + ex.id + '\')">🗑</button>'
     + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitExSheetSave(\'' + ex.id + '\')">保存</button></div>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -14610,9 +14614,9 @@ function fitPgSheet(pid) {
     + (rows || '<div style="font-size:12px;color:var(--text-dim);padding:6px 0">種目がありません</div>')
     + '<button class="fol-add" onclick="fitPgAddEx(\'' + pid + '\')">＋ 種目を追加（マスターから選択）</button>'
     + '<div style="display:flex;gap:8px;margin-top:12px">'
-    + '<button class="fol-add" style="margin:0;flex:none;padding:0 12px" onclick="fitPgMove(\'' + pid + '\',-1)" title="表示順を上へ">▲</button>'
-    + '<button class="fol-add" style="margin:0;flex:none;padding:0 12px" onclick="fitPgMove(\'' + pid + '\',1)" title="表示順を下へ">▼</button>'
-    + '<button class="fol-add" style="margin:0;flex:none;color:var(--red);border-color:var(--red);padding:0 16px" onclick="fitPgDel(\'' + pid + '\')">🗑</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;padding:10px 14px" onclick="fitPgMove(\'' + pid + '\',-1)" title="表示順を上へ">▲</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;padding:10px 14px" onclick="fitPgMove(\'' + pid + '\',1)" title="表示順を下へ">▼</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;color:var(--red);border-color:var(--red);padding:10px 18px" onclick="fitPgDel(\'' + pid + '\')">🗑</button>'
     + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitPgSheetSave(\'' + pid + '\')">保存</button></div>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -15840,7 +15844,7 @@ function gcalEventBody(e) {
   if (e.memo) desc.push(e.memo);
   if (m) desc.push('メンバー: ' + ((m.lastName || '') + (m.firstName || '')).replace(/^\s+|\s+$/g, ''));
   if (cat) desc.push('カテゴリ: ' + cat.name);
-  desc.push('（GROOVE MAPより自動連携）');
+  desc.push('（NAVIGATORより自動連携）');
   var body = {
     summary: (e.type === 'task' && e.done ? '✓ ' : '') + (e.title || '(無題)'),
     description: desc.join('\n')
@@ -15883,7 +15887,7 @@ function gtaskBody(e) {
   if (e.memo) notes.push(e.memo);
   if (m) notes.push('メンバー: ' + ((m.lastName || '') + (m.firstName || '')).replace(/^\s+|\s+$/g, ''));
   if (cat) notes.push('カテゴリ: ' + cat.name);
-  notes.push('（GROOVE MAPより自動連携）');
+  notes.push('（NAVIGATORより自動連携）');
   var body = {
     title: e.title || '(無題)',
     notes: notes.join('\n'),
@@ -17817,7 +17821,7 @@ function m3Share() {
     cx.font = '700 36px "IBM Plex Mono", monospace';
     cx.fillText(String(state.currentMonth || '').replace('.', ' / '), W / 2, 530);
     cx.font = '800 34px "Inter", sans-serif';
-    cx.fillText('GROOVE MAP', W / 2, H - 110);
+    cx.fillText('NAVIGATOR', W / 2, H - 110);
     // v365: コーナーの花ラインアート（コード描画・テーマのインク色）
     function flower(fx, fy, fr, rot) {
       cx.save(); cx.translate(fx, fy); cx.rotate(rot || 0);
@@ -22698,7 +22702,7 @@ function loginSuccess(user) {
   updateHomeBadge();
   // ロゴ更新
   var logo = document.getElementById('appLogo');
-  if (logo) logo.textContent = user.org || 'MAP';
+  if (logo) logo.textContent = user.org || 'NAVIGATOR';
   var nameEl = document.getElementById('appUserName');
   if (nameEl && user.name) {
     var infoText = user.name;
