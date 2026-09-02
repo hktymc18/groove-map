@@ -1194,6 +1194,8 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .fit-exskip{opacity:.45}
 @keyframes pcFreshGlow{0%,100%{filter:drop-shadow(0 0 3px rgba(255,209,102,.5))}50%{filter:drop-shadow(0 0 15px rgba(255,209,102,1))}}
 .oval-node.pc-fresh{animation:pcFreshGlow 2.4s ease-in-out infinite}
+@keyframes pcCareTr{0%,100%{filter:drop-shadow(0 0 3px rgba(90,215,255,.5))}50%{filter:drop-shadow(0 0 15px rgba(90,215,255,1))}}
+.oval-node.pc-care-tr{animation:pcCareTr 2.4s ease-in-out infinite}
 .fit-food-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13px;border:1px solid transparent}
 .fit-food-row:hover{background:var(--surface2)}
 .fit-meal-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px}
@@ -2259,7 +2261,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v438</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v439</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2911,6 +2913,15 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <div class="ed-ctrl"><div id="restartCtl" style="font-size:12.5px;line-height:1.8"></div></div>
           </div>
           <div class="ed-help" id="h_restart">BR維持失敗（ロールアップ）から再挑戦中のメンバーに「🔄リスタート◯ヶ月目」を表示します（開始月＝1ヶ月目、6ヶ月目まで自動表示）。翌月コピーの自動ロールアップでは自動設定されます。既に手動で組織を組み替え済みの場合は、ここから開始月を後付けで設定してください。</div>
+          <div class="ed-row" id="badgeRow">
+            <span class="ed-l">🌱 ケアバッジ<span class="ed-q" onclick="edHelp(event,'h_badge')">?</span></span>
+            <div class="ed-chips">
+              <div class="rb sel" id="rbBadgeAuto" onclick="selBadgeMode('')">自動</div>
+              <div class="rb" id="rbBadgeOn" onclick="selBadgeMode('on')">表示</div>
+              <div class="rb" id="rbBadgeOff" onclick="selBadgeMode('off')">非表示</div>
+            </div>
+          </div>
+          <div class="ed-help" id="h_badge">PCツリーの「🌱フレッシュ」（スタート6ヶ月以内・BR未満）／「🎓研修生」バッジの表示設定。ケアしないと消えてしまう層を目立たせるためのバッジです。自動＝条件に合えば表示。条件外でもケアしたい人には「表示」、外したい人は「非表示」。</div>
           <div class="ed-row">
             <span class="ed-l">現状GSV<span class="ed-q" onclick="edHelp(event,'h_fPtC')">?</span></span>
             <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力"></div>
@@ -4058,8 +4069,7 @@ function renderPCMap(mapType) {
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.setAttribute('class','oval-node' + (mapType === 'current' && typeof memberActivityLevel === 'function' ? (' ' + memberActivityLevel(m)) : '')
-      + ((mapType === 'current' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m)) ? ' pc-fresh' : '')); // v437: フレッシュは金色パルス
+    g.setAttribute('class','oval-node' + (mapType === 'current' && typeof memberActivityLevel === 'function' ? (' ' + memberActivityLevel(m)) : '')); // v439: ケアバッジ側でpc-fresh/pc-care-trを付与
     g.setAttribute('data-mid',m.id);
     g.setAttribute('data-lineage', lineageRoot[m.id]||'');
     g.setAttribute('data-region', m.region||'');
@@ -4078,6 +4088,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
     rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI?'2':'1'))); // v420: BR以上=太枠
+    if (_isBrUp) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
     g.appendChild(rect);
 
@@ -4106,18 +4117,31 @@ function renderPCMap(mapType) {
       var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
       g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
     }
-    if (mapType === 'current' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m)) {
-      // v438: 金色の「🌱フレ」バッジ（カード上辺の中央。✨より明示的に）
-      var fb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
-      fb9.setAttribute('x', rx + NODE_W/2 - 26); fb9.setAttribute('y', ry2 - 10);
-      fb9.setAttribute('width', 52); fb9.setAttribute('height', 18);
-      fb9.setAttribute('rx', 9);
-      fb9.setAttribute('fill', '#FFD166');
-      fb9.setAttribute('stroke', 'rgba(0,0,0,.25)');
-      fb9.setAttribute('stroke-width', '0.5');
-      fb9.setAttribute('pointer-events', 'none');
-      g.appendChild(fb9);
-      g.appendChild(txt(rx + NODE_W/2, ry2 + 3, '🌱フレ', '#5b3d00', 11, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
+    // v439: ケアバッジ（🌱フレッシュ＝スタート6ヶ月以内かつBR未満／🎓研修生。手動で表示/非表示の上書き可）
+    if (mapType === 'current') {
+      var _isTr9 = !!(m.trainee || (typeof memberCat === 'function' && memberCat(m) === '研修生'));
+      var _auto9 = '';
+      if (_isTr9) _auto9 = 'trainee';
+      else if (typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m) && !isBROrAbove(m.title)) _auto9 = 'fresh';
+      var _bm9 = m.badgeMode || '';
+      var _cb9 = (_bm9 === 'off') ? '' : ((_bm9 === 'on') ? (_auto9 || (_isTr9 ? 'trainee' : 'fresh')) : _auto9);
+      if (_cb9) {
+        var _bw9 = _cb9 === 'fresh' ? 80 : 68;
+        var _bg9 = _cb9 === 'fresh' ? '#FFD166' : '#5AD7FF';
+        var _bt9 = _cb9 === 'fresh' ? '🌱フレッシュ' : '🎓研修生';
+        var _bc9 = _cb9 === 'fresh' ? '#5b3d00' : '#00344d';
+        var fb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        fb9.setAttribute('x', rx + NODE_W/2 - _bw9/2); fb9.setAttribute('y', ry2 - 10);
+        fb9.setAttribute('width', _bw9); fb9.setAttribute('height', 18);
+        fb9.setAttribute('rx', 9);
+        fb9.setAttribute('fill', _bg9);
+        fb9.setAttribute('stroke', 'rgba(0,0,0,.25)');
+        fb9.setAttribute('stroke-width', '0.5');
+        fb9.setAttribute('pointer-events', 'none');
+        g.appendChild(fb9);
+        g.appendChild(txt(rx + NODE_W/2, ry2 + 3, _bt9, _bc9, 11, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
+        g.setAttribute('class', g.getAttribute('class') + (_cb9 === 'fresh' ? ' pc-fresh' : ' pc-care-tr'));
+      }
     }
     // 写真アバター（あれば左端に丸表示し、テキストを右へずらす）
     var _pcPh = (_pcPhotoOk && typeof _avatars !== 'undefined') ? _avatars[m.id] : null;
@@ -5114,7 +5138,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v438';
+  var DATA_VERSION = 'v439';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6073,6 +6097,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v439', d:'2026-08-28', items:['🌱PCツリーのケアバッジを整理：「🌱フレッシュ」（スタート6ヶ月以内・BR未満のみ。BRには付きません）と「🎓研修生」の2種類になりました。ケアしないと消えてしまう層がひと目で分かります','🎚バッジの手動付け外し：メンバー編集の「ケアバッジ」で 自動／表示／非表示 を選べます（条件外でもケアしたい人に付けたり、外したりできます）','👑BR以上の判別を強化：バッジではなく「宝石色の常時オーラ（静かな光）」を追加。点滅するフレッシュ／研修生（要ケア＝動）と対照的な、安定した上位者の表現にしました'] },
   { v:'v438', d:'2026-08-28', items:['📍地域絞り込みバグの真因を修正：ノードをクリックした時の「系列フォーカス」が地域の薄表示を上書きして、同じ系列の他地域メンバーが明るく戻っていました。系列フォーカスと地域絞り込みが両立するようになりました','🌱PCツリーのフレッシュ表示を強化：カード上部に金色の「🌱フレ」バッジを表示（✨マークより一目で分かる形に）。金色の点滅も少し強くしました'] },
   { v:'v437', d:'2026-08-28', items:['🎨テンプレのカテゴリ（色）を変更すると、そのテンプレから作った既存の予定の色もまとめて変更されるようになりました（カテゴリ自体の色変更はv432で対応済み。両方のパターンをカバー）','✨PCツリーでフレッシュ（登録6ヶ月以内）がひと目で分かるように：ノードが金色にやわらかく点滅し、カード左上に✨マークが付きます','📍地域絞り込みで他地域のメンバーが一部明るいまま残るバグを修正：PCの描画完了とフィルタ適用のタイミングずれが原因だったため、ノード生成時に即フィルタを適用するようにしました','🔄ロールアップの精度改善①：BRを含まないDライン（直下系列）はロールアップせず、降格したBMの下に残るようになりました（翌月コピー・手動どちらも）','🔄ロールアップの精度改善②：既に手動で組織を組み替え済みのメンバーに「リスタート表示」を後付けできるようになりました（メンバー編集→🔄リスタート→開始月を指定。解除も可能）'] },
   { v:'v436', d:'2026-08-28', items:['💪記録した筋トレをあとから編集・削除できるようになりました：記録済みの日を開くと「✏️記録済み」バナーが出て、値を変えて保存すれば上書き、回数を0にしたセットは削除されます。「🗑 この日の記録を削除」でセッションごと削除もできます（カレンダーの💪バーも消えます）'] },
@@ -11808,6 +11833,7 @@ function openEdit(id) {
         selOutVis(!!m.outHidden); // v426: OUT後の表示（残す/非表示）を復元
         _outVisRowSync();
         try { _restartRowRender(m); } catch(eRr) {} // v437
+        selBadgeMode(m.badgeMode || ''); // v439
       } catch(e2) {}
     })();
   } catch(e) {
@@ -11831,6 +11857,7 @@ function clearForm() {
   selOutVis(false);
   var _ovr=document.getElementById('outVisRow'); if(_ovr) _ovr.style.display='none';
   var _rsr=document.getElementById('restartRow'); if(_rsr) _rsr.style.display='none';
+  if (typeof selBadgeMode === 'function') selBadgeMode('');
   ['研修生','BA','BR'].forEach(function(k){
     var el=document.getElementById('rbCat'+(k==='研修生'?'Trainee':k));
     if(el) el.classList.remove('sel');
@@ -11928,6 +11955,15 @@ function _outVisRowSync() {
   row.style.display = (t === 'OUT') ? '' : 'none';
 }
 function onTitleChange() { _outVisRowSync(); }
+// v439: ケアバッジ（フレッシュ/研修生）の手動 表示/非表示
+var fBadgeMode = '';
+function selBadgeMode(v) {
+  fBadgeMode = v || '';
+  var a9 = document.getElementById('rbBadgeAuto'), o9 = document.getElementById('rbBadgeOn'), f9 = document.getElementById('rbBadgeOff');
+  if (a9) a9.classList.toggle('sel', !fBadgeMode);
+  if (o9) o9.classList.toggle('sel', fBadgeMode === 'on');
+  if (f9) f9.classList.toggle('sel', fBadgeMode === 'off');
+}
 // v437: 手動リスタート設定（既にロールアップ相当の組み替えを済ませたメンバー用）
 function _restartRowRender(m) {
   var row = document.getElementById('restartRow'), ctl = document.getElementById('restartCtl');
@@ -12158,6 +12194,7 @@ function saveMember() {
       if (_rh) return _rh.classList.contains('sel');
       return !!(_prevMember && _prevMember.outHidden);
     })(),
+    badgeMode: (typeof fBadgeMode !== 'undefined' ? (fBadgeMode || '') : ''), // v439: ケアバッジ 自動/表示/非表示
     month: state.currentMonth,
   };
   // 結果確定月のスタンプ（月次決定率の集計に使用）
