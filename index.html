@@ -13,8 +13,8 @@
      画面下の「タップも効かない空白」になるため、標準のステータスバー方式に変更 -->
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MAP">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png?v=448">
+<link rel="icon" type="image/png" href="icon-192.png?v=448">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 /* ═══ SUMMIT デザインシステム（Phase 0）：夜の遠征ネイビー×行動ミント×報酬アンバー ═══ */
@@ -2285,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v446</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v448</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5164,7 +5164,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v446';
+  var DATA_VERSION = 'v448';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6123,6 +6123,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v448', d:'2026-09-02', items:['🖼 ホーム画面アイコンが古い画像のまま残る問題の対策：iOSがアイコンをURL単位で強くキャッシュするため、アイコンURLにバージョンを付けて取り直させるようにしました（アップロード後にホーム画面から削除→再追加してください）'] },
+  { v:'v447', d:'2026-09-02', items:['🐛筋トレ記録の入力消失を修正：入力途中に「スキップ」や「＋この日だけ種目を追加」を押すと、他の種目で変えた重量・回数・限界マーク・ドロップセットが初期値に戻ってしまう問題を根治しました（保存前の入力を保持したまま再描画します）','🔧同名種目の重複を自動統合：種目マスターに同じ名前が2つあると「編集しても反映されない」原因になるため、読み込み時に1つへ統合し、大項目の参照も自動で張り替えます。新規登録・名前変更時も同名の重複を防止','📣アイコン・アプリ名がMAPのままの方へ：manifest.webmanifest とアイコン画像4枚のアップロードが必要です（今回の配布ファイルに同梱）'] },
   { v:'v446', d:'2026-09-02', items:['💪🗓ホームタブが月カレンダーになりました：実施日は緑「A✓」、予定はピンク、予定のままやらなかった日はグレーで一目瞭然。日付をタップすると、予定を入れる（大項目/ラン/休養をワンタップ）・内容をその場で見る・後追いで記録を入力ができます。月間の実施回数と累計トン数も表示','📋「Claudeに相談」を廃止し、履歴に「この日をコピー」ボタンを追加：種目ごとのインターバル秒数付きでその日の内容をコピーできます（履歴の展開内と、ホームカレンダーの日詳細の両方から）'] },
   { v:'v445', d:'2026-09-02', items:['💪📊推移タブを筋トレ可視化にリニューアル：①週別ボリューム積み上げ棒（分類色分け・直近12週、体幹/インナーは回数ミニバー）②種目別トップ重量＋推定1RMの折れ線（チップで種目切替）③継続ヒートマップ（過去15週の草）をグラフとして最上部に表示','📜履歴はタップするとその場で内容が展開表示されるようになりました（編集画面には飛びません。編集したい時だけ展開内の✏️ボタンから）','⚖️使っていなかった体重・体脂肪の入力欄とグラフを削除しました（過去のデータは残っています）'] },
   { v:'v444', d:'2026-09-02', items:['🐛PC版でボトムシート（種目編集・各種メニュー）が画面左に寄って表示されていたのを中央表示に修正','🐛💪種目編集シートの🗑削除ボタンが横いっぱいに崩れて保存ボタンが潰れていたレイアウトバグを修正（大項目シートの▲▼🗑も同様）'] },
@@ -13880,6 +13882,28 @@ function _fitEnsureMeta() {
       _fitSaveExs(); _fitSaveProgs();
     }
     if (!_fitCats) _fitCats = FIT_DEF_CATS.slice();
+    // v447: 同名種目の重複を自動統合（片方を編集しても反映されない問題の根治。大項目の参照も張り替え）
+    try {
+      var byN9 = {}, remap9 = {}, kept9 = [];
+      (_fitExs || []).forEach(function(x9) {
+        var k9 = (x9.n || '').trim();
+        var f9 = k9 ? byN9[k9] : null;
+        if (f9) {
+          remap9[x9.id] = f9.id;
+          if (!f9.kg && x9.kg) { f9.kg = x9.kg; f9.reps = x9.reps; f9.sets = x9.sets; f9.iv = x9.iv; f9.uni = x9.uni; if (!f9.note) f9.note = x9.note || ''; }
+        } else { if (k9) byN9[k9] = x9; kept9.push(x9); }
+      });
+      if (kept9.length !== (_fitExs || []).length) {
+        _fitExs = kept9;
+        (_fitProgs || []).forEach(function(p9) {
+          var out9 = [];
+          (p9.exIds || []).forEach(function(id9) { var n9 = remap9[id9] || id9; if (out9.indexOf(n9) < 0) out9.push(n9); });
+          p9.exIds = out9;
+        });
+        _fitSaveExs(); _fitSaveProgs();
+        toast('💪 同名で重複していた種目を1つに統合しました');
+      }
+    } catch(eDd9) {}
     if (!_fitProgs || !_fitProgs.length) { _fitProgs = [{ id: 'pg_A', label: 'A', name: 'A：トレーニング', exIds: [] }]; _fitSaveProgs(); }
     if (_fitCalVer !== 2) setTimeout(_fitVcMigrate, 900); else window._fitVcMigRun = true; // v441: 過去記録を回数制ルールで再計算
   });
@@ -14299,7 +14323,8 @@ function _fitWorkFill() {
     }
     h += (prevTxt ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">' + evEsc(prevTxt) + '</div>' : '')
       + '<div id="fitSets_' + xi + '">';
-    var rows = cur.length ? cur : null;
+    var draft = (_fitUiDraft && _fitUiDraft[ex.n] && _fitUiDraft[ex.n].length) ? _fitUiDraft[ex.n] : null; // v447: 再描画前の未保存入力を最優先
+    var rows = draft || (cur.length ? cur : null);
     var nSets = rows ? rows.length : (ex.sets || 3) * (ex.uni ? 2 : 1);
     for (var si = 0; si < nSets; si++) {
       var side = ex.uni ? (si % 2 === 0 ? 'left' : 'right') : 'both';
@@ -14313,6 +14338,7 @@ function _fitWorkFill() {
   });
   if (!_fitWorkCards.length) h = '<div class="fit-card"><div style="font-size:12.5px;color:var(--text-dim)">この大項目に種目がありません。「⚙️ メニューを編集」から種目を追加してください</div></div>';
   box.innerHTML = h;
+  _fitUiDraft = null; // v447: 退避分は1回の再描画で消費
 }
 function _fitSetRow(xi, si, side, kg, reps, lim, dr, prevLbl) {
   return '<div class="fit-set-row' + (dr ? ' fit-drop-row' : '') + '" data-fx="' + xi + '" data-fside="' + side + '"' + (dr ? ' data-dr="1"' : '') + '>'
@@ -14359,15 +14385,44 @@ function fitAddSet(xi) {
   tmp.innerHTML = _fitSetRow(xi, n, side, ex ? ex.kg : 10, ex ? (ex.reps || 10) : 10, false);
   box.appendChild(tmp.firstChild);
 }
+// v447: 未保存の入力（kg/回数/限/ドロップ行）をDOMから退避（スキップ等の再描画で初期値に戻らないように）
+var _fitUiDraft = null;
+function _fitHarvestUI() {
+  _fitUiDraft = null;
+  var box = document.getElementById('fitExList');
+  if (!box) return;
+  var rows = box.querySelectorAll('.fit-set-row');
+  if (!rows.length) return;
+  var by = {};
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var xi = parseInt(r.getAttribute('data-fx'), 10);
+    var ex = _fitWorkCards[xi];
+    if (!ex) continue;
+    var kg = parseFloat((r.querySelector('.fit-kg') || {}).value) || 0;
+    var reps = parseInt((r.querySelector('.fit-reps') || {}).value, 10) || 0;
+    var arr = by[ex.n] = by[ex.n] || [];
+    if (r.getAttribute('data-dr') === '1') {
+      var last = arr[arr.length - 1];
+      if (last) (last.drops = last.drops || []).push({ kg: kg, reps: reps });
+      continue;
+    }
+    var limEl = r.querySelector('.fit-lim');
+    arr.push({ ex: ex.n, side: r.getAttribute('data-fside') || 'both', kg: kg, reps: reps, lim: !!(limEl && limEl.classList.contains('on')) });
+  }
+  _fitUiDraft = by;
+}
 function fitSkipEx(xi) {
   var ex = _fitWorkCards[xi];
   if (!ex) return;
+  _fitHarvestUI(); // v447: 他カードの未保存入力を保持したまま再描画
   if (_fitSkipped[ex.n]) delete _fitSkipped[ex.n]; else _fitSkipped[ex.n] = true;
   _fitWorkFill();
 }
 function fitAddExToday() {
   fitExPick(function(exId) {
     if (_fitExtraEx.indexOf(exId) < 0) _fitExtraEx.push(exId);
+    _fitHarvestUI(); // v447: 追加前の未保存入力を保持
     _fitWorkFill();
     toast('＋ 種目を追加しました（この日だけ）');
   });
@@ -14559,6 +14614,8 @@ function fitExPickSel(exId) {
 function fitExPickNew() {
   var n = prompt('新しい種目名');
   if (!n || !n.trim()) return;
+  var dup9 = _fitExByName(n.trim()); // v447: 同名の重複登録を防止（重複は「編集が反映されない」原因になる）
+  if (dup9) { fitExPickSel(dup9.id); toast('「' + dup9.n + '」は登録済みのため、その種目を選択しました'); return; }
   var ex = { id: 'ex_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1000), n: n.trim(), cat: _fitPickCat || (_fitCats || FIT_DEF_CATS)[0], kg: 0, reps: 10, sets: 3, iv: 90, uni: false, note: '' };
   _fitExs.push(ex);
   _fitSaveExs();
@@ -14631,6 +14688,8 @@ function fitExSheetSave(exId) {
   if (!ex) return;
   var n = ((document.getElementById('fxs_n') || {}).value || '').trim();
   if (!n) { toast('種目名を入力してください'); return; }
+  var dup8 = _fitExByName(n); // v447: 別IDで同名は不可
+  if (dup8 && dup8.id !== ex.id) { toast('⚠️ 同名の種目「' + n + '」が既にあります。別名にするか、重複する方を削除してください'); return; }
   ex.n = n;
   ex.cat = (document.getElementById('fxs_cat') || {}).value || ex.cat;
   ex.kg = parseFloat((document.getElementById('fxs_kg') || {}).value) || 0;
