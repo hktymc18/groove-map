@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>MAP</title>
+<title>NAVIGATOR</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0d0f14">
@@ -1197,6 +1197,16 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 @keyframes pcCareTr{0%,100%{filter:drop-shadow(0 0 3px rgba(90,215,255,.5))}50%{filter:drop-shadow(0 0 15px rgba(90,215,255,1))}}
 .oval-node.pc-care-tr{animation:pcCareTr 2.4s ease-in-out infinite}
 .nc.out-member{opacity:.5;filter:grayscale(.55)}
+.fitcal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.fitcal-wd{font-size:9.5px;color:var(--text-dim);text-align:center;padding:1px 0;font-weight:700}
+.fitcal-d{min-height:46px;border:1px solid var(--border);border-radius:9px;padding:3px 1px;cursor:pointer;background:var(--surface2);display:flex;flex-direction:column;align-items:center;gap:2px}
+.fitcal-d.off{opacity:0;pointer-events:none;border:none;background:transparent}
+.fitcal-d.today{border-color:var(--accent);border-width:1.5px}
+.fitcal-num{font-size:10.5px;font-family:Inter,sans-serif;color:var(--text-mid)}
+.fitcal-b{font-size:8.5px;font-weight:800;border-radius:5px;padding:1px 4px;white-space:nowrap;max-width:100%;overflow:hidden}
+.fitcal-b.done{background:rgba(44,229,184,.16);color:var(--accent);border:1px solid rgba(44,229,184,.5)}
+.fitcal-b.plan{background:rgba(244,114,182,.14);color:#F472B6;border:1px solid rgba(244,114,182,.5)}
+.fitcal-b.miss{background:rgba(141,154,184,.1);color:var(--text-dim);border:1px solid var(--border2);text-decoration:line-through}
 #fitIvBar{position:absolute;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:6;background:linear-gradient(135deg,#1b2130,#242c3f);border:1.5px solid var(--accent);border-radius:16px;padding:10px 14px 9px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 .fiv-row{display:flex;align-items:center;gap:12px}
 .fiv-info{flex:1;min-width:0}
@@ -1456,7 +1466,7 @@ body.cal-fs .pc-toolbar{display:none!important}
   #evAgenda.full .td-due{margin-top:0;flex:none;max-width:48%;text-align:right}
   .overlay{align-items:center;padding:24px}
   .sheet{max-width:620px;border-radius:20px;border:1px solid var(--border);max-height:86vh}
-  .ms-overlay{align-items:center;padding:24px}
+  .ms-overlay{align-items:center;justify-content:center;padding:24px}
   .ms-sheet{max-width:620px;border-radius:20px;border:1px solid var(--border2);padding-bottom:22px}
   .tp-ov{align-items:center;padding:24px}
   .tp-sheet{max-width:440px;border-radius:20px;border:1px solid var(--border);padding-bottom:14px}
@@ -2204,8 +2214,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div style="width:100%;max-width:400px;margin:auto 0"><!-- v368: 入力欄が画面より多い時にスクロールできるように（margin:autoで少ない時は中央寄せ） -->
     <!-- タイトル -->
     <div style="text-align:center;margin-bottom:40px">
+      <img src="icon-192.png" alt="" style="width:92px;height:92px;border-radius:22px;margin-bottom:14px;background:#fff">
       <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);letter-spacing:3px;margin-bottom:8px">ORGANIZATION MANAGEMENT</div>
-      <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:36px;font-weight:700;color:var(--accent);letter-spacing:4px;line-height:1">MAP</div>
+      <div style="font-family:'Inter','IBM Plex Mono',monospace;font-size:27px;font-weight:700;color:var(--accent);letter-spacing:3px;line-height:1">NAVIGATOR</div>
       <div style="font-size:12px;color:var(--text-dim);margin-top:6px;font-family:'Inter','IBM Plex Mono',monospace">ver.2.0</div>
     </div>
 
@@ -2266,7 +2277,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
 <header>
   <div class="hdr-top">
-    <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer;flex-shrink:0;max-width:100%;overflow:hidden" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">MAP</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%"></div></div>
+    <div style="display:flex;flex-direction:column;line-height:1.2;cursor:pointer;flex-shrink:0;max-width:100%;overflow:hidden" onclick="openProfileModal()"><div class="logo" id="appLogo" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">NAVIGATOR</div><div id="appUserName" style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%"></div></div>
 <div style="display:flex;gap:4px;align-items:center">
       <select class="month-sel" id="selYear" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:80px"></select>
       <select class="month-sel" id="selMonth" onchange="onYearMonthChange()" style="padding:4px 6px;font-size:13px;width:60px"></select>
@@ -2274,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v441</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v446</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3717,7 +3728,7 @@ function generateResultImage() {
   x.fillStyle = '#FFB454'; x.font = '800 36px "Noto Sans JP", sans-serif';
   x.fillText('🔥 ストリーク ' + rd.streak + '日', cxm, py + 20);
   x.fillStyle = '#3D465C'; x.font = '800 30px "Noto Sans JP", sans-serif';
-  x.fillText('▲ GROOVE MAP', cxm, H - 110);
+  x.fillText('▲ NAVIGATOR', cxm, H - 110);
   // 共有 or ダウンロード
   cv.toBlob(function(blob) {
     if (!blob) { toast('画像の生成に失敗しました'); return; }
@@ -5128,7 +5139,7 @@ function saveProfile() {
 
   // ヘッダー更新
   var logo = document.getElementById('appLogo');
-  if (logo) logo.textContent = currentUser.org || 'MAP';
+  if (logo) logo.textContent = currentUser.org || 'NAVIGATOR';
   var nameEl = document.getElementById('appUserName');
   if (nameEl) {
     var infoText = currentUser.name;
@@ -5153,7 +5164,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v441';
+  var DATA_VERSION = 'v446';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6112,6 +6123,11 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v446', d:'2026-09-02', items:['💪🗓ホームタブが月カレンダーになりました：実施日は緑「A✓」、予定はピンク、予定のままやらなかった日はグレーで一目瞭然。日付をタップすると、予定を入れる（大項目/ラン/休養をワンタップ）・内容をその場で見る・後追いで記録を入力ができます。月間の実施回数と累計トン数も表示','📋「Claudeに相談」を廃止し、履歴に「この日をコピー」ボタンを追加：種目ごとのインターバル秒数付きでその日の内容をコピーできます（履歴の展開内と、ホームカレンダーの日詳細の両方から）'] },
+  { v:'v445', d:'2026-09-02', items:['💪📊推移タブを筋トレ可視化にリニューアル：①週別ボリューム積み上げ棒（分類色分け・直近12週、体幹/インナーは回数ミニバー）②種目別トップ重量＋推定1RMの折れ線（チップで種目切替）③継続ヒートマップ（過去15週の草）をグラフとして最上部に表示','📜履歴はタップするとその場で内容が展開表示されるようになりました（編集画面には飛びません。編集したい時だけ展開内の✏️ボタンから）','⚖️使っていなかった体重・体脂肪の入力欄とグラフを削除しました（過去のデータは残っています）'] },
+  { v:'v444', d:'2026-09-02', items:['🐛PC版でボトムシート（種目編集・各種メニュー）が画面左に寄って表示されていたのを中央表示に修正','🐛💪種目編集シートの🗑削除ボタンが横いっぱいに崩れて保存ボタンが潰れていたレイアウトバグを修正（大項目シートの▲▼🗑も同様）'] },
+  { v:'v443', d:'2026-09-02', items:['🎨NAVIGATORのロゴを提供いただいたオリジナル画像そのものに差し替えました（アイコン・ログイン画面）。ホーム画面のアイコンが変わらない場合は、一度削除して「ホーム画面に追加」し直してください'] },
+  { v:'v442', d:'2026-09-02', items:['🚀アプリ名が「MAP」から「NAVIGATOR」になりました！新しいNロゴのアイコン・ログイン画面にリニューアル。ホーム画面のアイコンと名前も新しくなります（反映されない場合は一度ホーム画面から削除して追加し直してください）。組織図タブや「共有MAP」などの機能名は今まで通りです'] },
   { v:'v441', d:'2026-08-28', items:['💪📜トレーニング履歴：推移タブの最上部に「いつ・何トレ・何セット・何トン」の履歴一覧を追加。行をタップするとその日の記録に直行して編集もできます','💪⚙️メニュー編集を全面改良：大項目・種目とも畳んだ1行一覧になり、タップすると編集シートが開く方式に（長いスクロールと展開しっぱなしを解消）','💪⏱インターバルタイマーを大幅強化：開始すると画面下に大型タイマーバー（特大数字・進捗ゲージ・＋30秒/停止ボタン）。終了時にピピピッ♪＋バイブ、残り3秒からカウント音。タイマー中は画面が自動で消えないように（Wake Lock）※本体のサイレントスイッチON時は音が鳴らないためバイブと画面でお知らせ','🐣体幹・インナーのメーターを「回数」制に：立ちコロなど自重系は重さ0でメーターが貯まらなかったため、体幹とインナーは実施回数で貯まるようにしました（レベル用には1回=5kg換算で加算）。過去の立ちコロ・インナーの記録も初回起動時に自動で再計算して反映します'] },
   { v:'v440', d:'2026-08-28', items:['🚪OUTをカテゴリの並びに独立ボタン化：研修生/BA/BRと並んで「OUT」を選べるようになりました（各タイトル一覧の中のOUTは廃止。選ぶとタイトルも自動でOUTに）','👋OUTにしたメンバーは当月のMAPにグレーのゴースト表示で残り（いなくなったことが分かる）、翌月コピーで自動的に翌月のMAPから外れます（表示/非表示の選択は当月の見え方のみに）'] },
   { v:'v439', d:'2026-08-28', items:['🌱PCツリーのケアバッジを整理：「🌱フレッシュ」（スタート6ヶ月以内・BR未満のみ。BRには付きません）と「🎓研修生」の2種類になりました。ケアしないと消えてしまう層がひと目で分かります','🎚バッジの手動付け外し：メンバー編集の「ケアバッジ」で 自動／表示／非表示 を選べます（条件外でもケアしたい人に付けたり、外したりできます）','👑BR以上の判別を強化：バッジではなく「宝石色の常時オーラ（静かな光）」を追加。点滅するフレッシュ／研修生（要ケア＝動）と対照的な、安定した上位者の表現にしました'] },
@@ -13770,10 +13786,12 @@ var _fitExtraEx = [];   // この日だけ追加した種目id
 var _fitSkipped = {};   // スキップ状態 {種目名:true}
 var _fitWorkYmd = '';   // workタブの日別シード済み判定
 var _fitWorkCards = []; // 表示中の種目カード（マスター項目の参照）
+var _fitDashYm = '';    // v446: ホーム月カレンダーの表示月 'YYYY-MM'
 function _fitP(doc2) { return 'fitness/' + currentUser.uid + '/' + doc2; }
 function _fitToday() { var t = new Date(); return t.getFullYear() + '-' + evPad2(t.getMonth() + 1) + '-' + evPad2(t.getDate()); }
 var FIT_DEF_CATS = ['押す', '引く', '肩・腕', '体幹', '脚', 'インナー'];
 var FIT_REP_CATS = { '体幹': 1, 'インナー': 1 }; // v441: 自重系は重量でなく回数でメーターが貯まる
+var FIT_CAT_COLORS = { '押す': '#4ADE80', '引く': '#5AD7FF', '肩・腕': '#F472B6', '体幹': '#FFB454', '脚': '#C583FF', 'インナー': '#8B7CFF' }; // v445: グラフ/メーター共通色
 var _fitCalVer = 0; // meta/calendarの集計ルールver（2=回数制対応済み）
 // カレンダー・サマリ表示名（s=プログラムの短縮ラベル or run/rest）
 function _fitLabelName(s) {
@@ -14025,7 +14043,7 @@ function fitTab(t) {
   if (t === 'dash') b.innerHTML = _fitDashHtml();
   else if (t === 'work') { b.innerHTML = _fitWorkHtml(); _fitLoadPrev(); }
   else if (t === 'menu') b.innerHTML = _fitMenuHtml();
-  else if (t === 'trend') { b.innerHTML = _fitTrendHtml(); setTimeout(function() { _fitDrawWeight(); _fitExTrendKick(); }, 60); }
+  else if (t === 'trend') { b.innerHTML = _fitTrendHtml(); setTimeout(_fitTrendKick, 60); }
 }
 // 今週の実施状況（予定=サマリにs(筋トレラベル)がある日 / 実施=done）
 function _fitWeekStat() {
@@ -14046,62 +14064,131 @@ function _fitWeekStat() {
 function _fitDashHtml() {
   var nx = _fitNextProg();
   var wk = _fitWeekStat();
-  var w7 = _fitWeight7();
   var doneLbl = _fitDay.session ? (_fitDay.session.name || _fitLabelName(_fitDay.session.label || _fitDay.session.split)) : '';
   var h = '<div class="fit-card"><div class="fit-card-t">今日は【' + evEsc(nx ? nx.name : 'メニュー未設定') + '】'
     + (_fitDay.session ? ' <span style="color:var(--accent)">✓ ' + evEsc(doneLbl) + ' 実施済み</span>' : '') + '</div>'
     + '<div style="font-size:12px;color:var(--text-mid);margin-top:4px">今週の筋トレ：<b style="color:var(--accent);font-family:Inter,sans-serif">' + wk.done + '回</b> 実施'
     + (wk.plan > wk.done ? '（予定 ' + wk.plan + '回）' : (wk.plan ? '（予定通り！）' : '')) + '</div>'
     + '<button class="btn-p" style="width:100%;margin-top:10px;padding:11px" onclick="fitTab(\'work\')">' + (_fitDay.session ? '✏️ この日の記録を編集する' : '🏋️ 今日の筋トレを記録する') + '</button></div>';
-  h += '<div class="fit-card"><div class="fit-card-t">体重</div>'
-    + '<div style="display:flex;align-items:baseline;gap:14px;margin-top:4px"><span style="font-size:26px;font-weight:800;font-family:Inter,sans-serif">' + (_fitDay.body && _fitDay.body.w ? _fitDay.body.w + 'kg' : '未記録') + '</span>'
-    + (w7 ? '<span style="font-size:13px;color:var(--text-mid)">7日平均 ' + w7 + 'kg</span>' : '') + '</div>'
-    + '<div style="display:flex;gap:8px;margin-top:8px">'
-    + '<input class="fi" id="fitW" type="number" step="0.1" placeholder="体重kg" value="' + (_fitDay.body ? _fitDay.body.w || '' : '') + '" style="flex:1">'
-    + '<input class="fi" id="fitBf" type="number" step="0.1" placeholder="体脂肪%" value="' + (_fitDay.body ? _fitDay.body.fat || '' : '') + '" style="flex:1">'
-    + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px" id="fitTagRow">'
-    + [['morning', '朝'], ['post_workout', '運動後'], ['post_alcohol', '飲酒翌日'], ['aircon', '冷房'], ['other', 'その他']].map(function(tg2) {
-        var on = _fitDay.body && _fitDay.body.tag === tg2[0];
-        return '<div class="rb' + (on ? ' sel' : '') + '" style="flex:none;padding:5px 10px;font-size:11px" onclick="fitBodyTag(\'' + tg2[0] + '\')">' + tg2[1] + '</div>';
-      }).join('')
-    + '</div><button class="btn-p" style="width:100%;margin-top:10px;padding:10px" onclick="fitSaveBody()">体重を保存</button></div>';
-  h += '<div class="fit-card"><div class="fit-card-t">明日の予定</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'
-    + (_fitProgs || []).map(function(p) { return '<div class="rb" style="flex:none;padding:6px 12px;font-size:12px" onclick="fitPlanTomorrow(\'' + evEsc(p.label) + '\')">' + evEsc(p.name) + '</div>'; }).join('')
-    + '<div class="rb" style="flex:none;padding:6px 12px;font-size:12px" onclick="fitPlanTomorrow(\'run\')">ラン</div>'
-    + '<div class="rb" style="flex:none;padding:6px 12px;font-size:12px" onclick="fitPlanTomorrow(\'rest\')">休養</div>'
-    + '</div><div style="font-size:11px;color:var(--text-dim);margin-top:6px">タップで明日のカレンダーに💪バーが入ります（自分にだけ見えます）。やらないまま日付が過ぎるとグレー表示になります</div></div>';
+  h += _fitDashCalHtml(); // v446: 月カレンダー（予定入れ・実施状況）
   h += _fitMuscleCard(false);
-  h += '<div class="fit-card"><div class="fit-card-t">📋 Claudeに相談</div>'
-    + '<div style="font-size:11px;color:var(--text-dim)">体重・筋トレの記録をテキスト化してコピーします。Claudeに貼り付けるとメニューのアドバイスがもらえます</div>'
-    + '<div style="display:flex;gap:8px;margin-top:8px">'
-    + '<button class="fol-add" style="margin:0;flex:1" onclick="fitExport(7)">直近7日をコピー</button>'
-    + '<button class="fol-add" style="margin:0;flex:1" onclick="fitExport(30)">直近30日をコピー</button></div></div>';
   return h;
 }
-var _fitTagSel = '';
-function fitBodyTag(t) { _fitTagSel = t; var r = document.getElementById('fitTagRow'); if (!r) return; var cs = r.children; for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].textContent === { morning: '朝', post_workout: '運動後', post_alcohol: '飲酒翌日', aircon: '冷房', other: 'その他' }[t]); }
-function fitSaveBody() {
-  var w = parseFloat((document.getElementById('fitW') || {}).value) || 0;
-  if (!w) { toast('体重を入力してください'); return; }
-  _fitDay.body = { w: w, fat: parseFloat((document.getElementById('fitBf') || {}).value) || 0, tag: _fitTagSel || (_fitDay.body && _fitDay.body.tag) || 'morning' };
-  _fitSaveDay();
-  toast('体重を記録しました ✓');
+// ── v446: 💪ホームの月カレンダー ──
+function _fitDashCalHtml() {
+  if (!_fitDashYm) _fitDashYm = _fitToday().slice(0, 7);
+  var yy = parseInt(_fitDashYm.slice(0, 4), 10), mm = parseInt(_fitDashYm.slice(5, 7), 10);
+  var ws = (typeof _weekStart !== 'undefined') ? _weekStart : 0;
+  var WD = ['日', '月', '火', '水', '木', '金', '土'];
+  var lead = ((new Date(yy, mm - 1, 1)).getDay() - ws + 7) % 7;
+  var dim = new Date(yy, mm, 0).getDate();
+  var today = _fitToday();
+  var h = '<div class="fit-card"><div style="display:flex;align-items:center;gap:8px">'
+    + '<div class="fit-card-t" style="margin:0">🗓 ' + yy + '年' + mm + '月</div>'
+    + '<span class="fit-dnav" style="margin-left:auto" onclick="fitDashMonth(-1)">‹</span>'
+    + '<span class="fit-dnav" onclick="fitDashMonth(1)">›</span>'
+    + '<span class="fit-dnav" style="width:auto;padding:0 10px;font-size:11px;border-radius:16px" onclick="fitDashToday()">今月</span></div>';
+  h += '<div class="fitcal">';
+  for (var i = 0; i < 7; i++) h += '<div class="fitcal-wd">' + WD[(ws + i) % 7] + '</div>';
+  for (var b = 0; b < lead; b++) h += '<div class="fitcal-d off"></div>';
+  var cnt = 0, vol = 0;
+  for (var d = 1; d <= dim; d++) {
+    var key = yy + '-' + evPad2(mm) + '-' + evPad2(d);
+    var e = (_fitCal || {})[key];
+    var badge = '';
+    if (e && e.done) {
+      cnt++; vol += e.v || 0;
+      badge = '<span class="fitcal-b done">' + evEsc(e.s === 'run' ? 'ラン' : (e.s === 'rest' ? '休' : e.s)) + '✓</span>';
+    } else if (e && e.s) {
+      badge = '<span class="fitcal-b ' + (key < today ? 'miss' : 'plan') + '">' + evEsc(e.s === 'run' ? 'ラン' : (e.s === 'rest' ? '休' : e.s)) + '</span>';
+    }
+    h += '<div class="fitcal-d' + (key === today ? ' today' : '') + '" onclick="fitDaySheet(\'' + key + '\')"><span class="fitcal-num">' + d + '</span>' + badge + '</div>';
+  }
+  h += '</div>';
+  h += '<div style="font-size:11.5px;color:var(--text-mid);margin-top:8px">' + mm + '月：<b style="color:var(--accent);font-family:Inter,sans-serif">' + cnt + '回</b> 実施'
+    + (vol ? '・累計 <b style="font-family:Inter,sans-serif">' + (Math.round(vol / 100) / 10) + 't</b>' : '') + '</div>';
+  h += '<div style="font-size:10px;color:var(--text-dim);margin-top:3px">日付をタップ：予定を入れる／内容を見る。グレー＝予定のままやらなかった日</div></div>';
+  return h;
+}
+function fitDashMonth(d) {
+  var yy = parseInt(_fitDashYm.slice(0, 4), 10), mm = parseInt(_fitDashYm.slice(5, 7), 10) + d;
+  var dt = new Date(yy, mm - 1, 1);
+  _fitDashYm = dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1);
   fitTab('dash');
 }
-function fitPlanTomorrow(sp) {
-  var p9 = _fitToday().split('-');
-  var dt = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10) + 1);
-  var ymd = dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1) + '-' + evPad2(dt.getDate());
-  var cur = _fitYmd;
-  var disp = _fitLabelName(sp);
-  var pg9 = null;
-  (_fitProgs || []).forEach(function(p) { if (p.label === sp) pg9 = p; });
-  if (pg9) disp = pg9.name;
-  _fitLoadDay(ymd).then(function() {
-    _fitDay.plan = { split: sp, time: '' };
-    _fitSaveDay();
-    return _fitLoadDay(cur);
-  }).then(function() { toast('💪 明日の予定：' + disp); fitTab('dash'); });
+function fitDashToday() { _fitDashYm = _fitToday().slice(0, 7); fitTab('dash'); }
+// 日タップ→状態に応じたシート（記録あり=閲覧 / なし=予定入れ・後追い入力）
+function fitDaySheet(ymd) {
+  _fitSheetClose('fitDayShOv');
+  var p9 = ymd.split('-');
+  var wd = ['日', '月', '火', '水', '木', '金', '土'][new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10)).getDay()];
+  var e = (_fitCal || {})[ymd];
+  if (e && e.done && _fitHistCache[ymd] === undefined) {
+    _fitHistCache[ymd] = null;
+    fsGet(_fitP('days/' + ymd)).then(function(d) {
+      _fitHistCache[ymd] = d || false;
+      var b2 = document.getElementById('fitDayShBody');
+      if (b2) b2.innerHTML = _fitDaySheetBody(ymd);
+    }).catch(function() { _fitHistCache[ymd] = false; });
+  }
+  var ov = document.createElement('div');
+  ov.id = 'fitDayShOv'; ov.className = 'ms-overlay'; ov.style.zIndex = '1290';
+  ov.onclick = function(ev) { if (ev.target === ov) _fitSheetClose('fitDayShOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:80vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">💪 ' + parseInt(p9[1], 10) + '/' + parseInt(p9[2], 10) + '(' + wd + ')</div></div>'
+    + '<span class="ms-x" onclick="_fitSheetClose(\'fitDayShOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px" id="fitDayShBody">' + _fitDaySheetBody(ymd) + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function _fitDaySheetBody(ymd) {
+  var e = (_fitCal || {})[ymd];
+  if (e && e.done) {
+    return '<div style="font-size:13px;font-weight:700;margin-bottom:2px;color:var(--accent)">' + evEsc(_fitProgNameByLabel(e.s)) + ' ✓実施済み'
+      + (e.v ? ' <span style="font-weight:400;color:var(--text-mid);font-size:11px">' + (Math.round(e.v / 100) / 10) + 't</span>' : '') + '</div>'
+      + _fitHistDetailHtml(ymd);
+  }
+  var cur = (e && e.s) ? e.s : '';
+  var h = '';
+  if (cur) {
+    h += '<div style="font-size:13px;margin-bottom:8px">予定：<b>' + evEsc(_fitProgNameByLabel(cur)) + '</b>'
+      + (ymd < _fitToday() ? ' <span style="color:var(--text-dim)">（未実施）</span>' : '') + '</div>';
+  }
+  h += '<div style="font-size:10.5px;color:var(--text-dim);margin-bottom:6px">' + (cur ? '予定を変更：' : 'この日の予定を入れる：') + '</div>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+    + (_fitProgs || []).map(function(p) { return '<div class="rb' + (cur === p.label ? ' sel' : '') + '" style="flex:none;padding:7px 13px;font-size:12px" onclick="_fitSetPlan(\'' + ymd + '\',\'' + evEsc(p.label) + '\')">' + evEsc(p.name) + '</div>'; }).join('')
+    + '<div class="rb' + (cur === 'run' ? ' sel' : '') + '" style="flex:none;padding:7px 13px;font-size:12px" onclick="_fitSetPlan(\'' + ymd + '\',\'run\')">ラン</div>'
+    + '<div class="rb' + (cur === 'rest' ? ' sel' : '') + '" style="flex:none;padding:7px 13px;font-size:12px" onclick="_fitSetPlan(\'' + ymd + '\',\'rest\')">休養</div>'
+    + '</div>';
+  if (cur) h += '<button class="fol-add" style="margin-top:10px;color:var(--red);border-color:var(--red)" onclick="_fitSetPlan(\'' + ymd + '\',\'\')">予定を削除</button>';
+  h += '<button class="fol-add" style="margin-top:8px" onclick="fitDayRecord(\'' + ymd + '\')">🏋️ この日の記録を入力</button>';
+  return h;
+}
+function fitDayRecord(ymd) {
+  _fitSheetClose('fitDayShOv');
+  _fitLoadDay(ymd).then(function() { fitTab('work'); });
+}
+// 任意日の予定セット/解除（現在表示中の日と独立してdocを直接更新）
+function _fitSetPlan(ymd, split) {
+  fsGet(_fitP('days/' + ymd)).then(function(d) {
+    d = d || {};
+    fsSet(_fitP('days/' + ymd), {
+      meals: d.meals || [], body: d.body || null, session: d.session || null,
+      plan: split ? { split: split, time: '' } : null,
+      updatedAt: new Date().toISOString()
+    });
+    var e = (_fitCal || {})[ymd];
+    if (!(e && e.done)) {
+      if (split) _fitCal[ymd] = { s: split };
+      else if (e) delete _fitCal[ymd];
+    }
+    fsSet(_fitP('meta/calendar'), { days: _fitCal, vcv: (_fitCalVer || 0), updatedAt: new Date().toISOString() });
+    if (_fitYmd === ymd && _fitDay) _fitDay.plan = split ? { split: split, time: '' } : null;
+    try { if (currentView === 'events') renderEvents(); } catch(e9) {}
+    _fitSheetClose('fitDayShOv');
+    fitTab('dash');
+    toast(split ? ('💪 ' + parseInt(ymd.slice(5, 7), 10) + '/' + parseInt(ymd.slice(8, 10), 10) + ' に「' + _fitProgNameByLabel(split) + '」の予定を入れました') : '予定を削除しました');
+  }).catch(function(err) { toast('⚠️ 保存できませんでした: ' + ((err && err.message) || '')); });
 }
 // ── 筋トレ記録（前回値の初期表示＋比較が本体） ──
 function _fitSelProg() { return _fitProgById(_fitProgSel) || (_fitProgs || [])[0] || null; }
@@ -14533,7 +14620,7 @@ function fitExSheet(exId) {
     + '<div style="flex:1"><div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">IV秒</div><input class="fi" id="fxs_iv" type="number" value="' + (ex.iv || 90) + '" style="text-align:center"></div></div>'
     + '<input class="fi" id="fxs_note" placeholder="メモ（例：座位で・最終ドロップ）" value="' + evEsc(ex.note || '') + '" style="margin-top:8px">'
     + '<div style="display:flex;gap:8px;margin-top:12px">'
-    + '<button class="fol-add" style="margin:0;flex:none;color:var(--red);border-color:var(--red);padding:0 16px" onclick="fitExDel(\'' + ex.id + '\')">🗑</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;color:var(--red);border-color:var(--red);padding:10px 18px" onclick="fitExDel(\'' + ex.id + '\')">🗑</button>'
     + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitExSheetSave(\'' + ex.id + '\')">保存</button></div>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -14610,9 +14697,9 @@ function fitPgSheet(pid) {
     + (rows || '<div style="font-size:12px;color:var(--text-dim);padding:6px 0">種目がありません</div>')
     + '<button class="fol-add" onclick="fitPgAddEx(\'' + pid + '\')">＋ 種目を追加（マスターから選択）</button>'
     + '<div style="display:flex;gap:8px;margin-top:12px">'
-    + '<button class="fol-add" style="margin:0;flex:none;padding:0 12px" onclick="fitPgMove(\'' + pid + '\',-1)" title="表示順を上へ">▲</button>'
-    + '<button class="fol-add" style="margin:0;flex:none;padding:0 12px" onclick="fitPgMove(\'' + pid + '\',1)" title="表示順を下へ">▼</button>'
-    + '<button class="fol-add" style="margin:0;flex:none;color:var(--red);border-color:var(--red);padding:0 16px" onclick="fitPgDel(\'' + pid + '\')">🗑</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;padding:10px 14px" onclick="fitPgMove(\'' + pid + '\',-1)" title="表示順を上へ">▲</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;padding:10px 14px" onclick="fitPgMove(\'' + pid + '\',1)" title="表示順を下へ">▼</button>'
+    + '<button class="fol-add" style="margin:0;flex:none;width:auto;border-style:solid;color:var(--red);border-color:var(--red);padding:10px 18px" onclick="fitPgDel(\'' + pid + '\')">🗑</button>'
     + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitPgSheetSave(\'' + pid + '\')">保存</button></div>'
     + '</div></div>';
   document.body.appendChild(ov);
@@ -14689,21 +14776,242 @@ function fitPgMvEx(pid, i, d) {
   fitPgSheet(pid);
 }
 // ── 推移 ──
-function _fitWeight7() {
-  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].w; }).sort();
-  var recent = ds.filter(function(k) { return k <= _fitYmd; }).slice(-7);
-  if (!recent.length) return 0;
-  var sum = recent.reduce(function(a, k) { return a + _fitCal[k].w; }, 0);
-  return Math.round(sum / recent.length * 10) / 10;
-}
-var _fitHistLimit = 20;
+// v445: 体重グラフ廃止→筋トレ可視化（A:週別ボリューム / B:種目別トップ重量+推定1RM / C:継続ヒートマップ）
 function _fitProgNameByLabel(s) {
   var nm = '';
   (_fitProgs || []).forEach(function(p) { if (p.label === s) nm = p.name; });
   return nm || _fitLabelName(s);
 }
-// v441: トレーニング履歴（サマリから即表示。行タップでその日の記録へ）
-function _fitHistHtml() {
+function _fitCatColor(c, i) {
+  var F = FIT_CAT_COLORS[c];
+  if (F) return F;
+  var alt = ['#FF5D73', '#FFD166', '#8B7CFF', '#FF9F6E'];
+  return alt[(i || 0) % alt.length];
+}
+// A: 週別ボリューム（重量系=積み上げ棒 / 回数系=下段ミニバー）
+function _fitWeekAgg(nWeeks) {
+  var ws = (typeof _weekStart !== 'undefined') ? _weekStart : 0;
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var off = (today.getDay() - ws + 7) % 7;
+  var w0 = new Date(today.getTime() - off * 86400000 - (nWeeks - 1) * 7 * 86400000);
+  var weeks = [];
+  for (var i = 0; i < nWeeks; i++) {
+    var st = new Date(w0.getTime() + i * 7 * 86400000);
+    weeks.push({ lbl: (st.getMonth() + 1) + '/' + st.getDate(), w: {}, r: 0, wSum: 0 });
+  }
+  for (var k in (_fitCal || {})) {
+    var e = _fitCal[k];
+    if (!e || !e.done) continue;
+    var p9 = k.split('-');
+    var d9 = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10));
+    var idx = Math.floor((d9.getTime() - w0.getTime()) / (7 * 86400000));
+    if (idx < 0 || idx >= nWeeks) continue;
+    var wk = weeks[idx];
+    if (e.vc) {
+      for (var c in e.vc) {
+        if (FIT_REP_CATS[c]) wk.r += e.vc[c];
+        else { wk.w[c] = (wk.w[c] || 0) + e.vc[c]; wk.wSum += e.vc[c]; }
+      }
+    } else if (e.v) { wk.w['押す'] = (wk.w['押す'] || 0) + e.v; wk.wSum += e.v; }
+  }
+  return weeks;
+}
+function _fitDrawWeekly() {
+  var cv = document.getElementById('fitWkChart');
+  if (!cv) return;
+  var weeks = _fitWeekAgg(12);
+  var cats = [];
+  weeks.forEach(function(wk) { for (var c in wk.w) if (cats.indexOf(c) < 0) cats.push(c); });
+  var ord = ['押す', '引く', '肩・腕', '脚'];
+  cats.sort(function(a, b) { var ia = ord.indexOf(a), ib = ord.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+  var W = cv.clientWidth || 320, H = 190;
+  cv.width = W * 2; cv.height = H * 2;
+  var cx = cv.getContext('2d');
+  cx.scale(2, 2); cx.clearRect(0, 0, W, H);
+  var max = 1;
+  weeks.forEach(function(wk) { if (wk.wSum > max) max = wk.wSum; });
+  var L = 34, R = 8, B = 34, T = 12;
+  var bw = (W - L - R) / weeks.length;
+  cx.strokeStyle = 'rgba(141,154,184,.25)';
+  cx.beginPath(); cx.moveTo(L - 4, H - B); cx.lineTo(W - R, H - B); cx.stroke();
+  cx.fillStyle = '#8D9AB8'; cx.font = '10px Inter';
+  cx.fillText((Math.round(max / 100) / 10) + 't', 2, T + 8);
+  cx.fillText('0', 2, H - B + 3);
+  weeks.forEach(function(wk, i) {
+    var x = L + i * bw + bw * 0.18, w2 = bw * 0.64;
+    var y = H - B;
+    cats.forEach(function(c, ci) {
+      var v = wk.w[c] || 0;
+      if (!v) return;
+      var h2 = (H - B - T) * v / max;
+      cx.fillStyle = _fitCatColor(c, ci);
+      cx.fillRect(x, y - h2, w2, h2);
+      y -= h2;
+    });
+    if (i % 2 === 0) { cx.fillStyle = '#8D9AB8'; cx.font = '9px Inter'; cx.fillText(wk.lbl, L + i * bw + 1, H - B + 13); }
+  });
+  // 回数系ミニバー（体幹・インナーの週合計回数）
+  var maxR = 1;
+  weeks.forEach(function(wk) { if (wk.r > maxR) maxR = wk.r; });
+  var hasR = false;
+  weeks.forEach(function(wk) { if (wk.r) hasR = true; });
+  if (hasR) {
+    cx.fillStyle = '#8D9AB8'; cx.font = '9px Inter';
+    cx.fillText('体幹・インナー(回)', L, H - 2);
+    weeks.forEach(function(wk, i) {
+      if (!wk.r) return;
+      var x = L + i * bw + bw * 0.18, w2 = bw * 0.64;
+      var h2 = Math.max(2, 10 * wk.r / maxR);
+      cx.fillStyle = 'rgba(255,180,84,.9)';
+      cx.fillRect(x, H - B + 16 + (10 - h2), w2, h2);
+    });
+  }
+}
+// B+D: 種目別トップ重量＋推定1RM（1RM=重量×(1+回数/30)）
+var _fitExChartData = null; // { byEx: {name: [{ymd,kg,reps}]}, names: [] }
+var _fitTrendExSel = '';
+function _fitExChartKick() {
+  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; }).sort().slice(-20);
+  if (!ds.length) {
+    var bx = document.getElementById('fitExChips');
+    if (bx) bx.innerHTML = '<span style="font-size:11.5px;color:var(--text-dim)">セッションを記録するとここに表示されます</span>';
+    return;
+  }
+  Promise.all(ds.map(function(ymd) { return fsGet(_fitP('days/' + ymd)).then(function(d) { return { ymd: ymd, s: d && d.session }; }).catch(function() { return null; }); }))
+    .then(function(all) {
+      var byEx = {};
+      all.filter(Boolean).forEach(function(r) {
+        if (!r.s || !r.s.sets) return;
+        r.s.sets.forEach(function(st) {
+          if (!st.kg) return; // 自重系はグラフ対象外
+          if (!byEx[st.ex]) byEx[st.ex] = [];
+          var arr = byEx[st.ex];
+          var last = arr[arr.length - 1];
+          if (!last || last.ymd !== r.ymd) arr.push({ ymd: r.ymd, kg: st.kg, reps: st.reps || 0 });
+          else if (st.kg > last.kg) { last.kg = st.kg; last.reps = st.reps || 0; }
+        });
+      });
+      var names = Object.keys(byEx).sort(function(a, b) { return byEx[b].length - byEx[a].length; });
+      _fitExChartData = { byEx: byEx, names: names };
+      if (!_fitTrendExSel || names.indexOf(_fitTrendExSel) < 0) _fitTrendExSel = names[0] || '';
+      _fitExChipsRender();
+      _fitDrawExChart();
+    });
+}
+function _fitExChipsRender() {
+  var bx = document.getElementById('fitExChips');
+  if (!bx || !_fitExChartData) return;
+  bx.innerHTML = _fitExChartData.names.slice(0, 10).map(function(n) {
+    return '<div class="rb' + (_fitTrendExSel === n ? ' sel' : '') + '" style="flex:none;padding:5px 10px;font-size:11px" onclick="fitTrendExSel(\'' + evEsc(n) + '\')">' + evEsc(n) + '</div>';
+  }).join('') || '<span style="font-size:11.5px;color:var(--text-dim)">重量ありの種目の記録がまだありません</span>';
+}
+function fitTrendExSel(n) { _fitTrendExSel = n; _fitExChipsRender(); _fitDrawExChart(); }
+function _fitDrawExChart() {
+  var cv = document.getElementById('fitExChart');
+  if (!cv || !_fitExChartData) return;
+  var arr = (_fitExChartData.byEx[_fitTrendExSel] || []).slice(-10);
+  var W = cv.clientWidth || 320, H = 180;
+  cv.width = W * 2; cv.height = H * 2;
+  var cx = cv.getContext('2d');
+  cx.scale(2, 2); cx.clearRect(0, 0, W, H);
+  if (arr.length < 1) { cx.fillStyle = '#8D9AB8'; cx.font = '12px Inter'; cx.fillText('この種目の記録がまだありません', 16, 80); return; }
+  var rms = arr.map(function(a) { return Math.round(a.kg * (1 + a.reps / 30) * 10) / 10; });
+  var min = null, max = null;
+  arr.forEach(function(a, i) {
+    if (min === null || a.kg < min) min = a.kg;
+    if (max === null || rms[i] > max) max = rms[i];
+  });
+  min = Math.max(0, min - 1); max = max + 1;
+  var L = 34, R = 10, B = 26, T = 14;
+  var X = function(i) { return arr.length === 1 ? (L + (W - L - R) / 2) : (L + (W - L - R) * i / (arr.length - 1)); };
+  var Y = function(v) { return T + (H - T - B) * (1 - (v - min) / (max - min)); };
+  cx.strokeStyle = 'rgba(141,154,184,.25)';
+  cx.beginPath(); cx.moveTo(L - 4, H - B); cx.lineTo(W - R, H - B); cx.stroke();
+  cx.fillStyle = '#8D9AB8'; cx.font = '10px Inter';
+  cx.fillText(String(max), 2, T + 4); cx.fillText(String(min), 2, H - B + 3);
+  // 推定1RM（破線）
+  cx.strokeStyle = '#FFB454'; cx.lineWidth = 1.6;
+  cx.setLineDash([5, 4]);
+  cx.beginPath();
+  rms.forEach(function(v, i) { if (i === 0) cx.moveTo(X(i), Y(v)); else cx.lineTo(X(i), Y(v)); });
+  cx.stroke();
+  cx.setLineDash([]);
+  // トップ重量（実線）
+  cx.strokeStyle = '#2CE5B8'; cx.lineWidth = 2.2;
+  cx.beginPath();
+  arr.forEach(function(a, i) { if (i === 0) cx.moveTo(X(i), Y(a.kg)); else cx.lineTo(X(i), Y(a.kg)); });
+  cx.stroke();
+  arr.forEach(function(a, i) {
+    cx.fillStyle = '#2CE5B8';
+    cx.beginPath(); cx.arc(X(i), Y(a.kg), 3, 0, 7); cx.fill();
+    cx.fillStyle = '#e6e8ec'; cx.font = '9.5px Inter';
+    cx.fillText(a.kg + '', X(i) - 8, Y(a.kg) - 7);
+  });
+  cx.fillStyle = '#8D9AB8'; cx.font = '9px Inter';
+  cx.fillText(arr[0].ymd.slice(5).replace('-', '/'), L, H - 8);
+  cx.fillText(arr[arr.length - 1].ymd.slice(5).replace('-', '/'), W - 44, H - 8);
+}
+// C: 継続ヒートマップ（過去15週）
+function _fitHeatHtml() {
+  var ws = (typeof _weekStart !== 'undefined') ? _weekStart : 0;
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var off = (today.getDay() - ws + 7) % 7;
+  var w0 = new Date(today.getTime() - off * 86400000 - 14 * 7 * 86400000);
+  var vals = [];
+  for (var k in (_fitCal || {})) { if (_fitCal[k] && _fitCal[k].done && _fitCal[k].v) vals.push(_fitCal[k].v); }
+  vals.sort(function(a, b) { return a - b; });
+  var t1 = vals.length ? vals[Math.floor(vals.length * 0.33)] : 1;
+  var t2 = vals.length ? vals[Math.floor(vals.length * 0.66)] : 2;
+  var h = '<div style="display:flex;gap:3px;overflow-x:auto;padding-bottom:4px">';
+  for (var wi = 0; wi < 15; wi++) {
+    h += '<div style="display:flex;flex-direction:column;gap:3px">';
+    for (var di = 0; di < 7; di++) {
+      var d9 = new Date(w0.getTime() + (wi * 7 + di) * 86400000);
+      var key = d9.getFullYear() + '-' + evPad2(d9.getMonth() + 1) + '-' + evPad2(d9.getDate());
+      var e = (_fitCal || {})[key];
+      var col = 'var(--surface3)';
+      var tip = (d9.getMonth() + 1) + '/' + d9.getDate();
+      if (d9.getTime() > today.getTime()) col = 'transparent';
+      else if (e && e.done) {
+        var v = e.v || 0;
+        col = v >= t2 ? '#2CE5B8' : (v >= t1 ? 'rgba(44,229,184,.6)' : 'rgba(44,229,184,.33)');
+        tip += ' ' + _fitLabelName(e.s) + (v ? '・' + (Math.round(v / 100) / 10) + 't' : '');
+      }
+      h += '<div title="' + evEsc(tip) + '" style="width:14px;height:14px;border-radius:3.5px;background:' + col + '"></div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+// 📜 履歴（その場で展開して閲覧。編集はボタンからのみ）
+var _fitHistLimit = 20;
+var _fitHistOpen = {};
+var _fitHistCache = {};
+function _fitHistDetailHtml(ymd) {
+  var d = _fitHistCache[ymd];
+  if (d === null || d === undefined) return '<div style="font-size:11.5px;color:var(--text-dim);padding:6px 0 2px 6px">読み込み中...</div>';
+  var s = d && d.session;
+  if (!s || !s.sets) return '<div style="font-size:11.5px;color:var(--text-dim);padding:6px 0 2px 6px">詳細データがありません</div>';
+  var order = [], byEx = {};
+  s.sets.forEach(function(st) {
+    if (!byEx[st.ex]) { byEx[st.ex] = []; order.push(st.ex); }
+    byEx[st.ex].push((st.side && st.side !== 'both' ? (st.side === 'left' ? '左' : '右') : '') + st.kg + '×' + st.reps + (st.lim ? '!' : '')
+      + ((st.drops || []).map(function(dd) { return '→' + dd.kg + '×' + dd.reps; }).join('')));
+  });
+  var h = '<div style="padding:6px 2px 4px 6px;font-size:12px;line-height:1.9;color:var(--text-mid);border-left:2px solid var(--border2);margin:4px 0 2px 4px">';
+  order.forEach(function(ex) {
+    h += '<div><b style="color:var(--text)">' + evEsc(ex) + '</b>　' + evEsc(byEx[ex].join('、')) + '</div>';
+  });
+  (s.skipped || []).forEach(function(sk) { h += '<div style="color:var(--text-dim)">⏭ (スキップ) ' + evEsc(sk) + '</div>'; });
+  if (s.note) h += '<div>📝 ' + evEsc(s.note) + '</div>';
+  h += '<div style="display:flex;gap:8px;margin-top:6px">'
+    + '<button class="fol-add" style="width:auto;border-style:solid;margin:0;padding:7px 14px;font-size:11.5px;color:var(--accent)" onclick="event.stopPropagation();fitHistCopy(\'' + ymd + '\')">📋 この日をコピー</button>'
+    + '<button class="fol-add" style="width:auto;border-style:solid;margin:0;padding:7px 14px;font-size:11.5px" onclick="event.stopPropagation();fitHistGo(\'' + ymd + '\')">✏️ 編集</button></div>';
+  h += '</div>';
+  return h;
+}
+function _fitHistInner() {
   var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; }).sort().reverse();
   var rows = '';
   ds.slice(0, _fitHistLimit).forEach(function(k) {
@@ -14714,199 +15022,105 @@ function _fitHistHtml() {
     if (e.st) meta.push(e.st + 'セット');
     if (e.v) meta.push((Math.round(e.v / 100) / 10) + 't');
     if (e.sk) meta.push('⏭スキップ' + e.sk);
-    rows += '<div class="fol-log" style="cursor:pointer" onclick="fitHistGo(\'' + k + '\')">'
+    var open = !!_fitHistOpen[k];
+    rows += '<div class="fol-log" style="cursor:pointer" onclick="fitHistTgl(\'' + k + '\')">'
       + '<span class="fol-log-main"><span class="fol-log-ttl">' + parseInt(p9[1], 10) + '/' + parseInt(p9[2], 10) + '(' + wd + ')　' + evEsc(_fitProgNameByLabel(e.s)) + '</span>'
       + '<span class="fol-log-sub">' + (meta.join('・') || '記録あり') + (e.mo ? '・📝メモ' : '') + '</span></span>'
-      + '<span style="color:var(--text-dim)">›</span></div>';
+      + '<span style="color:var(--text-dim)">' + (open ? '▴' : '▾') + '</span></div>';
+    if (open) rows += _fitHistDetailHtml(k);
   });
   if (!rows) rows = '<div style="font-size:12px;color:var(--text-dim);padding:6px 0">まだ記録がありません</div>';
-  var more = ds.length > _fitHistLimit ? '<button class="fol-add" style="margin-top:8px" onclick="_fitHistLimit += 30; fitTab(\'trend\')">もっと見る（あと ' + (ds.length - _fitHistLimit) + '回）</button>' : '';
-  return '<div class="fit-card"><div class="fit-card-t">📜 トレーニング履歴</div><div style="font-size:10.5px;color:var(--text-dim)">タップでその日の記録へ（そのまま編集もできます）</div>' + rows + more + '</div>';
+  var more = ds.length > _fitHistLimit ? '<button class="fol-add" style="margin-top:8px" onclick="_fitHistLimit += 30; fitHistRefresh()">もっと見る（あと ' + (ds.length - _fitHistLimit) + '回）</button>' : '';
+  return rows + more;
 }
-function fitHistGo(ymd) { _fitLoadDay(ymd).then(function() { fitTab('work'); }); }
-function _fitTrendHtml() {
-  return _fitHistHtml()
-    + _fitMuscleCard(true)
-    + '<div class="fit-card"><div class="fit-card-t">体重（点＝実測 / 線＝7日移動平均）</div>'
-    + '<canvas id="fitWChart" height="170" style="width:100%;display:block;margin-top:6px"></canvas>'
-    + '<div style="display:flex;gap:6px;margin-top:8px"><div class="rb" style="flex:none;padding:5px 10px;font-size:11px" id="fitTagF" onclick="this.classList.toggle(\'sel\');_fitDrawWeight()">朝の測定のみ</div></div></div>'
-    + '<div class="fit-card"><div class="fit-card-t">種目別の重量（直近のトップセット）</div><div id="fitExTrend" style="font-size:12.5px;line-height:2;margin-top:4px">'
-    + _fitExTrendHtml() + '</div></div>';
+function fitHistRefresh() {
+  var bx = document.getElementById('fitHistBox');
+  if (bx) bx.innerHTML = _fitHistInner();
 }
-function _fitExTrendHtml() {
-  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; }).sort().slice(-15);
-  if (!ds.length) return '<span style="color:var(--text-dim)">セッションを記録するとここに表示されます</span>';
-  return '<span style="color:var(--text-dim)">詳細を読み込み中...</span>';
+function fitHistTgl(ymd) {
+  if (_fitHistOpen[ymd]) { delete _fitHistOpen[ymd]; fitHistRefresh(); return; }
+  _fitHistOpen[ymd] = true;
+  if (_fitHistCache[ymd] !== undefined) { fitHistRefresh(); return; }
+  _fitHistCache[ymd] = null;
+  fitHistRefresh();
+  fsGet(_fitP('days/' + ymd)).then(function(d) { _fitHistCache[ymd] = d || false; fitHistRefresh(); })
+    .catch(function() { _fitHistCache[ymd] = false; fitHistRefresh(); });
 }
-function _fitExTrendKick() {
-  var ds = Object.keys(_fitCal || {}).filter(function(k) { return _fitCal[k].done; }).sort().slice(-15);
-  if (ds.length) _fitExTrendLoad(ds);
+function fitHistGo(ymd) {
+  try { _fitSheetClose('fitDayShOv'); } catch(e9) {}
+  _fitLoadDay(ymd).then(function() { fitTab('work'); });
 }
-function _fitExTrendLoad(ds) {
-  Promise.all(ds.map(function(ymd) { return fsGet(_fitP('days/' + ymd)).then(function(d) { return { ymd: ymd, s: d && d.session }; }).catch(function() { return null; }); }))
-    .then(function(all) {
-      var byEx = {};
-      all.filter(Boolean).forEach(function(r) {
-        if (!r.s || !r.s.sets) return;
-        r.s.sets.forEach(function(st) {
-          if (!byEx[st.ex]) byEx[st.ex] = [];
-          var last = byEx[st.ex][byEx[st.ex].length - 1];
-          if (!last || last.ymd !== r.ymd) byEx[st.ex].push({ ymd: r.ymd, kg: st.kg, reps: st.reps });
-          else if (st.kg > last.kg) { last.kg = st.kg; last.reps = st.reps; }
-        });
-      });
-      // 旧セッション（ボリューム未記録）のサマリを補完（マッスルくんが過去分も反映）
-      try {
-        var _chg9 = false;
-        all.filter(Boolean).forEach(function(r9) {
-          if (!r9.s || !r9.s.sets) return;
-          var c9 = _fitCal[r9.ymd];
-          if (!c9 || !c9.done || c9.v) return;
-          var v9 = 0;
-          r9.s.sets.forEach(function(st9) {
-            v9 += (st9.kg || 0) * (st9.reps || 0);
-            (st9.drops || []).forEach(function(d9) { v9 += (d9.kg || 0) * (d9.reps || 0); });
-          });
-          if (v9 > 0) { c9.v = Math.round(v9); _chg9 = true; }
-        });
-        if (_chg9) fsSet(_fitP('meta/calendar'), { days: _fitCal, updatedAt: new Date().toISOString() });
-      } catch(eBf) {}
-      var box = document.getElementById('fitExTrend');
-      if (!box) return;
-      var h = '';
-      Object.keys(byEx).forEach(function(ex) {
-        var arr = byEx[ex].slice(-5);
-        h += '<div><b>' + evEsc(ex) + '</b>　' + arr.map(function(a) { return a.ymd.slice(5).replace('-', '/') + ' <span style="color:var(--accent);font-weight:700">' + a.kg + 'kg×' + a.reps + '</span>'; }).join(' → ') + '</div>';
-      });
-      box.innerHTML = h || '<span style="color:var(--text-dim)">記録なし</span>';
+// v446: 1日分のコピー（インターバル秒数付き）
+function _fitDayText(ymd, d) {
+  var s = d && d.session;
+  var p9 = ymd.split('-');
+  var wd = ['日', '月', '火', '水', '木', '金', '土'][new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10)).getDay()];
+  var t = '【' + parseInt(p9[1], 10) + '/' + parseInt(p9[2], 10) + '(' + wd + ') ' + ((s && (s.name || _fitLabelName(s.label || s.split))) || 'トレーニング') + '】\n';
+  if (s && s.sets) {
+    var order = [], byEx = {};
+    s.sets.forEach(function(st) {
+      if (!byEx[st.ex]) { byEx[st.ex] = []; order.push(st.ex); }
+      var one = (st.side && st.side !== 'both' ? (st.side === 'left' ? '左' : '右') : '')
+        + (st.kg ? (st.kg + 'kg×' + st.reps) : (st.reps + '回')) + (st.lim ? '!' : '')
+        + ((st.drops || []).map(function(dd) { return '→' + (dd.kg ? (dd.kg + 'kg×' + dd.reps) : (dd.reps + '回')); }).join(''));
+      byEx[st.ex].push(one);
     });
-}
-function _fitDrawWeight() {
-  var cv = document.getElementById('fitWChart');
-  if (!cv) return;
-  var morningOnly = document.getElementById('fitTagF') && document.getElementById('fitTagF').classList.contains('sel');
-  var ds = Object.keys(_fitCal || {}).filter(function(k) {
-    if (!_fitCal[k].w) return false;
-    if (morningOnly && _fitCal[k].t && _fitCal[k].t !== 'morning') return false;
-    return true;
-  }).sort().slice(-60);
-  var W = cv.clientWidth || 320, H = 170;
-  cv.width = W * 2; cv.height = H * 2;
-  var cx = cv.getContext('2d');
-  cx.scale(2, 2);
-  cx.clearRect(0, 0, W, H);
-  if (ds.length < 2) { cx.fillStyle = '#8D9AB8'; cx.font = '12px Inter'; cx.fillText('体重を2日以上記録するとグラフが出ます', 16, 80); return; }
-  var vals = ds.map(function(k) { return _fitCal[k].w; });
-  var min = Math.min.apply(null, vals) - 0.5, max = Math.max.apply(null, vals) + 0.5;
-  var X = function(i) { return 30 + (W - 44) * i / (ds.length - 1); };
-  var Y = function(v) { return 12 + (H - 34) * (1 - (v - min) / (max - min)); };
-  cx.strokeStyle = 'rgba(141,154,184,.25)';
-  cx.beginPath(); cx.moveTo(30, H - 22); cx.lineTo(W - 12, H - 22); cx.stroke();
-  cx.fillStyle = '#8D9AB8'; cx.font = '10px Inter';
-  cx.fillText(String(max - 0.5), 2, 18); cx.fillText(String(min + 0.5), 2, H - 26);
-  cx.fillText(ds[0].slice(5).replace('-', '/'), 30, H - 8); cx.fillText(ds[ds.length - 1].slice(5).replace('-', '/'), W - 48, H - 8);
-  ds.forEach(function(k, i) { cx.fillStyle = 'rgba(90,215,255,.5)'; cx.beginPath(); cx.arc(X(i), Y(vals[i]), 2.5, 0, 7); cx.fill(); });
-  cx.strokeStyle = '#2CE5B8'; cx.lineWidth = 2.2; cx.beginPath();
-  ds.forEach(function(k, i) {
-    var s = Math.max(0, i - 6);
-    var seg = vals.slice(s, i + 1);
-    var avg = seg.reduce(function(a, b) { return a + b; }, 0) / seg.length;
-    if (i === 0) cx.moveTo(X(i), Y(avg)); else cx.lineTo(X(i), Y(avg));
-  });
-  cx.stroke();
-}
-// ── 📋 Claudeに相談（記録のテキスト化＋プレビューシート） ──
-var FIT_TAG_JP = { morning: '朝', post_workout: '運動後', post_alcohol: '飲酒翌日', aircon: '冷房', other: 'その他' };
-function fitExport(days) {
-  var list = [];
-  var p9 = (_fitYmd || _fitToday()).split('-');
-  for (var i = days - 1; i >= 0; i--) {
-    var dt = new Date(parseInt(p9[0], 10), parseInt(p9[1], 10) - 1, parseInt(p9[2], 10) - i);
-    list.push(dt.getFullYear() + '-' + evPad2(dt.getMonth() + 1) + '-' + evPad2(dt.getDate()));
+    order.forEach(function(ex) {
+      var m = _fitExByName(ex);
+      t += ex + (m && m.iv ? '（IV' + m.iv + '秒）' : '') + ' ' + byEx[ex].join('、') + '\n';
+    });
+    (s.skipped || []).forEach(function(sk) { t += '(スキップ) ' + sk + '\n'; });
+    if (s.note) t += '📝 ' + s.note + '\n';
   }
-  toast('📋 記録を集めています...');
-  Promise.all(list.map(function(ymd) {
-    return fsGet(_fitP('days/' + ymd)).then(function(d) { return { ymd: ymd, d: d }; }).catch(function() { return null; });
-  })).then(function(all) {
-    var t = '【トレーニング記録 ' + list[0].slice(5).replace('-', '/') + '〜' + list[list.length - 1].slice(5).replace('-', '/') + '】\n';
-    t += 'メニュー構成:\n' + (_fitProgs || []).map(function(p) {
-      return '　' + p.name + ' = ' + (p.exIds || []).map(function(id) { var ex = _fitExById(id); return ex ? ex.n : ''; }).filter(Boolean).join(' / ');
-    }).join('\n') + '\n';
-    var any = false;
-    all.filter(Boolean).forEach(function(r) {
-      var d = r.d;
-      if (!d) return;
-      var lines = [];
-      if (d.body && d.body.w) lines.push('体重 ' + d.body.w + 'kg' + (d.body.fat ? ' 体脂肪' + d.body.fat + '%' : '') + (d.body.tag ? '（' + (FIT_TAG_JP[d.body.tag] || d.body.tag) + '）' : ''));
-      if (d.session && d.session.sets && (d.session.sets.length || (d.session.skipped || []).length)) {
-        lines.push('筋トレ【' + (d.session.name || _fitLabelName(d.session.label || d.session.split)) + '】');
-        d.session.sets.forEach(function(st) {
-          lines.push('　' + st.ex + (st.side && st.side !== 'both' ? (st.side === 'left' ? '(左)' : '(右)') : '')
-            + ' ' + st.kg + 'kg×' + st.reps + (st.lim ? '!' : '')
-            + ((st.drops || []).map(function(dd) { return '→' + dd.kg + 'kg×' + dd.reps; }).join('')));
-        });
-        (d.session.skipped || []).forEach(function(sk) { lines.push('　(スキップ) ' + sk); });
-        if (d.session.note) lines.push('　メモ: ' + d.session.note);
-      } else if (d.plan && d.plan.split && (d.plan.split === 'run' || d.plan.split === 'rest')) {
-        lines.push(_fitLabelName(d.plan.split));
-      }
-      if (lines.length) { any = true; t += '\n■' + r.ymd.slice(5).replace('-', '/') + '\n' + lines.join('\n') + '\n'; }
-    });
-    if (!any) { toast('この期間の記録がまだありません'); return; }
-    t += '\n※「!」=限界まで、「→」=ドロップセット、(スキップ)=その日やらなかった種目\nこの記録を見て、次のトレーニングメニュー（重量・回数・組み合わせ）のアドバイスをください。';
-    _fitExportSheet(t);
-  });
+  t += '※「!」=限界まで、「→」=ドロップセット';
+  return t;
 }
-function _fitExportSheet(t) {
-  var old = document.getElementById('fitExpOv');
-  if (old && old.parentNode) old.parentNode.removeChild(old);
-  var ov = document.createElement('div');
-  ov.id = 'fitExpOv'; ov.className = 'ms-overlay';
-  ov.style.zIndex = '1290';
-  ov.onclick = function(e) { if (e.target === ov) fitExpClose(); };
-  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📋 Claudeに相談</div></div><span class="ms-x" onclick="fitExpClose()">✕</span></div>'
-    + '<div style="padding:0 16px 18px">'
-    + '<textarea id="fitExpTa" readonly style="width:100%;height:170px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:11.5px;line-height:1.6;color:var(--text);resize:none;-webkit-user-select:text;user-select:text"></textarea>'
-    + '<div style="display:flex;gap:8px;margin-top:10px">'
-    + '<button class="btn-p" style="flex:1;padding:12px" onclick="fitExpCopy()">📋 コピー</button>'
-    + (navigator.share ? '<button class="fol-add" style="flex:1;margin:0" onclick="fitExpShare()">📤 共有</button>' : '')
-    + '</div>'
-    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px">コピーしてClaudeに貼り付けてください。📤共有からClaudeアプリへ直接送ることもできます</div>'
-    + '</div></div>';
-  document.body.appendChild(ov);
-  requestAnimationFrame(function() { ov.classList.add('show'); });
-  var ta = document.getElementById('fitExpTa');
-  if (ta) ta.value = t;
-}
-function fitExpClose() {
-  var ov = document.getElementById('fitExpOv');
-  if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
-}
-function fitExpCopy() {
-  var ta = document.getElementById('fitExpTa');
-  if (!ta) return;
+function _fitCopyDirect(t) {
+  var ta = document.createElement('textarea');
+  ta.value = t;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { ta.setSelectionRange(0, ta.value.length); } catch(e8) {}
   var ok = false;
-  try {
-    ta.readOnly = false;
-    ta.focus(); ta.select();
-    try { ta.setSelectionRange(0, ta.value.length); } catch(e8) {}
-    ok = document.execCommand('copy');
-    ta.readOnly = true;
-    ta.blur();
-  } catch(e9) {}
-  if (ok) { toast('📋 コピーしました。Claudeに貼り付けて相談できます'); return; }
+  try { ok = document.execCommand('copy'); } catch(e9) {}
+  document.body.removeChild(ta);
+  if (ok) { toast('📋 コピーしました'); return; }
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(ta.value).then(function() { toast('📋 コピーしました。Claudeに貼り付けて相談できます'); },
-      function() { toast('⚠️ 自動コピーできませんでした。テキストを長押し→全選択→コピーしてください'); });
-    return;
-  }
-  toast('⚠️ 自動コピーできませんでした。テキストを長押し→全選択→コピーしてください');
+    navigator.clipboard.writeText(t).then(function() { toast('📋 コピーしました'); }, function() { toast('⚠️ コピーできませんでした'); });
+  } else toast('⚠️ コピーできませんでした');
 }
-function fitExpShare() {
-  var ta = document.getElementById('fitExpTa');
-  if (!ta) return;
-  try { navigator.share({ text: ta.value }); } catch(e9) { toast('⚠️ 共有を開けませんでした'); }
+function fitHistCopy(ymd) {
+  var d = _fitHistCache[ymd];
+  if (!d) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
+  _fitCopyDirect(_fitDayText(ymd, d));
+}
+function _fitTrendHtml() {
+  // 週別ボリュームの凡例
+  var weeks = _fitWeekAgg(12);
+  var cats = [];
+  weeks.forEach(function(wk) { for (var c in wk.w) if (cats.indexOf(c) < 0) cats.push(c); });
+  var ord = ['押す', '引く', '肩・腕', '脚'];
+  cats.sort(function(a, b) { var ia = ord.indexOf(a), ib = ord.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+  var legend = cats.map(function(c, ci) {
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text-mid)"><i style="width:9px;height:9px;border-radius:3px;background:' + _fitCatColor(c, ci) + '"></i>' + evEsc(c) + '</span>';
+  }).join('');
+  return '<div class="fit-card"><div class="fit-card-t">📊 週別ボリューム（直近12週）</div>'
+    + '<canvas id="fitWkChart" height="190" style="width:100%;display:block;margin-top:6px"></canvas>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">' + legend + '</div></div>'
+    + '<div class="fit-card"><div class="fit-card-t">🏋️ 種目別トップ重量 <span style="font-size:10px;color:var(--text-dim);font-weight:400">実線＝トップ重量 / 破線＝推定1RM（重量×(1+回数÷30)）</span></div>'
+    + '<div id="fitExChips" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">読み込み中...</div>'
+    + '<canvas id="fitExChart" height="180" style="width:100%;display:block"></canvas></div>'
+    + '<div class="fit-card"><div class="fit-card-t">🌱 継続ヒートマップ（過去15週）</div><div style="margin-top:8px">' + _fitHeatHtml() + '</div>'
+    + '<div style="font-size:10px;color:var(--text-dim);margin-top:4px">濃いほど高ボリュームの日。列＝週、上から日曜（週の始まり設定に連動）</div></div>'
+    + '<div class="fit-card"><div class="fit-card-t">📜 トレーニング履歴</div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">タップで内容をその場で表示。編集は展開内のボタンから</div>'
+    + '<div id="fitHistBox">' + _fitHistInner() + '</div></div>'
+    + _fitMuscleCard(true);
+}
+function _fitTrendKick() {
+  _fitDrawWeekly();
+  _fitExChartKick();
 }
 // ── 🐣 マッスルくん（累計ボリュームで育つアバター） ──
 var FIT_LV_NAMES = ['', 'もやし', 'ヒヨコ', 'トレーニー見習い', '駆け出しマッチョ', '中堅マッチョ', 'ゴリマッチョ候補', 'ゴリマッチョ', 'バケモノ', 'レジェンド', '山の神'];
@@ -14997,7 +15211,7 @@ function _fitMuscleCard(big) {
           var val = ms.vc[c] || 0;
           var isRep = !!FIT_REP_CATS[c];
           return '<div style="display:flex;align-items:center;gap:8px;margin-top:5px"><span style="flex:none;width:70px;color:var(--text-mid)">' + evEsc(c) + '</span>'
-            + '<div style="flex:1;height:8px;border-radius:4px;background:var(--surface3);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round(val / (isRep ? mxR : mxW) * 100) + '%;background:' + COLS9[ci % COLS9.length] + '"></i></div>'
+            + '<div style="flex:1;height:8px;border-radius:4px;background:var(--surface3);overflow:hidden"><i style="display:block;height:100%;width:' + Math.round(val / (isRep ? mxR : mxW) * 100) + '%;background:' + (FIT_CAT_COLORS[c] || COLS9[ci % COLS9.length]) + '"></i></div>'
             + '<span style="flex:none;width:48px;text-align:right;font-family:Inter,sans-serif;color:var(--text-mid)">' + (isRep ? (val + '回') : ((Math.round(val / 100) / 10) + 't')) + '</span></div>';
         }).join('')
       + '</div><div style="font-size:10px;color:var(--text-dim);margin-top:8px">分類のバランスで体つきが変わります（押す→胸・引く→背中・肩腕→肩幅と腕・体幹→腹筋・脚→脚の太さ）。体幹とインナーは重さではなく回数で育ちます。Lv5で腹筋、Lv8でオーラ、Lv10で👑</div>';
@@ -15840,7 +16054,7 @@ function gcalEventBody(e) {
   if (e.memo) desc.push(e.memo);
   if (m) desc.push('メンバー: ' + ((m.lastName || '') + (m.firstName || '')).replace(/^\s+|\s+$/g, ''));
   if (cat) desc.push('カテゴリ: ' + cat.name);
-  desc.push('（GROOVE MAPより自動連携）');
+  desc.push('（NAVIGATORより自動連携）');
   var body = {
     summary: (e.type === 'task' && e.done ? '✓ ' : '') + (e.title || '(無題)'),
     description: desc.join('\n')
@@ -15883,7 +16097,7 @@ function gtaskBody(e) {
   if (e.memo) notes.push(e.memo);
   if (m) notes.push('メンバー: ' + ((m.lastName || '') + (m.firstName || '')).replace(/^\s+|\s+$/g, ''));
   if (cat) notes.push('カテゴリ: ' + cat.name);
-  notes.push('（GROOVE MAPより自動連携）');
+  notes.push('（NAVIGATORより自動連携）');
   var body = {
     title: e.title || '(無題)',
     notes: notes.join('\n'),
@@ -17817,7 +18031,7 @@ function m3Share() {
     cx.font = '700 36px "IBM Plex Mono", monospace';
     cx.fillText(String(state.currentMonth || '').replace('.', ' / '), W / 2, 530);
     cx.font = '800 34px "Inter", sans-serif';
-    cx.fillText('GROOVE MAP', W / 2, H - 110);
+    cx.fillText('NAVIGATOR', W / 2, H - 110);
     // v365: コーナーの花ラインアート（コード描画・テーマのインク色）
     function flower(fx, fy, fr, rot) {
       cx.save(); cx.translate(fx, fy); cx.rotate(rot || 0);
@@ -22698,7 +22912,7 @@ function loginSuccess(user) {
   updateHomeBadge();
   // ロゴ更新
   var logo = document.getElementById('appLogo');
-  if (logo) logo.textContent = user.org || 'MAP';
+  if (logo) logo.textContent = user.org || 'NAVIGATOR';
   var nameEl = document.getElementById('appUserName');
   if (nameEl && user.name) {
     var infoText = user.name;
