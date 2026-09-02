@@ -179,8 +179,24 @@ tr:last-child td{border-bottom:none;}
 #mcQr{display:flex;justify-content:center;min-height:180px;align-items:center;position:relative;z-index:1;}
 #mcQr img,#mcQr canvas{border:8px solid #fff;outline:1px solid #e2e0d8;border-radius:4px;background:#fff;}
 .mc-no{font-size:12.5px;color:#6f6d63;margin-top:12px;}
-.mc-tip{font-size:12.5px;color:var(--sub);margin-top:16px;line-height:1.8;}
 .mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
+/* 次回の開催予定（搭乗券風ストリップ） */
+.nextwrap{margin-top:26px;text-align:left;}
+.next-head{display:flex;align-items:center;gap:12px;font-size:10.5px;font-weight:700;letter-spacing:.3em;color:var(--sub);}
+.next-head::after{content:'';flex:1;height:1px;background:var(--line);}
+.nextrow{display:flex;align-items:baseline;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line);}
+.nextrow:last-child{border-bottom:none;}
+.nextrow .nd{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;letter-spacing:.02em;}
+.nextrow .nn{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:700;font-size:14.5px;}
+.nextrow .ns{margin-left:auto;color:var(--sub);font-size:12px;white-space:nowrap;}
+.nextrow .today-pill{font-size:10.5px;font-weight:700;color:var(--green);border:1px solid var(--green);border-radius:99px;padding:1px 8px;margin-left:auto;white-space:nowrap;}
+.nextrow .today-pill + .ns{margin-left:0;}
+/* ご利用ガイド（説明書きの退避先） */
+.mc-help{
+  display:block;margin:30px auto 0;width:36px;height:36px;border-radius:50%;
+  border:1px solid var(--line);background:var(--card);color:var(--sub);
+  font-size:16px;font-weight:700;line-height:1;padding:0;
+}
 /* セルフチェックイン（CLAVIS主催イベント等） */
 .selfevent{background:var(--card);border:2px solid var(--green);border-radius:14px;padding:16px;margin-top:16px;text-align:center;}
 .selfevent b{font-family:"Zen Kaku Gothic New",sans-serif;display:block;font-size:15px;margin-bottom:4px;}
@@ -499,7 +515,8 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div id="selfArea"></div>
     <div id="onlineArea"></div>
-    <p class="mc-tip">受付でこのQRコードをかざしてください。<br>画面を明るくすると読み取りやすくなります。<br>ブラウザの「ホーム画面に追加」をしておくと次回すぐ開けます。</p>
+    <div id="nextArea"></div>
+    <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
     <p class="mc-err" id="mcErr"></p>
   </div>
 </div>
@@ -704,6 +721,7 @@ function showCardView(token){
       renderCard(c);
       renderSelfEvents(c);
       renderOnlineEvents(c);
+      renderNextEvents(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
@@ -839,6 +857,46 @@ function renderOnlineEvents(c){
     });
   }).catch(function(){});
 }
+
+// 次回の開催予定: 自ユニオンの直近イベントを搭乗券風に表示
+// （セルフ受付中・オンライン対応のイベントは専用カードが出るのでここでは省く）
+function renderNextEvents(c){
+  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
+    var t = todayStr(), evs = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if((ev.unions || []).indexOf(c.union) < 0) return;
+      if(ev.online) return;
+      if(ev.mode === 'self' && ev.selfOpen) return;
+      evs.push(ev);
+    });
+    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    evs = evs.slice(0, 3);
+    if(!evs.length){ $('nextArea').innerHTML = ''; return; }
+    $('nextArea').innerHTML = '<div class="nextwrap">'
+      + '<div class="next-head">UPCOMING</div>'
+      + evs.map(function(ev){
+          return '<div class="nextrow">'
+            + '<span class="nd">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
+            + '<span class="nn">' + esc(ev.name || '') + '</span>'
+            + (ev.date === t ? '<span class="today-pill">TODAY</span>' : '')
+            + (ev.speaker ? '<span class="ns">🎤 ' + esc(ev.speaker) + '</span>' : '')
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }).catch(function(){});
+}
+// ご利用ガイド（旧・説明書き）
+$('mcHelp').onclick = function(){
+  modal('<h2>ご利用ガイド</h2>'
+    + '<div style="font-size:14px;line-height:2;">'
+    + '📱 受付でこのQRコードをかざしてください。<br>'
+    + '☀️ 画面を明るくすると読み取りやすくなります。<br>'
+    + '⭐ ブラウザの「ホーム画面に追加」をしておくと次回すぐ開けます。'
+    + '</div>'
+    + '<div class="btns"><button id="hgClose">閉じる</button></div>');
+  $('hgClose').onclick = closeModal;
+};
 
 if(gCardToken){ showCardView(gCardToken); }
 
