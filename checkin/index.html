@@ -1982,6 +1982,9 @@ function onlineModal(ev){
           + '<button data-ola="reject" data-i="' + i + '" class="danger">却下</button>';
       } else if(a.status === 'rejected'){
         btns = '<button data-ola="reset" data-i="' + i + '">申請を削除（再申請できるようにする）</button>';
+      } else if(a.status === 'approved'){
+        // 発行者名の設定前に承認した分などへの再発行用
+        btns = '<button data-ola="rercpt" data-i="' + i + '">🧾 領収書を再発行</button>';
       }
       return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0;">'
         + '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;">'
@@ -2077,6 +2080,21 @@ function onlineModal(ev){
           .then(function(){ return markCard('reapply'); })
           .then(function(){ done('申請を削除しました。本人は再申請できます'); })
           .catch(function(e){ toast(permMsg(e, '権限がありません')); });
+      }
+      if(act === 'rercpt'){
+        // 承認済みへの領収書の再発行（発行者名の設定前に承認した分の救済）
+        if(!olIssuer){
+          toast('先に会計タブの「🧾 領収書設定」で発行者名を設定してください（主催: ' + (ev.hostUnion || '') + '）');
+          return;
+        }
+        if(!a.cardToken){ toast('この申請には会員証の情報がないため発行できません'); return; }
+        b.disabled = true;
+        var ru = {};
+        ru['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
+                                by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
+        db.collection('cards').doc(a.cardToken).set(ru, { merge: true })
+          .then(function(){ b.disabled = false; toast((a.name || '') + ' さんの領収書を発行しました。会員証に表示されます'); })
+          .catch(function(e){ b.disabled = false; toast(permMsg(e, '発行権限がありません')); });
       }
     });
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
