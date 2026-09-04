@@ -191,6 +191,14 @@ tr:last-child td{border-bottom:none;}
 .nextrow .ns{margin-left:auto;color:var(--sub);font-size:12px;white-space:nowrap;}
 .nextrow .today-pill{font-size:10.5px;font-weight:700;color:var(--green);border:1px solid var(--green);border-radius:99px;padding:1px 8px;margin-left:auto;white-space:nowrap;}
 .nextrow .today-pill + .ns{margin-left:0;}
+/* 電子領収書 */
+.receipt{background:#fdfcf7;color:#26241f;border-radius:12px;padding:24px 20px 16px;text-align:center;}
+.rstamp{
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  width:62px;height:62px;border:2.5px solid rgba(192,57,43,.8);border-radius:50%;
+  color:rgba(192,57,43,.92);font-size:12.5px;font-weight:700;line-height:1.25;
+  transform:rotate(-8deg);flex:0 0 auto;
+}
 /* ご利用ガイド（説明書きの退避先） */
 .mc-help{
   display:block;margin:30px auto 0;width:36px;height:36px;border-radius:50%;
@@ -458,6 +466,8 @@ tr:last-child td{border-bottom:none;}
       <button class="ghost" id="fnPrev">◀</button><b id="fnMonthLabel"></b><button class="ghost" id="fnNext">▶</button>
       <label for="finUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="finUnionSel"></select>
+      <span style="flex:1"></span>
+      <button id="btnRcptSet" class="hide">🧾 領収書設定</button>
     </div>
     <div id="finBody"><p style="color:var(--sub)">読み込み中…</p></div>
   </section>
@@ -515,6 +525,7 @@ tr:last-child td{border-bottom:none;}
     <div id="selfArea"></div>
     <div id="onlineArea"></div>
     <div id="nextArea"></div>
+    <div id="rcptArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
     <p class="mc-err" id="mcErr"></p>
   </div>
@@ -601,6 +612,7 @@ function cardUrl(token){ return location.href.split('#')[0] + '#c=' + token; }
 /* ライセンスグレード → カードデザイン
    BR = ゴールドカード（BRAND REPRESENTATIVE） / JETCLUB = ブラックカード（JETCLUB MEMBER）
    ※旧名称（ゴールド/ブラック等）で登録済みのデータも同じデザインに解決する */
+var RCPT_ISSUER_DEFAULT = '株式会社PROMOTE';   // 領収書の発行者名（ユニオンごとに checkinUnions.issuer で上書き可）
 var GRADES = ['', 'BR', 'JETCLUB'];
 var GRADE_MENU = { '': '（一般・白カード）', 'BR': 'BR（ゴールドカード）', 'JETCLUB': 'JETCLUB（ブラックカード）' };
 var GRADE_STYLES = { 'BR': 'mc-gold', 'JETCLUB': 'mc-black',
@@ -721,6 +733,7 @@ function showCardView(token){
       renderSelfEvents(c);
       renderOnlineEvents(c);
       renderNextEvents(c);
+      renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
@@ -884,6 +897,56 @@ function renderNextEvents(c){
         }).join('')
       + '</div>';
   }).catch(function(){});
+}
+// 電子領収書: 受付でピッとした瞬間に発行されたものを会員証に表示
+function renderReceipts(c){
+  var keys = Object.keys(c).filter(function(k){ return k.indexOf('rcpt_') === 0 && c[k]; });
+  if(!keys.length){ $('rcptArea').innerHTML = ''; return; }
+  keys.sort(function(a, b){ return (c[b].at || 0) - (c[a].at || 0); });
+  keys = keys.slice(0, 8);
+  $('rcptArea').innerHTML = '<div class="nextwrap">'
+    + '<div class="next-head">RECEIPTS</div>'
+    + keys.map(function(k, i){
+        var r = c[k];
+        return '<div class="nextrow" id="rc_' + i + '" style="cursor:pointer;" title="タップで領収書を表示">'
+          + '<span class="nd">' + esc((r.d || '').slice(5).replace('-', '/')) + '</span>'
+          + '<span class="nn">🧾 ' + esc(r.ev || '') + '</span>'
+          + '<span class="nr"><b class="mono" style="font-size:14px;">' + yen(r.amt || 0) + '</b></span>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+  keys.forEach(function(k, i){
+    var el = $('rc_' + i);
+    if(el) el.onclick = function(){ receiptModal(k, c[k], c); };
+  });
+}
+function receiptModal(key, r, c){
+  var eid = key.slice(5);
+  var rno = 'R' + eid.slice(-6).toUpperCase() + '-' + (r.no || c.no || '');
+  var dp = (r.d || '').split('-');
+  var dateJp = dp.length === 3 ? (dp[0] + '年' + parseInt(dp[1], 10) + '月' + parseInt(dp[2], 10) + '日') : (r.d || '');
+  var stampDate = dp.length === 3 ? (parseInt(dp[1], 10) + '.' + parseInt(dp[2], 10)) : '';
+  modal(
+    '<div class="receipt">'
+    + '<div style="font-family:\'Zen Kaku Gothic New\',sans-serif;font-size:21px;font-weight:900;letter-spacing:.35em;">領 収 書</div>'
+    + '<div class="mono" style="font-size:11px;color:#8b877c;margin-top:2px;">No. ' + esc(rno) + '</div>'
+    + '<div style="text-align:left;font-size:15.5px;margin-top:18px;border-bottom:1.5px solid #d8d4c8;padding-bottom:6px;">'
+    + '<b>' + esc(c.name || '') + '</b>　様</div>'
+    + '<div style="font-family:\'Zen Kaku Gothic New\',sans-serif;font-size:32px;font-weight:900;margin:18px 0 4px;">'
+    + yen(r.amt || 0) + '−</div>'
+    + '<div style="font-size:12.5px;color:#6f6b60;">但し セミナー受講料として'
+    + (r.pm ? '（' + esc(r.pm) + '受領）' : '') + '</div>'
+    + '<div style="font-size:12.5px;color:#6f6b60;margin-top:4px;">' + esc(dateJp) + '　' + esc(r.ev || '') + '</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px;">'
+    + '<div style="text-align:left;font-size:11.5px;color:#6f6b60;">上記金額を正に受領いたしました<br>'
+    + '<b style="color:#26241f;font-size:13.5px;">' + esc(r.by || '') + '</b></div>'
+    + '<div class="rstamp"><span>受領</span><span style="font-size:9.5px;">' + esc(stampDate) + '</span></div>'
+    + '</div>'
+    + '<div style="font-size:10px;color:#a39e91;margin-top:14px;">電子的に発行された領収書です（5万円未満のため収入印紙は不要）</div>'
+    + '</div>'
+    + '<div class="btns"><button id="rcClose">閉じる</button></div>'
+  );
+  $('rcClose').onclick = closeModal;
 }
 // ご利用ガイド（旧・説明書き）
 $('mcHelp').onclick = function(){
@@ -1743,6 +1806,11 @@ function eventForm(ev){
 
 /* ---------- オンライン受講の承認キュー ---------- */
 function onlineModal(ev){
+  // 電子領収書の発行者名（主催ユニオンの設定）
+  var olIssuer = RCPT_ISSUER_DEFAULT;
+  db.collection('checkinUnions').doc(ev.hostUnion || '').get().then(function(s){
+    if(s.exists && s.data().issuer) olIssuer = s.data().issuer;
+  }).catch(function(){});
   db.collection('checkinEvents').doc(ev.id).collection('attendance')
     .where('method', '==', 'online').get().then(function(qs){
     var apps = [];
@@ -1795,6 +1863,13 @@ function onlineModal(ev){
       var markCard = function(val){
         if(!a.cardToken) return Promise.resolve();
         var u = {}; u['online_' + ev.id] = val;
+        // 電子領収書: 承認と同時に発行、却下・申請削除で取り下げ
+        if(val === 'approved'){
+          u['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
+                                 by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
+        } else {
+          u['rcpt_' + ev.id] = FV.delete();
+        }
         return db.collection('cards').doc(a.cardToken).set(u, { merge: true }).catch(function(){});
       };
       if(act === 'approve'){
@@ -2003,9 +2078,31 @@ function financeModal(ev){
   }).catch(function(e){ toast('会計の読込エラー: ' + e.message); });
 }
 
+/* 領収書設定: 電子領収書の発行者名（ユニオンごと） */
+$('btnRcptSet').onclick = function(){
+  var un = gFinUnion;
+  db.collection('checkinUnions').doc(un).get().then(function(s){
+    var cur = (s.exists && s.data().issuer) || '';
+    modal('<h2>🧾 領収書設定 — ' + esc(un) + '</h2>'
+      + '<label>発行者名（領収書の「上記金額を受領しました」の名義）</label>'
+      + '<input type="text" id="rsIssuer" value="' + esc(cur) + '" placeholder="' + RCPT_ISSUER_DEFAULT + '">'
+      + '<p style="font-size:12.5px;color:var(--sub);margin-top:8px;">'
+      + '空欄の場合は「' + RCPT_ISSUER_DEFAULT + '」として発行されます。ユニオンごとに設定でき、'
+      + '設定後の受付・承認分から反映されます。</p>'
+      + '<div class="btns"><button id="rsCancel">キャンセル</button><button class="primary" id="rsSave">保存</button></div>');
+    $('rsCancel').onclick = closeModal;
+    $('rsSave').onclick = function(){
+      db.collection('checkinUnions').doc(un).set({ issuer: $('rsIssuer').value.trim() }, { merge: true })
+        .then(function(){ closeModal(); toast('発行者名を保存しました'); })
+        .catch(function(e){ toast(permMsg(e, '設定の変更はユニオン管理者のみ可能です')); });
+    };
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+};
+
 /* 会計タブ: 月内イベントの会計状況一覧 */
 function loadFinanceTab(){
   $('fnMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
+  $('btnRcptSet').classList.toggle('hide', !canEditUnion(gFinUnion));
   var key = monthKey(gMonth.y, gMonth.m), body = $('finBody');
   db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
     var evs = [];
@@ -2098,7 +2195,12 @@ function startReception(ev){
   $('pKiosk').classList.add('on');
 
   gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null,
-           feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1 };
+           feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1,
+           issuer: RCPT_ISSUER_DEFAULT };
+  // 電子領収書の発行者名（主催ユニオンの設定を読む）
+  db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
+    if(gRec && gRec.ev === ev && s.exists && s.data().issuer) gRec.issuer = s.data().issuer;
+  }).catch(function(){});
   renderFeeRow();
   $('recNone').classList.add('hide');
   $('recArea').classList.remove('hide');
@@ -2176,6 +2278,24 @@ function setPay(no, fields){
   db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
     .set(fields, { merge: true })
     .catch(function(e){ toast(permMsg(e, '会計の記録権限がありません')); });
+  syncReceipt(no);
+}
+/* 電子領収書: 徴収状態に合わせて本人のスマホ会員証に自動で発行・更新・取消する。
+   紙カードのみの人（cardTokenなし）とゲストは対象外＝従来の紙領収書で運用 */
+function syncReceipt(no){
+  if(!gRec) return;
+  var m = gRec.roster[no];
+  if(!m || !m.cardToken) return;
+  var a = gRec.att[no];
+  var key = 'rcpt_' + gRec.ev.id, u = {};
+  if(a && (a.fee || 0) > 0 && a.paid !== false){
+    u[key] = { d: gRec.ev.date || '', ev: gRec.ev.name || '',
+               amt: (a.fee || 0) - (a.refund || 0),
+               by: gRec.issuer || RCPT_ISSUER_DEFAULT, no: no, at: Date.now() };
+  } else {
+    u[key] = FV.delete();   // 未徴収・取消は領収書も取り下げ
+  }
+  db.collection('cards').doc(m.cardToken).set(u, { merge: true }).catch(function(){});
 }
 function payModal(no){
   var a = gRec && gRec.att[no];
@@ -2286,6 +2406,7 @@ function attListModal(mode){
       if(!window.confirm(a.name + ' さんの受付を取り消しますか？出席・徴収の記録が削除されます。')) return;
       delete gRec.att[no];
       renderTallies();
+      syncReceipt(no);
       db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
         .delete()
         .catch(function(e2){ toast(permMsg(e2, '取消の権限がありません')); });
@@ -2545,6 +2666,7 @@ function writeAttendance(id, data){
       beep('ng');
       toast(permMsg(e, '出席の記録権限がありません（参加ユニオンのメンバーのみ受付できます）'));
     });
+  syncReceipt(id);
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
