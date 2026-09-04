@@ -831,10 +831,26 @@ function renderOnlineEvents(c){
         + (ev.speaker ? '<span class="se-sub">🎤 ' + esc(ev.speaker) + '</span>' : '');
       var body;
       if(mark === 'approved'){
+        var zRow = function(label, value, btnId, btnLabel){
+          return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;">'
+            + '<span style="flex:0 0 92px;font-size:12px;color:var(--sub);text-align:left;">' + label + '</span>'
+            + '<b class="mono" style="flex:1;text-align:left;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(value) + '</b>'
+            + '<button id="' + btnId + '" style="flex:0 0 auto;width:auto;padding:5px 10px;font-size:11.5px;">' + btnLabel + '</button>'
+            + '</div>';
+        };
         body = '<div class="se-done">✓ 受講が承認されました</div>'
           + (ev.zoomUrl
-            ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する</a>'
-            : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoom URLは当日までにここに表示されます。開催時間に開き直してください。</p>');
+            ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する（この端末で開く）</a>'
+            : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoomの参加情報は当日までにここに表示されます。開催時間に開き直してください。</p>')
+          + ((ev.zoomId || ev.zoomPw || ev.zoomUrl)
+            ? '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:8px;">'
+              + '<div style="font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--sub);margin-bottom:4px;">PCで参加する場合</div>'
+              + (ev.zoomId ? zRow('ミーティングID', fmtZoomId(ev.zoomId), 'zcId_' + i, 'コピー') : '')
+              + (ev.zoomPw ? zRow('パスコード', ev.zoomPw, 'zcPw_' + i, 'コピー') : '')
+              + (ev.zoomUrl ? zRow('参加URL', ev.zoomUrl.replace(/^https?:\/\//, ''), 'zcUrl_' + i, 'URLをコピー') : '')
+              + '<p style="font-size:11.5px;color:var(--sub);margin:6px 0 0;text-align:left;">PCのZoomで「参加」→ 上のIDとパスコードを入力。またはURLをコピーしてPCのブラウザに貼り付けてください。</p>'
+              + '</div>'
+            : '');
       } else if(mark === 'rejected'){
         body = '<p style="color:var(--accent);font-weight:700;font-size:14px;">申請が承認されませんでした。<br><span style="font-weight:400;font-size:12.5px;">内容に不備があった可能性があります。Uラインまたは受付担当に確認してください。</span></p>';
       } else if(applied){
@@ -855,6 +871,11 @@ function renderOnlineEvents(c){
       return '<div class="selfevent" id="ol_' + i + '" style="border-color:var(--focus);">' + head + body + '</div>';
     }).join('');
     evs.forEach(function(ev, i){
+      // PC参加用のコピー（承認済み表示）
+      var bId = $('zcId_' + i), bPw = $('zcPw_' + i), bUrl = $('zcUrl_' + i);
+      if(bId) bId.onclick = function(){ copyText(fmtZoomId(ev.zoomId), bId); };
+      if(bPw) bPw.onclick = function(){ copyText(ev.zoomPw || '', bPw); };
+      if(bUrl) bUrl.onclick = function(){ copyText(ev.zoomUrl || '', bUrl); };
       var op = $('olOpen_' + i);
       if(op) op.onclick = function(){ op.classList.add('hide'); $('olForm_' + i).classList.remove('hide'); };
       var go = $('olGo_' + i);
@@ -1894,6 +1915,48 @@ function eventForm(ev){
   };
 }
 
+/* ---------- Zoom招待の自動判別・参加情報 ---------- */
+// Zoomの「招待をコピー」全文から 参加URL / ミーティングID / パスコード を抜き出す。
+// チャットリンク(/launch/jc/)や参加手順(/meetings/...)のURLは拾わない。
+function parseZoomInvite(t){
+  var out = { url: '', id: '', pw: '' };
+  var m = t.match(/https?:\/\/[^\s"'<>]*zoom\.us\/j\/[^\s"'<>]+/);
+  if(m) out.url = m[0];
+  m = t.match(/ミーティング\s*ID[:：]?\s*([0-9 　]+)/) || t.match(/Meeting\s*ID[:：]?\s*([0-9 ]+)/i);
+  if(m) out.id = m[1].replace(/[ 　]/g, '');
+  if(!out.id && out.url){
+    var mm = out.url.match(/\/j\/(\d+)/);
+    if(mm) out.id = mm[1];
+  }
+  m = t.match(/パスコード[:：]?\s*(\S+)/) || t.match(/Passcode[:：]?\s*(\S+)/i);
+  if(m) out.pw = m[1];
+  return out;
+}
+// ミーティングIDをZoom表記（865 9954 5845）に整形
+function fmtZoomId(id){
+  var d = String(id || '').replace(/\D/g, '');
+  var m = d.match(/^(\d{3})(\d{3,4})(\d{4})$/);
+  return m ? (m[1] + ' ' + m[2] + ' ' + m[3]) : d;
+}
+function copyText(t, btn){
+  function done(){
+    if(!btn) return;
+    var o = btn.textContent;
+    btn.textContent = '✓ コピー済';
+    setTimeout(function(){ btn.textContent = o; }, 1500);
+  }
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){}
+    ta.remove();
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done).catch(fallback);
+  } else fallback();
+}
+
 /* ---------- オンライン受講の承認キュー ---------- */
 function onlineModal(ev){
   // 電子領収書の発行者名（主催ユニオンの設定）
@@ -1930,18 +1993,51 @@ function onlineModal(ev){
         + '</div>';
     }).join('');
     modal('<h2>💻 オンライン受講 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
-      + '<label>Zoom URL（保存すると承認済みの受講者の会員証に表示されます）</label>'
-      + '<div style="display:flex;gap:8px;"><input type="text" id="olZoom" value="' + esc(ev.zoomUrl || '') + '" style="flex:1;min-width:0;" placeholder="https://zoom.us/j/...">'
+      + '<label>Zoom参加情報（保存すると承認済みの受講者の会員証に表示されます）</label>'
+      + '<textarea id="olZoomPaste" rows="2" placeholder="Zoomの「招待をコピー」の全文をここに貼り付けると、URL・ID・パスコードを自動で抜き出します"'
+      + ' style="width:100%;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical;"></textarea>'
+      + '<div id="olZoomMsg" style="font-size:12px;color:var(--green);min-height:1.2em;margin:3px 0 4px;"></div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+      + '<input type="text" id="olZoom" value="' + esc(ev.zoomUrl || '') + '" style="flex:1;min-width:170px;" placeholder="参加URL（https://…zoom.us/j/…）">'
+      + '<input type="text" id="olZoomId" value="' + esc(fmtZoomId(ev.zoomId || '')) + '" style="width:140px;" placeholder="ミーティングID">'
+      + '<input type="text" id="olZoomPw" value="' + esc(ev.zoomPw || '') + '" style="width:110px;" placeholder="パスコード">'
       + '<button id="olZoomSave">保存</button></div>'
       + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）</label>'
       + (rows || '<p style="color:var(--sub);font-size:13px;">申請はまだありません。受講者は自分の会員証から申請できます。</p>')
       + '<div class="btns"><button id="olClose">閉じる</button></div>',
       true);
     $('olClose').onclick = closeModal;
+    // 招待の丸ごと貼り付け → 自動判別して各欄に反映
+    $('olZoomPaste').addEventListener('input', function(){
+      var t = $('olZoomPaste').value;
+      if(t.trim().length < 8) return;
+      var z = parseZoomInvite(t);
+      var got = [];
+      if(z.url){ $('olZoom').value = z.url; got.push('URL'); }
+      if(z.id){ $('olZoomId').value = fmtZoomId(z.id); got.push('ミーティングID'); }
+      if(z.pw){ $('olZoomPw').value = z.pw; got.push('パスコード'); }
+      $('olZoomMsg').textContent = got.length
+        ? '✓ ' + got.join('・') + ' を検出しました。内容を確認して「保存」を押してください'
+        : '';
+      if(!got.length){
+        $('olZoomMsg').style.color = 'var(--accent)';
+        $('olZoomMsg').textContent = 'Zoomの参加情報が見つかりませんでした。招待の全文を貼り付けてください';
+      } else {
+        $('olZoomMsg').style.color = 'var(--green)';
+      }
+    });
     $('olZoomSave').onclick = function(){
-      db.collection('checkinEvents').doc(ev.id).set({ zoomUrl: $('olZoom').value.trim() }, { merge: true })
-        .then(function(){ ev.zoomUrl = $('olZoom').value.trim(); toast('Zoom URLを保存しました'); loadEvents(); })
-        .catch(function(e){ toast(permMsg(e, 'Zoom URLの保存権限がありません')); });
+      var upd = {
+        zoomUrl: $('olZoom').value.trim(),
+        zoomId: $('olZoomId').value.replace(/\D/g, ''),
+        zoomPw: $('olZoomPw').value.trim()
+      };
+      db.collection('checkinEvents').doc(ev.id).set(upd, { merge: true })
+        .then(function(){
+          ev.zoomUrl = upd.zoomUrl; ev.zoomId = upd.zoomId; ev.zoomPw = upd.zoomPw;
+          toast('Zoom参加情報を保存しました'); loadEvents();
+        })
+        .catch(function(e){ toast(permMsg(e, 'Zoom情報の保存権限がありません')); });
     };
     document.querySelector('.modal').addEventListener('click', function(e){
       var b = e.target.closest ? e.target.closest('button[data-ola]') : null;
