@@ -537,7 +537,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .insta-btn svg{width:14px;height:14px;fill:white}
 .nc:hover .insta-btn, .nc.selected .insta-btn{opacity:1}
 /* 選択中カード */
-.nc.selected{box-shadow:0 0 0 2px var(--accent);background:rgba(44,229,184,.06)}
+.nc.selected{box-shadow:0 0 0 2px var(--accent);background:rgba(44,229,184,.06);padding-bottom:15px} /* v450: ヒント文字の重なり回避 */
 .nc.selected::after{
   content:'ダブルタップで編集';
   position:absolute;bottom:4px;right:8px;
@@ -2285,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v448</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v450</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4585,13 +4585,23 @@ function buildRegionFilter(members, wrap) {
   });
   return true;
 }
-function applyRegionDim() {
+function applyRegionDim() { _applyMapDims(); }
+// v450: カテゴリ絞り込み×地域絞り込みを1つの処理で同時適用。
+// 従来は別々の関数がそれぞれopacityを書いていたため、後から走った方が先の薄暗を消していた
+// （研修生で絞り込んでも保存・再描画のたびに全員明るく戻る／該当0人でも強調が残るバグの真因）
+function _applyMapDims() {
+  var catF = (typeof mapCatFilter !== 'undefined') ? mapCatFilter : '';
+  var regF = (typeof regionFilter !== 'undefined') ? regionFilter : '';
   // PC組織図ノード（SVG）
   var nodes = document.querySelectorAll('.oval-node');
   var _lin9 = (typeof window !== 'undefined' && window._pcFocusLineage) || ''; // v438: 系列フォーカスと両立
   for (var i=0;i<nodes.length;i++){
     var r = (nodes[i].getAttribute('data-region') || '').trim(); // v420: 表記ゆれ（前後スペース）で判定が狂うバグ修正
-    var ok = !regionFilter || (regionFilter === '__NONE__' ? !r : (r === regionFilter));
+    var ok = !regF || (regF === '__NONE__' ? !r : (r === regF));
+    if (ok && catF) {
+      var mN = _findMemberComposed(nodes[i].getAttribute('data-mid'));
+      ok = !!(mN && memberMatchesFilter(mN, catF));
+    }
     var _nl9 = nodes[i].getAttribute('data-lineage');
     var _fOk9 = (!_lin9 || _nl9 === _lin9 || _nl9 === '');
     nodes[i].style.opacity = !ok ? '0.22' : (_fOk9 ? '1' : '0.6');
@@ -4601,7 +4611,8 @@ function applyRegionDim() {
   for (var j=0;j<cards.length;j++){
     var m = _findMemberComposed(cards[j].getAttribute('data-cid'));
     var rr = ((m && m.region) ? m.region : '').trim(); // v420: 正規化
-    var ok2 = !regionFilter || (regionFilter === '__NONE__' ? !rr : (rr === regionFilter));
+    var ok2 = !regF || (regF === '__NONE__' ? !rr : (rr === regF));
+    if (ok2 && catF) ok2 = !!(m && memberMatchesFilter(m, catF));
     cards[j].style.opacity = ok2 ? '' : '0.3';
   }
 }
@@ -4694,22 +4705,7 @@ function buildMapCatChips(members) {
   }).join('');
 }
 function setMapCatFilter(f) { mapCatFilter = f; renderCurrentView(); setTimeout(applyMapCatDim, 180); }
-function applyMapCatDim() {
-  // PC組織図ノード ※結合ノードも合成リストで解決
-  var nodes = document.querySelectorAll('.oval-node');
-  for (var i=0;i<nodes.length;i++){
-    var m = _findMemberComposed(nodes[i].getAttribute('data-mid'));
-    var ok = !mapCatFilter || (m && memberMatchesFilter(m, mapCatFilter));
-    nodes[i].style.opacity = ok ? '1' : '0.2';
-  }
-  // モバイルツリーカード
-  var cards = document.querySelectorAll('.nc[data-cid]');
-  for (var j=0;j<cards.length;j++){
-    var m2 = _findMemberComposed(cards[j].getAttribute('data-cid'));
-    var ok2 = !mapCatFilter || (m2 && memberMatchesFilter(m2, mapCatFilter));
-    cards[j].style.opacity = ok2 ? '' : '0.3';
-  }
-}
+function applyMapCatDim() { _applyMapDims(); } // v450: 地域と統合（_applyMapDims）
 
 
 // ── テーマ切替 ──
@@ -5164,7 +5160,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v448';
+  var DATA_VERSION = 'v450';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6123,6 +6119,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v450', d:'2026-09-04', items:['🐛 モバイルMAPのカテゴリ絞り込み（研修生など）のバグを修正：絞り込み中にメンバーを保存したり再描画が入ると全員が明るく戻ってしまう／該当者がいないのに一部が強調されたままになる問題を根治しました（カテゴリと地域の薄暗表示が互いを上書きしていたのが原因。1つの処理に統合）','💬 選択中カードの「ダブルタップで編集」の案内文字が地域などの表示に重なっていたのを修正（案内用の余白を確保）'] },
+  { v:'v449', d:'2026-09-02', items:['🐛 記録を保存した後に追加・修正して保存し直しても、推移の履歴詳細やホームの日シートに追加分が反映されない問題を修正しました（古い読み取りキャッシュを保存時に破棄するように）'] },
   { v:'v448', d:'2026-09-02', items:['🖼 ホーム画面アイコンが古い画像のまま残る問題の対策：iOSがアイコンをURL単位で強くキャッシュするため、アイコンURLにバージョンを付けて取り直させるようにしました（アップロード後にホーム画面から削除→再追加してください）'] },
   { v:'v447', d:'2026-09-02', items:['🐛筋トレ記録の入力消失を修正：入力途中に「スキップ」や「＋この日だけ種目を追加」を押すと、他の種目で変えた重量・回数・限界マーク・ドロップセットが初期値に戻ってしまう問題を根治しました（保存前の入力を保持したまま再描画します）','🔧同名種目の重複を自動統合：種目マスターに同じ名前が2つあると「編集しても反映されない」原因になるため、読み込み時に1つへ統合し、大項目の参照も自動で張り替えます。新規登録・名前変更時も同名の重複を防止','📣アイコン・アプリ名がMAPのままの方へ：manifest.webmanifest とアイコン画像4枚のアップロードが必要です（今回の配布ファイルに同梱）'] },
   { v:'v446', d:'2026-09-02', items:['💪🗓ホームタブが月カレンダーになりました：実施日は緑「A✓」、予定はピンク、予定のままやらなかった日はグレーで一目瞭然。日付をタップすると、予定を入れる（大項目/ラン/休養をワンタップ）・内容をその場で見る・後追いで記録を入力ができます。月間の実施回数と累計トン数も表示','📋「Claudeに相談」を廃止し、履歴に「この日をコピー」ボタンを追加：種目ごとのインターバル秒数付きでその日の内容をコピーできます（履歴の展開内と、ホームカレンダーの日詳細の両方から）'] },
@@ -13984,6 +13982,7 @@ function _fitSaveDay() {
   if (_fitDay.body && _fitDay.body.w) { e2.w = _fitDay.body.w; if (_fitDay.body.fat) e2.bf = _fitDay.body.fat; if (_fitDay.body.tag) e2.t = _fitDay.body.tag; }
   _fitCal = _fitCal || {};
   if (Object.keys(e2).length) _fitCal[_fitYmd] = e2; else delete _fitCal[_fitYmd];
+  try { delete _fitHistCache[_fitYmd]; delete _fitHistOpen[_fitYmd]; } catch(eHc9) {} // v449: 再保存した日の履歴詳細キャッシュを破棄（推移・日シートに追加分が出ない問題の修正）
   fsSet(_fitP('meta/calendar'), { days: _fitCal, vcv: (_fitCalVer || 0), updatedAt: new Date().toISOString() });
   try { if (currentView === 'events') renderEvents(); } catch(eR) {}
 }
