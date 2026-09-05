@@ -556,7 +556,13 @@ tr:last-child td{border-bottom:none;}
     <input type="text" id="rvNo" inputmode="numeric" placeholder="例: 412211" style="text-align:center;font-size:20px;letter-spacing:.12em;">
     <button class="primary" id="rvGo" style="width:100%;margin-top:12px;padding:13px;font-size:16px;">会員証を開く</button>
     <p class="mc-err" id="rvErr"></p>
-    <p style="font-size:12.5px;color:var(--sub);margin-top:16px;line-height:1.8;">開いたら、ブラウザの「ホーム画面に追加」をしておくと次回すぐ使えます。<br>番号がわからない場合は受付にお問い合わせください。</p>
+    <div class="notice" style="text-align:left;margin-top:16px;">
+      カードの番号が「<b>REVE ○○</b>」の方へ：システム化にともない、新しい番号
+      「<b>RV00○○</b>」に変わりました（例: REVE 12 → <b>RV0012</b>）。<br>
+      そのまま「REVE 12」と入力しても自動で新しい番号に変換されます。<br>
+      <b>数字のみの番号の方は今までどおり</b>です。
+    </div>
+    <p style="font-size:12.5px;color:var(--sub);margin-top:14px;line-height:1.8;">開いたら、ブラウザの「ホーム画面に追加」をしておくと次回すぐ使えます。<br>番号がわからない場合は受付にお問い合わせください。</p>
   </div>
 </div>
 
@@ -1092,9 +1098,13 @@ if(gCardToken){ showCardView(gCardToken); }
 if(gReceiveMode){
   showView('vReceive');
   var rvOpen = function(){
+    // 全角→半角・大文字化・空白等を除去。旧表記「REVE 12」は新番号 RV0012 に自動変換
     var no = $('rvNo').value
-      .replace(/[０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
-      .replace(/\D/g, '');
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '');
+    var m = no.match(/^(?:REVE|RV)(\d{1,4})$/);
+    if(m) no = 'RV' + ('0000' + m[1]).slice(-4);
     $('rvErr').textContent = '';
     if(!no){ $('rvErr').textContent = '会員番号を入力してください'; return; }
     $('rvGo').disabled = true;
