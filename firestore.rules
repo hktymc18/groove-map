@@ -322,6 +322,15 @@ service cloud.firestore {
     // スマホ会員証: トークン(URL)を知っている本人だけが自分のカードを表示できる。
     // get のみ公開（list 不可＝一覧の抜き出しはできない）。
     // 発行・再発行・無効化はログイン済みなら誰でも可（受付スタッフが配布できるように）。
+    // 受け取りリンク用: 会員番号 → 会員証トークンの対応表。
+    // 共通URLから本人が自分の番号でカードを開くために get のみ公開（list 不可）。
+    // 作成・更新・削除は発行/再発行/無効化と連動（ログイン済みのみ）。
+    match /cardClaims/{no} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if signedIn();
+    }
+
     match /cards/{token} {
       allow get: if true;
       allow list: if false;

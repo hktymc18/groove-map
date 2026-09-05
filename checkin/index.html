@@ -450,6 +450,7 @@ tr:last-child td{border-bottom:none;}
       <span style="flex:1"></span>
       <button id="btnCardBulk">会員証一括発行</button>
       <button id="btnCardUrls">会員証URL一覧</button>
+      <button id="btnReceiveLink">受け取りリンク</button>
       <button id="btnPrintCards">カード印刷</button>
       <button id="btnDelAll" class="danger">全削除…</button>
     </div>
@@ -546,6 +547,19 @@ tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+<!-- ═══ 会員証の受け取り（共通リンク・ログイン不要） ═══ -->
+<div id="vReceive" class="hide">
+  <div class="gate">
+    <h1>スマホ会員証の受け取り</h1>
+    <p class="s">お手持ちのQRカード（紙カード）の会員番号を入力すると、あなた専用のスマホ会員証が開きます。</p>
+    <label for="rvNo">会員番号</label>
+    <input type="text" id="rvNo" inputmode="numeric" placeholder="例: 412211" style="text-align:center;font-size:20px;letter-spacing:.12em;">
+    <button class="primary" id="rvGo" style="width:100%;margin-top:12px;padding:13px;font-size:16px;">会員証を開く</button>
+    <p class="mc-err" id="rvErr"></p>
+    <p style="font-size:12.5px;color:var(--sub);margin-top:16px;line-height:1.8;">開いたら、ブラウザの「ホーム画面に追加」をしておくと次回すぐ使えます。<br>番号がわからない場合は受付にお問い合わせください。</p>
+  </div>
+</div>
+
 <div id="printArea"></div>
 <div id="rcptPrint"></div>
 <div id="modalHost"></div>
@@ -605,7 +619,7 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp','vCard'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
 }
@@ -721,6 +735,7 @@ $('actLogout').onclick = function(){ auth.signOut(); };
 
 /* ── スマホ会員証モード（#c=トークン で開くとログイン不要の会員証表示） ── */
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
+var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
@@ -1073,8 +1088,36 @@ $('mcHelp').onclick = function(){
 
 if(gCardToken){ showCardView(gCardToken); }
 
+/* 共通受け取りリンク: 会員番号 → 自分の会員証（cardClaims/{番号} から引く） */
+if(gReceiveMode){
+  showView('vReceive');
+  var rvOpen = function(){
+    var no = $('rvNo').value
+      .replace(/[０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+      .replace(/\D/g, '');
+    $('rvErr').textContent = '';
+    if(!no){ $('rvErr').textContent = '会員番号を入力してください'; return; }
+    $('rvGo').disabled = true;
+    db.collection('cardClaims').doc(no).get().then(function(sn){
+      if(sn.exists && sn.data().t){
+        gCardToken = sn.data().t;
+        try{ history.replaceState(null, '', location.href.split('#')[0] + '#c=' + gCardToken); }catch(e){}
+        showCardView(gCardToken);
+      } else {
+        $('rvGo').disabled = false;
+        $('rvErr').textContent = 'この番号の会員証が見つかりません。番号を確認するか、受付にお問い合わせください。';
+      }
+    }).catch(function(){
+      $('rvGo').disabled = false;
+      $('rvErr').textContent = '読み込みに失敗しました。電波の良いところでもう一度お試しください。';
+    });
+  };
+  $('rvGo').onclick = rvOpen;
+  $('rvNo').addEventListener('keydown', function(e){ if(e.key === 'Enter') rvOpen(); });
+}
+
 auth.onAuthStateChanged(function(u){
-  if(gCardToken) return;   // 会員証モード中は通常画面に切り替えない
+  if(gCardToken || gReceiveMode) return;   // 会員証・受け取りモード中は通常画面に切り替えない
   gUser = u;
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
@@ -1541,6 +1584,7 @@ function issueCard(m, cb){
   batch.set(db.collection('checkinMembers').doc(m.no), {
     cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
   }, { merge: true });
+  batch.set(db.collection('cardClaims').doc(m.no), { t: token });   // 受け取りリンク用（番号→カード）
   return batch.commit().then(function(){
     m.cardToken = token; m.cardSig = token.slice(0, 6);
     if(cb) cb(token);
@@ -1552,6 +1596,7 @@ function revokeCard(m, cb){
   batch.set(db.collection('checkinMembers').doc(m.no), {
     cardToken: FV.delete(), cardSig: FV.delete(), cardStatus: 'revoked'
   }, { merge: true });
+  batch.delete(db.collection('cardClaims').doc(m.no));
   return batch.commit().then(function(){
     delete m.cardToken; delete m.cardSig;
     if(cb) cb();
@@ -1617,9 +1662,53 @@ $('btnCardBulk').onclick = function(){
         batch.set(db.collection('checkinMembers').doc(m.no), {
           cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
         }, { merge: true });
+        batch.set(db.collection('cardClaims').doc(m.no), { t: token });
       }
       batch.commit().then(nextBatch).catch(function(e){
         toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）'));
+      });
+    }
+    nextBatch();
+  };
+};
+/* 受け取りリンク: LINEグループに貼る共通URLと、番号→カードの対応データ生成 */
+$('btnReceiveLink').onclick = function(){
+  var url = location.href.split('#')[0] + '#receive';
+  var issued = gMembers.filter(function(m){ return m.cardToken; });
+  var lineMsg = '📱 スマホ会員証の受け取り\n'
+    + 'こちらを開いて、QRカード（紙カード）の会員番号を入力してください👇\n'
+    + url + '\n'
+    + '開いたら「ホーム画面に追加」をしておくと次回すぐ使えます！';
+  modal('<h2>📮 会員証の受け取りリンク</h2>'
+    + '<p style="font-size:13.5px;">この共通URLをLINEグループ等に貼るだけで配布できます。'
+    + '開いた人が自分の会員番号を入力すると、本人専用の会員証が開きます。</p>'
+    + '<input type="text" id="rlUrl" readonly value="' + esc(url) + '" style="width:100%;font-size:12.5px;">'
+    + '<div class="btns" style="justify-content:flex-start;margin-top:8px;">'
+    + '<button class="primary" id="rlCopy">URLをコピー</button>'
+    + '<button id="rlMsg">LINE用の案内文ごとコピー</button></div>'
+    + '<label style="margin-top:14px;">受け取り用データ（番号→会員証の対応表）</label>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:2px 0 8px;">「' + esc(gRosterUnion) + '」の発行済み <b>'
+    + issued.length + '名</b> 分を生成します。今後の発行・再発行・無効化は自動で反映されるため、'
+    + '<b>この生成は最初に1回だけでOK</b>です（何度押しても安全）。</p>'
+    + '<div class="btns"><button id="rlClose">閉じる</button>'
+    + (issued.length ? '<button class="primary" id="rlGen">' + issued.length + '名分を生成</button>' : '')
+    + '</div>');
+  $('rlClose').onclick = closeModal;
+  $('rlCopy').onclick = function(){ copyText(url, $('rlCopy')); };
+  $('rlMsg').onclick = function(){ copyText(lineMsg, $('rlMsg')); };
+  var g = $('rlGen');
+  if(g) g.onclick = function(){
+    g.disabled = true;
+    var i = 0;
+    function nextBatch(){
+      if(i >= issued.length){ toast(issued.length + '名分の受け取りデータを生成しました'); closeModal(); return; }
+      var batch = db.batch(), end = Math.min(i + 400, issued.length);
+      for(; i < end; i++){
+        batch.set(db.collection('cardClaims').doc(issued[i].no), { t: issued[i].cardToken });
+      }
+      batch.commit().then(nextBatch).catch(function(e){
+        g.disabled = false;
+        toast(permMsg(e, '生成に失敗しました（ログイン状態を確認してください）'));
       });
     }
     nextBatch();
