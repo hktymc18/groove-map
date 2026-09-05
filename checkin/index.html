@@ -1117,9 +1117,11 @@ if(gReceiveMode){
         $('rvGo').disabled = false;
         $('rvErr').textContent = 'この番号の会員証が見つかりません。番号を確認するか、受付にお問い合わせください。';
       }
-    }).catch(function(){
+    }).catch(function(e){
       $('rvGo').disabled = false;
-      $('rvErr').textContent = '読み込みに失敗しました。電波の良いところでもう一度お試しください。';
+      $('rvErr').textContent = (e && e.code === 'permission-denied')
+        ? 'システムの設定が完了していないため開けません。受付（管理者）にお知らせください。'
+        : '読み込みに失敗しました。電波の良いところでもう一度お試しください。';
     });
   };
   $('rvGo').onclick = rvOpen;
