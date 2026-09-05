@@ -60,7 +60,7 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v450';
+var CACHE = 'groove-map-v451';
 var ASSETS = [
   './',
   './index.html',
@@ -69,12 +69,28 @@ var ASSETS = [
   './icon-512.png',
   './icon-180.png'
 ];
+/* v451: オフライン起動用にFirebase SDK（バージョン固定URL）もキャッシュ。
+ * これが無いと機内モード等でSDKが読めず、認証・データ層ごと初期化に失敗して
+ * ログイン画面のまま何もできなかった。URL固定なのでキャッシュ優先でも安全
+ * （SDK更新時はURLが変わる＝自動で新しい方を取得）。 */
+var SDK_ASSETS = [
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js'
+];
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then(function (c) {
-      return c.addAll(ASSETS).catch(function () {});
+      return Promise.all([
+        c.addAll(ASSETS).catch(function () {}),
+        // v451: SDKはno-corsで取得（opaqueレスポンスでも<script>読み込みには使える）
+        Promise.all(SDK_ASSETS.map(function (u) {
+          return c.add(new Request(u, { mode: 'no-cors' })).catch(function () {});
+        }))
+      ]);
     })
   );
 });
@@ -95,7 +111,20 @@ self.addEventListener('fetch', function (e) {
 
   var url;
   try { url = new URL(req.url); } catch (err) { return; }
-  // 外部オリジン（Firebase/Firestore/gstatic/fonts等）はそのままネットワークへ
+  // v451: Firebase SDK（バージョン固定URL）はキャッシュ優先＝オフラインでも起動できる
+  if (SDK_ASSETS.indexOf(url.href) >= 0) {
+    e.respondWith(
+      caches.match(req).then(function (m) {
+        return m || fetch(new Request(url.href, { mode: 'no-cors' })).then(function (res) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(url.href, copy); });
+          return res;
+        });
+      })
+    );
+    return;
+  }
+  // 外部オリジン（Firestore通信/gstatic/fonts等）はそのままネットワークへ
   if (url.origin !== self.location.origin) return;
 
   var accept = req.headers.get('accept') || '';

@@ -2285,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v450</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v451</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3234,6 +3234,21 @@ var auth = typeof firebase !== 'undefined' ? firebase.auth()      : null;
 // 変更ぶんだけサーバー読み取り＝Firestoreの読み取り課金を大幅削減（他のfirestore呼び出しより先に実行）
 try { if (db) db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED }); } catch(eCs) {} // v387: 40MB上限で写真等が追い出されないように
 try { if (db) db.enablePersistence({ synchronizeTabs: true }).catch(function(){}); } catch(e) {}
+// v451: 初回オフライン起動（Firebase SDKが未キャッシュ）時は、壊れた画面ではなく案内を出す
+if (!db) {
+  window.addEventListener('load', function() {
+    try {
+      var ls9 = document.getElementById('loginScreen');
+      if (ls9) {
+        ls9.style.display = 'flex';
+        var d9 = document.createElement('div');
+        d9.style.cssText = 'margin-top:14px;padding:12px 16px;border:1px solid #FFB454;border-radius:12px;color:#FFB454;font-size:12.5px;line-height:1.8;max-width:320px;text-align:center';
+        d9.textContent = '📡 オフラインのため起動に必要なデータを読み込めませんでした。一度オンラインの状態でアプリを開くと、次回からはオフラインでも閲覧・入力できます。';
+        ls9.appendChild(d9);
+      }
+    } catch(e9) {}
+  });
+}
 
 // Firestore保存
 // v387: オフライン編集対応 — オフライン中の書き込みは端末に記録され、復帰時にFirestoreが自動送信する。
@@ -5160,7 +5175,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v450';
+  var DATA_VERSION = 'v451';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6119,6 +6134,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v451', d:'2026-09-05', items:['📡 オフライン起動に対応：機内モードや圏外でもアプリを開いて、MAP・予定・トレーニングの閲覧と入力ができるようになりました（入力分は電波復帰時に自動同期）。仕組み上、一度オンラインで開いたことのある端末が対象です。初回ログインだけはオンラインが必要です'] },
   { v:'v450', d:'2026-09-04', items:['🐛 モバイルMAPのカテゴリ絞り込み（研修生など）のバグを修正：絞り込み中にメンバーを保存したり再描画が入ると全員が明るく戻ってしまう／該当者がいないのに一部が強調されたままになる問題を根治しました（カテゴリと地域の薄暗表示が互いを上書きしていたのが原因。1つの処理に統合）','💬 選択中カードの「ダブルタップで編集」の案内文字が地域などの表示に重なっていたのを修正（案内用の余白を確保）'] },
   { v:'v449', d:'2026-09-02', items:['🐛 記録を保存した後に追加・修正して保存し直しても、推移の履歴詳細やホームの日シートに追加分が反映されない問題を修正しました（古い読み取りキャッシュを保存時に破棄するように）'] },
   { v:'v448', d:'2026-09-02', items:['🖼 ホーム画面アイコンが古い画像のまま残る問題の対策：iOSがアイコンをURL単位で強くキャッシュするため、アイコンURLにバージョンを付けて取り直させるようにしました（アップロード後にホーム画面から削除→再追加してください）'] },
@@ -22791,7 +22807,14 @@ if (auth) {
   auth.onAuthStateChanged(function(fbUser) {
     if (fbUser) {
       // Firestoreからプロフィール取得
-      fsGet('users/' + fbUser.uid).then(function(profile) {
+      fsGet('users/' + fbUser.uid).catch(function() {
+        // v451: オフライン等で読めない場合は前回ログイン時のスナップショットで起動
+        try {
+          var sp = JSON.parse(localStorage.getItem('gm_lastProfile') || 'null');
+          if (sp && sp.uid === fbUser.uid) return sp;
+        } catch(eSp) {}
+        return null;
+      }).then(function(profile) {
         if (!profile) {
           // プロフィール未作成（新規登録の途中 or 異常）→ アプリに入れず待機（保存失敗トースト等を防ぐ）
           if (typeof closeApprovalGate === 'function') closeApprovalGate();
@@ -22955,6 +22978,7 @@ function checkPendingApprovals(){
 
 function loginSuccess(user) {
   currentUser = user;
+  try { localStorage.setItem('gm_lastProfile', JSON.stringify(user)); } catch(eLp) {} // v451: オフライン起動用スナップショット
   // 承認制：承認待ち/無効はゲート表示してアプリに入れない（オーナー・レガシー(status無し=active)は通過）
   if (user.uid !== OWNER_UID && (user.status === 'pending' || user.status === 'disabled')) {
     showApprovalGate(user.status, user);
