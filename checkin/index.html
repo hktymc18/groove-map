@@ -880,6 +880,18 @@ function renderOnlineEvents(c){
       if(ev.online && (ev.unions || []).indexOf(c.union) >= 0) evs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    // 受付終了済みのイベントは申請フォームを出さない（申請済み・承認済みの人には結果・Zoom情報を表示継続）
+    evs = evs.filter(function(ev){
+      if(!ev.recClosed) return true;
+      var mark = c['online_' + ev.id] || '';
+      if(mark === 'reapply'){
+        try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+        return false;
+      }
+      var applied = false;
+      try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+      return !!mark || applied;
+    });
     evs = evs.slice(0, 4);
     if(!evs.length){ $('onlineArea').innerHTML = ''; return; }
     $('onlineArea').innerHTML = evs.map(function(ev, i){
@@ -2808,6 +2820,12 @@ $('btnRecStart').onclick = function(){
 $('btnRecStop').onclick = function(){
   var ev = gRec && gRec.ev;
   stopReception();
+  // 受付終了をイベントに記録 → 会員証側の「オンライン受講を申請する」を締め切る
+  // （ルール未対応などで書けなくても受付終了自体は成立させる）
+  if(ev){
+    ev.recClosed = true;
+    db.collection('checkinEvents').doc(ev.id).set({ recClosed: true }, { merge: true }).catch(function(){});
+  }
   // 受付終了 → そのまま会計入力へ
   if(ev && window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
 };
@@ -2822,6 +2840,11 @@ function startReception(ev){
   gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null,
            feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1,
            issuer: '' };
+  // 受付を開き直したら締め切りを解除（オンライン申請を再開）
+  if(ev.recClosed){
+    ev.recClosed = false;
+    db.collection('checkinEvents').doc(ev.id).set({ recClosed: false }, { merge: true }).catch(function(){});
+  }
   // 電子領収書の発行者名（主催ユニオンの設定を読む）
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
     if(gRec && gRec.ev === ev && s.exists && s.data().issuer) gRec.issuer = s.data().issuer;

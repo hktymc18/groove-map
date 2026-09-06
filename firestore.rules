@@ -271,11 +271,11 @@ service cloud.firestore {
                     && request.resource.data.get('unions',[])
                          .hasAny([request.resource.data.get('hostUnion','')]);
       allow update, delete: if isCkAdmin(resource.data.get('hostUnion',''));
-      // Zoom参加情報（URL・ミーティングID・パスコード）の登録・変更は
-      // ログイン済みメンバーなら可（オンライン受付の運用者向け）
+      // Zoom参加情報（URL・ミーティングID・パスコード）と受付終了フラグ（recClosed）の
+      // 登録・変更はログイン済みメンバーなら可（受付・オンライン受付の運用者向け）
       allow update: if signedIn()
                     && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['zoomUrl', 'zoomId', 'zoomPw']);
+                         .hasOnly(['zoomUrl', 'zoomId', 'zoomPw', 'recClosed']);
 
       match /attendance/{aid} {
         allow read: if signedIn();
