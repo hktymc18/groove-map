@@ -463,6 +463,7 @@ tr:last-child td{border-bottom:none;}
       <button class="primary" id="btnAddMember">＋ メンバー追加</button>
       <button id="btnCsvIn">CSV取込</button>
       <button id="btnCsvOut">CSV出力</button>
+      <button id="btnGroupRen" class="hide">系列名変更</button>
     </div>
     <div class="toolrow hide" id="bulkRow">
       <span style="font-size:13px;font-weight:700;" id="selCount">選択中: 0名</span>
@@ -1433,6 +1434,7 @@ function renderRoster(){
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
+  $('btnGroupRen').classList.toggle('hide', !edit);
   var tb = $('rosterBody'), html = '', shown = 0;
   gMembers.forEach(function(m){
     var name = m.name || '';
@@ -1975,6 +1977,69 @@ $('btnCsvOut').onclick = function(){
       m.sex === 'm' ? '男' : (m.sex === 'f' ? '女' : '')]);
   });
   csvDownload('members_' + gRosterUnion + '.csv', rows);
+};
+/* ── 系列名の一括変更（名簿と発行済み会員証に反映。過去の出席記録の表記は変えない）── */
+$('btnGroupRen').onclick = function(){
+  if(!canEditRoster()){ toast('系列名の変更はユニオン管理者・受付管理者のみ可能です'); return; }
+  modal('<h2>系列名の一括変更</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行に1件、「旧名→新名」で入力してください（「,」やタブ区切りも可）。<br>'
+    + '「' + esc(gRosterUnion) + '」の名簿と発行済み会員証に反映されます。過去の出席記録の表記はそのまま残ります。</p>'
+    + '<textarea id="grText" rows="8" placeholder="旧系列名→新系列名&#10;（例）〇〇BD→山田 太郎"></textarea>'
+    + '<div id="grPrev" style="font-size:13.5px;margin-top:8px;"></div>'
+    + '<div class="btns"><button id="grCancel">キャンセル</button>'
+    + '<button id="grCheck">プレビュー</button><button class="primary hide" id="grGo">変更する</button></div>');
+  $('grCancel').onclick = closeModal;
+  var map = {};
+  $('grCheck').onclick = function(){
+    map = {};
+    $('grText').value.split(/\r?\n/).forEach(function(ln){
+      var c = ln.split(/→|,|\t/).map(function(x){ return x.trim(); }).filter(Boolean);
+      if(c.length >= 2) map[c[0]] = c[1];
+    });
+    var olds = Object.keys(map);
+    if(!olds.length){
+      $('grPrev').innerHTML = '<span style="color:var(--accent);">読み取れる行がありません</span>';
+      $('grGo').classList.add('hide');
+      return;
+    }
+    // 件数は最新の名簿で数える
+    fetchMembers(gRosterUnion).then(function(list){
+    gMembers = list;
+    var total = 0;
+    $('grPrev').innerHTML = olds.map(function(o){
+      var n = gMembers.filter(function(m){ return (m.group || '') === o; }).length;
+      total += n;
+      return '<div>' + esc(o) + ' → <b>' + esc(map[o]) + '</b>'
+        + '<span style="color:' + (n ? 'var(--sub)' : 'var(--accent)') + ';">　' + n + '名' + (n ? '' : '（該当なし）') + '</span></div>';
+    }).join('') + '<div style="margin-top:6px;">合計 <b>' + total + '</b> 名を変更します</div>';
+    $('grGo').classList.toggle('hide', !total);
+    }).catch(function(e){ toast(permMsg(e, '名簿の読み込みに失敗しました')); });
+  };
+  $('grGo').onclick = function(){
+    var targets = gMembers.filter(function(m){ return map[m.group || '']; });
+    if(!targets.length){ toast('該当メンバーがいません'); return; }
+    $('grGo').disabled = true;
+    var i = 0;
+    function nextBatch(){
+      if(i >= targets.length){
+        closeModal();
+        toast(targets.length + '名の系列名を変更しました（発行済み会員証にも反映）');
+        loadMembers();
+        return;
+      }
+      var batch = db.batch(), end = Math.min(i + 150, targets.length);
+      for(; i < end; i++){
+        var m = targets[i], ng = map[m.group || ''];
+        batch.set(db.collection('checkinMembers').doc(m.no), { group: ng, updatedAt: FV.serverTimestamp() }, { merge: true });
+        if(m.cardToken) batch.set(db.collection('cards').doc(m.cardToken), { group: ng }, { merge: true });
+      }
+      batch.commit().then(nextBatch).catch(function(e){
+        $('grGo').disabled = false;
+        toast(permMsg(e, '系列名の変更はユニオン管理者・受付管理者のみ可能です'));
+      });
+    }
+    nextBatch();
+  };
 };
 
 /* ---------- イベント（月単位） ---------- */
@@ -3601,6 +3666,9 @@ function loadStats(){
       else otherEvs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    // 稼働率の分母は「本日までに開催済み」のイベントのみ（月の途中でも正しい値になる）
+    var tdy = todayStr();
+    evs = evs.filter(function(ev){ return (ev.date || '') <= tdy; });
     if(!evs.length && !otherEvs.length){
       $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
@@ -3706,7 +3774,7 @@ function renderStats(evs, attMaps, unionMembers, visits){
     + '</div>'
     + '<div class="sectionhead"><h2>系列別のべ出席</h2><span class="note">' + esc(gStatUnion) + '</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
-    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷開催数 / 列見出しタップで並べ替え</span></div>'
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷本日までの開催数 / 列見出しタップで並べ替え</span></div>'
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
     + visitsHtml;
