@@ -495,7 +495,7 @@ tr:last-child td{border-bottom:none;}
       <select id="finUnionSel"></select>
       <span style="flex:1"></span>
       <button id="btnRcptCsv" class="hide">台帳CSV</button>
-      <button id="btnRcptSet" class="hide">🧾 領収書設定</button>
+      <button id="btnRcptSet" class="hide">⚙ ユニオン設定</button>
     </div>
     <div id="finBody"><p style="color:var(--sub)">読み込み中…</p></div>
   </section>
@@ -700,6 +700,32 @@ var gStatUnion = '';        // 集計タブで表示中のユニオン
 var gFinUnion = '';         // 会計タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
+var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
+// 初期の命名規則（ユニオン設定で上書き可能）
+var DEFAULT_NO_PREFIX = { 'BASE REVE': 'RV', 'BASE ANTARES': 'ANT' };
+function unionNoPrefix(un){ return gUnionPrefix[un] || DEFAULT_NO_PREFIX[un] || ''; }
+// 自動発番: プレフィックス+数字の既存最大値+1（4桁ゼロ埋め）。数字のみの旧番号は無視
+function nextMemberNo(list, un){
+  var pre = unionNoPrefix(un);
+  if(!pre) return '';
+  var re = new RegExp('^' + pre + '(\\d+)$'), max = 0;
+  list.forEach(function(m){
+    var x = re.exec(m.no || '');
+    if(x){ var n = parseInt(x[1], 10); if(n > max) max = n; }
+  });
+  var next = String(max + 1);
+  while(next.length < 4) next = '0' + next;
+  return pre + next;
+}
+function groupDatalist(list){
+  var seen = {}, out = [];
+  list.forEach(function(m){
+    var g = (m.group || '').trim();
+    if(g && !seen[g]){ seen[g] = true; out.push(g); }
+  });
+  out.sort();
+  return out.map(function(g){ return '<option value="' + esc(g) + '"></option>'; }).join('');
+}
 var gMembers = [];          // gRosterUnion の名簿
 var gMembersLoaded = false;
 var gSel = {};              // 名簿の選択状態 {no: true}
@@ -1182,6 +1208,7 @@ function afterLogin(){
       var un = d.data().name || d.id;
       gUnions.push(un);
       gCkAdmins[un] = d.data().admins || [];
+      gUnionPrefix[un] = d.data().noPrefix || '';
     });
     gUnions.sort();
     if(gUnions.indexOf(gUnion) < 0){
@@ -1567,11 +1594,14 @@ function memberForm(m){
         }).join('');
       })() + '</select>'
     : '<input type="text" value="' + esc(curUnion) + '" disabled>';
+  var autoNo = isNew ? nextMemberNo(gMembers, curUnion) : '';
   modal(
     '<h2>' + (isNew ? 'メンバー追加' : 'メンバー編集') + '</h2>'
-    + '<label>番号（QRコード）</label><input type="text" id="mfNo" ' + (isNew ? '' : 'disabled ') + 'value="' + esc(m.no || '') + '">'
+    + '<label>番号（QRコード）' + (isNew && autoNo ? '<span style="font-weight:400;color:var(--sub);">　自動発番（変更可）</span>' : '') + '</label>'
+    + '<input type="text" id="mfNo" ' + (isNew ? '' : 'disabled ') + 'value="' + esc(isNew ? (m.no || autoNo) : (m.no || '')) + '">'
     + '<label>氏名</label><input type="text" id="mfName" value="' + esc(m.name || '') + '">'
-    + '<label>系列（UPBD）</label><input type="text" id="mfGroup" value="' + esc(m.group || '') + '">'
+    + '<label>系列</label><input type="text" id="mfGroup" list="dlGroups" value="' + esc(m.group || '') + '" placeholder="タップで既存の系列から選択・新規入力も可">'
+    + '<datalist id="dlGroups">' + groupDatalist(gMembers) + '</datalist>'
     + '<label>所属ユニオン</label>' + unionField
     + '<label>ライセンスグレード</label>'
     + '<select id="mfGrade">' + GRADES.map(function(g){
@@ -1585,8 +1615,18 @@ function memberForm(m){
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
   $('mfCancel').onclick = closeModal;
+  // オーナーが所属ユニオンを切り替えたら、そのユニオンの名簿で採番・系列候補を出し直す
+  var us = $('mfUnion');
+  if(us && isNew) us.onchange = function(){
+    fetchMembers(us.value).then(function(list){
+      $('mfNo').value = nextMemberNo(list, us.value);
+      $('dlGroups').innerHTML = groupDatalist(list);
+    }).catch(function(){});
+  };
   $('mfSave').onclick = function(){
-    var no = (isNew ? $('mfNo').value : m.no).trim();
+    var no = (isNew ? $('mfNo').value : m.no)
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+      .toUpperCase().replace(/\s/g, '').trim();
     var name = $('mfName').value.trim(), group = $('mfGroup').value.trim();
     if(!no || !name){ toast('番号と氏名は必須です'); return; }
     var targetUnion = isOwner() ? $('mfUnion').value : curUnion;
@@ -1597,14 +1637,30 @@ function memberForm(m){
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
     if(isNew) data.createdAt = FV.serverTimestamp();
-    db.collection('checkinMembers').doc(no).set(data, {merge: true}).then(function(){
+    // 新規は番号の重複を保存前にチェック（既存メンバーの上書き事故を防ぐ）
+    var pre = isNew
+      ? db.collection('checkinMembers').doc(no).get().then(function(sn){
+          if(sn.exists){
+            throw { code: 'dup', name: (sn.data() && sn.data().name) || '' };
+          }
+        })
+      : Promise.resolve();
+    pre.then(function(){
+      return db.collection('checkinMembers').doc(no).set(data, {merge: true});
+    }).then(function(){
       // 発行済みの会員証があれば内容（氏名・系列・ユニオン・グレード）を反映
       return refreshCardDoc(m.cardToken, data);
     }).then(function(){
       closeModal();
       toast('保存しました（所属: ' + targetUnion + '）');
       loadMembers();
-    }).catch(function(e){ toast(permMsg(e, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
+    }).catch(function(e){
+      if(e && e.code === 'dup'){
+        toast('番号 ' + no + ' はすでに使われています（' + e.name + '）。別の番号にしてください');
+        return;
+      }
+      toast(permMsg(e, '名簿の編集はユニオン管理者・受付管理者のみ可能です'));
+    });
   };
 }
 function permMsg(e, hint){
@@ -2508,20 +2564,35 @@ function financeModal(ev){
 /* 領収書設定: 電子領収書の発行者名（ユニオンごと） */
 $('btnRcptSet').onclick = function(){
   var un = gFinUnion;
-  db.collection('checkinUnions').doc(un).get().then(function(s){
-    var cur = (s.exists && s.data().issuer) || '';
-    modal('<h2>🧾 領収書設定 — ' + esc(un) + '</h2>'
-      + '<label>発行者名（領収書の「上記金額を受領しました」の名義）</label>'
+  db.collection('checkinUnions').doc(un).get().then(function(sn){
+    var s0 = sn.exists ? sn.data() : null;
+    var cur = (s0 && s0.issuer) || '';
+    var curPre = (s0 && s0.noPrefix) || '';
+    modal('<h2>⚙ ユニオン設定 — ' + esc(un) + '</h2>'
+      + '<label>領収書の発行者名</label>'
       + '<input type="text" id="rsIssuer" value="' + esc(cur) + '" placeholder="例: 株式会社PROMOTE">'
-      + '<p style="font-size:12.5px;color:var(--sub);margin-top:8px;">'
-      + '<b>未設定（空欄）の間、このユニオンでは電子領収書は発行されません。</b><br>'
-      + 'ユニオンごとに設定でき、設定後に開始した受付・承認分から反映されます。</p>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
+      + '<b>未設定（空欄）の間、このユニオンでは電子領収書は発行されません。</b></p>'
+      + '<label style="margin-top:14px;">会員番号プレフィックス（自動発番）</label>'
+      + '<input type="text" id="rsPrefix" value="' + esc(curPre) + '" placeholder="例: RV → RV0001, RV0002…">'
+      + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
+      + 'メンバー追加時に「プレフィックス+4桁」で自動発番します。'
+      + '未設定の場合、BASE REVE=RV / BASE ANTARES=ANT の初期値が使われ、その他のユニオンは手入力です。</p>'
       + '<div class="btns"><button id="rsCancel">キャンセル</button><button class="primary" id="rsSave">保存</button></div>');
     $('rsCancel').onclick = closeModal;
     $('rsSave').onclick = function(){
-      db.collection('checkinUnions').doc(un).set({ issuer: $('rsIssuer').value.trim() }, { merge: true })
-        .then(function(){ closeModal(); toast('発行者名を保存しました'); })
-        .catch(function(e){ toast(permMsg(e, '設定の変更はユニオン管理者のみ可能です')); });
+      var upd = {
+        issuer: $('rsIssuer').value.trim(),
+        noPrefix: $('rsPrefix').value
+          .replace(/[Ａ-Ｚａ-ｚ]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+          .toUpperCase().replace(/[^A-Z]/g, '')
+      };
+      db.collection('checkinUnions').doc(un).set(upd, { merge: true })
+        .then(function(){
+          gUnionPrefix[un] = upd.noPrefix;
+          closeModal(); toast('ユニオン設定を保存しました');
+        })
+        .catch(function(e){ toast(permMsg(e, '設定の変更はユニオン管理者・受付管理者のみ可能です')); });
     };
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
 };
