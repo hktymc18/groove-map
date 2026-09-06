@@ -421,9 +421,11 @@ tr:last-child td{border-bottom:none;}
           <button id="btnGuest">ゲスト受付</button>
         </div>
         <div class="manualrow">
-          <label style="font-size:12.5px;font-weight:700;color:var(--sub);">登壇者:</label>
+          <label style="font-size:12.5px;font-weight:700;color:var(--sub);">登壇者・運営:</label>
           <button id="btnMC">MCを登録</button>
           <button id="btnSpeaker">スピーカーを登録</button>
+          <button id="btnStaffRole">受付管理者を登録</button>
+          <button id="btnAdminRole">ユニオン管理者を登録</button>
         </div>
       </div>
       <aside class="side">
@@ -434,7 +436,7 @@ tr:last-child td{border-bottom:none;}
           <div id="cashSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div>
           <div id="unpaidList" style="margin-top:6px;"></div>
         </div>
-        <div class="tile tap hide" id="roleTile"><h3>MC・スピーカー</h3><div id="roleList"></div></div>
+        <div class="tile tap hide" id="roleTile"><h3>MC・スピーカー・運営</h3><div id="roleList"></div></div>
         <div class="tile tap hide" id="unionTallyTile"><h3>ユニオン別</h3><div id="unionTally"></div></div>
         <div class="tile tap" id="groupTile"><h3>系列別</h3><div id="groupTally"></div></div>
         <div class="tile tap" id="recentTile"><h3>受付履歴</h3><ul class="recent" id="recent"></ul></div>
@@ -2848,7 +2850,7 @@ function payModal(no){
     if(paid && !refund) btns += '<button id="pmRefund">¥500 返金する（2部不参加）</button>';
     if(refund) btns += '<button id="pmUnrefund">返金を取り消す</button>';
   } else {
-    btns += '<p style="font-size:13px;color:var(--sub);">この受付は徴収対象外です（登壇者・セルフ等）。</p>';
+    btns += '<p style="font-size:13px;color:var(--sub);">この受付は徴収対象外です（登壇者・運営・セルフ等）。</p>';
   }
   modal('<h2>会計操作 — ' + esc(a.name || '') + '</h2>'
     + '<p style="font-size:14px;">現在: <b>' + status + '</b></p>'
@@ -2889,12 +2891,12 @@ function attListModal(mode){
     var g = (x.a.group || '') < (y.a.group || '') ? -1 : ((x.a.group || '') > (y.a.group || '') ? 1 : 0);
     return g !== 0 ? g : attSortKey(y.a) - attSortKey(x.a);
   });
-  var title = mode === 'roles' ? 'MC・スピーカー'
+  var title = mode === 'roles' ? 'MC・スピーカー・運営'
     : mode === 'money' ? '会計（徴収状況）'
     : mode === 'group' ? '出席者一覧（系列順）' : '出席者一覧';
   var rows = items.map(function(x){
     var a = x.a, fee = a.fee || 0, tags = '';
-    if(a.role) tags += ' <span class="pill g">' + (a.role === 'mc' ? 'MC' : '🎤 スピーカー') + '</span>';
+    if(a.role) tags += ' <span class="pill g">' + (a.role === 'speaker' ? '🎤 スピーカー' : roleLabel(a.role)) + '</span>';
     if(a.guest) tags += ' <span class="pill n">ゲスト</span>';
     if(a.method === 'online') tags += ' <span class="pill n">💻 オンライン</span>';
     var pay = '';
@@ -2930,7 +2932,7 @@ function attListModal(mode){
     if(!a) return;
     if(act === 'pay'){ closeModal(); payModal(no); }
     if(act === 'unrole'){
-      if(!window.confirm(a.name + ' さんの役割（' + (a.role === 'mc' ? 'MC' : 'スピーカー') + '）を解除しますか？出席の記録は残ります。')) return;
+      if(!window.confirm(a.name + ' さんの役割（' + roleLabel(a.role) + '）を解除しますか？出席の記録は残ります。')) return;
       a.role = '';
       renderTallies();
       db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
@@ -3041,7 +3043,15 @@ function scan(raw, method){
   }
   checkinMember(member, method, null);
 }
-function roleLabel(r){ return r === 'mc' ? 'MC' : (r === 'speaker' ? 'スピーカー' : ''); }
+function roleLabel(r){
+  return r === 'mc' ? 'MC' : r === 'speaker' ? 'スピーカー'
+    : r === 'staff' ? '受付管理者' : r === 'unionadmin' ? 'ユニオン管理者' : '';
+}
+// サイドタイル・履歴用の短い表示
+function roleShort(r){
+  return r === 'mc' ? 'MC' : r === 'speaker' ? '🎤'
+    : r === 'staff' ? '受付' : r === 'unionadmin' ? '管理' : '';
+}
 // 名簿メンバーの受付（スキャン/手入力/名前検索/登壇者登録の共通処理）
 function checkinMember(member, method, role){
   if(!gRec) return;
@@ -3138,9 +3148,11 @@ $('nameSug').addEventListener('mousedown', function(e){
 $('nameIn').addEventListener('blur', function(){
   setTimeout(function(){ $('nameSug').classList.add('hide'); }, 250);
 });
-// MC・スピーカー登録（名簿から名前検索。スピーカーは名簿外ゲストも可）
+// MC・スピーカー・運営（受付管理者/ユニオン管理者）登録（名簿から名前検索。スピーカーは名簿外ゲストも可。いずれも徴収なし）
 $('btnMC').onclick = function(){ roleModal('mc'); };
 $('btnSpeaker').onclick = function(){ roleModal('speaker'); };
+$('btnStaffRole').onclick = function(){ roleModal('staff'); };
+$('btnAdminRole').onclick = function(){ roleModal('unionadmin'); };
 function roleModal(role){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   var lbl = roleLabel(role);
@@ -3280,7 +3292,7 @@ function renderTallies(){
   }).join('');
   $('roleTile').classList.toggle('hide', !roles.length);
   $('roleList').innerHTML = roles.map(function(a){
-    return '<div style="font-size:13.5px;margin:4px 0;"><b>' + (a.role === 'mc' ? 'MC' : '🎤') + '</b> '
+    return '<div style="font-size:13.5px;margin:4px 0;"><b>' + roleShort(a.role) + '</b> '
       + esc(a.name || '') + '<span style="color:var(--sub);font-size:12px;margin-left:6px;">'
       + esc(a.guest ? 'ゲスト' : (a.union || '')) + '</span></div>';
   }).join('');
@@ -3296,7 +3308,7 @@ function renderTallies(){
   $('recent').innerHTML = hist.slice(0, 8).map(function(x){
     var a = x.a;
     var sub = a.guest ? 'ゲスト' : (a.group || a.union || '');
-    if(a.role) sub = (a.role === 'mc' ? 'MC' : '🎤') + ' ' + sub;
+    if(a.role) sub = roleShort(a.role) + ' ' + sub;
     if(a.method === 'online') sub = '💻 ' + sub;
     return '<li data-no="' + esc(x.id) + '" style="cursor:pointer;" title="タップで会計操作（未徴収・返金）">'
       + '<span class="tm">' + esc(a.atLocal || '') + '</span><span class="who">' + esc(a.name || '') + '</span>'
