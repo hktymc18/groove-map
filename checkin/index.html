@@ -301,19 +301,6 @@ tr:last-child td{border-bottom:none;}
   .rp-amt{font-size:15pt;font-weight:900;margin:3mm 0 1mm;}
   .rp-note{font-size:7.5pt;color:#444;}
   .rp-by{font-size:9pt;font-weight:700;margin-top:2.5mm;}
-  /* 納金票（A4の左上1/4サイズに1枚。点線＝切り取りガイド）
-     ページ余白8mm + 97mm×140.5mm = ちょうどA4の1/4（105mm×148.5mm） */
-  .cs-quarter{width:97mm;height:140.5mm;box-sizing:border-box;
-    border-right:0.3mm dashed #999;border-bottom:0.3mm dashed #999;padding-right:4mm;}
-  .cs-slip{border:0.4mm solid #333;border-radius:2mm;padding:5mm 5mm;color:#000;box-sizing:border-box;}
-  .cs-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12pt;letter-spacing:.3em;}
-  .cs-head span{font-size:9pt;letter-spacing:.05em;}
-  .cs-ev{font-size:10pt;font-weight:700;margin:2mm 0 3mm;border-bottom:0.3mm solid #999;padding-bottom:1.5mm;}
-  .cs-row{display:flex;justify-content:space-between;font-size:9.5pt;padding:1mm 0;}
-  .cs-strong{border-top:0.4mm solid #333;margin-top:2mm;padding-top:2mm;font-size:12.5pt;font-weight:900;}
-  .cs-foot{font-size:8pt;color:#444;margin-top:3mm;}
-  .cs-sign{font-size:9.5pt;margin-top:4mm;border-top:0.2mm dashed #999;padding-top:3mm;}
-  .cs-note{font-size:7.5pt;color:#999;text-align:center;margin-top:2mm;}
 }
 /* toast */
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
@@ -2421,6 +2408,8 @@ function onlineModal(ev){
 /* ---------- 会計（BASE集計表のデジタル版） ---------- */
 function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
 // 納金票: 封筒同封用の小票をA4の1/4サイズで1枚印刷。封入現金 = 現金徴収 − 支出 − 不足金
+// 本体ページごと印刷すると重いので、小さな別ウィンドウに票だけを書いて印刷する
+// （即表示され、ウィンドウのタイトルがそのままPDF保存時のファイル名になる）
 function printCashSlip(ev, f, live){
   var cash = (f.cashTotal != null) ? f.cashTotal : live.cash;
   var pp = (f.paypayTotal != null) ? f.paypayTotal : live.pp;
@@ -2449,10 +2438,28 @@ function printCashSlip(ev, f, live){
     + (when ? '　確定: ' + esc(when) : '') + '</div>'
     + '<div class="cs-sign">受領確認サイン:　　　　　　　　　　</div>'
     + '</div>';
-  $('rcptPrint').innerHTML =
-    '<div class="cs-quarter">' + slip
-    + '<div class="cs-note">✂ 点線で切り取り（A4の1/4サイズ）</div></div>';
-  window.print();
+  var css = '@page{size:A4;margin:8mm;}'
+    + 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#000;background:#fff;}'
+    + '.cs-quarter{width:97mm;height:140.5mm;box-sizing:border-box;border-right:0.3mm dashed #999;border-bottom:0.3mm dashed #999;padding-right:4mm;}'
+    + '.cs-slip{border:0.4mm solid #333;border-radius:2mm;padding:5mm 5mm;box-sizing:border-box;}'
+    + '.cs-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12pt;letter-spacing:.3em;}'
+    + '.cs-head span{font-size:9pt;letter-spacing:.05em;}'
+    + '.cs-ev{font-size:10pt;font-weight:700;margin:2mm 0 3mm;border-bottom:0.3mm solid #999;padding-bottom:1.5mm;}'
+    + '.cs-row{display:flex;justify-content:space-between;font-size:9.5pt;padding:1mm 0;}'
+    + '.cs-strong{border-top:0.4mm solid #333;margin-top:2mm;padding-top:2mm;font-size:12.5pt;font-weight:900;}'
+    + '.cs-foot{font-size:8pt;color:#444;margin-top:3mm;}'
+    + '.cs-sign{font-size:9.5pt;margin-top:4mm;border-top:0.2mm dashed #999;padding-top:3mm;}'
+    + '.cs-note{font-size:7.5pt;color:#999;text-align:center;margin-top:2mm;}'
+    + '.mono{font-family:"Courier New",monospace;}';
+  var title = '納金表_' + (ev.hostUnion || '') + '_' + (ev.date || '');
+  var w = window.open('', '_blank');
+  if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
+    + '<style>' + css + '</style></head><body>'
+    + '<div class="cs-quarter">' + slip + '<div class="cs-note">✂ 点線で切り取り（A4の1/4サイズ）</div></div>'
+    + '<' + 'script>setTimeout(function(){ window.print(); }, 50);</' + 'script>'
+    + '</body></html>');
+  w.document.close();
 }
 
 function financeModal(ev){
@@ -3753,39 +3760,41 @@ function renderStats(evs, attMaps, unionMembers, visits){
     });
     return c;
   });
-  var totalAtt = 0, sumRate = 0, rateN = 0;
-  var grpSum = {}, grpN = {};                    // 系列別 平均稼働率（メンバーのみ）
-  var sexSum = { m: 0, f: 0 }, sexN = { m: 0, f: 0 };
+  var totalAtt = 0;
+  var grpSum = {};                    // 系列別ののべ出席（→ 開催数で割って平均稼動数に）
   rows.forEach(function(r){
     r.marks = evs.map(function(ev){ return attMaps[ev.id][r.no] ? 1 : 0; });
     r.count = r.marks.reduce(function(a,b){ return a + b; }, 0);
     r.rate = Math.round(r.count / held * 100);
     totalAtt += r.count;
-    if(r.member){   // 平均稼働率はメンバーのみ（ゲスト除外）
-      sumRate += r.rate; rateN++;
+    if(r.count > 0){
       var gk = r.group || 'その他';
-      grpSum[gk] = (grpSum[gk] || 0) + r.rate;
-      grpN[gk] = (grpN[gk] || 0) + 1;
-      if(r.sex === 'm' || r.sex === 'f'){ sexSum[r.sex] += r.rate; sexN[r.sex]++; }
+      grpSum[gk] = (grpSum[gk] || 0) + r.count;
     }
   });
-  var avgRate = rateN ? Math.round(sumRate / rateN) : 0;
-  var byGroupRate = {};
-  Object.keys(grpSum).forEach(function(k){ byGroupRate[k] = Math.round(grpSum[k] / grpN[k]); });
-  var rateM = sexN.m ? Math.round(sexSum.m / sexN.m) : 0;
-  var rateF = sexN.f ? Math.round(sexSum.f / sexN.f) : 0;
+  function r1(x){ return Math.round(x * 10) / 10; }   // 小数1桁
+  var avgAtt = held ? r1(totalAtt / held) : 0;        // 平均稼動数 = 1回あたりの出席数
+  var evCounts = evs.map(function(ev){ return Object.keys(attMaps[ev.id]).length; });
+  var maxAtt = 0;
+  evCounts.forEach(function(c){ if(c > maxAtt) maxAtt = c; });   // 最高稼動数（今月ここまでの最多出席）
+  var sexTotM = 0, sexTotF = 0;
+  evSex.forEach(function(c){ sexTotM += c.m; sexTotF += c.f; });
+  var avgSexM = held ? r1(sexTotM / held) : 0;
+  var avgSexF = held ? r1(sexTotF / held) : 0;
+  var byGroupAvg = {};
+  Object.keys(grpSum).forEach(function(k){ byGroupAvg[k] = held ? r1(grpSum[k] / held) : 0; });
   gStat = { evs: evs, rows: rows, held: held, evSex: evSex, q: '', sk: 'count', dir: -1 };
 
   var html = '<div class="stattiles">'
     + '<div class="tile"><h3>開催数</h3><div class="bignum">' + held + '<small>回</small></div></div>'
-    + '<div class="tile"><h3>のべ出席</h3><div class="bignum">' + totalAtt + '<small>名</small></div></div>'
-    + '<div class="tile"><h3>平均稼働率</h3><div class="bignum">' + avgRate + '<small>%</small></div></div>'
-    + ((sexN.m || sexN.f)
-      ? '<div class="tile"><h3>男女 平均稼働率</h3><div class="bignum" style="font-size:22px;">男 ' + rateM + '%・女 ' + rateF + '%</div></div>'
+    + '<div class="tile"><h3>平均稼動数</h3><div class="bignum">' + avgAtt + '<small>名/回</small></div></div>'
+    + '<div class="tile"><h3>最高稼動数</h3><div class="bignum">' + maxAtt + '<small>名</small></div></div>'
+    + ((sexTotM || sexTotF)
+      ? '<div class="tile"><h3>男女 平均稼動数</h3><div class="bignum" style="font-size:22px;">男 ' + avgSexM + '・女 ' + avgSexF + '</div></div>'
       : '')
     + '</div>'
-    + '<div class="sectionhead"><h2>系列別 平均稼働率</h2><span class="note">' + esc(gStatUnion) + '・系列内メンバーの稼働率平均</span></div>'
-    + '<div class="tile">' + (tallyHtml(byGroupRate, '%', 100) || '<p style="color:var(--sub);font-size:13px;margin:0;">メンバーがいません</p>') + '</div>'
+    + '<div class="sectionhead"><h2>系列別 平均稼動数</h2><span class="note">' + esc(gStatUnion) + '・1回あたりの出席数</span></div>'
+    + '<div class="tile">' + (tallyHtml(byGroupAvg, '名') || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
     + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷本日までの開催数 / 列見出しタップで並べ替え</span></div>'
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
