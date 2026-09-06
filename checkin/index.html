@@ -1453,7 +1453,7 @@ $('btnGradeSel').onclick = function(){
     var grade = $('bgSel').value;
     $('bgGo').disabled = true;
     var i = 0;
-    function fail(e){ toast(permMsg(e, 'グレード変更はユニオン管理者のみ可能です')); }
+    function fail(e){ toast(permMsg(e, 'グレード変更はユニオン管理者・受付管理者のみ可能です')); }
     function phase1(){   // グレード更新 + 旧カードドキュメント削除
       if(i >= members.length){ i = 0; phase2(); return; }
       var batch = db.batch(), end = Math.min(i + 150, members.length);
@@ -1604,7 +1604,7 @@ function memberForm(m){
       closeModal();
       toast('保存しました（所属: ' + targetUnion + '）');
       loadMembers();
-    }).catch(function(e){ toast(permMsg(e, '名簿の編集はユニオン管理者のみ可能です')); });
+    }).catch(function(e){ toast(permMsg(e, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
   };
 }
 function permMsg(e, hint){
@@ -1623,7 +1623,7 @@ $('rosterBody').addEventListener('click', function(e){
   if(a === 'tog'){
     db.collection('checkinMembers').doc(no).set({active: !(m.active !== false)}, {merge:true})
       .then(function(){ loadMembers(); })
-      .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者のみ可能です')); });
+      .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
   }
   if(a === 'del'){
     modal('<h2>メンバー削除</h2>'
@@ -1637,7 +1637,7 @@ $('rosterBody').addEventListener('click', function(e){
         closeModal(); toast('削除しました');
         delete gSel[no];
         loadMembers();
-      }).catch(function(err){ toast(permMsg(err, '名簿の削除はユニオン管理者のみ可能です')); });
+      }).catch(function(err){ toast(permMsg(err, '名簿の削除はユニオン管理者・受付管理者のみ可能です')); });
     };
   }
 });
@@ -1892,7 +1892,7 @@ $('btnCsvIn').onclick = function(){
       }
       batch.commit().then(nextBatch).catch(function(e){
         $('csvGo').disabled = false;
-        toast(permMsg(e, 'CSV取込はユニオン管理者のみ可能です'));
+        toast(permMsg(e, 'CSV取込はユニオン管理者・受付管理者のみ可能です'));
       });
     }
     nextBatch();
@@ -2010,7 +2010,7 @@ $('evList').addEventListener('click', function(e){
     $('delGo').onclick = function(){
       db.collection('checkinEvents').doc(id).delete().then(function(){
         closeModal(); toast('削除しました'); loadEvents(); loadStats();
-      }).catch(function(err){ toast(permMsg(err, 'イベント削除は主催ユニオンの管理者のみ可能です')); });
+      }).catch(function(err){ toast(permMsg(err, 'イベント削除は主催ユニオンの管理者・受付管理者のみ可能です')); });
     };
   }
 });
@@ -2089,7 +2089,7 @@ function eventForm(ev){
       closeModal(); toast(isNew ? 'イベントを作成しました' : '保存しました');
       gMonth = { y: parseInt(date.slice(0,4), 10), m: parseInt(date.slice(5,7), 10) };
       loadEvents(); loadStats();
-    }).catch(function(e){ toast(permMsg(e, 'イベントの作成・編集は主催ユニオンの管理者のみ可能です')); });
+    }).catch(function(e){ toast(permMsg(e, 'イベントの作成・編集は主催ユニオンの管理者・受付管理者のみ可能です')); });
   };
 }
 
