@@ -2018,6 +2018,7 @@ function renderEvents(){
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
       + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canRec ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
+      + (canRec ? '<button data-a="imp" data-id="' + esc(ev.id) + '">📥 取込</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
       + '</div>';
@@ -2051,6 +2052,7 @@ $('evList').addEventListener('click', function(e){
   if(!ev) return;
   if(a === 'rec'){ startReception(ev); }
   if(a === 'fin'){ financeModal(ev); }
+  if(a === 'imp'){ importModal(ev); }
   if(a === 'online'){ onlineModal(ev); }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
@@ -3332,6 +3334,212 @@ function tallyHtml(map){
   }).join('');
 }
 
+/* ---------- 過去出席データの取込（Numbers/Excelコピー貼り付け・CSV） ---------- */
+function normImpNo(s){
+  s = String(s || '')
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+    .toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var m = s.match(/^(?:REVE|RV)(\d{1,4})$/);
+  return m ? 'RV' + ('0000' + m[1]).slice(-4) : s;
+}
+function impSplitLine(ln){
+  if(ln.indexOf('\t') >= 0) return ln.split('\t');
+  var out = [], cur = '', inQ = false;
+  for(var i = 0; i < ln.length; i++){
+    var ch = ln.charAt(i);
+    if(inQ){
+      if(ch === '"'){ if(ln.charAt(i + 1) === '"'){ cur += '"'; i++; } else inQ = false; }
+      else cur += ch;
+    }
+    else if(ch === '"') inQ = true;
+    else if(ch === ','){ out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+var IMP_JP = /[぀-ヿ一-鿿々]/;
+function parseImportText(text){
+  var role = null, out = [], seen = {};
+  text.split(/\r?\n/).forEach(function(ln){
+    var cells = impSplitLine(ln).map(function(c){ return c.trim(); }).filter(function(c){ return c !== ''; });
+    if(!cells.length) return;
+    var joined = cells.join('');
+    // 役割セクション見出し（SP / MC / 受付 だけの行）→ それ以降の行に役割を付与
+    if(!IMP_JP.test(joined)){
+      var jj = normImpNo(joined);
+      if(jj === 'SP'){ role = 'speaker'; return; }
+      if(jj === 'MC'){ role = 'mc'; return; }
+    }
+    if(joined === '受付'){ role = 'staff'; return; }
+    // 会員番号セルを探す（5桁以上の数字 or 英字プレフィックス+4桁。行頭の連番1〜2桁は対象外）
+    var noIdx = -1, no = '';
+    for(var i = 0; i < cells.length; i++){
+      var n = normImpNo(cells[i]);
+      if(/^\d{5,7}$/.test(n) || /^[A-Z]{1,4}\d{4}$/.test(n)){ noIdx = i; no = n; break; }
+    }
+    // カードなし行（番号・氏名なし）→ 匿名の出席として取込
+    if(noIdx < 0 && joined.indexOf('カードなし') >= 0){ out.push({ no: '', name: '', group: '', role: role, anon: true }); return; }
+    // 氏名 = 番号の後ろで最初の日本語セル、系列 = その次の日本語セル
+    var name = '', group = '';
+    for(var j = noIdx + 1; j < cells.length; j++){
+      if(!IMP_JP.test(cells[j])) continue;
+      if(!name) name = cells[j];
+      else { group = cells[j]; break; }
+    }
+    if(noIdx < 0){
+      // 番号なし行: 見出し・右側の集計表と区別するため、日本語2セル以上 or 性別(m/f)セルがある行のみ氏名扱い
+      var hasMF = false;
+      for(var k = 0; k < cells.length; k++){ if(/^[mfMF]$/.test(cells[k])) hasMF = true; }
+      if(!name || (!group && !hasMF)) return;
+      if(/合計|男女|ハウディ|オンライン|QRコード|氏名/.test(joined)) return;
+    }
+    if(!no && !name) return;
+    if(name === 'カードなし'){ out.push({ no: '', name: '', group: '', role: role, anon: true }); return; }
+    var key = no || name.replace(/[ 　]/g, '');
+    if(seen[key]) return;   // 同一番号・同一氏名の重複行は最初の1件のみ
+    seen[key] = true;
+    out.push({ no: no, name: name, group: group, role: role, anon: false });
+  });
+  return out;
+}
+var gImp = null;
+function importModal(ev){
+  modal('<h2>📥 出席データ取込 — ' + esc((ev.date || '').slice(5).replace('-', '/')) + ' ' + esc(ev.name || '') + '</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">'
+    + 'Numbers / Excel で出席表の範囲を選択してコピーし、下に貼り付けてください（CSVファイルの読み込みも可）。<br>'
+    + '「REVE 12」などの旧番号は自動で新番号に変換して名簿と照合します。'
+    + '「SP」「MC」「受付」だけの行があると、それ以降の行に役割が付きます。<br>'
+    + '取込は<b>全員 料金0円</b>で、会計には影響しません。</p>'
+    + '<textarea id="impText" rows="8" placeholder="460333&#9;小峰 香弘&#9;井上BD&#10;REVE 43&#9;…"></textarea>'
+    + '<div style="margin:6px 0;"><input type="file" id="impFile" accept=".csv,.tsv,.txt"></div>'
+    + '<div class="btns" style="justify-content:flex-start;"><button class="primary" id="impPrev">プレビュー</button></div>'
+    + '<div id="impList"></div>'
+    + '<div class="btns"><button id="impCancel">キャンセル</button><button class="primary hide" id="impGo">登録</button></div>');
+  gImp = null;
+  $('impCancel').onclick = closeModal;
+  $('impFile').onchange = function(){
+    var f = this.files && this.files[0]; if(!f) return;
+    var rd = new FileReader();
+    rd.onload = function(){ $('impText').value = String(rd.result || ''); };
+    rd.readAsText(f);
+  };
+  $('impPrev').onclick = function(){ impPreview(ev); };
+  $('impGo').onclick = function(){ impCommit(ev); };
+}
+function impPreview(ev){
+  var rows = parseImportText($('impText').value);
+  if(!rows.length){
+    $('impList').innerHTML = '<p style="color:var(--accent);font-size:13px;">読み取れる行がありません。表の範囲をコピーして貼り付けてください。</p>';
+    $('impGo').classList.add('hide');
+    return;
+  }
+  $('impPrev').disabled = true;
+  var uns = ev.unions || [];
+  Promise.all(uns.map(fetchMembers).concat([
+    db.collection('checkinEvents').doc(ev.id).collection('attendance').get()
+  ])).then(function(res){
+    var byNo = {}, byName = {};
+    for(var u = 0; u < uns.length; u++){
+      res[u].forEach(function(m){
+        byNo[m.no] = m;
+        var k = (m.name || '').replace(/[ 　]/g, '');
+        if(k){ (byName[k] = byName[k] || []).push(m); }
+      });
+    }
+    var att = {};
+    res[res.length - 1].forEach(function(d){ att[d.id] = true; });
+    gImp = rows.map(function(r){
+      if(r.anon) return { r: r, kind: 'guest', inc: true };
+      var m = r.no ? byNo[r.no] : null;
+      if(m){
+        if(att[m.no]) return { r: r, m: m, kind: 'dup', inc: false };
+        var warn = r.name && (m.name || '').replace(/[ 　]/g, '') !== r.name.replace(/[ 　]/g, '');
+        return { r: r, m: m, kind: warn ? 'warn' : 'ok', inc: true };
+      }
+      var cands = byName[(r.name || '').replace(/[ 　]/g, '')] || [];
+      if(cands.length === 1){
+        if(att[cands[0].no]) return { r: r, m: cands[0], kind: 'dup', inc: false };
+        return { r: r, m: cands[0], kind: 'byname', inc: true };
+      }
+      return { r: r, kind: 'notfound', inc: true };
+    });
+    renderImpList();
+    $('impPrev').disabled = false;
+  }).catch(function(e){
+    $('impPrev').disabled = false;
+    toast(permMsg(e, '名簿の読み込みに失敗しました'));
+  });
+}
+function renderImpList(){
+  var KIND = {
+    ok: ['g', '照合OK'], warn: ['a', '⚠ 氏名不一致'], byname: ['a', '氏名で照合'],
+    dup: ['n', '登録済み'], guest: ['n', 'カードなし→ゲスト'], notfound: ['r', '名簿になし→ゲスト']
+  };
+  var n = 0;
+  var html = gImp.map(function(it, i){
+    if(it.inc) n++;
+    var r = it.r, k = KIND[it.kind];
+    var disp = it.m
+      ? '<b>' + esc(it.m.name || '') + '</b> <span class="mono" style="font-size:11.5px;">' + esc(it.m.no) + '</span> <span style="color:var(--sub);">' + esc(it.m.group || '') + '</span>'
+      : '<b>' + esc(r.name || 'カードなし') + '</b>'
+        + (r.no ? ' <span class="mono" style="font-size:11.5px;">' + esc(r.no) + '</span>' : '')
+        + (r.group ? ' <span style="color:var(--sub);">' + esc(r.group) + '</span>' : '');
+    var warn = it.kind === 'warn' ? '<div style="font-size:12px;color:var(--amber);">シート上の氏名: ' + esc(r.name) + '</div>' : '';
+    return '<label style="display:flex;gap:8px;align-items:center;padding:5px 2px;border-bottom:1px solid var(--line);font-size:13.5px;">'
+      + '<input type="checkbox" data-imp="' + i + '"' + (it.inc ? ' checked' : '') + (it.kind === 'dup' ? ' disabled' : '') + '>'
+      + '<span style="flex:1;">' + disp + warn + '</span>'
+      + (r.role ? '<span class="pill g">' + roleLabel(r.role) + '</span>' : '')
+      + '<span class="pill ' + k[0] + '">' + k[1] + '</span></label>';
+  }).join('');
+  $('impList').innerHTML = '<div style="max-height:300px;overflow:auto;margin-top:8px;">' + html + '</div>'
+    + '<p style="font-size:13px;margin:8px 0 0;"><b id="impN">' + n + '</b> 名を登録します（チェックを外した行は取り込みません）</p>';
+  $('impGo').classList.remove('hide');
+  Array.prototype.forEach.call(document.querySelectorAll('input[data-imp]'), function(cb){
+    cb.onchange = function(){
+      gImp[+cb.getAttribute('data-imp')].inc = cb.checked;
+      var n2 = 0;
+      gImp.forEach(function(x){ if(x.inc) n2++; });
+      $('impN').textContent = n2;
+    };
+  });
+}
+function impCommit(ev){
+  var list = gImp ? gImp.filter(function(x){ return x.inc && x.kind !== 'dup'; }) : [];
+  if(!list.length){ toast('登録する行がありません'); return; }
+  $('impGo').disabled = true;
+  var atMs = new Date((ev.date || '2000-01-01') + 'T12:00:00').getTime() || Date.now();
+  var i = 0;
+  function nextBatch(){
+    if(i >= list.length){
+      closeModal();
+      toast(list.length + '名の出席を取り込みました（料金0円・会計への影響なし）');
+      loadEvents();
+      return;
+    }
+    var batch = db.batch(), end = Math.min(i + 300, list.length);
+    for(; i < end; i++){
+      var it = list[i], r = it.r, id, data;
+      if(it.m){
+        id = it.m.no;
+        data = { no: id, name: it.m.name || '', group: it.m.group || '', union: it.m.union || '' };
+      } else {
+        id = 'g' + atMs + '_' + i;
+        data = { no: id, name: r.name || 'カードなし', group: r.group || 'ゲスト', union: '', guest: true };
+      }
+      data.method = 'import'; data.fee = 0; data.paid = true; data.refund = 0;
+      data.atLocal = '取込'; data.atMs = atMs + i; data.at = FV.serverTimestamp(); data.by = gUser.uid;
+      if(r.role) data.role = r.role;
+      batch.set(db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(id), data, { merge: true });
+    }
+    batch.commit().then(nextBatch).catch(function(e){
+      $('impGo').disabled = false;
+      toast(permMsg(e, '取込の書き込み権限がありません'));
+    });
+  }
+  nextBatch();
+}
+
 /* ---------- 集計 ---------- */
 var gStat = null;
 $('btnStatReload').onclick = function(){ loadStats(); };
@@ -3422,8 +3630,7 @@ function renderStats(evs, attMaps, unionMembers, visits){
     if(r.member){ sumRate += r.rate; rateN++; }   // 平均稼働率はメンバーのみ（ゲスト除外）
   });
   var avgRate = rateN ? Math.round(sumRate / rateN) : 0;
-  rows.sort(function(a,b){ return b.count - a.count || (a.no < b.no ? -1 : 1); });
-  gStat = { evs: evs, rows: rows, held: held };
+  gStat = { evs: evs, rows: rows, held: held, q: '', sk: 'count', dir: -1 };
 
   var html = '<div class="stattiles">'
     + '<div class="tile"><h3>開催数</h3><div class="bignum">' + held + '<small>回</small></div></div>'
@@ -3432,24 +3639,65 @@ function renderStats(evs, attMaps, unionMembers, visits){
     + '</div>'
     + '<div class="sectionhead"><h2>系列別のべ出席</h2><span class="note">' + esc(gStatUnion) + '</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
-    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷開催数</span></div>'
-    + '<div class="tblwrap"><table class="matrix"><thead><tr><th>氏名</th><th>系列</th>'
-    + evs.map(function(ev){ return '<th>' + esc((ev.date || '').slice(5).replace('-', '/')) + '</th>'; }).join('')
-    + '<th>回数</th><th>稼働率</th></tr></thead><tbody>'
-    + rows.map(function(r){
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷開催数 / 列見出しタップで並べ替え</span></div>'
+    + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
+    + '<div id="statMatrix"></div>'
+    + visitsHtml;
+  $('statBody').innerHTML = html;
+  $('statQ').addEventListener('input', function(){ gStat.q = this.value; renderStatMatrix(); });
+  renderStatMatrix();
+}
+// 絞り込み＋ソートを適用した表示行
+function statViewRows(){
+  var q = (gStat.q || '').replace(/[ 　]/g, '').toLowerCase();
+  var out = gStat.rows.filter(function(r){
+    return !q || ((r.no || '') + (r.name || '') + (r.group || '')).replace(/[ 　]/g, '').toLowerCase().indexOf(q) >= 0;
+  });
+  var sk = gStat.sk, dir = gStat.dir;
+  out.sort(function(a, b){
+    var va, vb;
+    if(sk === 'name'){ va = a.name || ''; vb = b.name || ''; }
+    else if(sk === 'group'){ va = a.group || ''; vb = b.group || ''; }
+    else if(sk === 'rate'){ va = a.rate; vb = b.rate; }
+    else if(sk.indexOf('ev') === 0){ var i = +sk.slice(2); va = a.marks[i]; vb = b.marks[i]; }
+    else { va = a.count; vb = b.count; }
+    if(va < vb) return -dir;
+    if(va > vb) return dir;
+    return b.count - a.count || (a.no < b.no ? -1 : 1);
+  });
+  return out;
+}
+function renderStatMatrix(){
+  if(!gStat) return;
+  var ar = function(k){ return gStat.sk === k ? (gStat.dir > 0 ? ' ▲' : ' ▼') : ''; };
+  var th = function(k, label){ return '<th data-sk="' + k + '" style="cursor:pointer;white-space:nowrap;">' + label + ar(k) + '</th>'; };
+  var view = statViewRows();
+  var html = '<div class="tblwrap"><table class="matrix"><thead><tr>'
+    + th('name', '氏名') + th('group', '系列')
+    + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
+    + th('count', '回数') + th('rate', '稼働率') + '</tr></thead><tbody>'
+    + (view.length ? view.map(function(r){
         return '<tr><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.group) + '</td>'
           + r.marks.map(function(v){ return '<td class="mk">' + (v ? '<span class="y">●</span>' : '<span class="nn">・</span>') + '</td>'; }).join('')
           + '<td class="mono">' + r.count + '</td><td class="rate">' + (r.member ? r.rate + '%' : '—') + '</td></tr>';
       }).join('')
-    + '</tbody></table></div>'
-    + visitsHtml;
-  $('statBody').innerHTML = html;
+      : '<tr><td colspan="' + (gStat.evs.length + 4) + '" style="color:var(--sub);">該当するメンバーがいません</td></tr>')
+    + '</tbody></table></div>';
+  $('statMatrix').innerHTML = html;
+  $('statMatrix').querySelector('thead').addEventListener('click', function(e){
+    var t = e.target.closest ? e.target.closest('th[data-sk]') : null;
+    if(!t) return;
+    var k = t.getAttribute('data-sk');
+    if(gStat.sk === k){ gStat.dir = -gStat.dir; }
+    else { gStat.sk = k; gStat.dir = (k === 'name' || k === 'group') ? 1 : -1; }
+    renderStatMatrix();
+  });
 }
 $('btnStatCsv').onclick = function(){
   if(!gStat){ toast('集計データがありません'); return; }
   var head = ['番号','氏名','系列'].concat(gStat.evs.map(function(ev){ return ev.date + ' ' + ev.name; })).concat(['出席回数','稼働率%']);
   var rows = [head];
-  gStat.rows.forEach(function(r){
+  statViewRows().forEach(function(r){
     rows.push([r.no, r.name, r.group].concat(r.marks.map(function(v){ return v ? 1 : 0; })).concat([r.count, r.rate]));
   });
   csvDownload('kadou_' + gStatUnion + '_' + monthKey(gMonth.y, gMonth.m) + '.csv', rows);
