@@ -151,6 +151,12 @@ tr:last-child td{border-bottom:none;}
 .mk .y{color:var(--green);font-weight:700;}
 .mk .nn{color:var(--line);}
 .rate{font-variant-numeric:tabular-nums;font-weight:700;}
+/* 出席マトリクスの左固定列（氏名・系列・稼働率）*/
+.matrix th.stk,.matrix td.stk{position:sticky;background:var(--card);z-index:1;box-sizing:border-box;}
+.matrix th.stk{z-index:2;}
+.matrix .stk1{left:0;min-width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis;}
+.matrix .stk2{left:104px;min-width:72px;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
+.matrix .stk3{left:176px;min-width:64px;max-width:64px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
 .sectionhead{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;flex-wrap:wrap;}
 .sectionhead h2{margin:0;font-size:16px;}
 .sectionhead .note{color:var(--sub);font-size:12.5px;}
@@ -429,7 +435,8 @@ tr:last-child td{border-bottom:none;}
         </div>
       </div>
       <aside class="side">
-        <div class="tile tap" id="totalTile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div></div>
+        <div class="tile tap" id="totalTile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div>
+          <div id="totalSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div></div>
         <div class="tile tap" id="cashTile">
           <h3>手元金額（リアルタイム）</h3>
           <div class="bignum" style="font-size:30px;"><span id="cashNow">¥0</span></div>
@@ -1604,6 +1611,10 @@ function memberForm(m){
     + '<label>氏名</label><input type="text" id="mfName" value="' + esc(m.name || '') + '">'
     + '<label>系列</label><input type="text" id="mfGroup" list="dlGroups" value="' + esc(m.group || '') + '" placeholder="タップで既存の系列から選択・新規入力も可">'
     + '<datalist id="dlGroups">' + groupDatalist(gMembers) + '</datalist>'
+    + '<label>性別</label><select id="mfSex">'
+    + '<option value=""' + (!m.sex ? ' selected' : '') + '>未設定</option>'
+    + '<option value="m"' + (m.sex === 'm' ? ' selected' : '') + '>男性</option>'
+    + '<option value="f"' + (m.sex === 'f' ? ' selected' : '') + '>女性</option></select>'
     + '<label>所属ユニオン</label>' + unionField
     + '<label>ライセンスグレード</label>'
     + '<select id="mfGrade">' + GRADES.map(function(g){
@@ -1634,6 +1645,7 @@ function memberForm(m){
     var targetUnion = isOwner() ? $('mfUnion').value : curUnion;
     var data = {
       no: no, union: targetUnion, name: name, group: group,
+      sex: $('mfSex').value,
       grade: $('mfGrade').value,
       kana: $('mfKana').value.trim(),
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
@@ -1957,9 +1969,10 @@ $('btnCsvIn').onclick = function(){
   };
 };
 $('btnCsvOut').onclick = function(){
-  var rows = [['番号','氏名','系列','かな','状態']];
+  var rows = [['番号','氏名','系列','かな','状態','性別']];
   gMembers.forEach(function(m){
-    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? '有効' : '無効']);
+    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? '有効' : '無効',
+      m.sex === 'm' ? '男' : (m.sex === 'f' ? '女' : '')]);
   });
   csvDownload('members_' + gRosterUnion + '.csv', rows);
 };
@@ -3088,6 +3101,7 @@ function checkinMember(member, method, role){
   var data = {
     no: no, name: member.name || '', group: member.group || '',
     union: member.union || gUnion, method: method,
+    sex: member.sex || '',
     fee: fee, paid: true, refund: 0
   };
   if(isVisitor) data.visitor = true;
@@ -3253,12 +3267,16 @@ function renderTallies(){
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
   var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [], hist = [];
+  var sexM = 0, sexF = 0;
   Object.keys(gRec.att).forEach(function(id){
     var a = gRec.att[id];
     // オンライン申請の承認待ち・却下は集計に含めない
     if(a.status === 'pending' || a.status === 'rejected') return;
     hist.push({ id: id, a: a });
     total++;
+    var sx = a.sex || (gRec.roster[id] && gRec.roster[id].sex) || '';
+    if(sx === 'm') sexM++;
+    else if(sx === 'f') sexF++;
     var uk = a.union || 'ゲスト';
     byUnion[uk] = (byUnion[uk] || 0) + 1;
     if(a.role) roles.push(a);
@@ -3299,6 +3317,9 @@ function renderTallies(){
       + esc(a.guest ? 'ゲスト' : (a.union || '')) + '</span></div>';
   }).join('');
   $('total').textContent = total;
+  $('totalSub').textContent = (sexM || sexF)
+    ? '男 ' + sexM + '・女 ' + sexF + (total - sexM - sexF ? '・未設定 ' + (total - sexM - sexF) : '')
+    : '';
   $('ctr').textContent = total + '名';
   // 合同イベント、またはビジターがいる場合はユニオン別を表示
   $('unionTallyTile').classList.toggle('hide',
@@ -3378,8 +3399,15 @@ function parseImportText(text){
       var n = normImpNo(cells[i]);
       if(/^\d{5,7}$/.test(n) || /^[A-Z]{1,4}\d{4}$/.test(n)){ noIdx = i; no = n; break; }
     }
+    // 性別セル（m/f。全角も可）
+    var sex = '';
+    for(var s = 0; s < cells.length; s++){
+      var lc = cells[s].toLowerCase();
+      if(lc === 'm' || lc === 'ｍ' || lc === '男') sex = 'm';
+      else if(lc === 'f' || lc === 'ｆ' || lc === '女') sex = 'f';
+    }
     // カードなし行（番号・氏名なし）→ 匿名の出席として取込
-    if(noIdx < 0 && joined.indexOf('カードなし') >= 0){ out.push({ no: '', name: '', group: '', role: role, anon: true }); return; }
+    if(noIdx < 0 && joined.indexOf('カードなし') >= 0){ out.push({ no: '', name: '', group: '', sex: sex, role: role, anon: true }); return; }
     // 氏名 = 番号の後ろで最初の日本語セル、系列 = その次の日本語セル
     var name = '', group = '';
     for(var j = noIdx + 1; j < cells.length; j++){
@@ -3395,11 +3423,11 @@ function parseImportText(text){
       if(/合計|男女|ハウディ|オンライン|QRコード|氏名/.test(joined)) return;
     }
     if(!no && !name) return;
-    if(name === 'カードなし'){ out.push({ no: '', name: '', group: '', role: role, anon: true }); return; }
+    if(name === 'カードなし'){ out.push({ no: '', name: '', group: '', sex: sex, role: role, anon: true }); return; }
     var key = no || name.replace(/[ 　]/g, '');
     if(seen[key]) return;   // 同一番号・同一氏名の重複行は最初の1件のみ
     seen[key] = true;
-    out.push({ no: no, name: name, group: group, role: role, anon: false });
+    out.push({ no: no, name: name, group: group, sex: sex, role: role, anon: false });
   });
   return out;
 }
@@ -3410,7 +3438,7 @@ function importModal(ev){
     + 'Numbers / Excel で出席表の範囲を選択してコピーし、下に貼り付けてください（CSVファイルの読み込みも可）。<br>'
     + '「REVE 12」などの旧番号は自動で新番号に変換して名簿と照合します。'
     + '「SP」「MC」「受付」だけの行があると、それ以降の行に役割が付きます。<br>'
-    + '取込は<b>全員 料金0円</b>で、会計には影響しません。</p>'
+    + '取込は<b>全員 料金0円</b>で、会計には影響しません。性別（m/f）の列があれば名簿にも反映します。</p>'
     + '<textarea id="impText" rows="8" placeholder="460333&#9;小峰 香弘&#9;井上BD&#10;REVE 43&#9;…"></textarea>'
     + '<div style="margin:6px 0;"><input type="file" id="impFile" accept=".csv,.tsv,.txt"></div>'
     + '<div class="btns" style="justify-content:flex-start;"><button class="primary" id="impPrev">プレビュー</button></div>'
@@ -3486,9 +3514,10 @@ function renderImpList(){
         + (r.no ? ' <span class="mono" style="font-size:11.5px;">' + esc(r.no) + '</span>' : '')
         + (r.group ? ' <span style="color:var(--sub);">' + esc(r.group) + '</span>' : '');
     var warn = it.kind === 'warn' ? '<div style="font-size:12px;color:var(--amber);">シート上の氏名: ' + esc(r.name) + '</div>' : '';
+    var sexMark = r.sex ? ' <span style="color:var(--sub);">' + (r.sex === 'm' ? '♂' : '♀') + '</span>' : '';
     return '<label style="display:flex;gap:8px;align-items:center;padding:5px 2px;border-bottom:1px solid var(--line);font-size:13.5px;">'
       + '<input type="checkbox" data-imp="' + i + '"' + (it.inc ? ' checked' : '') + (it.kind === 'dup' ? ' disabled' : '') + '>'
-      + '<span style="flex:1;">' + disp + warn + '</span>'
+      + '<span style="flex:1;">' + disp + sexMark + warn + '</span>'
       + (r.role ? '<span class="pill g">' + roleLabel(r.role) + '</span>' : '')
       + '<span class="pill ' + k[0] + '">' + k[1] + '</span></label>';
   }).join('');
@@ -3508,13 +3537,30 @@ function impCommit(ev){
   var list = gImp ? gImp.filter(function(x){ return x.inc && x.kind !== 'dup'; }) : [];
   if(!list.length){ toast('登録する行がありません'); return; }
   $('impGo').disabled = true;
+  // シートに性別があれば名簿にも反映（登録済み行も対象。要管理者権限なので失敗しても出席取込は成立）
+  var rosterUpd = [];
+  gImp.forEach(function(it){
+    if(!it.m || !it.r.sex) return;
+    if(it.kind !== 'dup' && !it.inc) return;
+    if((it.m.sex || '') !== it.r.sex) rosterUpd.push({ no: it.m.no, sex: it.r.sex });
+  });
   var atMs = new Date((ev.date || '2000-01-01') + 'T12:00:00').getTime() || Date.now();
   var i = 0;
   function nextBatch(){
     if(i >= list.length){
-      closeModal();
-      toast(list.length + '名の出席を取り込みました（料金0円・会計への影響なし）');
-      loadEvents();
+      var fin = function(extra){
+        closeModal();
+        toast(list.length + '名の出席を取り込みました（料金0円・会計への影響なし）' + extra);
+        loadEvents();
+      };
+      if(!rosterUpd.length){ fin(''); return; }
+      var rb = db.batch();
+      rosterUpd.forEach(function(u){
+        rb.set(db.collection('checkinMembers').doc(u.no), { sex: u.sex, updatedAt: FV.serverTimestamp() }, { merge: true });
+      });
+      rb.commit()
+        .then(function(){ fin('。名簿に性別を ' + rosterUpd.length + ' 名分反映しました'); })
+        .catch(function(){ fin('。名簿への性別反映は管理者権限がないためスキップしました'); });
       return;
     }
     var batch = db.batch(), end = Math.min(i + 300, list.length);
@@ -3528,6 +3574,7 @@ function impCommit(ev){
         data = { no: id, name: r.name || 'カードなし', group: r.group || 'ゲスト', union: '', guest: true };
       }
       data.method = 'import'; data.fee = 0; data.paid = true; data.refund = 0;
+      data.sex = r.sex || (it.m && it.m.sex) || '';
       data.atLocal = '取込'; data.atMs = atMs + i; data.at = FV.serverTimestamp(); data.by = gUser.uid;
       if(r.role) data.role = r.role;
       batch.set(db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(id), data, { merge: true });
@@ -3607,8 +3654,9 @@ function renderStats(evs, attMaps, unionMembers, visits){
     gStat = null; return;
   }
   // 行: 有効メンバー + 出席したゲスト
-  var rows = [];
-  unionMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', member: true }); });
+  var rows = [], rosterSex = {};
+  unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
+  unionMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true }); });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
   evs.forEach(function(ev){
@@ -3616,9 +3664,19 @@ function renderStats(evs, attMaps, unionMembers, visits){
       if(!known[no]){
         known[no] = true;
         var a = attMaps[ev.id][no];
-        rows.push({ no: no, name: a.name + (a.guest ? '（ゲスト）' : ''), group: a.group || '', member: !a.guest });
+        rows.push({ no: no, name: a.name + (a.guest ? '（ゲスト）' : ''), group: a.group || '', sex: a.sex || rosterSex[no] || '', member: !a.guest });
       }
     });
+  });
+  // イベントごとの男女内訳（出席レコードの性別、なければ名簿から）
+  var evSex = evs.map(function(ev){
+    var c = { m: 0, f: 0 };
+    Object.keys(attMaps[ev.id]).forEach(function(no){
+      var sx = attMaps[ev.id][no].sex || rosterSex[no] || '';
+      if(sx === 'm') c.m++;
+      else if(sx === 'f') c.f++;
+    });
+    return c;
   });
   var totalAtt = 0, byGroup = {}, sumRate = 0, rateN = 0;
   rows.forEach(function(r){
@@ -3630,12 +3688,21 @@ function renderStats(evs, attMaps, unionMembers, visits){
     if(r.member){ sumRate += r.rate; rateN++; }   // 平均稼働率はメンバーのみ（ゲスト除外）
   });
   var avgRate = rateN ? Math.round(sumRate / rateN) : 0;
-  gStat = { evs: evs, rows: rows, held: held, q: '', sk: 'count', dir: -1 };
+  var totM = 0, totF = 0;
+  rows.forEach(function(r){
+    if(r.sex === 'm') totM += r.count;
+    else if(r.sex === 'f') totF += r.count;
+  });
+  gStat = { evs: evs, rows: rows, held: held, evSex: evSex, q: '', sk: 'count', dir: -1 };
 
   var html = '<div class="stattiles">'
     + '<div class="tile"><h3>開催数</h3><div class="bignum">' + held + '<small>回</small></div></div>'
     + '<div class="tile"><h3>のべ出席</h3><div class="bignum">' + totalAtt + '<small>名</small></div></div>'
     + '<div class="tile"><h3>平均稼働率</h3><div class="bignum">' + avgRate + '<small>%</small></div></div>'
+    + ((totM || totF)
+      ? '<div class="tile"><h3>男女（のべ出席）</h3><div class="bignum" style="font-size:22px;">男' + totM + '・女' + totF
+        + (totalAtt - totM - totF ? '<small>他' + (totalAtt - totM - totF) + '</small>' : '') + '</div></div>'
+      : '')
     + '</div>'
     + '<div class="sectionhead"><h2>系列別のべ出席</h2><span class="note">' + esc(gStatUnion) + '</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroup) || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
@@ -3670,19 +3737,33 @@ function statViewRows(){
 function renderStatMatrix(){
   if(!gStat) return;
   var ar = function(k){ return gStat.sk === k ? (gStat.dir > 0 ? ' ▲' : ' ▼') : ''; };
-  var th = function(k, label){ return '<th data-sk="' + k + '" style="cursor:pointer;white-space:nowrap;">' + label + ar(k) + '</th>'; };
+  var th = function(k, label, cls){
+    return '<th data-sk="' + k + '"' + (cls ? ' class="' + cls + '"' : '') + ' style="cursor:pointer;white-space:nowrap;">' + label + ar(k) + '</th>';
+  };
   var view = statViewRows();
+  // 男女フッター（イベントごとの内訳。絞り込みに関係なく全体の値）
+  var hasSex = false;
+  gStat.evSex.forEach(function(c){ if(c.m || c.f) hasSex = true; });
+  var foot = hasSex
+    ? '<tfoot>'
+      + '<tr><td class="stk stk1" style="color:var(--sub);font-weight:700;">男</td><td class="stk stk2"></td><td class="stk stk3"></td>'
+      + gStat.evSex.map(function(c){ return '<td class="mk mono">' + c.m + '</td>'; }).join('') + '<td></td></tr>'
+      + '<tr><td class="stk stk1" style="color:var(--sub);font-weight:700;">女</td><td class="stk stk2"></td><td class="stk stk3"></td>'
+      + gStat.evSex.map(function(c){ return '<td class="mk mono">' + c.f + '</td>'; }).join('') + '<td></td></tr>'
+      + '</tfoot>'
+    : '';
   var html = '<div class="tblwrap"><table class="matrix"><thead><tr>'
-    + th('name', '氏名') + th('group', '系列')
+    + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', '稼働率', 'stk stk3')
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
-    + th('count', '回数') + th('rate', '稼働率') + '</tr></thead><tbody>'
+    + th('count', '回数') + '</tr></thead><tbody>'
     + (view.length ? view.map(function(r){
-        return '<tr><td><b>' + esc(r.name) + '</b></td><td>' + esc(r.group) + '</td>'
+        return '<tr><td class="stk stk1"><b>' + esc(r.name) + '</b></td><td class="stk stk2">' + esc(r.group) + '</td>'
+          + '<td class="stk stk3 rate">' + (r.member ? r.rate + '%' : '—') + '</td>'
           + r.marks.map(function(v){ return '<td class="mk">' + (v ? '<span class="y">●</span>' : '<span class="nn">・</span>') + '</td>'; }).join('')
-          + '<td class="mono">' + r.count + '</td><td class="rate">' + (r.member ? r.rate + '%' : '—') + '</td></tr>';
+          + '<td class="mono">' + r.count + '</td></tr>';
       }).join('')
       : '<tr><td colspan="' + (gStat.evs.length + 4) + '" style="color:var(--sub);">該当するメンバーがいません</td></tr>')
-    + '</tbody></table></div>';
+    + '</tbody>' + foot + '</table></div>';
   $('statMatrix').innerHTML = html;
   $('statMatrix').querySelector('thead').addEventListener('click', function(e){
     var t = e.target.closest ? e.target.closest('th[data-sk]') : null;
@@ -3695,10 +3776,11 @@ function renderStatMatrix(){
 }
 $('btnStatCsv').onclick = function(){
   if(!gStat){ toast('集計データがありません'); return; }
-  var head = ['番号','氏名','系列'].concat(gStat.evs.map(function(ev){ return ev.date + ' ' + ev.name; })).concat(['出席回数','稼働率%']);
+  var head = ['番号','氏名','系列','性別'].concat(gStat.evs.map(function(ev){ return ev.date + ' ' + ev.name; })).concat(['出席回数','稼働率%']);
   var rows = [head];
   statViewRows().forEach(function(r){
-    rows.push([r.no, r.name, r.group].concat(r.marks.map(function(v){ return v ? 1 : 0; })).concat([r.count, r.rate]));
+    var sx = r.sex === 'm' ? '男' : (r.sex === 'f' ? '女' : '');
+    rows.push([r.no, r.name, r.group, sx].concat(r.marks.map(function(v){ return v ? 1 : 0; })).concat([r.count, r.rate]));
   });
   csvDownload('kadou_' + gStatUnion + '_' + monthKey(gMonth.y, gMonth.m) + '.csv', rows);
 };
