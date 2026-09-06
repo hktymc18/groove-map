@@ -295,6 +295,17 @@ tr:last-child td{border-bottom:none;}
   .rp-amt{font-size:15pt;font-weight:900;margin:3mm 0 1mm;}
   .rp-note{font-size:7.5pt;color:#444;}
   .rp-by{font-size:9pt;font-weight:700;margin-top:2.5mm;}
+  /* 納金票（A4に提出用・控えの2枚組） */
+  .cs-copy{font-size:9pt;color:#666;margin:2mm 0 1mm;}
+  .cs-slip{border:0.4mm solid #333;border-radius:2mm;padding:7mm 8mm;margin-bottom:4mm;color:#000;}
+  .cs-head{display:flex;justify-content:space-between;align-items:baseline;font-size:14pt;letter-spacing:.3em;}
+  .cs-head span{font-size:10pt;letter-spacing:.05em;}
+  .cs-ev{font-size:11pt;font-weight:700;margin:2mm 0 4mm;border-bottom:0.3mm solid #999;padding-bottom:2mm;}
+  .cs-row{display:flex;justify-content:space-between;font-size:10.5pt;padding:1.2mm 0;}
+  .cs-strong{border-top:0.4mm solid #333;margin-top:2mm;padding-top:2.5mm;font-size:14pt;font-weight:900;}
+  .cs-foot{font-size:9pt;color:#444;margin-top:4mm;}
+  .cs-sign{font-size:10.5pt;margin-top:5mm;border-top:0.2mm dashed #999;padding-top:4mm;}
+  .cs-cut{font-size:8pt;color:#999;text-align:center;margin:5mm 0;}
 }
 /* toast */
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
@@ -2203,6 +2214,42 @@ function onlineModal(ev){
 
 /* ---------- 会計（BASE集計表のデジタル版） ---------- */
 function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
+// 納金票: 封筒同封用の小票をA4に2枚（提出用・控え）印刷。封入現金 = 現金徴収 − 支出 − 不足金
+function printCashSlip(ev, f, live){
+  var cash = (f.cashTotal != null) ? f.cashTotal : live.cash;
+  var pp = (f.paypayTotal != null) ? f.paypayTotal : live.pp;
+  var shortage = f.shortage || 0;
+  var expOnly = (f.expenseTotal || 0) - shortage;   // expenseTotal は不足金込みで保存されている
+  var seal = cash - expOnly - shortage;
+  var when = '';
+  try{ if(f.updatedAt && f.updatedAt.toDate){ var d = f.updatedAt.toDate();
+    when = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' '
+      + pad(d.getHours()) + ':' + pad(d.getMinutes()); } }catch(e){}
+  function line(label, val, strong){
+    return '<div class="cs-row' + (strong ? ' cs-strong' : '') + '">'
+      + '<span>' + label + '</span><span class="mono">' + val + '</span></div>';
+  }
+  var slip = '<div class="cs-slip">'
+    + '<div class="cs-head"><b>納　金　票</b><span>' + esc(ev.hostUnion || '') + '</span></div>'
+    + '<div class="cs-ev">' + esc(ev.date || '') + '　' + esc(ev.name || '')
+    + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</div>'
+    + line('現金徴収', yen(cash) + '（' + live.cashN + '名' + (live.refN ? '・返金' + live.refN + '件' : '') + '）')
+    + (pp ? line('PayPay徴収（参考・現金外）', yen(pp)) : '')
+    + line('支出計', '−' + yen(expOnly).slice(1) + '円')
+    + (shortage ? line('不足金', '−' + yen(shortage).slice(1) + '円') : '')
+    + line('封入現金額', yen(seal), true)
+    + '<div class="cs-foot">'
+    + '司会: ' + esc(f.mcName || '　　　') + '　受付: ' + esc(f.receptionName || '　　　')
+    + (when ? '　確定: ' + esc(when) : '') + '</div>'
+    + '<div class="cs-sign">受領確認サイン:　　　　　　　　　　</div>'
+    + '</div>';
+  $('rcptPrint').innerHTML =
+    '<div class="cs-copy">【提出用】</div>' + slip
+    + '<div class="cs-cut">✂ ─────────────────── キリトリ ───────────────────</div>'
+    + '<div class="cs-copy">【受付控え】</div>' + slip;
+  window.print();
+}
+
 function financeModal(ev){
   var finRef = db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main');
   var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance');
@@ -2210,7 +2257,7 @@ function financeModal(ev){
     var snap = res[0];
     // 受付の徴収データからBA人数を自動集計（未保存の場合の初期値に使う）
     var attCount = 0, c1000 = 0, c500 = 0;
-    var adet = [], dCash = 0, dPp = 0, dUnpaid = 0;
+    var adet = [], dCash = 0, dPp = 0, dUnpaid = 0, dCashN = 0, dRefN = 0;
     res[1].forEach(function(d){
       var a = d.data(), fee = a.fee || 0;
       var pending = a.status === 'pending' || a.status === 'rejected';
@@ -2220,7 +2267,11 @@ function financeModal(ev){
         if(!pending && fee > 0){
           if(a.paid === false){ dUnpaid += fee; }
           else if(a.payMethod === 'paypay'){ dPp += fee - (a.refund || 0); }
-          else { dCash += fee - (a.refund || 0); }
+          else {
+            dCash += fee - (a.refund || 0);
+            dCashN++;
+            if(a.refund) dRefN++;
+          }
         }
       }
       if(!pending && fee > 0 && a.paid !== false && a.payMethod !== 'paypay'){
@@ -2313,7 +2364,8 @@ function financeModal(ev){
         : '')
       + '<div class="btns"><button id="fnCancel">閉じる</button>'
       + (f.locked
-        ? (canEditUnion(ev.hostUnion) ? '<button id="fnUnlock" class="danger">確定を解除</button>' : '')
+        ? '<button class="primary" id="fnSlip">🖨 納金票を印刷</button>'
+          + (canEditUnion(ev.hostUnion) ? '<button id="fnUnlock" class="danger">確定を解除</button>' : '')
         : '<button id="fnSave">保存</button><button class="primary" id="fnLock">保存して確定</button>')
       + '</div>',
       true
@@ -2341,6 +2393,10 @@ function financeModal(ev){
     if(f.locked){
       // 確定済み: 入力を全てロック
       Array.prototype.forEach.call(document.querySelectorAll('.modal input'), function(el){ el.disabled = true; });
+      var sb = $('fnSlip');
+      if(sb) sb.onclick = function(){
+        printCashSlip(ev, f, { cash: dCash, pp: dPp, cashN: dCashN, refN: dRefN });
+      };
       var ub = $('fnUnlock');
       if(ub) ub.onclick = function(){
         if(!window.confirm('確定を解除して編集できるようにしますか？')) return;
