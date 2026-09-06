@@ -447,6 +447,7 @@ tr:last-child td{border-bottom:none;}
     <div class="toolrow">
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
+      <button id="btnCkAdmins" class="hide">👑 受付管理者</button>
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
@@ -698,6 +699,7 @@ var gEventUnion = '';       // イベントタブで表示中のユニオン
 var gStatUnion = '';        // 集計タブで表示中のユニオン
 var gFinUnion = '';         // 会計タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
+var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
 var gMembers = [];          // gRosterUnion の名簿
 var gMembersLoaded = false;
 var gSel = {};              // 名簿の選択状態 {no: true}
@@ -705,8 +707,12 @@ var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.g
 var gEvents = [];           // 表示月のイベント（gUnion 参加分）
 var gRec = null;            // 受付中 {ev, roster:{no:member}, att:{id:rec}, unsub}
 function isOwner(){ return gUser && gUser.uid === OWNER_UID; }
-function isAdminHere(){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === gUnion); }
-function canEditUnion(un){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === un); }
+// コア管理者 = オーナー or MAPのユニオン管理者(role=admin)。受付管理者の任命はこの権限のみ
+function isCoreAdmin(un){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === un); }
+// 受付管理者 = checkinUnions/{un}.admins に登録されたユーザー。このシステム内では管理者と同等
+function isCkStaffAdmin(un){ return !!(gUser && (gCkAdmins[un] || []).indexOf(gUser.uid) >= 0); }
+function canEditUnion(un){ return isCoreAdmin(un) || isCkStaffAdmin(un); }
+function isAdminHere(){ return canEditUnion(gUnion); }
 function fillUnionSel(sel, current){
   var list = gUnions.slice();
   if(list.indexOf(current) < 0) list.push(current);
@@ -1171,7 +1177,12 @@ $('btnProfile').onclick = function(){
 function afterLogin(){
   db.collection('checkinUnions').get().then(function(qs){
     gUnions = [];
-    qs.forEach(function(d){ gUnions.push(d.data().name || d.id); });
+    gCkAdmins = {};
+    qs.forEach(function(d){
+      var un = d.data().name || d.id;
+      gUnions.push(un);
+      gCkAdmins[un] = d.data().admins || [];
+    });
     gUnions.sort();
     if(gUnions.indexOf(gUnion) < 0){
       // 自ユニオンが未有効化
@@ -1262,6 +1273,60 @@ $('rosterUnionSel').onchange = function(){
   loadMembers();
 };
 /* オーナーのみ: 新しいユニオンを登録（横展開用） */
+/* 受付管理者の設定: ユニオン管理者かオーナーが、同ユニオンのユーザーに
+   このシステムの管理権限（名簿・イベント・会計確定解除・各種設定）を付与できる */
+$('btnCkAdmins').onclick = function(){
+  var un = gRosterUnion;
+  db.collection('users').where('union', '==', un).get().then(function(qs){
+    var users = [];
+    qs.forEach(function(d){
+      var u = d.data(); u.uid = d.id;
+      if(u.status === 'disabled') return;
+      users.push(u);
+    });
+    users.sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; });
+    var cur = (gCkAdmins[un] || []).slice();
+    if(!users.length){ toast('「' + un + '」のユーザーが見つかりません'); return; }
+    modal('<h2>👑 受付管理者 — ' + esc(un) + '</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">'
+      + 'チェックした人は、このシステム内でユニオン管理者と同じ操作（名簿編集・イベント作成・'
+      + '会計の確定解除・領収書設定など）ができるようになります。任命・解除ができるのは'
+      + 'ユニオン管理者とオーナーのみです。</p>'
+      + '<div style="max-height:50vh;overflow:auto;">'
+      + users.map(function(u, i){
+          var isRoleAdmin = u.role === 'admin';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
+            + '<input type="checkbox" id="cka_' + i + '"' + (cur.indexOf(u.uid) >= 0 ? ' checked' : '')
+            + (isRoleAdmin ? ' disabled checked' : '') + '>'
+            + '<label for="cka_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">'
+            + esc(u.name || u.uid.slice(0, 8)) + '</label>'
+            + (isRoleAdmin ? '<span class="pill g">ユニオン管理者</span>' : '')
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '<div class="btns"><button id="ckaCancel">キャンセル</button><button class="primary" id="ckaSave">保存</button></div>',
+      true);
+    $('ckaCancel').onclick = closeModal;
+    $('ckaSave').onclick = function(){
+      var arr = [];
+      users.forEach(function(u, i){
+        if(u.role === 'admin') return;   // ユニオン管理者は元から全権なのでリストには入れない
+        var cb = $('cka_' + i);
+        if(cb && cb.checked) arr.push(u.uid);
+      });
+      $('ckaSave').disabled = true;
+      db.collection('checkinUnions').doc(un).set({ admins: arr }, { merge: true }).then(function(){
+        gCkAdmins[un] = arr;
+        closeModal();
+        toast('受付管理者を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます');
+        renderRoster();
+      }).catch(function(e){
+        $('ckaSave').disabled = false;
+        toast(permMsg(e, '任命はユニオン管理者・オーナーのみ可能です'));
+      });
+    };
+  }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
+};
 $('btnAddUnion').onclick = function(){
   modal('<h2>ユニオン追加</h2>'
     + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">追加すると名簿の取込先・合同イベントの選択肢に表示されます。</p>'
@@ -1329,6 +1394,7 @@ function renderRoster(){
   $('btnGradeSel').classList.toggle('hide', !edit);
   $('btnDelAll').classList.toggle('hide', !edit);
   $('btnAddUnion').classList.toggle('hide', !isOwner());
+  $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   var tb = $('rosterBody'), html = '', shown = 0;

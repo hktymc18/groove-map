@@ -215,12 +215,22 @@ service cloud.firestore {
     // 権限: 管理 = オーナー or 同ユニオンの role=='admin'。
     //       受付(出席の記録) = 参加ユニオンの有効メンバーなら誰でも可。
 
-    // オーナー or 指定ユニオンの管理者
-    function isCkAdmin(un) {
+    // コア管理者: オーナー or 指定ユニオンの管理者(role=admin)。
+    // 受付管理者の任命・ユニオンの有効化はこの権限のみ
+    function isCkCoreAdmin(un) {
       return isOwnerAdmin()
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('role','') == 'admin'
             && profile(request.auth.uid).get('union','') == un);
+    }
+    // 受付システムの管理権限: コア管理者 or 任命された受付管理者
+    // （checkinUnions/{un}.admins にUIDが登録されたユーザー）
+    function isCkAdmin(un) {
+      return isCkCoreAdmin(un)
+        || (signedIn()
+            && exists(/databases/$(database)/documents/checkinUnions/$(un))
+            && get(/databases/$(database)/documents/checkinUnions/$(un))
+                 .data.get('admins', []).hasAny([request.auth.uid]));
     }
     // 自分のプロフィールの所属ユニオン
     function ckMyUnion() {
@@ -230,7 +240,12 @@ service cloud.firestore {
 
     match /checkinUnions/{un} {
       allow read: if signedIn();
-      allow create, update: if isCkAdmin(un);
+      // 有効化・受付管理者(admins)の変更はコア管理者のみ。
+      // 受付管理者は発行者名(issuer)などadmins以外の設定は変更できる
+      allow create: if isCkCoreAdmin(un);
+      allow update: if isCkCoreAdmin(un)
+        || (isCkAdmin(un)
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins']));
       allow delete: if isOwnerAdmin();
     }
 
