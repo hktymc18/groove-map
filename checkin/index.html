@@ -871,13 +871,19 @@ function renderSelfEvents(c){
   }).catch(function(){});
 }
 
-// PayPay受け取りリンク（paypay.me）: 貼り付けから paypay.me/xxx を抽出、金額付き送金URLを組み立て
+// PayPay受け取りリンクの正規化: paypay.me（マイリンク）と qr.paypay.ne.jp（送金リンク）の両対応
 function normPayLink(s){
-  var m = String(s || '').match(/paypay\.me\/([A-Za-z0-9_\-\.]+)/i);
-  return m ? 'paypay.me/' + m[1] : '';
+  s = String(s || '');
+  var m = s.match(/paypay\.me\/([A-Za-z0-9_\-\.]+)/i);
+  if(m) return 'paypay.me/' + m[1];
+  m = s.match(/qr\.paypay\.ne\.jp\/([A-Za-z0-9_\-]+)/i);
+  if(m) return 'qr.paypay.ne.jp/' + m[1];
+  return '';
 }
+// paypay.me はURL末尾に金額を付けると金額入りで開く。qr.paypay.ne.jp は金額指定に非対応
+function payLinkHasAmount(link){ return link.indexOf('paypay.me/') === 0; }
 function payLinkUrl(link, fee){
-  return 'https://' + link + (fee > 0 ? '/' + fee : '');
+  return 'https://' + link + (payLinkHasAmount(link) && fee > 0 ? '/' + fee : '');
 }
 // オンライン受講: 直近のオンライン受付イベントを会員証の下に表示（申請→承認待ち→Zoom参加）
 function renderOnlineEvents(c){
@@ -951,7 +957,11 @@ function renderOnlineEvents(c){
               + '💰 PayPayで ' + yen(ev.onlineFee || 1000) + ' を送る</a>'
               + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
               + '<div id="olPayQr_' + i + '" style="background:#fff;padding:4px;border-radius:6px;flex:0 0 auto;"></div>'
-              + '<span style="font-size:11.5px;color:var(--sub);text-align:left;">タップでPayPayが開き、宛先と金額が入った状態になります。PCで見ている場合はスマホでQRを読んでください。</span></div>'
+              + '<span style="font-size:11.5px;color:var(--sub);text-align:left;">'
+              + (payLinkHasAmount(ev.onlinePayLink)
+                ? 'タップでPayPayが開き、宛先と金額が入った状態になります。'
+                : 'タップでPayPayの送金画面が開きます（宛先入り）。金額 ' + yen(ev.onlineFee || 1000) + ' はPayPay側で入力してください。')
+              + 'PCで見ている場合はスマホでQRを読んでください。</span></div>'
             : '')
           + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPay_' + i + '"><label for="olPay_' + i + '" style="font-size:13px;">受講料 ' + yen(ev.onlineFee || 1000) + ' をPayPayで送金済み'
           + (ev.onlinePayTo ? '<br><span style="color:var(--sub);font-size:12px;">送金先: ' + esc(ev.onlinePayTo) + '</span>' : '') + '</label></div>'
@@ -2203,7 +2213,7 @@ function eventForm(ev){
     + '<label>オンライン受講料（¥）</label><input type="text" id="evOnFee" inputmode="numeric" value="' + esc(ev && ev.onlineFee != null ? ev.onlineFee : 1000) + '">'
     + '<label>PayPay送金先（申請フォームに表示）</label><input type="text" id="evOnPay" value="' + esc((ev && ev.onlinePayTo) || '') + '" placeholder="例: PayPay ID xxxx（きむ）">'
     + '<label>PayPay受け取りリンク（設定すると申請フォームに金額入りの送金ボタンが出ます）</label>'
-    + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="例: paypay.me/xxxx（未入力ならユニオン設定の値を自動使用）">'
+    + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…（未入力ならユニオン設定の値）">'
     + '<label>Zoom URL（あとからでも可。承認キュー画面でも入力できます）</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
     + '</div>'
     + chk
@@ -2226,7 +2236,7 @@ function eventForm(ev){
     if(!date || !name){ toast('日付と名称は必須です'); return; }
     var payLinkIn = $('evOnPayLink').value.trim();
     var payLink = normPayLink(payLinkIn);
-    if(payLinkIn && !payLink){ toast('PayPay受け取りリンクの形式が違います（例: paypay.me/xxxx）'); return; }
+    if(payLinkIn && !payLink){ toast('PayPay受け取りリンクの形式が違います（例: paypay.me/xxxx または https://qr.paypay.ne.jp/…）'); return; }
     var unions = [host];
     others.forEach(function(u, i){ if($('evU' + i) && $('evU' + i).checked) unions.push(u); });
     var isSelf = $('evModeSelf').checked;
@@ -2712,16 +2722,18 @@ $('btnRcptSet').onclick = function(){
       + 'メンバー追加時に「プレフィックス+4桁」で自動発番します。'
       + '未設定の場合、BASE REVE=RV / BASE ANTARES=ANT の初期値が使われ、その他のユニオンは手入力です。</p>'
       + '<label style="margin-top:14px;">PayPay受け取りリンク（オンライン受講の送金先）</label>'
-      + '<input type="text" id="rsPayLink" value="' + esc((s0 && s0.payLink) || '') + '" placeholder="例: paypay.me/xxxx">'
+      + '<input type="text" id="rsPayLink" value="' + esc((s0 && s0.payLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
-      + '受け取り担当のPayPayアプリ「マイコード→リンクを設定」で発行されるリンクを登録すると、'
-      + 'オンライン受講の申請フォームに<b>宛先・金額入りの送金ボタン</b>が表示されます（イベント作成時に自動で引き継がれます）。</p>'
+      + '受け取り担当のPayPayリンクを登録すると、オンライン受講の申請フォームに<b>送金ボタン</b>が表示されます'
+      + '（イベント作成時に自動で引き継がれます）。<br>'
+      + '・<b>paypay.me/○○</b>（マイコード→リンクを設定）… 宛先と<b>金額も自動入力</b>されます<br>'
+      + '・<b>qr.paypay.ne.jp/…</b>（送る・受け取るのリンク）… 宛先のみ自動、金額は送る人が入力</p>'
       + '<div class="btns"><button id="rsCancel">キャンセル</button><button class="primary" id="rsSave">保存</button></div>');
     $('rsCancel').onclick = closeModal;
     $('rsSave').onclick = function(){
       var plIn = $('rsPayLink').value.trim();
       var pl = normPayLink(plIn);
-      if(plIn && !pl){ toast('PayPay受け取りリンクの形式が違います（例: paypay.me/xxxx）'); return; }
+      if(plIn && !pl){ toast('PayPay受け取りリンクの形式が違います（例: paypay.me/xxxx または https://qr.paypay.ne.jp/…）'); return; }
       var upd = {
         issuer: $('rsIssuer').value.trim(),
         payLink: pl,
