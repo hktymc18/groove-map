@@ -963,8 +963,6 @@ function renderOnlineEvents(c){
       } else {
         body = '<button class="primary" id="olOpen_' + i + '">オンライン受講を申請する</button>'
           + '<div class="hide" id="olForm_' + i + '" style="text-align:left;margin-top:10px;">'
-          + '<label style="display:block;font-size:12px;font-weight:700;color:var(--sub);margin:8px 0 3px;">環境責任者（受講許可をもらった方の名前）</label>'
-          + '<input type="text" id="olEnv_' + i + '" style="width:100%;" placeholder="例: 山内 北斗">'
           + (function(){
               var prev = '';
               try{ prev = localStorage.getItem('bci_pl_' + c.no) || ''; }catch(e){}
@@ -992,6 +990,8 @@ function renderOnlineEvents(c){
             : '')
           + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPay_' + i + '"><label for="olPay_' + i + '" style="font-size:13px;">受講料 ' + yen(ev.onlineFee || 1000) + ' をPayPayで送金済み'
           + (ev.onlinePayTo ? '<br><span style="color:var(--sub);font-size:12px;">送金先: ' + esc(ev.onlinePayTo) + '</span>' : '') + '</label></div>'
+          + '<div class="chkrow"><input type="checkbox" id="olEnv_' + i + '"><label for="olEnv_' + i + '" style="font-size:13px;">環境責任者'
+          + (ev.onlineEnvName ? '（' + esc(ev.onlineEnvName) + '）' : '') + 'の受講許可済</label></div>'
           + '<button class="primary" id="olGo_' + i + '" style="width:100%;margin-top:8px;">申請する</button>'
           + '<div class="se-msg" id="olMsg_' + i + '"></div>'
           + '</div>';
@@ -1026,14 +1026,16 @@ function renderOnlineEvents(c){
       var go = $('olGo_' + i);
       if(!go) return;
       go.onclick = function(){
-        var env = $('olEnv_' + i).value.trim();
-        if(!env){ $('olMsg_' + i).textContent = '環境責任者の名前を入力してください'; return; }
         if(!$('olPledge_' + i).checked){
           $('olMsg_' + i).textContent = '誓約内容を最後まで確認して「同意する」にチェックを入れてください'; return;
         }
         if(!$('olPay_' + i).checked){
           $('olMsg_' + i).textContent = 'PayPay送金のチェックを入れてください'; return;
         }
+        if(!$('olEnv_' + i).checked){
+          $('olMsg_' + i).textContent = '環境責任者の受講許可のチェックを入れてください'; return;
+        }
+        var env = ev.onlineEnvName || '';
         go.disabled = true;
         var pd = new Date();
         var pledgeLocal = pd.getFullYear() + '/' + (pd.getMonth() + 1) + '/' + pd.getDate() + ' ' + nowHM();
@@ -1049,7 +1051,7 @@ function renderOnlineEvents(c){
           no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
           method: 'online', status: 'pending',
           fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
-          envApprover: env, pledged: true, pledgeLocal: pledgeLocal, pledgeVer: PLEDGE_VER, paypaySent: true,
+          envApprover: env, envApproved: true, pledged: true, pledgeLocal: pledgeLocal, pledgeVer: PLEDGE_VER, paypaySent: true,
           cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self-online'
         }).then(function(){
           try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
@@ -2292,6 +2294,19 @@ function eventForm(ev){
     var payLinkIn = $('evOnPayLink').value.trim();
     var payLink = normPayLink(payLinkIn);
     if(payLinkIn && !payLink){ toast('PayPay受け取りリンクの形式が違います（例: paypay.me/xxxx または https://qr.paypay.ne.jp/…）'); return; }
+    // オンライン受付イベントには環境責任者（=主催ユニオンの管理者名）を自動で載せる
+    // （会員証は未ログインでイベントしか読めないため、保存時に取得してイベントに保持）
+    var envPre = $('evOnline').checked
+      ? db.collection('users').where('union', '==', host).get().then(function(qs){
+          var names = [];
+          qs.forEach(function(d){
+            var u = d.data();
+            if(u.role === 'admin' && u.name) names.push(u.name);
+          });
+          return names.join('・') || ((ev && ev.onlineEnvName) || '');
+        }).catch(function(){ return (ev && ev.onlineEnvName) || ''; })
+      : Promise.resolve('');
+    envPre.then(function(envName){
     var unions = [host];
     others.forEach(function(u, i){ if($('evU' + i) && $('evU' + i).checked) unions.push(u); });
     var isSelf = $('evModeSelf').checked;
@@ -2308,6 +2323,7 @@ function eventForm(ev){
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
       onlinePayTo: $('evOnPay').value.trim(),
       onlinePayLink: payLink,
+      onlineEnvName: envName,
       zoomUrl: $('evZoom').value.trim()
     };
     var p;
@@ -2325,6 +2341,7 @@ function eventForm(ev){
       gMonth = { y: parseInt(date.slice(0,4), 10), m: parseInt(date.slice(5,7), 10) };
       loadEvents(); loadStats();
     }).catch(function(e){ toast(permMsg(e, 'イベントの作成・編集は主催ユニオンの管理者・受付管理者のみ可能です')); });
+    });
   };
 }
 
@@ -2424,7 +2441,7 @@ function onlineModal(ev){
       var st = a.status === 'pending' ? '<span class="pill a">承認待ち</span>'
         : a.status === 'approved' ? '<span class="pill g">承認済み' + (a.approvedBy ? '（' + esc(a.approvedBy) + '）' : '') + '</span>'
         : '<span class="pill r">却下</span>';
-      var detail = '環境責任者: ' + esc(a.envApprover || '—')
+      var detail = '環境責任者: ' + (a.envApproved ? '✓ ' : '') + esc(a.envApprover || (a.envApproved ? '許可済' : '—'))
         + '　誓約書: ' + (a.pledged ? '✓' + (a.pledgeLocal ? ' 同意 ' + esc(a.pledgeLocal) : '') : '—')
         + '　PayPay送金申告: ' + (a.paypaySent ? '✓ ' + yen(a.fee || 0) : '—');
       var btns = '';
