@@ -871,6 +871,21 @@ function renderSelfEvents(c){
   }).catch(function(){});
 }
 
+// オンライン受講 誓約書（従来の外部サイトと同一文言。変更時は PLEDGE_VER を上げる）
+var PLEDGE_VER = '2026-09';
+var PLEDGE_PRE = '株式会社IMPROVE及び各ユニオンが主催するオンラインセミナーを受講するにあたり、以下の事項を厳守することを誓約いたします。';
+var PLEDGE_ITEMS = [
+  '録音、録画、コピー、ダウンロード、ストリームキャプチャ、複製、複写、アーカイブ保管、配信、アップロード、公開、変更、翻訳、放映、実行、表示、販売、送信又は再送信することは一切いたしません。',
+  '知り得た機密情報を他者(SNS含む)に漏らすことはいたしません。',
+  '貴社の著作権等の知的財産権を侵害する行為はいたしません。',
+  '上記に違反した場合、代表者及び該当する署名者は、連帯して、違約金50万円を支払うことを約束いたします。また、貴社及び関係者が実際に被った損害額が違約金50万円を上回る場合には、実際に生じた損害の賠償をすることを約束いたします。'
+];
+function pledgeBodyHtml(){
+  return '<p style="margin:0 0 6px;">' + esc(PLEDGE_PRE) + '</p>'
+    + '<ol style="margin:0;padding-left:1.4em;">'
+    + PLEDGE_ITEMS.map(function(t){ return '<li style="margin-bottom:5px;">' + esc(t) + '</li>'; }).join('')
+    + '</ol>';
+}
 // PayPay受け取りリンクの正規化: paypay.me（マイリンク）と qr.paypay.ne.jp（送金リンク）の両対応
 function normPayLink(s){
   s = String(s || '');
@@ -950,7 +965,19 @@ function renderOnlineEvents(c){
           + '<div class="hide" id="olForm_' + i + '" style="text-align:left;margin-top:10px;">'
           + '<label style="display:block;font-size:12px;font-weight:700;color:var(--sub);margin:8px 0 3px;">環境責任者（受講許可をもらった方の名前）</label>'
           + '<input type="text" id="olEnv_' + i + '" style="width:100%;" placeholder="例: 山内 北斗">'
-          + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPledge_' + i + '"><label for="olPledge_' + i + '" style="font-size:13px;">誓約書を提出済み（返信メールを受領済み）</label></div>'
+          + (function(){
+              var prev = '';
+              try{ prev = localStorage.getItem('bci_pl_' + c.no) || ''; }catch(e){}
+              return '<div style="border:1px solid var(--line);border-radius:10px;margin-top:10px;padding:10px 12px;">'
+                + '<div style="font-weight:700;font-size:13px;">📜 オンライン受講 誓約書</div>'
+                + (prev ? '<div style="font-size:12px;color:var(--green);margin:4px 0 2px;">✅ この端末で同意済み（' + esc(prev) + '）。今回の申請にも同じ内容で誓約します。</div>' : '')
+                + '<div id="olPtext_' + i + '" style="max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.65;text-align:left;color:var(--ink);background:var(--paper);">'
+                + pledgeBodyHtml() + '</div>'
+                + '<div class="chkrow"><input type="checkbox" id="olPledge_' + i + '"' + (prev ? ' checked' : ' disabled') + '>'
+                + '<label for="olPledge_' + i + '" style="font-size:13px;">誓約内容に同意する（誓約日: 本日）</label></div>'
+                + (prev ? '' : '<div id="olPnote_' + i + '" style="font-size:11.5px;color:var(--amber);">※誓約内容を最後までスクロールするとチェックできます</div>')
+                + '</div>';
+            })()
           + (ev.onlinePayLink
             ? '<a id="olPayBtn_' + i + '" href="' + esc(payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000)) + '" target="_blank" rel="noopener" '
               + 'style="display:block;text-align:center;text-decoration:none;padding:11px;border-radius:10px;background:#e60012;color:#fff;font-weight:700;font-size:14.5px;margin-top:10px;">'
@@ -977,8 +1004,23 @@ function renderOnlineEvents(c){
       if(bId) bId.onclick = function(){ copyText(fmtZoomId(ev.zoomId), bId); };
       if(bPw) bPw.onclick = function(){ copyText(ev.zoomPw || '', bPw); };
       if(bUrl) bUrl.onclick = function(){ copyText(ev.zoomUrl || '', bUrl); };
+      // 誓約書: 最後までスクロールで同意チェックを解禁（全文が収まっている場合はフォームを開いた時点で解禁）
+      var pt = $('olPtext_' + i);
+      var unlockPledge = function(){
+        var cb = $('olPledge_' + i);
+        if(cb) cb.disabled = false;
+        var nt = $('olPnote_' + i);
+        if(nt){ nt.textContent = '最後まで確認しました。チェックを入れてください'; nt.style.color = 'var(--green)'; }
+      };
+      if(pt) pt.addEventListener('scroll', function(){
+        if(pt.scrollTop + pt.clientHeight >= pt.scrollHeight - 6) unlockPledge();
+      });
       var op = $('olOpen_' + i);
-      if(op) op.onclick = function(){ op.classList.add('hide'); $('olForm_' + i).classList.remove('hide'); };
+      if(op) op.onclick = function(){
+        op.classList.add('hide'); $('olForm_' + i).classList.remove('hide');
+        // 表示後にサイズが確定するので、スクロール不要の場合はここで解禁
+        if(pt && pt.scrollHeight <= pt.clientHeight + 6) unlockPledge();
+      };
       var pq = $('olPayQr_' + i);
       if(pq && ev.onlinePayLink) makeQr(pq, payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000), 64);
       var go = $('olGo_' + i);
@@ -986,15 +1028,28 @@ function renderOnlineEvents(c){
       go.onclick = function(){
         var env = $('olEnv_' + i).value.trim();
         if(!env){ $('olMsg_' + i).textContent = '環境責任者の名前を入力してください'; return; }
-        if(!$('olPledge_' + i).checked || !$('olPay_' + i).checked){
-          $('olMsg_' + i).textContent = '誓約書とPayPay送金のチェックを入れてください'; return;
+        if(!$('olPledge_' + i).checked){
+          $('olMsg_' + i).textContent = '誓約内容を最後まで確認して「同意する」にチェックを入れてください'; return;
+        }
+        if(!$('olPay_' + i).checked){
+          $('olMsg_' + i).textContent = 'PayPay送金のチェックを入れてください'; return;
         }
         go.disabled = true;
+        var pd = new Date();
+        var pledgeLocal = pd.getFullYear() + '/' + (pd.getMonth() + 1) + '/' + pd.getDate() + ' ' + nowHM();
+        // 誓約書アーカイブ（申請1件につき1レコード。ルール未公開などで書けなくても申請は成立させる）
+        db.collection('checkinPledges').add({
+          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+          eventId: ev.id, eventDate: ev.date || '', eventName: ev.name || '',
+          ver: PLEDGE_VER, envApprover: env,
+          at: FV.serverTimestamp(), atLocal: pledgeLocal, atMs: Date.now(), cardToken: gCardToken
+        }).catch(function(){});
+        try{ localStorage.setItem('bci_pl_' + c.no, pledgeLocal); }catch(e){}
         db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
           no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
           method: 'online', status: 'pending',
           fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
-          envApprover: env, pledged: true, paypaySent: true,
+          envApprover: env, pledged: true, pledgeLocal: pledgeLocal, pledgeVer: PLEDGE_VER, paypaySent: true,
           cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self-online'
         }).then(function(){
           try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
@@ -2316,6 +2371,44 @@ function copyText(t, btn){
 }
 
 /* ---------- オンライン受講の承認キュー ---------- */
+/* 誓約書アーカイブ: オンライン受講申請時の同意記録（ユニオン単位・改変不可） */
+function pledgeArchiveModal(ev){
+  var un = ev.hostUnion || '';
+  db.collection('checkinPledges').where('union', '==', un).get().then(function(qs){
+    var rows = [];
+    qs.forEach(function(d){ rows.push(d.data()); });
+    rows.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
+    modal('<h2>📜 誓約書アーカイブ — ' + esc(un) + '（' + rows.length + '件）</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">オンライン受講の申請時に同意された誓約の記録です。行をタップで全文を表示。</p>'
+      + (rows.length
+        ? '<div style="max-height:340px;overflow:auto;">' + rows.map(function(r, i){
+            return '<div data-pl="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);cursor:pointer;flex-wrap:wrap;">'
+              + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.atLocal || '') + '</span>'
+              + '<b>' + esc(r.name || '') + '</b>'
+              + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.no || '') + '</span>'
+              + '<span style="font-size:12px;color:var(--sub);">' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '') + '</span>'
+              + '</div>';
+          }).join('') + '</div>'
+        : '<p style="color:var(--sub);font-size:13px;">まだ記録はありません。</p>')
+      + '<div class="btns"><button id="plaClose">閉じる</button></div>', true);
+    $('plaClose').onclick = function(){ onlineModal(ev); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pl]'), function(el){
+      el.onclick = function(){
+        var r = rows[+el.getAttribute('data-pl')];
+        modal('<h2>誓約書</h2>'
+          + '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.7;">'
+          + pledgeBodyHtml() + '</div>'
+          + '<div style="font-size:13px;margin-top:10px;line-height:1.8;">'
+          + '誓約者: <b>' + esc(r.name || '') + '</b>（' + esc(r.no || '') + '・' + esc(r.group || '') + '）<br>'
+          + '同意日時: ' + esc(r.atLocal || '') + '　対象: ' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '')
+          + (r.envApprover ? '<br>環境責任者: ' + esc(r.envApprover) : '')
+          + '<br><span style="color:var(--sub);font-size:12px;">文言バージョン: ' + esc(r.ver || '') + '</span></div>'
+          + '<div class="btns"><button id="plvBack">一覧に戻る</button></div>');
+        $('plvBack').onclick = function(){ pledgeArchiveModal(ev); };
+      };
+    });
+  }).catch(function(e){ toast(permMsg(e, '誓約書アーカイブの閲覧権限がありません')); });
+}
 function onlineModal(ev){
   // 電子領収書の発行者名（主催ユニオンの設定）
   var olIssuer = '';
@@ -2332,7 +2425,7 @@ function onlineModal(ev){
         : a.status === 'approved' ? '<span class="pill g">承認済み' + (a.approvedBy ? '（' + esc(a.approvedBy) + '）' : '') + '</span>'
         : '<span class="pill r">却下</span>';
       var detail = '環境責任者: ' + esc(a.envApprover || '—')
-        + '　誓約書: ' + (a.pledged ? '✓' : '—')
+        + '　誓約書: ' + (a.pledged ? '✓' + (a.pledgeLocal ? ' 同意 ' + esc(a.pledgeLocal) : '') : '—')
         + '　PayPay送金申告: ' + (a.paypaySent ? '✓ ' + yen(a.fee || 0) : '—');
       var btns = '';
       if(a.status === 'pending'){
@@ -2365,9 +2458,10 @@ function onlineModal(ev){
       + '<button id="olZoomSave">保存</button></div>'
       + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）</label>'
       + (rows || '<p style="color:var(--sub);font-size:13px;">申請はまだありません。受講者は自分の会員証から申請できます。</p>')
-      + '<div class="btns"><button id="olClose">閉じる</button></div>',
+      + '<div class="btns"><button id="olPledges">📜 誓約書アーカイブ</button><button id="olClose">閉じる</button></div>',
       true);
     $('olClose').onclick = closeModal;
+    $('olPledges').onclick = function(){ pledgeArchiveModal(ev); };
     // 招待の丸ごと貼り付け → 自動判別して各欄に反映
     $('olZoomPaste').addEventListener('input', function(){
       var t = $('olZoomPaste').value;
