@@ -3203,6 +3203,12 @@ function attListModal(mode){
       delete gRec.att[no];
       renderTallies();
       syncReceipt(no);
+      // オンライン受講の取消は会員証の承認表示もリセット（承認キューの「申請を削除」と同じマーカー）
+      if(a.method === 'online' && a.cardToken){
+        var up = {};
+        up['online_' + gRec.ev.id] = 'reapply';
+        db.collection('cards').doc(a.cardToken).set(up, { merge: true }).catch(function(){});
+      }
       db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
         .delete()
         .catch(function(e2){ toast(permMsg(e2, '取消の権限がありません')); });
