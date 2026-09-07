@@ -354,5 +354,15 @@ service cloud.firestore {
       // オンライン申請の承認結果マーカー(online_<eventId>)の書込みに使用
       allow update: if signedIn();
     }
+
+    // オンライン受講の誓約書アーカイブ:
+    //   会員証ページ（未ログイン）から申請時に同意記録を作成。改変・削除は不可（アーカイブ）
+    match /checkinPledges/{pid} {
+      allow read: if signedIn();
+      allow create: if request.resource.data.keys().hasOnly(
+        ['no', 'name', 'group', 'union', 'eventId', 'eventDate', 'eventName',
+         'ver', 'envApprover', 'at', 'atLocal', 'atMs', 'cardToken']);
+      allow update, delete: if false;
+    }
   }
 }
