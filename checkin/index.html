@@ -2722,7 +2722,14 @@ function financeModal(ev){
         + '</div>'
       : '';
     var f = snap.exists ? snap.data() : {};
-    var inc = f.income || [
+    // 保存済みの収入行があっても人数が全て空/0なら、受付の徴収データからの自動集計を優先する
+    // （受付前に一度「保存」した場合などに、0のまま固定されてしまうのを防ぐ）
+    var savedHasCount = false;
+    (f.income || []).forEach(function(r){
+      var n = parseInt(String(r.count).replace(/[^\d]/g, ''), 10);
+      if(n > 0) savedHasCount = true;
+    });
+    var inc = (f.income && savedHasCount) ? f.income : [
       { label: 'BA', unit: 1000, count: c1000 || '' },
       { label: 'BA', unit: 500, count: c500 || '' },
       { label: 'BA（オンライン）', unit: 1000, count: '' },
@@ -2762,7 +2769,9 @@ function financeModal(ev){
       '<h2>会計 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
       + '<p style="font-size:12px;color:var(--sub);margin:0 0 8px;">'
       + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
-      + '<label style="color:var(--green);">収入（＋）</label>' + incHtml
+      + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label style="color:var(--green);margin:0;">収入（＋）</label>'
+      + (!f.locked && (c1000 || c500) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
+      + '</div>' + incHtml
       + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(+)計 <span id="fiTotal" class="mono">¥0</span></div>'
       + '<label style="color:var(--accent);">支出（−）</label>' + expHtml
       + '<div style="display:flex;gap:6px;align-items:center;margin:5px 0;">'
@@ -2790,7 +2799,7 @@ function financeModal(ev){
       true
     );
     $('fnAtt').textContent = '出席 ' + attCount + '名'
-      + (!snap.exists && (c1000 || c500) ? '（受付の徴収データからBA人数を自動入力しました）' : '（参考）');
+      + ((!snap.exists || !savedHasCount) && (c1000 || c500) ? '（受付の徴収データからBA人数を自動入力しました）' : '（参考）');
     function num(v){ var n = parseInt(String(v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n; }
     function recompute(){
       var ti = 0;
@@ -2809,6 +2818,14 @@ function financeModal(ev){
     document.querySelector('.modal').addEventListener('input', recompute);
     recompute();
     $('fnCancel').onclick = closeModal;
+    // 受付の徴収データでBA行を入れ直す（保存済みの古い人数を最新に更新したいとき用）
+    var ab = $('fnAuto');
+    if(ab) ab.onclick = function(){
+      $('fiL0').value = 'BA'; $('fiU0').value = 1000; $('fiC0').value = c1000 || '';
+      $('fiL1').value = 'BA'; $('fiU1').value = 500; $('fiC1').value = c500 || '';
+      recompute();
+      toast('受付データからBA人数を入力しました（¥1,000×' + c1000 + '名・¥500×' + c500 + '名）');
+    };
     if(f.locked){
       // 確定済み: 入力を全てロック
       Array.prototype.forEach.call(document.querySelectorAll('.modal input'), function(el){ el.disabled = true; });
