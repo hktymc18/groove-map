@@ -393,6 +393,7 @@ tr:last-child td{border-bottom:none;}
       <button class="primary" id="btnRecStart">受付を開始</button>
       <button id="btnRecStop" class="hide">受付を終了</button>
     </div>
+    <div id="olAlert" class="notice hide" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);"></div>
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
       <div>
@@ -1368,6 +1369,48 @@ function enterApp(){
   loadEvents();
   loadStats();
   loadFinanceTab();
+  initOnlineAlert();
+}
+
+/* ── オンライン申請の到着を受付タブでリアルタイム通知 ──
+   本日のオンライン対応イベント（自ユニオン参加分）の申請を購読し、
+   承認待ちがあれば受付タブ上部に赤帯を表示。増えたら受付音でお知らせ */
+var gOlAlert = { unsubs: [], evs: {}, counts: {}, last: -1 };
+function initOnlineAlert(){
+  gOlAlert.unsubs.forEach(function(u){ try{ u(); }catch(e){} });
+  gOlAlert = { unsubs: [], evs: {}, counts: {}, last: -1 };
+  db.collection('checkinEvents').where('date', '==', todayStr()).get().then(function(qs){
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if(!ev.online) return;
+      if((ev.unions || []).indexOf(gUnion) < 0 && !isOwner()) return;
+      gOlAlert.evs[ev.id] = ev;
+      var unsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
+        .where('method', '==', 'online')
+        .onSnapshot(function(aqs){
+          var n = 0;
+          aqs.forEach(function(a){ if(a.data().status === 'pending') n++; });
+          gOlAlert.counts[ev.id] = n;
+          renderOlAlert();
+        }, function(){});
+      gOlAlert.unsubs.push(unsub);
+    });
+  }).catch(function(){});
+}
+function renderOlAlert(){
+  var total = 0, firstEv = null;
+  Object.keys(gOlAlert.counts).forEach(function(id){
+    total += gOlAlert.counts[id];
+    if(!firstEv && gOlAlert.counts[id] > 0) firstEv = gOlAlert.evs[id];
+  });
+  var el = $('olAlert');
+  el.classList.toggle('hide', !total);
+  if(total){
+    el.innerHTML = '💻 オンライン受講の申請が <b>' + total + '件</b> 承認待ちです — タップして承認画面を開く';
+    el.onclick = function(){ if(firstEv) onlineModal(firstEv); };
+    if(gOlAlert.last >= 0 && total > gOlAlert.last) beep('ok');
+  }
+  gOlAlert.last = total;
 }
 
 /* 各タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
