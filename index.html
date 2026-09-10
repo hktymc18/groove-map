@@ -7262,6 +7262,7 @@ function renderMembers() {
     return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
   }).join('')
     + (mergedCt > 0 ? '<span class="ml-pill" style="border-style:dashed;color:' + (incM ? 'var(--accent)' : 'var(--text-dim)') + '" onclick="toggleMemberIncMerged()" title="集計・カテゴリに結合メンバーを含めるか">' + (incM ? '🔗結合込み ✓' : '🔗結合除外') + '</span>' : '')
+    + (!viewingOwnerUid ? '<span class="ml-pill" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</span>' : '')
     + '</div>';
   if (!list.length) { wrap.innerHTML = html + '<div class="ck-empty">該当するメンバーがいません</div>'; return; }
   html += '<div class="ml-list">' + list.map(function(m){
