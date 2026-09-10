@@ -2288,7 +2288,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v466</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v467</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2328,6 +2328,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div class="export-bar">
       <div class="exp-btn" onclick="exportCSV('current')">📄 CSV出力</div>
+      <div class="exp-btn" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</div>
       <div class="exp-btn" onclick="openShareModal()" id="shareBtn" style="display:none">🔗 共有</div>
     </div>
     <div class="edit-hint" id="editHint">▶で開閉 ・ ✎ボタンで編集</div>
@@ -5203,7 +5204,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v466';
+  var DATA_VERSION = 'v467';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6162,6 +6163,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v467', d:'2026-09-12', items:['⚙️ 「予定とOLの連携」の設定を2つに分割：連携をオンにしたまま「OL予定をカレンダーに表示」だけをオフにできるようになりました（カレンダーの📝紫のOL帯を消しても、メンバー予定を完了した時の「OLとして記録しますか？」の提案は残ります）。カレンダーの⚙設定から切り替えられます'] },
   { v:'v466', d:'2026-09-11', items:['🌟 🌱フレッシュ・🎓研修生が光らない問題を修正：Mac/iPhoneのSafariはツリー（SVG）のCSS発光エフェクトに対応しておらず、これまで光って見えていませんでした。どのブラウザでも確実に見える「脈動する色付きリング」（フレッシュ=金・研修生=水色）に変更しました'] },
   { v:'v465', d:'2026-09-11', items:['🌟 PCツリーの🌱フレッシュ・🎓研修生の光を強化：系列フォーカスを使っていない通常表示でもはっきり目立つよう、点滅の光を大きく・明るくしました','💡 系列フォーカスの入口を分かりやすく：フォーカスしていない時も左上に「💡カードをクリックすると系列フォーカス」の案内を常時表示します（フォーカス中は従来どおり「✕解除」ボタンに変わります）'] },
   { v:'v464', d:'2026-09-11', items:['📍 メンバー追加時の「地域」は、自分のアカウント（プロフィール）の活動地域が最初から選択された状態で開くようになりました（変更はいつでも可能。プロフィールに活動地域が未設定の場合は従来どおり未設定で開きます）'] },
@@ -7065,6 +7067,167 @@ function toggleMemberIncMerged() {
   window._memberIncMerged = (window._memberIncMerged === false); // 既定ON→OFF→ON…
   renderMembers();
 }
+// ============================================================
+//  受付システム連携（BASE CHECK-IN）
+//  初回: 氏名の正規化マッチで名簿と照合 → 会員番号(checkinNo)で恒久リンク
+//  以後: ワンタップで当月の実測稼働率を actRate に一括反映（Sタイプは除外）
+// ============================================================
+function _ckNorm(s) {
+  return String(s || '').replace(/[\s　]/g, '')
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); });
+}
+function _ckMonthKey() {  // MAPの '2026.09' → 受付の '2026-09'
+  return (state.currentMonth || currentMonthStr()).replace('.', '-');
+}
+function _ckOwnMembers() {
+  return (state.members || []).filter(function(m) {
+    return !m.deleted && !/^MG_/.test(m.id || '') && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
+  });
+}
+var _ckLink = null;
+function ckLinkOpen(unionId) {
+  if (viewingOwnerUid) { toast('受付連携は自分のMAP表示中に使えます'); return; }
+  if (!db) { toast('オンライン時のみ使えます'); return; }
+  db.collection('checkinUnions').get().then(function(qs) {
+    var unions = [];
+    qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
+    if (!unions.length) { toast('受付システムに有効化されたユニオンがまだありません'); return; }
+    var sel = unionId || '';
+    if (!sel) {
+      // 自分のユニオン名＋地域で自動選択（地域欄が未設定の受付ユニオンは名前一致のみで許容）
+      var myU = _ckNorm((currentUser && currentUser.union) || '');
+      var myA = _ckNorm((currentUser && currentUser.area) || '');
+      unions.forEach(function(u) {
+        if (sel) return;
+        if (_ckNorm(u.id) === myU && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
+      });
+      unions.forEach(function(u) {  // 部分一致（BASE REVE東京 など）
+        if (sel) return;
+        if (myU && _ckNorm(u.id).indexOf(myU) === 0 && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
+      });
+      if (!sel) sel = unions[0].id;
+    }
+    _ckLink = { unions: unions, sel: sel };
+    ckLinkLoad();
+  }).catch(function(e) { toast('受付システムに接続できません: ' + (e && e.message || '')); });
+}
+function ckLinkLoad() {
+  db.collection('checkinMembers').where('union', '==', _ckLink.sel).get().then(function(qs) {
+    var roster = [];
+    qs.forEach(function(d) { var r = d.data() || {}; r.no = d.id; if (r.active !== false) roster.push(r); });
+    var byNo = {}, byName = {};
+    roster.forEach(function(r) {
+      byNo[r.no] = r;
+      var k = _ckNorm(r.name);
+      if (k) { (byName[k] = byName[k] || []).push(r); }
+    });
+    _ckLink.items = _ckOwnMembers().map(function(m) {
+      if (m.checkinNo && byNo[m.checkinNo]) return { m: m, kind: 'linked', r: byNo[m.checkinNo] };
+      var cands = byName[_ckNorm((m.lastName || '') + (m.firstName || ''))] || [];
+      if (cands.length === 1) return { m: m, kind: 'auto', r: cands[0] };
+      if (cands.length > 1) return { m: m, kind: 'multi', cands: cands };
+      return { m: m, kind: 'none' };
+    });
+    _ckLink.rosterCount = roster.length;
+    ckLinkRender();
+  }).catch(function(e) { toast('受付名簿の読込に失敗しました: ' + (e && e.message || '')); });
+}
+function ckLinkClose() { var o = document.getElementById('ckLinkOv'); if (o && o.parentNode) o.parentNode.removeChild(o); }
+function ckLinkRender() {
+  ckLinkClose();
+  var L = _ckLink;
+  var unionSel = '<select id="ckUnionSel" onchange="_ckLink.sel=this.value;ckLinkLoad()" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px">'
+    + L.unions.map(function(u) {
+        return '<option value="' + evEsc(u.id) + '"' + (u.id === L.sel ? ' selected' : '') + '>'
+          + evEsc(u.id) + (u.area ? '（' + evEsc(u.area) + '）' : '') + '</option>';
+      }).join('') + '</select>';
+  var nAuto = 0, nLinked = 0;
+  var rows = L.items.map(function(it, i) {
+    var nm = evEsc(((it.m.lastName || '') + ' ' + (it.m.firstName || '')).trim() || '(無名)');
+    var right;
+    if (it.kind === 'linked') {
+      nLinked++;
+      right = '<span style="color:var(--accent);font-size:12px">✓ ' + evEsc(it.r.no) + '</span>'
+        + '<span onclick="_ckLink.items[' + i + '].m.checkinNo=\'\';ckLinkLoad()" style="font-size:11px;color:var(--text-dim);margin-left:8px;cursor:pointer;text-decoration:underline">解除</span>';
+    } else if (it.kind === 'auto') {
+      nAuto++;
+      right = '<span style="color:var(--accent);font-size:12px">→ ' + evEsc(it.r.no) + '</span>'
+        + '<span style="font-size:11px;color:var(--text-dim);margin-left:6px">' + evEsc(it.r.group || '') + '</span>';
+    } else if (it.kind === 'multi') {
+      right = '<select id="ckSel' + i + '" style="max-width:170px;padding:5px 6px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">'
+        + '<option value="">同名が複数 — 選択</option>'
+        + it.cands.map(function(c) { return '<option value="' + evEsc(c.no) + '">' + evEsc(c.no) + '（' + evEsc(c.group || '系列なし') + '）</option>'; }).join('')
+        + '</select>';
+    } else {
+      right = '<span style="font-size:11.5px;color:var(--text-dim)">名簿になし</span>';
+    }
+    return '<div style="display:flex;align-items:center;gap:8px;padding:9px 2px;border-top:1px solid var(--border);font-size:13.5px">'
+      + '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + nm + '</span>' + right + '</div>';
+  }).join('');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'ckLinkOv';
+  ov.onclick = function(e) { if (e.target === ov) ckLinkClose(); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⟲ 受付システム連携</div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px">名簿 ' + L.rosterCount + '名 ・ リンク済み ' + nLinked + ' ・ 自動一致 ' + nAuto + '</div></div>'
+    + '<span class="ms-x" onclick="ckLinkClose()">✕</span></div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">受付ユニオン</div>' + unionSel
+    + '<div style="max-height:44vh;overflow-y:auto;margin-top:10px">' + (rows || '<div style="padding:16px;color:var(--text-dim);font-size:13px">このMAPにメンバーがいません</div>') + '</div>'
+    + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + evEsc((state.currentMonth || currentMonthStr())) + ' の稼働率を取り込む</button>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率 = 出席回数 ÷ 本日までの開催数（受付システムの集計と同じ）。稼働タイプSの人は自動更新の対象外です。</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function ckLinkApply() {
+  var newLinks = 0;
+  _ckLink.items.forEach(function(it, i) {
+    if (it.kind === 'auto') { it.m.checkinNo = it.r.no; newLinks++; }
+    else if (it.kind === 'multi') {
+      var sel = document.getElementById('ckSel' + i);
+      if (sel && sel.value) { it.m.checkinNo = sel.value; newLinks++; }
+    }
+  });
+  ckImportRates(function(updated, held) {
+    autoSave();
+    ckLinkClose();
+    if (currentView === 'members') renderMembers();
+    if (held) toast('連携完了 ✓ 新規リンク' + newLinks + '名・稼働率を' + updated + '名に反映（開催' + held + '回）');
+    else toast('リンクを保存しました（' + _ckMonthKey() + ' の開催がまだないため稼働率は未更新）');
+  });
+}
+function ckImportRates(done) {
+  var un = _ckLink.sel, month = _ckMonthKey();
+  db.collection('checkinEvents').where('month', '==', month).get().then(function(qs) {
+    var d = new Date();
+    var today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    var evIds = [];
+    qs.forEach(function(doc) {
+      var ev = doc.data() || {};
+      if ((ev.unions || []).indexOf(un) >= 0 && (ev.date || '') <= today) evIds.push(doc.id);
+    });
+    if (!evIds.length) { done(0, 0); return; }
+    var present = {};
+    var reads = evIds.map(function(eid) {
+      return db.collection('checkinEvents').doc(eid).collection('attendance').where('union', '==', un).get().then(function(aqs) {
+        aqs.forEach(function(a) {
+          var x = a.data() || {};
+          if (x.status === 'pending' || x.status === 'rejected') return;
+          present[a.id] = (present[a.id] || 0) + 1;
+        });
+      });
+    });
+    Promise.all(reads).then(function() {
+      var updated = 0;
+      _ckOwnMembers().forEach(function(m) {
+        if (!m.checkinNo || m.activity === 'S') return;
+        m.actRate = Math.round((present[m.checkinNo] || 0) / evIds.length * 100);
+        updated++;
+      });
+      done(updated, evIds.length);
+    });
+  }).catch(function(e) { toast('稼働率の取込に失敗しました: ' + (e && e.message || '')); });
+}
+
 function renderMembers() {
   var wrap = document.getElementById('view-members'); if (!wrap) return;
   // 結合（共有）したダウンラインも一覧に含める（MAPと同じ合成リスト）。
@@ -7100,6 +7263,7 @@ function renderMembers() {
     return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
   }).join('')
     + (mergedCt > 0 ? '<span class="ml-pill" style="border-style:dashed;color:' + (incM ? 'var(--accent)' : 'var(--text-dim)') + '" onclick="toggleMemberIncMerged()" title="集計・カテゴリに結合メンバーを含めるか">' + (incM ? '🔗結合込み ✓' : '🔗結合除外') + '</span>' : '')
+    + (!viewingOwnerUid ? '<span class="ml-pill" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</span>' : '')
     + '</div>';
   if (!list.length) { wrap.innerHTML = html + '<div class="ck-empty">該当するメンバーがいません</div>'; return; }
   html += '<div class="ml-list">' + list.map(function(m){
@@ -12552,6 +12716,16 @@ function setBarDur(v) {
 var _olLink = true;
 try { _olLink = localStorage.getItem('gm_olLink') !== '0'; } catch(eOl0) {}
 function _olLinkOn() { return _olLink; }
+// v467: OL予定のカレンダー表示だけを別トグルに（オフでも完了時のOL記録提案は残る）
+var _olCalShow = true;
+try { _olCalShow = localStorage.getItem('gm_olCal') !== '0'; } catch(eOl1) {}
+function _olCalOn() { return _olLink && _olCalShow; }
+function setOlCal(v) {
+  _olCalShow = !!v;
+  try { localStorage.setItem('gm_olCal', v ? '1' : '0'); } catch(e) {}
+  renderCalendar();
+  openCalSettings();
+}
 function setOlLink(v) {
   _olLink = !!v;
   try { localStorage.setItem('gm_olLink', v ? '1' : '0'); } catch(e) {}
@@ -17215,11 +17389,18 @@ function openCalSettings() {
     + '<div class="rb' + (!_calBarDur ? ' sel' : '') + '" onclick="setBarDur(false)">固定（1行）</div>'
     + '<div class="rb' + (_calBarDur ? ' sel' : '') + '" onclick="setBarDur(true)">⏱ 時間の長さで伸ばす</div>'
     + '</div></div>'
-    + '<div class="fr" style="margin-top:4px"><label class="fl">予定とOLの連携（OL予定をカレンダー表示・メンバー予定の完了時にOL記録を提案）</label>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">予定とOLの連携（メンバー予定の完了時にOL記録を提案）</label>'
     + '<div class="rg">'
     + '<div class="rb' + (_olLink ? ' sel' : '') + '" onclick="setOlLink(true)">🔗 オン</div>'
     + '<div class="rb' + (!_olLink ? ' sel' : '') + '" onclick="setOlLink(false)">オフ</div>'
     + '</div></div>'
+    + (_olLink
+      ? '<div class="fr" style="margin-top:4px"><label class="fl">└ 📝OL予定をカレンダーに表示（非表示にしても完了時のOL記録提案は残ります）</label>'
+        + '<div class="rg">'
+        + '<div class="rb' + (_olCalShow ? ' sel' : '') + '" onclick="setOlCal(true)">表示</div>'
+        + '<div class="rb' + (!_olCalShow ? ' sel' : '') + '" onclick="setOlCal(false)">非表示</div>'
+        + '</div></div>'
+      : '')
     + '<div class="fr" style="margin-top:4px"><label class="fl">下部タブの表示（タップで表示⇄非表示。予定・メニューは常時）</label>'
     + '<div class="rg">'
     + (function(){
@@ -20252,8 +20433,8 @@ function renderCalendar() {
       (byDate[e.date] = byDate[e.date] || []).push({ ev: e, span: '' });
     }
   });
-  // v407: OL予定（OL記録の📅予定）もカレンダーに表示（⚙設定の「予定とOLの連携」でオフ可）
-  if (_olLinkOn() && !viewingOwnerUid && state.freshData) {
+  // v407: OL予定（OL記録の📅予定）もカレンダーに表示（v467: 表示だけ別トグルで消せる）
+  if (_olCalOn() && !viewingOwnerUid && state.freshData) {
     for (var _omid in state.freshData) {
       var _olog = (state.freshData[_omid] && state.freshData[_omid].olLog) || [];
       for (var _oj = 0; _oj < _olog.length; _oj++) {
@@ -20632,9 +20813,9 @@ function _daySheetHtml(ds) {
   });
   var tks = (state.events || []).filter(function(e){ return e.date === ds && e.type === 'task' && evTdMine(e); }); // v361
   evs.sort(evSortFn); tks.sort(evSortFn);
-  // v407: OL予定もこの日のシートに表示（タップでOL記録を開く）
+  // v407: OL予定もこの日のシートに表示（v467: 表示だけ別トグルで消せる）
   var ols = [];
-  if (typeof _olLinkOn === 'function' && _olLinkOn() && !viewingOwnerUid && state.freshData) {
+  if (typeof _olCalOn === 'function' && _olCalOn() && !viewingOwnerUid && state.freshData) {
     for (var _dmid in state.freshData) {
       var _dlog = (state.freshData[_dmid] && state.freshData[_dmid].olLog) || [];
       for (var _dj = 0; _dj < _dlog.length; _dj++) {
