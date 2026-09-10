@@ -2892,6 +2892,10 @@ $('btnRcptSet').onclick = function(){
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
       + 'メンバー追加時に「プレフィックス+4桁」で自動発番します。'
       + '未設定の場合、BASE REVE=RV / BASE ANTARES=ANT の初期値が使われ、その他のユニオンは手入力です。</p>'
+      + '<label style="margin-top:14px;">地域</label>'
+      + '<input type="text" id="rsArea" value="' + esc((s0 && s0.area) || '') + '" placeholder="例: 福岡">'
+      + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
+      + 'MAPとの連携（稼働率の取込）で、同じユニオン名が複数地域にある場合の自動判別に使われます。</p>'
       + '<label style="margin-top:14px;">PayPay受け取りリンク（オンライン受講の送金先）</label>'
       + '<input type="text" id="rsPayLink" value="' + esc((s0 && s0.payLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
@@ -2907,6 +2911,7 @@ $('btnRcptSet').onclick = function(){
       if(plIn && !pl){ toast('PayPay受け取りリンクの形式が違います（例: paypay.me/xxxx または https://qr.paypay.ne.jp/…）'); return; }
       var upd = {
         issuer: $('rsIssuer').value.trim(),
+        area: $('rsArea').value.trim(),
         payLink: pl,
         noPrefix: $('rsPrefix').value
           .replace(/[Ａ-Ｚａ-ｚ]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
