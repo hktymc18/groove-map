@@ -1192,10 +1192,10 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .fit-prev-s{flex:none;font-size:9.5px;color:var(--text-dim);min-width:44px;text-align:right;font-family:Inter,sans-serif}
 .fit-exed{border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:6px;background:var(--surface2)}
 .fit-exskip{opacity:.45}
-@keyframes pcFreshGlow{0%,100%{filter:drop-shadow(0 0 3px rgba(255,209,102,.5))}50%{filter:drop-shadow(0 0 15px rgba(255,209,102,1))}}
-.oval-node.pc-fresh{animation:pcFreshGlow 2.4s ease-in-out infinite}
-@keyframes pcCareTr{0%,100%{filter:drop-shadow(0 0 3px rgba(90,215,255,.5))}50%{filter:drop-shadow(0 0 15px rgba(90,215,255,1))}}
-.oval-node.pc-care-tr{animation:pcCareTr 2.4s ease-in-out infinite}
+@keyframes pcFreshGlow{0%,100%{filter:drop-shadow(0 0 5px rgba(255,209,102,.85))}50%{filter:drop-shadow(0 0 12px rgba(255,209,102,1)) drop-shadow(0 0 28px rgba(255,209,102,.85))}} /* v465: フォーカス無しでも目立つ強さに */
+.oval-node.pc-fresh{animation:pcFreshGlow 1.8s ease-in-out infinite}
+@keyframes pcCareTr{0%,100%{filter:drop-shadow(0 0 5px rgba(90,215,255,.85))}50%{filter:drop-shadow(0 0 12px rgba(90,215,255,1)) drop-shadow(0 0 28px rgba(90,215,255,.85))}} /* v465 */
+.oval-node.pc-care-tr{animation:pcCareTr 1.8s ease-in-out infinite}
 .nc.out-member{opacity:.5;filter:grayscale(.55)}
 .fitcal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
 .fitcal-wd{font-size:9.5px;color:var(--text-dim);text-align:center;padding:1px 0;font-weight:700}
@@ -2285,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v463</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v465</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3933,10 +3933,11 @@ function renderPCMap(mapType) {
     rulerLabels.push(rl);
   }
 
-  // フォーカス解除ヒント
+  // フォーカス解除ヒント（v465: 未フォーカス時も入口の案内を常時表示）
   var focusHint = document.createElement('div');
-  focusHint.className = 'layered-focus-hint';
-  focusHint.textContent = '✕ 系列フォーカス解除';
+  focusHint.className = 'layered-focus-hint show';
+  focusHint.textContent = '💡 カードをクリックすると系列フォーカス';
+  focusHint.style.opacity = '.75';
   focusHint.onclick = function(){ applyFocus(''); };
   outerWrap.appendChild(focusHint);
 
@@ -4309,7 +4310,10 @@ function renderPCMap(mapType) {
       var al = lanes[i].getAttribute('data-lineage');
       lanes[i].setAttribute('fill-opacity', (!lin || al===lin) ? '0.1' : '0.02');
     }
-    focusHint.classList.toggle('show', !!lin);
+    // v465: 未フォーカス時は入口の案内・フォーカス中は解除ボタン（常時表示）
+    focusHint.classList.add('show');
+    if (lin) { focusHint.textContent = '✕ 系列フォーカス解除'; focusHint.style.opacity = ''; }
+    else { focusHint.textContent = '💡 カードをクリックすると系列フォーカス'; focusHint.style.opacity = '.75'; }
   }
 
   // ミニマップ
@@ -5184,7 +5188,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v463';
+  var DATA_VERSION = 'v465';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6143,6 +6147,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v465', d:'2026-09-11', items:['🌟 PCツリーの🌱フレッシュ・🎓研修生の光を強化：系列フォーカスを使っていない通常表示でもはっきり目立つよう、点滅の光を大きく・明るくしました','💡 系列フォーカスの入口を分かりやすく：フォーカスしていない時も左上に「💡カードをクリックすると系列フォーカス」の案内を常時表示します（フォーカス中は従来どおり「✕解除」ボタンに変わります）'] },
+  { v:'v464', d:'2026-09-11', items:['📍 メンバー追加時の「地域」は、自分のアカウント（プロフィール）の活動地域が最初から選択された状態で開くようになりました（変更はいつでも可能。プロフィールに活動地域が未設定の場合は従来どおり未設定で開きます）'] },
   { v:'v463', d:'2026-09-11', items:['📝 OL記録の複数メンバー対応を強化：①編集画面でも「対象メンバー」が全員表示され、あとからメンバーを追加できます　②編集した内容（種別・日付・内容など）が対象メンバー全員の記録にまとめて反映されるようになりました（従来は開いた1人分しか更新されず、追加したメンバーに予定が出ない原因でした）　③新規のOL記録の種別は「📅 予定」が既定になりました'] },
   { v:'v462', d:'2026-09-11', items:['📅 メンバー編集の「登録月」を選択式にしました：年と月を別々のプルダウンで選べます。右の欄に「2026-09」「2026.9」「202609」のように直接入力してもOK（自動で整形・プルダウンとも連動）'] },
   { v:'v461', d:'2026-09-11', items:['🖥 PC版のタスク時刻入力を選択式に：クイック追加の時刻欄をクリックすると15分刻み（00/15/30/45）の候補リストが開き、クリックで選べます。「19:00」「1930」のような手入力もそのまま可能（自動で整形）。モバイルは従来どおり時刻パッドです'] },
@@ -12121,7 +12127,8 @@ function clearForm() {
     var el = document.getElementById(id);
     if (el) el.value='';
   });
-  syncRegionSelect(''); // 地域プルダウンを未設定にリセット
+  // v464: 新規メンバーの地域は自分のアカウントの活動地域を既定に（プロフィール未設定なら空）
+  syncRegionSelect(normalizeRegionValue((typeof currentUser !== 'undefined' && currentUser && currentUser.area) || ''));
   _pendingPhoto = null; _photoPrevSet(null);
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
