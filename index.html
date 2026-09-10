@@ -2288,7 +2288,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v466</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v467</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5204,7 +5204,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v466';
+  var DATA_VERSION = 'v467';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6163,6 +6163,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v467', d:'2026-09-12', items:['⚙️ 「予定とOLの連携」の設定を2つに分割：連携をオンにしたまま「OL予定をカレンダーに表示」だけをオフにできるようになりました（カレンダーの📝紫のOL帯を消しても、メンバー予定を完了した時の「OLとして記録しますか？」の提案は残ります）。カレンダーの⚙設定から切り替えられます'] },
   { v:'v466', d:'2026-09-11', items:['🌟 🌱フレッシュ・🎓研修生が光らない問題を修正：Mac/iPhoneのSafariはツリー（SVG）のCSS発光エフェクトに対応しておらず、これまで光って見えていませんでした。どのブラウザでも確実に見える「脈動する色付きリング」（フレッシュ=金・研修生=水色）に変更しました'] },
   { v:'v465', d:'2026-09-11', items:['🌟 PCツリーの🌱フレッシュ・🎓研修生の光を強化：系列フォーカスを使っていない通常表示でもはっきり目立つよう、点滅の光を大きく・明るくしました','💡 系列フォーカスの入口を分かりやすく：フォーカスしていない時も左上に「💡カードをクリックすると系列フォーカス」の案内を常時表示します（フォーカス中は従来どおり「✕解除」ボタンに変わります）'] },
   { v:'v464', d:'2026-09-11', items:['📍 メンバー追加時の「地域」は、自分のアカウント（プロフィール）の活動地域が最初から選択された状態で開くようになりました（変更はいつでも可能。プロフィールに活動地域が未設定の場合は従来どおり未設定で開きます）'] },
@@ -12715,6 +12716,16 @@ function setBarDur(v) {
 var _olLink = true;
 try { _olLink = localStorage.getItem('gm_olLink') !== '0'; } catch(eOl0) {}
 function _olLinkOn() { return _olLink; }
+// v467: OL予定のカレンダー表示だけを別トグルに（オフでも完了時のOL記録提案は残る）
+var _olCalShow = true;
+try { _olCalShow = localStorage.getItem('gm_olCal') !== '0'; } catch(eOl1) {}
+function _olCalOn() { return _olLink && _olCalShow; }
+function setOlCal(v) {
+  _olCalShow = !!v;
+  try { localStorage.setItem('gm_olCal', v ? '1' : '0'); } catch(e) {}
+  renderCalendar();
+  openCalSettings();
+}
 function setOlLink(v) {
   _olLink = !!v;
   try { localStorage.setItem('gm_olLink', v ? '1' : '0'); } catch(e) {}
@@ -17378,11 +17389,18 @@ function openCalSettings() {
     + '<div class="rb' + (!_calBarDur ? ' sel' : '') + '" onclick="setBarDur(false)">固定（1行）</div>'
     + '<div class="rb' + (_calBarDur ? ' sel' : '') + '" onclick="setBarDur(true)">⏱ 時間の長さで伸ばす</div>'
     + '</div></div>'
-    + '<div class="fr" style="margin-top:4px"><label class="fl">予定とOLの連携（OL予定をカレンダー表示・メンバー予定の完了時にOL記録を提案）</label>'
+    + '<div class="fr" style="margin-top:4px"><label class="fl">予定とOLの連携（メンバー予定の完了時にOL記録を提案）</label>'
     + '<div class="rg">'
     + '<div class="rb' + (_olLink ? ' sel' : '') + '" onclick="setOlLink(true)">🔗 オン</div>'
     + '<div class="rb' + (!_olLink ? ' sel' : '') + '" onclick="setOlLink(false)">オフ</div>'
     + '</div></div>'
+    + (_olLink
+      ? '<div class="fr" style="margin-top:4px"><label class="fl">└ 📝OL予定をカレンダーに表示（非表示にしても完了時のOL記録提案は残ります）</label>'
+        + '<div class="rg">'
+        + '<div class="rb' + (_olCalShow ? ' sel' : '') + '" onclick="setOlCal(true)">表示</div>'
+        + '<div class="rb' + (!_olCalShow ? ' sel' : '') + '" onclick="setOlCal(false)">非表示</div>'
+        + '</div></div>'
+      : '')
     + '<div class="fr" style="margin-top:4px"><label class="fl">下部タブの表示（タップで表示⇄非表示。予定・メニューは常時）</label>'
     + '<div class="rg">'
     + (function(){
@@ -20415,8 +20433,8 @@ function renderCalendar() {
       (byDate[e.date] = byDate[e.date] || []).push({ ev: e, span: '' });
     }
   });
-  // v407: OL予定（OL記録の📅予定）もカレンダーに表示（⚙設定の「予定とOLの連携」でオフ可）
-  if (_olLinkOn() && !viewingOwnerUid && state.freshData) {
+  // v407: OL予定（OL記録の📅予定）もカレンダーに表示（v467: 表示だけ別トグルで消せる）
+  if (_olCalOn() && !viewingOwnerUid && state.freshData) {
     for (var _omid in state.freshData) {
       var _olog = (state.freshData[_omid] && state.freshData[_omid].olLog) || [];
       for (var _oj = 0; _oj < _olog.length; _oj++) {
@@ -20795,9 +20813,9 @@ function _daySheetHtml(ds) {
   });
   var tks = (state.events || []).filter(function(e){ return e.date === ds && e.type === 'task' && evTdMine(e); }); // v361
   evs.sort(evSortFn); tks.sort(evSortFn);
-  // v407: OL予定もこの日のシートに表示（タップでOL記録を開く）
+  // v407: OL予定もこの日のシートに表示（v467: 表示だけ別トグルで消せる）
   var ols = [];
-  if (typeof _olLinkOn === 'function' && _olLinkOn() && !viewingOwnerUid && state.freshData) {
+  if (typeof _olCalOn === 'function' && _olCalOn() && !viewingOwnerUid && state.freshData) {
     for (var _dmid in state.freshData) {
       var _dlog = (state.freshData[_dmid] && state.freshData[_dmid].olLog) || [];
       for (var _dj = 0; _dj < _dlog.length; _dj++) {
