@@ -1196,6 +1196,9 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 .oval-node.pc-fresh{animation:pcFreshGlow 1.8s ease-in-out infinite}
 @keyframes pcCareTr{0%,100%{filter:drop-shadow(0 0 5px rgba(90,215,255,.85))}50%{filter:drop-shadow(0 0 12px rgba(90,215,255,1)) drop-shadow(0 0 28px rgba(90,215,255,.85))}} /* v465 */
 .oval-node.pc-care-tr{animation:pcCareTr 1.8s ease-in-out infinite}
+/* v466: Safari向けの確実な発光（SVG要素のopacityアニメはSafariでも動く） */
+.pc-pulse-ring{animation:pcRingPulse 1.6s ease-in-out infinite}
+@keyframes pcRingPulse{0%,100%{opacity:.18}50%{opacity:1}}
 .nc.out-member{opacity:.5;filter:grayscale(.55)}
 .fitcal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
 .fitcal-wd{font-size:9.5px;color:var(--text-dim);text-align:center;padding:1px 0;font-weight:700}
@@ -2285,7 +2288,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v465</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v466</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2325,6 +2328,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div class="export-bar">
       <div class="exp-btn" onclick="exportCSV('current')">📄 CSV出力</div>
+      <div class="exp-btn" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</div>
       <div class="exp-btn" onclick="openShareModal()" id="shareBtn" style="display:none">🔗 共有</div>
     </div>
     <div class="edit-hint" id="editHint">▶で開閉 ・ ✎ボタンで編集</div>
@@ -4192,6 +4196,18 @@ function renderPCMap(mapType) {
         g.appendChild(fb9);
         g.appendChild(txt(rx + NODE_W/2, ry2 + 3, _bt9, _bc9, 11, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
         g.setAttribute('class', g.getAttribute('class') + (_cb9 === 'fresh' ? ' pc-fresh' : ' pc-care-tr'));
+        // v466: SafariはSVG要素へのCSSフィルタ発光（drop-shadowアニメ）を描画しないため、
+        // どの環境でも確実に見える「脈動する色付きリング」を追加（opacityアニメはSafariでも動く）
+        var pr9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        pr9.setAttribute('x', rx - 4); pr9.setAttribute('y', ry2 - 4);
+        pr9.setAttribute('width', NODE_W + 8); pr9.setAttribute('height', NODE_H + 8);
+        pr9.setAttribute('rx', NODE_RX + 4); pr9.setAttribute('ry', NODE_RX + 4);
+        pr9.setAttribute('fill', 'none');
+        pr9.setAttribute('stroke', _bg9);
+        pr9.setAttribute('stroke-width', '3.5');
+        pr9.setAttribute('class', 'pc-pulse-ring');
+        pr9.setAttribute('pointer-events', 'none');
+        g.insertBefore(pr9, g.firstChild);
       }
     }
     // 写真アバター（あれば左端に丸表示し、テキストを右へずらす）
@@ -5188,7 +5204,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v465';
+  var DATA_VERSION = 'v466';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6147,6 +6163,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v466', d:'2026-09-11', items:['🌟 🌱フレッシュ・🎓研修生が光らない問題を修正：Mac/iPhoneのSafariはツリー（SVG）のCSS発光エフェクトに対応しておらず、これまで光って見えていませんでした。どのブラウザでも確実に見える「脈動する色付きリング」（フレッシュ=金・研修生=水色）に変更しました'] },
   { v:'v465', d:'2026-09-11', items:['🌟 PCツリーの🌱フレッシュ・🎓研修生の光を強化：系列フォーカスを使っていない通常表示でもはっきり目立つよう、点滅の光を大きく・明るくしました','💡 系列フォーカスの入口を分かりやすく：フォーカスしていない時も左上に「💡カードをクリックすると系列フォーカス」の案内を常時表示します（フォーカス中は従来どおり「✕解除」ボタンに変わります）'] },
   { v:'v464', d:'2026-09-11', items:['📍 メンバー追加時の「地域」は、自分のアカウント（プロフィール）の活動地域が最初から選択された状態で開くようになりました（変更はいつでも可能。プロフィールに活動地域が未設定の場合は従来どおり未設定で開きます）'] },
   { v:'v463', d:'2026-09-11', items:['📝 OL記録の複数メンバー対応を強化：①編集画面でも「対象メンバー」が全員表示され、あとからメンバーを追加できます　②編集した内容（種別・日付・内容など）が対象メンバー全員の記録にまとめて反映されるようになりました（従来は開いた1人分しか更新されず、追加したメンバーに予定が出ない原因でした）　③新規のOL記録の種別は「📅 予定」が既定になりました'] },
@@ -7068,6 +7085,7 @@ function _ckOwnMembers() {
 }
 var _ckLink = null;
 function ckLinkOpen(unionId) {
+  if (viewingOwnerUid) { toast('受付連携は自分のMAP表示中に使えます'); return; }
   if (!db) { toast('オンライン時のみ使えます'); return; }
   db.collection('checkinUnions').get().then(function(qs) {
     var unions = [];
