@@ -2285,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v453</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v458</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2837,7 +2837,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
           <div class="ed-row">
             <span class="ed-l">年齢のみ<span class="ed-q" onclick="edHelp(event,'h_age')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例: 27" style="width:90px"><span id="fAgeNote" style="font-size:12px;color:var(--text-dim);margin-left:6px">歳</span></div>
+            <div class="ed-ctrl"><input class="ed-in" id="fAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例: 27" style="width:90px" onfocus="edSelAll(this)"><span id="fAgeNote" style="font-size:12px;color:var(--text-dim);margin-left:6px">歳</span></div>
           </div>
           <div class="ed-help" id="h_age">生年月日が分からない時はこちらに年齢だけ。生年月日を入れた場合はそちらが優先されます。</div>
           <div class="ed-row">
@@ -2949,12 +2949,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-help" id="h_badge">PCツリーの「🌱フレッシュ」（スタート6ヶ月以内・BR未満）／「🎓研修生」バッジの表示設定。ケアしないと消えてしまう層を目立たせるためのバッジです。自動＝条件に合えば表示。条件外でもケアしたい人には「表示」、外したい人は「非表示」。</div>
           <div class="ed-row">
             <span class="ed-l">現状GSV<span class="ed-q" onclick="edHelp(event,'h_fPtC')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力"></div>
+            <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力" onfocus="edSelAll(this)"></div>
           </div>
           <div class="ed-help" id="h_fPtC">その月の現在のグループ売上（GSV）。月の後半に確定します。</div>
           <div class="ed-row">
             <span class="ed-l">固定ポイント<span class="ed-q" onclick="edHelp(event,'h_fPtF')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fPtF" type="number" inputmode="numeric" placeholder="未入力"></div>
+            <div class="ed-ctrl"><input class="ed-in" id="fPtF" type="number" inputmode="numeric" placeholder="未入力" onfocus="edSelAll(this)"></div>
           </div>
           <div class="ed-help" id="h_fPtF">毎月固定で上がる見込みのポイント。</div>
           <div class="ed-row">
@@ -2978,7 +2978,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           </div>
           <div class="ed-row">
             <span class="ed-l">稼働率(%)<span class="ed-q" onclick="edHelp(event,'h_fActRate')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fActRate" type="number" inputmode="numeric" placeholder="—" min="0" max="100"></div>
+            <div class="ed-ctrl"><input class="ed-in" id="fActRate" type="number" inputmode="numeric" placeholder="—" min="0" max="100" onfocus="edSelAll(this)"></div>
           </div>
           <div class="ed-help" id="h_fActRate">S以外の人の稼働率（％）。</div>
           <div class="ed-row">
@@ -3519,9 +3519,37 @@ function copyToNextMonth() {
   var copyMembers = JSON.parse(JSON.stringify(state.members));
   var copyIdeal   = JSON.parse(JSON.stringify(state.idealMembers || []));
 
+  // 今月の確定GSVで判定（リセット前に積み上げを確定）
+  // v458: OUT除外より「前」に確定する。OUTメンバーの今月の売上も当月実績として
+  // アップラインのGSVに含まれるため（従来はOUTを外してから再集計しており、
+  // OUT配下の売上分だけ目減りした金額で「BR維持失敗」等と誤判定されていた）
+  recalcGSV(copyMembers);
+
+  // タイトル遷移を計算＆適用、変更点を収集
+  var changes = [];
+  var _ruDemoted = [], _ruPromoted = []; // v426: ロールアップ（BR維持失敗）／BR復帰
+  copyMembers.forEach(function(mm) {
+    if (((mm.title || '').trim()) === 'OUT') return; // v458: OUT本人は判定対象外（後段でまとめて除外）
+    if (mm.traineeResult) mm.trainee = false; // 研修結果確定済みは翌月の決定率にカウントしない
+    mm.memo = ''; // v342: メモは月ごと＝翌月に持ち越さない
+    var tr = _computeTitleTransition(mm, nextMonth);
+    if (tr.kind === 'promote' || tr.kind === 'demote' || tr.kind === 'advance') {
+      // v339: 登録月が未入力（かつB系タイトルから逆算もできない）人の降格は、活動月数が1ヶ月目扱い＝B1になるため警告
+      var _noSm = (tr.kind === 'demote' && !mm.startMonth && !/^B\d+$/.test((mm.title || '').trim()));
+      changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: tr.reason || '', noStart: _noSm });
+    }
+    if (tr.kind === 'demote' && (mm.title || '').trim() === 'BR' && mm.parentId) _ruDemoted.push(mm); // v426
+    if (tr.kind === 'promote' && tr.to === 'BR' && mm.rollup && mm.rollup.at) _ruPromoted.push(mm); // v426
+    mm.title = tr.to;
+    mm.loiCumPt = tr.cum;
+    mm.ptCurrent = 0;
+    mm.ptSelf = 0;
+  });
+
   // OUT（当月アウト）は当月の記録として残し、翌月には持ち越さない。
   // 配下がいる場合はOUTメンバーの上位に付け替えてから除外する。
   // ※ルート（自分）はOUT除外の対象外（消すとMAP構造が壊れるため）
+  // v458: タイトル判定の「後」に実行（判定は当月実績＝OUT込みのGSVで行う）
   var outIds = {};
   copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT' && mm.parentId) outIds[mm.id] = mm.parentId; }); // v440: OUTは当月のみ表示し、翌月コピーで常に除外
   var _outChanges = [];
@@ -3543,29 +3571,6 @@ function copyToNextMonth() {
       _roots2.slice(1).forEach(function(mm){ mm.parentId = _mainRoot.id; });
     }
   }
-
-  // 今月の確定GSVで判定（リセット前に積み上げを確定）
-  recalcGSV(copyMembers);
-
-  // タイトル遷移を計算＆適用、変更点を収集
-  var changes = [];
-  var _ruDemoted = [], _ruPromoted = []; // v426: ロールアップ（BR維持失敗）／BR復帰
-  copyMembers.forEach(function(mm) {
-    if (mm.traineeResult) mm.trainee = false; // 研修結果確定済みは翌月の決定率にカウントしない
-    mm.memo = ''; // v342: メモは月ごと＝翌月に持ち越さない
-    var tr = _computeTitleTransition(mm, nextMonth);
-    if (tr.kind === 'promote' || tr.kind === 'demote' || tr.kind === 'advance') {
-      // v339: 登録月が未入力（かつB系タイトルから逆算もできない）人の降格は、活動月数が1ヶ月目扱い＝B1になるため警告
-      var _noSm = (tr.kind === 'demote' && !mm.startMonth && !/^B\d+$/.test((mm.title || '').trim()));
-      changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: tr.reason || '', noStart: _noSm });
-    }
-    if (tr.kind === 'demote' && (mm.title || '').trim() === 'BR' && mm.parentId) _ruDemoted.push(mm); // v426
-    if (tr.kind === 'promote' && tr.to === 'BR' && mm.rollup && mm.rollup.at) _ruPromoted.push(mm); // v426
-    mm.title = tr.to;
-    mm.loiCumPt = tr.cum;
-    mm.ptCurrent = 0;
-    mm.ptSelf = 0;
-  });
 
   // v426: 自動ロールアップ＝BR維持失敗の降格者は直下メンバーを上のアップラインへ付け替え、リスタート記録を開始。
   //        6ヶ月以内にBRへ復帰（審査クリア）した人は、記録していた組織を自動で直下に取り戻す。
@@ -5175,7 +5180,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v453';
+  var DATA_VERSION = 'v458';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5230,7 +5235,7 @@ function currentMonthStr() {
   return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0');
 }
 // ── 登録月・活動月数・BAタイトル判定 ──
-function monthIdx(ms) { var p = (ms || '').split('.'); return parseInt(p[0], 10) * 12 + (parseInt(p[1], 10) - 1); }
+function monthIdx(ms) { var p = String(ms || '').replace('-', '.').split('.'); return parseInt(p[0], 10) * 12 + (parseInt(p[1], 10) - 1); } // v458: 登録月がハイフン形式(2026-09)でも解釈（月入力欄の標準形式。従来はNaN→降格先がBNaNになった）
 function addMonths(ms, delta) { var i = monthIdx(ms) + delta; var y = Math.floor(i / 12); var m = (i % 12) + 1; return y + '.' + String(m).padStart(2, '0'); }
 // メンバーの登録月（無ければBタイトルから逆算 or 当月）
 function memberStartMonth(m, ref) {
@@ -6134,6 +6139,11 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v458', d:'2026-09-11', items:['🐛 翌月コピーの降格誤判定を修正：配下にOUTメンバーがいると、その売上を除いた金額でBR維持・審査を判定していたため、実際は1,000pt以上あるのに「BR維持失敗」等と表示されていました。OUTの人の今月の売上も当月実績としてGSVに含めて判定し、そのあとで翌月からの除外を行う順序に直しました（ツリーのカード表示と同じ数字で判定されます）','🔧 登録月が「2026-09」のようなハイフン形式で保存されていると、降格先の計算が壊れて「BNaN」という不正なタイトルになるバグも修正しました'] },
+  { v:'v457', d:'2026-09-10', items:['✏️ メンバー編集の数値入力（現状GSV・固定ポイント・年齢・稼働率）は、欄にカーソルを合わせると既存の値が全選択されるようになりました。選択し直さなくても、そのまま数字を打てば上書きできます'] },
+  { v:'v456', d:'2026-09-10', items:['🕐 タスクのクイック追加の時刻入力を、カレンダーの予定と同じ「時刻パッド」（数字キーで打つ方式）に統一しました','🔔 クイック追加で作ったタスクに通知が飛ばなかった問題を修正：通知設定が「なし」のまま保存されていたため、ロック画面に通知が出ませんでした。詳細画面と同じく「時刻ちょうど」を既定にしました（時刻なしのタスクは朝9時基準。通知の変更・オフは各タスクの✎編集から）'] },
+  { v:'v455', d:'2026-09-09', items:['✏️ サブタスクの名前をあとから編集できるようになりました：タスクの詳細シート（モバイル）とPCのToDo詳細パネルで、各サブタスクの「✎」をタップすると名前を書き換えられます（チェック・削除は今まで通り）'] },
+  { v:'v454', d:'2026-09-09', items:['✅ タスクのクイック追加シート（＋ボタン）に「🕐 時刻（任意）」欄を追加：詳細入力を開かなくても時刻を付けられるようになりました（時刻だけ入れて期限なしの場合は今日の日付が自動で入ります）。「⤢詳細入力」に進んだ時も入力した時刻を引き継ぎます'] },
   { v:'v453', d:'2026-09-07', items:['🐛 研修生をカテゴリOUTにすると、PCツリーで「🌱フレッシュ」バッジが付いてしまうバグを修正しました（OUTにはケアバッジを付けません。「気になるメンバー」の要ケア対象からもOUTを除外）'] },
   { v:'v452', d:'2026-09-07', items:['🐛 ToDoの操作シートにサブタスクをたくさん入れると縦にスクロールできなくなり、下の「完了にする」などのボタンに届かなくなるバグを修正しました（すべての下から出るシートに「画面の88%まで・超えたら中でスクロール」の共通ルールを設定。同じ指定漏れがあった他の7つのシートもまとめて解消）'] },
   { v:'v451', d:'2026-09-05', items:['📡 オフライン起動に対応：機内モードや圏外でもアプリを開いて、MAP・予定・トレーニングの閲覧と入力ができるようになりました（入力分は電波復帰時に自動同期）。仕組み上、一度オンラインで開いたことのある端末が対象です。初回ログインだけはオンラインが必要です'] },
@@ -12016,6 +12026,10 @@ function _outVisRowSync() {
   row.style.display = (t === 'OUT') ? '' : 'none';
 }
 function onTitleChange() { _outVisRowSync(); }
+// v457: 数値欄フォーカスで既存値を全選択（選び直さずそのまま上書きできるように）
+function edSelAll(el) {
+  setTimeout(function() { try { el.select(); } catch(e9) {} }, 0);
+}
 // v439: ケアバッジ（フレッシュ/研修生）の手動 表示/非表示
 var fBadgeMode = '';
 function selBadgeMode(v) {
@@ -15731,6 +15745,7 @@ try {
 function _tdMakeTask(title, date, listId) {
   return { id: genEventId(), done: false, createdAt: new Date().toISOString(),
     type: 'task', title: title, date: date || '', time: '', endTime: '', endDate: '',
+    remindBefore: 0, // v456: 新規タスクは「時刻ちょうど」既定（詳細画面と同じ。これが無いとPUSH通知が予約されなかった）
     memberId: '', categoryId: '', color: '', place: '',
     priority: 'normal', memo: '', star: false, listId: listId || '', labelId: '',
     updatedAt: new Date().toISOString() };
@@ -15776,7 +15791,7 @@ function todoSearchToggle(on) {
   }
 }
 // v335: ＋ボタン＝1行クイック追加シート（Enterで即保存・チップで期限/リスト・⤢でフル入力へ）
-var _tqDate = '', _tqListId = '';
+var _tqDate = '', _tqListId = '', _tqTime = '';
 function closeTaskQuickSheet() {
   var ov = document.getElementById('tqOv');
   if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
@@ -15785,6 +15800,7 @@ function openTaskQuickSheet() {
   if (!eventsUid()) { toast('ログインが必要です'); return; }
   closeTaskQuickSheet();
   _tqDate = evTodayYmd(); // v352: 既定＝今日（期限なしにしたい時はチップで解除）
+  _tqTime = ''; // v454: 時刻（任意）
   _tqListId = (_todoNav && _todoNav.type === 'list' && _todoNav.id) ? _todoNav.id : '';
   // v345: リスト画面以外から開いた時は「直近に使ったリスト」を既定に
   if (!_tqListId && _todoFilter && _todoFilter.type === 'list') _tqListId = _todoFilter.id; // 絞り込み中はそのリスト
@@ -15831,9 +15847,16 @@ function _tqRenderChips() {
     + '<input type="date" class="fi" id="tqDate" value="' + evEsc(_tqDate || '') + '" onchange="tqDateChange(this.value)" style="flex:1;min-width:130px;padding:8px 10px;font-size:13px' + (_tqDate ? ';border-color:var(--accent)' : '') + '">'
     + '<div class="ev-cat-field" style="flex:1;min-width:120px" onclick="tqPickList()">'
     + '<span class="cat-swatch" style="background:' + (L ? L.color : '#9ca3af') + '"></span>'
-    + '<span style="flex:1">' + evEsc(L ? L.name : 'マイリスト') + '</span><span style="color:var(--text-dim)">▾</span></div>';
+    + '<span style="flex:1">' + evEsc(L ? L.name : 'マイリスト') + '</span><span style="color:var(--text-dim)">▾</span></div>'
+    // v454: 時刻（任意）— 詳細入力を開かずにここで指定できる
+    + '<div style="flex-basis:100%;display:flex;gap:8px;align-items:center;margin-top:2px">'
+    + '<span style="font-size:12px;color:var(--text-dim);flex:none">🕐 時刻（任意）</span>'
+    + '<input class="fi ev-dt" id="tqTime" type="text" readonly placeholder="なし" value="' + evEsc(_tqTime || '') + '" onclick="openTimePad(\'tqTime\')" style="flex:1;min-width:110px;padding:8px 10px;font-size:13px;cursor:pointer;text-align:center' + (_tqTime ? ';border-color:var(--accent)' : '') + '">'
+    + (_tqTime ? '<div class="rb" onclick="tqTimeChange(\'\')" style="padding:8px 12px;font-size:12.5px">クリア</div>' : '')
+    + '</div>';
 }
 function tqSetDate(v) { _tqDate = v; _tqRenderChips(); }
+function tqTimeChange(v) { _tqTime = v || ''; _tqRenderChips(); } // v454
 function tqDateChange(v) { _tqDate = v || ''; _tqRenderChips(); }
 function tqPickList() {
   window._tdPickCb = function(kind, id){ _tqListId = id; _tqRenderChips(); };
@@ -15846,6 +15869,7 @@ function tqSave() {
   var title = (inp.value || '').trim();
   if (!title) { try { inp.focus(); } catch(e0) {} return; }
   var e = _tdMakeTask(title, _tqDate, _tqListId);
+  if (_tqTime) { e.time = _tqTime; if (!e.date) e.date = evTodayYmd(); } // v454: 時刻あり＝日付未指定なら今日
   if (e.listId) try { localStorage.setItem('gm_lastListId', e.listId); } catch(eLS) {} // v344: 直近リストを記憶
   state.events.push(e);
   saveEventDoc(e);
@@ -15865,6 +15889,7 @@ function tqAdvanced() {
   openTaskAdd();
   if (val) document.getElementById('evTitle').value = val;
   if (d) { var dd = document.getElementById('evDate'); if (dd) dd.value = d; }
+  if (_tqTime) { var tv = document.getElementById('evTime'); if (tv) tv.value = _tqTime; } // v454: 時刻も引き継ぐ
   if (l) { _evListId = l; updateTodoMetaDisplay(); }
 }
 // v358: 📳シェイクで「元に戻す」
@@ -18823,6 +18848,7 @@ function openEventActions(id) {
           return '<div class="ev-sub-row' + (s.done ? ' done' : '') + '" onclick="evActSubToggle(\'' + id + '\',\'' + evEsc(s.id) + '\')">'
             + '<span class="ev-sub-chk">' + (s.done ? '✓' : '') + '</span>'
             + '<span class="ev-sub-t">' + evEsc(s.t || '') + '</span>'
+            + '<span class="ev-sub-x" style="margin-right:2px" onclick="event.stopPropagation();evActSubEdit(\'' + id + '\',\'' + evEsc(s.id) + '\')" title="名前を編集">✎</span>'
             + '<span class="ev-sub-x" onclick="event.stopPropagation();evActSubDel(\'' + id + '\',\'' + evEsc(s.id) + '\')">✕</span></div>';
         }).join('') + '</div>'
       : '')
@@ -19019,6 +19045,24 @@ function evActSubAdd(id) {
   openEventActions(id); // シートを更新
   setTimeout(function(){ var i2 = document.getElementById('evActSubNew'); if (i2) try { i2.focus(); } catch(e1) {} }, 80); // 連続入力
 }
+// v455: サブタスクの名前を編集（共通処理。変更があればtrue）
+function _evSubEditCore(eid, sid) {
+  var e = findEvent(eid);
+  if (!e || !e.subtasks) return false;
+  var s = null;
+  for (var i = 0; i < e.subtasks.length; i++) if (e.subtasks[i].id === sid) { s = e.subtasks[i]; break; }
+  if (!s) return false;
+  var nv = prompt('サブタスクを編集', s.t || '');
+  if (nv === null) return false;
+  nv = nv.trim();
+  if (!nv || nv === s.t) return false;
+  s.t = nv;
+  e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  renderEvents();
+  return true;
+}
+function evActSubEdit(eid, sid) { if (_evSubEditCore(eid, sid)) openEventActions(eid); }
 function evActSubDel(eid, sid) {
   var e = findEvent(eid);
   if (!e || !e.subtasks) return;
@@ -19823,6 +19867,7 @@ function _pcTdRenderDetail() {
         return '<div class="ev-sub-row' + (sx.done ? ' done' : '') + '" onclick="pcTdSubToggle(\'' + e.id + '\',\'' + evEsc(sx.id) + '\')">'
           + '<span class="ev-sub-chk">' + (sx.done ? '✓' : '') + '</span>'
           + '<span class="ev-sub-t">' + evEsc(sx.t || '') + '</span>'
+          + '<span class="ev-sub-x" style="margin-right:2px" onclick="event.stopPropagation();pcTdSubEdit(\'' + e.id + '\',\'' + evEsc(sx.id) + '\')" title="名前を編集">✎</span>'
           + '<span class="ev-sub-x" onclick="event.stopPropagation();pcTdSubDel(\'' + e.id + '\',\'' + evEsc(sx.id) + '\')">✕</span></div>';
       }).join('') + '</div>';
     }
@@ -19847,6 +19892,7 @@ function _pcTdSave(field, val) {
   renderAgenda();
 }
 function pcTdSubToggle(eid, sid) { evSubToggle(eid, sid); _pcTdAfterRender(); }
+function pcTdSubEdit(eid, sid) { if (_evSubEditCore(eid, sid)) renderAgenda(); } // v455
 function pcTdSubDel(eid, sid) {
   var e = findEvent(eid); if (!e || !e.subtasks) return;
   e.subtasks = e.subtasks.filter(function(sx){ return sx.id !== sid; });
@@ -21025,6 +21071,7 @@ function openTimePad(targetId) {
   } catch(e1) {}
   // v364: 対象ペアを決定（テンプレ作成 or 予定追加）
   if (targetId === 'evtF_time' || targetId === 'evtF_timeEnd') { _tpStartId = 'evtF_time'; _tpEndId = 'evtF_timeEnd'; _tpIsTask = false; }
+  else if (targetId === 'tqTime') { _tpStartId = 'tqTime'; _tpEndId = 'tqTimeEndX'; _tpIsTask = true; } // v456: クイック追加もカレンダーと同じ時刻パッド
   else { _tpStartId = 'evTime'; _tpEndId = 'evTimeEnd'; _tpIsTask = (_evType === 'task'); }
   if (_tpStartId === 'evTime' && typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
   _tpTarget = targetId;
@@ -21068,6 +21115,18 @@ function _tpCommitCurrent() {
   var inp = document.getElementById(_tpTarget);
   if (inp) inp.value = _tpParse(_tpBuf);
   _tpBuf = '';
+  _tqPadSync();
+}
+// v456: クイック追加(tqTime)向け — パッドが入力欄に書いた値をstateにも即時反映。
+// クイックシートはリスト読込完了時などにチップ列をstateから再描画するため、
+// DOMにしか値が無いとその瞬間に消えてしまう。
+function _tqPadSync() {
+  try {
+    if (_tpStartId === 'tqTime' && typeof _tqTime !== 'undefined') {
+      var tq9 = document.getElementById('tqTime');
+      if (tq9) _tqTime = tq9.value || '';
+    }
+  } catch(e9) {}
 }
 function tpRender() {
   var s = document.getElementById('tpDispS');
@@ -21099,6 +21158,7 @@ function _tpAutoNext() {
   var inp = document.getElementById(_tpTarget);
   if (inp) inp.value = val;
   _tpBuf = '';
+  _tqPadSync(); // v456
   if (_tpTarget === _tpStartId && !_tpIsTask) {
     // 終了が空なら+1時間を仮セットして、終了の入力へ移動
     var en = document.getElementById(_tpEndId);
@@ -21158,11 +21218,15 @@ function tpClear() {
   _tpBuf = '';
   var inp = document.getElementById(_tpTarget);
   if (inp) inp.value = '';
+  _tqPadSync(); // v456
   tpRender();
 }
 function closeTimePad(commit) {
   var ov = document.getElementById('tpOv');
   if (commit) _tpCommitCurrent(); // 入力途中の値も確定して閉じる（完了ボタン）
+  // v456: クイック追加の時刻はstateへ同期してからチップを描き直す（クリアボタンの表示更新）
+  _tqPadSync();
+  if (_tpStartId === 'tqTime' && typeof _tqRenderChips === 'function') { try { _tqRenderChips(); } catch(eTq9) {} }
   if (ov) {
     // v343: ふわっとフェードアウト（idを外して、フェード中でも次のパッドをすぐ開けるように）
     ov.id = '';
