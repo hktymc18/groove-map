@@ -2285,7 +2285,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v458</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v463</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2901,7 +2901,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-help" id="h_line">LINE ID（英数字）か、友だち追加URLを入力。ボタンでLINEを開けます。</div>
           <div class="ed-row">
             <span class="ed-l">登録月<span class="ed-q" onclick="edHelp(event,'h_start')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fStartMonth" type="month"></div>
+            <div class="ed-ctrl" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <select class="ed-in" id="fStartY" onchange="startYmSel()" style="width:auto"></select>
+              <select class="ed-in" id="fStartM" onchange="startYmSel()" style="width:auto"></select>
+              <input class="ed-in" id="fStartMonth" type="text" placeholder="2026-09" autocomplete="off" onfocus="edSelAll(this)" onchange="startYmManual(this.value)" style="width:96px">
+            </div>
           </div>
           <div class="ed-help" id="h_start">組織に入った月。翌月コピー時の活動月数（B◯の判定）に使います。</div>
         </div>
@@ -4223,7 +4227,7 @@ function renderPCMap(mapType) {
       g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
     }
     // 2行目: タイトル + GSV(固定)。v420: 何ヶ月目を併記＆BR以上/BMは太字
-    var titleStr = (m.title||'-') + titleMonthsSuffix(m) + restartSuffix(m, true); // v426
+    var titleStr = ((_isBrUp && typeof titleAbbr === 'function') ? titleAbbr(m.title || '-') : (m.title || '-')) + titleMonthsSuffix(m) + restartSuffix(m, true); // v426 / v459: BR以上は頭文字表記（モバイルと同じ・GSV表示との重なり防止）
     var titleFs = titleStr.length<=6 ? 16 : (titleStr.length<=8 ? 14 : 12); // 長いタイトル(ブルーダイヤ等)は縮小
     g.appendChild(txt(_pcTx, ry2+55, titleStr, cc, titleFs, (_isBrUp||_isBM)?'800':'600', 'Inter,Noto Sans JP,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
@@ -5180,7 +5184,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v458';
+  var DATA_VERSION = 'v463';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6139,6 +6143,11 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v463', d:'2026-09-11', items:['📝 OL記録の複数メンバー対応を強化：①編集画面でも「対象メンバー」が全員表示され、あとからメンバーを追加できます　②編集した内容（種別・日付・内容など）が対象メンバー全員の記録にまとめて反映されるようになりました（従来は開いた1人分しか更新されず、追加したメンバーに予定が出ない原因でした）　③新規のOL記録の種別は「📅 予定」が既定になりました'] },
+  { v:'v462', d:'2026-09-11', items:['📅 メンバー編集の「登録月」を選択式にしました：年と月を別々のプルダウンで選べます。右の欄に「2026-09」「2026.9」「202609」のように直接入力してもOK（自動で整形・プルダウンとも連動）'] },
+  { v:'v461', d:'2026-09-11', items:['🖥 PC版のタスク時刻入力を選択式に：クイック追加の時刻欄をクリックすると15分刻み（00/15/30/45）の候補リストが開き、クリックで選べます。「19:00」「1930」のような手入力もそのまま可能（自動で整形）。モバイルは従来どおり時刻パッドです'] },
+  { v:'v460', d:'2026-09-11', items:['🖱 PCツリーでメンバーにマウスを乗せた時の「📋 予定・タスク」は、直近1ヶ月以内のものだけ表示するようにしました（1ヶ月より古い完了済みタスク等で埋まらないように。これからの予定と期限なしタスクは今まで通り表示）'] },
+  { v:'v459', d:'2026-09-11', items:['🖥 PCツリーのタイトル表記：BR以上はモバイルと同じ頭文字表記（ゴールド→G・ラピス→L・ルビー→R・エメラルド→E・ダイヤモンド→D・ブルーダイヤモンド→BD・チームエリート→TE）にしました。長いタイトルがポイント表示に重なるのを解消します'] },
   { v:'v458', d:'2026-09-11', items:['🐛 翌月コピーの降格誤判定を修正：配下にOUTメンバーがいると、その売上を除いた金額でBR維持・審査を判定していたため、実際は1,000pt以上あるのに「BR維持失敗」等と表示されていました。OUTの人の今月の売上も当月実績としてGSVに含めて判定し、そのあとで翌月からの除外を行う順序に直しました（ツリーのカード表示と同じ数字で判定されます）','🔧 登録月が「2026-09」のようなハイフン形式で保存されていると、降格先の計算が壊れて「BNaN」という不正なタイトルになるバグも修正しました'] },
   { v:'v457', d:'2026-09-10', items:['✏️ メンバー編集の数値入力（現状GSV・固定ポイント・年齢・稼働率）は、欄にカーソルを合わせると既存の値が全選択されるようになりました。選択し直さなくても、そのまま数字を打てば上書きできます'] },
   { v:'v456', d:'2026-09-10', items:['🕐 タスクのクイック追加の時刻入力を、カレンダーの予定と同じ「時刻パッド」（数字キーで打つ方式）に統一しました','🔔 クイック追加で作ったタスクに通知が飛ばなかった問題を修正：通知設定が「なし」のまま保存されていたため、ロック画面に通知が出ませんでした。詳細画面と同じく「時刻ちょうど」を既定にしました（時刻なしのタスクは朝9時基準。通知の変更・オフは各タスクの✎編集から）'] },
@@ -9901,6 +9910,7 @@ function openOlRecordModal(mid, editIdx){
   var editing=(typeof editIdx==='number');
   var rec=editing?(freshOlLog(mid)[editIdx]||{}):{};
   var v=function(x){ return evEsc(x||''); };
+  var _stPlan = editing ? (rec.st === 'planned') : true; // v463: 新規は「予定」が既定
   var inStyle='box-sizing:border-box;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none;margin:4px 0 10px';
   var lbStyle='font-size:12px;color:var(--text-dim)';
   var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='olRecOv';
@@ -9909,12 +9919,12 @@ function openOlRecordModal(mid, editIdx){
     + '<div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+(editing?'OL記録を編集':'OL記録を追加')+(nm?'（'+v(nm)+'）':'')+'</div></div><span class="ms-x" onclick="closeOlRecordModal()">✕</span></div>'
     + '<div style="padding:4px 16px 16px">'
-    + (editing ? '' : ('<label style="'+lbStyle+'">対象メンバー（複数可）</label>'
-        + '<div id="_olrMemBox" style="margin:4px 0 10px"></div>')) // v412: 複数メンバーへ同じ記録を追加
+    + '<label style="'+lbStyle+'">対象メンバー（複数可）</label>'
+    + '<div id="_olrMemBox" style="margin:4px 0 10px"></div>' // v412: 複数メンバーへ同じ記録 / v463: 編集時も表示・追加可
     + '<label style="'+lbStyle+'">種別</label>'
     + '<div style="display:flex;gap:8px;margin:4px 0 10px">'
-    + '<div class="rb'+(rec.st==='planned'?'':' sel')+'" id="_olrStDone" onclick="_olrSetSt(\'done\')" style="flex:1;text-align:center">✓ 実施済み</div>'
-    + '<div class="rb'+(rec.st==='planned'?' sel':'')+'" id="_olrStPlan" onclick="_olrSetSt(\'planned\')" style="flex:1;text-align:center">📅 予定</div>'
+    + '<div class="rb'+(_stPlan?'':' sel')+'" id="_olrStDone" onclick="_olrSetSt(\'done\')" style="flex:1;text-align:center">✓ 実施済み</div>'
+    + '<div class="rb'+(_stPlan?' sel':'')+'" id="_olrStPlan" onclick="_olrSetSt(\'planned\')" style="flex:1;text-align:center">📅 予定</div>'
     + '</div>'
     + '<label style="'+lbStyle+'">日付</label>'
     + '<input id="_olrDate" type="date" value="'+(rec.date||today)+'" style="'+inStyle+'">'
@@ -9927,10 +9937,21 @@ function openOlRecordModal(mid, editIdx){
     + '<button onclick="olRecordModalSave(\''+mid+'\','+(editing?editIdx:'-1')+')" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent,#2CE5B8);color:#08121a;font-size:15px;font-weight:700;margin-top:4px">保存</button>'
     + (editing ? '<button onclick="olRecordModalDelete(\''+mid+'\','+editIdx+')" style="width:100%;padding:11px;border-radius:10px;border:1px solid #FF5D73;color:#FF5D73;background:transparent;font-size:14px;font-weight:600;margin-top:8px">この記録を削除</button>' : '')
     + '</div></div>';
-  window._olrSt = (rec.st === 'planned') ? 'planned' : 'done'; // v361
-  window._olrMids = editing ? [mid] : [mid]; // v412: 対象メンバー（追加時は複数選択可）
+  window._olrSt = _stPlan ? 'planned' : 'done'; // v361 / v463
+  // v463: 編集時は保存済みの対象メンバー全員をチップ表示（先頭=開いている本人）。元からの対象は外せない
+  if (editing) {
+    var _gm9 = (rec.mids || []).filter(function(x){ return x === mid || (typeof _findMember === 'function' && _findMember(x)); });
+    var _gi9 = _gm9.indexOf(mid);
+    if (_gi9 >= 0) _gm9.splice(_gi9, 1);
+    _gm9.unshift(mid);
+    window._olrMids = _gm9;
+    window._olrBaseMids = _gm9.slice();
+  } else {
+    window._olrMids = [mid];
+    window._olrBaseMids = [];
+  }
   document.body.appendChild(ov);
-  if (!editing) _olrRenderMems();
+  _olrRenderMems();
   requestAnimationFrame(function(){ ov.classList.add('show'); setTimeout(function(){ var f=document.getElementById('_olrWhat'); if(f&&!editing) f.focus(); },80); });
 }
 window._olrSt = 'done';
@@ -9947,7 +9968,7 @@ function _olrRenderMems() {
   (window._olrMids || []).forEach(function(id, i){
     h += '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:14px;padding:5px 10px;font-size:12.5px;font-weight:700;margin:0 6px 6px 0">'
       + evEsc(_olrNameOf(id))
-      + (i > 0 ? '<span style="cursor:pointer;opacity:.8" onclick="_olrMemDel(\'' + id + '\')">✕</span>' : '') + '</span>';
+      + ((i > 0 && (window._olrBaseMids || []).indexOf(id) < 0) ? '<span style="cursor:pointer;opacity:.8" onclick="_olrMemDel(\'' + id + '\')">✕</span>' : '') + '</span>';
   });
   h += '<span style="display:inline-flex;align-items:center;background:var(--surface2);border:1px dashed var(--border2);color:var(--text-mid);border-radius:14px;padding:5px 11px;font-size:12.5px;font-weight:700;cursor:pointer;margin-bottom:6px" onclick="_olrMemPick()">＋ メンバーを追加</span>';
   box.innerHTML = h;
@@ -10001,6 +10022,7 @@ function _olrPickList(q) {
 function _olrPickToggle(id) {
   var arr = window._olrMids || [];
   var i = arr.indexOf(id);
+  if (i >= 0 && (window._olrBaseMids || []).indexOf(id) >= 0) { toast('既に記録済みのメンバーは外せません（消す場合はその人の記録から削除）'); return; } // v463
   if (i >= 0) { if (arr.length <= 1) { toast('1人以上選んでください'); return; } arr.splice(i, 1); }
   else arr.push(id);
   window._olrMids = arr;
@@ -10023,13 +10045,36 @@ function olRecordModalSave(mid, editIdx){
   var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
   var log=freshOlLog(mid);
   var data={ date:g('_olrDate'), asan:(g('_olrAsan')||'').trim(), what:(g('_olrWhat')||'').trim(), note:(g('_olrNote')||'').trim(), st:(window._olrSt==='planned'?'planned':'done') };
+  var mids = (window._olrMids && window._olrMids.length) ? window._olrMids.slice() : [mid];
   if(typeof editIdx==='number' && editIdx>=0 && log[editIdx]){
-    log[editIdx].date=data.date; log[editIdx].asan=data.asan; log[editIdx].what=data.what; log[editIdx].note=data.note; log[editIdx].st=data.st;
-  } else {
-    // v412: 選んだメンバー全員に同じ記録を追加
-    var mids = (window._olrMids && window._olrMids.length) ? window._olrMids : [mid];
+    // v463: 編集は対象メンバー全員の記録へ反映（記録グループgidで紐付け。旧形式は編集前の内容一致で取り込み）
+    var e0 = log[editIdx];
+    var prevSig = { date: e0.date || '', what: e0.what || '', note: e0.note || '', asan: e0.asan || '' };
+    var gid = e0.gid || ('olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
+    e0.date=data.date; e0.asan=data.asan; e0.what=data.what; e0.note=data.note; e0.st=data.st;
+    e0.gid = gid; e0.mids = mids.slice();
     mids.forEach(function(id9){
-      freshOlLog(id9).unshift({ date:data.date, asan:data.asan, to:'', what:data.what, note:data.note, st:data.st });
+      if (id9 === mid) return;
+      var lg = freshOlLog(id9);
+      var tgt = null;
+      for (var i9 = 0; i9 < lg.length; i9++) { if (lg[i9] && lg[i9].gid === gid) { tgt = lg[i9]; break; } }
+      if (!tgt) {
+        // 旧形式（gidなし）: 編集前と同じ内容の記録があればグループへ取り込む（重複作成を防止）
+        for (var j9 = 0; j9 < lg.length; j9++) {
+          var c9 = lg[j9];
+          if (c9 && !c9.gid && (c9.date || '') === prevSig.date && (c9.what || '') === prevSig.what && (c9.note || '') === prevSig.note && (c9.asan || '') === prevSig.asan) { tgt = c9; break; }
+        }
+      }
+      if (!tgt) { tgt = { to: '' }; lg.unshift(tgt); }
+      tgt.date=data.date; tgt.asan=data.asan; tgt.what=data.what; tgt.note=data.note; tgt.st=data.st;
+      tgt.gid = gid; tgt.mids = mids.slice();
+    });
+    if (mids.length > 1) setTimeout(function(){ toast('📝 対象メンバー ' + mids.length + '人に反映しました'); }, 300);
+  } else {
+    // v412: 選んだメンバー全員に同じ記録を追加（v463: グループgid・対象一覧も保存）
+    var gid2 = 'olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    mids.forEach(function(id9){
+      freshOlLog(id9).unshift({ date:data.date, asan:data.asan, to:'', what:data.what, note:data.note, st:data.st, gid: gid2, mids: mids.slice() });
     });
     if (mids.length > 1) setTimeout(function(){ toast('📝 ' + mids.length + '人にOL記録を追加しました'); }, 300);
   }
@@ -11285,7 +11330,13 @@ function showPcTooltip(mid, ev) {
   var gsvDisplay = m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0';
   var fixDisplay = m.ptFixed>0 ? m.ptFixed.toLocaleString() : '-';
   // このメンバーに紐づく予定・タスク
-  var myEv = (state.events || []).filter(function(e){ return evHasMember(e, m.id) && !e.deleted; });
+  // v460: 直近1ヶ月より古いものは表示しない（日付なしタスク・未来の予定は表示）
+  var _evCut = (function(){ var d0 = new Date(); d0.setMonth(d0.getMonth() - 1); return d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0'); })();
+  var myEv = (state.events || []).filter(function(e){
+    if (!evHasMember(e, m.id) || e.deleted) return false;
+    var ref = e.endDate || e.date;
+    return !ref || String(ref) >= _evCut;
+  });
   myEv.sort(function(a, b){
     var ad = (a.type === 'task' && a.done) ? 1 : 0, bd = (b.type === 'task' && b.done) ? 1 : 0;
     if (ad !== bd) return ad - bd;            // 未完了を上に
@@ -11818,6 +11869,7 @@ function openEdit(id) {
     var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
     if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
+    if (typeof syncStartSelects === 'function') syncStartSelects(); // v462
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
     selTraineeResultChip(m.traineeResult||'');
@@ -11921,6 +11973,7 @@ function clearForm() {
   var _ovr=document.getElementById('outVisRow'); if(_ovr) _ovr.style.display='none';
   var _rsr=document.getElementById('restartRow'); if(_rsr) _rsr.style.display='none';
   if (typeof selBadgeMode === 'function') selBadgeMode('');
+  if (typeof syncStartSelects === 'function') syncStartSelects(); // v462
   ['研修生','BA','BR'].forEach(function(k){
     var el=document.getElementById('rbCat'+(k==='研修生'?'Trainee':k));
     if(el) el.classList.remove('sel');
@@ -12029,6 +12082,59 @@ function onTitleChange() { _outVisRowSync(); }
 // v457: 数値欄フォーカスで既存値を全選択（選び直さずそのまま上書きできるように）
 function edSelAll(el) {
   setTimeout(function() { try { el.select(); } catch(e9) {} }, 0);
+}
+// ── v462: 登録月の年・月セレクト＋手入力コンボ ──
+// 'YYYY-MM' へ正規化（'2026-09' '2026.9' '2026/9' '202609' 全角も可）。空='' / 不正=null
+function _normYm(v) {
+  v = String(v || '').trim().replace(/[０-９]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 65248); }).replace(/[．／]/g, '.');
+  if (!v) return '';
+  var m = /^(\d{4})[-.\/]?(\d{1,2})$/.exec(v);
+  if (!m) return null;
+  var y = parseInt(m[1], 10), mo = parseInt(m[2], 10);
+  if (mo < 1 || mo > 12) return null;
+  return y + '-' + String(mo).padStart(2, '0');
+}
+function _startYmBuild() {
+  var ys = document.getElementById('fStartY'), ms = document.getElementById('fStartM');
+  if (!ys || !ms || ys.options.length) return;
+  var nowY = new Date().getFullYear();
+  var h = '<option value="">年</option>';
+  for (var y = nowY + 1; y >= 2000; y--) h += '<option value="' + y + '">' + y + '</option>';
+  ys.innerHTML = h;
+  var h2 = '<option value="">月</option>';
+  for (var mo = 1; mo <= 12; mo++) h2 += '<option value="' + mo + '">' + mo + '月</option>';
+  ms.innerHTML = h2;
+}
+// 手入力欄の値をセレクトへ反映（開いた時・復元時に呼ぶ）
+function syncStartSelects() {
+  _startYmBuild();
+  var ys = document.getElementById('fStartY'), ms = document.getElementById('fStartM');
+  var inp = document.getElementById('fStartMonth');
+  if (!ys || !ms || !inp) return;
+  var v = _normYm(inp.value);
+  if (v) { ys.value = String(parseInt(v.slice(0, 4), 10)); ms.value = String(parseInt(v.slice(5), 10)); }
+  else { ys.value = ''; ms.value = ''; }
+}
+// セレクト操作 → 手入力欄へ（年・月が揃った時に確定。両方空でクリア）
+function startYmSel() {
+  var ys = document.getElementById('fStartY'), ms = document.getElementById('fStartM');
+  var inp = document.getElementById('fStartMonth');
+  if (!ys || !ms || !inp) return;
+  if (ys.value && ms.value) inp.value = ys.value + '-' + String(parseInt(ms.value, 10)).padStart(2, '0');
+  else if (!ys.value && !ms.value) inp.value = '';
+}
+// 手入力 → 整形してセレクトへ
+function startYmManual(v) {
+  var inp = document.getElementById('fStartMonth');
+  var n = _normYm(v);
+  if (n === null) {
+    toast('\u26A0\uFE0F 登録月は「2026-09」の形式で入力してください');
+    if (inp) inp.value = '';
+    syncStartSelects();
+    return;
+  }
+  if (inp) inp.value = n;
+  syncStartSelects();
 }
 // v439: ケアバッジ（フレッシュ/研修生）の手動 表示/非表示
 var fBadgeMode = '';
@@ -12257,7 +12363,9 @@ function saveMember() {
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
       var v = el ? el.value : ''; // 'YYYY-MM'
-      if (v) return v.replace('-', '.');
+      var n = (typeof _normYm === 'function') ? _normYm(v) : v; // v462: 手入力の形式ゆれを整形
+      if (n === null) { toast('\u26A0\uFE0F 登録月の形式が読めなかったため保存しませんでした（例 2026-09）'); n = ''; }
+      if (n) return n.replace('-', '.');
       if (editingId && _prevMember && _prevMember.startMonth) return _prevMember.startMonth;
       return state.currentMonth || currentMonthStr();
     })(),
@@ -15851,12 +15959,61 @@ function _tqRenderChips() {
     // v454: 時刻（任意）— 詳細入力を開かずにここで指定できる
     + '<div style="flex-basis:100%;display:flex;gap:8px;align-items:center;margin-top:2px">'
     + '<span style="font-size:12px;color:var(--text-dim);flex:none">🕐 時刻（任意）</span>'
-    + '<input class="fi ev-dt" id="tqTime" type="text" readonly placeholder="なし" value="' + evEsc(_tqTime || '') + '" onclick="openTimePad(\'tqTime\')" style="flex:1;min-width:110px;padding:8px 10px;font-size:13px;cursor:pointer;text-align:center' + (_tqTime ? ';border-color:var(--accent)' : '') + '">'
+    + (isPCMode()
+      // v461: PCは選択式（15分刻みリスト）＋手入力のコンボ
+      ? '<span style="flex:1;min-width:110px;position:relative;display:block">'
+        + '<input class="fi" id="tqTime" type="text" placeholder="なし（例 19:00）" autocomplete="off" value="' + evEsc(_tqTime || '') + '"'
+        + ' onfocus="tqTimeDropOpen()" onclick="tqTimeDropOpen()" onblur="setTimeout(tqTimeDropClose,150)"'
+        + ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+        + ' onchange="tqTimeManual(this.value)"'
+        + ' style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;text-align:center' + (_tqTime ? ';border-color:var(--accent)' : '') + '">'
+        + '<span id="tqTimeDrop"></span></span>'
+      : '<input class="fi ev-dt" id="tqTime" type="text" readonly placeholder="なし" value="' + evEsc(_tqTime || '') + '" onclick="openTimePad(\'tqTime\')" style="flex:1;min-width:110px;padding:8px 10px;font-size:13px;cursor:pointer;text-align:center' + (_tqTime ? ';border-color:var(--accent)' : '') + '">')
     + (_tqTime ? '<div class="rb" onclick="tqTimeChange(\'\')" style="padding:8px 12px;font-size:12.5px">クリア</div>' : '')
     + '</div>';
 }
 function tqSetDate(v) { _tqDate = v; _tqRenderChips(); }
 function tqTimeChange(v) { _tqTime = v || ''; _tqRenderChips(); } // v454
+// ── v461: PC用の時刻コンボ（15分刻みリスト＋手入力） ──
+function tqTimeDropOpen() {
+  var host = document.getElementById('tqTimeDrop');
+  if (!host || host.childElementCount) return;
+  var h = '<div id="tqTimeDropIn" style="position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:60;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;max-height:216px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.45)">';
+  for (var hh = 0; hh < 24; hh++) {
+    for (var mm = 0; mm < 60; mm += 15) {
+      var t = evPad2(hh) + ':' + evPad2(mm);
+      h += '<div onmousedown="event.preventDefault();tqTimePick(\'' + t + '\')" onmouseover="this.style.background=\'var(--surface3)\'" onmouseout="this.style.background=\'\'"'
+        + ' style="padding:7px 10px;cursor:pointer;font-size:13px;text-align:center' + (t === _tqTime ? ';color:var(--accent);font-weight:700' : '') + '">' + t + '</div>';
+    }
+  }
+  h += '</div>';
+  host.innerHTML = h;
+  // 現在値（未設定なら09:00）付近へスクロール
+  var inr = document.getElementById('tqTimeDropIn');
+  if (inr) {
+    var tg = /^\d\d:\d\d$/.test(_tqTime || '') ? _tqTime : '09:00';
+    var idx = Math.max(0, Math.round((parseInt(tg.slice(0, 2), 10) * 60 + parseInt(tg.slice(3), 10)) / 15) - 3);
+    inr.scrollTop = idx * 31;
+  }
+}
+function tqTimeDropClose() { var host = document.getElementById('tqTimeDrop'); if (host) host.innerHTML = ''; }
+function tqTimePick(t) { _tqTime = t; _tqRenderChips(); }
+// 手入力の整形: '19' '1930' '9:30' '19:00' → HH:MM / 空 → クリア / 不正 → 元に戻してトースト
+function _tqNormTime(v) {
+  v = String(v || '').trim().replace('：', ':').replace(/[０-９]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 65248); });
+  if (!v) return '';
+  var m = /^(\d{1,2}):(\d{2})$/.exec(v) || /^(\d{1,2})(\d{2})$/.exec(v) || /^(\d{1,2})$/.exec(v);
+  if (!m) return null;
+  var h = parseInt(m[1], 10), mi = m[2] ? parseInt(m[2], 10) : 0;
+  if (h > 29 || mi > 59) return null;
+  return evPad2(h) + ':' + evPad2(mi);
+}
+function tqTimeManual(v) {
+  var n = _tqNormTime(v);
+  if (n === null) { toast('\u23F0 時刻は「19:00」の形式で入力してください'); _tqRenderChips(); return; }
+  _tqTime = n;
+  _tqRenderChips();
+}
 function tqDateChange(v) { _tqDate = v || ''; _tqRenderChips(); }
 function tqPickList() {
   window._tdPickCb = function(kind, id){ _tqListId = id; _tqRenderChips(); };
