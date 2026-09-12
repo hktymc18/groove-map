@@ -1525,9 +1525,9 @@ body.cal-fs .pc-toolbar{display:none!important}
 /* マップ生命化（Phase E）：活動中は脈打ち・30日放置は色あせ */
 @keyframes mapPulse{0%,100%{opacity:1}50%{opacity:.78}}
 .oval-node.act-active{animation:mapPulse 2.8s ease-in-out infinite}
-.oval-node.act-dormant{opacity:.5}
+/* v468: 長期未活動は薄くせずバッジで表現 */
 .nc.act-active>.card-main{box-shadow:0 0 12px rgba(44,229,184,.22)}
-.nc.act-dormant{opacity:.62;filter:saturate(.45)}
+/* v468: 長期未活動は薄くせずバッジで表現（モバイル） */
 .home-wk{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:12px 15px;font-size:13px;line-height:1.7;margin-top:10px}
 /* 自動コーチング（Phase H）：次の一手を1行だけ */
 .home-coach{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--go-sky);border-radius:0 14px 14px 0;padding:11px 14px;font-size:13px;line-height:1.7;margin-top:10px}
@@ -2288,7 +2288,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v467</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v468</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4110,7 +4110,7 @@ function renderPCMap(mapType) {
   // ── ノード ──
   visMembers.forEach(function(m){
     var col=cmap[m.id]||COLORS[0];
-    var isT=m.trainee||(m.traineeHistory&&m.traineeHistory.length>0);
+    var isT=(typeof memberCat==='function') ? (memberCat(m)==='研修生') : !!m.trainee; // v468: 研修履歴が残っていても現カテゴリで判定（BA昇格後も水色のままになるバグ修正）
     var pcLOI=['LOI','Q1','Q2','Q3','Q4'];
     var isPcLOI=pcLOI.indexOf((m.title||'').trim())>=0;
     var isF=m.gender==='female';
@@ -4210,11 +4210,31 @@ function renderPCMap(mapType) {
         g.insertBefore(pr9, g.firstChild);
       }
     }
-    // 写真アバター（あれば左端に丸表示し、テキストを右へずらす）
+    // v468: 長期未活動バッジ（薄く消していく表現の代替。30日=💤グレー / 60日=🚨赤）
+    if (mapType === 'current' && (m.title || '').trim() !== 'OUT' && typeof memberIdleDays === 'function') {
+      var _idl9 = memberIdleDays(m);
+      if (_idl9 >= 30) {
+        var _iRed9 = _idl9 >= 60;
+        var _it9 = (_iRed9 ? '\uD83D\uDEA8 ' : '\uD83D\uDCA4 ') + _idl9 + '日';
+        var _iw9 = 64;
+        var ib9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        ib9.setAttribute('x', rx + 6); ib9.setAttribute('y', ry2 - 10);
+        ib9.setAttribute('width', _iw9); ib9.setAttribute('height', 18);
+        ib9.setAttribute('rx', 9);
+        ib9.setAttribute('fill', _iRed9 ? '#FF5D73' : '#6b7280');
+        ib9.setAttribute('stroke', 'rgba(0,0,0,.25)');
+        ib9.setAttribute('stroke-width', '0.5');
+        ib9.setAttribute('pointer-events', 'none');
+        ib9.setAttribute('class', 'pc-idle-badge');
+        g.appendChild(ib9);
+        g.appendChild(txt(rx + 6 + _iw9 / 2, ry2 + 3, _it9, '#fff', 10.5, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
+      }
+    }
+    // 写真アバター（v468: 写真が無くてもイニシャルの○を常時表示して見た目を統一）
     var _pcPh = (_pcPhotoOk && typeof _avatars !== 'undefined') ? _avatars[m.id] : null;
-    var _pcTx = rx + 16;
+    var _avR = 19, _avCx = rx + 14 + _avR, _avCy = ry2 + NODE_H/2;
+    var _pcTx = _avCx + _avR + 9;
     if (_pcPh) {
-      var _avR = 19, _avCx = rx + 14 + _avR, _avCy = ry2 + NODE_H/2;
       var clipId = 'pcav-' + String(m.id).replace(/[^a-zA-Z0-9_-]/g, '');
       var cp = document.createElementNS('http://www.w3.org/2000/svg','clipPath');
       cp.setAttribute('id', clipId);
@@ -4229,13 +4249,21 @@ function renderPCMap(mapType) {
       im.setAttribute('clip-path', 'url(#' + clipId + ')');
       im.setAttribute('pointer-events', 'none');
       g.appendChild(im);
-      var ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
-      ring.setAttribute('cx',_avCx); ring.setAttribute('cy',_avCy); ring.setAttribute('r',_avR);
-      ring.setAttribute('fill','none'); ring.setAttribute('stroke', titleRingColor(m.title)); ring.setAttribute('stroke-width','2.5');
-      ring.setAttribute('pointer-events','none');
-      g.appendChild(ring);
-      _pcTx = _avCx + _avR + 9;
+    } else {
+      // v468: 写真なし＝イニシャル○（塗り円＋姓の頭文字）
+      var abg9 = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      abg9.setAttribute('cx', _avCx); abg9.setAttribute('cy', _avCy); abg9.setAttribute('r', _avR);
+      abg9.setAttribute('fill', isLightTheme ? '#e8edf4' : '#1e2430');
+      abg9.setAttribute('pointer-events', 'none');
+      g.appendChild(abg9);
+      var _ini9 = ((m.lastName || m.firstName || '？').charAt(0));
+      g.appendChild(txt(_avCx, _avCy + 6, _ini9, isLightTheme ? '#334155' : '#cbd5e1', 16, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
     }
+    var ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    ring.setAttribute('cx',_avCx); ring.setAttribute('cy',_avCy); ring.setAttribute('r',_avR);
+    ring.setAttribute('fill','none'); ring.setAttribute('stroke', titleRingColor(m.title)); ring.setAttribute('stroke-width','2.5');
+    ring.setAttribute('pointer-events','none');
+    g.appendChild(ring);
     // 1行目: 名前 + 稼働
     g.appendChild(txt(_pcTx, ry2+30, nameStr, nameColor, nameFs, '700', 'Noto Sans JP,Inter,sans-serif'));
     if(m.activity){
@@ -4243,10 +4271,20 @@ function renderPCMap(mapType) {
       var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
       g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
     }
-    // 2行目: タイトル + GSV(固定)。v420: 何ヶ月目を併記＆BR以上/BMは太字
-    var titleStr = ((_isBrUp && typeof titleAbbr === 'function') ? titleAbbr(m.title || '-') : (m.title || '-')) + titleMonthsSuffix(m) + restartSuffix(m, true); // v426 / v459: BR以上は頭文字表記（モバイルと同じ・GSV表示との重なり防止）
-    var titleFs = titleStr.length<=6 ? 16 : (titleStr.length<=8 ? 14 : 12); // 長いタイトル(ブルーダイヤ等)は縮小
-    g.appendChild(txt(_pcTx, ry2+55, titleStr, cc, titleFs, (_isBrUp||_isBM)?'800':'600', 'Inter,Noto Sans JP,sans-serif'));
+    // 2行目: タイトル + GSV(固定)。v468: モバイルと同じ「色付きバッジ（ピル）」表示に
+    var _tAb9 = (typeof titleAbbr === 'function') ? (titleAbbr((m.title || '').trim()) || '-') : ((m.title || '-'));
+    if (!(m.title || '').trim()) _tAb9 = '-';
+    var _sfx9 = titleMonthsSuffix(m) + restartSuffix(m, true);
+    var _pw9 = Math.max(34, _tAb9.length * 10 + 16);
+    var tb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    tb9.setAttribute('x', _pcTx); tb9.setAttribute('y', ry2 + 42);
+    tb9.setAttribute('width', _pw9); tb9.setAttribute('height', 20);
+    tb9.setAttribute('rx', 10);
+    tb9.setAttribute('fill', cc);
+    tb9.setAttribute('pointer-events', 'none');
+    g.appendChild(tb9);
+    g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 56, _tAb9, isLightTheme ? '#ffffff' : '#0a1017', 12.5, '800', 'Inter,Noto Sans JP,sans-serif', 'middle'));
+    if (_sfx9) g.appendChild(txt(_pcTx + _pw9 + 6, ry2 + 56, _sfx9, gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
@@ -5204,7 +5242,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v467';
+  var DATA_VERSION = 'v468';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6163,6 +6201,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v468', d:'2026-09-12', items:['🐛 研修を終えてBAになった人がPCツリーでずっと水色（研修生色）のままになるバグを修正（研修履歴の有無ではなく現在のカテゴリで判定）','💤 「何もしないと薄く消えていく」表現を廃止：全員通常の明るさで表示し、代わりに30日以上アクションが無い人に「💤30日」（グレー）、60日以上は「🚨」（赤）のバッジを表示します（PC・モバイル共通）','👤 PCツリーの全カードにアバター○を常時表示（写真がない人はイニシャル＋タイトル色のリング）','🏷 PCツリーのタイトルをモバイルと同じ「色付きバッジ」表示に（宝石色の塗りピル。ひと目で階級が分かります）','📆 ToDoの並び順を「日付→時刻→⚑重要」に修正（⚑が時刻を無視して上に来ていた問題）','🗂 PC予定タブの右パネル：選択日が今日の時は「今日のToDo（期限切れ含む）」だけに統合（タスクの二重表示を解消）','📅 メンバー付き予定の「自分のカレンダーに表示」の既定値を入口で変更：予定タブから作成＝表示する／MAP（メンバーカード）から作成＝メンバー専用','⏰ 時刻パッドの操作性を修正：閉じた直後の再タップが効かない問題（フェード中の透明な幕がタップを吸っていた）と、終了時刻が開始より前のまま表示される問題（自動で開始+1時間に補正してお知らせ）を修正','🔔 期限切れタスクのリマインド：期限切れが残っている間、9・12・15・18・21時にPUSH通知でお知らせします（完了すると自動で止まります）'] },
   { v:'v467', d:'2026-09-12', items:['⚙️ 「予定とOLの連携」の設定を2つに分割：連携をオンにしたまま「OL予定をカレンダーに表示」だけをオフにできるようになりました（カレンダーの📝紫のOL帯を消しても、メンバー予定を完了した時の「OLとして記録しますか？」の提案は残ります）。カレンダーの⚙設定から切り替えられます'] },
   { v:'v466', d:'2026-09-11', items:['🌟 🌱フレッシュ・🎓研修生が光らない問題を修正：Mac/iPhoneのSafariはツリー（SVG）のCSS発光エフェクトに対応しておらず、これまで光って見えていませんでした。どのブラウザでも確実に見える「脈動する色付きリング」（フレッシュ=金・研修生=水色）に変更しました'] },
   { v:'v465', d:'2026-09-11', items:['🌟 PCツリーの🌱フレッシュ・🎓研修生の光を強化：系列フォーカスを使っていない通常表示でもはっきり目立つよう、点滅の光を大きく・明るくしました','💡 系列フォーカスの入口を分かりやすく：フォーカスしていない時も左上に「💡カードをクリックすると系列フォーカス」の案内を常時表示します（フォーカス中は従来どおり「✕解除」ボタンに変わります）'] },
@@ -8630,8 +8669,14 @@ function memberActivityLevel(m) {
   if (!last) return '';
   var d = gameDaysGap(last, evTodayYmd());
   if (d <= 7) return 'act-active';    // 1週間以内に活動＝生きている（脈打つ）
-  if (d >= 30) return 'act-dormant';  // 30日以上活動なし＝枯れかけ（色あせ）
+  if (d >= 30) return 'act-dormant';  // 30日以上活動なし（v468: 表示はバッジで行う）
   return '';
+}
+// v468: 最終活動からの経過日数（活動記録なし=-1）。💤/🚨バッジ用
+function memberIdleDays(m) {
+  var last = memberLastActivity(m);
+  if (!last) return -1;
+  return gameDaysGap(last, evTodayYmd());
 }
 function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, familyColorMap, skipChildren) {
   if (!familyColorMap) familyColorMap = {};
@@ -8724,13 +8769,20 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
         var _tShow = (m.title || (typeof getLatestStatus === 'function' ? (getLatestStatus(m) || '') : '') || '').trim();
         var _ab = titleAbbr(_tShow) || '\u2013';
         var _st = _tShow ? titleAvatarStyle(_tShow) : avStyle;
-        return '<div class="av ' + g + (isLOI ? ' loi-av' : (m.trainee || (m.traineeHistory&&m.traineeHistory.length>0)) ? ' trainee-av' : '') + ' av-title" style="' + _st + '" title="' + evEsc(_tShow) + '">' + evEsc(_ab) + '</div>';
+        return '<div class="av ' + g + (isLOI ? ' loi-av' : ((typeof memberCat==='function' ? memberCat(m)==='研修生' : m.trainee)) ? ' trainee-av' : '') + ' av-title" style="' + _st + '" title="' + evEsc(_tShow) + '">' + evEsc(_ab) + '</div>';
       })())
     + '<div style="flex:1;min-width:max-content">'
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
     + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
     + (m.goldShip ? '<span title="金の船" style="font-size:12px">⛴</span>' : '')
     + (restartSuffix(m, true) ? '<span style="font-size:9px;font-weight:800;color:#FB923C;background:rgba(251,146,60,.13);border:1px solid rgba(251,146,60,.4);border-radius:6px;padding:1px 5px;white-space:nowrap">' + restartSuffix(m, true) + '</span>' : '')
+    + (function(){ // v468: 長期未活動バッジ（薄く消す表現の代替）
+        if ((m.title || '').trim() === 'OUT' || typeof memberIdleDays !== 'function') return '';
+        var _id9 = memberIdleDays(m);
+        if (_id9 < 30) return '';
+        var _r9 = _id9 >= 60;
+        return '<span title="最終活動から' + _id9 + '日" style="font-size:9px;font-weight:800;color:#fff;background:' + (_r9 ? '#FF5D73' : '#6b7280') + ';border-radius:6px;padding:1px 5px;white-space:nowrap">' + (_r9 ? '\uD83D\uDEA8' : '\uD83D\uDCA4') + _id9 + '日</span>';
+      })()
     + (isForeign ? '<span class="merged-badge">🔗' + evEsc(m._ownerName || '下位') + '</span>' : '')
     + '</div>'
     + '<div style="display:flex;align-items:center;gap:4px;margin-top:2px">' + parentChip
@@ -15897,6 +15949,7 @@ function _digestSync() {
   try { old = JSON.parse(localStorage.getItem('gm_dgQ') || '[]'); } catch(e0) {}
   old.forEach(function(qid){ db.doc('notifQueue/' + qid).delete().catch(function(){}); });
   var written = [];
+  var _dgAt = {}; // v468: まとめ通知の予約時刻（期限切れリマインドとの重複防止）
   var pushOff = false;
   try { pushOff = localStorage.getItem('gm_pushOff') === '1'; } catch(e1) {}
   if (_dgOn && _dgTimes.length && !pushOff) {
@@ -15924,6 +15977,36 @@ function _digestSync() {
           body: (odN ? '⚠️ 期限切れ ' + odN + '件を含む・' : '') + 'タップして一覧を開く'
         }).catch(function(){});
         written.push(qid);
+        _dgAt[dt.toISOString()] = 1;
+      }
+    }
+  }
+  // v468: 期限切れタスクの定時リマインド（9/12/15/18/21時）。期限切れが残っている間だけ予約し、
+  // 完了して0件になれば次の同期で予約ごと消える。まとめ通知と同時刻になる枠はスキップ。
+  if (!pushOff) {
+    var _odTasks = (state.events || []).filter(function(e){
+      return e.type === 'task' && !e.done && !e.deleted && e.date && e.date < evTodayYmd() && evTdMine(e);
+    });
+    if (_odTasks.length) {
+      var _odSlots = ['09:00', '12:00', '15:00', '18:00', '21:00'];
+      var now2 = new Date();
+      for (var d2 = 0; d2 < 2 && written.length < 18; d2++) {
+        var day2 = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate() + d2);
+        for (var i2 = 0; i2 < _odSlots.length && written.length < 18; i2++) {
+          var hm2 = _odSlots[i2].split(':');
+          var dt2 = new Date(day2.getFullYear(), day2.getMonth(), day2.getDate(), parseInt(hm2[0], 10), parseInt(hm2[1], 10), 0);
+          if (dt2.getTime() <= Date.now() + 60000) continue;
+          if (_dgAt[dt2.toISOString()]) continue;
+          var qid2 = currentUser.uid + '_od' + day2.getFullYear() + _dgPad(day2.getMonth() + 1) + _dgPad(day2.getDate()) + hm2[0] + hm2[1];
+          fsSet('notifQueue/' + qid2, {
+            uid: currentUser.uid,
+            eventId: 'due-digest',
+            fireAt: dt2.toISOString(),
+            title: '\u26A0\uFE0F 期限切れタスク ' + _odTasks.length + '件',
+            body: 'タップして一覧を開く（完了するとリマインドは止まります）'
+          }).catch(function(){});
+          written.push(qid2);
+        }
       }
     }
   }
@@ -19627,10 +19710,11 @@ function todoRowHtml(e) {
 function _todoSortDue(a, b) {
   var da = a.date || '9999-99-99', db2 = b.date || '9999-99-99';
   if (da !== db2) return da < db2 ? -1 : 1;
-  // v337: 同じ日の中では ⚑重要 を上に
+  // v468: 同じ日の中は時刻順（時刻なしは最後）。同時刻のみ⚑重要を上に
+  var ta = a.time || '99:99', tb = b.time || '99:99';
+  if (ta !== tb) return ta < tb ? -1 : 1;
   var pa = a.priority === 'high' ? 0 : 1, pb = b.priority === 'high' ? 0 : 1;
-  if (pa !== pb) return pa - pb;
-  return (a.time || '99:99') < (b.time || '99:99') ? -1 : 1;
+  return pa - pb;
 }
 function _todoHomeRow(icon, name, count, onclick, colorDot) {
   return '<div class="td-home-row" onclick="' + onclick + '">'
@@ -20794,7 +20878,7 @@ function renderPcDayPanel() {
     + '<div style="font-size:14.5px;font-weight:800;flex:1;font-family:\'Inter\',\'Noto Sans JP\',sans-serif">' + evEsc(fmtEvDate(ds, '')) + '</div>'
     + '<button class="btn-p" style="flex:none;padding:7px 13px;font-size:12.5px" onclick="openEventAddDate(\'' + ds + '\')">＋ 予定</button>'
     + '</div>'
-    + '<div id="pcDayList">' + _daySheetHtml(ds) + '</div>'
+    + '<div id="pcDayList">' + _daySheetHtml(ds, ds === t) + '</div>'
     + '<div class="td-secttl" style="padding:16px 0 6px">✅ 今日のToDo（期限切れ含む）</div>'
     + (due.length ? due.map(todoRowHtml).join('') : '<div class="ev-empty" style="padding:10px 0">未完了のタスクはありません</div>');
   p.innerHTML = h;
@@ -20805,7 +20889,7 @@ function evCellDblPC(ds) {
   openEventAddDate(ds);
 }
 // v297: 日別ボトムシート（📅その日の予定 ＋ ✅その日が期日のタスク）
-function _daySheetHtml(ds) {
+function _daySheetHtml(ds, skipTasks) { // v468: PC右パネルで今日を表示中はタスク欄を出さない（今日のToDoに統合）
   var evs = (state.events || []).filter(function(e){
     if (e.type === 'task') return false;
     if (!evShowMine(e)) return false; // v361: メンバー専用は自分のカレンダーに出さない
@@ -20828,11 +20912,11 @@ function _daySheetHtml(ds) {
     }
   }
   var h = '';
-  if (!evs.length && !tks.length && !ols.length) {
+  if (!evs.length && (skipTasks || !tks.length) && !ols.length) {
     h += '<div class="ev-empty" style="padding:22px 8px">この日の予定・タスクはありません</div>';
   } else {
     if (evs.length) h += '<div class="ev-group-label" style="padding-top:6px">📅 予定 <span style="opacity:.55;font-weight:600">' + evs.length + '</span></div>' + evs.map(evItemHtml).join('');
-    if (tks.length) h += '<div class="ev-group-label" style="padding-top:' + (evs.length ? '12px' : '6px') + '">✅ タスク <span style="opacity:.55;font-weight:600">' + tks.length + '</span></div>' + tks.map(evItemHtml).join('');
+    if (!skipTasks && tks.length) h += '<div class="ev-group-label" style="padding-top:' + (evs.length ? '12px' : '6px') + '">✅ タスク <span style="opacity:.55;font-weight:600">' + tks.length + '</span></div>' + tks.map(evItemHtml).join('');
     if (typeof _fitOwner === 'function' && _fitOwner() && !viewingOwnerUid && _fitCal && _fitCal[ds] && _fitCal[ds].s) {
       var _fe2 = _fitCal[ds];
       var _ftPast2 = !_fe2.done && ds < evTodayYmd(); // v434
@@ -21582,9 +21666,24 @@ function tpClear() {
   _tqPadSync(); // v456
   tpRender();
 }
+// v468: 終了が開始より前（または同時刻）のまま閉じたら、開始+1時間へ自動補正して知らせる
+function _tpFixOrder() {
+  try {
+    if (_tpIsTask || !_tpStartId || !_tpEndId) return;
+    var s9 = document.getElementById(_tpStartId), e9 = document.getElementById(_tpEndId);
+    if (!s9 || !e9) return;
+    var sv9 = s9.value || '', ev9 = e9.value || '';
+    if (!/^\d\d:\d\d$/.test(sv9) || !/^\d\d:\d\d$/.test(ev9)) return;
+    if (ev9 > sv9) return;
+    var hm9 = sv9.split(':');
+    e9.value = evPad2(Math.min((parseInt(hm9[0], 10) || 0) + 1, 29)) + ':' + hm9[1];
+    toast('\u23F0 終了時刻が開始より前だったため、開始+1時間に直しました');
+  } catch(e8) {}
+}
 function closeTimePad(commit) {
   var ov = document.getElementById('tpOv');
   if (commit) _tpCommitCurrent(); // 入力途中の値も確定して閉じる（完了ボタン）
+  _tpFixOrder(); // v468
   // v456: クイック追加の時刻はstateへ同期してからチップを描き直す（クリアボタンの表示更新）
   _tqPadSync();
   if (_tpStartId === 'tqTime' && typeof _tqRenderChips === 'function') { try { _tqRenderChips(); } catch(eTq9) {} }
@@ -21592,6 +21691,7 @@ function closeTimePad(commit) {
     // v343: ふわっとフェードアウト（idを外して、フェード中でも次のパッドをすぐ開けるように）
     ov.id = '';
     ov.classList.remove('show');
+    ov.style.pointerEvents = 'none'; // v468: フェード中の透明な幕がタップを吸って「再タップが効かない」のを防ぐ
     setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 240);
   }
   _tpTarget = null; _tpBuf = '';
@@ -22305,7 +22405,7 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   _evMemberIds = e
     ? ((e.memberIds && e.memberIds.length) ? e.memberIds.slice() : (e.memberId ? [e.memberId] : []))
     : (presetMember ? [presetMember] : []);
-  selEvSelfShow(e ? (e.selfShow !== false) : false); // v361: 新規は「メンバー専用」既定・旧データは表示扱い
+  selEvSelfShow(e ? (e.selfShow !== false) : !presetMember); // v468: 予定タブ起点=「自分にも表示」既定 / MAP（メンバーカード）起点=「メンバー専用」既定。旧データは表示扱い
   updateEvMemberDisplay();
   // CAL-3: サブタスクを編集用にコピー（保存するまで元データは変えない）
   _evSubs = (e && e.subtasks ? e.subtasks : []).map(function(s){ return { id: s.id, t: s.t, done: !!s.done }; });
