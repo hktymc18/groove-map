@@ -2148,6 +2148,36 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .dh-cat-ic{font-size:20px;flex:none}
 .dh-cat-l{font-size:13px;font-weight:600;color:var(--text)}
 .dh-cat-s{font-size:10px;color:var(--text-dim);margin-top:2px}
+/* ── v469 PLAN ── */
+#view-plan{padding:14px 14px 110px;max-width:640px;margin:0 auto}
+@media(min-width:768px){
+  #view-plan{max-width:none;margin:0;padding:16px 20px 20px;display:grid;grid-template-columns:minmax(290px,330px) minmax(430px,1fr) minmax(290px,350px);gap:16px;align-items:start}
+  .p2-col{overflow-y:auto;max-height:calc(100vh - 120px);padding-right:4px}
+}
+.p2-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+.p2-t{font-size:13px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.p2-t .sp{flex:1}
+.p2-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--border)}
+.p2-row:last-child{border-bottom:none}
+.p2-lb{flex:1;font-size:12.5px;min-width:0}
+.p2-in{width:66px;text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 4px;font-size:14px;font-family:Inter,monospace;-webkit-appearance:none}
+.p2-num{font-family:Inter,monospace}
+.p2-meta{font-size:10.5px;color:var(--text-dim)}
+.p2-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px 9px;font-size:11px;margin:0 4px 5px 0;color:var(--text-mid)}
+.p2-btn{display:inline-block;padding:9px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;margin:4px 6px 0 0}
+.p2-btn.pri{background:var(--accent);border-color:var(--accent);color:#04120e}
+.p2-prog{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:4px}
+.p2-prog>i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
+.p2-banner{position:fixed;top:0;left:0;right:0;z-index:485;background:#7f1d1d;color:#fecaca;font-size:12px;font-weight:700;text-align:center;padding:7px 10px;cursor:pointer;display:none}
+.p2-fab{position:fixed;right:16px;bottom:158px;width:52px;height:52px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:23px;z-index:496;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+@media(min-width:768px){.p2-fab{bottom:26px;right:88px}}
+.p2-ink{position:fixed;inset:0;z-index:645;background:var(--bg);display:none;flex-direction:column;padding:16px}
+.p2-ink.show{display:flex}
+.p2-ink textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:16px;line-height:2;resize:none;font-family:inherit;margin-top:10px}
+.p2-inbrow{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px dashed var(--border);font-size:12.5px}
+.p2-inbrow:last-child{border-bottom:none}
+.p2-ib{flex:none;font-size:11px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;color:var(--text-mid)}
 /* ── 今日のタスク（ホーム②） ── */
 .ht-item{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
 .ht-item.overdue{border-left:3px solid var(--red,#FF5D73)}
@@ -2272,8 +2302,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="pcs-item" data-view="ol" onclick="switchView('ol')" title="OL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#8B7CFF;box-shadow:0 3px 12px rgba(139,124,255,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="18" rx="2"/><path d="M9 2.5h6v3.5H9z"/><path d="M8 11h8M8 15h8M8 19h5"/></svg></span><span class="pcs-lb">OL</span></div>
   <div class="pcs-item" data-view="events" onclick="switchView('events')" title="予定"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#FFB454;box-shadow:0 3px 12px rgba(255,180,84,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/></svg></span><span class="pcs-lb">予定</span></div>
   <div class="pcs-item" data-view="stats" onclick="switchView('stats')" title="データ"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#4ADE80;box-shadow:0 3px 12px rgba(16,185,129,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M5 20V13M12 20V4M19 20v-9"/></svg></span><span class="pcs-lb">データ</span></div>
-  <div class="pcs-item" data-view="goals" onclick="switchView('goals')" title="GOAL"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3z"/></svg></span><span class="pcs-lb">GOAL</span></div>
-  <div class="pcs-item" data-view="month" onclick="switchView('month')" title="今月"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#3ED5C4;box-shadow:0 3px 12px rgba(20,184,166,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="17" rx="2"/><path d="M8 2.5V7M16 2.5V7M3 10.5h18"/><path d="M8.5 16l2.5 2.5 4.5-4.5"/></svg></span><span class="pcs-lb">今月</span></div>
+  <div class="pcs-item" data-view="plan" onclick="switchView('plan')" title="PLAN" style="position:relative"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#0ea5e9;box-shadow:0 3px 12px rgba(14,165,233,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3z"/></svg></span><span class="pcs-lb">PLAN</span><span id="p2NavDot" style="display:none;position:absolute;top:6px;right:10px;width:9px;height:9px;border-radius:50%;background:#FF5D73"></span></div>
   <div class="pcs-item" id="pcsFit" style="display:none" onclick="fitOpen()" title="マイトレーニング（オーナー専用）"><span class="pcs-ic" style="background:linear-gradient(160deg,rgba(255,255,255,.45),transparent 55%),#F472B6;box-shadow:0 3px 12px rgba(244,114,182,.5)"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M2.5 12h2M19.5 12h2"/><rect x="4.5" y="8" width="3" height="8" rx="1"/><rect x="16.5" y="8" width="3" height="8" rx="1"/><path d="M7.5 12h9"/></svg></span><span class="pcs-lb">筋トレ</span></div>
   <div class="pcs-spacer"></div>
 </aside>
@@ -2288,7 +2317,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v468</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v469</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2316,6 +2345,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- ⑨ 今月（月間タスク） -->
   <div id="view-month" style="display:none"></div>
+  <div id="view-plan" style="display:none"></div>
 
   <!-- ====== メンバー一覧 ====== -->
   <div id="view-members" style="display:none"></div>
@@ -5242,7 +5272,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v468';
+  var DATA_VERSION = 'v469';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5377,9 +5407,10 @@ function updateFabVisibility() {
 
 // ── VIEW SWITCH ──
 function switchView(v) {
+  if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
   currentView = v;
   window._selectedCardId = null;
-  ['home','members','current','ideal','stats','ol','events','goals','month'].forEach(function(n) {
+  ['home','members','current','ideal','stats','ol','events','goals','month','plan'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
@@ -5403,7 +5434,7 @@ function switchView(v) {
   // 「メニューへ戻る」バー：ホーム以外で表示（PCはサイドバーがあるので非表示）
   var bh = document.getElementById('backHomeBar');
   if (bh) {
-    var names = { current:'組織MAP', members:'メンバー', ideal:'理想', stats:'データ', ol:'OL', events:'予定', goals:'GOAL', month:'今月' };
+    var names = { current:'組織MAP', members:'メンバー', ideal:'理想', stats:'データ', ol:'OL', events:'予定', plan:'PLAN', goals:'GOAL', month:'今月' };
     if (isPCMode() || v === 'home' || !names[v]) {
       bh.style.display = 'none';
     } else if (v === 'current' || v === 'ideal') {
@@ -5428,15 +5459,13 @@ function switchView(v) {
   else if (v==='stats') renderStats();
   else if (v==='ol') renderOL();
   else if (v==='events') renderEvents();
-  else if (v==='goals') renderGoals();
-  else if (v==='month') renderMonth();
+  else if (v==='plan') renderPlan();
 }
 // ── モバイル：メニュータブ（隠れタブへの常設導線） ──
 function openMobileMenu() {
   closeMobileMenu();
   var items = [
-    { v:'goals',   ic:'🧭', lb:'GOAL',    sub:'頂上と逆算プラン' },
-    { v:'month',   ic:'📆', lb:'今月',    sub:'月間目標・カウンター' },
+    { v:'plan',    ic:'🧭', lb:'PLAN',    sub:'目標・計画・振り返り' },
     { v:'ol',      ic:'📋', lb:'OL',      sub:'フレッシュ・金の船' },
     { v:'members', ic:'👥', lb:'メンバー', sub:'一覧・絞り込み' },
     { v:'ideal',   ic:'🎯', lb:'理想MAP', sub:'ありたい組織図' }
@@ -6201,6 +6230,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v469', d:'2026-09-13', items:['🧭 新タブ「PLAN」誕生：GOALタブと今月タブを統合し、目標設定〜月次計画〜日々の実行〜振り返りを1画面に刷新しました','✍️ 書き出しインボックス：右下の✍️ボタンでいつでも白紙に殴り書き→あとから「タスク化・今月の目標化・メンバーメモ化」に振り分けられます（紙の代わり）','🌟 北極星ウィザード：やりたいこと/なりたい自分→理想の生活→必要月収→目標タイトル→期日を1問1答で設定（全部スキップ可・最低限は月収と期日だけでOK）','📅 月次の宣言：今月・来月のフロント/ユーザーPT/チームB1/チームPTを宣言すると、実績（MAP・テンプレ完了・受付連携から自動集計）と着地予測を常時表示','🎯 ファネル逆算：宣言フロント数×係数（標準 CT8・FT/マケ4・DLR2。個人／ユニオンで変更可）から必要行動数を自動表示。「動員を計画」でDLR日を選ぶとPG（3日前）・FT/CT（1週間前）・CT取りのタスクを期限付きで自動生成','🏛 ユニオンマイルストーン：ユニオン管理者が目標を設定でき、メンバー全員のPLANに表示されます','🔁 月替わりの検証：前月の宣言vs実績を見て「できた理由・できなかった理由・来月変えること」を記録→そのまま来月の宣言へ','⚠️ 今月の宣言が無い間はPLANタブと画面上部にアラートを出し続けます','🖥 PC版は3カラムの全画面レイアウト（左=北極星・ユニオン／中央=宣言・ファネル／右=インボックス）'] },
   { v:'v468', d:'2026-09-12', items:['🐛 研修を終えてBAになった人がPCツリーでずっと水色（研修生色）のままになるバグを修正（研修履歴の有無ではなく現在のカテゴリで判定）','💤 「何もしないと薄く消えていく」表現を廃止：全員通常の明るさで表示し、代わりに30日以上アクションが無い人に「💤30日」（グレー）、60日以上は「🚨」（赤）のバッジを表示します（PC・モバイル共通）','👤 PCツリーの全カードにアバター○を常時表示（写真がない人はイニシャル＋タイトル色のリング）','🏷 PCツリーのタイトルをモバイルと同じ「色付きバッジ」表示に（宝石色の塗りピル。ひと目で階級が分かります）','📆 ToDoの並び順を「日付→時刻→⚑重要」に修正（⚑が時刻を無視して上に来ていた問題）','🗂 PC予定タブの右パネル：選択日が今日の時は「今日のToDo（期限切れ含む）」だけに統合（タスクの二重表示を解消）','📅 メンバー付き予定の「自分のカレンダーに表示」の既定値を入口で変更：予定タブから作成＝表示する／MAP（メンバーカード）から作成＝メンバー専用','⏰ 時刻パッドの操作性を修正：閉じた直後の再タップが効かない問題（フェード中の透明な幕がタップを吸っていた）と、終了時刻が開始より前のまま表示される問題（自動で開始+1時間に補正してお知らせ）を修正','🔔 期限切れタスクのリマインド：期限切れが残っている間、9・12・15・18・21時にPUSH通知でお知らせします（完了すると自動で止まります）'] },
   { v:'v467', d:'2026-09-12', items:['⚙️ 「予定とOLの連携」の設定を2つに分割：連携をオンにしたまま「OL予定をカレンダーに表示」だけをオフにできるようになりました（カレンダーの📝紫のOL帯を消しても、メンバー予定を完了した時の「OLとして記録しますか？」の提案は残ります）。カレンダーの⚙設定から切り替えられます'] },
   { v:'v466', d:'2026-09-11', items:['🌟 🌱フレッシュ・🎓研修生が光らない問題を修正：Mac/iPhoneのSafariはツリー（SVG）のCSS発光エフェクトに対応しておらず、これまで光って見えていませんでした。どのブラウザでも確実に見える「脈動する色付きリング」（フレッシュ=金・研修生=水色）に変更しました'] },
@@ -7073,8 +7103,7 @@ function homeMenuHtml() {
     { label:'OL',          emoji:'📋',  color:'#8B7CFF', act:"switchView('ol')" },
     { label:'予定',        emoji:'📅',  color:'#FFB454', act:"switchView('events')", badge: due },
     { label:'データ',      emoji:'📊',  color:'#4ADE80', act:"switchView('stats')" },
-    { label:'GOAL',        emoji:'🧭',  color:'#0ea5e9', act:"switchView('goals')" },
-    { label:'今月',        emoji:'📆',  color:'#3ED5C4', act:"switchView('month')" }
+    { label:'PLAN',        emoji:'🧭',  color:'#0ea5e9', act:"switchView('plan')" }
   ];
   var html = '<div class="home-sec-label">📂 メニュー</div><div class="home-menu">';
   html += items.map(function(it){
@@ -13767,6 +13796,557 @@ function _glMonthSummaryCardHtml(p){
     +'<span style="margin-left:auto;color:var(--go-sky);font-weight:800">詳細・入力は「今月」タブ ›</span>'
     +'</div></div>';
 }
+
+// ============================================================
+//  v469: PLAN（目標・計画・振り返り）— GOAL/今月タブの後継
+//  北極星（価値観・目標・期日）→ 月次宣言 → ファネル逆算 → 検証、＋書き出しインボックス
+// ============================================================
+function _p2() {
+  if (!state.goals) state.goals = _glDefault();
+  if (!state.goals.plan) state.goals.plan = _glDefaultPlan();
+  if (!state.goals.plan2) state.goals.plan2 = {};
+  var p2 = state.goals.plan2;
+  p2.north = p2.north || { wants: [], notWants: [], be: [], notBe: [], life: '' };
+  p2.months = p2.months || {};
+  p2.inbox = p2.inbox || [];
+  return p2;
+}
+function _p2Ym(off) { var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + (off || 0)); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function _p2YmLabel(ym) { return parseInt(ym.slice(0, 4), 10) + '年' + parseInt(ym.slice(5), 10) + '月'; }
+function _p2M(ym) {
+  var p2 = _p2();
+  if (!p2.months[ym]) p2.months[ym] = { front: '', upt: '', teamB1: '', teamPt: '', skill: [], declared: false, review: null };
+  var m = p2.months[ym];
+  m.skill = m.skill || [];
+  return m;
+}
+function _p2Declared(ym) {
+  var g = state.goals; var p2 = g && g.plan2; var m = p2 && p2.months && p2.months[ym];
+  return !!(m && m.declared);
+}
+// 係数: 個人 > ユニオン既定 > 標準（CT8 / FT・マケ4 / DLR2）
+function _p2Coef() {
+  var p2 = _p2();
+  if (p2.coef && (+p2.coef.ct || +p2.coef.ft || +p2.coef.dlr)) return { ct: +p2.coef.ct || 8, ft: +p2.coef.ft || 4, dlr: +p2.coef.dlr || 2, src: '個人' };
+  var um = (window._unPlanMeta && window._unPlanMeta.coef) || null;
+  if (um && (+um.ct || +um.ft || +um.dlr)) return { ct: +um.ct || 8, ft: +um.ft || 4, dlr: +um.dlr || 2, src: 'ユニオン' };
+  return { ct: 8, ft: 4, dlr: 2, src: '標準' };
+}
+function _p2OwnRoot() { var ms = state.members || []; for (var i = 0; i < ms.length; i++) { if (!ms[i].parentId && !ms[i].deleted) return ms[i]; } return null; }
+function _p2NormYmV(v) { return String(v || '').replace('.', '-').slice(0, 7); }
+// 実績の自動集計（手入力なし）: MAP・テンプレ完了(MAP実績)・受付連携の稼働率
+function _p2Act(ym) {
+  var p = state.goals.plan;
+  var root = _p2OwnRoot();
+  var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; });
+  var front = 0, teamB1 = 0, actN = 0, actS = 0;
+  ms.forEach(function(m) {
+    var sm = _p2NormYmV(m.startMonth);
+    if (root && m.parentId === root.id && sm === ym) front++;
+    if (sm === ym && (!root || m.id !== root.id) && ((m.ptCurrent || 0) >= 1000 || /^B\d+$/.test((m.title || '').trim()))) teamB1++;
+    if (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) { actN++; actS += parseInt(m.actRate, 10); }
+  });
+  return {
+    front: front, teamB1: teamB1,
+    upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf : (root.ptCurrent || 0)) : 0,
+    teamPt: root ? (root.ptCurrent || 0) : 0,
+    rate: actN ? Math.round(actS / actN) : null,
+    ct: _glMonthActual(p, ym, 'ct'), ft: _glMonthActual(p, ym, 'ft'),
+    dlr: _glMonthActual(p, ym, 'dlr'), pg: _glMonthActual(p, ym, 'pg'), ctget: _glMonthActual(p, ym, 'ctget')
+  };
+}
+// 今のペースの着地予測
+function _p2Pace(v) {
+  var d = new Date(); var days = d.getDate();
+  var dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  if (!days || !v) return v || 0;
+  return Math.round(v / days * dim);
+}
+// ── メイン描画 ──
+function renderPlan() {
+  var wrap = document.getElementById('view-plan');
+  if (!wrap) return;
+  _p2();
+  var ym = _p2Ym(0);
+  var alertH = _p2Declared(ym) ? '' : '<div class="p2-alert">⚠️ 今月の目標が未宣言です。「今月の宣言」に数字を入れて<b>宣言する</b>を押してください</div>';
+  var north = _p2NorthHtml();
+  var rev = _p2ReviewHtml();
+  var mon = _p2MonthHtml(ym, 0) + _p2MonthHtml(_p2Ym(1), 1);
+  var fun = _p2FunnelHtml(ym);
+  var unn = _p2UnionHtml();
+  var inb = _p2InboxHtml();
+  if (typeof isPCMode === 'function' && isPCMode()) {
+    wrap.innerHTML = '<div class="p2-col">' + north + unn + '</div>'
+      + '<div class="p2-col">' + alertH + rev + mon + fun + '</div>'
+      + '<div class="p2-col">' + inb + '</div>';
+  } else {
+    wrap.innerHTML = alertH + rev + north + mon + fun + unn + inb;
+  }
+  _p2BannerSync();
+}
+// ── 北極星 ──
+function _p2NorthHtml() {
+  var p = state.goals.plan, p2 = _p2(), n = p2.north;
+  var chips = function(arr, pre) { return (arr || []).slice(0, 8).map(function(x) { return '<span class="p2-chip">' + pre + evEsc(x) + '</span>'; }).join(''); };
+  var hasGoal = !!(p.title && p.deadline);
+  var h = '<div class="p2-card"><div class="p2-t">🌟 北極星<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : '🧭 目標をつくる') + '</span></div>';
+  if (hasGoal) {
+    h += '<div style="font-size:17px;font-weight:800">' + evEsc(p.title) + '<span style="font-size:12px;color:var(--text-dim);font-weight:600">　' + evEsc(String(p.deadline).replace('-', '年')) + '月まで</span></div>';
+    if (p.income) h += '<div class="p2-meta" style="margin-top:2px">必要月収 ' + (+p.income).toLocaleString() + '円</div>';
+    var rem = _glMonthsUntil(p.deadline);
+    if (rem > 0) h += '<div class="p2-meta">期限まで残り ' + rem + 'ヶ月・月あたり目安フロント ' + _glMonthlyFront(p) + '人</div>';
+  } else {
+    h += '<div style="font-size:12.5px;color:var(--text-dim);line-height:1.8">目標タイトルと期日がまだありません。<br>「🧭 目標をつくる」から1問1答で作れます（全部スキップ可）</div>';
+  }
+  var cAll = chips(n.wants, '👍') + chips(n.notWants, '🙅') + chips(n.be, '✨') + chips(n.notBe, '⛔');
+  if (n.life) cAll += '<span class="p2-chip">🏠' + evEsc(String(n.life).slice(0, 40)) + '</span>';
+  if (cAll) h += '<div style="margin-top:10px">' + cAll + '</div>';
+  h += '</div>';
+  return h;
+}
+// ── 月次宣言 ──
+function _p2MonthHtml(ym, off) {
+  var m = _p2M(ym), act = _p2Act(ym), p = state.goals.plan;
+  var sug = _glMonthlyFront(p) || '';
+  var isCur = off === 0;
+  var row = function(k, lb, actV, sugV) {
+    var pace = (isCur && actV > 0) ? _p2Pace(actV) : null;
+    return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
+      + '<input class="p2-in" type="number" inputmode="numeric" placeholder="' + (sugV !== undefined && sugV !== '' ? sugV : '-') + '" value="' + (m[k] === '' || m[k] == null ? '' : m[k]) + '" onfocus="edSelAll(this)" onchange="p2SetM(\'' + ym + '\',\'' + k + '\',this.value)">'
+      + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
+      + (pace !== null ? '<div class="p2-meta">着地 ' + pace.toLocaleString() + '</div>' : '<div class="p2-meta">実績</div>') + '</span></div>';
+  };
+  var h = '<div class="p2-card"><div class="p2-t">📅 ' + _p2YmLabel(ym) + 'の宣言'
+    + (m.declared ? '<span style="font-size:10px;color:var(--accent);font-weight:800">✓宣言済み</span>' : '')
+    + '<span class="sp"></span></div>';
+  var inner = ''
+    + '<div class="p2-meta" style="margin-bottom:2px">🧍 自分</div>'
+    + row('front', 'フロント（人）', act.front, sug)
+    + row('upt', 'ユーザーPT', act.upt, '')
+    + '<div class="p2-meta" style="margin:8px 0 2px">👥 チーム</div>'
+    + row('teamB1', 'B1（今月スタート）', act.teamB1, '')
+    + row('teamPt', 'チームPT', act.teamPt, '')
+    + (act.rate !== null ? '<div class="p2-row"><span class="p2-lb">平均稼働率（受付連携）</span><span class="p2-num" style="font-weight:700">' + act.rate + '%</span></div>' : '')
+    + '<div class="p2-meta" style="margin:8px 0 2px">📚 自分磨き（自由に）</div>'
+    + (m.skill || []).map(function(s, i) {
+        return '<div class="p2-row" style="padding:5px 0"><span class="td-chk' + (s.done ? ' on' : '') + '" style="width:20px;height:20px;font-size:11px;flex:none" onclick="p2SkillTgl(\'' + ym + '\',' + i + ')">' + (s.done ? '✓' : '') + '</span>'
+          + '<span class="p2-lb" style="' + (s.done ? 'text-decoration:line-through;color:var(--text-dim)' : '') + '">' + evEsc(s.t) + '</span>'
+          + '<span style="color:var(--text-dim);cursor:pointer;flex:none" onclick="p2SkillDel(\'' + ym + '\',' + i + ')">✕</span></div>';
+      }).join('')
+    + '<div style="display:flex;gap:6px;margin-top:6px"><input class="fi" id="p2Skill_' + ym + '" placeholder="＋ 例：本を1冊読む" style="flex:1;padding:8px 10px;font-size:13px" onkeydown="if(event.key===\'Enter\'){p2SkillAdd(\'' + ym + '\');}"><span class="p2-btn" style="margin:0" onclick="p2SkillAdd(\'' + ym + '\')">追加</span></div>'
+    + (m.declared
+        ? '<div class="p2-meta" style="margin-top:10px">数字はいつでも変更できます（変更は自動保存）</div>'
+        : '<span class="p2-btn pri" style="width:100%;text-align:center;box-sizing:border-box;display:block;margin-top:12px" onclick="p2Declare(\'' + ym + '\')">✅ この内容で宣言する</span>');
+  if (isCur) h += inner;
+  else h += '<details' + (m.declared ? '' : '') + '><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">来月の宣言を開く' + (m.declared ? '（宣言済み）' : '') + '</summary>' + inner + '</details>';
+  h += '</div>';
+  return h;
+}
+function p2SetM(ym, k, v) {
+  var m = _p2M(ym);
+  m[k] = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
+  saveGoals();
+  if (currentView === 'plan') renderPlan();
+}
+function p2Declare(ym) {
+  var m = _p2M(ym);
+  m.declared = true;
+  saveGoals();
+  toast('✅ ' + _p2YmLabel(ym) + 'の目標を宣言しました');
+  renderPlan();
+}
+function p2SkillAdd(ym) {
+  var inp = document.getElementById('p2Skill_' + ym);
+  if (!inp) return;
+  var t = (inp.value || '').trim();
+  if (!t) return;
+  _p2M(ym).skill.push({ t: t, done: false });
+  saveGoals(); renderPlan();
+}
+function p2SkillTgl(ym, i) { var s = _p2M(ym).skill[i]; if (s) { s.done = !s.done; saveGoals(); renderPlan(); } }
+function p2SkillDel(ym, i) { _p2M(ym).skill.splice(i, 1); saveGoals(); renderPlan(); }
+// ── ファネル ──
+function _p2DlrEvents() {
+  var t = evTodayYmd();
+  return (_unionRaw || []).filter(function(u) {
+    return u && u.date && u.date >= t && /DLR/i.test(u.title || '');
+  }).sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
+}
+function _p2FunnelHtml(ym) {
+  var c = _p2Coef(), m = _p2M(ym), act = _p2Act(ym);
+  var F = (m.front !== '' && m.front != null) ? +m.front : 0;
+  var bar = function(lb, need, done) {
+    var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
+    return '<div class="p2-row" style="display:block"><div style="display:flex;justify-content:space-between;font-size:12px"><span>' + lb + '</span><span class="p2-num"><b>' + done + '</b> / ' + (need || '-') + '</span></div>'
+      + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>';
+  };
+  var dlrEvs = _p2DlrEvents();
+  var h = '<div class="p2-card"><div class="p2-t">🎯 今月のファネル<span class="sp"></span>'
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">⚙ 係数（' + c.src + '）</span></div>';
+  if (!F) {
+    h += '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">今月のフロント人数を宣言すると、必要なCT・FT/マケ・DLR動員数がここに出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
+  } else {
+    h += bar('CT（会う）', F * c.ct, act.ct)
+      + bar('FT・マケ（伝える）', F * c.ft, act.ft)
+      + bar('DLR動員', F * c.dlr, act.dlr)
+      + '<div class="p2-meta" style="margin-top:6px">PGは係数外（DLRの3日前までに実施）・完了はテンプレ予定の実績から自動カウント</div>';
+  }
+  h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「DLR」を含む予定がありません') + '</div>';
+  h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
+  h += '</div>';
+  return h;
+}
+// 係数編集
+function p2CoefSheet() {
+  var c = _p2Coef(), p2 = _p2();
+  _fitSheetClose && _fitSheetClose('p2CoefOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2CoefOv'; ov.style.zIndex = '600';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2CoefOv'); };
+  var admin = (typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union);
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚙ ファネル係数（フロント1人あたり）</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">現在適用中: ' + c.src + '（個人 ＞ ユニオン ＞ 標準 8/4/2）</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2CoefOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div style="display:flex;gap:8px">'
+    + '<div style="flex:1"><div class="p2-meta">CT</div><input class="fi" id="p2cCt" type="number" value="' + c.ct + '" style="text-align:center" onfocus="edSelAll(this)"></div>'
+    + '<div style="flex:1"><div class="p2-meta">FT・マケ</div><input class="fi" id="p2cFt" type="number" value="' + c.ft + '" style="text-align:center" onfocus="edSelAll(this)"></div>'
+    + '<div style="flex:1"><div class="p2-meta">DLR動員</div><input class="fi" id="p2cDlr" type="number" value="' + c.dlr + '" style="text-align:center" onfocus="edSelAll(this)"></div>'
+    + '</div>'
+    + '<span class="p2-btn pri" onclick="p2CoefSave(false)">💾 自分の係数として保存</span>'
+    + (p2.coef ? '<span class="p2-btn" onclick="p2CoefClear()">↩ 個人設定をやめる（ユニオン/標準に戻す）</span>' : '')
+    + (admin ? '<span class="p2-btn" onclick="p2CoefSave(true)">🏛 ユニオンの既定として保存（管理者）</span>' : '')
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function _p2SheetClose(id) { var ov = document.getElementById(id); if (ov && ov.parentNode) ov.parentNode.removeChild(ov); }
+function _p2ReadCoefInputs() {
+  var g = function(id) { return Math.max(1, parseInt((document.getElementById(id) || {}).value, 10) || 0); };
+  return { ct: g('p2cCt'), ft: g('p2cFt'), dlr: g('p2cDlr') };
+}
+function p2CoefSave(toUnion) {
+  var v = _p2ReadCoefInputs();
+  if (toUnion) {
+    var un = currentUser && currentUser.union;
+    if (!un) { toast('ユニオンが未設定です'); return; }
+    fsSet('unions/' + un + '/events/plan_meta', { pm2: true, coef: v, updatedAt: new Date().toISOString() })
+      .then(function() { toast('🏛 ユニオン既定の係数を保存しました'); });
+    window._unPlanMeta = Object.assign({}, window._unPlanMeta || {}, { pm2: true, coef: v });
+  } else {
+    _p2().coef = v;
+    saveGoals();
+    toast('💾 個人の係数を保存しました');
+  }
+  _p2SheetClose('p2CoefOv'); renderPlan();
+}
+function p2CoefClear() { _p2().coef = null; saveGoals(); _p2SheetClose('p2CoefOv'); toast('係数をユニオン/標準に戻しました'); renderPlan(); }
+// 動員計画 → タスク自動生成
+function p2Mobilize() {
+  _p2SheetClose('p2MobOv');
+  var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
+    .sort(function(a, b) { return ((a.lastName || '') + (a.firstName || '')).localeCompare((b.lastName || '') + (b.firstName || '')); });
+  var opts = ms.map(function(m) { return '<option value="' + m.id + '">' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)') + (m.title ? '（' + evEsc(m.title) + '）' : '') + '</option>'; }).join('');
+  var dlrs = _p2DlrEvents();
+  var dOpts = dlrs.map(function(u) { return '<option value="' + u.date + '">' + parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10) + ' ' + evEsc(u.title || 'DLR') + '</option>'; }).join('')
+    + '<option value="__manual__">📅 日付を直接入力…</option>';
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2MobOv'; ov.style.zIndex = '600';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2MobOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:84vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🎪 動員を計画</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">DLR日から逆算して PG（3日前）・FT/CT（1週間前）・CT取り のタスクを自動作成</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2MobOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div class="p2-meta">誰を動員する？</div>'
+    + '<select class="fi" id="p2MobMem" style="margin-bottom:10px">' + opts + '</select>'
+    + '<div class="p2-meta">どのDLRに？（既定＝自ユニオンの直近DLR）</div>'
+    + '<select class="fi" id="p2MobDlr" onchange="document.getElementById(\'p2MobDate\').style.display=(this.value===\'__manual__\')?\'\':\'none\'" style="margin-bottom:8px">' + dOpts + '</select>'
+    + '<input class="fi" id="p2MobDate" type="date" style="display:' + (dlrs.length ? 'none' : '') + ';margin-bottom:8px">'
+    + '<span class="p2-btn pri" style="display:block;text-align:center" onclick="p2MobilizeGo()">✅ タスクを作成</span>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  if (!dlrs.length) { var s = document.getElementById('p2MobDlr'); if (s) s.value = '__manual__'; }
+}
+function _p2AddDaysYmd(ymd, n) {
+  var p = ymd.split('-');
+  var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10) + n);
+  return evYmd(d);
+}
+function p2MobilizeGo() {
+  var mid = (document.getElementById('p2MobMem') || {}).value;
+  var sel = (document.getElementById('p2MobDlr') || {}).value;
+  var D = (sel === '__manual__') ? (document.getElementById('p2MobDate') || {}).value : sel;
+  if (!mid || !D) { toast('メンバーとDLR日を選んでください'); return; }
+  var t = evTodayYmd();
+  var mm = _findMember(mid);
+  var nm = mm ? (((mm.lastName || '') + (mm.firstName || '')).trim()) : '';
+  var clamp = function(d) { return d < t ? t : d; };
+  var mk = function(title, date, stage, type) {
+    var e = _tdMakeTask(title, date, '');
+    e.type = type || 'task';
+    e.templateStage = stage;
+    e.memberId = mid; e.memberIds = [mid];
+    e.selfShow = true;
+    return e;
+  };
+  var items = [
+    mk('🎪 ' + nm + ' DLR動員', D, 'dlr', 'event'),
+    mk('🎓 ' + nm + ' PG（DLR3日前まで）', clamp(_p2AddDaysYmd(D, -3)), 'pg', 'task'),
+    mk('🎤 ' + nm + ' FT', clamp(_p2AddDaysYmd(D, -10)), 'ft', 'task'),
+    mk('☕ ' + nm + ' CT', clamp(_p2AddDaysYmd(D, -10)), 'ct', 'task'),
+    mk('📲 ' + nm + ' CT取り（連絡）', clamp(_p2AddDaysYmd(D, -14)), 'ctget', 'task')
+  ];
+  items.forEach(function(e) { state.events.push(e); saveEventDoc(e); });
+  try { updateEventsBadge(); } catch(e1) {}
+  try { if (currentView === 'events') renderEvents(); } catch(e2) {}
+  _p2SheetClose('p2MobOv');
+  toast('🎪 ' + nm + ' さんの動員タスクを5件作成しました（予定・ToDoに入っています）');
+  renderPlan();
+}
+// ── ユニオンマイルストーン ──
+function _p2UnionHtml() {
+  var un = currentUser && currentUser.union;
+  if (!un) return '';
+  var meta = window._unPlanMeta || null;
+  var mi = meta && meta.milestone;
+  var admin = (typeof isCurrentAdmin === 'function' && isCurrentAdmin());
+  if (!mi && !admin) return '';
+  var h = '<div class="p2-card"><div class="p2-t">🏛 ' + evEsc(un) + ' マイルストーン<span class="sp"></span>'
+    + (admin ? '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2MilestoneSheet()">✎</span>' : '') + '</div>';
+  if (mi) {
+    var ym = _p2Ym(0), act = _p2Act(ym);
+    h += '<div style="font-size:14px;font-weight:800">' + evEsc(mi.t || '') + (mi.due ? '<span style="font-size:11px;color:var(--text-dim);font-weight:600">　' + evEsc(String(mi.due).replace('-', '年')) + '月まで</span>' : '') + '</div>';
+    if (mi.b1) h += '<div class="p2-row"><span class="p2-lb">B1目標</span><span class="p2-num"><b>' + act.teamB1 + '</b> / ' + mi.b1 + '<span class="p2-meta">（自分のMAP集計・今月分）</span></span></div>';
+    if (mi.pt) h += '<div class="p2-row"><span class="p2-lb">PT目標</span><span class="p2-num"><b>' + (act.teamPt || 0).toLocaleString() + '</b> / ' + (+mi.pt).toLocaleString() + '</span></div>';
+  } else {
+    h += '<div class="p2-meta">マイルストーン未設定（管理者が✎から設定できます）</div>';
+  }
+  h += '</div>';
+  return h;
+}
+function p2MilestoneSheet() {
+  var mi = (window._unPlanMeta && window._unPlanMeta.milestone) || {};
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2MsOv'; ov.style.zIndex = '600';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2MsOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🏛 ユニオンマイルストーン</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2MsOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div class="p2-meta">タイトル（例：年内にユニオンB1 30人）</div><input class="fi" id="p2msT" value="' + evEsc(mi.t || '') + '" style="margin-bottom:8px">'
+    + '<div class="p2-meta">期日（YYYY-MM）</div><input class="fi" id="p2msDue" placeholder="2026-12" value="' + evEsc(mi.due || '') + '" style="margin-bottom:8px">'
+    + '<div style="display:flex;gap:8px">'
+    + '<div style="flex:1"><div class="p2-meta">B1目標（人）</div><input class="fi" id="p2msB1" type="number" value="' + (mi.b1 || '') + '" style="text-align:center"></div>'
+    + '<div style="flex:1"><div class="p2-meta">PT目標</div><input class="fi" id="p2msPt" type="number" value="' + (mi.pt || '') + '" style="text-align:center"></div>'
+    + '</div>'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:12px" onclick="p2MilestoneSave()">保存（メンバー全員に表示されます）</span>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2MilestoneSave() {
+  var un = currentUser && currentUser.union;
+  if (!un) { toast('ユニオンが未設定です'); return; }
+  var g = function(id) { return (document.getElementById(id) || {}).value || ''; };
+  var mi = { t: g('p2msT').trim(), due: (typeof _normYm === 'function' ? (_normYm(g('p2msDue')) || '') : g('p2msDue')), b1: parseInt(g('p2msB1'), 10) || 0, pt: parseInt(g('p2msPt'), 10) || 0 };
+  fsSet('unions/' + un + '/events/plan_meta', { pm2: true, milestone: mi, updatedAt: new Date().toISOString() })
+    .then(function() { toast('🏛 マイルストーンを保存しました'); });
+  window._unPlanMeta = Object.assign({}, window._unPlanMeta || {}, { pm2: true, milestone: mi });
+  _p2SheetClose('p2MsOv');
+  renderPlan();
+}
+// ── 検証（予測→実践→検証） ──
+function _p2ReviewHtml() {
+  var prev = _p2Ym(-1);
+  var p2 = _p2();
+  var m = p2.months[prev];
+  if (!m || !m.declared || m.review) return '';
+  var act = _p2Act(prev);
+  var line = function(lb, dec, a) { return (dec === '' || dec == null) ? '' : '<span class="p2-chip">' + lb + ' 宣言' + dec + ' → 実績' + a + '</span>'; };
+  return '<div class="p2-card" style="border-color:rgba(139,124,255,.5)"><div class="p2-t">🔁 ' + _p2YmLabel(prev) + 'の検証（1分でOK）</div>'
+    + '<div style="margin-bottom:6px">' + line('フロント', m.front, act.front) + line('ユーザーPT', m.upt, act.upt) + line('B1', m.teamB1, act.teamB1) + line('チームPT', m.teamPt, act.teamPt) + '</div>'
+    + '<input class="fi" id="p2rvG" placeholder="👍 できた理由" style="margin-bottom:6px">'
+    + '<input class="fi" id="p2rvB" placeholder="🤔 できなかった理由" style="margin-bottom:6px">'
+    + '<input class="fi" id="p2rvC" placeholder="🔧 来月変えること" style="margin-bottom:8px">'
+    + '<span class="p2-btn pri" onclick="p2ReviewSave(\'' + prev + '\')">保存して今月の宣言へ</span>'
+    + '<span class="p2-btn" onclick="p2ReviewSave(\'' + prev + '\', true)">スキップ</span>'
+    + '</div>';
+}
+function p2ReviewSave(ym, skip) {
+  var g = function(id) { return ((document.getElementById(id) || {}).value || '').trim(); };
+  _p2M(ym).review = skip ? { skipped: 1, at: evTodayYmd() } : { g: g('p2rvG'), b: g('p2rvB'), c: g('p2rvC'), at: evTodayYmd() };
+  saveGoals();
+  if (!skip) toast('🔁 検証を記録しました');
+  renderPlan();
+}
+// ── ✍️ 書き出しインボックス ──
+function _p2InboxHtml() {
+  var p2 = _p2();
+  var items = (p2.inbox || []).filter(function(x) { return x && x.st !== 'done'; });
+  var h = '<div class="p2-card"><div class="p2-t">✍️ 書き出し（未整理 ' + items.length + '）<span class="sp"></span>'
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2InkOpen()">✍️ 書く</span></div>';
+  if (!items.length) {
+    h += '<div class="p2-meta" style="line-height:1.8">思いついたことを右下の✍️（またはここ）から殴り書き。<br>あとで「タスク化・目標化・メンバーメモ化」に振り分けられます</div>';
+  } else {
+    h += items.slice(0, 30).map(function(x) {
+      return '<div class="p2-inbrow"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">' + evEsc(x.t) + '</span>'
+        + '<span class="p2-ib" onclick="p2InbTask(\'' + x.id + '\')" title="今日のタスクにする">✅</span>'
+        + '<span class="p2-ib" onclick="p2InbSkill(\'' + x.id + '\')" title="今月の自分磨きにする">📚</span>'
+        + '<span class="p2-ib" onclick="p2InbMemo(\'' + x.id + '\')" title="メンバーのメモにする">👤</span>'
+        + '<span class="p2-ib" onclick="p2InbDel(\'' + x.id + '\')" title="削除">🗑</span></div>';
+    }).join('');
+  }
+  h += '</div>';
+  return h;
+}
+function _p2InbFind(id) { var a = _p2().inbox; for (var i = 0; i < a.length; i++) { if (a[i].id === id) return a[i]; } return null; }
+function p2InbTask(id) {
+  var x = _p2InbFind(id); if (!x) return;
+  var e = _tdMakeTask(x.t, evTodayYmd(), '');
+  state.events.push(e); saveEventDoc(e);
+  x.st = 'done'; saveGoals();
+  try { updateEventsBadge(); } catch(e1) {}
+  toast('✅ タスクにしました（期限：今日）');
+  renderPlan();
+}
+function p2InbSkill(id) {
+  var x = _p2InbFind(id); if (!x) return;
+  _p2M(_p2Ym(0)).skill.push({ t: x.t, done: false });
+  x.st = 'done'; saveGoals();
+  toast('📚 今月の自分磨きに入れました');
+  renderPlan();
+}
+function p2InbMemo(id) {
+  var x = _p2InbFind(id); if (!x) return;
+  var ms = (state.members || []).filter(function(m) { return !m.deleted; });
+  var opts = ms.map(function(m) { return '<option value="' + m.id + '">' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)') + '</option>'; }).join('');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2MemoOv'; ov.style.zIndex = '650';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2MemoOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">👤 誰のメモにする？</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">「' + evEsc(String(x.t).slice(0, 30)) + '」</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2MemoOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px"><select class="fi" id="p2MemoMem">' + opts + '</select>'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:10px" onclick="p2InbMemoGo(\'' + id + '\')">メモに追記</span></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2InbMemoGo(id) {
+  var x = _p2InbFind(id); if (!x) return;
+  var mid = (document.getElementById('p2MemoMem') || {}).value;
+  var m = _findMember(mid);
+  if (!m) return;
+  m.memo = (m.memo ? m.memo + '\n' : '') + '・' + x.t;
+  x.st = 'done';
+  autoSave(); saveGoals();
+  _p2SheetClose('p2MemoOv');
+  toast('👤 ' + ((m.lastName || '') + (m.firstName || '')) + ' さんのメモに追記しました');
+  renderPlan();
+}
+function p2InbDel(id) { var x = _p2InbFind(id); if (x) { x.st = 'done'; saveGoals(); renderPlan(); } }
+function p2InkOpen() {
+  var el = document.getElementById('p2Ink');
+  if (!el) return;
+  el.classList.add('show');
+  var ta = document.getElementById('p2InkTa');
+  if (ta) { ta.value = ''; setTimeout(function() { try { ta.focus(); } catch(e) {} }, 60); }
+}
+function p2InkClose() {
+  var el = document.getElementById('p2Ink');
+  var ta = document.getElementById('p2InkTa');
+  if (ta) {
+    var lines = (ta.value || '').split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+    if (lines.length) {
+      var p2 = _p2();
+      lines.forEach(function(t) { p2.inbox.unshift({ id: 'ib_' + Date.now() + '_' + Math.floor(Math.random() * 100000), t: t, at: evTodayYmd() }); });
+      saveGoals();
+      toast('✍️ ' + lines.length + '行を書き出しに入れました');
+    }
+    ta.value = '';
+  }
+  if (el) el.classList.remove('show');
+  if (currentView === 'plan') renderPlan();
+}
+// ── 未宣言アラート（バナー・ナビ赤点） ──
+function _p2BannerSync() {
+  try {
+    var b = document.getElementById('p2Banner');
+    var dot = document.getElementById('p2NavDot');
+    var need = currentUser && state && state.isEditor && !viewingOwnerUid && !_p2Declared(_p2Ym(0));
+    if (dot) dot.style.display = need ? '' : 'none';
+    if (b) b.style.display = (need && currentView !== 'plan') ? 'block' : 'none';
+  } catch(e) {}
+}
+// 起動時: バナーとFAB・インク画面を用意
+function _p2Boot() {
+  if (document.getElementById('p2Banner')) return;
+  var b = document.createElement('div');
+  b.id = 'p2Banner'; b.className = 'p2-banner';
+  b.textContent = '⚠️ 今月の目標が未宣言です — タップして設定';
+  b.onclick = function() { switchView('plan'); };
+  document.body.appendChild(b);
+  var f = document.createElement('div');
+  f.id = 'p2Fab'; f.className = 'p2-fab'; f.title = '書き出し（思いつきメモ）';
+  f.textContent = '✍️';
+  f.onclick = p2InkOpen;
+  document.body.appendChild(f);
+  var ink = document.createElement('div');
+  ink.id = 'p2Ink'; ink.className = 'p2-ink';
+  ink.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><div style="font-size:14px;font-weight:800">✍️ 書き出し</div>'
+    + '<div style="flex:1;font-size:10.5px;color:var(--text-dim)">改行で1件ずつ。閉じると自動で「未整理」に入ります</div>'
+    + '<span class="p2-btn pri" style="margin:0" onclick="p2InkClose()">閉じて保存</span></div>'
+    + '<textarea id="p2InkTa" placeholder="思いついたことをそのまま…"></textarea>';
+  document.body.appendChild(ink);
+  _p2BannerSync();
+}
+try { setTimeout(function() { try { _p2Boot(); } catch(e) {} }, 1500); } catch(e) {}
+// ── 🧭 北極星ウィザード（1問1答風・全部スキップ可） ──
+function p2Wiz() {
+  var p = state.goals.plan, n = _p2().north;
+  var ta = function(id, ph, arr) { return '<textarea class="fta" id="' + id + '" placeholder="' + ph + '" style="min-height:64px">' + evEsc((arr || []).join('\n')) + '</textarea>'; };
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2WizOv'; ov.style.zIndex = '600';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2WizOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🧭 北極星をつくる</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">全部書かなくてOK。「月収と期日」だけでも逆算が動きます</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2WizOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div class="p2-meta">① やりたいこと（1行に1つ）</div>' + ta('p2wW', '例：家族と月1回旅行', n.wants)
+    + '<div class="p2-meta" style="margin-top:8px">② やりたくないこと</div>' + ta('p2wNW', '例：満員電車', n.notWants)
+    + '<div class="p2-meta" style="margin-top:8px">③ なりたい自分</div>' + ta('p2wB', '例：与える側の人間', n.be)
+    + '<div class="p2-meta" style="margin-top:8px">④ なりたくない自分</div>' + ta('p2wNB', '例：言い訳する自分', n.notBe)
+    + '<div class="p2-meta" style="margin-top:8px">⑤ 理想の生活（衣食住・趣味を自由に）</div>'
+    + '<textarea class="fta" id="p2wLife" placeholder="例：海の見える家・週3ジム・年2回海外" style="min-height:52px">' + evEsc(n.life || '') + '</textarea>'
+    + '<div class="p2-meta" style="margin-top:8px">⑥ その生活に必要な月収（円）</div>'
+    + '<input class="fi" id="p2wInc" type="number" inputmode="numeric" value="' + (p.income || '') + '" placeholder="例 300000" oninput="p2WizInc(this.value)" onfocus="edSelAll(this)">'
+    + '<div class="p2-meta" style="margin:4px 0 8px">→ 必要タイトル：<b id="p2wTitle" style="color:var(--accent)">' + evEsc(p.title || '—') + '</b></div>'
+    + '<div class="p2-meta">⑦ いつまでに？（期日）</div>'
+    + '<input class="fi" id="p2wDl" placeholder="2027-12" value="' + evEsc(p.deadline || '') + '">'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:14px" onclick="p2WizSave()">🌟 保存する</span>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2WizInc(v) {
+  var t = document.getElementById('p2wTitle');
+  var inc = parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0;
+  if (t) t.textContent = inc ? glTitleFromIncome(inc) : '—';
+}
+function p2WizSave() {
+  var g = function(id) { return ((document.getElementById(id) || {}).value || ''); };
+  var lines = function(id) { return g(id).split('\n').map(function(s) { return s.trim(); }).filter(Boolean); };
+  var p = state.goals.plan, n = _p2().north;
+  n.wants = lines('p2wW'); n.notWants = lines('p2wNW'); n.be = lines('p2wB'); n.notBe = lines('p2wNB');
+  n.life = g('p2wLife').trim();
+  var inc = parseInt(g('p2wInc').replace(/[^0-9]/g, ''), 10) || 0;
+  if (inc) { p.income = inc; p.title = glTitleFromIncome(inc); }
+  var dl = (typeof _normYm === 'function') ? _normYm(g('p2wDl')) : g('p2wDl');
+  if (dl) p.deadline = dl;
+  _p2().wiz = true;
+  saveGoals();
+  _p2SheetClose('p2WizOv');
+  toast('🌟 北極星を保存しました');
+  renderPlan();
+}
+
 function renderMonth(){
   var el=document.getElementById('view-month'); if(!el) return;
   if(!state.goals) state.goals=_glDefault();
@@ -15713,7 +16293,13 @@ function loadUnionEvents() {
     fsGet('maps/' + currentUser.uid + '/meta/unionPrefs')
   ]).then(function(rs) {
     _unionRaw = rs[0] || [];
+    // v469: PLAN用メタ（ユニオン係数・マイルストーン）はカレンダー合成から分離
+    try {
+      window._unPlanMeta = null;
+      _unionRaw = _unionRaw.filter(function(d){ if (d && d.pm2) { window._unPlanMeta = d; return false; } return true; });
+    } catch(ePm) {}
     _unionPrefs = rs[1] ? { off: !!rs[1].off, hidden: rs[1].hidden || [] } : { off: false, hidden: [] };
+    if (typeof _p2BannerSync === 'function') setTimeout(_p2BannerSync, 100);
     _unionApplyToState();
   }).catch(function(e) { console.log('union load:', e && e.message); });
 }
