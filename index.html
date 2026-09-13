@@ -2320,7 +2320,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v471</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v472</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4318,9 +4318,19 @@ function renderPCMap(mapType) {
     tb9.setAttribute('pointer-events', 'none');
     g.appendChild(tb9);
     g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 56, _tAb9, isLightTheme ? '#ffffff' : '#0a1017', 12.5, '800', 'Inter,Noto Sans JP,sans-serif', 'middle'));
-    if (_sfx9) g.appendChild(txt(_pcTx + _pw9 + 6, ry2 + 56, _sfx9, gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
+    if (_sfx9) {
+      // v472: 右端のGSV表示に重なる場合は短縮（ヶ月目→ヶ月）、それでも入らなければ非表示（ホバーの詳細で確認可）
+      var _est9 = function(str){ var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) { w9 += str.charCodeAt(q9) > 255 ? 11 : 6.5; } return w9; };
+      var _gsvW9 = (gsvStr + (fixStr ? ' ' + fixStr : '')).length * 9 + 12;
+      var _sfxX9 = _pcTx + _pw9 + 6;
+      var _avail9 = (rx + NODE_W - 16) - _gsvW9 - _sfxX9;
+      var _s9 = _sfx9;
+      if (_est9(_s9) > _avail9) _s9 = _s9.replace(/ヶ月目/g, 'ヶ月');
+      if (_est9(_s9) > _avail9) _s9 = '';
+      if (_s9) g.appendChild(txt(_sfxX9, ry2 + 56, _s9, gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif'));
+    }
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
     // 地域（カードの外・右上に小さく）
     if(m.region){ g.appendChild(txt(rx+NODE_W-2, ry2-4, '📍'+m.region.substring(0,6), gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif', 'end')); }
@@ -5296,7 +5306,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v471';
+  var DATA_VERSION = 'v472';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6255,6 +6265,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v472', d:'2026-09-13', items:['🐛 PC版ツリーカードで「◯ヶ月目」とポイント表示が重なる問題を修正（入り切らない場合は自動で短縮・非表示。マウスオーバーで全文確認できます）','🐛 モバイル版・理想MAPでメンバーをタップしても選択表示にならない／▶で段の展開ができないバグを修正（現状MAPと同じIDのカードが裏に存在し、そちらに反応していました）','🎓 研修履歴で「✗ 流れた（離脱）」を選ぶと、研修結果が自動で「流れた」・カテゴリが自動で「OUT」になります（再アプローチリストにも自動登録）','📝 言葉の統一：研修履歴の「離脱」表記を研修結果と同じ「流れた」に統一しました'] },
   { v:'v471', d:'2026-09-13', items:['🔎 MAPのカテゴリ絞り込み（すべて/研修生/フレッシュ/BR/金の船）をPC版でも表示（ツリー上部のバー）','💎 絞り込みに「QBR」を追加：ドロップダウンでLOI〜Q4のタイトルを選んで絞り込めます（モバイル・PC共通）'] },
   { v:'v470', d:'2026-09-13', items:['✍️ 書き出しボタン（右下の✍️）はPLANタブを開いている間だけ表示するようにしました（他の画面で邪魔にならないように）'] },
   { v:'v469', d:'2026-09-13', items:['🧭 新タブ「PLAN」誕生：GOALタブと今月タブを統合し、目標設定〜月次計画〜日々の実行〜振り返りを1画面に刷新しました','✍️ 書き出しインボックス：右下の✍️ボタンでいつでも白紙に殴り書き→あとから「タスク化・今月の目標化・メンバーメモ化」に振り分けられます（紙の代わり）','🌟 北極星ウィザード：やりたいこと/なりたい自分→理想の生活→必要月収→目標タイトル→期日を1問1答で設定（全部スキップ可・最低限は月収と期日だけでOK）','📅 月次の宣言：今月・来月のフロント/ユーザーPT/チームB1/チームPTを宣言すると、実績（MAP・テンプレ完了・受付連携から自動集計）と着地予測を常時表示','🎯 ファネル逆算：宣言フロント数×係数（標準 CT8・FT/マケ4・DLR2。個人／ユニオンで変更可）から必要行動数を自動表示。「動員を計画」でDLR日を選ぶとPG（3日前）・FT/CT（1週間前）・CT取りのタスクを期限付きで自動生成','🏛 ユニオンマイルストーン：ユニオン管理者が目標を設定でき、メンバー全員のPLANに表示されます','🔁 月替わりの検証：前月の宣言vs実績を見て「できた理由・できなかった理由・来月変えること」を記録→そのまま来月の宣言へ','⚠️ 今月の宣言が無い間はPLANタブと画面上部にアラートを出し続けます','🖥 PC版は3カラムの全画面レイアウト（左=北極星・ユニオン／中央=宣言・ファネル／右=インボックス）'] },
@@ -9028,10 +9039,17 @@ function _lazyBuildChildren(ch, pid) {
   if (typeof regionFilter !== 'undefined' && regionFilter && typeof applyRegionDim === 'function') applyRegionDim(); // v361: 再描画（結合更新・写真読込等）で地域の薄表示が解除されるバグ修正
   if (typeof regionFilter !== 'undefined' && regionFilter && typeof applyRegionDim === 'function') applyRegionDim();
 }
+// v472: 現状/理想ツリーは同じDOM id（nc-/nw-/ch-/mem-）を持つため、表示中のツリー内を優先して探す。
+// getElementByIdは常に先勝ち（＝現状ツリー側）を返すので、理想MAPでタップが裏の現状カードに効いていた
+function _treeScopedEl(prefix, id) {
+  var root = document.getElementById(currentView === 'ideal' ? 'treeIdeal' : 'treeCurrent');
+  var el = root ? root.querySelector('[id="' + prefix + id + '"]') : null;
+  return el || document.getElementById(prefix + id);
+}
 function toggleExpand(id) {
   if (!window._treeOpen) window._treeOpen = {};
-  var nw = document.getElementById('nw-'+id);
-  var ch = document.getElementById('ch-'+id);
+  var nw = _treeScopedEl('nw-', id);
+  var ch = _treeScopedEl('ch-', id);
   if (!ch) return;
   var willOpen = ch.classList.contains('closed');
   if (willOpen) _lazyBuildChildren(ch, id);
@@ -9047,13 +9065,14 @@ function cardSingleTap(id, e) {
   // カード選択（右下＋ボタンでこの下に追加できるように）
   window._selectedCardId = id;
   Array.prototype.slice.call(document.querySelectorAll('.nc.card-selected')).forEach(function(c){ c.classList.remove('card-selected'); });
-  var nc = document.getElementById('nc-'+id); if (nc) nc.classList.add('card-selected');
+  var nc = _treeScopedEl('nc-', id); if (nc) nc.classList.add('card-selected');
   updateFabVisibility();
-  var box = document.getElementById('mem-'+id);
+  var box = _treeScopedEl('mem-', id);
   if (!box) return;
   if (box.classList.contains('show')) { box.classList.remove('show'); return; }
-  // 結合(MG_)メンバーはstate.membersに居ないため、合成後リストから探す
-  var pool = /^MG_/.test(id) ? membersForMap('current') : state.members;
+  // 結合(MG_)メンバーはstate.membersに居ないため、合成後リストから探す（v472: 理想MAPは理想の名簿から）
+  var mt9 = (currentView === 'ideal') ? 'ideal' : 'current';
+  var pool = /^MG_/.test(id) ? membersForMap(mt9) : (mt9 === 'ideal' ? membersForMap('ideal') : state.members);
   var m = null; for (var i=0;i<pool.length;i++){ if (pool[i].id===id){ m=pool[i]; break; } }
   box.innerHTML = m ? memberInfoHtml(m) : '';
   box.classList.add('show');
@@ -9649,7 +9668,7 @@ function renderTraineeHistory(m) {
     if (h.rs) { var rsB = document.createElement('span'); rsB.textContent = '🔄リスケ' + h.rs + '回'; rsB.style.color = h.rs >= 3 ? 'var(--red)' : 'var(--text-dim)'; meta.appendChild(rsB); }
     if (h.aSan) { var as2 = document.createElement('span'); as2.textContent = 'A: ' + h.aSan; meta.appendChild(as2); }
     var rs = document.createElement('span');
-    rs.textContent = h.result === 'left' ? '✗ 離脱' : (h.result === 'planned' ? (h.tbd ? '📅 調整中' : '📅 予定') : (h.ir ? '✓ 実施' : '✓ 進んだ'));
+    rs.textContent = h.result === 'left' ? '✗ 流れた' : (h.result === 'planned' ? (h.tbd ? '📅 調整中' : '📅 予定') : (h.ir ? '✓ 実施' : '✓ 進んだ'));
     rs.style.color = h.result === 'left' ? 'var(--red)' : (h.result === 'planned' ? '#FFB454' : 'var(--accent)');
     meta.appendChild(rs);
     entry.appendChild(meta);
@@ -9660,7 +9679,7 @@ function renderTraineeHistory(m) {
       (function(idx){
         var bN = document.createElement('button'); bN.className = 'th-act-btn go'; bN.textContent = '✓ 進んだ';
         bN.onclick = function(){ setStepResult(idx, 'next'); };
-        var bL = document.createElement('button'); bL.className = 'th-act-btn left'; bL.textContent = '✗ 離脱';
+        var bL = document.createElement('button'); bL.className = 'th-act-btn left'; bL.textContent = '✗ 流れた';
         bL.onclick = function(){ setStepResult(idx, 'left'); };
         var bR = document.createElement('button'); bR.className = 'th-act-btn'; bR.textContent = h.tbd ? '📅 日付を入れる' : '📅 リスケ'; // v413
         bR.onclick = function(){ stepReschedule(idx); };
@@ -9744,7 +9763,21 @@ function stepReschedDo(idx, tbd) {
   toast(tbd ? '🔄 日程調整中にしました（決まったら「📅 日付を入れる」から）'
             : (wasTbd ? '📅 ' + nd + ' に日程が決まりました' : '🔄 ' + nd + ' にリスケしました'));
 }
-// 予定ステップの結果を後から確定（進んだ/離脱）
+// v472: 研修の離脱（流れた）確定 → 研修結果「流れた」・カテゴリOUTに自動同期（研修生カテゴリの人のみ）
+function _traineeDropOut(m) {
+  try {
+    var t9 = (m.title || '').trim();
+    if (t9 && t9 !== 'OUT' && detectCategory(t9) !== '研修生' && !m.trainee) return; // LOI以降は自動変更しない
+    m.traineeResult = '流れた';
+    m.trainee = false;
+    m.title = 'OUT';
+    if (typeof selTraineeResultChip === 'function') selTraineeResultChip('流れた');
+    if (typeof selCategory === 'function') selCategory('OUT'); // 編集モーダルの表示も同期
+    try { _reapproachAdd(m); } catch(eR9) {}
+    setTimeout(function(){ toast('✗ 流れた：研修結果を「流れた」・カテゴリを「OUT」にしました（再アプローチリストに登録）'); }, 700);
+  } catch(e) {}
+}
+// 予定ステップの結果を後から確定（進んだ/流れた）
 function setStepResult(idx, result) {
   var m = getTraineeMember();
   if (!m || !m.traineeHistory || !m.traineeHistory[idx]) return;
@@ -9758,11 +9791,13 @@ function setStepResult(idx, result) {
   }
   m.traineeStatus = getLatestStatus(m);
   syncTraineeTitle(m); // 予定→進んだ確定時もタイトルへ反映
+  if (result === 'left') _traineeDropOut(m); // v472: 流れた→研修結果・カテゴリを自動同期
   autoSave();
   renderTraineeHistory(null);
   if (typeof getGame === 'function') getGame().stepUpdatedDate = gameToday();
   if (typeof gameCheck === 'function') gameCheck();
-  toast(result === 'left' ? '離脱に確定しました' : '進んだに確定しました 🎉');
+  toast(result === 'left' ? '流れたに確定しました' : '進んだに確定しました 🎉');
+  if (result === 'left') { try { renderCurrentView(); } catch(e9) {} }
 }
 function updateStepFlow(hist) {
   var reached = {};
@@ -9831,7 +9866,7 @@ function selectStep(step) {
     + '<div style="display:flex;gap:6px">'
     + '<div class="result-chip sel-plan" id="sdPlan" onclick="selDetailResult(\'planned\')" style="flex:1;justify-content:center">📅 予定</div>'
     + '<div class="result-chip" id="sdNext" onclick="selDetailResult(\'next\')" style="flex:1;justify-content:center">✓ 進んだ</div>'
-    + '<div class="result-chip" id="sdLeft" onclick="selDetailResult(\'left\')" style="flex:1;justify-content:center">✗ 離脱</div>'
+    + '<div class="result-chip" id="sdLeft" onclick="selDetailResult(\'left\')" style="flex:1;justify-content:center">✗ 流れた</div>'
     + '</div></div>'
     + '<button class="btn-p" style="width:100%;padding:10px;font-size:14px" onclick="confirmAddHistory()">追加する</button>'
     + '</div>';
@@ -9891,6 +9926,7 @@ function confirmAddHistory() {
   if (res === 'planned') { m.nextDate = date; if (aSan) m.aSan = aSan; }
   m.traineeStatus = getLatestStatus(m);
   syncTraineeTitle(m); // タイトル欄への二度目の入力を不要に
+  if (res === 'left') _traineeDropOut(m); // v472: 流れた→研修結果・カテゴリを自動同期
   autoSave();
   renderTraineeHistory(null);
   toast(addedStep + (res === 'planned' ? ' の予定を追加しました' : ' を追加しました'));
