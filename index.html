@@ -208,6 +208,9 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 /* テーブルフィルター */
 .pc-filter-bar{display:none}
 @media(min-width:768px){.pc-filter-bar.show{display:block;position:sticky;top:46px;z-index:19;background:var(--bg);border-bottom:1px solid var(--border)}}
+/* v471: PC版のカテゴリ絞り込みバー（ツリー表示時のみ） */
+.pc-cat-bar{display:none}
+@media(min-width:768px){.pc-cat-bar.show{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--bg)}}
 .tbl-filter-bar{display:flex;gap:6px;padding:8px 14px;flex-wrap:wrap;align-items:center}
 .tbl-filter-chip{padding:3px 10px;border-radius:12px;font-size:11px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace;transition:all .15s}
 .tbl-filter-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
@@ -2317,7 +2320,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v470</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v471</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2427,6 +2430,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
     </div>
     <div class="sec-label mobile-tree">組織ツリー</div>
+    <div class="pc-cat-bar" id="pcMapCatChips"></div>
     <div class="pc-filter-bar" id="pcFilterCurrent"></div>
     <div class="pc-map-wrap" id="pcMapCurrent"></div>
     <div class="pc-table-wrap" id="pcTableCurrent"></div>
@@ -4801,7 +4805,8 @@ function _findMemberComposed(mid){
 }
 function buildMapCatChips(members) {
   var wrap = document.getElementById('mapCatChips');
-  if (!wrap) return;
+  var pcWrap = document.getElementById('pcMapCatChips'); // v471: PC版にも同じ絞り込みバー
+  if (!wrap && !pcWrap) return;
   var own = (members || []).filter(function(m){ return !m.deleted; });
   var cAll = own.length, cTr = 0, cFr = 0, cBr = 0, cGo = 0;
   own.forEach(function(m){
@@ -4811,10 +4816,29 @@ function buildMapCatChips(members) {
     if (m.goldShip) cGo++;
   });
   var defs = [['','すべて',cAll,'#2CE5B8'],['trainee','研修生',cTr,'#FFB454'],['fresh','フレッシュ',cFr,'#4ADE80'],['br','BR',cBr,'#5AD7FF'],['gold','金の船',cGo,'#8B7CFF']];
-  wrap.innerHTML = defs.map(function(d){
+  var html = defs.map(function(d){
     var active = (mapCatFilter === d[0]);
     return '<span class="mc-chip" onclick="setMapCatFilter(\'' + d[0] + '\')" style="border-color:' + (active?d[3]:'var(--border)') + ';background:' + (active?d[3]:'transparent') + ';color:' + (active?'#000':'var(--text-dim)') + '">' + d[1] + ' ' + d[2] + '</span>';
   }).join('');
+  // v471: QBR（LOI〜Q4）はドロップダウンで選択して絞り込み
+  var QBR_TITLES = ['LOI','Q2','Q3','Q4'];
+  var qbrActive = (mapCatFilter || '').indexOf('qbr:') === 0;
+  var qbrSel = qbrActive ? mapCatFilter.slice(4) : '';
+  var qbrCol = '#F6C744';
+  html += '<select class="mc-chip" onchange="setMapCatFilter(this.value)" title="QBR（LOI〜Q4のタイトルで絞り込み）"'
+    + ' style="-webkit-appearance:none;appearance:none;outline:none;border-color:' + (qbrActive?qbrCol:'var(--border)') + ';background:' + (qbrActive?qbrCol:'transparent') + ';color:' + (qbrActive?'#000':'var(--text-dim)') + '">'
+    + '<option value="">' + (qbrActive ? 'QBR解除' : 'QBR ▾') + '</option>'
+    + QBR_TITLES.map(function(t){
+        var n = 0;
+        own.forEach(function(m){ if ((m.title||'').trim() === t) n++; });
+        return '<option value="qbr:' + t + '"' + (qbrSel === t ? ' selected' : '') + '>' + t + ' ' + n + '</option>';
+      }).join('')
+    + '</select>';
+  if (wrap) wrap.innerHTML = html;
+  if (pcWrap) {
+    pcWrap.innerHTML = html;
+    pcWrap.classList.toggle('show', (typeof _pcView === 'undefined') || _pcView === 'tree');
+  }
 }
 function setMapCatFilter(f) { mapCatFilter = f; renderCurrentView(); setTimeout(applyMapCatDim, 180); }
 function applyMapCatDim() { _applyMapDims(); } // v450: 地域と統合（_applyMapDims）
@@ -5272,7 +5296,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v470';
+  var DATA_VERSION = 'v471';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6231,6 +6255,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v471', d:'2026-09-13', items:['🔎 MAPのカテゴリ絞り込み（すべて/研修生/フレッシュ/BR/金の船）をPC版でも表示（ツリー上部のバー）','💎 絞り込みに「QBR」を追加：ドロップダウンでLOI〜Q4のタイトルを選んで絞り込めます（モバイル・PC共通）'] },
   { v:'v470', d:'2026-09-13', items:['✍️ 書き出しボタン（右下の✍️）はPLANタブを開いている間だけ表示するようにしました（他の画面で邪魔にならないように）'] },
   { v:'v469', d:'2026-09-13', items:['🧭 新タブ「PLAN」誕生：GOALタブと今月タブを統合し、目標設定〜月次計画〜日々の実行〜振り返りを1画面に刷新しました','✍️ 書き出しインボックス：右下の✍️ボタンでいつでも白紙に殴り書き→あとから「タスク化・今月の目標化・メンバーメモ化」に振り分けられます（紙の代わり）','🌟 北極星ウィザード：やりたいこと/なりたい自分→理想の生活→必要月収→目標タイトル→期日を1問1答で設定（全部スキップ可・最低限は月収と期日だけでOK）','📅 月次の宣言：今月・来月のフロント/ユーザーPT/チームB1/チームPTを宣言すると、実績（MAP・テンプレ完了・受付連携から自動集計）と着地予測を常時表示','🎯 ファネル逆算：宣言フロント数×係数（標準 CT8・FT/マケ4・DLR2。個人／ユニオンで変更可）から必要行動数を自動表示。「動員を計画」でDLR日を選ぶとPG（3日前）・FT/CT（1週間前）・CT取りのタスクを期限付きで自動生成','🏛 ユニオンマイルストーン：ユニオン管理者が目標を設定でき、メンバー全員のPLANに表示されます','🔁 月替わりの検証：前月の宣言vs実績を見て「できた理由・できなかった理由・来月変えること」を記録→そのまま来月の宣言へ','⚠️ 今月の宣言が無い間はPLANタブと画面上部にアラートを出し続けます','🖥 PC版は3カラムの全画面レイアウト（左=北極星・ユニオン／中央=宣言・ファネル／右=インボックス）'] },
   { v:'v468', d:'2026-09-12', items:['🐛 研修を終えてBAになった人がPCツリーでずっと水色（研修生色）のままになるバグを修正（研修履歴の有無ではなく現在のカテゴリで判定）','💤 「何もしないと薄く消えていく」表現を廃止：全員通常の明るさで表示し、代わりに30日以上アクションが無い人に「💤30日」（グレー）、60日以上は「🚨」（赤）のバッジを表示します（PC・モバイル共通）','👤 PCツリーの全カードにアバター○を常時表示（写真がない人はイニシャル＋タイトル色のリング）','🏷 PCツリーのタイトルをモバイルと同じ「色付きバッジ」表示に（宝石色の塗りピル。ひと目で階級が分かります）','📆 ToDoの並び順を「日付→時刻→⚑重要」に修正（⚑が時刻を無視して上に来ていた問題）','🗂 PC予定タブの右パネル：選択日が今日の時は「今日のToDo（期限切れ含む）」だけに統合（タスクの二重表示を解消）','📅 メンバー付き予定の「自分のカレンダーに表示」の既定値を入口で変更：予定タブから作成＝表示する／MAP（メンバーカード）から作成＝メンバー専用','⏰ 時刻パッドの操作性を修正：閉じた直後の再タップが効かない問題（フェード中の透明な幕がタップを吸っていた）と、終了時刻が開始より前のまま表示される問題（自動で開始+1時間に補正してお知らせ）を修正','🔔 期限切れタスクのリマインド：期限切れが残っている間、9・12・15・18・21時にPUSH通知でお知らせします（完了すると自動で止まります）'] },
@@ -7130,6 +7155,7 @@ function memberMatchesFilter(m, f) {
   if (f === 'gold') return !!m.goldShip;
   if (f === 'merged') return /^MG_/.test(m.id || '');
   if (f === 'out') return (m.title||'').trim() === 'OUT';
+  if (f && f.indexOf('qbr:') === 0) return (m.title||'').trim() === f.slice(4); // v471: QBR（タイトル一致）
   return true;
 }
 function memberPriorityRank(m) { return m.priority === '高' ? 3 : (m.priority === '中' ? 2 : (m.priority === '低' ? 1 : 0)); }
@@ -7691,6 +7717,8 @@ function switchPCView(view) {
   if (tblI) tblI.classList.toggle('show', view === 'table');
   if (fltC) fltC.classList.toggle('show', view === 'table');
   if (fltI) fltI.classList.toggle('show', view === 'table');
+  var catC = document.getElementById('pcMapCatChips'); // v471: カテゴリ絞り込みはツリー表示のみ
+  if (catC) catC.classList.toggle('show', view === 'tree');
   if (kbnC) kbnC.classList.toggle('show', view === 'kanban');
   if (view === 'table') {
     if (currentView === 'current') renderPCTable('current');
