@@ -2317,7 +2317,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v469</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v470</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5272,7 +5272,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v469';
+  var DATA_VERSION = 'v470';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5451,6 +5451,7 @@ function switchView(v) {
     }
   }
   updateFabVisibility();
+  if (typeof _p2BannerSync === 'function') _p2BannerSync();
   if (v !== 'events') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
   if (v==='home') renderHome();
   else if (v==='members') renderMembers();
@@ -6230,6 +6231,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v470', d:'2026-09-13', items:['✍️ 書き出しボタン（右下の✍️）はPLANタブを開いている間だけ表示するようにしました（他の画面で邪魔にならないように）'] },
   { v:'v469', d:'2026-09-13', items:['🧭 新タブ「PLAN」誕生：GOALタブと今月タブを統合し、目標設定〜月次計画〜日々の実行〜振り返りを1画面に刷新しました','✍️ 書き出しインボックス：右下の✍️ボタンでいつでも白紙に殴り書き→あとから「タスク化・今月の目標化・メンバーメモ化」に振り分けられます（紙の代わり）','🌟 北極星ウィザード：やりたいこと/なりたい自分→理想の生活→必要月収→目標タイトル→期日を1問1答で設定（全部スキップ可・最低限は月収と期日だけでOK）','📅 月次の宣言：今月・来月のフロント/ユーザーPT/チームB1/チームPTを宣言すると、実績（MAP・テンプレ完了・受付連携から自動集計）と着地予測を常時表示','🎯 ファネル逆算：宣言フロント数×係数（標準 CT8・FT/マケ4・DLR2。個人／ユニオンで変更可）から必要行動数を自動表示。「動員を計画」でDLR日を選ぶとPG（3日前）・FT/CT（1週間前）・CT取りのタスクを期限付きで自動生成','🏛 ユニオンマイルストーン：ユニオン管理者が目標を設定でき、メンバー全員のPLANに表示されます','🔁 月替わりの検証：前月の宣言vs実績を見て「できた理由・できなかった理由・来月変えること」を記録→そのまま来月の宣言へ','⚠️ 今月の宣言が無い間はPLANタブと画面上部にアラートを出し続けます','🖥 PC版は3カラムの全画面レイアウト（左=北極星・ユニオン／中央=宣言・ファネル／右=インボックス）'] },
   { v:'v468', d:'2026-09-12', items:['🐛 研修を終えてBAになった人がPCツリーでずっと水色（研修生色）のままになるバグを修正（研修履歴の有無ではなく現在のカテゴリで判定）','💤 「何もしないと薄く消えていく」表現を廃止：全員通常の明るさで表示し、代わりに30日以上アクションが無い人に「💤30日」（グレー）、60日以上は「🚨」（赤）のバッジを表示します（PC・モバイル共通）','👤 PCツリーの全カードにアバター○を常時表示（写真がない人はイニシャル＋タイトル色のリング）','🏷 PCツリーのタイトルをモバイルと同じ「色付きバッジ」表示に（宝石色の塗りピル。ひと目で階級が分かります）','📆 ToDoの並び順を「日付→時刻→⚑重要」に修正（⚑が時刻を無視して上に来ていた問題）','🗂 PC予定タブの右パネル：選択日が今日の時は「今日のToDo（期限切れ含む）」だけに統合（タスクの二重表示を解消）','📅 メンバー付き予定の「自分のカレンダーに表示」の既定値を入口で変更：予定タブから作成＝表示する／MAP（メンバーカード）から作成＝メンバー専用','⏰ 時刻パッドの操作性を修正：閉じた直後の再タップが効かない問題（フェード中の透明な幕がタップを吸っていた）と、終了時刻が開始より前のまま表示される問題（自動で開始+1時間に補正してお知らせ）を修正','🔔 期限切れタスクのリマインド：期限切れが残っている間、9・12・15・18・21時にPUSH通知でお知らせします（完了すると自動で止まります）'] },
   { v:'v467', d:'2026-09-12', items:['⚙️ 「予定とOLの連携」の設定を2つに分割：連携をオンにしたまま「OL予定をカレンダーに表示」だけをオフにできるようになりました（カレンダーの📝紫のOL帯を消しても、メンバー予定を完了した時の「OLとして記録しますか？」の提案は残ります）。カレンダーの⚙設定から切り替えられます'] },
@@ -14273,6 +14275,8 @@ function _p2BannerSync() {
     var need = currentUser && state && state.isEditor && !viewingOwnerUid && !_p2Declared(_p2Ym(0));
     if (dot) dot.style.display = need ? '' : 'none';
     if (b) b.style.display = (need && currentView !== 'plan') ? 'block' : 'none';
+    var f = document.getElementById('p2Fab');
+    if (f) f.style.display = (currentView === 'plan') ? '' : 'none';
   } catch(e) {}
 }
 // 起動時: バナーとFAB・インク画面を用意
