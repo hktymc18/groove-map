@@ -2320,7 +2320,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v472</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v473</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5306,7 +5306,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v472';
+  var DATA_VERSION = 'v473';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6265,6 +6265,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v473', d:'2026-09-13', items:['🐛 今月の宣言をしたのに、しばらくすると「未宣言」アラートが再び出るバグを修正（データ再読込のときにPLANタブの宣言データを読み落としていました。宣言・北極星・書き出し・検証の内容も再読込後に正しく表示されます）'] },
   { v:'v472', d:'2026-09-13', items:['🐛 PC版ツリーカードで「◯ヶ月目」とポイント表示が重なる問題を修正（入り切らない場合は自動で短縮・非表示。マウスオーバーで全文確認できます）','🐛 モバイル版・理想MAPでメンバーをタップしても選択表示にならない／▶で段の展開ができないバグを修正（現状MAPと同じIDのカードが裏に存在し、そちらに反応していました）','🎓 研修履歴で「✗ 流れた（離脱）」を選ぶと、研修結果が自動で「流れた」・カテゴリが自動で「OUT」になります（再アプローチリストにも自動登録）','📝 言葉の統一：研修履歴の「離脱」表記を研修結果と同じ「流れた」に統一しました'] },
   { v:'v471', d:'2026-09-13', items:['🔎 MAPのカテゴリ絞り込み（すべて/研修生/フレッシュ/BR/金の船）をPC版でも表示（ツリー上部のバー）','💎 絞り込みに「QBR」を追加：ドロップダウンでLOI〜Q4のタイトルを選んで絞り込めます（モバイル・PC共通）'] },
   { v:'v470', d:'2026-09-13', items:['✍️ 書き出しボタン（右下の✍️）はPLANタブを開いている間だけ表示するようにしました（他の画面で邪魔にならないように）'] },
@@ -13002,10 +13003,15 @@ var GL_STAGES=[
 function loadGoals(uid){
   if(!uid || !db){ if(!state.goals) state.goals=_glDefault(); return Promise.resolve(); }
   return fsGet('maps/'+uid+'/meta/goals').then(function(g){
+    // v473: plan2（PLANタブ：宣言/北極星/書き出し/検証）を読み落とすと、再読込のたびに
+    // 「未宣言」アラートが復活していた。サーバー値を優先し、無ければメモリ上の値を保持する
+    var _keepP2 = state.goals && state.goals.plan2;
     if(g && (g.items || g.vision!==undefined)){
-      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[], plan:_glNormPlan(g.plan), milestones:g.milestones||[], counters:g.counters||[] };
-    } else { state.goals = _glDefault(); }
+      state.goals = { vision:g.vision||'', year:g.year||(new Date()).getFullYear(), items:g.items||[], habits:g.habits||[], plan:_glNormPlan(g.plan), milestones:g.milestones||[], counters:g.counters||[], plan2:(g.plan2 || _keepP2 || null) };
+    } else { state.goals = _glDefault(); if (_keepP2) state.goals.plan2 = _keepP2; }
     if(currentView==='goals') renderGoals();
+    if(currentView==='plan' && typeof renderPlan==='function') renderPlan();
+    if(typeof _p2BannerSync==='function') setTimeout(_p2BannerSync, 50);
     return state.goals;
   }).catch(function(){ if(!state.goals) state.goals=_glDefault(); });
 }
