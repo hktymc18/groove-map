@@ -2386,7 +2386,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v474</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v475</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3037,7 +3037,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <span class="ed-l">OUT後の表示<span class="ed-q" onclick="edHelp(event,'h_outvis')">?</span></span>
             <div class="ed-chips">
               <div class="rb sel" id="rbOutShow" onclick="selOutVis(false)">ツリーに残す</div>
-              <div class="rb" id="rbOutHide" onclick="selOutVis(true)">🙈 非表示</div>
+              <div class="rb" id="rbOutHide" onclick="selOutVis(true)">非表示</div>
             </div>
           </div>
           <div class="ed-help" id="h_outvis">OUTメンバーをツリーに出し続けるか選べます。「残す」＝当月のMAPにグレー表示で残します（翌月コピーで自動的に外れます）。「非表示」＝ツリーから消えます（データは残り、メンバー一覧の「OUT」絞り込みからいつでも開けます）。どちらでも直下の組織は上のアップラインに移動します。</div>
@@ -3659,7 +3659,12 @@ function copyToNextMonth() {
   // ※ルート（自分）はOUT除外の対象外（消すとMAP構造が壊れるため）
   // v458: タイトル判定の「後」に実行（判定は当月実績＝OUT込みのGSVで行う）
   var outIds = {};
-  copyMembers.forEach(function(mm){ if (((mm.title||'').trim()) === 'OUT' && mm.parentId) outIds[mm.id] = mm.parentId; }); // v440: OUTは当月のみ表示し、翌月コピーで常に除外
+  copyMembers.forEach(function(mm){
+    var _t9 = (mm.title||'').trim();
+    // v475: 研修結果「流れた」のNA（タイトル未設定〜研修ステップ帯）もOUTと同様に翌月から除外
+    var _naOut9 = mm.traineeResult === '流れた' && (!_t9 || (typeof detectCategory === 'function' && detectCategory(_t9) === '研修生'));
+    if ((_t9 === 'OUT' || _naOut9) && mm.parentId) outIds[mm.id] = mm.parentId;
+  }); // v440: OUTは当月のみ表示し、翌月コピーで常に除外
   var _outChanges = [];
   if (Object.keys(outIds).length) {
     copyMembers.forEach(function(mm){
@@ -3667,7 +3672,7 @@ function copyToNextMonth() {
       while (outIds.hasOwnProperty(mm.parentId) && guard++ < 60) mm.parentId = outIds[mm.parentId];
     });
     copyMembers.filter(function(mm){ return outIds.hasOwnProperty(mm.id); }).forEach(function(mm){
-      _outChanges.push({ name: mcName(mm), from: 'OUT', to: '翌月から除外', kind: 'out' });
+      _outChanges.push({ name: mcName(mm), from: (((mm.title||'').trim()) === 'OUT' ? 'OUT' : '流れた（NA）'), to: '翌月から除外', kind: 'out' });
     });
     copyMembers = copyMembers.filter(function(mm){ return !outIds.hasOwnProperty(mm.id); });
     // 付け替え先が消えている等の孤児はルート直下へ退避（見えないメンバーを作らない）
@@ -4784,6 +4789,16 @@ function applyRegionDim() { _applyMapDims(); }
 function _applyMapDims() {
   var catF = (typeof mapCatFilter !== 'undefined') ? mapCatFilter : '';
   var regF = (typeof regionFilter !== 'undefined') ? regionFilter : '';
+  // v475: 結合(MG_)ノードの合成リストは1パスにつき1回だけ作る（ノードごとに作り直すと結合MAPで重い）
+  var _mgMap9 = null;
+  var _findC9 = function(mid) {
+    if (!/^MG_/.test(mid)) return _findMember(mid);
+    if (!_mgMap9) {
+      _mgMap9 = {};
+      composeMergedInto(membersForMap('current'), 'current').forEach(function(x) { _mgMap9[x.id] = x; });
+    }
+    return _mgMap9[mid] || null;
+  };
   // PC組織図ノード（SVG）
   var nodes = document.querySelectorAll('.oval-node');
   var _lin9 = (typeof window !== 'undefined' && window._pcFocusLineage) || ''; // v438: 系列フォーカスと両立
@@ -4791,7 +4806,7 @@ function _applyMapDims() {
     var r = (nodes[i].getAttribute('data-region') || '').trim(); // v420: 表記ゆれ（前後スペース）で判定が狂うバグ修正
     var ok = !regF || (regF === '__NONE__' ? !r : (r === regF));
     if (ok && catF) {
-      var mN = _findMemberComposed(nodes[i].getAttribute('data-mid'));
+      var mN = _findC9(nodes[i].getAttribute('data-mid'));
       ok = !!(mN && memberMatchesFilter(mN, catF));
     }
     var _nl9 = nodes[i].getAttribute('data-lineage');
@@ -4801,7 +4816,7 @@ function _applyMapDims() {
   // モバイルツリーカード（HTML）※結合ノードも合成リストで解決
   var cards = document.querySelectorAll('.nc[data-cid]');
   for (var j=0;j<cards.length;j++){
-    var m = _findMemberComposed(cards[j].getAttribute('data-cid'));
+    var m = _findC9(cards[j].getAttribute('data-cid'));
     var rr = ((m && m.region) ? m.region : '').trim(); // v420: 正規化
     var ok2 = !regF || (regF === '__NONE__' ? !rr : (rr === regF));
     if (ok2 && catF) ok2 = !!(m && memberMatchesFilter(m, catF));
@@ -5372,7 +5387,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v474';
+  var DATA_VERSION = 'v475';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6331,6 +6346,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v475', d:'2026-09-14', items:['⚡ PC版の高速化：画面には出ないモバイル用ツリーを毎回まるごと組み立ててからSVG組織図を描いていたため、入力のたび・共有MAP切替のたびに描画が約2倍重くなっていました。PCではSVGだけを描くように修正','🐛 絞り込み（研修生/BR/QBR/金の船/地域）で、編集直後のメンバーが古い情報のまま判定され「該当じゃない人が強調される」バグを修正（保存時に検索キャッシュを更新）','🐛 研修結果「流れた」のNA（タイトル未設定〜研修ステップ）が翌月コピーで残ってしまう問題を修正：OUTと同じく翌月から自動で除外されます（プレビューにも表示）','🙈 OUT非表示ボタンのサルの絵文字を削除しました'] },
   { v:'v474', d:'2026-09-13', items:['🌟 GOAL SETTINGアプリをPLANタブに統合しました（北極星カードが「GOALハブ」になり、5つのツールが開けます）','🧭 目標ウィザード刷新：住まい・食・車（ローン計算つき）・旅行・親孝行…と理想の生活を積み上げると目標月収が自動合計→タイトル・期日まで一気に設定（チャット形式・スキップ可）。やりたいこと5つ×4種・やる理由作文も','🎮 シミュレーション：フロント数×BPC×複製率で4ヶ月後の組織人数・GSV・ビルディングボーナス額を試算。「この人数を今月の宣言に入れる」でそのまま宣言に反映できます','🌈 夢100リスト：ほしいもの/やりたいことを金額つきで登録→達成チェック。合計・達成済み・残り必要額と期間別の必要額も表示','✅ チェックリスト：必須アイテムとTRAININGの進捗管理（日付つき）。未完了項目はワンタップで今日のタスクにできます','💴 BB早見表：GSVを入れるとビルディングボーナス額を即計算（初期値は自分の今月GSV）。ハブカードにも「今月のGSV→BB換算」を常時表示','（旧GOAL SETTINGで設定済みの方は、新ウィザードで一度答え直してください。2分で終わります）'] },
   { v:'v473', d:'2026-09-13', items:['🐛 今月の宣言をしたのに、しばらくすると「未宣言」アラートが再び出るバグを修正（データ再読込のときにPLANタブの宣言データを読み落としていました。宣言・北極星・書き出し・検証の内容も再読込後に正しく表示されます）'] },
   { v:'v472', d:'2026-09-13', items:['🐛 PC版ツリーカードで「◯ヶ月目」とポイント表示が重なる問題を修正（入り切らない場合は自動で短縮・非表示。マウスオーバーで全文確認できます）','🐛 モバイル版・理想MAPでメンバーをタップしても選択表示にならない／▶で段の展開ができないバグを修正（現状MAPと同じIDのカードが裏に存在し、そちらに反応していました）','🎓 研修履歴で「✗ 流れた（離脱）」を選ぶと、研修結果が自動で「流れた」・カテゴリが自動で「OUT」になります（再アプローチリストにも自動登録）','📝 言葉の統一：研修履歴の「離脱」表記を研修結果と同じ「流れた」に統一しました'] },
@@ -8722,6 +8738,19 @@ function renderTree(mapType) {
   if (roots.length === 0) {
     container.innerHTML = emptyStateHTML('map');
     updateLTSV(mapType, ownMembers); // LTSVは自分のメンバーのみで集計（数値を変えない）
+    return;
+  }
+
+  // v475: PCはSVG組織図のみ描画。CSSで非表示のモバイル用ツリーDOM（全カード＋アイコンSVG）まで
+  // 毎回フル構築していたため、保存・共有MAP切替のたびに描画が約2倍重くなっていた
+  if (isPCMode()) {
+    container.innerHTML = '';
+    updateLTSV(mapType, ownMembers);
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        renderPCMap(mapType);
+      });
+    });
     return;
   }
 
@@ -12837,6 +12866,7 @@ function saveMember() {
   if (editingId) {
     var idx = -1; for(var fi=0;fi<state.members.length;fi++){if(state.members[fi].id===editingId){idx=fi;break;}}
     state.members[idx] = m;
+    _memMap = null; // v475: 同一配列・同一件数のオブジェクト差し替えはキャッシュが検知できず、絞り込みが編集前の情報で判定されていた
   } else {
     state.members.push(m);
   }
