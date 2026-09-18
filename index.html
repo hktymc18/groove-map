@@ -2172,7 +2172,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2-prog{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:4px}
 .p2-prog>i{display:block;height:100%;border-radius:4px;background:var(--accent)}
 .p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
-.p2-banner{position:fixed;top:0;left:0;right:0;z-index:485;background:#7f1d1d;color:#fecaca;font-size:12px;font-weight:700;text-align:center;padding:7px 10px;padding-top:calc(7px + env(safe-area-inset-top,0px));cursor:pointer;display:none}
+.p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none}
+@media(min-width:768px){.p2-banner{left:auto;right:24px;bottom:24px;max-width:340px}}
 .p2-fab{position:fixed;right:16px;bottom:158px;width:52px;height:52px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:23px;z-index:496;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}
 @media(min-width:768px){.p2-fab{bottom:26px;right:88px}}
 .p2-ink{position:fixed;inset:0;z-index:645;background:var(--bg);display:none;flex-direction:column;padding:16px}
@@ -2395,7 +2396,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v478</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v479</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5396,7 +5397,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v478';
+  var DATA_VERSION = 'v479';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6363,6 +6364,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v479', d:'2026-09-18', items:['🐛 画面最上部に文字の読めない「赤い帯」が出る問題を解消：未宣言のお知らせを画面上部の帯から、下部ナビの上に浮かぶピル型の通知に変更しました（iPhoneのステータスバーと重なる構造自体を廃止。タップでPLANへ）','🔄 通知を出す前にサーバーの宣言状態を自動で確認し、宣言済みならその場で消えるようにしました（他の端末で宣言した直後でもOK）'] },
   { v:'v478', d:'2026-09-18', items:['🌈 夢100リストの入力と閲覧を分離：「＋夢を追加」から専用の入力画面が開き、カテゴリもその中で選ぶ方式に。タブを切り替えても入力中の内容は消えません（追加後は続けて次を入力できます）','🖥 PC版の夢100は画面中央の大きなウィンドウ（最大1100px）で表示：左に統計・期間フィルタ、右に夢のカードが2〜4列のグリッドで並びます','📋 並び順を「期日が近い順→期日なし→達成済み」に変更（次に叶える夢が先頭に）'] },
   { v:'v477', d:'2026-09-18', items:['🌈 夢100リストを完全版に：各項目に「いつまでに（期日）」と「URL」を登録でき、✏で後から編集できるようになりました','📅 期間で一覧表示：「◯年◯月まで」を選ぶと、その期日までの夢だけの一覧と必要金額の合計が出ます（元のGOAL SETTINGと同じ動き）','🔗 URLを付けた夢はタイトルがリンクになり、タップで商品ページ等を開けます'] },
   { v:'v476', d:'2026-09-18', items:['🐛 宣言したのに「未宣言」アラートが出続ける問題を根治：複数端末で使うと、宣言前に開いていた端末（開きっぱなしのPC等）が保存のたびに「未宣言」でサーバーを上書きしていました。①保存時に「未宣言」フラグを送らない（宣言済みを消せない）②宣言はその場で即サーバー反映③PLANタブを開くと最新の宣言状態を自動で取り込むよう修正','📱 未宣言バナーがiPhoneのステータスバーに隠れて「赤い帯」だけになる問題を修正（セーフエリア対応）'] },
@@ -14511,6 +14513,14 @@ function _p2BannerSync() {
     if (b) b.style.display = (need && currentView !== 'plan') ? 'block' : 'none';
     var f = document.getElementById('p2Fab');
     if (f) f.style.display = (currentView === 'plan') ? '' : 'none';
+    // v479: 表示しようとした時はサーバーの宣言状態を再確認（他端末で宣言済みなら自動消灯）
+    if (need && currentUser && !viewingOwnerUid && typeof loadGoals === 'function' && db) {
+      var _bn9 = Date.now();
+      if (!window._p2GoalsAt || _bn9 - window._p2GoalsAt > 60000) {
+        window._p2GoalsAt = _bn9;
+        loadGoals(currentUser.uid);
+      }
+    }
   } catch(e) {}
 }
 // 起動時: バナーとFAB・インク画面を用意
