@@ -2249,6 +2249,36 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2c-box{width:22px;height:22px;border-radius:7px;border:2px solid var(--border2);cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#04211a}
 .p2c-box.on{background:var(--accent);border-color:var(--accent)}
 .p2c-date{width:104px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:6px;font-size:11px;outline:none;flex:none}
+/* v481: 立案ステッパー */
+.p2st{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.p2st span{flex:1;min-width:56px;text-align:center;font-size:9.5px;color:var(--text-dim);border:1px solid var(--border);border-radius:9px;padding:5px 2px;cursor:pointer;line-height:1.3}
+.p2st span b{display:block;font-size:12px}
+.p2st span.done{border-color:rgba(44,229,184,.55);color:var(--accent);background:rgba(44,229,184,.08)}
+.p2st span.cur{border-color:#F6C744;color:#F6C744;background:rgba(246,199,68,.08)}
+/* v481: 年間ロードマップ */
+.p2rm-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.p2rm-tbl{border-collapse:collapse;min-width:900px;width:100%}
+.p2rm-tbl th,.p2rm-tbl td{border:1px solid var(--border);padding:4px 5px;text-align:center;font-size:12px;min-width:64px}
+.p2rm-tbl th{color:var(--text-dim);font-size:11px;font-weight:700}
+.p2rm-tbl td:first-child,.p2rm-tbl th:first-child{position:sticky;left:0;background:var(--surface);z-index:2;font-size:11px;color:var(--text-mid);font-weight:700;min-width:84px}
+.p2rm-ms{min-height:56px;vertical-align:bottom;cursor:pointer}
+.p2rm-chip{display:block;font-size:10px;font-weight:800;border-radius:7px;padding:3px 4px;margin:2px 0;color:#0a1017;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px}
+.p2rm-chip small{display:block;font-weight:600;font-size:9px;opacity:.8}
+.p2rm-add{font-size:12px;color:var(--text-dim);opacity:.55}
+.p2rm-in{width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:5px 3px;font-size:13px;text-align:center;outline:none}
+.p2rm-mini{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center}
+.p2rm-mini .mc{border:1px solid var(--border);border-radius:9px;padding:5px 3px;min-height:64px}
+.p2rm-mini .mc.cur{border-color:var(--accent)}
+.p2rm-mini .ml{font-size:10px;color:var(--text-dim);font-weight:700}
+.p2rm-mini .mf{font-size:14px;font-weight:800;color:var(--accent)}
+/* v481: PC浮きメモパッド */
+.p2pad{position:fixed;right:24px;bottom:92px;width:340px;max-height:70vh;background:var(--surface);border:1px solid var(--border2);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.5);z-index:640;display:none;flex-direction:column;overflow:hidden}
+.p2pad.show{display:flex}
+.p2pad-hd{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.p2pad-tab{flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--text-dim);border:1px solid var(--border);border-radius:9px;padding:6px;cursor:pointer}
+.p2pad-tab.on{border-color:var(--accent);color:var(--accent);background:rgba(44,229,184,.08)}
+.p2pad-bd{padding:10px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.p2pad textarea{min-height:170px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:10px;font-size:13.5px;outline:none;resize:vertical}
 /* v478: 夢100 大画面レイアウト＋入力分離 */
 .p2dr-addbtn{display:block;text-align:center;background:var(--accent);color:#04211a;font-weight:800;border-radius:12px;padding:12px;cursor:pointer;margin:10px 0}
 @media(min-width:768px){
@@ -2397,7 +2427,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v480</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v481</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5398,7 +5428,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v480';
+  var DATA_VERSION = 'v481';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6365,6 +6395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v481', d:'2026-09-18', items:['🗺 年間ロードマップ新設：12ヶ月のタイムラインにマイルストーン（色付き・補足つき）を置き、フロント/流通/Qルビー/エキスパートを月別に立案できます。フロント行は今月の目標と自動連動。PLANの右カラムに直近のミニ表示','📆 年ごとの目標：期日から逆算した各年に「目標タイトル＋目標月収＋ひとこと」を設定できます','🧭 立案ステッパー：価値観→年別→年間→月次→月間タスク→日々→実行の7ステップの進み具合をカード上部に表示。タップで該当画面へ','✍️ PC版の書き出しを右下の浮きメモパッドに変更：目標やロードマップを見ながらメモでき、「未整理」タブでそのまま振り分けも。常時表示のカードは廃止（モバイルは従来どおり）','📝 名称変更：「北極星」→「目標設定」、「宣言」→「目標（設定する）」に統一しました'] },
   { v:'v480', d:'2026-09-18', items:['🐛 アプリを開くたびに未宣言の赤い通知が一瞬だけ表示される問題を解消：宣言状態を「宣言済み/未宣言/未確認」の3値で扱い、サーバー確認が済むまでは表示しない方式に変更。さらに一度宣言済みを確認した端末は記憶して、次回から確認を待たずに非表示を確定します（オフラインでも誤表示なし）。本当に未宣言のときだけ、ふわっとフェードインで表示されます'] },
   { v:'v479', d:'2026-09-18', items:['🐛 画面最上部に文字の読めない「赤い帯」が出る問題を解消：未宣言のお知らせを画面上部の帯から、下部ナビの上に浮かぶピル型の通知に変更しました（iPhoneのステータスバーと重なる構造自体を廃止。タップでPLANへ）','🔄 通知を出す前にサーバーの宣言状態を自動で確認し、宣言済みならその場で消えるようにしました（他の端末で宣言した直後でもOK）'] },
   { v:'v478', d:'2026-09-18', items:['🌈 夢100リストの入力と閲覧を分離：「＋夢を追加」から専用の入力画面が開き、カテゴリもその中で選ぶ方式に。タブを切り替えても入力中の内容は消えません（追加後は続けて次を入力できます）','🖥 PC版の夢100は画面中央の大きなウィンドウ（最大1100px）で表示：左に統計・期間フィルタ、右に夢のカードが2〜4列のグリッドで並びます','📋 並び順を「期日が近い順→期日なし→達成済み」に変更（次に叶える夢が先頭に）'] },
@@ -14079,20 +14110,23 @@ function renderPlan() {
   if (!wrap) return;
   _p2();
   var ym = _p2Ym(0);
-  var alertH = _p2Declared(ym) ? '' : '<div class="p2-alert">⚠️ 今月の目標が未宣言です。「今月の宣言」に数字を入れて<b>宣言する</b>を押してください</div>';
+  var alertH = _p2Declared(ym) ? '' : '<div class="p2-alert">⚠️ 今月の目標が未設定です。「今月の目標」に数字を入れて<b>設定</b>を押してください</div>';
   var north = _p2NorthHtml();
   var rev = _p2ReviewHtml();
   var mon = _p2MonthHtml(ym, 0) + _p2MonthHtml(_p2Ym(1), 1);
   var fun = _p2FunnelHtml(ym);
   var unn = _p2UnionHtml();
   var inb = _p2InboxHtml();
+  var rm = (typeof _p2RmMiniHtml === 'function') ? _p2RmMiniHtml() : '';
   if (typeof isPCMode === 'function' && isPCMode()) {
+    // v481: PCの右カラムはロードマップミニ。書き出しは右下の✍️メモパッドへ
     wrap.innerHTML = '<div class="p2-col">' + north + unn + '</div>'
       + '<div class="p2-col">' + alertH + rev + mon + fun + '</div>'
-      + '<div class="p2-col">' + inb + '</div>';
+      + '<div class="p2-col">' + rm + '</div>';
   } else {
-    wrap.innerHTML = alertH + rev + north + mon + fun + unn + inb;
+    wrap.innerHTML = alertH + rev + north + mon + rm + fun + unn + inb;
   }
+  if (typeof _p2FabBadge === 'function') _p2FabBadge();
   _p2BannerSync();
 }
 // ── 北極星 ──
@@ -14101,7 +14135,7 @@ function _p2NorthHtml() {
   var p = state.goals.plan, p2 = _p2(), n = p2.north, g = _p2G();
   var chips = function(arr, pre) { return (arr || []).slice(0, 8).map(function(x) { return '<span class="p2-chip">' + pre + evEsc(x) + '</span>'; }).join(''); };
   var hasGoal = !!(p.title && p.deadline);
-  var h = '<div class="p2-card"><div class="p2-t">🌟 北極星<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : '🧭 目標をつくる') + '</span></div>';
+  var h = '<div class="p2-card">' + (typeof _p2StepperHtml === 'function' ? _p2StepperHtml() : '') + '<div class="p2-t">🌟 目標設定<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : '🧭 目標をつくる') + '</span></div>';
   if (hasGoal) {
     h += '<div style="font-size:17px;font-weight:800">' + evEsc(p.title) + '<span style="font-size:12px;color:var(--text-dim);font-weight:600">　' + evEsc(String(p.deadline).replace('-', '年')) + '月まで</span></div>';
     if (p.income) h += '<div class="p2-meta" style="margin-top:2px">目標月収 ' + Math.round((+p.income) / 10000).toLocaleString() + '万円（理想の生活の積み上げ）</div>';
@@ -14131,6 +14165,8 @@ function _p2NorthHtml() {
   // ツールボタン
   var ck = _p2CkCount();
   h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
+    + '<span class="p2-btn" style="margin:0" onclick="p2RmOpen()">🗺 年間ロードマップ</span>'
+    + '<span class="p2-btn" style="margin:0" onclick="p2YearsOpen()">📆 年別目標</span>'
     + '<span class="p2-btn" style="margin:0" onclick="p2SimOpen()">🎮 シミュレーション</span>'
     + '<span class="p2-btn" style="margin:0" onclick="p2DreamOpen()">🌈 夢100' + (dr.length ? '（' + dr.filter(function(d){return d.done;}).length + '/' + dr.length + '）' : '') + '</span>'
     + '<span class="p2-btn" style="margin:0" onclick="p2CheckOpen()">✅ チェック（' + ck.done + '/' + ck.total + '）</span>'
@@ -14151,8 +14187,8 @@ function _p2MonthHtml(ym, off) {
       + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
       + (pace !== null ? '<div class="p2-meta">着地 ' + pace.toLocaleString() + '</div>' : '<div class="p2-meta">実績</div>') + '</span></div>';
   };
-  var h = '<div class="p2-card"><div class="p2-t">📅 ' + _p2YmLabel(ym) + 'の宣言'
-    + (m.declared ? '<span style="font-size:10px;color:var(--accent);font-weight:800">✓宣言済み</span>' : '')
+  var h = '<div class="p2-card"' + (isCur ? ' id="p2MonCur"' : '') + '><div class="p2-t">📅 ' + _p2YmLabel(ym) + 'の目標'
+    + (m.declared ? '<span style="font-size:10px;color:var(--accent);font-weight:800">✓設定済み</span>' : '')
     + '<span class="sp"></span></div>';
   var inner = ''
     + '<div class="p2-meta" style="margin-bottom:2px">🧍 自分</div>'
@@ -14171,9 +14207,9 @@ function _p2MonthHtml(ym, off) {
     + '<div style="display:flex;gap:6px;margin-top:6px"><input class="fi" id="p2Skill_' + ym + '" placeholder="＋ 例：本を1冊読む" style="flex:1;padding:8px 10px;font-size:13px" onkeydown="if(event.key===\'Enter\'){p2SkillAdd(\'' + ym + '\');}"><span class="p2-btn" style="margin:0" onclick="p2SkillAdd(\'' + ym + '\')">追加</span></div>'
     + (m.declared
         ? '<div class="p2-meta" style="margin-top:10px">数字はいつでも変更できます（変更は自動保存）</div>'
-        : '<span class="p2-btn pri" style="width:100%;text-align:center;box-sizing:border-box;display:block;margin-top:12px" onclick="p2Declare(\'' + ym + '\')">✅ この内容で宣言する</span>');
+        : '<span class="p2-btn pri" style="width:100%;text-align:center;box-sizing:border-box;display:block;margin-top:12px" onclick="p2Declare(\'' + ym + '\')">✅ この内容で目標を設定する</span>');
   if (isCur) h += inner;
-  else h += '<details' + (m.declared ? '' : '') + '><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">来月の宣言を開く' + (m.declared ? '（宣言済み）' : '') + '</summary>' + inner + '</details>';
+  else h += '<details' + (m.declared ? '' : '') + '><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">来月の目標を開く' + (m.declared ? '（設定済み）' : '') + '</summary>' + inner + '</details>';
   h += '</div>';
   return h;
 }
@@ -14194,7 +14230,7 @@ function p2Declare(ym) {
     if (_du && db) { var _mo = {}; _mo[ym] = { declared: true, declaredAt: m.declaredAt }; fsSet('maps/' + _du + '/meta/goals', { plan2: { months: _mo } }).catch(function(){}); }
   } catch(e) {}
   saveGoals();
-  toast('✅ ' + _p2YmLabel(ym) + 'の目標を宣言しました');
+  toast('✅ ' + _p2YmLabel(ym) + 'の目標を設定しました');
   renderPlan();
 }
 function p2SkillAdd(ym) {
@@ -14223,10 +14259,10 @@ function _p2FunnelHtml(ym) {
       + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>';
   };
   var dlrEvs = _p2DlrEvents();
-  var h = '<div class="p2-card"><div class="p2-t">🎯 今月のファネル<span class="sp"></span>'
+  var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">🎯 今月のファネル<span class="sp"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">⚙ 係数（' + c.src + '）</span></div>';
   if (!F) {
-    h += '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">今月のフロント人数を宣言すると、必要なCT・FT/マケ・DLR動員数がここに出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
+    h += '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">今月のフロント人数を目標に入れると、必要なCT・FT/マケ・DLR動員数がここに出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
   } else {
     h += bar('CT（会う）', F * c.ct, act.ct)
       + bar('FT・マケ（伝える）', F * c.ft, act.ft)
@@ -14403,7 +14439,7 @@ function _p2ReviewHtml() {
   var m = p2.months[prev];
   if (!m || !m.declared || m.review) return '';
   var act = _p2Act(prev);
-  var line = function(lb, dec, a) { return (dec === '' || dec == null) ? '' : '<span class="p2-chip">' + lb + ' 宣言' + dec + ' → 実績' + a + '</span>'; };
+  var line = function(lb, dec, a) { return (dec === '' || dec == null) ? '' : '<span class="p2-chip">' + lb + ' 目標' + dec + ' → 実績' + a + '</span>'; };
   return '<div class="p2-card" style="border-color:rgba(139,124,255,.5)"><div class="p2-t">🔁 ' + _p2YmLabel(prev) + 'の検証（1分でOK）</div>'
     + '<div style="margin-bottom:6px">' + line('フロント', m.front, act.front) + line('ユーザーPT', m.upt, act.upt) + line('B1', m.teamB1, act.teamB1) + line('チームPT', m.teamPt, act.teamPt) + '</div>'
     + '<input class="fi" id="p2rvG" placeholder="👍 できた理由" style="margin-bottom:6px">'
@@ -14485,6 +14521,8 @@ function p2InbMemoGo(id) {
 }
 function p2InbDel(id) { var x = _p2InbFind(id); if (x) { x.st = 'done'; saveGoals(); renderPlan(); } }
 function p2InkOpen() {
+  // v481: PCは右下の浮きメモパッド（目標を見ながら書ける）
+  if (typeof isPCMode === 'function' && isPCMode()) { p2PadToggle(); return; }
   var el = document.getElementById('p2Ink');
   if (!el) return;
   el.classList.add('show');
@@ -14543,7 +14581,7 @@ function _p2Boot() {
   if (document.getElementById('p2Banner')) return;
   var b = document.createElement('div');
   b.id = 'p2Banner'; b.className = 'p2-banner';
-  b.textContent = '⚠️ 今月の目標が未宣言です — タップして設定';
+  b.textContent = '⚠️ 今月の目標が未設定です — タップして設定';
   b.onclick = function() { switchView('plan'); };
   document.body.appendChild(b);
   var f = document.createElement('div');
@@ -14834,7 +14872,7 @@ function p2GwNext(skipped) {
   if (phaseEnds) _p2GwFinishPhase(q.ph);
   if (next >= P2GW_Q.length) {
     _p2SheetClose('p2GwOv');
-    toast('🌟 北極星を保存しました！ここから月次の宣言に落とし込もう');
+    toast('🌟 目標を保存しました！ここから月ごとの目標に落とし込もう');
     renderPlan();
     return;
   }
@@ -14906,7 +14944,7 @@ function p2SimOpen() {
     + '<div><label>開始月</label><select id="p2sM" onchange="p2SimRun()">' + mOpts + '</select></div></div>'
     + '<div id="p2sResults"></div>'
     + '<div class="p2-meta" style="margin:10px 0 4px">🎁 ファーストボーナス</div><div id="p2sFB"></div>'
-    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:12px" onclick="p2SimApply()">✍ この人数を今月の宣言に入れる</span>'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:12px" onclick="p2SimApply()">✍ この人数を今月の目標に入れる</span>'
     + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -14991,7 +15029,7 @@ function p2SimApply() {
   _p2M(ym).front = n;
   saveGoals();
   _p2SheetClose('p2SimOv');
-  toast('✍ 今月のフロント宣言に ' + n + '人 を入れました。「宣言する」で確定しよう');
+  toast('✍ 今月のフロント目標に ' + n + '人 を入れました。「設定」で確定しよう');
   renderPlan();
 }
 // ── ⑤BB早見表 ──
@@ -15277,6 +15315,351 @@ function p2CkTask(pre, i) {
   state.events.push(e); saveEventDoc(e);
   try { updateEventsBadge(); } catch(e1) {}
   toast('📋 「' + items[i] + '」を今日のタスクにしました');
+}
+
+// ============================================================
+//  v481: 年間ロードマップ・年別目標・立案ステッパー・PCメモパッド
+// ============================================================
+// ── 年間ロードマップ（データ: plan2.roadmap） ──
+var P2RM_ROWS = [['front','フロント'],['dist','流通'],['qr','Qルビー'],['exp','エキスパート']];
+var P2RM_COLORS = ['#AECBEB','#F4B7B7','#F6C744','#4ADE80','#8B7CFF','#5AD7FF'];
+function _p2Rm() {
+  var p2 = _p2();
+  if (!p2.roadmap) p2.roadmap = { start: _p2Ym(0), ms: [], rows: {} };
+  if (!p2.roadmap.ms) p2.roadmap.ms = [];
+  if (!p2.roadmap.rows) p2.roadmap.rows = {};
+  P2RM_ROWS.forEach(function(r) { if (!p2.roadmap.rows[r[0]]) p2.roadmap.rows[r[0]] = {}; });
+  if (!p2.roadmap.start) p2.roadmap.start = _p2Ym(0);
+  return p2.roadmap;
+}
+function _p2RmYms(rm) {
+  var y = parseInt(rm.start.slice(0, 4), 10), mo = parseInt(rm.start.slice(5, 7), 10);
+  var out = [];
+  for (var i = 0; i < 12; i++) {
+    var mm = mo + i, yy = y + Math.floor((mm - 1) / 12);
+    mm = ((mm - 1) % 12) + 1;
+    out.push(yy + '-' + String(mm).padStart(2, '0'));
+  }
+  return out;
+}
+function _p2RmFront(rm, ym) {
+  if (rm.rows.front[ym] !== undefined && rm.rows.front[ym] !== '') return rm.rows.front[ym];
+  var m = state.goals && state.goals.plan2 && state.goals.plan2.months && state.goals.plan2.months[ym];
+  return (m && m.front !== '' && m.front != null) ? m.front : '';
+}
+function p2RmOpen() {
+  _p2SheetClose('p2RmOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay p2dr-ov'; ov.id = 'p2RmOv'; ov.style.zIndex = '610';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2RmOv'); };
+  ov.innerHTML = '<div class="ms-sheet p2dr-big" style="overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🗺 年間ロードマップ</div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">月をタップしてマイルストーンを追加。下の行は月別の立案数値（フロントは今月の目標と連動）</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2RmOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px" id="p2RmBody"></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  _p2RmRender();
+}
+function _p2RmRender() {
+  var el = document.getElementById('p2RmBody');
+  if (!el) return;
+  var rm = _p2Rm();
+  var yms = _p2RmYms(rm);
+  var p = state.goals.plan;
+  var sy = parseInt(rm.start.slice(0, 4), 10), sm = parseInt(rm.start.slice(5, 7), 10);
+  var nowY = new Date().getFullYear();
+  var ySel = '<select class="fi" style="width:auto;padding:7px" onchange="p2RmStart(this.value, null)">';
+  for (var yy = nowY - 1; yy <= nowY + 3; yy++) ySel += '<option value="' + yy + '"' + (yy === sy ? ' selected' : '') + '>' + yy + '年</option>';
+  ySel += '</select>';
+  var mSel = '<select class="fi" style="width:auto;padding:7px" onchange="p2RmStart(null, this.value)">';
+  for (var mo = 1; mo <= 12; mo++) mSel += '<option value="' + mo + '"' + (mo === sm ? ' selected' : '') + '>' + mo + '月はじまり</option>';
+  mSel += '</select>';
+  var h = '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><span class="p2-meta">表示期間</span>' + ySel + mSel + '</div>';
+  h += '<div class="p2rm-wrap"><table class="p2rm-tbl">';
+  // マイルストーン行
+  h += '<tr><td>🚩 マイルストーン</td>';
+  yms.forEach(function(ym) {
+    var chips = '';
+    if (p && p.deadline === ym && p.title) chips += '<span class="p2rm-chip" style="background:#F6C744">🎯 ' + evEsc(p.title) + '</span>';
+    rm.ms.filter(function(m) { return m.ym === ym; }).forEach(function(m) {
+      chips += '<span class="p2rm-chip" style="background:' + (m.color || P2RM_COLORS[0]) + '" onclick="event.stopPropagation();p2RmMsForm(\'' + ym + '\',\'' + m.id + '\')">' + evEsc(m.t) + (m.sub ? '<small>' + evEsc(m.sub) + '</small>' : '') + '</span>';
+    });
+    h += '<td class="p2rm-ms" onclick="p2RmMsForm(\'' + ym + '\')">' + chips + '<span class="p2rm-add">＋</span></td>';
+  });
+  h += '</tr>';
+  // 月ヘッダ
+  h += '<tr><th></th>';
+  yms.forEach(function(ym) {
+    var mo = parseInt(ym.slice(5, 7), 10);
+    var cur = ym === _p2Ym(0);
+    h += '<th style="' + (cur ? 'color:var(--accent)' : '') + '">' + (mo === 1 || ym === yms[0] ? ym.slice(0, 4) + '年<br>' : '') + mo + '月</th>';
+  });
+  h += '</tr>';
+  // 数値行
+  P2RM_ROWS.forEach(function(r) {
+    h += '<tr><td>' + r[1] + '</td>';
+    yms.forEach(function(ym) {
+      var v = r[0] === 'front' ? _p2RmFront(rm, ym) : (rm.rows[r[0]][ym] !== undefined ? rm.rows[r[0]][ym] : '');
+      h += '<td><input class="p2rm-in" type="number" inputmode="numeric" value="' + v + '" onfocus="edSelAll(this)" onchange="p2RmCell(\'' + r[0] + '\',\'' + ym + '\',this.value)"></td>';
+    });
+    h += '</tr>';
+  });
+  h += '</table></div>';
+  h += '<div class="p2-meta" style="margin-top:6px">🎯 の金色チップは目標設定の期日（自動表示）。フロント行に入れた数字は各月の「目標」の下書きになります</div>';
+  el.innerHTML = h;
+}
+function p2RmStart(y, m) {
+  var rm = _p2Rm();
+  var sy = y != null ? parseInt(y, 10) : parseInt(rm.start.slice(0, 4), 10);
+  var sm = m != null ? parseInt(m, 10) : parseInt(rm.start.slice(5, 7), 10);
+  rm.start = sy + '-' + String(sm).padStart(2, '0');
+  saveGoals(); _p2RmRender();
+}
+function p2RmCell(row, ym, v) {
+  var rm = _p2Rm();
+  var n = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
+  rm.rows[row][ym] = n;
+  if (row === 'front' && n !== '') _p2M(ym).front = n; // 月の目標へ連動
+  saveGoals();
+  if (currentView === 'plan') renderPlan();
+}
+function p2RmMsForm(ym, msId) {
+  _p2SheetClose('p2RmMsOv');
+  var rm = _p2Rm();
+  var editing = null;
+  if (msId) { for (var i = 0; i < rm.ms.length; i++) { if (rm.ms[i].id === msId) { editing = rm.ms[i]; break; } } }
+  var col = editing ? (editing.color || P2RM_COLORS[0]) : P2RM_COLORS[0];
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2RmMsOv'; ov.style.zIndex = '660';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2RmMsOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🚩 ' + _p2YmLabel(ym) + ' のマイルストーン</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2RmMsOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
+    + '<input class="fi" id="p2rmS" placeholder="補足（例：60人タッチ / LOIカウント）任意" value="' + evEsc(editing && editing.sub ? editing.sub : '') + '" style="margin-bottom:8px">'
+    + '<div class="p2-meta">色</div><div style="display:flex;gap:6px;margin:4px 0 10px" id="p2rmCols">'
+    + P2RM_COLORS.map(function(c) { return '<span data-c="' + c + '" onclick="p2RmMsCol(\'' + c + '\')" style="width:30px;height:30px;border-radius:9px;background:' + c + ';cursor:pointer;border:2.5px solid ' + (c === col ? 'var(--text)' : 'transparent') + '"></span>'; }).join('')
+    + '</div>'
+    + '<div style="display:flex;gap:6px">'
+    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2RmMsSave(\'' + ym + '\',\'' + (msId || '') + '\')">' + (editing ? '✔ 更新' : '＋ 追加') + '</span>'
+    + (editing ? '<span class="p2-btn" style="margin:0;color:var(--red)" onclick="p2RmMsDel(\'' + msId + '\')">🗑 削除</span>' : '')
+    + '</div></div></div>';
+  document.body.appendChild(ov);
+  window._p2RmCol = col;
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2RmMsCol(c) {
+  window._p2RmCol = c;
+  var wrap = document.getElementById('p2rmCols');
+  if (wrap) { var ks = wrap.querySelectorAll('span'); for (var i = 0; i < ks.length; i++) ks[i].style.borderColor = ks[i].getAttribute('data-c') === c ? 'var(--text)' : 'transparent'; }
+}
+function p2RmMsSave(ym, msId) {
+  var t = ((document.getElementById('p2rmT') || {}).value || '').trim();
+  if (!t) { toast('タイトルを入力してください'); return; }
+  var sub = ((document.getElementById('p2rmS') || {}).value || '').trim();
+  var rm = _p2Rm();
+  if (msId) {
+    for (var i = 0; i < rm.ms.length; i++) { if (rm.ms[i].id === msId) { rm.ms[i].t = t; rm.ms[i].sub = sub; rm.ms[i].color = window._p2RmCol; break; } }
+  } else {
+    rm.ms.push({ id: 'rm_' + Date.now() + '_' + Math.floor(Math.random() * 10000), ym: ym, t: t, sub: sub, color: window._p2RmCol });
+  }
+  saveGoals();
+  _p2SheetClose('p2RmMsOv');
+  _p2RmRender();
+  if (currentView === 'plan') renderPlan();
+}
+function p2RmMsDel(msId) {
+  var rm = _p2Rm();
+  for (var i = 0; i < rm.ms.length; i++) { if (rm.ms[i].id === msId) { rm.ms.splice(i, 1); break; } }
+  saveGoals();
+  _p2SheetClose('p2RmMsOv');
+  _p2RmRender();
+  if (currentView === 'plan') renderPlan();
+}
+// PLAN右カラムのミニ表示（今月±2ヶ月）
+function _p2RmMiniHtml() {
+  var rm = _p2Rm();
+  var cur = _p2Ym(0);
+  var yms = [];
+  var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1);
+  for (var i = 0; i < 5; i++) { yms.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')); d.setMonth(d.getMonth() + 1); }
+  var p = state.goals.plan;
+  var cells = yms.map(function(ym) {
+    var chips = '';
+    if (p && p.deadline === ym && p.title) chips += '<span class="p2rm-chip" style="background:#F6C744;max-width:none">🎯</span>';
+    rm.ms.filter(function(m) { return m.ym === ym; }).slice(0, 2).forEach(function(m) {
+      chips += '<span class="p2rm-chip" style="background:' + (m.color || P2RM_COLORS[0]) + ';max-width:none">' + evEsc(String(m.t).slice(0, 6)) + '</span>';
+    });
+    var f = _p2RmFront(rm, ym);
+    return '<div class="mc' + (ym === cur ? ' cur' : '') + '"><div class="ml">' + parseInt(ym.slice(5, 7), 10) + '月</div>' + chips + '<div class="mf">' + (f === '' ? '–' : f) + '</div></div>';
+  }).join('');
+  return '<div class="p2-card"><div class="p2-t">🗺 年間ロードマップ<span class="sp"></span>'
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2RmOpen()">開く</span></div>'
+    + '<div class="p2rm-mini">' + cells + '</div>'
+    + '<div class="p2-meta" style="margin-top:4px;text-align:center">下段=フロント目標</div></div>';
+}
+// ── 年別目標（タイトル＋目標月収＋ひとこと） ──
+var P2_YEAR_TITLES = ['BR', 'ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'チームエリート'];
+function p2YearsOpen() {
+  _p2SheetClose('p2YrOv');
+  var p2 = _p2();
+  if (!p2.years) p2.years = {};
+  var p = state.goals.plan;
+  var y0 = new Date().getFullYear();
+  var yEnd = p.deadline ? parseInt(String(p.deadline).slice(0, 4), 10) : (y0 + 2);
+  if (yEnd < y0) yEnd = y0;
+  if (yEnd > y0 + 5) yEnd = y0 + 5;
+  var rows = '';
+  for (var y = y0; y <= yEnd; y++) {
+    var v = p2.years[y] || {};
+    var isLast = y === yEnd && p.title;
+    var tSel = '<select class="fi" style="flex:1.2;padding:8px 4px;font-size:12.5px" onchange="p2YearCell(' + y + ',\'t\',this.value)"><option value="">タイトル</option>'
+      + P2_YEAR_TITLES.map(function(t) { return '<option value="' + t + '"' + ((v.t || (isLast && !v.t ? p.title : '')) === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>';
+    rows += '<div style="margin-bottom:10px"><div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">'
+      + '<span style="font-size:14px;font-weight:800;flex:none;width:56px">' + y + '年</span>' + tSel
+      + '<input class="fi" type="number" inputmode="numeric" placeholder="月収(万円)" value="' + (v.inc || (isLast && !v.inc && p.income ? Math.round(p.income / 10000) : '')) + '" style="flex:1;min-width:70px;padding:8px 6px;font-size:13px" onfocus="edSelAll(this)" onchange="p2YearCell(' + y + ',\'inc\',this.value)">'
+      + '</div>'
+      + '<input class="fi" placeholder="ひとこと（例：ユニオン30人・SA達成）" value="' + evEsc(v.memo || '') + '" style="font-size:12.5px;padding:8px 10px" onchange="p2YearCell(' + y + ',\'memo\',this.value)">'
+      + '</div>';
+  }
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2YrOv'; ov.style.zIndex = '610';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2YrOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:92vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📆 年ごとの目標</div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">期日（' + evEsc(p.deadline || '未設定') + '）から逆算して、各年のタイトルと目標月収を決めよう</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2YrOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">' + rows
+    + '<div class="p2-meta">最終年は目標設定のタイトル・月収が初期表示されます（変更可・自動保存）</div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2YearCell(y, k, v) {
+  var p2 = _p2();
+  if (!p2.years) p2.years = {};
+  if (!p2.years[y]) p2.years[y] = {};
+  p2.years[y][k] = (k === 'inc') ? (parseInt(v, 10) || '') : String(v);
+  saveGoals();
+  if (currentView === 'plan') renderPlan();
+}
+// ── 立案ステッパー（7ステップ・タップで該当画面へ） ──
+function _p2Steps() {
+  var p = state.goals.plan, g = _p2G(), p2 = _p2();
+  var ym = _p2Ym(0), t = evTodayYmd();
+  var evs = (state.events || []).filter(function(e) { return !e.deleted; });
+  var s5 = evs.some(function(e) { return e.type !== 'event' && (e.date || '').slice(0, 7) === ym; });
+  var s6 = evs.some(function(e) { return e.type !== 'event' && e.date === t; });
+  var s7 = evs.some(function(e) { return e.done && e.date === t; }) || !!(p.dailyActuals && p.dailyActuals[t] && Object.keys(p.dailyActuals[t]).length);
+  return [
+    { lb: '価値観', done: !!(g.p1 || (p.title && p.deadline)) },
+    { lb: '年別目標', done: !!(p2.years && Object.keys(p2.years).some(function(k) { var v = p2.years[k]; return v && (v.t || v.inc); })) },
+    { lb: '年間MS', done: !!(p2.roadmap && (p2.roadmap.ms || []).length) },
+    { lb: '今月目標', done: _p2Declared(ym) },
+    { lb: '月間タスク', done: s5 },
+    { lb: '日々', done: s6 },
+    { lb: '実行', done: s7 }
+  ];
+}
+function _p2StepperHtml() {
+  var st = _p2Steps();
+  var curIdx = -1;
+  for (var i = 0; i < st.length; i++) { if (!st[i].done) { curIdx = i; break; } }
+  return '<div class="p2st">' + st.map(function(x, i) {
+    var cls = x.done ? 'done' : (i === curIdx ? 'cur' : '');
+    return '<span class="' + cls + '" onclick="p2StepGo(' + i + ')"><b>' + (x.done ? '✓' : (i + 1)) + '</b>' + x.lb + '</span>';
+  }).join('') + '</div>';
+}
+function p2StepGo(i) {
+  if (i === 0) { p2GwOpen(); return; }
+  if (i === 1) { p2YearsOpen(); return; }
+  if (i === 2) { p2RmOpen(); return; }
+  if (i === 3) { var el = document.getElementById('p2MonCur'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (i === 4) { var f = document.getElementById('p2FunCard'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (i === 5) { switchView('events'); return; }
+  if (i === 6) { switchView('home'); return; }
+}
+// ── PC: 右下の浮きメモパッド（書き出し） ──
+var _p2PadTab = 'write';
+function p2PadToggle() {
+  var pad = document.getElementById('p2Pad');
+  if (!pad) { _p2PadBuild(); pad = document.getElementById('p2Pad'); }
+  var showing = pad.classList.contains('show');
+  if (showing) { _p2PadFlush(); pad.classList.remove('show'); }
+  else { pad.classList.add('show'); _p2PadRender(); }
+}
+function _p2PadBuild() {
+  var pad = document.createElement('div');
+  pad.id = 'p2Pad'; pad.className = 'p2pad';
+  pad.innerHTML = '<div class="p2pad-hd">'
+    + '<span class="p2pad-tab on" id="p2PadTabW" onclick="p2PadTab(\'write\')">✍️ 書く</span>'
+    + '<span class="p2pad-tab" id="p2PadTabL" onclick="p2PadTab(\'list\')">📥 未整理<span id="p2PadCnt"></span></span>'
+    + '<span style="cursor:pointer;color:var(--text-dim);padding:2px 6px" onclick="p2PadToggle()">✕</span></div>'
+    + '<div class="p2pad-bd" id="p2PadBody"></div>';
+  document.body.appendChild(pad);
+}
+function p2PadTab(t) {
+  _p2PadTab = t;
+  var tw = document.getElementById('p2PadTabW'), tl = document.getElementById('p2PadTabL');
+  if (tw) tw.classList.toggle('on', t === 'write');
+  if (tl) tl.classList.toggle('on', t === 'list');
+  _p2PadRender();
+}
+function _p2PadRender() {
+  var bd = document.getElementById('p2PadBody');
+  if (!bd) return;
+  var items = (_p2().inbox || []).filter(function(x) { return x && x.st !== 'done'; });
+  var cnt = document.getElementById('p2PadCnt');
+  if (cnt) cnt.textContent = items.length ? '(' + items.length + ')' : '';
+  if (_p2PadTab === 'write') {
+    var draft = '';
+    try { draft = localStorage.getItem('gm_p2draft') || ''; } catch(e) {}
+    bd.innerHTML = '<div class="p2-meta">目標を見ながら殴り書き。改行で1件。</div>'
+      + '<textarea id="p2PadTa" placeholder="思いついたことをそのまま…" oninput="try{localStorage.setItem(\'gm_p2draft\',this.value)}catch(e){}">' + evEsc(draft) + '</textarea>'
+      + '<span class="p2-btn pri" style="margin:0;text-align:center" onclick="p2PadSave()">📥 未整理に入れる</span>';
+  } else {
+    var h = '';
+    if (!items.length) h = '<div class="p2-meta" style="text-align:center;padding:14px 0">未整理はありません</div>';
+    items.slice(0, 30).forEach(function(x) {
+      h += '<div class="p2-inbrow" style="margin:0"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">' + evEsc(x.t) + '</span>'
+        + '<span class="p2-ib" onclick="p2InbTask(\'' + x.id + '\');_p2PadRender()" title="今日のタスクにする">✅</span>'
+        + '<span class="p2-ib" onclick="p2InbSkill(\'' + x.id + '\');_p2PadRender()" title="今月の自分磨きにする">📚</span>'
+        + '<span class="p2-ib" onclick="p2InbMemo(\'' + x.id + '\')" title="メンバーのメモにする">👤</span>'
+        + '<span class="p2-ib" onclick="p2InbDel(\'' + x.id + '\');_p2PadRender()" title="削除">🗑</span></div>';
+    });
+    bd.innerHTML = h;
+  }
+}
+function p2PadSave() {
+  var ta = document.getElementById('p2PadTa');
+  if (!ta) return;
+  var lines = (ta.value || '').split('\n').map(function(s) { return s.trim(); }).filter(Boolean);
+  if (!lines.length) { toast('内容を入力してください'); return; }
+  var p2 = _p2();
+  lines.forEach(function(t) { p2.inbox.unshift({ id: 'ib_' + Date.now() + '_' + Math.floor(Math.random() * 100000), t: t, at: evTodayYmd() }); });
+  ta.value = '';
+  try { localStorage.removeItem('gm_p2draft'); } catch(e) {}
+  saveGoals();
+  toast('📥 ' + lines.length + '件を未整理に入れました');
+  _p2PadRender(); _p2FabBadge();
+  if (currentView === 'plan') renderPlan();
+}
+function _p2PadFlush() {
+  // 閉じるときは下書きのまま保持（localStorage）。何もしない
+}
+function _p2FabBadge() {
+  var f = document.getElementById('p2Fab');
+  if (!f) return;
+  var n = (_p2().inbox || []).filter(function(x) { return x && x.st !== 'done'; }).length;
+  var b = document.getElementById('p2FabBadge');
+  if (!b) {
+    b = document.createElement('span');
+    b.id = 'p2FabBadge';
+    b.style.cssText = 'position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#FF5D73;color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px';
+    f.style.position = 'fixed';
+    f.appendChild(b);
+  }
+  b.style.display = n ? 'flex' : 'none';
+  b.textContent = n;
 }
 
 function renderMonth(){
