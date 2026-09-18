@@ -2172,7 +2172,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2-prog{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:4px}
 .p2-prog>i{display:block;height:100%;border-radius:4px;background:var(--accent)}
 .p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
-.p2-banner{position:fixed;top:0;left:0;right:0;z-index:485;background:#7f1d1d;color:#fecaca;font-size:12px;font-weight:700;text-align:center;padding:7px 10px;cursor:pointer;display:none}
+.p2-banner{position:fixed;top:0;left:0;right:0;z-index:485;background:#7f1d1d;color:#fecaca;font-size:12px;font-weight:700;text-align:center;padding:7px 10px;padding-top:calc(7px + env(safe-area-inset-top,0px));cursor:pointer;display:none}
 .p2-fab{position:fixed;right:16px;bottom:158px;width:52px;height:52px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:23px;z-index:496;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}
 @media(min-width:768px){.p2-fab{bottom:26px;right:88px}}
 .p2-ink{position:fixed;inset:0;z-index:645;background:var(--bg);display:none;flex-direction:column;padding:16px}
@@ -2386,7 +2386,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v475</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v476</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5387,7 +5387,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v475';
+  var DATA_VERSION = 'v476';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5568,6 +5568,14 @@ function switchView(v) {
   updateFabVisibility();
   if (typeof _p2BannerSync === 'function') _p2BannerSync();
   if (v !== 'events') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
+  if (v === 'plan' && currentUser && !viewingOwnerUid && typeof loadGoals === 'function') {
+    // v476: 他端末で宣言した直後でもバナーが消えるよう、PLANを開くたび最新のgoalsを取り込む（60秒に1回）
+    var _gn9 = Date.now();
+    if (!window._p2GoalsAt || _gn9 - window._p2GoalsAt > 60000) {
+      window._p2GoalsAt = _gn9;
+      try { loadGoals(currentUser.uid); } catch(e9) {}
+    }
+  }
   if (v==='home') renderHome();
   else if (v==='members') renderMembers();
   else if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
@@ -6346,6 +6354,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v476', d:'2026-09-18', items:['🐛 宣言したのに「未宣言」アラートが出続ける問題を根治：複数端末で使うと、宣言前に開いていた端末（開きっぱなしのPC等）が保存のたびに「未宣言」でサーバーを上書きしていました。①保存時に「未宣言」フラグを送らない（宣言済みを消せない）②宣言はその場で即サーバー反映③PLANタブを開くと最新の宣言状態を自動で取り込むよう修正','📱 未宣言バナーがiPhoneのステータスバーに隠れて「赤い帯」だけになる問題を修正（セーフエリア対応）'] },
   { v:'v475', d:'2026-09-14', items:['⚡ PC版の高速化：画面には出ないモバイル用ツリーを毎回まるごと組み立ててからSVG組織図を描いていたため、入力のたび・共有MAP切替のたびに描画が約2倍重くなっていました。PCではSVGだけを描くように修正','🐛 絞り込み（研修生/BR/QBR/金の船/地域）で、編集直後のメンバーが古い情報のまま判定され「該当じゃない人が強調される」バグを修正（保存時に検索キャッシュを更新）','🐛 研修結果「流れた」のNA（タイトル未設定〜研修ステップ）が翌月コピーで残ってしまう問題を修正：OUTと同じく翌月から自動で除外されます（プレビューにも表示）','🙈 OUT非表示ボタンのサルの絵文字を削除しました'] },
   { v:'v474', d:'2026-09-13', items:['🌟 GOAL SETTINGアプリをPLANタブに統合しました（北極星カードが「GOALハブ」になり、5つのツールが開けます）','🧭 目標ウィザード刷新：住まい・食・車（ローン計算つき）・旅行・親孝行…と理想の生活を積み上げると目標月収が自動合計→タイトル・期日まで一気に設定（チャット形式・スキップ可）。やりたいこと5つ×4種・やる理由作文も','🎮 シミュレーション：フロント数×BPC×複製率で4ヶ月後の組織人数・GSV・ビルディングボーナス額を試算。「この人数を今月の宣言に入れる」でそのまま宣言に反映できます','🌈 夢100リスト：ほしいもの/やりたいことを金額つきで登録→達成チェック。合計・達成済み・残り必要額と期間別の必要額も表示','✅ チェックリスト：必須アイテムとTRAININGの進捗管理（日付つき）。未完了項目はワンタップで今日のタスクにできます','💴 BB早見表：GSVを入れるとビルディングボーナス額を即計算（初期値は自分の今月GSV）。ハブカードにも「今月のGSV→BB換算」を常時表示','（旧GOAL SETTINGで設定済みの方は、新ウィザードで一度答え直してください。2分で終わります）'] },
   { v:'v473', d:'2026-09-13', items:['🐛 今月の宣言をしたのに、しばらくすると「未宣言」アラートが再び出るバグを修正（データ再読込のときにPLANタブの宣言データを読み落としていました。宣言・北極星・書き出し・検証の内容も再読込後に正しく表示されます）'] },
@@ -13113,12 +13122,29 @@ function loadGoals(uid){
   }).catch(function(){ if(!state.goals) state.goals=_glDefault(); });
 }
 var _glSaveT=null;
+// v476: 保存ペイロードから「未宣言(declared:false)」「未検証(review:null)」を取り除く。
+// UIに宣言取消は無いので、falseを書く正当な理由がない。merge:trueなので送らなければサーバーの
+// 宣言済みが残り、宣言前に開いていた古い端末の保存が他端末の宣言を上書きする事故を防ぐ
+function _glSanitized(g){
+  try {
+    var c = JSON.parse(JSON.stringify(g));
+    var ms = c && c.plan2 && c.plan2.months;
+    if (ms) {
+      for (var k in ms) {
+        if (!ms[k]) continue;
+        if (ms[k].declared === false) delete ms[k].declared;
+        if (ms[k].review === null || ms[k].review === undefined) delete ms[k].review;
+      }
+    }
+    return c;
+  } catch(e) { return g; }
+}
 function saveGoals(){
   if(!state.goals) return;
   var uid=goalsUid(); if(!uid||!db) return;
   if(_glSaveT) clearTimeout(_glSaveT);
   _glSaveT=setTimeout(function(){
-    fsSet('maps/'+uid+'/meta/goals', state.goals).then(function(){ if(typeof updateLastSaved==='function') updateLastSaved(); }).catch(function(){});
+    fsSet('maps/'+uid+'/meta/goals', _glSanitized(state.goals)).then(function(){ if(typeof updateLastSaved==='function') updateLastSaved(); }).catch(function(){});
   }, 400);
 }
 function _glItems(level, parentId){
@@ -14144,6 +14170,12 @@ function p2SetM(ym, k, v) {
 function p2Declare(ym) {
   var m = _p2M(ym);
   m.declared = true;
+  m.declaredAt = evTodayYmd();
+  // v476: 宣言はその場で即サーバーへ（デバウンス待ちの間にリロード/クラッシュしても消えない）
+  try {
+    var _du = goalsUid();
+    if (_du && db) { var _mo = {}; _mo[ym] = { declared: true, declaredAt: m.declaredAt }; fsSet('maps/' + _du + '/meta/goals', { plan2: { months: _mo } }).catch(function(){}); }
+  } catch(e) {}
   saveGoals();
   toast('✅ ' + _p2YmLabel(ym) + 'の目標を宣言しました');
   renderPlan();
