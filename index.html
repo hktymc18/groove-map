@@ -2172,7 +2172,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2-prog{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:4px}
 .p2-prog>i{display:block;height:100%;border-radius:4px;background:var(--accent)}
 .p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
-.p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none}
+.p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none;animation:p2bIn .35s ease}
+@keyframes p2bIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(min-width:768px){.p2-banner{left:auto;right:24px;bottom:24px;max-width:340px}}
 .p2-fab{position:fixed;right:16px;bottom:158px;width:52px;height:52px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:23px;z-index:496;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}
 @media(min-width:768px){.p2-fab{bottom:26px;right:88px}}
@@ -2396,7 +2397,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v479</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v480</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5397,7 +5398,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v479';
+  var DATA_VERSION = 'v480';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6364,6 +6365,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v480', d:'2026-09-18', items:['🐛 アプリを開くたびに未宣言の赤い通知が一瞬だけ表示される問題を解消：宣言状態を「宣言済み/未宣言/未確認」の3値で扱い、サーバー確認が済むまでは表示しない方式に変更。さらに一度宣言済みを確認した端末は記憶して、次回から確認を待たずに非表示を確定します（オフラインでも誤表示なし）。本当に未宣言のときだけ、ふわっとフェードインで表示されます'] },
   { v:'v479', d:'2026-09-18', items:['🐛 画面最上部に文字の読めない「赤い帯」が出る問題を解消：未宣言のお知らせを画面上部の帯から、下部ナビの上に浮かぶピル型の通知に変更しました（iPhoneのステータスバーと重なる構造自体を廃止。タップでPLANへ）','🔄 通知を出す前にサーバーの宣言状態を自動で確認し、宣言済みならその場で消えるようにしました（他の端末で宣言した直後でもOK）'] },
   { v:'v478', d:'2026-09-18', items:['🌈 夢100リストの入力と閲覧を分離：「＋夢を追加」から専用の入力画面が開き、カテゴリもその中で選ぶ方式に。タブを切り替えても入力中の内容は消えません（追加後は続けて次を入力できます）','🖥 PC版の夢100は画面中央の大きなウィンドウ（最大1100px）で表示：左に統計・期間フィルタ、右に夢のカードが2〜4列のグリッドで並びます','📋 並び順を「期日が近い順→期日なし→達成済み」に変更（次に叶える夢が先頭に）'] },
   { v:'v477', d:'2026-09-18', items:['🌈 夢100リストを完全版に：各項目に「いつまでに（期日）」と「URL」を登録でき、✏で後から編集できるようになりました','📅 期間で一覧表示：「◯年◯月まで」を選ぶと、その期日までの夢だけの一覧と必要金額の合計が出ます（元のGOAL SETTINGと同じ動き）','🔗 URLを付けた夢はタイトルがリンクになり、タップで商品ページ等を開けます'] },
@@ -13130,9 +13132,10 @@ function loadGoals(uid){
     } else { state.goals = _glDefault(); if (_keepP2) state.goals.plan2 = _keepP2; }
     if(currentView==='goals') renderGoals();
     if(currentView==='plan' && typeof renderPlan==='function') renderPlan();
+    window._p2GoalsLoaded = true; // v480: サーバー確認済み（これ以降のみ未宣言通知を出せる）
     if(typeof _p2BannerSync==='function') setTimeout(_p2BannerSync, 50);
     return state.goals;
-  }).catch(function(){ if(!state.goals) state.goals=_glDefault(); });
+  }).catch(function(){ if(!state.goals) state.goals=_glDefault(); window._p2GoalsLoaded = true; if(typeof _p2BannerSync==='function') setTimeout(_p2BannerSync, 50); });
 }
 var _glSaveT=null;
 // v476: 保存ペイロードから「未宣言(declared:false)」「未検証(review:null)」を取り除く。
@@ -14184,6 +14187,7 @@ function p2Declare(ym) {
   var m = _p2M(ym);
   m.declared = true;
   m.declaredAt = evTodayYmd();
+  try { localStorage.setItem('gm_p2decl', ym); } catch(eL) {} // v480: この端末は以後「確認待ち」なしで非表示確定
   // v476: 宣言はその場で即サーバーへ（デバウンス待ちの間にリロード/クラッシュしても消えない）
   try {
     var _du = goalsUid();
@@ -14508,13 +14512,24 @@ function _p2BannerSync() {
   try {
     var b = document.getElementById('p2Banner');
     var dot = document.getElementById('p2NavDot');
-    var need = currentUser && state && state.isEditor && !viewingOwnerUid && !_p2Declared(_p2Ym(0));
+    var ym9 = _p2Ym(0);
+    var declared9 = _p2Declared(ym9);
+    // v480: この端末で「当月宣言済み」を一度確認したら記憶（次回起動は確認を待たず非表示を確定）
+    var localOk9 = false;
+    try {
+      if (declared9) localStorage.setItem('gm_p2decl', ym9);
+      localOk9 = localStorage.getItem('gm_p2decl') === ym9;
+    } catch(eL9) {}
+    // v480: 3値判定 — サーバー確認済み(_p2GoalsLoaded)かローカルマーカーがあるまでは「未確認」＝表示しない
+    var known9 = declared9 || localOk9 || window._p2GoalsLoaded === true;
+    var need = known9 && !declared9 && !localOk9 && currentUser && state && state.isEditor && !viewingOwnerUid;
     if (dot) dot.style.display = need ? '' : 'none';
     if (b) b.style.display = (need && currentView !== 'plan') ? 'block' : 'none';
     var f = document.getElementById('p2Fab');
     if (f) f.style.display = (currentView === 'plan') ? '' : 'none';
     // v479: 表示しようとした時はサーバーの宣言状態を再確認（他端末で宣言済みなら自動消灯）
-    if (need && currentUser && !viewingOwnerUid && typeof loadGoals === 'function' && db) {
+    // v480: 未確認(known9=false)のときも裏で確認を走らせ、確定してから表示判定する
+    if ((need || !known9) && currentUser && !viewingOwnerUid && typeof loadGoals === 'function' && db) {
       var _bn9 = Date.now();
       if (!window._p2GoalsAt || _bn9 - window._p2GoalsAt > 60000) {
         window._p2GoalsAt = _bn9;
