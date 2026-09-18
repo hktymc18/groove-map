@@ -2316,6 +2316,12 @@ function eventForm(ev){
     + '<label for="evModeSelf" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">CLAVIS主催・セルフチェックイン</label></div>'
     + '<div class="chkrow' + (isSelfCur ? '' : ' hide') + '" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode"' + (ev && ev.requireCode ? ' checked' : '') + '>'
     + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する（会場で案内された4桁を入れないとチェックインできない）</label></div>'
+    + '<div style="display:flex;gap:10px;margin-top:4px;">'
+    + '<div style="flex:1;min-width:0;"><label>受付料金 第1部（¥）</label>'
+    + '<input type="text" id="evFee1" inputmode="numeric" value="' + esc(ev && ev.fee1 != null ? ev.fee1 : 1000) + '"></div>'
+    + '<div style="flex:1;min-width:0;"><label>第2部・会場代のみ（¥）</label>'
+    + '<input type="text" id="evFee2" inputmode="numeric" value="' + esc(ev && ev.fee2 != null ? ev.fee2 : 500) + '"></div>'
+    + '</div>'
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evPayMode"' + (ev && ev.payMode === 'paypay' ? ' checked' : '') + '>'
     + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayで集金する（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evOnline"' + (ev && ev.online ? ' checked' : '') + '>'
@@ -2373,6 +2379,8 @@ function eventForm(ev){
       hostLabel: isSelf ? 'CLAVIS' : '',
       requireCode: reqCode,
       venueCode: reqCode ? ((ev && ev.venueCode) || String(Math.floor(1000 + Math.random() * 9000))) : '',
+      fee1: (function(){ var n = parseInt($('evFee1').value, 10); return isNaN(n) ? 1000 : n; })(),
+      fee2: (function(){ var n = parseInt($('evFee2').value, 10); return isNaN(n) ? 500 : n; })(),
       payMode: $('evPayMode').checked ? 'paypay' : '',
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
@@ -2691,6 +2699,8 @@ function financeModal(ev){
   Promise.all([finRef.get(), attRef.get()]).then(function(res){
     var snap = res[0];
     // 受付の徴収データからBA人数を自動集計（未保存の場合の初期値に使う）
+    // c1000/c500 はイベント設定の第1部/第2部料金（初期値 ¥1,000/¥500）に一致した徴収の人数
+    var bF1 = evFee1(ev), bF2 = evFee2(ev);
     var attCount = 0, c1000 = 0, c500 = 0;
     var adet = [], dCash = 0, dPp = 0, dUnpaid = 0, dCashN = 0, dRefN = 0;
     res[1].forEach(function(d){
@@ -2711,8 +2721,8 @@ function financeModal(ev){
       }
       if(!pending && fee > 0 && a.paid !== false && (ppMode || a.payMethod !== 'paypay')){
         var net = fee - (a.refund || 0);
-        if(net === 1000) c1000++;
-        else if(net === 500) c500++;
+        if(net === bF1) c1000++;
+        else if(net === bF2) c500++;
       }
     });
     adet.sort(function(a, b){ return (a.atLocal || '') < (b.atLocal || '') ? -1 : 1; });
@@ -2746,10 +2756,10 @@ function financeModal(ev){
       if(n > 0) savedHasCount = true;
     });
     var inc = (f.income && savedHasCount) ? f.income : [
-      { label: 'BA', unit: 1000, count: c1000 || '' },
-      { label: 'BA', unit: 500, count: c500 || '' },
-      { label: 'BA（オンライン）', unit: 1000, count: '' },
-      { label: 'BA（オンライン）', unit: 500, count: '' },
+      { label: 'BA', unit: bF1, count: c1000 || '' },
+      { label: 'BA', unit: bF2, count: c500 || '' },
+      { label: 'BA（オンライン）', unit: (ev.onlineFee != null ? ev.onlineFee : 1000), count: '' },
+      { label: 'BA（オンライン）', unit: bF2, count: '' },
       { label: '', unit: '', count: '' },
       { label: '', unit: '', count: '' }
     ];
@@ -2861,10 +2871,10 @@ function financeModal(ev){
     // 受付の徴収データでBA行を入れ直す（保存済みの古い人数を最新に更新したいとき用）
     var ab = $('fnAuto');
     if(ab) ab.onclick = function(){
-      $('fiL0').value = 'BA'; $('fiU0').value = 1000; $('fiC0').value = c1000 || '';
-      $('fiL1').value = 'BA'; $('fiU1').value = 500; $('fiC1').value = c500 || '';
+      $('fiL0').value = 'BA'; $('fiU0').value = bF1; $('fiC0').value = c1000 || '';
+      $('fiL1').value = 'BA'; $('fiU1').value = bF2; $('fiC1').value = c500 || '';
       recompute();
-      toast('受付データからBA人数を入力しました（¥1,000×' + c1000 + '名・¥500×' + c500 + '名）');
+      toast('受付データからBA人数を入力しました（' + yen(bF1) + '×' + c1000 + '名・' + yen(bF2) + '×' + c500 + '名）');
     };
     if(f.locked){
       // 確定済み: 入力を全てロック
@@ -3081,7 +3091,17 @@ function renderRecSelect(){
       + esc((ev.date || '').slice(5).replace('-', '/')) + ' ' + esc(ev.name || '')
       + ((ev.unions || []).length > 1 ? '（合同）' : '') + '</option>';
   }).join('');
+  updFeeModeLabels();
 }
+// 料金モードの選択肢に、選択中イベントの設定料金を表示
+function updFeeModeLabels(){
+  var id = $('recEvSel').value, ev = null;
+  gEvents.forEach(function(x){ if(x.id === id) ev = x; });
+  var o = $('feeModeSel').options;
+  o[0].text = '通常受付（1部 ' + yen(evFee1(ev)) + '）';
+  o[1].text = '会場代のみ（' + yen(evFee2(ev)) + '）';
+}
+$('recEvSel').onchange = updFeeModeLabels;
 $('btnRecStart').onclick = function(){
   var id = $('recEvSel').value;
   if(!id){ toast('イベントを選択してください'); return; }
@@ -3169,22 +3189,27 @@ function stopReception(){
 }
 
 /* ── 受付の料金（ピッと同時に自動計上） ── */
+// イベントごとに設定可能（未設定の初期値: 第1部¥1,000 / 第2部・会場代のみ¥500）
+function evFee1(ev){ var n = ev ? parseInt(ev.fee1, 10) : NaN; return isNaN(n) ? 1000 : n; }
+function evFee2(ev){ var n = ev ? parseInt(ev.fee2, 10) : NaN; return isNaN(n) ? 500 : n; }
 function currentFee(){
   if(!gRec) return 0;
-  if(gRec.feeMode === 'venue') return 500;          // 会場代のみ（ハウディ代はPayPay等）
-  return gRec.part === 2 ? 500 : 1000;              // 通常: 1部¥1000 / 2部から¥500
+  if(gRec.feeMode === 'venue') return evFee2(gRec.ev);   // 会場代のみ（ハウディ代はPayPay等）
+  return gRec.part === 2 ? evFee2(gRec.ev) : evFee1(gRec.ev);
 }
 function renderFeeRow(){
   if(!gRec) return;
   var moneyIcon = gRec.payMode ? '💳' : '💰';
   if(gRec.feeMode === 'venue'){
-    $('feeInfo').textContent = moneyIcon + ' 会場代のみ受付中 — 新規 ¥500' + (gRec.payMode ? '（PayPay集金）' : '');
+    $('feeInfo').textContent = moneyIcon + ' 会場代のみ受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
     $('btnPartToggle').classList.add('hide');
   } else {
     $('feeInfo').textContent = moneyIcon + ' 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
     var b = $('btnPartToggle');
     b.classList.remove('hide');
-    b.textContent = gRec.part === 1 ? '第2部受付に切替（新規¥500）' : '第1部受付に戻す（新規¥1,000）';
+    b.textContent = gRec.part === 1
+      ? '第2部受付に切替（新規' + yen(evFee2(gRec.ev)) + '）'
+      : '第1部受付に戻す（新規' + yen(evFee1(gRec.ev)) + '）';
   }
   renderPpPanel();
 }
@@ -3263,7 +3288,8 @@ function payModal(no){
     if(paid) btns += isPp
       ? '<button id="pmToCash">現金受領に変更</button>'
       : '<button id="pmToPp">PayPay受領に変更</button>';
-    if(paid && !refund) btns += '<button id="pmRefund">¥500 返金する（2部不参加）</button>';
+    var rfAmt = Math.max(0, evFee1(gRec.ev) - evFee2(gRec.ev));   // 2部不参加の返金 = 第1部と第2部の差額
+    if(paid && !refund && rfAmt > 0) btns += '<button id="pmRefund">' + yen(rfAmt) + ' 返金する（2部不参加）</button>';
     if(refund) btns += '<button id="pmUnrefund">返金を取り消す</button>';
   } else {
     btns += '<p style="font-size:13px;color:var(--sub);">この受付は徴収対象外です（登壇者・運営・セルフ等）。</p>';
@@ -3283,7 +3309,7 @@ function payModal(no){
   };
   if((b = $('pmToCash'))) b.onclick = function(){ setPay(no, { payMethod: '' }); closeModal(); toast(a.name + ' さんを現金受領に変更しました'); focusScan(); };
   if((b = $('pmToPp'))) b.onclick = function(){ setPay(no, { payMethod: 'paypay' }); closeModal(); toast(a.name + ' さんをPayPay受領に変更しました'); focusScan(); };
-  if((b = $('pmRefund'))) b.onclick = function(){ setPay(no, { refund: 500 }); closeModal(); toast(a.name + ' さんに ¥500 返金しました'); focusScan(); };
+  if((b = $('pmRefund'))) b.onclick = function(){ setPay(no, { refund: rfAmt }); closeModal(); toast(a.name + ' さんに ' + yen(rfAmt) + ' 返金しました'); focusScan(); };
   if((b = $('pmUnrefund'))) b.onclick = function(){ setPay(no, { refund: 0 }); closeModal(); toast('返金を取り消しました'); focusScan(); };
 }
 $('recent').addEventListener('click', function(e){
