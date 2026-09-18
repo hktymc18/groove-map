@@ -401,6 +401,14 @@ tr:last-child td{border-bottom:none;}
           <span id="feeInfo" style="font-weight:700;font-size:14px;"></span>
           <button id="btnPartToggle" class="hide"></button>
         </div>
+        <div id="ppPanel" class="hide" style="display:flex;align-items:center;gap:14px;border:2px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 10px;background:var(--card);">
+          <div id="ppQr" style="flex:0 0 auto;background:#fff;padding:6px;border-radius:8px;"></div>
+          <div style="min-width:0;">
+            <div style="font-weight:900;font-size:16px;">💳 PayPay送金 <span id="ppAmt" class="mono"></span></div>
+            <div id="ppLinkTxt" style="font-size:12.5px;color:var(--sub);word-break:break-all;margin-top:2px;"></div>
+            <div id="ppNote" style="font-size:12px;color:var(--sub);margin-top:2px;"></div>
+          </div>
+        </div>
         <div class="scanstage" id="stage">
           <div class="counter mono" id="ctr">0名</div>
           <div id="stageBody"></div>
@@ -428,7 +436,7 @@ tr:last-child td{border-bottom:none;}
         <div class="tile tap" id="totalTile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div>
           <div id="totalSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div></div>
         <div class="tile tap" id="cashTile">
-          <h3>手元金額（リアルタイム）</h3>
+          <h3 id="cashTitle">手元金額（リアルタイム）</h3>
           <div class="bignum" style="font-size:30px;"><span id="cashNow">¥0</span></div>
           <div id="cashSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div>
           <div id="unpaidList" style="margin-top:6px;"></div>
@@ -2215,6 +2223,7 @@ function renderEvents(){
       + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
       + '<b>' + esc(ev.name || '') + '</b>'
       + (ev.speaker ? '<span style="color:var(--sub);font-size:13px;">🎤 ' + esc(ev.speaker) + '</span>' : '')
+      + (ev.payMode === 'paypay' ? '<span class="jointtag">💳 PayPay集金</span>' : '')
       + (isSelf ? '<span class="jointtag" style="background:var(--green-soft);color:var(--green);">' + esc(ev.hostLabel || 'CLAVIS') + '主催・セルフ</span>' : '')
       + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
@@ -2307,6 +2316,8 @@ function eventForm(ev){
     + '<label for="evModeSelf" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">CLAVIS主催・セルフチェックイン</label></div>'
     + '<div class="chkrow' + (isSelfCur ? '' : ' hide') + '" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode"' + (ev && ev.requireCode ? ' checked' : '') + '>'
     + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する（会場で案内された4桁を入れないとチェックインできない）</label></div>'
+    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evPayMode"' + (ev && ev.payMode === 'paypay' ? ' checked' : '') + '>'
+    + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayで集金する（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evOnline"' + (ev && ev.online ? ' checked' : '') + '>'
     + '<label for="evOnline" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">オンライン受講を受け付ける（会員証から申請→承認でZoom URL自動表示）</label></div>'
     + '<div id="rowOnline" class="' + (ev && ev.online ? '' : 'hide') + '" style="margin-left:22px;">'
@@ -2362,6 +2373,7 @@ function eventForm(ev){
       hostLabel: isSelf ? 'CLAVIS' : '',
       requireCode: reqCode,
       venueCode: reqCode ? ((ev && ev.venueCode) || String(Math.floor(1000 + Math.random() * 9000))) : '',
+      payMode: $('evPayMode').checked ? 'paypay' : '',
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
       onlinePayTo: $('evOnPay').value.trim(),
@@ -2618,11 +2630,12 @@ function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
 // 本体ページごと印刷すると重いので、小さな別ウィンドウに票だけを書いて印刷する
 // （即表示され、ウィンドウのタイトルがそのままPDF保存時のファイル名になる）
 function printCashSlip(ev, f, live){
+  var ppMode = ev.payMode === 'paypay';   // 💳 PayPay集金: 経費は預り金から支出＝現金から差し引かない
   var cash = (f.cashTotal != null) ? f.cashTotal : live.cash;
   var pp = (f.paypayTotal != null) ? f.paypayTotal : live.pp;
   var shortage = f.shortage || 0;
   var expOnly = (f.expenseTotal || 0) - shortage;   // expenseTotal は不足金込みで保存されている
-  var seal = cash - expOnly - shortage;
+  var seal = ppMode ? cash : cash - expOnly - shortage;
   var when = '';
   try{ if(f.updatedAt && f.updatedAt.toDate){ var d = f.updatedAt.toDate();
     when = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' '
@@ -2635,10 +2648,12 @@ function printCashSlip(ev, f, live){
     + '<div class="cs-head"><b>納　金　票</b><span>' + esc(ev.hostUnion || '') + '</span></div>'
     + '<div class="cs-ev">' + esc(ev.date || '') + '　' + esc(ev.name || '')
     + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</div>'
-    + line('現金徴収', yen(cash) + '（' + live.cashN + '名' + (live.refN ? '・返金' + live.refN + '件' : '') + '）')
-    + (pp ? line('PayPay徴収（参考・現金外）', yen(pp)) : '')
-    + line('支出計', '−' + yen(expOnly).slice(1) + '円')
-    + (shortage ? line('不足金', '−' + yen(shortage).slice(1) + '円') : '')
+    + line('現金徴収' + (ppMode ? '（例外分）' : ''), yen(cash) + '（' + live.cashN + '名' + (live.refN ? '・返金' + live.refN + '件' : '') + '）')
+    + (pp ? line(ppMode ? 'PayPay徴収（現金外）' : 'PayPay徴収（参考・現金外）', yen(pp)) : '')
+    + (ppMode
+      ? line('支出計（預り金から支出）', '−' + yen(expOnly + shortage).slice(1) + '円（現金差引なし）')
+      : line('支出計', '−' + yen(expOnly).slice(1) + '円')
+        + (shortage ? line('不足金', '−' + yen(shortage).slice(1) + '円') : ''))
     + line('封入現金額', yen(seal), true)
     + '<div class="cs-foot">'
     + '司会: ' + esc(f.mcName || '　　　') + '　受付: ' + esc(f.receptionName || '　　　')
@@ -2672,6 +2687,7 @@ function printCashSlip(ev, f, live){
 function financeModal(ev){
   var finRef = db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main');
   var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance');
+  var ppMode = ev.payMode === 'paypay';   // 💳 PayPay集金イベント: BA人数はPayPay受領も数える
   Promise.all([finRef.get(), attRef.get()]).then(function(res){
     var snap = res[0];
     // 受付の徴収データからBA人数を自動集計（未保存の場合の初期値に使う）
@@ -2693,7 +2709,7 @@ function financeModal(ev){
           }
         }
       }
-      if(!pending && fee > 0 && a.paid !== false && a.payMethod !== 'paypay'){
+      if(!pending && fee > 0 && a.paid !== false && (ppMode || a.payMethod !== 'paypay')){
         var net = fee - (a.refund || 0);
         if(net === 1000) c1000++;
         else if(net === 500) c500++;
@@ -2765,9 +2781,25 @@ function financeModal(ev){
         + '<label style="font-size:11.5px;color:var(--sub);white-space:nowrap;"><input type="checkbox" id="feR' + i + '"' + (r.receipt ? ' checked' : '') + '> 領収書</label>'
         + '</div>';
     }).join('');
+    var floatBase = (f.floatBase != null) ? f.floatBase : 10000;
+    var floatHtml = ppMode
+      ? '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:12px;">'
+        + '<label style="margin:0;">💳 預り金（経費用・ユニオン管理者から）</label>'
+        + '<div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px;">'
+        + '<span style="font-size:13.5px;">預り金</span><span style="flex:1"></span>'
+        + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+        + '<input type="text" id="fnFloat" inputmode="numeric" value="' + esc(floatBase) + '" style="width:80px;padding:6px 6px;text-align:right;">'
+        + '</div>'
+        + '<div style="font-size:13.5px;text-align:right;">経費 <span id="fnFlExp" class="mono">¥0</span>'
+        + '　→　残高 <b id="fnFlBal" class="mono">¥0</b>'
+        + '　／　補充依頼 <b id="fnFlRefill" class="mono" style="color:var(--accent);">¥0</b></div>'
+        + '<p style="font-size:11.5px;color:var(--sub);margin:6px 0 0;">経費（支出計）は預り金から支払い、補充依頼額をユニオン管理者にPayPayで請求して満額に戻します。</p>'
+        + '</div>'
+      : '';
     modal(
       '<h2>会計 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
       + '<p style="font-size:12px;color:var(--sub);margin:0 0 8px;">'
+      + (ppMode ? '<span class="pill a">💳 PayPay集金</span>　' : '')
       + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label style="color:var(--green);margin:0;">収入（＋）</label>'
       + (!f.locked && (c1000 || c500) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
@@ -2782,6 +2814,7 @@ function financeModal(ev){
       + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(−)計 <span id="feTotal" class="mono">¥0</span></div>'
       + '<div style="text-align:right;font-family:\'Zen Kaku Gothic New\',sans-serif;font-weight:900;font-size:18px;border-top:2px solid var(--line);padding-top:8px;">'
       + '計 <span id="fnNet" class="mono">¥0</span></div>'
+      + floatHtml
       + '<div style="display:flex;gap:8px;margin-top:10px;">'
       + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || '') + '" style="flex:1;min-width:0;">'
       + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || '') + '" style="flex:1;min-width:0;">'
@@ -2792,7 +2825,7 @@ function financeModal(ev){
         : '')
       + '<div class="btns"><button id="fnCancel">閉じる</button>'
       + (f.locked
-        ? '<button class="primary" id="fnSlip">🖨 納金票を印刷</button>'
+        ? ((ppMode && !dCash) ? '' : '<button class="primary" id="fnSlip">🖨 納金票を印刷</button>')
           + (canEditUnion(ev.hostUnion) ? '<button id="fnUnlock" class="danger">確定を解除</button>' : '')
         : '<button id="fnSave">保存</button><button class="primary" id="fnLock">保存して確定</button>')
       + '</div>',
@@ -2813,6 +2846,13 @@ function financeModal(ev){
       $('fiTotal').textContent = yen(ti);
       $('feTotal').textContent = yen(te);
       $('fnNet').textContent = yen(ti - te);
+      if(ppMode && $('fnFloat')){
+        // 預り金: 経費(支出計)を差し引いた残高と、満額に戻すための補充依頼額
+        var fb = num($('fnFloat').value);
+        $('fnFlExp').textContent = te ? '−' + yen(te).slice(1) : '¥0';
+        $('fnFlBal').textContent = yen(fb - te);
+        $('fnFlRefill').textContent = yen(te);
+      }
       return { ti: ti, te: te };
     }
     document.querySelector('.modal').addEventListener('input', recompute);
@@ -2853,7 +2893,7 @@ function financeModal(ev){
                  amount: num($('feA' + i).value), receipt: $('feR' + i).checked };
       });
       $('fnSave').disabled = true; $('fnLock').disabled = true;
-      finRef.set({
+      var fdoc = {
         income: income, expenses: expenses,
         shortage: num($('fnShort').value),
         incomeTotal: totals.ti, expenseTotal: totals.te, net: totals.ti - totals.te,
@@ -2861,7 +2901,9 @@ function financeModal(ev){
         mcName: $('fnMc').value.trim(), receptionName: $('fnRc').value.trim(),
         locked: !!lock,
         updatedAt: FV.serverTimestamp(), updatedBy: gUser.uid
-      }).then(function(){
+      };
+      if(ppMode && $('fnFloat')) fdoc.floatBase = num($('fnFloat').value);
+      finRef.set(fdoc).then(function(){
         closeModal();
         toast((lock ? '会計を確定しました' : '会計を保存しました') + '（計 ' + yen(totals.ti - totals.te) + '）');
         loadFinanceTab();
@@ -3004,6 +3046,7 @@ function loadFinanceTab(){
         html += '<div class="evrow" data-id="' + esc(ev.id) + '" style="cursor:pointer;">'
           + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
           + '<b>' + esc(ev.name || '') + '</b>'
+          + (ev.payMode === 'paypay' ? '<span class="jointtag">💳</span>' : '')
           + (ev.online ? '<span class="jointtag">💻</span>' : '')
           + '<span style="flex:1"></span>' + cells + st + '</div>';
       });
@@ -3067,15 +3110,20 @@ function startReception(ev){
 
   gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null,
            feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1,
-           issuer: '' };
+           issuer: '',
+           payMode: ev.payMode === 'paypay',        // 💳 現金なし・PayPay集金イベント
+           payLink: ev.onlinePayLink || '' };
   // 受付を開き直したら締め切りを解除（オンライン申請を再開）
   if(ev.recClosed){
     ev.recClosed = false;
     db.collection('checkinEvents').doc(ev.id).set({ recClosed: false }, { merge: true }).catch(function(){});
   }
-  // 電子領収書の発行者名（主催ユニオンの設定を読む）
+  // 電子領収書の発行者名とPayPay受け取りリンク（主催ユニオンの設定を読む）
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
-    if(gRec && gRec.ev === ev && s.exists && s.data().issuer) gRec.issuer = s.data().issuer;
+    if(gRec && gRec.ev === ev && s.exists){
+      if(s.data().issuer) gRec.issuer = s.data().issuer;
+      if(!gRec.payLink && s.data().payLink){ gRec.payLink = s.data().payLink; renderFeeRow(); }
+    }
   }).catch(function(){});
   renderFeeRow();
   $('recNone').classList.add('hide');
@@ -3128,14 +3176,39 @@ function currentFee(){
 }
 function renderFeeRow(){
   if(!gRec) return;
+  var moneyIcon = gRec.payMode ? '💳' : '💰';
   if(gRec.feeMode === 'venue'){
-    $('feeInfo').textContent = '💰 会場代のみ受付中 — 新規 ¥500';
+    $('feeInfo').textContent = moneyIcon + ' 会場代のみ受付中 — 新規 ¥500' + (gRec.payMode ? '（PayPay集金）' : '');
     $('btnPartToggle').classList.add('hide');
   } else {
-    $('feeInfo').textContent = '💰 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee());
+    $('feeInfo').textContent = moneyIcon + ' 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
     var b = $('btnPartToggle');
     b.classList.remove('hide');
     b.textContent = gRec.part === 1 ? '第2部受付に切替（新規¥500）' : '第1部受付に戻す（新規¥1,000）';
+  }
+  renderPpPanel();
+}
+// 💳 PayPay集金モード: 受付画面に金額入りの送金QRを常時表示（料金の部切替に追従）
+function renderPpPanel(){
+  var pnl = $('ppPanel');
+  if(!pnl) return;
+  if(!gRec || !gRec.payMode){ pnl.classList.add('hide'); return; }
+  pnl.classList.remove('hide');
+  var fee = currentFee();
+  if(gRec.payLink){
+    var url = payLinkUrl(gRec.payLink, fee);
+    $('ppQr').innerHTML = '';
+    makeQr($('ppQr'), url, 120);
+    $('ppAmt').textContent = yen(fee);
+    $('ppLinkTxt').textContent = url;
+    $('ppNote').textContent = payLinkHasAmount(gRec.payLink)
+      ? '読み取ると宛先と金額が自動入力されます。送金画面を確認してから受付してください'
+      : '読み取ると宛先が入ります。金額 ' + yen(fee) + ' は本人がPayPay側で入力してください';
+  } else {
+    $('ppQr').innerHTML = '';
+    $('ppAmt').textContent = yen(fee);
+    $('ppLinkTxt').textContent = '';
+    $('ppNote').textContent = 'PayPay受け取りリンクが未設定です。会計タブの「⚙ ユニオン設定」で登録するとQRが表示されます';
   }
 }
 $('btnPartToggle').onclick = function(){
@@ -3178,14 +3251,18 @@ function payModal(no){
   var a = gRec && gRec.att[no];
   if(!a) return;
   var fee = a.fee || 0, refund = a.refund || 0, paid = a.paid !== false;
+  var isPp = a.payMethod === 'paypay';
   var status = fee === 0 ? '徴収なし'
     : (!paid ? '未徴収（' + yen(fee) + '）'
-      : '徴収済み ' + yen(fee) + (refund ? '（' + yen(refund) + ' 返金済み）' : ''));
+      : '徴収済み ' + yen(fee) + (isPp ? '（PayPay）' : '（現金）') + (refund ? '（' + yen(refund) + ' 返金済み）' : ''));
   var btns = '';
   if(fee > 0){
     btns += paid
       ? '<button id="pmUnpaid">未徴収にする</button>'
       : '<button class="primary" id="pmPaid">徴収済みにする（' + yen(fee) + ' 受領）</button>';
+    if(paid) btns += isPp
+      ? '<button id="pmToCash">現金受領に変更</button>'
+      : '<button id="pmToPp">PayPay受領に変更</button>';
     if(paid && !refund) btns += '<button id="pmRefund">¥500 返金する（2部不参加）</button>';
     if(refund) btns += '<button id="pmUnrefund">返金を取り消す</button>';
   } else {
@@ -3198,7 +3275,14 @@ function payModal(no){
   $('pmClose').onclick = function(){ closeModal(); focusScan(); };
   var b;
   if((b = $('pmUnpaid'))) b.onclick = function(){ setPay(no, { paid: false }); closeModal(); toast(a.name + ' さんを未徴収にしました'); focusScan(); };
-  if((b = $('pmPaid'))) b.onclick = function(){ setPay(no, { paid: true }); closeModal(); toast(a.name + ' さんから ' + yen(fee) + ' を徴収しました'); focusScan(); };
+  if((b = $('pmPaid'))) b.onclick = function(){
+    // 未徴収→徴収: PayPay集金イベント中はPayPay受領として記録
+    var flds = { paid: true };
+    if(gRec.payMode && !a.payMethod) flds.payMethod = 'paypay';
+    setPay(no, flds); closeModal(); toast(a.name + ' さんから ' + yen(fee) + ' を徴収しました'); focusScan();
+  };
+  if((b = $('pmToCash'))) b.onclick = function(){ setPay(no, { payMethod: '' }); closeModal(); toast(a.name + ' さんを現金受領に変更しました'); focusScan(); };
+  if((b = $('pmToPp'))) b.onclick = function(){ setPay(no, { payMethod: 'paypay' }); closeModal(); toast(a.name + ' さんをPayPay受領に変更しました'); focusScan(); };
   if((b = $('pmRefund'))) b.onclick = function(){ setPay(no, { refund: 500 }); closeModal(); toast(a.name + ' さんに ¥500 返金しました'); focusScan(); };
   if((b = $('pmUnrefund'))) b.onclick = function(){ setPay(no, { refund: 0 }); closeModal(); toast('返金を取り消しました'); focusScan(); };
 }
@@ -3437,6 +3521,8 @@ function checkinMember(member, method, role){
   };
   if(isVisitor) data.visitor = true;
   if(role) data.role = role;
+  var ppRec = fee > 0 && gRec.payMode;   // 💳 PayPay集金イベント: 徴収はPayPay受領として記録
+  if(ppRec) data.payMethod = 'paypay';
   writeAttendance(no, data);
   var joint = (gRec.ev.unions || []).length > 1;
   beep('ok');
@@ -3446,8 +3532,9 @@ function checkinMember(member, method, role){
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
     + '<p class="hit-meta">' + nowHM()
-    + (fee > 0 ? '　<b>' + yen(fee) + ' 徴収</b>' : '') + '</p>'
-    + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : ''));
+    + (fee > 0 ? '　<b>' + (ppRec ? '💳 PayPay ' : '') + yen(fee) + ' 徴収</b>' : '') + '</p>'
+    + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
+    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''));
   var su = $('stgUnpaid');
   if(su) su.onclick = function(){
     setPay(no, { paid: false });
@@ -3455,6 +3542,12 @@ function checkinMember(member, method, role){
       '<span class="hit-badge">未徴収</span>'
       + '<div class="hit-name">' + esc(member.name) + '</div>'
       + '<p class="hit-meta">' + yen(fee) + ' を未徴収として記録しました。受け取ったらサイドの「徴収済」を押してください</p>');
+  };
+  var sc = $('stgCash');
+  if(sc) sc.onclick = function(){
+    setPay(no, { payMethod: '' });
+    toast(member.name + ' さんを現金受領に変更しました');
+    sc.disabled = true;
   };
 }
 // 名簿の名前検索（全ユニオンの名簿から。スペース有無は無視）
@@ -3581,14 +3674,16 @@ $('btnGuest').onclick = function(){
     if(!name){ toast('氏名を入力してください'); return; }
     var id = 'g' + Date.now();
     var gfee = currentFee();
-    writeAttendance(id, {
+    var gdata = {
       no: id, name: name, group: $('gGroup').value.trim() || 'ゲスト',
       union: $('gUnion').value, method: 'guest', guest: true,
       fee: gfee, paid: true, refund: 0
-    });
+    };
+    if(gfee > 0 && gRec.payMode) gdata.payMethod = 'paypay';
+    writeAttendance(id, gdata);
     beep('ok');
     setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>'
-      + (gfee > 0 ? '<p class="hit-meta"><b>' + yen(gfee) + ' 徴収</b></p>' : ''));
+      + (gfee > 0 ? '<p class="hit-meta"><b>' + (gdata.payMethod ? '💳 PayPay ' : '') + yen(gfee) + ' 徴収</b></p>' : ''));
     closeModal(); focusScan();
   };
 };
@@ -3632,13 +3727,24 @@ function renderTallies(){
       byGroup[g] = (byGroup[g] || 0) + 1;
     }
   });
-  $('cashNow').textContent = yen(cash);
   var unpaidSum = 0;
   unpaid.forEach(function(u){ unpaidSum += u.fee; });
-  $('cashSub').textContent = '徴収 ' + paidCount + '名'
-    + (paypay ? ' ・ PayPay ' + yen(paypay) : '')
-    + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
-    + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
+  if(gRec.payMode){
+    // 💳 PayPay集金イベント: PayPay受領額をメインに表示（例外の現金はサブに）
+    $('cashTitle').textContent = 'PayPay受領（リアルタイム）';
+    $('cashNow').textContent = yen(paypay);
+    $('cashSub').textContent = '徴収 ' + paidCount + '名'
+      + (cash ? ' ・ 現金（例外） ' + yen(cash) : '')
+      + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
+      + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
+  } else {
+    $('cashTitle').textContent = '手元金額（リアルタイム）';
+    $('cashNow').textContent = yen(cash);
+    $('cashSub').textContent = '徴収 ' + paidCount + '名'
+      + (paypay ? ' ・ PayPay ' + yen(paypay) : '')
+      + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
+      + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
+  }
   $('unpaidList').innerHTML = unpaid.map(function(u){
     return '<div style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0;">'
       + '<span style="color:var(--accent);font-weight:700;">未</span>'
