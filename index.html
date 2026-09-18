@@ -2247,6 +2247,15 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2c-box{width:22px;height:22px;border-radius:7px;border:2px solid var(--border2);cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#04211a}
 .p2c-box.on{background:var(--accent);border-color:var(--accent)}
 .p2c-date{width:104px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:6px;font-size:11px;outline:none;flex:none}
+/* v478: 夢100 大画面レイアウト＋入力分離 */
+.p2dr-addbtn{display:block;text-align:center;background:var(--accent);color:#04211a;font-weight:800;border-radius:12px;padding:12px;cursor:pointer;margin:10px 0}
+@media(min-width:768px){
+  .ms-sheet.p2dr-big{max-width:1100px;width:min(92vw,1100px);height:88vh;max-height:88vh}
+  .p2dr-body{display:grid;grid-template-columns:280px 1fr;gap:18px;align-items:start}
+  .p2dr-side{position:sticky;top:0}
+  .p2dr-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-content:start}
+  .p2dr-list .p2d-item{margin-bottom:0;align-items:flex-start}
+}
 /* ── 今日のタスク（ホーム②） ── */
 .ht-item{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:7px}
 .ht-item.overdue{border-left:3px solid var(--red,#FF5D73)}
@@ -2386,7 +2395,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v477</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v478</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5387,7 +5396,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v477';
+  var DATA_VERSION = 'v478';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6354,6 +6363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v478', d:'2026-09-18', items:['🌈 夢100リストの入力と閲覧を分離：「＋夢を追加」から専用の入力画面が開き、カテゴリもその中で選ぶ方式に。タブを切り替えても入力中の内容は消えません（追加後は続けて次を入力できます）','🖥 PC版の夢100は画面中央の大きなウィンドウ（最大1100px）で表示：左に統計・期間フィルタ、右に夢のカードが2〜4列のグリッドで並びます','📋 並び順を「期日が近い順→期日なし→達成済み」に変更（次に叶える夢が先頭に）'] },
   { v:'v477', d:'2026-09-18', items:['🌈 夢100リストを完全版に：各項目に「いつまでに（期日）」と「URL」を登録でき、✏で後から編集できるようになりました','📅 期間で一覧表示：「◯年◯月まで」を選ぶと、その期日までの夢だけの一覧と必要金額の合計が出ます（元のGOAL SETTINGと同じ動き）','🔗 URLを付けた夢はタイトルがリンクになり、タップで商品ページ等を開けます'] },
   { v:'v476', d:'2026-09-18', items:['🐛 宣言したのに「未宣言」アラートが出続ける問題を根治：複数端末で使うと、宣言前に開いていた端末（開きっぱなしのPC等）が保存のたびに「未宣言」でサーバーを上書きしていました。①保存時に「未宣言」フラグを送らない（宣言済みを消せない）②宣言はその場で即サーバー反映③PLANタブを開くと最新の宣言状態を自動で取り込むよう修正','📱 未宣言バナーがiPhoneのステータスバーに隠れて「赤い帯」だけになる問題を修正（セーフエリア対応）'] },
   { v:'v475', d:'2026-09-14', items:['⚡ PC版の高速化：画面には出ないモバイル用ツリーを毎回まるごと組み立ててからSVG組織図を描いていたため、入力のたび・共有MAP切替のたびに描画が約2倍重くなっていました。PCではSVGだけを描くように修正','🐛 絞り込み（研修生/BR/QBR/金の船/地域）で、編集直後のメンバーが古い情報のまま判定され「該当じゃない人が強調される」バグを修正（保存時に検索キャッシュを更新）','🐛 研修結果「流れた」のNA（タイトル未設定〜研修ステップ）が翌月コピーで残ってしまう問題を修正：OUTと同じく翌月から自動で除外されます（プレビューにも表示）','🙈 OUT非表示ボタンのサルの絵文字を削除しました'] },
@@ -14988,23 +14998,29 @@ function p2BbCalc() {
   if (a) a.textContent = '¥' + _p2BBCalc(v).toLocaleString();
   if (b) b.textContent = (v / 500).toFixed(1);
 }
-// ── ③夢100リスト（v477: 期日・URL・編集・期間別一覧つき完全版） ──
+// ── ③夢100リスト（v478: 入力と閲覧を分離・PC大画面グリッド） ──
 var _p2DrCat = 'want';
 var _p2DrEditId = null;
 var _p2DrPeriod = '';
+var _p2DrFormCat = 'want';
 function p2DreamOpen() {
   _p2SheetClose('p2DrOv');
-  _p2DrEditId = null;
-  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2DrOv'; ov.style.zIndex = '610';
+  var ov = document.createElement('div'); ov.className = 'ms-overlay p2dr-ov'; ov.id = 'p2DrOv'; ov.style.zIndex = '610';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2DrOv'); };
-  ov.innerHTML = '<div class="ms-sheet" style="max-height:92vh;overflow-y:auto"><div class="ms-grip"></div>'
+  ov.innerHTML = '<div class="ms-sheet p2dr-big" style="overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🌈 夢100リスト</div>'
-    + '<div style="font-size:10.5px;color:var(--text-dim)">金額・期日・URLつきで登録。達成したらチェック</div></div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">「＋夢を追加」から入力。達成したらチェック</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'p2DrOv\')">✕</span></div>'
-    + '<div style="padding:0 16px 18px" id="p2DrBody"></div></div>';
+    + '<div style="padding:0 16px 18px" class="p2dr-body">'
+    + '<div class="p2dr-side" id="p2DrSide"></div>'
+    + '<div><div class="p2d-tabs" id="p2DrTabs">'
+    + '<span class="p2d-tab" id="p2DrTabW" onclick="p2DrTab(\'want\')">🛍 ほしいもの</span>'
+    + '<span class="p2d-tab" id="p2DrTabD" onclick="p2DrTab(\'do\')">🔥 やりたいこと</span></div>'
+    + '<div class="p2dr-list" id="p2DrList"></div></div>'
+    + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
-  _p2DrRender();
+  _p2DrSync();
 }
 function _p2DrYmSel(idBase, val) {
   var cy = parseInt(String(val || '').slice(0, 4), 10) || 0, cm = parseInt(String(val || '').slice(5, 7), 10) || 0;
@@ -15017,22 +15033,23 @@ function _p2DrYmSel(idBase, val) {
   return h;
 }
 function _p2DrYmLabel(ym) { var p = String(ym).split('-'); return p[0] + '年' + parseInt(p[1], 10) + '月'; }
-function _p2DrRender() {
-  var el = document.getElementById('p2DrBody');
-  if (!el) return;
+// 閲覧側の再描画（統計＋期間フィルタ＋リストのみ。入力モーダルには一切触らない）
+function _p2DrSync() {
+  var side = document.getElementById('p2DrSide');
+  var listEl = document.getElementById('p2DrList');
+  if (!side || !listEl) return;
   var dreams = _p2().dreams;
   var total = dreams.length, done = 0, amtAll = 0, amtDone = 0;
   dreams.forEach(function(d) { var a = parseFloat(d.amt) || 0; amtAll += a; if (d.done) { done++; amtDone += a; } });
   var pct = total ? Math.round(done / total * 100) : 0;
   var fmt = function(v) { return (Math.round(v * 10) / 10).toLocaleString(); };
-  var h = '<div class="p2d-head"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800"><span>達成 <span style="color:var(--accent);font-size:18px">' + done + '</span> / ' + total + '</span><span>' + pct + '%</span></div>'
+  var h = '<div class="p2d-head" style="margin-bottom:0"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800"><span>達成 <span style="color:var(--accent);font-size:18px">' + done + '</span> / ' + total + '</span><span>' + pct + '%</span></div>'
     + '<div class="p2d-bar"><i style="width:' + pct + '%"></i></div>'
-    + '<div class="p2-meta">💰 総合計 ' + fmt(amtAll) + '万円　✅ 達成済み ' + fmt(amtDone) + '万円　📋 残り必要 <b style="color:var(--accent)">' + fmt(amtAll - amtDone) + '万円</b></div>';
-  // 期間フィルタ（未達成の期日から候補を作成・全カテゴリ横断）
+    + '<div class="p2-meta">💰 総合計 ' + fmt(amtAll) + '万円<br>✅ 達成済み ' + fmt(amtDone) + '万円<br>📋 残り必要 <b style="color:var(--accent)">' + fmt(amtAll - amtDone) + '万円</b></div>';
   var dls = {};
   dreams.forEach(function(d) { if (d.dl && !d.done) dls[d.dl] = true; });
   var sortedDl = Object.keys(dls).sort();
-  h += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="font-size:13px">📅</span>'
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span style="font-size:13px">📅</span>'
     + '<select class="fi" style="flex:1;padding:8px 10px;font-size:12.5px" onchange="p2DrPeriodChange(this.value)">'
     + '<option value="">期間を選択...</option>'
     + sortedDl.map(function(dl) { return '<option value="' + dl + '"' + (_p2DrPeriod === dl ? ' selected' : '') + '>' + _p2DrYmLabel(dl) + 'まで</option>'; }).join('')
@@ -15042,31 +15059,25 @@ function _p2DrRender() {
     dreams.forEach(function(d) { if (!d.done && d.dl && d.dl <= _p2DrPeriod) pAmt += parseFloat(d.amt) || 0; });
     h += '<div class="p2-meta" style="margin-top:6px">🎯 ' + _p2DrYmLabel(_p2DrPeriod) + 'までに必要 <b style="color:var(--accent);font-size:14px">' + fmt(pAmt) + '万円</b></div>';
   }
-  h += '</div>';
-  // 追加／編集フォーム
-  var editing = null;
-  if (_p2DrEditId) { for (var e9 = 0; e9 < dreams.length; e9++) { if (dreams[e9].id === _p2DrEditId) { editing = dreams[e9]; break; } } }
-  h += '<div style="background:var(--surface2);border:1px solid ' + (editing ? 'var(--accent)' : 'var(--border)') + ';border-radius:12px;padding:10px;margin-bottom:10px">'
-    + (editing ? '<div class="p2-meta" style="margin-bottom:6px;color:var(--accent);font-weight:700">✏ 「' + evEsc(String(editing.t).slice(0, 20)) + '」を編集中</div>' : '')
-    + '<input class="fi" id="p2drT" placeholder="例：ロレックス / ハワイ旅行" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
-    + '<div style="display:flex;gap:6px;margin-bottom:6px">'
-    + '<input class="fi" id="p2drA" type="number" placeholder="万円" value="' + (editing && editing.amt ? editing.amt : '') + '" style="flex:1;min-width:60px" inputmode="numeric">'
-    + _p2DrYmSel('p2drD', editing ? editing.dl : '')
-    + '</div>'
-    + '<input class="fi" id="p2drU" type="url" placeholder="URL（任意・商品ページなど）" value="' + evEsc(editing && editing.url ? editing.url : '') + '" style="margin-bottom:8px">'
-    + '<div style="display:flex;gap:6px">'
-    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2DrAdd()">' + (editing ? '✔ 更新する' : '＋ 追加する') + '</span>'
-    + (editing ? '<span class="p2-btn" style="margin:0" onclick="p2DrCancelEdit()">キャンセル</span>' : '')
-    + '</div></div>';
-  h += '<div class="p2d-tabs"><span class="p2d-tab' + (_p2DrCat === 'want' ? ' on' : '') + '" onclick="p2DrTab(\'want\')">🛍 ほしいもの</span><span class="p2d-tab' + (_p2DrCat === 'do' ? ' on' : '') + '" onclick="p2DrTab(\'do\')">🔥 やりたいこと</span></div>';
+  h += '</div><span class="p2dr-addbtn" onclick="p2DrFormOpen()">＋ 夢を追加</span>';
+  side.innerHTML = h;
+  var tw = document.getElementById('p2DrTabW'), td = document.getElementById('p2DrTabD');
+  if (tw) tw.classList.toggle('on', _p2DrCat === 'want');
+  if (td) td.classList.toggle('on', _p2DrCat === 'do');
+  // リスト（期日が近い順→期日なし→達成済み）
   var list = dreams.filter(function(d) {
     if (d.cat !== _p2DrCat) return false;
-    if (_p2DrPeriod && !d.done && (!d.dl || d.dl > _p2DrPeriod)) return false; // 期間内の未達成＋達成済みを表示（元アプリと同じ）
+    if (_p2DrPeriod && !d.done && (!d.dl || d.dl > _p2DrPeriod)) return false;
     return true;
   });
-  var undone = list.filter(function(d) { return !d.done; }), doneL = list.filter(function(d) { return d.done; });
+  var undone = list.filter(function(d) { return !d.done; }).sort(function(a, b) {
+    if (!!a.dl !== !!b.dl) return a.dl ? -1 : 1;
+    return (a.dl || '9999').localeCompare(b.dl || '9999');
+  });
+  var doneL = list.filter(function(d) { return d.done; });
   var rows = undone.concat(doneL);
-  if (!rows.length) h += '<div class="p2-meta" style="text-align:center;padding:18px 0">' + (_p2DrPeriod ? 'この期間の項目はありません' : (_p2DrCat === 'want' ? 'ほしいものを追加しよう！' : 'やりたいことを追加しよう！')) + '</div>';
+  var lh = '';
+  if (!rows.length) lh = '<div class="p2-meta" style="text-align:center;padding:18px 0;grid-column:1/-1">' + (_p2DrPeriod ? 'この期間の項目はありません' : (_p2DrCat === 'want' ? 'ほしいものを追加しよう！' : 'やりたいことを追加しよう！')) + '</div>';
   rows.forEach(function(d) {
     var meta = [];
     if (d.amt) meta.push('💰 ' + (Math.round(parseFloat(d.amt) * 10) / 10).toLocaleString() + '万円');
@@ -15074,18 +15085,58 @@ function _p2DrRender() {
     var titleHtml = d.url
       ? '<a href="' + evEsc(d.url) + '" target="_blank" rel="noopener" style="color:#5AD7FF;text-decoration:underline">' + evEsc(d.t) + ' ↗</a>'
       : evEsc(d.t);
-    h += '<div class="p2d-item' + (d.done ? ' done' : '') + '">'
+    lh += '<div class="p2d-item' + (d.done ? ' done' : '') + '">'
       + '<span class="p2d-chk' + (d.done ? ' on' : '') + '" onclick="p2DrTgl(\'' + d.id + '\')">' + (d.done ? '✓' : '') + '</span>'
       + '<span style="flex:1;min-width:0"><span class="t" style="font-size:14px;font-weight:600">' + titleHtml + '</span>'
       + (meta.length ? '<div class="p2-meta">' + meta.join('　') + '</div>' : '')
       + '</span>'
-      + '<span style="color:var(--text-dim);cursor:pointer;flex:none;padding:4px" onclick="p2DrEdit(\'' + d.id + '\')">✏️</span>'
+      + '<span style="color:var(--text-dim);cursor:pointer;flex:none;padding:4px" onclick="p2DrFormOpen(\'' + d.id + '\')">✏️</span>'
       + '<span style="color:var(--text-dim);cursor:pointer;flex:none;padding:4px" onclick="p2DrDel(\'' + d.id + '\')">🗑</span></div>';
   });
-  el.innerHTML = h;
+  listEl.innerHTML = lh;
 }
-function p2DrTab(c) { _p2DrCat = c; _p2DrRender(); }
-function p2DrPeriodChange(v) { _p2DrPeriod = v; _p2DrRender(); }
+function p2DrTab(c) { _p2DrCat = c; _p2DrSync(); }
+function p2DrPeriodChange(v) { _p2DrPeriod = v; _p2DrSync(); }
+// ── 入力モーダル（追加・編集共通。閲覧側の再描画から独立） ──
+function p2DrFormOpen(editId) {
+  _p2SheetClose('p2DrFormOv');
+  _p2DrEditId = editId || null;
+  var editing = null;
+  if (editId) {
+    var dreams = _p2().dreams;
+    for (var i = 0; i < dreams.length; i++) { if (dreams[i].id === editId) { editing = dreams[i]; break; } }
+  }
+  _p2DrFormCat = editing ? (editing.cat || 'want') : _p2DrCat;
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2DrFormOv'; ov.style.zIndex = '660';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2DrFormOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (editing ? '✏ 夢を編集' : '🌈 夢を追加') + '</div>'
+    + (editing ? '' : '<div style="font-size:10.5px;color:var(--text-dim)">追加したあとも続けて入力できます</div>')
+    + '</div><span class="ms-x" onclick="_p2SheetClose(\'p2DrFormOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div style="display:flex;gap:6px;margin-bottom:10px">'
+    + '<span class="p2d-tab' + (_p2DrFormCat === 'want' ? ' on' : '') + '" id="p2drCatW" style="flex:1;text-align:center" onclick="p2DrFormCat(\'want\')">🛍 ほしいもの</span>'
+    + '<span class="p2d-tab' + (_p2DrFormCat === 'do' ? ' on' : '') + '" id="p2drCatD" style="flex:1;text-align:center" onclick="p2DrFormCat(\'do\')">🔥 やりたいこと</span></div>'
+    + '<input class="fi" id="p2drT" placeholder="例：ロレックス / ハワイ旅行" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
+    + '<div style="display:flex;gap:6px;margin-bottom:6px">'
+    + '<input class="fi" id="p2drA" type="number" placeholder="万円" value="' + (editing && editing.amt ? editing.amt : '') + '" style="flex:1;min-width:60px" inputmode="numeric">'
+    + _p2DrYmSel('p2drD', editing ? editing.dl : '')
+    + '</div>'
+    + '<input class="fi" id="p2drU" type="url" placeholder="URL（任意・商品ページなど）" value="' + evEsc(editing && editing.url ? editing.url : '') + '" style="margin-bottom:10px">'
+    + '<div style="display:flex;gap:6px">'
+    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2DrSave()">' + (editing ? '✔ 更新する' : '＋ 追加する') + '</span>'
+    + '<span class="p2-btn" style="margin:0" onclick="_p2SheetClose(\'p2DrFormOv\')">' + (editing ? 'キャンセル' : '閉じる') + '</span>'
+    + '</div></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  setTimeout(function() { var t = document.getElementById('p2drT'); if (t && !editing) { try { t.focus(); } catch(e) {} } }, 120);
+}
+function p2DrFormCat(c) {
+  _p2DrFormCat = c;
+  var cw = document.getElementById('p2drCatW'), cd = document.getElementById('p2drCatD');
+  if (cw) cw.classList.toggle('on', c === 'want');
+  if (cd) cd.classList.toggle('on', c === 'do');
+}
 function _p2DrReadForm() {
   var gv = function(id) { return ((document.getElementById(id) || {}).value || '').trim(); };
   var y = gv('p2drDY'), m = gv('p2drDM');
@@ -15098,40 +15149,40 @@ function _p2DrReadForm() {
     url: url
   };
 }
-function p2DrAdd() {
+function p2DrSave() {
   var f = _p2DrReadForm();
   if (!f.t) { toast('タイトルを入力してください'); return; }
   var dreams = _p2().dreams;
   if (_p2DrEditId) {
     for (var i = 0; i < dreams.length; i++) {
-      if (dreams[i].id === _p2DrEditId) { dreams[i].t = f.t; dreams[i].amt = f.amt; dreams[i].dl = f.dl; dreams[i].url = f.url; break; }
+      if (dreams[i].id === _p2DrEditId) { dreams[i].t = f.t; dreams[i].amt = f.amt; dreams[i].dl = f.dl; dreams[i].url = f.url; dreams[i].cat = _p2DrFormCat; break; }
     }
     _p2DrEditId = null;
+    _p2SheetClose('p2DrFormOv');
     toast('✏ 更新しました');
   } else {
-    dreams.unshift({ id: 'dr_' + Date.now() + '_' + Math.floor(Math.random() * 10000), cat: _p2DrCat, t: f.t, amt: f.amt, dl: f.dl, url: f.url, done: false });
+    dreams.unshift({ id: 'dr_' + Date.now() + '_' + Math.floor(Math.random() * 10000), cat: _p2DrFormCat, t: f.t, amt: f.amt, dl: f.dl, url: f.url, done: false });
+    // 連続入力: モーダルは開いたまま、フォームだけクリア（カテゴリ・期日は維持）
+    var tEl = document.getElementById('p2drT'), aEl = document.getElementById('p2drA'), uEl = document.getElementById('p2drU');
+    if (tEl) { tEl.value = ''; try { tEl.focus(); } catch(e) {} }
+    if (aEl) aEl.value = '';
+    if (uEl) uEl.value = '';
+    toast('🌈 追加しました（続けて入力できます）');
   }
-  saveGoals(); _p2DrRender();
+  saveGoals(); _p2DrSync();
   if (currentView === 'plan') renderPlan();
 }
-function p2DrEdit(id) {
-  var dreams = _p2().dreams;
-  for (var i = 0; i < dreams.length; i++) { if (dreams[i].id === id) { _p2DrEditId = id; _p2DrCat = dreams[i].cat || _p2DrCat; break; } }
-  _p2DrRender();
-  var sheet = document.querySelector('#p2DrOv .ms-sheet'); if (sheet) sheet.scrollTop = 0;
-}
-function p2DrCancelEdit() { _p2DrEditId = null; _p2DrRender(); }
 function p2DrTgl(id) {
   var dreams = _p2().dreams;
   for (var i = 0; i < dreams.length; i++) { if (dreams[i].id === id) { dreams[i].done = !dreams[i].done; if (dreams[i].done) toast('🎉 夢を1つ達成！'); break; } }
-  saveGoals(); _p2DrRender();
+  saveGoals(); _p2DrSync();
   if (currentView === 'plan') renderPlan();
 }
 function p2DrDel(id) {
   var dreams = _p2().dreams;
   for (var i = 0; i < dreams.length; i++) { if (dreams[i].id === id) { dreams.splice(i, 1); break; } }
-  if (_p2DrEditId === id) _p2DrEditId = null;
-  saveGoals(); _p2DrRender();
+  if (_p2DrEditId === id) { _p2DrEditId = null; _p2SheetClose('p2DrFormOv'); }
+  saveGoals(); _p2DrSync();
   if (currentView === 'plan') renderPlan();
 }
 // ── ④チェックリスト ──
