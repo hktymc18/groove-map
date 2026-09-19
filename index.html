@@ -79,7 +79,7 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 .pc-orbit-wrap{display:none}
 .pc-orbit-wrap.show{display:block}
 .orbit-hit circle{stroke:#F6C744 !important;stroke-width:5px !important;filter:drop-shadow(0 0 10px #F6C744)}
-.map-fs{position:fixed !important;inset:0 !important;z-index:8000;background:var(--bg);overflow:auto;padding:0 !important;display:block !important}
+.map-fs{position:fixed !important;inset:0 !important;z-index:60;background:var(--bg);overflow:auto;padding:0 !important;display:block !important}
 #orbitPrintLayer{display:none}
 @media print{
   body.printing-orbit>*:not(#orbitPrintLayer){display:none !important}
@@ -2439,7 +2439,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v487</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v488</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4679,7 +4679,7 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     var R = R0 + (d - 1) * RS;
     var k = 'd' + d;
     ringIdx[k] = (ringIdx[k] || 0) + 1;
-    if (!kids(m.id).length && perLeaf * Math.PI / 180 * R * (ASPECT + 1) / 2 < nr * 2.4) R += (ringIdx[k] % 2 ? stag : -stag * 0.4); // 混雑時は互い違い
+    if (d >= 2 && !kids(m.id).length && perLeaf * Math.PI / 180 * R * (ASPECT + 1) / 2 < nr * 2.4) R += (ringIdx[k] % 2 ? stag : -stag * 0.4); // v488: 互い違いは2段目以降の混雑時のみ（1段目はリングに乗せる）
     posOf[m.id] = ept(R, angle[m.id]);
   });
 
@@ -4789,7 +4789,9 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     // v486: ノード下に GSVポイント・稼働率
     var _pt6 = (m.ptCurrent || 0);
     var _ar6 = (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) ? parseInt(m.actRate, 10) : null;
-    var _sub6 = (_pt6 > 0 ? _pt6.toLocaleString() + 'pt' : '') + (_ar6 !== null ? ((_pt6 > 0 ? '・' : '') + _ar6 + '%') : '');
+    var _at6 = (m.activity || '').trim(); // v488: SABCタイプも併記（例 C40%）
+    var _act6 = (_ar6 !== null) ? (_at6 + _ar6 + '%') : _at6;
+    var _sub6 = (_pt6 > 0 ? _pt6.toLocaleString() + 'pt' : '') + (_act6 ? ((_pt6 > 0 ? '・' : '') + _act6) : '');
     if (_sub6) {
       var ts = document.createElementNS(NS, 'text');
       ts.setAttribute('x', pos.x); ts.setAttribute('y', pos.y + r + 9);
@@ -4944,7 +4946,7 @@ function mapFullscreen() {
     var b = document.createElement('div');
     b.id = 'mapFsExit';
     b.textContent = '✕ 全画面を終了（Esc）';
-    b.style.cssText = 'position:fixed;top:10px;right:14px;z-index:8100;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)';
+    b.style.cssText = 'position:fixed;top:10px;right:14px;z-index:70;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)';
     b.onclick = mapFullscreen;
     document.body.appendChild(b);
     try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){}); } catch(eF) {}
@@ -5827,7 +5829,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v487';
+  var DATA_VERSION = 'v488';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6801,6 +6803,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v488', d:'2026-09-19', items:['◎ 俯瞰MAP：1段目のメンバーが1段リングにきちんと乗るように修正（互い違い配置は2段目以降の混雑時のみ）','🐛 MAP全画面中に情報カード・編集画面が表示されない問題を修正（全画面レイヤーの重なり順が原因で、開いても裏に隠れていました）','🏃 俯瞰MAPの稼働表示にSABCタイプを追加（例：C40%・タイプのみ登録ならC）'] },
   { v:'v487', d:'2026-09-19', items:['⚡ メンバーの「かんたん追加」：＋ボタンを押すと名前・性別・段階チップ（FT〜CO）だけの軽いシートが開きます。NA（新規）を最低限の情報でサッと登録し、研修が進んだら従来の編集画面で詳細を追記する運用に','🔁 「登録して続けて追加」でDLR後などの連続登録に対応（段階・追加先は前回のまま、名前だけ入力）','🏷 研修生タイトルに「FT」を追加（マケの前段階）。MAP・俯瞰・絞り込み・経過表示にもそのまま乗ります','📝 くわしく登録したい時はシート右上の「くわしく登録」から従来のフル編集フォームへ（入力内容は引き継ぎ）'] },
   { v:'v486', d:'2026-09-19', items:['◎ 俯瞰MAPを楕円レイアウトに：横長画面に合わせてリングが楕円になり、フロント（1段目）が多くても横方向に広く使えます（印刷もA3横の比率で最適化）','👆 俯瞰MAPのマウスオーバーで通常MAPと同じ情報カード（稼働・GSV・予定タスク・OL記録）を表示','🔢 各ノードの下にGSVポイントと稼働率を表示','⛴ 金の船マークは円の中ではなく右上の小さなバッジ表示に統一'] },
   { v:'v485', d:'2026-09-19', items:['◎ PC版に「俯瞰MAP」ビューを新設：同心リング＝段数・系列は扇形セクターで色分けした円形MAP。100人規模でも組織全体が1画面に収まります（ツリー/テーブル/カンバンの隣の「俯瞰」ボタン）','🔍 俯瞰MAPの名前検索スポットライト：名前を打つと該当メンバーが光って他が薄暗くなり、位置へ自動センタリング（打ち合わせで「誰の話か」が一瞬で共有できます）','🖨 俯瞰MAPをA3横1枚に印刷（ブラウザの印刷→PDF保存にも対応）','⛶ MAPの全画面表示：ヘッダー・ナビを消してMAPだけを画面いっぱいに（画面共有向け・Escで解除）','研修生/BR/QBR/金の船/地域の絞り込み・タップで詳細編集は俯瞰MAPでもそのまま使えます'] },
