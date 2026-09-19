@@ -427,6 +427,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .olp-title{font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace}
 .nc.trainee{border-left-width:5px!important;background:rgba(34,211,238,.05)}
 .nc.loi-card{border-left-width:5px!important;border-color:var(--loi)!important;background:rgba(74,222,128,.05)}
+.nc.fresh-card{border-left-width:5px!important;border-color:#FFD166!important;background:rgba(255,209,102,.06)}
 .nc.result-ng{background:rgba(100,100,100,.18);border-color:rgba(100,100,100,.3);opacity:0.6}
 .nc.result-user{background:rgba(100,140,180,.18);border-color:rgba(100,140,180,.4)}
 .nc.diff-added{border-color:var(--green)!important;background:rgba(74,222,128,.06)}
@@ -2442,7 +2443,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v490</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v492</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2548,6 +2549,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
         <div class="pt-action mapFsBtn" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに表示（画面共有向け）">⛶ 全画面</div>
+        <div class="pt-action" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</div>
         <div class="pt-action" onclick="exportCSV('current')">CSV</div>
         <div class="pt-action" id="pcShareBtn" onclick="openShareModal()" style="display:none">共有</div>
         <span style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace" id="searchResultCount"></span>
@@ -4297,7 +4299,10 @@ function renderPCMap(mapType) {
     var _isBrUp = (typeof isBROrAbove === 'function') && isBROrAbove(m.title);
     var _isBM = (m.title || '').trim() === 'BM';
     var _rankCol = (_isBrUp || _isBM) ? titleRingColor(m.title) : '';
-    var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':col), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':nodeBaseFill; // v423: QBR=オレンジ
+    // v491: フレッシュ（6ヶ月以内・BR未満）はゴールド。ケアバッジ非表示の人は通常色
+    var _isFr9 = mapType === 'current' && !_isBrUp && !_isBM && !isPcLOI && !isT && (m.title || '').trim() !== 'OUT'
+      && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
+    var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':(_isFr9?'#FFD166':col)), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':(_isFr9?'rgba(255,209,102,0.13)':nodeBaseFill); // v423: QBR=オレンジ／v491: フレッシュ=金
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
@@ -4319,7 +4324,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('width',NODE_W); rect.setAttribute('height',NODE_H);
     rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
-    rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI?'2':'1'))); // v420: BR以上=太枠
+    rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI||_isFr9?'2':'1'))); // v420: BR以上=太枠／v491: フレッシュも太枠
     if (_isBrUp) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
     if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)'; // v440: OUTは当月ゴースト表示
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
@@ -4344,7 +4349,7 @@ function renderPCMap(mapType) {
     }
     var nameStr = ((m.lastName||'')+(m.firstName||'')).replace(/\s+/g,'').substring(0,8);
     // v490: 稼働表示（右端）と重ならない幅に名前を自動フィット（縮小→…省略）
-    var _actStr9 = m.activity ? (m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'')) : '';
+    var _actStr9 = m.activity ? (m.actRate ? m.activity + m.actRate + '%' : (m.activity==='S' ? 'S 120%' : m.activity)) : ''; // v492: Sも実測優先
     var _actW9 = _actStr9 ? _actStr9.length * 9.5 + 12 : 0;
     var _nameMax9 = (NODE_W - 16 - _actW9) - 61 - 4; // 61=アバター分の左オフセット
     var _estW9 = function(str, fs) { var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) w9 += str.charCodeAt(q9) > 255 ? fs : fs * 0.58; return w9; };
@@ -4454,7 +4459,7 @@ function renderPCMap(mapType) {
     g.appendChild(txt(_pcTx, ry2+30, nameStr, nameColor, nameFs, '700', 'Noto Sans JP,Inter,sans-serif'));
     if(m.activity){
       var ac=m.activity==='S'?'#2CE5B8':m.activity==='A'?'#8B7CFF':m.activity==='B'?'#5AD7FF':'#FFB454';
-      var actStr=m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'');
+      var actStr=m.actRate?m.activity+m.actRate+'%':(m.activity==='S'?'S 120%':m.activity); // v492: Sも実測優先
       g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
     }
     // 2行目: タイトル + GSV(固定)。v468: モバイルと同じ「色付きバッジ（ピル）」表示に
@@ -4780,10 +4785,14 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     var isPcLOI = ['LOI','Q1','Q2','Q3','Q4'].indexOf((m.title || '').trim()) >= 0;
     var _isBrUp = (typeof isBROrAbove === 'function') && isBROrAbove(m.title);
     var _rankCol = _isBrUp ? titleRingColor(m.title) : '';
-    var stroke = _rankCol || (isPcLOI ? '#FB923C' : (isT ? '#5AD7FF' : col));
+    // v491: フレッシュ=ゴールド（QBR/研修生/BR以上/BM以外・バッジ非表示の人は除く）
+    var _isFrO = mapType === 'current' && !_isBrUp && !isPcLOI && !isT && (m.title || '').trim() !== 'BM' && (m.title || '').trim() !== 'OUT'
+      && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
+    var stroke = _rankCol || (isPcLOI ? '#FB923C' : (isT ? '#5AD7FF' : (_isFrO ? '#FFD166' : col)));
     var fill = light ? '#ffffff' : '#161920';
     if (isT) fill = light ? 'rgba(90,215,255,0.18)' : 'rgba(90,215,255,0.22)';
     if (isPcLOI) fill = 'rgba(251,146,60,0.14)';
+    if (_isFrO) fill = 'rgba(255,209,102,0.13)';
     var g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'oval-node orbit-node');
     g.setAttribute('data-mid', m.id);
@@ -5034,12 +5043,7 @@ function mapFullscreen() {
   if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
   if (on) {
     el.classList.add('map-fs');
-    var b = document.createElement('div');
-    b.id = 'mapFsExit';
-    b.textContent = '✕ 全画面を終了（Esc）';
-    b.style.cssText = 'position:fixed;top:10px;right:14px;z-index:70;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)';
-    b.onclick = mapFullscreen;
-    document.body.appendChild(b);
+    // v492: 「✕ 全画面を終了」は廃止。⛶ボタンの再押し or Esc で解除
     try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){}); } catch(eF) {}
   } else {
     try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){}); } catch(eF2) {}
@@ -5921,7 +5925,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v490';
+  var DATA_VERSION = 'v492';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6895,6 +6899,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v492', d:'2026-09-19', items:['⛶ 全画面の解除を「⛶ 全画面ボタンをもう一度押す」に統一（右上の「✕ 全画面を終了」は廃止。Escでも解除できます）','⟲ PC版のツールバーに受付連携ボタンを追加（CSVの左）','🏃 S稼働も受付システムの実測稼働率を連携するように（これまでSタイプは取込から除外され、常に「S 120%」固定表示でした）。実測があれば S71% のように表示し、未連携のSは従来どおり S 120% 表示'] },
+  { v:'v491', d:'2026-09-19', items:['🌟 フレッシュ（スタート6ヶ月以内・BR未満）のカードをゴールド（黄）で表示：QBRのオレンジと同じ方式で、PCツリー・モバイルカード・◎俯瞰MAPすべてに適用。🌱バッジと同系色で「黄色＝フレッシュ」に統一','色の優先順位は BR以上（宝石色）→ BM（紫）→ QBR（橙）→ 研修生（水色）→ フレッシュ（金）→ 通常。ケアバッジを「非表示」にしている人は色も通常のまま。6ヶ月経過で自動的に通常色へ'] },
   { v:'v490', d:'2026-09-19', items:['🤏 俯瞰MAPの上でピンチ（トラックパッド/タッチ）すると、ブラウザ拡大ではなくMAP自体がズームするように（＋ボタンと同じ動き・指の位置を中心に拡大）。情報カードが見切れなくなります','🔳 全画面・A3印刷・ズームのボタンをボタンらしい見た目に変更。全画面中はボタンが点灯して状態がわかります','📐 俯瞰MAPの高さを画面に合わせて自動調整（下の黒い余白まで使ってMAPを表示）','🌳 ツリー表示で名前が長い時に稼働％と重なっていたのを修正（稼働表示の幅に合わせて名前を自動縮小・入り切らない場合は…で省略）'] },
   { v:'v489', d:'2026-09-19', items:['◎ 俯瞰MAP：リング上で丸同士が重ならないように自動で間隔を確保（楕円の左右端は角度あたりの間隔が縮むため、混んだ場所は空いている方向へ自動でずらします）','🗂 情報カードが画面からはみ出さないように修正：縦横とも画面内に収め、内容が長い場合はカード自体をスクロールできます（カードにマウスを乗せている間は消えません）'] },
   { v:'v488', d:'2026-09-19', items:['◎ 俯瞰MAP：1段目のメンバーが1段リングにきちんと乗るように修正（互い違い配置は2段目以降の混雑時のみ）','🐛 MAP全画面中に情報カード・編集画面が表示されない問題を修正（全画面レイヤーの重なり順が原因で、開いても裏に隠れていました）','🏃 俯瞰MAPの稼働表示にSABCタイプを追加（例：C40%・タイプのみ登録ならC）'] },
@@ -7825,7 +7831,7 @@ function toggleMemberIncMerged() {
 // ============================================================
 //  受付システム連携（BASE CHECK-IN）
 //  初回: 氏名の正規化マッチで名簿と照合 → 会員番号(checkinNo)で恒久リンク
-//  以後: ワンタップで当月の実測稼働率を actRate に一括反映（Sタイプは除外）
+//  以後: ワンタップで当月の実測稼働率を actRate に一括反映（v492: Sタイプ含む）
 // ============================================================
 function _ckNorm(s) {
   return String(s || '').replace(/[\s　]/g, '')
@@ -7974,7 +7980,7 @@ function ckImportRates(done) {
     Promise.all(reads).then(function() {
       var updated = 0;
       _ckOwnMembers().forEach(function(m) {
-        if (!m.checkinNo || m.activity === 'S') return;
+        if (!m.checkinNo) return; // v492: Sタイプも実測稼働率を取り込む
         m.actRate = Math.round((present[m.checkinNo] || 0) / evIds.length * 100);
         updated++;
       });
@@ -8150,7 +8156,7 @@ function openMemberDetail(mid) {
     + (m.lineId ? '<div class="md-row"><span class="md-l">LINE</span><span class="md-v" style="text-align:right"><span onclick="openLineChatById(\'' + m.id + '\')" style="color:#06C755;font-weight:600;cursor:pointer">💬 LINEを開く</span></span></div>' : '');
   var monthly = _dRow('現状GSV', m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0')
     + _dRow('固定PT', m.ptFixed>0 ? m.ptFixed.toLocaleString() : '—')
-    + _dRow('稼働タイプ', m.activity ? (m.activity==='S'?'S（120%）':(m.activity+(m.actRate?' '+m.actRate+'%':''))) : '—')
+    + _dRow('稼働タイプ', m.activity ? (m.actRate ? m.activity+' '+m.actRate+'%' : (m.activity==='S'?'S（120%）':m.activity)) : '—')
     + _dRow('やる気', ['','パヤパヤ','やる気','死ぬ気'][Math.min(m.morale||1,3)])
     + _dRow('優先度', m.priority || '—')
     + (m.memo ? '<div class="md-memo">' + evEsc(m.memo) + '</div>' : '');
@@ -8634,7 +8640,7 @@ function renderPCTable(mapType) {
     tdA.className = 'col-act' + (isEd ? ' editable' : '');
     var actText = m.activity || '-';
     if (m.activity && m.actRate) actText += ' ' + m.actRate + '%';
-    if (m.activity === 'S') actText = 'S 120%';
+    if (m.activity === 'S' && !m.actRate) actText = 'S 120%'; // v492: 実測があればそちら
     tdA.textContent = actText;
     tdA.style.color = m.activity==='S'?'var(--s)':m.activity==='A'?'var(--a)':m.activity==='B'?'var(--b)':m.activity==='C'?'var(--c)':'var(--text-dim)';
     if (isEd) tdA.onclick = function() { inlineSelect(tdA, m, 'activity', mapType); };
@@ -8874,7 +8880,7 @@ function inlineSelect(td, member, field, mapType) {
         return;
       }
       var actText = member.activity || '-';
-      if (member.activity === 'S') actText = 'S 120%';
+      if (member.activity === 'S' && !member.actRate) actText = 'S 120%'; // v492
       td.textContent = actText;
     } else {
       member[field] = sel.value;
@@ -9431,8 +9437,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
   var g = m.gender || 'male';
   var depthColor = familyColorMap[m.id] || familyColor;
 
-  var actLabel = m.activity === 'S' ? 'S 120%' :
-                 m.activity ? (m.activity + (m.actRate ? m.actRate+'%' : '')) : '';
+  var actLabel = m.activity ? (m.actRate ? m.activity + m.actRate + '%' : (m.activity === 'S' ? 'S 120%' : m.activity)) : ''; // v492: Sも実測優先
   var actColor = m.activity === 'S' ? 'var(--s)' :
                  m.activity === 'A' ? 'var(--a)' :
                  m.activity === 'B' ? 'var(--b)' :
@@ -9496,7 +9501,13 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
 
   var LOI_TITLES = ['LOI','Q2','Q3','Q4'];
   var isLOI = LOI_TITLES.indexOf((m.title||'').trim()) >= 0;
-  var ncClass = 'nc' + (isLOI ? ' loi-card' : m.trainee ? ' trainee' : '') +
+  // v491: フレッシュ=ゴールドカード（QBR/研修生/BR以上/BM以外・ケアバッジ非表示は除く）
+  var _isFrM = mapType === 'current' && !isLOI && !m.trainee
+    && !((typeof memberCat === 'function') && memberCat(m) === '研修生')
+    && !((typeof isBROrAbove === 'function') && isBROrAbove(m.title))
+    && (m.title || '').trim() !== 'BM' && (m.title || '').trim() !== 'OUT'
+    && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
+  var ncClass = 'nc' + (isLOI ? ' loi-card' : m.trainee ? ' trainee' : (_isFrM ? ' fresh-card' : '')) +
     (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '') +
     (mapType === 'current' ? (' ' + memberActivityLevel(m)) : '') +
     (((m.title || '').trim() === 'OUT') ? ' out-member' : ''); // v440: OUTは当月ゴースト表示
@@ -26269,7 +26280,7 @@ function applyAllFilters() {
   container.innerHTML = matched.map(function(m) {
     var depth = calcMemberDepth(m, allMembers);
     var depthColor = getFamilyColor(m.id, allMembers, depth);
-    var actLabel = m.activity === 'S' ? 'S 120%' : m.activity ? (m.activity + (m.actRate ? m.actRate + '%' : '')) : '';
+    var actLabel = m.activity ? (m.actRate ? m.activity + m.actRate + '%' : (m.activity === 'S' ? 'S 120%' : m.activity)) : ''; // v492: Sも実測優先
     var actColor = m.activity === 'S' ? 'var(--s)' : m.activity === 'A' ? 'var(--a)' : m.activity === 'B' ? 'var(--b)' : m.activity === 'C' ? 'var(--c)' : 'var(--text-dim)';
     var ptDisplay = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '-';
     var g = m.gender || 'male';
