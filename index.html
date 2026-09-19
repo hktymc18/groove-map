@@ -74,6 +74,9 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 /* PC左サイドバー */
 .pc-sidebar{display:none;position:fixed;left:0;top:0;bottom:0;width:68px;background:#0a0c11;border-right:1px solid var(--border);flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 14px) 0 14px;gap:5px;z-index:60}
 @media(min-width:768px){.pc-sidebar{display:flex}body{padding-left:68px}}
+.orbit-btn{padding:6px 14px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);color:var(--text);background:var(--surface2);transition:all .15s;white-space:nowrap;user-select:none;display:inline-flex;align-items:center;gap:4px}
+.orbit-btn:hover{background:var(--surface3);border-color:var(--accent)}
+.mapFsBtn.on{background:var(--accent) !important;color:#08121a !important;border-color:var(--accent) !important}
 .qa-chip{padding:8px 13px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;user-select:none}
 .qa-chip.sel{background:var(--accent);color:#08121a;border-color:var(--accent)}
 .pc-orbit-wrap{display:none}
@@ -2439,7 +2442,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v489</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v490</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2544,7 +2547,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span id="pcSearchClear" style="display:none;font-size:14px;color:var(--text-dim);cursor:pointer" onclick="event.stopPropagation();clearSearch()">✕</span>
       </div>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
-        <div class="pt-action" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに表示（画面共有向け）">⛶ 全画面</div>
+        <div class="pt-action mapFsBtn" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに表示（画面共有向け）">⛶ 全画面</div>
         <div class="pt-action" onclick="exportCSV('current')">CSV</div>
         <div class="pt-action" id="pcShareBtn" onclick="openShareModal()" style="display:none">共有</div>
         <span style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace" id="searchResultCount"></span>
@@ -4340,7 +4343,15 @@ function renderPCMap(mapType) {
       return t;
     }
     var nameStr = ((m.lastName||'')+(m.firstName||'')).replace(/\s+/g,'').substring(0,8);
-    var nameFs = nameStr.length<=5 ? 20 : (nameStr.length<=6 ? 18 : 16); // 長い名前は自動縮小して見切れ防止
+    // v490: 稼働表示（右端）と重ならない幅に名前を自動フィット（縮小→…省略）
+    var _actStr9 = m.activity ? (m.activity==='S'?'S 120%':m.activity+(m.actRate?m.actRate+'%':'')) : '';
+    var _actW9 = _actStr9 ? _actStr9.length * 9.5 + 12 : 0;
+    var _nameMax9 = (NODE_W - 16 - _actW9) - 61 - 4; // 61=アバター分の左オフセット
+    var _estW9 = function(str, fs) { var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) w9 += str.charCodeAt(q9) > 255 ? fs : fs * 0.58; return w9; };
+    var nameFs = 20;
+    var _fss9 = [20, 18, 16, 14.5, 13];
+    for (var _fi9 = 0; _fi9 < _fss9.length; _fi9++) { nameFs = _fss9[_fi9]; if (_estW9(nameStr, nameFs) <= _nameMax9) break; }
+    while (nameStr.length > 2 && _estW9(nameStr + '…', nameFs) > _nameMax9 && _estW9(nameStr, nameFs) > _nameMax9) { nameStr = nameStr.slice(0, -1); if (_estW9(nameStr + '…', nameFs) <= _nameMax9) { nameStr += '…'; break; } }
     var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#f2f4f8');
     var gsvColor = isLightTheme ? '#3a4560' : '#e2e8f0';
     if(m.morale>0){
@@ -4854,15 +4865,22 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     + 'style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;padding:6px 12px;border-radius:9px;outline:none;width:210px" '
     + 'oninput="orbitSearch(this.value)" value="' + evEsc(_orbitQ) + '">'
     + '<span class="sp" style="flex:1"></span>'
-    + '<div class="pt-action" onclick="orbitZoomBy(-1)">−</div>'
-    + '<div class="pt-action" onclick="orbitZoomBy(0)" title="全体表示">⊡</div>'
-    + '<div class="pt-action" onclick="orbitZoomBy(1)">＋</div>'
-    + '<div class="pt-action" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>'
-    + '<div class="pt-action" onclick="orbitPrint()" title="A3横1枚に印刷（PDF保存も可）">🖨 A3印刷</div>';
+    + '<div class="orbit-btn" onclick="orbitZoomBy(-1)" title="縮小">−</div>'
+    + '<div class="orbit-btn" onclick="orbitZoomBy(0)" title="全体表示">⊡</div>'
+    + '<div class="orbit-btn" onclick="orbitZoomBy(1)" title="拡大">＋</div>'
+    + '<div class="orbit-btn mapFsBtn' + (document.querySelector('.map-fs') ? ' on' : '') + '" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>'
+    + '<div class="orbit-btn" onclick="orbitPrint()" title="A3横1枚に印刷（PDF保存も可）">🖨 A3印刷</div>';
   wrap.appendChild(bar);
   var fsOn = !!document.querySelector('.map-fs');
   var viewH = Math.max(window.innerHeight - (fsOn ? 130 : 230), 460);
   var outer = document.createElement('div');
+  // v490: 実際の位置から下端まで使う（フッター側の黒い余白をなくす）
+  requestAnimationFrame(function() {
+    try {
+      var r9 = outer.getBoundingClientRect();
+      if (r9 && r9.top > 0 && window.innerHeight - r9.top - 6 > 300) outer.style.height = (window.innerHeight - r9.top - 6) + 'px';
+    } catch(e9) {}
+  });
   outer.id = 'orbitOuter' + (mapType === 'current' ? 'C' : 'I');
   outer.style.cssText = 'width:100%;height:' + viewH + 'px;overflow:auto;cursor:grab;position:relative;background:' + (light ? '#fff' : 'var(--bg)');
   var viewW = Math.max(window.innerWidth - (isPCMode() ? 110 : 20), 600);
@@ -4881,6 +4899,33 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
   outer.addEventListener('mousemove', function(e) { if (!drag) return; outer.scrollLeft = sl - (e.clientX - sx); outer.scrollTop = st - (e.clientY - sy); });
   outer.addEventListener('mouseup', function() { drag = false; outer.style.cursor = 'grab'; });
   outer.addEventListener('mouseleave', function() { drag = false; outer.style.cursor = 'grab'; });
+  // v490: ピンチ＝MAP自体のズーム（トラックパッドのピンチは ctrl+wheel として届く）
+  outer.addEventListener('wheel', function(e) {
+    if (!e.ctrlKey) return; // 通常のスクロールはそのまま
+    e.preventDefault();
+    var r9 = outer.getBoundingClientRect();
+    var meta9 = window['_orbitMeta' + (mapType === 'current' ? 'C' : 'I')];
+    if (!meta9) return;
+    var oz9 = meta9.z || meta9.fit;
+    _orbitZoomTo(mapType, oz9 * (e.deltaY < 0 ? 1.12 : 0.89), e.clientX - r9.left, e.clientY - r9.top);
+  }, { passive: false });
+  // タッチのピンチ（2本指）
+  var _pnD = 0, _pnZ = 0;
+  outer.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      _pnD = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      var meta9 = window['_orbitMeta' + (mapType === 'current' ? 'C' : 'I')];
+      _pnZ = meta9 ? (meta9.z || meta9.fit) : 1;
+    }
+  }, { passive: true });
+  outer.addEventListener('touchmove', function(e) {
+    if (e.touches.length !== 2 || !_pnD) return;
+    e.preventDefault(); // ブラウザのページ拡大にしない
+    var d9 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    var r9 = outer.getBoundingClientRect();
+    _orbitZoomTo(mapType, _pnZ * (d9 / _pnD), (e.touches[0].clientX + e.touches[1].clientX) / 2 - r9.left, (e.touches[0].clientY + e.touches[1].clientY) / 2 - r9.top);
+  }, { passive: false });
+  outer.addEventListener('touchend', function() { _pnD = 0; });
   // 絞り込み・検索を反映
   if (_orbitQ) orbitSearch(_orbitQ);
   else _applyMapDims();
@@ -4892,10 +4937,29 @@ function orbitZoomBy(dir) {
   if (!meta) return;
   var z = _orbitZoom[mt] || meta.fit;
   if (dir === 0) z = meta.fit; else z = Math.max(0.15, Math.min(2.5, z * (dir > 0 ? 1.25 : 0.8)));
-  _orbitZoom[mt] = (dir === 0) ? 0 : z;
+  _orbitZoomTo(mt, z, null, null);
+  if (dir === 0) _orbitZoom[mt] = 0;
+}
+// v490: 焦点（指・カーソル位置）を中心にズーム。ピンチ＝＋ボタンと同じMAPズームに
+function _orbitZoomTo(mt, nz, fx, fy) {
+  var key = mt === 'current' ? 'C' : 'I';
+  var meta = window['_orbitMeta' + key];
+  var outer = document.getElementById('orbitOuter' + key);
   var svg = document.getElementById(mt === 'current' ? 'orbitSvgC' : 'orbitSvgI');
-  if (svg) { svg.style.width = Math.round(meta.SW * z) + 'px'; svg.style.height = Math.round(meta.SH * z) + 'px'; }
-  meta.z = z;
+  if (!meta || !outer || !svg) return;
+  var oz = meta.z || meta.fit;
+  nz = Math.max(0.15, Math.min(2.5, nz));
+  if (fx == null) { fx = (outer.clientWidth || 0) / 2; fy = (outer.clientHeight || 0) / 2; }
+  var ml0 = Math.max(0, ((outer.clientWidth || 0) - meta.SW * oz) / 2); // margin:auto の中央寄せ分
+  var cx9 = (outer.scrollLeft + fx - ml0) / oz;
+  var cy9 = (outer.scrollTop + fy) / oz;
+  svg.style.width = Math.round(meta.SW * nz) + 'px';
+  svg.style.height = Math.round(meta.SH * nz) + 'px';
+  meta.z = nz;
+  _orbitZoom[mt] = nz;
+  var ml1 = Math.max(0, ((outer.clientWidth || 0) - meta.SW * nz) / 2);
+  outer.scrollLeft = Math.max(0, cx9 * nz + ml1 - fx);
+  outer.scrollTop = Math.max(0, cy9 * nz - fy);
 }
 // 名前スポットライト：該当が光り、他は薄く。最初のヒットへ自動センタリング
 function orbitSearch(q) {
@@ -4980,6 +5044,7 @@ function mapFullscreen() {
   } else {
     try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){}); } catch(eF2) {}
   }
+  document.querySelectorAll('.mapFsBtn').forEach(function(b) { b.classList.toggle('on', on); }); // v490: 押した状態がわかるように点灯
   renderCurrentView();
 }
 document.addEventListener('keydown', function(e) {
@@ -5856,7 +5921,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v489';
+  var DATA_VERSION = 'v490';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6830,6 +6895,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v490', d:'2026-09-19', items:['🤏 俯瞰MAPの上でピンチ（トラックパッド/タッチ）すると、ブラウザ拡大ではなくMAP自体がズームするように（＋ボタンと同じ動き・指の位置を中心に拡大）。情報カードが見切れなくなります','🔳 全画面・A3印刷・ズームのボタンをボタンらしい見た目に変更。全画面中はボタンが点灯して状態がわかります','📐 俯瞰MAPの高さを画面に合わせて自動調整（下の黒い余白まで使ってMAPを表示）','🌳 ツリー表示で名前が長い時に稼働％と重なっていたのを修正（稼働表示の幅に合わせて名前を自動縮小・入り切らない場合は…で省略）'] },
   { v:'v489', d:'2026-09-19', items:['◎ 俯瞰MAP：リング上で丸同士が重ならないように自動で間隔を確保（楕円の左右端は角度あたりの間隔が縮むため、混んだ場所は空いている方向へ自動でずらします）','🗂 情報カードが画面からはみ出さないように修正：縦横とも画面内に収め、内容が長い場合はカード自体をスクロールできます（カードにマウスを乗せている間は消えません）'] },
   { v:'v488', d:'2026-09-19', items:['◎ 俯瞰MAP：1段目のメンバーが1段リングにきちんと乗るように修正（互い違い配置は2段目以降の混雑時のみ）','🐛 MAP全画面中に情報カード・編集画面が表示されない問題を修正（全画面レイヤーの重なり順が原因で、開いても裏に隠れていました）','🏃 俯瞰MAPの稼働表示にSABCタイプを追加（例：C40%・タイプのみ登録ならC）'] },
   { v:'v487', d:'2026-09-19', items:['⚡ メンバーの「かんたん追加」：＋ボタンを押すと名前・性別・段階チップ（FT〜CO）だけの軽いシートが開きます。NA（新規）を最低限の情報でサッと登録し、研修が進んだら従来の編集画面で詳細を追記する運用に','🔁 「登録して続けて追加」でDLR後などの連続登録に対応（段階・追加先は前回のまま、名前だけ入力）','🏷 研修生タイトルに「FT」を追加（マケの前段階）。MAP・俯瞰・絞り込み・経過表示にもそのまま乗ります','📝 くわしく登録したい時はシート右上の「くわしく登録」から従来のフル編集フォームへ（入力内容は引き継ぎ）'] },
