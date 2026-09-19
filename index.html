@@ -427,6 +427,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .olp-title{font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace}
 .nc.trainee{border-left-width:5px!important;background:rgba(34,211,238,.05)}
 .nc.loi-card{border-left-width:5px!important;border-color:var(--loi)!important;background:rgba(74,222,128,.05)}
+.nc.fresh-card{border-left-width:5px!important;border-color:#FFD166!important;background:rgba(255,209,102,.06)}
 .nc.result-ng{background:rgba(100,100,100,.18);border-color:rgba(100,100,100,.3);opacity:0.6}
 .nc.result-user{background:rgba(100,140,180,.18);border-color:rgba(100,140,180,.4)}
 .nc.diff-added{border-color:var(--green)!important;background:rgba(74,222,128,.06)}
@@ -2442,7 +2443,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v490</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v491</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4297,7 +4298,10 @@ function renderPCMap(mapType) {
     var _isBrUp = (typeof isBROrAbove === 'function') && isBROrAbove(m.title);
     var _isBM = (m.title || '').trim() === 'BM';
     var _rankCol = (_isBrUp || _isBM) ? titleRingColor(m.title) : '';
-    var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':col), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':nodeBaseFill; // v423: QBR=オレンジ
+    // v491: フレッシュ（6ヶ月以内・BR未満）はゴールド。ケアバッジ非表示の人は通常色
+    var _isFr9 = mapType === 'current' && !_isBrUp && !_isBM && !isPcLOI && !isT && (m.title || '').trim() !== 'OUT'
+      && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
+    var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':(_isFr9?'#FFD166':col)), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':(_isFr9?'rgba(255,209,102,0.13)':nodeBaseFill); // v423: QBR=オレンジ／v491: フレッシュ=金
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
@@ -4319,7 +4323,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('width',NODE_W); rect.setAttribute('height',NODE_H);
     rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
-    rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI?'2':'1'))); // v420: BR以上=太枠
+    rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI||_isFr9?'2':'1'))); // v420: BR以上=太枠／v491: フレッシュも太枠
     if (_isBrUp) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
     if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)'; // v440: OUTは当月ゴースト表示
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
@@ -4780,10 +4784,14 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     var isPcLOI = ['LOI','Q1','Q2','Q3','Q4'].indexOf((m.title || '').trim()) >= 0;
     var _isBrUp = (typeof isBROrAbove === 'function') && isBROrAbove(m.title);
     var _rankCol = _isBrUp ? titleRingColor(m.title) : '';
-    var stroke = _rankCol || (isPcLOI ? '#FB923C' : (isT ? '#5AD7FF' : col));
+    // v491: フレッシュ=ゴールド（QBR/研修生/BR以上/BM以外・バッジ非表示の人は除く）
+    var _isFrO = mapType === 'current' && !_isBrUp && !isPcLOI && !isT && (m.title || '').trim() !== 'BM' && (m.title || '').trim() !== 'OUT'
+      && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
+    var stroke = _rankCol || (isPcLOI ? '#FB923C' : (isT ? '#5AD7FF' : (_isFrO ? '#FFD166' : col)));
     var fill = light ? '#ffffff' : '#161920';
     if (isT) fill = light ? 'rgba(90,215,255,0.18)' : 'rgba(90,215,255,0.22)';
     if (isPcLOI) fill = 'rgba(251,146,60,0.14)';
+    if (_isFrO) fill = 'rgba(255,209,102,0.13)';
     var g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'oval-node orbit-node');
     g.setAttribute('data-mid', m.id);
@@ -5921,7 +5929,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v490';
+  var DATA_VERSION = 'v491';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6895,6 +6903,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v491', d:'2026-09-19', items:['🌟 フレッシュ（スタート6ヶ月以内・BR未満）のカードをゴールド（黄）で表示：QBRのオレンジと同じ方式で、PCツリー・モバイルカード・◎俯瞰MAPすべてに適用。🌱バッジと同系色で「黄色＝フレッシュ」に統一','色の優先順位は BR以上（宝石色）→ BM（紫）→ QBR（橙）→ 研修生（水色）→ フレッシュ（金）→ 通常。ケアバッジを「非表示」にしている人は色も通常のまま。6ヶ月経過で自動的に通常色へ'] },
   { v:'v490', d:'2026-09-19', items:['🤏 俯瞰MAPの上でピンチ（トラックパッド/タッチ）すると、ブラウザ拡大ではなくMAP自体がズームするように（＋ボタンと同じ動き・指の位置を中心に拡大）。情報カードが見切れなくなります','🔳 全画面・A3印刷・ズームのボタンをボタンらしい見た目に変更。全画面中はボタンが点灯して状態がわかります','📐 俯瞰MAPの高さを画面に合わせて自動調整（下の黒い余白まで使ってMAPを表示）','🌳 ツリー表示で名前が長い時に稼働％と重なっていたのを修正（稼働表示の幅に合わせて名前を自動縮小・入り切らない場合は…で省略）'] },
   { v:'v489', d:'2026-09-19', items:['◎ 俯瞰MAP：リング上で丸同士が重ならないように自動で間隔を確保（楕円の左右端は角度あたりの間隔が縮むため、混んだ場所は空いている方向へ自動でずらします）','🗂 情報カードが画面からはみ出さないように修正：縦横とも画面内に収め、内容が長い場合はカード自体をスクロールできます（カードにマウスを乗せている間は消えません）'] },
   { v:'v488', d:'2026-09-19', items:['◎ 俯瞰MAP：1段目のメンバーが1段リングにきちんと乗るように修正（互い違い配置は2段目以降の混雑時のみ）','🐛 MAP全画面中に情報カード・編集画面が表示されない問題を修正（全画面レイヤーの重なり順が原因で、開いても裏に隠れていました）','🏃 俯瞰MAPの稼働表示にSABCタイプを追加（例：C40%・タイプのみ登録ならC）'] },
@@ -9496,7 +9505,13 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
 
   var LOI_TITLES = ['LOI','Q2','Q3','Q4'];
   var isLOI = LOI_TITLES.indexOf((m.title||'').trim()) >= 0;
-  var ncClass = 'nc' + (isLOI ? ' loi-card' : m.trainee ? ' trainee' : '') +
+  // v491: フレッシュ=ゴールドカード（QBR/研修生/BR以上/BM以外・ケアバッジ非表示は除く）
+  var _isFrM = mapType === 'current' && !isLOI && !m.trainee
+    && !((typeof memberCat === 'function') && memberCat(m) === '研修生')
+    && !((typeof isBROrAbove === 'function') && isBROrAbove(m.title))
+    && (m.title || '').trim() !== 'BM' && (m.title || '').trim() !== 'OUT'
+    && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
+  var ncClass = 'nc' + (isLOI ? ' loi-card' : m.trainee ? ' trainee' : (_isFrM ? ' fresh-card' : '')) +
     (m.traineeResult === '流れた' ? ' result-ng' : m.traineeResult === 'ユーザー' ? ' result-user' : '') +
     (mapType === 'current' ? (' ' + memberActivityLevel(m)) : '') +
     (((m.title || '').trim() === 'OUT') ? ' out-member' : ''); // v440: OUTは当月ゴースト表示
