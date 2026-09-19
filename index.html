@@ -2437,7 +2437,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v485</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v486</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4662,9 +4662,13 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
   var nr = Math.max(13, Math.min(24, Math.round(1100 / Math.max(N, 20))));
   var stag = RS * 0.30; // 混雑リング用の内外スタガ
   var Rmax = R0 + Math.max(maxD - 1, 0) * RS + stag;
+  // v486: 旧MAP同様の楕円（横長）。画面比率に合わせて横に伸ばす（印刷はA3横の比率）
+  var ASPECT = isPrint ? 1.45 : Math.max(1.15, Math.min(1.9, (window.innerWidth || 1400) / Math.max(window.innerHeight || 900, 500)));
   var PAD = 70;
-  var CX = Rmax + PAD, CY = Rmax + PAD, SW = (Rmax + PAD) * 2, SH = SW;
+  var CX = Rmax * ASPECT + PAD, CY = Rmax + PAD;
+  var SW = (Rmax * ASPECT + PAD) * 2, SH = (Rmax + PAD) * 2;
   var rad = function(deg) { return deg * Math.PI / 180; };
+  var ept = function(R, deg) { return { x: CX + R * ASPECT * Math.cos(rad(deg)), y: CY + R * Math.sin(rad(deg)) }; };
   var posOf = {};
   var ringIdx = {};
   members.forEach(function(m) {
@@ -4673,8 +4677,8 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     var R = R0 + (d - 1) * RS;
     var k = 'd' + d;
     ringIdx[k] = (ringIdx[k] || 0) + 1;
-    if (!kids(m.id).length && perLeaf * Math.PI / 180 * R < nr * 2.4) R += (ringIdx[k] % 2 ? stag : -stag * 0.4); // 混雑時は互い違い
-    posOf[m.id] = { x: CX + R * Math.cos(rad(angle[m.id])), y: CY + R * Math.sin(rad(angle[m.id])) };
+    if (!kids(m.id).length && perLeaf * Math.PI / 180 * R * (ASPECT + 1) / 2 < nr * 2.4) R += (ringIdx[k] % 2 ? stag : -stag * 0.4); // 混雑時は互い違い
+    posOf[m.id] = ept(R, angle[m.id]);
   });
 
   var NS = 'http://www.w3.org/2000/svg';
@@ -4688,11 +4692,12 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     if (sec.a1 - sec.a0 >= 359) return;
     var rIn = R0 * 0.45, rOut = Rmax + PAD * 0.5;
     var large = (sec.a1 - sec.a0) > 180 ? 1 : 0;
-    var p = 'M' + (CX + rIn * Math.cos(rad(sec.a0))) + ',' + (CY + rIn * Math.sin(rad(sec.a0)))
-      + ' L' + (CX + rOut * Math.cos(rad(sec.a0))) + ',' + (CY + rOut * Math.sin(rad(sec.a0)))
-      + ' A' + rOut + ',' + rOut + ' 0 ' + large + ' 1 ' + (CX + rOut * Math.cos(rad(sec.a1))) + ',' + (CY + rOut * Math.sin(rad(sec.a1)))
-      + ' L' + (CX + rIn * Math.cos(rad(sec.a1))) + ',' + (CY + rIn * Math.sin(rad(sec.a1)))
-      + ' A' + rIn + ',' + rIn + ' 0 ' + large + ' 0 ' + (CX + rIn * Math.cos(rad(sec.a0))) + ',' + (CY + rIn * Math.sin(rad(sec.a0))) + ' Z';
+    var i0 = ept(rIn, sec.a0), i1 = ept(rIn, sec.a1), o0 = ept(rOut, sec.a0), o1 = ept(rOut, sec.a1);
+    var p = 'M' + i0.x + ',' + i0.y
+      + ' L' + o0.x + ',' + o0.y
+      + ' A' + (rOut * ASPECT) + ',' + rOut + ' 0 ' + large + ' 1 ' + o1.x + ',' + o1.y
+      + ' L' + i1.x + ',' + i1.y
+      + ' A' + (rIn * ASPECT) + ',' + rIn + ' 0 ' + large + ' 0 ' + i0.x + ',' + i0.y + ' Z';
     var path = document.createElementNS(NS, 'path');
     path.setAttribute('d', p); path.setAttribute('fill', sec.col); path.setAttribute('opacity', light ? '0.06' : '0.07');
     path.setAttribute('pointer-events', 'none');
@@ -4701,8 +4706,9 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
   // 同心リング＝段
   for (var d1 = 1; d1 <= maxD; d1++) {
     var R1 = R0 + (d1 - 1) * RS;
-    var ring = document.createElementNS(NS, 'circle');
-    ring.setAttribute('cx', CX); ring.setAttribute('cy', CY); ring.setAttribute('r', R1);
+    var ring = document.createElementNS(NS, 'ellipse');
+    ring.setAttribute('cx', CX); ring.setAttribute('cy', CY);
+    ring.setAttribute('rx', R1 * ASPECT); ring.setAttribute('ry', R1);
     ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', light ? '#c9cfda' : '#2a3242'); ring.setAttribute('stroke-width', '1');
     svg.appendChild(ring);
     var rl = document.createElementNS(NS, 'text');
@@ -4767,19 +4773,31 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
       t2.setAttribute('text-anchor', 'middle'); t2.setAttribute('pointer-events', 'none');
       t2.setAttribute('font-size', '7.5px'); t2.setAttribute('font-weight', '700');
       t2.setAttribute('fill', stroke);
-      t2.textContent = (typeof titleAbbr === 'function' ? titleAbbr(m.title || '—') : (m.title || '—')) + (m.goldShip ? ' ⛴' : '');
+      t2.textContent = (typeof titleAbbr === 'function' ? titleAbbr(m.title || '—') : (m.title || '—'));
       g.appendChild(t2);
-    } else if (m.goldShip) {
+    }
+    if (m.goldShip) { // v486: ⛴は円の中でなく右上の小バッジ
       var t3 = document.createElementNS(NS, 'text');
-      t3.setAttribute('x', pos.x + r * 0.75); t3.setAttribute('y', pos.y - r * 0.75);
-      t3.setAttribute('text-anchor', 'middle'); t3.setAttribute('font-size', '9px'); t3.setAttribute('pointer-events', 'none');
+      t3.setAttribute('x', pos.x + r * 0.8); t3.setAttribute('y', pos.y - r * 0.8);
+      t3.setAttribute('text-anchor', 'middle'); t3.setAttribute('font-size', '9.5px'); t3.setAttribute('pointer-events', 'none');
+      t3.setAttribute('class', 'orbit-gold');
       t3.textContent = '⛴';
       g.appendChild(t3);
     }
-    var tip = document.createElementNS(NS, 'title');
-    tip.textContent = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() + '　' + (m.title || '—') + '　GSV ' + ((m.ptCurrent || 0).toLocaleString()) + 'pt'
-      + (m.region ? '　📍' + m.region : '') + ((nodeDepth[m.id] || 0) ? '　' + nodeDepth[m.id] + '段目' : '') + (m._foreign ? '　（結合）' : '');
-    g.appendChild(tip);
+    // v486: ノード下に GSVポイント・稼働率
+    var _pt6 = (m.ptCurrent || 0);
+    var _ar6 = (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) ? parseInt(m.actRate, 10) : null;
+    var _sub6 = (_pt6 > 0 ? _pt6.toLocaleString() + 'pt' : '') + (_ar6 !== null ? ((_pt6 > 0 ? '・' : '') + _ar6 + '%') : '');
+    if (_sub6) {
+      var ts = document.createElementNS(NS, 'text');
+      ts.setAttribute('x', pos.x); ts.setAttribute('y', pos.y + r + 9);
+      ts.setAttribute('text-anchor', 'middle'); ts.setAttribute('pointer-events', 'none');
+      ts.setAttribute('font-size', '7.5px'); ts.setAttribute('font-weight', '700');
+      ts.setAttribute('fill', light ? '#556070' : '#9fb0c3');
+      ts.setAttribute('class', 'orbit-sub');
+      ts.textContent = _sub6;
+      g.appendChild(ts);
+    }
     if (!isPrint) {
       g.addEventListener('click', function(ev) {
         ev.stopPropagation();
@@ -4787,6 +4805,9 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
         else if (/^AG\d+_/.test(m.id)) { /* 合算表示は閲覧のみ */ }
         else if (state.isEditor && typeof openEdit === 'function') openEdit(m.id);
       });
+      // v486: マウスオーバーで通常MAPと同じ情報カード
+      g.addEventListener('mouseenter', function(ev) { if (typeof showPcTooltip === 'function') showPcTooltip(m.id, ev); });
+      g.addEventListener('mouseleave', function() { if (typeof hidePcTooltip === 'function') hidePcTooltip(); });
     }
     svg.appendChild(g);
   });
@@ -5804,7 +5825,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v485';
+  var DATA_VERSION = 'v486';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6778,6 +6799,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v486', d:'2026-09-19', items:['◎ 俯瞰MAPを楕円レイアウトに：横長画面に合わせてリングが楕円になり、フロント（1段目）が多くても横方向に広く使えます（印刷もA3横の比率で最適化）','👆 俯瞰MAPのマウスオーバーで通常MAPと同じ情報カード（稼働・GSV・予定タスク・OL記録）を表示','🔢 各ノードの下にGSVポイントと稼働率を表示','⛴ 金の船マークは円の中ではなく右上の小さなバッジ表示に統一'] },
   { v:'v485', d:'2026-09-19', items:['◎ PC版に「俯瞰MAP」ビューを新設：同心リング＝段数・系列は扇形セクターで色分けした円形MAP。100人規模でも組織全体が1画面に収まります（ツリー/テーブル/カンバンの隣の「俯瞰」ボタン）','🔍 俯瞰MAPの名前検索スポットライト：名前を打つと該当メンバーが光って他が薄暗くなり、位置へ自動センタリング（打ち合わせで「誰の話か」が一瞬で共有できます）','🖨 俯瞰MAPをA3横1枚に印刷（ブラウザの印刷→PDF保存にも対応）','⛶ MAPの全画面表示：ヘッダー・ナビを消してMAPだけを画面いっぱいに（画面共有向け・Escで解除）','研修生/BR/QBR/金の船/地域の絞り込み・タップで詳細編集は俯瞰MAPでもそのまま使えます'] },
   { v:'v484', d:'2026-09-19', items:['⚡ PC版の大規模MAPを高速化：組織図の深さ計算・子探索を全面書き換え（人数の2乗→人数に比例）。名前・ポイント入力後の保存や再描画が大幅に軽くなりました','⚡ MAP切替を高速化：結合リスナー・孫階層・写真読込などの裏読み込みが1件ごとに全画面を再描画していたのをまとめて1回に（共有MAP⇄自分MAPの切替直後の固まりを解消）','🔍 絞り込みの強調バグを修正：研修生/BR/地域などの薄暗判定を描画のたびに最新メンバー情報から作り直すように（編集前の情報で判定される経路を根絶）。理想MAPでの絞り込みも正しく判定'] },
   { v:'v483', d:'2026-09-18', items:['🚩 年間ロードマップ：複数月にまたがるマイルストーンに対応（期間バー表示・重なりは自動で段分け）','🧮 フロントBRの自動逆算：LOI→Q2→Q3→BRの最短リードタイム（既定3ヶ月・変更可）を組み込み。BR行に予測値を自動表示し、📤割り振りではBRギャップを「期日3ヶ月前までのフロント」に逆算配置','🎪 動員を計画を逆算プランナーに刷新：出したいフロント数×係数から CT取り・CT・FT・PG・DLR動員 の件数と期限を自動計算（人の紐づけを廃止）','📅 DLRのカレンダー表記に対応：標準でDLR/P&P両対応＋⚙係数で自由に登録可。他のユニオン予定からも選択OK','🗺 PC右カラムのロードマップミニを当月始まりに変更','🌟 目標タイトル・目標月収を大きく表示＋スローガン（ひとこと）を登録可能に'] },
