@@ -2439,7 +2439,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v488</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v489</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4671,6 +4671,33 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
   var SW = (Rmax * ASPECT + PAD) * 2, SH = (Rmax + PAD) * 2;
   var rad = function(deg) { return deg * Math.PI / 180; };
   var ept = function(R, deg) { return { x: CX + R * ASPECT * Math.cos(rad(deg)), y: CY + R * Math.sin(rad(deg)) }; };
+  // v489: リングごとに最小間隔を確保（楕円の左右端は角度あたりの移動距離が縮み、丸が重なるため）
+  (function() {
+    var byRing = {};
+    members.forEach(function(m) {
+      if (m.id === root.id) return;
+      var d = nodeDepth[m.id] || 0;
+      (byRing[d] || (byRing[d] = [])).push(m.id);
+    });
+    var minPx = nr * 2 + 10;
+    Object.keys(byRing).forEach(function(dk) {
+      var ids = byRing[dk].sort(function(a, b) { return angle[a] - angle[b]; });
+      if (ids.length < 2) return;
+      var R = R0 + (parseInt(dk, 10) - 1) * RS;
+      var degLen = function(th) { var t = rad(th); return Math.PI / 180 * Math.sqrt(Math.pow(R * ASPECT * Math.sin(t), 2) + Math.pow(R * Math.cos(t), 2)); }; // 1度あたりの移動距離(px)
+      for (var i = 1; i < ids.length; i++) {
+        var need = minPx / Math.max(degLen((angle[ids[i - 1]] + angle[ids[i]]) / 2), 0.5);
+        if (angle[ids[i]] < angle[ids[i - 1]] + need) angle[ids[i]] = angle[ids[i - 1]] + need;
+      }
+      // 一周分を超えて先頭と被る場合は全体を均等に圧縮
+      var span = angle[ids[ids.length - 1]] - angle[ids[0]];
+      var lim = 360 - minPx / Math.max(degLen(angle[ids[0]]), 0.5);
+      if (span > lim && span > 0) {
+        var sc = lim / span;
+        for (var j = 1; j < ids.length; j++) angle[ids[j]] = angle[ids[0]] + (angle[ids[j]] - angle[ids[0]]) * sc;
+      }
+    });
+  })();
   var posOf = {};
   var ringIdx = {};
   members.forEach(function(m) {
@@ -5829,7 +5856,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v488';
+  var DATA_VERSION = 'v489';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6803,6 +6830,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v489', d:'2026-09-19', items:['◎ 俯瞰MAP：リング上で丸同士が重ならないように自動で間隔を確保（楕円の左右端は角度あたりの間隔が縮むため、混んだ場所は空いている方向へ自動でずらします）','🗂 情報カードが画面からはみ出さないように修正：縦横とも画面内に収め、内容が長い場合はカード自体をスクロールできます（カードにマウスを乗せている間は消えません）'] },
   { v:'v488', d:'2026-09-19', items:['◎ 俯瞰MAP：1段目のメンバーが1段リングにきちんと乗るように修正（互い違い配置は2段目以降の混雑時のみ）','🐛 MAP全画面中に情報カード・編集画面が表示されない問題を修正（全画面レイヤーの重なり順が原因で、開いても裏に隠れていました）','🏃 俯瞰MAPの稼働表示にSABCタイプを追加（例：C40%・タイプのみ登録ならC）'] },
   { v:'v487', d:'2026-09-19', items:['⚡ メンバーの「かんたん追加」：＋ボタンを押すと名前・性別・段階チップ（FT〜CO）だけの軽いシートが開きます。NA（新規）を最低限の情報でサッと登録し、研修が進んだら従来の編集画面で詳細を追記する運用に','🔁 「登録して続けて追加」でDLR後などの連続登録に対応（段階・追加先は前回のまま、名前だけ入力）','🏷 研修生タイトルに「FT」を追加（マケの前段階）。MAP・俯瞰・絞り込み・経過表示にもそのまま乗ります','📝 くわしく登録したい時はシート右上の「くわしく登録」から従来のフル編集フォームへ（入力内容は引き継ぎ）'] },
   { v:'v486', d:'2026-09-19', items:['◎ 俯瞰MAPを楕円レイアウトに：横長画面に合わせてリングが楕円になり、フロント（1段目）が多くても横方向に広く使えます（印刷もA3横の比率で最適化）','👆 俯瞰MAPのマウスオーバーで通常MAPと同じ情報カード（稼働・GSV・予定タスク・OL記録）を表示','🔢 各ノードの下にGSVポイントと稼働率を表示','⛴ 金の船マークは円の中ではなく右上の小さなバッジ表示に統一'] },
@@ -12303,18 +12331,42 @@ function showPcTooltip(mid, ev) {
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">稼働</span><span class="pc-tooltip-val">' + actLabel + '</span></div>'
     + (m.memo ? '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:var(--text-mid);white-space:pre-wrap;max-width:280px;line-height:1.5">' + m.memo.substring(0,200) + '</div>' : '')
     + planHtml + olHtml + evHtml;
-  tip.style.left = Math.min(ev.clientX + 12, window.innerWidth - 200) + 'px';
-  tip.style.top = Math.max(ev.clientY - 10, 10) + 'px';
+  if (_tipHideT) { clearTimeout(_tipHideT); _tipHideT = null; }
+  if (!tip._hoverWired) { // v489: カード上にマウスがある間は消さない（スクロール閲覧用）
+    tip._hoverWired = true;
+    tip.addEventListener('mouseenter', function() { if (_tipHideT) { clearTimeout(_tipHideT); _tipHideT = null; } });
+    tip.addEventListener('mouseleave', function() { _tipHideNow(); });
+  }
+  tip.style.maxHeight = ''; tip.style.overflowY = ''; tip.style.pointerEvents = 'none';
+  tip.style.left = (ev.clientX + 12) + 'px';
+  tip.style.top = Math.max(ev.clientY - 10, 8) + 'px';
   tip.classList.add('show');
-  // 下端で見切れる場合は上方向にクランプ
-  var th = tip.offsetHeight;
+  // v489: 縦横とも画面内に完全に収める。画面より長い内容はカード内スクロール
+  var th = tip.offsetHeight || 0, tw = tip.offsetWidth || 0;
+  var maxH = window.innerHeight - 16;
+  if (th > maxH) {
+    tip.style.maxHeight = maxH + 'px';
+    tip.style.overflowY = 'auto';
+    tip.style.pointerEvents = 'auto'; // カードに乗ってスクロールできる
+    th = maxH;
+  }
+  var left = ev.clientX + 12;
+  if (tw && left + tw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - tw - 8);
   var top = ev.clientY - 10;
-  if (top + th > window.innerHeight - 10) top = window.innerHeight - th - 10;
-  tip.style.top = Math.max(10, top) + 'px';
+  if (th && top + th > window.innerHeight - 8) top = window.innerHeight - th - 8;
+  tip.style.left = left + 'px';
+  tip.style.top = Math.max(8, top) + 'px';
+}
+var _tipHideT = null;
+function _tipHideNow() {
+  if (_tipHideT) { clearTimeout(_tipHideT); _tipHideT = null; }
+  var tip = document.getElementById('pcTooltip');
+  if (tip) { tip.classList.remove('show'); tip.style.pointerEvents = 'none'; }
 }
 function hidePcTooltip() {
-  var tip = document.getElementById('pcTooltip');
-  if (tip) tip.classList.remove('show');
+  // v489: 少し遅らせて消す（ノード→カードへマウス移動した時に消えないように）
+  if (_tipHideT) clearTimeout(_tipHideT);
+  _tipHideT = setTimeout(_tipHideNow, 150);
 }
 
 // #6 共有チップ表示
