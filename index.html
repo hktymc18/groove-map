@@ -74,6 +74,18 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 /* PC左サイドバー */
 .pc-sidebar{display:none;position:fixed;left:0;top:0;bottom:0;width:68px;background:#0a0c11;border-right:1px solid var(--border);flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 14px) 0 14px;gap:5px;z-index:60}
 @media(min-width:768px){.pc-sidebar{display:flex}body{padding-left:68px}}
+.qa-chip{padding:8px 13px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;user-select:none}
+.qa-chip.sel{background:var(--accent);color:#08121a;border-color:var(--accent)}
+.pc-orbit-wrap{display:none}
+.pc-orbit-wrap.show{display:block}
+.orbit-hit circle{stroke:#F6C744 !important;stroke-width:5px !important;filter:drop-shadow(0 0 10px #F6C744)}
+.map-fs{position:fixed !important;inset:0 !important;z-index:60;background:var(--bg);overflow:auto;padding:0 !important;display:block !important}
+#orbitPrintLayer{display:none}
+@media print{
+  body.printing-orbit>*:not(#orbitPrintLayer){display:none !important}
+  body.printing-orbit #orbitPrintLayer{display:block !important;position:static;background:#fff;color:#111}
+  body.printing-orbit #orbitPrintLayer svg{width:100%;height:auto}
+}
 .pcs-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:5px 3px;border-radius:12px;transition:background .12s;width:60px}
 .pcs-item:hover{background:var(--surface)}
 .pcs-item.active{background:var(--surface2)}
@@ -2427,7 +2439,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v484</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v488</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2524,6 +2536,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')">ツリー</div>
       <div class="pv-btn" id="pvTable" onclick="switchPCView('table')">テーブル</div>
       <div class="pv-btn" id="pvKanban" onclick="switchPCView('kanban')">カンバン</div>
+      <div class="pv-btn" id="pvOrbit" onclick="switchPCView('orbit')">◎ 俯瞰</div>
       <div class="pt-sep"></div>
       <div class="pt-search" onclick="openSearchModal()">
         <span style="font-size:13px">🔍</span>
@@ -2531,6 +2544,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span id="pcSearchClear" style="display:none;font-size:14px;color:var(--text-dim);cursor:pointer" onclick="event.stopPropagation();clearSearch()">✕</span>
       </div>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <div class="pt-action" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに表示（画面共有向け）">⛶ 全画面</div>
         <div class="pt-action" onclick="exportCSV('current')">CSV</div>
         <div class="pt-action" id="pcShareBtn" onclick="openShareModal()" style="display:none">共有</div>
         <span style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace" id="searchResultCount"></span>
@@ -2542,6 +2556,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="pc-map-wrap" id="pcMapCurrent"></div>
     <div class="pc-table-wrap" id="pcTableCurrent"></div>
     <div class="pc-kanban-wrap" id="pcKanbanCurrent"></div>
+    <div class="pc-orbit-wrap" id="pcOrbitCurrent"></div>
     <div class="mobile-tree tree" id="treeCurrent"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
   </div>
 
@@ -2567,10 +2582,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="pt-sep"></div>
       <div class="pv-btn active" id="pvTreeI" onclick="switchPCView('tree')">ツリー</div>
       <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">テーブル</div>
+      <div class="pv-btn" id="pvOrbitI" onclick="switchPCView('orbit')">◎ 俯瞰</div>
     </div>
     <div class="sec-label mobile-tree">目標ツリー</div>
     <div class="pc-filter-bar" id="pcFilterIdeal"></div>
     <div class="pc-map-wrap" id="pcMapIdeal"></div>
+    <div class="pc-orbit-wrap" id="pcOrbitIdeal"></div>
     <div class="pc-table-wrap" id="pcTableIdeal"></div>
     <div class="mobile-tree tree" id="treeIdeal"><div class="loading"><span class="spin"></span>読み込み中...</div></div>
   </div>
@@ -4573,9 +4590,376 @@ function renderPCMap(mapType) {
 // ウィンドウリサイズ時に再描画
 window.addEventListener('resize', function() {
   if (isPCMode()) {
+    if (typeof _pcView !== 'undefined' && _pcView === 'orbit') {
+      renderPCOrbit(currentView === 'ideal' ? 'ideal' : 'current');
+      return;
+    }
     if (currentView === 'current') renderPCMap('current');
     else if (currentView === 'ideal') renderPCMap('ideal');
   }
+});
+
+// ============================================================
+//  v485: ◎ 俯瞰MAP（同心リング＝段数・系列セクター・検索スポットライト）
+//        ＋ 🖨 A3印刷 ＋ ⛶ MAP全画面
+// ============================================================
+var _orbitQ = '';
+var _orbitZoom = { current: 0, ideal: 0 }; // 0=フィット（自動）
+function renderPCOrbit(mapType, targetEl, forceLight) {
+  mapType = mapType || 'current';
+  var wrap = targetEl || document.getElementById(mapType === 'current' ? 'pcOrbitCurrent' : 'pcOrbitIdeal');
+  if (!wrap) return;
+  var isPrint = !!targetEl;
+  var light = forceLight || document.body.classList.contains('light');
+  wrap.innerHTML = '';
+  var members = _treeVisibleMembers(composeMergedInto(membersForMap(mapType), mapType));
+  if (!members || !members.length) { wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし</div>'; return; }
+  var _kidsCmp = _treeSortCmp(members);
+  var _byId = {}, _kidIdx = {};
+  members.forEach(function(m) { _byId[m.id] = m; var pid = m.parentId || ''; (_kidIdx[pid] || (_kidIdx[pid] = [])).push(m); });
+  for (var _ki in _kidIdx) _kidIdx[_ki].sort(_kidsCmp);
+  var kids = function(id) { return _kidIdx[id] || []; };
+  var roots = kids('');
+  if (!roots.length) return;
+  var root = roots[0];
+  // 深さ（メモ化）
+  var nodeDepth = {}, maxD = 0;
+  members.forEach(function(m) {
+    var chain = [], cur = m, guard = 0;
+    while (cur && nodeDepth[cur.id] === undefined && guard++ < 999) { chain.unshift(cur); cur = cur.parentId ? (_byId[cur.parentId] || null) : null; }
+    var base = (cur && nodeDepth[cur.id] !== undefined) ? nodeDepth[cur.id] : -1;
+    for (var ci = 0; ci < chain.length; ci++) nodeDepth[chain[ci].id] = base + 1 + ci;
+    if (nodeDepth[m.id] > maxD) maxD = nodeDepth[m.id];
+  });
+  // 葉数（角度の割当量）
+  var leafCnt = {};
+  (function cnt(id) { var ch = kids(id); if (!ch.length) { leafCnt[id] = 1; return 1; } var t = 0; ch.forEach(function(c) { t += cnt(c.id); }); leafCnt[id] = t; return t; })(root.id);
+  var totalLeaves = leafCnt[root.id] || 1;
+  // 系列カラー＆セクター角度
+  var COLORS = ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF'];
+  var l1 = kids(root.id);
+  var gapDeg = l1.length > 1 ? 5 : 0;
+  var availDeg = 360 - gapDeg * l1.length;
+  var perLeaf = availDeg / totalLeaves;
+  var cmap = {}, lineageRoot = {};
+  cmap[root.id] = '#8a94a6'; lineageRoot[root.id] = '';
+  var angle = {}, sectors = [];
+  var a = -90;
+  l1.forEach(function(kid, fi) {
+    var col = COLORS[fi % COLORS.length];
+    var span = leafCnt[kid.id] * perLeaf;
+    sectors.push({ a0: a, a1: a + span, col: col, id: kid.id });
+    (function assign(m, a0, a1, c, lr) {
+      cmap[m.id] = c; lineageRoot[m.id] = lr;
+      angle[m.id] = (a0 + a1) / 2;
+      var ch = kids(m.id), ca = a0;
+      ch.forEach(function(cc2) { var sp = leafCnt[cc2.id] * perLeaf; assign(cc2, ca, ca + sp, c, lr); ca += sp; });
+    })(kid, a, a + span, col, kid.id);
+    a += span + gapDeg;
+  });
+  angle[root.id] = 0;
+  // 半径・ノードサイズ（人数で自動調整）
+  var N = members.length;
+  var R0 = 120, RS = N > 160 ? 78 : (N > 80 ? 88 : 100);
+  var nr = Math.max(13, Math.min(24, Math.round(1100 / Math.max(N, 20))));
+  var stag = RS * 0.30; // 混雑リング用の内外スタガ
+  var Rmax = R0 + Math.max(maxD - 1, 0) * RS + stag;
+  // v486: 旧MAP同様の楕円（横長）。画面比率に合わせて横に伸ばす（印刷はA3横の比率）
+  var ASPECT = isPrint ? 1.45 : Math.max(1.15, Math.min(1.9, (window.innerWidth || 1400) / Math.max(window.innerHeight || 900, 500)));
+  var PAD = 70;
+  var CX = Rmax * ASPECT + PAD, CY = Rmax + PAD;
+  var SW = (Rmax * ASPECT + PAD) * 2, SH = (Rmax + PAD) * 2;
+  var rad = function(deg) { return deg * Math.PI / 180; };
+  var ept = function(R, deg) { return { x: CX + R * ASPECT * Math.cos(rad(deg)), y: CY + R * Math.sin(rad(deg)) }; };
+  var posOf = {};
+  var ringIdx = {};
+  members.forEach(function(m) {
+    var d = nodeDepth[m.id] || 0;
+    if (m.id === root.id) { posOf[m.id] = { x: CX, y: CY }; return; }
+    var R = R0 + (d - 1) * RS;
+    var k = 'd' + d;
+    ringIdx[k] = (ringIdx[k] || 0) + 1;
+    if (d >= 2 && !kids(m.id).length && perLeaf * Math.PI / 180 * R * (ASPECT + 1) / 2 < nr * 2.4) R += (ringIdx[k] % 2 ? stag : -stag * 0.4); // v488: 互い違いは2段目以降の混雑時のみ（1段目はリングに乗せる）
+    posOf[m.id] = ept(R, angle[m.id]);
+  });
+
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + SW + ' ' + SH);
+  svg.setAttribute('id', isPrint ? 'orbitSvgPrint' : (mapType === 'current' ? 'orbitSvgC' : 'orbitSvgI'));
+  var bg = light ? '#ffffff' : 'var(--bg)';
+  svg.style.background = bg;
+  // 系列セクター（薄い塗り）
+  sectors.forEach(function(sec) {
+    if (sec.a1 - sec.a0 >= 359) return;
+    var rIn = R0 * 0.45, rOut = Rmax + PAD * 0.5;
+    var large = (sec.a1 - sec.a0) > 180 ? 1 : 0;
+    var i0 = ept(rIn, sec.a0), i1 = ept(rIn, sec.a1), o0 = ept(rOut, sec.a0), o1 = ept(rOut, sec.a1);
+    var p = 'M' + i0.x + ',' + i0.y
+      + ' L' + o0.x + ',' + o0.y
+      + ' A' + (rOut * ASPECT) + ',' + rOut + ' 0 ' + large + ' 1 ' + o1.x + ',' + o1.y
+      + ' L' + i1.x + ',' + i1.y
+      + ' A' + (rIn * ASPECT) + ',' + rIn + ' 0 ' + large + ' 0 ' + i0.x + ',' + i0.y + ' Z';
+    var path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', p); path.setAttribute('fill', sec.col); path.setAttribute('opacity', light ? '0.06' : '0.07');
+    path.setAttribute('pointer-events', 'none');
+    svg.appendChild(path);
+  });
+  // 同心リング＝段
+  for (var d1 = 1; d1 <= maxD; d1++) {
+    var R1 = R0 + (d1 - 1) * RS;
+    var ring = document.createElementNS(NS, 'ellipse');
+    ring.setAttribute('cx', CX); ring.setAttribute('cy', CY);
+    ring.setAttribute('rx', R1 * ASPECT); ring.setAttribute('ry', R1);
+    ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', light ? '#c9cfda' : '#2a3242'); ring.setAttribute('stroke-width', '1');
+    svg.appendChild(ring);
+    var rl = document.createElementNS(NS, 'text');
+    rl.setAttribute('x', CX); rl.setAttribute('y', CY - R1 - 6);
+    rl.setAttribute('text-anchor', 'middle'); rl.setAttribute('font-size', '11px'); rl.setAttribute('font-weight', '700');
+    rl.setAttribute('fill', light ? '#8a94a6' : '#5b6c7d'); // 段ラベル色
+    rl.setAttribute('class', 'orbit-ring-lb');
+    rl.textContent = d1 + '段';
+    svg.appendChild(rl);
+  }
+  // 線（親→子）
+  members.forEach(function(m) {
+    if (!m.parentId || !_byId[m.parentId]) return;
+    var p1 = posOf[m.parentId], p2 = posOf[m.id];
+    if (!p1 || !p2) return;
+    var ln = document.createElementNS(NS, 'line');
+    ln.setAttribute('x1', p1.x); ln.setAttribute('y1', p1.y); ln.setAttribute('x2', p2.x); ln.setAttribute('y2', p2.y);
+    ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '1.2'); ln.setAttribute('opacity', '0.4');
+    if (m._foreign) ln.setAttribute('stroke-dasharray', '4,3');
+    svg.appendChild(ln);
+  });
+  // ノード
+  members.forEach(function(m) {
+    var pos = posOf[m.id];
+    if (!pos) return;
+    var isRoot = m.id === root.id;
+    var col = cmap[m.id] || COLORS[0];
+    var isT = (typeof memberCat === 'function') ? (memberCat(m) === '研修生') : !!m.trainee;
+    var isPcLOI = ['LOI','Q1','Q2','Q3','Q4'].indexOf((m.title || '').trim()) >= 0;
+    var _isBrUp = (typeof isBROrAbove === 'function') && isBROrAbove(m.title);
+    var _rankCol = _isBrUp ? titleRingColor(m.title) : '';
+    var stroke = _rankCol || (isPcLOI ? '#FB923C' : (isT ? '#5AD7FF' : col));
+    var fill = light ? '#ffffff' : '#161920';
+    if (isT) fill = light ? 'rgba(90,215,255,0.18)' : 'rgba(90,215,255,0.22)';
+    if (isPcLOI) fill = 'rgba(251,146,60,0.14)';
+    var g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'oval-node orbit-node');
+    g.setAttribute('data-mid', m.id);
+    g.setAttribute('data-lineage', lineageRoot[m.id] || '');
+    g.setAttribute('data-region', m.region || '');
+    g.style.cursor = 'pointer';
+    var r = isRoot ? nr + 8 : nr;
+    var ci = document.createElementNS(NS, 'circle');
+    ci.setAttribute('cx', pos.x); ci.setAttribute('cy', pos.y); ci.setAttribute('r', r);
+    ci.setAttribute('fill', fill); ci.setAttribute('stroke', stroke);
+    ci.setAttribute('stroke-width', _isBrUp ? '3' : '1.6');
+    if (m._foreign) ci.setAttribute('stroke-dasharray', '4,3');
+    g.appendChild(ci);
+    if (_isBrUp && !isPrint) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
+    if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)';
+    var nm = ((m.lastName || '') + (m.firstName || '')).replace(/\s+/g, '').substring(0, 4) || '—';
+    var tx = document.createElementNS(NS, 'text');
+    tx.setAttribute('x', pos.x); tx.setAttribute('y', pos.y + (r >= 17 ? -1 : 3));
+    tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('pointer-events', 'none');
+    tx.setAttribute('font-size', (r >= 20 ? 11 : (r >= 15 ? 9.5 : 8.5)) + 'px'); tx.setAttribute('font-weight', '800');
+    tx.setAttribute('fill', m.gender === 'female' ? (light ? '#db2777' : '#f9a8d4') : (light ? '#1a1f2b' : '#f2f4f8'));
+    tx.textContent = nm;
+    g.appendChild(tx);
+    if (r >= 17) {
+      var t2 = document.createElementNS(NS, 'text');
+      t2.setAttribute('x', pos.x); t2.setAttribute('y', pos.y + 10);
+      t2.setAttribute('text-anchor', 'middle'); t2.setAttribute('pointer-events', 'none');
+      t2.setAttribute('font-size', '7.5px'); t2.setAttribute('font-weight', '700');
+      t2.setAttribute('fill', stroke);
+      t2.textContent = (typeof titleAbbr === 'function' ? titleAbbr(m.title || '—') : (m.title || '—'));
+      g.appendChild(t2);
+    }
+    if (m.goldShip) { // v486: ⛴は円の中でなく右上の小バッジ
+      var t3 = document.createElementNS(NS, 'text');
+      t3.setAttribute('x', pos.x + r * 0.8); t3.setAttribute('y', pos.y - r * 0.8);
+      t3.setAttribute('text-anchor', 'middle'); t3.setAttribute('font-size', '9.5px'); t3.setAttribute('pointer-events', 'none');
+      t3.setAttribute('class', 'orbit-gold');
+      t3.textContent = '⛴';
+      g.appendChild(t3);
+    }
+    // v486: ノード下に GSVポイント・稼働率
+    var _pt6 = (m.ptCurrent || 0);
+    var _ar6 = (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) ? parseInt(m.actRate, 10) : null;
+    var _at6 = (m.activity || '').trim(); // v488: SABCタイプも併記（例 C40%）
+    var _act6 = (_ar6 !== null) ? (_at6 + _ar6 + '%') : _at6;
+    var _sub6 = (_pt6 > 0 ? _pt6.toLocaleString() + 'pt' : '') + (_act6 ? ((_pt6 > 0 ? '・' : '') + _act6) : '');
+    if (_sub6) {
+      var ts = document.createElementNS(NS, 'text');
+      ts.setAttribute('x', pos.x); ts.setAttribute('y', pos.y + r + 9);
+      ts.setAttribute('text-anchor', 'middle'); ts.setAttribute('pointer-events', 'none');
+      ts.setAttribute('font-size', '7.5px'); ts.setAttribute('font-weight', '700');
+      ts.setAttribute('fill', light ? '#556070' : '#9fb0c3');
+      ts.setAttribute('class', 'orbit-sub');
+      ts.textContent = _sub6;
+      g.appendChild(ts);
+    }
+    if (!isPrint) {
+      g.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        if (/^MG_/.test(m.id)) { if (typeof mgNodeClick === 'function') mgNodeClick(m.id); }
+        else if (/^AG\d+_/.test(m.id)) { /* 合算表示は閲覧のみ */ }
+        else if (state.isEditor && typeof openEdit === 'function') openEdit(m.id);
+      });
+      // v486: マウスオーバーで通常MAPと同じ情報カード
+      g.addEventListener('mouseenter', function(ev) { if (typeof showPcTooltip === 'function') showPcTooltip(m.id, ev); });
+      g.addEventListener('mouseleave', function() { if (typeof hidePcTooltip === 'function') hidePcTooltip(); });
+    }
+    svg.appendChild(g);
+  });
+
+  if (isPrint) { wrap.appendChild(svg); return; }
+
+  // ── ツールバー＋スクロール容器 ──
+  var bar = document.createElement('div');
+  bar.style.cssText = 'display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap';
+  bar.innerHTML = '<b style="font-size:13px">◎ 俯瞰MAP</b>'
+    + '<span style="font-size:11px;color:var(--text-dim)">' + (state.currentMonth || '') + '・' + members.length + '人・リング=段数／扇=系列</span>'
+    + '<input id="orbitSearch' + (mapType === 'current' ? 'C' : 'I') + '" type="search" placeholder="🔍 名前でスポットライト" autocomplete="off" '
+    + 'style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;padding:6px 12px;border-radius:9px;outline:none;width:210px" '
+    + 'oninput="orbitSearch(this.value)" value="' + evEsc(_orbitQ) + '">'
+    + '<span class="sp" style="flex:1"></span>'
+    + '<div class="pt-action" onclick="orbitZoomBy(-1)">−</div>'
+    + '<div class="pt-action" onclick="orbitZoomBy(0)" title="全体表示">⊡</div>'
+    + '<div class="pt-action" onclick="orbitZoomBy(1)">＋</div>'
+    + '<div class="pt-action" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>'
+    + '<div class="pt-action" onclick="orbitPrint()" title="A3横1枚に印刷（PDF保存も可）">🖨 A3印刷</div>';
+  wrap.appendChild(bar);
+  var fsOn = !!document.querySelector('.map-fs');
+  var viewH = Math.max(window.innerHeight - (fsOn ? 130 : 230), 460);
+  var outer = document.createElement('div');
+  outer.id = 'orbitOuter' + (mapType === 'current' ? 'C' : 'I');
+  outer.style.cssText = 'width:100%;height:' + viewH + 'px;overflow:auto;cursor:grab;position:relative;background:' + (light ? '#fff' : 'var(--bg)');
+  var viewW = Math.max(window.innerWidth - (isPCMode() ? 110 : 20), 600);
+  var fit = Math.min(viewW / SW, viewH / SH);
+  var z = _orbitZoom[mapType] || fit;
+  svg.style.width = Math.round(SW * z) + 'px';
+  svg.style.height = Math.round(SH * z) + 'px';
+  svg.style.display = 'block';
+  svg.style.margin = '0 auto';
+  outer.appendChild(svg);
+  wrap.appendChild(outer);
+  window['_orbitMeta' + (mapType === 'current' ? 'C' : 'I')] = { SW: SW, SH: SH, fit: fit, pos: posOf, z: z };
+  // ドラッグでパン
+  var drag = false, sx = 0, sy = 0, sl = 0, st = 0;
+  outer.addEventListener('mousedown', function(e) { if (e.target.closest && e.target.closest('.oval-node')) return; drag = true; sx = e.clientX; sy = e.clientY; sl = outer.scrollLeft; st = outer.scrollTop; outer.style.cursor = 'grabbing'; });
+  outer.addEventListener('mousemove', function(e) { if (!drag) return; outer.scrollLeft = sl - (e.clientX - sx); outer.scrollTop = st - (e.clientY - sy); });
+  outer.addEventListener('mouseup', function() { drag = false; outer.style.cursor = 'grab'; });
+  outer.addEventListener('mouseleave', function() { drag = false; outer.style.cursor = 'grab'; });
+  // 絞り込み・検索を反映
+  if (_orbitQ) orbitSearch(_orbitQ);
+  else _applyMapDims();
+}
+function orbitZoomBy(dir) {
+  var mt = currentView === 'ideal' ? 'ideal' : 'current';
+  var key = mt === 'current' ? 'C' : 'I';
+  var meta = window['_orbitMeta' + key];
+  if (!meta) return;
+  var z = _orbitZoom[mt] || meta.fit;
+  if (dir === 0) z = meta.fit; else z = Math.max(0.15, Math.min(2.5, z * (dir > 0 ? 1.25 : 0.8)));
+  _orbitZoom[mt] = (dir === 0) ? 0 : z;
+  var svg = document.getElementById(mt === 'current' ? 'orbitSvgC' : 'orbitSvgI');
+  if (svg) { svg.style.width = Math.round(meta.SW * z) + 'px'; svg.style.height = Math.round(meta.SH * z) + 'px'; }
+  meta.z = z;
+}
+// 名前スポットライト：該当が光り、他は薄く。最初のヒットへ自動センタリング
+function orbitSearch(q) {
+  _orbitQ = String(q || '').trim();
+  var mt = currentView === 'ideal' ? 'ideal' : 'current';
+  var key = mt === 'current' ? 'C' : 'I';
+  var svg = document.getElementById(mt === 'current' ? 'orbitSvgC' : 'orbitSvgI');
+  if (!svg) return;
+  var nodes = svg.querySelectorAll('.orbit-node');
+  if (!_orbitQ) {
+    for (var i = 0; i < nodes.length; i++) nodes[i].classList.remove('orbit-hit');
+    _applyMapDims();
+    return;
+  }
+  var norm = function(s) { return String(s || '').replace(/[\s　]/g, ''); };
+  var nq = norm(_orbitQ);
+  var firstHit = null;
+  var ms = _treeVisibleMembers(composeMergedInto(membersForMap(mt), mt));
+  var byId = {}; ms.forEach(function(m) { byId[m.id] = m; });
+  for (var j = 0; j < nodes.length; j++) {
+    var m = byId[nodes[j].getAttribute('data-mid')];
+    var hit = !!(m && norm((m.lastName || '') + (m.firstName || '')).indexOf(nq) >= 0);
+    nodes[j].classList.toggle('orbit-hit', hit);
+    nodes[j].style.opacity = hit ? '1' : '0.15';
+    if (hit && !firstHit) firstHit = nodes[j].getAttribute('data-mid');
+  }
+  var meta = window['_orbitMeta' + key];
+  var outer = document.getElementById('orbitOuter' + key);
+  if (firstHit && meta && meta.pos[firstHit] && outer) {
+    var z = meta.z || meta.fit;
+    outer.scrollLeft = Math.max(0, meta.pos[firstHit].x * z - outer.clientWidth / 2 + Math.max(0, (outer.clientWidth - meta.SW * z) / 2) * 0);
+    outer.scrollTop = Math.max(0, meta.pos[firstHit].y * z - outer.clientHeight / 2);
+  }
+}
+// 🖨 A3横1枚に印刷（明色で再描画してから印刷）
+function orbitPrint() {
+  var mt = currentView === 'ideal' ? 'ideal' : 'current';
+  var old = document.getElementById('orbitPrintLayer');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  var layer = document.createElement('div');
+  layer.id = 'orbitPrintLayer';
+  var ttl = (state.currentMonth || '').replace('.', '年') + '月 GROOVE ' + (mt === 'ideal' ? '理想' : '現状') + 'MAP';
+  var ms = _treeVisibleMembers(composeMergedInto(membersForMap(mt), mt));
+  layer.innerHTML = '<div style="text-align:center;font-size:22px;font-weight:800;color:#111;padding:4px 0 8px">' + evEsc(ttl)
+    + '<span style="font-size:12px;font-weight:600;color:#555">　' + ms.length + '人</span></div>';
+  var host = document.createElement('div');
+  layer.appendChild(host);
+  document.body.appendChild(layer);
+  renderPCOrbit(mt, host, true); // 印刷用に明色で描画
+  var st = document.createElement('style');
+  st.id = 'orbitPageStyle';
+  st.textContent = '@page{size:A3 landscape;margin:8mm}';
+  document.head.appendChild(st);
+  document.body.classList.add('printing-orbit');
+  var cleanup = function() {
+    document.body.classList.remove('printing-orbit');
+    var l2 = document.getElementById('orbitPrintLayer'); if (l2 && l2.parentNode) l2.parentNode.removeChild(l2);
+    var s2 = document.getElementById('orbitPageStyle'); if (s2 && s2.parentNode) s2.parentNode.removeChild(s2);
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  try { if (typeof window.print === 'function') window.print(); } catch(e) {}
+  setTimeout(cleanup, 4000); // afterprint が来ない環境の保険
+}
+// ⛶ MAPだけを画面いっぱいに（ヘッダー・ナビを隠す）。Escで解除
+function mapFullscreen() {
+  var el = document.getElementById(currentView === 'ideal' ? 'view-ideal' : 'view-current');
+  if (!el) return;
+  var on = !el.classList.contains('map-fs');
+  document.querySelectorAll('.map-fs').forEach(function(x) { x.classList.remove('map-fs'); });
+  var ex = document.getElementById('mapFsExit');
+  if (ex && ex.parentNode) ex.parentNode.removeChild(ex);
+  if (on) {
+    el.classList.add('map-fs');
+    var b = document.createElement('div');
+    b.id = 'mapFsExit';
+    b.textContent = '✕ 全画面を終了（Esc）';
+    b.style.cssText = 'position:fixed;top:10px;right:14px;z-index:70;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)';
+    b.onclick = mapFullscreen;
+    document.body.appendChild(b);
+    try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){}); } catch(eF) {}
+  } else {
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){}); } catch(eF2) {}
+  }
+  renderCurrentView();
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.querySelector('.map-fs')) mapFullscreen();
+});
+document.addEventListener('fullscreenchange', function() {
+  if (!document.fullscreenElement && document.querySelector('.map-fs')) mapFullscreen();
 });
 
 
@@ -4653,7 +5037,7 @@ function ctxAddChild() {
   var tid = _ctxTargetId; // closeの前に保存
   closeCtxMenu();
   selectedParentId = tid;
-  openAdd();
+  openQuickAdd(); // v487
 }
 
 function ctxEdit() {
@@ -5445,7 +5829,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v484';
+  var DATA_VERSION = 'v488';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6419,6 +6803,10 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v488', d:'2026-09-19', items:['◎ 俯瞰MAP：1段目のメンバーが1段リングにきちんと乗るように修正（互い違い配置は2段目以降の混雑時のみ）','🐛 MAP全画面中に情報カード・編集画面が表示されない問題を修正（全画面レイヤーの重なり順が原因で、開いても裏に隠れていました）','🏃 俯瞰MAPの稼働表示にSABCタイプを追加（例：C40%・タイプのみ登録ならC）'] },
+  { v:'v487', d:'2026-09-19', items:['⚡ メンバーの「かんたん追加」：＋ボタンを押すと名前・性別・段階チップ（FT〜CO）だけの軽いシートが開きます。NA（新規）を最低限の情報でサッと登録し、研修が進んだら従来の編集画面で詳細を追記する運用に','🔁 「登録して続けて追加」でDLR後などの連続登録に対応（段階・追加先は前回のまま、名前だけ入力）','🏷 研修生タイトルに「FT」を追加（マケの前段階）。MAP・俯瞰・絞り込み・経過表示にもそのまま乗ります','📝 くわしく登録したい時はシート右上の「くわしく登録」から従来のフル編集フォームへ（入力内容は引き継ぎ）'] },
+  { v:'v486', d:'2026-09-19', items:['◎ 俯瞰MAPを楕円レイアウトに：横長画面に合わせてリングが楕円になり、フロント（1段目）が多くても横方向に広く使えます（印刷もA3横の比率で最適化）','👆 俯瞰MAPのマウスオーバーで通常MAPと同じ情報カード（稼働・GSV・予定タスク・OL記録）を表示','🔢 各ノードの下にGSVポイントと稼働率を表示','⛴ 金の船マークは円の中ではなく右上の小さなバッジ表示に統一'] },
+  { v:'v485', d:'2026-09-19', items:['◎ PC版に「俯瞰MAP」ビューを新設：同心リング＝段数・系列は扇形セクターで色分けした円形MAP。100人規模でも組織全体が1画面に収まります（ツリー/テーブル/カンバンの隣の「俯瞰」ボタン）','🔍 俯瞰MAPの名前検索スポットライト：名前を打つと該当メンバーが光って他が薄暗くなり、位置へ自動センタリング（打ち合わせで「誰の話か」が一瞬で共有できます）','🖨 俯瞰MAPをA3横1枚に印刷（ブラウザの印刷→PDF保存にも対応）','⛶ MAPの全画面表示：ヘッダー・ナビを消してMAPだけを画面いっぱいに（画面共有向け・Escで解除）','研修生/BR/QBR/金の船/地域の絞り込み・タップで詳細編集は俯瞰MAPでもそのまま使えます'] },
   { v:'v484', d:'2026-09-19', items:['⚡ PC版の大規模MAPを高速化：組織図の深さ計算・子探索を全面書き換え（人数の2乗→人数に比例）。名前・ポイント入力後の保存や再描画が大幅に軽くなりました','⚡ MAP切替を高速化：結合リスナー・孫階層・写真読込などの裏読み込みが1件ごとに全画面を再描画していたのをまとめて1回に（共有MAP⇄自分MAPの切替直後の固まりを解消）','🔍 絞り込みの強調バグを修正：研修生/BR/地域などの薄暗判定を描画のたびに最新メンバー情報から作り直すように（編集前の情報で判定される経路を根絶）。理想MAPでの絞り込みも正しく判定'] },
   { v:'v483', d:'2026-09-18', items:['🚩 年間ロードマップ：複数月にまたがるマイルストーンに対応（期間バー表示・重なりは自動で段分け）','🧮 フロントBRの自動逆算：LOI→Q2→Q3→BRの最短リードタイム（既定3ヶ月・変更可）を組み込み。BR行に予測値を自動表示し、📤割り振りではBRギャップを「期日3ヶ月前までのフロント」に逆算配置','🎪 動員を計画を逆算プランナーに刷新：出したいフロント数×係数から CT取り・CT・FT・PG・DLR動員 の件数と期限を自動計算（人の紐づけを廃止）','📅 DLRのカレンダー表記に対応：標準でDLR/P&P両対応＋⚙係数で自由に登録可。他のユニオン予定からも選択OK','🗺 PC右カラムのロードマップミニを当月始まりに変更','🌟 目標タイトル・目標月収を大きく表示＋スローガン（ひとこと）を登録可能に'] },
   { v:'v482', d:'2026-09-18', items:['🧮 「必要数とギャップ」新設：目標月収からQルビー（1QR=20万円）・環境数（1環境=100万円）を自動計算し、フロントBR・流通（既定3000P）・エキスパートと合わせて目標／現状／ギャップを1画面で表示。現状はMAPから自動取得（フロントBR・流通・ルビー・⛴金の船=Qルビー候補）','⛴ Qルビー候補ルールを組み込み：QR目標×2の候補必要数と金の船の現在数を自動で対比','📤 「ロードマップに割り振る」：ギャップを残り月数で階段状の月末目標に自動按分（プレビュー→確定）','⚙ ロードマップの行を自由に編集：名前変更・追加・並び替え・非表示（デフォルトはフロント/流通/Qルビー/エキスパート＋環境数）','🧭 立案ステッパーを7手順に改訂：価値観→年別→ギャップ→年間MS→今月目標→月間タスク→日々・実行'] },
@@ -7871,13 +8259,14 @@ var _pcView = 'tree'; // 'tree' | 'table' | 'kanban'
 function switchPCView(view) {
   _pcView = view;
   // ボタン状態
-  var ids = ['pvTree','pvTable','pvKanban','pvTreeI','pvTableI'];
+  var ids = ['pvTree','pvTable','pvKanban','pvTreeI','pvTableI','pvOrbit','pvOrbitI'];
   ids.forEach(function(id) {
     var el = document.getElementById(id);
     if (!el) return;
     var match = (id.indexOf('Tree') >= 0 && view === 'tree')
       || (id.indexOf('Table') >= 0 && view === 'table')
-      || (id.indexOf('Kanban') >= 0 && view === 'kanban');
+      || (id.indexOf('Kanban') >= 0 && view === 'kanban')
+      || (id.indexOf('Orbit') >= 0 && view === 'orbit');
     el.classList.toggle('active', match);
   });
   // 表示切替
@@ -7888,20 +8277,29 @@ function switchPCView(view) {
   var fltC = document.getElementById('pcFilterCurrent');
   var fltI = document.getElementById('pcFilterIdeal');
   var kbnC = document.getElementById('pcKanbanCurrent');
+  var orbC = document.getElementById('pcOrbitCurrent');
+  var orbI = document.getElementById('pcOrbitIdeal');
   if (treeC) treeC.style.display = view === 'tree' ? '' : 'none';
   if (treeI) treeI.style.display = view === 'tree' ? '' : 'none';
   if (tblC) tblC.classList.toggle('show', view === 'table');
   if (tblI) tblI.classList.toggle('show', view === 'table');
   if (fltC) fltC.classList.toggle('show', view === 'table');
   if (fltI) fltI.classList.toggle('show', view === 'table');
-  var catC = document.getElementById('pcMapCatChips'); // v471: カテゴリ絞り込みはツリー表示のみ
-  if (catC) catC.classList.toggle('show', view === 'tree');
+  var catC = document.getElementById('pcMapCatChips'); // v471: カテゴリ絞り込みはツリー/俯瞰表示のみ
+  if (catC) catC.classList.toggle('show', view === 'tree' || view === 'orbit');
   if (kbnC) kbnC.classList.toggle('show', view === 'kanban');
+  if (orbC) orbC.classList.toggle('show', view === 'orbit');
+  if (orbI) orbI.classList.toggle('show', view === 'orbit');
   if (view === 'table') {
     if (currentView === 'current') renderPCTable('current');
     else if (currentView === 'ideal') renderPCTable('ideal');
   }
   if (view === 'kanban') renderKanban();
+  if (view === 'orbit') {
+    if (currentView === 'ideal') renderPCOrbit('ideal');
+    else renderPCOrbit('current');
+  }
+  if (view === 'tree') renderCurrentView(); // 俯瞰中に更新された分を再構築
 }
 
 // ── PC テーブルビュー ──
@@ -8695,7 +9093,7 @@ function membersForMap(mapType) {
 // state.members そのもの（描画外でその場更新される）はキャッシュせず毎回組み直す＝常に正しい。
 var _childIdx = null, _childIdxSrc = null;
 // v420: タイトルランク（高い順ソート・視覚強調用）。QBR＝LOI〜Q4（BR審査期間）でBMより上位
-var TITLE_RANK_MAP = {'チームエリート':200,'PD':195,'BD':190,'ブルーダイヤモンド':190,'D':185,'ダイヤモンド':185,'E':180,'エメラルド':180,'R':175,'ルビー':175,'L':170,'ラピス':170,'G':165,'ゴールド':165,'BR':160,'Q4':155,'Q3':154,'Q2':153,'Q1':152,'LOI':151,'BM':150,'B11':149,'B10':148,'B9':147,'B8':146,'B7':145,'B6':144,'B5':143,'B4':142,'B3':141,'B2':140,'B1':139,'CO':120,'BPC':119,'面談':118,'PA':117,'EXP':116,'DLR':115,'PG':114,'マケ':113,'OUT':-1};
+var TITLE_RANK_MAP = {'チームエリート':200,'PD':195,'BD':190,'ブルーダイヤモンド':190,'D':185,'ダイヤモンド':185,'E':180,'エメラルド':180,'R':175,'ルビー':175,'L':170,'ラピス':170,'G':165,'ゴールド':165,'BR':160,'Q4':155,'Q3':154,'Q2':153,'Q1':152,'LOI':151,'BM':150,'B11':149,'B10':148,'B9':147,'B8':146,'B7':145,'B6':144,'B5':143,'B4':142,'B3':141,'B2':140,'B1':139,'CO':120,'BPC':119,'面談':118,'PA':117,'EXP':116,'DLR':115,'PG':114,'マケ':113,'FT':112,'OUT':-1};
 function titleRank(t) {
   t = (t || '').trim();
   if (TITLE_RANK_MAP[t] !== undefined) return TITLE_RANK_MAP[t];
@@ -8828,6 +9226,11 @@ function renderTree(mapType) {
   if (isPCMode()) {
     container.innerHTML = '';
     updateLTSV(mapType, ownMembers);
+    if (typeof _pcView !== 'undefined' && _pcView === 'orbit' && typeof renderPCOrbit === 'function') {
+      // v485: 俯瞰表示中は重いツリーSVGを作らず俯瞰だけ更新
+      requestAnimationFrame(function() { requestAnimationFrame(function() { renderPCOrbit(mapType); }); });
+      return;
+    }
     requestAnimationFrame(function() {
       requestAnimationFrame(function() {
         renderPCMap(mapType);
@@ -11999,7 +12402,7 @@ function onFabClick() {
 function fabSelectParent(id) {
   selectedParentId = id;
   closeFabMenu();
-  openAdd();
+  openQuickAdd(); // v487: まずはかんたん追加（くわしく登録へは中から遷移可）
 }
 function closeFabMenu() {
   var menu = document.getElementById('fabMenu');
@@ -12284,6 +12687,122 @@ function meDeleteTask(eid, mid) {
   var m = _mFind(mid);
   if (m) meRenderExtras(m);
 }
+// ============================================================
+//  v487: ⚡ かんたん追加（NAクイック登録）
+//  名前・性別・段階（FT〜CO）だけで登録。詳細は研修が進んでから従来画面で。
+// ============================================================
+var _qaGender = 'male';
+function _qaStageGet() {
+  try { var v = localStorage.getItem('gm_qaStage'); if (v && (TITLE_OPTIONS['研修生'] || []).indexOf(v) >= 0) return v; } catch(e) {}
+  return 'FT';
+}
+function openQuickAdd() {
+  if (!state.isEditor) return;
+  var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
+  if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は従来フォームで
+  _p2SheetClose('qaOv');
+  var stage = _qaStageGet();
+  var parent = selectedParentId || roots[0].id;
+  var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
+    .sort(_treeSortCmp(state.members));
+  var pOpts = ms.map(function(m) {
+    var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+    return '<option value="' + m.id + '"' + (m.id === parent ? ' selected' : '') + '>' + evEsc(nm) + (m.title ? '（' + evEsc(m.title) + '）' : '') + '</option>';
+  }).join('');
+  var chips = (TITLE_OPTIONS['研修生'] || []).map(function(t) {
+    return '<span class="qa-chip' + (t === stage ? ' sel' : '') + '" data-st="' + t + '" onclick="qaStageSel(\'' + t + '\')">' + t + '</span>';
+  }).join('');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'qaOv'; ov.style.zIndex = '640';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('qaOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚡ かんたん追加</div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・段階だけでOK。詳細は研修が進んでから</div></div>'
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px;flex:none" onclick="qaToFull()">📝 くわしく登録</span>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'qaOv\')" style="margin-left:8px">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px"><span style="font-size:12px;flex:none">📍 追加先</span>'
+    + '<select class="fi" id="qaParent" style="flex:1;padding:8px 10px;font-size:13px">' + pOpts + '</select></div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    + '<input class="fi" id="qaLast" placeholder="姓" style="flex:1">'
+    + '<input class="fi" id="qaFirst" placeholder="名" style="flex:1"></div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    + '<span class="qa-chip qa-g' + (_qaGender !== 'female' ? ' sel' : '') + '" id="qaGm" onclick="qaGenderSel(\'male\')" style="flex:1;text-align:center">👨 男性</span>'
+    + '<span class="qa-chip qa-g' + (_qaGender === 'female' ? ' sel' : '') + '" id="qaGf" onclick="qaGenderSel(\'female\')" style="flex:1;text-align:center">👩 女性</span></div>'
+    + '<div class="p2-meta" style="margin-bottom:4px">アプローチ・研修の段階</div>'
+    + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px" id="qaStages">' + chips + '</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<span class="p2-btn" style="margin:0;flex:1.4;text-align:center" onclick="qaSave(true)">＋ 登録して続けて追加</span>'
+    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="qaSave(false)">✔ 登録</span></div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  setTimeout(function() { var i = document.getElementById('qaLast'); if (i) i.focus(); }, 150);
+}
+function qaStageSel(t) {
+  try { localStorage.setItem('gm_qaStage', t); } catch(e) {}
+  var w9 = document.getElementById('qaStages');
+  if (w9) { var cs = w9.querySelectorAll('.qa-chip'); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute('data-st') === t); }
+}
+function qaGenderSel(g) {
+  _qaGender = g;
+  var m9 = document.getElementById('qaGm'), f9 = document.getElementById('qaGf');
+  if (m9) m9.classList.toggle('sel', g === 'male');
+  if (f9) f9.classList.toggle('sel', g === 'female');
+}
+function qaSave(cont) {
+  var last = ((document.getElementById('qaLast') || {}).value || '').trim();
+  var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
+  if (!last && !first) { toast('名前を入力してください'); return; }
+  var pid = (document.getElementById('qaParent') || {}).value || '';
+  if (!pid) { toast('追加先を選んでください'); return; }
+  var stage = _qaStageGet();
+  var cm = state.currentMonth || currentMonthStr();
+  var m = {
+    id: 'id-' + Date.now(),
+    lastName: last, firstName: first, gender: _qaGender,
+    title: stage, cat: '研修生',
+    activity: '', actRate: '', morale: 1, priority: '',
+    ptCurrent: 0, ptFixed: 0, ptSelf: 0,
+    trainee: false, parentId: pid, mapType: 'current',
+    memo: '', nextDate: '', aSan: '', instaUrl: '', lineId: '', goldShip: false,
+    traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
+    region: '', birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
+    month: cm,
+  };
+  state.members.push(m);
+  _memMap = null;
+  recalcAllGSV();
+  renderCurrentView();
+  autoSave();
+  try { gameCheck(); } catch(eG) {}
+  var nm = (last + ' ' + first).trim();
+  toast('⚡ ' + nm + ' さんを追加しました（' + stage + '）');
+  if (cont) {
+    var l9 = document.getElementById('qaLast'), f9 = document.getElementById('qaFirst');
+    if (l9) { l9.value = ''; l9.focus(); }
+    if (f9) f9.value = '';
+  } else {
+    _p2SheetClose('qaOv');
+  }
+}
+function qaToFull() {
+  // 入力途中の内容を引き継いで従来のフル編集フォームへ
+  var last = ((document.getElementById('qaLast') || {}).value || '').trim();
+  var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
+  var pid = (document.getElementById('qaParent') || {}).value || '';
+  var g = _qaGender, stage = _qaStageGet();
+  _p2SheetClose('qaOv');
+  if (pid) selectedParentId = pid;
+  openAdd();
+  try {
+    var fl = document.getElementById('fLast'); if (fl) fl.value = last;
+    var ff = document.getElementById('fFirst'); if (ff) ff.value = first;
+    selGender(g, true);
+    selCategory('研修生');
+    var ft = document.getElementById('fTitle'); if (ft) ft.value = stage;
+    if (typeof onTitleChange === 'function') onTitleChange();
+  } catch(e) {}
+}
 function openAdd() {
   if (!state.isEditor) return;
   window._tempNewMember = null; // 一時データリセット
@@ -12512,7 +13031,7 @@ function buildParentSelect(selectedId, excludeId) {
   });
 }
 var TITLE_OPTIONS = {
-  '研修生': ['マケ','PG','DLR','EXP','PA','面談','BPC','CO'],
+  '研修生': ['FT','マケ','PG','DLR','EXP','PA','面談','BPC','CO'], // v487: FT=フェアトレード（マケの前段階）
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート'],
 };
