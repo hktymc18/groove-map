@@ -2321,6 +2321,8 @@ function eventForm(ev){
     + '<input type="text" id="evFee1" inputmode="numeric" value="' + esc(ev && ev.fee1 != null ? ev.fee1 : 1000) + '"></div>'
     + '<div style="flex:1;min-width:0;"><label>第2部・会場代のみ（¥）</label>'
     + '<input type="text" id="evFee2" inputmode="numeric" value="' + esc(ev && ev.fee2 != null ? ev.fee2 : 500) + '"></div>'
+    + '<div style="flex:1;min-width:0;"><label>第3部（¥・任意）</label>'
+    + '<input type="text" id="evFee3" inputmode="numeric" value="' + esc(ev && ev.fee3 != null && ev.fee3 !== '' ? ev.fee3 : '') + '" placeholder="3部制のときだけ"></div>'
     + '</div>'
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evPayMode"' + (ev && ev.payMode === 'paypay' ? ' checked' : '') + '>'
     + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayで集金する（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
@@ -2381,6 +2383,7 @@ function eventForm(ev){
       venueCode: reqCode ? ((ev && ev.venueCode) || String(Math.floor(1000 + Math.random() * 9000))) : '',
       fee1: (function(){ var n = parseInt($('evFee1').value, 10); return isNaN(n) ? 1000 : n; })(),
       fee2: (function(){ var n = parseInt($('evFee2').value, 10); return isNaN(n) ? 500 : n; })(),
+      fee3: (function(){ var n = parseInt($('evFee3').value, 10); return isNaN(n) ? '' : n; })(),
       payMode: $('evPayMode').checked ? 'paypay' : '',
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
@@ -2656,8 +2659,8 @@ function printCashSlip(ev, f, live){
     return '<div class="cs-row cs-item' + (sub ? ' cs-sub' : '') + '">'
       + '<span>' + label + '</span><span class="mono">' + val + '</span></div>';
   }
-  // 収入の内訳（会計で保存したBA人数の行）: 第1部/第2部の料金に一致する行はラベルに部を明記
-  var f1 = evFee1(ev), f2 = evFee2(ev);
+  // 収入の内訳（会計で保存したBA人数の行）: 第1〜3部の料金に一致する行はラベルに部を明記
+  var f1 = evFee1(ev), f2 = evFee2(ev), f3 = evFee3(ev);
   var incRows = '', incSum = 0;
   (f.income || []).forEach(function(r){
     var amt = r.amount != null ? r.amount : (Number(r.unit) || 0) * (Number(r.count) || 0);
@@ -2666,6 +2669,7 @@ function printCashSlip(ev, f, live){
     if(lbl === 'BA' && f1 !== f2){
       if(Number(r.unit) === f1) lbl = 'BA（第1部）';
       else if(Number(r.unit) === f2) lbl = 'BA（第2部）';
+      else if(f3 != null && Number(r.unit) === f3) lbl = 'BA（第3部）';
     }
     incSum += amt;
     incRows += item(esc(lbl) + '　' + yen(Number(r.unit) || 0) + ' × ' + (Number(r.count) || 0) + '名', yen(amt));
@@ -2733,9 +2737,9 @@ function financeModal(ev){
   Promise.all([finRef.get(), attRef.get()]).then(function(res){
     var snap = res[0];
     // 受付の徴収データからBA人数を自動集計（未保存の場合の初期値に使う）
-    // c1000/c500 はイベント設定の第1部/第2部料金（初期値 ¥1,000/¥500）に一致した徴収の人数
-    var bF1 = evFee1(ev), bF2 = evFee2(ev);
-    var attCount = 0, c1000 = 0, c500 = 0;
+    // c1000/c500/c3 はイベント設定の第1部/第2部/第3部料金に一致した徴収の人数
+    var bF1 = evFee1(ev), bF2 = evFee2(ev), bF3 = evFee3(ev);
+    var attCount = 0, c1000 = 0, c500 = 0, c3 = 0;
     var adet = [], dCash = 0, dPp = 0, dUnpaid = 0, dCashN = 0, dRefN = 0;
     res[1].forEach(function(d){
       var a = d.data(), fee = a.fee || 0;
@@ -2757,6 +2761,7 @@ function financeModal(ev){
         var net = fee - (a.refund || 0);
         if(net === bF1) c1000++;
         else if(net === bF2) c500++;
+        else if(bF3 != null && net === bF3) c3++;
       }
     });
     adet.sort(function(a, b){ return (a.atLocal || '') < (b.atLocal || '') ? -1 : 1; });
@@ -2789,14 +2794,18 @@ function financeModal(ev){
       var n = parseInt(String(r.count).replace(/[^\d]/g, ''), 10);
       if(n > 0) savedHasCount = true;
     });
-    var inc = (f.income && savedHasCount) ? f.income : [
+    var incDef = [
       { label: 'BA', unit: bF1, count: c1000 || '' },
-      { label: 'BA', unit: bF2, count: c500 || '' },
+      { label: 'BA', unit: bF2, count: c500 || '' }
+    ];
+    if(bF3 != null) incDef.push({ label: 'BA', unit: bF3, count: c3 || '' });
+    incDef.push(
       { label: 'BA（オンライン）', unit: (ev.onlineFee != null ? ev.onlineFee : 1000), count: '' },
       { label: 'BA（オンライン）', unit: bF2, count: '' },
       { label: '', unit: '', count: '' },
       { label: '', unit: '', count: '' }
-    ];
+    );
+    var inc = (f.income && savedHasCount) ? f.income : incDef;
     var exp = f.expenses || [
       { label: 'スピーカー差し入れ', note: '', amount: '', receipt: false },
       { label: '会場使用料', note: '', amount: '', receipt: false },
@@ -2846,7 +2855,7 @@ function financeModal(ev){
       + (ppMode ? '<span class="pill a">💳 PayPay集金</span>　' : '')
       + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label style="color:var(--green);margin:0;">収入（＋）</label>'
-      + (!f.locked && (c1000 || c500) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
+      + (!f.locked && (c1000 || c500 || c3) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
       + '</div>' + incHtml
       + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(+)計 <span id="fiTotal" class="mono">¥0</span></div>'
       + '<label style="color:var(--accent);">支出（−）</label>' + expHtml
@@ -2907,8 +2916,10 @@ function financeModal(ev){
     if(ab) ab.onclick = function(){
       $('fiL0').value = 'BA'; $('fiU0').value = bF1; $('fiC0').value = c1000 || '';
       $('fiL1').value = 'BA'; $('fiU1').value = bF2; $('fiC1').value = c500 || '';
+      if(bF3 != null && $('fiC2')){ $('fiL2').value = 'BA'; $('fiU2').value = bF3; $('fiC2').value = c3 || ''; }
       recompute();
-      toast('受付データからBA人数を入力しました（' + yen(bF1) + '×' + c1000 + '名・' + yen(bF2) + '×' + c500 + '名）');
+      toast('受付データからBA人数を入力しました（' + yen(bF1) + '×' + c1000 + '名・' + yen(bF2) + '×' + c500 + '名'
+        + (bF3 != null ? '・' + yen(bF3) + '×' + c3 + '名' : '') + '）');
     };
     if(f.locked){
       // 確定済み: 入力を全てロック
@@ -3224,11 +3235,14 @@ function stopReception(){
 
 /* ── 受付の料金（ピッと同時に自動計上） ── */
 // イベントごとに設定可能（未設定の初期値: 第1部¥1,000 / 第2部・会場代のみ¥500）
+// 第3部は任意: 金額を設定したイベントだけ3部制（evFee3 が null なら2部制）
 function evFee1(ev){ var n = ev ? parseInt(ev.fee1, 10) : NaN; return isNaN(n) ? 1000 : n; }
 function evFee2(ev){ var n = ev ? parseInt(ev.fee2, 10) : NaN; return isNaN(n) ? 500 : n; }
+function evFee3(ev){ var n = ev ? parseInt(ev.fee3, 10) : NaN; return isNaN(n) ? null : n; }
 function currentFee(){
   if(!gRec) return 0;
   if(gRec.feeMode === 'venue') return evFee2(gRec.ev);   // 会場代のみ（ハウディ代はPayPay等）
+  if(gRec.part === 3){ var f3 = evFee3(gRec.ev); return f3 != null ? f3 : evFee2(gRec.ev); }
   return gRec.part === 2 ? evFee2(gRec.ev) : evFee1(gRec.ev);
 }
 function renderFeeRow(){
@@ -3241,9 +3255,12 @@ function renderFeeRow(){
     $('feeInfo').textContent = moneyIcon + ' 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
     var b = $('btnPartToggle');
     b.classList.remove('hide');
+    var f3 = evFee3(gRec.ev);   // 第3部設定ありなら 1→2→3→1 のサイクル切替
     b.textContent = gRec.part === 1
       ? '第2部受付に切替（新規' + yen(evFee2(gRec.ev)) + '）'
-      : '第1部受付に戻す（新規' + yen(evFee1(gRec.ev)) + '）';
+      : (gRec.part === 2 && f3 != null)
+        ? '第3部受付に切替（新規' + yen(f3) + '）'
+        : '第1部受付に戻す（新規' + yen(evFee1(gRec.ev)) + '）';
   }
   renderPpPanel();
 }
@@ -3272,7 +3289,8 @@ function renderPpPanel(){
 }
 $('btnPartToggle').onclick = function(){
   if(!gRec) return;
-  gRec.part = gRec.part === 1 ? 2 : 1;
+  gRec.part = gRec.part === 1 ? 2
+    : (gRec.part === 2 && evFee3(gRec.ev) != null) ? 3 : 1;
   renderFeeRow();
   toast('第' + gRec.part + '部受付に切り替えました（新規 ' + yen(currentFee()) + '）');
   focusScan();
@@ -3322,15 +3340,23 @@ function payModal(no){
     if(paid) btns += isPp
       ? '<button id="pmToCash">現金受領に変更</button>'
       : '<button id="pmToPp">PayPay受領に変更</button>';
-    var rfAmt = Math.max(0, evFee1(gRec.ev) - evFee2(gRec.ev));   // 2部不参加の返金 = 第1部と第2部の差額
-    if(paid && !refund && rfAmt > 0) btns += '<button id="pmRefund">' + yen(rfAmt) + ' 返金する（2部不参加）</button>';
+    if(paid && !refund && fee >= 500) btns += '<button id="pmRefund">¥500 返金する</button>';
     if(refund) btns += '<button id="pmUnrefund">返金を取り消す</button>';
   } else {
     btns += '<p style="font-size:13px;color:var(--sub);">この受付は徴収対象外です（登壇者・運営・セルフ等）。</p>';
   }
+  // 返金額の直接入力（¥500以外の返金にも対応）
+  var customRef = (fee > 0 && paid && !refund)
+    ? '<div style="display:flex;gap:6px;align-items:center;margin-top:6px;border-top:1px solid var(--line);padding-top:10px;">'
+      + '<span style="font-size:13.5px;">返金額を直接入力</span><span style="flex:1"></span>'
+      + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+      + '<input type="text" id="pmRefAmt" inputmode="numeric" style="width:80px;padding:6px 6px;text-align:right;">'
+      + '<button id="pmRefGo">返金する</button></div>'
+    : '';
   modal('<h2>会計操作 — ' + esc(a.name || '') + '</h2>'
     + '<p style="font-size:14px;">現在: <b>' + status + '</b></p>'
     + '<div class="btns" style="justify-content:flex-start;flex-wrap:wrap;">' + btns + '</div>'
+    + customRef
     + '<div class="btns"><button id="pmClose">閉じる</button></div>');
   $('pmClose').onclick = function(){ closeModal(); focusScan(); };
   var b;
@@ -3343,7 +3369,13 @@ function payModal(no){
   };
   if((b = $('pmToCash'))) b.onclick = function(){ setPay(no, { payMethod: '' }); closeModal(); toast(a.name + ' さんを現金受領に変更しました'); focusScan(); };
   if((b = $('pmToPp'))) b.onclick = function(){ setPay(no, { payMethod: 'paypay' }); closeModal(); toast(a.name + ' さんをPayPay受領に変更しました'); focusScan(); };
-  if((b = $('pmRefund'))) b.onclick = function(){ setPay(no, { refund: rfAmt }); closeModal(); toast(a.name + ' さんに ' + yen(rfAmt) + ' 返金しました'); focusScan(); };
+  if((b = $('pmRefund'))) b.onclick = function(){ setPay(no, { refund: 500 }); closeModal(); toast(a.name + ' さんに ¥500 返金しました'); focusScan(); };
+  if((b = $('pmRefGo'))) b.onclick = function(){
+    var n = parseInt(String($('pmRefAmt').value).replace(/[^\d]/g, ''), 10);
+    if(isNaN(n) || n <= 0){ toast('返金額を入力してください'); return; }
+    if(n > fee){ toast('返金額が徴収額（' + yen(fee) + '）を超えています'); return; }
+    setPay(no, { refund: n }); closeModal(); toast(a.name + ' さんに ' + yen(n) + ' 返金しました'); focusScan();
+  };
   if((b = $('pmUnrefund'))) b.onclick = function(){ setPay(no, { refund: 0 }); closeModal(); toast('返金を取り消しました'); focusScan(); };
 }
 $('recent').addEventListener('click', function(e){
