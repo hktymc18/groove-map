@@ -3430,6 +3430,7 @@ function attListModal(mode){
       + '<span style="color:var(--sub);font-size:12px;margin-left:6px;">' + esc(attGroup(x.id, a)) + (a.union ? '・' + esc(a.union) : '') + '</span>'
       + tags + '</div>'
       + pay
+      + '<button data-ala="copy" data-no="' + esc(x.id) + '" title="他システムへの入力用に氏名をコピー" style="padding:4px 10px;font-size:12px;">📋 名前コピー</button>'
       + (fee > 0 ? '<button data-ala="pay" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">会計</button>' : '')
       + (a.role && !a.guest ? '<button data-ala="unrole" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">役割解除</button>' : '')
       + '<button data-ala="del" data-no="' + esc(x.id) + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">取消</button>'
@@ -3446,6 +3447,7 @@ function attListModal(mode){
     var no = b.getAttribute('data-no'), act = b.getAttribute('data-ala');
     var a = gRec && gRec.att[no];
     if(!a) return;
+    if(act === 'copy'){ copyText(a.name || '', b); return; }   // 一覧は開いたまま連続コピーできる
     if(act === 'pay'){ closeModal(); payModal(no); }
     if(act === 'unrole'){
       if(!window.confirm(a.name + ' さんの役割（' + roleLabel(a.role) + '）を解除しますか？出席の記録は残ります。')) return;
