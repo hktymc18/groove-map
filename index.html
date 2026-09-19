@@ -2443,7 +2443,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v492</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v493</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5004,27 +5004,54 @@ function orbitSearch(q) {
   }
 }
 // 🖨 A3横1枚に印刷（明色で再描画してから印刷）
+// v493: 印刷は専用ウィンドウ方式（即時に開く・MAPのみ・A3横・タイトル=保存ファイル名）
+function _orbitPrintName(mt) {
+  var ymNum = String(state.currentMonth || currentMonthStr()).replace(/[^0-9]/g, ''); // 2026.09→202609
+  var nm = ((currentUser && currentUser.name) || '');
+  if (!nm) { var r0 = (typeof _p2OwnRoot === 'function') ? _p2OwnRoot() : null; nm = r0 ? ((r0.lastName || '') + (r0.firstName || '')) : ''; }
+  nm = String(nm).replace(/[\s　]/g, '') || 'GROOVE';
+  return 'MAP_' + ymNum + '_' + nm;
+}
 function orbitPrint() {
   var mt = currentView === 'ideal' ? 'ideal' : 'current';
+  toast('🖨 印刷プレビューを準備しています…');
+  var ttl = (state.currentMonth || '').replace('.', '年') + '月 GROOVE ' + (mt === 'ideal' ? '理想' : '現状') + 'MAP';
+  var fname = _orbitPrintName(mt);
+  var ms = _treeVisibleMembers(composeMergedInto(membersForMap(mt), mt));
+  var host = document.createElement('div');
+  renderPCOrbit(mt, host, true); // 印刷用に明色で描画
+  var hd = '<div style="text-align:center;font-size:22px;font-weight:800;color:#111;padding:2px 0 8px">' + evEsc(ttl)
+    + '<span style="font-size:12px;font-weight:600;color:#555">　' + ms.length + '人</span></div>';
+  var pw = null;
+  try { pw = window.open('', '_blank'); } catch(eW) { pw = null; }
+  if (pw && pw.document) {
+    // 専用ウィンドウ: アプリ画面を含まずMAPだけをA3横で。タイトル=PDF保存時のファイル名
+    pw.document.write('<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>' + evEsc(fname) + '</title>'
+      + '<style>@page{size:A3 landscape;margin:8mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:"Noto Sans JP","Hiragino Sans",Inter,sans-serif}svg{width:100%;height:auto;display:block}</style>'
+      + '</head><body>' + hd + host.innerHTML
+      + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},200);};window.onafterprint=function(){setTimeout(function(){window.close();},300);};</scr' + 'ipt>'
+      + '</body></html>');
+    pw.document.close();
+    return;
+  }
+  // ポップアップ不可の環境: 従来のページ内印刷にフォールバック（ファイル名=タイトルも設定）
   var old = document.getElementById('orbitPrintLayer');
   if (old && old.parentNode) old.parentNode.removeChild(old);
   var layer = document.createElement('div');
   layer.id = 'orbitPrintLayer';
-  var ttl = (state.currentMonth || '').replace('.', '年') + '月 GROOVE ' + (mt === 'ideal' ? '理想' : '現状') + 'MAP';
-  var ms = _treeVisibleMembers(composeMergedInto(membersForMap(mt), mt));
-  layer.innerHTML = '<div style="text-align:center;font-size:22px;font-weight:800;color:#111;padding:4px 0 8px">' + evEsc(ttl)
-    + '<span style="font-size:12px;font-weight:600;color:#555">　' + ms.length + '人</span></div>';
-  var host = document.createElement('div');
+  layer.innerHTML = hd;
   layer.appendChild(host);
   document.body.appendChild(layer);
-  renderPCOrbit(mt, host, true); // 印刷用に明色で描画
   var st = document.createElement('style');
   st.id = 'orbitPageStyle';
   st.textContent = '@page{size:A3 landscape;margin:8mm}';
   document.head.appendChild(st);
   document.body.classList.add('printing-orbit');
+  var _oldTitle = document.title;
+  try { document.title = fname; } catch(eT) {}
   var cleanup = function() {
     document.body.classList.remove('printing-orbit');
+    try { document.title = _oldTitle; } catch(eT2) {}
     var l2 = document.getElementById('orbitPrintLayer'); if (l2 && l2.parentNode) l2.parentNode.removeChild(l2);
     var s2 = document.getElementById('orbitPageStyle'); if (s2 && s2.parentNode) s2.parentNode.removeChild(s2);
     window.removeEventListener('afterprint', cleanup);
@@ -5925,7 +5952,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v492';
+  var DATA_VERSION = 'v493';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6899,6 +6926,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v493', d:'2026-09-19', items:['🖨 A3印刷を専用の印刷ウィンドウ方式に刷新：押した瞬間にウィンドウが開き（無反応に見える問題を解消）、アプリ画面を含まずMAP部分だけがA3横で印刷されます','📄 PDF保存時のファイル名が「MAP_yyyymm_名前」になるように（印刷ウィンドウのタイトル＝保存ファイル名）','ポップアップがブロックされる環境では従来のページ内印刷に自動フォールバック（この場合もファイル名は設定されます）'] },
   { v:'v492', d:'2026-09-19', items:['⛶ 全画面の解除を「⛶ 全画面ボタンをもう一度押す」に統一（右上の「✕ 全画面を終了」は廃止。Escでも解除できます）','⟲ PC版のツールバーに受付連携ボタンを追加（CSVの左）','🏃 S稼働も受付システムの実測稼働率を連携するように（これまでSタイプは取込から除外され、常に「S 120%」固定表示でした）。実測があれば S71% のように表示し、未連携のSは従来どおり S 120% 表示'] },
   { v:'v491', d:'2026-09-19', items:['🌟 フレッシュ（スタート6ヶ月以内・BR未満）のカードをゴールド（黄）で表示：QBRのオレンジと同じ方式で、PCツリー・モバイルカード・◎俯瞰MAPすべてに適用。🌱バッジと同系色で「黄色＝フレッシュ」に統一','色の優先順位は BR以上（宝石色）→ BM（紫）→ QBR（橙）→ 研修生（水色）→ フレッシュ（金）→ 通常。ケアバッジを「非表示」にしている人は色も通常のまま。6ヶ月経過で自動的に通常色へ'] },
   { v:'v490', d:'2026-09-19', items:['🤏 俯瞰MAPの上でピンチ（トラックパッド/タッチ）すると、ブラウザ拡大ではなくMAP自体がズームするように（＋ボタンと同じ動き・指の位置を中心に拡大）。情報カードが見切れなくなります','🔳 全画面・A3印刷・ズームのボタンをボタンらしい見た目に変更。全画面中はボタンが点灯して状態がわかります','📐 俯瞰MAPの高さを画面に合わせて自動調整（下の黒い余白まで使ってMAPを表示）','🌳 ツリー表示で名前が長い時に稼働％と重なっていたのを修正（稼働表示の幅に合わせて名前を自動縮小・入り切らない場合は…で省略）'] },
