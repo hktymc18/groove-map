@@ -2652,16 +2652,46 @@ function printCashSlip(ev, f, live){
     return '<div class="cs-row' + (strong ? ' cs-strong' : '') + '">'
       + '<span>' + label + '</span><span class="mono">' + val + '</span></div>';
   }
+  function item(label, val, sub){
+    return '<div class="cs-row cs-item' + (sub ? ' cs-sub' : '') + '">'
+      + '<span>' + label + '</span><span class="mono">' + val + '</span></div>';
+  }
+  // 収入の内訳（会計で保存したBA人数の行）: 第1部/第2部の料金に一致する行はラベルに部を明記
+  var f1 = evFee1(ev), f2 = evFee2(ev);
+  var incRows = '', incSum = 0;
+  (f.income || []).forEach(function(r){
+    var amt = r.amount != null ? r.amount : (Number(r.unit) || 0) * (Number(r.count) || 0);
+    if(!amt && !r.count) return;
+    var lbl = r.label || '';
+    if(lbl === 'BA' && f1 !== f2){
+      if(Number(r.unit) === f1) lbl = 'BA（第1部）';
+      else if(Number(r.unit) === f2) lbl = 'BA（第2部）';
+    }
+    incSum += amt;
+    incRows += item(esc(lbl) + '　' + yen(Number(r.unit) || 0) + ' × ' + (Number(r.count) || 0) + '名', yen(amt));
+  });
+  // 支出の明細（会計で入力した経費の行）
+  var expRows = '';
+  (f.expenses || []).forEach(function(r){
+    var amt = Number(r.amount) || 0;
+    if(!amt) return;
+    expRows += item(esc(r.label || 'その他') + (r.note ? '（' + esc(r.note) + '）' : '')
+      + (r.receipt ? '　※領収書あり' : ''), '−' + yen(amt));
+  });
+  if(shortage) expRows += item('不足金', '−' + yen(shortage));
   var slip = '<div class="cs-slip">'
     + '<div class="cs-head"><b>納　金　票</b><span>' + esc(ev.hostUnion || '') + '</span></div>'
     + '<div class="cs-ev">' + esc(ev.date || '') + '　' + esc(ev.name || '')
     + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</div>'
+    + (incRows
+      ? '<div class="cs-sec">収入の内訳</div>' + incRows
+        + item('収入計', yen(f.incomeTotal != null ? f.incomeTotal : incSum), true)
+      : '')
     + line('現金徴収' + (ppMode ? '（例外分）' : ''), yen(cash) + '（' + live.cashN + '名' + (live.refN ? '・返金' + live.refN + '件' : '') + '）')
     + (pp ? line(ppMode ? 'PayPay徴収（現金外）' : 'PayPay徴収（参考・現金外）', yen(pp)) : '')
-    + (ppMode
-      ? line('支出計（預り金から支出）', '−' + yen(expOnly + shortage).slice(1) + '円（現金差引なし）')
-      : line('支出計', '−' + yen(expOnly).slice(1) + '円')
-        + (shortage ? line('不足金', '−' + yen(shortage).slice(1) + '円') : ''))
+    + '<div class="cs-sec">支出の明細' + (ppMode ? '（預り金から支出・現金差引なし）' : '') + '</div>'
+    + (expRows || item('支出なし', '¥0'))
+    + item('支出計', (expOnly + shortage) ? '−' + yen(expOnly + shortage) : '¥0', true)
     + line('封入現金額', yen(seal), true)
     + '<div class="cs-foot">'
     + '司会: ' + esc(f.mcName || '　　　') + '　受付: ' + esc(f.receptionName || '　　　')
@@ -2670,12 +2700,16 @@ function printCashSlip(ev, f, live){
     + '</div>';
   var css = '@page{size:A4;margin:8mm;}'
     + 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#000;background:#fff;}'
-    + '.cs-quarter{width:97mm;height:140.5mm;box-sizing:border-box;border-right:0.3mm dashed #999;border-bottom:0.3mm dashed #999;padding-right:4mm;}'
+    + '.cs-quarter{width:97mm;min-height:140.5mm;box-sizing:border-box;border-right:0.3mm dashed #999;border-bottom:0.3mm dashed #999;padding-right:4mm;padding-bottom:2mm;}'
     + '.cs-slip{border:0.4mm solid #333;border-radius:2mm;padding:5mm 5mm;box-sizing:border-box;}'
     + '.cs-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12pt;letter-spacing:.3em;}'
     + '.cs-head span{font-size:9pt;letter-spacing:.05em;}'
     + '.cs-ev{font-size:10pt;font-weight:700;margin:2mm 0 3mm;border-bottom:0.3mm solid #999;padding-bottom:1.5mm;}'
     + '.cs-row{display:flex;justify-content:space-between;font-size:9.5pt;padding:1mm 0;}'
+    + '.cs-sec{font-size:7.5pt;font-weight:700;color:#555;letter-spacing:.15em;margin-top:2mm;border-bottom:0.2mm solid #bbb;padding-bottom:0.5mm;}'
+    + '.cs-item{font-size:8.5pt;padding:0.6mm 0;}'
+    + '.cs-item span:first-child{padding-right:2mm;}'
+    + '.cs-sub{border-top:0.2mm solid #999;margin-top:0.5mm;padding-top:1mm;font-weight:700;}'
     + '.cs-strong{border-top:0.4mm solid #333;margin-top:2mm;padding-top:2mm;font-size:12.5pt;font-weight:900;}'
     + '.cs-foot{font-size:8pt;color:#444;margin-top:3mm;}'
     + '.cs-sign{font-size:9.5pt;margin-top:4mm;border-top:0.2mm dashed #999;padding-top:3mm;}'
