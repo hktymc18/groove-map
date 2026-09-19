@@ -74,6 +74,8 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 /* PC左サイドバー */
 .pc-sidebar{display:none;position:fixed;left:0;top:0;bottom:0;width:68px;background:#0a0c11;border-right:1px solid var(--border);flex-direction:column;align-items:center;padding:calc(env(safe-area-inset-top) + 14px) 0 14px;gap:5px;z-index:60}
 @media(min-width:768px){.pc-sidebar{display:flex}body{padding-left:68px}}
+.qa-chip{padding:8px 13px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;user-select:none}
+.qa-chip.sel{background:var(--accent);color:#08121a;border-color:var(--accent)}
 .pc-orbit-wrap{display:none}
 .pc-orbit-wrap.show{display:block}
 .orbit-hit circle{stroke:#F6C744 !important;stroke-width:5px !important;filter:drop-shadow(0 0 10px #F6C744)}
@@ -2437,7 +2439,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v486</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v487</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5033,7 +5035,7 @@ function ctxAddChild() {
   var tid = _ctxTargetId; // closeの前に保存
   closeCtxMenu();
   selectedParentId = tid;
-  openAdd();
+  openQuickAdd(); // v487
 }
 
 function ctxEdit() {
@@ -5825,7 +5827,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v486';
+  var DATA_VERSION = 'v487';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6799,6 +6801,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v487', d:'2026-09-19', items:['⚡ メンバーの「かんたん追加」：＋ボタンを押すと名前・性別・段階チップ（FT〜CO）だけの軽いシートが開きます。NA（新規）を最低限の情報でサッと登録し、研修が進んだら従来の編集画面で詳細を追記する運用に','🔁 「登録して続けて追加」でDLR後などの連続登録に対応（段階・追加先は前回のまま、名前だけ入力）','🏷 研修生タイトルに「FT」を追加（マケの前段階）。MAP・俯瞰・絞り込み・経過表示にもそのまま乗ります','📝 くわしく登録したい時はシート右上の「くわしく登録」から従来のフル編集フォームへ（入力内容は引き継ぎ）'] },
   { v:'v486', d:'2026-09-19', items:['◎ 俯瞰MAPを楕円レイアウトに：横長画面に合わせてリングが楕円になり、フロント（1段目）が多くても横方向に広く使えます（印刷もA3横の比率で最適化）','👆 俯瞰MAPのマウスオーバーで通常MAPと同じ情報カード（稼働・GSV・予定タスク・OL記録）を表示','🔢 各ノードの下にGSVポイントと稼働率を表示','⛴ 金の船マークは円の中ではなく右上の小さなバッジ表示に統一'] },
   { v:'v485', d:'2026-09-19', items:['◎ PC版に「俯瞰MAP」ビューを新設：同心リング＝段数・系列は扇形セクターで色分けした円形MAP。100人規模でも組織全体が1画面に収まります（ツリー/テーブル/カンバンの隣の「俯瞰」ボタン）','🔍 俯瞰MAPの名前検索スポットライト：名前を打つと該当メンバーが光って他が薄暗くなり、位置へ自動センタリング（打ち合わせで「誰の話か」が一瞬で共有できます）','🖨 俯瞰MAPをA3横1枚に印刷（ブラウザの印刷→PDF保存にも対応）','⛶ MAPの全画面表示：ヘッダー・ナビを消してMAPだけを画面いっぱいに（画面共有向け・Escで解除）','研修生/BR/QBR/金の船/地域の絞り込み・タップで詳細編集は俯瞰MAPでもそのまま使えます'] },
   { v:'v484', d:'2026-09-19', items:['⚡ PC版の大規模MAPを高速化：組織図の深さ計算・子探索を全面書き換え（人数の2乗→人数に比例）。名前・ポイント入力後の保存や再描画が大幅に軽くなりました','⚡ MAP切替を高速化：結合リスナー・孫階層・写真読込などの裏読み込みが1件ごとに全画面を再描画していたのをまとめて1回に（共有MAP⇄自分MAPの切替直後の固まりを解消）','🔍 絞り込みの強調バグを修正：研修生/BR/地域などの薄暗判定を描画のたびに最新メンバー情報から作り直すように（編集前の情報で判定される経路を根絶）。理想MAPでの絞り込みも正しく判定'] },
@@ -9087,7 +9090,7 @@ function membersForMap(mapType) {
 // state.members そのもの（描画外でその場更新される）はキャッシュせず毎回組み直す＝常に正しい。
 var _childIdx = null, _childIdxSrc = null;
 // v420: タイトルランク（高い順ソート・視覚強調用）。QBR＝LOI〜Q4（BR審査期間）でBMより上位
-var TITLE_RANK_MAP = {'チームエリート':200,'PD':195,'BD':190,'ブルーダイヤモンド':190,'D':185,'ダイヤモンド':185,'E':180,'エメラルド':180,'R':175,'ルビー':175,'L':170,'ラピス':170,'G':165,'ゴールド':165,'BR':160,'Q4':155,'Q3':154,'Q2':153,'Q1':152,'LOI':151,'BM':150,'B11':149,'B10':148,'B9':147,'B8':146,'B7':145,'B6':144,'B5':143,'B4':142,'B3':141,'B2':140,'B1':139,'CO':120,'BPC':119,'面談':118,'PA':117,'EXP':116,'DLR':115,'PG':114,'マケ':113,'OUT':-1};
+var TITLE_RANK_MAP = {'チームエリート':200,'PD':195,'BD':190,'ブルーダイヤモンド':190,'D':185,'ダイヤモンド':185,'E':180,'エメラルド':180,'R':175,'ルビー':175,'L':170,'ラピス':170,'G':165,'ゴールド':165,'BR':160,'Q4':155,'Q3':154,'Q2':153,'Q1':152,'LOI':151,'BM':150,'B11':149,'B10':148,'B9':147,'B8':146,'B7':145,'B6':144,'B5':143,'B4':142,'B3':141,'B2':140,'B1':139,'CO':120,'BPC':119,'面談':118,'PA':117,'EXP':116,'DLR':115,'PG':114,'マケ':113,'FT':112,'OUT':-1};
 function titleRank(t) {
   t = (t || '').trim();
   if (TITLE_RANK_MAP[t] !== undefined) return TITLE_RANK_MAP[t];
@@ -12396,7 +12399,7 @@ function onFabClick() {
 function fabSelectParent(id) {
   selectedParentId = id;
   closeFabMenu();
-  openAdd();
+  openQuickAdd(); // v487: まずはかんたん追加（くわしく登録へは中から遷移可）
 }
 function closeFabMenu() {
   var menu = document.getElementById('fabMenu');
@@ -12681,6 +12684,122 @@ function meDeleteTask(eid, mid) {
   var m = _mFind(mid);
   if (m) meRenderExtras(m);
 }
+// ============================================================
+//  v487: ⚡ かんたん追加（NAクイック登録）
+//  名前・性別・段階（FT〜CO）だけで登録。詳細は研修が進んでから従来画面で。
+// ============================================================
+var _qaGender = 'male';
+function _qaStageGet() {
+  try { var v = localStorage.getItem('gm_qaStage'); if (v && (TITLE_OPTIONS['研修生'] || []).indexOf(v) >= 0) return v; } catch(e) {}
+  return 'FT';
+}
+function openQuickAdd() {
+  if (!state.isEditor) return;
+  var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
+  if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は従来フォームで
+  _p2SheetClose('qaOv');
+  var stage = _qaStageGet();
+  var parent = selectedParentId || roots[0].id;
+  var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
+    .sort(_treeSortCmp(state.members));
+  var pOpts = ms.map(function(m) {
+    var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+    return '<option value="' + m.id + '"' + (m.id === parent ? ' selected' : '') + '>' + evEsc(nm) + (m.title ? '（' + evEsc(m.title) + '）' : '') + '</option>';
+  }).join('');
+  var chips = (TITLE_OPTIONS['研修生'] || []).map(function(t) {
+    return '<span class="qa-chip' + (t === stage ? ' sel' : '') + '" data-st="' + t + '" onclick="qaStageSel(\'' + t + '\')">' + t + '</span>';
+  }).join('');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'qaOv'; ov.style.zIndex = '640';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('qaOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚡ かんたん追加</div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・段階だけでOK。詳細は研修が進んでから</div></div>'
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px;flex:none" onclick="qaToFull()">📝 くわしく登録</span>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'qaOv\')" style="margin-left:8px">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px"><span style="font-size:12px;flex:none">📍 追加先</span>'
+    + '<select class="fi" id="qaParent" style="flex:1;padding:8px 10px;font-size:13px">' + pOpts + '</select></div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    + '<input class="fi" id="qaLast" placeholder="姓" style="flex:1">'
+    + '<input class="fi" id="qaFirst" placeholder="名" style="flex:1"></div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    + '<span class="qa-chip qa-g' + (_qaGender !== 'female' ? ' sel' : '') + '" id="qaGm" onclick="qaGenderSel(\'male\')" style="flex:1;text-align:center">👨 男性</span>'
+    + '<span class="qa-chip qa-g' + (_qaGender === 'female' ? ' sel' : '') + '" id="qaGf" onclick="qaGenderSel(\'female\')" style="flex:1;text-align:center">👩 女性</span></div>'
+    + '<div class="p2-meta" style="margin-bottom:4px">アプローチ・研修の段階</div>'
+    + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px" id="qaStages">' + chips + '</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<span class="p2-btn" style="margin:0;flex:1.4;text-align:center" onclick="qaSave(true)">＋ 登録して続けて追加</span>'
+    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="qaSave(false)">✔ 登録</span></div>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  setTimeout(function() { var i = document.getElementById('qaLast'); if (i) i.focus(); }, 150);
+}
+function qaStageSel(t) {
+  try { localStorage.setItem('gm_qaStage', t); } catch(e) {}
+  var w9 = document.getElementById('qaStages');
+  if (w9) { var cs = w9.querySelectorAll('.qa-chip'); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute('data-st') === t); }
+}
+function qaGenderSel(g) {
+  _qaGender = g;
+  var m9 = document.getElementById('qaGm'), f9 = document.getElementById('qaGf');
+  if (m9) m9.classList.toggle('sel', g === 'male');
+  if (f9) f9.classList.toggle('sel', g === 'female');
+}
+function qaSave(cont) {
+  var last = ((document.getElementById('qaLast') || {}).value || '').trim();
+  var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
+  if (!last && !first) { toast('名前を入力してください'); return; }
+  var pid = (document.getElementById('qaParent') || {}).value || '';
+  if (!pid) { toast('追加先を選んでください'); return; }
+  var stage = _qaStageGet();
+  var cm = state.currentMonth || currentMonthStr();
+  var m = {
+    id: 'id-' + Date.now(),
+    lastName: last, firstName: first, gender: _qaGender,
+    title: stage, cat: '研修生',
+    activity: '', actRate: '', morale: 1, priority: '',
+    ptCurrent: 0, ptFixed: 0, ptSelf: 0,
+    trainee: false, parentId: pid, mapType: 'current',
+    memo: '', nextDate: '', aSan: '', instaUrl: '', lineId: '', goldShip: false,
+    traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
+    region: '', birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
+    month: cm,
+  };
+  state.members.push(m);
+  _memMap = null;
+  recalcAllGSV();
+  renderCurrentView();
+  autoSave();
+  try { gameCheck(); } catch(eG) {}
+  var nm = (last + ' ' + first).trim();
+  toast('⚡ ' + nm + ' さんを追加しました（' + stage + '）');
+  if (cont) {
+    var l9 = document.getElementById('qaLast'), f9 = document.getElementById('qaFirst');
+    if (l9) { l9.value = ''; l9.focus(); }
+    if (f9) f9.value = '';
+  } else {
+    _p2SheetClose('qaOv');
+  }
+}
+function qaToFull() {
+  // 入力途中の内容を引き継いで従来のフル編集フォームへ
+  var last = ((document.getElementById('qaLast') || {}).value || '').trim();
+  var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
+  var pid = (document.getElementById('qaParent') || {}).value || '';
+  var g = _qaGender, stage = _qaStageGet();
+  _p2SheetClose('qaOv');
+  if (pid) selectedParentId = pid;
+  openAdd();
+  try {
+    var fl = document.getElementById('fLast'); if (fl) fl.value = last;
+    var ff = document.getElementById('fFirst'); if (ff) ff.value = first;
+    selGender(g, true);
+    selCategory('研修生');
+    var ft = document.getElementById('fTitle'); if (ft) ft.value = stage;
+    if (typeof onTitleChange === 'function') onTitleChange();
+  } catch(e) {}
+}
 function openAdd() {
   if (!state.isEditor) return;
   window._tempNewMember = null; // 一時データリセット
@@ -12909,7 +13028,7 @@ function buildParentSelect(selectedId, excludeId) {
   });
 }
 var TITLE_OPTIONS = {
-  '研修生': ['マケ','PG','DLR','EXP','PA','面談','BPC','CO'],
+  '研修生': ['FT','マケ','PG','DLR','EXP','PA','面談','BPC','CO'], // v487: FT=フェアトレード（マケの前段階）
   'BA':     ['LOI','Q2','Q3','Q4','B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','BM'],
   'BR':     ['BR','ゴールド','ラピス','ルビー','エメラルド','ダイヤモンド','ブルーダイヤモンド','PD','チームエリート'],
 };
