@@ -87,7 +87,8 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
 @media print{
   body.printing-orbit>*:not(#orbitPrintLayer){display:none !important}
   body.printing-orbit #orbitPrintLayer{display:block !important;position:static;background:#fff;color:#111}
-  body.printing-orbit #orbitPrintLayer svg{width:100%;height:auto}
+  body.printing-orbit #orbitPrintLayer{height:100vh;overflow:hidden}
+  body.printing-orbit #orbitPrintLayer svg{width:100%;height:auto;max-height:86vh;margin:0 auto;page-break-inside:avoid}
 }
 .pcs-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:5px 3px;border-radius:12px;transition:background .12s;width:60px}
 .pcs-item:hover{background:var(--surface)}
@@ -2443,7 +2444,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v493</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v494</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5027,7 +5028,7 @@ function orbitPrint() {
   if (pw && pw.document) {
     // 専用ウィンドウ: アプリ画面を含まずMAPだけをA3横で。タイトル=PDF保存時のファイル名
     pw.document.write('<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>' + evEsc(fname) + '</title>'
-      + '<style>@page{size:A3 landscape;margin:8mm}html,body{margin:0;padding:0;background:#fff;color:#111;font-family:"Noto Sans JP","Hiragino Sans",Inter,sans-serif}svg{width:100%;height:auto;display:block}</style>'
+      + '<style>@page{size:A3 landscape;margin:8mm}html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#fff;color:#111;font-family:"Noto Sans JP","Hiragino Sans",Inter,sans-serif}svg{width:100%;height:auto;max-height:86vh;display:block;margin:0 auto;page-break-inside:avoid}</style>'
       + '</head><body>' + hd + host.innerHTML
       + '<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},200);};window.onafterprint=function(){setTimeout(function(){window.close();},300);};</scr' + 'ipt>'
       + '</body></html>');
@@ -5952,7 +5953,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v493';
+  var DATA_VERSION = 'v494';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6926,6 +6927,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v494', d:'2026-09-19', items:['🖨 印刷が必ず1ページに収まるように修正：MAPを用紙の幅と高さの両方に合わせて自動縮小し、はみ出し分も遮断（2ページ目に楕円の端だけ出る問題を解消）。SafariのA4縦のままでも1枚に収まります','ℹ️ 用紙の初期値（A3横）が効くのはChrome/Edge。Safariは仕様上Webから用紙・向きを指定できないため、A3横にしたい場合はダイアログで選択してください（1ページ収まりはどの用紙でも保証）'] },
   { v:'v493', d:'2026-09-19', items:['🖨 A3印刷を専用の印刷ウィンドウ方式に刷新：押した瞬間にウィンドウが開き（無反応に見える問題を解消）、アプリ画面を含まずMAP部分だけがA3横で印刷されます','📄 PDF保存時のファイル名が「MAP_yyyymm_名前」になるように（印刷ウィンドウのタイトル＝保存ファイル名）','ポップアップがブロックされる環境では従来のページ内印刷に自動フォールバック（この場合もファイル名は設定されます）'] },
   { v:'v492', d:'2026-09-19', items:['⛶ 全画面の解除を「⛶ 全画面ボタンをもう一度押す」に統一（右上の「✕ 全画面を終了」は廃止。Escでも解除できます）','⟲ PC版のツールバーに受付連携ボタンを追加（CSVの左）','🏃 S稼働も受付システムの実測稼働率を連携するように（これまでSタイプは取込から除外され、常に「S 120%」固定表示でした）。実測があれば S71% のように表示し、未連携のSは従来どおり S 120% 表示'] },
   { v:'v491', d:'2026-09-19', items:['🌟 フレッシュ（スタート6ヶ月以内・BR未満）のカードをゴールド（黄）で表示：QBRのオレンジと同じ方式で、PCツリー・モバイルカード・◎俯瞰MAPすべてに適用。🌱バッジと同系色で「黄色＝フレッシュ」に統一','色の優先順位は BR以上（宝石色）→ BM（紫）→ QBR（橙）→ 研修生（水色）→ フレッシュ（金）→ 通常。ケアバッジを「非表示」にしている人は色も通常のまま。6ヶ月経過で自動的に通常色へ'] },
