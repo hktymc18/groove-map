@@ -653,15 +653,6 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 /* フレッシュリスト（自動表示・ステップUI） */
 .fresh-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px;margin:10px}
 .fresh-card.done{opacity:.55}
-/* 金の船カード */
-.gold-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px;margin:10px}
-.gold-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.gold-card-name{font-size:15px;font-weight:700;color:var(--text)}
-.gold-card-title{font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;background:var(--purple-dim);color:var(--purple)}
-.gold-card-prog{margin-left:auto;font-size:12px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace}
-.gold-tasks .ev-item{margin-left:0;margin-right:0}
-.gold-empty{font-size:13px;color:var(--text-dim);padding:14px 12px;background:var(--surface2);border-radius:8px;text-align:center}
-.gold-add{width:100%;margin-top:8px;padding:11px;border-radius:9px;border:1px dashed var(--accent);background:transparent;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer}
 /* アウトライン カード */
 .ol-card{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px;margin:10px}
 .ol-card.done{opacity:.5}
@@ -712,8 +703,6 @@ tr.ot-drawer td{background:var(--surface2);padding:0}
 .ot-mel.warn{color:var(--gold)} .ot-mel.crit{color:var(--red)} .ot-mel.ok{color:var(--green)}
 .ot-mlast{padding:0 12px 11px;font-size:12.5px;color:var(--text-mid);line-height:1.6} .ot-mlast b{color:var(--text);font-weight:700}
 .ot-mbody{border-top:1px solid var(--border);padding:10px 12px;background:var(--surface2)}
-.gold-grid{display:grid;gap:10px;padding:10px}
-.gold-grid .gold-card{margin:0}
 @media(min-width:900px){.gold-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
 table.ot.olt7{min-width:640px}
 tr.ot-done{opacity:.5}
@@ -2135,11 +2124,8 @@ body:not(.light) .me-tab:not(.on),body:not(.light) .md-tab:not(.on){color:#c6cdd
 select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;text-align-last:right;cursor:pointer}
 .ed-chev{color:var(--text-dim);font-size:10px;flex:none;pointer-events:none}
 /* 誕生日：未入力時はiOS等の日付プレースホルダを隠し「未設定」を表示 */
-.ed-birth{position:relative}
-#fBirth:not(.has-value){color:transparent}
-#fBirth:not(.has-value)::-webkit-datetime-edit{color:transparent}
-.ed-bph{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:15px;color:var(--text-dim);opacity:.55;pointer-events:none}
-#fBirth.has-value ~ .ed-bph{display:none}
+.ed-birth{display:flex;gap:6px}
+.ed-birth select.ed-in{min-width:0}
 .ed-help{font-size:12px;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin:0 0 10px;line-height:1.6;display:none}
 .ed-help.open{display:block}
 .ed-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
@@ -2444,7 +2430,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v496</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v497</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2652,9 +2638,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <!-- フレッシュリスト -->
     <div class="sec-label" style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span>フレッシュリスト</span><span style="font-size:10px;color:var(--text-dim);font-weight:400">現状MAPの LOI / Q2 / Q3 / B1〜B6 を自動表示</span></div>
     <div class="card" id="freshListWrap"></div>
-    <!-- 金の船リスト -->
-    <div class="sec-label"><span>金の船リスト</span> <span style="font-size:10px;color:var(--text-dim);font-weight:400">MAPで「⛴金の船」にしたメンバーを自動表示</span></div>
-    <div class="card" id="goldListWrap"></div>
     <!-- アウトライン -->
     <div class="sec-label">３〜７人のアウトライン</div>
     <div class="card" id="outlineWrap"></div>
@@ -3000,7 +2983,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-help" id="h_photo">端末内で圧縮してから保存されます（1枚 約8KB）。ドラッグとピンチで表示範囲を調整。写真をタップすると切り抜きをやり直せます。</div>
           <div class="ed-row">
             <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
-            <div class="ed-ctrl ed-birth"><input class="ed-in" id="fBirth" type="date" min="1900-01-01" onchange="this.classList.toggle('has-value',!!this.value);syncAgeField()"><span class="ed-bph">未設定</span></div>
+            <div class="ed-ctrl ed-birth"><select class="ed-in" id="fBirthY" onchange="syncAgeField()" style="flex:1.5"></select><select class="ed-in" id="fBirthM" onchange="syncAgeField()" style="flex:1"></select><select class="ed-in" id="fBirthD" onchange="syncAgeField()" style="flex:1"></select></div>
           </div>
           <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
           <div class="ed-row">
@@ -3041,20 +3024,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-row">
             <span class="ed-l">適用MAP<span class="ed-q" onclick="edHelp(event,'h_map')">?</span></span>
             <div class="ed-chips">
-              <div class="rb sel" id="rbMapC" onclick="selMapType('current')">現状</div>
+              <div class="rb" id="rbMapC" onclick="selMapType('current')">現状</div>
               <div class="rb" id="rbMapI" onclick="selMapType('ideal')">理想</div>
-              <div class="rb" id="rbMapB" onclick="selMapType('both')">両方</div>
+              <div class="rb sel" id="rbMapB" onclick="selMapType('both')">両方</div>
             </div>
           </div>
           <div class="ed-help" id="h_map">このメンバーを現状MAP／理想MAPのどちらに表示するか。</div>
-          <div class="ed-row">
-            <span class="ed-l">金の船<span class="ed-q" onclick="edHelp(event,'h_gold')">?</span></span>
-            <div class="ed-chips">
-              <div class="rb sel" id="rbGoldNo" onclick="selGoldShip(false)">通常</div>
-              <div class="rb" id="rbGoldYes" onclick="selGoldShip(true)">⛴ 金の船</div>
-            </div>
-          </div>
-          <div class="ed-help" id="h_gold">組織の要になる重要メンバー。特別に注目表示されます。</div>
           <div class="ed-row">
             <span class="ed-l">Instagram</span>
             <div class="ed-ctrl"><input class="ed-in" id="fInsta" placeholder="URL"></div>
@@ -3134,12 +3109,17 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <div class="ed-ctrl"><select class="ed-in" id="fAct">
               <option value="">-</option>
               <option value="S">S（120%）</option>
-              <option value="A">A（仕事辞める日確定）</option>
+              <option value="A">A（仕事を変えてS稼働になる日確定）</option>
               <option value="B">B（仕事以外来る）</option>
               <option value="C">C（来れるけど来ない）</option>
             </select><span class="ed-chev">▾</span></div>
           </div>
-          <div class="ed-help" id="h_fAct">S＝120%稼働／A＝仕事辞める日確定（昼の仕事を辞めてビジネスに専念＝good）／B＝仕事以外は来る／C＝来れるけど来ない。</div>
+          <div class="ed-help" id="h_fAct">S＝120%稼働／A＝仕事を変えてS稼働になる日確定／B＝仕事以外は来る／C＝来れるけど来ない。</div>
+          <div class="ed-row">
+            <span class="ed-l">稼働率(%)<span class="ed-q" onclick="edHelp(event,'h_fActRate')">?</span></span>
+            <div class="ed-ctrl"><input class="ed-in" id="fActRate" type="number" inputmode="numeric" placeholder="—" min="0" max="100" onfocus="edSelAll(this)"></div>
+          </div>
+          <div class="ed-help" id="h_fActRate">S以外の人の稼働率（％）。</div>
           <div class="ed-row">
             <span class="ed-l">やる気</span>
             <div class="ed-ctrl"><select class="ed-in" id="fMorale">
@@ -3148,11 +3128,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
               <option value="3">🔥 死ぬ気</option>
             </select><span class="ed-chev">▾</span></div>
           </div>
-          <div class="ed-row">
-            <span class="ed-l">稼働率(%)<span class="ed-q" onclick="edHelp(event,'h_fActRate')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fActRate" type="number" inputmode="numeric" placeholder="—" min="0" max="100" onfocus="edSelAll(this)"></div>
-          </div>
-          <div class="ed-help" id="h_fActRate">S以外の人の稼働率（％）。</div>
           <div class="ed-row">
             <span class="ed-l">優先度<span class="ed-q" onclick="edHelp(event,'h_fPriority')">?</span></span>
             <div class="ed-ctrl"><select class="ed-in" id="fPriority">
@@ -3508,7 +3483,7 @@ var state = {
 };
 
 var editingId = null;
-var fGender = 'male', fTrainee = false, fMapType = 'current', fGoldShip = false;
+var fGender = 'male', fTrainee = false, fMapType = 'current';
 var currentView = 'current';
 var diffData = [];
 var pendingChanges = false;
@@ -4356,8 +4331,8 @@ function renderPCMap(mapType) {
     var _actW9 = _actStr9 ? _actStr9.length * 9.5 + 12 : 0;
     var _nameMax9 = (NODE_W - 16 - _actW9) - 61 - 4; // 61=アバター分の左オフセット
     var _estW9 = function(str, fs) { var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) w9 += str.charCodeAt(q9) > 255 ? fs : fs * 0.58; return w9; };
-    var nameFs = 20;
-    var _fss9 = [20, 18, 16, 14.5, 13];
+    var nameFs = 18;
+    var _fss9 = [18, 16, 14.5, 13]; // v497: 漢字4文字＋S100%が収まる18pxを上限に統一（短い名前だけ大きく目立たない）
     for (var _fi9 = 0; _fi9 < _fss9.length; _fi9++) { nameFs = _fss9[_fi9]; if (_estW9(nameStr, nameFs) <= _nameMax9) break; }
     while (nameStr.length > 2 && _estW9(nameStr + '…', nameFs) > _nameMax9 && _estW9(nameStr, nameFs) > _nameMax9) { nameStr = nameStr.slice(0, -1); if (_estW9(nameStr + '…', nameFs) <= _nameMax9) { nameStr += '…'; break; } }
     var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#f2f4f8');
@@ -4831,14 +4806,6 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
       t2.textContent = (typeof titleAbbr === 'function' ? titleAbbr(m.title || '—') : (m.title || '—'));
       g.appendChild(t2);
     }
-    if (m.goldShip) { // v486: ⛴は円の中でなく右上の小バッジ
-      var t3 = document.createElementNS(NS, 'text');
-      t3.setAttribute('x', pos.x + r * 0.8); t3.setAttribute('y', pos.y - r * 0.8);
-      t3.setAttribute('text-anchor', 'middle'); t3.setAttribute('font-size', '9.5px'); t3.setAttribute('pointer-events', 'none');
-      t3.setAttribute('class', 'orbit-gold');
-      t3.textContent = '⛴';
-      g.appendChild(t3);
-    }
     // v486: ノード下に GSVポイント・稼働率
     var _pt6 = (m.ptCurrent || 0);
     var _ar6 = (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) ? parseInt(m.actRate, 10) : null;
@@ -5135,10 +5102,13 @@ function openCtxMenu(memberId, x, y) {
   }
   if (label && m) label.textContent = (m.lastName||'') + ' ' + (m.firstName||'');
 
-  // 位置調整（画面端に収まるよう）
+  // v497: メニューの実寸を測って画面内にクランプ（端のメンバーで見切れない）
   menu.style.left = x + 'px';
   menu.style.top  = y + 'px';
   menu.classList.add('open');
+  var _mw7 = menu.offsetWidth || 200, _mh7 = menu.offsetHeight || 220;
+  menu.style.left = Math.max(8, Math.min(x, window.innerWidth - _mw7 - 8)) + 'px';
+  menu.style.top  = Math.max(8, Math.min(y, window.innerHeight - _mh7 - 8)) + 'px';
 
   // インスタ・LINEボタンの表示切替
   var instaBtn = document.getElementById('ctxInsta');
@@ -5470,14 +5440,13 @@ function buildMapCatChips(members) {
   var pcWrap = document.getElementById('pcMapCatChips'); // v471: PC版にも同じ絞り込みバー
   if (!wrap && !pcWrap) return;
   var own = (members || []).filter(function(m){ return !m.deleted; });
-  var cAll = own.length, cTr = 0, cFr = 0, cBr = 0, cGo = 0;
+  var cAll = own.length, cTr = 0, cFr = 0, cBr = 0;
   own.forEach(function(m){
     if (memberMatchesFilter(m,'trainee')) cTr++;
     if (memberMatchesFilter(m,'fresh')) cFr++;
     if (memberMatchesFilter(m,'br')) cBr++;
-    if (m.goldShip) cGo++;
   });
-  var defs = [['','すべて',cAll,'#2CE5B8'],['trainee','研修生',cTr,'#FFB454'],['fresh','フレッシュ',cFr,'#4ADE80'],['br','BR',cBr,'#5AD7FF'],['gold','金の船',cGo,'#8B7CFF']];
+  var defs = [['','すべて',cAll,'#2CE5B8'],['trainee','研修生',cTr,'#FFB454'],['fresh','フレッシュ',cFr,'#4ADE80'],['br','BR',cBr,'#5AD7FF']];
   var html = defs.map(function(d){
     var active = (mapCatFilter === d[0]);
     return '<span class="mc-chip" onclick="setMapCatFilter(\'' + d[0] + '\')" style="border-color:' + (active?d[3]:'var(--border)') + ';background:' + (active?d[3]:'transparent') + ';color:' + (active?'#000':'var(--text-dim)') + '">' + d[1] + ' ' + d[2] + '</span>';
@@ -5958,7 +5927,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v496';
+  var DATA_VERSION = 'v497';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6161,7 +6130,7 @@ function openMobileMenu() {
   closeMobileMenu();
   var items = [
     { v:'plan',    ic:'🧭', lb:'PLAN',    sub:'目標・計画・振り返り' },
-    { v:'ol',      ic:'📋', lb:'OL',      sub:'フレッシュ・金の船' },
+    { v:'ol',      ic:'📋', lb:'OL',      sub:'フレッシュ・アウトライン' },
     { v:'members', ic:'👥', lb:'メンバー', sub:'一覧・絞り込み' },
     { v:'ideal',   ic:'🎯', lb:'理想MAP', sub:'ありたい組織図' }
   ].filter(function(it){ return !(it.v==='members' && typeof membersTabHidden==='function' && membersTabHidden()); });
@@ -6932,6 +6901,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v497', d:'2026-09-22', items:['🎂 生年月日を年・月・日のプルダウン選択に変更：「2002」と入力中に0002になる問題と、入力した文字が確定まで見えない問題を根本解消','⛴→🔴 「金の船」フラグを廃止し「優先度」に一本化：編集フォームの項目・MAP/メンバーの絞り込み・OLタブの金の船リスト・カードの⛴マークを削除。必要数とギャップの「Qルビー候補」は優先度「高」の人数から自動集計されるように','🗺 メンバー追加時の適用MAPの既定を「両方」に変更（理想MAPを開いて追加した場合は従来どおり「理想」）','✍️ 稼働タイプAの説明を「仕事を変えてS稼働になる日確定」に変更','↕️ 編集フォームの「やる気」を稼働率(%)の下に移動','📌 画面端のメンバーで「＋直下に追加」メニューが見切れないように位置を自動調整','🔤 MAPカードの名前の文字サイズを統一：漢字4文字＋S100%が収まるサイズを上限に、5文字以上の時だけ縮小（短い名前だけ大きく目立つのを解消）'] },
   { v:'v496', d:'2026-09-22', items:['🎓 研修生の編集は「研修タブ」から開くように（921-1。研修生・研修履歴ありの人のみ。他は従来どおり月次タブ）','⚡ かんたん追加に「研修の予定（日付・時刻）・Aさん」を追加。入力すると研修履歴に予定として登録されます（921-2）','📆 カレンダーが画面上部に圧縮される問題の対策：カレンダーを開いた瞬間に画面の高さを取り直すように（921-3・iOSのビューポート高さが古いまま残る現象）','🏷 テンプレから登録した予定のカテゴリが編集時に「未分類」になる問題を修正：どんな名前のテンプレにも自動でカテゴリを付与し、色だけ付いた予定（ユニオン予定含む）は編集時に色からカテゴリを復元（921-4）','📋 ToDoリストの区分を全箇所で「⚠️期限切れ／今日の予定／今後の予定」の3段に統一（922-1）','📍 地域絞り込みを強化（922-3/922-4）：表記ゆれ（愛知⇄名古屋など）を正規化して判定・描画直後にタイマーを待たず即適用（強調が逆転する/全地域に戻しても暗いままの競合経路を根絶）'] },
   { v:'v495', d:'2026-09-19', items:['🐛 共有MAPが全体的に暗く見える問題を修正（919-3）：自分のMAPでカードをクリックした「系列フォーカス」がMAP切替後も持ち越され、切替先に存在しない系列を選択したままになるため全員が薄暗表示になっていました','🔄 MAP切替（自分⇄共有⇄合算）で系列フォーカスとカテゴリ/QBR/地域の絞り込みを自動リセット','🛡 保険として、選択中の系列が現在のMAPに存在しない場合は描画時に自動解除（ツリー・俯瞰とも）'] },
   { v:'v494', d:'2026-09-19', items:['🖨 印刷が必ず1ページに収まるように修正：MAPを用紙の幅と高さの両方に合わせて自動縮小し、はみ出し分も遮断（2ページ目に楕円の端だけ出る問題を解消）。SafariのA4縦のままでも1枚に収まります','ℹ️ 用紙の初期値（A3横）が効くのはChrome/Edge。Safariは仕様上Webから用紙・向きを指定できないため、A3横にしたい場合はダイアログで選択してください（1ページ収まりはどの用紙でも保証）'] },
@@ -6946,7 +6916,7 @@ var RELEASE_NOTES = [
   { v:'v485', d:'2026-09-19', items:['◎ PC版に「俯瞰MAP」ビューを新設：同心リング＝段数・系列は扇形セクターで色分けした円形MAP。100人規模でも組織全体が1画面に収まります（ツリー/テーブル/カンバンの隣の「俯瞰」ボタン）','🔍 俯瞰MAPの名前検索スポットライト：名前を打つと該当メンバーが光って他が薄暗くなり、位置へ自動センタリング（打ち合わせで「誰の話か」が一瞬で共有できます）','🖨 俯瞰MAPをA3横1枚に印刷（ブラウザの印刷→PDF保存にも対応）','⛶ MAPの全画面表示：ヘッダー・ナビを消してMAPだけを画面いっぱいに（画面共有向け・Escで解除）','研修生/BR/QBR/金の船/地域の絞り込み・タップで詳細編集は俯瞰MAPでもそのまま使えます'] },
   { v:'v484', d:'2026-09-19', items:['⚡ PC版の大規模MAPを高速化：組織図の深さ計算・子探索を全面書き換え（人数の2乗→人数に比例）。名前・ポイント入力後の保存や再描画が大幅に軽くなりました','⚡ MAP切替を高速化：結合リスナー・孫階層・写真読込などの裏読み込みが1件ごとに全画面を再描画していたのをまとめて1回に（共有MAP⇄自分MAPの切替直後の固まりを解消）','🔍 絞り込みの強調バグを修正：研修生/BR/地域などの薄暗判定を描画のたびに最新メンバー情報から作り直すように（編集前の情報で判定される経路を根絶）。理想MAPでの絞り込みも正しく判定'] },
   { v:'v483', d:'2026-09-18', items:['🚩 年間ロードマップ：複数月にまたがるマイルストーンに対応（期間バー表示・重なりは自動で段分け）','🧮 フロントBRの自動逆算：LOI→Q2→Q3→BRの最短リードタイム（既定3ヶ月・変更可）を組み込み。BR行に予測値を自動表示し、📤割り振りではBRギャップを「期日3ヶ月前までのフロント」に逆算配置','🎪 動員を計画を逆算プランナーに刷新：出したいフロント数×係数から CT取り・CT・FT・PG・DLR動員 の件数と期限を自動計算（人の紐づけを廃止）','📅 DLRのカレンダー表記に対応：標準でDLR/P&P両対応＋⚙係数で自由に登録可。他のユニオン予定からも選択OK','🗺 PC右カラムのロードマップミニを当月始まりに変更','🌟 目標タイトル・目標月収を大きく表示＋スローガン（ひとこと）を登録可能に'] },
-  { v:'v482', d:'2026-09-18', items:['🧮 「必要数とギャップ」新設：目標月収からQルビー（1QR=20万円）・環境数（1環境=100万円）を自動計算し、フロントBR・流通（既定3000P）・エキスパートと合わせて目標／現状／ギャップを1画面で表示。現状はMAPから自動取得（フロントBR・流通・ルビー・⛴金の船=Qルビー候補）','⛴ Qルビー候補ルールを組み込み：QR目標×2の候補必要数と金の船の現在数を自動で対比','📤 「ロードマップに割り振る」：ギャップを残り月数で階段状の月末目標に自動按分（プレビュー→確定）','⚙ ロードマップの行を自由に編集：名前変更・追加・並び替え・非表示（デフォルトはフロント/流通/Qルビー/エキスパート＋環境数）','🧭 立案ステッパーを7手順に改訂：価値観→年別→ギャップ→年間MS→今月目標→月間タスク→日々・実行'] },
+  { v:'v482', d:'2026-09-18', items:['🧮 「必要数とギャップ」新設：目標月収からQルビー（1QR=20万円）・環境数（1環境=100万円）を自動計算し、フロントBR・流通（既定3000P）・エキスパートと合わせて目標／現状／ギャップを1画面で表示。現状はMAPから自動取得（フロントBR・流通・ルビー・⛴金の船=Qルビー候補）','Qルビー候補ルールを組み込み：QR目標×2の候補必要数と金の船の現在数を自動で対比','📤 「ロードマップに割り振る」：ギャップを残り月数で階段状の月末目標に自動按分（プレビュー→確定）','⚙ ロードマップの行を自由に編集：名前変更・追加・並び替え・非表示（デフォルトはフロント/流通/Qルビー/エキスパート＋環境数）','🧭 立案ステッパーを7手順に改訂：価値観→年別→ギャップ→年間MS→今月目標→月間タスク→日々・実行'] },
   { v:'v481', d:'2026-09-18', items:['🗺 年間ロードマップ新設：12ヶ月のタイムラインにマイルストーン（色付き・補足つき）を置き、フロント/流通/Qルビー/エキスパートを月別に立案できます。フロント行は今月の目標と自動連動。PLANの右カラムに直近のミニ表示','📆 年ごとの目標：期日から逆算した各年に「目標タイトル＋目標月収＋ひとこと」を設定できます','🧭 立案ステッパー：価値観→年別→年間→月次→月間タスク→日々→実行の7ステップの進み具合をカード上部に表示。タップで該当画面へ','✍️ PC版の書き出しを右下の浮きメモパッドに変更：目標やロードマップを見ながらメモでき、「未整理」タブでそのまま振り分けも。常時表示のカードは廃止（モバイルは従来どおり）','📝 名称変更：「北極星」→「目標設定」、「宣言」→「目標（設定する）」に統一しました'] },
   { v:'v480', d:'2026-09-18', items:['🐛 アプリを開くたびに未宣言の赤い通知が一瞬だけ表示される問題を解消：宣言状態を「宣言済み/未宣言/未確認」の3値で扱い、サーバー確認が済むまでは表示しない方式に変更。さらに一度宣言済みを確認した端末は記憶して、次回から確認を待たずに非表示を確定します（オフラインでも誤表示なし）。本当に未宣言のときだけ、ふわっとフェードインで表示されます'] },
   { v:'v479', d:'2026-09-18', items:['🐛 画面最上部に文字の読めない「赤い帯」が出る問題を解消：未宣言のお知らせを画面上部の帯から、下部ナビの上に浮かぶピル型の通知に変更しました（iPhoneのステータスバーと重なる構造自体を廃止。タップでPLANへ）','🔄 通知を出す前にサーバーの宣言状態を自動で確認し、宣言済みならその場で消えるようにしました（他の端末で宣言した直後でもOK）'] },
@@ -7528,10 +7498,9 @@ function ckFreshListState(m) {
   var fd = (typeof freshNorm === 'function') ? freshNorm(raw) : (raw || {});
   return { done: !!fd.done, date: fd.date || '' };
 }
-// 層判定：金の船 > 研修生 > フレッシュ(LOI〜B6)
+// 層判定：研修生 > フレッシュ(LOI〜B6)
 function ckGroup(m) {
   if ((m.title || '').trim() === 'OUT') return ''; // v453: OUTは要ケア対象外
-  if (m.goldShip) return 'leader';
   var cat = (typeof memberCat === 'function') ? memberCat(m) : '';
   if (cat === '研修生') return 'trainee';
   if (ckIsFreshByStart(m)) return 'fresh';       // v417: 登録月から3ヶ月以内
@@ -7646,8 +7615,7 @@ function cockpitHtml() {
   var groups = [
     { key:'trainee', ic:'🌱', label:'研修生' },
     { key:'fresh',   ic:'🌿', label:'フレッシュ（登録6ヶ月以内）' },
-    { key:'exam',    ic:'📋', label:'審査期間中（LOI〜Q4）' },
-    { key:'leader',  ic:'⛴', label:'リーダー格・金の船' }
+    { key:'exam',    ic:'📋', label:'審査期間中（LOI〜Q4）' }
   ];
   groups.forEach(function(gr) {
     var list = g[gr.key];
@@ -7715,17 +7683,15 @@ function homeTasksHtml() {
 // ── 今日の気づき（今日ホーム）現状データからの組織レベルの気づき ──
 function homeInsights() {
   var mem = (typeof gameActiveMembers === 'function') ? gameActiveMembers() : (state.members || []);
-  var cC = 0, cA = 0, shibu = 0, goldNoPr = 0;
+  var cC = 0, cA = 0, shibu = 0;
   mem.forEach(function(m){
     if (m.activity === 'C') cC++;
     if (m.activity === 'A') cA++;
     if (m.morale === 3 || m.morale === '3') shibu++;
-    if (m.goldShip && !m.priority) goldNoPr++;
   });
   var out = [];
-  if (cA > 0) out.push({ t:'稼働A（仕事辞める日確定）が ' + cA + '人。モチベ/ノウハウOL・リスト作戦会議でフォローを', c:'good' });
+  if (cA > 0) out.push({ t:'稼働A（仕事を変えてS稼働になる日確定）が ' + cA + '人。モチベ/ノウハウOL・リスト作戦会議でフォローを', c:'good' });
   if (cC > 0) out.push({ t:'稼働C（来れるけど来ない）が ' + cC + '人。個別フォローのタイミング', c:'warn' });
-  if (goldNoPr > 0) out.push({ t:'金の船 ' + goldNoPr + '人に優先度が未設定。注力先を決めましょう', c:'info' });
   if (shibu > 0) out.push({ t:'🔥 死ぬ気メンバーが ' + shibu + '人！この勢いを次に繋げよう', c:'good' });
   return out;
 }
@@ -7854,7 +7820,6 @@ function memberMatchesFilter(m, f) {
   if (f === 'trainee') return memberCat(m) === '研修生';
   if (f === 'fresh') return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
   if (f === 'br') return memberCat(m) === 'BR';
-  if (f === 'gold') return !!m.goldShip;
   if (f === 'merged') return /^MG_/.test(m.id || '');
   if (f === 'out') return (m.title||'').trim() === 'OUT';
   if (f && f.indexOf('qbr:') === 0) return (m.title||'').trim() === f.slice(4); // v471: QBR（タイトル一致）
@@ -8038,14 +8003,13 @@ function renderMembers() {
   var base = incM ? all : ownList;
   var cOut = base.filter(function(m){ return (m.title||'').trim() === 'OUT'; }).length;
   var baseActive = base.filter(function(m){ return (m.title||'').trim() !== 'OUT'; });
-  var cAll = baseActive.length, cTr = 0, cFr = 0, cGo = 0, cBr = 0;
+  var cAll = baseActive.length, cTr = 0, cFr = 0, cBr = 0;
   baseActive.forEach(function(m){
     if (memberCat(m) === '研修生') cTr++;
     if (CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0) cFr++;
     if (memberCat(m) === 'BR') cBr++;
-    if (m.goldShip) cGo++;
   });
-  var filters = [['all','すべて',cAll],['trainee','研修生',cTr],['fresh','フレッシュ',cFr],['br','BR',cBr],['gold','金の船',cGo]];
+  var filters = [['all','すべて',cAll],['trainee','研修生',cTr],['fresh','フレッシュ',cFr],['br','BR',cBr]];
   if (cOut > 0) filters.push(['out','🚪OUT',cOut]);
   if (mergedCt > 0) filters.push(['merged','🔗結合',mergedCt]);
   var list = all.filter(function(m){
@@ -8072,7 +8036,7 @@ function renderMembers() {
     var meta = [gsv, act].filter(Boolean).join(' ・ ') || (memberCat(m) || '-');
     var pr = memberPriorityRank(m);
     var dotCls = pr === 3 ? 'high' : (pr === 2 ? 'mid' : (pr === 1 ? 'low' : 'none'));
-    var accent = pr === 3 ? '#FF5D73' : (memberCat(m) === '研修生' ? '#FFB454' : (m.goldShip ? '#8B7CFF' : '#5AD7FF'));
+    var accent = pr === 3 ? '#FF5D73' : (memberCat(m) === '研修生' ? '#FFB454' : '#5AD7FF');
     return '<div class="ml-card" style="border-left-color:' + accent + '" onclick="openMemberCard(\'' + m.id + '\')">'
       + (_avatars[m.id]
           ? '<span class="ml-avatar" style="padding:0;overflow:hidden;border:2px solid ' + titleRingColor(m.title) + '"><img src="' + _avatars[m.id] + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""></span>'
@@ -8146,11 +8110,42 @@ function openMemberActions(mid) {
 var _mdPage = 0, _mdMid = '', _mdX0 = 0;
 function _mFind(mid) { for (var i=0;i<state.members.length;i++){ if (state.members[i].id===mid) return state.members[i]; } return null; }
 function _dRow(l, v) { return '<div class="md-row"><span class="md-l">' + evEsc(l) + '</span><span class="md-v">' + ((v===''||v==null) ? '—' : evEsc(String(v))) + '</span></div>'; }
+// v497: 生年月日は年/月/日のプルダウン3連。type=dateの「2002→0002」問題と、入力直後に文字が見えない問題を根本解消
+function _birthSelInit() {
+  var y = document.getElementById('fBirthY');
+  if (!y || y.options.length > 1) return;
+  var m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
+  var nowY = new Date().getFullYear();
+  var hy = '<option value="">----年</option>';
+  for (var i = nowY; i >= 1900; i--) hy += '<option value="' + i + '">' + i + '年</option>';
+  y.innerHTML = hy;
+  var hm = '<option value="">--月</option>';
+  for (var j = 1; j <= 12; j++) hm += '<option value="' + j + '">' + j + '月</option>';
+  if (m) m.innerHTML = hm;
+  var hd = '<option value="">--日</option>';
+  for (var k = 1; k <= 31; k++) hd += '<option value="' + k + '">' + k + '日</option>';
+  if (d) d.innerHTML = hd;
+}
+function _fBirthGet() {
+  var y = (document.getElementById('fBirthY') || {}).value || '';
+  var m = (document.getElementById('fBirthM') || {}).value || '';
+  var d = (document.getElementById('fBirthD') || {}).value || '';
+  if (!y || !m || !d) return '';
+  return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2);
+}
+function _fBirthSet(v) {
+  _birthSelInit();
+  var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
+  var y = document.getElementById('fBirthY'), m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
+  if (y) y.value = p ? p[1] : '';
+  if (m) m.value = p ? String(parseInt(p[2], 10)) : '';
+  if (d) d.value = p ? String(parseInt(p[3], 10)) : '';
+}
 // 生年月日が入っている間は年齢欄を無効化（優先ルールをその場で見せる）
 function syncAgeField() {
-  var b = document.getElementById('fBirth'), a = document.getElementById('fAge'), n = document.getElementById('fAgeNote');
+  var a = document.getElementById('fAge'), n = document.getElementById('fAgeNote');
   if (!a) return;
-  var hasBirth = !!(b && b.value);
+  var hasBirth = !!_fBirthGet();
   a.disabled = hasBirth;
   a.style.opacity = hasBirth ? '.45' : '';
   if (n) n.textContent = hasBirth ? '歳（生年月日から自動計算中）' : '歳';
@@ -8187,7 +8182,6 @@ function openMemberDetail(mid) {
     + _dRow('性別', m.gender==='female'?'女性':'男性')
     + _dRow('適用MAP', m.mapType==='ideal'?'理想':(m.mapType==='both'?'両方':'現状'))
     + _dRow('アップライン', parent ? ((parent.lastName||'')+(parent.firstName||'')) : 'トップ直下')
-    + _dRow('金の船', m.goldShip ? '⛴ 金の船' : '—')
     + (function(){ var a=_memberAge(m); return a!==null ? _dRow('年齢', a + '歳' + (m.birthday?'':'（入力値）')) : ''; })()
     + (m.instaUrl ? _dRow('Instagram', m.instaUrl) : '')
     + (m.lineId ? '<div class="md-row"><span class="md-l">LINE</span><span class="md-v" style="text-align:right"><span onclick="openLineChatById(\'' + m.id + '\')" style="color:#06C755;font-weight:600;cursor:pointer">💬 LINEを開く</span></span></div>' : '');
@@ -9569,7 +9563,6 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
     + '<div style="flex:1;min-width:max-content">'
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
     + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
-    + (m.goldShip ? '<span title="金の船" style="font-size:12px">⛴</span>' : '')
     + (restartSuffix(m, true) ? '<span style="font-size:9px;font-weight:800;color:#FB923C;background:rgba(251,146,60,.13);border:1px solid rgba(251,146,60,.4);border-radius:6px;padding:1px 5px;white-space:nowrap">' + restartSuffix(m, true) + '</span>' : '')
     + (function(){ // v468: 長期未活動バッジ（薄く消す表現の代替）
         if ((m.title || '').trim() === 'OUT' || typeof memberIdleDays !== 'function') return '';
@@ -11284,15 +11277,13 @@ function olPickSelect(name) {
 var _OL_CATS_FRESH = [
   { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
   { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
-  { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
-  { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } }
+  { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } }
 ];
-// 3〜7人アウトライン用カテゴリ（研修生/フレッシュ/BR/金の船/その他）
+// 3〜7人アウトライン用カテゴリ（研修生/フレッシュ/BR/その他）
 var _OL_CATS_OUTLINE = [
   { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
   { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
   { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
-  { label:'⛴ 金の船', test:function(m){ return !!m.goldShip; } },
   { label:'👤 その他', test:function(m){ return true; } }
 ];
 function openOlPicker(mid, idx) {
@@ -11435,7 +11426,7 @@ function buildAutoStats() {
 
 
 function renderOL() {
-  renderStats(); // フレッシュ・金の船・アウトラインはrenderStatsで描画
+  renderStats(); // フレッシュ・アウトラインはrenderStatsで描画
 }
 
 // ── データハブ（⑤）AIアドバイス枠＋稼働分布＋カテゴリカード ──
@@ -11731,38 +11722,6 @@ function renderStats() {
     }).join('');
     return '<tr><td class="plname" style="position:sticky;left:0;background:var(--surface2);z-index:1">' + row.name + '</td>' + vals + '</tr>';
   }).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
-  }
-
-  // ── 金の船リスト（MAPで「金の船」フラグのメンバー＋そのカレンダー予定/タスクを自動表示） ──
-  var goldWrap = document.getElementById('goldListWrap');
-  if (goldWrap) {
-    var goldMembers = membersForMap('current').filter(function(m){ return !m.deleted && m.goldShip; });
-    goldMembers.sort(function(a,b){
-      return ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||''));
-    });
-    if (goldMembers.length === 0) {
-      goldWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">「金の船」のメンバーがいません。<br>メンバー編集で「⛴ 金の船」に設定すると、ここに表示されます。</div>';
-    } else {
-      var allEvents = state.events || [];
-      goldWrap.innerHTML = '<div class="gold-grid">' + goldMembers.map(function(m){
-        var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/^\s+|\s+$/g,'') || '(無名)';
-        var evs = allEvents.filter(function(e){ return evHasMember(e, m.id); });
-        evs.sort(evSortFn);
-        var tasksHtml = evs.length
-          ? evs.map(evItemHtml).join('')
-          : '<div class="gold-empty">予定・タスクはありません</div>';
-        var addBtn = eventsUid()
-          ? '<button class="gold-add" onclick="openEventAdd(\'' + m.id + '\')">＋ 予定・タスクを追加</button>'
-          : '';
-        return '<div class="gold-card">'
-          + '<div class="gold-card-top"><span class="gold-card-name">⛴ ' + evEsc(name) + '</span>'
-          + (m.title ? '<span class="gold-card-title">' + evEsc(m.title) + '</span>' : '')
-          + '<span class="gold-card-prog">' + evs.length + '件</span></div>'
-          + '<div class="gold-tasks">' + tasksHtml + '</div>'
-          + addBtn
-          + '</div>';
-      }).join('') + '</div>';
-    }
   }
 
   // ── フレッシュリスト（現状MAPの LOI / Q2 / B1 / B2 を自動表示） ──
@@ -12936,8 +12895,8 @@ function qaSave(cont) {
     title: stage, cat: '研修生',
     activity: '', actRate: '', morale: 1, priority: '',
     ptCurrent: 0, ptFixed: 0, ptSelf: 0,
-    trainee: false, parentId: pid, mapType: 'current',
-    memo: '', nextDate: '', aSan: ((document.getElementById('qaAsan') || {}).value || '').trim(), instaUrl: '', lineId: '', goldShip: false,
+    trainee: false, parentId: pid, mapType: 'both', // v497: かんたん追加も既定「両方」
+    memo: '', nextDate: '', aSan: ((document.getElementById('qaAsan') || {}).value || '').trim(), instaUrl: '', lineId: '',
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
     region: '', birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
     month: cm,
@@ -12983,8 +12942,8 @@ function qaToFull() {
 function openAdd() {
   if (!state.isEditor) return;
   window._tempNewMember = null; // 一時データリセット
-  editingId = null; fGender='male'; fTrainee=false; fGoldShip=false;
-  fMapType = currentView==='stats' ? 'current' : currentView;
+  editingId = null; fGender='male'; fTrainee=false;
+  fMapType = currentView==='ideal' ? 'ideal' : 'both'; // v497: 既定は「両方」（理想MAP表示中の追加のみ理想）
   document.getElementById('shTitle').textContent = 'メンバー追加';
   document.getElementById('btnDel').style.visibility = 'hidden';
   var _mtb1 = document.getElementById('memberTaskBtn');
@@ -13046,7 +13005,6 @@ function openEdit(id) {
     fGender = m.gender||'male';
     fTrainee = !!m.trainee;
     fMapType = m.mapType||'current';
-    fGoldShip = !!m.goldShip;
 
     var set = function(elId, val) {
       var el = document.getElementById(elId);
@@ -13070,11 +13028,10 @@ function openEdit(id) {
     set('fLine', m.lineId);
     set('fRegion', m.region);
     syncRegionSelect(m.region);
-    set('fBirth', m.birthday);
+    _fBirthSet(m.birthday || '');
     set('fAge', m.age || '');
     _pendingPhoto = null; _photoPrevSet(_avatars[m.id] || null);
     if (typeof syncAgeField === 'function') syncAgeField();
-    var _fbMax = document.getElementById('fBirth'); if (_fbMax) { _fbMax.max = (typeof evTodayYmd === 'function') ? evTodayYmd() : new Date().toISOString().slice(0,10); _fbMax.classList.toggle('has-value', !!m.birthday); }
     var _smEl = document.getElementById('fStartMonth');
     if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
     if (typeof syncStartSelects === 'function') syncStartSelects(); // v462
@@ -13104,7 +13061,6 @@ function openEdit(id) {
     selGender(fGender, true);
     selTrainee(fTrainee, true);
     selMapType(fMapType, true);
-    selGoldShip(fGoldShip, true);
 
     // 研修生（現役/履歴あり）以外は研修タブ自体を非表示
     var _showTr = !!(m.trainee || (typeof memberCat === 'function' && memberCat(m) === '研修生') || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult);
@@ -13174,7 +13130,7 @@ function clearForm() {
   document.getElementById('fAct').value='';
   document.getElementById('fMorale').value='1';
   var _fp=document.getElementById('fPriority'); if(_fp) _fp.value='';
-  var _fb=document.getElementById('fBirth'); if(_fb){ _fb.value=''; _fb.classList.remove('has-value'); _fb.max=(typeof evTodayYmd==='function')?evTodayYmd():new Date().toISOString().slice(0,10); }
+  _fBirthSet('');
   if (typeof syncAgeField === 'function') syncAgeField();
   var _fsm=document.getElementById('fStartMonth'); if(_fsm) _fsm.value=(state.currentMonth||currentMonthStr()).replace('.', '-');
   fCategory='';
@@ -13194,8 +13150,7 @@ function clearForm() {
   var sdp = document.getElementById('stepDetailPanel');
   if (sdp) sdp.style.display = 'none';
   selGender('male',true); selTrainee(false,true);
-  selMapType(currentView==='stats'?'current':currentView,true);
-  selGoldShip(false,true);
+  selMapType(currentView==='ideal'?'ideal':'both',true); // v497: 既定は「両方」
 }
 function buildParentSelect(selectedId, excludeId) {
   var sel = document.getElementById('fParent');
@@ -13416,11 +13371,6 @@ function selMapType(v, silent) {
   document.getElementById('rbMapI').classList.toggle('sel', v === 'ideal');
   document.getElementById('rbMapB').classList.toggle('sel', v === 'both');
 }
-function selGoldShip(v, silent) {
-  fGoldShip = !!v;
-  var no=document.getElementById('rbGoldNo'); if(no) no.classList.toggle('sel', !v);
-  var yes=document.getElementById('rbGoldYes'); if(yes) yes.classList.toggle('sel', !!v);
-}
 function closeModal() {
   meUnbindOutside();
   document.getElementById('modal').classList.remove('open');
@@ -13555,7 +13505,6 @@ function saveMember() {
     aSan: (document.getElementById('fASan')||{}).value||'',
     instaUrl: (document.getElementById('fInsta')||{}).value||'',
     lineId: (document.getElementById('fLine')||{}).value||'',
-    goldShip: fGoldShip,
     traineeStatus: (function(){ var m2=null; for(var j=0;j<state.members.length;j++){if(state.members[j].id===editingId){m2=state.members[j];break;}} return m2 ? getLatestStatus(m2) : ''; })(),
     traineeHistory: (function(){
       if (editingId) {
@@ -13567,7 +13516,7 @@ function saveMember() {
     })(),
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
     region: normalizeRegionValue((document.getElementById('fRegion')||{}).value || ''),
-    birthday: (document.getElementById('fBirth')||{}).value || '',
+    birthday: _fBirthGet(),
     age: (function(){ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
@@ -16592,7 +16541,7 @@ function _p2GapAuto() {
   ms.forEach(function(m) {
     if (root && m.parentId === root.id && memberCat(m) === 'BR') br++;
     if ((m.title || '').trim() === 'ルビー') qr++;
-    if (m.goldShip) cand++;
+    if (m.priority === '高') cand++; // v497: 候補=優先度「高」（金の船フラグ廃止）
   });
   return { br: br, dist: root ? (root.ptCurrent || 0) : 0, qr: qr, exp: null, env: null, cand: cand };
 }
@@ -16659,10 +16608,10 @@ function _p2GapRender() {
     : (cd.gap <= 0 ? '<span style="color:var(--accent);font-weight:800">達成✓</span>' : '<span style="color:#FF5D73;font-weight:800">あと' + cd.gap + '</span>');
   h += '<span style="font-weight:700;border-top:1px solid var(--border);padding-top:6px">⛴ Qルビー候補<small style="color:var(--text-dim)">（QR×' + g.rates.candX + '）</small></span>'
     + '<span style="text-align:center;border-top:1px solid var(--border);padding-top:6px;font-weight:800">' + (cd.t === null ? '—' : cd.t) + '</span>'
-    + '<input class="fi" type="number" inputmode="numeric" value="' + (cd.cIsAuto ? '' : cd.c) + '" placeholder="' + _p2GapAuto().cand + '" style="padding:7px 4px;text-align:center;font-size:13px;border-top-width:1px' + (cd.cIsAuto ? ';color:var(--accent)' : '') + '" onfocus="edSelAll(this)" onchange="p2GapSet(\'c\',\'cand\',this.value)" title="空欄=⛴金の船の人数から自動">'
+    + '<input class="fi" type="number" inputmode="numeric" value="' + (cd.cIsAuto ? '' : cd.c) + '" placeholder="' + _p2GapAuto().cand + '" style="padding:7px 4px;text-align:center;font-size:13px;border-top-width:1px' + (cd.cIsAuto ? ';color:var(--accent)' : '') + '" onfocus="edSelAll(this)" onchange="p2GapSet(\'c\',\'cand\',this.value)" title="空欄=優先度「高」の人数から自動">'
     + '<span style="text-align:center;border-top:1px solid var(--border);padding-top:6px">' + candGapTxt + '</span>';
   h += '</div>';
-  h += '<div class="p2-meta" style="margin-top:8px">現状の緑数字はMAPから自動（フロントBR=直下のBR・流通=チームPT・Qルビー=ルビーの人数・候補=⛴金の船）。上書き入力も可</div>';
+  h += '<div class="p2-meta" style="margin-top:8px">現状の緑数字はMAPから自動（フロントBR=直下のBR・流通=チームPT・Qルビー=ルビーの人数・候補=優先度「高」）。上書き入力も可</div>';
   var brIt = calc.items[0];
   if (brIt.gap !== null && brIt.gap > 0) {
     var leadTo = p.deadline ? _p2YmAdd(p.deadline, -g.rates.brLead) : null;
