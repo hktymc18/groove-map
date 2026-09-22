@@ -2444,7 +2444,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v495</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v496</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4316,8 +4316,8 @@ function renderPCMap(mapType) {
     // v437: 地域絞り込みは生成時にも即適用（applyRegionDimのタイマーと描画完了の競合で
     //        後から描かれたノードが明るいまま残るバグの根治）
     if (typeof regionFilter !== 'undefined' && regionFilter) {
-      var _rg9 = (m.region || '').trim();
-      var _rok9 = (regionFilter === '__NONE__') ? !_rg9 : (_rg9 === regionFilter);
+      var _rg9 = normalizeRegionValue(m.region); // v496: 正規化して判定（922-3）
+      var _rok9 = (regionFilter === '__NONE__') ? !_rg9 : (_rg9 === normalizeRegionValue(regionFilter));
       if (!_rok9) g.style.opacity = '0.22';
     }
     g.style.cursor='pointer';
@@ -4604,6 +4604,7 @@ function renderPCMap(mapType) {
     if (window._pcFocusLineage) applyFocus(window._pcFocusLineage);
     applyRegionDim();
   }, 60);
+  _applyMapDims(); // v496: タイマーを待たず即適用（絞り込みの競合・解除後に暗いまま残る経路を根絶・922-4）
 }
 
 // ウィンドウリサイズ時に再描画
@@ -5329,7 +5330,7 @@ function buildRegionFilter(members, wrap) {
   if (!wrap) wrap = document.getElementById('depthFilterBtns');
   if (!wrap) return false;
   var seen = {}, regions = [];
-  members.forEach(function(m){ var r=(m.region||'').trim(); if(r && !seen[r]){ seen[r]=1; regions.push(r); } });
+  members.forEach(function(m){ var r=normalizeRegionValue(m.region); if(r && !seen[r]){ seen[r]=1; regions.push(r); } }); // v496: 表記ゆれを正規化してチップ生成
   if (!regions.length) { regionFilter = ''; return false; }
   regions.sort();
   var lbl = document.createElement('span'); lbl.textContent = '地域'; lbl.style.cssText = 'font-size:11px;color:var(--text-dim);align-self:center;margin-right:2px';
@@ -5373,8 +5374,8 @@ function _applyMapDims() {
   var nodes = document.querySelectorAll('.oval-node');
   var _lin9 = (typeof window !== 'undefined' && window._pcFocusLineage) || ''; // v438: 系列フォーカスと両立
   for (var i=0;i<nodes.length;i++){
-    var r = (nodes[i].getAttribute('data-region') || '').trim(); // v420: 表記ゆれ（前後スペース）で判定が狂うバグ修正
-    var ok = !regF || (regF === '__NONE__' ? !r : (r === regF));
+    var r = normalizeRegionValue(nodes[i].getAttribute('data-region')); // v496: エイリアス（愛知⇄名古屋等）も正規化して判定（922-3）
+    var ok = !regF || (regF === '__NONE__' ? !r : (r === normalizeRegionValue(regF)));
     if (ok && catF) {
       var mN = _findC9(nodes[i].getAttribute('data-mid'));
       ok = !!(mN && memberMatchesFilter(mN, catF));
@@ -5387,8 +5388,8 @@ function _applyMapDims() {
   var cards = document.querySelectorAll('.nc[data-cid]');
   for (var j=0;j<cards.length;j++){
     var m = _findC9(cards[j].getAttribute('data-cid'));
-    var rr = ((m && m.region) ? m.region : '').trim(); // v420: 正規化
-    var ok2 = !regF || (regF === '__NONE__' ? !rr : (rr === regF));
+    var rr = normalizeRegionValue((m && m.region) ? m.region : ''); // v496: エイリアスも正規化（922-3）
+    var ok2 = !regF || (regF === '__NONE__' ? !rr : (rr === normalizeRegionValue(regF)));
     if (ok2 && catF) ok2 = !!(m && memberMatchesFilter(m, catF));
     cards[j].style.opacity = ok2 ? '' : '0.3';
   }
@@ -5957,7 +5958,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v495';
+  var DATA_VERSION = 'v496';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6931,6 +6932,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v496', d:'2026-09-22', items:['🎓 研修生の編集は「研修タブ」から開くように（921-1。研修生・研修履歴ありの人のみ。他は従来どおり月次タブ）','⚡ かんたん追加に「研修の予定（日付・時刻）・Aさん」を追加。入力すると研修履歴に予定として登録されます（921-2）','📆 カレンダーが画面上部に圧縮される問題の対策：カレンダーを開いた瞬間に画面の高さを取り直すように（921-3・iOSのビューポート高さが古いまま残る現象）','🏷 テンプレから登録した予定のカテゴリが編集時に「未分類」になる問題を修正：どんな名前のテンプレにも自動でカテゴリを付与し、色だけ付いた予定（ユニオン予定含む）は編集時に色からカテゴリを復元（921-4）','📋 ToDoリストの区分を全箇所で「⚠️期限切れ／今日の予定／今後の予定」の3段に統一（922-1）','📍 地域絞り込みを強化（922-3/922-4）：表記ゆれ（愛知⇄名古屋など）を正規化して判定・描画直後にタイマーを待たず即適用（強調が逆転する/全地域に戻しても暗いままの競合経路を根絶）'] },
   { v:'v495', d:'2026-09-19', items:['🐛 共有MAPが全体的に暗く見える問題を修正（919-3）：自分のMAPでカードをクリックした「系列フォーカス」がMAP切替後も持ち越され、切替先に存在しない系列を選択したままになるため全員が薄暗表示になっていました','🔄 MAP切替（自分⇄共有⇄合算）で系列フォーカスとカテゴリ/QBR/地域の絞り込みを自動リセット','🛡 保険として、選択中の系列が現在のMAPに存在しない場合は描画時に自動解除（ツリー・俯瞰とも）'] },
   { v:'v494', d:'2026-09-19', items:['🖨 印刷が必ず1ページに収まるように修正：MAPを用紙の幅と高さの両方に合わせて自動縮小し、はみ出し分も遮断（2ページ目に楕円の端だけ出る問題を解消）。SafariのA4縦のままでも1枚に収まります','ℹ️ 用紙の初期値（A3横）が効くのはChrome/Edge。Safariは仕様上Webから用紙・向きを指定できないため、A3横にしたい場合はダイアログで選択してください（1ページ収まりはどの用紙でも保証）'] },
   { v:'v493', d:'2026-09-19', items:['🖨 A3印刷を専用の印刷ウィンドウ方式に刷新：押した瞬間にウィンドウが開き（無反応に見える問題を解消）、アプリ画面を含まずMAP部分だけがA3横で印刷されます','📄 PDF保存時のファイル名が「MAP_yyyymm_名前」になるように（印刷ウィンドウのタイトル＝保存ファイル名）','ポップアップがブロックされる環境では従来のページ内印刷に自動フォールバック（この場合もファイル名は設定されます）'] },
@@ -9413,6 +9415,7 @@ function renderTree(mapType) {
 
   container.innerHTML = html;
   updateLTSV(mapType, ownMembers); // LTSVは自分のメンバーのみで集計
+  _applyMapDims(); // v496: モバイルも描画直後に即適用（922-4）
 
   if (isPCMode()) {
     // DOMが更新されてからサイズを取得するため遅延
@@ -12894,7 +12897,12 @@ function openQuickAdd() {
     + '<span class="qa-chip qa-g' + (_qaGender !== 'female' ? ' sel' : '') + '" id="qaGm" onclick="qaGenderSel(\'male\')" style="flex:1;text-align:center">👨 男性</span>'
     + '<span class="qa-chip qa-g' + (_qaGender === 'female' ? ' sel' : '') + '" id="qaGf" onclick="qaGenderSel(\'female\')" style="flex:1;text-align:center">👩 女性</span></div>'
     + '<div class="p2-meta" style="margin-bottom:4px">アプローチ・研修の段階</div>'
-    + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px" id="qaStages">' + chips + '</div>'
+    + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="qaStages">' + chips + '</div>'
+    + '<div class="p2-meta" style="margin-bottom:4px">研修の予定（任意・入力すると研修履歴に登録）</div>'
+    + '<div style="display:flex;gap:8px;margin-bottom:14px">'
+    + '<input class="fi" id="qaDate" type="date" style="flex:1.3;padding:9px 8px;font-size:13px" title="研修日">'
+    + '<input class="fi" id="qaTime" type="time" style="flex:1;padding:9px 8px;font-size:13px" title="時刻">'
+    + '<input class="fi" id="qaAsan" placeholder="Aさん" style="flex:1;padding:9px 10px;font-size:13px"></div>'
     + '<div style="display:flex;gap:8px">'
     + '<span class="p2-btn" style="margin:0;flex:1.4;text-align:center" onclick="qaSave(true)">＋ 登録して続けて追加</span>'
     + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="qaSave(false)">✔ 登録</span></div>'
@@ -12929,11 +12937,15 @@ function qaSave(cont) {
     activity: '', actRate: '', morale: 1, priority: '',
     ptCurrent: 0, ptFixed: 0, ptSelf: 0,
     trainee: false, parentId: pid, mapType: 'current',
-    memo: '', nextDate: '', aSan: '', instaUrl: '', lineId: '', goldShip: false,
+    memo: '', nextDate: '', aSan: ((document.getElementById('qaAsan') || {}).value || '').trim(), instaUrl: '', lineId: '', goldShip: false,
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
     region: '', birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
     month: cm,
   };
+  // v496: 研修の予定（日付＋時刻＋Aさん）→ 研修履歴に「予定」として登録（921-2）
+  var _qd = ((document.getElementById('qaDate') || {}).value || '');
+  var _qt = ((document.getElementById('qaTime') || {}).value || '');
+  if (_qd) m.traineeHistory.push({ status: stage, date: _qd, aSan: m.aSan || '', result: 'planned', time: _qt });
   state.members.push(m);
   _memMap = null;
   recalcAllGSV();
@@ -12941,7 +12953,7 @@ function qaSave(cont) {
   autoSave();
   try { gameCheck(); } catch(eG) {}
   var nm = (last + ' ' + first).trim();
-  toast('⚡ ' + nm + ' さんを追加しました（' + stage + '）');
+  toast('⚡ ' + nm + ' さんを追加しました（' + stage + (_qd ? '・' + parseInt(_qd.slice(5, 7), 10) + '/' + parseInt(_qd.slice(8, 10), 10) + ' 予定' : '') + '）');
   if (cont) {
     var l9 = document.getElementById('qaLast'), f9 = document.getElementById('qaFirst');
     if (l9) { l9.value = ''; l9.focus(); }
@@ -13098,11 +13110,11 @@ function openEdit(id) {
     var _showTr = !!(m.trainee || (typeof memberCat === 'function' && memberCat(m) === '研修生') || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult);
     window._meHideTrainee = !_showTr;
     document.getElementById('modal').classList.toggle('no-trainee', !_showTr);
-    // 編集時 → 月次タブ（GSV入力）から開始
+    // 編集時 → 月次タブ（GSV入力）から開始。v496: 研修生は研修タブから（921-1）
     meRenderExtras(m);
     meSyncTrainTab();
     meBindSwipe();
-    meGo(1);
+    meGo((m.trainee || (typeof memberCat === 'function' && memberCat(m) === '研修生')) ? 2 : 1);
     // モーダルを開く
     document.getElementById('modal').classList.add('open');
     try { if (isPCMode()) document.body.classList.add('me-open'); } catch(eMo2) {} // v414: 入力中の再描画を軽くする
@@ -20445,6 +20457,12 @@ function setEventsMode(mode) {
   if (ew) ew.classList.toggle('full', mode === 'week');
   if (ea) ea.classList.toggle('full', mode === 'agenda'); // v321: ToDoも全画面
   document.body.classList.toggle('cal-fs', (mode === 'calendar' || mode === 'day' || mode === 'week' || mode === 'agenda') && currentView === 'events');
+  // v496: 921-3 カレンダーが上に圧縮される対策 — 開いた瞬間に実高さ(--vvh)を取り直し＋ギャップキック
+  if ((mode === 'calendar' || mode === 'day' || mode === 'week' || mode === 'agenda') && !(typeof isPCMode === 'function' && isPCMode())) {
+    try { _vvhUpdate(); } catch(eV1) {}
+    try { _gapKicked = 0; setTimeout(_iosGapKick, 60); } catch(eV2) {}
+    setTimeout(function() { try { _gapKicked = 0; _iosGapKick(); _vvhUpdate(); } catch(eV3) {} }, 450);
+  }
   if (mode === 'calendar') _calSwipeInit();
   if (mode === 'day' && !_dayVDate) _dayVDate = evTodayYmd();
   try { localStorage.setItem('gm_evMode', mode); } catch(e) {}
@@ -22939,16 +22957,17 @@ function _renderAgendaCore() {
   var shownDone = _applyChip(doneTodayAll); // v350: 今日完了した分は下に残す
   var h = fch;
   // v360: 期限切れは赤の見出し付きでまとめて先頭に（行自体も薄赤＋「◯日超過」ピル）
+  // v496: 全箇所で「期限切れ／今日の予定／今後の予定」の3区分に統一（922-1）
   var _odList = shown.filter(function(e){ return e.date && e.date < t9; });
-  var _okList = shown.filter(function(e){ return !(e.date && e.date < t9); });
+  var _tdyList = shown.filter(function(e){ return e.date === t9; });
+  var _futList = shown.filter(function(e){ return !e.date || e.date > t9; });
   if (_odList.length) {
     h += '<div class="td-secttl" style="color:var(--red)">⚠️ 期限切れ ' + _odList.length + '件</div>';
     h += _odList.map(todoRowHtml).join('');
-    if (_okList.length) h += '<div class="td-secttl">これから</div>';
   }
-  h += _okList.length
-    ? _okList.map(todoRowHtml).join('')
-    : (_odList.length ? '' : '<div class="ev-empty" style="padding:28px 16px">' + (F.type === 'all' ? 'タスクはありません。上の入力欄に打ってEnterですぐ追加できます' : 'この絞り込みに該当するタスクはありません') + '</div>');
+  if (_tdyList.length) h += '<div class="td-secttl">今日の予定</div>' + _tdyList.map(todoRowHtml).join('');
+  if (_futList.length) h += '<div class="td-secttl">今後の予定</div>' + _futList.map(todoRowHtml).join('');
+  if (!_odList.length && !_tdyList.length && !_futList.length) h += '<div class="ev-empty" style="padding:28px 16px">' + (F.type === 'all' ? 'タスクはありません。上の入力欄に打ってEnterですぐ追加できます' : 'この絞り込みに該当するタスクはありません') + '</div>';
   if (shownDone.length) {
     // v357: 今日完了した分は見出し付きの折りたたみに（タップ/クリックで開閉・既定は開）
     var _dtOpen = localStorage.getItem('gm_tdDoneOpen') !== '0';
@@ -24803,11 +24822,19 @@ function _evTplStageLabel(k) {
 var _TPL_CAT_COLORS = { 'CT取り':'#5AD7FF', 'CT':'#2FB56B', 'FT':'#FFB454', 'PG同席':'#6366f1', 'DLR動員':'#C583FF', 'ミーティング':'#9ca3af' };
 function _evTplAutoCat(t) {
   if (t.categoryId && findCategory(t.categoryId)) return t.categoryId;
-  var col = _TPL_CAT_COLORS[t.name];
-  if (!col || !state.categories) return '';
+  if (!state.categories) return '';
   for (var i = 0; i < state.categories.length; i++) {
     if (state.categories[i].name === t.name) return state.categories[i].id;
   }
+  // v496: 標準6種以外の名前でも自動でカテゴリを付与（テンプレから作った予定が未分類になるのを防ぐ・921-4）
+  var col = _TPL_CAT_COLORS[t.name];
+  if (!col) {
+    var _pal9 = ['#5AD7FF', '#2FB56B', '#FFB454', '#6366f1', '#C583FF', '#FF87B3', '#3ED5C4', '#F6C744'];
+    var _hs9 = 0, _nm9 = String(t.name || '');
+    for (var q9 = 0; q9 < _nm9.length; q9++) _hs9 = (_hs9 * 31 + _nm9.charCodeAt(q9)) >>> 0;
+    col = _pal9[_hs9 % _pal9.length];
+  }
+  if (!String(t.name || '').trim()) return '';
   var c = { id: 'cat_' + Date.now() + '_' + Math.floor(Math.random() * 100000), name: t.name, color: col };
   state.categories.push(c);
   saveCategories();
@@ -25414,6 +25441,12 @@ function openEventModal(id, presetMember, presetDate, forceType) {
     } else { _gr.style.display = 'none'; _gr.innerHTML = ''; }
   }
   _evCategoryId = e ? (e.categoryId || '') : '';
+  // v496: カテゴリ未設定でも色だけ付いた予定（テンプレ即登録・ユニオン予定など）は色からカテゴリを復元（921-4）
+  if (e && !_evCategoryId && e.color && state.categories) {
+    for (var _ci9 = 0; _ci9 < state.categories.length; _ci9++) {
+      if (state.categories[_ci9].color === e.color) { _evCategoryId = state.categories[_ci9].id; break; }
+    }
+  }
   updateEvCategoryDisplay();
   // v315: ★・リスト・ラベル（タスクのみ表示。表示可否は selEvType が制御）
   _evStar = e ? !!e.star : false;
