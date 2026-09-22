@@ -2430,7 +2430,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v498</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v499</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5927,7 +5927,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v498';
+  var DATA_VERSION = 'v499';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6901,6 +6901,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v499', d:'2026-09-22', items:['🎂 生年月日の「年」プルダウンの初期表示を2002年に変更（メンバー追加時・生年月日未設定の編集時）。月と日を選ぶまでは未設定のままなので、年だけ既定のままでも誤って保存されません'] },
   { v:'v498', d:'2026-09-22', items:['◎ MAPの「俯瞰」ボタンを「運動会」に名称変更し、位置をツリーの右隣に移動（現状MAP・理想MAPとも）'] },
   { v:'v497', d:'2026-09-22', items:['🎂 生年月日を年・月・日のプルダウン選択に変更：「2002」と入力中に0002になる問題と、入力した文字が確定まで見えない問題を根本解消','⛴→🔴 「金の船」フラグを廃止し「優先度」に一本化：編集フォームの項目・MAP/メンバーの絞り込み・OLタブの金の船リスト・カードの⛴マークを削除。必要数とギャップの「Qルビー候補」は優先度「高」の人数から自動集計されるように','🗺 メンバー追加時の適用MAPの既定を「両方」に変更（理想MAPを開いて追加した場合は従来どおり「理想」）','✍️ 稼働タイプAの説明を「仕事を変えてS稼働になる日確定」に変更','↕️ 編集フォームの「やる気」を稼働率(%)の下に移動','📌 画面端のメンバーで「＋直下に追加」メニューが見切れないように位置を自動調整','🔤 MAPカードの名前の文字サイズを統一：漢字4文字＋S100%が収まるサイズを上限に、5文字以上の時だけ縮小（短い名前だけ大きく目立つのを解消）'] },
   { v:'v496', d:'2026-09-22', items:['🎓 研修生の編集は「研修タブ」から開くように（921-1。研修生・研修履歴ありの人のみ。他は従来どおり月次タブ）','⚡ かんたん追加に「研修の予定（日付・時刻）・Aさん」を追加。入力すると研修履歴に予定として登録されます（921-2）','📆 カレンダーが画面上部に圧縮される問題の対策：カレンダーを開いた瞬間に画面の高さを取り直すように（921-3・iOSのビューポート高さが古いまま残る現象）','🏷 テンプレから登録した予定のカテゴリが編集時に「未分類」になる問題を修正：どんな名前のテンプレにも自動でカテゴリを付与し、色だけ付いた予定（ユニオン予定含む）は編集時に色からカテゴリを復元（921-4）','📋 ToDoリストの区分を全箇所で「⚠️期限切れ／今日の予定／今後の予定」の3段に統一（922-1）','📍 地域絞り込みを強化（922-3/922-4）：表記ゆれ（愛知⇄名古屋など）を正規化して判定・描画直後にタイマーを待たず即適用（強調が逆転する/全地域に戻しても暗いままの競合経路を根絶）'] },
@@ -8138,7 +8139,7 @@ function _fBirthSet(v) {
   _birthSelInit();
   var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
   var y = document.getElementById('fBirthY'), m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
-  if (y) y.value = p ? p[1] : '';
+  if (y) y.value = p ? p[1] : '2002'; // v499: 年の初期表示は2002年（月・日が未選択の間は未設定扱い）
   if (m) m.value = p ? String(parseInt(p[2], 10)) : '';
   if (d) d.value = p ? String(parseInt(p[3], 10)) : '';
 }
