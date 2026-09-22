@@ -2432,7 +2432,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v509</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v510</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3877,7 +3877,7 @@ function generateResultImage() {
   x.fillStyle = hit ? 'rgba(255,180,84,.16)' : '#1B2232'; _rrect(x, 120, 400, W-240, 130, 24); x.fill();
   x.strokeStyle = hit ? '#FFB454' : '#33405C'; _rrect(x, 120, 400, W-240, 130, 24); x.stroke();
   x.fillStyle = hit ? '#FFB454' : '#F4F6FB'; x.font = '900 52px "Noto Sans JP", sans-serif';
-  x.fillText((hit ? '🏆 ' : '🧗 ') + 'フロント ' + rd.frontA + (rd.frontT ? ' / ' + rd.frontT : '') + (hit ? '  達成！' : ''), cxm, 485);
+  x.fillText('フロント ' + rd.frontA + (rd.frontT ? ' / ' + rd.frontT : '') + (hit ? '  達成！' : ''), cxm, 485);
   // 統計 2×2
   var stats = [['GSV', (rd.gsv||0).toLocaleString()], ['CT実施', rd.ct + '件'], ['アクション', rd.action + '件'], ['記録日数', rd.recDays + '/' + rd.dim + '日']];
   for (var i = 0; i < 4; i++) {
@@ -3900,7 +3900,7 @@ function generateResultImage() {
     py += 70;
   }
   x.fillStyle = '#FFB454'; x.font = '800 36px "Noto Sans JP", sans-serif';
-  x.fillText('🔥 ストリーク ' + rd.streak + '日', cxm, py + 20);
+  x.fillText('ストリーク ' + rd.streak + '日', cxm, py + 20);
   x.fillStyle = '#3D465C'; x.font = '800 30px "Noto Sans JP", sans-serif';
   x.fillText('▲ NAVIGATOR', cxm, H - 110);
   // 共有 or ダウンロード
@@ -4343,11 +4343,11 @@ function renderPCMap(mapType) {
       // v501: やる気＝色分き線画アイコン（絵文字廃止）
       var _ml9 = moraleLv(m.morale);
       var _mg9 = document.createElementNS('http://www.w3.org/2000/svg','g');
-      _mg9.setAttribute('transform', 'translate(' + (rx + 3) + ',' + (ry2 - 25) + ') scale(0.95)');
+      _mg9.setAttribute('transform', 'translate(' + (rx - 11) + ',' + (ry2 - 11) + ') scale(1.08)');
       _mg9.setAttribute('pointer-events', 'none');
       _mg9.setAttribute('class', 'pc-morale-ic');
-      _mg9.innerHTML = moraleFill(_ml9, 'mgT' + _ml9); // v503: グラデ塗りつぶし＋拡大
-      g.appendChild(_mg9);
+      _mg9.innerHTML = moraleFill(_ml9, 'mgT' + _ml9);
+      g._moraleBadge = _mg9; // v510: カードの角に重ね、他の要素を描いた最後に追加（裏に隠れない）
     }
     // v439: ケアバッジ（🌱フレッシュ＝スタート6ヶ月以内かつBR未満／🎓研修生。手動で表示/非表示の上書き可）
     if (mapType === 'current' && (m.title || '').trim() !== 'OUT') { // v453: OUT（退会）にはケアバッジを付けない
@@ -4392,10 +4392,10 @@ function renderPCMap(mapType) {
       var _idl9 = memberIdleDays(m);
       if (_idl9 >= 30) {
         var _iRed9 = _idl9 >= 60;
-        var _it9 = (_iRed9 ? '\uD83D\uDEA8 ' : '\uD83D\uDCA4 ') + _idl9 + '日';
-        var _iw9 = 64;
+        var _it9 = _idl9 + '日';
+        var _iw9 = 64, _ix9 = rx + 20; // v510: 左上角のやる気バッジと重ならない位置へ
         var ib9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
-        ib9.setAttribute('x', rx + 6); ib9.setAttribute('y', ry2 - 10);
+        ib9.setAttribute('x', _ix9); ib9.setAttribute('y', ry2 - 10);
         ib9.setAttribute('width', _iw9); ib9.setAttribute('height', 18);
         ib9.setAttribute('rx', 9);
         ib9.setAttribute('fill', _iRed9 ? '#FF5D73' : '#6b7280');
@@ -4404,7 +4404,14 @@ function renderPCMap(mapType) {
         ib9.setAttribute('pointer-events', 'none');
         ib9.setAttribute('class', 'pc-idle-badge');
         g.appendChild(ib9);
-        g.appendChild(txt(rx + 6 + _iw9 / 2, ry2 + 3, _it9, '#fff', 10.5, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
+        var _iic9 = document.createElementNS('http://www.w3.org/2000/svg','g'); // v510: 休眠=月／要注意=警告の線画（SVG内は絵文字不可）
+        _iic9.setAttribute('transform', 'translate(' + (_ix9 + 7) + ',' + (ry2 - 6.5) + ') scale(0.46)');
+        _iic9.setAttribute('fill', 'none'); _iic9.setAttribute('stroke', '#fff'); _iic9.setAttribute('stroke-width', '2.6');
+        _iic9.setAttribute('stroke-linecap', 'round'); _iic9.setAttribute('stroke-linejoin', 'round'); _iic9.setAttribute('pointer-events', 'none');
+        _iic9.setAttribute('class', 'pc-idle-ic');
+        _iic9.innerHTML = ICONS[_iRed9 ? 'alert' : 'moon'];
+        g.appendChild(_iic9);
+        g.appendChild(txt(_ix9 + _iw9 / 2 + 6, ry2 + 3, _it9, '#fff', 10.5, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
       }
     }
     // 写真アバター（v468: 写真が無くてもイニシャルの○を常時表示して見た目を統一）
@@ -4476,7 +4483,17 @@ function renderPCMap(mapType) {
     }
     g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
     // 地域（カードの外・右上に小さく）
-    if(m.region){ g.appendChild(txt(rx+NODE_W-2, ry2-4, '📍'+m.region.substring(0,6), gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif', 'end')); }
+    if(m.region){
+      var _rgT = txt(rx+NODE_W-2, ry2-4, m.region.substring(0,6), gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif', 'end');
+      g.appendChild(_rgT);
+      var _rgW = 0, _rgS = m.region.substring(0,6); for (var _rgi = 0; _rgi < _rgS.length; _rgi++) _rgW += _rgS.charCodeAt(_rgi) > 255 ? 11 : 6.4;
+      var _rgP = document.createElementNS('http://www.w3.org/2000/svg','g');
+      _rgP.setAttribute('transform', 'translate(' + (rx + NODE_W - 2 - _rgW - 11) + ',' + (ry2 - 14) + ') scale(0.45)');
+      _rgP.setAttribute('fill', 'none'); _rgP.setAttribute('stroke', '#FF5D73'); _rgP.setAttribute('stroke-width', '2.6');
+      _rgP.setAttribute('stroke-linecap', 'round'); _rgP.setAttribute('stroke-linejoin', 'round'); _rgP.setAttribute('pointer-events', 'none');
+      _rgP.innerHTML = ICONS.pin; // v510: 地域ラベルのピンを線画に
+      g.appendChild(_rgP);
+    }
     // v505: 誕生日30日以内はカード左上にケーキ＋日付
     if (typeof _bdayIn30 === 'function' && _bdayIn30(m) !== null) {
       var _bgT = document.createElementNS('http://www.w3.org/2000/svg','g');
@@ -4530,6 +4547,7 @@ function renderPCMap(mapType) {
       g.addEventListener('mouseleave',function(){hidePcTooltip();});
     })(m.id, lineageRoot[m.id]||'');
 
+    if (g._moraleBadge) g.appendChild(g._moraleBadge);
     svg.appendChild(g);
   });
 
@@ -6065,6 +6083,55 @@ var ICONS = {
   eyeoff: '<path d="M3 3l18 18"/><path d="M10.6 5.6A9.7 9.7 0 0112 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 01-3 3.8M6.6 6.6C3.9 8.3 2.5 12 2.5 12S6 18.5 12 18.5a9.4 9.4 0 004.4-1.1"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/>',
   belloff: '<path d="M8.3 4.8A6 6 0 0118 10c0 2.4.4 4 1 5M6 10c0 6-2.5 7-2.5 7H17"/><path d="M10 20.5a2.2 2.2 0 004 0M3 3l18 18"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/>',
+  party: '<path d="M4.5 20.5l4.3-11.8 7 7z"/><path d="M13 3.5c.5 1.5 0 2.5-1 3.3M20.5 11c-1.5-.5-2.5 0-3.3 1M16.5 3.5l.5 2M20 7l-2 .5M8.8 8.7l6.5 6.5"/>',
+  crown: '<path d="M3.5 18.5L2.5 7l5.5 4.5L12 5l4 6.5L21.5 7l-1 11.5z"/><path d="M4 21h16"/>',
+  trophy: '<path d="M7.5 3.5h9v6a4.5 4.5 0 01-9 0z"/><path d="M7.5 5.5H4a3.5 3.5 0 003.7 4M16.5 5.5H20a3.5 3.5 0 01-3.7 4M12 14v3.5M8 21h8M9.5 17.5h5V21h-5z"/>',
+  gem: '<path d="M6.5 3.5h11l4 5.5L12 21 2.5 9z"/><path d="M2.5 9h19M9.5 3.5L12 21l2.5-17.5"/>',
+  sparkle: '<path d="M12 2.5l1.9 6.1 6.1 1.9-6.1 1.9L12 18.5l-1.9-6.1-6.1-1.9 6.1-1.9z"/><path d="M19 16l.7 2.3 2.3.7-2.3.7L19 22l-.7-2.3-2.3-.7 2.3-.7z"/>',
+  bulb: '<path d="M9 18h6M10 21.5h4M8.5 14.5a6.5 6.5 0 117 0c-.9.7-1.5 1.8-1.5 3v.5h-4v-.5c0-1.2-.6-2.3-1.5-3z"/>',
+  cap: '<path d="M1.5 9.5L12 4.5l10.5 5L12 14.5z"/><path d="M6 11.7v4.8c0 1.6 2.7 3 6 3s6-1.4 6-3v-4.8M22.5 9.5v5.5"/>',
+  medal: '<circle cx="12" cy="15" r="6"/><path d="M8.5 10.2L5.5 2.5h4l2.5 5 2.5-5h4l-3 7.7"/><path d="M12 12.5v5"/>',
+  lock: '<rect x="4.5" y="10.5" width="15" height="11" rx="2"/><path d="M8 10.5V7a4 4 0 018 0v3.5"/>',
+  mountain: '<path d="M2 20.5L9 7l4.5 8.5L16 11l6 9.5z"/><path d="M7.4 10.2L9 12l1.6-1.8"/>',
+  book: '<path d="M4 4.5A2 2 0 016 2.5h14v16H6a2 2 0 00-2 2z"/><path d="M4 20.5a2 2 0 002 2h14v-4"/>',
+  building: '<rect x="4.5" y="2.5" width="15" height="19" rx="1.5"/><path d="M9 6.5h1M14 6.5h1M9 10.5h1M14 10.5h1M9 14.5h1M14 14.5h1M10 21.5v-3.5h4v3.5"/>',
+  rainbow: '<path d="M2.5 18a9.5 9.5 0 0119 0M6 18a6 6 0 0112 0M9.5 18a2.5 2.5 0 015 0"/>',
+  tent: '<path d="M12 3.5L2 20.5h20z"/><path d="M12 3.5v4M12 11l-3.5 9.5M12 11l3.5 9.5"/>',
+  flower: '<circle cx="12" cy="10" r="2.6"/><path d="M12 7.4C12 4 14.5 3 15.5 4.5S14.9 8.4 12 7.4zM14.4 9.2c3-1.7 5-.2 4.4 1.5s-3.3 1.3-4.4-1.5zM13.6 12.3c2 2.8.7 5-1 4.8s-2.1-3-.8-4.8zM10.4 12.3c-1.3 1.8-.9 4.6.8 4.8M9.6 9.2C8.5 12-.2 11.5 5.2 10.7c-.6-1.7 1.4-3.2 4.4-1.5zM12 7.4C9.1 8.4 7.5 6 8.5 4.5S12 4 12 7.4z"/><path d="M12 16.5v5"/>',
+  box: '<path d="M21 7.5L12 2.5 3 7.5v9l9 5 9-5z"/><path d="M3 7.5l9 5 9-5M12 12.5v9"/>',
+  moon: '<path d="M20.5 14.5A8.5 8.5 0 119.5 3.5a7 7 0 0011 11z"/>',
+  rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9s-2.1-.8-2.9-.1z"/><path d="M12 15l-3-3a19 19 0 012-4C13.3 4.6 17 2.5 21.5 2.5c0 4.5-2.1 8.2-5.5 10.5a19 19 0 01-4 2z"/><path d="M9 12H4.5s.5-3 2-4c1.6-1.1 4.5 0 4.5 0M12 15v4.5s3-.5 4-2c1.1-1.6 0-4.5 0-4.5"/>',
+  trend: '<path d="M2.5 17.5l6.5-6.5 4.5 4.5 8-8"/><path d="M15.5 7.5h6v6"/>',
+  help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.2 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01"/>',
+  upload: '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  expand: '<path d="M3.5 9V3.5H9M15 3.5h5.5V9M20.5 15v5.5H15M9 20.5H3.5V15"/>',
+  dot: '<circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none"/>',
+  door: '<path d="M5 21.5V3.5a1 1 0 011-1h12a1 1 0 011 1v18M2.5 21.5h19"/><path d="M14.5 12.5h.01"/>',
+  printer: '<path d="M6.5 9V2.5h11V9"/><rect x="2.5" y="9" width="19" height="8" rx="2"/><path d="M6.5 14h11v7.5h-11z"/>',
+  mic: '<rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3.5"/>',
+  ban: '<circle cx="12" cy="12" r="9.5"/><path d="M5.3 5.3l13.4 13.4"/>',
+  plane: '<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+  ship: '<path d="M2.5 20.5c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0 3-1 4.5 0"/><path d="M19.5 17.5l1.8-5.5H2.7l1.8 5.5M5.5 12V7.5h13V12M12 4.5v3"/>',
+  globe: '<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5a14.5 14.5 0 010 19M12 2.5a14.5 14.5 0 000 19"/>',
+  bag: '<path d="M6 2.5L3.5 6v14a2 2 0 002 2h13a2 2 0 002-2V6L18 2.5z"/><path d="M3.5 6h17M16 10a4 4 0 01-8 0"/>',
+  home: '<path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>',
+  game: '<rect x="2.5" y="6.5" width="19" height="11" rx="5.5"/><path d="M7 10.5v3M5.5 12h3M15.5 11h.01M18 13h.01"/>',
+  cup: '<path d="M17 8h1.5a3.5 3.5 0 010 7H17M3.5 8H17v8a5 5 0 01-5 5H8.5a5 5 0 01-5-5z"/><path d="M7 2.5v2.5M10.5 2.5v2.5M14 2.5v2.5"/>',
+  coin: '<circle cx="12" cy="12" r="9.5"/><path d="M8.5 7.5L12 12l3.5-4.5M12 12v5.5M9 12.5h6M9 15h6"/>',
+  save: '<path d="M19 21.5H5a2 2 0 01-2-2v-15a2 2 0 012-2h11l5 5v12a2 2 0 01-2 2z"/><path d="M17 21.5v-8H7v8M7 2.5v5h8"/>',
+  megaphone: '<path d="M3.5 10v4a1 1 0 001 1H7l7 4.5V4.5L7 9H4.5a1 1 0 00-1 1z"/><path d="M17.5 9a4 4 0 010 6M7 15l1 5.5"/>',
+  thumb: '<path d="M7 10.5v11M15 6.3L14 10.5h5.8a2 2 0 012 2.3l-1.4 7a2 2 0 01-2 1.7H7h-2.5a2 2 0 01-2-2v-7a2 2 0 012-2H7L10.5 3a2.7 2.7 0 012.7 0c.9.5 2 1.5 1.8 3.3z"/>',
+  skip: '<path d="M5 4.5l10 7.5-10 7.5zM19 5v14"/>',
+  pause: '<path d="M8 4.5v15M16 4.5v15"/>',
+  menu: '<path d="M3.5 6h17M3.5 12h17M3.5 18h17"/>',
+  scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.1 15.9M14.5 14.5L20 20M8.1 8.1L12 12"/>',
+  ticket: '<path d="M2.5 9a3 3 0 000 6v3.5a1 1 0 001 1h17a1 1 0 001-1V15a3 3 0 010-6V5.5a1 1 0 00-1-1h-17a1 1 0 00-1 1z"/><path d="M13.5 4.5v2M13.5 17.5v2M13.5 11v2"/>',
+  funnel: '<path d="M3 4h18l-7 8.5V20l-4-2v-5.5z"/>',
+  food: '<path d="M3.5 2.5v7a3 3 0 003 3v9M9.5 2.5v7a3 3 0 01-3 3M6.5 2.5v6M17.5 21.5V2.5c-2.8 0-4.5 3.5-4.5 8.5h4.5"/>',
+  car: '<path d="M5 17h14M3.5 17v-5l2-5.5h13l2 5.5v5H3.5z"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M3.5 12h17"/>',
+  train: '<rect x="5" y="2.5" width="14" height="15" rx="3"/><path d="M5 10.5h14M8.5 21.5l1.5-4M15.5 21.5l-1.5-4M9 14h.01M15 14h.01"/>',
+  gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13.5M19 12v7.5a2 2 0 01-2 2H7a2 2 0 01-2-2V12M7.5 8a2.5 2.5 0 010-5C10.5 3 12 8 12 8s1.5-5 4.5-5a2.5 2.5 0 010 5"/>',
+  ruler: '<path d="M21.3 15.3a2.4 2.4 0 010 3.4l-2.6 2.6a2.4 2.4 0 01-3.4 0L2.7 8.7a2.4 2.4 0 010-3.4l2.6-2.6a2.4 2.4 0 013.4 0z"/><path d="M14.5 12.5l2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/>',
   flag: '<path d="M5 21.5V3.5"/><path d="M5 4h12.5l-2.5 4.5 2.5 4.5H5"/>',
   inbox: '<path d="M3 13.5l2.8-8.2A1.5 1.5 0 017.2 4.3h9.6a1.5 1.5 0 011.4 1l2.8 8.2V19a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 19z"/><path d="M3 13.5h5l1.5 2.5h5l1.5-2.5h5"/>'
 };
@@ -6074,25 +6141,85 @@ var MORALE_ICON_NAMES = ['', 'sprout', 'zap', 'flame'];
 var MORALE_LABELS = ['', 'パヤパヤ', 'やる気', '死ぬ気'];
 function moraleLv(level) { return Math.max(1, Math.min(parseInt(level, 10) || 1, 3)); }
 function moraleLabel(level) { return MORALE_LABELS[moraleLv(level)]; }
-// v503: 判別しやすいようグラデーションの塗りつぶし＋ひと回り大きく
-var MORALE_GRAD = ['', ['#6EE7B7', '#16A34A'], ['#FDE047', '#F59E0B'], ['#FBBF24', '#EF4444']];
-var MORALE_FILL = ['',
-  '<path fill="none" stroke="GRAD" stroke-width="2.4" stroke-linecap="round" d="M12 21.5V11"/><path fill="GRAD" stroke="none" d="M11.4 13.6C11.4 9.6 8.5 7 4.1 7c0 4.4 3 6.6 7.3 6.6z"/><path fill="GRAD" stroke="none" d="M12.6 11.6c0-3.4 2.4-5.6 6.3-5.6 0 3.7-2.5 5.6-6.3 5.6z"/>',
-  '<path fill="GRAD" stroke="none" d="M13.2 2 4.5 13.6h6L10.8 22l8.7-11.6h-6z"/>',
-  '<path fill="GRAD" stroke="none" d="M12 2.2c.6 3.3 2.3 5.4 4.3 7.1 2 1.7 3.2 3.6 3.2 6a7.5 7.5 0 01-15 0c0-2 .8-3.7 2-5 .3 1.6 1.1 2.9 2.3 3.6-.5-3.6.6-8 3.2-11.7z"/>'
+// v510: やる気＝グラデーションの丸バッジ＋白い絵柄（小さくても色と形で判別できる）
+var MORALE_GRAD = ['', ['#4ADE80', '#15803D'], ['#FDBA3B', '#EA580C'], ['#FB7185', '#DC2626']];
+var MORALE_GLYPH = ['',
+  '<path d="M11 21.5v-8.2" stroke="#fff" stroke-width="3.2" stroke-linecap="round" fill="none"/><path fill="#fff" d="M10.4 14.4C10.6 9 7 5.6 1.6 5.8 1.4 11 5 14.6 10.4 14.4z"/><path fill="#fff" d="M11.8 12.2C11.6 7.6 14.6 4.2 19.6 4.2 19.8 8.9 16.7 12.2 11.8 12.2z"/>',
+  '<path fill="#fff" d="M13.6 1.5 4 13.4h6.4L9.2 22.5l9.8-12.3h-6.6z"/>',
+  '<path fill="#fff" d="M12 1.2c.8 3.5 2.6 5.6 4.6 7.5 2 1.8 3.4 3.9 3.4 6.5a8 8 0 01-16 0c0-2.2.9-4 2.2-5.4.3 1.8 1.2 3.1 2.5 3.9-.6-4 .7-8.6 3.3-12.5z"/>'
 ];
 function moraleFill(lv, gid) {
-  return '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + MORALE_GRAD[lv][0] + '"/><stop offset="1" stop-color="' + MORALE_GRAD[lv][1] + '"/></linearGradient></defs>' + MORALE_FILL[lv].split('GRAD').join('url(#' + gid + ')');
+  return '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' + MORALE_GRAD[lv][0] + '"/><stop offset="1" stop-color="' + MORALE_GRAD[lv][1] + '"/></linearGradient></defs>'
+    + '<circle cx="12" cy="12" r="11.2" fill="url(#' + gid + ')" stroke="#fff" stroke-width="1.4"/>'
+    + '<g transform="translate(4.2 4.2) scale(0.65)">' + MORALE_GLYPH[lv] + '</g>';
 }
 function moraleIcon(level, px) {
   var lv = moraleLv(level);
-  var sz = px ? px + 'px' : '1.35em';
+  var sz = px ? px + 'px' : '1.4em';
   return '<svg class="lic mor" viewBox="0 0 24 24" style="width:' + sz + ';height:' + sz + '"><title>' + MORALE_LABELS[lv] + '</title>' + moraleFill(lv, 'mgH' + lv) + '</svg>';
 }
 function icn(name, style) {
   if (name === 'trash') style = 'color:var(--red)' + (style ? ';' + style : ''); // v509: ゴミ箱は常に赤
   return '<svg class="lic" viewBox="0 0 24 24"' + (style ? ' style="' + style + '"' : '') + '>' + (ICONS[name] || '') + '</svg>';
 }
+// v510: 絵文字→線画アイコンの変換表。画面に描画されたテキストはemoWatchが自動で線画に差し替える
+var EMO_ICON = {"✅": ["checksq", "color:#22C55E"], "📅": ["calendar", ""], "📆": ["calendar", ""], "🗓": ["calendar", ""], "⚠": ["alert", "color:#F59E0B"], "✎": ["pencil", ""], "✏": ["pencil", ""], "🖊": ["pencil", ""], "✍": ["pencil", ""], "📝": ["pencil", ""], "🎉": ["party", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🥂": ["party", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🔥": ["flame", "color:#F97316;fill:#F97316;fill-opacity:.2"], "😤": ["flame", "color:#F97316;fill:#F97316;fill-opacity:.2"], "🎯": ["target", "color:var(--red)"], "🔄": ["refresh", ""], "🧹": ["refresh", ""], "📋": ["clipboard", ""], "📍": ["pin", "color:var(--red)"], "📌": ["pin", "color:var(--red)"], "🌱": ["sprout", "color:#22C55E"], "🐣": ["sprout", "color:#22C55E"], "💪": ["dumbbell", ""], "🏋": ["dumbbell", ""], "🎓": ["cap", "color:#38BDF8"], "🏔": ["mountain", ""], "🧗": ["mountain", ""], "⏱": ["clock", ""], "⏳": ["clock", ""], "⏰": ["clock", ""], "🕐": ["clock", ""], "👑": ["crown", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🦁": ["crown", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "📚": ["book", ""], "📖": ["book", ""], "👤": ["user", ""], "👨": ["user", ""], "👩": ["user", ""], "🧍": ["user", ""], "🙂": ["user", ""], "😎": ["user", ""], "😇": ["user", ""], "🚩": ["flag", "color:var(--red)"], "🏁": ["flag", "color:var(--red)"], "📷": ["camera", ""], "📸": ["camera", ""], "🏆": ["trophy", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "💡": ["bulb", "color:#F59E0B;fill:#FDE047;fill-opacity:.35"], "🌟": ["sparkle", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "✨": ["sparkle", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🫰": ["sparkle", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🪩": ["sparkle", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "💎": ["gem", "color:#06B6D4;fill:#22D3EE;fill-opacity:.2"], "💠": ["gem", "color:#06B6D4;fill:#22D3EE;fill-opacity:.2"], "⚡": ["zap", "color:#F59E0B;fill:#FDE047;fill-opacity:.5"], "👊": ["zap", "color:#F59E0B;fill:#FDE047;fill-opacity:.5"], "👍": ["thumb", "color:#22C55E"], "👥": ["users", ""], "🔗": ["link", ""], "💬": ["chat", ""], "🗣": ["chat", ""], "🏅": ["medal", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🎖": ["medal", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🥇": ["medal", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "🥈": ["medal", "color:#94A3B8;fill:#CBD5E1;fill-opacity:.35"], "🥉": ["medal", "color:#B87333;fill:#CD7F32;fill-opacity:.25"], "🗺": ["map", ""], "🧭": ["compass", ""], "🏢": ["building", ""], "🏙": ["building", ""], "🔁": ["repeat", ""], "🔀": ["repeat", ""], "🏛": ["landmark", ""], "🌈": ["rainbow", "color:#8B7CFF"], "🎪": ["ticket", "color:#F97316"], "👁": ["eye", ""], "👀": ["eye", ""], "🔍": ["search", ""], "🌸": ["flower", "color:#FF5D8F"], "🌺": ["flower", "color:#FF5D8F"], "🦋": ["flower", "color:#FF5D8F"], "📦": ["box", ""], "🌙": ["moon", ""], "💤": ["moon", ""], "🌿": ["leaf", "color:#22C55E"], "🌳": ["leaf", "color:#22C55E"], "🚀": ["rocket", "color:#8B7CFF"], "📈": ["trend", "color:#22C55E"], "🧮": ["calc", ""], "📄": ["doc", ""], "📜": ["doc", ""], "📂": ["doc", ""], "🛡": ["shield", ""], "📡": ["alert", "color:#F59E0B"], "🚨": ["alert", ""], "🔒": ["lock", "color:#94A3B8"], "📣": ["megaphone", "color:#F97316"], "☕": ["cup", ""], "💰": ["coin", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "💴": ["coin", "color:#E8B400;fill:#F6C744;fill-opacity:.25"], "💾": ["save", ""], "🤔": ["help", ""], "📥": ["inbox", ""], "📤": ["upload", ""], "⛶": ["expand", ""], "🎨": ["palette", ""], "☀": ["sun", "color:#F59E0B"], "🌅": ["sun", "color:#F59E0B"], "🌞": ["sun", "color:#F59E0B"], "🔴": ["dot", "color:var(--red)"], "🟡": ["dot", "color:#EAB308"], "🟢": ["dot", "color:#22C55E"], "⚪": ["dot", "color:#94A3B8"], "🚪": ["door", ""], "🖨": ["printer", ""], "📲": ["phone", ""], "📱": ["phone", ""], "🎤": ["mic", ""], "📊": ["chart", ""], "🚫": ["ban", "color:var(--red)"], "⛔": ["ban", "color:var(--red)"], "🙅": ["ban", "color:var(--red)"], "✈": ["plane", "color:#38BDF8"], "⛴": ["ship", "color:#38BDF8"], "🚢": ["ship", "color:#38BDF8"], "🌏": ["globe", "color:#38BDF8"], "🌍": ["globe", "color:#38BDF8"], "🗾": ["globe", "color:#38BDF8"], "🛒": ["bag", ""], "🛍": ["bag", ""], "🎒": ["bag", ""], "🏠": ["home", ""], "🏡": ["home", ""], "🎮": ["game", ""], "⚙": ["gear", ""], "🔧": ["gear", ""], "🤖": ["gear", ""], "⏭": ["skip", ""], "⏸": ["pause", ""], "✂": ["scissors", ""], "🧊": ["cube", ""], "☰": ["menu", ""], "➕": ["plus", ""], "🏷": ["tag", ""], "🔻": ["funnel", ""], "🎫": ["ticket", ""], "🍣": ["food", ""], "🥗": ["food", ""], "🏎": ["car", ""], "🚙": ["car", ""], "🚕": ["car", ""], "🚃": ["train", ""], "🎁": ["gift", "color:#FF5D8F"], "📏": ["ruler", ""], "🎂": ["cake", "color:#FF5D8F"], "🗑": ["trash", ""], "🙈": ["eyeoff", ""], "🔔": ["bell", ""], "📨": ["bell", ""], "🔕": ["belloff", ""], "★": ["star", "color:#E8B400;fill:#F6C744"], "☆": ["star", ""], "☑": ["checksq", ""], "⚑": ["flag", "color:var(--red)"], "📁": ["doc", ""], "📳": ["phone", ""]};
+var EMO_RE = new RegExp('(' + Object.keys(EMO_ICON).map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')\uFE0F?', 'g');
+function emoHtml(str) {
+  return String(str).replace(EMO_RE, function(all, ch) { var d = EMO_ICON[ch]; return d ? icn(d[0], d[1]) : all; });
+}
+function emoStrip(str) {
+  return String(str == null ? '' : str).replace(new RegExp(EMO_RE.source + ' ?', 'g'), '');
+}
+var _emoTpl = document.createElement('template');
+function _emoTextNode(t) {
+  var par = t.parentNode;
+  if (!par || !t.data) return;
+  EMO_RE.lastIndex = 0;
+  if (!EMO_RE.test(t.data)) return;
+  var tag = par.nodeName;
+  if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA' || par.isContentEditable) return;
+  if (tag === 'OPTION' || tag === 'TITLE' || par.namespaceURI === 'http://www.w3.org/2000/svg') { t.data = emoStrip(t.data); return; }
+  _emoTpl.innerHTML = emoHtml(t.data.replace(/[&<>]/g, function(c){ return c === '&' ? '&amp;' : (c === '<' ? '&lt;' : '&gt;'); }));
+  par.replaceChild(_emoTpl.content, t);
+}
+var _EMO_ATTRS = ['title', 'placeholder', 'aria-label', 'data-tip'];
+function _emoAttrs(el) {
+  for (var i = 0; i < _EMO_ATTRS.length; i++) {
+    var v = el.getAttribute && el.getAttribute(_EMO_ATTRS[i]);
+    if (v) { EMO_RE.lastIndex = 0; if (EMO_RE.test(v)) el.setAttribute(_EMO_ATTRS[i], emoStrip(v)); }
+  }
+}
+function emoScan(root) {
+  if (!root) return;
+  if (root.nodeType === 3) { _emoTextNode(root); return; }
+  if (root.nodeType !== 1 && root.nodeType !== 11) return;
+  if (root.nodeType === 1) _emoAttrs(root);
+  var tw = document.createTreeWalker(root, 5, null), n, texts = [];
+  while ((n = tw.nextNode())) { if (n.nodeType === 3) texts.push(n); else _emoAttrs(n); }
+  for (var i = 0; i < texts.length; i++) _emoTextNode(texts[i]);
+}
+function emoWatch() {
+  if (window._emoObs || typeof MutationObserver === 'undefined' || !document.body) return;
+  emoScan(document.body);
+  if (document.title) document.title = emoStrip(document.title);
+  window._emoObs = new MutationObserver(function(muts) {
+    for (var i = 0; i < muts.length; i++) {
+      var mu = muts[i];
+      if (mu.type === 'childList') { for (var j = 0; j < mu.addedNodes.length; j++) emoScan(mu.addedNodes[j]); }
+      else if (mu.type === 'characterData') _emoTextNode(mu.target);
+      else if (mu.type === 'attributes') _emoAttrs(mu.target);
+    }
+  });
+  window._emoObs.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: _EMO_ATTRS });
+}
+(function() {
+  var _c = window.confirm, _a = window.alert, _p = window.prompt;
+  window.confirm = function(msg) { return _c.call(window, emoStrip(msg)); };
+  window.alert = function(msg) { return _a.call(window, emoStrip(msg)); };
+  window.prompt = function(msg, d) { return _p.call(window, emoStrip(msg), d); };
+})();
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', emoWatch); else setTimeout(emoWatch, 0);
 // v509: カレンダーに合成表示する予定の種別マーク（ユニオン/OL/トレーニング）
 function _evMarkIc(e) {
   if (!e) return '';
@@ -6104,7 +6231,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v509';
+  var DATA_VERSION = 'v510';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -7078,6 +7205,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v510', d:'2026-09-22', items:['🎨 アプリ全体の絵文字を線画アイコンに置き換え完了：HOME・MAP・メンバー・OL・PLAN・目標・データ・トレーニング・3D・トースト表示まで、変換表にもとづいて自動で線画に（✕✓↩などの記号はそのまま）。意味のあるものは色つき（警告=黄、トロフィー/王冠/メダル=金、目標=赤、成長=緑 など）、優先度の●は色で塗りつぶし','🔥 やる気マークを「色の丸バッジ＋白い絵柄」に刷新：パヤパヤ=緑・やる気=オレンジ・死ぬ気=赤。MAPのカードでは左上の角に重ねて最前面に表示し、カードの裏に隠れないように。芽のマークも太く大きくして見やすく'] },
   { v:'v509', d:'2026-09-22', items:['🎨 予定タブの絵文字をすべて線画アイコンに置き換え：カレンダー・ToDo・予定の追加/編集フォーム・操作シート・日別シート・テンプレ・カテゴリ・カレンダー設定・ユニオン予定・PC版の左カラム/詳細パネル。カレンダーに載るユニオン予定/OL予定/トレーニングも線画マーク付きに（通知やトーストなど文字だけの場所は絵文字を削除）','🗑 ゴミ箱マークをアプリ全体で赤い線画アイコンに統一（スワイプ削除ボタンも赤アイコンが見えるデザインに）'] },
   { v:'v508', d:'2026-09-22', items:['🎂 誕生日フォローを見つけやすく改善：これまで「30日以内に誕生日の人が0人」だとチップごと非表示で、機能の存在が分かりませんでした','・MAP上部の「誕生日」チップを常時表示に（0人のときはグレー表示）。タップでいつでも一覧シートが開きます','・一覧シートに「その先の誕生日（次の5人）」セクションを追加：30日以内が0人でも、次に誰の誕生日が来るかが分かります','・誕生日未登録の人数も表示（登録はメンバー編集の「基本」タブから）'] },
   { v:'v507', d:'2026-09-22', items:['🎨 アイコン刷新 第4弾：PLANの各カード見出し（目標設定・月次目標・ファネル・ユニオンMS・検証・書き出し・ロードマップ・ギャップ）、HOMEの見出し（気になるメンバー・先月からの変化・データ分析）、お知らせベル、設定⚙の各ボタン、合算表示、MAP切替タブ（現状MAP）などを線画アイコンに。トースト等のテキストからは絵文字を削除'] },
@@ -14666,7 +14794,8 @@ function _glEvModal(id){
   var inS='box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px;outline:none;-webkit-appearance:none;margin:4px 0 12px';
   var lb='font-size:12px;color:var(--text-dim);font-weight:700';
   var moOpt=''; for(var m=1;m<=12;m++){ moOpt+='<option value="'+m+'"'+((e&&e.month===m)?' selected':'')+'>'+m+'月</option>'; }
-  var emOpt=GL_EVENT_EMOJIS.map(function(x){return '<option value="'+x+'"'+((e&&e.emoji===x)?' selected':'')+'>'+x+'</option>';}).join('');
+  var _emL={'🏆':'トロフィー','🎓':'学び・研修','✈️':'旅行','💎':'ダイヤ','🏔':'山・挑戦','🎯':'目標','🔥':'炎','🎉':'お祝い','📣':'発表','🏛':'ユニオン','⛴':'船','🌏':'世界'};
+  var emOpt=GL_EVENT_EMOJIS.map(function(x){return '<option value="'+x+'"'+((e&&e.emoji===x)?' selected':'')+'>'+(_emL[x]||x)+'</option>';}).join(''); // v510: 選択肢は名称表示
   var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='glEvModal';
   ov.onclick=function(ev){ if(ev.target===ov) _glCloseEvModal(); };
   ov.innerHTML='<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
@@ -19267,7 +19396,7 @@ function _digestSync() {
             uid: currentUser.uid,
             eventId: 'due-digest',
             fireAt: dt2.toISOString(),
-            title: '\u26A0\uFE0F 期限切れタスク ' + _odTasks.length + '件',
+            title: '期限切れタスク ' + _odTasks.length + '件',
             body: 'タップして一覧を開く（完了するとリマインドは止まります）'
           }).catch(function(){});
           written.push(qid2);
@@ -20970,9 +21099,20 @@ function _m3EmojiNode(ch, size) {
   try {
     var cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
     var cx = cv.getContext('2d');
-    cx.font = '72px sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-    cx.fillText(ch, 48, 54);
-    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true }));
+    var tex = new THREE.CanvasTexture(cv);
+    var _d9 = (typeof EMO_ICON !== 'undefined') ? EMO_ICON[String(ch).replace(/\uFE0F/g, '')] : null;
+    if (_d9 && ICONS[_d9[0]]) { // v510: 絵文字の代わりに線画アイコンを描く
+      var _col9 = (/color:([^;]+)/.exec(_d9[1] || '') || [])[1] || '#ffffff';
+      if (_col9.indexOf('var(') === 0) _col9 = '#FF5D73';
+      var _svg9 = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96" fill="none" stroke="' + _col9 + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ICONS[_d9[0]].replace(/currentColor/g, _col9) + '</svg>';
+      var _im9 = new Image();
+      _im9.onload = function() { cx.drawImage(_im9, 8, 8, 80, 80); tex.needsUpdate = true; };
+      _im9.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_svg9);
+    } else {
+      cx.font = '72px sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(ch, 48, 54);
+    }
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
     sp.scale.set(size, size, 1);
     return sp;
   } catch(e){ return null; }
