@@ -2431,7 +2431,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v500</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v501</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3087,14 +3087,14 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           </div>
           <div class="ed-help" id="h_restart">BR維持失敗（ロールアップ）から再挑戦中のメンバーに「🔄リスタート◯ヶ月目」を表示します（開始月＝1ヶ月目、6ヶ月目まで自動表示）。翌月コピーの自動ロールアップでは自動設定されます。既に手動で組織を組み替え済みの場合は、ここから開始月を後付けで設定してください。</div>
           <div class="ed-row" id="badgeRow">
-            <span class="ed-l">🌱 ケアバッジ<span class="ed-q" onclick="edHelp(event,'h_badge')">?</span></span>
+            <span class="ed-l">ケアバッジ<span class="ed-q" onclick="edHelp(event,'h_badge')">?</span></span>
             <div class="ed-chips">
               <div class="rb sel" id="rbBadgeAuto" onclick="selBadgeMode('')">自動</div>
               <div class="rb" id="rbBadgeOn" onclick="selBadgeMode('on')">表示</div>
               <div class="rb" id="rbBadgeOff" onclick="selBadgeMode('off')">非表示</div>
             </div>
           </div>
-          <div class="ed-help" id="h_badge">PCツリーの「🌱フレッシュ」（スタート6ヶ月以内・BR未満）／「🎓研修生」バッジの表示設定。ケアしないと消えてしまう層を目立たせるためのバッジです。自動＝条件に合えば表示。条件外でもケアしたい人には「表示」、外したい人は「非表示」。</div>
+          <div class="ed-help" id="h_badge">PCツリーの「フレッシュ」（スタート6ヶ月以内・BR未満）／「研修生」バッジの表示設定。ケアしないと消えてしまう層を目立たせるためのバッジです。自動＝条件に合えば表示。条件外でもケアしたい人には「表示」、外したい人は「非表示」。</div>
           <div class="ed-row">
             <span class="ed-l">現状GSV<span class="ed-q" onclick="edHelp(event,'h_fPtC')">?</span></span>
             <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力" onfocus="edSelAll(this)"></div>
@@ -3124,9 +3124,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-row">
             <span class="ed-l">やる気</span>
             <div class="ed-ctrl"><select class="ed-in" id="fMorale">
-              <option value="1" selected>🌱 パヤパヤ</option>
-              <option value="2">💪 やる気</option>
-              <option value="3">🔥 死ぬ気</option>
+              <option value="1" selected>パヤパヤ</option>
+              <option value="2">やる気</option>
+              <option value="3">死ぬ気</option>
             </select><span class="ed-chev">▾</span></div>
           </div>
           <div class="ed-row">
@@ -4339,8 +4339,19 @@ function renderPCMap(mapType) {
     var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#f2f4f8');
     var gsvColor = isLightTheme ? '#3a4560' : '#e2e8f0';
     if(m.morale>0){
-      var emoji=['','🌱','💪','🔥'][Math.min(m.morale,3)]||'';
-      g.appendChild(txt(rx+3, ry2-3, emoji, '#fff', 18, null, 'Inter,sans-serif'));
+      // v501: やる気＝色分き線画アイコン（絵文字廃止）
+      var _ml9 = moraleLv(m.morale);
+      var _mg9 = document.createElementNS('http://www.w3.org/2000/svg','g');
+      _mg9.setAttribute('transform', 'translate(' + (rx + 4) + ',' + (ry2 - 20) + ') scale(0.72)');
+      _mg9.setAttribute('fill', 'none');
+      _mg9.setAttribute('stroke', MORALE_COLORS[_ml9]);
+      _mg9.setAttribute('stroke-width', '2.3');
+      _mg9.setAttribute('stroke-linecap', 'round');
+      _mg9.setAttribute('stroke-linejoin', 'round');
+      _mg9.setAttribute('pointer-events', 'none');
+      _mg9.setAttribute('class', 'pc-morale-ic');
+      _mg9.innerHTML = ICONS[MORALE_ICON_NAMES[_ml9]];
+      g.appendChild(_mg9);
     }
     // v439: ケアバッジ（🌱フレッシュ＝スタート6ヶ月以内かつBR未満／🎓研修生。手動で表示/非表示の上書き可）
     if (mapType === 'current' && (m.title || '').trim() !== 'OUT') { // v453: OUT（退会）にはケアバッジを付けない
@@ -4351,9 +4362,9 @@ function renderPCMap(mapType) {
       var _bm9 = m.badgeMode || '';
       var _cb9 = (_bm9 === 'off') ? '' : ((_bm9 === 'on') ? (_auto9 || (_isTr9 ? 'trainee' : 'fresh')) : _auto9);
       if (_cb9) {
-        var _bw9 = _cb9 === 'fresh' ? 80 : 68;
+        var _bw9 = _cb9 === 'fresh' ? 68 : 52;
         var _bg9 = _cb9 === 'fresh' ? '#FFD166' : '#5AD7FF';
-        var _bt9 = _cb9 === 'fresh' ? '🌱フレッシュ' : '🎓研修生';
+        var _bt9 = _cb9 === 'fresh' ? 'フレッシュ' : '研修生';
         var _bc9 = _cb9 === 'fresh' ? '#5b3d00' : '#00344d';
         var fb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
         fb9.setAttribute('x', rx + NODE_W/2 - _bw9/2); fb9.setAttribute('y', ry2 - 10);
@@ -5945,15 +5956,33 @@ var ICONS = {
   shield: '<path d="M12 2.8l7.5 3v5.7c0 4.7-3.2 7.9-7.5 9.7-4.3-1.8-7.5-5-7.5-9.7V5.8z"/><path d="M9 12l2 2 4-4"/>',
   gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.2 2.2M16.6 16.6l2.2 2.2M18.8 5.2l-2.2 2.2M7.4 16.6l-2.2 2.2"/>',
   share2: '<circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="5.5" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="M8.4 10.8l7.2-4M8.4 13.2l7.2 4"/>',
-  alert: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 9.5v4.5"/><path d="M12 17.2v.1"/>'
+  alert: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 9.5v4.5"/><path d="M12 17.2v.1"/>',
+  sprout: '<path d="M12 21v-8"/><path d="M12 13c0-3.8-2.8-6.5-7-6.5 0 4.2 2.8 6.5 7 6.5z"/><path d="M12 11c0-3.2 2.4-5.5 6-5.5 0 3.5-2.4 5.5-6 5.5z"/>',
+  zap: '<path d="M13 2.5L4.5 13.5h6.2L11 21.5l8.5-11h-6.2z"/>',
+  flame: '<path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4.1 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 002.5 2.5z"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17"/>',
+  checksq: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/>',
+  user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/>',
+  cake: '<path d="M5 21h14M6 21v-6h12v6M12 9.5V12"/><path d="M12 9.5a1.6 1.6 0 001.6-1.6C13.6 6.4 12 4.5 12 4.5s-1.6 1.9-1.6 3.4A1.6 1.6 0 0012 9.5z"/><path d="M6 17.5c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0"/>'
 };
+// v501: やる気レベル＝色分き線画アイコン（1=緑の芽・2=オレンジの稲妻・3=赤の炎）
+var MORALE_COLORS = ['', '#4ADE80', '#FFB454', '#FF5D73'];
+var MORALE_ICON_NAMES = ['', 'sprout', 'zap', 'flame'];
+var MORALE_LABELS = ['', 'パヤパヤ', 'やる気', '死ぬ気'];
+function moraleLv(level) { return Math.max(1, Math.min(parseInt(level, 10) || 1, 3)); }
+function moraleLabel(level) { return MORALE_LABELS[moraleLv(level)]; }
+function moraleIcon(level, px) {
+  var lv = moraleLv(level);
+  return '<svg class="lic" viewBox="0 0 24 24" style="color:' + MORALE_COLORS[lv] + (px ? ';width:' + px + 'px;height:' + px + 'px' : '') + '"><title>' + MORALE_LABELS[lv] + '</title>' + ICONS[MORALE_ICON_NAMES[lv]] + '</svg>';
+}
 function icn(name, style) {
   return '<svg class="lic" viewBox="0 0 24 24"' + (style ? ' style="' + style + '"' : '') + '>' + (ICONS[name] || '') + '</svg>';
 }
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v500';
+  var DATA_VERSION = 'v501';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6927,6 +6956,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v501', d:'2026-09-22', items:['🎨 アイコン刷新 第2弾：やる気レベルを色分き線画アイコンに（パヤパヤ=緑の芽・やる気=オレンジの稲妻・死ぬ気=赤の炎）。MAPカード・メンバー一覧・テーブル・詳細シートすべて統一','✅ ToDo/カレンダーの行アイコンを線画に：ゴミ箱・時計（期限）・タスク/予定マーク・👤メンバー絞り込み・ゴミ箱画面','🌱 ケアバッジ（フレッシュ/研修生）の絵文字を外してすっきり（色分けはそのまま）','🎂 誕生日リマインドのアイコンも線画ケーキに'] },
   { v:'v500', d:'2026-09-22', items:['🎨 アイコン刷新 第1弾：絵文字をミニマルな線画アイコンに置き換え開始。まずは右クリック/＋メニュー（編集・削除・Instagram・LINE）・☰メニュー・検索・3Dボタン・ToDoの期限切れ見出しから。ライト/ダークどちらのテーマにも自動で馴染みます（順次ほかの画面にも展開予定）'] },
   { v:'v499', d:'2026-09-22', items:['🎂 生年月日の「年」プルダウンの初期表示を2002年に変更（メンバー追加時・生年月日未設定の編集時）。月と日を選ぶまでは未設定のままなので、年だけ既定のままでも誤って保存されません'] },
   { v:'v498', d:'2026-09-22', items:['◎ MAPの「俯瞰」ボタンを「運動会」に名称変更し、位置をツリーの右隣に移動（現状MAP・理想MAPとも）'] },
@@ -7624,13 +7654,13 @@ function birthdayHtml() {
   var bs = birthdayUpcoming();
   if (bs.length) {
     var names = bs.map(function(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; }).join('、');
-    html += '<div class="home-bday"><span class="home-bday-ic">🎂</span><div><div class="home-bday-t">明日は ' + evEsc(names) + ' さんの誕生日！</div><div class="home-bday-s">お祝いメッセージの準備を 🎉</div></div></div>';
+    html += '<div class="home-bday"><span class="home-bday-ic">' + icn('cake') + '</span><div><div class="home-bday-t">明日は ' + evEsc(names) + ' さんの誕生日！</div><div class="home-bday-s">お祝いメッセージの準備を</div></div></div>';
   }
   var tm = birthdayThisMonth();
   if (tm.length) {
     var curM = new Date().getMonth() + 1, today = new Date().getDate();
     var list = tm.map(function(x){ var nm = ((x.m.lastName || '') + ' ' + (x.m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; var passed = x.day < today; return '<span' + (passed ? ' style="opacity:.5"' : '') + '>' + evEsc(nm) + '（' + curM + '/' + x.day + '）</span>'; }).join('、');
-    html += '<div class="home-bday-month">🎂 今月の誕生日：' + list + '</div>';
+    html += '<div class="home-bday-month">' + icn('cake') + ' 今月の誕生日：' + list + '</div>';
   }
   return html;
 }
@@ -7759,8 +7789,8 @@ function computeMonthlyChanges(prev, cur) {
       out.push({ t: nm + '：稼働 ' + (pm.activity||'-') + '→' + (m.activity||'-'), c: worse?'warn':'good', pr: worse?3:1 });
     }
     var pmo = pm.morale||1, cmo = m.morale||1;
-    if (cmo < pmo) out.push({ t: nm + '：やる気ダウン ' + moraleEmoji(pmo) + '→' + moraleEmoji(cmo), c:'warn', pr:2 });
-    else if (cmo > pmo) out.push({ t: nm + '：やる気アップ ' + moraleEmoji(pmo) + '→' + moraleEmoji(cmo), c:'good', pr:1 });
+    if (cmo < pmo) out.push({ t: nm + '：やる気ダウン ' + moraleLabel(pmo) + '→' + moraleLabel(cmo), c:'warn', pr:2 });
+    else if (cmo > pmo) out.push({ t: nm + '：やる気アップ ' + moraleLabel(pmo) + '→' + moraleLabel(cmo), c:'good', pr:1 });
     // タイトル変化：B系（活動歴）は非表示。LOI/Q2/Q3/Q4の審査クリアと、BR昇格のみ表示
     var qSeries = ['LOI','Q2','Q3','Q4'];
     var ct = (m.title||'').trim(), pt = (pm.title||'').trim();
@@ -8723,7 +8753,7 @@ function renderPCTable(mapType) {
     // やる気（ドロップダウン）
     var tdM = document.createElement('td');
     tdM.className = 'col-morale' + (isEd ? ' editable' : '');
-    tdM.textContent = ['','🌱','💪','🔥'][Math.min(m.morale||1, 3)] || '';
+    tdM.innerHTML = moraleIcon(m.morale||1);
     if (isEd) tdM.onclick = function() { inlineSelect(tdM, m, 'morale', mapType); };
     tr.appendChild(tdM);
 
@@ -8910,7 +8940,7 @@ function inlineSelect(td, member, field, mapType) {
   function finish() {
     if (field === 'morale') {
       member.morale = parseInt(sel.value) || 1;
-      td.textContent = ['','🌱','💪','🔥'][Math.min(member.morale,3)] || '';
+      td.innerHTML = moraleIcon(member.morale);
     } else if (field === 'activity') {
       member.activity = sel.value;
       td.style.color = member.activity==='S'?'var(--s)':member.activity==='A'?'var(--a)':member.activity==='B'?'var(--b)':member.activity==='C'?'var(--c)':'var(--text-dim)';
@@ -9591,7 +9621,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
       })())
     + '<div style="flex:1;min-width:max-content">'
     + '<div class="nm ' + g + '" style="display:flex;align-items:center;gap:6px">' + (m.lastName||'') + ' ' + (m.firstName||'')
-    + '<span class="morale-emoji">' + moraleEmoji(m.morale||1) + '</span>'
+    + '<span class="morale-emoji">' + moraleIcon(m.morale||1) + '</span>'
     + (restartSuffix(m, true) ? '<span style="font-size:9px;font-weight:800;color:#FB923C;background:rgba(251,146,60,.13);border:1px solid rgba(251,146,60,.4);border-radius:6px;padding:1px 5px;white-space:nowrap">' + restartSuffix(m, true) + '</span>' : '')
     + (function(){ // v468: 長期未活動バッジ（薄く消す表現の代替）
         if ((m.title || '').trim() === 'OUT' || typeof memberIdleDays !== 'function') return '';
@@ -9934,7 +9964,7 @@ function editField(id, field, e) {
     return;
   } else if (field === 'morale') {
     m.morale = (m.morale||1) >= 3 ? 1 : (m.morale||1) + 1;
-    toast("やる気: "+moraleEmoji(m.morale));
+    toast("やる気: "+moraleLabel(m.morale));
   } else if (field === 'memo') {
     glForm('📝 メモ', [{label:'メモ', type:'textarea', value:m.memo||''}], function(v){
       m.memo = v[0]; renderCurrentView(); autoSave();
@@ -12373,7 +12403,7 @@ function showPcTooltip(mid, ev) {
   var tip = document.getElementById('pcTooltip');
   var name = (m.lastName||'') + ' ' + (m.firstName||'');
   var actLabel = m.activity ? m.activity + (m.actRate ? ' ' + m.actRate + '%' : '') : '-';
-  var moraleStr = ['','🌱 パヤパヤ','💪 やる気','🔥 死ぬ気'][Math.min(m.morale||1,3)]||'';
+  var moraleStr = m.morale ? (moraleIcon(m.morale) + ' ' + moraleLabel(m.morale)) : '';
   var gsvDisplay = m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0';
   var fixDisplay = m.ptFixed>0 ? m.ptFixed.toLocaleString() : '-';
   // このメンバーに紐づく予定・タスク
@@ -22299,7 +22329,7 @@ function openEventActions(id) {
   if (dl) metaParts.push(dl);
   if (cat) metaParts.push(cat.name);
   if (e.place) metaParts.push('📍' + e.place); // v329: 場所
-  if (mName) metaParts.push('👤' + mName);
+  if (mName) metaParts.push(icn('user') + mName);
   var subs = e.subtasks || [];
   if (e.seriesId) metaParts.push('🔁繰り返し');
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
@@ -22577,7 +22607,7 @@ function evItemHtml(e) {
   h += '<div class="ev-i-body" onclick="openEventActions(\'' + e.id + '\')">';
   h += '<div class="ev-i-title">' + evEsc(e.title || '(無題)') + '</div>';
   h += '<div class="ev-i-meta">';
-  if (dateLabel) h += '<span class="' + dueCls + '">' + (isTask && e.date && e.date <= t && !e.done ? '⏰ ' : '') + evEsc(dateLabel) + '</span>';
+  if (dateLabel) h += '<span class="' + dueCls + '">' + (isTask && e.date && e.date <= t && !e.done ? icn('clock') + ' ' : '') + evEsc(dateLabel) + '</span>';
   if (cat) h += '<span class="ev-i-cat" style="background:' + (_ic || cat.color) + ';color:' + catTextColor(_ic || cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">⚑ 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
@@ -22710,7 +22740,7 @@ function todoRowHtml(e) {
     : '';
   var lb = e.labelId ? _todoLabelById(e.labelId) : null;
   var ls = e.listId ? _todoListById(e.listId) : null; // v336: どのリストのタスクか行内に表示
-  var h = '<div class="td-wrap"><div class="td-delbtn" onclick="event.stopPropagation();tdSwipeDelete(\'' + e.id + '\')" title="削除">🗑</div>'
+  var h = '<div class="td-wrap"><div class="td-delbtn" onclick="event.stopPropagation();tdSwipeDelete(\'' + e.id + '\')" title="削除">' + icn('trash') + '</div>'
     + '<div class="td-row' + (e.done ? ' done' : '') + (overdue ? ' od-row' : '') + '" data-eid="' + e.id + '" draggable="true">'
     + '<div class="td-chk' + (e.done ? ' on' : '') + '" onclick="toggleEventDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</div>'
     + '<div class="td-body" onclick="openEventActions(\'' + e.id + '\')">'
@@ -22718,7 +22748,7 @@ function todoRowHtml(e) {
     + ((due || subTx || lb || ls || e.seriesId) ? ('<div class="td-due' + (overdue ? ' od' : '') + '">' + (overdue ? '<span class="td-odpill">' + _tdOverdueDays(e.date) + '日超過</span>' : '') + evEsc(due) + _tdSeriesMark(e) + (subTx ? ' ' + subTx : '') + (ls ? ' <span style="color:' + ls.color + '">●' + evEsc(ls.name) + '</span>' : '') + (lb ? ' <span style="color:' + lb.color + '">◎' + evEsc(lb.name) + '</span>' : '') + '</div>') : '')
     + '</div>'
     // v357: PCはホバーで ⚑重要/🗑削除（スワイプの代替。CSSでPC+hover時のみ表示）
-    + '<div class="td-hovacts"><span onclick="event.stopPropagation();tdTogglePrio(\'' + e.id + '\')" title="⚑重要の切替">⚑</span><span onclick="event.stopPropagation();tdSwipeDelete(\'' + e.id + '\')" title="削除">🗑</span></div>'
+    + '<div class="td-hovacts"><span onclick="event.stopPropagation();tdTogglePrio(\'' + e.id + '\')" title="⚑重要の切替">⚑</span><span onclick="event.stopPropagation();tdSwipeDelete(\'' + e.id + '\')" title="削除">' + icn('trash') + '</span></div>'
     + '</div></div>'; // .td-row 閉じ + .td-wrap 閉じ
   if (subs.length && _evExpandedSubs[e.id]) {
     h += '<div class="ev-sub-block" style="margin:2px 14px 8px 42px">' + subs.map(function(s){
@@ -22845,8 +22875,8 @@ function _renderAgendaCore() {
   if (nav.type === 'smart' && nav.id === 'trash') {
     var _tr = (state.trashEvents || []).slice().sort(function(a,b){ return (b.deletedAt || '').localeCompare(a.deletedAt || ''); });
     var _ht3 = document.getElementById('tdHdrTitle');
-    if (_ht3) _ht3.textContent = '🗑 ゴミ箱';
-    var h3 = '<div class="td-sechd">🗑 ゴミ箱　<span style="opacity:.6">' + _tr.length + '件</span>'
+    if (_ht3) _ht3.textContent = 'ゴミ箱';
+    var h3 = '<div class="td-sechd">' + icn('trash') + ' ゴミ箱　<span style="opacity:.6">' + _tr.length + '件</span>'
       + (_tr.length ? '<span class="td-del" style="color:var(--red)" onclick="tdTrashEmpty()">すべて完全削除</span>' : '')
       + '</div>'
       + '<div style="font-size:11px;color:var(--text-dim);padding:0 14px 8px">削除から30日たつと自動的に完全削除されます</div>';
@@ -22854,7 +22884,7 @@ function _renderAgendaCore() {
     else h3 += _tr.map(function(e){
       var dd = e.deletedAt ? (parseInt(e.deletedAt.slice(5,7),10) + '/' + parseInt(e.deletedAt.slice(8,10),10)) : '';
       return '<div class="td-row" style="cursor:default">'
-        + '<span style="flex:none;font-size:15px">' + (e.type === 'task' ? '✅' : '📅') + '</span>'
+        + '<span style="flex:none;font-size:15px;display:flex;align-items:center">' + (e.type === 'task' ? icn('checksq') : icn('calendar')) + '</span>'
         + '<div class="td-body"><div class="td-ttl" style="color:var(--text-mid)">' + evEsc(e.title || '(無題)') + '</div>'
         + '<div class="td-due">' + (e.date ? evEsc(e.date) + '　' : '') + '削除: ' + dd + '</div></div>'
         + '<span onclick="tdTrashRestore(\'' + e.id + '\')" style="flex:none;padding:8px 6px;color:var(--accent);font-weight:800;cursor:pointer;font-size:12.5px">↩ 復元</span>'
@@ -22914,7 +22944,7 @@ function _renderAgendaCore() {
       ? '<div class="td-fchip" onclick="openTdOrderSheet()" title="リスト/ラベルの並べ替え" style="padding:7px 10px">⇅</div>' : '') // v377: 左端に常時見える位置へ
     + fchip(F.type === 'all', "todoSetFilter('all')", 'すべて')
     + fchip(F.type === 'today', "todoSetFilter('today')", '今日')
-    + fchip(F.type === 'member', "todoSetFilter('member')", '👤メンバー'); // v361: メンバー担当タスク
+    + fchip(F.type === 'member', "todoSetFilter('member')", icn('user') + 'メンバー'); // v361: メンバー担当タスク
   ((_todoMeta && _todoMeta.lists) || []).forEach(function(L){
     fch += fchip(F.type === 'list' && F.id === L.id, "todoSetFilter('list','" + L.id + "')", '<i style="background:' + L.color + '"></i>' + evEsc(L.name), 'data-ord="list:' + L.id + '"'); // v366: 長押しで並べ替え
   });
@@ -22954,7 +22984,7 @@ function _renderAgendaCore() {
   }
   h += '<div class="td-secttl">完了済み</div>';
   h += _todoHomeRow('✓', '完了タスク', doneCt, "todoNavTo('smart','done')");
-  h += _todoHomeRow('🗑', 'ゴミ箱', (state.trashEvents || []).length, "todoNavTo('smart','trash')"); // v371
+  h += _todoHomeRow(icn('trash'), 'ゴミ箱', (state.trashEvents || []).length, "todoNavTo('smart','trash')"); // v371
   wrap.innerHTML = h;
   _tdChipDnd(wrap); // v366: チップの長押し並べ替え
 }
@@ -26347,7 +26377,7 @@ function applyAllFilters() {
       + '<div class="nm ' + g + '">' + (m.lastName||'') + ' ' + (m.firstName||'') + '</div>'
       + '</div>'
       + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
-      + '<div class="morale-emoji">' + moraleEmoji(m.morale||1) + '</div>'
+      + '<div class="morale-emoji">' + moraleIcon(m.morale||1) + '</div>'
       + '<span class="info-pt">' + ptDisplay + (m.ptFixed>0 ? '<span class="info-pt-fix"> (' + m.ptFixed.toLocaleString() + ')</span>' : '') + '</span>'
       + '</div>'
       + '</div>'
