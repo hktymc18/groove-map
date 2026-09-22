@@ -2432,7 +2432,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v507</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v508</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -5541,13 +5541,11 @@ function buildMapCatChips(members) {
     var active = (mapCatFilter === d[0]);
     return '<span class="mc-chip" onclick="setMapCatFilter(\'' + d[0] + '\')" style="border-color:' + (active?d[3]:'var(--border)') + ';background:' + (active?d[3]:'transparent') + ';color:' + (active?'#000':'var(--text-dim)') + '">' + d[1] + ' ' + d[2] + '</span>';
   }).join('');
-  // v505: 誕生日30日以内のメンバーがいる時だけ「誕生日」チップ（タップで強調＋一覧シート）
+  // v508: 「誕生日」チップは常時表示（0人はグレー）。タップで一覧シート（該当者がいれば強調も）
   var cBd = 0;
   own.forEach(function(m){ if (typeof _bdayIn30 === 'function' && _bdayIn30(m) !== null) cBd++; });
-  if (cBd > 0) {
-    var bdA = (mapCatFilter === 'bday'), bdCol = '#FF87B3';
-    html += '<span class="mc-chip" onclick="mapBdayChipTap()" style="display:inline-flex;align-items:center;gap:3px;border-color:' + (bdA?bdCol:'var(--border)') + ';background:' + (bdA?bdCol:'transparent') + ';color:' + (bdA?'#000':'#FF5D8F') + '">' + icn('cake') + '誕生日 ' + cBd + '</span>';
-  }
+  var bdA = (mapCatFilter === 'bday'), bdCol = '#FF87B3';
+  html += '<span class="mc-chip" onclick="mapBdayChipTap()" style="display:inline-flex;align-items:center;gap:3px;border-color:' + (bdA?bdCol:'var(--border)') + ';background:' + (bdA?bdCol:'transparent') + ';color:' + (bdA?'#000':(cBd>0?'#FF5D8F':'var(--text-dim)')) + '">' + icn('cake') + '誕生日 ' + cBd + '</span>';
   // v471: QBR（LOI〜Q4）はドロップダウンで選択して絞り込み
   var QBR_TITLES = ['LOI','Q2','Q3','Q4'];
   var qbrActive = (mapCatFilter || '').indexOf('qbr:') === 0;
@@ -6087,7 +6085,7 @@ function icn(name, style) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v507';
+  var DATA_VERSION = 'v508';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -7061,6 +7059,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v508', d:'2026-09-22', items:['🎂 誕生日フォローを見つけやすく改善：これまで「30日以内に誕生日の人が0人」だとチップごと非表示で、機能の存在が分かりませんでした','・MAP上部の「誕生日」チップを常時表示に（0人のときはグレー表示）。タップでいつでも一覧シートが開きます','・一覧シートに「その先の誕生日（次の5人）」セクションを追加：30日以内が0人でも、次に誰の誕生日が来るかが分かります','・誕生日未登録の人数も表示（登録はメンバー編集の「基本」タブから）'] },
   { v:'v507', d:'2026-09-22', items:['🎨 アイコン刷新 第4弾：PLANの各カード見出し（目標設定・月次目標・ファネル・ユニオンMS・検証・書き出し・ロードマップ・ギャップ）、HOMEの見出し（気になるメンバー・先月からの変化・データ分析）、お知らせベル、設定⚙の各ボタン、合算表示、MAP切替タブ（現状MAP）などを線画アイコンに。トースト等のテキストからは絵文字を削除'] },
   { v:'v506', d:'2026-09-22', items:['◎ 運動会MAPでも研修生（水色）・フレッシュ（金色）の丸の枠が点滅して目立つように（ツリーのケアバッジと同じ脈動リング・Safariでも動作）。印刷時は点滅なしのすっきり表示'] },
   { v:'v505', d:'2026-09-22', items:['🎂 誕生日フォロー機能：30日以内に誕生日を迎えるメンバーをMAPでまとめて確認できます','・MAP上部の絞り込みに「誕生日 N」チップを追加（該当者がいる時だけ表示）。タップで該当メンバーを強調＋一覧シートが開きます','・一覧シートは近い順に「名前・誕生日・あと◯日・何歳になるか」を表示。LINEでお祝い・＋予定で会う約束にそのまま進めます','・ツリーカード/運動会の丸/モバイルカードに、誕生日が近い人だけピンクのケーキ＋日付バッジを表示','・「今日から30日先まで」のローリング判定なので月またぎでも漏れません（HOMEの誕生日リマインドは従来どおり）'] },
@@ -7738,7 +7737,7 @@ function ckRecord(mid, group) {
 }
 // ── 誕生日リマインド（前日）──
 // ── v505: 誕生日フォロー（直近30日・ローリング判定） ──
-function _bdayIn30(m) {
+function _bdayDaysUntil(m) {
   if (!m || m.deleted || !m.birthday || (m.title || '').trim() === 'OUT') return null;
   var p = /^(\d{4})-(\d{2})-(\d{2})/.exec(m.birthday);
   if (!p) return null;
@@ -7746,8 +7745,11 @@ function _bdayIn30(m) {
   var t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   var next = new Date(now.getFullYear(), parseInt(p[2], 10) - 1, parseInt(p[3], 10));
   if (next < t0) next = new Date(now.getFullYear() + 1, parseInt(p[2], 10) - 1, parseInt(p[3], 10));
-  var days = Math.round((next - t0) / 86400000);
-  return days <= 30 ? days : null;
+  return Math.round((next - t0) / 86400000);
+}
+function _bdayIn30(m) {
+  var d = _bdayDaysUntil(m);
+  return (d !== null && d <= 30) ? d : null;
 }
 function _bdayMD(m) {
   var p = /^\d{4}-(\d{2})-(\d{2})/.exec(m.birthday || '');
@@ -7764,8 +7766,14 @@ function _bdayTurnAge(m) {
 }
 function openBdaySheet() {
   _p2SheetClose('bdayOv');
-  var list = composeMergedInto(membersForMap('current'), 'current').filter(function(m) { return _bdayIn30(m) !== null; });
+  var _all9 = composeMergedInto(membersForMap('current'), 'current').filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; });
+  var list = _all9.filter(function(m) { return _bdayIn30(m) !== null; });
   list.sort(function(a, b) { return _bdayIn30(a) - _bdayIn30(b); });
+  // v508: 30日より先の直近5人＋誕生日未登録の人数（0人でもシートが空にならない）
+  var later = _all9.filter(function(m) { var d = _bdayDaysUntil(m); return d !== null && d > 30; });
+  later.sort(function(a, b) { return _bdayDaysUntil(a) - _bdayDaysUntil(b); });
+  later = later.slice(0, 5);
+  var noBd = _all9.filter(function(m) { return !m.birthday && !/^MG_/.test(m.id || ''); }).length;
   var rows = list.map(function(m) {
     var d = _bdayIn30(m);
     var when = d === 0 ? '今日！' : (d === 1 ? '明日' : 'あと' + d + '日');
@@ -7787,13 +7795,25 @@ function openBdaySheet() {
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name" style="display:flex;align-items:center;gap:6px;color:#FF5D8F">' + icn('cake') + ' 誕生日（30日以内）</div>'
     + '<div style="font-size:10.5px;color:var(--text-dim)">' + list.length + '人・近い順。LINEでお祝い、＋予定で会う約束を</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'bdayOv\')">✕</span></div>'
-    + '<div style="padding:0 16px 18px">' + (rows || '<div class="ev-empty" style="padding:22px 12px">30日以内に誕生日のメンバーはいません</div>') + '</div></div>';
+    + '<div style="padding:0 16px 18px">' + (rows || '<div class="ev-empty" style="padding:18px 12px">30日以内に誕生日のメンバーはいません</div>')
+    + (later.length ? ('<div style="font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;padding:14px 4px 4px">その先の誕生日</div>'
+        + later.map(function(m) {
+            var d2 = _bdayDaysUntil(m);
+            var nm2 = ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+$/, '');
+            return '<div style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text-mid)">'
+              + '<span style="font-weight:700;color:' + (m.gender === 'female' ? 'var(--female)' : 'var(--text)') + '">' + evEsc(nm2) + '</span>'
+              + '<span style="margin-left:auto;color:var(--text-dim)">' + _bdayMD(m) + '（あと' + d2 + '日）</span></div>';
+          }).join('')) : '')
+    + (noBd > 0 ? '<div style="font-size:11px;color:var(--text-dim);padding:12px 4px 0">誕生日未登録 ' + noBd + '人（メンバー編集の「基本」タブで登録できます）</div>' : '')
+    + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
 }
 function mapBdayChipTap() {
   if (mapCatFilter === 'bday') { setMapCatFilter(''); return; }
-  setMapCatFilter('bday');
+  // v508: 0人のときは絞り込まず（全員薄暗になるだけのため）シートだけ開く
+  var _has9 = composeMergedInto(membersForMap('current'), 'current').some(function(m) { return _bdayIn30(m) !== null; });
+  if (_has9) setMapCatFilter('bday');
   openBdaySheet();
 }
 function birthdayUpcoming() {
