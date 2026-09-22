@@ -2432,7 +2432,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v506</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v507</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2517,7 +2517,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <!-- PC統合ツールバー -->
     <div class="pc-toolbar" id="pcToolbarC">
       <div class="pt-mapseg">
-        <span class="pt-ms cur active" onclick="switchView('current')">🗺 現状MAP</span>
+        <span class="pt-ms cur active" onclick="switchView('current')"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> 現状MAP</span>
         <span class="pt-ms idl" onclick="switchView('ideal')">🎯 理想MAP</span>
       </div>
       <div class="pt-sep"></div>
@@ -2560,12 +2560,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div><div class="banner-label">LTSV 目標</div><div class="banner-val purple" id="ltsvI">-</div></div>
       <div class="banner-sub">コミッション<span id="commTotal">-</span></div>
     </div>
-    <div style="padding:8px 14px 0"><button class="btn-c" style="border-color:var(--purple);color:var(--purple);font-size:12px;padding:7px 14px;width:auto" onclick="copyCurrentToIdeal()">🗺 → 🎯 現状MAPからコピー</button></div>
+    <div style="padding:8px 14px 0"><button class="btn-c" style="border-color:var(--purple);color:var(--purple);font-size:12px;padding:7px 14px;width:auto" onclick="copyCurrentToIdeal()"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> → <svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg> 現状MAPからコピー</button></div>
     <div id="commTableWrap"></div>
     <!-- PC統合ツールバー(理想) -->
     <div class="pc-toolbar pc-toolbar-ideal" id="pcToolbarI">
       <div class="pt-mapseg">
-        <span class="pt-ms cur" onclick="switchView('current')">🗺 現状MAP</span>
+        <span class="pt-ms cur" onclick="switchView('current')"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> 現状MAP</span>
         <span class="pt-ms idl active" onclick="switchView('ideal')">🎯 理想MAP</span>
       </div>
       <span class="pt-modebadge">🎯 理想MAPを表示中 — 目標の組織図です</span>
@@ -3248,7 +3248,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <!-- v316: 通知・繰り返しをLifebearと同じくフォーム直下の1行に（繰り返しは新規作成時のみ） -->
     <div class="ev-dt-row">
-      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl">🔔 通知</label>
+      <div class="fr" style="flex:1;margin-bottom:0"><label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M18 10a6 6 0 10-12 0c0 6-2.5 7-2.5 7h17S18 16 18 10z"/><path d="M10 20.5a2.2 2.2 0 004 0"/></svg> 通知</label>
         <select class="fi" id="evRemind">
           <option value="">なし</option>
           <option value="0">時刻ちょうど</option>
@@ -3269,10 +3269,10 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
     </div>
     <div class="fr" id="evRepeatUntilWrap" style="display:none"><label class="fl">繰り返し終了日</label><input class="fi ev-dt" id="evRepeatUntil" type="date"></div>
-    <div class="fr" id="evUnionRow" style="display:none"><label class="fl">🏛 共有範囲（ユニオン管理者）</label>
+    <div class="fr" id="evUnionRow" style="display:none"><label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> 共有範囲（ユニオン管理者）</label>
       <div class="rg">
         <div class="rb sel" id="evUnScope0" onclick="evUnionScope(false)">自分のみ</div>
-        <div class="rb" id="evUnScope1" onclick="evUnionScope(true)">🏛 ユニオン全員</div>
+        <div class="rb" id="evUnScope1" onclick="evUnionScope(true)"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> ユニオン全員</div>
       </div>
       <div class="rg" id="evUnionAreaRow" style="display:none;margin-top:6px">
         <div class="rb sel" id="evUnArea0" onclick="evUnionArea(false)">全地域</div>
@@ -6051,7 +6051,14 @@ var ICONS = {
   user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/>',
   cake: '<path d="M5 21h14M6 21v-6h12v6M12 9.5V12"/><path d="M12 9.5a1.6 1.6 0 001.6-1.6C13.6 6.4 12 4.5 12 4.5s-1.6 1.9-1.6 3.4A1.6 1.6 0 0012 9.5z"/><path d="M6 17.5c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0"/>',
   link: '<path d="M9.5 14.5l5-5"/><path d="M7.3 11.2L5 13.5a4 4 0 105.6 5.6l2.3-2.3M16.7 12.8L19 10.5a4 4 0 10-5.6-5.6l-2.3 2.3"/>',
-  leaf: '<path d="M11 20A7 7 0 014 13C4 7 9 3 20 3c0 11-4 16-9 17z"/><path d="M4 21c0-4 3-7 8-9"/>'
+  leaf: '<path d="M11 20A7 7 0 014 13C4 7 9 3 20 3c0 11-4 16-9 17z"/><path d="M4 21c0-4 3-7 8-9"/>',
+  bell: '<path d="M18 10a6 6 0 10-12 0c0 6-2.5 7-2.5 7h17S18 16 18 10z"/><path d="M10 20.5a2.2 2.2 0 004 0"/>',
+  star: '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3.2"/>',
+  map: '<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>',
+  chart: '<path d="M4.5 20.5V13M12 20.5V4.5M19.5 20.5v-9"/>',
+  calc: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 7h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 15.5h.01M12 15.5h.01M15.5 15.5h.01M8.5 19h.01M12 19h.01M15.5 19h.01"/>',
+  repeat: '<path d="M17 2.5l3.5 3.5L17 9.5"/><path d="M3.5 11V9.5a3.5 3.5 0 013.5-3.5h13.5"/><path d="M7 21.5L3.5 18 7 14.5"/><path d="M20.5 13v1.5a3.5 3.5 0 01-3.5 3.5H3.5"/>'
 };
 // v501: やる気レベル＝色分き線画アイコン（1=緑の芽・2=オレンジの稲妻・3=赤の炎）
 var MORALE_COLORS = ['', '#4ADE80', '#FFB454', '#FF5D73'];
@@ -6080,7 +6087,7 @@ function icn(name, style) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v506';
+  var DATA_VERSION = 'v507';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -7054,6 +7061,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v507', d:'2026-09-22', items:['🎨 アイコン刷新 第4弾：PLANの各カード見出し（目標設定・月次目標・ファネル・ユニオンMS・検証・書き出し・ロードマップ・ギャップ）、HOMEの見出し（気になるメンバー・先月からの変化・データ分析）、お知らせベル、設定⚙の各ボタン、合算表示、MAP切替タブ（現状MAP）などを線画アイコンに。トースト等のテキストからは絵文字を削除'] },
   { v:'v506', d:'2026-09-22', items:['◎ 運動会MAPでも研修生（水色）・フレッシュ（金色）の丸の枠が点滅して目立つように（ツリーのケアバッジと同じ脈動リング・Safariでも動作）。印刷時は点滅なしのすっきり表示'] },
   { v:'v505', d:'2026-09-22', items:['🎂 誕生日フォロー機能：30日以内に誕生日を迎えるメンバーをMAPでまとめて確認できます','・MAP上部の絞り込みに「誕生日 N」チップを追加（該当者がいる時だけ表示）。タップで該当メンバーを強調＋一覧シートが開きます','・一覧シートは近い順に「名前・誕生日・あと◯日・何歳になるか」を表示。LINEでお祝い・＋予定で会う約束にそのまま進めます','・ツリーカード/運動会の丸/モバイルカードに、誕生日が近い人だけピンクのケーキ＋日付バッジを表示','・「今日から30日先まで」のローリング判定なので月またぎでも漏れません（HOMEの誕生日リマインドは従来どおり）'] },
   { v:'v504', d:'2026-09-22', items:['◎ 運動会MAP調整：名前が丸からはみ出ないように配置と文字サイズを修正（姓2＋名2の4文字時のサイズを上限に、行の文字数が多いほど自動で縮小して円内に収めます）','⭕ 中央（0段目・自分）の丸を他のメンバーと同じサイズに統一'] },
@@ -7311,7 +7319,7 @@ function openReleaseNotes() {
   var ov = document.createElement('div');
   ov.id = 'notesOv'; ov.className = 'trophy-ov';
   ov.onclick = function(e){ if (e.target === ov) { if(ov.parentNode) ov.parentNode.removeChild(ov); } };
-  ov.innerHTML = '<div class="trophy-sheet"><div class="ts-hd"><span>🔔 お知らせ（アップデート情報）</span>'
+  ov.innerHTML = '<div class="trophy-sheet"><div class="ts-hd"><span>' + icn('bell') + ' お知らせ（アップデート情報）</span>'
     + '<span class="ts-x" onclick="var o=document.getElementById(\'notesOv\');if(o&&o.parentNode)o.parentNode.removeChild(o)">✕</span></div>'
     + body + '</div>';
   document.body.appendChild(ov);
@@ -7829,7 +7837,7 @@ function birthdayHtml() {
 function cockpitHtml() {
   var g = ckCollect();
   var total = g.trainee.length + g.fresh.length + g.exam.length + g.leader.length; // v417
-  var html = '<div class="home-sec-label"><span>👀 気になるメンバー</span><span style="color:var(--text-dim);font-weight:400;font-family:Inter,IBM Plex Mono,monospace">' + total + '人</span></div>';
+  var html = '<div class="home-sec-label"><span>' + icn('eye') + ' 気になるメンバー</span><span style="color:var(--text-dim);font-weight:400;font-family:Inter,IBM Plex Mono,monospace">' + total + '人</span></div>';
   if (total === 0) {
     return html + '<div class="ck-empty">今フォローが必要なメンバーはいません 👍<br><span>優先度「高」・研修3日/OL7日停滞・予定切れの人がここに出ます</span></div>';
   }
@@ -8525,9 +8533,9 @@ function renderHome() {
         var ctgA = _glMonthActual(p, ym, 'ctget'), ctA = _glMonthActual(p, ym, 'ct');
         if (ctgA >= 4 && ctA < ctgA * 0.4) return '☕ アポ取り→実施の転換が低め。日程は取ったその場で確定しよう。';
         var ftA = _glMonthActual(p, ym, 'ft'), b1A = _glMonthActual(p, ym, 'b1');
-        if (mF > 0 && ftA >= mF * (p.funnel.ft || 0) * 0.7 && b1A === 0 && prog > 0.5) return '🎓 FTは十分打てている。研修動員→B1の「決め」に進もう。';
+        if (mF > 0 && ftA >= mF * (p.funnel.ft || 0) * 0.7 && b1A === 0 && prog > 0.5) return 'FTは十分打てている。研修動員→B1の「決め」に進もう。';
         if (mF > 0 && b1A >= mF) return '🏆 今月のフロント目標は達成！育成と来月の仕込みに時間を使おう。';
-        if (mF > 0) return '🧭 今月フロント ' + b1A + '/' + mF + '。逆算どおりに進行中。';
+        if (mF > 0) return '今月フロント ' + b1A + '/' + mF + '。逆算どおりに進行中。';
       }
       return '';
     } catch(e) { return ''; }
@@ -8561,7 +8569,7 @@ function renderHome() {
     + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">'
     +   '<div><div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
     +   '<div class="home-date">' + gameDateLabel() + '</div></div>'
-    +   '<span class="home-bell" onclick="openReleaseNotes()" title="お知らせ（アップデート情報）">🔔' + (hasUnseenNotes() ? '<i class="bell-dot"></i>' : '') + '</span>'
+    +   '<span class="home-bell" onclick="openReleaseNotes()" title="お知らせ（アップデート情報）">' + icn('bell') + '' + (hasUnseenNotes() ? '<i class="bell-dot"></i>' : '') + '</span>'
     + '</div>'
     // v373: 「今日のルーチン」「クイック記録」は実務に合わないため廃止（記録はOL・テンプレ完了・今日の一歩から）
     + ftueHtml
@@ -8576,7 +8584,7 @@ function renderHome() {
     + coachHtml
     + wkHtml
     + insightsHtml()
-    + '<div class="home-sec-label"><span>📊 先月からの変化</span><span onclick="_mcPrevCache={key:\'\',members:null};renderMonthlyChanges()" style="color:var(--text-dim);font-weight:700;font-size:11px;cursor:pointer;padding:4px 10px">↻ 更新</span></div>'
+    + '<div class="home-sec-label"><span>' + icn('chart') + ' 先月からの変化</span><span onclick="_mcPrevCache={key:\'\',members:null};renderMonthlyChanges()" style="color:var(--text-dim);font-weight:700;font-size:11px;cursor:pointer;padding:4px 10px">↻ 更新</span></div>'
     + '<div id="homeChanges" class="home-changes"><div class="ck-empty" style="color:var(--text-dim)">読み込み中…</div></div>'
     + '</details>'
     + '</div>';
@@ -10283,10 +10291,10 @@ function enterAggregate(sel){
     updateEditorUI();
     // 合算中バー表示
     var bar=document.getElementById('sdViewingBar'), nameEl=document.getElementById('sdViewingName');
-    if(bar&&nameEl){ nameEl.textContent='🧮 合算表示：'+teams.map(function(t){return t.name;}).join('＋')+'（閲覧のみ）'; bar.classList.add('show'); }
+    if(bar&&nameEl){ nameEl.textContent='合算表示：'+teams.map(function(t){return t.name;}).join('＋')+'（閲覧のみ）'; bar.classList.add('show'); }
     renderCurrentView();
     renderTeamPickBars();
-    toast('🧮 '+teams.length+'チームを合算表示中');
+    toast(teams.length+'チームを合算表示中');
   }).catch(function(e){ toast('合算の読み込みに失敗: '+(e&&e.message||'')); });
 }
 function teamPick(uid){ // 旧API互換（単一選択）
@@ -10306,7 +10314,7 @@ function renderTeamPickBars(){
       var nm=(o.org||o.name||o.email||'共有').substring(0,10);
       h+='<span class="tc-b'+(sel.indexOf(o.uid)>=0?' on':'')+'" onclick="teamChip(\''+o.uid+'\')">'+evEsc(nm)+(o.perm==='edit'?' ✏️':'')+'</span>';
     });
-    h+='<span style="font-size:10px;color:var(--text-dim)">'+(_aggActive?'🧮 合算表示中（閲覧のみ）':'複数選ぶと合算表示')+'</span>';
+    h+='<span style="font-size:10px;color:var(--text-dim)">'+(_aggActive? icn('calc')+' 合算表示中（閲覧のみ）':'複数選ぶと合算表示')+'</span>';
     h+='</div>';
     el.innerHTML=h;
   });
@@ -10357,7 +10365,7 @@ function renderTeamCompare(){
         +'<td class="go-tnum" style="text-align:right">'+r.cur.front+'</td>'
         +'<td class="go-tnum" style="text-align:right">'+r.cur.trainee+'</td></tr>';
     });
-    hh+='<tr style="border-top:2px solid var(--border2)"><td style="font-weight:900">🧮 合算</td>'
+    hh+='<tr style="border-top:2px solid var(--border2)"><td style="font-weight:900">' + icn('calc') + ' 合算</td>'
       +'<td class="go-tnum" style="text-align:right;font-weight:900;color:var(--accent)">'+tot.ltsv.toLocaleString()+'</td>'
       +'<td class="go-tnum" style="text-align:right;font-weight:900">'+(totPct>=0?'+':'')+totPct+'%</td>'
       +'<td class="go-tnum" style="text-align:right;font-weight:800">'+tot.act+'</td>'
@@ -11683,7 +11691,7 @@ function renderDataHub() {
     return '<div class="dh-cat" onclick="dataScrollTo(\'' + c.target + '\')"><span class="dh-cat-ic">' + c.emoji + '</span><div><div class="dh-cat-l">' + c.label + '</div><div class="dh-cat-s">' + c.sub + '</div></div></div>';
   }).join('');
   box.innerHTML = '<div class="dh-wrap">'
-    + '<div class="home-sec-label">📊 データ・分析</div>'
+    + '<div class="home-sec-label">' + icn('chart') + ' データ・分析</div>'
     + '<div class="dh-ai"><span class="dh-ai-ic">🤖</span><div><div class="dh-ai-t">AIアドバイス</div><div class="dh-ai-b">' + evEsc(advice) + '</div></div></div>'
     + '<div class="dh-chart"><div class="dh-chart-hd"><span>稼働分布</span><span class="dh-chart-cnt">今月 ' + mem.length + '人</span></div><div class="dh-bars">' + bars + '</div></div>'
     + '<div class="home-sec-label" style="padding-left:0">項目を選ぶ</div>'
@@ -11782,7 +11790,7 @@ function renderStats() {
     }
   }
   if (roBanner) {
-    roBanner.textContent = _aggActive ? '🧮 合算表示中：閲覧のみ（入力・保存はできません）' : '👁 共有MAPを閲覧中：閲覧のみ（入力・保存はできません）';
+    roBanner.textContent = _aggActive ? '合算表示中：閲覧のみ（入力・保存はできません）' : '共有MAPを閲覧中：閲覧のみ（入力・保存はできません）';
     roBanner.style.display = statsReadOnly ? '' : 'none';
   }
   var hlRows = ['平均稼働','UNIVERSE'];
@@ -14291,7 +14299,7 @@ function renderGoals(){
     if(!_tdAny){
       // 未設定（必要フロント0）なのに祝わない：設定への導線を出す
       if(mFront>0) h+='<div style="font-size:12.5px;color:var(--green);padding:4px 0">🎉 今月のKPIはすべて達成ペースです</div>';
-      else h+='<div style="font-size:12.5px;color:var(--text-dim);padding:4px 0">頂上の<b>必要月収</b>を入れると、必要フロント数と今日やる件数が自動計算されます <span class="gl-add" onclick="glEditGoal()" style="margin-left:6px">⚙ 設定する</span></div>';
+      else h+='<div style="font-size:12.5px;color:var(--text-dim);padding:4px 0">頂上の<b>必要月収</b>を入れると、必要フロント数と今日やる件数が自動計算されます <span class="gl-add" onclick="glEditGoal()" style="margin-left:6px">' + icn('gear') + ' 設定する</span></div>';
     }
     // 習慣
     (g.habits||[]).forEach(function(hb){
@@ -14446,7 +14454,7 @@ function glDelItem(id){
 }
 function glSetMetric(id){
   var it=_glFind(id); if(!it)return;
-  glForm('📊 数値目標',[
+  glForm('数値目標',[
     {label:'目標値',type:'number',value:(typeof it.tgt==='number')?it.tgt:'',ph:'空欄で数値目標を削除',half:true},
     {label:'現在値',type:'number',value:(typeof it.cur==='number')?it.cur:0,half:true},
     {label:'単位（任意）',value:it.unit||'',ph:'万円 / 人 / 冊 など'}
@@ -15037,7 +15045,7 @@ function _p2NorthHtml() {
   var p = state.goals.plan, p2 = _p2(), n = p2.north, g = _p2G();
   var chips = function(arr, pre) { return (arr || []).slice(0, 8).map(function(x) { return '<span class="p2-chip">' + pre + evEsc(x) + '</span>'; }).join(''); };
   var hasGoal = !!(p.title && p.deadline);
-  var h = '<div class="p2-card">' + (typeof _p2StepperHtml === 'function' ? _p2StepperHtml() : '') + '<div class="p2-t">🌟 目標設定<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : '🧭 目標をつくる') + '</span></div>';
+  var h = '<div class="p2-card">' + (typeof _p2StepperHtml === 'function' ? _p2StepperHtml() : '') + '<div class="p2-t">' + icn('star') + ' 目標設定<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : icn('compass') + ' 目標をつくる') + '</span></div>';
   if (hasGoal) {
     // v483: タイトル・月収を大きく＋スローガン（タップで編集）
     h += '<div style="text-align:center;padding:6px 0 4px">'
@@ -15052,7 +15060,7 @@ function _p2NorthHtml() {
     var rem = _glMonthsUntil(p.deadline);
     if (rem > 0) h += '<div class="p2-meta" style="text-align:center">期限まで残り ' + rem + 'ヶ月・月あたり目安フロント ' + _glMonthlyFront(p) + '人</div>';
   } else {
-    h += '<div style="font-size:12.5px;color:var(--text-dim);line-height:1.8">「🧭 目標をつくる」で理想の生活を積み上げると、<br>目標月収→タイトル→期日まで自動で決まります（2分・スキップ可）</div>';
+    h += '<div style="font-size:12.5px;color:var(--text-dim);line-height:1.8">「目標をつくる」で理想の生活を積み上げると、<br>目標月収→タイトル→期日まで自動で決まります（2分・スキップ可）</div>';
   }
   var why = (g.ans && (g.ans.reason_why || '')).split('\n')[0];
   if (why) h += '<div class="p2-meta" style="margin-top:6px;font-style:italic">🔥 ' + evEsc(why.slice(0, 42)) + (why.length > 42 ? '…' : '') + '</div>';
@@ -15076,7 +15084,7 @@ function _p2NorthHtml() {
   var ck = _p2CkCount();
   if (typeof _p2GapSummary === 'function') h += _p2GapSummary();
   h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
-    + '<span class="p2-btn" style="margin:0" onclick="p2GapOpen()">🧮 ギャップ</span>'
+    + '<span class="p2-btn" style="margin:0" onclick="p2GapOpen()">' + icn('calc') + ' ギャップ</span>'
     + '<span class="p2-btn" style="margin:0" onclick="p2RmOpen()">🗺 年間ロードマップ</span>'
     + '<span class="p2-btn" style="margin:0" onclick="p2YearsOpen()">📆 年別目標</span>'
     + '<span class="p2-btn" style="margin:0" onclick="p2SimOpen()">🎮 シミュレーション</span>'
@@ -15099,7 +15107,7 @@ function _p2MonthHtml(ym, off) {
       + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
       + (pace !== null ? '<div class="p2-meta">着地 ' + pace.toLocaleString() + '</div>' : '<div class="p2-meta">実績</div>') + '</span></div>';
   };
-  var h = '<div class="p2-card"' + (isCur ? ' id="p2MonCur"' : '') + '><div class="p2-t">📅 ' + _p2YmLabel(ym) + 'の目標'
+  var h = '<div class="p2-card"' + (isCur ? ' id="p2MonCur"' : '') + '><div class="p2-t">' + icn('calendar') + ' ' + _p2YmLabel(ym) + 'の目標'
     + (m.declared ? '<span style="font-size:10px;color:var(--accent);font-weight:800">✓設定済み</span>' : '')
     + '<span class="sp"></span></div>';
   var inner = ''
@@ -15184,8 +15192,8 @@ function _p2FunnelHtml(ym) {
       + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>';
   };
   var dlrEvs = _p2DlrEvents();
-  var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">🎯 今月のファネル<span class="sp"></span>'
-    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">⚙ 係数（' + c.src + '）</span></div>';
+  var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月のファネル<span class="sp"></span>'
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">' + icn('gear') + ' 係数（' + c.src + '）</span></div>';
   if (!F) {
     h += '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">今月のフロント人数を目標に入れると、必要なCT・FT/マケ・DLR動員数がここに出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
   } else {
@@ -15194,7 +15202,7 @@ function _p2FunnelHtml(ym) {
       + bar('DLR動員', F * c.dlr, act.dlr)
       + '<div class="p2-meta" style="margin-top:6px">PGは係数外（DLRの3日前までに実施）・完了はテンプレ予定の実績から自動カウント</div>';
   }
-  h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は⚙係数で変更可）') + '</div>';
+  h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
   return h;
@@ -15207,7 +15215,7 @@ function p2CoefSheet() {
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2CoefOv'); };
   var admin = (typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union);
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚙ ファネル係数（フロント1人あたり）</div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('gear') + ' ファネル係数（フロント1人あたり）</div>'
     + '<div style="font-size:11px;color:var(--text-dim)">現在適用中: ' + c.src + '（個人 ＞ ユニオン ＞ 標準 8/4/2）</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'p2CoefOv\')">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
@@ -15220,7 +15228,7 @@ function p2CoefSheet() {
     + '<input class="fi" id="p2cDlrKw" value="' + evEsc(_p2DlrKw()) + '" placeholder="DLR,P&amp;P">'
     + '<span class="p2-btn pri" onclick="p2CoefSave(false)">💾 自分の係数として保存</span>'
     + (p2.coef ? '<span class="p2-btn" onclick="p2CoefClear()">↩ 個人設定をやめる（ユニオン/標準に戻す）</span>' : '')
-    + (admin ? '<span class="p2-btn" onclick="p2CoefSave(true)">🏛 ユニオンの既定として保存（管理者）</span>' : '')
+    + (admin ? '<span class="p2-btn" onclick="p2CoefSave(true)">' + icn('landmark') + ' ユニオンの既定として保存（管理者）</span>' : '')
     + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -15237,7 +15245,7 @@ function p2CoefSave(toUnion) {
     var un = currentUser && currentUser.union;
     if (!un) { toast('ユニオンが未設定です'); return; }
     fsSet('unions/' + un + '/events/plan_meta', { pm2: true, coef: v, dlrKw: kw || 'DLR,P&P', updatedAt: new Date().toISOString() })
-      .then(function() { toast('🏛 ユニオン既定の係数を保存しました'); });
+      .then(function() { toast('ユニオン既定の係数を保存しました'); });
     window._unPlanMeta = Object.assign({}, window._unPlanMeta || {}, { pm2: true, coef: v, dlrKw: kw || 'DLR,P&P' });
   } else {
     _p2().coef = v;
@@ -15334,7 +15342,7 @@ function _p2UnionHtml() {
   var mi = meta && meta.milestone;
   var admin = (typeof isCurrentAdmin === 'function' && isCurrentAdmin());
   if (!mi && !admin) return '';
-  var h = '<div class="p2-card"><div class="p2-t">🏛 ' + evEsc(un) + ' マイルストーン<span class="sp"></span>'
+  var h = '<div class="p2-card"><div class="p2-t">' + icn('landmark') + ' ' + evEsc(un) + ' マイルストーン<span class="sp"></span>'
     + (admin ? '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2MilestoneSheet()">✎</span>' : '') + '</div>';
   if (mi) {
     var ym = _p2Ym(0), act = _p2Act(ym);
@@ -15352,7 +15360,7 @@ function p2MilestoneSheet() {
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2MsOv'; ov.style.zIndex = '600';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2MsOv'); };
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🏛 ユニオンマイルストーン</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2MsOv\')">✕</span></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('landmark') + ' ユニオンマイルストーン</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2MsOv\')">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
     + '<div class="p2-meta">タイトル（例：年内にユニオンB1 30人）</div><input class="fi" id="p2msT" value="' + evEsc(mi.t || '') + '" style="margin-bottom:8px">'
     + '<div class="p2-meta">期日（YYYY-MM）</div><input class="fi" id="p2msDue" placeholder="2026-12" value="' + evEsc(mi.due || '') + '" style="margin-bottom:8px">'
@@ -15371,7 +15379,7 @@ function p2MilestoneSave() {
   var g = function(id) { return (document.getElementById(id) || {}).value || ''; };
   var mi = { t: g('p2msT').trim(), due: (typeof _normYm === 'function' ? (_normYm(g('p2msDue')) || '') : g('p2msDue')), b1: parseInt(g('p2msB1'), 10) || 0, pt: parseInt(g('p2msPt'), 10) || 0 };
   fsSet('unions/' + un + '/events/plan_meta', { pm2: true, milestone: mi, updatedAt: new Date().toISOString() })
-    .then(function() { toast('🏛 マイルストーンを保存しました'); });
+    .then(function() { toast('マイルストーンを保存しました'); });
   window._unPlanMeta = Object.assign({}, window._unPlanMeta || {}, { pm2: true, milestone: mi });
   _p2SheetClose('p2MsOv');
   renderPlan();
@@ -15384,7 +15392,7 @@ function _p2ReviewHtml() {
   if (!m || !m.declared || m.review) return '';
   var act = _p2Act(prev);
   var line = function(lb, dec, a) { return (dec === '' || dec == null) ? '' : '<span class="p2-chip">' + lb + ' 目標' + dec + ' → 実績' + a + '</span>'; };
-  return '<div class="p2-card" style="border-color:rgba(139,124,255,.5)"><div class="p2-t">🔁 ' + _p2YmLabel(prev) + 'の検証（1分でOK）</div>'
+  return '<div class="p2-card" style="border-color:rgba(139,124,255,.5)"><div class="p2-t">' + icn('repeat') + ' ' + _p2YmLabel(prev) + 'の検証（1分でOK）</div>'
     + '<div style="margin-bottom:6px">' + line('フロント', m.front, act.front) + line('ユーザーPT', m.upt, act.upt) + line('B1', m.teamB1, act.teamB1) + line('チームPT', m.teamPt, act.teamPt) + '</div>'
     + '<input class="fi" id="p2rvG" placeholder="👍 できた理由" style="margin-bottom:6px">'
     + '<input class="fi" id="p2rvB" placeholder="🤔 できなかった理由" style="margin-bottom:6px">'
@@ -15404,7 +15412,7 @@ function p2ReviewSave(ym, skip) {
 function _p2InboxHtml() {
   var p2 = _p2();
   var items = (p2.inbox || []).filter(function(x) { return x && x.st !== 'done'; });
-  var h = '<div class="p2-card"><div class="p2-t">✍️ 書き出し（未整理 ' + items.length + '）<span class="sp"></span>'
+  var h = '<div class="p2-card"><div class="p2-t">' + icn('pencil') + ' 書き出し（未整理 ' + items.length + '）<span class="sp"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2InkOpen()">✍️ 書く</span></div>';
   if (!items.length) {
     h += '<div class="p2-meta" style="line-height:1.8">思いついたことを右下の✍️（またはここ）から殴り書き。<br>あとで「タスク化・目標化・メンバーメモ化」に振り分けられます</div>';
@@ -16330,7 +16338,7 @@ function _p2RmRender() {
   var h = '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap"><span class="p2-meta">表示期間</span>' + ySel + mSel
     + '<span class="sp" style="flex:1"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2GapOpen()">🧮 ギャップ</span>'
-    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2RmRowsOpen()">⚙ 行の編集</span></div>';
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2RmRowsOpen()">' + icn('gear') + ' 行の編集</span></div>';
   h += '<div class="p2rm-wrap"><table class="p2rm-tbl">';
   // v483: 複数月にまたがるMSは帯で表示（重なりはレーン分け）
   var first = yms[0], last = yms[yms.length - 1];
@@ -16486,7 +16494,7 @@ function _p2RmMiniHtml() {
     var f = _p2RmFront(rm, ym);
     return '<div class="mc' + (ym === cur ? ' cur' : '') + '"><div class="ml">' + parseInt(ym.slice(5, 7), 10) + '月</div>' + chips + '<div class="mf">' + (f === '' ? '–' : f) + '</div></div>';
   }).join('');
-  return '<div class="p2-card"><div class="p2-t">🗺 年間ロードマップ<span class="sp"></span>'
+  return '<div class="p2-card"><div class="p2-t">' + icn('map') + ' 年間ロードマップ<span class="sp"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2RmOpen()">開く</span></div>'
     + '<div class="p2rm-mini">' + cells + '</div>'
     + '<div class="p2-meta" style="margin-top:4px;text-align:center">下段=フロント目標</div></div>';
@@ -16666,7 +16674,7 @@ function p2RmRowsOpen() {
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2RmRowsOv'; ov.style.zIndex = '660';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2RmRowsOv'); };
   ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚙ ロードマップの行を編集</div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('gear') + ' ロードマップの行を編集</div>'
     + '<div style="font-size:10.5px;color:var(--text-dim)">名前の変更・並び替え・非表示・追加ができます</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'p2RmRowsOv\')">✕</span></div>'
     + '<div style="padding:0 16px 18px" id="p2RmRowsBody"></div></div>';
@@ -16848,7 +16856,7 @@ function _p2GapRender() {
     h += '<div class="p2-meta" style="margin-top:4px">🕐 フロントBRはLOI→Q2→Q3→BRで最短' + g.rates.brLead + 'ヶ月。あと' + brIt.gap + '人なら<b style="color:#F6C744">' + (leadTo ? _p2YmLabel(leadTo) + 'までにフロント' + brIt.gap + '人' : 'フロント' + brIt.gap + '人（早いほど◎）') + '</b>が必要です</div>';
   }
   // 単価・倍率の設定
-  h += '<details style="margin-top:8px"><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">⚙ 単価・倍率の設定</summary>'
+  h += '<details style="margin-top:8px"><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">' + icn('gear') + ' 単価・倍率の設定</summary>'
     + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px;align-items:center">'
     + '<span>1QR=</span><input class="fi" type="number" value="' + g.rates.qrYen + '" style="width:64px;padding:6px;text-align:center" onchange="p2GapRate(\'qrYen\',this.value)"><span>万円</span>'
     + '<span>　1環境=</span><input class="fi" type="number" value="' + g.rates.envYen + '" style="width:64px;padding:6px;text-align:center" onchange="p2GapRate(\'envYen\',this.value)"><span>万円</span>'
@@ -17210,7 +17218,7 @@ function glSetAdp(){
 function glSetFunnel(){
   var p=state.goals.plan;
   var fields=GL_STAGES.map(function(st){ return {label:st.label,type:'number',value:p.funnel[st.k],half:true}; });
-  glForm('⚙️ 係数（フロント1人あたりの必要数）',fields,function(v){
+  glForm('係数（フロント1人あたりの必要数）',fields,function(v){
     GL_STAGES.forEach(function(st,i){ var n=parseInt(v[i],10); if(!isNaN(n)) p.funnel[st.k]=n; });
     saveGoals(); renderGoals();
   });
@@ -17853,7 +17861,7 @@ function _fitWorkHtml() {
     + (_fitProgs || []).map(function(p) { return '<div class="rb' + (prog && prog.id === p.id ? ' sel' : '') + '" style="flex:1;min-width:72px;padding:8px 4px;font-size:12px;text-align:center" onclick="fitWorkProg(\'' + p.id + '\')">' + evEsc(p.name) + '</div>'; }).join('')
     + '</div><div id="fitPrevInfo" style="font-size:11px;color:var(--text-dim);margin-top:6px">前回値を読み込み中...</div>'
     + '<div style="font-size:10.5px;color:var(--text-dim);margin-top:4px">「限」＝限界（フェイル）まで追い込んだ印（前回表示の !）。「D+」＝ドロップセット。「⏱」＝インターバルタイマー。やらない種目は「スキップ」で記録に残せます</div>'
-    + '<button class="fol-add" style="margin-top:8px" onclick="fitTab(\'menu\')">⚙️ メニューを編集（大項目・種目マスター）</button></div>';
+    + '<button class="fol-add" style="margin-top:8px" onclick="fitTab(\'menu\')">' + icn('gear') + ' メニューを編集（大項目・種目マスター）</button></div>';
   // v436: 記録済みの日は編集モードであることを明示＋削除ボタン
   if (_fitDay.session) {
     h += '<div class="fit-card" style="border-left:3px solid var(--accent)">'
@@ -17936,7 +17944,7 @@ function _fitWorkFill() {
     }
     h += '</div><div style="display:flex;gap:8px;margin-top:6px"><button class="fol-add" style="margin:0;flex:1" onclick="fitAddSet(' + xi + ')">＋ セット追加</button></div></div>';
   });
-  if (!_fitWorkCards.length) h = '<div class="fit-card"><div style="font-size:12.5px;color:var(--text-dim)">この大項目に種目がありません。「⚙️ メニューを編集」から種目を追加してください</div></div>';
+  if (!_fitWorkCards.length) h = '<div class="fit-card"><div style="font-size:12.5px;color:var(--text-dim)">この大項目に種目がありません。「メニューを編集」から種目を追加してください</div></div>';
   box.innerHTML = h;
   _fitUiDraft = null; // v447: 退避分は1回の再描画で消費
 }
@@ -18121,7 +18129,7 @@ function fitIvStart(xi) {
 }
 function fitSaveSession() {
   var prog = _fitSelProg();
-  if (!prog) { toast('大項目（メニュー）がありません。⚙️メニューを編集から作成してください'); return; }
+  if (!prog) { toast('大項目（メニュー）がありません。メニューを編集から作成してください'); return; }
   var sets = [];
   var rows = document.querySelectorAll('#fitExList .fit-set-row');
   for (var i = 0; i < rows.length; i++) {
@@ -19007,7 +19015,7 @@ function _unionSaveFromModal(editRawId) {
   };
   if (!editRawId && !confirm('🏛 「' + un + '」の' + (area ? '「' + area + '」地域の' : '全') + 'メンバーのカレンダーに表示されます。よろしいですか？')) return;
   db.doc('unions/' + un + '/events/' + id).set(doc).then(function() {
-    toast('🏛 ユニオン予定を保存しました ✓');
+    toast('ユニオン予定を保存しました ✓');
   }).catch(function(err) { toast('⚠️ 保存できませんでした: ' + ((err && err.message) || '権限/通信を確認してください')); });
   var found = false;
   for (var i = 0; i < _unionRaw.length; i++) { if (_unionRaw[i].id === id) { _unionRaw[i] = doc; found = true; break; } }
@@ -19020,7 +19028,7 @@ function _unionSaveFromModal(editRawId) {
 function unionDelete(rawId) {
   if (!confirm('🏛 このユニオン予定を削除しますか？（全メンバーのカレンダーから消えます）')) return;
   var un = currentUser.union;
-  db.doc('unions/' + un + '/events/' + rawId).delete().then(function() { toast('🏛 削除しました'); })
+  db.doc('unions/' + un + '/events/' + rawId).delete().then(function() { toast('削除しました'); })
     .catch(function(err) { toast('⚠️ 削除できませんでした: ' + ((err && err.message) || '')); });
   _unionRaw = _unionRaw.filter(function(u) { return u.id !== rawId; });
   _unionApplyToState();
@@ -19043,7 +19051,7 @@ function openUnionEventSheet(compId) {
       return;
     }
     if (typeof loadUnionEvents === 'function' && currentUser && currentUser.union) {
-      toast('🏛 ユニオン予定を読み込み直しています...');
+      toast('ユニオン予定を読み込み直しています...');
       window._unRetry = rawId;
       loadUnionEvents();
       setTimeout(function() { openUnionEventSheet(compId); }, 1200);
@@ -24174,7 +24182,7 @@ function evTplQuickAdd(tplId, ds) {
   if (!t) return;
   // v409: ユニオン共有テンプレの即登録は、必ず確認してからユニオン予定として配信（誤爆防止）
   if (t.unionScope) {
-    if (!(typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)) { toast('🏛 ユニオン共有テンプレはユニオン管理者のみ使えます'); return; }
+    if (!(typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)) { toast('ユニオン共有テンプレはユニオン管理者のみ使えます'); return; }
     var un9 = currentUser.union;
     var area9 = t.unionAreaMine ? (currentUser.area || '') : '';
     if (!confirm('🏛 「' + un9 + '」の' + (area9 ? '「' + area9 + '」地域の' : '全') + 'メンバーのカレンダーに「' + (t.name || '') + '」を登録します。よろしいですか？')) return;
@@ -24195,7 +24203,7 @@ function evTplQuickAdd(tplId, ds) {
       place: '', memo: t.memo || '', color: _qc9 ? _qc9.color : '',
       createdBy: currentUser.uid, createdByName: currentUser.org || currentUser.name || '',
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    db.doc('unions/' + un9 + '/events/' + id9).set(doc9).then(function(){ toast('🏛 ユニオン予定を登録しました ✓'); })
+    db.doc('unions/' + un9 + '/events/' + id9).set(doc9).then(function(){ toast('ユニオン予定を登録しました ✓'); })
       .catch(function(err){ toast('⚠️ 登録できませんでした: ' + ((err && err.message) || '権限/通信を確認してください')); });
     _unionRaw.push(doc9);
     _unionApplyToState();
@@ -25397,9 +25405,9 @@ function openEvTplEdit(id) {
     + '</div>'
     + '<div class="fr" style="margin-top:2px"><div class="rg"><div class="rb' + (t && t.allDay ? ' sel' : '') + '" id="evtF_allday" onclick="evtToggleAllDay()">🌞 終日（時刻なし）</div></div></div>'
     + ((typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)
-      ? '<div class="fr"><label class="fl">🏛 共有範囲（ユニオン管理者）</label><div class="rg">'
+      ? '<div class="fr"><label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> 共有範囲（ユニオン管理者）</label><div class="rg">'
         + '<div class="rb' + (!(t && t.unionScope) ? ' sel' : '') + '" id="evtF_un0" onclick="evtUnionScope(false)">自分のみ</div>'
-        + '<div class="rb' + ((t && t.unionScope) ? ' sel' : '') + '" id="evtF_un1" onclick="evtUnionScope(true)">🏛 ユニオン全員</div>'
+        + '<div class="rb' + ((t && t.unionScope) ? ' sel' : '') + '" id="evtF_un1" onclick="evtUnionScope(true)"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> ユニオン全員</div>'
         + '</div><div class="rg" id="evtF_unaRow" style="margin-top:6px;display:' + ((t && t.unionScope) ? '' : 'none') + '">'
         + '<div class="rb' + (!(t && t.unionAreaMine) ? ' sel' : '') + '" id="evtF_una0" onclick="evtUnionArea(false)">全地域</div>'
         + '<div class="rb' + ((t && t.unionAreaMine) ? ' sel' : '') + '" id="evtF_una1" onclick="evtUnionArea(true)">📍 ' + evEsc((currentUser && currentUser.area) || '地域') + ' のみ</div>'
