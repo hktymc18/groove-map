@@ -2432,7 +2432,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v505</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v506</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4826,6 +4826,17 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     ci.setAttribute('stroke-width', _isBrUp ? '3' : '1.6');
     if (m._foreign) ci.setAttribute('stroke-dasharray', '4,3');
     g.appendChild(ci);
+    // v506: 研修生・フレッシュは枠を点滅（Safariでも動くopacityアニメの脈動リング）。印刷では出さない
+    if ((isT || _isFrO) && !isPrint) {
+      var _pr6 = document.createElementNS(NS, 'circle');
+      _pr6.setAttribute('cx', pos.x); _pr6.setAttribute('cy', pos.y); _pr6.setAttribute('r', r + 3.5);
+      _pr6.setAttribute('fill', 'none');
+      _pr6.setAttribute('stroke', stroke);
+      _pr6.setAttribute('stroke-width', '3');
+      _pr6.setAttribute('class', 'pc-pulse-ring orbit-pulse');
+      _pr6.setAttribute('pointer-events', 'none');
+      g.insertBefore(_pr6, g.firstChild);
+    }
     if (_isBrUp && !isPrint) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
     if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)';
     // v502: 旧MAP式の4分割サークル（左上=名前2行／右上=稼働／左下=タイトル／右下=(固定PT)・GSV）
@@ -6069,7 +6080,7 @@ function icn(name, style) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v505';
+  var DATA_VERSION = 'v506';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -7043,6 +7054,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v506', d:'2026-09-22', items:['◎ 運動会MAPでも研修生（水色）・フレッシュ（金色）の丸の枠が点滅して目立つように（ツリーのケアバッジと同じ脈動リング・Safariでも動作）。印刷時は点滅なしのすっきり表示'] },
   { v:'v505', d:'2026-09-22', items:['🎂 誕生日フォロー機能：30日以内に誕生日を迎えるメンバーをMAPでまとめて確認できます','・MAP上部の絞り込みに「誕生日 N」チップを追加（該当者がいる時だけ表示）。タップで該当メンバーを強調＋一覧シートが開きます','・一覧シートは近い順に「名前・誕生日・あと◯日・何歳になるか」を表示。LINEでお祝い・＋予定で会う約束にそのまま進めます','・ツリーカード/運動会の丸/モバイルカードに、誕生日が近い人だけピンクのケーキ＋日付バッジを表示','・「今日から30日先まで」のローリング判定なので月またぎでも漏れません（HOMEの誕生日リマインドは従来どおり）'] },
   { v:'v504', d:'2026-09-22', items:['◎ 運動会MAP調整：名前が丸からはみ出ないように配置と文字サイズを修正（姓2＋名2の4文字時のサイズを上限に、行の文字数が多いほど自動で縮小して円内に収めます）','⭕ 中央（0段目・自分）の丸を他のメンバーと同じサイズに統一'] },
   { v:'v503', d:'2026-09-22', items:['🎂 生年月日の年の選択肢を「今年−19年」（今は2007年）までに制限：この仕事は20才からのため。初期表示も「今年−24年」（今は2002年）に。どちらも年が変わると自動で1年ずつ進みます','🔥 やる気アイコンを見やすく：ひと回り大きく・グラデーションの塗りつぶしに（緑の芽・黄→橙の稲妻・橙→赤の炎）','🎨 アイコン刷新 第3弾：メンバー情報カードの予定/タスク/OLボタン・気になるメンバーの層アイコンと記録ボタン・結合バッジ・カレンダーの月/週/日メニュー・今日のタスク見出しなどを線画アイコンに'] },
