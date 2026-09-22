@@ -2124,6 +2124,7 @@ body:not(.light) .me-tab:not(.on),body:not(.light) .md-tab:not(.on){color:#c6cdd
 select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;text-align-last:right;cursor:pointer}
 .ed-chev{color:var(--text-dim);font-size:10px;flex:none;pointer-events:none}
 /* 誕生日：未入力時はiOS等の日付プレースホルダを隠し「未設定」を表示 */
+.lic{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-0.15em;flex:none}
 .ed-birth{display:flex;gap:6px}
 .ed-birth select.ed-in{min-width:0}
 .ed-help{font-size:12px;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin:0 0 10px;line-height:1.6;display:none}
@@ -2430,7 +2431,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v499</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v500</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2530,7 +2531,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="pv-btn" id="pvKanban" onclick="switchPCView('kanban')">カンバン</div>
       <div class="pt-sep"></div>
       <div class="pt-search" onclick="openSearchModal()">
-        <span style="font-size:13px">🔍</span>
+        <span style="font-size:13px;display:flex;align-items:center"><svg class="lic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
         <span id="pcSearchText" style="font-size:12px;color:var(--text-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">検索</span>
         <span id="pcSearchClear" style="display:none;font-size:14px;color:var(--text-dim);cursor:pointer" onclick="event.stopPropagation();clearSearch()">✕</span>
       </div>
@@ -2769,18 +2770,18 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('calendar')">🗓 月</div>
       <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('week')">📆 週</div>
       <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('day')">📅 日</div>
-      <div class="ev-cal-vitem" onclick="calViewMenuClose();calOpenSearch()">🔍 検索</div>
+      <div class="ev-cal-vitem" onclick="calViewMenuClose();calOpenSearch()"><svg class="lic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> 検索</div>
     </div>
   </div>
 
 </div><!-- /scroll-area -->
 
 <!-- v308: 3D組織マップ（MAPタブの🧊3Dボタンで切替） -->
-<div class="map3d-btn" id="map3dBtn" onclick="open3DMap()" style="display:none">🧊 3D</div>
+<div class="map3d-btn" id="map3dBtn" onclick="open3DMap()" style="display:none"><svg class="lic" viewBox="0 0 24 24"><path d="M12 2.5l8.5 4.75v9.5L12 21.5l-8.5-4.75v-9.5z"/><path d="M12 12l8.5-4.75M12 12L3.5 7.25M12 12v9.5"/></svg> 3D</div>
 <div id="map3dPane" class="full" style="display:none">
   <div class="ev-cal-hdr">
     <div class="ev-cal-x" onclick="close3DMap()" title="2D表示へ戻る">✕</div>
-    <div class="ev-cal-title" id="map3dTitle">🧊 3D組織マップ</div>
+    <div class="ev-cal-title" id="map3dTitle"><svg class="lic" viewBox="0 0 24 24"><path d="M12 2.5l8.5 4.75v9.5L12 21.5l-8.5-4.75v-9.5z"/><path d="M12 12l8.5-4.75M12 12L3.5 7.25M12 12v9.5"/></svg> 3D組織マップ</div>
     <div class="ev-cal-nav m3hbtn" onclick="map3dResetView()" title="視点リセット">🎯</div>
     <div class="ev-cal-nav m3hbtn" id="m3AutoBtn" onclick="m3ToggleAuto()" title="自動回転プレゼン">▶</div>
     <div class="ev-cal-nav m3hbtn" onclick="m3TimeTravel()" title="成長タイムトラベル再生">⏳</div>
@@ -2900,13 +2901,13 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 <!-- 右クリックメニュー -->
 <div id="ctxMenu">
   <div class="ctx-label" id="ctxLabel">メンバー名</div>
-  <div class="ctx-item" onclick="ctxAddChild()">＋ 直下に追加</div>
+  <div class="ctx-item" onclick="ctxAddChild()"><svg class="lic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> 直下に追加</div>
   <div class="ctx-divider"></div>
-  <div class="ctx-item" onclick="ctxEdit()">✏️ 編集</div>
-  <div class="ctx-item" id="ctxInsta" onclick="ctxOpenInsta()" style="display:none">📷 Instagramを開く</div>
-  <div class="ctx-item" id="ctxLine" onclick="ctxOpenLine()" style="display:none">💬 LINEを開く</div>
+  <div class="ctx-item" onclick="ctxEdit()"><svg class="lic" viewBox="0 0 24 24"><path d="M4 20l4.5-1 11-11a2.12 2.12 0 00-3-3l-11 11zM13.5 6.5l3 3"/></svg> 編集</div>
+  <div class="ctx-item" id="ctxInsta" onclick="ctxOpenInsta()" style="display:none"><svg class="lic" viewBox="0 0 24 24"><path d="M8 7l1.5-2.5h5L16 7"/><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/></svg> Instagramを開く</div>
+  <div class="ctx-item" id="ctxLine" onclick="ctxOpenLine()" style="display:none"><svg class="lic" viewBox="0 0 24 24"><path d="M12 21a9 9 0 10-8.2-5.3L3 21l5.3-.8A9 9 0 0012 21z"/></svg> LINEを開く</div>
   <div class="ctx-divider"></div>
-  <div class="ctx-item danger" onclick="ctxDelete()">🗑 削除</div>
+  <div class="ctx-item danger" onclick="ctxDelete()"><svg class="lic" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5.5M14 11v5.5"/></svg> 削除</div>
 </div>
 
 
@@ -5925,9 +5926,34 @@ function saveProfile() {
   closeProfileModal(null);
 }
 
+// v500: ミニマル線画アイコン（絵文字置き換え・currentColorでテーマ追従）
+var ICONS = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  pencil: '<path d="M4 20l4.5-1 11-11a2.12 2.12 0 00-3-3l-11 11zM13.5 6.5l3 3"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5.5M14 11v5.5"/>',
+  camera: '<path d="M8 7l1.5-2.5h5L16 7"/><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/>',
+  chat: '<path d="M12 21a9 9 0 10-8.2-5.3L3 21l5.3-.8A9 9 0 0012 21z"/>',
+  cube: '<path d="M12 2.5l8.5 4.75v9.5L12 21.5l-8.5-4.75v-9.5z"/><path d="M12 12l8.5-4.75M12 12L3.5 7.25M12 12v9.5"/>',
+  compass: '<circle cx="12" cy="12" r="9.5"/><path d="M16 8l-2.5 5.5L8 16l2.5-5.5z"/>',
+  clipboard: '<rect x="4.5" y="4" width="15" height="18" rx="2"/><path d="M9 2.5h6V6H9zM8.5 11.5h7M8.5 15.5h7"/>',
+  users: '<circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 5.5a3.2 3.2 0 010 6.2M18 14.5c2.3.7 3.7 2.6 3.7 5.5"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  refresh: '<path d="M20 11a8 8 0 10-2.2 6.5"/><path d="M20.5 4.5V11H14"/>',
+  landmark: '<path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/>',
+  dumbbell: '<path d="M7 6.5v11M17 6.5v11M3.5 9.5v5M20.5 9.5v5M7 12h10"/>',
+  shield: '<path d="M12 2.8l7.5 3v5.7c0 4.7-3.2 7.9-7.5 9.7-4.3-1.8-7.5-5-7.5-9.7V5.8z"/><path d="M9 12l2 2 4-4"/>',
+  gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.2 2.2M16.6 16.6l2.2 2.2M18.8 5.2l-2.2 2.2M7.4 16.6l-2.2 2.2"/>',
+  share2: '<circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="5.5" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="M8.4 10.8l7.2-4M8.4 13.2l7.2 4"/>',
+  alert: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 9.5v4.5"/><path d="M12 17.2v.1"/>'
+};
+function icn(name, style) {
+  return '<svg class="lic" viewBox="0 0 24 24"' + (style ? ' style="' + style + '"' : '') + '>' + (ICONS[name] || '') + '</svg>';
+}
+
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v499';
+  var DATA_VERSION = 'v500';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6129,21 +6155,21 @@ function switchView(v) {
 function openMobileMenu() {
   closeMobileMenu();
   var items = [
-    { v:'plan',    ic:'🧭', lb:'PLAN',    sub:'目標・計画・振り返り' },
-    { v:'ol',      ic:'📋', lb:'OL',      sub:'フレッシュ・アウトライン' },
-    { v:'members', ic:'👥', lb:'メンバー', sub:'一覧・絞り込み' },
-    { v:'ideal',   ic:'🎯', lb:'理想MAP', sub:'ありたい組織図' }
+    { v:'plan',    ic:icn('compass'), lb:'PLAN',    sub:'目標・計画・振り返り' },
+    { v:'ol',      ic:icn('clipboard'), lb:'OL',      sub:'フレッシュ・アウトライン' },
+    { v:'members', ic:icn('users'), lb:'メンバー', sub:'一覧・絞り込み' },
+    { v:'ideal',   ic:icn('target'), lb:'理想MAP', sub:'ありたい組織図' }
   ].filter(function(it){ return !(it.v==='members' && typeof membersTabHidden==='function' && membersTabHidden()); });
   var rows = items.map(function(it){
     var on = currentView === it.v;
     return '<div class="ms-act" onclick="closeMobileMenu();switchView(\'' + it.v + '\')" style="' + (on?'color:var(--accent)':'') + '"><span class="ms-aic">' + it.ic + '</span>' + it.lb + (on?' <span style="color:var(--accent)">✓</span>':'') + '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + it.sub + '</span><span class="ms-ch">›</span></div>';
   }).join('');
-  if (sharedOwners && sharedOwners.length) rows += '<div class="ms-act" onclick="closeMobileMenu();openSharedDashboard()"><span class="ms-aic">🤝</span>共有MAP<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + sharedOwners.length + '件</span><span class="ms-ch">›</span></div>';
-  rows += '<div class="ms-act" onclick="closeMobileMenu();openReapproachSheet()"><span class="ms-aic">🔄</span>再アプローチ' + ((_reapproach && _reapproach.length) ? '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + _reapproach.length + '件</span>' : '') + '<span class="ms-ch">›</span></div>'; // v361
-  if (currentUser && currentUser.union) rows += '<div class="ms-act" onclick="closeMobileMenu();openUnionListSheet()"><span class="ms-aic">🏛</span>ユニオン予定<span class="ms-ch">›</span></div>'; // v392
-  if (typeof _fitOwner === 'function' && _fitOwner()) rows += '<div class="ms-act" onclick="closeMobileMenu();fitOpen()"><span class="ms-aic">💪</span>トレーニング<span class="ms-ch">›</span></div>'; // v424: オーナー専用
-  if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) rows += '<div class="ms-act" onclick="closeMobileMenu();openAdminPanel()"><span class="ms-aic">🛡</span>アカウント管理<span class="ms-ch">›</span></div>';
-  rows += '<div class="ms-act" onclick="closeMobileMenu();openProfileModal()"><span class="ms-aic">⚙️</span>設定・プロフィール<span class="ms-ch">›</span></div>';
+  if (sharedOwners && sharedOwners.length) rows += '<div class="ms-act" onclick="closeMobileMenu();openSharedDashboard()"><span class="ms-aic">' + icn('share2') + '</span>共有MAP<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + sharedOwners.length + '件</span><span class="ms-ch">›</span></div>';
+  rows += '<div class="ms-act" onclick="closeMobileMenu();openReapproachSheet()"><span class="ms-aic">' + icn('refresh') + '</span>再アプローチ' + ((_reapproach && _reapproach.length) ? '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + _reapproach.length + '件</span>' : '') + '<span class="ms-ch">›</span></div>'; // v361
+  if (currentUser && currentUser.union) rows += '<div class="ms-act" onclick="closeMobileMenu();openUnionListSheet()"><span class="ms-aic">' + icn('landmark') + '</span>ユニオン予定<span class="ms-ch">›</span></div>'; // v392
+  if (typeof _fitOwner === 'function' && _fitOwner()) rows += '<div class="ms-act" onclick="closeMobileMenu();fitOpen()"><span class="ms-aic">' + icn('dumbbell') + '</span>トレーニング<span class="ms-ch">›</span></div>'; // v424: オーナー専用
+  if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) rows += '<div class="ms-act" onclick="closeMobileMenu();openAdminPanel()"><span class="ms-aic">' + icn('shield') + '</span>アカウント管理<span class="ms-ch">›</span></div>';
+  rows += '<div class="ms-act" onclick="closeMobileMenu();openProfileModal()"><span class="ms-aic">' + icn('gear') + '</span>設定・プロフィール<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
   ov.className = 'ms-overlay'; ov.id = 'mobileMenuOv';
   ov.onclick = function(e){ if (e.target === ov) closeMobileMenu(); };
@@ -6901,6 +6927,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v500', d:'2026-09-22', items:['🎨 アイコン刷新 第1弾：絵文字をミニマルな線画アイコンに置き換え開始。まずは右クリック/＋メニュー（編集・削除・Instagram・LINE）・☰メニュー・検索・3Dボタン・ToDoの期限切れ見出しから。ライト/ダークどちらのテーマにも自動で馴染みます（順次ほかの画面にも展開予定）'] },
   { v:'v499', d:'2026-09-22', items:['🎂 生年月日の「年」プルダウンの初期表示を2002年に変更（メンバー追加時・生年月日未設定の編集時）。月と日を選ぶまでは未設定のままなので、年だけ既定のままでも誤って保存されません'] },
   { v:'v498', d:'2026-09-22', items:['◎ MAPの「俯瞰」ボタンを「運動会」に名称変更し、位置をツリーの右隣に移動（現状MAP・理想MAPとも）'] },
   { v:'v497', d:'2026-09-22', items:['🎂 生年月日を年・月・日のプルダウン選択に変更：「2002」と入力中に0002になる問題と、入力した文字が確定まで見えない問題を根本解消','⛴→🔴 「金の船」フラグを廃止し「優先度」に一本化：編集フォームの項目・MAP/メンバーの絞り込み・OLタブの金の船リスト・カードの⛴マークを削除。必要数とギャップの「Qルビー候補」は優先度「高」の人数から自動集計されるように','🗺 メンバー追加時の適用MAPの既定を「両方」に変更（理想MAPを開いて追加した場合は従来どおり「理想」）','✍️ 稼働タイプAの説明を「仕事を変えてS稼働になる日確定」に変更','↕️ 編集フォームの「やる気」を稼働率(%)の下に移動','📌 画面端のメンバーで「＋直下に追加」メニューが見切れないように位置を自動調整','🔤 MAPカードの名前の文字サイズを統一：漢字4文字＋S100%が収まるサイズを上限に、5文字以上の時だけ縮小（短い名前だけ大きく目立つのを解消）'] },
@@ -12688,7 +12715,7 @@ function openPhotoCrop(srcDataUrl) {
       + '<div id="cropVp" style="width:' + CROP_V + 'px;height:' + CROP_V + 'px;border-radius:50%;overflow:hidden;border:3px solid var(--accent);position:relative;touch-action:none;cursor:grab;background:#000">'
       + '<img id="cropImgEl" src="' + srcDataUrl + '" style="position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;max-width:none" alt="">'
       + '</div></div>'
-      + '<div style="display:flex;align-items:center;gap:10px;padding:10px 22px"><span style="font-size:16px">🔍</span>'
+      + '<div style="display:flex;align-items:center;gap:10px;padding:10px 22px"><span style="font-size:16px;display:flex;align-items:center">' + icn('search') + '</span>'
       + '<input id="cropZoom" type="range" min="100" max="500" value="100" aria-label="拡大率" oninput="cropSetZoom(this.value)" style="flex:1;accent-color:var(--accent)"></div>'
       + '<div style="display:flex;gap:9px;padding:4px 16px 16px">'
       + '<button type="button" onclick="cropConfirm()" style="flex:1;padding:13px;border-radius:11px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;cursor:pointer">この範囲で決定</button>'
@@ -22809,7 +22836,7 @@ function _renderAgendaCore() {
     var hits = tasks.filter(function(e){
       return ((e.title || '') + ' ' + (e.memo || '')).toLowerCase().indexOf(q) >= 0;
     }).sort(_todoSortDue);
-    wrap.innerHTML = '<div class="td-sechd">🔍 検索結果 ' + hits.length + '件</div>'
+    wrap.innerHTML = '<div class="td-sechd">' + icn('search') + ' 検索結果 ' + hits.length + '件</div>'
       + (hits.length ? hits.map(todoRowHtml).join('') : '<div class="ev-empty" style="padding:24px 16px">「' + evEsc(_evQuickFilter) + '」に一致するタスクはありません</div>');
     return;
   }
@@ -22913,7 +22940,7 @@ function _renderAgendaCore() {
   var _tdyList = shown.filter(function(e){ return e.date === t9; });
   var _futList = shown.filter(function(e){ return !e.date || e.date > t9; });
   if (_odList.length) {
-    h += '<div class="td-secttl" style="color:var(--red)">⚠️ 期限切れ ' + _odList.length + '件</div>';
+    h += '<div class="td-secttl" style="color:var(--red)">' + icn('alert', 'width:13px;height:13px') + ' 期限切れ ' + _odList.length + '件</div>';
     h += _odList.map(todoRowHtml).join('');
   }
   if (_tdyList.length) h += '<div class="td-secttl">今日の予定</div>' + _tdyList.map(todoRowHtml).join('');
