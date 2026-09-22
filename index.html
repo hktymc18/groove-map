@@ -2431,7 +2431,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v501</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v502</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4670,7 +4670,7 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
   // 半径・ノードサイズ（人数で自動調整）
   var N = members.length;
   var R0 = 120, RS = N > 160 ? 78 : (N > 80 ? 88 : 100);
-  var nr = Math.max(13, Math.min(24, Math.round(1100 / Math.max(N, 20))));
+  var nr = Math.max(20, Math.min(34, Math.round(1600 / Math.max(N, 20)))); // v502: 4分割表示のため拡大
   var stag = RS * 0.30; // 混雑リング用の内外スタガ
   var Rmax = R0 + Math.max(maxD - 1, 0) * RS + stag;
   // v486: 旧MAP同様の楕円（横長）。画面比率に合わせて横に伸ばす（印刷はA3横の比率）
@@ -4697,6 +4697,26 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
       for (var i = 1; i < ids.length; i++) {
         var need = minPx / Math.max(degLen((angle[ids[i - 1]] + angle[ids[i]]) / 2), 0.5);
         if (angle[ids[i]] < angle[ids[i - 1]] + need) angle[ids[i]] = angle[ids[i - 1]] + need;
+      }
+      // v502: 弧長近似の誤差（楕円の端で実距離が短くなる）と一周の巻き戻りペアを、
+      // 実測距離の緩和反復（詰まったペアを両側へ半分ずつ押し広げる）で補正
+      var perim9 = Math.PI * (R * ASPECT + R);
+      if (ids.length * minPx < perim9 * 0.98) {
+        for (var it9 = 0; it9 < 8; it9++) {
+          var moved9 = false;
+          for (var i9 = 0; i9 < ids.length; i9++) {
+            var idA9 = ids[(i9 === 0) ? ids.length - 1 : i9 - 1], idB9 = ids[i9];
+            var aA9 = (i9 === 0) ? angle[idA9] - 360 : angle[idA9], aB9 = angle[idB9];
+            var pA9 = ept(R, aA9), pB9 = ept(R, aB9);
+            var dist9 = Math.sqrt(Math.pow(pA9.x - pB9.x, 2) + Math.pow(pA9.y - pB9.y, 2));
+            if (dist9 < minPx - 0.5) {
+              var half9 = (minPx - dist9) / 2 / Math.max(degLen((aA9 + aB9) / 2), 0.5);
+              angle[idA9] -= half9; angle[idB9] += half9;
+              moved9 = true;
+            }
+          }
+          if (!moved9) break;
+        }
       }
       // 一周分を超えて先頭と被る場合は全体を均等に圧縮
       var span = angle[ids[ids.length - 1]] - angle[ids[0]];
@@ -4801,38 +4821,57 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     g.appendChild(ci);
     if (_isBrUp && !isPrint) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
     if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)';
-    var nm = ((m.lastName || '') + (m.firstName || '')).replace(/\s+/g, '').substring(0, 4) || '—';
-    var tx = document.createElementNS(NS, 'text');
-    tx.setAttribute('x', pos.x); tx.setAttribute('y', pos.y + (r >= 17 ? -1 : 3));
-    tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('pointer-events', 'none');
-    tx.setAttribute('font-size', (r >= 20 ? 11 : (r >= 15 ? 9.5 : 8.5)) + 'px'); tx.setAttribute('font-weight', '800');
-    tx.setAttribute('fill', m.gender === 'female' ? (light ? '#db2777' : '#f9a8d4') : (light ? '#1a1f2b' : '#f2f4f8'));
-    tx.textContent = nm;
-    g.appendChild(tx);
-    if (r >= 17) {
-      var t2 = document.createElementNS(NS, 'text');
-      t2.setAttribute('x', pos.x); t2.setAttribute('y', pos.y + 10);
-      t2.setAttribute('text-anchor', 'middle'); t2.setAttribute('pointer-events', 'none');
-      t2.setAttribute('font-size', '7.5px'); t2.setAttribute('font-weight', '700');
-      t2.setAttribute('fill', stroke);
-      t2.textContent = (typeof titleAbbr === 'function' ? titleAbbr(m.title || '—') : (m.title || '—'));
-      g.appendChild(t2);
+    // v502: 旧MAP式の4分割サークル（左上=名前2行／右上=稼働／左下=タイトル／右下=(固定PT)・GSV）
+    var _txtCol = light ? '#1a1f2b' : '#f2f4f8';
+    var _dimCol = light ? '#3a4560' : '#cbd5e1';
+    var _divCol = light ? '#556070' : '#7d8aa0';
+    var lv2 = document.createElementNS(NS, 'line');
+    lv2.setAttribute('x1', pos.x); lv2.setAttribute('y1', pos.y - r); lv2.setAttribute('x2', pos.x); lv2.setAttribute('y2', pos.y + r);
+    lv2.setAttribute('stroke', _divCol); lv2.setAttribute('stroke-width', '0.9'); lv2.setAttribute('opacity', '0.5'); lv2.setAttribute('pointer-events', 'none');
+    g.appendChild(lv2);
+    var lh2 = document.createElementNS(NS, 'line');
+    lh2.setAttribute('x1', pos.x - r); lh2.setAttribute('y1', pos.y); lh2.setAttribute('x2', pos.x + r); lh2.setAttribute('y2', pos.y);
+    lh2.setAttribute('stroke', _divCol); lh2.setAttribute('stroke-width', '0.9'); lh2.setAttribute('opacity', '0.5'); lh2.setAttribute('pointer-events', 'none');
+    g.appendChild(lh2);
+    var qtxt = function(x, y, str, fs, fw, colr, cls) {
+      var t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('text-anchor', 'middle'); t.setAttribute('pointer-events', 'none');
+      t.setAttribute('font-size', fs.toFixed(1) + 'px'); t.setAttribute('font-weight', fw);
+      t.setAttribute('fill', colr);
+      if (cls) t.setAttribute('class', cls);
+      t.textContent = str;
+      g.appendChild(t);
+      return t;
+    };
+    var qx = r * 0.46, qy = r * 0.46;
+    // 左上: 名前（姓/名の2行・女性はピンク）
+    var _ln2 = (m.lastName || '').replace(/\s+/g, ''), _fn2 = (m.firstName || '').replace(/\s+/g, '');
+    if (!_ln2 && !_fn2) _ln2 = '—';
+    var _nmCol = m.gender === 'female' ? (light ? '#db2777' : '#f9a8d4') : _txtCol;
+    var _fsN = r * (Math.max(_ln2.length, _fn2.length) >= 4 ? 0.26 : 0.32);
+    _ln2 = _ln2.substring(0, 4); _fn2 = _fn2.substring(0, 4);
+    if (_fn2) {
+      qtxt(pos.x - qx, pos.y - qy - _fsN * 0.12, _ln2, _fsN, '800', _nmCol, 'orbit-nm');
+      qtxt(pos.x - qx, pos.y - qy + _fsN * 0.95, _fn2, _fsN, '800', _nmCol, 'orbit-nm');
+    } else {
+      qtxt(pos.x - qx, pos.y - qy + _fsN * 0.38, _ln2, _fsN, '800', _nmCol, 'orbit-nm');
     }
-    // v486: ノード下に GSVポイント・稼働率
-    var _pt6 = (m.ptCurrent || 0);
+    // 右上: 稼働タイプ＋稼働率（%なし・例 B70）
     var _ar6 = (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) ? parseInt(m.actRate, 10) : null;
-    var _at6 = (m.activity || '').trim(); // v488: SABCタイプも併記（例 C40%）
-    var _act6 = (_ar6 !== null) ? (_at6 + _ar6 + '%') : _at6;
-    var _sub6 = (_pt6 > 0 ? _pt6.toLocaleString() + 'pt' : '') + (_act6 ? ((_pt6 > 0 ? '・' : '') + _act6) : '');
-    if (_sub6) {
-      var ts = document.createElementNS(NS, 'text');
-      ts.setAttribute('x', pos.x); ts.setAttribute('y', pos.y + r + 9);
-      ts.setAttribute('text-anchor', 'middle'); ts.setAttribute('pointer-events', 'none');
-      ts.setAttribute('font-size', '7.5px'); ts.setAttribute('font-weight', '700');
-      ts.setAttribute('fill', light ? '#556070' : '#9fb0c3');
-      ts.setAttribute('class', 'orbit-sub');
-      ts.textContent = _sub6;
-      g.appendChild(ts);
+    var _at6 = (m.activity || '').trim();
+    var _act6 = (_ar6 !== null) ? (_at6 + _ar6) : (_at6 === 'S' ? 'S120' : _at6);
+    if (_act6) qtxt(pos.x + qx, pos.y - qy + r * 0.13, _act6, r * (_act6.length >= 4 ? 0.28 : 0.35), '800', _txtCol, 'orbit-act');
+    // 左下: タイトル
+    var _tt6 = (typeof titleAbbr === 'function' ? titleAbbr(m.title || '') : (m.title || '')) || '';
+    if (_tt6) qtxt(pos.x - qx, pos.y + qy + r * 0.12, _tt6, r * (String(_tt6).length >= 4 ? 0.23 : 0.31), '700', _dimCol, 'orbit-ttl');
+    // 右下: 1行目=(固定PT)・2行目=現状GSV
+    var _pf6 = m.ptFixed > 0 ? m.ptFixed : 0;
+    var _pc6 = m.ptCurrent > 0 ? m.ptCurrent : 0;
+    if (_pf6 || _pc6) {
+      var _fsP = r * (Math.max(String(_pf6).length + 2, String(_pc6).length) >= 6 ? 0.21 : 0.25);
+      qtxt(pos.x + qx, pos.y + qy - _fsP * 0.2, '(' + _pf6 + ')', _fsP, '700', _dimCol, 'orbit-pt');
+      qtxt(pos.x + qx, pos.y + qy + _fsP * 0.9, String(_pc6), _fsP, '700', _dimCol, 'orbit-pt');
     }
     if (!isPrint) {
       g.addEventListener('click', function(ev) {
@@ -5982,7 +6021,7 @@ function icn(name, style) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v501';
+  var DATA_VERSION = 'v502';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6956,6 +6995,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v502', d:'2026-09-22', items:['◎ 運動会MAPの丸を旧MAP式の「4分割サークル」に刷新：左上=名前（姓/名の2行・女性はピンク）／右上=稼働タイプ＋稼働率（%なし・例 B70）／左下=タイトル／右下=（固定PT）と現状GSVの2行','🔍 文字が読めるよう丸のサイズを拡大（人数に応じて自動調整・ピンチ/＋ボタンのズームは従来どおり）','系列色の枠・研修生/QBR/フレッシュ/BR以上の色分け・ホバー情報カード・タップ編集・絞り込み・A3印刷はそのまま使えます'] },
   { v:'v501', d:'2026-09-22', items:['🎨 アイコン刷新 第2弾：やる気レベルを色分き線画アイコンに（パヤパヤ=緑の芽・やる気=オレンジの稲妻・死ぬ気=赤の炎）。MAPカード・メンバー一覧・テーブル・詳細シートすべて統一','✅ ToDo/カレンダーの行アイコンを線画に：ゴミ箱・時計（期限）・タスク/予定マーク・👤メンバー絞り込み・ゴミ箱画面','🌱 ケアバッジ（フレッシュ/研修生）の絵文字を外してすっきり（色分けはそのまま）','🎂 誕生日リマインドのアイコンも線画ケーキに'] },
   { v:'v500', d:'2026-09-22', items:['🎨 アイコン刷新 第1弾：絵文字をミニマルな線画アイコンに置き換え開始。まずは右クリック/＋メニュー（編集・削除・Instagram・LINE）・☰メニュー・検索・3Dボタン・ToDoの期限切れ見出しから。ライト/ダークどちらのテーマにも自動で馴染みます（順次ほかの画面にも展開予定）'] },
   { v:'v499', d:'2026-09-22', items:['🎂 生年月日の「年」プルダウンの初期表示を2002年に変更（メンバー追加時・生年月日未設定の編集時）。月と日を選ぶまでは未設定のままなので、年だけ既定のままでも誤って保存されません'] },
