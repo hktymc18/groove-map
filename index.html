@@ -2125,6 +2125,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .ed-chev{color:var(--text-dim);font-size:10px;flex:none;pointer-events:none}
 /* 誕生日：未入力時はiOS等の日付プレースホルダを隠し「未設定」を表示 */
 .lic{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-0.15em;flex:none}
+.lic.mor{stroke:none;vertical-align:-0.24em}
 .ed-birth{display:flex;gap:6px}
 .ed-birth select.ed-in{min-width:0}
 .ed-help{font-size:12px;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin:0 0 10px;line-height:1.6;display:none}
@@ -2431,7 +2432,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v502</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v503</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2473,7 +2474,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="export-bar">
       <div class="exp-btn" onclick="exportCSV('current')">📄 CSV出力</div>
       <div class="exp-btn" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</div>
-      <div class="exp-btn" onclick="openShareModal()" id="shareBtn" style="display:none">🔗 共有</div>
+      <div class="exp-btn" onclick="openShareModal()" id="shareBtn" style="display:none"><svg class="lic" viewBox="0 0 24 24"><path d="M9.5 14.5l5-5"/><path d="M7.3 11.2L5 13.5a4 4 0 105.6 5.6l2.3-2.3M16.7 12.8L19 10.5a4 4 0 10-5.6-5.6l-2.3 2.3"/></svg> 共有</div>
     </div>
     <div class="edit-hint" id="editHint">▶で開閉 ・ ✎ボタンで編集</div>
     <!-- 検索欄 -->
@@ -2767,9 +2768,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
     <!-- v304: ビュー切替メニュー（月/週/日 共通・固定配置） -->
     <div class="ev-cal-vmenu" id="evCalVMenu" style="display:none">
-      <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('calendar')">🗓 月</div>
-      <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('week')">📆 週</div>
-      <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('day')">📅 日</div>
+      <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('calendar')"><svg class="lic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17M8.5 14.5h2M13.5 14.5h2M8.5 17.5h2M13.5 17.5h2"/></svg> 月</div>
+      <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('week')"><svg class="lic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17M7.5 14.5v4M12 14.5v4M16.5 14.5v4"/></svg> 週</div>
+      <div class="ev-cal-vitem" onclick="calViewMenuClose();setEventsMode('day')"><svg class="lic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17"/><circle cx="12" cy="16" r="2"/></svg> 日</div>
       <div class="ev-cal-vitem" onclick="calViewMenuClose();calOpenSearch()"><svg class="lic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg> 検索</div>
     </div>
   </div>
@@ -4342,15 +4343,10 @@ function renderPCMap(mapType) {
       // v501: やる気＝色分き線画アイコン（絵文字廃止）
       var _ml9 = moraleLv(m.morale);
       var _mg9 = document.createElementNS('http://www.w3.org/2000/svg','g');
-      _mg9.setAttribute('transform', 'translate(' + (rx + 4) + ',' + (ry2 - 20) + ') scale(0.72)');
-      _mg9.setAttribute('fill', 'none');
-      _mg9.setAttribute('stroke', MORALE_COLORS[_ml9]);
-      _mg9.setAttribute('stroke-width', '2.3');
-      _mg9.setAttribute('stroke-linecap', 'round');
-      _mg9.setAttribute('stroke-linejoin', 'round');
+      _mg9.setAttribute('transform', 'translate(' + (rx + 3) + ',' + (ry2 - 25) + ') scale(0.95)');
       _mg9.setAttribute('pointer-events', 'none');
       _mg9.setAttribute('class', 'pc-morale-ic');
-      _mg9.innerHTML = ICONS[MORALE_ICON_NAMES[_ml9]];
+      _mg9.innerHTML = moraleFill(_ml9, 'mgT' + _ml9); // v503: グラデ塗りつぶし＋拡大
       g.appendChild(_mg9);
     }
     // v439: ケアバッジ（🌱フレッシュ＝スタート6ヶ月以内かつBR未満／🎓研修生。手動で表示/非表示の上書き可）
@@ -6003,7 +5999,9 @@ var ICONS = {
   calendar: '<rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17"/>',
   checksq: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/>',
   user: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/>',
-  cake: '<path d="M5 21h14M6 21v-6h12v6M12 9.5V12"/><path d="M12 9.5a1.6 1.6 0 001.6-1.6C13.6 6.4 12 4.5 12 4.5s-1.6 1.9-1.6 3.4A1.6 1.6 0 0012 9.5z"/><path d="M6 17.5c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0"/>'
+  cake: '<path d="M5 21h14M6 21v-6h12v6M12 9.5V12"/><path d="M12 9.5a1.6 1.6 0 001.6-1.6C13.6 6.4 12 4.5 12 4.5s-1.6 1.9-1.6 3.4A1.6 1.6 0 0012 9.5z"/><path d="M6 17.5c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0"/>',
+  link: '<path d="M9.5 14.5l5-5"/><path d="M7.3 11.2L5 13.5a4 4 0 105.6 5.6l2.3-2.3M16.7 12.8L19 10.5a4 4 0 10-5.6-5.6l-2.3 2.3"/>',
+  leaf: '<path d="M11 20A7 7 0 014 13C4 7 9 3 20 3c0 11-4 16-9 17z"/><path d="M4 21c0-4 3-7 8-9"/>'
 };
 // v501: やる気レベル＝色分き線画アイコン（1=緑の芽・2=オレンジの稲妻・3=赤の炎）
 var MORALE_COLORS = ['', '#4ADE80', '#FFB454', '#FF5D73'];
@@ -6011,9 +6009,20 @@ var MORALE_ICON_NAMES = ['', 'sprout', 'zap', 'flame'];
 var MORALE_LABELS = ['', 'パヤパヤ', 'やる気', '死ぬ気'];
 function moraleLv(level) { return Math.max(1, Math.min(parseInt(level, 10) || 1, 3)); }
 function moraleLabel(level) { return MORALE_LABELS[moraleLv(level)]; }
+// v503: 判別しやすいようグラデーションの塗りつぶし＋ひと回り大きく
+var MORALE_GRAD = ['', ['#6EE7B7', '#16A34A'], ['#FDE047', '#F59E0B'], ['#FBBF24', '#EF4444']];
+var MORALE_FILL = ['',
+  '<path fill="none" stroke="GRAD" stroke-width="2.4" stroke-linecap="round" d="M12 21.5V11"/><path fill="GRAD" stroke="none" d="M11.4 13.6C11.4 9.6 8.5 7 4.1 7c0 4.4 3 6.6 7.3 6.6z"/><path fill="GRAD" stroke="none" d="M12.6 11.6c0-3.4 2.4-5.6 6.3-5.6 0 3.7-2.5 5.6-6.3 5.6z"/>',
+  '<path fill="GRAD" stroke="none" d="M13.2 2 4.5 13.6h6L10.8 22l8.7-11.6h-6z"/>',
+  '<path fill="GRAD" stroke="none" d="M12 2.2c.6 3.3 2.3 5.4 4.3 7.1 2 1.7 3.2 3.6 3.2 6a7.5 7.5 0 01-15 0c0-2 .8-3.7 2-5 .3 1.6 1.1 2.9 2.3 3.6-.5-3.6.6-8 3.2-11.7z"/>'
+];
+function moraleFill(lv, gid) {
+  return '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + MORALE_GRAD[lv][0] + '"/><stop offset="1" stop-color="' + MORALE_GRAD[lv][1] + '"/></linearGradient></defs>' + MORALE_FILL[lv].split('GRAD').join('url(#' + gid + ')');
+}
 function moraleIcon(level, px) {
   var lv = moraleLv(level);
-  return '<svg class="lic" viewBox="0 0 24 24" style="color:' + MORALE_COLORS[lv] + (px ? ';width:' + px + 'px;height:' + px + 'px' : '') + '"><title>' + MORALE_LABELS[lv] + '</title>' + ICONS[MORALE_ICON_NAMES[lv]] + '</svg>';
+  var sz = px ? px + 'px' : '1.35em';
+  return '<svg class="lic mor" viewBox="0 0 24 24" style="width:' + sz + ';height:' + sz + '"><title>' + MORALE_LABELS[lv] + '</title>' + moraleFill(lv, 'mgH' + lv) + '</svg>';
 }
 function icn(name, style) {
   return '<svg class="lic" viewBox="0 0 24 24"' + (style ? ' style="' + style + '"' : '') + '>' + (ICONS[name] || '') + '</svg>';
@@ -6021,7 +6030,7 @@ function icn(name, style) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v502';
+  var DATA_VERSION = 'v503';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6995,6 +7004,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v503', d:'2026-09-22', items:['🎂 生年月日の年の選択肢を「今年−19年」（今は2007年）までに制限：この仕事は20才からのため。初期表示も「今年−24年」（今は2002年）に。どちらも年が変わると自動で1年ずつ進みます','🔥 やる気アイコンを見やすく：ひと回り大きく・グラデーションの塗りつぶしに（緑の芽・黄→橙の稲妻・橙→赤の炎）','🎨 アイコン刷新 第3弾：メンバー情報カードの予定/タスク/OLボタン・気になるメンバーの層アイコンと記録ボタン・結合バッジ・カレンダーの月/週/日メニュー・今日のタスク見出しなどを線画アイコンに'] },
   { v:'v502', d:'2026-09-22', items:['◎ 運動会MAPの丸を旧MAP式の「4分割サークル」に刷新：左上=名前（姓/名の2行・女性はピンク）／右上=稼働タイプ＋稼働率（%なし・例 B70）／左下=タイトル／右下=（固定PT）と現状GSVの2行','🔍 文字が読めるよう丸のサイズを拡大（人数に応じて自動調整・ピンチ/＋ボタンのズームは従来どおり）','系列色の枠・研修生/QBR/フレッシュ/BR以上の色分け・ホバー情報カード・タップ編集・絞り込み・A3印刷はそのまま使えます'] },
   { v:'v501', d:'2026-09-22', items:['🎨 アイコン刷新 第2弾：やる気レベルを色分き線画アイコンに（パヤパヤ=緑の芽・やる気=オレンジの稲妻・死ぬ気=赤の炎）。MAPカード・メンバー一覧・テーブル・詳細シートすべて統一','✅ ToDo/カレンダーの行アイコンを線画に：ゴミ箱・時計（期限）・タスク/予定マーク・👤メンバー絞り込み・ゴミ箱画面','🌱 ケアバッジ（フレッシュ/研修生）の絵文字を外してすっきり（色分けはそのまま）','🎂 誕生日リマインドのアイコンも線画ケーキに'] },
   { v:'v500', d:'2026-09-22', items:['🎨 アイコン刷新 第1弾：絵文字をミニマルな線画アイコンに置き換え開始。まずは右クリック/＋メニュー（編集・削除・Instagram・LINE）・☰メニュー・検索・3Dボタン・ToDoの期限切れ見出しから。ライト/ダークどちらのテーマにも自動で馴染みます（順次ほかの画面にも展開予定）'] },
@@ -7712,9 +7722,9 @@ function cockpitHtml() {
     return html + '<div class="ck-empty">今フォローが必要なメンバーはいません 👍<br><span>優先度「高」・研修3日/OL7日停滞・予定切れの人がここに出ます</span></div>';
   }
   var groups = [
-    { key:'trainee', ic:'🌱', label:'研修生' },
-    { key:'fresh',   ic:'🌿', label:'フレッシュ（登録6ヶ月以内）' },
-    { key:'exam',    ic:'📋', label:'審査期間中（LOI〜Q4）' }
+    { key:'trainee', ic:icn('sprout'), label:'研修生' },
+    { key:'fresh',   ic:icn('leaf'), label:'フレッシュ（登録6ヶ月以内）' },
+    { key:'exam',    ic:icn('clipboard'), label:'審査期間中（LOI〜Q4）' }
   ];
   groups.forEach(function(gr) {
     var list = g[gr.key];
@@ -7732,7 +7742,7 @@ function cockpitHtml() {
         +   '<div class="ck-badges">' + badges + '</div>'
         + '</div>'
         + '<div class="ck-actions">'
-        +   (gr.key !== 'leader' ? '<button class="ck-btn rec" onclick="ckRecord(\'' + m.id + '\',\'' + gr.key + '\')">📝' + (gr.key === 'trainee' ? '研修' : 'OL') + '</button>' : '')
+        +   (gr.key !== 'leader' ? '<button class="ck-btn rec" onclick="ckRecord(\'' + m.id + '\',\'' + gr.key + '\')">' + icn('pencil') + (gr.key === 'trainee' ? '研修' : 'OL') + '</button>' : '')
         +   '<button class="ck-btn task" onclick="ckAddTask(\'' + m.id + '\')">＋タスク</button>'
         + '</div>'
         + '</div>';
@@ -7755,7 +7765,7 @@ function homeTasksHtml() {
     return e.type === 'task' && !e.done && !e.deleted && e.date && e.date <= t;
   });
   tasks.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); }); // 期限切れ(古い)を上に
-  var html = '<div class="home-sec-label"><span>✅ 今日のタスク</span><span style="color:var(--text-dim);font-weight:400;font-family:Inter,IBM Plex Mono,monospace">' + tasks.length + '件</span></div>';
+  var html = '<div class="home-sec-label"><span>' + icn('checksq') + ' 今日のタスク</span><span style="color:var(--text-dim);font-weight:400;font-family:Inter,IBM Plex Mono,monospace">' + tasks.length + '件</span></div>';
   if (!tasks.length) {
     return html + '<div class="ck-empty">今日やるタスクはありません 🎉<br><span>「気になるメンバー」の＋タスクから追加できます</span></div>';
   }
@@ -8110,7 +8120,7 @@ function renderMembers() {
   });
   var filters = [['all','すべて',cAll],['trainee','研修生',cTr],['fresh','フレッシュ',cFr],['br','BR',cBr]];
   if (cOut > 0) filters.push(['out','🚪OUT',cOut]);
-  if (mergedCt > 0) filters.push(['merged','🔗結合',mergedCt]);
+  if (mergedCt > 0) filters.push(['merged', icn('link') + '結合', mergedCt]);
   var list = all.filter(function(m){
     var isMg = /^MG_/.test(m.id || '');
     if (_memberFilter === 'all') return isMg || (m.title||'').trim() !== 'OUT';
@@ -8119,11 +8129,11 @@ function renderMembers() {
     return memberMatchesFilter(m, _memberFilter);
   });
   list.sort(function(a,b){ return (memberPriorityRank(b) - memberPriorityRank(a)) || ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||'')); });
-  var html = '<div class="ml-head"><span class="ml-title">👥 メンバー</span><span class="ml-count">自分 ' + cAll + '人' + (mergedCt ? ' ＋ 🔗結合 ' + mergedCt + '人' : '') + '</span></div>';
+  var html = '<div class="ml-head"><span class="ml-title">👥 メンバー</span><span class="ml-count">自分 ' + cAll + '人' + (mergedCt ? ' ＋ ' + icn('link') + '結合 ' + mergedCt + '人' : '') + '</span></div>';
   html += '<div class="ml-filters">' + filters.map(function(f){
     return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
   }).join('')
-    + (mergedCt > 0 ? '<span class="ml-pill" style="border-style:dashed;color:' + (incM ? 'var(--accent)' : 'var(--text-dim)') + '" onclick="toggleMemberIncMerged()" title="集計・カテゴリに結合メンバーを含めるか">' + (incM ? '🔗結合込み ✓' : '🔗結合除外') + '</span>' : '')
+    + (mergedCt > 0 ? '<span class="ml-pill" style="border-style:dashed;color:' + (incM ? 'var(--accent)' : 'var(--text-dim)') + '" onclick="toggleMemberIncMerged()" title="集計・カテゴリに結合メンバーを含めるか">' + icn('link') + (incM ? '結合込み ✓' : '結合除外') + '</span>' : '')
     + (!viewingOwnerUid ? '<span class="ml-pill" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</span>' : '')
     + '</div>';
   if (!list.length) { wrap.innerHTML = html + '<div class="ck-empty">該当するメンバーがいません</div>'; return; }
@@ -8140,7 +8150,7 @@ function renderMembers() {
       + (_avatars[m.id]
           ? '<span class="ml-avatar" style="padding:0;overflow:hidden;border:2px solid ' + titleRingColor(m.title) + '"><img src="' + _avatars[m.id] + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt=""></span>'
           : '<span class="ml-avatar">' + evEsc(ini) + '</span>')
-      + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span>' + (/^MG_/.test(m.id) ? '<span class="merged-badge" style="margin-left:4px">🔗' + evEsc(m._ownerName || '結合') + '</span>' : '') + '</div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
+      + '<div class="ml-mid"><div class="ml-name">' + evEsc(nm) + ' <span class="ml-badge">' + evEsc(m.title || '-') + '</span>' + (/^MG_/.test(m.id) ? '<span class="merged-badge" style="margin-left:4px">' + icn('link') + evEsc(m._ownerName || '結合') + '</span>' : '') + '</div><div class="ml-meta">' + evEsc(meta) + '</div></div>'
       + '<span class="ml-dot ' + dotCls + '"></span>'
       + '<span class="ml-chev">›</span>'
       + '</div>';
@@ -8183,7 +8193,7 @@ function openMemberActions(mid) {
   var badges = '<span class="msb">' + evEsc(m.title||'-') + '</span>' + (actStr ? '<span class="msb">' + evEsc(actStr) + '</span>' : '') + (m.priority ? '<span class="msb hi">優先度 ' + evEsc(m.priority) + '</span>' : '');
   var prioChips = ['高','中','低',''].map(function(p){ return '<span class="ms-pchip' + ((m.priority||'')===p?' on':'') + '" onclick="setMemberPriority(\'' + mid + '\',\'' + p + '\')">' + (p||'なし') + '</span>'; }).join('');
   var rows = '';
-  if (group === 'trainee') rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'trainee\')"><span class="ms-aic">📝</span>研修ステップを記録<span class="ms-ch">›</span></div>';
+  if (group === 'trainee') rows += '<div class="ms-act" onclick="closeMemberActions();ckRecord(\'' + mid + '\',\'trainee\')"><span class="ms-aic">' + icn('pencil') + '</span>研修ステップを記録<span class="ms-ch">›</span></div>';
   if (group === 'fresh' || group === 'exam') rows += '<div class="ms-act" onclick="closeMemberActions();openOlPopup(\'' + mid + '\')"><span class="ms-aic">📋</span>OLを見る・記録<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMemberActions();ckAddTask(\'' + mid + '\')"><span class="ms-aic">➕</span>タスクを追加<span class="ms-ch">›</span></div>';
   if (m.lineId) rows += '<div class="ms-act" onclick="closeMemberActions();openLineChatById(\'' + mid + '\')"><span class="ms-aic">💬</span>LINEを開く<span class="ms-ch">›</span></div>';
@@ -8216,7 +8226,8 @@ function _birthSelInit() {
   var m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
   var nowY = new Date().getFullYear();
   var hy = '<option value="">----年</option>';
-  for (var i = nowY; i >= 1900; i--) hy += '<option value="' + i + '">' + i + '年</option>';
+  // v503: この仕事は20才から（研修中に20才になるケース込みで今年−19年まで）。年が変われば自動で1年進む
+  for (var i = nowY - 19; i >= 1900; i--) hy += '<option value="' + i + '">' + i + '年</option>';
   y.innerHTML = hy;
   var hm = '<option value="">--月</option>';
   for (var j = 1; j <= 12; j++) hm += '<option value="' + j + '">' + j + '月</option>';
@@ -8236,7 +8247,13 @@ function _fBirthSet(v) {
   _birthSelInit();
   var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
   var y = document.getElementById('fBirthY'), m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
-  if (y) y.value = p ? p[1] : '2002'; // v499: 年の初期表示は2002年（月・日が未選択の間は未設定扱い）
+  // v503: 範囲外の年（旧データ）は選択肢を足して復元。未設定の初期表示は「今年−24年」（24才前後の新メンバーが最多）
+  if (y && p && !y.querySelector('option[value="' + p[1] + '"]')) {
+    var _op9 = document.createElement('option');
+    _op9.value = p[1]; _op9.textContent = p[1] + '年';
+    y.insertBefore(_op9, y.options[1] || null);
+  }
+  if (y) y.value = p ? p[1] : String(new Date().getFullYear() - 24);
   if (m) m.value = p ? String(parseInt(p[2], 10)) : '';
   if (d) d.value = p ? String(parseInt(p[3], 10)) : '';
 }
@@ -8416,7 +8433,7 @@ function renderHome() {
     if (g.wkPrev && curMembers.length) {
       var dn = curStat.n - (g.wkPrev.n || 0), dg = curStat.gsv - (g.wkPrev.gsv || 0);
       var dorm = 0; curMembers.forEach(function(m){ if (memberActivityLevel(m) === 'act-dormant') dorm++; });
-      wkHtml = '<div class="home-wk">🌱 <b>先週からの組織</b>　メンバー ' + (dn >= 0 ? '+' : '') + dn + '人 ・ GSV ' + (dg >= 0 ? '+' : '') + dg.toLocaleString()
+      wkHtml = '<div class="home-wk">' + icn('sprout') + ' <b>先週からの組織</b>　メンバー ' + (dn >= 0 ? '+' : '') + dn + '人 ・ GSV ' + (dg >= 0 ? '+' : '') + dg.toLocaleString()
         + (dorm ? ' ・ <span style="color:var(--go-rose)">💤フォロー要 ' + dorm + '人</span>' : ' ・ 全員稼働中🔥') + '</div>';
     }
   } catch(e) {}
@@ -9670,7 +9687,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
         var _r9 = _id9 >= 60;
         return '<span title="最終活動から' + _id9 + '日" style="font-size:9px;font-weight:800;color:#fff;background:' + (_r9 ? '#FF5D73' : '#6b7280') + ';border-radius:6px;padding:1px 5px;white-space:nowrap">' + (_r9 ? '\uD83D\uDEA8' : '\uD83D\uDCA4') + _id9 + '日</span>';
       })()
-    + (isForeign ? '<span class="merged-badge">🔗' + evEsc(m._ownerName || '下位') + '</span>' : '')
+    + (isForeign ? '<span class="merged-badge">' + icn('link') + evEsc(m._ownerName || '下位') + '</span>' : '')
     + '</div>'
     + '<div style="display:flex;align-items:center;gap:4px;margin-top:2px">' + parentChip
     + (m.region ? '<span style="font-size:9px;color:var(--text-dim);white-space:nowrap">📍' + evEsc(String(m.region).substring(0,5)) + '</span>' : '')
@@ -9923,7 +9940,7 @@ function memberInfoHtml(m) {
   var fd = (state.freshData && state.freshData[m.id]) || {};
   var olog = (fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
   if (olog.length) {
-    html += '<div class="ci-ol-lbl">📝 OL記録</div>';
+    html += '<div class="ci-ol-lbl">' + icn('pencil') + ' OL記録</div>';
     html += olog.slice(0, 5).map(function(e){
       var d = e.date ? e.date.split('-').slice(1).join('/') : '';
       return '<div class="ci-ol">' + (e.st === 'planned' ? '<span style="background:var(--gold);color:#08121a;font-size:9px;font-weight:800;border-radius:6px;padding:0 5px;margin-right:3px">予定</span>' : '') + (d ? '<span class="ci-ol-d">' + d + '</span> ' : '') + (e.to ? '<b>' + evEsc(e.to) + '</b> ' : '') + (e.what ? evEsc(e.what) : '') + (e.note ? '<div class="ci-ol-note">↳ ' + evEsc(e.note) + '</div>' : '') + '</div>';
@@ -9933,9 +9950,9 @@ function memberInfoHtml(m) {
   // CAL-2: この人との予定をテンプレから即作成（結合メンバーは相手MAP編集ボタンを優先）
   if (!/^MG_/.test(m.id) && eventsUid()) {
     html += '<div style="margin-top:8px;display:flex;gap:6px">'
-      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openEventAdd(\'' + m.id + '\')">📅 予定</button>'
-      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();ckAddTask(\'' + m.id + '\')">✅ タスク</button>'
-      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openOlRecordModal(\'' + m.id + '\')">📝 OL</button>'
+      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openEventAdd(\'' + m.id + '\')">' + icn('calendar') + ' 予定</button>'
+      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();ckAddTask(\'' + m.id + '\')">' + icn('checksq') + ' タスク</button>'
+      + '<button style="flex:1;padding:9px 4px;border-radius:10px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();openOlRecordModal(\'' + m.id + '\')">' + icn('pencil') + ' OL</button>'
       + '</div>';
   }
   // 結合メンバー：モバイルからも編集へ飛べるボタンを表示
@@ -12701,9 +12718,9 @@ function meRenderExtras(m) {
   });
   items.sort(function(a, b){ return (b.d || '').localeCompare(a.d || ''); });
   var tkHtml = '<div style="display:flex;gap:8px;margin-bottom:10px">'
-    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openEventAdd(\'' + mid + '\')">📅 予定</button>'
-    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="ckAddTask(\'' + mid + '\')">✅ タスク</button>'
-    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openOlRecordModal(\'' + mid + '\')">📝 OL</button>'
+    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openEventAdd(\'' + mid + '\')">' + icn('calendar') + ' 予定</button>'
+    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="ckAddTask(\'' + mid + '\')">' + icn('checksq') + ' タスク</button>'
+    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openOlRecordModal(\'' + mid + '\')">' + icn('pencil') + ' OL</button>'
     + '</div>';
   tkHtml += '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">📋 リストOL: ' + (listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手')) + '</div>'; // v366: 旧OLタブから移設
   var _npl = memberNextPlanLines(m);
@@ -19881,14 +19898,14 @@ function updateGcalBtn() {
   if (state.gcalConnected) {
     b.classList.add('on');
     // 最終同期時刻を表示（「本当に同期されたのか」への不安を解消）
-    var lbl = '🔗 Google同期';
+    var lbl = 'Google同期';
     try {
       var ls = localStorage.getItem('gm_gcalLastSync');
       if (ls) { var d = new Date(ls); lbl += '（' + (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + '）'; }
     } catch(e) {}
     b.textContent = lbl;
   }
-  else { b.classList.remove('on'); b.textContent = '🔗 Googleカレンダー連携'; }
+  else { b.classList.remove('on'); b.textContent = 'Googleカレンダー連携'; }
 }
 
 // ── テンプレートリンク方式（連携不要：Googleカレンダーの予定作成画面を内容入りで開く） ──
