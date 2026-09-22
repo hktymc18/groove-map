@@ -2430,7 +2430,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v497</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v498</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2525,9 +2525,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
       <div class="pt-sep"></div>
       <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')">ツリー</div>
+      <div class="pv-btn" id="pvOrbit" onclick="switchPCView('orbit')">◎ 運動会</div>
       <div class="pv-btn" id="pvTable" onclick="switchPCView('table')">テーブル</div>
       <div class="pv-btn" id="pvKanban" onclick="switchPCView('kanban')">カンバン</div>
-      <div class="pv-btn" id="pvOrbit" onclick="switchPCView('orbit')">◎ 俯瞰</div>
       <div class="pt-sep"></div>
       <div class="pt-search" onclick="openSearchModal()">
         <span style="font-size:13px">🔍</span>
@@ -2573,8 +2573,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
       <div class="pt-sep"></div>
       <div class="pv-btn active" id="pvTreeI" onclick="switchPCView('tree')">ツリー</div>
+      <div class="pv-btn" id="pvOrbitI" onclick="switchPCView('orbit')">◎ 運動会</div>
       <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">テーブル</div>
-      <div class="pv-btn" id="pvOrbitI" onclick="switchPCView('orbit')">◎ 俯瞰</div>
     </div>
     <div class="sec-label mobile-tree">目標ツリー</div>
     <div class="pc-filter-bar" id="pcFilterIdeal"></div>
@@ -4841,7 +4841,7 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
   // ── ツールバー＋スクロール容器 ──
   var bar = document.createElement('div');
   bar.style.cssText = 'display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap';
-  bar.innerHTML = '<b style="font-size:13px">◎ 俯瞰MAP</b>'
+  bar.innerHTML = '<b style="font-size:13px">◎ 運動会MAP</b>'
     + '<span style="font-size:11px;color:var(--text-dim)">' + (state.currentMonth || '') + '・' + members.length + '人・リング=段数／扇=系列</span>'
     + '<input id="orbitSearch' + (mapType === 'current' ? 'C' : 'I') + '" type="search" placeholder="🔍 名前でスポットライト" autocomplete="off" '
     + 'style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;padding:6px 12px;border-radius:9px;outline:none;width:210px" '
@@ -5927,7 +5927,7 @@ function saveProfile() {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v497';
+  var DATA_VERSION = 'v498';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6901,6 +6901,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v498', d:'2026-09-22', items:['◎ MAPの「俯瞰」ボタンを「運動会」に名称変更し、位置をツリーの右隣に移動（現状MAP・理想MAPとも）'] },
   { v:'v497', d:'2026-09-22', items:['🎂 生年月日を年・月・日のプルダウン選択に変更：「2002」と入力中に0002になる問題と、入力した文字が確定まで見えない問題を根本解消','⛴→🔴 「金の船」フラグを廃止し「優先度」に一本化：編集フォームの項目・MAP/メンバーの絞り込み・OLタブの金の船リスト・カードの⛴マークを削除。必要数とギャップの「Qルビー候補」は優先度「高」の人数から自動集計されるように','🗺 メンバー追加時の適用MAPの既定を「両方」に変更（理想MAPを開いて追加した場合は従来どおり「理想」）','✍️ 稼働タイプAの説明を「仕事を変えてS稼働になる日確定」に変更','↕️ 編集フォームの「やる気」を稼働率(%)の下に移動','📌 画面端のメンバーで「＋直下に追加」メニューが見切れないように位置を自動調整','🔤 MAPカードの名前の文字サイズを統一：漢字4文字＋S100%が収まるサイズを上限に、5文字以上の時だけ縮小（短い名前だけ大きく目立つのを解消）'] },
   { v:'v496', d:'2026-09-22', items:['🎓 研修生の編集は「研修タブ」から開くように（921-1。研修生・研修履歴ありの人のみ。他は従来どおり月次タブ）','⚡ かんたん追加に「研修の予定（日付・時刻）・Aさん」を追加。入力すると研修履歴に予定として登録されます（921-2）','📆 カレンダーが画面上部に圧縮される問題の対策：カレンダーを開いた瞬間に画面の高さを取り直すように（921-3・iOSのビューポート高さが古いまま残る現象）','🏷 テンプレから登録した予定のカテゴリが編集時に「未分類」になる問題を修正：どんな名前のテンプレにも自動でカテゴリを付与し、色だけ付いた予定（ユニオン予定含む）は編集時に色からカテゴリを復元（921-4）','📋 ToDoリストの区分を全箇所で「⚠️期限切れ／今日の予定／今後の予定」の3段に統一（922-1）','📍 地域絞り込みを強化（922-3/922-4）：表記ゆれ（愛知⇄名古屋など）を正規化して判定・描画直後にタイマーを待たず即適用（強調が逆転する/全地域に戻しても暗いままの競合経路を根絶）'] },
   { v:'v495', d:'2026-09-19', items:['🐛 共有MAPが全体的に暗く見える問題を修正（919-3）：自分のMAPでカードをクリックした「系列フォーカス」がMAP切替後も持ち越され、切替先に存在しない系列を選択したままになるため全員が薄暗表示になっていました','🔄 MAP切替（自分⇄共有⇄合算）で系列フォーカスとカテゴリ/QBR/地域の絞り込みを自動リセット','🛡 保険として、選択中の系列が現在のMAPに存在しない場合は描画時に自動解除（ツリー・俯瞰とも）'] },
