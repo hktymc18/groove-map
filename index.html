@@ -2432,7 +2432,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v503</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v504</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4808,7 +4808,7 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     g.setAttribute('data-lineage', lineageRoot[m.id] || '');
     g.setAttribute('data-region', m.region || '');
     g.style.cursor = 'pointer';
-    var r = isRoot ? nr + 8 : nr;
+    var r = nr; // v504: 0段目も他と同じサイズ
     var ci = document.createElementNS(NS, 'circle');
     ci.setAttribute('cx', pos.x); ci.setAttribute('cy', pos.y); ci.setAttribute('r', r);
     ci.setAttribute('fill', fill); ci.setAttribute('stroke', stroke);
@@ -4842,16 +4842,19 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     };
     var qx = r * 0.46, qy = r * 0.46;
     // 左上: 名前（姓/名の2行・女性はピンク）
+    // v504: 2文字/行（姓2＋名2）のサイズを上限に、行の文字数が多いほど縮小して必ず円内に収める
     var _ln2 = (m.lastName || '').replace(/\s+/g, ''), _fn2 = (m.firstName || '').replace(/\s+/g, '');
     if (!_ln2 && !_fn2) _ln2 = '—';
     var _nmCol = m.gender === 'female' ? (light ? '#db2777' : '#f9a8d4') : _txtCol;
-    var _fsN = r * (Math.max(_ln2.length, _fn2.length) >= 4 ? 0.26 : 0.32);
     _ln2 = _ln2.substring(0, 4); _fn2 = _fn2.substring(0, 4);
+    var _nqx = r * 0.40, _nqy = r * 0.40;
+    var _maxL2 = Math.max(_ln2.length, _fn2.length);
+    var _fsN = r * (_maxL2 <= 2 ? 0.30 : (_maxL2 === 3 ? 0.22 : 0.17));
     if (_fn2) {
-      qtxt(pos.x - qx, pos.y - qy - _fsN * 0.12, _ln2, _fsN, '800', _nmCol, 'orbit-nm');
-      qtxt(pos.x - qx, pos.y - qy + _fsN * 0.95, _fn2, _fsN, '800', _nmCol, 'orbit-nm');
+      qtxt(pos.x - _nqx, pos.y - _nqy, _ln2, _fsN, '800', _nmCol, 'orbit-nm');
+      qtxt(pos.x - _nqx, pos.y - _nqy + _fsN, _fn2, _fsN, '800', _nmCol, 'orbit-nm');
     } else {
-      qtxt(pos.x - qx, pos.y - qy + _fsN * 0.38, _ln2, _fsN, '800', _nmCol, 'orbit-nm');
+      qtxt(pos.x - _nqx, pos.y - _nqy + _fsN * 0.38, _ln2, _fsN, '800', _nmCol, 'orbit-nm');
     }
     // 右上: 稼働タイプ＋稼働率（%なし・例 B70）
     var _ar6 = (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) ? parseInt(m.actRate, 10) : null;
@@ -6030,7 +6033,7 @@ function icn(name, style) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v503';
+  var DATA_VERSION = 'v504';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -7004,6 +7007,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v504', d:'2026-09-22', items:['◎ 運動会MAP調整：名前が丸からはみ出ないように配置と文字サイズを修正（姓2＋名2の4文字時のサイズを上限に、行の文字数が多いほど自動で縮小して円内に収めます）','⭕ 中央（0段目・自分）の丸を他のメンバーと同じサイズに統一'] },
   { v:'v503', d:'2026-09-22', items:['🎂 生年月日の年の選択肢を「今年−19年」（今は2007年）までに制限：この仕事は20才からのため。初期表示も「今年−24年」（今は2002年）に。どちらも年が変わると自動で1年ずつ進みます','🔥 やる気アイコンを見やすく：ひと回り大きく・グラデーションの塗りつぶしに（緑の芽・黄→橙の稲妻・橙→赤の炎）','🎨 アイコン刷新 第3弾：メンバー情報カードの予定/タスク/OLボタン・気になるメンバーの層アイコンと記録ボタン・結合バッジ・カレンダーの月/週/日メニュー・今日のタスク見出しなどを線画アイコンに'] },
   { v:'v502', d:'2026-09-22', items:['◎ 運動会MAPの丸を旧MAP式の「4分割サークル」に刷新：左上=名前（姓/名の2行・女性はピンク）／右上=稼働タイプ＋稼働率（%なし・例 B70）／左下=タイトル／右下=（固定PT）と現状GSVの2行','🔍 文字が読めるよう丸のサイズを拡大（人数に応じて自動調整・ピンチ/＋ボタンのズームは従来どおり）','系列色の枠・研修生/QBR/フレッシュ/BR以上の色分け・ホバー情報カード・タップ編集・絞り込み・A3印刷はそのまま使えます'] },
   { v:'v501', d:'2026-09-22', items:['🎨 アイコン刷新 第2弾：やる気レベルを色分き線画アイコンに（パヤパヤ=緑の芽・やる気=オレンジの稲妻・死ぬ気=赤の炎）。MAPカード・メンバー一覧・テーブル・詳細シートすべて統一','✅ ToDo/カレンダーの行アイコンを線画に：ゴミ箱・時計（期限）・タスク/予定マーク・👤メンバー絞り込み・ゴミ箱画面','🌱 ケアバッジ（フレッシュ/研修生）の絵文字を外してすっきり（色分けはそのまま）','🎂 誕生日リマインドのアイコンも線画ケーキに'] },
