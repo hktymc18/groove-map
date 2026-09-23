@@ -1,6 +1,8 @@
 /* GROOVE MAP Service Worker
  * アプリシェルをキャッシュしてインストール可能化＋オフライン起動を実現。
- * HTML はネットワーク優先（デプロイ反映）、失敗時にキャッシュへフォールバック。
+ * v511: HTML はキャッシュから即表示し、裏でネットワークから最新版を取得してキャッシュを更新
+ *       （従来のネットワーク優先は毎回1.8MBのダウンロード完了まで画面が出なかった）。
+ *       新バージョンは sw.js の更新検知→アプリ側の「新しいバージョンがあります」バナーで反映。
  * Firebase/gstatic 等の外部オリジンは素通し（キャッシュしない）。
  * 注意: バージョンを上げたら CACHE 名も更新すること（古いキャッシュを破棄）。 */
 /* ── CAL-4: プッシュ通知（FCM）バックグラウンド受信 ──
@@ -60,7 +62,7 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v510';
+var CACHE = 'groove-map-v511';
 var ASSETS = [
   './',
   './index.html',
@@ -85,7 +87,8 @@ self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(CACHE).then(function (c) {
       return Promise.all([
-        c.addAll(ASSETS).catch(function () {}),
+        // v511: HTTPキャッシュを経由せず必ず最新を取得（新SWのキャッシュに古いHTMLが入らないように）
+        c.addAll(ASSETS.map(function (u) { return new Request(u, { cache: 'reload' }); })).catch(function () {}),
         // v451: SDKはno-corsで取得（opaqueレスポンスでも<script>読み込みには使える）
         Promise.all(SDK_ASSETS.map(function (u) {
           return c.add(new Request(u, { mode: 'no-cors' })).catch(function () {});
@@ -131,16 +134,22 @@ self.addEventListener('fetch', function (e) {
   var isHTML = req.mode === 'navigate' || accept.indexOf('text/html') >= 0;
 
   if (isHTML) {
-    // HTML はネットワーク優先（更新を確実に反映）。失敗時のみキャッシュ。
-    e.respondWith(
-      fetch(req).then(function (res) {
+    // v511: キャッシュ優先で即表示＋裏で最新版を取得してキャッシュを更新（stale-while-revalidate）。
+    // パスワード再設定などクエリ付きのURLも同じアプリ本体を返す（中身は1ファイルのため）。
+    var fresh = fetch(new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' })).then(function (res) {
+      if (res && res.ok) {
         var copy = res.clone();
         caches.open(CACHE).then(function (c) { c.put('./index.html', copy); });
-        return res;
-      }).catch(function () {
-        return caches.match(req).then(function (m) {
-          return m || caches.match('./index.html');
-        });
+      }
+      return res;
+    });
+    e.respondWith(
+      caches.match('./index.html').then(function (m) {
+        if (m) {
+          e.waitUntil(fresh.catch(function () {}));
+          return m;
+        }
+        return fresh.catch(function () { return caches.match(req); });
       })
     );
     return;
