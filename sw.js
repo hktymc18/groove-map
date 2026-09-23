@@ -62,10 +62,12 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v511';
+var CACHE = 'groove-map-v512';
+var APP_JS = './app.js?v=v512'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
 var ASSETS = [
   './',
   './index.html',
+  APP_JS,
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
@@ -155,12 +157,15 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // 同一オリジンのアイコン等はキャッシュ優先
+  // 同一オリジンのapp.js・アイコン等はキャッシュ優先（app.jsは版ごとにURLが変わる）
+  // v512: 404などエラー応答はキャッシュしない（アップロード途中の欠落を固定化しないため）
   e.respondWith(
     caches.match(req).then(function (m) {
       return m || fetch(req).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE).then(function (c) { c.put(req, copy); });
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { c.put(req, copy); });
+        }
         return res;
       }).catch(function () { return m; });
     })
