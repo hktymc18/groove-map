@@ -2432,7 +2432,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v510</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v511</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3443,17 +3443,50 @@ window.addEventListener('online', _netBannerUpdate);
 window.addEventListener('offline', _netBannerUpdate);
 setTimeout(function(){ try { _netBannerUpdate(); } catch(e) {} }, 0);
 
-// Firestore読み込み
-function fsGet(path) {
-  if (!db) return Promise.resolve(null);
+// v511: 起動時の先読み。プロフィール取得を待たずに主要データの取得を並列で開始し、
+// 同じパスの最初のfsGet/fsGetColがその結果を受け取る（読み取り回数は増えない）
+var _fsPrefetch = {};
+function _fsTakePrefetch(key) {
+  var e = _fsPrefetch[key];
+  if (!e) return null;
+  delete _fsPrefetch[key];
+  return (Date.now() - e.at < 30000) ? e.p : null;
+}
+function fsPrefetch(path, isCol) {
+  if (!db || _fsPrefetch[(isCol ? 'c:' : 'd:') + path]) return;
+  var pr = isCol ? _fsGetColRaw(path) : _fsGetRaw(path);
+  pr.catch(function(){});
+  _fsPrefetch[(isCol ? 'c:' : 'd:') + path] = { p: pr, at: Date.now() };
+}
+function _startupPrefetch(uid) {
+  try {
+    var mo = state.currentMonth;
+    if (!uid || !mo) return;
+    fsPrefetch('maps/' + uid + '/months/' + mo + '_current');
+    fsPrefetch('maps/' + uid + '/months/' + mo + '_ideal');
+    fsPrefetch('maps/' + uid + '/stats/' + mo);
+    fsPrefetch('maps/' + uid + '/events', true);
+    fsPrefetch('maps/' + uid + '/meta/eventCategories');
+    fsPrefetch('maps/' + uid + '/meta/goals');
+  } catch(e) {}
+}
+function _fsGetRaw(path) {
   return db.doc(path).get().then(function(doc) {
     return doc.exists ? doc.data() : null;
   });
+}
+// Firestore読み込み
+function fsGet(path) {
+  if (!db) return Promise.resolve(null);
+  return _fsTakePrefetch('d:' + path) || _fsGetRaw(path);
 }
 
 // コレクション読み込み
 function fsGetCol(path) {
   if (!db) return Promise.resolve([]);
+  return _fsTakePrefetch('c:' + path) || _fsGetColRaw(path);
+}
+function _fsGetColRaw(path) {
   return db.collection(path).get().then(function(snap) {
     var docs = [];
     snap.forEach(function(d) { docs.push(Object.assign({id: d.id}, d.data())); });
@@ -6231,7 +6264,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v510';
+  var DATA_VERSION = 'v511';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6426,7 +6459,7 @@ function switchView(v) {
   else if (v==='ideal') { renderTree('ideal'); renderCommission(); }
   else if (v==='stats') renderStats();
   else if (v==='ol') renderOL();
-  else if (v==='events') renderEvents();
+  // v511: eventsはsetEventsMode内で描画済み（ここで再描画すると毎回2回描いていた）
   else if (v==='plan') renderPlan();
 }
 // ── モバイル：メニュータブ（隠れタブへの常設導線） ──
@@ -6597,6 +6630,7 @@ document.addEventListener('visibilitychange', function(){ if (!document.hidden) 
 setInterval(function() {
   try {
     if (typeof isPCMode === 'function' && isPCMode()) return; // v414: PCでは監視不要
+    if (document.hidden) return; // v511: アプリが裏にある間は監視しない（電池の節約）
     var ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return; // 入力中は触らない
     var vv = window.visualViewport;
@@ -7205,6 +7239,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v511', d:'2026-09-23', items:['⚡ 起動を高速化：2回目以降はアプリ本体を端末のキャッシュから即表示し、最新版はその裏で取得（新しい版があれば従来どおり「新しいバージョンがあります」を表示）。これまでは毎回1.8MBをダウンロードし終わるまで画面が出ませんでした','⚡ ログイン直後のデータ取得を並列化：プロフィール確認を待たずにMAP・予定・目標の取得を同時に開始','⚡ 予定タブの二重描画を解消：タブを開くたびにカレンダーを2回描いていたのを1回に。起動時のデータ到着ごとの描き直しもまとめて1回に','📉 通信量・書き込みの削減：起動のたびに行っていた旧形式データの確認と削除を月1回に／管理者の承認待ちチェックを全ユーザー読込から承認待ちのみの読込に／通知予約（最大18件）を毎回全削除→全書き直ししていたのを変更分だけに／自動保存で変更のない理想MAP・統計データは書き込まないように','🔋 アプリが裏に回っている間は画面高さの監視（4秒ごと）を止めて電池を節約'] },
   { v:'v510', d:'2026-09-22', items:['🎨 アプリ全体の絵文字を線画アイコンに置き換え完了：HOME・MAP・メンバー・OL・PLAN・目標・データ・トレーニング・3D・トースト表示まで、変換表にもとづいて自動で線画に（✕✓↩などの記号はそのまま）。意味のあるものは色つき（警告=黄、トロフィー/王冠/メダル=金、目標=赤、成長=緑 など）、優先度の●は色で塗りつぶし','🔥 やる気マークを「色の丸バッジ＋白い絵柄」に刷新：パヤパヤ=緑・やる気=オレンジ・死ぬ気=赤。MAPのカードでは左上の角に重ねて最前面に表示し、カードの裏に隠れないように。芽のマークも太く大きくして見やすく'] },
   { v:'v509', d:'2026-09-22', items:['🎨 予定タブの絵文字をすべて線画アイコンに置き換え：カレンダー・ToDo・予定の追加/編集フォーム・操作シート・日別シート・テンプレ・カテゴリ・カレンダー設定・ユニオン予定・PC版の左カラム/詳細パネル。カレンダーに載るユニオン予定/OL予定/トレーニングも線画マーク付きに（通知やトーストなど文字だけの場所は絵文字を削除）','🗑 ゴミ箱マークをアプリ全体で赤い線画アイコンに統一（スワイプ削除ボタンも赤アイコンが見えるデザインに）'] },
   { v:'v508', d:'2026-09-22', items:['🎂 誕生日フォローを見つけやすく改善：これまで「30日以内に誕生日の人が0人」だとチップごと非表示で、機能の存在が分かりませんでした','・MAP上部の「誕生日」チップを常時表示に（0人のときはグレー表示）。タップでいつでも一覧シートが開きます','・一覧シートに「その先の誕生日（次の5人）」セクションを追加：30日以内が0人でも、次に誰の誕生日が来るかが分かります','・誕生日未登録の人数も表示（登録はメンバー編集の「基本」タブから）'] },
@@ -17528,7 +17563,7 @@ function loadEvents(uid) {
       saveCategories();
     }
     updateEventsBadge();
-    if (currentView === 'events') renderEvents();
+    if (currentView === 'events') renderEventsSoon();
     notifyDueEvents();
     startReminderLoop();
     checkReminders();
@@ -19138,7 +19173,7 @@ function _unionApplyToState() {
   }
   state.events = mine.concat(add);
   updateEventsBadge();
-  try { if (currentView === 'events') renderEvents(); } catch(eR) {}
+  try { if (currentView === 'events') renderEventsSoon(); } catch(eR) {}
 }
 function _unionPrefsSave() {
   if (!db || !currentUser) return;
@@ -19338,10 +19373,12 @@ function _digestScheduleSoon() {
 }
 function _digestSync() {
   if (!db || !currentUser || !currentUser.uid || viewingOwnerUid) return;
-  // 前回貼った予約はいったん全部消してから貼り直す（件数を最新化するため）
-  var old = [];
+  // v511: 予約内容を前回と比較し、変わった分だけ書き込み／不要になった分だけ削除（従来は毎回全削除→全書き直し）
+  var old = [], oldSig = {};
   try { old = JSON.parse(localStorage.getItem('gm_dgQ') || '[]'); } catch(e0) {}
-  old.forEach(function(qid){ db.doc('notifQueue/' + qid).delete().catch(function(){}); });
+  try { oldSig = JSON.parse(localStorage.getItem('gm_dgSig') || '{}') || {}; } catch(e0b) {}
+  var plan = {};
+  var fsSet = function(path, data) { plan[path.split('/')[1]] = data; return Promise.resolve(); };
   var written = [];
   var _dgAt = {}; // v468: まとめ通知の予約時刻（期限切れリマインドとの重複防止）
   var pushOff = false;
@@ -19404,7 +19441,15 @@ function _digestSync() {
       }
     }
   }
-  try { localStorage.setItem('gm_dgQ', JSON.stringify(written)); } catch(e2) {}
+  var newSig = {};
+  written.forEach(function(qid) {
+    var body = plan[qid]; if (!body) return;
+    var sig = JSON.stringify(body);
+    newSig[qid] = sig;
+    if (oldSig[qid] !== sig) window.fsSet('notifQueue/' + qid, body).catch(function(){});
+  });
+  old.forEach(function(qid) { if (!newSig[qid]) db.doc('notifQueue/' + qid).delete().catch(function(){}); });
+  try { localStorage.setItem('gm_dgQ', JSON.stringify(written)); localStorage.setItem('gm_dgSig', JSON.stringify(newSig)); } catch(e2) {}
 }
 function _notifSync(e) {
   if (!db || !currentUser || !currentUser.uid || !e || !e.id) return;
@@ -22124,7 +22169,15 @@ function _calSwipeInit() {
     if (Math.abs(dx) > 60 && Math.abs(dy) < 50) calShiftMonth(dx < 0 ? 1 : -1);
   }, { passive: true });
 }
+// v511: データ到着のたびの再描画（予定・カテゴリ・ユニオン予定）を次のフレームで1回にまとめる
+var _evRenderRaf = 0;
+function renderEventsSoon() {
+  if (_evRenderRaf) return;
+  var run = function() { _evRenderRaf = 0; if (currentView === 'events') { try { renderEvents(); } catch(e) {} } };
+  _evRenderRaf = (typeof requestAnimationFrame === 'function') ? requestAnimationFrame(run) : setTimeout(run, 16);
+}
 function renderEvents() {
+  if (_evRenderRaf) { try { cancelAnimationFrame(_evRenderRaf); } catch(eC) {} _evRenderRaf = 0; }
   updateEventsBadge();
   updateNotifBtn();
   updateInstallBtn();
@@ -26760,6 +26813,7 @@ if (auth) {
   handlePasswordResetLink();
   auth.onAuthStateChanged(function(fbUser) {
     if (fbUser) {
+      _startupPrefetch(fbUser.uid); // v511: プロフィール確認と並列にMAP・予定・目標を取得開始
       // Firestoreからプロフィール取得
       fsGet('users/' + fbUser.uid).catch(function() {
         // v451: オフライン等で読めない場合は前回ログイン時のスナップショットで起動
@@ -26923,8 +26977,10 @@ function checkPendingApprovals(){
   if(!isCurrentAdmin() || !db) return;
   var owner = currentUser.uid === OWNER_UID;
   var myUnion = currentUser.union || '';
-  fsGetCol('users').then(function(list){
-    var scoped = owner ? (list||[]) : (list||[]).filter(function(u){ return (u.union||'')===myUnion; });
+  // v511: 全ユーザーを読んでいたのを「承認待ちのみ」のクエリに（読み取り件数を大幅削減）
+  db.collection('users').where('status', '==', 'pending').get().then(function(snap){
+    var list = []; snap.forEach(function(d){ list.push(Object.assign({ id: d.id }, d.data())); });
+    var scoped = owner ? list : list.filter(function(u){ return (u.union||'')===myUnion; });
     var pend = scoped.filter(function(u){ return u.status==='pending'; });
     if(pend.length){ setTimeout(function(){ toast('⏳ 承認待ち '+pend.length+'件（プロフィール→アカウント管理）'); }, 2200); }
   }).catch(function(){});
@@ -28053,7 +28109,10 @@ function fsLoadFromFirestore(uid) {
   loadAvatars(uid); // 写真アバター（月に依存しない・同一uidなら再取得しない）
 
   // 旧形式（2026.01）を削除して新形式に移行
-  if (db) {
+  // v511: 毎回の起動で読み取り1回＋削除1回が発生していたため、同じ月・同じ端末では1回だけ実行
+  var _lgKey = 'gm_legacyChk_' + uid + '_' + month, _lgDone = false;
+  try { _lgDone = localStorage.getItem(_lgKey) === '1'; if (!_lgDone) localStorage.setItem(_lgKey, '1'); } catch(eLg) {}
+  if (db && !_lgDone) {
     db.doc('maps/' + uid + '/months/' + month).get().then(function(doc) {
       if (doc.exists) {
         // 旧形式データを新形式に変換して削除
@@ -28071,10 +28130,7 @@ function fsLoadFromFirestore(uid) {
     }).catch(function(){});
   }
 
-  // 旧パス（maps/{uid}/months/{month}）のデータを削除（クリーンアップ）
-  if (db) {
-    db.doc('maps/' + uid + '/months/' + month).delete().catch(function(){});
-  }
+  // 旧パス（maps/{uid}/months/{month}）のデータは上の確認で存在時のみ削除する（v511: 無条件の毎回削除を廃止）
 
   // 現状MAP・理想MAP・stats・commissionを全て読み込む
   var p1 = fsGet('maps/' + uid + '/months/' + month + '_current');
@@ -28131,6 +28187,12 @@ function fsLoadFromFirestore(uid) {
     }
     renderCurrentView();
     updateLTSV('current', state.members);
+    // v511: 変更検知の基準＝読込直後（描画時の再計算で付く集計値も含めた状態）
+    try {
+      if (typeof recalcAllGSV === 'function') recalcAllGSV();
+      _fsSavedSig['maps/' + uid + '/months/' + month + '_ideal'] = loaded.ideal ? JSON.stringify(state.idealMembers || []) : '';
+      _fsSavedSig['maps/' + uid + '/stats/' + month] = loaded.stats ? JSON.stringify([state.stats, state.commission, state.freshData || {}]) : '';
+    } catch(eSg) {}
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
     state.members      = [];
@@ -28167,6 +28229,7 @@ function mergeMembers(localArr, remoteArr) {
 }
 // 保存前マージ読取りの間引き：直近60秒以内に読取り/読込済みならスキップ（大規模MAPの往復半減）
 var _lastMergeCheck = 0;
+var _fsSavedSig = {}; // v511: パス→最後に保存/読込した内容（変更がない文書の書き込みを省略）
 function fsSaveToFirestore(uid) {
   var month = state.currentMonth;
   var curPath = 'maps/' + uid + '/months/' + month + '_current';
@@ -28197,16 +28260,23 @@ function fsSaveToFirestore(uid) {
       return fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
     });
   }
-  var p2 = fsSet('maps/' + uid + '/months/' + month + '_ideal', {
+  // v511: 前回保存（または読込）時と同じ内容なら書き込みを省略
+  var _idPath = 'maps/' + uid + '/months/' + month + '_ideal';
+  var _idSig = JSON.stringify(state.idealMembers || []);
+  var _stPath = 'maps/' + uid + '/stats/' + month;
+  var _stSig = JSON.stringify([state.stats, state.commission, state.freshData || {}]);
+  var p2 = (_fsSavedSig[_idPath] === _idSig) ? Promise.resolve() : fsSet(_idPath, {
     members: state.idealMembers || [],
     updatedAt: new Date().toISOString()
   });
-  var p3 = fsSet('maps/' + uid + '/stats/' + month, {
+  var p3 = (_fsSavedSig[_stPath] === _stSig) ? Promise.resolve() : fsSet(_stPath, {
     stats: state.stats,
     commission: state.commission,
     freshData: state.freshData || {},
     updatedAt: new Date().toISOString()
   });
+  p2 = p2.then(function(){ _fsSavedSig[_idPath] = _idSig; });
+  p3 = p3.then(function(){ _fsSavedSig[_stPath] = _stSig; });
   return p1.then(function(){ return p2; }).then(function(){ return p3; });
 }
 
