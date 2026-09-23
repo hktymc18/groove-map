@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v513';
+var APP_JS_VERSION = 'v514';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1335,14 +1335,43 @@ window.addEventListener('resize', function() {
 // ============================================================
 var _orbitQ = '';
 var _orbitZoom = { current: 0, ideal: 0 }; // 0=フィット（自動）
-function renderPCOrbit(mapType, targetEl, forceLight) {
+// v514: PDFの分割出力用に一部分だけのMAPを作る（opts.rootId=その人を中心／opts.exclude=系列を除く／opts.region=地域）
+function _orbitSubset(all, opts) {
+  var byId = {}, kidIdx = {};
+  all.forEach(function(m) { byId[m.id] = m; (kidIdx[m.parentId || ''] || (kidIdx[m.parentId || ''] = [])).push(m); });
+  var clone = function(m, extra) { var c = {}; for (var k in m) c[k] = m[k]; if (extra) for (var k2 in extra) c[k2] = extra[k2]; return c; };
+  var subtree = function(id, acc) { acc[id] = 1; (kidIdx[id] || []).forEach(function(c) { subtree(c.id, acc); }); return acc; };
+  var out = all;
+  if (opts.rootId && byId[opts.rootId]) {
+    var keep = subtree(opts.rootId, {});
+    out = out.filter(function(m) { return keep[m.id]; }).map(function(m) { return m.id === opts.rootId ? clone(m, { parentId: '' }) : m; });
+  }
+  if (opts.exclude && opts.exclude.length) {
+    var drop = {};
+    opts.exclude.forEach(function(id) { if (byId[id]) subtree(id, drop); });
+    out = out.filter(function(m) { return !drop[m.id]; });
+  }
+  if (opts.region) {
+    var want = normalizeRegionValue(opts.region);
+    var inR = {}, need = {};
+    out.forEach(function(m) { if (normalizeRegionValue(m.region || '') === want) inR[m.id] = 1; });
+    var byId2 = {}; out.forEach(function(m) { byId2[m.id] = m; });
+    Object.keys(inR).forEach(function(id) { var cur = byId2[id], g = 0; while (cur && g++ < 999) { need[cur.id] = 1; cur = cur.parentId ? byId2[cur.parentId] : null; } });
+    out.forEach(function(m) { if (!m.parentId) need[m.id] = 1; });
+    out = out.filter(function(m) { return need[m.id]; }).map(function(m) { return inR[m.id] ? m : clone(m, { _ghost: true }); });
+  }
+  return out;
+}
+function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   mapType = mapType || 'current';
+  opts = opts || {};
   var wrap = targetEl || document.getElementById(mapType === 'current' ? 'pcOrbitCurrent' : 'pcOrbitIdeal');
   if (!wrap) return;
   var isPrint = !!targetEl;
   var light = forceLight || document.body.classList.contains('light');
   wrap.innerHTML = '';
   var members = _treeVisibleMembers(composeMergedInto(membersForMap(mapType), mapType));
+  if (opts.rootId || (opts.exclude && opts.exclude.length) || opts.region) members = _orbitSubset(members, opts);
   if (!members || !members.length) { wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim)">メンバーなし</div>'; return; }
   var _kidsCmp = _treeSortCmp(members);
   var _byId = {}, _kidIdx = {};
@@ -1361,155 +1390,226 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     for (var ci = 0; ci < chain.length; ci++) nodeDepth[chain[ci].id] = base + 1 + ci;
     if (nodeDepth[m.id] > maxD) maxD = nodeDepth[m.id];
   });
-  // 葉数（角度の割当量）
-  var leafCnt = {};
-  (function cnt(id) { var ch = kids(id); if (!ch.length) { leafCnt[id] = 1; return 1; } var t = 0; ch.forEach(function(c) { t += cnt(c.id); }); leafCnt[id] = t; return t; })(root.id);
-  var totalLeaves = leafCnt[root.id] || 1;
-  // 系列カラー＆セクター角度
+  // ── v514: 陸上トラック型（紙のMAPと同じ：直線＋半円のレーン＝段）──
+  // 丸はレーンの線の上にだけ置く（内外にずらさない）。混む段があればトラックの直線部分を延ばして
+  // 横に広げ、丸どうしが重ならない間隔を必ず確保する。子は親の外側・同じ並び順でまとめて置く。
   var COLORS = ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF'];
   var l1 = kids(root.id);
   // v495: 存在しない系列フォーカスの持ち越しを自動解除
-  if (window._pcFocusLineage && !l1.some(function(k) { return k.id === window._pcFocusLineage; })) window._pcFocusLineage = '';
-  var gapDeg = l1.length > 1 ? 5 : 0;
-  var availDeg = 360 - gapDeg * l1.length;
-  var perLeaf = availDeg / totalLeaves;
+  if (!isPrint && window._pcFocusLineage && !l1.some(function(k) { return k.id === window._pcFocusLineage; })) window._pcFocusLineage = '';
   var cmap = {}, lineageRoot = {};
   cmap[root.id] = '#8a94a6'; lineageRoot[root.id] = '';
-  var angle = {}, sectors = [];
-  var a = -90;
   l1.forEach(function(kid, fi) {
     var col = COLORS[fi % COLORS.length];
-    var span = leafCnt[kid.id] * perLeaf;
-    sectors.push({ a0: a, a1: a + span, col: col, id: kid.id });
-    (function assign(m, a0, a1, c, lr) {
-      cmap[m.id] = c; lineageRoot[m.id] = lr;
-      angle[m.id] = (a0 + a1) / 2;
-      var ch = kids(m.id), ca = a0;
-      ch.forEach(function(cc2) { var sp = leafCnt[cc2.id] * perLeaf; assign(cc2, ca, ca + sp, c, lr); ca += sp; });
-    })(kid, a, a + span, col, kid.id);
-    a += span + gapDeg;
+    (function paint(m) { cmap[m.id] = col; lineageRoot[m.id] = kid.id; kids(m.id).forEach(paint); })(kid);
   });
-  angle[root.id] = 0;
-  // 半径・ノードサイズ（人数で自動調整）
-  var N = members.length;
-  var R0 = 120, RS = N > 160 ? 78 : (N > 80 ? 88 : 100);
-  var nr = Math.max(20, Math.min(34, Math.round(1600 / Math.max(N, 20)))); // v502: 4分割表示のため拡大
-  var stag = RS * 0.30; // 混雑リング用の内外スタガ
-  var Rmax = R0 + Math.max(maxD - 1, 0) * RS + stag;
-  // v486: 旧MAP同様の楕円（横長）。画面比率に合わせて横に伸ばす（印刷はA3横の比率）
-  var ASPECT = isPrint ? 1.45 : Math.max(1.15, Math.min(1.9, (window.innerWidth || 1400) / Math.max(window.innerHeight || 900, 500)));
-  var PAD = 70;
-  var CX = Rmax * ASPECT + PAD, CY = Rmax + PAD;
-  var SW = (Rmax * ASPECT + PAD) * 2, SH = (Rmax + PAD) * 2;
-  var rad = function(deg) { return deg * Math.PI / 180; };
-  var ept = function(R, deg) { return { x: CX + R * ASPECT * Math.cos(rad(deg)), y: CY + R * Math.sin(rad(deg)) }; };
-  // v489: リングごとに最小間隔を確保（楕円の左右端は角度あたりの移動距離が縮み、丸が重なるため）
-  (function() {
-    var byRing = {};
-    members.forEach(function(m) {
-      if (m.id === root.id) return;
-      var d = nodeDepth[m.id] || 0;
-      (byRing[d] || (byRing[d] = [])).push(m.id);
-    });
-    var minPx = nr * 2 + 10;
-    Object.keys(byRing).forEach(function(dk) {
-      var ids = byRing[dk].sort(function(a, b) { return angle[a] - angle[b]; });
-      if (ids.length < 2) return;
-      var R = R0 + (parseInt(dk, 10) - 1) * RS;
-      var degLen = function(th) { var t = rad(th); return Math.PI / 180 * Math.sqrt(Math.pow(R * ASPECT * Math.sin(t), 2) + Math.pow(R * Math.cos(t), 2)); }; // 1度あたりの移動距離(px)
-      for (var i = 1; i < ids.length; i++) {
-        var need = minPx / Math.max(degLen((angle[ids[i - 1]] + angle[ids[i]]) / 2), 0.5);
-        if (angle[ids[i]] < angle[ids[i - 1]] + need) angle[ids[i]] = angle[ids[i - 1]] + need;
-      }
-      // v502: 弧長近似の誤差（楕円の端で実距離が短くなる）と一周の巻き戻りペアを、
-      // 実測距離の緩和反復（詰まったペアを両側へ半分ずつ押し広げる）で補正
-      var perim9 = Math.PI * (R * ASPECT + R);
-      if (ids.length * minPx < perim9 * 0.98) {
-        for (var it9 = 0; it9 < 8; it9++) {
-          var moved9 = false;
-          for (var i9 = 0; i9 < ids.length; i9++) {
-            var idA9 = ids[(i9 === 0) ? ids.length - 1 : i9 - 1], idB9 = ids[i9];
-            var aA9 = (i9 === 0) ? angle[idA9] - 360 : angle[idA9], aB9 = angle[idB9];
-            var pA9 = ept(R, aA9), pB9 = ept(R, aB9);
-            var dist9 = Math.sqrt(Math.pow(pA9.x - pB9.x, 2) + Math.pow(pA9.y - pB9.y, 2));
-            if (dist9 < minPx - 0.5) {
-              var half9 = (minPx - dist9) / 2 / Math.max(degLen((aA9 + aB9) / 2), 0.5);
-              angle[idA9] -= half9; angle[idB9] += half9;
-              moved9 = true;
-            }
-          }
-          if (!moved9) break;
-        }
-      }
-      // 一周分を超えて先頭と被る場合は全体を均等に圧縮
-      var span = angle[ids[ids.length - 1]] - angle[ids[0]];
-      var lim = 360 - minPx / Math.max(degLen(angle[ids[0]]), 0.5);
-      if (span > lim && span > 0) {
-        var sc = lim / span;
-        for (var j = 1; j < ids.length; j++) angle[ids[j]] = angle[ids[0]] + (angle[ids[j]] - angle[ids[0]]) * sc;
+  var leafCnt = {};
+  (function cnt(id) { var ch = kids(id); if (!ch.length) { leafCnt[id] = 1; return 1; } var t = 0; ch.forEach(function(c) { t += cnt(c.id); }); leafCnt[id] = t; return t; })(root.id);
+  var totalLeaves = leafCnt[root.id] || 1;
+  var nr = 26;                          // 丸の半径（固定。人数が多いほどトラックが横に伸びる）
+  var MIN = nr * 2 + 10;                // 同じレーンの丸どうしの中心間の最小距離
+  var GAP = nr * 2 + 30;                // レーンの間隔
+  var R1 = nr * 2 + 40;                 // 1段目レーンの半円部分の半径
+  var KR = 1;                           // レーン半径の倍率（下で自動決定）
+  var laneR = function(d) { return (R1 + (d - 1) * GAP) * KR; };
+  var maxLane = Math.max(maxD, 1);
+  // 目標位置：一周を1としたときの割合 fT を葉の数で配分（系列の間は少し空ける）
+  var gapF = l1.length > 1 ? 0.0125 : 0;
+  var perLeaf = (1 - gapF * l1.length) / totalLeaves;
+  var fT = {}, fCur = gapF / 2;
+  l1.forEach(function(kid) {
+    (function assign(m, f0) {
+      fT[m.id] = f0 + leafCnt[m.id] * perLeaf / 2;
+      var cf = f0;
+      kids(m.id).forEach(function(c) { assign(c, cf); cf += leafCnt[c.id] * perLeaf; });
+    })(kid, fCur);
+    fCur += leafCnt[kid.id] * perLeaf + gapF;
+  });
+  // レーンごとの並び（系列→並び順どおり）
+  var byLane = {};
+  (function walk(id) { kids(id).forEach(function(c) { var d = nodeDepth[c.id]; (byLane[d] || (byLane[d] = [])).push(c.id); walk(c.id); }); })(root.id);
+  var Lh = R1; // 直線部分の半分の長さ（下で自動決定）
+  var refLane = 1, refCnt = 0; // 一番混むレーンを基準に、長さに比例して配分（直線と半円で密度をそろえる）
+  for (var dq in byLane) if (byLane[dq].length > refCnt) { refCnt = byLane[dq].length; refLane = +dq; }
+  var segLen = function(r) { return [2 * Lh, Math.PI * r, 2 * Lh, Math.PI * r]; };
+  var perim = function(r) { return 4 * Lh + 2 * Math.PI * r; };
+  var uToS = function(r, u) {
+    u = ((u % 4) + 4) % 4; var sl = segLen(r), sAcc = 0, k = Math.floor(u);
+    for (var i = 0; i < k; i++) sAcc += sl[i];
+    return sAcc + (u - k) * sl[k];
+  };
+  var sToU = function(r, sv) {
+    var P = perim(r); sv = ((sv % P) + P) % P; var sl = segLen(r);
+    for (var i = 0; i < 4; i++) { if (sv <= sl[i] || i === 3) return i + Math.min(1, sv / sl[i]); sv -= sl[i]; }
+    return 0;
+  };
+  // 並び順を保ったまま最小間隔を満たし、目標位置からのずれが最小になる配置（等間隔制約つき単調回帰＝PAV）
+  var placeLane = function(ids, r) {
+    var P = perim(r), n = ids.length, t = ids.map(function(id) { return uToS(r, uT[id]); });
+    for (var i = 1; i < n; i++) while (t[i] < t[i - 1] - P / 2) t[i] += P; // 周回の連続性
+    var y = t.map(function(v, i) { return v - i * MIN; });
+    var blocks = [];
+    y.forEach(function(v) {
+      blocks.push({ sum: v, cnt: 1 });
+      while (blocks.length > 1 && blocks[blocks.length - 2].sum / blocks[blocks.length - 2].cnt > blocks[blocks.length - 1].sum / blocks[blocks.length - 1].cnt) {
+        var bl = blocks.pop(); blocks[blocks.length - 1].sum += bl.sum; blocks[blocks.length - 1].cnt += bl.cnt;
       }
     });
-  })();
+    var out = [], idx = 0;
+    blocks.forEach(function(bl) { var m = bl.sum / bl.cnt; for (var j = 0; j < bl.cnt; j++) { out.push(m + idx * MIN); idx++; } });
+    var ok = n < 2 || (out[n - 1] - out[0] <= P - MIN + 0.5);
+    return { s: out, ok: ok };
+  };
+  var laneS = {}, uT = {};
+  // 今の KR で、全レーンの丸が重ならずに並ぶ最短の直線長 Lh を求めて配置
+  var solve = function() {
+    Lh = Math.max(R1, laneR(maxLane) * 0.3);
+    for (var dq2 in byLane) Lh = Math.max(Lh, (byLane[dq2].length * MIN / 0.82 - 2 * Math.PI * laneR(+dq2)) / 4);
+    for (var tryN = 0; tryN < 14; tryN++) {
+      var allOk = true;
+      // 基準レーン上で割合→位置 u。同じ u は全レーンで同じ法線上（親の真外側に子）
+      for (var fid in fT) uT[fid] = sToU(laneR(refLane), fT[fid] * perim(laneR(refLane)));
+      for (var dk in byLane) { var res = placeLane(byLane[dk], laneR(+dk)); laneS[dk] = res.s; if (!res.ok) allOk = false; }
+      if (allOk) break;
+      Lh *= 1.18;
+    }
+  };
+  var PAD = nr + 34;
+  var hasTitle = !!(isPrint && opts.title);
+  var titleH = 0, tS = 1; // 見出しの高さ・文字の倍率（大きいMAPほど見出しも大きく＝紙の上で同じくらいの大きさ）
+  var dimsOf = function() {
+    var rO = laneR(maxLane), w = 2 * (Lh + rO + PAD), s9 = Math.max(1, w / 1500), th = hasTitle ? 96 * s9 : 0;
+    if (hasTitle) w = Math.max(w, 2 * PAD + s9 * Math.max(String(opts.title).length * 30, String(opts.sub || '').length * 17)); // 見出しが収まる幅
+    return { w: w, h: 2 * (rO + PAD) + th, th: th, ts: s9 };
+  };
+  // v514: 横に細長くなりすぎないよう、レーン半径の倍率 KR を選ぶ（混む外側レーンの半円を長くして縦も使う）
+  // 目標：印刷はA3横（404×281mm）、画面は表示エリアいっぱいに一番大きく見える形
+  var tgtW = isPrint ? 404 : Math.max((window.innerWidth || 1400) - (isPCMode() ? 110 : 20), 600);
+  var tgtH = isPrint ? 281 : Math.max((window.innerHeight || 900) - 230, 460);
+  var bestK = 1, bestSc = 0;
+  var KS = [1, 1.15, 1.3, 1.5, 1.75, 2, 2.35, 2.75, 3.25, 3.85, 4.5, 5.3, 6.2];
+  for (var ki = 0; ki < KS.length; ki++) {
+    KR = KS[ki]; solve();
+    var dm0 = dimsOf(), sc0 = Math.min(tgtW / dm0.w, tgtH / dm0.h);
+    if (sc0 > bestSc * 1.01) { bestSc = sc0; bestK = KR; }
+    if (ki === 0 && (isPrint ? 2 * nr * sc0 >= 24 : sc0 >= 1)) break; // 小さいMAPはそのまま（コンパクト）
+    if (ki >= 2 && sc0 < bestSc * 0.9) break;
+  }
+  KR = bestK; solve();
+  var BAND = GAP * KR; // レーンの間隔
+  var rOut = laneR(maxLane);
+  var dm = dimsOf(), SW = dm.w, SH = dm.h;
+  titleH = dm.th; tS = dm.ts;
+  var CX = SW / 2, CY = titleH + rOut + PAD;
+  var lanePt = function(r, u) {
+    u = ((u % 4) + 4) % 4;
+    if (u < 1) return { x: CX - Lh + 2 * Lh * u, y: CY - r };
+    if (u < 2) { var a1 = -Math.PI / 2 + Math.PI * (u - 1); return { x: CX + Lh + r * Math.cos(a1), y: CY + r * Math.sin(a1) }; }
+    if (u < 3) return { x: CX + Lh - 2 * Lh * (u - 2), y: CY + r };
+    var a2 = Math.PI / 2 + Math.PI * (u - 3); return { x: CX - Lh + r * Math.cos(a2), y: CY + r * Math.sin(a2) };
+  };
   var posOf = {};
-  var ringIdx = {};
-  members.forEach(function(m) {
-    var d = nodeDepth[m.id] || 0;
-    if (m.id === root.id) { posOf[m.id] = { x: CX, y: CY }; return; }
-    var R = R0 + (d - 1) * RS;
-    var k = 'd' + d;
-    ringIdx[k] = (ringIdx[k] || 0) + 1;
-    if (d >= 2 && !kids(m.id).length && perLeaf * Math.PI / 180 * R * (ASPECT + 1) / 2 < nr * 2.4) R += (ringIdx[k] % 2 ? stag : -stag * 0.4); // v488: 互い違いは2段目以降の混雑時のみ（1段目はリングに乗せる）
-    posOf[m.id] = ept(R, angle[m.id]);
-  });
+  posOf[root.id] = { x: CX, y: CY };
+  for (var dk2 in byLane) {
+    var rr = laneR(+dk2);
+    byLane[dk2].forEach(function(id, i) { var u0 = sToU(rr, laneS[dk2][i]); var p0 = lanePt(rr, u0); p0.lane = +dk2; p0.u = u0; posOf[id] = p0; });
+  }
+  var stadiumPath = function(r) {
+    return 'M' + (CX - Lh) + ',' + (CY - r) + ' L' + (CX + Lh) + ',' + (CY - r)
+      + ' A' + r + ',' + r + ' 0 0 1 ' + (CX + Lh) + ',' + (CY + r)
+      + ' L' + (CX - Lh) + ',' + (CY + r)
+      + ' A' + r + ',' + r + ' 0 0 1 ' + (CX - Lh) + ',' + (CY - r) + ' Z';
+  };
 
   var NS = 'http://www.w3.org/2000/svg';
   var svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 ' + SW + ' ' + SH);
   svg.setAttribute('id', isPrint ? 'orbitSvgPrint' : (mapType === 'current' ? 'orbitSvgC' : 'orbitSvgI'));
+  svg.setAttribute('data-lh', Lh.toFixed(1));
   var bg = light ? '#ffffff' : 'var(--bg)';
   svg.style.background = bg;
-  // 系列セクター（薄い塗り）
-  sectors.forEach(function(sec) {
-    if (sec.a1 - sec.a0 >= 359) return;
-    var rIn = R0 * 0.45, rOut = Rmax + PAD * 0.5;
-    var large = (sec.a1 - sec.a0) > 180 ? 1 : 0;
-    var i0 = ept(rIn, sec.a0), i1 = ept(rIn, sec.a1), o0 = ept(rOut, sec.a0), o1 = ept(rOut, sec.a1);
-    var p = 'M' + i0.x + ',' + i0.y
-      + ' L' + o0.x + ',' + o0.y
-      + ' A' + (rOut * ASPECT) + ',' + rOut + ' 0 ' + large + ' 1 ' + o1.x + ',' + o1.y
-      + ' L' + i1.x + ',' + i1.y
-      + ' A' + (rIn * ASPECT) + ',' + rIn + ' 0 ' + large + ' 0 ' + i0.x + ',' + i0.y + ' Z';
-    var path = document.createElementNS(NS, 'path');
-    path.setAttribute('d', p); path.setAttribute('fill', sec.col); path.setAttribute('opacity', light ? '0.06' : '0.07');
-    path.setAttribute('pointer-events', 'none');
-    svg.appendChild(path);
-  });
-  // 同心リング＝段
-  for (var d1 = 1; d1 <= maxD; d1++) {
-    var R1 = R0 + (d1 - 1) * RS;
-    var ring = document.createElementNS(NS, 'ellipse');
-    ring.setAttribute('cx', CX); ring.setAttribute('cy', CY);
-    ring.setAttribute('rx', R1 * ASPECT); ring.setAttribute('ry', R1);
-    ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', light ? '#c9cfda' : '#2a3242'); ring.setAttribute('stroke-width', '1');
-    svg.appendChild(ring);
-    var rl = document.createElementNS(NS, 'text');
-    rl.setAttribute('x', CX); rl.setAttribute('y', CY - R1 - 6);
-    rl.setAttribute('text-anchor', 'middle'); rl.setAttribute('font-size', '11px'); rl.setAttribute('font-weight', '700');
-    rl.setAttribute('fill', light ? '#8a94a6' : '#5b6c7d'); // 段ラベル色
-    rl.setAttribute('class', 'orbit-ring-lb');
-    rl.textContent = d1 + '段';
-    svg.appendChild(rl);
+  if (isPrint && opts.title) {
+    var tt = document.createElementNS(NS, 'text');
+    tt.setAttribute('x', PAD); tt.setAttribute('y', 44 * tS); tt.setAttribute('font-size', (30 * tS).toFixed(1) + 'px'); tt.setAttribute('font-weight', '800'); tt.setAttribute('fill', '#1a1f2b');
+    tt.setAttribute('class', 'orbit-title');
+    tt.textContent = opts.title;
+    svg.appendChild(tt);
+    if (opts.sub) {
+      var ts2 = document.createElementNS(NS, 'text');
+      ts2.setAttribute('x', PAD); ts2.setAttribute('y', 76 * tS); ts2.setAttribute('font-size', (17 * tS).toFixed(1) + 'px'); ts2.setAttribute('font-weight', '700'); ts2.setAttribute('fill', '#556070');
+      ts2.textContent = opts.sub;
+      svg.appendChild(ts2);
+    }
   }
-  // 線（親→子）
+  // 中央（0段目＝自分）の囲み
+  var c0 = document.createElementNS(NS, 'path');
+  c0.setAttribute('d', stadiumPath(laneR(1) - BAND * 0.55));
+  c0.setAttribute('fill', light ? '#f4f6fa' : 'rgba(255,255,255,0.025)'); c0.setAttribute('stroke', light ? '#c9cfda' : '#2a3242'); c0.setAttribute('stroke-width', '1');
+  c0.setAttribute('class', 'orbit-center');
+  svg.appendChild(c0);
+  // レーン＝段（丸はこの線の上に並ぶ）
+  for (var d1 = 1; d1 <= maxLane; d1++) {
+    var R1d = laneR(d1);
+    var ring = document.createElementNS(NS, 'path');
+    ring.setAttribute('d', stadiumPath(R1d));
+    ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', light ? '#aab3c2' : '#3a4558'); ring.setAttribute('stroke-width', '1.4');
+    ring.setAttribute('class', 'orbit-lane');
+    ring.setAttribute('data-r', R1d);
+    svg.appendChild(ring);
+  }
+  // 段ラベル（左端、そのレーンの内側の帯に小さく）
+  for (var d2 = 1; d2 <= maxLane; d2++) {
+    var lb = document.createElementNS(NS, 'text');
+    lb.setAttribute('x', CX - Lh - (laneR(d2 - 1) + BAND / 2)); lb.setAttribute('y', CY + 4);
+    lb.setAttribute('text-anchor', 'middle'); lb.setAttribute('font-size', '11px'); lb.setAttribute('font-weight', '700');
+    lb.setAttribute('fill', light ? '#a0a9b8' : '#4a5566');
+    lb.setAttribute('class', 'orbit-ring-lb');
+    lb.textContent = d2 + '段';
+    svg.appendChild(lb);
+  }
+  // 線（親→子）v514: 紙のMAPと同じ「くし形」。親から外へ半レーン出て、レーンの間（丸のない帯）を進み、子へまっすぐ入る
+  // → 線が他の人の丸を突き抜けない。0段目（中央）からは中心軸に沿って進む
+  var fp = function(v) { return v.toFixed(1); };
+  var bandPts = function(rm, u0, u1) {
+    var du = u1 - u0; if (du > 2) du -= 4; if (du < -2) du += 4;
+    var out = '', steps = Math.max(1, Math.ceil(Math.abs(du) * 24));
+    for (var k = 1; k <= steps; k++) { var pp = lanePt(rm, u0 + du * k / steps); out += ' L' + fp(pp.x) + ',' + fp(pp.y); }
+    return out;
+  };
+  var spineX0 = CX, spineX1 = CX;
   members.forEach(function(m) {
     if (!m.parentId || !_byId[m.parentId]) return;
     var p1 = posOf[m.parentId], p2 = posOf[m.id];
     if (!p1 || !p2) return;
-    var ln = document.createElementNS(NS, 'line');
-    ln.setAttribute('x1', p1.x); ln.setAttribute('y1', p1.y); ln.setAttribute('x2', p2.x); ln.setAttribute('y2', p2.y);
-    ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '1.2'); ln.setAttribute('opacity', '0.4');
+    var dd;
+    if (m.parentId === root.id && p2.u != null) {
+      var sp = lanePt(0, p2.u);
+      spineX0 = Math.min(spineX0, sp.x); spineX1 = Math.max(spineX1, sp.x);
+      dd = 'M' + fp(sp.x) + ',' + fp(sp.y) + ' L' + fp(p2.x) + ',' + fp(p2.y);
+    } else if (p1.u != null && p2.u != null && p2.lane === p1.lane + 1) {
+      var rm = laneR(p1.lane) + BAND / 2, a0 = lanePt(rm, p1.u);
+      dd = 'M' + fp(p1.x) + ',' + fp(p1.y) + ' L' + fp(a0.x) + ',' + fp(a0.y) + bandPts(rm, p1.u, p2.u) + ' L' + fp(p2.x) + ',' + fp(p2.y);
+    } else {
+      dd = 'M' + fp(p1.x) + ',' + fp(p1.y) + ' L' + fp(p2.x) + ',' + fp(p2.y);
+    }
+    var ln = document.createElementNS(NS, 'path');
+    ln.setAttribute('d', dd); ln.setAttribute('fill', 'none'); ln.setAttribute('class', 'orbit-link');
+    ln.setAttribute('stroke-linejoin', 'round');
+    ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '1.6'); ln.setAttribute('opacity', m._ghost ? '0.25' : '0.6');
     if (m._foreign) ln.setAttribute('stroke-dasharray', '4,3');
     svg.appendChild(ln);
+  });
+  if (spineX1 > spineX0) { // 中心軸（0段目から各系列へ）
+    var spn = document.createElementNS(NS, 'path');
+    spn.setAttribute('d', 'M' + fp(spineX0) + ',' + fp(CY) + ' L' + fp(spineX1) + ',' + fp(CY));
+    spn.setAttribute('stroke', light ? '#8a94a6' : '#6b7a90'); spn.setAttribute('stroke-width', '2'); spn.setAttribute('opacity', '0.7');
+    spn.setAttribute('class', 'orbit-link orbit-spine');
+    svg.appendChild(spn);
+  }
+  // 段ラベルは線の上に（読めるよう背景色のふち取り）
+  Array.prototype.slice.call(svg.querySelectorAll('.orbit-ring-lb')).forEach(function(el) {
+    el.style.stroke = light ? '#ffffff' : 'var(--bg)'; el.style.strokeWidth = '4px'; el.style.paintOrder = 'stroke';
+    svg.appendChild(el);
   });
   // ノード
   members.forEach(function(m) {
@@ -1554,7 +1654,8 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
       g.insertBefore(_pr6, g.firstChild);
     }
     if (_isBrUp && !isPrint) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
-    if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)';
+    if ((m.title || '').trim() === 'OUT') { if (isPrint) g.setAttribute('opacity', '0.5'); else g.style.filter = 'grayscale(1) opacity(0.55)'; } // v514: PDF化（画像変換）ではCSSフィルタが効かない環境があるため属性で
+    if (m._ghost) { g.setAttribute('opacity', '0.35'); g.setAttribute('class', 'oval-node orbit-node orbit-ghost'); } // v514: 地域MAPで、つながりを示すために残した他地域の上位者
     // v502: 旧MAP式の4分割サークル（左上=名前2行／右上=稼働／左下=タイトル／右下=(固定PT)・GSV）
     var _txtCol = light ? '#1a1f2b' : '#f2f4f8';
     var _dimCol = light ? '#3a4560' : '#cbd5e1';
@@ -1642,13 +1743,13 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     svg.appendChild(g);
   });
 
-  if (isPrint) { wrap.appendChild(svg); return; }
+  if (isPrint) { wrap._orbitSize = { SW: SW, SH: SH, n: members.length, nr: nr }; wrap.appendChild(svg); return; }
 
   // ── ツールバー＋スクロール容器 ──
   var bar = document.createElement('div');
   bar.style.cssText = 'display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap';
   bar.innerHTML = '<b style="font-size:13px">◎ 運動会MAP</b>'
-    + '<span style="font-size:11px;color:var(--text-dim)">' + (state.currentMonth || '') + '・' + members.length + '人・リング=段数／扇=系列</span>'
+    + '<span style="font-size:11px;color:var(--text-dim)">' + (state.currentMonth || '') + '・' + members.length + '人・レーン=段数／色=系列</span>'
     + '<input id="orbitSearch' + (mapType === 'current' ? 'C' : 'I') + '" type="search" placeholder="🔍 名前でスポットライト" autocomplete="off" '
     + 'style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;padding:6px 12px;border-radius:9px;outline:none;width:210px" '
     + 'oninput="orbitSearch(this.value)" value="' + evEsc(_orbitQ) + '">'
@@ -1657,7 +1758,7 @@ function renderPCOrbit(mapType, targetEl, forceLight) {
     + '<div class="orbit-btn" onclick="orbitZoomBy(0)" title="全体表示">⊡</div>'
     + '<div class="orbit-btn" onclick="orbitZoomBy(1)" title="拡大">＋</div>'
     + '<div class="orbit-btn mapFsBtn' + (document.querySelector('.map-fs') ? ' on' : '') + '" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>'
-    + '<div class="orbit-btn" onclick="orbitPrint()" title="A3横1枚に印刷（PDF保存も可）">🖨 A3印刷</div>';
+    + '<div class="orbit-btn" onclick="orbitPdfOpen()" title="A3横のPDFを作成（コンビニ印刷・LINE共有に）">' + icn('doc') + ' PDFで保存</div>';
   wrap.appendChild(bar);
   var fsOn = !!document.querySelector('.map-fs');
   var viewH = Math.max(window.innerHeight - (fsOn ? 130 : 230), 460);
@@ -1781,6 +1882,289 @@ function orbitSearch(q) {
     outer.scrollLeft = Math.max(0, meta.pos[firstHit].x * z - outer.clientWidth / 2 + Math.max(0, (outer.clientWidth - meta.SW * z) / 2) * 0);
     outer.scrollTop = Math.max(0, meta.pos[firstHit].y * z - outer.clientHeight / 2);
   }
+}
+// ── v514: 運動会MAPを「PDFで保存」（A3横・1選択＝1ページ／全体・系列ごと・選んだ系列を除く・地域）──
+// 家にプリンターがない人でもコンビニ印刷・LINE共有できるように、印刷ではなくPDFファイルを作る
+var _opdf = null;
+var _OPDF_JSPDF = ['https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js']; // 1つ目が読めなければ2つ目
+var _OPDF_TITLE_FULL = { 'BD':'ブルーダイヤモンド', 'D':'ダイヤモンド', 'E':'エメラルド', 'R':'ルビー', 'L':'ラピス', 'G':'ゴールド', 'TE':'チームエリート' };
+var _OPDF_MIN_MM = 8; // 丸の直径がこれ未満だと文字が読みにくい
+var _OPDF_MAX_MM = 24; // 人数が少ないページで丸が巨大にならないように
+function _opdfName(m) { return String((m.lastName || '') + (m.firstName || '')).replace(/[\s　]/g, ''); }
+function _opdfMembers(mt) { return _treeVisibleMembers(composeMergedInto(membersForMap(mt), mt)); }
+function orbitPdfOpen() {
+  var mt = currentView === 'ideal' ? 'ideal' : 'current';
+  var ms = _opdfMembers(mt);
+  if (!ms || !ms.length) { toast('メンバーがいません'); return; }
+  var cmp = _treeSortCmp(ms);
+  var roots = ms.filter(function(m) { return !m.parentId; }).sort(cmp);
+  var root = roots[0];
+  var l1 = ms.filter(function(m) { return m.parentId === root.id; }).sort(cmp);
+  var kidIdx = {};
+  ms.forEach(function(m) { (kidIdx[m.parentId || ''] || (kidIdx[m.parentId || ''] = [])).push(m); });
+  var cntSub = function(id) { var t = 1; (kidIdx[id] || []).forEach(function(c) { t += cntSub(c.id); }); return t; };
+  // 系列名：姓（ルートや他の1段目と姓がかぶる時は名）→「嶽本MAP」「将平MAP」
+  var lnCnt = {};
+  lnCnt[root.lastName || ''] = 1;
+  l1.forEach(function(k) { lnCnt[k.lastName || ''] = (lnCnt[k.lastName || ''] || 0) + 1; });
+  var nick = {};
+  l1.forEach(function(k) {
+    var ln = (k.lastName || '').trim(), fn = (k.firstName || '').trim();
+    nick[k.id] = (ln && lnCnt[k.lastName || ''] === 1) ? ln : (fn || ln || '—');
+  });
+  var regCnt = {};
+  ms.forEach(function(m) { var r = normalizeRegionValue(m.region || ''); if (r) regCnt[r] = (regCnt[r] || 0) + 1; });
+  var regions = Object.keys(regCnt).sort(function(a, b) {
+    var ia = REGION_PRESETS.indexOf(a), ib = REGION_PRESETS.indexOf(b);
+    if (ia < 0) ia = 99; if (ib < 0) ib = 99;
+    return ia - ib || regCnt[b] - regCnt[a];
+  });
+  _opdf = { mt: mt, root: root, l1: l1, nick: nick, cnt: {}, regions: regions, regCnt: regCnt, whole: true, lin: {}, excl: {}, reg: {}, est: {}, busy: false };
+  l1.forEach(function(k) { _opdf.cnt[k.id] = cntSub(k.id); });
+  closeOrbitPdf();
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'opdfOv';
+  ov.onclick = function(e) { if (e.target === ov && !_opdf.busy) closeOrbitPdf(); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('doc') + ' PDFで保存</div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim);margin-top:2px">A3横・選んだものが1枚ずつのページになります（コンビニ印刷・LINE共有に）</div></div>'
+    + '<span class="ms-x" onclick="closeOrbitPdf()">✕</span></div>'
+    + '<div id="opdfBody" style="padding:0 16px 8px"></div>'
+    + '<div id="opdfFoot" style="padding:0 16px 6px"></div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  _opdfRender();
+}
+function closeOrbitPdf() {
+  var ov = document.getElementById('opdfOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+}
+function opdfToggle(kind, key) {
+  if (!_opdf || _opdf.busy) return;
+  if (kind === 'whole') _opdf.whole = !_opdf.whole;
+  else { var o = _opdf[kind]; if (o[key]) delete o[key]; else o[key] = true; }
+  _opdfRender();
+}
+function opdfAll(kind, on) {
+  if (!_opdf || _opdf.busy) return;
+  var o = {};
+  if (on) (kind === 'reg' ? _opdf.regions : _opdf.l1.map(function(k) { return k.id; })).forEach(function(k) { o[k] = true; });
+  _opdf[kind] = o;
+  _opdfRender();
+}
+function _opdfFullTitle(t) { t = (t || '').trim(); return _OPDF_TITLE_FULL[t] || t; }
+// 選択 → ページ一覧（順番：全体 → 系列ごと → 除外 → 地域）
+function _opdfPages() {
+  var o = _opdf, pages = [];
+  var ym = String(state.currentMonth || currentMonthStr()).replace('.', '年').replace(/^(\d+年)0?(\d+)$/, '$1$2月');
+  var sub0 = ym + '　' + (o.mt === 'ideal' ? '理想' : '現状') + 'MAP';
+  var rootNm = _opdfName(o.root);
+  if (o.whole) pages.push({ key: 'whole', label: '全体MAP', title: rootNm + ' 全体MAP', sub: sub0, opts: {}, suffix: '' });
+  o.l1.forEach(function(k) {
+    if (!o.lin[k.id]) return;
+    var ft = _opdfFullTitle(k.title);
+    pages.push({ key: 'lin_' + k.id, label: o.nick[k.id] + 'MAP', title: o.nick[k.id] + 'MAP' + (ft ? '（' + ft + '）' : ''), sub: sub0, opts: { rootId: k.id }, suffix: o.nick[k.id] });
+  });
+  var ex = o.l1.filter(function(k) { return o.excl[k.id]; });
+  if (ex.length) {
+    var exNm = ex.map(function(k) { return o.nick[k.id]; }).join('・');
+    pages.push({ key: 'ex_' + ex.map(function(k) { return k.id; }).join(','), label: exNm + 'を除く', title: rootNm + ' MAP（' + exNm + 'を除く）', sub: sub0, opts: { exclude: ex.map(function(k) { return k.id; }) }, suffix: exNm + '除く' });
+  }
+  o.regions.forEach(function(r) {
+    if (!o.reg[r]) return;
+    pages.push({ key: 'reg_' + r, label: r + 'MAP', title: r + 'MAP', sub: sub0 + '（薄い丸＝つながりを示す他地域の上位者）', opts: { region: r }, suffix: r });
+  });
+  return pages;
+}
+// ページの大きさ → A3横に収めた時の丸の直径(mm)を見積もる（描画結果はキャッシュ）
+function _opdfEstimate(pg) {
+  if (_opdf.est[pg.key]) return _opdf.est[pg.key];
+  var host = document.createElement('div');
+  var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
+  renderPCOrbit(_opdf.mt, host, true, op);
+  var sz = host._orbitSize;
+  var e = { n: 0, mm: 0 };
+  if (sz) {
+    var nReal = host.querySelectorAll('.orbit-node').length - host.querySelectorAll('.orbit-ghost').length;
+    e = { n: nReal, mm: Math.min(_OPDF_MAX_MM, 2 * sz.nr * Math.min(404 / sz.SW, 281 / sz.SH)) };
+  }
+  _opdf.est[pg.key] = e;
+  return e;
+}
+function _opdfRender() {
+  var body = document.getElementById('opdfBody'), foot = document.getElementById('opdfFoot');
+  if (!body || !_opdf) return;
+  var o = _opdf;
+  var chip = function(kind, key, on, label, cnt) {
+    return '<div class="opdf-chip' + (on ? ' on' : '') + '" onclick="opdfToggle(\'' + kind + '\',\'' + evEsc(String(key).replace(/'/g, "\\'")) + '\')">'
+      + '<span class="opdf-ck">' + (on ? '✓' : '') + '</span>' + evEsc(label) + (cnt != null ? '<small>' + cnt + '人</small>' : '') + '</div>';
+  };
+  var sec = function(ttl, desc, kind, inner) {
+    return '<div class="opdf-sec"><div class="opdf-st">' + ttl
+      + (kind ? '<span class="opdf-all"><a onclick="opdfAll(\'' + kind + '\',1)">全部</a>／<a onclick="opdfAll(\'' + kind + '\',0)">なし</a></span>' : '')
+      + '</div>' + (desc ? '<div class="opdf-sd">' + desc + '</div>' : '') + '<div class="opdf-chips">' + inner + '</div></div>';
+  };
+  var total = _opdfMembers(o.mt).length;
+  var h = sec('全体MAP', '', '', chip('whole', '', o.whole, _opdfName(o.root) + ' 全体', total));
+  if (o.l1.length) {
+    h += sec('系列ごとのMAP', '1段目の人を中心にしたMAPを1人1ページで', 'lin',
+      o.l1.map(function(k) { return chip('lin', k.id, !!o.lin[k.id], o.nick[k.id] + 'MAP', o.cnt[k.id]); }).join(''));
+    h += sec('選んだ系列を除いたMAP', '選んだ系列をまとめて外した全体MAPを1ページで', 'excl',
+      o.l1.map(function(k) { return chip('excl', k.id, !!o.excl[k.id], o.nick[k.id], o.cnt[k.id]); }).join(''));
+  }
+  if (o.regions.length) {
+    h += sec('地域MAP', 'その地域の人だけ（つながりを示す上位者は薄く表示）', 'reg',
+      o.regions.map(function(r) { return chip('reg', r, !!o.reg[r], r, o.regCnt[r]); }).join(''));
+  }
+  body.innerHTML = h;
+  var pages = _opdfPages();
+  var f = '';
+  if (!pages.length) {
+    f = '<div class="opdf-sum" style="color:var(--text-dim)">作るMAPを1つ以上選んでください</div>';
+  } else {
+    var small = 0;
+    f = '<div class="opdf-sum"><b>' + pages.length + 'ページ</b>のPDFを作ります</div><div class="opdf-list">';
+    pages.forEach(function(pg, i) {
+      var e = _opdfEstimate(pg);
+      var bad = e.mm < _OPDF_MIN_MM;
+      if (bad) small++;
+      f += '<div class="opdf-row' + (bad ? ' bad' : '') + '"><span class="opdf-pn">' + (i + 1) + '</span><span class="opdf-pt">' + evEsc(pg.title) + '</span>'
+        + '<span class="opdf-pm">' + e.n + '人・丸 約' + Math.round(e.mm) + 'mm' + (bad ? ' ' + icn('alert', 'color:#F59E0B') : '') + '</span></div>';
+    });
+    f += '</div>';
+    if (small) {
+      f += '<div class="opdf-warn">' + icn('alert', 'color:#F59E0B') + ' 丸が小さく文字が読みにくいページがあります（' + _OPDF_MIN_MM + 'mm未満）。'
+        + (o.l1.length > 1 ? '「系列ごとのMAP」で分けて作るのがおすすめです。' : 'PDFを拡大して見てください。') + '</div>';
+    }
+  }
+  f += '<div class="btn-row" style="margin-top:12px"><button class="btn-c" onclick="closeOrbitPdf()">閉じる</button>'
+    + '<button class="btn-p" id="opdfGo" onclick="orbitPdfMake()"' + (pages.length ? '' : ' disabled style="opacity:.45"') + '>' + icn('doc') + ' PDFを作成</button></div>';
+  foot.innerHTML = f;
+}
+function _opdfFileName(pages) {
+  var base = _orbitPrintName(_opdf.mt);
+  if (pages.length === 1 && pages[0].suffix) base += '_' + pages[0].suffix;
+  return base.replace(/[\\\/:*?"<>|]/g, '') + '.pdf';
+}
+// SVG → A3横 200dpi のJPEG（白背景・余白8mm・中央寄せ）
+var _OPDF_W = 3307, _OPDF_H = 2339, _OPDF_M = 63;
+function _opdfSvgToJpeg(svg, SW, SH, nr, cb) {
+  var cl = svg.cloneNode(true);
+  cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  cl.setAttribute('width', SW); cl.setAttribute('height', SH);
+  cl.setAttribute('font-family', '"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Noto Sans CJK JP","Yu Gothic","Meiryo",sans-serif');
+  cl.removeAttribute('style');
+  var str = new XMLSerializer().serializeToString(cl).replace(/var\(--[^)]*\)/g, '#ffffff');
+  var img = new Image();
+  img.onload = function() {
+    try {
+      var cv = document.createElement('canvas');
+      cv.width = _OPDF_W; cv.height = _OPDF_H;
+      var cx = cv.getContext('2d');
+      cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, _OPDF_W, _OPDF_H);
+      var sc = Math.min((_OPDF_W - 2 * _OPDF_M) / SW, (_OPDF_H - 2 * _OPDF_M) / SH, _OPDF_MAX_MM * (_OPDF_W / 420) / (2 * nr));
+      var w = SW * sc, h = SH * sc;
+      cx.drawImage(img, (_OPDF_W - w) / 2, (_OPDF_H - h) / 2, w, h);
+      var url = cv.toDataURL('image/jpeg', 0.9);
+      cv.width = cv.height = 1; // メモリを早めに解放（iPhone対策）
+      cb(url);
+    } catch (e) { cb(null, e); }
+  };
+  img.onerror = function(e) { cb(null, e || new Error('svg image')); };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(str);
+}
+function _opdfLoadLib(cb) {
+  if (window.jspdf && window.jspdf.jsPDF) { cb(true); return; }
+  var i = 0;
+  var tryNext = function() {
+    if (i >= _OPDF_JSPDF.length) { cb(false); return; }
+    _m3LoadScript(_OPDF_JSPDF[i++], function(ok) { if (ok && window.jspdf && window.jspdf.jsPDF) cb(true); else tryNext(); });
+  };
+  tryNext();
+}
+function _opdfProgress(msg) {
+  var b = document.getElementById('opdfGo');
+  if (b) { b.disabled = true; b.innerHTML = evEsc(msg); b.style.opacity = '.7'; }
+}
+function orbitPdfMake() {
+  if (!_opdf || _opdf.busy) return;
+  var pages = _opdfPages();
+  if (!pages.length) { toast('作るMAPを選んでください'); return; }
+  _opdf.busy = true;
+  var fname = _opdfFileName(pages);
+  _opdfProgress('準備中…');
+  var fail = function(msg) {
+    _opdf.busy = false;
+    toast(msg, 4000);
+    _opdfRender();
+  };
+  _opdfLoadLib(function(ok) {
+    if (!ok) { fail('PDFの部品を読み込めませんでした。通信状況を確認してもう一度お試しください'); return; }
+    var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3', compress: true });
+    var i = 0;
+    var next = function() {
+      if (i >= pages.length) {
+        var blob;
+        try { blob = doc.output('blob'); } catch (e) { fail('PDFの作成に失敗しました'); return; }
+        _opdf.busy = false;
+        _opdfDone(blob, fname, pages.length);
+        return;
+      }
+      var pg = pages[i];
+      _opdfProgress('作成中… ' + (i + 1) + '/' + pages.length + 'ページ');
+      var host = document.createElement('div');
+      var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
+      renderPCOrbit(_opdf.mt, host, true, op);
+      var svg = host.querySelector('svg'), sz = host._orbitSize;
+      if (!svg || !sz) { i++; setTimeout(next, 0); return; }
+      _opdfSvgToJpeg(svg, sz.SW, sz.SH, sz.nr, function(url) {
+        if (!url) { fail('MAPの画像化に失敗しました（' + pg.title + '）'); return; }
+        try {
+          if (i > 0) doc.addPage('a3', 'landscape');
+          doc.addImage(url, 'JPEG', 0, 0, 420, 297);
+        } catch (e) { fail('PDFの作成に失敗しました'); return; }
+        i++;
+        setTimeout(next, 30); // 画面の固まりを避けて1ページずつ
+      });
+    };
+    next();
+  });
+}
+var _opdfLast = null;
+function _opdfDone(blob, fname, nPage) {
+  _opdfLast = { blob: blob, name: fname };
+  var file = null;
+  try { file = new File([blob], fname, { type: 'application/pdf' }); } catch (e) { file = null; }
+  var canShare = !!(file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] }));
+  var mobile = !isPCMode();
+  if (!mobile || !canShare) opdfDownload(); // PCはそのまま保存
+  var foot = document.getElementById('opdfFoot'), body = document.getElementById('opdfBody');
+  if (!foot) return;
+  if (body) body.innerHTML = '';
+  var kb = Math.max(1, Math.round(blob.size / 1024));
+  foot.innerHTML = '<div class="opdf-done">' + icn('checksq', 'color:#22C55E') + ' PDFができました</div>'
+    + '<div class="opdf-fn">' + evEsc(fname) + '<small>' + nPage + 'ページ・' + (kb >= 1024 ? (kb / 1024).toFixed(1) + 'MB' : kb + 'KB') + '</small></div>'
+    + '<div class="opdf-sd" style="margin:6px 0 0">' + (mobile && canShare ? '「保存・共有」から、ファイルに保存・LINEで送る・コンビニのプリントアプリで開く ができます' : 'ダウンロードフォルダに保存しました') + '</div>'
+    + '<div class="btn-row" style="margin-top:14px"><button class="btn-c" onclick="closeOrbitPdf()">閉じる</button>'
+    + (canShare ? '<button class="btn-p" onclick="opdfShare()">' + icn('upload') + ' 保存・共有</button>' : '')
+    + '<button class="' + (canShare ? 'btn-c' : 'btn-p') + '" onclick="opdfDownload()">' + icn('save') + ' ダウンロード</button></div>';
+}
+function opdfShare() {
+  if (!_opdfLast) return;
+  var file = new File([_opdfLast.blob], _opdfLast.name, { type: 'application/pdf' });
+  navigator.share({ files: [file], title: _opdfLast.name.replace(/\.pdf$/, '') }).catch(function(e) {
+    if (e && e.name === 'AbortError') return;
+    opdfDownload();
+  });
+}
+function opdfDownload() {
+  if (!_opdfLast) return;
+  var url = URL.createObjectURL(_opdfLast.blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = _opdfLast.name; a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 60000);
 }
 // 🖨 A3横1枚に印刷（明色で再描画してから印刷）
 // v493: 印刷は専用ウィンドウ方式（即時に開く・MAPのみ・A3横・タイトル=保存ファイル名）
@@ -2929,7 +3313,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v513';
+  var DATA_VERSION = 'v514';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -3904,6 +4288,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v514', d:'2026-09-23', items:['🏟 運動会MAPを紙のMAPと同じ「陸上トラック型」に作り直し：丸は必ず段の線（レーン）の上に並び、内外にずらしません。人数が多い段があるとトラックが自動で横に伸び、丸どうしが重なりません','🔗 線は紙のMAPと同じ「くし形」に：親から外へ出てレーンの間を進み、子へまっすぐ入るので、線が他の人の丸を突き抜けず、渦巻きになりません','📄 「A3印刷」を「PDFで保存」に変更：A3横のPDF（ファイル名 MAP_年月_名前.pdf）を作成。スマホは共有シートからファイル保存・LINE・コンビニのプリントアプリへ、PCはそのままダウンロード','✂️ PDFを分けて作れるように：全体MAP／系列ごとのMAP（1段目の人を中心に「嶽本MAP（ブルーダイヤモンド）」など）／選んだ系列を除いたMAP／地域MAP（つながりを示す他地域の上位者は薄く表示）。選んだものが1枚ずつのページになり、丸が小さくなりすぎるページは分割をおすすめします'] },
   { v:'v513', d:'2026-09-23', items:['📏 スマホのMAPでカードの高さを統一：フレッシュ（金枠）のカードだけ縦に大きくなっていたのを修正（OLタブのフレッシュリスト用の余白が誤ってMAPのカードにも付いていました）。配下がいるカード／いないカードの数pxの差もなくし、全カード同じ高さに'] },
   { v:'v512', d:'2026-09-23', items:['⚡ 起動をさらに高速化：アプリ本体のプログラムを app.js に分離。ブラウザがプログラムの解析結果を保存して使い回せるようになり、2回目以降の起動が速くなります（特にスマホ）','🛡 index.html と app.js の組み合わせが食い違った場合（アップロード途中など）は自動で読み直し、それでも合わなければ「更新中です」と案内して、壊れた状態で保存されないように'] },
   { v:'v511', d:'2026-09-23', items:['⚡ 起動を高速化：2回目以降はアプリ本体を端末のキャッシュから即表示し、最新版はその裏で取得（新しい版があれば従来どおり「新しいバージョンがあります」を表示）。これまでは毎回1.8MBをダウンロードし終わるまで画面が出ませんでした','⚡ ログイン直後のデータ取得を並列化：プロフィール確認を待たずにMAP・予定・目標の取得を同時に開始','⚡ 予定タブの二重描画を解消：タブを開くたびにカレンダーを2回描いていたのを1回に。起動時のデータ到着ごとの描き直しもまとめて1回に','📉 通信量・書き込みの削減：起動のたびに行っていた旧形式データの確認と削除を月1回に／管理者の承認待ちチェックを全ユーザー読込から承認待ちのみの読込に／通知予約（最大18件）を毎回全削除→全書き直ししていたのを変更分だけに／自動保存で変更のない理想MAP・統計データは書き込まないように','🔋 アプリが裏に回っている間は画面高さの監視（4秒ごと）を止めて電池を節約'] },
