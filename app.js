@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v518';
+var APP_JS_VERSION = 'v519';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1568,6 +1568,23 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     return out;
   };
   var spineX0 = CX, spineX1 = CX;
+  // v519: 923-4 隣り合う親のくし（横棒）が同じ高さで1本につながり「誰のフロントか」分からなかったため、
+  //        同じレーンの親ごとに横棒の高さを3段（中・外・内）で交互にずらす
+  var trackOf = {};
+  (function() {
+    var TG = Math.max(4, Math.min(12, (BAND - 2 * nr) / 4));
+    var pl = {};
+    members.forEach(function(m) {
+      if (!m.parentId || m.parentId === root.id) return;
+      var pp = posOf[m.parentId];
+      if (!pp || pp.u == null) return;
+      (pl[pp.lane] = pl[pp.lane] || {})[m.parentId] = pp.u;
+    });
+    for (var ln9 in pl) {
+      var ids9 = Object.keys(pl[ln9]).sort(function(a, b) { return pl[ln9][a] - pl[ln9][b]; });
+      ids9.forEach(function(id, i) { trackOf[id] = [0, 1, -1][i % 3] * TG; });
+    }
+  })();
   members.forEach(function(m) {
     if (!m.parentId || !_byId[m.parentId]) return;
     var p1 = posOf[m.parentId], p2 = posOf[m.id];
@@ -1578,7 +1595,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       spineX0 = Math.min(spineX0, sp.x); spineX1 = Math.max(spineX1, sp.x);
       dd = 'M' + fp(sp.x) + ',' + fp(sp.y) + ' L' + fp(p2.x) + ',' + fp(p2.y);
     } else if (p1.u != null && p2.u != null && p2.lane === p1.lane + 1) {
-      var rm = laneR(p1.lane) + BAND / 2, a0 = lanePt(rm, p1.u);
+      var rm = laneR(p1.lane) + BAND / 2 + (trackOf[m.parentId] || 0), a0 = lanePt(rm, p1.u);
       dd = 'M' + fp(p1.x) + ',' + fp(p1.y) + ' L' + fp(a0.x) + ',' + fp(a0.y) + bandPts(rm, p1.u, p2.u) + ' L' + fp(p2.x) + ',' + fp(p2.y);
     } else {
       dd = 'M' + fp(p1.x) + ',' + fp(p1.y) + ' L' + fp(p2.x) + ',' + fp(p2.y);
@@ -1627,6 +1644,11 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     g.setAttribute('data-region', m.region || '');
     g.style.cursor = 'pointer';
     var r = nr; // v504: 0段目も他と同じサイズ
+    // v519: 923-3 丸の下に不透明の下地（淡い塗り・OUTや薄表示でも後ろの線が透けて見えない）
+    var base0 = document.createElementNS(NS, 'circle');
+    base0.setAttribute('cx', pos.x); base0.setAttribute('cy', pos.y); base0.setAttribute('r', r);
+    base0.setAttribute('fill', light ? '#ffffff' : '#161920'); base0.setAttribute('class', 'orbit-base'); base0.setAttribute('pointer-events', 'none');
+    svg.appendChild(base0);
     var ci = document.createElementNS(NS, 'circle');
     ci.setAttribute('cx', pos.x); ci.setAttribute('cy', pos.y); ci.setAttribute('r', r);
     ci.setAttribute('fill', fill); ci.setAttribute('stroke', stroke);
@@ -3313,7 +3335,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v518';
+  var DATA_VERSION = 'v519';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4314,6 +4336,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v519', d:'2026-09-24', items:['⚪ 運動会MAPの丸が透けて後ろの線が見えていたのを修正（923-3）：丸の下に不透明の下地を敷きました（OUT・研修生・フレッシュの淡い色でも透けません）','🔗 運動会MAPで「誰が誰のフロントか」分かりにくかったのを修正（923-4）：隣り合う親のくし（横棒）が同じ高さで1本につながって見えていたため、親ごとに横棒の高さを3段でずらしました','✨ 研修生（NA）の光り方がバラバラだったのを修正（923-5）：最近7日以内に活動した人は「活動中」の脈打ちが発光を打ち消して光っていませんでした。研修生・フレッシュは全員同じように光ります','🖥 PC版ツリー：NAを追加すると中央に戻されるのを修正（923-7）：かんたん追加でも見ていた位置・倍率のまま','🖥 PC版ツリー：NAを追加すると他の系列が暗くなるのを修正（923-8）：追加先のカードをクリックした時の系列フォーカスを、追加後に解除','⏱ NAのかんたん追加から時刻の入力欄を削除（923-9。研修日とAさんはそのまま）'] },
   { v:'v518', d:'2026-09-24', items:['📍 地域の絞り込みで、選んだ地域ではない人が明るく目立ってしまう不具合を修正（922-3）：活動中の脈打ちや研修中・フレッシュの発光アニメが薄暗表示より優先されていました。絞り込みで薄くした人はアニメを止めて確実に薄く表示します','📍 地域を選んだ後に「全地域」に戻しても暗いままの人が残る不具合を修正（922-4）：カードをクリックした時の「系列フォーカス」の薄暗が残っていました。地域を切り替えると系列フォーカスも解除します。系列フォーカス中の地域判定も表記ゆれ（愛知⇄名古屋）とカテゴリ絞り込みに対応'] },
   { v:'v517', d:'2026-09-24', items:['📅 スマホのカレンダー（予定）が下にはみ出し、下のボタンが隠れていた不具合を修正：v515の「上に圧縮される」対策で、ホーム画面アプリでは実際に見えている高さより大きい値（ステータスバー分など）を使ってしまっていました。見えている高さだけを基準にし、キーボードを閉じた後に縮んだままになる対策はそのまま残しています'] },
   { v:'v516', d:'2026-09-24', items:['📋 OLタブを刷新：入力欄を常に並べるのをやめ、見るだけのすっきりした画面に。企画・記録は下の＋ボタン（PCは右上の「＋ OLを企画」）から','👥 OLは「個別OL（マンツーマン・2人まで）」と「3〜7人OL（3〜7人組）」の2種類。＋ボタン→種類→人を選ぶ（複数可）→日時・Aさん・内容で企画。Aさん・内容は過去の入力からワンタップ','🔢 「今月の3〜7人OL」は紙のMAPと同じ枠3つ（最低月3回）で表示。空き枠をタップするとそのまま企画できます。これまでの「３〜７人のアウトライン」の入力内容は3〜7人OLの記録として自動で引き継ぎます','📅 予定のOLを一覧表示。日付を過ぎた予定は「結果を入力」から実施済みにして反応（全員共通＋人ごと）を記録','🌿 フレッシュは1人1行（要フォロー順・色分け）。タップでその人のOL履歴と「この人でOLを企画」。「まとめて選ぶ」で複数人をまとめて企画','🗓 カレンダーのOL予定は企画ごとに1本（例「3〜7人OL（5人）」）にまとめて表示'] },
@@ -10487,7 +10510,6 @@ function openQuickAdd() {
     + '<div class="p2-meta" style="margin-bottom:4px">研修の予定（任意・入力すると研修履歴に登録）</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px">'
     + '<input class="fi" id="qaDate" type="date" style="flex:1.3;padding:9px 8px;font-size:13px" title="研修日">'
-    + '<input class="fi" id="qaTime" type="time" style="flex:1;padding:9px 8px;font-size:13px" title="時刻">'
     + '<input class="fi" id="qaAsan" placeholder="Aさん" style="flex:1;padding:9px 10px;font-size:13px"></div>'
     + '<div style="display:flex;gap:8px">'
     + '<span class="p2-btn" style="margin:0;flex:1.4;text-align:center" onclick="qaSave(true)">＋ 登録して続けて追加</span>'
@@ -10509,6 +10531,7 @@ function qaGenderSel(g) {
   if (f9) f9.classList.toggle('sel', g === 'female');
 }
 function qaSave(cont) {
+  try { if (typeof isPCMode === 'function' && isPCMode()) _pcTreeCaptureView(); } catch(ePv) {} // v519: 923-7 追加後も見ていた位置のまま（中央に戻さない）
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
   var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
   if (!last && !first) { toast('名前を入力してください'); return; }
@@ -10530,9 +10553,9 @@ function qaSave(cont) {
   };
   // v496: 研修の予定（日付＋時刻＋Aさん）→ 研修履歴に「予定」として登録（921-2）
   var _qd = ((document.getElementById('qaDate') || {}).value || '');
-  var _qt = ((document.getElementById('qaTime') || {}).value || '');
-  if (_qd) m.traineeHistory.push({ status: stage, date: _qd, aSan: m.aSan || '', result: 'planned', time: _qt });
+  if (_qd) m.traineeHistory.push({ status: stage, date: _qd, aSan: m.aSan || '', result: 'planned', time: '' }); // v519: 923-9 時刻欄は廃止
   state.members.push(m);
+  window._pcFocusLineage = ''; // v519: 923-8 追加先を選ぶクリックで付いた系列フォーカスを解除（他の系列が暗いまま残らない）
   _memMap = null;
   recalcAllGSV();
   renderCurrentView();
@@ -11223,6 +11246,7 @@ function saveMember() {
     _memMap = null; // v475: 同一配列・同一件数のオブジェクト差し替えはキャッシュが検知できず、絞り込みが編集前の情報で判定されていた
   } else {
     state.members.push(m);
+    window._pcFocusLineage = ''; // v519: 923-8 新規追加後は系列フォーカスを解除（他の系列が暗いまま残らない）
   }
   // 入力されたGSVを「自分の分(ptSelf)」に変換し、配下合計を差し引いてアップラインへ反映
   var _gsvIn = parseInt(document.getElementById('fPtC').value)||0;
