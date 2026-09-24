@@ -880,6 +880,28 @@ tr.olt-on td{background:var(--accent-dim)}
 .dt-plj{flex:none;color:var(--text-dim);font-size:12px}
 .dt-pln{flex:none;width:96px;font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dt-pln small{display:block;font-size:9.5px;color:var(--text-dim);font-weight:600}
 .dt-pb.sm{height:10px}
+.ids-card{margin:10px 12px 6px;background:var(--surface);border:1px solid rgba(139,124,255,.35);border-radius:16px;padding:12px 14px 10px}
+.ids-hd{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:800;margin-bottom:8px}.ids-hd>span:not(.ids-btn){font-size:11.5px;color:var(--text-dim);font-weight:700}
+.ids-btn{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--purple);border:1px solid var(--purple);border-radius:10px;padding:5px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.ids-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+.ids-lb{flex:none;width:84px;font-size:12.5px;font-weight:800}.ids-lb small{display:block;font-size:9.5px;color:var(--text-dim);font-weight:600;white-space:nowrap}
+.ids-bar{flex:1;height:10px;border-radius:6px;background:var(--surface3);overflow:hidden}.ids-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#8B7CFF,#C583FF)}.ids-bar i.ok{background:linear-gradient(90deg,#2CE5B8,#4ADE80)}
+.ids-v{flex:none;min-width:86px;text-align:right}.ids-v b{font-size:15px;font-weight:900;font-family:'Inter',sans-serif}.ids-v small{display:block;font-size:10px;color:var(--text-dim)}
+.ids-comm{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.ids-ct{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:800}.ids-ct b{font-size:22px;font-weight:900;color:var(--purple);font-family:'Inter',sans-serif}.ids-ct small{font-size:11px;color:var(--text-dim);font-weight:600}
+.ids-cb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:6px}
+.ids-cb>div{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;min-width:0}
+.ids-cb span{font-size:10.5px;font-weight:800;color:var(--text-dim)}.ids-cb b{display:block;font-size:14px;font-weight:900;font-family:'Inter',sans-serif}.ids-cb small{display:block;font-size:9.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ids-tg{display:inline-flex;align-items:center;gap:6px;cursor:pointer}.ids-tg>span{font-size:11.5px;color:var(--text-dim);font-weight:700}.ids-ar{font-size:10px!important}
+.ids-mini{font-size:12px;color:var(--text-mid);cursor:pointer}.ids-mini b{color:var(--text);font-family:'Inter',sans-serif;font-size:13px}
+.ids-card.closed .ids-hd{margin-bottom:4px}
+@media (min-width:768px){.ids-card{margin:12px 16px 8px}.ids-body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}.ids-body .ids-comm{margin-top:0;padding-top:0;border-top:none;border-left:1px solid var(--border);padding-left:18px}}
+.ids-hint{font-size:10.5px;color:var(--text-dim);margin-top:8px;line-height:1.7}
+.idd{display:inline-block;font-size:9.5px;font-weight:800;border-radius:6px;padding:0 5px;line-height:15px;margin-left:3px;white-space:nowrap;font-family:'Inter','Noto Sans JP',sans-serif}
+.idd.new{background:#FFD166;color:#1a1f2b}.idd.up{background:rgba(44,229,184,.16);color:#2CE5B8}.idd.dn{background:rgba(255,93,115,.14);color:#FF5D73}.idd.act{background:rgba(139,124,255,.16);color:#8B7CFF}
+.idd-row{display:flex;justify-content:flex-end;gap:2px}
+.idq-q{flex:none;font-size:12px;font-weight:800;padding:8px 10px;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;user-select:none;-webkit-user-select:none}
+.idq-add{margin-top:14px;padding:10px 12px;border-radius:12px;border:1px dashed var(--purple);background:rgba(139,124,255,.06)}
 .dt-lgrow{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;margin-top:4px}.dt-lgrow span{display:inline-flex;align-items:center;gap:5px}.dt-lgrow i{width:10px;height:3px;border-radius:2px;display:inline-block}
 .dt-est{margin-top:4px;font-size:11.5px;color:var(--text-dim);line-height:1.6}.dt-est b{display:block;font-size:14px;color:var(--text)}
 .olp-hist-lbl{font-size:12px;font-weight:800;color:var(--text-dim);margin:4px 0 8px}
@@ -2620,7 +2642,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v523</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v524</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2744,12 +2766,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 
   <!-- ====== 理想MAP ====== -->
   <div id="view-ideal" style="display:none">
-    <div class="banner ideal">
-      <div><div class="banner-label">LTSV 目標</div><div class="banner-val purple" id="ltsvI">-</div></div>
-      <div class="banner-sub">コミッション<span id="commTotal">-</span></div>
-    </div>
-    <div style="padding:8px 14px 0"><button class="btn-c" style="border-color:var(--purple);color:var(--purple);font-size:12px;padding:7px 14px;width:auto" onclick="copyCurrentToIdeal()"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> → <svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg> 現状MAPからコピー</button></div>
-    <div id="commTableWrap"></div>
+    <!-- v524: 理想 vs 現状（新規B1・チームGSV・S稼働・平均稼働・コミッション） -->
+    <div id="idealSum"></div>
+    <div style="display:none"><span id="ltsvI"></span><span id="commTotal"></span><div id="commTableWrap"></div></div>
     <!-- PC統合ツールバー(理想) -->
     <div class="pc-toolbar pc-toolbar-ideal" id="pcToolbarI">
       <div class="pt-mapseg">
@@ -3540,7 +3559,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v523';</script>
-<script src="app.js?v=v523"></script>
+<script>window.GM_EXPECT_JS='v524';</script>
+<script src="app.js?v=v524"></script>
 </body>
 </html>
