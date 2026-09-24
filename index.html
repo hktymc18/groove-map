@@ -851,6 +851,28 @@ tr.olt-on td{background:var(--accent-dim)}
 .dt-mc b{font-size:16px;font-weight:900;font-family:'Inter','Noto Sans JP',sans-serif;white-space:nowrap}
 .dt-mc.ed{border-style:dashed;border-color:var(--accent)}
 .dt-tbl{margin-top:4px}.dt-tbl summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text-mid);padding:10px 4px}
+.dt-tl small{display:block;font-size:9.5px;font-weight:600;color:var(--text-dim);opacity:.8}
+.dt-goal{grid-column:span 2}
+@media (min-width:768px){.dt-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.dt-funnel{width:100%;max-width:520px;height:auto;display:block;margin:0 auto}
+.dt-lg.tap{cursor:pointer;border-radius:8px;padding:3px 4px;margin:-3px -4px}.dt-lg.tap:hover{background:var(--surface2)}
+.dt-ar{display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid var(--border);cursor:pointer}
+.dt-rk{flex:none;width:22px;height:22px;border-radius:50%;background:var(--surface3);font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.dt-an{flex:none;width:86px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dt-an small{display:block;font-size:10px;color:var(--text-dim);font-weight:600}
+.dt-sbar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface3)}.dt-sbar i{display:block;height:100%}
+.dt-ar .dt-sbar{flex:none;max-width:calc(100% - 170px)}
+.dt-ap{margin-left:auto;flex:none;font-size:14px;font-weight:900;font-family:'Inter',sans-serif}
+.dt-aopen{padding:8px 2px 12px;border-bottom:1px solid var(--border)}
+.dt-atiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dt-at{text-align:center;border-radius:10px;padding:6px 0;background:var(--surface2);border:1px solid var(--border)}.dt-at.tap{cursor:pointer;border-color:var(--border2)}
+.dt-at b{display:block;font-size:18px;font-family:'Inter',sans-serif}.dt-at span{font-size:10px;color:var(--text-dim)}
+.dt-asteps{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.dt-asteps span{font-size:10.5px;padding:2px 7px;border-radius:8px;background:var(--surface2);color:var(--text-dim)}.dt-asteps span.on{color:var(--accent);background:var(--accent-dim)}
+.dt-pr{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--border);cursor:pointer}.dt-pr:last-of-type{border-bottom:none}
+.dt-pr.sel{background:var(--accent-dim);border-radius:8px}
+.dt-pn{flex:none;width:92px;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dt-pb{flex:1;height:16px;border-radius:8px;background:var(--surface3);overflow:hidden}.dt-pb i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#8B7CFF,#2CE5B8)}
+.dt-pv{flex:none;min-width:74px;text-align:right;font-size:13px;font-weight:900;font-family:'Inter',sans-serif}.dt-pv small{display:block;font-size:10px;font-weight:700}.dt-pv small.up{color:#22C55E}.dt-pv small.dn{color:#FF5D73}
+.dt-lgrow{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;margin-top:4px}.dt-lgrow span{display:inline-flex;align-items:center;gap:5px}.dt-lgrow i{width:10px;height:3px;border-radius:2px;display:inline-block}
 .dt-est{margin-top:4px;font-size:11.5px;color:var(--text-dim);line-height:1.6}.dt-est b{display:block;font-size:14px;color:var(--text)}
 .olp-hist-lbl{font-size:12px;font-weight:800;color:var(--text-dim);margin:4px 0 8px}
 .ot-mlast{padding:0 12px 11px;font-size:12.5px;color:var(--text-mid);line-height:1.6} .ot-mlast b{color:var(--text);font-weight:700}
@@ -2590,7 +2612,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v520</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v521</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2769,23 +2791,22 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </details>
     </div>
     <div class="dt-pane" data-p="train" style="display:none">
-      <div class="sec-label">研修生ファネル</div>
-      <div class="card" id="funnelWrap" style="padding:14px"></div>
-      <div class="sec-label">Aさん別決定率</div>
-      <div class="card" id="asanFunnelWrap"></div>
+      <div id="dtTrain"></div>
     </div>
     <div class="dt-pane" data-p="pl" style="display:none">
-      <div class="sec-label">パワーライン<span style="font-size:10.5px;color:var(--text-dim);font-weight:500;margin-left:8px">LTSV 5000P以上の系列</span></div>
+      <div id="dtPl"></div>
+      <details class="dt-tbl"><summary>表で見る（月ごとのLTSV）</summary>
       <div class="card" style="overflow-x:auto">
         <table class="tbl" id="plTbl">
           <thead id="plHead"><tr><th style="text-align:left;padding-left:12px">名前</th><th>LTSV</th></tr></thead>
           <tbody id="plBody"></tbody>
         </table>
       </div>
+      </details>
     </div>
     <div class="dt-pane" data-p="reg" style="display:none">
-      <div class="sec-label">📍 地域別 月次推移</div>
-      <div class="card" style="padding:12px 12px 14px">
+      <div id="dtRegCmp"></div>
+      <div class="dt-card">
         <div id="regTrendChips" style="display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px"></div>
         <div id="regTrendBody" style="overflow-x:auto"><div style="font-size:12px;color:var(--text-dim)">地域を選ぶと、過去12ヶ月の人数・研修生・QBR・BR以上を地域別に集計します</div></div>
       </div>
@@ -3511,7 +3532,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v520';</script>
-<script src="app.js?v=v520"></script>
+<script>window.GM_EXPECT_JS='v521';</script>
+<script src="app.js?v=v521"></script>
 </body>
 </html>

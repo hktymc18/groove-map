@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v520';
+var APP_JS_VERSION = 'v521';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3335,7 +3335,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v520';
+  var DATA_VERSION = 'v521';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4336,6 +4336,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v521', d:'2026-09-24', items:['🔄 UNIVERSEは「UNIVERSE RIDE（ゼネラルイベント）の参加人数」なので手入力に戻しました（v520で総人数を自動で入れてしまった今月分は取り消し）。総人数は別の項目として自動集計。サマリーは9枚（UNIVERSEのタイルを追加）','🔻 研修タブをグラフに：じょうご形のファネル（段階ごとの人数と歩留まり％・タップで内訳）、研修結果のドーナツ（BC決定率）、Aさん別の決定率ランキング（色分けバー・タップで詳細）','⚡ パワーラインを横棒ランキングに（上位3系列はメダル色・前月比・タップで現状MAPのその人へ）','📍 地域タブ：今月の地域比較グラフ（人数・研修生・QBR・BR以上・S稼働・新規B1を切替）と、選んだ地域の12ヶ月推移グラフ'] },
   { v:'v520', d:'2026-09-24', items:['📊 データタブを刷新：上のタブ（サマリー／推移／研修／パワーライン／地域）で切り替え。下までスクロールしなくても各項目が見られます','🔢 サマリーは8枚のタイル（総人数・平均稼働・S稼働・OUT・新規BC・研修生・コミッション・今月の目標）。前月比の矢印と12ヶ月の小さな推移グラフ付き。タップでその項目の推移へ','📈 推移は大きなグラフに：項目をチップで選び（2つまで重ねて比較）、「稼働構成」はS/A/B/Cの積み上げで組織の中身の変化が一目で分かります。月をタップするとその月の全数字','🤖 平均稼働・UNIVERSE（人数）・OUT・研修生を現状MAPから自動集計。手入力はコミッションだけ（入力シートから。現状MAPからの概算も参考表示）','🎯 サマリーの「今月の目標」はPLANの今月の目標に対する達成率（タップでPLANへ）'] },
   { v:'v519', d:'2026-09-24', items:['⚪ 運動会MAPの丸が透けて後ろの線が見えていたのを修正（923-3）：丸の下に不透明の下地を敷きました（OUT・研修生・フレッシュの淡い色でも透けません）','🔗 運動会MAPで「誰が誰のフロントか」分かりにくかったのを修正（923-4）：隣り合う親のくし（横棒）が同じ高さで1本につながって見えていたため、親ごとに横棒の高さを3段でずらしました','✨ 研修生（NA）の光り方がバラバラだったのを修正（923-5）：最近7日以内に活動した人は「活動中」の脈打ちが発光を打ち消して光っていませんでした。研修生・フレッシュは全員同じように光ります','🖥 PC版ツリー：NAを追加すると中央に戻されるのを修正（923-7）：かんたん追加でも見ていた位置・倍率のまま','🖥 PC版ツリー：NAを追加すると他の系列が暗くなるのを修正（923-8）：追加先のカードをクリックした時の系列フォーカスを、追加後に解除','⏱ NAのかんたん追加から時刻の入力欄を削除（923-9。研修日とAさんはそのまま）'] },
   { v:'v518', d:'2026-09-24', items:['📍 地域の絞り込みで、選んだ地域ではない人が明るく目立ってしまう不具合を修正（922-3）：活動中の脈打ちや研修中・フレッシュの発光アニメが薄暗表示より優先されていました。絞り込みで薄くした人はアニメを止めて確実に薄く表示します','📍 地域を選んだ後に「全地域」に戻しても暗いままの人が残る不具合を修正（922-4）：カードをクリックした時の「系列フォーカス」の薄暗が残っていました。地域を切り替えると系列フォーカスも解除します。系列フォーカス中の地域判定も表記ゆれ（愛知⇄名古屋）とカテゴリ絞り込みに対応'] },
@@ -9200,7 +9201,14 @@ function buildAutoStats() {
     var _bi9 = -1; s.monthly.forEach(function(r, i){ if (r.label === 'B1') _bi9 = i; });
     s.monthly.splice(_bi9 >= 0 ? _bi9 + 1 : s.monthly.length, 0, { label: '研修生', vals: ['','','','','','','','','','','',''] });
   }
-  var labelMap = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','UNIVERSE':'uni','OUT':'out','研修生':'tr'};
+  // v521: 総人数は自動（新しい行）。UNIVERSE＝UNIVERSE RIDE（ゼネラルイベント）の参加人数なので手入力に戻す
+  if (!s.monthly.some(function(r){ return r.label === '総人数'; })) s.monthly.unshift({ label: '総人数', vals: ['','','','','','','','','','','',''] });
+  if (!s.uniFix521) {
+    // v520で「UNIVERSE＝総人数」として自動で入れてしまった今月の値を取り消す（総人数と完全に一致する場合のみ）
+    s.monthly.forEach(function(r){ if (r.label === 'UNIVERSE' && r.vals && r.vals[colIdx] === counts.uni) r.vals[colIdx] = ''; });
+    s.uniFix521 = true;
+  }
+  var labelMap = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','総人数':'uni','OUT':'out','研修生':'tr'};
   s.monthly.forEach(function(row) {
     var key = labelMap[row.label];
     if (key && counts[key] !== undefined) {
@@ -9223,10 +9231,11 @@ function dataScrollTo(id) { var el = document.getElementById(id); if (el && el.s
 var DT_TABS = [['sum', 'サマリー'], ['trend', '推移'], ['train', '研修'], ['pl', 'パワーライン'], ['reg', '地域']];
 var _dtTab = 'sum';
 try { var _dt0 = localStorage.getItem('gm_dtTab'); if (_dt0 && DT_TABS.some(function(t) { return t[0] === _dt0; })) _dtTab = _dt0; } catch (eDt0) {}
-var _dtSel = ['UNIVERSE'];      // 推移で表示中の項目（2つまで）
+var _dtSel = ['総人数'];      // 推移で表示中の項目（2つまで）
 var _dtMonthIdx = 11;           // 推移で選んでいる月（0〜11、11=表示中の月）
+var DT_MANUAL = ['UNIVERSE', 'コミッション']; // v521: 手入力の項目
 var DT_METRICS = [
-  { k: 'UNIVERSE', lb: '総人数', unit: '人' },
+  { k: '総人数', lb: '総人数', unit: '人' },
   { k: '平均稼働', lb: '平均稼働', unit: '%' },
   { k: 'S', lb: 'S稼働', unit: '人' },
   { k: 'A', lb: 'A', unit: '人' },
@@ -9237,6 +9246,7 @@ var DT_METRICS = [
   { k: '研修生', lb: '研修生', unit: '人' },
   { k: 'マケ・PG', lb: 'マケ・PG', unit: '人' },
   { k: 'DLR動員', lb: 'DLR動員', unit: '人' },
+  { k: 'UNIVERSE', lb: 'UNIVERSE', unit: '人', sub: 'UNIVERSE RIDE 参加' },
   { k: 'コミッション', lb: 'コミッション', unit: '円', yen: true }
 ];
 var DT_ACT_COLORS = { S: '#2CE5B8', A: '#FF5D73', B: '#5AD7FF', C: '#FFB454' };
@@ -9267,6 +9277,7 @@ function dtTab(t) {
   try { localStorage.setItem('gm_dtTab', t); } catch (e) {}
   _dtApplyTab();
   if (t === 'trend') renderDtTrend();
+  if (t === 'reg' && !document.querySelector('#regTrendBody svg')) { try { regTrendRender(); } catch (eR) {} } // 開いたら全体の推移をすぐ表示
   // タブが画面の上に隠れていたら、タブが見える位置まで戻す
   try { var bar = document.getElementById('dtTabs'); if (bar && bar.getBoundingClientRect().top < 0 && bar.scrollIntoView) bar.scrollIntoView({ block: 'start' }); } catch (e2) {}
 }
@@ -9339,15 +9350,16 @@ function _dtDonut(cnt) {
 function renderDataHub() {
   var box = document.getElementById('dataHub'); if (!box) return;
   var ro = _dtReadOnly();
-  var tiles = ['UNIVERSE', '平均稼働', 'S', 'OUT', 'B1', '研修生', 'コミッション'];
-  var colors = { 'UNIVERSE': '#2CE5B8', '平均稼働': '#8B7CFF', 'S': '#2CE5B8', 'OUT': '#FF5D73', 'B1': '#FFD166', '研修生': '#5AD7FF', 'コミッション': '#FFB454' };
+  var tiles = ['総人数', '平均稼働', 'S', 'OUT', 'B1', '研修生', 'UNIVERSE', 'コミッション'];
+  var colors = { '総人数': '#2CE5B8', '平均稼働': '#8B7CFF', 'S': '#2CE5B8', 'OUT': '#FF5D73', 'B1': '#FFD166', '研修生': '#5AD7FF', 'UNIVERSE': '#C583FF', 'コミッション': '#FFB454' };
   var h = '<div class="dt-grid">';
   tiles.forEach(function(k) {
     var meta = _dtMeta(k), v = _dtVals(k), cur = v[11], prev = v[10];
     var empty = cur === null;
-    var onclk = (k === 'コミッション' && empty && !ro) ? 'dtInputOpen(11)' : 'dtOpenTrend(\'' + k + '\')';
-    h += '<div class="dt-tile" onclick="' + onclk + '"><div class="dt-tl">' + meta.lb + '</div>'
-      + '<div class="dt-tv">' + (empty ? '<span class="dt-na">' + (k === 'コミッション' ? (ro ? '未入力' : '＋ 入力') : '—') + '</span>' : _dtFmt(cur, meta, true) + (meta.yen ? '' : '<small>' + meta.unit + '</small>')) + '</div>'
+    var man = DT_MANUAL.indexOf(k) >= 0;
+    var onclk = (man && empty && !ro) ? 'dtInputOpen(11)' : 'dtOpenTrend(\'' + k + '\')';
+    h += '<div class="dt-tile" onclick="' + onclk + '"><div class="dt-tl">' + meta.lb + (meta.sub ? '<small>' + meta.sub + '</small>' : '') + '</div>'
+      + '<div class="dt-tv">' + (empty ? '<span class="dt-na">' + (man ? (ro ? '未入力' : '＋ 入力') : '—') + '</span>' : _dtFmt(cur, meta, true) + (meta.yen ? '' : '<small>' + meta.unit + '</small>')) + '</div>'
       + _dtDelta(cur, prev, meta) + _dtSpark(v, colors[k]) + '</div>';
   });
   var g = _dtGoal();
@@ -9370,11 +9382,12 @@ function renderDataHub() {
   var advice = ins.length ? ins.slice(0, 2).map(function(x) { return x.t; }).join('　/　') : '大きな気づきはありません。組織は良好です';
   h += '<div class="dt-row2"><div class="dt-card dt-mix" onclick="dtOpenTrend(\'__MIX__\')"><div class="dt-ch">稼働構成<span>推移を見る ›</span></div><div class="dt-mixin">' + _dtDonut(cnt) + '<div class="dt-lgs">' + leg + '</div></div></div>'
     + '<div class="dt-card"><div class="dt-ch">' + icn('bulb') + ' AIアドバイス</div><div class="dt-adv">' + evEsc(advice) + '</div></div></div>';
-  if (!ro && _dtVals('コミッション')[11] === null) {
+  var miss = DT_MANUAL.filter(function(k) { return _dtVals(k)[11] === null; });
+  if (!ro && miss.length) {
     var ml = _dtMonths()[11];
-    h += '<div class="dt-todo" onclick="dtInputOpen(11)">' + icn('pencil') + ' ' + ml.m + '月のコミッションが未入力です<span>入力する ›</span></div>';
+    h += '<div class="dt-todo" onclick="dtInputOpen(11)">' + icn('pencil') + ' ' + ml.m + '月の' + miss.join('・') + 'が未入力です<span>入力する ›</span></div>';
   }
-  h += '<div class="dt-foot">' + icn('refresh') + ' 総人数・平均稼働・S〜C・OUT・B1・研修生は現状MAPから自動集計（コミッションのみ手入力）</div>';
+  h += '<div class="dt-foot">' + icn('refresh') + ' 総人数・平均稼働・S〜C・OUT・B1・研修生は現状MAPから自動集計（UNIVERSE・コミッションは手入力）</div>';
   box.innerHTML = h;
   _dtApplyTab();
 }
@@ -9484,12 +9497,204 @@ function renderDtTrend() {
   h += '<div class="dt-card"><div class="dt-ch">' + mo.y + '年' + mo.m + '月の数字<span>' + (_dtMonthIdx === 11 ? '表示中の月' : '') + '</span></div><div class="dt-mgrid">';
   DT_METRICS.forEach(function(m) {
     var v = _dtVals(m.k), cur = v[_dtMonthIdx], prev = _dtMonthIdx > 0 ? v[_dtMonthIdx - 1] : null;
-    var edit = m.k === 'コミッション' && !ro;
+    var edit = DT_MANUAL.indexOf(m.k) >= 0 && !ro;
     h += '<div class="dt-mc' + (edit ? ' ed' : '') + '"' + (edit ? ' onclick="dtInputOpen(' + _dtMonthIdx + ')"' : ' onclick="dtOpenTrend(\'' + m.k + '\');dtPickMonth(' + _dtMonthIdx + ')"') + '><span>' + m.lb + (edit ? ' ' + icn('pencil', 'width:.9em;height:.9em') : '') + '</span><b>' + (cur === null ? (edit ? '＋入力' : '—') : _dtFmt(cur, m, true)) + '</b>' + _dtDelta(cur, prev, m) + '</div>';
   });
   h += '</div></div>';
   box.innerHTML = h;
 }
+// ════ v521: データタブ第2弾（研修・パワーライン・地域をグラフに） ════
+var DT_STEPS = ['マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO'];
+var DT_RES = [
+  { key: 'BC', lb: 'BC（成約）', col: '#2CE5B8' },
+  { key: 'ユーザー', lb: 'ユーザー', col: '#FFB454' },
+  { key: '流れた', lb: '流れた', col: '#FF5D73' },
+  { key: '__prog', lb: '進行中', col: '#6B7A90' }
+];
+var _dtAsanOpen = '';
+var _dtDrill = {};
+function dtDrill(key) { var d = _dtDrill[key]; if (d && d.list.length && typeof showTraineeDrill === 'function') showTraineeDrill(d.who, d.cat, d.list); }
+function _dtDrillKey(who, cat, list) { var k = 'd' + Object.keys(_dtDrill).length; _dtDrill[k] = { who: who, cat: cat, list: list }; return k; }
+// 汎用：ドーナツ（segs=[{n,col}]・中央に大きい文字＋小さい文字）
+function _dtDonutSegs(segs, big, small) {
+  var tot = segs.reduce(function(s, x) { return s + x.n; }, 0), R = 42, C = 2 * Math.PI * R, acc = 0, h = '';
+  segs.forEach(function(x) {
+    if (!tot || !x.n) return;
+    var len = C * x.n / tot;
+    h += '<circle cx="55" cy="55" r="' + R + '" fill="none" stroke="' + x.col + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-acc).toFixed(2) + '" transform="rotate(-90 55 55)"/>';
+    acc += len;
+  });
+  if (!tot) h = '<circle cx="55" cy="55" r="' + R + '" fill="none" stroke="var(--surface3)" stroke-width="16"/>';
+  return '<svg width="110" height="110" viewBox="0 0 110 110">' + h + '<text x="55" y="53" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">' + big + '</text><text x="55" y="69" text-anchor="middle" font-size="10" fill="var(--text-dim)">' + small + '</text></svg>';
+}
+// 汎用：折れ線（series=[{name,col,vals(12)}]・1本の軸）
+function _dtLines(series, labels) {
+  var pc = isPCMode();
+  var W = pc ? 760 : 360, H = pc ? 240 : 210, L = pc ? 40 : 30, R = 14, T = 16, B = 26, cw = W - L - R, ch = H - T - B;
+  var all = []; series.forEach(function(s) { s.vals.forEach(function(v) { if (v !== null && v !== undefined) all.push(v); }); });
+  var mx = _dtNice(Math.max.apply(null, all.concat([1])));
+  var xOf = function(i) { return L + cw * i / (labels.length - 1); }, yOf = function(v) { return T + ch * (1 - v / mx); };
+  var h = '<svg class="dt-chart" viewBox="0 0 ' + W + ' ' + H + '">';
+  for (var g = 0; g <= 4; g++) {
+    var gy = T + ch * g / 4;
+    h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--border)"/><text x="' + (L - 5) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10" fill="var(--text-dim)">' + Math.round(mx * (1 - g / 4)) + '</text>';
+  }
+  labels.forEach(function(l, i) { h += '<text x="' + xOf(i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">' + l + '</text>'; });
+  series.forEach(function(s) {
+    var pts = []; s.vals.forEach(function(v, i) { if (v !== null && v !== undefined) pts.push(i); });
+    if (!pts.length) return;
+    h += '<path d="' + pts.map(function(i, n) { return (n ? 'L' : 'M') + xOf(i).toFixed(1) + ',' + yOf(s.vals[i]).toFixed(1); }).join(' ') + '" fill="none" stroke="' + s.col + '" stroke-width="2.4" stroke-linejoin="round"/>';
+    var li = pts[pts.length - 1];
+    h += '<circle cx="' + xOf(li).toFixed(1) + '" cy="' + yOf(s.vals[li]).toFixed(1) + '" r="4" fill="' + s.col + '"/>';
+  });
+  return h + '</svg><div class="dt-lgrow">' + series.map(function(s) { var lv = s.vals[s.vals.length - 1]; return '<span><i style="background:' + s.col + '"></i>' + s.name + ' <b>' + (lv === null || lv === undefined ? '—' : lv) + '</b></span>'; }).join('') + '</div>';
+}
+
+// ── 研修 ──
+function renderDtTrain() {
+  var box = document.getElementById('dtTrain'); if (!box) return;
+  _dtDrill = {};
+  var fmon = state.currentMonth;
+  var trainees = monthTrainees(fmon);
+  var total = trainees.length;
+  var inMon = function(m, step) { var hs = m.traineeHistory || []; for (var i = 0; i < hs.length; i++) if (hs[i].status === step && _ymToMon(hs[i].date) === fmon) return true; return false; };
+  var decidedIn = function(m) { return m.traineeResult && traineeDecidedMonth(m) === fmon; };
+  var h = '';
+  // ① ファネル（じょうご形）
+  var cnt = DT_STEPS.map(function(st) { return trainees.filter(function(m) { return inMon(m, st); }); });
+  var mx = Math.max.apply(null, cnt.map(function(l) { return l.length; }).concat([1]));
+  var W = 340, rowH = 34, H = DT_STEPS.length * rowH + 6, cx = 190, maxW = 230;
+  var svg = '<svg class="dt-funnel" viewBox="0 0 ' + W + ' ' + H + '">';
+  DT_STEPS.forEach(function(st, i) {
+    var n = cnt[i].length, w = Math.max(n ? 14 : 4, maxW * n / mx), y = i * rowH + 3;
+    var nw = i < DT_STEPS.length - 1 ? Math.max(cnt[i + 1].length ? 14 : 4, maxW * cnt[i + 1].length / mx) : w * 0.9;
+    var dk = _dtDrillKey(fmon, st, cnt[i]);
+    var alpha = 1 - i * 0.07;
+    svg += '<path d="M' + (cx - w / 2).toFixed(1) + ',' + y + ' L' + (cx + w / 2).toFixed(1) + ',' + y + ' L' + (cx + nw / 2).toFixed(1) + ',' + (y + rowH - 6) + ' L' + (cx - nw / 2).toFixed(1) + ',' + (y + rowH - 6) + ' Z" fill="#2CE5B8" fill-opacity="' + (n ? alpha * 0.85 : 0.12).toFixed(2) + '"' + (n ? ' style="cursor:pointer" onclick="dtDrill(\'' + dk + '\')"' : '') + '/>';
+    svg += '<text x="8" y="' + (y + rowH / 2 + 1) + '" font-size="12.5" font-weight="800" fill="var(--text)">' + st + '</text>';
+    svg += '<text x="' + cx + '" y="' + (y + rowH / 2 + 1) + '" text-anchor="middle" font-size="13" font-weight="900" fill="' + (n ? '#06251C' : 'var(--text-dim)') + '" pointer-events="none">' + n + '人</text>';
+    if (i > 0 && cnt[i - 1].length) {
+      var cv = Math.round(n / cnt[i - 1].length * 100);
+      svg += '<text x="' + (W - 4) + '" y="' + (y + 11) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="' + (cv >= 60 ? '#22C55E' : (cv >= 30 ? '#FFB454' : '#FF5D73')) + '">↓ ' + cv + '%</text>';
+    }
+  });
+  svg += '</svg>';
+  h += '<div class="dt-card"><div class="dt-ch">' + icn('funnel') + ' ' + parseInt(fmon.split('.')[0], 10) + '年' + parseInt(fmon.split('.')[1], 10) + '月の研修フロー<span style="color:var(--text-dim)">研修生 ' + total + '人</span></div>'
+    + (total ? svg + '<div class="dt-hint">右の％＝前の段階から進んだ割合（歩留まり）。段をタップで内訳</div>' : '<div class="ev-empty" style="padding:16px">この月の研修の記録はありません</div>') + '</div>';
+  // ② 結果ドーナツ
+  var lists = {
+    'BC': trainees.filter(function(m) { return decidedIn(m) && m.traineeResult === 'BC'; }),
+    'ユーザー': trainees.filter(function(m) { return decidedIn(m) && m.traineeResult === 'ユーザー'; }),
+    '流れた': trainees.filter(function(m) { return decidedIn(m) && m.traineeResult === '流れた'; }),
+    '__prog': trainees.filter(function(m) { return !decidedIn(m); })
+  };
+  var dec = lists['BC'].length + lists['ユーザー'].length + lists['流れた'].length;
+  var bcRate = dec ? Math.round(lists['BC'].length / dec * 100) : 0;
+  h += '<div class="dt-card"><div class="dt-ch">' + icn('target') + ' 研修の結果<span style="color:var(--text-dim)">結果が出た ' + dec + '人</span></div><div class="dt-mixin">'
+    + _dtDonutSegs(DT_RES.map(function(r) { return { n: lists[r.key].length, col: r.col }; }), dec ? bcRate + '%' : '—', 'BC決定率')
+    + '<div class="dt-lgs" style="grid-template-columns:1fr">' + DT_RES.map(function(r) {
+      var l = lists[r.key], dk = _dtDrillKey('全体', r.lb, l);
+      return '<div class="dt-lg' + (l.length ? ' tap' : '') + '"' + (l.length ? ' onclick="dtDrill(\'' + dk + '\')"' : '') + '><i style="background:' + r.col + '"></i>' + r.lb + '<b>' + l.length + '人</b><span>' + (total ? Math.round(l.length / total * 100) : 0) + '%</span></div>';
+    }).join('') + '</div></div><div class="dt-hint">BC決定率＝結果が出た人のうちBCの割合</div></div>';
+  // ③ Aさん別（決定率ランキング）
+  var amap = {};
+  trainees.forEach(function(m) {
+    (m.traineeHistory || []).forEach(function(hh) {
+      if (!hh.aSan || _ymToMon(hh.date) !== fmon) return;
+      var a = amap[hh.aSan] || (amap[hh.aSan] = { name: hh.aSan, ms: {}, steps: {} });
+      a.ms[m.id] = m;
+      a.steps[hh.status] = (a.steps[hh.status] || 0) + 1;
+    });
+  });
+  var arr = Object.keys(amap).map(function(k) {
+    var a = amap[k], ms = Object.keys(a.ms).map(function(id) { return a.ms[id]; });
+    var g = { 'BC': [], 'ユーザー': [], '流れた': [], '__prog': [] };
+    ms.forEach(function(m) { if (decidedIn(m) && g[m.traineeResult]) g[m.traineeResult].push(m); else g['__prog'].push(m); });
+    var d = g['BC'].length + g['ユーザー'].length + g['流れた'].length;
+    return { name: a.name, n: ms.length, g: g, steps: a.steps, rate: d ? Math.round(g['BC'].length / d * 100) : -1 };
+  }).sort(function(x, y) { return (y.rate - x.rate) || (y.n - x.n); });
+  var amax = Math.max.apply(null, arr.map(function(a) { return a.n; }).concat([1]));
+  h += '<div class="dt-card"><div class="dt-ch">' + icn('users') + ' Aさん別<span style="color:var(--text-dim)">BC決定率の高い順</span></div>';
+  if (!arr.length) h += '<div class="ev-empty" style="padding:16px">この月の研修履歴にAさんが設定されていません</div>';
+  arr.forEach(function(a, i) {
+    var open = _dtAsanOpen === a.name;
+    h += '<div class="dt-ar" onclick="dtAsanTgl(\'' + evEsc(a.name).replace(/'/g, '') + '\')"><span class="dt-rk">' + (i + 1) + '</span><span class="dt-an">' + evEsc(a.name) + '<small>' + a.n + '人</small></span>'
+      + '<span class="dt-sbar" style="width:' + Math.max(18, a.n / amax * 100).toFixed(0) + '%">' + DT_RES.map(function(r) { var n = a.g[r.key].length; return n ? '<i style="flex:' + n + ';background:' + r.col + '"></i>' : ''; }).join('') + '</span>'
+      + '<span class="dt-ap">' + (a.rate < 0 ? '—' : a.rate + '%') + '</span></div>';
+    if (open) {
+      h += '<div class="dt-aopen"><div class="dt-atiles">' + DT_RES.map(function(r) {
+        var l = a.g[r.key], dk = _dtDrillKey(a.name, r.lb, l);
+        return '<div class="dt-at' + (l.length ? ' tap' : '') + '"' + (l.length ? ' onclick="event.stopPropagation();dtDrill(\'' + dk + '\')"' : '') + '><b style="color:' + r.col + '">' + l.length + '</b><span>' + r.lb + '</span></div>';
+      }).join('') + '</div><div class="dt-asteps">' + DT_STEPS.map(function(st) { return '<span' + (a.steps[st] ? ' class="on"' : '') + '>' + st + ' ' + (a.steps[st] || 0) + '</span>'; }).join('') + '</div><div class="dt-hint" style="text-align:left">数字をタップ → 内訳 → 現状MAPへ</div></div>';
+    }
+  });
+  h += '</div>';
+  box.innerHTML = h;
+}
+function dtAsanTgl(n) { _dtAsanOpen = (_dtAsanOpen === n) ? '' : n; renderDtTrain(); }
+
+// ── パワーライン ──
+function renderDtPl() {
+  var box = document.getElementById('dtPl'); if (!box) return;
+  var pl = ((state.stats && state.stats.powerline) || []).map(function(r) {
+    var v = (r.vals || []).slice(-12).map(function(x) { return (x === '' || x === null || x === undefined) ? null : Number(x); });
+    while (v.length < 12) v.unshift(null);
+    return { name: r.name, v: v, cur: v[11] || 0, prev: v[10] };
+  }).filter(function(r) { return r.cur > 0; }).sort(function(a, b) { return b.cur - a.cur; });
+  var idOf = {};
+  membersForMap('current').forEach(function(m) { idOf[(m.lastName || '') + (m.firstName || '')] = m.id; });
+  var mx = pl.length ? pl[0].cur : 1, sum = pl.reduce(function(s, r) { return s + r.cur; }, 0);
+  var h = '<div class="dt-card"><div class="dt-ch">' + icn('zap') + ' パワーライン<span style="color:var(--text-dim)">LTSV 5,000P以上 ' + pl.length + '系列・合計 ' + sum.toLocaleString() + '</span></div>';
+  if (!pl.length) h += '<div class="ev-empty" style="padding:16px">LTSV 5,000P以上の系列はまだありません</div>';
+  var medal = ['#FFD166', '#C0C7D2', '#E0A36B'];
+  pl.forEach(function(r, i) {
+    var id = idOf[r.name];
+    var d = (r.prev === null) ? '' : (r.cur - r.prev);
+    h += '<div class="dt-pr"' + (id ? ' onclick="jumpToMember(\'' + id + '\')"' : '') + '><span class="dt-rk"' + (i < 3 ? ' style="background:' + medal[i] + ';color:#1a1f2b"' : '') + '>' + (i + 1) + '</span>'
+      + '<span class="dt-pn">' + evEsc(r.name) + '</span>'
+      + '<span class="dt-pb"><i style="width:' + Math.max(3, r.cur / mx * 100).toFixed(1) + '%"></i></span>'
+      + '<span class="dt-pv">' + r.cur.toLocaleString() + (d === '' || !d ? '' : '<small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.abs(d).toLocaleString() + '</small>') + '</span></div>';
+  });
+  if (pl.length) h += '<div class="dt-hint">名前をタップで現状MAPのその人へ／前月比は先月のLTSVとの差</div>';
+  box.innerHTML = h + '</div>';
+}
+
+// ── 地域（今月の比較） ──
+var DT_REG_M = [['n', '人数'], ['tr', '研修生'], ['q', 'QBR'], ['br', 'BR以上'], ['s', 'S稼働'], ['b1', '新規B1']];
+var _dtRegM = 'n';
+function dtRegMetric(k) { _dtRegM = k; renderDtReg(); }
+function renderDtReg() {
+  var box = document.getElementById('dtRegCmp'); if (!box) return;
+  var QBR = ['LOI', 'Q1', 'Q2', 'Q3', 'Q4'];
+  var ym = state.currentMonth || currentMonthStr();
+  var by = {};
+  membersForMap('current').forEach(function(m) {
+    if (m.deleted || (m.title || '').trim() === 'OUT' || /^(MG_|AG\d+_)/.test(m.id)) return;
+    var r = normalizeRegionValue(m.region || '') || '未設定', t = (m.title || '').trim();
+    var o = by[r] || (by[r] = { r: r, n: 0, tr: 0, q: 0, br: 0, s: 0, b1: 0 });
+    o.n++;
+    if (memberCat(m) === '研修生') o.tr++;
+    if (QBR.indexOf(t) >= 0) o.q++;
+    if (isBROrAbove(t)) o.br++;
+    if (m.activity === 'S') o.s++;
+    if (String(m.startMonth || '').replace('-', '.').slice(0, 7) === ym && /^B\d+$/.test(t)) o.b1++;
+  });
+  var arr = Object.keys(by).map(function(k) { return by[k]; }).sort(function(a, b) { return (b[_dtRegM] - a[_dtRegM]) || (b.n - a.n); });
+  var mx = Math.max.apply(null, arr.map(function(o) { return o[_dtRegM]; }).concat([1]));
+  var cols = ['#2CE5B8', '#8B7CFF', '#5AD7FF', '#FFB454', '#FF5D73', '#FF87B3', '#FFD166', '#4ADE80'];
+  var h = '<div class="dt-card"><div class="dt-ch">' + icn('pin') + ' 地域の比較（今月）<span style="color:var(--text-dim)">OUTを除く</span></div>'
+    + '<div class="dt-chips" style="padding-bottom:8px">' + DT_REG_M.map(function(m) { return '<span class="dt-chip' + (m[0] === _dtRegM ? ' on c0' : '') + '" onclick="dtRegMetric(\'' + m[0] + '\')">' + m[1] + '</span>'; }).join('') + '</div>';
+  if (!arr.length) h += '<div class="ev-empty" style="padding:16px">メンバーがいません</div>';
+  arr.forEach(function(o, i) {
+    var sel = (_regTrendSel || '') === (o.r === '未設定' ? '__none__' : o.r);
+    h += '<div class="dt-pr' + (sel ? ' sel' : '') + '"' + (o.r !== '未設定' ? ' onclick="regTrendPick(\'' + evEsc(o.r).replace(/'/g, '') + '\')"' : '') + '><span class="dt-pn">' + evEsc(o.r) + '</span>'
+      + '<span class="dt-pb"><i style="width:' + Math.max(o[_dtRegM] ? 3 : 0, o[_dtRegM] / mx * 100).toFixed(1) + '%;background:' + cols[i % cols.length] + '"></i></span>'
+      + '<span class="dt-pv">' + o[_dtRegM] + '<small style="color:var(--text-dim)">/' + o.n + '人</small></span></div>';
+  });
+  if (arr.length) h += '<div class="dt-hint">地域をタップすると、下にその地域の12ヶ月の推移</div>';
+  box.innerHTML = h + '</div>';
+}
+
 // ── 手入力（コミッションのみ）──
 function dtInputOpen(idx) {
   if (_dtReadOnly()) return;
@@ -9507,11 +9712,12 @@ function dtInputOpen(idx) {
       if (e1 > 0) est = '<div class="dt-est">参考：現状MAPから計算した概算（BB＋LB、SBは含まず）<b>¥' + Math.round(e1).toLocaleString() + '</b></div>';
     }
   } catch (eE) {}
-  var v = _dtVals('コミッション')[idx];
-  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('pencil') + ' コミッションを入力</div>'
-    + '<div style="font-size:11.5px;color:var(--text-dim)">実際に受け取った金額（円）。ほかの数字はMAPから自動で集計されます</div></div><span class="ms-x" onclick="dtInputClose()">✕</span></div>'
+  var vu = _dtVals('UNIVERSE')[idx], vc = _dtVals('コミッション')[idx];
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('pencil') + ' 今月の数字を入力</div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim)">ほかの数字は現状MAPから自動で集計されます</div></div><span class="ms-x" onclick="dtInputClose()">✕</span></div>'
     + '<div style="padding:0 16px 18px"><label class="olp-lb">月</label><select class="fi" id="dtInMonth" onchange="dtInputOpen(+this.value)">' + opts + '</select>'
-    + '<label class="olp-lb" style="margin-top:10px">コミッション（円）</label><input class="fi" id="dtInVal" type="number" inputmode="numeric" placeholder="例 350000" value="' + (v === null ? '' : v) + '">'
+    + '<label class="olp-lb" style="margin-top:10px">UNIVERSE（UNIVERSE RIDE 参加人数）</label><input class="fi" id="dtInUni" type="number" inputmode="numeric" placeholder="例 24" value="' + (vu === null ? '' : vu) + '">'
+    + '<label class="olp-lb" style="margin-top:10px">コミッション（円・実際に受け取った金額）</label><input class="fi" id="dtInVal" type="number" inputmode="numeric" placeholder="例 350000" value="' + (vc === null ? '' : vc) + '">'
     + est
     + '<div class="btn-row" style="margin-top:14px"><button class="btn-c" onclick="dtInputClose()">閉じる</button><button class="btn-p" onclick="dtInputSave()">保存</button></div></div></div>';
   document.body.appendChild(ov);
@@ -9520,16 +9726,19 @@ function dtInputOpen(idx) {
 function dtInputClose() { var ov = document.getElementById('dtInOv'); if (ov) { ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); } }
 function dtInputSave() {
   var idx = +((document.getElementById('dtInMonth') || {}).value || 11);
-  var raw = ((document.getElementById('dtInVal') || {}).value || '').replace(/[^0-9.-]/g, '');
-  var r = _dtRow('コミッション');
-  if (!r) { r = { label: 'コミッション', vals: [] }; state.stats.monthly.push(r); }
-  if (!r.vals) r.vals = [];
-  while (r.vals.length < 12) r.vals.unshift('');
-  r.vals[r.vals.length - 12 + idx] = raw === '' ? '' : Number(raw);
+  [['UNIVERSE', 'dtInUni'], ['コミッション', 'dtInVal']].forEach(function(p) {
+    var el = document.getElementById(p[1]); if (!el) return;
+    var raw = (el.value || '').replace(/[^0-9.-]/g, '');
+    var r = _dtRow(p[0]);
+    if (!r) { r = { label: p[0], vals: [] }; state.stats.monthly.push(r); }
+    if (!r.vals) r.vals = [];
+    while (r.vals.length < 12) r.vals.unshift('');
+    r.vals[r.vals.length - 12 + idx] = raw === '' ? '' : Number(raw);
+  });
   autoSave();
   dtInputClose();
   renderStats();
-  toast('コミッションを保存しました');
+  toast('保存しました');
 }
 // ============================================================
 //  v420: 地域別 月次推移（過去12ヶ月のmonthsドキュメントから集計）
@@ -9542,7 +9751,7 @@ function regTrendInit() {
   var seen = {}, regions = [];
   (state.members || []).forEach(function(m){
     if (m.deleted) return;
-    var r = (m.region || '').trim();
+    var r = normalizeRegionValue(m.region || ''); // v521: 表記ゆれを正規化
     if (r && !seen[r]) { seen[r] = 1; regions.push(r); }
   });
   regions.sort();
@@ -9557,6 +9766,7 @@ function regTrendPick(r) {
   _regTrendSel = r;
   regTrendInit();
   regTrendRender();
+  try { renderDtReg(); } catch (eR) {} // v521: 比較グラフ側の選択表示も更新
 }
 function regTrendRender() {
   var body = document.getElementById('regTrendBody');
@@ -9578,10 +9788,11 @@ function regTrendRender() {
   })).then(function(all){
     var QBR = ['LOI','Q1','Q2','Q3','Q4'];
     var rows = mons.map(function(mon, i){
+      if (!(all[i] || []).length) return { mon: mon, n: null, tr: null, q: null, br: null }; // v521: データの無い月は線を引かない（0扱いにしない）
       var arr = (all[i] || []).filter(function(m){
         if (m.deleted) return false;
         if ((m.title || '').trim() === 'OUT') return false;
-        if (_regTrendSel && (m.region || '').trim() !== _regTrendSel) return false;
+        if (_regTrendSel && normalizeRegionValue(m.region || '') !== _regTrendSel) return false;
         return true;
       });
       var nTr = 0, nQ = 0, nBr = 0;
@@ -9593,14 +9804,19 @@ function regTrendRender() {
       });
       return { mon: mon, n: arr.length, tr: nTr, q: nQ, br: nBr };
     });
+    // v521: 12ヶ月の推移をグラフで（表は「表で見る」に）
+    var _lbs9 = rows.map(function(r){ return parseInt(r.mon.split('.')[1], 10) + '月'; });
+    var _sr9 = [['人数', 'n', '#2CE5B8'], ['研修生', 'tr', '#5AD7FF'], ['QBR', 'q', '#FFB454'], ['BR以上', 'br', '#8B7CFF']].map(function(x){ return { name: x[0], col: x[2], vals: rows.map(function(r){ return r[x[1]]; }) }; });
+    var gh = '<div class="dt-ch" style="margin-top:2px">' + evEsc(_regTrendSel || '全体') + ' の12ヶ月</div>' + _dtLines(_sr9, _lbs9);
     var h = '<table class="tbl" style="min-width:520px"><thead><tr><th style="text-align:left;padding-left:10px">' + evEsc(_regTrendSel || '全体') + '</th>'
       + rows.map(function(r){ return '<th style="font-family:Inter,sans-serif">' + r.mon.split('.')[1] + '月</th>'; }).join('') + '</tr></thead><tbody>';
     [['人数（OUT除く）', 'n'], ['研修生', 'tr'], ['QBR（LOI〜Q4）', 'q'], ['BR以上', 'br']].forEach(function(rw){
       h += '<tr><td style="text-align:left;padding-left:10px;white-space:nowrap">' + rw[0] + '</td>'
-        + rows.map(function(r){ return '<td style="text-align:center;font-family:Inter,sans-serif">' + (r[rw[1]] || (r[rw[1]] === 0 ? '0' : '')) + '</td>'; }).join('') + '</tr>';
+        + rows.map(function(r){ return '<td style="text-align:center;font-family:Inter,sans-serif">' + (r[rw[1]] === null ? '—' : (r[rw[1]] || '0')) + '</td>'; }).join('') + '</tr>';
     });
-    h += '</tbody></table><div style="font-size:11px;color:var(--text-dim);margin-top:6px">※地域が未入力だった時期の月は、実際より少なく表示されます</div>';
-    body.innerHTML = h;
+    h += '</tbody></table>';
+    body.innerHTML = gh + '<details class="dt-tbl"><summary>表で見る</summary><div style="overflow-x:auto">' + h + '</div></details>'
+      + '<div style="font-size:11px;color:var(--text-dim);margin-top:6px">※地域が未入力だった時期の月は、実際より少なく表示されます</div>';
   });
 }
 function renderStats() {
@@ -9659,12 +9875,12 @@ function renderStats() {
       lg.style.cssText = 'font-size:11px;color:var(--text-dim);padding:6px 12px 2px;line-height:1.6';
       statsCard.insertBefore(lg, statsCard.firstChild);
     }
-    if (lg) lg.innerHTML = '✏️ 入力可：コミッション　／　<span style="color:var(--accent)">緑数字</span>＝MAPから自動集計'
+    if (lg) lg.innerHTML = '✏️ 入力可：UNIVERSE・コミッション　／　<span style="color:var(--accent)">緑数字</span>＝MAPから自動集計'
       + '<span class="hide-pc" style="display:block">📱 直近3ヶ月表示・PCで12ヶ月表示</span>';
   }
 
-  var EDITABLE_ROWS = ['コミッション']; // v520: 平均稼働・OUT・UNIVERSE はMAPから自動集計
-  var AUTO_ROWS = ['マケ・PG','DLR動員','S','A','B','C','B1','平均稼働','OUT','UNIVERSE','研修生'];
+  var EDITABLE_ROWS = ['UNIVERSE','コミッション']; // v521: UNIVERSE（UNIVERSE RIDE参加人数）とコミッションは手入力
+  var AUTO_ROWS = ['マケ・PG','DLR動員','S','A','B','C','B1','平均稼働','OUT','総人数','研修生'];
   var tbody = document.getElementById('statsTblBody');
   tbody.innerHTML = '';
   (s.monthly||[]).forEach(function(row) {
@@ -9796,6 +10012,8 @@ function renderStats() {
   }).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
   }
 
+  // v521: データタブ第2弾（研修・パワーライン・地域のグラフ）
+  try { renderDtTrain(); renderDtPl(); renderDtReg(); } catch (eDt2) { console.warn('dt2', eDt2); }
   // v516: OLタブ（3〜7人OLの枠・予定のOL・フレッシュ）は renderOlTab で描画（入力欄は常時表示しない）
   renderOlTab();
 
@@ -23554,6 +23772,7 @@ function openTaskForMember() {
 // ── DEFAULTS & SEED ──
 function getDefaultStats() {
   return { monthly:[
+    {label:'総人数',vals:['','','','','','']},
     {label:'平均稼働',vals:['','','','','','']},
     {label:'S',vals:['','','','','','']},{label:'A',vals:['','','','','','']},
     {label:'B',vals:['','','','','','']},{label:'C',vals:['','','','','','']},
