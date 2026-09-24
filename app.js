@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v521';
+var APP_JS_VERSION = 'v523';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3335,7 +3335,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v521';
+  var DATA_VERSION = 'v523';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -3584,23 +3584,32 @@ function _vvEditableFocus() {
 function _vvStandalone() {
   return (window.navigator.standalone === true) || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 }
-var _vvBase = {}; // 画面幅 → キーボード無しで実測した最大の高さ（ホーム画面アプリのみ）
+// v522: v515〜v521の「その画面幅で測った最大の高さより縮めない」は、iOSが一度でも大きめの値（起動直後にステータスバー分を
+//        含む等）を返すとずっと残り、画面が下にはみ出したまま戻らなかった（馬越さん端末）。
+//        → 最大値の記憶はやめ、「キーボードを閉じた直後に、キーボード表示中の小さい高さのまま」の時だけ、
+//          キーボードを出す直前の高さを使う（921-3対策）。それ以外は常に今の実測値そのもの
+var _vvKb = { pre: 0, wk: '', stale: false };
+function _vvNow() { var vv = window.visualViewport; return vv ? Math.round(vv.height) : window.innerHeight; }
+document.addEventListener('focusin', function() {
+  try {
+    if (!_vvEditableFocus()) return;
+    var h = _vvNow(), wk = String(Math.round(window.innerWidth || 0));
+    // 欄から欄へ移る時はキーボードが出たまま（小さい値）なので、直前の正しい値を上書きしない
+    if (!_vvKb.pre || _vvKb.wk !== wk || h >= _vvKb.pre - 100) { _vvKb.pre = h; _vvKb.wk = wk; }
+  } catch (e) {}
+}, true);
+document.addEventListener('focusout', function() { if (_vvKb.pre) _vvKb.stale = true; }, true);
 function _vvhTarget() {
-  // v325: v324の screen.height 強制補正は撤回（ステータスバー等の分を誤差として押し出し、
-  // 下部バーが画面外に隠れて押せなくなるため）。実測値（visualViewport・レイアウト高さ）のみを使う
-  var vv = window.visualViewport;
-  var h = vv ? Math.round(vv.height) : window.innerHeight;
+  var h = _vvNow();
   if (typeof isPCMode === 'function' && isPCMode()) return h;
   if (!_vvStandalone()) return h; // Safariのタブ表示はツールバーの出入りで高さが正しく変わるため従来どおり
   if (_vvEditableFocus()) return h; // キーボード表示中は見えている高さぴったりに
-  // v517: 基準は visualViewport の実測値だけ（innerHeight／clientHeight はホーム画面アプリだとステータスバー分など
-  //       見えている高さより大きいことがあり、v515でそれを使ったため画面が下にはみ出した）
-  var cand = h;
-  var cap = Math.max(screen.width || 0, screen.height || 0);
-  if (cap) cand = Math.min(cand, cap);
-  var wk = String(Math.round(window.innerWidth || 0));
-  if (cand > (_vvBase[wk] || 0)) _vvBase[wk] = cand;
-  return Math.max(cand, _vvBase[wk] || 0);
+  if (_vvKb.stale) {
+    var wk = String(Math.round(window.innerWidth || 0));
+    if (_vvKb.wk === wk && _vvKb.pre && h < _vvKb.pre - 100) return _vvKb.pre; // キーボードを閉じたのに小さいまま＝iOSの古い値
+    _vvKb.stale = false; // 正しい高さに戻った（または向きが変わった）→ 以後は実測値
+  }
+  return h;
 }
 function _vvhUpdate() {
   try {
@@ -4336,6 +4345,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v523', d:'2026-09-24', items:['⚡ パワーラインを「系列ごと」に：フロント（直下）の系列でLTSVが5,000P以上のラインだけを表示。配下のBRは系列のLTSVに含まれるので、一覧には出しません','🔎 系列の行をタップすると詳細：その系列の中でLTSVが5,000P以上のメンバーを、上下関係（何段下か）つきで表示。前月比つき・タップで現状MAPのその人へ','🚀 LTSVの計算を高速化（大人数のMAPでデータタブが重くなるのを防止）'] },
+  { v:'v522', d:'2026-09-24', items:['📅 スマホのカレンダーが下にはみ出して下のボタンが隠れる不具合を根本修正：「上に圧縮される」対策で“今まで測った一番大きい高さ”を記憶していたため、iPhoneが一度でも大きめの値を返すと、はみ出したまま戻りませんでした。記憶をやめ、キーボードを閉じた直後に高さが小さいまま残った時だけ直前の高さを使うようにしました'] },
   { v:'v521', d:'2026-09-24', items:['🔄 UNIVERSEは「UNIVERSE RIDE（ゼネラルイベント）の参加人数」なので手入力に戻しました（v520で総人数を自動で入れてしまった今月分は取り消し）。総人数は別の項目として自動集計。サマリーは9枚（UNIVERSEのタイルを追加）','🔻 研修タブをグラフに：じょうご形のファネル（段階ごとの人数と歩留まり％・タップで内訳）、研修結果のドーナツ（BC決定率）、Aさん別の決定率ランキング（色分けバー・タップで詳細）','⚡ パワーラインを横棒ランキングに（上位3系列はメダル色・前月比・タップで現状MAPのその人へ）','📍 地域タブ：今月の地域比較グラフ（人数・研修生・QBR・BR以上・S稼働・新規B1を切替）と、選んだ地域の12ヶ月推移グラフ'] },
   { v:'v520', d:'2026-09-24', items:['📊 データタブを刷新：上のタブ（サマリー／推移／研修／パワーライン／地域）で切り替え。下までスクロールしなくても各項目が見られます','🔢 サマリーは8枚のタイル（総人数・平均稼働・S稼働・OUT・新規BC・研修生・コミッション・今月の目標）。前月比の矢印と12ヶ月の小さな推移グラフ付き。タップでその項目の推移へ','📈 推移は大きなグラフに：項目をチップで選び（2つまで重ねて比較）、「稼働構成」はS/A/B/Cの積み上げで組織の中身の変化が一目で分かります。月をタップするとその月の全数字','🤖 平均稼働・UNIVERSE（人数）・OUT・研修生を現状MAPから自動集計。手入力はコミッションだけ（入力シートから。現状MAPからの概算も参考表示）','🎯 サマリーの「今月の目標」はPLANの今月の目標に対する達成率（タップでPLANへ）'] },
   { v:'v519', d:'2026-09-24', items:['⚪ 運動会MAPの丸が透けて後ろの線が見えていたのを修正（923-3）：丸の下に不透明の下地を敷きました（OUT・研修生・フレッシュの淡い色でも透けません）','🔗 運動会MAPで「誰が誰のフロントか」分かりにくかったのを修正（923-4）：隣り合う親のくし（横棒）が同じ高さで1本につながって見えていたため、親ごとに横棒の高さを3段でずらしました','✨ 研修生（NA）の光り方がバラバラだったのを修正（923-5）：最近7日以内に活動した人は「活動中」の脈打ちが発光を打ち消して光っていませんでした。研修生・フレッシュは全員同じように光ります','🖥 PC版ツリー：NAを追加すると中央に戻されるのを修正（923-7）：かんたん追加でも見ていた位置・倍率のまま','🖥 PC版ツリー：NAを追加すると他の系列が暗くなるのを修正（923-8）：追加先のカードをクリックした時の系列フォーカスを、追加後に解除','⏱ NAのかんたん追加から時刻の入力欄を削除（923-9。研修日とAさんはそのまま）'] },
@@ -9633,32 +9644,50 @@ function renderDtTrain() {
 }
 function dtAsanTgl(n) { _dtAsanOpen = (_dtAsanOpen === n) ? '' : n; renderDtTrain(); }
 
-// ── パワーライン ──
+// ── パワーライン（v523: フロントの系列ごと。詳細でその系列の5,000P以上のメンバー） ──
+var _dtPlOpen = '';
+function dtPlTgl(id) { _dtPlOpen = (_dtPlOpen === id) ? '' : id; renderDtPl(); }
 function renderDtPl() {
   var box = document.getElementById('dtPl'); if (!box) return;
-  var pl = ((state.stats && state.stats.powerline) || []).map(function(r) {
-    var v = (r.vals || []).slice(-12).map(function(x) { return (x === '' || x === null || x === undefined) ? null : Number(x); });
-    while (v.length < 12) v.unshift(null);
-    return { name: r.name, v: v, cur: v[11] || 0, prev: v[10] };
-  }).filter(function(r) { return r.cur > 0; }).sort(function(a, b) { return b.cur - a.cur; });
-  var idOf = {};
-  membersForMap('current').forEach(function(m) { idOf[(m.lastName || '') + (m.firstName || '')] = m.id; });
-  var mx = pl.length ? pl[0].cur : 1, sum = pl.reduce(function(s, r) { return s + r.cur; }, 0);
-  var h = '<div class="dt-card"><div class="dt-ch">' + icn('zap') + ' パワーライン<span style="color:var(--text-dim)">LTSV 5,000P以上 ' + pl.length + '系列・合計 ' + sum.toLocaleString() + '</span></div>';
-  if (!pl.length) h += '<div class="ev-empty" style="padding:16px">LTSV 5,000P以上の系列はまだありません</div>';
+  var ms = membersForMap('current').filter(function(m) { return !m.deleted; });
+  var lt = ltsvMap(ms);
+  var root = ms.filter(function(m) { return !m.parentId; })[0];
+  var kids = {}; ms.forEach(function(m) { (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  var hist = {}; ((state.stats && state.stats.powerline) || []).forEach(function(r) { var v = (r.vals || []).slice(-12); while (v.length < 12) v.unshift(''); hist[r.name] = v; });
+  var nm = function(m) { return (m.lastName || '') + (m.firstName || ''); };
+  var prevOf = function(m) { var v = hist[nm(m)]; var p = v ? v[10] : ''; return (p === '' || p === null || p === undefined) ? null : Number(p); };
+  var lines = root ? (kids[root.id] || []).filter(function(f) { return (lt[f.id] || 0) >= 5000; }).sort(function(a, b) { return lt[b.id] - lt[a.id]; }) : [];
+  var mx = lines.length ? lt[lines[0].id] : 1, sum = lines.reduce(function(s9, f) { return s9 + lt[f.id]; }, 0);
+  var dlt = function(cur, prev) { if (prev === null) return ''; var d = cur - prev; return d ? '<small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.abs(d).toLocaleString() + '</small>' : ''; };
+  var h = '<div class="dt-card"><div class="dt-ch">' + icn('zap') + ' パワーライン<span style="color:var(--text-dim)">LTSV 5,000P以上の系列 ' + lines.length + '本・合計 ' + sum.toLocaleString() + '</span></div>';
+  if (!lines.length) h += '<div class="ev-empty" style="padding:16px">LTSV 5,000P以上の系列はまだありません</div>';
   var medal = ['#FFD166', '#C0C7D2', '#E0A36B'];
-  pl.forEach(function(r, i) {
-    var id = idOf[r.name];
-    var d = (r.prev === null) ? '' : (r.cur - r.prev);
-    h += '<div class="dt-pr"' + (id ? ' onclick="jumpToMember(\'' + id + '\')"' : '') + '><span class="dt-rk"' + (i < 3 ? ' style="background:' + medal[i] + ';color:#1a1f2b"' : '') + '>' + (i + 1) + '</span>'
-      + '<span class="dt-pn">' + evEsc(r.name) + '</span>'
-      + '<span class="dt-pb"><i style="width:' + Math.max(3, r.cur / mx * 100).toFixed(1) + '%"></i></span>'
-      + '<span class="dt-pv">' + r.cur.toLocaleString() + (d === '' || !d ? '' : '<small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.abs(d).toLocaleString() + '</small>') + '</span></div>';
+  lines.forEach(function(f, i) {
+    // 系列内（フロント本人を含む）で LTSV 5,000P以上のメンバー（上下関係が分かる順に）
+    var inner = [];
+    (function walk(m, d) { var v = lt[m.id] || 0; if (v >= 5000) inner.push({ m: m, v: v, d: d }); (kids[m.id] || []).forEach(function(c) { walk(c, d + 1); }); })(f, 0);
+    var open = _dtPlOpen === f.id;
+    h += '<div class="dt-pr' + (open ? ' sel' : '') + '" onclick="dtPlTgl(\'' + f.id + '\')"><span class="dt-rk"' + (i < 3 ? ' style="background:' + medal[i] + ';color:#1a1f2b"' : '') + '>' + (i + 1) + '</span>'
+      + '<span class="dt-pn">' + evEsc(nm(f)) + '<small class="dt-pt">' + evEsc((f.title || '').trim()) + '</small></span>'
+      + '<span class="dt-pb"><i style="width:' + Math.max(3, lt[f.id] / mx * 100).toFixed(1) + '%"></i></span>'
+      + '<span class="dt-pv">' + lt[f.id].toLocaleString() + dlt(lt[f.id], prevOf(f)) + '</span>'
+      + '<span class="dt-pd">' + (open ? '▲' : '詳細 ' + inner.length) + '</span></div>';
+    if (open) {
+      var imx = inner.length ? inner[0].v : 1;
+      h += '<div class="dt-plin"><div class="dt-plh">この系列で LTSV 5,000P以上のメンバー（' + inner.length + '人）</div>'
+        + inner.map(function(x) {
+          return '<div class="dt-pli" onclick="event.stopPropagation();jumpToMember(\'' + x.m.id + '\')" style="padding-left:' + (6 + Math.min(x.d, 6) * 14) + 'px">'
+            + (x.d ? '<span class="dt-plj">└</span>' : '')
+            + '<span class="dt-pln">' + evEsc(nm(x.m)) + '<small>' + evEsc((x.m.title || '').trim()) + (x.d ? '・' + x.d + '段下' : '・フロント') + '</small></span>'
+            + '<span class="dt-pb sm"><i style="width:' + Math.max(3, x.v / imx * 100).toFixed(1) + '%"></i></span>'
+            + '<span class="dt-pv">' + x.v.toLocaleString() + dlt(x.v, prevOf(x.m)) + '</span></div>';
+        }).join('')
+        + '<div class="dt-hint" style="text-align:left">名前をタップで現状MAPのその人へ</div></div>';
+    }
   });
-  if (pl.length) h += '<div class="dt-hint">名前をタップで現状MAPのその人へ／前月比は先月のLTSVとの差</div>';
+  if (lines.length) h += '<div class="dt-hint">フロント（直下）ごとの系列。配下のBRは系列のLTSVに含まれます。行をタップで詳細</div>';
   box.innerHTML = h + '</div>';
 }
-
 // ── 地域（今月の比較） ──
 var DT_REG_M = [['n', '人数'], ['tr', '研修生'], ['q', 'QBR'], ['br', 'BR以上'], ['s', 'S稼働'], ['b1', '新規B1']];
 var _dtRegM = 'n';
@@ -9956,10 +9985,15 @@ function renderStats() {
   // パワーライン: LTSV 5000P以上の系列を自動表示
   var plData = [];
   var currentMembers = membersForMap('current');
+  var _ltsv9 = ltsvMap(currentMembers); // v523: 一括計算
+  var _root9 = currentMembers.filter(function(m){ return !m.parentId; })[0];
+  var _frontNm9 = {}; // v523: パワーライン＝フロント（自分の直下）の系列でLTSV 5,000P以上
   currentMembers.forEach(function(m) {
     if (!m.parentId) return; // ルート除外
-    var ltsv = calcLtsv(m.id, currentMembers);
+    var ltsv = _ltsv9[m.id] || 0;
+    // 履歴（前月比）用に、系列内の5,000P以上のメンバーも保存しておく（一覧に出すのはフロントの系列だけ）
     if (ltsv >= 5000) plData.push({name:(m.lastName||'')+(m.firstName||''), ltsv:ltsv});
+    if (ltsv >= 5000 && _root9 && m.parentId === _root9.id) _frontNm9[(m.lastName||'')+(m.firstName||'')] = 1;
   });
   plData.sort(function(a,b){ return b.ltsv - a.ltsv; });
   // パワーライン - 月次ラベルをヘッダーに、現在LTSVを最終列に表示
@@ -9991,20 +10025,21 @@ function renderStats() {
     }
   });
   s.powerline = plStats;
+  var plShow = plStats.filter(function(row){ return _frontNm9[row.name]; }); // v523: 表もフロントの系列だけ
 
   // 履歴が最新月しか無いうちは「-」だらけの12列を出さず、ランキング形式で表示（前月比つき）
-  var _plHasHistory = plStats.some(function(row){
+  var _plHasHistory = plShow.some(function(row){
     return (row.vals||[]).some(function(v,i){ return i < 11 && v !== '' && v !== null && v !== undefined; });
   });
-  if (plHead && !_plHasHistory && plStats.length > 0) {
+  if (plHead && !_plHasHistory && plShow.length > 0) {
     plHead.innerHTML = '<tr><th style="text-align:left;padding-left:12px">名前</th><th style="text-align:right">現在LTSV</th></tr>';
-    var _plSorted = plStats.slice().sort(function(a,b){ return (Number((b.vals||[])[11])||0) - (Number((a.vals||[])[11])||0); });
+    var _plSorted = plShow.slice().sort(function(a,b){ return (Number((b.vals||[])[11])||0) - (Number((a.vals||[])[11])||0); });
     document.getElementById('plBody').innerHTML = _plSorted.map(function(row, ri){
       var cur = Number((row.vals||[])[11]) || 0;
       return '<tr><td class="plname">' + (ri+1) + '. ' + evEsc(row.name) + '</td><td style="text-align:right;font-family:Inter,IBM Plex Mono,monospace">' + (cur ? cur.toLocaleString() : '-') + '</td></tr>';
     }).join('');
   } else {
-  document.getElementById('plBody').innerHTML = plStats.length > 0 ? plStats.map(function(row) {
+  document.getElementById('plBody').innerHTML = plShow.length > 0 ? plShow.slice().sort(function(a,b){ return (Number((b.vals||[])[11])||0) - (Number((a.vals||[])[11])||0); }).map(function(row) {
     var vals = (row.vals||[]).map(function(v) {
       return '<td style="min-width:60px">' + (v ? Number(v).toLocaleString() : '-') + '</td>';
     }).join('');
@@ -23905,6 +23940,21 @@ function saveFreshData(i, field, value) {
 
 // ── LTSV詳細 ──
 var LTSV_BR_PLUS = ['BR','ゴールド','G','ラピス','L','ルビー','R','エメラルド','E','ダイヤモンド','D','ブルーダイヤモンド','BD','PD','チームエリート'];
+// v523: 全員のLTSVを1回の走査で計算（calcLtsv を全員に呼ぶと人数の3乗で重くなるため）
+function ltsvMap(allMembers) {
+  var kids = {}, byId = {}, memo = {};
+  allMembers.forEach(function(m) { byId[m.id] = m; (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  var calc = function(id, guard) {
+    if (memo[id] !== undefined) return memo[id];
+    if (guard > 60) return 0;
+    var m = byId[id], t = (m && LTSV_BR_PLUS.indexOf((m.title || '').trim()) >= 0) ? (m.ptCurrent || 0) : 0;
+    (kids[id] || []).forEach(function(c) { t += calc(c.id, guard + 1); });
+    memo[id] = t;
+    return t;
+  };
+  allMembers.forEach(function(m) { calc(m.id, 0); });
+  return memo;
+}
 function calcLtsv(memberId, allMembers) {
   var total = 0;
   // 本人（BR以上のはず）
