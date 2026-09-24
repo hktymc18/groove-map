@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v524';
+var APP_JS_VERSION = 'v525';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -300,7 +300,7 @@ function _computeTitleTransition(m, nextMonth) {
 }
 
 // 昇降格プレビュー確認モーダル → OKで onConfirm() 実行
-function _showCopyPreview(cur, nextMonth, changes, onConfirm) {
+function _showCopyPreview(cur, nextMonth, changes, onConfirm, extraHtml) {
   var esc = (typeof evEsc === 'function') ? evEsc : function(s){ return s; };
   function sect(title, list, color) {
     if (!list.length) return '';
@@ -337,6 +337,7 @@ function _showCopyPreview(cur, nextMonth, changes, onConfirm) {
       '<div style="font-size:16px;font-weight:700;margin-bottom:4px">翌月コピー確認</div>'
     + '<div style="font-size:12px;color:var(--text-dim,#8a94a6);margin-bottom:14px">' + cur + ' → ' + nextMonth + '　（今月のGSVでタイトルを自動判定）</div>'
     + body
+    + (extraHtml || '')
     + '<div style="font-size:11px;color:var(--text-dim,#8a94a6);margin:10px 0 14px">※GSVは0にリセットされ、上記タイトルで翌月を作成します。既存の翌月データは上書きされます。</div>'
     + '<div style="display:flex;gap:10px">'
     + '<button id="_cpCancel" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border,#2a2e38);background:transparent;color:var(--text,#e6e8ec);font-size:14px;font-weight:600">キャンセル</button>'
@@ -347,7 +348,12 @@ function _showCopyPreview(cur, nextMonth, changes, onConfirm) {
   function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
   ov.onclick = function(e) { if (e.target === ov) close(); };
   document.getElementById('_cpCancel').onclick = close;
-  document.getElementById('_cpOk').onclick = function() { close(); onConfirm(); };
+  document.getElementById('_cpOk').onclick = function() {
+    // v525: 来月の理想MAPの作り方（作り直す／引き継ぐ）と、新規B1の持ち越し
+    var rb = document.querySelector('input[name="_cpIdeal"]:checked'), cc = document.getElementById('_cpCarry');
+    var opt = { ideal: rb ? rb.value : 'rebuild', carry: cc ? !!cc.checked : false };
+    close(); onConfirm(opt);
+  };
 }
 
 function copyToNextMonth() {
@@ -450,7 +456,19 @@ function copyToNextMonth() {
   })();
 
   // プレビュー確認 → 確定でコミット
-  _showCopyPreview(cur, nextMonth, changes.concat(_outChanges), function() {
+  // v525: 理想MAPは「今月の着地の目標」。来月は新しい現状から作り直すのが基本（今月の理想をそのまま引き継ぐことも可）
+  var _idNew9 = (state.idealMembers || []).filter(function(mm){ return mm.idealNew && !mm.deleted; });
+  var _cpX = '';
+  if (state.idealMembers && state.idealMembers.length) {
+    _cpX = '<div style="margin:6px 0 4px;padding:10px 12px;border-radius:10px;border:1px solid rgba(139,124,255,.4);background:rgba(139,124,255,.06);font-size:12.5px;line-height:1.8">'
+      + '<div style="font-weight:700;margin-bottom:2px">🎯 来月の理想MAP</div>'
+      + '<label style="display:block"><input type="radio" name="_cpIdeal" value="rebuild" checked> 新しい現状MAPから作り直す（おすすめ）</label>'
+      + '<label style="display:block"><input type="radio" name="_cpIdeal" value="keep"> 今月の理想をそのまま引き継ぐ</label>'
+      + (_idNew9.length ? '<label style="display:block;margin-top:4px;padding-left:18px;color:var(--text-dim,#8a94a6)"><input type="checkbox" id="_cpCarry" checked> 理想で追加した新規B1（' + _idNew9.length + '人）を来月の理想に持ち越す<br><span style="font-size:11px">※もう現状MAPに登録した人は、来月の理想で削除してください</span></label>' : '')
+      + '</div>';
+  }
+  _showCopyPreview(cur, nextMonth, changes.concat(_outChanges), function(_cpOpt) {
+    _cpOpt = _cpOpt || { ideal: 'keep', carry: false };
     // リザルト用データを「リセット前」に収集（Phase B）
     var _rd = null;
     try {
@@ -482,6 +500,24 @@ function copyToNextMonth() {
     // データをセット（statsはリセット）
     state.members      = copyMembers;
     state.idealMembers = copyIdeal;
+    if (_cpOpt.ideal === 'rebuild' && copyIdeal.length) {
+      // v525: 来月の理想＝新しい現状のコピー（＋持ち越す新規B1）
+      var _ni9 = JSON.parse(JSON.stringify(copyMembers));
+      _ni9.forEach(function(mm){ mm.mapType = 'ideal'; delete mm.idealNew; });
+      if (_cpOpt.carry && _idNew9.length) {
+        var _ids9 = {}; _ni9.forEach(function(mm){ _ids9[mm.id] = 1; });
+        var _carryIds9 = {}; _idNew9.forEach(function(mm){ _carryIds9[mm.id] = 1; });
+        var _root9 = _ni9.filter(function(mm){ return !mm.parentId && !mm.deleted; })[0];
+        _idNew9.forEach(function(mm){
+          var c9 = JSON.parse(JSON.stringify(mm));
+          c9.startMonth = nextMonth; c9.month = nextMonth;
+          if (!_ids9[c9.parentId] && !_carryIds9[c9.parentId]) c9.parentId = _root9 ? _root9.id : c9.parentId; // 親がいない（OUT等）→ 自分の直下へ
+          _ni9.push(c9);
+        });
+      }
+      state.idealMembers = _ni9;
+      try { recalcGSV(state.idealMembers); } catch (eRg) {}
+    }
     state.commission   = JSON.parse(JSON.stringify(state.commission || {SB:{pt:0,com:0},BB:{pt:0,com:0},LB:{pt:0,com:0}}));
 
     // stats引き継ぎ: 月次推移は1列シフト（過去データを保持）
@@ -512,7 +548,7 @@ function copyToNextMonth() {
     toast(nextMonth + ' にコピーしました ✓ ' + extra);
     // 月末リザルト（Phase B）：先月の成績表を全画面表示
     if (_rd) setTimeout(function(){ showMonthlyResult(_rd); }, 350);
-  });
+  }, _cpX);
 }
 
 // ── 月末リザルト＋シェア画像（Phase B） ──
@@ -3351,7 +3387,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v524';
+  var DATA_VERSION = 'v525';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4361,6 +4397,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v525', d:'2026-09-24', items:['🔗 理想MAP→PLANの「今月の目標」を自動に：フロント（直下の新規B1）・ユーザーPT・チームB1・チームPT（理想のGSV）は理想MAPの数字。PLANでは表示のみ（変更は理想MAPで）','📊 データタブの「今月の目標」は理想MAPに対する達成率（新規B1・チームGSV・S稼働・コミッション）','⭐ 理想MAPに「長期目標から見た今月の目安」：年間ロードマップの今月のフロント・流通、PLANの目標月収に対して、理想で達成できているか／あといくつか','🗓 翌月コピーで来月の理想MAPを「新しい現状から作り直す（おすすめ）／今月の理想を引き継ぐ」から選択。作り直す時は理想で追加した新規B1を持ち越せます'] },
   { v:'v524', d:'2026-09-24', items:['🎯 理想MAPを刷新（第1弾）：上に「今月の理想 vs 現状」（新規B1・チームGSV・S稼働・平均稼働・コミッション）をバーで表示','✏️ 理想MAPのカードをタップすると、かんたん編集（理想のGSV・稼働／この人の直下に新規B1をまとめて追加）。新規B1はタイトルLOI・GSV 1,500Pで追加（手入力で変更可）。新規B1の人数に数えるのは1,000P以上','🏷 カードに現状との差（NEW・+GSV・B→A など）を表示','💴 コミッションを自動計算：SB＝今月スタートの直下B1のGSV×3%×126円、BB＝PLANのBB早見表、LB。理想と現状を同じ計算で比較（データタブの概算も同じ計算に）'] },
   { v:'v523', d:'2026-09-24', items:['⚡ パワーラインを「系列ごと」に：フロント（直下）の系列でLTSVが5,000P以上のラインだけを表示。配下のBRは系列のLTSVに含まれるので、一覧には出しません','🔎 系列の行をタップすると詳細：その系列の中でLTSVが5,000P以上のメンバーを、上下関係（何段下か）つきで表示。前月比つき・タップで現状MAPのその人へ','🚀 LTSVの計算を高速化（大人数のMAPでデータタブが重くなるのを防止）'] },
   { v:'v522', d:'2026-09-24', items:['📅 スマホのカレンダーが下にはみ出して下のボタンが隠れる不具合を根本修正：「上に圧縮される」対策で“今まで測った一番大きい高さ”を記憶していたため、iPhoneが一度でも大きめの値を返すと、はみ出したまま戻りませんでした。記憶をやめ、キーボードを閉じた直後に高さが小さいまま残った時だけ直前の高さを使うようにしました'] },
@@ -7799,6 +7836,7 @@ function _idealEnsure() {
 // ── 理想 vs 現状（理想MAPの上） ──
 function renderIdealSum() {
   var box = document.getElementById('idealSum'); if (!box) return;
+  try { syncIdealToPlan(); } catch (eS) {}
   var I = _idealStats(membersForMap('ideal')), C = _idealStats(membersForMap('current'));
   var ym = String(state.currentMonth || currentMonthStr()).split('.');
   var bar = function(lb, iv, cv, fmt, sub) {
@@ -7829,12 +7867,50 @@ function renderIdealSum() {
     + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', 'BR系列']].map(function(x) {
       return '<div><span>' + x[0] + '</span><b>' + yen(I.comm[x[1]]) + '</b><small>' + x[2] + '</small><small>現状 ' + yen(C.comm[x[1]]) + '</small></div>';
     }).join('') + '</div></div></div>'
+    + _idealGuideHtml(I)
     + (state.isEditor ? '<div class="ids-hint">カードをタップ → GSV・稼働の変更／直下に新規B1を追加。カードの <span class="idd up">+800</span> <span class="idd act">B→A</span> <span class="idd new">NEW</span> は現状との差</div>' : '')
     + '</div>';
   box.innerHTML = h;
 }
 function _idsOpen() { try { return localStorage.getItem('gm_idsOpen') !== '0'; } catch (e) { return true; } }
 function idsToggle() { try { localStorage.setItem('gm_idsOpen', _idsOpen() ? '0' : '1'); } catch (e) {} renderIdealSum(); }
+// ── v525: 理想MAP → PLANの「今月の目標」（フロント・ユーザーPT・チームB1・チームPT）を自動で ──
+function _hasIdeal() { return !!(state.idealMembers && state.idealMembers.length); }
+function idealTargets(ym) {
+  if (!_hasIdeal()) return null;
+  if (ym && String(state.currentMonth || '').replace('.', '-') !== ym) return null; // 表示中の月の理想だけ
+  var I = _idealStats(state.idealMembers);
+  var root = state.idealMembers.filter(function(m) { return !m.parentId && !m.deleted; })[0];
+  return { front: I.newFront, teamB1: I.newB1, teamPt: I.gsv, upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf : (root.ptCurrent || 0)) : 0, stats: I };
+}
+function syncIdealToPlan() {
+  if (typeof _p2 !== 'function' || !state.goals) return false;
+  var ym = String(state.currentMonth || '').replace('.', '-');
+  var t = idealTargets(ym);
+  if (!t) return false;
+  var m = _p2M(ym), ch = false;
+  ['front', 'upt', 'teamB1', 'teamPt'].forEach(function(k) { if (m[k] !== t[k]) { m[k] = t[k]; ch = true; } });
+  if (!m.fromIdeal) { m.fromIdeal = true; ch = true; }
+  if (ch && typeof saveGoals === 'function') saveGoals();
+  return ch;
+}
+// 長期目標（PLAN）から見た今月の目安：ロードマップの今月（フロント・流通）と目標月収
+function _idealGuideHtml(I) {
+  if (typeof _p2Rm !== 'function' || !state.goals) return '';
+  var ym = String(state.currentMonth || '').replace('.', '-');
+  var rm = _p2Rm(), p = state.goals.plan || {};
+  var fT = (rm.rows.front || {})[ym], dT = (rm.rows.dist || {})[ym];
+  var inc = p.income ? +p.income : 0;
+  var items = [];
+  if (fT !== undefined && fT !== '' && fT !== null) items.push({ lb: 'ロードマップのフロント', t: +fT, v: I.newFront, u: '人' });
+  if (dT !== undefined && dT !== '' && dT !== null) items.push({ lb: 'ロードマップの流通', t: +dT, v: I.gsv, u: 'P' });
+  if (inc > 0) items.push({ lb: '目標月収', t: inc, v: I.comm.total, u: '円' });
+  if (!items.length) return '<div class="ids-guide none" onclick="switchView(\'plan\')">' + icn('star') + ' PLANで長期目標・年間ロードマップを作ると、今月の目安（必要なフロント・流通・月収）がここに出ます ›</div>';
+  return '<div class="ids-guide" onclick="switchView(\'plan\')"><div class="ids-gt">' + icn('star') + ' 長期目標から見た今月の目安</div>' + items.map(function(x) {
+    var ok = x.v >= x.t, f = function(v) { return x.u === '円' ? '¥' + Math.round(v).toLocaleString() : v.toLocaleString() + x.u; };
+    return '<div class="ids-gi' + (ok ? ' ok' : '') + '"><span>' + x.lb + '</span><b>' + f(x.t) + '</b><em>' + (ok ? '✓ 理想で達成' : 'あと ' + f(x.t - x.v)) + '</em></div>';
+  }).join('') + '</div>';
+}
 // ── かんたん編集（カードをタップ） ──
 var _idq = null;
 function idqOpen(mid) {
@@ -7898,6 +7974,7 @@ function _idealAfter(msg) {
   _memMap = null;
   window._pcFocusLineage = ''; // カードを押した時の系列フォーカスを残さない（他の系列が暗いままにならない）
   recalcAllGSV();
+  syncIdealToPlan(); // v525: PLANの今月の目標へ
   autoSave();
   renderCurrentView();
   if (msg) toast(msg);
@@ -9569,6 +9646,17 @@ function _dtDelta(cur, prev, meta) {
 }
 // ── 今月の目標（PLAN の「今月の目標」と実績）──
 function _dtGoal() {
+  // v525: 理想MAPがあれば「理想MAPに対する達成率」（新規B1・チームGSV・S稼働・コミッション）
+  if (typeof idealTargets === 'function') {
+    var it = idealTargets(String(state.currentMonth || currentMonthStr()).replace('.', '-'));
+    if (it) {
+      var I = it.stats, C = _idealStats(membersForMap('current'));
+      var li = [['新規B1', I.newB1, C.newB1], ['チームGSV', I.gsv, C.gsv], ['S稼働', I.s, C.s], ['コミッション', I.comm.total, C.comm.total]]
+        .filter(function(x) { return x[1] > 0; })
+        .map(function(x) { return { lb: x[0], t: x[1], a: x[2], pct: Math.min(1, x[2] / x[1]), yen: x[0] === 'コミッション' }; });
+      if (li.length) return { ideal: true, list: li, pct: Math.round(li.reduce(function(s9, x) { return s9 + x.pct; }, 0) / li.length * 100) };
+    }
+  }
   if (typeof _p2 !== 'function' || typeof _p2Act !== 'function') return null;
   var ym = String(state.currentMonth || currentMonthStr()).replace('.', '-');
   var p2 = _p2(), m = (p2.months || {})[ym];
@@ -9625,8 +9713,9 @@ function renderDataHub() {
   if (!g || g.none) {
     h += '<div class="dt-tile dt-goal" onclick="switchView(\'plan\')"><div class="dt-tl">今月の目標</div><div class="dt-gnone">目標が未設定です<br><b>PLANで設定 ›</b></div></div>';
   } else {
-    h += '<div class="dt-tile dt-goal" onclick="switchView(\'plan\')"><div class="dt-tl">今月の目標</div><div class="dt-gin">' + _dtRing(g.pct, g.pct >= 100 ? '#2CE5B8' : (g.pct >= 60 ? '#FFD166' : '#FF5D73'), 58)
-      + '<div class="dt-gl">' + g.list.slice(0, 3).map(function(x) { return '<div>' + x.lb + ' <b>' + x.a.toLocaleString() + '</b>/' + x.t.toLocaleString() + '</div>'; }).join('') + '</div></div></div>';
+    var gfmt = function(x, v) { return x.yen ? (Math.round(v / 1000) / 10).toLocaleString() + '万' : v.toLocaleString(); };
+    h += '<div class="dt-tile dt-goal" onclick="switchView(\'' + (g.ideal ? 'ideal' : 'plan') + '\')"><div class="dt-tl">今月の目標' + (g.ideal ? '<small>理想MAPに対して</small>' : '') + '</div><div class="dt-gin">' + _dtRing(g.pct, g.pct >= 100 ? '#2CE5B8' : (g.pct >= 60 ? '#FFD166' : '#FF5D73'), 58)
+      + '<div class="dt-gl">' + g.list.slice(0, 4).map(function(x) { return '<div>' + x.lb + ' <b>' + gfmt(x, x.a) + '</b>/' + gfmt(x, x.t) + '</div>'; }).join('') + '</div></div></div>';
   }
   h += '</div>';
   // 稼働構成＋AIアドバイス
@@ -13279,8 +13368,16 @@ function _p2MonthHtml(ym, off) {
   var m = _p2M(ym), act = _p2Act(ym), p = state.goals.plan;
   var sug = _glMonthlyFront(p) || '';
   var isCur = off === 0;
+  var _it9 = (typeof idealTargets === 'function') ? idealTargets(ym) : null; // v525: 理想MAPがあれば目標は理想MAPから
+  if (_it9 && typeof syncIdealToPlan === 'function') syncIdealToPlan();
   var row = function(k, lb, actV, sugV) {
     var pace = (isCur && actV > 0) ? _p2Pace(actV) : null;
+    if (_it9 && _it9[k] !== undefined) {
+      return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
+        + '<span class="p2-ideal" onclick="switchView(\'ideal\')" title="理想MAPで変更">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
+        + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
+        + (pace !== null ? '<div class="p2-meta">着地 ' + pace.toLocaleString() + '</div>' : '<div class="p2-meta">実績</div>') + '</span></div>';
+    }
     return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
       + '<input class="p2-in" type="number" inputmode="numeric" placeholder="' + (sugV !== undefined && sugV !== '' ? sugV : '-') + '" value="' + (m[k] === '' || m[k] == null ? '' : m[k]) + '" onfocus="edSelAll(this)" onchange="p2SetM(\'' + ym + '\',\'' + k + '\',this.value)">'
       + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
@@ -13290,6 +13387,7 @@ function _p2MonthHtml(ym, off) {
     + (m.declared ? '<span style="font-size:10px;color:var(--accent);font-weight:800">✓設定済み</span>' : '')
     + '<span class="sp"></span></div>';
   var inner = ''
+    + (_it9 ? '<div class="p2-idealnote" onclick="switchView(\'ideal\')">' + icn('target') + ' フロント・PT・チームB1は<b>理想MAP</b>の数字です（変更は理想MAPで ›）</div>' : '')
     + '<div class="p2-meta" style="margin-bottom:2px">🧍 自分</div>'
     + row('front', 'フロント（人）', act.front, sug)
     + row('upt', 'ユーザーPT', act.upt, '')
