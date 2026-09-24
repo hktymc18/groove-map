@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v519';
+var APP_JS_VERSION = 'v520';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3335,7 +3335,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v519';
+  var DATA_VERSION = 'v520';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4336,6 +4336,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v520', d:'2026-09-24', items:['📊 データタブを刷新：上のタブ（サマリー／推移／研修／パワーライン／地域）で切り替え。下までスクロールしなくても各項目が見られます','🔢 サマリーは8枚のタイル（総人数・平均稼働・S稼働・OUT・新規BC・研修生・コミッション・今月の目標）。前月比の矢印と12ヶ月の小さな推移グラフ付き。タップでその項目の推移へ','📈 推移は大きなグラフに：項目をチップで選び（2つまで重ねて比較）、「稼働構成」はS/A/B/Cの積み上げで組織の中身の変化が一目で分かります。月をタップするとその月の全数字','🤖 平均稼働・UNIVERSE（人数）・OUT・研修生を現状MAPから自動集計。手入力はコミッションだけ（入力シートから。現状MAPからの概算も参考表示）','🎯 サマリーの「今月の目標」はPLANの今月の目標に対する達成率（タップでPLANへ）'] },
   { v:'v519', d:'2026-09-24', items:['⚪ 運動会MAPの丸が透けて後ろの線が見えていたのを修正（923-3）：丸の下に不透明の下地を敷きました（OUT・研修生・フレッシュの淡い色でも透けません）','🔗 運動会MAPで「誰が誰のフロントか」分かりにくかったのを修正（923-4）：隣り合う親のくし（横棒）が同じ高さで1本につながって見えていたため、親ごとに横棒の高さを3段でずらしました','✨ 研修生（NA）の光り方がバラバラだったのを修正（923-5）：最近7日以内に活動した人は「活動中」の脈打ちが発光を打ち消して光っていませんでした。研修生・フレッシュは全員同じように光ります','🖥 PC版ツリー：NAを追加すると中央に戻されるのを修正（923-7）：かんたん追加でも見ていた位置・倍率のまま','🖥 PC版ツリー：NAを追加すると他の系列が暗くなるのを修正（923-8）：追加先のカードをクリックした時の系列フォーカスを、追加後に解除','⏱ NAのかんたん追加から時刻の入力欄を削除（923-9。研修日とAさんはそのまま）'] },
   { v:'v518', d:'2026-09-24', items:['📍 地域の絞り込みで、選んだ地域ではない人が明るく目立ってしまう不具合を修正（922-3）：活動中の脈打ちや研修中・フレッシュの発光アニメが薄暗表示より優先されていました。絞り込みで薄くした人はアニメを止めて確実に薄く表示します','📍 地域を選んだ後に「全地域」に戻しても暗いままの人が残る不具合を修正（922-4）：カードをクリックした時の「系列フォーカス」の薄暗が残っていました。地域を切り替えると系列フォーカスも解除します。系列フォーカス中の地域判定も表記ゆれ（愛知⇄名古屋）とカテゴリ絞り込みに対応'] },
   { v:'v517', d:'2026-09-24', items:['📅 スマホのカレンダー（予定）が下にはみ出し、下のボタンが隠れていた不具合を修正：v515の「上に圧縮される」対策で、ホーム画面アプリでは実際に見えている高さより大きい値（ステータスバー分など）を使ってしまっていました。見えている高さだけを基準にし、キーボードを閉じた後に縮んだままになる対策はそのまま残しています'] },
@@ -9182,7 +9183,24 @@ function buildAutoStats() {
     if (hasDLR)  counts.dlr++;
   });
   
-  var labelMap = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr'};
+  // v520: 平均稼働・UNIVERSE（人数）・OUT・研修生も現状MAPから自動集計
+  var _curMs9 = membersForMap('current').filter(function(m){ return !m.deleted && !/^(MG_|AG\d+_)/.test(m.id); });
+  var _act9 = _curMs9.filter(function(m){ return (m.title || '').trim() !== 'OUT'; });
+  counts.out = _curMs9.length - _act9.length;
+  counts.uni = _act9.length;
+  counts.tr = _act9.filter(function(m){ return memberCat(m) === '研修生'; }).length;
+  var _rN9 = 0, _rS9 = 0;
+  _act9.forEach(function(m){
+    var r9 = parseInt(m.actRate, 10);
+    if (isNaN(r9) && m.activity === 'S') r9 = 120; // Sで稼働率未入力は120%扱い（カード表示と同じ）
+    if (!isNaN(r9) && ['S','A','B','C'].indexOf(m.activity) >= 0) { _rN9++; _rS9 += r9; }
+  });
+  counts.rate = _rN9 ? Math.round(_rS9 / _rN9) : '';
+  if (!s.monthly.some(function(r){ return r.label === '研修生'; })) {
+    var _bi9 = -1; s.monthly.forEach(function(r, i){ if (r.label === 'B1') _bi9 = i; });
+    s.monthly.splice(_bi9 >= 0 ? _bi9 + 1 : s.monthly.length, 0, { label: '研修生', vals: ['','','','','','','','','','','',''] });
+  }
+  var labelMap = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','UNIVERSE':'uni','OUT':'out','研修生':'tr'};
   s.monthly.forEach(function(row) {
     var key = labelMap[row.label];
     if (key && counts[key] !== undefined) {
@@ -9199,34 +9217,319 @@ function renderOL() {
 
 // ── データハブ（⑤）AIアドバイス枠＋稼働分布＋カテゴリカード ──
 function dataScrollTo(id) { var el = document.getElementById(id); if (el && el.scrollIntoView) el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+// ════ v520: データタブ刷新（タブ切替のダッシュボード） ════
+// サマリー（8枚のタイル＋稼働構成）／推移（大きなグラフ＋月の詳細）／研修／パワーライン／地域
+// 平均稼働・UNIVERSE・OUT・研修生はMAPから自動集計。手入力はコミッションだけ（入力シートから）
+var DT_TABS = [['sum', 'サマリー'], ['trend', '推移'], ['train', '研修'], ['pl', 'パワーライン'], ['reg', '地域']];
+var _dtTab = 'sum';
+try { var _dt0 = localStorage.getItem('gm_dtTab'); if (_dt0 && DT_TABS.some(function(t) { return t[0] === _dt0; })) _dtTab = _dt0; } catch (eDt0) {}
+var _dtSel = ['UNIVERSE'];      // 推移で表示中の項目（2つまで）
+var _dtMonthIdx = 11;           // 推移で選んでいる月（0〜11、11=表示中の月）
+var DT_METRICS = [
+  { k: 'UNIVERSE', lb: '総人数', unit: '人' },
+  { k: '平均稼働', lb: '平均稼働', unit: '%' },
+  { k: 'S', lb: 'S稼働', unit: '人' },
+  { k: 'A', lb: 'A', unit: '人' },
+  { k: 'B', lb: 'B', unit: '人' },
+  { k: 'C', lb: 'C', unit: '人' },
+  { k: 'OUT', lb: 'OUT', unit: '人', inv: true },
+  { k: 'B1', lb: '新規BC(B1)', unit: '人' },
+  { k: '研修生', lb: '研修生', unit: '人' },
+  { k: 'マケ・PG', lb: 'マケ・PG', unit: '人' },
+  { k: 'DLR動員', lb: 'DLR動員', unit: '人' },
+  { k: 'コミッション', lb: 'コミッション', unit: '円', yen: true }
+];
+var DT_ACT_COLORS = { S: '#2CE5B8', A: '#FF5D73', B: '#5AD7FF', C: '#FFB454' };
+function _dtMeta(k) { for (var i = 0; i < DT_METRICS.length; i++) if (DT_METRICS[i].k === k) return DT_METRICS[i]; return { k: k, lb: k, unit: '' }; }
+function _dtRow(k) { var ms = (state.stats && state.stats.monthly) || []; for (var i = 0; i < ms.length; i++) if (ms[i].label === k) return ms[i]; return null; }
+function _dtVals(k) {
+  var r = _dtRow(k), v = (r && r.vals) ? r.vals.slice(-12) : [];
+  while (v.length < 12) v.unshift('');
+  return v.map(function(x) { return (x === '' || x === null || x === undefined || isNaN(Number(x))) ? null : Number(x); });
+}
+function _dtMonths() {
+  var p = String(state.currentMonth || currentMonthStr()).split('.'), y = parseInt(p[0], 10), m = parseInt(p[1], 10), out = [];
+  for (var i = 11; i >= 0; i--) { var d = new Date(y, m - 1 - i, 1); out.push({ y: d.getFullYear(), m: d.getMonth() + 1, lbl: (d.getMonth() + 1) + '月' }); }
+  return out;
+}
+function _dtFmt(v, meta, short) {
+  if (v === null || v === undefined) return '—';
+  if (meta && meta.yen) {
+    if (short && Math.abs(v) >= 10000) return (Math.round(v / 1000) / 10).toLocaleString() + '万';
+    return '¥' + Math.round(v).toLocaleString();
+  }
+  return (Math.round(v * 10) / 10).toLocaleString();
+}
+function _dtReadOnly() { return !!((typeof _aggActive !== 'undefined' && _aggActive) || (viewingOwnerUid && !state.isEditor)); }
+// ── タブ ──
+function dtTab(t) {
+  _dtTab = t;
+  try { localStorage.setItem('gm_dtTab', t); } catch (e) {}
+  _dtApplyTab();
+  if (t === 'trend') renderDtTrend();
+  // タブが画面の上に隠れていたら、タブが見える位置まで戻す
+  try { var bar = document.getElementById('dtTabs'); if (bar && bar.getBoundingClientRect().top < 0 && bar.scrollIntoView) bar.scrollIntoView({ block: 'start' }); } catch (e2) {}
+}
+function _dtApplyTab() {
+  var bar = document.getElementById('dtTabs');
+  if (bar) {
+    bar.innerHTML = DT_TABS.map(function(t) { return '<div class="dt-tab' + (t[0] === _dtTab ? ' on' : '') + '" onclick="dtTab(\'' + t[0] + '\')">' + t[1] + '</div>'; }).join('');
+  }
+  var ps = document.querySelectorAll('#view-stats .dt-pane');
+  for (var i = 0; i < ps.length; i++) ps[i].style.display = ps[i].getAttribute('data-p') === _dtTab ? '' : 'none';
+}
+// ── 小さな推移の線（12ヶ月） ──
+function _dtSpark(vals, color) {
+  var pts = [];
+  vals.forEach(function(v, i) { if (v !== null) pts.push([i, v]); });
+  if (pts.length < 2) return '<svg class="dt-spark" viewBox="0 0 100 26"></svg>';
+  var mn = Math.min.apply(null, pts.map(function(p) { return p[1]; })), mx = Math.max.apply(null, pts.map(function(p) { return p[1]; }));
+  var rg = (mx - mn) || 1;
+  var d = pts.map(function(p, j) { return (j ? 'L' : 'M') + (p[0] / 11 * 98 + 1).toFixed(1) + ',' + (23 - (p[1] - mn) / rg * 20).toFixed(1); }).join(' ');
+  var last = pts[pts.length - 1];
+  return '<svg class="dt-spark" viewBox="0 0 100 26" preserveAspectRatio="none"><path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'
+    + '<circle cx="' + (last[0] / 11 * 98 + 1).toFixed(1) + '" cy="' + (23 - (last[1] - mn) / rg * 20).toFixed(1) + '" r="2.2" fill="' + color + '"/></svg>';
+}
+function _dtDelta(cur, prev, meta) {
+  if (cur === null || prev === null) return '<span class="dt-dl">前月 —</span>';
+  var d = cur - prev;
+  if (!d) return '<span class="dt-dl">前月比 ±0</span>';
+  var good = meta.inv ? d < 0 : d > 0;
+  return '<span class="dt-dl ' + (good ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + ' ' + _dtFmt(Math.abs(d), meta, true) + '</span>';
+}
+// ── 今月の目標（PLAN の「今月の目標」と実績）──
+function _dtGoal() {
+  if (typeof _p2 !== 'function' || typeof _p2Act !== 'function') return null;
+  var ym = String(state.currentMonth || currentMonthStr()).replace('.', '-');
+  var p2 = _p2(), m = (p2.months || {})[ym];
+  if (!m) return { none: true, ym: ym };
+  var act = _p2Act(ym);
+  var items = [['front', 'フロント', act.front], ['upt', 'ユーザーPT', act.upt], ['teamB1', 'チームB1', act.teamB1], ['teamPt', 'チームPT', act.teamPt]];
+  var list = [];
+  items.forEach(function(it) {
+    var t = m[it[0]];
+    if (t === '' || t === null || t === undefined || !(+t > 0)) return;
+    list.push({ lb: it[1], t: +t, a: +it[2] || 0, pct: Math.min(1, (+it[2] || 0) / +t) });
+  });
+  if (!list.length) return { none: true, ym: ym };
+  var avg = list.reduce(function(s, x) { return s + x.pct; }, 0) / list.length;
+  return { ym: ym, list: list, pct: Math.round(avg * 100) };
+}
+function _dtRing(pct, color, size) {
+  size = size || 64;
+  var r = size / 2 - 6, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(100, pct)) / 100);
+  return '<svg class="dt-ring" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">'
+    + '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="var(--surface3)" stroke-width="7"/>'
+    + '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/>'
+    + '<text x="50%" y="50%" dy=".36em" text-anchor="middle" font-size="' + (size * 0.24).toFixed(0) + '" font-weight="800" fill="var(--text)">' + pct + '%</text></svg>';
+}
+// 稼働構成のドーナツ
+function _dtDonut(cnt) {
+  var tot = cnt.S + cnt.A + cnt.B + cnt.C, R = 42, C = 2 * Math.PI * R, acc = 0, h = '';
+  ['S', 'A', 'B', 'C'].forEach(function(k) {
+    if (!tot || !cnt[k]) return;
+    var len = C * cnt[k] / tot;
+    h += '<circle cx="55" cy="55" r="' + R + '" fill="none" stroke="' + DT_ACT_COLORS[k] + '" stroke-width="16" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-acc).toFixed(2) + '" transform="rotate(-90 55 55)"/>';
+    acc += len;
+  });
+  if (!tot) h = '<circle cx="55" cy="55" r="' + R + '" fill="none" stroke="var(--surface3)" stroke-width="16"/>';
+  return '<svg width="110" height="110" viewBox="0 0 110 110">' + h + '<text x="55" y="52" text-anchor="middle" font-size="20" font-weight="800" fill="var(--text)">' + tot + '</text><text x="55" y="68" text-anchor="middle" font-size="10" fill="var(--text-dim)">稼働中</text></svg>';
+}
+// ── サマリー ──
 function renderDataHub() {
   var box = document.getElementById('dataHub'); if (!box) return;
-  var mem = (typeof gameActiveMembers === 'function') ? gameActiveMembers() : (state.members||[]).filter(function(m){return !m.deleted;});
-  var cnt = { S:0, A:0, B:0, C:0 };
-  mem.forEach(function(m){ if (cnt[m.activity] !== undefined) cnt[m.activity]++; });
-  var maxC = Math.max(cnt.S, cnt.A, cnt.B, cnt.C, 1);
+  var ro = _dtReadOnly();
+  var tiles = ['UNIVERSE', '平均稼働', 'S', 'OUT', 'B1', '研修生', 'コミッション'];
+  var colors = { 'UNIVERSE': '#2CE5B8', '平均稼働': '#8B7CFF', 'S': '#2CE5B8', 'OUT': '#FF5D73', 'B1': '#FFD166', '研修生': '#5AD7FF', 'コミッション': '#FFB454' };
+  var h = '<div class="dt-grid">';
+  tiles.forEach(function(k) {
+    var meta = _dtMeta(k), v = _dtVals(k), cur = v[11], prev = v[10];
+    var empty = cur === null;
+    var onclk = (k === 'コミッション' && empty && !ro) ? 'dtInputOpen(11)' : 'dtOpenTrend(\'' + k + '\')';
+    h += '<div class="dt-tile" onclick="' + onclk + '"><div class="dt-tl">' + meta.lb + '</div>'
+      + '<div class="dt-tv">' + (empty ? '<span class="dt-na">' + (k === 'コミッション' ? (ro ? '未入力' : '＋ 入力') : '—') + '</span>' : _dtFmt(cur, meta, true) + (meta.yen ? '' : '<small>' + meta.unit + '</small>')) + '</div>'
+      + _dtDelta(cur, prev, meta) + _dtSpark(v, colors[k]) + '</div>';
+  });
+  var g = _dtGoal();
+  if (!g || g.none) {
+    h += '<div class="dt-tile dt-goal" onclick="switchView(\'plan\')"><div class="dt-tl">今月の目標</div><div class="dt-gnone">目標が未設定です<br><b>PLANで設定 ›</b></div></div>';
+  } else {
+    h += '<div class="dt-tile dt-goal" onclick="switchView(\'plan\')"><div class="dt-tl">今月の目標</div><div class="dt-gin">' + _dtRing(g.pct, g.pct >= 100 ? '#2CE5B8' : (g.pct >= 60 ? '#FFD166' : '#FF5D73'), 58)
+      + '<div class="dt-gl">' + g.list.slice(0, 3).map(function(x) { return '<div>' + x.lb + ' <b>' + x.a.toLocaleString() + '</b>/' + x.t.toLocaleString() + '</div>'; }).join('') + '</div></div></div>';
+  }
+  h += '</div>';
+  // 稼働構成＋AIアドバイス
+  var mem = (typeof gameActiveMembers === 'function') ? gameActiveMembers() : (state.members || []).filter(function(m) { return !m.deleted; });
+  var cnt = { S: 0, A: 0, B: 0, C: 0 };
+  mem.forEach(function(m) { if (cnt[m.activity] !== undefined) cnt[m.activity]++; });
+  var tot = cnt.S + cnt.A + cnt.B + cnt.C;
+  var leg = ['S', 'A', 'B', 'C'].map(function(k) {
+    return '<div class="dt-lg"><i style="background:' + DT_ACT_COLORS[k] + '"></i>' + k + '<b>' + cnt[k] + '人</b><span>' + (tot ? Math.round(cnt[k] / tot * 100) : 0) + '%</span></div>';
+  }).join('');
   var ins = (typeof homeInsights === 'function') ? homeInsights() : [];
-  var advice = ins.length ? ins.slice(0,2).map(function(x){ return x.t; }).join('　/　') : '大きな気づきはありません。組織は良好です 👍';
-  var bars = [['S','#2CE5B8'],['A','#FF5D73'],['B','#5AD7FF'],['C','#FFB454']].map(function(a){
-    var c = cnt[a[0]], h = Math.round(c / maxC * 92);
-    return '<div class="dh-bar"><span class="dh-bnum" style="color:' + a[1] + '">' + c + '</span><div class="dh-brect" style="height:' + Math.max(h, c>0?8:2) + 'px;background:' + a[1] + '"></div><span class="dh-blbl">' + a[0] + '</span></div>';
-  }).join('');
-  var cats = [
-    { label:'月次推移', sub:'稼働・人数の推移', emoji:'📈', target:'statsTbl' },
-    { label:'研修ファネル', sub:'マケ→BCの流れ', emoji:'🔻', target:'funnelWrap' },
-    { label:'パワーライン', sub:'LTSVランキング', emoji:'⚡', target:'plTbl' },
-    { label:'決定率', sub:'Aさん別の成約', emoji:'🎯', target:'asanFunnelWrap' }
-  ];
-  var catHtml = cats.map(function(c){
-    return '<div class="dh-cat" onclick="dataScrollTo(\'' + c.target + '\')"><span class="dh-cat-ic">' + c.emoji + '</span><div><div class="dh-cat-l">' + c.label + '</div><div class="dh-cat-s">' + c.sub + '</div></div></div>';
-  }).join('');
-  box.innerHTML = '<div class="dh-wrap">'
-    + '<div class="home-sec-label">' + icn('chart') + ' データ・分析</div>'
-    + '<div class="dh-ai"><span class="dh-ai-ic">🤖</span><div><div class="dh-ai-t">AIアドバイス</div><div class="dh-ai-b">' + evEsc(advice) + '</div></div></div>'
-    + '<div class="dh-chart"><div class="dh-chart-hd"><span>稼働分布</span><span class="dh-chart-cnt">今月 ' + mem.length + '人</span></div><div class="dh-bars">' + bars + '</div></div>'
-    + '<div class="home-sec-label" style="padding-left:0">項目を選ぶ</div>'
-    + '<div class="dh-cats">' + catHtml + '</div>'
-    + '</div>';
+  var advice = ins.length ? ins.slice(0, 2).map(function(x) { return x.t; }).join('　/　') : '大きな気づきはありません。組織は良好です';
+  h += '<div class="dt-row2"><div class="dt-card dt-mix" onclick="dtOpenTrend(\'__MIX__\')"><div class="dt-ch">稼働構成<span>推移を見る ›</span></div><div class="dt-mixin">' + _dtDonut(cnt) + '<div class="dt-lgs">' + leg + '</div></div></div>'
+    + '<div class="dt-card"><div class="dt-ch">' + icn('bulb') + ' AIアドバイス</div><div class="dt-adv">' + evEsc(advice) + '</div></div></div>';
+  if (!ro && _dtVals('コミッション')[11] === null) {
+    var ml = _dtMonths()[11];
+    h += '<div class="dt-todo" onclick="dtInputOpen(11)">' + icn('pencil') + ' ' + ml.m + '月のコミッションが未入力です<span>入力する ›</span></div>';
+  }
+  h += '<div class="dt-foot">' + icn('refresh') + ' 総人数・平均稼働・S〜C・OUT・B1・研修生は現状MAPから自動集計（コミッションのみ手入力）</div>';
+  box.innerHTML = h;
+  _dtApplyTab();
+}
+function dtOpenTrend(k) {
+  _dtSel = [k];
+  _dtMonthIdx = 11;
+  dtTab('trend');
+}
+// ── 推移 ──
+function dtToggleMetric(k) {
+  if (k === '__MIX__') { _dtSel = ['__MIX__']; }
+  else {
+    var cur = _dtSel.filter(function(x) { return x !== '__MIX__'; });
+    var i = cur.indexOf(k);
+    if (i >= 0) { if (cur.length > 1) cur.splice(i, 1); }
+    else { cur.push(k); if (cur.length > 2) cur.shift(); }
+    _dtSel = cur;
+  }
+  renderDtTrend();
+}
+function dtPickMonth(i) { _dtMonthIdx = i; renderDtTrend(); }
+function _dtNice(mx) {
+  if (mx <= 0) return 1;
+  var p = Math.pow(10, Math.floor(Math.log10(mx))), n = mx / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p;
+}
+function _dtChartSvg(months) {
+  // スマホは画面幅に近いサイズで描いて文字を読みやすく（縮小で小さくならない）
+  var pc = isPCMode();
+  var W = pc ? 760 : 360, H = pc ? 260 : 220, L = pc ? 48 : 34, R = pc ? 48 : 34, T = 18, B = 26, cw = W - L - R, ch = H - T - B;
+  var xOf = function(i) { return L + cw * i / 11; };
+  var h = '<svg class="dt-chart" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
+  // 選択中の月
+  h += '<rect x="' + (xOf(_dtMonthIdx) - cw / 22) + '" y="' + T + '" width="' + (cw / 11) + '" height="' + ch + '" fill="var(--accent-dim)" rx="6"/>';
+  for (var gi = 0; gi <= 4; gi++) { var gy = T + ch * gi / 4; h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--border)" stroke-width="1"/>'; }
+  months.forEach(function(mo, i) { h += '<text x="' + xOf(i) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11" fill="' + (i === _dtMonthIdx ? 'var(--text)' : 'var(--text-dim)') + '" font-weight="' + (i === _dtMonthIdx ? '800' : '500') + '">' + mo.lbl + '</text>'; });
+  if (_dtSel[0] === '__MIX__') {
+    // 稼働構成（S/A/B/Cの積み上げ面）
+    var ser = ['C', 'B', 'A', 'S'].map(function(k) { return { k: k, v: _dtVals(k) }; });
+    var tot = []; for (var i = 0; i < 12; i++) { var t9 = 0; ser.forEach(function(s) { t9 += s.v[i] || 0; }); tot.push(t9); }
+    var mx = _dtNice(Math.max.apply(null, tot.concat([1])));
+    var yOf = function(v) { return T + ch * (1 - v / mx); };
+    var base = [0,0,0,0,0,0,0,0,0,0,0,0];
+    var has = []; for (var i2 = 0; i2 < 12; i2++) has.push(ser.some(function(s) { return s.v[i2] !== null; }));
+    ser.forEach(function(s) {
+      var top = base.map(function(b, i) { return b + (s.v[i] || 0); });
+      var idx = []; for (var j = 0; j < 12; j++) if (has[j]) idx.push(j);
+      if (idx.length) {
+        var d = idx.map(function(j, n) { return (n ? 'L' : 'M') + xOf(j).toFixed(1) + ',' + yOf(top[j]).toFixed(1); }).join(' ')
+          + ' ' + idx.slice().reverse().map(function(j) { return 'L' + xOf(j).toFixed(1) + ',' + yOf(base[j]).toFixed(1); }).join(' ') + ' Z';
+        h += '<path d="' + d + '" fill="' + DT_ACT_COLORS[s.k] + '" fill-opacity=".55" stroke="' + DT_ACT_COLORS[s.k] + '" stroke-width="1.5"/>';
+      }
+      base = top;
+    });
+    for (var gi2 = 0; gi2 <= 4; gi2++) h += '<text x="' + (L - 6) + '" y="' + (T + ch * gi2 / 4 + 4) + '" text-anchor="end" font-size="10" fill="var(--text-dim)">' + Math.round(mx * (1 - gi2 / 4)) + '</text>';
+  } else {
+    var cols = ['#2CE5B8', '#8B7CFF'];
+    _dtSel.forEach(function(k, si) {
+      var meta = _dtMeta(k), v = _dtVals(k), pts = [];
+      v.forEach(function(x, i) { if (x !== null) pts.push(i); });
+      var mx = _dtNice(Math.max.apply(null, v.filter(function(x) { return x !== null; }).concat([1])));
+      var yOf = function(x) { return T + ch * (1 - x / mx); };
+      for (var gi3 = 0; gi3 <= 4; gi3++) {
+        var lbv = mx * (1 - gi3 / 4);
+        var lbs = meta.yen ? (lbv >= 10000 ? Math.round(lbv / 10000) + '万' : Math.round(lbv)) : (Math.round(lbv * 10) / 10);
+        h += '<text x="' + (si ? W - R + 6 : L - 6) + '" y="' + (T + ch * gi3 / 4 + 4) + '" text-anchor="' + (si ? 'start' : 'end') + '" font-size="10" fill="' + cols[si] + '" opacity=".85">' + lbs + '</text>';
+      }
+      if (!pts.length) return;
+      if (si === 0 && _dtSel.length === 1 && pts.length > 1) {
+        var ad = pts.map(function(i, n) { return (n ? 'L' : 'M') + xOf(i).toFixed(1) + ',' + yOf(v[i]).toFixed(1); }).join(' ')
+          + ' L' + xOf(pts[pts.length - 1]).toFixed(1) + ',' + (T + ch) + ' L' + xOf(pts[0]).toFixed(1) + ',' + (T + ch) + ' Z';
+        h += '<path d="' + ad + '" fill="' + cols[si] + '" fill-opacity=".12"/>';
+      }
+      h += '<path d="' + pts.map(function(i, n) { return (n ? 'L' : 'M') + xOf(i).toFixed(1) + ',' + yOf(v[i]).toFixed(1); }).join(' ') + '" fill="none" stroke="' + cols[si] + '" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
+      pts.forEach(function(i) {
+        var sel = i === _dtMonthIdx;
+        h += '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(v[i]).toFixed(1) + '" r="' + (sel ? 5.5 : 3.5) + '" fill="' + (sel ? cols[si] : 'var(--surface)') + '" stroke="' + cols[si] + '" stroke-width="2"/>';
+        if (sel) h += '<text x="' + xOf(i).toFixed(1) + '" y="' + (yOf(v[i]) - 10).toFixed(1) + '" text-anchor="middle" font-size="12" font-weight="800" fill="' + cols[si] + '">' + _dtFmt(v[i], meta, true) + '</text>';
+      });
+    });
+  }
+  // 月ごとのタップ領域
+  for (var ti = 0; ti < 12; ti++) h += '<rect class="dt-hit" x="' + (xOf(ti) - cw / 22) + '" y="0" width="' + (cw / 11) + '" height="' + H + '" fill="transparent" onclick="dtPickMonth(' + ti + ')"/>';
+  return h + '</svg>';
+}
+function renderDtTrend() {
+  var box = document.getElementById('dtTrend'); if (!box) return;
+  var months = _dtMonths(), mo = months[_dtMonthIdx], ro = _dtReadOnly();
+  var chips = '<div class="dt-chips"><span class="dt-chip mix' + (_dtSel[0] === '__MIX__' ? ' on' : '') + '" onclick="dtToggleMetric(\'__MIX__\')">稼働構成</span>'
+    + DT_METRICS.map(function(m) {
+      var i = _dtSel.indexOf(m.k);
+      return '<span class="dt-chip' + (i >= 0 ? ' on c' + i : '') + '" onclick="dtToggleMetric(\'' + m.k + '\')">' + m.lb + '</span>';
+    }).join('') + '</div>';
+  // 見出し（選んだ項目の今の値・前月比・12ヶ月の最高/最低）
+  var head = '';
+  if (_dtSel[0] === '__MIX__') {
+    head = '<div class="dt-th"><span><b>稼働構成</b>の推移<small>S/A/B/C の人数の積み上げ（' + ['S','A','B','C'].map(function(k) { return '<i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + DT_ACT_COLORS[k] + ';margin:0 2px 0 4px"></i>' + k; }).join('') + '）</small></span></div>';
+  } else {
+    head = '<div class="dt-th">' + _dtSel.map(function(k, si) {
+      var meta = _dtMeta(k), v = _dtVals(k), nn = v.filter(function(x) { return x !== null; });
+      return '<span class="dt-thi c' + si + '"><i></i>' + meta.lb + ' <b>' + _dtFmt(v[11], meta) + (meta.yen || v[11] === null ? '' : meta.unit) + '</b>' + _dtDelta(v[11], v[10], meta)
+        + (nn.length > 1 ? '<small>最高 ' + _dtFmt(Math.max.apply(null, nn), meta, true) + '・最低 ' + _dtFmt(Math.min.apply(null, nn), meta, true) + '</small>' : '') + '</span>';
+    }).join('') + '</div>';
+  }
+  var h = chips + '<div class="dt-card">' + head + _dtChartSvg(months) + '<div class="dt-hint">グラフの月をタップすると、その月の数字が下に出ます</div></div>';
+  // 選んだ月の数字
+  h += '<div class="dt-card"><div class="dt-ch">' + mo.y + '年' + mo.m + '月の数字<span>' + (_dtMonthIdx === 11 ? '表示中の月' : '') + '</span></div><div class="dt-mgrid">';
+  DT_METRICS.forEach(function(m) {
+    var v = _dtVals(m.k), cur = v[_dtMonthIdx], prev = _dtMonthIdx > 0 ? v[_dtMonthIdx - 1] : null;
+    var edit = m.k === 'コミッション' && !ro;
+    h += '<div class="dt-mc' + (edit ? ' ed' : '') + '"' + (edit ? ' onclick="dtInputOpen(' + _dtMonthIdx + ')"' : ' onclick="dtOpenTrend(\'' + m.k + '\');dtPickMonth(' + _dtMonthIdx + ')"') + '><span>' + m.lb + (edit ? ' ' + icn('pencil', 'width:.9em;height:.9em') : '') + '</span><b>' + (cur === null ? (edit ? '＋入力' : '—') : _dtFmt(cur, m, true)) + '</b>' + _dtDelta(cur, prev, m) + '</div>';
+  });
+  h += '</div></div>';
+  box.innerHTML = h;
+}
+// ── 手入力（コミッションのみ）──
+function dtInputOpen(idx) {
+  if (_dtReadOnly()) return;
+  if (typeof idx !== 'number') idx = 11;
+  var months = _dtMonths();
+  var ov = document.getElementById('dtInOv'); if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+  ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'dtInOv';
+  ov.onclick = function(e) { if (e.target === ov) dtInputClose(); };
+  var opts = months.map(function(m, i) { return '<option value="' + i + '"' + (i === idx ? ' selected' : '') + '>' + m.y + '年' + m.m + '月</option>'; }).join('');
+  var est = '';
+  try {
+    if (idx === 11) {
+      var cur = membersForMap('current'), bb = calcBBGSV(cur);
+      var e1 = (buildingBonus(bb) || 0) + (calcLBCommission(bb, cur) || 0);
+      if (e1 > 0) est = '<div class="dt-est">参考：現状MAPから計算した概算（BB＋LB、SBは含まず）<b>¥' + Math.round(e1).toLocaleString() + '</b></div>';
+    }
+  } catch (eE) {}
+  var v = _dtVals('コミッション')[idx];
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('pencil') + ' コミッションを入力</div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim)">実際に受け取った金額（円）。ほかの数字はMAPから自動で集計されます</div></div><span class="ms-x" onclick="dtInputClose()">✕</span></div>'
+    + '<div style="padding:0 16px 18px"><label class="olp-lb">月</label><select class="fi" id="dtInMonth" onchange="dtInputOpen(+this.value)">' + opts + '</select>'
+    + '<label class="olp-lb" style="margin-top:10px">コミッション（円）</label><input class="fi" id="dtInVal" type="number" inputmode="numeric" placeholder="例 350000" value="' + (v === null ? '' : v) + '">'
+    + est
+    + '<div class="btn-row" style="margin-top:14px"><button class="btn-c" onclick="dtInputClose()">閉じる</button><button class="btn-p" onclick="dtInputSave()">保存</button></div></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function dtInputClose() { var ov = document.getElementById('dtInOv'); if (ov) { ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); } }
+function dtInputSave() {
+  var idx = +((document.getElementById('dtInMonth') || {}).value || 11);
+  var raw = ((document.getElementById('dtInVal') || {}).value || '').replace(/[^0-9.-]/g, '');
+  var r = _dtRow('コミッション');
+  if (!r) { r = { label: 'コミッション', vals: [] }; state.stats.monthly.push(r); }
+  if (!r.vals) r.vals = [];
+  while (r.vals.length < 12) r.vals.unshift('');
+  r.vals[r.vals.length - 12 + idx] = raw === '' ? '' : Number(raw);
+  autoSave();
+  dtInputClose();
+  renderStats();
+  toast('コミッションを保存しました');
 }
 // ============================================================
 //  v420: 地域別 月次推移（過去12ヶ月のmonthsドキュメントから集計）
@@ -9304,8 +9607,9 @@ function renderStats() {
   try { regTrendInit(); if (document.getElementById('regTrendBody') && (_regTrendSel || document.querySelector('#regTrendBody table'))) regTrendRender(); } catch(eRt) {} // v420
   renderTeamPickBars();
   renderTeamCompare();
+  buildAutoStats(); // v520: 自動集計を先に（サマリーのタイルが今月の最新値を出せるように）
   renderDataHub();
-  buildAutoStats();
+  if (_dtTab === 'trend') renderDtTrend();
   var s = state.stats;
   // 閲覧のみ（共有ビュー/合算）の場合は入力を無効化してバナーで明示（無言で保存されない事故を防ぐ）
   var statsReadOnly = _aggActive || (viewingOwnerUid && !state.isEditor);
@@ -9355,12 +9659,12 @@ function renderStats() {
       lg.style.cssText = 'font-size:11px;color:var(--text-dim);padding:6px 12px 2px;line-height:1.6';
       statsCard.insertBefore(lg, statsCard.firstChild);
     }
-    if (lg) lg.innerHTML = '✏️ 入力可：平均稼働・コミッション・OUT・UNIVERSE　／　<span style="color:var(--accent)">緑数字</span>＝MAPから自動集計'
+    if (lg) lg.innerHTML = '✏️ 入力可：コミッション　／　<span style="color:var(--accent)">緑数字</span>＝MAPから自動集計'
       + '<span class="hide-pc" style="display:block">📱 直近3ヶ月表示・PCで12ヶ月表示</span>';
   }
 
-  var EDITABLE_ROWS = ['平均稼働','コミッション','OUT','UNIVERSE'];
-  var AUTO_ROWS = ['マケ・PG','DLR動員','S','A','B','C','B1'];
+  var EDITABLE_ROWS = ['コミッション']; // v520: 平均稼働・OUT・UNIVERSE はMAPから自動集計
+  var AUTO_ROWS = ['マケ・PG','DLR動員','S','A','B','C','B1','平均稼働','OUT','UNIVERSE','研修生'];
   var tbody = document.getElementById('statsTblBody');
   tbody.innerHTML = '';
   (s.monthly||[]).forEach(function(row) {
@@ -9667,16 +9971,7 @@ function renderStats() {
 
 
 
-  // デフォルト表示：データが入っている項目を優先して選択（空項目で空白に見えるのを防ぐ）
-  if (s.monthly && s.monthly.length) {
-    var defLabel = s.monthly[0].label;
-    for (var di=0; di<s.monthly.length; di++) {
-      var rv = s.monthly[di].vals || [];
-      var hasData = rv.some(function(v){ return v!=='' && v!==null && v!==undefined; });
-      if (hasData) { defLabel = s.monthly[di].label; break; }
-    }
-    selectChartRow(defLabel);
-  }
+  // v520: 旧グラフ（canvas）は廃止。推移タブのSVGグラフで表示
 
   // スクロール位置：最新月にデータがあれば右端。無ければデータのある一番左の月を表示（PC）
   setTimeout(function() {
@@ -9705,38 +10000,8 @@ function renderStats() {
 }
 
 var selectedChartLabel = '';
-function selectChartRow(label) {
-  selectedChartLabel = label;
-  var s = state.stats;
-  var row = (s.monthly||[]).filter(function(r){ return r.label===label; })[0];
-  if (!row) return;
-  Array.prototype.slice.call(document.querySelectorAll('.chart-btn')).forEach(function(b) {
-    b.classList.toggle('chart-btn-active', b.textContent===label);
-  });
-  // 表側でも選択行をハイライト（タップの結果が画面外のグラフだけだと気づけない）
-  Array.prototype.slice.call(document.querySelectorAll('#statsTblBody tr')).forEach(function(tr) {
-    var ln = tr.querySelector('.lname');
-    var on = !!ln && ln.textContent === label;
-    tr.style.boxShadow = on ? 'inset 3px 0 0 var(--accent)' : '';
-    tr.style.background = on ? 'var(--accent-dim)' : '';
-  });
-  // 動的月ラベル生成（月次推移と同じ）
-  var now = state.currentMonth || currentMonthStr();
-  var nowParts = now.split('.');
-  var nowYear = parseInt(nowParts[0]);
-  var nowMonth = parseInt(nowParts[1]);
-  var chartMonths = [];
-  for (var cmi = 11; cmi >= 0; cmi--) {
-    var mDate = new Date(nowYear, nowMonth - 1 - cmi, 1);
-    chartMonths.push((mDate.getMonth()+1) + '月');
-  }
-  var vals = (row.vals||[]).slice(0, 12).map(function(v) {
-    return (v===''||v===undefined||v===null) ? null : Number(v);
-  });
-  // 12列に揃える
-  while (vals.length < 12) vals.unshift(null);
-  drawLineChart(chartMonths, vals, label);
-}
+// v520: 表の行タップ → 推移タブのグラフでその項目を表示
+function selectChartRow(label) { dtOpenTrend(label); }
 
 function drawLineChart(labels, data, title) {
   var canvas = document.getElementById('statsChart');
@@ -23292,7 +23557,7 @@ function getDefaultStats() {
     {label:'平均稼働',vals:['','','','','','']},
     {label:'S',vals:['','','','','','']},{label:'A',vals:['','','','','','']},
     {label:'B',vals:['','','','','','']},{label:'C',vals:['','','','','','']},
-    {label:'OUT',vals:['','','','','','']},{label:'B1',vals:['','','','','','']},
+    {label:'OUT',vals:['','','','','','']},{label:'B1',vals:['','','','','','']},{label:'研修生',vals:['','','','','','']},
     {label:'UNIVERSE',vals:['','','','','','']},
     {label:'マケ・PG',vals:['','','','','','']},{label:'DLR動員',vals:['','','','','','']},
     {label:'コミッション',vals:['','','','','','']},

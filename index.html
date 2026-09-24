@@ -805,6 +805,53 @@ tr.olt-on td{background:var(--accent-dim)}
 .olp-save{width:100%;padding:13px;font-size:15px;margin-top:6px}
 .olp-del{width:100%;padding:11px;border-radius:10px;border:1px solid var(--red);color:var(--red);background:transparent;font-size:13.5px;font-weight:700;margin-top:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
 .olp-body .fi{margin-bottom:10px}.olp-body textarea.fi{resize:vertical;font-family:inherit}
+/* v520: データタブ（タブ＋ダッシュボード） */
+.dt-tabs{display:flex;gap:4px;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.dt-tabs::-webkit-scrollbar{display:none}
+.dt-tab{flex:none;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:800;color:var(--text-dim);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none}
+.dt-tab.on{background:var(--accent);color:var(--go-ink,#08121a)}
+.dt-pane{padding:12px 12px 90px}
+.dt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:768px){.dt-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.dt-pane{padding:16px 20px 40px}}
+.dt-tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 12px 8px;cursor:pointer;min-width:0;display:flex;flex-direction:column;gap:2px;transition:border-color .15s}
+.dt-tile:hover{border-color:var(--accent)}
+.dt-tl{font-size:11.5px;font-weight:700;color:var(--text-dim)}
+.dt-tv{font-size:24px;font-weight:900;font-family:'Inter','Noto Sans JP',sans-serif;line-height:1.15;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dt-tv small{font-size:12px;font-weight:700;color:var(--text-dim);margin-left:2px}
+.dt-na{font-size:15px;font-weight:800;color:var(--accent)}
+.dt-dl{font-size:11px;font-weight:800;color:var(--text-dim)}.dt-dl.up{color:#22C55E}.dt-dl.dn{color:#FF5D73}
+.dt-spark{width:100%;height:26px;display:block;margin-top:2px}
+.dt-goal .dt-gin{display:flex;align-items:center;gap:8px;margin-top:2px}.dt-gl{font-size:10.5px;color:var(--text-dim);line-height:1.55;min-width:0}.dt-gl b{color:var(--text);font-size:12px}
+.dt-gnone{font-size:12px;color:var(--text-dim);line-height:1.7;margin-top:6px}.dt-gnone b{color:var(--accent)}
+.dt-row2{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+@media (min-width:768px){.dt-row2{grid-template-columns:1fr 1fr}}
+.dt-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 12px 10px;margin-bottom:10px;min-width:0}
+.dt-row2 .dt-card{margin-bottom:0}
+.dt-ch{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;margin-bottom:8px}.dt-ch span{margin-left:auto;font-size:11px;font-weight:700;color:var(--accent)}
+.dt-mix{cursor:pointer}.dt-mixin{display:flex;align-items:center;gap:14px}
+.dt-lgs{flex:1;max-width:300px;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+.dt-lg{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800}.dt-lg i{width:10px;height:10px;border-radius:3px;flex:none}.dt-lg b{margin-left:auto;font-size:13px}.dt-lg span{font-size:10.5px;color:var(--text-dim);font-weight:600;min-width:28px;text-align:right}
+.dt-adv{font-size:12.5px;line-height:1.7;color:var(--text-mid)}
+.dt-todo{display:flex;align-items:center;gap:6px;margin-top:10px;padding:11px 12px;border-radius:12px;border:1px dashed var(--accent);color:var(--accent);font-size:12.5px;font-weight:800;cursor:pointer}.dt-todo span{margin-left:auto}
+.dt-foot{font-size:10.5px;color:var(--text-dim);margin-top:12px;display:flex;align-items:center;gap:5px}
+.dt-chips{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}.dt-chips::-webkit-scrollbar{display:none}
+@media (min-width:768px){.dt-chips{flex-wrap:wrap}}
+.dt-chip{flex:none;font-size:12px;font-weight:800;padding:6px 12px;border-radius:14px;border:1.5px solid var(--border);color:var(--text-mid);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none}
+.dt-chip.on.c0{border-color:#2CE5B8;color:#2CE5B8;background:rgba(44,229,184,.1)}.dt-chip.on.c1{border-color:#8B7CFF;color:#8B7CFF;background:rgba(139,124,255,.1)}
+.dt-chip.mix.on{border-color:#FFB454;color:#FFB454;background:rgba(255,180,84,.1)}
+.dt-th{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;font-size:12.5px;margin-bottom:4px}.dt-th small{display:block;font-size:10.5px;color:var(--text-dim);margin-top:1px}
+.dt-thi{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:6px}.dt-thi i{width:10px;height:3px;border-radius:2px;display:inline-block;align-self:center}
+.dt-thi.c0 i{background:#2CE5B8}.dt-thi.c1 i{background:#8B7CFF}.dt-thi b{font-size:18px;font-weight:900}.dt-thi small{flex-basis:100%}
+.dt-chart{width:100%;height:auto;display:block;touch-action:manipulation}
+.dt-hit{cursor:pointer}
+.dt-hint{font-size:10.5px;color:var(--text-dim);text-align:center;margin-top:2px}
+.dt-mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (min-width:768px){.dt-mgrid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.dt-mc{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:7px 8px;display:flex;flex-direction:column;gap:1px;cursor:pointer;min-width:0}
+.dt-mc span{font-size:10.5px;color:var(--text-dim);font-weight:700;display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden}
+.dt-mc b{font-size:16px;font-weight:900;font-family:'Inter','Noto Sans JP',sans-serif;white-space:nowrap}
+.dt-mc.ed{border-style:dashed;border-color:var(--accent)}
+.dt-tbl{margin-top:4px}.dt-tbl summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--text-mid);padding:10px 4px}
+.dt-est{margin-top:4px;font-size:11.5px;color:var(--text-dim);line-height:1.6}.dt-est b{display:block;font-size:14px;color:var(--text)}
 .olp-hist-lbl{font-size:12px;font-weight:800;color:var(--text-dim);margin:4px 0 8px}
 .ot-mlast{padding:0 12px 11px;font-size:12.5px;color:var(--text-mid);line-height:1.6} .ot-mlast b{color:var(--text);font-weight:700}
 .ot-mbody{border-top:1px solid var(--border);padding:10px 12px;background:var(--surface2)}
@@ -2543,7 +2590,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v519</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v520</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2700,49 +2747,49 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <!-- ====== データ ====== -->
   <div id="view-stats" style="display:none">
     <div id="teamPickStats"></div>
-    <div id="teamCompareWrap"></div>
-    <div id="dataHub"></div>
-    <div class="export-bar">
-      <div class="exp-btn" onclick="exportCSV('stats')">📄 統計CSV</div>
+    <!-- v520: データタブ刷新（タブで切替＝縦に長いスクロールをなくす） -->
+    <div class="dt-tabs" id="dtTabs"></div>
+    <div class="dt-pane" data-p="sum">
+      <div id="teamCompareWrap"></div>
+      <div id="dataHub"></div>
     </div>
-    <!-- 月次テーブル -->
-    <div style="padding:8px 14px;display:flex;align-items:center;gap:12px">
-      <label style="font-size:13px;color:var(--text-dim)">表示年</label>
-      <select class="fs" id="statsYear" onchange="onStatsYearChange()" style="width:120px">
-      </select>
+    <div class="dt-pane" data-p="trend" style="display:none">
+      <div id="dtTrend"></div>
+      <details class="dt-tbl">
+        <summary>表で見る（月次推移の一覧・CSV）</summary>
+        <div class="export-bar">
+          <div class="exp-btn" onclick="exportCSV('stats')">📄 統計CSV</div>
+        </div>
+        <div class="card" style="overflow-x:auto">
+          <table class="tbl" id="statsTbl">
+            <thead id="statsTblHead"><tr><th style="text-align:left;padding-left:12px">項目</th></tr></thead>
+            <tbody id="statsTblBody"></tbody>
+          </table>
+        </div>
+      </details>
     </div>
-    <div class="sec-label">月次推移</div>
-    <div class="card" style="overflow-x:auto">
-      <table class="tbl" id="statsTbl">
-        <thead id="statsTblHead"><tr><th style="text-align:left;padding-left:12px">項目</th></tr></thead>
-        <tbody id="statsTblBody"></tbody>
-      </table>
+    <div class="dt-pane" data-p="train" style="display:none">
+      <div class="sec-label">研修生ファネル</div>
+      <div class="card" id="funnelWrap" style="padding:14px"></div>
+      <div class="sec-label">Aさん別決定率</div>
+      <div class="card" id="asanFunnelWrap"></div>
     </div>
-    <!-- 折れ線グラフ -->
-    <div class="card" style="padding:12px 8px 8px">
-      <div style="font-size:10px;color:var(--text-dim);padding:0 4px 8px;font-family:'Inter','IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase">CHART — 項目を選択</div>
-      <canvas id="statsChart" height="160" style="width:100%;display:block"></canvas>
-      <div id="chartBtnRow" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 4px 2px"></div>
+    <div class="dt-pane" data-p="pl" style="display:none">
+      <div class="sec-label">パワーライン<span style="font-size:10.5px;color:var(--text-dim);font-weight:500;margin-left:8px">LTSV 5000P以上の系列</span></div>
+      <div class="card" style="overflow-x:auto">
+        <table class="tbl" id="plTbl">
+          <thead id="plHead"><tr><th style="text-align:left;padding-left:12px">名前</th><th>LTSV</th></tr></thead>
+          <tbody id="plBody"></tbody>
+        </table>
+      </div>
     </div>
-    <!-- v420: 地域別 月次推移 -->
-    <div class="sec-label">📍 地域別 月次推移</div>
-    <div class="card" style="padding:12px 12px 14px">
-      <div id="regTrendChips" style="display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px"></div>
-      <div id="regTrendBody" style="overflow-x:auto"><div style="font-size:12px;color:var(--text-dim)">地域を選ぶと、過去12ヶ月の人数・研修生・QBR・BR以上を地域別に集計します</div></div>
+    <div class="dt-pane" data-p="reg" style="display:none">
+      <div class="sec-label">📍 地域別 月次推移</div>
+      <div class="card" style="padding:12px 12px 14px">
+        <div id="regTrendChips" style="display:flex;flex-wrap:wrap;gap:5px;padding-bottom:10px"></div>
+        <div id="regTrendBody" style="overflow-x:auto"><div style="font-size:12px;color:var(--text-dim)">地域を選ぶと、過去12ヶ月の人数・研修生・QBR・BR以上を地域別に集計します</div></div>
+      </div>
     </div>
-    <!-- パワーライン -->
-    <div class="sec-label">パワーライン</div>
-    <div class="card" style="overflow-x:auto">
-      <table class="tbl" id="plTbl">
-        <thead id="plHead"><tr><th style="text-align:left;padding-left:12px">名前</th><th>LTSV</th></tr></thead>
-        <tbody id="plBody"></tbody>
-      </table>
-    </div>
-    <!-- 研修生ファネル -->
-    <div class="sec-label">研修生ファネル</div>
-    <div class="card" id="funnelWrap" style="padding:14px"></div>
-    <div class="sec-label">Aさん別決定率</div>
-    <div class="card" id="asanFunnelWrap"></div>
   </div>
 
   <!-- OLタブ -->
@@ -3464,7 +3511,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v519';</script>
-<script src="app.js?v=v519"></script>
+<script>window.GM_EXPECT_JS='v520';</script>
+<script src="app.js?v=v520"></script>
 </body>
 </html>
