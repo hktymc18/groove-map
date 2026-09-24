@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v515';
+var APP_JS_VERSION = 'v516';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3313,7 +3313,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v515';
+  var DATA_VERSION = 'v516';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4312,6 +4312,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v516', d:'2026-09-24', items:['📋 OLタブを刷新：入力欄を常に並べるのをやめ、見るだけのすっきりした画面に。企画・記録は下の＋ボタン（PCは右上の「＋ OLを企画」）から','👥 OLは「個別OL（マンツーマン・2人まで）」と「3〜7人OL（3〜7人組）」の2種類。＋ボタン→種類→人を選ぶ（複数可）→日時・Aさん・内容で企画。Aさん・内容は過去の入力からワンタップ','🔢 「今月の3〜7人OL」は紙のMAPと同じ枠3つ（最低月3回）で表示。空き枠をタップするとそのまま企画できます。これまでの「３〜７人のアウトライン」の入力内容は3〜7人OLの記録として自動で引き継ぎます','📅 予定のOLを一覧表示。日付を過ぎた予定は「結果を入力」から実施済みにして反応（全員共通＋人ごと）を記録','🌿 フレッシュは1人1行（要フォロー順・色分け）。タップでその人のOL履歴と「この人でOLを企画」。「まとめて選ぶ」で複数人をまとめて企画','🗓 カレンダーのOL予定は企画ごとに1本（例「3〜7人OL（5人）」）にまとめて表示'] },
   { v:'v515', d:'2026-09-24', items:['📅 カレンダーが上に圧縮される不具合（921-3）を修正：ホーム画面アプリでキーボードを閉じた後、iPhoneが「キーボード表示中の小さい高さ」を返し続けることがあり、カレンダーが画面の6割ほどに縮んで祝日の文字も潰れていました。文字入力中以外は、その端末で実際に測れた画面いっぱいの高さより縮めないようにしました'] },
   { v:'v514', d:'2026-09-23', items:['🏟 運動会MAPを紙のMAPと同じ「陸上トラック型」に作り直し：丸は必ず段の線（レーン）の上に並び、内外にずらしません。人数が多い段があるとトラックが自動で横に伸び、丸どうしが重なりません','🔗 線は紙のMAPと同じ「くし形」に：親から外へ出てレーンの間を進み、子へまっすぐ入るので、線が他の人の丸を突き抜けず、渦巻きになりません','📄 「A3印刷」を「PDFで保存」に変更：A3横のPDF（ファイル名 MAP_年月_名前.pdf）を作成。スマホは共有シートからファイル保存・LINE・コンビニのプリントアプリへ、PCはそのままダウンロード','✂️ PDFを分けて作れるように：全体MAP／系列ごとのMAP（1段目の人を中心に「嶽本MAP（ブルーダイヤモンド）」など）／選んだ系列を除いたMAP／地域MAP（つながりを示す他地域の上位者は薄く表示）。選んだものが1枚ずつのページになり、丸が小さくなりすぎるページは分割をおすすめします'] },
   { v:'v513', d:'2026-09-23', items:['📏 スマホのMAPでカードの高さを統一：フレッシュ（金枠）のカードだけ縦に大きくなっていたのを修正（OLタブのフレッシュリスト用の余白が誤ってMAPのカードにも付いていました）。配下がいるカード／いないカードの数pxの差もなくし、全カード同じ高さに'] },
@@ -8430,334 +8431,264 @@ function freshToggleDone(mid, step) {
   renderStats();
 }
 
-// ── アウトライン（3〜7人）操作 ──
-function _ol() { if (!state.stats.outline) state.stats.outline = []; return state.stats.outline; }
-function olSetField(i, f, v) { var o = _ol()[i]; if (!o) return; o[f] = v; autoSave(); }            // テキストは再描画しない（focus維持）
-function olSetTarget(i, ti, v) { var o = _ol()[i]; if (!o) return; if (!o.targets) o.targets = ['']; o.targets[ti] = v; autoSave(); }
-function olToggleDone(i) { var o = _ol()[i]; if (!o) return; o.done = !o.done; autoSave(); renderStats(); }
-function olAddEntry() { var a = _ol(); if (a.length >= 7) return; a.push({date:'',targets:[''],content:'',aSan:'',done:false}); autoSave(); renderStats(); }
-function olRemoveEntry(i) { var a = _ol(); var e=a[i]||{}; if(!confirm('このアウトライン（'+(e.date||'')+'）を削除しますか？')) return; a.splice(i, 1); autoSave(); renderStats(); }
-function olAddTarget(i) { var o = _ol()[i]; if (!o) return; if (!o.targets) o.targets = ['']; o.targets.push(''); autoSave(); renderStats(); }
-function olRemoveTarget(i, ti) { var o = _ol()[i]; if (!o || !o.targets) return; o.targets.splice(ti, 1); if (o.targets.length === 0) o.targets = ['']; autoSave(); renderStats(); }
-// 3〜7人OL：PC一覧テーブル
-function renderOutlinePC(wrap, outline){
-  var h='<div class="ot-scroll"><table class="ot olt7"><thead><tr><th style="width:60px">完了</th><th>対象者</th><th>内容</th><th>Aさん</th><th>日付</th><th style="width:52px"></th></tr></thead><tbody>';
-  outline.forEach(function(o,i){
-    if(!o.targets) o.targets = o.target?[o.target]:[''];
-    var done=!!o.done;
-    var tg=o.targets.map(function(t,ti){
-      return '<div class="ol-target-row" style="margin-bottom:4px"><input class="ol-input" style="height:34px;cursor:pointer" readonly placeholder="対象者（タップで選択）" value="'+evEsc(t||'')+'" onclick="openOutlinePicker('+i+','+ti+')">'+(ti>0?'<button class="ol-x" onclick="olRemoveTarget('+i+','+ti+')">✕</button>':'')+'</div>';
-    }).join('');
-    h+='<tr class="'+(done?'ot-done':'')+'">'
-      +'<td><button class="ol-done'+(done?' on':'')+'" onclick="olToggleDone('+i+')">'+(done?'✓':'未')+'</button></td>'
-      +'<td style="min-width:150px">'+tg+'<span class="ol-add-t" onclick="olAddTarget('+i+')">＋追加</span></td>'
-      +'<td style="min-width:190px"><input class="ol-input" style="height:34px" placeholder="内容" value="'+evEsc(o.content||'')+'" oninput="olSetField('+i+',\'content\',this.value)"></td>'
-      +'<td style="min-width:100px"><input class="ol-input" style="height:34px" placeholder="Aさん" value="'+evEsc(o.aSan||'')+'" oninput="olSetField('+i+',\'aSan\',this.value)"></td>'
-      +'<td><input class="ol-input" style="height:34px;width:150px" type="date" value="'+(o.date||'')+'" onchange="olSetField('+i+',\'date\',this.value)"></td>'
-      +'<td><button class="ol-del" onclick="olRemoveEntry('+i+')">削除</button></td></tr>';
-  });
-  h+='</tbody></table></div>';
-  if(outline.length<7) h+='<button class="ol-add" onclick="olAddEntry()" style="margin:10px">＋ 人を追加</button>';
-  wrap.innerHTML=h;
-}
-// ── フレッシュ OLログ（いつ・誰に・内容・備考(反応)）──
+// ════ v516: OLタブ刷新 ════
+// OLは「企画」単位で扱う。種類は2つ：
+//   個別OL（マンツーマン・2人まで）／3〜7人OL（3〜7人組で切磋琢磨。紙のMAPの枠3つ＝月3回以上が目安）
+// 記録はこれまでどおりメンバーごとの olLog に持ち、同じ企画は gid で紐付ける：
+//   { date, time, asan, what, note(全員共通の反応), pnote(その人だけの反応), st:'planned'|'done', gid, mids, kind:'solo'|'group', guests, hostOnly, to }
+// 画面（OLタブ）は見るだけ。作成・編集はすべて ＋ボタン／各行から開くシートで行う。
+var OL_GROUP_MIN = 3, OL_GROUP_MAX = 7, OL_GROUP_GOAL = 3, OL_SOLO_MAX = 2;
 function freshOlLog(mid) {
   if (!state.freshData) state.freshData = {};
   if (!state.freshData[mid]) state.freshData[mid] = {};
   if (!state.freshData[mid].olLog) state.freshData[mid].olLog = [];
   return state.freshData[mid].olLog;
 }
-function freshOlAdd(mid) { var t=new Date(); var d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); freshOlLog(mid).unshift({date:d,asan:'',to:'',what:'',note:''}); autoSave(); renderStats(); }
-function freshOlField(mid, idx, field, val) { var log=freshOlLog(mid); if (log[idx]) { log[idx][field]=val; autoSave(); } } // 入力中は再描画しない
-function freshOlRemove(mid, idx) { var log=freshOlLog(mid); log.splice(idx,1); autoSave(); renderStats(); }
-// OL記録追加：その場でポップアップ入力（日付・Aさん・内容・反応）
-function closeOlRecordModal(){ var el=document.getElementById('olRecOv'); if(el&&el.parentNode) el.parentNode.removeChild(el); }
-function openOlRecordModal(mid, editIdx){
-  closeOlRecordModal();
-  var t=new Date(); var today=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
-  var m=(typeof _findMember==='function')?_findMember(mid):null;
-  var nm=m?(((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'')||'(無名)'):'';
-  var editing=(typeof editIdx==='number');
-  var rec=editing?(freshOlLog(mid)[editIdx]||{}):{};
-  var v=function(x){ return evEsc(x||''); };
-  var _stPlan = editing ? (rec.st === 'planned') : true; // v463: 新規は「予定」が既定
-  var inStyle='box-sizing:border-box;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none;margin:4px 0 10px';
-  var lbStyle='font-size:12px;color:var(--text-dim)';
-  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='olRecOv';
-  ov.onclick=function(e){ if(e.target===ov) closeOlRecordModal(); };
-  ov.innerHTML='<div class="ms-sheet" style="max-height:84vh;overflow-y:auto">'
-    + '<div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">'+(editing?'OL記録を編集':'OL記録を追加')+(nm?'（'+v(nm)+'）':'')+'</div></div><span class="ms-x" onclick="closeOlRecordModal()">✕</span></div>'
-    + '<div style="padding:4px 16px 16px">'
-    + '<label style="'+lbStyle+'">対象メンバー（複数可）</label>'
-    + '<div id="_olrMemBox" style="margin:4px 0 10px"></div>' // v412: 複数メンバーへ同じ記録 / v463: 編集時も表示・追加可
-    + '<label style="'+lbStyle+'">種別</label>'
-    + '<div style="display:flex;gap:8px;margin:4px 0 10px">'
-    + '<div class="rb'+(_stPlan?'':' sel')+'" id="_olrStDone" onclick="_olrSetSt(\'done\')" style="flex:1;text-align:center">✓ 実施済み</div>'
-    + '<div class="rb'+(_stPlan?' sel':'')+'" id="_olrStPlan" onclick="_olrSetSt(\'planned\')" style="flex:1;text-align:center">📅 予定</div>'
-    + '</div>'
-    + '<label style="'+lbStyle+'">日付</label>'
-    + '<input id="_olrDate" type="date" value="'+(rec.date||today)+'" style="'+inStyle+'">'
-    + '<label style="'+lbStyle+'">Aさん</label>'
-    + '<input id="_olrAsan" placeholder="担当（Aさん）" value="'+v(rec.asan)+'" style="'+inStyle+'">'
-    + '<label style="'+lbStyle+'">内容（何をした）</label>'
-    + '<input id="_olrWhat" placeholder="内容" value="'+v(rec.what)+'" style="'+inStyle+'">'
-    + '<label style="'+lbStyle+'">反応（どんな反応だったか）</label>'
-    + '<input id="_olrNote" placeholder="反応" value="'+v(rec.note)+'" style="'+inStyle+'">'
-    + '<button onclick="olRecordModalSave(\''+mid+'\','+(editing?editIdx:'-1')+')" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent,#2CE5B8);color:#08121a;font-size:15px;font-weight:700;margin-top:4px">保存</button>'
-    + (editing ? '<button onclick="olRecordModalDelete(\''+mid+'\','+editIdx+')" style="width:100%;padding:11px;border-radius:10px;border:1px solid #FF5D73;color:#FF5D73;background:transparent;font-size:14px;font-weight:600;margin-top:8px">この記録を削除</button>' : '')
-    + '</div></div>';
-  window._olrSt = _stPlan ? 'planned' : 'done'; // v361 / v463
-  // v463: 編集時は保存済みの対象メンバー全員をチップ表示（先頭=開いている本人）。元からの対象は外せない
-  if (editing) {
-    var _gm9 = (rec.mids || []).filter(function(x){ return x === mid || (typeof _findMember === 'function' && _findMember(x)); });
-    var _gi9 = _gm9.indexOf(mid);
-    if (_gi9 >= 0) _gm9.splice(_gi9, 1);
-    _gm9.unshift(mid);
-    window._olrMids = _gm9;
-    window._olrBaseMids = _gm9.slice();
-  } else {
-    window._olrMids = [mid];
-    window._olrBaseMids = [];
-  }
-  document.body.appendChild(ov);
-  _olrRenderMems();
-  requestAnimationFrame(function(){ ov.classList.add('show'); setTimeout(function(){ var f=document.getElementById('_olrWhat'); if(f&&!editing) f.focus(); },80); });
-}
-window._olrSt = 'done';
-window._olrMids = [];
-// v412: OL記録の対象メンバー（複数可）
-function _olrNameOf(mid) {
-  var m = (typeof _findMember === 'function') ? _findMember(mid) : null;
-  return m ? ((((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '')) || '(無名)') : '(不明)';
-}
-function _olrRenderMems() {
-  var box = document.getElementById('_olrMemBox');
-  if (!box) return;
-  var h = '';
-  (window._olrMids || []).forEach(function(id, i){
-    h += '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:14px;padding:5px 10px;font-size:12.5px;font-weight:700;margin:0 6px 6px 0">'
-      + evEsc(_olrNameOf(id))
-      + ((i > 0 && (window._olrBaseMids || []).indexOf(id) < 0) ? '<span style="cursor:pointer;opacity:.8" onclick="_olrMemDel(\'' + id + '\')">✕</span>' : '') + '</span>';
-  });
-  h += '<span style="display:inline-flex;align-items:center;background:var(--surface2);border:1px dashed var(--border2);color:var(--text-mid);border-radius:14px;padding:5px 11px;font-size:12.5px;font-weight:700;cursor:pointer;margin-bottom:6px" onclick="_olrMemPick()">＋ メンバーを追加</span>';
-  box.innerHTML = h;
-}
-function _olrMemDel(id) {
-  window._olrMids = (window._olrMids || []).filter(function(x){ return x !== id; });
-  _olrRenderMems();
-}
-function _olrMemPick() {
-  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'olrPickOv';
-  ov.style.zIndex = '600';
-  ov.onclick = function(e){ if (e.target === ov) _olrMemPickClose(); };
-  ov.innerHTML = '<div class="ms-sheet" style="max-height:80vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">👥 メンバーを選択（複数可）</div></div>'
-    + '<span class="ms-x" onclick="_olrMemPickClose()">✕</span></div>'
-    + '<div style="padding:0 16px 20px">'
-    + '<input class="fi" id="_olrSearch" placeholder="🔍 名前で検索" autocomplete="off" oninput="_olrPickList(this.value)">'
-    + '<div id="_olrPickList" style="margin-top:8px"></div>'
-    + '<div class="btn-row" style="margin-top:12px"><button class="btn-p" style="flex:1" onclick="_olrMemPickClose()">完了</button></div>'
-    + '</div></div>';
-  document.body.appendChild(ov);
-  // 検索中はシートを上部へ（キーボードで隠れないように・v395と同じ対策）
-  if (typeof isPCMode !== 'function' || !isPCMode()) {
-    ov.addEventListener('focusin', function(e2){ if (e2.target && e2.target.id === '_olrSearch') ov.classList.add('kb-top'); });
-    ov.addEventListener('focusout', function(e2){ if (e2.target && e2.target.id === '_olrSearch') setTimeout(function(){ ov.classList.remove('kb-top'); }, 150); });
-  }
-  requestAnimationFrame(function(){ ov.classList.add('show'); });
-  _olrPickList('');
-}
-function _olrMemPickClose() {
-  var ov = document.getElementById('olrPickOv');
-  if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
-  _olrRenderMems();
-}
-function _olrPickList(q) {
-  var box = document.getElementById('_olrPickList');
-  if (!box) return;
-  q = (q || '').trim().toLowerCase().replace(/\s+/g, '');
-  var h = '';
-  (state.members || []).forEach(function(m){
-    if (m.deleted) return;
-    var name = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
-    if (q && name.toLowerCase().replace(/\s+/g, '').indexOf(q) < 0) return;
-    var on = (window._olrMids || []).indexOf(m.id) >= 0;
-    h += '<div class="td-home-row" onclick="_olrPickToggle(\'' + m.id + '\')">'
-      + '<span class="td-chk' + (on ? ' on' : '') + '" style="width:22px;height:22px;font-size:12px">' + (on ? '✓' : '') + '</span>'
-      + '<span class="td-hname">' + evEsc(name) + (m.title ? ' <span style="font-size:11px;color:var(--text-dim)">' + evEsc(m.title) + '</span>' : '') + '</span></div>';
-  });
-  box.innerHTML = h || '<div class="ev-empty" style="padding:14px">該当するメンバーがいません</div>';
-}
-function _olrPickToggle(id) {
-  var arr = window._olrMids || [];
-  var i = arr.indexOf(id);
-  if (i >= 0 && (window._olrBaseMids || []).indexOf(id) >= 0) { toast('既に記録済みのメンバーは外せません（消す場合はその人の記録から削除）'); return; } // v463
-  if (i >= 0) { if (arr.length <= 1) { toast('1人以上選んでください'); return; } arr.splice(i, 1); }
-  else arr.push(id);
-  window._olrMids = arr;
-  var sIn = document.getElementById('_olrSearch');
-  _olrPickList(sIn ? sIn.value : '');
-}
-function _olrSetSt(v){
-  window._olrSt = (v === 'planned') ? 'planned' : 'done';
-  var a = document.getElementById('_olrStDone'), b = document.getElementById('_olrStPlan');
-  if (a) a.classList.toggle('sel', window._olrSt === 'done');
-  if (b) b.classList.toggle('sel', window._olrSt === 'planned');
-}
-function olRecordModalDelete(mid, editIdx){
-  if(typeof editIdx!=='number' || editIdx<0) return;
-  if(!confirm('この記録を削除しますか？')) return;
-  var log=freshOlLog(mid); if(log[editIdx]) log.splice(editIdx,1);
-  autoSave(); closeOlRecordModal(); renderStats(); _olAfterRecordChange(mid);
-}
-function olRecordModalSave(mid, editIdx){
-  var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
-  var log=freshOlLog(mid);
-  var data={ date:g('_olrDate'), asan:(g('_olrAsan')||'').trim(), what:(g('_olrWhat')||'').trim(), note:(g('_olrNote')||'').trim(), st:(window._olrSt==='planned'?'planned':'done') };
-  var mids = (window._olrMids && window._olrMids.length) ? window._olrMids.slice() : [mid];
-  if(typeof editIdx==='number' && editIdx>=0 && log[editIdx]){
-    // v463: 編集は対象メンバー全員の記録へ反映（記録グループgidで紐付け。旧形式は編集前の内容一致で取り込み）
-    var e0 = log[editIdx];
-    var prevSig = { date: e0.date || '', what: e0.what || '', note: e0.note || '', asan: e0.asan || '' };
-    var gid = e0.gid || ('olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
-    e0.date=data.date; e0.asan=data.asan; e0.what=data.what; e0.note=data.note; e0.st=data.st;
-    e0.gid = gid; e0.mids = mids.slice();
-    mids.forEach(function(id9){
-      if (id9 === mid) return;
-      var lg = freshOlLog(id9);
-      var tgt = null;
-      for (var i9 = 0; i9 < lg.length; i9++) { if (lg[i9] && lg[i9].gid === gid) { tgt = lg[i9]; break; } }
-      if (!tgt) {
-        // 旧形式（gidなし）: 編集前と同じ内容の記録があればグループへ取り込む（重複作成を防止）
-        for (var j9 = 0; j9 < lg.length; j9++) {
-          var c9 = lg[j9];
-          if (c9 && !c9.gid && (c9.date || '') === prevSig.date && (c9.what || '') === prevSig.what && (c9.note || '') === prevSig.note && (c9.asan || '') === prevSig.asan) { tgt = c9; break; }
-        }
-      }
-      if (!tgt) { tgt = { to: '' }; lg.unshift(tgt); }
-      tgt.date=data.date; tgt.asan=data.asan; tgt.what=data.what; tgt.note=data.note; tgt.st=data.st;
-      tgt.gid = gid; tgt.mids = mids.slice();
-    });
-    if (mids.length > 1) setTimeout(function(){ toast('📝 対象メンバー ' + mids.length + '人に反映しました'); }, 300);
-  } else {
-    // v412: 選んだメンバー全員に同じ記録を追加（v463: グループgid・対象一覧も保存）
-    var gid2 = 'olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-    mids.forEach(function(id9){
-      freshOlLog(id9).unshift({ date:data.date, asan:data.asan, to:'', what:data.what, note:data.note, st:data.st, gid: gid2, mids: mids.slice() });
-    });
-    if (mids.length > 1) setTimeout(function(){ toast('📝 ' + mids.length + '人にOL記録を追加しました'); }, 300);
-  }
-  autoSave();
-  closeOlRecordModal();
-  renderStats();
-  _olAfterRecordChange(mid);
-}
-// ── OLポップアップ（現状MAP起点でOL閲覧＋記録、MAPの位置を保持） ──
-function openOlPopup(mid){
-  var m = (typeof _findMember==='function') ? _findMember(mid) : null;
-  if(!m) return;
-  var nm = _olNm(m);
-  var fd = (state.freshData && state.freshData[mid]) || {};
-  var listSt = (typeof freshNorm==='function') ? freshNorm(fd['リスト']) : (fd['リスト']||{});
-  var statusTxt = listSt.done ? '✓ 完了' : (listSt.date ? ('予定 '+listSt.date) : '未着手');
-  closeOlPopup();
-  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='olPopupOv';
-  ov.onclick=function(e){ if(e.target===ov) closeOlPopup(); };
-  ov.innerHTML='<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📋 '+evEsc(nm)+' のOL</div>'
-    + '<div style="font-size:11px;color:var(--text-dim)">リストOL: '+evEsc(statusTxt)+'</div></div>'
-    + '<span class="ms-x" onclick="closeOlPopup()">✕</span></div>'
-    + '<div style="padding:4px 16px 16px">'+_olRecordsHtml(m)+'</div></div>';
-  document.body.appendChild(ov);
-  requestAnimationFrame(function(){ ov.classList.add('show'); });
-}
-function closeOlPopup(){ var ov=document.getElementById('olPopupOv'); if(ov){ ov.classList.remove('show'); setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); },200); } }
-// OL記録の保存/削除後に、開いているOLポップアップ・編集パネルのOL欄を最新化
-function _olAfterRecordChange(mid){
-  if(document.getElementById('olPopupOv')) openOlPopup(mid);
-  if(typeof editingId!=='undefined' && editingId===mid){
-    var modal=document.getElementById('modal');
-    if(modal && modal.classList.contains('open')){ var mm=(typeof _findMember==='function')?_findMember(mid):null; if(mm && typeof meRenderExtras==='function') meRenderExtras(mm); }
-  }
-}
-// ── OL育成ダッシュボード（PCテーブル / モバイルカード） ──
-var _olExpandMid='';
-function olToggleExpand(mid){ _olExpandMid=(_olExpandMid===mid)?'':mid; renderStats(); }
 function _olDaysSince(ymd){ if(!ymd||!/^\d{4}-\d{2}-\d{2}$/.test(ymd))return null; var t=new Date();t.setHours(0,0,0,0); var d=new Date(ymd.replace(/-/g,'/'));d.setHours(0,0,0,0); return Math.round((t-d)/86400000); }
 // 未接触（記録なし）は「30日停滞」と同じ赤にせず、警告（黄）で区別する
 function _olSev(days){ if(days===null)return 'warn'; if(days>=30)return 'crit'; if(days>=14)return 'warn'; return 'ok'; }
 function _olMD(ymd){ if(!ymd||!/^\d{4}-\d{2}-\d{2}$/.test(ymd))return '—'; return (+ymd.slice(5,7))+'/'+(+ymd.slice(8,10)); }
 function _olNm(m){ return ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'')||'(無名)'; }
 function _olTtlCls(t){ t=(t||'').trim(); if(t==='LOI')return 'loi'; if(t.charAt(0)==='Q')return 'q'; if(t.charAt(0)==='B')return 'b'; return ''; }
-function _olMD2(ymd){ if(!ymd) return '—'; var p=String(ymd).split('-'); return p.length>=3?((+p[1])+'/'+(+p[2])):ymd; }
-function _olRecordsHtml(m){
-  var log=freshOlLog(m.id)||[];
-  var h='<div class="fresh-ol"><div class="fresh-ol-lbl">📝 OL記録（タップで詳細）</div>';
-  if(!log.length){ h+='<div style="font-size:12px;color:var(--text-dim);padding:2px 2px 8px">まだ記録がありません</div>'; }
-  h+=log.map(function(e,idx){
-    var ttl=evEsc(e.what || e.note || '（内容なし）');
-    var subs=[];
-    if(e.asan) subs.push('👤 '+evEsc(e.asan));
-    if(e.what && e.note) subs.push('💬 '+evEsc(e.note));
-    var sub=subs.length?'<span class="fol-log-sub">'+subs.join('　')+'</span>':'';
-    return '<div class="fol-log-row" onclick="openOlRecordModal(\''+m.id+'\','+idx+')">'
-      +'<span class="fol-log-date">'+_olMD2(e.date)+'</span>'
-      +'<span class="fol-log-main"><span class="fol-log-ttl">'+ttl+'</span>'+sub+'</span>'
-      +'<span class="fol-log-arrow">›</span></div>';
-  }).join('');
-  h+='<button class="fol-add" onclick="openOlRecordModal(\''+m.id+'\')">＋ OL記録を追加</button></div>';
-  return h;
+function _olKindOf(r) {
+  if (r && (r.kind === 'group' || r.kind === 'solo')) return r.kind;
+  var n = ((r && r.mids) || []).length + ((r && r.guests) || []).length;
+  return n >= OL_GROUP_MIN ? 'group' : 'solo'; // 種類の無い旧記録：3人以上で一緒に記録したものは3〜7人OL
 }
-function renderFreshOL(wrap, members, hidden, TITLES){
-  if(!members.length && !hidden.length){ wrap.innerHTML='<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>'; return; }
-  var rows=members.map(function(m){ var log=freshOlLog(m.id)||[]; var last=log[0]||{}; var days=_olDaysSince(last.date); return {m:m,log:log,last:last,days:days,sev:_olSev(days)}; });
-  rows.sort(function(a,b){ var da=(a.days===null?99999:a.days), db=(b.days===null?99999:b.days); return db-da; });
-  var counts={}; members.forEach(function(m){ var t=(m.title||'').trim(); counts[t]=(counts[t]||0)+1; });
-  var followCt=rows.filter(function(r){ return r.sev!=='ok'; }).length;
-  var groups=[['LOI',['LOI']],['Q2',['Q2']],['Q3',['Q3']],['B1',['B1']],['B2',['B2']],['B3',['B3']],['B4–B6',['B4','B5','B6']]];
-  if(isPCMode()){
-    var h='<div class="ot-funnel">';
-    groups.forEach(function(g){ var c=g[1].reduce(function(s,t){ return s+(counts[t]||0); },0); h+='<div class="ot-fs"><div class="st">'+g[0]+'</div><div class="ct">'+c+'</div><div class="bl"></div></div>'; });
-    h+='<div class="ot-fs crit"><div class="st">要フォロー</div><div class="ct">'+followCt+'</div><div class="bl"></div></div></div>';
-    h+='<div class="ot-scroll"><table class="ot"><thead><tr><th class="ot-sev"></th><th>名前</th><th>タイトル</th><th>最終OL</th><th>Aさん</th><th>内容</th><th>反応・メモ</th><th style="text-align:center">記録</th><th>経過</th><th></th></tr></thead><tbody>';
-    rows.forEach(function(r){
-      var m=r.m, nm=_olNm(m), g=(m.gender==='female'?'female':'male'), open=(_olExpandMid===m.id);
-      var el=(r.days===null?'未接触':(r.days+'日'));
-      h+='<tr class="ot-'+r.sev+'"><td class="ot-sev"><i></i></td>'
-        +'<td><span class="ot-nm '+g+'" onclick="olToggleExpand(\''+m.id+'\')">'+evEsc(nm)+'</span></td>'
-        +'<td><span class="ot-ttl '+_olTtlCls(m.title)+'">'+evEsc((m.title||'').trim()||'—')+'</span></td>'
-        +'<td class="ot-date">'+_olMD(r.last.date)+'</td>'
-        +'<td class="ot-dim">'+evEsc(r.last.asan||'—')+'</td>'
-        +'<td class="ot-txt">'+evEsc(r.last.what||'—')+'</td>'
-        +'<td class="ot-txt">'+evEsc(r.last.note||'—')+'</td>'
-        +'<td class="ot-cnt">'+r.log.length+'</td>'
-        +'<td><span class="ot-el '+r.sev+'">'+el+'</span></td>'
-        +'<td><span class="ot-exp" onclick="olToggleExpand(\''+m.id+'\')">'+(open?'▲':'⋯')+'</span></td></tr>';
-      if(open) h+='<tr class="ot-drawer"><td colspan="10"><div style="padding:4px 14px 14px">'+_olRecordsHtml(m)+'<div style="margin-top:8px"><button class="fresh-hide-btn" onclick="setOlHidden(\''+m.id+'\',true)">✕ OL対象外にする</button></div></div></td></tr>';
-    });
-    h+='</tbody></table></div>'+olHiddenSectionHtml(hidden);
-    wrap.innerHTML=h;
-  } else {
-    // モバイルにも「要フォロー人数」サマリーと色の凡例を出す（PCだけだった）
-    var critCt=rows.filter(function(r){ return r.sev==='crit'; }).length;
-    var warnCt=rows.filter(function(r){ return r.sev==='warn'; }).length;
-    var h='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:2px 2px 10px;font-size:12px">'
-      +(critCt?'<span style="padding:5px 12px;border-radius:12px;background:rgba(255,93,115,.12);color:var(--red);font-weight:800">🔴 30日以上 '+critCt+'人</span>':'')
-      +(warnCt?'<span style="padding:5px 12px;border-radius:12px;background:var(--gold-dim);color:var(--gold);font-weight:800">🟡 14日以上/未接触 '+warnCt+'人</span>':'')
-      +((critCt||warnCt)?'':'<span style="color:var(--green);font-weight:700">✅ 全員フォロー良好</span>')
-      +'</div>';
-    rows.forEach(function(r){
-      var m=r.m, nm=_olNm(m), g=(m.gender==='female'?'female':'male'), open=(_olExpandMid===m.id);
-      var el=(r.days===null?'未接触':(r.days+'日'));
-      h+='<div class="ot-mcard '+(r.sev==='ok'?'':r.sev)+'">'
-        +'<div class="ot-mhd" onclick="olToggleExpand(\''+m.id+'\')"><span class="ot-mname '+g+'">'+evEsc(nm)+'</span><span class="ot-ttl '+_olTtlCls(m.title)+'">'+evEsc((m.title||'').trim()||'—')+'</span><span class="ot-mel '+r.sev+'">'+el+'</span></div>'
-        +'<div class="ot-mlast">最終OL <b>'+_olMD(r.last.date)+'</b>　Aさん <b>'+evEsc(r.last.asan||'—')+'</b><br>内容：'+evEsc(r.last.what||'—')+'<br>反応：'+evEsc(r.last.note||'—')+'</div>'
-        +(open?('<div class="ot-mbody">'+_olRecordsHtml(m)+'<div style="margin-top:8px"><button class="fresh-hide-btn" onclick="setOlHidden(\''+m.id+'\',true)">✕ OL対象外にする</button></div></div>'):'')
-        +'</div>';
-    });
-    wrap.innerHTML=h+olHiddenSectionHtml(hidden);
+function _olKindLabel(k) { return k === 'group' ? '3〜7人OL' : '個別OL'; }
+function _olKindBadge(k) { return '<span class="olk ' + (k === 'group' ? 'g' : 's') + '">' + (k === 'group' ? '3〜7人' : '個別') + '</span>'; }
+function _olCanEdit() { return !!state.isEditor && !(typeof _aggActive !== 'undefined' && _aggActive); }
+function _olMem(mid) { var m = (typeof _findMember === 'function') ? _findMember(mid) : null; return (m && !m.deleted) ? m : null; }
+function _olShortNm(m) { return (m.lastName || m.firstName || '(無名)'); }
+function _olWd(ymd) { if (!ymd) return ''; var d = new Date(ymd.replace(/-/g, '/')); return isNaN(d) ? '' : '日月火水木金土'.charAt(d.getDay()); }
+function _olDateLbl(ev) { return ev.date ? (_olMD(ev.date) + '(' + _olWd(ev.date) + ')' + (ev.time ? ' ' + ev.time : '')) : '日付未定'; }
+function _olKeyAttr(k) { return evEsc(String(k).replace(/'/g, '')); }
+// 全メンバーのOL記録を「企画（イベント）」にまとめる（同じgid＝同じ企画）
+function _olEvents() {
+  var map = {}, list = [];
+  var fd = state.freshData || {};
+  for (var mid in fd) {
+    var log = (fd[mid] && fd[mid].olLog) || [];
+    if (!log.length || !_olMem(mid)) continue;
+    for (var i = 0; i < log.length; i++) {
+      var r = log[i];
+      if (!r || !(r.date || r.what || r.note || r.asan || r.gid)) continue;
+      var key = r.gid || ('solo_' + mid + '_' + i);
+      var ev = map[key];
+      if (!ev) {
+        ev = map[key] = { key: key, gid: r.gid || '', date: r.date || '', time: r.time || '', asan: r.asan || '', what: r.what || '', note: r.note || '',
+          st: r.st === 'planned' ? 'planned' : 'done', kind: _olKindOf(r), guests: (r.guests || []).slice(), order: (r.mids || []).slice(), recs: [] };
+        list.push(ev);
+      }
+      ev.recs.push({ mid: mid, idx: i, rec: r });
+    }
   }
+  list.forEach(function(ev) {
+    var have = {};
+    ev.recs.forEach(function(x) { if (!x.rec.hostOnly) have[x.mid] = 1; });
+    var ids = ev.order.filter(function(id) { return have[id]; });
+    ev.recs.forEach(function(x) { if (!x.rec.hostOnly && ids.indexOf(x.mid) < 0) ids.push(x.mid); });
+    ev.mids = ids;
+    ev.n = ids.length + ev.guests.length;
+  });
+  return list;
+}
+function _olEventByKey(key) { var l = _olEvents(); for (var i = 0; i < l.length; i++) if (l[i].key === key) return l[i]; return null; }
+function _olEvNames(ev, max) {
+  var nms = ev.mids.map(function(id) { var m = _olMem(id); return m ? _olShortNm(m) : ''; }).filter(Boolean).concat(ev.guests);
+  max = max || 3;
+  return nms.length > max ? nms.slice(0, max).join('・') + ' 他' + (nms.length - max) + '人' : (nms.join('・') || '—');
+}
+function _olInMonth(ev, ym) { return !!ev.date && ev.date.slice(0, 7).replace('-', '.') === ym; }
+// 旧「３〜７人のアウトライン」（stats.outline の入力枠）を3〜7人OLの記録へ引き継ぐ（1回だけ）
+function _olMigrateOutline() {
+  var s = state.stats;
+  if (!s || s.olMigrated || !_olCanEdit()) return false;
+  var list = s.outline || [];
+  var norm = function(x) { return String(x || '').replace(/[\s　]/g, ''); };
+  var byName = {};
+  (state.members || []).forEach(function(m) { if (m.deleted) return; var k = norm((m.lastName || '') + (m.firstName || '')); if (k && !byName[k]) byName[k] = m.id; });
+  var root = (state.members || []).filter(function(m) { return !m.parentId && !m.deleted; })[0];
+  var moved = 0;
+  list.forEach(function(o, i) {
+    if (!o) return;
+    var tg = (o.targets || (o.target ? [o.target] : [])).map(function(t) { return String(t || '').trim(); }).filter(Boolean);
+    if (!o.date && !o.content && !o.aSan && !tg.length) return; // 空の枠は移さない
+    var gid = 'olg_mig_' + String(state.currentMonth || '').replace(/\D/g, '') + '_' + i;
+    var mids = [], guests = [];
+    tg.forEach(function(t) { var id = byName[norm(t)]; if (id) { if (mids.indexOf(id) < 0) mids.push(id); } else guests.push(t); });
+    var hostOnly = !mids.length; // MAPに名前が見つからない時は自分（ルート）の記録として保管（参加者には数えない）
+    var holders = mids.length ? mids : (root ? [root.id] : []);
+    if (!holders.length) return;
+    if (holders.some(function(id) { return freshOlLog(id).some(function(r) { return r && r.gid === gid; }); })) return;
+    holders.forEach(function(id) {
+      var rec = { date: o.date || '', time: '', asan: o.aSan || '', what: o.content || '', note: '', pnote: '', st: o.done ? 'done' : 'planned', gid: gid, mids: mids.slice(), kind: 'group', guests: guests.slice(), to: '' };
+      if (hostOnly) rec.hostOnly = true;
+      freshOlLog(id).unshift(rec);
+    });
+    moved++;
+  });
+  s.olMigrated = true; // 旧データ（stats.outline）は念のため消さずに残す
+  return true;
+}
+
+// ── OLタブ ──
+var _olSevFilter = '', _olSelMode = false, _olSel = [];
+var OL_FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
+function _olFreshMembers() {
+  var ord = function(a, b) {
+    var d = OL_FRESH_TITLES.indexOf((a.title || '').trim()) - OL_FRESH_TITLES.indexOf((b.title || '').trim());
+    return d || ((a.lastName || '') + (a.firstName || '')).localeCompare((b.lastName || '') + (b.firstName || ''));
+  };
+  var all = membersForMap('current').filter(function(m) { return !m.deleted && OL_FRESH_TITLES.indexOf((m.title || '').trim()) >= 0; });
+  return { shown: all.filter(function(m) { return !m.olHidden; }).sort(ord), hidden: all.filter(function(m) { return m.olHidden; }).sort(ord) };
+}
+// その人の最終OL（実施済み）と次の予定
+function _olFreshRow(m, evs) {
+  var t = evTodayYmd(), last = null, next = null;
+  evs.forEach(function(ev) {
+    var mine = ev.mids.indexOf(m.id) >= 0;
+    if (!mine) return;
+    if (ev.st === 'done' && ev.date) { if (!last || ev.date > last.date) last = ev; }
+    else if (ev.st === 'planned' && ev.date && ev.date >= t) { if (!next || ev.date < next.date) next = ev; }
+  });
+  var days = last ? _olDaysSince(last.date) : null;
+  return { m: m, last: last, next: next, days: days, sev: _olSev(days) };
+}
+function renderOlTab() {
+  var wrap = document.getElementById('olTabWrap');
+  if (!wrap) return;
+  if (_olMigrateOutline()) { if (typeof autoSave === 'function') autoSave(); }
+  var ym = state.currentMonth || currentMonthStr();
+  var t = evTodayYmd();
+  var evs = _olEvents();
+  var fr = _olFreshMembers();
+  var canEdit = _olCanEdit();
+  var pc = isPCMode();
+  var h = '';
+  if (pc) h += '<div class="olt-top"><span class="olt-h1">' + icn('users') + ' OL</span><span style="flex:1"></span>'
+    + (canEdit ? '<button class="olt-new" onclick="olPlanStart()">＋ OLを企画</button>' : '') + '</div>';
+  // ① 今月の3〜7人OL（枠3つ）
+  var grp = evs.filter(function(ev) { return ev.kind === 'group' && (_olInMonth(ev, ym) || (!ev.date && ev.st === 'planned')); })
+    .sort(function(a, b) { return (a.date || '9999').localeCompare(b.date || '9999'); });
+  var gDone = grp.filter(function(ev) { return ev.st === 'done'; }).length;
+  var gPlan = grp.length - gDone;
+  h += '<div class="olt-card"><div class="olt-hd"><span class="olt-ttl">今月の3〜7人OL</span><span class="olt-goal">最低' + OL_GROUP_GOAL + '回</span><span style="flex:1"></span>'
+    + '<span class="olt-prog' + (gDone >= OL_GROUP_GOAL ? ' ok' : '') + '">実施 <b>' + gDone + '</b>' + (gPlan ? '・予定 ' + gPlan : '') + ' / ' + OL_GROUP_GOAL + '</span></div>';
+  var nSlot = Math.max(OL_GROUP_GOAL, grp.length);
+  for (var si = 0; si < nSlot; si++) {
+    var num = String.fromCharCode(0x2460 + Math.min(si, 19));
+    var ev = grp[si];
+    if (ev) {
+      h += '<div class="olt-slot ' + (ev.st === 'done' ? 'done' : 'plan') + '" onclick="olEventOpen(\'' + _olKeyAttr(ev.key) + '\')">'
+        + '<span class="olt-sn">' + num + '</span>'
+        + '<span class="olt-sst">' + (ev.st === 'done' ? '✓' : '予定') + '</span>'
+        + '<span class="olt-sd">' + _olDateLbl(ev) + '</span>'
+        + '<span class="olt-sm"><span class="olt-sm1"><b>' + ev.n + '人</b>' + (ev.asan ? '・A:' + evEsc(ev.asan) : '') + (ev.what ? '・' + evEsc(ev.what) : '') + '</span><small>' + evEsc(_olEvNames(ev, 4)) + '</small></span>'
+        + '<span class="olt-arr">›</span></div>';
+    } else {
+      h += '<div class="olt-slot empty"' + (canEdit ? ' onclick="olPlanStart({kind:\'group\'})"' : '') + '><span class="olt-sn">' + num + '</span>'
+        + '<span class="olt-sadd">' + (canEdit ? '＋ 企画する' : 'まだありません') + '</span></div>';
+    }
+  }
+  h += '</div>';
+  // ② 個別OLの件数＋要フォロー（タップで絞り込み）
+  var solo = evs.filter(function(ev) { return ev.kind === 'solo' && _olInMonth(ev, ym); });
+  var sDone = solo.filter(function(ev) { return ev.st === 'done'; }).length;
+  var rows = fr.shown.map(function(m) { return _olFreshRow(m, evs); });
+  var critN = rows.filter(function(r) { return r.sev === 'crit'; }).length;
+  var warnN = rows.filter(function(r) { return r.sev === 'warn'; }).length;
+  h += '<div class="olt-sum"><span>個別OL 今月 <b>' + sDone + '</b>件' + (solo.length - sDone ? '（予定 ' + (solo.length - sDone) + '）' : '') + '</span><span style="flex:1"></span>'
+    + (critN ? '<span class="olt-chip crit' + (_olSevFilter === 'crit' ? ' on' : '') + '" onclick="olSetSevFilter(\'crit\')">30日以上 ' + critN + '人</span>' : '')
+    + (warnN ? '<span class="olt-chip warn' + (_olSevFilter === 'warn' ? ' on' : '') + '" onclick="olSetSevFilter(\'warn\')">14日以上/未接触 ' + warnN + '人</span>' : '')
+    + ((critN || warnN) ? '' : '<span class="olt-good">全員フォロー良好</span>') + '</div>';
+  // ③ 予定のOL（日付を過ぎた予定は「結果を入力」）
+  var plans = evs.filter(function(ev) { return ev.st === 'planned'; });
+  var over = plans.filter(function(ev) { return ev.date && ev.date < t; }).sort(function(a, b) { return a.date.localeCompare(b.date); });
+  var up = plans.filter(function(ev) { return !ev.date || ev.date >= t; }).sort(function(a, b) { return (a.date || '9999').localeCompare(b.date || '9999'); });
+  if (over.length || up.length) {
+    h += '<div class="olt-sec">予定のOL</div><div class="olt-card olt-list">';
+    over.concat(up).forEach(function(ev) {
+      var isOver = ev.date && ev.date < t;
+      h += '<div class="olt-ev' + (isOver ? ' over' : '') + '" onclick="olEventOpen(\'' + _olKeyAttr(ev.key) + '\')">'
+        + _olKindBadge(ev.kind)
+        + '<span class="olt-evd">' + _olDateLbl(ev) + '</span>'
+        + '<span class="olt-evn">' + evEsc(_olEvNames(ev, 3)) + (ev.asan ? '<small>A:' + evEsc(ev.asan) + '</small>' : '') + '</span>'
+        + (isOver && canEdit ? '<button class="olt-res" onclick="event.stopPropagation();olEventOpen(\'' + _olKeyAttr(ev.key) + '\',{result:true})">結果を入力</button>' : '<span class="olt-arr">›</span>')
+        + '</div>';
+    });
+    h += '</div>';
+  }
+  // ④ フレッシュ（要フォロー順）
+  rows.sort(function(a, b) { var da = (a.days === null ? 99999 : a.days), db = (b.days === null ? 99999 : b.days); return db - da; });
+  var vis = _olSevFilter ? rows.filter(function(r) { return r.sev === _olSevFilter; }) : rows;
+  h += '<div class="olt-sec"><span>フレッシュ<small>（要フォロー順・' + vis.length + '人）</small></span><span style="flex:1"></span>'
+    + (_olSevFilter ? '<span class="olt-link" onclick="olSetSevFilter(\'\')">絞り込み解除</span>' : '')
+    + (canEdit && rows.length ? '<span class="olt-link" onclick="olSelToggleMode()">' + (_olSelMode ? 'キャンセル' : 'まとめて選ぶ') + '</span>' : '') + '</div>';
+  if (!fr.shown.length && !fr.hidden.length) {
+    h += '<div class="olt-card"><div class="ev-empty" style="padding:18px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div></div>';
+  } else {
+    var lastLbl = function(r) { return r.last ? (_olMD(r.last.date) + ' ' + (r.last.kind === 'group' ? '3〜7人' : '個別')) : '—'; };
+    if (pc) {
+      h += '<div class="olt-card" style="padding:0"><div class="ot-scroll"><table class="ot olt-tbl"><thead><tr><th class="ot-sev"></th>' + (_olSelMode ? '<th></th>' : '')
+        + '<th>名前</th><th>タイトル</th><th>最終OL</th><th>Aさん</th><th>内容</th><th>反応</th><th>次の予定</th><th>経過</th></tr></thead><tbody>';
+      vis.forEach(function(r) {
+        var m = r.m, on = _olSel.indexOf(m.id) >= 0;
+        h += '<tr class="ot-' + r.sev + (on ? ' olt-on' : '') + '" onclick="olFreshTap(\'' + m.id + '\')" style="cursor:pointer"><td class="ot-sev"><i></i></td>'
+          + (_olSelMode ? '<td><span class="olt-ck' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span></td>' : '')
+          + '<td><span class="ot-nm ' + (m.gender === 'female' ? 'female' : 'male') + '">' + evEsc(_olNm(m)) + '</span></td>'
+          + '<td><span class="ot-ttl ' + _olTtlCls(m.title) + '">' + evEsc((m.title || '').trim() || '—') + '</span></td>'
+          + '<td class="ot-date">' + lastLbl(r) + '</td>'
+          + '<td class="ot-dim">' + evEsc((r.last && r.last.asan) || '—') + '</td>'
+          + '<td class="ot-txt">' + evEsc((r.last && r.last.what) || '—') + '</td>'
+          + '<td class="ot-txt">' + evEsc((r.last && r.last.note) || '—') + '</td>'
+          + '<td class="ot-date">' + (r.next ? _olMD(r.next.date) : '—') + '</td>'
+          + '<td><span class="ot-el ' + r.sev + '">' + (r.days === null ? '未接触' : r.days + '日') + '</span></td></tr>';
+      });
+      h += '</tbody></table></div></div>';
+    } else {
+      h += '<div class="olt-card olt-list">';
+      vis.forEach(function(r) {
+        var m = r.m, on = _olSel.indexOf(m.id) >= 0;
+        h += '<div class="olt-fr ' + r.sev + (on ? ' on' : '') + '" onclick="olFreshTap(\'' + m.id + '\')">'
+          + (_olSelMode ? '<span class="olt-ck' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span>' : '<i class="olt-dot"></i>')
+          + '<span class="olt-fn ' + (m.gender === 'female' ? 'female' : 'male') + '">' + evEsc(_olNm(m)) + '</span>'
+          + '<span class="ot-ttl ' + _olTtlCls(m.title) + '">' + evEsc((m.title || '').trim() || '—') + '</span>'
+          + '<span class="olt-fl">' + (r.next ? '<span class="olt-next">予定 ' + _olMD(r.next.date) + '</span>' : (r.last ? '最終 ' + lastLbl(r) : '')) + '</span>'
+          + '<span class="olt-fe ' + r.sev + '">' + (r.days === null ? '未接触' : r.days + '日') + '</span></div>';
+      });
+      if (!vis.length) h += '<div class="ev-empty" style="padding:14px">該当する人はいません</div>';
+      h += '</div>';
+    }
+  }
+  h += olHiddenSectionHtml(fr.hidden);
+  // まとめて選ぶ：下の操作バー
+  if (_olSelMode) {
+    h += '<div class="olt-selbar"><span>' + _olSel.length + '人を選択中</span><span style="flex:1"></span>'
+      + '<button class="btn-c" onclick="olSelToggleMode()">キャンセル</button>'
+      + '<button class="btn-p" onclick="olSelPlan()"' + (_olSel.length ? '' : ' disabled style="opacity:.45"') + '>この人たちで企画</button></div>';
+  }
+  wrap.innerHTML = h;
+  var fab = document.getElementById('olFab');
+  if (fab) fab.style.display = (canEdit && !pc && !_olSelMode) ? '' : 'none';
+}
+function olSetSevFilter(v) { _olSevFilter = (_olSevFilter === v) ? '' : v; renderOlTab(); }
+function olSelToggleMode() { _olSelMode = !_olSelMode; _olSel = []; renderOlTab(); }
+function olFreshTap(mid) {
+  if (_olSelMode) {
+    var i = _olSel.indexOf(mid);
+    if (i >= 0) _olSel.splice(i, 1); else _olSel.push(mid);
+    renderOlTab();
+    return;
+  }
+  openOlPopup(mid);
+}
+function olSelPlan() {
+  if (!_olSel.length) return;
+  var mids = _olSel.slice();
+  _olSelMode = false; _olSel = [];
+  renderOlTab();
+  olPlanStart({ mids: mids });
 }
 // OLリストの表示/非表示フラグ（フォロー不要な人を隠す）
 function setOlHidden(mid, hide) {
@@ -8765,80 +8696,372 @@ function setOlHidden(mid, hide) {
   if (!m) return;
   m.olHidden = !!hide;
   autoSave();
+  closeOlPopup();
   if (typeof renderStats === 'function') renderStats();
   toast(hide ? 'OL対象外にしました' : 'OLリストに戻しました');
 }
 function olHiddenSectionHtml(hidden) {
   if (!hidden || !hidden.length) return '';
   var items = hidden.map(function(m){
-    var nm = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
-    return '<div class="fresh-hidden-item"><span>' + evEsc(nm) + ' <span class="fhs-title">' + evEsc(m.title||'') + '</span></span><button class="fresh-restore-btn" onclick="setOlHidden(\'' + m.id + '\',false)">戻す</button></div>';
+    return '<div class="fresh-hidden-item"><span>' + evEsc(_olNm(m)) + ' <span class="fhs-title">' + evEsc(m.title||'') + '</span></span><button class="fresh-restore-btn" onclick="setOlHidden(\'' + m.id + '\',false)">戻す</button></div>';
   }).join('');
   return '<div class="fresh-hidden-sec">'
-    + '<div class="fresh-hidden-hd" onclick="this.parentNode.classList.toggle(\'open\')">🚫 OL対象外 <span class="fhs-count">' + hidden.length + '</span><span class="fhs-arrow">▶</span></div>'
+    + '<div class="fresh-hidden-hd" onclick="this.parentNode.classList.toggle(\'open\')">OL対象外 <span class="fhs-count">' + hidden.length + '</span><span class="fhs-arrow">▶</span></div>'
     + '<div class="fresh-hidden-body">' + items + '</div></div>';
 }
-// OLの「誰に」をカテゴリ別メンバーピッカーで選択
-var _olPick = { kind:'fresh', mid:'', idx:-1, oi:-1, ti:-1 };
-function closeOlPicker() { var el=document.getElementById('olPickerOv'); if (el && el.parentNode) el.parentNode.removeChild(el); }
-function olPickSelect(name) {
-  if (_olPick.kind === 'outline') {
-    olSetTarget(_olPick.oi, _olPick.ti, name);
-    if (typeof renderStats === 'function') renderStats();
-  } else if (_olPick.mid && _olPick.idx >= 0) {
-    freshOlField(_olPick.mid, _olPick.idx, 'to', name);
-    if (typeof renderStats === 'function') renderStats();
-  }
-  closeOlPicker();
-}
-// フレッシュOL「誰に」用カテゴリ
-var _OL_CATS_FRESH = [
-  { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
-  { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
-  { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } }
-];
-// 3〜7人アウトライン用カテゴリ（研修生/フレッシュ/BR/その他）
-var _OL_CATS_OUTLINE = [
-  { label:'🌱 研修生', test:function(m){ return memberCat(m) === '研修生'; } },
-  { label:'🌿 フレッシュ', test:function(m){ return CK_FRESH_TITLES.indexOf((m.title||'').trim()) >= 0; } },
-  { label:'💎 BR', test:function(m){ return memberCat(m) === 'BR'; } },
-  { label:'👤 その他', test:function(m){ return true; } }
-];
-function openOlPicker(mid, idx) {
-  _olPick = { kind:'fresh', mid: mid, idx: idx };
-  _openMemberPicker(_OL_CATS_FRESH, 'OL相手を選択');
-}
-function openOutlinePicker(oi, ti) {
-  _olPick = { kind:'outline', oi: oi, ti: ti };
-  _openMemberPicker(_OL_CATS_OUTLINE, 'アウトライン対象を選択');
-}
-function _openMemberPicker(cats, title) {
-  closeOlPicker();
-  var all = (state.members || []).filter(function(m){ return !m.deleted; });
-  var used = {}, body = '';
-  cats.forEach(function(c){
-    var ms = all.filter(function(m){ return c.test(m) && !used[m.id]; });
-    if (!ms.length) return;
-    ms.forEach(function(m){ used[m.id] = 1; });
-    body += '<div class="olp-cat">' + c.label + '<span>' + ms.length + '</span></div>';
-    body += ms.map(function(m){
-      var nm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
-      return '<div class="olp-item" onclick="olPickSelect(&quot;' + evEsc(nm).replace(/"/g,'') + '&quot;)"><span class="olp-name">' + evEsc(nm) + '</span><span class="olp-title">' + evEsc(m.title||'') + '</span></div>';
-    }).join('');
+// ── その人のOL（履歴＋この人で企画）: OLタブの行・現状MAP・メンバー操作から開く ──
+function openOlPopup(mid){
+  var m = _olMem(mid);
+  if (!m) return;
+  var fd = (state.freshData && state.freshData[mid]) || {};
+  var listSt = (typeof freshNorm==='function') ? freshNorm(fd['リスト']) : (fd['リスト']||{});
+  var statusTxt = listSt.done ? '✓ 完了' : (listSt.date ? ('予定 '+listSt.date) : '未着手');
+  var evs = _olEvents().filter(function(ev) { return ev.mids.indexOf(mid) >= 0; })
+    .sort(function(a, b) { return (b.date || '0000').localeCompare(a.date || '0000'); });
+  var isFresh = OL_FRESH_TITLES.indexOf((m.title || '').trim()) >= 0;
+  var body = '';
+  if (_olCanEdit()) body += '<button class="olt-new wide" onclick="closeOlPopup();olPlanStart({mids:[\'' + mid + '\']})">＋ この人でOLを企画</button>';
+  body += '<div class="olp-hist-lbl">OL履歴（' + evs.length + '件）</div>';
+  if (!evs.length) body += '<div class="ev-empty" style="padding:10px 4px">まだ記録がありません</div>';
+  evs.forEach(function(ev) {
+    var mine = null; ev.recs.forEach(function(x) { if (x.mid === mid) mine = x.rec; });
+    var subs = [];
+    if (ev.kind === 'group' || ev.n > 1) subs.push(ev.n + '人：' + evEsc(_olEvNames(ev, 4)));
+    if (ev.asan) subs.push('A:' + evEsc(ev.asan));
+    if (ev.note) subs.push('反応：' + evEsc(ev.note));
+    if (mine && mine.pnote) subs.push('本人：' + evEsc(mine.pnote));
+    body += '<div class="fol-log-row" onclick="closeOlPopup();olEventOpen(\'' + _olKeyAttr(ev.key) + '\')">'
+      + '<span class="fol-log-date">' + _olMD(ev.date) + '</span>'
+      + '<span class="fol-log-main"><span class="fol-log-ttl">' + _olKindBadge(ev.kind) + (ev.st === 'planned' ? '<span class="olk p">予定</span>' : '') + evEsc(ev.what || '（内容なし）') + '</span>'
+      + (subs.length ? '<span class="fol-log-sub">' + subs.join('　') + '</span>' : '') + '</span>'
+      + '<span class="fol-log-arrow">›</span></div>';
   });
-  if (!body) body = '<div style="padding:24px;text-align:center;color:var(--text-dim)">選べるメンバーがいません</div>';
-  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'olPickerOv';
-  ov.onclick = function(e){ if (e.target === ov) closeOlPicker(); };
-  ov.innerHTML = '<div class="ms-sheet" style="max-height:74vh;overflow-y:auto">'
-    + '<div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + title + '</div></div><span class="ms-x" onclick="closeOlPicker()">✕</span></div>'
-    + '<div class="olp-list">' + body + '</div></div>';
+  if (isFresh && _olCanEdit()) body += '<div style="margin-top:14px"><button class="fresh-hide-btn" onclick="setOlHidden(\'' + mid + '\',' + (m.olHidden ? 'false' : 'true') + ')">' + (m.olHidden ? 'OLリストに戻す' : '✕ OL対象外にする') + '</button></div>';
+  closeOlPopup();
+  var ov=document.createElement('div'); ov.className='ms-overlay'; ov.id='olPopupOv';
+  ov.onclick=function(e){ if(e.target===ov) closeOlPopup(); };
+  ov.innerHTML='<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(_olNm(m)) + ' のOL <span class="ot-ttl ' + _olTtlCls(m.title) + '">' + evEsc((m.title||'').trim()) + '</span></div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">リストOL: '+evEsc(statusTxt)+'</div></div>'
+    + '<span class="ms-x" onclick="closeOlPopup()">✕</span></div>'
+    + '<div style="padding:4px 16px 16px">' + body + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function(){ ov.classList.add('show'); });
 }
-// ── 3〜7人アウトライン 折りたたみ ──
-var _outlineExpanded = false;
-function toggleOutlineExpand() { _outlineExpanded = !_outlineExpanded; renderStats(); }
+function closeOlPopup(){ var ov=document.getElementById('olPopupOv'); if(ov){ ov.classList.remove('show'); setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); },200); } }
+// 保存/削除後に、開いている画面（OLポップアップ・メンバー編集のOL欄・カレンダー）を最新化
+function _olAfterRecordChange(mid){
+  if(typeof editingId!=='undefined' && editingId===mid){
+    var modal=document.getElementById('modal');
+    if(modal && modal.classList.contains('open')){ var mm=_olMem(mid); if(mm && typeof meRenderExtras==='function') meRenderExtras(mm); }
+  }
+  if (typeof currentView !== 'undefined' && currentView === 'events' && typeof renderEvents === 'function') renderEvents();
+}
+// 旧API（MAP・メンバー編集・カレンダーから呼ばれる）：記録を指定→その企画を開く／指定なし→この人で企画
+function openOlRecordModal(mid, editIdx) {
+  if (typeof editIdx === 'number' && editIdx >= 0) {
+    var r = freshOlLog(mid)[editIdx];
+    if (r) { olEventOpen(r.gid || ('solo_' + mid + '_' + editIdx)); return; }
+  }
+  olPlanStart({ mids: mid ? [mid] : [] });
+}
+
+// ── OLを企画（＋ボタン）：①種類 → ②人を選ぶ → ③中身 ／ 既存の企画の編集は③から ──
+var _olp = null;
+function olPlanStart(o) {
+  if (!_olCanEdit()) { toast('閲覧中のため企画できません'); return; }
+  o = o || {};
+  var mids = (o.mids || []).filter(function(id) { return !!_olMem(id); });
+  _olp = { mode: 'new', kind: o.kind || '', mids: mids, guests: [], date: o.date || evTodayYmd(), time: '', asan: '', what: '', note: '', pnotes: {}, st: 'planned',
+    gid: '', orig: [], legacy: null, q: '', showP: false, back: '' };
+  _olp.step = _olp.kind ? _olAfterKindStep() : 'type';
+  _olpRender();
+}
+function _olAfterKindStep() {
+  if (_olp.kind === 'group') return _olp.mids.length >= OL_GROUP_MIN ? 'detail' : 'people';
+  return _olp.mids.length ? 'detail' : 'people';
+}
+function olEventOpen(key, opts) {
+  var ev = _olEventByKey(key);
+  if (!ev) { toast('この記録は見つかりませんでした'); return; }
+  opts = opts || {};
+  var pn = {};
+  ev.recs.forEach(function(x) { if (x.rec.pnote) pn[x.mid] = x.rec.pnote; });
+  _olp = { mode: 'edit', step: 'detail', kind: ev.kind, mids: ev.mids.slice(), guests: ev.guests.slice(), date: ev.date, time: ev.time, asan: ev.asan, what: ev.what, note: ev.note,
+    pnotes: pn, st: opts.result ? 'done' : ev.st, gid: ev.gid, orig: ev.mids.slice(), legacy: ev.gid ? null : ev.recs[0], hostRecs: ev.recs.filter(function(x) { return x.rec.hostOnly; }),
+    q: '', showP: !!Object.keys(pn).length, back: '', ro: !_olCanEdit(), focusNote: !!opts.result };
+  _olpRender();
+}
+function closeOlPlan() {
+  var ov = document.getElementById('olpOv');
+  if (ov) { ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+  _olp = null;
+}
+function _olpRender() {
+  if (!_olp) return;
+  var ov = document.getElementById('olpOv');
+  if (!ov) {
+    ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'olpOv';
+    ov.onclick = function(e) { if (e.target === ov) closeOlPlan(); };
+    ov.innerHTML = '<div class="ms-sheet olp-sheet"></div>';
+    document.body.appendChild(ov);
+    if (!isPCMode()) { // 検索・入力中はシートを上部へ（キーボードで隠れないように）
+      ov.addEventListener('focusin', function(e2) { if (e2.target && /^(olpQ|olpAsan|olpWhat|olpNote)$/.test(e2.target.id || '')) ov.classList.add('kb-top'); });
+      ov.addEventListener('focusout', function() { setTimeout(function() { ov.classList.remove('kb-top'); }, 150); });
+    }
+    requestAnimationFrame(function() { ov.classList.add('show'); });
+  }
+  var sh = ov.querySelector('.olp-sheet');
+  var ttl = _olp.mode === 'edit' ? (_olp.ro ? 'OLの内容' : 'OLを編集') : 'OLを企画';
+  var hd = '<div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + ttl + (_olp.kind ? ' <span class="olk ' + (_olp.kind === 'group' ? 'g' : 's') + '">' + _olKindLabel(_olp.kind) + '</span>' : '') + '</div></div>'
+    + '<span class="ms-x" onclick="closeOlPlan()">✕</span></div>';
+  var b = '';
+  if (_olp.step === 'type') b = _olpTypeHtml();
+  else if (_olp.step === 'people') b = _olpPeopleHtml();
+  else b = _olpDetailHtml();
+  sh.innerHTML = hd + '<div class="olp-body">' + b + '</div>';
+  if (_olp.step === 'people') _olpRenderList();
+  if (_olp.focusNote) { _olp.focusNote = false; setTimeout(function() { var f = document.getElementById('olpNote'); if (f) f.focus(); }, 120); }
+}
+function _olMonthGroupCount() {
+  var ym = state.currentMonth || currentMonthStr();
+  return _olEvents().filter(function(ev) { return ev.kind === 'group' && _olInMonth(ev, ym); }).length;
+}
+function _olpTypeHtml() {
+  var n = _olp.mids.length;
+  var rec = n >= OL_GROUP_MIN ? 'group' : (n ? 'solo' : '');
+  var pre = n ? '<div class="olp-pre">選択中：' + evEsc(_olp.mids.map(function(id) { var m = _olMem(id); return m ? _olShortNm(m) : ''; }).join('・')) + '（' + n + '人）</div>' : '';
+  return pre + '<div class="olp-types">'
+    + '<div class="olp-type s' + (rec === 'solo' ? ' rec' : '') + '" onclick="olpPickKind(\'solo\')">' + (rec === 'solo' ? '<span class="olp-rec">おすすめ</span>' : '')
+    + '<div class="olp-tt">' + icn('user') + ' 個別OL</div><div class="olp-td">マンツーマン（2人まで）</div></div>'
+    + '<div class="olp-type g' + (rec === 'group' ? ' rec' : '') + '" onclick="olpPickKind(\'group\')">' + (rec === 'group' ? '<span class="olp-rec">おすすめ</span>' : '')
+    + '<div class="olp-tt">' + icn('users') + ' 3〜7人OL</div><div class="olp-td">3〜7人組で切磋琢磨<br>今月 ' + _olMonthGroupCount() + ' / ' + OL_GROUP_GOAL + '回</div></div>'
+    + '</div>';
+}
+function olpPickKind(k) {
+  if (!_olp) return;
+  if (k === 'solo' && _olp.mids.length > OL_SOLO_MAX) { toast('個別OLは2人までです（3人以上は3〜7人OL）'); return; }
+  _olp.kind = k;
+  _olp.step = _olAfterKindStep();
+  _olpRender();
+}
+function _olpCountHtml() {
+  var n = _olp.mids.length + _olp.guests.length;
+  if (_olp.kind === 'group') {
+    if (n < OL_GROUP_MIN) return '<span class="olp-cnt warn">' + n + '人 — あと' + (OL_GROUP_MIN - n) + '人で成立（3〜7人）</span>';
+    if (n > OL_GROUP_MAX) return '<span class="olp-cnt warn">' + n + '人（7人までが目安）</span>';
+    return '<span class="olp-cnt ok">' + n + '人 ✓（3〜7人）</span>';
+  }
+  return '<span class="olp-cnt' + (n ? ' ok' : '') + '">' + n + '人（2人まで）</span>';
+}
+function _olpPeopleHtml() {
+  return '<div class="olp-ph">' + _olpCountHtml() + '</div>'
+    + '<input class="fi" id="olpQ" placeholder="名前で検索" autocomplete="off" value="' + evEsc(_olp.q) + '" oninput="olpSearch(this.value)">'
+    + '<div id="olpList" class="olp-list"></div>'
+    + '<div class="btn-row" style="margin-top:12px">'
+    + '<button class="btn-c" onclick="olpBack()">戻る</button>'
+    + '<button class="btn-p" id="olpNext" onclick="olpNext()">次へ</button></div>';
+}
+function olpSearch(v) { if (!_olp) return; _olp.q = v || ''; _olpRenderList(); }
+function _olpRenderList() {
+  var box = document.getElementById('olpList');
+  if (!box || !_olp) return;
+  var q = (_olp.q || '').replace(/[\s　]/g, '').toLowerCase();
+  var evs = _olEvents();
+  var all = (state.members || []).filter(function(m) { return !m.deleted && !/^(MG_|AG\d+_)/.test(m.id); });
+  if (q) all = all.filter(function(m) { return ((m.lastName || '') + (m.firstName || '')).replace(/[\s　]/g, '').toLowerCase().indexOf(q) >= 0; });
+  var used = {};
+  var fresh = all.filter(function(m) { return OL_FRESH_TITLES.indexOf((m.title || '').trim()) >= 0 && !m.olHidden; })
+    .map(function(m) { return _olFreshRow(m, evs); })
+    .sort(function(a, b) { var da = (a.days === null ? 99999 : a.days), db = (b.days === null ? 99999 : b.days); return db - da; });
+  var cats = [['フレッシュ（要フォロー順）', fresh.map(function(r) { return r.m; }), fresh]];
+  fresh.forEach(function(r) { used[r.m.id] = 1; });
+  var rest = all.filter(function(m) { return !used[m.id]; });
+  var mc = function(m) { return (typeof memberCat === 'function') ? memberCat(m) : ''; };
+  cats.push(['研修生', rest.filter(function(m) { return mc(m) === '研修生'; })]);
+  cats.push(['BR', rest.filter(function(m) { return mc(m) === 'BR'; })]);
+  cats.push(['その他', rest.filter(function(m) { return mc(m) !== '研修生' && mc(m) !== 'BR'; })]);
+  var h = '';
+  cats.forEach(function(c) {
+    if (!c[1].length) return;
+    h += '<div class="olp-cat">' + c[0] + '<span>' + c[1].length + '</span></div>';
+    c[1].forEach(function(m, i) {
+      var on = _olp.mids.indexOf(m.id) >= 0;
+      var r = c[2] ? c[2][i] : null;
+      h += '<div class="olp-it' + (on ? ' on' : '') + '" onclick="olpToggle(\'' + m.id + '\')">'
+        + '<span class="olt-ck' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span>'
+        + '<span class="olp-nm">' + evEsc(_olNm(m)) + '</span><span class="ot-ttl ' + _olTtlCls(m.title) + '">' + evEsc((m.title || '').trim()) + '</span>'
+        + (r ? '<span class="olt-fe ' + r.sev + '">' + (r.days === null ? '未接触' : r.days + '日') + '</span>' : '') + '</div>';
+    });
+  });
+  box.innerHTML = h || '<div class="ev-empty" style="padding:14px">該当するメンバーがいません</div>';
+  var ph = document.querySelector('#olpOv .olp-ph');
+  if (ph) ph.innerHTML = _olpCountHtml();
+  var nx = document.getElementById('olpNext');
+  if (nx) { var n = _olp.mids.length; nx.disabled = !n; nx.style.opacity = n ? '' : '.45'; nx.textContent = n ? '次へ（' + n + '人）' : '次へ'; }
+}
+function olpToggle(mid) {
+  if (!_olp) return;
+  var i = _olp.mids.indexOf(mid);
+  if (i >= 0) { _olp.mids.splice(i, 1); }
+  else {
+    if (_olp.kind === 'solo' && _olp.mids.length >= OL_SOLO_MAX) {
+      if (!confirm('3人以上は「3〜7人OL」になります。3〜7人OLに切り替えますか？')) return;
+      _olp.kind = 'group';
+      _olp.mids.push(mid);
+      _olpRender();
+      return;
+    }
+    _olp.mids.push(mid);
+    if (_olp.kind === 'group' && _olp.mids.length === OL_GROUP_MAX + 1) toast('3〜7人OLは7人までが目安です');
+  }
+  _olpRenderList();
+}
+function olpBack() {
+  if (!_olp) return;
+  if (_olp.back === 'detail') { _olp.back = ''; _olp.step = 'detail'; }
+  else if (_olp.mode === 'edit') { _olp.step = 'detail'; }
+  else _olp.step = 'type';
+  _olpRender();
+}
+function olpNext() {
+  if (!_olp || !_olp.mids.length) return;
+  _olp.back = ''; _olp.step = 'detail';
+  _olpRender();
+}
+function olpAddPeople() { if (!_olp) return; _olp.back = 'detail'; _olp.step = 'people'; _olp.q = ''; _olpRender(); }
+function olpRemovePerson(mid) {
+  if (!_olp) return;
+  _olp.mids = _olp.mids.filter(function(x) { return x !== mid; });
+  delete _olp.pnotes[mid];
+  _olpRender();
+}
+function olpRemoveGuest(i) { if (!_olp) return; _olp.guests.splice(i, 1); _olpRender(); }
+function olpSetKind(k) {
+  if (!_olp || _olp.ro) return;
+  if (k === 'solo' && _olp.mids.length + _olp.guests.length > OL_SOLO_MAX) { toast('個別OLは2人までです'); return; }
+  _olp.kind = k; _olpRender();
+}
+function olpSetSt(v) { if (!_olp || _olp.ro) return; _olp.st = v === 'done' ? 'done' : 'planned'; _olpRender(); }
+function olpField(f, v) { if (_olp) _olp[f] = v; }
+function olpPnote(mid, v) { if (_olp) _olp.pnotes[mid] = v; }
+function olpShowP() { if (!_olp) return; _olp.showP = !_olp.showP; _olpRender(); }
+function olpChip(f, v) {
+  if (!_olp || _olp.ro) return;
+  _olp[f] = v;
+  var el = document.getElementById(f === 'asan' ? 'olpAsan' : 'olpWhat');
+  if (el) el.value = v;
+}
+// 過去の入力から候補（多い順）
+function _olpRecent(f) {
+  var cnt = {};
+  _olEvents().forEach(function(ev) { var v = (ev[f] || '').trim(); if (v) cnt[v] = (cnt[v] || 0) + 1; });
+  return Object.keys(cnt).sort(function(a, b) { return cnt[b] - cnt[a]; }).slice(0, 6);
+}
+function _olpDetailHtml() {
+  var ro = _olp.ro, dis = ro ? ' disabled' : '';
+  var h = '';
+  h += '<div class="olp-seg">'
+    + '<div class="rb' + (_olp.kind === 'solo' ? ' sel' : '') + '" onclick="olpSetKind(\'solo\')">' + icn('user') + ' 個別OL</div>'
+    + '<div class="rb' + (_olp.kind === 'group' ? ' sel' : '') + '" onclick="olpSetKind(\'group\')">' + icn('users') + ' 3〜7人OL</div></div>';
+  h += '<label class="olp-lb">参加する人 ' + _olpCountHtml() + '</label><div class="olp-chips">';
+  _olp.mids.forEach(function(id) {
+    var m = _olMem(id);
+    h += '<span class="olp-pc">' + evEsc(m ? _olNm(m) : '(不明)') + (ro ? '' : '<span class="x" onclick="olpRemovePerson(\'' + id + '\')">✕</span>') + '</span>';
+  });
+  _olp.guests.forEach(function(g, i) { h += '<span class="olp-pc guest">' + evEsc(g) + (ro ? '' : '<span class="x" onclick="olpRemoveGuest(' + i + ')">✕</span>') + '</span>'; });
+  if (!ro) h += '<span class="olp-pc add" onclick="olpAddPeople()">＋ 人を追加</span>';
+  h += '</div>';
+  h += '<div class="olp-seg">'
+    + '<div class="rb' + (_olp.st === 'planned' ? ' sel' : '') + '" onclick="olpSetSt(\'planned\')">' + icn('calendar') + ' 予定</div>'
+    + '<div class="rb' + (_olp.st === 'done' ? ' sel' : '') + '" onclick="olpSetSt(\'done\')">✓ 実施済み</div></div>';
+  h += '<div class="olp-row"><div><label class="olp-lb">日付</label><input class="fi" id="olpDate" type="date" value="' + evEsc(_olp.date) + '" onchange="olpField(\'date\',this.value)"' + dis + '></div>'
+    + '<div><label class="olp-lb">時刻（任意）</label><input class="fi" id="olpTime" type="time" value="' + evEsc(_olp.time) + '" onchange="olpField(\'time\',this.value)"' + dis + '></div></div>';
+  var chips = function(f) {
+    if (ro) return '';
+    var rs = _olpRecent(f);
+    return rs.length ? '<div class="olp-sug">' + rs.map(function(v) { return '<span onclick="olpChip(\'' + f + '\',\'' + evEsc(v).replace(/'/g, '') + '\')">' + evEsc(v) + '</span>'; }).join('') + '</div>' : '';
+  };
+  h += '<label class="olp-lb">Aさん</label><input class="fi" id="olpAsan" placeholder="担当（Aさん）" value="' + evEsc(_olp.asan) + '" oninput="olpField(\'asan\',this.value)"' + dis + '>' + chips('asan');
+  h += '<label class="olp-lb">内容</label><input class="fi" id="olpWhat" placeholder="内容（例：ビジョン共有）" value="' + evEsc(_olp.what) + '" oninput="olpField(\'what\',this.value)"' + dis + '>' + chips('what');
+  if (_olp.st === 'done') {
+    h += '<label class="olp-lb">反応（全員共通）</label><textarea class="fi" id="olpNote" rows="2" placeholder="どんな反応だったか" oninput="olpField(\'note\',this.value)"' + dis + '>' + evEsc(_olp.note) + '</textarea>';
+    if (_olp.mids.length > 1 || _olp.showP) {
+      h += '<div class="olt-link" style="margin:2px 0 6px" onclick="olpShowP()">' + (_olp.showP ? '▼' : '▶') + ' 人ごとの反応を書く</div>';
+      if (_olp.showP) _olp.mids.forEach(function(id) {
+        var m = _olMem(id);
+        h += '<div class="olp-pn"><span>' + evEsc(m ? _olShortNm(m) : '') + '</span><input class="fi" placeholder="この人だけの反応（任意）" value="' + evEsc(_olp.pnotes[id] || '') + '" oninput="olpPnote(\'' + id + '\',this.value)"' + dis + '></div>';
+      });
+    } else if (_olp.mids.length === 1) {
+      _olp.showP = false;
+    }
+  }
+  if (!ro) {
+    h += '<button class="btn-p olp-save" onclick="olpSave()">保存</button>';
+    if (_olp.mode === 'edit') h += '<button class="olp-del" onclick="olpDelete()">' + icn('trash') + ' この企画を削除</button>';
+  }
+  return h;
+}
+function _olpSig(r) { return [r.date || '', r.what || '', r.note || '', r.asan || ''].join('\u0001'); }
+function olpSave() {
+  var p = _olp;
+  if (!p || p.ro) return;
+  // 入力欄の最新値（onchange 前に保存を押された場合も拾う）
+  ['Date', 'Time', 'Asan', 'What', 'Note'].forEach(function(k) { var el = document.getElementById('olp' + k); if (el) p[k.toLowerCase()] = el.value; });
+  var n = p.mids.length + p.guests.length;
+  if (!p.mids.length) { toast('参加する人を選んでください'); return; }
+  if (p.kind === 'solo' && n > OL_SOLO_MAX) { toast('個別OLは2人までです（3人以上は3〜7人OL）'); return; }
+  if (p.kind === 'group' && n < OL_GROUP_MIN && !confirm('3〜7人OLは3人以上が目安です（今 ' + n + '人）。このまま保存しますか？')) return;
+  if (p.kind === 'group' && n > OL_GROUP_MAX && !confirm('3〜7人OLは7人までが目安です（今 ' + n + '人）。このまま保存しますか？')) return;
+  var gid = p.gid || ('olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
+  var legacySig = p.legacy ? _olpSig(p.legacy.rec) : null;
+  var data = { date: p.date || '', time: p.time || '', asan: (p.asan || '').trim(), what: (p.what || '').trim(), note: p.st === 'done' ? (p.note || '').trim() : (p.note || ''),
+    st: p.st, gid: gid, mids: p.mids.slice(), kind: p.kind, guests: p.guests.slice(), to: '' };
+  p.mids.forEach(function(mid) {
+    var log = freshOlLog(mid), rec = null, i;
+    for (i = 0; i < log.length; i++) if (log[i] && log[i].gid === gid) { rec = log[i]; break; }
+    if (!rec && p.legacy && p.legacy.mid === mid) rec = p.legacy.rec;
+    if (!rec && legacySig) { // 旧形式（gidなし）で同じ内容の記録があれば取り込む（重複作成を防止）
+      for (i = 0; i < log.length; i++) if (log[i] && !log[i].gid && _olpSig(log[i]) === legacySig) { rec = log[i]; break; }
+    }
+    if (!rec) { rec = {}; log.unshift(rec); }
+    for (var k in data) rec[k] = (k === 'mids' || k === 'guests') ? data[k].slice() : data[k];
+    rec.pnote = (p.pnotes[mid] || '').trim();
+    delete rec.hostOnly;
+  });
+  // 外した人の記録は消す
+  var drop = function(mid, pred) { var log = freshOlLog(mid); for (var i = log.length - 1; i >= 0; i--) if (pred(log[i])) log.splice(i, 1); };
+  p.orig.forEach(function(mid) {
+    if (p.mids.indexOf(mid) >= 0) return;
+    drop(mid, function(r) { return r && ((r.gid && r.gid === gid) || (p.legacy && r === p.legacy.rec)); });
+  });
+  (p.hostRecs || []).forEach(function(x) { drop(x.mid, function(r) { return r === x.rec; }); }); // 移行時の仮置き（自分の記録）は人が決まったら不要
+  autoSave();
+  var first = p.mids[0];
+  var lbl = _olKindLabel(p.kind) + (p.kind === 'group' ? '（' + n + '人）' : '');
+  closeOlPlan();
+  if (typeof renderStats === 'function') renderStats();
+  _olAfterRecordChange(first);
+  toast((p.mode === 'edit' ? '更新しました：' : (p.st === 'planned' ? '企画しました：' : '記録しました：')) + lbl);
+}
+function olpDelete() {
+  var p = _olp;
+  if (!p || p.mode !== 'edit' || p.ro) return;
+  if (!confirm('この' + _olKindLabel(p.kind) + '（' + (p.date ? _olMD(p.date) : '日付未定') + '）を削除しますか？\n参加した全員の記録から消えます。')) return;
+  var fd = state.freshData || {};
+  for (var mid in fd) {
+    var log = (fd[mid] && fd[mid].olLog) || [];
+    for (var i = log.length - 1; i >= 0; i--) {
+      if ((p.gid && log[i] && log[i].gid === p.gid) || (p.legacy && log[i] === p.legacy.rec)) log.splice(i, 1);
+    }
+  }
+  autoSave();
+  var first = p.mids[0];
+  closeOlPlan();
+  if (typeof renderStats === 'function') renderStats();
+  if (first) _olAfterRecordChange(first);
+  toast('削除しました');
+}
 
 // ── 研修生 月次集計ヘルパー ──
 function _ymToMon(dateStr) {  // 'YYYY-MM-DD' → 'YYYY.MM'
@@ -9242,126 +9465,8 @@ function renderStats() {
   }).join('') : '<tr><td colspan="13" style="text-align:center;color:var(--text-dim)">5000P以上なし</td></tr>';
   }
 
-  // ── フレッシュリスト（現状MAPの LOI / Q2 / B1 / B2 を自動表示） ──
-  if (!state.freshData) state.freshData = {};
-  var freshWrap = document.getElementById('freshListWrap');
-  if (freshWrap) {
-    var FRESH_TITLES = ['LOI','Q2','Q3','B1','B2','B3','B4','B5','B6'];
-    var FRESH_STEPS = [];
-    var _freshSort = function(a,b){
-      var d = FRESH_TITLES.indexOf((a.title||'').trim()) - FRESH_TITLES.indexOf((b.title||'').trim());
-      if (d !== 0) return d;
-      return ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||''));
-    };
-    var _allFresh = membersForMap('current').filter(function(m){
-      return !m.deleted && FRESH_TITLES.indexOf((m.title||'').trim()) >= 0;
-    });
-    var freshMembers = _allFresh.filter(function(m){ return !m.olHidden; }).sort(_freshSort);
-    var hiddenFresh = _allFresh.filter(function(m){ return m.olHidden; }).sort(_freshSort);
-    renderFreshOL(freshWrap, freshMembers, hiddenFresh, FRESH_TITLES);
-    if (false) {
-    if (freshMembers.length === 0 && hiddenFresh.length === 0) {
-      freshWrap.innerHTML = '<div class="ev-empty" style="padding:20px 14px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。<br>メンバーのタイトルを設定すると自動で表示されます。</div>';
-    } else {
-      freshWrap.innerHTML = (freshMembers.length ? '' : '<div class="ev-empty" style="padding:14px 14px 0;color:var(--text-dim)">表示中のOL対象はいません。下の「OL対象外」から戻せます。</div>') + freshMembers.map(function(m){
-        var name = ((m.lastName||'')+' '+(m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || '(無名)';
-        var fd = state.freshData[m.id] || {};
-        var doneCount = 0;
-        var chips = FRESH_STEPS.map(function(step){
-          var sd = freshNorm(fd[step]);
-          if (sd.done) doneCount++;
-          var open = (_freshOpenKey === (m.id + '|' + step));
-          var mark = sd.done ? '✓ ' : (sd.date ? '📅 ' : '');
-          return '<div class="' + freshStepClass(sd) + (open ? ' open' : '') + '" data-mid="' + m.id + '" data-step="' + step + '" onclick="freshOpenStep(\'' + m.id + '\',\'' + step + '\')">' + mark + evEsc(step) + '</div>';
-        }).join('');
-        var allDone = FRESH_STEPS.length > 0 && doneCount === FRESH_STEPS.length;
-        // 編集パネル（開いているステップのみ：日付・Aさん・完了）
-        var editorHtml = '';
-        var ok = _freshOpenKey.split('|');
-        if (ok[0] === m.id && FRESH_STEPS.indexOf(ok[1]) >= 0) {
-          var estep = ok[1];
-          var esd = freshNorm(fd[estep]);
-          editorHtml = '<div class="fresh-editor">'
-            + '<div class="fresh-editor-ttl">' + evEsc(estep) + ' の予定</div>'
-            + '<div class="fresh-editor-row">'
-            +   '<div class="fresh-editor-f"><label>日付</label><input type="date" value="' + (esd.date||'') + '" onchange="freshSetField(\'' + m.id + '\',\'' + estep + '\',\'date\',this.value)"></div>'
-            +   '<div class="fresh-editor-f"><label>Aさん</label><input type="text" placeholder="担当" value="' + evEsc(esd.asan||'') + '" oninput="freshSetField(\'' + m.id + '\',\'' + estep + '\',\'asan\',this.value)"></div>'
-            + '</div>'
-            + '<button class="fresh-done-btn' + (esd.done?' on':'') + '" onclick="freshToggleDone(\'' + m.id + '\',\'' + estep + '\')">' + (esd.done ? '✓ 完了済み（タップで戻す）' : '完了にする') + '</button>'
-            + '</div>';
-        }
-        // OLログ（いつ・誰に・内容・備考=反応）
-        var olog = fd.olLog || [];
-        var ologHtml = '<div class="fresh-ol"><div class="fresh-ol-lbl">📝 OL記録（いつ・誰に・内容・反応）</div>';
-        ologHtml += olog.map(function(e, idx){
-          return '<div class="fol-item">'
-            + '<div class="fol-row">'
-            +   '<input class="fol-in" type="date" value="' + (e.date||'') + '" onchange="freshOlField(\'' + m.id + '\',' + idx + ',\'date\',this.value)">'
-            +   '<input class="fol-in" readonly placeholder="誰に（タップで選択）" value="' + evEsc(e.to||'') + '" onclick="openOlPicker(\'' + m.id + '\',' + idx + ')" style="cursor:pointer">'
-            +   '<button class="fol-x" onclick="freshOlRemove(\'' + m.id + '\',' + idx + ')">✕</button>'
-            + '</div>'
-            + '<input class="fol-in fol-full" placeholder="内容（何をした）" value="' + evEsc(e.what||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'what\',this.value)" style="margin-bottom:6px">'
-            + '<input class="fol-in fol-full" placeholder="備考（どんな反応だったか）" value="' + evEsc(e.note||'') + '" oninput="freshOlField(\'' + m.id + '\',' + idx + ',\'note\',this.value)">'
-            + '</div>';
-        }).join('');
-        ologHtml += '<button class="fol-add" onclick="freshOlAdd(\'' + m.id + '\')">＋ OL記録を追加</button></div>';
-        return '<div class="fresh-card'+(allDone?' done':'')+'" id="freshcard-'+m.id+'">'
-          + '<div class="fresh-card-top">'
-          +   '<span class="fresh-card-name">'+evEsc(name)+'</span>'
-          +   '<span class="fresh-card-title">'+evEsc(m.title||'')+'</span>'
-          +   '<button class="fresh-hide-btn" onclick="setOlHidden(\''+m.id+'\',true)" title="OLリストから外す">✕ OL対象外</button>'
-          + '</div>'
-          + (chips ? '<div class="fresh-steps">'+chips+'</div>' : '')
-          + editorHtml
-          + ologHtml
-          + '</div>';
-      }).join('') + olHiddenSectionHtml(hiddenFresh);
-    }
-    } // legacy card render (disabled: renderFreshOL handles it)
-  }
-
-  // ── アウトライン（3〜7人）カード型UI ──
-  var outlineWrap = document.getElementById('outlineWrap');
-  if (outlineWrap) {
-    if (!s.outline) s.outline = [];
-    while (s.outline.length < 3) s.outline.push({date:'',targets:[''],content:'',aSan:'',done:false});
-    while (s.outline.length > 7) s.outline.pop();
-    if (isPCMode()) { renderOutlinePC(outlineWrap, s.outline); } else {
-    var visibleOl = _outlineExpanded ? s.outline : s.outline.slice(0, 1);
-    var olHtml = '<div class="ol-collapse-hd' + (_outlineExpanded?' open':'') + '" onclick="toggleOutlineExpand()">'
-      + '<span style="font-size:12px;font-weight:700;color:var(--text-mid)">３〜７人OL（' + s.outline.length + '件）</span>'
-      + '<span class="ol-cc-arrow">▶</span></div>';
-    olHtml += visibleOl.map(function(o, i){
-      if (!o.targets) o.targets = o.target ? [o.target] : [''];
-      var done = !!o.done;
-      var targetsHtml = o.targets.map(function(t, ti){
-        return '<div class="ol-target-row">'
-          + '<input class="ol-input" style="cursor:pointer" readonly placeholder="対象者（タップで選択）" value="' + evEsc(t||'') + '" onclick="openOutlinePicker(' + i + ',' + ti + ')">'
-          + (ti>0 ? '<button class="ol-x" onclick="olRemoveTarget(' + i + ',' + ti + ')">✕</button>' : '')
-          + '</div>';
-      }).join('');
-      return '<div class="ol-card' + (done?' done':'') + '">'
-        + '<div class="ol-card-hd">'
-        +   '<button class="ol-done' + (done?' on':'') + '" onclick="olToggleDone(' + i + ')">' + (done?'✓ 完了':'未完了') + '</button>'
-        +   '<span class="ol-num">' + (i+1) + '人目</span>'
-        +   '<button class="ol-del" onclick="olRemoveEntry(' + i + ')">削除</button>'
-        + '</div>'
-        + '<div class="ol-row2">'
-        +   '<div class="ol-f"><label>日付</label><input class="ol-input" type="date" value="' + (o.date||'') + '" onchange="olSetField(' + i + ',\'date\',this.value)"></div>'
-        +   '<div class="ol-f"><label>Aさん</label><input class="ol-input" placeholder="担当" value="' + evEsc(o.aSan||'') + '" oninput="olSetField(' + i + ',\'aSan\',this.value)"></div>'
-        + '</div>'
-        + '<div class="ol-f"><label>対象者 <span class="ol-add-t" onclick="olAddTarget(' + i + ')">＋追加</span></label>' + targetsHtml + '</div>'
-        + '<div class="ol-f"><label>内容</label><input class="ol-input" placeholder="内容" value="' + evEsc(o.content||'') + '" oninput="olSetField(' + i + ',\'content\',this.value)"></div>'
-        + '</div>';
-    }).join('');
-    if (_outlineExpanded) {
-      if (s.outline.length < 7) olHtml += '<button class="ol-add" onclick="olAddEntry()">＋ 人を追加</button>';
-    } else if (s.outline.length > 1) {
-      olHtml += '<div class="ck-more" onclick="toggleOutlineExpand()">ほか ' + (s.outline.length - 1) + '件を表示</div>';
-    }
-    outlineWrap.innerHTML = olHtml;
-    }
-  }
+  // v516: OLタブ（3〜7人OLの枠・予定のOL・フレッシュ）は renderOlTab で描画（入力欄は常時表示しない）
+  renderOlTab();
 
   // ── 研修生ファネル（月次：表示中の月に活動 or 結果確定した研修生のみ） ──
   var funnelWrap = document.getElementById('funnelWrap');
@@ -10134,7 +10239,7 @@ function meRenderExtras(m) {
     if (it.kind === 'ol') {
       var pl = it.o.st === 'planned';
       return '<div class="me-task" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openOlRecordModal(\'' + mid + '\',' + it.oi + ')">'
-        + dTag + '<span>📝</span>'
+        + dTag + '<span>📝</span>' + _olKindBadge(_olKindOf(it.o))
         + (pl ? '<span style="flex:none;background:var(--gold);color:#08121a;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">予定</span>' : '')
         + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(it.o.what || it.o.note || 'OL') + (it.o.asan ? ' <span style="color:var(--text-dim);font-size:11px">A:' + evEsc(it.o.asan) + '</span>' : '') + '</span></div>';
     }
@@ -21061,18 +21166,13 @@ function renderCalendar() {
   });
   // v407: OL予定（OL記録の📅予定）もカレンダーに表示（v467: 表示だけ別トグルで消せる）
   if (_olCalOn() && !viewingOwnerUid && state.freshData) {
-    for (var _omid in state.freshData) {
-      var _olog = (state.freshData[_omid] && state.freshData[_omid].olLog) || [];
-      for (var _oj = 0; _oj < _olog.length; _oj++) {
-        var _o = _olog[_oj];
-        if (!_o || !_o.date || _o.st !== 'planned') continue;
-        var _om = null;
-        for (var _omi = 0; _omi < state.members.length; _omi++) { if (state.members[_omi].id === _omid) { _om = state.members[_omi]; break; } }
-        if (!_om || _om.deleted) continue;
-        var _onm = ((_om.lastName || '') + (_om.firstName || '')).trim();
-        (byDate[_o.date] = byDate[_o.date] || []).push({ ev: { id: 'OL_' + _omid + '_' + _oj, type: 'event', date: _o.date, time: '', title: 'OL ' + _onm + (_o.what ? '・' + _o.what : ''), color: '#B48CFF', _ol: true }, span: '' });
-      }
-    }
+    // v516: 同じ企画（3〜7人OL・2人の個別OL）は1本にまとめ、種類を表示
+    _olEvents().forEach(function(_oe) {
+      if (!_oe.date || _oe.st !== 'planned' || !_oe.recs.length) return;
+      var _r0 = _oe.recs[0];
+      var _ot = _oe.kind === 'group' ? ('3〜7人OL（' + _oe.n + '人）') : ('OL ' + _olEvNames(_oe, 2));
+      (byDate[_oe.date] = byDate[_oe.date] || []).push({ ev: { id: 'OL_' + _r0.mid + '_' + _r0.idx, type: 'event', date: _oe.date, time: _oe.time || '', title: _ot + (_oe.what ? '・' + _oe.what : ''), color: _oe.kind === 'group' ? '#8B7CFF' : '#B48CFF', _ol: true }, span: '' });
+    });
   }
   // v424: 💪トレーニング予定/実績（オーナーの端末でだけ合成表示。共有データには存在しない）
   if (typeof _fitOwner === 'function' && _fitOwner() && !viewingOwnerUid && _fitCal) {
@@ -21442,16 +21542,10 @@ function _daySheetHtml(ds, skipTasks) { // v468: PC右パネルで今日を表�
   // v407: OL予定もこの日のシートに表示（v467: 表示だけ別トグルで消せる）
   var ols = [];
   if (typeof _olCalOn === 'function' && _olCalOn() && !viewingOwnerUid && state.freshData) {
-    for (var _dmid in state.freshData) {
-      var _dlog = (state.freshData[_dmid] && state.freshData[_dmid].olLog) || [];
-      for (var _dj = 0; _dj < _dlog.length; _dj++) {
-        var _do = _dlog[_dj];
-        if (!_do || _do.date !== ds || _do.st !== 'planned') continue;
-        var _dm = (typeof _findMember === 'function') ? _findMember(_dmid) : null;
-        if (!_dm || _dm.deleted) continue;
-        ols.push({ mid: _dmid, idx: _dj, name: ((_dm.lastName || '') + (_dm.firstName || '')).trim(), what: _do.what || '', asan: _do.asan || '' });
-      }
-    }
+    _olEvents().forEach(function(_de) { // v516: 企画ごとに1件（種類つき）
+      if (_de.date !== ds || _de.st !== 'planned' || !_de.recs.length) return;
+      ols.push({ mid: _de.recs[0].mid, idx: _de.recs[0].idx, name: (_de.kind === 'group' ? '3〜7人OL（' + _de.n + '人）' : '個別OL ' + _olEvNames(_de, 2)), what: _de.what || '', asan: _de.asan || '', time: _de.time || '' });
+    });
   }
   var h = '';
   if (!evs.length && (skipTasks || !tks.length) && !ols.length) {
@@ -21468,7 +21562,7 @@ function _daySheetHtml(ds, skipTasks) { // v468: PC右パネルで今日を表�
     if (ols.length) h += '<div class="ev-group-label" style="padding-top:12px">' + icn('pencil') + ' OL予定 <span style="opacity:.55;font-weight:600">' + ols.length + '</span></div>'
       + ols.map(function(o){
           return '<div style="padding:11px 13px;border:1px solid var(--border);border-radius:10px;margin-top:6px;cursor:pointer;background:var(--surface2);border-left:3px solid #B48CFF" onclick="closeCalDaySheet(true);openOlRecordModal(\'' + o.mid + '\',' + o.idx + ')">'
-            + '<span style="font-weight:700">' + icn('pencil') + ' ' + evEsc(o.name) + (o.what ? '・' + evEsc(o.what) : '') + '</span>'
+            + '<span style="font-weight:700">' + icn('pencil') + ' ' + (o.time ? evEsc(o.time) + ' ' : '') + evEsc(o.name) + (o.what ? '・' + evEsc(o.what) : '') + '</span>'
             + (o.asan ? ' <span style="font-size:11px;color:var(--text-dim)">A:' + evEsc(o.asan) + '</span>' : '') + '</div>';
         }).join('');
   }
