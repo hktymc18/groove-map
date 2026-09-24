@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v514';
+var APP_JS_VERSION = 'v515';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3313,7 +3313,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v514';
+  var DATA_VERSION = 'v515';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -3548,14 +3548,40 @@ function closeMobileMenu() {
 // v323: 実際に見えている高さ(visualViewport)をCSS変数 --vvh に反映
 // （iOSでキーボードやブラウザUIの後、レイアウト上の高さが古いまま残り「下に空白」が出る問題の根本対策。
 //   全画面ペインは height:var(--vvh) で常に見えている高さぴったりに、下部タブは --vvoff で画面最下部へ）
+// v515: 921-3 カレンダーが上に圧縮される（画面の6割ほどの高さに縮み、祝日の文字も潰れる）の根治。
+//   ホーム画面アプリのiOSは、キーボードを閉じた後も visualViewport.height が「キーボード表示中の小さい高さ」
+//   のまま戻らないことがある。v496の「開いた瞬間に取り直す」ではその古い値を取り直すだけで直らなかった。
+//   → キーボードが出うる入力欄にフォーカスが無い間は、同じ画面幅で実測した「一番大きい高さ」より縮めない
+function _vvEditableFocus() {
+  var ae = document.activeElement;
+  if (!ae) return false;
+  if (ae.isContentEditable || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT') return true;
+  if (ae.tagName !== 'INPUT' || ae.readOnly || ae.disabled) return false; // 読み取り専用（時刻パッド等）はキーボードが出ない
+  return ['button', 'checkbox', 'radio', 'range', 'color', 'file', 'submit', 'reset', 'hidden', 'image'].indexOf((ae.type || '').toLowerCase()) < 0;
+}
+function _vvStandalone() {
+  return (window.navigator.standalone === true) || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+}
+var _vvBase = {}; // 画面幅 → キーボード無しで実測した最大の高さ（ホーム画面アプリのみ）
+function _vvhTarget() {
+  // v325: v324の screen.height 強制補正は撤回（ステータスバー等の分を誤差として押し出し、
+  // 下部バーが画面外に隠れて押せなくなるため）。実測値（visualViewport・レイアウト高さ）のみを使う
+  var vv = window.visualViewport;
+  var h = vv ? Math.round(vv.height) : window.innerHeight;
+  if (typeof isPCMode === 'function' && isPCMode()) return h;
+  if (!_vvStandalone()) return h; // Safariのタブ表示はツールバーの出入りで高さが正しく変わるため従来どおり
+  if (_vvEditableFocus()) return h; // キーボード表示中は見えている高さぴったりに
+  var cand = Math.max(h, Math.round(window.innerHeight || 0), Math.round((document.documentElement && document.documentElement.clientHeight) || 0));
+  var cap = Math.max(screen.width || 0, screen.height || 0);
+  if (cap) cand = Math.min(cand, cap);
+  var wk = String(Math.round(window.innerWidth || 0));
+  if (cand > (_vvBase[wk] || 0)) _vvBase[wk] = cand;
+  return Math.max(cand, _vvBase[wk] || 0);
+}
 function _vvhUpdate() {
   try {
-    // v325: v324の screen.height 強制補正は撤回（ステータスバー等の分を誤差として押し出し、
-    // 下部バーが画面外に隠れて押せなくなるため）。実測のvisualViewportのみを正とする
-    var vv = window.visualViewport;
-    var h = vv ? Math.round(vv.height) : window.innerHeight;
     var root = document.documentElement;
-    root.style.setProperty('--vvh', h + 'px');
+    root.style.setProperty('--vvh', _vvhTarget() + 'px');
     root.style.setProperty('--vvoff', '0px');
   } catch(e9) {}
 }
@@ -3680,12 +3706,10 @@ setInterval(function() {
   try {
     if (typeof isPCMode === 'function' && isPCMode()) return; // v414: PCでは監視不要
     if (document.hidden) return; // v511: アプリが裏にある間は監視しない（電池の節約）
-    var ae = document.activeElement;
-    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return; // 入力中は触らない
-    var vv = window.visualViewport;
-    var h = vv ? Math.round(vv.height) : window.innerHeight;
+    if (_vvEditableFocus()) return; // 入力中は触らない（v515: 読み取り専用の欄は対象外＝監視を止めない）
+    var h = _vvhTarget();
     var cur = parseInt(document.documentElement.style.getPropertyValue('--vvh') || '0', 10) || 0;
-    if (cur && Math.abs(h - cur) > 24) _vvhUpdate(); // 変数が実高さとズレたら取り直し
+    if (!cur || Math.abs(h - cur) > 24) _vvhUpdate(); // 変数が正しい高さとズレたら取り直し
     var sa = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
     if (sa && (screen.height - window.innerHeight) > 110) { _gapKicked = 0; _iosGapKick(); } // 幻のツールバー状態は何度でも蹴る
   } catch(eWd) {}
@@ -4288,6 +4312,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v515', d:'2026-09-24', items:['📅 カレンダーが上に圧縮される不具合（921-3）を修正：ホーム画面アプリでキーボードを閉じた後、iPhoneが「キーボード表示中の小さい高さ」を返し続けることがあり、カレンダーが画面の6割ほどに縮んで祝日の文字も潰れていました。文字入力中以外は、その端末で実際に測れた画面いっぱいの高さより縮めないようにしました'] },
   { v:'v514', d:'2026-09-23', items:['🏟 運動会MAPを紙のMAPと同じ「陸上トラック型」に作り直し：丸は必ず段の線（レーン）の上に並び、内外にずらしません。人数が多い段があるとトラックが自動で横に伸び、丸どうしが重なりません','🔗 線は紙のMAPと同じ「くし形」に：親から外へ出てレーンの間を進み、子へまっすぐ入るので、線が他の人の丸を突き抜けず、渦巻きになりません','📄 「A3印刷」を「PDFで保存」に変更：A3横のPDF（ファイル名 MAP_年月_名前.pdf）を作成。スマホは共有シートからファイル保存・LINE・コンビニのプリントアプリへ、PCはそのままダウンロード','✂️ PDFを分けて作れるように：全体MAP／系列ごとのMAP（1段目の人を中心に「嶽本MAP（ブルーダイヤモンド）」など）／選んだ系列を除いたMAP／地域MAP（つながりを示す他地域の上位者は薄く表示）。選んだものが1枚ずつのページになり、丸が小さくなりすぎるページは分割をおすすめします'] },
   { v:'v513', d:'2026-09-23', items:['📏 スマホのMAPでカードの高さを統一：フレッシュ（金枠）のカードだけ縦に大きくなっていたのを修正（OLタブのフレッシュリスト用の余白が誤ってMAPのカードにも付いていました）。配下がいるカード／いないカードの数pxの差もなくし、全カード同じ高さに'] },
   { v:'v512', d:'2026-09-23', items:['⚡ 起動をさらに高速化：アプリ本体のプログラムを app.js に分離。ブラウザがプログラムの解析結果を保存して使い回せるようになり、2回目以降の起動が速くなります（特にスマホ）','🛡 index.html と app.js の組み合わせが食い違った場合（アップロード途中など）は自動で読み直し、それでも合わなければ「更新中です」と案内して、壊れた状態で保存されないように'] },
