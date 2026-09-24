@@ -490,6 +490,7 @@ tr:last-child td{border-bottom:none;}
       <label for="evUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="evUnionSel"></select>
       <span style="flex:1"></span>
+      <button id="btnPledges" title="オンライン受講の誓約書の同意記録をまとめて見る">📜 誓約書</button>
       <button class="primary" id="btnAddEvent">＋ 新規イベント</button>
     </div>
     <div class="evlist" id="evList"></div>
@@ -2454,44 +2455,102 @@ function copyText(t, btn){
 }
 
 /* ---------- オンライン受講の承認キュー ---------- */
-/* 誓約書アーカイブ: オンライン受講申請時の同意記録（ユニオン単位・改変不可） */
+/* 誓約書アーカイブ: オンライン受講申請時の同意記録（ユニオン単位・改変不可）。
+   イベントタブの「📜 誓約書」から常設で開ける（ev なし）。承認キューからも従来どおり開ける（ev あり）。
+   イベント別にグルーピング表示し、絞り込みとCSV台帳出力に対応 */
 function pledgeArchiveModal(ev){
-  var un = ev.hostUnion || '';
+  var un = ev ? (ev.hostUnion || '') : (gEventUnion || gUnion);
   db.collection('checkinPledges').where('union', '==', un).get().then(function(qs){
     var rows = [];
     qs.forEach(function(d){ rows.push(d.data()); });
-    rows.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
-    modal('<h2>📜 誓約書アーカイブ — ' + esc(un) + '（' + rows.length + '件）</h2>'
-      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">オンライン受講の申請時に同意された誓約の記録です。行をタップで全文を表示。</p>'
-      + (rows.length
-        ? '<div style="max-height:340px;overflow:auto;">' + rows.map(function(r, i){
-            return '<div data-pl="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);cursor:pointer;flex-wrap:wrap;">'
-              + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.atLocal || '') + '</span>'
-              + '<b>' + esc(r.name || '') + '</b>'
-              + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.no || '') + '</span>'
-              + '<span style="font-size:12px;color:var(--sub);">' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '') + '</span>'
-              + '</div>';
-          }).join('') + '</div>'
-        : '<p style="color:var(--sub);font-size:13px;">まだ記録はありません。</p>')
-      + '<div class="btns"><button id="plaClose">閉じる</button></div>', true);
-    $('plaClose').onclick = function(){ onlineModal(ev); };
-    Array.prototype.forEach.call(document.querySelectorAll('[data-pl]'), function(el){
-      el.onclick = function(){
-        var r = rows[+el.getAttribute('data-pl')];
-        modal('<h2>誓約書</h2>'
-          + '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.7;">'
-          + pledgeBodyHtml() + '</div>'
-          + '<div style="font-size:13px;margin-top:10px;line-height:1.8;">'
-          + '誓約者: <b>' + esc(r.name || '') + '</b>（' + esc(r.no || '') + '・' + esc(r.group || '') + '）<br>'
-          + '同意日時: ' + esc(r.atLocal || '') + '　対象: ' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '')
-          + (r.envApprover ? '<br>環境責任者: ' + esc(r.envApprover) : '')
-          + '<br><span style="color:var(--sub);font-size:12px;">文言バージョン: ' + esc(r.ver || '') + '</span></div>'
-          + '<div class="btns"><button id="plvBack">一覧に戻る</button></div>');
-        $('plvBack').onclick = function(){ pledgeArchiveModal(ev); };
-      };
+    // 新しいイベント順 → 同イベント内は同意日時の新しい順
+    rows.sort(function(a, b){
+      var da = a.eventDate || '', dbb = b.eventDate || '';
+      if(da !== dbb) return da < dbb ? 1 : -1;
+      var na = a.eventName || '', nb = b.eventName || '';
+      if(na !== nb) return na < nb ? -1 : 1;
+      return (b.atMs || 0) - (a.atMs || 0);
     });
+    function listHtml(q){
+      var norm = String(q || '').replace(/[ 　]/g, '').toLowerCase();
+      var out = '', lastKey = null, shown = 0;
+      rows.forEach(function(r, i){
+        if(norm){
+          var hay = ((r.name || '') + (r.no || '') + (r.group || '') + (r.eventName || '') + (r.eventDate || ''))
+            .replace(/[ 　]/g, '').toLowerCase();
+          if(hay.indexOf(norm) < 0) return;
+        }
+        var key = (r.eventDate || '') + '　' + (r.eventName || '');
+        if(key !== lastKey){
+          out += '<div style="font-size:12px;font-weight:700;color:var(--sub);background:var(--bg);'
+            + 'padding:5px 6px;border-radius:6px;margin-top:8px;position:sticky;top:0;">📅 ' + esc(key) + '</div>';
+          lastKey = key;
+        }
+        out += '<div data-pl="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);cursor:pointer;flex-wrap:wrap;">'
+          + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.atLocal || '') + '</span>'
+          + '<b>' + esc(r.name || '') + '</b>'
+          + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.no || '') + '</span>'
+          + '<span style="font-size:12px;color:var(--sub);">' + esc(r.group || '') + '</span>'
+          + (r.envApprover ? '<span style="font-size:11.5px;color:var(--sub);">環境: ' + esc(r.envApprover) + '</span>' : '')
+          + '</div>';
+        shown++;
+      });
+      return { html: out || '<p style="color:var(--sub);font-size:13px;margin-top:10px;">'
+        + (rows.length ? '該当する記録がありません。' : 'まだ記録はありません。') + '</p>', n: shown };
+    }
+    modal('<h2>📜 誓約書アーカイブ — ' + esc(un) + '（<span id="plaCt">' + rows.length + '</span>件）</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">オンライン受講の申請時に同意された誓約の記録です。行をタップで全文を表示。</p>'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<input type="search" id="plaQ" placeholder="氏名・番号・系列・イベントで絞り込み" style="flex:1;min-width:0;">'
+      + (rows.length ? '<button id="plaCsv" title="表示中の記録を台帳CSVで保存">台帳CSV</button>' : '')
+      + '</div>'
+      + '<div id="plaList" style="max-height:340px;overflow:auto;"></div>'
+      + '<div class="btns"><button id="plaClose">閉じる</button></div>', true);
+    function bindRows(){
+      Array.prototype.forEach.call(document.querySelectorAll('[data-pl]'), function(el){
+        el.onclick = function(){
+          var r = rows[+el.getAttribute('data-pl')];
+          modal('<h2>誓約書</h2>'
+            + '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.7;">'
+            + pledgeBodyHtml() + '</div>'
+            + '<div style="font-size:13px;margin-top:10px;line-height:1.8;">'
+            + '誓約者: <b>' + esc(r.name || '') + '</b>（' + esc(r.no || '') + '・' + esc(r.group || '') + '）<br>'
+            + '同意日時: ' + esc(r.atLocal || '') + '　対象: ' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '')
+            + (r.envApprover ? '<br>環境責任者: ' + esc(r.envApprover) : '')
+            + '<br><span style="color:var(--sub);font-size:12px;">文言バージョン: ' + esc(r.ver || '') + '</span></div>'
+            + '<div class="btns"><button id="plvBack">一覧に戻る</button></div>');
+          $('plvBack').onclick = function(){ pledgeArchiveModal(ev); };
+        };
+      });
+    }
+    function rerender(){
+      var res = listHtml($('plaQ').value);
+      $('plaList').innerHTML = res.html;
+      $('plaCt').textContent = res.n;
+      bindRows();
+    }
+    rerender();
+    $('plaQ').addEventListener('input', rerender);
+    var cb = $('plaCsv');
+    if(cb) cb.onclick = function(){
+      var norm = String($('plaQ').value || '').replace(/[ 　]/g, '').toLowerCase();
+      var out = [['同意日時', '会員番号', '氏名', '系列', 'ユニオン', 'イベント日', 'イベント名', '環境責任者', '文言バージョン']];
+      rows.forEach(function(r){
+        if(norm){
+          var hay = ((r.name || '') + (r.no || '') + (r.group || '') + (r.eventName || '') + (r.eventDate || ''))
+            .replace(/[ 　]/g, '').toLowerCase();
+          if(hay.indexOf(norm) < 0) return;
+        }
+        out.push([r.atLocal || '', r.no || '', r.name || '', r.group || '', r.union || '',
+                  r.eventDate || '', r.eventName || '', r.envApprover || '', r.ver || '']);
+      });
+      csvDownload('誓約書台帳_' + un + '_' + todayStr() + '.csv', out);
+      toast('誓約書台帳CSVを保存しました（' + (out.length - 1) + '件）');
+    };
+    $('plaClose').onclick = ev ? function(){ onlineModal(ev); } : closeModal;
   }).catch(function(e){ toast(permMsg(e, '誓約書アーカイブの閲覧権限がありません')); });
 }
+$('btnPledges').onclick = function(){ pledgeArchiveModal(null); };
 function onlineModal(ev){
   // 電子領収書の発行者名（主催ユニオンの設定）
   var olIssuer = '';
