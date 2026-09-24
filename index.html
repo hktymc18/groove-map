@@ -1639,6 +1639,12 @@ body.cal-fs .pc-toolbar{display:none!important}
 /* マップ生命化（Phase E）：活動中は脈打ち・30日放置は色あせ */
 @keyframes mapPulse{0%,100%{opacity:1}50%{opacity:.78}}
 .oval-node.act-active{animation:mapPulse 2.8s ease-in-out infinite}
+/* v519: 923-5 研修生・フレッシュの発光が「活動中」の脈打ちで上書きされ、最近活動した人だけ光らなかった → 両方のアニメを重ねる */
+.oval-node.act-active.pc-care-tr{animation:pcCareTr 1.8s ease-in-out infinite,mapPulse 2.8s ease-in-out infinite}
+.oval-node.act-active.pc-fresh{animation:pcFreshGlow 1.8s ease-in-out infinite,mapPulse 2.8s ease-in-out infinite}
+/* v518: 絞り込み（地域・カテゴリ）で薄くした人は、脈打ち・発光アニメより優先して確実に薄く（922-3） */
+.oval-node.map-dim{opacity:.22!important;animation:none!important;filter:none!important}
+.oval-node.map-unfocus{opacity:.6!important;animation:none!important}
 /* v468: 長期未活動は薄くせずバッジで表現 */
 .nc.act-active>.card-main{box-shadow:0 0 12px rgba(44,229,184,.22)}
 /* v468: 長期未活動は薄くせずバッジで表現（モバイル） */
@@ -2537,7 +2543,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v517</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v519</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3458,7 +3464,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v517';</script>
-<script src="app.js?v=v517"></script>
+<script>window.GM_EXPECT_JS='v519';</script>
+<script src="app.js?v=v519"></script>
 </body>
 </html>
