@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v517';
+var APP_JS_VERSION = 'v518';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -993,7 +993,7 @@ function renderPCMap(mapType) {
     if (typeof regionFilter !== 'undefined' && regionFilter) {
       var _rg9 = normalizeRegionValue(m.region); // v496: 正規化して判定（922-3）
       var _rok9 = (regionFilter === '__NONE__') ? !_rg9 : (_rg9 === normalizeRegionValue(regionFilter));
-      if (!_rok9) g.style.opacity = '0.22';
+      if (!_rok9) { g.style.opacity = '0.22'; g.classList.add('map-dim'); } // v518: クラスでも薄暗（活動中の脈打ち・発光アニメに上書きされない）
     }
     g.style.cursor='pointer';
 
@@ -1259,17 +1259,8 @@ function renderPCMap(mapType) {
     var links = svg.querySelectorAll('.pc-link');
     var lanes = svg.querySelectorAll('.lane-bg');
     var i;
-    for (i=0;i<nodes.length;i++){
-      var nl = nodes[i].getAttribute('data-lineage');
-      var fOk = (!lin || nl===lin || nl==='');
-      // v438: 系列フォーカスが地域絞り込みを上書きしないように（他地域は薄いまま維持）
-      var rOk = true;
-      if (typeof regionFilter !== 'undefined' && regionFilter) {
-        var rg9 = (nodes[i].getAttribute('data-region') || '').trim();
-        rOk = (regionFilter === '__NONE__') ? !rg9 : (rg9 === regionFilter);
-      }
-      nodes[i].style.opacity = !rOk ? '0.22' : (fOk ? '1' : '0.6');
-    }
+    // v518: 薄暗の判定は共通処理に一本化（地域の表記ゆれ正規化・カテゴリ絞り込みも同時に反映）
+    _applyMapDims();
     for (i=0;i<links.length;i++){
       var ll = links[i].getAttribute('data-lineage');
       links[i].style.opacity = (!lin || ll===lin) ? '1' : '0.35';
@@ -1872,6 +1863,7 @@ function orbitSearch(q) {
     var m = byId[nodes[j].getAttribute('data-mid')];
     var hit = !!(m && norm((m.lastName || '') + (m.firstName || '')).indexOf(nq) >= 0);
     nodes[j].classList.toggle('orbit-hit', hit);
+    nodes[j].classList.remove('map-dim', 'map-unfocus'); // v518: 検索のスポットライトを優先
     nodes[j].style.opacity = hit ? '1' : '0.15';
     if (hit && !firstHit) firstHit = nodes[j].getAttribute('data-mid');
   }
@@ -2503,7 +2495,9 @@ function buildRegionFilter(members, wrap) {
     var chip = document.createElement('div');
     chip.textContent = isAll ? '📍全地域' : (r === '__NONE__' ? '未設定' : r);
     chip.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:10px;cursor:pointer;border:1px solid ' + (active?'#FF87B3':'var(--border)') + ';background:' + (active?'#FF87B3':'transparent') + ';color:' + (active?'#fff':'var(--text-dim)');
-    chip.onclick = function(){ regionFilter = isAll ? '' : r; renderCurrentView(); setTimeout(applyRegionDim, 160); };
+    // v518: 922-4 地域を切り替えたら系列フォーカスも解除（フォーカスの薄暗が残り「全地域に戻しても暗いまま」になっていた。
+    //        選んだ地域の人が別系列だと0.6に沈み「選んだ地域が強調されない」原因にもなっていた）
+    chip.onclick = function(){ regionFilter = isAll ? '' : r; window._pcFocusLineage = ''; renderCurrentView(); setTimeout(applyRegionDim, 160); };
     wrap.appendChild(chip);
   });
   return true;
@@ -2543,6 +2537,12 @@ function _applyMapDims() {
     var _nl9 = nodes[i].getAttribute('data-lineage');
     var _fOk9 = (!_lin9 || _nl9 === _lin9 || _nl9 === '');
     nodes[i].style.opacity = !ok ? '0.22' : (_fOk9 ? '1' : '0.6');
+    // v518: 922-3 活動中（脈打ち＝opacityアニメ）や研修中・フレッシュの発光アニメは style.opacity より優先されるため、
+    //        他地域なのに明るく光って「選んだ地域より目立つ」状態だった。クラス（!important＋アニメ停止）で確実に薄くする
+    if (nodes[i].classList) {
+      nodes[i].classList.toggle('map-dim', !ok);
+      nodes[i].classList.toggle('map-unfocus', ok && !_fOk9);
+    }
   }
   // モバイルツリーカード（HTML）※結合ノードも合成リストで解決
   var cards = document.querySelectorAll('.nc[data-cid]');
@@ -3313,7 +3313,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v517';
+  var DATA_VERSION = 'v518';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4314,6 +4314,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v518', d:'2026-09-24', items:['📍 地域の絞り込みで、選んだ地域ではない人が明るく目立ってしまう不具合を修正（922-3）：活動中の脈打ちや研修中・フレッシュの発光アニメが薄暗表示より優先されていました。絞り込みで薄くした人はアニメを止めて確実に薄く表示します','📍 地域を選んだ後に「全地域」に戻しても暗いままの人が残る不具合を修正（922-4）：カードをクリックした時の「系列フォーカス」の薄暗が残っていました。地域を切り替えると系列フォーカスも解除します。系列フォーカス中の地域判定も表記ゆれ（愛知⇄名古屋）とカテゴリ絞り込みに対応'] },
   { v:'v517', d:'2026-09-24', items:['📅 スマホのカレンダー（予定）が下にはみ出し、下のボタンが隠れていた不具合を修正：v515の「上に圧縮される」対策で、ホーム画面アプリでは実際に見えている高さより大きい値（ステータスバー分など）を使ってしまっていました。見えている高さだけを基準にし、キーボードを閉じた後に縮んだままになる対策はそのまま残しています'] },
   { v:'v516', d:'2026-09-24', items:['📋 OLタブを刷新：入力欄を常に並べるのをやめ、見るだけのすっきりした画面に。企画・記録は下の＋ボタン（PCは右上の「＋ OLを企画」）から','👥 OLは「個別OL（マンツーマン・2人まで）」と「3〜7人OL（3〜7人組）」の2種類。＋ボタン→種類→人を選ぶ（複数可）→日時・Aさん・内容で企画。Aさん・内容は過去の入力からワンタップ','🔢 「今月の3〜7人OL」は紙のMAPと同じ枠3つ（最低月3回）で表示。空き枠をタップするとそのまま企画できます。これまでの「３〜７人のアウトライン」の入力内容は3〜7人OLの記録として自動で引き継ぎます','📅 予定のOLを一覧表示。日付を過ぎた予定は「結果を入力」から実施済みにして反応（全員共通＋人ごと）を記録','🌿 フレッシュは1人1行（要フォロー順・色分け）。タップでその人のOL履歴と「この人でOLを企画」。「まとめて選ぶ」で複数人をまとめて企画','🗓 カレンダーのOL予定は企画ごとに1本（例「3〜7人OL（5人）」）にまとめて表示'] },
   { v:'v515', d:'2026-09-24', items:['📅 カレンダーが上に圧縮される不具合（921-3）を修正：ホーム画面アプリでキーボードを閉じた後、iPhoneが「キーボード表示中の小さい高さ」を返し続けることがあり、カレンダーが画面の6割ほどに縮んで祝日の文字も潰れていました。文字入力中以外は、その端末で実際に測れた画面いっぱいの高さより縮めないようにしました'] },
