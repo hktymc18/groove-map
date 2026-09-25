@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v529';
+var APP_JS_VERSION = 'v530';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -412,12 +412,21 @@ function copyToNextMonth() {
   }); // v440: OUTは当月のみ表示し、翌月コピーで常に除外
   var _outChanges = [];
   if (Object.keys(outIds).length) {
+    // v530: OUTした人の直下は、当月はそのまま→翌月コピーでここでロールアップ（移動先をプレビューに出す）
+    var _outKidN = {}, _outTo = {};
+    var _byId30 = {}; copyMembers.forEach(function(mm){ _byId30[mm.id] = mm; });
+    Object.keys(outIds).forEach(function(oid){
+      _outKidN[oid] = copyMembers.filter(function(c){ return c.parentId === oid && !c.deleted && !outIds.hasOwnProperty(c.id); }).length;
+      var up = outIds[oid], g0 = 0;
+      while (outIds.hasOwnProperty(up) && g0++ < 60) up = outIds[up];
+      _outTo[oid] = _byId30[up] ? mcName(_byId30[up]) : '';
+    });
     copyMembers.forEach(function(mm){
       var guard = 0;
       while (outIds.hasOwnProperty(mm.parentId) && guard++ < 60) mm.parentId = outIds[mm.parentId];
     });
     copyMembers.filter(function(mm){ return outIds.hasOwnProperty(mm.id); }).forEach(function(mm){
-      _outChanges.push({ name: mcName(mm), from: (((mm.title||'').trim()) === 'OUT' ? 'OUT' : '流れた（NA）'), to: '翌月から除外', kind: 'out' });
+      _outChanges.push({ name: mcName(mm), from: (((mm.title||'').trim()) === 'OUT' ? 'OUT' : '流れた（NA）'), to: '翌月から除外' + (_outKidN[mm.id] ? '（直下' + _outKidN[mm.id] + '人は' + (_outTo[mm.id] ? _outTo[mm.id] + 'さん' : '上のアップライン') + 'の直下へ）' : ''), kind: 'out' });
     });
     copyMembers = copyMembers.filter(function(mm){ return !outIds.hasOwnProperty(mm.id); });
     // 付け替え先が消えている等の孤児はルート直下へ退避（見えないメンバーを作らない）
@@ -3431,7 +3440,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v529';
+  var DATA_VERSION = 'v530';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4441,6 +4450,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v530', d:'2026-09-25', items:['🚪 OUTにした時、直下の組織は「今月はそのまま」に。誰の下がOUTしたのかMAPで分かるように残し、翌月コピーの時に上のアップラインの直下へ自動で移動（ロールアップ）します。翌月コピーの確認画面に「直下◯人は△△さんの直下へ」と表示'] },
   { v:'v529', d:'2026-09-25', items:['📈 データタブの推移グラフに、過去の月のデータが出ない問題を修正。過去の月は「その月のMAP」から総人数・稼働・OUT・研修生などを集計し直して表示し、UNIVERSE・コミッションはその月に入力した数字を使います（翌月コピーをしていない月や、あとから増えた項目も表示されます）'] },
   { v:'v528', d:'2026-09-25', items:['🛠 カレンダー（月表示）の予定の帯をダブルクリックすると新規追加になってしまう不具合を修正。帯のダブルクリックでその予定の編集が開きます'] },
   { v:'v527', d:'2026-09-25', items:['🛠 PCの予定：右側の予定をクリックした時の詳細に、アイコンのソース（<svg…>）が文字で表示されていたのを修正','✎ カレンダー上の予定の帯を「ダブルクリック」または「右クリック」で、そのまま編集画面を開けるように（月・週・日表示）'] },
@@ -12258,10 +12268,10 @@ function saveMember() {
     var _nm6 = ((m.lastName || '') + (m.firstName || '')).trim();
     var _liveKids6 = state.members.filter(function(c) { return c.parentId === m.id && !c.deleted; });
     if (_t1m === 'OUT' && _t0m !== 'OUT') {
-      // OUT＝ビジネス終了。組織は上のアップラインへ（リスタートのカウントはしない）
+      // OUT＝ビジネス終了（リスタートのカウントはしない）
+      // v530: 当月は組織をそのまま（誰の下がOUTしたか分かるように）。翌月コピーで上のアップラインへロールアップ
       if (m.parentId && _liveKids6.length) {
-        if (!confirm(_nm6 + 'さんをOUTにします。\n直下 ' + _liveKids6.length + '人 は上のアップラインの直下に移動します。よろしいですか？')) return;
-        _liveKids6.forEach(function(c) { c.parentId = m.parentId; });
+        setTimeout(function() { toast('🚪 ' + _nm6 + 'さんをOUTにしました。直下 ' + _liveKids6.length + '人 は今月はそのまま、翌月コピーで上のアップラインの直下に移動します'); }, 400);
       }
       m.rollup = '';
     } else if (isBROrAbove(_t0m) && !isBROrAbove(_t1m) && _t1m !== 'OUT' && m.parentId) {
