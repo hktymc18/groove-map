@@ -2648,7 +2648,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v525</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v526</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -2699,6 +2699,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <span style="font-size:12px;color:var(--text-dim)">レベル</span>
       <select id="levelSelect" onchange="expandToLevel(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;padding:5px 10px;border-radius:8px;outline:none"></select>
       <div id="depthFilterBtns" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+      <span id="treeSortSlotC" class="tree-sort-slot"></span>
     </div>
     <div id="searchBar" style="padding:8px 14px 0">
       <!-- ジャンプ検索：階層を壊さず、名前でツリー内の本人へスクロール＆ハイライト -->
@@ -2791,7 +2792,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="pv-btn" id="pvOrbitI" onclick="switchPCView('orbit')">◎ 運動会</div>
       <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">テーブル</div>
     </div>
-    <div class="sec-label mobile-tree">目標ツリー</div>
+    <div class="sec-label mobile-tree" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">目標ツリー <span id="treeSortSlotI" class="tree-sort-slot" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
     <div class="pc-filter-bar" id="pcFilterIdeal"></div>
     <div class="pc-map-wrap" id="pcMapIdeal"></div>
     <div class="pc-orbit-wrap" id="pcOrbitIdeal"></div>
@@ -3565,7 +3566,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v525';</script>
-<script src="app.js?v=v525"></script>
+<script>window.GM_EXPECT_JS='v526';</script>
+<script src="app.js?v=v526"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v525';
+var APP_JS_VERSION = 'v526';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -816,7 +816,12 @@ function renderPCMap(mapType) {
   // 地域フィルタバー（地域が設定されているメンバーがいる時のみ・マップ構造の上に配置）
   var regionBar = document.createElement('div');
   regionBar.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);background:var(--bg)';
-  if (buildRegionFilter(members, regionBar)) wrap.appendChild(regionBar);
+  // v526: 並び順の選択は常に表示（地域チップはその右に）
+  var _tsBox = document.createElement('span'); _tsBox.innerHTML = treeSortSelectHtml(); _tsBox.style.marginRight = '6px';
+  var _rgBox = document.createElement('span'); _rgBox.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;align-items:center';
+  buildRegionFilter(members, _rgBox);
+  regionBar.appendChild(_tsBox); regionBar.appendChild(_rgBox);
+  wrap.appendChild(regionBar);
 
   // 段ルーラー（固定）
   var ruler = document.createElement('div');
@@ -1600,6 +1605,39 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     ring.setAttribute('data-r', R1d);
     svg.appendChild(ring);
   }
+  // v526: 並び順「地域ごと」では、同じ地域が続く所をレーン上の色帯でまとめて見せる（色=地域）
+  var _rgO = null, _rgCol = null;
+  if (_treeSortMode === 'region') {
+    _rgO = _regionOrder(members);
+    var RCOL = ['#5AD7FF','#FF87B3','#4ADE80','#FFB454','#C583FF','#FF5D73','#FFD166','#3ED5C4','#67B7FF','#FF9F6E'];
+    _rgCol = function(key) { var i = _rgO.idx[key]; return (key && i != null) ? RCOL[i % RCOL.length] : '#8a94a6'; };
+    var rKey = function(id) { return normalizeRegionValue((_byId[id] && _byId[id].region) || ''); };
+    for (var dz in byLane) {
+      var ids7 = byLane[dz], rz = laneR(+dz), s7 = laneS[dz];
+      for (var i7 = 0; i7 < ids7.length;) {
+        var k7 = rKey(ids7[i7]), j7 = i7;
+        while (j7 + 1 < ids7.length && rKey(ids7[j7 + 1]) === k7 && s7[j7 + 1] - s7[j7] < MIN * 1.7) j7++; // 離れている所は帯を分ける
+        var z0 = s7[i7] - MIN * 0.42, z1 = s7[j7] + MIN * 0.42, zd = '', steps7 = Math.max(1, Math.ceil((z1 - z0) / 8));
+        for (var q7 = 0; q7 <= steps7; q7++) { var pz = lanePt(rz, sToU(rz, z0 + (z1 - z0) * q7 / steps7)); zd += (q7 ? ' L' : 'M') + pz.x.toFixed(1) + ',' + pz.y.toFixed(1); }
+        var zp = document.createElementNS(NS, 'path');
+        zp.setAttribute('d', zd); zp.setAttribute('fill', 'none'); zp.setAttribute('stroke', _rgCol(k7));
+        zp.setAttribute('stroke-width', 2 * nr + 12); zp.setAttribute('stroke-linecap', 'round'); zp.setAttribute('stroke-linejoin', 'round');
+        zp.setAttribute('opacity', light ? '0.26' : '0.22'); zp.setAttribute('class', 'orbit-zone'); zp.setAttribute('data-region', k7);
+        zp.setAttribute('pointer-events', 'none');
+        svg.appendChild(zp);
+        if (+dz === 1) { // 1段目の帯には地域名（内側）
+          var pm = lanePt(rz - nr - 22, sToU(rz, (s7[i7] + s7[j7]) / 2));
+          var zt = document.createElementNS(NS, 'text');
+          zt.setAttribute('x', pm.x.toFixed(1)); zt.setAttribute('y', (pm.y + 6).toFixed(1));
+          zt.setAttribute('text-anchor', 'middle'); zt.setAttribute('font-size', '17px'); zt.setAttribute('font-weight', '800');
+          zt.setAttribute('fill', _rgCol(k7)); zt.setAttribute('class', 'orbit-zone-lb'); zt.setAttribute('pointer-events', 'none');
+          zt.textContent = k7 || '未設定';
+          svg.appendChild(zt);
+        }
+        i7 = j7 + 1;
+      }
+    }
+  }
   // 段ラベル（左端、そのレーンの内側の帯に小さく）
   for (var d2 = 1; d2 <= maxLane; d2++) {
     var lb = document.createElementNS(NS, 'text');
@@ -1667,7 +1705,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     svg.appendChild(spn);
   }
   // 段ラベルは線の上に（読めるよう背景色のふち取り）
-  Array.prototype.slice.call(svg.querySelectorAll('.orbit-ring-lb')).forEach(function(el) {
+  Array.prototype.slice.call(svg.querySelectorAll('.orbit-ring-lb, .orbit-zone-lb')).forEach(function(el) {
     el.style.stroke = light ? '#ffffff' : 'var(--bg)'; el.style.strokeWidth = '4px'; el.style.paintOrder = 'stroke';
     svg.appendChild(el);
   });
@@ -1814,7 +1852,13 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   var bar = document.createElement('div');
   bar.style.cssText = 'display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap';
   bar.innerHTML = '<b style="font-size:13px">◎ 運動会MAP</b>'
-    + '<span style="font-size:11px;color:var(--text-dim)">' + (state.currentMonth || '') + '・' + members.length + '人・レーン=段数／色=系列</span>'
+    + '<span style="font-size:11px;color:var(--text-dim)">' + (state.currentMonth || '') + '・' + members.length + '人・レーン=段数／' + (_rgO ? '線の色=系列・帯の色=地域' : '色=系列') + '</span>'
+    + treeSortSelectHtml()
+    + (_rgO ? '<span class="orbit-rg-legend" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--text-mid)">'
+      + _rgO.keys.concat(members.some(function(m) { return !normalizeRegionValue(m.region || ''); }) ? [''] : []).map(function(k) {
+          var n = k ? _rgO.cnt[k] : members.filter(function(m) { return !m.deleted && !normalizeRegionValue(m.region || ''); }).length;
+          return '<span style="display:inline-flex;align-items:center;gap:3px"><i style="width:10px;height:10px;border-radius:50%;background:' + _rgCol(k) + ';display:inline-block"></i>' + evEsc(k || '未設定') + ' ' + n + '</span>';
+        }).join('') + '</span>' : '')
     + '<input id="orbitSearch' + (mapType === 'current' ? 'C' : 'I') + '" type="search" placeholder="🔍 名前でスポットライト" autocomplete="off" '
     + 'style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12.5px;padding:6px 12px;border-radius:9px;outline:none;width:210px" '
     + 'oninput="orbitSearch(this.value)" value="' + evEsc(_orbitQ) + '">'
@@ -3387,7 +3431,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v525';
+  var DATA_VERSION = 'v526';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4397,6 +4441,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v526', d:'2026-09-25', items:['↕ MAPの並び順を選べるように：標準（タイトル順）／地域ごと／GSVが高い順／組織が大きい順／登録が古い順。ツリー（スマホ・PC）と運動会MAP、現状・理想の両方に反映され、端末ごとに記憶します','📍 運動会MAPで「地域ごと」を選ぶと、同じ地域の人がまとまって並び、レーン上に地域の色帯＋地域名が付きます（線の色は系列のまま）。PDFにも反映'] },
   { v:'v525', d:'2026-09-24', items:['🔗 理想MAP→PLANの「今月の目標」を自動に：フロント（直下の新規B1）・ユーザーPT・チームB1・チームPT（理想のGSV）は理想MAPの数字。PLANでは表示のみ（変更は理想MAPで）','📊 データタブの「今月の目標」は理想MAPに対する達成率（新規B1・チームGSV・S稼働・コミッション）','⭐ 理想MAPに「長期目標から見た今月の目安」：年間ロードマップの今月のフロント・流通、PLANの目標月収に対して、理想で達成できているか／あといくつか','🗓 翌月コピーで来月の理想MAPを「新しい現状から作り直す（おすすめ）／今月の理想を引き継ぐ」から選択。作り直す時は理想で追加した新規B1を持ち越せます'] },
   { v:'v524', d:'2026-09-24', items:['🎯 理想MAPを刷新（第1弾）：上に「今月の理想 vs 現状」（新規B1・チームGSV・S稼働・平均稼働・コミッション）をバーで表示','✏️ 理想MAPのカードをタップすると、かんたん編集（理想のGSV・稼働／この人の直下に新規B1をまとめて追加）。新規B1はタイトルLOI・GSV 1,500Pで追加（手入力で変更可）。新規B1の人数に数えるのは1,000P以上','🏷 カードに現状との差（NEW・+GSV・B→A など）を表示','💴 コミッションを自動計算：SB＝今月スタートの直下B1のGSV×3%×126円、BB＝PLANのBB早見表、LB。理想と現状を同じ計算で比較（データタブの概算も同じ計算に）'] },
   { v:'v523', d:'2026-09-24', items:['⚡ パワーラインを「系列ごと」に：フロント（直下）の系列でLTSVが5,000P以上のラインだけを表示。配下のBRは系列のLTSVに含まれるので、一覧には出しません','🔎 系列の行をタップすると詳細：その系列の中でLTSVが5,000P以上のメンバーを、上下関係（何段下か）つきで表示。前月比つき・タップで現状MAPのその人へ','🚀 LTSVの計算を高速化（大人数のMAPでデータタブが重くなるのを防止）'] },
@@ -6842,14 +6887,48 @@ function titleRank(t) {
   if (TITLE_RANK_MAP[t] !== undefined) return TITLE_RANK_MAP[t];
   return t ? 100 : 50; // 不明タイトルはB帯の下・無題より上
 }
+// v526: ツリー・運動会MAPの並び順（端末ごとに記憶）
+var TREE_SORTS = [['title','標準（タイトル順）'],['region','地域ごと'],['gsv','GSVが高い順'],['org','組織が大きい順'],['start','登録が古い順']];
+var _treeSortMode = 'title';
+try { var _tsm0 = localStorage.getItem('gm_treeSort'); if (_tsm0 && TREE_SORTS.some(function(s) { return s[0] === _tsm0; })) _treeSortMode = _tsm0; } catch(e) {}
+function treeSortSelectHtml(extraStyle) {
+  var on = _treeSortMode !== 'title';
+  return '<select class="mc-chip tree-sort-sel" onchange="setTreeSort(this.value)" title="ツリー・運動会MAPの並び順"'
+    + ' style="-webkit-appearance:none;appearance:none;outline:none;border-color:' + (on ? '#8B7CFF' : 'var(--border)') + ';background:' + (on ? '#8B7CFF' : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text-dim)') + (extraStyle ? ';' + extraStyle : '') + '">'
+    + TREE_SORTS.map(function(s) { return '<option value="' + s[0] + '"' + (s[0] === _treeSortMode ? ' selected' : '') + '>並び：' + s[1] + '</option>'; }).join('')
+    + '</select>';
+}
+function setTreeSort(mode) {
+  if (!TREE_SORTS.some(function(s) { return s[0] === mode; })) mode = 'title';
+  _treeSortMode = mode;
+  try { localStorage.setItem('gm_treeSort', mode); } catch(e) {}
+  _childIdxSrc = null; // 子リストのキャッシュを作り直す
+  window._pcTreeKeepView = null;
+  renderCurrentView();
+  setTimeout(_applyMapDims, 160);
+}
+// v526: 地域の並び（REGION_PRESETSの順→その他は人数が多い順→未設定は最後）
+function _regionOrder(members) {
+  var cnt = {};
+  members.forEach(function(m) { if (m.deleted) return; var r = normalizeRegionValue(m.region || ''); if (r) cnt[r] = (cnt[r] || 0) + 1; });
+  var keys = Object.keys(cnt).sort(function(a, b) {
+    var ia = REGION_PRESETS.indexOf(a), ib = REGION_PRESETS.indexOf(b);
+    if (ia < 0) ia = 99; if (ib < 0) ib = 99;
+    return ia - ib || cnt[b] - cnt[a] || (a < b ? -1 : (a > b ? 1 : 0));
+  });
+  var idx = {}; keys.forEach(function(k, i) { idx[k] = i; });
+  return { keys: keys, idx: idx, cnt: cnt };
+}
 // v420: 兄弟の並び順＝タイトル高い順→フロント（直下人数）多い順→名前順
-function _treeSortCmp(members) {
+// v526: mode（省略時は選択中の並び順）で 地域ごと／GSV／組織の大きさ／登録順 にも並べ替え。同順位は従来の順
+function _treeSortCmp(members, mode) {
+  mode = mode || _treeSortMode;
   var cnt = {};
   for (var ci = 0; ci < members.length; ci++) {
     var p9 = members[ci].parentId || '';
     cnt[p9] = (cnt[p9] || 0) + 1;
   }
-  return function(a, b) {
+  var base = function(a, b) {
     var ra = titleRank(a.title), rb = titleRank(b.title);
     if (ra !== rb) return rb - ra;
     var fa = cnt[a.id] || 0, fb = cnt[b.id] || 0;
@@ -6857,6 +6936,44 @@ function _treeSortCmp(members) {
     var na = ((a.lastName || '') + (a.firstName || '')), nb = ((b.lastName || '') + (b.firstName || ''));
     return na < nb ? -1 : (na > nb ? 1 : 0);
   };
+  if (mode === 'title') return base;
+  if (mode === 'gsv') {
+    return function(a, b) { var d = (+b.ptCurrent || 0) - (+a.ptCurrent || 0); return d || base(a, b); };
+  }
+  if (mode === 'start') {
+    return function(a, b) {
+      var sa = String(a.startMonth || '9999.99'), sb = String(b.startMonth || '9999.99');
+      var ka = sa.replace(/^(\d+)\.(\d)$/, '$1.0$2'), kb = sb.replace(/^(\d+)\.(\d)$/, '$1.0$2');
+      return ka < kb ? -1 : (ka > kb ? 1 : base(a, b));
+    };
+  }
+  // 配下の人数（org）・配下で一番多い地域（region の2番目のキー）
+  var kidIdx = {};
+  members.forEach(function(m) { (kidIdx[m.parentId || ''] || (kidIdx[m.parentId || ''] = [])).push(m); });
+  if (mode === 'org') {
+    var sz = {};
+    var size = function(id, g) { if (sz[id] != null) return sz[id]; var t = 1; if (g < 200) (kidIdx[id] || []).forEach(function(c) { t += size(c.id, g + 1); }); sz[id] = t; return t; };
+    return function(a, b) { var d = size(b.id, 0) - size(a.id, 0); return d || base(a, b); };
+  }
+  if (mode === 'region') {
+    var ro = _regionOrder(members), NONE = ro.keys.length;
+    var rIdx = function(m) { var r = normalizeRegionValue(m.region || ''); return r && ro.idx[r] != null ? ro.idx[r] : NONE; };
+    var dom = {};
+    var domOf = function(id, g) {
+      if (dom[id]) return dom[id];
+      var c = {};
+      (function walk(x, d) { (kidIdx[x] || []).forEach(function(k) { var i = rIdx(k); c[i] = (c[i] || 0) + 1; if (d < 200) walk(k.id, d + 1); }); })(id, 0);
+      var best = NONE, bn = 0;
+      for (var k in c) { if (+k === NONE) continue; if (c[k] > bn || (c[k] === bn && +k < best)) { bn = c[k]; best = +k; } }
+      dom[id] = { v: best }; return dom[id];
+    };
+    return function(a, b) {
+      var d = rIdx(a) - rIdx(b); if (d) return d;
+      var d2 = domOf(a.id).v - domOf(b.id).v; if (d2) return d2;
+      return base(a, b);
+    };
+  }
+  return base;
 }
 // v420: タイトル横の「何ヶ月目」（登録月=1ヶ月目。研修生〜QBR(LOI-Q4)〜BM帯のみ・登録月入力済みの人のみ）
 function titleMonthsSuffix(m) {
@@ -6954,6 +7071,8 @@ function renderTree(mapType) {
   var ownMembers = membersForMap(mapType);
   var members = _treeVisibleMembers(composeMergedInto(ownMembers, mapType)); // 結合中の下位ツリーを合成（v426: OUT非表示を除外）（表示のみ）
   if (!isPCMode()) buildLevelSelector(members); // モバイル：レベル展開セレクタ
+  var _tsSlot = document.getElementById(mapType === 'current' ? 'treeSortSlotC' : 'treeSortSlotI'); // v526: 並び順
+  if (_tsSlot) _tsSlot.innerHTML = treeSortSelectHtml();
   if (mapType === 'current') { buildMapCatChips(ownMembers); setTimeout(applyMapCatDim, 200); } // カテゴリ絞り込み
   if (mapType === 'current') { buildRegionChipsInto(ownMembers, 'mapRegionChips'); setTimeout(applyRegionDim, 200); } // 地域絞り込み（モバイル）
   var roots = childrenOf('', members);
@@ -11335,7 +11454,7 @@ function openQuickAdd() {
   var stage = _qaStageGet();
   var parent = selectedParentId || roots[0].id;
   var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
-    .sort(_treeSortCmp(state.members));
+    .sort(_treeSortCmp(state.members, 'title'));
   var pOpts = ms.map(function(m) {
     var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
     return '<option value="' + m.id + '"' + (m.id === parent ? ' selected' : '') + '>' + evEsc(nm) + (m.title ? '（' + evEsc(m.title) + '）' : '') + '</option>';
