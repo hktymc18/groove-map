@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v528';
+var APP_JS_VERSION = 'v529';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3431,7 +3431,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v528';
+  var DATA_VERSION = 'v529';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4441,6 +4441,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v529', d:'2026-09-25', items:['📈 データタブの推移グラフに、過去の月のデータが出ない問題を修正。過去の月は「その月のMAP」から総人数・稼働・OUT・研修生などを集計し直して表示し、UNIVERSE・コミッションはその月に入力した数字を使います（翌月コピーをしていない月や、あとから増えた項目も表示されます）'] },
   { v:'v528', d:'2026-09-25', items:['🛠 カレンダー（月表示）の予定の帯をダブルクリックすると新規追加になってしまう不具合を修正。帯のダブルクリックでその予定の編集が開きます'] },
   { v:'v527', d:'2026-09-25', items:['🛠 PCの予定：右側の予定をクリックした時の詳細に、アイコンのソース（<svg…>）が文字で表示されていたのを修正','✎ カレンダー上の予定の帯を「ダブルクリック」または「右クリック」で、そのまま編集画面を開けるように（月・週・日表示）'] },
   { v:'v526', d:'2026-09-25', items:['↕ MAPの並び順を選べるように：標準（タイトル順）／地域ごと／GSVが高い順／組織が大きい順／登録が古い順。ツリー（スマホ・PC）と運動会MAP、現状・理想の両方に反映され、端末ごとに記憶します','📍 運動会MAPで「地域ごと」を選ぶと、同じ地域の人がまとまって並び、レーン上に地域の色帯＋地域名が付きます（線の色は系列のまま）。PDFにも反映'] },
@@ -9605,6 +9606,92 @@ function _traineeDrillJump(id) {
   if (typeof jumpToMember === 'function') jumpToMember(id);
 }
 
+// v529: MAPから自動集計する数字（今月＝buildAutoStats／過去の月＝その月のMAPから _dtHistLoad で使う）
+//   allMs：その月の全メンバー（S/A/B/C・B1・マケPG・DLR）／curMs：その月の現状MAPのメンバー（総人数・OUT・研修生・平均稼働）
+function _dtAutoCounts(allMs, curMs, fmon) {
+  var counts = {S:0, A:0, B:0, C:0, B1:0, make:0, dlr:0};
+  // v529: 稼働（S/A/B/C）は現状MAPの削除されていない人だけ（削除済み・理想MAPだけの人を数えていた）
+  (curMs || []).forEach(function(m) {
+    if (m.deleted || /^(MG_|AG\d+_)/.test(m.id)) return;
+    if (m.activity === 'S') counts.S++;
+    else if (m.activity === 'A') counts.A++;
+    else if (m.activity === 'B') counts.B++;
+    else if (m.activity === 'C') counts.C++;
+  });
+  (allMs || []).forEach(function(m) {
+    // B1 = 「その月に」BC決定した研修生のみ（前月分は当月にカウントしない）
+    if (m.traineeResult === 'BC' && traineeDecidedMonth(m) === fmon) counts.B1++;
+    // マケ・PG / DLR = 「その月の」履歴だけをカウント（月度管理）
+    var hist = m.traineeHistory || [];
+    var hasMake = hist.some(function(h){ return (h.status==='マケ' || h.status==='PG') && _ymToMon(h.date) === fmon; });
+    var hasDLR  = hist.some(function(h){ return h.status==='DLR' && _ymToMon(h.date) === fmon; });
+    if (hasMake) counts.make++;
+    if (hasDLR)  counts.dlr++;
+  });
+  // v520: 平均稼働・総人数・OUT・研修生も現状MAPから自動集計
+  var _curMs9 = (curMs || []).filter(function(m){ return !m.deleted && !/^(MG_|AG\d+_)/.test(m.id); });
+  var _act9 = _curMs9.filter(function(m){ return (m.title || '').trim() !== 'OUT'; });
+  counts.out = _curMs9.length - _act9.length;
+  counts.uni = _act9.length;
+  counts.tr = _act9.filter(function(m){ return memberCat(m) === '研修生'; }).length;
+  var _rN9 = 0, _rS9 = 0;
+  _act9.forEach(function(m){
+    var r9 = parseInt(m.actRate, 10);
+    if (isNaN(r9) && m.activity === 'S') r9 = 120; // Sで稼働率未入力は120%扱い（カード表示と同じ）
+    if (!isNaN(r9) && ['S','A','B','C'].indexOf(m.activity) >= 0) { _rN9++; _rS9 += r9; }
+  });
+  counts.rate = _rN9 ? Math.round(_rS9 / _rN9) : '';
+  return counts;
+}
+var DT_AUTO_KEY = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','総人数':'uni','OUT':'out','研修生':'tr'};
+// v529: 推移グラフの過去の月は「その月のデータ」から出す。
+//   従来は表示中の月の保存データに入っている12ヶ月分の欄だけを読んでいたため、翌月コピーで引き継がれなかった月や
+//   あとから増えた行（総人数など）は、データがあってもグラフに出なかった
+var _dtHist = null; // { key, mon: { 'YYYY.MM': { auto: counts|null, man: {行名: 値} } } }
+function _dtHistLoad() {
+  if ((typeof _aggActive !== 'undefined' && _aggActive) || typeof fsGet !== 'function') return;
+  var uid = _regTrendUid();
+  if (!uid) return;
+  var cur = state.currentMonth || currentMonthStr();
+  var key = uid + '|' + cur;
+  if (_dtHist && _dtHist.key === key) return; // 読み込み済み／読み込み中
+  var h = { key: key, mon: {}, done: false };
+  _dtHist = h;
+  var mons = [];
+  for (var i = 11; i >= 1; i--) mons.push(addMonths(cur, -i));
+  Promise.all(mons.map(function(mon) {
+    var pC = fsGet('maps/' + uid + '/months/' + mon + '_current').catch(function() { return null; });
+    var pS = fsGet('maps/' + uid + '/stats/' + mon).catch(function() { return null; });
+    return Promise.all([pC, pS]).then(function(r) {
+      var ms = (r[0] && r[0].members) || [];
+      var ent = { auto: null, man: {} };
+      if (ms.length) {
+        var curMs = ms.filter(function(m) { return !m.deleted && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType); });
+        ent.auto = _dtAutoCounts(ms, curMs, mon);
+      }
+      var st = r[1] && r[1].stats;
+      ((st && st.monthly) || []).forEach(function(row) {
+        var vs = (row.vals || []).slice(-12);
+        while (vs.length < 12) vs.unshift('');
+        var v = vs[11]; // その月の保存データでは、最後の欄がその月
+        if (v !== '' && v !== null && v !== undefined && !isNaN(Number(v))) ent.man[row.label] = Number(v);
+      });
+      h.mon[mon] = ent;
+    });
+  })).then(function() {
+    if (_dtHist !== h) return; // 途中で月を切り替えた
+    h.done = true;
+    if (typeof currentView !== 'undefined' && currentView === 'stats') { try { renderStats(); } catch (eR) {} }
+  });
+}
+function _dtHistVal(k, mon) {
+  var h = _dtHist && _dtHist.mon && _dtHist.mon[mon];
+  if (!h) return undefined;
+  var ak = DT_AUTO_KEY[k];
+  if (ak && h.auto) { var a = h.auto[ak]; return (a === '' || a === null || a === undefined) ? null : Number(a); }
+  if (h.man[k] !== undefined) return h.man[k];
+  return undefined;
+}
 function buildAutoStats() {
   // 現状MAPから稼働/研修生ステータスを自動集計して state.stats.monthly に反映
   var members = membersForMap('current');
@@ -9623,37 +9710,7 @@ function buildAutoStats() {
   });
   
   var fmon = now2; // 表示中の月（'YYYY.MM'）。B1/マケPG/DLRはこの月の実績だけ数える
-  var counts = {S:0, A:0, B:0, C:0, B1:0, make:0, dlr:0};
-  // 全メンバーを対象（研修履歴があるBAも研修生としてカウント）
-  var allMembersForStats = state.members;
-  allMembersForStats.forEach(function(m) {
-    if (m.activity === 'S') counts.S++;
-    else if (m.activity === 'A') counts.A++;
-    else if (m.activity === 'B') counts.B++;
-    else if (m.activity === 'C') counts.C++;
-    // B1 = 「その月に」BC決定した研修生のみ（前月分は当月にカウントしない）
-    if (m.traineeResult === 'BC' && traineeDecidedMonth(m) === fmon) counts.B1++;
-    // マケ・PG / DLR = 「その月の」履歴だけをカウント（月度管理）
-    var hist = m.traineeHistory || [];
-    var hasMake = hist.some(function(h){ return (h.status==='マケ' || h.status==='PG') && _ymToMon(h.date) === fmon; });
-    var hasDLR  = hist.some(function(h){ return h.status==='DLR' && _ymToMon(h.date) === fmon; });
-    if (hasMake) counts.make++;
-    if (hasDLR)  counts.dlr++;
-  });
-  
-  // v520: 平均稼働・UNIVERSE（人数）・OUT・研修生も現状MAPから自動集計
-  var _curMs9 = membersForMap('current').filter(function(m){ return !m.deleted && !/^(MG_|AG\d+_)/.test(m.id); });
-  var _act9 = _curMs9.filter(function(m){ return (m.title || '').trim() !== 'OUT'; });
-  counts.out = _curMs9.length - _act9.length;
-  counts.uni = _act9.length;
-  counts.tr = _act9.filter(function(m){ return memberCat(m) === '研修生'; }).length;
-  var _rN9 = 0, _rS9 = 0;
-  _act9.forEach(function(m){
-    var r9 = parseInt(m.actRate, 10);
-    if (isNaN(r9) && m.activity === 'S') r9 = 120; // Sで稼働率未入力は120%扱い（カード表示と同じ）
-    if (!isNaN(r9) && ['S','A','B','C'].indexOf(m.activity) >= 0) { _rN9++; _rS9 += r9; }
-  });
-  counts.rate = _rN9 ? Math.round(_rS9 / _rN9) : '';
+  var counts = _dtAutoCounts(state.members, membersForMap('current'), fmon); // v529: 過去の月の集計と同じ関数で
   if (!s.monthly.some(function(r){ return r.label === '研修生'; })) {
     var _bi9 = -1; s.monthly.forEach(function(r, i){ if (r.label === 'B1') _bi9 = i; });
     s.monthly.splice(_bi9 >= 0 ? _bi9 + 1 : s.monthly.length, 0, { label: '研修生', vals: ['','','','','','','','','','','',''] });
@@ -9665,9 +9722,8 @@ function buildAutoStats() {
     s.monthly.forEach(function(r){ if (r.label === 'UNIVERSE' && r.vals && r.vals[colIdx] === counts.uni) r.vals[colIdx] = ''; });
     s.uniFix521 = true;
   }
-  var labelMap = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','総人数':'uni','OUT':'out','研修生':'tr'};
   s.monthly.forEach(function(row) {
-    var key = labelMap[row.label];
+    var key = DT_AUTO_KEY[row.label];
     if (key && counts[key] !== undefined) {
       while (row.vals.length <= colIdx) row.vals.push('');
       row.vals[colIdx] = counts[key];
@@ -9712,7 +9768,18 @@ function _dtRow(k) { var ms = (state.stats && state.stats.monthly) || []; for (v
 function _dtVals(k) {
   var r = _dtRow(k), v = (r && r.vals) ? r.vals.slice(-12) : [];
   while (v.length < 12) v.unshift('');
-  return v.map(function(x) { return (x === '' || x === null || x === undefined || isNaN(Number(x))) ? null : Number(x); });
+  var out = v.map(function(x) { return (x === '' || x === null || x === undefined || isNaN(Number(x))) ? null : Number(x); });
+  // v529: 過去の月は、その月のMAPから集計し直した数字（自動の項目）／その月に保存した数字（手入力の項目・空欄の時）
+  if (_dtHist && _dtHist.done) {
+    var cur = state.currentMonth || currentMonthStr();
+    for (var i = 0; i < 11; i++) {
+      var hv = _dtHistVal(k, addMonths(cur, i - 11));
+      if (hv === undefined) continue;
+      if (DT_AUTO_KEY[k]) { if (hv !== null || out[i] === null) out[i] = hv; }
+      else if (out[i] === null) out[i] = hv;
+    }
+  }
+  return out;
 }
 function _dtMonths() {
   var p = String(state.currentMonth || currentMonthStr()).split('.'), y = parseInt(p[0], 10), m = parseInt(p[1], 10), out = [];
@@ -10310,6 +10377,7 @@ function renderStats() {
   renderTeamPickBars();
   renderTeamCompare();
   buildAutoStats(); // v520: 自動集計を先に（サマリーのタイルが今月の最新値を出せるように）
+  _dtHistLoad(); // v529: 過去の月の数字をその月のデータから（読み込めたら描き直す）
   renderDataHub();
   if (_dtTab === 'trend') renderDtTrend();
   var s = state.stats;
@@ -10394,6 +10462,7 @@ function renderStats() {
         // 入力欄と分かるよう薄い面＋枠（従来の下線のみは発見不能だった）
         inp.style.cssText = 'width:62px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);text-align:right;font-family:Inter,monospace;font-size:13px;padding:4px 6px';
         inp.placeholder = '✏️';
+        if (idx < 11 && (v === '' || v === undefined || v === null)) { var _hv9 = _dtVals(row.label)[idx]; if (_hv9 !== null) { inp.placeholder = String(_hv9); inp.title = 'その月に保存した数字'; } } // v529
         (function(r, i){ 
           inp.onchange = function(){
             if (!r.vals) r.vals = [];
@@ -10423,6 +10492,7 @@ function renderStats() {
         inp.onclick = function(e){ e.stopPropagation(); };
         td.appendChild(inp);
       } else {
+        if (idx < 11 && _dtHist && _dtHist.done) { var _mv9 = _dtVals(row.label)[idx]; v = (_mv9 === null) ? '' : _mv9; } // v529: グラフと同じ数字
         td.textContent = (v===''||v===undefined||v===null) ? '-' : (Number(v)>10000 ? Number(v).toLocaleString() : v);
         if (isAuto) td.style.color = 'var(--accent)';
       }
