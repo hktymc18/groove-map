@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v526';
+var APP_JS_VERSION = 'v527';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3431,7 +3431,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v526';
+  var DATA_VERSION = 'v527';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4441,6 +4441,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v527', d:'2026-09-25', items:['🛠 PCの予定：右側の予定をクリックした時の詳細に、アイコンのソース（<svg…>）が文字で表示されていたのを修正','✎ カレンダー上の予定の帯を「ダブルクリック」または「右クリック」で、そのまま編集画面を開けるように（月・週・日表示）'] },
   { v:'v526', d:'2026-09-25', items:['↕ MAPの並び順を選べるように：標準（タイトル順）／地域ごと／GSVが高い順／組織が大きい順／登録が古い順。ツリー（スマホ・PC）と運動会MAP、現状・理想の両方に反映され、端末ごとに記憶します','📍 運動会MAPで「地域ごと」を選ぶと、同じ地域の人がまとまって並び、レーン上に地域の色帯＋地域名が付きます（線の色は系列のまま）。PDFにも反映'] },
   { v:'v525', d:'2026-09-24', items:['🔗 理想MAP→PLANの「今月の目標」を自動に：フロント（直下の新規B1）・ユーザーPT・チームB1・チームPT（理想のGSV）は理想MAPの数字。PLANでは表示のみ（変更は理想MAPで）','📊 データタブの「今月の目標」は理想MAPに対する達成率（新規B1・チームGSV・S稼働・コミッション）','⭐ 理想MAPに「長期目標から見た今月の目安」：年間ロードマップの今月のフロント・流通、PLANの目標月収に対して、理想で達成できているか／あといくつか','🗓 翌月コピーで来月の理想MAPを「新しい現状から作り直す（おすすめ）／今月の理想を引き継ぐ」から選択。作り直す時は理想で追加した新規B1を持ち越せます'] },
   { v:'v524', d:'2026-09-24', items:['🎯 理想MAPを刷新（第1弾）：上に「今月の理想 vs 現状」（新規B1・チームGSV・S稼働・平均稼働・コミッション）をバーで表示','✏️ 理想MAPのカードをタップすると、かんたん編集（理想のGSV・稼働／この人の直下に新規B1をまとめて追加）。新規B1はタイトルLOI・GSV 1,500Pで追加（手入力で変更可）。新規B1の人数に数えるのは1,000P以上','🏷 カードに現状との差（NEW・+GSV・B→A など）を表示','💴 コミッションを自動計算：SB＝今月スタートの直下B1のGSV×3%×126円、BB＝PLANのBB早見表、LB。理想と現状を同じ計算で比較（データタブの概算も同じ計算に）'] },
@@ -20420,7 +20421,7 @@ function renderDayV() {
       alldayEl.innerHTML = bands.map(function(e){
         var _c9 = evColorOf(e);
         var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
-        return '<div class="ev-bar" style="' + st + '" onclick="openEventActions(\'' + e.id + '\')">' + (e.done ? '✓ ' : '') + _evMarkIc(e) + evEsc(e.title || '') + (e.endDate ? '（〜' + parseInt(e.endDate.slice(5,7),10) + '/' + parseInt(e.endDate.slice(8,10),10) + '）' : '') + '</div>';
+        return '<div class="ev-bar" data-eid="' + e.id + '" style="' + st + '" onclick="evTapPC(\'' + e.id + '\',event)">' + (e.done ? '✓ ' : '') + _evMarkIc(e) + evEsc(e.title || '') + (e.endDate ? '（〜' + parseInt(e.endDate.slice(5,7),10) + '/' + parseInt(e.endDate.slice(8,10),10) + '）' : '') + '</div>';
       }).join('');
     } else { alldayEl.style.display = 'none'; alldayEl.innerHTML = ''; }
   }
@@ -20461,7 +20462,7 @@ function renderDayV() {
     var _c9 = evColorOf(e);
     var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
     var left = lane * 26;
-    h += '<div class="dayv-ev" style="top:' + top + 'px;height:' + hgt + 'px;left:' + left + '%;right:2px;' + st + (e.done ? ';opacity:.45' : '') + '" onclick="event.stopPropagation();openEventActions(\'' + e.id + '\')">'
+    h += '<div class="dayv-ev" style="top:' + top + 'px;height:' + hgt + 'px;left:' + left + '%;right:2px;' + st + (e.done ? ';opacity:.45' : '') + '" data-eid="' + e.id + '" onclick="evTapPC(\'' + e.id + '\',event)">'
       + '<span class="t">' + evEsc(e.time) + (e.endTime ? '-' + evEsc(e.endTime) : '') + '</span> ' + (e.done ? '✓ ' : '') + _evMarkIc(e) + evEsc(e.title || '')
       + '</div>';
   });
@@ -20544,7 +20545,7 @@ function renderWeek() {
     adH += '<div class="wa-cell">' + bands.slice(0, 3).map(function(e){
       var _c9 = evColorOf(e);
       var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
-      return '<div class="ev-bar" style="' + st + '" onclick="openEventActions(\'' + e.id + '\')">' + _evMarkIc(e) + evEsc(e.title || '') + '</div>';
+      return '<div class="ev-bar" data-eid="' + e.id + '" style="' + st + '" onclick="evTapPC(\'' + e.id + '\',event)">' + _evMarkIc(e) + evEsc(e.title || '') + '</div>';
     }).join('') + (bands.length > 3 ? '<div style="font-size:8px;color:var(--text-dim)">+' + (bands.length - 3) + '</div>' : '') + '</div>';
   });
   if (adRow) {
@@ -20589,7 +20590,7 @@ function renderWeek() {
       var hgt = Math.max(20, (eMin - sMin) / 60 * HH - 2);
       var _c9 = evColorOf(e);
       var st = _c9 ? ('background:' + _c9 + ';color:' + catTextColor(_c9)) : 'background:var(--purple);color:#fff';
-      col += '<div class="dayv-ev" style="top:' + top + 'px;height:' + hgt + 'px;left:' + (lane * 30) + '%;right:1px;' + st + (e.done ? ';opacity:.45' : '') + '" onclick="event.stopPropagation();openEventActions(\'' + e.id + '\')">'
+      col += '<div class="dayv-ev" style="top:' + top + 'px;height:' + hgt + 'px;left:' + (lane * 30) + '%;right:1px;' + st + (e.done ? ';opacity:.45' : '') + '" data-eid="' + e.id + '" onclick="evTapPC(\'' + e.id + '\',event)">'
         + '<span class="t">' + evEsc(e.time) + '</span>' + (e.done ? '✓' : '') + _evMarkIc(e) + evEsc(e.title || '') + '</div>';
     });
     // 現在時刻ライン（今日の列のみ）
@@ -20930,15 +20931,16 @@ function openEventActions(id) {
   var metaParts = [];
   var dl = fmtEvDate(e.date, e.time);
   if (dl && e.time && e.endTime) dl += '〜' + e.endTime;
-  if (dl) metaParts.push(dl);
-  if (cat) metaParts.push(cat.name);
-  if (e.place) metaParts.push(icn('pin') + e.place); // v329: 場所
-  if (mName) metaParts.push(icn('user') + mName);
+  // v527: 文字だけエスケープ（アイコンSVGごとエスケープしてソースが表示されていた）
+  if (dl) metaParts.push(evEsc(dl));
+  if (cat) metaParts.push(evEsc(cat.name));
+  if (e.place) metaParts.push(icn('pin') + evEsc(e.place)); // v329: 場所
+  if (mName) metaParts.push(icn('user') + evEsc(mName));
   var subs = e.subtasks || [];
   if (e.seriesId) metaParts.push(icn('repeat') + '繰り返し');
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (e.type === 'task' ? icn('checksq') + ' ' : icn('calendar') + ' ') + evEsc(e.title || '(無題)') + '</div>'
-    + '<div style="font-size:11.5px;color:var(--text-dim);margin-top:2px">' + evEsc(metaParts.join('　')) + '</div></div>'
+    + '<div class="ev-act-meta" style="font-size:11.5px;color:var(--text-dim);margin-top:2px">' + metaParts.join('　') + '</div></div>'
     + '<span class="ms-x" onclick="closeEventActions()">✕</span></div>'
     + '<div style="padding:0 16px 20px">'
     + (e.memo ? '<div style="font-size:12.5px;color:var(--text-mid);padding:4px 2px 0;white-space:pre-wrap">' + evEsc(e.memo) + '</div>' : '')
@@ -22536,6 +22538,38 @@ function renderPcDayPanel() {
   p.innerHTML = h;
 }
 // v354: PCの空きマスはダブルクリックで即・予定作成
+// v527: カレンダー上の予定の帯は「ダブルクリック」または「右クリック」でそのまま編集画面へ（PC）
+//        ※キャプチャ段階で拾うので、日マスのダブルクリック（その日に新規追加）より優先される
+var _evClkT = null;
+function evTapPC(id, ev) { // 週・日表示の予定：PCはダブルクリックと区別するため、1クリックは少し待ってから詳細シート
+  if (ev) ev.stopPropagation();
+  if (!(typeof isPCMode === 'function' && isPCMode())) { openEventActions(id); return; }
+  clearTimeout(_evClkT);
+  _evClkT = setTimeout(function() { _evClkT = null; openEventActions(id); }, 240);
+}
+function evEditDirect(id, ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  clearTimeout(_evClkT); _evClkT = null;
+  if (!id) return;
+  if (!findEvent(id)) { openEventActions(id); return; } // OL・ユニオン・筋トレの帯はそれぞれの画面へ
+  try { closeEventActions(); } catch(e0) {}
+  try { if (typeof calViewMenuClose === 'function') calViewMenuClose(); } catch(e1) {}
+  openEventEdit(id);
+}
+function _evBarFromEv(ev) {
+  var t = ev && ev.target;
+  if (!t || !t.closest) return null;
+  return t.closest('#view-events .ev-bar[data-eid], #view-events .dayv-ev[data-eid]');
+}
+document.addEventListener('dblclick', function(ev) {
+  if (!(typeof isPCMode === 'function' && isPCMode())) return;
+  var b = _evBarFromEv(ev);
+  if (b) evEditDirect(b.getAttribute('data-eid'), ev);
+}, true);
+document.addEventListener('contextmenu', function(ev) {
+  var b = _evBarFromEv(ev);
+  if (b) evEditDirect(b.getAttribute('data-eid'), ev);
+}, true);
 function evCellDblPC(ds) {
   if (typeof isPCMode === 'function' && !isPCMode()) return;
   openEventAddDate(ds);
