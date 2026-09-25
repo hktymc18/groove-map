@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v527';
+var APP_JS_VERSION = 'v528';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3431,7 +3431,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v527';
+  var DATA_VERSION = 'v528';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4441,6 +4441,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v528', d:'2026-09-25', items:['🛠 カレンダー（月表示）の予定の帯をダブルクリックすると新規追加になってしまう不具合を修正。帯のダブルクリックでその予定の編集が開きます'] },
   { v:'v527', d:'2026-09-25', items:['🛠 PCの予定：右側の予定をクリックした時の詳細に、アイコンのソース（<svg…>）が文字で表示されていたのを修正','✎ カレンダー上の予定の帯を「ダブルクリック」または「右クリック」で、そのまま編集画面を開けるように（月・週・日表示）'] },
   { v:'v526', d:'2026-09-25', items:['↕ MAPの並び順を選べるように：標準（タイトル順）／地域ごと／GSVが高い順／組織が大きい順／登録が古い順。ツリー（スマホ・PC）と運動会MAP、現状・理想の両方に反映され、端末ごとに記憶します','📍 運動会MAPで「地域ごと」を選ぶと、同じ地域の人がまとまって並び、レーン上に地域の色帯＋地域名が付きます（線の色は系列のまま）。PDFにも反映'] },
   { v:'v525', d:'2026-09-24', items:['🔗 理想MAP→PLANの「今月の目標」を自動に：フロント（直下の新規B1）・ユーザーPT・チームB1・チームPT（理想のGSV）は理想MAPの数字。PLANでは表示のみ（変更は理想MAPで）','📊 データタブの「今月の目標」は理想MAPに対する達成率（新規B1・チームGSV・S稼働・コミッション）','⭐ 理想MAPに「長期目標から見た今月の目安」：年間ロードマップの今月のフロント・流通、PLANの目標月収に対して、理想で達成できているか／あといくつか','🗓 翌月コピーで来月の理想MAPを「新しい現状から作り直す（おすすめ）／今月の理想を引き継ぐ」から選択。作り直す時は理想で追加した新規B1を持ち越せます'] },
@@ -22285,7 +22286,7 @@ function renderCalendar() {
         bars += '<div class="ev-slot"' + (slotSpan[si3] > 1 ? ' style="flex:' + slotSpan[si3] + ' 1 0"' : '') + '>' + (slots[si3] || '') + '</div>';
       }
       if (extra > 0) bars += '<div class="ev-more-badge">+' + extra + '</div>';
-      html += '<div class="' + cls + '" data-ds="' + ds + '" onclick="selCalDay(\'' + ds + '\')" ondblclick="evCellDblPC(\'' + ds + '\')">'
+      html += '<div class="' + cls + '" data-ds="' + ds + '" onclick="selCalDay(\'' + ds + '\')" ondblclick="evCellDblPC(\'' + ds + '\',event)">'
         + '<span class="' + numCls + '">' + (d === 1 ? ((cur.getMonth()+1) + '/1') : d) + '</span>'
         + '<div class="ev-cell-bars">' + bars + '</div></div>';
       cur.setDate(cur.getDate() + 1);
@@ -22561,6 +22562,12 @@ function _evBarFromEv(ev) {
   if (!t || !t.closest) return null;
   return t.closest('#view-events .ev-bar[data-eid], #view-events .dayv-ev[data-eid]');
 }
+var _evLastDown = null; // v528: 直前に押した予定の帯（ダブルクリックの2回目が帯から外れても判定できるように）
+document.addEventListener('mousedown', function(ev) {
+  var b = _evBarFromEv(ev);
+  if (b) _evLastDown = { id: b.getAttribute('data-eid'), t: Date.now() };
+  else if (_evLastDown && Date.now() - _evLastDown.t > 700) _evLastDown = null;
+}, true);
 document.addEventListener('dblclick', function(ev) {
   if (!(typeof isPCMode === 'function' && isPCMode())) return;
   var b = _evBarFromEv(ev);
@@ -22570,8 +22577,14 @@ document.addEventListener('contextmenu', function(ev) {
   var b = _evBarFromEv(ev);
   if (b) evEditDirect(b.getAttribute('data-eid'), ev);
 }, true);
-function evCellDblPC(ds) {
+function evCellDblPC(ds, ev) {
   if (typeof isPCMode === 'function' && !isPCMode()) return;
+  // v528: 1クリック目でカレンダーが描き直されるため、ダブルクリックは「描き直し前の（画面から外れた）マス」に届き、
+  //       documentの監視では拾えず新規追加になっていた。ここで帯の上かを判定して、その予定の編集を開く
+  var b = (ev && ev.target && ev.target.closest) ? ev.target.closest('.ev-bar[data-eid]') : null;
+  var bid = b ? b.getAttribute('data-eid') : '';
+  if (!bid && _evLastDown && Date.now() - _evLastDown.t < 700) bid = _evLastDown.id;
+  if (bid) { evEditDirect(bid, ev); return; }
   openEventAddDate(ds);
 }
 // v297: 日別ボトムシート（📅その日の予定 ＋ ✅その日が期日のタスク）
