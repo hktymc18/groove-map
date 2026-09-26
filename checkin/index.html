@@ -3600,20 +3600,38 @@ function normalizeScan(raw){
 function scan(raw, method){
   if(!gRec) return;
   raw = normalizeScan(raw);
-  // スマホ会員証形式 "m:412211:xxxx"（番号+署名）にも対応
+  // スマホ会員証形式 "m:412211:xxxx"（番号+署名）にも対応。
+  // スキャナのShift取りこぼしやJIS/US配列ズレで「:」が「;」「+」に化けることがあるため、区切りは3種を許容する
   var no = raw, sig = null;
-  var mm = /^m:([\w-]+):(\w*)/.exec(raw);
+  var mm = /^m[:;+]([\w-]+)[:;+](\w*)/.exec(raw);
   if(mm){ no = mm[1]; sig = mm[2]; }
   // 署名がIMEで復元不能に化けている場合は、署名なし（紙カード同等の扱い）として受付する
   if(sig && !/^[0-9a-f]{4,}$/.test(sig)) sig = null;
   no = no.replace(/\.0$/, '');
   var member = gRec.roster[no];
   if(member && sig && member.cardSig && sig !== member.cardSig){
-    beep('ng');
-    setStage('ng',
-      '<span class="hit-badge">無効な会員証</span>'
-      + '<div class="hit-name">' + esc(member.name || '') + '</div>'
-      + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+    // 受付開始後に会員証が再発行されていると、開始時に読み込んだ名簿の署名が古い。
+    // 弾く前に名簿の最新を1件だけ取り直し、最新の署名と一致すればそのまま受付する
+    db.collection('checkinMembers').doc(no).get().then(function(s){
+      if(!gRec) return;
+      var fresh = s.exists ? s.data() : null;
+      if(fresh && fresh.active !== false){
+        fresh.no = no;
+        gRec.roster[no] = fresh;
+        if(!fresh.cardSig || sig === fresh.cardSig){ checkinMember(fresh, method, null); return; }
+      }
+      beep('ng');
+      setStage('ng',
+        '<span class="hit-badge">無効な会員証</span>'
+        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
+        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+    }).catch(function(){
+      beep('ng');
+      setStage('ng',
+        '<span class="hit-badge">無効な会員証</span>'
+        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
+        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+    });
     return;
   }
   if(!member){
