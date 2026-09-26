@@ -323,6 +323,28 @@ service cloud.firestore {
                           .data.get('union','')]);
       }
 
+      // 🎟 予約（RSVP）: 会員証（未ログイン）から本人が1回だけ予約を作成できる。
+      // 対象は rsvp=true のイベントのみ。トークン照合で本人確認、update不可＝改ざん・二重予約は不可。
+      // 受付側の追加・削除は出席と同じ権限（参加ユニオンの有効メンバー）
+      match /rsvps/{rid} {
+        allow read: if signedIn();
+        allow create: if request.auth == null
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('rsvp', false) == true
+          && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+          && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+               .data.get('no','') == rid
+          && get(/databases/$(database)/documents/checkinEvents/$(eid))
+               .data.get('unions',[])
+               .hasAny([get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+                          .data.get('union','')]);
+        allow create, delete: if isOwnerAdmin()
+          || (signedIn()
+              && notDisabled(request.auth.uid)
+              && get(/databases/$(database)/documents/checkinEvents/$(eid))
+                   .data.get('unions',[]).hasAny([ckMyUnion()]));
+      }
+
       // 会計（BASE集計表）: 参加ユニオンの有効メンバーが記録できる
       match /finance/{fid} {
         allow read: if signedIn();
