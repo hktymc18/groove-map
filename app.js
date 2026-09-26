@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v530';
+var APP_JS_VERSION = 'v531';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3440,7 +3440,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v530';
+  var DATA_VERSION = 'v531';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4450,6 +4450,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v531', d:'2026-09-26', items:['🔗 OLの企画・編集で、共有MAP（結合）のメンバーも選べるように（924-1）。予定（スケジュール）のOLからも同じです','✍ 共有MAPのメンバーのOLは、相手のMAPにも記録されます（相手が「編集」で共有している場合。閲覧のみの共有ならあなたのMAPにだけ保存）。相手のOLタブには「🔗記録した人の名前」が付き、相手のMAPにいない参加者は名前で表示','🗑 企画から外す・削除すると、相手のMAPからも消えます。相手の画面が古いままでも、書き込まれた記録が消えないように保存時に取り込みます'] },
   { v:'v530', d:'2026-09-25', items:['🚪 OUTにした時、直下の組織は「今月はそのまま」に。誰の下がOUTしたのかMAPで分かるように残し、翌月コピーの時に上のアップラインの直下へ自動で移動（ロールアップ）します。翌月コピーの確認画面に「直下◯人は△△さんの直下へ」と表示'] },
   { v:'v529', d:'2026-09-25', items:['📈 データタブの推移グラフに、過去の月のデータが出ない問題を修正。過去の月は「その月のMAP」から総人数・稼働・OUT・研修生などを集計し直して表示し、UNIVERSE・コミッションはその月に入力した数字を使います（翌月コピーをしていない月や、あとから増えた項目も表示されます）'] },
   { v:'v528', d:'2026-09-25', items:['🛠 カレンダー（月表示）の予定の帯をダブルクリックすると新規追加になってしまう不具合を修正。帯のダブルクリックでその予定の編集が開きます'] },
@@ -8941,6 +8942,114 @@ function freshOlLog(mid) {
   if (!state.freshData[mid].olLog) state.freshData[mid].olLog = [];
   return state.freshData[mid].olLog;
 }
+// ════ v531: 924-1 共有MAP（結合）のメンバーのOL記録を、相手のMAPにも書き込む ════
+//  ・自分側：自分のデータに MG_ のIDで記録（OLタブ・カレンダーに出る）
+//  ・相手側：maps/{相手}/stats/{今の月} の freshData[相手のID].olLog に同じ企画(gid)を書き込む（ext＝誰が記録したか）
+//    → 相手が「編集」で共有してくれている時だけ（閲覧のみの共有は自分側だけに保存）
+//  ・相手側でその記録を消したら olDel（削除済みgid）を残し、古い画面からの保存で復活しないようにする
+function _olTomb(mid, rec) { // 他のMAPから書き込まれた記録を消した時の目印
+  if (!rec || !rec.gid || !(rec.ext || /^MG_/.test(mid))) return;
+  var f = state.freshData[mid] || (state.freshData[mid] = {});
+  if (!f.olDel) f.olDel = [];
+  if (f.olDel.indexOf(rec.gid) < 0) f.olDel.push(rec.gid);
+}
+var _olPermCache = {};
+function _olCanWriteTo(uid) {
+  if (!currentUser || !uid) return Promise.resolve(false);
+  if (_olPermCache[uid] && Date.now() - _olPermCache[uid].t < 300000) return Promise.resolve(_olPermCache[uid].ok);
+  return fsGet('maps/' + uid + '/shared/' + currentUser.uid).then(function(d) {
+    var ok = !!(d && d.perm === 'edit' && !d.derived);
+    _olPermCache[uid] = { ok: ok, t: Date.now() };
+    return ok;
+  }).catch(function() { return false; });
+}
+function _olMirror(gid, goneMids, isDelete) {
+  try {
+    if (!gid || typeof mgResolve !== 'function' || !db) return;
+    var ev = isDelete ? null : _olEventByKey(gid);
+    var byUid = {};
+    var add = function(mid, gone) {
+      var r = mgResolve(mid);
+      if (!r) return;
+      var u = byUid[r.uid] || (byUid[r.uid] = { put: [], gone: [] });
+      (gone ? u.gone : u.put).push({ mid: mid, src: r.srcId });
+    };
+    if (ev) ev.mids.forEach(function(mid) { if (/^MG_/.test(mid)) add(mid, false); });
+    (goneMids || []).forEach(function(mid) { add(mid, true); });
+    var month = state.currentMonth || currentMonthStr();
+    var me = { uid: (currentUser && currentUser.uid) || '', name: (currentUser && currentUser.name) || '' };
+    Object.keys(byUid).forEach(function(uid) {
+      var job = byUid[uid];
+      var own = _olOwnerName(uid);
+      _olCanWriteTo(uid).then(function(ok) {
+        if (!ok) { toast('👁 ' + own + 'さんのMAPは閲覧のみの共有のため、OLの記録はあなたのMAPにだけ保存しました'); return; }
+        var path = 'maps/' + uid + '/stats/' + month;
+        return fsGet(path).then(function(doc) {
+          if (!doc) { toast(own + 'さんのMAPにまだ' + parseInt(month.split('.')[1], 10) + '月がないため、相手のMAPには書き込めませんでした'); return; }
+          var fd = doc.freshData || {}, patch = {};
+          var srcOf = {}; job.put.forEach(function(x) { srcOf[x.mid] = x.src; });
+          job.put.forEach(function(x) {
+            var cur = fd[x.src] || {}, log = (cur.olLog || []).slice(), rec = null;
+            for (var i = 0; i < log.length; i++) if (log[i] && log[i].gid === gid) { rec = log[i] = JSON.parse(JSON.stringify(log[i])); break; }
+            if (!rec) { rec = {}; log.unshift(rec); }
+            var mine = null, ml = freshOlLog(x.mid);
+            for (var j = 0; j < ml.length; j++) if (ml[j] && ml[j].gid === gid) { mine = ml[j]; break; }
+            ['date', 'time', 'asan', 'what', 'note', 'st', 'kind', 'to'].forEach(function(k) { rec[k] = ev[k] !== undefined ? ev[k] : (mine && mine[k]) || ''; });
+            rec.gid = gid;
+            rec.mids = ev.mids.filter(function(id) { return srcOf[id]; }).map(function(id) { return srcOf[id]; });
+            // 相手のMAPにいない参加者は名前で（ゲスト扱い）
+            rec.guests = ev.guests.concat(ev.mids.filter(function(id) { return !srcOf[id]; }).map(function(id) { var m = _olMem(id); return m ? _olNm(m) : ''; }).filter(Boolean));
+            rec.pnote = (mine && mine.pnote) || '';
+            rec.ext = rec.ext || me;
+            rec.updatedAt = new Date().toISOString();
+            patch[x.src] = { olLog: log, olDel: (cur.olDel || []).filter(function(g) { return g !== gid; }) };
+          });
+          job.gone.forEach(function(x) {
+            if (patch[x.src]) return;
+            var cur = fd[x.src] || {};
+            var log = (cur.olLog || []).filter(function(r) { return !(r && r.gid === gid); });
+            var del = (cur.olDel || []).slice(); if (del.indexOf(gid) < 0) del.push(gid);
+            patch[x.src] = { olLog: log, olDel: del };
+          });
+          if (!Object.keys(patch).length) return;
+          return db.doc(path).set({ freshData: patch }, { merge: true }).then(function() {
+            if (job.put.length) toast('🔗 ' + own + 'さんのMAPにもOLを記録しました');
+          });
+        });
+      }).catch(function() { toast(own + 'さんのMAPへの書き込みに失敗しました（あなたのMAPには保存済み）'); });
+    });
+  } catch (e) {}
+}
+function _olOwnerName(uid) {
+  var mm = (viewingOwnerUid ? (_viewMerged && _viewMerged.maps) : state.mergedMaps) || [];
+  for (var i = 0; i < mm.length; i++) if (mm[i].uid === uid && mm[i].name) return mm[i].name;
+  var so = (typeof sharedOwners !== 'undefined' && sharedOwners || []).filter(function(x) { return x.uid === uid; })[0];
+  return (so && (so.ownerName || so.ownerOrg)) || '相手';
+}
+// 保存前に、他のMAPから書き込まれたOL記録（ext）と削除の目印（olDel）を取り込む（古い画面からの保存で消さない）
+function _olMergeRemoteFresh(remoteFd) {
+  if (!remoteFd || typeof remoteFd !== 'object') return false;
+  var changed = false;
+  if (!state.freshData) state.freshData = {};
+  for (var mid in remoteFd) {
+    var rf = remoteFd[mid] || {}, rlog = rf.olLog || [], rdel = rf.olDel || [];
+    var hasExt = rlog.some(function(r) { return r && r.ext && r.gid; });
+    if (!hasExt && !rdel.length) continue;
+    var lf = state.freshData[mid] || (state.freshData[mid] = {});
+    var ldel = lf.olDel || [];
+    var dels = ldel.slice(); rdel.forEach(function(g) { if (dels.indexOf(g) < 0) dels.push(g); });
+    var llog = lf.olLog || (lf.olLog = []);
+    for (var i = llog.length - 1; i >= 0; i--) if (llog[i] && llog[i].gid && dels.indexOf(llog[i].gid) >= 0) { llog.splice(i, 1); changed = true; }
+    rlog.forEach(function(r) {
+      if (!r || !r.ext || !r.gid || dels.indexOf(r.gid) >= 0) return;
+      var l = null; for (var k = 0; k < llog.length; k++) if (llog[k] && llog[k].gid === r.gid) { l = llog[k]; break; }
+      if (!l) { llog.unshift(JSON.parse(JSON.stringify(r))); changed = true; }
+      else if ((r.updatedAt || '') > (l.updatedAt || '')) { for (var kk in r) l[kk] = JSON.parse(JSON.stringify(r[kk])); changed = true; }
+    });
+    if (dels.length !== ldel.length) { lf.olDel = dels; changed = true; }
+  }
+  return changed;
+}
 function _olDaysSince(ymd){ if(!ymd||!/^\d{4}-\d{2}-\d{2}$/.test(ymd))return null; var t=new Date();t.setHours(0,0,0,0); var d=new Date(ymd.replace(/-/g,'/'));d.setHours(0,0,0,0); return Math.round((t-d)/86400000); }
 // 未接触（記録なし）は「30日停滞」と同じ赤にせず、警告（黄）で区別する
 function _olSev(days){ if(days===null)return 'warn'; if(days>=30)return 'crit'; if(days>=14)return 'warn'; return 'ok'; }
@@ -8955,7 +9064,11 @@ function _olKindOf(r) {
 function _olKindLabel(k) { return k === 'group' ? '3〜7人OL' : '個別OL'; }
 function _olKindBadge(k) { return '<span class="olk ' + (k === 'group' ? 'g' : 's') + '">' + (k === 'group' ? '3〜7人' : '個別') + '</span>'; }
 function _olCanEdit() { return !!state.isEditor && !(typeof _aggActive !== 'undefined' && _aggActive); }
-function _olMem(mid) { var m = (typeof _findMember === 'function') ? _findMember(mid) : null; return (m && !m.deleted) ? m : null; }
+function _olMem(mid) {
+  var m = (typeof _findMember === 'function') ? _findMember(mid) : null;
+  if (!m && /^MG_/.test(String(mid)) && typeof _findMemberComposed === 'function') m = _findMemberComposed(mid); // v531: 共有MAP（結合）のメンバー
+  return (m && !m.deleted) ? m : null;
+}
 function _olShortNm(m) { return (m.lastName || m.firstName || '(無名)'); }
 function _olWd(ymd) { if (!ymd) return ''; var d = new Date(ymd.replace(/-/g, '/')); return isNaN(d) ? '' : '日月火水木金土'.charAt(d.getDay()); }
 function _olDateLbl(ev) { return ev.date ? (_olMD(ev.date) + '(' + _olWd(ev.date) + ')' + (ev.time ? ' ' + ev.time : '')) : '日付未定'; }
@@ -8974,7 +9087,7 @@ function _olEvents() {
       var ev = map[key];
       if (!ev) {
         ev = map[key] = { key: key, gid: r.gid || '', date: r.date || '', time: r.time || '', asan: r.asan || '', what: r.what || '', note: r.note || '',
-          st: r.st === 'planned' ? 'planned' : 'done', kind: _olKindOf(r), guests: (r.guests || []).slice(), order: (r.mids || []).slice(), recs: [] };
+          st: r.st === 'planned' ? 'planned' : 'done', kind: _olKindOf(r), guests: (r.guests || []).slice(), order: (r.mids || []).slice(), recs: [], ext: r.ext || null };
         list.push(ev);
       }
       ev.recs.push({ mid: mid, idx: i, rec: r });
@@ -8989,6 +9102,10 @@ function _olEvents() {
     ev.n = ids.length + ev.guests.length;
   });
   return list;
+}
+function _olExtBadge(ev) { // v531: 他のMAP（共有MAPの上位など）から記録されたOL
+  var me = currentUser && currentUser.uid;
+  return (ev && ev.ext && ev.ext.uid && ev.ext.uid !== me) ? ' <span class="merged-badge" title="' + evEsc(ev.ext.name || '') + 'さんのMAPから記録">' + icn('link') + evEsc(ev.ext.name || '共有') + '</span>' : '';
 }
 function _olEventByKey(key) { var l = _olEvents(); for (var i = 0; i < l.length; i++) if (l[i].key === key) return l[i]; return null; }
 function _olEvNames(ev, max) {
@@ -9081,7 +9198,7 @@ function renderOlTab() {
         + '<span class="olt-sn">' + num + '</span>'
         + '<span class="olt-sst">' + (ev.st === 'done' ? '✓' : '予定') + '</span>'
         + '<span class="olt-sd">' + _olDateLbl(ev) + '</span>'
-        + '<span class="olt-sm"><span class="olt-sm1"><b>' + ev.n + '人</b>' + (ev.asan ? '・A:' + evEsc(ev.asan) : '') + (ev.what ? '・' + evEsc(ev.what) : '') + '</span><small>' + evEsc(_olEvNames(ev, 4)) + '</small></span>'
+        + '<span class="olt-sm"><span class="olt-sm1"><b>' + ev.n + '人</b>' + (ev.asan ? '・A:' + evEsc(ev.asan) : '') + (ev.what ? '・' + evEsc(ev.what) : '') + '</span><small>' + evEsc(_olEvNames(ev, 4)) + _olExtBadge(ev) + '</small></span>'
         + '<span class="olt-arr">›</span></div>';
     } else {
       h += '<div class="olt-slot empty"' + (canEdit ? ' onclick="olPlanStart({kind:\'group\'})"' : '') + '><span class="olt-sn">' + num + '</span>'
@@ -9110,7 +9227,7 @@ function renderOlTab() {
       h += '<div class="olt-ev' + (isOver ? ' over' : '') + '" onclick="olEventOpen(\'' + _olKeyAttr(ev.key) + '\')">'
         + _olKindBadge(ev.kind)
         + '<span class="olt-evd">' + _olDateLbl(ev) + '</span>'
-        + '<span class="olt-evn">' + evEsc(_olEvNames(ev, 3)) + (ev.asan ? '<small>A:' + evEsc(ev.asan) + '</small>' : '') + '</span>'
+        + '<span class="olt-evn">' + evEsc(_olEvNames(ev, 3)) + _olExtBadge(ev) + (ev.asan ? '<small>A:' + evEsc(ev.asan) + '</small>' : '') + '</span>'
         + (isOver && canEdit ? '<button class="olt-res" onclick="event.stopPropagation();olEventOpen(\'' + _olKeyAttr(ev.key) + '\',{result:true})">結果を入力</button>' : '<span class="olt-arr">›</span>')
         + '</div>';
     });
@@ -9378,6 +9495,13 @@ function _olpRenderList() {
   cats.push(['研修生', rest.filter(function(m) { return mc(m) === '研修生'; })]);
   cats.push(['BR', rest.filter(function(m) { return mc(m) === 'BR'; })]);
   cats.push(['その他', rest.filter(function(m) { return mc(m) !== '研修生' && mc(m) !== 'BR'; })]);
+  // v531: 924-1 共有MAP（結合）のメンバーも選べるように（記録は相手のMAPにも書き込む）
+  var shared = (typeof composeMergedInto === 'function' ? composeMergedInto(membersForMap('current'), 'current') : []).filter(function(m) {
+    if (!/^MG_/.test(m.id) || m.deleted || (m.title || '').trim() === 'OUT') return false;
+    if (!/^MG_/.test(m.parentId || '')) return false; // 共有元の本人＝接続先の自分のメンバーと同じ人（重複して出さない）
+    return !q || ((m.lastName || '') + (m.firstName || '')).replace(/[\s　]/g, '').toLowerCase().indexOf(q) >= 0;
+  });
+  if (shared.length) cats.push([icn('link') + ' 共有MAP', shared]);
   var h = '';
   cats.forEach(function(c) {
     if (!c[1].length) return;
@@ -9388,6 +9512,7 @@ function _olpRenderList() {
       h += '<div class="olp-it' + (on ? ' on' : '') + '" onclick="olpToggle(\'' + m.id + '\')">'
         + '<span class="olt-ck' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span>'
         + '<span class="olp-nm">' + evEsc(_olNm(m)) + '</span><span class="ot-ttl ' + _olTtlCls(m.title) + '">' + evEsc((m.title || '').trim()) + '</span>'
+        + (m._foreign ? '<span class="merged-badge">' + icn('link') + evEsc(m._ownerName || '共有') + '</span>' : '')
         + (r ? '<span class="olt-fe ' + r.sev + '">' + (r.days === null ? '未接触' : r.days + '日') + '</span>' : '') + '</div>';
     });
   });
@@ -9513,7 +9638,7 @@ function olpSave() {
   var gid = p.gid || ('olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
   var legacySig = p.legacy ? _olpSig(p.legacy.rec) : null;
   var data = { date: p.date || '', time: p.time || '', asan: (p.asan || '').trim(), what: (p.what || '').trim(), note: p.st === 'done' ? (p.note || '').trim() : (p.note || ''),
-    st: p.st, gid: gid, mids: p.mids.slice(), kind: p.kind, guests: p.guests.slice(), to: '' };
+    st: p.st, gid: gid, mids: p.mids.slice(), kind: p.kind, guests: p.guests.slice(), to: '', updatedAt: new Date().toISOString() };
   p.mids.forEach(function(mid) {
     var log = freshOlLog(mid), rec = null, i;
     for (i = 0; i < log.length; i++) if (log[i] && log[i].gid === gid) { rec = log[i]; break; }
@@ -9527,13 +9652,15 @@ function olpSave() {
     delete rec.hostOnly;
   });
   // 外した人の記録は消す
-  var drop = function(mid, pred) { var log = freshOlLog(mid); for (var i = log.length - 1; i >= 0; i--) if (pred(log[i])) log.splice(i, 1); };
+  var drop = function(mid, pred) { var log = freshOlLog(mid); for (var i = log.length - 1; i >= 0; i--) if (pred(log[i])) { _olTomb(mid, log[i]); log.splice(i, 1); } };
+  var _mgGone = p.orig.filter(function(mid) { return p.mids.indexOf(mid) < 0 && /^MG_/.test(mid); });
   p.orig.forEach(function(mid) {
     if (p.mids.indexOf(mid) >= 0) return;
     drop(mid, function(r) { return r && ((r.gid && r.gid === gid) || (p.legacy && r === p.legacy.rec)); });
   });
   (p.hostRecs || []).forEach(function(x) { drop(x.mid, function(r) { return r === x.rec; }); }); // 移行時の仮置き（自分の記録）は人が決まったら不要
   autoSave();
+  _olMirror(gid, _mgGone, false); // v531: 共有MAPのメンバーは相手のMAPにも
   var first = p.mids[0];
   var lbl = _olKindLabel(p.kind) + (p.kind === 'group' ? '（' + n + '人）' : '');
   closeOlPlan();
@@ -9546,13 +9673,15 @@ function olpDelete() {
   if (!p || p.mode !== 'edit' || p.ro) return;
   if (!confirm('この' + _olKindLabel(p.kind) + '（' + (p.date ? _olMD(p.date) : '日付未定') + '）を削除しますか？\n参加した全員の記録から消えます。')) return;
   var fd = state.freshData || {};
+  var _mgAll = p.orig.concat(p.mids).filter(function(mid, i, a) { return /^MG_/.test(mid) && a.indexOf(mid) === i; });
   for (var mid in fd) {
     var log = (fd[mid] && fd[mid].olLog) || [];
     for (var i = log.length - 1; i >= 0; i--) {
-      if ((p.gid && log[i] && log[i].gid === p.gid) || (p.legacy && log[i] === p.legacy.rec)) log.splice(i, 1);
+      if ((p.gid && log[i] && log[i].gid === p.gid) || (p.legacy && log[i] === p.legacy.rec)) { _olTomb(mid, log[i]); log.splice(i, 1); }
     }
   }
   autoSave();
+  if (p.gid) _olMirror(p.gid, _mgAll, true); // v531: 相手のMAPからも消す
   var first = p.mids[0];
   closeOlPlan();
   if (typeof renderStats === 'function') renderStats();
@@ -22834,15 +22963,17 @@ function toggleEventDone(id) {
   // v407: メンバー紐付きの予定を完了→ワンタップでOL記録化（⚙設定の「予定とOLの連携」でオフ可）
   if (e.done && e.type === 'event' && typeof _olLinkOn === 'function' && _olLinkOn() && !viewingOwnerUid && !e.olLogged) {
     var _olMid = e.memberId || ((e.memberIds && e.memberIds.length) ? e.memberIds[0] : '');
-    if (_olMid && !/^MG_/.test(_olMid)) {
+    if (_olMid) { // v531: 共有MAPのメンバーも（相手のMAPにも記録）
       (function(ev7, mid7){
         setTimeout(function(){
           toastAction('「' + (ev7.title || '') + '」をOLとして記録しますか？', '記録する', function(){
             var log7 = freshOlLog(mid7);
-            log7.unshift({ date: ev7.date || evTodayYmd(), asan: '', to: '', what: ev7.title || '', note: '', st: 'done' });
+            var gid7 = 'olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            log7.unshift({ date: ev7.date || evTodayYmd(), asan: '', to: '', what: ev7.title || '', note: '', st: 'done', gid: gid7, mids: [mid7], kind: 'solo', guests: [], updatedAt: new Date().toISOString() });
             ev7.olLogged = true;
             saveEventDoc(ev7);
             autoSave();
+            if (/^MG_/.test(mid7)) _olMirror(gid7, [], false);
             toast('OL記録に追加しました（反応はメンバーのOLから追記できます）');
           }, 7000);
         }, 500);
@@ -26593,11 +26724,15 @@ function fsSaveToFirestore(uid) {
     members: state.idealMembers || [],
     updatedAt: new Date().toISOString()
   });
-  var p3 = (_fsSavedSig[_stPath] === _stSig) ? Promise.resolve() : fsSet(_stPath, {
-    stats: state.stats,
-    commission: state.commission,
-    freshData: state.freshData || {},
-    updatedAt: new Date().toISOString()
+  // v531: 共有MAPの相手が書き込んだOL記録を消さないよう、保存の直前に取り込んでから書く
+  var p3 = (_fsSavedSig[_stPath] === _stSig) ? Promise.resolve() : fsGet(_stPath).catch(function() { return null; }).then(function(remote) {
+    if (remote && _olMergeRemoteFresh(remote.freshData)) _stSig = JSON.stringify([state.stats, state.commission, state.freshData || {}]);
+    return fsSet(_stPath, {
+      stats: state.stats,
+      commission: state.commission,
+      freshData: state.freshData || {},
+      updatedAt: new Date().toISOString()
+    });
   });
   p2 = p2.then(function(){ _fsSavedSig[_idPath] = _idSig; });
   p3 = p3.then(function(){ _fsSavedSig[_stPath] = _stSig; });
