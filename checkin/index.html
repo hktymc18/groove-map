@@ -90,7 +90,7 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .recbar select{min-width:200px;}
 .manualrow{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .manualrow input{width:150px;}
-.sugbox{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--card);
+.sugbox{position:absolute;bottom:calc(100% + 4px);left:0;z-index:40;background:var(--card);
   border:1px solid var(--line);border-radius:8px;min-width:260px;max-height:240px;overflow:auto;
   box-shadow:0 8px 22px rgba(0,0,0,.18);}
 .sugitem{padding:8px 12px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
@@ -417,15 +417,17 @@ tr:last-child td{border-bottom:none;}
         <div class="manualrow">
           <label for="numIn" style="font-size:12.5px;font-weight:700;color:var(--sub);">手入力:</label>
           <input type="text" id="numIn" inputmode="numeric" placeholder="番号を入力">
-          <button id="btnManual">受付</button>
           <span style="position:relative;display:inline-block;">
             <input type="text" id="nameIn" placeholder="名前で検索して受付" style="width:170px;">
             <div id="nameSug" class="sugbox hide"></div>
           </span>
-          <button id="btnGuest">ゲスト受付</button>
+          <button id="btnManual" class="primary">受付</button>
+          <span style="flex:1"></span>
+          <button id="btnPlList" title="誓約書提出用の受付順リストを別ウィンドウで開く">📝 誓約書リスト</button>
         </div>
         <div class="manualrow">
-          <label style="font-size:12.5px;font-weight:700;color:var(--sub);">登壇者・運営:</label>
+          <button id="btnGuest">ゲスト受付</button>
+          <label style="font-size:12.5px;font-weight:700;color:var(--sub);margin-left:8px;">登壇者・運営:</label>
           <button id="btnMC">MCを登録</button>
           <button id="btnSpeaker">スピーカーを登録</button>
           <button id="btnStaffRole">受付管理者を登録</button>
@@ -490,6 +492,7 @@ tr:last-child td{border-bottom:none;}
       <label for="evUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="evUnionSel"></select>
       <span style="flex:1"></span>
+      <button id="btnSchedPdf" title="この月のイベント一覧を入金チェック表付きで印刷">📄 予定表PDF</button>
       <button id="btnPledges" title="オンライン受講の誓約書の同意記録をまとめて見る">📜 誓約書</button>
       <button class="primary" id="btnAddEvent">＋ 新規イベント</button>
     </div>
@@ -561,6 +564,7 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div id="selfArea"></div>
     <div id="onlineArea"></div>
+    <div id="rsvpArea"></div>
     <div id="nextArea"></div>
     <div id="rcptArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
@@ -821,6 +825,7 @@ function showCardView(token){
       renderCard(c);
       renderSelfEvents(c);
       renderOnlineEvents(c);
+      renderRsvpEvents(c);
       renderNextEvents(c);
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
@@ -1077,6 +1082,59 @@ function renderOnlineEvents(c){
   }).catch(function(){});
 }
 
+// 🎟 予約（RSVP）: rsvp=true のイベントは、開催 rsvpDays 日前になると「予約する」ボタンを表示。
+// 予約は checkinEvents/{id}/rsvps/{会員番号} に1回だけ作成（未ログイン・トークン照合、ルールで保証）
+function renderRsvpEvents(c){
+  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
+    var t0 = new Date(todayStr() + 'T00:00:00').getTime();
+    var evs = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if(!ev.rsvp) return;
+      if((ev.unions || []).indexOf(c.union) < 0) return;
+      var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
+      var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - t0) / 86400000);
+      if(diff > days) return;   // まだ受付期間前
+      evs.push(ev);
+    });
+    evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    evs = evs.slice(0, 3);
+    if(!evs.length){ $('rsvpArea').innerHTML = ''; return; }
+    $('rsvpArea').innerHTML = evs.map(function(ev, i){
+      var done = false;
+      try{ done = !!localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
+      return '<div class="selfevent">'
+        + '<b>🎟 予約受付中：' + esc(ev.name || '') + '</b>'
+        + '<span class="se-sub">' + esc(ev.date || '') + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</span>'
+        + (done
+          ? '<div class="se-done">✓ 予約済みです</div>'
+            + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">当日は会場で通常どおりチェックインしてください。変更・取消は受付担当へ。</p>'
+          : '<button class="primary" id="rsGo_' + i + '">予約する</button>'
+            + '<div class="se-msg" id="rsMsg_' + i + '"></div>')
+        + '</div>';
+    }).join('');
+    evs.forEach(function(ev, i){
+      var b = $('rsGo_' + i);
+      if(!b) return;
+      b.onclick = function(){
+        b.disabled = true;
+        db.collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
+          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+          eventDate: ev.date || '', eventName: ev.name || '',
+          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
+        }).then(function(){
+          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+          renderRsvpEvents(c);
+        }).catch(function(){
+          // すでに予約済み（作成のみ許可のため上書きは失敗する）
+          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+          renderRsvpEvents(c);
+        });
+      };
+    });
+  }).catch(function(){});
+}
+
 // 次回の開催予定: 自ユニオンの直近イベントを搭乗券風に表示
 // （セルフ受付中・オンライン対応のイベントは専用カードが出るのでここでは省く）
 function renderNextEvents(c){
@@ -1087,6 +1145,12 @@ function renderNextEvents(c){
       if((ev.unions || []).indexOf(c.union) < 0) return;
       if(ev.online) return;
       if(ev.mode === 'self' && ev.selfOpen) return;
+      // 予約受付中のイベントは専用カード（🎟）が出るのでここでは省く
+      if(ev.rsvp){
+        var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
+        var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000);
+        if(diff <= days) return;
+      }
       evs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
@@ -2234,6 +2298,7 @@ function renderEvents(){
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
       + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
+      + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canRec ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canRec ? '<button data-a="imp" data-id="' + esc(ev.id) + '">📥 取込</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
@@ -2259,6 +2324,15 @@ function renderEvents(){
         if(el && pending) el.innerHTML = ' <span class="pill r">' + pending + '件</span>';
       }).catch(function(){});
     }
+    // 予約（RSVP）件数
+    if(ev.rsvp){
+      try{
+        db.collection('checkinEvents').doc(ev.id).collection('rsvps').count().get().then(function(s){
+          var el = $('rvCt_' + ev.id);
+          if(el && s.data().count) el.innerHTML = ' <span class="pill g">' + s.data().count + '名</span>';
+        }).catch(function(){});
+      }catch(e){}
+    }
   });
 }
 $('evList').addEventListener('click', function(e){
@@ -2271,6 +2345,7 @@ $('evList').addEventListener('click', function(e){
   if(a === 'fin'){ financeModal(ev); }
   if(a === 'imp'){ importModal(ev); }
   if(a === 'online'){ onlineModal(ev); }
+  if(a === 'rsvps'){ rsvpListModal(ev); }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
@@ -2291,6 +2366,107 @@ $('evList').addEventListener('click', function(e){
     };
   }
 });
+/* 📄 予定表PDF: 表示中の月のイベント一覧を、棚の入金チェック表として使えるA4で印刷
+   （日付・曜日・イベント名・スピーカー・「お金入れました」チェック欄・金額・サイン欄） */
+$('btnSchedPdf').onclick = function(){
+  var evs = gEvents.slice().sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+  if(!evs.length){ toast('この月のイベントがありません。先にイベントを登録してください'); return; }
+  var yl = gMonth.y + '年' + gMonth.m + '月';
+  var wd = ['日', '月', '火', '水', '木', '金', '土'];
+  var rows = evs.map(function(ev){
+    var d = new Date((ev.date || '') + 'T00:00:00');
+    var day = isNaN(d.getTime()) ? '' : wd[d.getDay()];
+    return '<tr>'
+      + '<td class="dt mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '<span class="wd">（' + day + '）</span></td>'
+      + '<td class="nm">' + esc(ev.name || '') + (ev.speaker ? '<span class="sp">🎤 ' + esc(ev.speaker) + '</span>' : '') + '</td>'
+      + '<td class="ck"><span class="box"></span></td>'
+      + '<td class="amt">¥</td>'
+      + '<td class="sg"></td>'
+      + '</tr>';
+  }).join('');
+  var css = '@page{size:A4;margin:12mm;}'
+    + 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#000;background:#fff;}'
+    + 'h1{font-size:15pt;margin:0 0 2mm;letter-spacing:.1em;}'
+    + '.sub{font-size:9pt;color:#555;margin:0 0 4mm;}'
+    + 'table{width:100%;border-collapse:collapse;}'
+    + 'th{font-size:9pt;background:#f0f0f0;border:0.3mm solid #666;padding:2mm;}'
+    + 'td{border:0.3mm solid #666;padding:2mm 2.5mm;height:11mm;font-size:11pt;vertical-align:middle;}'
+    + '.dt{width:22mm;white-space:nowrap;font-weight:700;}'
+    + '.wd{font-size:8.5pt;color:#555;font-weight:400;}'
+    + '.nm{font-weight:700;}'
+    + '.nm .sp{font-size:8.5pt;color:#555;font-weight:400;margin-left:2mm;}'
+    + '.ck{width:26mm;text-align:center;}'
+    + '.box{display:inline-block;width:7mm;height:7mm;border:0.4mm solid #333;border-radius:1mm;vertical-align:middle;}'
+    + '.amt{width:26mm;font-size:9pt;color:#555;vertical-align:bottom;}'
+    + '.sg{width:26mm;}'
+    + '.foot{font-size:8pt;color:#777;margin-top:3mm;}'
+    + '.mono{font-family:"Courier New",monospace;}';
+  var title = '予定表_' + gEventUnion + '_' + gMonth.y + '-' + pad(gMonth.m);
+  var w = window.open('', '_blank');
+  if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
+    + '<style>' + css + '</style></head><body>'
+    + '<h1>' + esc(yl) + '　ハウディ予定表</h1>'
+    + '<p class="sub">' + esc(gEventUnion) + '　（全' + evs.length + '回）　✔ = お金を入れました</p>'
+    + '<table><tr><th>日付</th><th>イベント</th><th>お金入れました</th><th>金額</th><th>サイン</th></tr>'
+    + rows + '</table>'
+    + '<div class="foot">BASE CHECK-IN で出力（' + esc(todayStr()) + '）</div>'
+    + '<' + 'script>setTimeout(function(){ window.print(); }, 50);</' + 'script>'
+    + '</body></html>');
+  w.document.close();
+};
+
+/* 🎟 予約（RSVP）一覧: おでかけUR等の事前把握用。参加済み（出席あり）を✓表示、コピー・CSV・削除 */
+function rsvpListModal(ev){
+  var base = db.collection('checkinEvents').doc(ev.id);
+  Promise.all([base.collection('rsvps').get(), base.collection('attendance').get()]).then(function(res){
+    var rows = [];
+    res[0].forEach(function(d){ var r = d.data(); r.id = d.id; rows.push(r); });
+    rows.sort(function(a, b){ return (a.atMs || 0) - (b.atMs || 0); });
+    var att = {};
+    res[1].forEach(function(d){
+      var a = d.data();
+      if(a.status === 'pending' || a.status === 'rejected') return;
+      att[d.id] = 1;
+    });
+    var attended = rows.filter(function(r){ return att[r.id]; }).length;
+    modal('<h2>🎟 予約一覧 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '（' + rows.length + '名・参加済み ' + attended + '名）</h2>'
+      + (rows.length
+        ? '<div style="max-height:55vh;overflow:auto;">' + rows.map(function(r, i){
+            return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap;">'
+              + '<span class="mono" style="color:var(--sub);font-size:12px;width:1.8em;text-align:right;">' + (i + 1) + '</span>'
+              + '<b style="flex:1;min-width:120px;">' + esc(r.name || '') + '</b>'
+              + '<span style="color:var(--sub);font-size:12px;">' + esc(r.group || '') + (r.union ? '・' + esc(r.union) : '') + '</span>'
+              + (att[r.id] ? '<span class="pill g">✓ 参加済み</span>' : '<span class="pill n">予約のみ</span>')
+              + '<button data-rv="copy" data-i="' + i + '" title="氏名をコピー" style="padding:4px 10px;font-size:12px;">📋</button>'
+              + '<button data-rv="del" data-i="' + i + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">削除</button>'
+              + '</div>';
+          }).join('') + '</div>'
+        : '<p style="color:var(--sub);font-size:13.5px;">まだ予約はありません。会員証に「予約する」ボタンが表示されるのは開催'
+          + (ev.rsvpDays != null ? esc(ev.rsvpDays) : 4) + '日前からです。</p>')
+      + '<div class="btns">' + (rows.length ? '<button id="rvCsv">CSV出力</button>' : '') + '<button id="rvClose">閉じる</button></div>', true);
+    $('rvClose').onclick = closeModal;
+    var cb = $('rvCsv');
+    if(cb) cb.onclick = function(){
+      var out = [['会員番号', '氏名', '系列', 'ユニオン', '予約日時', '参加']];
+      rows.forEach(function(r){ out.push([r.id, r.name || '', r.group || '', r.union || '', r.atLocal || '', att[r.id] ? '参加済み' : '']); });
+      csvDownload('予約一覧_' + (ev.name || '') + '_' + (ev.date || '') + '.csv', out);
+    };
+    document.querySelector('.modal').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button[data-rv]') : null;
+      if(!b) return;
+      var r = rows[+b.getAttribute('data-i')];
+      if(!r) return;
+      if(b.getAttribute('data-rv') === 'copy'){ copyText(r.name || '', b); }
+      if(b.getAttribute('data-rv') === 'del'){
+        if(!window.confirm(r.name + ' さんの予約を削除しますか？')) return;
+        base.collection('rsvps').doc(r.id).delete().then(function(){
+          toast('予約を削除しました'); closeModal(); rsvpListModal(ev); loadEvents();
+        }).catch(function(e2){ toast(permMsg(e2, '削除権限がありません')); });
+      }
+    });
+  }).catch(function(e){ toast('予約の読込エラー: ' + e.message); });
+}
 $('btnAddEvent').onclick = function(){ eventForm(null); };
 function eventForm(ev){
   var isNew = !ev;
@@ -2336,6 +2512,12 @@ function eventForm(ev){
     + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…（未入力ならユニオン設定の値）">'
     + '<label>Zoom URL（あとからでも可。承認キュー画面でも入力できます）</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
     + '</div>'
+    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRsvp"' + (ev && ev.rsvp ? ' checked' : '') + '>'
+    + '<label for="evRsvp" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎟 会員証から予約を受け付ける（UR等。期日が来ると会員証に「予約する」ボタンが自動表示）</label></div>'
+    + '<div id="rowRsvp" class="' + (ev && ev.rsvp ? '' : 'hide') + '" style="margin-left:22px;">'
+    + '<label>予約ボタンを表示する日（開催の何日前から）</label>'
+    + '<input type="text" id="evRsvpDays" inputmode="numeric" value="' + esc(ev && ev.rsvpDays != null ? ev.rsvpDays : 4) + '" style="width:80px;">'
+    + '</div>'
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
@@ -2344,6 +2526,7 @@ function eventForm(ev){
   $('evModeDesk').onchange = updModeRow;
   $('evModeSelf').onchange = updModeRow;
   $('evOnline').onchange = function(){ $('rowOnline').classList.toggle('hide', !$('evOnline').checked); };
+  $('evRsvp').onchange = function(){ $('rowRsvp').classList.toggle('hide', !$('evRsvp').checked); };
   // 受け取りリンクが未入力なら、ユニオン設定の共通リンクをプリセット
   if(!(ev && ev.onlinePayLink)){
     db.collection('checkinUnions').doc(host).get().then(function(s){
@@ -2386,6 +2569,8 @@ function eventForm(ev){
       fee2: (function(){ var n = parseInt($('evFee2').value, 10); return isNaN(n) ? 500 : n; })(),
       fee3: (function(){ var n = parseInt($('evFee3').value, 10); return isNaN(n) ? '' : n; })(),
       payMode: $('evPayMode').checked ? 'paypay' : '',
+      rsvp: $('evRsvp').checked,
+      rsvpDays: (function(){ var n = parseInt($('evRsvpDays').value, 10); return isNaN(n) || n < 0 ? 4 : n; })(),
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
       onlinePayTo: $('evOnPay').value.trim(),
@@ -2761,9 +2946,11 @@ function printCashSlip(ev, f, live){
     + (when ? '　確定: ' + esc(when) : '') + '</div>'
     + '<div class="cs-sign">受領確認サイン:　　　　　　　　　　</div>'
     + '</div>';
-  var css = '@page{size:A4;margin:8mm;}'
+  var css = '@page{size:A4;margin:6mm;}'
     + 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#000;background:#fff;}'
-    + '.cs-quarter{width:97mm;min-height:140.5mm;box-sizing:border-box;border-right:0.3mm dashed #999;border-bottom:0.3mm dashed #999;padding-right:4mm;padding-bottom:2mm;}'
+    + '.cs-quarter{width:97mm;min-height:128mm;box-sizing:border-box;border-right:0.3mm dashed #999;padding-right:4mm;padding-bottom:2mm;}'
+    + '.cs-cap{font-size:8.5pt;font-weight:700;color:#555;margin:1mm 0;}'
+    + '.cs-cut{width:97mm;border-top:0.3mm dashed #999;text-align:center;color:#999;font-size:7.5pt;padding:1mm 0;}'
     + '.cs-slip{border:0.4mm solid #333;border-radius:2mm;padding:5mm 5mm;box-sizing:border-box;}'
     + '.cs-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12pt;letter-spacing:.3em;}'
     + '.cs-head span{font-size:9pt;letter-spacing:.05em;}'
@@ -2783,7 +2970,9 @@ function printCashSlip(ev, f, live){
   if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
     + '<style>' + css + '</style></head><body>'
-    + '<div class="cs-quarter">' + slip + '<div class="cs-note">✂ 点線で切り取り（A4の1/4サイズ）</div></div>'
+    + '<div class="cs-quarter"><div class="cs-cap">【提出用】</div>' + slip + '</div>'
+    + '<div class="cs-cut">✂ ここで切り取り</div>'
+    + '<div class="cs-quarter"><div class="cs-cap">【封筒貼付用】</div>' + slip + '</div>'
     + '<' + 'script>setTimeout(function(){ window.print(); }, 50);</' + 'script>'
     + '</body></html>');
   w.document.close();
@@ -2800,10 +2989,15 @@ function financeModal(ev){
     var bF1 = evFee1(ev), bF2 = evFee2(ev), bF3 = evFee3(ev);
     var attCount = 0, c1000 = 0, c500 = 0, c3 = 0;
     var adet = [], dCash = 0, dPp = 0, dUnpaid = 0, dCashN = 0, dRefN = 0;
+    var mcN = [], rcN = [];   // 受付で登録したMC・受付管理者の名前（納金票の署名に自動連動）
     res[1].forEach(function(d){
       var a = d.data(), fee = a.fee || 0;
       var pending = a.status === 'pending' || a.status === 'rejected';
       if(!pending) attCount++;
+      if(!pending && a.name){
+        if(a.role === 'mc') mcN.push(a.name);
+        if(a.role === 'staff') rcN.push(a.name);
+      }
       if(fee > 0 || a.method === 'online'){
         adet.push(a);
         if(!pending && fee > 0){
@@ -2865,6 +3059,19 @@ function financeModal(ev){
       { label: '', unit: '', count: '' }
     );
     var inc = (f.income && savedHasCount) ? f.income : incDef;
+    // 受付の途中で支出だけ入力して保存すると、保存済みの人数で固定されて
+    // 以降の受付（IN）が反映されなくなるため、未確定の間はBA行（設定料金に
+    // 一致する行）を常に最新の受付データで表示する。その他の行は保存値を維持
+    if(!f.locked && f.income && savedHasCount){
+      inc = inc.map(function(r){
+        if((r.label || '') !== 'BA') return r;
+        var u = Number(r.unit);
+        if(u === bF1) return { label: 'BA', unit: bF1, count: c1000 || '' };
+        if(u === bF2) return { label: 'BA', unit: bF2, count: c500 || '' };
+        if(bF3 != null && u === bF3) return { label: 'BA', unit: bF3, count: c3 || '' };
+        return r;
+      });
+    }
     var exp = f.expenses || [
       { label: 'スピーカー差し入れ', note: '', amount: '', receipt: false },
       { label: '会場使用料', note: '', amount: '', receipt: false },
@@ -2928,8 +3135,8 @@ function financeModal(ev){
       + '計 <span id="fnNet" class="mono">¥0</span></div>'
       + floatHtml
       + '<div style="display:flex;gap:8px;margin-top:10px;">'
-      + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || '') + '" style="flex:1;min-width:0;">'
-      + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || '') + '" style="flex:1;min-width:0;">'
+      + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || mcN.join('・')) + '" style="flex:1;min-width:0;">'
+      + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || rcN.join('・')) + '" style="flex:1;min-width:0;">'
       + '</div>'
       + detailHtml
       + (f.locked
@@ -3555,7 +3762,7 @@ function stageIdle(){
   var ev = gRec && gRec.ev;
   $('stage').className = 'scanstage';
   $('stageBody').innerHTML =
-    '<div class="wait-icon">🔴</div><h2 style="margin:0;font-size:22px;">カードをかざしてください</h2>'
+    '<div class="wait-icon">🔴</div><h2 style="margin:0;font-size:44px;font-weight:900;letter-spacing:.04em;">QRをかざしてください</h2>'
     + '<p class="stage-sub">' + (ev ? esc(ev.date + ' ' + ev.name) + (ev.speaker ? '（🎤 ' + esc(ev.speaker) + '）' : '') : '')
     + '　紙カード・スマホ会員証どちらもOK</p>';
 }
@@ -3830,23 +4037,46 @@ function writeAttendance(id, data){
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   var unions = gRec.ev.unions || [gUnion];
+  // 系列はそのユニオンの名簿にある系列からプルダウン選択（手入力も可）
+  function groupOptions(un){
+    var set = {};
+    Object.keys(gRec.roster).forEach(function(no){
+      var m = gRec.roster[no];
+      if(m.union === un && m.group) set[m.group] = 1;
+    });
+    var gs = Object.keys(set).sort();
+    return '<option value="">ゲスト（系列なし）</option>'
+      + gs.map(function(g){ return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('')
+      + '<option value="__free">その他（手入力）</option>';
+  }
   modal(
     '<h2>ゲスト受付</h2>'
     + '<label>氏名</label><input type="text" id="gName">'
     + '<label>所属ユニオン</label><select id="gUnion">'
     + unions.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
     + '</select>'
-    + '<label>系列（任意）</label><input type="text" id="gGroup" placeholder="紹介者の系列など">'
+    + '<label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select>'
+    + '<input type="text" id="gGroupFree" class="hide" placeholder="系列名を入力" style="margin-top:6px;">'
     + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
   );
+  $('gUnion').onchange = function(){
+    $('gGroupSel').innerHTML = groupOptions($('gUnion').value);
+    $('gGroupFree').classList.add('hide');
+  };
+  $('gGroupSel').onchange = function(){
+    $('gGroupFree').classList.toggle('hide', $('gGroupSel').value !== '__free');
+    if($('gGroupSel').value === '__free') $('gGroupFree').focus();
+  };
   $('gCancel').onclick = function(){ closeModal(); focusScan(); };
   $('gGo').onclick = function(){
     var name = $('gName').value.trim();
     if(!name){ toast('氏名を入力してください'); return; }
+    var gsel = $('gGroupSel').value;
+    var ggroup = gsel === '__free' ? $('gGroupFree').value.trim() : gsel;
     var id = 'g' + Date.now();
     var gfee = currentFee();
     var gdata = {
-      no: id, name: name, group: $('gGroup').value.trim() || 'ゲスト',
+      no: id, name: name, group: ggroup || 'ゲスト',
       union: $('gUnion').value, method: 'guest', guest: true,
       fee: gfee, paid: true, refund: 0
     };
@@ -3950,6 +4180,96 @@ function renderTallies(){
       + '<span class="tm">' + esc(a.atLocal || '') + '</span><span class="who">' + esc(a.name || '') + '</span>'
       + '<span class="gr">' + esc(sub) + '</span></li>';
   }).join('') || '<li style="color:var(--sub)">まだ受付はありません</li>';
+  // 誓約書リストの別ウィンドウを開いていればライブ更新
+  pledgeListRender();
+}
+/* ── 誓約書提出用の受付順リスト（別ウィンドウ・ライブ更新） ──
+   受付済みを受付順に並べ、通し番号と誓約書番号（○枚目-○番）を振る。
+   1枚あたりの人数は 1枚目/2枚目以降 で個別設定（ゼネラル10/10・SG10/9のプリセット付き）。
+   ✅とコピー済み表示は受付が進んで再描画されても保持する */
+var gPlWin = null, gPlChk = {}, gPlN1 = 10, gPlN2 = 10;
+$('btnPlList').onclick = function(){
+  if(!gRec){ toast('先に受付を開始してください'); return; }
+  pledgeListOpen();
+};
+function pledgeListOpen(){
+  if(gPlWin && !gPlWin.closed){ try{ gPlWin.focus(); }catch(e){} pledgeListRender(); return; }
+  var sw = (window.screen && screen.availWidth) || 1280;
+  var sh = (window.screen && screen.availHeight) || 800;
+  var w2 = Math.max(430, Math.floor(sw / 2));
+  gPlWin = window.open('', 'bciPledgeList', 'width=' + w2 + ',height=' + (sh - 40) + ',left=' + (sw - w2) + ',top=0');
+  if(!gPlWin){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
+  var css = 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:#faf9f4;color:#1c1a15;}'
+    + '.cfg{position:sticky;top:0;background:#fff;border-bottom:2px solid #ddd;padding:10px 14px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}'
+    + '.cfg input{width:44px;padding:5px;text-align:right;font-size:14px;border:1px solid #ccc;border-radius:6px;}'
+    + '.cfg button{padding:5px 10px;font-size:12px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;}'
+    + '.row{display:flex;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid #e5e2d8;font-size:16px;}'
+    + '.row.hd{background:#f0eee6;font-size:11px;color:#777;padding:4px 14px;position:sticky;top:52px;}'
+    + '.ser{width:2.2em;text-align:right;color:#999;font-size:13px;}'
+    + '.sh{width:3.4em;font-weight:700;color:#0a6b3c;}'
+    + '.row input[type=checkbox]{width:22px;height:22px;}'
+    + '.row b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    + '.sub{font-size:12px;color:#888;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    + '.cpb{padding:5px 12px;font-size:13px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;}'
+    + '.empty{color:#999;font-size:13px;padding:20px 14px;}'
+    + '.mono{font-family:"Courier New",monospace;}';
+  gPlWin.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>誓約書リスト（受付順）</title>'
+    + '<style>' + css + '</style></head><body>'
+    + '<div class="cfg">誓約書1枚あたり: 1枚目 <input id="n1" type="number" min="1" value="' + gPlN1 + '"> 名 / 2枚目以降 <input id="n2" type="number" min="1" value="' + gPlN2 + '"> 名'
+    + '<button onclick="ps(10,10)">ゼネラル(10/10)</button><button onclick="ps(10,9)">SG(10/9)</button>'
+    + '<span style="flex:1"></span><span style="font-weight:700;">受付 <span id="ct">0</span>名</span></div>'
+    + '<div class="row hd"><span class="ser">通し</span><span class="sh">誓約書</span><span style="width:22px;">✅</span><b>氏名（📋でコピー）</b></div>'
+    + '<div id="list"><p class="empty">まだ受付はありません</p></div>'
+    + '<' + 'script>'
+    + 'function conf(){ try{ window.opener.ckPlConf(document.getElementById("n1").value, document.getElementById("n2").value); }catch(e){} }'
+    + 'document.getElementById("n1").oninput = conf; document.getElementById("n2").oninput = conf;'
+    + 'function ps(a,b){ document.getElementById("n1").value = a; document.getElementById("n2").value = b; conf(); }'
+    + 'function tg(el){ try{ window.opener.ckPlToggle(el.getAttribute("data-no"), el.checked); }catch(e){} }'
+    + 'function cp(el){ var t = el.getAttribute("data-n");'
+    + '  function done(){ el.textContent = "✓"; try{ window.opener.ckPlCopied(el.getAttribute("data-no")); }catch(e){} }'
+    + '  function fb(){ var ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";'
+    + '    document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); done(); }catch(e){} ta.remove(); }'
+    + '  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done).catch(fb); } else fb(); }'
+    + '<' + '/script></body></html>');
+  gPlWin.document.close();
+  pledgeListRender();
+}
+// 別ウィンドウ側から呼ばれる（設定変更・✅・コピー済みの保持）
+var gPlCopied = {};
+window.ckPlConf = function(a, b){
+  gPlN1 = Math.max(1, parseInt(a, 10) || 10);
+  gPlN2 = Math.max(1, parseInt(b, 10) || 10);
+  pledgeListRender();
+};
+window.ckPlToggle = function(no, on){ if(on) gPlChk[no] = 1; else delete gPlChk[no]; };
+window.ckPlCopied = function(no){ gPlCopied[no] = 1; };
+function pledgeListRender(){
+  if(!gPlWin || gPlWin.closed || !gRec) return;
+  var el, ct;
+  try{ el = gPlWin.document.getElementById('list'); ct = gPlWin.document.getElementById('ct'); }catch(e){ return; }
+  if(!el) return;
+  var items = [];
+  Object.keys(gRec.att).forEach(function(id){
+    var a = gRec.att[id];
+    if(a.status === 'pending' || a.status === 'rejected') return;
+    items.push({ id: id, a: a });
+  });
+  items.sort(function(x, y){ return attSortKey(x.a) - attSortKey(y.a); });   // 受付順（早い→遅い）
+  el.innerHTML = items.map(function(x, i){
+    var sheet, pos;
+    if(i < gPlN1){ sheet = 1; pos = i + 1; }
+    else { sheet = 2 + Math.floor((i - gPlN1) / gPlN2); pos = (i - gPlN1) % gPlN2 + 1; }
+    var nm = x.a.name || '';
+    return '<div class="row">'
+      + '<span class="ser mono">' + (i + 1) + '</span>'
+      + '<span class="sh mono">' + sheet + '-' + pos + '</span>'
+      + '<input type="checkbox" data-no="' + esc(x.id) + '" onchange="tg(this)"' + (gPlChk[x.id] ? ' checked' : '') + '>'
+      + '<b>' + esc(nm) + '</b>'
+      + '<span class="sub">' + esc(attGroup(x.id, x.a) || (x.a.guest ? 'ゲスト' : '')) + '</span>'
+      + '<button class="cpb" data-n="' + esc(nm) + '" data-no="' + esc(x.id) + '" onclick="cp(this)">' + (gPlCopied[x.id] ? '✓' : '📋') + '</button>'
+      + '</div>';
+  }).join('') || '<p class="empty">まだ受付はありません</p>';
+  if(ct) ct.textContent = items.length;
 }
 // 並び順キー: atMs（受付時に記録）→ なければ atLocal "HH:MM" から概算
 function attSortKey(a){
