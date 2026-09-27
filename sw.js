@@ -62,8 +62,8 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v531c';   // c: 受付システムがMAPのシェルに化ける問題の修正（キャッシュ作り直し）
-var APP_JS = './app.js?v=v531'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
+var CACHE = 'groove-map-v532';
+var APP_JS = './app.js?v=v532'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
 var ASSETS = [
   './',
   './index.html',
@@ -136,21 +136,6 @@ self.addEventListener('fetch', function (e) {
   var isHTML = req.mode === 'navigate' || accept.indexOf('text/html') >= 0;
 
   if (isHTML) {
-    // 受付システム（/checkin/配下）はMAP本体とは別アプリなので、下のアプリシェル共有キャッシュを使わない。
-    // ネットワーク優先で常に受付システム自身のHTMLを返し、オフライン時のみそのURLのキャッシュへフォールバック
-    // （これがないと、MAPを開いた後に受付URLを開くとMAPのログイン画面が返ってしまう）
-    if (url.pathname.indexOf('/checkin') >= 0) {
-      e.respondWith(
-        fetch(new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' })).then(function (res) {
-          if (res && res.ok) {
-            var copy = res.clone();
-            caches.open(CACHE).then(function (c) { c.put(req, copy); });
-          }
-          return res;
-        }).catch(function () { return caches.match(req); })
-      );
-      return;
-    }
     // v511: キャッシュ優先で即表示＋裏で最新版を取得してキャッシュを更新（stale-while-revalidate）。
     // パスワード再設定などクエリ付きのURLも同じアプリ本体を返す（中身は1ファイルのため）。
     var fresh = fetch(new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' })).then(function (res) {
