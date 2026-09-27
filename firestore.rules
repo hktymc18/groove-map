@@ -232,6 +232,15 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/checkinUnions/$(un))
                  .data.get('admins', []).hasAny([request.auth.uid]));
     }
+    // 🎓 研修生登録の担当: checkinUnions.trainers に任命された人（管理者は常に可）。
+    // できるのは「研修生の新規登録」と「研修生のチュートリアル記録」だけ（下のルールで限定）
+    function isCkTrainer(un) {
+      return isCkAdmin(un)
+        || (signedIn() && notDisabled(request.auth.uid)
+            && exists(/databases/$(database)/documents/checkinUnions/$(un))
+            && get(/databases/$(database)/documents/checkinUnions/$(un))
+                 .data.get('trainers', []).hasAny([request.auth.uid]));
+    }
     // 自分のプロフィールの所属ユニオン
     function ckMyUnion() {
       return profileExists(request.auth.uid)
@@ -260,6 +269,17 @@ service cloud.firestore {
       allow update: if signedIn()
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['cardToken','cardSig','cardStatus']);
+      // 🎓 研修生登録の担当: 研修生（trainee=true）の新規登録と、
+      // 研修生のチュートリアル記録（trainings）の更新、自分が登録した研修生の削除（取消用）だけ可
+      allow create: if isCkTrainer(request.resource.data.get('union',''))
+                    && request.resource.data.get('trainee', false) == true;
+      allow update: if isCkTrainer(resource.data.get('union',''))
+                    && resource.data.get('trainee', false) == true
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['trainings']);
+      allow delete: if isCkTrainer(resource.data.get('union',''))
+                    && resource.data.get('trainee', false) == true
+                    && resource.data.get('regBy','') == request.auth.uid;
       allow delete: if isCkAdmin(resource.data.get('union',''));
     }
 
