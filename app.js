@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v531';
+var APP_JS_VERSION = 'v532';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1375,7 +1375,17 @@ function renderPCMap(mapType) {
 }
 
 // ウィンドウリサイズ時に再描画
+var _lastPcMode = (typeof window !== 'undefined') ? (window.innerWidth >= 768) : null; // 読込時の表示（最初の回転も検知できるように）
 window.addEventListener('resize', function() {
+  // v532: 927-1 スマホを縦⇄横に回して PC表示⇄スマホ表示 が切り替わったら、その表示で作り直す
+  //        （横向き＝PC表示の間はスマホ用ツリーを作らないため、縦に戻すとツリーが空のままだった）
+  var _pcNow = isPCMode();
+  if (_lastPcMode !== null && _pcNow !== _lastPcMode) {
+    _lastPcMode = _pcNow;
+    if (typeof renderCurrentView === 'function') { try { renderCurrentView(); } catch (eMc) {} }
+    return;
+  }
+  _lastPcMode = _pcNow;
   if (isPCMode()) {
     if (typeof _pcView !== 'undefined' && _pcView === 'orbit') {
       renderPCOrbit(currentView === 'ideal' ? 'ideal' : 'current');
@@ -1460,9 +1470,6 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     var col = COLORS[fi % COLORS.length];
     (function paint(m) { cmap[m.id] = col; lineageRoot[m.id] = kid.id; kids(m.id).forEach(paint); })(kid);
   });
-  var leafCnt = {};
-  (function cnt(id) { var ch = kids(id); if (!ch.length) { leafCnt[id] = 1; return 1; } var t = 0; ch.forEach(function(c) { t += cnt(c.id); }); leafCnt[id] = t; return t; })(root.id);
-  var totalLeaves = leafCnt[root.id] || 1;
   var nr = 26;                          // 丸の半径（固定。人数が多いほどトラックが横に伸びる）
   var MIN = nr * 2 + 10;                // 同じレーンの丸どうしの中心間の最小距離
   var GAP = nr * 2 + 30;                // レーンの間隔
@@ -1470,18 +1477,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   var KR = 1;                           // レーン半径の倍率（下で自動決定）
   var laneR = function(d) { return (R1 + (d - 1) * GAP) * KR; };
   var maxLane = Math.max(maxD, 1);
-  // 目標位置：一周を1としたときの割合 fT を葉の数で配分（系列の間は少し空ける）
-  var gapF = l1.length > 1 ? 0.0125 : 0;
-  var perLeaf = (1 - gapF * l1.length) / totalLeaves;
-  var fT = {}, fCur = gapF / 2;
-  l1.forEach(function(kid) {
-    (function assign(m, f0) {
-      fT[m.id] = f0 + leafCnt[m.id] * perLeaf / 2;
-      var cf = f0;
-      kids(m.id).forEach(function(c) { assign(c, cf); cf += leafCnt[c.id] * perLeaf; });
-    })(kid, fCur);
-    fCur += leafCnt[kid.id] * perLeaf + gapF;
-  });
+  var fT = {}; // 目標位置（一周を1とした割合）：下の tidy() で決める
   // レーンごとの並び（系列→並び順どおり）
   var byLane = {};
   (function walk(id) { kids(id).forEach(function(c) { var d = nodeDepth[c.id]; (byLane[d] || (byLane[d] = [])).push(c.id); walk(c.id); }); })(root.id);
@@ -1500,11 +1496,64 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     for (var i = 0; i < 4; i++) { if (sv <= sl[i] || i === 3) return i + Math.min(1, sv / sl[i]); sv -= sl[i]; }
     return 0;
   };
-  // 並び順を保ったまま最小間隔を満たし、目標位置からのずれが最小になる配置（等間隔制約つき単調回帰＝PAV）
-  var placeLane = function(ids, r) {
-    var P = perim(r), n = ids.length, t = ids.map(function(id) { return uToS(r, uT[id]); });
-    for (var i = 1; i < n; i++) while (t[i] < t[i - 1] - P / 2) t[i] += P; // 周回の連続性
-    var y = t.map(function(v, i) { return v - i * MIN; });
+  // v532: 927-4 同じ親の子どうしは詰め、別の親のグループの間・別の系列の間はすき間を空ける（誰のフロントか見分けやすく）
+  var SG = Math.round(nr * 0.9), LG = Math.round(nr * 1.8), tidyTot = 0;
+  // v532: 目標位置は「整った木」の並べ方（Reingold–Tilford）：兄弟の部分木を、段ごとの輪郭がぶつからない所まで寄せて並べ、
+  //        親は最初と最後の子の真ん中。→ 子は親の近くにまとまり、親ごとの範囲が入れ子になる（線が交差しない）。
+  //        従来の「葉の数で割り当て」は、大きい部分木を持つ子が親から遠くへ離れ、隣の親の下に入り込んでいた
+  (function tidy() {
+    var rel = {};
+    var lay = function(id, d, sibGap, deepGap) {
+      var ch = kids(id), out = { l: {}, r: {} };
+      out.l[d] = 0; out.r[d] = 0;
+      if (!ch.length) return out;
+      var acc = null, offs = [];
+      ch.forEach(function(c) {
+        var cc = lay(c.id, d + 1, MIN, MIN + SG), sh = 0;
+        if (acc) {
+          sh = -1e12;
+          for (var dd in cc.l) if (acc.r[dd] !== undefined) sh = Math.max(sh, acc.r[dd] - cc.l[dd] + (+dd === d + 1 ? sibGap : deepGap));
+        } else acc = { l: {}, r: {} };
+        offs.push(sh);
+        for (var d2 in cc.l) {
+          var lv = cc.l[d2] + sh, rv = cc.r[d2] + sh;
+          if (acc.l[d2] === undefined || lv < acc.l[d2]) acc.l[d2] = lv;
+          if (acc.r[d2] === undefined || rv > acc.r[d2]) acc.r[d2] = rv;
+        }
+      });
+      var mid = (offs[0] + offs[offs.length - 1]) / 2;
+      ch.forEach(function(c, k) { rel[c.id] = offs[k] - mid; });
+      for (var d3 in acc.l) { out.l[d3] = acc.l[d3] - mid; out.r[d3] = acc.r[d3] - mid; }
+      // 子へのくし（横棒）が通る範囲＝最初の子〜最後の子。兄弟・いとこはこの外側に置く（棒の上に他の親が来ない＝交差しない）
+      out.l[d] = Math.min(0, offs[0] - mid); out.r[d] = Math.max(0, offs[offs.length - 1] - mid);
+      return out;
+    };
+    lay(root.id, 0, MIN + LG, MIN + LG); // 1段目どうし＝系列の間は広く
+    var X = {}, mn = 1e12, mx = -1e12;
+    (function abs(id, x) { kids(id).forEach(function(c) { X[c.id] = x + rel[c.id]; if (X[c.id] < mn) mn = X[c.id]; if (X[c.id] > mx) mx = X[c.id]; abs(c.id, X[c.id]); }); })(root.id, 0);
+    var wrap = MIN + (l1.length > 1 ? LG : 0), tot = Math.max(1, mx - mn + wrap);
+    for (var id9 in X) fT[id9] = (X[id9] - mn + wrap / 2) / tot;
+    tidyTot = tot;
+  })();
+  var gapBetween = function(a, b) {
+    var ma = _byId[a], mb = _byId[b];
+    if (ma && mb && ma.parentId === mb.parentId) return MIN;
+    return (lineageRoot[a] !== lineageRoot[b]) ? MIN + LG : MIN + SG;
+  };
+  var laneGaps = {}, laneNeed = {};
+  for (var dg in byLane) {
+    var L9 = byLane[dg], g9 = [0], tot9 = 0;
+    for (var gi = 1; gi < L9.length; gi++) { g9.push(gapBetween(L9[gi - 1], L9[gi])); tot9 += g9[gi]; }
+    laneGaps[dg] = g9;
+    laneNeed[dg] = tot9 + (L9.length > 1 ? gapBetween(L9[L9.length - 1], L9[0]) : MIN); // 一周して先頭に戻る所のすき間も
+  }
+  // 並び順を保ったまま最小間隔（上のすき間）を満たし、目標位置からのずれが最小になる配置（間隔制約つき単調回帰＝PAV）
+  var placeLane = function(dk, r, tS) {
+    var ids = byLane[dk], gaps = laneGaps[dk];
+    var P = perim(r), n = ids.length, t = tS.slice();
+    for (var i = 1; i < n; i++) { while (t[i] < t[i - 1] - P / 2) t[i] += P; while (t[i] > t[i - 1] + P / 2) t[i] -= P; } // 周回の連続性
+    var off = [0]; for (var i2 = 1; i2 < n; i2++) off.push(off[i2 - 1] + gaps[i2]);
+    var y = t.map(function(v, k) { return v - off[k]; });
     var blocks = [];
     y.forEach(function(v) {
       blocks.push({ sum: v, cnt: 1 });
@@ -1513,21 +1562,45 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       }
     });
     var out = [], idx = 0;
-    blocks.forEach(function(bl) { var m = bl.sum / bl.cnt; for (var j = 0; j < bl.cnt; j++) { out.push(m + idx * MIN); idx++; } });
-    var ok = n < 2 || (out[n - 1] - out[0] <= P - MIN + 0.5);
+    blocks.forEach(function(bl) { var m = bl.sum / bl.cnt; for (var j = 0; j < bl.cnt; j++) { out.push(m + off[idx]); idx++; } });
+    var ok = n < 2 || (out[n - 1] - out[0] <= P - (laneNeed[dk] - off[n - 1]) + 0.5);
     return { s: out, ok: ok };
   };
   var laneS = {}, uT = {};
+  var uOf = function(id) { var p = _laneIdx[id]; return p ? sToU(laneR(p.d), laneS[p.d][p.i]) : null; };
+  var _laneIdx = {};
+  for (var dl in byLane) byLane[dl].forEach(function(id, k) { _laneIdx[id] = { d: +dl, i: k }; });
+  // 半円部分では内側のレーンほど短く丸が押し出されるため、最後に親を「最初と最後の子の真ん中」へ戻す（外側のレーンから）
+  var recenter = function() {
+    for (var d9 = maxLane - 1; d9 >= 1; d9--) {
+      if (!byLane[d9] || !byLane[d9 + 1]) continue;
+      var r9 = laneR(d9);
+      var tg = byLane[d9].map(function(id, k) {
+        var ch = kids(id);
+        if (!ch.length) return laneS[d9][k];
+        var ua = uOf(ch[0].id), ub = uOf(ch[ch.length - 1].id), du = ub - ua;
+        if (du > 2) du -= 4; if (du < -2) du += 4;
+        return uToS(r9, ua + du / 2);
+      });
+      laneS[d9] = placeLane(d9, r9, tg).s;
+    }
+  };
   // 今の KR で、全レーンの丸が重ならずに並ぶ最短の直線長 Lh を求めて配置
   var solve = function() {
     Lh = Math.max(R1, laneR(maxLane) * 0.3);
-    for (var dq2 in byLane) Lh = Math.max(Lh, (byLane[dq2].length * MIN / 0.82 - 2 * Math.PI * laneR(+dq2)) / 4);
+    for (var dq2 in byLane) Lh = Math.max(Lh, (laneNeed[dq2] / 0.82 - 2 * Math.PI * laneR(+dq2)) / 4);
+    // 基準レーンに「整った木」の並び（親ごとのくしの範囲を含む）がそのまま入る長さにする（押し出しで親子がずれない）
+    Lh = Math.max(Lh, (tidyTot - 2 * Math.PI * laneR(refLane)) / 4);
     for (var tryN = 0; tryN < 14; tryN++) {
       var allOk = true;
       // 基準レーン上で割合→位置 u。同じ u は全レーンで同じ法線上（親の真外側に子）
       for (var fid in fT) uT[fid] = sToU(laneR(refLane), fT[fid] * perim(laneR(refLane)));
-      for (var dk in byLane) { var res = placeLane(byLane[dk], laneR(+dk)); laneS[dk] = res.s; if (!res.ok) allOk = false; }
-      if (allOk) break;
+      for (var dk in byLane) {
+        var rr0 = laneR(+dk);
+        var res = placeLane(+dk, rr0, byLane[dk].map(function(id) { return uToS(rr0, uT[id]); }));
+        laneS[dk] = res.s; if (!res.ok) allOk = false;
+      }
+      if (allOk) { recenter(); break; }
       Lh *= 1.18;
     }
   };
@@ -3440,7 +3513,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v531';
+  var DATA_VERSION = 'v532';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4450,6 +4523,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v532', d:'2026-09-27', items:['◎ 運動会MAPの並べ方を改善（927-4）：同じ人のフロントは親の真外側にまとまり、別の人のグループの間・系列の間にはすき間を空けるように。子が隣の人の下に入り込んだり、線が他の人の線と交差・重なったりしにくくなりました','📱 スマホを横にして運動会・ツリーを切り替えたあと縦に戻すと、ツリーが消える／運動会が残る／⊡でツリーが下に出る不具合を修正（927-1〜3）'] },
   { v:'v531', d:'2026-09-26', items:['🔗 OLの企画・編集で、共有MAP（結合）のメンバーも選べるように（924-1）。予定（スケジュール）のOLからも同じです','✍ 共有MAPのメンバーのOLは、相手のMAPにも記録されます（相手が「編集」で共有している場合。閲覧のみの共有ならあなたのMAPにだけ保存）。相手のOLタブには「🔗記録した人の名前」が付き、相手のMAPにいない参加者は名前で表示','🗑 企画から外す・削除すると、相手のMAPからも消えます。相手の画面が古いままでも、書き込まれた記録が消えないように保存時に取り込みます'] },
   { v:'v530', d:'2026-09-25', items:['🚪 OUTにした時、直下の組織は「今月はそのまま」に。誰の下がOUTしたのかMAPで分かるように残し、翌月コピーの時に上のアップラインの直下へ自動で移動（ロールアップ）します。翌月コピーの確認画面に「直下◯人は△△さんの直下へ」と表示'] },
   { v:'v529', d:'2026-09-25', items:['📈 データタブの推移グラフに、過去の月のデータが出ない問題を修正。過去の月は「その月のMAP」から総人数・稼働・OUT・研修生などを集計し直して表示し、UNIVERSE・コミッションはその月に入力した数字を使います（翌月コピーをしていない月や、あとから増えた項目も表示されます）'] },

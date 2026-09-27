@@ -62,8 +62,8 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v531c';   // c: 受付システムがMAPのシェルに化ける問題の修正（キャッシュ作り直し）
-var APP_JS = './app.js?v=v531'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
+var CACHE = 'groove-map-v532';
+var APP_JS = './app.js?v=v532'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
 var ASSETS = [
   './',
   './index.html',
