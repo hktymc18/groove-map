@@ -160,6 +160,8 @@ header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--b
   .pc-view-toggle { display: none !important; }
   .pc-toolbar { display: none !important; }
   .mobile-tree { display: block; }
+  /* v532: 927-2/927-3 横向き（PC表示）で運動会・カンバンを開いたまま縦に戻しても残らない */
+  .pc-orbit-wrap.show, .pc-kanban-wrap.show, .pc-filter-bar.show { display: none !important; }
 }
 /* PC時にモバイル用バナー/検索/段数/ヒントを非表示 */
 @media (min-width: 768px) {
@@ -2648,7 +2650,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v531</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v532</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3566,7 +3568,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v531';</script>
-<script src="app.js?v=v531"></script>
+<script>window.GM_EXPECT_JS='v532';</script>
+<script src="app.js?v=v532"></script>
 </body>
 </html>
