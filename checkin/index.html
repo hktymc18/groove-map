@@ -96,6 +96,14 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .sugitem{padding:8px 12px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
 .sugitem:last-child{border-bottom:none;}
 .sugitem:hover{background:var(--paper);}
+/* 🎓 研修生登録ページ（スマホ向け・大きめの入力とボタン） */
+#vTrainer input,#vTrainer select{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
+.trtabs{display:flex;gap:8px;margin:10px 0 14px;}
+.trtabs button{flex:1;padding:11px;font-size:14px;}
+.trtabs button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
+.trsex{display:flex;gap:8px;margin:4px 0 10px;}
+.trsex button{flex:1;padding:11px;font-size:14px;}
+.trsex button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
 .sugitem .su{color:var(--sub);font-size:12px;margin-left:6px;}
 .side{display:flex;flex-direction:column;gap:12px;min-width:0;}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
@@ -457,6 +465,7 @@ tr:last-child td{border-bottom:none;}
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
       <button id="btnCkAdmins" class="hide">👑 受付管理者</button>
+      <button id="btnTrainers" class="hide">🎓 研修生登録の担当</button>
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
@@ -563,6 +572,7 @@ tr:last-child td{border-bottom:none;}
       <div class="mc-no mono" id="mcNo"></div>
     </div>
     <div id="selfArea"></div>
+    <div id="trArea"></div>
     <div id="onlineArea"></div>
     <div id="rsvpArea"></div>
     <div id="nextArea"></div>
@@ -588,6 +598,52 @@ tr:last-child td{border-bottom:none;}
       <b>数字のみの番号の方は今までどおり</b>です。
     </div>
     <p style="font-size:12.5px;color:var(--sub);margin-top:14px;line-height:1.8;">開いたら、ブラウザの「ホーム画面に追加」をしておくと次回すぐ使えます。<br>番号がわからない場合は受付にお問い合わせください。</p>
+  </div>
+</div>
+
+<!-- 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） -->
+<div id="vTrainer" class="hide">
+  <div style="max-width:560px;margin:0 auto;padding:14px 14px 40px;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+      <h2 style="margin:0;font-size:18px;">🎓 研修生登録</h2>
+      <span id="trUnionLbl" style="font-size:12.5px;color:var(--sub);"></span>
+      <span style="flex:1"></span>
+      <span id="trMe" style="font-size:12px;color:var(--sub);"></span>
+    </div>
+    <div id="trDeny" class="notice hide"></div>
+    <div id="trMain" class="hide">
+      <div class="trtabs">
+        <button id="trTabReg" class="on">＋ 登録</button>
+        <button id="trTabList">研修生一覧</button>
+      </div>
+      <div id="trPaneReg">
+        <label>氏名</label><input type="text" id="trName" autocomplete="off">
+        <label>UPルビー</label>
+        <select id="trUp"></select>
+        <input type="text" id="trUpFree" class="hide" placeholder="UPルビー名を入力" style="margin-top:6px;">
+        <label>ふりがな（任意）</label><input type="text" id="trKana" autocomplete="off">
+        <label>性別（任意）</label>
+        <div class="trsex">
+          <button data-sex="" class="on">未設定</button><button data-sex="m">男</button><button data-sex="f">女</button>
+        </div>
+        <p style="font-size:12.5px;color:var(--sub);">番号は自動発番: <b id="trNoPrev" class="mono">—</b></p>
+        <button class="primary" id="trGo" style="width:100%;padding:14px;font-size:16px;">登録して会員証QRを表示</button>
+        <div id="trToday" style="margin-top:18px;"></div>
+      </div>
+      <div id="trPaneList" class="hide"></div>
+    </div>
+    <div id="trQrView" class="hide" style="text-align:center;padding-top:8px;">
+      <p style="font-size:13px;color:var(--sub);margin:0 0 4px;">研修生本人のスマホでこのQRを読み取ってください</p>
+      <h3 id="tqName" style="margin:4px 0;font-size:22px;"></h3>
+      <div class="mono" id="tqNo" style="color:var(--sub);font-size:13px;margin-bottom:10px;"></div>
+      <div id="tqQr" style="display:flex;justify-content:center;background:#fff;padding:16px;border-radius:14px;"></div>
+      <p style="font-size:12px;color:var(--sub);">読み取ると本人専用の会員証が開きます（「ホーム画面に追加」を案内してください）</p>
+      <button class="primary" id="tqDone" style="width:100%;padding:14px;font-size:16px;margin-top:8px;">✓ 完了 — 次の研修生を登録</button>
+      <div class="btns" style="justify-content:center;margin-top:8px;">
+        <button id="tqShare">リンクを共有</button>
+        <button id="tqUndo" class="danger ghost">この登録を取消</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -650,7 +706,7 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
 }
@@ -669,6 +725,22 @@ function randToken(){
   return s;
 }
 function cardUrl(token){ return location.href.split('#')[0] + '#c=' + token; }
+/* 🎓 研修生のチュートリアル項目。main=メイン3項目（進捗の分母）。
+   internal=内部管理項目: 記録されるまで会員証には表示しない */
+var TR_ITEMS = [
+  { k: 'PG',  main: true },
+  { k: 'DLR', main: true, note: '会場' },
+  { k: 'PA',  main: true },
+  { k: 'EXP' },
+  { k: 'CO' },
+  { k: 'BPC済み', internal: true }
+];
+function trMainProgress(tr){
+  tr = tr || {}; var n = 0;
+  TR_ITEMS.forEach(function(it){ if(it.main && tr[it.k]) n++; });
+  return n;
+}
+function trDateShort(d){ return String(d || '').slice(5).replace('-', '/'); }
 
 /* ライセンスグレード → カードデザイン
    BR = ゴールドカード（BRAND REPRESENTATIVE） / JETCLUB = ブラックカード（JETCLUB MEMBER）
@@ -798,6 +870,7 @@ $('actLogout').onclick = function(){ auth.signOut(); };
 /* ── スマホ会員証モード（#c=トークン で開くとログイン不要の会員証表示） ── */
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
 var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
+var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
@@ -822,7 +895,17 @@ function showCardView(token){
   db.collection('cards').doc(token).get().then(function(snap){
     if(snap.exists){
       var c = snap.data();
+      if(c.rcptOnly){
+        // その場QR領収書専用ページ: 領収書だけを表示（会員証・イベント類は出さない）
+        $('mcName').textContent = c.name || '';
+        $('mcNo').textContent = '電子領収書';
+        $('mcGroup').textContent = ''; $('mcUnion').textContent = c.union || '';
+        $('mcQr').innerHTML = '<div style="font-size:40px;">🧾</div>';
+        renderReceipts(c);
+        return;
+      }
       renderCard(c);
+      renderTrainee(c);
       renderSelfEvents(c);
       renderOnlineEvents(c);
       renderRsvpEvents(c);
@@ -837,6 +920,31 @@ function showCardView(token){
   }).catch(function(){
     if(!cached) $('mcErr').textContent = '読み込みに失敗しました。電波の良いところで再読み込みしてください。';
   });
+}
+// 🎓 研修生: チュートリアルの受講履歴を会員証に表示（受付で見せる用）。
+// 進捗はメイン3項目（PG/DLR/PA）基準。BPC済みは記録されるまで表示しない
+function renderTrainee(c){
+  var el = $('trArea');
+  if(!el) return;
+  if(!c.trainee){ el.innerHTML = ''; return; }
+  var tr = c.trainings || {};
+  var done = trMainProgress(tr);
+  var rows = TR_ITEMS.filter(function(it){ return !it.internal || tr[it.k]; }).map(function(it){
+    var r = tr[it.k];
+    return '<div class="nextrow">'
+      + '<span class="nd" style="width:1.4em;text-align:center;' + (r ? 'color:var(--green);font-weight:900;' : 'opacity:.4;') + '">' + (r ? '✓' : '─') + '</span>'
+      + '<span class="nn">' + esc(it.k) + (it.note ? '<span style="font-size:10.5px;color:var(--sub);">（' + esc(it.note) + '）</span>' : '') + '</span>'
+      + (r
+        ? '<span class="ns">' + esc(trDateShort(r.at)) + '　担当: ' + esc(r.byName || '') + '</span>'
+        : '<span class="ns" style="opacity:.5;">未受講</span>')
+      + '</div>';
+  }).join('');
+  el.innerHTML = '<div class="nextwrap">'
+    + '<div class="next-head">TRAINEE — チュートリアル ' + done + '/3</div>'
+    + '<div style="height:6px;background:var(--line);border-radius:99px;margin:6px 0 8px;overflow:hidden;">'
+    + '<i style="display:block;height:100%;width:' + Math.round(done / 3 * 100) + '%;background:var(--green);"></i></div>'
+    + (tr['BPC済み'] ? '<div class="se-done" style="margin:4px 0 8px;">🎉 修了 — 正規登録手続き中</div>' : '')
+    + rows + '</div>';
 }
 // 本日の「セルフチェックイン受付中」イベントを会員証の下に表示
 function renderSelfEvents(c){
@@ -1351,6 +1459,7 @@ auth.onAuthStateChanged(function(u){
     }
     gProf = snap.data();
     gUnion = gProf.union;
+    if(gTrainerMode){ trainerEnter(); return; }
     afterLogin();
   }).catch(function(e){ toast('プロフィール読込エラー: ' + e.message); showView('vLogin'); });
 });
@@ -1566,6 +1675,64 @@ $('btnCkAdmins').onclick = function(){
     };
   }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
 };
+/* 🎓 研修生登録の担当の任命（checkinUnions.trainers）。任命された人は
+   研修生登録ページ（#trainer）から研修生の登録とチュートリアル記録だけ行える */
+$('btnTrainers').onclick = function(){
+  var un = gRosterUnion;
+  Promise.all([
+    db.collection('users').where('union', '==', un).get(),
+    db.collection('checkinUnions').doc(un).get()
+  ]).then(function(res){
+    var users = [];
+    res[0].forEach(function(d){
+      var u = d.data(); u.uid = d.id;
+      if(u.status === 'disabled') return;
+      users.push(u);
+    });
+    users.sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; });
+    var cur = (res[1].exists && res[1].data().trainers) || [];
+    if(!users.length){ toast('「' + un + '」のユーザーが見つかりません'); return; }
+    var trUrl = location.href.split('#')[0] + '#trainer';
+    modal('<h2>🎓 研修生登録の担当 — ' + esc(un) + '</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">'
+      + 'チェックした人は研修生登録ページから<b>研修生の新規登録とチュートリアル記録だけ</b>できます'
+      + '（名簿の編集や正規メンバーの登録はできません）。管理者は任命なしで常に操作できます。</p>'
+      + '<div style="max-height:44vh;overflow:auto;">'
+      + users.map(function(u, i){
+          var isRoleAdmin = u.role === 'admin';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
+            + '<input type="checkbox" id="trn_' + i + '"' + (cur.indexOf(u.uid) >= 0 ? ' checked' : '')
+            + (isRoleAdmin ? ' disabled checked' : '') + '>'
+            + '<label for="trn_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">'
+            + esc(u.name || u.uid.slice(0, 8)) + '</label>'
+            + (isRoleAdmin ? '<span class="pill g">管理者</span>' : '')
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '<label style="margin-top:12px;">研修生登録ページのURL（担当者に共有。スマホのホーム画面に追加推奨）</label>'
+      + '<input type="text" id="trnUrl" readonly value="' + esc(trUrl) + '" style="width:100%;font-size:12px;">'
+      + '<div class="btns"><button id="trnCopy">URLをコピー</button><button id="trnCancel">キャンセル</button><button class="primary" id="trnSave">保存</button></div>',
+      true);
+    $('trnCancel').onclick = closeModal;
+    $('trnCopy').onclick = function(){ copyText(trUrl); };
+    $('trnSave').onclick = function(){
+      var arr = [];
+      users.forEach(function(u, i){
+        if(u.role === 'admin') return;
+        var cb = $('trn_' + i);
+        if(cb && cb.checked) arr.push(u.uid);
+      });
+      $('trnSave').disabled = true;
+      db.collection('checkinUnions').doc(un).set({ trainers: arr }, { merge: true }).then(function(){
+        closeModal();
+        toast('研修生登録の担当を保存しました（' + arr.length + '名）');
+      }).catch(function(e){
+        $('trnSave').disabled = false;
+        toast(permMsg(e, '任命はユニオン管理者・受付管理者のみ可能です'));
+      });
+    };
+  }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
+};
 $('btnAddUnion').onclick = function(){
   modal('<h2>ユニオン追加</h2>'
     + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">追加すると名簿の取込先・合同イベントの選択肢に表示されます。</p>'
@@ -1634,6 +1801,7 @@ function renderRoster(){
   $('btnDelAll').classList.toggle('hide', !edit);
   $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
+  $('btnTrainers').classList.toggle('hide', !edit);
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   $('btnGroupRen').classList.toggle('hide', !edit);
@@ -1645,7 +1813,9 @@ function renderRoster(){
     html += '<tr>'
       + (edit ? '<td><input type="checkbox" class="selchk" data-no="' + esc(m.no) + '"' + (gSel[m.no] ? ' checked' : '') + '></td>' : '')
       + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b>'
-      + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '') + '</td>'
+      + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '')
+      + (m.trainee ? ' <span class="pill n">研修生</span>'
+          + (m.trainings && m.trainings['BPC済み'] ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
       + '<td>' + esc(m.group || '') + '</td>'
       + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
@@ -1717,7 +1887,9 @@ $('btnGradeSel').onclick = function(){
         var m = withCards[i];
         batch.set(db.collection('cards').doc(m.cardToken), {
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-          grade: grade, createdAt: FV.serverTimestamp()
+          grade: grade,
+          trainee: !!m.trainee, trainings: m.trainings || {},
+          createdAt: FV.serverTimestamp()
         });
       }
       batch.commit().then(phase2).catch(fail);
@@ -1829,6 +2001,9 @@ function memberForm(m){
           ? '<option value="' + esc(m.grade) + '" selected>' + esc(m.grade) + '</option>' : '')
       + '</select>'
     + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
+    + '<div class="chkrow" style="margin-top:10px;"><input type="checkbox" id="mfTrainee"' + (m.trainee ? ' checked' : '') + '>'
+    + '<label for="mfTrainee" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 研修生（チュートリアル対象）</label></div>'
+    + (m.trainee ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを外して保存すると正規メンバーに昇格します（番号・会員証・履歴はそのまま引き継ぎ）。</p>' : '')
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
   $('mfCancel').onclick = closeModal;
@@ -1852,8 +2027,10 @@ function memberForm(m){
       sex: $('mfSex').value,
       grade: $('mfGrade').value,
       kana: $('mfKana').value.trim(),
+      trainee: $('mfTrainee').checked,
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
+    data.trainings = m.trainings || {};   // 研修履歴は維持（カード再生成用）
     if(isNew) data.createdAt = FV.serverTimestamp();
     // 新規は番号の重複を保存前にチェック（既存メンバーの上書き事故を防ぐ）
     var pre = isNew
@@ -1924,7 +2101,9 @@ function refreshCardDoc(token, m){
   return ref.delete().then(function(){
     return ref.set({
       no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-      grade: m.grade || '', createdAt: FV.serverTimestamp()
+      grade: m.grade || '',
+      trainee: !!m.trainee, trainings: m.trainings || {},
+      createdAt: FV.serverTimestamp()
     });
   }).catch(function(){});
 }
@@ -1942,7 +2121,9 @@ function issueCard(m, cb){
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));   // 旧カードを無効化
   batch.set(db.collection('cards').doc(token), {
     no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-    grade: m.grade || '', createdAt: FV.serverTimestamp()
+    grade: m.grade || '',
+    trainee: !!m.trainee, trainings: m.trainings || {},
+    createdAt: FV.serverTimestamp()
   });
   batch.set(db.collection('checkinMembers').doc(m.no), {
     cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
@@ -2020,7 +2201,9 @@ $('btnCardBulk').onclick = function(){
         var m = targets[i], token = randToken();
         batch.set(db.collection('cards').doc(token), {
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-          grade: m.grade || '', createdAt: FV.serverTimestamp()
+          grade: m.grade || '',
+          trainee: !!m.trainee, trainings: m.trainings || {},
+          createdAt: FV.serverTimestamp()
         });
         batch.set(db.collection('checkinMembers').doc(m.no), {
           cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
@@ -2736,6 +2919,228 @@ function pledgeArchiveModal(ev){
   }).catch(function(e){ toast(permMsg(e, '誓約書アーカイブの閲覧権限がありません')); });
 }
 $('btnPledges').onclick = function(){ pledgeArchiveModal(null); };
+
+/* ══════════ 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） ══════════
+   任命された担当（checkinUnions.trainers）＋管理者だけが、研修生の登録と
+   チュートリアル記録を行える。登録と同時に会員証を発行し、QRを本人に読ませて渡す */
+var gTrMembers = [], gTrToday = [], gTrSex = '', gTrLast = null;
+function trainerEnter(){
+  showView('vTrainer');
+  $('trUnionLbl').textContent = gUnion;
+  $('trMe').textContent = '担当: ' + (gProf.name || '');
+  db.collection('checkinUnions').doc(gUnion).get().then(function(sn){
+    var d = sn.exists ? sn.data() : {};
+    gUnionPrefix[gUnion] = d.noPrefix || '';   // 自動発番用（このページはafterLoginを通らない）
+    var isAdmin = isOwner() || gProf.role === 'admin' || ((d.admins || []).indexOf(gUser.uid) >= 0);
+    var allowed = isAdmin || ((d.trainers || []).indexOf(gUser.uid) >= 0);
+    if(!allowed){
+      $('trDeny').classList.remove('hide');
+      $('trDeny').textContent = '研修生登録の担当に任命されていません。ユニオンの管理者に「🎓 研修生登録の担当」への任命を依頼してください。';
+      return;
+    }
+    $('trMain').classList.remove('hide');
+    trLoadMembers();
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+}
+function trLoadMembers(){
+  return fetchMembers(gUnion).then(function(list){
+    gTrMembers = list;
+    $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
+    trFillUp();
+    trRenderList();
+  }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
+}
+// UPルビー: そのユニオンの既存系列＋自分の名前を初期値に。手入力も可
+function trFillUp(){
+  var set = {};
+  gTrMembers.forEach(function(m){ if(m.group) set[m.group] = 1; });
+  var my = gProf.name || '';
+  if(my) set[my] = 1;
+  var gs = Object.keys(set).sort();
+  $('trUp').innerHTML = gs.map(function(g){
+    return '<option value="' + esc(g) + '"' + (g === my ? ' selected' : '') + '>' + esc(g) + '</option>';
+  }).join('') + '<option value="__free">その他（手入力）</option>';
+}
+$('trUp').onchange = function(){
+  $('trUpFree').classList.toggle('hide', $('trUp').value !== '__free');
+  if($('trUp').value === '__free') $('trUpFree').focus();
+};
+Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(b){
+  b.onclick = function(){
+    gTrSex = b.getAttribute('data-sex') || '';
+    Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+  };
+});
+function trTab(reg){
+  $('trTabReg').classList.toggle('on', reg);
+  $('trTabList').classList.toggle('on', !reg);
+  $('trPaneReg').classList.toggle('hide', !reg);
+  $('trPaneList').classList.toggle('hide', reg);
+}
+$('trTabReg').onclick = function(){ trTab(true); };
+$('trTabList').onclick = function(){ trTab(false); trRenderList(); };
+$('trGo').onclick = function(){
+  var name = $('trName').value.trim();
+  if(!name){ toast('氏名を入力してください'); return; }
+  var upSel = $('trUp').value;
+  var up = upSel === '__free' ? $('trUpFree').value.trim() : upSel;
+  if(!up){ toast('UPルビーを選択してください'); return; }
+  var no = nextMemberNo(gTrMembers, gUnion);
+  if(!no){ toast('番号の自動発番に失敗しました。管理者にプレフィックス設定を確認してください'); return; }
+  $('trGo').disabled = true;
+  var data = {
+    no: no, union: gUnion, name: name, group: up,
+    kana: $('trKana').value.trim(), sex: gTrSex,
+    grade: '', active: true, trainee: true, trainings: {},
+    regBy: gUser.uid, regByName: gProf.name || '',
+    createdAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp()
+  };
+  db.collection('checkinMembers').doc(no).get().then(function(sn){
+    if(sn.exists) throw { code: 'dup' };
+    return db.collection('checkinMembers').doc(no).set(data);
+  }).then(function(){
+    return issueCard(data, function(){
+      gTrMembers.push(data);
+      gTrToday.unshift(data);
+      gTrLast = data;
+      $('trName').value = ''; $('trKana').value = '';
+      $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
+      trRenderToday();
+      trShowQr(data);
+    });
+  }).catch(function(e){
+    if(e && e.code === 'dup'){ toast('番号が重複しました。もう一度お試しください'); trLoadMembers(); }
+    else toast(permMsg(e, '研修生登録の権限がありません（担当への任命を確認してください）'));
+  }).then(function(){ $('trGo').disabled = false; });
+};
+function trShowQr(m){
+  if(!m.cardToken){ toast('会員証の発行に失敗しました。もう一度お試しください'); return; }
+  $('trMain').classList.add('hide');
+  $('trQrView').classList.remove('hide');
+  $('tqName').textContent = m.name || '';
+  $('tqNo').textContent = m.no || '';
+  makeQr($('tqQr'), cardUrl(m.cardToken), 240);
+  try{ if(navigator.vibrate) navigator.vibrate(80); }catch(e){}
+}
+$('tqDone').onclick = function(){
+  $('trQrView').classList.add('hide');
+  $('trMain').classList.remove('hide');
+  var n = $('trName'); if(n) try{ n.focus(); }catch(e){}
+};
+$('tqShare').onclick = function(){
+  var m = gTrLast;
+  if(!m || !m.cardToken) return;
+  var url = cardUrl(m.cardToken);
+  if(navigator.share){
+    navigator.share({ title: '会員証', text: m.name + ' さんの会員証', url: url }).catch(function(){});
+  } else copyText(url);
+};
+$('tqUndo').onclick = function(){
+  var m = gTrLast;
+  if(!m) return;
+  if(!window.confirm(m.name + ' さんの登録を取り消しますか？（会員証も無効になります）')) return;
+  var batch = db.batch();
+  batch.delete(db.collection('checkinMembers').doc(m.no));
+  if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
+  batch.delete(db.collection('cardClaims').doc(m.no));
+  batch.commit().then(function(){
+    gTrToday = gTrToday.filter(function(x){ return x.no !== m.no; });
+    gTrMembers = gTrMembers.filter(function(x){ return x.no !== m.no; });
+    gTrLast = null;
+    toast('取り消しました');
+    $('trQrView').classList.add('hide');
+    $('trMain').classList.remove('hide');
+    trRenderToday();
+    $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
+  }).catch(function(e){ toast(permMsg(e, '取消できるのは自分が登録した研修生だけです')); });
+};
+function trRenderToday(){
+  $('trToday').innerHTML = gTrToday.length
+    ? '<label>本日の登録（この端末）</label>' + gTrToday.map(function(m, i){
+        return '<div style="display:flex;gap:8px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);">'
+          + '<b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.name || '') + '</b>'
+          + '<span class="mono" style="font-size:12px;color:var(--sub);">' + esc(m.no) + '</span>'
+          + '<button data-tq="' + i + '" style="padding:7px 12px;font-size:13px;">QR再表示</button></div>';
+      }).join('')
+    : '';
+}
+$('trToday').addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('button[data-tq]') : null;
+  if(!b) return;
+  var m = gTrToday[+b.getAttribute('data-tq')];
+  if(m){ gTrLast = m; trShowQr(m); }
+});
+// 研修生一覧 → タップでチュートリアルのチェックリスト
+function trRenderList(){
+  var el = $('trPaneList');
+  var ts = gTrMembers.filter(function(m){ return m.trainee && m.active !== false; });
+  ts.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
+  el.innerHTML = ts.length
+    ? ts.map(function(m, i){
+        var p = trMainProgress(m.trainings);
+        var bpc = m.trainings && m.trainings['BPC済み'];
+        return '<div data-tr="' + i + '" style="display:flex;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;">'
+          + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
+          + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '') + '</div></div>'
+          + (bpc ? '<span class="pill g">修了</span>' : '')
+          + '<span class="pill n">' + p + '/3</span>'
+          + '<span style="color:var(--sub);">›</span></div>';
+      }).join('')
+    : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">研修生はまだ登録されていません。</p>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-tr]'), function(row){
+    row.onclick = function(){ trChecklist(ts[+row.getAttribute('data-tr')]); };
+  });
+}
+function trChecklist(m){
+  var tr = m.trainings || {};
+  function rowHtml(it){
+    var r = tr[it.k];
+    return '<div style="display:flex;gap:8px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line);">'
+      + '<b style="flex:1;font-size:15px;">' + esc(it.k) + (it.note ? '<span style="font-size:11px;color:var(--sub);">（' + esc(it.note) + '）</span>' : '') + '</b>'
+      + (r
+        ? '<span style="font-size:12.5px;color:var(--green);font-weight:700;">✓ ' + esc(trDateShort(r.at)) + ' ' + esc(r.byName || '') + '</span>'
+          + (r.by === gUser.uid || canEditUnion(gUnion)
+            ? '<button data-tk="' + esc(it.k) + '" data-tundo="1" style="padding:5px 10px;font-size:12px;">取消</button>' : '')
+        : '<button data-tk="' + esc(it.k) + '" class="primary" style="padding:9px 14px;font-size:13px;">✓ 受講済みにする</button>')
+      + '</div>';
+  }
+  modal('<h2>' + esc(m.name || '') + '<span style="font-size:12px;color:var(--sub);font-weight:400;margin-left:8px;">' + esc(m.no) + '</span></h2>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">チュートリアル ' + trMainProgress(tr) + '/3'
+    + (tr['BPC済み'] ? '　<span class="pill g">修了 — 昇格待ち</span>' : '') + '</p>'
+    + '<label>チュートリアル</label>'
+    + TR_ITEMS.filter(function(it){ return it.main; }).map(rowHtml).join('')
+    + '<label style="margin-top:14px;">サブ項目</label>'
+    + TR_ITEMS.filter(function(it){ return !it.main; }).map(rowHtml).join('')
+    + '<div class="btns"><button id="tcClose">閉じる</button></div>', true);
+  $('tcClose').onclick = closeModal;
+  document.querySelector('.modal').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button[data-tk]') : null;
+    if(!b) return;
+    var k = b.getAttribute('data-tk');
+    if(b.getAttribute('data-tundo')){
+      if(!window.confirm('「' + k + '」の記録を取り消しますか？')) return;
+      trWrite(m, k, null).then(function(){ closeModal(); trChecklist(m); });
+    } else {
+      if(!window.confirm(m.name + ' さんの「' + k + '」を受講済みにしますか？\n（担当: ' + (gProf.name || '') + '・' + todayStr() + '）')) return;
+      trWrite(m, k, { at: todayStr(), byName: gProf.name || '', by: gUser.uid, atMs: Date.now() })
+        .then(function(){ closeModal(); trChecklist(m); });
+    }
+  });
+}
+// 記録は名簿（マスター）と会員証（表示用）の両方へ。取消は該当キーだけ削除
+function trWrite(m, k, rec){
+  m.trainings = m.trainings || {};
+  if(rec) m.trainings[k] = rec; else delete m.trainings[k];
+  // update() でマップを丸ごと置き換える（取消時のキー削除も反映される）
+  var ps = [db.collection('checkinMembers').doc(m.no).update({ trainings: m.trainings })];
+  if(m.cardToken) ps.push(db.collection('cards').doc(m.cardToken).update({ trainings: m.trainings }));
+  return Promise.all(ps).then(function(){
+    toast(rec ? '「' + k + '」を記録しました' : '「' + k + '」を取り消しました');
+    trRenderList();
+  }).catch(function(e){ toast(permMsg(e, '研修記録の権限がありません（担当への任命を確認してください）')); });
+}
 function onlineModal(ev){
   // 電子領収書の発行者名（主催ユニオンの設定）
   var olIssuer = '';
@@ -3909,6 +4314,7 @@ function checkinMember(member, method, role){
     + '<div class="hit-name">' + esc(member.name) + '</div>'
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
+    + (member.trainee ? '<div style="margin:4px 0;"><span class="pill n">研修生</span> <span style="font-size:14px;font-weight:700;">チュートリアル ' + trMainProgress(member.trainings) + '/3</span></div>' : '')
     + '<p class="hit-meta">' + nowHM()
     + (fee > 0 ? '　<b>' + (ppRec ? '💳 PayPay ' : '') + yen(fee) + ' 徴収</b>' : '') + '</p>'
     + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
@@ -4034,6 +4440,29 @@ function writeAttendance(id, data){
     });
   syncReceipt(id);
 }
+/* 📱 その場QR領収書: 名簿にいない人（研修生の飛び入り・ゲスト）向けに、
+   宛名・金額入りの電子領収書ページを一回性のURLで発行し、QRで本人のスマホに渡す */
+function guestRcptQr(no, name, fee){
+  if(!gRec || !gRec.issuer){ toast('ユニオン設定で領収書の発行者名を設定すると使えます'); return; }
+  var token = randToken();
+  var docData = {
+    no: no, name: name, union: gRec.ev.hostUnion || gUnion,
+    rcptOnly: true, createdAt: FV.serverTimestamp()
+  };
+  docData['rcpt_' + gRec.ev.id] = {
+    d: gRec.ev.date || '', ev: gRec.ev.name || '', amt: fee,
+    by: gRec.issuer, no: no, at: Date.now()
+  };
+  db.collection('cards').doc(token).set(docData).then(function(){
+    modal('<h2>📱 電子領収書</h2>'
+      + '<p style="font-size:13.5px;">' + esc(name) + ' さん本人のスマホでこのQRを読み取ってもらってください。'
+      + '宛名・金額入りの領収書ページが開きます（スクリーンショット保存OK）。</p>'
+      + '<div id="grQr" style="display:flex;justify-content:center;background:#fff;padding:14px;border-radius:12px;"></div>'
+      + '<div class="btns"><button id="grClose">閉じる</button></div>', true);
+    makeQr($('grQr'), cardUrl(token), 220);
+    $('grClose').onclick = function(){ closeModal(); focusScan(); };
+  }).catch(function(e){ toast(permMsg(e, '領収書の発行に失敗しました')); });
+}
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   var unions = gRec.ev.unions || [gUnion];
@@ -4083,8 +4512,12 @@ $('btnGuest').onclick = function(){
     if(gfee > 0 && gRec.payMode) gdata.payMethod = 'paypay';
     writeAttendance(id, gdata);
     beep('ok');
+    var canRcpt = gfee > 0 && gRec.issuer;   // 発行者名が設定済みのユニオンのみ
     setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>'
-      + (gfee > 0 ? '<p class="hit-meta"><b>' + (gdata.payMethod ? '💳 PayPay ' : '') + yen(gfee) + ' 徴収</b></p>' : ''));
+      + (gfee > 0 ? '<p class="hit-meta"><b>' + (gdata.payMethod ? '💳 PayPay ' : '') + yen(gfee) + ' 徴収</b></p>' : '')
+      + (canRcpt ? '<button id="stgRcpt" style="margin-top:8px;">📱 領収書QRを表示</button>' : ''), canRcpt);
+    var rb = $('stgRcpt');
+    if(rb) rb.onclick = function(){ guestRcptQr(id, name, gfee); };
     closeModal(); focusScan();
   };
 };
