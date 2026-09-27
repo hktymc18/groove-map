@@ -515,6 +515,7 @@ tr:last-child td{border-bottom:none;}
       <label for="finUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="finUnionSel"></select>
       <span style="flex:1"></span>
+      <button id="btnFinCsv" class="hide">📊 収支CSV</button>
       <button id="btnRcptCsv" class="hide">台帳CSV</button>
       <button id="btnRcptSet" class="hide">⚙ ユニオン設定</button>
     </div>
@@ -3793,11 +3794,95 @@ $('btnRcptCsv').onclick = function(){
   }).catch(function(e){ toast('出力エラー: ' + e.message); });
 };
 
+/* 📊 収支CSV: イベント1行の収支まとめを期間指定でまとめて出力。
+   列: 日付 / イベント / スピーカー / 収入内訳(単価×人数) / 収入合計 / 支出内訳 / 支出合計 / 計 / 状態。
+   最終行に期間合計 */
+$('btnFinCsv').onclick = function(){
+  var un = gFinUnion;
+  // 月の選択肢: 過去24ヶ月〜未来2ヶ月
+  var opts = [], base = new Date();
+  for(var i = -24; i <= 2; i++){
+    var dt = new Date(base.getFullYear(), base.getMonth() + i, 1);
+    opts.push(dt.getFullYear() + '-' + pad(dt.getMonth() + 1));
+  }
+  var curKey = monthKey(gMonth.y, gMonth.m);
+  function monthSel(id){
+    return '<select id="' + id + '" style="width:auto;">' + opts.map(function(k){
+      return '<option' + (k === curKey ? ' selected' : '') + '>' + k + '</option>';
+    }).join('') + '</select>';
+  }
+  modal('<h2>📊 収支CSV — ' + esc(un) + '</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">'
+    + '期間内のイベントを1行ずつ（日付・イベント・収入内訳・収入合計・支出内訳・支出合計・計）で出力します。'
+    + '最終行に期間合計が付きます。</p>'
+    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+    + '<label style="margin:0;">期間</label>' + monthSel('fcFrom') + '<span>〜</span>' + monthSel('fcTo')
+    + '</div>'
+    + '<div class="btns"><button id="fcCancel">キャンセル</button><button class="primary" id="fcGo">CSVを出力</button></div>');
+  $('fcCancel').onclick = closeModal;
+  $('fcGo').onclick = function(){
+    var from = $('fcFrom').value, to = $('fcTo').value;
+    if(from > to){ var tmp = from; from = to; to = tmp; }
+    $('fcGo').disabled = true;
+    db.collection('checkinEvents').where('month', '>=', from).where('month', '<=', to).get().then(function(qs){
+      var evs = [];
+      qs.forEach(function(d){
+        var ev = d.data(); ev.id = d.id;
+        if((ev.unions || []).indexOf(un) >= 0) evs.push(ev);
+      });
+      evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+      if(!evs.length){ $('fcGo').disabled = false; toast('期間内のイベントがありません'); return; }
+      return Promise.all(evs.map(function(ev){
+        return db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main').get()
+          .then(function(s2){ return s2.exists ? s2.data() : null; })
+          .catch(function(){ return null; });
+      })).then(function(fins){
+        var out = [['日付', 'イベント', 'スピーカー', '収入内訳', '収入合計', '支出内訳', '支出合計', '計', '状態']];
+        var tIn = 0, tEx = 0, tNet = 0;
+        evs.forEach(function(ev, i){
+          var f = fins[i];
+          if(!f){
+            out.push([ev.date || '', ev.name || '', ev.speaker || '', '', '', '', '', '', '未入力']);
+            return;
+          }
+          var incParts = [];
+          (f.income || []).forEach(function(r){
+            var cnt = Number(r.count) || 0;
+            var amt = (r.amount != null) ? Number(r.amount) : (Number(r.unit) || 0) * cnt;
+            if(!cnt && !amt) return;
+            incParts.push(((r.label && r.label !== 'BA') ? r.label + ' ' : '')
+              + (Number(r.unit) || 0).toLocaleString('ja-JP') + '円×' + cnt + '人');
+          });
+          var expParts = [];
+          (f.expenses || []).forEach(function(r){
+            var amt = Number(r.amount) || 0;
+            if(!amt) return;
+            expParts.push((r.label || 'その他') + (r.note ? '（' + r.note + '）' : '')
+              + ' ' + amt.toLocaleString('ja-JP') + '円');
+          });
+          if(f.shortage) expParts.push('不足金 ' + Number(f.shortage).toLocaleString('ja-JP') + '円');
+          var ti = f.incomeTotal || 0, te = f.expenseTotal || 0;
+          var net = (f.net != null) ? f.net : ti - te;
+          tIn += ti; tEx += te; tNet += net;
+          out.push([ev.date || '', ev.name || '', ev.speaker || '',
+            incParts.join(' / '), ti, expParts.join(' / '), te, net,
+            f.locked ? '確定' : '入力中']);
+        });
+        out.push(['期間合計', from + '〜' + to, '', '', tIn, '', tEx, tNet, '']);
+        csvDownload('収支_' + un + '_' + from + '_' + to + '.csv', out);
+        toast('収支CSVを出力しました（' + evs.length + 'イベント）');
+        closeModal();
+      });
+    }).catch(function(e){ $('fcGo').disabled = false; toast('読込エラー: ' + e.message); });
+  };
+};
+
 /* 会計タブ: 月内イベントの会計状況一覧 */
 function loadFinanceTab(){
   $('fnMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('btnRcptSet').classList.toggle('hide', !canEditUnion(gFinUnion));
   $('btnRcptCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
+  $('btnFinCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
   var key = monthKey(gMonth.y, gMonth.m), body = $('finBody');
   db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
     var evs = [];
