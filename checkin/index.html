@@ -786,6 +786,14 @@ var gEventUnion = '';       // イベントタブで表示中のユニオン
 var gStatUnion = '';        // 集計タブで表示中のユニオン
 var gFinUnion = '';         // 会計タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
+/* ── 機能スイッチ ──
+ * FEATURE_PAYPAY: 💳 PayPay集金モードは現在封印中（受付担当への説明が複雑になるため）。
+ *   true に戻すだけで全機能（イベント設定のチェック・送金QRパネル・預り金・PayPay版納金票）が復活する。
+ *   封印中は新規にONにできないだけで、コード本体は残してある（payMode付きイベントでしか動かない）。
+ * RSVP_UNIONS: 🎟 会員証からの予約受付を使えるユニオン。ここに載っていないユニオンには
+ *   イベント設定のチェック自体を表示しない（シークレット機能）。 */
+var FEATURE_PAYPAY = false;
+var RSVP_UNIONS = ['BASE REVE'];
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
 // 初期の命名規則（ユニオン設定で上書き可能）
@@ -2836,6 +2844,9 @@ $('btnAddEvent').onclick = function(){ eventForm(null); };
 function eventForm(ev){
   var isNew = !ev;
   var host = isNew ? gEventUnion : (ev.hostUnion || gEventUnion);
+  // 💳/🎟 は機能スイッチで表示制御。ただし既にONで保存済みのイベントはOFFに戻せるよう表示する
+  var showPay = FEATURE_PAYPAY || !!(ev && ev.payMode === 'paypay');
+  var showRsvp = RSVP_UNIONS.indexOf(host) >= 0 || !!(ev && ev.rsvp);
   var evUnions = (ev && ev.unions) || [];
   var others = gUnions.filter(function(u){ return u !== host; });
   var chk = others.length
@@ -2866,8 +2877,10 @@ function eventForm(ev){
     + '<div style="flex:1;min-width:0;"><label>第3部（¥・任意）</label>'
     + '<input type="text" id="evFee3" inputmode="numeric" value="' + esc(ev && ev.fee3 != null && ev.fee3 !== '' ? ev.fee3 : '') + '" placeholder="3部制のときだけ"></div>'
     + '</div>'
-    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evPayMode"' + (ev && ev.payMode === 'paypay' ? ' checked' : '') + '>'
-    + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayで集金する（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
+    + (showPay
+      ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evPayMode"' + (ev && ev.payMode === 'paypay' ? ' checked' : '') + '>'
+        + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayで集金する（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
+      : '')
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evOnline"' + (ev && ev.online ? ' checked' : '') + '>'
     + '<label for="evOnline" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">オンライン受講を受け付ける（会員証から申請→承認でZoom URL自動表示）</label></div>'
     + '<div id="rowOnline" class="' + (ev && ev.online ? '' : 'hide') + '" style="margin-left:22px;">'
@@ -2877,12 +2890,14 @@ function eventForm(ev){
     + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…（未入力ならユニオン設定の値）">'
     + '<label>Zoom URL（あとからでも可。承認キュー画面でも入力できます）</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
     + '</div>'
-    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRsvp"' + (ev && ev.rsvp ? ' checked' : '') + '>'
-    + '<label for="evRsvp" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎟 会員証から予約を受け付ける（UR等。期日が来ると会員証に「予約する」ボタンが自動表示）</label></div>'
-    + '<div id="rowRsvp" class="' + (ev && ev.rsvp ? '' : 'hide') + '" style="margin-left:22px;">'
-    + '<label>予約ボタンを表示する日（開催の何日前から）</label>'
-    + '<input type="text" id="evRsvpDays" inputmode="numeric" value="' + esc(ev && ev.rsvpDays != null ? ev.rsvpDays : 4) + '" style="width:80px;">'
-    + '</div>'
+    + (showRsvp
+      ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRsvp"' + (ev && ev.rsvp ? ' checked' : '') + '>'
+        + '<label for="evRsvp" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎟 会員証から予約を受け付ける（UR等。期日が来ると会員証に「予約する」ボタンが自動表示）</label></div>'
+        + '<div id="rowRsvp" class="' + (ev && ev.rsvp ? '' : 'hide') + '" style="margin-left:22px;">'
+        + '<label>予約ボタンを表示する日（開催の何日前から）</label>'
+        + '<input type="text" id="evRsvpDays" inputmode="numeric" value="' + esc(ev && ev.rsvpDays != null ? ev.rsvpDays : 4) + '" style="width:80px;">'
+        + '</div>'
+      : '')
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
@@ -2891,7 +2906,7 @@ function eventForm(ev){
   $('evModeDesk').onchange = updModeRow;
   $('evModeSelf').onchange = updModeRow;
   $('evOnline').onchange = function(){ $('rowOnline').classList.toggle('hide', !$('evOnline').checked); };
-  $('evRsvp').onchange = function(){ $('rowRsvp').classList.toggle('hide', !$('evRsvp').checked); };
+  if($('evRsvp')) $('evRsvp').onchange = function(){ $('rowRsvp').classList.toggle('hide', !$('evRsvp').checked); };
   // 受け取りリンクが未入力なら、ユニオン設定の共通リンクをプリセット
   if(!(ev && ev.onlinePayLink)){
     db.collection('checkinUnions').doc(host).get().then(function(s){
@@ -2933,9 +2948,12 @@ function eventForm(ev){
       fee1: (function(){ var n = parseInt($('evFee1').value, 10); return isNaN(n) ? 1000 : n; })(),
       fee2: (function(){ var n = parseInt($('evFee2').value, 10); return isNaN(n) ? 500 : n; })(),
       fee3: (function(){ var n = parseInt($('evFee3').value, 10); return isNaN(n) ? '' : n; })(),
-      payMode: $('evPayMode').checked ? 'paypay' : '',
-      rsvp: $('evRsvp').checked,
-      rsvpDays: (function(){ var n = parseInt($('evRsvpDays').value, 10); return isNaN(n) || n < 0 ? 4 : n; })(),
+      payMode: $('evPayMode') ? ($('evPayMode').checked ? 'paypay' : '') : ((ev && ev.payMode) || ''),
+      rsvp: $('evRsvp') ? $('evRsvp').checked : !!(ev && ev.rsvp),
+      rsvpDays: (function(){
+        if(!$('evRsvpDays')) return (ev && ev.rsvpDays != null) ? ev.rsvpDays : 4;
+        var n = parseInt($('evRsvpDays').value, 10); return isNaN(n) || n < 0 ? 4 : n;
+      })(),
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
       onlinePayTo: $('evOnPay').value.trim(),
