@@ -2650,7 +2650,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v532</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v533</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3148,6 +3148,13 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="rb" id="rbShareEdit" onclick="selSharePerm('edit')" style="padding:8px 10px;font-size:12px">編集</div>
       </div>
     </div>
+    <!-- v533: 予定・タスクを見せるかどうか（BAがプライベートの予定を見せずにMAPだけ共有できる） -->
+    <div style="font-size:12px;color:var(--text-mid);margin-bottom:6px">見せる範囲</div>
+    <div class="rg" style="margin-bottom:6px">
+      <div class="rb" id="rbScopeAll" onclick="selShareScope('all')" style="padding:8px 10px;font-size:12px">📅 全部見せる</div>
+      <div class="rb sel" id="rbScopeMap" onclick="selShareScope('map')" style="padding:8px 10px;font-size:12px">🔒 予定・タスクは見せない</div>
+    </div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:12px;line-height:1.6">「予定・タスクは見せない」＝MAP（組織図・メンバー・データ・OL）だけ共有。あとから下の一覧で切り替えできます</div>
     <button class="btn-p" style="width:100%;margin-bottom:16px" onclick="addShareUser()">追加</button>
 
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;font-family:'Inter','IBM Plex Mono',monospace">共有中のユーザー</div>
@@ -3270,6 +3277,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <!-- Page 1: 月次 -->
         <div class="me-page">
           <!-- v342: タイトル（とカテゴリ）を月次の一番上へ（毎月の昇降格と一緒に触る項目のため） -->
+          <!-- v533: 新規登録の時はこのブロックごと「基本」タブの一番上へ移動（基本タブだけでBA/BRとして登録できる） -->
+          <div id="meCatBlock">
           <div class="ed-row">
             <span class="ed-l">カテゴリ<span class="ed-q" onclick="edHelp(event,'h_cat')">?</span></span>
             <div class="ed-chips">
@@ -3285,6 +3294,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <div class="ed-ctrl"><select class="ed-in" id="fTitle" onchange="onTitleChange()">
               <option value="">カテゴリを選択</option>
             </select><span class="ed-chev">▾</span></div>
+          </div>
           </div>
           <div class="ed-row" id="outVisRow" style="display:none">
             <span class="ed-l">OUT後の表示<span class="ed-q" onclick="edHelp(event,'h_outvis')">?</span></span>
@@ -3568,7 +3578,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v532';</script>
-<script src="app.js?v=v532"></script>
+<script>window.GM_EXPECT_JS='v533';</script>
+<script src="app.js?v=v533"></script>
 </body>
 </html>
