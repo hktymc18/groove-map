@@ -387,6 +387,7 @@ tr:last-child td{border-bottom:none;}
       <button id="btnLogout" title="ログアウト">⎋</button>
     </nav>
   </div>
+  <div id="olAlert" class="notice hide" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);margin:10px 14px 0;"></div>
   <main>
 
   <!-- 受付 -->
@@ -401,7 +402,6 @@ tr:last-child td{border-bottom:none;}
       <button class="primary" id="btnRecStart">受付を開始</button>
       <button id="btnRecStop" class="hide">受付を終了</button>
     </div>
-    <div id="olAlert" class="notice hide" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);"></div>
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
       <div>
@@ -1576,19 +1576,35 @@ function initOnlineAlert(){
       var ev = d.data(); ev.id = d.id;
       if(!ev.online) return;
       if((ev.unions || []).indexOf(gUnion) < 0 && !isOwner()) return;
-      gOlAlert.evs[ev.id] = ev;
-      var unsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
-        .where('method', '==', 'online')
-        .onSnapshot(function(aqs){
-          var n = 0;
-          aqs.forEach(function(a){ if(a.data().status === 'pending') n++; });
-          gOlAlert.counts[ev.id] = n;
-          renderOlAlert();
-        }, function(){});
-      gOlAlert.unsubs.push(unsub);
+      olWatchEvent(ev);
     });
+    // 受付中のイベントは日付に関係なく監視対象（前日ログインのままでも見逃さない）
+    if(gRec && gRec.ev && gRec.ev.online) olWatchEvent(gRec.ev);
   }).catch(function(){});
+  // 承認待ちが残っている間は60秒ごとに小さくリマインド音（モーダル操作中は鳴らさない）
+  if(!window.gOlRemindTimer){
+    window.gOlRemindTimer = setInterval(function(){
+      var total = 0;
+      Object.keys(gOlAlert.counts).forEach(function(id){ total += gOlAlert.counts[id]; });
+      if(total > 0 && !document.querySelector('.modal')) beep('ok');
+    }, 60000);
+  }
 }
+// 1イベント分の申請を購読（重複購読はしない）。initOnlineAlert と受付開始の両方から使う
+function olWatchEvent(ev){
+  if(gOlAlert.evs[ev.id]) return;
+  gOlAlert.evs[ev.id] = ev;
+  var unsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
+    .where('method', '==', 'online')
+    .onSnapshot(function(aqs){
+      var n = 0;
+      aqs.forEach(function(a){ if(a.data().status === 'pending') n++; });
+      gOlAlert.counts[ev.id] = n;
+      renderOlAlert();
+    }, function(){});
+  gOlAlert.unsubs.push(unsub);
+}
+var DOC_TITLE = document.title;
 function renderOlAlert(){
   var total = 0, firstEv = null;
   Object.keys(gOlAlert.counts).forEach(function(id){
@@ -1598,11 +1614,35 @@ function renderOlAlert(){
   var el = $('olAlert');
   el.classList.toggle('hide', !total);
   if(total){
-    el.innerHTML = '💻 オンライン受講の申請が <b>' + total + '件</b> 承認待ちです — タップして承認画面を開く';
+    var canAsk = ('Notification' in window) && Notification.permission === 'default';
+    el.innerHTML = '💻 オンライン受講の申請が <b>' + total + '件</b> 承認待ちです — タップして承認画面を開く'
+      + (canAsk ? '<span id="olNotiAsk" style="margin-left:10px;text-decoration:underline;font-size:12.5px;">🔔 デスクトップ通知を許可</span>' : '');
     el.onclick = function(){ if(firstEv) onlineModal(firstEv); };
-    if(gOlAlert.last >= 0 && total > gOlAlert.last) beep('ok');
+    var ask = $('olNotiAsk');
+    if(ask) ask.onclick = function(e2){
+      e2.stopPropagation();
+      try{ Notification.requestPermission().then(function(){ renderOlAlert(); }); }catch(e3){}
+    };
+    if(gOlAlert.last >= 0 && total > gOlAlert.last){ beep('ok'); olNotify(total, firstEv); }
   }
+  // どのタブ・別アプリを見ていても気づけるよう、ブラウザのタブタイトルにも件数を出す
+  document.title = total ? '🔴' + total + '件 承認待ち｜' + DOC_TITLE : DOC_TITLE;
   gOlAlert.last = total;
+}
+// デスクトップ通知（許可済みのときだけ）。クリックで承認画面を開く
+function olNotify(total, ev){
+  try{
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    var n = new Notification('💻 オンライン受講の申請', {
+      body: '承認待ちが ' + total + '件あります' + (ev && ev.name ? '（' + ev.name + '）' : ''),
+      tag: 'ck-online'
+    });
+    n.onclick = function(){
+      try{ window.focus(); }catch(e){}
+      try{ n.close(); }catch(e){}
+      if(ev) onlineModal(ev);
+    };
+  }catch(e){}
 }
 
 /* 各タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
@@ -2975,6 +3015,7 @@ function eventForm(ev){
       closeModal(); toast(isNew ? 'イベントを作成しました' : '保存しました');
       gMonth = { y: parseInt(date.slice(0,4), 10), m: parseInt(date.slice(5,7), 10) };
       loadEvents(); loadStats();
+      initOnlineAlert();   // オンライン設定の変更を申請監視に即反映
     }).catch(function(e){ toast(permMsg(e, 'イベントの作成・編集は主催ユニオンの管理者・受付管理者のみ可能です')); });
     });
   };
@@ -3347,11 +3388,47 @@ function onlineModal(ev){
   db.collection('checkinUnions').doc(ev.hostUnion || '').get().then(function(s){
     if(s.exists && s.data().issuer) olIssuer = s.data().issuer;
   }).catch(function(){});
-  db.collection('checkinEvents').doc(ev.id).collection('attendance')
-    .where('method', '==', 'online').get().then(function(qs){
+  // ライブ承認画面: 開いている間もリアルタイムで新着申請が追加される（当日ラッシュ対応）。
+  // 再描画は申請の構成が変わったときだけにして、入力途中の金額・チェックを守る
+  if(window.gOlmUnsub){ try{ window.gOlmUnsub(); }catch(e0){} window.gOlmUnsub = null; }
+  var olmFirst = true, olmKey = '', olmPrev = [];
+  window.gOlmUnsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
+    .where('method', '==', 'online').onSnapshot(function(qs){
     var apps = [];
     qs.forEach(function(d){ var a = d.data(); a.id = d.id; apps.push(a); });
     apps.sort(function(a, b){ return (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1); });
+    var key = apps.map(function(a){
+      return a.id + ':' + (a.status || '') + ':' + (a.pledged ? 1 : 0) + ':' + (a.paypaySent ? 1 : 0) + ':' + (a.envApproved ? 1 : 0);
+    }).join('|');
+    var isOpen = !!$('olmMark');
+    if(!olmFirst && !isOpen){
+      // モーダルが（別画面で）閉じられていたら購読を止める
+      try{ window.gOlmUnsub(); }catch(e1){}
+      window.gOlmUnsub = null;
+      return;
+    }
+    if(!olmFirst && key === olmKey) return;
+    // 入力途中の金額・領収書チェックを申請ID単位で退避 → 再描画後に復元
+    var saved = {};
+    if(!olmFirst && isOpen){
+      olmPrev.forEach(function(a, i){
+        if(a.status === 'pending' && $('olAmt_' + i)){
+          saved[a.id] = { amt: $('olAmt_' + i).value, rc: $('olRc_' + i) ? $('olRc_' + i).checked : true };
+        }
+      });
+    }
+    var oldPend = 0, newPend = 0;
+    olmPrev.forEach(function(a){ if(a.status === 'pending') oldPend++; });
+    apps.forEach(function(a){ if(a.status === 'pending') newPend++; });
+    renderOlModal(apps, saved);
+    if(!olmFirst && newPend > oldPend) beep('ok');   // 開いている間の新着もお知らせ
+    olmKey = key; olmPrev = apps; olmFirst = false;
+  }, function(e){ toast('読込エラー: ' + e.message); });
+
+  function olmStop(){
+    if(window.gOlmUnsub){ try{ window.gOlmUnsub(); }catch(e1){} window.gOlmUnsub = null; }
+  }
+  function renderOlModal(apps, saved){
     var rows = apps.map(function(a, i){
       var st = a.status === 'pending' ? '<span class="pill a">承認待ち</span>'
         : a.status === 'approved' ? '<span class="pill g">承認済み' + (a.approvedBy ? '（' + esc(a.approvedBy) + '）' : '') + '</span>'
@@ -3381,7 +3458,7 @@ function onlineModal(ev){
         + '<div class="rowbtns" style="flex-wrap:wrap;">' + btns + '</div>'
         + '</div>';
     }).join('');
-    modal('<h2>💻 オンライン受講 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
+    modal('<h2>💻 オンライン受講 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '<span id="olmMark" class="hide"></span></h2>'
       + '<label>Zoom参加情報（保存すると承認済みの受講者の会員証に表示されます）</label>'
       + '<textarea id="olZoomPaste" rows="2" placeholder="Zoomの「招待をコピー」の全文をここに貼り付けると、URL・ID・パスコードを自動で抜き出します"'
       + ' style="width:100%;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical;"></textarea>'
@@ -3391,12 +3468,19 @@ function onlineModal(ev){
       + '<input type="text" id="olZoomId" value="' + esc(fmtZoomId(ev.zoomId || '')) + '" style="width:140px;" placeholder="ミーティングID">'
       + '<input type="text" id="olZoomPw" value="' + esc(ev.zoomPw || '') + '" style="width:110px;" placeholder="パスコード">'
       + '<button id="olZoomSave">保存</button></div>'
-      + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）</label>'
+      + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）<small style="color:var(--sub);font-weight:400;">　新しい申請は自動で追加されます</small></label>'
       + (rows || '<p style="color:var(--sub);font-size:13px;">申請はまだありません。受講者は自分の会員証から申請できます。</p>')
       + '<div class="btns"><button id="olPledges">📜 誓約書アーカイブ</button><button id="olClose">閉じる</button></div>',
       true);
-    $('olClose').onclick = closeModal;
-    $('olPledges').onclick = function(){ pledgeArchiveModal(ev); };
+    // 退避しておいた入力途中の値を復元
+    apps.forEach(function(a, i){
+      if(a.status === 'pending' && saved[a.id]){
+        if($('olAmt_' + i)) $('olAmt_' + i).value = saved[a.id].amt;
+        if($('olRc_' + i)) $('olRc_' + i).checked = saved[a.id].rc;
+      }
+    });
+    $('olClose').onclick = function(){ olmStop(); closeModal(); };
+    $('olPledges').onclick = function(){ olmStop(); pledgeArchiveModal(ev); };
     // 招待の丸ごと貼り付け → 自動判別して各欄に反映
     $('olZoomPaste').addEventListener('input', function(){
       var t = $('olZoomPaste').value;
@@ -3435,7 +3519,8 @@ function onlineModal(ev){
       var a = apps[parseInt(b.getAttribute('data-i'), 10)];
       var act = b.getAttribute('data-ola');
       var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(a.id);
-      var done = function(msg){ toast(msg); closeModal(); onlineModal(ev); loadEvents(); };
+      // 書き込むとライブ購読が発火して一覧が自動更新されるので、モーダルは開いたままでよい
+      var done = function(msg){ toast(msg); loadEvents(); };
       var markCard = function(val){
         if(!a.cardToken) return Promise.resolve();
         var u = {}; u['online_' + ev.id] = val;
@@ -3499,7 +3584,7 @@ function onlineModal(ev){
           .catch(function(e){ b.disabled = false; toast(permMsg(e, '発行権限がありません')); });
       }
     });
-  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+  }
 }
 
 /* ---------- 会計（BASE集計表のデジタル版） ---------- */
@@ -4215,6 +4300,10 @@ function startReception(ev){
   $('recNone').classList.add('hide');
   $('recArea').classList.remove('hide');
   $('btnRecStop').classList.remove('hide');
+  // オンライン対応イベントは日付に関係なく申請を監視（見逃し防止）
+  if(ev.online) olWatchEvent(ev);
+  // デスクトップ通知の許可はユーザー操作のタイミングでだけ確認できる
+  try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }catch(eN){}
   $('unionTallyTile').classList.toggle('hide', (ev.unions || []).length < 2);
   $('recent').innerHTML = '<li style="color:var(--sub)">まだ受付はありません</li>';
   stageIdle();
