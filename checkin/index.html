@@ -928,6 +928,18 @@ function showCardView(token){
       renderNextEvents(c);
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
+      // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
+      // ホーム画面ショートカットから開いた旧トークンのページでは、QRを出さず案内する
+      // （旧QRを受付でスキャンすると「無効な会員証」になり続けるため、その入口で止める）
+      if(c.no){
+        db.collection('cardClaims').doc(String(c.no)).get().then(function(cl){
+          if(cl.exists && cl.data().t && cl.data().t !== token){
+            try{ localStorage.removeItem('bci_card_' + token); }catch(e2){}
+            $('mcQr').innerHTML = '<div style="font-size:44px;">⚠️</div>';
+            $('mcErr').textContent = 'この会員証は再発行され、このURLは古くなっています。管理者から新しいURLを受け取り、ホーム画面に追加し直してください。';
+          }
+        }).catch(function(){});
+      }
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
       $('mcName').textContent = '—'; $('mcQr').innerHTML = ''; $('mcNo').textContent = ''; $('mcGroup').textContent = ''; $('mcUnion').textContent = '';
@@ -4711,6 +4723,19 @@ function normalizeScan(raw){
     .replace(/ー/g, '-');
   return s;
 }
+// 古い会員証（再発行前のURL・スクショ等）をスキャンしたとき: 名簿には実在する本人なので、
+// その場でワンタップ受付できるボタン付きで案内する（手入力で番号を打ち直す手間をなくす）
+function staleCardStage(member, method){
+  beep('ng');
+  setStage('ng',
+    '<span class="hit-badge">無効な会員証</span>'
+    + '<div class="hit-name">' + esc(member.name || '') + '</div>'
+    + '<p class="stage-sub">古い会員証のURL（再発行前のリンクやスクショ）の可能性があります。'
+    + '本人に新しいURLを送り直してください。受付はこのまま下のボタンでできます。</p>'
+    + '<button id="stgForce" class="primary" style="margin-top:8px;">本人確認のうえ、この名前で受付する</button>', true);
+  var fb = $('stgForce');
+  if(fb) fb.onclick = function(){ checkinMember(member, method, null); };
+}
 function scan(raw, method){
   if(!gRec) return;
   raw = normalizeScan(raw);
@@ -4734,17 +4759,9 @@ function scan(raw, method){
         gRec.roster[no] = fresh;
         if(!fresh.cardSig || sig === fresh.cardSig){ checkinMember(fresh, method, null); return; }
       }
-      beep('ng');
-      setStage('ng',
-        '<span class="hit-badge">無効な会員証</span>'
-        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
-        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+      staleCardStage((fresh && fresh.active !== false) ? fresh : member, method);
     }).catch(function(){
-      beep('ng');
-      setStage('ng',
-        '<span class="hit-badge">無効な会員証</span>'
-        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
-        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+      staleCardStage(member, method);
     });
     return;
   }
