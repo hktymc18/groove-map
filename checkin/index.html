@@ -928,6 +928,18 @@ function showCardView(token){
       renderNextEvents(c);
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
+      // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
+      // ホーム画面ショートカットから開いた旧トークンのページでは、QRを出さず案内する
+      // （旧QRを受付でスキャンすると「無効な会員証」になり続けるため、その入口で止める）
+      if(c.no){
+        db.collection('cardClaims').doc(String(c.no)).get().then(function(cl){
+          if(cl.exists && cl.data().t && cl.data().t !== token){
+            try{ localStorage.removeItem('bci_card_' + token); }catch(e2){}
+            $('mcQr').innerHTML = '<div style="font-size:44px;">⚠️</div>';
+            $('mcErr').textContent = 'この会員証は再発行され、このURLは古くなっています。管理者から新しいURLを受け取り、ホーム画面に追加し直してください。';
+          }
+        }).catch(function(){});
+      }
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
       $('mcName').textContent = '—'; $('mcQr').innerHTML = ''; $('mcNo').textContent = ''; $('mcGroup').textContent = ''; $('mcUnion').textContent = '';
@@ -3622,7 +3634,10 @@ function auditLog(evId, act, target, detail){
     }).catch(function(){});
   }catch(e){}
 }
-// 納金票: 封筒同封用の小票をA4の1/4サイズで1枚印刷。封入現金 = 現金徴収 − 支出 − 不足金
+// 納金票: 封筒同封用の小票をA4の1/4サイズで1枚印刷。
+// 封入現金 = 会計で確定した「計」（収入計 − 支出計・不足金込み）。
+// 収入を手修正した場合（受付を通さず集金した分など）もその金額がそのまま封筒に入るため、
+// 受付の現金徴収額ではなく保存済みの計を使う（現金徴収の行は参考として残す）
 // 本体ページごと印刷すると重いので、小さな別ウィンドウに票だけを書いて印刷する
 // （即表示され、ウィンドウのタイトルがそのままPDF保存時のファイル名になる）
 function printCashSlip(ev, f, live){
@@ -3631,7 +3646,9 @@ function printCashSlip(ev, f, live){
   var pp = (f.paypayTotal != null) ? f.paypayTotal : live.pp;
   var shortage = f.shortage || 0;
   var expOnly = (f.expenseTotal || 0) - shortage;   // expenseTotal は不足金込みで保存されている
-  var seal = ppMode ? cash : cash - expOnly - shortage;
+  // 封入現金 = 保存済みの計（収入計 − 支出計）。編集し直した金額がそのまま印刷される。
+  // net が無い古い保存データは従来式（現金徴収 − 支出）。PayPay集金イベントは例外現金のみ封入
+  var seal = ppMode ? cash : (f.net != null ? f.net : cash - expOnly - shortage);
   var when = '';
   try{ if(f.updatedAt && f.updatedAt.toDate){ var d = f.updatedAt.toDate();
     when = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' '
@@ -4706,6 +4723,19 @@ function normalizeScan(raw){
     .replace(/ー/g, '-');
   return s;
 }
+// 古い会員証（再発行前のURL・スクショ等）をスキャンしたとき: 名簿には実在する本人なので、
+// その場でワンタップ受付できるボタン付きで案内する（手入力で番号を打ち直す手間をなくす）
+function staleCardStage(member, method){
+  beep('ng');
+  setStage('ng',
+    '<span class="hit-badge">無効な会員証</span>'
+    + '<div class="hit-name">' + esc(member.name || '') + '</div>'
+    + '<p class="stage-sub">古い会員証のURL（再発行前のリンクやスクショ）の可能性があります。'
+    + '本人に新しいURLを送り直してください。受付はこのまま下のボタンでできます。</p>'
+    + '<button id="stgForce" class="primary" style="margin-top:8px;">本人確認のうえ、この名前で受付する</button>', true);
+  var fb = $('stgForce');
+  if(fb) fb.onclick = function(){ checkinMember(member, method, null); };
+}
 function scan(raw, method){
   if(!gRec) return;
   raw = normalizeScan(raw);
@@ -4729,17 +4759,9 @@ function scan(raw, method){
         gRec.roster[no] = fresh;
         if(!fresh.cardSig || sig === fresh.cardSig){ checkinMember(fresh, method, null); return; }
       }
-      beep('ng');
-      setStage('ng',
-        '<span class="hit-badge">無効な会員証</span>'
-        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
-        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+      staleCardStage((fresh && fresh.active !== false) ? fresh : member, method);
     }).catch(function(){
-      beep('ng');
-      setStage('ng',
-        '<span class="hit-badge">無効な会員証</span>'
-        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
-        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+      staleCardStage(member, method);
     });
     return;
   }
