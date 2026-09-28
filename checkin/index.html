@@ -3622,7 +3622,10 @@ function auditLog(evId, act, target, detail){
     }).catch(function(){});
   }catch(e){}
 }
-// 納金票: 封筒同封用の小票をA4の1/4サイズで1枚印刷。封入現金 = 現金徴収 − 支出 − 不足金
+// 納金票: 封筒同封用の小票をA4の1/4サイズで1枚印刷。
+// 封入現金 = 会計で確定した「計」（収入計 − 支出計・不足金込み）。
+// 収入を手修正した場合（受付を通さず集金した分など）もその金額がそのまま封筒に入るため、
+// 受付の現金徴収額ではなく保存済みの計を使う（現金徴収の行は参考として残す）
 // 本体ページごと印刷すると重いので、小さな別ウィンドウに票だけを書いて印刷する
 // （即表示され、ウィンドウのタイトルがそのままPDF保存時のファイル名になる）
 function printCashSlip(ev, f, live){
@@ -3631,7 +3634,9 @@ function printCashSlip(ev, f, live){
   var pp = (f.paypayTotal != null) ? f.paypayTotal : live.pp;
   var shortage = f.shortage || 0;
   var expOnly = (f.expenseTotal || 0) - shortage;   // expenseTotal は不足金込みで保存されている
-  var seal = ppMode ? cash : cash - expOnly - shortage;
+  // 封入現金 = 保存済みの計（収入計 − 支出計）。編集し直した金額がそのまま印刷される。
+  // net が無い古い保存データは従来式（現金徴収 − 支出）。PayPay集金イベントは例外現金のみ封入
+  var seal = ppMode ? cash : (f.net != null ? f.net : cash - expOnly - shortage);
   var when = '';
   try{ if(f.updatedAt && f.updatedAt.toDate){ var d = f.updatedAt.toDate();
     when = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' '
