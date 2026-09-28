@@ -1565,6 +1565,7 @@ function enterApp(){
   refreshUnionSelectors();
   loadMembers();
   loadEvents();
+  ckRefreshIfStale(gUnion);   // MAP連携用の稼働率の集計を今日の状態に（日付が変わった後の初回だけ）
   loadStats();
   loadFinanceTab();
   initOnlineAlert();
@@ -4292,7 +4293,9 @@ $('btnRecStop').onclick = function(){
   // （ルール未対応などで書けなくても受付終了自体は成立させる）
   if(ev){
     ev.recClosed = true;
-    db.collection('checkinEvents').doc(ev.id).set({ recClosed: true }, { merge: true }).catch(function(){});
+    db.collection('checkinEvents').doc(ev.id).set({ recClosed: true }, { merge: true })
+      .then(function(){ ckRefreshForEvent(ev); })   // 当日分を稼働率の分母に入れた集計をMAPへ
+      .catch(function(){});
   }
   // 受付終了 → そのまま会計入力へ
   if(ev && window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
@@ -4313,7 +4316,9 @@ function startReception(ev){
   // 受付を開き直したら締め切りを解除（オンライン申請を再開）
   if(ev.recClosed){
     ev.recClosed = false;
-    db.collection('checkinEvents').doc(ev.id).set({ recClosed: false }, { merge: true }).catch(function(){});
+    db.collection('checkinEvents').doc(ev.id).set({ recClosed: false }, { merge: true })
+      .then(function(){ ckRefreshForEvent(ev); })
+      .catch(function(){});
   }
   // 電子領収書の発行者名とPayPay受け取りリンク（主催ユニオンの設定を読む）
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
@@ -5457,6 +5462,89 @@ function impCommit(ev){
   nextBatch();
 }
 
+/* ---------- 稼働率の計算（集計画面とMAP連携の共通・計算はここだけ） ---------- */
+// 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
+// 当日分は「受付を終了」した時点（recClosed）で算入する
+// （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
+function ckHeldEvents(evs){
+  var tdy = todayStr();
+  return evs.filter(function(ev){ return (ev.date || '') < tdy || ev.recClosed === true; });
+}
+// 行: 有効メンバー（無効・休会中を除く）＋出席した人。出席回数と稼働率（出席÷開催数・四捨五入）
+function ckRateRows(evs, attMaps, unionMembers){
+  var rows = [], rosterSex = {};
+  unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
+  unionMembers.forEach(function(m){
+    if(m.active === false || m.resting) return;   // 無効・休会中は集計に出さない（休会中でも出席すれば下の出席記録から行に載る）
+    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true });
+  });
+  var known = {};
+  rows.forEach(function(r){ known[r.no] = true; });
+  evs.forEach(function(ev){
+    Object.keys(attMaps[ev.id]).forEach(function(no){
+      if(!known[no]){
+        known[no] = true;
+        var a = attMaps[ev.id][no];
+        rows.push({ no: no, name: a.name + (a.guest ? '（ゲスト）' : ''), group: a.group || '', sex: a.sex || rosterSex[no] || '', member: !a.guest });
+      }
+    });
+  });
+  var held = evs.length;
+  rows.forEach(function(r){
+    r.marks = evs.map(function(ev){ return attMaps[ev.id][r.no] ? 1 : 0; });
+    r.count = r.marks.reduce(function(a,b){ return a + b; }, 0);
+    r.rate = held ? Math.round(r.count / held * 100) : 0;
+  });
+  return rows;
+}
+// GROOVE MAPの「受付連携」はこの集計結果を読むだけ（MAP側では計算しない＝数字が必ず一致する）
+//   checkinStats/{ユニオン}__{YYYY-MM} = { union, month, held, evIds, rates:{番号:{count,rate}}, calcAt, calcDay }
+function ckStatDocId(union, key){ return String(union || '').replace(/\//g, '／') + '__' + key; }
+function ckSaveRateSnapshot(union, key, evs, rows){
+  if(!union || !key || !gUser) return Promise.resolve();
+  var rates = {};
+  rows.forEach(function(r){ if(!/^g/.test(r.no)) rates[r.no] = { count: r.count, rate: r.rate }; });
+  return db.collection('checkinStats').doc(ckStatDocId(union, key)).set({
+    union: union, month: key, held: evs.length, evIds: evs.map(function(ev){ return ev.id; }),
+    rates: rates, calcAt: Date.now(), calcDay: todayStr(), by: gUser.uid
+  }).catch(function(){});   // ルール未反映などで書けなくても集計画面は動かす
+}
+// 画面に出さずに集計だけやり直して保存（受付終了・受付再開・起動時の日付変わりに呼ぶ）
+function ckRefreshRateSnapshot(union, key){
+  if(!union || !key) return Promise.resolve();
+  return db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+    var evs = [];
+    qs.forEach(function(d){ var ev = d.data(); ev.id = d.id; if((ev.unions || []).indexOf(union) >= 0) evs.push(ev); });
+    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    evs = ckHeldEvents(evs);
+    var attMaps = {};
+    var reads = evs.map(function(ev){
+      return db.collection('checkinEvents').doc(ev.id).collection('attendance')
+        .where('union', '==', union).get().then(function(aqs){
+          var m = {};
+          aqs.forEach(function(d){ var a = d.data(); if(a.status === 'pending' || a.status === 'rejected') return; m[d.id] = a; });
+          attMaps[ev.id] = m;
+        });
+    });
+    return Promise.all(reads.concat([fetchMembers(union)])).then(function(res){
+      return ckSaveRateSnapshot(union, key, evs, ckRateRows(evs, attMaps, res[res.length - 1]));
+    });
+  }).catch(function(){});
+}
+// 受付終了・再開した開催の参加ユニオン全部の集計を更新
+function ckRefreshForEvent(ev){
+  if(!ev) return;
+  var key = ev.month || String(ev.date || '').slice(0, 7);
+  (ev.unions || []).forEach(function(un){ ckRefreshRateSnapshot(un, key); });
+}
+// 起動時：自分のユニオンの今月の集計が今日より前のまま（日付が変わって前日の開催が分母に入った等）なら作り直す
+function ckRefreshIfStale(union){
+  var d = new Date(), key = monthKey(d.getFullYear(), d.getMonth() + 1);
+  db.collection('checkinStats').doc(ckStatDocId(union, key)).get().then(function(s){
+    if(!s.exists || (s.data() || {}).calcDay !== todayStr()) ckRefreshRateSnapshot(union, key);
+  }).catch(function(){});
+}
+
 /* ---------- 集計 ---------- */
 var gStat = null;
 $('btnStatReload').onclick = function(){ loadStats(); };
@@ -5474,8 +5562,7 @@ function loadStats(){
     // 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
     // 当日分は「受付を終了」した時点（recClosed）で算入する
     // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
-    var tdy = todayStr();
-    evs = evs.filter(function(ev){ return (ev.date || '') < tdy || ev.recClosed === true; });
+    evs = ckHeldEvents(evs);
     if(!evs.length && !otherEvs.length){
       $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
@@ -5528,24 +5615,11 @@ function renderStats(evs, attMaps, unionMembers, visits){
     $('statBody').innerHTML = '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>' + visitsHtml;
     gStat = null; return;
   }
-  // 行: 有効メンバー + 出席したゲスト
-  var rows = [], rosterSex = {};
+  // 行: 有効メンバー + 出席したゲスト（出席回数・稼働率まで ckRateRows で計算＝MAPへ渡す数字と同じ）
+  var rosterSex = {};
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
-  unionMembers.forEach(function(m){
-    if(m.active === false || m.resting) return;   // 無効・休会中は集計に出さない（休会中でも出席すれば下の出席記録から行に載る）
-    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true });
-  });
-  var known = {};
-  rows.forEach(function(r){ known[r.no] = true; });
-  evs.forEach(function(ev){
-    Object.keys(attMaps[ev.id]).forEach(function(no){
-      if(!known[no]){
-        known[no] = true;
-        var a = attMaps[ev.id][no];
-        rows.push({ no: no, name: a.name + (a.guest ? '（ゲスト）' : ''), group: a.group || '', sex: a.sex || rosterSex[no] || '', member: !a.guest });
-      }
-    });
-  });
+  var rows = ckRateRows(evs, attMaps, unionMembers);
+  ckSaveRateSnapshot(gStatUnion, monthKey(gMonth.y, gMonth.m), evs, rows);   // MAPの受付連携はこの数字を読む
   // イベントごとの男女内訳（出席レコードの性別、なければ名簿から）
   var evSex = evs.map(function(ev){
     var c = { m: 0, f: 0 };
@@ -5559,9 +5633,6 @@ function renderStats(evs, attMaps, unionMembers, visits){
   var totalAtt = 0;
   var grpSum = {};                    // 系列別ののべ出席（→ 開催数で割って平均稼動数に）
   rows.forEach(function(r){
-    r.marks = evs.map(function(ev){ return attMaps[ev.id][r.no] ? 1 : 0; });
-    r.count = r.marks.reduce(function(a,b){ return a + b; }, 0);
-    r.rate = Math.round(r.count / held * 100);
     totalAtt += r.count;
     if(r.count > 0){
       var gk = r.group || 'その他';

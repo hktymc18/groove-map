@@ -130,6 +130,13 @@ service cloud.firestore {
           && myShareDoc(uid).get('perm', 'view') == 'edit';
     }
 
+    // v533: 予定・タスクを見せる共有か（scope=='map'＝MAPのみ共有／結合経由の自動配布も予定は見せない）
+    function canSeeSchedule(uid) {
+      return isSharedToMap(uid)
+          && myShareDoc(uid).get('derived', false) != true
+          && myShareDoc(uid).get('scope', 'all') != 'map';
+    }
+
     // データ本体：read=オーナー/管理者/共有された人、write=オーナー/管理者/共有編集者
     match /maps/{uid}/months/{doc} {
       allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
@@ -140,8 +147,8 @@ service cloud.firestore {
       allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
     }
     match /maps/{uid}/events/{doc} {
-      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
-      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+      allow read:  if isAdmin() || ownerActive(uid) || canSeeSchedule(uid);
+      allow write: if isAdmin() || ownerActive(uid) || (canEditMap(uid) && canSeeSchedule(uid));
     }
     match /maps/{uid}/meta/{doc} {
       allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
@@ -255,6 +262,17 @@ service cloud.firestore {
       allow update: if isCkCoreAdmin(un)
         || (isCkAdmin(un)
             && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins']));
+      allow delete: if isOwnerAdmin();
+    }
+
+    // 📊 稼働率の集計結果（受付システムが計算して保存 → GROOVE MAPの受付連携は読むだけ）
+    //   docId = {ユニオン}__{YYYY-MM}。書けるのはそのユニオンの有効メンバー・受付管理者・オーナー
+    match /checkinStats/{sid} {
+      allow read: if signedIn();
+      allow create, update: if isOwnerAdmin()
+        || isCkAdmin(request.resource.data.get('union', ''))
+        || (signedIn() && notDisabled(request.auth.uid)
+            && request.resource.data.get('union', '') == ckMyUnion());
       allow delete: if isOwnerAdmin();
     }
 

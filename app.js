@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v532';
+var APP_JS_VERSION = 'v536';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1375,6 +1375,12 @@ function renderPCMap(mapType) {
 }
 
 // ウィンドウリサイズ時に再描画
+// v533: 漢字・かな変換を確定するEnterで「追加・保存」されないように（全入力欄共通）。
+//        変換中のキー（isComposing／keyCode 229＝SafariはcompositionEndの後に届く）は各欄の処理に渡さない。
+//        ※既定動作（変換の確定）は止めない＝stopPropagationのみ
+window.addEventListener('keydown', function(ev) {
+  if (ev.isComposing || ev.keyCode === 229) ev.stopImmediatePropagation();
+}, true);
 var _lastPcMode = (typeof window !== 'undefined') ? (window.innerWidth >= 768) : null; // 読込時の表示（最初の回転も検知できるように）
 window.addEventListener('resize', function() {
   // v532: 927-1 スマホを縦⇄横に回して PC表示⇄スマホ表示 が切り替わったら、その表示で作り直す
@@ -3513,7 +3519,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v532';
+  var DATA_VERSION = 'v536';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4523,6 +4529,10 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v536', d:'2026-09-28', items:['🔗 受付連携の稼働率は、受付システムが集計した数字をそのまま読むように（MAP側では計算しない＝受付システムの集計と必ず一致）。連携完了の表示に「何時点の集計か」を表示','受付システム：集計画面を開いた時・受付を終了/再開した時・日付が変わって最初に開いた時に、MAP用の集計を自動で保存'] },
+  { v:'v535', d:'2026-09-28', items:['🛠 受付連携の稼働率が受付システムの集計とずれる問題を修正：当日のハウディを「受付終了」前から分母に入れていたため、全出席の人でも当日は92%などになっていました。受付システムと同じく、当日分は受付を終了してから数えます'] },
+  { v:'v534', d:'2026-09-28', items:['🛠 受付システムを開くとMAPのログイン画面が出てしまう問題が再発していたのを修正（v533の差し替えで受付システム側の修正が上書きされていました）'] },
+  { v:'v533', d:'2026-09-28', items:['🔔 期限切れタスクの通知を強制に：期限切れが残っている間は 9・12・15・18・21時 にサーバーから必ず通知（アプリを開いていなくても届く・完了すると止まる）。⚙設定に「📨テスト通知を送る」を戻しました（届かない時の確認用）','🔒 MAP共有を2段階に：共有する時に「全部見せる」か「予定・タスクは見せない（MAPだけ）」を選べます。共有中の一覧からあとで切り替えも可能。今までの共有は「全部見せる」のまま','⌨ 漢字・かなの変換を確定するEnterで、タスクなどが途中で保存されてしまう問題を修正（変換が終わった後のEnterで追加されます）','➕ メンバー追加：「くわしく登録」の基本タブの一番上でカテゴリ（研修生／BA／BR）とタイトルを選べるように。かんたん追加でも研修生／BA／BRとタイトルを選んで登録できます'] },
   { v:'v532', d:'2026-09-27', items:['◎ 運動会MAPの並べ方を改善（927-4）：同じ人のフロントは親の真外側にまとまり、別の人のグループの間・系列の間にはすき間を空けるように。子が隣の人の下に入り込んだり、線が他の人の線と交差・重なったりしにくくなりました','📱 スマホを横にして運動会・ツリーを切り替えたあと縦に戻すと、ツリーが消える／運動会が残る／⊡でツリーが下に出る不具合を修正（927-1〜3）'] },
   { v:'v531', d:'2026-09-26', items:['🔗 OLの企画・編集で、共有MAP（結合）のメンバーも選べるように（924-1）。予定（スケジュール）のOLからも同じです','✍ 共有MAPのメンバーのOLは、相手のMAPにも記録されます（相手が「編集」で共有している場合。閲覧のみの共有ならあなたのMAPにだけ保存）。相手のOLタブには「🔗記録した人の名前」が付き、相手のMAPにいない参加者は名前で表示','🗑 企画から外す・削除すると、相手のMAPからも消えます。相手の画面が古いままでも、書き込まれた記録が消えないように保存時に取り込みます'] },
   { v:'v530', d:'2026-09-25', items:['🚪 OUTにした時、直下の組織は「今月はそのまま」に。誰の下がOUTしたのかMAPで分かるように残し、翌月コピーの時に上のアップラインの直下へ自動で移動（ロールアップ）します。翌月コピーの確認画面に「直下◯人は△△さんの直下へ」と表示'] },
@@ -5674,7 +5684,7 @@ function ckLinkRender() {
     + '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">受付ユニオン</div>' + unionSel
     + '<div style="max-height:44vh;overflow-y:auto;margin-top:10px">' + (rows || '<div style="padding:16px;color:var(--text-dim);font-size:13px">このMAPにメンバーがいません</div>') + '</div>'
     + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + evEsc((state.currentMonth || currentMonthStr())) + ' の稼働率を取り込む</button>'
-    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率 = 出席回数 ÷ 本日までの開催数（受付システムの集計と同じ）。稼働タイプSの人は自動更新の対象外です。</div>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率は受付システムの「集計」の数字をそのまま取り込みます（MAPでは計算しません）。稼働タイプSの人は自動更新の対象外です。</div>'
     + '</div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -5688,45 +5698,43 @@ function ckLinkApply() {
       if (sel && sel.value) { it.m.checkinNo = sel.value; newLinks++; }
     }
   });
-  ckImportRates(function(updated, held) {
+  ckImportRates(function(updated, held, st, skipped) {
     autoSave();
     ckLinkClose();
     if (currentView === 'members') renderMembers();
-    if (held) toast('連携完了 ✓ 新規リンク' + newLinks + '名・稼働率を' + updated + '名に反映（開催' + held + '回）');
-    else toast('リンクを保存しました（' + _ckMonthKey() + ' の開催がまだないため稼働率は未更新）');
+    renderCurrentView();
+    if (held) {
+      var d0 = new Date(), today0 = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+      toast('連携完了 ✓ 新規リンク' + newLinks + '名・受付システムの集計（' + _ckStatWhen(st) + '時点・開催' + held + '回）を' + updated + '名に反映'
+        + (skipped ? '（休会中など集計外の' + skipped + '名は変更なし）' : '')
+        + (st.calcDay && st.calcDay !== today0 ? '　※最新にするには受付システムの「集計」を開いてから、もう一度連携してください' : ''));
+    } else if (st) toast('リンクを保存しました（' + _ckMonthKey() + ' はまだ受付が終了した開催がないため稼働率は未更新）');
+    else toast('リンクを保存しました。受付システムでこの月の集計がまだ作られていません（受付システムの「集計」を開くか受付を終了すると作られます）');
   });
 }
+// v536: 稼働率はMAPでは計算せず、受付システムが集計した数字（checkinStats/{ユニオン}__{YYYY-MM}）を読むだけ。
+//        計算式は受付システムの1か所だけ＝受付システムの集計画面と必ず同じ数字になる
+function _ckStatDocId(union, key) { return String(union || '').replace(/\//g, '／') + '__' + key; }
 function ckImportRates(done) {
   var un = _ckLink.sel, month = _ckMonthKey();
-  db.collection('checkinEvents').where('month', '==', month).get().then(function(qs) {
-    var d = new Date();
-    var today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    var evIds = [];
-    qs.forEach(function(doc) {
-      var ev = doc.data() || {};
-      if ((ev.unions || []).indexOf(un) >= 0 && (ev.date || '') <= today) evIds.push(doc.id);
+  db.collection('checkinStats').doc(_ckStatDocId(un, month)).get().then(function(snap) {
+    var st = snap && snap.exists ? (snap.data() || {}) : null;
+    if (!st || !st.held) { done(0, 0, st); return; }
+    var rates = st.rates || {}, updated = 0, skipped = 0;
+    _ckOwnMembers().forEach(function(m) {
+      if (!m.checkinNo) return; // v492: Sタイプも実測稼働率を取り込む
+      var r = rates[m.checkinNo];
+      if (!r) { skipped++; return; } // 休会中・無効などで受付システムの集計に出ていない人は変更しない
+      m.actRate = r.rate;
+      updated++;
     });
-    if (!evIds.length) { done(0, 0); return; }
-    var present = {};
-    var reads = evIds.map(function(eid) {
-      return db.collection('checkinEvents').doc(eid).collection('attendance').where('union', '==', un).get().then(function(aqs) {
-        aqs.forEach(function(a) {
-          var x = a.data() || {};
-          if (x.status === 'pending' || x.status === 'rejected') return;
-          present[a.id] = (present[a.id] || 0) + 1;
-        });
-      });
-    });
-    Promise.all(reads).then(function() {
-      var updated = 0;
-      _ckOwnMembers().forEach(function(m) {
-        if (!m.checkinNo) return; // v492: Sタイプも実測稼働率を取り込む
-        m.actRate = Math.round((present[m.checkinNo] || 0) / evIds.length * 100);
-        updated++;
-      });
-      done(updated, evIds.length);
-    });
+    done(updated, st.held, st, skipped);
   }).catch(function(e) { toast('稼働率の取込に失敗しました: ' + (e && e.message || '')); });
+}
+function _ckStatWhen(st) {
+  if (!st || !st.calcAt) return '';
+  var d = new Date(st.calcAt);
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 }
 
 function renderMembers() {
@@ -11727,6 +11735,38 @@ function meDeleteTask(eid, mid) {
 //  名前・性別・段階（FT〜CO）だけで登録。詳細は研修が進んでから従来画面で。
 // ============================================================
 var _qaGender = 'male';
+// v533: かんたん追加でも「研修生／BA／BR」を選び、タイトルをリストから選べるように
+var QA_CAT_DEFAULT = { '研修生': 'FT', 'BA': 'LOI', 'BR': 'BR' };
+function _qaCatGet() { try { var c = localStorage.getItem('gm_qaCat'); if (TITLE_OPTIONS[c]) return c; } catch(e) {} return '研修生'; }
+function _qaTitleGet(cat) {
+  cat = cat || _qaCatGet();
+  if (cat === '研修生') return _qaStageGet();
+  try { var v = localStorage.getItem('gm_qaTitle_' + cat); if (v && (TITLE_OPTIONS[cat] || []).indexOf(v) >= 0) return v; } catch(e) {}
+  return QA_CAT_DEFAULT[cat];
+}
+function _qaTitleAreaHtml(cat) {
+  if (cat === '研修生') {
+    var st = _qaStageGet();
+    return '<div class="p2-meta" style="margin-bottom:4px">アプローチ・研修の段階（タイトル）</div>'
+      + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="qaStages">'
+      + (TITLE_OPTIONS['研修生'] || []).map(function(t) { return '<span class="qa-chip' + (t === st ? ' sel' : '') + '" data-st="' + t + '" onclick="qaStageSel(\'' + t + '\')">' + t + '</span>'; }).join('')
+      + '</div>';
+  }
+  var cur = _qaTitleGet(cat);
+  return '<div class="p2-meta" style="margin-bottom:4px">タイトル</div>'
+    + '<select class="fi" id="qaTitle" onchange="qaTitleSel(this.value)" style="margin-bottom:10px;padding:9px 10px;font-size:14px">'
+    + (TITLE_OPTIONS[cat] || []).map(function(t) { return '<option value="' + t + '"' + (t === cur ? ' selected' : '') + '>' + t + '</option>'; }).join('')
+    + '</select>';
+}
+function qaCatSel(cat) {
+  if (!TITLE_OPTIONS[cat]) return;
+  try { localStorage.setItem('gm_qaCat', cat); } catch(e) {}
+  var w9 = document.getElementById('qaCats');
+  if (w9) { var cs = w9.querySelectorAll('.qa-chip'); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute('data-c') === cat); }
+  var ta = document.getElementById('qaTitleArea'); if (ta) ta.innerHTML = _qaTitleAreaHtml(cat);
+  var tr = document.getElementById('qaTrainRow'); if (tr) tr.style.display = cat === '研修生' ? '' : 'none';
+}
+function qaTitleSel(t) { var cat = _qaCatGet(); try { localStorage.setItem('gm_qaTitle_' + cat, t); } catch(e) {} }
 function _qaStageGet() {
   try { var v = localStorage.getItem('gm_qaStage'); if (v && (TITLE_OPTIONS['研修生'] || []).indexOf(v) >= 0) return v; } catch(e) {}
   return 'FT';
@@ -11744,14 +11784,15 @@ function openQuickAdd() {
     var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
     return '<option value="' + m.id + '"' + (m.id === parent ? ' selected' : '') + '>' + evEsc(nm) + (m.title ? '（' + evEsc(m.title) + '）' : '') + '</option>';
   }).join('');
-  var chips = (TITLE_OPTIONS['研修生'] || []).map(function(t) {
-    return '<span class="qa-chip' + (t === stage ? ' sel' : '') + '" data-st="' + t + '" onclick="qaStageSel(\'' + t + '\')">' + t + '</span>';
+  var qcat = _qaCatGet();
+  var catChips = ['研修生', 'BA', 'BR'].map(function(c) {
+    return '<span class="qa-chip' + (c === qcat ? ' sel' : '') + '" data-c="' + c + '" onclick="qaCatSel(\'' + c + '\')" style="flex:1;text-align:center">' + c + '</span>';
   }).join('');
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'qaOv'; ov.style.zIndex = '640';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('qaOv'); };
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚡ かんたん追加</div>'
-    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・段階だけでOK。詳細は研修が進んでから</div></div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・区分とタイトルだけでOK。詳細はあとから</div></div>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px;flex:none" onclick="qaToFull()">📝 くわしく登録</span>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'qaOv\')" style="margin-left:8px">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
@@ -11763,12 +11804,14 @@ function openQuickAdd() {
     + '<div style="display:flex;gap:8px;margin-bottom:10px">'
     + '<span class="qa-chip qa-g' + (_qaGender !== 'female' ? ' sel' : '') + '" id="qaGm" onclick="qaGenderSel(\'male\')" style="flex:1;text-align:center">👨 男性</span>'
     + '<span class="qa-chip qa-g' + (_qaGender === 'female' ? ' sel' : '') + '" id="qaGf" onclick="qaGenderSel(\'female\')" style="flex:1;text-align:center">👩 女性</span></div>'
-    + '<div class="p2-meta" style="margin-bottom:4px">アプローチ・研修の段階</div>'
-    + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="qaStages">' + chips + '</div>'
+    + '<div class="p2-meta" style="margin-bottom:4px">区分</div>'
+    + '<div style="display:flex;gap:6px;margin-bottom:10px" id="qaCats">' + catChips + '</div>'
+    + '<div id="qaTitleArea">' + _qaTitleAreaHtml(qcat) + '</div>'
+    + '<div id="qaTrainRow"' + (qcat === '研修生' ? '' : ' style="display:none"') + '>'
     + '<div class="p2-meta" style="margin-bottom:4px">研修の予定（任意・入力すると研修履歴に登録）</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px">'
     + '<input class="fi" id="qaDate" type="date" style="flex:1.3;padding:9px 8px;font-size:13px" title="研修日">'
-    + '<input class="fi" id="qaAsan" placeholder="Aさん" style="flex:1;padding:9px 10px;font-size:13px"></div>'
+    + '<input class="fi" id="qaAsan" placeholder="Aさん" style="flex:1;padding:9px 10px;font-size:13px"></div></div>'
     + '<div style="display:flex;gap:8px">'
     + '<span class="p2-btn" style="margin:0;flex:1.4;text-align:center" onclick="qaSave(true)">＋ 登録して続けて追加</span>'
     + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="qaSave(false)">✔ 登録</span></div>'
@@ -11795,12 +11838,14 @@ function qaSave(cont) {
   if (!last && !first) { toast('名前を入力してください'); return; }
   var pid = (document.getElementById('qaParent') || {}).value || '';
   if (!pid) { toast('追加先を選んでください'); return; }
-  var stage = _qaStageGet();
+  var qcat = _qaCatGet();
+  var stage = _qaTitleGet(qcat);
+  var tSel = document.getElementById('qaTitle'); if (qcat !== '研修生' && tSel && tSel.value) stage = tSel.value;
   var cm = state.currentMonth || currentMonthStr();
   var m = {
     id: 'id-' + Date.now(),
     lastName: last, firstName: first, gender: _qaGender,
-    title: stage, cat: '研修生',
+    title: stage, cat: qcat,
     activity: '', actRate: '', morale: 1, priority: '',
     ptCurrent: 0, ptFixed: 0, ptSelf: 0,
     trainee: false, parentId: pid, mapType: 'both', // v497: かんたん追加も既定「両方」
@@ -11810,7 +11855,8 @@ function qaSave(cont) {
     month: cm,
   };
   // v496: 研修の予定（日付＋時刻＋Aさん）→ 研修履歴に「予定」として登録（921-2）
-  var _qd = ((document.getElementById('qaDate') || {}).value || '');
+  var _qd = qcat === '研修生' ? ((document.getElementById('qaDate') || {}).value || '') : '';
+  if (qcat !== '研修生') m.aSan = '';
   if (_qd) m.traineeHistory.push({ status: stage, date: _qd, aSan: m.aSan || '', result: 'planned', time: '' }); // v519: 923-9 時刻欄は廃止
   state.members.push(m);
   window._pcFocusLineage = ''; // v519: 923-8 追加先を選ぶクリックで付いた系列フォーカスを解除（他の系列が暗いまま残らない）
@@ -11834,7 +11880,8 @@ function qaToFull() {
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
   var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
   var pid = (document.getElementById('qaParent') || {}).value || '';
-  var g = _qaGender, stage = _qaStageGet();
+  var g = _qaGender, qcat = _qaCatGet(), stage = _qaTitleGet(qcat);
+  var tSel = document.getElementById('qaTitle'); if (qcat !== '研修生' && tSel && tSel.value) stage = tSel.value;
   _p2SheetClose('qaOv');
   if (pid) selectedParentId = pid;
   openAdd();
@@ -11842,7 +11889,7 @@ function qaToFull() {
     var fl = document.getElementById('fLast'); if (fl) fl.value = last;
     var ff = document.getElementById('fFirst'); if (ff) ff.value = first;
     selGender(g, true);
-    selCategory('研修生');
+    selCategory(qcat);
     var ft = document.getElementById('fTitle'); if (ft) ft.value = stage;
     if (typeof onTitleChange === 'function') onTitleChange();
   } catch(e) {}
@@ -11882,6 +11929,7 @@ function openAdd() {
     pl.style.display = '';
   }
   // 新規追加 → 基本タブ（名前入力）から開始。研修タブは表示
+  _meCatPlace(true); // v533: カテゴリ・タイトルを基本タブの一番上に（基本タブだけでBA/BRとして登録できる）
   window._meHideTrainee = false;
   document.getElementById('modal').classList.remove('no-trainee');
   meRenderExtras(null);
@@ -11902,10 +11950,19 @@ function openAdd() {
     if (sel2 && _editTitle) sel2.value = _editTitle;
   }, 0);
 }
+// v533: カテゴリ・タイトルの置き場所（新規＝基本タブの一番上／編集＝月次タブの一番上）
+function _meCatPlace(isNew) {
+  var blk = document.getElementById('meCatBlock');
+  var pgs = document.querySelectorAll('#modal .me-page');
+  var to = pgs[isNew ? 0 : 1];
+  if (!blk || !to || (blk.parentNode === to && to.firstElementChild === blk)) return;
+  to.insertBefore(blk, to.firstChild);
+}
 function openEdit(id) {
   try {
     if (/^MG_/.test(id)) { mgNodeClick(id); return; } // 結合ノード→編集権限があれば相手MAPへ切替して編集
     if (!state.isEditor) return;
+    _meCatPlace(false);
     editingId = id;
     var m = null;
     for (var i=0; i<state.members.length; i++) { if (state.members[i].id===id){ m=state.members[i]; break; } }
@@ -16054,6 +16111,7 @@ function loadEvents(uid) {
 function saveEventDoc(e) {
   var uid = eventsUid();
   if (!uid || !db) return Promise.resolve();
+  if (_viewNoSched()) { toast('🔒 この共有MAPでは予定・タスクは保存できません（MAPのみの共有）'); return Promise.resolve(); } // v533
   if (e && /^UN_/.test(e.id || '')) return Promise.resolve(); // v392: ユニオン予定は個人ドキュメントに保存しない
   // undefined を含むと Firestore が保存を拒否するため除去（保存されない事故の防止）
   var clean = {};
@@ -17874,6 +17932,8 @@ function _digestSync() {
         if (dt.getTime() <= Date.now() + 60000) continue; // 直近1分以内は飛ばす
         var due = tasks.filter(function(e){ return e.date <= ymd; });
         if (!due.length) continue; // 0件の時は通知しない
+        // v533: 期限切れがある時の 9/12/15/18/21時ちょうどはサーバーの期限切れ通知が届くので重ねない
+        if (hm[1] === '00' && ['09', '12', '15', '18', '21'].indexOf(hm[0]) >= 0 && due.some(function(e){ return e.date < evTodayYmd(); })) continue;
         var odN = 0;
         for (var k = 0; k < due.length; k++) { if (due[k].date < ymd) odN++; }
         var qid = currentUser.uid + '_dg' + day.getFullYear() + _dgPad(day.getMonth() + 1) + _dgPad(day.getDate()) + hm[0] + hm[1];
@@ -17889,35 +17949,8 @@ function _digestSync() {
       }
     }
   }
-  // v468: 期限切れタスクの定時リマインド（9/12/15/18/21時）。期限切れが残っている間だけ予約し、
-  // 完了して0件になれば次の同期で予約ごと消える。まとめ通知と同時刻になる枠はスキップ。
-  if (!pushOff) {
-    var _odTasks = (state.events || []).filter(function(e){
-      return e.type === 'task' && !e.done && !e.deleted && e.date && e.date < evTodayYmd() && evTdMine(e);
-    });
-    if (_odTasks.length) {
-      var _odSlots = ['09:00', '12:00', '15:00', '18:00', '21:00'];
-      var now2 = new Date();
-      for (var d2 = 0; d2 < 2 && written.length < 18; d2++) {
-        var day2 = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate() + d2);
-        for (var i2 = 0; i2 < _odSlots.length && written.length < 18; i2++) {
-          var hm2 = _odSlots[i2].split(':');
-          var dt2 = new Date(day2.getFullYear(), day2.getMonth(), day2.getDate(), parseInt(hm2[0], 10), parseInt(hm2[1], 10), 0);
-          if (dt2.getTime() <= Date.now() + 60000) continue;
-          if (_dgAt[dt2.toISOString()]) continue;
-          var qid2 = currentUser.uid + '_od' + day2.getFullYear() + _dgPad(day2.getMonth() + 1) + _dgPad(day2.getDate()) + hm2[0] + hm2[1];
-          fsSet('notifQueue/' + qid2, {
-            uid: currentUser.uid,
-            eventId: 'due-digest',
-            fireAt: dt2.toISOString(),
-            title: '期限切れタスク ' + _odTasks.length + '件',
-            body: 'タップして一覧を開く（完了するとリマインドは止まります）'
-          }).catch(function(){});
-          written.push(qid2);
-        }
-      }
-    }
-  }
+  // v533: 期限切れタスクの定時リマインド（9/12/15/18/21時）はサーバー（functions: overdueReminders）が直接送る。
+  //        端末から予約する方式（v468）は、アプリを開かないと予約されず届かないことがあったため廃止（古い予約は下で消える）
   var newSig = {};
   written.forEach(function(qid) {
     var body = plan[qid]; if (!body) return;
@@ -19418,7 +19451,9 @@ function openCalSettings() {
     + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">プッシュ通知（この端末・アプリを閉じていても届く）</label>'
     + pushRow
+    + '<button class="fol-add" style="margin-top:8px" onclick="pushSendTest()">📨 テスト通知を送る（届かない時の確認用・アプリを閉じて1〜2分で届けば正常）</button>'
     + '<button class="fol-add" style="margin-top:8px" onclick="pushClearOtherTokens()">' + icn('refresh') + ' 通知が2重に届く時はこちら（古い登録を掃除）</button>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:6px">期限切れのタスクがある間は、9・12・15・18・21時に必ずお知らせします（完了すると止まります）</div>'
     + '</div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">' + icn('clock') + ' 定時リマインダー（未完了タスクの件数をプッシュでお知らせ）</label>'
     + '<div class="rg">'
@@ -20655,6 +20690,15 @@ function renderEventsSoon() {
 }
 function renderEvents() {
   if (_evRenderRaf) { try { cancelAnimationFrame(_evRenderRaf); } catch(eC) {} _evRenderRaf = 0; }
+  // v533: 「予定・タスクは見せない」共有のMAPを見ている時は、その旨を表示
+  var _nsB = document.getElementById('evNoSchedBanner');
+  if (_viewNoSched()) {
+    if (!_nsB) {
+      var _ve = document.getElementById('view-events');
+      if (_ve) { _nsB = document.createElement('div'); _nsB.id = 'evNoSchedBanner'; _ve.insertBefore(_nsB, _ve.firstChild); }
+    }
+    if (_nsB) { _nsB.style.cssText = 'margin:10px 14px;padding:12px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--border2);font-size:13px;color:var(--text-mid);line-height:1.6'; _nsB.innerHTML = '🔒 この共有では、予定・タスクは見られません（MAPのみの共有）。<br><span style="font-size:11.5px;color:var(--text-dim)">自分の予定に戻るには、自分のMAPに切り替えてください。</span>'; }
+  } else if (_nsB) _nsB.style.display = 'none';
   updateEventsBadge();
   updateNotifBtn();
   updateInstallBtn();
@@ -25335,6 +25379,31 @@ function applySearch(q) { searchFilters.freeword=q; applyAllFilters(); }
 // ── 認証 ──
 var currentUser = null;
 var sharePerm = 'view';
+var shareScope = 'map'; // v533: 'all'＝全部見せる／'map'＝予定・タスクは見せない（新しく共有する時の初期値）
+function _shareScopeOf(owner) { return owner ? (owner.derived ? 'map' : (owner.scope || 'all')) : 'all'; }
+function _viewNoSched() { // 共有MAPを見ている時、その共有で予定・タスクが見られない
+  if (!viewingOwnerUid) return false;
+  var o = null; for (var i = 0; i < (sharedOwners || []).length; i++) if (sharedOwners[i].uid === viewingOwnerUid) { o = sharedOwners[i]; break; }
+  return !!o && _shareScopeOf(o) === 'map';
+}
+function selShareScope(sc) {
+  shareScope = sc === 'all' ? 'all' : 'map';
+  var a = document.getElementById('rbScopeAll'), m = document.getElementById('rbScopeMap');
+  if (a) a.classList.toggle('sel', shareScope === 'all');
+  if (m) m.classList.toggle('sel', shareScope === 'map');
+}
+// 共有中の相手ごとに「全部見せる⇄予定・タスクは見せない」を切り替え（オーナー側と受け取り側の両方を更新）
+function toggleShareScope(rid, cur) {
+  if (!db || !currentUser) return;
+  var nx = cur === 'map' ? 'all' : 'map';
+  Promise.all([
+    fsSet('maps/' + currentUser.uid + '/shared/' + rid, { scope: nx }),
+    fsSet('sharedWith/' + rid + '/from/' + currentUser.uid, { scope: nx })
+  ]).then(function() {
+    toast(nx === 'map' ? '🔒 予定・タスクは見せない設定にしました' : '📅 予定・タスクも見せる設定にしました');
+    loadShareUserList();
+  }).catch(function(e) { toast('⚠️ 変更に失敗しました: ' + (e && e.message || '')); });
+}
 
 // Firebase Authのリスナー
 if (auth) {
@@ -25721,13 +25790,25 @@ function loadShareUserList() {
       emailEl.textContent = d.email || '';
       var permEl = document.createElement('div');
       permEl.style.cssText = 'font-size:11px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace';
-      permEl.textContent = d.derived ? ('👁 🔗' + (d.viaName ? d.viaName + '経由' : '結合経由')) : (d.perm === 'edit' ? '編集可' : '閲覧のみ');
+      permEl.textContent = d.derived ? ('👁 🔗' + (d.viaName ? d.viaName + '経由' : '結合経由') + '・予定なし') : (d.perm === 'edit' ? '編集可' : '閲覧のみ');
+      // v533: 予定・タスクを見せるかどうか（タップで切替）
+      var scEl = null;
+      if (!d.derived) {
+        var sc9 = d.scope === 'map' ? 'map' : 'all';
+        scEl = document.createElement('div');
+        scEl.className = 'share-scope';
+        scEl.style.cssText = 'font-size:11px;padding:3px 8px;border-radius:8px;cursor:pointer;white-space:nowrap;border:1px solid ' + (sc9 === 'map' ? 'var(--border2)' : 'var(--accent)') + ';color:' + (sc9 === 'map' ? 'var(--text-dim)' : 'var(--accent)');
+        scEl.textContent = sc9 === 'map' ? '🔒 予定なし' : '📅 予定も';
+        scEl.title = 'タップで切替：' + (sc9 === 'map' ? '予定・タスクも見せる' : '予定・タスクは見せない');
+        (function(id, cur){ scEl.onclick = function(){ toggleShareScope(id, cur); }; })(d.id, sc9);
+      }
       var delEl = document.createElement('div');
       delEl.style.cssText = 'color:var(--red);font-size:16px;cursor:pointer;padding:0 6px';
       delEl.textContent = '✕';
       (function(id){ delEl.onclick = function(){ removeShareUser(id); }; })(d.id);
       row.appendChild(emailEl);
       row.appendChild(permEl);
+      if (scEl) row.appendChild(scEl);
       if (!d.derived) row.appendChild(delEl); // v355: 連鎖共有(自動配布)は経由元の解除で消えるため手動削除なし
       listEl.appendChild(row);
     });
@@ -25756,6 +25837,7 @@ function addShareUser() {
       email: email,
       recipientUid: recipientUid,
       perm: sharePerm,
+      scope: shareScope, // v533
       ownerUid: currentUser.uid,
       ownerName: currentUser.org || currentUser.name || '',
       derived: false, via: '', // v370: 過去に自動配布(derived)だった場合の残骸を明示的に打ち消す（merge保存で残ると連鎖の後片付けに誤削除されるため）
@@ -25771,6 +25853,7 @@ function addShareUser() {
       ownerUnion: currentUser.union || '',
       ownerEmail: currentUser.email || '',
       perm: sharePerm,
+      scope: shareScope, // v533
       addedAt: new Date().toISOString()
     });
 
@@ -25861,7 +25944,11 @@ function fsLoadSharedMap(ownerUid) {
     }
     // 重要でないデータ（予定・アバター）は編集可能になった後に裏で読む
     setTimeout(function() {
-      if (viewingOwnerUid === ownerUid) { loadEvents(ownerUid); loadAvatars(ownerUid); }
+      if (viewingOwnerUid === ownerUid) {
+        if (_viewNoSched()) { state.events = []; try { updateEventsBadge(); if (currentView === 'events') renderEvents(); } catch (eNs) {} } // v533: この共有では予定・タスクは見られない
+        else loadEvents(ownerUid);
+        loadAvatars(ownerUid);
+      }
     }, 900);
   }
   p1.then(function(data) { state.members = (data && data.members) ? data.members : []; done(); })
@@ -25951,6 +26038,7 @@ function checkSharedMaps() {
       fsGet('maps/' + c.uid + '/shared/' + currentUser.uid).then(function(real) {
         if (real) {
           c.perm = real.perm || c.perm; // 権限もオーナー側の正データに合わせる
+          c.scope = real.scope || 'all'; c.derived = !!real.derived; // v533: 予定・タスクを見せるか
           if (real.derived) c.viaName = real.viaName || ''; // 連鎖共有（自動配布）経由
           sharedOwners.push(c);
         } else {
