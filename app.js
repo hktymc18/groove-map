@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v536';
+var APP_JS_VERSION = 'v537';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1934,6 +1934,53 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     svg.appendChild(g);
   });
 
+  // v537: PDF：メモのある人に番号バッジ＋入る所は丸の横にメモ（外側→内側の順に、ほかの丸・メモと重ならない所だけ）
+  if (isPrint && opts.memoNums) {
+    var mBoxes = [], cPts = [];
+    for (var cid in posOf) cPts.push(posOf[cid]);
+    var hitCirc = function(x0, y0, w0, h0) {
+      for (var ci9 = 0; ci9 < cPts.length; ci9++) {
+        var c9 = cPts[ci9], qx9 = Math.max(x0, Math.min(c9.x, x0 + w0)), qy9 = Math.max(y0, Math.min(c9.y, y0 + h0));
+        if (Math.hypot(c9.x - qx9, c9.y - qy9) < nr + 2) return true;
+      }
+      return false;
+    };
+    var hitBox = function(x0, y0, w0, h0) { return mBoxes.some(function(b) { return x0 < b[0] + b[2] + 3 && b[0] < x0 + w0 + 3 && y0 < b[1] + b[3] + 3 && b[1] < y0 + h0 + 3; }); };
+    members.forEach(function(m) {
+      var no = opts.memoNums[m.id], pos = posOf[m.id];
+      if (!no || !pos) return;
+      var bx = pos.x + nr * 0.74, by = pos.y - nr * 0.74;
+      var bg = document.createElementNS(NS, 'g'); bg.setAttribute('class', 'orbit-memo-no');
+      bg.innerHTML = '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="9.5" fill="#1a1f2b"/><text x="' + bx.toFixed(1) + '" y="' + (by + 3.6).toFixed(1) + '" text-anchor="middle" font-size="' + (no >= 100 ? 8 : 10) + '" font-weight="800" fill="#ffffff">' + no + '</text>';
+      svg.appendChild(bg);
+      var lines = _opsWrap(m.memo, 11, 2);
+      if (!lines.length) return;
+      var fs9 = 10, lh9 = 12.5, bw9 = 0; lines.forEach(function(l) { bw9 = Math.max(bw9, _opsEm(l) * fs9); }); var bh9 = lines.length * lh9;
+      var px9 = Math.max(CX - Lh, Math.min(pos.x, CX + Lh)), nx9 = pos.x - px9, ny9 = pos.y - CY, nl9 = Math.hypot(nx9, ny9) || 1;
+      nx9 /= nl9; ny9 /= nl9;
+      var cands = [[nx9, ny9], [-nx9, -ny9]];
+      for (var k9 = 0; k9 < cands.length; k9++) {
+        var ux = cands[k9][0], uy = cands[k9][1];
+        var ext = Math.abs(ux) * bw9 / 2 + Math.abs(uy) * bh9 / 2;
+        var cx9 = pos.x + ux * (nr + 5 + ext), cy9 = pos.y + uy * (nr + 5 + ext);
+        var x0 = cx9 - bw9 / 2, y0 = cy9 - bh9 / 2;
+        if (x0 < 2 || y0 < titleH + 2 || x0 + bw9 > SW - 2 || y0 + bh9 > SH - 2) continue;
+        if (hitCirc(x0, y0, bw9, bh9) || hitBox(x0, y0, bw9, bh9)) continue;
+        mBoxes.push([x0, y0, bw9, bh9]);
+        var tx = document.createElementNS(NS, 'text');
+        tx.setAttribute('class', 'orbit-memo'); tx.setAttribute('font-size', fs9); tx.setAttribute('fill', '#3a4560'); tx.setAttribute('font-weight', '600');
+        tx.setAttribute('stroke', '#ffffff'); tx.setAttribute('stroke-width', '3'); tx.setAttribute('paint-order', 'stroke'); tx.setAttribute('stroke-linejoin', 'round');
+        lines.forEach(function(l, li) {
+          var ts = document.createElementNS(NS, 'tspan');
+          ts.setAttribute('x', x0.toFixed(1)); ts.setAttribute('y', (y0 + fs9 + li * lh9 - 1).toFixed(1));
+          ts.textContent = (li === 0 ? no + ' ' : '') + l;
+          tx.appendChild(ts);
+        });
+        svg.appendChild(tx);
+        break;
+      }
+    });
+  }
   if (isPrint) { wrap._orbitSize = { SW: SW, SH: SH, n: members.length, nr: nr }; wrap.appendChild(svg); return; }
 
   // ── ツールバー＋スクロール容器 ──
@@ -2117,7 +2164,9 @@ function orbitPdfOpen() {
     if (ia < 0) ia = 99; if (ib < 0) ib = 99;
     return ia - ib || regCnt[b] - regCnt[a];
   });
-  _opdf = { mt: mt, root: root, l1: l1, nick: nick, cnt: {}, regions: regions, regCnt: regCnt, whole: true, lin: {}, excl: {}, reg: {}, est: {}, busy: false };
+  _opdf = { mt: mt, root: root, l1: l1, nick: nick, cnt: {}, regions: regions, regCnt: regCnt, whole: true, lin: {}, excl: {}, reg: {}, est: {}, busy: false,
+    x: { data: true, ol: true, memo: false } }; // v537: いっしょに入れるページ（メモは人に見せたくない内容もあるため既定オフ）
+  try { if (typeof _dtHistLoad === 'function') _dtHistLoad(); } catch (eH) {} // データの過去の月を先に読んでおく
   l1.forEach(function(k) { _opdf.cnt[k.id] = cntSub(k.id); });
   closeOrbitPdf();
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'opdfOv';
@@ -2140,6 +2189,7 @@ function closeOrbitPdf() {
 function opdfToggle(kind, key) {
   if (!_opdf || _opdf.busy) return;
   if (kind === 'whole') _opdf.whole = !_opdf.whole;
+  else if (kind === 'x') _opdf.x[key] = !_opdf.x[key];
   else { var o = _opdf[kind]; if (o[key]) delete o[key]; else o[key] = true; }
   _opdfRender();
 }
@@ -2172,10 +2222,17 @@ function _opdfPages() {
     if (!o.reg[r]) return;
     pages.push({ key: 'reg_' + r, label: r + 'MAP', title: r + 'MAP', sub: sub0 + '（薄い丸＝つながりを示す他地域の上位者）', opts: { region: r }, suffix: r });
   });
+  // v537: MAPのあとに付けるページ（データ・3〜7人OL・メモの一覧）
+  var ym2 = String(state.currentMonth || currentMonthStr()).replace('.', '年').replace(/^(\d+年)0?(\d+)$/, '$1$2月');
+  var addSheets = function(key, list) { list.forEach(function(sv, i) { pages.push({ key: key + i, sheet: sv.svg, title: sv.title, label: sv.title, sub: ym2 }); }); };
+  if (o.x.data) addSheets('x_data', _opdfDataSheets(rootNm, ym2));
+  if (o.x.ol) addSheets('x_ol', _opdfOlSheets(rootNm, ym2));
+  if (o.x.memo) addSheets('x_memo', _opdfMemoSheets(rootNm, ym2));
   return pages;
 }
 // ページの大きさ → A3横に収めた時の丸の直径(mm)を見積もる（描画結果はキャッシュ）
 function _opdfEstimate(pg) {
+  if (pg.sheet) return { n: null, mm: _OPDF_MAX_MM }; // データ・OL・メモの一覧（表のページ）
   if (_opdf.est[pg.key]) return _opdf.est[pg.key];
   var host = document.createElement('div');
   var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
@@ -2214,6 +2271,11 @@ function _opdfRender() {
     h += sec('地域MAP', 'その地域の人だけ（つながりを示す上位者は薄く表示）', 'reg',
       o.regions.map(function(r) { return chip('reg', r, !!o.reg[r], r, o.regCnt[r]); }).join(''));
   }
+  var xs = '';
+  xs += chip('x', 'data', !!o.x.data, '📊 データ（今月の数字・12ヶ月の推移・パワーライン・研修・地域）');
+  xs += chip('x', 'ol', !!o.x.ol, '👥 3〜7人OL（実施したか・内容）');
+  xs += chip('x', 'memo', !!o.x.memo, '📝 メンバーのメモ（丸の横＋番号の一覧）');
+  h += sec('いっしょに入れるページ', 'MAPのあとに付けます（メモを入れる時は、MAPの丸に番号が付きます）', '', xs);
   body.innerHTML = h;
   var pages = _opdfPages();
   var f = '';
@@ -2227,7 +2289,7 @@ function _opdfRender() {
       var bad = e.mm < _OPDF_MIN_MM;
       if (bad) small++;
       f += '<div class="opdf-row' + (bad ? ' bad' : '') + '"><span class="opdf-pn">' + (i + 1) + '</span><span class="opdf-pt">' + evEsc(pg.title) + '</span>'
-        + '<span class="opdf-pm">' + e.n + '人・丸 約' + Math.round(e.mm) + 'mm' + (bad ? ' ' + icn('alert', 'color:#F59E0B') : '') + '</span></div>';
+        + '<span class="opdf-pm">' + (pg.sheet ? '表' : e.n + '人・丸 約' + Math.round(e.mm) + 'mm') + (bad ? ' ' + icn('alert', 'color:#F59E0B') : '') + '</span></div>';
     });
     f += '</div>';
     if (small) {
@@ -2299,6 +2361,7 @@ function orbitPdfMake() {
   _opdfLoadLib(function(ok) {
     if (!ok) { fail('PDFの部品を読み込めませんでした。通信状況を確認してもう一度お試しください'); return; }
     var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3', compress: true });
+    var memoNums = _opdfMemoNums().num;
     var i = 0;
     var next = function() {
       if (i >= pages.length) {
@@ -2311,9 +2374,16 @@ function orbitPdfMake() {
       var pg = pages[i];
       _opdfProgress('作成中… ' + (i + 1) + '/' + pages.length + 'ページ');
       var host = document.createElement('div');
-      var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
-      renderPCOrbit(_opdf.mt, host, true, op);
-      var svg = host.querySelector('svg'), sz = host._orbitSize;
+      var svg, sz;
+      if (pg.sheet) { // v537: 表のページ
+        host.innerHTML = pg.sheet;
+        svg = host.querySelector('svg'); sz = { SW: _OPS_W, SH: _OPS_H, nr: 1 };
+      } else {
+        var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
+        if (_opdf.x.memo) op.memoNums = memoNums; // メモのある人に番号（＋入る所は丸の横にメモ）
+        renderPCOrbit(_opdf.mt, host, true, op);
+        svg = host.querySelector('svg'); sz = host._orbitSize;
+      }
       if (!svg || !sz) { i++; setTimeout(next, 0); return; }
       _opdfSvgToJpeg(svg, sz.SW, sz.SH, sz.nr, function(url) {
         if (!url) { fail('MAPの画像化に失敗しました（' + pg.title + '）'); return; }
@@ -2363,6 +2433,246 @@ function opdfDownload() {
   document.body.appendChild(a);
   a.click();
   setTimeout(function() { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 60000);
+}
+// ════ v537: PDFに付けるページ（データ・3〜7人OL・メモの一覧）＝表をSVGで描いて画像化 ════
+var _OPS_W = 1587, _OPS_H = 1123;
+function _opsEsc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function _opsEm(str) { var w = 0; str = String(str || ''); for (var i = 0; i < str.length; i++) w += str.charCodeAt(i) > 255 ? 1 : 0.56; return w; }
+// 幅（全角何文字分）で折り返し。入りきらない時は最後の行を「…」で切る
+function _opsWrap(str, maxEm, maxLines) {
+  var out = [], paras = String(str || '').replace(/\r/g, '').split('\n');
+  for (var pi = 0; pi < paras.length; pi++) {
+    var cur = '', w = 0, p = paras[pi].replace(/\s+/g, ' ').trim();
+    if (!p) continue;
+    for (var i = 0; i < p.length; i++) {
+      var ch = p[i], cw = p.charCodeAt(i) > 255 ? 1 : 0.56;
+      if (w + cw > maxEm && cur) { out.push(cur); cur = ''; w = 0; }
+      cur += ch; w += cw;
+    }
+    if (cur) out.push(cur);
+  }
+  if (maxLines && out.length > maxLines) { out = out.slice(0, maxLines); var last = out[maxLines - 1]; out[maxLines - 1] = (_opsEm(last) > maxEm - 1 ? last.slice(0, -1) : last) + '…'; }
+  return out;
+}
+function OpsSheet(title, sub) { this.b = []; this.title = title; this.sub = sub; }
+OpsSheet.prototype.t = function(x, y, s, o) {
+  o = o || {};
+  this.b.push('<text x="' + (+x).toFixed(1) + '" y="' + (+y).toFixed(1) + '" font-size="' + (o.fs || 14) + '" font-weight="' + (o.fw || 500) + '" fill="' + (o.c || '#1a1f2b') + '"' + (o.a ? ' text-anchor="' + o.a + '"' : '') + '>' + _opsEsc(s) + '</text>');
+};
+OpsSheet.prototype.r = function(x, y, w, h, o) {
+  o = o || {};
+  this.b.push('<rect x="' + (+x).toFixed(1) + '" y="' + (+y).toFixed(1) + '" width="' + Math.max(0, w).toFixed(1) + '" height="' + Math.max(0, h).toFixed(1) + '" rx="' + (o.rx || 0) + '" fill="' + (o.f || 'none') + '"' + (o.s ? ' stroke="' + o.s + '" stroke-width="' + (o.sw || 1) + '"' : '') + '/>');
+};
+OpsSheet.prototype.sec = function(x, y, s) { this.r(x, y - 15, 5, 20, { f: '#2CE5B8', rx: 2 }); this.t(x + 13, y, s, { fs: 19, fw: 800 }); };
+OpsSheet.prototype.svg = function() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + _OPS_W + '" height="' + _OPS_H + '" viewBox="0 0 ' + _OPS_W + ' ' + _OPS_H + '">'
+    + '<rect x="0" y="0" width="' + _OPS_W + '" height="' + _OPS_H + '" fill="#ffffff"/>'
+    + '<text x="40" y="54" font-size="30" font-weight="800" fill="#1a1f2b">' + _opsEsc(this.title) + '</text>'
+    + '<text x="40" y="82" font-size="16" font-weight="700" fill="#556070">' + _opsEsc(this.sub) + '</text>'
+    + '<rect x="40" y="96" width="' + (_OPS_W - 80) + '" height="2" fill="#e3e7ee"/>'
+    + this.b.join('') + '</svg>';
+};
+// ── データ：①今月の数字＋稼働構成＋12ヶ月の推移 ②パワーライン・研修・地域 ──
+function _opdfDataSheets(rootNm, ymLbl) {
+  var out = [];
+  try { if (_opdf && _opdf.mt === 'current' && !viewingOwnerUid && typeof buildAutoStats === 'function') buildAutoStats(); } catch (eB) {} // データタブを開いていなくても今月の数字を集計
+  var sh = new OpsSheet(rootNm + ' データ ①今月の数字と12ヶ月の推移', ymLbl + '　現状MAPから集計（UNIVERSE・コミッションは入力した数字）');
+  var ms = DT_METRICS, W = _OPS_W - 80, cols = 7, gap = 12, tw = (W - gap * (cols - 1)) / cols, th = 104;
+  ms.forEach(function(meta, i) {
+    var v = _dtVals(meta.k), cur = v[11], prev = v[10];
+    var x = 40 + (i % cols) * (tw + gap), y = 116 + Math.floor(i / cols) * (th + gap);
+    sh.r(x, y, tw, th, { f: '#f5f7fa', s: '#e3e7ee', rx: 12 });
+    sh.t(x + 14, y + 26, meta.lb, { fs: 13, fw: 700, c: '#556070' });
+    sh.t(x + 14, y + 66, _dtFmt(cur, meta, true), { fs: 30, fw: 800 });
+    sh.t(x + tw - 12, y + 66, meta.yen ? '' : meta.unit, { fs: 14, fw: 700, c: '#8a94a6', a: 'end' });
+    if (cur !== null && prev !== null) {
+      var d = Math.round((cur - prev) * 10) / 10, good = meta.inv ? d < 0 : d > 0;
+      sh.t(x + 14, y + 90, d === 0 ? '前月と同じ' : ('前月比 ' + (d > 0 ? '▲' : '▼') + _dtFmt(Math.abs(d), meta, true)), { fs: 12.5, fw: 700, c: d === 0 ? '#8a94a6' : (good ? '#16a34a' : '#e23b55') });
+    } else sh.t(x + 14, y + 90, '前月 —', { fs: 12.5, c: '#8a94a6' });
+  });
+  // 稼働構成
+  var y2 = 116 + 2 * (th + gap) + 34;
+  sh.sec(40, y2, '稼働構成');
+  var cnt = ['S', 'A', 'B', 'C'].map(function(k) { var v = _dtVals(k)[11]; return { k: k, n: v || 0 }; });
+  var tot = cnt.reduce(function(a, c) { return a + c.n; }, 0) || 1, bx = 190, bw = W - 150;
+  cnt.forEach(function(c) {
+    var w9 = bw * c.n / tot;
+    sh.r(bx, y2 - 18, w9, 26, { f: DT_ACT_COLORS[c.k] });
+    if (w9 > 70) sh.t(bx + w9 / 2, y2, c.k + ' ' + c.n + '人（' + Math.round(c.n / tot * 100) + '%）', { fs: 13, fw: 800, a: 'middle', c: '#1a1f2b' });
+    else if (w9 > 20) sh.t(bx + w9 / 2, y2, c.k, { fs: 13, fw: 800, a: 'middle' });
+    bx += w9;
+  });
+  // 12ヶ月の推移（表）
+  var y3 = y2 + 44;
+  sh.sec(40, y3, '12ヶ月の推移');
+  var mons = _dtMonths(), lw = 210, cw = (W - lw) / 12, rh = 40, ty = y3 + 14;
+  sh.r(40 + lw + cw * 11, ty, cw, rh * (ms.length + 1), { f: '#eafbf5' });
+  mons.forEach(function(mo, j) { sh.t(40 + lw + cw * j + cw / 2, ty + 26, (j === 0 || mo.m === 1 ? mo.y + '/' : '') + mo.lbl, { fs: 13.5, fw: 800, a: 'middle', c: j === 11 ? '#0f8a6a' : '#556070' }); });
+  ms.forEach(function(meta, i) {
+    var yy = ty + rh * (i + 1);
+    if (i % 2 === 0) sh.r(40, yy, W, rh, { f: 'rgba(0,0,0,0.028)' });
+    sh.t(52, yy + 26, meta.lb, { fs: 14, fw: 700 });
+    _dtVals(meta.k).forEach(function(v, j) { sh.t(40 + lw + cw * j + cw / 2, yy + 26, v === null ? '—' : _dtFmt(v, meta, true), { fs: 14, fw: j === 11 ? 800 : 500, a: 'middle', c: v === null ? '#b3bac6' : '#1a1f2b' }); });
+  });
+  out.push({ title: 'データ ①今月の数字と推移', svg: sh.svg() });
+
+  // ② パワーライン・研修・地域
+  var s2 = new OpsSheet(rootNm + ' データ ②パワーライン・研修・地域', ymLbl + '　現状MAPから集計');
+  var cm = membersForMap('current').filter(function(m) { return !m.deleted; });
+  var lt = ltsvMap(cm), root = cm.filter(function(m) { return !m.parentId; })[0];
+  var kids = {}; cm.forEach(function(m) { (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  var nm = function(m) { return (m.lastName || '') + (m.firstName || ''); };
+  var lines = root ? (kids[root.id] || []).filter(function(f) { return (lt[f.id] || 0) >= 5000; }).sort(function(a, b) { return lt[b.id] - lt[a.id]; }) : [];
+  var LX = 40, LW = 740, y = 136;
+  s2.sec(LX, y, 'パワーライン（LTSV 5,000P以上の系列 ' + lines.length + '本）');
+  y += 30;
+  if (!lines.length) { s2.t(LX + 14, y + 10, 'LTSV 5,000P以上の系列はまだありません', { fs: 14, c: '#8a94a6' }); }
+  var mx = lines.length ? lt[lines[0].id] : 1, more = 0;
+  lines.forEach(function(f, i) {
+    if (y > _OPS_H - 60) { more++; return; }
+    s2.t(LX + 8, y + 18, (i + 1) + '. ' + nm(f), { fs: 16, fw: 800 });
+    s2.t(LX + 250, y + 18, (f.title || '').trim(), { fs: 13, fw: 700, c: '#556070' });
+    s2.r(LX + 330, y + 5, 300 * lt[f.id] / mx, 16, { f: '#2CE5B8', rx: 4 });
+    s2.t(LX + LW, y + 18, lt[f.id].toLocaleString(), { fs: 16, fw: 800, a: 'end' });
+    y += 28;
+    var inner = [];
+    (function walk(m, d) { (kids[m.id] || []).forEach(function(c) { if ((lt[c.id] || 0) >= 5000) inner.push({ m: c, d: d }); walk(c, d + 1); }); })(f, 1);
+    inner.forEach(function(x) {
+      if (y > _OPS_H - 60) { more++; return; }
+      s2.t(LX + 22 + Math.min(x.d, 6) * 14, y + 15, '└ ' + nm(x.m) + '（' + (x.m.title || '').trim() + '・' + x.d + '段下）', { fs: 13, c: '#3a4560' });
+      s2.t(LX + LW, y + 15, lt[x.m.id].toLocaleString(), { fs: 13, fw: 700, a: 'end', c: '#3a4560' });
+      y += 22;
+    });
+    y += 6;
+  });
+  if (more) s2.t(LX + 8, _OPS_H - 30, '…ほか ' + more + '行（アプリのデータタブで確認できます）', { fs: 12.5, c: '#8a94a6' });
+  // 研修（今月）
+  var RX = 830, RW = _OPS_W - 40 - RX, fmon = state.currentMonth;
+  var trainees = monthTrainees(fmon);
+  var inMon = function(m, st) { var hs = m.traineeHistory || []; for (var i2 = 0; i2 < hs.length; i2++) if (hs[i2].status === st && _ymToMon(hs[i2].date) === fmon) return true; return false; };
+  var ry = 136;
+  s2.sec(RX, ry, '研修フロー（研修生 ' + trainees.length + '人）');
+  ry += 18;
+  var cw2 = RW / DT_STEPS.length;
+  DT_STEPS.forEach(function(st, i) {
+    var n = trainees.filter(function(m) { return inMon(m, st); }).length;
+    s2.r(RX + cw2 * i + 3, ry, cw2 - 6, 64, { f: n ? '#eafbf5' : '#f5f7fa', s: '#e3e7ee', rx: 10 });
+    s2.t(RX + cw2 * i + cw2 / 2, ry + 24, st, { fs: 13, fw: 700, a: 'middle', c: '#556070' });
+    s2.t(RX + cw2 * i + cw2 / 2, ry + 52, n + '人', { fs: 19, fw: 800, a: 'middle' });
+  });
+  ry += 96;
+  var decided = function(m) { return m.traineeResult && traineeDecidedMonth(m) === fmon; };
+  var res = DT_RES.map(function(r) { return { lb: r.lb, col: r.col, n: trainees.filter(function(m) { return r.key === '__prog' ? !decided(m) : (decided(m) && m.traineeResult === r.key); }).length }; });
+  var dec = res[0].n + res[1].n + res[2].n;
+  s2.t(RX, ry, '研修の結果：' + res.map(function(r) { return r.lb + ' ' + r.n + '人'; }).join('・') + (dec ? '　BC決定率 ' + Math.round(res[0].n / dec * 100) + '%' : ''), { fs: 14.5, fw: 700 });
+  // 地域（今月）
+  ry += 50;
+  s2.sec(RX, ry, '地域の比較（今月・OUTを除く）');
+  var QBR = ['LOI', 'Q1', 'Q2', 'Q3', 'Q4'], ym = state.currentMonth || currentMonthStr(), by = {};
+  membersForMap('current').forEach(function(m) {
+    if (m.deleted || (m.title || '').trim() === 'OUT' || /^(MG_|AG\d+_)/.test(m.id)) return;
+    var r = normalizeRegionValue(m.region || '') || '未設定', t = (m.title || '').trim();
+    var o = by[r] || (by[r] = { r: r, n: 0, tr: 0, q: 0, br: 0, s: 0, b1: 0 });
+    o.n++; if (memberCat(m) === '研修生') o.tr++; if (QBR.indexOf(t) >= 0) o.q++; if (isBROrAbove(t)) o.br++; if (m.activity === 'S') o.s++;
+    if (String(m.startMonth || '').replace('-', '.').slice(0, 7) === ym && /^B\d+$/.test(t)) o.b1++;
+  });
+  var regs = Object.keys(by).map(function(k) { return by[k]; }).sort(function(a, b) { return b.n - a.n; });
+  var hd = ['地域'].concat(DT_REG_M.map(function(x) { return x[1]; })), cw3 = RW / hd.length, rh3 = 34;
+  ry += 16;
+  hd.forEach(function(h, j) { s2.t(RX + cw3 * j + (j ? cw3 / 2 : 8), ry + 22, h, { fs: 13, fw: 800, c: '#556070', a: j ? 'middle' : 'start' }); });
+  regs.forEach(function(o, i) {
+    var yy = ry + rh3 * (i + 1);
+    if (yy > _OPS_H - 40) return;
+    if (i % 2 === 0) s2.r(RX, yy, RW, rh3, { f: 'rgba(0,0,0,0.028)' });
+    s2.t(RX + 8, yy + 23, o.r, { fs: 14.5, fw: 800 });
+    DT_REG_M.forEach(function(x, j) { s2.t(RX + cw3 * (j + 1) + cw3 / 2, yy + 23, o[x[0]], { fs: 14.5, fw: 600, a: 'middle' }); });
+  });
+  out.push({ title: 'データ ②パワーライン・研修・地域', svg: s2.svg() });
+  return out;
+}
+// ── 3〜7人OL（今月）：実施したか・参加者・Aさん・内容・反応 ──
+function _opdfOlSheets(rootNm, ymLbl) {
+  var ym = state.currentMonth || currentMonthStr();
+  var evs = _olEvents().filter(function(ev) { return ev.kind === 'group' && _olInMonth(ev, ym); })
+    .sort(function(a, b) { return (a.date + (a.time || '')) < (b.date + (b.time || '')) ? -1 : 1; });
+  var done = evs.filter(function(ev) { return ev.st === 'done'; }).length;
+  var sub = ymLbl + '　実施 ' + done + '回・予定 ' + (evs.length - done) + '回（目安：月' + OL_GROUP_GOAL + '回・' + OL_GROUP_MIN + '〜' + OL_GROUP_MAX + '人）';
+  var cols = [['No', 50], ['日付', 110], ['状態', 80], ['人数', 60], ['参加者', 380], ['Aさん', 120], ['内容', 330], ['反応・メモ', 377]];
+  var pages = [], sh = null, y = 0, n = 0;
+  var start = function() {
+    sh = new OpsSheet(rootNm + ' 3〜7人OL' + (pages.length ? '（続き）' : ''), sub);
+    y = 118;
+    var x = 40;
+    sh.r(40, y, _OPS_W - 80, 36, { f: '#f0f3f7', rx: 6 });
+    cols.forEach(function(c) { sh.t(x + 10, y + 24, c[0], { fs: 14, fw: 800, c: '#556070' }); x += c[1]; });
+    y += 36;
+  };
+  start();
+  if (!evs.length) sh.t(50, y + 40, '今月の3〜7人OLはまだありません', { fs: 16, c: '#8a94a6' });
+  evs.forEach(function(ev) {
+    n++;
+    var names = ev.mids.map(function(id) { var m = _olMem(id); return m ? _olNm(m) : ''; }).filter(Boolean).concat((ev.guests || []).map(function(g) { return g + '（ゲスト）'; }));
+    var cells = [
+      [String(n)], [ev.date ? _olMD(ev.date) + '(' + _olWd(ev.date) + ')' + (ev.time ? ' ' + ev.time : '') : '日付未定'], [ev.st === 'done' ? '✓ 実施' : '予定'], [ev.n + '人'],
+      _opsWrap(names.join('、'), 23, 4), _opsWrap(ev.asan || '—', 6.5, 2), _opsWrap(ev.what || '—', 20, 4), _opsWrap(ev.note || (ev.st === 'done' ? '—' : ''), 23, 4)
+    ];
+    var lnN = Math.max.apply(null, cells.map(function(c) { return c.length || 1; }));
+    var rh = 18 + lnN * 21;
+    if (y + rh > _OPS_H - 30) { pages.push(sh); start(); }
+    if (n % 2 === 0) sh.r(40, y, _OPS_W - 80, rh, { f: 'rgba(0,0,0,0.028)' });
+    var x = 40;
+    cells.forEach(function(c, j) {
+      c.forEach(function(l, li) { sh.t(x + 10, y + 26 + li * 21, l, { fs: 14.5, fw: (j === 2 || j === 1) ? 800 : 500, c: j === 2 ? (ev.st === 'done' ? '#16a34a' : '#b7791f') : '#1a1f2b' }); });
+      x += cols[j][1];
+    });
+    y += rh;
+  });
+  pages.push(sh);
+  return pages.map(function(p, i) { return { title: '3〜7人OL' + (pages.length > 1 ? '（' + (i + 1) + '/' + pages.length + '）' : ''), svg: p.svg() }; });
+}
+// ── メンバーのメモ：番号（MAPの丸の番号と同じ）・名前・タイトル・メモ ──
+function _opdfMemoNums() {
+  var mt = (_opdf && _opdf.mt) || 'current';
+  var ms = _opdfMembers(mt), cmp = _treeSortCmp(ms), kids = {};
+  ms.forEach(function(m) { (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  for (var k in kids) kids[k].sort(cmp);
+  var list = [], num = {};
+  (function walk(pid) { (kids[pid] || []).forEach(function(m) { if (String(m.memo || '').trim()) { list.push(m); num[m.id] = list.length; } walk(m.id); }); })('');
+  return { list: list, num: num };
+}
+function _opdfMemoSheets(rootNm, ymLbl) {
+  var L = _opdfMemoNums().list;
+  // 2列で詰めて並べる（人数が多くてもページ数を抑える）
+  var colW = (_OPS_W - 80 - 24) / 2, cols = [['No', 46], ['名前', 160], ['タイトル', 104], ['メモ', colW - 310]];
+  var pages = [], sh = null, y = 0, col = 0, top = 0;
+  var head = function(x0) {
+    var x = x0;
+    sh.r(x0, top, colW, 34, { f: '#f0f3f7', rx: 6 });
+    cols.forEach(function(c) { sh.t(x + 8, top + 23, c[0], { fs: 13.5, fw: 800, c: '#556070' }); x += c[1]; });
+  };
+  var start = function() {
+    sh = new OpsSheet(rootNm + ' メンバーのメモ' + (pages.length ? '（続き）' : ''), ymLbl + '　番号＝MAPの丸の右上の番号');
+    top = 116; col = 0; head(40); y = top + 34;
+  };
+  start();
+  if (!L.length) sh.t(50, y + 40, 'メモが入っているメンバーはいません', { fs: 16, c: '#8a94a6' });
+  L.forEach(function(m, i) {
+    var memo = _opsWrap(m.memo, 26, 4);
+    var rh = 14 + Math.max(1, memo.length) * 20;
+    if (y + rh > _OPS_H - 24) {
+      if (col === 0) { col = 1; head(40 + colW + 24); y = top + 34; }
+      else { pages.push(sh); start(); }
+    }
+    var x0 = 40 + col * (colW + 24);
+    if (i % 2 === 1) sh.r(x0, y, colW, rh, { f: 'rgba(0,0,0,0.028)' });
+    sh.t(x0 + 8, y + 23, String(i + 1), { fs: 14.5, fw: 800 });
+    sh.t(x0 + 54, y + 23, _opsWrap((m.lastName || '') + ' ' + (m.firstName || ''), 8.5, 1)[0] || '', { fs: 14.5, fw: 800 });
+    sh.t(x0 + 214, y + 23, _opsWrap(_opdfFullTitle(m.title), 6, 1)[0] || '', { fs: 13, fw: 700, c: '#556070' });
+    memo.forEach(function(l, li) { sh.t(x0 + 318, y + 23 + li * 20, l, { fs: 14 }); });
+    y += rh;
+  });
+  pages.push(sh);
+  return pages.map(function(p, i) { return { title: 'メンバーのメモ' + (pages.length > 1 ? '（' + (i + 1) + '/' + pages.length + '）' : ''), svg: p.svg() }; });
 }
 // 🖨 A3横1枚に印刷（明色で再描画してから印刷）
 // v493: 印刷は専用ウィンドウ方式（即時に開く・MAPのみ・A3横・タイトル=保存ファイル名）
@@ -3519,7 +3829,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v536';
+  var DATA_VERSION = 'v537';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4529,6 +4839,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v537', d:'2026-09-29', items:['🧭 PLAN（PC）を作り直し：一番上に目標（タイトル・期日・スローガン・目標月収）を大きく、その下にマイルストーンの横線（月ごとの点・📍現在地・🚩最終LOI・🏔期日・旗・月ごとのフロント目標／点をクリックで追加）、下に「今月やること」の数字タイルと、今月｜来月の目標入力。目標設定のツール（価値観・年別目標・ギャップ・夢100など）は ⚙ から必要な時に表示','👥 今月の目標の「稼働」を％ではなく平均稼働人数に（実績＝受付連携の稼働率から）','📄 運動会MAPのPDFに「データ（今月の数字・12ヶ月の推移・パワーライン・研修・地域）」「3〜7人OL（実施したか・参加者・内容・反応）」「メンバーのメモ（丸に番号＋入る所は丸の横に・一覧ページ）」を追加できるように'] },
   { v:'v536', d:'2026-09-28', items:['🔗 受付連携の稼働率は、受付システムが集計した数字をそのまま読むように（MAP側では計算しない＝受付システムの集計と必ず一致）。連携完了の表示に「何時点の集計か」を表示','受付システム：集計画面を開いた時・受付を終了/再開した時・日付が変わって最初に開いた時に、MAP用の集計を自動で保存'] },
   { v:'v535', d:'2026-09-28', items:['🛠 受付連携の稼働率が受付システムの集計とずれる問題を修正：当日のハウディを「受付終了」前から分母に入れていたため、全出席の人でも当日は92%などになっていました。受付システムと同じく、当日分は受付を終了してから数えます'] },
   { v:'v534', d:'2026-09-28', items:['🛠 受付システムを開くとMAPのログイン画面が出てしまう問題が再発していたのを修正（v533の差し替えで受付システム側の修正が上書きされていました）'] },
@@ -13729,12 +14040,24 @@ function _p2Act(ym) {
   });
   return {
     front: front, teamB1: teamB1,
+    actN: _p2ActN(), // v537: 平均稼働人数（1回あたりの出席人数の見込み＝各メンバーの稼働率の合計÷100）
     upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf : (root.ptCurrent || 0)) : 0,
     teamPt: root ? (root.ptCurrent || 0) : 0,
     rate: actN ? Math.round(actS / actN) : null,
     ct: _glMonthActual(p, ym, 'ct'), ft: _glMonthActual(p, ym, 'ft'),
     dlr: _glMonthActual(p, ym, 'dlr'), pg: _glMonthActual(p, ym, 'pg'), ctget: _glMonthActual(p, ym, 'ctget')
   };
+}
+// v537: 平均稼働人数＝現状MAPの人の稼働率の合計÷100（受付連携の実測。S で稼働率未入力は120%扱い＝データタブと同じ）
+function _p2ActN() {
+  var sum = 0, n = 0;
+  membersForMap('current').forEach(function(m) {
+    if (m.deleted || (m.title || '').trim() === 'OUT' || /^(MG_|AG\d+_)/.test(m.id || '')) return;
+    var r = parseInt(m.actRate, 10);
+    if (isNaN(r) && m.activity === 'S') r = 120;
+    if (!isNaN(r) && ['S', 'A', 'B', 'C'].indexOf(m.activity) >= 0) { sum += r; n++; }
+  });
+  return n ? Math.round(sum / 10) / 10 : null;
 }
 // 今のペースの着地予測
 function _p2Pace(v) {
@@ -13758,16 +14081,158 @@ function renderPlan() {
   var inb = _p2InboxHtml();
   var rm = (typeof _p2RmMiniHtml === 'function') ? _p2RmMiniHtml() : '';
   if (typeof isPCMode === 'function' && isPCMode()) {
-    // v481: PCの右カラムはロードマップミニ。書き出しは右下の✍️メモパッドへ
-    wrap.innerHTML = '<div class="p2-col">' + north + unn + '</div>'
-      + '<div class="p2-col">' + alertH + rev + mon + fun + '</div>'
-      + '<div class="p2-col">' + rm + '</div>';
+    // v537: PCは「大きな目標（ヒーロー）→ マイルストーンの横線 → 今月やること｜目標の入力」。
+    //        目標設定のツール類は ⚙ で右から出すパネルへ（常時は出さない）。書き出しは右下の✍️メモパッド
+    wrap.classList.add('p2pc-on');
+    var tabYm = _p2Ym(_p2PcTab);
+    wrap.innerHTML = _p2PcHeroHtml()
+      + _p2PcRailHtml()
+      + '<div class="p2pc-low"><div class="p2pc-l">' + _p2PcTilesHtml(ym) + fun + '</div>'
+      + '<div class="p2pc-r">' + alertH + rev
+      + '<div class="p2pc-tabs"><span class="' + (_p2PcTab === 0 ? 'on' : '') + '" onclick="p2PcTab(0)">今月（' + parseInt(ym.slice(5), 10) + '月）</span><span class="' + (_p2PcTab === 1 ? 'on' : '') + '" onclick="p2PcTab(1)">来月（' + parseInt(_p2Ym(1).slice(5), 10) + '月）</span></div>'
+      + _p2MonthHtml(tabYm, _p2PcTab, true) + unn + '</div></div>';
   } else {
+    wrap.classList.remove('p2pc-on');
     wrap.innerHTML = alertH + rev + north + mon + rm + fun + unn + inb;
   }
   if (typeof _p2FabBadge === 'function') _p2FabBadge();
   _p2BannerSync();
 }
+// ════ v537: PLAN（PC）──────────────────────────────────────────
+var _p2PcTab = 0; // 右の目標入力：0=今月／1=来月
+function p2PcTab(i) { _p2PcTab = i ? 1 : 0; renderPlan(); }
+function _p2YmAdd(ym, k) { var y = parseInt(ym.slice(0, 4), 10), m = parseInt(ym.slice(5, 7), 10) - 1 + k; y += Math.floor(m / 12); m = ((m % 12) + 12) % 12; return y + '-' + String(m + 1).padStart(2, '0'); }
+function _p2YmDiff(a, b) { return (parseInt(b.slice(0, 4), 10) - parseInt(a.slice(0, 4), 10)) * 12 + parseInt(b.slice(5, 7), 10) - parseInt(a.slice(5, 7), 10); }
+// ① ヒーロー：目標タイトル・期日・スローガン（左）／目標月収・BB換算・夢100（右）
+function _p2PcHeroHtml() {
+  var p = state.goals.plan, p2 = _p2(), g = _p2G();
+  var act = '<div class="p2h-act"><span onclick="p2Wiz()" title="目標を編集">' + icn('pencil') + '</span><span onclick="p2DrawerOpen()" title="目標設定のツール（価値観・年別目標・ギャップ・夢100など）">' + icn('gear') + '</span></div>';
+  if (!(p.title && p.deadline)) {
+    return '<div class="p2h p2h-empty">' + act + '<div class="p2h-l"><div class="p2h-ttl" style="font-size:30px">目標をつくりましょう</div>'
+      + '<div class="p2h-dl">理想の生活を積み上げると、目標月収→タイトル→期日まで自動で決まります（2分・スキップ可）</div>'
+      + '<span class="p2-btn pri" style="margin:14px 0 0;display:inline-block;padding:11px 22px;font-size:15px" onclick="p2Wiz()">' + icn('compass') + ' 目標をつくる</span></div></div>';
+  }
+  var rem = _glMonthsUntil(p.deadline);
+  var motto = (p2.motto || '').trim();
+  var l = '<div class="p2h-l"><div class="p2h-eb">目標</div><div class="p2h-ttl">' + evEsc(p.title) + '</div>'
+    + '<div class="p2h-dl">' + evEsc(String(p.deadline).replace('-', '年')) + '月まで' + (rem > 0 ? '・残り <b>' + rem + '</b>ヶ月' : '') + '</div>'
+    + (motto ? '<div class="p2h-motto" onclick="p2MottoOpen()" title="クリックで編集">『' + evEsc(motto) + '』</div>' : '<div class="p2h-motto add" onclick="p2MottoOpen()">＋ スローガン（ひとこと）</div>')
+    + '</div>';
+  var r = '<div class="p2h-r">';
+  if (p.income) r += '<div class="p2h-eb">目標月収</div><div class="p2h-inc">' + Math.round((+p.income) / 10000).toLocaleString() + '<small>万円</small></div>';
+  var root = _p2OwnRoot(), gsv = root ? (root.ptCurrent || 0) : 0;
+  if (gsv > 0) r += '<div class="p2h-sub">今月のBB換算 <b>¥' + _p2BBCalc(gsv).toLocaleString() + '</b><span>（GSV ' + gsv.toLocaleString() + 'pt・税抜の目安）</span></div>';
+  var dr = g.dreams || [];
+  if (dr.length) {
+    var dDone = 0, dRem = 0;
+    dr.forEach(function(d) { if (d.done) dDone++; else dRem += parseFloat(d.amt) || 0; });
+    r += '<div class="p2h-sub p2h-dream" onclick="p2DreamOpen()">🌈 夢100 <b>' + dDone + '/' + dr.length + '</b> 達成' + (dRem ? '・あと <b>' + (Math.round(dRem * 10) / 10).toLocaleString() + '</b>万円' : '')
+      + '<div class="p2d-bar"><i style="width:' + Math.round(dDone / dr.length * 100) + '%"></i></div></div>';
+  }
+  r += '</div>';
+  return '<div class="p2h">' + act + l + r + '</div>';
+}
+// ② マイルストーンの横線（先月〜期日。月ごとの点・旗・フロント目標）
+function _p2PcRailHtml() {
+  var p = state.goals.plan, rm = _p2Rm(), cur = _p2Ym(0);
+  var start = _p2Ym(-1);
+  var dl = (p.deadline && /^\d{4}-\d{2}$/.test(p.deadline)) ? p.deadline : '';
+  var end = dl && _p2YmDiff(start, dl) >= 5 ? dl : _p2YmAdd(start, 11);
+  var n = Math.min(_p2YmDiff(start, end) + 1, 37);
+  var yms = []; for (var i = 0; i < n; i++) yms.push(_p2YmAdd(start, i));
+  // 最終LOIカウント月＝期日−育成月数
+  var loi = dl ? _p2YmAdd(dl, -(parseInt(p.pipeline, 10) || 3)) : '';
+  var flags = {}; // ym -> [{html}]
+  var addF = function(ym, html) { (flags[ym] = flags[ym] || []).push(html); };
+  (rm.ms || []).forEach(function(m) {
+    if (!m || !m.ym) return;
+    addF(m.ym, '<span class="p2r-flag" style="border-color:' + (m.color || P2RM_COLORS[0]) + '" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><i style="background:' + (m.color || P2RM_COLORS[0]) + '"></i>' + evEsc(m.t) + (m.ym2 && m.ym2 !== m.ym ? '<small>〜' + parseInt(m.ym2.slice(5), 10) + '月</small>' : '') + '</span>');
+  });
+  // 旧GOAL画面の旗（GOT100など・今年の月）
+  var cy = new Date().getFullYear();
+  (Array.isArray(p.events) ? p.events : []).forEach(function(e) {
+    if (!e || !e.month) return;
+    addF(cy + '-' + String(e.month).padStart(2, '0'), '<span class="p2r-flag" onclick="event.stopPropagation();openSeasonPanel(\'' + e.id + '\')">' + (e.emoji || '📌') + ' ' + evEsc(e.name) + '</span>');
+  });
+  // ユニオンのマイルストーン
+  var mi = window._unPlanMeta && window._unPlanMeta.milestone;
+  if (mi && mi.t && mi.due) addF(String(mi.due).slice(0, 7), '<span class="p2r-flag un">' + icn('landmark') + ' ' + evEsc(mi.t) + '</span>');
+  if (dl) addF(dl, '<span class="p2r-flag peak">🏔 ' + evEsc(p.title || '頂上') + '</span>');
+  var ci = yms.indexOf(cur);
+  var maxF = 0; yms.forEach(function(ym) { maxF = Math.max(maxF, Math.min(3, (flags[ym] || []).length)); });
+  var fh = Math.max(1, maxF) * 30 + 4; // 旗の段数に合わせた高さ（空き地を作らない）
+  var cols = yms.map(function(ym, k) {
+    var isCur = ym === cur, isLoi = ym === loi, isPeak = ym === dl, done = k <= ci;
+    var f = _p2RmFront(rm, ym);
+    var mo = parseInt(ym.slice(5), 10);
+    return '<div class="p2r-col' + (isCur ? ' cur' : '') + (isLoi ? ' loi' : '') + (isPeak ? ' peak' : '') + (done ? ' done' : '') + '" onclick="p2RmMsForm(\'' + ym + '\')" title="' + _p2YmLabel(ym) + '：クリックでマイルストーンを追加">'
+      + '<div class="p2r-flags">' + (flags[ym] || []).slice(0, 3).join('') + '</div>'
+      + '<div class="p2r-dot"></div>'
+      + '<div class="p2r-mo">' + ((mo === 1 || k === 0) ? '<small>' + ym.slice(0, 4) + '</small>' : '') + mo + '月</div>'
+      + '<div class="p2r-mk">' + (isCur ? '📍現在地' : (isLoi ? '🚩最終LOI' : (isPeak ? '🏔期日' : ''))) + '</div>'
+      + '<div class="p2r-f">' + (f === '' ? '' : 'F ' + f) + '</div></div>';
+  }).join('');
+  var fill = ci >= 0 ? ((ci + 0.5) / n * 100) : 0;
+  return '<div class="p2r"><div class="p2r-hd">' + icn('map') + ' マイルストーン<span class="sp"></span>'
+    + '<span class="p2r-legend">点をクリックで追加・F＝その月のフロント目標</span>'
+    + '<span class="p2-btn" style="margin:0;padding:5px 12px" onclick="p2RmOpen()">表で編集</span></div>'
+    + '<div class="p2r-scroll"><div class="p2r-tl" style="--fh:' + fh + 'px;min-width:' + (n > 14 ? n * 78 : 0) + 'px;grid-template-columns:repeat(' + n + ',1fr)">'
+    + '<div class="p2r-track"></div><div class="p2r-fill" style="width:' + fill.toFixed(2) + '%"></div>' + cols + '</div></div></div>';
+}
+// ③左 今月やること（目標と実績のタイル）
+function _p2PcTilesHtml(ym) {
+  var m = _p2M(ym), act = _p2Act(ym);
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  var tg = function(k) { if (it && it[k] !== undefined && k !== 'actN') return +it[k] || 0; return (m[k] === '' || m[k] == null) ? null : +m[k]; };
+  var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), left = dim - d.getDate();
+  var tile = function(k, lb, unit, pace) {
+    var a = act[k], t = tg(k);
+    var av = (a === null || a === undefined) ? null : a;
+    var pct = (t && av !== null) ? Math.min(100, Math.round(av / t * 100)) : 0;
+    var land = (pace && av > 0) ? _p2Pace(av) : null;
+    var ok = t ? (av !== null && (land !== null ? land : av) >= t) : false;
+    return '<div class="p2t' + (t && ok ? ' ok' : '') + '"><div class="p2t-lb">' + lb + '</div>'
+      + '<div class="p2t-v">' + (av === null ? '—' : av.toLocaleString()) + '<small>' + unit + '</small></div>'
+      + '<div class="p2t-tg">' + (t !== null ? '目標 <b>' + t.toLocaleString() + '</b>' + unit + '<span>' + pct + '%</span>' : '目標なし') + '</div>'
+      + '<div class="p2t-bar"><i style="width:' + pct + '%"></i></div>'
+      + '<div class="p2t-sub">' + (land !== null ? '着地見込み ' + land.toLocaleString() + unit : '&nbsp;') + '</div></div>';
+  };
+  return '<div class="p2-card p2t-wrap"><div class="p2-t">' + icn('target') + ' ' + parseInt(ym.slice(5), 10) + '月にやること<span class="sp"></span><span class="p2-meta">月末まであと ' + left + '日</span></div>'
+    + '<div class="p2t-grid">'
+    + tile('front', 'フロント', '人', true) + tile('upt', 'ユーザーPT', '', true) + tile('teamB1', '新規B1', '人', true)
+    + tile('teamPt', 'チームPT', '', true) + tile('actN', '平均稼働人数', '人', false)
+    + '</div></div>';
+}
+// ⚙ 目標設定のツール（右から出すパネル。常時は表示しない）
+function p2DrawerOpen() {
+  _p2SheetClose('p2DwOv');
+  var p = state.goals.plan, p2 = _p2(), n = p2.north, g = _p2G(), dr = g.dreams || [], ck = _p2CkCount();
+  var chips = function(arr, pre) { return (arr || []).slice(0, 8).map(function(x) { return '<span class="p2-chip">' + pre + evEsc(x) + '</span>'; }).join(''); };
+  var tool = function(fn, ic, lb, sub) { return '<div class="p2dw-it" onclick="' + fn + '"><span class="ic">' + ic + '</span><span class="lb">' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="ar">›</span></div>'; };
+  var why = (g.ans && (g.ans.reason_why || '')).split('\n')[0];
+  var cAll = chips(n.wants, '👍') + chips(n.notWants, '🙅') + chips(n.be, '✨') + chips(n.notBe, '⛔');
+  if (n.life) cAll += '<span class="p2-chip">🏠' + evEsc(String(n.life).slice(0, 40)) + '</span>';
+  var ov = document.createElement('div'); ov.className = 'p2dw-ov'; ov.id = 'p2DwOv';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2DwOv'); };
+  ov.innerHTML = '<div class="p2dw"><div class="p2dw-hd">' + icn('gear') + ' 目標設定<span class="sp"></span><span class="ms-x" onclick="_p2SheetClose(\'p2DwOv\')">✕</span></div>'
+    + '<div class="p2dw-sec">準備の進み具合</div>' + _p2StepperHtml()
+    + '<div class="p2dw-sec">目標</div>'
+    + tool('p2Wiz()', icn('pencil'), '目標を編集', (p.title ? evEsc(p.title) + '・' + evEsc(String(p.deadline || '').replace('-', '年')) + '月' : 'まだありません'))
+    + tool('p2GwOpen()', '🌱', '価値観・理想の人生')
+    + tool('p2YearsOpen()', '📆', '年別目標')
+    + tool('p2GapOpen()', icn('calc'), 'ギャップ（必要数）')
+    + tool('p2SimOpen()', '🎮', 'シミュレーション')
+    + tool('p2DreamOpen()', '🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length + ' 達成' : '')
+    + tool('p2CheckOpen()', '✅', 'チェック', ck.done + '/' + ck.total)
+    + tool('p2BbOpen()', '💴', 'BB早見表')
+    + tool('p2RmOpen()', '🗺', '年間ロードマップ（表）')
+    + (function() { var gs = (typeof _p2GapSummary === 'function') ? _p2GapSummary() : ''; return gs ? '<div class="p2dw-sec">ギャップ</div>' + gs : ''; })()
+    + (why || cAll ? '<div class="p2dw-sec">なぜやるか・なりたい自分</div>' + (why ? '<div class="p2-meta" style="font-style:italic;margin-bottom:6px">🔥 ' + evEsc(why) + '</div>' : '') + cAll : '')
+    + '</div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+
 // ── 北極星 ──
 function _p2NorthHtml() {
   // v474: GOALハブ（目標＋5ツールの入口）
@@ -13825,14 +14290,14 @@ function _p2NorthHtml() {
   return h;
 }
 // ── 月次宣言 ──
-function _p2MonthHtml(ym, off) {
+function _p2MonthHtml(ym, off, forceOpen) {
   var m = _p2M(ym), act = _p2Act(ym), p = state.goals.plan;
   var sug = _glMonthlyFront(p) || '';
   var isCur = off === 0;
   var _it9 = (typeof idealTargets === 'function') ? idealTargets(ym) : null; // v525: 理想MAPがあれば目標は理想MAPから
   if (_it9 && typeof syncIdealToPlan === 'function') syncIdealToPlan();
-  var row = function(k, lb, actV, sugV) {
-    var pace = (isCur && actV > 0) ? _p2Pace(actV) : null;
+  var row = function(k, lb, actV, sugV, noPace) {
+    var pace = (isCur && actV > 0 && !noPace) ? _p2Pace(actV) : null;
     if (_it9 && _it9[k] !== undefined) {
       return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
         + '<span class="p2-ideal" onclick="switchView(\'ideal\')" title="理想MAPで変更">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
@@ -13855,7 +14320,7 @@ function _p2MonthHtml(ym, off) {
     + '<div class="p2-meta" style="margin:8px 0 2px">👥 チーム</div>'
     + row('teamB1', 'B1（今月スタート）', act.teamB1, '')
     + row('teamPt', 'チームPT', act.teamPt, '')
-    + (act.rate !== null ? '<div class="p2-row"><span class="p2-lb">平均稼働率（受付連携）</span><span class="p2-num" style="font-weight:700">' + act.rate + '%</span></div>' : '')
+    + row('actN', '平均稼働人数（人）', act.actN, '', true) // v537: 稼働は％でなく平均稼働人数を目標に
     + '<div class="p2-meta" style="margin:8px 0 2px">📚 自分磨き（自由に）</div>'
     + (m.skill || []).map(function(s, i) {
         return '<div class="p2-row" style="padding:5px 0"><span class="td-chk' + (s.done ? ' on' : '') + '" style="width:20px;height:20px;font-size:11px;flex:none" onclick="p2SkillTgl(\'' + ym + '\',' + i + ')">' + (s.done ? '✓' : '') + '</span>'
@@ -13866,14 +14331,15 @@ function _p2MonthHtml(ym, off) {
     + (m.declared
         ? '<div class="p2-meta" style="margin-top:10px">数字はいつでも変更できます（変更は自動保存）</div>'
         : '<span class="p2-btn pri" style="width:100%;text-align:center;box-sizing:border-box;display:block;margin-top:12px" onclick="p2Declare(\'' + ym + '\')">✅ この内容で目標を設定する</span>');
-  if (isCur) h += inner;
+  if (isCur || forceOpen) h += inner;
   else h += '<details' + (m.declared ? '' : '') + '><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">来月の目標を開く' + (m.declared ? '（設定済み）' : '') + '</summary>' + inner + '</details>';
   h += '</div>';
   return h;
 }
 function p2SetM(ym, k, v) {
   var m = _p2M(ym);
-  m[k] = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
+  if (k === 'actN') m[k] = (v === '' ? '' : Math.max(0, Math.round((parseFloat(String(v).replace(/[^0-9.]/g, '')) || 0) * 10) / 10)); // 平均稼働人数は小数1桁まで
+  else m[k] = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
   saveGoals();
   if (currentView === 'plan') renderPlan();
 }
