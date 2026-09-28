@@ -90,12 +90,20 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .recbar select{min-width:200px;}
 .manualrow{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .manualrow input{width:150px;}
-.sugbox{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--card);
+.sugbox{position:absolute;bottom:calc(100% + 4px);left:0;z-index:40;background:var(--card);
   border:1px solid var(--line);border-radius:8px;min-width:260px;max-height:240px;overflow:auto;
   box-shadow:0 8px 22px rgba(0,0,0,.18);}
 .sugitem{padding:8px 12px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
 .sugitem:last-child{border-bottom:none;}
 .sugitem:hover{background:var(--paper);}
+/* 🎓 研修生登録ページ（スマホ向け・大きめの入力とボタン） */
+#vTrainer input,#vTrainer select{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
+.trtabs{display:flex;gap:8px;margin:10px 0 14px;}
+.trtabs button{flex:1;padding:11px;font-size:14px;}
+.trtabs button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
+.trsex{display:flex;gap:8px;margin:4px 0 10px;}
+.trsex button{flex:1;padding:11px;font-size:14px;}
+.trsex button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
 .sugitem .su{color:var(--sub);font-size:12px;margin-left:6px;}
 .side{display:flex;flex-direction:column;gap:12px;min-width:0;}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
@@ -157,6 +165,12 @@ tr:last-child td{border-bottom:none;}
 .matrix .stk1{left:0;min-width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis;}
 .matrix .stk2{left:104px;min-width:72px;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
 .matrix .stk3{left:176px;min-width:64px;max-width:64px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+/* 出席マトリクスのヘッダー行固定: 表自体を縦スクロール枠にして、日付行を常に上に表示。
+   border-collapse だと固定行の罫線が消えるため、下線は box-shadow で描く */
+.mxwrap{max-height:72vh;overflow:auto;}
+.matrix thead th{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--line);}
+.matrix thead th.stk{z-index:4;}
+.matrix thead th.stk3{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
 .sectionhead{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;flex-wrap:wrap;}
 .sectionhead h2{margin:0;font-size:16px;}
 .sectionhead .note{color:var(--sub);font-size:12.5px;}
@@ -379,6 +393,7 @@ tr:last-child td{border-bottom:none;}
       <button id="btnLogout" title="ログアウト">⎋</button>
     </nav>
   </div>
+  <div id="olAlert" class="notice hide" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);margin:10px 14px 0;"></div>
   <main>
 
   <!-- 受付 -->
@@ -393,13 +408,20 @@ tr:last-child td{border-bottom:none;}
       <button class="primary" id="btnRecStart">受付を開始</button>
       <button id="btnRecStop" class="hide">受付を終了</button>
     </div>
-    <div id="olAlert" class="notice hide" style="cursor:pointer;background:var(--accent-soft);color:var(--accent);"></div>
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
       <div>
         <div class="manualrow" style="margin:0 0 10px;">
           <span id="feeInfo" style="font-weight:700;font-size:14px;"></span>
           <button id="btnPartToggle" class="hide"></button>
+        </div>
+        <div id="ppPanel" class="hide" style="display:flex;align-items:center;gap:14px;border:2px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 10px;background:var(--card);">
+          <div id="ppQr" style="flex:0 0 auto;background:#fff;padding:6px;border-radius:8px;"></div>
+          <div style="min-width:0;">
+            <div style="font-weight:900;font-size:16px;">💳 PayPay送金 <span id="ppAmt" class="mono"></span></div>
+            <div id="ppLinkTxt" style="font-size:12.5px;color:var(--sub);word-break:break-all;margin-top:2px;"></div>
+            <div id="ppNote" style="font-size:12px;color:var(--sub);margin-top:2px;"></div>
+          </div>
         </div>
         <div class="scanstage" id="stage">
           <div class="counter mono" id="ctr">0名</div>
@@ -409,15 +431,17 @@ tr:last-child td{border-bottom:none;}
         <div class="manualrow">
           <label for="numIn" style="font-size:12.5px;font-weight:700;color:var(--sub);">手入力:</label>
           <input type="text" id="numIn" inputmode="numeric" placeholder="番号を入力">
-          <button id="btnManual">受付</button>
           <span style="position:relative;display:inline-block;">
             <input type="text" id="nameIn" placeholder="名前で検索して受付" style="width:170px;">
             <div id="nameSug" class="sugbox hide"></div>
           </span>
-          <button id="btnGuest">ゲスト受付</button>
+          <button id="btnManual" class="primary">受付</button>
+          <span style="flex:1"></span>
+          <button id="btnPlList" title="誓約書提出用の受付順リストを別ウィンドウで開く">📝 誓約書リスト</button>
         </div>
         <div class="manualrow">
-          <label style="font-size:12.5px;font-weight:700;color:var(--sub);">登壇者・運営:</label>
+          <button id="btnGuest">ゲスト受付</button>
+          <label style="font-size:12.5px;font-weight:700;color:var(--sub);margin-left:8px;">登壇者・運営:</label>
           <button id="btnMC">MCを登録</button>
           <button id="btnSpeaker">スピーカーを登録</button>
           <button id="btnStaffRole">受付管理者を登録</button>
@@ -428,7 +452,7 @@ tr:last-child td{border-bottom:none;}
         <div class="tile tap" id="totalTile"><h3>出席</h3><div class="bignum"><span id="total">0</span><small>名</small></div>
           <div id="totalSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div></div>
         <div class="tile tap" id="cashTile">
-          <h3>手元金額（リアルタイム）</h3>
+          <h3 id="cashTitle">手元金額（リアルタイム）</h3>
           <div class="bignum" style="font-size:30px;"><span id="cashNow">¥0</span></div>
           <div id="cashSub" style="font-size:12.5px;color:var(--sub);margin-top:2px;"></div>
           <div id="unpaidList" style="margin-top:6px;"></div>
@@ -447,6 +471,8 @@ tr:last-child td{border-bottom:none;}
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
       <button id="btnCkAdmins" class="hide">👑 受付管理者</button>
+      <button id="btnTrainers" class="hide">🎓 研修生登録の担当</button>
+      <button id="btnAdminsView">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
@@ -482,6 +508,8 @@ tr:last-child td{border-bottom:none;}
       <label for="evUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="evUnionSel"></select>
       <span style="flex:1"></span>
+      <button id="btnSchedPdf" title="この月のイベント一覧を入金チェック表付きで印刷">📄 予定表PDF</button>
+      <button id="btnPledges" title="オンライン受講の誓約書の同意記録をまとめて見る">📜 誓約書</button>
       <button class="primary" id="btnAddEvent">＋ 新規イベント</button>
     </div>
     <div class="evlist" id="evList"></div>
@@ -494,6 +522,7 @@ tr:last-child td{border-bottom:none;}
       <label for="finUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="finUnionSel"></select>
       <span style="flex:1"></span>
+      <button id="btnFinCsv" class="hide">📊 収支CSV</button>
       <button id="btnRcptCsv" class="hide">台帳CSV</button>
       <button id="btnRcptSet" class="hide">⚙ ユニオン設定</button>
     </div>
@@ -551,7 +580,9 @@ tr:last-child td{border-bottom:none;}
       <div class="mc-no mono" id="mcNo"></div>
     </div>
     <div id="selfArea"></div>
+    <div id="trArea"></div>
     <div id="onlineArea"></div>
+    <div id="rsvpArea"></div>
     <div id="nextArea"></div>
     <div id="rcptArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
@@ -575,6 +606,52 @@ tr:last-child td{border-bottom:none;}
       <b>数字のみの番号の方は今までどおり</b>です。
     </div>
     <p style="font-size:12.5px;color:var(--sub);margin-top:14px;line-height:1.8;">開いたら、ブラウザの「ホーム画面に追加」をしておくと次回すぐ使えます。<br>番号がわからない場合は受付にお問い合わせください。</p>
+  </div>
+</div>
+
+<!-- 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） -->
+<div id="vTrainer" class="hide">
+  <div style="max-width:560px;margin:0 auto;padding:14px 14px 40px;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+      <h2 style="margin:0;font-size:18px;">🎓 研修生登録</h2>
+      <span id="trUnionLbl" style="font-size:12.5px;color:var(--sub);"></span>
+      <span style="flex:1"></span>
+      <span id="trMe" style="font-size:12px;color:var(--sub);"></span>
+    </div>
+    <div id="trDeny" class="notice hide"></div>
+    <div id="trMain" class="hide">
+      <div class="trtabs">
+        <button id="trTabReg" class="on">＋ 登録</button>
+        <button id="trTabList">研修生一覧</button>
+      </div>
+      <div id="trPaneReg">
+        <label>氏名</label><input type="text" id="trName" autocomplete="off">
+        <label>UPルビー</label>
+        <select id="trUp"></select>
+        <input type="text" id="trUpFree" class="hide" placeholder="UPルビー名を入力" style="margin-top:6px;">
+        <label>ふりがな（任意）</label><input type="text" id="trKana" autocomplete="off">
+        <label>性別（任意）</label>
+        <div class="trsex">
+          <button data-sex="" class="on">未設定</button><button data-sex="m">男</button><button data-sex="f">女</button>
+        </div>
+        <p style="font-size:12.5px;color:var(--sub);">番号は自動発番: <b id="trNoPrev" class="mono">—</b></p>
+        <button class="primary" id="trGo" style="width:100%;padding:14px;font-size:16px;">登録して会員証QRを表示</button>
+        <div id="trToday" style="margin-top:18px;"></div>
+      </div>
+      <div id="trPaneList" class="hide"></div>
+    </div>
+    <div id="trQrView" class="hide" style="text-align:center;padding-top:8px;">
+      <p style="font-size:13px;color:var(--sub);margin:0 0 4px;">研修生本人のスマホでこのQRを読み取ってください</p>
+      <h3 id="tqName" style="margin:4px 0;font-size:22px;"></h3>
+      <div class="mono" id="tqNo" style="color:var(--sub);font-size:13px;margin-bottom:10px;"></div>
+      <div id="tqQr" style="display:flex;justify-content:center;background:#fff;padding:16px;border-radius:14px;"></div>
+      <p style="font-size:12px;color:var(--sub);">読み取ると本人専用の会員証が開きます（「ホーム画面に追加」を案内してください）</p>
+      <button class="primary" id="tqDone" style="width:100%;padding:14px;font-size:16px;margin-top:8px;">✓ 完了 — 次の研修生を登録</button>
+      <div class="btns" style="justify-content:center;margin-top:8px;">
+        <button id="tqShare">リンクを共有</button>
+        <button id="tqUndo" class="danger ghost">この登録を取消</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -637,7 +714,7 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
 }
@@ -656,6 +733,22 @@ function randToken(){
   return s;
 }
 function cardUrl(token){ return location.href.split('#')[0] + '#c=' + token; }
+/* 🎓 研修生のチュートリアル項目。main=メイン3項目（進捗の分母）。
+   internal=内部管理項目: 記録されるまで会員証には表示しない */
+var TR_ITEMS = [
+  { k: 'PG',  main: true },
+  { k: 'DLR', main: true, note: '会場' },
+  { k: 'PA',  main: true },
+  { k: 'EXP' },
+  { k: 'CO' },
+  { k: 'BPC済み', internal: true }
+];
+function trMainProgress(tr){
+  tr = tr || {}; var n = 0;
+  TR_ITEMS.forEach(function(it){ if(it.main && tr[it.k]) n++; });
+  return n;
+}
+function trDateShort(d){ return String(d || '').slice(5).replace('-', '/'); }
 
 /* ライセンスグレード → カードデザイン
    BR = ゴールドカード（BRAND REPRESENTATIVE） / JETCLUB = ブラックカード（JETCLUB MEMBER）
@@ -699,6 +792,14 @@ var gEventUnion = '';       // イベントタブで表示中のユニオン
 var gStatUnion = '';        // 集計タブで表示中のユニオン
 var gFinUnion = '';         // 会計タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
+/* ── 機能スイッチ ──
+ * FEATURE_PAYPAY: 💳 PayPay集金モードは現在封印中（受付担当への説明が複雑になるため）。
+ *   true に戻すだけで全機能（イベント設定のチェック・送金QRパネル・預り金・PayPay版納金票）が復活する。
+ *   封印中は新規にONにできないだけで、コード本体は残してある（payMode付きイベントでしか動かない）。
+ * RSVP_UNIONS: 🎟 会員証からの予約受付を使えるユニオン。ここに載っていないユニオンには
+ *   イベント設定のチェック自体を表示しない（シークレット機能）。 */
+var FEATURE_PAYPAY = false;
+var RSVP_UNIONS = ['BASE REVE'];
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
 // 初期の命名規則（ユニオン設定で上書き可能）
@@ -785,6 +886,7 @@ $('actLogout').onclick = function(){ auth.signOut(); };
 /* ── スマホ会員証モード（#c=トークン で開くとログイン不要の会員証表示） ── */
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
 var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
+var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
@@ -809,9 +911,20 @@ function showCardView(token){
   db.collection('cards').doc(token).get().then(function(snap){
     if(snap.exists){
       var c = snap.data();
+      if(c.rcptOnly){
+        // その場QR領収書専用ページ: 領収書だけを表示（会員証・イベント類は出さない）
+        $('mcName').textContent = c.name || '';
+        $('mcNo').textContent = '電子領収書';
+        $('mcGroup').textContent = ''; $('mcUnion').textContent = c.union || '';
+        $('mcQr').innerHTML = '<div style="font-size:40px;">🧾</div>';
+        renderReceipts(c);
+        return;
+      }
       renderCard(c);
+      renderTrainee(c);
       renderSelfEvents(c);
       renderOnlineEvents(c);
+      renderRsvpEvents(c);
       renderNextEvents(c);
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
@@ -823,6 +936,31 @@ function showCardView(token){
   }).catch(function(){
     if(!cached) $('mcErr').textContent = '読み込みに失敗しました。電波の良いところで再読み込みしてください。';
   });
+}
+// 🎓 研修生: チュートリアルの受講履歴を会員証に表示（受付で見せる用）。
+// 進捗はメイン3項目（PG/DLR/PA）基準。BPC済みは記録されるまで表示しない
+function renderTrainee(c){
+  var el = $('trArea');
+  if(!el) return;
+  if(!c.trainee){ el.innerHTML = ''; return; }
+  var tr = c.trainings || {};
+  var done = trMainProgress(tr);
+  var rows = TR_ITEMS.filter(function(it){ return !it.internal || tr[it.k]; }).map(function(it){
+    var r = tr[it.k];
+    return '<div class="nextrow">'
+      + '<span class="nd" style="width:1.4em;text-align:center;' + (r ? 'color:var(--green);font-weight:900;' : 'opacity:.4;') + '">' + (r ? '✓' : '─') + '</span>'
+      + '<span class="nn">' + esc(it.k) + (it.note ? '<span style="font-size:10.5px;color:var(--sub);">（' + esc(it.note) + '）</span>' : '') + '</span>'
+      + (r
+        ? '<span class="ns">' + esc(trDateShort(r.at)) + '　担当: ' + esc(r.byName || '') + '</span>'
+        : '<span class="ns" style="opacity:.5;">未受講</span>')
+      + '</div>';
+  }).join('');
+  el.innerHTML = '<div class="nextwrap">'
+    + '<div class="next-head">TRAINEE — チュートリアル ' + done + '/3</div>'
+    + '<div style="height:6px;background:var(--line);border-radius:99px;margin:6px 0 8px;overflow:hidden;">'
+    + '<i style="display:block;height:100%;width:' + Math.round(done / 3 * 100) + '%;background:var(--green);"></i></div>'
+    + (tr['BPC済み'] ? '<div class="se-done" style="margin:4px 0 8px;">🎉 修了 — 正規登録手続き中</div>' : '')
+    + rows + '</div>';
 }
 // 本日の「セルフチェックイン受付中」イベントを会員証の下に表示
 function renderSelfEvents(c){
@@ -1068,6 +1206,59 @@ function renderOnlineEvents(c){
   }).catch(function(){});
 }
 
+// 🎟 予約（RSVP）: rsvp=true のイベントは、開催 rsvpDays 日前になると「予約する」ボタンを表示。
+// 予約は checkinEvents/{id}/rsvps/{会員番号} に1回だけ作成（未ログイン・トークン照合、ルールで保証）
+function renderRsvpEvents(c){
+  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
+    var t0 = new Date(todayStr() + 'T00:00:00').getTime();
+    var evs = [];
+    qs.forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if(!ev.rsvp) return;
+      if((ev.unions || []).indexOf(c.union) < 0) return;
+      var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
+      var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - t0) / 86400000);
+      if(diff > days) return;   // まだ受付期間前
+      evs.push(ev);
+    });
+    evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    evs = evs.slice(0, 3);
+    if(!evs.length){ $('rsvpArea').innerHTML = ''; return; }
+    $('rsvpArea').innerHTML = evs.map(function(ev, i){
+      var done = false;
+      try{ done = !!localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
+      return '<div class="selfevent">'
+        + '<b>🎟 予約受付中：' + esc(ev.name || '') + '</b>'
+        + '<span class="se-sub">' + esc(ev.date || '') + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</span>'
+        + (done
+          ? '<div class="se-done">✓ 予約済みです</div>'
+            + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">当日は会場で通常どおりチェックインしてください。変更・取消は受付担当へ。</p>'
+          : '<button class="primary" id="rsGo_' + i + '">予約する</button>'
+            + '<div class="se-msg" id="rsMsg_' + i + '"></div>')
+        + '</div>';
+    }).join('');
+    evs.forEach(function(ev, i){
+      var b = $('rsGo_' + i);
+      if(!b) return;
+      b.onclick = function(){
+        b.disabled = true;
+        db.collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
+          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+          eventDate: ev.date || '', eventName: ev.name || '',
+          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
+        }).then(function(){
+          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+          renderRsvpEvents(c);
+        }).catch(function(){
+          // すでに予約済み（作成のみ許可のため上書きは失敗する）
+          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+          renderRsvpEvents(c);
+        });
+      };
+    });
+  }).catch(function(){});
+}
+
 // 次回の開催予定: 自ユニオンの直近イベントを搭乗券風に表示
 // （セルフ受付中・オンライン対応のイベントは専用カードが出るのでここでは省く）
 function renderNextEvents(c){
@@ -1078,6 +1269,12 @@ function renderNextEvents(c){
       if((ev.unions || []).indexOf(c.union) < 0) return;
       if(ev.online) return;
       if(ev.mode === 'self' && ev.selfOpen) return;
+      // 予約受付中のイベントは専用カード（🎟）が出るのでここでは省く
+      if(ev.rsvp){
+        var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
+        var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000);
+        if(diff <= days) return;
+      }
       evs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
@@ -1278,6 +1475,7 @@ auth.onAuthStateChanged(function(u){
     }
     gProf = snap.data();
     gUnion = gProf.union;
+    if(gTrainerMode){ trainerEnter(); return; }
     afterLogin();
   }).catch(function(e){ toast('プロフィール読込エラー: ' + e.message); showView('vLogin'); });
 });
@@ -1384,19 +1582,35 @@ function initOnlineAlert(){
       var ev = d.data(); ev.id = d.id;
       if(!ev.online) return;
       if((ev.unions || []).indexOf(gUnion) < 0 && !isOwner()) return;
-      gOlAlert.evs[ev.id] = ev;
-      var unsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
-        .where('method', '==', 'online')
-        .onSnapshot(function(aqs){
-          var n = 0;
-          aqs.forEach(function(a){ if(a.data().status === 'pending') n++; });
-          gOlAlert.counts[ev.id] = n;
-          renderOlAlert();
-        }, function(){});
-      gOlAlert.unsubs.push(unsub);
+      olWatchEvent(ev);
     });
+    // 受付中のイベントは日付に関係なく監視対象（前日ログインのままでも見逃さない）
+    if(gRec && gRec.ev && gRec.ev.online) olWatchEvent(gRec.ev);
   }).catch(function(){});
+  // 承認待ちが残っている間は60秒ごとに小さくリマインド音（モーダル操作中は鳴らさない）
+  if(!window.gOlRemindTimer){
+    window.gOlRemindTimer = setInterval(function(){
+      var total = 0;
+      Object.keys(gOlAlert.counts).forEach(function(id){ total += gOlAlert.counts[id]; });
+      if(total > 0 && !document.querySelector('.modal')) beep('ok');
+    }, 60000);
+  }
 }
+// 1イベント分の申請を購読（重複購読はしない）。initOnlineAlert と受付開始の両方から使う
+function olWatchEvent(ev){
+  if(gOlAlert.evs[ev.id]) return;
+  gOlAlert.evs[ev.id] = ev;
+  var unsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
+    .where('method', '==', 'online')
+    .onSnapshot(function(aqs){
+      var n = 0;
+      aqs.forEach(function(a){ if(a.data().status === 'pending') n++; });
+      gOlAlert.counts[ev.id] = n;
+      renderOlAlert();
+    }, function(){});
+  gOlAlert.unsubs.push(unsub);
+}
+var DOC_TITLE = document.title;
 function renderOlAlert(){
   var total = 0, firstEv = null;
   Object.keys(gOlAlert.counts).forEach(function(id){
@@ -1406,11 +1620,35 @@ function renderOlAlert(){
   var el = $('olAlert');
   el.classList.toggle('hide', !total);
   if(total){
-    el.innerHTML = '💻 オンライン受講の申請が <b>' + total + '件</b> 承認待ちです — タップして承認画面を開く';
+    var canAsk = ('Notification' in window) && Notification.permission === 'default';
+    el.innerHTML = '💻 オンライン受講の申請が <b>' + total + '件</b> 承認待ちです — タップして承認画面を開く'
+      + (canAsk ? '<span id="olNotiAsk" style="margin-left:10px;text-decoration:underline;font-size:12.5px;">🔔 デスクトップ通知を許可</span>' : '');
     el.onclick = function(){ if(firstEv) onlineModal(firstEv); };
-    if(gOlAlert.last >= 0 && total > gOlAlert.last) beep('ok');
+    var ask = $('olNotiAsk');
+    if(ask) ask.onclick = function(e2){
+      e2.stopPropagation();
+      try{ Notification.requestPermission().then(function(){ renderOlAlert(); }); }catch(e3){}
+    };
+    if(gOlAlert.last >= 0 && total > gOlAlert.last){ beep('ok'); olNotify(total, firstEv); }
   }
+  // どのタブ・別アプリを見ていても気づけるよう、ブラウザのタブタイトルにも件数を出す
+  document.title = total ? '🔴' + total + '件 承認待ち｜' + DOC_TITLE : DOC_TITLE;
   gOlAlert.last = total;
+}
+// デスクトップ通知（許可済みのときだけ）。クリックで承認画面を開く
+function olNotify(total, ev){
+  try{
+    if(!('Notification' in window) || Notification.permission !== 'granted') return;
+    var n = new Notification('💻 オンライン受講の申請', {
+      body: '承認待ちが ' + total + '件あります' + (ev && ev.name ? '（' + ev.name + '）' : ''),
+      tag: 'ck-online'
+    });
+    n.onclick = function(){
+      try{ window.focus(); }catch(e){}
+      try{ n.close(); }catch(e){}
+      if(ev) onlineModal(ev);
+    };
+  }catch(e){}
 }
 
 /* 各タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
@@ -1441,57 +1679,227 @@ $('rosterUnionSel').onchange = function(){
 /* オーナーのみ: 新しいユニオンを登録（横展開用） */
 /* 受付管理者の設定: ユニオン管理者かオーナーが、同ユニオンのユーザーに
    このシステムの管理権限（名簿・イベント・会計確定解除・各種設定）を付与できる */
+/* 👑 受付管理者の任命。自ユニオンのユーザーに加え、「他ユニオンから追加」で
+   別ユニオン所属のユーザーも任命できる（1人が複数ユニオンを管理する兼務用）。
+   権限ルールは admins[] 所属のみを見るためルール変更は不要 */
 $('btnCkAdmins').onclick = function(){
   var un = gRosterUnion;
+  var cur = (gCkAdmins[un] || []).slice();
   db.collection('users').where('union', '==', un).get().then(function(qs){
     var users = [];
+    var sameUids = {};
     qs.forEach(function(d){
+      var u = d.data(); u.uid = d.id;
+      if(u.status === 'disabled') return;
+      users.push(u);
+      sameUids[d.id] = 1;
+    });
+    users.sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; });
+    if(!users.length){ toast('「' + un + '」のユーザーが見つかりません'); return; }
+    // 任命済みだが他ユニオン所属のユーザー（兼務者）はプロフィールを個別に取得して表示
+    var xUids = cur.filter(function(uid){ return !sameUids[uid]; });
+    return Promise.all(xUids.map(function(uid){
+      return db.collection('users').doc(uid).get().then(function(sn){
+        var u = sn.exists ? sn.data() : {};
+        return { uid: uid, name: u.name || uid.slice(0, 8), union: u.union || '?', checked: true };
+      }).catch(function(){ return { uid: uid, name: uid.slice(0, 8), union: '?', checked: true }; });
+    })).then(function(xRows){
+      openCkAdminsModal(un, users, cur, xRows);
+    });
+  }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
+};
+function openCkAdminsModal(un, users, cur, xRows){
+  var others = gUnions.filter(function(u){ return u !== un; });
+  modal('<h2>👑 受付管理者 — ' + esc(un) + '</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">'
+    + 'チェックした人は、このシステム内でユニオン管理者と同じ操作（名簿編集・イベント作成・'
+    + '会計の確定解除・領収書設定など）ができるようになります。任命・解除ができるのは'
+    + 'ユニオン管理者とオーナーのみです。</p>'
+    + '<div style="max-height:36vh;overflow:auto;">'
+    + users.map(function(u, i){
+        var isRoleAdmin = u.role === 'admin';
+        return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
+          + '<input type="checkbox" id="cka_' + i + '"' + (cur.indexOf(u.uid) >= 0 ? ' checked' : '')
+          + (isRoleAdmin ? ' disabled checked' : '') + '>'
+          + '<label for="cka_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">'
+          + esc(u.name || u.uid.slice(0, 8)) + '</label>'
+          + (isRoleAdmin ? '<span class="pill g">ユニオン管理者</span>' : '')
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '<label style="margin-top:14px;">他ユニオンから追加（兼務・複数ユニオン管理用）</label>'
+    + '<div id="ckaXList"></div>'
+    + (others.length
+      ? '<div style="display:flex;gap:8px;align-items:center;margin-top:6px;">'
+        + '<select id="ckaXUn" style="flex:1;min-width:0;">'
+        + others.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
+        + '</select>'
+        + '<button id="ckaXLoad">ユーザーを表示</button></div>'
+      : '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">他のユニオンがまだありません。</p>')
+    + '<div class="btns"><button id="ckaCancel">キャンセル</button><button class="primary" id="ckaSave">保存</button></div>',
+    true);
+  function renderX(){
+    $('ckaXList').innerHTML = xRows.map(function(r, i){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
+        + '<input type="checkbox" id="ckx_' + i + '"' + (r.checked ? ' checked' : '') + '>'
+        + '<label for="ckx_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">'
+        + esc(r.name) + '</label>'
+        + '<span class="pill n">所属: ' + esc(r.union) + '</span>'
+        + '</div>';
+    }).join('') || '<p style="font-size:12px;color:var(--sub);margin:4px 0;">他ユニオンからの任命はまだありません。下で選んで追加できます。</p>';
+    xRows.forEach(function(r, i){
+      var cb = $('ckx_' + i);
+      if(cb) cb.onchange = function(){ r.checked = cb.checked; };
+    });
+  }
+  renderX();
+  var xl = $('ckaXLoad');
+  if(xl) xl.onclick = function(){
+    var xun = $('ckaXUn').value;
+    xl.disabled = true;
+    db.collection('users').where('union', '==', xun).get().then(function(qs){
+      var added = 0;
+      qs.forEach(function(d){
+        var u = d.data();
+        if(u.status === 'disabled') return;
+        if(xRows.some(function(r){ return r.uid === d.id; })) return;   // 既に一覧にいる
+        xRows.push({ uid: d.id, name: u.name || d.id.slice(0, 8), union: xun, checked: false });
+        added++;
+      });
+      xl.disabled = false;
+      if(!added){ toast('「' + xun + '」に追加できるユーザーがいません'); return; }
+      xRows.sort(function(a, b){ return (a.union + a.name) < (b.union + b.name) ? -1 : 1; });
+      renderX();
+    }).catch(function(e){ xl.disabled = false; toast('ユーザー読込エラー: ' + e.message); });
+  };
+  $('ckaCancel').onclick = closeModal;
+  $('ckaSave').onclick = function(){
+    var arr = [];
+    users.forEach(function(u, i){
+      if(u.role === 'admin') return;   // ユニオン管理者は元から全権なのでリストには入れない
+      var cb = $('cka_' + i);
+      if(cb && cb.checked) arr.push(u.uid);
+    });
+    xRows.forEach(function(r){ if(r.checked) arr.push(r.uid); });
+    $('ckaSave').disabled = true;
+    db.collection('checkinUnions').doc(un).set({ admins: arr }, { merge: true }).then(function(){
+      gCkAdmins[un] = arr;
+      closeModal();
+      toast('受付管理者を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます');
+      renderRoster();
+    }).catch(function(e){
+      $('ckaSave').disabled = false;
+      toast(permMsg(e, '任命はユニオン管理者・オーナーのみ可能です'));
+    });
+  };
+}
+/* 🎓 研修生登録の担当の任命（checkinUnions.trainers）。任命された人は
+   研修生登録ページ（#trainer）から研修生の登録とチュートリアル記録だけ行える */
+$('btnTrainers').onclick = function(){
+  var un = gRosterUnion;
+  Promise.all([
+    db.collection('users').where('union', '==', un).get(),
+    db.collection('checkinUnions').doc(un).get()
+  ]).then(function(res){
+    var users = [];
+    res[0].forEach(function(d){
       var u = d.data(); u.uid = d.id;
       if(u.status === 'disabled') return;
       users.push(u);
     });
     users.sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; });
-    var cur = (gCkAdmins[un] || []).slice();
+    var cur = (res[1].exists && res[1].data().trainers) || [];
     if(!users.length){ toast('「' + un + '」のユーザーが見つかりません'); return; }
-    modal('<h2>👑 受付管理者 — ' + esc(un) + '</h2>'
+    var trUrl = location.href.split('#')[0] + '#trainer';
+    modal('<h2>🎓 研修生登録の担当 — ' + esc(un) + '</h2>'
       + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">'
-      + 'チェックした人は、このシステム内でユニオン管理者と同じ操作（名簿編集・イベント作成・'
-      + '会計の確定解除・領収書設定など）ができるようになります。任命・解除ができるのは'
-      + 'ユニオン管理者とオーナーのみです。</p>'
-      + '<div style="max-height:50vh;overflow:auto;">'
+      + 'チェックした人は研修生登録ページから<b>研修生の新規登録とチュートリアル記録だけ</b>できます'
+      + '（名簿の編集や正規メンバーの登録はできません）。管理者は任命なしで常に操作できます。</p>'
+      + '<div style="max-height:44vh;overflow:auto;">'
       + users.map(function(u, i){
           var isRoleAdmin = u.role === 'admin';
           return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
-            + '<input type="checkbox" id="cka_' + i + '"' + (cur.indexOf(u.uid) >= 0 ? ' checked' : '')
+            + '<input type="checkbox" id="trn_' + i + '"' + (cur.indexOf(u.uid) >= 0 ? ' checked' : '')
             + (isRoleAdmin ? ' disabled checked' : '') + '>'
-            + '<label for="cka_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">'
+            + '<label for="trn_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">'
             + esc(u.name || u.uid.slice(0, 8)) + '</label>'
-            + (isRoleAdmin ? '<span class="pill g">ユニオン管理者</span>' : '')
+            + (isRoleAdmin ? '<span class="pill g">管理者</span>' : '')
             + '</div>';
         }).join('')
       + '</div>'
-      + '<div class="btns"><button id="ckaCancel">キャンセル</button><button class="primary" id="ckaSave">保存</button></div>',
+      + '<label style="margin-top:12px;">研修生登録ページのURL（担当者に共有。スマホのホーム画面に追加推奨）</label>'
+      + '<input type="text" id="trnUrl" readonly value="' + esc(trUrl) + '" style="width:100%;font-size:12px;">'
+      + '<div class="btns"><button id="trnCopy">URLをコピー</button><button id="trnCancel">キャンセル</button><button class="primary" id="trnSave">保存</button></div>',
       true);
-    $('ckaCancel').onclick = closeModal;
-    $('ckaSave').onclick = function(){
+    $('trnCancel').onclick = closeModal;
+    $('trnCopy').onclick = function(){ copyText(trUrl); };
+    $('trnSave').onclick = function(){
       var arr = [];
       users.forEach(function(u, i){
-        if(u.role === 'admin') return;   // ユニオン管理者は元から全権なのでリストには入れない
-        var cb = $('cka_' + i);
+        if(u.role === 'admin') return;
+        var cb = $('trn_' + i);
         if(cb && cb.checked) arr.push(u.uid);
       });
-      $('ckaSave').disabled = true;
-      db.collection('checkinUnions').doc(un).set({ admins: arr }, { merge: true }).then(function(){
-        gCkAdmins[un] = arr;
+      $('trnSave').disabled = true;
+      db.collection('checkinUnions').doc(un).set({ trainers: arr }, { merge: true }).then(function(){
         closeModal();
-        toast('受付管理者を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます');
-        renderRoster();
+        toast('研修生登録の担当を保存しました（' + arr.length + '名）');
       }).catch(function(e){
-        $('ckaSave').disabled = false;
-        toast(permMsg(e, '任命はユニオン管理者・オーナーのみ可能です'));
+        $('trnSave').disabled = false;
+        toast(permMsg(e, '任命はユニオン管理者・受付管理者のみ可能です'));
       });
     };
   }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
+};
+/* 👥 管理者一覧（閲覧用）: 誰がユニオン管理者・受付管理者・研修生登録の担当なのかを誰でも確認できる */
+$('btnAdminsView').onclick = function(){
+  var un = gRosterUnion;
+  Promise.all([
+    db.collection('users').where('union', '==', un).get(),
+    db.collection('checkinUnions').doc(un).get()
+  ]).then(function(res){
+    var byUid = {};
+    res[0].forEach(function(d){
+      var u = d.data();
+      if(u.status === 'disabled') return;
+      byUid[d.id] = { name: u.name || d.id.slice(0, 8), union: u.union || un, role: u.role || '' };
+    });
+    var s0 = res[1].exists ? res[1].data() : {};
+    var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice();
+    // 他ユニオン所属の兼務者はプロフィールを個別取得して所属付きで表示
+    var need = {};
+    admins.concat(trainers).forEach(function(uid){ if(!byUid[uid]) need[uid] = 1; });
+    return Promise.all(Object.keys(need).map(function(uid){
+      return db.collection('users').doc(uid).get().then(function(sn){
+        var u = sn.exists ? sn.data() : {};
+        byUid[uid] = { name: u.name || uid.slice(0, 8), union: u.union || '?', role: u.role || '' };
+      }).catch(function(){ byUid[uid] = { name: uid.slice(0, 8), union: '?', role: '' }; });
+    })).then(function(){
+      function row(uid, pill){
+        var u = byUid[uid] || { name: uid.slice(0, 8), union: '?' };
+        return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);font-size:14px;">'
+          + '<span style="flex:1;">' + esc(u.name) + '</span>'
+          + (u.union !== un ? '<span class="pill n">所属: ' + esc(u.union) + '</span>' : '')
+          + (pill || '') + '</div>';
+      }
+      var roleAdmins = Object.keys(byUid).filter(function(uid){
+        return byUid[uid].role === 'admin' && byUid[uid].union === un;
+      });
+      var h = '<label>ユニオン管理者（アカウント権限）</label>'
+        + (roleAdmins.map(function(uid){ return row(uid, '<span class="pill g">ユニオン管理者</span>'); }).join('')
+          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
+        + '<label style="margin-top:14px;">👑 受付管理者（任命制・管理者と同じ操作ができる）</label>'
+        + (admins.map(function(uid){ return row(uid, ''); }).join('')
+          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
+        + '<label style="margin-top:14px;">🎓 研修生登録の担当</label>'
+        + (trainers.map(function(uid){ return row(uid, ''); }).join('')
+          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
+        + '<p style="font-size:12px;color:var(--sub);margin-top:12px;">任命・解除は、ユニオン管理者に表示される「👑 受付管理者」「🎓 研修生登録の担当」ボタンから行えます。</p>';
+      modal('<h2>👥 管理者一覧 — ' + esc(un) + '</h2>' + h
+        + '<div class="btns"><button id="avClose">閉じる</button></div>', true);
+      $('avClose').onclick = closeModal;
+    });
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
 };
 $('btnAddUnion').onclick = function(){
   modal('<h2>ユニオン追加</h2>'
@@ -1561,6 +1969,7 @@ function renderRoster(){
   $('btnDelAll').classList.toggle('hide', !edit);
   $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
+  $('btnTrainers').classList.toggle('hide', !edit);
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   $('btnGroupRen').classList.toggle('hide', !edit);
@@ -1572,14 +1981,21 @@ function renderRoster(){
     html += '<tr>'
       + (edit ? '<td><input type="checkbox" class="selchk" data-no="' + esc(m.no) + '"' + (gSel[m.no] ? ' checked' : '') + '></td>' : '')
       + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b>'
-      + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '') + '</td>'
+      + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '')
+      + (m.trainee ? ' <span class="pill n">研修生</span>'
+          + (m.trainings && m.trainings['BPC済み'] ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
       + '<td>' + esc(m.group || '') + '</td>'
-      + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>')
+      + '<td>' + (m.active !== false
+          ? (m.resting ? '<span class="pill a">休会</span>' : '<span class="pill g">有効</span>')
+          : '<span class="pill n">無効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
       + '<td><div class="rowbtns">'
       + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
       + (edit
         ? '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
+          + (m.active !== false
+            ? '<button data-a="rest" data-no="' + esc(m.no) + '">' + (m.resting ? '復帰' : '休会') + '</button>'
+            : '')
           + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
           + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
         : '')
@@ -1644,7 +2060,9 @@ $('btnGradeSel').onclick = function(){
         var m = withCards[i];
         batch.set(db.collection('cards').doc(m.cardToken), {
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-          grade: grade, createdAt: FV.serverTimestamp()
+          grade: grade,
+          trainee: !!m.trainee, trainings: m.trainings || {},
+          createdAt: FV.serverTimestamp()
         });
       }
       batch.commit().then(phase2).catch(fail);
@@ -1756,6 +2174,9 @@ function memberForm(m){
           ? '<option value="' + esc(m.grade) + '" selected>' + esc(m.grade) + '</option>' : '')
       + '</select>'
     + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
+    + '<div class="chkrow" style="margin-top:10px;"><input type="checkbox" id="mfTrainee"' + (m.trainee ? ' checked' : '') + '>'
+    + '<label for="mfTrainee" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 研修生（チュートリアル対象）</label></div>'
+    + (m.trainee ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを外して保存すると正規メンバーに昇格します（番号・会員証・履歴はそのまま引き継ぎ）。</p>' : '')
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
   $('mfCancel').onclick = closeModal;
@@ -1779,8 +2200,10 @@ function memberForm(m){
       sex: $('mfSex').value,
       grade: $('mfGrade').value,
       kana: $('mfKana').value.trim(),
+      trainee: $('mfTrainee').checked,
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
+    data.trainings = m.trainings || {};   // 研修履歴は維持（カード再生成用）
     if(isNew) data.createdAt = FV.serverTimestamp();
     // 新規は番号の重複を保存前にチェック（既存メンバーの上書き事故を防ぐ）
     var pre = isNew
@@ -1826,10 +2249,20 @@ $('rosterBody').addEventListener('click', function(e){
       .then(function(){ loadMembers(); })
       .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
   }
+  if(a === 'rest'){
+    // 休会: 名簿・受付スキャン・会員証はそのままで、集計（稼働率）からだけ外す
+    var toRest = !m.resting;
+    db.collection('checkinMembers').doc(no).set({ resting: toRest ? true : FV.delete() }, {merge:true})
+      .then(function(){
+        toast(m.name + ' さんを' + (toRest ? '休会にしました（集計に表示されなくなります）' : '復帰させました（集計に表示されます）'));
+        loadMembers();
+      })
+      .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
+  }
   if(a === 'del'){
     modal('<h2>メンバー削除</h2>'
       + '<p>「' + esc(m.name || '') + '」（' + esc(no) + '）を名簿から削除しますか？<br>'
-      + '<small>過去の出席記録は消えません。退会・休会の場合は削除ではなく「無効化」がおすすめです（集計から外れ、いつでも戻せます）。</small></p>'
+      + '<small>過去の出席記録は消えません。来なくなった人は削除ではなく「休会」（集計から外れるだけ。受付・会員証はそのまま）、退会は「無効化」がおすすめです。どちらもいつでも戻せます。</small></p>'
       + '<div class="btns"><button id="mdCancel">キャンセル</button>'
       + '<button class="primary" id="mdGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
     $('mdCancel').onclick = closeModal;
@@ -1851,7 +2284,9 @@ function refreshCardDoc(token, m){
   return ref.delete().then(function(){
     return ref.set({
       no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-      grade: m.grade || '', createdAt: FV.serverTimestamp()
+      grade: m.grade || '',
+      trainee: !!m.trainee, trainings: m.trainings || {},
+      createdAt: FV.serverTimestamp()
     });
   }).catch(function(){});
 }
@@ -1869,7 +2304,9 @@ function issueCard(m, cb){
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));   // 旧カードを無効化
   batch.set(db.collection('cards').doc(token), {
     no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-    grade: m.grade || '', createdAt: FV.serverTimestamp()
+    grade: m.grade || '',
+    trainee: !!m.trainee, trainings: m.trainings || {},
+    createdAt: FV.serverTimestamp()
   });
   batch.set(db.collection('checkinMembers').doc(m.no), {
     cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
@@ -1903,6 +2340,7 @@ function cardModal(m){
       + '<input type="text" id="cmUrl" readonly value="' + esc(url) + '" style="width:100%;font-size:12px;">'
       + '<div class="btns" style="justify-content:flex-start;margin-top:10px;">'
       + '<button class="primary" id="cmCopy">URLをコピー</button>'
+      + '<button id="cmRcpts">🧾 領収書一覧</button>'
       + '<button id="cmReissue">再発行</button>'
       + '<button id="cmRevoke" class="danger">無効化</button>'
       + '</div>'
@@ -1917,6 +2355,8 @@ function cardModal(m){
     issueCard(m, function(){ toast('発行しました'); renderRoster(); cardModal(m); });
   };
   if(bCopy) bCopy.onclick = function(){ copyText($('cmUrl').value); };
+  var bRc = $('cmRcpts');
+  if(bRc) bRc.onclick = function(){ cardRcptModal(m); };
   if(bRe) bRe.onclick = function(){
     if(!window.confirm(m.name + ' さんの会員証を再発行しますか？\n旧URLは使えなくなります。')) return;
     issueCard(m, function(){ toast('再発行しました。新しいURLを送ってください'); renderRoster(); cardModal(m); });
@@ -1925,6 +2365,41 @@ function cardModal(m){
     if(!window.confirm(m.name + ' さんの会員証を無効化しますか？')) return;
     revokeCard(m, function(){ toast('無効化しました'); renderRoster(); closeModal(); });
   };
+}
+/* 🧾 発行済み電子領収書の一覧と個別取消（会員証の rcpt_<イベントID> マーカーを直接操作） */
+function cardRcptModal(m){
+  db.collection('cards').doc(m.cardToken).get().then(function(sn){
+    var c = sn.exists ? sn.data() : {};
+    var rs = [];
+    Object.keys(c).forEach(function(k){
+      if(k.indexOf('rcpt_') === 0 && c[k]) rs.push({ key: k, evId: k.slice(5), r: c[k] });
+    });
+    rs.sort(function(a, b){ return ((b.r && b.r.at) || 0) - ((a.r && a.r.at) || 0); });
+    var html = rs.map(function(x, i){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:13.5px;">'
+        + '<div style="flex:1;min-width:0;"><b>' + esc(x.r.ev || '') + '</b>'
+        + '<div style="font-size:12px;color:var(--sub);">' + esc(x.r.d || '') + '　' + yen(x.r.amt || 0) + '</div></div>'
+        + '<button class="danger ghost" data-ri="' + i + '">発行を取り消す</button></div>';
+    }).join('') || '<p style="font-size:13px;color:var(--sub);">発行済みの電子領収書はありません。</p>';
+    modal('<h2>🧾 領収書一覧 — ' + esc(m.name || '') + '</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">この会員証に発行中の電子領収書です。取り消すと本人の画面からも消えます（取消は操作ログに残ります）。</p>'
+      + '<div style="max-height:48vh;overflow:auto;">' + html + '</div>'
+      + '<div class="btns"><button id="crClose">閉じる</button></div>', true);
+    $('crClose').onclick = function(){ closeModal(); cardModal(m); };
+    document.querySelector('.modal').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button[data-ri]') : null;
+      if(!b) return;
+      var x = rs[parseInt(b.getAttribute('data-ri'), 10)];
+      if(!x) return;
+      if(!window.confirm('「' + (x.r.ev || '') + '」の領収書（' + yen(x.r.amt || 0) + '）の発行を取り消しますか？')) return;
+      var u = {}; u[x.key] = FV.delete();
+      db.collection('cards').doc(m.cardToken).set(u, { merge: true }).then(function(){
+        auditLog(x.evId, '領収書取消', m.name || m.no, (x.r.ev || '') + '・' + yen(x.r.amt || 0));
+        toast('領収書の発行を取り消しました');
+        cardRcptModal(m);
+      }).catch(function(e2){ toast(permMsg(e2, '取消に失敗しました')); });
+    });
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
 }
 $('btnCardBulk').onclick = function(){
   var targets = gMembers.filter(function(m){ return m.active !== false && !m.cardToken; });
@@ -1947,7 +2422,9 @@ $('btnCardBulk').onclick = function(){
         var m = targets[i], token = randToken();
         batch.set(db.collection('cards').doc(token), {
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
-          grade: m.grade || '', createdAt: FV.serverTimestamp()
+          grade: m.grade || '',
+          trainee: !!m.trainee, trainings: m.trainings || {},
+          createdAt: FV.serverTimestamp()
         });
         batch.set(db.collection('checkinMembers').doc(m.no), {
           cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
@@ -2102,7 +2579,7 @@ $('btnCsvIn').onclick = function(){
 $('btnCsvOut').onclick = function(){
   var rows = [['番号','氏名','系列','かな','状態','性別']];
   gMembers.forEach(function(m){
-    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? '有効' : '無効',
+    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? (m.resting ? '休会' : '有効') : '無効',
       m.sex === 'm' ? '男' : (m.sex === 'f' ? '女' : '')]);
   });
   csvDownload('members_' + gRosterUnion + '.csv', rows);
@@ -2215,6 +2692,7 @@ function renderEvents(){
       + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
       + '<b>' + esc(ev.name || '') + '</b>'
       + (ev.speaker ? '<span style="color:var(--sub);font-size:13px;">🎤 ' + esc(ev.speaker) + '</span>' : '')
+      + (ev.payMode === 'paypay' ? '<span class="jointtag">💳 PayPay集金</span>' : '')
       + (isSelf ? '<span class="jointtag" style="background:var(--green-soft);color:var(--green);">' + esc(ev.hostLabel || 'CLAVIS') + '主催・セルフ</span>' : '')
       + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
@@ -2224,6 +2702,7 @@ function renderEvents(){
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
       + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
+      + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canRec ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canRec ? '<button data-a="imp" data-id="' + esc(ev.id) + '">📥 取込</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
@@ -2249,6 +2728,15 @@ function renderEvents(){
         if(el && pending) el.innerHTML = ' <span class="pill r">' + pending + '件</span>';
       }).catch(function(){});
     }
+    // 予約（RSVP）件数
+    if(ev.rsvp){
+      try{
+        db.collection('checkinEvents').doc(ev.id).collection('rsvps').count().get().then(function(s){
+          var el = $('rvCt_' + ev.id);
+          if(el && s.data().count) el.innerHTML = ' <span class="pill g">' + s.data().count + '名</span>';
+        }).catch(function(){});
+      }catch(e){}
+    }
   });
 }
 $('evList').addEventListener('click', function(e){
@@ -2261,6 +2749,7 @@ $('evList').addEventListener('click', function(e){
   if(a === 'fin'){ financeModal(ev); }
   if(a === 'imp'){ importModal(ev); }
   if(a === 'online'){ onlineModal(ev); }
+  if(a === 'rsvps'){ rsvpListModal(ev); }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
@@ -2271,20 +2760,154 @@ $('evList').addEventListener('click', function(e){
       .catch(function(err){ toast(permMsg(err, '受付の開始/終了は主催ユニオンの管理者のみ可能です')); });
   }
   if(a === 'del'){
-    modal('<h2>イベント削除</h2><p>「' + esc(ev.date) + ' ' + esc(ev.name) + '」を削除しますか？<br>出席記録も見えなくなります。</p>'
+    modal('<h2>イベント削除</h2><p>「' + esc(ev.date) + ' ' + esc(ev.name) + '」を削除しますか？<br>出席記録も見えなくなります。このイベントで発行した電子領収書も取り下げます。</p>'
       + '<div class="btns"><button id="delCancel">キャンセル</button><button class="primary" id="delGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
     $('delCancel').onclick = closeModal;
     $('delGo').onclick = function(){
-      db.collection('checkinEvents').doc(id).delete().then(function(){
-        closeModal(); toast('削除しました'); loadEvents(); loadStats();
-      }).catch(function(err){ toast(permMsg(err, 'イベント削除は主催ユニオンの管理者・受付管理者のみ可能です')); });
+      $('delGo').disabled = true;
+      var evRef = db.collection('checkinEvents').doc(id);
+      // 出席記録から会員証トークンを辿り、このイベントの電子領収書・オンライン承認マーカーを一括で取り下げる
+      evRef.collection('attendance').get().then(function(qs){
+        var jobs = [];
+        qs.forEach(function(d){
+          var a = d.data(), no = a.no || d.id;
+          if(a.cardToken || a.rcptToken){
+            jobs.push(Promise.resolve(a.cardToken || a.rcptToken));
+          } else if(!a.guest && no.charAt(0) !== 'g'){
+            jobs.push(db.collection('checkinMembers').doc(no).get()
+              .then(function(sn){ return sn.exists ? (sn.data().cardToken || '') : ''; })
+              .catch(function(){ return ''; }));
+          }
+        });
+        return Promise.all(jobs);
+      }).then(function(tokens){
+        var seen = {}, u = {};
+        u['rcpt_' + id] = FV.delete();
+        u['online_' + id] = FV.delete();
+        return Promise.all(tokens.map(function(t){
+          if(!t || seen[t]) return null;
+          seen[t] = 1;
+          return db.collection('cards').doc(t).set(u, { merge: true }).catch(function(){});
+        }));
+      }).catch(function(){}).then(function(){
+        return evRef.delete();
+      }).then(function(){
+        closeModal(); toast('削除しました（発行済みの電子領収書も取り下げました）'); loadEvents(); loadStats();
+      }).catch(function(err){
+        $('delGo').disabled = false;
+        toast(permMsg(err, 'イベント削除は主催ユニオンの管理者・受付管理者のみ可能です'));
+      });
     };
   }
 });
+/* 📄 予定表PDF: 表示中の月のイベント一覧を、棚の入金チェック表として使えるA4で印刷
+   （日付・曜日・イベント名・スピーカー・「お金入れました」チェック欄・金額・サイン欄） */
+$('btnSchedPdf').onclick = function(){
+  var evs = gEvents.slice().sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+  if(!evs.length){ toast('この月のイベントがありません。先にイベントを登録してください'); return; }
+  var yl = gMonth.y + '年' + gMonth.m + '月';
+  var wd = ['日', '月', '火', '水', '木', '金', '土'];
+  var rows = evs.map(function(ev){
+    var d = new Date((ev.date || '') + 'T00:00:00');
+    var day = isNaN(d.getTime()) ? '' : wd[d.getDay()];
+    return '<tr>'
+      + '<td class="dt mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '<span class="wd">（' + day + '）</span></td>'
+      + '<td class="nm">' + esc(ev.name || '') + (ev.speaker ? '<span class="sp">🎤 ' + esc(ev.speaker) + '</span>' : '') + '</td>'
+      + '<td class="ck"><span class="box"></span></td>'
+      + '<td class="amt">¥</td>'
+      + '<td class="sg"></td>'
+      + '</tr>';
+  }).join('');
+  var css = '@page{size:A4;margin:12mm;}'
+    + 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#000;background:#fff;}'
+    + 'h1{font-size:15pt;margin:0 0 2mm;letter-spacing:.1em;}'
+    + '.sub{font-size:9pt;color:#555;margin:0 0 4mm;}'
+    + 'table{width:100%;border-collapse:collapse;}'
+    + 'th{font-size:9pt;background:#f0f0f0;border:0.3mm solid #666;padding:2mm;}'
+    + 'td{border:0.3mm solid #666;padding:2mm 2.5mm;height:11mm;font-size:11pt;vertical-align:middle;}'
+    + '.dt{width:22mm;white-space:nowrap;font-weight:700;}'
+    + '.wd{font-size:8.5pt;color:#555;font-weight:400;}'
+    + '.nm{font-weight:700;}'
+    + '.nm .sp{font-size:8.5pt;color:#555;font-weight:400;margin-left:2mm;}'
+    + '.ck{width:26mm;text-align:center;}'
+    + '.box{display:inline-block;width:7mm;height:7mm;border:0.4mm solid #333;border-radius:1mm;vertical-align:middle;}'
+    + '.amt{width:26mm;font-size:9pt;color:#555;vertical-align:bottom;}'
+    + '.sg{width:26mm;}'
+    + '.foot{font-size:8pt;color:#777;margin-top:3mm;}'
+    + '.mono{font-family:"Courier New",monospace;}';
+  var title = '予定表_' + gEventUnion + '_' + gMonth.y + '-' + pad(gMonth.m);
+  var w = window.open('', '_blank');
+  if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
+    + '<style>' + css + '</style></head><body>'
+    + '<h1>' + esc(yl) + '　ハウディ予定表</h1>'
+    + '<p class="sub">' + esc(gEventUnion) + '　（全' + evs.length + '回）　✔ = お金を入れました</p>'
+    + '<table><tr><th>日付</th><th>イベント</th><th>お金入れました</th><th>金額</th><th>サイン</th></tr>'
+    + rows + '</table>'
+    + '<div class="foot">BASE CHECK-IN で出力（' + esc(todayStr()) + '）</div>'
+    + '<' + 'script>setTimeout(function(){ window.print(); }, 50);</' + 'script>'
+    + '</body></html>');
+  w.document.close();
+};
+
+/* 🎟 予約（RSVP）一覧: おでかけUR等の事前把握用。参加済み（出席あり）を✓表示、コピー・CSV・削除 */
+function rsvpListModal(ev){
+  var base = db.collection('checkinEvents').doc(ev.id);
+  Promise.all([base.collection('rsvps').get(), base.collection('attendance').get()]).then(function(res){
+    var rows = [];
+    res[0].forEach(function(d){ var r = d.data(); r.id = d.id; rows.push(r); });
+    rows.sort(function(a, b){ return (a.atMs || 0) - (b.atMs || 0); });
+    var att = {};
+    res[1].forEach(function(d){
+      var a = d.data();
+      if(a.status === 'pending' || a.status === 'rejected') return;
+      att[d.id] = 1;
+    });
+    var attended = rows.filter(function(r){ return att[r.id]; }).length;
+    modal('<h2>🎟 予約一覧 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '（' + rows.length + '名・参加済み ' + attended + '名）</h2>'
+      + (rows.length
+        ? '<div style="max-height:55vh;overflow:auto;">' + rows.map(function(r, i){
+            return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap;">'
+              + '<span class="mono" style="color:var(--sub);font-size:12px;width:1.8em;text-align:right;">' + (i + 1) + '</span>'
+              + '<b style="flex:1;min-width:120px;">' + esc(r.name || '') + '</b>'
+              + '<span style="color:var(--sub);font-size:12px;">' + esc(r.group || '') + (r.union ? '・' + esc(r.union) : '') + '</span>'
+              + (att[r.id] ? '<span class="pill g">✓ 参加済み</span>' : '<span class="pill n">予約のみ</span>')
+              + '<button data-rv="copy" data-i="' + i + '" title="氏名をコピー" style="padding:4px 10px;font-size:12px;">📋</button>'
+              + '<button data-rv="del" data-i="' + i + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">削除</button>'
+              + '</div>';
+          }).join('') + '</div>'
+        : '<p style="color:var(--sub);font-size:13.5px;">まだ予約はありません。会員証に「予約する」ボタンが表示されるのは開催'
+          + (ev.rsvpDays != null ? esc(ev.rsvpDays) : 4) + '日前からです。</p>')
+      + '<div class="btns">' + (rows.length ? '<button id="rvCsv">CSV出力</button>' : '') + '<button id="rvClose">閉じる</button></div>', true);
+    $('rvClose').onclick = closeModal;
+    var cb = $('rvCsv');
+    if(cb) cb.onclick = function(){
+      var out = [['会員番号', '氏名', '系列', 'ユニオン', '予約日時', '参加']];
+      rows.forEach(function(r){ out.push([r.id, r.name || '', r.group || '', r.union || '', r.atLocal || '', att[r.id] ? '参加済み' : '']); });
+      csvDownload('予約一覧_' + (ev.name || '') + '_' + (ev.date || '') + '.csv', out);
+    };
+    document.querySelector('.modal').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button[data-rv]') : null;
+      if(!b) return;
+      var r = rows[+b.getAttribute('data-i')];
+      if(!r) return;
+      if(b.getAttribute('data-rv') === 'copy'){ copyText(r.name || '', b); }
+      if(b.getAttribute('data-rv') === 'del'){
+        if(!window.confirm(r.name + ' さんの予約を削除しますか？')) return;
+        base.collection('rsvps').doc(r.id).delete().then(function(){
+          toast('予約を削除しました'); closeModal(); rsvpListModal(ev); loadEvents();
+        }).catch(function(e2){ toast(permMsg(e2, '削除権限がありません')); });
+      }
+    });
+  }).catch(function(e){ toast('予約の読込エラー: ' + e.message); });
+}
 $('btnAddEvent').onclick = function(){ eventForm(null); };
 function eventForm(ev){
   var isNew = !ev;
   var host = isNew ? gEventUnion : (ev.hostUnion || gEventUnion);
+  // 💳/🎟 は機能スイッチで表示制御。ただし既にONで保存済みのイベントはOFFに戻せるよう表示する
+  var showPay = FEATURE_PAYPAY || !!(ev && ev.payMode === 'paypay');
+  var showRsvp = RSVP_UNIONS.indexOf(host) >= 0 || !!(ev && ev.rsvp);
   var evUnions = (ev && ev.unions) || [];
   var others = gUnions.filter(function(u){ return u !== host; });
   var chk = others.length
@@ -2307,6 +2930,18 @@ function eventForm(ev){
     + '<label for="evModeSelf" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">CLAVIS主催・セルフチェックイン</label></div>'
     + '<div class="chkrow' + (isSelfCur ? '' : ' hide') + '" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode"' + (ev && ev.requireCode ? ' checked' : '') + '>'
     + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する（会場で案内された4桁を入れないとチェックインできない）</label></div>'
+    + '<div style="display:flex;gap:10px;margin-top:4px;">'
+    + '<div style="flex:1;min-width:0;"><label>受付料金 第1部（¥）</label>'
+    + '<input type="text" id="evFee1" inputmode="numeric" value="' + esc(ev && ev.fee1 != null ? ev.fee1 : 1000) + '"></div>'
+    + '<div style="flex:1;min-width:0;"><label>第2部・会場代のみ（¥）</label>'
+    + '<input type="text" id="evFee2" inputmode="numeric" value="' + esc(ev && ev.fee2 != null ? ev.fee2 : 500) + '"></div>'
+    + '<div style="flex:1;min-width:0;"><label>第3部（¥・任意）</label>'
+    + '<input type="text" id="evFee3" inputmode="numeric" value="' + esc(ev && ev.fee3 != null && ev.fee3 !== '' ? ev.fee3 : '') + '" placeholder="3部制のときだけ"></div>'
+    + '</div>'
+    + (showPay
+      ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evPayMode"' + (ev && ev.payMode === 'paypay' ? ' checked' : '') + '>'
+        + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayで集金する（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
+      : '')
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evOnline"' + (ev && ev.online ? ' checked' : '') + '>'
     + '<label for="evOnline" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">オンライン受講を受け付ける（会員証から申請→承認でZoom URL自動表示）</label></div>'
     + '<div id="rowOnline" class="' + (ev && ev.online ? '' : 'hide') + '" style="margin-left:22px;">'
@@ -2316,6 +2951,14 @@ function eventForm(ev){
     + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…（未入力ならユニオン設定の値）">'
     + '<label>Zoom URL（あとからでも可。承認キュー画面でも入力できます）</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
     + '</div>'
+    + (showRsvp
+      ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRsvp"' + (ev && ev.rsvp ? ' checked' : '') + '>'
+        + '<label for="evRsvp" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎟 会員証から予約を受け付ける（UR等。期日が来ると会員証に「予約する」ボタンが自動表示）</label></div>'
+        + '<div id="rowRsvp" class="' + (ev && ev.rsvp ? '' : 'hide') + '" style="margin-left:22px;">'
+        + '<label>予約ボタンを表示する日（開催の何日前から）</label>'
+        + '<input type="text" id="evRsvpDays" inputmode="numeric" value="' + esc(ev && ev.rsvpDays != null ? ev.rsvpDays : 4) + '" style="width:80px;">'
+        + '</div>'
+      : '')
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
@@ -2324,6 +2967,7 @@ function eventForm(ev){
   $('evModeDesk').onchange = updModeRow;
   $('evModeSelf').onchange = updModeRow;
   $('evOnline').onchange = function(){ $('rowOnline').classList.toggle('hide', !$('evOnline').checked); };
+  if($('evRsvp')) $('evRsvp').onchange = function(){ $('rowRsvp').classList.toggle('hide', !$('evRsvp').checked); };
   // 受け取りリンクが未入力なら、ユニオン設定の共通リンクをプリセット
   if(!(ev && ev.onlinePayLink)){
     db.collection('checkinUnions').doc(host).get().then(function(s){
@@ -2362,6 +3006,15 @@ function eventForm(ev){
       hostLabel: isSelf ? 'CLAVIS' : '',
       requireCode: reqCode,
       venueCode: reqCode ? ((ev && ev.venueCode) || String(Math.floor(1000 + Math.random() * 9000))) : '',
+      fee1: (function(){ var n = parseInt($('evFee1').value, 10); return isNaN(n) ? 1000 : n; })(),
+      fee2: (function(){ var n = parseInt($('evFee2').value, 10); return isNaN(n) ? 500 : n; })(),
+      fee3: (function(){ var n = parseInt($('evFee3').value, 10); return isNaN(n) ? '' : n; })(),
+      payMode: $('evPayMode') ? ($('evPayMode').checked ? 'paypay' : '') : ((ev && ev.payMode) || ''),
+      rsvp: $('evRsvp') ? $('evRsvp').checked : !!(ev && ev.rsvp),
+      rsvpDays: (function(){
+        if(!$('evRsvpDays')) return (ev && ev.rsvpDays != null) ? ev.rsvpDays : 4;
+        var n = parseInt($('evRsvpDays').value, 10); return isNaN(n) || n < 0 ? 4 : n;
+      })(),
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
       onlinePayTo: $('evOnPay').value.trim(),
@@ -2383,6 +3036,7 @@ function eventForm(ev){
       closeModal(); toast(isNew ? 'イベントを作成しました' : '保存しました');
       gMonth = { y: parseInt(date.slice(0,4), 10), m: parseInt(date.slice(5,7), 10) };
       loadEvents(); loadStats();
+      initOnlineAlert();   // オンライン設定の変更を申請監視に即反映
     }).catch(function(e){ toast(permMsg(e, 'イベントの作成・編集は主催ユニオンの管理者・受付管理者のみ可能です')); });
     });
   };
@@ -2431,43 +3085,323 @@ function copyText(t, btn){
 }
 
 /* ---------- オンライン受講の承認キュー ---------- */
-/* 誓約書アーカイブ: オンライン受講申請時の同意記録（ユニオン単位・改変不可） */
+/* 誓約書アーカイブ: オンライン受講申請時の同意記録（ユニオン単位・改変不可）。
+   イベントタブの「📜 誓約書」から常設で開ける（ev なし）。承認キューからも従来どおり開ける（ev あり）。
+   イベント別にグルーピング表示し、絞り込みとCSV台帳出力に対応 */
 function pledgeArchiveModal(ev){
-  var un = ev.hostUnion || '';
+  var un = ev ? (ev.hostUnion || '') : (gEventUnion || gUnion);
   db.collection('checkinPledges').where('union', '==', un).get().then(function(qs){
     var rows = [];
     qs.forEach(function(d){ rows.push(d.data()); });
-    rows.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
-    modal('<h2>📜 誓約書アーカイブ — ' + esc(un) + '（' + rows.length + '件）</h2>'
-      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">オンライン受講の申請時に同意された誓約の記録です。行をタップで全文を表示。</p>'
-      + (rows.length
-        ? '<div style="max-height:340px;overflow:auto;">' + rows.map(function(r, i){
-            return '<div data-pl="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);cursor:pointer;flex-wrap:wrap;">'
-              + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.atLocal || '') + '</span>'
-              + '<b>' + esc(r.name || '') + '</b>'
-              + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.no || '') + '</span>'
-              + '<span style="font-size:12px;color:var(--sub);">' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '') + '</span>'
-              + '</div>';
-          }).join('') + '</div>'
-        : '<p style="color:var(--sub);font-size:13px;">まだ記録はありません。</p>')
-      + '<div class="btns"><button id="plaClose">閉じる</button></div>', true);
-    $('plaClose').onclick = function(){ onlineModal(ev); };
-    Array.prototype.forEach.call(document.querySelectorAll('[data-pl]'), function(el){
-      el.onclick = function(){
-        var r = rows[+el.getAttribute('data-pl')];
-        modal('<h2>誓約書</h2>'
-          + '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.7;">'
-          + pledgeBodyHtml() + '</div>'
-          + '<div style="font-size:13px;margin-top:10px;line-height:1.8;">'
-          + '誓約者: <b>' + esc(r.name || '') + '</b>（' + esc(r.no || '') + '・' + esc(r.group || '') + '）<br>'
-          + '同意日時: ' + esc(r.atLocal || '') + '　対象: ' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '')
-          + (r.envApprover ? '<br>環境責任者: ' + esc(r.envApprover) : '')
-          + '<br><span style="color:var(--sub);font-size:12px;">文言バージョン: ' + esc(r.ver || '') + '</span></div>'
-          + '<div class="btns"><button id="plvBack">一覧に戻る</button></div>');
-        $('plvBack').onclick = function(){ pledgeArchiveModal(ev); };
-      };
+    // 新しいイベント順 → 同イベント内は同意日時の新しい順
+    rows.sort(function(a, b){
+      var da = a.eventDate || '', dbb = b.eventDate || '';
+      if(da !== dbb) return da < dbb ? 1 : -1;
+      var na = a.eventName || '', nb = b.eventName || '';
+      if(na !== nb) return na < nb ? -1 : 1;
+      return (b.atMs || 0) - (a.atMs || 0);
     });
+    function listHtml(q){
+      var norm = String(q || '').replace(/[ 　]/g, '').toLowerCase();
+      var out = '', lastKey = null, shown = 0;
+      rows.forEach(function(r, i){
+        if(norm){
+          var hay = ((r.name || '') + (r.no || '') + (r.group || '') + (r.eventName || '') + (r.eventDate || ''))
+            .replace(/[ 　]/g, '').toLowerCase();
+          if(hay.indexOf(norm) < 0) return;
+        }
+        var key = (r.eventDate || '') + '　' + (r.eventName || '');
+        if(key !== lastKey){
+          out += '<div style="font-size:12px;font-weight:700;color:var(--sub);background:var(--bg);'
+            + 'padding:5px 6px;border-radius:6px;margin-top:8px;position:sticky;top:0;">📅 ' + esc(key) + '</div>';
+          lastKey = key;
+        }
+        out += '<div data-pl="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);cursor:pointer;flex-wrap:wrap;">'
+          + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.atLocal || '') + '</span>'
+          + '<b>' + esc(r.name || '') + '</b>'
+          + '<span class="mono" style="font-size:11.5px;color:var(--sub);">' + esc(r.no || '') + '</span>'
+          + '<span style="font-size:12px;color:var(--sub);">' + esc(r.group || '') + '</span>'
+          + (r.envApprover ? '<span style="font-size:11.5px;color:var(--sub);">環境: ' + esc(r.envApprover) + '</span>' : '')
+          + '</div>';
+        shown++;
+      });
+      return { html: out || '<p style="color:var(--sub);font-size:13px;margin-top:10px;">'
+        + (rows.length ? '該当する記録がありません。' : 'まだ記録はありません。') + '</p>', n: shown };
+    }
+    modal('<h2>📜 誓約書アーカイブ — ' + esc(un) + '（<span id="plaCt">' + rows.length + '</span>件）</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">オンライン受講の申請時に同意された誓約の記録です。行をタップで全文を表示。</p>'
+      + '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<input type="search" id="plaQ" placeholder="氏名・番号・系列・イベントで絞り込み" style="flex:1;min-width:0;">'
+      + (rows.length ? '<button id="plaCsv" title="表示中の記録を台帳CSVで保存">台帳CSV</button>' : '')
+      + '</div>'
+      + '<div id="plaList" style="max-height:340px;overflow:auto;"></div>'
+      + '<div class="btns"><button id="plaClose">閉じる</button></div>', true);
+    function bindRows(){
+      Array.prototype.forEach.call(document.querySelectorAll('[data-pl]'), function(el){
+        el.onclick = function(){
+          var r = rows[+el.getAttribute('data-pl')];
+          modal('<h2>誓約書</h2>'
+            + '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13px;line-height:1.7;">'
+            + pledgeBodyHtml() + '</div>'
+            + '<div style="font-size:13px;margin-top:10px;line-height:1.8;">'
+            + '誓約者: <b>' + esc(r.name || '') + '</b>（' + esc(r.no || '') + '・' + esc(r.group || '') + '）<br>'
+            + '同意日時: ' + esc(r.atLocal || '') + '　対象: ' + esc(r.eventDate || '') + ' ' + esc(r.eventName || '')
+            + (r.envApprover ? '<br>環境責任者: ' + esc(r.envApprover) : '')
+            + '<br><span style="color:var(--sub);font-size:12px;">文言バージョン: ' + esc(r.ver || '') + '</span></div>'
+            + '<div class="btns"><button id="plvBack">一覧に戻る</button></div>');
+          $('plvBack').onclick = function(){ pledgeArchiveModal(ev); };
+        };
+      });
+    }
+    function rerender(){
+      var res = listHtml($('plaQ').value);
+      $('plaList').innerHTML = res.html;
+      $('plaCt').textContent = res.n;
+      bindRows();
+    }
+    rerender();
+    $('plaQ').addEventListener('input', rerender);
+    var cb = $('plaCsv');
+    if(cb) cb.onclick = function(){
+      var norm = String($('plaQ').value || '').replace(/[ 　]/g, '').toLowerCase();
+      var out = [['同意日時', '会員番号', '氏名', '系列', 'ユニオン', 'イベント日', 'イベント名', '環境責任者', '文言バージョン']];
+      rows.forEach(function(r){
+        if(norm){
+          var hay = ((r.name || '') + (r.no || '') + (r.group || '') + (r.eventName || '') + (r.eventDate || ''))
+            .replace(/[ 　]/g, '').toLowerCase();
+          if(hay.indexOf(norm) < 0) return;
+        }
+        out.push([r.atLocal || '', r.no || '', r.name || '', r.group || '', r.union || '',
+                  r.eventDate || '', r.eventName || '', r.envApprover || '', r.ver || '']);
+      });
+      csvDownload('誓約書台帳_' + un + '_' + todayStr() + '.csv', out);
+      toast('誓約書台帳CSVを保存しました（' + (out.length - 1) + '件）');
+    };
+    $('plaClose').onclick = ev ? function(){ onlineModal(ev); } : closeModal;
   }).catch(function(e){ toast(permMsg(e, '誓約書アーカイブの閲覧権限がありません')); });
+}
+$('btnPledges').onclick = function(){ pledgeArchiveModal(null); };
+
+/* ══════════ 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） ══════════
+   任命された担当（checkinUnions.trainers）＋管理者だけが、研修生の登録と
+   チュートリアル記録を行える。登録と同時に会員証を発行し、QRを本人に読ませて渡す */
+var gTrMembers = [], gTrToday = [], gTrSex = '', gTrLast = null;
+function trainerEnter(){
+  showView('vTrainer');
+  $('trUnionLbl').textContent = gUnion;
+  $('trMe').textContent = '担当: ' + (gProf.name || '');
+  db.collection('checkinUnions').doc(gUnion).get().then(function(sn){
+    var d = sn.exists ? sn.data() : {};
+    gUnionPrefix[gUnion] = d.noPrefix || '';   // 自動発番用（このページはafterLoginを通らない）
+    var isAdmin = isOwner() || gProf.role === 'admin' || ((d.admins || []).indexOf(gUser.uid) >= 0);
+    var allowed = isAdmin || ((d.trainers || []).indexOf(gUser.uid) >= 0);
+    if(!allowed){
+      $('trDeny').classList.remove('hide');
+      $('trDeny').textContent = '研修生登録の担当に任命されていません。ユニオンの管理者に「🎓 研修生登録の担当」への任命を依頼してください。';
+      return;
+    }
+    $('trMain').classList.remove('hide');
+    trLoadMembers();
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+}
+function trLoadMembers(){
+  return fetchMembers(gUnion).then(function(list){
+    gTrMembers = list;
+    $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
+    trFillUp();
+    trRenderList();
+  }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
+}
+// UPルビー: そのユニオンの既存系列＋自分の名前を初期値に。手入力も可
+function trFillUp(){
+  var set = {};
+  gTrMembers.forEach(function(m){ if(m.group) set[m.group] = 1; });
+  var my = gProf.name || '';
+  if(my) set[my] = 1;
+  var gs = Object.keys(set).sort();
+  $('trUp').innerHTML = gs.map(function(g){
+    return '<option value="' + esc(g) + '"' + (g === my ? ' selected' : '') + '>' + esc(g) + '</option>';
+  }).join('') + '<option value="__free">その他（手入力）</option>';
+}
+$('trUp').onchange = function(){
+  $('trUpFree').classList.toggle('hide', $('trUp').value !== '__free');
+  if($('trUp').value === '__free') $('trUpFree').focus();
+};
+Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(b){
+  b.onclick = function(){
+    gTrSex = b.getAttribute('data-sex') || '';
+    Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+  };
+});
+function trTab(reg){
+  $('trTabReg').classList.toggle('on', reg);
+  $('trTabList').classList.toggle('on', !reg);
+  $('trPaneReg').classList.toggle('hide', !reg);
+  $('trPaneList').classList.toggle('hide', reg);
+}
+$('trTabReg').onclick = function(){ trTab(true); };
+$('trTabList').onclick = function(){ trTab(false); trRenderList(); };
+$('trGo').onclick = function(){
+  var name = $('trName').value.trim();
+  if(!name){ toast('氏名を入力してください'); return; }
+  var upSel = $('trUp').value;
+  var up = upSel === '__free' ? $('trUpFree').value.trim() : upSel;
+  if(!up){ toast('UPルビーを選択してください'); return; }
+  var no = nextMemberNo(gTrMembers, gUnion);
+  if(!no){ toast('番号の自動発番に失敗しました。管理者にプレフィックス設定を確認してください'); return; }
+  $('trGo').disabled = true;
+  var data = {
+    no: no, union: gUnion, name: name, group: up,
+    kana: $('trKana').value.trim(), sex: gTrSex,
+    grade: '', active: true, trainee: true, trainings: {},
+    regBy: gUser.uid, regByName: gProf.name || '',
+    createdAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp()
+  };
+  db.collection('checkinMembers').doc(no).get().then(function(sn){
+    if(sn.exists) throw { code: 'dup' };
+    return db.collection('checkinMembers').doc(no).set(data);
+  }).then(function(){
+    return issueCard(data, function(){
+      gTrMembers.push(data);
+      gTrToday.unshift(data);
+      gTrLast = data;
+      $('trName').value = ''; $('trKana').value = '';
+      $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
+      trRenderToday();
+      trShowQr(data);
+    });
+  }).catch(function(e){
+    if(e && e.code === 'dup'){ toast('番号が重複しました。もう一度お試しください'); trLoadMembers(); }
+    else toast(permMsg(e, '研修生登録の権限がありません（担当への任命を確認してください）'));
+  }).then(function(){ $('trGo').disabled = false; });
+};
+function trShowQr(m){
+  if(!m.cardToken){ toast('会員証の発行に失敗しました。もう一度お試しください'); return; }
+  $('trMain').classList.add('hide');
+  $('trQrView').classList.remove('hide');
+  $('tqName').textContent = m.name || '';
+  $('tqNo').textContent = m.no || '';
+  makeQr($('tqQr'), cardUrl(m.cardToken), 240);
+  try{ if(navigator.vibrate) navigator.vibrate(80); }catch(e){}
+}
+$('tqDone').onclick = function(){
+  $('trQrView').classList.add('hide');
+  $('trMain').classList.remove('hide');
+  var n = $('trName'); if(n) try{ n.focus(); }catch(e){}
+};
+$('tqShare').onclick = function(){
+  var m = gTrLast;
+  if(!m || !m.cardToken) return;
+  var url = cardUrl(m.cardToken);
+  if(navigator.share){
+    navigator.share({ title: '会員証', text: m.name + ' さんの会員証', url: url }).catch(function(){});
+  } else copyText(url);
+};
+$('tqUndo').onclick = function(){
+  var m = gTrLast;
+  if(!m) return;
+  if(!window.confirm(m.name + ' さんの登録を取り消しますか？（会員証も無効になります）')) return;
+  var batch = db.batch();
+  batch.delete(db.collection('checkinMembers').doc(m.no));
+  if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
+  batch.delete(db.collection('cardClaims').doc(m.no));
+  batch.commit().then(function(){
+    gTrToday = gTrToday.filter(function(x){ return x.no !== m.no; });
+    gTrMembers = gTrMembers.filter(function(x){ return x.no !== m.no; });
+    gTrLast = null;
+    toast('取り消しました');
+    $('trQrView').classList.add('hide');
+    $('trMain').classList.remove('hide');
+    trRenderToday();
+    $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
+  }).catch(function(e){ toast(permMsg(e, '取消できるのは自分が登録した研修生だけです')); });
+};
+function trRenderToday(){
+  $('trToday').innerHTML = gTrToday.length
+    ? '<label>本日の登録（この端末）</label>' + gTrToday.map(function(m, i){
+        return '<div style="display:flex;gap:8px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);">'
+          + '<b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.name || '') + '</b>'
+          + '<span class="mono" style="font-size:12px;color:var(--sub);">' + esc(m.no) + '</span>'
+          + '<button data-tq="' + i + '" style="padding:7px 12px;font-size:13px;">QR再表示</button></div>';
+      }).join('')
+    : '';
+}
+$('trToday').addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('button[data-tq]') : null;
+  if(!b) return;
+  var m = gTrToday[+b.getAttribute('data-tq')];
+  if(m){ gTrLast = m; trShowQr(m); }
+});
+// 研修生一覧 → タップでチュートリアルのチェックリスト
+function trRenderList(){
+  var el = $('trPaneList');
+  var ts = gTrMembers.filter(function(m){ return m.trainee && m.active !== false; });
+  ts.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
+  el.innerHTML = ts.length
+    ? ts.map(function(m, i){
+        var p = trMainProgress(m.trainings);
+        var bpc = m.trainings && m.trainings['BPC済み'];
+        return '<div data-tr="' + i + '" style="display:flex;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;">'
+          + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
+          + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '') + '</div></div>'
+          + (bpc ? '<span class="pill g">修了</span>' : '')
+          + '<span class="pill n">' + p + '/3</span>'
+          + '<span style="color:var(--sub);">›</span></div>';
+      }).join('')
+    : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">研修生はまだ登録されていません。</p>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-tr]'), function(row){
+    row.onclick = function(){ trChecklist(ts[+row.getAttribute('data-tr')]); };
+  });
+}
+function trChecklist(m){
+  var tr = m.trainings || {};
+  function rowHtml(it){
+    var r = tr[it.k];
+    return '<div style="display:flex;gap:8px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line);">'
+      + '<b style="flex:1;font-size:15px;">' + esc(it.k) + (it.note ? '<span style="font-size:11px;color:var(--sub);">（' + esc(it.note) + '）</span>' : '') + '</b>'
+      + (r
+        ? '<span style="font-size:12.5px;color:var(--green);font-weight:700;">✓ ' + esc(trDateShort(r.at)) + ' ' + esc(r.byName || '') + '</span>'
+          + (r.by === gUser.uid || canEditUnion(gUnion)
+            ? '<button data-tk="' + esc(it.k) + '" data-tundo="1" style="padding:5px 10px;font-size:12px;">取消</button>' : '')
+        : '<button data-tk="' + esc(it.k) + '" class="primary" style="padding:9px 14px;font-size:13px;">✓ 受講済みにする</button>')
+      + '</div>';
+  }
+  modal('<h2>' + esc(m.name || '') + '<span style="font-size:12px;color:var(--sub);font-weight:400;margin-left:8px;">' + esc(m.no) + '</span></h2>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">チュートリアル ' + trMainProgress(tr) + '/3'
+    + (tr['BPC済み'] ? '　<span class="pill g">修了 — 昇格待ち</span>' : '') + '</p>'
+    + '<label>チュートリアル</label>'
+    + TR_ITEMS.filter(function(it){ return it.main; }).map(rowHtml).join('')
+    + '<label style="margin-top:14px;">サブ項目</label>'
+    + TR_ITEMS.filter(function(it){ return !it.main; }).map(rowHtml).join('')
+    + '<div class="btns"><button id="tcClose">閉じる</button></div>', true);
+  $('tcClose').onclick = closeModal;
+  document.querySelector('.modal').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button[data-tk]') : null;
+    if(!b) return;
+    var k = b.getAttribute('data-tk');
+    if(b.getAttribute('data-tundo')){
+      if(!window.confirm('「' + k + '」の記録を取り消しますか？')) return;
+      trWrite(m, k, null).then(function(){ closeModal(); trChecklist(m); });
+    } else {
+      if(!window.confirm(m.name + ' さんの「' + k + '」を受講済みにしますか？\n（担当: ' + (gProf.name || '') + '・' + todayStr() + '）')) return;
+      trWrite(m, k, { at: todayStr(), byName: gProf.name || '', by: gUser.uid, atMs: Date.now() })
+        .then(function(){ closeModal(); trChecklist(m); });
+    }
+  });
+}
+// 記録は名簿（マスター）と会員証（表示用）の両方へ。取消は該当キーだけ削除
+function trWrite(m, k, rec){
+  m.trainings = m.trainings || {};
+  if(rec) m.trainings[k] = rec; else delete m.trainings[k];
+  // update() でマップを丸ごと置き換える（取消時のキー削除も反映される）
+  var ps = [db.collection('checkinMembers').doc(m.no).update({ trainings: m.trainings })];
+  if(m.cardToken) ps.push(db.collection('cards').doc(m.cardToken).update({ trainings: m.trainings }));
+  return Promise.all(ps).then(function(){
+    toast(rec ? '「' + k + '」を記録しました' : '「' + k + '」を取り消しました');
+    trRenderList();
+  }).catch(function(e){ toast(permMsg(e, '研修記録の権限がありません（担当への任命を確認してください）')); });
 }
 function onlineModal(ev){
   // 電子領収書の発行者名（主催ユニオンの設定）
@@ -2475,11 +3409,47 @@ function onlineModal(ev){
   db.collection('checkinUnions').doc(ev.hostUnion || '').get().then(function(s){
     if(s.exists && s.data().issuer) olIssuer = s.data().issuer;
   }).catch(function(){});
-  db.collection('checkinEvents').doc(ev.id).collection('attendance')
-    .where('method', '==', 'online').get().then(function(qs){
+  // ライブ承認画面: 開いている間もリアルタイムで新着申請が追加される（当日ラッシュ対応）。
+  // 再描画は申請の構成が変わったときだけにして、入力途中の金額・チェックを守る
+  if(window.gOlmUnsub){ try{ window.gOlmUnsub(); }catch(e0){} window.gOlmUnsub = null; }
+  var olmFirst = true, olmKey = '', olmPrev = [];
+  window.gOlmUnsub = db.collection('checkinEvents').doc(ev.id).collection('attendance')
+    .where('method', '==', 'online').onSnapshot(function(qs){
     var apps = [];
     qs.forEach(function(d){ var a = d.data(); a.id = d.id; apps.push(a); });
     apps.sort(function(a, b){ return (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1); });
+    var key = apps.map(function(a){
+      return a.id + ':' + (a.status || '') + ':' + (a.pledged ? 1 : 0) + ':' + (a.paypaySent ? 1 : 0) + ':' + (a.envApproved ? 1 : 0);
+    }).join('|');
+    var isOpen = !!$('olmMark');
+    if(!olmFirst && !isOpen){
+      // モーダルが（別画面で）閉じられていたら購読を止める
+      try{ window.gOlmUnsub(); }catch(e1){}
+      window.gOlmUnsub = null;
+      return;
+    }
+    if(!olmFirst && key === olmKey) return;
+    // 入力途中の金額・領収書チェックを申請ID単位で退避 → 再描画後に復元
+    var saved = {};
+    if(!olmFirst && isOpen){
+      olmPrev.forEach(function(a, i){
+        if(a.status === 'pending' && $('olAmt_' + i)){
+          saved[a.id] = { amt: $('olAmt_' + i).value, rc: $('olRc_' + i) ? $('olRc_' + i).checked : true };
+        }
+      });
+    }
+    var oldPend = 0, newPend = 0;
+    olmPrev.forEach(function(a){ if(a.status === 'pending') oldPend++; });
+    apps.forEach(function(a){ if(a.status === 'pending') newPend++; });
+    renderOlModal(apps, saved);
+    if(!olmFirst && newPend > oldPend) beep('ok');   // 開いている間の新着もお知らせ
+    olmKey = key; olmPrev = apps; olmFirst = false;
+  }, function(e){ toast('読込エラー: ' + e.message); });
+
+  function olmStop(){
+    if(window.gOlmUnsub){ try{ window.gOlmUnsub(); }catch(e1){} window.gOlmUnsub = null; }
+  }
+  function renderOlModal(apps, saved){
     var rows = apps.map(function(a, i){
       var st = a.status === 'pending' ? '<span class="pill a">承認待ち</span>'
         : a.status === 'approved' ? '<span class="pill g">承認済み' + (a.approvedBy ? '（' + esc(a.approvedBy) + '）' : '') + '</span>'
@@ -2489,7 +3459,10 @@ function onlineModal(ev){
         + '　PayPay送金申告: ' + (a.paypaySent ? '✓ ' + yen(a.fee || 0) : '—');
       var btns = '';
       if(a.status === 'pending'){
-        btns = '<button class="primary" data-ola="approve" data-i="' + i + '">承認（' + yen(a.fee || 0) + ' 受領確認済み）</button>'
+        btns = '<span style="font-size:12.5px;color:var(--sub);">金額 ¥</span>'
+          + '<input type="text" id="olAmt_' + i + '" inputmode="numeric" value="' + esc(a.fee != null ? a.fee : (ev.onlineFee || 1000)) + '" style="width:70px;padding:6px 6px;text-align:right;">'
+          + '<label style="font-size:12px;color:var(--sub);white-space:nowrap;margin:0;"><input type="checkbox" id="olRc_' + i + '" checked> 領収書を発行</label>'
+          + '<button class="primary" data-ola="approve" data-i="' + i + '">承認（受領確認済み）</button>'
           + '<button data-ola="reject" data-i="' + i + '" class="danger">却下</button>';
       } else if(a.status === 'rejected'){
         btns = '<button data-ola="reset" data-i="' + i + '">申請を削除（再申請できるようにする）</button>';
@@ -2506,7 +3479,7 @@ function onlineModal(ev){
         + '<div class="rowbtns" style="flex-wrap:wrap;">' + btns + '</div>'
         + '</div>';
     }).join('');
-    modal('<h2>💻 オンライン受講 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
+    modal('<h2>💻 オンライン受講 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '<span id="olmMark" class="hide"></span></h2>'
       + '<label>Zoom参加情報（保存すると承認済みの受講者の会員証に表示されます）</label>'
       + '<textarea id="olZoomPaste" rows="2" placeholder="Zoomの「招待をコピー」の全文をここに貼り付けると、URL・ID・パスコードを自動で抜き出します"'
       + ' style="width:100%;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical;"></textarea>'
@@ -2516,12 +3489,19 @@ function onlineModal(ev){
       + '<input type="text" id="olZoomId" value="' + esc(fmtZoomId(ev.zoomId || '')) + '" style="width:140px;" placeholder="ミーティングID">'
       + '<input type="text" id="olZoomPw" value="' + esc(ev.zoomPw || '') + '" style="width:110px;" placeholder="パスコード">'
       + '<button id="olZoomSave">保存</button></div>'
-      + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）</label>'
+      + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）<small style="color:var(--sub);font-weight:400;">　新しい申請は自動で追加されます</small></label>'
       + (rows || '<p style="color:var(--sub);font-size:13px;">申請はまだありません。受講者は自分の会員証から申請できます。</p>')
       + '<div class="btns"><button id="olPledges">📜 誓約書アーカイブ</button><button id="olClose">閉じる</button></div>',
       true);
-    $('olClose').onclick = closeModal;
-    $('olPledges').onclick = function(){ pledgeArchiveModal(ev); };
+    // 退避しておいた入力途中の値を復元
+    apps.forEach(function(a, i){
+      if(a.status === 'pending' && saved[a.id]){
+        if($('olAmt_' + i)) $('olAmt_' + i).value = saved[a.id].amt;
+        if($('olRc_' + i)) $('olRc_' + i).checked = saved[a.id].rc;
+      }
+    });
+    $('olClose').onclick = function(){ olmStop(); closeModal(); };
+    $('olPledges').onclick = function(){ olmStop(); pledgeArchiveModal(ev); };
     // 招待の丸ごと貼り付け → 自動判別して各欄に反映
     $('olZoomPaste').addEventListener('input', function(){
       var t = $('olZoomPaste').value;
@@ -2560,12 +3540,13 @@ function onlineModal(ev){
       var a = apps[parseInt(b.getAttribute('data-i'), 10)];
       var act = b.getAttribute('data-ola');
       var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(a.id);
-      var done = function(msg){ toast(msg); closeModal(); onlineModal(ev); loadEvents(); };
+      // 書き込むとライブ購読が発火して一覧が自動更新されるので、モーダルは開いたままでよい
+      var done = function(msg){ toast(msg); loadEvents(); };
       var markCard = function(val){
         if(!a.cardToken) return Promise.resolve();
         var u = {}; u['online_' + ev.id] = val;
         // 電子領収書: 承認と同時に発行、却下・申請削除で取り下げ
-        if(val === 'approved' && olIssuer){
+        if(val === 'approved' && olIssuer && !a.rcptNone){
           u['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
                                  by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
         } else {
@@ -2574,23 +3555,33 @@ function onlineModal(ev){
         return db.collection('cards').doc(a.cardToken).set(u, { merge: true }).catch(function(){});
       };
       if(act === 'approve'){
+        var idx = parseInt(b.getAttribute('data-i'), 10);
+        var amtIn = $('olAmt_' + idx);
+        var nAmt = parseInt(String((amtIn && amtIn.value) || '').replace(/[^\d]/g, ''), 10);
+        if(isNaN(nAmt) || nAmt < 0){ toast('金額を入力してください（無料なら0）'); return; }
+        var wantRcpt = !!($('olRc_' + idx) && $('olRc_' + idx).checked);
+        a.fee = nAmt; a.rcptNone = !wantRcpt;   // markCard が参照
         b.disabled = true;
-        attRef.set({ status: 'approved', paid: true, approvedBy: (gProf && gProf.name) || '', approvedAt: FV.serverTimestamp() }, { merge: true })
+        attRef.set({ status: 'approved', paid: true, fee: nAmt, rcptNone: !wantRcpt,
+                     approvedBy: (gProf && gProf.name) || '', approvedAt: FV.serverTimestamp() }, { merge: true })
           .then(function(){ return markCard('approved'); })
-          .then(function(){ done(a.name + ' さんを承認しました。会員証にZoomボタンが表示されます'); })
+          .then(function(){
+            auditLog(ev.id, 'オンライン承認', a.name || a.id, yen(nAmt) + (wantRcpt ? '・領収書あり' : '・領収書なし'));
+            done(a.name + ' さんを承認しました（' + yen(nAmt) + '）。会員証にZoomボタンが表示されます');
+          })
           .catch(function(e){ b.disabled = false; toast(permMsg(e, '承認権限がありません')); });
       }
       if(act === 'reject'){
         if(!window.confirm(a.name + ' さんの申請を却下しますか？')) return;
         attRef.set({ status: 'rejected', paid: false }, { merge: true })
           .then(function(){ return markCard('rejected'); })
-          .then(function(){ done('却下しました'); })
+          .then(function(){ auditLog(ev.id, 'オンライン却下', a.name || a.id, ''); done('却下しました'); })
           .catch(function(e){ toast(permMsg(e, '権限がありません')); });
       }
       if(act === 'reset'){
         attRef.delete()
           .then(function(){ return markCard('reapply'); })
-          .then(function(){ done('申請を削除しました。本人は再申請できます'); })
+          .then(function(){ auditLog(ev.id, 'オンライン申請削除', a.name || a.id, yen(a.fee || 0)); done('申請を削除しました。本人は再申請できます'); })
           .catch(function(e){ toast(permMsg(e, '権限がありません')); });
       }
       if(act === 'rercpt'){
@@ -2605,24 +3596,41 @@ function onlineModal(ev){
         ru['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
                                 by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
         db.collection('cards').doc(a.cardToken).set(ru, { merge: true })
-          .then(function(){ b.disabled = false; toast((a.name || '') + ' さんの領収書を発行しました。会員証に表示されます'); })
+          .then(function(){ return attRef.set({ rcptNone: false }, { merge: true }).catch(function(){}); })
+          .then(function(){
+            b.disabled = false;
+            auditLog(ev.id, '領収書再発行', a.name || a.id, yen(a.fee || 0));
+            toast((a.name || '') + ' さんの領収書を発行しました。会員証に表示されます');
+          })
           .catch(function(e){ b.disabled = false; toast(permMsg(e, '発行権限がありません')); });
       }
     });
-  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+  }
 }
 
 /* ---------- 会計（BASE集計表のデジタル版） ---------- */
 function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
+/* 📋 お金の操作ログ: だれが・いつ・何を・誰に対して（追記専用。ルールで編集/削除を禁止） */
+function auditLog(evId, act, target, detail){
+  if(!evId) return;
+  try{
+    db.collection('checkinEvents').doc(evId).collection('audit').add({
+      at: FV.serverTimestamp(), atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now(),
+      byUid: (gUser && gUser.uid) || '', byName: (gProf && gProf.name) || '',
+      act: act || '', target: target || '', detail: detail || ''
+    }).catch(function(){});
+  }catch(e){}
+}
 // 納金票: 封筒同封用の小票をA4の1/4サイズで1枚印刷。封入現金 = 現金徴収 − 支出 − 不足金
 // 本体ページごと印刷すると重いので、小さな別ウィンドウに票だけを書いて印刷する
 // （即表示され、ウィンドウのタイトルがそのままPDF保存時のファイル名になる）
 function printCashSlip(ev, f, live){
+  var ppMode = ev.payMode === 'paypay';   // 💳 PayPay集金: 経費は預り金から支出＝現金から差し引かない
   var cash = (f.cashTotal != null) ? f.cashTotal : live.cash;
   var pp = (f.paypayTotal != null) ? f.paypayTotal : live.pp;
   var shortage = f.shortage || 0;
   var expOnly = (f.expenseTotal || 0) - shortage;   // expenseTotal は不足金込みで保存されている
-  var seal = cash - expOnly - shortage;
+  var seal = ppMode ? cash : cash - expOnly - shortage;
   var when = '';
   try{ if(f.updatedAt && f.updatedAt.toDate){ var d = f.updatedAt.toDate();
     when = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' '
@@ -2631,28 +3639,67 @@ function printCashSlip(ev, f, live){
     return '<div class="cs-row' + (strong ? ' cs-strong' : '') + '">'
       + '<span>' + label + '</span><span class="mono">' + val + '</span></div>';
   }
+  function item(label, val, sub){
+    return '<div class="cs-row cs-item' + (sub ? ' cs-sub' : '') + '">'
+      + '<span>' + label + '</span><span class="mono">' + val + '</span></div>';
+  }
+  // 収入の内訳（会計で保存したBA人数の行）: 第1〜3部の料金に一致する行はラベルに部を明記
+  var f1 = evFee1(ev), f2 = evFee2(ev), f3 = evFee3(ev);
+  var incRows = '', incSum = 0;
+  (f.income || []).forEach(function(r){
+    var amt = r.amount != null ? r.amount : (Number(r.unit) || 0) * (Number(r.count) || 0);
+    if(!amt && !r.count) return;
+    var lbl = r.label || '';
+    if(lbl === 'BA' && f1 !== f2){
+      if(Number(r.unit) === f1) lbl = 'BA（第1部）';
+      else if(Number(r.unit) === f2) lbl = 'BA（第2部）';
+      else if(f3 != null && Number(r.unit) === f3) lbl = 'BA（第3部）';
+    }
+    incSum += amt;
+    incRows += item(esc(lbl) + '　' + yen(Number(r.unit) || 0) + ' × ' + (Number(r.count) || 0) + '名', yen(amt));
+  });
+  // 支出の明細（会計で入力した経費の行）
+  var expRows = '';
+  (f.expenses || []).forEach(function(r){
+    var amt = Number(r.amount) || 0;
+    if(!amt) return;
+    expRows += item(esc(r.label || 'その他') + (r.note ? '（' + esc(r.note) + '）' : '')
+      + (r.receipt ? '　※領収書あり' : ''), '−' + yen(amt));
+  });
+  if(shortage) expRows += item('不足金', '−' + yen(shortage));
   var slip = '<div class="cs-slip">'
     + '<div class="cs-head"><b>納　金　票</b><span>' + esc(ev.hostUnion || '') + '</span></div>'
     + '<div class="cs-ev">' + esc(ev.date || '') + '　' + esc(ev.name || '')
     + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</div>'
-    + line('現金徴収', yen(cash) + '（' + live.cashN + '名' + (live.refN ? '・返金' + live.refN + '件' : '') + '）')
-    + (pp ? line('PayPay徴収（参考・現金外）', yen(pp)) : '')
-    + line('支出計', '−' + yen(expOnly).slice(1) + '円')
-    + (shortage ? line('不足金', '−' + yen(shortage).slice(1) + '円') : '')
+    + (incRows
+      ? '<div class="cs-sec">収入の内訳</div>' + incRows
+        + item('収入計', yen(f.incomeTotal != null ? f.incomeTotal : incSum), true)
+      : '')
+    + line('現金徴収' + (ppMode ? '（例外分）' : ''), yen(cash) + '（' + live.cashN + '名' + (live.refN ? '・返金' + live.refN + '件' : '') + '）')
+    + (pp ? line(ppMode ? 'PayPay徴収（現金外）' : 'PayPay徴収（参考・現金外）', yen(pp)) : '')
+    + '<div class="cs-sec">支出の明細' + (ppMode ? '（預り金から支出・現金差引なし）' : '') + '</div>'
+    + (expRows || item('支出なし', '¥0'))
+    + item('支出計', (expOnly + shortage) ? '−' + yen(expOnly + shortage) : '¥0', true)
     + line('封入現金額', yen(seal), true)
     + '<div class="cs-foot">'
     + '司会: ' + esc(f.mcName || '　　　') + '　受付: ' + esc(f.receptionName || '　　　')
     + (when ? '　確定: ' + esc(when) : '') + '</div>'
     + '<div class="cs-sign">受領確認サイン:　　　　　　　　　　</div>'
     + '</div>';
-  var css = '@page{size:A4;margin:8mm;}'
+  var css = '@page{size:A4;margin:6mm;}'
     + 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:#000;background:#fff;}'
-    + '.cs-quarter{width:97mm;height:140.5mm;box-sizing:border-box;border-right:0.3mm dashed #999;border-bottom:0.3mm dashed #999;padding-right:4mm;}'
+    + '.cs-quarter{width:97mm;min-height:128mm;box-sizing:border-box;border-right:0.3mm dashed #999;padding-right:4mm;padding-bottom:2mm;}'
+    + '.cs-cap{font-size:8.5pt;font-weight:700;color:#555;margin:1mm 0;}'
+    + '.cs-cut{width:97mm;border-top:0.3mm dashed #999;text-align:center;color:#999;font-size:7.5pt;padding:1mm 0;}'
     + '.cs-slip{border:0.4mm solid #333;border-radius:2mm;padding:5mm 5mm;box-sizing:border-box;}'
     + '.cs-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12pt;letter-spacing:.3em;}'
     + '.cs-head span{font-size:9pt;letter-spacing:.05em;}'
     + '.cs-ev{font-size:10pt;font-weight:700;margin:2mm 0 3mm;border-bottom:0.3mm solid #999;padding-bottom:1.5mm;}'
     + '.cs-row{display:flex;justify-content:space-between;font-size:9.5pt;padding:1mm 0;}'
+    + '.cs-sec{font-size:7.5pt;font-weight:700;color:#555;letter-spacing:.15em;margin-top:2mm;border-bottom:0.2mm solid #bbb;padding-bottom:0.5mm;}'
+    + '.cs-item{font-size:8.5pt;padding:0.6mm 0;}'
+    + '.cs-item span:first-child{padding-right:2mm;}'
+    + '.cs-sub{border-top:0.2mm solid #999;margin-top:0.5mm;padding-top:1mm;font-weight:700;}'
     + '.cs-strong{border-top:0.4mm solid #333;margin-top:2mm;padding-top:2mm;font-size:12.5pt;font-weight:900;}'
     + '.cs-foot{font-size:8pt;color:#444;margin-top:3mm;}'
     + '.cs-sign{font-size:9.5pt;margin-top:4mm;border-top:0.2mm dashed #999;padding-top:3mm;}'
@@ -2663,7 +3710,9 @@ function printCashSlip(ev, f, live){
   if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
   w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
     + '<style>' + css + '</style></head><body>'
-    + '<div class="cs-quarter">' + slip + '<div class="cs-note">✂ 点線で切り取り（A4の1/4サイズ）</div></div>'
+    + '<div class="cs-quarter"><div class="cs-cap">【提出用】</div>' + slip + '</div>'
+    + '<div class="cs-cut">✂ ここで切り取り</div>'
+    + '<div class="cs-quarter"><div class="cs-cap">【封筒貼付用】</div>' + slip + '</div>'
     + '<' + 'script>setTimeout(function(){ window.print(); }, 50);</' + 'script>'
     + '</body></html>');
   w.document.close();
@@ -2672,15 +3721,23 @@ function printCashSlip(ev, f, live){
 function financeModal(ev){
   var finRef = db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main');
   var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance');
+  var ppMode = ev.payMode === 'paypay';   // 💳 PayPay集金イベント: BA人数はPayPay受領も数える
   Promise.all([finRef.get(), attRef.get()]).then(function(res){
     var snap = res[0];
     // 受付の徴収データからBA人数を自動集計（未保存の場合の初期値に使う）
-    var attCount = 0, c1000 = 0, c500 = 0;
+    // c1000/c500/c3 はイベント設定の第1部/第2部/第3部料金に一致した徴収の人数
+    var bF1 = evFee1(ev), bF2 = evFee2(ev), bF3 = evFee3(ev);
+    var attCount = 0, c1000 = 0, c500 = 0, c3 = 0;
     var adet = [], dCash = 0, dPp = 0, dUnpaid = 0, dCashN = 0, dRefN = 0;
+    var mcN = [], rcN = [];   // 受付で登録したMC・受付管理者の名前（納金票の署名に自動連動）
     res[1].forEach(function(d){
       var a = d.data(), fee = a.fee || 0;
       var pending = a.status === 'pending' || a.status === 'rejected';
       if(!pending) attCount++;
+      if(!pending && a.name){
+        if(a.role === 'mc') mcN.push(a.name);
+        if(a.role === 'staff') rcN.push(a.name);
+      }
       if(fee > 0 || a.method === 'online'){
         adet.push(a);
         if(!pending && fee > 0){
@@ -2693,10 +3750,11 @@ function financeModal(ev){
           }
         }
       }
-      if(!pending && fee > 0 && a.paid !== false && a.payMethod !== 'paypay'){
+      if(!pending && fee > 0 && a.paid !== false && (ppMode || a.payMethod !== 'paypay')){
         var net = fee - (a.refund || 0);
-        if(net === 1000) c1000++;
-        else if(net === 500) c500++;
+        if(net === bF1) c1000++;
+        else if(net === bF2) c500++;
+        else if(bF3 != null && net === bF3) c3++;
       }
     });
     adet.sort(function(a, b){ return (a.atLocal || '') < (b.atLocal || '') ? -1 : 1; });
@@ -2729,14 +3787,31 @@ function financeModal(ev){
       var n = parseInt(String(r.count).replace(/[^\d]/g, ''), 10);
       if(n > 0) savedHasCount = true;
     });
-    var inc = (f.income && savedHasCount) ? f.income : [
-      { label: 'BA', unit: 1000, count: c1000 || '' },
-      { label: 'BA', unit: 500, count: c500 || '' },
-      { label: 'BA（オンライン）', unit: 1000, count: '' },
-      { label: 'BA（オンライン）', unit: 500, count: '' },
+    var incDef = [
+      { label: 'BA', unit: bF1, count: c1000 || '' },
+      { label: 'BA', unit: bF2, count: c500 || '' }
+    ];
+    if(bF3 != null) incDef.push({ label: 'BA', unit: bF3, count: c3 || '' });
+    incDef.push(
+      { label: 'BA（オンライン）', unit: (ev.onlineFee != null ? ev.onlineFee : 1000), count: '' },
+      { label: 'BA（オンライン）', unit: bF2, count: '' },
       { label: '', unit: '', count: '' },
       { label: '', unit: '', count: '' }
-    ];
+    );
+    var inc = (f.income && savedHasCount) ? f.income : incDef;
+    // 受付の途中で支出だけ入力して保存すると、保存済みの人数で固定されて
+    // 以降の受付（IN）が反映されなくなるため、未確定の間はBA行（設定料金に
+    // 一致する行）を常に最新の受付データで表示する。その他の行は保存値を維持
+    if(!f.locked && f.income && savedHasCount){
+      inc = inc.map(function(r){
+        if((r.label || '') !== 'BA') return r;
+        var u = Number(r.unit);
+        if(u === bF1) return { label: 'BA', unit: bF1, count: c1000 || '' };
+        if(u === bF2) return { label: 'BA', unit: bF2, count: c500 || '' };
+        if(bF3 != null && u === bF3) return { label: 'BA', unit: bF3, count: c3 || '' };
+        return r;
+      });
+    }
     var exp = f.expenses || [
       { label: 'スピーカー差し入れ', note: '', amount: '', receipt: false },
       { label: '会場使用料', note: '', amount: '', receipt: false },
@@ -2765,12 +3840,28 @@ function financeModal(ev){
         + '<label style="font-size:11.5px;color:var(--sub);white-space:nowrap;"><input type="checkbox" id="feR' + i + '"' + (r.receipt ? ' checked' : '') + '> 領収書</label>'
         + '</div>';
     }).join('');
+    var floatBase = (f.floatBase != null) ? f.floatBase : 10000;
+    var floatHtml = ppMode
+      ? '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:12px;">'
+        + '<label style="margin:0;">💳 預り金（経費用・ユニオン管理者から）</label>'
+        + '<div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px;">'
+        + '<span style="font-size:13.5px;">預り金</span><span style="flex:1"></span>'
+        + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+        + '<input type="text" id="fnFloat" inputmode="numeric" value="' + esc(floatBase) + '" style="width:80px;padding:6px 6px;text-align:right;">'
+        + '</div>'
+        + '<div style="font-size:13.5px;text-align:right;">経費 <span id="fnFlExp" class="mono">¥0</span>'
+        + '　→　残高 <b id="fnFlBal" class="mono">¥0</b>'
+        + '　／　補充依頼 <b id="fnFlRefill" class="mono" style="color:var(--accent);">¥0</b></div>'
+        + '<p style="font-size:11.5px;color:var(--sub);margin:6px 0 0;">経費（支出計）は預り金から支払い、補充依頼額をユニオン管理者にPayPayで請求して満額に戻します。</p>'
+        + '</div>'
+      : '';
     modal(
       '<h2>会計 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
       + '<p style="font-size:12px;color:var(--sub);margin:0 0 8px;">'
+      + (ppMode ? '<span class="pill a">💳 PayPay集金</span>　' : '')
       + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label style="color:var(--green);margin:0;">収入（＋）</label>'
-      + (!f.locked && (c1000 || c500) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
+      + (!f.locked && (c1000 || c500 || c3) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
       + '</div>' + incHtml
       + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(+)計 <span id="fiTotal" class="mono">¥0</span></div>'
       + '<label style="color:var(--accent);">支出（−）</label>' + expHtml
@@ -2782,17 +3873,19 @@ function financeModal(ev){
       + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(−)計 <span id="feTotal" class="mono">¥0</span></div>'
       + '<div style="text-align:right;font-family:\'Zen Kaku Gothic New\',sans-serif;font-weight:900;font-size:18px;border-top:2px solid var(--line);padding-top:8px;">'
       + '計 <span id="fnNet" class="mono">¥0</span></div>'
+      + floatHtml
       + '<div style="display:flex;gap:8px;margin-top:10px;">'
-      + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || '') + '" style="flex:1;min-width:0;">'
-      + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || '') + '" style="flex:1;min-width:0;">'
+      + '<input type="text" id="fnMc" placeholder="司会者名" value="' + esc(f.mcName || mcN.join('・')) + '" style="flex:1;min-width:0;">'
+      + '<input type="text" id="fnRc" placeholder="受付担当者名" value="' + esc(f.receptionName || rcN.join('・')) + '" style="flex:1;min-width:0;">'
       + '</div>'
       + detailHtml
       + (f.locked
         ? '<p style="margin-top:10px;"><span class="pill g">✓ 確定済み</span><span style="font-size:12.5px;color:var(--sub);margin-left:8px;">編集はロックされています</span></p>'
         : '')
       + '<div class="btns"><button id="fnCancel">閉じる</button>'
+      + '<button id="fnLog">📋 操作ログ</button>'
       + (f.locked
-        ? '<button class="primary" id="fnSlip">🖨 納金票を印刷</button>'
+        ? ((ppMode && !dCash) ? '' : '<button class="primary" id="fnSlip">🖨 納金票を印刷</button>')
           + (canEditUnion(ev.hostUnion) ? '<button id="fnUnlock" class="danger">確定を解除</button>' : '')
         : '<button id="fnSave">保存</button><button class="primary" id="fnLock">保存して確定</button>')
       + '</div>',
@@ -2813,18 +3906,28 @@ function financeModal(ev){
       $('fiTotal').textContent = yen(ti);
       $('feTotal').textContent = yen(te);
       $('fnNet').textContent = yen(ti - te);
+      if(ppMode && $('fnFloat')){
+        // 預り金: 経費(支出計)を差し引いた残高と、満額に戻すための補充依頼額
+        var fb = num($('fnFloat').value);
+        $('fnFlExp').textContent = te ? '−' + yen(te).slice(1) : '¥0';
+        $('fnFlBal').textContent = yen(fb - te);
+        $('fnFlRefill').textContent = yen(te);
+      }
       return { ti: ti, te: te };
     }
     document.querySelector('.modal').addEventListener('input', recompute);
     recompute();
     $('fnCancel').onclick = closeModal;
+    $('fnLog').onclick = function(){ closeModal(); auditListModal(ev); };
     // 受付の徴収データでBA行を入れ直す（保存済みの古い人数を最新に更新したいとき用）
     var ab = $('fnAuto');
     if(ab) ab.onclick = function(){
-      $('fiL0').value = 'BA'; $('fiU0').value = 1000; $('fiC0').value = c1000 || '';
-      $('fiL1').value = 'BA'; $('fiU1').value = 500; $('fiC1').value = c500 || '';
+      $('fiL0').value = 'BA'; $('fiU0').value = bF1; $('fiC0').value = c1000 || '';
+      $('fiL1').value = 'BA'; $('fiU1').value = bF2; $('fiC1').value = c500 || '';
+      if(bF3 != null && $('fiC2')){ $('fiL2').value = 'BA'; $('fiU2').value = bF3; $('fiC2').value = c3 || ''; }
       recompute();
-      toast('受付データからBA人数を入力しました（¥1,000×' + c1000 + '名・¥500×' + c500 + '名）');
+      toast('受付データからBA人数を入力しました（' + yen(bF1) + '×' + c1000 + '名・' + yen(bF2) + '×' + c500 + '名'
+        + (bF3 != null ? '・' + yen(bF3) + '×' + c3 + '名' : '') + '）');
     };
     if(f.locked){
       // 確定済み: 入力を全てロック
@@ -2837,6 +3940,7 @@ function financeModal(ev){
       if(ub) ub.onclick = function(){
         if(!window.confirm('確定を解除して編集できるようにしますか？')) return;
         finRef.set({ locked: false }, { merge: true }).then(function(){
+          auditLog(ev.id, '確定解除', '', '');
           toast('確定を解除しました'); closeModal(); financeModal(ev); loadFinanceTab();
         }).catch(function(e){ toast(permMsg(e, '解除の権限がありません')); });
       };
@@ -2853,7 +3957,7 @@ function financeModal(ev){
                  amount: num($('feA' + i).value), receipt: $('feR' + i).checked };
       });
       $('fnSave').disabled = true; $('fnLock').disabled = true;
-      finRef.set({
+      var fdoc = {
         income: income, expenses: expenses,
         shortage: num($('fnShort').value),
         incomeTotal: totals.ti, expenseTotal: totals.te, net: totals.ti - totals.te,
@@ -2861,7 +3965,10 @@ function financeModal(ev){
         mcName: $('fnMc').value.trim(), receptionName: $('fnRc').value.trim(),
         locked: !!lock,
         updatedAt: FV.serverTimestamp(), updatedBy: gUser.uid
-      }).then(function(){
+      };
+      if(ppMode && $('fnFloat')) fdoc.floatBase = num($('fnFloat').value);
+      finRef.set(fdoc).then(function(){
+        auditLog(ev.id, lock ? '会計確定' : '会計保存', '', '計 ' + yen(totals.ti - totals.te));
         closeModal();
         toast((lock ? '会計を確定しました' : '会計を保存しました') + '（計 ' + yen(totals.ti - totals.te) + '）');
         loadFinanceTab();
@@ -2873,6 +3980,39 @@ function financeModal(ev){
     $('fnSave').onclick = function(){ saveFinance(false); };
     $('fnLock').onclick = function(){ saveFinance(true); };
   }).catch(function(e){ toast('会計の読込エラー: ' + e.message); });
+}
+/* 📋 お金の操作ログ: だれが・いつ・何をしたかの記録（checkinEvents/{id}/audit・追記専用）を一覧表示 */
+function auditListModal(ev){
+  db.collection('checkinEvents').doc(ev.id).collection('audit').get().then(function(qs){
+    var rows = [];
+    qs.forEach(function(d){ rows.push(d.data()); });
+    rows.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
+    var html = rows.map(function(r){
+      return '<div style="padding:7px 2px;border-bottom:1px solid var(--line);font-size:13px;">'
+        + '<div style="display:flex;gap:8px;align-items:baseline;">'
+        + '<b>' + esc(r.act || '') + '</b>'
+        + (r.target ? '<span>' + esc(r.target) + '</span>' : '')
+        + '<span style="flex:1"></span>'
+        + '<span class="mono" style="font-size:11.5px;color:var(--sub);white-space:nowrap;">' + esc(r.atLocal || '') + '</span></div>'
+        + '<div style="display:flex;gap:8px;color:var(--sub);font-size:12px;">'
+        + (r.detail ? '<span>' + esc(r.detail) + '</span>' : '')
+        + '<span style="flex:1"></span>'
+        + '<span>操作: ' + esc(r.byName || '?') + '</span></div>'
+        + '</div>';
+    }).join('') || '<p style="font-size:13px;color:var(--sub);">まだ操作ログがありません。会計に関する操作（徴収・返金・金額変更・オンライン承認・確定など）をすると自動で記録されます。</p>';
+    modal('<h2>📋 操作ログ — ' + esc(ev.name || '') + '</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">お金に関する操作の記録です（追記専用・あとから編集/削除はできません）。全 ' + rows.length + ' 件</p>'
+      + '<div style="max-height:52vh;overflow:auto;">' + html + '</div>'
+      + '<div class="btns"><button id="auCsv">CSV出力</button><button class="primary" id="auClose">閉じる</button></div>', true);
+    $('auClose').onclick = function(){ closeModal(); financeModal(ev); };
+    $('auCsv').onclick = function(){
+      var out = [['日時', '操作', '対象', '内容', '操作者']];
+      rows.slice().reverse().forEach(function(r){
+        out.push([r.atLocal || '', r.act || '', r.target || '', r.detail || '', r.byName || '']);
+      });
+      csvDownload('操作ログ_' + (ev.date || '') + '_' + (ev.name || ''), out);
+    };
+  }).catch(function(e){ toast('操作ログの読込エラー: ' + e.message); });
 }
 
 /* 領収書設定: 電子領収書の発行者名（ユニオンごと） */
@@ -2963,11 +4103,95 @@ $('btnRcptCsv').onclick = function(){
   }).catch(function(e){ toast('出力エラー: ' + e.message); });
 };
 
+/* 📊 収支CSV: イベント1行の収支まとめを期間指定でまとめて出力。
+   列: 日付 / イベント / スピーカー / 収入内訳(単価×人数) / 収入合計 / 支出内訳 / 支出合計 / 計 / 状態。
+   最終行に期間合計 */
+$('btnFinCsv').onclick = function(){
+  var un = gFinUnion;
+  // 月の選択肢: 過去24ヶ月〜未来2ヶ月
+  var opts = [], base = new Date();
+  for(var i = -24; i <= 2; i++){
+    var dt = new Date(base.getFullYear(), base.getMonth() + i, 1);
+    opts.push(dt.getFullYear() + '-' + pad(dt.getMonth() + 1));
+  }
+  var curKey = monthKey(gMonth.y, gMonth.m);
+  function monthSel(id){
+    return '<select id="' + id + '" style="width:auto;">' + opts.map(function(k){
+      return '<option' + (k === curKey ? ' selected' : '') + '>' + k + '</option>';
+    }).join('') + '</select>';
+  }
+  modal('<h2>📊 収支CSV — ' + esc(un) + '</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">'
+    + '期間内のイベントを1行ずつ（日付・イベント・収入内訳・収入合計・支出内訳・支出合計・計）で出力します。'
+    + '最終行に期間合計が付きます。</p>'
+    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+    + '<label style="margin:0;">期間</label>' + monthSel('fcFrom') + '<span>〜</span>' + monthSel('fcTo')
+    + '</div>'
+    + '<div class="btns"><button id="fcCancel">キャンセル</button><button class="primary" id="fcGo">CSVを出力</button></div>');
+  $('fcCancel').onclick = closeModal;
+  $('fcGo').onclick = function(){
+    var from = $('fcFrom').value, to = $('fcTo').value;
+    if(from > to){ var tmp = from; from = to; to = tmp; }
+    $('fcGo').disabled = true;
+    db.collection('checkinEvents').where('month', '>=', from).where('month', '<=', to).get().then(function(qs){
+      var evs = [];
+      qs.forEach(function(d){
+        var ev = d.data(); ev.id = d.id;
+        if((ev.unions || []).indexOf(un) >= 0) evs.push(ev);
+      });
+      evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+      if(!evs.length){ $('fcGo').disabled = false; toast('期間内のイベントがありません'); return; }
+      return Promise.all(evs.map(function(ev){
+        return db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main').get()
+          .then(function(s2){ return s2.exists ? s2.data() : null; })
+          .catch(function(){ return null; });
+      })).then(function(fins){
+        var out = [['日付', 'イベント', 'スピーカー', '収入内訳', '収入合計', '支出内訳', '支出合計', '計', '状態']];
+        var tIn = 0, tEx = 0, tNet = 0;
+        evs.forEach(function(ev, i){
+          var f = fins[i];
+          if(!f){
+            out.push([ev.date || '', ev.name || '', ev.speaker || '', '', '', '', '', '', '未入力']);
+            return;
+          }
+          var incParts = [];
+          (f.income || []).forEach(function(r){
+            var cnt = Number(r.count) || 0;
+            var amt = (r.amount != null) ? Number(r.amount) : (Number(r.unit) || 0) * cnt;
+            if(!cnt && !amt) return;
+            incParts.push(((r.label && r.label !== 'BA') ? r.label + ' ' : '')
+              + (Number(r.unit) || 0).toLocaleString('ja-JP') + '円×' + cnt + '人');
+          });
+          var expParts = [];
+          (f.expenses || []).forEach(function(r){
+            var amt = Number(r.amount) || 0;
+            if(!amt) return;
+            expParts.push((r.label || 'その他') + (r.note ? '（' + r.note + '）' : '')
+              + ' ' + amt.toLocaleString('ja-JP') + '円');
+          });
+          if(f.shortage) expParts.push('不足金 ' + Number(f.shortage).toLocaleString('ja-JP') + '円');
+          var ti = f.incomeTotal || 0, te = f.expenseTotal || 0;
+          var net = (f.net != null) ? f.net : ti - te;
+          tIn += ti; tEx += te; tNet += net;
+          out.push([ev.date || '', ev.name || '', ev.speaker || '',
+            incParts.join(' / '), ti, expParts.join(' / '), te, net,
+            f.locked ? '確定' : '入力中']);
+        });
+        out.push(['期間合計', from + '〜' + to, '', '', tIn, '', tEx, tNet, '']);
+        csvDownload('収支_' + un + '_' + from + '_' + to + '.csv', out);
+        toast('収支CSVを出力しました（' + evs.length + 'イベント）');
+        closeModal();
+      });
+    }).catch(function(e){ $('fcGo').disabled = false; toast('読込エラー: ' + e.message); });
+  };
+};
+
 /* 会計タブ: 月内イベントの会計状況一覧 */
 function loadFinanceTab(){
   $('fnMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('btnRcptSet').classList.toggle('hide', !canEditUnion(gFinUnion));
   $('btnRcptCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
+  $('btnFinCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
   var key = monthKey(gMonth.y, gMonth.m), body = $('finBody');
   db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
     var evs = [];
@@ -3004,6 +4228,7 @@ function loadFinanceTab(){
         html += '<div class="evrow" data-id="' + esc(ev.id) + '" style="cursor:pointer;">'
           + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
           + '<b>' + esc(ev.name || '') + '</b>'
+          + (ev.payMode === 'paypay' ? '<span class="jointtag">💳</span>' : '')
           + (ev.online ? '<span class="jointtag">💻</span>' : '')
           + '<span style="flex:1"></span>' + cells + st + '</div>';
       });
@@ -3038,7 +4263,17 @@ function renderRecSelect(){
       + esc((ev.date || '').slice(5).replace('-', '/')) + ' ' + esc(ev.name || '')
       + ((ev.unions || []).length > 1 ? '（合同）' : '') + '</option>';
   }).join('');
+  updFeeModeLabels();
 }
+// 料金モードの選択肢に、選択中イベントの設定料金を表示
+function updFeeModeLabels(){
+  var id = $('recEvSel').value, ev = null;
+  gEvents.forEach(function(x){ if(x.id === id) ev = x; });
+  var o = $('feeModeSel').options;
+  o[0].text = '通常受付（1部 ' + yen(evFee1(ev)) + '）';
+  o[1].text = '会場代のみ（' + yen(evFee2(ev)) + '）';
+}
+$('recEvSel').onchange = updFeeModeLabels;
 $('btnRecStart').onclick = function(){
   var id = $('recEvSel').value;
   if(!id){ toast('イベントを選択してください'); return; }
@@ -3067,20 +4302,29 @@ function startReception(ev){
 
   gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null,
            feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1,
-           issuer: '' };
+           issuer: '',
+           payMode: ev.payMode === 'paypay',        // 💳 現金なし・PayPay集金イベント
+           payLink: ev.onlinePayLink || '' };
   // 受付を開き直したら締め切りを解除（オンライン申請を再開）
   if(ev.recClosed){
     ev.recClosed = false;
     db.collection('checkinEvents').doc(ev.id).set({ recClosed: false }, { merge: true }).catch(function(){});
   }
-  // 電子領収書の発行者名（主催ユニオンの設定を読む）
+  // 電子領収書の発行者名とPayPay受け取りリンク（主催ユニオンの設定を読む）
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
-    if(gRec && gRec.ev === ev && s.exists && s.data().issuer) gRec.issuer = s.data().issuer;
+    if(gRec && gRec.ev === ev && s.exists){
+      if(s.data().issuer) gRec.issuer = s.data().issuer;
+      if(!gRec.payLink && s.data().payLink){ gRec.payLink = s.data().payLink; renderFeeRow(); }
+    }
   }).catch(function(){});
   renderFeeRow();
   $('recNone').classList.add('hide');
   $('recArea').classList.remove('hide');
   $('btnRecStop').classList.remove('hide');
+  // オンライン対応イベントは日付に関係なく申請を監視（見逃し防止）
+  if(ev.online) olWatchEvent(ev);
+  // デスクトップ通知の許可はユーザー操作のタイミングでだけ確認できる
+  try{ if('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); }catch(eN){}
   $('unionTallyTile').classList.toggle('hide', (ev.unions || []).length < 2);
   $('recent').innerHTML = '<li style="color:var(--sub)">まだ受付はありません</li>';
   stageIdle();
@@ -3121,26 +4365,63 @@ function stopReception(){
 }
 
 /* ── 受付の料金（ピッと同時に自動計上） ── */
+// イベントごとに設定可能（未設定の初期値: 第1部¥1,000 / 第2部・会場代のみ¥500）
+// 第3部は任意: 金額を設定したイベントだけ3部制（evFee3 が null なら2部制）
+function evFee1(ev){ var n = ev ? parseInt(ev.fee1, 10) : NaN; return isNaN(n) ? 1000 : n; }
+function evFee2(ev){ var n = ev ? parseInt(ev.fee2, 10) : NaN; return isNaN(n) ? 500 : n; }
+function evFee3(ev){ var n = ev ? parseInt(ev.fee3, 10) : NaN; return isNaN(n) ? null : n; }
 function currentFee(){
   if(!gRec) return 0;
-  if(gRec.feeMode === 'venue') return 500;          // 会場代のみ（ハウディ代はPayPay等）
-  return gRec.part === 2 ? 500 : 1000;              // 通常: 1部¥1000 / 2部から¥500
+  if(gRec.feeMode === 'venue') return evFee2(gRec.ev);   // 会場代のみ（ハウディ代はPayPay等）
+  if(gRec.part === 3){ var f3 = evFee3(gRec.ev); return f3 != null ? f3 : evFee2(gRec.ev); }
+  return gRec.part === 2 ? evFee2(gRec.ev) : evFee1(gRec.ev);
 }
 function renderFeeRow(){
   if(!gRec) return;
+  var moneyIcon = gRec.payMode ? '💳' : '💰';
   if(gRec.feeMode === 'venue'){
-    $('feeInfo').textContent = '💰 会場代のみ受付中 — 新規 ¥500';
+    $('feeInfo').textContent = moneyIcon + ' 会場代のみ受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
     $('btnPartToggle').classList.add('hide');
   } else {
-    $('feeInfo').textContent = '💰 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee());
+    $('feeInfo').textContent = moneyIcon + ' 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
     var b = $('btnPartToggle');
     b.classList.remove('hide');
-    b.textContent = gRec.part === 1 ? '第2部受付に切替（新規¥500）' : '第1部受付に戻す（新規¥1,000）';
+    var f3 = evFee3(gRec.ev);   // 第3部設定ありなら 1→2→3→1 のサイクル切替
+    b.textContent = gRec.part === 1
+      ? '第2部受付に切替（新規' + yen(evFee2(gRec.ev)) + '）'
+      : (gRec.part === 2 && f3 != null)
+        ? '第3部受付に切替（新規' + yen(f3) + '）'
+        : '第1部受付に戻す（新規' + yen(evFee1(gRec.ev)) + '）';
+  }
+  renderPpPanel();
+}
+// 💳 PayPay集金モード: 受付画面に金額入りの送金QRを常時表示（料金の部切替に追従）
+function renderPpPanel(){
+  var pnl = $('ppPanel');
+  if(!pnl) return;
+  if(!gRec || !gRec.payMode){ pnl.classList.add('hide'); return; }
+  pnl.classList.remove('hide');
+  var fee = currentFee();
+  if(gRec.payLink){
+    var url = payLinkUrl(gRec.payLink, fee);
+    $('ppQr').innerHTML = '';
+    makeQr($('ppQr'), url, 120);
+    $('ppAmt').textContent = yen(fee);
+    $('ppLinkTxt').textContent = url;
+    $('ppNote').textContent = payLinkHasAmount(gRec.payLink)
+      ? '読み取ると宛先と金額が自動入力されます。送金画面を確認してから受付してください'
+      : '読み取ると宛先が入ります。金額 ' + yen(fee) + ' は本人がPayPay側で入力してください';
+  } else {
+    $('ppQr').innerHTML = '';
+    $('ppAmt').textContent = yen(fee);
+    $('ppLinkTxt').textContent = '';
+    $('ppNote').textContent = 'PayPay受け取りリンクが未設定です。会計タブの「⚙ ユニオン設定」で登録するとQRが表示されます';
   }
 }
 $('btnPartToggle').onclick = function(){
   if(!gRec) return;
-  gRec.part = gRec.part === 1 ? 2 : 1;
+  gRec.part = gRec.part === 1 ? 2
+    : (gRec.part === 2 && evFee3(gRec.ev) != null) ? 3 : 1;
   renderFeeRow();
   toast('第' + gRec.part + '部受付に切り替えました（新規 ' + yen(currentFee()) + '）');
   focusScan();
@@ -3149,6 +4430,13 @@ $('btnPartToggle').onclick = function(){
 function setPay(no, fields){
   var a = gRec && gRec.att[no];
   if(!a) return;
+  // 💰 操作ログ: お金に関わる変更（徴収・返金・受領方法・金額）は内容を監査ログに残す
+  var ps = [];
+  if('fee' in fields && fields.fee !== (a.fee || 0)) ps.push('徴収額 ' + yen(a.fee || 0) + '→' + yen(fields.fee));
+  if('paid' in fields && fields.paid !== (a.paid !== false)) ps.push(fields.paid ? '徴収済みにする（' + yen(('fee' in fields ? fields.fee : a.fee) || 0) + '）' : '未徴収にする');
+  if('payMethod' in fields && fields.payMethod !== (a.payMethod || '')) ps.push(fields.payMethod === 'paypay' ? 'PayPay受領に変更' : '現金受領に変更');
+  if('refund' in fields && fields.refund !== (a.refund || 0)) ps.push(fields.refund ? '返金 ' + yen(fields.refund) : '返金の取消');
+  if(ps.length) auditLog(gRec.ev.id, '会計操作', a.name || no, ps.join('・'));
   Object.keys(fields).forEach(function(k){ a[k] = fields[k]; });
   renderTallies();
   db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
@@ -3165,7 +4453,7 @@ function syncReceipt(no){
   if(!m || !m.cardToken) return;
   var a = gRec.att[no];
   var key = 'rcpt_' + gRec.ev.id, u = {};
-  if(a && (a.fee || 0) > 0 && a.paid !== false){
+  if(a && (a.fee || 0) > 0 && a.paid !== false && !a.rcptNone){
     u[key] = { d: gRec.ev.date || '', ev: gRec.ev.name || '',
                amt: (a.fee || 0) - (a.refund || 0),
                by: gRec.issuer, no: no, at: Date.now() };
@@ -3178,29 +4466,73 @@ function payModal(no){
   var a = gRec && gRec.att[no];
   if(!a) return;
   var fee = a.fee || 0, refund = a.refund || 0, paid = a.paid !== false;
+  var isPp = a.payMethod === 'paypay';
   var status = fee === 0 ? '徴収なし'
     : (!paid ? '未徴収（' + yen(fee) + '）'
-      : '徴収済み ' + yen(fee) + (refund ? '（' + yen(refund) + ' 返金済み）' : ''));
+      : '徴収済み ' + yen(fee) + (isPp ? '（PayPay）' : '（現金）') + (refund ? '（' + yen(refund) + ' 返金済み）' : ''));
   var btns = '';
   if(fee > 0){
     btns += paid
       ? '<button id="pmUnpaid">未徴収にする</button>'
       : '<button class="primary" id="pmPaid">徴収済みにする（' + yen(fee) + ' 受領）</button>';
-    if(paid && !refund) btns += '<button id="pmRefund">¥500 返金する（2部不参加）</button>';
+    if(paid) btns += isPp
+      ? '<button id="pmToCash">現金受領に変更</button>'
+      : '<button id="pmToPp">PayPay受領に変更</button>';
+    if(paid && !refund && fee >= 500) btns += '<button id="pmRefund">¥500 返金する</button>';
     if(refund) btns += '<button id="pmUnrefund">返金を取り消す</button>';
   } else {
     btns += '<p style="font-size:13px;color:var(--sub);">この受付は徴収対象外です（登壇者・運営・セルフ等）。</p>';
   }
+  // 返金額の直接入力（¥500以外の返金にも対応）
+  var customRef = (fee > 0 && paid && !refund)
+    ? '<div style="display:flex;gap:6px;align-items:center;margin-top:6px;border-top:1px solid var(--line);padding-top:10px;">'
+      + '<span style="font-size:13.5px;">返金額を直接入力</span><span style="flex:1"></span>'
+      + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+      + '<input type="text" id="pmRefAmt" inputmode="numeric" style="width:80px;padding:6px 6px;text-align:right;">'
+      + '<button id="pmRefGo">返金する</button></div>'
+    : '';
+  // 徴収額の変更（ユニオン管理者・受付管理者のみ表示）: オンライン分の手入力金額の修正・誤入力の訂正用。
+  // 変更すると納金票・BA人数・受付画面の集計にそのまま反映され、操作ログに記録される
+  var feeEdit = canEditUnion(gRec.ev.hostUnion || gUnion)
+    ? '<div style="display:flex;gap:6px;align-items:center;margin-top:6px;border-top:1px solid var(--line);padding-top:10px;">'
+      + '<span style="font-size:13.5px;">徴収額を変更 <small style="color:var(--sub);">(管理者)</small></span><span style="flex:1"></span>'
+      + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+      + '<input type="text" id="pmFeeAmt" inputmode="numeric" value="' + fee + '" style="width:80px;padding:6px 6px;text-align:right;">'
+      + '<button id="pmFeeGo">変更</button></div>'
+    : '';
   modal('<h2>会計操作 — ' + esc(a.name || '') + '</h2>'
     + '<p style="font-size:14px;">現在: <b>' + status + '</b></p>'
     + '<div class="btns" style="justify-content:flex-start;flex-wrap:wrap;">' + btns + '</div>'
+    + customRef
+    + feeEdit
     + '<div class="btns"><button id="pmClose">閉じる</button></div>');
   $('pmClose').onclick = function(){ closeModal(); focusScan(); };
   var b;
   if((b = $('pmUnpaid'))) b.onclick = function(){ setPay(no, { paid: false }); closeModal(); toast(a.name + ' さんを未徴収にしました'); focusScan(); };
-  if((b = $('pmPaid'))) b.onclick = function(){ setPay(no, { paid: true }); closeModal(); toast(a.name + ' さんから ' + yen(fee) + ' を徴収しました'); focusScan(); };
+  if((b = $('pmPaid'))) b.onclick = function(){
+    // 未徴収→徴収: PayPay集金イベント中はPayPay受領として記録
+    var flds = { paid: true };
+    if(gRec.payMode && !a.payMethod) flds.payMethod = 'paypay';
+    setPay(no, flds); closeModal(); toast(a.name + ' さんから ' + yen(fee) + ' を徴収しました'); focusScan();
+  };
+  if((b = $('pmToCash'))) b.onclick = function(){ setPay(no, { payMethod: '' }); closeModal(); toast(a.name + ' さんを現金受領に変更しました'); focusScan(); };
+  if((b = $('pmToPp'))) b.onclick = function(){ setPay(no, { payMethod: 'paypay' }); closeModal(); toast(a.name + ' さんをPayPay受領に変更しました'); focusScan(); };
   if((b = $('pmRefund'))) b.onclick = function(){ setPay(no, { refund: 500 }); closeModal(); toast(a.name + ' さんに ¥500 返金しました'); focusScan(); };
+  if((b = $('pmRefGo'))) b.onclick = function(){
+    var n = parseInt(String($('pmRefAmt').value).replace(/[^\d]/g, ''), 10);
+    if(isNaN(n) || n <= 0){ toast('返金額を入力してください'); return; }
+    if(n > fee){ toast('返金額が徴収額（' + yen(fee) + '）を超えています'); return; }
+    setPay(no, { refund: n }); closeModal(); toast(a.name + ' さんに ' + yen(n) + ' 返金しました'); focusScan();
+  };
   if((b = $('pmUnrefund'))) b.onclick = function(){ setPay(no, { refund: 0 }); closeModal(); toast('返金を取り消しました'); focusScan(); };
+  if((b = $('pmFeeGo'))) b.onclick = function(){
+    var n = parseInt(String($('pmFeeAmt').value).replace(/[^\d]/g, ''), 10);
+    if(isNaN(n) || n < 0){ toast('金額を入力してください（無料なら0）'); return; }
+    if(n === fee){ toast('金額が変わっていません'); return; }
+    if(n < refund){ toast('返金済み額（' + yen(refund) + '）より小さい金額にはできません'); return; }
+    setPay(no, { fee: n }); closeModal();
+    toast(a.name + ' さんの徴収額を ' + yen(n) + ' に変更しました'); focusScan();
+  };
 }
 $('recent').addEventListener('click', function(e){
   var li = e.target.closest ? e.target.closest('li[data-no]') : null;
@@ -3254,6 +4586,7 @@ function attListModal(mode){
       + '<span style="color:var(--sub);font-size:12px;margin-left:6px;">' + esc(attGroup(x.id, a)) + (a.union ? '・' + esc(a.union) : '') + '</span>'
       + tags + '</div>'
       + pay
+      + '<button data-ala="copy" data-no="' + esc(x.id) + '" title="他システムへの入力用に氏名をコピー" style="padding:4px 10px;font-size:12px;">📋 名前コピー</button>'
       + (fee > 0 ? '<button data-ala="pay" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">会計</button>' : '')
       + (a.role && !a.guest ? '<button data-ala="unrole" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">役割解除</button>' : '')
       + '<button data-ala="del" data-no="' + esc(x.id) + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">取消</button>'
@@ -3270,6 +4603,7 @@ function attListModal(mode){
     var no = b.getAttribute('data-no'), act = b.getAttribute('data-ala');
     var a = gRec && gRec.att[no];
     if(!a) return;
+    if(act === 'copy'){ copyText(a.name || '', b); return; }   // 一覧は開いたまま連続コピーできる
     if(act === 'pay'){ closeModal(); payModal(no); }
     if(act === 'unrole'){
       if(!window.confirm(a.name + ' さんの役割（' + roleLabel(a.role) + '）を解除しますか？出席の記録は残ります。')) return;
@@ -3285,6 +4619,13 @@ function attListModal(mode){
       delete gRec.att[no];
       renderTallies();
       syncReceipt(no);
+      auditLog(gRec.ev.id, '受付取消', a.name || no,
+        (a.fee || 0) > 0 ? yen(a.fee || 0) + (a.paid !== false ? '（徴収済み分）' : '（未徴収分）') : '');
+      // その場QR領収書（ゲスト等）を発行済みなら、その領収書も取り下げ
+      if(a.rcptToken){
+        var ru = {}; ru['rcpt_' + gRec.ev.id] = FV.delete();
+        db.collection('cards').doc(a.rcptToken).set(ru, { merge: true }).catch(function(){});
+      }
       // オンライン受講の取消は会員証の承認表示もリセット（承認キューの「申請を削除」と同じマーカー）
       if(a.method === 'online' && a.cardToken){
         var up = {};
@@ -3318,7 +4659,7 @@ function stageIdle(){
   var ev = gRec && gRec.ev;
   $('stage').className = 'scanstage';
   $('stageBody').innerHTML =
-    '<div class="wait-icon">🔴</div><h2 style="margin:0;font-size:22px;">カードをかざしてください</h2>'
+    '<div class="wait-icon">🔴</div><h2 style="margin:0;font-size:44px;font-weight:900;letter-spacing:.04em;">QRをかざしてください</h2>'
     + '<p class="stage-sub">' + (ev ? esc(ev.date + ' ' + ev.name) + (ev.speaker ? '（🎤 ' + esc(ev.speaker) + '）' : '') : '')
     + '　紙カード・スマホ会員証どちらもOK</p>';
 }
@@ -3363,20 +4704,38 @@ function normalizeScan(raw){
 function scan(raw, method){
   if(!gRec) return;
   raw = normalizeScan(raw);
-  // スマホ会員証形式 "m:412211:xxxx"（番号+署名）にも対応
+  // スマホ会員証形式 "m:412211:xxxx"（番号+署名）にも対応。
+  // スキャナのShift取りこぼしやJIS/US配列ズレで「:」が「;」「+」に化けることがあるため、区切りは3種を許容する
   var no = raw, sig = null;
-  var mm = /^m:([\w-]+):(\w*)/.exec(raw);
+  var mm = /^m[:;+]([\w-]+)[:;+](\w*)/.exec(raw);
   if(mm){ no = mm[1]; sig = mm[2]; }
   // 署名がIMEで復元不能に化けている場合は、署名なし（紙カード同等の扱い）として受付する
   if(sig && !/^[0-9a-f]{4,}$/.test(sig)) sig = null;
   no = no.replace(/\.0$/, '');
   var member = gRec.roster[no];
   if(member && sig && member.cardSig && sig !== member.cardSig){
-    beep('ng');
-    setStage('ng',
-      '<span class="hit-badge">無効な会員証</span>'
-      + '<div class="hit-name">' + esc(member.name || '') + '</div>'
-      + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+    // 受付開始後に会員証が再発行されていると、開始時に読み込んだ名簿の署名が古い。
+    // 弾く前に名簿の最新を1件だけ取り直し、最新の署名と一致すればそのまま受付する
+    db.collection('checkinMembers').doc(no).get().then(function(s){
+      if(!gRec) return;
+      var fresh = s.exists ? s.data() : null;
+      if(fresh && fresh.active !== false){
+        fresh.no = no;
+        gRec.roster[no] = fresh;
+        if(!fresh.cardSig || sig === fresh.cardSig){ checkinMember(fresh, method, null); return; }
+      }
+      beep('ng');
+      setStage('ng',
+        '<span class="hit-badge">無効な会員証</span>'
+        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
+        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+    }).catch(function(){
+      beep('ng');
+      setStage('ng',
+        '<span class="hit-badge">無効な会員証</span>'
+        + '<div class="hit-name">' + esc(member.name || '') + '</div>'
+        + '<p class="stage-sub">この会員証は再発行または無効化されています。本人確認のうえ「手入力」で番号を打てば受付できます。</p>');
+    });
     return;
   }
   if(!member){
@@ -3437,6 +4796,8 @@ function checkinMember(member, method, role){
   };
   if(isVisitor) data.visitor = true;
   if(role) data.role = role;
+  var ppRec = fee > 0 && gRec.payMode;   // 💳 PayPay集金イベント: 徴収はPayPay受領として記録
+  if(ppRec) data.payMethod = 'paypay';
   writeAttendance(no, data);
   var joint = (gRec.ev.unions || []).length > 1;
   beep('ok');
@@ -3445,9 +4806,11 @@ function checkinMember(member, method, role){
     + '<div class="hit-name">' + esc(member.name) + '</div>'
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
+    + (member.trainee ? '<div style="margin:4px 0;"><span class="pill n">研修生</span> <span style="font-size:14px;font-weight:700;">チュートリアル ' + trMainProgress(member.trainings) + '/3</span></div>' : '')
     + '<p class="hit-meta">' + nowHM()
-    + (fee > 0 ? '　<b>' + yen(fee) + ' 徴収</b>' : '') + '</p>'
-    + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : ''));
+    + (fee > 0 ? '　<b>' + (ppRec ? '💳 PayPay ' : '') + yen(fee) + ' 徴収</b>' : '') + '</p>'
+    + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
+    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''));
   var su = $('stgUnpaid');
   if(su) su.onclick = function(){
     setPay(no, { paid: false });
@@ -3455,6 +4818,12 @@ function checkinMember(member, method, role){
       '<span class="hit-badge">未徴収</span>'
       + '<div class="hit-name">' + esc(member.name) + '</div>'
       + '<p class="hit-meta">' + yen(fee) + ' を未徴収として記録しました。受け取ったらサイドの「徴収済」を押してください</p>');
+  };
+  var sc = $('stgCash');
+  if(sc) sc.onclick = function(){
+    setPay(no, { payMethod: '' });
+    toast(member.name + ' さんを現金受領に変更しました');
+    sc.disabled = true;
   };
 }
 // 名簿の名前検索（全ユニオンの名簿から。スペース有無は無視）
@@ -3563,32 +4932,91 @@ function writeAttendance(id, data){
     });
   syncReceipt(id);
 }
+/* 📱 その場QR領収書: 名簿にいない人（研修生の飛び入り・ゲスト）向けに、
+   宛名・金額入りの電子領収書ページを一回性のURLで発行し、QRで本人のスマホに渡す */
+function guestRcptQr(no, name, fee){
+  if(!gRec || !gRec.issuer){ toast('ユニオン設定で領収書の発行者名を設定すると使えます'); return; }
+  var token = randToken();
+  var docData = {
+    no: no, name: name, union: gRec.ev.hostUnion || gUnion,
+    rcptOnly: true, createdAt: FV.serverTimestamp()
+  };
+  docData['rcpt_' + gRec.ev.id] = {
+    d: gRec.ev.date || '', ev: gRec.ev.name || '', amt: fee,
+    by: gRec.issuer, no: no, at: Date.now()
+  };
+  db.collection('cards').doc(token).set(docData).then(function(){
+    // イベント削除時に一括で取り下げられるよう、出席記録に領収書トークンを残す＋操作ログ
+    if(gRec.att[no]) gRec.att[no].rcptToken = token;
+    db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
+      .set({ rcptToken: token }, { merge: true }).catch(function(){});
+    auditLog(gRec.ev.id, '領収書QR発行', name, yen(fee));
+    modal('<h2>📱 電子領収書</h2>'
+      + '<p style="font-size:13.5px;">' + esc(name) + ' さん本人のスマホでこのQRを読み取ってもらってください。'
+      + '宛名・金額入りの領収書ページが開きます（スクリーンショット保存OK）。</p>'
+      + '<div id="grQr" style="display:flex;justify-content:center;background:#fff;padding:14px;border-radius:12px;"></div>'
+      + '<div class="btns"><button id="grClose">閉じる</button></div>', true);
+    makeQr($('grQr'), cardUrl(token), 220);
+    $('grClose').onclick = function(){ closeModal(); focusScan(); };
+  }).catch(function(e){ toast(permMsg(e, '領収書の発行に失敗しました')); });
+}
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
-  var unions = gRec.ev.unions || [gUnion];
+  // 所属ユニオンはイベント参加ユニオンを先頭に、登録済みの全ユニオンから選択できる
+  var evUns = gRec.ev.unions || [gUnion];
+  var unions = evUns.concat(gUnions.filter(function(u){ return evUns.indexOf(u) < 0; }));
+  // 系列はそのユニオンの名簿にある系列からプルダウン選択（手入力も可）
+  function groupOptions(un){
+    var set = {};
+    Object.keys(gRec.roster).forEach(function(no){
+      var m = gRec.roster[no];
+      if(m.union === un && m.group) set[m.group] = 1;
+    });
+    var gs = Object.keys(set).sort();
+    return '<option value="">ゲスト（系列なし）</option>'
+      + gs.map(function(g){ return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('')
+      + '<option value="__free">その他（手入力）</option>';
+  }
   modal(
     '<h2>ゲスト受付</h2>'
     + '<label>氏名</label><input type="text" id="gName">'
     + '<label>所属ユニオン</label><select id="gUnion">'
     + unions.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
     + '</select>'
-    + '<label>系列（任意）</label><input type="text" id="gGroup" placeholder="紹介者の系列など">'
+    + '<label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select>'
+    + '<input type="text" id="gGroupFree" class="hide" placeholder="系列名を入力" style="margin-top:6px;">'
     + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
   );
+  $('gUnion').onchange = function(){
+    $('gGroupSel').innerHTML = groupOptions($('gUnion').value);
+    $('gGroupFree').classList.add('hide');
+  };
+  $('gGroupSel').onchange = function(){
+    $('gGroupFree').classList.toggle('hide', $('gGroupSel').value !== '__free');
+    if($('gGroupSel').value === '__free') $('gGroupFree').focus();
+  };
   $('gCancel').onclick = function(){ closeModal(); focusScan(); };
   $('gGo').onclick = function(){
     var name = $('gName').value.trim();
     if(!name){ toast('氏名を入力してください'); return; }
+    var gsel = $('gGroupSel').value;
+    var ggroup = gsel === '__free' ? $('gGroupFree').value.trim() : gsel;
     var id = 'g' + Date.now();
     var gfee = currentFee();
-    writeAttendance(id, {
-      no: id, name: name, group: $('gGroup').value.trim() || 'ゲスト',
+    var gdata = {
+      no: id, name: name, group: ggroup || 'ゲスト',
       union: $('gUnion').value, method: 'guest', guest: true,
       fee: gfee, paid: true, refund: 0
-    });
+    };
+    if(gfee > 0 && gRec.payMode) gdata.payMethod = 'paypay';
+    writeAttendance(id, gdata);
     beep('ok');
+    var canRcpt = gfee > 0 && gRec.issuer;   // 発行者名が設定済みのユニオンのみ
     setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>'
-      + (gfee > 0 ? '<p class="hit-meta"><b>' + yen(gfee) + ' 徴収</b></p>' : ''));
+      + (gfee > 0 ? '<p class="hit-meta"><b>' + (gdata.payMethod ? '💳 PayPay ' : '') + yen(gfee) + ' 徴収</b></p>' : '')
+      + (canRcpt ? '<button id="stgRcpt" style="margin-top:8px;">📱 領収書QRを表示</button>' : ''), canRcpt);
+    var rb = $('stgRcpt');
+    if(rb) rb.onclick = function(){ guestRcptQr(id, name, gfee); };
     closeModal(); focusScan();
   };
 };
@@ -3632,13 +5060,24 @@ function renderTallies(){
       byGroup[g] = (byGroup[g] || 0) + 1;
     }
   });
-  $('cashNow').textContent = yen(cash);
   var unpaidSum = 0;
   unpaid.forEach(function(u){ unpaidSum += u.fee; });
-  $('cashSub').textContent = '徴収 ' + paidCount + '名'
-    + (paypay ? ' ・ PayPay ' + yen(paypay) : '')
-    + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
-    + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
+  if(gRec.payMode){
+    // 💳 PayPay集金イベント: PayPay受領額をメインに表示（例外の現金はサブに）
+    $('cashTitle').textContent = 'PayPay受領（リアルタイム）';
+    $('cashNow').textContent = yen(paypay);
+    $('cashSub').textContent = '徴収 ' + paidCount + '名'
+      + (cash ? ' ・ 現金（例外） ' + yen(cash) : '')
+      + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
+      + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
+  } else {
+    $('cashTitle').textContent = '手元金額（リアルタイム）';
+    $('cashNow').textContent = yen(cash);
+    $('cashSub').textContent = '徴収 ' + paidCount + '名'
+      + (paypay ? ' ・ PayPay ' + yen(paypay) : '')
+      + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
+      + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
+  }
   $('unpaidList').innerHTML = unpaid.map(function(u){
     return '<div style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0;">'
       + '<span style="color:var(--accent);font-weight:700;">未</span>'
@@ -3673,6 +5112,96 @@ function renderTallies(){
       + '<span class="tm">' + esc(a.atLocal || '') + '</span><span class="who">' + esc(a.name || '') + '</span>'
       + '<span class="gr">' + esc(sub) + '</span></li>';
   }).join('') || '<li style="color:var(--sub)">まだ受付はありません</li>';
+  // 誓約書リストの別ウィンドウを開いていればライブ更新
+  pledgeListRender();
+}
+/* ── 誓約書提出用の受付順リスト（別ウィンドウ・ライブ更新） ──
+   受付済みを受付順に並べ、通し番号と誓約書番号（○枚目-○番）を振る。
+   1枚あたりの人数は 1枚目/2枚目以降 で個別設定（ゼネラル10/10・SG10/9のプリセット付き）。
+   ✅とコピー済み表示は受付が進んで再描画されても保持する */
+var gPlWin = null, gPlChk = {}, gPlN1 = 10, gPlN2 = 10;
+$('btnPlList').onclick = function(){
+  if(!gRec){ toast('先に受付を開始してください'); return; }
+  pledgeListOpen();
+};
+function pledgeListOpen(){
+  if(gPlWin && !gPlWin.closed){ try{ gPlWin.focus(); }catch(e){} pledgeListRender(); return; }
+  var sw = (window.screen && screen.availWidth) || 1280;
+  var sh = (window.screen && screen.availHeight) || 800;
+  var w2 = Math.max(430, Math.floor(sw / 2));
+  gPlWin = window.open('', 'bciPledgeList', 'width=' + w2 + ',height=' + (sh - 40) + ',left=' + (sw - w2) + ',top=0');
+  if(!gPlWin){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
+  var css = 'body{margin:0;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;background:#faf9f4;color:#1c1a15;}'
+    + '.cfg{position:sticky;top:0;background:#fff;border-bottom:2px solid #ddd;padding:10px 14px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}'
+    + '.cfg input{width:44px;padding:5px;text-align:right;font-size:14px;border:1px solid #ccc;border-radius:6px;}'
+    + '.cfg button{padding:5px 10px;font-size:12px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;}'
+    + '.row{display:flex;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid #e5e2d8;font-size:16px;}'
+    + '.row.hd{background:#f0eee6;font-size:11px;color:#777;padding:4px 14px;position:sticky;top:52px;}'
+    + '.ser{width:2.2em;text-align:right;color:#999;font-size:13px;}'
+    + '.sh{width:3.4em;font-weight:700;color:#0a6b3c;}'
+    + '.row input[type=checkbox]{width:22px;height:22px;}'
+    + '.row b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    + '.sub{font-size:12px;color:#888;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    + '.cpb{padding:5px 12px;font-size:13px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;}'
+    + '.empty{color:#999;font-size:13px;padding:20px 14px;}'
+    + '.mono{font-family:"Courier New",monospace;}';
+  gPlWin.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>誓約書リスト（受付順）</title>'
+    + '<style>' + css + '</style></head><body>'
+    + '<div class="cfg">誓約書1枚あたり: 1枚目 <input id="n1" type="number" min="1" value="' + gPlN1 + '"> 名 / 2枚目以降 <input id="n2" type="number" min="1" value="' + gPlN2 + '"> 名'
+    + '<button onclick="ps(10,10)">ゼネラル(10/10)</button><button onclick="ps(10,9)">SG(10/9)</button>'
+    + '<span style="flex:1"></span><span style="font-weight:700;">受付 <span id="ct">0</span>名</span></div>'
+    + '<div class="row hd"><span class="ser">通し</span><span class="sh">誓約書</span><span style="width:22px;">✅</span><b>氏名（📋でコピー）</b></div>'
+    + '<div id="list"><p class="empty">まだ受付はありません</p></div>'
+    + '<' + 'script>'
+    + 'function conf(){ try{ window.opener.ckPlConf(document.getElementById("n1").value, document.getElementById("n2").value); }catch(e){} }'
+    + 'document.getElementById("n1").oninput = conf; document.getElementById("n2").oninput = conf;'
+    + 'function ps(a,b){ document.getElementById("n1").value = a; document.getElementById("n2").value = b; conf(); }'
+    + 'function tg(el){ try{ window.opener.ckPlToggle(el.getAttribute("data-no"), el.checked); }catch(e){} }'
+    + 'function cp(el){ var t = el.getAttribute("data-n");'
+    + '  function done(){ el.textContent = "✓"; try{ window.opener.ckPlCopied(el.getAttribute("data-no")); }catch(e){} }'
+    + '  function fb(){ var ta = document.createElement("textarea"); ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";'
+    + '    document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); done(); }catch(e){} ta.remove(); }'
+    + '  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done).catch(fb); } else fb(); }'
+    + '<' + '/script></body></html>');
+  gPlWin.document.close();
+  pledgeListRender();
+}
+// 別ウィンドウ側から呼ばれる（設定変更・✅・コピー済みの保持）
+var gPlCopied = {};
+window.ckPlConf = function(a, b){
+  gPlN1 = Math.max(1, parseInt(a, 10) || 10);
+  gPlN2 = Math.max(1, parseInt(b, 10) || 10);
+  pledgeListRender();
+};
+window.ckPlToggle = function(no, on){ if(on) gPlChk[no] = 1; else delete gPlChk[no]; };
+window.ckPlCopied = function(no){ gPlCopied[no] = 1; };
+function pledgeListRender(){
+  if(!gPlWin || gPlWin.closed || !gRec) return;
+  var el, ct;
+  try{ el = gPlWin.document.getElementById('list'); ct = gPlWin.document.getElementById('ct'); }catch(e){ return; }
+  if(!el) return;
+  var items = [];
+  Object.keys(gRec.att).forEach(function(id){
+    var a = gRec.att[id];
+    if(a.status === 'pending' || a.status === 'rejected') return;
+    items.push({ id: id, a: a });
+  });
+  items.sort(function(x, y){ return attSortKey(x.a) - attSortKey(y.a); });   // 受付順（早い→遅い）
+  el.innerHTML = items.map(function(x, i){
+    var sheet, pos;
+    if(i < gPlN1){ sheet = 1; pos = i + 1; }
+    else { sheet = 2 + Math.floor((i - gPlN1) / gPlN2); pos = (i - gPlN1) % gPlN2 + 1; }
+    var nm = x.a.name || '';
+    return '<div class="row">'
+      + '<span class="ser mono">' + (i + 1) + '</span>'
+      + '<span class="sh mono">' + sheet + '-' + pos + '</span>'
+      + '<input type="checkbox" data-no="' + esc(x.id) + '" onchange="tg(this)"' + (gPlChk[x.id] ? ' checked' : '') + '>'
+      + '<b>' + esc(nm) + '</b>'
+      + '<span class="sub">' + esc(attGroup(x.id, x.a) || (x.a.guest ? 'ゲスト' : '')) + '</span>'
+      + '<button class="cpb" data-n="' + esc(nm) + '" data-no="' + esc(x.id) + '" onclick="cp(this)">' + (gPlCopied[x.id] ? '✓' : '📋') + '</button>'
+      + '</div>';
+  }).join('') || '<p class="empty">まだ受付はありません</p>';
+  if(ct) ct.textContent = items.length;
 }
 // 並び順キー: atMs（受付時に記録）→ なければ atLocal "HH:MM" から概算
 function attSortKey(a){
@@ -3937,9 +5466,11 @@ function loadStats(){
       else otherEvs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    // 稼働率の分母は「本日までに開催済み」のイベントのみ（月の途中でも正しい値になる）
+    // 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
+    // 当日分は「受付を終了」した時点（recClosed）で算入する
+    // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
     var tdy = todayStr();
-    evs = evs.filter(function(ev){ return (ev.date || '') <= tdy; });
+    evs = evs.filter(function(ev){ return (ev.date || '') < tdy || ev.recClosed === true; });
     if(!evs.length && !otherEvs.length){
       $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
@@ -3995,7 +5526,10 @@ function renderStats(evs, attMaps, unionMembers, visits){
   // 行: 有効メンバー + 出席したゲスト
   var rows = [], rosterSex = {};
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
-  unionMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true }); });
+  unionMembers.forEach(function(m){
+    if(m.active === false || m.resting) return;   // 無効・休会中は集計に出さない（休会中でも出席すれば下の出席記録から行に載る）
+    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true });
+  });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
   evs.forEach(function(ev){
@@ -4052,7 +5586,7 @@ function renderStats(evs, attMaps, unionMembers, visits){
     + '</div>'
     + '<div class="sectionhead"><h2>系列別 平均稼動数</h2><span class="note">' + esc(gStatUnion) + '・1回あたりの出席数</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroupAvg, '名') || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
-    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷本日までの開催数 / 列見出しタップで並べ替え</span></div>'
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入）/ 休会中のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
     + visitsHtml;
@@ -4098,7 +5632,7 @@ function renderStatMatrix(){
       + gStat.evSex.map(function(c){ return '<td class="mk mono">' + c.f + '</td>'; }).join('') + '<td></td></tr>'
       + '</tfoot>'
     : '';
-  var html = '<div class="tblwrap"><table class="matrix"><thead><tr>'
+  var html = '<div class="tblwrap mxwrap"><table class="matrix"><thead><tr>'
     + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', '稼働率', 'stk stk3')
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
     + th('count', '回数') + '</tr></thead><tbody>'
