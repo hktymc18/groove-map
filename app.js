@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v538';
+var APP_JS_VERSION = 'v539';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1054,7 +1054,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
     rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI||_isFr9?'2':'1'))); // v420: BR以上=太枠／v491: フレッシュも太枠
     if (_isBrUp) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
-    if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)'; // v440: OUTは当月ゴースト表示
+    if ((m.title || '').trim() === 'OUT') { g.classList.add('is-out'); g.style.filter = 'grayscale(1)'; g.style.opacity = '0.5'; } // v440: OUTは当月ゴースト表示（v539: Safariは<g>のCSSフィルタが効かないため不透明度で薄く）
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
     g.appendChild(rect);
 
@@ -1845,7 +1845,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       g.insertBefore(_pr6, g.firstChild);
     }
     if (_isBrUp && !isPrint) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
-    if ((m.title || '').trim() === 'OUT') { if (isPrint) g.setAttribute('opacity', '0.5'); else g.style.filter = 'grayscale(1) opacity(0.55)'; } // v514: PDF化（画像変換）ではCSSフィルタが効かない環境があるため属性で
+    if ((m.title || '').trim() === 'OUT') { if (isPrint) g.setAttribute('opacity', '0.5'); else { g.classList.add('is-out'); g.style.filter = 'grayscale(1)'; g.style.opacity = '0.5'; } } // v539: 画面でも薄く（Safariは<g>のCSSフィルタが効かない） // v514: PDF化（画像変換）ではCSSフィルタが効かない環境があるため属性で
     if (m._ghost) { g.setAttribute('opacity', '0.35'); g.setAttribute('class', 'oval-node orbit-node orbit-ghost'); } // v514: 地域MAPで、つながりを示すために残した他地域の上位者
     // v502: 旧MAP式の4分割サークル（左上=名前2行／右上=稼働／左下=タイトル／右下=(固定PT)・GSV）
     var _txtCol = light ? '#1a1f2b' : '#f2f4f8';
@@ -3052,7 +3052,8 @@ function _applyMapDims() {
     }
     var _nl9 = nodes[i].getAttribute('data-lineage');
     var _fOk9 = (!_lin9 || _nl9 === _lin9 || _nl9 === '');
-    nodes[i].style.opacity = !ok ? '0.22' : (_fOk9 ? '1' : '0.6');
+    var _out9 = nodes[i].classList && nodes[i].classList.contains('is-out'); // v539: OUTは当月ゴースト表示（薄いまま）
+    nodes[i].style.opacity = !ok ? '0.22' : (_fOk9 ? (_out9 ? '0.5' : '1') : (_out9 ? '0.3' : '0.6'));
     // v518: 922-3 活動中（脈打ち＝opacityアニメ）や研修中・フレッシュの発光アニメは style.opacity より優先されるため、
     //        他地域なのに明るく光って「選んだ地域より目立つ」状態だった。クラス（!important＋アニメ停止）で確実に薄くする
     if (nodes[i].classList) {
@@ -3829,7 +3830,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v538';
+  var DATA_VERSION = 'v539';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4839,6 +4840,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v539', d:'2026-09-29', items:['🌫 運動会MAP（とPCのツリー）でOUTの人が薄く表示されない問題を修正（Safariなどで薄くならなかった・絞り込みの表示で濃く戻っていた）'] },
   { v:'v538', d:'2026-09-29', items:['💰 PLAN（PC）の一番上を「目標月収」から：左上に目標月収、その横に目標タイトル・期日をどれも大きな文字で。スローガンも大きく表示'] },
   { v:'v537', d:'2026-09-29', items:['🧭 PLAN（PC）を作り直し：一番上に目標（タイトル・期日・スローガン・目標月収）を大きく、その下にマイルストーンの横線（月ごとの点・📍現在地・🚩最終LOI・🏔期日・旗・月ごとのフロント目標／点をクリックで追加）、下に「今月やること」の数字タイルと、今月｜来月の目標入力。目標設定のツール（価値観・年別目標・ギャップ・夢100など）は ⚙ から必要な時に表示','👥 今月の目標の「稼働」を％ではなく平均稼働人数に（実績＝受付連携の稼働率から）','📄 運動会MAPのPDFに「データ（今月の数字・12ヶ月の推移・パワーライン・研修・地域）」「3〜7人OL（実施したか・参加者・内容・反応）」「メンバーのメモ（丸に番号＋入る所は丸の横に・一覧ページ）」を追加できるように'] },
   { v:'v536', d:'2026-09-28', items:['🔗 受付連携の稼働率は、受付システムが集計した数字をそのまま読むように（MAP側では計算しない＝受付システムの集計と必ず一致）。連携完了の表示に「何時点の集計か」を表示','受付システム：集計画面を開いた時・受付を終了/再開した時・日付が変わって最初に開いた時に、MAP用の集計を自動で保存'] },
