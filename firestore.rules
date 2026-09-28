@@ -130,6 +130,13 @@ service cloud.firestore {
           && myShareDoc(uid).get('perm', 'view') == 'edit';
     }
 
+    // v533: 予定・タスクを見せる共有か（scope=='map'＝MAPのみ共有／結合経由の自動配布も予定は見せない）
+    function canSeeSchedule(uid) {
+      return isSharedToMap(uid)
+          && myShareDoc(uid).get('derived', false) != true
+          && myShareDoc(uid).get('scope', 'all') != 'map';
+    }
+
     // データ本体：read=オーナー/管理者/共有された人、write=オーナー/管理者/共有編集者
     match /maps/{uid}/months/{doc} {
       allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
@@ -140,8 +147,8 @@ service cloud.firestore {
       allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
     }
     match /maps/{uid}/events/{doc} {
-      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
-      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+      allow read:  if isAdmin() || ownerActive(uid) || canSeeSchedule(uid);
+      allow write: if isAdmin() || ownerActive(uid) || (canEditMap(uid) && canSeeSchedule(uid));
     }
     match /maps/{uid}/meta/{doc} {
       allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
@@ -232,15 +239,6 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/checkinUnions/$(un))
                  .data.get('admins', []).hasAny([request.auth.uid]));
     }
-    // 🎓 研修生登録の担当: checkinUnions.trainers に任命された人（管理者は常に可）。
-    // できるのは「研修生の新規登録」と「研修生のチュートリアル記録」だけ（下のルールで限定）
-    function isCkTrainer(un) {
-      return isCkAdmin(un)
-        || (signedIn() && notDisabled(request.auth.uid)
-            && exists(/databases/$(database)/documents/checkinUnions/$(un))
-            && get(/databases/$(database)/documents/checkinUnions/$(un))
-                 .data.get('trainers', []).hasAny([request.auth.uid]));
-    }
     // 自分のプロフィールの所属ユニオン
     function ckMyUnion() {
       return profileExists(request.auth.uid)
@@ -269,17 +267,6 @@ service cloud.firestore {
       allow update: if signedIn()
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['cardToken','cardSig','cardStatus']);
-      // 🎓 研修生登録の担当: 研修生（trainee=true）の新規登録と、
-      // 研修生のチュートリアル記録（trainings）の更新、自分が登録した研修生の削除（取消用）だけ可
-      allow create: if isCkTrainer(request.resource.data.get('union',''))
-                    && request.resource.data.get('trainee', false) == true;
-      allow update: if isCkTrainer(resource.data.get('union',''))
-                    && resource.data.get('trainee', false) == true
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['trainings']);
-      allow delete: if isCkTrainer(resource.data.get('union',''))
-                    && resource.data.get('trainee', false) == true
-                    && resource.data.get('regBy','') == request.auth.uid;
       allow delete: if isCkAdmin(resource.data.get('union',''));
     }
 
@@ -343,28 +330,6 @@ service cloud.firestore {
                           .data.get('union','')]);
       }
 
-      // 🎟 予約（RSVP）: 会員証（未ログイン）から本人が1回だけ予約を作成できる。
-      // 対象は rsvp=true のイベントのみ。トークン照合で本人確認、update不可＝改ざん・二重予約は不可。
-      // 受付側の追加・削除は出席と同じ権限（参加ユニオンの有効メンバー）
-      match /rsvps/{rid} {
-        allow read: if signedIn();
-        allow create: if request.auth == null
-          && get(/databases/$(database)/documents/checkinEvents/$(eid))
-               .data.get('rsvp', false) == true
-          && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
-          && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
-               .data.get('no','') == rid
-          && get(/databases/$(database)/documents/checkinEvents/$(eid))
-               .data.get('unions',[])
-               .hasAny([get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
-                          .data.get('union','')]);
-        allow create, delete: if isOwnerAdmin()
-          || (signedIn()
-              && notDisabled(request.auth.uid)
-              && get(/databases/$(database)/documents/checkinEvents/$(eid))
-                   .data.get('unions',[]).hasAny([ckMyUnion()]));
-      }
-
       // 会計（BASE集計表）: 参加ユニオンの有効メンバーが記録できる
       match /finance/{fid} {
         allow read: if signedIn();
@@ -373,15 +338,6 @@ service cloud.firestore {
               && notDisabled(request.auth.uid)
               && get(/databases/$(database)/documents/checkinEvents/$(eid))
                    .data.get('unions',[]).hasAny([ckMyUnion()]));
-      }
-
-      // 💰 お金の操作ログ: 追記専用（だれも編集・削除できない＝改ざん防止）。
-      // 記録の作成はログイン済みの有効ユーザーなら可（会計操作と同時にアプリが自動追記する）
-      match /audit/{aid} {
-        allow read: if signedIn();
-        allow create: if isOwnerAdmin()
-          || (signedIn() && notDisabled(request.auth.uid));
-        allow update, delete: if false;
       }
     }
 
