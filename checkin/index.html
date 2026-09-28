@@ -165,6 +165,12 @@ tr:last-child td{border-bottom:none;}
 .matrix .stk1{left:0;min-width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis;}
 .matrix .stk2{left:104px;min-width:72px;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
 .matrix .stk3{left:176px;min-width:64px;max-width:64px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+/* 出席マトリクスのヘッダー行固定: 表自体を縦スクロール枠にして、日付行を常に上に表示。
+   border-collapse だと固定行の罫線が消えるため、下線は box-shadow で描く */
+.mxwrap{max-height:72vh;overflow:auto;}
+.matrix thead th{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--line);}
+.matrix thead th.stk{z-index:4;}
+.matrix thead th.stk3{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
 .sectionhead{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;flex-wrap:wrap;}
 .sectionhead h2{margin:0;font-size:16px;}
 .sectionhead .note{color:var(--sub);font-size:12.5px;}
@@ -5626,7 +5632,7 @@ function renderStatMatrix(){
       + gStat.evSex.map(function(c){ return '<td class="mk mono">' + c.f + '</td>'; }).join('') + '<td></td></tr>'
       + '</tfoot>'
     : '';
-  var html = '<div class="tblwrap"><table class="matrix"><thead><tr>'
+  var html = '<div class="tblwrap mxwrap"><table class="matrix"><thead><tr>'
     + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', '稼働率', 'stk stk3')
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
     + th('count', '回数') + '</tr></thead><tbody>'
