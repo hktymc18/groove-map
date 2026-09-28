@@ -130,6 +130,13 @@ service cloud.firestore {
           && myShareDoc(uid).get('perm', 'view') == 'edit';
     }
 
+    // v533: 予定・タスクを見せる共有か（scope=='map'＝MAPのみ共有／結合経由の自動配布も予定は見せない）
+    function canSeeSchedule(uid) {
+      return isSharedToMap(uid)
+          && myShareDoc(uid).get('derived', false) != true
+          && myShareDoc(uid).get('scope', 'all') != 'map';
+    }
+
     // データ本体：read=オーナー/管理者/共有された人、write=オーナー/管理者/共有編集者
     match /maps/{uid}/months/{doc} {
       allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
@@ -140,8 +147,8 @@ service cloud.firestore {
       allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
     }
     match /maps/{uid}/events/{doc} {
-      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
-      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+      allow read:  if isAdmin() || ownerActive(uid) || canSeeSchedule(uid);
+      allow write: if isAdmin() || ownerActive(uid) || (canEditMap(uid) && canSeeSchedule(uid));
     }
     match /maps/{uid}/meta/{doc} {
       allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
