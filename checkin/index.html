@@ -1979,12 +1979,17 @@ function renderRoster(){
       + (m.trainee ? ' <span class="pill n">研修生</span>'
           + (m.trainings && m.trainings['BPC済み'] ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
       + '<td>' + esc(m.group || '') + '</td>'
-      + '<td>' + (m.active !== false ? '<span class="pill g">有効</span>' : '<span class="pill n">無効</span>')
+      + '<td>' + (m.active !== false
+          ? (m.resting ? '<span class="pill a">休会</span>' : '<span class="pill g">有効</span>')
+          : '<span class="pill n">無効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
       + '<td><div class="rowbtns">'
       + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
       + (edit
         ? '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
+          + (m.active !== false
+            ? '<button data-a="rest" data-no="' + esc(m.no) + '">' + (m.resting ? '復帰' : '休会') + '</button>'
+            : '')
           + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
           + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
         : '')
@@ -2238,10 +2243,20 @@ $('rosterBody').addEventListener('click', function(e){
       .then(function(){ loadMembers(); })
       .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
   }
+  if(a === 'rest'){
+    // 休会: 名簿・受付スキャン・会員証はそのままで、集計（稼働率）からだけ外す
+    var toRest = !m.resting;
+    db.collection('checkinMembers').doc(no).set({ resting: toRest ? true : FV.delete() }, {merge:true})
+      .then(function(){
+        toast(m.name + ' さんを' + (toRest ? '休会にしました（集計に表示されなくなります）' : '復帰させました（集計に表示されます）'));
+        loadMembers();
+      })
+      .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
+  }
   if(a === 'del'){
     modal('<h2>メンバー削除</h2>'
       + '<p>「' + esc(m.name || '') + '」（' + esc(no) + '）を名簿から削除しますか？<br>'
-      + '<small>過去の出席記録は消えません。退会・休会の場合は削除ではなく「無効化」がおすすめです（集計から外れ、いつでも戻せます）。</small></p>'
+      + '<small>過去の出席記録は消えません。来なくなった人は削除ではなく「休会」（集計から外れるだけ。受付・会員証はそのまま）、退会は「無効化」がおすすめです。どちらもいつでも戻せます。</small></p>'
       + '<div class="btns"><button id="mdCancel">キャンセル</button>'
       + '<button class="primary" id="mdGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
     $('mdCancel').onclick = closeModal;
@@ -2558,7 +2573,7 @@ $('btnCsvIn').onclick = function(){
 $('btnCsvOut').onclick = function(){
   var rows = [['番号','氏名','系列','かな','状態','性別']];
   gMembers.forEach(function(m){
-    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? '有効' : '無効',
+    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? (m.resting ? '休会' : '有効') : '無効',
       m.sex === 'm' ? '男' : (m.sex === 'f' ? '女' : '')]);
   });
   csvDownload('members_' + gRosterUnion + '.csv', rows);
@@ -5445,9 +5460,11 @@ function loadStats(){
       else otherEvs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    // 稼働率の分母は「本日までに開催済み」のイベントのみ（月の途中でも正しい値になる）
+    // 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
+    // 当日分は「受付を終了」した時点（recClosed）で算入する
+    // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
     var tdy = todayStr();
-    evs = evs.filter(function(ev){ return (ev.date || '') <= tdy; });
+    evs = evs.filter(function(ev){ return (ev.date || '') < tdy || ev.recClosed === true; });
     if(!evs.length && !otherEvs.length){
       $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
@@ -5503,7 +5520,10 @@ function renderStats(evs, attMaps, unionMembers, visits){
   // 行: 有効メンバー + 出席したゲスト
   var rows = [], rosterSex = {};
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
-  unionMembers.forEach(function(m){ if(m.active !== false) rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true }); });
+  unionMembers.forEach(function(m){
+    if(m.active === false || m.resting) return;   // 無効・休会中は集計に出さない（休会中でも出席すれば下の出席記録から行に載る）
+    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true });
+  });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
   evs.forEach(function(ev){
@@ -5560,7 +5580,7 @@ function renderStats(evs, attMaps, unionMembers, visits){
     + '</div>'
     + '<div class="sectionhead"><h2>系列別 平均稼動数</h2><span class="note">' + esc(gStatUnion) + '・1回あたりの出席数</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroupAvg, '名') || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
-    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷本日までの開催数 / 列見出しタップで並べ替え</span></div>'
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入）/ 休会中のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
     + visitsHtml;
