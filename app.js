@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v539';
+var APP_JS_VERSION = 'v540';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1688,7 +1688,11 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     var R1d = laneR(d1);
     var ring = document.createElementNS(NS, 'path');
     ring.setAttribute('d', stadiumPath(R1d));
-    ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', light ? '#aab3c2' : '#3a4558'); ring.setAttribute('stroke-width', '1.4');
+    // v540: 段の線は背景（ごく薄い点線）。つながりの線を主役に（拓郎さん要望・案C）。PDF（印刷）は紙で消えないよう少し濃く
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', isPrint ? '#c3cad6' : (light ? '#d5dbe5' : '#2c3545'));
+    ring.setAttribute('stroke-width', isPrint ? '1.2' : '0.9');
+    ring.setAttribute('stroke-dasharray', isPrint ? '2 5' : '1 5');
     ring.setAttribute('class', 'orbit-lane');
     ring.setAttribute('data-r', R1d);
     svg.appendChild(ring);
@@ -1781,7 +1785,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     var ln = document.createElementNS(NS, 'path');
     ln.setAttribute('d', dd); ln.setAttribute('fill', 'none'); ln.setAttribute('class', 'orbit-link');
     ln.setAttribute('stroke-linejoin', 'round');
-    ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '1.6'); ln.setAttribute('opacity', m._ghost ? '0.25' : '0.6');
+    ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '2.4'); ln.setAttribute('opacity', m._ghost ? '0.25' : '0.85'); // v540: つながりの線を太く・濃く
     if (m._foreign) ln.setAttribute('stroke-dasharray', '4,3');
     svg.appendChild(ln);
   });
@@ -3830,7 +3834,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v539';
+  var DATA_VERSION = 'v540';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4840,6 +4844,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v540', d:'2026-09-29', items:['🎯 PLAN（PC）の目標：目標月収・目標タイトル・期日のラベルと数字の高さをそろえ、スローガンを右上に大きく、BB換算・夢100の進捗は目標の下にまとめました','🔤 目標タイトルをアルファベット表記に（ルビー→RUBY など）','🧵 運動会MAPの線を見やすく：メンバーをつなぐ線を太く、段の線はごく薄い点線に（PDFは印刷で消えないよう少しだけ濃いめ）'] },
   { v:'v539', d:'2026-09-29', items:['🌫 運動会MAP（とPCのツリー）でOUTの人が薄く表示されない問題を修正（Safariなどで薄くならなかった・絞り込みの表示で濃く戻っていた）'] },
   { v:'v538', d:'2026-09-29', items:['💰 PLAN（PC）の一番上を「目標月収」から：左上に目標月収、その横に目標タイトル・期日をどれも大きな文字で。スローガンも大きく表示'] },
   { v:'v537', d:'2026-09-29', items:['🧭 PLAN（PC）を作り直し：一番上に目標（タイトル・期日・スローガン・目標月収）を大きく、その下にマイルストーンの横線（月ごとの点・📍現在地・🚩最終LOI・🏔期日・旗・月ごとのフロント目標／点をクリックで追加）、下に「今月やること」の数字タイルと、今月｜来月の目標入力。目標設定のツール（価値観・年別目標・ギャップ・夢100など）は ⚙ から必要な時に表示','👥 今月の目標の「稼働」を％ではなく平均稼働人数に（実績＝受付連携の稼働率から）','📄 運動会MAPのPDFに「データ（今月の数字・12ヶ月の推移・パワーライン・研修・地域）」「3〜7人OL（実施したか・参加者・内容・反応）」「メンバーのメモ（丸に番号＋入る所は丸の横に・一覧ページ）」を追加できるように'] },
@@ -14116,28 +14121,37 @@ function _p2PcHeroHtml() {
       + '<span class="p2-btn pri" style="margin:14px 0 0;display:inline-block;padding:11px 22px;font-size:15px" onclick="p2Wiz()">' + icn('compass') + ' 目標をつくる</span></div></div>';
   }
   // v538: 一番大事な「目標月収」を左上に。その横に目標タイトル・期日（どれも大きく）、下にスローガンも大きく
+  // v540: 3つはラベル・数字の高さをそろえる（グリッド）
   var rem = _glMonthsUntil(p.deadline);
   var motto = (p2.motto || '').trim();
   var dl = String(p.deadline).split('-');
-  var top = '<div class="p2h-top">'
-    + (p.income ? '<div class="p2h-blk inc"><div class="p2h-eb">目標月収</div><div class="p2h-inc">' + Math.round((+p.income) / 10000).toLocaleString() + '<small>万円</small></div></div>' : '<div class="p2h-blk inc"><div class="p2h-eb">目標月収</div><div class="p2h-inc add" onclick="p2Wiz()">未設定</div></div>')
-    + '<div class="p2h-blk"><div class="p2h-eb">目標タイトル</div><div class="p2h-ttl">' + evEsc(p.title) + '</div></div>'
-    + '<div class="p2h-blk"><div class="p2h-eb">期日</div><div class="p2h-dl"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div>'
-    + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + '</div>'
+  var incV = p.income ? '<div class="p2h-inc">' + Math.round((+p.income) / 10000).toLocaleString() + '<small>万円</small></div>' : '<div class="p2h-inc add" onclick="p2Wiz()">未設定</div>';
+  var top = '<div class="p2h-grid">'
+    + '<div class="p2h-eb c1">目標月収</div><div class="p2h-eb c2">目標タイトル</div><div class="p2h-eb c3">期日</div>'
+    + '<div class="v c1">' + incV + '</div>'
+    + '<div class="v c2"><div class="p2h-ttl" title="' + evEsc(p.title) + '">' + evEsc(_p2TitleEn(p.title)) + '</div></div>'
+    + '<div class="v c3"><div class="p2h-dl"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div></div>'
+    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + '</div>'
     + '</div>';
   var mot = motto ? '<div class="p2h-motto" onclick="p2MottoOpen()" title="クリックで編集">『' + evEsc(motto) + '』</div>' : '<div class="p2h-motto add" onclick="p2MottoOpen()">＋ スローガン（ひとこと）を入れる</div>';
-  var sub = '';
+  // v540: スローガンは右上（✎⚙の下）。BB換算・夢100の進捗は目標の下の段へ
+  var side = '<div class="p2h-side">' + act + mot + '</div>';
+  var subs = '';
   var root = _p2OwnRoot(), gsv = root ? (root.ptCurrent || 0) : 0;
-  if (gsv > 0) sub += '<div class="p2h-sub">今月のBB換算 <b>¥' + _p2BBCalc(gsv).toLocaleString() + '</b><span>（GSV ' + gsv.toLocaleString() + 'pt・税抜の目安）</span></div>';
+  if (gsv > 0) subs += '<div class="p2h-sub">今月のBB換算 <b>¥' + _p2BBCalc(gsv).toLocaleString() + '</b><span>GSV ' + gsv.toLocaleString() + 'pt・税抜の目安</span></div>';
   var dr = g.dreams || [];
   if (dr.length) {
     var dDone = 0, dRem = 0;
     dr.forEach(function(d) { if (d.done) dDone++; else dRem += parseFloat(d.amt) || 0; });
-    sub += '<div class="p2h-sub p2h-dream" onclick="p2DreamOpen()">🌈 夢100 <b>' + dDone + '/' + dr.length + '</b> 達成' + (dRem ? '・あと <b>' + (Math.round(dRem * 10) / 10).toLocaleString() + '</b>万円' : '')
+    subs += '<div class="p2h-sub p2h-dream" onclick="p2DreamOpen()">🌈 夢100 <b>' + dDone + '/' + dr.length + '</b> 達成' + (dRem ? '・あと <b>' + (Math.round(dRem * 10) / 10).toLocaleString() + '</b>万円' : '')
       + '<div class="p2d-bar"><i style="width:' + Math.round(dDone / dr.length * 100) + '%"></i></div></div>';
   }
-  return '<div class="p2h p2h-v2">' + act + top + mot + (sub ? '<div class="p2h-subs">' + sub + '</div>' : '') + '</div>';
+  return '<div class="p2h p2h-v2"><div class="p2h-row">' + top + side + '</div>' + (subs ? '<div class="p2h-subs">' + subs + '</div>' : '') + '</div>';
 }
+// v540: 目標タイトルはアルファベット表記（ルビー→RUBY）
+var P2_TITLE_EN = { 'BR': 'BR', 'ブランドレプリゼンタティブ': 'BR', 'ゴールド': 'GOLD', 'ラピス': 'LAPIS', 'ルビー': 'RUBY', 'エメラルド': 'EMERALD', 'ダイヤモンド': 'DIAMOND', 'ブルーダイヤモンド': 'BLUE DIAMOND', 'PD': 'PD', 'チームエリート': 'TEAM ELITE',
+  'G': 'GOLD', 'L': 'LAPIS', 'R': 'RUBY', 'E': 'EMERALD', 'D': 'DIAMOND', 'BD': 'BLUE DIAMOND', 'TE': 'TEAM ELITE' };
+function _p2TitleEn(t) { t = String(t || '').trim(); return P2_TITLE_EN[t] || t; }
 // ② マイルストーンの横線（先月〜期日。月ごとの点・旗・フロント目標）
 function _p2PcRailHtml() {
   var p = state.goals.plan, rm = _p2Rm(), cur = _p2Ym(0);
@@ -14163,7 +14177,7 @@ function _p2PcRailHtml() {
   // ユニオンのマイルストーン
   var mi = window._unPlanMeta && window._unPlanMeta.milestone;
   if (mi && mi.t && mi.due) addF(String(mi.due).slice(0, 7), '<span class="p2r-flag un">' + icn('landmark') + ' ' + evEsc(mi.t) + '</span>');
-  if (dl) addF(dl, '<span class="p2r-flag peak">🏔 ' + evEsc(p.title || '頂上') + '</span>');
+  if (dl) addF(dl, '<span class="p2r-flag peak">🏔 ' + evEsc(p.title ? _p2TitleEn(p.title) : '頂上') + '</span>');
   var ci = yms.indexOf(cur);
   var maxF = 0; yms.forEach(function(ym) { maxF = Math.max(maxF, Math.min(3, (flags[ym] || []).length)); });
   var fh = Math.max(1, maxF) * 30 + 4; // 旗の段数に合わせた高さ（空き地を作らない）
