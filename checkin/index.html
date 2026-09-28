@@ -466,6 +466,7 @@ tr:last-child td{border-bottom:none;}
       <select id="rosterUnionSel"></select>
       <button id="btnCkAdmins" class="hide">👑 受付管理者</button>
       <button id="btnTrainers" class="hide">🎓 研修生登録の担当</button>
+      <button id="btnAdminsView">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
@@ -1796,6 +1797,56 @@ $('btnTrainers').onclick = function(){
     };
   }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
 };
+/* 👥 管理者一覧（閲覧用）: 誰がユニオン管理者・受付管理者・研修生登録の担当なのかを誰でも確認できる */
+$('btnAdminsView').onclick = function(){
+  var un = gRosterUnion;
+  Promise.all([
+    db.collection('users').where('union', '==', un).get(),
+    db.collection('checkinUnions').doc(un).get()
+  ]).then(function(res){
+    var byUid = {};
+    res[0].forEach(function(d){
+      var u = d.data();
+      if(u.status === 'disabled') return;
+      byUid[d.id] = { name: u.name || d.id.slice(0, 8), union: u.union || un, role: u.role || '' };
+    });
+    var s0 = res[1].exists ? res[1].data() : {};
+    var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice();
+    // 他ユニオン所属の兼務者はプロフィールを個別取得して所属付きで表示
+    var need = {};
+    admins.concat(trainers).forEach(function(uid){ if(!byUid[uid]) need[uid] = 1; });
+    return Promise.all(Object.keys(need).map(function(uid){
+      return db.collection('users').doc(uid).get().then(function(sn){
+        var u = sn.exists ? sn.data() : {};
+        byUid[uid] = { name: u.name || uid.slice(0, 8), union: u.union || '?', role: u.role || '' };
+      }).catch(function(){ byUid[uid] = { name: uid.slice(0, 8), union: '?', role: '' }; });
+    })).then(function(){
+      function row(uid, pill){
+        var u = byUid[uid] || { name: uid.slice(0, 8), union: '?' };
+        return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);font-size:14px;">'
+          + '<span style="flex:1;">' + esc(u.name) + '</span>'
+          + (u.union !== un ? '<span class="pill n">所属: ' + esc(u.union) + '</span>' : '')
+          + (pill || '') + '</div>';
+      }
+      var roleAdmins = Object.keys(byUid).filter(function(uid){
+        return byUid[uid].role === 'admin' && byUid[uid].union === un;
+      });
+      var h = '<label>ユニオン管理者（アカウント権限）</label>'
+        + (roleAdmins.map(function(uid){ return row(uid, '<span class="pill g">ユニオン管理者</span>'); }).join('')
+          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
+        + '<label style="margin-top:14px;">👑 受付管理者（任命制・管理者と同じ操作ができる）</label>'
+        + (admins.map(function(uid){ return row(uid, ''); }).join('')
+          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
+        + '<label style="margin-top:14px;">🎓 研修生登録の担当</label>'
+        + (trainers.map(function(uid){ return row(uid, ''); }).join('')
+          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
+        + '<p style="font-size:12px;color:var(--sub);margin-top:12px;">任命・解除は、ユニオン管理者に表示される「👑 受付管理者」「🎓 研修生登録の担当」ボタンから行えます。</p>';
+      modal('<h2>👥 管理者一覧 — ' + esc(un) + '</h2>' + h
+        + '<div class="btns"><button id="avClose">閉じる</button></div>', true);
+      $('avClose').onclick = closeModal;
+    });
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+};
 $('btnAddUnion').onclick = function(){
   modal('<h2>ユニオン追加</h2>'
     + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">追加すると名簿の取込先・合同イベントの選択肢に表示されます。</p>'
@@ -2220,6 +2271,7 @@ function cardModal(m){
       + '<input type="text" id="cmUrl" readonly value="' + esc(url) + '" style="width:100%;font-size:12px;">'
       + '<div class="btns" style="justify-content:flex-start;margin-top:10px;">'
       + '<button class="primary" id="cmCopy">URLをコピー</button>'
+      + '<button id="cmRcpts">🧾 領収書一覧</button>'
       + '<button id="cmReissue">再発行</button>'
       + '<button id="cmRevoke" class="danger">無効化</button>'
       + '</div>'
@@ -2234,6 +2286,8 @@ function cardModal(m){
     issueCard(m, function(){ toast('発行しました'); renderRoster(); cardModal(m); });
   };
   if(bCopy) bCopy.onclick = function(){ copyText($('cmUrl').value); };
+  var bRc = $('cmRcpts');
+  if(bRc) bRc.onclick = function(){ cardRcptModal(m); };
   if(bRe) bRe.onclick = function(){
     if(!window.confirm(m.name + ' さんの会員証を再発行しますか？\n旧URLは使えなくなります。')) return;
     issueCard(m, function(){ toast('再発行しました。新しいURLを送ってください'); renderRoster(); cardModal(m); });
@@ -2242,6 +2296,41 @@ function cardModal(m){
     if(!window.confirm(m.name + ' さんの会員証を無効化しますか？')) return;
     revokeCard(m, function(){ toast('無効化しました'); renderRoster(); closeModal(); });
   };
+}
+/* 🧾 発行済み電子領収書の一覧と個別取消（会員証の rcpt_<イベントID> マーカーを直接操作） */
+function cardRcptModal(m){
+  db.collection('cards').doc(m.cardToken).get().then(function(sn){
+    var c = sn.exists ? sn.data() : {};
+    var rs = [];
+    Object.keys(c).forEach(function(k){
+      if(k.indexOf('rcpt_') === 0 && c[k]) rs.push({ key: k, evId: k.slice(5), r: c[k] });
+    });
+    rs.sort(function(a, b){ return ((b.r && b.r.at) || 0) - ((a.r && a.r.at) || 0); });
+    var html = rs.map(function(x, i){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:13.5px;">'
+        + '<div style="flex:1;min-width:0;"><b>' + esc(x.r.ev || '') + '</b>'
+        + '<div style="font-size:12px;color:var(--sub);">' + esc(x.r.d || '') + '　' + yen(x.r.amt || 0) + '</div></div>'
+        + '<button class="danger ghost" data-ri="' + i + '">発行を取り消す</button></div>';
+    }).join('') || '<p style="font-size:13px;color:var(--sub);">発行済みの電子領収書はありません。</p>';
+    modal('<h2>🧾 領収書一覧 — ' + esc(m.name || '') + '</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">この会員証に発行中の電子領収書です。取り消すと本人の画面からも消えます（取消は操作ログに残ります）。</p>'
+      + '<div style="max-height:48vh;overflow:auto;">' + html + '</div>'
+      + '<div class="btns"><button id="crClose">閉じる</button></div>', true);
+    $('crClose').onclick = function(){ closeModal(); cardModal(m); };
+    document.querySelector('.modal').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button[data-ri]') : null;
+      if(!b) return;
+      var x = rs[parseInt(b.getAttribute('data-ri'), 10)];
+      if(!x) return;
+      if(!window.confirm('「' + (x.r.ev || '') + '」の領収書（' + yen(x.r.amt || 0) + '）の発行を取り消しますか？')) return;
+      var u = {}; u[x.key] = FV.delete();
+      db.collection('cards').doc(m.cardToken).set(u, { merge: true }).then(function(){
+        auditLog(x.evId, '領収書取消', m.name || m.no, (x.r.ev || '') + '・' + yen(x.r.amt || 0));
+        toast('領収書の発行を取り消しました');
+        cardRcptModal(m);
+      }).catch(function(e2){ toast(permMsg(e2, '取消に失敗しました')); });
+    });
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
 }
 $('btnCardBulk').onclick = function(){
   var targets = gMembers.filter(function(m){ return m.active !== false && !m.cardToken; });
@@ -2602,13 +2691,43 @@ $('evList').addEventListener('click', function(e){
       .catch(function(err){ toast(permMsg(err, '受付の開始/終了は主催ユニオンの管理者のみ可能です')); });
   }
   if(a === 'del'){
-    modal('<h2>イベント削除</h2><p>「' + esc(ev.date) + ' ' + esc(ev.name) + '」を削除しますか？<br>出席記録も見えなくなります。</p>'
+    modal('<h2>イベント削除</h2><p>「' + esc(ev.date) + ' ' + esc(ev.name) + '」を削除しますか？<br>出席記録も見えなくなります。このイベントで発行した電子領収書も取り下げます。</p>'
       + '<div class="btns"><button id="delCancel">キャンセル</button><button class="primary" id="delGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
     $('delCancel').onclick = closeModal;
     $('delGo').onclick = function(){
-      db.collection('checkinEvents').doc(id).delete().then(function(){
-        closeModal(); toast('削除しました'); loadEvents(); loadStats();
-      }).catch(function(err){ toast(permMsg(err, 'イベント削除は主催ユニオンの管理者・受付管理者のみ可能です')); });
+      $('delGo').disabled = true;
+      var evRef = db.collection('checkinEvents').doc(id);
+      // 出席記録から会員証トークンを辿り、このイベントの電子領収書・オンライン承認マーカーを一括で取り下げる
+      evRef.collection('attendance').get().then(function(qs){
+        var jobs = [];
+        qs.forEach(function(d){
+          var a = d.data(), no = a.no || d.id;
+          if(a.cardToken || a.rcptToken){
+            jobs.push(Promise.resolve(a.cardToken || a.rcptToken));
+          } else if(!a.guest && no.charAt(0) !== 'g'){
+            jobs.push(db.collection('checkinMembers').doc(no).get()
+              .then(function(sn){ return sn.exists ? (sn.data().cardToken || '') : ''; })
+              .catch(function(){ return ''; }));
+          }
+        });
+        return Promise.all(jobs);
+      }).then(function(tokens){
+        var seen = {}, u = {};
+        u['rcpt_' + id] = FV.delete();
+        u['online_' + id] = FV.delete();
+        return Promise.all(tokens.map(function(t){
+          if(!t || seen[t]) return null;
+          seen[t] = 1;
+          return db.collection('cards').doc(t).set(u, { merge: true }).catch(function(){});
+        }));
+      }).catch(function(){}).then(function(){
+        return evRef.delete();
+      }).then(function(){
+        closeModal(); toast('削除しました（発行済みの電子領収書も取り下げました）'); loadEvents(); loadStats();
+      }).catch(function(err){
+        $('delGo').disabled = false;
+        toast(permMsg(err, 'イベント削除は主催ユニオンの管理者・受付管理者のみ可能です'));
+      });
     };
   }
 });
@@ -3224,7 +3343,10 @@ function onlineModal(ev){
         + '　PayPay送金申告: ' + (a.paypaySent ? '✓ ' + yen(a.fee || 0) : '—');
       var btns = '';
       if(a.status === 'pending'){
-        btns = '<button class="primary" data-ola="approve" data-i="' + i + '">承認（' + yen(a.fee || 0) + ' 受領確認済み）</button>'
+        btns = '<span style="font-size:12.5px;color:var(--sub);">金額 ¥</span>'
+          + '<input type="text" id="olAmt_' + i + '" inputmode="numeric" value="' + esc(a.fee != null ? a.fee : (ev.onlineFee || 1000)) + '" style="width:70px;padding:6px 6px;text-align:right;">'
+          + '<label style="font-size:12px;color:var(--sub);white-space:nowrap;margin:0;"><input type="checkbox" id="olRc_' + i + '" checked> 領収書を発行</label>'
+          + '<button class="primary" data-ola="approve" data-i="' + i + '">承認（受領確認済み）</button>'
           + '<button data-ola="reject" data-i="' + i + '" class="danger">却下</button>';
       } else if(a.status === 'rejected'){
         btns = '<button data-ola="reset" data-i="' + i + '">申請を削除（再申請できるようにする）</button>';
@@ -3300,7 +3422,7 @@ function onlineModal(ev){
         if(!a.cardToken) return Promise.resolve();
         var u = {}; u['online_' + ev.id] = val;
         // 電子領収書: 承認と同時に発行、却下・申請削除で取り下げ
-        if(val === 'approved' && olIssuer){
+        if(val === 'approved' && olIssuer && !a.rcptNone){
           u['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
                                  by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
         } else {
@@ -3309,23 +3431,33 @@ function onlineModal(ev){
         return db.collection('cards').doc(a.cardToken).set(u, { merge: true }).catch(function(){});
       };
       if(act === 'approve'){
+        var idx = parseInt(b.getAttribute('data-i'), 10);
+        var amtIn = $('olAmt_' + idx);
+        var nAmt = parseInt(String((amtIn && amtIn.value) || '').replace(/[^\d]/g, ''), 10);
+        if(isNaN(nAmt) || nAmt < 0){ toast('金額を入力してください（無料なら0）'); return; }
+        var wantRcpt = !!($('olRc_' + idx) && $('olRc_' + idx).checked);
+        a.fee = nAmt; a.rcptNone = !wantRcpt;   // markCard が参照
         b.disabled = true;
-        attRef.set({ status: 'approved', paid: true, approvedBy: (gProf && gProf.name) || '', approvedAt: FV.serverTimestamp() }, { merge: true })
+        attRef.set({ status: 'approved', paid: true, fee: nAmt, rcptNone: !wantRcpt,
+                     approvedBy: (gProf && gProf.name) || '', approvedAt: FV.serverTimestamp() }, { merge: true })
           .then(function(){ return markCard('approved'); })
-          .then(function(){ done(a.name + ' さんを承認しました。会員証にZoomボタンが表示されます'); })
+          .then(function(){
+            auditLog(ev.id, 'オンライン承認', a.name || a.id, yen(nAmt) + (wantRcpt ? '・領収書あり' : '・領収書なし'));
+            done(a.name + ' さんを承認しました（' + yen(nAmt) + '）。会員証にZoomボタンが表示されます');
+          })
           .catch(function(e){ b.disabled = false; toast(permMsg(e, '承認権限がありません')); });
       }
       if(act === 'reject'){
         if(!window.confirm(a.name + ' さんの申請を却下しますか？')) return;
         attRef.set({ status: 'rejected', paid: false }, { merge: true })
           .then(function(){ return markCard('rejected'); })
-          .then(function(){ done('却下しました'); })
+          .then(function(){ auditLog(ev.id, 'オンライン却下', a.name || a.id, ''); done('却下しました'); })
           .catch(function(e){ toast(permMsg(e, '権限がありません')); });
       }
       if(act === 'reset'){
         attRef.delete()
           .then(function(){ return markCard('reapply'); })
-          .then(function(){ done('申請を削除しました。本人は再申請できます'); })
+          .then(function(){ auditLog(ev.id, 'オンライン申請削除', a.name || a.id, yen(a.fee || 0)); done('申請を削除しました。本人は再申請できます'); })
           .catch(function(e){ toast(permMsg(e, '権限がありません')); });
       }
       if(act === 'rercpt'){
@@ -3340,7 +3472,12 @@ function onlineModal(ev){
         ru['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
                                 by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
         db.collection('cards').doc(a.cardToken).set(ru, { merge: true })
-          .then(function(){ b.disabled = false; toast((a.name || '') + ' さんの領収書を発行しました。会員証に表示されます'); })
+          .then(function(){ return attRef.set({ rcptNone: false }, { merge: true }).catch(function(){}); })
+          .then(function(){
+            b.disabled = false;
+            auditLog(ev.id, '領収書再発行', a.name || a.id, yen(a.fee || 0));
+            toast((a.name || '') + ' さんの領収書を発行しました。会員証に表示されます');
+          })
           .catch(function(e){ b.disabled = false; toast(permMsg(e, '発行権限がありません')); });
       }
     });
@@ -3349,6 +3486,17 @@ function onlineModal(ev){
 
 /* ---------- 会計（BASE集計表のデジタル版） ---------- */
 function yen(n){ return '¥' + (Number(n) || 0).toLocaleString('ja-JP'); }
+/* 📋 お金の操作ログ: だれが・いつ・何を・誰に対して（追記専用。ルールで編集/削除を禁止） */
+function auditLog(evId, act, target, detail){
+  if(!evId) return;
+  try{
+    db.collection('checkinEvents').doc(evId).collection('audit').add({
+      at: FV.serverTimestamp(), atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now(),
+      byUid: (gUser && gUser.uid) || '', byName: (gProf && gProf.name) || '',
+      act: act || '', target: target || '', detail: detail || ''
+    }).catch(function(){});
+  }catch(e){}
+}
 // 納金票: 封筒同封用の小票をA4の1/4サイズで1枚印刷。封入現金 = 現金徴収 − 支出 − 不足金
 // 本体ページごと印刷すると重いので、小さな別ウィンドウに票だけを書いて印刷する
 // （即表示され、ウィンドウのタイトルがそのままPDF保存時のファイル名になる）
@@ -3611,6 +3759,7 @@ function financeModal(ev){
         ? '<p style="margin-top:10px;"><span class="pill g">✓ 確定済み</span><span style="font-size:12.5px;color:var(--sub);margin-left:8px;">編集はロックされています</span></p>'
         : '')
       + '<div class="btns"><button id="fnCancel">閉じる</button>'
+      + '<button id="fnLog">📋 操作ログ</button>'
       + (f.locked
         ? ((ppMode && !dCash) ? '' : '<button class="primary" id="fnSlip">🖨 納金票を印刷</button>')
           + (canEditUnion(ev.hostUnion) ? '<button id="fnUnlock" class="danger">確定を解除</button>' : '')
@@ -3645,6 +3794,7 @@ function financeModal(ev){
     document.querySelector('.modal').addEventListener('input', recompute);
     recompute();
     $('fnCancel').onclick = closeModal;
+    $('fnLog').onclick = function(){ closeModal(); auditListModal(ev); };
     // 受付の徴収データでBA行を入れ直す（保存済みの古い人数を最新に更新したいとき用）
     var ab = $('fnAuto');
     if(ab) ab.onclick = function(){
@@ -3666,6 +3816,7 @@ function financeModal(ev){
       if(ub) ub.onclick = function(){
         if(!window.confirm('確定を解除して編集できるようにしますか？')) return;
         finRef.set({ locked: false }, { merge: true }).then(function(){
+          auditLog(ev.id, '確定解除', '', '');
           toast('確定を解除しました'); closeModal(); financeModal(ev); loadFinanceTab();
         }).catch(function(e){ toast(permMsg(e, '解除の権限がありません')); });
       };
@@ -3693,6 +3844,7 @@ function financeModal(ev){
       };
       if(ppMode && $('fnFloat')) fdoc.floatBase = num($('fnFloat').value);
       finRef.set(fdoc).then(function(){
+        auditLog(ev.id, lock ? '会計確定' : '会計保存', '', '計 ' + yen(totals.ti - totals.te));
         closeModal();
         toast((lock ? '会計を確定しました' : '会計を保存しました') + '（計 ' + yen(totals.ti - totals.te) + '）');
         loadFinanceTab();
@@ -3704,6 +3856,39 @@ function financeModal(ev){
     $('fnSave').onclick = function(){ saveFinance(false); };
     $('fnLock').onclick = function(){ saveFinance(true); };
   }).catch(function(e){ toast('会計の読込エラー: ' + e.message); });
+}
+/* 📋 お金の操作ログ: だれが・いつ・何をしたかの記録（checkinEvents/{id}/audit・追記専用）を一覧表示 */
+function auditListModal(ev){
+  db.collection('checkinEvents').doc(ev.id).collection('audit').get().then(function(qs){
+    var rows = [];
+    qs.forEach(function(d){ rows.push(d.data()); });
+    rows.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
+    var html = rows.map(function(r){
+      return '<div style="padding:7px 2px;border-bottom:1px solid var(--line);font-size:13px;">'
+        + '<div style="display:flex;gap:8px;align-items:baseline;">'
+        + '<b>' + esc(r.act || '') + '</b>'
+        + (r.target ? '<span>' + esc(r.target) + '</span>' : '')
+        + '<span style="flex:1"></span>'
+        + '<span class="mono" style="font-size:11.5px;color:var(--sub);white-space:nowrap;">' + esc(r.atLocal || '') + '</span></div>'
+        + '<div style="display:flex;gap:8px;color:var(--sub);font-size:12px;">'
+        + (r.detail ? '<span>' + esc(r.detail) + '</span>' : '')
+        + '<span style="flex:1"></span>'
+        + '<span>操作: ' + esc(r.byName || '?') + '</span></div>'
+        + '</div>';
+    }).join('') || '<p style="font-size:13px;color:var(--sub);">まだ操作ログがありません。会計に関する操作（徴収・返金・金額変更・オンライン承認・確定など）をすると自動で記録されます。</p>';
+    modal('<h2>📋 操作ログ — ' + esc(ev.name || '') + '</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">お金に関する操作の記録です（追記専用・あとから編集/削除はできません）。全 ' + rows.length + ' 件</p>'
+      + '<div style="max-height:52vh;overflow:auto;">' + html + '</div>'
+      + '<div class="btns"><button id="auCsv">CSV出力</button><button class="primary" id="auClose">閉じる</button></div>', true);
+    $('auClose').onclick = function(){ closeModal(); financeModal(ev); };
+    $('auCsv').onclick = function(){
+      var out = [['日時', '操作', '対象', '内容', '操作者']];
+      rows.slice().reverse().forEach(function(r){
+        out.push([r.atLocal || '', r.act || '', r.target || '', r.detail || '', r.byName || '']);
+      });
+      csvDownload('操作ログ_' + (ev.date || '') + '_' + (ev.name || ''), out);
+    };
+  }).catch(function(e){ toast('操作ログの読込エラー: ' + e.message); });
 }
 
 /* 領収書設定: 電子領収書の発行者名（ユニオンごと） */
@@ -4117,6 +4302,13 @@ $('btnPartToggle').onclick = function(){
 function setPay(no, fields){
   var a = gRec && gRec.att[no];
   if(!a) return;
+  // 💰 操作ログ: お金に関わる変更（徴収・返金・受領方法・金額）は内容を監査ログに残す
+  var ps = [];
+  if('fee' in fields && fields.fee !== (a.fee || 0)) ps.push('徴収額 ' + yen(a.fee || 0) + '→' + yen(fields.fee));
+  if('paid' in fields && fields.paid !== (a.paid !== false)) ps.push(fields.paid ? '徴収済みにする（' + yen(('fee' in fields ? fields.fee : a.fee) || 0) + '）' : '未徴収にする');
+  if('payMethod' in fields && fields.payMethod !== (a.payMethod || '')) ps.push(fields.payMethod === 'paypay' ? 'PayPay受領に変更' : '現金受領に変更');
+  if('refund' in fields && fields.refund !== (a.refund || 0)) ps.push(fields.refund ? '返金 ' + yen(fields.refund) : '返金の取消');
+  if(ps.length) auditLog(gRec.ev.id, '会計操作', a.name || no, ps.join('・'));
   Object.keys(fields).forEach(function(k){ a[k] = fields[k]; });
   renderTallies();
   db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
@@ -4133,7 +4325,7 @@ function syncReceipt(no){
   if(!m || !m.cardToken) return;
   var a = gRec.att[no];
   var key = 'rcpt_' + gRec.ev.id, u = {};
-  if(a && (a.fee || 0) > 0 && a.paid !== false){
+  if(a && (a.fee || 0) > 0 && a.paid !== false && !a.rcptNone){
     u[key] = { d: gRec.ev.date || '', ev: gRec.ev.name || '',
                amt: (a.fee || 0) - (a.refund || 0),
                by: gRec.issuer, no: no, at: Date.now() };
@@ -4171,10 +4363,20 @@ function payModal(no){
       + '<input type="text" id="pmRefAmt" inputmode="numeric" style="width:80px;padding:6px 6px;text-align:right;">'
       + '<button id="pmRefGo">返金する</button></div>'
     : '';
+  // 徴収額の変更（ユニオン管理者・受付管理者のみ表示）: オンライン分の手入力金額の修正・誤入力の訂正用。
+  // 変更すると納金票・BA人数・受付画面の集計にそのまま反映され、操作ログに記録される
+  var feeEdit = canEditUnion(gRec.ev.hostUnion || gUnion)
+    ? '<div style="display:flex;gap:6px;align-items:center;margin-top:6px;border-top:1px solid var(--line);padding-top:10px;">'
+      + '<span style="font-size:13.5px;">徴収額を変更 <small style="color:var(--sub);">(管理者)</small></span><span style="flex:1"></span>'
+      + '<span style="font-size:12px;color:var(--sub);">¥</span>'
+      + '<input type="text" id="pmFeeAmt" inputmode="numeric" value="' + fee + '" style="width:80px;padding:6px 6px;text-align:right;">'
+      + '<button id="pmFeeGo">変更</button></div>'
+    : '';
   modal('<h2>会計操作 — ' + esc(a.name || '') + '</h2>'
     + '<p style="font-size:14px;">現在: <b>' + status + '</b></p>'
     + '<div class="btns" style="justify-content:flex-start;flex-wrap:wrap;">' + btns + '</div>'
     + customRef
+    + feeEdit
     + '<div class="btns"><button id="pmClose">閉じる</button></div>');
   $('pmClose').onclick = function(){ closeModal(); focusScan(); };
   var b;
@@ -4195,6 +4397,14 @@ function payModal(no){
     setPay(no, { refund: n }); closeModal(); toast(a.name + ' さんに ' + yen(n) + ' 返金しました'); focusScan();
   };
   if((b = $('pmUnrefund'))) b.onclick = function(){ setPay(no, { refund: 0 }); closeModal(); toast('返金を取り消しました'); focusScan(); };
+  if((b = $('pmFeeGo'))) b.onclick = function(){
+    var n = parseInt(String($('pmFeeAmt').value).replace(/[^\d]/g, ''), 10);
+    if(isNaN(n) || n < 0){ toast('金額を入力してください（無料なら0）'); return; }
+    if(n === fee){ toast('金額が変わっていません'); return; }
+    if(n < refund){ toast('返金済み額（' + yen(refund) + '）より小さい金額にはできません'); return; }
+    setPay(no, { fee: n }); closeModal();
+    toast(a.name + ' さんの徴収額を ' + yen(n) + ' に変更しました'); focusScan();
+  };
 }
 $('recent').addEventListener('click', function(e){
   var li = e.target.closest ? e.target.closest('li[data-no]') : null;
@@ -4281,6 +4491,13 @@ function attListModal(mode){
       delete gRec.att[no];
       renderTallies();
       syncReceipt(no);
+      auditLog(gRec.ev.id, '受付取消', a.name || no,
+        (a.fee || 0) > 0 ? yen(a.fee || 0) + (a.paid !== false ? '（徴収済み分）' : '（未徴収分）') : '');
+      // その場QR領収書（ゲスト等）を発行済みなら、その領収書も取り下げ
+      if(a.rcptToken){
+        var ru = {}; ru['rcpt_' + gRec.ev.id] = FV.delete();
+        db.collection('cards').doc(a.rcptToken).set(ru, { merge: true }).catch(function(){});
+      }
       // オンライン受講の取消は会員証の承認表示もリセット（承認キューの「申請を削除」と同じマーカー）
       if(a.method === 'online' && a.cardToken){
         var up = {};
@@ -4601,6 +4818,11 @@ function guestRcptQr(no, name, fee){
     by: gRec.issuer, no: no, at: Date.now()
   };
   db.collection('cards').doc(token).set(docData).then(function(){
+    // イベント削除時に一括で取り下げられるよう、出席記録に領収書トークンを残す＋操作ログ
+    if(gRec.att[no]) gRec.att[no].rcptToken = token;
+    db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
+      .set({ rcptToken: token }, { merge: true }).catch(function(){});
+    auditLog(gRec.ev.id, '領収書QR発行', name, yen(fee));
     modal('<h2>📱 電子領収書</h2>'
       + '<p style="font-size:13.5px;">' + esc(name) + ' さん本人のスマホでこのQRを読み取ってもらってください。'
       + '宛名・金額入りの領収書ページが開きます（スクリーンショット保存OK）。</p>'
@@ -4612,7 +4834,9 @@ function guestRcptQr(no, name, fee){
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
-  var unions = gRec.ev.unions || [gUnion];
+  // 所属ユニオンはイベント参加ユニオンを先頭に、登録済みの全ユニオンから選択できる
+  var evUns = gRec.ev.unions || [gUnion];
+  var unions = evUns.concat(gUnions.filter(function(u){ return evUns.indexOf(u) < 0; }));
   // 系列はそのユニオンの名簿にある系列からプルダウン選択（手入力も可）
   function groupOptions(un){
     var set = {};
