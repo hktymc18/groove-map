@@ -2380,6 +2380,68 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   #view-plan{max-width:none;margin:0;padding:16px 20px 20px;display:grid;grid-template-columns:minmax(290px,330px) minmax(430px,1fr) minmax(290px,350px);gap:16px;align-items:start}
   .p2-col{overflow-y:auto;max-height:calc(100vh - 120px);padding-right:4px}
 }
+/* v537: PLAN（PC）＝ヒーロー → マイルストーンの横線 → 今月やること｜目標の入力 */
+@media(min-width:768px){
+  #view-plan.p2pc-on{display:block;padding:18px 26px 28px;max-width:1500px;margin:0 auto}
+}
+.p2h{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:30px;padding:26px 30px 24px;border-radius:20px;border:1px solid var(--border);
+  background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--accent) 13%,var(--surface)) 0%,var(--surface) 55%);margin-bottom:16px}
+.p2h-eb{font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:var(--text-dim)}
+.p2h-ttl{font-size:52px;font-weight:900;letter-spacing:1px;line-height:1.1;margin-top:2px}
+.p2h-dl{font-size:15px;color:var(--text-mid);margin-top:6px} .p2h-dl b{font-size:20px;color:var(--text);font-family:Inter,sans-serif}
+.p2h-motto{font-size:17px;font-weight:800;font-style:italic;margin-top:10px;cursor:pointer}
+.p2h-motto.add{font-size:12.5px;font-weight:600;font-style:normal;color:var(--text-dim)}
+.p2h-r{text-align:right;min-width:260px;margin-top:34px}
+.p2h-inc{font-size:56px;font-weight:900;color:var(--accent);font-family:Inter,sans-serif;line-height:1.05;letter-spacing:.5px} .p2h-inc small{font-size:20px;margin-left:2px}
+.p2h-sub{font-size:13px;color:var(--text-mid);margin-top:8px} .p2h-sub b{color:var(--text);font-family:Inter,sans-serif} .p2h-sub span{font-size:11px;color:var(--text-dim);margin-left:4px}
+.p2h-dream{cursor:pointer} .p2h-dream .p2d-bar{margin:5px 0 0 auto;max-width:260px}
+.p2h-act{position:absolute;top:14px;right:16px;display:flex;gap:6px}
+.p2h-act span{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text-mid)}
+.p2h-act span:hover{color:var(--text);border-color:var(--border2)}
+.p2h-empty{align-items:center}
+.p2r{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px 18px 10px;margin-bottom:16px}
+.p2r-hd{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800} .p2r-hd .sp{flex:1}
+.p2r-legend{font-size:11px;color:var(--text-dim);font-weight:600}
+.p2r-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.p2r-tl{position:relative;display:grid;margin-top:6px}
+.p2r-track,.p2r-fill{position:absolute;left:0;top:calc(var(--fh,100px) + 12px);height:5px;border-radius:3px}
+.p2r-track{right:0;background:var(--surface3)} .p2r-fill{background:var(--accent)}
+.p2r-col{position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer;border-radius:12px;padding-bottom:4px;min-width:0}
+.p2r-col:hover{background:var(--surface2)}
+.p2r-flags{height:var(--fh,100px);display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;padding:0 2px;width:100%}
+.p2r-flag{display:inline-flex;align-items:center;gap:5px;max-width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:14px;padding:4px 10px;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.p2r-flag i{width:8px;height:8px;border-radius:50%;flex:none} .p2r-flag small{font-size:10px;color:var(--text-dim);font-weight:600}
+.p2r-flag.peak{border-color:var(--accent);color:var(--accent)} .p2r-flag.un{border-color:var(--go-sky)}
+.p2r-dot{width:12px;height:12px;border-radius:50%;background:var(--surface3);border:3px solid var(--surface);margin-top:4px;z-index:1;box-sizing:content-box}
+.p2r-col.done .p2r-dot{background:var(--accent)}
+.p2r-col.cur .p2r-dot,.p2r-col.loi .p2r-dot,.p2r-col.peak .p2r-dot{width:18px;height:18px;margin-top:1px}
+.p2r-col.loi .p2r-dot{background:var(--go-rose)} .p2r-col.peak .p2r-dot{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent)}
+.p2r-mo{font-size:13px;font-weight:700;color:var(--text-mid);margin-top:6px;text-align:center;line-height:1.1} .p2r-mo small{display:block;font-size:9.5px;color:var(--text-dim)}
+.p2r-col.cur .p2r-mo{color:var(--accent);font-weight:900} .p2r-col.loi .p2r-mo{color:var(--go-rose);font-weight:900}
+.p2r-mk{font-size:11px;font-weight:800;height:15px;white-space:nowrap;margin-top:2px}
+.p2r-col.cur .p2r-mk{color:var(--accent)} .p2r-col.loi .p2r-mk{color:var(--go-rose)} .p2r-col.peak .p2r-mk{color:var(--accent)}
+.p2r-f{font-size:11px;color:var(--text-dim);font-family:Inter,sans-serif;height:14px}
+.p2pc-low{display:grid;grid-template-columns:minmax(0,6fr) minmax(360px,4fr);gap:16px;align-items:start}
+.p2pc-tabs{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:10px}
+.p2pc-tabs span{flex:1;text-align:center;padding:8px;border-radius:9px;font-size:13px;font-weight:800;color:var(--text-dim);cursor:pointer}
+.p2pc-tabs span.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.p2t-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.p2t{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+.p2t.ok{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.p2t-lb{font-size:12px;font-weight:800;color:var(--text-mid)}
+.p2t-v{font-size:30px;font-weight:900;font-family:Inter,sans-serif;margin-top:2px;line-height:1.15} .p2t-v small{font-size:13px;color:var(--text-dim);font-weight:700;margin-left:4px}
+.p2t-tg{font-size:12px;color:var(--text-dim);margin-top:3px;display:flex;align-items:baseline;gap:3px} .p2t-tg b{color:var(--text-mid);font-family:Inter,sans-serif;font-size:13px} .p2t-tg span{margin-left:auto;font-weight:800;color:var(--text-mid)}
+.p2t-bar{height:6px;border-radius:4px;background:var(--surface3);margin-top:8px;overflow:hidden} .p2t-bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.p2t-sub{font-size:11px;color:var(--text-dim);margin-top:5px}
+.p2dw-ov{position:fixed;inset:0;z-index:580;background:rgba(0,0,0,0);transition:background .2s}
+.p2dw-ov.show{background:rgba(0,0,0,.35)}
+.p2dw{position:absolute;top:0;right:0;bottom:0;width:min(420px,92vw);background:var(--surface);border-left:1px solid var(--border);padding:16px 18px 30px;overflow-y:auto;transform:translateX(100%);transition:transform .22s ease;box-shadow:var(--shadow)}
+.p2dw-ov.show .p2dw{transform:none}
+.p2dw-hd{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900;margin-bottom:6px} .p2dw-hd .sp{flex:1}
+.p2dw-sec{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-dim);margin:16px 0 6px}
+.p2dw-it{display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:700}
+.p2dw-it:hover{background:var(--surface2)} .p2dw-it .ic{width:24px;text-align:center;flex:none} .p2dw-it .lb{flex:1;min-width:0} .p2dw-it .lb small{display:block;font-size:11px;color:var(--text-dim);font-weight:600}
+.p2dw-it .ar{color:var(--text-dim)}
 .p2-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
 .p2-t{font-size:13px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .p2-t .sp{flex:1}
@@ -2650,7 +2712,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v536</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v537</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3578,7 +3640,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v536';</script>
-<script src="app.js?v=v536"></script>
+<script>window.GM_EXPECT_JS='v537';</script>
+<script src="app.js?v=v537"></script>
 </body>
 </html>
