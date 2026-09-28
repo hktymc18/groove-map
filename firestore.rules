@@ -265,6 +265,17 @@ service cloud.firestore {
       allow delete: if isOwnerAdmin();
     }
 
+    // 📊 稼働率の集計結果（受付システムが計算して保存 → GROOVE MAPの受付連携は読むだけ）
+    //   docId = {ユニオン}__{YYYY-MM}。書けるのはそのユニオンの有効メンバー・受付管理者・オーナー
+    match /checkinStats/{sid} {
+      allow read: if signedIn();
+      allow create, update: if isOwnerAdmin()
+        || isCkAdmin(request.resource.data.get('union', ''))
+        || (signedIn() && notDisabled(request.auth.uid)
+            && request.resource.data.get('union', '') == ckMyUnion());
+      allow delete: if isOwnerAdmin();
+    }
+
     match /checkinMembers/{no} {
       // 合同イベントの受付・MAP連携のため、ログイン済みなら閲覧可
       allow read: if signedIn();

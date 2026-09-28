@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v535';
+var APP_JS_VERSION = 'v536';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3519,7 +3519,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v535';
+  var DATA_VERSION = 'v536';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4529,6 +4529,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v536', d:'2026-09-28', items:['🔗 受付連携の稼働率は、受付システムが集計した数字をそのまま読むように（MAP側では計算しない＝受付システムの集計と必ず一致）。連携完了の表示に「何時点の集計か」を表示','受付システム：集計画面を開いた時・受付を終了/再開した時・日付が変わって最初に開いた時に、MAP用の集計を自動で保存'] },
   { v:'v535', d:'2026-09-28', items:['🛠 受付連携の稼働率が受付システムの集計とずれる問題を修正：当日のハウディを「受付終了」前から分母に入れていたため、全出席の人でも当日は92%などになっていました。受付システムと同じく、当日分は受付を終了してから数えます'] },
   { v:'v534', d:'2026-09-28', items:['🛠 受付システムを開くとMAPのログイン画面が出てしまう問題が再発していたのを修正（v533の差し替えで受付システム側の修正が上書きされていました）'] },
   { v:'v533', d:'2026-09-28', items:['🔔 期限切れタスクの通知を強制に：期限切れが残っている間は 9・12・15・18・21時 にサーバーから必ず通知（アプリを開いていなくても届く・完了すると止まる）。⚙設定に「📨テスト通知を送る」を戻しました（届かない時の確認用）','🔒 MAP共有を2段階に：共有する時に「全部見せる」か「予定・タスクは見せない（MAPだけ）」を選べます。共有中の一覧からあとで切り替えも可能。今までの共有は「全部見せる」のまま','⌨ 漢字・かなの変換を確定するEnterで、タスクなどが途中で保存されてしまう問題を修正（変換が終わった後のEnterで追加されます）','➕ メンバー追加：「くわしく登録」の基本タブの一番上でカテゴリ（研修生／BA／BR）とタイトルを選べるように。かんたん追加でも研修生／BA／BRとタイトルを選んで登録できます'] },
@@ -5683,7 +5684,7 @@ function ckLinkRender() {
     + '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">受付ユニオン</div>' + unionSel
     + '<div style="max-height:44vh;overflow-y:auto;margin-top:10px">' + (rows || '<div style="padding:16px;color:var(--text-dim);font-size:13px">このMAPにメンバーがいません</div>') + '</div>'
     + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + evEsc((state.currentMonth || currentMonthStr())) + ' の稼働率を取り込む</button>'
-    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率 = 出席回数 ÷ 受付が終了した開催数（当日分は受付終了後に算入・受付システムの集計と同じ）。稼働タイプSの人は自動更新の対象外です。</div>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率は受付システムの「集計」の数字をそのまま取り込みます（MAPでは計算しません）。稼働タイプSの人は自動更新の対象外です。</div>'
     + '</div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -5697,47 +5698,43 @@ function ckLinkApply() {
       if (sel && sel.value) { it.m.checkinNo = sel.value; newLinks++; }
     }
   });
-  ckImportRates(function(updated, held) {
+  ckImportRates(function(updated, held, st, skipped) {
     autoSave();
     ckLinkClose();
     if (currentView === 'members') renderMembers();
-    if (held) toast('連携完了 ✓ 新規リンク' + newLinks + '名・稼働率を' + updated + '名に反映（開催' + held + '回）');
-    else toast('リンクを保存しました（' + _ckMonthKey() + ' の開催がまだないため稼働率は未更新）');
+    renderCurrentView();
+    if (held) {
+      var d0 = new Date(), today0 = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+      toast('連携完了 ✓ 新規リンク' + newLinks + '名・受付システムの集計（' + _ckStatWhen(st) + '時点・開催' + held + '回）を' + updated + '名に反映'
+        + (skipped ? '（休会中など集計外の' + skipped + '名は変更なし）' : '')
+        + (st.calcDay && st.calcDay !== today0 ? '　※最新にするには受付システムの「集計」を開いてから、もう一度連携してください' : ''));
+    } else if (st) toast('リンクを保存しました（' + _ckMonthKey() + ' はまだ受付が終了した開催がないため稼働率は未更新）');
+    else toast('リンクを保存しました。受付システムでこの月の集計がまだ作られていません（受付システムの「集計」を開くか受付を終了すると作られます）');
   });
 }
+// v536: 稼働率はMAPでは計算せず、受付システムが集計した数字（checkinStats/{ユニオン}__{YYYY-MM}）を読むだけ。
+//        計算式は受付システムの1か所だけ＝受付システムの集計画面と必ず同じ数字になる
+function _ckStatDocId(union, key) { return String(union || '').replace(/\//g, '／') + '__' + key; }
 function ckImportRates(done) {
   var un = _ckLink.sel, month = _ckMonthKey();
-  db.collection('checkinEvents').where('month', '==', month).get().then(function(qs) {
-    var d = new Date();
-    var today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    var evIds = [];
-    qs.forEach(function(doc) {
-      var ev = doc.data() || {};
-      // v535: 受付システムの集計と同じ分母＝「受付が終了した開催」のみ（過去日は開催済み、当日分は受付を終了した時点で算入）。
-      //       従来は当日の開催を受付前・受付中から分母に入れていたため、全出席の人でも当日は92%等になり受付システムとずれていた
-      if ((ev.unions || []).indexOf(un) >= 0 && ((ev.date || '') < today || (ev.date === today && ev.recClosed === true))) evIds.push(doc.id);
+  db.collection('checkinStats').doc(_ckStatDocId(un, month)).get().then(function(snap) {
+    var st = snap && snap.exists ? (snap.data() || {}) : null;
+    if (!st || !st.held) { done(0, 0, st); return; }
+    var rates = st.rates || {}, updated = 0, skipped = 0;
+    _ckOwnMembers().forEach(function(m) {
+      if (!m.checkinNo) return; // v492: Sタイプも実測稼働率を取り込む
+      var r = rates[m.checkinNo];
+      if (!r) { skipped++; return; } // 休会中・無効などで受付システムの集計に出ていない人は変更しない
+      m.actRate = r.rate;
+      updated++;
     });
-    if (!evIds.length) { done(0, 0); return; }
-    var present = {};
-    var reads = evIds.map(function(eid) {
-      return db.collection('checkinEvents').doc(eid).collection('attendance').where('union', '==', un).get().then(function(aqs) {
-        aqs.forEach(function(a) {
-          var x = a.data() || {};
-          if (x.status === 'pending' || x.status === 'rejected') return;
-          present[a.id] = (present[a.id] || 0) + 1;
-        });
-      });
-    });
-    Promise.all(reads).then(function() {
-      var updated = 0;
-      _ckOwnMembers().forEach(function(m) {
-        if (!m.checkinNo) return; // v492: Sタイプも実測稼働率を取り込む
-        m.actRate = Math.round((present[m.checkinNo] || 0) / evIds.length * 100);
-        updated++;
-      });
-      done(updated, evIds.length);
-    });
+    done(updated, st.held, st, skipped);
   }).catch(function(e) { toast('稼働率の取込に失敗しました: ' + (e && e.message || '')); });
+}
+function _ckStatWhen(st) {
+  if (!st || !st.calcAt) return '';
+  var d = new Date(st.calcAt);
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 }
 
 function renderMembers() {
