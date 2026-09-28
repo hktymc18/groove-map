@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v540';
+var APP_JS_VERSION = 'v541';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1690,9 +1690,10 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     ring.setAttribute('d', stadiumPath(R1d));
     // v540: 段の線は背景（ごく薄い点線）。つながりの線を主役に（拓郎さん要望・案C）。PDF（印刷）は紙で消えないよう少し濃く
     ring.setAttribute('fill', 'none');
-    ring.setAttribute('stroke', isPrint ? '#c3cad6' : (light ? '#d5dbe5' : '#2c3545'));
-    ring.setAttribute('stroke-width', isPrint ? '1.2' : '0.9');
-    ring.setAttribute('stroke-dasharray', isPrint ? '2 5' : '1 5');
+    // v541: 画面の段の線が見えにくかったので少し濃く・太く（ダークは明るめのグレー、ライトは中間のグレー）
+    ring.setAttribute('stroke', isPrint ? '#c3cad6' : (light ? '#9ca8ba' : '#66779a'));
+    ring.setAttribute('stroke-width', isPrint ? '1.2' : '1.5');
+    ring.setAttribute('stroke-dasharray', isPrint ? '2 5' : '3 4');
     ring.setAttribute('class', 'orbit-lane');
     ring.setAttribute('data-r', R1d);
     svg.appendChild(ring);
@@ -3834,7 +3835,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v540';
+  var DATA_VERSION = 'v541';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4844,6 +4845,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v541', d:'2026-09-29', items:['🧵 運動会MAPの段の線を少し濃く・太くして、ダークモードでもライトモードでも見えるように（つなぐ線より控えめのまま）'] },
   { v:'v540', d:'2026-09-29', items:['🎯 PLAN（PC）の目標：目標月収・目標タイトル・期日のラベルと数字の高さをそろえ、スローガンを右上に大きく、BB換算・夢100の進捗は目標の下にまとめました','🔤 目標タイトルをアルファベット表記に（ルビー→RUBY など）','🧵 運動会MAPの線を見やすく：メンバーをつなぐ線を太く、段の線はごく薄い点線に（PDFは印刷で消えないよう少しだけ濃いめ）'] },
   { v:'v539', d:'2026-09-29', items:['🌫 運動会MAP（とPCのツリー）でOUTの人が薄く表示されない問題を修正（Safariなどで薄くならなかった・絞り込みの表示で濃く戻っていた）'] },
   { v:'v538', d:'2026-09-29', items:['💰 PLAN（PC）の一番上を「目標月収」から：左上に目標月収、その横に目標タイトル・期日をどれも大きな文字で。スローガンも大きく表示'] },
