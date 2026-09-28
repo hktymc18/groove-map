@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v534';
+var APP_JS_VERSION = 'v535';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3519,7 +3519,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v534';
+  var DATA_VERSION = 'v535';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4529,6 +4529,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v535', d:'2026-09-28', items:['🛠 受付連携の稼働率が受付システムの集計とずれる問題を修正：当日のハウディを「受付終了」前から分母に入れていたため、全出席の人でも当日は92%などになっていました。受付システムと同じく、当日分は受付を終了してから数えます'] },
   { v:'v534', d:'2026-09-28', items:['🛠 受付システムを開くとMAPのログイン画面が出てしまう問題が再発していたのを修正（v533の差し替えで受付システム側の修正が上書きされていました）'] },
   { v:'v533', d:'2026-09-28', items:['🔔 期限切れタスクの通知を強制に：期限切れが残っている間は 9・12・15・18・21時 にサーバーから必ず通知（アプリを開いていなくても届く・完了すると止まる）。⚙設定に「📨テスト通知を送る」を戻しました（届かない時の確認用）','🔒 MAP共有を2段階に：共有する時に「全部見せる」か「予定・タスクは見せない（MAPだけ）」を選べます。共有中の一覧からあとで切り替えも可能。今までの共有は「全部見せる」のまま','⌨ 漢字・かなの変換を確定するEnterで、タスクなどが途中で保存されてしまう問題を修正（変換が終わった後のEnterで追加されます）','➕ メンバー追加：「くわしく登録」の基本タブの一番上でカテゴリ（研修生／BA／BR）とタイトルを選べるように。かんたん追加でも研修生／BA／BRとタイトルを選んで登録できます'] },
   { v:'v532', d:'2026-09-27', items:['◎ 運動会MAPの並べ方を改善（927-4）：同じ人のフロントは親の真外側にまとまり、別の人のグループの間・系列の間にはすき間を空けるように。子が隣の人の下に入り込んだり、線が他の人の線と交差・重なったりしにくくなりました','📱 スマホを横にして運動会・ツリーを切り替えたあと縦に戻すと、ツリーが消える／運動会が残る／⊡でツリーが下に出る不具合を修正（927-1〜3）'] },
@@ -5682,7 +5683,7 @@ function ckLinkRender() {
     + '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">受付ユニオン</div>' + unionSel
     + '<div style="max-height:44vh;overflow-y:auto;margin-top:10px">' + (rows || '<div style="padding:16px;color:var(--text-dim);font-size:13px">このMAPにメンバーがいません</div>') + '</div>'
     + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + evEsc((state.currentMonth || currentMonthStr())) + ' の稼働率を取り込む</button>'
-    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率 = 出席回数 ÷ 本日までの開催数（受付システムの集計と同じ）。稼働タイプSの人は自動更新の対象外です。</div>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率 = 出席回数 ÷ 受付が終了した開催数（当日分は受付終了後に算入・受付システムの集計と同じ）。稼働タイプSの人は自動更新の対象外です。</div>'
     + '</div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -5712,7 +5713,9 @@ function ckImportRates(done) {
     var evIds = [];
     qs.forEach(function(doc) {
       var ev = doc.data() || {};
-      if ((ev.unions || []).indexOf(un) >= 0 && (ev.date || '') <= today) evIds.push(doc.id);
+      // v535: 受付システムの集計と同じ分母＝「受付が終了した開催」のみ（過去日は開催済み、当日分は受付を終了した時点で算入）。
+      //       従来は当日の開催を受付前・受付中から分母に入れていたため、全出席の人でも当日は92%等になり受付システムとずれていた
+      if ((ev.unions || []).indexOf(un) >= 0 && ((ev.date || '') < today || (ev.date === today && ev.recClosed === true))) evIds.push(doc.id);
     });
     if (!evIds.length) { done(0, 0); return; }
     var present = {};
