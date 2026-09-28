@@ -374,6 +374,15 @@ service cloud.firestore {
               && get(/databases/$(database)/documents/checkinEvents/$(eid))
                    .data.get('unions',[]).hasAny([ckMyUnion()]));
       }
+
+      // 💰 お金の操作ログ: 追記専用（だれも編集・削除できない＝改ざん防止）。
+      // 記録の作成はログイン済みの有効ユーザーなら可（会計操作と同時にアプリが自動追記する）
+      match /audit/{aid} {
+        allow read: if signedIn();
+        allow create: if isOwnerAdmin()
+          || (signedIn() && notDisabled(request.auth.uid));
+        allow update, delete: if false;
+      }
     }
 
     // スマホ会員証: トークン(URL)を知っている本人だけが自分のカードを表示できる。
