@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v542';
+var APP_JS_VERSION = 'v543';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1787,7 +1787,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     ln.setAttribute('d', dd); ln.setAttribute('fill', 'none'); ln.setAttribute('class', 'orbit-link');
     ln.setAttribute('stroke-linejoin', 'round');
     ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '2.4'); ln.setAttribute('opacity', m._ghost ? '0.25' : '0.85'); // v540: つながりの線を太く・濃く
-    if (m._foreign) ln.setAttribute('stroke-dasharray', '4,3');
+    // v543: 929-1 共有MAPメンバーの線は点線をやめる（段の点線とまぎらわしい）。共有は丸の「共有」タグで示す
     svg.appendChild(ln);
   });
   if (spineX1 > spineX0) { // 中心軸（0段目から各系列へ）
@@ -1836,7 +1836,6 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     ci.setAttribute('cx', pos.x); ci.setAttribute('cy', pos.y); ci.setAttribute('r', r);
     ci.setAttribute('fill', fill); ci.setAttribute('stroke', stroke);
     ci.setAttribute('stroke-width', _isBrUp ? '3' : '1.6');
-    if (m._foreign) ci.setAttribute('stroke-dasharray', '4,3');
     g.appendChild(ci);
     // v506: 研修生・フレッシュは枠を点滅（Safariでも動くopacityアニメの脈動リング）。印刷では出さない
     // v542: 光る条件はツリーのケアバッジと同じ（フレッシュ＝スタート6ヶ月以内・BR未満。LOI〜Q4でも光る／手動の表示・非表示も反映）
@@ -1932,6 +1931,28 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       var _fsP = r * (Math.max(String(_pf6).length + 2, String(_pc6).length) >= 6 ? 0.21 : 0.25);
       qtxt(pos.x + qx, pos.y + qy - _fsP * 0.2, '(' + _pf6 + ')', _fsP, '700', _dimCol, 'orbit-pt');
       qtxt(pos.x + qx, pos.y + qy + _fsP * 0.9, String(_pc6), _fsP, '700', _dimCol, 'orbit-pt');
+    }
+    // v543: 929-1 共有MAPメンバーは丸の下ふちに紫の「共有」タグ（点線の丸は段の点線とまぎらわしかったため）
+    if (m._foreign) {
+      var _fsS = Math.max(8, r * 0.3), _hS = _fsS * 1.45, _wS = _fsS * 2.8;
+      var _tgS = document.createElementNS(NS, 'g');
+      _tgS.setAttribute('class', 'orbit-shared'); _tgS.setAttribute('pointer-events', 'none');
+      var _oS = document.createElementNS(NS, 'circle'); // 外側の紫の細い輪（縮小表示でも共有と分かる）
+      _oS.setAttribute('cx', pos.x); _oS.setAttribute('cy', pos.y); _oS.setAttribute('r', r + 2.6);
+      _oS.setAttribute('fill', 'none'); _oS.setAttribute('stroke', '#8B7CFF'); _oS.setAttribute('stroke-width', '1.8');
+      _tgS.appendChild(_oS);
+      var _rS = document.createElementNS(NS, 'rect');
+      _rS.setAttribute('x', pos.x - _wS / 2); _rS.setAttribute('y', pos.y + r - _hS / 2);
+      _rS.setAttribute('width', _wS); _rS.setAttribute('height', _hS); _rS.setAttribute('rx', _hS / 2);
+      _rS.setAttribute('fill', '#8B7CFF'); _rS.setAttribute('stroke', light ? '#ffffff' : '#161920'); _rS.setAttribute('stroke-width', '1.2');
+      _tgS.appendChild(_rS);
+      var _tS = document.createElementNS(NS, 'text');
+      _tS.setAttribute('x', pos.x); _tS.setAttribute('y', pos.y + r + _fsS * 0.36);
+      _tS.setAttribute('text-anchor', 'middle'); _tS.setAttribute('font-size', _fsS.toFixed(1) + 'px'); _tS.setAttribute('font-weight', '800');
+      _tS.setAttribute('fill', '#ffffff');
+      _tS.textContent = '共有';
+      _tgS.appendChild(_tS);
+      g.appendChild(_tgS);
     }
     if (!isPrint) {
       g.addEventListener('click', function(ev) {
@@ -3843,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v542';
+  var DATA_VERSION = 'v543';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4853,6 +4874,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v543', d:'2026-09-29', items:['🔗 運動会MAPの共有MAPメンバーを分かりやすく（929-1）：丸とつなぐ線の点線をやめ（段の点線とまぎらわしかったため）、丸の外側に紫の細い輪＋下ふちに「共有」タグを付けました。PDFにも出ます'] },
   { v:'v542', d:'2026-09-29', items:['✨ 運動会MAPでも、LOI〜Q4のフレッシュ（スタート6ヶ月以内・BR未満）が光るように：ツリーのMAPと同じ判定（ケアバッジの自動／表示／非表示）にそろえました。丸の色（QBRのオレンジ）はそのままで、金色の枠が点滅します'] },
   { v:'v541', d:'2026-09-29', items:['🧵 運動会MAPの段の線を少し濃く・太くして、ダークモードでもライトモードでも見えるように（つなぐ線より控えめのまま）'] },
   { v:'v540', d:'2026-09-29', items:['🎯 PLAN（PC）の目標：目標月収・目標タイトル・期日のラベルと数字の高さをそろえ、スローガンを右上に大きく、BB換算・夢100の進捗は目標の下にまとめました','🔤 目標タイトルをアルファベット表記に（ルビー→RUBY など）','🧵 運動会MAPの線を見やすく：メンバーをつなぐ線を太く、段の線はごく薄い点線に（PDFは印刷で消えないよう少しだけ濃いめ）'] },
