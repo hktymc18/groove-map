@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v541';
+var APP_JS_VERSION = 'v542';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1839,11 +1839,19 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     if (m._foreign) ci.setAttribute('stroke-dasharray', '4,3');
     g.appendChild(ci);
     // v506: 研修生・フレッシュは枠を点滅（Safariでも動くopacityアニメの脈動リング）。印刷では出さない
-    if ((isT || _isFrO) && !isPrint) {
+    // v542: 光る条件はツリーのケアバッジと同じ（フレッシュ＝スタート6ヶ月以内・BR未満。LOI〜Q4でも光る／手動の表示・非表示も反映）
+    var _cbO = '';
+    if (mapType === 'current' && (m.title || '').trim() !== 'OUT') {
+      var _isTrO = !!(m.trainee || isT);
+      var _autoO = _isTrO ? 'trainee' : ((typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m) && !_isBrUp) ? 'fresh' : '');
+      var _bmO = m.badgeMode || '';
+      _cbO = (_bmO === 'off') ? '' : ((_bmO === 'on') ? (_autoO || (_isTrO ? 'trainee' : 'fresh')) : _autoO);
+    } else if (isT && mapType !== 'current') _cbO = 'trainee'; // 理想MAPなどは今までどおり研修生のみ
+    if (_cbO && !isPrint) {
       var _pr6 = document.createElementNS(NS, 'circle');
       _pr6.setAttribute('cx', pos.x); _pr6.setAttribute('cy', pos.y); _pr6.setAttribute('r', r + 3.5);
       _pr6.setAttribute('fill', 'none');
-      _pr6.setAttribute('stroke', stroke);
+      _pr6.setAttribute('stroke', _cbO === 'fresh' ? '#FFD166' : '#5AD7FF');
       _pr6.setAttribute('stroke-width', '3');
       _pr6.setAttribute('class', 'pc-pulse-ring orbit-pulse');
       _pr6.setAttribute('pointer-events', 'none');
@@ -3835,7 +3843,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v541';
+  var DATA_VERSION = 'v542';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4845,6 +4853,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v542', d:'2026-09-29', items:['✨ 運動会MAPでも、LOI〜Q4のフレッシュ（スタート6ヶ月以内・BR未満）が光るように：ツリーのMAPと同じ判定（ケアバッジの自動／表示／非表示）にそろえました。丸の色（QBRのオレンジ）はそのままで、金色の枠が点滅します'] },
   { v:'v541', d:'2026-09-29', items:['🧵 運動会MAPの段の線を少し濃く・太くして、ダークモードでもライトモードでも見えるように（つなぐ線より控えめのまま）'] },
   { v:'v540', d:'2026-09-29', items:['🎯 PLAN（PC）の目標：目標月収・目標タイトル・期日のラベルと数字の高さをそろえ、スローガンを右上に大きく、BB換算・夢100の進捗は目標の下にまとめました','🔤 目標タイトルをアルファベット表記に（ルビー→RUBY など）','🧵 運動会MAPの線を見やすく：メンバーをつなぐ線を太く、段の線はごく薄い点線に（PDFは印刷で消えないよう少しだけ濃いめ）'] },
   { v:'v539', d:'2026-09-29', items:['🌫 運動会MAP（とPCのツリー）でOUTの人が薄く表示されない問題を修正（Safariなどで薄くならなかった・絞り込みの表示で濃く戻っていた）'] },
