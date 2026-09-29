@@ -1323,6 +1323,15 @@ body.light .ev-cell.alt{background:rgba(0,0,0,.04)}
 #eventModal input.ev-dt{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
 #eventModal input[type=date].ev-dt{-webkit-appearance:none;appearance:none}
 #eventModal #evAllDayChip{padding:8px 9px}
+/* v549: 予定の入力は詳細を開く前なら保存ボタンまでスクロールなしで見える。保存・キャンセルは常に下に固定 */
+.ev-cm-row{display:contents}
+@media(min-width:768px){
+  .ev-cm-row{display:flex;gap:10px} .ev-cm-row>.fr{flex:1;min-width:0}
+  #eventModal .sheet{padding-bottom:0}
+  #eventModal .sheet .fr{margin-bottom:10px}
+}
+#eventModal .sheet>.btn-row{position:sticky;bottom:0;z-index:2;background:var(--surface);margin:10px -18px 0;padding:10px 18px 14px;border-top:1px solid var(--border)}
+@media(max-width:767px){#eventModal .sheet>.btn-row{bottom:-44px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}}
 /* A1: 追加フォームの詳細折りたたみ */
 .ev-adv-toggle{margin:2px 0 12px;padding:10px 12px;border:1px dashed var(--border);border-radius:10px;font-size:12.5px;font-weight:700;color:var(--text-dim);cursor:pointer;text-align:center}
 .ev-adv-toggle.open{color:var(--accent);border-color:var(--accent);border-style:solid;background:var(--accent-dim)}
@@ -2495,6 +2504,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2a-add:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 @media(max-width:767px){.p2a-row{grid-template-columns:1fr auto;row-gap:4px}.p2a-mo{grid-column:1/-1;order:3}.p2a-wk{order:4}.p2a-add{order:2}}
 .p2r-flag b.em{font-weight:400;font-size:12px;line-height:1}
+.p2a-row.warn{background:color-mix(in srgb,var(--go-rose,#FF5D73) 7%,transparent);border-radius:10px;padding-left:6px;padding-right:6px} /* v550: 今週の枠が未予約 */
+.p2a-subw{grid-column:2/-1;margin-top:-4px} @media(max-width:767px){.p2a-subw{grid-column:1/-1;order:5}}
+.p2a-sub{font-size:11.5px;color:var(--text-mid);margin-top:5px;line-height:1.5} .p2a-sub b{font-family:Inter,sans-serif;color:var(--text)}
+.p2a-lk{color:var(--accent);font-weight:800;cursor:pointer;text-decoration:underline;margin:0 3px}
+.p2a-add.al{color:var(--text-mid);border-color:var(--border2)}
 .p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
 .p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none;animation:p2bIn .35s ease}
 @keyframes p2bIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -2751,7 +2765,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v548</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v550</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3602,6 +3616,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="rb" id="evUnArea1" onclick="evUnionArea(true)">地域限定</div>
       </div>
     </div>
+    <!-- v549: PCはカテゴリと関連メンバーを横並び（保存ボタンまで1画面に） -->
+    <div class="ev-cm-row">
     <!-- v350: カテゴリは通知・繰り返しの下のメイン項目に（メモは詳細へ移動） -->
     <div class="fr">
       <label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M12 21.5a9.5 9.5 0 110-19c5.2 0 9.5 3.8 9.5 8.5 0 2.9-2.4 4.5-5 4.5h-1.8a1.8 1.8 0 00-1.3 3.1 1.8 1.8 0 01-1.4 2.9z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7" r="1.2"/></svg> カテゴリ（色分け）</label>
@@ -3619,6 +3635,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span id="evMemberNames" style="flex:1;color:var(--text-dim)">（なし）</span>
         <span style="color:var(--text-dim)">▾</span>
       </div>
+    </div>
     </div>
     <!-- v545: 種類・Aさん（メンバー選択時。MAPのメンバー側の予定表示に使う） -->
     <div class="fr" id="evKindRow" style="display:none">
@@ -3689,7 +3706,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v548';</script>
-<script src="app.js?v=v548"></script>
+<script>window.GM_EXPECT_JS='v550';</script>
+<script src="app.js?v=v550"></script>
 </body>
 </html>

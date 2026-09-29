@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v548';
+var APP_JS_VERSION = 'v550';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v548';
+  var DATA_VERSION = 'v550';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v550', d:'2026-09-29', items:['🏃 今月の行動量に「ST・SNST・CT取り」を追加：CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数で自動カウント）。目標はCTの必要数＋ドタキャン分（標準20%）。ST・SNSTは回数を右の「今月の目標」で決めます','⏰ ST・SNST・CT取りは「予約」で時間の枠をカレンダーに入れる形に。今週の枠が無い／残っていない行は赤く表示。終わったCT取りの枠には「取れた約束をCTの予定に入れる」案内','📋 ATTACK LISTと連携：手元のリスト（未着手・連絡中）の人数とCT予定の人数を自動で表示（読めない時は手入力）。リストが少なくなったら「STで作る」。ALボタンでATTACK LISTを開けます','⚙ 係数の画面に「行動の設定」：STを目標に使う（フレッシュ期間は既定OFF）／SNSTを目標に使う（任意）／CT取りの余裕％','🏷 予定の種類にST・SNST・CT取りを追加（タイトルから自動判定。人を選ばない予定でも種類の欄が出ます）'] },
+  { v:'v549', d:'2026-09-29', items:['🗓 予定の入力画面：詳細を開く前は保存ボタンまでスクロールなしで表示（PCはカテゴリと関連メンバーを横並び）。保存・キャンセルは常に下に固定','🔤 今月の行動量：今週の件数は「実施・予定」（今週に入っている予定と実施済みの合計）、月の残りは「これからの予定」と表記'] },
   { v:'v548', d:'2026-09-29', items:['🧩 PLANのデータを1本化：旧GOAL画面の行事（RRR TRIPなど）をPLANのマイルストーンに移しました（絵文字もそのまま）。月のフロント目標は「理想MAPで新規フロントを組んだ月はその人数、それ以外は月の目標（横線のF・表・右の入力は同じ値）」の1つのルールで、横線・タイル・行動量・動員計画・ホームのコーチがそろいます','📅 CT・FT/マケ・PG・DLRの実績をカレンダーから自動カウント：種類の付いた予定は日付が来たら、タスクは完了で1件（関連メンバーの人数分）。クイック記録の手入力分も足します（9月までは二重にならないよう多い方）','🗓 「今月のファネル」→「今月の行動量」：月の必要数・実績・残りの予定に加え、今週の必要件数と予定件数・あと何件を表示。「＋予定」で種類を入れた予定の入力が開きます'] },
   { v:'v547', d:'2026-09-29', items:['🎏 PLANのマイルストーン：複数月にまたがるものは、対象の月の幅まで帯を伸ばして表示（単月の旗の上の段・重なる時は別の段）','⚡ マイルストーンや行事の旗（RRR TRIPなど）を編集・削除したら、ブラウザの更新なしですぐ反映','🔢 横線の月をクリック→「この月のフロント目標（F）」をマイルストーン無しでも入れられるように（空欄で消去）'] },
   { v:'v546', d:'2026-09-29', items:['📐 PLAN（PC）をスクロールなしで1画面に：目標月収・タイトル・期日・スローガンの文字を少し小さくし、BB換算・夢100は目標のすぐ下（月収の下・タイトルの下）に。マイルストーンは「現在地」とフロント目標（F）を1行にまとめ、カードの余白も詰めました。ノートPCの幅でも「やること」の5枚が1列に並びます'] },
@@ -14098,6 +14100,12 @@ function _p2Coef() {
   if (um && (+um.ct || +um.ft || +um.dlr)) return { ct: +um.ct || 8, ft: +um.ft || 4, dlr: +um.dlr || 2, src: 'ユニオン' };
   return { ct: 8, ft: 4, dlr: 2, src: '標準' };
 }
+// v550: 行動の設定（自分）…ST・SNSTを目標に使うか、CT取りのドタキャン余裕（％）
+function _p2ActCfg() {
+  var a = _p2().act || {};
+  var root = _p2OwnRoot(), fresh = !!(root && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(root));
+  return { st: a.st !== undefined ? !!a.st : !fresh, snst: !!a.snst, ctBuf: (a.ctBuf !== undefined && a.ctBuf !== '') ? Math.max(0, +a.ctBuf || 0) : 20, fresh: fresh };
+}
 function _p2OwnRoot() { var ms = state.members || []; for (var i = 0; i < ms.length; i++) { if (!ms[i].parentId && !ms[i].deleted) return ms[i]; } return null; }
 function _p2NormYmV(v) { return String(v || '').replace('.', '-').slice(0, 7); }
 // 実績の自動集計（手入力なし）: MAP・テンプレ完了(MAP実績)・受付連携の稼働率
@@ -14119,12 +14127,12 @@ function _p2Act(ym) {
     teamPt: root ? (root.ptCurrent || 0) : 0,
     rate: actN ? Math.round(actS / actN) : null,
     ct: _p2ActK(ym, 'ct'), ft: _p2ActK(ym, 'ft'),
-    dlr: _p2ActK(ym, 'dlr'), pg: _p2ActK(ym, 'pg'), ctget: _glMonthActual(p, ym, 'ctget')
+    dlr: _p2ActK(ym, 'dlr'), pg: _p2ActK(ym, 'pg'), ctget: _p2ActK(ym, 'ctget'), st: _p2ActK(ym, 'st'), snst: _p2ActK(ym, 'snst')
   };
 }
 // v548: CT・FT/マケ・PG・DLRの実績はカレンダーから自動カウント（予定の「種類」＝v545）
 //  予定＝日付が来たら実施、タスク＝完了チェックで実施。関連メンバーが複数なら人数分（DLR動員2人＝2）
-var P2_KIND_KEY = { 'CT': 'ct', 'FT': 'ft', 'マケ': 'ft', 'PG': 'pg', 'DLR': 'dlr' };
+var P2_KIND_KEY = { 'CT': 'ct', 'FT': 'ft', 'マケ': 'ft', 'PG': 'pg', 'DLR': 'dlr', 'CT取り': 'ctget', 'ST': 'st', 'SNST': 'snst' }; // v550
 var P2_AUTO_ACT_FROM = '2026-10'; // この月からは「自動＋手入力」。それより前は二重計上を避けて多い方
 function _p2KindEvs(key, from, to) {
   var out = [];
@@ -14137,8 +14145,22 @@ function _p2KindEvs(key, from, to) {
 }
 function _p2KindN(e) { return Math.max(1, (e.memberIds && e.memberIds.length) || (e.memberId ? 1 : 0)); }
 function _p2EvDoneAt(e, t) { return e.type === 'task' ? !!e.done : (e.date <= t); }
+// v550: CT取り＝会う約束が取れた件数。約束が取れたらCTの予定を入れるので「その期間に作ったCTの予定」で数える
+function _p2CtGotEvs(from, to) {
+  var out = [];
+  (state.events || []).forEach(function(e) {
+    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || P2_KIND_KEY[evKindOf(e)] !== 'ct') return;
+    var d0 = '';
+    try { d0 = e.createdAt ? evYmd(new Date(e.createdAt)) : ''; } catch (eD) {}
+    if (!d0) d0 = e.date || '';
+    if (d0 && d0 >= from && d0 <= to) out.push(e);
+  });
+  return out;
+}
 function _p2ActAuto(ym, key, from, to) {
   var t = evTodayYmd(), n = 0;
+  if (key === 'ctget') { _p2CtGotEvs(from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { n += _p2KindN(e); }); return n; }
+  if (key === 'st' || key === 'snst') { _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n++; }); return n; } // 回数
   _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n += _p2KindN(e); });
   return n;
 }
@@ -14449,6 +14471,8 @@ function _p2MonthHtml(ym, off, forceOpen) {
     + '<div class="p2-meta" style="margin-bottom:2px">🧍 自分</div>'
     + row('front', 'フロント（人）', act.front, sug)
     + row('upt', 'ユーザーPT', act.upt, '')
+    + (_p2ActCfg().st ? row('st', 'ST（回）', act.st, '', true) : '') // v550: 回数の目標は本人が決める
+    + (_p2ActCfg().snst ? row('snst', 'SNST（回）', act.snst, '', true) : '')
     + '<div class="p2-meta" style="margin:8px 0 2px">👥 チーム</div>'
     + row('teamB1', 'B1（今月スタート）', act.teamB1, '')
     + row('teamPt', 'チームPT', act.teamPt, '')
@@ -14535,6 +14559,49 @@ function _p2ManualRange(key, from, to) {
   for (var k in da) { if (k >= from && k <= to) s += parseInt(da[k][key] || 0, 10) || 0; }
   return s;
 }
+// v550: 人を決めない「時間の枠」（ST・SNST・CT取り）の行
+function _p2BlockRow(ym, key, kind, lb, need) {
+  var t = evTodayYmd(), w = _p2WeekInfo(ym);
+  var done = _p2ActK(ym, key);
+  var blocks = _p2KindEvs(key, ym + '-01', ym + '-31');
+  var wkBlocks = blocks.filter(function(e) { return e.date >= w.from && e.date <= w.to; });
+  var futBlocks = blocks.filter(function(e) { return !_p2EvDoneAt(e, t); }).length;
+  var isGet = key === 'ctget';
+  var wkDone = _p2ActAuto(ym, key, w.from, w.to) + _p2ManualRange(key, w.from, w.to);
+  var doneBefore = Math.max(0, done - wkDone);
+  var wNeed = need ? Math.ceil(Math.max(0, need - doneBefore) / w.weeks) : 0;
+  var unit = isGet ? '件' : '回';
+  var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
+  var ok = need && done >= need;
+  var wkHave = isGet ? wkDone : wkBlocks.length;
+  var short = need ? Math.max(0, wNeed - wkHave) : 0;
+  var noSlot = need && !ok && short > 0 && !wkBlocks.some(function(e) { return !_p2EvDoneAt(e, t); });
+  var slotTxt = wkBlocks.length ? wkBlocks.slice(0, 3).map(function(e) { var d9 = new Date(e.date.replace(/-/g, '/')); return ['日', '月', '火', '水', '木', '金', '土'][d9.getDay()] + (e.time ? e.time : ''); }).join('・') : '';
+  var sub = '';
+  if (isGet) {
+    var L = _p2ListN();
+    var rest = need ? Math.max(0, need - done) : 0;
+    sub = '<div class="p2a-sub">📋 手元のリスト ' + (L.n === null ? (L.src === 'loading' ? '…' : '<span class="p2a-lk" onclick="p2ListManual()">人数を入れる</span>') : ('<b>' + L.n + '</b>人' + (L.src === 'al' ? '（ATTACK LIST）' : '<span class="p2a-lk" onclick="p2ListManual()">（手入力 ✎）</span>')))
+      + (L.apo ? '・CT予定 ' + L.apo + '人' : '')
+      + (L.n !== null && rest > 0 && L.n < rest * 2 ? '<span class="p2a-sh">リストが少なめ → STで作る</span>' : '') + '</div>';
+    // 直近（2日以内）に終わったCT取りの枠 → 取れた約束をCTの予定に
+    var d2 = new Date(); d2.setDate(d2.getDate() - 2);
+    var rec = blocks.filter(function(e) { return e.date >= evYmd(d2) && _p2EvDoneAt(e, t); }).sort(function(a, b) { return (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')); })[0];
+    if (rec) sub += '<div class="p2a-sub">⏱ ' + parseInt(rec.date.slice(5, 7), 10) + '/' + parseInt(rec.date.slice(8), 10) + (rec.time ? ' ' + rec.time : '') + ' のCT取り → 取れた約束を<span class="p2a-lk" onclick="p2AddKindEv(\'CT\')">CTの予定に入れる</span>（入れた件数がCT取りの実績になります）</div>';
+  }
+  return '<div class="p2a-row' + (ok ? ' ok' : '') + (noSlot ? ' warn' : '') + '">'
+    + '<div class="p2a-lb">' + lb + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + unit + '</small>' + (futBlocks ? '<span class="p2a-pl">＋これからの枠' + futBlocks + '</span>' : '') + '</div>'
+    + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
+    + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
+        : (need ? '今週 <b>' + wNeed + '</b>' + unit + ' ・ ' + (isGet ? '取れた <b>' + wkDone + '</b> ・ ' : '') + '枠 ' + (wkBlocks.length ? '<b>' + wkBlocks.length + '</b>回（' + slotTxt + '）' : '<span class="p2a-sh">未予約</span>')
+            + (noSlot && wkBlocks.length ? '<span class="p2a-sh">残りの枠なし</span>' : '') + (!noSlot && short ? '<span class="p2a-sh">あと' + short + '</span>' : '') : (isGet ? '' : '今月の回数を目標に入れる')))
+    + '</div>'
+    + '<span style="display:flex;gap:6px">' + (isGet ? '<span class="p2a-add al" onclick="p2OpenAL()" title="ATTACK LISTを開く">AL</span>' : '')
+    + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の時間をカレンダーに予約">予約</span></span>'
+    + (sub ? '<div class="p2a-subw">' + sub + '</div>' : '') // v550: リスト・直近の枠の案内は行の下に全幅で
+    + '</div>';
+}
 // v548: 行動量の1行（月の必要・実績・残りの予定／今週の必要と予定）
 function _p2ActRow(ym, key, kind, lb, need) {
   var t = evTodayYmd(), w = _p2WeekInfo(ym), ms0 = ym + '-01', me0 = ym + '-31';
@@ -14550,20 +14617,55 @@ function _p2ActRow(ym, key, kind, lb, need) {
   var ok = need && done >= need;
   return '<div class="p2a-row' + (ok ? ' ok' : '') + '">'
     + '<div class="p2a-lb">' + lb + '</div>'
-    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + (planned ? '<span class="p2a-pl">＋予定' + planned + '</span>' : '') + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + (planned ? '<span class="p2a-pl">＋これからの予定' + planned + '</span>' : '') + '</div>'
     + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
     + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
-        : (need ? '今週 <b>' + wNeed + '</b>件 ・ 予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '予定 <b>' + wk + '</b>件'))
+        : (need ? '今週 <b>' + wNeed + '</b>件 ・ 実施・予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '今週の実施・予定 <b>' + wk + '</b>件')) // v549: 今週の予定件数は実施済みも含むので表記を明確に
     + '</div>'
     + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の予定をカレンダーに入れる">＋予定</span>'
     + '</div>';
 }
+// v550: ATTACK LIST（同じFirebaseの users/{uid}/people）から「手元のリスト」＝未着手・連絡中の人数を読む（10分キャッシュ）
+var _p2Al = { n: null, apo: null, at: 0, err: false, busy: false };
+function _p2AlLoad(force) {
+  if (!db || !currentUser || viewingOwnerUid || _p2Al.busy) return;
+  if (!force && _p2Al.at && Date.now() - _p2Al.at < 600000) return;
+  _p2Al.busy = true;
+  fsGetCol('users/' + currentUser.uid + '/people').then(function(docs) {
+    var n = 0, apo = 0;
+    (docs || []).forEach(function(d) { var st = d.status || '未着手'; if (st === '未着手' || st === '連絡中') n++; else if (st === 'CT予定') apo++; });
+    _p2Al = { n: n, apo: apo, at: Date.now(), err: false, busy: false };
+    if (currentView === 'plan') renderPlan();
+  }).catch(function() { _p2Al = { n: null, apo: null, at: Date.now(), err: true, busy: false }; if (currentView === 'plan') renderPlan(); });
+}
+function _p2ListN() { // 連携できればATTACK LIST、できなければ手入力
+  if (_p2Al.n !== null && !_p2Al.err) return { n: _p2Al.n, apo: _p2Al.apo, src: 'al' };
+  var lm = _p2().listManual;
+  return lm && lm.n !== '' && lm.n != null ? { n: +lm.n, apo: null, src: 'manual', at: lm.at } : { n: null, apo: null, src: _p2Al.err ? 'manual' : 'loading' };
+}
+function p2ListManual() {
+  _p2SheetClose('p2ListOv');
+  var lm = _p2().listManual || {};
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2ListOv'; ov.style.zIndex = '620';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2ListOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📋 手元のリストの人数</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">ATTACK LISTの「未着手・連絡中」の人数（週1回くらい更新）</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2ListOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px"><input class="fi" id="p2ListN" type="number" inputmode="numeric" value="' + (lm.n != null ? lm.n : '') + '" style="text-align:center;font-size:20px;font-weight:800" onfocus="edSelAll(this)">'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:10px" onclick="p2ListManualSave()">保存</span></div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2ListManualSave() {
+  var v = ((document.getElementById('p2ListN') || {}).value || '').trim();
+  _p2().listManual = { n: v === '' ? '' : Math.max(0, parseInt(v, 10) || 0), at: evTodayYmd() };
+  saveGoals(); _p2SheetClose('p2ListOv'); if (currentView === 'plan') renderPlan();
+}
+function p2OpenAL() { if (typeof AL_URL !== 'undefined') window.open(AL_URL, '_blank'); _p2Al.at = 0; setTimeout(function() { _p2AlLoad(true); }, 60000); }
 // v548: 「＋予定」＝種類を入れた状態で予定の入力を開く（メンバーを選んで保存）
 function p2AddKindEv(kind) {
   openEventModal(null, null, evTodayYmd(), 'event');
   var ti = document.getElementById('evTitle');
   if (ti) { ti.value = kind + ' '; try { evKindAuto(); } catch (eK) {} try { ti.focus(); } catch (eF) {} }
-  try { _evKind = kind; _evKindManual = true; evKindRender(); } catch (eK2) {}
+  try { _evKind = kind; _evKindManual = true; updateEvMemberDisplay(); } catch (eK2) {}
 }
 function _p2FunnelHtml(ym) {
   var c = _p2Coef(), act = _p2Act(ym);
@@ -14573,11 +14675,16 @@ function _p2FunnelHtml(ym) {
   var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月の行動量<span class="p2-meta" style="margin-left:8px">今週 ' + w.label + '</span><span class="sp"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">' + icn('gear') + ' 係数（' + c.src + '）</span></div>';
   if (!F) h += '<div class="p2-meta" style="margin-bottom:6px">今月のフロント目標（F）を入れると、必要なCT・FT/マケ・DLR動員数と今週の件数が出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
+  var cfg = _p2ActCfg(), mm = _p2M(ym);
+  _p2AlLoad(false); // v550: 手元のリスト（ATTACK LIST）
+  if (cfg.st) h += _p2BlockRow(ym, 'st', 'ST', 'ST', +mm.st || 0);
+  if (cfg.snst) h += _p2BlockRow(ym, 'snst', 'SNST', 'SNST', +mm.snst || 0);
+  h += _p2BlockRow(ym, 'ctget', 'CT取り', 'CT取り', F ? Math.ceil(F * c.ct * (1 + cfg.ctBuf / 100)) : 0);
   h += _p2ActRow(ym, 'ct', 'CT', 'CT（会う）', F * c.ct)
     + _p2ActRow(ym, 'ft', 'FT', 'FT・マケ（伝える）', F * c.ft)
     + _p2ActRow(ym, 'pg', 'PG', 'PG', 0)
     + _p2ActRow(ym, 'dlr', 'DLR', 'DLR動員', F * c.dlr)
-    + '<div class="p2-meta" style="margin-top:6px">実績はカレンダーから自動：種類（CT・FT・マケ・PG・DLR）の付いた予定は日付が来たら、タスクは完了で1件（関連メンバーの人数分）。PGは係数外（DLRの3日前までに実施）</div>';
+    + '<div class="p2-meta" style="margin-top:6px">実績はカレンダーから自動：種類の付いた予定は日付が来たら、タスクは完了で1件（CT・FTなどは関連メンバーの人数分）。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）</div>';
   h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
@@ -14600,6 +14707,11 @@ function p2CoefSheet() {
     + '<div style="flex:1"><div class="p2-meta">FT・マケ</div><input class="fi" id="p2cFt" type="number" value="' + c.ft + '" style="text-align:center" onfocus="edSelAll(this)"></div>'
     + '<div style="flex:1"><div class="p2-meta">DLR動員</div><input class="fi" id="p2cDlr" type="number" value="' + c.dlr + '" style="text-align:center" onfocus="edSelAll(this)"></div>'
     + '</div>'
+    + (function() { var a9 = _p2ActCfg(); return '<div class="p2-meta" style="margin-top:12px;font-weight:800;color:var(--text-mid)">行動の設定（自分）</div>'
+      + '<div class="rg" style="flex-wrap:wrap;margin-top:4px"><div class="rb' + (a9.st ? ' sel' : '') + '" id="p2cSt" onclick="this.classList.toggle(\'sel\')">STを目標に使う</div>'
+      + '<div class="rb' + (a9.snst ? ' sel' : '') + '" id="p2cSnst" onclick="this.classList.toggle(\'sel\')">SNSTを目標に使う（任意）</div></div>'
+      + (a9.fresh ? '<div class="p2-meta" style="margin-top:4px">フレッシュ期間は、まず既存のリストから当たるのがおすすめ（STは必要な人だけON）</div>' : '')
+      + '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="p2-meta" style="flex:1">CT取りの余裕（ドタキャン分）：CTの必要数の＋何％を約束として取るか</span><input class="fi" id="p2cBuf" type="number" value="' + a9.ctBuf + '" style="width:80px;text-align:center" onfocus="edSelAll(this)">%</div>'; })()
     + '<div class="p2-meta" style="margin-top:10px">DLRのカレンダー表記（カンマ区切り。例：DLR,P&amp;P）</div>'
     + '<input class="fi" id="p2cDlrKw" value="' + evEsc(_p2DlrKw()) + '" placeholder="DLR,P&amp;P">'
     + '<span class="p2-btn pri" onclick="p2CoefSave(false)">💾 自分の係数として保存</span>'
@@ -14616,6 +14728,9 @@ function _p2ReadCoefInputs() {
 }
 function p2CoefSave(toUnion) {
   var v = _p2ReadCoefInputs();
+  // v550: 行動の設定は常に自分の設定として保存
+  var _stE = document.getElementById('p2cSt'), _snE = document.getElementById('p2cSnst'), _bfE = document.getElementById('p2cBuf');
+  if (_stE) { _p2().act = { st: _stE.classList.contains('sel'), snst: !!(_snE && _snE.classList.contains('sel')), ctBuf: Math.max(0, parseInt((_bfE || {}).value, 10) || 0) }; if (toUnion) saveGoals(); }
   var kw = (((document.getElementById('p2cDlrKw') || {}).value) || '').trim();
   if (toUnion) {
     var un = currentUser && currentUser.union;
@@ -24019,7 +24134,7 @@ function evHasMember(e, id) {
   return e.memberId === id || (e.memberIds && e.memberIds.indexOf(id) >= 0);
 }
 // v545: 予定の「種類」と「Aさん」。種類はアプリ共通の固定リスト（カテゴリは各自が作るのでブレるため使わない）
-var EV_KINDS = ['マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO', 'CT', 'FT', 'OL', 'その他'];
+var EV_KINDS = ['ST', 'SNST', 'CT取り', 'CT', 'FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO', 'OL', 'その他']; // v550: ST・SNST・CT取り（会う約束を取る）を追加
 var _evKind = '', _evKindManual = false, _evAsan = '';
 // タイトルから種類を推定（全角・小文字もOK。英字の一部に含まれるだけ＝例 CONTACT の CO は拾わない）
 function evGuessKind(title) {
@@ -24027,8 +24142,9 @@ function evGuessKind(title) {
   try { s = s.normalize('NFKC'); } catch (eN) {}
   s = s.toUpperCase();
   if (s.indexOf('面談') >= 0) return '面談';
+  if (/CT ?(取|とり|ドリ)|アポ取|アポとり/.test(s)) return 'CT取り'; // v550
   if (/マーケ|マケ/.test(s)) return 'マケ';
-  var ks = ['DLR', 'EXP', 'BPC', 'PG', 'PA', 'CO', 'CT', 'FT', 'OL'];
+  var ks = ['DLR', 'EXP', 'BPC', 'SNST', 'PG', 'PA', 'CO', 'CT', 'FT', 'OL', 'ST'];
   for (var i = 0; i < ks.length; i++) {
     if (new RegExp('(^|[^A-Z])' + ks[i] + '(?![A-Z])').test(s)) return ks[i];
   }
@@ -24074,6 +24190,8 @@ function evKindAuto() {
   if (_evKindManual) return;
   var ti = document.getElementById('evTitle');
   _evKind = evGuessKind(ti ? ti.value : '');
+  var _kr2 = document.getElementById('evKindRow');
+  if (_kr2) _kr2.style.display = (_evMemberIds.length || _evKind) ? '' : 'none'; // v550
   evKindRender();
 }
 function evAsanRender() {
@@ -24097,9 +24215,10 @@ function updateEvMemberDisplay() {
   if (_ssRow) _ssRow.style.display = _evMemberIds.length ? '' : 'none'; // v361
   // v545: 種類・Aさんはメンバーを選んだ時だけ
   var _kr = document.getElementById('evKindRow'), _ar = document.getElementById('evAsanRow');
-  if (_kr) _kr.style.display = _evMemberIds.length ? '' : 'none';
+  if (_kr) _kr.style.display = (_evMemberIds.length || _evKind) ? '' : 'none'; // v550: 種類が分かった時も表示（CT取り・STなど人を決めない枠）
   if (_ar) _ar.style.display = _evMemberIds.length ? '' : 'none';
-  if (_evMemberIds.length) { evKindRender(); evAsanRender(); }
+  if (_evMemberIds.length || _evKind) evKindRender();
+  if (_evMemberIds.length) evAsanRender();
   var el = document.getElementById('evMemberNames');
   if (!el) return;
   if (!_evMemberIds.length) { el.textContent = '（なし）'; el.style.color = 'var(--text-dim)'; return; }
@@ -24524,7 +24643,7 @@ function evToggleAdv(force) {
   if (w) w.style.display = _evAdvOpen ? '' : 'none';
   if (t) {
     t.classList.toggle('open', _evAdvOpen);
-    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（メンバー・優先度・メモ・場所）';
+    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（優先度・メモ・場所）';
   }
 }
 
