@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v546';
+var APP_JS_VERSION = 'v548';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v546';
+  var DATA_VERSION = 'v548';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v548', d:'2026-09-29', items:['🧩 PLANのデータを1本化：旧GOAL画面の行事（RRR TRIPなど）をPLANのマイルストーンに移しました（絵文字もそのまま）。月のフロント目標は「理想MAPで新規フロントを組んだ月はその人数、それ以外は月の目標（横線のF・表・右の入力は同じ値）」の1つのルールで、横線・タイル・行動量・動員計画・ホームのコーチがそろいます','📅 CT・FT/マケ・PG・DLRの実績をカレンダーから自動カウント：種類の付いた予定は日付が来たら、タスクは完了で1件（関連メンバーの人数分）。クイック記録の手入力分も足します（9月までは二重にならないよう多い方）','🗓 「今月のファネル」→「今月の行動量」：月の必要数・実績・残りの予定に加え、今週の必要件数と予定件数・あと何件を表示。「＋予定」で種類を入れた予定の入力が開きます'] },
+  { v:'v547', d:'2026-09-29', items:['🎏 PLANのマイルストーン：複数月にまたがるものは、対象の月の幅まで帯を伸ばして表示（単月の旗の上の段・重なる時は別の段）','⚡ マイルストーンや行事の旗（RRR TRIPなど）を編集・削除したら、ブラウザの更新なしですぐ反映','🔢 横線の月をクリック→「この月のフロント目標（F）」をマイルストーン無しでも入れられるように（空欄で消去）'] },
   { v:'v546', d:'2026-09-29', items:['📐 PLAN（PC）をスクロールなしで1画面に：目標月収・タイトル・期日・スローガンの文字を少し小さくし、BB換算・夢100は目標のすぐ下（月収の下・タイトルの下）に。マイルストーンは「現在地」とフロント目標（F）を1行にまとめ、カードの余白も詰めました。ノートPCの幅でも「やること」の5枚が1列に並びます'] },
   { v:'v545', d:'2026-09-29', items:['🅰️ カレンダーの予定に「種類」と「Aさん」を追加（関連メンバーを選んだ時に表示）：種類はマケ・PG・DLR・EXP・PA・面談・BPC・CO・CT・FT・OL・その他の共通リストで、タイトル（例「匡哉PG」）から自動で選ばれます（全角・小文字もOK。違えばタップで変更）。Aさんは最初「自分」、過去に入れた名前はワンタップ','🗺 MAPのメンバー側の予定は「PG（A:山内）」のように種類＋Aさんで表示（タイトルに入れた本人の名前は外します）。自分のカレンダーはタイトルそのまま＋「A:◯◯」','📋 テンプレートに「いつものAさん」を追加（空欄＝自分）'] },
   { v:'v544', d:'2026-09-29', items:['🗓 MAPのデータが無い月を開くと、直前に開いていたMAPが表示されたままになる不具合を修正（PCのツリー・運動会MAP）：データの無い月は何も表示しません','⏳ 月を切り替えた時は読み込みが終わるまで「読み込み中…」を表示（前の月のMAPを新しい月のように見せない）。月を続けて切り替えても、前に選んだ月のデータで上書きされません','🔗 共有MAPを見ている時に月を切り替えると自分のMAPが表示されていたのを修正：相手のMAPの同じ月を表示します'] },
@@ -5313,7 +5315,8 @@ function missionDefs() {
   try {
     var p = state.goals && state.goals.plan;
     if (p && p.title && p.funnel && typeof _glMonthlyFront === 'function') {
-      var mT = _glMonthlyFront(p) * (p.funnel.action || 0);
+      var _qF = (typeof _p2FrontTgt === 'function') ? _p2FrontTgt(_p2Ym(0)) : ''; // v548: 月のフロント目標（PLAN）
+      var mT = (_qF !== '' ? _qF : _glMonthlyFront(p)) * (p.funnel.action || 0);
       if (mT > 0) {
         var dInM = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
         var dailyT = Math.max(1, Math.round(mT / dInM));
@@ -5401,6 +5404,13 @@ function _qrToday(stage) {
 }
 var _lastQuickRec = null; // 直前のクイック記録（押し間違い取り消し用）
 // dailyActuals への+1記録＋即時XP報酬（クイック記録／CAL-2テンプレ完了還元の共通実体）
+function _stageXpOnly(stage) { // v548: 実績は加算せずXPだけ
+  var g = getGame(), xp = GAME_XP[stage] || 2;
+  g.xp += xp; g.weekXp = (g.weekXp || 0) + xp;
+  gameMarkActive(); saveGame();
+  try { gameXpFloat(xp); } catch (eX) {}
+  return xp;
+}
 function _stageRecord(stage, day) {
   if (!state.goals) state.goals = _glDefault();
   if (!state.goals.plan) state.goals.plan = _glDefaultPlan();
@@ -6406,14 +6416,15 @@ function renderHome() {
       var dorm = 0; curM.forEach(function(m){ if (memberActivityLevel(m) === 'act-dormant') dorm++; });
       if (dorm >= 3) return '💤 フォロー待ちが' + dorm + '人。今日は新規より「フォローDay」がおすすめ。';
       if (p && p.title && p.funnel) {
-        var ym = _glCurYm(), mF = _glMonthlyFront(p);
+        var ym = _glCurYm(), _cF = (typeof _p2FrontTgt === 'function') ? _p2FrontTgt(ym) : '', mF = _cF !== '' ? _cF : _glMonthlyFront(p); // v548: PLANの月のフロント目標
+        var _cA = (typeof _p2Act === 'function') ? _p2Act(ym) : null, _cC = (typeof _p2Coef === 'function') ? _p2Coef() : null;
         var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), prog = d.getDate() / dim;
         var actT = mF * (p.funnel.action || 0), actA = _glMonthActual(p, ym, 'action');
         if (actT > 0 && prog > 0.15 && actA < actT * prog * 0.5) return '📣 アクションが目標ペースの半分以下。まず声かけの母数を増やそう。';
-        var ctgA = _glMonthActual(p, ym, 'ctget'), ctA = _glMonthActual(p, ym, 'ct');
+        var ctgA = _glMonthActual(p, ym, 'ctget'), ctA = _cA ? _cA.ct : _glMonthActual(p, ym, 'ct');
         if (ctgA >= 4 && ctA < ctgA * 0.4) return '☕ アポ取り→実施の転換が低め。日程は取ったその場で確定しよう。';
-        var ftA = _glMonthActual(p, ym, 'ft'), b1A = _glMonthActual(p, ym, 'b1');
-        if (mF > 0 && ftA >= mF * (p.funnel.ft || 0) * 0.7 && b1A === 0 && prog > 0.5) return 'FTは十分打てている。研修動員→B1の「決め」に進もう。';
+        var ftA = _cA ? _cA.ft : _glMonthActual(p, ym, 'ft'), b1A = _cA ? _cA.front : _glMonthActual(p, ym, 'b1');
+        if (mF > 0 && ftA >= mF * (_cC ? _cC.ft : (p.funnel.ft || 0)) * 0.7 && b1A === 0 && prog > 0.5) return 'FTは十分打てている。研修動員→B1の「決め」に進もう。';
         if (mF > 0 && b1A >= mF) return '🏆 今月のフロント目標は達成！育成と来月の仕込みに時間を使おう。';
         if (mF > 0) return '今月フロント ' + b1A + '/' + mF + '。逆算どおりに進行中。';
       }
@@ -8473,7 +8484,10 @@ function syncIdealToPlan() {
   var t = idealTargets(ym);
   if (!t) return false;
   var m = _p2M(ym), ch = false;
-  ['front', 'upt', 'teamB1', 'teamPt'].forEach(function(k) { if (m[k] !== t[k]) { m[k] = t[k]; ch = true; } });
+  ['front', 'upt', 'teamB1', 'teamPt'].forEach(function(k) {
+    var v = (k === 'front') ? _p2FrontTgt(ym) : t[k]; // v548: 理想MAPの新規フロントが0なら、月の目標（下書き）を残す
+    if (m[k] !== v) { m[k] = v; ch = true; }
+  });
   if (!m.fromIdeal) { m.fromIdeal = true; ch = true; }
   if (ch && typeof saveGoals === 'function') saveGoals();
   return ch;
@@ -13240,6 +13254,8 @@ function _glGoalTasks(monthId){
 function renderGoals(){
   // 今月タブ表示中にKPI等を操作した場合も反映（各setterはrenderGoalsを呼ぶ）
   if(currentView==='month' && typeof renderMonth==='function') renderMonth();
+  // v547: PLANの旗（旧GOAL画面の行事＝RRR TRIPなど）を編集・削除した時もPLANへ即反映（更新ボタン不要に）
+  if(currentView==='plan' && typeof renderPlan==='function' && !window._glInPlanRender){ window._glInPlanRender=true; try { renderPlan(); } finally { window._glInPlanRender=false; } }
   var el=document.getElementById('view-goals'); if(!el) return;
   if(!state.goals) state.goals=_glDefault();
   if(!state.goals.year) state.goals.year=(new Date()).getFullYear();
@@ -14102,9 +14118,33 @@ function _p2Act(ym) {
     upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf : (root.ptCurrent || 0)) : 0,
     teamPt: root ? (root.ptCurrent || 0) : 0,
     rate: actN ? Math.round(actS / actN) : null,
-    ct: _glMonthActual(p, ym, 'ct'), ft: _glMonthActual(p, ym, 'ft'),
-    dlr: _glMonthActual(p, ym, 'dlr'), pg: _glMonthActual(p, ym, 'pg'), ctget: _glMonthActual(p, ym, 'ctget')
+    ct: _p2ActK(ym, 'ct'), ft: _p2ActK(ym, 'ft'),
+    dlr: _p2ActK(ym, 'dlr'), pg: _p2ActK(ym, 'pg'), ctget: _glMonthActual(p, ym, 'ctget')
   };
+}
+// v548: CT・FT/マケ・PG・DLRの実績はカレンダーから自動カウント（予定の「種類」＝v545）
+//  予定＝日付が来たら実施、タスク＝完了チェックで実施。関連メンバーが複数なら人数分（DLR動員2人＝2）
+var P2_KIND_KEY = { 'CT': 'ct', 'FT': 'ft', 'マケ': 'ft', 'PG': 'pg', 'DLR': 'dlr' };
+var P2_AUTO_ACT_FROM = '2026-10'; // この月からは「自動＋手入力」。それより前は二重計上を避けて多い方
+function _p2KindEvs(key, from, to) {
+  var out = [];
+  (state.events || []).forEach(function(e) {
+    if (!e || e.deleted || !e.date || /^UN_/.test(String(e.id || '')) || e.date < from || e.date > to) return;
+    if (P2_KIND_KEY[evKindOf(e)] !== key) return;
+    out.push(e);
+  });
+  return out;
+}
+function _p2KindN(e) { return Math.max(1, (e.memberIds && e.memberIds.length) || (e.memberId ? 1 : 0)); }
+function _p2EvDoneAt(e, t) { return e.type === 'task' ? !!e.done : (e.date <= t); }
+function _p2ActAuto(ym, key, from, to) {
+  var t = evTodayYmd(), n = 0;
+  _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n += _p2KindN(e); });
+  return n;
+}
+function _p2ActK(ym, key) {
+  var man = _glMonthActual(state.goals.plan, ym, key), auto = _p2ActAuto(ym, key);
+  return ym >= P2_AUTO_ACT_FROM ? auto + man : Math.max(auto, man);
 }
 // v537: 平均稼働人数＝現状MAPの人の稼働率の合計÷100（受付連携の実測。S で稼働率未入力は120%扱い＝データタブと同じ）
 function _p2ActN() {
@@ -14217,23 +14257,39 @@ function _p2PcRailHtml() {
   var loi = dl ? _p2YmAdd(dl, -(parseInt(p.pipeline, 10) || 3)) : '';
   var flags = {}; // ym -> [{html}]
   var addF = function(ym, html) { (flags[ym] = flags[ym] || []).push(html); };
+  var bands = []; // v547: 複数月にまたがるマイルストーン（対象月の幅まで伸ばす帯）
   (rm.ms || []).forEach(function(m) {
     if (!m || !m.ym) return;
-    addF(m.ym, '<span class="p2r-flag" style="border-color:' + (m.color || P2RM_COLORS[0]) + '" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><i style="background:' + (m.color || P2RM_COLORS[0]) + '"></i>' + evEsc(m.t) + (m.ym2 && m.ym2 !== m.ym ? '<small>〜' + parseInt(m.ym2.slice(5), 10) + '月</small>' : '') + '</span>');
+    var mc = m.color || P2RM_COLORS[0];
+    if (m.ym2 && m.ym2 > m.ym) {
+      var s0 = Math.max(0, _p2YmDiff(start, m.ym)), e0 = Math.min(n - 1, _p2YmDiff(start, m.ym2));
+      if (e0 < 0 || s0 > n - 1 || e0 < s0) return;
+      bands.push({ s: s0, e: e0, html: '<span class="p2r-flag span" style="border-color:' + mc + ';background:color-mix(in srgb,' + mc + ' 16%,var(--surface2))" title="' + evEsc(m.t) + '（' + _p2YmLabel(m.ym) + '〜' + _p2YmLabel(m.ym2) + '）" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><i style="background:' + mc + '"></i>' + evEsc(m.t) + '<small>〜' + parseInt(m.ym2.slice(5), 10) + '月</small></span>' });
+      return;
+    }
+    addF(m.ym, '<span class="p2r-flag" style="border-color:' + mc + '" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')">' + (m.emoji ? '<b class="em">' + evEsc(m.emoji) + '</b>' : '<i style="background:' + mc + '"></i>') + evEsc(m.t) + '</span>');
   });
-  // 旧GOAL画面の旗（GOT100など・今年の月）
-  var cy = new Date().getFullYear();
-  (Array.isArray(p.events) ? p.events : []).forEach(function(e) {
-    if (!e || !e.month) return;
-    addF(cy + '-' + String(e.month).padStart(2, '0'), '<span class="p2r-flag" onclick="event.stopPropagation();openSeasonPanel(\'' + e.id + '\')">' + (e.emoji || '📌') + ' ' + evEsc(e.name) + '</span>');
-  });
+  // v548: 旧GOAL画面の行事はマイルストーンへ移行済み（_p2Rm）。ここでは読まない
   // ユニオンのマイルストーン
   var mi = window._unPlanMeta && window._unPlanMeta.milestone;
   if (mi && mi.t && mi.due) addF(String(mi.due).slice(0, 7), '<span class="p2r-flag un">' + icn('landmark') + ' ' + evEsc(mi.t) + '</span>');
   if (dl) addF(dl, '<span class="p2r-flag peak">🏔 ' + evEsc(p.title ? _p2TitleEn(p.title) : '頂上') + '</span>');
   var ci = yms.indexOf(cur);
   var maxF = 0; yms.forEach(function(ym) { maxF = Math.max(maxF, Math.min(3, (flags[ym] || []).length)); });
+  // v547: 帯は、かかる月の単月の旗より上の段へ（帯どうしが重なる時はさらに上の段）
+  var lanesUsed = [], bandH = '';
+  bands.sort(function(a, b) { return a.s - b.s || (b.e - b.s) - (a.e - a.s); }).forEach(function(b) {
+    var base = 0;
+    for (var k = b.s; k <= b.e; k++) base = Math.max(base, Math.min(3, (flags[yms[k]] || []).length));
+    var L = base;
+    while ((lanesUsed[L] || []).some(function(r) { return !(b.e < r[0] || b.s > r[1]); })) L++;
+    (lanesUsed[L] = lanesUsed[L] || []).push([b.s, b.e]);
+    b.lane = L; maxF = Math.max(maxF, L + 1);
+  });
   var fh = Math.max(1, maxF) * 27 + 2; // 旗の段数に合わせた高さ（空き地を作らない）
+  bands.forEach(function(b) {
+    bandH += '<div class="p2r-band" style="left:calc(' + (b.s / n * 100).toFixed(3) + '% + 4px);width:calc(' + ((b.e - b.s + 1) / n * 100).toFixed(3) + '% - 8px);bottom:' + (b.lane * 27) + 'px">' + b.html + '</div>';
+  });
   var cols = yms.map(function(ym, k) {
     var isCur = ym === cur, isLoi = ym === loi, isPeak = ym === dl, done = k <= ci;
     var f = _p2RmFront(rm, ym);
@@ -14250,13 +14306,16 @@ function _p2PcRailHtml() {
     + '<span class="p2r-legend">点をクリックで追加・F＝その月のフロント目標</span>'
     + '<span class="p2-btn" style="margin:0;padding:5px 12px" onclick="p2RmOpen()">表で編集</span></div>'
     + '<div class="p2r-scroll"><div class="p2r-tl" style="--fh:' + fh + 'px;min-width:' + (n > 14 ? n * 78 : 0) + 'px;grid-template-columns:repeat(' + n + ',1fr)">'
-    + '<div class="p2r-track"></div><div class="p2r-fill" style="width:' + fill.toFixed(2) + '%"></div>' + cols + '</div></div></div>';
+    + '<div class="p2r-track"></div><div class="p2r-fill" style="width:' + fill.toFixed(2) + '%"></div>' + cols
+    + (bandH ? '<div class="p2r-blayer">' + bandH + '</div>' : '') + '</div></div></div>';
 }
 // ③左 今月やること（目標と実績のタイル）
 function _p2PcTilesHtml(ym) {
   var m = _p2M(ym), act = _p2Act(ym);
   var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
-  var tg = function(k) { if (it && it[k] !== undefined && k !== 'actN') return +it[k] || 0; return (m[k] === '' || m[k] == null) ? null : +m[k]; };
+  var tg = function(k) {
+    if (k === 'front') { var fv = _p2FrontTgt(ym); return fv === '' ? null : fv; } // v548
+    if (it && it[k] !== undefined && k !== 'actN') return +it[k] || 0; return (m[k] === '' || m[k] == null) ? null : +m[k]; };
   var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), left = dim - d.getDate();
   var tile = function(k, lb, unit, pace) {
     var a = act[k], t = tg(k);
@@ -14371,7 +14430,7 @@ function _p2MonthHtml(ym, off, forceOpen) {
   if (_it9 && typeof syncIdealToPlan === 'function') syncIdealToPlan();
   var row = function(k, lb, actV, sugV, noPace) {
     var pace = (isCur && actV > 0 && !noPace) ? _p2Pace(actV) : null;
-    if (_it9 && _it9[k] !== undefined) {
+    if (_it9 && _it9[k] !== undefined && !(k === 'front' && !(+_it9.front > 0))) { // v548: 理想MAPの新規フロント0人なら入力欄（月の目標）
       return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
         + '<span class="p2-ideal" onclick="switchView(\'ideal\')" title="理想MAPで変更">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
         + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
@@ -14413,6 +14472,7 @@ function p2SetM(ym, k, v) {
   var m = _p2M(ym);
   if (k === 'actN') m[k] = (v === '' ? '' : Math.max(0, Math.round((parseFloat(String(v).replace(/[^0-9.]/g, '')) || 0) * 10) / 10)); // 平均稼働人数は小数1桁まで
   else m[k] = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
+  if (k === 'front') { var rmF = _p2Rm(); rmF.rows.front[ym] = m.front; } // v548: 横線のF・表と同じ値に
   saveGoals();
   if (currentView === 'plan') renderPlan();
 }
@@ -14460,25 +14520,64 @@ function _p2DlrEvents() {
     return u && u.date && u.date >= t && _p2IsDlrTitle(u.title);
   }).sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
 }
+// v548: 今週の範囲（月曜はじまり・月の中だけ）と、月の残り週数
+function _p2WeekInfo(ym) {
+  var d = new Date(); d.setHours(0, 0, 0, 0);
+  var dow = (d.getDay() + 6) % 7, mon = new Date(d.getTime()); mon.setDate(d.getDate() - dow);
+  var sun = new Date(mon.getTime()); sun.setDate(mon.getDate() + 6);
+  var ms = new Date(parseInt(ym.slice(0, 4), 10), parseInt(ym.slice(5, 7), 10) - 1, 1), me = new Date(ms.getFullYear(), ms.getMonth() + 1, 0);
+  var ws = mon < ms ? ms : mon, we = sun > me ? me : sun;
+  var weeks = Math.max(1, Math.ceil((Math.round((me - ws) / 86400000) + 1) / 7));
+  return { from: evYmd(ws), to: evYmd(we), weeks: weeks, label: (ws.getMonth() + 1) + '/' + ws.getDate() + '〜' + (we.getMonth() + 1) + '/' + we.getDate() };
+}
+function _p2ManualRange(key, from, to) {
+  var da = state.goals.plan.dailyActuals || {}, s = 0;
+  for (var k in da) { if (k >= from && k <= to) s += parseInt(da[k][key] || 0, 10) || 0; }
+  return s;
+}
+// v548: 行動量の1行（月の必要・実績・残りの予定／今週の必要と予定）
+function _p2ActRow(ym, key, kind, lb, need) {
+  var t = evTodayYmd(), w = _p2WeekInfo(ym), ms0 = ym + '-01', me0 = ym + '-31';
+  var done = _p2ActK(ym, key);
+  var evs = _p2KindEvs(key, ms0, me0);
+  var planned = 0; evs.forEach(function(e) { if (!_p2EvDoneAt(e, t)) planned += _p2KindN(e); });
+  var wk = 0; evs.forEach(function(e) { if (e.date >= w.from && e.date <= w.to) wk += _p2KindN(e); });
+  wk += _p2ManualRange(key, w.from, w.to);
+  var doneBefore = Math.max(0, done - _p2ActAuto(ym, key, w.from, w.to) - _p2ManualRange(key, w.from, w.to));
+  var wNeed = need ? Math.ceil(Math.max(0, need - doneBefore) / w.weeks) : 0;
+  var short = need ? Math.max(0, wNeed - wk) : 0;
+  var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
+  var ok = need && done >= need;
+  return '<div class="p2a-row' + (ok ? ' ok' : '') + '">'
+    + '<div class="p2a-lb">' + lb + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + (planned ? '<span class="p2a-pl">＋予定' + planned + '</span>' : '') + '</div>'
+    + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
+    + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
+        : (need ? '今週 <b>' + wNeed + '</b>件 ・ 予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '予定 <b>' + wk + '</b>件'))
+    + '</div>'
+    + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の予定をカレンダーに入れる">＋予定</span>'
+    + '</div>';
+}
+// v548: 「＋予定」＝種類を入れた状態で予定の入力を開く（メンバーを選んで保存）
+function p2AddKindEv(kind) {
+  openEventModal(null, null, evTodayYmd(), 'event');
+  var ti = document.getElementById('evTitle');
+  if (ti) { ti.value = kind + ' '; try { evKindAuto(); } catch (eK) {} try { ti.focus(); } catch (eF) {} }
+  try { _evKind = kind; _evKindManual = true; evKindRender(); } catch (eK2) {}
+}
 function _p2FunnelHtml(ym) {
-  var c = _p2Coef(), m = _p2M(ym), act = _p2Act(ym);
-  var F = (m.front !== '' && m.front != null) ? +m.front : 0;
-  var bar = function(lb, need, done) {
-    var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
-    return '<div class="p2-row" style="display:block"><div style="display:flex;justify-content:space-between;font-size:12px"><span>' + lb + '</span><span class="p2-num"><b>' + done + '</b> / ' + (need || '-') + '</span></div>'
-      + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>';
-  };
+  var c = _p2Coef(), act = _p2Act(ym);
+  var F = +_p2FrontTgt(ym) || 0; // v548: 月のフロント目標（横線・タイルと同じ）
+  var w = _p2WeekInfo(ym);
   var dlrEvs = _p2DlrEvents();
-  var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月のファネル<span class="sp"></span>'
+  var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月の行動量<span class="p2-meta" style="margin-left:8px">今週 ' + w.label + '</span><span class="sp"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">' + icn('gear') + ' 係数（' + c.src + '）</span></div>';
-  if (!F) {
-    h += '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">今月のフロント人数を目標に入れると、必要なCT・FT/マケ・DLR動員数がここに出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
-  } else {
-    h += bar('CT（会う）', F * c.ct, act.ct)
-      + bar('FT・マケ（伝える）', F * c.ft, act.ft)
-      + bar('DLR動員', F * c.dlr, act.dlr)
-      + '<div class="p2-meta" style="margin-top:6px">PGは係数外（DLRの3日前までに実施）・完了はテンプレ予定の実績から自動カウント</div>';
-  }
+  if (!F) h += '<div class="p2-meta" style="margin-bottom:6px">今月のフロント目標（F）を入れると、必要なCT・FT/マケ・DLR動員数と今週の件数が出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
+  h += _p2ActRow(ym, 'ct', 'CT', 'CT（会う）', F * c.ct)
+    + _p2ActRow(ym, 'ft', 'FT', 'FT・マケ（伝える）', F * c.ft)
+    + _p2ActRow(ym, 'pg', 'PG', 'PG', 0)
+    + _p2ActRow(ym, 'dlr', 'DLR', 'DLR動員', F * c.dlr)
+    + '<div class="p2-meta" style="margin-top:6px">実績はカレンダーから自動：種類（CT・FT・マケ・PG・DLR）の付いた予定は日付が来たら、タスクは完了で1件（関連メンバーの人数分）。PGは係数外（DLRの3日前までに実施）</div>';
   h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
@@ -14544,7 +14643,7 @@ function p2Mobilize() {
   var dOpts = dlrs.map(function(u) { return '<option value="' + u.date + '">' + fmtD(u) + '</option>'; }).join('')
     + (others.length ? '<option value="" disabled>── その他のユニオン予定 ──</option>' + others.map(function(u) { return '<option value="' + u.date + '">' + fmtD(u) + '</option>'; }).join('') : '')
     + '<option value="__manual__">📅 日付を直接入力…</option>';
-  var mF = _p2M(_p2Ym(0)).front;
+  var mF = _p2FrontTgt(_p2Ym(0)); // v548: 月のフロント目標（1つのルール）
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2MobOv'; ov.style.zIndex = '600';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2MobOv'); };
   ov.innerHTML = '<div class="ms-sheet" style="max-height:84vh;overflow-y:auto"><div class="ms-grip"></div>'
@@ -15567,6 +15666,20 @@ function _p2Rm() {
   });
   p2.roadmap.rowDefs.forEach(function(d) { if (!p2.roadmap.rows[d.k]) p2.roadmap.rows[d.k] = {}; });
   if (!p2.roadmap.start) p2.roadmap.start = _p2Ym(0);
+  // v548: 旧GOAL画面の「行事」（RRR TRIPなど・月だけの旗）をPLANのマイルストーンへ一度だけ移す（マイルストーンを1系統に）
+  var pl = state.goals && state.goals.plan;
+  if (pl && !p2.evMigrated && window._p2GoalsLoaded) {
+    p2.evMigrated = true;
+    if (Array.isArray(pl.events) && pl.events.length) {
+      var cy = new Date().getFullYear();
+      pl.events.forEach(function(e, i) {
+        if (!e || !e.month || !e.name) return;
+        p2.roadmap.ms.push({ id: 'rm_ev_' + (e.id || i), ym: cy + '-' + String(e.month).padStart(2, '0'), t: String(e.name), emoji: e.emoji || '', color: P2RM_COLORS[i % P2RM_COLORS.length], target: e.target || 0 });
+      });
+    }
+    pl.events = [];
+    setTimeout(function() { if (typeof saveGoals === 'function') saveGoals(); }, 0);
+  }
   return p2.roadmap;
 }
 function _p2RmDefs(rm) { return (rm.rowDefs || []).filter(function(d) { return !d.hide; }); }
@@ -15580,10 +15693,18 @@ function _p2RmYms(rm) {
   }
   return out;
 }
-function _p2RmFront(rm, ym) {
-  if (rm.rows.front[ym] !== undefined && rm.rows.front[ym] !== '') return rm.rows.front[ym];
-  var m = state.goals && state.goals.plan2 && state.goals.plan2.months && state.goals.plan2.months[ym];
-  return (m && m.front !== '' && m.front != null) ? m.front : '';
+function _p2RmFront(rm, ym) { return _p2FrontTgt(ym); } // v548: 横線・表・タイル・ファネルで同じ数字
+// v548: 月のフロント目標は1つのルールで決める
+//  ① その月の理想MAPで新規フロントを組んでいれば（1人以上）それ ② 無ければ月の目標（横線のF／表のフロント行／右の入力＝同じ値）
+function _p2FrontTgt(ym) {
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  if (it && +it.front > 0) return +it.front;
+  var p2 = state.goals && state.goals.plan2;
+  var rv = p2 && p2.roadmap && p2.roadmap.rows && p2.roadmap.rows.front ? p2.roadmap.rows.front[ym] : undefined;
+  if (rv !== undefined && rv !== '' && rv !== null) return +rv;
+  var m = p2 && p2.months && p2.months[ym];
+  if (m && m.front !== '' && m.front != null && !(m.fromIdeal && +m.front === 0)) return +m.front;
+  return it ? 0 : '';
 }
 function p2RmOpen() {
   _p2SheetClose('p2RmOv');
@@ -15702,10 +15823,14 @@ function p2RmMsForm(ym, msId) {
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2RmMsOv'; ov.style.zIndex = '660';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2RmMsOv'); };
   ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🚩 ' + _p2YmLabel(ym) + ' のマイルストーン</div></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🚩 ' + _p2YmLabel(ym) + (editing ? ' のマイルストーン' : '') + '</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'p2RmMsOv\')">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
-    + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
+    // v547: この月のフロント目標（F）はマイルストーン無しでも入れられる
+    + '<div class="p2-meta">この月のフロント目標（F）</div>'
+    + '<input class="fi" id="p2rmF" type="number" inputmode="numeric" min="0" placeholder="例：4（空欄＝なし）" value="' + _p2RmFront(rm, ym) + '" onfocus="edSelAll(this)" style="margin:4px 0 12px;max-width:180px">'
+    + '<div class="p2-meta">マイルストーン' + (editing ? '' : '（任意）') + '</div>'
+    + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin:4px 0 6px">'
     + '<input class="fi" id="p2rmS" placeholder="補足（例：60人タッチ / LOIカウント）任意" value="' + evEsc(editing && editing.sub ? editing.sub : '') + '" style="margin-bottom:8px">'
     + '<div class="p2-meta">〜いつまで（複数月にまたがる場合）</div>'
     + '<select class="fi" id="p2rmY2" style="margin:4px 0 8px"><option value="">この月だけ（1ヶ月）</option>'
@@ -15715,7 +15840,7 @@ function p2RmMsForm(ym, msId) {
     + P2RM_COLORS.map(function(c) { return '<span data-c="' + c + '" onclick="p2RmMsCol(\'' + c + '\')" style="width:30px;height:30px;border-radius:9px;background:' + c + ';cursor:pointer;border:2.5px solid ' + (c === col ? 'var(--text)' : 'transparent') + '"></span>'; }).join('')
     + '</div>'
     + '<div style="display:flex;gap:6px">'
-    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2RmMsSave(\'' + ym + '\',\'' + (msId || '') + '\')">' + (editing ? '✔ 更新' : '＋ 追加') + '</span>'
+    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2RmMsSave(\'' + ym + '\',\'' + (msId || '') + '\')">' + (editing ? '✔ 更新' : '✔ 保存') + '</span>'
     + (editing ? '<span class="p2-btn" style="margin:0;color:var(--red)" onclick="p2RmMsDel(\'' + msId + '\')">' + icn('trash') + ' 削除</span>' : '')
     + '</div></div></div>';
   document.body.appendChild(ov);
@@ -15729,9 +15854,30 @@ function p2RmMsCol(c) {
 }
 function p2RmMsSave(ym, msId) {
   var t = ((document.getElementById('p2rmT') || {}).value || '').trim();
-  if (!t) { toast('タイトルを入力してください'); return; }
-  var sub = ((document.getElementById('p2rmS') || {}).value || '').trim();
   var rm = _p2Rm();
+  // v547: フロント目標（F）だけの保存もOK
+  var fEl = document.getElementById('p2rmF'), fChanged = false;
+  if (fEl) {
+    var fRaw = String(fEl.value || '').trim();
+    var fNew = fRaw === '' ? '' : Math.max(0, parseInt(fRaw.replace(/[^0-9]/g, ''), 10) || 0);
+    if (String(fNew) !== String(_p2RmFront(rm, ym))) {
+      if (!rm.rows.front) rm.rows.front = {};
+      rm.rows.front[ym] = fNew;
+      var mm = _p2M(ym);
+      if (fNew !== '') mm.front = fNew; else if (!mm.declared) mm.front = ''; // 月の目標（下書き）へ連動。確定済みの月の目標は消さない
+      fChanged = true;
+    }
+  }
+  if (!t) {
+    if (msId) { toast('マイルストーンの名前を入力してください（消す時は「削除」）'); return; }
+    if (!fChanged) { toast('フロント目標かマイルストーンを入力してください'); return; }
+    saveGoals();
+    _p2SheetClose('p2RmMsOv');
+    _p2RmRender();
+    if (currentView === 'plan') renderPlan();
+    return;
+  }
+  var sub = ((document.getElementById('p2rmS') || {}).value || '').trim();
   if (msId) {
     var y2v = ((document.getElementById('p2rmY2') || {}).value || '');
     for (var i = 0; i < rm.ms.length; i++) { if (rm.ms[i].id === msId) { rm.ms[i].t = t; rm.ms[i].sub = sub; rm.ms[i].color = window._p2RmCol; if (y2v && y2v > ym) rm.ms[i].ym2 = y2v; else delete rm.ms[i].ym2; break; } }
@@ -23651,7 +23797,9 @@ function toggleEventDone(id) {
 function _evRewardOnDone(e) {
   if (!e.templateStage || e.rewarded) return false;
   if (viewingOwnerUid) return false; // 共有MAP閲覧・編集中は相手の予定なので自分の実績に入れない
-  var xp = _stageRecord(e.templateStage, evTodayYmd());
+  // v548: 種類（CT/FT/マケ/PG/DLR）が付いた予定はPLANがカレンダーから自動で数えるので、実績の手入力欄には足さない（XPだけ）
+  var _autoK = (typeof P2_KIND_KEY !== 'undefined' && typeof evKindOf === 'function') ? P2_KIND_KEY[evKindOf(e)] : '';
+  var xp = _autoK ? _stageXpOnly(e.templateStage) : _stageRecord(e.templateStage, evTodayYmd());
   e.rewarded = true; // 二重加算防止（チェックを外して付け直しても再加算しない）
   var lbl = _evTplStageLabel(e.templateStage);
   if ((e.templateStage === 'ct' || e.templateStage === 'ft') && e.memberId && typeof openOlRecordModal === 'function') {
