@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v553';
+var APP_JS_VERSION = 'v554';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1101,9 +1101,9 @@ function renderPCMap(mapType) {
     if (mapType === 'ideal') {
       var _dd9 = _idealDiff(m);
       if (_dd9 && (_dd9.isNew || _dd9.parts.length)) {
-        var _dt9 = _dd9.isNew ? 'NEW' : _dd9.parts.map(function(p){ return p.t; }).join('  ');
+        var _dt9 = _dd9.isNew ? (m.idealKind === 'user' ? 'USER' : (m.idealKind === 'biz' ? 'NEW B1' : 'NEW')) : _dd9.parts.map(function(p){ return p.t; }).join('  '); // v554
         var _dw9 = Math.max(40, _dt9.length * 7.2 + 16);
-        var _dc9 = _dd9.isNew ? '#FFD166' : (_dd9.parts[0].c === 'dn' ? '#FF5D73' : (_dd9.parts[0].c === 'act' ? '#8B7CFF' : '#2CE5B8'));
+        var _dc9 = _dd9.isNew ? (m.idealKind === 'user' ? '#FFB454' : (m.idealKind === 'biz' ? '#2CE5B8' : '#FFD166')) : (_dd9.parts[0].c === 'dn' ? '#FF5D73' : (_dd9.parts[0].c === 'act' ? '#8B7CFF' : '#2CE5B8'));
         var db9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
         db9.setAttribute('x', rx + NODE_W/2 - _dw9/2); db9.setAttribute('y', ry2 - 10);
         db9.setAttribute('width', _dw9); db9.setAttribute('height', 18); db9.setAttribute('rx', 9);
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v553';
+  var DATA_VERSION = 'v554';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v554', d:'2026-09-29', items:['👔 理想MAPのかんたん編集を作り直し：メンバーをタップ→「直下に追加」は2択だけ。ビジネスメンバー（LOI・GSV 1,500P・稼働B 80%）か、ユーザー（200P・ポイントは変更可で前回の値を覚える）を、タップするたび1人ずつ追加（元に戻す付き）','✏️ 既存メンバーはタイトル・GSV・稼働レベル・稼働%だけを、その場で変更（変えるとすぐ保存）','🔢 数え方：自分の直下に追加したビジネスメンバー＝自分のB1、理想MAPの新規ビジネスメンバー全員＝チームのB1（自分のB1を含む）。ユーザーはB1に数えない（ポイントは上のGSVに積み上げ）。PLANの今月の目標（フロント・B1）にそのまま連動','🏷 理想MAPのカードに「NEW B1」（緑）「USER」（金）の印。理想MAPの上に 自分のB1／チームのB1／ユーザー の人数'] },
   { v:'v553', d:'2026-09-29', items:['📖 想いのノート：やる理由・動かなかったら1年後・成功した毎日・やりたい/やりたくないこと・なりたい/なりたくない自分を、全画面の大きな画面で書けます（原稿用紙何枚分かを表示・自動保存）。「この版を残す」で日付つきで残し、過去の版も大きな文字で読み返せます。これまでの入力は引き継ぎ','✍️ やる理由は最低でも半年に1回、新しく書くのがおすすめ：半年たつとPLANと想いのノートで「書き直す時期です」。「新しく書く」は白紙から（前の作文は版として残る）。今月の目標を決める前やペースが遅れている時に「やる理由を読む」','🎉 実績の見せ方：目標を超えたら％は100超え・「＋◯ 超え」・金色に。目標をクリアした瞬間に紙吹雪（1回だけ）。予定に入れずにやった分は「＋1」（取り消しあり）。週の目標を続けてクリアすると🔥◯週。フロント目標を達成した月は横線に◎。説明はⓘに畳みました','🗓 今週の作戦：週のはじめ（月〜水）に、今週の必要数とST・CT取りの枠の予約状況を表示（足りない時はいつでも）。「作戦OK」で閉じます。HOMEにも表示','🎯 HOMEに「今日の3つ」：今日の行動（種類付きの予定・タスク）を時間順に。足りない時は今週足りない行動を提案','🐛 今日の予定は開始時刻を過ぎてから「実施」扱いに（夜のCT取りの枠が夕方に済み扱いになっていた）'] },
   { v:'v552', d:'2026-09-29', items:['📊 次の山の条件にRUBY（フロントBR 4人）・LAPIS（2人）・GOLD（1人）を追加。BR→RUBYを目指す時も、フロントBRの人数の進み具合が出ます'] },
   { v:'v551', d:'2026-09-29', items:['⛰ 目標のはしご：最終ゴールが遠い時は「次の山（最短目標）」をPLANの主役に。今のタイトルから自動で提案（BR未満→BR、BR→RUBY→EMERALD→DIAMOND→BLUE DIAMOND→TEAM ELITE）。最終ゴールは上に小さく表示','🎁 次の山がBRの時は、ファーストボーナスの見込み（BB＋エリートLOI特典。BRになる月のGSVで計算）を大きく表示','📊 次の山の条件の進み具合：フロントBRの人数と、パワーライン（系列のLTSV）の本数・不足分、クオリファイ月数（EMERALD 4人・1万／DIAMOND 5人・2万1万／BLUE DIAMOND 6人・3万2万1万・2ヶ月／TEAM ELITE 6人・4万3万2万1万・6ヶ月）','✎ 目標をなおす：月収・タイトル・期日と次の山を1画面で直せます（20問に入り直さない）。次の山に到達したら記録して次の候補へ','🧭 目標をつくるウィザードは「理想の生活（20問）」で終わり。やりたいこと・なりたい自分、やる理由の作文は⚙から書きたい時に'] },
@@ -8368,7 +8369,10 @@ var NEW_B1_MIN = 1000;      // 新規B1として数えるGSVの下限
 function _ymOfStart(m) { return String(m.startMonth || '').replace('-', '.').slice(0, 7); }
 function isNewB1(m, ym) {
   if (!m || m.deleted || !m.parentId || (m.title || '').trim() === 'OUT') return false;
-  return _ymOfStart(m) === (ym || state.currentMonth || currentMonthStr()) && (m.ptCurrent || 0) >= NEW_B1_MIN;
+  if (m.idealKind === 'user') return false; // v554: ユーザーはB1に数えない
+  if (_ymOfStart(m) !== (ym || state.currentMonth || currentMonthStr())) return false;
+  if (m.idealKind === 'biz') return true; // v554: かんたん追加の「ビジネスメンバー」はGSVに関係なくB1
+  return (m.ptCurrent || 0) >= NEW_B1_MIN;
 }
 function commCalc(members) {
   var ms = (members || []).filter(function(m) { return !m.deleted; });
@@ -8390,15 +8394,16 @@ function _idealStats(members) {
   var root = ms.filter(function(m) { return !m.parentId; })[0];
   var ym = state.currentMonth || currentMonthStr();
   var act = ms.filter(function(m) { return (m.title || '').trim() !== 'OUT'; });
-  var nb = 0, nbF = 0, s = 0, rn = 0, rs = 0;
+  var nb = 0, nbF = 0, s = 0, rn = 0, rs = 0, nu = 0;
   act.forEach(function(m) {
     if (isNewB1(m, ym)) { nb++; if (root && m.parentId === root.id) nbF++; }
+    if (m.idealKind === 'user' && _ymOfStart(m) === ym) nu++; // v554
     if (m.activity === 'S') s++;
     var r = parseInt(m.actRate, 10);
     if (isNaN(r) && m.activity === 'S') r = 120;
     if (!isNaN(r) && ['S', 'A', 'B', 'C'].indexOf(m.activity) >= 0) { rn++; rs += r; }
   });
-  return { newB1: nb, newFront: nbF, gsv: root ? (root.ptCurrent || 0) : 0, s: s, rate: rn ? Math.round(rs / rn) : null, n: act.length, comm: commCalc(ms) };
+  return { newB1: nb, newFront: nbF, newUser: nu, gsv: root ? (root.ptCurrent || 0) : 0, s: s, rate: rn ? Math.round(rs / rn) : null, n: act.length, comm: commCalc(ms) };
 }
 // 現状MAPの同じ人（id）を引く
 var _idCurCache = { arr: null, len: -1, at: 0, map: {} };
@@ -8424,7 +8429,7 @@ function idealDiffHtml(m, mapType) {
   if (mapType !== 'ideal') return '';
   var d = _idealDiff(m);
   if (!d) return '';
-  if (d.isNew) return '<span class="idd new">NEW</span>';
+  if (d.isNew) return m.idealKind === 'user' ? '<span class="idd usr">USER</span>' : (m.idealKind === 'biz' ? '<span class="idd nb1">NEW B1</span>' : '<span class="idd new">NEW</span>'); // v554
   return d.parts.map(function(p) { return '<span class="idd ' + p.c + '">' + p.t + '</span>'; }).join('');
 }
 // 理想MAPを編集する前に、独立した理想の名簿を用意（無ければ表示中の内容を写す）
@@ -8456,11 +8461,12 @@ function renderIdealSum() {
   var h = '<div class="ids-card' + (open ? '' : ' closed') + '"><div class="ids-hd"><span class="ids-tg" onclick="idsToggle()">' + icn('target') + ' ' + parseInt(ym[0], 10) + '年' + parseInt(ym[1], 10) + '月の理想 <span>vs 現状</span><span class="ids-ar">' + (open ? '▲' : '▼') + '</span></span>'
     + (state.isEditor ? '<span class="ids-btn" onclick="copyCurrentToIdeal()">' + icn('refresh') + ' 現状から作り直す</span>' : '') + '</div>';
   if (!open) {
-    box.innerHTML = h + '<div class="ids-mini" onclick="idsToggle()">新規B1 <b>' + I.newB1 + '</b>/現状' + C.newB1 + '　GSV <b>' + pt(I.gsv) + '</b>　コミッション <b>' + yen(I.comm.total) + '</b></div></div>';
+    box.innerHTML = h + '<div class="ids-mini" onclick="idsToggle()">新規B1 自分 <b>' + I.newFront + '</b>／チーム <b>' + I.newB1 + '</b>（自分を含む）・ユーザー <b>' + (I.newUser || 0) + '</b>　GSV <b>' + pt(I.gsv) + '</b>　コミッション <b>' + yen(I.comm.total) + '</b></div></div>';
     return;
   }
   h += '<div class="ids-body"><div class="ids-bars">'
-    + bar('新規B1', I.newB1, C.newB1, ppl, '1,000P以上・うち直下 ' + I.newFront)
+    + bar('自分のB1', I.newFront, C.newFront, ppl, '自分の直下の新規ビジネス') // v554
+    + bar('チームのB1', I.newB1, C.newB1, ppl, '自分のB1を含む・ユーザー ' + (I.newUser || 0) + '人は数えない')
     + bar('チームGSV', I.gsv, C.gsv, pt)
     + bar('S稼働', I.s, C.s, ppl)
     + bar('平均稼働', I.rate, C.rate, pc)
@@ -8518,43 +8524,108 @@ function _idealGuideHtml(I) {
 }
 // ── かんたん編集（カードをタップ） ──
 var _idq = null;
+// v554: 理想MAPのかんたん編集（タイトル・GSV・稼働・稼働%だけをその場で変更／直下に「ビジネスメンバー」か「ユーザー」をワンタップで追加）
+var IDQ_TITLES = ['LOI', 'Q2', 'Q3', 'Q4', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'BM', 'BR', 'ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'チームエリート', 'ユーザー'];
+var IDQ_BIZ = { title: 'LOI', gsv: 1500, act: 'B', rate: 80 };
+function _idqUserPt() { var v = 200; try { var x = parseInt(localStorage.getItem('gm_idqUserPt'), 10); if (!isNaN(x) && x >= 0) v = x; } catch (e) {} return v; }
 function idqOpen(mid) {
   if (!state.isEditor) return;
   if (/^(MG_|AG\d+_)/.test(mid)) { if (typeof mgNodeClick === 'function') mgNodeClick(mid); return; }
   var arr = _idealEnsure();
   var m = null; for (var i = 0; i < arr.length; i++) if (arr[i].id === mid) { m = arr[i]; break; }
   if (!m) { toast('理想MAPにこの人がいません'); return; }
-  var cur = _idealCurMap()[mid];
-  _idq = { id: mid, act: m.activity || '', n: 1 };
+  _idq = { id: mid, act: m.activity || '', n: 1, added: [] };
   idqClose(true);
-  var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
-  var curLine = cur && !m.idealNew
-    ? '現状：GSV ' + (cur.ptCurrent || 0).toLocaleString() + '・稼働 ' + (cur.activity || '−') + (cur.actRate !== '' && cur.actRate != null ? '（' + cur.actRate + '%）' : '')
-    : '現状MAPにはいない人（理想で追加した新規）';
-  var actChip = function(a) { return '<span class="qa-chip' + (_idq.act === a ? ' sel' : '') + '" data-a="' + a + '" onclick="idqAct(\'' + a + '\')">' + (a || 'なし') + '</span>'; };
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'idqOv';
   ov.onclick = function(e) { if (e.target === ov) idqClose(); };
-  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + ' <span class="ot-ttl">' + evEsc((m.title || '').trim()) + '</span>' + (m.idealNew || !cur ? ' <span class="idd new">NEW</span>' : '') + '</div>'
-    + '<div style="font-size:11.5px;color:var(--text-dim)">' + curLine + '</div></div><span class="ms-x" onclick="idqClose()">✕</span></div>'
-    + '<div style="padding:0 16px 18px">'
-    + (m.idealNew ? '<div style="display:flex;gap:8px;margin-bottom:8px"><input class="fi" id="idqLast" placeholder="姓（任意）" value="' + evEsc(m.lastName || '') + '"><input class="fi" id="idqFirst" placeholder="名（任意）" value="' + evEsc(m.firstName || '') + '"></div>' : '')
-    + '<label class="olp-lb">理想のGSV（P）</label>'
-    + '<div style="display:flex;gap:6px;align-items:center"><input class="fi" id="idqGsv" type="number" inputmode="numeric" value="' + (m.ptCurrent || 0) + '" style="flex:1">'
-    + '<span class="idq-q" onclick="idqStep(-500)">−500</span><span class="idq-q" onclick="idqStep(500)">+500</span><span class="idq-q" onclick="idqStep(1000)">+1000</span></div>'
-    + '<label class="olp-lb" style="margin-top:12px">稼働</label>'
-    + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="idqActs">' + ['S', 'A', 'B', 'C', ''].map(actChip).join('')
-    + '<input class="fi" id="idqRate" type="number" inputmode="numeric" placeholder="稼働率%" value="' + (m.actRate === '' || m.actRate == null ? '' : m.actRate) + '" style="width:96px;flex:none"></div>'
-    + '<button class="btn-p" style="width:100%;margin-top:14px;padding:12px" onclick="idqSave()">保存</button>'
-    + '<div class="idq-add"><div class="olp-lb" style="margin:0 0 6px">' + icn('users') + ' この人の直下に新規B1を追加</div>'
-    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="idq-q" onclick="idqN(-1)">−</span><b id="idqN" style="min-width:34px;text-align:center">1人</b><span class="idq-q" onclick="idqN(1)">＋</span>'
-    + '<span style="font-size:12px;color:var(--text-dim);margin-left:6px">GSV</span><input class="fi" id="idqNewGsv" type="number" inputmode="numeric" value="' + IDEAL_NEW_GSV + '" style="width:96px;flex:none">'
-    + '<button class="btn-c" style="flex:1;min-width:120px" onclick="idqAddB1()">＋ 追加</button></div>'
-    + '<div style="font-size:10.5px;color:var(--text-dim);margin-top:4px">タイトルはLOIで追加（名前は後からでもOK）。新規B1として数えるのはGSV 1,000P以上</div></div>'
-    + '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn-c" style="flex:1" onclick="idqClose();openEdit(\'' + mid + '\')">' + icn('pencil') + ' くわしく編集</button>'
-    + (m.idealNew ? '<button class="btn-c" style="flex:1;color:var(--red);border-color:var(--red)" onclick="idqDelete()">' + icn('trash') + ' この新規を削除</button>' : '') + '</div>'
-    + '</div></div>';
+  ov.innerHTML = '<div class="ms-sheet idq-sheet"><div class="ms-grip"></div><div id="idqBody"></div></div>';
   document.body.appendChild(ov);
+  _idqRender();
   requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function _idqRender() {
+  var box = document.getElementById('idqBody'), m = _idqMember(); if (!box || !m) return;
+  var cur = _idealCurMap()[m.id];
+  var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+  var tl = (m.title || '').trim();
+  var root = (state.idealMembers || []).filter(function(x) { return !x.parentId && !x.deleted; })[0];
+  var isRoot = root && root.id === m.id;
+  var kids = (state.idealMembers || []).filter(function(x) { return x.parentId === m.id && !x.deleted && x.idealNew; });
+  var nBiz = kids.filter(function(x) { return x.idealKind === 'biz'; }).length, nUsr = kids.filter(function(x) { return x.idealKind === 'user'; }).length;
+  var badge = m.idealKind === 'user' ? '<span class="idd usr">USER</span>' : (m.idealKind === 'biz' ? '<span class="idd nb1">NEW B1</span>' : (m.idealNew ? '<span class="idd new">NEW</span>' : ''));
+  var curLine = cur && !m.idealNew ? '現状：' + (cur.title || '−') + '・GSV ' + (cur.ptCurrent || 0).toLocaleString() + '・稼働 ' + (cur.activity || '−') + (cur.actRate !== '' && cur.actRate != null ? '（' + cur.actRate + '%）' : '') : '理想で追加した新規';
+  var lab = function(t) { return (typeof titleAbbr === 'function' && titleAbbr(t)) || t; };
+  var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + ' <span class="ot-ttl">' + evEsc(lab(tl)) + '</span> ' + badge + '</div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim)">' + evEsc(curLine) + '</div></div><span class="ms-x" onclick="idqClose()">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + (m.idealKind === 'user' ? '' : '<div class="idq-sec">この人の直下に追加<small>タップするたび1人ずつ</small></div>'
+    + '<div class="idq-add2">'
+    + '<div class="idq-big biz" onclick="idqAdd(\'biz\')"><div class="t">👔 ビジネスメンバー</div><div class="d">LOI・GSV 1,500P・稼働B 80%</div><div class="c">→ ' + (isRoot ? '自分のB1' : 'チームのB1') + ' ＋1</div></div>'
+    + '<div class="idq-big usr"><div onclick="idqAdd(\'user\')"><div class="t">🛍 ユーザー</div><div class="c">→ B1には数えない</div></div>'
+    + '<div class="d" style="display:flex;align-items:center;gap:4px;margin-top:6px"><input class="fi" id="idqUserPt" type="number" inputmode="numeric" value="' + _idqUserPt() + '" style="width:80px;padding:6px 8px;text-align:right" onfocus="edSelAll(this)" onclick="event.stopPropagation()">P</div></div>'
+    + '</div>'
+    + '<div class="idq-kids">この人の直下（理想で追加）：ビジネス <b>' + nBiz + '</b>人・ユーザー <b>' + nUsr + '</b>人</div>')
+    + '<div class="idq-sec" style="margin-top:' + (m.idealKind === 'user' ? '0' : '16px') + '">この人を変える<small>変えるとすぐ保存</small></div>'
+    + (m.idealNew ? '<div style="display:flex;gap:8px;margin-bottom:8px"><input class="fi" id="idqLast" placeholder="姓（任意）" value="' + evEsc(m.lastName || '') + '" onchange="idqName()"><input class="fi" id="idqFirst" placeholder="名（任意）" value="' + evEsc(m.firstName || '') + '" onchange="idqName()"></div>' : '')
+    + '<label class="olp-lb">タイトル</label><div class="idq-chips" id="idqTitles">' + IDQ_TITLES.map(function(t) { return '<span class="qa-chip' + (t === tl ? ' sel' : '') + '" data-v="' + t + '" onclick="idqTitle(\'' + t + '\')">' + evEsc(lab(t)) + '</span>'; }).join('') + '</div>'
+    + '<label class="olp-lb" style="margin-top:10px">GSV（P）</label>'
+    + '<div style="display:flex;gap:6px;align-items:center"><input class="fi" id="idqGsv" type="number" inputmode="numeric" value="' + (m.ptCurrent || 0) + '" style="flex:1" onfocus="edSelAll(this)" onchange="idqGsvSet(this.value)">'
+    + '<span class="idq-q" onclick="idqStep(-500)">−500</span><span class="idq-q" onclick="idqStep(500)">+500</span><span class="idq-q" onclick="idqStep(1000)">+1000</span></div>'
+    + '<label class="olp-lb" style="margin-top:10px">稼働</label>'
+    + '<div class="idq-chips" id="idqActs">' + ['S', 'A', 'B', 'C', ''].map(function(a) { return '<span class="qa-chip' + ((m.activity || '') === a ? ' sel' : '') + '" data-a="' + a + '" onclick="idqAct(\'' + a + '\')">' + (a || 'なし') + '</span>'; }).join('')
+    + '<span style="width:10px"></span>' + [30, 50, 80, 100, 120].map(function(r) { return '<span class="qa-chip' + (String(m.actRate) === String(r) ? ' sel' : '') + '" data-r="' + r + '" onclick="idqRate(' + r + ')">' + r + '%</span>'; }).join('')
+    + '<input class="fi" id="idqRate" type="number" inputmode="numeric" placeholder="%" value="' + (m.actRate === '' || m.actRate == null ? '' : m.actRate) + '" style="width:74px;flex:none" onfocus="edSelAll(this)" onchange="idqRate(this.value)"></div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn-c" style="flex:1" onclick="idqClose();openEdit(\'' + m.id + '\')">' + icn('pencil') + ' くわしく編集</button>'
+    + (m.idealNew ? '<button class="btn-c" style="flex:1;color:var(--red);border-color:var(--red)" onclick="idqDelete()">' + icn('trash') + ' この新規を削除</button>' : '') + '</div>'
+    + '</div>';
+  box.innerHTML = h;
+}
+// 変更はその場で保存。シートは作り直さず選択表示だけ更新（入力→チップのタップが途中で消えないように）
+function _idqChanged(msg) {
+  _idealAfter(msg || '');
+  var m = _idqMember(); if (!m) return;
+  var q = function(sel, attr, v) { var cs = document.querySelectorAll(sel); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute(attr) === String(v)); };
+  q('#idqTitles .qa-chip', 'data-v', (m.title || '').trim());
+  q('#idqActs .qa-chip[data-a]', 'data-a', m.activity || '');
+  q('#idqActs .qa-chip[data-r]', 'data-r', m.actRate);
+  var ri = document.getElementById('idqRate'); if (ri && document.activeElement !== ri) ri.value = (m.actRate === '' || m.actRate == null) ? '' : m.actRate;
+  var gi = document.getElementById('idqGsv'); if (gi && document.activeElement !== gi) gi.value = m.ptCurrent || 0;
+  var tt = document.querySelector('#idqBody .ot-ttl'); if (tt) tt.textContent = (typeof titleAbbr === 'function' && titleAbbr(m.title)) || m.title || '';
+}
+function idqTitle(t) { var m = _idqMember(); if (!m) return; m.title = t; if (t === 'ユーザー') { if (m.idealNew) m.idealKind = 'user'; } else if (m.idealKind === 'user') m.idealKind = 'biz'; _idqChanged('タイトルを ' + t + ' に'); }
+function idqGsvSet(v) { var m = _idqMember(); if (!m) return; var g = parseInt(v, 10); if (isNaN(g)) return; setMemberGSV(m, Math.max(0, g), state.idealMembers); if (m.idealNew) m.ptSelf = Math.max(0, g); _idqChanged(); }
+function idqName() {
+  var m = _idqMember(); if (!m) return;
+  var l = document.getElementById('idqLast'), f = document.getElementById('idqFirst');
+  if (l) m.lastName = l.value.trim() || m.lastName; if (f) m.firstName = f.value.trim();
+  _idealAfter('');
+}
+function idqRate(v) { var m = _idqMember(); if (!m) return; var s0 = String(v === undefined || v === null ? '' : v).trim(); m.actRate = s0 === '' ? '' : Math.max(0, parseInt(s0, 10) || 0); _idqChanged(); }
+function idqAdd(kind) {
+  var p = _idqMember(); if (!p) return;
+  var arr = state.idealMembers, cm = state.currentMonth || currentMonthStr();
+  var up = kind === 'user' ? Math.max(0, parseInt((document.getElementById('idqUserPt') || {}).value, 10) || 0) : IDQ_BIZ.gsv;
+  if (kind === 'user') { try { localStorage.setItem('gm_idqUserPt', String(up)); } catch (e) {} }
+  var k = arr.filter(function(m) { return m.idealNew && m.idealKind === kind; }).length + 1;
+  var root = arr.filter(function(x) { return !x.parentId && !x.deleted; })[0];
+  var nm = { id: 'id-' + Date.now() + '-' + Math.floor(Math.random() * 1000), lastName: kind === 'user' ? 'ユーザー' : '新規', firstName: (k <= 20 ? String.fromCharCode(0x2460 + k - 1) : String(k)), gender: 'male',
+    title: kind === 'user' ? 'ユーザー' : IDQ_BIZ.title, activity: kind === 'user' ? '' : IDQ_BIZ.act, actRate: kind === 'user' ? '' : IDQ_BIZ.rate, morale: 1, priority: '',
+    ptCurrent: up, ptFixed: 0, ptSelf: up, trainee: false, parentId: p.id, mapType: 'ideal', idealNew: true, idealKind: kind,
+    memo: '', region: p.region || '', startMonth: cm, month: cm, traineeHistory: [] };
+  arr.push(nm);
+  _idq.added.push(nm.id);
+  var I = _idealStats(arr);
+  var msg = kind === 'user' ? 'ユーザーを追加（' + up.toLocaleString() + 'P）'
+    : (root && p.id === root.id ? '自分のB1 ' + I.newFront + '人目を追加' : 'チームのB1 ' + I.newB1 + '人目を追加');
+  _idealAfter('');
+  _idqRender();
+  if (typeof toastAction === 'function') toastAction(msg, '元に戻す', function() { idqUndoAdd(nm.id); }, 5000); else toast(msg);
+}
+function idqUndoAdd(id) {
+  var arr = state.idealMembers || [];
+  var drop = {}; (function walk(x) { drop[x] = 1; arr.forEach(function(y) { if (y.parentId === x) walk(y.id); }); })(id);
+  state.idealMembers = arr.filter(function(x) { return !drop[x.id]; });
+  _idealAfter('取り消しました'); _idqRender();
 }
 function idqClose(silent) {
   var ov = document.getElementById('idqOv');
@@ -8563,10 +8634,10 @@ function idqClose(silent) {
 function idqAct(a) {
   if (!_idq) return;
   _idq.act = a;
-  var cs = document.querySelectorAll('#idqActs .qa-chip');
-  for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute('data-a') === a);
+  var m = _idqMember(); if (!m) return; m.activity = a || ''; // v554: すぐ保存
+  _idqChanged();
 }
-function idqStep(d) { var el = document.getElementById('idqGsv'); if (el) el.value = Math.max(0, (parseInt(el.value, 10) || 0) + d); }
+function idqStep(d) { var el = document.getElementById('idqGsv'); if (el) { el.value = Math.max(0, (parseInt(el.value, 10) || 0) + d); idqGsvSet(el.value); } }
 function idqN(d) { if (!_idq) return; _idq.n = Math.max(1, Math.min(10, _idq.n + d)); var el = document.getElementById('idqN'); if (el) el.textContent = _idq.n + '人'; }
 function _idqMember() {
   if (!_idq) return null;
@@ -8600,23 +8671,10 @@ function idqSave() {
   idqClose();
   _idealAfter('理想を更新しました');
 }
-function idqAddB1() {
-  var p = _idqMember(); if (!p) return;
-  var arr = state.idealMembers, n = _idq.n;
-  var g = Math.max(0, parseInt((document.getElementById('idqNewGsv') || {}).value, 10) || 0);
-  var cm = state.currentMonth || currentMonthStr();
-  var k = arr.filter(function(m) { return m.idealNew; }).length;
-  for (var i = 0; i < n; i++) {
-    k++;
-    arr.push({
-      id: 'id-' + Date.now() + '-' + i, lastName: '新規', firstName: (k <= 20 ? String.fromCharCode(0x2460 + k - 1) : String(k)), gender: 'male',
-      title: 'LOI', activity: '', actRate: '', morale: 1, priority: '',
-      ptCurrent: g, ptFixed: 0, ptSelf: g, trainee: false, parentId: p.id, mapType: 'ideal', idealNew: true,
-      memo: '', region: p.region || '', startMonth: cm, month: cm, traineeHistory: []
-    });
-  }
-  idqClose();
-  _idealAfter('新規B1を' + n + '人追加しました（GSV ' + g.toLocaleString() + 'P' + (g < NEW_B1_MIN ? '・1,000P未満なので新規B1の人数には数えません' : '') + '）');
+function idqAddB1() { // 互換（v554以前の呼び出し）：ビジネスメンバーを _idq.n 人追加
+  var n = (_idq && _idq.n) || 1;
+  for (var i = 0; i < n; i++) idqAdd('biz');
+  idqClose(true);
 }
 function idqDelete() {
   var m = _idqMember(); if (!m || !m.idealNew) return;
