@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v543';
+var APP_JS_VERSION = 'v544';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v543';
+  var DATA_VERSION = 'v544';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -3970,10 +3970,18 @@ function onYearMonthChange() {
   var y = document.getElementById('selYear').value;
   var m = document.getElementById('selMonth').value;
   var mm = String(m).padStart(2,'0');
+  var _prevMonth = state.currentMonth;
   state.currentMonth = y + '.' + mm;
   if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
-  renderCurrentView();
-  if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+  // v544: 読み込みが終わるまで前の月のMAPを新しい月として見せない（読み込み中の表示→読込後に描画）
+  if (USE_FIREBASE && currentUser && currentUser.uid && db && state.currentMonth !== _prevMonth) {
+    _showSwitching('読み込み中…');
+    if (viewingOwnerUid) fsLoadSharedMap(viewingOwnerUid); // v544: 共有MAPを見ている時は、その人のMAPの同じ月を読む（自分のMAPを読んでいた）
+    else fsLoadFromFirestore(currentUser.uid);
+  } else {
+    renderCurrentView();
+    if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+  }
   startAllMergeListeners(); // 月が変わったら結合MAPの購読を新しい月で張り直す
 }
 
@@ -4874,6 +4882,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v544', d:'2026-09-29', items:['🗓 MAPのデータが無い月を開くと、直前に開いていたMAPが表示されたままになる不具合を修正（PCのツリー・運動会MAP）：データの無い月は何も表示しません','⏳ 月を切り替えた時は読み込みが終わるまで「読み込み中…」を表示（前の月のMAPを新しい月のように見せない）。月を続けて切り替えても、前に選んだ月のデータで上書きされません','🔗 共有MAPを見ている時に月を切り替えると自分のMAPが表示されていたのを修正：相手のMAPの同じ月を表示します'] },
   { v:'v543', d:'2026-09-29', items:['🔗 運動会MAPの共有MAPメンバーを分かりやすく（929-1）：丸とつなぐ線の点線をやめ（段の点線とまぎらわしかったため）、丸の外側に紫の細い輪＋下ふちに「共有」タグを付けました。PDFにも出ます'] },
   { v:'v542', d:'2026-09-29', items:['✨ 運動会MAPでも、LOI〜Q4のフレッシュ（スタート6ヶ月以内・BR未満）が光るように：ツリーのMAPと同じ判定（ケアバッジの自動／表示／非表示）にそろえました。丸の色（QBRのオレンジ）はそのままで、金色の枠が点滅します'] },
   { v:'v541', d:'2026-09-29', items:['🧵 運動会MAPの段の線を少し濃く・太くして、ダークモードでもライトモードでも見えるように（つなぐ線より控えめのまま）'] },
@@ -7527,6 +7536,11 @@ function renderTree(mapType) {
 
   if (roots.length === 0) {
     container.innerHTML = emptyStateHTML('map');
+    // v544: PCのツリー・運動会MAPも空にする（前に開いていた月のMAPが残って見えていた）
+    if (isPCMode()) ['pcMap', 'pcOrbit'].forEach(function(pre) {
+      var el = document.getElementById(pre + (mapType === 'current' ? 'Current' : 'Ideal'));
+      if (el) el.innerHTML = emptyStateHTML('map');
+    });
     updateLTSV(mapType, ownMembers); // LTSVは自分のメンバーのみで集計（数値を変えない）
     return;
   }
@@ -26447,9 +26461,11 @@ function fsLoadSharedMap(ownerUid) {
   var p2 = fsGet('maps/' + ownerUid + '/months/' + month + '_ideal');
   var p3 = fsGet('maps/' + ownerUid + '/stats/' + month);
   var left = 3, failed = false;
+  var _stale = function() { return viewingOwnerUid !== ownerUid || state.currentMonth !== month; }; // v544: 読込中に月・MAPを切り替えた
   function done() {
     left--;
     if (left > 0) return;
+    if (_stale()) return;
     window._keepSpinner = false;
     if (failed) { _hideSwitching(); toast('読み込みエラー。もう一度お試しください'); return; }
     _mergeSnap = null; // マージ基準を再初期化（共有MAP読込）
@@ -26470,12 +26486,12 @@ function fsLoadSharedMap(ownerUid) {
       }
     }, 900);
   }
-  p1.then(function(data) { state.members = (data && data.members) ? data.members : []; done(); })
+  p1.then(function(data) { if (!_stale()) state.members = (data && data.members) ? data.members : []; done(); })
     .catch(function(e) { failed = true; console.error('shared map load error:', e); done(); });
-  p2.then(function(data) { state.idealMembers = (data && data.members) ? data.members : []; done(); })
+  p2.then(function(data) { if (!_stale()) state.idealMembers = (data && data.members) ? data.members : []; done(); })
     .catch(function() { done(); });
   p3.then(function(data) {
-    if (data) {
+    if (data && !_stale()) {
       state.stats = data.stats || getDefaultStats();
       state.commission = data.commission || getDefaultCommission();
       state.freshData = data.freshData || {};
@@ -27284,6 +27300,8 @@ function fsLoadFromFirestore(uid) {
     return p3;
   }).then(function(data) {
     loaded.stats = data;
+    // v544: 読み込み中に別の月・共有MAPへ切り替えていたら、古い結果で上書きしない
+    if (state.currentMonth !== month || viewingOwnerUid) return;
 
     // 現状MAPメンバー
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
@@ -27331,6 +27349,7 @@ function fsLoadFromFirestore(uid) {
     } catch(eSg) {}
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
+    if (state.currentMonth !== month || viewingOwnerUid) return; // v544
     state.members      = [];
     state.idealMembers = [];
     state.stats        = getDefaultStats();
