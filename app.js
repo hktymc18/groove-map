@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v536';
+var APP_JS_VERSION = 'v550';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1054,7 +1054,7 @@ function renderPCMap(mapType) {
     rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
     rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI||_isFr9?'2':'1'))); // v420: BR以上=太枠／v491: フレッシュも太枠
     if (_isBrUp) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
-    if ((m.title || '').trim() === 'OUT') g.style.filter = 'grayscale(1) opacity(0.55)'; // v440: OUTは当月ゴースト表示
+    if ((m.title || '').trim() === 'OUT') { g.classList.add('is-out'); g.style.filter = 'grayscale(1)'; g.style.opacity = '0.5'; } // v440: OUTは当月ゴースト表示（v539: Safariは<g>のCSSフィルタが効かないため不透明度で薄く）
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
     g.appendChild(rect);
 
@@ -1688,7 +1688,12 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     var R1d = laneR(d1);
     var ring = document.createElementNS(NS, 'path');
     ring.setAttribute('d', stadiumPath(R1d));
-    ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', light ? '#aab3c2' : '#3a4558'); ring.setAttribute('stroke-width', '1.4');
+    // v540: 段の線は背景（ごく薄い点線）。つながりの線を主役に（拓郎さん要望・案C）。PDF（印刷）は紙で消えないよう少し濃く
+    ring.setAttribute('fill', 'none');
+    // v541: 画面の段の線が見えにくかったので少し濃く・太く（ダークは明るめのグレー、ライトは中間のグレー）
+    ring.setAttribute('stroke', isPrint ? '#c3cad6' : (light ? '#9ca8ba' : '#66779a'));
+    ring.setAttribute('stroke-width', isPrint ? '1.2' : '1.5');
+    ring.setAttribute('stroke-dasharray', isPrint ? '2 5' : '3 4');
     ring.setAttribute('class', 'orbit-lane');
     ring.setAttribute('data-r', R1d);
     svg.appendChild(ring);
@@ -1781,8 +1786,8 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     var ln = document.createElementNS(NS, 'path');
     ln.setAttribute('d', dd); ln.setAttribute('fill', 'none'); ln.setAttribute('class', 'orbit-link');
     ln.setAttribute('stroke-linejoin', 'round');
-    ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '1.6'); ln.setAttribute('opacity', m._ghost ? '0.25' : '0.6');
-    if (m._foreign) ln.setAttribute('stroke-dasharray', '4,3');
+    ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '2.4'); ln.setAttribute('opacity', m._ghost ? '0.25' : '0.85'); // v540: つながりの線を太く・濃く
+    // v543: 929-1 共有MAPメンバーの線は点線をやめる（段の点線とまぎらわしい）。共有は丸の「共有」タグで示す
     svg.appendChild(ln);
   });
   if (spineX1 > spineX0) { // 中心軸（0段目から各系列へ）
@@ -1831,21 +1836,28 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     ci.setAttribute('cx', pos.x); ci.setAttribute('cy', pos.y); ci.setAttribute('r', r);
     ci.setAttribute('fill', fill); ci.setAttribute('stroke', stroke);
     ci.setAttribute('stroke-width', _isBrUp ? '3' : '1.6');
-    if (m._foreign) ci.setAttribute('stroke-dasharray', '4,3');
     g.appendChild(ci);
     // v506: 研修生・フレッシュは枠を点滅（Safariでも動くopacityアニメの脈動リング）。印刷では出さない
-    if ((isT || _isFrO) && !isPrint) {
+    // v542: 光る条件はツリーのケアバッジと同じ（フレッシュ＝スタート6ヶ月以内・BR未満。LOI〜Q4でも光る／手動の表示・非表示も反映）
+    var _cbO = '';
+    if (mapType === 'current' && (m.title || '').trim() !== 'OUT') {
+      var _isTrO = !!(m.trainee || isT);
+      var _autoO = _isTrO ? 'trainee' : ((typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m) && !_isBrUp) ? 'fresh' : '');
+      var _bmO = m.badgeMode || '';
+      _cbO = (_bmO === 'off') ? '' : ((_bmO === 'on') ? (_autoO || (_isTrO ? 'trainee' : 'fresh')) : _autoO);
+    } else if (isT && mapType !== 'current') _cbO = 'trainee'; // 理想MAPなどは今までどおり研修生のみ
+    if (_cbO && !isPrint) {
       var _pr6 = document.createElementNS(NS, 'circle');
       _pr6.setAttribute('cx', pos.x); _pr6.setAttribute('cy', pos.y); _pr6.setAttribute('r', r + 3.5);
       _pr6.setAttribute('fill', 'none');
-      _pr6.setAttribute('stroke', stroke);
+      _pr6.setAttribute('stroke', _cbO === 'fresh' ? '#FFD166' : '#5AD7FF');
       _pr6.setAttribute('stroke-width', '3');
       _pr6.setAttribute('class', 'pc-pulse-ring orbit-pulse');
       _pr6.setAttribute('pointer-events', 'none');
       g.insertBefore(_pr6, g.firstChild);
     }
     if (_isBrUp && !isPrint) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
-    if ((m.title || '').trim() === 'OUT') { if (isPrint) g.setAttribute('opacity', '0.5'); else g.style.filter = 'grayscale(1) opacity(0.55)'; } // v514: PDF化（画像変換）ではCSSフィルタが効かない環境があるため属性で
+    if ((m.title || '').trim() === 'OUT') { if (isPrint) g.setAttribute('opacity', '0.5'); else { g.classList.add('is-out'); g.style.filter = 'grayscale(1)'; g.style.opacity = '0.5'; } } // v539: 画面でも薄く（Safariは<g>のCSSフィルタが効かない） // v514: PDF化（画像変換）ではCSSフィルタが効かない環境があるため属性で
     if (m._ghost) { g.setAttribute('opacity', '0.35'); g.setAttribute('class', 'oval-node orbit-node orbit-ghost'); } // v514: 地域MAPで、つながりを示すために残した他地域の上位者
     // v502: 旧MAP式の4分割サークル（左上=名前2行／右上=稼働／左下=タイトル／右下=(固定PT)・GSV）
     var _txtCol = light ? '#1a1f2b' : '#f2f4f8';
@@ -1920,6 +1932,28 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       qtxt(pos.x + qx, pos.y + qy - _fsP * 0.2, '(' + _pf6 + ')', _fsP, '700', _dimCol, 'orbit-pt');
       qtxt(pos.x + qx, pos.y + qy + _fsP * 0.9, String(_pc6), _fsP, '700', _dimCol, 'orbit-pt');
     }
+    // v543: 929-1 共有MAPメンバーは丸の下ふちに紫の「共有」タグ（点線の丸は段の点線とまぎらわしかったため）
+    if (m._foreign) {
+      var _fsS = Math.max(8, r * 0.3), _hS = _fsS * 1.45, _wS = _fsS * 2.8;
+      var _tgS = document.createElementNS(NS, 'g');
+      _tgS.setAttribute('class', 'orbit-shared'); _tgS.setAttribute('pointer-events', 'none');
+      var _oS = document.createElementNS(NS, 'circle'); // 外側の紫の細い輪（縮小表示でも共有と分かる）
+      _oS.setAttribute('cx', pos.x); _oS.setAttribute('cy', pos.y); _oS.setAttribute('r', r + 2.6);
+      _oS.setAttribute('fill', 'none'); _oS.setAttribute('stroke', '#8B7CFF'); _oS.setAttribute('stroke-width', '1.8');
+      _tgS.appendChild(_oS);
+      var _rS = document.createElementNS(NS, 'rect');
+      _rS.setAttribute('x', pos.x - _wS / 2); _rS.setAttribute('y', pos.y + r - _hS / 2);
+      _rS.setAttribute('width', _wS); _rS.setAttribute('height', _hS); _rS.setAttribute('rx', _hS / 2);
+      _rS.setAttribute('fill', '#8B7CFF'); _rS.setAttribute('stroke', light ? '#ffffff' : '#161920'); _rS.setAttribute('stroke-width', '1.2');
+      _tgS.appendChild(_rS);
+      var _tS = document.createElementNS(NS, 'text');
+      _tS.setAttribute('x', pos.x); _tS.setAttribute('y', pos.y + r + _fsS * 0.36);
+      _tS.setAttribute('text-anchor', 'middle'); _tS.setAttribute('font-size', _fsS.toFixed(1) + 'px'); _tS.setAttribute('font-weight', '800');
+      _tS.setAttribute('fill', '#ffffff');
+      _tS.textContent = '共有';
+      _tgS.appendChild(_tS);
+      g.appendChild(_tgS);
+    }
     if (!isPrint) {
       g.addEventListener('click', function(ev) {
         ev.stopPropagation();
@@ -1934,6 +1968,53 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     svg.appendChild(g);
   });
 
+  // v537: PDF：メモのある人に番号バッジ＋入る所は丸の横にメモ（外側→内側の順に、ほかの丸・メモと重ならない所だけ）
+  if (isPrint && opts.memoNums) {
+    var mBoxes = [], cPts = [];
+    for (var cid in posOf) cPts.push(posOf[cid]);
+    var hitCirc = function(x0, y0, w0, h0) {
+      for (var ci9 = 0; ci9 < cPts.length; ci9++) {
+        var c9 = cPts[ci9], qx9 = Math.max(x0, Math.min(c9.x, x0 + w0)), qy9 = Math.max(y0, Math.min(c9.y, y0 + h0));
+        if (Math.hypot(c9.x - qx9, c9.y - qy9) < nr + 2) return true;
+      }
+      return false;
+    };
+    var hitBox = function(x0, y0, w0, h0) { return mBoxes.some(function(b) { return x0 < b[0] + b[2] + 3 && b[0] < x0 + w0 + 3 && y0 < b[1] + b[3] + 3 && b[1] < y0 + h0 + 3; }); };
+    members.forEach(function(m) {
+      var no = opts.memoNums[m.id], pos = posOf[m.id];
+      if (!no || !pos) return;
+      var bx = pos.x + nr * 0.74, by = pos.y - nr * 0.74;
+      var bg = document.createElementNS(NS, 'g'); bg.setAttribute('class', 'orbit-memo-no');
+      bg.innerHTML = '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="9.5" fill="#1a1f2b"/><text x="' + bx.toFixed(1) + '" y="' + (by + 3.6).toFixed(1) + '" text-anchor="middle" font-size="' + (no >= 100 ? 8 : 10) + '" font-weight="800" fill="#ffffff">' + no + '</text>';
+      svg.appendChild(bg);
+      var lines = _opsWrap(m.memo, 11, 2);
+      if (!lines.length) return;
+      var fs9 = 10, lh9 = 12.5, bw9 = 0; lines.forEach(function(l) { bw9 = Math.max(bw9, _opsEm(l) * fs9); }); var bh9 = lines.length * lh9;
+      var px9 = Math.max(CX - Lh, Math.min(pos.x, CX + Lh)), nx9 = pos.x - px9, ny9 = pos.y - CY, nl9 = Math.hypot(nx9, ny9) || 1;
+      nx9 /= nl9; ny9 /= nl9;
+      var cands = [[nx9, ny9], [-nx9, -ny9]];
+      for (var k9 = 0; k9 < cands.length; k9++) {
+        var ux = cands[k9][0], uy = cands[k9][1];
+        var ext = Math.abs(ux) * bw9 / 2 + Math.abs(uy) * bh9 / 2;
+        var cx9 = pos.x + ux * (nr + 5 + ext), cy9 = pos.y + uy * (nr + 5 + ext);
+        var x0 = cx9 - bw9 / 2, y0 = cy9 - bh9 / 2;
+        if (x0 < 2 || y0 < titleH + 2 || x0 + bw9 > SW - 2 || y0 + bh9 > SH - 2) continue;
+        if (hitCirc(x0, y0, bw9, bh9) || hitBox(x0, y0, bw9, bh9)) continue;
+        mBoxes.push([x0, y0, bw9, bh9]);
+        var tx = document.createElementNS(NS, 'text');
+        tx.setAttribute('class', 'orbit-memo'); tx.setAttribute('font-size', fs9); tx.setAttribute('fill', '#3a4560'); tx.setAttribute('font-weight', '600');
+        tx.setAttribute('stroke', '#ffffff'); tx.setAttribute('stroke-width', '3'); tx.setAttribute('paint-order', 'stroke'); tx.setAttribute('stroke-linejoin', 'round');
+        lines.forEach(function(l, li) {
+          var ts = document.createElementNS(NS, 'tspan');
+          ts.setAttribute('x', x0.toFixed(1)); ts.setAttribute('y', (y0 + fs9 + li * lh9 - 1).toFixed(1));
+          ts.textContent = (li === 0 ? no + ' ' : '') + l;
+          tx.appendChild(ts);
+        });
+        svg.appendChild(tx);
+        break;
+      }
+    });
+  }
   if (isPrint) { wrap._orbitSize = { SW: SW, SH: SH, n: members.length, nr: nr }; wrap.appendChild(svg); return; }
 
   // ── ツールバー＋スクロール容器 ──
@@ -2117,7 +2198,9 @@ function orbitPdfOpen() {
     if (ia < 0) ia = 99; if (ib < 0) ib = 99;
     return ia - ib || regCnt[b] - regCnt[a];
   });
-  _opdf = { mt: mt, root: root, l1: l1, nick: nick, cnt: {}, regions: regions, regCnt: regCnt, whole: true, lin: {}, excl: {}, reg: {}, est: {}, busy: false };
+  _opdf = { mt: mt, root: root, l1: l1, nick: nick, cnt: {}, regions: regions, regCnt: regCnt, whole: true, lin: {}, excl: {}, reg: {}, est: {}, busy: false,
+    x: { data: true, ol: true, memo: false } }; // v537: いっしょに入れるページ（メモは人に見せたくない内容もあるため既定オフ）
+  try { if (typeof _dtHistLoad === 'function') _dtHistLoad(); } catch (eH) {} // データの過去の月を先に読んでおく
   l1.forEach(function(k) { _opdf.cnt[k.id] = cntSub(k.id); });
   closeOrbitPdf();
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'opdfOv';
@@ -2140,6 +2223,7 @@ function closeOrbitPdf() {
 function opdfToggle(kind, key) {
   if (!_opdf || _opdf.busy) return;
   if (kind === 'whole') _opdf.whole = !_opdf.whole;
+  else if (kind === 'x') _opdf.x[key] = !_opdf.x[key];
   else { var o = _opdf[kind]; if (o[key]) delete o[key]; else o[key] = true; }
   _opdfRender();
 }
@@ -2172,10 +2256,17 @@ function _opdfPages() {
     if (!o.reg[r]) return;
     pages.push({ key: 'reg_' + r, label: r + 'MAP', title: r + 'MAP', sub: sub0 + '（薄い丸＝つながりを示す他地域の上位者）', opts: { region: r }, suffix: r });
   });
+  // v537: MAPのあとに付けるページ（データ・3〜7人OL・メモの一覧）
+  var ym2 = String(state.currentMonth || currentMonthStr()).replace('.', '年').replace(/^(\d+年)0?(\d+)$/, '$1$2月');
+  var addSheets = function(key, list) { list.forEach(function(sv, i) { pages.push({ key: key + i, sheet: sv.svg, title: sv.title, label: sv.title, sub: ym2 }); }); };
+  if (o.x.data) addSheets('x_data', _opdfDataSheets(rootNm, ym2));
+  if (o.x.ol) addSheets('x_ol', _opdfOlSheets(rootNm, ym2));
+  if (o.x.memo) addSheets('x_memo', _opdfMemoSheets(rootNm, ym2));
   return pages;
 }
 // ページの大きさ → A3横に収めた時の丸の直径(mm)を見積もる（描画結果はキャッシュ）
 function _opdfEstimate(pg) {
+  if (pg.sheet) return { n: null, mm: _OPDF_MAX_MM }; // データ・OL・メモの一覧（表のページ）
   if (_opdf.est[pg.key]) return _opdf.est[pg.key];
   var host = document.createElement('div');
   var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
@@ -2214,6 +2305,11 @@ function _opdfRender() {
     h += sec('地域MAP', 'その地域の人だけ（つながりを示す上位者は薄く表示）', 'reg',
       o.regions.map(function(r) { return chip('reg', r, !!o.reg[r], r, o.regCnt[r]); }).join(''));
   }
+  var xs = '';
+  xs += chip('x', 'data', !!o.x.data, '📊 データ（今月の数字・12ヶ月の推移・パワーライン・研修・地域）');
+  xs += chip('x', 'ol', !!o.x.ol, '👥 3〜7人OL（実施したか・内容）');
+  xs += chip('x', 'memo', !!o.x.memo, '📝 メンバーのメモ（丸の横＋番号の一覧）');
+  h += sec('いっしょに入れるページ', 'MAPのあとに付けます（メモを入れる時は、MAPの丸に番号が付きます）', '', xs);
   body.innerHTML = h;
   var pages = _opdfPages();
   var f = '';
@@ -2227,7 +2323,7 @@ function _opdfRender() {
       var bad = e.mm < _OPDF_MIN_MM;
       if (bad) small++;
       f += '<div class="opdf-row' + (bad ? ' bad' : '') + '"><span class="opdf-pn">' + (i + 1) + '</span><span class="opdf-pt">' + evEsc(pg.title) + '</span>'
-        + '<span class="opdf-pm">' + e.n + '人・丸 約' + Math.round(e.mm) + 'mm' + (bad ? ' ' + icn('alert', 'color:#F59E0B') : '') + '</span></div>';
+        + '<span class="opdf-pm">' + (pg.sheet ? '表' : e.n + '人・丸 約' + Math.round(e.mm) + 'mm') + (bad ? ' ' + icn('alert', 'color:#F59E0B') : '') + '</span></div>';
     });
     f += '</div>';
     if (small) {
@@ -2299,6 +2395,7 @@ function orbitPdfMake() {
   _opdfLoadLib(function(ok) {
     if (!ok) { fail('PDFの部品を読み込めませんでした。通信状況を確認してもう一度お試しください'); return; }
     var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3', compress: true });
+    var memoNums = _opdfMemoNums().num;
     var i = 0;
     var next = function() {
       if (i >= pages.length) {
@@ -2311,9 +2408,16 @@ function orbitPdfMake() {
       var pg = pages[i];
       _opdfProgress('作成中… ' + (i + 1) + '/' + pages.length + 'ページ');
       var host = document.createElement('div');
-      var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
-      renderPCOrbit(_opdf.mt, host, true, op);
-      var svg = host.querySelector('svg'), sz = host._orbitSize;
+      var svg, sz;
+      if (pg.sheet) { // v537: 表のページ
+        host.innerHTML = pg.sheet;
+        svg = host.querySelector('svg'); sz = { SW: _OPS_W, SH: _OPS_H, nr: 1 };
+      } else {
+        var op = { title: pg.title, sub: pg.sub }; for (var k in pg.opts) op[k] = pg.opts[k];
+        if (_opdf.x.memo) op.memoNums = memoNums; // メモのある人に番号（＋入る所は丸の横にメモ）
+        renderPCOrbit(_opdf.mt, host, true, op);
+        svg = host.querySelector('svg'); sz = host._orbitSize;
+      }
       if (!svg || !sz) { i++; setTimeout(next, 0); return; }
       _opdfSvgToJpeg(svg, sz.SW, sz.SH, sz.nr, function(url) {
         if (!url) { fail('MAPの画像化に失敗しました（' + pg.title + '）'); return; }
@@ -2363,6 +2467,246 @@ function opdfDownload() {
   document.body.appendChild(a);
   a.click();
   setTimeout(function() { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 60000);
+}
+// ════ v537: PDFに付けるページ（データ・3〜7人OL・メモの一覧）＝表をSVGで描いて画像化 ════
+var _OPS_W = 1587, _OPS_H = 1123;
+function _opsEsc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function _opsEm(str) { var w = 0; str = String(str || ''); for (var i = 0; i < str.length; i++) w += str.charCodeAt(i) > 255 ? 1 : 0.56; return w; }
+// 幅（全角何文字分）で折り返し。入りきらない時は最後の行を「…」で切る
+function _opsWrap(str, maxEm, maxLines) {
+  var out = [], paras = String(str || '').replace(/\r/g, '').split('\n');
+  for (var pi = 0; pi < paras.length; pi++) {
+    var cur = '', w = 0, p = paras[pi].replace(/\s+/g, ' ').trim();
+    if (!p) continue;
+    for (var i = 0; i < p.length; i++) {
+      var ch = p[i], cw = p.charCodeAt(i) > 255 ? 1 : 0.56;
+      if (w + cw > maxEm && cur) { out.push(cur); cur = ''; w = 0; }
+      cur += ch; w += cw;
+    }
+    if (cur) out.push(cur);
+  }
+  if (maxLines && out.length > maxLines) { out = out.slice(0, maxLines); var last = out[maxLines - 1]; out[maxLines - 1] = (_opsEm(last) > maxEm - 1 ? last.slice(0, -1) : last) + '…'; }
+  return out;
+}
+function OpsSheet(title, sub) { this.b = []; this.title = title; this.sub = sub; }
+OpsSheet.prototype.t = function(x, y, s, o) {
+  o = o || {};
+  this.b.push('<text x="' + (+x).toFixed(1) + '" y="' + (+y).toFixed(1) + '" font-size="' + (o.fs || 14) + '" font-weight="' + (o.fw || 500) + '" fill="' + (o.c || '#1a1f2b') + '"' + (o.a ? ' text-anchor="' + o.a + '"' : '') + '>' + _opsEsc(s) + '</text>');
+};
+OpsSheet.prototype.r = function(x, y, w, h, o) {
+  o = o || {};
+  this.b.push('<rect x="' + (+x).toFixed(1) + '" y="' + (+y).toFixed(1) + '" width="' + Math.max(0, w).toFixed(1) + '" height="' + Math.max(0, h).toFixed(1) + '" rx="' + (o.rx || 0) + '" fill="' + (o.f || 'none') + '"' + (o.s ? ' stroke="' + o.s + '" stroke-width="' + (o.sw || 1) + '"' : '') + '/>');
+};
+OpsSheet.prototype.sec = function(x, y, s) { this.r(x, y - 15, 5, 20, { f: '#2CE5B8', rx: 2 }); this.t(x + 13, y, s, { fs: 19, fw: 800 }); };
+OpsSheet.prototype.svg = function() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + _OPS_W + '" height="' + _OPS_H + '" viewBox="0 0 ' + _OPS_W + ' ' + _OPS_H + '">'
+    + '<rect x="0" y="0" width="' + _OPS_W + '" height="' + _OPS_H + '" fill="#ffffff"/>'
+    + '<text x="40" y="54" font-size="30" font-weight="800" fill="#1a1f2b">' + _opsEsc(this.title) + '</text>'
+    + '<text x="40" y="82" font-size="16" font-weight="700" fill="#556070">' + _opsEsc(this.sub) + '</text>'
+    + '<rect x="40" y="96" width="' + (_OPS_W - 80) + '" height="2" fill="#e3e7ee"/>'
+    + this.b.join('') + '</svg>';
+};
+// ── データ：①今月の数字＋稼働構成＋12ヶ月の推移 ②パワーライン・研修・地域 ──
+function _opdfDataSheets(rootNm, ymLbl) {
+  var out = [];
+  try { if (_opdf && _opdf.mt === 'current' && !viewingOwnerUid && typeof buildAutoStats === 'function') buildAutoStats(); } catch (eB) {} // データタブを開いていなくても今月の数字を集計
+  var sh = new OpsSheet(rootNm + ' データ ①今月の数字と12ヶ月の推移', ymLbl + '　現状MAPから集計（UNIVERSE・コミッションは入力した数字）');
+  var ms = DT_METRICS, W = _OPS_W - 80, cols = 7, gap = 12, tw = (W - gap * (cols - 1)) / cols, th = 104;
+  ms.forEach(function(meta, i) {
+    var v = _dtVals(meta.k), cur = v[11], prev = v[10];
+    var x = 40 + (i % cols) * (tw + gap), y = 116 + Math.floor(i / cols) * (th + gap);
+    sh.r(x, y, tw, th, { f: '#f5f7fa', s: '#e3e7ee', rx: 12 });
+    sh.t(x + 14, y + 26, meta.lb, { fs: 13, fw: 700, c: '#556070' });
+    sh.t(x + 14, y + 66, _dtFmt(cur, meta, true), { fs: 30, fw: 800 });
+    sh.t(x + tw - 12, y + 66, meta.yen ? '' : meta.unit, { fs: 14, fw: 700, c: '#8a94a6', a: 'end' });
+    if (cur !== null && prev !== null) {
+      var d = Math.round((cur - prev) * 10) / 10, good = meta.inv ? d < 0 : d > 0;
+      sh.t(x + 14, y + 90, d === 0 ? '前月と同じ' : ('前月比 ' + (d > 0 ? '▲' : '▼') + _dtFmt(Math.abs(d), meta, true)), { fs: 12.5, fw: 700, c: d === 0 ? '#8a94a6' : (good ? '#16a34a' : '#e23b55') });
+    } else sh.t(x + 14, y + 90, '前月 —', { fs: 12.5, c: '#8a94a6' });
+  });
+  // 稼働構成
+  var y2 = 116 + 2 * (th + gap) + 34;
+  sh.sec(40, y2, '稼働構成');
+  var cnt = ['S', 'A', 'B', 'C'].map(function(k) { var v = _dtVals(k)[11]; return { k: k, n: v || 0 }; });
+  var tot = cnt.reduce(function(a, c) { return a + c.n; }, 0) || 1, bx = 190, bw = W - 150;
+  cnt.forEach(function(c) {
+    var w9 = bw * c.n / tot;
+    sh.r(bx, y2 - 18, w9, 26, { f: DT_ACT_COLORS[c.k] });
+    if (w9 > 70) sh.t(bx + w9 / 2, y2, c.k + ' ' + c.n + '人（' + Math.round(c.n / tot * 100) + '%）', { fs: 13, fw: 800, a: 'middle', c: '#1a1f2b' });
+    else if (w9 > 20) sh.t(bx + w9 / 2, y2, c.k, { fs: 13, fw: 800, a: 'middle' });
+    bx += w9;
+  });
+  // 12ヶ月の推移（表）
+  var y3 = y2 + 44;
+  sh.sec(40, y3, '12ヶ月の推移');
+  var mons = _dtMonths(), lw = 210, cw = (W - lw) / 12, rh = 40, ty = y3 + 14;
+  sh.r(40 + lw + cw * 11, ty, cw, rh * (ms.length + 1), { f: '#eafbf5' });
+  mons.forEach(function(mo, j) { sh.t(40 + lw + cw * j + cw / 2, ty + 26, (j === 0 || mo.m === 1 ? mo.y + '/' : '') + mo.lbl, { fs: 13.5, fw: 800, a: 'middle', c: j === 11 ? '#0f8a6a' : '#556070' }); });
+  ms.forEach(function(meta, i) {
+    var yy = ty + rh * (i + 1);
+    if (i % 2 === 0) sh.r(40, yy, W, rh, { f: 'rgba(0,0,0,0.028)' });
+    sh.t(52, yy + 26, meta.lb, { fs: 14, fw: 700 });
+    _dtVals(meta.k).forEach(function(v, j) { sh.t(40 + lw + cw * j + cw / 2, yy + 26, v === null ? '—' : _dtFmt(v, meta, true), { fs: 14, fw: j === 11 ? 800 : 500, a: 'middle', c: v === null ? '#b3bac6' : '#1a1f2b' }); });
+  });
+  out.push({ title: 'データ ①今月の数字と推移', svg: sh.svg() });
+
+  // ② パワーライン・研修・地域
+  var s2 = new OpsSheet(rootNm + ' データ ②パワーライン・研修・地域', ymLbl + '　現状MAPから集計');
+  var cm = membersForMap('current').filter(function(m) { return !m.deleted; });
+  var lt = ltsvMap(cm), root = cm.filter(function(m) { return !m.parentId; })[0];
+  var kids = {}; cm.forEach(function(m) { (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  var nm = function(m) { return (m.lastName || '') + (m.firstName || ''); };
+  var lines = root ? (kids[root.id] || []).filter(function(f) { return (lt[f.id] || 0) >= 5000; }).sort(function(a, b) { return lt[b.id] - lt[a.id]; }) : [];
+  var LX = 40, LW = 740, y = 136;
+  s2.sec(LX, y, 'パワーライン（LTSV 5,000P以上の系列 ' + lines.length + '本）');
+  y += 30;
+  if (!lines.length) { s2.t(LX + 14, y + 10, 'LTSV 5,000P以上の系列はまだありません', { fs: 14, c: '#8a94a6' }); }
+  var mx = lines.length ? lt[lines[0].id] : 1, more = 0;
+  lines.forEach(function(f, i) {
+    if (y > _OPS_H - 60) { more++; return; }
+    s2.t(LX + 8, y + 18, (i + 1) + '. ' + nm(f), { fs: 16, fw: 800 });
+    s2.t(LX + 250, y + 18, (f.title || '').trim(), { fs: 13, fw: 700, c: '#556070' });
+    s2.r(LX + 330, y + 5, 300 * lt[f.id] / mx, 16, { f: '#2CE5B8', rx: 4 });
+    s2.t(LX + LW, y + 18, lt[f.id].toLocaleString(), { fs: 16, fw: 800, a: 'end' });
+    y += 28;
+    var inner = [];
+    (function walk(m, d) { (kids[m.id] || []).forEach(function(c) { if ((lt[c.id] || 0) >= 5000) inner.push({ m: c, d: d }); walk(c, d + 1); }); })(f, 1);
+    inner.forEach(function(x) {
+      if (y > _OPS_H - 60) { more++; return; }
+      s2.t(LX + 22 + Math.min(x.d, 6) * 14, y + 15, '└ ' + nm(x.m) + '（' + (x.m.title || '').trim() + '・' + x.d + '段下）', { fs: 13, c: '#3a4560' });
+      s2.t(LX + LW, y + 15, lt[x.m.id].toLocaleString(), { fs: 13, fw: 700, a: 'end', c: '#3a4560' });
+      y += 22;
+    });
+    y += 6;
+  });
+  if (more) s2.t(LX + 8, _OPS_H - 30, '…ほか ' + more + '行（アプリのデータタブで確認できます）', { fs: 12.5, c: '#8a94a6' });
+  // 研修（今月）
+  var RX = 830, RW = _OPS_W - 40 - RX, fmon = state.currentMonth;
+  var trainees = monthTrainees(fmon);
+  var inMon = function(m, st) { var hs = m.traineeHistory || []; for (var i2 = 0; i2 < hs.length; i2++) if (hs[i2].status === st && _ymToMon(hs[i2].date) === fmon) return true; return false; };
+  var ry = 136;
+  s2.sec(RX, ry, '研修フロー（研修生 ' + trainees.length + '人）');
+  ry += 18;
+  var cw2 = RW / DT_STEPS.length;
+  DT_STEPS.forEach(function(st, i) {
+    var n = trainees.filter(function(m) { return inMon(m, st); }).length;
+    s2.r(RX + cw2 * i + 3, ry, cw2 - 6, 64, { f: n ? '#eafbf5' : '#f5f7fa', s: '#e3e7ee', rx: 10 });
+    s2.t(RX + cw2 * i + cw2 / 2, ry + 24, st, { fs: 13, fw: 700, a: 'middle', c: '#556070' });
+    s2.t(RX + cw2 * i + cw2 / 2, ry + 52, n + '人', { fs: 19, fw: 800, a: 'middle' });
+  });
+  ry += 96;
+  var decided = function(m) { return m.traineeResult && traineeDecidedMonth(m) === fmon; };
+  var res = DT_RES.map(function(r) { return { lb: r.lb, col: r.col, n: trainees.filter(function(m) { return r.key === '__prog' ? !decided(m) : (decided(m) && m.traineeResult === r.key); }).length }; });
+  var dec = res[0].n + res[1].n + res[2].n;
+  s2.t(RX, ry, '研修の結果：' + res.map(function(r) { return r.lb + ' ' + r.n + '人'; }).join('・') + (dec ? '　BC決定率 ' + Math.round(res[0].n / dec * 100) + '%' : ''), { fs: 14.5, fw: 700 });
+  // 地域（今月）
+  ry += 50;
+  s2.sec(RX, ry, '地域の比較（今月・OUTを除く）');
+  var QBR = ['LOI', 'Q1', 'Q2', 'Q3', 'Q4'], ym = state.currentMonth || currentMonthStr(), by = {};
+  membersForMap('current').forEach(function(m) {
+    if (m.deleted || (m.title || '').trim() === 'OUT' || /^(MG_|AG\d+_)/.test(m.id)) return;
+    var r = normalizeRegionValue(m.region || '') || '未設定', t = (m.title || '').trim();
+    var o = by[r] || (by[r] = { r: r, n: 0, tr: 0, q: 0, br: 0, s: 0, b1: 0 });
+    o.n++; if (memberCat(m) === '研修生') o.tr++; if (QBR.indexOf(t) >= 0) o.q++; if (isBROrAbove(t)) o.br++; if (m.activity === 'S') o.s++;
+    if (String(m.startMonth || '').replace('-', '.').slice(0, 7) === ym && /^B\d+$/.test(t)) o.b1++;
+  });
+  var regs = Object.keys(by).map(function(k) { return by[k]; }).sort(function(a, b) { return b.n - a.n; });
+  var hd = ['地域'].concat(DT_REG_M.map(function(x) { return x[1]; })), cw3 = RW / hd.length, rh3 = 34;
+  ry += 16;
+  hd.forEach(function(h, j) { s2.t(RX + cw3 * j + (j ? cw3 / 2 : 8), ry + 22, h, { fs: 13, fw: 800, c: '#556070', a: j ? 'middle' : 'start' }); });
+  regs.forEach(function(o, i) {
+    var yy = ry + rh3 * (i + 1);
+    if (yy > _OPS_H - 40) return;
+    if (i % 2 === 0) s2.r(RX, yy, RW, rh3, { f: 'rgba(0,0,0,0.028)' });
+    s2.t(RX + 8, yy + 23, o.r, { fs: 14.5, fw: 800 });
+    DT_REG_M.forEach(function(x, j) { s2.t(RX + cw3 * (j + 1) + cw3 / 2, yy + 23, o[x[0]], { fs: 14.5, fw: 600, a: 'middle' }); });
+  });
+  out.push({ title: 'データ ②パワーライン・研修・地域', svg: s2.svg() });
+  return out;
+}
+// ── 3〜7人OL（今月）：実施したか・参加者・Aさん・内容・反応 ──
+function _opdfOlSheets(rootNm, ymLbl) {
+  var ym = state.currentMonth || currentMonthStr();
+  var evs = _olEvents().filter(function(ev) { return ev.kind === 'group' && _olInMonth(ev, ym); })
+    .sort(function(a, b) { return (a.date + (a.time || '')) < (b.date + (b.time || '')) ? -1 : 1; });
+  var done = evs.filter(function(ev) { return ev.st === 'done'; }).length;
+  var sub = ymLbl + '　実施 ' + done + '回・予定 ' + (evs.length - done) + '回（目安：月' + OL_GROUP_GOAL + '回・' + OL_GROUP_MIN + '〜' + OL_GROUP_MAX + '人）';
+  var cols = [['No', 50], ['日付', 110], ['状態', 80], ['人数', 60], ['参加者', 380], ['Aさん', 120], ['内容', 330], ['反応・メモ', 377]];
+  var pages = [], sh = null, y = 0, n = 0;
+  var start = function() {
+    sh = new OpsSheet(rootNm + ' 3〜7人OL' + (pages.length ? '（続き）' : ''), sub);
+    y = 118;
+    var x = 40;
+    sh.r(40, y, _OPS_W - 80, 36, { f: '#f0f3f7', rx: 6 });
+    cols.forEach(function(c) { sh.t(x + 10, y + 24, c[0], { fs: 14, fw: 800, c: '#556070' }); x += c[1]; });
+    y += 36;
+  };
+  start();
+  if (!evs.length) sh.t(50, y + 40, '今月の3〜7人OLはまだありません', { fs: 16, c: '#8a94a6' });
+  evs.forEach(function(ev) {
+    n++;
+    var names = ev.mids.map(function(id) { var m = _olMem(id); return m ? _olNm(m) : ''; }).filter(Boolean).concat((ev.guests || []).map(function(g) { return g + '（ゲスト）'; }));
+    var cells = [
+      [String(n)], [ev.date ? _olMD(ev.date) + '(' + _olWd(ev.date) + ')' + (ev.time ? ' ' + ev.time : '') : '日付未定'], [ev.st === 'done' ? '✓ 実施' : '予定'], [ev.n + '人'],
+      _opsWrap(names.join('、'), 23, 4), _opsWrap(ev.asan || '—', 6.5, 2), _opsWrap(ev.what || '—', 20, 4), _opsWrap(ev.note || (ev.st === 'done' ? '—' : ''), 23, 4)
+    ];
+    var lnN = Math.max.apply(null, cells.map(function(c) { return c.length || 1; }));
+    var rh = 18 + lnN * 21;
+    if (y + rh > _OPS_H - 30) { pages.push(sh); start(); }
+    if (n % 2 === 0) sh.r(40, y, _OPS_W - 80, rh, { f: 'rgba(0,0,0,0.028)' });
+    var x = 40;
+    cells.forEach(function(c, j) {
+      c.forEach(function(l, li) { sh.t(x + 10, y + 26 + li * 21, l, { fs: 14.5, fw: (j === 2 || j === 1) ? 800 : 500, c: j === 2 ? (ev.st === 'done' ? '#16a34a' : '#b7791f') : '#1a1f2b' }); });
+      x += cols[j][1];
+    });
+    y += rh;
+  });
+  pages.push(sh);
+  return pages.map(function(p, i) { return { title: '3〜7人OL' + (pages.length > 1 ? '（' + (i + 1) + '/' + pages.length + '）' : ''), svg: p.svg() }; });
+}
+// ── メンバーのメモ：番号（MAPの丸の番号と同じ）・名前・タイトル・メモ ──
+function _opdfMemoNums() {
+  var mt = (_opdf && _opdf.mt) || 'current';
+  var ms = _opdfMembers(mt), cmp = _treeSortCmp(ms), kids = {};
+  ms.forEach(function(m) { (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  for (var k in kids) kids[k].sort(cmp);
+  var list = [], num = {};
+  (function walk(pid) { (kids[pid] || []).forEach(function(m) { if (String(m.memo || '').trim()) { list.push(m); num[m.id] = list.length; } walk(m.id); }); })('');
+  return { list: list, num: num };
+}
+function _opdfMemoSheets(rootNm, ymLbl) {
+  var L = _opdfMemoNums().list;
+  // 2列で詰めて並べる（人数が多くてもページ数を抑える）
+  var colW = (_OPS_W - 80 - 24) / 2, cols = [['No', 46], ['名前', 160], ['タイトル', 104], ['メモ', colW - 310]];
+  var pages = [], sh = null, y = 0, col = 0, top = 0;
+  var head = function(x0) {
+    var x = x0;
+    sh.r(x0, top, colW, 34, { f: '#f0f3f7', rx: 6 });
+    cols.forEach(function(c) { sh.t(x + 8, top + 23, c[0], { fs: 13.5, fw: 800, c: '#556070' }); x += c[1]; });
+  };
+  var start = function() {
+    sh = new OpsSheet(rootNm + ' メンバーのメモ' + (pages.length ? '（続き）' : ''), ymLbl + '　番号＝MAPの丸の右上の番号');
+    top = 116; col = 0; head(40); y = top + 34;
+  };
+  start();
+  if (!L.length) sh.t(50, y + 40, 'メモが入っているメンバーはいません', { fs: 16, c: '#8a94a6' });
+  L.forEach(function(m, i) {
+    var memo = _opsWrap(m.memo, 26, 4);
+    var rh = 14 + Math.max(1, memo.length) * 20;
+    if (y + rh > _OPS_H - 24) {
+      if (col === 0) { col = 1; head(40 + colW + 24); y = top + 34; }
+      else { pages.push(sh); start(); }
+    }
+    var x0 = 40 + col * (colW + 24);
+    if (i % 2 === 1) sh.r(x0, y, colW, rh, { f: 'rgba(0,0,0,0.028)' });
+    sh.t(x0 + 8, y + 23, String(i + 1), { fs: 14.5, fw: 800 });
+    sh.t(x0 + 54, y + 23, _opsWrap((m.lastName || '') + ' ' + (m.firstName || ''), 8.5, 1)[0] || '', { fs: 14.5, fw: 800 });
+    sh.t(x0 + 214, y + 23, _opsWrap(_opdfFullTitle(m.title), 6, 1)[0] || '', { fs: 13, fw: 700, c: '#556070' });
+    memo.forEach(function(l, li) { sh.t(x0 + 318, y + 23 + li * 20, l, { fs: 14 }); });
+    y += rh;
+  });
+  pages.push(sh);
+  return pages.map(function(p, i) { return { title: 'メンバーのメモ' + (pages.length > 1 ? '（' + (i + 1) + '/' + pages.length + '）' : ''), svg: p.svg() }; });
 }
 // 🖨 A3横1枚に印刷（明色で再描画してから印刷）
 // v493: 印刷は専用ウィンドウ方式（即時に開く・MAPのみ・A3横・タイトル=保存ファイル名）
@@ -2742,7 +3086,8 @@ function _applyMapDims() {
     }
     var _nl9 = nodes[i].getAttribute('data-lineage');
     var _fOk9 = (!_lin9 || _nl9 === _lin9 || _nl9 === '');
-    nodes[i].style.opacity = !ok ? '0.22' : (_fOk9 ? '1' : '0.6');
+    var _out9 = nodes[i].classList && nodes[i].classList.contains('is-out'); // v539: OUTは当月ゴースト表示（薄いまま）
+    nodes[i].style.opacity = !ok ? '0.22' : (_fOk9 ? (_out9 ? '0.5' : '1') : (_out9 ? '0.3' : '0.6'));
     // v518: 922-3 活動中（脈打ち＝opacityアニメ）や研修中・フレッシュの発光アニメは style.opacity より優先されるため、
     //        他地域なのに明るく光って「選んだ地域より目立つ」状態だった。クラス（!important＋アニメ停止）で確実に薄くする
     if (nodes[i].classList) {
@@ -3519,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v536';
+  var DATA_VERSION = 'v550';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -3625,10 +3970,18 @@ function onYearMonthChange() {
   var y = document.getElementById('selYear').value;
   var m = document.getElementById('selMonth').value;
   var mm = String(m).padStart(2,'0');
+  var _prevMonth = state.currentMonth;
   state.currentMonth = y + '.' + mm;
   if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
-  renderCurrentView();
-  if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+  // v544: 読み込みが終わるまで前の月のMAPを新しい月として見せない（読み込み中の表示→読込後に描画）
+  if (USE_FIREBASE && currentUser && currentUser.uid && db && state.currentMonth !== _prevMonth) {
+    _showSwitching('読み込み中…');
+    if (viewingOwnerUid) fsLoadSharedMap(viewingOwnerUid); // v544: 共有MAPを見ている時は、その人のMAPの同じ月を読む（自分のMAPを読んでいた）
+    else fsLoadFromFirestore(currentUser.uid);
+  } else {
+    renderCurrentView();
+    if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+  }
   startAllMergeListeners(); // 月が変わったら結合MAPの購読を新しい月で張り直す
 }
 
@@ -4529,6 +4882,20 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v550', d:'2026-09-29', items:['🏃 今月の行動量に「ST・SNST・CT取り」を追加：CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数で自動カウント）。目標はCTの必要数＋ドタキャン分（標準20%）。ST・SNSTは回数を右の「今月の目標」で決めます','⏰ ST・SNST・CT取りは「予約」で時間の枠をカレンダーに入れる形に。今週の枠が無い／残っていない行は赤く表示。終わったCT取りの枠には「取れた約束をCTの予定に入れる」案内','📋 ATTACK LISTと連携：手元のリスト（未着手・連絡中）の人数とCT予定の人数を自動で表示（読めない時は手入力）。リストが少なくなったら「STで作る」。ALボタンでATTACK LISTを開けます','⚙ 係数の画面に「行動の設定」：STを目標に使う（フレッシュ期間は既定OFF）／SNSTを目標に使う（任意）／CT取りの余裕％','🏷 予定の種類にST・SNST・CT取りを追加（タイトルから自動判定。人を選ばない予定でも種類の欄が出ます）'] },
+  { v:'v549', d:'2026-09-29', items:['🗓 予定の入力画面：詳細を開く前は保存ボタンまでスクロールなしで表示（PCはカテゴリと関連メンバーを横並び）。保存・キャンセルは常に下に固定','🔤 今月の行動量：今週の件数は「実施・予定」（今週に入っている予定と実施済みの合計）、月の残りは「これからの予定」と表記'] },
+  { v:'v548', d:'2026-09-29', items:['🧩 PLANのデータを1本化：旧GOAL画面の行事（RRR TRIPなど）をPLANのマイルストーンに移しました（絵文字もそのまま）。月のフロント目標は「理想MAPで新規フロントを組んだ月はその人数、それ以外は月の目標（横線のF・表・右の入力は同じ値）」の1つのルールで、横線・タイル・行動量・動員計画・ホームのコーチがそろいます','📅 CT・FT/マケ・PG・DLRの実績をカレンダーから自動カウント：種類の付いた予定は日付が来たら、タスクは完了で1件（関連メンバーの人数分）。クイック記録の手入力分も足します（9月までは二重にならないよう多い方）','🗓 「今月のファネル」→「今月の行動量」：月の必要数・実績・残りの予定に加え、今週の必要件数と予定件数・あと何件を表示。「＋予定」で種類を入れた予定の入力が開きます'] },
+  { v:'v547', d:'2026-09-29', items:['🎏 PLANのマイルストーン：複数月にまたがるものは、対象の月の幅まで帯を伸ばして表示（単月の旗の上の段・重なる時は別の段）','⚡ マイルストーンや行事の旗（RRR TRIPなど）を編集・削除したら、ブラウザの更新なしですぐ反映','🔢 横線の月をクリック→「この月のフロント目標（F）」をマイルストーン無しでも入れられるように（空欄で消去）'] },
+  { v:'v546', d:'2026-09-29', items:['📐 PLAN（PC）をスクロールなしで1画面に：目標月収・タイトル・期日・スローガンの文字を少し小さくし、BB換算・夢100は目標のすぐ下（月収の下・タイトルの下）に。マイルストーンは「現在地」とフロント目標（F）を1行にまとめ、カードの余白も詰めました。ノートPCの幅でも「やること」の5枚が1列に並びます'] },
+  { v:'v545', d:'2026-09-29', items:['🅰️ カレンダーの予定に「種類」と「Aさん」を追加（関連メンバーを選んだ時に表示）：種類はマケ・PG・DLR・EXP・PA・面談・BPC・CO・CT・FT・OL・その他の共通リストで、タイトル（例「匡哉PG」）から自動で選ばれます（全角・小文字もOK。違えばタップで変更）。Aさんは最初「自分」、過去に入れた名前はワンタップ','🗺 MAPのメンバー側の予定は「PG（A:山内）」のように種類＋Aさんで表示（タイトルに入れた本人の名前は外します）。自分のカレンダーはタイトルそのまま＋「A:◯◯」','📋 テンプレートに「いつものAさん」を追加（空欄＝自分）'] },
+  { v:'v544', d:'2026-09-29', items:['🗓 MAPのデータが無い月を開くと、直前に開いていたMAPが表示されたままになる不具合を修正（PCのツリー・運動会MAP）：データの無い月は何も表示しません','⏳ 月を切り替えた時は読み込みが終わるまで「読み込み中…」を表示（前の月のMAPを新しい月のように見せない）。月を続けて切り替えても、前に選んだ月のデータで上書きされません','🔗 共有MAPを見ている時に月を切り替えると自分のMAPが表示されていたのを修正：相手のMAPの同じ月を表示します'] },
+  { v:'v543', d:'2026-09-29', items:['🔗 運動会MAPの共有MAPメンバーを分かりやすく（929-1）：丸とつなぐ線の点線をやめ（段の点線とまぎらわしかったため）、丸の外側に紫の細い輪＋下ふちに「共有」タグを付けました。PDFにも出ます'] },
+  { v:'v542', d:'2026-09-29', items:['✨ 運動会MAPでも、LOI〜Q4のフレッシュ（スタート6ヶ月以内・BR未満）が光るように：ツリーのMAPと同じ判定（ケアバッジの自動／表示／非表示）にそろえました。丸の色（QBRのオレンジ）はそのままで、金色の枠が点滅します'] },
+  { v:'v541', d:'2026-09-29', items:['🧵 運動会MAPの段の線を少し濃く・太くして、ダークモードでもライトモードでも見えるように（つなぐ線より控えめのまま）'] },
+  { v:'v540', d:'2026-09-29', items:['🎯 PLAN（PC）の目標：目標月収・目標タイトル・期日のラベルと数字の高さをそろえ、スローガンを右上に大きく、BB換算・夢100の進捗は目標の下にまとめました','🔤 目標タイトルをアルファベット表記に（ルビー→RUBY など）','🧵 運動会MAPの線を見やすく：メンバーをつなぐ線を太く、段の線はごく薄い点線に（PDFは印刷で消えないよう少しだけ濃いめ）'] },
+  { v:'v539', d:'2026-09-29', items:['🌫 運動会MAP（とPCのツリー）でOUTの人が薄く表示されない問題を修正（Safariなどで薄くならなかった・絞り込みの表示で濃く戻っていた）'] },
+  { v:'v538', d:'2026-09-29', items:['💰 PLAN（PC）の一番上を「目標月収」から：左上に目標月収、その横に目標タイトル・期日をどれも大きな文字で。スローガンも大きく表示'] },
+  { v:'v537', d:'2026-09-29', items:['🧭 PLAN（PC）を作り直し：一番上に目標（タイトル・期日・スローガン・目標月収）を大きく、その下にマイルストーンの横線（月ごとの点・📍現在地・🚩最終LOI・🏔期日・旗・月ごとのフロント目標／点をクリックで追加）、下に「今月やること」の数字タイルと、今月｜来月の目標入力。目標設定のツール（価値観・年別目標・ギャップ・夢100など）は ⚙ から必要な時に表示','👥 今月の目標の「稼働」を％ではなく平均稼働人数に（実績＝受付連携の稼働率から）','📄 運動会MAPのPDFに「データ（今月の数字・12ヶ月の推移・パワーライン・研修・地域）」「3〜7人OL（実施したか・参加者・内容・反応）」「メンバーのメモ（丸に番号＋入る所は丸の横に・一覧ページ）」を追加できるように'] },
   { v:'v536', d:'2026-09-28', items:['🔗 受付連携の稼働率は、受付システムが集計した数字をそのまま読むように（MAP側では計算しない＝受付システムの集計と必ず一致）。連携完了の表示に「何時点の集計か」を表示','受付システム：集計画面を開いた時・受付を終了/再開した時・日付が変わって最初に開いた時に、MAP用の集計を自動で保存'] },
   { v:'v535', d:'2026-09-28', items:['🛠 受付連携の稼働率が受付システムの集計とずれる問題を修正：当日のハウディを「受付終了」前から分母に入れていたため、全出席の人でも当日は92%などになっていました。受付システムと同じく、当日分は受付を終了してから数えます'] },
   { v:'v534', d:'2026-09-28', items:['🛠 受付システムを開くとMAPのログイン画面が出てしまう問題が再発していたのを修正（v533の差し替えで受付システム側の修正が上書きされていました）'] },
@@ -4950,7 +5317,8 @@ function missionDefs() {
   try {
     var p = state.goals && state.goals.plan;
     if (p && p.title && p.funnel && typeof _glMonthlyFront === 'function') {
-      var mT = _glMonthlyFront(p) * (p.funnel.action || 0);
+      var _qF = (typeof _p2FrontTgt === 'function') ? _p2FrontTgt(_p2Ym(0)) : ''; // v548: 月のフロント目標（PLAN）
+      var mT = (_qF !== '' ? _qF : _glMonthlyFront(p)) * (p.funnel.action || 0);
       if (mT > 0) {
         var dInM = new Date(new Date().getFullYear(), new Date().getMonth()+1, 0).getDate();
         var dailyT = Math.max(1, Math.round(mT / dInM));
@@ -5038,6 +5406,13 @@ function _qrToday(stage) {
 }
 var _lastQuickRec = null; // 直前のクイック記録（押し間違い取り消し用）
 // dailyActuals への+1記録＋即時XP報酬（クイック記録／CAL-2テンプレ完了還元の共通実体）
+function _stageXpOnly(stage) { // v548: 実績は加算せずXPだけ
+  var g = getGame(), xp = GAME_XP[stage] || 2;
+  g.xp += xp; g.weekXp = (g.weekXp || 0) + xp;
+  gameMarkActive(); saveGame();
+  try { gameXpFloat(xp); } catch (eX) {}
+  return xp;
+}
 function _stageRecord(stage, day) {
   if (!state.goals) state.goals = _glDefault();
   if (!state.goals.plan) state.goals.plan = _glDefaultPlan();
@@ -5955,9 +6330,10 @@ function openMemberDetail(mid) {
   if (!olog.length) ol += '<div class="md-empty">OL記録はまだありません</div>';
   else ol += olog.map(function(e){ return '<div class="md-ol"><div class="md-oltop">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div class="md-olwhat">' + evEsc(e.what) + '</div>':'') + (e.note?'<div class="md-olnote">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
   var evs = (state.events||[]).filter(function(e){ return e.memberId===mid && !e.deleted; });
+  var _mMd = findMemberAny(mid); // v545
   var tk = '';
   if (!evs.length) tk = '<div class="md-empty">紐付くタスク・予定はありません</div>';
-  else tk = evs.map(function(e){ var ic=e.type==='task'?(e.done?'✅':'⬜'):'📅'; var d=e.date?e.date.split('-').slice(1).join('/'):''; return '<div class="md-task"><span>' + ic + '</span><span class="md-tt' + (e.done?' done':'') + '">' + evEsc(e.title||'(無題)') + '</span><span class="md-td">' + d + '</span></div>'; }).join('');
+  else tk = evs.map(function(e){ var ic=e.type==='task'?(e.done?'✅':'⬜'):'📅'; var d=e.date?e.date.split('-').slice(1).join('/'):''; return '<div class="md-task"><span>' + ic + '</span><span class="md-tt' + (e.done?' done':'') + '">' + evEsc(evMemberLabel(e, _mMd)) + '</span><span class="md-td">' + d + '</span></div>'; }).join('');
   var pages = [basic, monthly, train, ol, tk];
   var tabs = ['基本','月次','研修','OL','タスク'];
   var ov = document.createElement('div'); ov.id='mdOverlay'; ov.className='md-overlay';
@@ -6042,14 +6418,15 @@ function renderHome() {
       var dorm = 0; curM.forEach(function(m){ if (memberActivityLevel(m) === 'act-dormant') dorm++; });
       if (dorm >= 3) return '💤 フォロー待ちが' + dorm + '人。今日は新規より「フォローDay」がおすすめ。';
       if (p && p.title && p.funnel) {
-        var ym = _glCurYm(), mF = _glMonthlyFront(p);
+        var ym = _glCurYm(), _cF = (typeof _p2FrontTgt === 'function') ? _p2FrontTgt(ym) : '', mF = _cF !== '' ? _cF : _glMonthlyFront(p); // v548: PLANの月のフロント目標
+        var _cA = (typeof _p2Act === 'function') ? _p2Act(ym) : null, _cC = (typeof _p2Coef === 'function') ? _p2Coef() : null;
         var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(), prog = d.getDate() / dim;
         var actT = mF * (p.funnel.action || 0), actA = _glMonthActual(p, ym, 'action');
         if (actT > 0 && prog > 0.15 && actA < actT * prog * 0.5) return '📣 アクションが目標ペースの半分以下。まず声かけの母数を増やそう。';
-        var ctgA = _glMonthActual(p, ym, 'ctget'), ctA = _glMonthActual(p, ym, 'ct');
+        var ctgA = _glMonthActual(p, ym, 'ctget'), ctA = _cA ? _cA.ct : _glMonthActual(p, ym, 'ct');
         if (ctgA >= 4 && ctA < ctgA * 0.4) return '☕ アポ取り→実施の転換が低め。日程は取ったその場で確定しよう。';
-        var ftA = _glMonthActual(p, ym, 'ft'), b1A = _glMonthActual(p, ym, 'b1');
-        if (mF > 0 && ftA >= mF * (p.funnel.ft || 0) * 0.7 && b1A === 0 && prog > 0.5) return 'FTは十分打てている。研修動員→B1の「決め」に進もう。';
+        var ftA = _cA ? _cA.ft : _glMonthActual(p, ym, 'ft'), b1A = _cA ? _cA.front : _glMonthActual(p, ym, 'b1');
+        if (mF > 0 && ftA >= mF * (_cC ? _cC.ft : (p.funnel.ft || 0)) * 0.7 && b1A === 0 && prog > 0.5) return 'FTは十分打てている。研修動員→B1の「決め」に進もう。';
         if (mF > 0 && b1A >= mF) return '🏆 今月のフロント目標は達成！育成と来月の仕込みに時間を使おう。';
         if (mF > 0) return '今月フロント ' + b1A + '/' + mF + '。逆算どおりに進行中。';
       }
@@ -7175,6 +7552,11 @@ function renderTree(mapType) {
 
   if (roots.length === 0) {
     container.innerHTML = emptyStateHTML('map');
+    // v544: PCのツリー・運動会MAPも空にする（前に開いていた月のMAPが残って見えていた）
+    if (isPCMode()) ['pcMap', 'pcOrbit'].forEach(function(pre) {
+      var el = document.getElementById(pre + (mapType === 'current' ? 'Current' : 'Ideal'));
+      if (el) el.innerHTML = emptyStateHTML('map');
+    });
     updateLTSV(mapType, ownMembers); // LTSVは自分のメンバーのみで集計（数値を変えない）
     return;
   }
@@ -8104,7 +8486,10 @@ function syncIdealToPlan() {
   var t = idealTargets(ym);
   if (!t) return false;
   var m = _p2M(ym), ch = false;
-  ['front', 'upt', 'teamB1', 'teamPt'].forEach(function(k) { if (m[k] !== t[k]) { m[k] = t[k]; ch = true; } });
+  ['front', 'upt', 'teamB1', 'teamPt'].forEach(function(k) {
+    var v = (k === 'front') ? _p2FrontTgt(ym) : t[k]; // v548: 理想MAPの新規フロントが0なら、月の目標（下書き）を残す
+    if (m[k] !== v) { m[k] = v; ch = true; }
+  });
   if (!m.fromIdeal) { m.fromIdeal = true; ch = true; }
   if (ch && typeof saveGoals === 'function') saveGoals();
   return ch;
@@ -11285,7 +11670,7 @@ function showPcTooltip(mid, ev) {
       var ds = (e.type === 'task' && e.done) ? 'text-decoration:line-through;color:var(--text-dim)' : 'color:var(--text)';
       return '<div style="display:flex;gap:6px;align-items:center;font-size:12px;margin-top:3px">'
         + '<span>' + ic + '</span>'
-        + '<span style="flex:1;' + ds + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(e.title || '(無題)') + '</span>'
+        + '<span style="flex:1;' + ds + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(evMemberLabel(e, m)) + '</span>' // v545
         + (d ? '<span style="color:var(--text-dim);font-family:Inter,monospace;font-size:11px">' + d + '</span>' : '')
         + '</div>';
     }).join('');
@@ -11545,7 +11930,7 @@ function meRenderExtras(m) {
     var ic = isTask ? (e.done ? '✅' : '⬜') : (e.done ? '✅' : '📅');
     return '<div class="me-task" style="display:flex;align-items:center;gap:4px">'
       + '<span style="flex:1;display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0" onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')">'
-      + dTag + '<span>' + ic + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span></span>'
+      + dTag + '<span>' + ic + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(evMemberLabel(e, m)) + '</span></span>'
       + '<span onclick="openEventEdit(\'' + e.id + '\')" style="flex:none;padding:6px 8px;color:var(--text-dim);cursor:pointer" title="編集">✎</span>'
       + '<span onclick="meDeleteTask(\'' + e.id + '\',\'' + mid + '\')" style="flex:none;padding:6px 8px;color:var(--red);cursor:pointer" title="削除">' + icn('trash') + '</span>'
       + '</div>';
@@ -12871,6 +13256,8 @@ function _glGoalTasks(monthId){
 function renderGoals(){
   // 今月タブ表示中にKPI等を操作した場合も反映（各setterはrenderGoalsを呼ぶ）
   if(currentView==='month' && typeof renderMonth==='function') renderMonth();
+  // v547: PLANの旗（旧GOAL画面の行事＝RRR TRIPなど）を編集・削除した時もPLANへ即反映（更新ボタン不要に）
+  if(currentView==='plan' && typeof renderPlan==='function' && !window._glInPlanRender){ window._glInPlanRender=true; try { renderPlan(); } finally { window._glInPlanRender=false; } }
   var el=document.getElementById('view-goals'); if(!el) return;
   if(!state.goals) state.goals=_glDefault();
   if(!state.goals.year) state.goals.year=(new Date()).getFullYear();
@@ -13713,6 +14100,12 @@ function _p2Coef() {
   if (um && (+um.ct || +um.ft || +um.dlr)) return { ct: +um.ct || 8, ft: +um.ft || 4, dlr: +um.dlr || 2, src: 'ユニオン' };
   return { ct: 8, ft: 4, dlr: 2, src: '標準' };
 }
+// v550: 行動の設定（自分）…ST・SNSTを目標に使うか、CT取りのドタキャン余裕（％）
+function _p2ActCfg() {
+  var a = _p2().act || {};
+  var root = _p2OwnRoot(), fresh = !!(root && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(root));
+  return { st: a.st !== undefined ? !!a.st : !fresh, snst: !!a.snst, ctBuf: (a.ctBuf !== undefined && a.ctBuf !== '') ? Math.max(0, +a.ctBuf || 0) : 20, fresh: fresh };
+}
 function _p2OwnRoot() { var ms = state.members || []; for (var i = 0; i < ms.length; i++) { if (!ms[i].parentId && !ms[i].deleted) return ms[i]; } return null; }
 function _p2NormYmV(v) { return String(v || '').replace('.', '-').slice(0, 7); }
 // 実績の自動集計（手入力なし）: MAP・テンプレ完了(MAP実績)・受付連携の稼働率
@@ -13729,12 +14122,62 @@ function _p2Act(ym) {
   });
   return {
     front: front, teamB1: teamB1,
+    actN: _p2ActN(), // v537: 平均稼働人数（1回あたりの出席人数の見込み＝各メンバーの稼働率の合計÷100）
     upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf : (root.ptCurrent || 0)) : 0,
     teamPt: root ? (root.ptCurrent || 0) : 0,
     rate: actN ? Math.round(actS / actN) : null,
-    ct: _glMonthActual(p, ym, 'ct'), ft: _glMonthActual(p, ym, 'ft'),
-    dlr: _glMonthActual(p, ym, 'dlr'), pg: _glMonthActual(p, ym, 'pg'), ctget: _glMonthActual(p, ym, 'ctget')
+    ct: _p2ActK(ym, 'ct'), ft: _p2ActK(ym, 'ft'),
+    dlr: _p2ActK(ym, 'dlr'), pg: _p2ActK(ym, 'pg'), ctget: _p2ActK(ym, 'ctget'), st: _p2ActK(ym, 'st'), snst: _p2ActK(ym, 'snst')
   };
+}
+// v548: CT・FT/マケ・PG・DLRの実績はカレンダーから自動カウント（予定の「種類」＝v545）
+//  予定＝日付が来たら実施、タスク＝完了チェックで実施。関連メンバーが複数なら人数分（DLR動員2人＝2）
+var P2_KIND_KEY = { 'CT': 'ct', 'FT': 'ft', 'マケ': 'ft', 'PG': 'pg', 'DLR': 'dlr', 'CT取り': 'ctget', 'ST': 'st', 'SNST': 'snst' }; // v550
+var P2_AUTO_ACT_FROM = '2026-10'; // この月からは「自動＋手入力」。それより前は二重計上を避けて多い方
+function _p2KindEvs(key, from, to) {
+  var out = [];
+  (state.events || []).forEach(function(e) {
+    if (!e || e.deleted || !e.date || /^UN_/.test(String(e.id || '')) || e.date < from || e.date > to) return;
+    if (P2_KIND_KEY[evKindOf(e)] !== key) return;
+    out.push(e);
+  });
+  return out;
+}
+function _p2KindN(e) { return Math.max(1, (e.memberIds && e.memberIds.length) || (e.memberId ? 1 : 0)); }
+function _p2EvDoneAt(e, t) { return e.type === 'task' ? !!e.done : (e.date <= t); }
+// v550: CT取り＝会う約束が取れた件数。約束が取れたらCTの予定を入れるので「その期間に作ったCTの予定」で数える
+function _p2CtGotEvs(from, to) {
+  var out = [];
+  (state.events || []).forEach(function(e) {
+    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || P2_KIND_KEY[evKindOf(e)] !== 'ct') return;
+    var d0 = '';
+    try { d0 = e.createdAt ? evYmd(new Date(e.createdAt)) : ''; } catch (eD) {}
+    if (!d0) d0 = e.date || '';
+    if (d0 && d0 >= from && d0 <= to) out.push(e);
+  });
+  return out;
+}
+function _p2ActAuto(ym, key, from, to) {
+  var t = evTodayYmd(), n = 0;
+  if (key === 'ctget') { _p2CtGotEvs(from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { n += _p2KindN(e); }); return n; }
+  if (key === 'st' || key === 'snst') { _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n++; }); return n; } // 回数
+  _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n += _p2KindN(e); });
+  return n;
+}
+function _p2ActK(ym, key) {
+  var man = _glMonthActual(state.goals.plan, ym, key), auto = _p2ActAuto(ym, key);
+  return ym >= P2_AUTO_ACT_FROM ? auto + man : Math.max(auto, man);
+}
+// v537: 平均稼働人数＝現状MAPの人の稼働率の合計÷100（受付連携の実測。S で稼働率未入力は120%扱い＝データタブと同じ）
+function _p2ActN() {
+  var sum = 0, n = 0;
+  membersForMap('current').forEach(function(m) {
+    if (m.deleted || (m.title || '').trim() === 'OUT' || /^(MG_|AG\d+_)/.test(m.id || '')) return;
+    var r = parseInt(m.actRate, 10);
+    if (isNaN(r) && m.activity === 'S') r = 120;
+    if (!isNaN(r) && ['S', 'A', 'B', 'C'].indexOf(m.activity) >= 0) { sum += r; n++; }
+  });
+  return n ? Math.round(sum / 10) / 10 : null;
 }
 // 今のペースの着地予測
 function _p2Pace(v) {
@@ -13758,16 +14201,192 @@ function renderPlan() {
   var inb = _p2InboxHtml();
   var rm = (typeof _p2RmMiniHtml === 'function') ? _p2RmMiniHtml() : '';
   if (typeof isPCMode === 'function' && isPCMode()) {
-    // v481: PCの右カラムはロードマップミニ。書き出しは右下の✍️メモパッドへ
-    wrap.innerHTML = '<div class="p2-col">' + north + unn + '</div>'
-      + '<div class="p2-col">' + alertH + rev + mon + fun + '</div>'
-      + '<div class="p2-col">' + rm + '</div>';
+    // v537: PCは「大きな目標（ヒーロー）→ マイルストーンの横線 → 今月やること｜目標の入力」。
+    //        目標設定のツール類は ⚙ で右から出すパネルへ（常時は出さない）。書き出しは右下の✍️メモパッド
+    wrap.classList.add('p2pc-on');
+    var tabYm = _p2Ym(_p2PcTab);
+    wrap.innerHTML = _p2PcHeroHtml()
+      + _p2PcRailHtml()
+      + '<div class="p2pc-low"><div class="p2pc-l">' + _p2PcTilesHtml(ym) + fun + '</div>'
+      + '<div class="p2pc-r">' + alertH + rev
+      + '<div class="p2pc-tabs"><span class="' + (_p2PcTab === 0 ? 'on' : '') + '" onclick="p2PcTab(0)">今月（' + parseInt(ym.slice(5), 10) + '月）</span><span class="' + (_p2PcTab === 1 ? 'on' : '') + '" onclick="p2PcTab(1)">来月（' + parseInt(_p2Ym(1).slice(5), 10) + '月）</span></div>'
+      + _p2MonthHtml(tabYm, _p2PcTab, true) + unn + '</div></div>';
   } else {
+    wrap.classList.remove('p2pc-on');
     wrap.innerHTML = alertH + rev + north + mon + rm + fun + unn + inb;
   }
   if (typeof _p2FabBadge === 'function') _p2FabBadge();
   _p2BannerSync();
 }
+// ════ v537: PLAN（PC）──────────────────────────────────────────
+var _p2PcTab = 0; // 右の目標入力：0=今月／1=来月
+function p2PcTab(i) { _p2PcTab = i ? 1 : 0; renderPlan(); }
+function _p2YmAdd(ym, k) { var y = parseInt(ym.slice(0, 4), 10), m = parseInt(ym.slice(5, 7), 10) - 1 + k; y += Math.floor(m / 12); m = ((m % 12) + 12) % 12; return y + '-' + String(m + 1).padStart(2, '0'); }
+function _p2YmDiff(a, b) { return (parseInt(b.slice(0, 4), 10) - parseInt(a.slice(0, 4), 10)) * 12 + parseInt(b.slice(5, 7), 10) - parseInt(a.slice(5, 7), 10); }
+// ① ヒーロー：目標タイトル・期日・スローガン（左）／目標月収・BB換算・夢100（右）
+function _p2PcHeroHtml() {
+  var p = state.goals.plan, p2 = _p2(), g = _p2G();
+  var act = '<div class="p2h-act"><span onclick="p2Wiz()" title="目標を編集">' + icn('pencil') + '</span><span onclick="p2DrawerOpen()" title="目標設定のツール（価値観・年別目標・ギャップ・夢100など）">' + icn('gear') + '</span></div>';
+  if (!(p.title && p.deadline)) {
+    return '<div class="p2h p2h-empty">' + act + '<div class="p2h-l"><div class="p2h-ttl" style="font-size:30px">目標をつくりましょう</div>'
+      + '<div class="p2h-dl">理想の生活を積み上げると、目標月収→タイトル→期日まで自動で決まります（2分・スキップ可）</div>'
+      + '<span class="p2-btn pri" style="margin:14px 0 0;display:inline-block;padding:11px 22px;font-size:15px" onclick="p2Wiz()">' + icn('compass') + ' 目標をつくる</span></div></div>';
+  }
+  // v538: 一番大事な「目標月収」を左上に。その横に目標タイトル・期日（どれも大きく）、下にスローガンも大きく
+  // v540: 3つはラベル・数字の高さをそろえる（グリッド）
+  var rem = _glMonthsUntil(p.deadline);
+  var motto = (p2.motto || '').trim();
+  var dl = String(p.deadline).split('-');
+  var incV = p.income ? '<div class="p2h-inc">' + Math.round((+p.income) / 10000).toLocaleString() + '<small>万円</small></div>' : '<div class="p2h-inc add" onclick="p2Wiz()">未設定</div>';
+  var top = '<div class="p2h-grid">'
+    + '<div class="p2h-eb c1">目標月収</div><div class="p2h-eb c2">目標タイトル</div><div class="p2h-eb c3">期日</div>'
+    + '<div class="v c1">' + incV + '</div>'
+    + '<div class="v c2"><div class="p2h-ttl" title="' + evEsc(p.title) + '">' + evEsc(_p2TitleEn(p.title)) + '</div></div>'
+    + '<div class="v c3"><div class="p2h-dl"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div></div>'
+    + '<div class="s c1">%BB%</div><div class="s c2">%DREAM%</div>'
+    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + '</div>'
+    + '</div>';
+  var mot = motto ? '<div class="p2h-motto" onclick="p2MottoOpen()" title="クリックで編集">『' + evEsc(motto) + '』</div>' : '<div class="p2h-motto add" onclick="p2MottoOpen()">＋ スローガン（ひとこと）を入れる</div>';
+  // v540: スローガンは右上（✎⚙の下）
+  // v546: BB換算・夢100の進捗は目標の真下（月収の下＝BB換算、タイトルの下＝夢100、期日の下＝残り）。別の段をやめて高さを詰める
+  var side = '<div class="p2h-side">' + act + mot + '</div>';
+  var bbH = '', drH = '';
+  var root = _p2OwnRoot(), gsv = root ? (root.ptCurrent || 0) : 0;
+  if (gsv > 0) bbH = '<div class="p2h-sub" title="GSV ' + gsv.toLocaleString() + 'pt・税抜の目安">今月のBB換算 <b>¥' + _p2BBCalc(gsv).toLocaleString() + '</b></div>';
+  var dr = g.dreams || [];
+  if (dr.length) {
+    var dDone = 0, dRem = 0;
+    dr.forEach(function(d) { if (d.done) dDone++; else dRem += parseFloat(d.amt) || 0; });
+    drH = '<div class="p2h-sub p2h-dream" onclick="p2DreamOpen()">🌈 夢100 <b>' + dDone + '/' + dr.length + '</b> 達成' + (dRem ? '・あと <b>' + (Math.round(dRem * 10) / 10).toLocaleString() + '</b>万円' : '')
+      + '<div class="p2d-bar"><i style="width:' + Math.round(dDone / dr.length * 100) + '%"></i></div></div>';
+  }
+  top = top.replace('%BB%', bbH).replace('%DREAM%', drH);
+  return '<div class="p2h p2h-v2"><div class="p2h-row">' + top + side + '</div></div>';
+}
+// v540: 目標タイトルはアルファベット表記（ルビー→RUBY）
+var P2_TITLE_EN = { 'BR': 'BR', 'ブランドレプリゼンタティブ': 'BR', 'ゴールド': 'GOLD', 'ラピス': 'LAPIS', 'ルビー': 'RUBY', 'エメラルド': 'EMERALD', 'ダイヤモンド': 'DIAMOND', 'ブルーダイヤモンド': 'BLUE DIAMOND', 'PD': 'PD', 'チームエリート': 'TEAM ELITE',
+  'G': 'GOLD', 'L': 'LAPIS', 'R': 'RUBY', 'E': 'EMERALD', 'D': 'DIAMOND', 'BD': 'BLUE DIAMOND', 'TE': 'TEAM ELITE' };
+function _p2TitleEn(t) { t = String(t || '').trim(); return P2_TITLE_EN[t] || t; }
+// ② マイルストーンの横線（先月〜期日。月ごとの点・旗・フロント目標）
+function _p2PcRailHtml() {
+  var p = state.goals.plan, rm = _p2Rm(), cur = _p2Ym(0);
+  var start = _p2Ym(-1);
+  var dl = (p.deadline && /^\d{4}-\d{2}$/.test(p.deadline)) ? p.deadline : '';
+  var end = dl && _p2YmDiff(start, dl) >= 5 ? dl : _p2YmAdd(start, 11);
+  var n = Math.min(_p2YmDiff(start, end) + 1, 37);
+  var yms = []; for (var i = 0; i < n; i++) yms.push(_p2YmAdd(start, i));
+  // 最終LOIカウント月＝期日−育成月数
+  var loi = dl ? _p2YmAdd(dl, -(parseInt(p.pipeline, 10) || 3)) : '';
+  var flags = {}; // ym -> [{html}]
+  var addF = function(ym, html) { (flags[ym] = flags[ym] || []).push(html); };
+  var bands = []; // v547: 複数月にまたがるマイルストーン（対象月の幅まで伸ばす帯）
+  (rm.ms || []).forEach(function(m) {
+    if (!m || !m.ym) return;
+    var mc = m.color || P2RM_COLORS[0];
+    if (m.ym2 && m.ym2 > m.ym) {
+      var s0 = Math.max(0, _p2YmDiff(start, m.ym)), e0 = Math.min(n - 1, _p2YmDiff(start, m.ym2));
+      if (e0 < 0 || s0 > n - 1 || e0 < s0) return;
+      bands.push({ s: s0, e: e0, html: '<span class="p2r-flag span" style="border-color:' + mc + ';background:color-mix(in srgb,' + mc + ' 16%,var(--surface2))" title="' + evEsc(m.t) + '（' + _p2YmLabel(m.ym) + '〜' + _p2YmLabel(m.ym2) + '）" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><i style="background:' + mc + '"></i>' + evEsc(m.t) + '<small>〜' + parseInt(m.ym2.slice(5), 10) + '月</small></span>' });
+      return;
+    }
+    addF(m.ym, '<span class="p2r-flag" style="border-color:' + mc + '" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')">' + (m.emoji ? '<b class="em">' + evEsc(m.emoji) + '</b>' : '<i style="background:' + mc + '"></i>') + evEsc(m.t) + '</span>');
+  });
+  // v548: 旧GOAL画面の行事はマイルストーンへ移行済み（_p2Rm）。ここでは読まない
+  // ユニオンのマイルストーン
+  var mi = window._unPlanMeta && window._unPlanMeta.milestone;
+  if (mi && mi.t && mi.due) addF(String(mi.due).slice(0, 7), '<span class="p2r-flag un">' + icn('landmark') + ' ' + evEsc(mi.t) + '</span>');
+  if (dl) addF(dl, '<span class="p2r-flag peak">🏔 ' + evEsc(p.title ? _p2TitleEn(p.title) : '頂上') + '</span>');
+  var ci = yms.indexOf(cur);
+  var maxF = 0; yms.forEach(function(ym) { maxF = Math.max(maxF, Math.min(3, (flags[ym] || []).length)); });
+  // v547: 帯は、かかる月の単月の旗より上の段へ（帯どうしが重なる時はさらに上の段）
+  var lanesUsed = [], bandH = '';
+  bands.sort(function(a, b) { return a.s - b.s || (b.e - b.s) - (a.e - a.s); }).forEach(function(b) {
+    var base = 0;
+    for (var k = b.s; k <= b.e; k++) base = Math.max(base, Math.min(3, (flags[yms[k]] || []).length));
+    var L = base;
+    while ((lanesUsed[L] || []).some(function(r) { return !(b.e < r[0] || b.s > r[1]); })) L++;
+    (lanesUsed[L] = lanesUsed[L] || []).push([b.s, b.e]);
+    b.lane = L; maxF = Math.max(maxF, L + 1);
+  });
+  var fh = Math.max(1, maxF) * 27 + 2; // 旗の段数に合わせた高さ（空き地を作らない）
+  bands.forEach(function(b) {
+    bandH += '<div class="p2r-band" style="left:calc(' + (b.s / n * 100).toFixed(3) + '% + 4px);width:calc(' + ((b.e - b.s + 1) / n * 100).toFixed(3) + '% - 8px);bottom:' + (b.lane * 27) + 'px">' + b.html + '</div>';
+  });
+  var cols = yms.map(function(ym, k) {
+    var isCur = ym === cur, isLoi = ym === loi, isPeak = ym === dl, done = k <= ci;
+    var f = _p2RmFront(rm, ym);
+    var mo = parseInt(ym.slice(5), 10);
+    return '<div class="p2r-col' + (isCur ? ' cur' : '') + (isLoi ? ' loi' : '') + (isPeak ? ' peak' : '') + (done ? ' done' : '') + '" onclick="p2RmMsForm(\'' + ym + '\')" title="' + _p2YmLabel(ym) + '：クリックでマイルストーンを追加">'
+      + '<div class="p2r-flags">' + (flags[ym] || []).slice(0, 3).join('') + '</div>'
+      + '<div class="p2r-dot"></div>'
+      + '<div class="p2r-mo">' + ((mo === 1 || k === 0) ? '<small>' + ym.slice(0, 4) + '</small>' : '') + mo + '月</div>'
+      // v546: 目印（現在地など）とFを1行に（縦を詰める）
+      + '<div class="p2r-mk">' + (isCur ? '📍現在地' : (isLoi ? '🚩最終LOI' : (isPeak ? '🏔期日' : ''))) + (f === '' ? '' : '<span class="p2r-f">F ' + f + '</span>') + '</div></div>';
+  }).join('');
+  var fill = ci >= 0 ? ((ci + 0.5) / n * 100) : 0;
+  return '<div class="p2r"><div class="p2r-hd">' + icn('map') + ' マイルストーン<span class="sp"></span>'
+    + '<span class="p2r-legend">点をクリックで追加・F＝その月のフロント目標</span>'
+    + '<span class="p2-btn" style="margin:0;padding:5px 12px" onclick="p2RmOpen()">表で編集</span></div>'
+    + '<div class="p2r-scroll"><div class="p2r-tl" style="--fh:' + fh + 'px;min-width:' + (n > 14 ? n * 78 : 0) + 'px;grid-template-columns:repeat(' + n + ',1fr)">'
+    + '<div class="p2r-track"></div><div class="p2r-fill" style="width:' + fill.toFixed(2) + '%"></div>' + cols
+    + (bandH ? '<div class="p2r-blayer">' + bandH + '</div>' : '') + '</div></div></div>';
+}
+// ③左 今月やること（目標と実績のタイル）
+function _p2PcTilesHtml(ym) {
+  var m = _p2M(ym), act = _p2Act(ym);
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  var tg = function(k) {
+    if (k === 'front') { var fv = _p2FrontTgt(ym); return fv === '' ? null : fv; } // v548
+    if (it && it[k] !== undefined && k !== 'actN') return +it[k] || 0; return (m[k] === '' || m[k] == null) ? null : +m[k]; };
+  var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), left = dim - d.getDate();
+  var tile = function(k, lb, unit, pace) {
+    var a = act[k], t = tg(k);
+    var av = (a === null || a === undefined) ? null : a;
+    var pct = (t && av !== null) ? Math.min(100, Math.round(av / t * 100)) : 0;
+    var land = (pace && av > 0) ? _p2Pace(av) : null;
+    var ok = t ? (av !== null && (land !== null ? land : av) >= t) : false;
+    return '<div class="p2t' + (t && ok ? ' ok' : '') + '"><div class="p2t-lb">' + lb + '</div>'
+      + '<div class="p2t-v">' + (av === null ? '—' : av.toLocaleString()) + '<small>' + unit + '</small></div>'
+      + '<div class="p2t-tg">' + (t !== null ? '目標 <b>' + t.toLocaleString() + '</b>' + unit + '<span>' + pct + '%</span>' : '目標なし') + '</div>'
+      + '<div class="p2t-bar"><i style="width:' + pct + '%"></i></div>'
+      + '<div class="p2t-sub">' + (land !== null ? '着地見込み ' + land.toLocaleString() + unit : '&nbsp;') + '</div></div>';
+  };
+  return '<div class="p2-card p2t-wrap"><div class="p2-t">' + icn('target') + ' ' + parseInt(ym.slice(5), 10) + '月にやること<span class="sp"></span><span class="p2-meta">月末まであと ' + left + '日</span></div>'
+    + '<div class="p2t-grid">'
+    + tile('front', 'フロント', '人', true) + tile('upt', 'ユーザーPT', '', true) + tile('teamB1', '新規B1', '人', true)
+    + tile('teamPt', 'チームPT', '', true) + tile('actN', '平均稼働人数', '人', false)
+    + '</div></div>';
+}
+// ⚙ 目標設定のツール（右から出すパネル。常時は表示しない）
+function p2DrawerOpen() {
+  _p2SheetClose('p2DwOv');
+  var p = state.goals.plan, p2 = _p2(), n = p2.north, g = _p2G(), dr = g.dreams || [], ck = _p2CkCount();
+  var chips = function(arr, pre) { return (arr || []).slice(0, 8).map(function(x) { return '<span class="p2-chip">' + pre + evEsc(x) + '</span>'; }).join(''); };
+  var tool = function(fn, ic, lb, sub) { return '<div class="p2dw-it" onclick="' + fn + '"><span class="ic">' + ic + '</span><span class="lb">' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="ar">›</span></div>'; };
+  var why = (g.ans && (g.ans.reason_why || '')).split('\n')[0];
+  var cAll = chips(n.wants, '👍') + chips(n.notWants, '🙅') + chips(n.be, '✨') + chips(n.notBe, '⛔');
+  if (n.life) cAll += '<span class="p2-chip">🏠' + evEsc(String(n.life).slice(0, 40)) + '</span>';
+  var ov = document.createElement('div'); ov.className = 'p2dw-ov'; ov.id = 'p2DwOv';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2DwOv'); };
+  ov.innerHTML = '<div class="p2dw"><div class="p2dw-hd">' + icn('gear') + ' 目標設定<span class="sp"></span><span class="ms-x" onclick="_p2SheetClose(\'p2DwOv\')">✕</span></div>'
+    + '<div class="p2dw-sec">準備の進み具合</div>' + _p2StepperHtml()
+    + '<div class="p2dw-sec">目標</div>'
+    + tool('p2Wiz()', icn('pencil'), '目標を編集', (p.title ? evEsc(p.title) + '・' + evEsc(String(p.deadline || '').replace('-', '年')) + '月' : 'まだありません'))
+    + tool('p2GwOpen()', '🌱', '価値観・理想の人生')
+    + tool('p2YearsOpen()', '📆', '年別目標')
+    + tool('p2GapOpen()', icn('calc'), 'ギャップ（必要数）')
+    + tool('p2SimOpen()', '🎮', 'シミュレーション')
+    + tool('p2DreamOpen()', '🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length + ' 達成' : '')
+    + tool('p2CheckOpen()', '✅', 'チェック', ck.done + '/' + ck.total)
+    + tool('p2BbOpen()', '💴', 'BB早見表')
+    + tool('p2RmOpen()', '🗺', '年間ロードマップ（表）')
+    + (function() { var gs = (typeof _p2GapSummary === 'function') ? _p2GapSummary() : ''; return gs ? '<div class="p2dw-sec">ギャップ</div>' + gs : ''; })()
+    + (why || cAll ? '<div class="p2dw-sec">なぜやるか・なりたい自分</div>' + (why ? '<div class="p2-meta" style="font-style:italic;margin-bottom:6px">🔥 ' + evEsc(why) + '</div>' : '') + cAll : '')
+    + '</div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+
 // ── 北極星 ──
 function _p2NorthHtml() {
   // v474: GOALハブ（目標＋5ツールの入口）
@@ -13825,15 +14444,15 @@ function _p2NorthHtml() {
   return h;
 }
 // ── 月次宣言 ──
-function _p2MonthHtml(ym, off) {
+function _p2MonthHtml(ym, off, forceOpen) {
   var m = _p2M(ym), act = _p2Act(ym), p = state.goals.plan;
   var sug = _glMonthlyFront(p) || '';
   var isCur = off === 0;
   var _it9 = (typeof idealTargets === 'function') ? idealTargets(ym) : null; // v525: 理想MAPがあれば目標は理想MAPから
   if (_it9 && typeof syncIdealToPlan === 'function') syncIdealToPlan();
-  var row = function(k, lb, actV, sugV) {
-    var pace = (isCur && actV > 0) ? _p2Pace(actV) : null;
-    if (_it9 && _it9[k] !== undefined) {
+  var row = function(k, lb, actV, sugV, noPace) {
+    var pace = (isCur && actV > 0 && !noPace) ? _p2Pace(actV) : null;
+    if (_it9 && _it9[k] !== undefined && !(k === 'front' && !(+_it9.front > 0))) { // v548: 理想MAPの新規フロント0人なら入力欄（月の目標）
       return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
         + '<span class="p2-ideal" onclick="switchView(\'ideal\')" title="理想MAPで変更">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
         + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
@@ -13852,10 +14471,12 @@ function _p2MonthHtml(ym, off) {
     + '<div class="p2-meta" style="margin-bottom:2px">🧍 自分</div>'
     + row('front', 'フロント（人）', act.front, sug)
     + row('upt', 'ユーザーPT', act.upt, '')
+    + (_p2ActCfg().st ? row('st', 'ST（回）', act.st, '', true) : '') // v550: 回数の目標は本人が決める
+    + (_p2ActCfg().snst ? row('snst', 'SNST（回）', act.snst, '', true) : '')
     + '<div class="p2-meta" style="margin:8px 0 2px">👥 チーム</div>'
     + row('teamB1', 'B1（今月スタート）', act.teamB1, '')
     + row('teamPt', 'チームPT', act.teamPt, '')
-    + (act.rate !== null ? '<div class="p2-row"><span class="p2-lb">平均稼働率（受付連携）</span><span class="p2-num" style="font-weight:700">' + act.rate + '%</span></div>' : '')
+    + row('actN', '平均稼働人数（人）', act.actN, '', true) // v537: 稼働は％でなく平均稼働人数を目標に
     + '<div class="p2-meta" style="margin:8px 0 2px">📚 自分磨き（自由に）</div>'
     + (m.skill || []).map(function(s, i) {
         return '<div class="p2-row" style="padding:5px 0"><span class="td-chk' + (s.done ? ' on' : '') + '" style="width:20px;height:20px;font-size:11px;flex:none" onclick="p2SkillTgl(\'' + ym + '\',' + i + ')">' + (s.done ? '✓' : '') + '</span>'
@@ -13866,14 +14487,16 @@ function _p2MonthHtml(ym, off) {
     + (m.declared
         ? '<div class="p2-meta" style="margin-top:10px">数字はいつでも変更できます（変更は自動保存）</div>'
         : '<span class="p2-btn pri" style="width:100%;text-align:center;box-sizing:border-box;display:block;margin-top:12px" onclick="p2Declare(\'' + ym + '\')">✅ この内容で目標を設定する</span>');
-  if (isCur) h += inner;
+  if (isCur || forceOpen) h += inner;
   else h += '<details' + (m.declared ? '' : '') + '><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">来月の目標を開く' + (m.declared ? '（設定済み）' : '') + '</summary>' + inner + '</details>';
   h += '</div>';
   return h;
 }
 function p2SetM(ym, k, v) {
   var m = _p2M(ym);
-  m[k] = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
+  if (k === 'actN') m[k] = (v === '' ? '' : Math.max(0, Math.round((parseFloat(String(v).replace(/[^0-9.]/g, '')) || 0) * 10) / 10)); // 平均稼働人数は小数1桁まで
+  else m[k] = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
+  if (k === 'front') { var rmF = _p2Rm(); rmF.rows.front[ym] = m.front; } // v548: 横線のF・表と同じ値に
   saveGoals();
   if (currentView === 'plan') renderPlan();
 }
@@ -13921,25 +14544,147 @@ function _p2DlrEvents() {
     return u && u.date && u.date >= t && _p2IsDlrTitle(u.title);
   }).sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
 }
-function _p2FunnelHtml(ym) {
-  var c = _p2Coef(), m = _p2M(ym), act = _p2Act(ym);
-  var F = (m.front !== '' && m.front != null) ? +m.front : 0;
-  var bar = function(lb, need, done) {
-    var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
-    return '<div class="p2-row" style="display:block"><div style="display:flex;justify-content:space-between;font-size:12px"><span>' + lb + '</span><span class="p2-num"><b>' + done + '</b> / ' + (need || '-') + '</span></div>'
-      + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>';
-  };
-  var dlrEvs = _p2DlrEvents();
-  var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月のファネル<span class="sp"></span>'
-    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">' + icn('gear') + ' 係数（' + c.src + '）</span></div>';
-  if (!F) {
-    h += '<div style="font-size:12px;color:var(--text-dim);line-height:1.8">今月のフロント人数を目標に入れると、必要なCT・FT/マケ・DLR動員数がここに出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
-  } else {
-    h += bar('CT（会う）', F * c.ct, act.ct)
-      + bar('FT・マケ（伝える）', F * c.ft, act.ft)
-      + bar('DLR動員', F * c.dlr, act.dlr)
-      + '<div class="p2-meta" style="margin-top:6px">PGは係数外（DLRの3日前までに実施）・完了はテンプレ予定の実績から自動カウント</div>';
+// v548: 今週の範囲（月曜はじまり・月の中だけ）と、月の残り週数
+function _p2WeekInfo(ym) {
+  var d = new Date(); d.setHours(0, 0, 0, 0);
+  var dow = (d.getDay() + 6) % 7, mon = new Date(d.getTime()); mon.setDate(d.getDate() - dow);
+  var sun = new Date(mon.getTime()); sun.setDate(mon.getDate() + 6);
+  var ms = new Date(parseInt(ym.slice(0, 4), 10), parseInt(ym.slice(5, 7), 10) - 1, 1), me = new Date(ms.getFullYear(), ms.getMonth() + 1, 0);
+  var ws = mon < ms ? ms : mon, we = sun > me ? me : sun;
+  var weeks = Math.max(1, Math.ceil((Math.round((me - ws) / 86400000) + 1) / 7));
+  return { from: evYmd(ws), to: evYmd(we), weeks: weeks, label: (ws.getMonth() + 1) + '/' + ws.getDate() + '〜' + (we.getMonth() + 1) + '/' + we.getDate() };
+}
+function _p2ManualRange(key, from, to) {
+  var da = state.goals.plan.dailyActuals || {}, s = 0;
+  for (var k in da) { if (k >= from && k <= to) s += parseInt(da[k][key] || 0, 10) || 0; }
+  return s;
+}
+// v550: 人を決めない「時間の枠」（ST・SNST・CT取り）の行
+function _p2BlockRow(ym, key, kind, lb, need) {
+  var t = evTodayYmd(), w = _p2WeekInfo(ym);
+  var done = _p2ActK(ym, key);
+  var blocks = _p2KindEvs(key, ym + '-01', ym + '-31');
+  var wkBlocks = blocks.filter(function(e) { return e.date >= w.from && e.date <= w.to; });
+  var futBlocks = blocks.filter(function(e) { return !_p2EvDoneAt(e, t); }).length;
+  var isGet = key === 'ctget';
+  var wkDone = _p2ActAuto(ym, key, w.from, w.to) + _p2ManualRange(key, w.from, w.to);
+  var doneBefore = Math.max(0, done - wkDone);
+  var wNeed = need ? Math.ceil(Math.max(0, need - doneBefore) / w.weeks) : 0;
+  var unit = isGet ? '件' : '回';
+  var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
+  var ok = need && done >= need;
+  var wkHave = isGet ? wkDone : wkBlocks.length;
+  var short = need ? Math.max(0, wNeed - wkHave) : 0;
+  var noSlot = need && !ok && short > 0 && !wkBlocks.some(function(e) { return !_p2EvDoneAt(e, t); });
+  var slotTxt = wkBlocks.length ? wkBlocks.slice(0, 3).map(function(e) { var d9 = new Date(e.date.replace(/-/g, '/')); return ['日', '月', '火', '水', '木', '金', '土'][d9.getDay()] + (e.time ? e.time : ''); }).join('・') : '';
+  var sub = '';
+  if (isGet) {
+    var L = _p2ListN();
+    var rest = need ? Math.max(0, need - done) : 0;
+    sub = '<div class="p2a-sub">📋 手元のリスト ' + (L.n === null ? (L.src === 'loading' ? '…' : '<span class="p2a-lk" onclick="p2ListManual()">人数を入れる</span>') : ('<b>' + L.n + '</b>人' + (L.src === 'al' ? '（ATTACK LIST）' : '<span class="p2a-lk" onclick="p2ListManual()">（手入力 ✎）</span>')))
+      + (L.apo ? '・CT予定 ' + L.apo + '人' : '')
+      + (L.n !== null && rest > 0 && L.n < rest * 2 ? '<span class="p2a-sh">リストが少なめ → STで作る</span>' : '') + '</div>';
+    // 直近（2日以内）に終わったCT取りの枠 → 取れた約束をCTの予定に
+    var d2 = new Date(); d2.setDate(d2.getDate() - 2);
+    var rec = blocks.filter(function(e) { return e.date >= evYmd(d2) && _p2EvDoneAt(e, t); }).sort(function(a, b) { return (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')); })[0];
+    if (rec) sub += '<div class="p2a-sub">⏱ ' + parseInt(rec.date.slice(5, 7), 10) + '/' + parseInt(rec.date.slice(8), 10) + (rec.time ? ' ' + rec.time : '') + ' のCT取り → 取れた約束を<span class="p2a-lk" onclick="p2AddKindEv(\'CT\')">CTの予定に入れる</span>（入れた件数がCT取りの実績になります）</div>';
   }
+  return '<div class="p2a-row' + (ok ? ' ok' : '') + (noSlot ? ' warn' : '') + '">'
+    + '<div class="p2a-lb">' + lb + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + unit + '</small>' + (futBlocks ? '<span class="p2a-pl">＋これからの枠' + futBlocks + '</span>' : '') + '</div>'
+    + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
+    + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
+        : (need ? '今週 <b>' + wNeed + '</b>' + unit + ' ・ ' + (isGet ? '取れた <b>' + wkDone + '</b> ・ ' : '') + '枠 ' + (wkBlocks.length ? '<b>' + wkBlocks.length + '</b>回（' + slotTxt + '）' : '<span class="p2a-sh">未予約</span>')
+            + (noSlot && wkBlocks.length ? '<span class="p2a-sh">残りの枠なし</span>' : '') + (!noSlot && short ? '<span class="p2a-sh">あと' + short + '</span>' : '') : (isGet ? '' : '今月の回数を目標に入れる')))
+    + '</div>'
+    + '<span style="display:flex;gap:6px">' + (isGet ? '<span class="p2a-add al" onclick="p2OpenAL()" title="ATTACK LISTを開く">AL</span>' : '')
+    + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の時間をカレンダーに予約">予約</span></span>'
+    + (sub ? '<div class="p2a-subw">' + sub + '</div>' : '') // v550: リスト・直近の枠の案内は行の下に全幅で
+    + '</div>';
+}
+// v548: 行動量の1行（月の必要・実績・残りの予定／今週の必要と予定）
+function _p2ActRow(ym, key, kind, lb, need) {
+  var t = evTodayYmd(), w = _p2WeekInfo(ym), ms0 = ym + '-01', me0 = ym + '-31';
+  var done = _p2ActK(ym, key);
+  var evs = _p2KindEvs(key, ms0, me0);
+  var planned = 0; evs.forEach(function(e) { if (!_p2EvDoneAt(e, t)) planned += _p2KindN(e); });
+  var wk = 0; evs.forEach(function(e) { if (e.date >= w.from && e.date <= w.to) wk += _p2KindN(e); });
+  wk += _p2ManualRange(key, w.from, w.to);
+  var doneBefore = Math.max(0, done - _p2ActAuto(ym, key, w.from, w.to) - _p2ManualRange(key, w.from, w.to));
+  var wNeed = need ? Math.ceil(Math.max(0, need - doneBefore) / w.weeks) : 0;
+  var short = need ? Math.max(0, wNeed - wk) : 0;
+  var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
+  var ok = need && done >= need;
+  return '<div class="p2a-row' + (ok ? ' ok' : '') + '">'
+    + '<div class="p2a-lb">' + lb + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + (planned ? '<span class="p2a-pl">＋これからの予定' + planned + '</span>' : '') + '</div>'
+    + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
+    + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
+        : (need ? '今週 <b>' + wNeed + '</b>件 ・ 実施・予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '今週の実施・予定 <b>' + wk + '</b>件')) // v549: 今週の予定件数は実施済みも含むので表記を明確に
+    + '</div>'
+    + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の予定をカレンダーに入れる">＋予定</span>'
+    + '</div>';
+}
+// v550: ATTACK LIST（同じFirebaseの users/{uid}/people）から「手元のリスト」＝未着手・連絡中の人数を読む（10分キャッシュ）
+var _p2Al = { n: null, apo: null, at: 0, err: false, busy: false };
+function _p2AlLoad(force) {
+  if (!db || !currentUser || viewingOwnerUid || _p2Al.busy) return;
+  if (!force && _p2Al.at && Date.now() - _p2Al.at < 600000) return;
+  _p2Al.busy = true;
+  fsGetCol('users/' + currentUser.uid + '/people').then(function(docs) {
+    var n = 0, apo = 0;
+    (docs || []).forEach(function(d) { var st = d.status || '未着手'; if (st === '未着手' || st === '連絡中') n++; else if (st === 'CT予定') apo++; });
+    _p2Al = { n: n, apo: apo, at: Date.now(), err: false, busy: false };
+    if (currentView === 'plan') renderPlan();
+  }).catch(function() { _p2Al = { n: null, apo: null, at: Date.now(), err: true, busy: false }; if (currentView === 'plan') renderPlan(); });
+}
+function _p2ListN() { // 連携できればATTACK LIST、できなければ手入力
+  if (_p2Al.n !== null && !_p2Al.err) return { n: _p2Al.n, apo: _p2Al.apo, src: 'al' };
+  var lm = _p2().listManual;
+  return lm && lm.n !== '' && lm.n != null ? { n: +lm.n, apo: null, src: 'manual', at: lm.at } : { n: null, apo: null, src: _p2Al.err ? 'manual' : 'loading' };
+}
+function p2ListManual() {
+  _p2SheetClose('p2ListOv');
+  var lm = _p2().listManual || {};
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2ListOv'; ov.style.zIndex = '620';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2ListOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📋 手元のリストの人数</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">ATTACK LISTの「未着手・連絡中」の人数（週1回くらい更新）</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2ListOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px"><input class="fi" id="p2ListN" type="number" inputmode="numeric" value="' + (lm.n != null ? lm.n : '') + '" style="text-align:center;font-size:20px;font-weight:800" onfocus="edSelAll(this)">'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:10px" onclick="p2ListManualSave()">保存</span></div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2ListManualSave() {
+  var v = ((document.getElementById('p2ListN') || {}).value || '').trim();
+  _p2().listManual = { n: v === '' ? '' : Math.max(0, parseInt(v, 10) || 0), at: evTodayYmd() };
+  saveGoals(); _p2SheetClose('p2ListOv'); if (currentView === 'plan') renderPlan();
+}
+function p2OpenAL() { if (typeof AL_URL !== 'undefined') window.open(AL_URL, '_blank'); _p2Al.at = 0; setTimeout(function() { _p2AlLoad(true); }, 60000); }
+// v548: 「＋予定」＝種類を入れた状態で予定の入力を開く（メンバーを選んで保存）
+function p2AddKindEv(kind) {
+  openEventModal(null, null, evTodayYmd(), 'event');
+  var ti = document.getElementById('evTitle');
+  if (ti) { ti.value = kind + ' '; try { evKindAuto(); } catch (eK) {} try { ti.focus(); } catch (eF) {} }
+  try { _evKind = kind; _evKindManual = true; updateEvMemberDisplay(); } catch (eK2) {}
+}
+function _p2FunnelHtml(ym) {
+  var c = _p2Coef(), act = _p2Act(ym);
+  var F = +_p2FrontTgt(ym) || 0; // v548: 月のフロント目標（横線・タイルと同じ）
+  var w = _p2WeekInfo(ym);
+  var dlrEvs = _p2DlrEvents();
+  var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月の行動量<span class="p2-meta" style="margin-left:8px">今週 ' + w.label + '</span><span class="sp"></span>'
+    + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">' + icn('gear') + ' 係数（' + c.src + '）</span></div>';
+  if (!F) h += '<div class="p2-meta" style="margin-bottom:6px">今月のフロント目標（F）を入れると、必要なCT・FT/マケ・DLR動員数と今週の件数が出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
+  var cfg = _p2ActCfg(), mm = _p2M(ym);
+  _p2AlLoad(false); // v550: 手元のリスト（ATTACK LIST）
+  if (cfg.st) h += _p2BlockRow(ym, 'st', 'ST', 'ST', +mm.st || 0);
+  if (cfg.snst) h += _p2BlockRow(ym, 'snst', 'SNST', 'SNST', +mm.snst || 0);
+  h += _p2BlockRow(ym, 'ctget', 'CT取り', 'CT取り', F ? Math.ceil(F * c.ct * (1 + cfg.ctBuf / 100)) : 0);
+  h += _p2ActRow(ym, 'ct', 'CT', 'CT（会う）', F * c.ct)
+    + _p2ActRow(ym, 'ft', 'FT', 'FT・マケ（伝える）', F * c.ft)
+    + _p2ActRow(ym, 'pg', 'PG', 'PG', 0)
+    + _p2ActRow(ym, 'dlr', 'DLR', 'DLR動員', F * c.dlr)
+    + '<div class="p2-meta" style="margin-top:6px">実績はカレンダーから自動：種類の付いた予定は日付が来たら、タスクは完了で1件（CT・FTなどは関連メンバーの人数分）。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）</div>';
   h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
@@ -13962,6 +14707,11 @@ function p2CoefSheet() {
     + '<div style="flex:1"><div class="p2-meta">FT・マケ</div><input class="fi" id="p2cFt" type="number" value="' + c.ft + '" style="text-align:center" onfocus="edSelAll(this)"></div>'
     + '<div style="flex:1"><div class="p2-meta">DLR動員</div><input class="fi" id="p2cDlr" type="number" value="' + c.dlr + '" style="text-align:center" onfocus="edSelAll(this)"></div>'
     + '</div>'
+    + (function() { var a9 = _p2ActCfg(); return '<div class="p2-meta" style="margin-top:12px;font-weight:800;color:var(--text-mid)">行動の設定（自分）</div>'
+      + '<div class="rg" style="flex-wrap:wrap;margin-top:4px"><div class="rb' + (a9.st ? ' sel' : '') + '" id="p2cSt" onclick="this.classList.toggle(\'sel\')">STを目標に使う</div>'
+      + '<div class="rb' + (a9.snst ? ' sel' : '') + '" id="p2cSnst" onclick="this.classList.toggle(\'sel\')">SNSTを目標に使う（任意）</div></div>'
+      + (a9.fresh ? '<div class="p2-meta" style="margin-top:4px">フレッシュ期間は、まず既存のリストから当たるのがおすすめ（STは必要な人だけON）</div>' : '')
+      + '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="p2-meta" style="flex:1">CT取りの余裕（ドタキャン分）：CTの必要数の＋何％を約束として取るか</span><input class="fi" id="p2cBuf" type="number" value="' + a9.ctBuf + '" style="width:80px;text-align:center" onfocus="edSelAll(this)">%</div>'; })()
     + '<div class="p2-meta" style="margin-top:10px">DLRのカレンダー表記（カンマ区切り。例：DLR,P&amp;P）</div>'
     + '<input class="fi" id="p2cDlrKw" value="' + evEsc(_p2DlrKw()) + '" placeholder="DLR,P&amp;P">'
     + '<span class="p2-btn pri" onclick="p2CoefSave(false)">💾 自分の係数として保存</span>'
@@ -13978,6 +14728,9 @@ function _p2ReadCoefInputs() {
 }
 function p2CoefSave(toUnion) {
   var v = _p2ReadCoefInputs();
+  // v550: 行動の設定は常に自分の設定として保存
+  var _stE = document.getElementById('p2cSt'), _snE = document.getElementById('p2cSnst'), _bfE = document.getElementById('p2cBuf');
+  if (_stE) { _p2().act = { st: _stE.classList.contains('sel'), snst: !!(_snE && _snE.classList.contains('sel')), ctBuf: Math.max(0, parseInt((_bfE || {}).value, 10) || 0) }; if (toUnion) saveGoals(); }
   var kw = (((document.getElementById('p2cDlrKw') || {}).value) || '').trim();
   if (toUnion) {
     var un = currentUser && currentUser.union;
@@ -14005,7 +14758,7 @@ function p2Mobilize() {
   var dOpts = dlrs.map(function(u) { return '<option value="' + u.date + '">' + fmtD(u) + '</option>'; }).join('')
     + (others.length ? '<option value="" disabled>── その他のユニオン予定 ──</option>' + others.map(function(u) { return '<option value="' + u.date + '">' + fmtD(u) + '</option>'; }).join('') : '')
     + '<option value="__manual__">📅 日付を直接入力…</option>';
-  var mF = _p2M(_p2Ym(0)).front;
+  var mF = _p2FrontTgt(_p2Ym(0)); // v548: 月のフロント目標（1つのルール）
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2MobOv'; ov.style.zIndex = '600';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2MobOv'); };
   ov.innerHTML = '<div class="ms-sheet" style="max-height:84vh;overflow-y:auto"><div class="ms-grip"></div>'
@@ -15028,6 +15781,20 @@ function _p2Rm() {
   });
   p2.roadmap.rowDefs.forEach(function(d) { if (!p2.roadmap.rows[d.k]) p2.roadmap.rows[d.k] = {}; });
   if (!p2.roadmap.start) p2.roadmap.start = _p2Ym(0);
+  // v548: 旧GOAL画面の「行事」（RRR TRIPなど・月だけの旗）をPLANのマイルストーンへ一度だけ移す（マイルストーンを1系統に）
+  var pl = state.goals && state.goals.plan;
+  if (pl && !p2.evMigrated && window._p2GoalsLoaded) {
+    p2.evMigrated = true;
+    if (Array.isArray(pl.events) && pl.events.length) {
+      var cy = new Date().getFullYear();
+      pl.events.forEach(function(e, i) {
+        if (!e || !e.month || !e.name) return;
+        p2.roadmap.ms.push({ id: 'rm_ev_' + (e.id || i), ym: cy + '-' + String(e.month).padStart(2, '0'), t: String(e.name), emoji: e.emoji || '', color: P2RM_COLORS[i % P2RM_COLORS.length], target: e.target || 0 });
+      });
+    }
+    pl.events = [];
+    setTimeout(function() { if (typeof saveGoals === 'function') saveGoals(); }, 0);
+  }
   return p2.roadmap;
 }
 function _p2RmDefs(rm) { return (rm.rowDefs || []).filter(function(d) { return !d.hide; }); }
@@ -15041,10 +15808,18 @@ function _p2RmYms(rm) {
   }
   return out;
 }
-function _p2RmFront(rm, ym) {
-  if (rm.rows.front[ym] !== undefined && rm.rows.front[ym] !== '') return rm.rows.front[ym];
-  var m = state.goals && state.goals.plan2 && state.goals.plan2.months && state.goals.plan2.months[ym];
-  return (m && m.front !== '' && m.front != null) ? m.front : '';
+function _p2RmFront(rm, ym) { return _p2FrontTgt(ym); } // v548: 横線・表・タイル・ファネルで同じ数字
+// v548: 月のフロント目標は1つのルールで決める
+//  ① その月の理想MAPで新規フロントを組んでいれば（1人以上）それ ② 無ければ月の目標（横線のF／表のフロント行／右の入力＝同じ値）
+function _p2FrontTgt(ym) {
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  if (it && +it.front > 0) return +it.front;
+  var p2 = state.goals && state.goals.plan2;
+  var rv = p2 && p2.roadmap && p2.roadmap.rows && p2.roadmap.rows.front ? p2.roadmap.rows.front[ym] : undefined;
+  if (rv !== undefined && rv !== '' && rv !== null) return +rv;
+  var m = p2 && p2.months && p2.months[ym];
+  if (m && m.front !== '' && m.front != null && !(m.fromIdeal && +m.front === 0)) return +m.front;
+  return it ? 0 : '';
 }
 function p2RmOpen() {
   _p2SheetClose('p2RmOv');
@@ -15163,10 +15938,14 @@ function p2RmMsForm(ym, msId) {
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2RmMsOv'; ov.style.zIndex = '660';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2RmMsOv'); };
   ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🚩 ' + _p2YmLabel(ym) + ' のマイルストーン</div></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🚩 ' + _p2YmLabel(ym) + (editing ? ' のマイルストーン' : '') + '</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'p2RmMsOv\')">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
-    + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
+    // v547: この月のフロント目標（F）はマイルストーン無しでも入れられる
+    + '<div class="p2-meta">この月のフロント目標（F）</div>'
+    + '<input class="fi" id="p2rmF" type="number" inputmode="numeric" min="0" placeholder="例：4（空欄＝なし）" value="' + _p2RmFront(rm, ym) + '" onfocus="edSelAll(this)" style="margin:4px 0 12px;max-width:180px">'
+    + '<div class="p2-meta">マイルストーン' + (editing ? '' : '（任意）') + '</div>'
+    + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin:4px 0 6px">'
     + '<input class="fi" id="p2rmS" placeholder="補足（例：60人タッチ / LOIカウント）任意" value="' + evEsc(editing && editing.sub ? editing.sub : '') + '" style="margin-bottom:8px">'
     + '<div class="p2-meta">〜いつまで（複数月にまたがる場合）</div>'
     + '<select class="fi" id="p2rmY2" style="margin:4px 0 8px"><option value="">この月だけ（1ヶ月）</option>'
@@ -15176,7 +15955,7 @@ function p2RmMsForm(ym, msId) {
     + P2RM_COLORS.map(function(c) { return '<span data-c="' + c + '" onclick="p2RmMsCol(\'' + c + '\')" style="width:30px;height:30px;border-radius:9px;background:' + c + ';cursor:pointer;border:2.5px solid ' + (c === col ? 'var(--text)' : 'transparent') + '"></span>'; }).join('')
     + '</div>'
     + '<div style="display:flex;gap:6px">'
-    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2RmMsSave(\'' + ym + '\',\'' + (msId || '') + '\')">' + (editing ? '✔ 更新' : '＋ 追加') + '</span>'
+    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2RmMsSave(\'' + ym + '\',\'' + (msId || '') + '\')">' + (editing ? '✔ 更新' : '✔ 保存') + '</span>'
     + (editing ? '<span class="p2-btn" style="margin:0;color:var(--red)" onclick="p2RmMsDel(\'' + msId + '\')">' + icn('trash') + ' 削除</span>' : '')
     + '</div></div></div>';
   document.body.appendChild(ov);
@@ -15190,9 +15969,30 @@ function p2RmMsCol(c) {
 }
 function p2RmMsSave(ym, msId) {
   var t = ((document.getElementById('p2rmT') || {}).value || '').trim();
-  if (!t) { toast('タイトルを入力してください'); return; }
-  var sub = ((document.getElementById('p2rmS') || {}).value || '').trim();
   var rm = _p2Rm();
+  // v547: フロント目標（F）だけの保存もOK
+  var fEl = document.getElementById('p2rmF'), fChanged = false;
+  if (fEl) {
+    var fRaw = String(fEl.value || '').trim();
+    var fNew = fRaw === '' ? '' : Math.max(0, parseInt(fRaw.replace(/[^0-9]/g, ''), 10) || 0);
+    if (String(fNew) !== String(_p2RmFront(rm, ym))) {
+      if (!rm.rows.front) rm.rows.front = {};
+      rm.rows.front[ym] = fNew;
+      var mm = _p2M(ym);
+      if (fNew !== '') mm.front = fNew; else if (!mm.declared) mm.front = ''; // 月の目標（下書き）へ連動。確定済みの月の目標は消さない
+      fChanged = true;
+    }
+  }
+  if (!t) {
+    if (msId) { toast('マイルストーンの名前を入力してください（消す時は「削除」）'); return; }
+    if (!fChanged) { toast('フロント目標かマイルストーンを入力してください'); return; }
+    saveGoals();
+    _p2SheetClose('p2RmMsOv');
+    _p2RmRender();
+    if (currentView === 'plan') renderPlan();
+    return;
+  }
+  var sub = ((document.getElementById('p2rmS') || {}).value || '').trim();
   if (msId) {
     var y2v = ((document.getElementById('p2rmY2') || {}).value || '');
     for (var i = 0; i < rm.ms.length; i++) { if (rm.ms[i].id === msId) { rm.ms[i].t = t; rm.ms[i].sub = sub; rm.ms[i].color = window._p2RmCol; if (y2v && y2v > ym) rm.ms[i].ym2 = y2v; else delete rm.ms[i].ym2; break; } }
@@ -18830,8 +19630,9 @@ function memberNextPlanLines(m) {
     .sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
   var fEv = null, fTk = null;
   futs.forEach(function(x){ if (x.type === 'task') { if (!fTk) fTk = x; } else { if (!fEv) fEv = x; } });
-  if (fEv) out.push('🗓 次の予定：' + evEsc(fEv.title||'') + '（' + fEv.date.split('-').slice(1).join('/') + (fEv.time ? ' ' + fEv.time : '') + '）');
-  if (fTk) out.push('✅ 次のタスク：' + evEsc(fTk.title||'') + '（' + fTk.date.split('-').slice(1).join('/') + (fTk.time ? ' ' + fTk.time : '') + '）');
+  // v545: メンバー側は「種類＋Aさん」で表示（タイトルの本人の名前は外す）
+  if (fEv) out.push('🗓 次の予定：' + evEsc(evMemberLabel(fEv, m)) + '（' + fEv.date.split('-').slice(1).join('/') + (fEv.time ? ' ' + fEv.time : '') + '）');
+  if (fTk) out.push('✅ 次のタスク：' + evEsc(evMemberLabel(fTk, m)) + '（' + fTk.date.split('-').slice(1).join('/') + (fTk.time ? ' ' + fTk.time : '') + '）');
   var fd = (state.freshData && state.freshData[m.id]) || {};
   var olPlan = (fd.olLog || []).filter(function(o){ return o.st === 'planned' && o.date && o.date >= t; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
   if (olPlan) out.push('📝 OL予定：' + (olPlan.what ? evEsc(olPlan.what) : '') + '（' + olPlan.date.split('-').slice(1).join('/') + (olPlan.asan ? ' A:' + evEsc(olPlan.asan) : '') + '）');
@@ -21545,6 +22346,7 @@ function evItemHtml(e) {
   if (cat) h += '<span class="ev-i-cat" style="background:' + (_ic || cat.color) + ';color:' + catTextColor(_ic || cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">' + icn('flag') + ' 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
+  if (memberName && e.asan) h += '<span class="ev-i-asan">A:' + evEsc(e.asan) + '</span>'; // v545
   if (e.seriesId) h += '<span title="繰り返し">' + icn('repeat') + '</span>';
   // CAL-3: サブタスク進捗（2/4＋ミニバー）。タップでカード直下に展開してチェックできる
   var subs = e.subtasks || [];
@@ -23110,7 +23912,9 @@ function toggleEventDone(id) {
 function _evRewardOnDone(e) {
   if (!e.templateStage || e.rewarded) return false;
   if (viewingOwnerUid) return false; // 共有MAP閲覧・編集中は相手の予定なので自分の実績に入れない
-  var xp = _stageRecord(e.templateStage, evTodayYmd());
+  // v548: 種類（CT/FT/マケ/PG/DLR）が付いた予定はPLANがカレンダーから自動で数えるので、実績の手入力欄には足さない（XPだけ）
+  var _autoK = (typeof P2_KIND_KEY !== 'undefined' && typeof evKindOf === 'function') ? P2_KIND_KEY[evKindOf(e)] : '';
+  var xp = _autoK ? _stageXpOnly(e.templateStage) : _stageRecord(e.templateStage, evTodayYmd());
   e.rewarded = true; // 二重加算防止（チェックを外して付け直しても再加算しない）
   var lbl = _evTplStageLabel(e.templateStage);
   if ((e.templateStage === 'ct' || e.templateStage === 'ft') && e.memberId && typeof openOlRecordModal === 'function') {
@@ -23329,9 +24133,92 @@ function evHasMember(e, id) {
   if (!e || !id) return false;
   return e.memberId === id || (e.memberIds && e.memberIds.indexOf(id) >= 0);
 }
+// v545: 予定の「種類」と「Aさん」。種類はアプリ共通の固定リスト（カテゴリは各自が作るのでブレるため使わない）
+var EV_KINDS = ['ST', 'SNST', 'CT取り', 'CT', 'FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO', 'OL', 'その他']; // v550: ST・SNST・CT取り（会う約束を取る）を追加
+var _evKind = '', _evKindManual = false, _evAsan = '';
+// タイトルから種類を推定（全角・小文字もOK。英字の一部に含まれるだけ＝例 CONTACT の CO は拾わない）
+function evGuessKind(title) {
+  var s = String(title || '');
+  try { s = s.normalize('NFKC'); } catch (eN) {}
+  s = s.toUpperCase();
+  if (s.indexOf('面談') >= 0) return '面談';
+  if (/CT ?(取|とり|ドリ)|アポ取|アポとり/.test(s)) return 'CT取り'; // v550
+  if (/マーケ|マケ/.test(s)) return 'マケ';
+  var ks = ['DLR', 'EXP', 'BPC', 'SNST', 'PG', 'PA', 'CO', 'CT', 'FT', 'OL', 'ST'];
+  for (var i = 0; i < ks.length; i++) {
+    if (new RegExp('(^|[^A-Z])' + ks[i] + '(?![A-Z])').test(s)) return ks[i];
+  }
+  return '';
+}
+function evKindOf(e) { return (e && (e.kind || evGuessKind(e.title))) || ''; }
+// MAPのメンバー側の表示：タイトルからそのメンバーの名前を外し、種類＋Aさんで見せる（例「匡哉PG」→「PG（A:山内北斗）」）
+function evMemberLabel(e, m) {
+  var t = String((e && e.title) || '');
+  if (m) {
+    var ln = String(m.lastName || '').trim(), fn = String(m.firstName || '').trim(), names = [];
+    if (ln && fn) names.push(ln + fn, ln + ' ' + fn, ln + '　' + fn);
+    if (fn.length >= 2) names.push(fn);
+    if (ln.length >= 2) names.push(ln);
+    if (m.nickname && String(m.nickname).trim().length >= 2) names.push(String(m.nickname).trim());
+    names.forEach(function(n) { ['さん', 'くん', 'ちゃん', ''].forEach(function(hn) { t = t.split(n + hn).join(''); }); });
+    t = t.replace(/^[\s・\/\-_,、:：]+|[\s・\/\-_,、:：]+$/g, '');
+  }
+  var k = evKindOf(e);
+  if (k && k !== 'その他' && evGuessKind(t) !== k) t = k + (t ? '・' + t : '');
+  if (!t) t = String((e && e.title) || '') || '(無題)';
+  if (e && e.asan) t += '（A:' + e.asan + '）';
+  return t;
+}
+function _evSelfName() { return (currentUser && String(currentUser.name || '').trim()) || '自分'; }
+// Aさんの候補：自分＋過去に入れた名前（よく使う順）
+function _evAsanRecent() {
+  var cnt = {}, self = _evSelfName();
+  var add = function(n, w) { n = String(n || '').trim(); if (!n || n === self || n === '自分') return; cnt[n] = (cnt[n] || 0) + w; };
+  (state.events || []).forEach(function(e) { if (e && e.asan) add(e.asan, 3); });
+  (state.members || []).forEach(function(m) { if (m.aSan) add(m.aSan, 1); (m.traineeHistory || []).forEach(function(h) { if (h && h.aSan) add(h.aSan, 1); }); });
+  return Object.keys(cnt).sort(function(a, b) { return cnt[b] - cnt[a]; }).slice(0, 8);
+}
+function evKindRender() {
+  var box = document.getElementById('evKindChips');
+  if (!box) return;
+  box.innerHTML = EV_KINDS.map(function(k) {
+    return '<div class="rb' + (_evKind === k ? ' sel' : '') + '" onclick="evKindPick(\'' + k + '\')">' + evEsc(k) + '</div>';
+  }).join('');
+}
+function evKindPick(k) { _evKindManual = true; _evKind = (_evKind === k) ? '' : k; evKindRender(); }
+function evKindAuto() {
+  if (_evKindManual) return;
+  var ti = document.getElementById('evTitle');
+  _evKind = evGuessKind(ti ? ti.value : '');
+  var _kr2 = document.getElementById('evKindRow');
+  if (_kr2) _kr2.style.display = (_evMemberIds.length || _evKind) ? '' : 'none'; // v550
+  evKindRender();
+}
+function evAsanRender() {
+  var box = document.getElementById('evAsanChips'), inp = document.getElementById('evAsan');
+  if (inp && inp.value !== _evAsan) inp.value = _evAsan;
+  if (!box) return;
+  var self = _evSelfName();
+  var list = [{ v: self, lb: '自分' }].concat(_evAsanRecent().map(function(n) { return { v: n, lb: n }; }));
+  box.innerHTML = list.map(function(o) {
+    return '<div class="rb' + (_evAsan === o.v || (!_evAsan && o.lb === '自分') ? ' sel' : '') + '" onclick="evAsanPick(this)" data-v="' + evEsc(o.v) + '">' + evEsc(o.lb) + '</div>';
+  }).join('');
+}
+function evAsanPick(el) { _evAsan = el.getAttribute('data-v') || ''; evAsanRender(); }
+function evAsanInput(v) {
+  _evAsan = String(v || '');
+  var box = document.getElementById('evAsanChips');
+  if (box) [].forEach.call(box.children, function(c) { c.classList.toggle('sel', c.getAttribute('data-v') === _evAsan.trim() || (!_evAsan.trim() && c.textContent === '自分')); });
+}
 function updateEvMemberDisplay() {
   var _ssRow = document.getElementById('evSelfShowRow');
   if (_ssRow) _ssRow.style.display = _evMemberIds.length ? '' : 'none'; // v361
+  // v545: 種類・Aさんはメンバーを選んだ時だけ
+  var _kr = document.getElementById('evKindRow'), _ar = document.getElementById('evAsanRow');
+  if (_kr) _kr.style.display = (_evMemberIds.length || _evKind) ? '' : 'none'; // v550: 種類が分かった時も表示（CT取り・STなど人を決めない枠）
+  if (_ar) _ar.style.display = _evMemberIds.length ? '' : 'none';
+  if (_evMemberIds.length || _evKind) evKindRender();
+  if (_evMemberIds.length) evAsanRender();
   var el = document.getElementById('evMemberNames');
   if (!el) return;
   if (!_evMemberIds.length) { el.textContent = '（なし）'; el.style.color = 'var(--text-dim)'; return; }
@@ -23471,7 +24358,8 @@ function _evCreateSeries(base, rep, untilYmd) {
       id: genEventId() + '_' + count, seriesId: sid, done: false,
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       type: base.type, title: base.title, date: evYmd(cur), time: base.time, endTime: base.endTime || '',
-      memberId: base.memberId, categoryId: base.categoryId, priority: base.priority,
+      memberId: base.memberId, memberIds: (base.memberIds || []).slice(), selfShow: base.selfShow, kind: base.kind || '', asan: base.asan || '', // v545
+      categoryId: base.categoryId, priority: base.priority,
       memo: base.memo, remindBefore: base.remindBefore,
       color: base.color || '', place: base.place || ''
     };
@@ -23755,7 +24643,7 @@ function evToggleAdv(force) {
   if (w) w.style.display = _evAdvOpen ? '' : 'none';
   if (t) {
     t.classList.toggle('open', _evAdvOpen);
-    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（メンバー・優先度・メモ・場所）';
+    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（優先度・メモ・場所）';
   }
 }
 
@@ -24066,6 +24954,8 @@ function evTplPick(id) {
   var newTitle = String(t.name || '').replace(/\{name\}/g, evTplMemberName()); // v433: テンプレ名がタイトル
   if (titleEl && (!titleEl.value || titleEl.value === _evTplTitleAuto)) titleEl.value = newTitle; // 手入力は尊重
   _evTplTitleAuto = newTitle;
+  evKindAuto(); // v545: 種類をタイトルから
+  if (t.asan) { _evAsan = t.asan; evAsanRender(); } // v545: テンプレの「いつものAさん」
   if (t.allDay) evToggleAllDay(true); // v404: 終日テンプレ
   else if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
   // v409: ユニオン共有テンプレ→共有範囲トグルを自動セット（管理者・新規予定のみ。保存時に通常の確認が出る）
@@ -24088,6 +24978,7 @@ function evTplOnMemberChange() {
   var newTitle = String(_evTplSel.name || '').replace(/\{name\}/g, evTplMemberName());
   if (!titleEl.value || titleEl.value === _evTplTitleAuto) titleEl.value = newTitle;
   _evTplTitleAuto = newTitle;
+  evKindAuto(); // v545
 }
 // v314: Lifebear式「作成」＝今の入力内容を初期値にしたテンプレ作成フォームを開く
 function evTplCreateFromForm() {
@@ -24209,6 +25100,7 @@ function openEvTplEdit(id) {
       + '<span id="evtCatName" style="flex:1">' + evEsc(catNow ? catNow.name : '未分類') + '</span>'
       + '<span style="color:var(--text-dim)">▾</span></div>')
     + fld('メモの既定（任意）', '<input class="fi" id="evtF_memo" value="' + evEsc(t ? (t.memo || '') : '') + '">')
+    + fld('いつものAさん（任意・関連メンバーを選んだ時）', '<input class="fi" id="evtF_asan" placeholder="空欄＝自分" value="' + evEsc(t ? (t.asan || '') : '') + '">') // v545
     + '<div class="btn-row">'
     + '<button class="btn-c" onclick="closeEvTplEdit(true)">キャンセル</button>'
     + (isEdit ? '<button class="btn-d" onclick="deleteEvTplForm(\'' + evEsc(t.id) + '\')">削除</button>' : '')
@@ -24288,6 +25180,7 @@ function saveEvTplForm(id) {
   var _stEl = document.getElementById('evtF_stage');
   if (_stEl) t.stage = _stEl.value || ''; // v347: 対応ステージのUIは廃止（既存テンプレの値は維持）
   t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
+  t.asan = ((document.getElementById('evtF_asan')||{}).value || '').trim(); // v545
   // v347: 色分けはカテゴリで統一（選んだカテゴリをそのまま保存）
   var _oldCat9 = t.categoryId || '';
   t.categoryId = window._evtCatSel || '';
@@ -24442,6 +25335,12 @@ function openEventModal(id, presetMember, presetDate, forceType) {
     ? ((e.memberIds && e.memberIds.length) ? e.memberIds.slice() : (e.memberId ? [e.memberId] : []))
     : (presetMember ? [presetMember] : []);
   selEvSelfShow(e ? (e.selfShow !== false) : !presetMember); // v468: 予定タブ起点=「自分にも表示」既定 / MAP（メンバーカード）起点=「メンバー専用」既定。旧データは表示扱い
+  // v545: 種類（未設定ならタイトルから自動）・Aさん（新規は自分）
+  _evKind = e ? (e.kind || '') : ''; _evKindManual = !!(e && e.kind);
+  _evAsan = e ? (e.asan || '') : _evSelfName();
+  var _tiK = document.getElementById('evTitle');
+  if (_tiK && !_tiK._gmKindHook) { _tiK._gmKindHook = true; _tiK.addEventListener('input', evKindAuto); }
+  if (!_evKindManual) _evKind = evGuessKind(e ? e.title : '');
   updateEvMemberDisplay();
   // CAL-3: サブタスクを編集用にコピー（保存するまで元データは変えない）
   _evSubs = (e && e.subtasks ? e.subtasks : []).map(function(s){ return { id: s.id, t: s.t, done: !!s.done }; });
@@ -24540,6 +25439,9 @@ function _saveEventBody() {
   e.memberIds = _evMemberIds.slice(); // v348: 複数メンバー
   e.memberId = _evMemberIds[0] || '';  // 互換（実績連動・既存表示用の代表1人）
   e.selfShow = _evMemberIds.length ? (_evSelfShow === true) : ''; // v361: メンバー無しなら区分なし
+  // v545: 種類・Aさん（Aさんはメンバーを選んだ時だけ。空欄＝自分）
+  e.kind = _evKindManual ? (_evKind || '') : (_evKind || evGuessKind(title));
+  e.asan = _evMemberIds.length ? (String(_evAsan || '').trim() || _evSelfName()) : '';
   e.categoryId = _evCategoryId || '';
   // v329: 色は保存時点のカテゴリ色を予定自体に焼き付ける（後からカテゴリ/テンプレの色を変えても既存の予定の色は変わらない）
   e.color = '';
@@ -24583,6 +25485,7 @@ function _saveEventBody() {
         if (x.seriesId === e.seriesId && x.id !== e.id && (x.date || '') >= (e.date || '')) {
           x.title = e.title; x.time = e.time; x.endTime = e.endTime;
           x.categoryId = e.categoryId; x.memberId = e.memberId;
+          x.memberIds = (e.memberIds || []).slice(); x.selfShow = e.selfShow; x.kind = e.kind || ''; x.asan = e.asan || ''; // v545
           x.memo = e.memo; x.remindBefore = e.remindBefore;
           x.priority = e.priority; x.allDay = e.allDay;
           x.updatedAt = e.updatedAt || new Date().toISOString();
@@ -25928,9 +26831,11 @@ function fsLoadSharedMap(ownerUid) {
   var p2 = fsGet('maps/' + ownerUid + '/months/' + month + '_ideal');
   var p3 = fsGet('maps/' + ownerUid + '/stats/' + month);
   var left = 3, failed = false;
+  var _stale = function() { return viewingOwnerUid !== ownerUid || state.currentMonth !== month; }; // v544: 読込中に月・MAPを切り替えた
   function done() {
     left--;
     if (left > 0) return;
+    if (_stale()) return;
     window._keepSpinner = false;
     if (failed) { _hideSwitching(); toast('読み込みエラー。もう一度お試しください'); return; }
     _mergeSnap = null; // マージ基準を再初期化（共有MAP読込）
@@ -25951,12 +26856,12 @@ function fsLoadSharedMap(ownerUid) {
       }
     }, 900);
   }
-  p1.then(function(data) { state.members = (data && data.members) ? data.members : []; done(); })
+  p1.then(function(data) { if (!_stale()) state.members = (data && data.members) ? data.members : []; done(); })
     .catch(function(e) { failed = true; console.error('shared map load error:', e); done(); });
-  p2.then(function(data) { state.idealMembers = (data && data.members) ? data.members : []; done(); })
+  p2.then(function(data) { if (!_stale()) state.idealMembers = (data && data.members) ? data.members : []; done(); })
     .catch(function() { done(); });
   p3.then(function(data) {
-    if (data) {
+    if (data && !_stale()) {
       state.stats = data.stats || getDefaultStats();
       state.commission = data.commission || getDefaultCommission();
       state.freshData = data.freshData || {};
@@ -26765,6 +27670,8 @@ function fsLoadFromFirestore(uid) {
     return p3;
   }).then(function(data) {
     loaded.stats = data;
+    // v544: 読み込み中に別の月・共有MAPへ切り替えていたら、古い結果で上書きしない
+    if (state.currentMonth !== month || viewingOwnerUid) return;
 
     // 現状MAPメンバー
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
@@ -26812,6 +27719,7 @@ function fsLoadFromFirestore(uid) {
     } catch(eSg) {}
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
+    if (state.currentMonth !== month || viewingOwnerUid) return; // v544
     state.members      = [];
     state.idealMembers = [];
     state.stats        = getDefaultStats();
