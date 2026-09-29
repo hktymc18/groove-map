@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v551';
+var APP_JS_VERSION = 'v552';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v551';
+  var DATA_VERSION = 'v552';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v552', d:'2026-09-29', items:['📊 次の山の条件にRUBY（フロントBR 4人）・LAPIS（2人）・GOLD（1人）を追加。BR→RUBYを目指す時も、フロントBRの人数の進み具合が出ます'] },
   { v:'v551', d:'2026-09-29', items:['⛰ 目標のはしご：最終ゴールが遠い時は「次の山（最短目標）」をPLANの主役に。今のタイトルから自動で提案（BR未満→BR、BR→RUBY→EMERALD→DIAMOND→BLUE DIAMOND→TEAM ELITE）。最終ゴールは上に小さく表示','🎁 次の山がBRの時は、ファーストボーナスの見込み（BB＋エリートLOI特典。BRになる月のGSVで計算）を大きく表示','📊 次の山の条件の進み具合：フロントBRの人数と、パワーライン（系列のLTSV）の本数・不足分、クオリファイ月数（EMERALD 4人・1万／DIAMOND 5人・2万1万／BLUE DIAMOND 6人・3万2万1万・2ヶ月／TEAM ELITE 6人・4万3万2万1万・6ヶ月）','✎ 目標をなおす：月収・タイトル・期日と次の山を1画面で直せます（20問に入り直さない）。次の山に到達したら記録して次の候補へ','🧭 目標をつくるウィザードは「理想の生活（20問）」で終わり。やりたいこと・なりたい自分、やる理由の作文は⚙から書きたい時に'] },
   { v:'v550', d:'2026-09-29', items:['🏃 今月の行動量に「ST・SNST・CT取り」を追加：CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数で自動カウント）。目標はCTの必要数＋ドタキャン分（標準20%）。ST・SNSTは回数を右の「今月の目標」で決めます','⏰ ST・SNST・CT取りは「予約」で時間の枠をカレンダーに入れる形に。今週の枠が無い／残っていない行は赤く表示。終わったCT取りの枠には「取れた約束をCTの予定に入れる」案内','📋 ATTACK LISTと連携：手元のリスト（未着手・連絡中）の人数とCT予定の人数を自動で表示（読めない時は手入力）。リストが少なくなったら「STで作る」。ALボタンでATTACK LISTを開けます','⚙ 係数の画面に「行動の設定」：STを目標に使う（フレッシュ期間は既定OFF）／SNSTを目標に使う（任意）／CT取りの余裕％','🏷 予定の種類にST・SNST・CT取りを追加（タイトルから自動判定。人を選ばない予定でも種類の欄が出ます）'] },
   { v:'v549', d:'2026-09-29', items:['🗓 予定の入力画面：詳細を開く前は保存ボタンまでスクロールなしで表示（PCはカテゴリと関連メンバーを横並び）。保存・キャンセルは常に下に固定','🔤 今月の行動量：今週の件数は「実施・予定」（今週に入っている予定と実施済みの合計）、月の残りは「これからの予定」と表記'] },
@@ -14278,6 +14279,9 @@ var P2_LADDER = ['BR', 'RUBY', 'EMERALD', 'DIAMOND', 'BLUE DIAMOND', 'TEAM ELITE
 var P2_TITLE_JP = { 'BR': 'ブランドレプリゼンタティブ', 'GOLD': 'ゴールド', 'LAPIS': 'ラピス', 'RUBY': 'ルビー', 'EMERALD': 'エメラルド', 'DIAMOND': 'ダイヤモンド', 'BLUE DIAMOND': 'ブルーダイヤモンド', 'TEAM ELITE': 'チームエリート' };
 // 昇格条件：フロントBRの人数が揃ってから、パワーライン（フロントの系列のLTSV）を◯ヶ月クオリファイ
 var P2_REQ = {
+  'GOLD': { br: 1, pl: [], mo: 0 },
+  'LAPIS': { br: 2, pl: [], mo: 0 },
+  'RUBY': { br: 4, pl: [], mo: 0 },
   'EMERALD': { br: 4, pl: [10000], mo: 1 },
   'DIAMOND': { br: 5, pl: [20000, 10000], mo: 1 },
   'BLUE DIAMOND': { br: 6, pl: [30000, 20000, 10000], mo: 2 },
@@ -14345,8 +14349,8 @@ function _p2ReqHtml(nx) {
   var brOk = pr.br >= pr.req.br;
   return '<div class="p2h-req">' + (cur ? cur + '<span class="sep">→</span>' : '') + evEsc(en) + 'の条件'
     + '<span class="rq' + (brOk ? ' ok' : '') + '">フロントBR <b>' + pr.br + '</b>/' + pr.req.br + '人' + (brOk ? ' ✓' : '') + '</span>'
-    + '<span class="rq-l">パワーライン</span>' + pr.pl.map(function(x) { return '<span class="rq' + (x.ok ? ' ok' : '') + '" title="系列のLTSV ' + x.v.toLocaleString() + 'P">' + man(x.t) + (x.ok ? ' ✓' : '<small>（' + man(x.v) + '）</small>') + '</span>'; }).join('')
-    + '<span class="rq-m">揃ってから' + pr.req.mo + 'ヶ月クオリファイ</span></div>';
+    + (pr.pl.length ? '<span class="rq-l">パワーライン</span>' + pr.pl.map(function(x) { return '<span class="rq' + (x.ok ? ' ok' : '') + '" title="系列のLTSV ' + x.v.toLocaleString() + 'P">' + man(x.t) + (x.ok ? ' ✓' : '<small>（' + man(x.v) + '）</small>') + '</span>'; }).join('') : '') // v552: RUBY・LAPIS・GOLDはフロントBRの人数だけ
+    + (pr.req.mo ? '<span class="rq-m">揃ってから' + pr.req.mo + 'ヶ月クオリファイ</span>' : '') + '</div>';
 }
 // 目標をなおす（ウィザードに入り直さず、数字だけ直す）
 function _p2YmSelHtml(id, val) {
