@@ -625,6 +625,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .fr-row{display:flex;gap:8px;margin-bottom:12px}
 .fr-row .fr{flex:1;margin-bottom:0}
 .rg{display:flex;gap:6px}
+.ev-kind-rg{flex-wrap:wrap} .ev-kind-rg .rb{flex:none;padding:6px 12px;font-size:13px}
 .rb{flex:1;padding:8px 0;text-align:center;border-radius:var(--rsm);border:1px solid var(--border);font-size:12px;cursor:pointer;background:transparent;color:var(--text-dim);transition:all .15s;white-space:nowrap}
 .rb.sel{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 #evSelfShowRow .rb{white-space:normal;line-height:1.35;min-width:0;padding:8px 6px} /* v400: 長文ラベルが枠外にはみ出すのを防止（折り返し許可） */
@@ -1240,6 +1241,7 @@ tr.ot-done{opacity:.5}
 .ev-i-meta .due-overdue{color:var(--red);font-weight:700}
 .ev-i-meta .due-today{color:var(--accent);font-weight:700}
 .ev-i-member{padding:1px 7px;border-radius:10px;background:var(--purple-dim);color:var(--purple);font-weight:600}
+.ev-i-asan{padding:1px 7px;border-radius:10px;border:1px solid var(--border2);color:var(--text-mid);font-weight:600} /* v545 */
 .ev-i-prio{padding:1px 6px;border-radius:10px;background:rgba(255,93,115,.14);color:var(--red);font-weight:700}
 .ev-gcal-btn{flex:none;align-self:center;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);font-size:16px;cursor:pointer;margin-left:6px}
 .ev-gcal-btn:active{background:var(--accent);border-color:var(--accent)}
@@ -2729,7 +2731,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v543</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v545</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3598,6 +3600,16 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span style="color:var(--text-dim)">▾</span>
       </div>
     </div>
+    <!-- v545: 種類・Aさん（メンバー選択時。MAPのメンバー側の予定表示に使う） -->
+    <div class="fr" id="evKindRow" style="display:none">
+      <label class="fl">種類 <span style="font-weight:500;color:var(--text-dim)">（タイトルから自動で選びます）</span></label>
+      <div class="rg ev-kind-rg" id="evKindChips"></div>
+    </div>
+    <div class="fr" id="evAsanRow" style="display:none">
+      <label class="fl">Aさん <span style="font-weight:500;color:var(--text-dim)">（仕事に入る人）</span></label>
+      <div class="rg ev-kind-rg" id="evAsanChips"></div>
+      <input class="fi" id="evAsan" placeholder="名前を入力（空欄＝自分）" style="margin-top:6px" oninput="evAsanInput(this.value)">
+    </div>
     <div class="fr" id="evSelfShowRow" style="display:none">
       <label class="fl">この予定・タスクの扱い（メンバー選択時）</label>
       <div class="rg">
@@ -3657,7 +3669,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v543';</script>
-<script src="app.js?v=v543"></script>
+<script>window.GM_EXPECT_JS='v545';</script>
+<script src="app.js?v=v545"></script>
 </body>
 </html>

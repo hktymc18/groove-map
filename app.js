@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v543';
+var APP_JS_VERSION = 'v545';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v543';
+  var DATA_VERSION = 'v545';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -3970,10 +3970,18 @@ function onYearMonthChange() {
   var y = document.getElementById('selYear').value;
   var m = document.getElementById('selMonth').value;
   var mm = String(m).padStart(2,'0');
+  var _prevMonth = state.currentMonth;
   state.currentMonth = y + '.' + mm;
   if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
-  renderCurrentView();
-  if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+  // v544: 読み込みが終わるまで前の月のMAPを新しい月として見せない（読み込み中の表示→読込後に描画）
+  if (USE_FIREBASE && currentUser && currentUser.uid && db && state.currentMonth !== _prevMonth) {
+    _showSwitching('読み込み中…');
+    if (viewingOwnerUid) fsLoadSharedMap(viewingOwnerUid); // v544: 共有MAPを見ている時は、その人のMAPの同じ月を読む（自分のMAPを読んでいた）
+    else fsLoadFromFirestore(currentUser.uid);
+  } else {
+    renderCurrentView();
+    if (USE_FIREBASE && currentUser && currentUser.uid) fsLoadFromFirestore(currentUser.uid);
+  }
   startAllMergeListeners(); // 月が変わったら結合MAPの購読を新しい月で張り直す
 }
 
@@ -4874,6 +4882,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v545', d:'2026-09-29', items:['🅰️ カレンダーの予定に「種類」と「Aさん」を追加（関連メンバーを選んだ時に表示）：種類はマケ・PG・DLR・EXP・PA・面談・BPC・CO・CT・FT・OL・その他の共通リストで、タイトル（例「匡哉PG」）から自動で選ばれます（全角・小文字もOK。違えばタップで変更）。Aさんは最初「自分」、過去に入れた名前はワンタップ','🗺 MAPのメンバー側の予定は「PG（A:山内）」のように種類＋Aさんで表示（タイトルに入れた本人の名前は外します）。自分のカレンダーはタイトルそのまま＋「A:◯◯」','📋 テンプレートに「いつものAさん」を追加（空欄＝自分）'] },
+  { v:'v544', d:'2026-09-29', items:['🗓 MAPのデータが無い月を開くと、直前に開いていたMAPが表示されたままになる不具合を修正（PCのツリー・運動会MAP）：データの無い月は何も表示しません','⏳ 月を切り替えた時は読み込みが終わるまで「読み込み中…」を表示（前の月のMAPを新しい月のように見せない）。月を続けて切り替えても、前に選んだ月のデータで上書きされません','🔗 共有MAPを見ている時に月を切り替えると自分のMAPが表示されていたのを修正：相手のMAPの同じ月を表示します'] },
   { v:'v543', d:'2026-09-29', items:['🔗 運動会MAPの共有MAPメンバーを分かりやすく（929-1）：丸とつなぐ線の点線をやめ（段の点線とまぎらわしかったため）、丸の外側に紫の細い輪＋下ふちに「共有」タグを付けました。PDFにも出ます'] },
   { v:'v542', d:'2026-09-29', items:['✨ 運動会MAPでも、LOI〜Q4のフレッシュ（スタート6ヶ月以内・BR未満）が光るように：ツリーのMAPと同じ判定（ケアバッジの自動／表示／非表示）にそろえました。丸の色（QBRのオレンジ）はそのままで、金色の枠が点滅します'] },
   { v:'v541', d:'2026-09-29', items:['🧵 運動会MAPの段の線を少し濃く・太くして、ダークモードでもライトモードでも見えるように（つなぐ線より控えめのまま）'] },
@@ -6307,9 +6317,10 @@ function openMemberDetail(mid) {
   if (!olog.length) ol += '<div class="md-empty">OL記録はまだありません</div>';
   else ol += olog.map(function(e){ return '<div class="md-ol"><div class="md-oltop">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div class="md-olwhat">' + evEsc(e.what) + '</div>':'') + (e.note?'<div class="md-olnote">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
   var evs = (state.events||[]).filter(function(e){ return e.memberId===mid && !e.deleted; });
+  var _mMd = findMemberAny(mid); // v545
   var tk = '';
   if (!evs.length) tk = '<div class="md-empty">紐付くタスク・予定はありません</div>';
-  else tk = evs.map(function(e){ var ic=e.type==='task'?(e.done?'✅':'⬜'):'📅'; var d=e.date?e.date.split('-').slice(1).join('/'):''; return '<div class="md-task"><span>' + ic + '</span><span class="md-tt' + (e.done?' done':'') + '">' + evEsc(e.title||'(無題)') + '</span><span class="md-td">' + d + '</span></div>'; }).join('');
+  else tk = evs.map(function(e){ var ic=e.type==='task'?(e.done?'✅':'⬜'):'📅'; var d=e.date?e.date.split('-').slice(1).join('/'):''; return '<div class="md-task"><span>' + ic + '</span><span class="md-tt' + (e.done?' done':'') + '">' + evEsc(evMemberLabel(e, _mMd)) + '</span><span class="md-td">' + d + '</span></div>'; }).join('');
   var pages = [basic, monthly, train, ol, tk];
   var tabs = ['基本','月次','研修','OL','タスク'];
   var ov = document.createElement('div'); ov.id='mdOverlay'; ov.className='md-overlay';
@@ -7527,6 +7538,11 @@ function renderTree(mapType) {
 
   if (roots.length === 0) {
     container.innerHTML = emptyStateHTML('map');
+    // v544: PCのツリー・運動会MAPも空にする（前に開いていた月のMAPが残って見えていた）
+    if (isPCMode()) ['pcMap', 'pcOrbit'].forEach(function(pre) {
+      var el = document.getElementById(pre + (mapType === 'current' ? 'Current' : 'Ideal'));
+      if (el) el.innerHTML = emptyStateHTML('map');
+    });
     updateLTSV(mapType, ownMembers); // LTSVは自分のメンバーのみで集計（数値を変えない）
     return;
   }
@@ -11637,7 +11653,7 @@ function showPcTooltip(mid, ev) {
       var ds = (e.type === 'task' && e.done) ? 'text-decoration:line-through;color:var(--text-dim)' : 'color:var(--text)';
       return '<div style="display:flex;gap:6px;align-items:center;font-size:12px;margin-top:3px">'
         + '<span>' + ic + '</span>'
-        + '<span style="flex:1;' + ds + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(e.title || '(無題)') + '</span>'
+        + '<span style="flex:1;' + ds + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(evMemberLabel(e, m)) + '</span>' // v545
         + (d ? '<span style="color:var(--text-dim);font-family:Inter,monospace;font-size:11px">' + d + '</span>' : '')
         + '</div>';
     }).join('');
@@ -11897,7 +11913,7 @@ function meRenderExtras(m) {
     var ic = isTask ? (e.done ? '✅' : '⬜') : (e.done ? '✅' : '📅');
     return '<div class="me-task" style="display:flex;align-items:center;gap:4px">'
       + '<span style="flex:1;display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0" onclick="meToggleTask(\'' + e.id + '\',\'' + mid + '\')">'
-      + dTag + '<span>' + ic + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(e.title||'(無題)') + '</span></span>'
+      + dTag + '<span>' + ic + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + (e.done?'text-decoration:line-through;color:var(--text-dim)':'') + '">' + evEsc(evMemberLabel(e, m)) + '</span></span>'
       + '<span onclick="openEventEdit(\'' + e.id + '\')" style="flex:none;padding:6px 8px;color:var(--text-dim);cursor:pointer" title="編集">✎</span>'
       + '<span onclick="meDeleteTask(\'' + e.id + '\',\'' + mid + '\')" style="flex:none;padding:6px 8px;color:var(--red);cursor:pointer" title="削除">' + icn('trash') + '</span>'
       + '</div>';
@@ -19349,8 +19365,9 @@ function memberNextPlanLines(m) {
     .sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
   var fEv = null, fTk = null;
   futs.forEach(function(x){ if (x.type === 'task') { if (!fTk) fTk = x; } else { if (!fEv) fEv = x; } });
-  if (fEv) out.push('🗓 次の予定：' + evEsc(fEv.title||'') + '（' + fEv.date.split('-').slice(1).join('/') + (fEv.time ? ' ' + fEv.time : '') + '）');
-  if (fTk) out.push('✅ 次のタスク：' + evEsc(fTk.title||'') + '（' + fTk.date.split('-').slice(1).join('/') + (fTk.time ? ' ' + fTk.time : '') + '）');
+  // v545: メンバー側は「種類＋Aさん」で表示（タイトルの本人の名前は外す）
+  if (fEv) out.push('🗓 次の予定：' + evEsc(evMemberLabel(fEv, m)) + '（' + fEv.date.split('-').slice(1).join('/') + (fEv.time ? ' ' + fEv.time : '') + '）');
+  if (fTk) out.push('✅ 次のタスク：' + evEsc(evMemberLabel(fTk, m)) + '（' + fTk.date.split('-').slice(1).join('/') + (fTk.time ? ' ' + fTk.time : '') + '）');
   var fd = (state.freshData && state.freshData[m.id]) || {};
   var olPlan = (fd.olLog || []).filter(function(o){ return o.st === 'planned' && o.date && o.date >= t; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
   if (olPlan) out.push('📝 OL予定：' + (olPlan.what ? evEsc(olPlan.what) : '') + '（' + olPlan.date.split('-').slice(1).join('/') + (olPlan.asan ? ' A:' + evEsc(olPlan.asan) : '') + '）');
@@ -22064,6 +22081,7 @@ function evItemHtml(e) {
   if (cat) h += '<span class="ev-i-cat" style="background:' + (_ic || cat.color) + ';color:' + catTextColor(_ic || cat.color) + '">' + evEsc(cat.name) + '</span>';
   if (e.priority === 'high') h += '<span class="ev-i-prio">' + icn('flag') + ' 重要</span>';
   if (memberName) h += '<span class="ev-i-member">' + evEsc(memberName) + '</span>';
+  if (memberName && e.asan) h += '<span class="ev-i-asan">A:' + evEsc(e.asan) + '</span>'; // v545
   if (e.seriesId) h += '<span title="繰り返し">' + icn('repeat') + '</span>';
   // CAL-3: サブタスク進捗（2/4＋ミニバー）。タップでカード直下に展開してチェックできる
   var subs = e.subtasks || [];
@@ -23848,9 +23866,88 @@ function evHasMember(e, id) {
   if (!e || !id) return false;
   return e.memberId === id || (e.memberIds && e.memberIds.indexOf(id) >= 0);
 }
+// v545: 予定の「種類」と「Aさん」。種類はアプリ共通の固定リスト（カテゴリは各自が作るのでブレるため使わない）
+var EV_KINDS = ['マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO', 'CT', 'FT', 'OL', 'その他'];
+var _evKind = '', _evKindManual = false, _evAsan = '';
+// タイトルから種類を推定（全角・小文字もOK。英字の一部に含まれるだけ＝例 CONTACT の CO は拾わない）
+function evGuessKind(title) {
+  var s = String(title || '');
+  try { s = s.normalize('NFKC'); } catch (eN) {}
+  s = s.toUpperCase();
+  if (s.indexOf('面談') >= 0) return '面談';
+  if (/マーケ|マケ/.test(s)) return 'マケ';
+  var ks = ['DLR', 'EXP', 'BPC', 'PG', 'PA', 'CO', 'CT', 'FT', 'OL'];
+  for (var i = 0; i < ks.length; i++) {
+    if (new RegExp('(^|[^A-Z])' + ks[i] + '(?![A-Z])').test(s)) return ks[i];
+  }
+  return '';
+}
+function evKindOf(e) { return (e && (e.kind || evGuessKind(e.title))) || ''; }
+// MAPのメンバー側の表示：タイトルからそのメンバーの名前を外し、種類＋Aさんで見せる（例「匡哉PG」→「PG（A:山内北斗）」）
+function evMemberLabel(e, m) {
+  var t = String((e && e.title) || '');
+  if (m) {
+    var ln = String(m.lastName || '').trim(), fn = String(m.firstName || '').trim(), names = [];
+    if (ln && fn) names.push(ln + fn, ln + ' ' + fn, ln + '　' + fn);
+    if (fn.length >= 2) names.push(fn);
+    if (ln.length >= 2) names.push(ln);
+    if (m.nickname && String(m.nickname).trim().length >= 2) names.push(String(m.nickname).trim());
+    names.forEach(function(n) { ['さん', 'くん', 'ちゃん', ''].forEach(function(hn) { t = t.split(n + hn).join(''); }); });
+    t = t.replace(/^[\s・\/\-_,、:：]+|[\s・\/\-_,、:：]+$/g, '');
+  }
+  var k = evKindOf(e);
+  if (k && k !== 'その他' && evGuessKind(t) !== k) t = k + (t ? '・' + t : '');
+  if (!t) t = String((e && e.title) || '') || '(無題)';
+  if (e && e.asan) t += '（A:' + e.asan + '）';
+  return t;
+}
+function _evSelfName() { return (currentUser && String(currentUser.name || '').trim()) || '自分'; }
+// Aさんの候補：自分＋過去に入れた名前（よく使う順）
+function _evAsanRecent() {
+  var cnt = {}, self = _evSelfName();
+  var add = function(n, w) { n = String(n || '').trim(); if (!n || n === self || n === '自分') return; cnt[n] = (cnt[n] || 0) + w; };
+  (state.events || []).forEach(function(e) { if (e && e.asan) add(e.asan, 3); });
+  (state.members || []).forEach(function(m) { if (m.aSan) add(m.aSan, 1); (m.traineeHistory || []).forEach(function(h) { if (h && h.aSan) add(h.aSan, 1); }); });
+  return Object.keys(cnt).sort(function(a, b) { return cnt[b] - cnt[a]; }).slice(0, 8);
+}
+function evKindRender() {
+  var box = document.getElementById('evKindChips');
+  if (!box) return;
+  box.innerHTML = EV_KINDS.map(function(k) {
+    return '<div class="rb' + (_evKind === k ? ' sel' : '') + '" onclick="evKindPick(\'' + k + '\')">' + evEsc(k) + '</div>';
+  }).join('');
+}
+function evKindPick(k) { _evKindManual = true; _evKind = (_evKind === k) ? '' : k; evKindRender(); }
+function evKindAuto() {
+  if (_evKindManual) return;
+  var ti = document.getElementById('evTitle');
+  _evKind = evGuessKind(ti ? ti.value : '');
+  evKindRender();
+}
+function evAsanRender() {
+  var box = document.getElementById('evAsanChips'), inp = document.getElementById('evAsan');
+  if (inp && inp.value !== _evAsan) inp.value = _evAsan;
+  if (!box) return;
+  var self = _evSelfName();
+  var list = [{ v: self, lb: '自分' }].concat(_evAsanRecent().map(function(n) { return { v: n, lb: n }; }));
+  box.innerHTML = list.map(function(o) {
+    return '<div class="rb' + (_evAsan === o.v || (!_evAsan && o.lb === '自分') ? ' sel' : '') + '" onclick="evAsanPick(this)" data-v="' + evEsc(o.v) + '">' + evEsc(o.lb) + '</div>';
+  }).join('');
+}
+function evAsanPick(el) { _evAsan = el.getAttribute('data-v') || ''; evAsanRender(); }
+function evAsanInput(v) {
+  _evAsan = String(v || '');
+  var box = document.getElementById('evAsanChips');
+  if (box) [].forEach.call(box.children, function(c) { c.classList.toggle('sel', c.getAttribute('data-v') === _evAsan.trim() || (!_evAsan.trim() && c.textContent === '自分')); });
+}
 function updateEvMemberDisplay() {
   var _ssRow = document.getElementById('evSelfShowRow');
   if (_ssRow) _ssRow.style.display = _evMemberIds.length ? '' : 'none'; // v361
+  // v545: 種類・Aさんはメンバーを選んだ時だけ
+  var _kr = document.getElementById('evKindRow'), _ar = document.getElementById('evAsanRow');
+  if (_kr) _kr.style.display = _evMemberIds.length ? '' : 'none';
+  if (_ar) _ar.style.display = _evMemberIds.length ? '' : 'none';
+  if (_evMemberIds.length) { evKindRender(); evAsanRender(); }
   var el = document.getElementById('evMemberNames');
   if (!el) return;
   if (!_evMemberIds.length) { el.textContent = '（なし）'; el.style.color = 'var(--text-dim)'; return; }
@@ -23990,7 +24087,8 @@ function _evCreateSeries(base, rep, untilYmd) {
       id: genEventId() + '_' + count, seriesId: sid, done: false,
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       type: base.type, title: base.title, date: evYmd(cur), time: base.time, endTime: base.endTime || '',
-      memberId: base.memberId, categoryId: base.categoryId, priority: base.priority,
+      memberId: base.memberId, memberIds: (base.memberIds || []).slice(), selfShow: base.selfShow, kind: base.kind || '', asan: base.asan || '', // v545
+      categoryId: base.categoryId, priority: base.priority,
       memo: base.memo, remindBefore: base.remindBefore,
       color: base.color || '', place: base.place || ''
     };
@@ -24585,6 +24683,8 @@ function evTplPick(id) {
   var newTitle = String(t.name || '').replace(/\{name\}/g, evTplMemberName()); // v433: テンプレ名がタイトル
   if (titleEl && (!titleEl.value || titleEl.value === _evTplTitleAuto)) titleEl.value = newTitle; // 手入力は尊重
   _evTplTitleAuto = newTitle;
+  evKindAuto(); // v545: 種類をタイトルから
+  if (t.asan) { _evAsan = t.asan; evAsanRender(); } // v545: テンプレの「いつものAさん」
   if (t.allDay) evToggleAllDay(true); // v404: 終日テンプレ
   else if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
   // v409: ユニオン共有テンプレ→共有範囲トグルを自動セット（管理者・新規予定のみ。保存時に通常の確認が出る）
@@ -24607,6 +24707,7 @@ function evTplOnMemberChange() {
   var newTitle = String(_evTplSel.name || '').replace(/\{name\}/g, evTplMemberName());
   if (!titleEl.value || titleEl.value === _evTplTitleAuto) titleEl.value = newTitle;
   _evTplTitleAuto = newTitle;
+  evKindAuto(); // v545
 }
 // v314: Lifebear式「作成」＝今の入力内容を初期値にしたテンプレ作成フォームを開く
 function evTplCreateFromForm() {
@@ -24728,6 +24829,7 @@ function openEvTplEdit(id) {
       + '<span id="evtCatName" style="flex:1">' + evEsc(catNow ? catNow.name : '未分類') + '</span>'
       + '<span style="color:var(--text-dim)">▾</span></div>')
     + fld('メモの既定（任意）', '<input class="fi" id="evtF_memo" value="' + evEsc(t ? (t.memo || '') : '') + '">')
+    + fld('いつものAさん（任意・関連メンバーを選んだ時）', '<input class="fi" id="evtF_asan" placeholder="空欄＝自分" value="' + evEsc(t ? (t.asan || '') : '') + '">') // v545
     + '<div class="btn-row">'
     + '<button class="btn-c" onclick="closeEvTplEdit(true)">キャンセル</button>'
     + (isEdit ? '<button class="btn-d" onclick="deleteEvTplForm(\'' + evEsc(t.id) + '\')">削除</button>' : '')
@@ -24807,6 +24909,7 @@ function saveEvTplForm(id) {
   var _stEl = document.getElementById('evtF_stage');
   if (_stEl) t.stage = _stEl.value || ''; // v347: 対応ステージのUIは廃止（既存テンプレの値は維持）
   t.memo = ((document.getElementById('evtF_memo')||{}).value || '').trim();
+  t.asan = ((document.getElementById('evtF_asan')||{}).value || '').trim(); // v545
   // v347: 色分けはカテゴリで統一（選んだカテゴリをそのまま保存）
   var _oldCat9 = t.categoryId || '';
   t.categoryId = window._evtCatSel || '';
@@ -24961,6 +25064,12 @@ function openEventModal(id, presetMember, presetDate, forceType) {
     ? ((e.memberIds && e.memberIds.length) ? e.memberIds.slice() : (e.memberId ? [e.memberId] : []))
     : (presetMember ? [presetMember] : []);
   selEvSelfShow(e ? (e.selfShow !== false) : !presetMember); // v468: 予定タブ起点=「自分にも表示」既定 / MAP（メンバーカード）起点=「メンバー専用」既定。旧データは表示扱い
+  // v545: 種類（未設定ならタイトルから自動）・Aさん（新規は自分）
+  _evKind = e ? (e.kind || '') : ''; _evKindManual = !!(e && e.kind);
+  _evAsan = e ? (e.asan || '') : _evSelfName();
+  var _tiK = document.getElementById('evTitle');
+  if (_tiK && !_tiK._gmKindHook) { _tiK._gmKindHook = true; _tiK.addEventListener('input', evKindAuto); }
+  if (!_evKindManual) _evKind = evGuessKind(e ? e.title : '');
   updateEvMemberDisplay();
   // CAL-3: サブタスクを編集用にコピー（保存するまで元データは変えない）
   _evSubs = (e && e.subtasks ? e.subtasks : []).map(function(s){ return { id: s.id, t: s.t, done: !!s.done }; });
@@ -25059,6 +25168,9 @@ function _saveEventBody() {
   e.memberIds = _evMemberIds.slice(); // v348: 複数メンバー
   e.memberId = _evMemberIds[0] || '';  // 互換（実績連動・既存表示用の代表1人）
   e.selfShow = _evMemberIds.length ? (_evSelfShow === true) : ''; // v361: メンバー無しなら区分なし
+  // v545: 種類・Aさん（Aさんはメンバーを選んだ時だけ。空欄＝自分）
+  e.kind = _evKindManual ? (_evKind || '') : (_evKind || evGuessKind(title));
+  e.asan = _evMemberIds.length ? (String(_evAsan || '').trim() || _evSelfName()) : '';
   e.categoryId = _evCategoryId || '';
   // v329: 色は保存時点のカテゴリ色を予定自体に焼き付ける（後からカテゴリ/テンプレの色を変えても既存の予定の色は変わらない）
   e.color = '';
@@ -25102,6 +25214,7 @@ function _saveEventBody() {
         if (x.seriesId === e.seriesId && x.id !== e.id && (x.date || '') >= (e.date || '')) {
           x.title = e.title; x.time = e.time; x.endTime = e.endTime;
           x.categoryId = e.categoryId; x.memberId = e.memberId;
+          x.memberIds = (e.memberIds || []).slice(); x.selfShow = e.selfShow; x.kind = e.kind || ''; x.asan = e.asan || ''; // v545
           x.memo = e.memo; x.remindBefore = e.remindBefore;
           x.priority = e.priority; x.allDay = e.allDay;
           x.updatedAt = e.updatedAt || new Date().toISOString();
@@ -26447,9 +26560,11 @@ function fsLoadSharedMap(ownerUid) {
   var p2 = fsGet('maps/' + ownerUid + '/months/' + month + '_ideal');
   var p3 = fsGet('maps/' + ownerUid + '/stats/' + month);
   var left = 3, failed = false;
+  var _stale = function() { return viewingOwnerUid !== ownerUid || state.currentMonth !== month; }; // v544: 読込中に月・MAPを切り替えた
   function done() {
     left--;
     if (left > 0) return;
+    if (_stale()) return;
     window._keepSpinner = false;
     if (failed) { _hideSwitching(); toast('読み込みエラー。もう一度お試しください'); return; }
     _mergeSnap = null; // マージ基準を再初期化（共有MAP読込）
@@ -26470,12 +26585,12 @@ function fsLoadSharedMap(ownerUid) {
       }
     }, 900);
   }
-  p1.then(function(data) { state.members = (data && data.members) ? data.members : []; done(); })
+  p1.then(function(data) { if (!_stale()) state.members = (data && data.members) ? data.members : []; done(); })
     .catch(function(e) { failed = true; console.error('shared map load error:', e); done(); });
-  p2.then(function(data) { state.idealMembers = (data && data.members) ? data.members : []; done(); })
+  p2.then(function(data) { if (!_stale()) state.idealMembers = (data && data.members) ? data.members : []; done(); })
     .catch(function() { done(); });
   p3.then(function(data) {
-    if (data) {
+    if (data && !_stale()) {
       state.stats = data.stats || getDefaultStats();
       state.commission = data.commission || getDefaultCommission();
       state.freshData = data.freshData || {};
@@ -27284,6 +27399,8 @@ function fsLoadFromFirestore(uid) {
     return p3;
   }).then(function(data) {
     loaded.stats = data;
+    // v544: 読み込み中に別の月・共有MAPへ切り替えていたら、古い結果で上書きしない
+    if (state.currentMonth !== month || viewingOwnerUid) return;
 
     // 現状MAPメンバー
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
@@ -27331,6 +27448,7 @@ function fsLoadFromFirestore(uid) {
     } catch(eSg) {}
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
+    if (state.currentMonth !== month || viewingOwnerUid) return; // v544
     state.members      = [];
     state.idealMembers = [];
     state.stats        = getDefaultStats();
