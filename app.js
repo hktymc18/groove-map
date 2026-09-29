@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v548';
+var APP_JS_VERSION = 'v549';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v548';
+  var DATA_VERSION = 'v549';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v549', d:'2026-09-29', items:['🗓 予定の入力画面：詳細を開く前は保存ボタンまでスクロールなしで表示（PCはカテゴリと関連メンバーを横並び）。保存・キャンセルは常に下に固定','🔤 今月の行動量：今週の件数は「実施・予定」（今週に入っている予定と実施済みの合計）、月の残りは「これからの予定」と表記'] },
   { v:'v548', d:'2026-09-29', items:['🧩 PLANのデータを1本化：旧GOAL画面の行事（RRR TRIPなど）をPLANのマイルストーンに移しました（絵文字もそのまま）。月のフロント目標は「理想MAPで新規フロントを組んだ月はその人数、それ以外は月の目標（横線のF・表・右の入力は同じ値）」の1つのルールで、横線・タイル・行動量・動員計画・ホームのコーチがそろいます','📅 CT・FT/マケ・PG・DLRの実績をカレンダーから自動カウント：種類の付いた予定は日付が来たら、タスクは完了で1件（関連メンバーの人数分）。クイック記録の手入力分も足します（9月までは二重にならないよう多い方）','🗓 「今月のファネル」→「今月の行動量」：月の必要数・実績・残りの予定に加え、今週の必要件数と予定件数・あと何件を表示。「＋予定」で種類を入れた予定の入力が開きます'] },
   { v:'v547', d:'2026-09-29', items:['🎏 PLANのマイルストーン：複数月にまたがるものは、対象の月の幅まで帯を伸ばして表示（単月の旗の上の段・重なる時は別の段）','⚡ マイルストーンや行事の旗（RRR TRIPなど）を編集・削除したら、ブラウザの更新なしですぐ反映','🔢 横線の月をクリック→「この月のフロント目標（F）」をマイルストーン無しでも入れられるように（空欄で消去）'] },
   { v:'v546', d:'2026-09-29', items:['📐 PLAN（PC）をスクロールなしで1画面に：目標月収・タイトル・期日・スローガンの文字を少し小さくし、BB換算・夢100は目標のすぐ下（月収の下・タイトルの下）に。マイルストーンは「現在地」とフロント目標（F）を1行にまとめ、カードの余白も詰めました。ノートPCの幅でも「やること」の5枚が1列に並びます'] },
@@ -14550,10 +14551,10 @@ function _p2ActRow(ym, key, kind, lb, need) {
   var ok = need && done >= need;
   return '<div class="p2a-row' + (ok ? ' ok' : '') + '">'
     + '<div class="p2a-lb">' + lb + '</div>'
-    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + (planned ? '<span class="p2a-pl">＋予定' + planned + '</span>' : '') + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + (planned ? '<span class="p2a-pl">＋これからの予定' + planned + '</span>' : '') + '</div>'
     + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
     + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
-        : (need ? '今週 <b>' + wNeed + '</b>件 ・ 予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '予定 <b>' + wk + '</b>件'))
+        : (need ? '今週 <b>' + wNeed + '</b>件 ・ 実施・予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '今週の実施・予定 <b>' + wk + '</b>件')) // v549: 今週の予定件数は実施済みも含むので表記を明確に
     + '</div>'
     + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の予定をカレンダーに入れる">＋予定</span>'
     + '</div>';
@@ -24524,7 +24525,7 @@ function evToggleAdv(force) {
   if (w) w.style.display = _evAdvOpen ? '' : 'none';
   if (t) {
     t.classList.toggle('open', _evAdvOpen);
-    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（メンバー・優先度・メモ・場所）';
+    t.textContent = _evAdvOpen ? '▴ 詳細を閉じる' : '▾ 詳細（優先度・メモ・場所）';
   }
 }
 
