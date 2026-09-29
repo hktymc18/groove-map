@@ -2482,6 +2482,19 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2-btn.pri{background:var(--accent);border-color:var(--accent);color:#04120e}
 .p2-prog{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:4px}
 .p2-prog>i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+/* v548: 今月の行動量（今週やること） */
+.p2a-row{display:grid;grid-template-columns:150px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.p2a-row:last-of-type{border-bottom:none}
+.p2a-lb{font-size:12.5px;font-weight:800}
+.p2a-n{font-size:12px;color:var(--text-mid);display:flex;align-items:baseline;gap:2px} .p2a-n b{font-size:16px;color:var(--text);font-family:Inter,sans-serif}
+.p2a-pl{margin-left:8px;font-size:11px;color:var(--text-dim)}
+.p2a-wk{font-size:12px;color:var(--text-mid);white-space:nowrap} .p2a-wk b{color:var(--text);font-family:Inter,sans-serif}
+.p2a-sh{margin-left:6px;color:var(--go-rose,#FF5D73);font-weight:800} .p2a-ok{margin-left:4px;color:var(--accent);font-weight:800}
+.p2a-row.ok .p2-prog>i{background:var(--accent)}
+.p2a-add{font-size:12px;font-weight:800;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 50%,var(--border));border-radius:9px;padding:5px 10px;cursor:pointer;white-space:nowrap}
+.p2a-add:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+@media(max-width:767px){.p2a-row{grid-template-columns:1fr auto;row-gap:4px}.p2a-mo{grid-column:1/-1;order:3}.p2a-wk{order:4}.p2a-add{order:2}}
+.p2r-flag b.em{font-weight:400;font-size:12px;line-height:1}
 .p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
 .p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none;animation:p2bIn .35s ease}
 @keyframes p2bIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -2738,7 +2751,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v547</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v548</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3676,7 +3689,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v547';</script>
-<script src="app.js?v=v547"></script>
+<script>window.GM_EXPECT_JS='v548';</script>
+<script src="app.js?v=v548"></script>
 </body>
 </html>
