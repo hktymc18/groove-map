@@ -2432,6 +2432,10 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2r-flag{display:inline-flex;align-items:center;gap:5px;max-width:100%;background:var(--surface2);border:1.5px solid var(--border2);border-radius:14px;padding:4px 10px;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
 .p2r-flag i{width:8px;height:8px;border-radius:50%;flex:none} .p2r-flag small{font-size:10px;color:var(--text-dim);font-weight:600}
 .p2r-flag.peak{border-color:var(--accent);color:var(--accent)} .p2r-flag.un{border-color:var(--go-sky)}
+.p2r-blayer{position:absolute;left:0;right:0;top:0;height:var(--fh,100px);pointer-events:none} /* v547: 複数月の帯 */
+.p2r-band{position:absolute;display:flex;pointer-events:none}
+.p2r-band .p2r-flag.span{pointer-events:auto;width:100%;max-width:none;justify-content:flex-start;cursor:pointer}
+.p2r-flag.span small{margin-left:auto;padding-left:6px}
 .p2r-dot{width:12px;height:12px;border-radius:50%;background:var(--surface3);border:3px solid var(--surface);margin-top:4px;z-index:1;box-sizing:content-box}
 .p2r-col.done .p2r-dot{background:var(--accent)}
 .p2r-col.cur .p2r-dot,.p2r-col.loi .p2r-dot,.p2r-col.peak .p2r-dot{width:18px;height:18px;margin-top:1px}
@@ -2734,7 +2738,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v546</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v547</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3672,7 +3676,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v546';</script>
-<script src="app.js?v=v546"></script>
+<script>window.GM_EXPECT_JS='v547';</script>
+<script src="app.js?v=v547"></script>
 </body>
 </html>

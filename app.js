@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v546';
+var APP_JS_VERSION = 'v547';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v546';
+  var DATA_VERSION = 'v547';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v547', d:'2026-09-29', items:['🎏 PLANのマイルストーン：複数月にまたがるものは、対象の月の幅まで帯を伸ばして表示（単月の旗の上の段・重なる時は別の段）','⚡ マイルストーンや行事の旗（RRR TRIPなど）を編集・削除したら、ブラウザの更新なしですぐ反映','🔢 横線の月をクリック→「この月のフロント目標（F）」をマイルストーン無しでも入れられるように（空欄で消去）'] },
   { v:'v546', d:'2026-09-29', items:['📐 PLAN（PC）をスクロールなしで1画面に：目標月収・タイトル・期日・スローガンの文字を少し小さくし、BB換算・夢100は目標のすぐ下（月収の下・タイトルの下）に。マイルストーンは「現在地」とフロント目標（F）を1行にまとめ、カードの余白も詰めました。ノートPCの幅でも「やること」の5枚が1列に並びます'] },
   { v:'v545', d:'2026-09-29', items:['🅰️ カレンダーの予定に「種類」と「Aさん」を追加（関連メンバーを選んだ時に表示）：種類はマケ・PG・DLR・EXP・PA・面談・BPC・CO・CT・FT・OL・その他の共通リストで、タイトル（例「匡哉PG」）から自動で選ばれます（全角・小文字もOK。違えばタップで変更）。Aさんは最初「自分」、過去に入れた名前はワンタップ','🗺 MAPのメンバー側の予定は「PG（A:山内）」のように種類＋Aさんで表示（タイトルに入れた本人の名前は外します）。自分のカレンダーはタイトルそのまま＋「A:◯◯」','📋 テンプレートに「いつものAさん」を追加（空欄＝自分）'] },
   { v:'v544', d:'2026-09-29', items:['🗓 MAPのデータが無い月を開くと、直前に開いていたMAPが表示されたままになる不具合を修正（PCのツリー・運動会MAP）：データの無い月は何も表示しません','⏳ 月を切り替えた時は読み込みが終わるまで「読み込み中…」を表示（前の月のMAPを新しい月のように見せない）。月を続けて切り替えても、前に選んだ月のデータで上書きされません','🔗 共有MAPを見ている時に月を切り替えると自分のMAPが表示されていたのを修正：相手のMAPの同じ月を表示します'] },
@@ -13240,6 +13241,8 @@ function _glGoalTasks(monthId){
 function renderGoals(){
   // 今月タブ表示中にKPI等を操作した場合も反映（各setterはrenderGoalsを呼ぶ）
   if(currentView==='month' && typeof renderMonth==='function') renderMonth();
+  // v547: PLANの旗（旧GOAL画面の行事＝RRR TRIPなど）を編集・削除した時もPLANへ即反映（更新ボタン不要に）
+  if(currentView==='plan' && typeof renderPlan==='function' && !window._glInPlanRender){ window._glInPlanRender=true; try { renderPlan(); } finally { window._glInPlanRender=false; } }
   var el=document.getElementById('view-goals'); if(!el) return;
   if(!state.goals) state.goals=_glDefault();
   if(!state.goals.year) state.goals.year=(new Date()).getFullYear();
@@ -14217,9 +14220,17 @@ function _p2PcRailHtml() {
   var loi = dl ? _p2YmAdd(dl, -(parseInt(p.pipeline, 10) || 3)) : '';
   var flags = {}; // ym -> [{html}]
   var addF = function(ym, html) { (flags[ym] = flags[ym] || []).push(html); };
+  var bands = []; // v547: 複数月にまたがるマイルストーン（対象月の幅まで伸ばす帯）
   (rm.ms || []).forEach(function(m) {
     if (!m || !m.ym) return;
-    addF(m.ym, '<span class="p2r-flag" style="border-color:' + (m.color || P2RM_COLORS[0]) + '" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><i style="background:' + (m.color || P2RM_COLORS[0]) + '"></i>' + evEsc(m.t) + (m.ym2 && m.ym2 !== m.ym ? '<small>〜' + parseInt(m.ym2.slice(5), 10) + '月</small>' : '') + '</span>');
+    var mc = m.color || P2RM_COLORS[0];
+    if (m.ym2 && m.ym2 > m.ym) {
+      var s0 = Math.max(0, _p2YmDiff(start, m.ym)), e0 = Math.min(n - 1, _p2YmDiff(start, m.ym2));
+      if (e0 < 0 || s0 > n - 1 || e0 < s0) return;
+      bands.push({ s: s0, e: e0, html: '<span class="p2r-flag span" style="border-color:' + mc + ';background:color-mix(in srgb,' + mc + ' 16%,var(--surface2))" title="' + evEsc(m.t) + '（' + _p2YmLabel(m.ym) + '〜' + _p2YmLabel(m.ym2) + '）" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><i style="background:' + mc + '"></i>' + evEsc(m.t) + '<small>〜' + parseInt(m.ym2.slice(5), 10) + '月</small></span>' });
+      return;
+    }
+    addF(m.ym, '<span class="p2r-flag" style="border-color:' + mc + '" onclick="event.stopPropagation();p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><i style="background:' + mc + '"></i>' + evEsc(m.t) + '</span>');
   });
   // 旧GOAL画面の旗（GOT100など・今年の月）
   var cy = new Date().getFullYear();
@@ -14233,7 +14244,20 @@ function _p2PcRailHtml() {
   if (dl) addF(dl, '<span class="p2r-flag peak">🏔 ' + evEsc(p.title ? _p2TitleEn(p.title) : '頂上') + '</span>');
   var ci = yms.indexOf(cur);
   var maxF = 0; yms.forEach(function(ym) { maxF = Math.max(maxF, Math.min(3, (flags[ym] || []).length)); });
+  // v547: 帯は、かかる月の単月の旗より上の段へ（帯どうしが重なる時はさらに上の段）
+  var lanesUsed = [], bandH = '';
+  bands.sort(function(a, b) { return a.s - b.s || (b.e - b.s) - (a.e - a.s); }).forEach(function(b) {
+    var base = 0;
+    for (var k = b.s; k <= b.e; k++) base = Math.max(base, Math.min(3, (flags[yms[k]] || []).length));
+    var L = base;
+    while ((lanesUsed[L] || []).some(function(r) { return !(b.e < r[0] || b.s > r[1]); })) L++;
+    (lanesUsed[L] = lanesUsed[L] || []).push([b.s, b.e]);
+    b.lane = L; maxF = Math.max(maxF, L + 1);
+  });
   var fh = Math.max(1, maxF) * 27 + 2; // 旗の段数に合わせた高さ（空き地を作らない）
+  bands.forEach(function(b) {
+    bandH += '<div class="p2r-band" style="left:calc(' + (b.s / n * 100).toFixed(3) + '% + 4px);width:calc(' + ((b.e - b.s + 1) / n * 100).toFixed(3) + '% - 8px);bottom:' + (b.lane * 27) + 'px">' + b.html + '</div>';
+  });
   var cols = yms.map(function(ym, k) {
     var isCur = ym === cur, isLoi = ym === loi, isPeak = ym === dl, done = k <= ci;
     var f = _p2RmFront(rm, ym);
@@ -14250,7 +14274,8 @@ function _p2PcRailHtml() {
     + '<span class="p2r-legend">点をクリックで追加・F＝その月のフロント目標</span>'
     + '<span class="p2-btn" style="margin:0;padding:5px 12px" onclick="p2RmOpen()">表で編集</span></div>'
     + '<div class="p2r-scroll"><div class="p2r-tl" style="--fh:' + fh + 'px;min-width:' + (n > 14 ? n * 78 : 0) + 'px;grid-template-columns:repeat(' + n + ',1fr)">'
-    + '<div class="p2r-track"></div><div class="p2r-fill" style="width:' + fill.toFixed(2) + '%"></div>' + cols + '</div></div></div>';
+    + '<div class="p2r-track"></div><div class="p2r-fill" style="width:' + fill.toFixed(2) + '%"></div>' + cols
+    + (bandH ? '<div class="p2r-blayer">' + bandH + '</div>' : '') + '</div></div></div>';
 }
 // ③左 今月やること（目標と実績のタイル）
 function _p2PcTilesHtml(ym) {
@@ -15702,10 +15727,14 @@ function p2RmMsForm(ym, msId) {
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2RmMsOv'; ov.style.zIndex = '660';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2RmMsOv'); };
   ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🚩 ' + _p2YmLabel(ym) + ' のマイルストーン</div></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🚩 ' + _p2YmLabel(ym) + (editing ? ' のマイルストーン' : '') + '</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'p2RmMsOv\')">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
-    + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
+    // v547: この月のフロント目標（F）はマイルストーン無しでも入れられる
+    + '<div class="p2-meta">この月のフロント目標（F）</div>'
+    + '<input class="fi" id="p2rmF" type="number" inputmode="numeric" min="0" placeholder="例：4（空欄＝なし）" value="' + _p2RmFront(rm, ym) + '" onfocus="edSelAll(this)" style="margin:4px 0 12px;max-width:180px">'
+    + '<div class="p2-meta">マイルストーン' + (editing ? '' : '（任意）') + '</div>'
+    + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin:4px 0 6px">'
     + '<input class="fi" id="p2rmS" placeholder="補足（例：60人タッチ / LOIカウント）任意" value="' + evEsc(editing && editing.sub ? editing.sub : '') + '" style="margin-bottom:8px">'
     + '<div class="p2-meta">〜いつまで（複数月にまたがる場合）</div>'
     + '<select class="fi" id="p2rmY2" style="margin:4px 0 8px"><option value="">この月だけ（1ヶ月）</option>'
@@ -15715,7 +15744,7 @@ function p2RmMsForm(ym, msId) {
     + P2RM_COLORS.map(function(c) { return '<span data-c="' + c + '" onclick="p2RmMsCol(\'' + c + '\')" style="width:30px;height:30px;border-radius:9px;background:' + c + ';cursor:pointer;border:2.5px solid ' + (c === col ? 'var(--text)' : 'transparent') + '"></span>'; }).join('')
     + '</div>'
     + '<div style="display:flex;gap:6px">'
-    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2RmMsSave(\'' + ym + '\',\'' + (msId || '') + '\')">' + (editing ? '✔ 更新' : '＋ 追加') + '</span>'
+    + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2RmMsSave(\'' + ym + '\',\'' + (msId || '') + '\')">' + (editing ? '✔ 更新' : '✔ 保存') + '</span>'
     + (editing ? '<span class="p2-btn" style="margin:0;color:var(--red)" onclick="p2RmMsDel(\'' + msId + '\')">' + icn('trash') + ' 削除</span>' : '')
     + '</div></div></div>';
   document.body.appendChild(ov);
@@ -15729,9 +15758,30 @@ function p2RmMsCol(c) {
 }
 function p2RmMsSave(ym, msId) {
   var t = ((document.getElementById('p2rmT') || {}).value || '').trim();
-  if (!t) { toast('タイトルを入力してください'); return; }
-  var sub = ((document.getElementById('p2rmS') || {}).value || '').trim();
   var rm = _p2Rm();
+  // v547: フロント目標（F）だけの保存もOK
+  var fEl = document.getElementById('p2rmF'), fChanged = false;
+  if (fEl) {
+    var fRaw = String(fEl.value || '').trim();
+    var fNew = fRaw === '' ? '' : Math.max(0, parseInt(fRaw.replace(/[^0-9]/g, ''), 10) || 0);
+    if (String(fNew) !== String(_p2RmFront(rm, ym))) {
+      if (!rm.rows.front) rm.rows.front = {};
+      rm.rows.front[ym] = fNew;
+      var mm = _p2M(ym);
+      if (fNew !== '') mm.front = fNew; else if (!mm.declared) mm.front = ''; // 月の目標（下書き）へ連動。確定済みの月の目標は消さない
+      fChanged = true;
+    }
+  }
+  if (!t) {
+    if (msId) { toast('マイルストーンの名前を入力してください（消す時は「削除」）'); return; }
+    if (!fChanged) { toast('フロント目標かマイルストーンを入力してください'); return; }
+    saveGoals();
+    _p2SheetClose('p2RmMsOv');
+    _p2RmRender();
+    if (currentView === 'plan') renderPlan();
+    return;
+  }
+  var sub = ((document.getElementById('p2rmS') || {}).value || '').trim();
   if (msId) {
     var y2v = ((document.getElementById('p2rmY2') || {}).value || '');
     for (var i = 0; i < rm.ms.length; i++) { if (rm.ms[i].id === msId) { rm.ms[i].t = t; rm.ms[i].sub = sub; rm.ms[i].color = window._p2RmCol; if (y2v && y2v > ym) rm.ms[i].ym2 = y2v; else delete rm.ms[i].ym2; break; } }
