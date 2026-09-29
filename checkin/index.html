@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>BASE CHECK-IN</title>
+<!-- ロゴ: ブックマーク用ファビコンとiPhone「ホーム画面に追加」用アイコン -->
+<link rel="icon" type="image/png" sizes="32x32" href="./icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
+<meta name="apple-mobile-web-app-title" content="BASE CHECK-IN">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -626,10 +631,11 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div id="trPaneReg">
         <label>氏名</label><input type="text" id="trName" autocomplete="off">
+        <label>ふりがな（任意）</label><input type="text" id="trKana" autocomplete="off">
+        <label>紹介者（任意）</label><input type="text" id="trRef" autocomplete="off">
         <label>UPルビー</label>
         <select id="trUp"></select>
         <input type="text" id="trUpFree" class="hide" placeholder="UPルビー名を入力" style="margin-top:6px;">
-        <label>ふりがな（任意）</label><input type="text" id="trKana" autocomplete="off">
         <label>性別（任意）</label>
         <div class="trsex">
           <button data-sex="" class="on">未設定</button><button data-sex="m">男</button><button data-sex="f">女</button>
@@ -2187,12 +2193,18 @@ function memberForm(m){
           ? '<option value="' + esc(m.grade) + '" selected>' + esc(m.grade) + '</option>' : '')
       + '</select>'
     + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
+    + '<label>紹介者（任意）</label><input type="text" id="mfRef" value="' + esc(m.referrer || '') + '">'
     + '<div class="chkrow" style="margin-top:10px;"><input type="checkbox" id="mfTrainee"' + (m.trainee ? ' checked' : '') + '>'
     + '<label for="mfTrainee" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 研修生（チュートリアル対象）</label></div>'
     + (m.trainee ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを外して保存すると正規メンバーに昇格します（番号・会員証・履歴はそのまま引き継ぎ）。</p>' : '')
+    + ((!isNew && (m.trainee || m.coSheet))
+      ? '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button id="mfCoSheet">📝 面談シート' + (m.coSheet ? ' ✓' : '') + '</button></div>'
+      : '')
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
   $('mfCancel').onclick = closeModal;
+  var mcs = $('mfCoSheet');
+  if(mcs) mcs.onclick = function(){ closeModal(); coSheetModal(m, function(){ memberForm(m); }); };
   // オーナーが所属ユニオンを切り替えたら、そのユニオンの名簿で採番・系列候補を出し直す
   var us = $('mfUnion');
   if(us && isNew) us.onchange = function(){
@@ -2213,6 +2225,7 @@ function memberForm(m){
       sex: $('mfSex').value,
       grade: $('mfGrade').value,
       kana: $('mfKana').value.trim(),
+      referrer: $('mfRef').value.trim(),
       trainee: $('mfTrainee').checked,
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
@@ -3268,6 +3281,7 @@ $('trGo').onclick = function(){
   var data = {
     no: no, union: gUnion, name: name, group: up,
     kana: $('trKana').value.trim(), sex: gTrSex,
+    referrer: $('trRef').value.trim(),
     grade: '', active: true, trainee: true, trainings: {},
     regBy: gUser.uid, regByName: gProf.name || '',
     createdAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp()
@@ -3280,7 +3294,7 @@ $('trGo').onclick = function(){
       gTrMembers.push(data);
       gTrToday.unshift(data);
       gTrLast = data;
-      $('trName').value = ''; $('trKana').value = '';
+      $('trName').value = ''; $('trKana').value = ''; $('trRef').value = '';
       $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
       trRenderToday();
       trShowQr(data);
@@ -3350,30 +3364,63 @@ $('trToday').addEventListener('click', function(e){
 // 研修生一覧 → タップでチュートリアルのチェックリスト
 function trRenderList(){
   var el = $('trPaneList');
-  var ts = gTrMembers.filter(function(m){ return m.trainee && m.active !== false; });
+  // 一覧に出るのは自分が登録した研修生だけ（管理者は全員）。
+  // 他の担当者が登録した研修生は、下の「番号で開く」からチェックリストだけ開ける
+  var seeAll = canEditUnion(gUnion);
+  var ts = gTrMembers.filter(function(m){
+    return m.trainee && m.active !== false && (seeAll || m.regBy === gUser.uid);
+  });
   ts.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
-  el.innerHTML = ts.length
-    ? ts.map(function(m, i){
-        var p = trMainProgress(m.trainings);
-        var bpc = m.trainings && m.trainings['BPC済み'];
-        return '<div data-tr="' + i + '" style="display:flex;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;">'
-          + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
-          + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '') + '</div></div>'
-          + (bpc ? '<span class="pill g">修了</span>' : '')
-          + '<span class="pill n">' + p + '/3</span>'
-          + '<span style="color:var(--sub);">›</span></div>';
-      }).join('')
-    : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">研修生はまだ登録されていません。</p>';
+  el.innerHTML =
+    '<div style="display:flex;gap:8px;margin:4px 0 6px;">'
+    + '<input type="text" id="trOpenNo" placeholder="番号で開く（例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000）" style="flex:1;min-width:0;">'
+    + '<button id="trOpenGo">開く</button></div>'
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、会員番号（QRカード記載）を入れると開けます。</p>')
+    + (ts.length
+      ? ts.map(function(m, i){
+          var p = trMainProgress(m.trainings);
+          var bpc = m.trainings && m.trainings['BPC済み'];
+          return '<div data-tr="' + i + '" style="display:flex;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;">'
+            + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
+            + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '')
+            + (m.referrer ? '・紹介: ' + esc(m.referrer) : '') + '</div></div>'
+            + (bpc ? '<span class="pill g">修了</span>' : '')
+            + '<span class="pill n">' + p + '/3</span>'
+            + '<span style="color:var(--sub);">›</span></div>';
+        }).join('')
+      : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">' + (seeAll ? '研修生はまだ登録されていません。' : 'あなたが登録した研修生はまだいません。') + '</p>');
   Array.prototype.forEach.call(el.querySelectorAll('[data-tr]'), function(row){
     row.onclick = function(){ trChecklist(ts[+row.getAttribute('data-tr')]); };
   });
+  var og = $('trOpenGo');
+  if(og) og.onclick = function(){
+    var no = $('trOpenNo').value
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+      .toUpperCase().replace(/\s/g, '').trim();
+    if(!no){ toast('番号を入力してください'); return; }
+    var hit = null;
+    gTrMembers.forEach(function(m){ if(m.no === no) hit = m; });
+    if(hit && hit.trainee && hit.active !== false){ $('trOpenNo').value = ''; trChecklist(hit); return; }
+    // 一覧の読込後に登録された分にも対応して最新を1件取得
+    db.collection('checkinMembers').doc(no).get().then(function(sn){
+      var m = sn.exists ? sn.data() : null;
+      if(m && m.trainee && m.active !== false && m.union === gUnion){
+        m.no = no; $('trOpenNo').value = ''; trChecklist(m);
+      } else {
+        toast('この番号の研修生が見つかりません（' + no + '）');
+      }
+    }).catch(function(){ toast('読み込みに失敗しました'); });
+  };
 }
 function trChecklist(m){
   var tr = m.trainings || {};
   function rowHtml(it){
     var r = tr[it.k];
-    return '<div style="display:flex;gap:8px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line);">'
+    return '<div style="display:flex;gap:8px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap;">'
       + '<b style="flex:1;font-size:15px;">' + esc(it.k) + (it.note ? '<span style="font-size:11px;color:var(--sub);">（' + esc(it.note) + '）</span>' : '') + '</b>'
+      + (it.k === 'CO'
+        ? '<button data-tsheet="1" style="padding:7px 10px;font-size:12.5px;">📝 面談シート' + (m.coSheet ? ' ✓' : '') + '</button>'
+        : '')
       + (r
         ? '<span style="font-size:12.5px;color:var(--green);font-weight:700;">✓ ' + esc(trDateShort(r.at)) + ' ' + esc(r.byName || '') + '</span>'
           + (r.by === gUser.uid || canEditUnion(gUnion)
@@ -3391,6 +3438,8 @@ function trChecklist(m){
     + '<div class="btns"><button id="tcClose">閉じる</button></div>', true);
   $('tcClose').onclick = closeModal;
   document.querySelector('.modal').addEventListener('click', function(e){
+    var sb = e.target.closest ? e.target.closest('button[data-tsheet]') : null;
+    if(sb){ closeModal(); coSheetModal(m, function(){ trChecklist(m); }); return; }
     var b = e.target.closest ? e.target.closest('button[data-tk]') : null;
     if(!b) return;
     var k = b.getAttribute('data-tk');
@@ -3403,6 +3452,116 @@ function trChecklist(m){
         .then(function(){ closeModal(); trChecklist(m); });
     }
   });
+}
+/* ── 📝 CO面談シート（ver.2.5）: 紙の面談シートをそのままデジタル化 ──
+   保存先は checkinMembers/{no}.coSheet（名簿マスターのみ）。電話番号・住所等の
+   個人情報を含むため、公開ページのスマホ会員証（cards）には一切ミラーしない */
+var CO_SHEET_VER = '2.5';
+var CO_SHEET_ITEMS = [
+  { g: '基本事項', q: 'ビジネスで得られる報酬は活動の結果によって変動するということを理解していますか？' },
+  { g: '基本事項', q: 'クーリングオフ制度を理解した上でショッピングメンバー登録およびブランドパートナー登録をしましたか？（契約をする予定ですか？）' },
+  { g: '基本事項', q: '下記の1〜3は重要項目です。理解した上で活動することに同意できますか？\n1）セールスコンペンセーションプラン\n2）概要書面・立場（ショッピングメンバー・ブランドパートナー）\n3）ルール（規約・特定商取引法や薬事法など関連法規）' },
+  { g: 'ビジネス活動について', q: 'ビジネスへの参加は自らの意思ですか？' },
+  { g: 'ビジネス活動について', q: 'ビジネス活動に対し家族の理解が得られなかった場合、自らの意思で活動していることを伝え誤解を解くことに専念できますか？' },
+  { g: 'ビジネス活動について', q: '"CLAVIS"のポジションを理解していますか？（CLAVISはより良い結果を望む方のために準備されたサポート環境です）' },
+  { g: 'ビジネス活動について', q: 'COM（情報配信サービス）の登録は任意であることを理解していますか？（希望者のみが利用するサポートツールで、オプトイン規制によるトラブルの防止や効率の良い活動をおこなうためのものです）' },
+  { g: 'ビジネス活動について', q: '紹介者とのトラブルはサポート環境の管理者に相談することに同意できますか？（匿名可能・管理者はプライバシーや個人情報保護を優先し相談に応じます）' },
+  { g: 'ビジネス活動について', q: 'いかなる理由があっても許可なく第三者に開示する行為（掲示板・ブログ・Twitter・Facebook・Instagram等全てのSNS含む）や録音録画は損害賠償の対象となることに同意できますか？（インプレッション内容・関係者の氏名などの個人情報は機密として取り扱われます）※東京地方裁判所を第一審の合意管轄裁判所とします' }
+];
+var CO_SHEET_PLEDGE = 'ビジネスの活動中ならびに終了後に起こりうる出来事は自分自身に帰属するもので、関係者に対し責任を転化するものではありません。ビジネスマナーを守り誠実に活動すると誓約します。';
+function coSheetModal(m, back){
+  var editing = !m.coSheet;   // 未記入なら入力モード、記入済みなら閲覧モードで開く
+  function goBack(){ closeModal(); if(back) back(); }
+  function render(){
+    var s = m.coSheet || {};
+    var checks = s.checks || {};
+    var body = '';
+    if(editing){
+      body += '<p style="font-size:12px;color:var(--sub);margin:0 0 4px;">面談シート ver.' + CO_SHEET_VER
+        + '　本人に確認しながらチェックしてください。<b>途中保存できます。</b></p>';
+      var lastG = '';
+      CO_SHEET_ITEMS.forEach(function(it, i){
+        if(it.g !== lastG){ body += '<label style="margin-top:12px;">' + esc(it.g) + '</label>'; lastG = it.g; }
+        body += '<div class="chkrow" style="align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);">'
+          + '<input type="checkbox" id="cos_' + i + '"' + (checks['c' + i] ? ' checked' : '') + ' style="margin-top:3px;flex:0 0 auto;">'
+          + '<label for="cos_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:13.5px;white-space:pre-line;">' + esc(it.q) + '</label></div>';
+      });
+      body += '<label style="margin-top:14px;">誓約</label>'
+        + '<div class="chkrow" style="align-items:flex-start;padding:8px 0;">'
+        + '<input type="checkbox" id="cosPledge"' + (s.pledge ? ' checked' : '') + ' style="margin-top:3px;flex:0 0 auto;">'
+        + '<label for="cosPledge" style="margin:0;font-weight:400;color:var(--ink);font-size:13.5px;">' + esc(CO_SHEET_PLEDGE) + '</label></div>'
+        + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>日付</label><input type="date" id="cosDate" value="' + esc(s.date || todayStr()) + '"></div>'
+        + '<div style="flex:1;min-width:0;"><label>署名（本人氏名）</label><input type="text" id="cosSign" value="' + esc(s.sign != null ? s.sign : (m.name || '')) + '"></div></div>'
+        + '<label>電話番号</label><input type="tel" id="cosPhone" value="' + esc(s.phone || '') + '">'
+        + '<label>住所または生年月日</label><input type="text" id="cosAddr" value="' + esc(s.addrBirth || '') + '">'
+        + '<label>紹介者</label><input type="text" id="cosRef" value="' + esc(s.referrer != null ? s.referrer : (m.referrer || '')) + '">'
+        + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>管理者</label><input type="text" id="cosMgr" value="' + esc(s.manager || '') + '"></div>'
+        + '<div style="flex:1;min-width:0;"><label>面談者</label><input type="text" id="cosIntv" value="' + esc(s.interviewer != null ? s.interviewer : ((gProf && gProf.name) || '')) + '"></div></div>'
+        + '<div class="btns"><button id="cosCancel">キャンセル</button><button class="primary" id="cosSave">保存</button></div>';
+    } else {
+      var nDone = 0;
+      CO_SHEET_ITEMS.forEach(function(it, i){ if(checks['c' + i]) nDone++; });
+      var left = (CO_SHEET_ITEMS.length - nDone) + (s.pledge ? 0 : 1);
+      body += '<p style="font-size:12.5px;margin:0 0 8px;">'
+        + (left === 0 ? '<span class="pill g">✓ 全項目チェック済み — COを受講済みにできます</span>'
+                      : '<span class="pill a">未チェック ' + left + '件</span>')
+        + '<span style="color:var(--sub);font-size:11.5px;margin-left:8px;">ver.' + esc(s.ver || CO_SHEET_VER) + '</span></p>';
+      var lastG2 = '';
+      CO_SHEET_ITEMS.forEach(function(it, i){
+        if(it.g !== lastG2){ body += '<label style="margin-top:8px;">' + esc(it.g) + '</label>'; lastG2 = it.g; }
+        body += '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">'
+          + (checks['c' + i]
+            ? '<span style="color:var(--green);font-weight:700;flex:0 0 auto;">✓</span>'
+            : '<span style="color:var(--accent);flex:0 0 auto;">□</span>')
+          + '<span style="white-space:pre-line;color:var(--ink);">' + esc(it.q) + '</span></div>';
+      });
+      body += '<div style="font-size:13px;padding:8px 0;border-bottom:1px solid var(--line);">'
+        + (s.pledge ? '<span style="color:var(--green);font-weight:700;">✓</span>' : '<span style="color:var(--accent);">□</span>')
+        + ' 誓約に同意（' + esc(CO_SHEET_PLEDGE.slice(0, 22)) + '…）</div>'
+        + '<div style="font-size:13px;line-height:2;margin-top:8px;">'
+        + '日付: <b>' + esc(s.date || '—') + '</b>　署名: <b>' + esc(s.sign || '—') + '</b><br>'
+        + '電話番号: ' + esc(s.phone || '—') + '<br>'
+        + '住所または生年月日: ' + esc(s.addrBirth || '—') + '<br>'
+        + '紹介者: ' + esc(s.referrer || '—') + '　管理者: ' + esc(s.manager || '—') + '　面談者: ' + esc(s.interviewer || '—') + '</div>'
+        + '<p style="font-size:11.5px;color:var(--sub);margin-top:8px;">記入: ' + esc(s.byName || '') + '　' + esc(s.atLocal || '') + '</p>'
+        + '<div class="btns"><button id="cosClose">閉じる</button><button class="primary" id="cosEdit">編集</button></div>';
+    }
+    modal('<h2>📝 面談シート — ' + esc(m.name || '') + '</h2>' + body, true);
+    var b;
+    if((b = $('cosCancel'))) b.onclick = goBack;
+    if((b = $('cosClose'))) b.onclick = goBack;
+    if((b = $('cosEdit'))) b.onclick = function(){ editing = true; render(); };
+    if((b = $('cosSave'))) b.onclick = function(){
+      var newChecks = {}, all = true;
+      CO_SHEET_ITEMS.forEach(function(it, i){
+        var v = !!($('cos_' + i) && $('cos_' + i).checked);
+        newChecks['c' + i] = v;
+        if(!v) all = false;
+      });
+      var sheet = {
+        ver: CO_SHEET_VER, checks: newChecks, pledge: !!$('cosPledge').checked,
+        date: $('cosDate').value, sign: $('cosSign').value.trim(),
+        phone: $('cosPhone').value.trim(), addrBirth: $('cosAddr').value.trim(),
+        referrer: $('cosRef').value.trim(), manager: $('cosMgr').value.trim(),
+        interviewer: $('cosIntv').value.trim(),
+        byName: (gProf && gProf.name) || '', byUid: (gUser && gUser.uid) || '',
+        atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now()
+      };
+      $('cosSave').disabled = true;
+      db.collection('checkinMembers').doc(m.no).update({ coSheet: sheet }).then(function(){
+        m.coSheet = sheet;
+        toast(all && sheet.pledge
+          ? '面談シートを保存しました（全項目チェック済み）'
+          : '面談シートを保存しました（未チェックの項目があります・あとから追記できます）');
+        editing = false;
+        render();
+      }).catch(function(e){
+        $('cosSave').disabled = false;
+        toast(permMsg(e, '面談シートの保存権限がありません（担当への任命を確認してください）'));
+      });
+    };
+  }
+  render();
 }
 // 記録は名簿（マスター）と会員証（表示用）の両方へ。取消は該当キーだけ削除
 function trWrite(m, k, rec){
@@ -3501,7 +3660,8 @@ function onlineModal(ev){
       + '<input type="text" id="olZoom" value="' + esc(ev.zoomUrl || '') + '" style="flex:1;min-width:170px;" placeholder="参加URL（https://…zoom.us/j/…）">'
       + '<input type="text" id="olZoomId" value="' + esc(fmtZoomId(ev.zoomId || '')) + '" style="width:140px;" placeholder="ミーティングID">'
       + '<input type="text" id="olZoomPw" value="' + esc(ev.zoomPw || '') + '" style="width:110px;" placeholder="パスコード">'
-      + '<button id="olZoomSave">保存</button></div>'
+      + '<button id="olZoomSave">保存</button>'
+      + '<button id="olZoomCopy" title="カメラ担当・ゲストスピーカー等、システムを使わない人への共有用">📋 案内文をコピー</button></div>'
       + '<label style="margin-top:14px;">申請一覧（' + apps.length + '件）<small style="color:var(--sub);font-weight:400;">　新しい申請は自動で追加されます</small></label>'
       + (rows || '<p style="color:var(--sub);font-size:13px;">申請はまだありません。受講者は自分の会員証から申請できます。</p>')
       + '<div class="btns"><button id="olPledges">📜 誓約書アーカイブ</button><button id="olClose">閉じる</button></div>',
@@ -3546,6 +3706,16 @@ function onlineModal(ev){
           toast('Zoom参加情報を保存しました'); loadEvents();
         })
         .catch(function(e){ toast(permMsg(e, 'Zoom情報の保存権限がありません')); });
+    };
+    // 部外者（カメラ担当・ゲストスピーカー等）へのZoom共有: 案内文ごとコピーしてLINE等で送る
+    $('olZoomCopy').onclick = function(){
+      var url = $('olZoom').value.trim(), zid = $('olZoomId').value.trim(), pw = $('olZoomPw').value.trim();
+      if(!url && !zid){ toast('先にZoomの参加情報を入力（貼り付け）してください'); return; }
+      var txt = '📅 ' + (ev.date || '') + ' ' + (ev.name || '')
+        + (url ? '\nZoom参加URL: ' + url : '')
+        + (zid ? '\nミーティングID: ' + zid : '')
+        + (pw ? '\nパスコード: ' + pw : '');
+      copyText(txt);
     };
     document.querySelector('.modal').addEventListener('click', function(e){
       var b = e.target.closest ? e.target.closest('button[data-ola]') : null;
