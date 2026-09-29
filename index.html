@@ -2434,6 +2434,45 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2h-req .rq.ok{border-color:color-mix(in srgb,var(--accent) 60%,var(--border));color:var(--accent)} .p2h-req .rq-l{margin-left:6px;color:var(--text-dim)} .p2h-req .rq-m{margin-left:6px;color:var(--text-dim)}
 .p2r-flag.peak.nx{border-style:dashed}
 .p2h-v2 .p2h-inc.p2h-incr{font-size:44px} .p2h-v2 .p2h-inc.p2h-incr small{font-size:18px}
+/* v553: 想いのノート（全画面・原稿用紙のように書く／大きな文字で読む） */
+.p2nb-ov{position:fixed;inset:0;z-index:700;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+.p2nb-top{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);flex:none}
+.p2nb-ttl{flex:1;font-size:16px;font-weight:900;text-align:center} .p2nb-x{cursor:pointer;color:var(--text-mid);font-weight:800;padding:6px 8px;white-space:nowrap}
+.p2nb-cnt{font-size:12px;color:var(--text-mid);font-family:Inter,'Noto Sans JP',sans-serif;white-space:nowrap} .p2nb-sel{width:auto;max-width:48%;padding:6px 8px;font-size:12.5px}
+.p2nb-body{overflow-y:auto;padding:16px;max-width:820px;width:100%;margin:0 auto;box-sizing:border-box}
+.p2nb-ban{background:color-mix(in srgb,var(--accent) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.7;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px} .p2nb-ban .p2-btn{margin:0 0 0 auto}
+.p2nb-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.p2nb-ct{font-size:15px;font-weight:900} .p2nb-pv{font-size:13px;color:var(--text-mid);margin-top:6px;line-height:1.6} .p2nb-meta{font-size:11.5px;color:var(--text-dim);margin-top:6px} .p2nb-btns{display:flex;gap:8px;margin-top:8px} .p2nb-btns .p2-btn{margin:0}
+.p2nb-w{flex:1;display:flex;flex-direction:column;max-width:900px;width:100%;margin:0 auto;padding:12px 16px 0;box-sizing:border-box;min-height:0}
+.p2nb-q{font-size:15px;font-weight:800;margin-bottom:8px} .p2nb-q small{display:block;font-size:11.5px;font-weight:600;color:var(--text-dim);margin-top:3px}
+.p2nb-ta{flex:1;min-height:0;width:100%;box-sizing:border-box;resize:none;border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:17px;line-height:2;color:var(--text);font-family:'Noto Sans JP',sans-serif;
+  background:var(--surface) repeating-linear-gradient(to bottom,transparent 0,transparent calc(2em - 1px),color-mix(in srgb,var(--border) 70%,transparent) calc(2em - 1px),color-mix(in srgb,var(--border) 70%,transparent) 2em);background-attachment:local;background-position:0 14px;outline:none}
+.p2nb-ta:focus{border-color:color-mix(in srgb,var(--accent) 60%,var(--border))}
+.p2nb-foot{display:flex;align-items:center;gap:8px;padding:10px 0 calc(12px + env(safe-area-inset-bottom));flex-wrap:wrap} .p2nb-foot .p2-btn{margin:0}
+.p2nb-r{overflow-y:auto;flex:1;padding:24px 20px;max-width:760px;width:100%;margin:0 auto;box-sizing:border-box}
+.p2nb-rq{font-size:13px;color:var(--text-dim);margin-bottom:14px} .p2nb-rt{font-size:19px;line-height:2.15;white-space:pre-wrap;word-break:break-word;font-weight:500}
+.p2h-nb{font-size:12px;font-weight:800;color:var(--accent);cursor:pointer} .p2h-nb:hover{text-decoration:underline}
+/* v553: 実績の見せ方（クリア・超過・＋1・連続週） */
+.p2t.clear{border-color:#F6C744;background:linear-gradient(160deg,color-mix(in srgb,#F6C744 14%,var(--surface2)),var(--surface2) 60%)}
+.p2t.clear .p2t-bar i{background:linear-gradient(90deg,#F6C744,#FFB454)} .p2t.clear .p2t-tg span{color:#F6C744}
+.p2t-clr{color:#F6C744;font-weight:900}
+.p2a-row.ok .p2-prog>i{background:linear-gradient(90deg,#F6C744,#FFB454)}
+.p2a-pc{margin-left:8px;font-size:11px;font-weight:800;color:var(--text-mid);font-family:Inter,sans-serif} .p2a-row.ok .p2a-pc{color:#F6C744}
+.p2a-ov{margin-left:6px;font-size:11px;font-weight:900;color:#1d2733;background:#F6C744;border-radius:8px;padding:1px 7px}
+.p2a-fire{margin-left:6px;font-size:11px;font-weight:900;color:#FF9F6E;white-space:nowrap}
+.p2a-p1{font-size:12px;font-weight:900;color:var(--text);border:1px solid var(--border2);border-radius:9px;padding:5px 9px;cursor:pointer;white-space:nowrap;background:var(--surface2)} .p2a-p1:active{transform:scale(.94)}
+.p2a-lag{margin-top:8px;font-size:12.5px;color:var(--text-mid)}
+.p2a-help{margin-top:6px;font-size:11.5px;color:var(--text-dim);line-height:1.7} .p2a-help summary{cursor:pointer;font-weight:800;color:var(--text-mid);list-style:none} .p2a-help summary::-webkit-details-marker{display:none}
+.p2r-clr{color:#F6C744;font-weight:900;margin-left:2px}
+/* v553: 週の作戦・今日の3つ */
+.p2wk.warn{border-color:color-mix(in srgb,var(--go-rose,#FF5D73) 45%,var(--border))}
+.p2wk-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px} .p2wk-row:last-of-type{border-bottom:none}
+.p2wk-row .lb{font-weight:800;min-width:70px} .p2wk-row .nd{color:var(--text-mid)} .p2wk-row .nd b{font-family:Inter,sans-serif;color:var(--text)} .p2wk-row .ok{color:var(--accent);font-weight:800;flex:1} .p2wk-row .ng{color:var(--go-rose,#FF5D73);font-weight:800;flex:1}
+.p2td{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-top:12px}
+.p2td-h{display:flex;align-items:center;font-size:13.5px;font-weight:900;margin-bottom:6px} .p2td-h span{margin-left:auto;font-size:11.5px;color:var(--text-dim);font-weight:700;cursor:pointer}
+.p2td-it{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border);cursor:pointer;font-size:13px} .p2td-it:last-child{border-bottom:none}
+.p2td-it .tm{font-family:Inter,sans-serif;font-weight:800;min-width:44px;color:var(--text-mid)} .p2td-it .kd{font-size:11px;font-weight:900;border:1px solid var(--border2);border-radius:8px;padding:1px 7px;white-space:nowrap} .p2td-it .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p2td-it.sug{color:var(--text-mid)} .p2td-it.sug .tm{color:var(--accent)}
 .p2ge-h{font-size:13px;font-weight:900;margin:4px 0 8px} .p2ge-h small{font-weight:600;color:var(--text-dim);margin-left:8px;font-size:11px}
 .p2h-subs{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)}
 .p2h-subs .p2h-sub{margin-top:0} .p2h-subs .p2h-dream .p2d-bar{margin:5px 0 0;width:220px;max-width:220px}
@@ -2776,7 +2815,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v552</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v553</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3717,7 +3756,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v552';</script>
-<script src="app.js?v=v552"></script>
+<script>window.GM_EXPECT_JS='v553';</script>
+<script src="app.js?v=v553"></script>
 </body>
 </html>
