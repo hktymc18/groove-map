@@ -2484,6 +2484,24 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .idq-big.usr{border-color:color-mix(in srgb,#FFB454 55%,var(--border))} .idq-big.usr .c{color:#FFB454}
 .idq-kids{font-size:12px;color:var(--text-mid);margin-top:8px} .idq-kids b{font-family:Inter,sans-serif;color:var(--text)}
 .idd.nb1{background:#2CE5B8;color:#08201a} .idd.usr{background:#FFB454;color:#2a1a00}
+/* v555: 理想の生活シート */
+.p2lf-sheet{max-height:92vh;overflow-y:auto}
+.p2lf-dreams{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.p2lf-dream{flex:1;min-width:160px;background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 14%,var(--surface2)),var(--surface2));border:1px solid var(--border);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.p2lf-dream .ic{font-size:22px} .p2lf-dream b{font-size:15.5px;font-weight:900}
+.p2lf-dr{font-size:11px;font-weight:800;color:var(--accent);cursor:pointer} .p2lf-dr.on{color:var(--text-dim);cursor:default}
+.p2lf-total{font-size:13px;color:var(--text-mid);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap} .p2lf-total b{font-size:22px;color:var(--text);font-family:Inter,'Noto Sans JP',sans-serif} .p2lf-total span{font-size:12px}
+.p2lf-bar{display:flex;height:12px;border-radius:7px;overflow:hidden;background:var(--surface3);margin:8px 0 6px} .p2lf-bar i{display:block;height:100%}
+.p2lf-diff{font-size:12px;color:var(--text-mid);margin-bottom:6px} .p2lf-diff b{color:var(--text)}
+.p2lf-ask{font-size:12.5px;background:color-mix(in srgb,var(--accent) 10%,var(--surface2));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));border-radius:12px;padding:10px 12px;margin:6px 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px} .p2lf-ask small{color:var(--text-dim)} .p2lf-ask .p2-btn{margin:0} .p2lf-askb{display:flex;gap:6px;margin-left:auto}
+.p2lf-row{border-bottom:1px solid var(--border)} .p2lf-row.open{background:color-mix(in srgb,var(--surface2) 60%,transparent);border-radius:10px}
+.p2lf-h{display:flex;align-items:center;gap:8px;padding:10px 4px;cursor:pointer;font-size:13px}
+.p2lf-h .ic{width:28px;text-align:center;font-size:16px;border-radius:6px} .p2lf-h .lb{font-weight:800;min-width:78px} .p2lf-h .ds{flex:1;min-width:0;color:var(--text-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .p2lf-h .un{color:var(--accent)}
+.p2lf-h .am{font-family:Inter,sans-serif;font-weight:800;min-width:46px;text-align:right} .p2lf-h .pc{font-size:11px;color:var(--text-dim);min-width:34px;text-align:right} .p2lf-h .ar{color:var(--text-dim)}
+.p2lf-ed{padding:4px 8px 12px 40px} .p2lf-q{margin-top:8px} .p2lf-q .qq{font-size:12px;font-weight:800;color:var(--text-mid);margin-bottom:5px}
+.p2lf-sv{font-size:12px;min-width:64px;text-align:right} .p2lf-sv b{font-size:16px;font-family:Inter,sans-serif}
+.p2lf-loan{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px} .p2lf-loan label{font-size:11px;color:var(--text-dim);display:flex;flex-direction:column;gap:2px}
+@media(max-width:767px){.p2lf-dream{flex-direction:row;align-items:center;flex-wrap:wrap;min-width:100%;padding:8px 12px;gap:8px}.p2lf-dream .ic{font-size:18px}.p2lf-dream b{font-size:14px}.p2lf-dream .p2lf-dr{margin-left:auto}.p2lf-dreams{gap:6px}.p2lf-h{flex-wrap:wrap}.p2lf-h .ds{order:9;flex-basis:100%;padding-left:36px;white-space:normal;font-size:12px}.p2lf-ed{padding-left:8px}}
 .p2ge-h{font-size:13px;font-weight:900;margin:4px 0 8px} .p2ge-h small{font-weight:600;color:var(--text-dim);margin-left:8px;font-size:11px}
 .p2h-subs{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px dashed var(--border)}
 .p2h-subs .p2h-sub{margin-top:0} .p2h-subs .p2h-dream .p2d-bar{margin:5px 0 0;width:220px;max-width:220px}
@@ -2826,7 +2844,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v554</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v556</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3767,7 +3785,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v554';</script>
-<script src="app.js?v=v554"></script>
+<script>window.GM_EXPECT_JS='v556';</script>
+<script src="app.js?v=v556"></script>
 </body>
 </html>
