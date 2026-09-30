@@ -3530,6 +3530,7 @@ function trRenderList(){
             + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
             + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '')
             + (m.referrer ? '・紹介: ' + esc(m.referrer) : '') + '</div></div>'
+            + '<button data-tsend="' + i + '" title="会員証URLをLINE等で送る" style="padding:7px 10px;font-size:12.5px;">📨 送る</button>'
             + (bpc ? '<span class="pill g">修了</span>' : '')
             + '<span class="pill n">' + p + '/3</span>'
             + '<span style="color:var(--sub);">›</span></div>';
@@ -3537,6 +3538,13 @@ function trRenderList(){
       : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">' + (seeAll ? '研修生はまだ登録されていません。' : 'あなたが登録した研修生はまだいません。') + '</p>');
   Array.prototype.forEach.call(el.querySelectorAll('[data-tr]'), function(row){
     row.onclick = function(){ trChecklist(ts[+row.getAttribute('data-tr')]); };
+  });
+  // 📨 会員証URLの再送（QR/URLが分からなくなった研修生向け）。行タップ（チェックリスト）とは独立
+  Array.prototype.forEach.call(el.querySelectorAll('button[data-tsend]'), function(btn){
+    btn.onclick = function(e){
+      e.stopPropagation();
+      trSendCard(ts[+btn.getAttribute('data-tsend')]);
+    };
   });
   var og = $('trOpenGo');
   if(og) og.onclick = function(){
@@ -3557,6 +3565,21 @@ function trRenderList(){
       }
     }).catch(function(){ toast('読み込みに失敗しました'); });
   };
+}
+// 会員証URLの再送: スマホは共有シート（LINE等へ直接）、非対応環境は案内文ごとコピー
+function trSendCard(m){
+  if(!m || !m.cardToken){
+    toast('会員証が未発行です。名簿タブの「会員証」から発行してください');
+    return;
+  }
+  var msg = '📱 ' + (m.name || '') + ' さんの会員証（研修受講カード）\n'
+    + 'こちらを開いてください👇\n' + cardUrl(m.cardToken) + '\n'
+    + '開いたら「ホーム画面に追加」をしておくと次からすぐ開けます！';
+  if(navigator.share){
+    navigator.share({ text: msg }).catch(function(){});
+  } else {
+    copyText(msg);
+  }
 }
 function trChecklist(m){
   var tr = m.trainings || {};
