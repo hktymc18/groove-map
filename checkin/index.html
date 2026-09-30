@@ -1017,7 +1017,7 @@ function renderDlrTicket(c){
     + '<div class="dt-name">' + esc(c.name || '') + '<small>様</small></div>'
     + '<div class="dt-when">' + esc((r.date || '').slice(5).replace('-', '/')) + day
     + '　' + esc(r.timeFrom || '20:00') + '〜' + esc(r.timeTo || '22:00') + '</div>'
-    + (r.evName ? '<div class="dt-ev">' + esc(r.evName) + '</div>' : '')
+    + (r.evName ? '<div class="dt-ev">' + esc(r.evName) + (r.evUnion ? '（' + esc(r.evUnion) + '）' : '') + '</div>' : '')
     + (r.msg ? '<div class="dt-msg">' + esc(r.msg) + '</div>' : '')
     + '<div class="dt-cut"></div>'
     + '<div class="dt-note">当日はこの画面を受付でお見せください</div>'
@@ -3554,37 +3554,65 @@ function trRenderList(){
   };
   trRenderDlr();
 }
-/* 🎫 今後のDLR予約: 登録タブ（開いた瞬間の画面）と研修後入力の両方に表示。
-   ユニオン全体の予約が全担当者に見える。行タップでその子の予約モーダル（変更・取消） */
-function trRenderDlr(){
+/* 🎫 今後のDLR予約: 20件入っても登録フォームを圧迫しないよう、両タブとも
+   1行のサマリーバー（件数・本日件数・次の1件）だけを表示し、タップで一覧モーダルを開く */
+function trDlrUpcoming(){
   var tdy = todayStr();
   var dlrs = gTrMembers.filter(function(m){ return m.dlrRsv && (m.dlrRsv.date || '') >= tdy; });
   dlrs.sort(function(a, b){ return (a.dlrRsv.date || '') < (b.dlrRsv.date || '') ? -1 : 1; });
+  return dlrs;
+}
+function trRenderDlr(){
+  var tdy = todayStr();
+  var dlrs = trDlrUpcoming();
   // 研修後入力タブに件数バッジ
   var tab = $('trTabList');
   if(tab) tab.textContent = '研修後入力' + (dlrs.length ? '（🎫' + dlrs.length + '）' : '');
-  var html = dlrs.length
-    ? '<label>🎫 今後のDLR予約 <small style="color:var(--sub);font-weight:400;">タップで変更・取消</small></label>'
-      + dlrs.map(function(m, i){
-          var r = m.dlrRsv;
-          return '<div data-dlr="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:9px 2px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;">'
-            + (r.date === tdy ? '<span class="pill r">本日</span>' : '')
-            + '<span class="mono" style="color:var(--sub);white-space:nowrap;">' + esc((r.date || '').slice(5).replace('-', '/')) + ' ' + esc(r.timeFrom || '') + '</span>'
-            + '<b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.name || '') + '</b>'
-            + (r.evName ? '<span style="font-size:11.5px;color:var(--sub);max-width:6.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(r.evName) + '</span>' : '')
-            + '<span style="font-size:11.5px;color:var(--sub);white-space:nowrap;">担当: ' + esc(r.byName || '') + '</span></div>';
-        }).join('')
-      + '<div style="margin-bottom:12px;"></div>'
+  var todayN = dlrs.filter(function(m){ return m.dlrRsv.date === tdy; }).length;
+  var next = dlrs[0];
+  var bar = dlrs.length
+    ? '<div data-dlrbar="1" style="display:flex;gap:8px;align-items:center;padding:10px 12px;margin:0 0 12px;'
+      + 'border:1.5px solid #d9b380;border-radius:10px;background:var(--card);cursor:pointer;font-size:13px;">'
+      + '<b style="white-space:nowrap;">🎫 DLR予約 ' + dlrs.length + '件</b>'
+      + (todayN ? '<span class="pill r">本日' + todayN + '件</span>' : '')
+      + '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--sub);">'
+      + '次: ' + esc((next.dlrRsv.date || '').slice(5).replace('-', '/')) + ' ' + esc(next.dlrRsv.timeFrom || '')
+      + ' ' + esc(next.name || '') + '</span>'
+      + '<span style="color:var(--sub);">›</span></div>'
     : '';
   ['trDlrTop', 'trDlrList'].forEach(function(cid){
     var box = $(cid);
     if(!box) return;
-    box.innerHTML = html;
-    Array.prototype.forEach.call(box.querySelectorAll('[data-dlr]'), function(row){
-      row.onclick = function(){
-        dlrRsvModal(dlrs[+row.getAttribute('data-dlr')], function(){ trRenderList(); });
-      };
-    });
+    box.innerHTML = bar;
+    var b = box.querySelector('[data-dlrbar]');
+    if(b) b.onclick = dlrListModal;
+  });
+}
+// 予約一覧モーダル（日付順・スクロール・行タップでその子の予約モーダルへ）
+function dlrListModal(){
+  var tdy = todayStr();
+  var dlrs = trDlrUpcoming();
+  modal('<h2>🎫 今後のDLR予約（' + dlrs.length + '件）</h2>'
+    + '<p style="font-size:12px;color:var(--sub);margin:0 0 6px;">タップで変更・取消ができます。</p>'
+    + '<div style="max-height:62vh;overflow:auto;">'
+    + (dlrs.map(function(m, i){
+        var r = m.dlrRsv;
+        return '<div data-dlr="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:10px 2px;border-bottom:1px solid var(--line);font-size:13.5px;cursor:pointer;">'
+          + (r.date === tdy ? '<span class="pill r">本日</span>' : '')
+          + '<span class="mono" style="color:var(--sub);white-space:nowrap;">' + esc((r.date || '').slice(5).replace('-', '/')) + ' ' + esc(r.timeFrom || '') + '</span>'
+          + '<b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.name || '') + '</b>'
+          + (r.evName ? '<span style="font-size:11.5px;color:var(--sub);max-width:8em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+              + esc(r.evName) + (r.evUnion ? '・' + esc(r.evUnion) : '') + '</span>' : '')
+          + '<span style="font-size:11.5px;color:var(--sub);white-space:nowrap;">担当: ' + esc(r.byName || '') + '</span></div>';
+      }).join('') || '<p style="color:var(--sub);font-size:13px;">今後の予約はありません。</p>')
+    + '</div>'
+    + '<div class="btns"><button id="dlrLClose">閉じる</button></div>', true);
+  $('dlrLClose').onclick = closeModal;
+  document.querySelector('.modal').addEventListener('click', function(e){
+    var row = e.target.closest ? e.target.closest('[data-dlr]') : null;
+    if(!row) return;
+    closeModal();
+    dlrRsvModal(dlrs[+row.getAttribute('data-dlr')], function(){ trRenderList(); dlrListModal(); });
   });
 }
 // 会員証URLの再送: スマホは共有シート（LINE等へ直接）、非対応環境は案内文ごとコピー
@@ -3662,38 +3690,55 @@ function dlrTimeTo(from){
 }
 function dlrRsvModal(m, back){
   function goBack(){ closeModal(); if(back) back(); }
-  // 今後のイベント（今月＋来月・自ユニオン参加分）を選択肢として読み込む
+  // 「DLR」「P&P」というタイトルのイベントだけを、全ユニオン・全地域から読み込む（今月＋来月）。
+  // 他ユニオン開催分（BASE REVEのメンバーがBASE ANTARESで受講等）も予約できる。
+  // デフォルトは担当者の活動地域、セレクタで他地域（東京など）のDLRにも切り替え可能
   var tdy = todayStr();
   var mk1 = tdy.slice(0, 7);
   var d2 = new Date();
   d2.setMonth(d2.getMonth() + 1);
   var mk2 = d2.getFullYear() + '-' + ((d2.getMonth() + 1) < 10 ? '0' : '') + (d2.getMonth() + 1);
-  Promise.all([mk1, mk2].map(function(k){
-    return db.collection('checkinEvents').where('month', '==', k).get().catch(function(){ return { forEach: function(){} }; });
-  })).then(function(res){
+  function isDlrEvent(name){ return /DLR|P\s*&\s*P|Ｐ＆Ｐ/i.test(String(name || '')); }
+  Promise.all([
+    db.collection('checkinEvents').where('month', '==', mk1).get().catch(function(){ return { forEach: function(){} }; }),
+    db.collection('checkinEvents').where('month', '==', mk2).get().catch(function(){ return { forEach: function(){} }; }),
+    db.collection('checkinUnions').get().catch(function(){ return { forEach: function(){} }; })
+  ]).then(function(res){
+    // ユニオン → 活動地域（ユニオン有効化時に保存されるエリア情報）
+    var unionArea = {};
+    res[2].forEach(function(d){ unionArea[d.id] = (d.data() && d.data().area) || ''; });
     var evs = [];
-    res.forEach(function(qs){
+    [res[0], res[1]].forEach(function(qs){
       qs.forEach(function(d){
         var ev = d.data(); ev.id = d.id;
-        if((ev.unions || []).indexOf(gUnion) < 0) return;
         if((ev.date || '') < tdy) return;
+        if(!isDlrEvent(ev.name)) return;
+        ev.area = unionArea[ev.hostUnion] || '';
         evs.push(ev);
       });
     });
     evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    var areas = [];
+    evs.forEach(function(ev){ if(ev.area && areas.indexOf(ev.area) < 0) areas.push(ev.area); });
+    areas.sort();
     var cur = m.dlrRsv || null;
+    var curEv = null;
+    if(cur && cur.evId) evs.forEach(function(e){ if(e.id === cur.evId) curEv = e; });
+    var myArea = (gProf && gProf.area) || '';
+    var selArea = curEv ? (curEv.area || '__all') : (areas.indexOf(myArea) >= 0 ? myArea : '__all');
     modal('<h2>🎫 DLR会場受講の予約 — ' + esc(m.name || '') + '</h2>'
       + (cur ? '<p style="font-size:13px;"><span class="pill g">予約済み</span> '
           + esc(cur.date || '') + ' ' + esc(cur.timeFrom || '') + '〜' + esc(cur.timeTo || '')
           + (cur.evName ? '（' + esc(cur.evName) + '）' : '') + '</p>' : '')
-      + '<label>日程（今後のハウディから選択）</label>'
-      + '<select id="dlrEv">'
-      + evs.map(function(ev, i){
-          return '<option value="' + i + '"' + (cur && cur.evId === ev.id ? ' selected' : '') + '>'
-            + esc((ev.date || '') + '　' + (ev.name || '')) + '</option>';
+      + '<label>地域</label>'
+      + '<select id="dlrAreaSel">'
+      + areas.map(function(a){
+          return '<option value="' + esc(a) + '"' + (a === selArea ? ' selected' : '') + '>' + esc(a) + '</option>';
         }).join('')
-      + '<option value="__free"' + (cur && !cur.evId ? ' selected' : '') + '>その他（日付を手入力）</option>'
+      + '<option value="__all"' + (selArea === '__all' ? ' selected' : '') + '>すべての地域</option>'
       + '</select>'
+      + '<label>日程（今後のDLR / P&amp;P から選択）</label>'
+      + '<select id="dlrEv"></select>'
       + '<div id="dlrFreeRow" class="' + (cur && !cur.evId ? '' : 'hide') + '">'
       + '<label>日付</label><input type="date" id="dlrDate" value="' + esc((cur && cur.date) || '') + '"></div>'
       + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>開始</label>'
@@ -3709,6 +3754,21 @@ function dlrRsvModal(m, back){
       + '<button id="dlrCancel">閉じる</button><button class="primary" id="dlrGo">' + (cur ? '予約を変更' : '予約する') + '</button></div>',
       true);
     $('dlrCancel').onclick = goBack;
+    // 地域で絞り込んだDLR/P&Pの選択肢を出す（該当なしなら手入力のみ）
+    var curEvs = [];
+    function renderEvOpts(){
+      var ar = $('dlrAreaSel').value;
+      curEvs = evs.filter(function(ev){ return ar === '__all' || ev.area === ar; });
+      $('dlrEv').innerHTML = curEvs.map(function(ev, i){
+          return '<option value="' + i + '"' + (cur && cur.evId === ev.id ? ' selected' : '') + '>'
+            + esc((ev.date || '') + '　' + (ev.name || '')
+              + '（' + (ev.hostUnion || '') + (ev.area ? '・' + ev.area : '') + '）') + '</option>';
+        }).join('')
+        + '<option value="__free"' + (((cur && !cur.evId) || !curEvs.length) ? ' selected' : '') + '>その他（日付を手入力）</option>';
+      $('dlrFreeRow').classList.toggle('hide', $('dlrEv').value !== '__free');
+    }
+    $('dlrAreaSel').onchange = renderEvOpts;
+    renderEvOpts();
     $('dlrEv').onchange = function(){
       $('dlrFreeRow').classList.toggle('hide', $('dlrEv').value !== '__free');
     };
@@ -3727,17 +3787,17 @@ function dlrRsvModal(m, back){
     };
     $('dlrGo').onclick = function(){
       var sel = $('dlrEv').value;
-      var date = '', evName = '', evId = '';
+      var date = '', evName = '', evId = '', evUnion = '';
       if(sel === '__free'){
         date = $('dlrDate').value;
       } else {
-        var ev = evs[parseInt(sel, 10)];
-        if(ev){ date = ev.date || ''; evName = ev.name || ''; evId = ev.id; }
+        var ev = curEvs[parseInt(sel, 10)];
+        if(ev){ date = ev.date || ''; evName = ev.name || ''; evId = ev.id; evUnion = ev.hostUnion || ''; }
       }
       if(!date){ toast('日付を選択してください'); return; }
       var rsv = {
         date: date, timeFrom: $('dlrFrom').value || '20:00', timeTo: $('dlrTo').value || dlrTimeTo($('dlrFrom').value),
-        evName: evName, evId: evId, msg: $('dlrMsg').value.trim(),
+        evName: evName, evId: evId, evUnion: evUnion, msg: $('dlrMsg').value.trim(),
         by: (gUser && gUser.uid) || '', byName: (gProf && gProf.name) || '',
         atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now()
       };
@@ -3747,7 +3807,7 @@ function dlrRsvModal(m, back){
         // 会員証（表示用）へは日付・時間・イベント名・担当者名・メッセージだけミラー
         if(m.cardToken){
           return db.collection('cards').doc(m.cardToken).set({
-            dlrRsv: { date: rsv.date, timeFrom: rsv.timeFrom, timeTo: rsv.timeTo, evName: rsv.evName, byName: rsv.byName, msg: rsv.msg }
+            dlrRsv: { date: rsv.date, timeFrom: rsv.timeFrom, timeTo: rsv.timeTo, evName: rsv.evName, evUnion: rsv.evUnion, byName: rsv.byName, msg: rsv.msg }
           }, { merge: true }).catch(function(){});
         }
       }).then(function(){
