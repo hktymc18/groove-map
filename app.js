@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v556';
+var APP_JS_VERSION = 'v557';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v556';
+  var DATA_VERSION = 'v557';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4891,6 +4891,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v557', d:'2026-09-30', items:['✏️ 理想MAPのかんたん編集「この人を変える」をすっきり作り直し：項目名を左・選択肢を右の1行ずつにして、ボタンを種類ごとの帯にまとめました','🏷 タイトルはどれも1タップ（Q3→BR、BM→LOIもワンタップ）。B1〜B11・Q2〜Q4は数字だけ、上位タイトルはG L R E D BD TEの略称に色の下線','📊 稼働率は30・50・80・100%のワンタップ＋「他」に直接入力（100%まで）','🔗 「くわしく編集」は右下の小さいリンクに（新規の人は「この新規を削除」も並びます）'] },
   { v:'v556', d:'2026-09-30', items:['📅 iPhoneのSafari（タブで開いた場合）でカレンダーが画面の上半分だけに縮み、下半分が空白になる不具合を修正：iOS 26のSafariはキーボードを閉じても「見えている高さ」を小さいまま返し続けることがあり、ホーム画面アプリ向けの対策（v515）がSafariのタブには効いていませんでした。タブ表示でも同じ補正をかけ、キーボードを使っていなくても高さが大きく縮んだままなら本来の高さに戻します'] },
   { v:'v555', d:'2026-09-30', items:['🏡 PLANの20問の答えを「理想の生活」シートで見返せるように：住まい・食事・服・移動・旅行・趣味・親孝行・美容・健康・貯金・交際・期限の12分野に分けて、分野ごとの月額・割合・合計を一目で確認できます','✏️ 行をタップするとその分野の質問だけその場で答え直せます（20問を最初からやり直す必要なし）','📈 前回から合計がいくら変わったか、どの分野が増減したかを表示','🎯 合計が変わったら「目標月収も〇万円にしますか？」と確認。「する」で目標月収を更新、「今のまま」で据え置き（勝手には変わりません）','⭐ 家・車・旅行先はワンタップで夢100に追加','🚪 入口：⚙メニュー「理想の生活」／目標をなおすの「内訳を見る」／スマホPLANの「理想の生活を見る」'] },
   { v:'v554', d:'2026-09-29', items:['👔 理想MAPのかんたん編集を作り直し：メンバーをタップ→「直下に追加」は2択だけ。ビジネスメンバー（LOI・GSV 1,500P・稼働B 80%）か、ユーザー（200P・ポイントは変更可で前回の値を覚える）を、タップするたび1人ずつ追加（元に戻す付き）','✏️ 既存メンバーはタイトル・GSV・稼働レベル・稼働%だけを、その場で変更（変えるとすぐ保存）','🔢 数え方：自分の直下に追加したビジネスメンバー＝自分のB1、理想MAPの新規ビジネスメンバー全員＝チームのB1（自分のB1を含む）。ユーザーはB1に数えない（ポイントは上のGSVに積み上げ）。PLANの今月の目標（フロント・B1）にそのまま連動','🏷 理想MAPのカードに「NEW B1」（緑）「USER」（金）の印。理想MAPの上に 自分のB1／チームのB1／ユーザー の人数'] },
@@ -8554,6 +8555,22 @@ function idqOpen(mid) {
   _idqRender();
   requestAnimationFrame(function() { ov.classList.add('show'); });
 }
+// v557: 「この人を変える」をミニマルに。どの値も1タップ（タイトルは種類ごとの帯・B/Qは数字だけ・稼働率は100まで＋手入力）
+var IDQ_RATES = [30, 50, 80, 100];
+var IDQ_GEMS = ['ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'チームエリート'];
+function _idqTitleSegs(tl) {
+  var s = function(v, lb, st) { return '<span class="idq-s' + (v === tl ? ' sel' : '') + '" data-v="' + v + '" onclick="idqTitle(\'' + v + '\')"' + (st ? ' style="' + st + '"' : '') + '>' + lb + '</span>'; };
+  var g = function(p) { return '<span class="idq-pre">' + p + '</span>'; };
+  var nums = function(p, a, b) { var o = ''; for (var i = a; i <= b; i++) o += s(p + i, String(i)); return o; };
+  return '<div class="idq-seg sq">' + s('LOI', 'LOI') + g('Q') + nums('Q', 2, 4) + '</div>'
+    + '<div class="idq-seg sbm">' + s('BM', 'BM') + s('BR', 'BR') + '</div>'
+    + '<div class="idq-seg sb">' + g('B') + nums('B', 1, 11) + '</div>'
+    + '<div class="idq-seg sgem">' + IDQ_GEMS.map(function(t) { return s(t, titleAbbr(t), '--gc:' + titleRingColor(t)); }).join('') + '</div>'
+    + '<div class="idq-seg su">' + s('ユーザー', 'ユーザー') + '</div>';
+}
+function _idqIsPreset(m) { return IDQ_RATES.indexOf(parseInt(m.actRate, 10)) >= 0 && String(parseInt(m.actRate, 10)) === String(m.actRate); }
+function _idqOwnVal(m) { return (m.actRate === '' || m.actRate == null || _idqIsPreset(m)) ? '' : m.actRate; }
+function _idqOwnSel(m) { return _idqOwnVal(m) === '' ? '' : ' sel'; }
 function _idqRender() {
   var box = document.getElementById('idqBody'), m = _idqMember(); if (!box || !m) return;
   var cur = _idealCurMap()[m.id];
@@ -8578,16 +8595,15 @@ function _idqRender() {
     + '<div class="idq-kids">この人の直下（理想で追加）：ビジネス <b>' + nBiz + '</b>人・ユーザー <b>' + nUsr + '</b>人</div>')
     + '<div class="idq-sec" style="margin-top:' + (m.idealKind === 'user' ? '0' : '16px') + '">この人を変える<small>変えるとすぐ保存</small></div>'
     + (m.idealNew ? '<div style="display:flex;gap:8px;margin-bottom:8px"><input class="fi" id="idqLast" placeholder="姓（任意）" value="' + evEsc(m.lastName || '') + '" onchange="idqName()"><input class="fi" id="idqFirst" placeholder="名（任意）" value="' + evEsc(m.firstName || '') + '" onchange="idqName()"></div>' : '')
-    + '<label class="olp-lb">タイトル</label><div class="idq-chips" id="idqTitles">' + IDQ_TITLES.map(function(t) { return '<span class="qa-chip' + (t === tl ? ' sel' : '') + '" data-v="' + t + '" onclick="idqTitle(\'' + t + '\')">' + evEsc(lab(t)) + '</span>'; }).join('') + '</div>'
-    + '<label class="olp-lb" style="margin-top:10px">GSV（P）</label>'
-    + '<div style="display:flex;gap:6px;align-items:center"><input class="fi" id="idqGsv" type="number" inputmode="numeric" value="' + (m.ptCurrent || 0) + '" style="flex:1" onfocus="edSelAll(this)" onchange="idqGsvSet(this.value)">'
-    + '<span class="idq-q" onclick="idqStep(-500)">−500</span><span class="idq-q" onclick="idqStep(500)">+500</span><span class="idq-q" onclick="idqStep(1000)">+1000</span></div>'
-    + '<label class="olp-lb" style="margin-top:10px">稼働</label>'
-    + '<div class="idq-chips" id="idqActs">' + ['S', 'A', 'B', 'C', ''].map(function(a) { return '<span class="qa-chip' + ((m.activity || '') === a ? ' sel' : '') + '" data-a="' + a + '" onclick="idqAct(\'' + a + '\')">' + (a || 'なし') + '</span>'; }).join('')
-    + '<span style="width:10px"></span>' + [30, 50, 80, 100, 120].map(function(r) { return '<span class="qa-chip' + (String(m.actRate) === String(r) ? ' sel' : '') + '" data-r="' + r + '" onclick="idqRate(' + r + ')">' + r + '%</span>'; }).join('')
-    + '<input class="fi" id="idqRate" type="number" inputmode="numeric" placeholder="%" value="' + (m.actRate === '' || m.actRate == null ? '' : m.actRate) + '" style="width:74px;flex:none" onfocus="edSelAll(this)" onchange="idqRate(this.value)"></div>'
-    + '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn-c" style="flex:1" onclick="idqClose();openEdit(\'' + m.id + '\')">' + icn('pencil') + ' くわしく編集</button>'
-    + (m.idealNew ? '<button class="btn-c" style="flex:1;color:var(--red);border-color:var(--red)" onclick="idqDelete()">' + icn('trash') + ' この新規を削除</button>' : '') + '</div>'
+    + '<div class="idq-rows">'
+    + '<div class="idq-row"><div class="idq-lb">タイトル</div><div class="idq-val idq-tl" id="idqTitles">' + _idqTitleSegs(tl) + '</div></div>'
+    + '<div class="idq-row"><div class="idq-lb">GSV</div><div class="idq-val"><span class="idq-gsv"><input class="fi" id="idqGsv" type="number" inputmode="numeric" value="' + (m.ptCurrent || 0) + '" onfocus="edSelAll(this)" onchange="idqGsvSet(this.value)"><i>P</i></span>'
+    + '<span class="idq-q" onclick="idqStep(-500)">−500</span><span class="idq-q" onclick="idqStep(500)">+500</span></div></div>'
+    + '<div class="idq-row"><div class="idq-lb">稼働</div><div class="idq-val"><div class="idq-seg" id="idqActs">' + ['S', 'A', 'B', 'C', ''].map(function(a) { return '<span class="idq-s' + ((m.activity || '') === a ? ' sel' : '') + '" data-a="' + a + '" onclick="idqAct(\'' + a + '\')">' + (a || '―') + '</span>'; }).join('') + '</div></div></div>'
+    + '<div class="idq-row"><div class="idq-lb">稼働率</div><div class="idq-val"><div class="idq-seg" id="idqRates">' + IDQ_RATES.map(function(r) { return '<span class="idq-s' + (String(m.actRate) === String(r) ? ' sel' : '') + '" data-r="' + r + '" onclick="idqRate(' + r + ')">' + r + '</span>'; }).join('')
+    + '<input class="idq-own' + _idqOwnSel(m) + '" id="idqRate" type="number" inputmode="numeric" min="0" max="100" placeholder="他" value="' + _idqOwnVal(m) + '" onfocus="edSelAll(this)" onchange="idqRate(this.value)"></div><span class="idq-unit">%</span></div></div>'
+    + '</div>'
+    + '<div class="idq-foot">' + (m.idealNew ? '<span class="idq-del" onclick="idqDelete()">この新規を削除</span>' : '') + '<span class="idq-more" onclick="idqClose();openEdit(\'' + m.id + '\')">くわしく編集 ›</span></div>'
     + '</div>';
   box.innerHTML = h;
 }
@@ -8596,10 +8612,10 @@ function _idqChanged(msg) {
   _idealAfter(msg || '');
   var m = _idqMember(); if (!m) return;
   var q = function(sel, attr, v) { var cs = document.querySelectorAll(sel); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute(attr) === String(v)); };
-  q('#idqTitles .qa-chip', 'data-v', (m.title || '').trim());
-  q('#idqActs .qa-chip[data-a]', 'data-a', m.activity || '');
-  q('#idqActs .qa-chip[data-r]', 'data-r', m.actRate);
-  var ri = document.getElementById('idqRate'); if (ri && document.activeElement !== ri) ri.value = (m.actRate === '' || m.actRate == null) ? '' : m.actRate;
+  q('#idqTitles .idq-s', 'data-v', (m.title || '').trim());
+  q('#idqActs .idq-s', 'data-a', m.activity || '');
+  q('#idqRates .idq-s', 'data-r', m.actRate);
+  var ri = document.getElementById('idqRate'); if (ri) { if (document.activeElement !== ri) ri.value = _idqOwnVal(m); ri.classList.toggle('sel', _idqOwnVal(m) !== ''); }
   var gi = document.getElementById('idqGsv'); if (gi && document.activeElement !== gi) gi.value = m.ptCurrent || 0;
   var tt = document.querySelector('#idqBody .ot-ttl'); if (tt) tt.textContent = (typeof titleAbbr === 'function' && titleAbbr(m.title)) || m.title || '';
 }
@@ -8611,7 +8627,7 @@ function idqName() {
   if (l) m.lastName = l.value.trim() || m.lastName; if (f) m.firstName = f.value.trim();
   _idealAfter('');
 }
-function idqRate(v) { var m = _idqMember(); if (!m) return; var s0 = String(v === undefined || v === null ? '' : v).trim(); m.actRate = s0 === '' ? '' : Math.max(0, parseInt(s0, 10) || 0); _idqChanged(); }
+function idqRate(v) { var m = _idqMember(); if (!m) return; var s0 = String(v === undefined || v === null ? '' : v).trim(); m.actRate = s0 === '' ? '' : Math.min(100, Math.max(0, parseInt(s0, 10) || 0)); _idqChanged(); var ri = document.getElementById('idqRate'); if (ri) ri.value = _idqOwnVal(m); } // v557: 100まで（手入力も確定時に表示をそろえる）
 function idqAdd(kind) {
   var p = _idqMember(); if (!p) return;
   var arr = state.idealMembers, cm = state.currentMonth || currentMonthStr();
