@@ -3543,45 +3543,91 @@ $('trToday').addEventListener('click', function(e){
   if(m){ gTrLast = m; trShowQr(m); }
 });
 // 研修生一覧 → タップでチュートリアルのチェックリスト
-function trRenderList(){
-  var el = $('trPaneList');
-  // 一覧に出るのは自分が登録した研修生だけ（管理者は全員）。
-  // 他の担当者が登録した研修生は、下の「番号で開く」からチェックリストだけ開ける
+/* ── 研修生の検索 ──
+   全国で研修生が増えても探せるよう、管理者（ユニオン管理者・受付管理者）は
+   地域・ユニオン・研修担当者・紹介者・フリーワード（名前/ふりがな/番号）で検索できる。
+   一般の研修担当者が検索できるのは「自分が登録した研修生」の中だけ（フリーワードのみ） */
+var gTrFilter = { all: false, area: '', union: '', trainer: '', ref: '', q: '' };
+var gTrAll = null;        // 全国の研修生（「全国から検索」ON時に読み込み）
+var gTrAreaMap = null;    // ユニオン名 → 活動地域
+function trLoadAll(cb){
+  if(gTrAll){ cb(); return; }
+  Promise.all([
+    db.collection('checkinMembers').where('trainee', '==', true).get(),
+    db.collection('checkinUnions').get()
+  ]).then(function(res){
+    gTrAreaMap = {};
+    res[1].forEach(function(d){ gTrAreaMap[d.id] = (d.data() && d.data().area) || ''; });
+    gTrAll = [];
+    res[0].forEach(function(d){
+      var m = d.data(); m.no = d.id;
+      m._area = gTrAreaMap[m.union] || '';
+      gTrAll.push(m);
+    });
+    cb();
+  }).catch(function(e){ toast('全国の研修生の読込エラー: ' + e.message); gTrFilter.all = false; cb(); });
+}
+function trSearchBase(){
   var seeAll = canEditUnion(gUnion);
-  var ts = gTrMembers.filter(function(m){
+  var src = (seeAll && gTrFilter.all && gTrAll) ? gTrAll : gTrMembers;
+  return src.filter(function(m){
     return m.trainee && m.active !== false && (seeAll || m.regBy === gUser.uid);
   });
-  ts.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
+}
+function trRenderList(){
+  var el = $('trPaneList');
+  var seeAll = canEditUnion(gUnion);
+  var base = trSearchBase();
+  // 絞り込み候補（読み込んだ範囲から自動生成）
+  function distinct(fn){
+    var set = {};
+    base.forEach(function(m){ var v = fn(m); if(v) set[v] = 1; });
+    return Object.keys(set).sort();
+  }
+  function selHtml(id, label, opts, cur){
+    return '<select id="' + id + '" style="flex:1;min-width:6.5em;font-size:13px;padding:8px;">'
+      + '<option value="">' + label + '</option>'
+      + opts.map(function(o){ return '<option' + (o === cur ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('')
+      + '</select>';
+  }
+  var searchHtml = '<label>🔍 研修生を検索</label>'
+    + (seeAll
+      ? '<div class="chkrow" style="margin:0 0 6px;"><input type="checkbox" id="tsAll"' + (gTrFilter.all ? ' checked' : '') + '>'
+        + '<label for="tsAll" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">全国の研修生から検索（全ユニオンを読み込み）</label></div>'
+        + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px;">'
+        + (gTrFilter.all
+          ? selHtml('tsArea', '地域', distinct(function(m){ return m._area; }), gTrFilter.area)
+            + selHtml('tsUnion', 'ユニオン', distinct(function(m){ return m.union; }), gTrFilter.union)
+          : '')
+        + selHtml('tsTrainer', '研修担当者', distinct(function(m){ return m.regByName; }), gTrFilter.trainer)
+        + '</div>'
+        + '<input type="text" id="tsRef" placeholder="紹介者で絞り込み（部分一致）" value="' + esc(gTrFilter.ref) + '" style="margin:0 0 6px;">'
+      : '')
+    + '<input type="search" id="tsQ" placeholder="名前・ふりがな・番号で検索" value="' + esc(gTrFilter.q) + '" style="margin:0 0 4px;">';
   el.innerHTML = '<div id="trDlrList"></div>'
-    + '<p style="font-size:13px;font-weight:700;margin:6px 0 4px;">研修をした方の番号を入力してください</p>'
+    + searchHtml
+    + '<div id="tsResults"></div>'
+    + '<p style="font-size:13px;font-weight:700;margin:14px 0 4px;">研修をした方の番号を入力してください</p>'
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
-    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、会員番号（QRカード記載）を入れると開けます。</p>')
-    + (ts.length
-      ? ts.map(function(m, i){
-          var p = trMainProgress(m.trainings);
-          var bpc = m.trainings && m.trainings['BPC済み'];
-          return '<div data-tr="' + i + '" style="display:flex;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;">'
-            + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
-            + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '')
-            + (m.referrer ? '・紹介: ' + esc(m.referrer) : '') + '</div></div>'
-            + '<button data-tsend="' + i + '" title="会員証URLをLINE等で送る" style="padding:7px 10px;font-size:12.5px;">📨 送る</button>'
-            + (bpc ? '<span class="pill g">修了</span>' : '')
-            + '<span class="pill n">' + p + '/3</span>'
-            + '<span style="color:var(--sub);">›</span></div>';
-        }).join('')
-      : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">' + (seeAll ? '研修生はまだ登録されていません。' : 'あなたが登録した研修生はまだいません。') + '</p>');
-  Array.prototype.forEach.call(el.querySelectorAll('[data-tr]'), function(row){
-    row.onclick = function(){ trChecklist(ts[+row.getAttribute('data-tr')]); };
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、会員番号（QRカード記載）を入れると開けます。</p>');
+  // 検索条件の変更
+  var tsAll = $('tsAll');
+  if(tsAll) tsAll.onchange = function(){
+    gTrFilter.all = tsAll.checked;
+    if(gTrFilter.all){ toast('全国の研修生を読み込んでいます…'); trLoadAll(trRenderList); }
+    else { gTrFilter.area = ''; gTrFilter.union = ''; trRenderList(); }
+  };
+  [['tsArea', 'area'], ['tsUnion', 'union'], ['tsTrainer', 'trainer']].forEach(function(pr){
+    var elp = $(pr[0]);
+    if(elp) elp.onchange = function(){ gTrFilter[pr[1]] = elp.value; trApplyFilter(); };
   });
-  // 📨 会員証URLの再送（QR/URLが分からなくなった研修生向け）。行タップ（チェックリスト）とは独立
-  Array.prototype.forEach.call(el.querySelectorAll('button[data-tsend]'), function(btn){
-    btn.onclick = function(e){
-      e.stopPropagation();
-      trSendCard(ts[+btn.getAttribute('data-tsend')]);
-    };
+  [['tsRef', 'ref'], ['tsQ', 'q']].forEach(function(pr){
+    var elp = $(pr[0]);
+    if(elp) elp.addEventListener('input', function(){ gTrFilter[pr[1]] = elp.value; trApplyFilter(); });
   });
+  trApplyFilter();
   var og = $('trOpenGo');
   if(og) og.onclick = function(){
     var no = $('trOpenNo').value
@@ -3602,6 +3648,51 @@ function trRenderList(){
     }).catch(function(){ toast('読み込みに失敗しました'); });
   };
   trRenderDlr();
+}
+// 検索条件を適用して結果だけを描画（フリーワード入力中にフォーカスを失わないよう分離）
+function trApplyFilter(){
+  var box = $('tsResults');
+  if(!box) return;
+  var norm = function(v){ return String(v || '').replace(/[ 　]/g, '').toLowerCase(); };
+  var q = norm(gTrFilter.q);
+  var seeAll = canEditUnion(gUnion);
+  var list = trSearchBase().filter(function(m){
+    if(gTrFilter.all && gTrFilter.area && (m._area || '') !== gTrFilter.area) return false;
+    if(gTrFilter.all && gTrFilter.union && (m.union || '') !== gTrFilter.union) return false;
+    if(seeAll && gTrFilter.trainer && (m.regByName || '') !== gTrFilter.trainer) return false;
+    if(seeAll && gTrFilter.ref && norm(m.referrer).indexOf(norm(gTrFilter.ref)) < 0) return false;
+    if(q && (norm(m.name) + norm(m.kana) + norm(m.no)).indexOf(q) < 0) return false;
+    return true;
+  });
+  list.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
+  box.innerHTML = '<p style="font-size:12px;color:var(--sub);margin:2px 0 4px;">該当 ' + list.length + '名</p>'
+    + (list.length
+      ? list.map(function(m, i){
+          var p = trMainProgress(m.trainings);
+          var bpc = m.trainings && m.trainings['BPC済み'];
+          return '<div data-tr="' + i + '" style="display:flex;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;">'
+            + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
+            + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '')
+            + (m.referrer ? '・紹介: ' + esc(m.referrer) : '')
+            + (gTrFilter.all ? '・' + esc(m.union || '') + (m._area ? '（' + esc(m._area) + '）' : '') : '')
+            + (m.regByName ? '・担当: ' + esc(m.regByName) : '') + '</div></div>'
+            + '<button data-tsend="' + i + '" title="会員証URLをLINE等で送る" style="padding:7px 10px;font-size:12.5px;">📨 送る</button>'
+            + (bpc ? '<span class="pill g">修了</span>' : '')
+            + '<span class="pill n">' + p + '/3</span>'
+            + '<span style="color:var(--sub);">›</span></div>';
+        }).join('')
+      : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">'
+        + (seeAll ? '該当する研修生がいません。' : 'あなたが登録した研修生はまだいません。') + '</p>');
+  Array.prototype.forEach.call(box.querySelectorAll('[data-tr]'), function(row){
+    row.onclick = function(){ trChecklist(list[+row.getAttribute('data-tr')]); };
+  });
+  // 📨 会員証URLの再送（QR/URLが分からなくなった研修生向け）。行タップ（チェックリスト）とは独立
+  Array.prototype.forEach.call(box.querySelectorAll('button[data-tsend]'), function(btn){
+    btn.onclick = function(e){
+      e.stopPropagation();
+      trSendCard(list[+btn.getAttribute('data-tsend')]);
+    };
+  });
 }
 /* 🎫 今後のDLR予約: 20件入っても登録フォームを圧迫しないよう、両タブとも
    1行のサマリーバー（件数・本日件数・次の1件）だけを表示し、タップで一覧モーダルを開く */
