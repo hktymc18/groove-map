@@ -103,6 +103,8 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .sugitem:hover{background:var(--paper);}
 /* 🎓 研修生登録ページ（スマホ向け・大きめの入力とボタン） */
 #vTrainer input,#vTrainer select,#vTrainer textarea{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
+/* 全幅ルールの例外: チェックボックスまで全幅になると隣のラベルが潰れて表示が崩れる */
+#vTrainer input[type=checkbox]{width:22px;height:22px;padding:0;margin:0;flex:0 0 auto;}
 #vTrainer textarea{resize:none;overflow:hidden;line-height:1.4;font-family:inherit;}
 .trtabs{display:flex;gap:8px;margin:10px 0 14px;}
 .trtabs button{flex:1;padding:11px;font-size:14px;}
