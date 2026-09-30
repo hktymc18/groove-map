@@ -801,12 +801,12 @@ var gStatUnion = '';        // 集計タブで表示中のユニオン
 var gFinUnion = '';         // 会計タブで表示中のユニオン
 var gUnions = [];           // checkinUnions 一覧
 /* ── 機能スイッチ ──
- * FEATURE_PAYPAY: 💳 PayPay集金モードは現在封印中（受付担当への説明が複雑になるため）。
- *   true に戻すだけで全機能（イベント設定のチェック・送金QRパネル・預り金・PayPay版納金票）が復活する。
- *   封印中は新規にONにできないだけで、コード本体は残してある（payMode付きイベントでしか動かない）。
+ * FEATURE_PAYPAY: 💳 PayPay集金モード（イベント設定のチェック・送金QRパネル・預り金・PayPay版納金票）。
+ *   false にすると封印（新規にONできなくなるだけで、payMode付きの既存イベントは動き続ける）。
+ *   2026-09 に一時封印 → 2026-09-30 オーナー指示で復活。
  * RSVP_UNIONS: 🎟 会員証からの予約受付を使えるユニオン。ここに載っていないユニオンには
  *   イベント設定のチェック自体を表示しない（シークレット機能）。 */
-var FEATURE_PAYPAY = false;
+var FEATURE_PAYPAY = true;    // 2026-09-30 復活（オーナー指示）
 var RSVP_UNIONS = ['BASE REVE'];
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
