@@ -982,9 +982,15 @@ function showCardView(token){
       renderDlrTicket(c);
       renderCoSheetEntry(c);
       renderSelfEvents(c);
-      renderOnlineEvents(c);
-      renderRsvpEvents(c);
-      renderNextEvents(c);
+      // 🎓 研修生には先のハウディの予定（開催予定・オンライン受講の申請・予約）を表示しない。
+      // 研修生の受講はDLRチケット・当日の受付経由のみ（昇格すると同じURLで表示されるようになる）
+      if(c.trainee){
+        $('onlineArea').innerHTML = ''; $('rsvpArea').innerHTML = ''; $('nextArea').innerHTML = '';
+      } else {
+        renderOnlineEvents(c);
+        renderRsvpEvents(c);
+        renderNextEvents(c);
+      }
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
       // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
