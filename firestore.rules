@@ -425,6 +425,25 @@ service cloud.firestore {
       allow update: if signedIn();
     }
 
+    // 📝 CO面談シートの本人入力（下書き送信箱）:
+    //   担当者が本人の会員証に解錠マーカー（cards.coOpen・期限つき）を付けている間だけ、
+    //   本人（未ログイン・トークン照合）が下書きを1件送信できる。
+    //   読み取りはログイン済みのみ（個人情報を含むため公開しない）。
+    //   本人による変更・削除は不可＝正式記録は担当者が checkinMembers.coSheet へ保存して確定。
+    match /coSheetInbox/{iid} {
+      allow read: if signedIn();
+      allow create: if request.resource.data.keys().hasOnly(
+          ['no','name','cardToken','ver','checks','pledge','date','sign','phone','addrBirth',
+           'referrer','manager','atLocal','atMs'])
+        && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+        && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+             .data.get('no','') == request.resource.data.get('no','__x')
+        && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+             .data.get('coOpen', {}).get('until', 0) > request.time.toMillis();
+      allow update: if false;
+      allow delete: if signedIn();   // 担当者の保存時の掃除用
+    }
+
     // オンライン受講の誓約書アーカイブ:
     //   会員証ページ（未ログイン）から申請時に同意記録を作成。改変・削除は不可（アーカイブ）
     match /checkinPledges/{pid} {
