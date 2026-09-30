@@ -102,7 +102,8 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .sugitem:last-child{border-bottom:none;}
 .sugitem:hover{background:var(--paper);}
 /* 🎓 研修生登録ページ（スマホ向け・大きめの入力とボタン） */
-#vTrainer input,#vTrainer select{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
+#vTrainer input,#vTrainer select,#vTrainer textarea{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
+#vTrainer textarea{resize:none;overflow:hidden;line-height:1.4;font-family:inherit;}
 .trtabs{display:flex;gap:8px;margin:10px 0 14px;}
 .trtabs button{flex:1;padding:11px;font-size:14px;}
 .trtabs button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
@@ -631,12 +632,12 @@ tr:last-child td{border-bottom:none;}
         <button id="trTabList">研修後入力</button>
       </div>
       <div id="trPaneReg">
-        <label>氏名</label><input type="text" id="trName" autocomplete="off">
-        <label>ふりがな（任意）</label><input type="text" id="trKana" autocomplete="off">
-        <label>紹介者（任意）</label><input type="text" id="trRef" autocomplete="off">
+        <label>氏名</label><textarea id="trName" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
+        <label>ふりがな（任意）</label><textarea id="trKana" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
+        <label>紹介者（任意）</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>UPルビー</label>
         <select id="trUp"></select>
-        <input type="text" id="trUpFree" class="hide" placeholder="UPルビー名を入力" style="margin-top:6px;">
+        <textarea id="trUpFree" rows="1" class="hide" placeholder="UPルビー名を入力" style="margin-top:6px;" autocomplete="off"></textarea>
         <label>性別（任意）</label>
         <div class="trsex">
           <button data-sex="" class="on">未設定</button><button data-sex="m">男</button><button data-sex="f">女</button>
@@ -3346,8 +3347,13 @@ function trTab(reg){
 }
 $('trTabReg').onclick = function(){ trTab(true); };
 $('trTabList').onclick = function(){ trTab(false); trRenderList(); };
+// 氏名等はtextarea化しているため、Enterでの改行を抑止（値に改行が入らないように）
+['trName', 'trKana', 'trRef', 'trUpFree'].forEach(function(id){
+  var el = $(id);
+  if(el) el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); el.blur(); } });
+});
 $('trGo').onclick = function(){
-  var name = $('trName').value.trim();
+  var name = $('trName').value.replace(/[\r\n]/g, '').trim();
   if(!name){ toast('氏名を入力してください'); return; }
   var upSel = $('trUp').value;
   var up = upSel === '__free' ? $('trUpFree').value.trim() : upSel;
