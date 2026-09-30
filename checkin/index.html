@@ -656,6 +656,7 @@ tr:last-child td{border-bottom:none;}
         <button id="trTabList">研修後入力</button>
       </div>
       <div id="trPaneReg">
+        <div id="trDlrTop"></div>
         <label>氏名</label><textarea id="trName" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>ふりがな（任意）</label><textarea id="trKana" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>紹介者（任意）</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
@@ -3502,21 +3503,7 @@ function trRenderList(){
     return m.trainee && m.active !== false && (seeAll || m.regBy === gUser.uid);
   });
   ts.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
-  // 今後のDLR予約（日付順）
-  var tdy = todayStr();
-  var dlrs = gTrMembers.filter(function(m){ return m.dlrRsv && (m.dlrRsv.date || '') >= tdy; });
-  dlrs.sort(function(a, b){ return (a.dlrRsv.date || '') < (b.dlrRsv.date || '') ? -1 : 1; });
-  var dlrHtml = dlrs.length
-    ? '<label>🎫 今後のDLR予約</label>'
-      + dlrs.map(function(m){
-          return '<div style="display:flex;gap:8px;align-items:baseline;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13px;">'
-            + '<span class="mono" style="color:var(--sub);">' + esc((m.dlrRsv.date || '').slice(5).replace('-', '/')) + ' ' + esc(m.dlrRsv.timeFrom || '') + '</span>'
-            + '<b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.name || '') + '</b>'
-            + '<span style="font-size:11.5px;color:var(--sub);">担当: ' + esc(m.dlrRsv.byName || '') + '</span></div>';
-        }).join('')
-      + '<div style="margin-bottom:10px;"></div>'
-    : '';
-  el.innerHTML = dlrHtml
+  el.innerHTML = '<div id="trDlrList"></div>'
     + '<p style="font-size:13px;font-weight:700;margin:6px 0 4px;">研修をした方の番号を入力してください</p>'
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
@@ -3565,6 +3552,40 @@ function trRenderList(){
       }
     }).catch(function(){ toast('読み込みに失敗しました'); });
   };
+  trRenderDlr();
+}
+/* 🎫 今後のDLR予約: 登録タブ（開いた瞬間の画面）と研修後入力の両方に表示。
+   ユニオン全体の予約が全担当者に見える。行タップでその子の予約モーダル（変更・取消） */
+function trRenderDlr(){
+  var tdy = todayStr();
+  var dlrs = gTrMembers.filter(function(m){ return m.dlrRsv && (m.dlrRsv.date || '') >= tdy; });
+  dlrs.sort(function(a, b){ return (a.dlrRsv.date || '') < (b.dlrRsv.date || '') ? -1 : 1; });
+  // 研修後入力タブに件数バッジ
+  var tab = $('trTabList');
+  if(tab) tab.textContent = '研修後入力' + (dlrs.length ? '（🎫' + dlrs.length + '）' : '');
+  var html = dlrs.length
+    ? '<label>🎫 今後のDLR予約 <small style="color:var(--sub);font-weight:400;">タップで変更・取消</small></label>'
+      + dlrs.map(function(m, i){
+          var r = m.dlrRsv;
+          return '<div data-dlr="' + i + '" style="display:flex;gap:8px;align-items:baseline;padding:9px 2px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;">'
+            + (r.date === tdy ? '<span class="pill r">本日</span>' : '')
+            + '<span class="mono" style="color:var(--sub);white-space:nowrap;">' + esc((r.date || '').slice(5).replace('-', '/')) + ' ' + esc(r.timeFrom || '') + '</span>'
+            + '<b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.name || '') + '</b>'
+            + (r.evName ? '<span style="font-size:11.5px;color:var(--sub);max-width:6.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(r.evName) + '</span>' : '')
+            + '<span style="font-size:11.5px;color:var(--sub);white-space:nowrap;">担当: ' + esc(r.byName || '') + '</span></div>';
+        }).join('')
+      + '<div style="margin-bottom:12px;"></div>'
+    : '';
+  ['trDlrTop', 'trDlrList'].forEach(function(cid){
+    var box = $(cid);
+    if(!box) return;
+    box.innerHTML = html;
+    Array.prototype.forEach.call(box.querySelectorAll('[data-dlr]'), function(row){
+      row.onclick = function(){
+        dlrRsvModal(dlrs[+row.getAttribute('data-dlr')], function(){ trRenderList(); });
+      };
+    });
+  });
 }
 // 会員証URLの再送: スマホは共有シート（LINE等へ直接）、非対応環境は案内文ごとコピー
 function trSendCard(m){
