@@ -2483,6 +2483,26 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .idq-big.biz{border-color:color-mix(in srgb,#2CE5B8 55%,var(--border))} .idq-big.biz .c{color:#2CE5B8}
 .idq-big.usr{border-color:color-mix(in srgb,#FFB454 55%,var(--border))} .idq-big.usr .c{color:#FFB454}
 .idq-kids{font-size:12px;color:var(--text-mid);margin-top:8px} .idq-kids b{font-family:Inter,sans-serif;color:var(--text)}
+/* v557: この人を変える（ミニマル・1タップ） */
+.idq-rows{border-top:1px solid var(--border)}
+.idq-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.idq-lb{flex:none;width:56px;padding-top:7px;font-size:12px;font-weight:800;color:var(--text-dim)}
+.idq-val{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.idq-seg{display:inline-flex;align-items:center;gap:1px;padding:2px;border-radius:10px;background:var(--surface2);border:1px solid var(--border)}
+.idq-s{min-width:26px;text-align:center;padding:5px 7px;border-radius:8px;font-size:12.5px;font-weight:800;color:var(--text-mid);cursor:pointer;user-select:none;-webkit-user-select:none;font-family:Inter,'Noto Sans JP',sans-serif}
+.idq-s:hover{color:var(--text);background:color-mix(in srgb,var(--text) 6%,transparent)}
+.idq-s.sel{background:var(--accent);color:#08121a}
+.idq-pre{font-size:11px;font-weight:900;color:var(--text-dim);padding:0 2px 0 6px;font-family:Inter,sans-serif}
+.sgem .idq-s{box-shadow:inset 0 -2px 0 var(--gc)} .sgem .idq-s.sel{box-shadow:none}
+.idq-gsv{display:inline-flex;align-items:center;gap:4px} .idq-gsv .fi{width:110px;padding:6px 8px;text-align:right;font-family:Inter,sans-serif;font-weight:800} .idq-gsv i{font-style:normal;font-size:12px;color:var(--text-dim)}
+.idq-val .idq-q{border:none;background:none;padding:6px 6px;color:var(--text-mid)} .idq-val .idq-q:hover{color:var(--accent)}
+.idq-own{width:46px;border:none;background:none;padding:5px 4px;border-radius:8px;text-align:center;font:800 12.5px Inter,sans-serif;color:var(--text);outline:none;-moz-appearance:textfield}
+.idq-own::-webkit-inner-spin-button,.idq-own::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.idq-own::placeholder{color:var(--text-dim)} .idq-own:focus{background:var(--surface)} .idq-own.sel{background:var(--accent);color:#08121a}
+.idq-unit{font-size:12px;color:var(--text-dim)}
+.idq-foot{display:flex;justify-content:flex-end;gap:18px;margin-top:12px;font-size:12.5px;font-weight:800}
+.idq-more{color:var(--text-mid);cursor:pointer} .idq-more:hover{color:var(--accent)} .idq-del{color:var(--red);cursor:pointer}
+@media(max-width:767px){.idq-row{flex-direction:column;gap:6px}.idq-lb{width:auto;padding-top:0}.idq-s{padding:6px 6px;min-width:25px}}
 .idd.nb1{background:#2CE5B8;color:#08201a} .idd.usr{background:#FFB454;color:#2a1a00}
 /* v555: 理想の生活シート */
 .p2lf-sheet{max-height:92vh;overflow-y:auto}
@@ -2844,7 +2864,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v556</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v557</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3785,7 +3805,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v556';</script>
-<script src="app.js?v=v556"></script>
+<script>window.GM_EXPECT_JS='v557';</script>
+<script src="app.js?v=v557"></script>
 </body>
 </html>
