@@ -894,6 +894,21 @@ $('actLogout').onclick = function(){ auth.signOut(); };
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
 var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
 var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
+// 研修生登録ページは「ホーム画面に追加」用のアイコンと名前を専用のものに差し替える
+// （同じHTMLを共有しているため、受付システムと同じアイコンが並んで区別できなくなるのを防ぐ。
+//   iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
+if(gTrainerMode){
+  try{
+    document.title = '研修受講カード';
+    var _ti = document.querySelector('link[rel="apple-touch-icon"]');
+    if(_ti) _ti.href = './icon-trainer-180.png';
+    Array.prototype.forEach.call(document.querySelectorAll('link[rel="icon"]'), function(l){
+      l.href = (String(l.sizes).indexOf('32') >= 0) ? './icon-trainer-32.png' : './icon-trainer-192.png';
+    });
+    var _tm = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    if(_tm) _tm.content = '研修受講カード';
+  }catch(e){}
+}
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
