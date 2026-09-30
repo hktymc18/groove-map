@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v554';
+var APP_JS_VERSION = 'v555';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v554';
+  var DATA_VERSION = 'v555';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4882,6 +4882,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v555', d:'2026-09-30', items:['🏡 PLANの20問の答えを「理想の生活」シートで見返せるように：住まい・食事・服・移動・旅行・趣味・親孝行・美容・健康・貯金・交際・期限の12分野に分けて、分野ごとの月額・割合・合計を一目で確認できます','✏️ 行をタップするとその分野の質問だけその場で答え直せます（20問を最初からやり直す必要なし）','📈 前回から合計がいくら変わったか、どの分野が増減したかを表示','🎯 合計が変わったら「目標月収も〇万円にしますか？」と確認。「する」で目標月収を更新、「今のまま」で据え置き（勝手には変わりません）','⭐ 家・車・旅行先はワンタップで夢100に追加','🚪 入口：⚙メニュー「理想の生活」／目標をなおすの「内訳を見る」／スマホPLANの「理想の生活を見る」'] },
   { v:'v554', d:'2026-09-29', items:['👔 理想MAPのかんたん編集を作り直し：メンバーをタップ→「直下に追加」は2択だけ。ビジネスメンバー（LOI・GSV 1,500P・稼働B 80%）か、ユーザー（200P・ポイントは変更可で前回の値を覚える）を、タップするたび1人ずつ追加（元に戻す付き）','✏️ 既存メンバーはタイトル・GSV・稼働レベル・稼働%だけを、その場で変更（変えるとすぐ保存）','🔢 数え方：自分の直下に追加したビジネスメンバー＝自分のB1、理想MAPの新規ビジネスメンバー全員＝チームのB1（自分のB1を含む）。ユーザーはB1に数えない（ポイントは上のGSVに積み上げ）。PLANの今月の目標（フロント・B1）にそのまま連動','🏷 理想MAPのカードに「NEW B1」（緑）「USER」（金）の印。理想MAPの上に 自分のB1／チームのB1／ユーザー の人数'] },
   { v:'v553', d:'2026-09-29', items:['📖 想いのノート：やる理由・動かなかったら1年後・成功した毎日・やりたい/やりたくないこと・なりたい/なりたくない自分を、全画面の大きな画面で書けます（原稿用紙何枚分かを表示・自動保存）。「この版を残す」で日付つきで残し、過去の版も大きな文字で読み返せます。これまでの入力は引き継ぎ','✍️ やる理由は最低でも半年に1回、新しく書くのがおすすめ：半年たつとPLANと想いのノートで「書き直す時期です」。「新しく書く」は白紙から（前の作文は版として残る）。今月の目標を決める前やペースが遅れている時に「やる理由を読む」','🎉 実績の見せ方：目標を超えたら％は100超え・「＋◯ 超え」・金色に。目標をクリアした瞬間に紙吹雪（1回だけ）。予定に入れずにやった分は「＋1」（取り消しあり）。週の目標を続けてクリアすると🔥◯週。フロント目標を達成した月は横線に◎。説明はⓘに畳みました','🗓 今週の作戦：週のはじめ（月〜水）に、今週の必要数とST・CT取りの枠の予約状況を表示（足りない時はいつでも）。「作戦OK」で閉じます。HOMEにも表示','🎯 HOMEに「今日の3つ」：今日の行動（種類付きの予定・タスク）を時間順に。足りない時は今週足りない行動を提案','🐛 今日の予定は開始時刻を過ぎてから「実施」扱いに（夜のCT取りの枠が夕方に済み扱いになっていた）'] },
   { v:'v552', d:'2026-09-29', items:['📊 次の山の条件にRUBY（フロントBR 4人）・LAPIS（2人）・GOLD（1人）を追加。BR→RUBYを目指す時も、フロントBRの人数の進み具合が出ます'] },
@@ -14511,6 +14512,157 @@ function p2TodayHtml() {
   if (!items.length) return '';
   return '<div class="p2td"><div class="p2td-h">🎯 今日の3つ<span onclick="switchView(\'plan\')">PLANへ ›</span></div>' + items.join('') + '</div>';
 }
+
+// ════ v555: 理想の生活シート（20問の答えを1画面で見返す・その場で直す） ════
+var P2_LIFE_CATS = [
+  { k: 'house', ic: '🏠', lb: '住まい', ids: ['housing_type', 'housing_style', 'housing_area', 'housing_cost'], col: '#5AD7FF' },
+  { k: 'food', ic: '🍣', lb: '食', ids: ['food_style', 'food_cost'], col: '#FFB454' },
+  { k: 'clothes', ic: '👗', lb: 'ファッション', ids: ['clothes_cost'], col: '#FF87B3' },
+  { k: 'move', ic: '🚗', lb: '移動', ids: ['transport', 'car_name', 'car_loan', 'transport_cost'], col: '#8B7CFF' },
+  { k: 'travel', ic: '✈️', lb: '旅行', ids: ['travel_freq', 'travel_first', 'travel_cost'], col: '#2CE5B8' },
+  { k: 'hobby', ic: '🎸', lb: '趣味', ids: ['hobby'], col: '#FF9F6E' },
+  { k: 'parents', ic: '👪', lb: '仕送り', ids: ['parents_cost'], col: '#C583FF' },
+  { k: 'beauty', ic: '💄', lb: '美容', ids: ['beauty_cost'], col: '#FF5D73' },
+  { k: 'health', ic: '💪', lb: '健康', ids: ['health_cost'], col: '#4ADE80' },
+  { k: 'save', ic: '💰', lb: '貯金', ids: ['savings'], col: '#FFD166' },
+  { k: 'social', ic: '🥣', lb: '社会貢献', ids: ['social_packs'], col: '#67B7FF' },
+  { k: 'deadline', ic: '📅', lb: 'いつまでに', ids: ['deadline'], col: '' }
+];
+var _p2LfOpen = '';
+function _p2LfQ(id) { for (var i = 0; i < P2GW_Q.length; i++) if (P2GW_Q[i].id === id) return P2GW_Q[i]; return null; }
+function _p2LfAmt(cat) { // その分野の月額（万円）
+  var a = _p2G().ans, n = 0;
+  cat.ids.forEach(function(id) { var q = _p2LfQ(id); if (q && q.cost && _p2GwShow(q)) n += parseInt(a[id], 10) || 0; });
+  if (cat.k === 'move') {
+    var loan = a.car_loan;
+    if (loan && (a.transport === '外車' || a.transport === '国産車')) n += Math.floor(_p2CarMonthly(loan.price, loan.down, loan.years, loan.rate)) + (parseInt(loan.insurance, 10) || 0) + (parseInt(loan.parking, 10) || 0) + (parseInt(loan.gas, 10) || 0);
+  }
+  if (cat.k === 'social') n += Math.floor((parseInt(a.social_packs, 10) || 0) * 0.3);
+  return n;
+}
+function _p2LfDesc(cat) { // その分野の中身（選んだもの・書いたもの）
+  var a = _p2G().ans, bits = [];
+  cat.ids.forEach(function(id) {
+    var q = _p2LfQ(id); if (!q || q.cost || !_p2GwShow(q)) return;
+    var v = a[id];
+    if (id === 'car_loan' || v === undefined || v === null || v === '' || v === 'まだ決めてない') return;
+    if (id === 'deadline') { var d = String(v); bits.push(parseInt(d.slice(0, 4), 10) + '年' + parseInt(d.slice(5, 7), 10) + '月'); return; }
+    if (id === 'travel_first') { bits.push('一発目 ' + v); return; }
+    if (id === 'social_packs') { bits.push('ビタミール ' + v + 'パック'); return; }
+    bits.push(String(v));
+  });
+  return bits.join('・');
+}
+function _p2LfAnswered(cat) { var a = _p2G().ans; return cat.ids.some(function(id) { var v = a[id]; return v !== undefined && v !== null && v !== ''; }); }
+function _p2LfCats() { var o = {}; P2_LIFE_CATS.forEach(function(c) { if (c.k !== 'deadline') o[c.k] = _p2LfAmt(c); }); return o; }
+// 前回との差：答え直すたびに内訳を記録（同じ日の記録は上書き）
+function _p2LfSnap() {
+  var p2 = _p2(); p2.lifeSnaps = p2.lifeSnaps || [];
+  var cats = _p2LfCats(), total = _p2GwTotal(), last = p2.lifeSnaps[p2.lifeSnaps.length - 1];
+  if (last && JSON.stringify(last.cats) === JSON.stringify(cats)) return;
+  var snap = { at: evTodayYmd(), total: total, cats: cats };
+  if (last && last.at === snap.at && p2.lifeSnaps.length > 1) p2.lifeSnaps[p2.lifeSnaps.length - 1] = snap; else p2.lifeSnaps.push(snap);
+  if (p2.lifeSnaps.length > 24) p2.lifeSnaps = p2.lifeSnaps.slice(-24);
+  saveGoals();
+}
+function _p2LfPrev() { // いまと違う、いちばん新しい記録
+  var ss = _p2().lifeSnaps || [], cur = JSON.stringify(_p2LfCats());
+  for (var i = ss.length - 1; i >= 0; i--) if (JSON.stringify(ss[i].cats) !== cur) return ss[i];
+  return null;
+}
+function p2LifeOpen() {
+  var g = _p2G(), a = g.ans || {};
+  var any = P2_LIFE_CATS.some(function(c) { return c.k !== 'deadline' && _p2LfAnswered(c); });
+  if (!any && !g.p1) { p2GwOpen(1); return; } // まだ答えていない人はウィザードから
+  if (!(_p2().lifeSnaps || []).length) _p2LfSnap();
+  _p2SheetClose('p2LfOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2LfOv'; ov.style.zIndex = '630';
+  ov.onclick = function(e) { if (e.target === ov) p2LifeClose(); };
+  ov.innerHTML = '<div class="ms-sheet p2lf-sheet"><div class="ms-grip"></div><div id="p2LfBody"></div></div>';
+  document.body.appendChild(ov);
+  _p2LfOpen = '';
+  _p2LfRender();
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2LifeClose() { _p2LfSnap(); _p2SheetClose('p2LfOv'); if (currentView === 'plan') renderPlan(); }
+function _p2LfDreamBtn(t, cat) {
+  if (!t) return '';
+  var has = (_p2().dreams || []).some(function(d) { return String(d.t || '').trim() === t; });
+  return has ? '<span class="p2lf-dr on">夢100に入っています ✓</span>' : '<span class="p2lf-dr" onclick="event.stopPropagation();p2LfDream(\'' + evEsc(t).replace(/'/g, '&#39;') + '\',\'' + cat + '\')">＋夢100に追加</span>';
+}
+function p2LfDream(t, cat) {
+  var dr = _p2().dreams = _p2().dreams || [];
+  if (dr.some(function(d) { return String(d.t || '').trim() === t; })) return;
+  dr.unshift({ id: 'dr_' + Date.now() + '_' + Math.floor(Math.random() * 10000), cat: cat || 'want', t: t, amt: '', dl: '', url: '', done: false });
+  saveGoals(); toast('🌈 夢100に「' + t + '」を追加しました'); _p2LfRender();
+}
+function _p2LfRender() {
+  var box = document.getElementById('p2LfBody'); if (!box) return;
+  var p = state.goals.plan, a = _p2G().ans || {};
+  var total = _p2GwTotal(), inc = p.income ? Math.round(p.income / 10000) : 0;
+  var houseT = [a.housing_style && a.housing_style !== 'まだ決めてない' ? a.housing_style : '', a.housing_area ? '（' + a.housing_area + '）' : ''].join('');
+  var carT = a.car_name || '', trT = a.travel_first || '';
+  var dreamsH = '';
+  if (houseT) dreamsH += '<div class="p2lf-dream"><span class="ic">🏙</span><b>' + evEsc(houseT) + '</b>' + _p2LfDreamBtn(houseT, 'want') + '</div>';
+  if (carT) dreamsH += '<div class="p2lf-dream"><span class="ic">🏎</span><b>' + evEsc(carT) + '</b>' + _p2LfDreamBtn(carT, 'want') + '</div>';
+  if (trT) dreamsH += '<div class="p2lf-dream"><span class="ic">🌴</span><b>' + evEsc(trT) + '</b>' + _p2LfDreamBtn(trT, 'do') + '</div>';
+  var cats = P2_LIFE_CATS.filter(function(c) { return c.k !== 'deadline'; });
+  var bar = cats.map(function(c) { var v = _p2LfAmt(c); return v > 0 && total > 0 ? '<i style="width:' + (v / total * 100).toFixed(2) + '%;background:' + c.col + '" title="' + c.lb + ' ' + v + '万円"></i>' : ''; }).join('');
+  var prev = _p2LfPrev(), diffH = '';
+  if (prev) {
+    var cur = _p2LfCats(), parts = [];
+    cats.forEach(function(c) { var d = (cur[c.k] || 0) - ((prev.cats || {})[c.k] || 0); if (d) parts.push(c.lb + ' ' + (d > 0 ? '＋' : '−') + Math.abs(d) + '万'); });
+    var dt = total - (prev.total || 0);
+    if (parts.length) diffH = '<div class="p2lf-diff">前回（' + _p2NbFmtDate(prev.at) + '）から <b>' + (dt >= 0 ? '＋' : '−') + Math.abs(dt) + '万円</b>（' + parts.slice(0, 4).join('・') + (parts.length > 4 ? ' ほか' : '') + '）</div>';
+  }
+  var dis = _p2().lifeDismiss;
+  var ask = (inc !== total && total > 0 && dis !== total) ? '<div class="p2lf-ask">合計が月 <b>' + total + '万円</b> になりました → 目標月収も <b>' + total + '万円</b> にしますか？<small>（タイトルの目安：' + evEsc(_p2TitleEn(glTitleFromIncome(total * 10000))) + '）</small>'
+    + '<span class="p2lf-askb"><span class="p2-btn pri" onclick="p2LfApply()">する</span><span class="p2-btn" onclick="p2LfKeep()">今のまま</span></span></div>' : '';
+  var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🏡 理想の生活</div><div style="font-size:11.5px;color:var(--text-dim)">行をタップすると、その分野だけ答え直せます</div></div><span class="ms-x" onclick="p2LifeClose()">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + (dreamsH ? '<div class="p2lf-dreams">' + dreamsH + '</div>' : '')
+    + '<div class="p2lf-total">合計 <b>月 ' + total + '万円</b>' + (inc ? '<span>' + (inc === total ? '＝ 目標月収 ' + inc + '万 ✓' : '目標月収 ' + inc + '万（差 ' + (total > inc ? '＋' : '−') + Math.abs(total - inc) + '万）') + '</span>' : '') + '</div>'
+    + '<div class="p2lf-bar">' + bar + '</div>' + diffH + ask;
+  P2_LIFE_CATS.forEach(function(c) {
+    var v = c.k === 'deadline' ? null : _p2LfAmt(c), ans = _p2LfAnswered(c), desc = _p2LfDesc(c), open = _p2LfOpen === c.k;
+    h += '<div class="p2lf-row' + (open ? ' open' : '') + '"><div class="p2lf-h" onclick="p2LfToggle(\'' + c.k + '\')">'
+      + '<span class="ic" style="' + (c.col ? 'box-shadow:inset 3px 0 0 ' + c.col : '') + '">' + c.ic + '</span><span class="lb">' + c.lb + '</span>'
+      + '<span class="ds">' + (ans ? evEsc(desc) : '<span class="un">未回答 — タップして答える</span>') + '</span>'
+      + (v !== null ? '<span class="am">' + (v ? v + '万' : '—') + '</span><span class="pc">' + (v && total ? Math.round(v / total * 100) + '%' : '') + '</span>' : '')
+      + '<span class="ar">' + (open ? '▴' : '›') + '</span></div>'
+      + (open ? '<div class="p2lf-ed">' + _p2LfEditor(c) + '</div>' : '') + '</div>';
+  });
+  h += '<div style="text-align:center;margin-top:14px"><span class="p2a-lk" onclick="p2LifeClose();p2GwOpen(1)">最初から答え直す（20問）›</span></div></div>';
+  box.innerHTML = h;
+}
+function p2LfToggle(k) { _p2LfOpen = _p2LfOpen === k ? '' : k; _p2LfRender(); }
+function _p2LfEditor(cat) {
+  var a = _p2G().ans, h = '';
+  cat.ids.forEach(function(id) {
+    var q = _p2LfQ(id); if (!q || !_p2GwShow(q)) return;
+    var v = a[id];
+    h += '<div class="p2lf-q"><div class="qq">' + evEsc(q.q === '__TOTAL__' ? 'いつまでに実現したい？' : q.q) + '</div>';
+    if (q.type === 'select') h += '<div class="idq-chips">' + q.opts.map(function(o) { return '<span class="qa-chip' + (v === o.v ? ' sel' : '') + '" onclick="p2LfSet(\'' + id + '\',\'' + o.v + '\')">' + o.ic + ' ' + o.v + '</span>'; }).join('') + '</div>';
+    else if (q.type === 'input') h += '<input class="fi" value="' + evEsc(v || '') + '" placeholder="' + evEsc(q.ph2 || '') + '" onchange="p2LfSet(\'' + id + '\',this.value)">';
+    else if (q.type === 'slider') {
+      var sv = (v !== undefined && v !== null && v !== '') ? parseInt(v, 10) : q.dv;
+      h += '<div style="display:flex;align-items:center;gap:10px"><input type="range" class="gw2-slider" style="flex:1" min="' + q.min + '" max="' + q.max + '" step="' + q.step + '" value="' + sv + '" oninput="this.nextElementSibling.firstChild.textContent=this.value" onchange="p2LfSet(\'' + id + '\',parseInt(this.value,10))">'
+        + '<span class="p2lf-sv"><b>' + sv + '</b>' + q.unit + '</span></div>';
+    } else if (q.type === 'car_loan') {
+      var ln = v || { price: 500, down: 0, years: 5, rate: 3, insurance: 3, parking: 2, gas: 2 };
+      var f = function(lb, k, st) { return '<label>' + lb + '<input class="fi" type="number" step="' + (st || 1) + '" value="' + (ln[k] === undefined ? '' : ln[k]) + '" onchange="p2LfLoan(\'' + k + '\',this.value)"></label>'; };
+      h += '<div class="p2lf-loan">' + f('車両価格（万円）', 'price', 50) + f('頭金（万円）', 'down', 10) + f('ローン年数', 'years') + f('金利（%）', 'rate', 0.1) + f('保険（万/月）', 'insurance') + f('駐車場（万/月）', 'parking') + f('ガソリン（万/月）', 'gas') + '</div>'
+        + '<div class="p2-meta">月々 ' + (Math.floor(_p2CarMonthly(ln.price, ln.down, ln.years, ln.rate)) + (parseInt(ln.insurance, 10) || 0) + (parseInt(ln.parking, 10) || 0) + (parseInt(ln.gas, 10) || 0)) + '万円（ローン・保険・駐車場・ガソリン）</div>';
+    } else if (q.type === 'ym') h += _p2YmSelHtml('p2lfDl', v).replace(/<select /g, '<select onchange="p2LfDl()" ');
+    h += '</div>';
+  });
+  return h;
+}
+function p2LfSet(id, v) { _p2G().ans[id] = v; saveGoals(); _p2LfRender(); }
+function p2LfLoan(k, v) { var a = _p2G().ans; var ln = a.car_loan || { price: 500, down: 0, years: 5, rate: 3, insurance: 3, parking: 2, gas: 2 }; ln[k] = k === 'rate' ? (parseFloat(v) || 0) : (parseInt(v, 10) || 0); a.car_loan = ln; saveGoals(); _p2LfRender(); }
+function p2LfDl() { var d = _p2YmSelRead('p2lfDl'); if (!d) return; _p2G().ans.deadline = d; state.goals.plan.deadline = d; saveGoals(); toast('期日を ' + d.replace('-', '年') + '月 にしました'); _p2LfRender(); }
+function p2LfApply() { var t = _p2GwTotal(); state.goals.plan.income = t * 10000; saveGoals(); toast('目標月収を ' + t + '万円 にしました（タイトルは「目標をなおす」で変えられます）'); _p2LfRender(); if (currentView === 'plan') renderPlan(); }
+function p2LfKeep() { _p2().lifeDismiss = _p2GwTotal(); saveGoals(); _p2LfRender(); }
 // ════ v551: 目標のはしご（次の山＝最短目標） ════
 var P2_RANK = ['BR', 'GOLD', 'LAPIS', 'RUBY', 'EMERALD', 'DIAMOND', 'BLUE DIAMOND', 'TEAM ELITE'];
 var P2_LADDER = ['BR', 'RUBY', 'EMERALD', 'DIAMOND', 'BLUE DIAMOND', 'TEAM ELITE']; // BRの次はRUBYを目指すのが基本
@@ -14620,7 +14772,7 @@ function p2GoalEdit() {
     + '<span class="ms-x" onclick="_p2SheetClose(\'p2GeOv\')">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
     + '<div class="p2ge-h">🏔 最終ゴール</div>'
-    + '<div class="fr"><label class="fl">目標月収</label><div style="display:flex;gap:6px;align-items:center"><input class="fi" id="p2geInc" type="number" inputmode="numeric" value="' + (p.income ? Math.round(p.income / 10000) : '') + '" style="max-width:160px;text-align:right;font-weight:800" onfocus="edSelAll(this)" oninput="p2GeIncChange()"><span>万円</span><span class="p2-meta" id="p2geIncHint">' + (sugFin ? '月収からの目安：' + sugFin : '') + '</span></div></div>'
+    + '<div class="fr"><label class="fl">目標月収</label><div style="display:flex;gap:6px;align-items:center"><input class="fi" id="p2geInc" type="number" inputmode="numeric" value="' + (p.income ? Math.round(p.income / 10000) : '') + '" style="max-width:160px;text-align:right;font-weight:800" onfocus="edSelAll(this)" oninput="p2GeIncChange()"><span>万円</span><span class="p2a-lk" onclick="_p2SheetClose(\'p2GeOv\');p2LifeOpen()">内訳を見る ›</span><span class="p2-meta" id="p2geIncHint">' + (sugFin ? '月収からの目安：' + sugFin : '') + '</span></div></div>'
     + '<div class="fr"><label class="fl">目標タイトル</label>' + chips('p2geFin', P2_RANK, finEn, sugFin) + '</div>'
     + '<div class="fr"><label class="fl">期日</label>' + _p2YmSelHtml('p2geDl', p.deadline) + '</div>'
     + '<div class="p2ge-h" style="margin-top:6px">⛰ 次の山（最短目標）<small>今は ' + evEsc(nx.curRaw ? _p2TitleEn(nx.curRaw) : '—') + '</small></div>'
@@ -14772,7 +14924,7 @@ function p2DrawerOpen() {
     + '<div class="p2dw-sec">準備の進み具合</div>' + _p2StepperHtml()
     + '<div class="p2dw-sec">目標</div>'
     + tool('p2GoalEdit()', icn('pencil'), '目標をなおす（最終ゴール・次の山）', (p.title ? evEsc(p.title) + '・' + evEsc(String(p.deadline || '').replace('-', '年')) + '月' : 'まだありません'))
-    + tool('p2GwOpen(1)', '🏡', '理想の生活（20問）', '月収・タイトル・期日を作り直す')
+    + tool('p2LifeOpen()', '🏡', '理想の生活', '20問の答えを見る・直す')
     + tool('p2NotesOpen()', '📖', '想いのノート', (_p2WhyStale() ? '<span style="color:var(--accent)">やる理由を書き直す時期です</span>' : 'やる理由・やりたいこと・なりたい自分（書きたい時に）'))
     + tool('p2YearsOpen()', '📆', '年別目標')
     + tool('p2GapOpen()', icn('calc'), 'ギャップ（必要数）')
@@ -14800,6 +14952,7 @@ function _p2NorthHtml() {
     h += '<div style="text-align:center;padding:6px 0 4px">'
       + '<div style="font-size:25px;font-weight:900;letter-spacing:.5px;line-height:1.25">' + evEsc(p.title) + '</div>'
       + '<div class="p2-meta" style="margin-top:1px">' + evEsc(String(p.deadline).replace('-', '年')) + '月まで</div>';
+    h += '<div style="margin-top:4px"><span class="p2a-lk" onclick="p2LifeOpen()">🏡 理想の生活を見る ›</span></div>'; // v555
     var nxM = _p2Next(); // v551: 次の山（最短目標）
     if (!nxM.isFinal) h += '<div onclick="p2GoalEdit()" style="margin:8px auto 2px;display:inline-block;border:1.5px dashed var(--accent);border-radius:12px;padding:6px 14px;cursor:pointer">'
       + '<span class="p2-meta">⛰ 次の山</span> <b style="font-size:18px;font-family:Inter,sans-serif">' + evEsc(nxM.title) + '</b> '
@@ -15799,7 +15952,7 @@ function p2GwNext(skipped) {
   if (phaseEnds) { // v551: 1つのパートが終わったら閉じる（続けて次のパートに入らない）
     _p2SheetClose('p2GwOv');
     renderPlan();
-    if (q.ph === 1) { toast('🌟 目標ができました。次の山（最短目標）を決めよう'); setTimeout(p2GoalEdit, 300); }
+    if (q.ph === 1) { try { _p2LfSnap(); } catch (eS) {} toast('🌟 目標ができました。次の山（最短目標）を決めよう'); setTimeout(p2GoalEdit, 300); }
     else toast('保存しました ✓');
     return;
   }
