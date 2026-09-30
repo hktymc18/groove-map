@@ -7,8 +7,11 @@ PR → main へマージし、オーナーが **Cloud Shell から `firebase dep
 
 ```bash
 # Cloud Shell での適用手順（オーナーが実行）
-git clone https://github.com/hktymc18/groove-map.git && cd groove-map   # 2回目以降: git -C groove-map pull
-firebase deploy --only firestore:rules
+# 初回のみ: git clone https://github.com/hktymc18/groove-map.git
+git -C groove-map pull
+cd groove-map && firebase deploy --only firestore:rules
+# ※ deploy は必ず groove-map フォルダの中で実行（外だと firebase.json が見つからずエラーになる）
+cd ~
 ```
 
 - **Firebaseコンソールにルール全文を貼り付ける運用は廃止**。コンソールで直接変えた内容は、
