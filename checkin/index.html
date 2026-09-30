@@ -920,21 +920,28 @@ $('actLogout').onclick = function(){ auth.signOut(); };
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
 var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
 var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
-// 研修生登録ページは「ホーム画面に追加」用のアイコンと名前を専用のものに差し替える
-// （同じHTMLを共有しているため、受付システムと同じアイコンが並んで区別できなくなるのを防ぐ。
-//   iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
-if(gTrainerMode){
+// 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
+// （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
+//   区別できなくなるのを防ぐ。iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
+// ・#c=…（会員証）/#receive: BASE CHECK-IN のまま（差し替えなし）
+// ・#trainer: 研修受講カード（角帽アイコン）
+// ・それ以外＝受付システム本体（ログイン〜管理画面）: 受付管理（ベルアイコン）
+(function(){
+  var sw = gTrainerMode ? { t: '研修受講カード', i: './icon-trainer-' }
+    : (!gCardToken && !gReceiveMode) ? { t: '受付管理', i: './icon-admin-' }
+    : null;
+  if(!sw) return;
   try{
-    document.title = '研修受講カード';
+    document.title = sw.t;
     var _ti = document.querySelector('link[rel="apple-touch-icon"]');
-    if(_ti) _ti.href = './icon-trainer-180.png';
+    if(_ti) _ti.href = sw.i + '180.png';
     Array.prototype.forEach.call(document.querySelectorAll('link[rel="icon"]'), function(l){
-      l.href = (String(l.sizes).indexOf('32') >= 0) ? './icon-trainer-32.png' : './icon-trainer-192.png';
+      l.href = sw.i + ((String(l.sizes).indexOf('32') >= 0) ? '32.png' : '192.png');
     });
     var _tm = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-    if(_tm) _tm.content = '研修受講カード';
+    if(_tm) _tm.content = sw.t;
   }catch(e){}
-}
+})();
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
