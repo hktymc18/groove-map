@@ -2139,6 +2139,9 @@ function renderRoster(){
       + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
       + (edit
         ? '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
+          + (m.trainee && m.trainings && m.trainings['BPC済み']
+            ? '<button data-a="promote" data-no="' + esc(m.no) + '" class="primary">⭐ 昇格</button>'
+            : '')
           + (m.active !== false
             ? '<button data-a="rest" data-no="' + esc(m.no) + '">' + (m.resting ? '復帰' : '休会') + '</button>'
             : '')
@@ -2288,6 +2291,7 @@ $('btnDelAll').onclick = function(){
 function memberForm(m){
   var isNew = !m;
   m = m || {};
+  var hasTrHist = !!(m.trainings && Object.keys(m.trainings).length);
   var curUnion = m.union || gRosterUnion;
   var unionField = isOwner()
     ? '<select id="mfUnion">' + (function(){
@@ -2324,14 +2328,19 @@ function memberForm(m){
     + '<div class="chkrow" style="margin-top:10px;"><input type="checkbox" id="mfTrainee"' + (m.trainee ? ' checked' : '') + '>'
     + '<label for="mfTrainee" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 研修生（チュートリアル対象）</label></div>'
     + (m.trainee ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを外して保存すると正規メンバーに昇格します（番号・会員証・履歴はそのまま引き継ぎ）。</p>' : '')
-    + ((!isNew && (m.trainee || m.coSheet))
-      ? '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button id="mfCoSheet">📝 面談シート' + (m.coSheet ? ' ✓' : '') + '</button></div>'
+    + ((!isNew && (m.trainee || m.coSheet || hasTrHist))
+      ? '<div class="btns" style="justify-content:flex-start;margin-top:8px;">'
+        + ((m.trainee || hasTrHist) ? '<button id="mfTrHist">🎓 研修履歴</button>' : '')
+        + ((m.trainee || m.coSheet) ? '<button id="mfCoSheet">📝 面談シート' + (m.coSheet ? ' ✓' : '') + '</button>' : '')
+        + '</div>'
       : '')
     + '<div class="btns"><button id="mfCancel">キャンセル</button><button class="primary" id="mfSave">保存</button></div>'
   );
   $('mfCancel').onclick = closeModal;
   var mcs = $('mfCoSheet');
   if(mcs) mcs.onclick = function(){ closeModal(); coSheetModal(m, function(){ memberForm(m); }); };
+  var mth = $('mfTrHist');
+  if(mth) mth.onclick = function(){ closeModal(); trChecklist(m); };
   // オーナーが所属ユニオンを切り替えたら、そのユニオンの名簿で採番・系列候補を出し直す
   var us = $('mfUnion');
   if(us && isNew) us.onchange = function(){
@@ -2375,6 +2384,19 @@ function memberForm(m){
       closeModal();
       toast('保存しました（所属: ' + targetUnion + '）');
       loadMembers();
+      // 新規登録なら、その場で会員証を発行してQRで渡せる（LINE不要）
+      if(isNew){
+        var nm = { no: no, name: name, union: targetUnion, group: group, grade: data.grade,
+                   trainee: data.trainee, trainings: data.trainings };
+        modal('<h2>登録しました — ' + esc(name) + '</h2>'
+          + '<p style="font-size:13.5px;">続けて会員証を発行し、本人のスマホのカメラでQRを読み取ってもらえば、その場で渡せます（LINE不要）。</p>'
+          + '<div class="btns"><button id="miLater">あとで</button><button class="primary" id="miQr">📱 発行してQRで渡す</button></div>');
+        $('miLater').onclick = closeModal;
+        $('miQr').onclick = function(){
+          $('miQr').disabled = true;
+          issueCard(nm, function(){ loadMembers(); cardQrModal(nm); });
+        };
+      }
     }).catch(function(e){
       if(e && e.code === 'dup'){
         toast('番号 ' + no + ' はすでに使われています（' + e.name + '）。別の番号にしてください');
@@ -2401,6 +2423,10 @@ $('rosterBody').addEventListener('click', function(e){
     db.collection('checkinMembers').doc(no).set({active: !(m.active !== false)}, {merge:true})
       .then(function(){ loadMembers(); })
       .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
+  }
+  if(a === 'promote'){
+    if(!window.confirm(m.name + ' さんを正規メンバーに昇格しますか？\n会員証は同じURLのまま正規仕様に切り替わります。研修履歴は編集画面の「🎓 研修履歴」から確認できます。')) return;
+    promoteTrainee(m, function(){ loadMembers(); });
   }
   if(a === 'rest'){
     // 休会: 名簿・受付スキャン・会員証はそのままで、集計（稼働率）からだけ外す
@@ -2485,14 +2511,17 @@ function revokeCard(m, cb){
 function cardModal(m){
   var body;
   if(!m.cardToken){
-    body = '<p style="font-size:14px;">まだ発行されていません。発行するとこの人専用のURLが作られます。<br><small>URLをLINE等で本人に送るだけで会員証になります（ログイン不要）。</small></p>'
-      + '<div class="btns"><button id="cmClose">閉じる</button><button class="primary" id="cmIssue">発行する</button></div>';
+    body = '<p style="font-size:14px;">まだ発行されていません。発行するとこの人専用のURLが作られます。<br><small>目の前にいる人には「発行してQRで渡す」、遠隔の人には発行後にURLをLINE等で送ってください。</small></p>'
+      + '<div class="btns"><button id="cmClose">閉じる</button>'
+      + '<button id="cmIssue">発行する</button>'
+      + '<button class="primary" id="cmIssueQr">📱 発行してQRで渡す</button></div>';
   } else {
     var url = cardUrl(m.cardToken);
     body = '<label>この人専用の会員証URL（LINE等で本人に送る）</label>'
       + '<input type="text" id="cmUrl" readonly value="' + esc(url) + '" style="width:100%;font-size:12px;">'
       + '<div class="btns" style="justify-content:flex-start;margin-top:10px;">'
-      + '<button class="primary" id="cmCopy">URLをコピー</button>'
+      + '<button class="primary" id="cmQr">📱 QRで渡す</button>'
+      + '<button id="cmCopy">URLをコピー</button>'
       + '<button id="cmRcpts">🧾 領収書一覧</button>'
       + '<button id="cmReissue">再発行</button>'
       + '<button id="cmRevoke" class="danger">無効化</button>'
@@ -2507,6 +2536,13 @@ function cardModal(m){
     bIssue.disabled = true;
     issueCard(m, function(){ toast('発行しました'); renderRoster(); cardModal(m); });
   };
+  var bIq = $('cmIssueQr');
+  if(bIq) bIq.onclick = function(){
+    bIq.disabled = true;
+    issueCard(m, function(){ renderRoster(); cardQrModal(m); });
+  };
+  var bQr = $('cmQr');
+  if(bQr) bQr.onclick = function(){ cardQrModal(m); };
   if(bCopy) bCopy.onclick = function(){ copyText($('cmUrl').value); };
   var bRc = $('cmRcpts');
   if(bRc) bRc.onclick = function(){ cardRcptModal(m); };
@@ -2553,6 +2589,19 @@ function cardRcptModal(m){
       }).catch(function(e2){ toast(permMsg(e2, '取消に失敗しました')); });
     });
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
+}
+/* 📱 会員証をその場で渡す: 画面に大きなQRを出し、本人のスマホの標準カメラで
+   読み取ってもらう（LINE不要）。読み取ると本人専用の会員証が開く */
+function cardQrModal(m){
+  if(!m.cardToken){ toast('会員証が未発行です'); return; }
+  modal('<h2>📱 会員証QR — ' + esc(m.name || '') + '</h2>'
+    + '<p style="font-size:13.5px;">本人のスマホの<b>カメラ</b>でこのQRを読み取ってもらってください。本人専用の会員証が開きます。</p>'
+    + '<div style="display:flex;justify-content:center;background:#fff;padding:16px;border-radius:14px;"><div id="cqQr"></div></div>'
+    + '<div class="mono" style="text-align:center;color:var(--sub);font-size:12.5px;margin-top:6px;">' + esc(m.no || '') + '</div>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin-top:8px;">開けたら<b>「ホーム画面に追加」</b>をしてもらうと、次回からすぐ使えます。</p>'
+    + '<div class="btns"><button id="cqBack">閉じる</button></div>', true);
+  makeQr($('cqQr'), cardUrl(m.cardToken), 240);
+  $('cqBack').onclick = function(){ closeModal(); cardModal(m); };
 }
 $('btnCardBulk').onclick = function(){
   var targets = gMembers.filter(function(m){ return m.active !== false && !m.cardToken; });
@@ -3630,6 +3679,21 @@ function trSendCard(m){
     copyText(msg);
   }
 }
+/* ⭐ 研修生の昇格: trainee フラグを外すだけで、会員証は同じURL/QRのまま正規仕様に切り替わる。
+   研修履歴（trainings・面談シート・DLR記録）は名簿に残り、名簿の編集→🎓研修履歴から管理できる。
+   操作できるのはユニオン管理者・受付管理者のみ（ルール上も研修担当者は trainee を変更できない） */
+function promoteTrainee(m, cb){
+  db.collection('checkinMembers').doc(m.no).update({ trainee: false, updatedAt: FV.serverTimestamp() })
+    .then(function(){
+      m.trainee = false;
+      if(m.cardToken) return db.collection('cards').doc(m.cardToken).update({ trainee: false }).catch(function(){});
+    })
+    .then(function(){
+      toast(m.name + ' さんを正規メンバーに昇格しました。会員証は同じURLのまま正規仕様に切り替わります');
+      if(cb) cb();
+    })
+    .catch(function(e){ toast(permMsg(e, '昇格はユニオン管理者・受付管理者のみ可能です')); });
+}
 function trChecklist(m){
   var tr = m.trainings || {};
   function rowHtml(it){
@@ -3658,8 +3722,17 @@ function trChecklist(m){
     + TR_ITEMS.filter(function(it){ return it.main; }).map(rowHtml).join('')
     + '<label style="margin-top:14px;">サブ項目</label>'
     + TR_ITEMS.filter(function(it){ return !it.main; }).map(rowHtml).join('')
+    + (m.trainee && tr['BPC済み'] && canEditUnion(gUnion)
+      ? '<div class="btns" style="justify-content:flex-start;"><button id="tcPromote" class="primary">⭐ 正規メンバーに昇格</button></div>'
+      : '')
     + '<div class="btns"><button id="tcClose">閉じる</button></div>', true);
   $('tcClose').onclick = closeModal;
+  var pb = $('tcPromote');
+  if(pb) pb.onclick = function(){
+    if(!window.confirm(m.name + ' さんを正規メンバーに昇格しますか？\n会員証は同じURLのまま切り替わります（本人の操作は不要）。\n研修履歴は名簿の編集 →「🎓 研修履歴」から引き続き確認できます。')) return;
+    pb.disabled = true;
+    promoteTrainee(m, function(){ closeModal(); trRenderList(); if(typeof renderRoster === 'function' && gMembers.length) loadMembers(); });
+  };
   document.querySelector('.modal').addEventListener('click', function(e){
     var sb = e.target.closest ? e.target.closest('button[data-tsheet]') : null;
     if(sb){ closeModal(); coSheetModal(m, function(){ trChecklist(m); }); return; }
