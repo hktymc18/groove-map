@@ -165,6 +165,29 @@ tr:last-child td{border-bottom:none;}
 .mk .y{color:var(--green);font-weight:700;}
 .mk .nn{color:var(--line);}
 .rate{font-variant-numeric:tabular-nums;font-weight:700;}
+/* 🎫 DLR Premium Invitation（研修生のDLR予約チケット・黒×金の招待券） */
+.dlrticket{position:relative;overflow:hidden;margin-top:14px;border-radius:14px;padding:18px 16px 12px;
+  background:linear-gradient(135deg,#17130e,#2c2114 55%,#17130e);border:1.5px solid #d9b380;
+  color:#e9d7b4;text-align:center;font-family:"Zen Kaku Gothic New",sans-serif;
+  box-shadow:0 6px 22px rgba(0,0,0,.28);}
+.dlrticket .dt-title{font-size:17.5px;font-weight:900;letter-spacing:.08em;color:#f0d4a5;}
+.dlrticket .dt-sub{font-size:9.5px;letter-spacing:.5em;color:#b98f55;margin:3px 0 12px;text-indent:.5em;}
+.dlrticket .dt-name{font-size:21px;font-weight:900;color:#fff;letter-spacing:.04em;}
+.dlrticket .dt-name small{font-size:12px;color:#c9a976;font-weight:700;margin-left:4px;}
+.dlrticket .dt-when{font-size:16px;font-weight:700;color:#f0d4a5;margin-top:6px;font-variant-numeric:tabular-nums;}
+.dlrticket .dt-ev{font-size:12.5px;color:#c9a976;margin-top:2px;}
+.dlrticket .dt-msg{font-size:12.5px;color:#e9d7b4;margin-top:8px;font-style:italic;}
+.dlrticket .dt-cut{position:relative;border-top:1.6px dashed #a07f4e;margin:12px -16px 8px;}
+.dlrticket .dt-cut::before,.dlrticket .dt-cut::after{content:"";position:absolute;top:-9px;width:18px;height:18px;
+  border-radius:50%;background:var(--paper);}
+.dlrticket .dt-cut::before{left:-10px;}
+.dlrticket .dt-cut::after{right:-10px;}
+.dlrticket .dt-note{font-size:11px;color:#b98f55;}
+.dlrticket .dt-by{font-size:11.5px;color:#c9a976;margin-top:2px;}
+.dlrticket::after{content:"";position:absolute;top:-60%;left:-70%;width:46%;height:230%;
+  background:linear-gradient(100deg,transparent,rgba(255,240,205,.16),transparent);
+  transform:rotate(12deg);animation:dlrshine 3.4s ease-in-out infinite;pointer-events:none;}
+@keyframes dlrshine{0%{left:-70%}60%{left:130%}100%{left:130%}}
 /* 出席マトリクスの左固定列（氏名・系列・稼働率）*/
 .matrix th.stk,.matrix td.stk{position:sticky;background:var(--card);z-index:1;box-sizing:border-box;}
 .matrix th.stk{z-index:2;}
@@ -587,6 +610,7 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div id="selfArea"></div>
     <div id="trArea"></div>
+    <div id="dlrArea"></div>
     <div id="coArea"></div>
     <div id="onlineArea"></div>
     <div id="rsvpArea"></div>
@@ -945,6 +969,7 @@ function showCardView(token){
       }
       renderCard(c);
       renderTrainee(c);
+      renderDlrTicket(c);
       renderCoSheetEntry(c);
       renderSelfEvents(c);
       renderOnlineEvents(c);
@@ -975,6 +1000,29 @@ function showCardView(token){
 }
 // 🎓 研修生: チュートリアルの受講履歴を会員証に表示（受付で見せる用）。
 // 進捗はメイン3項目（PG/DLR/PA）基準。BPC済みは記録されるまで表示しない
+/* 🎫 DLR Premium Invitation: 担当者が予約すると本人の会員証に黒×金の招待チケットが出る。
+   DLR受講済みになる（または担当者が取消す）とチケットは消える */
+function renderDlrTicket(c){
+  var el = $('dlrArea');
+  if(!el) return;
+  var r = c.dlrRsv;
+  if(!r || !r.date || r.date < todayStr()){ el.innerHTML = ''; return; }
+  var wd = ['日', '月', '火', '水', '木', '金', '土'];
+  var d = new Date(r.date + 'T00:00:00');
+  var day = isNaN(d.getTime()) ? '' : '（' + wd[d.getDay()] + '）';
+  el.innerHTML = '<div class="dlrticket">'
+    + '<div class="dt-title">DLR Premium Invitation</div>'
+    + '<div class="dt-sub">ADMIT ONE</div>'
+    + '<div class="dt-name">' + esc(c.name || '') + '<small>様</small></div>'
+    + '<div class="dt-when">' + esc((r.date || '').slice(5).replace('-', '/')) + day
+    + '　' + esc(r.timeFrom || '20:00') + '〜' + esc(r.timeTo || '22:00') + '</div>'
+    + (r.evName ? '<div class="dt-ev">' + esc(r.evName) + '</div>' : '')
+    + (r.msg ? '<div class="dt-msg">' + esc(r.msg) + '</div>' : '')
+    + '<div class="dt-cut"></div>'
+    + '<div class="dt-note">当日はこの画面を受付でお見せください</div>'
+    + (r.byName ? '<div class="dt-by">ご案内: ' + esc(r.byName) + '</div>' : '')
+    + '</div>';
+}
 /* 📝 CO面談シートの本人入力: 担当者がチェックリストから解錠（cards.coOpen・30分）した間だけ、
    本人の会員証にフォームを表示。送信内容は下書き（coSheetInbox）として担当者に届き、
    担当者が内容を確認して保存した時点で正式記録になる（本人が勝手に確定はできない） */
@@ -3454,8 +3502,22 @@ function trRenderList(){
     return m.trainee && m.active !== false && (seeAll || m.regBy === gUser.uid);
   });
   ts.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
-  el.innerHTML =
-    '<p style="font-size:13px;font-weight:700;margin:6px 0 4px;">研修をした方の番号を入力してください</p>'
+  // 今後のDLR予約（日付順）
+  var tdy = todayStr();
+  var dlrs = gTrMembers.filter(function(m){ return m.dlrRsv && (m.dlrRsv.date || '') >= tdy; });
+  dlrs.sort(function(a, b){ return (a.dlrRsv.date || '') < (b.dlrRsv.date || '') ? -1 : 1; });
+  var dlrHtml = dlrs.length
+    ? '<label>🎫 今後のDLR予約</label>'
+      + dlrs.map(function(m){
+          return '<div style="display:flex;gap:8px;align-items:baseline;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13px;">'
+            + '<span class="mono" style="color:var(--sub);">' + esc((m.dlrRsv.date || '').slice(5).replace('-', '/')) + ' ' + esc(m.dlrRsv.timeFrom || '') + '</span>'
+            + '<b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.name || '') + '</b>'
+            + '<span style="font-size:11.5px;color:var(--sub);">担当: ' + esc(m.dlrRsv.byName || '') + '</span></div>';
+        }).join('')
+      + '<div style="margin-bottom:10px;"></div>'
+    : '';
+  el.innerHTML = dlrHtml
+    + '<p style="font-size:13px;font-weight:700;margin:6px 0 4px;">研修をした方の番号を入力してください</p>'
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
@@ -3505,6 +3567,11 @@ function trChecklist(m){
       + (it.k === 'CO'
         ? '<button data-tsheet="1" style="padding:7px 10px;font-size:12.5px;">📝 面談シート' + (m.coSheet ? ' ✓' : '') + '</button>'
         : '')
+      + (it.k === 'DLR' && !r
+        ? '<button data-tdlr="1" style="padding:7px 10px;font-size:12.5px;">'
+          + (m.dlrRsv ? '🎫 ' + esc((m.dlrRsv.date || '').slice(5).replace('-', '/')) + ' 予約済み' : '📅 会場受講を予約')
+          + '</button>'
+        : '')
       + (r
         ? '<span style="font-size:12.5px;color:var(--green);font-weight:700;">✓ ' + esc(trDateShort(r.at)) + ' ' + esc(r.byName || '') + '</span>'
           + (r.by === gUser.uid || canEditUnion(gUnion)
@@ -3524,6 +3591,8 @@ function trChecklist(m){
   document.querySelector('.modal').addEventListener('click', function(e){
     var sb = e.target.closest ? e.target.closest('button[data-tsheet]') : null;
     if(sb){ closeModal(); coSheetModal(m, function(){ trChecklist(m); }); return; }
+    var dbn = e.target.closest ? e.target.closest('button[data-tdlr]') : null;
+    if(dbn){ closeModal(); dlrRsvModal(m, function(){ trChecklist(m); }); return; }
     var b = e.target.closest ? e.target.closest('button[data-tk]') : null;
     if(!b) return;
     var k = b.getAttribute('data-tk');
@@ -3535,6 +3604,117 @@ function trChecklist(m){
       trWrite(m, k, { at: todayStr(), byName: gProf.name || '', by: gUser.uid, atMs: Date.now() })
         .then(function(){ closeModal(); trChecklist(m); });
     }
+  });
+}
+/* ── 🎫 DLR会場受講の予約: 担当者がこのシステムから予約し、本人の会員証に
+   「DLR Premium Invitation」チケットが表示される（旧: 外部予約サイト/LINEの置き換え） ──
+   保存先: checkinMembers/{no}.dlrRsv（マスター）＋ cards/{token}.dlrRsv（表示用ミラー） */
+function dlrTimeTo(from){
+  // 終了時間 = 開始の2時間後（デフォルト 20:00〜22:00）
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(from || ''));
+  if(!m) return '22:00';
+  var h = (parseInt(m[1], 10) + 2) % 24;
+  return (h < 10 ? '0' : '') + h + ':' + m[2];
+}
+function dlrRsvModal(m, back){
+  function goBack(){ closeModal(); if(back) back(); }
+  // 今後のイベント（今月＋来月・自ユニオン参加分）を選択肢として読み込む
+  var tdy = todayStr();
+  var mk1 = tdy.slice(0, 7);
+  var d2 = new Date();
+  d2.setMonth(d2.getMonth() + 1);
+  var mk2 = d2.getFullYear() + '-' + ((d2.getMonth() + 1) < 10 ? '0' : '') + (d2.getMonth() + 1);
+  Promise.all([mk1, mk2].map(function(k){
+    return db.collection('checkinEvents').where('month', '==', k).get().catch(function(){ return { forEach: function(){} }; });
+  })).then(function(res){
+    var evs = [];
+    res.forEach(function(qs){
+      qs.forEach(function(d){
+        var ev = d.data(); ev.id = d.id;
+        if((ev.unions || []).indexOf(gUnion) < 0) return;
+        if((ev.date || '') < tdy) return;
+        evs.push(ev);
+      });
+    });
+    evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    var cur = m.dlrRsv || null;
+    modal('<h2>🎫 DLR会場受講の予約 — ' + esc(m.name || '') + '</h2>'
+      + (cur ? '<p style="font-size:13px;"><span class="pill g">予約済み</span> '
+          + esc(cur.date || '') + ' ' + esc(cur.timeFrom || '') + '〜' + esc(cur.timeTo || '')
+          + (cur.evName ? '（' + esc(cur.evName) + '）' : '') + '</p>' : '')
+      + '<label>日程（今後のハウディから選択）</label>'
+      + '<select id="dlrEv">'
+      + evs.map(function(ev, i){
+          return '<option value="' + i + '"' + (cur && cur.evId === ev.id ? ' selected' : '') + '>'
+            + esc((ev.date || '') + '　' + (ev.name || '')) + '</option>';
+        }).join('')
+      + '<option value="__free"' + (cur && !cur.evId ? ' selected' : '') + '>その他（日付を手入力）</option>'
+      + '</select>'
+      + '<div id="dlrFreeRow" class="' + (cur && !cur.evId ? '' : 'hide') + '">'
+      + '<label>日付</label><input type="date" id="dlrDate" value="' + esc((cur && cur.date) || '') + '"></div>'
+      + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>開始</label>'
+      + '<input type="time" id="dlrFrom" value="' + esc((cur && cur.timeFrom) || '20:00') + '"></div>'
+      + '<div style="flex:1;min-width:0;"><label>終了（自動: 開始の2時間後）</label>'
+      + '<input type="time" id="dlrTo" value="' + esc((cur && cur.timeTo) || '22:00') + '" readonly style="opacity:.75;"></div></div>'
+      + '<label>本人へのひとこと（任意・チケットに載ります）</label>'
+      + '<input type="text" id="dlrMsg" value="' + esc((cur && cur.msg) || '') + '" placeholder="例: 当日お会いできるのを楽しみにしています">'
+      + '<p style="font-size:12px;color:var(--sub);margin-top:8px;">予約すると本人の会員証（研修受講カード）に'
+      + '「DLR Premium Invitation」の招待チケットが表示されます。DLRを受講済みにすると自動で消えます。</p>'
+      + '<div class="btns">'
+      + (cur ? '<button id="dlrDel" class="danger ghost">予約を取消</button>' : '')
+      + '<button id="dlrCancel">閉じる</button><button class="primary" id="dlrGo">' + (cur ? '予約を変更' : '予約する') + '</button></div>',
+      true);
+    $('dlrCancel').onclick = goBack;
+    $('dlrEv').onchange = function(){
+      $('dlrFreeRow').classList.toggle('hide', $('dlrEv').value !== '__free');
+    };
+    $('dlrFrom').onchange = function(){ $('dlrTo').value = dlrTimeTo($('dlrFrom').value); };
+    var del = $('dlrDel');
+    if(del) del.onclick = function(){
+      if(!window.confirm(m.name + ' さんのDLR予約を取り消しますか？（本人のチケットも消えます）')) return;
+      var ps = [db.collection('checkinMembers').doc(m.no).update({ dlrRsv: FV.delete() })];
+      if(m.cardToken) ps.push(db.collection('cards').doc(m.cardToken).set({ dlrRsv: FV.delete() }, { merge: true }).catch(function(){}));
+      Promise.all(ps).then(function(){
+        delete m.dlrRsv;
+        toast('予約を取り消しました');
+        trRenderList();
+        goBack();
+      }).catch(function(e){ toast(permMsg(e, '予約の権限がありません（担当への任命を確認してください）')); });
+    };
+    $('dlrGo').onclick = function(){
+      var sel = $('dlrEv').value;
+      var date = '', evName = '', evId = '';
+      if(sel === '__free'){
+        date = $('dlrDate').value;
+      } else {
+        var ev = evs[parseInt(sel, 10)];
+        if(ev){ date = ev.date || ''; evName = ev.name || ''; evId = ev.id; }
+      }
+      if(!date){ toast('日付を選択してください'); return; }
+      var rsv = {
+        date: date, timeFrom: $('dlrFrom').value || '20:00', timeTo: $('dlrTo').value || dlrTimeTo($('dlrFrom').value),
+        evName: evName, evId: evId, msg: $('dlrMsg').value.trim(),
+        by: (gUser && gUser.uid) || '', byName: (gProf && gProf.name) || '',
+        atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now()
+      };
+      $('dlrGo').disabled = true;
+      db.collection('checkinMembers').doc(m.no).update({ dlrRsv: rsv }).then(function(){
+        m.dlrRsv = rsv;
+        // 会員証（表示用）へは日付・時間・イベント名・担当者名・メッセージだけミラー
+        if(m.cardToken){
+          return db.collection('cards').doc(m.cardToken).set({
+            dlrRsv: { date: rsv.date, timeFrom: rsv.timeFrom, timeTo: rsv.timeTo, evName: rsv.evName, byName: rsv.byName, msg: rsv.msg }
+          }, { merge: true }).catch(function(){});
+        }
+      }).then(function(){
+        toast('予約しました。本人の会員証に招待チケットが表示されます');
+        trRenderList();
+        goBack();
+      }).catch(function(e){
+        $('dlrGo').disabled = false;
+        toast(permMsg(e, '予約の権限がありません（担当への任命を確認してください）'));
+      });
+    };
   });
 }
 /* ── 📝 CO面談シート（ver.2.5）: 紙の面談シートをそのままデジタル化 ──
@@ -3685,8 +3865,11 @@ function trWrite(m, k, rec){
   m.trainings = m.trainings || {};
   if(rec) m.trainings[k] = rec; else delete m.trainings[k];
   // update() でマップを丸ごと置き換える（取消時のキー削除も反映される）
-  var ps = [db.collection('checkinMembers').doc(m.no).update({ trainings: m.trainings })];
-  if(m.cardToken) ps.push(db.collection('cards').doc(m.cardToken).update({ trainings: m.trainings }));
+  var upd = { trainings: m.trainings };
+  // DLRを受講済みにしたら予約チケットは役目を終えて自動で消す
+  if(k === 'DLR' && rec && m.dlrRsv){ upd.dlrRsv = FV.delete(); delete m.dlrRsv; }
+  var ps = [db.collection('checkinMembers').doc(m.no).update(upd)];
+  if(m.cardToken) ps.push(db.collection('cards').doc(m.cardToken).update(upd));
   return Promise.all(ps).then(function(){
     toast(rec ? '「' + k + '」を記録しました' : '「' + k + '」を取り消しました');
     trRenderList();
@@ -5120,7 +5303,10 @@ function checkinMember(member, method, role){
     + '<div class="hit-name">' + esc(member.name) + '</div>'
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
-    + (member.trainee ? '<div style="margin:4px 0;"><span class="pill n">研修生</span> <span style="font-size:14px;font-weight:700;">チュートリアル ' + trMainProgress(member.trainings) + '/3</span></div>' : '')
+    + (member.trainee ? '<div style="margin:4px 0;"><span class="pill n">研修生</span> <span style="font-size:14px;font-weight:700;">チュートリアル ' + trMainProgress(member.trainings) + '/3</span>'
+        + (member.dlrRsv && member.dlrRsv.date === todayStr()
+          ? ' <span class="pill a">🎫 本日DLR予約 ' + esc(member.dlrRsv.timeFrom || '') + '〜</span>' : '')
+        + '</div>' : '')
     + '<p class="hit-meta">' + nowHM()
     + (fee > 0 ? '　<b>' + (ppRec ? '💳 PayPay ' : '') + yen(fee) + ' 徴収</b>' : '') + '</p>'
     + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
