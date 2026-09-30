@@ -3402,6 +3402,7 @@ function trainerEnter(){
   db.collection('checkinUnions').doc(gUnion).get().then(function(sn){
     var d = sn.exists ? sn.data() : {};
     gUnionPrefix[gUnion] = d.noPrefix || '';   // 自動発番用（このページはafterLoginを通らない）
+    gCkAdmins[gUnion] = d.admins || [];        // canEditUnion（検索パネルの管理者判定）用
     var isAdmin = isOwner() || gProf.role === 'admin' || ((d.admins || []).indexOf(gUser.uid) >= 0);
     var allowed = isAdmin || ((d.trainers || []).indexOf(gUser.uid) >= 0);
     if(!allowed){
@@ -3551,11 +3552,13 @@ $('trToday').addEventListener('click', function(e){
 });
 // 研修生一覧 → タップでチュートリアルのチェックリスト
 /* ── 研修生の検索 ──
-   全国で研修生が増えても探せるよう、管理者（ユニオン管理者・受付管理者）は
+   研修生が増えても探せるよう、管理者（ユニオン管理者・受付管理者）は
    地域・ユニオン・研修担当者・紹介者・フリーワード（名前/ふりがな/番号）で検索できる。
+   横断検索の範囲は「自分が担当（管理）しているユニオン」だけ
+   （オーナーは全ユニオン。担当外のユニオンの研修生は読み込まない）。
    一般の研修担当者が検索できるのは「自分が登録した研修生」の中だけ（フリーワードのみ） */
 var gTrFilter = { all: false, area: '', union: '', trainer: '', ref: '', q: '' };
-var gTrAll = null;        // 全国の研修生（「全国から検索」ON時に読み込み）
+var gTrAll = null;        // 担当している全ユニオンの研修生（横断検索ON時に読み込み）
 var gTrAreaMap = null;    // ユニオン名 → 活動地域
 function trLoadAll(cb){
   if(gTrAll){ cb(); return; }
@@ -3564,15 +3567,20 @@ function trLoadAll(cb){
     db.collection('checkinUnions').get()
   ]).then(function(res){
     gTrAreaMap = {};
-    res[1].forEach(function(d){ gTrAreaMap[d.id] = (d.data() && d.data().area) || ''; });
+    res[1].forEach(function(d){
+      var dd = d.data() || {};
+      gTrAreaMap[d.id] = dd.area || '';
+      gCkAdmins[dd.name || d.id] = dd.admins || [];   // 他ユニオンの担当判定用（#trainerはafterLoginを通らない）
+    });
     gTrAll = [];
     res[0].forEach(function(d){
       var m = d.data(); m.no = d.id;
+      if(!canEditUnion(m.union)) return;   // 担当外のユニオンは検索対象にしない
       m._area = gTrAreaMap[m.union] || '';
       gTrAll.push(m);
     });
     cb();
-  }).catch(function(e){ toast('全国の研修生の読込エラー: ' + e.message); gTrFilter.all = false; cb(); });
+  }).catch(function(e){ toast('研修生の読込エラー: ' + e.message); gTrFilter.all = false; cb(); });
 }
 function trSearchBase(){
   var seeAll = canEditUnion(gUnion);
@@ -3600,7 +3608,7 @@ function trRenderList(){
   var searchHtml = '<label>🔍 研修生を検索</label>'
     + (seeAll
       ? '<div class="chkrow" style="margin:0 0 6px;"><input type="checkbox" id="tsAll"' + (gTrFilter.all ? ' checked' : '') + '>'
-        + '<label for="tsAll" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">全国の研修生から検索（全ユニオンを読み込み）</label></div>'
+        + '<label for="tsAll" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">担当している全ユニオンから検索</label></div>'
         + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px;">'
         + (gTrFilter.all
           ? selHtml('tsArea', '地域', distinct(function(m){ return m._area; }), gTrFilter.area)
@@ -3623,7 +3631,7 @@ function trRenderList(){
   var tsAll = $('tsAll');
   if(tsAll) tsAll.onchange = function(){
     gTrFilter.all = tsAll.checked;
-    if(gTrFilter.all){ toast('全国の研修生を読み込んでいます…'); trLoadAll(trRenderList); }
+    if(gTrFilter.all){ toast('担当ユニオンの研修生を読み込んでいます…'); trLoadAll(trRenderList); }
     else { gTrFilter.area = ''; gTrFilter.union = ''; trRenderList(); }
   };
   [['tsArea', 'area'], ['tsUnion', 'union'], ['tsTrainer', 'trainer']].forEach(function(pr){
