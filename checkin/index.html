@@ -2337,6 +2337,7 @@ function memberForm(m){
     + '<div class="chkrow" style="margin-top:10px;"><input type="checkbox" id="mfTrainee"' + (m.trainee ? ' checked' : '') + '>'
     + '<label for="mfTrainee" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 研修生（チュートリアル対象）</label></div>'
     + (m.trainee ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを外して保存すると正規メンバーに昇格します（番号・会員証・履歴はそのまま引き継ぎ）。</p>' : '')
+    + (!isNew && !m.trainee && hasTrHist ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを入れて保存すると研修生に戻せます（昇格の取り消し。会員証は同じURLのまま）。「🎓 研修履歴」の中からも戻せます。</p>' : '')
     + ((!isNew && (m.trainee || m.coSheet || hasTrHist))
       ? '<div class="btns" style="justify-content:flex-start;margin-top:8px;">'
         + ((m.trainee || hasTrHist) ? '<button id="mfTrHist">🎓 研修履歴</button>' : '')
@@ -3802,6 +3803,20 @@ function promoteTrainee(m, cb){
     })
     .catch(function(e){ toast(permMsg(e, '昇格はユニオン管理者・受付管理者のみ可能です')); });
 }
+// ↩︎ 昇格の取り消し: 間違えて昇格した場合に trainee フラグを戻す。
+// 会員証は同じURL/QRのまま研修生仕様に戻る（研修履歴・面談シートはそのまま）
+function demoteTrainee(m, cb){
+  db.collection('checkinMembers').doc(m.no).update({ trainee: true, updatedAt: FV.serverTimestamp() })
+    .then(function(){
+      m.trainee = true;
+      if(m.cardToken) return db.collection('cards').doc(m.cardToken).update({ trainee: true }).catch(function(){});
+    })
+    .then(function(){
+      toast(m.name + ' さんを研修生に戻しました。会員証は同じURLのまま研修生仕様に戻ります');
+      if(cb) cb();
+    })
+    .catch(function(e){ toast(permMsg(e, '昇格の取り消しはユニオン管理者・受付管理者のみ可能です')); });
+}
 function trChecklist(m){
   var tr = m.trainings || {};
   function rowHtml(it){
@@ -3833,6 +3848,9 @@ function trChecklist(m){
     + (m.trainee && tr['BPC済み'] && canEditUnion(gUnion)
       ? '<div class="btns" style="justify-content:flex-start;"><button id="tcPromote" class="primary">⭐ 正規メンバーに昇格</button></div>'
       : '')
+    + (!m.trainee && canEditUnion(gUnion)
+      ? '<div class="btns" style="justify-content:flex-start;"><button id="tcDemote">↩︎ 研修生に戻す（昇格の取り消し）</button></div>'
+      : '')
     + '<div class="btns"><button id="tcClose">閉じる</button></div>', true);
   $('tcClose').onclick = closeModal;
   var pb = $('tcPromote');
@@ -3840,6 +3858,12 @@ function trChecklist(m){
     if(!window.confirm(m.name + ' さんを正規メンバーに昇格しますか？\n会員証は同じURLのまま切り替わります（本人の操作は不要）。\n研修履歴は名簿の編集 →「🎓 研修履歴」から引き続き確認できます。')) return;
     pb.disabled = true;
     promoteTrainee(m, function(){ closeModal(); trRenderList(); if(typeof renderRoster === 'function' && gMembers.length) loadMembers(); });
+  };
+  var dmb = $('tcDemote');
+  if(dmb) dmb.onclick = function(){
+    if(!window.confirm(m.name + ' さんを研修生に戻しますか？（昇格の取り消し）\n会員証は同じURLのまま研修生仕様に戻ります。研修履歴・面談シートはそのまま残ります。')) return;
+    dmb.disabled = true;
+    demoteTrainee(m, function(){ closeModal(); trRenderList(); if(typeof renderRoster === 'function' && gMembers.length) loadMembers(); });
   };
   document.querySelector('.modal').addEventListener('click', function(e){
     var sb = e.target.closest ? e.target.closest('button[data-tsheet]') : null;
