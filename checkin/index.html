@@ -230,6 +230,16 @@ tr:last-child td{border-bottom:none;}
 #mcQr{display:flex;justify-content:center;min-height:180px;align-items:center;position:relative;z-index:1;}
 #mcQr img,#mcQr canvas{border:8px solid #fff;outline:1px solid #e2e0d8;border-radius:4px;background:#fff;}
 .mc-no{font-size:12.5px;color:#6f6d63;margin-top:12px;}
+/* 🐤 VISITOR PASS: 研修生の会員証はヒヨコ色×青バッジで正規カードと一目で区別できる。
+   「研修生」とは書かない（VISITOR表記）。昇格すると同じURLのまま通常デザインに戻る */
+.membercard.visitor{background:#ffe680;color:#33290a;}
+.membercard.visitor::before{content:'';display:block;width:64px;height:12px;background:#e8c23a;border-radius:99px;margin:0 auto 14px;box-shadow:inset 0 2px 3px rgba(0,0,0,.22);}
+.membercard.visitor .mc-deco{display:none;}
+.membercard.visitor .mc-brand{display:inline-block;background:#2361e8;color:#fff;font-size:15px;letter-spacing:.08em;padding:7px 22px;border-radius:99px;box-shadow:0 3px 0 #123c8f;font-family:Verdana,"Zen Kaku Gothic New",sans-serif;font-weight:900;}
+.membercard.visitor .mc-union{color:#153f9e;margin-top:10px;}
+.membercard.visitor .mc-union::before{content:'BASE CHECK-IN';display:block;font-size:10px;letter-spacing:.34em;color:#b09a45;font-weight:700;margin:8px 0 10px;}
+.membercard.visitor .mc-group,.membercard.visitor .mc-no{color:#8a7a2f;}
+.membercard.visitor #mcQr img,.membercard.visitor #mcQr canvas{outline:3px solid #2361e8;}
 .mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
 /* 次回の開催予定（搭乗券風ストリップ） */
 .nextwrap{margin-top:26px;text-align:left;}
@@ -951,6 +961,14 @@ function renderCard(c){
   $('mcUnion').textContent = c.union || '';
   var card = $('memberCard');
   card.className = 'membercard';
+  // 🐤 研修生は VISITOR PASS デザイン（ヒヨコ色）。昇格すると同じURLで通常デザインに戻る
+  var brand = card.querySelector('.mc-brand');
+  if(c.trainee){
+    card.classList.add('visitor');
+    if(brand) brand.textContent = 'VISITOR PASS';
+  } else if(brand){
+    brand.textContent = 'BASE CHECK-IN';
+  }
   var style = GRADE_STYLES[c.grade || ''];
   if(style){
     card.classList.add(style, 'premium');
@@ -992,7 +1010,7 @@ function showCardView(token){
         renderNextEvents(c);
       }
       renderReceipts(c);
-      try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '' })); }catch(e){}
+      try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '', trainee: !!c.trainee })); }catch(e){}
       // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
       // ホーム画面ショートカットから開いた旧トークンのページでは、QRを出さず案内する
       // （旧QRを受付でスキャンすると「無効な会員証」になり続けるため、その入口で止める）
@@ -1116,7 +1134,7 @@ function renderTrainee(c){
       + '</div>';
   }).join('');
   el.innerHTML = '<div class="nextwrap">'
-    + '<div class="next-head">TRAINEE — チュートリアル ' + done + '/3</div>'
+    + '<div class="next-head">VISITOR — チュートリアル ' + done + '/3</div>'
     + '<div style="height:6px;background:var(--line);border-radius:99px;margin:6px 0 8px;overflow:hidden;">'
     + '<i style="display:block;height:100%;width:' + Math.round(done / 3 * 100) + '%;background:var(--green);"></i></div>'
     + (tr['BPC済み'] ? '<div class="se-done" style="margin:4px 0 8px;">🎉 修了 — 正規登録手続き中</div>' : '')
