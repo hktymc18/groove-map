@@ -586,6 +586,7 @@ tr:last-child td{border-bottom:none;}
     </div>
     <div id="selfArea"></div>
     <div id="trArea"></div>
+    <div id="coArea"></div>
     <div id="onlineArea"></div>
     <div id="rsvpArea"></div>
     <div id="nextArea"></div>
@@ -627,7 +628,7 @@ tr:last-child td{border-bottom:none;}
     <div id="trMain" class="hide">
       <div class="trtabs">
         <button id="trTabReg" class="on">＋ 登録</button>
-        <button id="trTabList">研修生一覧</button>
+        <button id="trTabList">研修後入力</button>
       </div>
       <div id="trPaneReg">
         <label>氏名</label><input type="text" id="trName" autocomplete="off">
@@ -928,6 +929,7 @@ function showCardView(token){
       }
       renderCard(c);
       renderTrainee(c);
+      renderCoSheetEntry(c);
       renderSelfEvents(c);
       renderOnlineEvents(c);
       renderRsvpEvents(c);
@@ -957,6 +959,66 @@ function showCardView(token){
 }
 // 🎓 研修生: チュートリアルの受講履歴を会員証に表示（受付で見せる用）。
 // 進捗はメイン3項目（PG/DLR/PA）基準。BPC済みは記録されるまで表示しない
+/* 📝 CO面談シートの本人入力: 担当者がチェックリストから解錠（cards.coOpen・30分）した間だけ、
+   本人の会員証にフォームを表示。送信内容は下書き（coSheetInbox）として担当者に届き、
+   担当者が内容を確認して保存した時点で正式記録になる（本人が勝手に確定はできない） */
+function renderCoSheetEntry(c){
+  var el = $('coArea');
+  if(!el) return;
+  var op = c.coOpen;
+  if(!op || !(op.until > Date.now())){ el.innerHTML = ''; return; }
+  el.innerHTML = '<div style="border:2px solid var(--green);border-radius:12px;padding:12px 14px;margin-top:10px;background:var(--card);">'
+    + '<b style="font-size:15px;">📝 面談シートの入力</b>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 10px;">担当: ' + esc(op.by || '') + '　面談中のみ入力できます。'
+    + '各項目を確認してチェックし、最後に「送信する」を押してください。</p>'
+    + '<button class="primary" id="coStart" style="width:100%;padding:12px;">入力をはじめる</button>'
+    + '<div id="coForm" class="hide"></div></div>';
+  $('coStart').onclick = function(){
+    $('coStart').classList.add('hide');
+    var h = '', lastG = '';
+    CO_SHEET_ITEMS.forEach(function(it, i){
+      if(it.g !== lastG){ h += '<label style="margin-top:10px;">' + esc(it.g) + '</label>'; lastG = it.g; }
+      h += '<div class="chkrow" style="align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);">'
+        + '<input type="checkbox" id="cc_' + i + '" style="margin-top:3px;flex:0 0 auto;">'
+        + '<label for="cc_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:13.5px;white-space:pre-line;">' + esc(it.q) + '</label></div>';
+    });
+    h += '<label style="margin-top:12px;">誓約</label>'
+      + '<div class="chkrow" style="align-items:flex-start;padding:8px 0;">'
+      + '<input type="checkbox" id="ccPledge" style="margin-top:3px;flex:0 0 auto;">'
+      + '<label for="ccPledge" style="margin:0;font-weight:400;color:var(--ink);font-size:13.5px;">' + esc(CO_SHEET_PLEDGE) + '</label></div>'
+      + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>日付</label><input type="date" id="ccDate" value="' + esc(todayStr()) + '"></div>'
+      + '<div style="flex:1;min-width:0;"><label>署名（氏名）</label><input type="text" id="ccSign" value="' + esc(c.name || '') + '"></div></div>'
+      + '<label>電話番号</label><input type="tel" id="ccPhone">'
+      + '<label>住所または生年月日</label><input type="text" id="ccAddr">'
+      + '<label>紹介者</label><input type="text" id="ccRef">'
+      + '<label>管理者（わからなければ空欄でOK）</label><input type="text" id="ccMgr">'
+      + '<button class="primary" id="ccSend" style="width:100%;padding:13px;font-size:15px;margin-top:12px;">送信する</button>'
+      + '<p style="font-size:11.5px;color:var(--sub);margin-top:6px;">送信内容は担当者が確認してから記録されます。</p>';
+    var f = $('coForm');
+    f.innerHTML = h;
+    f.classList.remove('hide');
+    $('ccSend').onclick = function(){
+      var checks = {};
+      CO_SHEET_ITEMS.forEach(function(it, i){ checks['c' + i] = !!$('cc_' + i).checked; });
+      $('ccSend').disabled = true;
+      db.collection('coSheetInbox').add({
+        no: c.no || '', name: c.name || '', cardToken: gCardToken, ver: CO_SHEET_VER,
+        checks: checks, pledge: !!$('ccPledge').checked,
+        date: $('ccDate').value, sign: $('ccSign').value.trim(),
+        phone: $('ccPhone').value.trim(), addrBirth: $('ccAddr').value.trim(),
+        referrer: $('ccRef').value.trim(), manager: $('ccMgr').value.trim(),
+        atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now()
+      }).then(function(){
+        el.innerHTML = '<div style="border:2px solid var(--green);border-radius:12px;padding:14px;margin-top:10px;background:var(--card);text-align:center;">'
+          + '<b style="color:var(--green);font-size:15px;">✓ 送信しました</b>'
+          + '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">担当者が内容を確認して記録します。スマホを担当者に見せてお知らせください。</p></div>';
+      }).catch(function(){
+        $('ccSend').disabled = false;
+        el.insertAdjacentHTML('beforeend', '<p style="color:var(--accent);font-size:12.5px;">送信に失敗しました。担当者の解錠が切れている可能性があります（担当者にもう一度ボタンを押してもらってください）。</p>');
+      });
+    };
+  };
+}
 function renderTrainee(c){
   var el = $('trArea');
   if(!el) return;
@@ -3372,8 +3434,9 @@ function trRenderList(){
   });
   ts.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
   el.innerHTML =
-    '<div style="display:flex;gap:8px;margin:4px 0 6px;">'
-    + '<input type="text" id="trOpenNo" placeholder="番号で開く（例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000）" style="flex:1;min-width:0;">'
+    '<p style="font-size:13px;font-weight:700;margin:6px 0 4px;">研修をした方の番号を入力してください</p>'
+    + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
+    + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
     + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、会員番号（QRカード記載）を入れると開けます。</p>')
     + (ts.length
@@ -3478,7 +3541,14 @@ function coSheetModal(m, back){
     var body = '';
     if(editing){
       body += '<p style="font-size:12px;color:var(--sub);margin:0 0 4px;">面談シート ver.' + CO_SHEET_VER
-        + '　本人に確認しながらチェックしてください。<b>途中保存できます。</b></p>';
+        + '　本人に確認しながらチェックしてください。<b>途中保存できます。</b></p>'
+        + (m.cardToken
+          ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 4px;">'
+            + '<button id="cosOpenPhone" style="font-size:12.5px;">📱 本人のスマホで入力してもらう</button>'
+            + '<button id="cosPull" style="font-size:12.5px;">📥 本人の入力を取り込む</button></div>'
+            + '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">📱を押すと本人の会員証に30分だけ入力フォームが出ます。'
+            + '本人が送信したら📥で読み込み、内容を確認して「保存」してください（保存で正式記録・フォームは自動で閉じます）。</p>'
+          : '');
       var lastG = '';
       CO_SHEET_ITEMS.forEach(function(it, i){
         if(it.g !== lastG){ body += '<label style="margin-top:12px;">' + esc(it.g) + '</label>'; lastG = it.g; }
@@ -3531,6 +3601,27 @@ function coSheetModal(m, back){
     if((b = $('cosCancel'))) b.onclick = goBack;
     if((b = $('cosClose'))) b.onclick = goBack;
     if((b = $('cosEdit'))) b.onclick = function(){ editing = true; render(); };
+    if((b = $('cosOpenPhone'))) b.onclick = function(){
+      db.collection('cards').doc(m.cardToken)
+        .set({ coOpen: { until: Date.now() + 30 * 60 * 1000, by: (gProf && gProf.name) || '' } }, { merge: true })
+        .then(function(){ toast('本人の会員証に入力フォームを表示しました（30分間）。本人に会員証を開き直してもらってください'); })
+        .catch(function(e){ toast(permMsg(e, '解錠に失敗しました')); });
+    };
+    if((b = $('cosPull'))) b.onclick = function(){
+      db.collection('coSheetInbox').where('no', '==', m.no).get().then(function(qs){
+        var latest = null;
+        qs.forEach(function(d){ var x = d.data(); if(!latest || (x.atMs || 0) > (latest.atMs || 0)) latest = x; });
+        if(!latest){ toast('本人からの入力はまだ届いていません（送信後にもう一度押してください）'); return; }
+        CO_SHEET_ITEMS.forEach(function(it, i){
+          if($('cos_' + i)) $('cos_' + i).checked = !!(latest.checks && latest.checks['c' + i]);
+        });
+        if($('cosPledge')) $('cosPledge').checked = !!latest.pledge;
+        if(latest.date && $('cosDate')) $('cosDate').value = latest.date;
+        [['sign','cosSign'],['phone','cosPhone'],['addrBirth','cosAddr'],['referrer','cosRef'],['manager','cosMgr']]
+          .forEach(function(pr){ if(latest[pr[0]] && $(pr[1])) $(pr[1]).value = latest[pr[0]]; });
+        toast('本人の入力（' + (latest.atLocal || '') + '）を読み込みました。内容を確認して「保存」を押してください');
+      }).catch(function(e){ toast('読み込みエラー: ' + e.message); });
+    };
     if((b = $('cosSave'))) b.onclick = function(){
       var newChecks = {}, all = true;
       CO_SHEET_ITEMS.forEach(function(it, i){
@@ -3550,6 +3641,11 @@ function coSheetModal(m, back){
       $('cosSave').disabled = true;
       db.collection('checkinMembers').doc(m.no).update({ coSheet: sheet }).then(function(){
         m.coSheet = sheet;
+        // 本人スマホ入力の解錠を終了し、下書きを掃除（正式記録は coSheet に確定済み）
+        if(m.cardToken) db.collection('cards').doc(m.cardToken).set({ coOpen: FV.delete() }, { merge: true }).catch(function(){});
+        db.collection('coSheetInbox').where('no', '==', m.no).get().then(function(qs){
+          qs.forEach(function(d){ db.collection('coSheetInbox').doc(d.id).delete().catch(function(){}); });
+        }).catch(function(){});
         toast(all && sheet.pledge
           ? '面談シートを保存しました（全項目チェック済み）'
           : '面談シートを保存しました（未チェックの項目があります・あとから追記できます）');
