@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v559';
+var APP_JS_VERSION = 'v560';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -274,11 +274,12 @@ function _computeTitleTransition(m, nextMonth) {
       if (gsv < LOI_MONTHLY_MIN) {
         return { to: demoteTitleFor(m, nextMonth), kind: 'demote', cum: 0, reason: '審査脱落（今月 ' + gsv.toLocaleString() + 'pt < ' + LOI_MONTHLY_MIN.toLocaleString() + '）' };
       }
-      if (cum >= BR_PROMOTE_CUM) {
-        return { to: 'BR', kind: 'promote', cum: 0, reason: '審査累計 ' + cum.toLocaleString() + 'pt 達成' };
-      }
+      // v560: 審査は固定4ヶ月（LOI→Q2→Q3→Q4）。LOI〜Q3で累計5,000Pに届いても次のQへ進み、BRになるのはQ4で条件を満たした時だけ
       if (qi < 3) {
         return { to: ['Q2', 'Q3', 'Q4'][qi], kind: 'advance', cum: cum, reason: '審査継続（累計 ' + cum.toLocaleString() + 'pt）' };
+      }
+      if (cum >= BR_PROMOTE_CUM) {
+        return { to: 'BR', kind: 'promote', cum: 0, reason: '審査累計 ' + cum.toLocaleString() + 'pt 達成' };
       }
       // Q4終了で5000未達
       return { to: demoteTitleFor(m, nextMonth), kind: 'demote', cum: 0, reason: '審査4ヶ月終了・累計 ' + cum.toLocaleString() + 'pt 未達' };
@@ -3868,7 +3869,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v559';
+  var DATA_VERSION = 'v560';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4895,6 +4896,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v560', d:'2026-10-01', items:['🏁 次の山がBRの時に「BRまでの道のり」を表示：研修生 → ビジネスメンバー → LOI → Q2 → Q3 → Q4 → BR のどこにいるかを光らせ、やることを数字で出します（既存メンバーは「今月からLOI：いま◯P → あと◯P」、BPC前は「◯月にBPCを揃えてブランドチェンジ」）','📅 BRの月は「BRになる月」から逆算：LOIの月＝その3ヶ月前。最短は今月LOIスタート→3ヶ月後のQ4の月。審査中はQ4の月で固定し、累計◯/5,000P・今月◯/1,000P・Q4の月は次の締め日（7・14・21日）まであと何Pかを表示（公式HPへのリンク付き）','🎁 目標ファーストボーナスから逆算して、毎月のフロント・新規B1・組織の数と、月ごとの内訳（LOI（BPC）→Q2→Q3→Q4→BR）、審査の条件（各月1,000P・累計5,000P）を表示','🔁 MAPのタイトル自動更新を審査ルールどおりに：審査は固定4ヶ月。LOI〜Q3で累計5,000Pに届いても次のQへ進み、BRになるのはQ4で条件を満たした時だけ'] },
   { v:'v559', d:'2026-10-01', items:['⛰ 次の山は「月収」から決めるように：月収を入れるとタイトルが自動で選ばれます（あとから手で変えてもOK・「月収に合わせる」で自動に戻せます）','📆 最終ゴールが1年以上先なら「1年ごとの目標」：最終ゴールの期日から1年ずつさかのぼり、月収・タイトルの例を自動で表示。直した段だけ保存され、1年目の段が次の山の例になります（⚙の年別目標もここに統合）','🎁 次の山がBRの時は「目標ファーストボーナス」を設定：金額に応じて、BRの月に必要なGSVと、フロントの人数（ブランドチェンジ→翌月◯人→翌月◯人）をシミュレーションと同じ計算で表示','🌱 理想の生活に「1年以内の理想」タブ：最終ゴールの理想とは別に、直近1年で叶えたい暮らしを描けます。合計をワンタップで次の山の月収に','👤 はじめての人向け：MAPが空の時は「まず あなた自身 を0段目に登録」の案内と図。アカウント名が入った状態で登録できます（PLANにも案内）'] },
   { v:'v558', d:'2026-10-01', items:['🗑 理想MAPで追加した新規メンバーを削除できない問題を修正：PCの右クリック「削除」「編集」が、理想MAPで追加した新規には何も反応していませんでした。右クリックからも、かんたん編集の「この新規を削除」からも削除できます（配下の新規もまとめて・「元に戻す」付き）','⚠️ 理想MAPで右クリック「削除」すると、現状MAPの同じ人が消えていた不具合も修正：理想MAPでの削除は理想MAPだけに効くようにしました（もともといる人は「理想MAPから外す」＝直下は一つ上に付け替え）','✏️ 理想MAPの右クリック「編集」「直下に追加」はかんたん編集を開くように'] },
   { v:'v557', d:'2026-09-30', items:['✏️ 理想MAPのかんたん編集「この人を変える」をすっきり作り直し：項目名を左・選択肢を右の1行ずつにして、ボタンを種類ごとの帯にまとめました','🏷 タイトルはどれも1タップ（Q3→BR、BM→LOIもワンタップ）。B1〜B11・Q2〜Q4は数字だけ、上位タイトルはG L R E D BD TEの略称に色の下線','📊 稼働率は30・50・80・100%のワンタップ＋「他」に直接入力（100%まで）','🔗 「くわしく編集」は右下の小さいリンクに（新規の人は「この新規を削除」も並びます）'] },
@@ -14811,6 +14813,7 @@ function _p2Next() {
   if (finR >= 0 && _p2Rank(title) > finR) title = fin;
   var inc = ok ? (+n.inc || 0) : (d.inc || 0), deadline = ok ? (n.deadline || '') : (d.deadline || '');
   var fb = title === 'BR' ? ((ok && +n.fb) || _p2FbDefault()) : 0;
+  if (title === 'BR' && curR < 0) { var bmin = _p2BrMin(); if (_p2BrStage().k === 'exam' || !deadline || deadline < bmin) deadline = bmin; } // v560
   var isFinal = !title || (finR >= 0 && finR <= curR) || (title === fin && (!deadline || !p.deadline || deadline >= p.deadline));
   return { title: title, inc: inc, deadline: deadline, fb: fb, tm: ok && !!n.tm, gsv: +n.gsv || 0, suggested: !ok, isFinal: isFinal, cur: cur, curRaw: curRaw, curR: curR, fin: fin };
 }
@@ -14852,8 +14855,8 @@ function _p2NextDefault(o) {
   o = o || {};
   var p = state.goals.plan, now = _p2Ym(0), curR = _p2Rank(_p2TitleEn(_p2CurTitle()));
   var fin = o.fin || _p2TitleEn(p.title), D = o.dl || (/^\d{4}-\d{2}$/.test(p.deadline || '') ? p.deadline : '');
-  if (curR < 0) {
-    var bd = fin === 'BR' && D ? D : _p2YmAdd(now, 3); if (D && bd > D) bd = D;
+  if (curR < 0) { // v560: BRの月の例＝最短（今月LOIスタート→3ヶ月後のQ4の月）。審査中はQ4の月
+    var bd = _p2BrMin();
     return { title: 'BR', inc: 0, deadline: bd, fb: _p2FbDefault() };
   }
   var L = _p2Ladder(o), finD = { title: _p2Above(fin, curR), inc: o.inc || (p.income ? Math.round(p.income / 10000) : 0), deadline: D };
@@ -14866,7 +14869,7 @@ function _p2NextDefault(o) {
 }
 // GOAL SETTINGのシミュレーションと同じ計算：ブランドチェンジ→翌月n人→翌月n人→BRの月
 function _p2SimFb(n, cfg) {
-  var fronts = [0, n, n, 0], all = [], out = null;
+  var fronts = [0, n, n, 0], all = [], out = null, mons = [];
   for (var m = 0; m < 4; m++) {
     for (var f = 0; f < fronts[m]; f++) all.push({ gen: 1, jm: m });
     if (cfg.dup > 0) {
@@ -14874,12 +14877,12 @@ function _p2SimFb(n, cfg) {
       all.forEach(function(mem) { var act = m - mem.jm; if (act === 1 || act === 2) { for (var d = 0; d < cfg.dup; d++) dups.push({ gen: mem.gen + 1, jm: m }); } });
       all = all.concat(dups);
     }
-    if (m === 3) {
-      var nc = 0, ec = 0; all.forEach(function(mem) { if (mem.jm === m) nc++; else ec++; });
-      var g = Math.round(cfg.myPsv + nc * cfg.psv + ec * cfg.myPsv);
-      out = { gsv: g, fb: _p2FirstBonus(g), org: 1 + all.length };
-    }
+    var nc = 0, ec = 0; all.forEach(function(mem) { if (mem.jm === m) nc++; else ec++; });
+    var gm = m === 0 ? cfg.psv : Math.round(cfg.myPsv + nc * cfg.psv + ec * cfg.myPsv); // LOIの月＝自分のBPC（ブランドチェンジ）
+    mons.push({ fr: fronts[m], nb: nc, gsv: gm });
+    if (m === 3) out = { gsv: gm, fb: _p2FirstBonus(gm), org: 1 + all.length, nb: all.length, fr: n * 2, mons: mons, cum: 0 };
   }
+  out.cum = mons.reduce(function(s, x) { return s + x.gsv; }, 0);
   return out;
 }
 function _p2FbDefault() { var c = _p2SimCfg(), r = _p2SimFb(c.preset > 0 ? c.preset : 2, c); return r ? Math.floor(r.fb / 10000) * 10000 : 0; }
@@ -14891,15 +14894,64 @@ function _p2FbPlan(target) {
   for (var k = 1; k <= 30; k++) { var r = _p2SimFb(k, c); if (r && r.fb >= target) { n = k; sim = r; break; } }
   return { target: target, gsv: g, n: n, sim: sim, cfg: c };
 }
-function _p2FbPlanHtml(target) {
-  if (!(+target > 0)) return '<div class="p2-meta">金額を入れると、必要なポイントとフロントの人数が出ます</div>';
+function _p2FbPlanHtml(target, brYm) {
+  if (!(+target > 0)) return '<div class="p2-meta">金額を入れると、必要なフロント・新規B1・組織の数が出ます</div>';
   var r = _p2FbPlan(target), c = r.cfg, yen = function(v) { return '¥' + Math.round(v).toLocaleString(); };
+  if (!r.n) return '<div class="p2fb"><div class="p2fb-r warn">フロント毎月30人でも届きません。シミュレーションでデュプリケーション率などを見直してください</div></div>';
+  var sm = r.sim, loi = brYm ? _p2YmAdd(brYm, -3) : '';
+  var lb = ['LOI（BPC）', 'Q2', 'Q3', 'Q4 → BR'];
+  var mon = function(i) { return loi ? parseInt(_p2YmAdd(loi, i).slice(5), 10) + '月 ' : ''; };
+  var rows = sm.mons.map(function(x, i) {
+    return '<tr><td>' + mon(i) + lb[i] + '</td><td>' + (i === 1 || i === 2 ? x.fr + '人' : '—') + '</td><td>' + (x.nb ? x.nb + '人' : '—') + '</td><td>' + x.gsv.toLocaleString() + 'P' + (x.gsv >= 1000 ? '' : ' <span class="ng">1,000P未満</span>') + '</td></tr>';
+  }).join('');
+  var okM = sm.mons.every(function(x) { return x.gsv >= 1000; }), okC = sm.cum >= 5000;
   return '<div class="p2fb">'
-    + '<div class="p2fb-r"><span>BRの月に必要なGSV</span><b>' + r.gsv.toLocaleString() + 'P</b><small>BB ' + yen(_p2BBCalc(Math.max(0, r.gsv - 1000))) + (r.gsv >= 2000 ? '＋エリートLOI特典 ¥50,000' : '') + '</small></div>'
-    + (r.n ? '<div class="p2fb-r"><span>フロントの目安</span><b>ブランドチェンジ → 翌月 ' + r.n + '人 → 翌月 ' + r.n + '人 → BR</b><small>この人数で ' + yen(r.sim.fb) + '・組織 ' + r.sim.org + '人</small></div>'
-      : '<div class="p2fb-r warn">フロント30人でも届きません。シミュレーションでデュプリケーション率などを見直してください</div>')
+    + '<div class="p2fb-flow">BPC（約' + c.psv.toLocaleString() + 'Pでブランドチェンジ＝LOIクリア）→ フロント ' + r.n + '人 → フロント ' + r.n + '人 → BR</div>'
+    + '<div class="p2fb-g"><div><b>' + r.n + '人</b><span>毎月のフロント<br>（Q2・Q3で計' + sm.fr + '人）</span></div><div><b>' + sm.nb + '人</b><span>新規B1（4ヶ月の計）</span></div><div><b>' + sm.org + '人</b><span>組織（自分を含む）</span></div><div><b>' + sm.gsv.toLocaleString() + 'P</b><span>BRの月のGSV</span></div></div>'
+    + '<table class="p2fb-t"><tr><th></th><th>フロント</th><th>新規B1</th><th>GSV</th></tr>' + rows + '</table>'
+    + '<div class="p2fb-r"><span>審査の条件</span><b>各月1,000P以上 ' + (okM ? '✓' : '✗') + '・累計 ' + sm.cum.toLocaleString() + ' / 5,000P ' + (okC ? '✓' : '✗') + '</b></div>'
+    + '<div class="p2fb-r"><span>この人数のファーストボーナス</span><b>' + yen(sm.fb) + '</b><small>BB ' + yen(_p2BBCalc(Math.max(0, sm.gsv - 1000))) + (sm.gsv >= 2000 ? '＋エリートLOI特典 ¥50,000' : '') + '</small></div>'
     + '<div class="p2-meta">シミュレーションの設定：各B1が毎月 ' + c.dup + '人・BPC ' + c.psv.toLocaleString() + 'P・自分のADP ' + c.myPsv + 'P　<span class="p2a-lk" onclick="p2FbSim(' + r.n + ')">シミュレーションで詳しく ›</span></div>'
     + '</div>';
+}
+// ════ v560: BRまでの道のり（審査は固定4ヶ月：LOI→Q2→Q3→Q4の月にBR。Q4の月は7・14・21日締め） ════
+var P2_NS_URL = 'https://www.nuskin.com/content/login/corporate/ja.html?destination=https://www.nuskin.com/content/markets/ja_JP/home.html&cancel=https://www.nuskin.com/content/markets/ja_JP/home.html&market=JP&localepage=undefined';
+var P2_EXAM = ['LOI', 'Q2', 'Q3', 'Q4'];
+function _p2BrStage() { // new＝まだBPC前（研修生など）／member＝既存メンバー（B1〜B11・BM）で審査中でない／exam＝審査中
+  var r = _p2OwnRoot(), t = r ? String(r.title || '').trim() : '';
+  var qi = P2_EXAM.indexOf(t);
+  if (qi >= 0) return { k: 'exam', qi: qi, t: t, gsv: r.ptCurrent || 0, cum: (r.loiCumPt || 0) + (r.ptCurrent || 0) };
+  if (/^B\d+$/.test(t) || t === 'BM') return { k: 'member', t: t, gsv: r.ptCurrent || 0 };
+  return { k: 'new', t: t };
+}
+function _p2BrMin() { var s = _p2BrStage(); return _p2YmAdd(_p2Ym(0), s.k === 'exam' ? 3 - s.qi : 3); } // いちばん早いBRの月（Q4の月）
+function _p2YmJa(ym) { return parseInt(ym.slice(0, 4), 10) + '年' + parseInt(ym.slice(5), 10) + '月'; }
+function _p2BrPathHtml(brYm) {
+  var s = _p2BrStage(), now = _p2Ym(0), min = _p2BrMin();
+  var br = s.k === 'exam' ? min : (brYm && brYm >= min ? brYm : min), loi = _p2YmAdd(br, -3);
+  var steps = ['研修生', 'ビジネスメンバー', 'LOI', 'Q2', 'Q3', 'Q4', 'BR'];
+  var at = s.k === 'new' ? 0 : (s.k === 'member' ? 1 : 2 + s.qi);
+  var h = '<div class="p2br"><div class="p2br-st">' + steps.map(function(x, i) { return '<span class="' + (i === at ? 'on' : (i < at ? 'done' : '')) + (i >= 2 && i <= 5 ? ' ex' : '') + '">' + x + '</span>'; }).join('<i>→</i>') + '</div>';
+  var man = function(v) { return Math.max(0, v).toLocaleString(); };
+  if (s.k === 'new') {
+    h += '<div class="p2br-l"><b>' + _p2YmJa(loi) + '</b>にBPCを揃えてブランドチェンジ（＝LOIクリア）→ <b>' + _p2YmJa(br) + '</b>（Q4の月）にBR</div>';
+  } else if (s.k === 'member') {
+    h += '<div class="p2br-l">' + (loi === now ? '<b>今月からLOI</b>：いま ' + man(s.gsv) + 'P → あと <b>' + man(1000 - s.gsv) + 'P</b>' : '<b>' + _p2YmJa(loi) + 'からLOI</b>（その月にGSV 1,000P以上）') + '</div>'
+      + '<div class="p2br-l">LOI → Q2 → Q3 → <b>' + _p2YmJa(br) + '</b>（Q4の月）にBR</div>';
+  } else {
+    var mo = s.qi + 1, d = new Date().getDate();
+    h += '<div class="p2br-l">審査中：<b>' + s.t + '</b>（' + mo + 'ヶ月目）→ <b>' + _p2YmJa(br) + '</b>（Q4の月）にBR</div>'
+      + '<div class="p2br-n"><span>累計 <b>' + s.cum.toLocaleString() + '</b> / 5,000P' + (s.cum >= 5000 ? ' ✓' : '（あと ' + man(5000 - s.cum) + 'P）') + '</span>'
+      + '<span>今月 <b>' + s.gsv.toLocaleString() + '</b> / 1,000P' + (s.gsv >= 1000 ? ' ✓' : '（あと ' + man(1000 - s.gsv) + 'P）') + '</span></div>';
+    if (s.qi === 3) {
+      var cut = d <= 7 ? 7 : (d <= 14 ? 14 : (d <= 21 ? 21 : 0)), need = Math.max(0, 1000 - s.gsv, 5000 - s.cum);
+      h += '<div class="p2br-l">' + (cut ? '次の締め日 <b>' + parseInt(now.slice(5), 10) + '月' + cut + '日</b>までに' : '<b>月末</b>までに') + (need ? ' あと <b>' + need.toLocaleString() + 'P</b>' : ' 条件クリア ✓') + ' → 翌日からBR</div>';
+    } else {
+      h += '<div class="p2br-l p2-meta">Q4の月は7日・14日・21日の締めで、その月の1,000Pと累計5,000Pを満たしていれば翌日からBR</div>';
+    }
+    h += '<div class="p2br-l"><a class="p2a-lk" href="' + P2_NS_URL + '" target="_blank" rel="noopener">詳細は公式HPを確認 ›</a></div>';
+  }
+  return h + '</div>';
 }
 function p2FbSim(n) { var c = _p2SimCfg(); if (n > 0) { c.preset = (n >= 2 && n <= 5) ? n : 0; c.fronts = [0, n, n, 0]; } p2SimOpen(); }
 // ファーストボーナス（BRになった翌月）の見込み＝シミュレーションと同じ計算（BB(GSV−1,000P)＋エリートLOI特典）
@@ -14925,7 +14977,7 @@ function _p2NextGridHtml(nx) {
     + '<div class="v c2">' + (dl ? '<div class="p2h-dl" onclick="p2GoalEdit()"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div>' : '<span class="p2-btn pri" style="margin:0" onclick="p2GoalEdit()">期日を決める</span>') + '</div>'
     + '<div class="v c3">' + third + '</div>'
     + '<div class="s c1">%BB%</div><div class="s c2">%DREAM%</div>'
-    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + (fbp && fbp.target ? '<div class="p2h-sub">BRの月 GSV ' + fbp.gsv.toLocaleString() + 'P' + (fbp.n ? '・フロント 翌月' + fbp.n + '人→翌月' + fbp.n + '人' : '') + '</div>' : '') + '</div>'
+    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + (fbp && fbp.target && fbp.n ? '<div class="p2h-sub">フロント 毎月' + fbp.n + '人・新規B1 ' + fbp.sim.nb + '人・組織 ' + fbp.sim.org + '人</div>' : '') + '</div>'
     + '</div>';
 }
 // 次の山までの進み具合（フロントBRの人数・パワーライン）
@@ -14943,7 +14995,8 @@ function _p2ReqHtml(nx) {
   var en = nx.isFinal ? nx.fin : nx.title;
   var pr = _p2NextProg(en);
   var cur = nx.curRaw ? '現在 <b>' + evEsc(_p2TitleEn(nx.curRaw)) + '</b>' : '';
-  if (!pr) return cur && !nx.isFinal ? '<div class="p2h-req">' + cur + ' → ' + evEsc(en) + (en === 'BR' ? '（LOI→Q2→Q3→Q4→BR）' : '') + '</div>' : '';
+  if (en === 'BR' && !nx.isFinal) return _p2BrPathHtml(nx.deadline); // v560
+  if (!pr) return cur && !nx.isFinal ? '<div class="p2h-req">' + cur + ' → ' + evEsc(en) + '</div>' : '';
   var man = function(v) { return (v >= 10000 ? (Math.round(v / 1000) / 10) + '万' : v.toLocaleString()) ; };
   var brOk = pr.br >= pr.req.br;
   return '<div class="p2h-req">' + (cur ? cur + '<span class="sep">→</span>' : '') + evEsc(en) + 'の条件'
@@ -14988,14 +15041,14 @@ function p2GoalEdit(focus) {
     + '<div id="p2geEx"></div>'
     + (nxList.length ? '<div class="fr" id="p2geNxIncRow" style="display:' + (isBR ? 'none' : '') + '"><label class="fl">月収</label><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input class="fi" id="p2geNxInc" type="number" inputmode="numeric" value="' + (nx.inc || '') + '" style="max-width:140px;text-align:right;font-weight:800" onfocus="edSelAll(this)" oninput="p2GeNxInc()"><span>万円</span><span class="p2a-lk" onclick="p2GeNear()">🌱 1年以内の理想から決める ›</span></div></div>'
       + '<div class="fr"><label class="fl">タイトル <span class="p2ge-mode" id="p2geNxMode"></span></label>' + chips('p2geNx', nxList, nx.title) + '</div>'
-      + '<div class="fr"><label class="fl">いつまでに</label>' + _p2YmSelHtml('p2geNxDl', nx.deadline) + '</div>'
-      + '<div class="fr" id="p2geFbRow" style="display:' + (isBR ? '' : 'none') + '"><label class="fl">目標ファーストボーナス</label><div style="display:flex;gap:6px;align-items:center"><input class="fi" id="p2geFb" type="number" inputmode="numeric" value="' + (nx.fb ? Math.round(nx.fb / 10000) : '') + '" style="max-width:140px;text-align:right;font-weight:800" onfocus="edSelAll(this)" oninput="p2GeFb()"><span>万円</span></div><div id="p2geFbPlan">' + _p2FbPlanHtml(nx.fb) + '</div></div>'
+      + '<div class="fr"><label class="fl">いつまでに <span class="p2ge-mode" id="p2geNxDlNote"></span></label>' + _p2YmSelHtml('p2geNxDl', nx.deadline).replace(/<select /g, '<select onchange="p2GeFb()" ') + '</div>'
+      + '<div class="fr" id="p2geFbRow" style="display:' + (isBR ? '' : 'none') + '"><label class="fl">目標ファーストボーナス</label><div style="display:flex;gap:6px;align-items:center"><input class="fi" id="p2geFb" type="number" inputmode="numeric" value="' + (nx.fb ? Math.round(nx.fb / 10000) : '') + '" style="max-width:140px;text-align:right;font-weight:800" onfocus="edSelAll(this)" oninput="p2GeFb()"><span>万円</span></div><div id="p2geFbPlan">' + _p2FbPlanHtml(nx.fb, nx.deadline) + '</div><div id="p2geBrPath">' + (isBR ? _p2BrPathHtml(nx.deadline) : '') + '</div></div>'
       : '<div class="p2-meta">最終ゴールに到達しています 🎉</div>')
     + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:10px;padding:12px" onclick="p2GoalEditSave()">保存</span>'
     + '<div style="text-align:center;margin-top:12px"><span class="p2a-lk" onclick="_p2SheetClose(\'p2GeOv\');p2GwOpen(1)">理想の生活（20問）から作り直す ›</span></div>'
     + '</div></div>';
   document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
-  _p2GeModes(); p2GeYrRefresh();
+  _p2GeModes(); p2GeYrRefresh(); p2GeFb();
   if (focus === 'years') setTimeout(function() { var y = document.getElementById('p2geYrs'); if (y && y.scrollIntoView) y.scrollIntoView({ block: 'start' }); }, 250);
 }
 function _p2GeVal(id) { return parseInt((document.getElementById(id) || {}).value, 10) || 0; }
@@ -15030,7 +15083,8 @@ function _p2GeNxRows() {
   var br = _p2GeSel('p2geNx') === 'BR';
   var a1 = document.getElementById('p2geNxIncRow'), a2 = document.getElementById('p2geFbRow');
   if (a1) a1.style.display = br ? 'none' : ''; if (a2) a2.style.display = br ? '' : 'none';
-  if (br) { var fb = document.getElementById('p2geFb'); if (fb && !fb.value) { fb.value = Math.round(_p2FbDefault() / 10000) || ''; p2GeFb(); } }
+  if (br) { var fb = document.getElementById('p2geFb'); if (fb && !fb.value) fb.value = Math.round(_p2FbDefault() / 10000) || ''; }
+  p2GeFb();
 }
 function p2GeNxInc() {
   var v = _p2GeVal('p2geNxInc');
@@ -15041,7 +15095,17 @@ function p2GeNxInc() {
   }
   _p2GeNxRows(); _p2GeModes();
 }
-function p2GeFb() { var b = document.getElementById('p2geFbPlan'); if (b) b.innerHTML = _p2FbPlanHtml(_p2GeVal('p2geFb') * 10000); }
+function p2GeFb() {
+  var br = _p2GeSel('p2geNx') === 'BR', dl = _p2YmSelRead('p2geNxDl'), note = document.getElementById('p2geNxDlNote');
+  if (br) { // v560: BRの月は最短（今月LOIスタート→Q4の月）より前にできない。審査中はQ4の月で固定
+    var min = _p2BrMin(), st = _p2BrStage();
+    if (st.k === 'exam' || !dl || dl < min) { _p2GeSetYm('p2geNxDl', min); dl = min; }
+    if (note) note.textContent = st.k === 'exam' ? '審査中はQ4の月で固定' : 'BRになる月（Q4の月）。最短は ' + _p2YmJa(min);
+  } else if (note) note.textContent = '';
+  var b = document.getElementById('p2geFbPlan'); if (b) b.innerHTML = _p2FbPlanHtml(_p2GeVal('p2geFb') * 10000, dl);
+  var p = document.getElementById('p2geBrPath'); if (p) p.innerHTML = br ? _p2BrPathHtml(dl) : '';
+}
+function _p2GeSetYm(id, ym) { var y = document.getElementById(id + 'Y'), m = document.getElementById(id + 'M'); if (y) y.value = String(parseInt(ym.slice(0, 4), 10)); if (m) m.value = String(parseInt(ym.slice(5), 10)); }
 // 1年ごとの目標（最終ゴールが1年以上先の時）＋次の山の例
 function p2GeYrRefresh() {
   var box = document.getElementById('p2geYrs'); if (!box) return;
@@ -15077,8 +15141,8 @@ function p2GeExRefresh() {
   var box = document.getElementById('p2geEx'); if (!box) return;
   var d = _p2NextDefault(_p2GeLive());
   var dl = d.deadline ? parseInt(d.deadline.slice(0, 4), 10) + '年' + parseInt(d.deadline.slice(5), 10) + '月まで' : '';
-  var body = d.title === 'BR' ? 'BR・' + dl + '・ファーストボーナス ' + Math.round((d.fb || 0) / 10000) + '万円' : '月 ' + (d.inc || '—') + '万円・' + evEsc(d.title || '—') + '・' + dl;
-  box.innerHTML = '<div class="p2ge-ex"><span>' + (d.title === 'BR' ? 'まずはBR（ブランドチェンジ→翌月→翌月→BR）の例' : '最終ゴールから逆算した例') + '：<b>' + body + '</b></span><span class="p2-btn" style="margin:0" onclick="p2GeUseEx()">この例を入れる</span></div>';
+  var body = d.title === 'BR' ? 'BR・' + dl + '（最短）・ファーストボーナス ' + Math.round((d.fb || 0) / 10000) + '万円' : '月 ' + (d.inc || '—') + '万円・' + evEsc(d.title || '—') + '・' + dl;
+  box.innerHTML = '<div class="p2ge-ex"><span>' + (d.title === 'BR' ? 'まずはBR' : '最終ゴールから逆算した例') + '：<b>' + body + '</b></span><span class="p2-btn" style="margin:0" onclick="p2GeUseEx()">この例を入れる</span></div>';
 }
 function p2GeUseEx() {
   var d = _p2NextDefault(_p2GeLive());
@@ -15104,7 +15168,9 @@ function p2GoalEditSave() {
   if (fin) p.title = P2_TITLE_JP[fin] || fin;
   if (dl) p.deadline = dl;
   var nxT = _p2GeSel('p2geNx');
-  if (nxT) p2.next = { title: nxT, tm: !!_p2ge.nxManual, inc: nxT === 'BR' ? 0 : _p2GeVal('p2geNxInc'), deadline: _p2YmSelRead('p2geNxDl'), fb: nxT === 'BR' ? _p2GeVal('p2geFb') * 10000 : 0 };
+  var nxDl = _p2YmSelRead('p2geNxDl');
+  if (nxT === 'BR' && _p2Rank(_p2TitleEn(_p2CurTitle())) < 0 && (!nxDl || nxDl < _p2BrMin())) nxDl = _p2BrMin(); // v560
+  if (nxT) p2.next = { title: nxT, tm: !!_p2ge.nxManual, inc: nxT === 'BR' ? 0 : _p2GeVal('p2geNxInc'), deadline: nxDl, fb: nxT === 'BR' ? _p2GeVal('p2geFb') * 10000 : 0 };
   var rk = Object.keys(_p2ge.rows || {});
   if (rk.length) { p2.ladder = p2.ladder || {}; rk.forEach(function(ym) { var r = _p2ge.rows[ym]; p2.ladder[ym] = { inc: +r.inc || 0, title: r.title || '' }; }); }
   saveGoals();

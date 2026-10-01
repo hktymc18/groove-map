@@ -2527,6 +2527,17 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .onb-o{width:26px;height:26px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2)} .onb-o.s{width:20px;height:20px}
 .onb-ln{width:2px;height:14px;background:var(--border2);margin:3px 0}
 .onb-b{display:inline-block;padding:12px 22px;font-size:15px;margin:0} .onb-s{font-size:11px;color:var(--text-dim);margin-top:8px}
+/* v560: BRまでの道のり・目標ファーストボーナスの内訳 */
+.p2br{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);font-size:12.5px;display:flex;flex-direction:column;gap:6px}
+.p2br-st{display:flex;flex-wrap:wrap;align-items:center;gap:3px 4px;font-size:11.5px;font-weight:800;color:var(--text-dim)} .p2br-st i{font-style:normal;opacity:.6}
+.p2br-st span{padding:3px 8px;border-radius:999px;border:1px solid var(--border)} .p2br-st span.ex{border-color:color-mix(in srgb,#FB923C 45%,var(--border))}
+.p2br-st span.done{color:var(--text-mid)} .p2br-st span.on{background:var(--accent);border-color:var(--accent);color:#08121a}
+.p2br-l b{color:var(--text)} .p2br-n{display:flex;flex-wrap:wrap;gap:6px 14px} .p2br-n b{font-family:Inter,sans-serif;font-size:14px}
+.p2fb-flow{font-size:12.5px;font-weight:800;color:var(--text)}
+.p2fb-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px} .p2fb-g div{background:var(--surface);border-radius:9px;padding:7px 8px;display:flex;flex-direction:column;gap:2px} .p2fb-g b{font-size:16px;font-family:Inter,'Noto Sans JP',sans-serif} .p2fb-g span{font-size:10.5px;color:var(--text-dim);line-height:1.35}
+.p2fb-t{width:100%;border-collapse:collapse;font-size:12px} .p2fb-t th{font-size:10.5px;color:var(--text-dim);font-weight:700;text-align:right;padding:3px 6px} .p2fb-t th:first-child,.p2fb-t td:first-child{text-align:left}
+.p2fb-t td{padding:4px 6px;border-top:1px solid var(--border);text-align:right;font-family:Inter,'Noto Sans JP',sans-serif} .p2fb-t .ng{color:var(--red);font-size:10.5px}
+@media(max-width:767px){.p2fb-g{grid-template-columns:repeat(2,1fr)}}
 /* v555: 理想の生活シート */
 .p2lf-sheet{max-height:92vh;overflow-y:auto}
 .p2lf-dreams{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
@@ -2887,7 +2898,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v559</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v560</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3828,7 +3839,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v559';</script>
-<script src="app.js?v=v559"></script>
+<script>window.GM_EXPECT_JS='v560';</script>
+<script src="app.js?v=v560"></script>
 </body>
 </html>
