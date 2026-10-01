@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v557';
+var APP_JS_VERSION = 'v558';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -2867,6 +2867,7 @@ function closeCtxMenu() {
 function ctxAddChild() {
   var tid = _ctxTargetId; // closeの前に保存
   closeCtxMenu();
+  if (currentView === 'ideal' && tid && state.isEditor && typeof idqOpen === 'function') { idqOpen(tid); return; } // v558: 理想MAPはかんたん編集の「直下に追加」へ
   selectedParentId = tid;
   openQuickAdd(); // v487
 }
@@ -2874,6 +2875,7 @@ function ctxAddChild() {
 function ctxEdit() {
   var tid = _ctxTargetId;
   closeCtxMenu();
+  if (currentView === 'ideal' && tid && state.isEditor && typeof idqOpen === 'function') { idqOpen(tid); return; } // v558: 理想MAPはかんたん編集
   if (tid && state.isEditor) openEdit(tid);
 }
 
@@ -2921,6 +2923,8 @@ function ctxDelete() {
   var tid = _ctxTargetId;
   closeCtxMenu();
   if (!tid || !state.isEditor) return;
+  // v558: 理想MAPでは理想MAPから削除（これまでは現状MAPの同じ人を消していた／理想で追加した新規は何も起きなかった）
+  if (currentView === 'ideal') { _idealRemove(tid); return; }
   _ctxTargetId = tid; // 一時的に復元
   var m = null;
   for (var i=0; i<state.members.length; i++) {
@@ -3864,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v557';
+  var DATA_VERSION = 'v558';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4891,6 +4895,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v558', d:'2026-10-01', items:['🗑 理想MAPで追加した新規メンバーを削除できない問題を修正：PCの右クリック「削除」「編集」が、理想MAPで追加した新規には何も反応していませんでした。右クリックからも、かんたん編集の「この新規を削除」からも削除できます（配下の新規もまとめて・「元に戻す」付き）','⚠️ 理想MAPで右クリック「削除」すると、現状MAPの同じ人が消えていた不具合も修正：理想MAPでの削除は理想MAPだけに効くようにしました（もともといる人は「理想MAPから外す」＝直下は一つ上に付け替え）','✏️ 理想MAPの右クリック「編集」「直下に追加」はかんたん編集を開くように'] },
   { v:'v557', d:'2026-09-30', items:['✏️ 理想MAPのかんたん編集「この人を変える」をすっきり作り直し：項目名を左・選択肢を右の1行ずつにして、ボタンを種類ごとの帯にまとめました','🏷 タイトルはどれも1タップ（Q3→BR、BM→LOIもワンタップ）。B1〜B11・Q2〜Q4は数字だけ、上位タイトルはG L R E D BD TEの略称に色の下線','📊 稼働率は30・50・80・100%のワンタップ＋「他」に直接入力（100%まで）','🔗 「くわしく編集」は右下の小さいリンクに（新規の人は「この新規を削除」も並びます）'] },
   { v:'v556', d:'2026-09-30', items:['📅 iPhoneのSafari（タブで開いた場合）でカレンダーが画面の上半分だけに縮み、下半分が空白になる不具合を修正：iOS 26のSafariはキーボードを閉じても「見えている高さ」を小さいまま返し続けることがあり、ホーム画面アプリ向けの対策（v515）がSafariのタブには効いていませんでした。タブ表示でも同じ補正をかけ、キーボードを使っていなくても高さが大きく縮んだままなら本来の高さに戻します'] },
   { v:'v555', d:'2026-09-30', items:['🏡 PLANの20問の答えを「理想の生活」シートで見返せるように：住まい・食事・服・移動・旅行・趣味・親孝行・美容・健康・貯金・交際・期限の12分野に分けて、分野ごとの月額・割合・合計を一目で確認できます','✏️ 行をタップするとその分野の質問だけその場で答え直せます（20問を最初からやり直す必要なし）','📈 前回から合計がいくら変わったか、どの分野が増減したかを表示','🎯 合計が変わったら「目標月収も〇万円にしますか？」と確認。「する」で目標月収を更新、「今のまま」で据え置き（勝手には変わりません）','⭐ 家・車・旅行先はワンタップで夢100に追加','🚪 入口：⚙メニュー「理想の生活」／目標をなおすの「内訳を見る」／スマホPLANの「理想の生活を見る」'] },
@@ -8584,7 +8589,7 @@ function _idqRender() {
   var curLine = cur && !m.idealNew ? '現状：' + (cur.title || '−') + '・GSV ' + (cur.ptCurrent || 0).toLocaleString() + '・稼働 ' + (cur.activity || '−') + (cur.actRate !== '' && cur.actRate != null ? '（' + cur.actRate + '%）' : '') : '理想で追加した新規';
   var lab = function(t) { return (typeof titleAbbr === 'function' && titleAbbr(t)) || t; };
   var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + ' <span class="ot-ttl">' + evEsc(lab(tl)) + '</span> ' + badge + '</div>'
-    + '<div style="font-size:11.5px;color:var(--text-dim)">' + evEsc(curLine) + '</div></div><span class="ms-x" onclick="idqClose()">✕</span></div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim)">' + evEsc(curLine) + '</div></div>' + (m.idealNew ? '<span class="ms-x idq-hdel" onclick="idqDelete()" title="この新規を削除">' + icn('trash') + '</span>' : '') + '<span class="ms-x" onclick="idqClose()">✕</span></div>' // v558: 新規はスクロールしなくても削除できるよう見出しにも🗑
     + '<div style="padding:0 16px 18px">'
     + (m.idealKind === 'user' ? '' : '<div class="idq-sec">この人の直下に追加<small>タップするたび1人ずつ</small></div>'
     + '<div class="idq-add2">'
@@ -8603,7 +8608,7 @@ function _idqRender() {
     + '<div class="idq-row"><div class="idq-lb">稼働率</div><div class="idq-val"><div class="idq-seg" id="idqRates">' + IDQ_RATES.map(function(r) { return '<span class="idq-s' + (String(m.actRate) === String(r) ? ' sel' : '') + '" data-r="' + r + '" onclick="idqRate(' + r + ')">' + r + '</span>'; }).join('')
     + '<input class="idq-own' + _idqOwnSel(m) + '" id="idqRate" type="number" inputmode="numeric" min="0" max="100" placeholder="他" value="' + _idqOwnVal(m) + '" onfocus="edSelAll(this)" onchange="idqRate(this.value)"></div><span class="idq-unit">%</span></div></div>'
     + '</div>'
-    + '<div class="idq-foot">' + (m.idealNew ? '<span class="idq-del" onclick="idqDelete()">この新規を削除</span>' : '') + '<span class="idq-more" onclick="idqClose();openEdit(\'' + m.id + '\')">くわしく編集 ›</span></div>'
+    + '<div class="idq-foot">' + (m.idealNew ? '<span class="idq-del" onclick="idqDelete()">' + icn('trash') + ' この新規を削除</span>' : (isRoot ? '' : '<span class="idq-del" onclick="idqDelete()">理想MAPから外す</span>') + '<span class="idq-more" onclick="idqClose();openEdit(\'' + m.id + '\')">くわしく編集 ›</span>') + '</div>' // v558: 新規は「くわしく編集」が開けない（現状MAPにいない）ため削除だけ
     + '</div>';
   box.innerHTML = h;
 }
@@ -8704,14 +8709,32 @@ function idqAddB1() { // 互換（v554以前の呼び出し）：ビジネスメ
   idqClose(true);
 }
 function idqDelete() {
-  var m = _idqMember(); if (!m || !m.idealNew) return;
-  var arr = state.idealMembers;
-  var drop = {}; (function walk(id) { drop[id] = 1; arr.forEach(function(x) { if (x.parentId === id) walk(x.id); }); })(m.id);
-  var n = Object.keys(drop).length;
-  if (!confirm('理想MAPから「' + ((m.lastName || '') + (m.firstName || '')) + '」' + (n > 1 ? 'と配下 ' + (n - 1) + '人' : '') + 'を削除しますか？')) return;
+  var m = _idqMember(); if (!m) return;
+  if (_idealRemove(m.id)) idqClose();
+}
+// v558: 理想MAPからの削除（現状MAPには一切触らない）。右クリックの「削除」・かんたん編集の両方からここを通す
+//   理想で追加した新規＝配下の新規ごと削除／もともといる人＝その人だけ外して直下は一つ上へ付け替え。「元に戻す」付き
+function _idealRemove(id) {
+  var arr = _idealEnsure(), m = null;
+  for (var i = 0; i < arr.length; i++) if (arr[i].id === id) { m = arr[i]; break; }
+  if (!m) { toast('理想MAPにこの人がいません'); return false; }
+  if (!m.parentId) { toast('いちばん上の人は削除できません'); return false; }
+  var up = m.parentId, drop = {}, moved = [];
+  (function walk(pid) {
+    drop[pid] = 1;
+    arr.forEach(function(x) { if (x.parentId === pid && !drop[x.id]) { if (m.idealNew && x.idealNew) walk(x.id); else moved.push(x); } });
+  })(m.id);
+  var nm = ((m.lastName || '') + (m.firstName || '')) || '(無名)', nDrop = Object.keys(drop).length;
+  var q = m.idealNew ? '理想MAPから「' + nm + '」' + (nDrop > 1 ? 'と配下の新規 ' + (nDrop - 1) + '人' : '') + 'を削除しますか？'
+    : '理想MAPから「' + nm + '」を外しますか？\n（現状MAPはそのまま。' + (moved.length ? '直下の ' + moved.length + '人は一つ上に付け替えます' : '理想MAPだけの変更です') + '）';
+  if (!confirm(q)) return false;
+  var before = JSON.parse(JSON.stringify(arr));
+  moved.forEach(function(x) { x.parentId = up; });
   state.idealMembers = arr.filter(function(x) { return !drop[x.id]; });
-  idqClose();
-  _idealAfter('削除しました');
+  _idealAfter('');
+  var msg = m.idealNew ? '「' + nm + '」を削除しました' : '「' + nm + '」を理想MAPから外しました';
+  if (typeof toastAction === 'function') toastAction(msg, '元に戻す', function() { state.idealMembers = before; _idealAfter('元に戻しました'); }, 5000); else toast(msg);
+  return true;
 }
 
 // v524: 理想MAP上部＝「理想 vs 現状」パネル（旧コミッション表は廃止）
@@ -12441,7 +12464,7 @@ function openEdit(id) {
     editingId = id;
     var m = null;
     for (var i=0; i<state.members.length; i++) { if (state.members[i].id===id){ m=state.members[i]; break; } }
-    if (!m) return;
+    if (!m) { if ((state.idealMembers || []).some(function(x) { return x.id === id; }) && typeof idqOpen === 'function') idqOpen(id); return; } // v558: 理想で追加した新規はかんたん編集へ（黙って何も起きなかった）
     fGender = m.gender||'male';
     fTrainee = !!m.trainee;
     fMapType = m.mapType||'current';
