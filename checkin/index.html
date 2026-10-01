@@ -6468,8 +6468,11 @@ function loadStats(){
     // 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
     // 当日分は「受付を終了」した時点（recClosed）で算入する
     // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
-    evs = ckHeldEvents(evs);
-    if(!evs.length && !otherEvs.length){
+    // まだ算入されないイベント（受付中・これから）は「イベントがありません」と紛らわしいので案内表示する
+    var heldEvs = ckHeldEvents(evs);
+    var pendingEvs = evs.filter(function(ev){ return heldEvs.indexOf(ev) < 0; });
+    evs = heldEvs;
+    if(!evs.length && !otherEvs.length && !pendingEvs.length){
       $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
     }
@@ -6499,12 +6502,18 @@ function loadStats(){
         });
     });
     Promise.all(reads.concat(vreads).concat([fetchMembers(gStatUnion)])).then(function(results){
-      renderStats(evs, attMaps, results[results.length - 1], visits);
+      renderStats(evs, attMaps, results[results.length - 1], visits, pendingEvs);
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
 }
-function renderStats(evs, attMaps, unionMembers, visits){
+function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
   var held = evs.length;
+  // 受付中・これからのイベントは受付終了後に集計へ反映される旨の案内
+  var pendHtml = (pendingEvs && pendingEvs.length)
+    ? '<p style="color:var(--sub);font-size:13.5px;">🕒 受付がまだ終了していないイベント: '
+      + pendingEvs.map(function(ev){ return '<b>' + esc((ev.date || '').slice(5).replace('-', '/') + ' ' + (ev.name || '')) + '</b>'; }).join('、')
+      + '　— 「受付を終了」すると集計（稼働率）に反映されます。</p>'
+    : '';
   var visitsHtml = '';
   if(visits && visits.length){
     visits.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
@@ -6518,7 +6527,9 @@ function renderStats(evs, attMaps, unionMembers, visits){
       + '</tbody></table></div>';
   }
   if(!held){
-    $('statBody').innerHTML = '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>' + visitsHtml;
+    $('statBody').innerHTML = pendHtml
+      + (pendHtml ? '' : '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>')
+      + visitsHtml;
     gStat = null; return;
   }
   // 行: 有効メンバー + 出席したゲスト（出席回数・稼働率まで ckRateRows で計算＝MAPへ渡す数字と同じ）
@@ -6572,7 +6583,7 @@ function renderStats(evs, attMaps, unionMembers, visits){
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
     + visitsHtml;
-  $('statBody').innerHTML = html;
+  $('statBody').innerHTML = pendHtml + html;
   $('statQ').addEventListener('input', function(){ gStat.q = this.value; renderStatMatrix(); });
   renderStatMatrix();
 }
