@@ -2468,6 +2468,22 @@ $('rosterBody').addEventListener('click', function(e){
         if(m.cardToken) return db.collection('cards').doc(m.cardToken).update({ active: !toOff }).catch(function(){});
       })
       .then(function(){
+        // 受付中なら開始時に読み込んだ名簿スナップショットにも即反映
+        // （受付を開いたまま無効化してもスキャンが通ってしまわないように。有効化はその逆）
+        if(gRec){
+          gRec.off = gRec.off || {};
+          if(toOff){
+            var rm = gRec.roster[no] || m;
+            delete gRec.roster[no];
+            rm.active = false;
+            gRec.off[no] = rm;
+          } else {
+            var om = gRec.off[no] || m;
+            delete gRec.off[no];
+            om.active = true; delete om.resting;
+            gRec.roster[no] = om;
+          }
+        }
         toast(m.name + ' さんを' + (toOff
           ? '無効にしました（集計・受付の対象外。領収書と出席履歴は残ります）'
           : '有効化しました（集計・受付に戻ります）'));
@@ -5607,6 +5623,16 @@ function roleShort(r){
 // 名簿メンバーの受付（スキャン/手入力/名前検索/登壇者登録の共通処理）
 function checkinMember(member, method, role){
   if(!gRec) return;
+  // 最終ガード: 無効メンバーはどの経路からでも受付させない
+  // （受付中に無効化された場合など、開始時の名簿スナップショットが古い可能性があるため）
+  if(ckMemberOff(member)){
+    beep('ng');
+    setStage('ng',
+      '<span class="hit-badge">無効のメンバー</span>'
+      + '<div class="hit-name">' + esc(member.name || member.no) + '</div>'
+      + '<p class="stage-sub">このメンバーは無効化されています。名簿から「有効化」すると受付できます。</p>');
+    return;
+  }
   var no = member.no;
   if(gRec.att[no]){
     if(role){
