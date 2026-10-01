@@ -447,7 +447,7 @@ tr:last-child td{border-bottom:none;}
         <option value="venue">会場代のみ（¥500）</option>
       </select>
       <button class="primary" id="btnRecStart">受付を開始</button>
-      <button id="btnRecStop" class="hide">受付を終了</button>
+      <button id="btnRecStop">受付を終了</button>
     </div>
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
@@ -5164,20 +5164,35 @@ $('btnRecStart').onclick = function(){
 };
 $('btnRecStop').onclick = function(){
   var ev = gRec && gRec.ev;
-  stopReception();
-  // 受付終了をイベントに記録 → 会員証側の「オンライン受講を申請する」を締め切る
-  // （ルール未対応などで書けなくても受付終了自体は成立させる）
-  if(ev){
-    ev.recClosed = true;
-    db.collection('checkinEvents').doc(ev.id).set({ recClosed: true }, { merge: true })
-      .then(function(){ ckRefreshForEvent(ev); })   // 当日分を稼働率の分母に入れた集計をMAPへ
-      .catch(function(){});
+  // この端末で受付中でない場合（別端末で受付した・ページを開き直した等）でも、
+  // 選択中のイベントの「受付終了」を記録できるようにする。
+  // 以前は無言で何もせず、集計（稼働率）にイベントが算入されない原因になっていた
+  if(!ev){
+    var id = $('recEvSel').value;
+    var sel = null; gEvents.forEach(function(x){ if(x.id === id) sel = x; });
+    if(!sel){ toast('イベントを選択してください'); return; }
+    if(sel.recClosed){ toast('「' + (sel.name || '') + '」の受付はすでに終了しています（集計に算入済み）'); return; }
+    if(!window.confirm('この端末では受付中ではありませんが、「' + (sel.name || '') + '」の受付を終了として記録しますか？\n（集計・稼働率に算入され、オンライン受講の申請が締め切られます）')) return;
+    sel.recClosed = true;
+    db.collection('checkinEvents').doc(sel.id).set({ recClosed: true }, { merge: true })
+      .then(function(){ ckRefreshForEvent(sel); toast('受付終了を記録しました（集計に反映されます）'); })
+      .catch(function(e){ toast(permMsg(e, '受付終了の記録に失敗しました')); });
+    return;
   }
+  stopReception();
+  // 受付終了をイベントに記録 → 集計（稼働率）に算入され、会員証側のオンライン申請を締め切る
+  // （書けなくても受付終了自体は成立させるが、集計に出なくなるため失敗は通知する）
+  ev.recClosed = true;
+  db.collection('checkinEvents').doc(ev.id).set({ recClosed: true }, { merge: true })
+    .then(function(){ ckRefreshForEvent(ev); })   // 当日分を稼働率の分母に入れた集計をMAPへ
+    .catch(function(){ toast('⚠️ 受付終了の記録に失敗しました。電波を確認して、もう一度「受付を終了」を押してください（集計に反映されません）'); });
   // 受付終了 → そのまま会計入力へ
-  if(ev && window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
+  if(window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
 };
 
 function startReception(ev){
+  // 終了済みイベントをうっかり開き直すと集計（稼働率）から外れるため、明示的に確認する
+  if(ev.recClosed && !window.confirm('「' + (ev.name || '') + '」の受付はすでに終了しています。受付を再開しますか？\n（再開中は集計・稼働率から一旦外れます。終わったら必ずもう一度「受付を終了」を押してください）')) return;
   stopReception();
   // タブを受付へ
   Array.prototype.forEach.call(tabs, function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === 'pKiosk'); });
@@ -5206,7 +5221,6 @@ function startReception(ev){
   renderFeeRow();
   $('recNone').classList.add('hide');
   $('recArea').classList.remove('hide');
-  $('btnRecStop').classList.remove('hide');
   // オンライン対応イベントは日付に関係なく申請を監視（見逃し防止）
   if(ev.online) olWatchEvent(ev);
   // デスクトップ通知の許可はユーザー操作のタイミングでだけ確認できる
@@ -5248,7 +5262,6 @@ function stopReception(){
   gRec = null;
   $('recArea').classList.add('hide');
   $('recNone').classList.remove('hide');
-  $('btnRecStop').classList.add('hide');
 }
 
 /* ── 受付の料金（ピッと同時に自動計上） ── */
