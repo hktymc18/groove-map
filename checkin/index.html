@@ -674,7 +674,6 @@ tr:last-child td{border-bottom:none;}
         <label>紹介者（任意）</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>UPルビー</label>
         <select id="trUp"></select>
-        <textarea id="trUpFree" rows="1" class="hide" placeholder="UPルビー名を入力" style="margin-top:6px;" autocomplete="off"></textarea>
         <label>性別（任意）</label>
         <div class="trsex">
           <button data-sex="" class="on">未設定</button><button data-sex="m">男</button><button data-sex="f">女</button>
@@ -888,6 +887,13 @@ function isAdminHere(){ return canEditUnion(gUnion); }
 // 無効メンバー判定: 旧「休会(resting)」は無効に統合（既存データはそのまま無効扱い。
 // 「有効化」で active:true＋resting削除に戻る）。領収書・出席履歴は無効化しても消えない
 function ckMemberOff(m){ return !m || m.active === false || !!m.resting; }
+// 系列名（UPルビー）の表記ゆれ対策: スペース（半角/全角）・全角英数・大文字小文字の
+// 差を無視した比較キー。候補の重複統合・集計の同一視・名寄せ検出で共通に使う
+function groupKey(s){
+  s = String(s || '');
+  try{ s = s.normalize('NFKC'); }catch(e){}
+  return s.replace(/[ 　\t]/g, '').toLowerCase();
+}
 function fillUnionSel(sel, current){
   var list = gUnions.slice();
   if(list.indexOf(current) < 0) list.push(current);
@@ -2847,14 +2853,42 @@ $('btnCsvOut').onclick = function(){
 /* ── 系列名の一括変更（名簿と発行済み会員証に反映。過去の出席記録の表記は変えない）── */
 $('btnGroupRen').onclick = function(){
   if(!canEditRoster()){ toast('系列名の変更はユニオン管理者・受付管理者のみ可能です'); return; }
+  // 🧹 表記ゆれ（スペース・全角半角だけ違う系列）の自動検出
+  var cntA = {};
+  gMembers.forEach(function(m){ if(m.group) cntA[m.group] = (cntA[m.group] || 0) + 1; });
+  var clus = {};
+  Object.keys(cntA).forEach(function(g){ var k = groupKey(g); (clus[k] = clus[k] || []).push(g); });
+  var dups = Object.keys(clus).filter(function(k){ return clus[k].length >= 2; }).map(function(k){ return clus[k]; });
+  var autoHtml = dups.length
+    ? '<label>🧹 表記ゆれの自動検出（' + dups.length + '組）— 正しい表記をタップすると下の変更欄に入ります</label>'
+      + dups.map(function(vs, ci){
+          return '<div style="border:1px solid var(--line);border-radius:8px;padding:8px;margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
+            + vs.map(function(v, vi){
+                return '<button data-gc="' + ci + '" data-gv="' + vi + '" style="padding:6px 10px;font-size:13px;">'
+                  + esc(v) + '<span style="color:var(--sub);font-size:11px;">（' + cntA[v] + '名）</span></button>';
+              }).join('')
+            + '</div>';
+        }).join('')
+    : '<p style="font-size:12.5px;color:var(--green);margin:0 0 8px;">✓ スペース・全角半角だけ違う系列はありません。</p>';
   modal('<h2>系列名の一括変更</h2>'
-    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行に1件、「旧名→新名」で入力してください（「,」やタブ区切りも可）。<br>'
-    + '「' + esc(gRosterUnion) + '」の名簿と発行済み会員証に反映されます。過去の出席記録の表記はそのまま残ります。</p>'
+    + autoHtml
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行に1件、「旧名→新名」で入力してください（「,」やタブ区切りも可）。漢字違いなどの名前間違いもここで直せます。<br>'
+    + '「' + esc(gRosterUnion) + '」の名簿と発行済み会員証に反映されます。過去の出席記録の表記はそのまま残ります（系列別の集計はスペース・全角半角を同一視して合算されます）。</p>'
     + '<textarea id="grText" rows="8" placeholder="旧系列名→新系列名&#10;（例）〇〇BD→山田 太郎"></textarea>'
     + '<div id="grPrev" style="font-size:13.5px;margin-top:8px;"></div>'
     + '<div class="btns"><button id="grCancel">キャンセル</button>'
     + '<button id="grCheck">プレビュー</button><button class="primary hide" id="grGo">変更する</button></div>');
   $('grCancel').onclick = closeModal;
+  Array.prototype.forEach.call(document.querySelectorAll('.modal button[data-gc]'), function(bb){
+    bb.onclick = function(){
+      var vs = dups[+bb.getAttribute('data-gc')];
+      var chosen = vs[+bb.getAttribute('data-gv')];
+      var lines = vs.filter(function(v){ return v !== chosen; }).map(function(v){ return v + '→' + chosen; });
+      var cur = $('grText').value.trim();
+      $('grText').value = (cur ? cur + '\n' : '') + lines.join('\n');
+      $('grCheck').onclick();
+    };
+  });
   var map = {};
   $('grCheck').onclick = function(){
     map = {};
@@ -3473,21 +3507,25 @@ function trLoadMembers(){
     trRenderList();
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 }
-// UPルビー: そのユニオンの既存系列＋自分の名前を初期値に。手入力も可
+// UPルビー: そのユニオンの既存系列＋自分の名前から選択のみ（手入力は廃止。
+// 表記ゆれで集計が割れるため、新しい系列は管理者が名簿の編集から登録する運用）。
+// スペース・全角半角だけ違う表記は、人数の多い表記1つにまとめて表示する
 function trFillUp(){
-  var set = {};
-  gTrMembers.forEach(function(m){ if(m.group) set[m.group] = 1; });
+  var cnt = {};
+  gTrMembers.forEach(function(m){ if(m.group) cnt[m.group] = (cnt[m.group] || 0) + 1; });
   var my = gProf.name || '';
-  if(my) set[my] = 1;
-  var gs = Object.keys(set).sort();
+  if(my) cnt[my] = (cnt[my] || 0) + 0.5;   // 自分の名前は既存の表記があればそちらを優先
+  var rep = {};
+  Object.keys(cnt).forEach(function(g){
+    var k = groupKey(g);
+    if(!rep[k] || cnt[g] > cnt[rep[k]]) rep[k] = g;
+  });
+  var myKey = groupKey(my);
+  var gs = Object.keys(rep).map(function(k){ return rep[k]; }).sort();
   $('trUp').innerHTML = gs.map(function(g){
-    return '<option value="' + esc(g) + '"' + (g === my ? ' selected' : '') + '>' + esc(g) + '</option>';
-  }).join('') + '<option value="__free">その他（手入力）</option>';
+    return '<option value="' + esc(g) + '"' + (my && groupKey(g) === myKey ? ' selected' : '') + '>' + esc(g) + '</option>';
+  }).join('');
 }
-$('trUp').onchange = function(){
-  $('trUpFree').classList.toggle('hide', $('trUp').value !== '__free');
-  if($('trUp').value === '__free') $('trUpFree').focus();
-};
 Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(b){
   b.onclick = function(){
     gTrSex = b.getAttribute('data-sex') || '';
@@ -3505,15 +3543,14 @@ function trTab(reg){
 $('trTabReg').onclick = function(){ trTab(true); };
 $('trTabList').onclick = function(){ trTab(false); trRenderList(); };
 // 氏名等はtextarea化しているため、Enterでの改行を抑止（値に改行が入らないように）
-['trName', 'trKana', 'trRef', 'trUpFree'].forEach(function(id){
+['trName', 'trKana', 'trRef'].forEach(function(id){
   var el = $(id);
   if(el) el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); el.blur(); } });
 });
 $('trGo').onclick = function(){
   var name = $('trName').value.replace(/[\r\n]/g, '').trim();
   if(!name){ toast('氏名を入力してください'); return; }
-  var upSel = $('trUp').value;
-  var up = upSel === '__free' ? $('trUpFree').value.trim() : upSel;
+  var up = $('trUp').value;
   if(!up){ toast('UPルビーを選択してください'); return; }
   var no = nextMemberNo(gTrMembers, gUnion);
   if(!no){ toast('番号の自動発番に失敗しました。管理者にプレフィックス設定を確認してください'); return; }
@@ -5843,15 +5880,20 @@ $('btnGuest').onclick = function(){
   var unions = evUns.concat(gUnions.filter(function(u){ return evUns.indexOf(u) < 0; }));
   // 系列はそのユニオンの名簿にある系列からプルダウン選択（手入力も可）
   function groupOptions(un){
-    var set = {};
+    // 選択のみ（手入力は廃止）。表記ゆれは人数の多い表記1つにまとめて表示
+    var cnt = {};
     Object.keys(gRec.roster).forEach(function(no){
       var m = gRec.roster[no];
-      if(m.union === un && m.group) set[m.group] = 1;
+      if(m.union === un && m.group) cnt[m.group] = (cnt[m.group] || 0) + 1;
     });
-    var gs = Object.keys(set).sort();
+    var rep = {};
+    Object.keys(cnt).forEach(function(g){
+      var k = groupKey(g);
+      if(!rep[k] || cnt[g] > cnt[rep[k]]) rep[k] = g;
+    });
+    var gs = Object.keys(rep).map(function(k){ return rep[k]; }).sort();
     return '<option value="">ゲスト（系列なし）</option>'
-      + gs.map(function(g){ return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('')
-      + '<option value="__free">その他（手入力）</option>';
+      + gs.map(function(g){ return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('');
   }
   modal(
     '<h2>ゲスト受付</h2>'
@@ -5860,23 +5902,16 @@ $('btnGuest').onclick = function(){
     + unions.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
     + '</select>'
     + '<label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select>'
-    + '<input type="text" id="gGroupFree" class="hide" placeholder="系列名を入力" style="margin-top:6px;">'
     + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
   );
   $('gUnion').onchange = function(){
     $('gGroupSel').innerHTML = groupOptions($('gUnion').value);
-    $('gGroupFree').classList.add('hide');
-  };
-  $('gGroupSel').onchange = function(){
-    $('gGroupFree').classList.toggle('hide', $('gGroupSel').value !== '__free');
-    if($('gGroupSel').value === '__free') $('gGroupFree').focus();
   };
   $('gCancel').onclick = function(){ closeModal(); focusScan(); };
   $('gGo').onclick = function(){
     var name = $('gName').value.trim();
     if(!name){ toast('氏名を入力してください'); return; }
-    var gsel = $('gGroupSel').value;
-    var ggroup = gsel === '__free' ? $('gGroupFree').value.trim() : gsel;
+    var ggroup = $('gGroupSel').value;
     var id = 'g' + Date.now();
     var gfee = currentFee();
     var gdata = {
@@ -5903,7 +5938,7 @@ function attGroup(id, a){
 }
 function renderTallies(){
   if(!gRec) return;
-  var total = 0, byUnion = {}, byGroup = {};
+  var total = 0, byUnion = {}, byGroup = {}, byGroupKey = {};
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
   var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [], hist = [];
@@ -5932,10 +5967,15 @@ function renderTallies(){
       }
     }
     if(a.union === tallyUnion){
+      // 系列別はスペース・全角半角の表記ゆれを同一視して合算（表示は長い方の表記を採用）
       var g = attGroup(id, a) || 'その他';
-      byGroup[g] = (byGroup[g] || 0) + 1;
+      var gk = groupKey(g);
+      if(!byGroupKey[gk]) byGroupKey[gk] = { label: g, n: 0 };
+      if(g.length > byGroupKey[gk].label.length) byGroupKey[gk].label = g;
+      byGroupKey[gk].n++;
     }
   });
+  Object.keys(byGroupKey).forEach(function(k){ byGroup[byGroupKey[k].label] = byGroupKey[k].n; });
   var unpaidSum = 0;
   unpaid.forEach(function(u){ unpaidSum += u.fee; });
   if(gRec.payMode){
