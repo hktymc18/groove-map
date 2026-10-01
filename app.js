@@ -7573,6 +7573,7 @@ function renderTree(mapType) {
   if (mapType === 'current') { buildMapCatChips(ownMembers); setTimeout(applyMapCatDim, 200); } // カテゴリ絞り込み
   if (mapType === 'current') { buildRegionChipsInto(ownMembers, 'mapRegionChips'); setTimeout(applyRegionDim, 200); } // 地域絞り込み（モバイル）
   var roots = childrenOf('', members);
+  if (roots.length && !viewingOwnerUid) _gmHadRoot(); // v559: 自分を登録済みの印
 
   if (roots.length === 0) {
     container.innerHTML = emptyStateHTML('map');
@@ -11864,6 +11865,12 @@ function renderShareChips() {
   // 旧実装 — showSharedButtonに統合
 }
 
+// v559: 「まず自分を0段目に」は、まだ一度も自分をMAPに登録したことがない人だけ（データの無い月を開いた既存の人には出さない）
+function _gmHadRoot() {
+  if (_p2OwnRoot()) { try { localStorage.setItem('gm_hadRoot_' + ((currentUser && currentUser.uid) || ''), '1'); } catch (e) {} return true; }
+  try { return localStorage.getItem('gm_hadRoot_' + ((currentUser && currentUser.uid) || '')) === '1'; } catch (e2) { return false; }
+}
+function _gmNeedSelf() { return !!state.isEditor && !viewingOwnerUid && !_gmHadRoot(); }
 // v559: 自分（0段目）の登録。名前はアカウントの名前を入れておく
 function onboardSelf() {
   if (!state.isEditor) return;
@@ -11873,7 +11880,7 @@ function onboardSelf() {
 }
 // #8 エンプティステート
 function emptyStateHTML(type) {
-  if (type === 'map' && state.isEditor && !viewingOwnerUid && !_p2OwnRoot()) { // v559: はじめての人は「まず自分を0段目に」
+  if (type === 'map' && _gmNeedSelf()) { // v559: はじめての人は「まず自分を0段目に」
     var nm = (currentUser && currentUser.name) ? String(currentUser.name).trim() : '';
     return '<div class="empty-state onb">'
       + '<div class="onb-t">まずは <b>あなた自身</b> を登録しましょう</div>'
@@ -14338,7 +14345,7 @@ function renderPlan() {
   _p2();
   var ym = _p2Ym(0);
   var alertH = _p2Declared(ym) ? '' : '<div class="p2-alert">⚠️ 今月の目標が未設定です。「今月の目標」に数字を入れて<b>設定</b>を押してください</div>';
-  if (state.isEditor && !viewingOwnerUid && !_p2OwnRoot()) alertH = '<div class="p2-alert onb-plan">👤 まず <b>自分</b> をMAPの0段目（いちばん上）に登録しましょう。次の山や進み具合は、自分のタイトルをもとに計算します <span class="p2a-lk" onclick="onboardSelf()">自分を登録する ›</span></div>' + alertH; // v559
+  if (_gmNeedSelf()) alertH = '<div class="p2-alert onb-plan">👤 まず <b>自分</b> をMAPの0段目（いちばん上）に登録しましょう。次の山や進み具合は、自分のタイトルをもとに計算します <span class="p2a-lk" onclick="onboardSelf()">自分を登録する ›</span></div>' + alertH; // v559
   var north = _p2NorthHtml();
   var rev = _p2ReviewHtml();
   var mon = _p2MonthHtml(ym, 0) + _p2MonthHtml(_p2Ym(1), 1);
