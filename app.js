@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v560';
+var APP_JS_VERSION = 'v565';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -265,6 +265,7 @@ function demoteTitleFor(m, nextMonth) {
 function _computeTitleTransition(m, nextMonth) {
   var gsv = m.ptCurrent || 0;
   var t = (m.title || '').trim();
+  if (t && _isKnownTitle(normTitle(t))) t = normTitle(t); // v563: 表記ゆれ（ＢＲ・ブランドレプリゼンタティブ等）もBRとして判定
   var cat = (typeof detectCategory === 'function') ? detectCategory(t) : '';
   if (cat === 'BA') {
     var qi = ['LOI', 'Q2', 'Q3', 'Q4'].indexOf(t);
@@ -689,10 +690,19 @@ function isPCMode() {
 }
 
 
+// v561: 同じMAP・同じ月・同じ持ち主の描き直し（編集・OUT・研修の「流れた」・追加・共同編集の取り込みなど）は、
+//        今見ている位置と倍率を保つ（中央・左上に戻さない）。月やMAPを切り替えた時だけ初期表示にする
+function _mapViewCtx(mapType) { return mapType + '|' + (state.currentMonth || '') + '|' + (viewingOwnerUid || ''); }
 function renderPCMap(mapType) {
   var containerId = mapType === 'current' ? 'pcMapCurrent' : 'pcMapIdeal';
   var wrap = document.getElementById(containerId);
   if (!wrap) return;
+  try {
+    var _o561 = wrap.querySelector('#pcTreeOuter');
+    if (_o561 && _o561.clientWidth > 0 && wrap._viewCtx === _mapViewCtx(mapType) && !(window._pcTreeKeepView && Date.now() - window._pcTreeKeepView.at < 8000))
+      window._pcTreeKeepView = { sl: _o561.scrollLeft, st: _o561.scrollTop, z: _o561._currentZoom || 0, at: Date.now() };
+  } catch (eK561) {}
+  wrap._viewCtx = _mapViewCtx(mapType);
   wrap.innerHTML = '';
 
   var members = _treeVisibleMembers(composeMergedInto(membersForMap(mapType), mapType)); // 結合中の下位ツリーを合成（v426: OUT非表示を除外）
@@ -1383,16 +1393,52 @@ window.addEventListener('keydown', function(ev) {
   if (ev.isComposing || ev.keyCode === 229) ev.stopImmediatePropagation();
 }, true);
 var _lastPcMode = (typeof window !== 'undefined') ? (window.innerWidth >= 768) : null; // 読込時の表示（最初の回転も検知できるように）
+// v561: 1001-6 PC表示⇄スマホ表示が切り替わったかを確かめて作り直す。スマホ表示になったらMAPの全画面（PC専用）を解除
+//        （横向きで運動会を全画面にしたまま縦に戻すと、全画面の枠が残ってスマホの画面と重なり崩れていた）
+//        iPhoneは回した直後の幅がまだ古いことがあるため、回転の少し後と4秒ごとの見回りでも確かめる
+function _pcModeCheck() {
+  var _pcNow = isPCMode();
+  if (!_pcNow && document.querySelector('.map-fs')) {
+    document.querySelectorAll('.map-fs').forEach(function(x) { x.classList.remove('map-fs'); });
+    document.querySelectorAll('.mapFsBtn').forEach(function(b) { b.classList.remove('on'); });
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){}); } catch (eFx) {}
+    if (_lastPcMode === false) { try { renderCurrentView(); } catch (eFr) {} }
+  }
+  if (_lastPcMode !== null && _pcNow !== _lastPcMode) {
+    _lastPcMode = _pcNow;
+    _pcModeReset();
+    return true;
+  }
+  _lastPcMode = _pcNow;
+  // スマホ表示なのにツリーが空（作り直しが間に合わなかった）なら作り直す
+  if (!_pcNow && (currentView === 'current' || currentView === 'ideal')) {
+    var tc9 = document.getElementById(currentView === 'current' ? 'treeCurrent' : 'treeIdeal');
+    if (tc9 && !tc9.children.length && membersForMap(currentView).length) { try { renderCurrentView(); } catch (eTr) {} return true; }
+  }
+  return false;
+}
+// v563: 1001-6 PC表示⇄スマホ表示が切り替わったら、スクロールを一番上に戻し、MAPはタブを開き直したのと同じ状態に作り直す
+//        （横向きで下までスクロールした位置が縦向きに残り、ツリーより下の空白が出る＝「ツリーが消える」・
+//          上に貼り付く「‹ メニュー｜現状MAP／理想MAP」のバーが中身に重なる、の原因）
+function _pcModeReset() {
+  try {
+    var sa = document.getElementById('scrollArea'); if (sa) sa.scrollTop = 0;
+    var vw = document.getElementById('view-' + currentView); if (vw) vw.scrollTop = 0;
+    if (window.scrollY) window.scrollTo(0, 0);
+  } catch (eS) {}
+  try {
+    if (currentView === 'current' || currentView === 'ideal') { switchView(currentView); return; }
+    var bh = document.getElementById('backHomeBar'); if (bh && isPCMode()) bh.style.display = 'none';
+    renderCurrentView();
+  } catch (eR) { try { renderCurrentView(); } catch (eR2) {} }
+}
+window.addEventListener('orientationchange', function() { setTimeout(_pcModeCheck, 300); setTimeout(_pcModeCheck, 900); });
+setInterval(function() { if (!document.hidden) _pcModeCheck(); }, 4000);
 window.addEventListener('resize', function() {
   // v532: 927-1 スマホを縦⇄横に回して PC表示⇄スマホ表示 が切り替わったら、その表示で作り直す
   //        （横向き＝PC表示の間はスマホ用ツリーを作らないため、縦に戻すとツリーが空のままだった）
+  if (_pcModeCheck()) return;
   var _pcNow = isPCMode();
-  if (_lastPcMode !== null && _pcNow !== _lastPcMode) {
-    _lastPcMode = _pcNow;
-    if (typeof renderCurrentView === 'function') { try { renderCurrentView(); } catch (eMc) {} }
-    return;
-  }
-  _lastPcMode = _pcNow;
   if (isPCMode()) {
     if (typeof _pcView !== 'undefined' && _pcView === 'orbit') {
       renderPCOrbit(currentView === 'ideal' ? 'ideal' : 'current');
@@ -1443,6 +1489,14 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   if (!wrap) return;
   var isPrint = !!targetEl;
   var light = forceLight || document.body.classList.contains('light');
+  var _keep561 = null; // v561: 同じMAP・同じ月の描き直しはスクロール位置を保つ（左上に飛ばない）
+  if (!isPrint) {
+    try {
+      var _oo561 = wrap.querySelector('#orbitOuter' + (mapType === 'current' ? 'C' : 'I'));
+      if (_oo561 && _oo561.clientWidth > 0 && wrap._viewCtx === _mapViewCtx(mapType)) _keep561 = { sl: _oo561.scrollLeft, st: _oo561.scrollTop };
+    } catch (eO561) {}
+    wrap._viewCtx = _mapViewCtx(mapType);
+  }
   wrap.innerHTML = '';
   var members = _treeVisibleMembers(composeMergedInto(membersForMap(mapType), mapType));
   if (opts.rootId || (opts.exclude && opts.exclude.length) || opts.region) members = _orbitSubset(members, opts);
@@ -2036,7 +2090,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     + '<div class="orbit-btn" onclick="orbitZoomBy(-1)" title="縮小">−</div>'
     + '<div class="orbit-btn" onclick="orbitZoomBy(0)" title="全体表示">⊡</div>'
     + '<div class="orbit-btn" onclick="orbitZoomBy(1)" title="拡大">＋</div>'
-    + '<div class="orbit-btn mapFsBtn' + (document.querySelector('.map-fs') ? ' on' : '') + '" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>'
+    + (mapType === 'ideal' ? '<div class="orbit-btn mapFsBtn' + (document.querySelector('.map-fs') ? ' on' : '') + '" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>' : '') // v564: 1002-2 現状MAPは上のツールバーに全画面ボタンがあるため出さない（2つ並んでいた）
     + '<div class="orbit-btn" onclick="orbitPdfOpen()" title="A3横のPDFを作成（コンビニ印刷・LINE共有に）">' + icn('doc') + ' PDFで保存</div>';
   wrap.appendChild(bar);
   var fsOn = !!document.querySelector('.map-fs');
@@ -2060,6 +2114,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   svg.style.margin = '0 auto';
   outer.appendChild(svg);
   wrap.appendChild(outer);
+  if (_keep561) { outer.scrollLeft = _keep561.sl; outer.scrollTop = _keep561.st; requestAnimationFrame(function() { outer.scrollLeft = _keep561.sl; outer.scrollTop = _keep561.st; }); }
   window['_orbitMeta' + (mapType === 'current' ? 'C' : 'I')] = { SW: SW, SH: SH, fit: fit, pos: posOf, z: z };
   // ドラッグでパン
   var drag = false, sx = 0, sy = 0, sl = 0, st = 0;
@@ -3869,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v560';
+  var DATA_VERSION = 'v565';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4527,6 +4582,7 @@ function _renderCurrentViewNow() {
   recalcAllGSV();
   // 自分のMAPのみ：地域の表記ゆれ（愛知/愛知県→名古屋）を統一し、変換時のみ保存
   if (!viewingOwnerUid && typeof migrateRegions === 'function' && migrateRegions()) autoSave();
+  if (!viewingOwnerUid && state.isEditor && typeof migrateTitles === 'function' && migrateTitles()) { recalcAllGSV(); autoSave(); } // v563: タイトルの表記ゆれを統一
   if (currentView === 'members') renderMembers();
   else if (currentView === 'current') renderTree('current');
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
@@ -4896,6 +4952,11 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v565', d:'2026-10-02', items:['📝 メンバー編集の基本タブを並べ替え：姓名→性別→地域（既定は自分の活動地域）→「ここから下は任意」写真・生年月日・Instagram・登録月。生年月日は年だけでもOK（その年の1月1日として年齢を日の横に自動表示）。登録月はプルダウンだけに','🧹 基本タブから「適用MAP」（新規は常に両方）・「LINE」・「年齢のみ」を外しました（入っているデータは消えません。年齢のみの人は生まれ年として表示）','📅 月次タブ：リスタートと「点滅表示」（旧ケアバッジ）をメモのすぐ上へ','⚡ かんたん追加で稼働タイプ（S/A/B/C）とGSV（任意）も入れられるように（くわしく登録へも引き継ぎ）'] },
+  { v:'v564', d:'2026-10-02', items:['◎ 運動会MAPで「⛶ 全画面」ボタンが2つ並んでいた不具合を修正（1002-2）：現状MAPは上のツールバーの1つだけに（理想MAPは運動会のボタン列に1つ）'] },
+  { v:'v563', d:'2026-10-02', items:['🏷 GSV 0PのBRが翌月コピーで降格の確認に出なかった不具合を修正（1001-4）：タイトルが「ブランドレプリゼンタティブ」や全角の「ＢＲ」で保存されていると、丸の中ではBRと表示されるのにBRとして判定されていませんでした。表記ゆれもBRとして判定し、保存されたタイトルも「BR」などに自動でそろえます（自由入力の文字はそのまま）','📱 スマホを横向き→運動会→全画面→縦向きにした時の追加対策（1001-6）：PC表示⇄スマホ表示が切り替わったら、スクロールを一番上に戻し、MAPはタブを開き直した状態に作り直します（「‹ メニュー｜現状MAP／理想MAP」のバーが重なる・ツリーより下の空白が出る対策）'] },
+  { v:'v562', d:'2026-10-02', items:['👥 メンバーに予定・タスクを入れる時の扱いを3つに（1001-2）：👤メンバーのみ（メンバーのカード・ホバーに出す）／🙋自分のみ（自分のカレンダー・ToDoだけ。メンバーのカード・共有先には出さず、行動にも数えない）／👥両方。前に入れた予定は「メンバー専用」→メンバーのみ、「自分にも表示」→両方 のまま','🎯 目標をなおす：目標タイトル・次の山のタイトルをプルダウンで選ぶように（月収から自動で選ばれ、手で変えると「手動」）','🧹 PLANの「まず自分を登録」の案内を出さないように（MAPが空の時の案内はそのまま）'] },
+  { v:'v561', d:'2026-10-02', items:['🗺 PC：NAを研修の「流れた」でOUTにすると、ツリーが中央（初期表示）に戻っていた不具合を修正（1001-1）。同じMAP・同じ月の描き直しは、どの操作でも今見ている位置と倍率のままにしました','◎ PC運動会：メンバーの編集やNAの追加のたびに画面が左上に移動していた不具合を修正（1001-3）','🔗 共有メンバーにカーソルを合わせても情報が出なかった不具合を修正（1001-5）：タイトル・GSV・稼働・メモと、共有元のMAPの予定・タスクを表示します（スマホはカードをタップ）。予定を見せない共有の時は「共有されていません」と表示','📱 スマホを横向き→運動会→全画面→縦向きにすると画面が崩れ、ツリーが消えることがあった不具合を修正（1001-6）：スマホ表示に戻ったら全画面を自動で解除し、回転の少し後にもツリーを確認して作り直します'] },
   { v:'v560', d:'2026-10-01', items:['🏁 次の山がBRの時に「BRまでの道のり」を表示：研修生 → ビジネスメンバー → LOI → Q2 → Q3 → Q4 → BR のどこにいるかを光らせ、やることを数字で出します（既存メンバーは「今月からLOI：いま◯P → あと◯P」、BPC前は「◯月にBPCを揃えてブランドチェンジ」）','📅 BRの月は「BRになる月」から逆算：LOIの月＝その3ヶ月前。最短は今月LOIスタート→3ヶ月後のQ4の月。審査中はQ4の月で固定し、累計◯/5,000P・今月◯/1,000P・Q4の月は次の締め日（7・14・21日）まであと何Pかを表示（公式HPへのリンク付き）','🎁 目標ファーストボーナスから逆算して、毎月のフロント・新規B1・組織の数と、月ごとの内訳（LOI（BPC）→Q2→Q3→Q4→BR）、審査の条件（各月1,000P・累計5,000P）を表示','🔁 MAPのタイトル自動更新を審査ルールどおりに：審査は固定4ヶ月。LOI〜Q3で累計5,000Pに届いても次のQへ進み、BRになるのはQ4で条件を満たした時だけ'] },
   { v:'v559', d:'2026-10-01', items:['⛰ 次の山は「月収」から決めるように：月収を入れるとタイトルが自動で選ばれます（あとから手で変えてもOK・「月収に合わせる」で自動に戻せます）','📆 最終ゴールが1年以上先なら「1年ごとの目標」：最終ゴールの期日から1年ずつさかのぼり、月収・タイトルの例を自動で表示。直した段だけ保存され、1年目の段が次の山の例になります（⚙の年別目標もここに統合）','🎁 次の山がBRの時は「目標ファーストボーナス」を設定：金額に応じて、BRの月に必要なGSVと、フロントの人数（ブランドチェンジ→翌月◯人→翌月◯人）をシミュレーションと同じ計算で表示','🌱 理想の生活に「1年以内の理想」タブ：最終ゴールの理想とは別に、直近1年で叶えたい暮らしを描けます。合計をワンタップで次の山の月収に','👤 はじめての人向け：MAPが空の時は「まず あなた自身 を0段目に登録」の案内と図。アカウント名が入った状態で登録できます（PLANにも案内）'] },
   { v:'v558', d:'2026-10-01', items:['🗑 理想MAPで追加した新規メンバーを削除できない問題を修正：PCの右クリック「削除」「編集」が、理想MAPで追加した新規には何も反応していませんでした。右クリックからも、かんたん編集の「この新規を削除」からも削除できます（配下の新規もまとめて・「元に戻す」付き）','⚠️ 理想MAPで右クリック「削除」すると、現状MAPの同じ人が消えていた不具合も修正：理想MAPでの削除は理想MAPだけに効くようにしました（もともといる人は「理想MAPから外す」＝直下は一つ上に付け替え）','✏️ 理想MAPの右クリック「編集」「直下に追加」はかんたん編集を開くように'] },
@@ -6279,9 +6340,10 @@ function _fBirthGet() {
   if (!y || !m || !d) return '';
   return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2);
 }
-function _fBirthSet(v) {
+function _fBirthSet(v, yOnly) {
   _birthSelInit();
   var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
+  if (!p && yOnly && /^\d{4}$/.test(String(yOnly))) p = [null, String(yOnly), '', '']; // v565: 生まれ年だけ
   var y = document.getElementById('fBirthY'), m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
   // v503: 範囲外の年（旧データ）は選択肢を足して復元。未設定の初期表示は「今年−24年」（24才前後の新メンバーが最多）
   if (y && p && !y.querySelector('option[value="' + p[1] + '"]')) {
@@ -6289,12 +6351,27 @@ function _fBirthSet(v) {
     _op9.value = p[1]; _op9.textContent = p[1] + '年';
     y.insertBefore(_op9, y.options[1] || null);
   }
-  if (y) y.value = p ? p[1] : String(new Date().getFullYear() - 24);
-  if (m) m.value = p ? String(parseInt(p[2], 10)) : '';
-  if (d) d.value = p ? String(parseInt(p[3], 10)) : '';
+  if (y) y.value = p ? p[1] : ''; // v565: 年だけでも保存するため、未設定の初期表示は空（以前は今年−24年を仮表示）
+  if (m) m.value = p && p[2] ? String(parseInt(p[2], 10)) : '';
+  if (d) d.value = p && p[3] ? String(parseInt(p[3], 10)) : '';
+}
+// v565: 年だけ選んだ時（月・日が空）は「生まれ年」として保存（誕生日のリマインドは出さない）
+function _fBirthYearGet() {
+  var y = (document.getElementById('fBirthY') || {}).value || '';
+  return (y && !_fBirthGet()) ? y : '';
+}
+// 年齢：年/月/日が揃えばその日、年だけならその年の1月1日で計算して日の横に表示
+function _ageFrom(bd, by) {
+  var b = bd && /^\d{4}-\d{2}-\d{2}$/.test(bd) ? new Date(bd.replace(/-/g, '/')) : (by && /^\d{4}$/.test(String(by)) ? new Date(parseInt(by, 10), 0, 1) : null);
+  if (!b) return null;
+  var t = new Date(), a = t.getFullYear() - b.getFullYear();
+  if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
+  return (a >= 0 && a < 130) ? a : null;
 }
 // 生年月日が入っている間は年齢欄を無効化（優先ルールをその場で見せる）
 function syncAgeField() {
+  var _au = document.getElementById('fAgeAuto');
+  if (_au) { var _ag = _ageFrom(_fBirthGet(), _fBirthYearGet()); _au.textContent = _ag === null ? '' : _ag + '歳'; }
   var a = document.getElementById('fAge'), n = document.getElementById('fAgeNote');
   if (!a) return;
   var hasBirth = !!_fBirthGet();
@@ -6304,6 +6381,7 @@ function syncAgeField() {
 }
 // 年齢：生年月日があれば計算値を優先、無ければ手入力の年齢（m.age）
 function _memberAge(m) {
+  if (!(m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) && m.birthYear) return _ageFrom('', m.birthYear); // v565: 生まれ年だけ＝その年の1月1日で計算
   if (m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) {
     var b = new Date(m.birthday.replace(/-/g, '/')), t = new Date();
     var a = t.getFullYear() - b.getFullYear();
@@ -6353,7 +6431,7 @@ function openMemberDetail(mid) {
   ol += _dRow('リストOL', listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手'));
   if (!olog.length) ol += '<div class="md-empty">OL記録はまだありません</div>';
   else ol += olog.map(function(e){ return '<div class="md-ol"><div class="md-oltop">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div class="md-olwhat">' + evEsc(e.what) + '</div>':'') + (e.note?'<div class="md-olnote">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
-  var evs = (state.events||[]).filter(function(e){ return e.memberId===mid && !e.deleted; });
+  var evs = (state.events||[]).filter(function(e){ return e.memberId===mid && !e.deleted && evOnMember(e); });
   var _mMd = findMemberAny(mid); // v545
   var tk = '';
   if (!evs.length) tk = '<div class="md-empty">紐付くタスク・予定はありません</div>';
@@ -7669,7 +7747,7 @@ function _evLastActFor(mid) {
     var t = evTodayYmd();
     for (var i = 0; i < evs.length; i++) {
       var e = evs[i];
-      if (!e.memberId || e.deleted || !e.date || e.date > t) continue;
+      if (!e.memberId || e.deleted || !e.date || e.date > t || !evOnMember(e)) continue; // v562: 「自分のみ」は活動に数えない
       if (!_evLastActMap[e.memberId] || e.date > _evLastActMap[e.memberId]) _evLastActMap[e.memberId] = e.date;
     }
   }
@@ -8059,7 +8137,18 @@ function memberInfoHtml(m) {
       html += '<div class="ci-plan" style="color:var(--text-dim);font-size:11px">💰 GSV内訳：' + _gp.join(' ＋ ') + (_gex ? '（BR系列' + _gex + '件は除外）' : '') + ' ＝ ' + (m.ptCurrent||0).toLocaleString() + '</div>';
     }
   } catch(e) {}
-  memberNextPlanLines(m).forEach(function(ln){ html += '<div class="ci-plan">' + ln + '</div>'; }); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
+  if (/^MG_/.test(m.id)) { // v561: 共有（結合）メンバーは持ち主のMAPの予定・タスク
+    var _fl = _fgnEvents(m.id, function() { var b9 = _treeScopedEl('mem-', m.id); if (b9 && b9.classList.contains('show')) b9.innerHTML = memberInfoHtml(m); });
+    if (_fl === null) html += '<div class="ci-plan" style="color:var(--text-dim)">📋 予定・タスクを読み込み中…</div>';
+    else if (_fl === false) html += '<div class="ci-plan" style="color:var(--text-dim)">📋 予定・タスクは共有されていません（' + evEsc(m._ownerName || '共有元') + 'さんの共有設定）</div>';
+    else {
+      var _cut9 = evTodayYmd().slice(0, 7);
+      _fl.filter(function(e) { return !(e.type === 'task' && e.done) && (!e.date || String(e.endDate || e.date) >= _cut9); }).sort(function(x, y) { return String(x.date || '9').localeCompare(String(y.date || '9')); }).slice(0, 5).forEach(function(e) {
+        var d9 = e.date ? String(e.date).split('-').slice(1).map(function(s) { return parseInt(s, 10); }).join('/') : '';
+        html += '<div class="ci-plan">' + (e.type === 'task' ? '⬜' : '📅') + ' ' + (d9 ? d9 + ' ' : '') + evEsc(evMemberLabel(e, m)) + '</div>';
+      });
+    }
+  } else memberNextPlanLines(m).forEach(function(ln){ html += '<div class="ci-plan">' + ln + '</div>'; }); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
   var fd = (state.freshData && state.freshData[m.id]) || {};
   var olog = (fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
   if (olog.length) {
@@ -11758,7 +11847,13 @@ function saveCurrent() {
 function showPcTooltip(mid, ev) {
   var m = null;
   for (var i=0; i<state.members.length; i++) { if (state.members[i].id===mid) { m=state.members[i]; break; } }
+  if (!m && /^MG_/.test(mid)) m = _mgFind(mid); // v561: 共有（結合）メンバーも表示
   if (!m) return;
+  var _fgn = !!m._foreign, _fgnList = null;
+  if (_fgn) { // 持ち主の予定・タスク（読込が終わったら、まだ同じ人を表示中なら描き直す）
+    var _ev0 = { clientX: ev.clientX, clientY: ev.clientY };
+    _fgnList = _fgnEvents(mid, function() { var t0 = document.getElementById('pcTooltip'); if (t0 && t0.classList.contains('show') && t0._mid === mid) showPcTooltip(mid, _ev0); });
+  }
   var tip = document.getElementById('pcTooltip');
   var name = (m.lastName||'') + ' ' + (m.firstName||'');
   var actLabel = m.activity ? m.activity + (m.actRate ? ' ' + m.actRate + '%' : '') : '-';
@@ -11768,8 +11863,8 @@ function showPcTooltip(mid, ev) {
   // このメンバーに紐づく予定・タスク
   // v460: 直近1ヶ月より古いものは表示しない（日付なしタスク・未来の予定は表示）
   var _evCut = (function(){ var d0 = new Date(); d0.setMonth(d0.getMonth() - 1); return d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0'); })();
-  var myEv = (state.events || []).filter(function(e){
-    if (!evHasMember(e, m.id) || e.deleted) return false;
+  var myEv = (_fgn ? (_fgnList || []) : (state.events || [])).filter(function(e){
+    if ((!_fgn && !evHasMember(e, m.id)) || e.deleted || !evOnMember(e)) return false;
     var ref = e.endDate || e.date;
     return !ref || String(ref) >= _evCut;
   });
@@ -11793,11 +11888,13 @@ function showPcTooltip(mid, ev) {
     }).join('');
     var more = myEv.length > 5 ? '<div style="font-size:11px;color:var(--text-dim);margin-top:3px">ほか ' + (myEv.length - 5) + ' 件</div>' : '';
     evHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">'
-      + '<div style="font-size:11px;color:var(--text-dim);margin-bottom:2px">📋 予定・タスク</div>' + rows + more + '</div>';
+      + '<div style="font-size:11px;color:var(--text-dim);margin-bottom:2px">📋 予定・タスク' + (_fgn ? '（' + evEsc(m._ownerName || '共有元') + 'さんのMAP）' : '') + '</div>' + rows + more + '</div>';
+  } else if (_fgn) {
+    evHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-dim)">📋 ' + (_fgnList === null ? '予定・タスクを読み込み中…' : (_fgnList === false ? '予定・タスクは共有されていません（' + evEsc(m._ownerName || '共有元') + 'さんの共有設定）' : '予定・タスクはありません')) + '</div>';
   }
   // OL記録（組んだアウトライン）— マップ上で見れるように（動線一本化）
   var olHtml = '';
-  var _fd = (state.freshData && state.freshData[m.id]) || {};
+  var _fd = (!_fgn && state.freshData && state.freshData[m.id]) || {};
   var _olog = (_fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
   if (_olog.length) {
     var olRows = _olog.slice(0, 4).map(function(e){
@@ -11814,7 +11911,7 @@ function showPcTooltip(mid, ev) {
   }
   // 次の予定（研修の予定ステップ or 次回予定日）
   var planHtml = '';
-  var _npls = memberNextPlanLines(m); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
+  var _npls = _fgn ? [] : memberNextPlanLines(m); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示（v561: 共有メンバーは上の予定欄に出す）
   if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454;line-height:1.7">' + _npls.join('<br>') + '</div>';
   tip.innerHTML = (_avatars[m.id] ? '<img src="' + _avatars[m.id] + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + ';display:block;margin-bottom:7px" alt="">' : '')
     + '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
@@ -11823,7 +11920,9 @@ function showPcTooltip(mid, ev) {
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">固定PT</span><span class="pc-tooltip-val" style="color:var(--accent)">' + fixDisplay + '</span></div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">稼働</span><span class="pc-tooltip-val">' + actLabel + '</span></div>'
     + (m.memo ? '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:var(--text-mid);white-space:pre-wrap;max-width:280px;line-height:1.5">' + m.memo.substring(0,200) + '</div>' : '')
+    + (_fgn ? '<div style="margin-top:6px;font-size:11px;color:var(--purple)">🔗 ' + evEsc(m._ownerName || '共有元') + 'さんのMAPのメンバー</div>' : '')
     + planHtml + olHtml + evHtml;
+  tip._mid = mid;
   if (_tipHideT) { clearTimeout(_tipHideT); _tipHideT = null; }
   if (!tip._hoverWired) { // v489: カード上にマウスがある間は消さない（スクロール閲覧用）
     tip._hoverWired = true;
@@ -12032,7 +12131,7 @@ function meRenderExtras(m) {
   // v361: 「活動」タブ＝OL・タスク・予定・研修予定を1本の時系列で表示（新しい順）
   var items = [];
   (state.events || []).forEach(function(e){
-    if (!evHasMember(e, mid) || e.deleted) return;
+    if (!evHasMember(e, mid) || e.deleted || !evOnMember(e)) return;
     items.push({ d: e.date || '', kind: (e.type === 'task' ? 'task' : 'ev'), e: e });
   });
   (fd.olLog || []).forEach(function(o, oi){
@@ -12261,6 +12360,12 @@ function meDeleteTask(eid, mid) {
 //  名前・性別・段階（FT〜CO）だけで登録。詳細は研修が進んでから従来画面で。
 // ============================================================
 var _qaGender = 'male';
+var _qaAct = ''; // v565: かんたん追加の稼働タイプ
+function qaActSel(v) {
+  _qaAct = (_qaAct === v) ? '' : v;
+  var w9 = document.getElementById('qaActs');
+  if (w9) [].forEach.call(w9.querySelectorAll('.qa-chip'), function(c) { c.classList.toggle('sel', c.getAttribute('data-a') === _qaAct); });
+}
 // v533: かんたん追加でも「研修生／BA／BR」を選び、タイトルをリストから選べるように
 var QA_CAT_DEFAULT = { '研修生': 'FT', 'BA': 'LOI', 'BR': 'BR' };
 function _qaCatGet() { try { var c = localStorage.getItem('gm_qaCat'); if (TITLE_OPTIONS[c]) return c; } catch(e) {} return '研修生'; }
@@ -12302,6 +12407,7 @@ function openQuickAdd() {
   var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
   if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は従来フォームで
   _p2SheetClose('qaOv');
+  _qaAct = '';
   var stage = _qaStageGet();
   var parent = selectedParentId || roots[0].id;
   var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
@@ -12318,7 +12424,7 @@ function openQuickAdd() {
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('qaOv'); };
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚡ かんたん追加</div>'
-    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・区分とタイトルだけでOK。詳細はあとから</div></div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・区分とタイトルだけでOK。稼働タイプ・GSVは任意。詳細はあとから</div></div>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px;flex:none" onclick="qaToFull()">📝 くわしく登録</span>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'qaOv\')" style="margin-left:8px">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
@@ -12333,6 +12439,9 @@ function openQuickAdd() {
     + '<div class="p2-meta" style="margin-bottom:4px">区分</div>'
     + '<div style="display:flex;gap:6px;margin-bottom:10px" id="qaCats">' + catChips + '</div>'
     + '<div id="qaTitleArea">' + _qaTitleAreaHtml(qcat) + '</div>'
+    + '<div class="p2-meta" style="margin-bottom:4px">稼働タイプ・GSV（任意）</div>'
+    + '<div class="qa-acts" id="qaActs">' + ['S', 'A', 'B', 'C'].map(function(x) { return '<span class="qa-chip" data-a="' + x + '" onclick="qaActSel(\'' + x + '\')">' + x + '</span>'; }).join('')
+    + '<input class="fi" id="qaGsv" type="number" inputmode="numeric" placeholder="GSV" style="flex:1.6;min-width:0;padding:8px 10px;font-size:13px;text-align:right" onfocus="edSelAll(this)"></div>'
     + '<div id="qaTrainRow"' + (qcat === '研修生' ? '' : ' style="display:none"') + '>'
     + '<div class="p2-meta" style="margin-bottom:4px">研修の予定（任意・入力すると研修履歴に登録）</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px">'
@@ -12357,6 +12466,7 @@ function qaGenderSel(g) {
   if (m9) m9.classList.toggle('sel', g === 'male');
   if (f9) f9.classList.toggle('sel', g === 'female');
 }
+function _qaGsvVal() { var v = parseInt(((document.getElementById('qaGsv') || {}).value || ''), 10); return isNaN(v) ? 0 : Math.max(0, v); }
 function qaSave(cont) {
   try { if (typeof isPCMode === 'function' && isPCMode()) _pcTreeCaptureView(); } catch(ePv) {} // v519: 923-7 追加後も見ていた位置のまま（中央に戻さない）
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
@@ -12372,12 +12482,13 @@ function qaSave(cont) {
     id: 'id-' + Date.now(),
     lastName: last, firstName: first, gender: _qaGender,
     title: stage, cat: qcat,
-    activity: '', actRate: '', morale: 1, priority: '',
-    ptCurrent: 0, ptFixed: 0, ptSelf: 0,
+    activity: _qaAct, actRate: '', morale: 1, priority: '', // v565: 稼働タイプ
+    ptCurrent: _qaGsvVal(), ptFixed: 0, ptSelf: _qaGsvVal(), // v565: GSV（任意）
     trainee: false, parentId: pid, mapType: 'both', // v497: かんたん追加も既定「両方」
     memo: '', nextDate: '', aSan: ((document.getElementById('qaAsan') || {}).value || '').trim(), instaUrl: '', lineId: '',
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
-    region: '', birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
+    region: normalizeRegionValue((typeof currentUser !== 'undefined' && currentUser && currentUser.area) || ''), // v565: 地域は自分の活動地域を既定に（くわしく登録と同じ）
+    birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
     month: cm,
   };
   // v496: 研修の予定（日付＋時刻＋Aさん）→ 研修履歴に「予定」として登録（921-2）
@@ -12395,6 +12506,7 @@ function qaSave(cont) {
   toast('⚡ ' + nm + ' さんを追加しました（' + stage + (_qd ? '・' + parseInt(_qd.slice(5, 7), 10) + '/' + parseInt(_qd.slice(8, 10), 10) + ' 予定' : '') + '）');
   if (cont) {
     var l9 = document.getElementById('qaLast'), f9 = document.getElementById('qaFirst');
+    var g9 = document.getElementById('qaGsv'); if (g9) g9.value = ''; _qaAct = 'x'; qaActSel('x'); // v565
     if (l9) { l9.value = ''; l9.focus(); }
     if (f9) f9.value = '';
   } else {
@@ -12408,6 +12520,7 @@ function qaToFull() {
   var pid = (document.getElementById('qaParent') || {}).value || '';
   var g = _qaGender, qcat = _qaCatGet(), stage = _qaTitleGet(qcat);
   var tSel = document.getElementById('qaTitle'); if (qcat !== '研修生' && tSel && tSel.value) stage = tSel.value;
+  var _qaAct0 = _qaAct, _qaG0 = _qaGsvVal();
   _p2SheetClose('qaOv');
   if (pid) selectedParentId = pid;
   openAdd();
@@ -12418,13 +12531,15 @@ function qaToFull() {
     selCategory(qcat);
     var ft = document.getElementById('fTitle'); if (ft) ft.value = stage;
     if (typeof onTitleChange === 'function') onTitleChange();
+    var fa = document.getElementById('fAct'); if (fa) fa.value = _qaAct0; // v565: 稼働タイプ・GSVも引き継ぐ
+    var fg = document.getElementById('fPtC'); if (fg && _qaG0) fg.value = _qaG0;
   } catch(e) {}
 }
 function openAdd() {
   if (!state.isEditor) return;
   window._tempNewMember = null; // 一時データリセット
   editingId = null; fGender='male'; fTrainee=false;
-  fMapType = currentView==='ideal' ? 'ideal' : 'both'; // v497: 既定は「両方」（理想MAP表示中の追加のみ理想）
+  fMapType = 'both'; // v565: 適用MAPの選択は廃止（新規は常に両方。理想MAPの追加はかんたん編集から）
   document.getElementById('shTitle').textContent = 'メンバー追加';
   document.getElementById('btnDel').style.visibility = 'hidden';
   var _mtb1 = document.getElementById('memberTaskBtn');
@@ -12523,7 +12638,7 @@ function openEdit(id) {
     set('fLine', m.lineId);
     set('fRegion', m.region);
     syncRegionSelect(m.region);
-    _fBirthSet(m.birthday || '');
+    _fBirthSet(m.birthday || '', m.birthYear || (!m.birthday && parseInt(m.age, 10) > 0 ? String(new Date().getFullYear() - parseInt(m.age, 10)) : '')); // v565: 旧「年齢のみ」は生まれ年に置き換えて表示
     set('fAge', m.age || '');
     _pendingPhoto = null; _photoPrevSet(_avatars[m.id] || null);
     if (typeof syncAgeField === 'function') syncAgeField();
@@ -12645,7 +12760,7 @@ function clearForm() {
   var sdp = document.getElementById('stepDetailPanel');
   if (sdp) sdp.style.display = 'none';
   selGender('male',true); selTrainee(false,true);
-  selMapType(currentView==='ideal'?'ideal':'both',true); // v497: 既定は「両方」
+  selMapType('both',true); // v565: 適用MAPの選択は廃止（新規は常に両方）
 }
 function buildParentSelect(selectedId, excludeId) {
   var sel = document.getElementById('fParent');
@@ -12710,8 +12825,37 @@ function selCategory(cat) {
   } catch(e) {}
 }
 
+// v563: 1001-4 タイトルの表記ゆれ（全角「ＢＲ」・小文字「br」・「ブランドレプリゼンタティブ」）を決まった表記に。
+//        丸の中では略して「BR」と出るのに判定ではBR扱いされず、翌月コピーの「BR維持失敗」の降格に出なかった
+var TITLE_ALIAS = { 'ブランドレプリゼンタティブ': 'BR' };
+function normTitle(title) {
+  var t = String(title == null ? '' : title);
+  try { t = t.normalize('NFKC'); } catch (eN) {}
+  t = t.replace(/\s+/g, '').trim();
+  if (TITLE_ALIAS[t]) return TITLE_ALIAS[t];
+  if (/^[A-Za-z0-9]+$/.test(t)) t = t.toUpperCase();
+  return t;
+}
+function _isKnownTitle(t) {
+  if (t === 'OUT') return true;
+  for (var c in TITLE_OPTIONS) if ((TITLE_OPTIONS[c] || []).indexOf(t) >= 0) return true;
+  return false;
+}
+// 保存されているタイトルの表記ゆれを直す（決まったタイトルに当てはまる時だけ。自由入力の文字は触らない）
+function migrateTitles() {
+  var ch = false;
+  [state.members || [], state.idealMembers || []].forEach(function(arr) {
+    arr.forEach(function(m) {
+      if (!m || !m.title) return;
+      var n = normTitle(m.title);
+      if (n !== m.title && _isKnownTitle(n)) { m.title = n; ch = true; }
+    });
+  });
+  return ch;
+}
 function detectCategory(title) {
   if (!title) return '';
+  if (!_isKnownTitle(title)) { var _nt = normTitle(title); if (_nt !== title && _isKnownTitle(_nt)) title = _nt; } // v563: 正しい表記の時は変換しない（描画のたびに呼ばれるため）
   var cats = ['研修生','BA','BR'];
   for (var i=0; i<cats.length; i++) {
     var opts = TITLE_OPTIONS[cats[i]] || [];
@@ -13012,7 +13156,8 @@ function saveMember() {
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
     region: normalizeRegionValue((document.getElementById('fRegion')||{}).value || ''),
     birthday: _fBirthGet(),
-    age: (function(){ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
+    birthYear: _fBirthYearGet(), // v565: 年だけ
+    age: (function(){ if (_fBirthGet() || _fBirthYearGet()) return ''; /* v565: 年を入れたら旧「年齢のみ」は使わない */ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
       var v = el ? el.value : ''; // 'YYYY-MM'
@@ -14283,7 +14428,7 @@ var P2_AUTO_ACT_FROM = '2026-10'; // この月からは「自動＋手入力」�
 function _p2KindEvs(key, from, to) {
   var out = [];
   (state.events || []).forEach(function(e) {
-    if (!e || e.deleted || !e.date || /^UN_/.test(String(e.id || '')) || e.date < from || e.date > to) return;
+    if (!e || e.deleted || !e.date || /^UN_/.test(String(e.id || '')) || e.date < from || e.date > to || !evOnMember(e)) return; // v562: 「自分のみ」は数えない
     if (P2_KIND_KEY[evKindOf(e)] !== key) return;
     out.push(e);
   });
@@ -14303,7 +14448,7 @@ function _p2EvDoneAt(e, t) {
 function _p2CtGotEvs(from, to) {
   var out = [];
   (state.events || []).forEach(function(e) {
-    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || P2_KIND_KEY[evKindOf(e)] !== 'ct') return;
+    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || P2_KIND_KEY[evKindOf(e)] !== 'ct' || !evOnMember(e)) return;
     var d0 = '';
     try { d0 = e.createdAt ? evYmd(new Date(e.createdAt)) : ''; } catch (eD) {}
     if (!d0) d0 = e.date || '';
@@ -14345,9 +14490,9 @@ function renderPlan() {
   var wrap = document.getElementById('view-plan');
   if (!wrap) return;
   _p2();
+  try { _gmHadRoot(); } catch (eHr) {} // v562: 案内はPLANに出さないが「自分を登録済み」の印は付ける
   var ym = _p2Ym(0);
   var alertH = _p2Declared(ym) ? '' : '<div class="p2-alert">⚠️ 今月の目標が未設定です。「今月の目標」に数字を入れて<b>設定</b>を押してください</div>';
-  if (_gmNeedSelf()) alertH = '<div class="p2-alert onb-plan">👤 まず <b>自分</b> をMAPの0段目（いちばん上）に登録しましょう。次の山や進み具合は、自分のタイトルをもとに計算します <span class="p2a-lk" onclick="onboardSelf()">自分を登録する ›</span></div>' + alertH; // v559
   var north = _p2NorthHtml();
   var rev = _p2ReviewHtml();
   var mon = _p2MonthHtml(ym, 0) + _p2MonthHtml(_p2Ym(1), 1);
@@ -15021,8 +15166,9 @@ function p2GoalEdit(focus) {
   var p = state.goals.plan, nx = _p2Next();
   var finEn = _p2TitleEn(p.title), incMan = p.income ? Math.round(p.income / 10000) : 0;
   _p2ge = { finManual: !!(incMan && finEn && finEn !== _p2TitleByInc(incMan)), nxManual: nx.tm, rows: {}, curR: nx.curR };
-  var chips = function(name, list, sel) {
-    return '<div class="rg ev-kind-rg" id="' + name + '">' + list.map(function(t) { return '<div class="rb' + (t === sel ? ' sel' : '') + '" data-v="' + t + '" onclick="p2GeChip(\'' + name + '\',this)">' + t + '</div>'; }).join('') + '</div>';
+  var chips = function(name, list, sel) { // v562: タイトルはプルダウンで選ぶ
+    return '<select class="fi p2ge-sel" id="' + name + '" onchange="p2GeChip(\'' + name + '\',this)">' + (list.indexOf(sel) < 0 ? '<option value="" selected>選んでください</option>' : '')
+      + list.map(function(t) { return '<option value="' + t + '"' + (t === sel ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>';
   };
   var nxList = P2_RANK.filter(function(t) { return _p2Rank(t) > nx.curR; });
   var isBR = nx.title === 'BR';
@@ -15052,8 +15198,9 @@ function p2GoalEdit(focus) {
   if (focus === 'years') setTimeout(function() { var y = document.getElementById('p2geYrs'); if (y && y.scrollIntoView) y.scrollIntoView({ block: 'start' }); }, 250);
 }
 function _p2GeVal(id) { return parseInt((document.getElementById(id) || {}).value, 10) || 0; }
-function _p2GeSel(name) { var b = document.getElementById(name), s0 = b && b.querySelector('.rb.sel'); return s0 ? s0.getAttribute('data-v') : ''; }
-function _p2GePick(name, v) { var b = document.getElementById(name); if (!b) return; [].forEach.call(b.children, function(c) { c.classList.toggle('sel', c.getAttribute('data-v') === v); }); }
+function _p2GeSel(name) { var b = document.getElementById(name); return b ? (b.value || '') : ''; }
+function _p2GeHas(name, v) { var b = document.getElementById(name); return !!(b && [].some.call(b.options, function(o) { return o.value === v; })); }
+function _p2GePick(name, v) { var b = document.getElementById(name); if (b && _p2GeHas(name, v)) b.value = v; }
 function _p2GeLive() { // 保存前の最終ゴール
   return { inc: _p2GeVal('p2geInc'), dl: _p2YmSelRead('p2geDl'), fin: _p2GeSel('p2geFin'), rows: _p2ge.rows };
 }
@@ -15063,7 +15210,7 @@ function _p2GeModes() {
   if (n) n.innerHTML = _p2ge.nxManual ? '手動 · <span class="p2a-lk" onclick="p2GeAuto(\'nx\')">月収に合わせる</span>' : (_p2GeSel('p2geNx') === 'BR' ? '' : '月収から自動');
 }
 function p2GeChip(name, el) {
-  _p2GePick(name, el.getAttribute('data-v'));
+  _p2GePick(name, el.value);
   if (name === 'p2geFin') { _p2ge.finManual = true; p2GeYrRefresh(); }
   if (name === 'p2geNx') { _p2ge.nxManual = true; _p2GeNxRows(); }
   _p2GeModes();
@@ -15091,7 +15238,7 @@ function p2GeNxInc() {
   if (!_p2ge.nxManual && v) {
     var t = _p2Above(_p2TitleByInc(v), _p2ge.curR), fin = _p2GeSel('p2geFin');
     if (fin && _p2Rank(t) > _p2Rank(fin)) t = fin;
-    if (document.querySelector('#p2geNx .rb[data-v="' + t + '"]')) _p2GePick('p2geNx', t);
+    _p2GePick('p2geNx', t);
   }
   _p2GeNxRows(); _p2GeModes();
 }
@@ -15147,7 +15294,7 @@ function p2GeExRefresh() {
 function p2GeUseEx() {
   var d = _p2NextDefault(_p2GeLive());
   var ni = document.getElementById('p2geNxInc'); if (ni) ni.value = d.inc || '';
-  if (document.querySelector('#p2geNx .rb[data-v="' + d.title + '"]')) _p2GePick('p2geNx', d.title);
+  _p2GePick('p2geNx', d.title);
   _p2ge.nxManual = false;
   if (d.deadline) { var y = document.getElementById('p2geNxDlY'), m = document.getElementById('p2geNxDlM'); if (y) y.value = String(parseInt(d.deadline.slice(0, 4), 10)); if (m) m.value = String(parseInt(d.deadline.slice(5), 10)); }
   if (d.title === 'BR') { var fb = document.getElementById('p2geFb'); if (fb) fb.value = Math.round((d.fb || 0) / 10000) || ''; p2GeFb(); }
@@ -19506,7 +19653,7 @@ function _unionApplyToState() {
       c.title = (u.title || ''); // v509: 🏛接頭辞は廃止（_evMarkIcで線画マーク）
       c._union = true;
       c.remindBefore = ''; // ユニオン予定は自動リマインドなし（v1）
-      c.memberIds = []; c.memberId = ''; c.selfShow = '';
+      c.memberIds = []; c.memberId = ''; c.selfShow = ''; c.vis = '';
       c.done = false; c.deleted = false;
       add.push(c);
     });
@@ -20605,8 +20752,12 @@ function gcalOpenTemplate(id) {
 //    ToDo/通知/バッジは「個人＋自分にも表示」だけに整理
 // ============================================================
 function evIsMemberLinked(e) { return !!((e.memberIds && e.memberIds.length) || e.memberId); }
-function evShowMine(e) { return !evIsMemberLinked(e) || e.selfShow !== false; }        // カレンダー系（旧データは表示）
-function evTdMine(e)   { return !evIsMemberLinked(e) || e.selfShow === true; }         // ToDo/通知/バッジ（自分にも表示のみ）
+// v562: 1001-2 メンバーに紐付けた予定・タスクの扱い＝ member（メンバーのみ）／self（自分のみ）／both（両方）を e.vis に保存。
+//        古い版の端末のため selfShow も一緒に保存（member→false、self・both→true）。vis の無い旧データは selfShow で判定
+function evVis(e) { if (!evIsMemberLinked(e)) return ''; if (e.vis === 'member' || e.vis === 'self' || e.vis === 'both') return e.vis; return e.selfShow === false ? 'member' : 'both'; }
+function evOnMember(e) { return evVis(e) !== 'self'; } // メンバー側（カード・ホバー・活動・共有先）に出す／行動に数える（「自分のみ」は出さない・数えない）
+function evShowMine(e) { if (!evIsMemberLinked(e)) return true; if (e.vis) return e.vis !== 'member'; return e.selfShow !== false; } // カレンダー系（旧データは表示）
+function evTdMine(e)   { if (!evIsMemberLinked(e)) return true; if (e.vis) return e.vis !== 'member'; return e.selfShow === true; }  // ToDo/通知/バッジ
 // v361: メンバーの「次の予定」行（研修ファネル予定＋カレンダー予定＋OL予定を全部返す）
 function memberNextPlanLines(m) {
   var out = [];
@@ -20631,7 +20782,7 @@ function memberNextPlanLines(m) {
   }
   else if (m.nextDate) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')) + _odTag(m.nextDate));
   // v368: カレンダー分は「次の予定」「次のタスク」を別行で表示（タスクが近いと予定が隠れるバグ修正）
-  var futs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t; })
+  var futs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t && evOnMember(ev2); })
     .sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
   var fEv = null, fTk = null;
   futs.forEach(function(x){ if (x.type === 'task') { if (!fTk) fTk = x; } else { if (!fEv) fEv = x; } });
@@ -25128,12 +25279,13 @@ function _mpDndBind(box) {
 // v348: 関連メンバー＝複数選択＋名前検索のピッカー
 var _evMemberIds = [];
 var _evSelfShow = false; // v361: メンバー紐付け時に自分の画面にも出すか（既定: 出さない）
-function selEvSelfShow(v) {
-  _evSelfShow = (v === true);
-  var a = document.getElementById('evSelfShowOff'), b = document.getElementById('evSelfShowOn');
-  if (a) a.classList.toggle('sel', !_evSelfShow);
-  if (b) b.classList.toggle('sel', _evSelfShow);
+var _evVis = 'member'; // v562: メンバーのみ／自分のみ／両方
+function selEvVis(v) {
+  _evVis = (v === 'self' || v === 'both') ? v : 'member';
+  _evSelfShow = _evVis !== 'member';
+  [['evVisMember', 'member'], ['evVisSelf', 'self'], ['evVisBoth', 'both']].forEach(function(x) { var el = document.getElementById(x[0]); if (el) el.classList.toggle('sel', _evVis === x[1]); });
 }
+function selEvSelfShow(v) { selEvVis(v === true ? 'both' : 'member'); } // 互換
 function evHasMember(e, id) {
   if (!e || !id) return false;
   return e.memberId === id || (e.memberIds && e.memberIds.indexOf(id) >= 0);
@@ -25363,7 +25515,7 @@ function _evCreateSeries(base, rep, untilYmd) {
       id: genEventId() + '_' + count, seriesId: sid, done: false,
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       type: base.type, title: base.title, date: evYmd(cur), time: base.time, endTime: base.endTime || '',
-      memberId: base.memberId, memberIds: (base.memberIds || []).slice(), selfShow: base.selfShow, kind: base.kind || '', asan: base.asan || '', // v545
+      memberId: base.memberId, memberIds: (base.memberIds || []).slice(), selfShow: base.selfShow, vis: base.vis || '', kind: base.kind || '', asan: base.asan || '', // v545
       categoryId: base.categoryId, priority: base.priority,
       memo: base.memo, remindBefore: base.remindBefore,
       color: base.color || '', place: base.place || ''
@@ -26339,7 +26491,7 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   _evMemberIds = e
     ? ((e.memberIds && e.memberIds.length) ? e.memberIds.slice() : (e.memberId ? [e.memberId] : []))
     : (presetMember ? [presetMember] : []);
-  selEvSelfShow(e ? (e.selfShow !== false) : !presetMember); // v468: 予定タブ起点=「自分にも表示」既定 / MAP（メンバーカード）起点=「メンバー専用」既定。旧データは表示扱い
+  selEvVis(e ? (evVis(e) || 'both') : (presetMember ? 'member' : 'both')); // v562（v468: 予定タブ起点=両方 / MAP（メンバーカード）起点=メンバーのみ が既定）: 予定タブ起点=「自分にも表示」既定 / MAP（メンバーカード）起点=「メンバー専用」既定。旧データは表示扱い
   // v545: 種類（未設定ならタイトルから自動）・Aさん（新規は自分）
   _evKind = e ? (e.kind || '') : ''; _evKindManual = !!(e && e.kind);
   _evAsan = e ? (e.asan || '') : _evSelfName();
@@ -26444,6 +26596,7 @@ function _saveEventBody() {
   e.memberIds = _evMemberIds.slice(); // v348: 複数メンバー
   e.memberId = _evMemberIds[0] || '';  // 互換（実績連動・既存表示用の代表1人）
   e.selfShow = _evMemberIds.length ? (_evSelfShow === true) : ''; // v361: メンバー無しなら区分なし
+  e.vis = _evMemberIds.length ? _evVis : ''; // v562
   // v545: 種類・Aさん（Aさんはメンバーを選んだ時だけ。空欄＝自分）
   e.kind = _evKindManual ? (_evKind || '') : (_evKind || evGuessKind(title));
   e.asan = _evMemberIds.length ? (String(_evAsan || '').trim() || _evSelfName()) : '';
@@ -26490,7 +26643,7 @@ function _saveEventBody() {
         if (x.seriesId === e.seriesId && x.id !== e.id && (x.date || '') >= (e.date || '')) {
           x.title = e.title; x.time = e.time; x.endTime = e.endTime;
           x.categoryId = e.categoryId; x.memberId = e.memberId;
-          x.memberIds = (e.memberIds || []).slice(); x.selfShow = e.selfShow; x.kind = e.kind || ''; x.asan = e.asan || ''; // v545
+          x.memberIds = (e.memberIds || []).slice(); x.selfShow = e.selfShow; x.vis = e.vis || ''; x.kind = e.kind || ''; x.asan = e.asan || ''; // v545
           x.memo = e.memo; x.remindBefore = e.remindBefore;
           x.priority = e.priority; x.allDay = e.allDay;
           x.updatedAt = e.updatedAt || new Date().toISOString();
@@ -28433,6 +28586,44 @@ function mgNodeClick(mid) {
   }).catch(function(){ _hideSwitching(); toast('権限を確認できませんでした'); });
 }
 // 自分のメンバー配列に、結合中の下位ツリーを接続点(graftId)の下へ差し込む（現状MAPのみ）
+// ════ v561: 共有（結合）メンバーの情報：持ち主の予定・タスクも読む（読める共有のみ。読めない時はその旨を表示） ════
+var _fgnEv = {}; // 持ち主uid -> { at, list, err, busy, cbs }
+var _mgFindCache = null;
+function _mgAllCfgs() {
+  var out = [], push = function(arr) { (arr || []).forEach(function(c) { if (c && c.uid) out.push(c); }); };
+  push(viewingOwnerUid ? (_viewMerged && _viewMerged.maps) : state.mergedMaps);
+  if (!viewingOwnerUid) Object.keys(_mergeSub || {}).forEach(function(k) { push((_mergeSub[k] || {}).maps); });
+  return out;
+}
+function _mgParse(mid) { // 'MG_' + 持ち主uidの先頭6文字 + '_' + 持ち主MAPでのID
+  var mm = /^MG_([^_]{1,6})_(.+)$/.exec(String(mid || '')); if (!mm) return null;
+  var cs = _mgAllCfgs();
+  for (var i = 0; i < cs.length; i++) if (String(cs[i].uid).substring(0, 6) === mm[1]) return { uid: cs[i].uid, oid: mm[2], name: cs[i].name || '' };
+  return null;
+}
+function _mgFind(mid) { // 合成後の共有メンバー（数秒キャッシュ：ホバーのたびに合成し直さない）
+  var c = _mgFindCache;
+  if (!c || Date.now() - c.at > 5000 || c.v !== viewingOwnerUid) {
+    var map = {}; composeMergedInto(membersForMap('current'), 'current').forEach(function(m) { if (m._foreign) map[m.id] = m; });
+    c = _mgFindCache = { at: Date.now(), v: viewingOwnerUid, map: map };
+  }
+  return c.map[mid] || null;
+}
+// 返り値：予定の配列（読込済み）／null（読込中・onLoadで知らせる）／false（読めない共有）
+function _fgnEvents(mid, onLoad) {
+  var p = _mgParse(mid); if (!p) return false;
+  var c = _fgnEv[p.uid];
+  var pick = function() { return (c.list || []).filter(function(e) { return !e.deleted && evHasMember(e, p.oid) && evOnMember(e); }); }; // v562: 「自分のみ」は共有先に見せない
+  if (c && !c.busy && Date.now() - c.at < 300000) return c.err ? false : pick();
+  if (!c || !c.busy) {
+    c = _fgnEv[p.uid] = { at: 0, busy: true, cbs: [], list: c ? c.list : null };
+    fsGetCol('maps/' + p.uid + '/events').then(function(list) { c.list = list || []; c.err = false; })
+      .catch(function() { c.err = true; })
+      .then(function() { c.busy = false; c.at = Date.now(); var cb = c.cbs; c.cbs = []; cb.forEach(function(f) { try { f(); } catch (e) {} }); });
+  }
+  if (onLoad) c.cbs.push(onLoad);
+  return null;
+}
 function composeMergedInto(ownMembers, mapType) {
   if (mapType !== 'current') return ownMembers;
   // v355: 連鎖共有 — 共有MAP閲覧中は「閲覧先の結合構成」で合成する
