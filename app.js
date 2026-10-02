@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v567';
+var APP_JS_VERSION = 'v568';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v567';
+  var DATA_VERSION = 'v568';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4954,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v568', d:'2026-10-02', items:['🧮 PLANの「今月の行動量」「今週の作戦」の数字に、計算式を表示（例：16件の横に「＝2人×8」、今週4件の横に「残り12÷3週」）','👆 式をタップすると「なぜこの数字？」：フロント目標（理想MAP・ロードマップ・今月の目標のどれから来たか）→ 係数 → 今月の必要数 → 先週までの実績 → 月末までの週の数 → 今週の目標、を実際の数字で順番に表示。それぞれの箱から理想MAP・係数・カレンダーへ移動できます','🔧 CT取りの目標が、ドタキャン余裕の％によっては小数の誤差で1件多く出ることがあったのを修正'] },
   { v:'v567', d:'2026-10-02', items:['📝 OLを「予定の一種（種類：OL）」にまとめました：OLを企画・記録すると予定にも同じものが入り、カレンダー・ToDo・通知に自然に出ます。予定とOLのどちらを直しても（日時・内容・人・実施済み・削除）もう片方に反映。種類「OL」で入れた予定もOLタブで数えます（前に入れたOL・予定も自動でつなぎます）','👤 メンバーの活動タブを整理：「＋ 追加」から OL／タスク を選ぶ形に（「予定」はOLに名前を変更）。一覧は すべて／OL／タスク で切り替え','✅ 活動タブから予定を完了した時も「OLとして記録しますか？」が出るように','🔧 「メンバーのみ」のタスクがHOMEの今日のタスクに出たり、「メンバーのみ」の予定で通知が鳴ったりしていたのを修正。複数人の予定は全員の「最後の活動」に入るように','⚡ かんたん追加で研修生を選んだ時は、稼働タイプ・GSVを表示しないように'] },
   { v:'v566', d:'2026-10-02', items:['📱 スマホの「OLを企画」でAさんや内容を入力しようとすると、シートが見えなくなる不具合を修正：キーボードが出るとiPhoneが見える範囲を下にずらすため、上に寄せたシートが画面の外に出ていました。見えている範囲の上にシートを置くようにしました（メンバー検索のシートも同じ）'] },
   { v:'v565', d:'2026-10-02', items:['📝 メンバー編集の基本タブを並べ替え：姓名→性別→地域（既定は自分の活動地域）→「ここから下は任意」写真・生年月日・Instagram・登録月。生年月日は年だけでもOK（その年の1月1日として年齢を日の横に自動表示）。登録月はプルダウンだけに','🧹 基本タブから「適用MAP」（新規は常に両方）・「LINE」・「年齢のみ」を外しました（入っているデータは消えません。年齢のみの人は生まれ年として表示）','📅 月次タブ：リスタートと「点滅表示」（旧ケアバッジ）をメモのすぐ上へ','⚡ かんたん追加で稼働タイプ（S/A/B/C）とGSV（任意）も入れられるように（くわしく登録へも引き継ぎ）'] },
@@ -14831,7 +14832,7 @@ function p2WeekPlanHtml(home) {
     + (p2.weekOk === _p2WeekKey() ? '<span class="p2-meta">✓ 作戦OK</span>' : '<span class="p2-btn" style="margin:0;padding:5px 12px" onclick="p2WeekOk()">作戦OK</span>') + '</div>';
   h += wi.items.map(function(x) {
     var st = x.block ? (x.fut ? '<span class="ok">枠 ' + x.slots + '回 ✓</span>' : '<span class="ng">枠が未予約</span>') : (x.short ? '<span class="ng">予定 ' + x.have + ' / あと' + x.short + '</span>' : '<span class="ok">予定 ' + x.have + ' ✓</span>');
-    return '<div class="p2wk-row"><span class="lb">' + x.lb + '</span><span class="nd">今週 <b>' + x.wNeed + '</b>' + (x.key === 'st' || x.key === 'snst' ? '回' : '件') + '</span>' + st
+    return '<div class="p2wk-row"><span class="lb">' + x.lb + '</span><span class="nd">今週 <b>' + x.wNeed + '</b>' + (x.key === 'st' || x.key === 'snst' ? '回' : '件') + _p2WhyWkF(_p2Why(_p2Ym(0), x.key)) + '</span>' + st
       + '<span class="p2a-add" onclick="p2AddKindEv(\'' + x.kind + '\')">' + (x.block ? '予約' : '＋予定') + '</span></div>';
   }).join('');
   h += '<div class="p2-meta" style="margin-top:6px">週のはじめに、ST・CT取りの「時間の枠」を先に予約しておくと、慌てずに目標に届きます</div></div>';
@@ -15768,7 +15769,7 @@ function _p2NeedOf(ym, key) {
   var c = _p2Coef(), cfg = _p2ActCfg(), F = +_p2FrontTgt(ym) || 0;
   var mo = (state.goals.plan2 && state.goals.plan2.months && state.goals.plan2.months[ym]) || {};
   if (key === 'ct') return F * c.ct; if (key === 'ft') return F * c.ft; if (key === 'dlr') return F * c.dlr;
-  if (key === 'ctget') return F ? Math.ceil(F * c.ct * (1 + cfg.ctBuf / 100)) : 0;
+  if (key === 'ctget') return F ? Math.ceil(F * c.ct * (100 + cfg.ctBuf) / 100) : 0;
   if (key === 'st' || key === 'snst') return +mo[key] || 0;
   return 0;
 }
@@ -15835,6 +15836,7 @@ function _p2BlockRow(ym, key, kind, lb, need) {
   var short = need ? Math.max(0, wNeed - wkHave) : 0;
   var noSlot = need && !ok && short > 0 && !wkBlocks.some(function(e) { return !_p2EvDoneAt(e, t); });
   var stk = _p2WeekStreak(key); // v553
+  var _wx = _p2Why(ym, key); // v568: 式の表示
   var slotTxt = wkBlocks.length ? wkBlocks.slice(0, 3).map(function(e) { var d9 = new Date(e.date.replace(/-/g, '/')); return ['日', '月', '火', '水', '木', '金', '土'][d9.getDay()] + (e.time ? e.time : ''); }).join('・') : '';
   var sub = '';
   if (isGet) {
@@ -15850,10 +15852,10 @@ function _p2BlockRow(ym, key, kind, lb, need) {
   }
   return '<div class="p2a-row' + (ok ? ' ok' : '') + (noSlot ? ' warn' : '') + '">'
     + '<div class="p2a-lb">' + lb + (stk ? '<span class="p2a-fire" title="週の目標を' + stk + '週連続でクリア">🔥' + stk + '週</span>' : '') + '</div>'
-    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + unit + '</small>' + (need ? '<span class="p2a-pc">' + Math.round(done / need * 100) + '%</span>' : '') + (ok && done > need ? '<span class="p2a-ov">＋' + (done - need) + ' 超え</span>' : '') + (futBlocks ? '<span class="p2a-pl">＋これからの枠' + futBlocks + '</span>' : '') + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + unit + '</small>' + _p2WhyMoF(_wx) + (need ? '<span class="p2a-pc">' + Math.round(done / need * 100) + '%</span>' : '') + (ok && done > need ? '<span class="p2a-ov">＋' + (done - need) + ' 超え</span>' : '') + (futBlocks ? '<span class="p2a-pl">＋これからの枠' + futBlocks + '</span>' : '') + '</div>'
     + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
     + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
-        : (need ? '今週 <b>' + wNeed + '</b>' + unit + ' ・ ' + (isGet ? '取れた <b>' + wkDone + '</b> ・ ' : '') + '枠 ' + (wkBlocks.length ? '<b>' + wkBlocks.length + '</b>回（' + slotTxt + '）' : '<span class="p2a-sh">未予約</span>')
+        : (need ? '今週 <b>' + wNeed + '</b>' + unit + _p2WhyWkF(_wx) + ' ・ ' + (isGet ? '取れた <b>' + wkDone + '</b> ・ ' : '') + '枠 ' + (wkBlocks.length ? '<b>' + wkBlocks.length + '</b>回（' + slotTxt + '）' : '<span class="p2a-sh">未予約</span>')
             + (noSlot && wkBlocks.length ? '<span class="p2a-sh">残りの枠なし</span>' : '') + (!noSlot && short ? '<span class="p2a-sh">あと' + short + '</span>' : '') : (isGet ? '' : '今月の回数を目標に入れる')))
     + '</div>'
     + '<span style="display:flex;gap:6px">' + (isGet ? '<span class="p2a-add al" onclick="p2OpenAL()" title="ATTACK LISTを開く">AL</span>' : '') + '<span class="p2a-p1" onclick="p2Plus1(\'' + key + '\',\'' + lb + '\')" title="予定に入れずに1' + unit + '記録">＋1</span>'
@@ -15875,12 +15877,13 @@ function _p2ActRow(ym, key, kind, lb, need) {
   var pct = need ? Math.min(100, Math.round(done / need * 100)) : 0;
   var ok = need && done >= need;
   var stk = _p2WeekStreak(key); // v553: 🔥連続週
+  var _wx = _p2Why(ym, key); // v568: 式の表示
   return '<div class="p2a-row' + (ok ? ' ok' : '') + '">'
     + '<div class="p2a-lb">' + lb + (stk ? '<span class="p2a-fire" title="週の目標を' + stk + '週連続でクリア">🔥' + stk + '週</span>' : '') + '</div>'
-    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + (need ? '<span class="p2a-pc">' + Math.round(done / need * 100) + '%</span>' : '') + (ok && done > need ? '<span class="p2a-ov">＋' + (done - need) + ' 超え</span>' : '') + (planned ? '<span class="p2a-pl">＋これからの予定' + planned + '</span>' : '') + '</div>'
+    + '<div class="p2a-mo"><div class="p2a-n"><b>' + done + '</b><small> / ' + (need || '—') + '</small>' + _p2WhyMoF(_wx) + (need ? '<span class="p2a-pc">' + Math.round(done / need * 100) + '%</span>' : '') + (ok && done > need ? '<span class="p2a-ov">＋' + (done - need) + ' 超え</span>' : '') + (planned ? '<span class="p2a-pl">＋これからの予定' + planned + '</span>' : '') + '</div>'
     + '<div class="p2-prog"><i style="width:' + pct + '%"></i></div></div>'
     + '<div class="p2a-wk">' + (ok ? '<span class="p2a-ok">✓ 今月達成</span>'
-        : (need ? '今週 <b>' + wNeed + '</b>件 ・ 実施・予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '今週の実施・予定 <b>' + wk + '</b>件')) // v549: 今週の予定件数は実施済みも含むので表記を明確に
+        : (need ? '今週 <b>' + wNeed + '</b>件' + _p2WhyWkF(_wx) + ' ・ 実施・予定 <b>' + wk + '</b>' + (short ? '<span class="p2a-sh">あと' + short + '</span>' : '<span class="p2a-ok">✓</span>') : '今週の実施・予定 <b>' + wk + '</b>件')) // v549: 今週の予定件数は実施済みも含むので表記を明確に
     + '</div>'
     + '<span style="display:flex;gap:6px"><span class="p2a-p1" onclick="p2Plus1(\'' + key + '\',\'' + lb + '\')" title="予定に入れずに1件記録">＋1</span>'
     + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の予定をカレンダーに入れる">＋予定</span></span>'
@@ -15936,17 +15939,18 @@ function _p2FunnelHtml(ym) {
   var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月の行動量<span class="p2-meta" style="margin-left:8px">今週 ' + w.label + '</span><span class="sp"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">' + icn('gear') + ' 係数（' + c.src + '）</span></div>';
   if (!F) h += '<div class="p2-meta" style="margin-bottom:6px">今月のフロント目標（F）を入れると、必要なCT・FT/マケ・DLR動員数と今週の件数が出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
+  if (F) h += '<div class="p2a-base" onclick="p2WhyOpen(\'ct\')">🧮 計算のもと：フロント目標 <b>F＝' + F + '人</b>' + ({ ideal: '（理想MAP）', roadmap: '（ロードマップ）', month: '（今月の目標）' }[_p2FrontSrc(ym)] || '') + ' × 1人あたり CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + '<span class="p2why-lk">なぜこの数字？ ›</span></div>'; // v568
   var cfg = _p2ActCfg(), mm = _p2M(ym);
   _p2AlLoad(false); // v550: 手元のリスト（ATTACK LIST）
   if (cfg.st) h += _p2BlockRow(ym, 'st', 'ST', 'ST', +mm.st || 0);
   if (cfg.snst) h += _p2BlockRow(ym, 'snst', 'SNST', 'SNST', +mm.snst || 0);
-  h += _p2BlockRow(ym, 'ctget', 'CT取り', 'CT取り', F ? Math.ceil(F * c.ct * (1 + cfg.ctBuf / 100)) : 0);
+  h += _p2BlockRow(ym, 'ctget', 'CT取り', 'CT取り', F ? Math.ceil(F * c.ct * (100 + cfg.ctBuf) / 100) : 0);
   h += _p2ActRow(ym, 'ct', 'CT', 'CT（会う）', F * c.ct)
     + _p2ActRow(ym, 'ft', 'FT', 'FT・マケ（伝える）', F * c.ft)
     + _p2ActRow(ym, 'pg', 'PG', 'PG', 0)
     + _p2ActRow(ym, 'dlr', 'DLR', 'DLR動員', F * c.dlr)
     + (function() { var lag = _p2Lagging(ym); return lag ? '<div class="p2a-lag">😤 ' + lag + ' <span class="p2a-lk" onclick="p2NotesOpen(\'why\',\'read\')">📖 やる理由を読み返す</span></div>' : ''; })()
-    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>実績はカレンダーから自動：種類の付いた予定は日付が来たら、タスクは完了で1件（CT・FTなどは関連メンバーの人数分）。予定に入れずにやった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数</details>';
+    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>実績はカレンダーから自動：種類の付いた予定は日付が来たら、タスクは完了で1件（CT・FTなどは関連メンバーの人数分）。予定に入れずにやった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数。点線の式をタップすると、数字が決まるまでの流れが見られます</details>';
   h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
@@ -17085,6 +17089,117 @@ function _p2FrontTgt(ym) {
   var m = p2 && p2.months && p2.months[ym];
   if (m && m.front !== '' && m.front != null && !(m.fromIdeal && +m.front === 0)) return +m.front;
   return it ? 0 : '';
+}
+// v568: 数字の決まり方（③式の表示・②なぜこの数字？）
+// Fの出どころ：理想MAP／ロードマップ／今月の目標（_p2FrontTgt と同じ順）
+function _p2FrontSrc(ym) {
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  if (it && +it.front > 0) return 'ideal';
+  var p2 = state.goals && state.goals.plan2;
+  var rv = p2 && p2.roadmap && p2.roadmap.rows && p2.roadmap.rows.front ? p2.roadmap.rows.front[ym] : undefined;
+  if (rv !== undefined && rv !== '' && rv !== null) return 'roadmap';
+  var m = p2 && p2.months && p2.months[ym];
+  if (m && m.front !== '' && m.front != null && !(m.fromIdeal && +m.front === 0)) return 'month';
+  return '';
+}
+var P2_WHY_LB = { st: 'ST', snst: 'SNST', ctget: 'CT取り', ct: 'CT', ft: 'FT・マケ', dlr: 'DLR動員' };
+var P2_WHY_KIND = { st: 'ST', snst: 'SNST', ctget: 'CT取り', ct: 'CT', ft: 'FT', dlr: 'DLR' };
+// 今月の必要数 → 先週までの実績を引く → 月末までの週で割る → 今週の目標（行・今週の作戦と同じ計算）
+function _p2Why(ym, key) {
+  var c = _p2Coef(), cfg = _p2ActCfg(), F = +_p2FrontTgt(ym) || 0, w = _p2WeekInfo(ym), t = evTodayYmd();
+  var need = _p2NeedOf(ym, key), done = _p2ActK(ym, key);
+  var wkDone = _p2ActAuto(ym, key, w.from, w.to) + _p2ManualRange(key, w.from, w.to);
+  var before = Math.max(0, done - wkDone), rest = Math.max(0, need - before);
+  var wNeed = need ? Math.ceil(rest / w.weeks) : 0;
+  var block = key === 'st' || key === 'snst' || key === 'ctget', have = 0;
+  var evs = _p2KindEvs(key, w.from, w.to);
+  if (key === 'ctget') have = wkDone;
+  else if (block) have = evs.length;
+  else { evs.forEach(function(e) { have += _p2KindN(e); }); have += _p2ManualRange(key, w.from, w.to); }
+  return { ym: ym, key: key, F: F, fsrc: _p2FrontSrc(ym), coef: key === 'ctget' ? c.ct : (c[key] || 0), csrc: c.src, buf: cfg.ctBuf,
+    byCount: key === 'st' || key === 'snst', unit: (key === 'st' || key === 'snst') ? '回' : '件',
+    need: need, done: done, wkDone: wkDone, before: before, rest: rest, weeks: w.weeks, wNeed: wNeed, w: w, have: have,
+    short: Math.max(0, wNeed - have), ok: need > 0 && done >= need };
+}
+// ③ 数字の横の式（タップで②のシート）
+function _p2WhyMoF(x) {
+  if (!x.need) return '';
+  var f = x.byCount ? '自分で決めた回数' : (x.key === 'ctget' ? x.F + '人×' + x.coef + '＋' + x.buf + '%' : x.F + '人×' + x.coef);
+  return '<span class="p2a-f" onclick="p2WhyOpen(\'' + x.key + '\')" title="なぜこの数字？">＝' + f + '</span>';
+}
+function _p2WhyWkF(x) {
+  if (!x.need || x.ok) return '';
+  return '<span class="p2a-f" onclick="p2WhyOpen(\'' + x.key + '\')" title="なぜこの数字？">残り' + x.rest + '÷' + x.weeks + '週</span>';
+}
+// ② なぜこの数字？（計算の流れを実際の数字で）
+var _p2WhyKey = 'ct';
+function p2WhyOpen(key) {
+  _p2WhyKey = key || 'ct';
+  _p2SheetClose('p2WhyOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2WhyOv'; ov.style.zIndex = '615';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2WhyOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div><div id="p2WhyBody"></div></div>';
+  document.body.appendChild(ov);
+  _p2WhyRender();
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2WhySel(key) { _p2WhyKey = key; _p2WhyRender(); }
+function p2WhyGo(where) {
+  _p2SheetClose('p2WhyOv');
+  if (where === 'ideal') switchView('ideal');
+  else if (where === 'rm') p2RmOpen();
+  else if (where === 'coef') p2CoefSheet();
+  else if (where === 'cal') switchView('events');
+  else if (where === 'month') { if (currentView !== 'plan') switchView('plan'); setTimeout(function() { var el = document.getElementById('p2MonCur'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120); }
+}
+function p2WhyAdd(key) { _p2SheetClose('p2WhyOv'); p2AddKindEv(P2_WHY_KIND[key] || 'CT'); }
+function _p2WhyKeys() {
+  var cfg = _p2ActCfg(), ks = [];
+  if (cfg.st) ks.push('st');
+  if (cfg.snst) ks.push('snst');
+  return ks.concat(['ctget', 'ct', 'ft', 'dlr']);
+}
+function _p2WhyRender() {
+  var body = document.getElementById('p2WhyBody'); if (!body) return;
+  var ym = _p2Ym(0), key = _p2WhyKey, x = _p2Why(ym, key), lb = P2_WHY_LB[key] || key, u = x.unit;
+  var me = new Date(parseInt(ym.slice(0, 4), 10), parseInt(ym.slice(5, 7), 10), 0);
+  var step = function(op, title, val, src, cls) {
+    return (op ? '<div class="p2why-op">' + op + '</div>' : '') + '<div class="p2why-step' + (cls ? ' ' + cls : '') + '"><div class="p2why-tx"><div class="lb">' + title + '</div>' + (src ? '<div class="src">' + src + '</div>' : '') + '</div><div class="v">' + val + '</div></div>';
+  };
+  var lk = function(where, t) { return '<span class="p2why-lk" onclick="p2WhyGo(\'' + where + '\')">' + t + ' ›</span>'; };
+  var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🧮 なぜこの数字？</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">' + _p2YmLabel(ym) + 'の目標から、今週やる数を逆算しています</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2WhyOv\')">✕</span></div><div style="padding:0 16px 18px">';
+  h += '<div class="p2why-tabs">' + _p2WhyKeys().map(function(k) { return '<span class="p2why-tab' + (k === key ? ' sel' : '') + '" onclick="p2WhySel(\'' + k + '\')">' + P2_WHY_LB[k] + '</span>'; }).join('') + '</div>';
+  var fsrcTx = { ideal: '理想MAPで新しく増やすB1（自分の直下）の人数 ' + lk('ideal', '理想MAP'), roadmap: '年間ロードマップの今月のF ' + lk('rm', 'ロードマップ'), month: '今月の目標カードで入れたフロント ' + lk('month', '今月の目標') }[x.fsrc] || '';
+  if (x.byCount) {
+    h += step('', '① 今月の' + lb + 'の回数', x.need ? x.need + '回' : '—', x.need ? '今月の目標カードで自分で決めた回数 ' + lk('month', '今月の目標') : '今月の目標カードで回数を入れると計算が始まります ' + lk('month', '回数を入れる'));
+  } else {
+    h += step('', '① 今月のフロント目標（F）', x.F ? x.F + '人' : '未設定', x.F ? fsrcTx : '理想MAPに新しいB1（自分の直下）を足すか、今月の目標でフロントを入れると決まります ' + lk('ideal', '理想MAPで決める'));
+    h += step('×', '② フロント1人あたりの' + (key === 'ctget' ? 'CT' : lb), x.coef, (x.csrc === '標準' ? '標準の係数' : x.csrc + 'の係数') + '（CT8・FT4・DLR2が標準） ' + lk('coef', '係数を変える'));
+    if (key === 'ctget') h += step('＋', '③ ドタキャン分の余裕', x.buf + '%', '会う約束は少し多めに取っておく ' + lk('coef', '％を変える'));
+  }
+  if (!x.need) {
+    h += '<div class="p2why-note">' + (x.byCount ? '回数' : 'F') + 'が決まると、ここから下の数字が自動で計算されます</div></div>';
+    body.innerHTML = h; return;
+  }
+  var n0 = x.byCount ? 2 : (key === 'ctget' ? 4 : 3), num = function(i) { return '①②③④⑤⑥⑦⑧'.charAt(n0 + i - 1); };
+  var calc = x.byCount ? '' : (key === 'ctget' ? (function() { var r = x.F * x.coef * (100 + x.buf) / 100; return x.F + '×' + x.coef + '×' + ((100 + x.buf) / 100) + '＝' + (Math.round(r * 10) / 10) + (x.need !== r ? ' → 切り上げ' : ''); })() : x.F + '×' + x.coef);
+  if (!x.byCount) h += step('＝', num(0) + ' 今月の必要数', x.need + u, calc, 'mid');
+  var wl = x.w.label;
+  h += step('−', num(x.byCount ? 0 : 1) + (key === 'ctget' ? ' 先週までに取れた約束' : ' 先週までにやった数'), x.before + u, (x.before ? (key === 'ctget' ? 'その週に入れたCTの予定の数・＋1の記録 ' : 'カレンダーの種類つき予定（日付が来たもの）・完了タスク・＋1の記録 ') + lk('cal', 'カレンダー') : '今月はまだ前の週の実績がありません') + (x.wkDone ? '<br>（今週の' + x.wkDone + u + 'は今週の分として数えます）' : ''));
+  h += step('＝', num(x.byCount ? 1 : 2) + ' 今月の残り', x.rest + u, x.need + '−' + x.before, 'mid');
+  h += step('÷', num(x.byCount ? 2 : 3) + ' 月末までの週の数', x.weeks + '週', '今週（' + wl + '）をふくめて ' + (me.getMonth() + 1) + '/' + me.getDate() + ' まで');
+  var wq = Math.round(x.rest / x.weeks * 10) / 10;
+  h += step('＝', num(x.byCount ? 3 : 4) + ' 今週の目標', x.ok ? '✓' : x.wNeed + u, x.ok ? '今月の目標はもう達成しています' : x.rest + '÷' + x.weeks + '＝' + wq + (wq !== x.wNeed ? ' → 切り上げて' + x.wNeed : ''), 'res');
+  if (!x.ok) {
+    h += '<div class="p2why-now">今週の' + (key === 'ctget' ? '取れた約束' : (x.byCount || key === 'ctget' ? '予約した枠' : '実施・予定')) + ' <span><b>' + x.have + '</b>' + (x.byCount ? '回' : u) + '</span>'
+      + (x.short ? '<span class="ng">あと' + x.short + '</span>' : '<span class="ok">✓ 足りています</span>')
+      + '<span class="p2a-add" onclick="p2WhyAdd(\'' + key + '\')">' + ((x.byCount || key === 'ctget') ? '予約' : '＋予定') + '</span></div>';
+  }
+  h += '<div class="p2why-note">💡 ' + (x.byCount ? '①の回数' : '①のFか②の係数') + 'を変えると、下の数字がぜんぶ変わります。予定を入れて実施すると「今月の残り」が減り、来週以降の目標も軽くなります</div>';
+  h += '</div>';
+  body.innerHTML = h;
 }
 function p2RmOpen() {
   _p2SheetClose('p2RmOv');

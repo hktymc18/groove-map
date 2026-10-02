@@ -2640,7 +2640,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2a-n{font-size:12px;color:var(--text-mid);display:flex;align-items:baseline;gap:2px} .p2a-n b{font-size:16px;color:var(--text);font-family:Inter,sans-serif}
 .p2a-pl{margin-left:8px;font-size:11px;color:var(--text-dim)}
 .p2a-wk{font-size:12px;color:var(--text-mid);white-space:nowrap} .p2a-wk b{color:var(--text);font-family:Inter,sans-serif}
-.p2a-sh{margin-left:6px;color:var(--go-rose,#FF5D73);font-weight:800} .p2a-ok{margin-left:4px;color:var(--accent);font-weight:800}
+.p2a-sh{margin-left:6px;color:var(--go-rose,#FF5D73);font-weight:800;white-space:nowrap} .p2a-ok{margin-left:4px;color:var(--accent);font-weight:800}
 .p2a-row.ok .p2-prog>i{background:var(--accent)}
 .p2a-add{font-size:12px;font-weight:800;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 50%,var(--border));border-radius:9px;padding:5px 10px;cursor:pointer;white-space:nowrap}
 .p2a-add:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
@@ -2650,6 +2650,30 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2a-subw{grid-column:2/-1;margin-top:-4px} @media(max-width:767px){.p2a-subw{grid-column:1/-1;order:5}}
 .p2a-sub{font-size:11.5px;color:var(--text-mid);margin-top:5px;line-height:1.5} .p2a-sub b{font-family:Inter,sans-serif;color:var(--text)}
 .p2a-lk{color:var(--accent);font-weight:800;cursor:pointer;text-decoration:underline;margin:0 3px}
+/* v568: 数字の決まり方（式・なぜこの数字？） */
+.p2a-f{margin-left:6px;font-size:10.5px;font-weight:700;color:var(--text-dim);border-bottom:1px dotted var(--text-dim);cursor:pointer;white-space:nowrap;font-family:inherit}
+.p2a-f:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.p2a-base{font-size:11.5px;color:var(--text-mid);background:var(--surface2);border:1px dashed var(--border2);border-radius:10px;padding:7px 10px;margin:2px 0 6px;cursor:pointer;line-height:1.6}
+.p2a-base b{color:var(--text)}
+.p2why-lk{color:var(--accent);font-weight:800;cursor:pointer;margin-left:6px;white-space:nowrap}
+.p2why-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.p2why-tab{padding:6px 12px;border-radius:16px;border:1px solid var(--border2);background:var(--surface2);font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer}
+.p2why-tab.sel{background:var(--accent);border-color:var(--accent);color:#04120e}
+.p2why-step{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface2)}
+.p2why-step .p2why-tx{flex:1;min-width:0}
+.p2why-step .lb{font-size:12.5px;font-weight:800;color:var(--text)}
+.p2why-step .src{font-size:11px;color:var(--text-dim);margin-top:2px;line-height:1.5}
+.p2why-step .v{flex:none;font-family:Inter,sans-serif;font-size:20px;font-weight:800;color:var(--text)}
+.p2why-step.mid{background:transparent;border-style:dashed}
+.p2why-step.res{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.p2why-step.res .v{color:var(--accent);font-size:24px}
+.p2why-op{text-align:center;font-size:15px;font-weight:800;color:var(--text-dim);line-height:1;margin:5px 0}
+.p2why-now{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;color:var(--text-mid)}
+.p2why-now b{font-family:Inter,sans-serif;color:var(--text);font-size:15px}
+.p2why-now .ng{color:var(--go-rose,#FF5D73);font-weight:800;flex:1} .p2why-now .ok{color:var(--accent);font-weight:800;flex:1}
+.p2why-note{font-size:11px;color:var(--text-dim);margin-top:12px;line-height:1.6}
+.p2a-mo{min-width:200px} .p2a-n{flex-wrap:wrap} .p2a-pl,.p2a-pc{white-space:nowrap} .p2a-wk{white-space:normal;max-width:340px;line-height:1.7}
+@media(max-width:767px){.p2a-mo{min-width:0}.p2a-wk{white-space:normal;max-width:none}.p2wk-row{gap:8px}.p2wk-row .lb{min-width:0;width:62px;flex:none}.p2wk-row .nd{white-space:nowrap}.p2wk-row .nd .p2a-f{display:block;margin:1px 0 0;width:fit-content}.p2wk-row .ok,.p2wk-row .ng{white-space:nowrap;font-size:12px}}
 .p2a-add.al{color:var(--text-mid);border-color:var(--border2)}
 .p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
 .p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none;animation:p2bIn .35s ease}
@@ -2907,7 +2931,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v567</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v568</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3853,7 +3877,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v567';</script>
-<script src="app.js?v=v567"></script>
+<script>window.GM_EXPECT_JS='v568';</script>
+<script src="app.js?v=v568"></script>
 </body>
 </html>
