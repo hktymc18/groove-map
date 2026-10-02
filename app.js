@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v564';
+var APP_JS_VERSION = 'v565';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v564';
+  var DATA_VERSION = 'v565';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4952,6 +4952,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v565', d:'2026-10-02', items:['📝 メンバー編集の基本タブを並べ替え：姓名→性別→地域（既定は自分の活動地域）→「ここから下は任意」写真・生年月日・Instagram・登録月。生年月日は年だけでもOK（その年の1月1日として年齢を日の横に自動表示）。登録月はプルダウンだけに','🧹 基本タブから「適用MAP」（新規は常に両方）・「LINE」・「年齢のみ」を外しました（入っているデータは消えません。年齢のみの人は生まれ年として表示）','📅 月次タブ：リスタートと「点滅表示」（旧ケアバッジ）をメモのすぐ上へ','⚡ かんたん追加で稼働タイプ（S/A/B/C）とGSV（任意）も入れられるように（くわしく登録へも引き継ぎ）'] },
   { v:'v564', d:'2026-10-02', items:['◎ 運動会MAPで「⛶ 全画面」ボタンが2つ並んでいた不具合を修正（1002-2）：現状MAPは上のツールバーの1つだけに（理想MAPは運動会のボタン列に1つ）'] },
   { v:'v563', d:'2026-10-02', items:['🏷 GSV 0PのBRが翌月コピーで降格の確認に出なかった不具合を修正（1001-4）：タイトルが「ブランドレプリゼンタティブ」や全角の「ＢＲ」で保存されていると、丸の中ではBRと表示されるのにBRとして判定されていませんでした。表記ゆれもBRとして判定し、保存されたタイトルも「BR」などに自動でそろえます（自由入力の文字はそのまま）','📱 スマホを横向き→運動会→全画面→縦向きにした時の追加対策（1001-6）：PC表示⇄スマホ表示が切り替わったら、スクロールを一番上に戻し、MAPはタブを開き直した状態に作り直します（「‹ メニュー｜現状MAP／理想MAP」のバーが重なる・ツリーより下の空白が出る対策）'] },
   { v:'v562', d:'2026-10-02', items:['👥 メンバーに予定・タスクを入れる時の扱いを3つに（1001-2）：👤メンバーのみ（メンバーのカード・ホバーに出す）／🙋自分のみ（自分のカレンダー・ToDoだけ。メンバーのカード・共有先には出さず、行動にも数えない）／👥両方。前に入れた予定は「メンバー専用」→メンバーのみ、「自分にも表示」→両方 のまま','🎯 目標をなおす：目標タイトル・次の山のタイトルをプルダウンで選ぶように（月収から自動で選ばれ、手で変えると「手動」）','🧹 PLANの「まず自分を登録」の案内を出さないように（MAPが空の時の案内はそのまま）'] },
@@ -6339,9 +6340,10 @@ function _fBirthGet() {
   if (!y || !m || !d) return '';
   return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2);
 }
-function _fBirthSet(v) {
+function _fBirthSet(v, yOnly) {
   _birthSelInit();
   var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
+  if (!p && yOnly && /^\d{4}$/.test(String(yOnly))) p = [null, String(yOnly), '', '']; // v565: 生まれ年だけ
   var y = document.getElementById('fBirthY'), m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
   // v503: 範囲外の年（旧データ）は選択肢を足して復元。未設定の初期表示は「今年−24年」（24才前後の新メンバーが最多）
   if (y && p && !y.querySelector('option[value="' + p[1] + '"]')) {
@@ -6349,12 +6351,27 @@ function _fBirthSet(v) {
     _op9.value = p[1]; _op9.textContent = p[1] + '年';
     y.insertBefore(_op9, y.options[1] || null);
   }
-  if (y) y.value = p ? p[1] : String(new Date().getFullYear() - 24);
-  if (m) m.value = p ? String(parseInt(p[2], 10)) : '';
-  if (d) d.value = p ? String(parseInt(p[3], 10)) : '';
+  if (y) y.value = p ? p[1] : ''; // v565: 年だけでも保存するため、未設定の初期表示は空（以前は今年−24年を仮表示）
+  if (m) m.value = p && p[2] ? String(parseInt(p[2], 10)) : '';
+  if (d) d.value = p && p[3] ? String(parseInt(p[3], 10)) : '';
+}
+// v565: 年だけ選んだ時（月・日が空）は「生まれ年」として保存（誕生日のリマインドは出さない）
+function _fBirthYearGet() {
+  var y = (document.getElementById('fBirthY') || {}).value || '';
+  return (y && !_fBirthGet()) ? y : '';
+}
+// 年齢：年/月/日が揃えばその日、年だけならその年の1月1日で計算して日の横に表示
+function _ageFrom(bd, by) {
+  var b = bd && /^\d{4}-\d{2}-\d{2}$/.test(bd) ? new Date(bd.replace(/-/g, '/')) : (by && /^\d{4}$/.test(String(by)) ? new Date(parseInt(by, 10), 0, 1) : null);
+  if (!b) return null;
+  var t = new Date(), a = t.getFullYear() - b.getFullYear();
+  if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
+  return (a >= 0 && a < 130) ? a : null;
 }
 // 生年月日が入っている間は年齢欄を無効化（優先ルールをその場で見せる）
 function syncAgeField() {
+  var _au = document.getElementById('fAgeAuto');
+  if (_au) { var _ag = _ageFrom(_fBirthGet(), _fBirthYearGet()); _au.textContent = _ag === null ? '' : _ag + '歳'; }
   var a = document.getElementById('fAge'), n = document.getElementById('fAgeNote');
   if (!a) return;
   var hasBirth = !!_fBirthGet();
@@ -6364,6 +6381,7 @@ function syncAgeField() {
 }
 // 年齢：生年月日があれば計算値を優先、無ければ手入力の年齢（m.age）
 function _memberAge(m) {
+  if (!(m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) && m.birthYear) return _ageFrom('', m.birthYear); // v565: 生まれ年だけ＝その年の1月1日で計算
   if (m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) {
     var b = new Date(m.birthday.replace(/-/g, '/')), t = new Date();
     var a = t.getFullYear() - b.getFullYear();
@@ -12342,6 +12360,12 @@ function meDeleteTask(eid, mid) {
 //  名前・性別・段階（FT〜CO）だけで登録。詳細は研修が進んでから従来画面で。
 // ============================================================
 var _qaGender = 'male';
+var _qaAct = ''; // v565: かんたん追加の稼働タイプ
+function qaActSel(v) {
+  _qaAct = (_qaAct === v) ? '' : v;
+  var w9 = document.getElementById('qaActs');
+  if (w9) [].forEach.call(w9.querySelectorAll('.qa-chip'), function(c) { c.classList.toggle('sel', c.getAttribute('data-a') === _qaAct); });
+}
 // v533: かんたん追加でも「研修生／BA／BR」を選び、タイトルをリストから選べるように
 var QA_CAT_DEFAULT = { '研修生': 'FT', 'BA': 'LOI', 'BR': 'BR' };
 function _qaCatGet() { try { var c = localStorage.getItem('gm_qaCat'); if (TITLE_OPTIONS[c]) return c; } catch(e) {} return '研修生'; }
@@ -12383,6 +12407,7 @@ function openQuickAdd() {
   var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
   if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は従来フォームで
   _p2SheetClose('qaOv');
+  _qaAct = '';
   var stage = _qaStageGet();
   var parent = selectedParentId || roots[0].id;
   var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
@@ -12399,7 +12424,7 @@ function openQuickAdd() {
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('qaOv'); };
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚡ かんたん追加</div>'
-    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・区分とタイトルだけでOK。詳細はあとから</div></div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・区分とタイトルだけでOK。稼働タイプ・GSVは任意。詳細はあとから</div></div>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px;flex:none" onclick="qaToFull()">📝 くわしく登録</span>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'qaOv\')" style="margin-left:8px">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
@@ -12414,6 +12439,9 @@ function openQuickAdd() {
     + '<div class="p2-meta" style="margin-bottom:4px">区分</div>'
     + '<div style="display:flex;gap:6px;margin-bottom:10px" id="qaCats">' + catChips + '</div>'
     + '<div id="qaTitleArea">' + _qaTitleAreaHtml(qcat) + '</div>'
+    + '<div class="p2-meta" style="margin-bottom:4px">稼働タイプ・GSV（任意）</div>'
+    + '<div class="qa-acts" id="qaActs">' + ['S', 'A', 'B', 'C'].map(function(x) { return '<span class="qa-chip" data-a="' + x + '" onclick="qaActSel(\'' + x + '\')">' + x + '</span>'; }).join('')
+    + '<input class="fi" id="qaGsv" type="number" inputmode="numeric" placeholder="GSV" style="flex:1.6;min-width:0;padding:8px 10px;font-size:13px;text-align:right" onfocus="edSelAll(this)"></div>'
     + '<div id="qaTrainRow"' + (qcat === '研修生' ? '' : ' style="display:none"') + '>'
     + '<div class="p2-meta" style="margin-bottom:4px">研修の予定（任意・入力すると研修履歴に登録）</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px">'
@@ -12438,6 +12466,7 @@ function qaGenderSel(g) {
   if (m9) m9.classList.toggle('sel', g === 'male');
   if (f9) f9.classList.toggle('sel', g === 'female');
 }
+function _qaGsvVal() { var v = parseInt(((document.getElementById('qaGsv') || {}).value || ''), 10); return isNaN(v) ? 0 : Math.max(0, v); }
 function qaSave(cont) {
   try { if (typeof isPCMode === 'function' && isPCMode()) _pcTreeCaptureView(); } catch(ePv) {} // v519: 923-7 追加後も見ていた位置のまま（中央に戻さない）
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
@@ -12453,12 +12482,13 @@ function qaSave(cont) {
     id: 'id-' + Date.now(),
     lastName: last, firstName: first, gender: _qaGender,
     title: stage, cat: qcat,
-    activity: '', actRate: '', morale: 1, priority: '',
-    ptCurrent: 0, ptFixed: 0, ptSelf: 0,
+    activity: _qaAct, actRate: '', morale: 1, priority: '', // v565: 稼働タイプ
+    ptCurrent: _qaGsvVal(), ptFixed: 0, ptSelf: _qaGsvVal(), // v565: GSV（任意）
     trainee: false, parentId: pid, mapType: 'both', // v497: かんたん追加も既定「両方」
     memo: '', nextDate: '', aSan: ((document.getElementById('qaAsan') || {}).value || '').trim(), instaUrl: '', lineId: '',
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
-    region: '', birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
+    region: normalizeRegionValue((typeof currentUser !== 'undefined' && currentUser && currentUser.area) || ''), // v565: 地域は自分の活動地域を既定に（くわしく登録と同じ）
+    birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '',
     month: cm,
   };
   // v496: 研修の予定（日付＋時刻＋Aさん）→ 研修履歴に「予定」として登録（921-2）
@@ -12476,6 +12506,7 @@ function qaSave(cont) {
   toast('⚡ ' + nm + ' さんを追加しました（' + stage + (_qd ? '・' + parseInt(_qd.slice(5, 7), 10) + '/' + parseInt(_qd.slice(8, 10), 10) + ' 予定' : '') + '）');
   if (cont) {
     var l9 = document.getElementById('qaLast'), f9 = document.getElementById('qaFirst');
+    var g9 = document.getElementById('qaGsv'); if (g9) g9.value = ''; _qaAct = 'x'; qaActSel('x'); // v565
     if (l9) { l9.value = ''; l9.focus(); }
     if (f9) f9.value = '';
   } else {
@@ -12489,6 +12520,7 @@ function qaToFull() {
   var pid = (document.getElementById('qaParent') || {}).value || '';
   var g = _qaGender, qcat = _qaCatGet(), stage = _qaTitleGet(qcat);
   var tSel = document.getElementById('qaTitle'); if (qcat !== '研修生' && tSel && tSel.value) stage = tSel.value;
+  var _qaAct0 = _qaAct, _qaG0 = _qaGsvVal();
   _p2SheetClose('qaOv');
   if (pid) selectedParentId = pid;
   openAdd();
@@ -12499,13 +12531,15 @@ function qaToFull() {
     selCategory(qcat);
     var ft = document.getElementById('fTitle'); if (ft) ft.value = stage;
     if (typeof onTitleChange === 'function') onTitleChange();
+    var fa = document.getElementById('fAct'); if (fa) fa.value = _qaAct0; // v565: 稼働タイプ・GSVも引き継ぐ
+    var fg = document.getElementById('fPtC'); if (fg && _qaG0) fg.value = _qaG0;
   } catch(e) {}
 }
 function openAdd() {
   if (!state.isEditor) return;
   window._tempNewMember = null; // 一時データリセット
   editingId = null; fGender='male'; fTrainee=false;
-  fMapType = currentView==='ideal' ? 'ideal' : 'both'; // v497: 既定は「両方」（理想MAP表示中の追加のみ理想）
+  fMapType = 'both'; // v565: 適用MAPの選択は廃止（新規は常に両方。理想MAPの追加はかんたん編集から）
   document.getElementById('shTitle').textContent = 'メンバー追加';
   document.getElementById('btnDel').style.visibility = 'hidden';
   var _mtb1 = document.getElementById('memberTaskBtn');
@@ -12604,7 +12638,7 @@ function openEdit(id) {
     set('fLine', m.lineId);
     set('fRegion', m.region);
     syncRegionSelect(m.region);
-    _fBirthSet(m.birthday || '');
+    _fBirthSet(m.birthday || '', m.birthYear || (!m.birthday && parseInt(m.age, 10) > 0 ? String(new Date().getFullYear() - parseInt(m.age, 10)) : '')); // v565: 旧「年齢のみ」は生まれ年に置き換えて表示
     set('fAge', m.age || '');
     _pendingPhoto = null; _photoPrevSet(_avatars[m.id] || null);
     if (typeof syncAgeField === 'function') syncAgeField();
@@ -12726,7 +12760,7 @@ function clearForm() {
   var sdp = document.getElementById('stepDetailPanel');
   if (sdp) sdp.style.display = 'none';
   selGender('male',true); selTrainee(false,true);
-  selMapType(currentView==='ideal'?'ideal':'both',true); // v497: 既定は「両方」
+  selMapType('both',true); // v565: 適用MAPの選択は廃止（新規は常に両方）
 }
 function buildParentSelect(selectedId, excludeId) {
   var sel = document.getElementById('fParent');
@@ -13122,7 +13156,8 @@ function saveMember() {
     traineeResult: (document.getElementById('fTraineeResult')||{}).value||'',
     region: normalizeRegionValue((document.getElementById('fRegion')||{}).value || ''),
     birthday: _fBirthGet(),
-    age: (function(){ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
+    birthYear: _fBirthYearGet(), // v565: 年だけ
+    age: (function(){ if (_fBirthGet() || _fBirthYearGet()) return ''; /* v565: 年を入れたら旧「年齢のみ」は使わない */ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
       var v = el ? el.value : ''; // 'YYYY-MM'
