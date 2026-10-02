@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v568';
+var APP_JS_VERSION = 'v569';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v568';
+  var DATA_VERSION = 'v569';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4954,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v569', d:'2026-10-02', items:['🎮 PLANに「数字の決まり方を体験（1分）」を追加：練習用のミニ画面で ①理想MAPに新しいB1を足す ②係数を変える ③今週CTの予定を入れる ④1週間すすめる、の4つを操作すると、今月の必要数・今週の目標が目の前で変わります（本物のデータは変わりません）','▶ 「見るだけ」を選ぶと自動で操作して見せてくれます。はじめての人には「今月の行動量」に案内が出ます（✕で消せます）。「なぜこの数字？」の画面からも開けます'] },
   { v:'v568', d:'2026-10-02', items:['🧮 PLANの「今月の行動量」「今週の作戦」の数字に、計算式を表示（例：16件の横に「＝2人×8」、今週4件の横に「残り12÷3週」）','👆 式をタップすると「なぜこの数字？」：フロント目標（理想MAP・ロードマップ・今月の目標のどれから来たか）→ 係数 → 今月の必要数 → 先週までの実績 → 月末までの週の数 → 今週の目標、を実際の数字で順番に表示。それぞれの箱から理想MAP・係数・カレンダーへ移動できます','🔧 CT取りの目標が、ドタキャン余裕の％によっては小数の誤差で1件多く出ることがあったのを修正'] },
   { v:'v567', d:'2026-10-02', items:['📝 OLを「予定の一種（種類：OL）」にまとめました：OLを企画・記録すると予定にも同じものが入り、カレンダー・ToDo・通知に自然に出ます。予定とOLのどちらを直しても（日時・内容・人・実施済み・削除）もう片方に反映。種類「OL」で入れた予定もOLタブで数えます（前に入れたOL・予定も自動でつなぎます）','👤 メンバーの活動タブを整理：「＋ 追加」から OL／タスク を選ぶ形に（「予定」はOLに名前を変更）。一覧は すべて／OL／タスク で切り替え','✅ 活動タブから予定を完了した時も「OLとして記録しますか？」が出るように','🔧 「メンバーのみ」のタスクがHOMEの今日のタスクに出たり、「メンバーのみ」の予定で通知が鳴ったりしていたのを修正。複数人の予定は全員の「最後の活動」に入るように','⚡ かんたん追加で研修生を選んだ時は、稼働タイプ・GSVを表示しないように'] },
   { v:'v566', d:'2026-10-02', items:['📱 スマホの「OLを企画」でAさんや内容を入力しようとすると、シートが見えなくなる不具合を修正：キーボードが出るとiPhoneが見える範囲を下にずらすため、上に寄せたシートが画面の外に出ていました。見えている範囲の上にシートを置くようにしました（メンバー検索のシートも同じ）'] },
@@ -15939,7 +15940,8 @@ function _p2FunnelHtml(ym) {
   var h = '<div class="p2-card" id="p2FunCard"><div class="p2-t">' + icn('target') + ' 今月の行動量<span class="p2-meta" style="margin-left:8px">今週 ' + w.label + '</span><span class="sp"></span>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2CoefSheet()">' + icn('gear') + ' 係数（' + c.src + '）</span></div>';
   if (!F) h += '<div class="p2-meta" style="margin-bottom:6px">今月のフロント目標（F）を入れると、必要なCT・FT/マケ・DLR動員数と今週の件数が出ます（係数: CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + ' ／ フロント1人あたり）</div>';
-  if (F) h += '<div class="p2a-base" onclick="p2WhyOpen(\'ct\')">🧮 計算のもと：フロント目標 <b>F＝' + F + '人</b>' + ({ ideal: '（理想MAP）', roadmap: '（ロードマップ）', month: '（今月の目標）' }[_p2FrontSrc(ym)] || '') + ' × 1人あたり CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + '<span class="p2why-lk">なぜこの数字？ ›</span></div>'; // v568
+  if (F) h += '<div class="p2a-base" onclick="p2WhyOpen(\'ct\')">🧮 計算のもと：フロント目標 <b>F＝' + F + '人</b>' + ({ ideal: '（理想MAP）', roadmap: '（ロードマップ）', month: '（今月の目標）' }[_p2FrontSrc(ym)] || '') + ' × 1人あたり CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + '<span class="p2why-lk">なぜこの数字？ ›</span><span class="p2why-lk" onclick="event.stopPropagation();p2TutOpen()">🎮 1分で体験</span></div>'; // v568・v569
+  if (!viewingOwnerUid && !_p2().tutSeen) h += '<div class="p2tut-ban">🎮 この数字の決まり方を体験する（1分）<span class="sp"></span><span class="p2a-add" onclick="p2TutOpen()">はじめる</span><span class="x" onclick="p2TutDismiss()" title="閉じる">✕</span></div>'; // v569
   var cfg = _p2ActCfg(), mm = _p2M(ym);
   _p2AlLoad(false); // v550: 手元のリスト（ATTACK LIST）
   if (cfg.st) h += _p2BlockRow(ym, 'st', 'ST', 'ST', +mm.st || 0);
@@ -17197,7 +17199,156 @@ function _p2WhyRender() {
       + (x.short ? '<span class="ng">あと' + x.short + '</span>' : '<span class="ok">✓ 足りています</span>')
       + '<span class="p2a-add" onclick="p2WhyAdd(\'' + key + '\')">' + ((x.byCount || key === 'ctget') ? '予約' : '＋予定') + '</span></div>';
   }
+  h += '<span class="p2-btn p2t-next" onclick="p2TutOpen()">🎮 動かして体験する（1分）</span>'; // v569
   h += '<div class="p2why-note">💡 ' + (x.byCount ? '①の回数' : '①のFか②の係数') + 'を変えると、下の数字がぜんぶ変わります。予定を入れて実施すると「今月の残り」が減り、来週以降の目標も軽くなります</div>';
+  h += '</div>';
+  body.innerHTML = h;
+}
+// v569: ① 体験チュートリアル（PLANと同じ計算のミニ画面で操作。本物のデータは変えない）
+var _p2Tut = null;
+var P2_TUT_N = 5; // 操作するステップの数（0＝はじめ、1〜4＝操作、5＝まとめ）
+function _p2TutCalc(t) {
+  var need = t.F * t.coef, rest = Math.max(0, need - t.before);
+  return { need: need, rest: rest, wNeed: need ? Math.ceil(rest / t.weeks) : 0 };
+}
+function p2TutOpen(auto) {
+  _p2SheetClose('p2WhyOv');
+  _p2SheetClose('p2TutOv');
+  _p2Tut = { step: 0, F: 0, coef: 8, weeks: 4, before: 0, wk: 0, week: 1, auto: false, timer: null, coefTouched: false, prevW: null, prev: {}, msg: '' };
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2TutOv'; ov.style.zIndex = '630';
+  ov.onclick = function(e) { if (e.target === ov) p2TutClose(); };
+  ov.innerHTML = '<div class="ms-sheet p2tut" style="max-height:92vh;overflow-y:auto"><div class="ms-grip"></div><div id="p2TutBody"></div></div>';
+  document.body.appendChild(ov);
+  _p2TutRender();
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  if (auto) p2TutAuto();
+}
+function p2TutClose() {
+  if (_p2Tut && _p2Tut.timer) clearTimeout(_p2Tut.timer);
+  _p2Tut = null; _p2SheetClose('p2TutOv'); _p2TutSeen();
+}
+function _p2TutSeen() {
+  if (viewingOwnerUid || !state.goals || !state.goals.plan) return;
+  var p2 = _p2(); if (p2.tutSeen) return;
+  p2.tutSeen = evTodayYmd(); saveGoals();
+  if (currentView === 'plan') renderPlan();
+}
+function p2TutDismiss() { _p2TutSeen(); }
+// 手で触ったら自動再生は止める
+function _p2TutUser(byAuto) { if (!byAuto && _p2Tut && _p2Tut.auto) { _p2Tut.auto = false; if (_p2Tut.timer) clearTimeout(_p2Tut.timer); _p2Tut.timer = null; } }
+function p2TutGo(step, byAuto) {
+  if (!_p2Tut) return; _p2TutUser(byAuto);
+  var t = _p2Tut;
+  if (step === 3 && t.step === 2) { t.coef = 8; } // 係数は標準に戻して続ける
+  t.step = step; t.msg = '';
+  if (step >= P2_TUT_N) _p2TutSeen();
+  _p2TutRender();
+}
+function p2TutAddB1(byAuto) { if (!_p2Tut) return; _p2TutUser(byAuto); if (_p2Tut.F < 3) _p2Tut.F++; _p2TutRender(); }
+function p2TutCoef(d, byAuto) { if (!_p2Tut) return; _p2TutUser(byAuto); var t = _p2Tut; t.coef = Math.max(2, Math.min(12, t.coef + d)); t.coefTouched = true; _p2TutRender(); }
+function p2TutAddCt(byAuto) { if (!_p2Tut) return; _p2TutUser(byAuto); if (_p2Tut.wk < 7) _p2Tut.wk++; _p2TutRender(); }
+function p2TutNextWeek(byAuto) {
+  if (!_p2Tut) return; _p2TutUser(byAuto);
+  var t = _p2Tut; if (t.weeks <= 1) return;
+  var old = _p2TutCalc(t).wNeed, did = t.wk;
+  t.before += t.wk; t.wk = 0; t.weeks--; t.week++;
+  var nw = _p2TutCalc(t).wNeed;
+  t.prevW = { old: old, did: did, nw: nw };
+  t.msg = nw > old ? '先週は目標（' + old + '件）より少なかったので、足りない分が残りの週に回って、今週の目標が <b>' + nw + '件</b> に増えました'
+    : (nw < old ? '先週は目標より多くできたので、今週の目標が <b>' + nw + '件</b> に減りました' : '先週は目標どおり。今週も <b>' + nw + '件</b> です');
+  _p2TutRender();
+}
+// 見るだけモード：順番に自動で操作して見せる
+function p2TutAuto() {
+  if (!_p2Tut) return;
+  var t = _p2Tut; t.auto = true;
+  var q = [
+    [900, function() { p2TutGo(1, true); }],
+    [1300, function() { _p2TutTap('p2tAddB1', function() { p2TutAddB1(true); }); }],
+    [1300, function() { _p2TutTap('p2tAddB1', function() { p2TutAddB1(true); }); }],
+    [1800, function() { p2TutGo(2, true); }],
+    [1300, function() { _p2TutTap('p2tCoefUp', function() { p2TutCoef(2, true); }); }],
+    [1500, function() { _p2TutTap('p2tCoefDn', function() { p2TutCoef(-4, true); }); }],
+    [1800, function() { p2TutGo(3, true); }],
+    [1200, function() { _p2TutTap('p2tAddCt', function() { p2TutAddCt(true); }); }],
+    [1000, function() { _p2TutTap('p2tAddCt', function() { p2TutAddCt(true); }); }],
+    [1800, function() { p2TutGo(4, true); }],
+    [1300, function() { _p2TutTap('p2tNextWk', function() { p2TutNextWeek(true); }); }],
+    [3200, function() { p2TutGo(5, true); }]
+  ];
+  var i = 0;
+  var run = function() {
+    if (!_p2Tut || !_p2Tut.auto || i >= q.length) { if (_p2Tut) { _p2Tut.auto = false; _p2TutRender(); } return; }
+    var it = q[i++];
+    _p2Tut.timer = setTimeout(function() { if (!_p2Tut || !_p2Tut.auto) return; it[1](); run(); }, it[0]);
+  };
+  _p2TutRender(); run();
+}
+function _p2TutTap(id, fn) {
+  var el = document.getElementById(id);
+  if (el) el.classList.add('tap');
+  setTimeout(function() { if (_p2Tut) fn(); }, 350);
+}
+function _p2TutChain() {
+  var t = _p2Tut, c = _p2TutCalc(t), pv = t.prev || {};
+  var box = function(k, lb, v) { var hit = pv[k] !== undefined && pv[k] !== v; return '<div class="p2t-b' + (hit ? ' hit' : '') + (k === 'w' ? ' res' : '') + '"><small>' + lb + '</small><b>' + v + '</b></div>'; };
+  var op = function(s) { return '<span class="p2t-op">' + s + '</span>'; };
+  var h = '<div class="p2t-chain">' + box('F', 'フロント', t.F + '人') + op('×') + box('coef', '係数', t.coef) + op('＝') + box('need', '今月', c.need + '件')
+    + op('−') + box('before', '先週まで', t.before + '件') + op('÷') + box('weeks', '残り週', t.weeks + '週') + op('＝') + box('w', '今週', c.wNeed + '件') + '</div>';
+  t.prev = { F: t.F + '人', coef: t.coef, need: c.need + '件', before: t.before + '件', weeks: t.weeks + '週', w: c.wNeed + '件' };
+  return h;
+}
+function _p2TutRender() {
+  var body = document.getElementById('p2TutBody'); if (!body || !_p2Tut) return;
+  var t = _p2Tut, c = _p2TutCalc(t), st = t.step;
+  var dots = '<div class="p2t-dots">' + [1, 2, 3, 4].map(function(i) { return '<i class="' + (i < st ? 'done' : (i === st ? 'on' : '')) + '"></i>'; }).join('') + '</div>';
+  var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🎮 数字の決まり方を体験</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">練習用の画面です（本物のデータは変わりません）' + (t.auto ? '・<b style="color:var(--accent)">自動で再生中</b>' : '') + '</div></div>'
+    + '<span class="ms-x" onclick="p2TutClose()">✕</span></div><div style="padding:0 16px 18px">' + (st >= 1 && st <= 4 ? dots : '');
+  var nextBtn = function(ok, to, lb) { return '<span class="p2-btn pri p2t-next' + (ok ? '' : ' dis') + '" onclick="' + (ok ? 'p2TutGo(' + to + ')' : '') + '">' + (lb || '次へ ›') + '</span>'; };
+  if (st === 0) {
+    h += '<div class="p2t-hero">🧮</div><div class="p2t-q">PLANの「今週 ◯件」は、<br><b>1つの目標から逆算</b>して決まっています</div>'
+      + '<div class="p2t-tx">フロントを決める → 係数をかける → やった分を引く → 残りの週で割る。<br>4つの操作で、数字が動くところを体験しましょう（約1分）</div>'
+      + '<span class="p2-btn pri p2t-next" onclick="p2TutGo(1)">はじめる ›</span>'
+      + '<span class="p2-btn p2t-next" onclick="p2TutAuto()">▶ 見るだけ（自動で再生）</span>';
+  } else if (st === 1) {
+    var kids = ''; for (var i = 0; i < t.F; i++) kids += '<div class="p2t-node new">NEW<br>B1</div>';
+    h += '<div class="p2t-q">① 理想MAPに、今月増やしたい<b>新しいB1</b>を足してみよう</div>'
+      + '<div class="p2t-map"><div class="p2t-node me">自分</div><div class="p2t-kids">' + kids + '<div class="p2t-node add" id="p2tAddB1" onclick="p2TutAddB1()">＋</div></div></div>'
+      + '<div class="p2t-tx">自分の直下に増やす人数が<b>フロント目標（F）</b>。ここからすべての数字が決まります</div>'
+      + _p2TutChain()
+      + (t.F >= 2 ? '<div class="p2t-ok">👍 Fが' + t.F + '人 → 今月のCTは ' + t.F + '×' + t.coef + '＝' + c.need + '件 必要</div>' : '<div class="p2t-hint">「＋」を2回タップ</div>')
+      + nextBtn(t.F >= 2, 2);
+  } else if (st === 2) {
+    h += '<div class="p2t-q">② <b>係数</b>＝フロント1人を増やすのに必要なCTの数。変えてみよう</div>'
+      + '<div class="p2t-step"><span class="p2t-sb" id="p2tCoefDn" onclick="p2TutCoef(-2)">−</span><div class="p2t-sv"><small>1人あたりのCT</small><b>' + t.coef + '</b></div><span class="p2t-sb" id="p2tCoefUp" onclick="p2TutCoef(2)">＋</span></div>'
+      + '<div class="p2t-tx">標準は8（8人に会うと1人がB1になるイメージ）。成約しやすい人は小さく、慎重に見るなら大きく</div>'
+      + _p2TutChain()
+      + (t.coefTouched ? '<div class="p2t-ok">👍 係数' + t.coef + ' → 今月のCTは ' + c.need + '件。係数で必要な行動量が変わります</div>' : '<div class="p2t-hint">「＋」か「−」をタップ</div>')
+      + nextBtn(t.coefTouched, 3, '次へ（係数は標準の8に戻します） ›');
+  } else if (st === 3) {
+    var days = ['月', '火', '水', '木', '金', '土', '日'];
+    h += '<div class="p2t-q">③ 今週の目標は <b>' + c.wNeed + '件</b>（' + c.rest + '÷' + t.weeks + '週）。CTの予定を入れてみよう</div>'
+      + '<div class="p2t-week">' + days.map(function(d, i) { return '<div class="p2t-day"><small>' + d + '</small>' + (i < t.wk ? '<span class="p2t-ev">CT</span>' : '') + '</div>'; }).join('') + '</div>'
+      + '<div class="p2t-now">今週の実施・予定 <span><b>' + t.wk + '</b>件</span>' + (t.wk >= c.wNeed ? '<span class="ok">✓ 足りています</span>' : '<span class="ng">あと' + (c.wNeed - t.wk) + '</span>') + '<span class="p2a-add" id="p2tAddCt" onclick="p2TutAddCt()">＋予定</span></div>'
+      + _p2TutChain()
+      + (t.wk ? '<div class="p2t-tx">' + (t.wk < c.wNeed ? '目標より少ないままでもOK。来週どうなるか見てみよう' : '目標を超えてもOK。来週どうなるか見てみよう') + '</div>' : '<div class="p2t-hint">「＋予定」をタップ（何回でも）</div>')
+      + nextBtn(t.wk >= 1, 4);
+  } else if (st === 4) {
+    h += '<div class="p2t-q">④ <b>1週間すすめる</b>と、今週やった分が「先週まで」に入ります</div>'
+      + (t.prevW ? '<div class="p2t-wk2">第' + (t.week - 1) + '週：目標 ' + t.prevW.old + '件 → やった ' + t.prevW.did + '件<br>第' + t.week + '週：残り ' + c.rest + '件 ÷ ' + t.weeks + '週 ＝ <b>' + c.wNeed + '件</b></div>' : '<div class="p2t-wk2">いまは第' + t.week + '週。今週の分：' + t.wk + '件</div>')
+      + (t.prevW ? '' : '<span class="p2-btn p2t-next" id="p2tNextWk" onclick="p2TutNextWeek()">▶ 来週へすすめる</span>')
+      + _p2TutChain()
+      + (t.msg ? '<div class="p2t-ok">' + t.msg + '</div>' : '')
+      + nextBtn(!!t.prevW, 5);
+  } else {
+    h += '<div class="p2t-hero">🎉</div><div class="p2t-q">これで数字の決まり方はバッチリ</div>'
+      + '<div class="p2t-sum"><div><b>フロント目標（F）</b> 理想MAPの新しいB1</div><div>× <b>係数</b> フロント1人あたりのCT・FT・DLR</div><div>＝ <b>今月の必要数</b></div><div>− <b>先週までにやった数</b> カレンダーの予定・＋1</div><div>÷ <b>月末までの週の数</b></div><div>＝ <b>今週の目標</b></div></div>'
+      + '<div class="p2t-tx">PLANの数字の横にある点線の式をタップすると、いつでも自分の実際の数字でこの流れが見られます</div>'
+      + (viewingOwnerUid ? '' : '<span class="p2-btn pri p2t-next" onclick="p2TutClose();p2WhyOpen(\'ct\')">自分の数字で見る ›</span>')
+      + '<span class="p2-btn p2t-next" onclick="p2TutOpen()">もう一度</span>'
+      + '<span class="p2-btn p2t-next" onclick="p2TutClose()">閉じる</span>';
+  }
   h += '</div>';
   body.innerHTML = h;
 }
