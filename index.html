@@ -2247,7 +2247,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .ms-sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border2);padding:8px 16px calc(env(safe-area-inset-bottom) + 22px);transform:translateY(100%);transition:transform .25s ease;max-height:88vh;overflow-y:auto} /* v452: 内容が多くても画面内に収まり中でスクロール（サブタスク大量でボタンに届かないバグの根治） */
 .ms-overlay.show .ms-sheet{transform:translateY(0)}
 /* v395: キーボード表示中はシートを画面上部へ（下端固定だとキーボードの裏に隠れるため） */
-.ms-overlay.kb-top{align-items:flex-start}
+.ms-overlay.kb-top{align-items:flex-start;top:var(--vvtop,0px);bottom:auto;height:var(--vvh,100dvh)} /* v566: 見えている範囲に合わせる（iOSはキーボード表示で見える範囲を下へずらす） */
 .ms-overlay.kb-top .ms-sheet{border-radius:0 0 20px 20px;border-top:none;border-bottom:1px solid var(--border2);max-height:calc(var(--vvh,100dvh) - 10px)!important;overflow-y:auto}
 .ms-grip{width:38px;height:4px;border-radius:2px;background:var(--border2);margin:6px auto 14px}
 .ms-hd{display:flex;align-items:center;gap:11px;margin-bottom:16px}
@@ -2902,7 +2902,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v565</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v566</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3848,7 +3848,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v565';</script>
-<script src="app.js?v=v565"></script>
+<script>window.GM_EXPECT_JS='v566';</script>
+<script src="app.js?v=v566"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v565';
+var APP_JS_VERSION = 'v566';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v565';
+  var DATA_VERSION = 'v566';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4222,6 +4222,8 @@ function _vvhUpdate() {
     var root = document.documentElement;
     root.style.setProperty('--vvh', _vvhTarget() + 'px');
     root.style.setProperty('--vvoff', '0px');
+    // v566: 見えている範囲の上端（キーボード表示中にiOSが見える範囲を下へずらした分）。入力中に上へ寄せるシート（.kb-top）をここに合わせる
+    var _vv6 = window.visualViewport; root.style.setProperty('--vvtop', (_vv6 && _vvEditableFocus() ? Math.max(0, Math.round(_vv6.offsetTop || 0)) : 0) + 'px');
   } catch(e9) {}
 }
 // v354: PCは時刻をキーボードで直接入力可（1600→16:00に自動整形。モバイルは従来のテンキー）
@@ -4952,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v566', d:'2026-10-02', items:['📱 スマホの「OLを企画」でAさんや内容を入力しようとすると、シートが見えなくなる不具合を修正：キーボードが出るとiPhoneが見える範囲を下にずらすため、上に寄せたシートが画面の外に出ていました。見えている範囲の上にシートを置くようにしました（メンバー検索のシートも同じ）'] },
   { v:'v565', d:'2026-10-02', items:['📝 メンバー編集の基本タブを並べ替え：姓名→性別→地域（既定は自分の活動地域）→「ここから下は任意」写真・生年月日・Instagram・登録月。生年月日は年だけでもOK（その年の1月1日として年齢を日の横に自動表示）。登録月はプルダウンだけに','🧹 基本タブから「適用MAP」（新規は常に両方）・「LINE」・「年齢のみ」を外しました（入っているデータは消えません。年齢のみの人は生まれ年として表示）','📅 月次タブ：リスタートと「点滅表示」（旧ケアバッジ）をメモのすぐ上へ','⚡ かんたん追加で稼働タイプ（S/A/B/C）とGSV（任意）も入れられるように（くわしく登録へも引き継ぎ）'] },
   { v:'v564', d:'2026-10-02', items:['◎ 運動会MAPで「⛶ 全画面」ボタンが2つ並んでいた不具合を修正（1002-2）：現状MAPは上のツールバーの1つだけに（理想MAPは運動会のボタン列に1つ）'] },
   { v:'v563', d:'2026-10-02', items:['🏷 GSV 0PのBRが翌月コピーで降格の確認に出なかった不具合を修正（1001-4）：タイトルが「ブランドレプリゼンタティブ」や全角の「ＢＲ」で保存されていると、丸の中ではBRと表示されるのにBRとして判定されていませんでした。表記ゆれもBRとして判定し、保存されたタイトルも「BR」などに自動でそろえます（自由入力の文字はそのまま）','📱 スマホを横向き→運動会→全画面→縦向きにした時の追加対策（1001-6）：PC表示⇄スマホ表示が切り替わったら、スクロールを一番上に戻し、MAPはタブを開き直した状態に作り直します（「‹ メニュー｜現状MAP／理想MAP」のバーが重なる・ツリーより下の空白が出る対策）'] },
@@ -10093,7 +10096,13 @@ function _olpRender() {
     ov.innerHTML = '<div class="ms-sheet olp-sheet"></div>';
     document.body.appendChild(ov);
     if (!isPCMode()) { // 検索・入力中はシートを上部へ（キーボードで隠れないように）
-      ov.addEventListener('focusin', function(e2) { if (e2.target && /^(olpQ|olpAsan|olpWhat|olpNote)$/.test(e2.target.id || '')) ov.classList.add('kb-top'); });
+      ov.addEventListener('focusin', function(e2) {
+        if (e2.target && /^(olpQ|olpAsan|olpWhat|olpNote)$/.test(e2.target.id || '')) {
+          ov.classList.add('kb-top');
+          // v566: キーボードが出きってから、見えている範囲に合わせ直して入力欄をシートの中で見える位置へ
+          var t9 = e2.target; [80, 350, 700].forEach(function(ms) { setTimeout(function() { try { _vvhUpdate(); if (t9.scrollIntoView) t9.scrollIntoView({ block: 'nearest' }); } catch (eK) {} }, ms); });
+        }
+      });
       ov.addEventListener('focusout', function() { setTimeout(function() { ov.classList.remove('kb-top'); }, 150); });
     }
     requestAnimationFrame(function() { ov.classList.add('show'); });
