@@ -2531,6 +2531,11 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .ed-opt-hd{margin:14px 0 2px;padding:6px 2px 4px;font-size:11px;font-weight:800;color:var(--text-dim);border-top:1px dashed var(--border);letter-spacing:.5px}
 .ed-age{flex:none;align-self:center;margin-left:6px;font-size:13px;font-weight:800;color:var(--accent);white-space:nowrap}
 .qa-acts{display:flex;gap:5px;margin-bottom:10px}.qa-acts .qa-chip{flex:1;text-align:center;padding:8px 4px}
+/* v567: 活動タブ（OL／タスク） */
+.me-act-add{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.me-act-pick{display:flex;gap:8px} .me-act-pick .me-add-btn{flex:1;margin:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px} .me-act-pick small{font-size:10.5px;font-weight:600;color:var(--text-dim)}
+.me-act-f{display:flex;gap:4px;margin-bottom:8px;padding:3px;border-radius:10px;background:var(--surface2);border:1px solid var(--border)}
+.me-act-f span{flex:1;text-align:center;padding:6px 4px;border-radius:8px;font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer} .me-act-f span b{font-family:Inter,sans-serif;margin-left:2px;opacity:.75} .me-act-f span.on{background:var(--accent);color:#08121a}
 /* v560: BRまでの道のり・目標ファーストボーナスの内訳 */
 .p2br{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);font-size:12.5px;display:flex;flex-direction:column;gap:6px}
 .p2br-st{display:flex;flex-wrap:wrap;align-items:center;gap:3px 4px;font-size:11.5px;font-weight:800;color:var(--text-dim)} .p2br-st i{font-style:normal;opacity:.6}
@@ -2902,7 +2907,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v566</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v567</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3848,7 +3853,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v566';</script>
-<script src="app.js?v=v566"></script>
+<script>window.GM_EXPECT_JS='v567';</script>
+<script src="app.js?v=v567"></script>
 </body>
 </html>

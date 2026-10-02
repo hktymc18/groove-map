@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v566';
+var APP_JS_VERSION = 'v567';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v566';
+  var DATA_VERSION = 'v567';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4954,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v567', d:'2026-10-02', items:['📝 OLを「予定の一種（種類：OL）」にまとめました：OLを企画・記録すると予定にも同じものが入り、カレンダー・ToDo・通知に自然に出ます。予定とOLのどちらを直しても（日時・内容・人・実施済み・削除）もう片方に反映。種類「OL」で入れた予定もOLタブで数えます（前に入れたOL・予定も自動でつなぎます）','👤 メンバーの活動タブを整理：「＋ 追加」から OL／タスク を選ぶ形に（「予定」はOLに名前を変更）。一覧は すべて／OL／タスク で切り替え','✅ 活動タブから予定を完了した時も「OLとして記録しますか？」が出るように','🔧 「メンバーのみ」のタスクがHOMEの今日のタスクに出たり、「メンバーのみ」の予定で通知が鳴ったりしていたのを修正。複数人の予定は全員の「最後の活動」に入るように','⚡ かんたん追加で研修生を選んだ時は、稼働タイプ・GSVを表示しないように'] },
   { v:'v566', d:'2026-10-02', items:['📱 スマホの「OLを企画」でAさんや内容を入力しようとすると、シートが見えなくなる不具合を修正：キーボードが出るとiPhoneが見える範囲を下にずらすため、上に寄せたシートが画面の外に出ていました。見えている範囲の上にシートを置くようにしました（メンバー検索のシートも同じ）'] },
   { v:'v565', d:'2026-10-02', items:['📝 メンバー編集の基本タブを並べ替え：姓名→性別→地域（既定は自分の活動地域）→「ここから下は任意」写真・生年月日・Instagram・登録月。生年月日は年だけでもOK（その年の1月1日として年齢を日の横に自動表示）。登録月はプルダウンだけに','🧹 基本タブから「適用MAP」（新規は常に両方）・「LINE」・「年齢のみ」を外しました（入っているデータは消えません。年齢のみの人は生まれ年として表示）','📅 月次タブ：リスタートと「点滅表示」（旧ケアバッジ）をメモのすぐ上へ','⚡ かんたん追加で稼働タイプ（S/A/B/C）とGSV（任意）も入れられるように（くわしく登録へも引き継ぎ）'] },
   { v:'v564', d:'2026-10-02', items:['◎ 運動会MAPで「⛶ 全画面」ボタンが2つ並んでいた不具合を修正（1002-2）：現状MAPは上のツールバーの1つだけに（理想MAPは運動会のボタン列に1つ）'] },
@@ -5863,7 +5864,7 @@ function homeTaskDone(id) {
 function homeTasksHtml() {
   var t = gameToday();
   var tasks = (state.events || []).filter(function(e){
-    return e.type === 'task' && !e.done && !e.deleted && e.date && e.date <= t;
+    return e.type === 'task' && !e.done && !e.deleted && e.date && e.date <= t && evTdMine(e); // v567: 「メンバーのみ」のタスクは自分のHOMEに出さない
   });
   tasks.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); }); // 期限切れ(古い)を上に
   var html = '<div class="home-sec-label"><span>' + icn('checksq') + ' 今日のタスク</span><span style="color:var(--text-dim);font-weight:400;font-family:Inter,IBM Plex Mono,monospace">' + tasks.length + '件</span></div>';
@@ -6434,7 +6435,7 @@ function openMemberDetail(mid) {
   ol += _dRow('リストOL', listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手'));
   if (!olog.length) ol += '<div class="md-empty">OL記録はまだありません</div>';
   else ol += olog.map(function(e){ return '<div class="md-ol"><div class="md-oltop">' + evEsc(e.date||'') + (e.to?' ・ ' + evEsc(e.to):'') + '</div>' + (e.what?'<div class="md-olwhat">' + evEsc(e.what) + '</div>':'') + (e.note?'<div class="md-olnote">' + evEsc(e.note) + '</div>':'') + '</div>'; }).join('');
-  var evs = (state.events||[]).filter(function(e){ return e.memberId===mid && !e.deleted && evOnMember(e); });
+  var evs = (state.events||[]).filter(function(e){ return evHasMember(e, mid) && !e.deleted && evOnMember(e); }); // v567: 複数人の予定も
   var _mMd = findMemberAny(mid); // v545
   var tk = '';
   if (!evs.length) tk = '<div class="md-empty">紐付くタスク・予定はありません</div>';
@@ -7751,7 +7752,8 @@ function _evLastActFor(mid) {
     for (var i = 0; i < evs.length; i++) {
       var e = evs[i];
       if (!e.memberId || e.deleted || !e.date || e.date > t || !evOnMember(e)) continue; // v562: 「自分のみ」は活動に数えない
-      if (!_evLastActMap[e.memberId] || e.date > _evLastActMap[e.memberId]) _evLastActMap[e.memberId] = e.date;
+      var _ids7 = (e.memberIds && e.memberIds.length) ? e.memberIds : [e.memberId]; // v567: 複数人の予定は全員の活動に
+      for (var _k7 = 0; _k7 < _ids7.length; _k7++) { var _id7 = _ids7[_k7]; if (!_evLastActMap[_id7] || e.date > _evLastActMap[_id7]) _evLastActMap[_id7] = e.date; }
     }
   }
   return _evLastActMap[mid] || '';
@@ -10343,12 +10345,98 @@ function olpSave() {
   (p.hostRecs || []).forEach(function(x) { drop(x.mid, function(r) { return r === x.rec; }); }); // 移行時の仮置き（自分の記録）は人が決まったら不要
   autoSave();
   _olMirror(gid, _mgGone, false); // v531: 共有MAPのメンバーは相手のMAPにも
+  try { _olEvUpsert(gid); } catch (eU) {} // v567: 予定（種類OL）にも
   var first = p.mids[0];
   var lbl = _olKindLabel(p.kind) + (p.kind === 'group' ? '（' + n + '人）' : '');
   closeOlPlan();
   if (typeof renderStats === 'function') renderStats();
   _olAfterRecordChange(first);
   toast((p.mode === 'edit' ? '更新しました：' : (p.st === 'planned' ? '企画しました：' : '記録しました：')) + lbl);
+}
+// ════ v567: OLは予定の一種（種類：OL）。OLを企画・記録すると予定にも同じものを作り、片方を直すともう片方も合わせる ════
+//   OLの記録（参加者ごとの olLog・同じ gid）と、予定（state.events・kind:'OL'・olGid）を1対1でつなぐ。
+//   予定側：カレンダー・ToDo・通知・PLANに自然に入る／OL側：OLタブ（3〜7人OLの枠・個別OLの件数）に入る
+function _olEvFind(gid) { if (!gid) return null; var es = state.events || []; for (var i = 0; i < es.length; i++) if (es[i] && !es[i].deleted && es[i].olGid === gid) return es[i]; return null; }
+function _olSyncOn() { return !viewingOwnerUid && !!eventsUid(); }
+function _olEvUpsert(gid) { // OLの記録 → 予定
+  if (!gid || !_olSyncOn()) return null;
+  var ev = null, l = _olEvents(); for (var i = 0; i < l.length; i++) if (l[i].gid === gid) { ev = l[i]; break; }
+  if (!ev || !ev.mids.length) return null;
+  var me = currentUser && currentUser.uid;
+  if (ev.ext && ev.ext.uid && ev.ext.uid !== me) return null; // 他の人のMAPで記録されたOLは、その人の予定
+  var e = _olEvFind(gid), isNew = !e, now = new Date().toISOString();
+  if (isNew) e = { id: 'evol_' + String(gid).replace(/[^A-Za-z0-9_]/g, ''), type: 'event', categoryId: '', priority: 'normal', memo: '', createdAt: now };
+  e.title = ev.what || (ev.kind === 'group' ? '3〜7人OL' : 'OL');
+  e.kind = 'OL'; e.olGid = gid; e.olKind = ev.kind; e.olLogged = true;
+  e.date = ev.date || ''; e.time = ev.time || ''; e.asan = ev.asan || '';
+  e.memberIds = ev.mids.slice(); e.memberId = ev.mids[0] || '';
+  e.vis = 'both'; e.selfShow = true;
+  var dn = ev.st === 'done'; if (!!e.done !== dn) { e.done = dn; e.completedAt = dn ? now : ''; }
+  e.updatedAt = now;
+  if (isNew) state.events.push(e);
+  saveEventDoc(e);
+  return e;
+}
+function _olEvDrop(gid) { // OLを消した → つながった予定も消す
+  var e = _olEvFind(gid); if (!e || !_olSyncOn()) return;
+  for (var i = 0; i < state.events.length; i++) if (state.events[i] === e) { state.events.splice(i, 1); break; }
+  e.deleted = true; e.deletedAt = e.updatedAt = new Date().toISOString();
+  saveEventDoc(e);
+  try { _notifQueueDelete(e.id); } catch (eQ) {}
+}
+function _olFromEvent(e) { // 予定（種類OL）→ OLの記録
+  if (!e || e.type !== 'event' || !_olSyncOn()) return;
+  var mids = (e.memberIds && e.memberIds.length ? e.memberIds : (e.memberId ? [e.memberId] : [])).filter(function(id) { return !!_olMem(id); });
+  if (!mids.length) return;
+  var gid = e.olGid || ('olg_ev_' + String(e.id).replace(/[^A-Za-z0-9_]/g, ''));
+  var old = null, l = _olEvents(); for (var i = 0; i < l.length; i++) if (l[i].gid === gid) { old = l[i]; break; }
+  var kind = e.olKind || (old ? old.kind : (mids.length >= OL_GROUP_MIN ? 'group' : 'solo'));
+  var what = (e.title && e.title !== 'OL' && e.title !== '3〜7人OL') ? e.title : (old ? old.what : '');
+  var data = { date: e.date || '', time: e.time || '', asan: e.asan || '', what: what, st: e.done ? 'done' : 'planned', gid: gid, mids: mids.slice(), kind: kind,
+    guests: old ? old.guests.slice() : [], to: '', updatedAt: new Date().toISOString() };
+  mids.forEach(function(mid) {
+    var log = freshOlLog(mid), rec = null;
+    for (var j = 0; j < log.length; j++) if (log[j] && log[j].gid === gid) { rec = log[j]; break; }
+    if (!rec) { rec = { note: '', pnote: '' }; log.unshift(rec); }
+    for (var k in data) rec[k] = (k === 'mids' || k === 'guests') ? data[k].slice() : data[k];
+  });
+  var gone = [];
+  if (old) old.mids.forEach(function(mid) {
+    if (mids.indexOf(mid) >= 0) return;
+    var log = freshOlLog(mid); for (var j = log.length - 1; j >= 0; j--) if (log[j] && log[j].gid === gid) { _olTomb(mid, log[j]); log.splice(j, 1); }
+    if (/^MG_/.test(mid)) gone.push(mid);
+  });
+  e.olGid = gid; e.olKind = kind; e.olLogged = true; if (!e.kind) e.kind = 'OL';
+  autoSave();
+  try { _olMirror(gid, gone, false); } catch (eM) {}
+}
+function _olDropForEvent(e) { // 予定（OL）を消した → OLの記録も消す
+  if (!e || !e.olGid || !_olSyncOn()) return;
+  var fd = state.freshData || {}, mg = [];
+  for (var mid in fd) {
+    var log = (fd[mid] && fd[mid].olLog) || [];
+    for (var i = log.length - 1; i >= 0; i--) if (log[i] && log[i].gid === e.olGid) { _olTomb(mid, log[i]); log.splice(i, 1); if (/^MG_/.test(mid) && mg.indexOf(mid) < 0) mg.push(mid); }
+  }
+  autoSave();
+  try { _olMirror(e.olGid, mg, true); } catch (eM) {}
+}
+// 前に入れたOL・種類OLの予定をつなぐ（1回だけ。予定とOLの記録の両方を読み込んでから）。IDは決まった形なので端末が違っても二重にならない
+var _olMigKey = '';
+function _olEvMigrate() {
+  if (!_olSyncOn() || !window._evLoadedUid || window._evLoadedUid !== eventsUid() || window._fdLoadedMonth !== state.currentMonth) return;
+  var key = eventsUid() + '|' + state.currentMonth; if (_olMigKey === key) return; _olMigKey = key;
+  var cut = (function() { var d = new Date(); d.setDate(d.getDate() - 60); return evYmd(d); })(), n = 0;
+  _olEvents().forEach(function(ev) {
+    if (!ev.gid || _olEvFind(ev.gid)) return;
+    if (ev.st !== 'planned' && (ev.date || '') < cut) return; // 古い実施済みはそのまま（カレンダーを埋めない）
+    if (_olEvUpsert(ev.gid)) n++;
+  });
+  (state.events || []).slice().forEach(function(e) {
+    if (!e || e.deleted || e.olGid || e.type !== 'event' || evKindOf(e) !== 'OL' || !evIsMemberLinked(e)) return;
+    if ((e.date || '') && e.date < cut && e.done) return;
+    _olFromEvent(e); saveEventDoc(e); n++;
+  });
+  if (n) { try { renderCurrentView(); } catch (eR) {} }
 }
 function olpDelete() {
   var p = _olp;
@@ -10364,6 +10452,7 @@ function olpDelete() {
   }
   autoSave();
   if (p.gid) _olMirror(p.gid, _mgAll, true); // v531: 相手のMAPからも消す
+  try { if (p.gid) _olEvDrop(p.gid); } catch (eD) {} // v567: つながった予定も消す
   var first = p.mids[0];
   closeOlPlan();
   if (typeof renderStats === 'function') renderStats();
@@ -12126,12 +12215,16 @@ function edHelp(ev, id) {
   var q = ev && ev.currentTarget;
   if (q && q.classList) q.classList.toggle('on', open);
 }
+// v567: 活動タブの「＋ 追加」（OL／タスクを選ぶ）と、すべて／OL／タスクの切り替え
+var _meActF = {};
+function meActAdd(btn) { var pk = btn && btn.parentNode && btn.parentNode.querySelector('.me-act-pick'); if (pk) pk.style.display = pk.style.display === 'none' ? 'flex' : 'none'; }
+function meActFilter(mid, f) { _meActF[mid] = f; var m = _mFind(mid); if (m) meRenderExtras(m); }
 function meRenderExtras(m) {
   // v366: OLタブは「活動」タブに統合（OL記録・タスク・予定・研修予定を1本の時系列で）
   var tkBox = document.getElementById('mePageTask');
   if (!tkBox) return;
   if (!m || !m.id) {
-    tkBox.innerHTML = '<div class="md-empty">メンバーを保存すると<br>予定・タスク・OLを記録できます</div>';
+    tkBox.innerHTML = '<div class="md-empty">メンバーを保存すると<br>OL・タスクを記録できます</div>';
     return;
   }
   var mid = m.id;
@@ -12141,6 +12234,7 @@ function meRenderExtras(m) {
   var items = [];
   (state.events || []).forEach(function(e){
     if (!evHasMember(e, mid) || e.deleted || !evOnMember(e)) return;
+    if (e.olGid && e.type !== 'task') return; // v567: 予定（種類OL）とつながったOLは、OLの行として1つだけ出す
     items.push({ d: e.date || '', kind: (e.type === 'task' ? 'task' : 'ev'), e: e });
   });
   (fd.olLog || []).forEach(function(o, oi){
@@ -12151,11 +12245,19 @@ function meRenderExtras(m) {
     if (hh.result === 'planned' && hh.date) items.push({ d: hh.date, kind: 'tr', h: hh });
   });
   items.sort(function(a, b){ return (b.d || '').localeCompare(a.d || ''); });
-  var tkHtml = '<div style="display:flex;gap:8px;margin-bottom:10px">'
-    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openEventAdd(\'' + mid + '\')">' + icn('calendar') + ' 予定</button>'
-    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="ckAddTask(\'' + mid + '\')">' + icn('checksq') + ' タスク</button>'
-    + '<button class="me-add-btn" style="flex:1;margin:0" onclick="openOlRecordModal(\'' + mid + '\')">' + icn('pencil') + ' OL</button>'
-    + '</div>';
+  // v567: 活動＝「OL」（人と会う予定・OLの企画と記録）と「タスク」の2つに整理。追加は1つのボタンから選ぶ
+  var _grp = function(it) { return it.kind === 'task' ? 'task' : 'ol'; };
+  var nOl = items.filter(function(it) { return _grp(it) === 'ol'; }).length, nTk = items.length - nOl;
+  var f = _meActF[mid] || 'all';
+  var tkHtml = '<div class="me-act-add"><button class="me-add-btn" style="flex:1;margin:0" onclick="meActAdd(this)">＋ 追加</button>'
+    + '<div class="me-act-pick" style="display:none">'
+    + '<button class="me-add-btn" onclick="openOlRecordModal(\'' + mid + '\')">' + icn('pencil') + ' OL<small>人と会う予定・OLの企画と記録</small></button>'
+    + '<button class="me-add-btn" onclick="ckAddTask(\'' + mid + '\')">' + icn('checksq') + ' タスク<small>この人に関するやること</small></button>'
+    + '</div></div>'
+    + '<div class="me-act-f">' + [['all', 'すべて', items.length], ['ol', 'OL', nOl], ['task', 'タスク', nTk]].map(function(x) {
+      return '<span class="' + (f === x[0] ? 'on' : '') + '" onclick="meActFilter(\'' + mid + '\',\'' + x[0] + '\')">' + x[1] + ' <b>' + x[2] + '</b></span>';
+    }).join('') + '</div>';
+  if (f !== 'all') items = items.filter(function(it) { return _grp(it) === f; });
   tkHtml += '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">📋 リストOL: ' + (listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手')) + '</div>'; // v366: 旧OLタブから移設
   var _npl = memberNextPlanLines(m);
   if (_npl.length) tkHtml += '<div style="font-size:12px;color:var(--gold);margin-bottom:8px;line-height:1.7">' + _npl.join('<br>') + '</div>';
@@ -12350,7 +12452,9 @@ function meToggleTask(id, mid) {
   e.updatedAt = new Date().toISOString();
   // CAL-2: テンプレ由来ならパネルからの完了でもMAP実績へ還元（トーストは還元側を優先）
   var _rw = (e.done && typeof _evRewardOnDone === 'function') ? _evRewardOnDone(e) : false;
+  try { if (e.olGid) _olFromEvent(e); } catch (eSy) {} // v567: OLの予定は記録にも
   saveEventDoc(e);
+  try { _evOlPrompt(e); } catch (eOp) {} // v567: 活動タブから完了した時も「OLとして記録」を聞く
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   if (e.done && typeof gameCheck === 'function') gameCheck();
@@ -12405,6 +12509,7 @@ function qaCatSel(cat) {
   if (w9) { var cs = w9.querySelectorAll('.qa-chip'); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute('data-c') === cat); }
   var ta = document.getElementById('qaTitleArea'); if (ta) ta.innerHTML = _qaTitleAreaHtml(cat);
   var tr = document.getElementById('qaTrainRow'); if (tr) tr.style.display = cat === '研修生' ? '' : 'none';
+  var ar = document.getElementById('qaActRow'); if (ar) ar.style.display = cat === '研修生' ? 'none' : ''; // v567: 研修生は稼働・GSVを出さない
 }
 function qaTitleSel(t) { var cat = _qaCatGet(); try { localStorage.setItem('gm_qaTitle_' + cat, t); } catch(e) {} }
 function _qaStageGet() {
@@ -12448,9 +12553,9 @@ function openQuickAdd() {
     + '<div class="p2-meta" style="margin-bottom:4px">区分</div>'
     + '<div style="display:flex;gap:6px;margin-bottom:10px" id="qaCats">' + catChips + '</div>'
     + '<div id="qaTitleArea">' + _qaTitleAreaHtml(qcat) + '</div>'
-    + '<div class="p2-meta" style="margin-bottom:4px">稼働タイプ・GSV（任意）</div>'
+    + '<div id="qaActRow"' + (qcat === '研修生' ? ' style="display:none"' : '') + '><div class="p2-meta" style="margin-bottom:4px">稼働タイプ・GSV（任意）</div>'
     + '<div class="qa-acts" id="qaActs">' + ['S', 'A', 'B', 'C'].map(function(x) { return '<span class="qa-chip" data-a="' + x + '" onclick="qaActSel(\'' + x + '\')">' + x + '</span>'; }).join('')
-    + '<input class="fi" id="qaGsv" type="number" inputmode="numeric" placeholder="GSV" style="flex:1.6;min-width:0;padding:8px 10px;font-size:13px;text-align:right" onfocus="edSelAll(this)"></div>'
+    + '<input class="fi" id="qaGsv" type="number" inputmode="numeric" placeholder="GSV" style="flex:1.6;min-width:0;padding:8px 10px;font-size:13px;text-align:right" onfocus="edSelAll(this)"></div></div>'
     + '<div id="qaTrainRow"' + (qcat === '研修生' ? '' : ' style="display:none"') + '>'
     + '<div class="p2-meta" style="margin-bottom:4px">研修の予定（任意・入力すると研修履歴に登録）</div>'
     + '<div style="display:flex;gap:8px;margin-bottom:14px">'
@@ -12491,8 +12596,8 @@ function qaSave(cont) {
     id: 'id-' + Date.now(),
     lastName: last, firstName: first, gender: _qaGender,
     title: stage, cat: qcat,
-    activity: _qaAct, actRate: '', morale: 1, priority: '', // v565: 稼働タイプ
-    ptCurrent: _qaGsvVal(), ptFixed: 0, ptSelf: _qaGsvVal(), // v565: GSV（任意）
+    activity: qcat === '研修生' ? '' : _qaAct, actRate: '', morale: 1, priority: '', // v565: 稼働タイプ（v567: 研修生は入れない）
+    ptCurrent: qcat === '研修生' ? 0 : _qaGsvVal(), ptFixed: 0, ptSelf: qcat === '研修生' ? 0 : _qaGsvVal(), // v565: GSV（任意）
     trainee: false, parentId: pid, mapType: 'both', // v497: かんたん追加も既定「両方」
     memo: '', nextDate: '', aSan: ((document.getElementById('qaAsan') || {}).value || '').trim(), instaUrl: '', lineId: '',
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
@@ -12529,7 +12634,7 @@ function qaToFull() {
   var pid = (document.getElementById('qaParent') || {}).value || '';
   var g = _qaGender, qcat = _qaCatGet(), stage = _qaTitleGet(qcat);
   var tSel = document.getElementById('qaTitle'); if (qcat !== '研修生' && tSel && tSel.value) stage = tSel.value;
-  var _qaAct0 = _qaAct, _qaG0 = _qaGsvVal();
+  var _qaAct0 = qcat === '研修生' ? '' : _qaAct, _qaG0 = qcat === '研修生' ? 0 : _qaGsvVal(); // v567
   _p2SheetClose('qaOv');
   if (pid) selectedParentId = pid;
   openAdd();
@@ -14737,7 +14842,7 @@ function p2WeekOk() { _p2().weekOk = _p2WeekKey(); saveGoals(); if (currentView 
 function p2TodayHtml() {
   if (viewingOwnerUid || !state.goals || !state.goals.plan) return '';
   var t = evTodayYmd(), items = [];
-  (state.events || []).filter(function(e) { return e && !e.deleted && e.date === t && !/^UN_/.test(String(e.id || '')) && P2_KIND_KEY[evKindOf(e)] && !(e.type === 'task' && e.done); })
+  (state.events || []).filter(function(e) { return e && !e.deleted && e.date === t && !/^UN_/.test(String(e.id || '')) && P2_KIND_KEY[evKindOf(e)] && !(e.type === 'task' && e.done) && (e.type === 'task' ? evTdMine(e) : evShowMine(e)); }) // v567: 自分に出さない予定は除く
     .sort(function(a, b) { return (a.time || '99').localeCompare(b.time || '99'); }).slice(0, 3).forEach(function(e) {
       items.push('<div class="p2td-it" onclick="openEventActions(\'' + e.id + '\')"><span class="tm">' + (e.time || '今日') + '</span><span class="kd">' + evEsc(evKindOf(e)) + '</span><span class="tt">' + evEsc(e.title || '') + '</span></div>');
     });
@@ -18020,6 +18125,7 @@ function loadEvents(uid) {
     var _all = list || [];
     state.trashEvents = _all.filter(function(e){ return !!e.deleted; });
     state.events = _all.filter(function(e){ return !e.deleted; });
+    window._evLoadedUid = uid; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} }, 800); // v567
     try {
       var _cut = new Date(Date.now() - 30 * 86400000).toISOString();
       state.trashEvents = state.trashEvents.filter(function(e){
@@ -19925,6 +20031,7 @@ function _digestSync() {
 function _notifSync(e) {
   if (!db || !currentUser || !currentUser.uid || !e || !e.id) return;
   var need = !e.done && !e.deleted && e.date && e.remindBefore !== '' && e.remindBefore !== undefined && e.remindBefore !== null; // v371: ゴミ箱内は通知しない
+  if (need && (e.type === 'task' ? !evTdMine(e) : !evShowMine(e))) need = false; // v567: 「メンバーのみ」は自分に通知しない
   if (need) {
     var tm = e.time || '09:00'; // 時刻なしは9:00基準（既存のアプリ内リマインドと同じ）
     var p = String(e.date).split('-'), q = String(tm).split(':');
@@ -20796,11 +20903,14 @@ function memberNextPlanLines(m) {
   var fEv = null, fTk = null;
   futs.forEach(function(x){ if (x.type === 'task') { if (!fTk) fTk = x; } else { if (!fEv) fEv = x; } });
   // v545: メンバー側は「種類＋Aさん」で表示（タイトルの本人の名前は外す）
-  if (fEv) out.push('🗓 次の予定：' + evEsc(evMemberLabel(fEv, m)) + '（' + fEv.date.split('-').slice(1).join('/') + (fEv.time ? ' ' + fEv.time : '') + '）');
-  if (fTk) out.push('✅ 次のタスク：' + evEsc(evMemberLabel(fTk, m)) + '（' + fTk.date.split('-').slice(1).join('/') + (fTk.time ? ' ' + fTk.time : '') + '）');
+  // v567: メンバーとの予定は「OL」。カレンダーの予定とOLの企画のうち、いちばん近いものを「次のOL」として1行に（予定とつながったOLは二重にしない）
   var fd = (state.freshData && state.freshData[m.id]) || {};
-  var olPlan = (fd.olLog || []).filter(function(o){ return o.st === 'planned' && o.date && o.date >= t; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); })[0];
-  if (olPlan) out.push('📝 OL予定：' + (olPlan.what ? evEsc(olPlan.what) : '') + '（' + olPlan.date.split('-').slice(1).join('/') + (olPlan.asan ? ' A:' + evEsc(olPlan.asan) : '') + '）');
+  var olPlan = (fd.olLog || []).filter(function(o){ return o.st === 'planned' && o.date && o.date >= t && !(o.gid && typeof _olEvFind === 'function' && _olEvFind(o.gid)); }).sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); })[0];
+  var nx = null;
+  if (fEv) nx = { d: fEv.date, tm: fEv.time || '', lb: evMemberLabel(fEv, m), as: '' };
+  if (olPlan && (!nx || (olPlan.date + (olPlan.time || '')) < (nx.d + nx.tm))) nx = { d: olPlan.date, tm: olPlan.time || '', lb: 'OL' + (olPlan.what ? '・' + olPlan.what : ''), as: olPlan.asan || '' };
+  if (nx) out.push('📝 次のOL：' + evEsc(nx.lb) + '（' + nx.d.split('-').slice(1).join('/') + (nx.tm ? ' ' + nx.tm : '') + (nx.as ? ' A:' + evEsc(nx.as) : '') + '）');
+  if (fTk) out.push('✅ 次のタスク：' + evEsc(evMemberLabel(fTk, m)) + '（' + fTk.date.split('-').slice(1).join('/') + (fTk.time ? ' ' + fTk.time : '') + '）');
   return out;
 }
 function dueTaskCount() {
@@ -21217,6 +21327,7 @@ function checkReminders() {
     var rb = e.remindBefore;
     if (rb === undefined || rb === null || rb === '') return;
     if (e.type === 'task' && e.done) return;
+    if (e.type === 'task' ? !evTdMine(e) : !evShowMine(e)) return; // v567: 「メンバーのみ」は通知しない
     var dt = evDateTime(e);
     if (!dt) return;
     var evMs = dt.getTime();
@@ -23325,6 +23436,7 @@ function _evDeleteById(id) {
   state.trashEvents.push(e);
   saveEventDoc(e);
   _notifQueueDelete(id); // CAL-4: 通知予約も削除
+  try { if (bak.olGid) _olDropForEvent(bak); } catch (eOd) {} // v567: OLの予定を消したらOLの記録も
   if (navigator.vibrate) try { navigator.vibrate(10); } catch(ev3) {}
   updateEventsBadge();
   renderEvents();
@@ -23340,6 +23452,7 @@ function _evDeleteById(id) {
     tdTrashTake(bak.id); // v371: ゴミ箱から取り出す
     bak.deleted = ''; bak.deletedAt = '';
     state.events.push(bak);
+    try { if (bak.olGid) _olFromEvent(bak); } catch (eOr) {} // v567: OLの記録も戻す
     saveEventDoc(bak); // 通知予約も自動復元される
     updateEventsBadge();
     renderEvents();
@@ -24476,6 +24589,7 @@ function renderCalendar() {
     // v516: 同じ企画（3〜7人OL・2人の個別OL）は1本にまとめ、種類を表示
     _olEvents().forEach(function(_oe) {
       if (!_oe.date || _oe.st !== 'planned' || !_oe.recs.length) return;
+      if (_oe.gid && _olEvFind(_oe.gid)) return; // v567: 予定（種類OL）とつながったOLは予定として出ている
       var _r0 = _oe.recs[0];
       var _ot = _oe.kind === 'group' ? ('3〜7人OL（' + _oe.n + '人）') : ('OL ' + _olEvNames(_oe, 2));
       (byDate[_oe.date] = byDate[_oe.date] || []).push({ ev: { id: 'OL_' + _r0.mid + '_' + _r0.idx, type: 'event', date: _oe.date, time: _oe.time || '', title: _ot + (_oe.what ? '・' + _oe.what : ''), color: _oe.kind === 'group' ? '#8B7CFF' : '#B48CFF', _ol: true }, span: '' });
@@ -24895,6 +25009,7 @@ function _daySheetHtml(ds, skipTasks) { // v468: PC右パネルで今日を表�
   if (typeof _olCalOn === 'function' && _olCalOn() && !viewingOwnerUid && state.freshData) {
     _olEvents().forEach(function(_de) { // v516: 企画ごとに1件（種類つき）
       if (_de.date !== ds || _de.st !== 'planned' || !_de.recs.length) return;
+      if (_de.gid && _olEvFind(_de.gid)) return; // v567: 予定（種類OL）とつながったOLは予定として出ている
       ols.push({ mid: _de.recs[0].mid, idx: _de.recs[0].idx, name: (_de.kind === 'group' ? '3〜7人OL（' + _de.n + '人）' : '個別OL ' + _olEvNames(_de, 2)), what: _de.what || '', asan: _de.asan || '', time: _de.time || '' });
     });
   }
@@ -25044,27 +25159,31 @@ function toggleEventDone(id) {
   e.completedAt = e.done ? new Date().toISOString() : '';
   e.updatedAt = new Date().toISOString();
   if (e.done) _evRewardOnDone(e); // CAL-2: rewarded フラグを立ててから1回の書き込みにまとめる
+  try { if (e.olGid) _olFromEvent(e); } catch (eSy) {} // v567: OLの予定は「予定／実施済み」を記録にも
   saveEventDoc(e);
+  _evOlPrompt(e);
+  _toggleEventDoneTail(e, id);
+}
+// v567: メンバー付きの予定を完了 → OLとして記録するか聞く（カレンダー・活動タブのどちらから完了しても）
+function _evOlPrompt(e) {
   // v407: メンバー紐付きの予定を完了→ワンタップでOL記録化（⚙設定の「予定とOLの連携」でオフ可）
-  if (e.done && e.type === 'event' && typeof _olLinkOn === 'function' && _olLinkOn() && !viewingOwnerUid && !e.olLogged) {
+  if (e.done && e.type === 'event' && typeof _olLinkOn === 'function' && _olLinkOn() && !viewingOwnerUid && !e.olLogged && !e.olGid) {
     var _olMid = e.memberId || ((e.memberIds && e.memberIds.length) ? e.memberIds[0] : '');
     if (_olMid) { // v531: 共有MAPのメンバーも（相手のMAPにも記録）
       (function(ev7, mid7){
         setTimeout(function(){
           toastAction('「' + (ev7.title || '') + '」をOLとして記録しますか？', '記録する', function(){
-            var log7 = freshOlLog(mid7);
-            var gid7 = 'olg_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            log7.unshift({ date: ev7.date || evTodayYmd(), asan: '', to: '', what: ev7.title || '', note: '', st: 'done', gid: gid7, mids: [mid7], kind: 'solo', guests: [], updatedAt: new Date().toISOString() });
-            ev7.olLogged = true;
+            ev7.olKind = 'solo';
+            _olFromEvent(ev7); // v567: この予定とOLの記録をつなぐ（以後どちらを直しても合う）
             saveEventDoc(ev7);
-            autoSave();
-            if (/^MG_/.test(mid7)) _olMirror(gid7, [], false);
             toast('OL記録に追加しました（反応はメンバーのOLから追記できます）');
           }, 7000);
         }, 500);
       })(e, _olMid);
     }
   }
+}
+function _toggleEventDoneTail(e, id) {
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   if (navigator.vibrate) try { navigator.vibrate(10); } catch(ev4) {} // v303: 触覚フィードバック（Android）
   // v303: 完了時はふわっと消えるアニメーションを見せてから再描画
@@ -26677,6 +26796,7 @@ function _saveEventBody() {
   // v378: 「＋続けて追加」で関連メンバーの紐付けが外れるバグ修正（メンバー・種別を引き継いで再オープン）
   var _contIds = (e.memberIds || []).slice();
   var _contType = e.type;
+  try { if (!viewingOwnerUid && e.type === 'event' && (e.olGid || evKindOf(e) === 'OL') && evIsMemberLinked(e)) _olFromEvent(e); } catch (eOl) {} // v567: OLの予定はOLの記録にも
   saveEventDoc(e).then(function(){
     if (_repMade > 1) toast('繰り返し予定を' + _repMade + '件作成しました ✓');
     else if (_newTask) toastAction('✓ 「' + _savedTitle + '」を追加しました', '＋ 続けて追加', function(){
@@ -28914,6 +29034,7 @@ function fsLoadFromFirestore(uid) {
     if (loaded.current || loaded.ideal || loaded.stats) {
       toast('データを読み込みました ✓');
     }
+    if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} }, 800); } // v567
     renderCurrentView();
     updateLTSV('current', state.members);
     // v511: 変更検知の基準＝読込直後（描画時の再計算で付く集計値も含めた状態）
