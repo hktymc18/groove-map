@@ -3707,14 +3707,15 @@ function trRenderList(){
         + '<input type="text" id="tsRef" placeholder="紹介者で絞り込み（部分一致）" value="' + esc(gTrFilter.ref) + '" style="margin:0 0 6px;">'
       : '')
     + '<input type="search" id="tsQ" placeholder="名前・ふりがな・番号で検索" value="' + esc(gTrFilter.q) + '" style="margin:0 0 4px;">';
+  // 「番号で開く」は研修生が増えても埋もれないよう、検索・一覧より上（最上部）に置く
   el.innerHTML = '<div id="trDlrList"></div>'
-    + searchHtml
-    + '<div id="tsResults"></div>'
-    + '<p style="font-size:13px;font-weight:700;margin:14px 0 4px;">研修をした方の番号を入力してください</p>'
+    + '<p style="font-size:13px;font-weight:700;margin:4px 0 4px;">研修をした方の番号を入力してください</p>'
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
-    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、会員番号（QRカード記載）を入れると開けます。</p>');
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">下の一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、上の会員番号（QRカード記載）を入れると開けます。</p>')
+    + '<div style="margin-top:14px;">' + searchHtml + '</div>'
+    + '<div id="tsResults"></div>';
   // 検索条件の変更
   var tsAll = $('tsAll');
   if(tsAll) tsAll.onchange = function(){
