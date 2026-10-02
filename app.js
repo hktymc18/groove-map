@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v563';
+var APP_JS_VERSION = 'v564';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -2090,7 +2090,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     + '<div class="orbit-btn" onclick="orbitZoomBy(-1)" title="縮小">−</div>'
     + '<div class="orbit-btn" onclick="orbitZoomBy(0)" title="全体表示">⊡</div>'
     + '<div class="orbit-btn" onclick="orbitZoomBy(1)" title="拡大">＋</div>'
-    + '<div class="orbit-btn mapFsBtn' + (document.querySelector('.map-fs') ? ' on' : '') + '" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>'
+    + (mapType === 'ideal' ? '<div class="orbit-btn mapFsBtn' + (document.querySelector('.map-fs') ? ' on' : '') + '" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに">⛶ 全画面</div>' : '') // v564: 1002-2 現状MAPは上のツールバーに全画面ボタンがあるため出さない（2つ並んでいた）
     + '<div class="orbit-btn" onclick="orbitPdfOpen()" title="A3横のPDFを作成（コンビニ印刷・LINE共有に）">' + icn('doc') + ' PDFで保存</div>';
   wrap.appendChild(bar);
   var fsOn = !!document.querySelector('.map-fs');
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v563';
+  var DATA_VERSION = 'v564';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4952,6 +4952,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v564', d:'2026-10-02', items:['◎ 運動会MAPで「⛶ 全画面」ボタンが2つ並んでいた不具合を修正（1002-2）：現状MAPは上のツールバーの1つだけに（理想MAPは運動会のボタン列に1つ）'] },
   { v:'v563', d:'2026-10-02', items:['🏷 GSV 0PのBRが翌月コピーで降格の確認に出なかった不具合を修正（1001-4）：タイトルが「ブランドレプリゼンタティブ」や全角の「ＢＲ」で保存されていると、丸の中ではBRと表示されるのにBRとして判定されていませんでした。表記ゆれもBRとして判定し、保存されたタイトルも「BR」などに自動でそろえます（自由入力の文字はそのまま）','📱 スマホを横向き→運動会→全画面→縦向きにした時の追加対策（1001-6）：PC表示⇄スマホ表示が切り替わったら、スクロールを一番上に戻し、MAPはタブを開き直した状態に作り直します（「‹ メニュー｜現状MAP／理想MAP」のバーが重なる・ツリーより下の空白が出る対策）'] },
   { v:'v562', d:'2026-10-02', items:['👥 メンバーに予定・タスクを入れる時の扱いを3つに（1001-2）：👤メンバーのみ（メンバーのカード・ホバーに出す）／🙋自分のみ（自分のカレンダー・ToDoだけ。メンバーのカード・共有先には出さず、行動にも数えない）／👥両方。前に入れた予定は「メンバー専用」→メンバーのみ、「自分にも表示」→両方 のまま','🎯 目標をなおす：目標タイトル・次の山のタイトルをプルダウンで選ぶように（月収から自動で選ばれ、手で変えると「手動」）','🧹 PLANの「まず自分を登録」の案内を出さないように（MAPが空の時の案内はそのまま）'] },
   { v:'v561', d:'2026-10-02', items:['🗺 PC：NAを研修の「流れた」でOUTにすると、ツリーが中央（初期表示）に戻っていた不具合を修正（1001-1）。同じMAP・同じ月の描き直しは、どの操作でも今見ている位置と倍率のままにしました','◎ PC運動会：メンバーの編集やNAの追加のたびに画面が左上に移動していた不具合を修正（1001-3）','🔗 共有メンバーにカーソルを合わせても情報が出なかった不具合を修正（1001-5）：タイトル・GSV・稼働・メモと、共有元のMAPの予定・タスクを表示します（スマホはカードをタップ）。予定を見せない共有の時は「共有されていません」と表示','📱 スマホを横向き→運動会→全画面→縦向きにすると画面が崩れ、ツリーが消えることがあった不具合を修正（1001-6）：スマホ表示に戻ったら全画面を自動で解除し、回転の少し後にもツリーを確認して作り直します'] },
