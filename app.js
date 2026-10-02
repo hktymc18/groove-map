@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v562';
+var APP_JS_VERSION = 'v563';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -265,6 +265,7 @@ function demoteTitleFor(m, nextMonth) {
 function _computeTitleTransition(m, nextMonth) {
   var gsv = m.ptCurrent || 0;
   var t = (m.title || '').trim();
+  if (t && _isKnownTitle(normTitle(t))) t = normTitle(t); // v563: 表記ゆれ（ＢＲ・ブランドレプリゼンタティブ等）もBRとして判定
   var cat = (typeof detectCategory === 'function') ? detectCategory(t) : '';
   if (cat === 'BA') {
     var qi = ['LOI', 'Q2', 'Q3', 'Q4'].indexOf(t);
@@ -1405,7 +1406,7 @@ function _pcModeCheck() {
   }
   if (_lastPcMode !== null && _pcNow !== _lastPcMode) {
     _lastPcMode = _pcNow;
-    if (typeof renderCurrentView === 'function') { try { renderCurrentView(); } catch (eMc) {} }
+    _pcModeReset();
     return true;
   }
   _lastPcMode = _pcNow;
@@ -1415,6 +1416,21 @@ function _pcModeCheck() {
     if (tc9 && !tc9.children.length && membersForMap(currentView).length) { try { renderCurrentView(); } catch (eTr) {} return true; }
   }
   return false;
+}
+// v563: 1001-6 PC表示⇄スマホ表示が切り替わったら、スクロールを一番上に戻し、MAPはタブを開き直したのと同じ状態に作り直す
+//        （横向きで下までスクロールした位置が縦向きに残り、ツリーより下の空白が出る＝「ツリーが消える」・
+//          上に貼り付く「‹ メニュー｜現状MAP／理想MAP」のバーが中身に重なる、の原因）
+function _pcModeReset() {
+  try {
+    var sa = document.getElementById('scrollArea'); if (sa) sa.scrollTop = 0;
+    var vw = document.getElementById('view-' + currentView); if (vw) vw.scrollTop = 0;
+    if (window.scrollY) window.scrollTo(0, 0);
+  } catch (eS) {}
+  try {
+    if (currentView === 'current' || currentView === 'ideal') { switchView(currentView); return; }
+    var bh = document.getElementById('backHomeBar'); if (bh && isPCMode()) bh.style.display = 'none';
+    renderCurrentView();
+  } catch (eR) { try { renderCurrentView(); } catch (eR2) {} }
 }
 window.addEventListener('orientationchange', function() { setTimeout(_pcModeCheck, 300); setTimeout(_pcModeCheck, 900); });
 setInterval(function() { if (!document.hidden) _pcModeCheck(); }, 4000);
@@ -3908,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v562';
+  var DATA_VERSION = 'v563';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4566,6 +4582,7 @@ function _renderCurrentViewNow() {
   recalcAllGSV();
   // 自分のMAPのみ：地域の表記ゆれ（愛知/愛知県→名古屋）を統一し、変換時のみ保存
   if (!viewingOwnerUid && typeof migrateRegions === 'function' && migrateRegions()) autoSave();
+  if (!viewingOwnerUid && state.isEditor && typeof migrateTitles === 'function' && migrateTitles()) { recalcAllGSV(); autoSave(); } // v563: タイトルの表記ゆれを統一
   if (currentView === 'members') renderMembers();
   else if (currentView === 'current') renderTree('current');
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
@@ -4935,6 +4952,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v563', d:'2026-10-02', items:['🏷 GSV 0PのBRが翌月コピーで降格の確認に出なかった不具合を修正（1001-4）：タイトルが「ブランドレプリゼンタティブ」や全角の「ＢＲ」で保存されていると、丸の中ではBRと表示されるのにBRとして判定されていませんでした。表記ゆれもBRとして判定し、保存されたタイトルも「BR」などに自動でそろえます（自由入力の文字はそのまま）','📱 スマホを横向き→運動会→全画面→縦向きにした時の追加対策（1001-6）：PC表示⇄スマホ表示が切り替わったら、スクロールを一番上に戻し、MAPはタブを開き直した状態に作り直します（「‹ メニュー｜現状MAP／理想MAP」のバーが重なる・ツリーより下の空白が出る対策）'] },
   { v:'v562', d:'2026-10-02', items:['👥 メンバーに予定・タスクを入れる時の扱いを3つに（1001-2）：👤メンバーのみ（メンバーのカード・ホバーに出す）／🙋自分のみ（自分のカレンダー・ToDoだけ。メンバーのカード・共有先には出さず、行動にも数えない）／👥両方。前に入れた予定は「メンバー専用」→メンバーのみ、「自分にも表示」→両方 のまま','🎯 目標をなおす：目標タイトル・次の山のタイトルをプルダウンで選ぶように（月収から自動で選ばれ、手で変えると「手動」）','🧹 PLANの「まず自分を登録」の案内を出さないように（MAPが空の時の案内はそのまま）'] },
   { v:'v561', d:'2026-10-02', items:['🗺 PC：NAを研修の「流れた」でOUTにすると、ツリーが中央（初期表示）に戻っていた不具合を修正（1001-1）。同じMAP・同じ月の描き直しは、どの操作でも今見ている位置と倍率のままにしました','◎ PC運動会：メンバーの編集やNAの追加のたびに画面が左上に移動していた不具合を修正（1001-3）','🔗 共有メンバーにカーソルを合わせても情報が出なかった不具合を修正（1001-5）：タイトル・GSV・稼働・メモと、共有元のMAPの予定・タスクを表示します（スマホはカードをタップ）。予定を見せない共有の時は「共有されていません」と表示','📱 スマホを横向き→運動会→全画面→縦向きにすると画面が崩れ、ツリーが消えることがあった不具合を修正（1001-6）：スマホ表示に戻ったら全画面を自動で解除し、回転の少し後にもツリーを確認して作り直します'] },
   { v:'v560', d:'2026-10-01', items:['🏁 次の山がBRの時に「BRまでの道のり」を表示：研修生 → ビジネスメンバー → LOI → Q2 → Q3 → Q4 → BR のどこにいるかを光らせ、やることを数字で出します（既存メンバーは「今月からLOI：いま◯P → あと◯P」、BPC前は「◯月にBPCを揃えてブランドチェンジ」）','📅 BRの月は「BRになる月」から逆算：LOIの月＝その3ヶ月前。最短は今月LOIスタート→3ヶ月後のQ4の月。審査中はQ4の月で固定し、累計◯/5,000P・今月◯/1,000P・Q4の月は次の締め日（7・14・21日）まであと何Pかを表示（公式HPへのリンク付き）','🎁 目標ファーストボーナスから逆算して、毎月のフロント・新規B1・組織の数と、月ごとの内訳（LOI（BPC）→Q2→Q3→Q4→BR）、審査の条件（各月1,000P・累計5,000P）を表示','🔁 MAPのタイトル自動更新を審査ルールどおりに：審査は固定4ヶ月。LOI〜Q3で累計5,000Pに届いても次のQへ進み、BRになるのはQ4で条件を満たした時だけ'] },
@@ -12772,8 +12790,37 @@ function selCategory(cat) {
   } catch(e) {}
 }
 
+// v563: 1001-4 タイトルの表記ゆれ（全角「ＢＲ」・小文字「br」・「ブランドレプリゼンタティブ」）を決まった表記に。
+//        丸の中では略して「BR」と出るのに判定ではBR扱いされず、翌月コピーの「BR維持失敗」の降格に出なかった
+var TITLE_ALIAS = { 'ブランドレプリゼンタティブ': 'BR' };
+function normTitle(title) {
+  var t = String(title == null ? '' : title);
+  try { t = t.normalize('NFKC'); } catch (eN) {}
+  t = t.replace(/\s+/g, '').trim();
+  if (TITLE_ALIAS[t]) return TITLE_ALIAS[t];
+  if (/^[A-Za-z0-9]+$/.test(t)) t = t.toUpperCase();
+  return t;
+}
+function _isKnownTitle(t) {
+  if (t === 'OUT') return true;
+  for (var c in TITLE_OPTIONS) if ((TITLE_OPTIONS[c] || []).indexOf(t) >= 0) return true;
+  return false;
+}
+// 保存されているタイトルの表記ゆれを直す（決まったタイトルに当てはまる時だけ。自由入力の文字は触らない）
+function migrateTitles() {
+  var ch = false;
+  [state.members || [], state.idealMembers || []].forEach(function(arr) {
+    arr.forEach(function(m) {
+      if (!m || !m.title) return;
+      var n = normTitle(m.title);
+      if (n !== m.title && _isKnownTitle(n)) { m.title = n; ch = true; }
+    });
+  });
+  return ch;
+}
 function detectCategory(title) {
   if (!title) return '';
+  if (!_isKnownTitle(title)) { var _nt = normTitle(title); if (_nt !== title && _isKnownTitle(_nt)) title = _nt; } // v563: 正しい表記の時は変換しない（描画のたびに呼ばれるため）
   var cats = ['研修生','BA','BR'];
   for (var i=0; i<cats.length; i++) {
     var opts = TITLE_OPTIONS[cats[i]] || [];
