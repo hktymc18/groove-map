@@ -447,7 +447,7 @@ tr:last-child td{border-bottom:none;}
         <option value="venue">会場代のみ（¥500）</option>
       </select>
       <button class="primary" id="btnRecStart">受付を開始</button>
-      <button id="btnRecStop" class="hide">受付を終了</button>
+      <button id="btnRecStop">受付を終了</button>
     </div>
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
@@ -674,7 +674,6 @@ tr:last-child td{border-bottom:none;}
         <label>紹介者（任意）</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>UPルビー</label>
         <select id="trUp"></select>
-        <textarea id="trUpFree" rows="1" class="hide" placeholder="UPルビー名を入力" style="margin-top:6px;" autocomplete="off"></textarea>
         <label>性別（任意）</label>
         <div class="trsex">
           <button data-sex="" class="on">未設定</button><button data-sex="m">男</button><button data-sex="f">女</button>
@@ -885,6 +884,16 @@ function isCoreAdmin(un){ return isOwner() || (gProf && gProf.role === 'admin' &
 function isCkStaffAdmin(un){ return !!(gUser && (gCkAdmins[un] || []).indexOf(gUser.uid) >= 0); }
 function canEditUnion(un){ return isCoreAdmin(un) || isCkStaffAdmin(un); }
 function isAdminHere(){ return canEditUnion(gUnion); }
+// 無効メンバー判定: 旧「休会(resting)」は無効に統合（既存データはそのまま無効扱い。
+// 「有効化」で active:true＋resting削除に戻る）。領収書・出席履歴は無効化しても消えない
+function ckMemberOff(m){ return !m || m.active === false || !!m.resting; }
+// 系列名（UPルビー）の表記ゆれ対策: スペース（半角/全角）・全角英数・大文字小文字の
+// 差を無視した比較キー。候補の重複統合・集計の同一視・名寄せ検出で共通に使う
+function groupKey(s){
+  s = String(s || '');
+  try{ s = s.normalize('NFKC'); }catch(e){}
+  return s.replace(/[ 　\t]/g, '').toLowerCase();
+}
 function fillUnionSel(sel, current){
   var list = gUnions.slice();
   if(list.indexOf(current) < 0) list.push(current);
@@ -997,17 +1006,23 @@ function showCardView(token){
       }
       renderCard(c);
       renderTrainee(c);
-      renderDlrTicket(c);
       renderCoSheetEntry(c);
-      renderSelfEvents(c);
-      // 🎓 研修生には先のハウディの予定（開催予定・オンライン受講の申請・予約）を表示しない。
-      // 研修生の受講はDLRチケット・当日の受付経由のみ（昇格すると同じURLで表示されるようになる）
-      if(c.trainee){
-        $('onlineArea').innerHTML = ''; $('rsvpArea').innerHTML = ''; $('nextArea').innerHTML = '';
+      if(c.active === false){
+        // ⛔ 無効メンバー: 先のハウディの予定・受付系をすべて非表示。
+        // 領収書の控え（下のrenderReceipts）と受講履歴はそのまま見られる
+        ['dlrArea', 'selfArea', 'onlineArea', 'rsvpArea', 'nextArea'].forEach(function(id){ $(id).innerHTML = ''; });
       } else {
-        renderOnlineEvents(c);
-        renderRsvpEvents(c);
-        renderNextEvents(c);
+        renderDlrTicket(c);
+        renderSelfEvents(c);
+        // 🎓 研修生には先のハウディの予定（開催予定・オンライン受講の申請・予約）を表示しない。
+        // 研修生の受講はDLRチケット・当日の受付経由のみ（昇格すると同じURLで表示されるようになる）
+        if(c.trainee){
+          $('onlineArea').innerHTML = ''; $('rsvpArea').innerHTML = ''; $('nextArea').innerHTML = '';
+        } else {
+          renderOnlineEvents(c);
+          renderRsvpEvents(c);
+          renderNextEvents(c);
+        }
       }
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '', trainee: !!c.trainee })); }catch(e){}
@@ -2164,9 +2179,7 @@ function renderRoster(){
       + (m.trainee ? ' <span class="pill n">研修生</span>'
           + (m.trainings && m.trainings['BPC済み'] ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
       + '<td>' + esc(m.group || '') + '</td>'
-      + '<td>' + (m.active !== false
-          ? (m.resting ? '<span class="pill a">休会</span>' : '<span class="pill g">有効</span>')
-          : '<span class="pill n">無効</span>')
+      + '<td>' + (ckMemberOff(m) ? '<span class="pill n">無効</span>' : '<span class="pill g">有効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
       + '<td><div class="rowbtns">'
       + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
@@ -2175,10 +2188,7 @@ function renderRoster(){
           + (m.trainee && m.trainings && m.trainings['BPC済み']
             ? '<button data-a="promote" data-no="' + esc(m.no) + '" class="primary">⭐ 昇格</button>'
             : '')
-          + (m.active !== false
-            ? '<button data-a="rest" data-no="' + esc(m.no) + '">' + (m.resting ? '復帰' : '休会') + '</button>'
-            : '')
-          + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (m.active !== false ? '無効化' : '有効化') + '</button>'
+          + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (ckMemberOff(m) ? '有効化' : '無効化') + '</button>'
           + '<button data-a="del" data-no="' + esc(m.no) + '" class="danger ghost">削除</button>'
         : '')
       + '</div></td>'
@@ -2454,28 +2464,47 @@ $('rosterBody').addEventListener('click', function(e){
   if(a === 'card') cardModal(m);
   if(a === 'edit') memberForm(m);
   if(a === 'tog'){
-    db.collection('checkinMembers').doc(no).set({active: !(m.active !== false)}, {merge:true})
-      .then(function(){ loadMembers(); })
+    // 無効化（旧「休会」も統合）: 稼働率の分母から外れ、受付スキャンと先のハウディの表示が止まる。
+    // 領収書の控え・出席履歴・会員証データはそのまま残り、「有効化」でいつでも戻せる
+    var toOff = !ckMemberOff(m);
+    db.collection('checkinMembers').doc(no).set(
+      toOff ? { active: false } : { active: true, resting: FV.delete() }, {merge:true})
+      .then(function(){
+        // 会員証にも反映（無効の間は本人のカードに先のハウディの予定を出さない）
+        if(m.cardToken) return db.collection('cards').doc(m.cardToken).update({ active: !toOff }).catch(function(){});
+      })
+      .then(function(){
+        // 受付中なら開始時に読み込んだ名簿スナップショットにも即反映
+        // （受付を開いたまま無効化してもスキャンが通ってしまわないように。有効化はその逆）
+        if(gRec){
+          gRec.off = gRec.off || {};
+          if(toOff){
+            var rm = gRec.roster[no] || m;
+            delete gRec.roster[no];
+            rm.active = false;
+            gRec.off[no] = rm;
+          } else {
+            var om = gRec.off[no] || m;
+            delete gRec.off[no];
+            om.active = true; delete om.resting;
+            gRec.roster[no] = om;
+          }
+        }
+        toast(m.name + ' さんを' + (toOff
+          ? '無効にしました（集計・受付の対象外。領収書と出席履歴は残ります）'
+          : '有効化しました（集計・受付に戻ります）'));
+        loadMembers();
+      })
       .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
   }
   if(a === 'promote'){
     if(!window.confirm(m.name + ' さんを正規メンバーに昇格しますか？\n会員証は同じURLのまま正規仕様に切り替わります。研修履歴は編集画面の「🎓 研修履歴」から確認できます。')) return;
     promoteTrainee(m, function(){ loadMembers(); });
   }
-  if(a === 'rest'){
-    // 休会: 名簿・受付スキャン・会員証はそのままで、集計（稼働率）からだけ外す
-    var toRest = !m.resting;
-    db.collection('checkinMembers').doc(no).set({ resting: toRest ? true : FV.delete() }, {merge:true})
-      .then(function(){
-        toast(m.name + ' さんを' + (toRest ? '休会にしました（集計に表示されなくなります）' : '復帰させました（集計に表示されます）'));
-        loadMembers();
-      })
-      .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
-  }
   if(a === 'del'){
     modal('<h2>メンバー削除</h2>'
       + '<p>「' + esc(m.name || '') + '」（' + esc(no) + '）を名簿から削除しますか？<br>'
-      + '<small>過去の出席記録は消えません。来なくなった人は削除ではなく「休会」（集計から外れるだけ。受付・会員証はそのまま）、退会は「無効化」がおすすめです。どちらもいつでも戻せます。</small></p>'
+      + '<small>過去の出席記録は消えません。休会・退会は削除ではなく「無効化」がおすすめです（集計と受付の対象から外れるだけで、領収書の控えや出席履歴はそのまま。いつでも有効化で戻せます）。</small></p>'
       + '<div class="btns"><button id="mdCancel">キャンセル</button>'
       + '<button class="primary" id="mdGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
     $('mdCancel').onclick = closeModal;
@@ -2499,6 +2528,7 @@ function refreshCardDoc(token, m){
       no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
       grade: m.grade || '',
       trainee: !!m.trainee, trainings: m.trainings || {},
+      active: !ckMemberOff(m),   // 無効の間は本人のカードに先のハウディの予定を出さない
       createdAt: FV.serverTimestamp()
     });
   }).catch(function(){});
@@ -2638,7 +2668,7 @@ function cardQrModal(m){
   $('cqBack').onclick = function(){ closeModal(); cardModal(m); };
 }
 $('btnCardBulk').onclick = function(){
-  var targets = gMembers.filter(function(m){ return m.active !== false && !m.cardToken; });
+  var targets = gMembers.filter(function(m){ return !ckMemberOff(m) && !m.cardToken; });
   if(!targets.length){ toast('未発行のメンバーはいません'); return; }
   modal('<h2>会員証の一括発行</h2>'
     + '<p>「' + esc(gRosterUnion) + '」の未発行メンバー <b>' + targets.length + '名</b> 分の会員証URLを発行します。<br><small>発行後「会員証URL一覧」でCSVを書き出して配布できます。</small></p>'
@@ -2730,7 +2760,7 @@ $('btnPrintCards').onclick = function(){
   if(selCount() > 0){
     targets = gMembers.filter(function(m){ return gSel[m.no]; });
   } else {
-    targets = gMembers.filter(function(m){ return m.active !== false; });
+    targets = gMembers.filter(function(m){ return !ckMemberOff(m); });
   }
   if(!targets.length){ toast('印刷対象がいません'); return; }
   modal('<h2>紙カード印刷</h2>'
@@ -2815,7 +2845,7 @@ $('btnCsvIn').onclick = function(){
 $('btnCsvOut').onclick = function(){
   var rows = [['番号','氏名','系列','かな','状態','性別']];
   gMembers.forEach(function(m){
-    rows.push([m.no, m.name || '', m.group || '', m.kana || '', m.active !== false ? (m.resting ? '休会' : '有効') : '無効',
+    rows.push([m.no, m.name || '', m.group || '', m.kana || '', ckMemberOff(m) ? '無効' : '有効',
       m.sex === 'm' ? '男' : (m.sex === 'f' ? '女' : '')]);
   });
   csvDownload('members_' + gRosterUnion + '.csv', rows);
@@ -2823,14 +2853,42 @@ $('btnCsvOut').onclick = function(){
 /* ── 系列名の一括変更（名簿と発行済み会員証に反映。過去の出席記録の表記は変えない）── */
 $('btnGroupRen').onclick = function(){
   if(!canEditRoster()){ toast('系列名の変更はユニオン管理者・受付管理者のみ可能です'); return; }
+  // 🧹 表記ゆれ（スペース・全角半角だけ違う系列）の自動検出
+  var cntA = {};
+  gMembers.forEach(function(m){ if(m.group) cntA[m.group] = (cntA[m.group] || 0) + 1; });
+  var clus = {};
+  Object.keys(cntA).forEach(function(g){ var k = groupKey(g); (clus[k] = clus[k] || []).push(g); });
+  var dups = Object.keys(clus).filter(function(k){ return clus[k].length >= 2; }).map(function(k){ return clus[k]; });
+  var autoHtml = dups.length
+    ? '<label>🧹 表記ゆれの自動検出（' + dups.length + '組）— 正しい表記をタップすると下の変更欄に入ります</label>'
+      + dups.map(function(vs, ci){
+          return '<div style="border:1px solid var(--line);border-radius:8px;padding:8px;margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
+            + vs.map(function(v, vi){
+                return '<button data-gc="' + ci + '" data-gv="' + vi + '" style="padding:6px 10px;font-size:13px;">'
+                  + esc(v) + '<span style="color:var(--sub);font-size:11px;">（' + cntA[v] + '名）</span></button>';
+              }).join('')
+            + '</div>';
+        }).join('')
+    : '<p style="font-size:12.5px;color:var(--green);margin:0 0 8px;">✓ スペース・全角半角だけ違う系列はありません。</p>';
   modal('<h2>系列名の一括変更</h2>'
-    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行に1件、「旧名→新名」で入力してください（「,」やタブ区切りも可）。<br>'
-    + '「' + esc(gRosterUnion) + '」の名簿と発行済み会員証に反映されます。過去の出席記録の表記はそのまま残ります。</p>'
+    + autoHtml
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行に1件、「旧名→新名」で入力してください（「,」やタブ区切りも可）。漢字違いなどの名前間違いもここで直せます。<br>'
+    + '「' + esc(gRosterUnion) + '」の名簿と発行済み会員証に反映されます。過去の出席記録の表記はそのまま残ります（系列別の集計はスペース・全角半角を同一視して合算されます）。</p>'
     + '<textarea id="grText" rows="8" placeholder="旧系列名→新系列名&#10;（例）〇〇BD→山田 太郎"></textarea>'
     + '<div id="grPrev" style="font-size:13.5px;margin-top:8px;"></div>'
     + '<div class="btns"><button id="grCancel">キャンセル</button>'
     + '<button id="grCheck">プレビュー</button><button class="primary hide" id="grGo">変更する</button></div>');
   $('grCancel').onclick = closeModal;
+  Array.prototype.forEach.call(document.querySelectorAll('.modal button[data-gc]'), function(bb){
+    bb.onclick = function(){
+      var vs = dups[+bb.getAttribute('data-gc')];
+      var chosen = vs[+bb.getAttribute('data-gv')];
+      var lines = vs.filter(function(v){ return v !== chosen; }).map(function(v){ return v + '→' + chosen; });
+      var cur = $('grText').value.trim();
+      $('grText').value = (cur ? cur + '\n' : '') + lines.join('\n');
+      $('grCheck').onclick();
+    };
+  });
   var map = {};
   $('grCheck').onclick = function(){
     map = {};
@@ -3449,21 +3507,25 @@ function trLoadMembers(){
     trRenderList();
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 }
-// UPルビー: そのユニオンの既存系列＋自分の名前を初期値に。手入力も可
+// UPルビー: そのユニオンの既存系列＋自分の名前から選択のみ（手入力は廃止。
+// 表記ゆれで集計が割れるため、新しい系列は管理者が名簿の編集から登録する運用）。
+// スペース・全角半角だけ違う表記は、人数の多い表記1つにまとめて表示する
 function trFillUp(){
-  var set = {};
-  gTrMembers.forEach(function(m){ if(m.group) set[m.group] = 1; });
+  var cnt = {};
+  gTrMembers.forEach(function(m){ if(m.group) cnt[m.group] = (cnt[m.group] || 0) + 1; });
   var my = gProf.name || '';
-  if(my) set[my] = 1;
-  var gs = Object.keys(set).sort();
+  if(my) cnt[my] = (cnt[my] || 0) + 0.5;   // 自分の名前は既存の表記があればそちらを優先
+  var rep = {};
+  Object.keys(cnt).forEach(function(g){
+    var k = groupKey(g);
+    if(!rep[k] || cnt[g] > cnt[rep[k]]) rep[k] = g;
+  });
+  var myKey = groupKey(my);
+  var gs = Object.keys(rep).map(function(k){ return rep[k]; }).sort();
   $('trUp').innerHTML = gs.map(function(g){
-    return '<option value="' + esc(g) + '"' + (g === my ? ' selected' : '') + '>' + esc(g) + '</option>';
-  }).join('') + '<option value="__free">その他（手入力）</option>';
+    return '<option value="' + esc(g) + '"' + (my && groupKey(g) === myKey ? ' selected' : '') + '>' + esc(g) + '</option>';
+  }).join('');
 }
-$('trUp').onchange = function(){
-  $('trUpFree').classList.toggle('hide', $('trUp').value !== '__free');
-  if($('trUp').value === '__free') $('trUpFree').focus();
-};
 Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(b){
   b.onclick = function(){
     gTrSex = b.getAttribute('data-sex') || '';
@@ -3481,15 +3543,14 @@ function trTab(reg){
 $('trTabReg').onclick = function(){ trTab(true); };
 $('trTabList').onclick = function(){ trTab(false); trRenderList(); };
 // 氏名等はtextarea化しているため、Enterでの改行を抑止（値に改行が入らないように）
-['trName', 'trKana', 'trRef', 'trUpFree'].forEach(function(id){
+['trName', 'trKana', 'trRef'].forEach(function(id){
   var el = $(id);
   if(el) el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); el.blur(); } });
 });
 $('trGo').onclick = function(){
   var name = $('trName').value.replace(/[\r\n]/g, '').trim();
   if(!name){ toast('氏名を入力してください'); return; }
-  var upSel = $('trUp').value;
-  var up = upSel === '__free' ? $('trUpFree').value.trim() : upSel;
+  var up = $('trUp').value;
   if(!up){ toast('UPルビーを選択してください'); return; }
   var no = nextMemberNo(gTrMembers, gUnion);
   if(!no){ toast('番号の自動発番に失敗しました。管理者にプレフィックス設定を確認してください'); return; }
@@ -3613,7 +3674,7 @@ function trSearchBase(){
   var seeAll = canEditUnion(gUnion);
   var src = (seeAll && gTrFilter.all && gTrAll) ? gTrAll : gTrMembers;
   return src.filter(function(m){
-    return m.trainee && m.active !== false && (seeAll || m.regBy === gUser.uid);
+    return m.trainee && !ckMemberOff(m) && (seeAll || m.regBy === gUser.uid);
   });
 }
 function trRenderList(){
@@ -3678,11 +3739,11 @@ function trRenderList(){
     if(!no){ toast('番号を入力してください'); return; }
     var hit = null;
     gTrMembers.forEach(function(m){ if(m.no === no) hit = m; });
-    if(hit && hit.trainee && hit.active !== false){ $('trOpenNo').value = ''; trChecklist(hit); return; }
+    if(hit && hit.trainee && !ckMemberOff(hit)){ $('trOpenNo').value = ''; trChecklist(hit); return; }
     // 一覧の読込後に登録された分にも対応して最新を1件取得
     db.collection('checkinMembers').doc(no).get().then(function(sn){
       var m = sn.exists ? sn.data() : null;
-      if(m && m.trainee && m.active !== false && m.union === gUnion){
+      if(m && m.trainee && !ckMemberOff(m) && m.union === gUnion){
         m.no = no; $('trOpenNo').value = ''; trChecklist(m);
       } else {
         toast('この番号の研修生が見つかりません（' + no + '）');
@@ -5103,27 +5164,42 @@ $('btnRecStart').onclick = function(){
 };
 $('btnRecStop').onclick = function(){
   var ev = gRec && gRec.ev;
-  stopReception();
-  // 受付終了をイベントに記録 → 会員証側の「オンライン受講を申請する」を締め切る
-  // （ルール未対応などで書けなくても受付終了自体は成立させる）
-  if(ev){
-    ev.recClosed = true;
-    db.collection('checkinEvents').doc(ev.id).set({ recClosed: true }, { merge: true })
-      .then(function(){ ckRefreshForEvent(ev); })   // 当日分を稼働率の分母に入れた集計をMAPへ
-      .catch(function(){});
+  // この端末で受付中でない場合（別端末で受付した・ページを開き直した等）でも、
+  // 選択中のイベントの「受付終了」を記録できるようにする。
+  // 以前は無言で何もせず、集計（稼働率）にイベントが算入されない原因になっていた
+  if(!ev){
+    var id = $('recEvSel').value;
+    var sel = null; gEvents.forEach(function(x){ if(x.id === id) sel = x; });
+    if(!sel){ toast('イベントを選択してください'); return; }
+    if(sel.recClosed){ toast('「' + (sel.name || '') + '」の受付はすでに終了しています（集計に算入済み）'); return; }
+    if(!window.confirm('この端末では受付中ではありませんが、「' + (sel.name || '') + '」の受付を終了として記録しますか？\n（集計・稼働率に算入され、オンライン受講の申請が締め切られます）')) return;
+    sel.recClosed = true;
+    db.collection('checkinEvents').doc(sel.id).set({ recClosed: true }, { merge: true })
+      .then(function(){ ckRefreshForEvent(sel); toast('受付終了を記録しました（集計に反映されます）'); })
+      .catch(function(e){ toast(permMsg(e, '受付終了の記録に失敗しました')); });
+    return;
   }
+  stopReception();
+  // 受付終了をイベントに記録 → 集計（稼働率）に算入され、会員証側のオンライン申請を締め切る
+  // （書けなくても受付終了自体は成立させるが、集計に出なくなるため失敗は通知する）
+  ev.recClosed = true;
+  db.collection('checkinEvents').doc(ev.id).set({ recClosed: true }, { merge: true })
+    .then(function(){ ckRefreshForEvent(ev); })   // 当日分を稼働率の分母に入れた集計をMAPへ
+    .catch(function(){ toast('⚠️ 受付終了の記録に失敗しました。電波を確認して、もう一度「受付を終了」を押してください（集計に反映されません）'); });
   // 受付終了 → そのまま会計入力へ
-  if(ev && window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
+  if(window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
 };
 
 function startReception(ev){
+  // 終了済みイベントをうっかり開き直すと集計（稼働率）から外れるため、明示的に確認する
+  if(ev.recClosed && !window.confirm('「' + (ev.name || '') + '」の受付はすでに終了しています。受付を再開しますか？\n（再開中は集計・稼働率から一旦外れます。終わったら必ずもう一度「受付を終了」を押してください）')) return;
   stopReception();
   // タブを受付へ
   Array.prototype.forEach.call(tabs, function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === 'pKiosk'); });
   Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(p){ p.classList.remove('on'); });
   $('pKiosk').classList.add('on');
 
-  gRec = { ev: ev, roster: {}, att: {}, order: [], unsub: null,
+  gRec = { ev: ev, roster: {}, off: {}, att: {}, order: [], unsub: null,
            feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1,
            issuer: '',
            payMode: ev.payMode === 'paypay',        // 💳 現金なし・PayPay集金イベント
@@ -5145,7 +5221,6 @@ function startReception(ev){
   renderFeeRow();
   $('recNone').classList.add('hide');
   $('recArea').classList.remove('hide');
-  $('btnRecStop').classList.remove('hide');
   // オンライン対応イベントは日付に関係なく申請を監視（見逃し防止）
   if(ev.online) olWatchEvent(ev);
   // デスクトップ通知の許可はユーザー操作のタイミングでだけ確認できる
@@ -5162,7 +5237,8 @@ function startReception(ev){
     return db.collection('checkinMembers').where('union', '==', u).get().then(function(qs){
       qs.forEach(function(d){
         var m = d.data(); m.no = d.id;
-        if(m.active !== false) gRec.roster[d.id] = m;
+        if(!ckMemberOff(m)) gRec.roster[d.id] = m;
+        else gRec.off[d.id] = m;   // 無効メンバー: スキャン時に「未登録」ではなく無効の案内を出す用
       });
     });
   });
@@ -5186,7 +5262,6 @@ function stopReception(){
   gRec = null;
   $('recArea').classList.add('hide');
   $('recNone').classList.remove('hide');
-  $('btnRecStop').classList.add('hide');
 }
 
 /* ── 受付の料金（ピッと同時に自動計上） ── */
@@ -5557,12 +5632,12 @@ function scan(raw, method){
     db.collection('checkinMembers').doc(no).get().then(function(s){
       if(!gRec) return;
       var fresh = s.exists ? s.data() : null;
-      if(fresh && fresh.active !== false){
+      if(fresh && !ckMemberOff(fresh)){
         fresh.no = no;
         gRec.roster[no] = fresh;
         if(!fresh.cardSig || sig === fresh.cardSig){ checkinMember(fresh, method, null); return; }
       }
-      staleCardStage((fresh && fresh.active !== false) ? fresh : member, method);
+      staleCardStage((fresh && !ckMemberOff(fresh)) ? fresh : member, method);
     }).catch(function(){
       staleCardStage(member, method);
     });
@@ -5570,6 +5645,14 @@ function scan(raw, method){
   }
   if(!member){
     beep('ng');
+    var offm = gRec.off && gRec.off[no];
+    if(offm){
+      setStage('ng',
+        '<span class="hit-badge">無効のメンバー</span>'
+        + '<div class="hit-name">' + esc(offm.name || no) + '</div>'
+        + '<p class="stage-sub">このメンバーは無効化されています。名簿から「有効化」すると受付できます。</p>');
+      return;
+    }
     setStage('ng',
       '<span class="hit-badge">未登録の番号</span>'
       + '<div class="hit-name mono" style="font-size:30px;">' + esc(no) + '</div>'
@@ -5590,6 +5673,16 @@ function roleShort(r){
 // 名簿メンバーの受付（スキャン/手入力/名前検索/登壇者登録の共通処理）
 function checkinMember(member, method, role){
   if(!gRec) return;
+  // 最終ガード: 無効メンバーはどの経路からでも受付させない
+  // （受付中に無効化された場合など、開始時の名簿スナップショットが古い可能性があるため）
+  if(ckMemberOff(member)){
+    beep('ng');
+    setStage('ng',
+      '<span class="hit-badge">無効のメンバー</span>'
+      + '<div class="hit-name">' + esc(member.name || member.no) + '</div>'
+      + '<p class="stage-sub">このメンバーは無効化されています。名簿から「有効化」すると受付できます。</p>');
+    return;
+  }
   var no = member.no;
   if(gRec.att[no]){
     if(role){
@@ -5800,15 +5893,20 @@ $('btnGuest').onclick = function(){
   var unions = evUns.concat(gUnions.filter(function(u){ return evUns.indexOf(u) < 0; }));
   // 系列はそのユニオンの名簿にある系列からプルダウン選択（手入力も可）
   function groupOptions(un){
-    var set = {};
+    // 選択のみ（手入力は廃止）。表記ゆれは人数の多い表記1つにまとめて表示
+    var cnt = {};
     Object.keys(gRec.roster).forEach(function(no){
       var m = gRec.roster[no];
-      if(m.union === un && m.group) set[m.group] = 1;
+      if(m.union === un && m.group) cnt[m.group] = (cnt[m.group] || 0) + 1;
     });
-    var gs = Object.keys(set).sort();
+    var rep = {};
+    Object.keys(cnt).forEach(function(g){
+      var k = groupKey(g);
+      if(!rep[k] || cnt[g] > cnt[rep[k]]) rep[k] = g;
+    });
+    var gs = Object.keys(rep).map(function(k){ return rep[k]; }).sort();
     return '<option value="">ゲスト（系列なし）</option>'
-      + gs.map(function(g){ return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('')
-      + '<option value="__free">その他（手入力）</option>';
+      + gs.map(function(g){ return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('');
   }
   modal(
     '<h2>ゲスト受付</h2>'
@@ -5817,23 +5915,16 @@ $('btnGuest').onclick = function(){
     + unions.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
     + '</select>'
     + '<label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select>'
-    + '<input type="text" id="gGroupFree" class="hide" placeholder="系列名を入力" style="margin-top:6px;">'
     + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
   );
   $('gUnion').onchange = function(){
     $('gGroupSel').innerHTML = groupOptions($('gUnion').value);
-    $('gGroupFree').classList.add('hide');
-  };
-  $('gGroupSel').onchange = function(){
-    $('gGroupFree').classList.toggle('hide', $('gGroupSel').value !== '__free');
-    if($('gGroupSel').value === '__free') $('gGroupFree').focus();
   };
   $('gCancel').onclick = function(){ closeModal(); focusScan(); };
   $('gGo').onclick = function(){
     var name = $('gName').value.trim();
     if(!name){ toast('氏名を入力してください'); return; }
-    var gsel = $('gGroupSel').value;
-    var ggroup = gsel === '__free' ? $('gGroupFree').value.trim() : gsel;
+    var ggroup = $('gGroupSel').value;
     var id = 'g' + Date.now();
     var gfee = currentFee();
     var gdata = {
@@ -5860,7 +5951,7 @@ function attGroup(id, a){
 }
 function renderTallies(){
   if(!gRec) return;
-  var total = 0, byUnion = {}, byGroup = {};
+  var total = 0, byUnion = {}, byGroup = {}, byGroupKey = {};
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
   var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [], hist = [];
@@ -5889,10 +5980,15 @@ function renderTallies(){
       }
     }
     if(a.union === tallyUnion){
+      // 系列別はスペース・全角半角の表記ゆれを同一視して合算（表示は長い方の表記を採用）
       var g = attGroup(id, a) || 'その他';
-      byGroup[g] = (byGroup[g] || 0) + 1;
+      var gk = groupKey(g);
+      if(!byGroupKey[gk]) byGroupKey[gk] = { label: g, n: 0 };
+      if(g.length > byGroupKey[gk].label.length) byGroupKey[gk].label = g;
+      byGroupKey[gk].n++;
     }
   });
+  Object.keys(byGroupKey).forEach(function(k){ byGroup[byGroupKey[k].label] = byGroupKey[k].n; });
   var unpaidSum = 0;
   unpaid.forEach(function(u){ unpaidSum += u.fee; });
   if(gRec.payMode){
@@ -6298,7 +6394,7 @@ function ckRateRows(evs, attMaps, unionMembers){
   var rows = [], rosterSex = {};
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
   unionMembers.forEach(function(m){
-    if(m.active === false || m.resting) return;   // 無効・休会中は集計に出さない（休会中でも出席すれば下の出席記録から行に載る）
+    if(ckMemberOff(m)) return;   // 無効（旧休会含む）は集計に出さない（過去に出席した月は下の出席記録から行に載る）
     rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true });
   });
   var known = {};
@@ -6385,8 +6481,11 @@ function loadStats(){
     // 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
     // 当日分は「受付を終了」した時点（recClosed）で算入する
     // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
-    evs = ckHeldEvents(evs);
-    if(!evs.length && !otherEvs.length){
+    // まだ算入されないイベント（受付中・これから）は「イベントがありません」と紛らわしいので案内表示する
+    var heldEvs = ckHeldEvents(evs);
+    var pendingEvs = evs.filter(function(ev){ return heldEvs.indexOf(ev) < 0; });
+    evs = heldEvs;
+    if(!evs.length && !otherEvs.length && !pendingEvs.length){
       $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
     }
@@ -6416,12 +6515,18 @@ function loadStats(){
         });
     });
     Promise.all(reads.concat(vreads).concat([fetchMembers(gStatUnion)])).then(function(results){
-      renderStats(evs, attMaps, results[results.length - 1], visits);
+      renderStats(evs, attMaps, results[results.length - 1], visits, pendingEvs);
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
 }
-function renderStats(evs, attMaps, unionMembers, visits){
+function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
   var held = evs.length;
+  // 受付中・これからのイベントは受付終了後に集計へ反映される旨の案内
+  var pendHtml = (pendingEvs && pendingEvs.length)
+    ? '<p style="color:var(--sub);font-size:13.5px;">🕒 受付がまだ終了していないイベント: '
+      + pendingEvs.map(function(ev){ return '<b>' + esc((ev.date || '').slice(5).replace('-', '/') + ' ' + (ev.name || '')) + '</b>'; }).join('、')
+      + '　— 「受付を終了」すると集計（稼働率）に反映されます。</p>'
+    : '';
   var visitsHtml = '';
   if(visits && visits.length){
     visits.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
@@ -6435,7 +6540,9 @@ function renderStats(evs, attMaps, unionMembers, visits){
       + '</tbody></table></div>';
   }
   if(!held){
-    $('statBody').innerHTML = '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>' + visitsHtml;
+    $('statBody').innerHTML = pendHtml
+      + (pendHtml ? '' : '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>')
+      + visitsHtml;
     gStat = null; return;
   }
   // 行: 有効メンバー + 出席したゲスト（出席回数・稼働率まで ckRateRows で計算＝MAPへ渡す数字と同じ）
@@ -6485,11 +6592,11 @@ function renderStats(evs, attMaps, unionMembers, visits){
     + '</div>'
     + '<div class="sectionhead"><h2>系列別 平均稼動数</h2><span class="note">' + esc(gStatUnion) + '・1回あたりの出席数</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroupAvg, '名') || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
-    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入）/ 休会中のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入）/ 無効のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
     + visitsHtml;
-  $('statBody').innerHTML = html;
+  $('statBody').innerHTML = pendHtml + html;
   $('statQ').addEventListener('input', function(){ gStat.q = this.value; renderStatMatrix(); });
   renderStatMatrix();
 }
