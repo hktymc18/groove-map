@@ -379,6 +379,67 @@ tr:last-child td{border-bottom:none;}
   padding:9px 20px;border-radius:99px;font-size:13.5px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;}
 #toast.show{opacity:1;}
 .notice{background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;}
+/* 🔰 使い方ガイド（ジェッ子ちゃん） */
+.gx-help{border:none;background:linear-gradient(135deg,#ffe066,#ffb703);color:#3a2a00;font-weight:800;font-size:12px;border-radius:999px;padding:4px 11px;box-shadow:0 2px 0 #c98a00;cursor:pointer;white-space:nowrap;}
+.gx-help:hover{filter:brightness(1.05);}
+.gx-hole{position:fixed;z-index:3001;border-radius:12px;box-shadow:0 0 0 9999px rgba(10,12,8,.6);pointer-events:none;transition:all .18s ease;}
+.gx-ring{position:fixed;z-index:3002;border-radius:12px;pointer-events:none;transition:all .18s ease;
+  box-shadow:0 0 0 4px #ffd83d,0 0 0 9px rgba(255,216,61,.35),0 0 26px 10px rgba(255,216,61,.45);animation:gxPulse 1.4s ease-in-out infinite;}
+@keyframes gxPulse{0%,100%{box-shadow:0 0 0 4px #ffd83d,0 0 0 9px rgba(255,216,61,.35),0 0 26px 10px rgba(255,216,61,.45);}
+  50%{box-shadow:0 0 0 4px #ffd83d,0 0 0 14px rgba(255,216,61,.18),0 0 34px 16px rgba(255,216,61,.35);}}
+.gx-dimall{position:fixed;inset:0;z-index:3001;background:rgba(10,12,8,.6);}
+.gx-bub{position:fixed;z-index:3004;background:#fffdf3;color:#2a2a24;border-radius:18px;padding:14px 16px 12px;border:3px solid #ffd83d;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);box-sizing:border-box;text-align:left;}
+.gx-bub .gx-t{display:block;font-size:15.5px;font-weight:800;margin:0 0 4px;color:#2a2a24;}
+.gx-bub .gx-x{margin:0;font-size:14px;line-height:1.6;color:#2a2a24;}
+.gx-bub .gx-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;}
+.gx-bub .gx-note{font-size:11.5px;color:#8b8670;margin-top:6px;}
+.gx-tail{position:absolute;width:16px;height:16px;background:#fffdf3;border-left:3px solid #ffd83d;border-top:3px solid #ffd83d;}
+.gx-dots{display:flex;gap:5px;align-items:center;} .gx-dots i{width:8px;height:8px;border-radius:50%;background:#e4dfc4;display:block;}
+.gx-dots i.on{background:#ff8c1a;width:20px;border-radius:5px;}
+.gx-lnk{border:none;background:transparent;color:#8b8670;font-size:12.5px;padding:4px 2px;cursor:pointer;width:auto;}
+.gx-btn{border:none;background:#ff8c1a;color:#fff;border-radius:999px;padding:8px 16px;font-weight:800;font-size:13.5px;box-shadow:0 3px 0 #d06a00;cursor:pointer;width:auto;}
+.gx-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #d06a00;}
+.gx-jet{position:fixed;z-index:3005;width:64px;height:64px;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35));animation:gxHop 2.2s ease-in-out infinite;}
+@keyframes gxHop{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+.gx-back{position:fixed;inset:0;z-index:2990;background:rgba(10,12,8,.55);display:flex;align-items:center;justify-content:center;padding:16px;}
+.gx-panel{background:var(--card);color:var(--ink);width:min(640px,100%);max-height:88vh;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.45);}
+.gx-top{background:linear-gradient(160deg,#ffe066 0%,#ffcf3a 55%,#ffb703 100%);color:#3a2a00;padding:18px 96px 16px 20px;position:relative;flex:0 0 auto;}
+.gx-top h2{margin:0;font-size:21px;font-weight:900;color:#3a2a00;}
+.gx-top p{margin:4px 0 0;font-size:13px;font-weight:600;color:#5a4500;}
+.gx-top .gx-tj{position:absolute;right:14px;top:4px;width:78px;height:78px;}
+.gx-top .gx-close{position:absolute;right:8px;top:6px;border:none;background:rgba(255,255,255,.55);color:#3a2a00;border-radius:50%;width:30px;height:30px;padding:0;font-size:16px;cursor:pointer;z-index:2;}
+.gx-body{overflow-y:auto;padding:4px 0 14px;flex:1 1 auto;}
+.gx-roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;padding:14px 16px 4px;}
+.gx-role{border:2px solid var(--line);border-radius:16px;padding:9px 12px;cursor:pointer;text-align:left;background:var(--paper);}
+.gx-role.on{border-color:#ffc21a;box-shadow:0 0 0 3px rgba(255,194,26,.25);}
+.gx-role.soon{opacity:.55;cursor:default;}
+.gx-role .e{font-size:21px;} .gx-role b{display:block;font-size:14px;margin-top:1px;} .gx-role small{font-size:11.5px;color:var(--sub);}
+.gx-bar{height:7px;border-radius:5px;background:var(--line);margin-top:6px;overflow:hidden;}
+.gx-bar i{display:block;height:100%;background:linear-gradient(90deg,#ff8c1a,#ffd83d);border-radius:5px;}
+.gx-h{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--sub);padding:12px 18px 6px;}
+.gx-mis{display:flex;align-items:center;gap:12px;margin:0 16px 8px;padding:10px 12px;background:var(--paper);border-radius:16px;}
+.gx-stamp{flex:0 0 40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;}
+.gx-stamp.done{background:#e0604f;color:#fff;transform:rotate(-12deg);box-shadow:0 2px 0 #9b3326;font-size:15px;}
+.gx-stamp.todo{border:2.5px dashed var(--line);color:var(--sub);font-size:15px;}
+.gx-stamp.pop{animation:gxPop .6s cubic-bezier(.2,1.6,.4,1) both;outline:4px solid #ffd83d;}
+@keyframes gxPop{0%{transform:scale(2.2) rotate(-30deg);opacity:0;}100%{transform:scale(1) rotate(-12deg);opacity:1;}}
+.gx-mis .tx{flex:1;min-width:0;} .gx-mis .tx b{display:block;font-size:14.5px;} .gx-mis .tx small{font-size:11.5px;color:var(--sub);}
+.gx-foot{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:10px 14px;border:2px solid #e8c95a;border-radius:16px;font-size:13px;background:var(--amber-soft);}
+.gx-foot b{color:var(--ink);}
+.gx-hint{position:fixed;z-index:3004;width:300px;}
+.gx-conf{position:fixed;top:-20px;z-index:3100;width:9px;height:14px;border-radius:2px;pointer-events:none;animation:gxFall linear forwards;}
+@keyframes gxFall{to{transform:translateY(112vh) rotate(720deg);}}
+.gx-clear{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3010;width:min(380px,calc(100vw - 40px));background:#fffdf3;color:#2a2a24;
+  border-radius:26px;padding:20px 18px 18px;text-align:center;border:4px solid #ffd83d;box-shadow:0 14px 40px rgba(0,0,0,.5);}
+.gx-clear .gx-cj{width:92px;height:92px;margin:-66px auto 0;}
+.gx-clear h3{margin:2px 0 0;font-size:25px;font-weight:900;color:#ff8c1a;letter-spacing:.04em;}
+.gx-clear .gx-stamps{display:flex;justify-content:center;gap:8px;margin:14px 0 8px;flex-wrap:wrap;}
+.gx-clear .gx-stamp.todo{border-color:#d6d0b4;color:#b3ad92;}
+@media (max-width:600px){
+  .gx-back{padding:0;align-items:stretch;}
+  .gx-panel{width:100%;max-height:none;height:100%;border-radius:0;}
+}
 </style>
 </head>
 <body>
@@ -442,6 +503,7 @@ tr:last-child td{border-bottom:none;}
     <span class="brand">BASE CHECK-IN<span class="dot">●</span></span>
     <span class="unionchip" id="unionBadge"></span>
     <select id="unionSel" class="hide"></select>
+    <button id="guideBtn" class="gx-help" title="使い方ガイド">🔰 使い方</button>
     <button id="verBtn" title="更新のお知らせ" style="border:none;background:transparent;color:var(--sub);font-size:11px;padding:2px 6px;letter-spacing:.02em;"></button>
     <nav>
       <button class="on" data-pane="pKiosk">受付</button>
@@ -681,7 +743,7 @@ tr:last-child td{border-bottom:none;}
     <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
       <h2 style="margin:0;font-size:18px;">🎓 研修生登録</h2>
       <span id="trUnionLbl" style="font-size:12.5px;color:var(--sub);"></span>
-      <button id="verBtnTr" title="更新のお知らせ" style="border:none;background:transparent;color:var(--sub);font-size:10.5px;padding:2px 4px;"></button>
+      <button id="guideBtnTr" class="gx-help" title="使い方ガイド" style="font-size:11px;padding:3px 9px;">🔰 使い方</button><button id="verBtnTr" title="更新のお知らせ" style="border:none;background:transparent;color:var(--sub);font-size:10.5px;padding:2px 4px;"></button>
       <span style="flex:1"></span>
       <span id="trMe" style="font-size:12px;color:var(--sub);"></span>
     </div>
@@ -786,6 +848,8 @@ function showView(id){
     $(v).classList.toggle('hide', v !== id);
   });
   if(id === 'vApp') setTimeout(setTbh, 0);   // 固定ヘッダー位置の計測（表示後でないと高さが取れない）
+  if(id === 'vApp' || id === 'vTrainer') setTimeout(function(){ gxHintOnce(id); }, 700);   // 🔰 初回だけ使い方ボタンの場所を案内
+  else gxEnd();
 }
 // 各タブの上部メニューを topbar の直下に固定するための高さ計測（折返しで高さが変わるため実測）
 function setTbh(){
@@ -1015,8 +1079,14 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v14';
+var APP_VER = 'v15';
 var CHANGELOG = [
+  { v: 'v15', d: '2026/10/04', items: [
+    '🔰 使い方ガイドができました！画面上の「🔰 使い方」からいつでも開けます（案内役はジェッ子ちゃん🐣）',
+    '受付管理: 「受付する人」のミッション5つ（受付を始める・QRでピッ・ゲスト/スピーカー・取消/未徴収・受付終了と会計）',
+    '研修受講カード: 「研修担当」のミッション5つ（登録・研修後入力・受講記録・昇格のルール・会員証を送る）',
+    '本物の画面のボタンを光らせて案内します。クリアするとスタンプがたまり、全部集めると「マスター」に🏅'
+  ] },
   { v: 'v14', d: '2026/10/04', items: ['研修生の昇格: EXPは受講していなくても昇格できるようになりました（条件は「DLR・EXP以外のすべての項目が受講済み＋面談シート提出済み」）'] },
   { v: 'v13', d: '2026/10/04', items: [
     '集計: 出席表の氏名をタップすると、その人の操作シートが開きます（会員証・編集・昇格・無効化/有効化・削除。名簿タブと同じ操作）。操作すると集計もすぐ更新されます',
@@ -1111,6 +1181,349 @@ function showChangelog(){
   verInit();   // 既読になったので赤丸を消す
 }
 verInit();
+/* ── 🔰 使い方ガイド（案内役: ジェッ子ちゃん） ──
+   毎回は出さない。初回だけ🔰ボタンの場所を吹き出しで教え、あとは見たいときに🔰から開く。
+   役割ごとのミッションを、本物の画面のボタンを光らせて案内する（スポットライトツアー）。
+   受付開始など本番データが動く操作は「光らせて説明するだけ」で、押さなくても次へ進める。
+   クリア状況（スタンプ）は端末ごとに localStorage へ保存する */
+var JETKO_SVG = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">'
+  + '<path d="M46 10 q4 -8 8 0 q3 -6 6 1" fill="none" stroke="#f2b400" stroke-width="3" stroke-linecap="round"/>'
+  + '<ellipse cx="50" cy="64" rx="34" ry="30" fill="#ffd83d"/><circle cx="50" cy="38" r="25" fill="#ffe066"/>'
+  + '<ellipse cx="22" cy="66" rx="9" ry="14" fill="#ffcf1f" transform="rotate(25 22 66)"/>'
+  + '<ellipse cx="78" cy="66" rx="9" ry="14" fill="#ffcf1f" transform="rotate(-25 78 66)"/>'
+  + '<circle cx="40" cy="35" r="4.2" fill="#2b2b2b"/><circle cx="60" cy="35" r="4.2" fill="#2b2b2b"/>'
+  + '<circle cx="41.4" cy="33.6" r="1.4" fill="#fff"/><circle cx="61.4" cy="33.6" r="1.4" fill="#fff"/>'
+  + '<ellipse cx="33" cy="45" rx="5" ry="3" fill="#ff9aa2" opacity=".8"/><ellipse cx="67" cy="45" rx="5" ry="3" fill="#ff9aa2" opacity=".8"/>'
+  + '<path d="M44 42 L56 42 L50 50 Z" fill="#ff8c1a"/>'
+  + '<path d="M40 93 l-4 5 M40 93 l0 6 M40 93 l4 5 M60 93 l-4 5 M60 93 l0 6 M60 93 l4 5" stroke="#ff8c1a" stroke-width="2.6" stroke-linecap="round"/>'
+  + '</svg>';
+var GX_NAME = 'ジェッ子ちゃん';
+var GX_KEY = 'bci_guide_v1';
+function gxLoad(){ var o = null; try{ o = JSON.parse(localStorage.getItem(GX_KEY) || 'null'); }catch(e){} return o || { done: {} }; }
+function gxIsDone(id){ return !!(gxLoad().done || {})[id]; }
+function gxMark(id){ var o = gxLoad(); o.done = o.done || {}; o.done[id] = Date.now(); try{ localStorage.setItem(GX_KEY, JSON.stringify(o)); }catch(e){} }
+// 受付管理のタブ・研修受講カードのタブを切り替える（ツアーの各ステップの前準備）
+function gxPane(id){
+  return function(){
+    var b = document.querySelector('nav button[data-pane="' + id + '"]');
+    if(b && !b.classList.contains('on') && b.onclick) b.onclick();
+  };
+}
+function gxTrTab(id){ return function(){ var b = $(id); if(b && !b.classList.contains('on')) b.click(); }; }
+function gxQ(sel){ return function(){ return document.querySelector(sel); }; }
+
+var GX_ROLES = [
+  { k: 'rec', e: '🎫', name: '受付する人', view: 'vApp', master: '受付マスター', missions: [
+    { id: 'rec1', t: '受付を始める', sub: '1分・イベントを選んでスタート', steps: [
+      { sel: 'nav button[data-pane="pKiosk"]', click: true, t: 'まずは「受付」タブ', x: '上の<b>「受付」</b>タブを押してみて！ここが受付の画面だよ。' },
+      { sel: '#recEvSel', pre: gxPane('pKiosk'), t: 'イベントを選ぶ', x: '受付するイベントを選ぶよ。<b>今日のイベントは最初から選ばれている</b>から、確認するだけでOK！' },
+      { sel: '#feeModeSel', pre: gxPane('pKiosk'), t: '料金モード', x: 'ふだんは<b>「通常受付」</b>のままでOK。会場代だけ集める日は「会場代のみ」に切り替えてね。' },
+      { sel: '#btnRecStart', pre: gxPane('pKiosk'), t: '「受付を開始」でスタート！', x: '押すと名簿が読み込まれて、QRを読める状態になるよ。<br><small>※本番の受付が始まるので、ここでは押さずに「次へ」でOK。当日のイベントのときに押してね。</small>' }
+    ] },
+    { id: 'rec2', t: 'QRでピッ・番号で受付', sub: '1分・ピッと鳴ればOK', steps: [
+      { sel: '#numIn', pre: gxPane('pKiosk'), t: 'QRを読む・番号を入れる', x: 'QRリーダーやカメラで<b>会員証のQRを読むと自動で受付</b>！番号を手で入れてEnterでもOKだよ。', miss: '受付を開始すると、ここに番号の入力欄が出るよ。' },
+      { sel: '#nameIn', pre: gxPane('pKiosk'), t: '名前でさがす', x: '番号がわからない人は、<b>名前で検索</b>して受付できるよ。', miss: '受付中の画面に「名前で検索して受付」の欄があるよ。' },
+      { sel: '#stage', pre: gxPane('pKiosk'), t: 'ピッ！の結果', x: '<b>緑なら成功🎉</b> 赤いときは「無効のメンバー」「未登録」など理由が出るから、確認してね。', miss: '受付中は、ここに読み取った人の名前と結果が大きく出るよ。' },
+      { sel: '#totalTile', pre: gxPane('pKiosk'), t: '人数・集金はリアルタイム', x: '受付した人数と集めた金額は、ここで<b>リアルタイムに確認</b>できるよ。', miss: '受付中の画面の下に、人数と集金額のタイルが出るよ。' }
+    ] },
+    { id: 'rec3', t: 'ゲスト・スピーカー', sub: '1分・名簿にいない人', steps: [
+      { sel: '#btnGuest', pre: gxPane('pKiosk'), t: 'ゲスト受付', x: '名簿にいない人（ゲスト・飛び入り）は<b>「ゲスト受付」</b>から名前を入れて受付するよ。', miss: '受付中の画面に「ゲスト受付」ボタンがあるよ。' },
+      { sel: '#btnSpeaker', pre: gxPane('pKiosk'), t: 'スピーカー・MC', x: 'スピーカーは<b>料金なし</b>で登録。MCも「MCを登録」から同じようにできるよ。', miss: '受付中の画面に「スピーカーを登録」「MCを登録」ボタンがあるよ。' }
+    ] },
+    { id: 'rec4', t: '受付の取消・未徴収', sub: '1分・間違えたとき', steps: [
+      { sel: '#stage', pre: gxPane('pKiosk'), t: 'あとで払う人', x: '受付した直後の画面の<b>「未徴収にする（後払い）」</b>で、あとから払う人にできるよ。', miss: '受付した直後、ここに「未徴収にする（後払い）」ボタンが出るよ。' },
+      { sel: '#totalTile', pre: gxPane('pKiosk'), t: '受付の取消', x: '人数のタイルを押すと受付した人の一覧が開くよ。間違えた人は<b>「取消」</b>で消せるよ。', miss: '受付中の人数タイルを押すと一覧が開いて、そこから取消できるよ。' },
+      { sel: '#cashTile', pre: gxPane('pKiosk'), t: '未徴収の確認', x: '未徴収の人はここに出るよ。払ってもらったら<b>「徴収済」</b>にしてね。', miss: '受付中の集金タイルに、未徴収の人が出るよ。' }
+    ] },
+    { id: 'rec5', t: '受付終了と会計', sub: '2分・集計に反映', steps: [
+      { sel: '#btnRecStop', pre: gxPane('pKiosk'), t: '「受付を終了」', x: '受付が終わったら<b>「受付を終了」</b>。これで集計（稼働率）に反映されるよ。そのまま会計の入力もできるよ。<br><small>※ここでは押さずに「次へ」でOK。</small>' },
+      { sel: 'nav button[data-pane="pFin"]', click: true, t: '会計タブ', x: '<b>「会計」</b>タブを押してみて！あとから会計を入力・修正できるよ。' },
+      { sel: 'nav button[data-pane="pStats"]', click: true, t: '集計タブ', x: '最後に<b>「集計」</b>タブ！出席表と稼働率が見られるよ。名前を押すと、その人をその場で編集できるよ。' }
+    ] }
+  ] },
+  { k: 'tr', e: '🎓', name: '研修担当', view: 'vTrainer', master: '研修マスター', missions: [
+    { id: 'tr1', t: '研修生を登録する', sub: '1分・その場でQRを渡す', steps: [
+      { sel: '#trTabReg', click: true, t: '「＋登録」タブ', x: '<b>「＋登録」</b>を押してみて！新しい研修生を登録する画面だよ。' },
+      { sel: '#trName', pre: gxTrTab('trTabReg'), t: '名前を入れる', x: '研修生の<b>名前</b>を入れてね。ふりがな・紹介者は分かれば入れておくと検索しやすいよ。' },
+      { sel: '#trUp', pre: gxTrTab('trTabReg'), t: 'UPルビーを選ぶ', x: 'UPルビーは<b>一覧から選ぶだけ</b>。打ち間違いの心配なし！' },
+      { sel: '#trGo', pre: gxTrTab('trTabReg'), t: '登録してQRを渡す', x: '押すと番号が決まって<b>会員証のQRが出る</b>よ。本人のスマホで読み取ってもらえば完了！' }
+    ] },
+    { id: 'tr2', t: '研修後入力をひらく', sub: '1分・番号で開く', steps: [
+      { sel: '#trTabList', click: true, t: '「研修後入力」タブ', x: '<b>「研修後入力」</b>を押してみて！研修した人の記録をつける画面だよ。' },
+      { sel: '#trOpenNo', pre: gxTrTab('trTabList'), t: '番号で開く', x: '研修した人の<b>会員番号</b>（会員証に書いてある）を入れて「開く」。ほかの担当者が登録した人もここから開けるよ。' },
+      { sel: '#tsResults', pre: gxTrTab('trTabList'), t: '自分の研修生', x: '自分が登録した研修生はここに並ぶよ。<b>タップでチェックリスト</b>が開くよ。' }
+    ] },
+    { id: 'tr3', t: '受講を記録する', sub: '2分・面談シート・DLR予約も', steps: [
+      { sel: gxQ('#tsResults [data-tr]'), pre: gxTrTab('trTabList'), click: true, t: '研修生をひらく', x: '一覧の研修生を<b>タップ</b>してみて！', miss: '研修生を登録すると、ここに一覧が出るよ。タップでチェックリストが開くよ。' },
+      { sel: gxQ('.modal button[data-tk]:not([data-tundo])'), t: '受講済みにする', x: '受講した項目の<b>「✓ 受講済みにする」</b>で、日付とあなたの名前で記録されるよ。間違えたら「取消」で戻せるよ。', miss: 'チェックリストの各項目に「✓ 受講済みにする」ボタンがあるよ。' },
+      { sel: gxQ('.modal button[data-tsheet]'), t: 'CO面談シート', x: '<b>📝 面談シート</b>はここから。本人のスマホで入力してもらうこともできるよ。', miss: 'チェックリストのCOの行に「📝 面談シート」ボタンがあるよ。' },
+      { sel: gxQ('.modal button[data-tdlr]'), t: 'DLR会場受講の予約', x: '<b>📅 会場受講を予約</b>すると、本人の会員証に招待チケットが出るよ。', miss: 'チェックリストのDLRの行に「📅 会場受講を予約」ボタンがあるよ。' }
+    ] },
+    { id: 'tr4', t: '昇格のルール', sub: '1分・いつ正規メンバーになる？', steps: [
+      { sel: null, t: '昇格の条件', x: '<b>' + trPromoteRule() + '</b>になると「昇格待ち」になるよ。足りないものは「あと: …」で教えてくれるよ。' },
+      { sel: null, t: '昇格するのは管理者', x: 'ユニオン管理者が名簿や集計から<b>⭐ 昇格</b>を押すと、<b>同じ会員証のまま</b>正規メンバーのカードに切り替わるよ。本人の操作はいらないよ！' }
+    ] },
+    { id: 'tr5', t: '会員証を送る', sub: '1分・LINEでURLを送る', steps: [
+      { sel: gxQ('#tsResults [data-tsend]'), pre: gxTrTab('trTabList'), t: '📨 送る', x: '<b>「📨 送る」</b>で会員証のURLをLINEなどで本人に送れるよ。スマホを変えたときも同じURLでOK！', miss: '研修後入力の一覧の各行に「📨 送る」ボタンがあるよ。' },
+      { sel: '#trTabReg', t: 'いちばんカンタンなのは…', x: '登録した直後に<b>QRを見せて、本人のスマホで読み取ってもらう</b>こと！その場で渡せるよ。' }
+    ] }
+  ] },
+  { k: 'adm', e: '📋', name: '名簿・管理者', view: 'vApp', soon: true },
+  { k: 'stat', e: '📊', name: '集計を見る', view: 'vApp', soon: true }
+];
+var gxMenuRole = '';
+function gxView(){ return ($('vTrainer') && !$('vTrainer').classList.contains('hide')) ? 'vTrainer' : 'vApp'; }
+function gxRolesHere(){ var v = gxView(); return GX_ROLES.filter(function(r){ return r.view === v; }); }
+function gxRoleCount(r){ var n = 0; (r.missions || []).forEach(function(m){ if(gxIsDone(m.id)) n++; }); return n; }
+function gxCloseMenu(){ var h = $('gxMenu'); if(h) h.parentNode.removeChild(h); }
+function gxOpenMenu(){
+  gxEnd(); gxHintClose(); gxCloseMenu();
+  var roles = gxRolesHere();
+  var role = null;
+  roles.forEach(function(r){ if(r.k === gxMenuRole && !r.soon) role = r; });
+  if(!role) role = roles.filter(function(r){ return !r.soon; })[0];
+  gxMenuRole = role.k;
+  var done = gxRoleCount(role), total = role.missions.length;
+  var html = '<div class="gx-panel" role="dialog" aria-label="使い方ガイド">'
+    + '<div class="gx-top"><h2>🔰 使い方ガイド</h2>'
+    + '<p>' + GX_NAME + 'といっしょに、ミッションをクリアしてスタンプを集めよう！</p>'
+    + '<div class="gx-tj">' + JETKO_SVG + '</div><button class="gx-close" id="gxMClose" title="とじる">✕</button></div>'
+    + '<div class="gx-body">'
+    + (roles.length > 1
+      ? '<div class="gx-roles">' + roles.map(function(r){
+          if(r.soon) return '<div class="gx-role soon"><span class="e">' + r.e + '</span><b>' + esc(r.name) + '</b><small>🔒 近日公開</small></div>';
+          var n = gxRoleCount(r), t = r.missions.length;
+          return '<div class="gx-role' + (r === role ? ' on' : '') + '" data-gr="' + r.k + '"><span class="e">' + r.e + '</span><b>' + esc(r.name) + '</b>'
+            + '<small>スタンプ ' + n + '/' + t + (n === t ? ' 🏅' : '') + '</small><div class="gx-bar"><i style="width:' + Math.round(n / t * 100) + '%"></i></div></div>';
+        }).join('') + '</div>'
+      : '')
+    + '<div class="gx-h">' + role.e + ' ' + esc(role.name) + 'のミッション</div>'
+    + role.missions.map(function(m, i){
+        var d = gxIsDone(m.id);
+        return '<div class="gx-mis"><div class="gx-stamp ' + (d ? 'done">済' : 'todo">' + (i + 1)) + '</div>'
+          + '<div class="tx"><b>' + esc(m.t) + '</b><small>' + esc(m.sub) + '</small></div>'
+          + '<button class="gx-btn" data-gm="' + i + '" style="font-size:12.5px;padding:7px 13px;">' + (d ? 'もう一度' : 'やってみる') + '</button></div>';
+      }).join('')
+    + '<div class="gx-foot"><span style="font-size:24px;">🏅</span><div style="flex:1;">'
+    + (done === total
+      ? '<b>' + esc(role.master) + ' 達成！</b> すごい！もう案内なしでバッチリだね🎉'
+      : '<b>' + esc(role.master) + 'まで あと' + (total - done) + 'つ！</b>')
+    + '<div class="gx-bar"><i style="width:' + Math.round(done / total * 100) + '%"></i></div></div></div>'
+    + '</div></div>';
+  var host = document.createElement('div');
+  host.id = 'gxMenu'; host.className = 'gx-back'; host.innerHTML = html;
+  document.body.appendChild(host);
+  host.addEventListener('click', function(e){
+    if(e.target === host){ gxCloseMenu(); return; }
+    var t = e.target.closest ? e.target.closest('[data-gr],[data-gm],#gxMClose') : null;
+    if(!t) return;
+    if(t.id === 'gxMClose'){ gxCloseMenu(); return; }
+    if(t.getAttribute('data-gr')){ gxMenuRole = t.getAttribute('data-gr'); gxOpenMenu(); return; }
+    gxStart(role, +t.getAttribute('data-gm'));
+  });
+}
+
+/* スポットライトツアー */
+var gxTour = null;
+function gxFind(sel){
+  if(!sel) return null;
+  var el = typeof sel === 'function' ? sel() : document.querySelector(sel);
+  if(!el) return null;
+  var r = el.getBoundingClientRect();
+  return (r.width || r.height) ? el : null;
+}
+function gxStart(role, mi){
+  gxCloseMenu(); gxEnd();
+  var host = document.createElement('div');
+  host.id = 'gxTour';
+  host.innerHTML = '<div class="gx-hole"></div><div class="gx-ring"></div><div class="gx-dimall" style="display:none;"></div>'
+    + '<div class="gx-bub"><div class="gx-tail"></div><div class="gx-c"></div></div><div class="gx-jet">' + JETKO_SVG + '</div>';
+  document.body.appendChild(host);
+  gxTour = { role: role, mi: mi, m: role.missions[mi], i: 0, host: host, el: null, raf: 0 };
+  gxTour.onClick = function(e){
+    var t = gxTour;
+    if(!t) return;
+    var st = t.m.steps[t.i];
+    if(st.click && t.el && t.el.contains(e.target)){ setTimeout(gxNext, 350); }
+  };
+  gxTour.onKey = function(e){ if(e.key === 'Escape') gxEnd(); };
+  document.addEventListener('click', gxTour.onClick, true);
+  document.addEventListener('keydown', gxTour.onKey);
+  host.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-gx]') : null;
+    if(!b) return;
+    var a = b.getAttribute('data-gx');
+    if(a === 'next') gxNext();
+    if(a === 'skip') gxEnd();
+  });
+  gxShow();
+  (function loop(){
+    if(!gxTour) return;
+    gxPos();
+    gxTour.raf = requestAnimationFrame(loop);
+  })();
+}
+function gxShow(){
+  var t = gxTour, st = t.m.steps[t.i], last = t.i === t.m.steps.length - 1;
+  if(st.pre) try{ st.pre(); }catch(e){}
+  t.el = gxFind(st.sel);
+  if(t.el && t.el.scrollIntoView){
+    var r = t.el.getBoundingClientRect();
+    if(r.top < 80 || r.bottom > window.innerHeight - 40) t.el.scrollIntoView({ block: 'center' });
+  }
+  var dots = t.m.steps.map(function(s, i){ return '<i' + (i === t.i ? ' class="on"' : '') + '></i>'; }).join('');
+  var canClick = st.click && t.el;
+  t.host.querySelector('.gx-c').innerHTML = '<span class="gx-t">' + (t.i === 0 ? 'ミッション' + (t.mi + 1) + '：' + esc(t.m.t) + '<br>' : '') + esc(st.t) + '</span>'
+    + '<p class="gx-x">' + (t.el || !st.miss ? st.x : st.miss) + '</p>'
+    + (st.sel && !t.el && st.miss ? '<div class="gx-note">（受付中など、その画面を開いているときは本物のボタンを光らせて案内するよ）</div>' : '')
+    + '<div class="gx-row"><div class="gx-dots">' + dots + '</div><div>'
+    + '<button class="gx-lnk" data-gx="skip">やめる</button> '
+    + (canClick
+      ? '<span style="font-size:13px;font-weight:800;color:#ff8c1a;">👆 押してみて！</span> <button class="gx-lnk" data-gx="next">とばす ›</button>'
+      : '<button class="gx-btn" data-gx="next">' + (last ? 'クリア！🎉' : '次へ ›') + '</button>')
+    + '</div></div>';
+  gxPos();
+}
+function gxPos(){
+  var t = gxTour;
+  if(!t) return;
+  var st = t.m.steps[t.i];
+  if(t.el && !document.body.contains(t.el)) t.el = gxFind(st.sel);
+  var hole = t.host.querySelector('.gx-hole'), ring = t.host.querySelector('.gx-ring'), dim = t.host.querySelector('.gx-dimall');
+  var bub = t.host.querySelector('.gx-bub'), tail = t.host.querySelector('.gx-tail'), jet = t.host.querySelector('.gx-jet');
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var W = Math.min(360, vw - 24);
+  bub.style.width = W + 'px';
+  var bh = bub.offsetHeight;
+  var r = t.el ? t.el.getBoundingClientRect() : null;
+  if(!r || (!r.width && !r.height)){
+    hole.style.display = 'none'; ring.style.display = 'none'; dim.style.display = ''; tail.style.display = 'none';
+    bub.style.left = Math.round((vw - W) / 2) + 'px';
+    bub.style.top = Math.round(Math.max(70, (vh - bh) / 2)) + 'px';
+  } else {
+    var pad = 6;
+    hole.style.display = ''; ring.style.display = ''; dim.style.display = 'none'; tail.style.display = '';
+    [hole, ring].forEach(function(x){
+      x.style.left = (r.left - pad) + 'px'; x.style.top = (r.top - pad) + 'px';
+      x.style.width = (r.width + pad * 2) + 'px'; x.style.height = (r.height + pad * 2) + 'px';
+    });
+    var below = r.bottom + 18 + bh < vh - 8 || r.top - 18 - bh < 8;
+    var top = below ? r.bottom + 18 : r.top - 18 - bh;
+    top = Math.max(8, Math.min(top, vh - bh - 8));
+    var left = Math.max(12, Math.min(r.left + r.width / 2 - W / 2, vw - W - 12));
+    bub.style.left = Math.round(left) + 'px'; bub.style.top = Math.round(top) + 'px';
+    var tx = Math.max(18, Math.min(r.left + r.width / 2 - left - 8, W - 34));
+    tail.style.left = Math.round(tx) + 'px';
+    if(below){ tail.style.top = '-11px'; tail.style.bottom = ''; tail.style.transform = 'rotate(45deg)'; }
+    else { tail.style.top = ''; tail.style.bottom = '-11px'; tail.style.transform = 'rotate(225deg)'; }
+  }
+  // ジェッ子ちゃんは光らせたボタンと重ならないよう、吹き出しの反対側（下向きなら下の角）に置く
+  var bl = parseFloat(bub.style.left), bt = parseFloat(bub.style.top);
+  var jl = bl + W - 44, jt = (r && (r.width || r.height) && below) ? bt + bh - 22 : bt - 50;
+  if(jt < 4) jt = bt + bh - 22;
+  if(jt + 64 > vh) jt = bt - 50;
+  jet.style.left = Math.round(Math.min(jl, vw - 66)) + 'px'; jet.style.top = Math.round(jt) + 'px';
+}
+function gxNext(){
+  var t = gxTour;
+  if(!t) return;
+  t.i++;
+  if(t.i >= t.m.steps.length){ var role = t.role, mi = t.mi; gxMark(t.m.id); gxEnd(); gxClear(role, mi); return; }
+  gxShow();
+}
+function gxEnd(){
+  var t = gxTour;
+  if(!t) return;
+  cancelAnimationFrame(t.raf);
+  document.removeEventListener('click', t.onClick, true);
+  document.removeEventListener('keydown', t.onKey);
+  if(t.host && t.host.parentNode) t.host.parentNode.removeChild(t.host);
+  gxTour = null;
+}
+/* ミッションクリア: 紙吹雪＋スタンプ */
+function gxConfetti(){
+  var cols = ['#ff8c1a', '#ffd83d', '#e0604f', '#79c29e', '#7ba7e0', '#ff9aa2', '#b48cf2'];
+  var frag = document.createDocumentFragment(), list = [];
+  for(var i = 0; i < 70; i++){
+    var c = document.createElement('i');
+    c.className = 'gx-conf';
+    c.style.left = Math.round(Math.random() * 100) + 'vw';
+    c.style.background = cols[i % cols.length];
+    c.style.animationDuration = (1.8 + Math.random() * 1.6).toFixed(2) + 's';
+    c.style.animationDelay = (Math.random() * 0.5).toFixed(2) + 's';
+    if(i % 3 === 0){ c.style.width = '9px'; c.style.height = '9px'; c.style.borderRadius = '50%'; }
+    frag.appendChild(c); list.push(c);
+  }
+  document.body.appendChild(frag);
+  setTimeout(function(){ list.forEach(function(c){ if(c.parentNode) c.parentNode.removeChild(c); }); }, 4200);
+}
+function gxClear(role, mi){
+  gxConfetti();
+  var done = gxRoleCount(role), total = role.missions.length;
+  var nextI = -1;
+  for(var k = 1; k <= total; k++){ var j = (mi + k) % total; if(!gxIsDone(role.missions[j].id)){ nextI = j; break; } }
+  var host = document.createElement('div');
+  host.id = 'gxClear';
+  host.innerHTML = '<div class="gx-dimall" style="z-index:3009;"></div><div class="gx-clear">'
+    + '<div class="gx-cj">' + JETKO_SVG + '</div>'
+    + '<h3>ミッションクリア！</h3>'
+    + '<div style="font-size:14px;color:#6b665a;margin-top:2px;">「' + esc(role.missions[mi].t) + '」ができたね🎉</div>'
+    + '<div class="gx-stamps">' + role.missions.map(function(m, i){
+        return gxIsDone(m.id)
+          ? '<div class="gx-stamp done' + (i === mi ? ' pop' : '') + '">済</div>'
+          : '<div class="gx-stamp todo">' + (i + 1) + '</div>';
+      }).join('') + '</div>'
+    + '<div style="font-size:13px;color:#6b665a;">' + (done === total
+        ? '🏅 <b style="color:#2a2a24;">' + esc(role.master) + ' 達成！</b> おめでとう！'
+        : '🏅 ' + esc(role.master) + 'まで <b style="color:#2a2a24;">あと' + (total - done) + 'つ</b>') + '</div>'
+    + '<div style="display:flex;gap:10px;margin-top:16px;">'
+    + '<button data-gc="close" style="flex:1;background:#efeadb;border:none;border-radius:999px;padding:11px;font-weight:800;color:#5b5646;cursor:pointer;">とじる</button>'
+    + (nextI >= 0 ? '<button class="gx-btn" data-gc="next" style="flex:1.4;padding:11px;">次のミッション ›</button>'
+                  : '<button class="gx-btn" data-gc="menu" style="flex:1.4;padding:11px;">ガイドにもどる</button>')
+    + '</div></div>';
+  document.body.appendChild(host);
+  host.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-gc]') : null;
+    if(!b) return;
+    var a = b.getAttribute('data-gc');
+    host.parentNode.removeChild(host);
+    if(a === 'next') gxStart(role, nextI);
+    if(a === 'menu') gxOpenMenu();
+  });
+}
+/* 初回だけ: 🔰ボタンの場所を吹き出しで案内（以後は出さない・画面操作はふさがない） */
+function gxHintClose(){
+  var h = $('gxHint');
+  if(h && h.parentNode) h.parentNode.removeChild(h);
+  if(gxHintClose.off){ document.removeEventListener('pointerdown', gxHintClose.off, true); gxHintClose.off = null; }
+}
+function gxHintOnce(view){
+  var seen = '';
+  try{ seen = localStorage.getItem('bci_guide_hint') || ''; }catch(e){ return; }
+  if(seen) return;
+  var btn = $(view === 'vTrainer' ? 'guideBtnTr' : 'guideBtn');
+  if(!btn || !btn.getBoundingClientRect().width) return;
+  try{ localStorage.setItem('bci_guide_hint', '1'); }catch(e){}
+  var r = btn.getBoundingClientRect(), vw = window.innerWidth, W = Math.min(300, vw - 24);
+  var left = Math.max(12, Math.min(r.left + r.width / 2 - W / 2, vw - W - 12));
+  var h = document.createElement('div');
+  h.id = 'gxHint';
+  h.innerHTML = '<div class="gx-bub" style="left:' + Math.round(left) + 'px;top:' + Math.round(r.bottom + 14) + 'px;width:' + W + 'px;">'
+    + '<div class="gx-tail" style="top:-11px;left:' + Math.round(Math.max(18, Math.min(r.left + r.width / 2 - left - 8, W - 34))) + 'px;transform:rotate(45deg);"></div>'
+    + '<span class="gx-t">はじめまして、' + GX_NAME + 'だよ！🐣</span>'
+    + '<p class="gx-x">使い方がわからなくなったら、いつでも<b>「🔰 使い方」</b>を押してね。ぜんぶ案内するよ！</p>'
+    + '<div class="gx-row"><span class="gx-note" style="margin:0;">この案内は最初の1回だけ</span><button class="gx-btn" id="gxHintOk">OK！</button></div></div>'
+    + '<div class="gx-jet" style="left:' + Math.round(Math.max(4, left - 18)) + 'px;top:' + Math.round(r.bottom + 2) + 'px;width:54px;height:54px;">' + JETKO_SVG + '</div>';
+  document.body.appendChild(h);
+  // ジェッ子ちゃんは吹き出しの右下の角へ（タイトルと重ならないように）
+  var br = h.querySelector('.gx-bub').getBoundingClientRect(), hj = h.querySelector('.gx-jet');
+  hj.style.left = Math.round(Math.min(br.right - 36, vw - 58)) + 'px'; hj.style.top = Math.round(br.bottom - 22) + 'px';
+  $('gxHintOk').onclick = gxHintClose;
+  // 吹き出しの外を触ったら閉じる（その操作自体はそのまま通す）
+  gxHintClose.off = function(e){ if(!h.contains(e.target)) gxHintClose(); };
+  document.addEventListener('pointerdown', gxHintClose.off, true);
+}
+['guideBtn', 'guideBtnTr'].forEach(function(id){ var b = $(id); if(b) b.onclick = gxOpenMenu; });
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
