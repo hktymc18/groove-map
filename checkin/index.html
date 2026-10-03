@@ -1004,8 +1004,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v10';
+var APP_VER = 'v11';
 var CHANGELOG = [
+  { v: 'v11', d: '2026/10/04', items: [
+    '稼働率: 登録して1ヶ月たっていない人は、名簿に登録した日からのハウディの回数を分母にして計算するようになりました（登録前の開催は表で「－」、稼働率の下に「10/10登録〜」）。GROOVE MAPに取り込む稼働率も同じです'
+  ] },
   { v: 'v10', d: '2026/10/04', items: [
     '集計: メンバー別 出席マトリクスに「直近1ヶ月」の稼働率の列を追加（今月を表示している時。1ヶ月前の翌日〜今日の出席÷開催数）。当月の稼働率と並べて見られます。CSVにも出力',
     'GROOVE MAPの受付連携で取り込む稼働率は「直近1ヶ月」になりました'
@@ -6707,7 +6710,7 @@ function ckRateRows(evs, attMaps, unionMembers){
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
   unionMembers.forEach(function(m){
     if(ckMemberOff(m)) return;   // 無効（旧休会含む）は集計に出さない（過去に出席した月は下の出席記録から行に載る）
-    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true, trainee: !!m.trainee });
+    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true, trainee: !!m.trainee, since: ckSinceOf(m) });
   });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
@@ -6720,13 +6723,22 @@ function ckRateRows(evs, attMaps, unionMembers){
       }
     });
   });
-  var held = evs.length;
   rows.forEach(function(r){
     r.marks = evs.map(function(ev){ return attMaps[ev.id][r.no] ? 1 : 0; });
-    r.count = r.marks.reduce(function(a,b){ return a + b; }, 0);
+    // 分母は登録した日（名簿の登録日）以降のハウディだけ＝活動1ヶ月未満の人は登録してからの回数で割る
+    var held = 0, cnt = 0;
+    evs.forEach(function(ev, i){ if(!r.since || (ev.date || '') >= r.since){ held++; cnt += r.marks[i]; } });
+    r.count = cnt; r.held = held;
     r.rate = held ? Math.round(r.count / held * 100) : 0;
   });
   return rows;
+}
+// 名簿に登録した日（YYYY-MM-DD）。CSV取込など登録日が無い人は '' ＝ 分母は期間の全部
+function ckSinceOf(m){
+  var t = m && m.createdAt; if(!t) return '';
+  var d = t.toDate ? t.toDate() : (t.seconds ? new Date(t.seconds * 1000) : new Date(t));
+  if(!d || isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
 // GROOVE MAPの「受付連携」はこの集計結果を読むだけ（MAP側では計算しない＝数字が必ず一致する）
 //   checkinStats/{ユニオン}__{YYYY-MM} = { union, month, held, evIds, rates:{番号:{count,rate}}, calcAt, calcDay }
@@ -6734,7 +6746,7 @@ function ckStatDocId(union, key){ return String(union || '').replace(/\//g, '／
 function ckSaveRateSnapshot(union, key, evs, rows, range){
   if(!union || !key || !gUser) return Promise.resolve();
   var rates = {};
-  rows.forEach(function(r){ if(!/^g/.test(r.no)) rates[r.no] = { count: r.count, rate: r.rate }; });
+  rows.forEach(function(r){ if(!/^g/.test(r.no)) rates[r.no] = { count: r.count, rate: r.rate, held: r.held, since: r.since || '' }; });
   var doc = {
     union: union, month: key, held: evs.length, evIds: evs.map(function(ev){ return ev.id; }),
     rates: rates, calcAt: Date.now(), calcDay: todayStr(), by: gUser.uid
@@ -6961,7 +6973,7 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
     + '</div>'
     + '<div class="sectionhead"><h2>系列別 平均稼動数</h2><span class="note">' + esc(gStatUnion) + '・1回あたりの出席数</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroupAvg, '名') || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
-    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入）/ 無効のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入。登録して間もない人は登録した日からの開催数）/ 無効のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
     + (_isNow ? '<div class="note" id="statRecentNote" style="margin:-2px 0 8px;font-size:12px;color:var(--sub);">直近1ヶ月の稼働率を集計中…</div>' : '')
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
@@ -7019,10 +7031,12 @@ function renderStatMatrix(){
     + th('count', '回数') + '</tr></thead><tbody>'
     + (view.length ? view.map(function(r){
         return '<tr><td class="stk stk1"><b>' + esc(r.name) + '</b>'
-          + (r.trainee ? ' <span class="pill n" style="font-size:10px;">研修生</span>' : '') + '</td><td class="stk stk2">' + esc(r.group) + '</td>'
-          + '<td class="stk stk3 rate">' + (r.member ? r.rate + '%' : '—') + '</td>'
+          + (r.trainee ? ' <span class="pill n" style="font-size:10px;">研修生</span>' : '')
+          + '</td><td class="stk stk2">' + esc(r.group) + '</td>'
+          + '<td class="stk stk3 rate">' + (r.member ? r.rate + '%' : '—')
+          + (r.since && gStat.evs.length && r.since > (gStat.evs[0].date || '') ? '<div style="font-size:9.5px;font-weight:600;color:var(--sub);white-space:nowrap;" title="登録した日からのハウディで計算">' + esc(ckMD(r.since)) + '登録〜</div>' : '') + '</td>'
           + (rc ? '<td class="stk stk4 rate">' + (r.member && rc.by[r.no] ? rc.by[r.no].rate + '%' : '—') + '</td>' : '')
-          + r.marks.map(function(v){ return '<td class="mk">' + (v ? '<span class="y">●</span>' : '<span class="nn">・</span>') + '</td>'; }).join('')
+          + r.marks.map(function(v, i){ return '<td class="mk">' + (r.since && (gStat.evs[i].date || '') < r.since ? '<span class="nn" title="登録前">－</span>' : (v ? '<span class="y">●</span>' : '<span class="nn">・</span>')) + '</td>'; }).join('')
           + '<td class="mono">' + r.count + '</td></tr>';
       }).join('')
       : '<tr><td colspan="' + (gStat.evs.length + (rc ? 5 : 4)) + '" style="color:var(--sub);">該当するメンバーがいません</td></tr>')
