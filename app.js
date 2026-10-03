@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v580';
+var APP_JS_VERSION = 'v581';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v580';
+  var DATA_VERSION = 'v581';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4526,13 +4526,14 @@ function _migrateGSVSelf(members) {
   if (!members || !members.length) return;
   members.forEach(function(m) {
     if (typeof m.ptSelf !== 'number') {
-      m.ptSelf = Math.max(0, (m.ptCurrent || 0) - sumChildGSV(m.id, members));
+      m.ptSelf = Math.max(0, (m.ptCurrent || 0) - sumChildGSV(m.id, members) - (members === state.idealMembers ? _idealFix(m) : 0));
     }
   });
 }
 // ptSelf から ptCurrent(GSV) を全再計算（子インデックス＋帰りがけ順で O(n)）
 function recalcGSV(members) {
   if (!members || !members.length) return;
+  var fx = members === state.idealMembers; // v581: 理想MAPは固定PTを上がったものとして足す
   var kids = {};
   members.forEach(function(m) {
     if (m.deleted) return;
@@ -4544,7 +4545,7 @@ function recalcGSV(members) {
   function calc(m) {
     if (visiting[m.id]) return 0; // 循環ガード
     visiting[m.id] = 1;
-    var s = m.ptSelf || 0;
+    var s = (m.ptSelf || 0) + (fx ? _idealFix(m) : 0);
     (kids[m.id] || []).forEach(function(c) {
       var cv = calc(c);
       if (!isBROrAbove(c.title)) s += cv; // BR以上はブレイクアウェイで除外
@@ -4563,7 +4564,7 @@ function recalcAllGSV() {
 }
 // GSV(合計値)を手入力で上書き → 自分の分(ptSelf)に変換して全体再計算
 function setMemberGSV(m, gsvVal, members) {
-  m.ptSelf = Math.max(0, (parseInt(gsvVal) || 0) - sumChildGSV(m.id, members));
+  m.ptSelf = Math.max(0, (parseInt(gsvVal) || 0) - sumChildGSV(m.id, members) - (members === state.idealMembers ? _idealFix(m) : 0)); // v581: 理想MAPは固定PT込みの数字を入れる
   recalcAllGSV();
 }
 function _arrOf(m) {
@@ -4955,6 +4956,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v581', d:'2026-10-04', items:['🎯 理想MAPのポイントは、メンバーの「固定で上がる見込み（固定PT）」を上がったものとして計算（その人と上の人のGSV・チームGSV・コミッション・PLANのチームPT/ユーザーPTに反映）','固定PTは現状MAPのその人の値を使います（理想で追加した人は0）。理想MAPでGSVを入れる時は、固定込みの数字を入れればそのまま表示されます'] },
   { v:'v580', d:'2026-10-04', items:['🗂 PLANの「今週の作戦」と「今月の行動量」を1枚の「今週やること」にまとめました。大きく「あと何件」、行は「名前・バー・数・＋」だけ','＋＝予定を入れる（ST・CT取りは予約）。行を押すと、今週・今月の数字、やった（＋1）、今週の予定、数字の理由が見られます','下の「今週／今月」で今月の分に切り替え。？＝数字の決まり方・1分で体験、⋯＝係数の設定・動員を計画','HOMEにも同じカードの短い版（足りない行だけ）'] },
   { v:'v579', d:'2026-10-04', items:['🕖 企画書の日時：時刻は「時」「分」の2つの欄に。時を入れると自動で分に移ります','💻 PCでは「LINEで送る」ボタンを出さないように（スマホ・タブレットだけ）。PCは「コピー」してLINEに貼り付け'] },
   { v:'v578', d:'2026-10-04', items:['📝 アウトライン企画書：「伝えていただきたい事」「望む結果」は定型文のボタンをなくして自由入力だけに','🔧 課題の定型文ボタンを押すと画面が一番上に戻ってしまっていたのを修正（押した場所のまま）'] },
@@ -8538,6 +8540,12 @@ function _idealStats(members) {
   });
   return { newB1: nb, newFront: nbF, newUser: nu, gsv: root ? (root.ptCurrent || 0) : 0, s: s, rate: rn ? Math.round(rs / rn) : null, n: act.length, comm: commCalc(ms) };
 }
+// v581: 理想MAPで上がったものとして足す固定PT（「固定で上がる見込み」）。現状MAPの同じ人の値を使う（理想で追加した人は0）
+function _idealFix(m) {
+  if (!m || m.idealNew) return 0;
+  var c = _idealCurMap()[m.id], v = c ? c.ptFixed : m.ptFixed;
+  return v > 0 ? +v : 0;
+}
 // 現状MAPの同じ人（id）を引く
 var _idCurCache = { arr: null, len: -1, at: 0, map: {} };
 function _idealCurMap() {
@@ -8600,7 +8608,7 @@ function renderIdealSum() {
   h += '<div class="ids-body"><div class="ids-bars">'
     + bar('自分のB1', I.newFront, C.newFront, ppl, '自分の直下の新規ビジネス') // v554
     + bar('チームのB1', I.newB1, C.newB1, ppl, '自分のB1を含む・ユーザー ' + (I.newUser || 0) + '人は数えない')
-    + bar('チームGSV', I.gsv, C.gsv, pt)
+    + bar('チームGSV', I.gsv, C.gsv, pt, _idealFixSum() ? '固定PT込み' : '')
     + bar('S稼働', I.s, C.s, ppl)
     + bar('平均稼働', I.rate, C.rate, pc)
     + '</div><div class="ids-comm"><div class="ids-ct">コミッション<b>' + yen(I.comm.total) + '</b><small>現状 ' + yen(C.comm.total) + (I.comm.total - C.comm.total > 0 ? '（あと ' + yen(I.comm.total - C.comm.total) + '）' : '') + '</small></div>'
@@ -8613,6 +8621,7 @@ function renderIdealSum() {
     + '</div>';
   box.innerHTML = h;
 }
+function _idealFixSum() { var s = 0; (state.idealMembers || []).forEach(function(m) { if (!m.deleted) s += _idealFix(m); }); return s; } // v581
 function _idsOpen() { try { return localStorage.getItem('gm_idsOpen') !== '0'; } catch (e) { return true; } }
 function idsToggle() { try { localStorage.setItem('gm_idsOpen', _idsOpen() ? '0' : '1'); } catch (e) {} renderIdealSum(); }
 // ── v525: 理想MAP → PLANの「今月の目標」（フロント・ユーザーPT・チームB1・チームPT）を自動で ──
@@ -8622,7 +8631,7 @@ function idealTargets(ym) {
   if (ym && String(state.currentMonth || '').replace('.', '-') !== ym) return null; // 表示中の月の理想だけ
   var I = _idealStats(state.idealMembers);
   var root = state.idealMembers.filter(function(m) { return !m.parentId && !m.deleted; })[0];
-  return { front: I.newFront, teamB1: I.newB1, teamPt: I.gsv, upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf : (root.ptCurrent || 0)) : 0, stats: I };
+  return { front: I.newFront, teamB1: I.newB1, teamPt: I.gsv, upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf + _idealFix(root) : (root.ptCurrent || 0)) : 0, stats: I }; // v581: 自分の固定PTも込み
 }
 function syncIdealToPlan() {
   if (typeof _p2 !== 'function' || !state.goals) return false;
@@ -8702,7 +8711,8 @@ function _idqRender() {
   var kids = (state.idealMembers || []).filter(function(x) { return x.parentId === m.id && !x.deleted && x.idealNew; });
   var nBiz = kids.filter(function(x) { return x.idealKind === 'biz'; }).length, nUsr = kids.filter(function(x) { return x.idealKind === 'user'; }).length;
   var badge = m.idealKind === 'user' ? '<span class="idd usr">USER</span>' : (m.idealKind === 'biz' ? '<span class="idd nb1">NEW B1</span>' : (m.idealNew ? '<span class="idd new">NEW</span>' : ''));
-  var curLine = cur && !m.idealNew ? '現状：' + (cur.title || '−') + '・GSV ' + (cur.ptCurrent || 0).toLocaleString() + '・稼働 ' + (cur.activity || '−') + (cur.actRate !== '' && cur.actRate != null ? '（' + cur.actRate + '%）' : '') : '理想で追加した新規';
+  var fx9 = _idealFix(m);
+  var curLine = cur && !m.idealNew ? '現状：' + (cur.title || '−') + '・GSV ' + (cur.ptCurrent || 0).toLocaleString() + (fx9 ? '（固定 +' + fx9.toLocaleString() + '）' : '') + '・稼働 ' + (cur.activity || '−') + (cur.actRate !== '' && cur.actRate != null ? '（' + cur.actRate + '%）' : '') : '理想で追加した新規';
   var lab = function(t) { return (typeof titleAbbr === 'function' && titleAbbr(t)) || t; };
   var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + ' <span class="ot-ttl">' + evEsc(lab(tl)) + '</span> ' + badge + '</div>'
     + '<div style="font-size:11.5px;color:var(--text-dim)">' + evEsc(curLine) + '</div></div>' + (m.idealNew ? '<span class="ms-x idq-hdel" onclick="idqDelete()" title="この新規を削除">' + icn('trash') + '</span>' : '') + '<span class="ms-x" onclick="idqClose()">✕</span></div>' // v558: 新規はスクロールしなくても削除できるよう見出しにも🗑
