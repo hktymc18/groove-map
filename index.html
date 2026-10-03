@@ -2672,6 +2672,18 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2why-now b{font-family:Inter,sans-serif;color:var(--text);font-size:15px}
 .p2why-now .ng{color:var(--go-rose,#FF5D73);font-weight:800;flex:1} .p2why-now .ok{color:var(--accent);font-weight:800;flex:1}
 .p2why-note{font-size:11px;color:var(--text-dim);margin-top:12px;line-height:1.6}
+/* v575: 今月の目標の出どころ・変え方の案内・PLANに戻る */
+.p2t{cursor:pointer} .p2t-sub .p2t-chip{margin:0 6px 0 0}
+.p2t.ideal .p2t-tg b{color:var(--purple)}
+.p2t-chip{font-style:normal;font-size:9.5px;font-weight:800;margin-left:6px;padding:1px 6px;border-radius:6px;border:1px solid var(--border2);color:var(--text-dim);white-space:nowrap;vertical-align:middle}
+.p2t-chip.ideal{color:var(--purple);border-color:color-mix(in srgb,var(--purple) 55%,transparent);background:var(--purple-dim)}
+.p2t-src{font-size:11.5px;font-weight:800;color:var(--purple);cursor:pointer;margin-right:12px;white-space:nowrap}
+.p2tw-src{font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px} .p2tw-src .pu{color:var(--purple)}
+.p2tw-tx{font-size:12.5px;color:var(--text-mid);line-height:1.7} .p2tw-tx b{color:var(--text)}
+.p2tw-tip{font-size:11.5px;color:var(--text-dim);margin-top:6px;line-height:1.6}
+.p2tw-go{display:block;text-align:center;margin:12px 0 0;padding:12px}
+.p2-back{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:95;padding:10px 18px;border-radius:22px;background:var(--surface);border:1.5px solid var(--purple);color:var(--purple);font-size:13px;font-weight:800;box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap}
+@media(min-width:768px){.p2-back{bottom:28px}}
 /* v573: 理想MAPで決まるF（入力させない） */
 .p2-fro{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:4px 0 12px;padding:8px 12px;border-radius:10px;border:1px dashed var(--border2);background:var(--surface2)}
 .p2-fro b{font-size:20px;font-family:Inter,sans-serif;color:var(--text)}
@@ -2984,7 +2996,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v574</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v575</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3928,7 +3940,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v574';</script>
-<script src="app.js?v=v574"></script>
+<script>window.GM_EXPECT_JS='v575';</script>
+<script src="app.js?v=v575"></script>
 </body>
 </html>
