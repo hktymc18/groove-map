@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v569';
+var APP_JS_VERSION = 'v570';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v569';
+  var DATA_VERSION = 'v570';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4954,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v570', d:'2026-10-03', items:['🗓 予定の「種類」の欄をなくしました。タイトルに ST・SNST・CT取り・CT・FT が入っていれば、そのままPLANの行動量に数えます（マケ・PG・DLRなどはカレンダーからは数えません）。タイトルの下に「→ PLAN『CT』に数えます」のように連携先を1行表示（？で説明）','🎓 タイトルが研修ステップ（FT・マケ・PG・DLR・EXP・PA・面談・BPC・CO）の予定で関連メンバーに研修生を選ぶと、その人の研修履歴に「予定」として自動で入ります。予定の日付を変える・消す・メンバーを外すと研修履歴の予定も追従（結果を入れた記録はそのまま）','📊 PG・マケ・DLR動員は研修履歴から数えるように：自分の直下の研修生に結果（進んだ・流れた）を入れたら「今月の行動量」に、それ以外の研修生は「今月の目標」のチーム欄（PG・DLR動員の目標を追加）に数えます。DLR動員は会場に来た人だけ。日付が過ぎて結果が未入力の人は「結果待ち」と表示','⚡ かんたん追加：区分のボタンをやめて、タイトルを選ぶだけに（研修生の入口はマケ・PG）'] },
   { v:'v569', d:'2026-10-02', items:['🎮 PLANに「数字の決まり方を体験（1分）」を追加：練習用のミニ画面で ①理想MAPに新しいB1を足す ②係数を変える ③今週CTの予定を入れる ④1週間すすめる、の4つを操作すると、今月の必要数・今週の目標が目の前で変わります（本物のデータは変わりません）','▶ 「見るだけ」を選ぶと自動で操作して見せてくれます。はじめての人には「今月の行動量」に案内が出ます（✕で消せます）。「なぜこの数字？」の画面からも開けます'] },
   { v:'v568', d:'2026-10-02', items:['🧮 PLANの「今月の行動量」「今週の作戦」の数字に、計算式を表示（例：16件の横に「＝2人×8」、今週4件の横に「残り12÷3週」）','👆 式をタップすると「なぜこの数字？」：フロント目標（理想MAP・ロードマップ・今月の目標のどれから来たか）→ 係数 → 今月の必要数 → 先週までの実績 → 月末までの週の数 → 今週の目標、を実際の数字で順番に表示。それぞれの箱から理想MAP・係数・カレンダーへ移動できます','🔧 CT取りの目標が、ドタキャン余裕の％によっては小数の誤差で1件多く出ることがあったのを修正'] },
   { v:'v567', d:'2026-10-02', items:['📝 OLを「予定の一種（種類：OL）」にまとめました：OLを企画・記録すると予定にも同じものが入り、カレンダー・ToDo・通知に自然に出ます。予定とOLのどちらを直しても（日時・内容・人・実施済み・削除）もう片方に反映。種類「OL」で入れた予定もOLタブで数えます（前に入れたOL・予定も自動でつなぎます）','👤 メンバーの活動タブを整理：「＋ 追加」から OL／タスク を選ぶ形に（「予定」はOLに名前を変更）。一覧は すべて／OL／タスク で切り替え','✅ 活動タブから予定を完了した時も「OLとして記録しますか？」が出るように','🔧 「メンバーのみ」のタスクがHOMEの今日のタスクに出たり、「メンバーのみ」の予定で通知が鳴ったりしていたのを修正。複数人の予定は全員の「最後の活動」に入るように','⚡ かんたん追加で研修生を選んだ時は、稼働タイプ・GSVを表示しないように'] },
@@ -9109,7 +9110,7 @@ function renderTraineeHistory(m) {
     (function(idx) {
       del.onclick = function() {
         var m2 = getTraineeMember();
-        if (m2 && m2.traineeHistory) { m2.traineeHistory.splice(idx, 1); m2.traineeStatus = getLatestStatus(m2); renderTraineeHistory(null); autoSave(); }
+        if (m2 && m2.traineeHistory) { var _hx = m2.traineeHistory[idx]; m2.traineeHistory.splice(idx, 1); try { _tsUnlink(m2, _hx); } catch (eU) {} m2.traineeStatus = getLatestStatus(m2); renderTraineeHistory(null); autoSave(); } // v570
       };
     })(i);
     entry.appendChild(del);
@@ -9158,6 +9159,7 @@ function stepReschedDo(idx, tbd) {
   //       日程調整中(tbd)の記録に日付を入れる操作は“保留中のリスケの日程が決まっただけ”なので数えない
   //       （元の日付も既に記録済みなので二重に積まない）
   var wasTbd = !!h.tbd;
+  try { _tsUnlink(m, h); } catch (eU) {} // v570: 研修履歴でリスケした記録は予定から切り離す
   if (!wasTbd) {
     h.rs = (h.rs || 0) + 1;
     h.rsFrom = (h.rsFrom || []);
@@ -12490,33 +12492,42 @@ function _qaTitleGet(cat) {
   try { var v = localStorage.getItem('gm_qaTitle_' + cat); if (v && (TITLE_OPTIONS[cat] || []).indexOf(v) >= 0) return v; } catch(e) {}
   return QA_CAT_DEFAULT[cat];
 }
+// v570: 区分のボタンはやめて、タイトルを1つ選ぶだけ（区分はタイトルで自動）。研修生の入口はマケ・PG
+var QA_TRAINEE_ENTRY = ['マケ', 'PG'];
+function _qaGroups() { return [['研修生', QA_TRAINEE_ENTRY], ['BA', TITLE_OPTIONS['BA'] || []], ['BR', TITLE_OPTIONS['BR'] || []]]; }
+function _qaCatOf(t) { var gs = _qaGroups(); for (var i = 0; i < gs.length; i++) { if (gs[i][1].indexOf(t) >= 0) return gs[i][0]; } return ''; }
 function _qaTitleAreaHtml(cat) {
-  if (cat === '研修生') {
-    var st = _qaStageGet();
-    return '<div class="p2-meta" style="margin-bottom:4px">アプローチ・研修の段階（タイトル）</div>'
-      + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px" id="qaStages">'
-      + (TITLE_OPTIONS['研修生'] || []).map(function(t) { return '<span class="qa-chip' + (t === st ? ' sel' : '') + '" data-st="' + t + '" onclick="qaStageSel(\'' + t + '\')">' + t + '</span>'; }).join('')
-      + '</div>';
-  }
   var cur = _qaTitleGet(cat);
-  return '<div class="p2-meta" style="margin-bottom:4px">タイトル</div>'
+  return '<div class="p2-meta" style="margin-bottom:4px">タイトル <span style="font-weight:400">（研修生・BA・BRはタイトルで自動）</span></div>'
     + '<select class="fi" id="qaTitle" onchange="qaTitleSel(this.value)" style="margin-bottom:10px;padding:9px 10px;font-size:14px">'
-    + (TITLE_OPTIONS[cat] || []).map(function(t) { return '<option value="' + t + '"' + (t === cur ? ' selected' : '') + '>' + t + '</option>'; }).join('')
+    + _qaGroups().map(function(g) {
+        return '<optgroup label="' + g[0] + '">' + g[1].map(function(t) { return '<option value="' + t + '"' + (g[0] === cat && t === cur ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</optgroup>';
+      }).join('')
     + '</select>';
 }
-function qaCatSel(cat) {
-  if (!TITLE_OPTIONS[cat]) return;
-  try { localStorage.setItem('gm_qaCat', cat); } catch(e) {}
-  var w9 = document.getElementById('qaCats');
-  if (w9) { var cs = w9.querySelectorAll('.qa-chip'); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute('data-c') === cat); }
-  var ta = document.getElementById('qaTitleArea'); if (ta) ta.innerHTML = _qaTitleAreaHtml(cat);
+function _qaRowsFor(cat) {
   var tr = document.getElementById('qaTrainRow'); if (tr) tr.style.display = cat === '研修生' ? '' : 'none';
   var ar = document.getElementById('qaActRow'); if (ar) ar.style.display = cat === '研修生' ? 'none' : ''; // v567: 研修生は稼働・GSVを出さない
 }
-function qaTitleSel(t) { var cat = _qaCatGet(); try { localStorage.setItem('gm_qaTitle_' + cat, t); } catch(e) {} }
+function qaCatSel(cat) { // 区分を指定して開き直す（前回そのグループで選んだタイトル）
+  if (!TITLE_OPTIONS[cat]) return;
+  try { localStorage.setItem('gm_qaCat', cat); } catch(e) {}
+  var ta = document.getElementById('qaTitleArea'); if (ta) ta.innerHTML = _qaTitleAreaHtml(cat);
+  _qaRowsFor(cat);
+}
+function qaTitleSel(t) {
+  var cat = _qaCatOf(t); if (!cat) return;
+  try { localStorage.setItem('gm_qaCat', cat); localStorage.setItem(cat === '研修生' ? 'gm_qaStage' : 'gm_qaTitle_' + cat, t); } catch(e) {}
+  var sel = document.getElementById('qaTitle'); if (sel && sel.value !== t) sel.value = t;
+  _qaRowsFor(cat);
+}
+function _qaPicked() { // 選ばれているタイトルと区分
+  var sel = document.getElementById('qaTitle'), t = sel && sel.value ? sel.value : _qaTitleGet();
+  return { t: t, cat: _qaCatOf(t) || _qaCatGet() };
+}
 function _qaStageGet() {
-  try { var v = localStorage.getItem('gm_qaStage'); if (v && (TITLE_OPTIONS['研修生'] || []).indexOf(v) >= 0) return v; } catch(e) {}
-  return 'FT';
+  try { var v = localStorage.getItem('gm_qaStage'); if (v && QA_TRAINEE_ENTRY.indexOf(v) >= 0) return v; } catch(e) {}
+  return 'マケ';
 }
 function openQuickAdd() {
   if (!state.isEditor) return;
@@ -12533,14 +12544,11 @@ function openQuickAdd() {
     return '<option value="' + m.id + '"' + (m.id === parent ? ' selected' : '') + '>' + evEsc(nm) + (m.title ? '（' + evEsc(m.title) + '）' : '') + '</option>';
   }).join('');
   var qcat = _qaCatGet();
-  var catChips = ['研修生', 'BA', 'BR'].map(function(c) {
-    return '<span class="qa-chip' + (c === qcat ? ' sel' : '') + '" data-c="' + c + '" onclick="qaCatSel(\'' + c + '\')" style="flex:1;text-align:center">' + c + '</span>';
-  }).join('');
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'qaOv'; ov.style.zIndex = '640';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('qaOv'); };
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚡ かんたん追加</div>'
-    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・区分とタイトルだけでOK。稼働タイプ・GSVは任意。詳細はあとから</div></div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">名前・性別・タイトルだけでOK。稼働タイプ・GSVは任意。詳細はあとから</div></div>'
     + '<span class="p2-btn" style="margin:0;padding:6px 12px;flex:none" onclick="qaToFull()">📝 くわしく登録</span>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'qaOv\')" style="margin-left:8px">✕</span></div>'
     + '<div style="padding:0 16px 18px">'
@@ -12552,8 +12560,6 @@ function openQuickAdd() {
     + '<div style="display:flex;gap:8px;margin-bottom:10px">'
     + '<span class="qa-chip qa-g' + (_qaGender !== 'female' ? ' sel' : '') + '" id="qaGm" onclick="qaGenderSel(\'male\')" style="flex:1;text-align:center">👨 男性</span>'
     + '<span class="qa-chip qa-g' + (_qaGender === 'female' ? ' sel' : '') + '" id="qaGf" onclick="qaGenderSel(\'female\')" style="flex:1;text-align:center">👩 女性</span></div>'
-    + '<div class="p2-meta" style="margin-bottom:4px">区分</div>'
-    + '<div style="display:flex;gap:6px;margin-bottom:10px" id="qaCats">' + catChips + '</div>'
     + '<div id="qaTitleArea">' + _qaTitleAreaHtml(qcat) + '</div>'
     + '<div id="qaActRow"' + (qcat === '研修生' ? ' style="display:none"' : '') + '><div class="p2-meta" style="margin-bottom:4px">稼働タイプ・GSV（任意）</div>'
     + '<div class="qa-acts" id="qaActs">' + ['S', 'A', 'B', 'C'].map(function(x) { return '<span class="qa-chip" data-a="' + x + '" onclick="qaActSel(\'' + x + '\')">' + x + '</span>'; }).join('')
@@ -12571,11 +12577,7 @@ function openQuickAdd() {
   requestAnimationFrame(function() { ov.classList.add('show'); });
   setTimeout(function() { var i = document.getElementById('qaLast'); if (i) i.focus(); }, 150);
 }
-function qaStageSel(t) {
-  try { localStorage.setItem('gm_qaStage', t); } catch(e) {}
-  var w9 = document.getElementById('qaStages');
-  if (w9) { var cs = w9.querySelectorAll('.qa-chip'); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute('data-st') === t); }
-}
+function qaStageSel(t) { qaTitleSel(t); }
 function qaGenderSel(g) {
   _qaGender = g;
   var m9 = document.getElementById('qaGm'), f9 = document.getElementById('qaGf');
@@ -12590,9 +12592,7 @@ function qaSave(cont) {
   if (!last && !first) { toast('名前を入力してください'); return; }
   var pid = (document.getElementById('qaParent') || {}).value || '';
   if (!pid) { toast('追加先を選んでください'); return; }
-  var qcat = _qaCatGet();
-  var stage = _qaTitleGet(qcat);
-  var tSel = document.getElementById('qaTitle'); if (qcat !== '研修生' && tSel && tSel.value) stage = tSel.value;
+  var _pk = _qaPicked(), qcat = _pk.cat, stage = _pk.t; // v570
   var cm = state.currentMonth || currentMonthStr();
   var m = {
     id: 'id-' + Date.now(),
@@ -12634,8 +12634,7 @@ function qaToFull() {
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
   var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
   var pid = (document.getElementById('qaParent') || {}).value || '';
-  var g = _qaGender, qcat = _qaCatGet(), stage = _qaTitleGet(qcat);
-  var tSel = document.getElementById('qaTitle'); if (qcat !== '研修生' && tSel && tSel.value) stage = tSel.value;
+  var _pk = _qaPicked(), g = _qaGender, qcat = _pk.cat, stage = _pk.t; // v570
   var _qaAct0 = qcat === '研修生' ? '' : _qaAct, _qaG0 = qcat === '研修生' ? 0 : _qaGsvVal(); // v567
   _p2SheetClose('qaOv');
   if (pid) selectedParentId = pid;
@@ -14534,18 +14533,20 @@ function _p2Act(ym) {
     teamPt: root ? (root.ptCurrent || 0) : 0,
     rate: actN ? Math.round(actS / actN) : null,
     ct: _p2ActK(ym, 'ct'), ft: _p2ActK(ym, 'ft'),
-    dlr: _p2ActK(ym, 'dlr'), pg: _p2ActK(ym, 'pg'), ctget: _p2ActK(ym, 'ctget'), st: _p2ActK(ym, 'st'), snst: _p2ActK(ym, 'snst')
+    dlr: _p2ActK(ym, 'dlr'), pg: _p2ActK(ym, 'pg'), ctget: _p2ActK(ym, 'ctget'), st: _p2ActK(ym, 'st'), snst: _p2ActK(ym, 'snst'),
+    teamPg: _p2TsN('PG', ym + '-01', ym + '-31', 'team'), teamDlr: _p2TsN('DLR', ym + '-01', ym + '-31', 'team') // v570: チームの研修生
   };
 }
 // v548: CT・FT/マケ・PG・DLRの実績はカレンダーから自動カウント（予定の「種類」＝v545）
 //  予定＝日付が来たら実施、タスク＝完了チェックで実施。関連メンバーが複数なら人数分（DLR動員2人＝2）
-var P2_KIND_KEY = { 'CT': 'ct', 'FT': 'ft', 'マケ': 'ft', 'PG': 'pg', 'DLR': 'dlr', 'CT取り': 'ctget', 'ST': 'st', 'SNST': 'snst' }; // v550
+var P2_KIND_KEY = { 'CT': 'ct', 'FT': 'ft', 'CT取り': 'ctget', 'ST': 'st', 'SNST': 'snst' }; // v550 → v570: カレンダーから数えるのはこの5つだけ（マケ・PG・DLRは研修履歴から）
+function _p2EvKey(e) { return (e && P2_KIND_KEY[evGuessKind(e.title)]) || ''; } // v570: 種類の欄は廃止。タイトルだけで判定
 var P2_AUTO_ACT_FROM = '2026-10'; // この月からは「自動＋手入力」。それより前は二重計上を避けて多い方
 function _p2KindEvs(key, from, to) {
   var out = [];
   (state.events || []).forEach(function(e) {
     if (!e || e.deleted || !e.date || /^UN_/.test(String(e.id || '')) || e.date < from || e.date > to || !evOnMember(e)) return; // v562: 「自分のみ」は数えない
-    if (P2_KIND_KEY[evKindOf(e)] !== key) return;
+    if (_p2EvKey(e) !== key) return;
     out.push(e);
   });
   return out;
@@ -14564,7 +14565,7 @@ function _p2EvDoneAt(e, t) {
 function _p2CtGotEvs(from, to) {
   var out = [];
   (state.events || []).forEach(function(e) {
-    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || P2_KIND_KEY[evKindOf(e)] !== 'ct' || !evOnMember(e)) return;
+    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || _p2EvKey(e) !== 'ct' || !evOnMember(e)) return;
     var d0 = '';
     try { d0 = e.createdAt ? evYmd(new Date(e.createdAt)) : ''; } catch (eD) {}
     if (!d0) d0 = e.date || '';
@@ -14572,8 +14573,23 @@ function _p2CtGotEvs(from, to) {
   });
   return out;
 }
+// v570: 研修履歴（PG・マケ・DLR）。自分＝自分の直下の研修生／チーム＝それ以外のMAPの人。結果を入れたもの（予定以外）を数える
+function _p2TsEntries(step, from, to, scope) {
+  var root = _p2OwnRoot(), out = [];
+  if (!root) return out;
+  (state.members || []).forEach(function(m) {
+    if (!m || m.deleted || m.id === root.id || /^(MG_|AG\d+_)/.test(m.id || '')) return;
+    if ((scope === 'self') !== (m.parentId === root.id)) return;
+    (m.traineeHistory || []).forEach(function(h) { if (h && !h.ir && h.status === step && h.date && h.date >= from && h.date <= to) out.push({ m: m, h: h }); });
+  });
+  return out;
+}
+function _p2TsN(step, from, to, scope) { return _p2TsEntries(step, from, to, scope).filter(function(x) { return x.h.result !== 'planned'; }).length; }
+var P2_TS_STEP = { pg: 'PG', dlr: 'DLR', ft: 'マケ' }; // 行 → 研修ステップ（FT・マケの行には自分の研修生のマケを足す）
 function _p2ActAuto(ym, key, from, to) {
   var t = evTodayYmd(), n = 0;
+  if (P2_TS_STEP[key]) n += _p2TsN(P2_TS_STEP[key], from || (ym + '-01'), to || (ym + '-31'), 'self'); // v570
+  if (key === 'pg' || key === 'dlr') return n;
   if (key === 'ctget') { _p2CtGotEvs(from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { n += _p2KindN(e); }); return n; }
   if (key === 'st' || key === 'snst') { _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n++; }); return n; } // 回数
   _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n += _p2KindN(e); });
@@ -14813,8 +14829,7 @@ function _p2WeekItems() {
     var wkDone = _p2ActAuto(ym, d[0], w.from, w.to) + _p2ManualRange(d[0], w.from, w.to);
     var wNeed = Math.ceil(Math.max(0, need - (done - wkDone)) / w.weeks);
     var evs = _p2KindEvs(d[0], w.from, w.to);
-    var have = d[3] ? evs.length : 0;
-    if (!d[3]) evs.forEach(function(e) { have += _p2KindN(e); });
+    var have = d[3] ? evs.length : _p2WkHave(ym, d[0], w); // v570
     var fut = evs.filter(function(e) { return !_p2EvDoneAt(e, t); }).length;
     out.push({ key: d[0], kind: d[1], lb: d[2], block: d[3], wNeed: wNeed, have: d[0] === 'ctget' ? wkDone : have, slots: d[3] ? evs.length : 0, fut: fut, short: Math.max(0, wNeed - (d[3] && d[0] !== 'ctget' ? have : (d[0] === 'ctget' ? wkDone : have))) });
   });
@@ -14844,9 +14859,9 @@ function p2WeekOk() { _p2().weekOk = _p2WeekKey(); saveGoals(); if (currentView 
 function p2TodayHtml() {
   if (viewingOwnerUid || !state.goals || !state.goals.plan) return '';
   var t = evTodayYmd(), items = [];
-  (state.events || []).filter(function(e) { return e && !e.deleted && e.date === t && !/^UN_/.test(String(e.id || '')) && P2_KIND_KEY[evKindOf(e)] && !(e.type === 'task' && e.done) && (e.type === 'task' ? evTdMine(e) : evShowMine(e)); }) // v567: 自分に出さない予定は除く
+  (state.events || []).filter(function(e) { return e && !e.deleted && e.date === t && !/^UN_/.test(String(e.id || '')) && _p2EvKey(e) && !(e.type === 'task' && e.done) && (e.type === 'task' ? evTdMine(e) : evShowMine(e)); }) // v567: 自分に出さない予定は除く
     .sort(function(a, b) { return (a.time || '99').localeCompare(b.time || '99'); }).slice(0, 3).forEach(function(e) {
-      items.push('<div class="p2td-it" onclick="openEventActions(\'' + e.id + '\')"><span class="tm">' + (e.time || '今日') + '</span><span class="kd">' + evEsc(evKindOf(e)) + '</span><span class="tt">' + evEsc(e.title || '') + '</span></div>');
+      items.push('<div class="p2td-it" onclick="openEventActions(\'' + e.id + '\')"><span class="tm">' + (e.time || '今日') + '</span><span class="kd">' + evEsc(evGuessKind(e.title)) + '</span><span class="tt">' + evEsc(e.title || '') + '</span></div>');
     });
   if (items.length < 3 && state.goals.plan.title) {
     _p2WeekItems().items.filter(function(x) { return x.short > 0 || (x.block && !x.fut); }).slice(0, 3 - items.length).forEach(function(x) {
@@ -15666,6 +15681,7 @@ function _p2MonthHtml(ym, off, forceOpen) {
     + row('teamB1', 'B1（今月スタート）', act.teamB1, '')
     + row('teamPt', 'チームPT', act.teamPt, '')
     + row('actN', '平均稼働人数（人）', act.actN, '', true) // v537: 稼働は％でなく平均稼働人数を目標に
+    + row('teamPg', 'PG（人）', act.teamPg, '', true) + row('teamDlr', 'DLR動員（人）', act.teamDlr, '', true) // v570: チームの研修生（自分の直下以外）
     + '<div class="p2-meta" style="margin:8px 0 2px">📚 自分磨き（自由に）</div>'
     + (m.skill || []).map(function(s, i) {
         return '<div class="p2-row" style="padding:5px 0"><span class="td-chk' + (s.done ? ' on' : '') + '" style="width:20px;height:20px;font-size:11px;flex:none" onclick="p2SkillTgl(\'' + ym + '\',' + i + ')">' + (s.done ? '✓' : '') + '</span>'
@@ -15864,14 +15880,22 @@ function _p2BlockRow(ym, key, kind, lb, need) {
     + (sub ? '<div class="p2a-subw">' + sub + '</div>' : '') // v550: リスト・直近の枠の案内は行の下に全幅で
     + '</div>';
 }
+// v570: 今週の「実施・予定」の件数（カレンダー＋自分の研修生の研修履歴＋＋1）
+function _p2WkHave(ym, key, w) {
+  var n = _p2ManualRange(key, w.from, w.to);
+  _p2KindEvs(key, w.from, w.to).forEach(function(e) { n += _p2KindN(e); });
+  if (P2_TS_STEP[key]) n += _p2TsEntries(P2_TS_STEP[key], w.from, w.to, 'self').length;
+  return n;
+}
 // v548: 行動量の1行（月の必要・実績・残りの予定／今週の必要と予定）
 function _p2ActRow(ym, key, kind, lb, need) {
   var t = evTodayYmd(), w = _p2WeekInfo(ym), ms0 = ym + '-01', me0 = ym + '-31';
   var done = _p2ActK(ym, key);
   var evs = _p2KindEvs(key, ms0, me0);
   var planned = 0; evs.forEach(function(e) { if (!_p2EvDoneAt(e, t)) planned += _p2KindN(e); });
-  var wk = 0; evs.forEach(function(e) { if (e.date >= w.from && e.date <= w.to) wk += _p2KindN(e); });
-  wk += _p2ManualRange(key, w.from, w.to);
+  var waiting = [];
+  if (P2_TS_STEP[key]) _p2TsEntries(P2_TS_STEP[key], ms0, me0, 'self').forEach(function(x) { if (x.h.result === 'planned') { if (x.h.date < t) waiting.push(x.m); else planned++; } }); // v570: 研修履歴の予定（日付が過ぎたら結果待ち）
+  var wk = _p2WkHave(ym, key, w);
   var doneBefore = Math.max(0, done - _p2ActAuto(ym, key, w.from, w.to) - _p2ManualRange(key, w.from, w.to));
   var wNeed = need ? Math.ceil(Math.max(0, need - doneBefore) / w.weeks) : 0;
   var short = need ? Math.max(0, wNeed - wk) : 0;
@@ -15888,8 +15912,10 @@ function _p2ActRow(ym, key, kind, lb, need) {
     + '</div>'
     + '<span style="display:flex;gap:6px"><span class="p2a-p1" onclick="p2Plus1(\'' + key + '\',\'' + lb + '\')" title="予定に入れずに1件記録">＋1</span>'
     + '<span class="p2a-add" onclick="p2AddKindEv(\'' + kind + '\')" title="' + lb + 'の予定をカレンダーに入れる">＋予定</span></span>'
+    + (waiting.length ? '<div class="p2a-subw"><div class="p2a-sub">⏳ 結果待ち ' + waiting.length + '人：' + waiting.slice(0, 4).map(function(m) { return '<span class="p2a-lk" onclick="p2TsOpen(\'' + m.id + '\')">' + evEsc(((m.lastName || '') + (m.firstName || '')) || '(無名)') + '</span>'; }).join('') + (waiting.length > 4 ? '…' : '') + '<span class="p2-meta">（研修履歴で「進んだ／流れた」を入れると数えます）</span></div></div>' : '') // v570
     + '</div>';
 }
+function p2TsOpen(mid) { try { if (typeof openEdit === 'function') openEdit(mid); } catch (e) {} } // v570: 研修履歴の結果を入れる
 // v550: ATTACK LIST（同じFirebaseの users/{uid}/people）から「手元のリスト」＝未着手・連絡中の人数を読む（10分キャッシュ）
 var _p2Al = { n: null, apo: null, at: 0, err: false, busy: false };
 function _p2AlLoad(force) {
@@ -15930,7 +15956,7 @@ function p2AddKindEv(kind) {
   openEventModal(null, null, evTodayYmd(), 'event');
   var ti = document.getElementById('evTitle');
   if (ti) { ti.value = kind + ' '; try { evKindAuto(); } catch (eK) {} try { ti.focus(); } catch (eF) {} }
-  try { _evKind = kind; _evKindManual = true; updateEvMemberDisplay(); } catch (eK2) {}
+  try { updateEvMemberDisplay(); } catch (eK2) {}
 }
 function _p2FunnelHtml(ym) {
   var c = _p2Coef(), act = _p2Act(ym);
@@ -15952,7 +15978,7 @@ function _p2FunnelHtml(ym) {
     + _p2ActRow(ym, 'pg', 'PG', 'PG', 0)
     + _p2ActRow(ym, 'dlr', 'DLR', 'DLR動員', F * c.dlr)
     + (function() { var lag = _p2Lagging(ym); return lag ? '<div class="p2a-lag">😤 ' + lag + ' <span class="p2a-lk" onclick="p2NotesOpen(\'why\',\'read\')">📖 やる理由を読み返す</span></div>' : ''; })()
-    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>実績はカレンダーから自動：種類の付いた予定は日付が来たら、タスクは完了で1件（CT・FTなどは関連メンバーの人数分）。予定に入れずにやった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数。点線の式をタップすると、数字が決まるまでの流れが見られます</details>';
+    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>ST・SNST・CT取り・CT・FTはカレンダーから自動：タイトルにその言葉が入った予定は日付が来たら、タスクは完了で1件（CT・FTは関連メンバーの人数分）。PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。予定に入れずにやった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数。点線の式をタップすると、数字が決まるまでの流れが見られます</details>';
   h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
@@ -17117,7 +17143,7 @@ function _p2Why(ym, key) {
   var evs = _p2KindEvs(key, w.from, w.to);
   if (key === 'ctget') have = wkDone;
   else if (block) have = evs.length;
-  else { evs.forEach(function(e) { have += _p2KindN(e); }); have += _p2ManualRange(key, w.from, w.to); }
+  else have = _p2WkHave(ym, key, w); // v570
   return { ym: ym, key: key, F: F, fsrc: _p2FrontSrc(ym), coef: key === 'ctget' ? c.ct : (c[key] || 0), csrc: c.src, buf: cfg.ctBuf,
     byCount: key === 'st' || key === 'snst', unit: (key === 'st' || key === 'snst') ? '回' : '件',
     need: need, done: done, wkDone: wkDone, before: before, rest: rest, weeks: w.weeks, wNeed: wNeed, w: w, have: have,
@@ -17189,7 +17215,7 @@ function _p2WhyRender() {
   var calc = x.byCount ? '' : (key === 'ctget' ? (function() { var r = x.F * x.coef * (100 + x.buf) / 100; return x.F + '×' + x.coef + '×' + ((100 + x.buf) / 100) + '＝' + (Math.round(r * 10) / 10) + (x.need !== r ? ' → 切り上げ' : ''); })() : x.F + '×' + x.coef);
   if (!x.byCount) h += step('＝', num(0) + ' 今月の必要数', x.need + u, calc, 'mid');
   var wl = x.w.label;
-  h += step('−', num(x.byCount ? 0 : 1) + (key === 'ctget' ? ' 先週までに取れた約束' : ' 先週までにやった数'), x.before + u, (x.before ? (key === 'ctget' ? 'その週に入れたCTの予定の数・＋1の記録 ' : 'カレンダーの種類つき予定（日付が来たもの）・完了タスク・＋1の記録 ') + lk('cal', 'カレンダー') : '今月はまだ前の週の実績がありません') + (x.wkDone ? '<br>（今週の' + x.wkDone + u + 'は今週の分として数えます）' : ''));
+  h += step('−', num(x.byCount ? 0 : 1) + (key === 'ctget' ? ' 先週までに取れた約束' : ' 先週までにやった数'), x.before + u, (x.before ? (key === 'ctget' ? 'その週に入れたCTの予定の数・＋1の記録 ' : (key === 'dlr' ? '自分の直下の研修生で、研修履歴のDLRに結果（進んだ・流れた）を入れた人・＋1の記録 ' : (key === 'ft' ? 'タイトルにFTが入った予定（日付が来たもの）・完了タスク・自分の研修生のマケ（結果あり）・＋1の記録 ' : 'タイトルに' + lb + 'が入った予定（日付が来たもの）・完了タスク・＋1の記録 '))) + lk('cal', 'カレンダー') : '今月はまだ前の週の実績がありません') + (x.wkDone ? '<br>（今週の' + x.wkDone + u + 'は今週の分として数えます）' : ''));
   h += step('＝', num(x.byCount ? 1 : 2) + ' 今月の残り', x.rest + u, x.need + '−' + x.before, 'mid');
   h += step('÷', num(x.byCount ? 2 : 3) + ' 月末までの週の数', x.weeks + '週', '今週（' + wl + '）をふくめて ' + (me.getMonth() + 1) + '/' + me.getDate() + ' まで');
   var wq = Math.round(x.rest / x.weeks * 10) / 10;
@@ -18441,7 +18467,49 @@ function loadEvents(uid) {
     return state.events;
   }).catch(function() { state.events = []; state.categories = []; updateEventsBadge(); });
 }
+// v570: 予定（タイトルが研修ステップ＋関連メンバーが研修生）→ その人の研修履歴に「予定」として連動
+//   予定の日付・Aさんの変更は「予定」のままの記録に反映。予定を消す・メンバーを外す・タイトルを変える → 予定のままの記録だけ消す
+//   結果（進んだ・流れた）を入れた記録は触らない。研修履歴で消した・リスケした人は以後連動しない（e.tsOff）
+function _tsFromEvent(e) {
+  if (!e || !e.id || viewingOwnerUid || (typeof _aggActive !== 'undefined' && _aggActive) || /^UN_/.test(String(e.id))) return false;
+  var step = e.deleted ? '' : _tsStepOf(e), off = e.tsOff || {}, want = {};
+  if (step && e.date) ((e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : [])).forEach(function(id) { if (!off[id]) want[id] = 1; });
+  var asan = String(e.asan || '').trim() || _evSelfName(), ch = [];
+  (state.members || []).forEach(function(m) {
+    if (!m || m.deleted) return;
+    var hs = m.traineeHistory || [], idx = -1;
+    for (var i = 0; i < hs.length; i++) { if (hs[i] && hs[i].evId === e.id) { idx = i; break; } }
+    if (idx < 0 && !(want[m.id] && _tsIsTrainee(m))) return;
+    if (idx >= 0) {
+      var h = hs[idx];
+      if (h.result !== 'planned') return;
+      if (!want[m.id]) { hs.splice(idx, 1); }
+      else if (h.status !== step || h.date !== e.date || h.aSan !== asan || h.tbd) { h.status = step; h.date = e.date; h.aSan = asan; h.tbd = false; }
+      else return;
+    } else {
+      m.traineeHistory = hs;
+      hs.push({ status: step, date: e.date, aSan: asan, result: 'planned', time: '', evId: e.id });
+    }
+    m.traineeStatus = getLatestStatus(m);
+    ch.push(m);
+  });
+  if (!ch.length) return false;
+  autoSave();
+  try {
+    var mo = document.getElementById('modal');
+    if (mo && mo.classList.contains('open') && editingId && ch.some(function(m) { return m.id === editingId; })) renderTraineeHistory(null);
+  } catch (eR) {}
+  return true;
+}
+// 研修履歴で消した・リスケした記録は予定とのつながりを切る（次に予定を保存しても戻さない）
+function _tsUnlink(m, h) {
+  if (!m || !h || !h.evId) return;
+  var e = findEvent(h.evId);
+  delete h.evId;
+  if (e) { e.tsOff = e.tsOff || {}; e.tsOff[m.id] = 1; saveEventDoc(e); }
+}
 function saveEventDoc(e) {
+  try { _tsFromEvent(e); } catch (eTs) {} // v570
   var uid = eventsUid();
   if (!uid || !db) return Promise.resolve();
   if (_viewNoSched()) { toast('🔒 この共有MAPでは予定・タスクは保存できません（MAPのみの共有）'); return Promise.resolve(); } // v533
@@ -21164,7 +21232,8 @@ function memberNextPlanLines(m) {
   }
   else if (m.nextDate) out.push('📅 次回予定：' + evEsc(String(m.nextDate).split('-').slice(1).join('/')) + _odTag(m.nextDate));
   // v368: カレンダー分は「次の予定」「次のタスク」を別行で表示（タスクが近いと予定が隠れるバグ修正）
-  var futs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t && evOnMember(ev2); })
+  var _tsLinked = {}; (m.traineeHistory || []).forEach(function(h){ if (h && h.evId) _tsLinked[h.evId] = 1; }); // v570: 研修予定とつながった予定は「研修予定」の行だけ（二重にしない）
+  var futs = (state.events || []).filter(function(ev2){ return evHasMember(ev2, m.id) && !ev2.deleted && !ev2.done && ev2.date && ev2.date >= t && evOnMember(ev2) && !_tsLinked[ev2.id]; })
     .sort(function(a,b){ return ((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||'')); });
   var fEv = null, fTk = null;
   futs.forEach(function(x){ if (x.type === 'task') { if (!fTk) fTk = x; } else { if (!fEv) fEv = x; } });
@@ -25463,7 +25532,7 @@ function _evRewardOnDone(e) {
   if (!e.templateStage || e.rewarded) return false;
   if (viewingOwnerUid) return false; // 共有MAP閲覧・編集中は相手の予定なので自分の実績に入れない
   // v548: 種類（CT/FT/マケ/PG/DLR）が付いた予定はPLANがカレンダーから自動で数えるので、実績の手入力欄には足さない（XPだけ）
-  var _autoK = (typeof P2_KIND_KEY !== 'undefined' && typeof evKindOf === 'function') ? P2_KIND_KEY[evKindOf(e)] : '';
+  var _autoK = (typeof _p2EvKey === 'function') ? _p2EvKey(e) : '';
   var xp = _autoK ? _stageXpOnly(e.templateStage) : _stageRecord(e.templateStage, evTodayYmd());
   e.rewarded = true; // 二重加算防止（チェックを外して付け直しても再加算しない）
   var lbl = _evTplStageLabel(e.templateStage);
@@ -25678,6 +25747,7 @@ function selEvVis(v) {
   _evVis = (v === 'self' || v === 'both') ? v : 'member';
   _evSelfShow = _evVis !== 'member';
   [['evVisMember', 'member'], ['evVisSelf', 'self'], ['evVisBoth', 'both']].forEach(function(x) { var el = document.getElementById(x[0]); if (el) el.classList.toggle('sel', _evVis === x[1]); });
+  try { evLinkHintRender(); } catch (eH) {} // v570
 }
 function selEvSelfShow(v) { selEvVis(v === true ? 'both' : 'member'); } // 互換
 function evHasMember(e, id) {
@@ -25729,6 +25799,34 @@ function _evAsanRecent() {
   (state.members || []).forEach(function(m) { if (m.aSan) add(m.aSan, 1); (m.traineeHistory || []).forEach(function(h) { if (h && h.aSan) add(h.aSan, 1); }); });
   return Object.keys(cnt).sort(function(a, b) { return cnt[b] - cnt[a]; }).slice(0, 8);
 }
+// v570: 予定の画面の「連携先」1行（種類の欄の代わり）。タイトルと関連メンバーから、どこに入るかを出す
+var P2_LINK_LB = { ct: 'CT', ft: 'FT', ctget: 'CT取り', st: 'ST', snst: 'SNST' };
+function _tsStepOf(e) { var k = evGuessKind(e && e.title); return (TITLE_OPTIONS['研修生'] || []).indexOf(k) >= 0 ? k : ''; }
+function _tsIsTrainee(m) { var t = String((m && m.title) || '').trim(); return !!t && detectCategory(t) === '研修生'; }
+function evLinkHintRender() {
+  var el = document.getElementById('evLinkHint'); if (!el) return;
+  var ti = document.getElementById('evTitle'), title = ti ? ti.value : '', parts = [];
+  var pk = _p2EvKey({ title: title }), step = _tsStepOf({ title: title });
+  if (pk) parts.push('PLAN「' + P2_LINK_LB[pk] + '」に数えます' + (_evMemberIds.length && _evVis === 'self' ? '<span class="dim">（「自分のみ」は数えません）</span>' : ''));
+  if (step) {
+    var tr = _evMemberIds.map(function(id) { return _mFind(id); }).filter(function(m) { return m && _tsIsTrainee(m); });
+    if (tr.length) parts.push(tr.slice(0, 3).map(function(m) { return evEsc(m.lastName || m.firstName || ''); }).join('・') + (tr.length > 3 ? ' ほか' : '') + 'さんの研修ステップ「' + step + '」に予定で入ります');
+    else if (!_evMemberIds.length) parts.push('<span class="dim">関連メンバー（研修生）を選ぶと、研修ステップ「' + step + '」にも予定で入ります</span>');
+  }
+  el.innerHTML = parts.length ? '<span class="ar">→</span><span class="tx">' + parts.join('<br>') + '</span><span class="q" onclick="evLinkHelp()">?</span>' : '';
+  el.style.display = parts.length ? '' : 'none';
+  var hp = document.getElementById('evLinkHelpBox'); if (hp && !parts.length) hp.style.display = 'none';
+}
+function evLinkHelp() {
+  var hp = document.getElementById('evLinkHelpBox'); if (!hp) return;
+  if (hp.style.display !== 'none') { hp.style.display = 'none'; return; }
+  hp.innerHTML = '<b>タイトルに入れた言葉で自動で連携します</b>'
+    + '<div><span>ST・SNST・CT取り</span>PLANの「時間の枠」（予約した回数）</div>'
+    + '<div><span>CT・FT</span>PLANの行動量（日付が来たら、関連メンバーの人数分）</div>'
+    + '<div><span>FT・マケ・PG・DLR・EXP・PA・面談・BPC・CO</span>関連メンバーに研修生を選ぶと、その人の研修履歴に「予定」で入ります。結果（進んだ・流れた）を入れると、自分の直下の研修生はPLANの行動量（PG・FT・マケ・DLR動員）、それ以外はチームの目標に数えます</div>'
+    + '<div><span>それ以外</span>どこにも数えません（ふつうの予定）</div>';
+  hp.style.display = '';
+}
 function evKindRender() {
   var box = document.getElementById('evKindChips');
   if (!box) return;
@@ -25738,12 +25836,9 @@ function evKindRender() {
 }
 function evKindPick(k) { _evKindManual = true; _evKind = (_evKind === k) ? '' : k; evKindRender(); }
 function evKindAuto() {
-  if (_evKindManual) return;
   var ti = document.getElementById('evTitle');
-  _evKind = evGuessKind(ti ? ti.value : '');
-  var _kr2 = document.getElementById('evKindRow');
-  if (_kr2) _kr2.style.display = (_evMemberIds.length || _evKind) ? '' : 'none'; // v550
-  evKindRender();
+  _evKind = evGuessKind(ti ? ti.value : ''); // v570: 種類はタイトルだけで決まる（欄は出さない）
+  evLinkHintRender();
 }
 function evAsanRender() {
   var box = document.getElementById('evAsanChips'), inp = document.getElementById('evAsan');
@@ -25765,11 +25860,10 @@ function updateEvMemberDisplay() {
   var _ssRow = document.getElementById('evSelfShowRow');
   if (_ssRow) _ssRow.style.display = _evMemberIds.length ? '' : 'none'; // v361
   // v545: 種類・Aさんはメンバーを選んだ時だけ
-  var _kr = document.getElementById('evKindRow'), _ar = document.getElementById('evAsanRow');
-  if (_kr) _kr.style.display = (_evMemberIds.length || _evKind) ? '' : 'none'; // v550: 種類が分かった時も表示（CT取り・STなど人を決めない枠）
+  var _ar = document.getElementById('evAsanRow');
   if (_ar) _ar.style.display = _evMemberIds.length ? '' : 'none';
-  if (_evMemberIds.length || _evKind) evKindRender();
   if (_evMemberIds.length) evAsanRender();
+  evLinkHintRender(); // v570
   var el = document.getElementById('evMemberNames');
   if (!el) return;
   if (!_evMemberIds.length) { el.textContent = '（なし）'; el.style.color = 'var(--text-dim)'; return; }
@@ -26887,7 +26981,8 @@ function openEventModal(id, presetMember, presetDate, forceType) {
     : (presetMember ? [presetMember] : []);
   selEvVis(e ? (evVis(e) || 'both') : (presetMember ? 'member' : 'both')); // v562（v468: 予定タブ起点=両方 / MAP（メンバーカード）起点=メンバーのみ が既定）: 予定タブ起点=「自分にも表示」既定 / MAP（メンバーカード）起点=「メンバー専用」既定。旧データは表示扱い
   // v545: 種類（未設定ならタイトルから自動）・Aさん（新規は自分）
-  _evKind = e ? (e.kind || '') : ''; _evKindManual = !!(e && e.kind);
+  _evKind = ''; _evKindManual = false; // v570: 種類はタイトルから
+  var _hb0 = document.getElementById('evLinkHelpBox'); if (_hb0) _hb0.style.display = 'none';
   _evAsan = e ? (e.asan || '') : _evSelfName();
   var _tiK = document.getElementById('evTitle');
   if (_tiK && !_tiK._gmKindHook) { _tiK._gmKindHook = true; _tiK.addEventListener('input', evKindAuto); }
@@ -26987,12 +27082,14 @@ function _saveEventBody() {
   e.endDate = (_dEndV && e.date && _dEndV > e.date) ? _dEndV : '';
   // v316: タスクは期限のみ（終了時刻・終了日は持たない。入力欄も非表示）
   if (_evType === 'task') { e.endTime = ''; e.endDate = ''; }
+  var _tsPrev = {}; (e.memberIds || (e.memberId ? [e.memberId] : [])).forEach(function(x) { _tsPrev[x] = 1; }); // v570
   e.memberIds = _evMemberIds.slice(); // v348: 複数メンバー
   e.memberId = _evMemberIds[0] || '';  // 互換（実績連動・既存表示用の代表1人）
   e.selfShow = _evMemberIds.length ? (_evSelfShow === true) : ''; // v361: メンバー無しなら区分なし
   e.vis = _evMemberIds.length ? _evVis : ''; // v562
   // v545: 種類・Aさん（Aさんはメンバーを選んだ時だけ。空欄＝自分）
-  e.kind = _evKindManual ? (_evKind || '') : (_evKind || evGuessKind(title));
+  e.kind = e.olGid ? 'OL' : evGuessKind(title); // v570: 種類はタイトルで決まる（OLタブから入れた予定はOLのまま）
+  if (e.tsOff) _evMemberIds.forEach(function(x) { if (!_tsPrev[x]) delete e.tsOff[x]; }); // v570: 選び直した人は研修履歴に入れ直す
   e.asan = _evMemberIds.length ? (String(_evAsan || '').trim() || _evSelfName()) : '';
   e.categoryId = _evCategoryId || '';
   // v329: 色は保存時点のカテゴリ色を予定自体に焼き付ける（後からカテゴリ/テンプレの色を変えても既存の予定の色は変わらない）

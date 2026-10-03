@@ -2672,6 +2672,15 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2why-now b{font-family:Inter,sans-serif;color:var(--text);font-size:15px}
 .p2why-now .ng{color:var(--go-rose,#FF5D73);font-weight:800;flex:1} .p2why-now .ok{color:var(--accent);font-weight:800;flex:1}
 .p2why-note{font-size:11px;color:var(--text-dim);margin-top:12px;line-height:1.6}
+/* v570: 予定の連携先（種類の欄の代わり） */
+.ev-link-hint{display:flex;align-items:flex-start;gap:6px;margin-top:6px;font-size:11.5px;line-height:1.55;color:var(--accent)}
+.ev-link-hint .ar{flex:none;font-weight:800}
+.ev-link-hint .tx{flex:1;min-width:0}
+.ev-link-hint .dim{color:var(--text-dim)}
+.ev-link-hint .q{flex:none;width:18px;height:18px;border-radius:50%;border:1px solid var(--border2);color:var(--text-dim);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ev-link-help{margin-top:6px;padding:9px 11px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);font-size:11.5px;line-height:1.6;color:var(--text-mid)}
+.ev-link-help b{display:block;color:var(--text);margin-bottom:4px}
+.ev-link-help div{margin-top:4px} .ev-link-help span{display:inline-block;font-weight:800;color:var(--text);margin-right:6px}
 /* v569: 体験チュートリアル */
 .p2tut-ban{display:flex;align-items:center;gap:8px;padding:10px 12px;margin:2px 0 8px;border-radius:12px;border:1px solid color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent) 10%,transparent);font-size:12.5px;font-weight:800;color:var(--text)}
 .p2tut-ban .sp{flex:1} .p2tut-ban .x{color:var(--text-dim);cursor:pointer;padding:2px 4px}
@@ -2970,7 +2979,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v569</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v570</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3765,6 +3774,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-tpl-toggle" id="evStarBtn" onclick="evStarToggle()" title="星付き" style="display:none"><svg class="lic" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z"/></svg></div>
         <div class="ev-tpl-toggle" id="evTplToggle" onclick="evTplPanelToggle()" title="テンプレ・履歴から入力">⧉<span style="font-size:9px">▾</span></div>
       </div>
+      <div class="ev-link-hint" id="evLinkHint" style="display:none"></div>
+      <div class="ev-link-help" id="evLinkHelpBox" style="display:none"></div>
       <div id="evTplRow" style="display:none"></div>
     </div>
     <div class="ev-dt-row">
@@ -3846,11 +3857,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
     </div>
     </div>
-    <!-- v545: 種類・Aさん（メンバー選択時。MAPのメンバー側の予定表示に使う） -->
-    <div class="fr" id="evKindRow" style="display:none">
-      <label class="fl">種類 <span style="font-weight:500;color:var(--text-dim)">（タイトルから自動で選びます）</span></label>
-      <div class="rg ev-kind-rg" id="evKindChips"></div>
-    </div>
+    <!-- v570: 種類の欄は廃止（タイトルで判定）。連携先はタイトルの下に1行で表示 -->
     <div class="fr" id="evAsanRow" style="display:none">
       <label class="fl">Aさん <span style="font-weight:500;color:var(--text-dim)">（仕事に入る人）</span></label>
       <div class="rg ev-kind-rg" id="evAsanChips"></div>
@@ -3916,7 +3923,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v569';</script>
-<script src="app.js?v=v569"></script>
+<script>window.GM_EXPECT_JS='v570';</script>
+<script src="app.js?v=v570"></script>
 </body>
 </html>
