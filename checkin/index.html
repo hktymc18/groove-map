@@ -3507,24 +3507,27 @@ function trLoadMembers(){
     trRenderList();
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 }
-// UPルビー: そのユニオンの既存系列＋自分の名前から選択のみ（手入力は廃止。
-// 表記ゆれで集計が割れるため、新しい系列は管理者が名簿の編集から登録する運用）。
+// UPルビー: そのユニオンの名簿に実在する系列だけから選択（手入力は廃止。
+// 新しい系列は管理者が名簿の編集から登録する運用）。
+// 以前は担当者自身の名前も選択肢に自動追加していたが、ページを開いただけの
+// 担当者名が初期選択のまま登録され、意図しない系列が名簿に生まれるため廃止。
 // スペース・全角半角だけ違う表記は、人数の多い表記1つにまとめて表示する
 function trFillUp(){
   var cnt = {};
   gTrMembers.forEach(function(m){ if(m.group) cnt[m.group] = (cnt[m.group] || 0) + 1; });
-  var my = gProf.name || '';
-  if(my) cnt[my] = (cnt[my] || 0) + 0.5;   // 自分の名前は既存の表記があればそちらを優先
   var rep = {};
   Object.keys(cnt).forEach(function(g){
     var k = groupKey(g);
     if(!rep[k] || cnt[g] > cnt[rep[k]]) rep[k] = g;
   });
-  var myKey = groupKey(my);
+  var myKey = groupKey(gProf.name || '');
   var gs = Object.keys(rep).map(function(k){ return rep[k]; }).sort();
-  $('trUp').innerHTML = gs.map(function(g){
-    return '<option value="' + esc(g) + '"' + (my && groupKey(g) === myKey ? ' selected' : '') + '>' + esc(g) + '</option>';
-  }).join('');
+  // 自分の名前が名簿の系列にあればそれを初期選択。無ければ未選択（選ぶまで登録できない）
+  var hasMy = gs.some(function(g){ return groupKey(g) === myKey; });
+  $('trUp').innerHTML = (hasMy ? '' : '<option value="" selected>UPルビーを選択してください</option>')
+    + gs.map(function(g){
+        return '<option value="' + esc(g) + '"' + (hasMy && groupKey(g) === myKey ? ' selected' : '') + '>' + esc(g) + '</option>';
+      }).join('');
 }
 Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(b){
   b.onclick = function(){
