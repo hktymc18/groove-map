@@ -1004,8 +1004,14 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v11';
+var APP_VER = 'v12';
 var CHANGELOG = [
+  { v: 'v12', d: '2026/10/04', items: [
+    '稼働率: 未来日のイベントは、誤って受付を開始・終了しても集計（分母）に入らないようになりました',
+    '今日以外のイベントで「受付を開始」を押すと確認が出るようになりました',
+    '今日以外のイベントの受付を終了するとき、その受付中に記録された出席を削除するか選べます（誤操作の取り消し用）',
+    '未来日のイベントで受付を終了しても、オンライン受講の申請は締め切られません'
+  ] },
   { v: 'v11', d: '2026/10/04', items: [
     '稼働率: 登録して1ヶ月たっていない人は、名簿に登録した日からのハウディの回数を分母にして計算するようになりました（登録前の開催は表で「－」、稼働率の下に「10/10登録〜」）。GROOVE MAPに取り込む稼働率も同じです'
   ] },
@@ -1374,7 +1380,7 @@ function olState(c, ev){
   if(mark === 'approved') return 'approved';
   if(mark === 'rejected') return 'rejected';
   if(applied) return 'pending';
-  return ev.recClosed ? '' : 'can';
+  return (ev.recClosed && (ev.date || '') <= todayStr()) ? '' : 'can';
 }
 // 予約（RSVP）: 開催 rsvpDays 日前（デフォルト4）〜 rsvpDeadline（予約締切日・任意）の間だけ受付
 function rsvpState(c, ev){
@@ -5486,6 +5492,7 @@ $('btnRecStop').onclick = function(){
     var id = $('recEvSel').value;
     var sel = null; gEvents.forEach(function(x){ if(x.id === id) sel = x; });
     if(!sel){ toast('イベントを選択してください'); return; }
+    if((sel.date || '') > todayStr()){ toast('「' + (sel.name || '') + '」は未来日のイベントのため、受付終了は記録しません（集計には入りません）'); return; }
     if(sel.recClosed){ toast('「' + (sel.name || '') + '」の受付はすでに終了しています（集計に算入済み）'); return; }
     if(!window.confirm('この端末では受付中ではありませんが、「' + (sel.name || '') + '」の受付を終了として記録しますか？\n（集計・稼働率に算入され、オンライン受講の申請が締め切られます）')) return;
     sel.recClosed = true;
@@ -5494,7 +5501,26 @@ $('btnRecStop').onclick = function(){
       .catch(function(e){ toast(permMsg(e, '受付終了の記録に失敗しました')); });
     return;
   }
+  var tdy = todayStr(), evDate = ev.date || '';
+  // 今日以外のイベントの受付で記録された出席（この受付を開始してから付いたもの）は、
+  // 押し間違いの可能性があるので削除するか確認する（過去日の後追い入力なら残せる）
+  if(evDate && evDate !== tdy){
+    var mis = Object.keys(gRec.att).filter(function(no){
+      var a = gRec.att[no];
+      return a && a.method !== 'online' && (a.atMs || 0) >= gRec.startMs;
+    });
+    if(mis.length && window.confirm('今日以外（' + evDate.slice(5).replace('-', '/') + '）のイベントの受付で '
+        + mis.length + ' 件の出席が記録されました。\n誤操作による記録なら削除しますか？\n（OK＝削除する／キャンセル＝残す）')){
+      mis.forEach(function(no){ removeAttendance(no, '誤受付の取消'); });
+      toast(mis.length + ' 件の出席記録を削除しました');
+    }
+  }
   stopReception();
+  // 未来日: 受付終了は記録しない（集計に入れない・オンライン申請も締め切らない）
+  if(evDate > tdy){
+    toast('受付を閉じました（未来日のイベントのため集計には入りません）');
+    return;
+  }
   // 受付終了をイベントに記録 → 集計（稼働率）に算入され、会員証側のオンライン申請を締め切る
   // （書けなくても受付終了自体は成立させるが、集計に出なくなるため失敗は通知する）
   ev.recClosed = true;
@@ -5506,15 +5532,20 @@ $('btnRecStop').onclick = function(){
 };
 
 function startReception(ev){
-  // 終了済みイベントをうっかり開き直すと集計（稼働率）から外れるため、明示的に確認する
-  if(ev.recClosed && !window.confirm('「' + (ev.name || '') + '」の受付はすでに終了しています。受付を再開しますか？\n（再開中は集計・稼働率から一旦外れます。終わったら必ずもう一度「受付を終了」を押してください）')) return;
+  var tdy = todayStr(), evDate = ev.date || '';
+  // 今日以外のイベントは押し間違いの可能性が高いので確認する
+  if(evDate && evDate !== tdy && !window.confirm('⚠️「' + (ev.name || '') + '」は ' + evDate.slice(5).replace('-', '/')
+      + ' のイベントです（今日ではありません）。\n受付を開始しますか？'
+      + (evDate > tdy ? '\n（未来日のイベントは、受付を終了しても集計・稼働率には入りません）' : ''))) return;
+  // 当日の終了済みイベントをうっかり開き直すと集計（稼働率）から外れるため、明示的に確認する
+  if(ev.recClosed && evDate === tdy && !window.confirm('「' + (ev.name || '') + '」の受付はすでに終了しています。受付を再開しますか？\n（再開中は集計・稼働率から一旦外れます。終わったら必ずもう一度「受付を終了」を押してください）')) return;
   stopReception();
   // タブを受付へ
   Array.prototype.forEach.call(tabs, function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === 'pKiosk'); });
   Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(p){ p.classList.remove('on'); });
   $('pKiosk').classList.add('on');
 
-  gRec = { ev: ev, roster: {}, off: {}, att: {}, order: [], unsub: null,
+  gRec = { ev: ev, roster: {}, off: {}, att: {}, order: [], unsub: null, startMs: Date.now(),
            feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1,
            issuer: '',
            payMode: ev.payMode === 'paypay',        // 💳 現金なし・PayPay集金イベント
@@ -5661,6 +5692,31 @@ function setPay(no, fields){
 }
 /* 電子領収書: 徴収状態に合わせて本人のスマホ会員証に自動で発行・更新・取消する。
    紙カードのみの人（cardTokenなし）とゲストは対象外＝従来の紙領収書で運用 */
+// 出席1件の取消（出席・徴収の記録を削除し、電子領収書やオンライン承認表示も取り下げる）
+function removeAttendance(no, logLabel){
+  var a = gRec && gRec.att[no];
+  if(!a) return;
+  var evId = gRec.ev.id;
+  delete gRec.att[no];
+  renderTallies();
+  syncReceipt(no);
+  auditLog(evId, logLabel || '受付取消', a.name || no,
+    (a.fee || 0) > 0 ? yen(a.fee || 0) + (a.paid !== false ? '（徴収済み分）' : '（未徴収分）') : '');
+  // その場QR領収書（ゲスト等）を発行済みなら、その領収書も取り下げ
+  if(a.rcptToken){
+    var ru = {}; ru['rcpt_' + evId] = FV.delete();
+    db.collection('cards').doc(a.rcptToken).set(ru, { merge: true }).catch(function(){});
+  }
+  // オンライン受講の取消は会員証の承認表示もリセット（承認キューの「申請を削除」と同じマーカー）
+  if(a.method === 'online' && a.cardToken){
+    var up = {};
+    up['online_' + evId] = 'reapply';
+    db.collection('cards').doc(a.cardToken).set(up, { merge: true }).catch(function(){});
+  }
+  db.collection('checkinEvents').doc(evId).collection('attendance').doc(no)
+    .delete()
+    .catch(function(e2){ toast(permMsg(e2, '取消の権限がありません')); });
+}
 function syncReceipt(no){
   if(!gRec) return;
   if(!gRec.issuer) return;   // 発行者名が未設定のユニオンでは電子領収書を発行しない
@@ -5831,25 +5887,7 @@ function attListModal(mode){
     }
     if(act === 'del'){
       if(!window.confirm(a.name + ' さんの受付を取り消しますか？出席・徴収の記録が削除されます。')) return;
-      delete gRec.att[no];
-      renderTallies();
-      syncReceipt(no);
-      auditLog(gRec.ev.id, '受付取消', a.name || no,
-        (a.fee || 0) > 0 ? yen(a.fee || 0) + (a.paid !== false ? '（徴収済み分）' : '（未徴収分）') : '');
-      // その場QR領収書（ゲスト等）を発行済みなら、その領収書も取り下げ
-      if(a.rcptToken){
-        var ru = {}; ru['rcpt_' + gRec.ev.id] = FV.delete();
-        db.collection('cards').doc(a.rcptToken).set(ru, { merge: true }).catch(function(){});
-      }
-      // オンライン受講の取消は会員証の承認表示もリセット（承認キューの「申請を削除」と同じマーカー）
-      if(a.method === 'online' && a.cardToken){
-        var up = {};
-        up['online_' + gRec.ev.id] = 'reapply';
-        db.collection('cards').doc(a.cardToken).set(up, { merge: true }).catch(function(){});
-      }
-      db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
-        .delete()
-        .catch(function(e2){ toast(permMsg(e2, '取消の権限がありません')); });
+      removeAttendance(no, '受付取消');
       toast(a.name + ' さんの受付を取り消しました');
       closeModal(); attListModal(mode);
     }
@@ -6700,9 +6738,13 @@ function impCommit(ev){
 // 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
 // 当日分は「受付を終了」した時点（recClosed）で算入する
 // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
+// 未来日は誤って受付を開始・終了しても算入しない
 function ckHeldEvents(evs){
   var tdy = todayStr();
-  return evs.filter(function(ev){ return (ev.date || '') < tdy || ev.recClosed === true; });
+  return evs.filter(function(ev){
+    var d = ev.date || '';
+    return d < tdy || (d === tdy && ev.recClosed === true);
+  });
 }
 // 行: 有効メンバー（無効・休会中を除く）＋出席した人。出席回数と稼働率（出席÷開催数・四捨五入）
 function ckRateRows(evs, attMaps, unionMembers){
