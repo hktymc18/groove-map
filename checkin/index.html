@@ -1001,9 +1001,10 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v7';
+var APP_VER = 'v8';
 var CHANGELOG = [
-  { v: 'v7', d: '2026/10/04', items: [
+  { v: 'v8', d: '2026/10/03', items: ['DLR会場受講の予約: 日程は今後のDLR / P&P からの選択のみになりました（「その他（日付を手入力）」を廃止）'] },
+  { v: 'v7', d: '2026/10/03', items: [
     '名簿: テーブルの見出し行（番号・氏名…）もスクロールしても固定されるようになりました'
   ] },
   { v: 'v6', d: '2026/10/04', items: [
@@ -4307,8 +4308,6 @@ function dlrRsvModal(m, back){
       + '</select>'
       + '<label>日程（今後のDLR / P&amp;P から選択）</label>'
       + '<select id="dlrEv"></select>'
-      + '<div id="dlrFreeRow" class="' + (cur && !cur.evId ? '' : 'hide') + '">'
-      + '<label>日付</label><input type="date" id="dlrDate" value="' + esc((cur && cur.date) || '') + '"></div>'
       + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>開始</label>'
       + '<input type="time" id="dlrFrom" value="' + esc((cur && cur.timeFrom) || '20:00') + '"></div>'
       + '<div style="flex:1;min-width:0;"><label>終了（自動: 開始の2時間後）</label>'
@@ -4322,7 +4321,7 @@ function dlrRsvModal(m, back){
       + '<button id="dlrCancel">閉じる</button><button class="primary" id="dlrGo">' + (cur ? '予約を変更' : '予約する') + '</button></div>',
       true);
     $('dlrCancel').onclick = goBack;
-    // 地域で絞り込んだDLR/P&Pの選択肢を出す（該当なしなら手入力のみ）
+    // 地域で絞り込んだDLR/P&Pの選択肢を出す（日付の手入力は不可。該当なしは地域の切替を案内）
     var curEvs = [];
     function renderEvOpts(){
       var ar = $('dlrAreaSel').value;
@@ -4332,14 +4331,10 @@ function dlrRsvModal(m, back){
             + esc((ev.date || '') + '　' + (ev.name || '')
               + '（' + (ev.hostUnion || '') + (ev.area ? '・' + ev.area : '') + '）') + '</option>';
         }).join('')
-        + '<option value="__free"' + (((cur && !cur.evId) || !curEvs.length) ? ' selected' : '') + '>その他（日付を手入力）</option>';
-      $('dlrFreeRow').classList.toggle('hide', $('dlrEv').value !== '__free');
+        || '<option value="">この地域に今後のDLR / P&amp;Pはありません（地域を変えてください）</option>';
     }
     $('dlrAreaSel').onchange = renderEvOpts;
     renderEvOpts();
-    $('dlrEv').onchange = function(){
-      $('dlrFreeRow').classList.toggle('hide', $('dlrEv').value !== '__free');
-    };
     $('dlrFrom').onchange = function(){ $('dlrTo').value = dlrTimeTo($('dlrFrom').value); };
     var del = $('dlrDel');
     if(del) del.onclick = function(){
@@ -4356,13 +4351,9 @@ function dlrRsvModal(m, back){
     $('dlrGo').onclick = function(){
       var sel = $('dlrEv').value;
       var date = '', evName = '', evId = '', evUnion = '';
-      if(sel === '__free'){
-        date = $('dlrDate').value;
-      } else {
-        var ev = curEvs[parseInt(sel, 10)];
-        if(ev){ date = ev.date || ''; evName = ev.name || ''; evId = ev.id; evUnion = ev.hostUnion || ''; }
-      }
-      if(!date){ toast('日付を選択してください'); return; }
+      var ev = sel === '' ? null : curEvs[parseInt(sel, 10)];
+      if(ev){ date = ev.date || ''; evName = ev.name || ''; evId = ev.id; evUnion = ev.hostUnion || ''; }
+      if(!date){ toast('日程を選択してください'); return; }
       var rsv = {
         date: date, timeFrom: $('dlrFrom').value || '20:00', timeTo: $('dlrTo').value || dlrTimeTo($('dlrFrom').value),
         evName: evName, evId: evId, evUnion: evUnion, msg: $('dlrMsg').value.trim(),
