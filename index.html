@@ -2960,7 +2960,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v584</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v585</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3405,6 +3405,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="profileAdminWrap" style="display:none;margin-top:4px;margin-bottom:4px">
       <button class="btn-c" style="width:100%;border-color:var(--purple);color:var(--purple)" onclick="openAdminPanel()">🛡 アカウント管理</button>
+    </div>
+    <div id="profileFbWrap" style="display:none;margin-top:4px;margin-bottom:4px">
+      <button class="btn-c" style="width:100%" onclick="closeProfileModal(null);fbOpen()">🐞 バグ・要望<b id="profileFbBadge" style="color:var(--gold)"></b></button>
     </div>
     <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
       <button class="btn-c" style="width:100%;margin-bottom:8px" onclick="closeProfileModal(null);showHistoryModal()">📜 変更履歴（追加・削除・タイトル変更）</button>
@@ -3906,7 +3909,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v584';</script>
-<script src="app.js?v=v584"></script>
+<script>window.GM_EXPECT_JS='v585';</script>
+<script src="app.js?v=v585"></script>
 </body>
 </html>

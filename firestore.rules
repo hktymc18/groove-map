@@ -478,5 +478,57 @@ service cloud.firestore {
          'ver', 'envApprover', 'at', 'atLocal', 'atMs', 'cardToken']);
       allow update, delete: if false;
     }
+
+    // ============ v585: バグ・要望（オーナー＋オーナーが指定した人だけ） ============
+    //   fbConfig/main.members に入っている人とオーナーだけが読み書きできる。指定はオーナーだけ。
+    //   書いた人（uid・プロフィールの名前）と日時（サーバー時刻）は書き換えられない。
+    function fbOk() {
+      return isOwnerAdmin() || (signedIn() && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/fbConfig/main)
+        && request.auth.uid in get(/databases/$(database)/documents/fbConfig/main).data.get('members', []));
+    }
+    function fbName() { return profile(request.auth.uid).get('name', ''); }
+    match /fbConfig/main {
+      allow read: if fbOk();
+      allow write: if isOwnerAdmin();
+    }
+    // 通し番号（#1, #2…）：1つずつしか増やせない
+    match /fbConfig/seq {
+      allow read: if fbOk();
+      allow create: if fbOk() && request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == 1;
+      allow update: if fbOk() && request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == resource.data.n + 1;
+    }
+    match /fbItems/{id} {
+      allow read: if fbOk();
+      allow create: if fbOk()
+        && request.resource.data.keys().hasOnly(['no','kind','screen','title','did','got','want','ver','device','status','authorUid','authorName','createdAt','imgN'])
+        && id == string(request.resource.data.no)
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.authorName == fbName()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.status == 'new';
+      // オーナーは切り分け・コメントなど全部。書いた本人は「新着」のうちだけ内容を直せる（書いた人・日時は変えられない）
+      allow update: if isOwnerAdmin()
+        || (fbOk() && resource.data.authorUid == request.auth.uid && resource.data.status == 'new'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kind','screen','title','did','got','want','editedAt']));
+      allow delete: if isOwnerAdmin();
+      match /imgs/{k} {
+        allow read: if fbOk();
+        allow create: if fbOk() && request.resource.data.byUid == request.auth.uid
+          && request.resource.data.data is string && request.resource.data.data.size() < 700000;
+        allow delete: if isOwnerAdmin();
+      }
+      // やりとり：誰が・いつ（サーバー時刻）を必ず残す。管理者の印・状態の記録はオーナーだけ
+      match /notes/{nid} {
+        allow read: if fbOk();
+        allow create: if fbOk()
+          && request.resource.data.byUid == request.auth.uid
+          && request.resource.data.byName == fbName()
+          && request.resource.data.at == request.time
+          && (request.resource.data.get('admin', false) == false || isOwnerAdmin())
+          && (request.resource.data.get('kind', 'note') == 'note' || isOwnerAdmin());
+        allow delete: if isOwnerAdmin();
+      }
+    }
   }
 }

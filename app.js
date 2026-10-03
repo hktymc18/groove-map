@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v584';
+var APP_JS_VERSION = 'v585';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3653,6 +3653,7 @@ function openProfileModal() {
   var title = el('profileModalTitle'); if (title) title.textContent = _profileMandatory ? 'プロフィール入力（必須）' : 'プロフィール設定';
   var perr = el('profileError'); if (perr) perr.style.display = 'none';
   var adm = el('profileAdminWrap'); if (adm) adm.style.display = (!_profileMandatory && isCurrentAdmin()) ? '' : 'none';
+  try { _fbSyncEntry(); } catch (eFb) {} // v585
   syncThemeButtons();
   if (typeof applyMembersTabVisible === 'function') applyMembersTabVisible();
   var m = document.getElementById('profileModal');
@@ -3924,7 +3925,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v584';
+  var DATA_VERSION = 'v585';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4131,6 +4132,422 @@ function switchView(v) {
   // v511: eventsはsetEventsMode内で描画済み（ここで再描画すると毎回2回描いていた）
   else if (v==='plan') renderPlan();
 }
+// ════ v585: 🐞 バグ・要望（オーナー＋オーナーが指定した人だけ。誰が・いつ書いたかは必ず残す） ════
+// Firestore: fbConfig/main {members:[uid], names:{uid:名前}} ／ fbConfig/seq {n} ／ fbItems/{番号} ＋ imgs・notes のサブコレクション
+var FB_ST = [
+  { k: 'new', lb: '新着', ic: '' },
+  { k: 'fix', lb: '改修する', ic: '🔧' },
+  { k: 'doing', lb: '対応中', ic: '🛠' },
+  { k: 'wa', lb: '運用回避', ic: '🧭' },
+  { k: 'no', lb: '対応しない', ic: '✋' },
+  { k: 'done', lb: '完了', ic: '✓' }
+];
+var FB_SCREENS = ['HOME', 'MAP', '理想MAP', '予定', 'ToDo', 'PLAN', 'データ', 'OL', 'メンバー', 'メンバー編集', '受付', 'その他'];
+var FB_VIEW_LB = { home: 'HOME', current: 'MAP', ideal: '理想MAP', events: '予定', plan: 'PLAN', stats: 'データ', ol: 'OL', members: 'メンバー' };
+var FB_IMG_MAX = 3, FB_IMG_KEEP_DAYS = 60;
+var _fb = { ok: null, cfg: null, items: [], tab: 'new', sel: {}, open: null, det: null, form: null, newN: 0 };
+function _fbStLb(k) { for (var i = 0; i < FB_ST.length; i++) if (FB_ST[i].k === k) return FB_ST[i]; return FB_ST[0]; }
+function _fbIsOwner() { return !!currentUser && currentUser.uid === OWNER_UID; }
+function _fbMyName() { return (currentUser && currentUser.name) || ''; }
+function _fbTs(v) { // Firestoreの日時 → Date
+  if (!v) return null;
+  if (typeof v.toDate === 'function') return v.toDate();
+  if (v.seconds !== undefined) return new Date(v.seconds * 1000);
+  var d = new Date(v); return isNaN(d.getTime()) ? null : d;
+}
+function _fbFmt(v, short) {
+  var d = _fbTs(v); if (!d) return '—';
+  var p = function(n) { return String(n).padStart(2, '0'); };
+  return (short ? '' : d.getFullYear() + '/') + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function _fbDevice() {
+  var u = navigator.userAgent || '', os = /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'PC';
+  var br = /Edg\//.test(u) ? 'Edge' : /CriOS|Chrome\//.test(u) ? 'Chrome' : /FxiOS|Firefox\//.test(u) ? 'Firefox' : /Safari\//.test(u) ? 'Safari' : '';
+  var pwa = false; try { pwa = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch (e) {}
+  return os + (br ? ' ' + br : '') + (pwa ? '（アプリ）' : '');
+}
+// ── データの読み書き（テストで差し替えられるように1か所に） ──
+function _fbCol() { return db.collection('fbItems'); }
+function _fbLoadCfg() { return fsGet('fbConfig/main'); }
+function _fbSaveCfg(cfg) { return db.doc('fbConfig/main').set(cfg); }
+function _fbLoadItems() { return fsGetCol('fbItems'); }
+function _fbNextNo() { // 通し番号（#1, #2…）
+  var ref = db.doc('fbConfig/seq');
+  return db.runTransaction(function(tx) {
+    return tx.get(ref).then(function(d) { var n = (d.exists && d.data().n ? d.data().n : 0) + 1; tx.set(ref, { n: n }); return n; });
+  });
+}
+function _fbCreate(it, imgs) {
+  var ts = firebase.firestore.FieldValue.serverTimestamp();
+  return _fbNextNo().then(function(no) {
+    var id = String(no);
+    var doc = Object.assign({}, it, { no: no, status: 'new', authorUid: currentUser.uid, authorName: _fbMyName(), createdAt: ts, imgN: imgs.length });
+    return _fbCol().doc(id).set(doc).then(function() {
+      return Promise.all(imgs.map(function(src, i) { return _fbCol().doc(id).collection('imgs').doc(String(i)).set({ data: src, byUid: currentUser.uid, at: ts }); }));
+    }).then(function() { return no; });
+  });
+}
+function _fbUpdate(id, data) { return _fbCol().doc(String(id)).update(data); }
+function _fbAddNote(id, note) { return _fbCol().doc(String(id)).collection('notes').add(Object.assign({ byUid: currentUser.uid, byName: _fbMyName(), at: firebase.firestore.FieldValue.serverTimestamp() }, note)); }
+function _fbLoadSub(id, sub) { return fsGetCol('fbItems/' + id + '/' + sub); }
+function _fbDelImgs(id, n) { var ps = []; for (var i = 0; i < Math.max(n || 0, FB_IMG_MAX); i++) ps.push(_fbCol().doc(String(id)).collection('imgs').doc(String(i)).delete().catch(function() {})); return Promise.all(ps); }
+// ── 見られる人か（オーナー＋指定した人）。ログイン後に1回だけ確かめる ──
+function fbCheckAccess() {
+  if (!currentUser || viewingOwnerUid) return Promise.resolve(false);
+  if (_fbIsOwner()) { _fb.ok = true; _fbLoadCfg().then(function(c) { _fb.cfg = c || { members: [], names: {} }; }).catch(function() {}); _fbCountNew(); return Promise.resolve(true); }
+  return _fbLoadCfg().then(function(c) {
+    _fb.cfg = c || null;
+    _fb.ok = !!(c && (c.members || []).indexOf(currentUser.uid) >= 0);
+    _fbSyncEntry();
+    return _fb.ok;
+  }).catch(function() { _fb.ok = false; _fbSyncEntry(); return false; });
+}
+function _fbCountNew() {
+  if (!_fbIsOwner()) return;
+  _fbLoadItems().then(function(list) { _fb.items = list || []; _fb.newN = _fb.items.filter(function(x) { return x.status === 'new'; }).length; _fbSyncEntry(); }).catch(function() {});
+}
+function _fbSyncEntry() {
+  var w = document.getElementById('profileFbWrap'); if (w) w.style.display = _fb.ok ? '' : 'none';
+  var b = document.getElementById('profileFbBadge'); if (b) b.textContent = _fb.newN ? ' ' + _fb.newN : '';
+}
+function _fbCss() {
+  if (document.getElementById('fbCss')) return;
+  var st = document.createElement('style'); st.id = 'fbCss';
+  st.textContent = ".fb-sheet{height:92vh;display:flex;flex-direction:column;overflow:hidden}.fb-body{flex:1;overflow-y:auto;padding:0 16px 20px}\n"
+    + ".fb-top{display:flex;align-items:center;gap:8px;padding:0 16px 10px}.fb-top .t{font-size:17px;font-weight:800;color:var(--text)}.fb-top .sp{flex:1}\n"
+    + ".fb-btn{font-size:13px;font-weight:800;border-radius:10px;padding:8px 12px;cursor:pointer;user-select:none;border:1px solid var(--border2);color:var(--text);background:var(--surface2);white-space:nowrap}.fb-btn.pri{background:var(--accent);border-color:var(--accent);color:#06231c}.fb-btn.dis{opacity:.4;pointer-events:none}\n"
+    + ".fb-ic{width:34px;height:34px;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}\n"
+    + ".fb-chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}.fb-chips span{font-size:12px;font-weight:700;padding:6px 10px;border-radius:9px;background:var(--surface2);color:var(--text-dim);cursor:pointer}.fb-chips span.on{background:var(--text);color:var(--bg)}.fb-chips b{margin-left:4px}\n"
+    + ".fb-it{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}.fb-it .bd{flex:1;min-width:0}\n"
+    + ".fb-cb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--text-dim);flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#06231c}.fb-cb.on{background:var(--accent);border-color:var(--accent)}\n"
+    + ".fb-ih{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim)}.fb-ih .no{font-family:Inter,sans-serif;font-weight:800}\n"
+    + ".fb-k{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px}.fb-k.bug{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}.fb-k.req{background:color-mix(in srgb,#5AD7FF 18%,transparent);color:#2ba9d6}\n"
+    + ".fb-st{margin-left:auto;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--surface2);color:var(--text-dim);white-space:nowrap}.fb-st.new{background:var(--gold);color:#2a1a00}.fb-st.fix,.fb-st.doing{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}.fb-st.wa{background:color-mix(in srgb,#8B7CFF 22%,transparent);color:#8B7CFF}.fb-st.done{color:var(--accent)}\n"
+    + ".fb-it .tt{font-size:14px;font-weight:700;margin:6px 0 4px;line-height:1.45;color:var(--text);word-break:break-word}.fb-it .mt{font-size:11.5px;color:var(--text-dim)}\n"
+    + ".fb-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 0}\n"
+    + ".fb-foot{padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);display:flex;gap:8px}.fb-foot .fb-btn{flex:1;text-align:center;padding:12px}\n"
+    + ".fb-lb{font-size:12px;color:var(--text-dim);font-weight:800;margin:14px 0 6px}.fb-lb small{font-weight:500;margin-left:6px}\n"
+    + ".fb-seg{display:flex;background:var(--surface2);border-radius:10px;padding:3px}.fb-seg span{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:800;color:var(--text-dim);cursor:pointer}.fb-seg span.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.2)}\n"
+    + ".fb-ta{width:100%;min-height:64px;resize:vertical;font-size:14px}\n"
+    + ".fb-imgs{display:flex;gap:8px;flex-wrap:wrap}.fb-img{position:relative;width:72px;height:96px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--surface2);cursor:pointer}.fb-img img{width:100%;height:100%;object-fit:cover}.fb-img .x{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}\n"
+    + ".fb-add{width:72px;height:96px;border-radius:10px;border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:22px;cursor:pointer}\n"
+    + ".fb-who{font-size:12px;color:var(--text-dim);line-height:1.7}.fb-who b{color:var(--text)}\n"
+    + ".fb-txt{font-size:13.5px;line-height:1.7;background:var(--surface2);border-radius:12px;padding:10px 12px;margin:10px 0;color:var(--text);white-space:pre-wrap;word-break:break-word}.fb-txt b{color:var(--text-dim);font-size:12px}\n"
+    + ".fb-tri{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.fb-tri span{text-align:center;font-size:12.5px;font-weight:800;padding:10px 4px;border-radius:10px;background:var(--surface2);color:var(--text-dim);cursor:pointer}.fb-tri span.on{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent);outline:1.5px solid var(--accent)}\n"
+    + ".fb-th{border-top:1px solid var(--border);padding:9px 0;font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word}.fb-th small{display:block;color:var(--text-dim);font-size:11px;white-space:normal}.fb-th.adm{color:var(--accent)}.fb-th.log{color:var(--text-dim);font-size:12px}\n"
+    + ".fb-row{display:flex;gap:8px;align-items:center}.fb-row .fi{flex:1}\n"
+    + ".fb-u{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);font-size:13.5px;color:var(--text);cursor:pointer}.fb-u small{color:var(--text-dim);font-size:11.5px}.fb-u .sp{flex:1}\n"
+    + ".fb-big{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:700;display:flex;align-items:center;justify-content:center}.fb-big img{max-width:96vw;max-height:92vh}";
+  document.head.appendChild(st);
+}
+// ── 一覧 ──
+function fbOpen() {
+  if (!_fb.ok) { toast('このページを見られる人に指定されていません'); return; }
+  _fbCss();
+  _p2SheetClose('fbOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'fbOv'; ov.style.zIndex = '640';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('fbOv'); };
+  ov.innerHTML = '<div class="ms-sheet fb-sheet"><div class="ms-grip"></div><div id="fbMain" style="display:flex;flex-direction:column;flex:1;min-height:0"></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  if (!_fbIsOwner() && _fb.tab === 'new') _fb.tab = 'all';
+  _fbRenderList(true);
+  fbReload();
+}
+function fbReload() {
+  return _fbLoadItems().then(function(list) {
+    _fb.items = (list || []).slice().sort(function(a, b) { return (b.no || 0) - (a.no || 0); });
+    _fb.newN = _fb.items.filter(function(x) { return x.status === 'new'; }).length;
+    _fbSyncEntry(); _fbRenderList(); _fbPurgeImgs();
+  }).catch(function() { var m = document.getElementById('fbMain'); if (m) m.innerHTML = '<div class="fb-empty">読み込めませんでした（見られる人に指定されているか確認してください）</div>'; });
+}
+function _fbRenderList(loading) {
+  var box = document.getElementById('fbMain'); if (!box) return;
+  var own = _fbIsOwner(), cnt = {};
+  _fb.items.forEach(function(x) { cnt[x.status] = (cnt[x.status] || 0) + 1; });
+  var tabs = FB_ST.map(function(s) { return s.k; }).concat(['all']);
+  var h = '<div class="fb-top"><span class="t">🐞 バグ・要望</span><span class="sp"></span>' + (own ? '<span class="fb-ic" onclick="fbMembersOpen()" title="見られる人・報告できる人">⚙</span>' : '') + '<span class="fb-btn pri" onclick="fbFormOpen()">＋ 報告する</span><span class="fb-ic" onclick="_p2SheetClose(\'fbOv\')">✕</span></div>'
+    + '<div class="fb-body"><div class="fb-chips">' + tabs.map(function(k) { var lb = k === 'all' ? 'すべて' : _fbStLb(k).lb, n = k === 'all' ? _fb.items.length : (cnt[k] || 0); return '<span class="' + (_fb.tab === k ? 'on' : '') + '" onclick="fbTab(\'' + k + '\')">' + lb + (n ? '<b>' + n + '</b>' : '') + '</span>'; }).join('') + '</div>';
+  var rows = _fb.items.filter(function(x) { return _fb.tab === 'all' || x.status === _fb.tab; });
+  var pick = own && _fb.tab === 'fix';
+  if (loading && !_fb.items.length) h += '<div class="fb-empty">読み込み中…</div>';
+  else if (!rows.length) h += '<div class="fb-empty">' + (_fb.tab === 'new' ? '新着はありません' : 'ありません') + '</div>';
+  else {
+    if (pick) h += '<div class="fb-who" style="margin:-2px 0 8px">直したいものにチェック → 下のボタンで、Claudeへの指示としてまとめてコピーします</div>';
+    h += rows.map(function(x) {
+      var st = _fbStLb(x.status);
+      return '<div class="fb-it" onclick="fbDetailOpen(\'' + x.id + '\')">' + (pick ? '<span class="fb-cb' + (_fb.sel[x.id] ? ' on' : '') + '" onclick="event.stopPropagation();fbPick(\'' + x.id + '\')">' + (_fb.sel[x.id] ? '✓' : '') + '</span>' : '')
+        + '<div class="bd"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + (x.kind === 'req' ? 'req' : 'bug') + '">' + (x.kind === 'req' ? '要望' : 'バグ') + '</span>' + evEsc(x.screen || '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div>'
+        + '<div class="tt">' + evEsc(x.title || '') + '</div><div class="mt">' + evEsc(x.authorName || '') + '・' + _fbFmt(x.createdAt, true) + (x.ver ? '・' + evEsc(x.ver) : '') + (x.device ? '・' + evEsc(x.device) : '') + (x.imgN ? '・📷' + x.imgN : '') + (x.adminComment ? '・💬' : '') + '</div></div></div>';
+    }).join('');
+  }
+  h += '</div>';
+  if (pick) { var n = Object.keys(_fb.sel).filter(function(k) { return _fb.sel[k] && rows.some(function(x) { return x.id === k; }); }).length; h += '<div class="fb-foot"><span class="fb-btn pri' + (n ? '' : ' dis') + '" onclick="fbCopyForClaude()">' + (n ? '選んだ' + n + '件を' : '') + 'Claudeへの指示としてコピー</span></div>'; }
+  box.innerHTML = h;
+}
+function fbTab(k) { _fb.tab = k; _fbRenderList(); }
+function fbPick(id) { _fb.sel[id] = !_fb.sel[id]; _fbRenderList(); }
+// ── 報告する ──
+function fbFormOpen(id) {
+  var x = id ? _fb.items.filter(function(i) { return i.id === id; })[0] : null;
+  var cv = (typeof currentView !== 'undefined' && FB_VIEW_LB[currentView]) || 'その他';
+  _fb.form = x ? { id: x.id, kind: x.kind || 'bug', screen: x.screen || cv, imgs: [], keepImgN: x.imgN || 0 } : { kind: 'bug', screen: cv, imgs: [] };
+  _fbCss();
+  _p2SheetClose('fbFormOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'fbFormOv'; ov.style.zIndex = '650';
+  ov.innerHTML = '<div class="ms-sheet fb-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (x ? '#' + x.no + ' を直す' : '🐞 報告する') + '</div><div style="font-size:11px;color:var(--text-dim)">書いた人（' + evEsc(_fbMyName()) + '）・日時・版・端末は自動で残ります</div></div><span class="ms-x" onclick="_p2SheetClose(\'fbFormOv\')">✕</span></div>'
+    + '<div class="fb-body" id="fbFormBody"></div><div class="fb-foot"><span class="fb-btn" onclick="_p2SheetClose(\'fbFormOv\')">やめる</span><span class="fb-btn pri" id="fbSendBtn" onclick="fbSend()">' + (x ? '保存' : '送る') + '</span></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  _fbFormRender(x);
+}
+function _fbFormRender(x) {
+  var b = document.getElementById('fbFormBody'), f = _fb.form; if (!b) return;
+  var v = function(k) { return x ? evEsc(x[k] || '') : ''; };
+  b.innerHTML = '<div class="fb-lb">種類</div><div class="fb-seg" id="fbKind"><span class="' + (f.kind === 'bug' ? 'on' : '') + '" onclick="fbKind(\'bug\')">🐞 バグ</span><span class="' + (f.kind === 'req' ? 'on' : '') + '" onclick="fbKind(\'req\')">💡 要望</span></div>'
+    + '<div class="fb-lb">画面</div><select class="fi" id="fbScreen">' + FB_SCREENS.map(function(s) { return '<option' + (s === f.screen ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>'
+    + '<div class="fb-lb">タイトル<small>ひとことで</small></div><input class="fi" id="fbTitle" maxlength="80" value="' + v('title') + '" placeholder="例：予定を保存すると関連メンバーが外れる">'
+    + '<div class="fb-lb">' + (f.kind === 'req' ? 'いま困っていること' : 'したこと') + '</div><textarea class="fi fb-ta" id="fbDid" maxlength="2000" placeholder="' + (f.kind === 'req' ? '例：MAPで誕生日が小さくて見えない' : '例：予定を開いて時間だけ変えて保存した') + '">' + v('did') + '</textarea>'
+    + '<div class="fb-lb">' + (f.kind === 'req' ? 'こうなったらうれしい' : '起きたこと') + '</div><textarea class="fi fb-ta" id="fbGot" maxlength="2000" placeholder="' + (f.kind === 'req' ? '例：カードの右上に大きく出す' : '例：関連メンバーの田中さんが消えた') + '">' + v('got') + '</textarea>'
+    + (f.kind === 'req' ? '' : '<div class="fb-lb">こうなってほしい<small>任意</small></div><textarea class="fi fb-ta" id="fbWant" maxlength="2000" placeholder="例：そのまま残る">' + v('want') + '</textarea>')
+    + (x ? (f.keepImgN ? '<div class="fb-who" style="margin-top:12px">スクショ ' + f.keepImgN + '枚はそのまま残ります</div>' : '') : '<div class="fb-lb">スクショ<small>' + FB_IMG_MAX + '枚まで・小さくして保存します</small></div><div class="fb-imgs" id="fbImgs"></div><input type="file" id="fbFile" accept="image/*" multiple style="display:none" onchange="fbFiles(this)">');
+  if (!x) _fbImgsRender();
+}
+function fbKind(k) { // 入力中の文字は残す
+  var f = _fb.form; if (!f) return;
+  var keep = {}; ['fbTitle', 'fbDid', 'fbGot', 'fbWant'].forEach(function(id) { var el = document.getElementById(id); if (el) keep[id] = el.value; });
+  var sc = document.getElementById('fbScreen'); if (sc) f.screen = sc.value;
+  f.kind = k;
+  var x = f.id ? _fb.items.filter(function(i) { return i.id === f.id; })[0] : null;
+  _fbFormRender(x);
+  Object.keys(keep).forEach(function(id) { var el = document.getElementById(id); if (el) el.value = keep[id]; });
+}
+function _fbImgsRender() {
+  var b = document.getElementById('fbImgs'), f = _fb.form; if (!b || !f) return;
+  b.innerHTML = f.imgs.map(function(src, i) { return '<div class="fb-img"><img src="' + src + '"><span class="x" onclick="fbImgDel(' + i + ')">✕</span></div>'; }).join('')
+    + (f.imgs.length < FB_IMG_MAX ? '<div class="fb-add" onclick="document.getElementById(\'fbFile\').click()">＋</div>' : '');
+}
+function fbImgDel(i) { if (_fb.form) { _fb.form.imgs.splice(i, 1); _fbImgsRender(); } }
+// 画像を小さく（長い辺1280px・JPEG）。300KBを超えたら画質を下げる
+function _fbShrink(file) {
+  return new Promise(function(res, rej) {
+    var rd = new FileReader();
+    rd.onload = function() {
+      var im = new Image();
+      im.onload = function() {
+        var mx = 1280, w = im.width, h = im.height, r = Math.min(1, mx / Math.max(w, h));
+        var cv = document.createElement('canvas'); cv.width = Math.round(w * r); cv.height = Math.round(h * r);
+        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        var q = 0.72, out = cv.toDataURL('image/jpeg', q);
+        while (out.length > 400000 && q > 0.3) { q -= 0.12; out = cv.toDataURL('image/jpeg', q); }
+        res(out);
+      };
+      im.onerror = rej; im.src = rd.result;
+    };
+    rd.onerror = rej; rd.readAsDataURL(file);
+  });
+}
+function fbFiles(inp) {
+  var f = _fb.form; if (!f) return;
+  var fs9 = Array.prototype.slice.call(inp.files || [], 0, FB_IMG_MAX - f.imgs.length);
+  inp.value = '';
+  Promise.all(fs9.map(_fbShrink)).then(function(list) { list.forEach(function(s) { if (f.imgs.length < FB_IMG_MAX) f.imgs.push(s); }); _fbImgsRender(); }).catch(function() { toast('画像を読み込めませんでした'); });
+}
+function fbSend() {
+  var f = _fb.form; if (!f) return;
+  var g = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var it = { kind: f.kind, screen: g('fbScreen') || f.screen, title: g('fbTitle'), did: g('fbDid'), got: g('fbGot'), want: f.kind === 'req' ? '' : g('fbWant') };
+  if (!it.title) { toast('タイトルを入れてください'); return; }
+  if (!it.did && !it.got) { toast('内容を入れてください'); return; }
+  var btn = document.getElementById('fbSendBtn'); if (btn) btn.classList.add('dis');
+  var done = function(msg) { _p2SheetClose('fbFormOv'); toast(msg); fbReload(); };
+  var fail = function() { if (btn) btn.classList.remove('dis'); toast('保存できませんでした（通信・権限を確認してください）'); };
+  if (f.id) { _fbUpdate(f.id, Object.assign(it, { editedAt: firebase.firestore.FieldValue.serverTimestamp() })).then(function() { done('保存しました'); }, fail); return; }
+  it.ver = (typeof APP_JS_VERSION !== 'undefined' ? APP_JS_VERSION : ''); it.device = _fbDevice();
+  _fbCreate(it, f.imgs).then(function(no) { done('#' + no + ' で受け付けました。ありがとうございます'); }, fail);
+}
+// ── 1件（切り分け・コメント・やりとり） ──
+function fbDetailOpen(id) {
+  _fbCss();
+  _fb.open = id; _fb.det = { imgs: null, notes: null };
+  _p2SheetClose('fbDetOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'fbDetOv'; ov.style.zIndex = '650';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('fbDetOv'); };
+  ov.innerHTML = '<div class="ms-sheet fb-sheet"><div class="ms-grip"></div><div class="fb-body" id="fbDetBody" style="padding-top:4px"></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  _fbDetRender();
+  _fbLoadSub(id, 'notes').then(function(n) { if (_fb.open !== id) return; _fb.det.notes = (n || []).sort(function(a, b) { return (_fbTs(a.at) || 0) - (_fbTs(b.at) || 0); }); _fbDetRender(); }).catch(function() { _fb.det.notes = []; _fbDetRender(); });
+  var x = _fbItem(id);
+  if (x && x.imgN) _fbLoadSub(id, 'imgs').then(function(m) { if (_fb.open !== id) return; _fb.det.imgs = (m || []).sort(function(a, b) { return a.id.localeCompare(b.id); }); _fbDetRender(); }).catch(function() {});
+}
+function _fbItem(id) { return _fb.items.filter(function(i) { return i.id === String(id); })[0] || null; }
+function _fbDetRender() {
+  var b = document.getElementById('fbDetBody'), x = _fbItem(_fb.open); if (!b || !x) return;
+  var own = _fbIsOwner(), st = _fbStLb(x.status), req = x.kind === 'req';
+  var keepAc = document.activeElement && document.activeElement.id, keep = {};
+  ['fbCmt', 'fbNote', 'fbWa', 'fbDoneVer'].forEach(function(k) { var el = document.getElementById(k); if (el) keep[k] = el.value; });
+  var sec = function(lb, t) { return t ? '<b>【' + lb + '】</b>' + evEsc(t) + '\n' : ''; };
+  var h = '<div class="ms-hd" style="padding:0 0 4px"><div class="ms-hinfo"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + (req ? 'req' : 'bug') + '">' + (req ? '要望' : 'バグ') + '</span>' + evEsc(x.screen || '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div></div><span class="ms-x" onclick="_p2SheetClose(\'fbDetOv\')">✕</span></div>'
+    + '<div style="font-size:16px;font-weight:800;margin:4px 0 6px;color:var(--text);word-break:break-word">' + evEsc(x.title || '') + '</div>'
+    + '<div class="fb-who">書いた人 <b>' + evEsc(x.authorName || '') + '</b>・<b>' + _fbFmt(x.createdAt) + '</b>' + (x.editedAt ? '（' + _fbFmt(x.editedAt, true) + ' に直しました）' : '') + '<br>' + evEsc(x.ver || '') + (x.device ? '・' + evEsc(x.device) : '') + '</div>'
+    + '<div class="fb-txt">' + (sec(req ? 'いま困っていること' : 'したこと', x.did) + sec(req ? 'こうなったらうれしい' : '起きたこと', x.got) + sec('こうなってほしい', x.want)).replace(/\n$/, '') + '</div>';
+  if (x.imgN) h += x.imgsPurged ? '<div class="fb-who">スクショは保存期間（' + FB_IMG_KEEP_DAYS + '日）を過ぎたので消えています</div>' : '<div class="fb-imgs">' + (_fb.det.imgs ? _fb.det.imgs.map(function(m) { return '<div class="fb-img" onclick="fbImgBig(\'' + m.id + '\')"><img src="' + m.data + '"></div>'; }).join('') : '<div class="fb-who">スクショを読み込み中…</div>') + '</div>';
+  if (!own && x.authorUid === (currentUser && currentUser.uid) && x.status === 'new') h += '<div style="margin-top:10px"><span class="fb-btn" onclick="fbFormOpen(\'' + x.id + '\')">✎ 内容を直す</span></div>';
+  if (x.status === 'wa' && x.waNote) h += '<div class="fb-lb">🧭 回避のしかた</div><div class="fb-txt" style="margin-top:0">' + evEsc(x.waNote) + '</div>';
+  if (x.status === 'done' && x.doneVer) h += '<div class="fb-lb">✓ 完了</div><div class="fb-who">' + evEsc(x.doneVer) + ' で直しました</div>';
+  if (own) {
+    h += '<div class="fb-lb">切り分け<small>管理者だけ</small></div><div class="fb-tri">' + ['fix', 'wa', 'no'].map(function(k) { var s = _fbStLb(k); return '<span class="' + (x.status === k ? 'on' : '') + '" onclick="fbSetSt(\'' + k + '\')">' + s.ic + ' ' + s.lb + '</span>'; }).join('') + '</div>'
+      + '<div class="fb-tri" style="margin-top:6px">' + ['new', 'doing', 'done'].map(function(k) { var s = _fbStLb(k); return '<span class="' + (x.status === k ? 'on' : '') + '" onclick="fbSetSt(\'' + k + '\')">' + (s.ic ? s.ic + ' ' : '') + s.lb + '</span>'; }).join('') + '</div>';
+    if (x.status === 'wa') h += '<div class="fb-lb">回避のしかた</div><div class="fb-row"><input class="fi" id="fbWa" value="' + evEsc(x.waNote || '') + '" placeholder="例：保存する前に関連メンバーを確認する"><span class="fb-btn" onclick="fbSaveField(\'waNote\',\'fbWa\')">保存</span></div>';
+    if (x.status === 'done') h += '<div class="fb-lb">何版で直したか</div><div class="fb-row"><input class="fi" id="fbDoneVer" value="' + evEsc(x.doneVer || '') + '" placeholder="例：v585"><span class="fb-btn" onclick="fbSaveField(\'doneVer\',\'fbDoneVer\')">保存</span></div>';
+    h += '<div class="fb-lb">管理者コメント<small>任意</small></div><textarea class="fi fb-ta" id="fbCmt" placeholder="例：再現した。次の改修でまとめて直します">' + evEsc(x.adminComment || '') + '</textarea><div style="text-align:right;margin-top:6px"><span class="fb-btn" onclick="fbSaveCmt()">コメントを保存</span></div>';
+  } else if (x.adminComment) h += '<div class="fb-lb">管理者コメント</div><div class="fb-txt" style="margin-top:0;color:var(--accent)">' + evEsc(x.adminComment) + '</div>';
+  h += '<div class="fb-lb">やりとり</div>';
+  if (!_fb.det.notes) h += '<div class="fb-who">読み込み中…</div>';
+  else h += (_fb.det.notes.length ? _fb.det.notes.map(function(n) {
+    if (n.kind === 'status') return '<div class="fb-th log">' + evEsc(n.text || '') + '<small>' + evEsc(n.byName || '') + '・' + _fbFmt(n.at) + '</small></div>';
+    return '<div class="fb-th' + (n.admin ? ' adm' : '') + '">' + evEsc(n.text || '') + '<small>' + evEsc(n.byName || '') + (n.admin ? '（管理者）' : '') + '・' + _fbFmt(n.at) + '</small></div>';
+  }).join('') : '<div class="fb-who">まだありません</div>');
+  h += '<div class="fb-row" style="margin-top:8px"><input class="fi" id="fbNote" placeholder="追記する（例：同じことが起きました）"><span class="fb-btn" onclick="fbNoteAdd()">送る</span></div>';
+  b.innerHTML = h;
+  Object.keys(keep).forEach(function(k) { var el = document.getElementById(k); if (el) el.value = keep[k]; }); // 書きかけは残す
+  if (keepAc) { var ae = document.getElementById(keepAc); if (ae) try { ae.focus({ preventScroll: true }); } catch (eF) {} }
+}
+function fbImgBig(k) {
+  var m = (_fb.det && _fb.det.imgs || []).filter(function(x) { return x.id === k; })[0]; if (!m) return;
+  var d = document.createElement('div'); d.className = 'fb-big'; d.onclick = function() { d.parentNode.removeChild(d); };
+  d.innerHTML = '<img src="' + m.data + '">'; document.body.appendChild(d);
+}
+function _fbLocal(id, data) { var x = _fbItem(id); if (x) Object.assign(x, data); }
+function fbSetSt(k) {
+  var x = _fbItem(_fb.open); if (!x || !_fbIsOwner() || x.status === k) return;
+  var from = _fbStLb(x.status).lb, to = _fbStLb(k).lb, ts = firebase.firestore.FieldValue.serverTimestamp();
+  var data = { status: k, statusAt: ts, statusBy: _fbMyName() };
+  _fbUpdate(x.id, data).then(function() {
+    _fbLocal(x.id, { status: k, statusAt: new Date().toISOString(), statusBy: _fbMyName() });
+    var note = { kind: 'status', text: from + ' → ' + to };
+    _fbAddNote(x.id, note).catch(function() {});
+    if (_fb.det && _fb.det.notes) _fb.det.notes.push(Object.assign({ byName: _fbMyName(), at: new Date() }, note));
+    _fb.newN = _fb.items.filter(function(i) { return i.status === 'new'; }).length; _fbSyncEntry();
+    _fbDetRender(); _fbRenderList();
+  }, function() { toast('保存できませんでした'); });
+}
+function fbSaveField(key, elId) {
+  var x = _fbItem(_fb.open), el = document.getElementById(elId); if (!x || !el) return;
+  var d = {}; d[key] = el.value.trim();
+  _fbUpdate(x.id, d).then(function() { _fbLocal(x.id, d); toast('保存しました'); _fbDetRender(); }, function() { toast('保存できませんでした'); });
+}
+function fbSaveCmt() {
+  var x = _fbItem(_fb.open), el = document.getElementById('fbCmt'); if (!x || !el) return;
+  var t = el.value.trim(); if (t === (x.adminComment || '')) { toast('変わっていません'); return; }
+  _fbUpdate(x.id, { adminComment: t, adminCommentAt: firebase.firestore.FieldValue.serverTimestamp() }).then(function() {
+    _fbLocal(x.id, { adminComment: t });
+    if (t) { var note = { text: t, admin: true }; _fbAddNote(x.id, note).catch(function() {}); if (_fb.det && _fb.det.notes) _fb.det.notes.push(Object.assign({ byName: _fbMyName(), at: new Date() }, note)); }
+    toast('コメントを保存しました'); _fbDetRender(); _fbRenderList();
+  }, function() { toast('保存できませんでした'); });
+}
+function fbNoteAdd() {
+  var x = _fbItem(_fb.open), el = document.getElementById('fbNote'); if (!x || !el) return;
+  var t = el.value.trim(); if (!t) return;
+  var note = { text: t, admin: false };
+  _fbAddNote(x.id, note).then(function() {
+    el.value = '';
+    if (_fb.det && _fb.det.notes) _fb.det.notes.push(Object.assign({ byName: _fbMyName(), at: new Date() }, note));
+    _fbDetRender();
+  }, function() { toast('送れませんでした'); });
+}
+// ── まとめてClaudeへ（「改修する」で選んだもの → 指示文をコピー → 対応中に） ──
+function _fbClaudeText(list) {
+  var L = ['GROOVE MAPの改修依頼（' + list.length + '件）。CLAUDE.mdの手順どおり、テスト→コミット→PR→mainへマージまでお願いします。', '直したら、完了報告に各項目の番号（#' + list[0].no + ' など）と、どの版で直したかを書いてください。', ''];
+  list.forEach(function(x) {
+    var req = x.kind === 'req';
+    L.push('■ #' + x.no + ' ' + (req ? '要望' : 'バグ') + '／' + (x.screen || ''));
+    L.push(x.title || '');
+    if (x.did) L.push((req ? 'いま困っていること：' : 'したこと：') + x.did);
+    if (x.got) L.push((req ? 'こうなったらうれしい：' : '起きたこと：') + x.got);
+    if (x.want) L.push('こうなってほしい：' + x.want);
+    L.push('報告：' + (x.authorName || '') + ' ' + _fbFmt(x.createdAt) + '（' + [x.ver, x.device].filter(Boolean).join('・') + '）' + (x.imgN && !x.imgsPurged ? '・スクショ' + x.imgN + '枚あり' : ''));
+    if (x.adminComment) L.push('管理者コメント：' + x.adminComment);
+    L.push('');
+  });
+  return L.join('\n').replace(/\n+$/, '\n');
+}
+function _fbCopy(text) {
+  var ok = function() { return true; };
+  try { if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(ok, function() { return _fbCopyOld(text); }); } catch (e) {}
+  return Promise.resolve(_fbCopyOld(text));
+}
+function _fbCopyOld(text) {
+  try { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); var r = document.execCommand('copy'); document.body.removeChild(ta); return !!r; } catch (e) { return false; }
+}
+function fbCopyForClaude() {
+  var list = _fb.items.filter(function(x) { return x.status === 'fix' && _fb.sel[x.id]; }).sort(function(a, b) { return a.no - b.no; });
+  if (!list.length) return;
+  var text = _fbClaudeText(list);
+  _fb.lastCopy = text;
+  _fbCopy(text).then(function(ok) {
+    if (!ok) { _fbShowText(text); return; }
+    var ts = firebase.firestore.FieldValue.serverTimestamp();
+    list.forEach(function(x) {
+      _fbUpdate(x.id, { status: 'doing', statusAt: ts, statusBy: _fbMyName(), sentAt: ts }).then(function() { _fbAddNote(x.id, { kind: 'status', text: '改修する → 対応中（Claudeに渡した）' }).catch(function() {}); }).catch(function() {});
+      x.status = 'doing'; delete _fb.sel[x.id];
+    });
+    _fb.tab = 'doing'; _fbRenderList();
+    toast(list.length + '件をコピーしました。Claudeのチャットに貼ってください（「対応中」に移しました）');
+  });
+}
+function _fbShowText(text) { // コピーできない端末：文章を出して手でコピー
+  _p2SheetClose('fbTxtOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'fbTxtOv'; ov.style.zIndex = '660';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('fbTxtOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">長押しでコピーしてください</div></div><span class="ms-x" onclick="_p2SheetClose(\'fbTxtOv\')">✕</span></div><div style="padding:0 16px 18px"><textarea class="fi" style="width:100%;height:50vh;font-size:12px" readonly>' + evEsc(text) + '</textarea></div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+// 完了・対応しないから60日たったスクショは消す（文章とやりとりは残す）。オーナーが開いた時に
+function _fbPurgeImgs() {
+  if (!_fbIsOwner()) return;
+  var lim = Date.now() - FB_IMG_KEEP_DAYS * 86400000;
+  _fb.items.forEach(function(x) {
+    if (!x.imgN || x.imgsPurged || (x.status !== 'done' && x.status !== 'no')) return;
+    var at = _fbTs(x.statusAt); if (!at || at.getTime() > lim) return;
+    _fbDelImgs(x.id, x.imgN).then(function() { return _fbUpdate(x.id, { imgsPurged: true }); }).then(function() { x.imgsPurged = true; }).catch(function() {});
+  });
+}
+// ── 見られる人・報告できる人（オーナーだけ） ──
+var _fbUsers = null, _fbUq = '';
+function fbMembersOpen() {
+  if (!_fbIsOwner()) return;
+  _fbCss();
+  _p2SheetClose('fbMemOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'fbMemOv'; ov.style.zIndex = '650';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('fbMemOv'); };
+  ov.innerHTML = '<div class="ms-sheet fb-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">⚙ 見られる人・報告できる人</div><div style="font-size:11px;color:var(--text-dim)">管理者（あなた）と、ここで選んだ人だけが見られます</div></div><span class="ms-x" onclick="_p2SheetClose(\'fbMemOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 8px"><input class="fi" id="fbUq" placeholder="名前・ユニオンで探す" oninput="fbUq(this.value)"></div><div class="fb-body" id="fbMemBody"><div class="fb-empty">読み込み中…</div></div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  var go = function() { _fbMemRender(); };
+  if (_fbUsers) go(); else fsGetCol('users').then(function(l) { _fbUsers = (l || []).filter(function(u) { return u.status !== 'disabled'; }); go(); }).catch(function() { var b = document.getElementById('fbMemBody'); if (b) b.innerHTML = '<div class="fb-empty">アカウント一覧を読み込めませんでした</div>'; });
+}
+function fbUq(v) { _fbUq = String(v || '').toLowerCase(); _fbMemRender(); }
+function _fbMemRender() {
+  var b = document.getElementById('fbMemBody'); if (!b || !_fbUsers) return;
+  var cfg = _fb.cfg || { members: [], names: {} }, mem = cfg.members || [];
+  var list = _fbUsers.filter(function(u) { return u.id !== OWNER_UID && (!_fbUq || ((u.name || '') + (u.union || '') + (u.email || '')).toLowerCase().indexOf(_fbUq) >= 0); });
+  list.sort(function(a, b2) { return (mem.indexOf(b2.id) >= 0) - (mem.indexOf(a.id) >= 0) || (a.name || '').localeCompare(b2.name || ''); });
+  b.innerHTML = '<div class="fb-who" style="margin-bottom:6px">選んでいる人 <b>' + mem.length + '人</b></div>' + list.slice(0, 200).map(function(u) {
+    var on = mem.indexOf(u.id) >= 0;
+    return '<div class="fb-u" onclick="fbMemTgl(\'' + u.id + '\')"><span class="fb-cb' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span><span>' + evEsc(u.name || '(名前なし)') + '<br><small>' + evEsc([u.union, u.area, u.role === 'admin' ? 'ユニオン管理者' : ''].filter(Boolean).join('・')) + '</small></span><span class="sp"></span></div>';
+  }).join('') + (list.length > 200 ? '<div class="fb-who">ほか ' + (list.length - 200) + '人（名前で探してください）</div>' : '');
+}
+function fbMemTgl(uid) {
+  var cfg = _fb.cfg = _fb.cfg || { members: [], names: {} };
+  cfg.members = (cfg.members || []).slice(); cfg.names = Object.assign({}, cfg.names || {});
+  var i = cfg.members.indexOf(uid), u = (_fbUsers || []).filter(function(x) { return x.id === uid; })[0];
+  if (i >= 0) { cfg.members.splice(i, 1); delete cfg.names[uid]; } else { cfg.members.push(uid); cfg.names[uid] = (u && u.name) || ''; }
+  _fbMemRender();
+  _fbSaveCfg({ members: cfg.members, names: cfg.names, updatedAt: new Date().toISOString() }).then(function() { toast((u && u.name || '') + (i >= 0 ? ' を外しました' : ' を追加しました')); }, function() { toast('保存できませんでした（Firestoreのルールが反映されているか確認してください）'); });
+}
 // ── モバイル：メニュータブ（隠れタブへの常設導線） ──
 function openMobileMenu() {
   closeMobileMenu();
@@ -4148,6 +4565,7 @@ function openMobileMenu() {
   rows += '<div class="ms-act" onclick="closeMobileMenu();openReapproachSheet()"><span class="ms-aic">' + icn('refresh') + '</span>再アプローチ' + ((_reapproach && _reapproach.length) ? '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + _reapproach.length + '件</span>' : '') + '<span class="ms-ch">›</span></div>'; // v361
   if (currentUser && currentUser.union) rows += '<div class="ms-act" onclick="closeMobileMenu();openUnionListSheet()"><span class="ms-aic">' + icn('landmark') + '</span>ユニオン予定<span class="ms-ch">›</span></div>'; // v392
   if (typeof _fitOwner === 'function' && _fitOwner()) rows += '<div class="ms-act" onclick="closeMobileMenu();fitOpen()"><span class="ms-aic">' + icn('dumbbell') + '</span>トレーニング<span class="ms-ch">›</span></div>'; // v424: オーナー専用
+  if (_fb.ok) rows += '<div class="ms-act" onclick="closeMobileMenu();fbOpen()"><span class="ms-aic">🐞</span>バグ・要望' + (_fb.newN ? '<span style="margin-left:8px;font-size:11px;font-weight:800;background:var(--gold);color:#2a1a00;border-radius:999px;padding:1px 7px">新着 ' + _fb.newN + '</span>' : '') + '<span class="ms-ch">›</span></div>'; // v585
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) rows += '<div class="ms-act" onclick="closeMobileMenu();openAdminPanel()"><span class="ms-aic">' + icn('shield') + '</span>アカウント管理<span class="ms-ch">›</span></div>';
   rows += '<div class="ms-act" onclick="closeMobileMenu();openProfileModal()"><span class="ms-aic">' + icn('gear') + '</span>設定・プロフィール<span class="ms-ch">›</span></div>';
   var ov = document.createElement('div');
@@ -4988,6 +5406,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v585', d:'2026-10-04', items:['🐞 バグ・要望のページを追加（管理者と、管理者が指定した人だけが見られます。☰メニュー／設定から）','報告：種類（バグ・要望）・画面・内容・スクショ3枚まで。書いた人・日時・版・端末は自動で残ります','管理者：改修する／運用回避／対応しないの切り分け・コメント・やりとり。「改修する」を選んでClaudeへの指示としてまとめてコピー（コピーしたものは対応中に）'] },
   { v:'v584', d:'2026-10-04', items:['🆕 理想MAPでGSV 1,000P以上になると自動でLOIになる人を「研修生とB1〜BM」に変更（タイトル空欄の人は変えません）。1,000P未満に戻すと元のタイトルに戻ります'] },
   { v:'v583', d:'2026-10-04', items:['🎯 理想MAPの固定PT：上の人の固定PTには、BRでない下の人の分が入っている前提に。下の人の固定を上に二重に足さないように直しました（上の人の固定が空欄・少ない時は、下の人の固定の合計を使います）','🆕 理想MAPで審査前の人（研修生・タイトル空欄）は、GSVが1,000P以上になると自動でLOIに。1,000P未満に戻すと元のタイトルに戻ります（ユーザーは変えません・現状MAPは変わりません）','新規B1に数えるのは、今までどおり今月スタートの人だけです'] },
   { v:'v582', d:'2026-10-04', items:['📊 データタブに「ざっくり」を追加（はじめて開くとこちら。今までの画面は「くわしく」で、最後に開いた方を覚えます）','① 先月のコミッション（確定）を先々月と比べて ▲▼ で。② 全ユニオン共通のやること：BRを増やす（審査中の全員が今月1,000pt）・BRを維持する（維持ライン1,000pt）・自分の成長（PLANの自分磨き）','③ 🔥S稼働 ◯/30人（30人でこの仕事一本で食える）。点線＝あと一歩（Aの人と、B・Cで稼働率70%以上の人）。目標の人数は変えられます','④ コミッションを動かす数字：B1数 × 新規の平均GSV × 平均稼働人数（1ハウディあたり）、1人あたりの平均GSV（先月との差つき）','⑤ 理想MAPとの差：稼働・BR・GSVで差がある人を自動で並べて、その場で＋タスク（紙の照らし合わせの代わり）','数字を押すと、その数字だけの推移・名前・数え方が出ます'] },
@@ -29386,6 +29805,7 @@ function loginSuccess(user) {
   enforceProfileGate();
   // 管理者：承認待ち件数を通知
   checkPendingApprovals();
+  setTimeout(function() { try { fbCheckAccess(); } catch (eFb) {} }, 2500); // v585: バグ・要望を見られる人か
   // ログインステータス記録（共有相手に最終ログインが見える）
   updateLastSeen();
   if (!window._seenTimer) {
