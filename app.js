@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v577';
+var APP_JS_VERSION = 'v578';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v577';
+  var DATA_VERSION = 'v578';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4955,6 +4955,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v578', d:'2026-10-04', items:['📝 アウトライン企画書：「伝えていただきたい事」「望む結果」は定型文のボタンをなくして自由入力だけに','🔧 課題の定型文ボタンを押すと画面が一番上に戻ってしまっていたのを修正（押した場所のまま）'] },
   { v:'v577', d:'2026-10-04', items:['📊 受付連携で取り込む稼働率を「今月」から「直近1ヶ月」（1ヶ月前の翌日〜今日。例：10/4なら9/5〜10/4）の出席÷開催数に。月初でも数字がブレにくくなります（過去の月のMAPはその月の数字のまま）'] },
   { v:'v576', d:'2026-10-04', items:['📝 アウトライン企画書（ATTACK LISTから移動）：メンバー編集の活動タブ「＋ 追加 → アウトライン企画書」から。Cはその人（名前・キャリア・タイトル・稼働・稼働率はMAPから自動・直せます）、Bは自分。課題・伝えていただきたい事・望む結果は定型文ボタンつき','📤 「LINEで送る」でLINEの送り先を選ぶ画面が開きます（AさんのLINE IDの登録は不要）。「コピー」も。送った日が「送信済み」で残ります','🗂 企画書はOL（予定）とひとつ：日時・テーマ・場所・参加者はOLと同じ。活動タブのOLに「📝企画書」の印、「📝企画書」で絞り込んで見返せます。OLの企画画面からも開けます','↻ 「前回の企画書から作る」で課題・伝えていただきたい事・望む結果を引き継げます'] },
   { v:'v575', d:'2026-10-03', items:['🎯 PLAN「今月にやること」の目標に出どころの印（理想MAP・ロードマップ・今月の目標）。理想MAPの数字は紫に','👆 タイルを押すと「この目標は理想MAPの数字です」と変え方を案内：フロントは自分の直下に新しいB1を足す画面、ユーザーPTは自分のカード、平均稼働人数は今月の目標の入力欄へ直接移動','← 理想MAPに移ったら画面の下に「PLANに戻る」。押すと元の位置に戻ります'] },
@@ -10477,10 +10478,8 @@ var OUTLINE_TPL_DEFAULT = [
     '報連相　例：自己流で行動しており、うまくいっていない',
     '行動量　例：条件付けがかかっており、数人にしか伝えていない',
     'オウンシップ　例：紹介者され気分で、オウンシップがない'] },
-  { key: 'messages', label: '伝えていただきたい事', type: 'bullets', rows: 2, presets: [
-    '改善改良のスピードを上げる', '自分で考えて動く', 'STを活用する', '次に話せるネタを持つ'] },
-  { key: 'goals', label: '望む結果', type: 'bullets', rows: 2, presets: [
-    '自分で動けるようになる', '自分で話せるようになる', '次回の動きが変わる', '業績につなげる'] },
+  { key: 'messages', label: '伝えていただきたい事', type: 'bullets', rows: 2 }, // v578: 定型文なし（自由入力のみ）
+  { key: 'goals', label: '望む結果', type: 'bullets', rows: 2 },
   { key: 'thanks', label: '御礼', type: 'textarea' }
 ];
 // 定型文「見出し　例：例文」→ { label, eg }
@@ -10572,11 +10571,15 @@ function _otlNewOutline(cs) {
     else if (f.type === 'bullets') { var a = []; for (var i = 0; i < (f.rows || 1); i++) a.push(''); v[f.key] = a; }
     else v[f.key] = '';
   });
-  return { tpl: tpl, v: v, union: _otlUnion(), writer: _otlWriter(), createdAt: now, updatedAt: now, sentAt: '' };
+  var o = { tpl: tpl, v: v, union: _otlUnion(), writer: _otlWriter(), createdAt: now, updatedAt: now, sentAt: '' };
+  _otlNoPresets(o);
+  return o;
 }
 function _otlKeyOf(o, type) { var t = o.tpl || []; for (var i = 0; i < t.length; i++) if (t[i].type === type) return t[i].key; return ''; }
 // 予定（OL）の日時・テーマ・場所・参加者 → 企画書（開くたびに合わせる）
+function _otlNoPresets(o) { (o.tpl || []).forEach(function(f) { if (f && (f.key === 'messages' || f.key === 'goals')) delete f.presets; }); } // v578
 function _otlSyncFromEvent(o, e, firstMid) {
+  _otlNoPresets(o);
   if (!e) return;
   var kw = _otlKeyOf(o, 'datetime'); if (kw) o.v[kw] = { date: e.date || '', time: e.time || '' };
   if (o.tpl.some(function(f) { return f.key === 'theme'; })) o.v.theme = (e.title && e.title !== 'OL' && e.title !== '3〜7人OL') ? e.title : '';
@@ -10698,7 +10701,7 @@ function otlPreset(k, pi) {
   if (i < 0) { a.push(''); i = a.length - 1; }
   a[i] = txt; _otlChanged(); _otlRender(); _otlFocus(k, i);
 }
-function _otlFocus(k, i) { setTimeout(function() { var el = document.getElementById('otlR_' + k + '_' + i); if (el) { try { el.focus(); var n = el.value.length; el.setSelectionRange(n, n); } catch (eF) {} } }, 30); }
+function _otlFocus(k, i) { setTimeout(function() { var el = document.getElementById('otlR_' + k + '_' + i); if (el) { try { el.focus({ preventScroll: true }); var n = el.value.length; el.setSelectionRange(n, n); if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); } catch (eF) {} } }, 30); } // v578: 入れた行が見える位置のまま（上に飛ばない）
 // ── 前回から作る（課題・伝えていただきたい事・望む結果を引き継ぐ。日時・テーマ・場所・対象者現状・御礼は空のまま） ──
 function _otlPrevFor(mid, exceptId) {
   var best = null;
@@ -10801,7 +10804,9 @@ function _otlRender() {
   h += '<div class="otl-prev"><div class="otl-prevh" onclick="otlPrevToggle()">' + (_otl.showPrev ? '▼' : '▶') + ' プレビュー（送る文面）</div>'
     + (_otl.showPrev ? '<pre id="otlPrevTx" class="otl-pre-tx">' + evEsc(_otlText() || '（まだ何も入力されていません）') + '</pre>' : '') + '</div>';
   h += '</div><div class="otl-foot"><span class="p2-btn" onclick="otlCopy()">📋 コピー</span><span class="p2-btn pri otl-line" onclick="otlLine()">LINEで送る</span></div>';
+  var ow = body.querySelector('.otl-wrap'), st0 = ow ? ow.scrollTop : 0; // v578: 作り直してもスクロールの位置はそのまま
   body.innerHTML = h;
+  var nw = body.querySelector('.otl-wrap'); if (nw && st0) nw.scrollTop = st0;
 }
 // 活動タブの「📝企画書」の印
 function _otlBadge(e, mid) {
