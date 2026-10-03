@@ -428,6 +428,8 @@ tr:last-child td{border-bottom:none;}
 .gx-foot{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:10px 14px;border:2px solid #e8c95a;border-radius:16px;font-size:13px;background:var(--amber-soft);}
 .gx-foot b{color:var(--ink);}
 .gx-hint{position:fixed;z-index:3004;width:300px;}
+.gx-badge{display:inline-block;background:#e0604f;color:#fff;font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:3px;animation:gxHop 1.6s ease-in-out infinite;}
+.gx-info{display:inline-block;margin-top:3px;font-size:11px;font-weight:800;color:#a65a00;background:#fff1c9;border-radius:999px;padding:1px 8px;}
 .gx-conf{position:fixed;top:-20px;z-index:3100;width:9px;height:14px;border-radius:2px;pointer-events:none;animation:gxFall linear forwards;}
 @keyframes gxFall{to{transform:translateY(112vh) rotate(720deg);}}
 .gx-clear{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3010;width:min(380px,calc(100vw - 40px));background:#fffdf3;color:#2a2a24;
@@ -1079,8 +1081,13 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v15';
+var APP_VER = 'v16';
 var CHANGELOG = [
+  { v: 'v16', d: '2026/10/04', items: [
+    '🔰 使い方ガイドに「🚀 はじめの準備」を追加（名簿を登録→会員証を配る→イベントを作る→受付担当を決める）',
+    '名簿やイベントがまだ無いときは「まずはここから！」と表示。会員証の未発行人数・今月のイベント数もミッションに表示します',
+    'イベントが無いのに「受付を始める」を開くと、ジェッ子ちゃんが先に「イベントを作る」へ案内します'
+  ] },
   { v: 'v15', d: '2026/10/04', items: [
     '🔰 使い方ガイドができました！画面上の「🔰 使い方」からいつでも開けます（案内役はジェッ子ちゃん🐣）',
     '受付管理: 「受付する人」のミッション5つ（受付を始める・QRでピッ・ゲスト/スピーカー・取消/未徴収・受付終了と会計）',
@@ -1212,9 +1219,52 @@ function gxPane(id){
 function gxTrTab(id){ return function(){ var b = $(id); if(b && !b.classList.contains('on')) b.click(); }; }
 function gxQ(sel){ return function(){ return document.querySelector(sel); }; }
 
+// いまのユニオンの状態（名簿・会員証・今月のイベント）を見て、次にやることを教える
+function gxStat(){
+  var mem = (typeof gMembersLoaded !== 'undefined' && gMembersLoaded) ? gMembers : null;
+  var act = mem ? mem.filter(function(m){ return !ckMemberOff(m); }) : null;
+  return {
+    members: act ? act.length : -1,
+    unissued: act ? act.filter(function(m){ return !m.cardToken; }).length : -1,
+    events: (typeof gEvents !== 'undefined' && gEvents) ? gEvents.length : -1
+  };
+}
+function gxNeedsSetup(){ var st = gxStat(); return st.members === 0 || st.events === 0; }
 var GX_ROLES = [
+  { k: 'setup', e: '🚀', name: 'はじめの準備', view: 'vApp', master: '準備マスター', then: 'rec', missions: [
+    { id: 'set1', t: '名簿を登録する', sub: '2分・CSVでまとめて／1人ずつ',
+      info: function(st){ return st.members > 0 ? '登録 ' + st.members + '人' : (st.members === 0 ? 'まだ0人' : ''); }, steps: [
+      { sel: 'nav button[data-pane="pRoster"]', click: true, t: '「名簿」タブ', x: 'まずは<b>「名簿」</b>タブを押してみて！メンバーの一覧を管理する画面だよ。' },
+      { sel: '#btnCsvIn', pre: gxPane('pRoster'), t: 'CSV取込でまとめて登録', x: 'エクセル等の名簿を<b>まとめて登録</b>！1行1名で<b>番号,氏名,系列</b>（かな・グレードは任意）。同じ番号は上書きされるから、やり直しもOK。', miss: '「CSV取込」はユニオン管理者・受付管理者の画面に出るよ。' },
+      { sel: '#btnAddMember', pre: gxPane('pRoster'), t: '1人ずつ追加', x: '<b>「＋ メンバー追加」</b>なら1人ずつ。番号は自動で振られるよ。', miss: '「＋ メンバー追加」はユニオン管理者・受付管理者の画面に出るよ。' },
+      { sel: '#rosterBody', pre: gxPane('pRoster'), t: '登録できたか確認', x: '登録した人はここに並ぶよ。見出し（番号・氏名…）を押すと並べ替えもできるよ。' }
+    ] },
+    { id: 'set2', t: '会員証を配る', sub: '2分・LINEでまとめて配れる',
+      info: function(st){ return st.unissued > 0 ? '未発行 ' + st.unissued + '人' : (st.members > 0 ? '全員発行済み ✓' : ''); }, steps: [
+      { sel: '#btnCardBulk', pre: gxPane('pRoster'), t: '会員証一括発行', x: 'まだ会員証が無い人に<b>まとめて発行</b>。一人ひとり専用のURLとQRができるよ。' },
+      { sel: '#btnReceiveLink', pre: gxPane('pRoster'), t: '受け取りリンク（いちばんラク！）', x: '<b>共通のURLをLINEグループに貼るだけ</b>。みんなが自分の番号を入れると、自分の会員証を受け取れるよ。' },
+      { sel: '#btnPrintCards', pre: gxPane('pRoster'), t: 'カード印刷', x: '紙で渡したいときは<b>カード印刷</b>。QR付きのカードを印刷できるよ。' },
+      { sel: gxQ('#rosterBody button[data-a="card"]'), pre: gxPane('pRoster'), t: 'その場で渡す', x: '名簿の<b>「会員証」</b>ボタンでQRを出して、本人のスマホで読み取ってもらえばその場で渡せるよ。', miss: '名簿に登録すると、各行に「会員証」ボタンが出るよ。' }
+    ] },
+    { id: 'set3', t: 'イベントを作る', sub: '1分・日付と料金を入れる',
+      info: function(st){ return st.events > 0 ? '今月 ' + st.events + '件' : (st.events === 0 ? '今月はまだ0件' : ''); }, steps: [
+      { sel: 'nav button[data-pane="pEvents"]', click: true, t: '「イベント」タブ', x: '<b>「イベント」</b>タブを押してみて！ハウディなどの予定を作る画面だよ。' },
+      { sel: '#btnAddEvent', pre: gxPane('pEvents'), t: '＋ 新規イベント', x: '<b>「＋ 新規イベント」</b>で日付・名前・料金を入れて保存。予約受付やオンライン受講もここでONにできるよ。' },
+      { sel: '#evList', pre: gxPane('pEvents'), t: '作ったイベント', x: '作ったイベントはここに並ぶよ。当日はこの一覧の<b>「受付を開始」</b>からでも受付できるよ。' }
+    ] },
+    { id: 'set4', t: '受付担当を決める', sub: '1分・当日受付する人を任命', steps: [
+      { sel: '#btnCkAdmins', pre: gxPane('pRoster'), t: '👑 受付管理者', x: '当日受付をする人を<b>受付管理者</b>に任命しよう。任命された人は、この「受付管理」で受付や名簿の操作ができるよ。', miss: '任命はユニオン管理者だけができるよ（名簿タブの「👑 受付管理者」）。' },
+      { sel: '#btnTrainers', pre: gxPane('pRoster'), t: '🎓 研修生登録の担当', x: '研修担当の人はここで任命。任命された人は<b>「研修受講カード」</b>から研修生を登録できるよ。', miss: '任命はユニオン管理者だけができるよ（名簿タブの「🎓 研修生登録の担当」）。' },
+      { sel: null, t: '準備OK！🎉', x: 'これで準備は完了！次は<b>「受付する人」</b>のミッションで、当日の受付の流れを見てみよう。' }
+    ] }
+  ] },
   { k: 'rec', e: '🎫', name: '受付する人', view: 'vApp', master: '受付マスター', missions: [
-    { id: 'rec1', t: '受付を始める', sub: '1分・イベントを選んでスタート', steps: [
+    { id: 'rec1', t: '受付を始める', sub: '1分・イベントを選んでスタート',
+      gate: function(){
+        var sel = $('recEvSel');
+        if(sel && sel.options.length > 1) return null;
+        return { x: '今月のイベントがまだ無いみたい！受付するには、先に<b>イベントを作る</b>必要があるよ。', role: 'setup', mi: 2, label: '「イベントを作る」へ ›' };
+      }, steps: [
       { sel: 'nav button[data-pane="pKiosk"]', click: true, t: 'まずは「受付」タブ', x: '上の<b>「受付」</b>タブを押してみて！ここが受付の画面だよ。' },
       { sel: '#recEvSel', pre: gxPane('pKiosk'), t: 'イベントを選ぶ', x: '受付するイベントを選ぶよ。<b>今日のイベントは最初から選ばれている</b>から、確認するだけでOK！' },
       { sel: '#feeModeSel', pre: gxPane('pKiosk'), t: '料金モード', x: 'ふだんは<b>「通常受付」</b>のままでOK。会場代だけ集める日は「会場代のみ」に切り替えてね。' },
@@ -1272,6 +1322,7 @@ var GX_ROLES = [
   { k: 'stat', e: '📊', name: '集計を見る', view: 'vApp', soon: true }
 ];
 var gxMenuRole = '';
+function gxRoleName(k){ var n = ''; GX_ROLES.forEach(function(r){ if(r.k === k) n = r.name; }); return n; }
 function gxView(){ return ($('vTrainer') && !$('vTrainer').classList.contains('hide')) ? 'vTrainer' : 'vApp'; }
 function gxRolesHere(){ var v = gxView(); return GX_ROLES.filter(function(r){ return r.view === v; }); }
 function gxRoleCount(r){ var n = 0; (r.missions || []).forEach(function(m){ if(gxIsDone(m.id)) n++; }); return n; }
@@ -1280,7 +1331,10 @@ function gxOpenMenu(){
   gxEnd(); gxHintClose(); gxCloseMenu();
   var roles = gxRolesHere();
   var role = null;
+  var needSetup = gxView() === 'vApp' && gxNeedsSetup(), st = gxStat();
   roles.forEach(function(r){ if(r.k === gxMenuRole && !r.soon) role = r; });
+  // 準備が済んでいない（名簿0人・今月のイベント0件）なら「はじめの準備」、ふだんは「受付する人」を開く
+  if(!role) roles.forEach(function(r){ if(r.k === (needSetup ? 'setup' : 'rec')) role = r; });
   if(!role) role = roles.filter(function(r){ return !r.soon; })[0];
   gxMenuRole = role.k;
   var done = gxRoleCount(role), total = role.missions.length;
@@ -1293,7 +1347,8 @@ function gxOpenMenu(){
       ? '<div class="gx-roles">' + roles.map(function(r){
           if(r.soon) return '<div class="gx-role soon"><span class="e">' + r.e + '</span><b>' + esc(r.name) + '</b><small>🔒 近日公開</small></div>';
           var n = gxRoleCount(r), t = r.missions.length;
-          return '<div class="gx-role' + (r === role ? ' on' : '') + '" data-gr="' + r.k + '"><span class="e">' + r.e + '</span><b>' + esc(r.name) + '</b>'
+          return '<div class="gx-role' + (r === role ? ' on' : '') + '" data-gr="' + r.k + '"><span class="e">' + r.e + '</span>'
+            + (r.k === 'setup' && needSetup ? '<span class="gx-badge">まずはここから！</span>' : '') + '<b>' + esc(r.name) + '</b>'
             + '<small>スタンプ ' + n + '/' + t + (n === t ? ' 🏅' : '') + '</small><div class="gx-bar"><i style="width:' + Math.round(n / t * 100) + '%"></i></div></div>';
         }).join('') + '</div>'
       : '')
@@ -1301,7 +1356,8 @@ function gxOpenMenu(){
     + role.missions.map(function(m, i){
         var d = gxIsDone(m.id);
         return '<div class="gx-mis"><div class="gx-stamp ' + (d ? 'done">済' : 'todo">' + (i + 1)) + '</div>'
-          + '<div class="tx"><b>' + esc(m.t) + '</b><small>' + esc(m.sub) + '</small></div>'
+          + '<div class="tx"><b>' + esc(m.t) + '</b><small>' + esc(m.sub) + '</small>'
+          + (m.info && m.info(st) ? '<span class="gx-info">' + esc(m.info(st)) + '</span>' : '') + '</div>'
           + '<button class="gx-btn" data-gm="' + i + '" style="font-size:12.5px;padding:7px 13px;">' + (d ? 'もう一度' : 'やってみる') + '</button></div>';
       }).join('')
     + '<div class="gx-foot"><span style="font-size:24px;">🏅</span><div style="flex:1;">'
@@ -1355,8 +1411,15 @@ function gxStart(role, mi){
     var a = b.getAttribute('data-gx');
     if(a === 'next') gxNext();
     if(a === 'skip') gxEnd();
+    if(a === 'cont'){ gxTour.gate = null; gxShow(); }
+    if(a === 'jump'){
+      var g = gxTour.gate, jr = null;
+      GX_ROLES.forEach(function(x){ if(x.k === g.role) jr = x; });
+      if(jr) gxStart(jr, g.mi);
+    }
   });
-  gxShow();
+  var gate = gxTour.m.gate ? gxTour.m.gate() : null;
+  if(gate) gxGate(gate); else gxShow();
   (function loop(){
     if(!gxTour) return;
     gxPos();
@@ -1384,10 +1447,19 @@ function gxShow(){
     + '</div></div>';
   gxPos();
 }
+// ミッションの前提が足りないとき（イベントが無いのに受付を始める等）に、先にやることへ案内する
+function gxGate(g){
+  var t = gxTour;
+  t.gate = g; t.el = null;
+  t.host.querySelector('.gx-c').innerHTML = '<span class="gx-t">ちょっと待って！🐣</span><p class="gx-x">' + g.x + '</p>'
+    + '<div class="gx-row"><button class="gx-lnk" data-gx="cont">このまま見る</button>'
+    + '<button class="gx-btn" data-gx="jump">' + esc(g.label) + '</button></div>';
+  gxPos();
+}
 function gxPos(){
   var t = gxTour;
   if(!t) return;
-  var st = t.m.steps[t.i];
+  var st = t.gate ? { sel: null } : t.m.steps[t.i];
   if(t.el && !document.body.contains(t.el)) t.el = gxFind(st.sel);
   var hole = t.host.querySelector('.gx-hole'), ring = t.host.querySelector('.gx-ring'), dim = t.host.querySelector('.gx-dimall');
   var bub = t.host.querySelector('.gx-bub'), tail = t.host.querySelector('.gx-tail'), jet = t.host.querySelector('.gx-jet');
@@ -1479,6 +1551,7 @@ function gxClear(role, mi){
     + '<div style="display:flex;gap:10px;margin-top:16px;">'
     + '<button data-gc="close" style="flex:1;background:#efeadb;border:none;border-radius:999px;padding:11px;font-weight:800;color:#5b5646;cursor:pointer;">とじる</button>'
     + (nextI >= 0 ? '<button class="gx-btn" data-gc="next" style="flex:1.4;padding:11px;">次のミッション ›</button>'
+      : role.then ? '<button class="gx-btn" data-gc="then" style="flex:1.4;padding:11px;">次は「' + esc(gxRoleName(role.then)) + '」へ ›</button>'
                   : '<button class="gx-btn" data-gc="menu" style="flex:1.4;padding:11px;">ガイドにもどる</button>')
     + '</div></div>';
   document.body.appendChild(host);
@@ -1489,6 +1562,7 @@ function gxClear(role, mi){
     host.parentNode.removeChild(host);
     if(a === 'next') gxStart(role, nextI);
     if(a === 'menu') gxOpenMenu();
+    if(a === 'then'){ gxMenuRole = role.then; gxOpenMenu(); }
   });
 }
 /* 初回だけ: 🔰ボタンの場所を吹き出しで案内（以後は出さない・画面操作はふさがない） */
