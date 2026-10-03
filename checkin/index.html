@@ -1269,7 +1269,7 @@ function rsvpState(c, ev){
     ls = null;
   }
   if(ls){
-    // 取消申請中（bci_rc）。受付が却下すると keep マーカーが入り、予約済み表示に戻る
+    // 取消申請中（bci_rc)。受付が却下すると keep マーカーが入り、予約済み表示に戻る
     var rq = null;
     try{ rq = localStorage.getItem('bci_rc_' + ev.id + '_' + c.no); }catch(e){}
     if(rq && mk && mk.st === 'keep' && (mk.atMs || 0) >= (parseInt(rq, 10) || 1)){
