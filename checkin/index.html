@@ -241,6 +241,10 @@ tr:last-child td{border-bottom:none;}
 .membercard.visitor .mc-group,.membercard.visitor .mc-no{color:#8a7a2f;}
 .membercard.visitor #mcQr img,.membercard.visitor #mcQr canvas{outline:3px solid #2361e8;}
 .mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
+/* 🎟 予約受付中のお知らせバー（QR直下・タップでUPCOMINGの該当行へ） */
+.rsvptop{display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--amber);border-radius:12px;padding:11px 14px;margin-top:14px;font-size:13.5px;cursor:pointer;text-align:left;}
+/* UPCOMINGの展開ボックス（オンライン申請・予約・Zoom情報） */
+.upx{margin:4px 0 10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);text-align:center;}
 /* 次回の開催予定（搭乗券風ストリップ） */
 .nextwrap{margin-top:26px;text-align:left;}
 .next-head{display:flex;align-items:center;gap:12px;font-size:10.5px;font-weight:700;letter-spacing:.3em;color:var(--sub);}
@@ -425,6 +429,7 @@ tr:last-child td{border-bottom:none;}
     <span class="brand">BASE CHECK-IN<span class="dot">●</span></span>
     <span class="unionchip" id="unionBadge"></span>
     <select id="unionSel" class="hide"></select>
+    <button id="verBtn" title="更新のお知らせ" style="border:none;background:transparent;color:var(--sub);font-size:11px;padding:2px 6px;letter-spacing:.02em;"></button>
     <nav>
       <button class="on" data-pane="pKiosk">受付</button>
       <button data-pane="pRoster">名簿</button>
@@ -517,6 +522,7 @@ tr:last-child td{border-bottom:none;}
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
+      <label style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;white-space:nowrap;margin:0;cursor:pointer;"><input type="checkbox" id="qShowOff" style="width:auto;margin:0;">無効も表示</label>
       <button class="primary" id="btnAddMember">＋ メンバー追加</button>
       <button id="btnCsvIn">CSV取込</button>
       <button id="btnCsvOut">CSV出力</button>
@@ -620,6 +626,7 @@ tr:last-child td{border-bottom:none;}
       <div id="mcQr"></div>
       <div class="mc-no mono" id="mcNo"></div>
     </div>
+    <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="trArea"></div>
     <div id="dlrArea"></div>
@@ -629,6 +636,7 @@ tr:last-child td{border-bottom:none;}
     <div id="nextArea"></div>
     <div id="rcptArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
+    <p id="verCard" style="text-align:center;font-size:10.5px;color:var(--sub);margin-top:10px;cursor:pointer;"></p>
     <p class="mc-err" id="mcErr"></p>
   </div>
 </div>
@@ -658,6 +666,7 @@ tr:last-child td{border-bottom:none;}
     <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
       <h2 style="margin:0;font-size:18px;">🎓 研修生登録</h2>
       <span id="trUnionLbl" style="font-size:12.5px;color:var(--sub);"></span>
+      <button id="verBtnTr" title="更新のお知らせ" style="border:none;background:transparent;color:var(--sub);font-size:10.5px;padding:2px 4px;"></button>
       <span style="flex:1"></span>
       <span id="trMe" style="font-size:12px;color:var(--sub);"></span>
     </div>
@@ -873,6 +882,10 @@ function groupDatalist(list){
 }
 var gMembers = [];          // gRosterUnion の名簿
 var gMembersLoaded = false;
+// 名簿の表示設定: 無効メンバーは通常非表示（「無効も表示」で切替・端末ごとに記憶）、
+// 列見出しタップで並べ替え（番号は TS2→TS10 になる自然順）
+var gRosterShowOff = (function(){ try{ return localStorage.getItem('bci_roster_showoff') === '1'; }catch(e){ return false; } })();
+var gRosterSort = { k: 'no', asc: true };
 var gSel = {};              // 名簿の選択状態 {no: true}
 var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.getMonth()+1}; })();
 var gEvents = [];           // 表示月のイベント（gUnion 参加分）
@@ -963,6 +976,74 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
     if(_tm) _tm.content = sw.t;
   }catch(e){}
 })();
+/* ── 📣 バージョンとお知らせ（更新履歴） ──
+   checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
+   ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
+   未読の更新があると📣の横に赤丸が付き、開くと既読になる */
+var APP_VER = 'v5';
+var CHANGELOG = [
+  { v: 'v5', d: '2026/10/04', items: [
+    '名簿: 無効メンバーは通常非表示になりました（検索欄の横の「無効も表示」で切替）',
+    '名簿: 列見出し（番号・氏名・系列・状態）をタップで並べ替えできます',
+    'バージョン表記を連番（v5〜）にし、お知らせに更新日を表示しました'
+  ] },
+  { v: 'v4', d: '2026/10/04', items: [
+    '画面上部にバージョン表示と📣お知らせ（この画面）を追加しました'
+  ] },
+  { v: 'v3', d: '2026/10/03', items: [
+    '会員証: 先の予定・オンライン受講・予約を「UPCOMING」に統合。行をタップすると申請や予約ができます',
+    '会員証: 予約受付中はQRの下にお知らせバーが出ます（締切日つき）',
+    '予約に締切日を設定できるようになりました（締切後は自動で受付終了）',
+    '予約の取消申請ができるようになりました（受付が承認すると取消されます）',
+    '受付が予約を削除すると、本人の会員証も「予約受付中」に戻るようになりました',
+    '研修生登録: UPルビーは名簿にある系列からの選択のみになりました（表記ゆれ対策）'
+  ] },
+  { v: 'v2', d: '2026/10/02', items: [
+    '研修生の会員証がVISITOR PASSデザイン（ヒヨコ色）になりました',
+    '研修生・無効メンバーの会員証には先のハウディの予定を表示しません',
+    '休会を廃止して無効化に統合しました（領収書・出席履歴は残ります）',
+    '「受付を終了」がどの端末からも記録できるようになりました',
+    '集計タブ: 受付が終わっていないイベントは案内が出ます（終了後に反映）'
+  ] },
+  { v: 'v1', d: '2026/10/01', items: [
+    '受付システムのホーム画面名を「受付管理」・専用アイコンに分離しました',
+    '研修後入力に研修生の検索（担当者・紹介者・フリーワード等）を追加しました'
+  ] }
+];
+function verInit(){
+  var seen = '';
+  try{ seen = localStorage.getItem('bci_seen_ver') || ''; }catch(e){}
+  var dot = seen !== APP_VER
+    ? ' <i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);vertical-align:2px;"></i>'
+    : '';
+  ['verBtn', 'verBtnTr'].forEach(function(id){
+    var b = $(id);
+    if(!b) return;
+    b.innerHTML = '📣 ' + APP_VER + dot;
+    b.onclick = showChangelog;
+  });
+  var vc = $('verCard');
+  if(vc){
+    vc.innerHTML = 'BASE CHECK-IN ' + APP_VER + (dot ? dot + ' 新しい更新があります（タップで表示）' : '');
+    vc.onclick = showChangelog;
+  }
+}
+function showChangelog(){
+  try{ localStorage.setItem('bci_seen_ver', APP_VER); }catch(e){}
+  modal('<h2>📣 お知らせ（更新履歴）</h2>'
+    + CHANGELOG.map(function(cl){
+        return '<div style="margin:0 0 14px;"><b style="font-size:14px;">' + esc(cl.v) + '</b>'
+          + (cl.d ? '<span style="color:var(--sub);font-size:12px;margin-left:8px;">' + esc(cl.d) + ' 更新</span>' : '')
+          + '<ul style="margin:4px 0 0;padding-left:1.3em;font-size:13.5px;line-height:1.8;">'
+          + cl.items.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('')
+          + '</ul></div>';
+      }).join('')
+    + '<p style="font-size:11.5px;color:var(--sub);">表示が古いままのときは、ページを開き直す（PCは Ctrl+F5）と最新になります。</p>'
+    + '<div class="btns"><button id="clClose">閉じる</button></div>', true);
+  $('clClose').onclick = closeModal;
+  verInit();   // 既読になったので赤丸を消す
+}
+verInit();
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
@@ -1010,18 +1091,16 @@ function showCardView(token){
       if(c.active === false){
         // ⛔ 無効メンバー: 先のハウディの予定・受付系をすべて非表示。
         // 領収書の控え（下のrenderReceipts）と受講履歴はそのまま見られる
-        ['dlrArea', 'selfArea', 'onlineArea', 'rsvpArea', 'nextArea'].forEach(function(id){ $(id).innerHTML = ''; });
+        ['dlrArea', 'selfArea', 'onlineArea', 'rsvpArea', 'nextArea', 'rsvpTop'].forEach(function(id){ $(id).innerHTML = ''; });
       } else {
         renderDlrTicket(c);
         renderSelfEvents(c);
         // 🎓 研修生には先のハウディの予定（開催予定・オンライン受講の申請・予約）を表示しない。
         // 研修生の受講はDLRチケット・当日の受付経由のみ（昇格すると同じURLで表示されるようになる）
         if(c.trainee){
-          $('onlineArea').innerHTML = ''; $('rsvpArea').innerHTML = ''; $('nextArea').innerHTML = '';
+          $('onlineArea').innerHTML = ''; $('rsvpArea').innerHTML = ''; $('nextArea').innerHTML = ''; $('rsvpTop').innerHTML = '';
         } else {
-          renderOnlineEvents(c);
-          renderRsvpEvents(c);
-          renderNextEvents(c);
+          renderUpcoming(c);
         }
       }
       renderReceipts(c);
@@ -1232,258 +1311,337 @@ function payLinkHasAmount(link){ return link.indexOf('paypay.me/') === 0; }
 function payLinkUrl(link, fee){
   return 'https://' + link + (payLinkHasAmount(link) && fee > 0 ? '/' + fee : '');
 }
-// オンライン受講: 直近のオンライン受付イベントを会員証の下に表示（申請→承認待ち→Zoom参加）
-function renderOnlineEvents(c){
-  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
-    var evs = [];
-    qs.forEach(function(d){
-      var ev = d.data(); ev.id = d.id;
-      if(ev.online && (ev.unions || []).indexOf(c.union) >= 0) evs.push(ev);
-    });
-    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    // 受付終了済みのイベントは申請フォームを出さない（申請済み・承認済みの人には結果・Zoom情報を表示継続）
-    evs = evs.filter(function(ev){
-      if(!ev.recClosed) return true;
-      var mark = c['online_' + ev.id] || '';
-      if(mark === 'reapply'){
-        try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-        return false;
-      }
-      var applied = false;
-      try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-      return !!mark || applied;
-    });
-    evs = evs.slice(0, 4);
-    if(!evs.length){ $('onlineArea').innerHTML = ''; return; }
-    $('onlineArea').innerHTML = evs.map(function(ev, i){
-      var mark = c['online_' + ev.id] || '';
-      var applied = false;
-      try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-      if(mark === 'reapply'){   // 申請が削除された → 再申請できる状態に戻す
-        try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-        mark = ''; applied = false;
-      }
-      var head = '<b>💻 オンライン受講：' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</b>'
-        + (ev.speaker ? '<span class="se-sub">🎤 ' + esc(ev.speaker) + '</span>' : '');
-      var body;
-      if(mark === 'approved'){
-        var zRow = function(label, value, btnId, btnLabel){
-          return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;">'
-            + '<span style="flex:0 0 92px;font-size:12px;color:var(--sub);text-align:left;">' + label + '</span>'
-            + '<b class="mono" style="flex:1;text-align:left;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(value) + '</b>'
-            + '<button id="' + btnId + '" style="flex:0 0 auto;width:auto;padding:5px 10px;font-size:11.5px;">' + btnLabel + '</button>'
-            + '</div>';
-        };
-        body = '<div class="se-done">✓ 受講が承認されました</div>'
-          + (ev.zoomUrl
-            ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する（この端末で開く）</a>'
-            : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoomの参加情報は当日までにここに表示されます。開催時間に開き直してください。</p>')
-          + ((ev.zoomId || ev.zoomPw || ev.zoomUrl)
-            ? '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:8px;">'
-              + '<div style="font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--sub);margin-bottom:4px;">PCで参加する場合</div>'
-              + (ev.zoomId ? zRow('ミーティングID', fmtZoomId(ev.zoomId), 'zcId_' + i, 'コピー') : '')
-              + (ev.zoomPw ? zRow('パスコード', ev.zoomPw, 'zcPw_' + i, 'コピー') : '')
-              + (ev.zoomUrl ? zRow('参加URL', ev.zoomUrl.replace(/^https?:\/\//, ''), 'zcUrl_' + i, 'URLをコピー') : '')
-              + '<p style="font-size:11.5px;color:var(--sub);margin:6px 0 0;text-align:left;">PCのZoomで「参加」→ 上のIDとパスコードを入力。またはURLをコピーしてPCのブラウザに貼り付けてください。</p>'
-              + '</div>'
-            : '');
-      } else if(mark === 'rejected'){
-        body = '<p style="color:var(--accent);font-weight:700;font-size:14px;">申請が承認されませんでした。<br><span style="font-weight:400;font-size:12.5px;">内容に不備があった可能性があります。Uラインまたは受付担当に確認してください。</span></p>';
-      } else if(applied){
-        body = '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請済み・承認待ちです</p>'
-          + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
-      } else {
-        body = '<button class="primary" id="olOpen_' + i + '">オンライン受講を申請する</button>'
-          + '<div class="hide" id="olForm_' + i + '" style="text-align:left;margin-top:10px;">'
-          + (function(){
-              var prev = '';
-              try{ prev = localStorage.getItem('bci_pl_' + c.no) || ''; }catch(e){}
-              return '<div style="border:1px solid var(--line);border-radius:10px;margin-top:10px;padding:10px 12px;">'
-                + '<div style="font-weight:700;font-size:13px;">📜 オンライン受講 誓約書</div>'
-                + (prev ? '<div style="font-size:12px;color:var(--green);margin:4px 0 2px;">✅ この端末で同意済み（' + esc(prev) + '）。今回の申請にも同じ内容で誓約します。</div>' : '')
-                + '<div id="olPtext_' + i + '" style="max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.65;text-align:left;color:var(--ink);background:var(--paper);">'
-                + pledgeBodyHtml() + '</div>'
-                + '<div class="chkrow"><input type="checkbox" id="olPledge_' + i + '"' + (prev ? ' checked' : ' disabled') + '>'
-                + '<label for="olPledge_' + i + '" style="font-size:13px;">誓約内容に同意する（誓約日: 本日）</label></div>'
-                + (prev ? '' : '<div id="olPnote_' + i + '" style="font-size:11.5px;color:var(--amber);">※誓約内容を最後までスクロールするとチェックできます</div>')
-                + '</div>';
-            })()
-          + (ev.onlinePayLink
-            ? '<a id="olPayBtn_' + i + '" href="' + esc(payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000)) + '" target="_blank" rel="noopener" '
-              + 'style="display:block;text-align:center;text-decoration:none;padding:11px;border-radius:10px;background:#e60012;color:#fff;font-weight:700;font-size:14.5px;margin-top:10px;">'
-              + '💰 PayPayで ' + yen(ev.onlineFee || 1000) + ' を送る</a>'
-              + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
-              + '<div id="olPayQr_' + i + '" style="background:#fff;padding:4px;border-radius:6px;flex:0 0 auto;"></div>'
-              + '<span style="font-size:11.5px;color:var(--sub);text-align:left;">'
-              + (payLinkHasAmount(ev.onlinePayLink)
-                ? 'タップでPayPayが開き、宛先と金額が入った状態になります。'
-                : 'タップでPayPayの送金画面が開きます（宛先入り）。金額 ' + yen(ev.onlineFee || 1000) + ' はPayPay側で入力してください。')
-              + 'PCで見ている場合はスマホでQRを読んでください。</span></div>'
-            : '')
-          + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPay_' + i + '"><label for="olPay_' + i + '" style="font-size:13px;">受講料 ' + yen(ev.onlineFee || 1000) + ' をPayPayで送金済み'
-          + (ev.onlinePayTo ? '<br><span style="color:var(--sub);font-size:12px;">送金先: ' + esc(ev.onlinePayTo) + '</span>' : '') + '</label></div>'
-          + '<div class="chkrow"><input type="checkbox" id="olEnv_' + i + '"><label for="olEnv_' + i + '" style="font-size:13px;">環境責任者'
-          + (ev.onlineEnvName ? '（' + esc(ev.onlineEnvName) + '）' : '') + 'の受講許可済</label></div>'
-          + '<button class="primary" id="olGo_' + i + '" style="width:100%;margin-top:8px;">申請する</button>'
-          + '<div class="se-msg" id="olMsg_' + i + '"></div>'
-          + '</div>';
-      }
-      return '<div class="selfevent" id="ol_' + i + '" style="border-color:var(--focus);">' + head + body + '</div>';
-    }).join('');
-    evs.forEach(function(ev, i){
-      // PC参加用のコピー（承認済み表示）
-      var bId = $('zcId_' + i), bPw = $('zcPw_' + i), bUrl = $('zcUrl_' + i);
-      if(bId) bId.onclick = function(){ copyText(fmtZoomId(ev.zoomId), bId); };
-      if(bPw) bPw.onclick = function(){ copyText(ev.zoomPw || '', bPw); };
-      if(bUrl) bUrl.onclick = function(){ copyText(ev.zoomUrl || '', bUrl); };
-      // 誓約書: 最後までスクロールで同意チェックを解禁（全文が収まっている場合はフォームを開いた時点で解禁）
-      var pt = $('olPtext_' + i);
-      var unlockPledge = function(){
-        var cb = $('olPledge_' + i);
-        if(cb) cb.disabled = false;
-        var nt = $('olPnote_' + i);
-        if(nt){ nt.textContent = '最後まで確認しました。チェックを入れてください'; nt.style.color = 'var(--green)'; }
-      };
-      if(pt) pt.addEventListener('scroll', function(){
-        if(pt.scrollTop + pt.clientHeight >= pt.scrollHeight - 6) unlockPledge();
-      });
-      var op = $('olOpen_' + i);
-      if(op) op.onclick = function(){
-        op.classList.add('hide'); $('olForm_' + i).classList.remove('hide');
-        // 表示後にサイズが確定するので、スクロール不要の場合はここで解禁
-        if(pt && pt.scrollHeight <= pt.clientHeight + 6) unlockPledge();
-      };
-      var pq = $('olPayQr_' + i);
-      if(pq && ev.onlinePayLink) makeQr(pq, payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000), 64);
-      var go = $('olGo_' + i);
-      if(!go) return;
-      go.onclick = function(){
-        if(!$('olPledge_' + i).checked){
-          $('olMsg_' + i).textContent = '誓約内容を最後まで確認して「同意する」にチェックを入れてください'; return;
-        }
-        if(!$('olPay_' + i).checked){
-          $('olMsg_' + i).textContent = 'PayPay送金のチェックを入れてください'; return;
-        }
-        if(!$('olEnv_' + i).checked){
-          $('olMsg_' + i).textContent = '環境責任者の受講許可のチェックを入れてください'; return;
-        }
-        var env = ev.onlineEnvName || '';
-        go.disabled = true;
-        var pd = new Date();
-        var pledgeLocal = pd.getFullYear() + '/' + (pd.getMonth() + 1) + '/' + pd.getDate() + ' ' + nowHM();
-        // 誓約書アーカイブ（申請1件につき1レコード。ルール未公開などで書けなくても申請は成立させる）
-        db.collection('checkinPledges').add({
-          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
-          eventId: ev.id, eventDate: ev.date || '', eventName: ev.name || '',
-          ver: PLEDGE_VER, envApprover: env,
-          at: FV.serverTimestamp(), atLocal: pledgeLocal, atMs: Date.now(), cardToken: gCardToken
-        }).catch(function(){});
-        try{ localStorage.setItem('bci_pl_' + c.no, pledgeLocal); }catch(e){}
-        db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
-          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
-          method: 'online', status: 'pending',
-          fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
-          envApprover: env, envApproved: true, pledged: true, pledgeLocal: pledgeLocal, pledgeVer: PLEDGE_VER, paypaySent: true,
-          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self-online'
-        }).then(function(){
-          try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
-          $('ol_' + i).innerHTML = '<b>💻 オンライン受講：' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</b>'
-            + '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請しました。承認をお待ちください</p>'
-            + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
-        }).catch(function(){
-          go.disabled = false;
-          $('olMsg_' + i).textContent = '申請できません。すでに申請済みか、受付が終了しています。';
-        });
-      };
-    });
-  }).catch(function(){});
+/* ── UPCOMING統合: 今後の予定・オンライン受講の申請・予約（RSVP）を1つのリストに ──
+   大きいカードの羅列をやめ、UPCOMINGの行に状態チップ（💻受講可/⏳承認待ち/✓受講OK/
+   🎟予約受付中…）を付け、行タップで展開して申請・予約・Zoom情報を出す。
+   表示は直近3イベント（従来どおり）。ただし予約受付中（未予約）のイベントだけは
+   3件圏外でも行を追加する（予約締切が先に来るため、予約手段が埋もれないように）。
+   当日セルフ受付中のイベントは専用カードがあるためここには出さない */
+function olState(c, ev){
+  if(!ev.online) return '';
+  var mark = c['online_' + ev.id] || '';
+  var applied = false;
+  try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+  if(mark === 'reapply'){   // 申請が削除された → 再申請できる状態に戻す
+    try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+    mark = ''; applied = false;
+  }
+  if(mark === 'approved') return 'approved';
+  if(mark === 'rejected') return 'rejected';
+  if(applied) return 'pending';
+  return ev.recClosed ? '' : 'can';
 }
-
-// 🎟 予約（RSVP）: rsvp=true のイベントは、開催 rsvpDays 日前になると「予約する」ボタンを表示。
-// 予約は checkinEvents/{id}/rsvps/{会員番号} に1回だけ作成（未ログイン・トークン照合、ルールで保証）
-function renderRsvpEvents(c){
-  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
-    var t0 = new Date(todayStr() + 'T00:00:00').getTime();
-    var evs = [];
-    qs.forEach(function(d){
-      var ev = d.data(); ev.id = d.id;
-      if(!ev.rsvp) return;
-      if((ev.unions || []).indexOf(c.union) < 0) return;
-      var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
-      var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - t0) / 86400000);
-      if(diff > days) return;   // まだ受付期間前
-      evs.push(ev);
-    });
-    evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    evs = evs.slice(0, 3);
-    if(!evs.length){ $('rsvpArea').innerHTML = ''; return; }
-    $('rsvpArea').innerHTML = evs.map(function(ev, i){
-      var done = false;
-      try{ done = !!localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
-      return '<div class="selfevent">'
-        + '<b>🎟 予約受付中：' + esc(ev.name || '') + '</b>'
-        + '<span class="se-sub">' + esc(ev.date || '') + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</span>'
-        + (done
-          ? '<div class="se-done">✓ 予約済みです</div>'
-            + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">当日は会場で通常どおりチェックインしてください。変更・取消は受付担当へ。</p>'
-          : '<button class="primary" id="rsGo_' + i + '">予約する</button>'
-            + '<div class="se-msg" id="rsMsg_' + i + '"></div>')
+// 予約（RSVP）: 開催 rsvpDays 日前（デフォルト4）〜 rsvpDeadline（予約締切日・任意）の間だけ受付
+function rsvpState(c, ev){
+  if(!ev.rsvp) return '';
+  var ls = null;
+  try{ ls = localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
+  // 受付側で予約を削除すると cards に取消マーカーが入る。予約した時刻（localStorage）より
+  // 新しい取消マーカーがあれば「予約済み」を解除し、受付期間内なら再予約できる状態に戻す
+  var mk = c['rsvp_' + ev.id];
+  if(ls && mk && mk.st === 'cancelled' && (mk.atMs || 0) >= (parseInt(ls, 10) || 1)){
+    try{ localStorage.removeItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
+    try{ localStorage.removeItem('bci_rc_' + ev.id + '_' + c.no); }catch(e){}
+    ls = null;
+  }
+  if(ls){
+    // 取消申請中（bci_rc)。受付が却下すると keep マーカーが入り、予約済み表示に戻る
+    var rq = null;
+    try{ rq = localStorage.getItem('bci_rc_' + ev.id + '_' + c.no); }catch(e){}
+    if(rq && mk && mk.st === 'keep' && (mk.atMs || 0) >= (parseInt(rq, 10) || 1)){
+      try{ localStorage.removeItem('bci_rc_' + ev.id + '_' + c.no); }catch(e){}
+      rq = null;
+    }
+    return rq ? 'cancelreq' : 'done';
+  }
+  var t = todayStr();
+  var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
+  var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000);
+  if(diff > days) return '';
+  if(ev.rsvpDeadline && t > ev.rsvpDeadline) return 'closed';
+  return 'open';
+}
+function rsvpDlLabel(ev){
+  if(!ev.rsvpDeadline) return '';
+  return ev.rsvpDeadline === todayStr() ? '本日締切' : '締切' + ev.rsvpDeadline.slice(5).replace('-', '/');
+}
+// 展開部分: オンライン受講（申請フォーム・承認待ち・Zoom情報は従来カードの中身をそのまま移植）
+function upOnlineBody(c, ev, i, st){
+  if(st === 'approved'){
+    var zRow = function(label, value, btnId, btnLabel){
+      return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;">'
+        + '<span style="flex:0 0 92px;font-size:12px;color:var(--sub);text-align:left;">' + label + '</span>'
+        + '<b class="mono" style="flex:1;text-align:left;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(value) + '</b>'
+        + '<button id="' + btnId + '" style="flex:0 0 auto;width:auto;padding:5px 10px;font-size:11.5px;">' + btnLabel + '</button>'
         + '</div>';
-    }).join('');
-    evs.forEach(function(ev, i){
-      var b = $('rsGo_' + i);
-      if(!b) return;
-      b.onclick = function(){
-        b.disabled = true;
-        db.collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
-          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
-          eventDate: ev.date || '', eventName: ev.name || '',
-          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
-        }).then(function(){
-          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
-          renderRsvpEvents(c);
-        }).catch(function(){
-          // すでに予約済み（作成のみ許可のため上書きは失敗する）
-          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
-          renderRsvpEvents(c);
-        });
-      };
-    });
-  }).catch(function(){});
+    };
+    return '<div class="se-done">✓ 受講が承認されました</div>'
+      + (ev.zoomUrl
+        ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する（この端末で開く）</a>'
+        : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoomの参加情報は当日までにここに表示されます。開催時間に開き直してください。</p>')
+      + ((ev.zoomId || ev.zoomPw || ev.zoomUrl)
+        ? '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:8px;">'
+          + '<div style="font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--sub);margin-bottom:4px;">PCで参加する場合</div>'
+          + (ev.zoomId ? zRow('ミーティングID', fmtZoomId(ev.zoomId), 'zcId_' + i, 'コピー') : '')
+          + (ev.zoomPw ? zRow('パスコード', ev.zoomPw, 'zcPw_' + i, 'コピー') : '')
+          + (ev.zoomUrl ? zRow('参加URL', ev.zoomUrl.replace(/^https?:\/\//, ''), 'zcUrl_' + i, 'URLをコピー') : '')
+          + '<p style="font-size:11.5px;color:var(--sub);margin:6px 0 0;text-align:left;">PCのZoomで「参加」→ 上のIDとパスコードを入力。またはURLをコピーしてPCのブラウザに貼り付けてください。</p>'
+          + '</div>'
+        : '');
+  }
+  if(st === 'rejected'){
+    return '<p style="color:var(--accent);font-weight:700;font-size:14px;">申請が承認されませんでした。<br><span style="font-weight:400;font-size:12.5px;">内容に不備があった可能性があります。Uラインまたは受付担当に確認してください。</span></p>';
+  }
+  if(st === 'pending'){
+    return '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請済み・承認待ちです</p>'
+      + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
+  }
+  return '<button class="primary" id="olOpen_' + i + '" style="width:100%;">オンライン受講を申請する</button>'
+    + '<div class="hide" id="olForm_' + i + '" style="text-align:left;margin-top:10px;">'
+    + (function(){
+        var prev = '';
+        try{ prev = localStorage.getItem('bci_pl_' + c.no) || ''; }catch(e){}
+        return '<div style="border:1px solid var(--line);border-radius:10px;margin-top:10px;padding:10px 12px;">'
+          + '<div style="font-weight:700;font-size:13px;">📜 オンライン受講 誓約書</div>'
+          + (prev ? '<div style="font-size:12px;color:var(--green);margin:4px 0 2px;">✅ この端末で同意済み（' + esc(prev) + '）。今回の申請にも同じ内容で誓約します。</div>' : '')
+          + '<div id="olPtext_' + i + '" style="max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.65;text-align:left;color:var(--ink);background:var(--paper);">'
+          + pledgeBodyHtml() + '</div>'
+          + '<div class="chkrow"><input type="checkbox" id="olPledge_' + i + '"' + (prev ? ' checked' : ' disabled') + '>'
+          + '<label for="olPledge_' + i + '" style="font-size:13px;">誓約内容に同意する（誓約日: 本日）</label></div>'
+          + (prev ? '' : '<div id="olPnote_' + i + '" style="font-size:11.5px;color:var(--amber);">※誓約内容を最後までスクロールするとチェックできます</div>')
+          + '</div>';
+      })()
+    + (ev.onlinePayLink
+      ? '<a id="olPayBtn_' + i + '" href="' + esc(payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000)) + '" target="_blank" rel="noopener" '
+        + 'style="display:block;text-align:center;text-decoration:none;padding:11px;border-radius:10px;background:#e60012;color:#fff;font-weight:700;font-size:14.5px;margin-top:10px;">'
+        + '💰 PayPayで ' + yen(ev.onlineFee || 1000) + ' を送る</a>'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
+        + '<div id="olPayQr_' + i + '" style="background:#fff;padding:4px;border-radius:6px;flex:0 0 auto;"></div>'
+        + '<span style="font-size:11.5px;color:var(--sub);text-align:left;">'
+        + (payLinkHasAmount(ev.onlinePayLink)
+          ? 'タップでPayPayが開き、宛先と金額が入った状態になります。'
+          : 'タップでPayPayの送金画面が開きます（宛先入り）。金額 ' + yen(ev.onlineFee || 1000) + ' はPayPay側で入力してください。')
+        + 'PCで見ている場合はスマホでQRを読んでください。</span></div>'
+      : '')
+    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPay_' + i + '"><label for="olPay_' + i + '" style="font-size:13px;">受講料 ' + yen(ev.onlineFee || 1000) + ' をPayPayで送金済み'
+    + (ev.onlinePayTo ? '<br><span style="color:var(--sub);font-size:12px;">送金先: ' + esc(ev.onlinePayTo) + '</span>' : '') + '</label></div>'
+    + '<div class="chkrow"><input type="checkbox" id="olEnv_' + i + '"><label for="olEnv_' + i + '" style="font-size:13px;">環境責任者'
+    + (ev.onlineEnvName ? '（' + esc(ev.onlineEnvName) + '）' : '') + 'の受講許可済</label></div>'
+    + '<button class="primary" id="olGo_' + i + '" style="width:100%;margin-top:8px;">申請する</button>'
+    + '<div class="se-msg" id="olMsg_' + i + '"></div>'
+    + '</div>';
 }
-
-// 次回の開催予定: 自ユニオンの直近イベントを搭乗券風に表示
-// （セルフ受付中・オンライン対応のイベントは専用カードが出るのでここでは省く）
-function renderNextEvents(c){
+function upBindOnline(c, ev, i, st){
+  if(st === 'approved'){
+    var bId = $('zcId_' + i), bPw = $('zcPw_' + i), bUrl = $('zcUrl_' + i);
+    if(bId) bId.onclick = function(e){ e.stopPropagation(); copyText(fmtZoomId(ev.zoomId), bId); };
+    if(bPw) bPw.onclick = function(e){ e.stopPropagation(); copyText(ev.zoomPw || '', bPw); };
+    if(bUrl) bUrl.onclick = function(e){ e.stopPropagation(); copyText(ev.zoomUrl || '', bUrl); };
+    return;
+  }
+  if(st !== 'can') return;
+  // 誓約書: 最後までスクロールで同意チェックを解禁（全文が収まっている場合はフォームを開いた時点で解禁）
+  var pt = $('olPtext_' + i);
+  var unlockPledge = function(){
+    var cb = $('olPledge_' + i);
+    if(cb) cb.disabled = false;
+    var nt = $('olPnote_' + i);
+    if(nt){ nt.textContent = '最後まで確認しました。チェックを入れてください'; nt.style.color = 'var(--green)'; }
+  };
+  if(pt) pt.addEventListener('scroll', function(){
+    if(pt.scrollTop + pt.clientHeight >= pt.scrollHeight - 6) unlockPledge();
+  });
+  var op = $('olOpen_' + i);
+  if(op) op.onclick = function(){
+    op.classList.add('hide'); $('olForm_' + i).classList.remove('hide');
+    if(pt && pt.scrollHeight <= pt.clientHeight + 6) unlockPledge();
+  };
+  var pq = $('olPayQr_' + i);
+  if(pq && ev.onlinePayLink) makeQr(pq, payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000), 64);
+  var go = $('olGo_' + i);
+  if(!go) return;
+  go.onclick = function(){
+    if(!$('olPledge_' + i).checked){
+      $('olMsg_' + i).textContent = '誓約内容を最後まで確認して「同意する」にチェックを入れてください'; return;
+    }
+    if(!$('olPay_' + i).checked){
+      $('olMsg_' + i).textContent = 'PayPay送金のチェックを入れてください'; return;
+    }
+    if(!$('olEnv_' + i).checked){
+      $('olMsg_' + i).textContent = '環境責任者の受講許可のチェックを入れてください'; return;
+    }
+    var env = ev.onlineEnvName || '';
+    go.disabled = true;
+    var pd = new Date();
+    var pledgeLocal = pd.getFullYear() + '/' + (pd.getMonth() + 1) + '/' + pd.getDate() + ' ' + nowHM();
+    // 誓約書アーカイブ（申請1件につき1レコード。ルール未公開などで書けなくても申請は成立させる）
+    db.collection('checkinPledges').add({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      eventId: ev.id, eventDate: ev.date || '', eventName: ev.name || '',
+      ver: PLEDGE_VER, envApprover: env,
+      at: FV.serverTimestamp(), atLocal: pledgeLocal, atMs: Date.now(), cardToken: gCardToken
+    }).catch(function(){});
+    try{ localStorage.setItem('bci_pl_' + c.no, pledgeLocal); }catch(e){}
+    db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      method: 'online', status: 'pending',
+      fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
+      envApprover: env, envApproved: true, pledged: true, pledgeLocal: pledgeLocal, pledgeVer: PLEDGE_VER, paypaySent: true,
+      cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self-online'
+    }).then(function(){
+      try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
+      renderUpcoming(c, ev.id);
+    }).catch(function(){
+      go.disabled = false;
+      $('olMsg_' + i).textContent = '申請できません。すでに申請済みか、受付が終了しています。';
+    });
+  };
+}
+// 展開部分: 予約（RSVP）
+function upRsvpBody(c, ev, i, rs){
+  if(rs === 'done'){
+    return '<div class="se-done">✓ 予約済みです</div>'
+      + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">当日は会場で通常どおりチェックインしてください。</p>'
+      + '<button id="rcGo_' + i + '" class="ghost" style="width:100%;margin-top:10px;font-size:13px;">予約の取消を申請</button>'
+      + '<div class="se-msg" id="rcMsg_' + i + '"></div>';
+  }
+  if(rs === 'cancelreq'){
+    return '<p style="color:var(--amber);font-weight:700;font-size:14px;margin:0;">⏳ 取消を申請中です</p>'
+      + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">受付が確認すると予約が取り消されます。却下された場合は予約が継続します。</p>';
+  }
+  if(rs === 'closed'){
+    return '<p style="color:var(--sub);font-size:13px;margin:0;">予約受付は終了しました（' + esc(rsvpDlLabel(ev)) + '）。参加希望は受付担当へご連絡ください。</p>';
+  }
+  return (ev.rsvpDeadline
+      ? '<p style="font-size:12.5px;font-weight:700;color:var(--amber);margin:0 0 6px;">🎟 予約' + esc(rsvpDlLabel(ev)) + '</p>' : '')
+    + '<button class="primary" id="rsGo_' + i + '" style="width:100%;">予約する</button>'
+    + '<div class="se-msg" id="rsMsg_' + i + '"></div>';
+}
+function upBindRsvp(c, ev, i){
+  // 予約の取消申請（予約済みのときだけ表示される）
+  var rc = $('rcGo_' + i);
+  if(rc) rc.onclick = function(){
+    if(!window.confirm('「' + (ev.name || '') + '」の予約の取消を申請しますか？\n受付が確認すると予約が取り消されます。')) return;
+    rc.disabled = true;
+    db.collection('checkinEvents').doc(ev.id).collection('rsvpCancels').doc(c.no).set({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      eventDate: ev.date || '', eventName: ev.name || '',
+      cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
+    }).then(function(){
+      try{ localStorage.setItem('bci_rc_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
+      renderUpcoming(c, ev.id);
+    }).catch(function(){
+      // すでに申請済み（作成のみ許可のため上書きは失敗する）
+      try{ localStorage.setItem('bci_rc_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
+      renderUpcoming(c, ev.id);
+    });
+  };
+  var b = $('rsGo_' + i);
+  if(!b) return;
+  b.onclick = function(){
+    b.disabled = true;
+    db.collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      eventDate: ev.date || '', eventName: ev.name || '',
+      cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
+    }).then(function(){
+      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
+      renderUpcoming(c, ev.id);
+    }).catch(function(){
+      // すでに予約済み（作成のみ許可のため上書きは失敗する）
+      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
+      renderUpcoming(c, ev.id);
+    });
+  };
+}
+// 🎟 予約受付中のお知らせバー（QR直下）: タップでUPCOMINGの該当行を開いてスクロール
+function renderRsvpTop(c, all){
+  var el = $('rsvpTop');
+  if(!el) return;
+  var list = all.filter(function(ev){ return rsvpState(c, ev) === 'open'; });
+  if(!list.length){ el.innerHTML = ''; return; }
+  el.innerHTML = list.map(function(ev){
+    return '<div class="rsvptop" data-rt="' + esc(ev.id) + '">🎟 <b>予約受付中: ' + esc(ev.name || '') + '</b>'
+      + '<span style="color:var(--sub);font-size:12.5px;">' + esc((ev.date || '').slice(5).replace('-', '/'))
+      + (ev.rsvpDeadline ? '・' + esc(rsvpDlLabel(ev)) : '') + '</span>'
+      + '<span style="margin-left:auto;color:var(--sub);">›</span></div>';
+  }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('[data-rt]'), function(bn){
+    bn.onclick = function(){
+      var id = bn.getAttribute('data-rt');
+      var x = $('upx_' + id);
+      if(x) x.classList.remove('hide');
+      var row = document.querySelector('[data-up="' + id + '"]');
+      try{ (row || $('nextArea')).scrollIntoView({ behavior: 'smooth', block: 'center' }); }catch(e){}
+    };
+  });
+}
+function renderUpcoming(c, openId){
   db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
-    var t = todayStr(), evs = [];
+    var t = todayStr(), all = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
       if((ev.unions || []).indexOf(c.union) < 0) return;
-      if(ev.online) return;
-      if(ev.mode === 'self' && ev.selfOpen) return;
-      // 予約受付中のイベントは専用カード（🎟）が出るのでここでは省く
-      if(ev.rsvp){
-        var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
-        var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000);
-        if(diff <= days) return;
-      }
-      evs.push(ev);
+      if(ev.mode === 'self' && ev.selfOpen) return;   // セルフ受付中は専用カードが出る
+      all.push(ev);
     });
-    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    evs = evs.slice(0, 3);
-    if(!evs.length){ $('nextArea').innerHTML = ''; return; }
-    $('nextArea').innerHTML = '<div class="nextwrap">'
-      + '<div class="next-head">UPCOMING</div>'
-      + evs.map(function(ev){
-          return '<div class="nextrow">'
-            + '<span class="nd">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
-            + '<span class="nn">' + esc(ev.name || '') + '</span>'
-            + (ev.date === t ? '<span class="today-pill">TODAY</span>' : '')
-            + (ev.speaker ? '<span class="ns">🎤 ' + esc(ev.speaker) + '</span>' : '')
-            + '</div>';
-        }).join('')
-      + '</div>';
+    all.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    renderRsvpTop(c, all);
+    var rows = all.slice(0, 3);   // 直近3つ（従来どおり）
+    // 予約受付中・予約済み・取消申請中のイベントは3件圏外でも行を追加
+    // （予約ボタンと「✓予約済み」「取消申請中」の確認が埋もれて消えないように）
+    all.forEach(function(ev){
+      var rs = rsvpState(c, ev);
+      if(rows.indexOf(ev) < 0 && (rs === 'open' || rs === 'done' || rs === 'cancelreq')) rows.push(ev);
+    });
+    rows.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    if(!rows.length){ $('nextArea').innerHTML = ''; return; }
+    var binds = [];
+    var html = rows.map(function(ev, i){
+      var ol = olState(c, ev), rs = rsvpState(c, ev);
+      var chip = '';
+      if(rs === 'open') chip = '<span class="pill a">🎟 予約受付中' + (ev.rsvpDeadline ? '・' + esc(rsvpDlLabel(ev)) : '') + '</span>';
+      else if(rs === 'done') chip = '<span class="pill g">✓ 予約済み</span>';
+      else if(rs === 'cancelreq') chip = '<span class="pill n">⏳ 取消申請中</span>';
+      else if(ol === 'can') chip = '<span class="pill a">💻 受講可</span>';
+      else if(ol === 'pending') chip = '<span class="pill n">⏳ 承認待ち</span>';
+      else if(ol === 'approved') chip = '<span class="pill g">✓ 受講OK</span>';
+      else if(ol === 'rejected') chip = '<span class="pill n">要確認</span>';
+      var body = '';
+      if(ol) body += upOnlineBody(c, ev, i, ol);
+      if(rs) body += upRsvpBody(c, ev, i, rs);
+      var canOpen = !!body;
+      var opened = canOpen && (ev.id === openId || (ol === 'approved' && ev.date === t));   // 当日×承認済みは自動展開
+      if(canOpen) binds.push({ ev: ev, i: i, ol: ol, rs: rs });
+      return '<div class="nextrow"' + (canOpen ? ' data-up="' + esc(ev.id) + '" style="cursor:pointer;"' : '') + '>'
+        + '<span class="nd">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
+        + '<span class="nn">' + esc(ev.name || '') + '</span>'
+        + (ev.date === t ? '<span class="today-pill">TODAY</span>' : '')
+        + (chip
+          ? '<span class="ns" style="margin-left:auto;">' + chip + '</span>'
+          : (ev.speaker ? '<span class="ns">🎤 ' + esc(ev.speaker) + '</span>' : ''))
+        + (canOpen ? '<span class="upar" style="color:var(--sub);flex:0 0 auto;">' + (opened ? '▾' : '▸') + '</span>' : '')
+        + '</div>'
+        + (canOpen
+          ? '<div id="upx_' + esc(ev.id) + '" class="upx' + (opened ? '' : ' hide') + '">'
+            + (ev.speaker ? '<div style="font-size:12px;color:var(--sub);margin-bottom:6px;">🎤 ' + esc(ev.speaker) + '</div>' : '')
+            + body + '</div>'
+          : '');
+    }).join('');
+    $('nextArea').innerHTML = '<div class="nextwrap"><div class="next-head">UPCOMING</div>' + html + '</div>';
+    Array.prototype.forEach.call($('nextArea').querySelectorAll('[data-up]'), function(row){
+      row.onclick = function(){
+        var x = $('upx_' + row.getAttribute('data-up'));
+        if(!x) return;
+        x.classList.toggle('hide');
+        var ar = row.querySelector('.upar');
+        if(ar) ar.textContent = x.classList.contains('hide') ? '▸' : '▾';
+      };
+    });
+    binds.forEach(function(bd){
+      if(bd.ol) upBindOnline(c, bd.ev, bd.i, bd.ol);
+      if(bd.rs === 'open' || bd.rs === 'done') upBindRsvp(c, bd.ev, bd.i);
+    });
   }).catch(function(){});
 }
 // 電子領収書: 受付でピッとした瞬間に発行されたものを会員証に表示
@@ -2152,8 +2310,13 @@ function loadMembers(cb){
 function renderRoster(){
   var edit = canEditRoster();
   var q = ($('q').value || '').trim();
+  function sth(k, label){
+    var cur = gRosterSort.k === k;
+    return '<th data-sk="' + k + '" style="cursor:pointer;white-space:nowrap;" title="タップで並べ替え">'
+      + label + (cur ? (gRosterSort.asc ? ' ▲' : ' ▼') : '') + '</th>';
+  }
   $('rosterHead').innerHTML = (edit ? '<th style="width:2em;"><input type="checkbox" id="selAllChk" title="表示中を全選択"></th>' : '')
-    + '<th>番号</th><th>氏名</th><th>系列</th><th>状態</th><th>操作</th>';
+    + sth('no', '番号') + sth('name', '氏名') + sth('group', '系列') + sth('st', '状態') + '<th>操作</th>';
   $('roBadge').classList.toggle('hide', edit);
   // 会員証の発行・印刷はログイン済みなら誰でも可。削除・グレード変更・取込は管理者のみ
   $('bulkRow').classList.remove('hide');
@@ -2167,8 +2330,26 @@ function renderRoster(){
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   $('btnGroupRen').classList.toggle('hide', !edit);
-  var tb = $('rosterBody'), html = '', shown = 0;
-  gMembers.forEach(function(m){
+  // 並べ替え（番号: プレフィックス＋数字の自然順 / 氏名: ふりがな優先 / 系列: 表記ゆれ同一視 / 状態: 有効→無効）
+  var natRe = /^([^0-9]*)([0-9]*)/;
+  function rosterCmp(a, b){
+    var k = gRosterSort.k, r = 0;
+    if(k === 'no'){
+      var ma = natRe.exec(a.no || ''), mb = natRe.exec(b.no || '');
+      r = ma[1] < mb[1] ? -1 : ma[1] > mb[1] ? 1 : (parseInt(ma[2] || '0', 10) - parseInt(mb[2] || '0', 10));
+      if(!r) r = (a.no || '') < (b.no || '') ? -1 : (a.no || '') > (b.no || '') ? 1 : 0;
+    } else if(k === 'name'){
+      r = String(a.kana || a.name || '').localeCompare(String(b.kana || b.name || ''), 'ja');
+    } else if(k === 'group'){
+      r = groupKey(a.group).localeCompare(groupKey(b.group), 'ja');
+    } else if(k === 'st'){
+      r = (ckMemberOff(a) ? 1 : 0) - (ckMemberOff(b) ? 1 : 0);
+    }
+    return gRosterSort.asc ? r : -r;
+  }
+  var tb = $('rosterBody'), html = '', shown = 0, offHidden = 0;
+  gMembers.slice().sort(rosterCmp).forEach(function(m){
+    if(!gRosterShowOff && ckMemberOff(m)){ offHidden++; return; }
     var name = m.name || '';
     if(q && name.indexOf(q) < 0 && m.no.indexOf(q) < 0 && (m.group||'').indexOf(q) < 0) return;
     shown++;
@@ -2197,11 +2378,28 @@ function renderRoster(){
   var cols = edit ? 6 : 5;
   tb.innerHTML = html || '<tr><td colspan="' + cols + '" style="color:var(--sub)">メンバーがいません。'
     + (edit ? '「＋ メンバー追加」または「CSV取込」で登録してください。' : '') + '</td></tr>';
-  $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名）'
+  $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名'
+    + (offHidden ? '・無効 ' + offHidden + '名は非表示' : '') + '）'
     + (edit ? '' : ' ※閲覧のみ（編集はこのユニオンの管理者が行えます）');
+  var so = $('qShowOff');
+  if(so) so.checked = gRosterShowOff;
   updateSelCount();
 }
 $('q').addEventListener('input', renderRoster);
+$('qShowOff').onchange = function(){
+  gRosterShowOff = this.checked;
+  try{ localStorage.setItem('bci_roster_showoff', gRosterShowOff ? '1' : '0'); }catch(e){}
+  renderRoster();
+};
+// 列見出しタップで並べ替え（同じ列をもう一度タップで昇順⇄降順）
+$('rosterHead').addEventListener('click', function(e){
+  var th = e.target.closest ? e.target.closest('th[data-sk]') : null;
+  if(!th) return;
+  var k = th.getAttribute('data-sk');
+  if(gRosterSort.k === k) gRosterSort.asc = !gRosterSort.asc;
+  else gRosterSort = { k: k, asc: true };
+  renderRoster();
+});
 
 /* ── 選択・一括削除 ── */
 function selCount(){ return Object.keys(gSel).length; }
@@ -3147,7 +3345,8 @@ $('btnSchedPdf').onclick = function(){
 /* 🎟 予約（RSVP）一覧: おでかけUR等の事前把握用。参加済み（出席あり）を✓表示、コピー・CSV・削除 */
 function rsvpListModal(ev){
   var base = db.collection('checkinEvents').doc(ev.id);
-  Promise.all([base.collection('rsvps').get(), base.collection('attendance').get()]).then(function(res){
+  Promise.all([base.collection('rsvps').get(), base.collection('attendance').get(),
+               base.collection('rsvpCancels').get().catch(function(){ return { forEach: function(){} }; })]).then(function(res){
     var rows = [];
     res[0].forEach(function(d){ var r = d.data(); r.id = d.id; rows.push(r); });
     rows.sort(function(a, b){ return (a.atMs || 0) - (b.atMs || 0); });
@@ -3157,8 +3356,13 @@ function rsvpListModal(ev){
       if(a.status === 'pending' || a.status === 'rejected') return;
       att[d.id] = 1;
     });
+    // 🎟 本人からの取消申請（会員番号 → 申請doc）。予約が無いゴミ申請は無視
+    var cancels = {};
+    res[2].forEach(function(d){ cancels[d.id] = d.data(); });
+    var cancelCount = rows.filter(function(r){ return cancels[r.id]; }).length;
     var attended = rows.filter(function(r){ return att[r.id]; }).length;
     modal('<h2>🎟 予約一覧 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '（' + rows.length + '名・参加済み ' + attended + '名）</h2>'
+      + (cancelCount ? '<p style="font-size:13px;color:var(--amber);font-weight:700;margin:0 0 6px;">⏳ 取消申請が ' + cancelCount + ' 件あります。「取消を承認」で予約が削除され、本人の会員証に反映されます。</p>' : '')
       + (rows.length
         ? '<div style="max-height:55vh;overflow:auto;">' + rows.map(function(r, i){
             return '<div style="display:flex;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap;">'
@@ -3166,12 +3370,18 @@ function rsvpListModal(ev){
               + '<b style="flex:1;min-width:120px;">' + esc(r.name || '') + '</b>'
               + '<span style="color:var(--sub);font-size:12px;">' + esc(r.group || '') + (r.union ? '・' + esc(r.union) : '') + '</span>'
               + (att[r.id] ? '<span class="pill g">✓ 参加済み</span>' : '<span class="pill n">予約のみ</span>')
+              + (cancels[r.id]
+                ? '<span class="pill a">⏳ 取消申請 ' + esc((cancels[r.id].atLocal || '')) + '</span>'
+                  + '<button data-rv="capprove" data-i="' + i + '" class="danger" style="padding:4px 10px;font-size:12px;">取消を承認</button>'
+                  + '<button data-rv="creject" data-i="' + i + '" style="padding:4px 10px;font-size:12px;">却下</button>'
+                : '')
               + '<button data-rv="copy" data-i="' + i + '" title="氏名をコピー" style="padding:4px 10px;font-size:12px;">📋</button>'
               + '<button data-rv="del" data-i="' + i + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">削除</button>'
               + '</div>';
           }).join('') + '</div>'
         : '<p style="color:var(--sub);font-size:13.5px;">まだ予約はありません。会員証に「予約する」ボタンが表示されるのは開催'
-          + (ev.rsvpDays != null ? esc(ev.rsvpDays) : 4) + '日前からです。</p>')
+          + (ev.rsvpDays != null ? esc(ev.rsvpDays) : 4) + '日前から'
+          + (ev.rsvpDeadline ? '、締切は ' + esc(ev.rsvpDeadline) + ' まで' : '') + 'です。</p>')
       + '<div class="btns">' + (rows.length ? '<button id="rvCsv">CSV出力</button>' : '') + '<button id="rvClose">閉じる</button></div>', true);
     $('rvClose').onclick = closeModal;
     var cb = $('rvCsv');
@@ -3186,11 +3396,41 @@ function rsvpListModal(ev){
       var r = rows[+b.getAttribute('data-i')];
       if(!r) return;
       if(b.getAttribute('data-rv') === 'copy'){ copyText(r.name || '', b); }
-      if(b.getAttribute('data-rv') === 'del'){
-        if(!window.confirm(r.name + ' さんの予約を削除しますか？')) return;
+      // 予約の削除（取消承認も同じ処理＋申請docの掃除）。本人の会員証に取消マーカーを書き、
+      // 「✓予約済み」表示を解除して受付中に戻す
+      function removeRsvp(doneMsg){
         base.collection('rsvps').doc(r.id).delete().then(function(){
-          toast('予約を削除しました'); closeModal(); rsvpListModal(ev); loadEvents();
+          var ps = [base.collection('rsvpCancels').doc(r.id).delete().catch(function(){})];
+          if(r.cardToken){
+            var u = {};
+            u['rsvp_' + ev.id] = { st: 'cancelled', atMs: Date.now() };
+            ps.push(db.collection('cards').doc(r.cardToken).set(u, { merge: true }).catch(function(){}));
+          }
+          return Promise.all(ps);
+        }).then(function(){
+          toast(doneMsg); closeModal(); rsvpListModal(ev); loadEvents();
         }).catch(function(e2){ toast(permMsg(e2, '削除権限がありません')); });
+      }
+      if(b.getAttribute('data-rv') === 'del'){
+        if(!window.confirm(r.name + ' さんの予約を削除しますか？\n（本人の会員証は「予約受付中」に戻り、再予約できるようになります）')) return;
+        removeRsvp('予約を削除しました（本人の会員証は予約受付中に戻ります）');
+      }
+      if(b.getAttribute('data-rv') === 'capprove'){
+        if(!window.confirm(r.name + ' さんの取消申請を承認して予約を削除しますか？')) return;
+        removeRsvp('取消を承認しました（本人の会員証は予約受付中に戻ります）');
+      }
+      if(b.getAttribute('data-rv') === 'creject'){
+        if(!window.confirm(r.name + ' さんの取消申請を却下しますか？（予約は継続されます）')) return;
+        base.collection('rsvpCancels').doc(r.id).delete().then(function(){
+          // 本人の会員証に「予約継続」マーカーを書き、「取消申請中」表示を予約済みに戻す
+          if(r.cardToken){
+            var u = {};
+            u['rsvp_' + ev.id] = { st: 'keep', atMs: Date.now() };
+            return db.collection('cards').doc(r.cardToken).set(u, { merge: true }).catch(function(){});
+          }
+        }).then(function(){
+          toast('取消申請を却下しました（予約は継続されます）'); closeModal(); rsvpListModal(ev);
+        }).catch(function(e2){ toast(permMsg(e2, '操作権限がありません')); });
       }
     });
   }).catch(function(e){ toast('予約の読込エラー: ' + e.message); });
@@ -3251,6 +3491,8 @@ function eventForm(ev){
         + '<div id="rowRsvp" class="' + (ev && ev.rsvp ? '' : 'hide') + '" style="margin-left:22px;">'
         + '<label>予約ボタンを表示する日（開催の何日前から）</label>'
         + '<input type="text" id="evRsvpDays" inputmode="numeric" value="' + esc(ev && ev.rsvpDays != null ? ev.rsvpDays : 4) + '" style="width:80px;">'
+        + '<label>予約締切日（任意。過ぎると会員証の「予約する」が自動で閉じます）</label>'
+        + '<input type="date" id="evRsvpDl" value="' + esc((ev && ev.rsvpDeadline) || '') + '" style="width:190px;">'
         + '</div>'
       : '')
     + chk
@@ -3309,6 +3551,7 @@ function eventForm(ev){
         if(!$('evRsvpDays')) return (ev && ev.rsvpDays != null) ? ev.rsvpDays : 4;
         var n = parseInt($('evRsvpDays').value, 10); return isNaN(n) || n < 0 ? 4 : n;
       })(),
+      rsvpDeadline: $('evRsvpDl') ? $('evRsvpDl').value : ((ev && ev.rsvpDeadline) || ''),
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
       onlinePayTo: $('evOnPay').value.trim(),
@@ -3507,24 +3750,27 @@ function trLoadMembers(){
     trRenderList();
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 }
-// UPルビー: そのユニオンの既存系列＋自分の名前から選択のみ（手入力は廃止。
-// 表記ゆれで集計が割れるため、新しい系列は管理者が名簿の編集から登録する運用）。
+// UPルビー: そのユニオンの名簿に実在する系列だけから選択（手入力は廃止。
+// 新しい系列は管理者が名簿の編集から登録する運用）。
+// 以前は担当者自身の名前も選択肢に自動追加していたが、ページを開いただけの
+// 担当者名が初期選択のまま登録され、意図しない系列が名簿に生まれるため廃止。
 // スペース・全角半角だけ違う表記は、人数の多い表記1つにまとめて表示する
 function trFillUp(){
   var cnt = {};
   gTrMembers.forEach(function(m){ if(m.group) cnt[m.group] = (cnt[m.group] || 0) + 1; });
-  var my = gProf.name || '';
-  if(my) cnt[my] = (cnt[my] || 0) + 0.5;   // 自分の名前は既存の表記があればそちらを優先
   var rep = {};
   Object.keys(cnt).forEach(function(g){
     var k = groupKey(g);
     if(!rep[k] || cnt[g] > cnt[rep[k]]) rep[k] = g;
   });
-  var myKey = groupKey(my);
+  var myKey = groupKey(gProf.name || '');
   var gs = Object.keys(rep).map(function(k){ return rep[k]; }).sort();
-  $('trUp').innerHTML = gs.map(function(g){
-    return '<option value="' + esc(g) + '"' + (my && groupKey(g) === myKey ? ' selected' : '') + '>' + esc(g) + '</option>';
-  }).join('');
+  // 自分の名前が名簿の系列にあればそれを初期選択。無ければ未選択（選ぶまで登録できない）
+  var hasMy = gs.some(function(g){ return groupKey(g) === myKey; });
+  $('trUp').innerHTML = (hasMy ? '' : '<option value="" selected>UPルビーを選択してください</option>')
+    + gs.map(function(g){
+        return '<option value="' + esc(g) + '"' + (hasMy && groupKey(g) === myKey ? ' selected' : '') + '>' + esc(g) + '</option>';
+      }).join('');
 }
 Array.prototype.forEach.call(document.querySelectorAll('#vTrainer .trsex button'), function(b){
   b.onclick = function(){
@@ -3707,14 +3953,15 @@ function trRenderList(){
         + '<input type="text" id="tsRef" placeholder="紹介者で絞り込み（部分一致）" value="' + esc(gTrFilter.ref) + '" style="margin:0 0 6px;">'
       : '')
     + '<input type="search" id="tsQ" placeholder="名前・ふりがな・番号で検索" value="' + esc(gTrFilter.q) + '" style="margin:0 0 4px;">';
+  // 「番号で開く」は研修生が増えても埋もれないよう、検索・一覧より上（最上部）に置く
   el.innerHTML = '<div id="trDlrList"></div>'
-    + searchHtml
-    + '<div id="tsResults"></div>'
-    + '<p style="font-size:13px;font-weight:700;margin:14px 0 4px;">研修をした方の番号を入力してください</p>'
+    + '<p style="font-size:13px;font-weight:700;margin:4px 0 4px;">研修をした方の番号を入力してください</p>'
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
-    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、会員番号（QRカード記載）を入れると開けます。</p>');
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">下の一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、上の会員番号（QRカード記載）を入れると開けます。</p>')
+    + '<div style="margin-top:14px;">' + searchHtml + '</div>'
+    + '<div id="tsResults"></div>';
   // 検索条件の変更
   var tsAll = $('tsAll');
   if(tsAll) tsAll.onchange = function(){
