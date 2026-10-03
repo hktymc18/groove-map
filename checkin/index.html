@@ -202,6 +202,7 @@ tr:last-child td{border-bottom:none;}
 /* 出席マトリクスの左固定列（氏名・系列・稼働率）*/
 .matrix th.stk,.matrix td.stk{position:sticky;background:var(--card);z-index:1;box-sizing:border-box;}
 .matrix th.stk{z-index:2;}
+.matrix .stname{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--sub);}
 .matrix .stk1{left:0;min-width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis;}
 .matrix .stk2{left:104px;min-width:72px;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
 .matrix .stk3{left:176px;min-width:64px;max-width:64px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
@@ -820,6 +821,15 @@ var TR_ITEMS = [
   { k: 'CO' },
   { k: 'BPC済み', internal: true }
 ];
+// ⭐ 昇格の条件: DLR以外のすべての項目が受講済み＋面談シート提出済み。足りないものを返す（空なら昇格可）
+function trPromoteMissing(m){
+  var tr = (m && m.trainings) || {}, miss = [];
+  TR_ITEMS.forEach(function(it){ if(it.k !== 'DLR' && !tr[it.k]) miss.push(it.k); });
+  if(!m || !m.coSheet) miss.push('面談シート');
+  return miss;
+}
+function trPromoteReady(m){ return !!(m && m.trainee) && !trPromoteMissing(m).length; }
+function trPromoteRule(){ return 'DLR以外のすべての項目が受講済み＋面談シート提出済み'; }
 function trMainProgress(tr){
   tr = tr || {}; var n = 0;
   TR_ITEMS.forEach(function(it){ if(it.main && tr[it.k]) n++; });
@@ -1004,8 +1014,12 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v12';
+var APP_VER = 'v13';
 var CHANGELOG = [
+  { v: 'v13', d: '2026/10/04', items: [
+    '集計: 出席表の氏名をタップすると、その人の操作シートが開きます（会員証・編集・昇格・無効化/有効化・削除。名簿タブと同じ操作）。操作すると集計もすぐ更新されます',
+    '研修生の昇格の条件を「DLR以外のすべての項目が受講済み＋面談シート提出済み」に変更。条件を満たすまで昇格ボタンは出ず、足りない項目を「あと: …」で表示します'
+  ] },
   { v: 'v12', d: '2026/10/04', items: [
     '稼働率: 未来日のイベントは、誤って受付を開始・終了しても集計（分母）に入らないようになりました',
     '今日以外のイベントで「受付を開始」を押すと確認が出るようになりました',
@@ -2371,6 +2385,8 @@ function loadMembers(cb){
     gMembers = arr;
     gMembersLoaded = true;
     renderRoster();
+    // 集計タブから編集・無効化等をした場合は集計も描き直す（氏名・系列・状態の変更を反映）
+    if(gStat && $('pStats').classList.contains('on')) loadStats();
     if(cb) cb();
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 }
@@ -2425,7 +2441,7 @@ function renderRoster(){
       + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b>'
       + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '')
       + (m.trainee ? ' <span class="pill n">研修生</span>'
-          + (m.trainings && m.trainings['BPC済み'] ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
+          + (trPromoteReady(m) ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
       + '<td>' + esc(m.group || '') + '</td>'
       + '<td>' + (ckMemberOff(m) ? '<span class="pill n">無効</span>' : '<span class="pill g">有効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
@@ -2433,7 +2449,7 @@ function renderRoster(){
       + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
       + (edit
         ? '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
-          + (m.trainee && m.trainings && m.trainings['BPC済み']
+          + (trPromoteReady(m)
             ? '<button data-a="promote" data-no="' + esc(m.no) + '" class="primary">⭐ 昇格</button>'
             : '')
           + '<button data-a="tog" data-no="' + esc(m.no) + '">' + (ckMemberOff(m) ? '有効化' : '無効化') + '</button>'
@@ -2634,9 +2650,11 @@ function memberForm(m){
       + '</select>'
     + '<label>かな（任意）</label><input type="text" id="mfKana" value="' + esc(m.kana || '') + '">'
     + '<label>紹介者（任意）</label><input type="text" id="mfRef" value="' + esc(m.referrer || '') + '">'
-    + '<div class="chkrow" style="margin-top:10px;"><input type="checkbox" id="mfTrainee"' + (m.trainee ? ' checked' : '') + '>'
+    + '<div class="chkrow" style="margin-top:10px;"><input type="checkbox" id="mfTrainee"' + (m.trainee ? ' checked' : '')
+      + (!isNew && m.trainee && !trPromoteReady(m) ? ' disabled' : '') + '>'
     + '<label for="mfTrainee" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 研修生（チュートリアル対象）</label></div>'
-    + (m.trainee ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを外して保存すると正規メンバーに昇格します（番号・会員証・履歴はそのまま引き継ぎ）。</p>' : '')
+    + (!isNew && m.trainee && trPromoteReady(m) ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを外して保存すると正規メンバーに昇格します（番号・会員証・履歴はそのまま引き継ぎ）。</p>' : '')
+    + (!isNew && m.trainee && !trPromoteReady(m) ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">昇格の条件（' + trPromoteRule() + '）を満たすと外せます。あと: <b style="color:var(--ink);">' + esc(trPromoteMissing(m).join('・')) + '</b></p>' : '')
     + (!isNew && !m.trainee && hasTrHist ? '<p style="font-size:12px;color:var(--sub);margin:4px 0 0 22px;">チェックを入れて保存すると研修生に戻せます（昇格の取り消し。会員証は同じURLのまま）。「🎓 研修履歴」の中からも戻せます。</p>' : '')
     + ((!isNew && (m.trainee || m.coSheet || hasTrHist))
       ? '<div class="btns" style="justify-content:flex-start;margin-top:8px;">'
@@ -2727,6 +2745,11 @@ $('rosterBody').addEventListener('click', function(e){
   var m = null;
   gMembers.forEach(function(x){ if(x.no === no) m = x; });
   if(!m) return;
+  memberAction(m, a);
+});
+// 名簿の行の操作（会員証・編集・昇格・無効化/有効化・削除）。集計タブの操作シートからも同じ処理を使う
+function memberAction(m, a){
+  var no = m.no;
   if(a === 'card') cardModal(m);
   if(a === 'edit') memberForm(m);
   if(a === 'tog'){
@@ -2782,7 +2805,62 @@ $('rosterBody').addEventListener('click', function(e){
       }).catch(function(err){ toast(permMsg(err, '名簿の削除はユニオン管理者・受付管理者のみ可能です')); });
     };
   }
-});
+}
+
+/* ── 集計タブ: 氏名タップで操作シート（名簿タブと同じ操作をその場で） ── */
+function statMemberSheet(no){
+  var r = null;
+  if(gStat) gStat.rows.forEach(function(x){ if(x.no === no) r = x; });
+  if(!r) return;
+  function open(){
+    var m = null;
+    gMembers.forEach(function(x){ if(x.no === no) m = x; });
+    if(!m){
+      modal('<h2>' + esc(r.name || '') + '<span style="font-size:12px;color:var(--sub);font-weight:400;margin-left:8px;">' + esc(no) + '</span></h2>'
+        + '<p style="font-size:13.5px;color:var(--sub);">名簿にいません（削除済み）。出席記録だけが残っています。</p>'
+        + '<div class="btns"><button id="smClose">閉じる</button></div>', true);
+      $('smClose').onclick = closeModal;
+      return;
+    }
+    var edit = canEditRoster(), off = ckMemberOff(m), rc = gStat.recent;
+    var rate = r.member ? r.rate + '%' : '—';
+    modal('<h2>' + esc(m.name || '') + '<span style="font-size:12px;color:var(--sub);font-weight:400;margin-left:8px;">' + esc(no) + '</span></h2>'
+      + '<p style="font-size:13px;margin:0 0 6px;">' + esc(m.group || '') + '　'
+      + (off ? '<span class="pill n">無効</span>' : '<span class="pill g">有効</span>')
+      + (m.trainee ? ' <span class="pill n">研修生</span>' + (trPromoteReady(m) ? ' <span class="pill g">昇格待ち</span>' : '') : '')
+      + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</p>'
+      + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">表示中の月: 出席 <b style="color:var(--ink);">' + r.count + '</b> / ' + gStat.held + '回・稼働率 <b style="color:var(--ink);">' + rate + '</b>'
+      + (rc && rc.by[no] ? '・直近1ヶ月 <b style="color:var(--ink);">' + rc.by[no].rate + '%</b>' : '') + '</p>'
+      + (m.trainee && !trPromoteReady(m) && edit
+        ? '<p style="font-size:12px;color:var(--sub);margin:0 0 10px;">⭐ 昇格まで あと: <b style="color:var(--ink);">' + esc(trPromoteMissing(m).join('・')) + '</b></p>' : '')
+      + '<div class="rowbtns" style="flex-wrap:wrap;gap:8px;">'
+      + '<button data-sm="card">会員証</button>'
+      + (edit
+        ? '<button data-sm="edit">編集</button>'
+          + (trPromoteReady(m) ? '<button data-sm="promote" class="primary">⭐ 昇格</button>' : '')
+          + '<button data-sm="tog">' + (off ? '有効化' : '無効化') + '</button>'
+          + '<button data-sm="del" class="danger ghost">削除</button>'
+        : '')
+      + '</div>'
+      + (edit ? '' : '<p style="font-size:12px;color:var(--sub);margin:8px 0 0;">※閲覧のみ（編集はこのユニオンの管理者が行えます）</p>')
+      + '<div class="btns"><button id="smClose">閉じる</button></div>', true);
+    $('smClose').onclick = closeModal;
+    document.querySelector('.modal').addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button[data-sm]') : null;
+      if(!b) return;
+      closeModal();
+      memberAction(m, b.getAttribute('data-sm'));
+    });
+  }
+  // 名簿の操作はその集計のユニオンの名簿で行う（名簿タブのユニオンも合わせる）
+  if(gRosterUnion !== gStatUnion || !gMembersLoaded){
+    gRosterUnion = gStatUnion; renderRosterUnionSel();
+    gSel = {}; gMembersLoaded = false; gMembers = [];
+    fetchMembers(gRosterUnion).then(function(arr){
+      gMembers = arr; gMembersLoaded = true; renderRoster(); open();
+    }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
+  } else open();
+}
 
 /* ── スマホ会員証の発行・管理 ── */
 // 会員証ドキュメントの内容を作り直す（URLとQRはそのまま。update権限を使わず delete→create で行う）
@@ -4103,7 +4181,7 @@ function trApplyFilter(){
     + (list.length
       ? list.map(function(m, i){
           var p = trMainProgress(m.trainings);
-          var bpc = m.trainings && m.trainings['BPC済み'];
+          var bpc = trPromoteReady(m);
           return '<div data-tr="' + i + '" style="display:flex;gap:10px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer;">'
             + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
             + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '')
@@ -4111,7 +4189,7 @@ function trApplyFilter(){
             + (gTrFilter.all ? '・' + esc(m.union || '') + (m._area ? '（' + esc(m._area) + '）' : '') : '')
             + (m.regByName ? '・担当: ' + esc(m.regByName) : '') + '</div></div>'
             + '<button data-tsend="' + i + '" title="会員証URLをLINE等で送る" style="padding:7px 10px;font-size:12.5px;">📨 送る</button>'
-            + (bpc ? '<span class="pill g">修了</span>' : '')
+            + (bpc ? '<span class="pill g">昇格待ち</span>' : '')
             + '<span class="pill n">' + p + '/3</span>'
             + '<span style="color:var(--sub);">›</span></div>';
         }).join('')
@@ -4208,6 +4286,8 @@ function trSendCard(m){
    研修履歴（trainings・面談シート・DLR記録）は名簿に残り、名簿の編集→🎓研修履歴から管理できる。
    操作できるのはユニオン管理者・受付管理者のみ（ルール上も研修担当者は trainee を変更できない） */
 function promoteTrainee(m, cb){
+  var miss = trPromoteMissing(m);
+  if(miss.length){ toast('まだ昇格できません（あと: ' + miss.join('・') + '）'); return; }
   db.collection('checkinMembers').doc(m.no).update({ trainee: false, updatedAt: FV.serverTimestamp() })
     .then(function(){
       m.trainee = false;
@@ -4256,13 +4336,17 @@ function trChecklist(m){
   }
   modal('<h2>' + esc(m.name || '') + '<span style="font-size:12px;color:var(--sub);font-weight:400;margin-left:8px;">' + esc(m.no) + '</span></h2>'
     + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">チュートリアル ' + trMainProgress(tr) + '/3'
-    + (tr['BPC済み'] ? '　<span class="pill g">修了 — 昇格待ち</span>' : '') + '</p>'
+    + (trPromoteReady(m) ? '　<span class="pill g">昇格待ち</span>' : '') + '</p>'
     + '<label>チュートリアル</label>'
     + TR_ITEMS.filter(function(it){ return it.main; }).map(rowHtml).join('')
     + '<label style="margin-top:14px;">サブ項目</label>'
     + TR_ITEMS.filter(function(it){ return !it.main; }).map(rowHtml).join('')
-    + (m.trainee && tr['BPC済み'] && canEditUnion(gUnion)
+    + (trPromoteReady(m) && canEditUnion(gUnion)
       ? '<div class="btns" style="justify-content:flex-start;"><button id="tcPromote" class="primary">⭐ 正規メンバーに昇格</button></div>'
+      : '')
+    + (m.trainee && !trPromoteReady(m)
+      ? '<p style="font-size:12px;color:var(--sub);margin:12px 0 0;">⭐ 昇格の条件: ' + trPromoteRule()
+        + '<br>あと: <b style="color:var(--ink);">' + esc(trPromoteMissing(m).join('・')) + '</b></p>'
       : '')
     + (!m.trainee && canEditUnion(gUnion)
       ? '<div class="btns" style="justify-content:flex-start;"><button id="tcDemote">↩︎ 研修生に戻す（昇格の取り消し）</button></div>'
@@ -7072,7 +7156,7 @@ function renderStatMatrix(){
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
     + th('count', '回数') + '</tr></thead><tbody>'
     + (view.length ? view.map(function(r){
-        return '<tr><td class="stk stk1"><b>' + esc(r.name) + '</b>'
+        return '<tr><td class="stk stk1"><b class="stname" data-sno="' + esc(r.no) + '" title="タップで名簿の操作（編集・無効化など）">' + esc(r.name) + '</b>'
           + (r.trainee ? ' <span class="pill n" style="font-size:10px;">研修生</span>' : '')
           + '</td><td class="stk stk2">' + esc(r.group) + '</td>'
           + '<td class="stk stk3 rate">' + (r.member ? r.rate + '%' : '—')
@@ -7084,6 +7168,10 @@ function renderStatMatrix(){
       : '<tr><td colspan="' + (gStat.evs.length + (rc ? 5 : 4)) + '" style="color:var(--sub);">該当するメンバーがいません</td></tr>')
     + '</tbody>' + foot + '</table></div>';
   $('statMatrix').innerHTML = html;
+  $('statMatrix').querySelector('tbody').addEventListener('click', function(e){
+    var t = e.target.closest ? e.target.closest('[data-sno]') : null;
+    if(t) statMemberSheet(t.getAttribute('data-sno'));
+  });
   $('statMatrix').querySelector('thead').addEventListener('click', function(e){
     var t = e.target.closest ? e.target.closest('th[data-sk]') : null;
     if(!t) return;
