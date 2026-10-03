@@ -4956,7 +4956,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v581', d:'2026-10-04', items:['🎯 理想MAPのポイントは、メンバーの「固定で上がる見込み（固定PT）」を上がったものとして計算（その人と上の人のGSV・チームGSV・コミッション・PLANのチームPT/ユーザーPTに反映）','固定PTは現状MAPのその人の値を使います（理想で追加した人は0）。理想MAPでGSVを入れる時は、固定込みの数字を入れればそのまま表示されます'] },
+  { v:'v581', d:'2026-10-04', items:['🎯 理想MAPのポイントは、メンバーの「固定で上がる見込み（固定PT）」を上がったものとして計算（その人と上の人のGSV・チームGSV・コミッション・PLANのチームPT/ユーザーPTに反映）','固定PTは現状MAPのその人の値を使います（理想で追加した人は0）。理想MAPでGSVを入れる時は、固定込みの数字を入れればそのまま表示されます','🔧 OLの記録を保存した直後にすぐ開き直すと、画面が消えてしまうことがあったのを修正'] },
   { v:'v580', d:'2026-10-04', items:['🗂 PLANの「今週の作戦」と「今月の行動量」を1枚の「今週やること」にまとめました。大きく「あと何件」、行は「名前・バー・数・＋」だけ','＋＝予定を入れる（ST・CT取りは予約）。行を押すと、今週・今月の数字、やった（＋1）、今週の予定、数字の理由が見られます','下の「今週／今月」で今月の分に切り替え。？＝数字の決まり方・1分で体験、⋯＝係数の設定・動員を計画','HOMEにも同じカードの短い版（足りない行だけ）'] },
   { v:'v579', d:'2026-10-04', items:['🕖 企画書の日時：時刻は「時」「分」の2つの欄に。時を入れると自動で分に移ります','💻 PCでは「LINEで送る」ボタンを出さないように（スマホ・タブレットだけ）。PCは「コピー」してLINEに貼り付け'] },
   { v:'v578', d:'2026-10-04', items:['📝 アウトライン企画書：「伝えていただきたい事」「望む結果」は定型文のボタンをなくして自由入力だけに','🔧 課題の定型文ボタンを押すと画面が一番上に戻ってしまっていたのを修正（押した場所のまま）'] },
@@ -10115,12 +10115,13 @@ function olEventOpen(key, opts) {
 }
 function closeOlPlan() {
   var ov = document.getElementById('olpOv');
-  if (ov) { ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+  if (ov) { ov._closing = true; ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
   _olp = null;
 }
 function _olpRender() {
   if (!_olp) return;
   var ov = document.getElementById('olpOv');
+  if (ov && ov._closing) { if (ov.parentNode) ov.parentNode.removeChild(ov); ov = null; } // v581: 閉じている途中のシートは使わない（保存直後に開き直すと消えていた）
   if (!ov) {
     ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'olpOv';
     ov.onclick = function(e) { if (e.target === ov) closeOlPlan(); };
