@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v574';
+var APP_JS_VERSION = 'v575';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v574';
+  var DATA_VERSION = 'v575';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4068,6 +4068,7 @@ function updateFabVisibility() {
 // ── VIEW SWITCH ──
 function switchView(v) {
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
+  if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   currentView = v;
   window._selectedCardId = null;
   ['home','members','current','ideal','stats','ol','events','goals','month','plan'].forEach(function(n) {
@@ -4954,6 +4955,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v575', d:'2026-10-03', items:['🎯 PLAN「今月にやること」の目標に出どころの印（理想MAP・ロードマップ・今月の目標）。理想MAPの数字は紫に','👆 タイルを押すと「この目標は理想MAPの数字です」と変え方を案内：フロントは自分の直下に新しいB1を足す画面、ユーザーPTは自分のカード、平均稼働人数は今月の目標の入力欄へ直接移動','← 理想MAPに移ったら画面の下に「PLANに戻る」。押すと元の位置に戻ります'] },
   { v:'v574', d:'2026-10-03', items:['✏️ 目標設定「どのあたりに住みたい？」の例を「大濠、南青山、新町」に変更'] },
   { v:'v573', d:'2026-10-03', items:['🔧 マイルストーン・年間ロードマップでフロント目標（F）を入れ直しても反映されなかった問題：理想MAPに新しいB1がいる月のFは理想MAPの人数で決まるため、その月は入力欄の代わりに「理想MAPの数字（理想MAPで変更 ›）」と表示するように（ギャップの割り振りも、その月はそのまま）','🔧 シミュレーションの「今月の目標に入れる」が、ロードマップに今月の数字があると反映されなかったのを修正'] },
   { v:'v572', d:'2026-10-03', items:['💰 PLANの一番上を「目標月収 → 次の山（タイトル）→ 期日」の順に。目標月収は月収かタイトルをタップして自分で決められます','⛰ 決めた月収から、goal settingと同じ月収レンジ（例：51〜100万＝DIAMOND）で次の山のタイトルを自動で決めます。タイトルはあとからプルダウンで選び直せます（「月収に合わせる」で自動に戻す）'] },
@@ -15603,24 +15605,100 @@ function _p2PcTilesHtml(ym) {
     if (it && it[k] !== undefined && k !== 'actN') return +it[k] || 0; return (m[k] === '' || m[k] == null) ? null : +m[k]; };
   var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), left = dim - d.getDate();
   var tile = function(k, lb, unit, pace) {
-    var a = act[k], t = tg(k);
+    var a = act[k], t = tg(k), src = _p2TgtSrc(ym, k); // v575: 目標の出どころ（理想MAP／ロードマップ／今月の目標）
     var av = (a === null || a === undefined) ? null : a;
     var pctRaw = (t && av !== null) ? Math.round(av / t * 100) : 0, pct = Math.min(100, pctRaw); // v553: 100%を超えても表示
     var land = (pace && av > 0) ? _p2Pace(av) : null;
     var ok = t ? (av !== null && (land !== null ? land : av) >= t) : false;
     var clr = t && av !== null && av >= t, over = clr ? av - t : 0;
-    return '<div class="p2t' + (t && ok ? ' ok' : '') + (clr ? ' clear' : '') + '"><div class="p2t-lb">' + lb + '</div>'
+    return '<div class="p2t' + (t && ok ? ' ok' : '') + (clr ? ' clear' : '') + (src === 'ideal' ? ' ideal' : '') + '" onclick="p2TgtWhy(\'' + k + '\')" title="目標の決まり方・変え方"><div class="p2t-lb">' + lb + '</div>'
       + '<div class="p2t-v">' + (av === null ? '—' : av.toLocaleString()) + '<small>' + unit + '</small></div>'
       + '<div class="p2t-tg">' + (t !== null ? '目標 <b>' + t.toLocaleString() + '</b>' + unit + '<span>' + pctRaw + '%</span>' : '目標なし') + '</div>'
       + '<div class="p2t-bar"><i style="width:' + pct + '%"></i></div>'
-      + '<div class="p2t-sub">' + (clr ? '<span class="p2t-clr">🎉 クリア' + (over ? ' ＋' + (Math.round(over * 10) / 10).toLocaleString() + unit : '') + '</span>' : (land !== null ? '着地見込み ' + land.toLocaleString() + unit : '&nbsp;')) + '</div></div>';
+      + '<div class="p2t-sub">' + _p2TgtChip(src) + (clr ? '<span class="p2t-clr">🎉 クリア' + (over ? ' ＋' + (Math.round(over * 10) / 10).toLocaleString() + unit : '') + '</span>' : (land !== null ? '着地見込み ' + land.toLocaleString() + unit : '&nbsp;')) + '</div></div>';
   };
-  return '<div class="p2-card p2t-wrap"><div class="p2-t">' + icn('target') + ' ' + parseInt(ym.slice(5), 10) + '月にやること<span class="sp"></span><span class="p2-meta">月末まであと ' + left + '日</span></div>'
+  return '<div class="p2-card p2t-wrap"><div class="p2-t">' + icn('target') + ' ' + parseInt(ym.slice(5), 10) + '月にやること<span class="sp"></span>' + (it ? '<span class="p2t-src" onclick="_p2GoIdeal()" title="理想MAPを開く">🎯 目標は理想MAPから ›</span>' : '') + '<span class="p2-meta">月末まであと ' + left + '日</span></div>'
     + '<div class="p2t-grid">'
     + tile('front', 'フロント', '人', true) + tile('upt', 'ユーザーPT', '', true) + tile('teamB1', '新規B1', '人', true)
     + tile('teamPt', 'チームPT', '', true) + tile('actN', '平均稼働人数', '人', false)
     + '</div></div>';
 }
+// v575: 今月の目標の出どころ（理想MAP／ロードマップ／今月の目標）と、変え方の案内
+function _p2TgtSrc(ym, k) {
+  if (k === 'front') return _p2FrontSrc(ym);
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  if (it && k !== 'actN' && it[k] !== undefined) return 'ideal';
+  var m = _p2M(ym); return (m[k] === '' || m[k] == null) ? '' : 'month';
+}
+function _p2TgtChip(src) {
+  var lb = { ideal: '理想MAP', roadmap: 'ロードマップ', month: '今月の目標' }[src];
+  return lb ? '<i class="p2t-chip ' + src + '">' + lb + '</i>' : '';
+}
+var P2_TGT_DEF = {
+  front: { lb: 'フロント', u: '人', ideal: '理想MAPで、<b>自分の直下</b>に今月スタートする新しいB1（ビジネスメンバー）の人数', go: '理想MAPで新しいB1を足す', how: 'root' },
+  upt: { lb: 'ユーザーPT', u: '', ideal: '理想MAPの<b>自分のカード</b>のPT', go: '理想MAPで自分のカードを開く', how: 'root' },
+  teamB1: { lb: '新規B1', u: '人', ideal: '理想MAPで、<b>チーム全体</b>に今月スタートする新しいB1の人数（自分の直下もふくむ）', go: '理想MAPを開く', how: 'map', tip: '増やしたいメンバーのカードを押して「直下に追加」' },
+  teamPt: { lb: 'チームPT', u: '', ideal: '理想MAPの<b>チーム全員のPTの合計</b>', go: '理想MAPを開く', how: 'map', tip: 'メンバーのカードを押してGSVを変えると合計が変わります' },
+  actN: { lb: '平均稼働人数', u: '人', go: '今月の目標で変える', how: 'month' }
+};
+function p2TgtWhy(k) {
+  var d = P2_TGT_DEF[k]; if (!d) return;
+  var ym = _p2Ym(0), src = _p2TgtSrc(ym, k), act = _p2Act(ym);
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  var t = k === 'front' ? _p2FrontTgt(ym) : (src === 'ideal' ? (+it[k] || 0) : _p2M(ym)[k]);
+  var fmt = function(v) { return (v === '' || v == null) ? '—' : (+v).toLocaleString() + d.u; };
+  var body, btn;
+  if (src === 'ideal') {
+    body = '<div class="p2tw-src">この目標は<b class="pu">理想MAP</b>の数字です</div><div class="p2tw-tx">' + d.ideal + '（今は <b>' + fmt(t) + '</b>）</div>' + (d.tip ? '<div class="p2tw-tip">💡 ' + d.tip + '</div>' : '');
+    btn = '<span class="p2-btn pri p2tw-go" onclick="p2TgtGo(\'' + k + '\')">' + d.go + ' ›</span>';
+  } else if (src === 'roadmap') {
+    body = '<div class="p2tw-src">この目標は<b>年間ロードマップ</b>の数字です</div><div class="p2tw-tx">今月のフロント（F）は今 <b>' + fmt(t) + '</b>。理想MAPで自分の直下に新しいB1を足すと、理想MAPの人数が目標になります</div>';
+    btn = '<span class="p2-btn pri p2tw-go" onclick="_p2SheetClose(\'p2TwOv\');p2RmOpen()">ロードマップで変える ›</span><span class="p2-btn p2tw-go" onclick="p2TgtGo(\'front\')">理想MAPで新しいB1を足す ›</span>';
+  } else {
+    body = '<div class="p2tw-src">この目標は<b>今月の目標</b>カードで入れた数字です</div><div class="p2tw-tx">今は <b>' + fmt(t) + '</b>' + (k !== 'actN' ? '。理想MAPを作ると、理想MAPの数字が自動で目標になります' : '（自分で決める目標です）') + '</div>';
+    btn = '<span class="p2-btn pri p2tw-go" onclick="p2TgtGo(\'actN\',\'' + k + '\')">今月の目標で変える ›</span>';
+  }
+  _p2SheetClose('p2TwOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2TwOv'; ov.style.zIndex = '625';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2TwOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🎯 ' + d.lb + 'の目標</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">今月の実績 ' + fmt(act[k]) + ' ／ 目標 ' + fmt(t) + '</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2TwOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">' + body + btn + '</div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2TgtGo(k, field) {
+  _p2SheetClose('p2TwOv');
+  var d = P2_TGT_DEF[k] || {};
+  if (d.how === 'month') {
+    if (currentView !== 'plan') switchView('plan');
+    setTimeout(function() {
+      var el = document.getElementById('p2MonCur'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var inp = el && el.querySelector('input.p2-in[onchange*="\'' + (field || k) + '\'"]'); if (inp) setTimeout(function() { try { inp.focus(); } catch (eF) {} }, 400);
+    }, 120);
+    return;
+  }
+  _p2GoIdeal(d.how === 'root' ? function() {
+    var arr = (typeof _idealEnsure === 'function') ? _idealEnsure() : (state.idealMembers || []);
+    var root = arr.filter(function(m) { return !m.parentId && !m.deleted; })[0];
+    if (root && typeof idqOpen === 'function') idqOpen(root.id);
+  } : null);
+}
+// PLANから理想MAPへ移る（下に「← PLANに戻る」を出す）
+function _p2GoIdeal(after) {
+  window._p2BackY = window.scrollY || (document.scrollingElement || {}).scrollTop || 0;
+  switchView('ideal');
+  var b = document.getElementById('p2BackPill');
+  if (!b) { b = document.createElement('div'); b.id = 'p2BackPill'; b.className = 'p2-back'; b.onclick = p2BackToPlan; document.body.appendChild(b); }
+  b.innerHTML = '← PLANに戻る'; b.style.display = '';
+  if (after) setTimeout(after, 350);
+}
+function p2BackToPlan() {
+  var y = window._p2BackY || 0;
+  _p2BackHide();
+  switchView('plan');
+  setTimeout(function() { try { window.scrollTo(0, y); } catch (e) {} }, 120);
+}
+function _p2BackHide() { var b = document.getElementById('p2BackPill'); if (b) b.style.display = 'none'; }
 // ⚙ 目標設定のツール（右から出すパネル。常時は表示しない）
 function p2DrawerOpen() {
   _p2SheetClose('p2DwOv');
@@ -15732,7 +15810,7 @@ function _p2MonthHtml(ym, off, forceOpen) {
     var pace = (isCur && actV > 0 && !noPace) ? _p2Pace(actV) : null;
     if (_it9 && _it9[k] !== undefined && !(k === 'front' && !(+_it9.front > 0))) { // v548: 理想MAPの新規フロント0人なら入力欄（月の目標）
       return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
-        + '<span class="p2-ideal" onclick="switchView(\'ideal\')" title="理想MAPで変更">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
+        + '<span class="p2-ideal" onclick="p2TgtWhy(\'' + k + '\')" title="目標の決まり方・変え方">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
         + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
         + (pace !== null ? '<div class="p2-meta">着地 ' + pace.toLocaleString() + '</div>' : '<div class="p2-meta">実績</div>') + '</span></div>';
     }
@@ -15745,7 +15823,7 @@ function _p2MonthHtml(ym, off, forceOpen) {
     + (m.declared ? '<span style="font-size:10px;color:var(--accent);font-weight:800">✓設定済み</span>' : '')
     + '<span class="sp"></span></div>';
   var inner = ''
-    + (_it9 ? '<div class="p2-idealnote" onclick="switchView(\'ideal\')">' + icn('target') + ' フロント・PT・チームB1は<b>理想MAP</b>の数字です（変更は理想MAPで ›）</div>' : '')
+    + (_it9 ? '<div class="p2-idealnote" onclick="_p2GoIdeal()">' + icn('target') + ' フロント・PT・チームB1は<b>理想MAP</b>の数字です（変更は理想MAPで ›）</div>' : '')
     + '<div class="p2-meta" style="margin-bottom:2px">🧍 自分</div>'
     + row('front', 'フロント（人）', act.front, sug)
     + row('upt', 'ユーザーPT', act.upt, '')
@@ -17190,7 +17268,7 @@ function _p2FrontIdeal(ym) {
   var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
   return (it && +it.front > 0) ? +it.front : null;
 }
-function _p2IdealGo(sheet) { if (sheet) _p2SheetClose(sheet); switchView('ideal'); }
+function _p2IdealGo(sheet) { if (sheet) _p2SheetClose(sheet); _p2GoIdeal(); }
 function _p2FrontIdealHtml(n, sheet) {
   return '<div class="p2-fro"><b>' + n + '</b>人<span class="p2-meta">理想MAPの数字（新しいB1の人数）</span><span class="p2a-lk" onclick="_p2IdealGo(\'' + (sheet || '') + '\')">理想MAPで変更 ›</span></div>';
 }
