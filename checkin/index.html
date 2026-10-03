@@ -149,6 +149,15 @@ tr:last-child td{border-bottom:none;}
 .toolrow{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;align-items:center;}
 .toolrow input[type=search]{flex:1;min-width:150px;}
 .monthnav{display:flex;gap:8px;align-items:center;margin:0 0 12px;}
+/* 各タブの上部メニューはスクロールしても固定（topbarの直下に張り付く。高さはJSで計測） */
+.panehead{position:sticky;top:var(--tbh, 56px);z-index:15;background:var(--paper);padding:8px 0 2px;margin:-8px 0 8px;}
+.panehead .toolrow,.panehead .monthnav{margin-bottom:8px;}
+/* 名簿: テーブルの見出し行（番号・氏名…）も固定。表を内部スクロールにして
+   見出し行をその中に貼り付ける（横スクロールも維持。集計マトリクスと同方式） */
+#pRoster .tblwrap{max-height:calc(100vh - var(--tbh, 56px) - var(--phh, 120px) - 64px);overflow-y:auto;}
+#pRoster .tblwrap thead th{position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line);}
+/* 集計: 未終了イベントの説明を出す?ボタン */
+.statq{width:26px;height:26px;border-radius:50%;padding:0;font-weight:700;color:var(--sub);line-height:1;}
 .monthnav b{font-size:16px;min-width:7.5em;text-align:center;}
 
 /* events */
@@ -513,6 +522,7 @@ tr:last-child td{border-bottom:none;}
 
   <!-- 名簿 -->
   <section class="pane" id="pRoster">
+    <div class="panehead">
     <div class="toolrow">
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
@@ -539,6 +549,7 @@ tr:last-child td{border-bottom:none;}
       <button id="btnPrintCards">カード印刷</button>
       <button id="btnDelAll" class="danger">全削除…</button>
     </div>
+    </div>
     <div class="tblwrap">
       <table>
         <thead><tr id="rosterHead"></tr></thead>
@@ -550,7 +561,7 @@ tr:last-child td{border-bottom:none;}
 
   <!-- イベント -->
   <section class="pane" id="pEvents">
-    <div class="monthnav">
+    <div class="monthnav panehead">
       <button class="ghost" id="evPrev">◀</button><b id="evMonthLabel"></b><button class="ghost" id="evNext">▶</button>
       <label for="evUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="evUnionSel"></select>
@@ -564,7 +575,7 @@ tr:last-child td{border-bottom:none;}
 
   <!-- 会計 -->
   <section class="pane" id="pFin">
-    <div class="monthnav">
+    <div class="monthnav panehead">
       <button class="ghost" id="fnPrev">◀</button><b id="fnMonthLabel"></b><button class="ghost" id="fnNext">▶</button>
       <label for="finUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="finUnionSel"></select>
@@ -578,7 +589,7 @@ tr:last-child td{border-bottom:none;}
 
   <!-- 集計 -->
   <section class="pane" id="pStats">
-    <div class="monthnav">
+    <div class="monthnav panehead">
       <button class="ghost" id="stPrev">◀</button><b id="stMonthLabel"></b><button class="ghost" id="stNext">▶</button>
       <label for="stUnionSel" style="font-weight:700;font-size:13px;margin-left:8px;">ユニオン:</label>
       <select id="stUnionSel"></select>
@@ -770,7 +781,17 @@ function showView(id){
   ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
+  if(id === 'vApp') setTimeout(setTbh, 0);   // 固定ヘッダー位置の計測（表示後でないと高さが取れない）
 }
+// 各タブの上部メニューを topbar の直下に固定するための高さ計測（折返しで高さが変わるため実測）
+function setTbh(){
+  var tb = document.querySelector('#vApp .topbar');
+  if(tb && tb.offsetHeight) document.documentElement.style.setProperty('--tbh', tb.offsetHeight + 'px');
+  // 名簿の固定ヘッダー高さ（一括操作行の表示/折返しで変わるため実測）→ 表の内部スクロール高さに使う
+  var ph = document.querySelector('#pRoster .panehead');
+  if(ph && ph.offsetHeight) document.documentElement.style.setProperty('--phh', ph.offsetHeight + 'px');
+}
+window.addEventListener('resize', setTbh);
 function makeQr(el, text, size){
   el.innerHTML = '';
   if(window.QRCode){
@@ -980,8 +1001,17 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v5';
+var APP_VER = 'v8';
 var CHANGELOG = [
+  { v: 'v8', d: '2026/10/03', items: ['DLR会場受講の予約: 日程は今後のDLR / P&P からの選択のみになりました（「その他（日付を手入力）」を廃止）'] },
+  { v: 'v7', d: '2026/10/03', items: [
+    '名簿: テーブルの見出し行（番号・氏名…）もスクロールしても固定されるようになりました'
+  ] },
+  { v: 'v6', d: '2026/10/04', items: [
+    '名簿・イベント・会計・集計の上部メニューが、スクロールしても画面上部に固定されるようになりました',
+    '集計: 研修生に「研修生」マークが付きました',
+    '集計: 未終了イベントの長い説明をやめ、?ボタンを押したときだけ表示するようにしました'
+  ] },
   { v: 'v5', d: '2026/10/04', items: [
     '名簿: 無効メンバーは通常非表示になりました（検索欄の横の「無効も表示」で切替）',
     '名簿: 列見出し（番号・氏名・系列・状態）をタップで並べ替えできます',
@@ -2285,6 +2315,7 @@ Array.prototype.forEach.call(tabs, function(b){
     Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(p){ p.classList.remove('on'); });
     b.classList.add('on');
     $(b.getAttribute('data-pane')).classList.add('on');
+    setTimeout(setTbh, 0);   // 非表示中は高さ0で測れないため、表示後にヘッダー高さを再計測
     if(b.getAttribute('data-pane') === 'pKiosk' && gRec) focusScan();
     if(b.getAttribute('data-pane') === 'pFin') loadFinanceTab();
   };
@@ -2383,6 +2414,7 @@ function renderRoster(){
     + (edit ? '' : ' ※閲覧のみ（編集はこのユニオンの管理者が行えます）');
   var so = $('qShowOff');
   if(so) so.checked = gRosterShowOff;
+  setTbh();   // 一括操作行の表示切替でヘッダー高さが変わるため再計測
   updateSelCount();
 }
 $('q').addEventListener('input', renderRoster);
@@ -4276,8 +4308,6 @@ function dlrRsvModal(m, back){
       + '</select>'
       + '<label>日程（今後のDLR / P&amp;P から選択）</label>'
       + '<select id="dlrEv"></select>'
-      + '<div id="dlrFreeRow" class="' + (cur && !cur.evId ? '' : 'hide') + '">'
-      + '<label>日付</label><input type="date" id="dlrDate" value="' + esc((cur && cur.date) || '') + '"></div>'
       + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>開始</label>'
       + '<input type="time" id="dlrFrom" value="' + esc((cur && cur.timeFrom) || '20:00') + '"></div>'
       + '<div style="flex:1;min-width:0;"><label>終了（自動: 開始の2時間後）</label>'
@@ -4291,7 +4321,7 @@ function dlrRsvModal(m, back){
       + '<button id="dlrCancel">閉じる</button><button class="primary" id="dlrGo">' + (cur ? '予約を変更' : '予約する') + '</button></div>',
       true);
     $('dlrCancel').onclick = goBack;
-    // 地域で絞り込んだDLR/P&Pの選択肢を出す（該当なしなら手入力のみ）
+    // 地域で絞り込んだDLR/P&Pの選択肢を出す（日付の手入力は不可。該当なしは地域の切替を案内）
     var curEvs = [];
     function renderEvOpts(){
       var ar = $('dlrAreaSel').value;
@@ -4301,14 +4331,10 @@ function dlrRsvModal(m, back){
             + esc((ev.date || '') + '　' + (ev.name || '')
               + '（' + (ev.hostUnion || '') + (ev.area ? '・' + ev.area : '') + '）') + '</option>';
         }).join('')
-        + '<option value="__free"' + (((cur && !cur.evId) || !curEvs.length) ? ' selected' : '') + '>その他（日付を手入力）</option>';
-      $('dlrFreeRow').classList.toggle('hide', $('dlrEv').value !== '__free');
+        || '<option value="">この地域に今後のDLR / P&amp;Pはありません（地域を変えてください）</option>';
     }
     $('dlrAreaSel').onchange = renderEvOpts;
     renderEvOpts();
-    $('dlrEv').onchange = function(){
-      $('dlrFreeRow').classList.toggle('hide', $('dlrEv').value !== '__free');
-    };
     $('dlrFrom').onchange = function(){ $('dlrTo').value = dlrTimeTo($('dlrFrom').value); };
     var del = $('dlrDel');
     if(del) del.onclick = function(){
@@ -4325,13 +4351,9 @@ function dlrRsvModal(m, back){
     $('dlrGo').onclick = function(){
       var sel = $('dlrEv').value;
       var date = '', evName = '', evId = '', evUnion = '';
-      if(sel === '__free'){
-        date = $('dlrDate').value;
-      } else {
-        var ev = curEvs[parseInt(sel, 10)];
-        if(ev){ date = ev.date || ''; evName = ev.name || ''; evId = ev.id; evUnion = ev.hostUnion || ''; }
-      }
-      if(!date){ toast('日付を選択してください'); return; }
+      var ev = sel === '' ? null : curEvs[parseInt(sel, 10)];
+      if(ev){ date = ev.date || ''; evName = ev.name || ''; evId = ev.id; evUnion = ev.hostUnion || ''; }
+      if(!date){ toast('日程を選択してください'); return; }
       var rsv = {
         date: date, timeFrom: $('dlrFrom').value || '20:00', timeTo: $('dlrTo').value || dlrTimeTo($('dlrFrom').value),
         evName: evName, evId: evId, evUnion: evUnion, msg: $('dlrMsg').value.trim(),
@@ -6642,7 +6664,7 @@ function ckRateRows(evs, attMaps, unionMembers){
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
   unionMembers.forEach(function(m){
     if(ckMemberOff(m)) return;   // 無効（旧休会含む）は集計に出さない（過去に出席した月は下の出席記録から行に載る）
-    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true });
+    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true, trainee: !!m.trainee });
   });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
@@ -6768,12 +6790,18 @@ function loadStats(){
 }
 function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
   var held = evs.length;
-  // 受付中・これからのイベントは受付終了後に集計へ反映される旨の案内
+  // 受付が終わっていないイベントの一覧表示は廃止し、?ボタンだけ置く（押すと説明を表示）
   var pendHtml = (pendingEvs && pendingEvs.length)
-    ? '<p style="color:var(--sub);font-size:13.5px;">🕒 受付がまだ終了していないイベント: '
-      + pendingEvs.map(function(ev){ return '<b>' + esc((ev.date || '').slice(5).replace('-', '/') + ' ' + (ev.name || '')) + '</b>'; }).join('、')
-      + '　— 「受付を終了」すると集計（稼働率）に反映されます。</p>'
+    ? '<p style="margin:0 0 8px;"><button class="statq" id="stPendInfo" title="集計に入っていないイベントがあります">?</button></p>'
     : '';
+  function bindPendInfo(){
+    var b = $('stPendInfo');
+    if(b) b.onclick = function(){
+      modal('<p style="font-size:14.5px;line-height:1.9;margin:0;">「受付を終了」すると集計（稼働率）に反映されます。</p>'
+        + '<div class="btns"><button id="piClose">閉じる</button></div>');
+      $('piClose').onclick = closeModal;
+    };
+  }
   var visitsHtml = '';
   if(visits && visits.length){
     visits.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
@@ -6790,6 +6818,7 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
     $('statBody').innerHTML = pendHtml
       + (pendHtml ? '' : '<p style="color:var(--sub)">この月の「' + esc(gStatUnion) + '」のイベントはありません。</p>')
       + visitsHtml;
+    bindPendInfo();
     gStat = null; return;
   }
   // 行: 有効メンバー + 出席したゲスト（出席回数・稼働率まで ckRateRows で計算＝MAPへ渡す数字と同じ）
@@ -6844,6 +6873,7 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
     + '<div id="statMatrix"></div>'
     + visitsHtml;
   $('statBody').innerHTML = pendHtml + html;
+  bindPendInfo();
   $('statQ').addEventListener('input', function(){ gStat.q = this.value; renderStatMatrix(); });
   renderStatMatrix();
 }
@@ -6890,7 +6920,8 @@ function renderStatMatrix(){
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
     + th('count', '回数') + '</tr></thead><tbody>'
     + (view.length ? view.map(function(r){
-        return '<tr><td class="stk stk1"><b>' + esc(r.name) + '</b></td><td class="stk stk2">' + esc(r.group) + '</td>'
+        return '<tr><td class="stk stk1"><b>' + esc(r.name) + '</b>'
+          + (r.trainee ? ' <span class="pill n" style="font-size:10px;">研修生</span>' : '') + '</td><td class="stk stk2">' + esc(r.group) + '</td>'
           + '<td class="stk stk3 rate">' + (r.member ? r.rate + '%' : '—') + '</td>'
           + r.marks.map(function(v){ return '<td class="mk">' + (v ? '<span class="y">●</span>' : '<span class="nn">・</span>') + '</td>'; }).join('')
           + '<td class="mono">' + r.count + '</td></tr>';
