@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v570';
+var APP_JS_VERSION = 'v571';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v570';
+  var DATA_VERSION = 'v571';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4954,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v571', d:'2026-10-03', items:['🎓 v570より前に入れた予定も、研修履歴にまとめて自動でつなぎました（30日前以降の予定。タイトルが研修ステップで、関連メンバーが研修生のもの）。同じステップの記録がすでにあれば新しく作らずにその記録につなぎ、済んだステップ・先に進んでいる人はそのままにします'] },
   { v:'v570', d:'2026-10-03', items:['🗓 予定の「種類」の欄をなくしました。タイトルに ST・SNST・CT取り・CT・FT が入っていれば、そのままPLANの行動量に数えます（マケ・PG・DLRなどはカレンダーからは数えません）。タイトルの下に「→ PLAN『CT』に数えます」のように連携先を1行表示（？で説明）','🎓 タイトルが研修ステップ（FT・マケ・PG・DLR・EXP・PA・面談・BPC・CO）の予定で関連メンバーに研修生を選ぶと、その人の研修履歴に「予定」として自動で入ります。予定の日付を変える・消す・メンバーを外すと研修履歴の予定も追従（結果を入れた記録はそのまま）','📊 PG・マケ・DLR動員は研修履歴から数えるように：自分の直下の研修生に結果（進んだ・流れた）を入れたら「今月の行動量」に、それ以外の研修生は「今月の目標」のチーム欄（PG・DLR動員の目標を追加）に数えます。DLR動員は会場に来た人だけ。日付が過ぎて結果が未入力の人は「結果待ち」と表示','⚡ かんたん追加：区分のボタンをやめて、タイトルを選ぶだけに（研修生の入口はマケ・PG）'] },
   { v:'v569', d:'2026-10-02', items:['🎮 PLANに「数字の決まり方を体験（1分）」を追加：練習用のミニ画面で ①理想MAPに新しいB1を足す ②係数を変える ③今週CTの予定を入れる ④1週間すすめる、の4つを操作すると、今月の必要数・今週の目標が目の前で変わります（本物のデータは変わりません）','▶ 「見るだけ」を選ぶと自動で操作して見せてくれます。はじめての人には「今月の行動量」に案内が出ます（✕で消せます）。「なぜこの数字？」の画面からも開けます'] },
   { v:'v568', d:'2026-10-02', items:['🧮 PLANの「今月の行動量」「今週の作戦」の数字に、計算式を表示（例：16件の横に「＝2人×8」、今週4件の横に「残り12÷3週」）','👆 式をタップすると「なぜこの数字？」：フロント目標（理想MAP・ロードマップ・今月の目標のどれから来たか）→ 係数 → 今月の必要数 → 先週までの実績 → 月末までの週の数 → 今週の目標、を実際の数字で順番に表示。それぞれの箱から理想MAP・係数・カレンダーへ移動できます','🔧 CT取りの目標が、ドタキャン余裕の％によっては小数の誤差で1件多く出ることがあったのを修正'] },
@@ -18417,7 +18418,7 @@ function loadEvents(uid) {
     var _all = list || [];
     state.trashEvents = _all.filter(function(e){ return !!e.deleted; });
     state.events = _all.filter(function(e){ return !e.deleted; });
-    window._evLoadedUid = uid; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} }, 800); // v567
+    window._evLoadedUid = uid; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); // v567・v571
     try {
       var _cut = new Date(Date.now() - 30 * 86400000).toISOString();
       state.trashEvents = state.trashEvents.filter(function(e){
@@ -18507,6 +18508,42 @@ function _tsUnlink(m, h) {
   var e = findEvent(h.evId);
   delete h.evId;
   if (e) { e.tsOff = e.tsOff || {}; e.tsOff[m.id] = 1; saveEventDoc(e); }
+}
+// v571: v570より前に入れた予定もまとめて研修履歴につなぐ（今月を開いた時に1回。30日前以降の予定）
+//   すでに同じステップの記録があれば新しく作らずにその記録につなぐ。済んだステップ・先に進んでいる人はつながない
+var _tsMigKey = '';
+function _tsEvMigrate() {
+  if (viewingOwnerUid || (typeof _aggActive !== 'undefined' && _aggActive) || !window._evLoadedUid || window._evLoadedUid !== eventsUid() || window._fdLoadedMonth !== state.currentMonth) return;
+  if (String(state.currentMonth || '').replace('.', '-') !== _p2Ym(0)) return; // 今月のMAPだけ
+  var key = eventsUid() + '|' + state.currentMonth; if (_tsMigKey === key) return; _tsMigKey = key;
+  var t = evTodayYmd(), cut = (function() { var d = new Date(); d.setDate(d.getDate() - 30); return evYmd(d); })();
+  var steps = TITLE_OPTIONS['研修生'] || [], n = 0;
+  (state.events || []).slice().forEach(function(e) {
+    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || !e.date || e.date < cut) return;
+    var step = _tsStepOf(e); if (!step) return;
+    var mids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
+    var offCh = false;
+    mids.forEach(function(mid) {
+      if (e.tsOff && e.tsOff[mid]) return;
+      var m = _mFind(mid); if (!m || m.deleted) return;
+      var hs = m.traineeHistory || [];
+      if (hs.some(function(h) { return h && h.evId === e.id; })) return; // つながり済み
+      if (!_tsIsTrainee(m)) return;
+      var same = hs.filter(function(h) { return h && !h.ir && !h.evId && h.status === step; });
+      var hit = same.filter(function(h) { return h.date === e.date; })[0] || same.filter(function(h) { return h.result === 'planned'; })[0];
+      if (hit) { hit.evId = e.id; n++; return; } // 手で入れた記録につなぐ（日付・Aさんは下で予定に合わせる。結果入りはそのまま）
+      var past = e.date < t;
+      var ahead = steps.indexOf(String(m.title || '').trim()) > steps.indexOf(step);
+      if (same.length || (past && ahead)) { e.tsOff = e.tsOff || {}; e.tsOff[mid] = 1; offCh = true; return; } // 済んだステップ・先に進んでいる人はつながない
+      n++;
+    });
+    if (offCh) saveEventDoc(e); else _tsFromEvent(e);
+  });
+  if (n) {
+    autoSave();
+    try { renderCurrentView(); } catch (eR) {}
+    setTimeout(function() { toast('🎓 これまでの予定を研修履歴に' + n + '件つなぎました'); }, 2600); // 自動保存の「保存しました」の後に
+  }
 }
 function saveEventDoc(e) {
   try { _tsFromEvent(e); } catch (eTs) {} // v570
@@ -29397,7 +29434,7 @@ function fsLoadFromFirestore(uid) {
     if (loaded.current || loaded.ideal || loaded.stats) {
       toast('データを読み込みました ✓');
     }
-    if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} }, 800); } // v567
+    if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); } // v567・v571
     renderCurrentView();
     updateLTSV('current', state.members);
     // v511: 変更検知の基準＝読込直後（描画時の再計算で付く集計値も含めた状態）
