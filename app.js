@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v571';
+var APP_JS_VERSION = 'v572';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v571';
+  var DATA_VERSION = 'v572';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4954,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v572', d:'2026-10-03', items:['💰 PLANの一番上を「目標月収 → 次の山（タイトル）→ 期日」の順に。目標月収は月収かタイトルをタップして自分で決められます','⛰ 決めた月収から、goal settingと同じ月収レンジ（例：51〜100万＝DIAMOND）で次の山のタイトルを自動で決めます。タイトルはあとからプルダウンで選び直せます（「月収に合わせる」で自動に戻す）'] },
   { v:'v571', d:'2026-10-03', items:['🎓 v570より前に入れた予定も、研修履歴にまとめて自動でつなぎました（30日前以降の予定。タイトルが研修ステップで、関連メンバーが研修生のもの）。同じステップの記録がすでにあれば新しく作らずにその記録につなぎ、済んだステップ・先に進んでいる人はそのままにします'] },
   { v:'v570', d:'2026-10-03', items:['🗓 予定の「種類」の欄をなくしました。タイトルに ST・SNST・CT取り・CT・FT が入っていれば、そのままPLANの行動量に数えます（マケ・PG・DLRなどはカレンダーからは数えません）。タイトルの下に「→ PLAN『CT』に数えます」のように連携先を1行表示（？で説明）','🎓 タイトルが研修ステップ（FT・マケ・PG・DLR・EXP・PA・面談・BPC・CO）の予定で関連メンバーに研修生を選ぶと、その人の研修履歴に「予定」として自動で入ります。予定の日付を変える・消す・メンバーを外すと研修履歴の予定も追従（結果を入れた記録はそのまま）','📊 PG・マケ・DLR動員は研修履歴から数えるように：自分の直下の研修生に結果（進んだ・流れた）を入れたら「今月の行動量」に、それ以外の研修生は「今月の目標」のチーム欄（PG・DLR動員の目標を追加）に数えます。DLR動員は会場に来た人だけ。日付が過ぎて結果が未入力の人は「結果待ち」と表示','⚡ かんたん追加：区分のボタンをやめて、タイトルを選ぶだけに（研修生の入口はマケ・PG）'] },
   { v:'v569', d:'2026-10-02', items:['🎮 PLANに「数字の決まり方を体験（1分）」を追加：練習用のミニ画面で ①理想MAPに新しいB1を足す ②係数を変える ③今週CTの予定を入れる ④1週間すすめる、の4つを操作すると、今月の必要数・今週の目標が目の前で変わります（本物のデータは変わりません）','▶ 「見るだけ」を選ぶと自動で操作して見せてくれます。はじめての人には「今月の行動量」に案内が出ます（✕で消せます）。「なぜこの数字？」の画面からも開けます'] },
@@ -14700,8 +14701,7 @@ function _p2PcHeroHtml() {
       + '<div class="p2d-bar"><i style="width:' + Math.round(dDone / dr.length * 100) + '%"></i></div></div>';
   }
   if (nxMode) {
-    finalLine = '<div class="p2h-final" onclick="p2GoalEdit()" title="目標をなおす">🏔 最終ゴール <b>' + evEsc(_p2TitleEn(p.title)) + '</b>'
-      + (p.income ? '・月収 <b>' + Math.round((+p.income) / 10000).toLocaleString() + '万</b>' : '')
+    finalLine = '<div class="p2h-final" onclick="p2GoalEdit()" title="目標をなおす">🏔 最終ゴール ' + (p.income ? '月収 <b>' + Math.round((+p.income) / 10000).toLocaleString() + '万</b>・' : '') + '<b>' + evEsc(_p2TitleEn(p.title)) + '</b>'
       + '・<b>' + parseInt(dl[0], 10) + '年' + parseInt(dl[1], 10) + '月</b>まで' + (rem > 0 ? '<span>（あと' + rem + 'ヶ月）</span>' : '') + ' <i>✎</i></div>';
   }
   top = top.replace('%BB%', bbH).replace('%DREAM%', drH);
@@ -15244,18 +15244,82 @@ function _p2TitleIncome(en) { // 月収の目安（タイトル帯）
 function _p2NextGridHtml(nx) {
   var dl = nx.deadline ? nx.deadline.split('-') : null, rem = nx.deadline ? _glMonthsUntil(nx.deadline) : 0;
   var isBR = nx.title === 'BR';
-  // v559: BRは「目標ファーストボーナス」、それ以外は次の山の月収（未設定ならタイトルの目安）
-  var third = isBR ? '<div class="p2h-inc" onclick="p2GoalEdit()">' + Math.round(nx.fb / 10000).toLocaleString() + '<small>万円</small></div>'
-    : (nx.inc ? '<div class="p2h-inc" onclick="p2GoalEdit()">' + nx.inc.toLocaleString() + '<small>万円</small></div>' : '<div class="p2h-inc p2h-incr">' + (_p2TitleIncome(nx.title) || '—') + '</div>');
+  // v572: いちばん大事な「目標月収」を左に、その右に次の山（タイトル）。月収は自分で決めて、タイトルは月収から自動（あとから選び直せる）
+  //       BRは月収の代わりに目標ファーストボーナス
+  var first = isBR ? '<div class="p2h-inc" onclick="p2GoalEdit()">' + Math.round(nx.fb / 10000).toLocaleString() + '<small>万円</small></div>'
+    : (nx.inc ? '<div class="p2h-inc" onclick="p2NxIncOpen()" title="目標月収を変える">' + nx.inc.toLocaleString() + '<small>万円</small></div>'
+      : '<div class="p2h-inc add" onclick="p2NxIncOpen()">決める</div>');
+  var incHint = (!isBR && !nx.inc && _p2TitleIncome(nx.title)) ? '<div class="p2h-sub">' + evEsc(nx.title) + 'の目安 <b>' + _p2TitleIncome(nx.title) + '</b></div>' : '';
   var fbp = isBR ? _p2FbPlan(nx.fb) : null;
   return '<div class="p2h-grid">'
-    + '<div class="p2h-eb c1">⛰ 次の山' + (nx.suggested ? '<span class="p2h-ex" onclick="p2GoalEdit()" title="最終ゴールから逆算した例です。目標をなおすで決めましょう">例</span>' : '') + '</div><div class="p2h-eb c2">期日</div><div class="p2h-eb c3">' + (isBR ? '目標ファーストボーナス' : (nx.inc ? '目標月収' : '月収の目安')) + '</div>'
-    + '<div class="v c1"><div class="p2h-ttl" onclick="p2GoalEdit()" title="次の山を変える">' + evEsc(nx.title) + '</div></div>'
-    + '<div class="v c2">' + (dl ? '<div class="p2h-dl" onclick="p2GoalEdit()"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div>' : '<span class="p2-btn pri" style="margin:0" onclick="p2GoalEdit()">期日を決める</span>') + '</div>'
-    + '<div class="v c3">' + third + '</div>'
-    + '<div class="s c1">%BB%</div><div class="s c2">%DREAM%</div>'
-    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + (fbp && fbp.target && fbp.n ? '<div class="p2h-sub">フロント 毎月' + fbp.n + '人・新規B1 ' + fbp.sim.nb + '人・組織 ' + fbp.sim.org + '人</div>' : '') + '</div>'
+    + '<div class="p2h-eb c1">' + (isBR ? '🎁 目標ファーストボーナス' : '💰 目標月収') + '</div>'
+    + '<div class="p2h-eb c2">⛰ 次の山' + (nx.suggested ? '<span class="p2h-ex" onclick="p2NxIncOpen()" title="最終ゴールから逆算した例です。月収を決めましょう">例</span>' : '') + '</div>'
+    + '<div class="p2h-eb c3">期日</div>'
+    + '<div class="v c1">' + first + '</div>'
+    + '<div class="v c2"><div class="p2h-ttl" onclick="' + (isBR ? 'p2GoalEdit()' : 'p2NxIncOpen()') + '" title="次の山を選び直す">' + evEsc(nx.title) + '</div></div>'
+    + '<div class="v c3">' + (dl ? '<div class="p2h-dl" onclick="p2GoalEdit()"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div>' : '<span class="p2-btn pri" style="margin:0" onclick="p2GoalEdit()">期日を決める</span>') + '</div>'
+    + '<div class="s c1">' + incHint + '%BB%' + (fbp && fbp.target && fbp.n ? '<div class="p2h-sub">フロント 毎月' + fbp.n + '人・新規B1 ' + fbp.sim.nb + '人・組織 ' + fbp.sim.org + '人</div>' : '') + '</div>'
+    + '<div class="s c2">' + (!isBR && nx.inc && !nx.suggested ? '<div class="p2h-sub">' + (nx.tm ? '自分で選んだタイトル' : '月収から自動') + '</div>' : '') + '%DREAM%</div>'
+    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + '</div>'
     + '</div>';
+}
+// v572: 次の山の目標月収を決める（タイトルは goal setting の月収レンジで自動。あとから選び直せる）
+var _p2Nx = null;
+function p2NxIncOpen() {
+  var nx = _p2Next();
+  if (nx.isFinal || (nx.title === 'BR' && nx.curR < 0 && !nx.inc)) { p2GoalEdit(); return; } // 最終ゴール・BR（ファーストボーナス）は従来の画面で
+  _p2Nx = { inc: nx.inc || '', title: nx.title, manual: !!nx.tm, curR: nx.curR, fin: nx.fin, deadline: nx.deadline };
+  _p2SheetClose('p2NxOv');
+  var list = P2_RANK.filter(function(t) { var r = _p2Rank(t), fr = _p2Rank(nx.fin); return r > nx.curR && (fr < 0 || r <= fr); });
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2NxOv'; ov.style.zIndex = '620';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2NxOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">💰 次の山の目標月収</div><div style="font-size:11px;color:var(--text-dim)">月収を決めると、タイトルは自動で決まります（あとから選び直せます）</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2NxOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div class="fr"><label class="fl">目標月収</label><div style="display:flex;gap:6px;align-items:center"><input class="fi" id="p2nxInc" type="number" inputmode="numeric" value="' + (_p2Nx.inc || '') + '" placeholder="例：60" style="max-width:150px;text-align:right;font-size:22px;font-weight:900" onfocus="edSelAll(this)" oninput="p2NxIncInput()"><span>万円</span></div></div>'
+    + '<div class="fr"><label class="fl">次の山（タイトル） <span class="p2ge-mode" id="p2nxMode"></span></label>'
+    + '<select class="fi p2ge-sel" id="p2nxTitle" onchange="p2NxTitlePick(this.value)">' + list.map(function(t) { return '<option value="' + t + '"' + (t === _p2Nx.title ? ' selected' : '') + '>' + t + '（' + (_p2TitleIncome(t) || '—') + '）</option>'; }).join('') + '</select>'
+    + '<div class="p2-meta" id="p2nxNote" style="margin-top:6px"></div></div>'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:6px;padding:12px" onclick="p2NxSave()">保存</span>'
+    + '<div style="text-align:center;margin-top:12px"><span class="p2a-lk" onclick="_p2SheetClose(\'p2NxOv\');p2GoalEdit()">期日・最終ゴールもなおす ›</span></div>'
+    + '</div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+  _p2NxRender();
+  setTimeout(function() { var i = document.getElementById('p2nxInc'); if (i && !_p2Nx.inc) try { i.focus(); } catch (eF) {} }, 200);
+}
+function _p2NxAutoTitle(v) {
+  var t = _p2Above(_p2TitleByInc(v), _p2Nx.curR), fr = _p2Rank(_p2Nx.fin);
+  if (fr >= 0 && _p2Rank(t) > fr) t = _p2Nx.fin;
+  return t;
+}
+function _p2NxRender() {
+  if (!_p2Nx) return;
+  var sel = document.getElementById('p2nxTitle'); if (sel && sel.value !== _p2Nx.title) sel.value = _p2Nx.title;
+  var md = document.getElementById('p2nxMode');
+  if (md) md.innerHTML = _p2Nx.manual ? '自分で選択 · <span class="p2a-lk" onclick="p2NxAuto()">月収に合わせる</span>' : '月収から自動';
+  var nt = document.getElementById('p2nxNote'), v = +_p2Nx.inc || 0, auto = v ? _p2NxAutoTitle(v) : '';
+  if (nt) nt.innerHTML = !v ? '目安：' + evEsc(_p2Nx.title) + ' は月収 ' + (_p2TitleIncome(_p2Nx.title) || '—')
+    : (_p2Nx.manual && auto !== _p2Nx.title ? '月収 ' + v + '万円 の目安は <b>' + evEsc(auto) + '</b>（' + _p2TitleIncome(auto) + '）。いまは自分で選んだ <b>' + evEsc(_p2Nx.title) + '</b>'
+      : '月収 ' + v + '万円 → <b>' + evEsc(_p2Nx.title) + '</b>（' + (_p2TitleIncome(_p2Nx.title) || '—') + '）');
+}
+function p2NxIncInput() {
+  if (!_p2Nx) return;
+  _p2Nx.inc = Math.max(0, parseInt((document.getElementById('p2nxInc') || {}).value, 10) || 0) || '';
+  if (!_p2Nx.manual && _p2Nx.inc) _p2Nx.title = _p2NxAutoTitle(_p2Nx.inc);
+  _p2NxRender();
+}
+function p2NxTitlePick(t) { if (!_p2Nx || !t) return; _p2Nx.title = t; _p2Nx.manual = true; _p2NxRender(); }
+function p2NxAuto() { if (!_p2Nx) return; _p2Nx.manual = false; if (_p2Nx.inc) _p2Nx.title = _p2NxAutoTitle(_p2Nx.inc); _p2NxRender(); }
+function p2NxSave() {
+  if (!_p2Nx) return;
+  if (!_p2Nx.inc) { toast('目標月収を入れてください'); return; }
+  var p2 = _p2(), old = p2.next || {};
+  p2.next = { title: _p2Nx.title, tm: !!_p2Nx.manual, inc: +_p2Nx.inc, deadline: _p2Nx.deadline || old.deadline || '', fb: _p2Nx.title === 'BR' ? (+old.fb || 0) : 0 };
+  saveGoals();
+  _p2SheetClose('p2NxOv'); _p2Nx = null;
+  if (currentView === 'plan') renderPlan();
+  toast('⛰ 次の山：月収 ' + p2.next.inc + '万円・' + p2.next.title);
 }
 // 次の山までの進み具合（フロントBRの人数・パワーライン）
 function _p2NextProg(en) {
@@ -15595,16 +15659,23 @@ function _p2NorthHtml() {
   var h = '<div class="p2-card">' + (typeof _p2StepperHtml === 'function' ? _p2StepperHtml() : '') + '<div class="p2-t">' + icn('star') + ' 目標設定<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : icn('compass') + ' 目標をつくる') + '</span></div>';
   if (hasGoal) {
     // v483: タイトル・月収を大きく＋スローガン（タップで編集）
+    // v572: いちばん大事な目標月収を先に、その下にタイトル・期日
     h += '<div style="text-align:center;padding:6px 0 4px">'
-      + '<div style="font-size:25px;font-weight:900;letter-spacing:.5px;line-height:1.25">' + evEsc(p.title) + '</div>'
+      + (p.income ? '<div onclick="p2GoalEdit()" style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text-mid)">目標月収 <b style="font-size:34px;font-weight:900;color:var(--accent);letter-spacing:.5px">' + Math.round((+p.income) / 10000).toLocaleString() + '</b><span style="font-size:15px;font-weight:800;color:var(--accent)">万円</span></div>' : '')
+      + '<div style="font-size:23px;font-weight:900;letter-spacing:.5px;line-height:1.25">' + evEsc(p.title) + '</div>'
       + '<div class="p2-meta" style="margin-top:1px">' + evEsc(String(p.deadline).replace('-', '年')) + '月まで</div>';
     h += '<div style="margin-top:4px"><span class="p2a-lk" onclick="p2LifeOpen()">🏡 理想の生活を見る ›</span></div>'; // v555
     var nxM = _p2Next(); // v551: 次の山（最短目標）
-    if (!nxM.isFinal) h += '<div onclick="p2GoalEdit()" style="margin:8px auto 2px;display:inline-block;border:1.5px dashed var(--accent);border-radius:12px;padding:6px 14px;cursor:pointer">'
-      + '<span class="p2-meta">⛰ 次の山</span> <b style="font-size:18px;font-family:Inter,sans-serif">' + evEsc(nxM.title) + '</b> '
-      + (nxM.deadline ? '<span class="p2-meta">' + evEsc(nxM.deadline.replace('-', '年')) + '月まで</span>' : '<span class="p2-meta" style="color:var(--accent)">期日を決める ›</span>')
-      + (nxM.title === 'BR' ? '<div class="p2-meta">目標ファーストボーナス ¥' + nxM.fb.toLocaleString() + '</div>' : (nxM.inc ? '<div class="p2-meta">月 ' + nxM.inc.toLocaleString() + '万円</div>' : '')) + (nxM.suggested ? '<div class="p2-meta" style="color:var(--accent)">最終ゴールから逆算した例 › 決める</div>' : '') + '</div>'; // v559
-    if (p.income) h += '<div style="margin-top:4px;font-size:13px;font-weight:700;color:var(--text-mid)">目標月収 <b style="font-size:28px;font-weight:900;color:var(--accent);letter-spacing:.5px">' + Math.round((+p.income) / 10000).toLocaleString() + '</b><span style="font-size:14px;font-weight:800;color:var(--accent)">万円</span></div>';
+    if (!nxM.isFinal) {
+      var _nxBR = nxM.title === 'BR';
+      h += '<div onclick="' + (_nxBR ? 'p2GoalEdit()' : 'p2NxIncOpen()') + '" style="margin:8px auto 2px;display:inline-block;border:1.5px dashed var(--accent);border-radius:12px;padding:6px 14px;cursor:pointer">'
+        + '<div class="p2-meta">⛰ 次の山' + (nxM.deadline ? '（' + evEsc(nxM.deadline.replace('-', '年')) + '月まで）' : '') + '</div>'
+        + (_nxBR ? '<span class="p2-meta">ファーストボーナス</span> <b style="font-size:20px;color:var(--accent);font-family:Inter,sans-serif">' + Math.round(nxM.fb / 10000).toLocaleString() + '<small style="font-size:12px">万円</small></b>'
+          : (nxM.inc ? '<span class="p2-meta">月収</span> <b style="font-size:20px;color:var(--accent);font-family:Inter,sans-serif">' + nxM.inc.toLocaleString() + '<small style="font-size:12px">万円</small></b>' : '<span class="p2-meta" style="color:var(--accent)">月収を決める</span>'))
+        + ' <span class="p2-meta">→</span> <b style="font-size:18px;font-family:Inter,sans-serif">' + evEsc(nxM.title) + '</b>'
+        + (!nxM.deadline ? '<div class="p2-meta" style="color:var(--accent)">期日を決める ›</div>' : '')
+        + (nxM.suggested ? '<div class="p2-meta" style="color:var(--accent)">最終ゴールから逆算した例 › タップで決める</div>' : '') + '</div>';
+    }
     var motto = (p2.motto || '').trim();
     h += motto
       ? '<div onclick="p2MottoOpen()" style="margin-top:6px;font-size:15px;font-weight:800;font-style:italic;color:var(--text);cursor:pointer" title="タップで編集">『' + evEsc(motto) + '』</div>'
