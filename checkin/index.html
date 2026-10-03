@@ -1258,9 +1258,16 @@ function olState(c, ev){
 // 予約（RSVP）: 開催 rsvpDays 日前（デフォルト4）〜 rsvpDeadline（予約締切日・任意）の間だけ受付
 function rsvpState(c, ev){
   if(!ev.rsvp) return '';
-  var done = false;
-  try{ done = !!localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
-  if(done) return 'done';
+  var ls = null;
+  try{ ls = localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
+  // 受付側で予約を削除すると cards に取消マーカーが入る。予約した時刻（localStorage）より
+  // 新しい取消マーカーがあれば「予約済み」を解除し、受付期間内なら再予約できる状態に戻す
+  var mk = c['rsvp_' + ev.id];
+  if(ls && mk && mk.st === 'cancelled' && (mk.atMs || 0) >= (parseInt(ls, 10) || 1)){
+    try{ localStorage.removeItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
+    ls = null;
+  }
+  if(ls) return 'done';
   var t = todayStr();
   var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
   var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000);
@@ -1428,11 +1435,11 @@ function upBindRsvp(c, ev, i){
       eventDate: ev.date || '', eventName: ev.name || '',
       cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
     }).then(function(){
-      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
       renderUpcoming(c, ev.id);
     }).catch(function(){
       // すでに予約済み（作成のみ許可のため上書きは失敗する）
-      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
       renderUpcoming(c, ev.id);
     });
   };
@@ -3228,9 +3235,16 @@ function rsvpListModal(ev){
       if(!r) return;
       if(b.getAttribute('data-rv') === 'copy'){ copyText(r.name || '', b); }
       if(b.getAttribute('data-rv') === 'del'){
-        if(!window.confirm(r.name + ' さんの予約を削除しますか？')) return;
+        if(!window.confirm(r.name + ' さんの予約を削除しますか？\n（本人の会員証は「予約受付中」に戻り、再予約できるようになります）')) return;
         base.collection('rsvps').doc(r.id).delete().then(function(){
-          toast('予約を削除しました'); closeModal(); rsvpListModal(ev); loadEvents();
+          // 本人の会員証に取消マーカーを書く（「✓予約済み」表示を解除して受付中に戻すため）
+          if(r.cardToken){
+            var u = {};
+            u['rsvp_' + ev.id] = { st: 'cancelled', atMs: Date.now() };
+            return db.collection('cards').doc(r.cardToken).set(u, { merge: true }).catch(function(){});
+          }
+        }).then(function(){
+          toast('予約を削除しました（本人の会員証は予約受付中に戻ります）'); closeModal(); rsvpListModal(ev); loadEvents();
         }).catch(function(e2){ toast(permMsg(e2, '削除権限がありません')); });
       }
     });
