@@ -211,6 +211,9 @@ tr:last-child td{border-bottom:none;}
 .matrix thead th{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--line);}
 .matrix thead th.stk{z-index:4;}
 .matrix thead th.stk3{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
+.matrix .stk4{left:240px;min-width:76px;max-width:76px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+.matrix.has1m .stk3{box-shadow:none;} .matrix.has1m thead th.stk3{box-shadow:0 1px 0 var(--line);}
+.matrix thead th.stk4{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
 .sectionhead{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;flex-wrap:wrap;}
 .sectionhead h2{margin:0;font-size:16px;}
 .sectionhead .note{color:var(--sub);font-size:12.5px;}
@@ -1001,13 +1004,20 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v10';
+var APP_VER = 'v12';
 var CHANGELOG = [
-  { v: 'v10', d: '2026/10/03', items: [
+  { v: 'v12', d: '2026/10/04', items: [
     '稼働率: 未来日のイベントは、誤って受付を開始・終了しても集計（分母）に入らないようになりました',
     '今日以外のイベントで「受付を開始」を押すと確認が出るようになりました',
     '今日以外のイベントの受付を終了するとき、その受付中に記録された出席を削除するか選べます（誤操作の取り消し用）',
     '未来日のイベントで受付を終了しても、オンライン受講の申請は締め切られません'
+  ] },
+  { v: 'v11', d: '2026/10/04', items: [
+    '稼働率: 登録して1ヶ月たっていない人は、名簿に登録した日からのハウディの回数を分母にして計算するようになりました（登録前の開催は表で「－」、稼働率の下に「10/10登録〜」）。GROOVE MAPに取り込む稼働率も同じです'
+  ] },
+  { v: 'v10', d: '2026/10/04', items: [
+    '集計: メンバー別 出席マトリクスに「直近1ヶ月」の稼働率の列を追加（今月を表示している時。1ヶ月前の翌日〜今日の出席÷開催数）。当月の稼働率と並べて見られます。CSVにも出力',
+    'GROOVE MAPの受付連携で取り込む稼働率は「直近1ヶ月」になりました'
   ] },
   { v: 'v9', d: '2026/10/03', items: [
     '予約の取消申請: 受付で先に予約を削除済みの場合でも、申請が受付の予約一覧に届くようになりました（「予約は削除済み」と表示。承認すると会員証が予約受付中に戻ります）',
@@ -6742,7 +6752,7 @@ function ckRateRows(evs, attMaps, unionMembers){
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
   unionMembers.forEach(function(m){
     if(ckMemberOff(m)) return;   // 無効（旧休会含む）は集計に出さない（過去に出席した月は下の出席記録から行に載る）
-    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true, trainee: !!m.trainee });
+    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true, trainee: !!m.trainee, since: ckSinceOf(m) });
   });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
@@ -6755,25 +6765,72 @@ function ckRateRows(evs, attMaps, unionMembers){
       }
     });
   });
-  var held = evs.length;
   rows.forEach(function(r){
     r.marks = evs.map(function(ev){ return attMaps[ev.id][r.no] ? 1 : 0; });
-    r.count = r.marks.reduce(function(a,b){ return a + b; }, 0);
+    // 分母は登録した日（名簿の登録日）以降のハウディだけ＝活動1ヶ月未満の人は登録してからの回数で割る
+    var held = 0, cnt = 0;
+    evs.forEach(function(ev, i){ if(!r.since || (ev.date || '') >= r.since){ held++; cnt += r.marks[i]; } });
+    r.count = cnt; r.held = held;
     r.rate = held ? Math.round(r.count / held * 100) : 0;
   });
   return rows;
 }
+// 名簿に登録した日（YYYY-MM-DD）。CSV取込など登録日が無い人は '' ＝ 分母は期間の全部
+function ckSinceOf(m){
+  var t = m && m.createdAt; if(!t) return '';
+  var d = t.toDate ? t.toDate() : (t.seconds ? new Date(t.seconds * 1000) : new Date(t));
+  if(!d || isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
 // GROOVE MAPの「受付連携」はこの集計結果を読むだけ（MAP側では計算しない＝数字が必ず一致する）
 //   checkinStats/{ユニオン}__{YYYY-MM} = { union, month, held, evIds, rates:{番号:{count,rate}}, calcAt, calcDay }
 function ckStatDocId(union, key){ return String(union || '').replace(/\//g, '／') + '__' + key; }
-function ckSaveRateSnapshot(union, key, evs, rows){
+function ckSaveRateSnapshot(union, key, evs, rows, range){
   if(!union || !key || !gUser) return Promise.resolve();
   var rates = {};
-  rows.forEach(function(r){ if(!/^g/.test(r.no)) rates[r.no] = { count: r.count, rate: r.rate }; });
-  return db.collection('checkinStats').doc(ckStatDocId(union, key)).set({
+  rows.forEach(function(r){ if(!/^g/.test(r.no)) rates[r.no] = { count: r.count, rate: r.rate, held: r.held, since: r.since || '' }; });
+  var doc = {
     union: union, month: key, held: evs.length, evIds: evs.map(function(ev){ return ev.id; }),
     rates: rates, calcAt: Date.now(), calcDay: todayStr(), by: gUser.uid
-  }).catch(function(){});   // ルール未反映などで書けなくても集計画面は動かす
+  };
+  if(range){ doc.from = range.from; doc.to = range.to; }
+  return db.collection('checkinStats').doc(ckStatDocId(union, key)).set(doc).catch(function(){});   // ルール未反映などで書けなくても集計画面は動かす
+}
+// 直近1ヶ月（1ヶ月前の同じ日の翌日〜今日。例：10/4 → 9/5〜10/4）。GROOVE MAPの稼働率はこちらを読む
+//   checkinStats/{ユニオン}__last1m = { …月の集計と同じ形…, from, to }
+var CK_RECENT_KEY = 'last1m';
+function ckRecentRange(){
+  var d = new Date(), y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
+  var lastPrev = new Date(y, m, 0).getDate();                       // 先月の日数
+  var f = new Date(y, m - 1, Math.min(day, lastPrev) + 1);          // 先月の同じ日（無ければ月末）の翌日
+  return { from: f.getFullYear() + '-' + pad(f.getMonth() + 1) + '-' + pad(f.getDate()), to: todayStr() };
+}
+function ckRefreshRecentSnapshot(union){
+  if(!union) return Promise.resolve();
+  var rg = ckRecentRange(), keys = [rg.from.slice(0, 7)];
+  if(keys.indexOf(rg.to.slice(0, 7)) < 0) keys.push(rg.to.slice(0, 7));
+  return Promise.all(keys.map(function(k){ return db.collection('checkinEvents').where('month', '==', k).get(); })).then(function(qss){
+    var evs = [];
+    qss.forEach(function(qs){ qs.forEach(function(d){ var ev = d.data(); ev.id = d.id;
+      if((ev.unions || []).indexOf(union) >= 0 && (ev.date || '') >= rg.from && (ev.date || '') <= rg.to) evs.push(ev); }); });
+    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    evs = ckHeldEvents(evs);
+    var attMaps = {};
+    var reads = evs.map(function(ev){
+      return db.collection('checkinEvents').doc(ev.id).collection('attendance')
+        .where('union', '==', union).get().then(function(aqs){
+          var m = {};
+          aqs.forEach(function(d){ var a = d.data(); if(a.status === 'pending' || a.status === 'rejected') return; m[d.id] = a; });
+          attMaps[ev.id] = m;
+        });
+    });
+    return Promise.all(reads.concat([fetchMembers(union)])).then(function(res){
+      var rows = ckRateRows(evs, attMaps, res[res.length - 1]);
+      ckSaveRateSnapshot(union, CK_RECENT_KEY, evs, rows, rg);
+      var by = {}; rows.forEach(function(r){ by[r.no] = { count: r.count, rate: r.rate, member: r.member }; });
+      return { union: union, from: rg.from, to: rg.to, held: evs.length, by: by };
+    });
+  }).catch(function(){ return null; });
 }
 // 画面に出さずに集計だけやり直して保存（受付終了・受付再開・起動時の日付変わりに呼ぶ）
 function ckRefreshRateSnapshot(union, key){
@@ -6801,13 +6858,16 @@ function ckRefreshRateSnapshot(union, key){
 function ckRefreshForEvent(ev){
   if(!ev) return;
   var key = ev.month || String(ev.date || '').slice(0, 7);
-  (ev.unions || []).forEach(function(un){ ckRefreshRateSnapshot(un, key); });
+  (ev.unions || []).forEach(function(un){ ckRefreshRateSnapshot(un, key); ckRefreshRecentSnapshot(un); });
 }
 // 起動時：自分のユニオンの今月の集計が今日より前のまま（日付が変わって前日の開催が分母に入った等）なら作り直す
 function ckRefreshIfStale(union){
   var d = new Date(), key = monthKey(d.getFullYear(), d.getMonth() + 1);
   db.collection('checkinStats').doc(ckStatDocId(union, key)).get().then(function(s){
     if(!s.exists || (s.data() || {}).calcDay !== todayStr()) ckRefreshRateSnapshot(union, key);
+  }).catch(function(){});
+  db.collection('checkinStats').doc(ckStatDocId(union, CK_RECENT_KEY)).get().then(function(s){   // 直近1ヶ月（MAPの稼働率）
+    if(!s.exists || (s.data() || {}).calcDay !== todayStr()) ckRefreshRecentSnapshot(union);
   }).catch(function(){});
 }
 
@@ -6903,7 +6963,16 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
   var rosterSex = {};
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
   var rows = ckRateRows(evs, attMaps, unionMembers);
-  ckSaveRateSnapshot(gStatUnion, monthKey(gMonth.y, gMonth.m), evs, rows);   // MAPの受付連携はこの数字を読む
+  ckSaveRateSnapshot(gStatUnion, monthKey(gMonth.y, gMonth.m), evs, rows);   // 月の集計
+  // 直近1ヶ月（MAPの受付連携はこちらを読む）。今月を表示している時は集計画面にも列で出す
+  var _isNow = (function(){ var d = new Date(); return gMonth.y === d.getFullYear() && gMonth.m === d.getMonth() + 1; })();
+  var _statTok = {};
+  ckRefreshRecentSnapshot(gStatUnion).then(function(rc){
+    if(!rc || !_isNow || !gStat || gStat.tok !== _statTok) return;
+    gStat.recent = rc;
+    var nt = $('statRecentNote'); if(nt) nt.innerHTML = '直近1ヶ月 = ' + esc(ckMD(rc.from)) + '〜' + esc(ckMD(rc.to)) + '（開催 ' + rc.held + '回）。GROOVE MAPの稼働率はこちら';
+    renderStatMatrix();
+  });
   // イベントごとの男女内訳（出席レコードの性別、なければ名簿から）
   var evSex = evs.map(function(ev){
     var c = { m: 0, f: 0 };
@@ -6934,7 +7003,7 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
   var avgSexF = held ? r1(sexTotF / held) : 0;
   var byGroupAvg = {};
   Object.keys(grpSum).forEach(function(k){ byGroupAvg[k] = held ? r1(grpSum[k] / held) : 0; });
-  gStat = { evs: evs, rows: rows, held: held, evSex: evSex, q: '', sk: 'count', dir: -1 };
+  gStat = { evs: evs, rows: rows, held: held, evSex: evSex, q: '', sk: 'count', dir: -1, tok: _statTok, recent: null };
 
   var html = '<div class="stattiles">'
     + '<div class="tile"><h3>開催数</h3><div class="bignum">' + held + '<small>回</small></div></div>'
@@ -6946,7 +7015,8 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
     + '</div>'
     + '<div class="sectionhead"><h2>系列別 平均稼動数</h2><span class="note">' + esc(gStatUnion) + '・1回あたりの出席数</span></div>'
     + '<div class="tile">' + (tallyHtml(byGroupAvg, '名') || '<p style="color:var(--sub);font-size:13px;margin:0;">出席がありません</p>') + '</div>'
-    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入）/ 無効のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
+    + '<div class="sectionhead"><h2>メンバー別 出席マトリクス</h2><span class="note">●=出席 / 稼働率 = 出席÷受付終了済みの開催数（当日分は受付終了後に算入。登録して間もない人は登録した日からの開催数）/ 無効のメンバーは表示されません / 列見出しタップで並べ替え</span></div>'
+    + (_isNow ? '<div class="note" id="statRecentNote" style="margin:-2px 0 8px;font-size:12px;color:var(--sub);">直近1ヶ月の稼働率を集計中…</div>' : '')
     + '<input type="text" id="statQ" placeholder="氏名・番号・系列で絞り込み" style="max-width:280px;margin-bottom:8px;">'
     + '<div id="statMatrix"></div>'
     + visitsHtml;
@@ -6956,6 +7026,9 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
   renderStatMatrix();
 }
 // 絞り込み＋ソートを適用した表示行
+// 直近1ヶ月の稼働率（その人の行。集計に出ていない人は -1）
+function ckRecentOf(r){ var x = gStat && gStat.recent && gStat.recent.by[r.no]; return x ? x.rate : -1; }
+function ckMD(ymd){ var p = String(ymd || '').split('-'); return parseInt(p[1], 10) + '/' + parseInt(p[2], 10); }
 function statViewRows(){
   var q = (gStat.q || '').replace(/[ 　]/g, '').toLowerCase();
   var out = gStat.rows.filter(function(r){
@@ -6967,6 +7040,7 @@ function statViewRows(){
     if(sk === 'name'){ va = a.name || ''; vb = b.name || ''; }
     else if(sk === 'group'){ va = a.group || ''; vb = b.group || ''; }
     else if(sk === 'rate'){ va = a.rate; vb = b.rate; }
+    else if(sk === 'rate1m'){ va = ckRecentOf(a); vb = ckRecentOf(b); }
     else if(sk.indexOf('ev') === 0){ var i = +sk.slice(2); va = a.marks[i]; vb = b.marks[i]; }
     else { va = a.count; vb = b.count; }
     if(va < vb) return -dir;
@@ -6981,30 +7055,33 @@ function renderStatMatrix(){
   var th = function(k, label, cls){
     return '<th data-sk="' + k + '"' + (cls ? ' class="' + cls + '"' : '') + ' style="cursor:pointer;white-space:nowrap;">' + label + ar(k) + '</th>';
   };
-  var view = statViewRows();
+  var view = statViewRows(), rc = gStat.recent;
   // 男女フッター（イベントごとの内訳。絞り込みに関係なく全体の値）
   var hasSex = false;
   gStat.evSex.forEach(function(c){ if(c.m || c.f) hasSex = true; });
   var foot = hasSex
     ? '<tfoot>'
-      + '<tr><td class="stk stk1" style="color:var(--sub);font-weight:700;">男</td><td class="stk stk2"></td><td class="stk stk3"></td>'
+      + '<tr><td class="stk stk1" style="color:var(--sub);font-weight:700;">男</td><td class="stk stk2"></td><td class="stk stk3"></td>' + (rc ? '<td class="stk stk4"></td>' : '')
       + gStat.evSex.map(function(c){ return '<td class="mk mono">' + c.m + '</td>'; }).join('') + '<td></td></tr>'
-      + '<tr><td class="stk stk1" style="color:var(--sub);font-weight:700;">女</td><td class="stk stk2"></td><td class="stk stk3"></td>'
+      + '<tr><td class="stk stk1" style="color:var(--sub);font-weight:700;">女</td><td class="stk stk2"></td><td class="stk stk3"></td>' + (rc ? '<td class="stk stk4"></td>' : '')
       + gStat.evSex.map(function(c){ return '<td class="mk mono">' + c.f + '</td>'; }).join('') + '<td></td></tr>'
       + '</tfoot>'
     : '';
-  var html = '<div class="tblwrap mxwrap"><table class="matrix"><thead><tr>'
-    + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', '稼働率', 'stk stk3')
+  var html = '<div class="tblwrap mxwrap"><table class="matrix' + (rc ? ' has1m' : '') + '"><thead><tr>'
+    + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', rc ? '当月' : '稼働率', 'stk stk3') + (rc ? th('rate1m', '直近1ヶ月', 'stk stk4') : '')
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
     + th('count', '回数') + '</tr></thead><tbody>'
     + (view.length ? view.map(function(r){
         return '<tr><td class="stk stk1"><b>' + esc(r.name) + '</b>'
-          + (r.trainee ? ' <span class="pill n" style="font-size:10px;">研修生</span>' : '') + '</td><td class="stk stk2">' + esc(r.group) + '</td>'
-          + '<td class="stk stk3 rate">' + (r.member ? r.rate + '%' : '—') + '</td>'
-          + r.marks.map(function(v){ return '<td class="mk">' + (v ? '<span class="y">●</span>' : '<span class="nn">・</span>') + '</td>'; }).join('')
+          + (r.trainee ? ' <span class="pill n" style="font-size:10px;">研修生</span>' : '')
+          + '</td><td class="stk stk2">' + esc(r.group) + '</td>'
+          + '<td class="stk stk3 rate">' + (r.member ? r.rate + '%' : '—')
+          + (r.since && gStat.evs.length && r.since > (gStat.evs[0].date || '') ? '<div style="font-size:9.5px;font-weight:600;color:var(--sub);white-space:nowrap;" title="登録した日からのハウディで計算">' + esc(ckMD(r.since)) + '登録〜</div>' : '') + '</td>'
+          + (rc ? '<td class="stk stk4 rate">' + (r.member && rc.by[r.no] ? rc.by[r.no].rate + '%' : '—') + '</td>' : '')
+          + r.marks.map(function(v, i){ return '<td class="mk">' + (r.since && (gStat.evs[i].date || '') < r.since ? '<span class="nn" title="登録前">－</span>' : (v ? '<span class="y">●</span>' : '<span class="nn">・</span>')) + '</td>'; }).join('')
           + '<td class="mono">' + r.count + '</td></tr>';
       }).join('')
-      : '<tr><td colspan="' + (gStat.evs.length + 4) + '" style="color:var(--sub);">該当するメンバーがいません</td></tr>')
+      : '<tr><td colspan="' + (gStat.evs.length + (rc ? 5 : 4)) + '" style="color:var(--sub);">該当するメンバーがいません</td></tr>')
     + '</tbody>' + foot + '</table></div>';
   $('statMatrix').innerHTML = html;
   $('statMatrix').querySelector('thead').addEventListener('click', function(e){
@@ -7018,11 +7095,12 @@ function renderStatMatrix(){
 }
 $('btnStatCsv').onclick = function(){
   if(!gStat){ toast('集計データがありません'); return; }
-  var head = ['番号','氏名','系列','性別'].concat(gStat.evs.map(function(ev){ return ev.date + ' ' + ev.name; })).concat(['出席回数','稼働率%']);
+  var rc = gStat.recent;
+  var head = ['番号','氏名','系列','性別'].concat(gStat.evs.map(function(ev){ return ev.date + ' ' + ev.name; })).concat(['出席回数','稼働率%']).concat(rc ? ['直近1ヶ月稼働率%（' + rc.from + '〜' + rc.to + '）'] : []);
   var rows = [head];
   statViewRows().forEach(function(r){
     var sx = r.sex === 'm' ? '男' : (r.sex === 'f' ? '女' : '');
-    rows.push([r.no, r.name, r.group, sx].concat(r.marks.map(function(v){ return v ? 1 : 0; })).concat([r.count, r.rate]));
+    rows.push([r.no, r.name, r.group, sx].concat(r.marks.map(function(v){ return v ? 1 : 0; })).concat([r.count, r.rate]).concat(rc ? [rc.by[r.no] ? rc.by[r.no].rate : ''] : []));
   });
   csvDownload('kadou_' + gStatUnion + '_' + monthKey(gMonth.y, gMonth.m) + '.csv', rows);
 };

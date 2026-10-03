@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v575';
+var APP_JS_VERSION = 'v577';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v575';
+  var DATA_VERSION = 'v577';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4955,6 +4955,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v577', d:'2026-10-04', items:['📊 受付連携で取り込む稼働率を「今月」から「直近1ヶ月」（1ヶ月前の翌日〜今日。例：10/4なら9/5〜10/4）の出席÷開催数に。月初でも数字がブレにくくなります（過去の月のMAPはその月の数字のまま）'] },
+  { v:'v576', d:'2026-10-04', items:['📝 アウトライン企画書（ATTACK LISTから移動）：メンバー編集の活動タブ「＋ 追加 → アウトライン企画書」から。Cはその人（名前・キャリア・タイトル・稼働・稼働率はMAPから自動・直せます）、Bは自分。課題・伝えていただきたい事・望む結果は定型文ボタンつき','📤 「LINEで送る」でLINEの送り先を選ぶ画面が開きます（AさんのLINE IDの登録は不要）。「コピー」も。送った日が「送信済み」で残ります','🗂 企画書はOL（予定）とひとつ：日時・テーマ・場所・参加者はOLと同じ。活動タブのOLに「📝企画書」の印、「📝企画書」で絞り込んで見返せます。OLの企画画面からも開けます','↻ 「前回の企画書から作る」で課題・伝えていただきたい事・望む結果を引き継げます'] },
   { v:'v575', d:'2026-10-03', items:['🎯 PLAN「今月にやること」の目標に出どころの印（理想MAP・ロードマップ・今月の目標）。理想MAPの数字は紫に','👆 タイルを押すと「この目標は理想MAPの数字です」と変え方を案内：フロントは自分の直下に新しいB1を足す画面、ユーザーPTは自分のカード、平均稼働人数は今月の目標の入力欄へ直接移動','← 理想MAPに移ったら画面の下に「PLANに戻る」。押すと元の位置に戻ります'] },
   { v:'v574', d:'2026-10-03', items:['✏️ 目標設定「どのあたりに住みたい？」の例を「大濠、南青山、新町」に変更'] },
   { v:'v573', d:'2026-10-03', items:['🔧 マイルストーン・年間ロードマップでフロント目標（F）を入れ直しても反映されなかった問題：理想MAPに新しいB1がいる月のFは理想MAPの人数で決まるため、その月は入力欄の代わりに「理想MAPの数字（理想MAPで変更 ›）」と表示するように（ギャップの割り振りも、その月はそのまま）','🔧 シミュレーションの「今月の目標に入れる」が、ロードマップに今月の数字があると反映されなかったのを修正'] },
@@ -6156,8 +6158,8 @@ function ckLinkRender() {
     + '<span class="ms-x" onclick="ckLinkClose()">✕</span></div>'
     + '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">受付ユニオン</div>' + unionSel
     + '<div style="max-height:44vh;overflow-y:auto;margin-top:10px">' + (rows || '<div style="padding:16px;color:var(--text-dim);font-size:13px">このMAPにメンバーがいません</div>') + '</div>'
-    + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + evEsc((state.currentMonth || currentMonthStr())) + ' の稼働率を取り込む</button>'
-    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率は受付システムの「集計」の数字をそのまま取り込みます（MAPでは計算しません）。稼働タイプSの人は自動更新の対象外です。</div>'
+    + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + (_ckIsNowMonth() ? '直近1ヶ月' : evEsc((state.currentMonth || currentMonthStr())) + ' ') + 'の稼働率を取り込む</button>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率は受付システムが計算した数字をそのまま取り込みます（MAPでは計算しません）。今月のMAPは<b>直近1ヶ月</b>（1ヶ月前の翌日〜今日）の出席÷開催数、過去の月のMAPはその月の数字です。</div>'
     + '</div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -6178,7 +6180,7 @@ function ckLinkApply() {
     renderCurrentView();
     if (held) {
       var d0 = new Date(), today0 = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
-      toast('連携完了 ✓ 新規リンク' + newLinks + '名・受付システムの集計（' + _ckStatWhen(st) + '時点・開催' + held + '回）を' + updated + '名に反映'
+      toast('連携完了 ✓ 新規リンク' + newLinks + '名・' + _ckRateLabel(st) + '稼働率（' + _ckStatWhen(st) + '時点・開催' + held + '回）を' + updated + '名に反映'
         + (skipped ? '（休会中など集計外の' + skipped + '名は変更なし）' : '')
         + (st.calcDay && st.calcDay !== today0 ? '　※最新にするには受付システムの「集計」を開いてから、もう一度連携してください' : ''));
     } else if (st) toast('リンクを保存しました（' + _ckMonthKey() + ' はまだ受付が終了した開催がないため稼働率は未更新）');
@@ -6188,10 +6190,14 @@ function ckLinkApply() {
 // v536: 稼働率はMAPでは計算せず、受付システムが集計した数字（checkinStats/{ユニオン}__{YYYY-MM}）を読むだけ。
 //        計算式は受付システムの1か所だけ＝受付システムの集計画面と必ず同じ数字になる
 function _ckStatDocId(union, key) { return String(union || '').replace(/\//g, '／') + '__' + key; }
+// v577: 今月のMAPは「直近1ヶ月」（受付システムの checkinStats/{ユニオン}__last1m・例 9/5〜10/4）。無ければ今月の集計。過去の月のMAPはその月の集計
+function _ckIsNowMonth() { var d = new Date(); return _ckMonthKey() === d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function _ckRateLabel(st) { return st && st.from && st.to ? '直近1ヶ月（' + _ckMD(st.from) + '〜' + _ckMD(st.to) + '）' : _ckMonthKey().replace('-', '.') + 'の'; }
+function _ckMD(ymd) { var p = String(ymd || '').split('-'); return parseInt(p[1], 10) + '/' + parseInt(p[2], 10); }
 function ckImportRates(done) {
   var un = _ckLink.sel, month = _ckMonthKey();
-  db.collection('checkinStats').doc(_ckStatDocId(un, month)).get().then(function(snap) {
-    var st = snap && snap.exists ? (snap.data() || {}) : null;
+  var getSt = function(key) { return db.collection('checkinStats').doc(_ckStatDocId(un, key)).get().then(function(s) { return s && s.exists ? (s.data() || {}) : null; }); };
+  (_ckIsNowMonth() ? getSt('last1m').then(function(r) { return (r && r.held) ? r : getSt(month); }) : getSt(month)).then(function(st) {
     if (!st || !st.held) { done(0, 0, st); return; }
     var rates = st.rates || {}, updated = 0, skipped = 0;
     _ckOwnMembers().forEach(function(m) {
@@ -6244,7 +6250,7 @@ function renderMembers() {
     return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
   }).join('')
     + (mergedCt > 0 ? '<span class="ml-pill" style="border-style:dashed;color:' + (incM ? 'var(--accent)' : 'var(--text-dim)') + '" onclick="toggleMemberIncMerged()" title="集計・カテゴリに結合メンバーを含めるか">' + icn('link') + (incM ? '結合込み ✓' : '結合除外') + '</span>' : '')
-    + (!viewingOwnerUid ? '<span class="ml-pill" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</span>' : '')
+    + (!viewingOwnerUid ? '<span class="ml-pill" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて直近1ヶ月の稼働率を取り込む">⟲ 受付連携</span>' : '')
     + '</div>';
   if (!list.length) { wrap.innerHTML = html + '<div class="ck-empty">該当するメンバーがいません</div>'; return; }
   html += '<div class="ml-list">' + list.map(function(m){
@@ -10314,6 +10320,7 @@ function _olpDetailHtml() {
   }
   if (!ro) {
     h += '<button class="btn-p olp-save" onclick="olpSave()">保存</button>';
+    if (_olp.mode === 'edit' && _olp.gid) { _otlCss(); var _oe = _olEvFind(_olp.gid); h += '<button class="olp-otl" onclick="otlFromOl(\'' + _olp.gid + '\',\'' + (_olp.mids[0] || '') + '\')">📝 ' + (_oe && _oe.outline ? 'アウトライン企画書を開く' + (_oe.outline.sentAt ? '（送信済み）' : '（下書き）') : 'アウトライン企画書をつくる') + '</button>'; } // v576
     if (_olp.mode === 'edit') h += '<button class="olp-del" onclick="olpDelete()">' + icn('trash') + ' この企画を削除</button>';
   }
   return h;
@@ -10447,6 +10454,361 @@ function _olEvMigrate() {
     _olFromEvent(e); saveEventDoc(e); n++;
   });
   if (n) { try { renderCurrentView(); } catch (eR) {} }
+}
+// ════ v576: アウトライン企画書（OLの中身。ATTACK LIST から移植＝OUTLINE_HANDOFF.md） ════
+//   1回のOL（予定 maps/{uid}/events の OL）につき1枚。e.outline = { tpl, v, union, writer, createdAt, updatedAt, sentAt }
+//   日時・テーマ・場所・参加者（C）はOLの予定と同じもの（どちらで直しても合う）。Aさん（送る相手）は文面に出さない
+var OUTLINE_TITLES = ['TE', 'PD', 'BD', 'D', 'E', 'R', 'L', 'G', 'BR', 'Q4', 'Q3', 'Q2', 'LOI',
+                      'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'BM',
+                      'FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO'];
+var OUTLINE_ACTIVITY = ['S', 'A', 'B', 'C'];
+var OUTLINE_TPL_DEFAULT = [
+  { type: 'section', label: '日時・場所' },
+  { key: 'when', label: '日時', type: 'datetime', fmt: 'head', reset: true },
+  { key: 'theme', label: 'テーマ', type: 'text', fmt: 'square', reset: true },
+  { key: 'place', label: '場所', type: 'text', fmt: 'square', reset: true },
+  { type: 'section', label: '参加者' },
+  { key: 'members', label: '参加者', type: 'participants', options: OUTLINE_TITLES, fmt: 'square' },
+  { key: 'current', label: '対象者現状', type: 'bullets', rows: 1, fmt: 'angle', withTarget: true },
+  { type: 'section', label: '内容' },
+  { key: 'issues', label: '課題', type: 'bullets', rows: 2, presets: [
+    '優先順位　例：優先順位の重要性をわかっておらず、ハウディに来たり来なかったりする',
+    '確信が低い　例：紹介者しか見ておらず、確信が低い',
+    '報連相　例：自己流で行動しており、うまくいっていない',
+    '行動量　例：条件付けがかかっており、数人にしか伝えていない',
+    'オウンシップ　例：紹介者され気分で、オウンシップがない'] },
+  { key: 'messages', label: '伝えていただきたい事', type: 'bullets', rows: 2, presets: [
+    '改善改良のスピードを上げる', '自分で考えて動く', 'STを活用する', '次に話せるネタを持つ'] },
+  { key: 'goals', label: '望む結果', type: 'bullets', rows: 2, presets: [
+    '自分で動けるようになる', '自分で話せるようになる', '次回の動きが変わる', '業績につなげる'] },
+  { key: 'thanks', label: '御礼', type: 'textarea' }
+];
+// 定型文「見出し　例：例文」→ { label, eg }
+function olPreset(str) {
+  var m = String(str).match(/^(.*?)[\s　]*例[:：]\s*(.*)$/);
+  return (m && m[1]) ? { label: m[1].replace(/^\s+|\s+$/g, ''), eg: m[2].replace(/^\s+|\s+$/g, '') }
+                     : { label: String(str).replace(/^\s+|\s+$/g, ''), eg: '' };
+}
+function olTrim(s) { return String(s == null ? '' : s).replace(/^[\s　]+|[\s　]+$/g, ''); }
+// アウトライン1件 → 共有用テキスト（OUTLINE_HANDOFF.md 3章のまま。ATTACK LIST の出力と文字単位で一致）
+function outlineToText(sheet) {
+  var tpl = sheet.tpl || OUTLINE_TPL_DEFAULT, v = sheet.v || {};
+  var blocks = [], target = null, i;
+  for (i = 0; i < tpl.length; i++) {
+    if (tpl[i].type === 'participants') { target = ((v[tpl[i].key] || {}).c || [])[0] || null; break; }
+  }
+  tpl.forEach(function (f) {
+    if (f.type === 'section') return;
+    var val = v[f.key], lines = [];
+    if (f.type === 'datetime') {
+      if (!val || !val.date) return;
+      var p = val.date.split('-');
+      var md = parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日';
+      blocks.push([md + ' アウトライン分', f.label + ':' + md + (val.time ? ' ' + val.time : '')]);
+      return;
+    }
+    if (f.type === 'participants') {
+      val = val || {};
+      if (olTrim(val.b)) lines.push('B:' + olTrim(val.b));
+      var started = false;
+      (val.c || []).forEach(function (x) {
+        var name = olTrim(x.name), meta = [];
+        if (olTrim(x.career)) meta.push('キャリア:' + olTrim(x.career));
+        if (x.titles && x.titles.length) meta.push('タイトル:' + x.titles.join('・'));
+        if (x.activity) meta.push('稼働:' + x.activity);
+        if (x.percent !== '' && x.percent != null) meta.push('稼働率:' + x.percent + '%');
+        if (!name && !meta.length) return;
+        lines.push((started ? '　' : 'C:') + name);
+        started = true;
+        if (meta.length) lines.push('　' + meta.join(' / '));
+      });
+      if (lines.length) blocks.push(['◾️' + f.label].concat(lines));
+      return;
+    }
+    if (f.type === 'bullets') {
+      if (f.withTarget && target) {
+        if (olTrim(target.career)) lines.push('・キャリア　' + olTrim(target.career));
+        if (target.titles && target.titles.length) lines.push('・タイトル　' + target.titles.join('・'));
+        if (target.activity) lines.push('・稼働　' + target.activity);
+      }
+      (val || []).forEach(function (s) { if (olTrim(s)) lines.push('・' + olTrim(s)); });
+      if (lines.length) blocks.push([(f.fmt === 'angle' ? '＜' + f.label + '＞' : '【' + f.label + '】')].concat(lines));
+      return;
+    }
+    var s = olTrim(val);
+    if (!s) return;
+    blocks.push([(f.fmt === 'square' ? '◾️' + f.label : '【' + f.label + '】'), s]);
+  });
+  if (olTrim(sheet.writer)) blocks.push([olTrim((sheet.union || '') + '   ' + sheet.writer)]);
+  return blocks.map(function (b) { return b.join('\n'); }).join('\n\n');
+}
+// ── MAPのデータから自動で入れる ──
+var OTL_TITLE_SHORT = { 'チームエリート': 'TE', 'ブルーダイヤモンド': 'BD', 'ダイヤモンド': 'D', 'エメラルド': 'E', 'ルビー': 'R', 'ラピス': 'L', 'ゴールド': 'G' };
+function _otlTitleCode(t) { t = String(t || '').trim(); return OTL_TITLE_SHORT[t] || t; }
+function _otlName(m) { var l = String(m.lastName || '').trim(), f = String(m.firstName || '').trim(); return (l && f) ? l + ' ' + f : (l || f || mcName(m)); }
+function _otlC(m) {
+  var t = _otlTitleCode(m.title), r = parseInt(m.actRate, 10);
+  return { mid: m.id, name: _otlName(m), career: activityMonths(m, state.currentMonth || currentMonthStr()) + 'ヶ月目',
+    titles: t && t !== 'OUT' ? [t] : [], activity: OUTLINE_ACTIVITY.indexOf(m.activity) >= 0 ? m.activity : '', percent: isNaN(r) ? '' : String(r) };
+}
+function _otlWriter() { return String((currentUser && currentUser.name) || '').trim(); }
+function _otlUnion() { return String((currentUser && currentUser.union) || '').trim(); }
+// ユニオン別フォーマット（unions/{ユニオン}/cdata/outlineTemplate）。あれば読むだけ・無ければ標準
+var _otlUnTpl = null, _otlUnTplAt = 0;
+function _otlTplLoad() {
+  var un = _otlUnion(); if (!un || typeof db === 'undefined' || !db || _otlUnTplAt) return;
+  _otlUnTplAt = Date.now();
+  fsGet('unions/' + un + '/cdata/outlineTemplate').then(function(d) {
+    if (d && Array.isArray(d.fields) && d.fields.some(function(f) { return f && f.type === 'participants'; })) _otlUnTpl = d.fields;
+  }).catch(function() {});
+}
+function _otlTpl() { return JSON.parse(JSON.stringify(_otlUnTpl || OUTLINE_TPL_DEFAULT)); }
+function _otlNewOutline(cs) {
+  var tpl = _otlTpl(), v = {}, now = new Date().toISOString();
+  tpl.forEach(function(f) {
+    if (f.type === 'section') return;
+    if (f.type === 'datetime') v[f.key] = { date: '', time: '' };
+    else if (f.type === 'participants') v[f.key] = { b: _otlWriter(), c: cs || [] };
+    else if (f.type === 'bullets') { var a = []; for (var i = 0; i < (f.rows || 1); i++) a.push(''); v[f.key] = a; }
+    else v[f.key] = '';
+  });
+  return { tpl: tpl, v: v, union: _otlUnion(), writer: _otlWriter(), createdAt: now, updatedAt: now, sentAt: '' };
+}
+function _otlKeyOf(o, type) { var t = o.tpl || []; for (var i = 0; i < t.length; i++) if (t[i].type === type) return t[i].key; return ''; }
+// 予定（OL）の日時・テーマ・場所・参加者 → 企画書（開くたびに合わせる）
+function _otlSyncFromEvent(o, e, firstMid) {
+  if (!e) return;
+  var kw = _otlKeyOf(o, 'datetime'); if (kw) o.v[kw] = { date: e.date || '', time: e.time || '' };
+  if (o.tpl.some(function(f) { return f.key === 'theme'; })) o.v.theme = (e.title && e.title !== 'OL' && e.title !== '3〜7人OL') ? e.title : '';
+  if (o.tpl.some(function(f) { return f.key === 'place'; })) o.v.place = e.place || '';
+  var kp = _otlKeyOf(o, 'participants'); if (!kp) return;
+  var P = o.v[kp] = o.v[kp] || { b: _otlWriter(), c: [] }, mids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
+  P.c = (P.c || []).filter(function(x) { return !x.mid || mids.indexOf(x.mid) >= 0; }); // OLから外れた人は外す（自分で足したCは残す）
+  mids.forEach(function(id) { if (!P.c.some(function(x) { return x.mid === id; })) { var m = _mFind(id); if (m) P.c.push(_otlC(m)); } });
+  if (firstMid) { var i = -1; P.c.forEach(function(x, j) { if (x.mid === firstMid) i = j; }); if (i > 0) P.c.unshift(P.c.splice(i, 1)[0]); }
+}
+// ── 開く ──
+// 企画書の見た目は使う時だけ読み込む（index.htmlを軽く保つ）
+function _otlCss() { if (document.getElementById('otlCss')) return; var st = document.createElement('style'); st.id = 'otlCss'; st.textContent = ".ms-sheet.otl-sheet{max-height:92vh;height:92vh;display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}\n#otlBody{display:flex;flex-direction:column;flex:1;min-height:0}\n.otl-wrap{padding:0 2px 12px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}\n.otl-foot{display:flex;gap:8px;margin:0 -16px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex:none}\n.otl-foot .p2-btn{flex:1;text-align:center;margin:0;padding:12px}\n.otl-foot .otl-line{background:#06C755;border-color:#06C755;color:#fff}\n.otl-st{margin-left:8px;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--surface2);color:var(--text-dim);vertical-align:middle}\n.otl-st.sent{background:color-mix(in srgb,#06C755 18%,transparent);color:#06C755}\n.otl-sec{margin:16px 0 4px;font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.5px;border-bottom:1px solid var(--border);padding-bottom:4px}\n.otl-lb{display:block;font-size:12px;font-weight:800;color:var(--text-mid);margin:10px 0 4px} .otl-lb small{font-weight:500;color:var(--text-dim);margin-left:6px}\n.otl-dt{display:flex;gap:8px} .otl-dt .fi{flex:1;min-width:0}\n.otl-p{display:flex;align-items:center;gap:6px;margin-bottom:6px} .otl-p .fi{flex:1;min-width:0}\n.otl-pk{flex:none;width:24px;height:24px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}\n.otl-c{border:1px solid var(--border);border-radius:12px;padding:8px;margin-bottom:8px;background:var(--surface2)}\n.otl-cm{display:grid;grid-template-columns:1.4fr 1fr 0.8fr 1fr;gap:6px} .otl-cm .fi{min-width:0;padding:8px 6px;font-size:13px}\n@media(max-width:520px){.otl-cm{grid-template-columns:1fr 1fr}}\n.otl-pc{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--text-dim)} .otl-pc .fi{flex:1}\n.otl-mid{flex:none;font-size:9.5px;font-weight:800;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:1px 5px}\n.otl-del{flex:none;color:var(--text-dim);cursor:pointer;padding:4px 6px}\n.otl-add,.otl-rowadd{display:inline-block;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer;margin:2px 0}\n.otl-auto{font-size:11px;color:var(--text-dim);margin-bottom:4px}\n.otl-row{display:flex;align-items:center;gap:4px;margin-bottom:4px} .otl-row .fi{flex:1;min-width:0}\n.otl-eg{font-size:11px;color:var(--text-dim);opacity:.75;margin:-2px 0 6px 14px;line-height:1.5}\n.otl-pre{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px} .otl-pre span{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:14px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text-mid)}\n.otl-pre .otl-rowadd{border-style:dashed;color:var(--accent)}\n.otl-prevbtn{margin:8px 0 2px;padding:9px 12px;border-radius:10px;border:1px dashed var(--accent);color:var(--accent);font-size:12.5px;font-weight:800;cursor:pointer} .otl-prevbtn small{display:block;font-weight:500;color:var(--text-dim);font-size:11px;margin-top:2px}\n.otl-prev{margin-top:16px} .otl-prevh{font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer}\n.otl-pre-tx{white-space:pre-wrap;font-family:inherit;font-size:12.5px;line-height:1.7;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;color:var(--text)}\n.otl-chip{flex:none;font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;border:1px solid var(--border2);color:var(--text-dim);cursor:pointer;white-space:nowrap}\n.otl-chip.sent{border-color:#06C755;color:#06C755}\n.olp-otl{display:block;width:100%;margin-top:8px;padding:11px;border-radius:12px;border:1.5px dashed var(--accent);background:transparent;color:var(--accent);font-size:13.5px;font-weight:800;cursor:pointer}"; document.head.appendChild(st); }
+var _otl = null;
+function otlNew(mid) { // 活動タブ「＋ 追加 → 企画書」：この人がCの新しいOL＋企画書（最初に入力した時にOLができる）
+  var m = _mFind(mid); if (!m) return;
+  if (!_olCanEdit()) { toast('閲覧中のため作れません'); return; }
+  _otlTplLoad();
+  _otl = { e: null, mid: mid, o: _otlNewOutline([_otlC(m)]), asan: '', dirty: false, prev: false, ro: false };
+  _otlOpen();
+}
+function otlOpenForEvent(eid, mid) {
+  var e = findEvent(eid); if (!e) { toast('このOLは見つかりませんでした'); return; }
+  _otlTplLoad();
+  var o = e.outline ? JSON.parse(JSON.stringify(e.outline)) : _otlNewOutline([]);
+  _otlSyncFromEvent(o, e, e.outline ? '' : mid);
+  _otl = { e: e, mid: mid || e.memberId || '', o: o, asan: e.asan || '', dirty: false, prev: false, ro: !_olCanEdit() };
+  _otlOpen();
+}
+function otlFromOl(gid, mid) { // OLの企画画面から
+  var e = _olEvFind(gid) || (function() { try { return _olEvUpsert(gid); } catch (eU) { return null; } })();
+  if (!e) { toast('このOLは予定とつながっていないため、企画書を作れません'); return; }
+  closeOlPlan();
+  otlOpenForEvent(e.id, mid);
+}
+function _otlOpen() {
+  _otlCss();
+  _p2SheetClose('otlOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'otlOv'; ov.style.zIndex = '650';
+  ov.onclick = function(e) { if (e.target === ov) otlClose(); };
+  ov.innerHTML = '<div class="ms-sheet otl-sheet"><div class="ms-grip"></div><div id="otlBody"></div></div>';
+  document.body.appendChild(ov);
+  _otlRender();
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function otlClose() {
+  if (_otl && _otl.timer) { clearTimeout(_otl.timer); _otl.timer = null; }
+  if (_otl && _otl.dirty && !_otl.ro) _otlCommit();
+  var mid = _otl && _otl.mid; _otl = null;
+  _p2SheetClose('otlOv');
+  try { var m = mid && _mFind(mid); var mo = document.getElementById('modal'); if (m && mo && mo.classList.contains('open') && editingId === mid) meRenderExtras(m); } catch (eR) {}
+}
+// ── 保存（1.2秒ごとにまとめて） ──
+function _otlChanged() {
+  if (!_otl || _otl.ro) return;
+  _otl.dirty = true;
+  if (_otl.timer) clearTimeout(_otl.timer);
+  _otl.timer = setTimeout(function() { if (_otl) { _otl.timer = null; _otlCommit(); } }, 1200);
+  _otlPrevUpdate();
+}
+function _otlCommit() {
+  var t = _otl; if (!t || t.ro) return;
+  var now = new Date().toISOString(), o = t.o, e = t.e;
+  var kp = _otlKeyOf(o, 'participants'), P = (kp && o.v[kp]) || { c: [] };
+  if (!e) { // 新しいOL（この人＋企画書で選んだ人）
+    var mids = (P.c || []).filter(function(x) { return x.mid && _olMem(x.mid); }).map(function(x) { return x.mid; });
+    if (!mids.length && t.mid) mids = [t.mid];
+    e = { id: genEventId(), type: 'event', kind: 'OL', olKind: mids.length >= OL_GROUP_MIN ? 'group' : 'solo', title: 'OL', date: '', time: '',
+      memberIds: mids, memberId: mids[0] || '', vis: 'both', selfShow: true, categoryId: '', priority: 'normal', memo: '', done: false, createdAt: now };
+    state.events.push(e); t.e = e;
+  }
+  var kw = _otlKeyOf(o, 'datetime'), w = (kw && o.v[kw]) || {};
+  e.date = w.date || ''; e.time = w.time || '';
+  if (o.v.theme !== undefined) e.title = olTrim(o.v.theme) || (e.olKind === 'group' ? '3〜7人OL' : 'OL');
+  if (o.v.place !== undefined) e.place = olTrim(o.v.place);
+  e.asan = olTrim(t.asan);
+  o.writer = olTrim(P.b) || o.writer; o.updatedAt = now;
+  e.outline = JSON.parse(JSON.stringify(o)); e.updatedAt = now;
+  try { _olFromEvent(e); } catch (eO) {}
+  saveEventDoc(e);
+  t.dirty = false;
+}
+function _otlText() { if (!_otl) return ''; var o = _otl.o; return outlineToText({ tpl: o.tpl, v: o.v, union: o.union, writer: o.writer }); }
+// ── 入力 ──
+function otlSet(k, val) { if (!_otl) return; _otl.o.v[k] = val; _otlChanged(); }
+function otlWhen(k, part, val) { if (!_otl) return; var w = _otl.o.v[k] = _otl.o.v[k] || { date: '', time: '' }; w[part] = val; _otlChanged(); }
+function otlAsan(val) { if (!_otl) return; _otl.asan = val; _otlChanged(); }
+function otlB(k, val) { if (!_otl) return; (_otl.o.v[k] = _otl.o.v[k] || { b: '', c: [] }).b = val; _otl.o.writer = olTrim(val) || _otl.o.writer; _otlChanged(); }
+function otlC(k, i, part, val) {
+  if (!_otl) return; var x = ((_otl.o.v[k] || {}).c || [])[i]; if (!x) return;
+  if (part === 'titles') x.titles = val ? [val] : [];
+  else if (part === 'percent') x.percent = String(val).replace(/[^0-9]/g, '').slice(0, 3);
+  else x[part] = val;
+  _otlChanged();
+}
+function otlCAdd(k) { if (!_otl) return; var P = _otl.o.v[k] = _otl.o.v[k] || { b: '', c: [] }; P.c.push({ name: '', career: '', titles: [], activity: '', percent: '' }); _otlChanged(); _otlRender(); }
+function otlCDel(k, i) { if (!_otl) return; var P = _otl.o.v[k]; if (!P || !P.c[i] || P.c[i].mid) return; P.c.splice(i, 1); _otlChanged(); _otlRender(); }
+function otlRow(k, i, val) {
+  if (!_otl) return; var a = _otl.o.v[k] = _otl.o.v[k] || []; a[i] = val; _otlChanged();
+  var eg = document.getElementById('otlEg_' + k + '_' + i); if (eg) { var g = _otlEgFor(k, val); eg.textContent = g ? '例：' + g : ''; eg.style.display = g ? '' : 'none'; }
+}
+function otlRowKey(ev, k, i) {
+  if (ev.key !== 'Enter' || ev.isComposing || ev.keyCode === 229) return;
+  ev.preventDefault();
+  var a = _otl.o.v[k] = _otl.o.v[k] || []; a.splice(i + 1, 0, ''); _otlChanged(); _otlRender(); _otlFocus(k, i + 1);
+}
+function otlRowAdd(k) { var a = _otl.o.v[k] = _otl.o.v[k] || []; a.push(''); _otlChanged(); _otlRender(); _otlFocus(k, a.length - 1); }
+function _otlField(k) { var t = _otl.o.tpl; for (var i = 0; i < t.length; i++) if (t[i].key === k) return t[i]; return null; }
+function _otlEgFor(k, val) {
+  var f = _otlField(k); if (!f || !f.presets) return '';
+  for (var i = 0; i < f.presets.length; i++) { var p = olPreset(f.presets[i]); if (p.eg && String(val || '').indexOf(p.label + '：') === 0) return p.eg; }
+  return '';
+}
+function otlPreset(k, pi) {
+  var f = _otlField(k); if (!f || !f.presets || !_otl) return;
+  var p = olPreset(f.presets[pi]), txt = p.eg ? p.label + '：' : p.label, a = _otl.o.v[k] = _otl.o.v[k] || [];
+  if (a.some(function(s) { return p.eg ? String(s || '').indexOf(txt) === 0 : olTrim(s) === txt; })) return;
+  var i = -1; for (var j = 0; j < a.length; j++) if (!olTrim(a[j])) { i = j; break; }
+  if (i < 0) { a.push(''); i = a.length - 1; }
+  a[i] = txt; _otlChanged(); _otlRender(); _otlFocus(k, i);
+}
+function _otlFocus(k, i) { setTimeout(function() { var el = document.getElementById('otlR_' + k + '_' + i); if (el) { try { el.focus(); var n = el.value.length; el.setSelectionRange(n, n); } catch (eF) {} } }, 30); }
+// ── 前回から作る（課題・伝えていただきたい事・望む結果を引き継ぐ。日時・テーマ・場所・対象者現状・御礼は空のまま） ──
+function _otlPrevFor(mid, exceptId) {
+  var best = null;
+  (state.events || []).forEach(function(e) {
+    if (!e || e.deleted || !e.outline || e.id === exceptId || !evHasMember(e, mid)) return;
+    var k = (e.date || '') + '|' + (e.outline.updatedAt || '');
+    if (!best || k > best.k) best = { k: k, e: e };
+  });
+  return best ? best.e : null;
+}
+function otlFromPrev() {
+  if (!_otl) return;
+  var pe = _otlPrevFor(_otl.mid, _otl.e && _otl.e.id); if (!pe) { toast('前回の企画書がありません'); return; }
+  var po = pe.outline, n = 0;
+  _otl.o.tpl.forEach(function(f) {
+    if (f.type !== 'bullets' || f.withTarget || f.reset) return;
+    var src = (po.v || {})[f.key]; if (!src || !src.length) return;
+    _otl.o.v[f.key] = src.slice(); n++;
+  });
+  _otl.prev = true; _otlChanged(); _otlRender();
+  toast('📝 ' + (pe.date ? parseInt(pe.date.slice(5, 7), 10) + '/' + parseInt(pe.date.slice(8), 10) + ' の' : '前回の') + '企画書から 課題・伝えていただきたい事・望む結果 を引き継ぎました');
+}
+// ── 送る ──
+function _otlCopyRaw(t, done) {
+  var fb = function() {
+    var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch (eC) {} ta.parentNode.removeChild(ta); done(ok);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function() { done(true); }, fb); else fb();
+}
+function _otlMarkSent() { if (!_otl || _otl.ro) return; _otl.o.sentAt = new Date().toISOString(); _otl.dirty = true; _otlCommit(); _otlRender(); }
+function otlCopy() {
+  var t = _otlText(); if (!t) { toast('まだ何も入力されていません'); return; }
+  _otlCopyRaw(t, function(ok) { toast(ok ? '📋 コピーしました（LINEに貼り付けて送ってください）' : '⚠️ コピーできませんでした'); if (ok) _otlMarkSent(); });
+}
+function otlLine() { // LINEの「送り先を選ぶ」画面を開く（AさんのLINE IDは不要。LINEの友だちから選ぶ）
+  var t = _otlText(); if (!t) { toast('まだ何も入力されていません'); return; }
+  var u = 'https://line.me/R/share?text=' + encodeURIComponent(t);
+  try { window.open(u, '_blank'); } catch (eW) { location.href = u; }
+  _otlMarkSent();
+}
+function otlPrevToggle() { if (!_otl) return; _otl.showPrev = !_otl.showPrev; _otlRender(); }
+function _otlPrevUpdate() { var pv = document.getElementById('otlPrevTx'); if (pv) pv.textContent = _otlText() || '（まだ何も入力されていません）'; }
+// ── 画面 ──
+function _otlFieldHtml(f) {
+  var o = _otl.o, v = o.v, k = f.key, dis = _otl.ro ? ' disabled' : '';
+  if (f.type === 'section') return '<div class="otl-sec">' + evEsc(f.label) + '</div>';
+  var lb = '<label class="otl-lb">' + evEsc(f.label) + '</label>';
+  if (f.type === 'datetime') {
+    var w = v[k] || {};
+    return lb + '<div class="otl-dt"><input class="fi" type="date" value="' + evEsc(w.date || '') + '" onchange="otlWhen(\'' + k + '\',\'date\',this.value)"' + dis + '><input class="fi" type="time" value="' + evEsc(w.time || '') + '" onchange="otlWhen(\'' + k + '\',\'time\',this.value)"' + dis + '></div>';
+  }
+  if (f.type === 'text') return lb + '<input class="fi" value="' + evEsc(v[k] || '') + '" oninput="otlSet(\'' + k + '\',this.value)"' + dis + '>';
+  if (f.type === 'textarea') return lb + '<textarea class="fi" rows="2" oninput="otlSet(\'' + k + '\',this.value)"' + dis + '>' + evEsc(v[k] || '') + '</textarea>';
+  if (f.type === 'participants') {
+    var P = v[k] || { b: '', c: [] }, opts = f.options || OUTLINE_TITLES;
+    var h = '<div class="otl-p"><span class="otl-pk">B</span><input class="fi" placeholder="記入者（自分）" value="' + evEsc(P.b || '') + '" oninput="otlB(\'' + k + '\',this.value)"' + dis + '></div>';
+    (P.c || []).forEach(function(x, i) {
+      var t0 = (x.titles || [])[0] || '', ol = opts.indexOf(t0) < 0 && t0 ? [t0].concat(opts) : opts;
+      h += '<div class="otl-c"><div class="otl-p"><span class="otl-pk">C</span><input class="fi" placeholder="名前" value="' + evEsc(x.name || '') + '" oninput="otlC(\'' + k + '\',' + i + ',\'name\',this.value)"' + dis + '>'
+        + (x.mid ? '<span class="otl-mid" title="OLの参加者（OLの画面で変更）">MAP</span>' : (_otl.ro ? '' : '<span class="otl-del" onclick="otlCDel(\'' + k + '\',' + i + ')" title="このCを外す">✕</span>')) + '</div>'
+        + '<div class="otl-cm"><input class="fi" placeholder="キャリア（例：2ヶ月目）" value="' + evEsc(x.career || '') + '" oninput="otlC(\'' + k + '\',' + i + ',\'career\',this.value)"' + dis + '>'
+        + '<select class="fi" onchange="otlC(\'' + k + '\',' + i + ',\'titles\',this.value)"' + dis + '><option value="">タイトル</option>' + ol.map(function(t) { return '<option' + (t === t0 ? ' selected' : '') + '>' + evEsc(t) + '</option>'; }).join('') + '</select>'
+        + '<select class="fi" onchange="otlC(\'' + k + '\',' + i + ',\'activity\',this.value)"' + dis + '><option value="">稼働</option>' + OUTLINE_ACTIVITY.map(function(a) { return '<option' + (a === x.activity ? ' selected' : '') + '>' + a + '</option>'; }).join('') + '</select>'
+        + '<span class="otl-pc"><input class="fi" type="number" inputmode="numeric" min="0" max="100" placeholder="稼働率" value="' + evEsc(x.percent || '') + '" oninput="otlC(\'' + k + '\',' + i + ',\'percent\',this.value)"' + dis + '>%</span></div></div>';
+    });
+    if (!_otl.ro) h += '<span class="otl-add" onclick="otlCAdd(\'' + k + '\')">＋ Cを追加</span>';
+    return lb.replace('</label>', '<small>MAPのデータから自動で入れています（直せます）</small></label>') + h;
+  }
+  if (f.type === 'bullets') {
+    var a = v[k] || [], hh = '';
+    if (f.withTarget) {
+      var tg = (((v[_otlKeyOf(o, 'participants')] || {}).c) || [])[0];
+      if (tg) hh += '<div class="otl-auto">自動：' + [olTrim(tg.career) ? 'キャリア ' + olTrim(tg.career) : '', (tg.titles || []).length ? 'タイトル ' + tg.titles.join('・') : '', tg.activity ? '稼働 ' + tg.activity : ''].filter(Boolean).join('・') + '（先頭のCから）</div>';
+    }
+    a.forEach(function(s, i) {
+      var g = _otlEgFor(k, s);
+      hh += '<div class="otl-row"><span>・</span><input class="fi" id="otlR_' + k + '_' + i + '" value="' + evEsc(s || '') + '" oninput="otlRow(\'' + k + '\',' + i + ',this.value)" onkeydown="otlRowKey(event,\'' + k + '\',' + i + ')"' + dis + '></div>'
+        + '<div class="otl-eg" id="otlEg_' + k + '_' + i + '"' + (g ? '' : ' style="display:none"') + '>' + (g ? '例：' + evEsc(g) : '') + '</div>';
+    });
+    if (!_otl.ro) {
+      hh += '<div class="otl-pre">' + (f.presets || []).map(function(ps, pi) { return '<span onclick="otlPreset(\'' + k + '\',' + pi + ')">＋ ' + evEsc(olPreset(ps).label) + '</span>'; }).join('')
+        + '<span class="otl-rowadd" onclick="otlRowAdd(\'' + k + '\')">＋ 行</span></div>';
+    }
+    return lb + hh;
+  }
+  return '';
+}
+function _otlRender() {
+  var body = document.getElementById('otlBody'); if (!body || !_otl) return;
+  var o = _otl.o, e = _otl.e, ro = _otl.ro;
+  var st = o.sentAt ? '送信済み ' + parseInt(o.sentAt.slice(5, 7), 10) + '/' + parseInt(o.sentAt.slice(8, 10), 10) : (e ? '下書き' : '未保存');
+  var prevE = !ro && _otl.mid ? _otlPrevFor(_otl.mid, e && e.id) : null;
+  var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📝 アウトライン企画書<span class="otl-st' + (o.sentAt ? ' sent' : '') + '">' + st + '</span></div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">LINEでAさんに送る企画書。入力すると自動で保存され、OL（予定）にも反映されます</div></div>'
+    + '<span class="ms-x" onclick="otlClose()">✕</span></div><div class="otl-wrap">';
+  h += '<div class="otl-to"><label class="otl-lb">送る相手（Aさん）<small>文面には出ません</small></label><input class="fi" placeholder="Aさんの名前（任意）" value="' + evEsc(_otl.asan || '') + '" oninput="otlAsan(this.value)"' + (ro ? ' disabled' : '') + '></div>';
+  if (prevE && !_otl.prev) h += '<div class="otl-prevbtn" onclick="otlFromPrev()">↻ 前回の企画書から作る<small>' + (prevE.date ? parseInt(prevE.date.slice(5, 7), 10) + '/' + parseInt(prevE.date.slice(8), 10) + ' ' : '') + '課題・伝えていただきたい事・望む結果を引き継ぐ</small></div>';
+  o.tpl.forEach(function(f) { h += _otlFieldHtml(f); });
+  h += '<div class="otl-prev"><div class="otl-prevh" onclick="otlPrevToggle()">' + (_otl.showPrev ? '▼' : '▶') + ' プレビュー（送る文面）</div>'
+    + (_otl.showPrev ? '<pre id="otlPrevTx" class="otl-pre-tx">' + evEsc(_otlText() || '（まだ何も入力されていません）') + '</pre>' : '') + '</div>';
+  h += '</div><div class="otl-foot"><span class="p2-btn" onclick="otlCopy()">📋 コピー</span><span class="p2-btn pri otl-line" onclick="otlLine()">LINEで送る</span></div>';
+  body.innerHTML = h;
+}
+// 活動タブの「📝企画書」の印
+function _otlBadge(e, mid) {
+  if (!e || !e.outline) return '';
+  _otlCss();
+  var s = e.outline.sentAt;
+  return '<span class="otl-chip' + (s ? ' sent' : '') + '" onclick="event.stopPropagation();otlOpenForEvent(\'' + e.id + '\',\'' + mid + '\')" title="アウトライン企画書を開く">📝 企画書' + (s ? ' 送信済み ' + parseInt(s.slice(5, 7), 10) + '/' + parseInt(s.slice(8, 10), 10) : ' 下書き') + '</span>';
 }
 function olpDelete() {
   var p = _olp;
@@ -12258,16 +12620,20 @@ function meRenderExtras(m) {
   // v567: 活動＝「OL」（人と会う予定・OLの企画と記録）と「タスク」の2つに整理。追加は1つのボタンから選ぶ
   var _grp = function(it) { return it.kind === 'task' ? 'task' : 'ol'; };
   var nOl = items.filter(function(it) { return _grp(it) === 'ol'; }).length, nTk = items.length - nOl;
+  var _otlE = function(it) { return it.kind === 'ol' && it.o.gid ? _olEvFind(it.o.gid) : null; }; // v576: 企画書のあるOL
+  var nOtl = items.filter(function(it) { var e9 = _otlE(it); return !!(e9 && e9.outline); }).length;
   var f = _meActF[mid] || 'all';
   var tkHtml = '<div class="me-act-add"><button class="me-add-btn" style="flex:1;margin:0" onclick="meActAdd(this)">＋ 追加</button>'
     + '<div class="me-act-pick" style="display:none">'
     + '<button class="me-add-btn" onclick="openOlRecordModal(\'' + mid + '\')">' + icn('pencil') + ' OL<small>人と会う予定・OLの企画と記録</small></button>'
     + '<button class="me-add-btn" onclick="ckAddTask(\'' + mid + '\')">' + icn('checksq') + ' タスク<small>この人に関するやること</small></button>'
+    + '<button class="me-add-btn" onclick="otlNew(\'' + mid + '\')">📝 アウトライン企画書<small>Aさんに送るOLの企画書（OLの予定もできます）</small></button>'
     + '</div></div>'
-    + '<div class="me-act-f">' + [['all', 'すべて', items.length], ['ol', 'OL', nOl], ['task', 'タスク', nTk]].map(function(x) {
+    + '<div class="me-act-f">' + [['all', 'すべて', items.length], ['ol', 'OL', nOl], ['task', 'タスク', nTk]].concat(nOtl ? [['otl', '📝企画書', nOtl]] : []).map(function(x) {
       return '<span class="' + (f === x[0] ? 'on' : '') + '" onclick="meActFilter(\'' + mid + '\',\'' + x[0] + '\')">' + x[1] + ' <b>' + x[2] + '</b></span>';
     }).join('') + '</div>';
-  if (f !== 'all') items = items.filter(function(it) { return _grp(it) === f; });
+  if (f === 'otl') items = items.filter(function(it) { var e9 = _otlE(it); return !!(e9 && e9.outline); });
+  else if (f !== 'all') items = items.filter(function(it) { return _grp(it) === f; });
   tkHtml += '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">📋 リストOL: ' + (listSt.done ? '✓ 完了' : (listSt.date ? ('予定 ' + listSt.date) : '未着手')) + '</div>'; // v366: 旧OLタブから移設
   var _npl = memberNextPlanLines(m);
   if (_npl.length) tkHtml += '<div style="font-size:12px;color:var(--gold);margin-bottom:8px;line-height:1.7">' + _npl.join('<br>') + '</div>';
@@ -12280,7 +12646,7 @@ function meRenderExtras(m) {
       return '<div class="me-task" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openOlRecordModal(\'' + mid + '\',' + it.oi + ')">'
         + dTag + '<span>📝</span>' + _olKindBadge(_olKindOf(it.o))
         + (pl ? '<span style="flex:none;background:var(--gold);color:#08121a;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">予定</span>' : '')
-        + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(it.o.what || it.o.note || 'OL') + (it.o.asan ? ' <span style="color:var(--text-dim);font-size:11px">A:' + evEsc(it.o.asan) + '</span>' : '') + '</span></div>';
+        + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(it.o.what || it.o.note || 'OL') + (it.o.asan ? ' <span style="color:var(--text-dim);font-size:11px">A:' + evEsc(it.o.asan) + '</span>' : '') + '</span>' + _otlBadge(_otlE(it), mid) + '</div>';
     }
     if (it.kind === 'tr') {
       return '<div class="me-task" style="display:flex;align-items:center;gap:6px">' + dTag + '<span>🎓</span>'
@@ -17401,7 +17767,9 @@ function _p2TutCalc(t) {
   var need = t.F * t.coef, rest = Math.max(0, need - t.before);
   return { need: need, rest: rest, wNeed: need ? Math.ceil(rest / t.weeks) : 0 };
 }
+function _p2TutCss() { if (document.getElementById('p2TutCss')) return; var st = document.createElement('style'); st.id = 'p2TutCss'; st.textContent = ".p2t-dots{display:flex;gap:6px;justify-content:center;margin:0 0 12px} .p2t-dots i{width:28px;height:5px;border-radius:3px;background:var(--border2)} .p2t-dots i.on{background:var(--accent)} .p2t-dots i.done{background:color-mix(in srgb,var(--accent) 45%,var(--border2))}\n.p2t-hero{text-align:center;font-size:44px;margin:6px 0 4px}\n.p2t-q{font-size:14.5px;font-weight:700;color:var(--text);line-height:1.6;text-align:center;margin-bottom:12px} .p2t-q b{color:var(--accent)}\n.p2t-tx{font-size:12px;color:var(--text-mid);line-height:1.7;margin:10px 0;text-align:center} .p2t-tx b{color:var(--text)}\n.p2t-hint{font-size:12px;color:var(--text-dim);text-align:center;margin:10px 0;animation:p2tBlink 1.6s ease-in-out infinite}\n.p2t-ok{font-size:12.5px;color:var(--text);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:10px;padding:9px 12px;margin:10px 0;line-height:1.6} .p2t-ok b{color:var(--accent)}\n.p2t-next{display:block;text-align:center;margin:10px 0 0} .p2t-next.dis{opacity:.35;pointer-events:none}\n.p2t-map{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0}\n.p2t-kids{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;position:relative}\n.p2t-node{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:800;line-height:1.15;border:2px solid var(--border2);background:var(--surface2);color:var(--text)}\n.p2t-node.me{width:62px;height:62px;border-color:var(--accent);font-size:13px}\n.p2t-node.new{border-color:var(--accent);color:var(--accent);animation:p2tPop .35s ease-out}\n.p2t-node.add{border-style:dashed;color:var(--accent);font-size:24px;cursor:pointer;animation:p2tPulse 1.6s ease-in-out infinite}\n.p2t-step{display:flex;align-items:center;justify-content:center;gap:18px;margin:4px 0}\n.p2t-sb{width:48px;height:48px;border-radius:50%;border:2px solid var(--accent);color:var(--accent);font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}\n.p2t-sv{text-align:center} .p2t-sv small{display:block;font-size:11px;color:var(--text-dim)} .p2t-sv b{font-family:Inter,sans-serif;font-size:34px;color:var(--text)}\n.p2t-chain{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:1px;margin:12px 0 4px;padding:10px 4px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)}\n.p2t-b{min-width:0;text-align:center;padding:4px 3px;border-radius:8px;transition:background .3s}\n.p2t-b small{display:block;font-size:9px;color:var(--text-dim);white-space:nowrap} .p2t-b b{font-family:Inter,sans-serif;font-size:14px;color:var(--text);white-space:nowrap}\n.p2t-b.res{background:color-mix(in srgb,var(--accent) 14%,transparent)} .p2t-b.res b{color:var(--accent)}\n.p2t-b.hit{animation:p2tHit 1s ease-out}\n.p2t-op{font-size:12px;font-weight:800;color:var(--text-dim)}\n.p2t-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 8px}\n.p2t-day{min-height:52px;border:1px solid var(--border);border-radius:8px;padding:3px;text-align:center;background:var(--surface2)} .p2t-day small{display:block;font-size:10px;color:var(--text-dim)}\n.p2t-ev{display:block;margin-top:4px;font-size:10px;font-weight:800;border-radius:5px;padding:3px 0;background:color-mix(in srgb,var(--accent) 25%,transparent);color:var(--accent);animation:p2tPop .3s ease-out}\n.p2t-now{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-mid)} .p2t-now b{font-family:Inter,sans-serif;font-size:15px;color:var(--text)}\n.p2t-now .ok{color:var(--accent);font-weight:800;flex:1} .p2t-now .ng{color:var(--go-rose,#FF5D73);font-weight:800;flex:1}\n.p2t-wk2{font-size:13px;color:var(--text-mid);line-height:1.8;text-align:center;padding:8px;border:1px dashed var(--border2);border-radius:10px} .p2t-wk2 b{color:var(--accent);font-size:15px}\n.p2t-sum{font-size:12.5px;color:var(--text-mid);line-height:2;padding:8px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)} .p2t-sum b{color:var(--text)}\n.p2tut .tap,#p2TutOv .tap{animation:p2tTap .45s ease-out}\n@keyframes p2tPop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}\n@keyframes p2tPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 8px transparent}}\n@keyframes p2tHit{0%{background:color-mix(in srgb,var(--accent) 45%,transparent)}100%{background:transparent}}\n@keyframes p2tTap{0%{transform:scale(1)}40%{transform:scale(.86);box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 35%,transparent)}100%{transform:scale(1)}}\n@keyframes p2tBlink{0%,100%{opacity:.55}50%{opacity:1}}\n@media (prefers-reduced-motion: reduce){.p2t-node.add,.p2t-hint{animation:none}}"; document.head.appendChild(st); } // v576: index.htmlを軽く保つ
 function p2TutOpen(auto) {
+  _p2TutCss();
   _p2SheetClose('p2WhyOv');
   _p2SheetClose('p2TutOv');
   _p2Tut = { step: 0, F: 0, coef: 8, weeks: 4, before: 0, wk: 0, week: 1, auto: false, timer: null, coefTouched: false, prevW: null, prev: {}, msg: '' };
