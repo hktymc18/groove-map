@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v582';
+var APP_JS_VERSION = 'v583';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v582';
+  var DATA_VERSION = 'v583';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4526,7 +4526,7 @@ function _migrateGSVSelf(members) {
   if (!members || !members.length) return;
   members.forEach(function(m) {
     if (typeof m.ptSelf !== 'number') {
-      m.ptSelf = Math.max(0, (m.ptCurrent || 0) - sumChildGSV(m.id, members) - (members === state.idealMembers ? _idealFix(m) : 0));
+      m.ptSelf = Math.max(0, (m.ptCurrent || 0) - sumChildGSV(m.id, members) - (members === state.idealMembers ? _idealOwnFx(m, members) : 0));
     }
   });
 }
@@ -4534,6 +4534,7 @@ function _migrateGSVSelf(members) {
 function recalcGSV(members) {
   if (!members || !members.length) return;
   var fx = members === state.idealMembers; // v581: 理想MAPは固定PTを上がったものとして足す
+  var fxMap = {}; // v583: その人のGSVに入る固定PT＝max(その人の固定PT, BRでない直下の固定の合計)（上の人の固定には下の分が入っている）
   var kids = {};
   members.forEach(function(m) {
     if (m.deleted) return;
@@ -4545,17 +4546,48 @@ function recalcGSV(members) {
   function calc(m) {
     if (visiting[m.id]) return 0; // 循環ガード
     visiting[m.id] = 1;
-    var s = (m.ptSelf || 0) + (fx ? _idealFix(m) : 0);
+    var s = m.ptSelf || 0, cf = 0;
     (kids[m.id] || []).forEach(function(c) {
       var cv = calc(c);
-      if (!isBROrAbove(c.title)) s += cv; // BR以上はブレイクアウェイで除外
+      if (!isBROrAbove(c.title)) { s += cv; if (fx) { s -= fxMap[c.id] || 0; cf += fxMap[c.id] || 0; } } // BR以上はブレイクアウェイで除外
     });
+    if (fx) { var F = Math.max(_idealFix(m), cf); fxMap[m.id] = F; s += F; }
     m.ptCurrent = s;
     return s;
   }
   (kids[''] || []).forEach(calc);
   // 親不明の孤児も個別に計算
   members.forEach(function(m) { if (!m.deleted && !visiting[m.id]) calc(m); });
+  if (fx) { _idealFxMap = fxMap; _idealAutoLoi(members); }
+}
+var _idealFxMap = {};
+// v583: 理想MAPでその人の「自分の分」に入る固定PT（その人のGSVの固定 − BRでない直下の固定）。GSVを手で入れた時・ユーザーPTで使う
+function _idealOwnFx(m, members) {
+  var cf = 0;
+  (members || state.idealMembers || []).forEach(function(c) { if (c && c.parentId === m.id && !c.deleted && !isBROrAbove(c.title)) cf += _idealFxMap[c.id] || 0; });
+  return Math.max(_idealFix(m), cf) - cf;
+}
+// v583: 理想MAPで審査前（研修生・タイトル空欄）の人はGSV 1,000P以上で自動でLOI。1,000P未満に戻したら元のタイトルへ（ユーザーは変えない）
+function _idealAutoLoi(members) {
+  var up = [], down = [];
+  members.forEach(function(m) {
+    if (!m || m.deleted || /^(MG_|AG\d+_)/.test(m.id || '')) return;
+    var t = (m.title || '').trim(), g = m.ptCurrent || 0;
+    if (m.idAutoLoi) {
+      if (t !== 'LOI') { delete m.idAutoLoi; return; } // 手でタイトルを変えた
+      if (g < LOI_MONTHLY_MIN) { m.title = m.idAutoLoi.t; m.trainee = !!m.idAutoLoi.tr; delete m.idAutoLoi; down.push(m); }
+      return;
+    }
+    if (t === 'ユーザー' || m.idealKind === 'user' || g < LOI_MONTHLY_MIN) return;
+    var c = memberCat(m);
+    if (!(c === '研修生' || (t === '' && c === ''))) return;
+    m.idAutoLoi = { t: m.title || '', tr: !!m.trainee };
+    m.title = 'LOI'; m.trainee = false; up.push(m);
+  });
+  if ((up.length || down.length) && typeof currentView !== 'undefined' && currentView === 'ideal' && typeof toast === 'function') {
+    var nm = function(a) { return a.slice(0, 2).map(function(m) { return (m.lastName || m.firstName || '') + 'さん'; }).join('・') + (a.length > 2 ? 'ほか' + (a.length - 2) + '人' : ''); };
+    toast(up.length ? nm(up) + 'がGSV ' + LOI_MONTHLY_MIN.toLocaleString() + 'Pを超えたのでLOIにしました（理想MAP）' : nm(down) + 'は ' + LOI_MONTHLY_MIN.toLocaleString() + 'P未満なので元のタイトルに戻しました（理想MAP）');
+  }
 }
 function recalcAllGSV() {
   _migrateGSVSelf(state.members);
@@ -4564,7 +4596,7 @@ function recalcAllGSV() {
 }
 // GSV(合計値)を手入力で上書き → 自分の分(ptSelf)に変換して全体再計算
 function setMemberGSV(m, gsvVal, members) {
-  m.ptSelf = Math.max(0, (parseInt(gsvVal) || 0) - sumChildGSV(m.id, members) - (members === state.idealMembers ? _idealFix(m) : 0)); // v581: 理想MAPは固定PT込みの数字を入れる
+  m.ptSelf = Math.max(0, (parseInt(gsvVal) || 0) - sumChildGSV(m.id, members) - (members === state.idealMembers ? _idealOwnFx(m, members) : 0)); // v581・v583: 理想MAPは固定PT込みの数字を入れる
   recalcAllGSV();
 }
 function _arrOf(m) {
@@ -4956,6 +4988,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v583', d:'2026-10-04', items:['🎯 理想MAPの固定PT：上の人の固定PTには、BRでない下の人の分が入っている前提に。下の人の固定を上に二重に足さないように直しました（上の人の固定が空欄・少ない時は、下の人の固定の合計を使います）','🆕 理想MAPで審査前の人（研修生・タイトル空欄）は、GSVが1,000P以上になると自動でLOIに。1,000P未満に戻すと元のタイトルに戻ります（ユーザーは変えません・現状MAPは変わりません）','新規B1に数えるのは、今までどおり今月スタートの人だけです'] },
   { v:'v582', d:'2026-10-04', items:['📊 データタブに「ざっくり」を追加（はじめて開くとこちら。今までの画面は「くわしく」で、最後に開いた方を覚えます）','① 先月のコミッション（確定）を先々月と比べて ▲▼ で。② 全ユニオン共通のやること：BRを増やす（審査中の全員が今月1,000pt）・BRを維持する（維持ライン1,000pt）・自分の成長（PLANの自分磨き）','③ 🔥S稼働 ◯/30人（30人でこの仕事一本で食える）。点線＝あと一歩（Aの人と、B・Cで稼働率70%以上の人）。目標の人数は変えられます','④ コミッションを動かす数字：B1数 × 新規の平均GSV × 平均稼働人数（1ハウディあたり）、1人あたりの平均GSV（先月との差つき）','⑤ 理想MAPとの差：稼働・BR・GSVで差がある人を自動で並べて、その場で＋タスク（紙の照らし合わせの代わり）','数字を押すと、その数字だけの推移・名前・数え方が出ます'] },
   { v:'v581', d:'2026-10-04', items:['🎯 理想MAPのポイントは、メンバーの「固定で上がる見込み（固定PT）」を上がったものとして計算（その人と上の人のGSV・チームGSV・コミッション・PLANのチームPT/ユーザーPTに反映）','固定PTは現状MAPのその人の値を使います（理想で追加した人は0）。理想MAPでGSVを入れる時は、固定込みの数字を入れればそのまま表示されます','🔧 OLの記録を保存した直後にすぐ開き直すと、画面が消えてしまうことがあったのを修正'] },
   { v:'v580', d:'2026-10-04', items:['🗂 PLANの「今週の作戦」と「今月の行動量」を1枚の「今週やること」にまとめました。大きく「あと何件」、行は「名前・バー・数・＋」だけ','＋＝予定を入れる（ST・CT取りは予約）。行を押すと、今週・今月の数字、やった（＋1）、今週の予定、数字の理由が見られます','下の「今週／今月」で今月の分に切り替え。？＝数字の決まり方・1分で体験、⋯＝係数の設定・動員を計画','HOMEにも同じカードの短い版（足りない行だけ）'] },
@@ -8565,6 +8598,7 @@ function _idealDiff(m) {
   var parts = [], d = (m.ptCurrent || 0) - (cur.ptCurrent || 0);
   if (d) parts.push({ t: (d > 0 ? '+' : '−') + Math.abs(d).toLocaleString(), c: d > 0 ? 'up' : 'dn' });
   if ((m.activity || '') !== (cur.activity || '')) parts.push({ t: (cur.activity || '−') + '→' + (m.activity || '−'), c: 'act' });
+  if (m.idAutoLoi) parts.push({ t: ((cur.title || '').trim() || '−') + '→LOI', c: 'new' }); // v583
   return { isNew: false, parts: parts };
 }
 function idealDiffHtml(m, mapType) {
@@ -8632,7 +8666,7 @@ function idealTargets(ym) {
   if (ym && String(state.currentMonth || '').replace('.', '-') !== ym) return null; // 表示中の月の理想だけ
   var I = _idealStats(state.idealMembers);
   var root = state.idealMembers.filter(function(m) { return !m.parentId && !m.deleted; })[0];
-  return { front: I.newFront, teamB1: I.newB1, teamPt: I.gsv, upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf + _idealFix(root) : (root.ptCurrent || 0)) : 0, stats: I }; // v581: 自分の固定PTも込み
+  return { front: I.newFront, teamB1: I.newB1, teamPt: I.gsv, upt: root ? ((typeof root.ptSelf === 'number') ? root.ptSelf + _idealOwnFx(root) : (root.ptCurrent || 0)) : 0, stats: I }; // v581・v583: 自分の分の固定PTも込み（下の人の固定は除く）
 }
 function syncIdealToPlan() {
   if (typeof _p2 !== 'function' || !state.goals) return false;
@@ -8751,7 +8785,8 @@ function _idqChanged(msg) {
   var gi = document.getElementById('idqGsv'); if (gi && document.activeElement !== gi) gi.value = m.ptCurrent || 0;
   var tt = document.querySelector('#idqBody .ot-ttl'); if (tt) tt.textContent = (typeof titleAbbr === 'function' && titleAbbr(m.title)) || m.title || '';
 }
-function idqTitle(t) { var m = _idqMember(); if (!m) return; m.title = t; if (t === 'ユーザー') { if (m.idealNew) m.idealKind = 'user'; } else if (m.idealKind === 'user') m.idealKind = 'biz'; _idqChanged('タイトルを ' + t + ' に'); }
+function idqTitle(t) { var m = _idqMember(); if (!m) return; m.title = t; delete m.idAutoLoi; // v583: 手で選んだタイトルは自動で戻さない
+  if (t === 'ユーザー') { if (m.idealNew) m.idealKind = 'user'; } else if (m.idealKind === 'user') m.idealKind = 'biz'; _idqChanged('タイトルを ' + t + ' に'); }
 function idqGsvSet(v) { var m = _idqMember(); if (!m) return; var g = parseInt(v, 10); if (isNaN(g)) return; setMemberGSV(m, Math.max(0, g), state.idealMembers); if (m.idealNew) m.ptSelf = Math.max(0, g); _idqChanged(); }
 function idqName() {
   var m = _idqMember(); if (!m) return;
@@ -11236,7 +11271,6 @@ function _dtEzLine(vals, goal) {
     + '<div class="dtez-mm"><span>' + ms[0].lbl + '</span><span>' + ms[11].lbl + '</span></div>';
 }
 // 理想MAPとの差（稼働が上がる・BRになる・GSVを500以上上げる）
-function _dtEzFixSub(m, kids) { var s = _idealFix(m); (kids[m.id] || []).forEach(function(c) { if (!isBROrAbove(c.title)) s += _dtEzFixSub(c, kids); }); return s; }
 function _dtEzHasTask(mid) {
   return (state.events || []).some(function(e) { return e && !e.deleted && e.type === 'task' && !e.done && (e.memberId === mid || (e.memberIds || []).indexOf(mid) >= 0); });
 }
@@ -11251,7 +11285,7 @@ function _dtEzGap() {
     if (isBROrAbove(itl) && !isBROrAbove(ct) && memberCat(c) === 'BA') it.push({ k: 'br', t: ct + ' → <b>' + evEsc(itl) + '</b>' + (DT_EZ_EXAM.indexOf(ct) >= 0 && (c.ptCurrent || 0) < LOI_MONTHLY_MIN ? '・今月あと' + (LOI_MONTHLY_MIN - (c.ptCurrent || 0)).toLocaleString() + 'pt' : ''), tx: ct + '→' + itl });
     if ((DT_EZ_ACT_R[i.activity] || 0) > (DT_EZ_ACT_R[c.activity] || 0)) { var cr = parseInt(c.actRate, 10); it.push({ k: 'act', t: (c.activity || '−') + (!isNaN(cr) && c.activity !== 'S' ? '（' + cr + '%）' : '') + ' → <b>' + i.activity + '</b>', tx: (c.activity || '−') + '→' + i.activity }); }
     var gi = i.ptCurrent || 0, gc = c.ptCurrent || 0;
-    if (gi - (gc + _dtEzFixSub(i, kids)) >= 500) it.push({ k: 'gsv', t: gc.toLocaleString() + ' → <b>' + gi.toLocaleString() + '</b>', tx: 'GSV ' + gc.toLocaleString() + '→' + gi.toLocaleString() });
+    if (gi - (gc + (_idealFxMap[i.id] || 0)) >= 500) it.push({ k: 'gsv', t: gc.toLocaleString() + ' → <b>' + gi.toLocaleString() + '</b>', tx: 'GSV ' + gc.toLocaleString() + '→' + gi.toLocaleString() });
     if (it.length) out.push({ m: c, items: it, task: _dtEzHasTask(c.id) });
   });
   var pr = { br: 0, act: 1, gsv: 2 };
