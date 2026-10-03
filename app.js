@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v572';
+var APP_JS_VERSION = 'v573';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v572';
+  var DATA_VERSION = 'v573';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4954,6 +4954,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v573', d:'2026-10-03', items:['🔧 マイルストーン・年間ロードマップでフロント目標（F）を入れ直しても反映されなかった問題：理想MAPに新しいB1がいる月のFは理想MAPの人数で決まるため、その月は入力欄の代わりに「理想MAPの数字（理想MAPで変更 ›）」と表示するように（ギャップの割り振りも、その月はそのまま）','🔧 シミュレーションの「今月の目標に入れる」が、ロードマップに今月の数字があると反映されなかったのを修正'] },
   { v:'v572', d:'2026-10-03', items:['💰 PLANの一番上を「目標月収 → 次の山（タイトル）→ 期日」の順に。目標月収は月収かタイトルをタップして自分で決められます','⛰ 決めた月収から、goal settingと同じ月収レンジ（例：51〜100万＝DIAMOND）で次の山のタイトルを自動で決めます。タイトルはあとからプルダウンで選び直せます（「月収に合わせる」で自動に戻す）'] },
   { v:'v571', d:'2026-10-03', items:['🎓 v570より前に入れた予定も、研修履歴にまとめて自動でつなぎました（30日前以降の予定。タイトルが研修ステップで、関連メンバーが研修生のもの）。同じステップの記録がすでにあれば新しく作らずにその記録につなぎ、済んだステップ・先に進んでいる人はそのままにします'] },
   { v:'v570', d:'2026-10-03', items:['🗓 予定の「種類」の欄をなくしました。タイトルに ST・SNST・CT取り・CT・FT が入っていれば、そのままPLANの行動量に数えます（マケ・PG・DLRなどはカレンダーからは数えません）。タイトルの下に「→ PLAN『CT』に数えます」のように連携先を1行表示（？で説明）','🎓 タイトルが研修ステップ（FT・マケ・PG・DLR・EXP・PA・面談・BPC・CO）の予定で関連メンバーに研修生を選ぶと、その人の研修履歴に「予定」として自動で入ります。予定の日付を変える・消す・メンバーを外すと研修履歴の予定も追従（結果を入れた記録はそのまま）','📊 PG・マケ・DLR動員は研修履歴から数えるように：自分の直下の研修生に結果（進んだ・流れた）を入れたら「今月の行動量」に、それ以外の研修生は「今月の目標」のチーム欄（PG・DLR動員の目標を追加）に数えます。DLR動員は会場に来た人だけ。日付が過ぎて結果が未入力の人は「結果待ち」と表示','⚡ かんたん追加：区分のボタンをやめて、タイトルを選ぶだけに（研修生の入口はマケ・PG）'] },
@@ -16838,7 +16839,10 @@ function p2SimApply() {
   var n = (idx >= 0 && idx < 4) ? cfg.fronts[idx] : Math.max.apply(null, cfg.fronts);
   if (!n) n = Math.max.apply(null, cfg.fronts);
   var ym = _p2Ym(0);
+  var _fi = _p2FrontIdeal(ym); // v573
+  if (_fi !== null) { _p2SheetClose('p2SimOv'); toast('今月のフロントは理想MAPの数字（' + _fi + '人）です。' + n + '人にするなら理想MAPで新しいB1を足してください'); return; }
   _p2M(ym).front = n;
+  var _rmS = _p2Rm(); if (!_rmS.rows.front) _rmS.rows.front = {}; _rmS.rows.front[ym] = n; // v573: ロードマップにも（ロードマップの数字が優先されて反映されなかった）
   saveGoals();
   _p2SheetClose('p2SimOv');
   toast('✍ 今月のフロント目標に ' + n + '人 を入れました。「設定」で確定しよう');
@@ -17180,6 +17184,15 @@ function _p2RmYms(rm) {
 function _p2RmFront(rm, ym) { return _p2FrontTgt(ym); } // v548: 横線・表・タイル・ファネルで同じ数字
 // v548: 月のフロント目標は1つのルールで決める
 //  ① その月の理想MAPで新規フロントを組んでいれば（1人以上）それ ② 無ければ月の目標（横線のF／表のフロント行／右の入力＝同じ値）
+// v573: その月のFが理想MAPで決まっているか（理想MAPに新しいB1がいる月）。決まっていれば人数、なければ null
+function _p2FrontIdeal(ym) {
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  return (it && +it.front > 0) ? +it.front : null;
+}
+function _p2IdealGo(sheet) { if (sheet) _p2SheetClose(sheet); switchView('ideal'); }
+function _p2FrontIdealHtml(n, sheet) {
+  return '<div class="p2-fro"><b>' + n + '</b>人<span class="p2-meta">理想MAPの数字（新しいB1の人数）</span><span class="p2a-lk" onclick="_p2IdealGo(\'' + (sheet || '') + '\')">理想MAPで変更 ›</span></div>';
+}
 function _p2FrontTgt(ym) {
   var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
   if (it && +it.front > 0) return +it.front;
@@ -17534,12 +17547,13 @@ function _p2RmRender() {
       var v = d.k === 'front' ? _p2RmFront(rm, ym) : ((rm.rows[d.k] || {})[ym] !== undefined ? rm.rows[d.k][ym] : '');
       var ph = '';
       if (d.k === 'br' && (v === '' || v == null)) { ph = ' placeholder="予測' + _p2RmBrPred(rm, ym) + '" title="フロント行から自動予測（' + _p2Gap().rates.brLead + 'ヶ月後にBR着）" style="color:var(--accent)"'; }
+      if (d.k === 'front' && _p2FrontIdeal(ym) !== null) { h += '<td><span class="p2rm-ro" onclick="_p2IdealGo(\'p2RmOv\')" title="理想MAPの数字（変更は理想MAPで）">' + v + '<i>理想</i></span></td>'; return; } // v573
       h += '<td><input class="p2rm-in" type="number" inputmode="numeric" value="' + v + '"' + ph + ' onfocus="edSelAll(this)" onchange="p2RmCell(\'' + d.k + '\',\'' + ym + '\',this.value)"></td>';
     });
     h += '</tr>';
   });
   h += '</table></div>';
-  h += '<div class="p2-meta" style="margin-top:6px">🎯 の金色チップは目標設定の期日（自動表示）。フロント行に入れた数字は各月の「目標」の下書きになります</div>';
+  h += '<div class="p2-meta" style="margin-top:6px">🎯 の金色チップは目標設定の期日（自動表示）。フロント行に入れた数字は各月の「目標」の下書きになります' + (yms.some(function(y9) { return _p2FrontIdeal(y9) !== null; }) ? '。「理想」の月のフロントは理想MAPの新しいB1の人数（変更は理想MAPで）' : '') + '</div>';
   el.innerHTML = h;
 }
 function p2RmStart(y, m) {
@@ -17550,6 +17564,7 @@ function p2RmStart(y, m) {
   saveGoals(); _p2RmRender();
 }
 function p2RmCell(row, ym, v) {
+  if (row === 'front' && _p2FrontIdeal(ym) !== null) { toast('この月のフロントは理想MAPの数字です（変更は理想MAPで）'); _p2RmRender(); return; } // v573
   var rm = _p2Rm();
   if (!rm.rows[row]) rm.rows[row] = {};
   var n = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
@@ -17572,7 +17587,8 @@ function p2RmMsForm(ym, msId) {
     + '<div style="padding:0 16px 18px">'
     // v547: この月のフロント目標（F）はマイルストーン無しでも入れられる
     + '<div class="p2-meta">この月のフロント目標（F）</div>'
-    + '<input class="fi" id="p2rmF" type="number" inputmode="numeric" min="0" placeholder="例：4（空欄＝なし）" value="' + _p2RmFront(rm, ym) + '" onfocus="edSelAll(this)" style="margin:4px 0 12px;max-width:180px">'
+    + (_p2FrontIdeal(ym) !== null ? _p2FrontIdealHtml(_p2FrontIdeal(ym), 'p2RmMsOv') // v573: 理想MAPで決まる月は入力させない（入れても反映されなかった）
+      : '<input class="fi" id="p2rmF" type="number" inputmode="numeric" min="0" placeholder="例：4（空欄＝なし）" value="' + _p2RmFront(rm, ym) + '" onfocus="edSelAll(this)" style="margin:4px 0 12px;max-width:180px">')
     + '<div class="p2-meta">マイルストーン' + (editing ? '' : '（任意）') + '</div>'
     + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin:4px 0 6px">'
     + '<input class="fi" id="p2rmS" placeholder="補足（例：60人タッチ / LOIカウント）任意" value="' + evEsc(editing && editing.sub ? editing.sub : '') + '" style="margin-bottom:8px">'
@@ -17614,7 +17630,7 @@ function p2RmMsSave(ym, msId) {
   }
   if (!t) {
     if (msId) { toast('マイルストーンの名前を入力してください（消す時は「削除」）'); return; }
-    if (!fChanged) { toast('フロント目標かマイルストーンを入力してください'); return; }
+    if (!fChanged) { toast(fEl ? 'フロント目標かマイルストーンを入力してください' : 'マイルストーンを入力してください（この月のフロントは理想MAPで変更）'); return; }
     saveGoals();
     _p2SheetClose('p2RmMsOv');
     _p2RmRender();
@@ -18101,16 +18117,18 @@ function p2GapAlloc() {
   if (!confirm('📤 ロードマップに割り振ります（該当セルは上書き）：\n\n' + prev + '\n\nよろしいですか？')) return;
   var rm = _p2Rm();
   if (brItem.gap !== null && brItem.gap > 0 && !rm.rowDefs.some(function(d) { return d.k === 'br'; })) { rm.rowDefs.push({ k: 'br', lb: 'フロントBR' }); }
+  var _idealSkip = 0;
   plans.forEach(function(pl) {
     if (!rm.rows[pl.k]) rm.rows[pl.k] = {};
     pl.steps.forEach(function(st) {
+      if (pl.k === 'front' && _p2FrontIdeal(st.ym) !== null) { _idealSkip++; return; } // v573: 理想MAPで決まる月はそのまま
       rm.rows[pl.k][st.ym] = st.v;
       if (pl.sync && st.v !== '') _p2M(st.ym).front = st.v; // フロントは月の目標と連動
     });
   });
   saveGoals();
   _p2SheetClose('p2GapOv');
-  toast('📤 ロードマップに割り振りました。微調整はロードマップでどうぞ');
+  toast('📤 ロードマップに割り振りました。微調整はロードマップでどうぞ' + (_idealSkip ? '（今月のフロントは理想MAPの数字のまま）' : ''));
   p2RmOpen();
   if (currentView === 'plan') renderPlan();
 }
