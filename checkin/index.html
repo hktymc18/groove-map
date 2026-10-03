@@ -152,6 +152,10 @@ tr:last-child td{border-bottom:none;}
 /* 各タブの上部メニューはスクロールしても固定（topbarの直下に張り付く。高さはJSで計測） */
 .panehead{position:sticky;top:var(--tbh, 56px);z-index:15;background:var(--paper);padding:8px 0 2px;margin:-8px 0 8px;}
 .panehead .toolrow,.panehead .monthnav{margin-bottom:8px;}
+/* 名簿: テーブルの見出し行（番号・氏名…）も固定。表を内部スクロールにして
+   見出し行をその中に貼り付ける（横スクロールも維持。集計マトリクスと同方式） */
+#pRoster .tblwrap{max-height:calc(100vh - var(--tbh, 56px) - var(--phh, 120px) - 64px);overflow-y:auto;}
+#pRoster .tblwrap thead th{position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line);}
 /* 集計: 未終了イベントの説明を出す?ボタン */
 .statq{width:26px;height:26px;border-radius:50%;padding:0;font-weight:700;color:var(--sub);line-height:1;}
 .monthnav b{font-size:16px;min-width:7.5em;text-align:center;}
@@ -783,6 +787,9 @@ function showView(id){
 function setTbh(){
   var tb = document.querySelector('#vApp .topbar');
   if(tb && tb.offsetHeight) document.documentElement.style.setProperty('--tbh', tb.offsetHeight + 'px');
+  // 名簿の固定ヘッダー高さ（一括操作行の表示/折返しで変わるため実測）→ 表の内部スクロール高さに使う
+  var ph = document.querySelector('#pRoster .panehead');
+  if(ph && ph.offsetHeight) document.documentElement.style.setProperty('--phh', ph.offsetHeight + 'px');
 }
 window.addEventListener('resize', setTbh);
 function makeQr(el, text, size){
@@ -994,8 +1001,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v6';
+var APP_VER = 'v7';
 var CHANGELOG = [
+  { v: 'v7', d: '2026/10/04', items: [
+    '名簿: テーブルの見出し行（番号・氏名…）もスクロールしても固定されるようになりました'
+  ] },
   { v: 'v6', d: '2026/10/04', items: [
     '名簿・イベント・会計・集計の上部メニューが、スクロールしても画面上部に固定されるようになりました',
     '集計: 研修生に「研修生」マークが付きました',
@@ -2304,6 +2314,7 @@ Array.prototype.forEach.call(tabs, function(b){
     Array.prototype.forEach.call(document.querySelectorAll('.pane'), function(p){ p.classList.remove('on'); });
     b.classList.add('on');
     $(b.getAttribute('data-pane')).classList.add('on');
+    setTimeout(setTbh, 0);   // 非表示中は高さ0で測れないため、表示後にヘッダー高さを再計測
     if(b.getAttribute('data-pane') === 'pKiosk' && gRec) focusScan();
     if(b.getAttribute('data-pane') === 'pFin') loadFinanceTab();
   };
@@ -2402,6 +2413,7 @@ function renderRoster(){
     + (edit ? '' : ' ※閲覧のみ（編集はこのユニオンの管理者が行えます）');
   var so = $('qShowOff');
   if(so) so.checked = gRosterShowOff;
+  setTbh();   // 一括操作行の表示切替でヘッダー高さが変わるため再計測
   updateSelCount();
 }
 $('q').addEventListener('input', renderRoster);
