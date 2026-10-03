@@ -2247,7 +2247,7 @@ body.cal-fs .pc-toolbar{display:none!important}
 .ms-sheet{width:100%;background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border2);padding:8px 16px calc(env(safe-area-inset-bottom) + 22px);transform:translateY(100%);transition:transform .25s ease;max-height:88vh;overflow-y:auto} /* v452: 内容が多くても画面内に収まり中でスクロール（サブタスク大量でボタンに届かないバグの根治） */
 .ms-overlay.show .ms-sheet{transform:translateY(0)}
 /* v395: キーボード表示中はシートを画面上部へ（下端固定だとキーボードの裏に隠れるため） */
-.ms-overlay.kb-top{align-items:flex-start}
+.ms-overlay.kb-top{align-items:flex-start;top:var(--vvtop,0px);bottom:auto;height:var(--vvh,100dvh)} /* v566: 見えている範囲に合わせる（iOSはキーボード表示で見える範囲を下へずらす） */
 .ms-overlay.kb-top .ms-sheet{border-radius:0 0 20px 20px;border-top:none;border-bottom:1px solid var(--border2);max-height:calc(var(--vvh,100dvh) - 10px)!important;overflow-y:auto}
 .ms-grip{width:38px;height:4px;border-radius:2px;background:var(--border2);margin:6px auto 14px}
 .ms-hd{display:flex;align-items:center;gap:11px;margin-bottom:16px}
@@ -2501,9 +2501,52 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .idq-own::placeholder{color:var(--text-dim)} .idq-own:focus{background:var(--surface)} .idq-own.sel{background:var(--accent);color:#08121a}
 .idq-unit{font-size:12px;color:var(--text-dim)}
 .idq-foot{display:flex;justify-content:flex-end;gap:18px;margin-top:12px;font-size:12.5px;font-weight:800}
-.idq-more{color:var(--text-mid);cursor:pointer} .idq-more:hover{color:var(--accent)} .idq-del{color:var(--red);cursor:pointer}
+.idq-more{color:var(--text-mid);cursor:pointer} .idq-more:hover{color:var(--accent)} .idq-del{color:var(--red);cursor:pointer;margin-right:auto;display:inline-flex;align-items:center;gap:4px} .idq-del svg{width:14px;height:14px} .idq-hdel{color:var(--red)} .idq-hdel svg{width:17px;height:17px}
 @media(max-width:767px){.idq-row{flex-direction:column;gap:6px}.idq-lb{width:auto;padding-top:0}.idq-s{padding:6px 6px;min-width:25px}}
 .idd.nb1{background:#2CE5B8;color:#08201a} .idd.usr{background:#FFB454;color:#2a1a00}
+/* v559: 次の山（月収→タイトル自動・1年ごとの目標・目標ファーストボーナス）／1年以内の理想／はじめての自分登録 */
+.p2ge-mode{font-size:10.5px;font-weight:700;color:var(--text-dim);margin-left:6px}
+.p2ge-ex{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;font-size:12px;color:var(--text-mid);background:color-mix(in srgb,var(--accent) 8%,var(--surface2));border:1px dashed color-mix(in srgb,var(--accent) 50%,var(--border));border-radius:10px;padding:8px 10px;margin:4px 0 10px} .p2ge-ex b{color:var(--text)}
+.p2ge-yrs{border-top:1px solid var(--border);margin-bottom:10px}
+.p2ge-yr{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+.p2ge-yr .ym{width:96px;flex:none;font-weight:800;display:flex;flex-direction:column;line-height:1.2} .p2ge-yr .ym small{font-size:10px;color:var(--text-dim);font-weight:600}
+.p2ge-yr .iv{display:inline-flex;align-items:center;gap:4px} .p2ge-yr .iv .fi{width:80px;padding:6px 8px;text-align:right;font-weight:800} .p2ge-yr .iv i{font-style:normal;color:var(--text-dim);font-size:11.5px}
+.p2ge-yr select.fi{width:auto;min-width:0;flex:1;max-width:170px;padding:6px 8px;font-size:12px}
+.p2ge-yr .ex{font-size:10px;font-weight:800;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:1px 5px}
+.p2ge-yr.fin{color:var(--text-mid)} .p2ge-yr.fin .iv b{font-size:14px;color:var(--text)} .p2ge-yr .tt{font-family:Inter,sans-serif}
+.p2fb{margin-top:8px;border-radius:10px;background:var(--surface2);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.p2fb-r{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:12px} .p2fb-r span{color:var(--text-dim);min-width:130px} .p2fb-r b{font-size:14px} .p2fb-r small{color:var(--text-dim);font-size:11px} .p2fb-r.warn{color:var(--red)}
+.p2h-ex{margin-left:6px;font-size:10px;font-weight:800;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:0 5px;cursor:pointer;vertical-align:middle}
+.p2lf-tabs{display:flex;gap:4px;padding:3px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);margin-bottom:10px} .p2lf-tabs span{flex:1;text-align:center;padding:7px 6px;border-radius:9px;font-size:12.5px;font-weight:800;color:var(--text-mid);cursor:pointer} .p2lf-tabs span.on{background:var(--accent);color:#08121a}
+.p2lf-note{font-size:12px;color:var(--text-mid);margin-bottom:10px;line-height:1.6}
+.empty-state.onb{max-width:420px;margin:24px auto;padding:22px 18px;border-radius:18px;background:var(--surface);border:1px solid var(--border);text-align:center}
+.onb-t{font-size:18px;font-weight:900;margin-bottom:6px} .onb-t b{color:var(--accent)} .onb-d{font-size:12.5px;color:var(--text-mid);line-height:1.7}
+.onb-fig{margin:14px auto 16px;display:flex;flex-direction:column;align-items:center}
+.onb-lv{position:relative;display:flex;gap:10px;align-items:center;justify-content:center} .onb-lv i{position:absolute;left:calc(100% + 10px);font-style:normal;font-size:11px;font-weight:800;color:var(--text-dim);white-space:nowrap}
+.onb-me{padding:7px 16px;border-radius:999px;background:var(--accent);color:#08121a;font-weight:900;font-size:13px;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}
+.onb-o{width:26px;height:26px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2)} .onb-o.s{width:20px;height:20px}
+.onb-ln{width:2px;height:14px;background:var(--border2);margin:3px 0}
+.onb-b{display:inline-block;padding:12px 22px;font-size:15px;margin:0} .onb-s{font-size:11px;color:var(--text-dim);margin-top:8px}
+.p2ge-sel{max-width:260px;font-weight:800;font-family:Inter,'Noto Sans JP',sans-serif}
+.ed-opt-hd{margin:14px 0 2px;padding:6px 2px 4px;font-size:11px;font-weight:800;color:var(--text-dim);border-top:1px dashed var(--border);letter-spacing:.5px}
+.ed-age{flex:none;align-self:center;margin-left:6px;font-size:13px;font-weight:800;color:var(--accent);white-space:nowrap}
+.qa-acts{display:flex;gap:5px;margin-bottom:10px}.qa-acts .qa-chip{flex:1;text-align:center;padding:8px 4px}
+/* v567: 活動タブ（OL／タスク） */
+.me-act-add{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.me-act-pick{display:flex;gap:8px} .me-act-pick .me-add-btn{flex:1;margin:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px} .me-act-pick small{font-size:10.5px;font-weight:600;color:var(--text-dim)}
+.me-act-f{display:flex;gap:4px;margin-bottom:8px;padding:3px;border-radius:10px;background:var(--surface2);border:1px solid var(--border)}
+.me-act-f span{flex:1;text-align:center;padding:6px 4px;border-radius:8px;font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer} .me-act-f span b{font-family:Inter,sans-serif;margin-left:2px;opacity:.75} .me-act-f span.on{background:var(--accent);color:#08121a}
+/* v560: BRまでの道のり・目標ファーストボーナスの内訳 */
+.p2br{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);font-size:12.5px;display:flex;flex-direction:column;gap:6px}
+.p2br-st{display:flex;flex-wrap:wrap;align-items:center;gap:3px 4px;font-size:11.5px;font-weight:800;color:var(--text-dim)} .p2br-st i{font-style:normal;opacity:.6}
+.p2br-st span{padding:3px 8px;border-radius:999px;border:1px solid var(--border)} .p2br-st span.ex{border-color:color-mix(in srgb,#FB923C 45%,var(--border))}
+.p2br-st span.done{color:var(--text-mid)} .p2br-st span.on{background:var(--accent);border-color:var(--accent);color:#08121a}
+.p2br-l b{color:var(--text)} .p2br-n{display:flex;flex-wrap:wrap;gap:6px 14px} .p2br-n b{font-family:Inter,sans-serif;font-size:14px}
+.p2fb-flow{font-size:12.5px;font-weight:800;color:var(--text)}
+.p2fb-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px} .p2fb-g div{background:var(--surface);border-radius:9px;padding:7px 8px;display:flex;flex-direction:column;gap:2px} .p2fb-g b{font-size:16px;font-family:Inter,'Noto Sans JP',sans-serif} .p2fb-g span{font-size:10.5px;color:var(--text-dim);line-height:1.35}
+.p2fb-t{width:100%;border-collapse:collapse;font-size:12px} .p2fb-t th{font-size:10.5px;color:var(--text-dim);font-weight:700;text-align:right;padding:3px 6px} .p2fb-t th:first-child,.p2fb-t td:first-child{text-align:left}
+.p2fb-t td{padding:4px 6px;border-top:1px solid var(--border);text-align:right;font-family:Inter,'Noto Sans JP',sans-serif} .p2fb-t .ng{color:var(--red);font-size:10.5px}
+@media(max-width:767px){.p2fb-g{grid-template-columns:repeat(2,1fr)}}
 /* v555: 理想の生活シート */
 .p2lf-sheet{max-height:92vh;overflow-y:auto}
 .p2lf-dreams{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
@@ -2597,7 +2640,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2a-n{font-size:12px;color:var(--text-mid);display:flex;align-items:baseline;gap:2px} .p2a-n b{font-size:16px;color:var(--text);font-family:Inter,sans-serif}
 .p2a-pl{margin-left:8px;font-size:11px;color:var(--text-dim)}
 .p2a-wk{font-size:12px;color:var(--text-mid);white-space:nowrap} .p2a-wk b{color:var(--text);font-family:Inter,sans-serif}
-.p2a-sh{margin-left:6px;color:var(--go-rose,#FF5D73);font-weight:800} .p2a-ok{margin-left:4px;color:var(--accent);font-weight:800}
+.p2a-sh{margin-left:6px;color:var(--go-rose,#FF5D73);font-weight:800;white-space:nowrap} .p2a-ok{margin-left:4px;color:var(--accent);font-weight:800}
 .p2a-row.ok .p2-prog>i{background:var(--accent)}
 .p2a-add{font-size:12px;font-weight:800;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 50%,var(--border));border-radius:9px;padding:5px 10px;cursor:pointer;white-space:nowrap}
 .p2a-add:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
@@ -2607,6 +2650,78 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2a-subw{grid-column:2/-1;margin-top:-4px} @media(max-width:767px){.p2a-subw{grid-column:1/-1;order:5}}
 .p2a-sub{font-size:11.5px;color:var(--text-mid);margin-top:5px;line-height:1.5} .p2a-sub b{font-family:Inter,sans-serif;color:var(--text)}
 .p2a-lk{color:var(--accent);font-weight:800;cursor:pointer;text-decoration:underline;margin:0 3px}
+/* v568: 数字の決まり方（式・なぜこの数字？） */
+.p2a-f{margin-left:6px;font-size:10.5px;font-weight:700;color:var(--text-dim);border-bottom:1px dotted var(--text-dim);cursor:pointer;white-space:nowrap;font-family:inherit}
+.p2a-f:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.p2a-base{font-size:11.5px;color:var(--text-mid);background:var(--surface2);border:1px dashed var(--border2);border-radius:10px;padding:7px 10px;margin:2px 0 6px;cursor:pointer;line-height:1.6}
+.p2a-base b{color:var(--text)}
+.p2why-lk{color:var(--accent);font-weight:800;cursor:pointer;margin-left:6px;white-space:nowrap}
+.p2why-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.p2why-tab{padding:6px 12px;border-radius:16px;border:1px solid var(--border2);background:var(--surface2);font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer}
+.p2why-tab.sel{background:var(--accent);border-color:var(--accent);color:#04120e}
+.p2why-step{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface2)}
+.p2why-step .p2why-tx{flex:1;min-width:0}
+.p2why-step .lb{font-size:12.5px;font-weight:800;color:var(--text)}
+.p2why-step .src{font-size:11px;color:var(--text-dim);margin-top:2px;line-height:1.5}
+.p2why-step .v{flex:none;font-family:Inter,sans-serif;font-size:20px;font-weight:800;color:var(--text)}
+.p2why-step.mid{background:transparent;border-style:dashed}
+.p2why-step.res{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.p2why-step.res .v{color:var(--accent);font-size:24px}
+.p2why-op{text-align:center;font-size:15px;font-weight:800;color:var(--text-dim);line-height:1;margin:5px 0}
+.p2why-now{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;color:var(--text-mid)}
+.p2why-now b{font-family:Inter,sans-serif;color:var(--text);font-size:15px}
+.p2why-now .ng{color:var(--go-rose,#FF5D73);font-weight:800;flex:1} .p2why-now .ok{color:var(--accent);font-weight:800;flex:1}
+.p2why-note{font-size:11px;color:var(--text-dim);margin-top:12px;line-height:1.6}
+/* v570: 予定の連携先（種類の欄の代わり） */
+.ev-link-hint{display:flex;align-items:flex-start;gap:6px;margin-top:6px;font-size:11.5px;line-height:1.55;color:var(--accent)}
+.ev-link-hint .ar{flex:none;font-weight:800}
+.ev-link-hint .tx{flex:1;min-width:0}
+.ev-link-hint .dim{color:var(--text-dim)}
+.ev-link-hint .q{flex:none;width:18px;height:18px;border-radius:50%;border:1px solid var(--border2);color:var(--text-dim);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ev-link-help{margin-top:6px;padding:9px 11px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);font-size:11.5px;line-height:1.6;color:var(--text-mid)}
+.ev-link-help b{display:block;color:var(--text);margin-bottom:4px}
+.ev-link-help div{margin-top:4px} .ev-link-help span{display:inline-block;font-weight:800;color:var(--text);margin-right:6px}
+/* v569: 体験チュートリアル */
+.p2tut-ban{display:flex;align-items:center;gap:8px;padding:10px 12px;margin:2px 0 8px;border-radius:12px;border:1px solid color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent) 10%,transparent);font-size:12.5px;font-weight:800;color:var(--text)}
+.p2tut-ban .sp{flex:1} .p2tut-ban .x{color:var(--text-dim);cursor:pointer;padding:2px 4px}
+.p2t-dots{display:flex;gap:6px;justify-content:center;margin:0 0 12px} .p2t-dots i{width:28px;height:5px;border-radius:3px;background:var(--border2)} .p2t-dots i.on{background:var(--accent)} .p2t-dots i.done{background:color-mix(in srgb,var(--accent) 45%,var(--border2))}
+.p2t-hero{text-align:center;font-size:44px;margin:6px 0 4px}
+.p2t-q{font-size:14.5px;font-weight:700;color:var(--text);line-height:1.6;text-align:center;margin-bottom:12px} .p2t-q b{color:var(--accent)}
+.p2t-tx{font-size:12px;color:var(--text-mid);line-height:1.7;margin:10px 0;text-align:center} .p2t-tx b{color:var(--text)}
+.p2t-hint{font-size:12px;color:var(--text-dim);text-align:center;margin:10px 0;animation:p2tBlink 1.6s ease-in-out infinite}
+.p2t-ok{font-size:12.5px;color:var(--text);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:10px;padding:9px 12px;margin:10px 0;line-height:1.6} .p2t-ok b{color:var(--accent)}
+.p2t-next{display:block;text-align:center;margin:10px 0 0} .p2t-next.dis{opacity:.35;pointer-events:none}
+.p2t-map{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0}
+.p2t-kids{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;position:relative}
+.p2t-node{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:800;line-height:1.15;border:2px solid var(--border2);background:var(--surface2);color:var(--text)}
+.p2t-node.me{width:62px;height:62px;border-color:var(--accent);font-size:13px}
+.p2t-node.new{border-color:var(--accent);color:var(--accent);animation:p2tPop .35s ease-out}
+.p2t-node.add{border-style:dashed;color:var(--accent);font-size:24px;cursor:pointer;animation:p2tPulse 1.6s ease-in-out infinite}
+.p2t-step{display:flex;align-items:center;justify-content:center;gap:18px;margin:4px 0}
+.p2t-sb{width:48px;height:48px;border-radius:50%;border:2px solid var(--accent);color:var(--accent);font-size:24px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+.p2t-sv{text-align:center} .p2t-sv small{display:block;font-size:11px;color:var(--text-dim)} .p2t-sv b{font-family:Inter,sans-serif;font-size:34px;color:var(--text)}
+.p2t-chain{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:1px;margin:12px 0 4px;padding:10px 4px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)}
+.p2t-b{min-width:0;text-align:center;padding:4px 3px;border-radius:8px;transition:background .3s}
+.p2t-b small{display:block;font-size:9px;color:var(--text-dim);white-space:nowrap} .p2t-b b{font-family:Inter,sans-serif;font-size:14px;color:var(--text);white-space:nowrap}
+.p2t-b.res{background:color-mix(in srgb,var(--accent) 14%,transparent)} .p2t-b.res b{color:var(--accent)}
+.p2t-b.hit{animation:p2tHit 1s ease-out}
+.p2t-op{font-size:12px;font-weight:800;color:var(--text-dim)}
+.p2t-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 8px}
+.p2t-day{min-height:52px;border:1px solid var(--border);border-radius:8px;padding:3px;text-align:center;background:var(--surface2)} .p2t-day small{display:block;font-size:10px;color:var(--text-dim)}
+.p2t-ev{display:block;margin-top:4px;font-size:10px;font-weight:800;border-radius:5px;padding:3px 0;background:color-mix(in srgb,var(--accent) 25%,transparent);color:var(--accent);animation:p2tPop .3s ease-out}
+.p2t-now{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-mid)} .p2t-now b{font-family:Inter,sans-serif;font-size:15px;color:var(--text)}
+.p2t-now .ok{color:var(--accent);font-weight:800;flex:1} .p2t-now .ng{color:var(--go-rose,#FF5D73);font-weight:800;flex:1}
+.p2t-wk2{font-size:13px;color:var(--text-mid);line-height:1.8;text-align:center;padding:8px;border:1px dashed var(--border2);border-radius:10px} .p2t-wk2 b{color:var(--accent);font-size:15px}
+.p2t-sum{font-size:12.5px;color:var(--text-mid);line-height:2;padding:8px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)} .p2t-sum b{color:var(--text)}
+.p2tut .tap,#p2TutOv .tap{animation:p2tTap .45s ease-out}
+@keyframes p2tPop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes p2tPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 8px transparent}}
+@keyframes p2tHit{0%{background:color-mix(in srgb,var(--accent) 45%,transparent)}100%{background:transparent}}
+@keyframes p2tTap{0%{transform:scale(1)}40%{transform:scale(.86);box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 35%,transparent)}100%{transform:scale(1)}}
+@keyframes p2tBlink{0%,100%{opacity:.55}50%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.p2t-node.add,.p2t-hint{animation:none}}
+.p2a-mo{min-width:200px} .p2a-n{flex-wrap:wrap} .p2a-pl,.p2a-pc{white-space:nowrap} .p2a-wk{white-space:normal;max-width:340px;line-height:1.7}
+@media(max-width:767px){.p2a-mo{min-width:0}.p2a-wk{white-space:normal;max-width:none}.p2wk-row{gap:8px}.p2wk-row .lb{min-width:0;width:62px;flex:none}.p2wk-row .nd{white-space:nowrap}.p2wk-row .nd .p2a-f{display:block;margin:1px 0 0;width:fit-content}.p2wk-row .ok,.p2wk-row .ng{white-space:nowrap;font-size:12px}}
 .p2a-add.al{color:var(--text-mid);border-color:var(--border2)}
 .p2-alert{background:rgba(255,93,115,.12);border:1px solid rgba(255,93,115,.5);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:#ff8fa3}
 .p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none;animation:p2bIn .35s ease}
@@ -2864,7 +2979,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v557</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v570</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3407,25 +3522,12 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             <div class="ed-ctrl"><input class="ed-in" id="fFirst" placeholder="未入力"></div>
           </div>
           <div class="ed-row">
-            <span class="ed-l">写真<span class="ed-q" onclick="edHelp(event,'h_photo')">?</span></span>
-            <div class="ed-ctrl" style="align-items:center;gap:10px">
-              <span id="fPhotoPrev" onclick="recropPhoto()" title="タップで切り抜きを調整" style="width:44px;height:44px;border-radius:50%;background:var(--surface3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex:none;cursor:pointer">📷</span>
-              <input type="file" id="fPhotoFile" accept="image/*" style="display:none" onchange="onPhotoPicked(this)">
-              <button type="button" onclick="document.getElementById('fPhotoFile').click()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">選択</button>
-              <button type="button" id="fPhotoDel" onclick="removeMemberPhoto()" style="display:none;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,93,115,.4);background:transparent;color:var(--red);font-size:13px;font-weight:700;cursor:pointer">削除</button>
+            <span class="ed-l">性別</span>
+            <div class="ed-chips">
+              <div class="rb sel" id="rbMale" onclick="selGender('male')">♂ 男性</div>
+              <div class="rb" id="rbFemale" onclick="selGender('female')">♀ 女性</div>
             </div>
           </div>
-          <div class="ed-help" id="h_photo">端末内で圧縮してから保存されます（1枚 約8KB）。ドラッグとピンチで表示範囲を調整。写真をタップすると切り抜きをやり直せます。</div>
-          <div class="ed-row">
-            <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
-            <div class="ed-ctrl ed-birth"><select class="ed-in" id="fBirthY" onchange="syncAgeField()" style="flex:1.5"></select><select class="ed-in" id="fBirthM" onchange="syncAgeField()" style="flex:1"></select><select class="ed-in" id="fBirthD" onchange="syncAgeField()" style="flex:1"></select></div>
-          </div>
-          <div class="ed-help" id="h_birth">誕生日の前日と当月にホームでリマインドが出ます。</div>
-          <div class="ed-row">
-            <span class="ed-l">年齢のみ<span class="ed-q" onclick="edHelp(event,'h_age')">?</span></span>
-            <div class="ed-ctrl"><input class="ed-in" id="fAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例: 27" style="width:90px" onfocus="edSelAll(this)"><span id="fAgeNote" style="font-size:12px;color:var(--text-dim);margin-left:6px">歳</span></div>
-          </div>
-          <div class="ed-help" id="h_age">生年月日が分からない時はこちらに年齢だけ。生年月日を入れた場合はそちらが優先されます。</div>
           <div class="ed-row">
             <span class="ed-l">地域<span class="ed-q" onclick="edHelp(event,'h_region')">?</span></span>
             <div class="ed-ctrl" style="flex-direction:column;align-items:stretch;gap:6px">
@@ -3444,18 +3546,47 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             </div>
           </div>
           <div class="ed-help" id="h_region">活動拠点。組織図の名前の横に表示され、地域でフィルタできます。</div>
-          <div class="ed-row">
-            <span class="ed-l">性別</span>
-            <div class="ed-chips">
-              <div class="rb sel" id="rbMale" onclick="selGender('male')">♂ 男性</div>
-              <div class="rb" id="rbFemale" onclick="selGender('female')">♀ 女性</div>
-            </div>
-          </div>
           <!-- v342: カテゴリ・タイトルは月次タブの一番上へ移動 -->
           <div style="display:none">
             <div class="rb sel" id="rbTraNo" onclick="selTrainee(false)">いいえ</div>
             <div class="rb" id="rbTraYes" onclick="selTrainee(true)">研修生（水色）</div>
           </div>
+          <div class="ed-opt-hd">ここから下は任意</div>
+          <div class="ed-row">
+            <span class="ed-l">写真<span class="ed-q" onclick="edHelp(event,'h_photo')">?</span></span>
+            <div class="ed-ctrl" style="align-items:center;gap:10px">
+              <span id="fPhotoPrev" onclick="recropPhoto()" title="タップで切り抜きを調整" style="width:44px;height:44px;border-radius:50%;background:var(--surface3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex:none;cursor:pointer">📷</span>
+              <input type="file" id="fPhotoFile" accept="image/*" style="display:none" onchange="onPhotoPicked(this)">
+              <button type="button" onclick="document.getElementById('fPhotoFile').click()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">選択</button>
+              <button type="button" id="fPhotoDel" onclick="removeMemberPhoto()" style="display:none;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,93,115,.4);background:transparent;color:var(--red);font-size:13px;font-weight:700;cursor:pointer">削除</button>
+            </div>
+          </div>
+          <div class="ed-help" id="h_photo">端末内で圧縮してから保存されます（1枚 約8KB）。ドラッグとピンチで表示範囲を調整。写真をタップすると切り抜きをやり直せます。</div>
+          <div class="ed-row">
+            <span class="ed-l">生年月日<span class="ed-q" onclick="edHelp(event,'h_birth')">?</span></span>
+            <div class="ed-ctrl ed-birth"><select class="ed-in" id="fBirthY" onchange="syncAgeField()" style="flex:1.5"></select><select class="ed-in" id="fBirthM" onchange="syncAgeField()" style="flex:1"></select><select class="ed-in" id="fBirthD" onchange="syncAgeField()" style="flex:1"></select><span id="fAgeAuto" class="ed-age"></span></div>
+          </div>
+          <div class="ed-help" id="h_birth">年だけでもOK（その年の1月1日として年齢を計算）。月・日まで入れると、誕生日の前日と当月にホームでリマインドが出ます。</div>
+          <div class="ed-row">
+            <span class="ed-l">Instagram</span>
+            <div class="ed-ctrl"><input class="ed-in" id="fInsta" placeholder="URL"></div>
+          </div>
+          <div class="ed-row">
+            <span class="ed-l">登録月<span class="ed-q" onclick="edHelp(event,'h_start')">?</span></span>
+            <div class="ed-ctrl" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <select class="ed-in" id="fStartY" onchange="startYmSel()" style="width:auto"></select>
+              <select class="ed-in" id="fStartM" onchange="startYmSel()" style="width:auto"></select>
+              <input type="hidden" id="fStartMonth">
+            </div>
+          </div>
+          <div class="ed-help" id="h_start">組織に入った月。翌月コピー時の活動月数（B◯の判定）に使います。</div>
+          <!-- v565: 年齢のみ・適用MAP（既定は両方）・LINE は画面から外す（保存済みの値は消さないため欄は非表示で残す） -->
+          <div style="display:none">
+          <div class="ed-row">
+            <span class="ed-l">年齢のみ<span class="ed-q" onclick="edHelp(event,'h_age')">?</span></span>
+            <div class="ed-ctrl"><input class="ed-in" id="fAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例: 27" style="width:90px" onfocus="edSelAll(this)"><span id="fAgeNote" style="font-size:12px;color:var(--text-dim);margin-left:6px">歳</span></div>
+          </div>
+          <div class="ed-help" id="h_age">生年月日が分からない時はこちらに年齢だけ。生年月日を入れた場合はそちらが優先されます。</div>
           <div class="ed-row">
             <span class="ed-l">適用MAP<span class="ed-q" onclick="edHelp(event,'h_map')">?</span></span>
             <div class="ed-chips">
@@ -3466,10 +3597,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           </div>
           <div class="ed-help" id="h_map">このメンバーを現状MAP／理想MAPのどちらに表示するか。</div>
           <div class="ed-row">
-            <span class="ed-l">Instagram</span>
-            <div class="ed-ctrl"><input class="ed-in" id="fInsta" placeholder="URL"></div>
-          </div>
-          <div class="ed-row">
             <span class="ed-l">LINE<span class="ed-q" onclick="edHelp(event,'h_line')">?</span></span>
             <div class="ed-ctrl" style="display:flex;gap:6px;align-items:center">
               <input class="ed-in" id="fLine" placeholder="LINE ID または URL" style="flex:1">
@@ -3477,15 +3604,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             </div>
           </div>
           <div class="ed-help" id="h_line">LINE ID（英数字）か、友だち追加URLを入力。ボタンでLINEを開けます。</div>
-          <div class="ed-row">
-            <span class="ed-l">登録月<span class="ed-q" onclick="edHelp(event,'h_start')">?</span></span>
-            <div class="ed-ctrl" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-              <select class="ed-in" id="fStartY" onchange="startYmSel()" style="width:auto"></select>
-              <select class="ed-in" id="fStartM" onchange="startYmSel()" style="width:auto"></select>
-              <input class="ed-in" id="fStartMonth" type="text" placeholder="2026-09" autocomplete="off" onfocus="edSelAll(this)" onchange="startYmManual(this.value)" style="width:96px">
-            </div>
           </div>
-          <div class="ed-help" id="h_start">組織に入った月。翌月コピー時の活動月数（B◯の判定）に使います。</div>
         </div>
 
         <!-- Page 1: 月次 -->
@@ -3518,20 +3637,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             </div>
           </div>
           <div class="ed-help" id="h_outvis">OUTメンバーをツリーに出し続けるか選べます。「残す」＝当月のMAPにグレー表示で残します（翌月コピーで自動的に外れます）。「非表示」＝ツリーから消えます（データは残り、メンバー一覧の「OUT」絞り込みからいつでも開けます）。どちらでも直下の組織は上のアップラインに移動します。</div>
-          <div class="ed-row" id="restartRow" style="display:none">
-            <span class="ed-l">🔄 リスタート<span class="ed-q" onclick="edHelp(event,'h_restart')">?</span></span>
-            <div class="ed-ctrl"><div id="restartCtl" style="font-size:12.5px;line-height:1.8"></div></div>
-          </div>
-          <div class="ed-help" id="h_restart">BR維持失敗（ロールアップ）から再挑戦中のメンバーに「🔄リスタート◯ヶ月目」を表示します（開始月＝1ヶ月目、6ヶ月目まで自動表示）。翌月コピーの自動ロールアップでは自動設定されます。既に手動で組織を組み替え済みの場合は、ここから開始月を後付けで設定してください。</div>
-          <div class="ed-row" id="badgeRow">
-            <span class="ed-l">ケアバッジ<span class="ed-q" onclick="edHelp(event,'h_badge')">?</span></span>
-            <div class="ed-chips">
-              <div class="rb sel" id="rbBadgeAuto" onclick="selBadgeMode('')">自動</div>
-              <div class="rb" id="rbBadgeOn" onclick="selBadgeMode('on')">表示</div>
-              <div class="rb" id="rbBadgeOff" onclick="selBadgeMode('off')">非表示</div>
-            </div>
-          </div>
-          <div class="ed-help" id="h_badge">PCツリーの「フレッシュ」（スタート6ヶ月以内・BR未満）／「研修生」バッジの表示設定。ケアしないと消えてしまう層を目立たせるためのバッジです。自動＝条件に合えば表示。条件外でもケアしたい人には「表示」、外したい人は「非表示」。</div>
           <div class="ed-row">
             <span class="ed-l">現状GSV<span class="ed-q" onclick="edHelp(event,'h_fPtC')">?</span></span>
             <div class="ed-ctrl"><input class="ed-in" id="fPtC" type="number" inputmode="numeric" placeholder="未入力" onfocus="edSelAll(this)"></div>
@@ -3576,6 +3681,20 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
             </select><span class="ed-chev">▾</span></div>
           </div>
           <div class="ed-help" id="h_fPriority">フォローの注力度。高いほどホームの「気になるメンバー」に出やすくなります。</div>
+          <div class="ed-row" id="restartRow" style="display:none">
+            <span class="ed-l">🔄 リスタート<span class="ed-q" onclick="edHelp(event,'h_restart')">?</span></span>
+            <div class="ed-ctrl"><div id="restartCtl" style="font-size:12.5px;line-height:1.8"></div></div>
+          </div>
+          <div class="ed-help" id="h_restart">BR維持失敗（ロールアップ）から再挑戦中のメンバーに「🔄リスタート◯ヶ月目」を表示します（開始月＝1ヶ月目、6ヶ月目まで自動表示）。翌月コピーの自動ロールアップでは自動設定されます。既に手動で組織を組み替え済みの場合は、ここから開始月を後付けで設定してください。</div>
+          <div class="ed-row" id="badgeRow">
+            <span class="ed-l">点滅表示<span class="ed-q" onclick="edHelp(event,'h_badge')">?</span></span>
+            <div class="ed-chips">
+              <div class="rb sel" id="rbBadgeAuto" onclick="selBadgeMode('')">自動</div>
+              <div class="rb" id="rbBadgeOn" onclick="selBadgeMode('on')">表示</div>
+              <div class="rb" id="rbBadgeOff" onclick="selBadgeMode('off')">非表示</div>
+            </div>
+          </div>
+          <div class="ed-help" id="h_badge">PCツリーで点滅させて目立たせる表示（「フレッシュ」＝スタート6ヶ月以内・BR未満／「研修生」）の設定。ケアしないと消えてしまう層を目立たせるためのものです。自動＝条件に合えば表示。条件外でもケアしたい人には「表示」、外したい人は「非表示」。</div>
           <div class="ed-memo-row">
             <span class="ed-l">メモ</span>
             <textarea class="ed-memo" id="fMemo" placeholder="予定・心境・タスクなど"></textarea>
@@ -3655,6 +3774,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <div class="ev-tpl-toggle" id="evStarBtn" onclick="evStarToggle()" title="星付き" style="display:none"><svg class="lic" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z"/></svg></div>
         <div class="ev-tpl-toggle" id="evTplToggle" onclick="evTplPanelToggle()" title="テンプレ・履歴から入力">⧉<span style="font-size:9px">▾</span></div>
       </div>
+      <div class="ev-link-hint" id="evLinkHint" style="display:none"></div>
+      <div class="ev-link-help" id="evLinkHelpBox" style="display:none"></div>
       <div id="evTplRow" style="display:none"></div>
     </div>
     <div class="ev-dt-row">
@@ -3736,11 +3857,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       </div>
     </div>
     </div>
-    <!-- v545: 種類・Aさん（メンバー選択時。MAPのメンバー側の予定表示に使う） -->
-    <div class="fr" id="evKindRow" style="display:none">
-      <label class="fl">種類 <span style="font-weight:500;color:var(--text-dim)">（タイトルから自動で選びます）</span></label>
-      <div class="rg ev-kind-rg" id="evKindChips"></div>
-    </div>
+    <!-- v570: 種類の欄は廃止（タイトルで判定）。連携先はタイトルの下に1行で表示 -->
     <div class="fr" id="evAsanRow" style="display:none">
       <label class="fl">Aさん <span style="font-weight:500;color:var(--text-dim)">（仕事に入る人）</span></label>
       <div class="rg ev-kind-rg" id="evAsanChips"></div>
@@ -3749,8 +3866,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div class="fr" id="evSelfShowRow" style="display:none">
       <label class="fl">この予定・タスクの扱い（メンバー選択時）</label>
       <div class="rg">
-        <div class="rb sel" id="evSelfShowOff" onclick="selEvSelfShow(false)"><svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg> メンバー専用（自分に出さない）</div>
-        <div class="rb" id="evSelfShowOn" onclick="selEvSelfShow(true)"><svg class="lic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17"/></svg> 自分にも表示</div>
+        <div class="rb sel" id="evVisMember" onclick="selEvVis('member')" title="メンバーのカード・ホバーに出す。自分のカレンダー・ToDoには出さない"><svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg> メンバーのみ</div>
+        <div class="rb" id="evVisSelf" onclick="selEvVis('self')" title="自分のカレンダー・ToDoだけに出す。メンバーのカード・共有先には出さず、行動にも数えない"><svg class="lic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17"/></svg> 自分のみ</div>
+        <div class="rb" id="evVisBoth" onclick="selEvVis('both')" title="メンバーのカードと自分のカレンダー・ToDoの両方に出す"><svg class="lic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.6 2.7-5.8 6-5.8s6 2.2 6 5.8"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.4c2.6.2 4.5 2 4.5 5"/></svg> 両方</div>
       </div>
     </div>
     <!-- A1: 詳細はデフォルト格納（ミニマル）。値が入っている時は自動で開く -->
@@ -3805,7 +3923,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v557';</script>
-<script src="app.js?v=v557"></script>
+<script>window.GM_EXPECT_JS='v570';</script>
+<script src="app.js?v=v570"></script>
 </body>
 </html>
