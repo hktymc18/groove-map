@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v570';
+var APP_JS_VERSION = 'v575';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v570';
+  var DATA_VERSION = 'v575';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4068,6 +4068,7 @@ function updateFabVisibility() {
 // ── VIEW SWITCH ──
 function switchView(v) {
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
+  if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   currentView = v;
   window._selectedCardId = null;
   ['home','members','current','ideal','stats','ol','events','goals','month','plan'].forEach(function(n) {
@@ -4954,6 +4955,11 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v575', d:'2026-10-03', items:['🎯 PLAN「今月にやること」の目標に出どころの印（理想MAP・ロードマップ・今月の目標）。理想MAPの数字は紫に','👆 タイルを押すと「この目標は理想MAPの数字です」と変え方を案内：フロントは自分の直下に新しいB1を足す画面、ユーザーPTは自分のカード、平均稼働人数は今月の目標の入力欄へ直接移動','← 理想MAPに移ったら画面の下に「PLANに戻る」。押すと元の位置に戻ります'] },
+  { v:'v574', d:'2026-10-03', items:['✏️ 目標設定「どのあたりに住みたい？」の例を「大濠、南青山、新町」に変更'] },
+  { v:'v573', d:'2026-10-03', items:['🔧 マイルストーン・年間ロードマップでフロント目標（F）を入れ直しても反映されなかった問題：理想MAPに新しいB1がいる月のFは理想MAPの人数で決まるため、その月は入力欄の代わりに「理想MAPの数字（理想MAPで変更 ›）」と表示するように（ギャップの割り振りも、その月はそのまま）','🔧 シミュレーションの「今月の目標に入れる」が、ロードマップに今月の数字があると反映されなかったのを修正'] },
+  { v:'v572', d:'2026-10-03', items:['💰 PLANの一番上を「目標月収 → 次の山（タイトル）→ 期日」の順に。目標月収は月収かタイトルをタップして自分で決められます','⛰ 決めた月収から、goal settingと同じ月収レンジ（例：51〜100万＝DIAMOND）で次の山のタイトルを自動で決めます。タイトルはあとからプルダウンで選び直せます（「月収に合わせる」で自動に戻す）'] },
+  { v:'v571', d:'2026-10-03', items:['🎓 v570より前に入れた予定も、研修履歴にまとめて自動でつなぎました（30日前以降の予定。タイトルが研修ステップで、関連メンバーが研修生のもの）。同じステップの記録がすでにあれば新しく作らずにその記録につなぎ、済んだステップ・先に進んでいる人はそのままにします'] },
   { v:'v570', d:'2026-10-03', items:['🗓 予定の「種類」の欄をなくしました。タイトルに ST・SNST・CT取り・CT・FT が入っていれば、そのままPLANの行動量に数えます（マケ・PG・DLRなどはカレンダーからは数えません）。タイトルの下に「→ PLAN『CT』に数えます」のように連携先を1行表示（？で説明）','🎓 タイトルが研修ステップ（FT・マケ・PG・DLR・EXP・PA・面談・BPC・CO）の予定で関連メンバーに研修生を選ぶと、その人の研修履歴に「予定」として自動で入ります。予定の日付を変える・消す・メンバーを外すと研修履歴の予定も追従（結果を入れた記録はそのまま）','📊 PG・マケ・DLR動員は研修履歴から数えるように：自分の直下の研修生に結果（進んだ・流れた）を入れたら「今月の行動量」に、それ以外の研修生は「今月の目標」のチーム欄（PG・DLR動員の目標を追加）に数えます。DLR動員は会場に来た人だけ。日付が過ぎて結果が未入力の人は「結果待ち」と表示','⚡ かんたん追加：区分のボタンをやめて、タイトルを選ぶだけに（研修生の入口はマケ・PG）'] },
   { v:'v569', d:'2026-10-02', items:['🎮 PLANに「数字の決まり方を体験（1分）」を追加：練習用のミニ画面で ①理想MAPに新しいB1を足す ②係数を変える ③今週CTの予定を入れる ④1週間すすめる、の4つを操作すると、今月の必要数・今週の目標が目の前で変わります（本物のデータは変わりません）','▶ 「見るだけ」を選ぶと自動で操作して見せてくれます。はじめての人には「今月の行動量」に案内が出ます（✕で消せます）。「なぜこの数字？」の画面からも開けます'] },
   { v:'v568', d:'2026-10-02', items:['🧮 PLANの「今月の行動量」「今週の作戦」の数字に、計算式を表示（例：16件の横に「＝2人×8」、今週4件の横に「残り12÷3週」）','👆 式をタップすると「なぜこの数字？」：フロント目標（理想MAP・ロードマップ・今月の目標のどれから来たか）→ 係数 → 今月の必要数 → 先週までの実績 → 月末までの週の数 → 今週の目標、を実際の数字で順番に表示。それぞれの箱から理想MAP・係数・カレンダーへ移動できます','🔧 CT取りの目標が、ドタキャン余裕の％によっては小数の誤差で1件多く出ることがあったのを修正'] },
@@ -14699,8 +14705,7 @@ function _p2PcHeroHtml() {
       + '<div class="p2d-bar"><i style="width:' + Math.round(dDone / dr.length * 100) + '%"></i></div></div>';
   }
   if (nxMode) {
-    finalLine = '<div class="p2h-final" onclick="p2GoalEdit()" title="目標をなおす">🏔 最終ゴール <b>' + evEsc(_p2TitleEn(p.title)) + '</b>'
-      + (p.income ? '・月収 <b>' + Math.round((+p.income) / 10000).toLocaleString() + '万</b>' : '')
+    finalLine = '<div class="p2h-final" onclick="p2GoalEdit()" title="目標をなおす">🏔 最終ゴール ' + (p.income ? '月収 <b>' + Math.round((+p.income) / 10000).toLocaleString() + '万</b>・' : '') + '<b>' + evEsc(_p2TitleEn(p.title)) + '</b>'
       + '・<b>' + parseInt(dl[0], 10) + '年' + parseInt(dl[1], 10) + '月</b>まで' + (rem > 0 ? '<span>（あと' + rem + 'ヶ月）</span>' : '') + ' <i>✎</i></div>';
   }
   top = top.replace('%BB%', bbH).replace('%DREAM%', drH);
@@ -15243,18 +15248,82 @@ function _p2TitleIncome(en) { // 月収の目安（タイトル帯）
 function _p2NextGridHtml(nx) {
   var dl = nx.deadline ? nx.deadline.split('-') : null, rem = nx.deadline ? _glMonthsUntil(nx.deadline) : 0;
   var isBR = nx.title === 'BR';
-  // v559: BRは「目標ファーストボーナス」、それ以外は次の山の月収（未設定ならタイトルの目安）
-  var third = isBR ? '<div class="p2h-inc" onclick="p2GoalEdit()">' + Math.round(nx.fb / 10000).toLocaleString() + '<small>万円</small></div>'
-    : (nx.inc ? '<div class="p2h-inc" onclick="p2GoalEdit()">' + nx.inc.toLocaleString() + '<small>万円</small></div>' : '<div class="p2h-inc p2h-incr">' + (_p2TitleIncome(nx.title) || '—') + '</div>');
+  // v572: いちばん大事な「目標月収」を左に、その右に次の山（タイトル）。月収は自分で決めて、タイトルは月収から自動（あとから選び直せる）
+  //       BRは月収の代わりに目標ファーストボーナス
+  var first = isBR ? '<div class="p2h-inc" onclick="p2GoalEdit()">' + Math.round(nx.fb / 10000).toLocaleString() + '<small>万円</small></div>'
+    : (nx.inc ? '<div class="p2h-inc" onclick="p2NxIncOpen()" title="目標月収を変える">' + nx.inc.toLocaleString() + '<small>万円</small></div>'
+      : '<div class="p2h-inc add" onclick="p2NxIncOpen()">決める</div>');
+  var incHint = (!isBR && !nx.inc && _p2TitleIncome(nx.title)) ? '<div class="p2h-sub">' + evEsc(nx.title) + 'の目安 <b>' + _p2TitleIncome(nx.title) + '</b></div>' : '';
   var fbp = isBR ? _p2FbPlan(nx.fb) : null;
   return '<div class="p2h-grid">'
-    + '<div class="p2h-eb c1">⛰ 次の山' + (nx.suggested ? '<span class="p2h-ex" onclick="p2GoalEdit()" title="最終ゴールから逆算した例です。目標をなおすで決めましょう">例</span>' : '') + '</div><div class="p2h-eb c2">期日</div><div class="p2h-eb c3">' + (isBR ? '目標ファーストボーナス' : (nx.inc ? '目標月収' : '月収の目安')) + '</div>'
-    + '<div class="v c1"><div class="p2h-ttl" onclick="p2GoalEdit()" title="次の山を変える">' + evEsc(nx.title) + '</div></div>'
-    + '<div class="v c2">' + (dl ? '<div class="p2h-dl" onclick="p2GoalEdit()"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div>' : '<span class="p2-btn pri" style="margin:0" onclick="p2GoalEdit()">期日を決める</span>') + '</div>'
-    + '<div class="v c3">' + third + '</div>'
-    + '<div class="s c1">%BB%</div><div class="s c2">%DREAM%</div>'
-    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + (fbp && fbp.target && fbp.n ? '<div class="p2h-sub">フロント 毎月' + fbp.n + '人・新規B1 ' + fbp.sim.nb + '人・組織 ' + fbp.sim.org + '人</div>' : '') + '</div>'
+    + '<div class="p2h-eb c1">' + (isBR ? '🎁 目標ファーストボーナス' : '💰 目標月収') + '</div>'
+    + '<div class="p2h-eb c2">⛰ 次の山' + (nx.suggested ? '<span class="p2h-ex" onclick="p2NxIncOpen()" title="最終ゴールから逆算した例です。月収を決めましょう">例</span>' : '') + '</div>'
+    + '<div class="p2h-eb c3">期日</div>'
+    + '<div class="v c1">' + first + '</div>'
+    + '<div class="v c2"><div class="p2h-ttl" onclick="' + (isBR ? 'p2GoalEdit()' : 'p2NxIncOpen()') + '" title="次の山を選び直す">' + evEsc(nx.title) + '</div></div>'
+    + '<div class="v c3">' + (dl ? '<div class="p2h-dl" onclick="p2GoalEdit()"><b>' + parseInt(dl[0], 10) + '</b>年<b>' + parseInt(dl[1], 10) + '</b>月まで</div>' : '<span class="p2-btn pri" style="margin:0" onclick="p2GoalEdit()">期日を決める</span>') + '</div>'
+    + '<div class="s c1">' + incHint + '%BB%' + (fbp && fbp.target && fbp.n ? '<div class="p2h-sub">フロント 毎月' + fbp.n + '人・新規B1 ' + fbp.sim.nb + '人・組織 ' + fbp.sim.org + '人</div>' : '') + '</div>'
+    + '<div class="s c2">' + (!isBR && nx.inc && !nx.suggested ? '<div class="p2h-sub">' + (nx.tm ? '自分で選んだタイトル' : '月収から自動') + '</div>' : '') + '%DREAM%</div>'
+    + '<div class="s c3">' + (rem > 0 ? '<div class="p2h-rem">残り <b>' + rem + '</b>ヶ月</div>' : '') + '</div>'
     + '</div>';
+}
+// v572: 次の山の目標月収を決める（タイトルは goal setting の月収レンジで自動。あとから選び直せる）
+var _p2Nx = null;
+function p2NxIncOpen() {
+  var nx = _p2Next();
+  if (nx.isFinal || (nx.title === 'BR' && nx.curR < 0 && !nx.inc)) { p2GoalEdit(); return; } // 最終ゴール・BR（ファーストボーナス）は従来の画面で
+  _p2Nx = { inc: nx.inc || '', title: nx.title, manual: !!nx.tm, curR: nx.curR, fin: nx.fin, deadline: nx.deadline };
+  _p2SheetClose('p2NxOv');
+  var list = P2_RANK.filter(function(t) { var r = _p2Rank(t), fr = _p2Rank(nx.fin); return r > nx.curR && (fr < 0 || r <= fr); });
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2NxOv'; ov.style.zIndex = '620';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2NxOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">💰 次の山の目標月収</div><div style="font-size:11px;color:var(--text-dim)">月収を決めると、タイトルは自動で決まります（あとから選び直せます）</div></div>'
+    + '<span class="ms-x" onclick="_p2SheetClose(\'p2NxOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">'
+    + '<div class="fr"><label class="fl">目標月収</label><div style="display:flex;gap:6px;align-items:center"><input class="fi" id="p2nxInc" type="number" inputmode="numeric" value="' + (_p2Nx.inc || '') + '" placeholder="例：60" style="max-width:150px;text-align:right;font-size:22px;font-weight:900" onfocus="edSelAll(this)" oninput="p2NxIncInput()"><span>万円</span></div></div>'
+    + '<div class="fr"><label class="fl">次の山（タイトル） <span class="p2ge-mode" id="p2nxMode"></span></label>'
+    + '<select class="fi p2ge-sel" id="p2nxTitle" onchange="p2NxTitlePick(this.value)">' + list.map(function(t) { return '<option value="' + t + '"' + (t === _p2Nx.title ? ' selected' : '') + '>' + t + '（' + (_p2TitleIncome(t) || '—') + '）</option>'; }).join('') + '</select>'
+    + '<div class="p2-meta" id="p2nxNote" style="margin-top:6px"></div></div>'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:6px;padding:12px" onclick="p2NxSave()">保存</span>'
+    + '<div style="text-align:center;margin-top:12px"><span class="p2a-lk" onclick="_p2SheetClose(\'p2NxOv\');p2GoalEdit()">期日・最終ゴールもなおす ›</span></div>'
+    + '</div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+  _p2NxRender();
+  setTimeout(function() { var i = document.getElementById('p2nxInc'); if (i && !_p2Nx.inc) try { i.focus(); } catch (eF) {} }, 200);
+}
+function _p2NxAutoTitle(v) {
+  var t = _p2Above(_p2TitleByInc(v), _p2Nx.curR), fr = _p2Rank(_p2Nx.fin);
+  if (fr >= 0 && _p2Rank(t) > fr) t = _p2Nx.fin;
+  return t;
+}
+function _p2NxRender() {
+  if (!_p2Nx) return;
+  var sel = document.getElementById('p2nxTitle'); if (sel && sel.value !== _p2Nx.title) sel.value = _p2Nx.title;
+  var md = document.getElementById('p2nxMode');
+  if (md) md.innerHTML = _p2Nx.manual ? '自分で選択 · <span class="p2a-lk" onclick="p2NxAuto()">月収に合わせる</span>' : '月収から自動';
+  var nt = document.getElementById('p2nxNote'), v = +_p2Nx.inc || 0, auto = v ? _p2NxAutoTitle(v) : '';
+  if (nt) nt.innerHTML = !v ? '目安：' + evEsc(_p2Nx.title) + ' は月収 ' + (_p2TitleIncome(_p2Nx.title) || '—')
+    : (_p2Nx.manual && auto !== _p2Nx.title ? '月収 ' + v + '万円 の目安は <b>' + evEsc(auto) + '</b>（' + _p2TitleIncome(auto) + '）。いまは自分で選んだ <b>' + evEsc(_p2Nx.title) + '</b>'
+      : '月収 ' + v + '万円 → <b>' + evEsc(_p2Nx.title) + '</b>（' + (_p2TitleIncome(_p2Nx.title) || '—') + '）');
+}
+function p2NxIncInput() {
+  if (!_p2Nx) return;
+  _p2Nx.inc = Math.max(0, parseInt((document.getElementById('p2nxInc') || {}).value, 10) || 0) || '';
+  if (!_p2Nx.manual && _p2Nx.inc) _p2Nx.title = _p2NxAutoTitle(_p2Nx.inc);
+  _p2NxRender();
+}
+function p2NxTitlePick(t) { if (!_p2Nx || !t) return; _p2Nx.title = t; _p2Nx.manual = true; _p2NxRender(); }
+function p2NxAuto() { if (!_p2Nx) return; _p2Nx.manual = false; if (_p2Nx.inc) _p2Nx.title = _p2NxAutoTitle(_p2Nx.inc); _p2NxRender(); }
+function p2NxSave() {
+  if (!_p2Nx) return;
+  if (!_p2Nx.inc) { toast('目標月収を入れてください'); return; }
+  var p2 = _p2(), old = p2.next || {};
+  p2.next = { title: _p2Nx.title, tm: !!_p2Nx.manual, inc: +_p2Nx.inc, deadline: _p2Nx.deadline || old.deadline || '', fb: _p2Nx.title === 'BR' ? (+old.fb || 0) : 0 };
+  saveGoals();
+  _p2SheetClose('p2NxOv'); _p2Nx = null;
+  if (currentView === 'plan') renderPlan();
+  toast('⛰ 次の山：月収 ' + p2.next.inc + '万円・' + p2.next.title);
 }
 // 次の山までの進み具合（フロントBRの人数・パワーライン）
 function _p2NextProg(en) {
@@ -15536,24 +15605,100 @@ function _p2PcTilesHtml(ym) {
     if (it && it[k] !== undefined && k !== 'actN') return +it[k] || 0; return (m[k] === '' || m[k] == null) ? null : +m[k]; };
   var d = new Date(), dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), left = dim - d.getDate();
   var tile = function(k, lb, unit, pace) {
-    var a = act[k], t = tg(k);
+    var a = act[k], t = tg(k), src = _p2TgtSrc(ym, k); // v575: 目標の出どころ（理想MAP／ロードマップ／今月の目標）
     var av = (a === null || a === undefined) ? null : a;
     var pctRaw = (t && av !== null) ? Math.round(av / t * 100) : 0, pct = Math.min(100, pctRaw); // v553: 100%を超えても表示
     var land = (pace && av > 0) ? _p2Pace(av) : null;
     var ok = t ? (av !== null && (land !== null ? land : av) >= t) : false;
     var clr = t && av !== null && av >= t, over = clr ? av - t : 0;
-    return '<div class="p2t' + (t && ok ? ' ok' : '') + (clr ? ' clear' : '') + '"><div class="p2t-lb">' + lb + '</div>'
+    return '<div class="p2t' + (t && ok ? ' ok' : '') + (clr ? ' clear' : '') + (src === 'ideal' ? ' ideal' : '') + '" onclick="p2TgtWhy(\'' + k + '\')" title="目標の決まり方・変え方"><div class="p2t-lb">' + lb + '</div>'
       + '<div class="p2t-v">' + (av === null ? '—' : av.toLocaleString()) + '<small>' + unit + '</small></div>'
       + '<div class="p2t-tg">' + (t !== null ? '目標 <b>' + t.toLocaleString() + '</b>' + unit + '<span>' + pctRaw + '%</span>' : '目標なし') + '</div>'
       + '<div class="p2t-bar"><i style="width:' + pct + '%"></i></div>'
-      + '<div class="p2t-sub">' + (clr ? '<span class="p2t-clr">🎉 クリア' + (over ? ' ＋' + (Math.round(over * 10) / 10).toLocaleString() + unit : '') + '</span>' : (land !== null ? '着地見込み ' + land.toLocaleString() + unit : '&nbsp;')) + '</div></div>';
+      + '<div class="p2t-sub">' + _p2TgtChip(src) + (clr ? '<span class="p2t-clr">🎉 クリア' + (over ? ' ＋' + (Math.round(over * 10) / 10).toLocaleString() + unit : '') + '</span>' : (land !== null ? '着地見込み ' + land.toLocaleString() + unit : '&nbsp;')) + '</div></div>';
   };
-  return '<div class="p2-card p2t-wrap"><div class="p2-t">' + icn('target') + ' ' + parseInt(ym.slice(5), 10) + '月にやること<span class="sp"></span><span class="p2-meta">月末まであと ' + left + '日</span></div>'
+  return '<div class="p2-card p2t-wrap"><div class="p2-t">' + icn('target') + ' ' + parseInt(ym.slice(5), 10) + '月にやること<span class="sp"></span>' + (it ? '<span class="p2t-src" onclick="_p2GoIdeal()" title="理想MAPを開く">🎯 目標は理想MAPから ›</span>' : '') + '<span class="p2-meta">月末まであと ' + left + '日</span></div>'
     + '<div class="p2t-grid">'
     + tile('front', 'フロント', '人', true) + tile('upt', 'ユーザーPT', '', true) + tile('teamB1', '新規B1', '人', true)
     + tile('teamPt', 'チームPT', '', true) + tile('actN', '平均稼働人数', '人', false)
     + '</div></div>';
 }
+// v575: 今月の目標の出どころ（理想MAP／ロードマップ／今月の目標）と、変え方の案内
+function _p2TgtSrc(ym, k) {
+  if (k === 'front') return _p2FrontSrc(ym);
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  if (it && k !== 'actN' && it[k] !== undefined) return 'ideal';
+  var m = _p2M(ym); return (m[k] === '' || m[k] == null) ? '' : 'month';
+}
+function _p2TgtChip(src) {
+  var lb = { ideal: '理想MAP', roadmap: 'ロードマップ', month: '今月の目標' }[src];
+  return lb ? '<i class="p2t-chip ' + src + '">' + lb + '</i>' : '';
+}
+var P2_TGT_DEF = {
+  front: { lb: 'フロント', u: '人', ideal: '理想MAPで、<b>自分の直下</b>に今月スタートする新しいB1（ビジネスメンバー）の人数', go: '理想MAPで新しいB1を足す', how: 'root' },
+  upt: { lb: 'ユーザーPT', u: '', ideal: '理想MAPの<b>自分のカード</b>のPT', go: '理想MAPで自分のカードを開く', how: 'root' },
+  teamB1: { lb: '新規B1', u: '人', ideal: '理想MAPで、<b>チーム全体</b>に今月スタートする新しいB1の人数（自分の直下もふくむ）', go: '理想MAPを開く', how: 'map', tip: '増やしたいメンバーのカードを押して「直下に追加」' },
+  teamPt: { lb: 'チームPT', u: '', ideal: '理想MAPの<b>チーム全員のPTの合計</b>', go: '理想MAPを開く', how: 'map', tip: 'メンバーのカードを押してGSVを変えると合計が変わります' },
+  actN: { lb: '平均稼働人数', u: '人', go: '今月の目標で変える', how: 'month' }
+};
+function p2TgtWhy(k) {
+  var d = P2_TGT_DEF[k]; if (!d) return;
+  var ym = _p2Ym(0), src = _p2TgtSrc(ym, k), act = _p2Act(ym);
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  var t = k === 'front' ? _p2FrontTgt(ym) : (src === 'ideal' ? (+it[k] || 0) : _p2M(ym)[k]);
+  var fmt = function(v) { return (v === '' || v == null) ? '—' : (+v).toLocaleString() + d.u; };
+  var body, btn;
+  if (src === 'ideal') {
+    body = '<div class="p2tw-src">この目標は<b class="pu">理想MAP</b>の数字です</div><div class="p2tw-tx">' + d.ideal + '（今は <b>' + fmt(t) + '</b>）</div>' + (d.tip ? '<div class="p2tw-tip">💡 ' + d.tip + '</div>' : '');
+    btn = '<span class="p2-btn pri p2tw-go" onclick="p2TgtGo(\'' + k + '\')">' + d.go + ' ›</span>';
+  } else if (src === 'roadmap') {
+    body = '<div class="p2tw-src">この目標は<b>年間ロードマップ</b>の数字です</div><div class="p2tw-tx">今月のフロント（F）は今 <b>' + fmt(t) + '</b>。理想MAPで自分の直下に新しいB1を足すと、理想MAPの人数が目標になります</div>';
+    btn = '<span class="p2-btn pri p2tw-go" onclick="_p2SheetClose(\'p2TwOv\');p2RmOpen()">ロードマップで変える ›</span><span class="p2-btn p2tw-go" onclick="p2TgtGo(\'front\')">理想MAPで新しいB1を足す ›</span>';
+  } else {
+    body = '<div class="p2tw-src">この目標は<b>今月の目標</b>カードで入れた数字です</div><div class="p2tw-tx">今は <b>' + fmt(t) + '</b>' + (k !== 'actN' ? '。理想MAPを作ると、理想MAPの数字が自動で目標になります' : '（自分で決める目標です）') + '</div>';
+    btn = '<span class="p2-btn pri p2tw-go" onclick="p2TgtGo(\'actN\',\'' + k + '\')">今月の目標で変える ›</span>';
+  }
+  _p2SheetClose('p2TwOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2TwOv'; ov.style.zIndex = '625';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2TwOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">🎯 ' + d.lb + 'の目標</div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">今月の実績 ' + fmt(act[k]) + ' ／ 目標 ' + fmt(t) + '</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2TwOv\')">✕</span></div>'
+    + '<div style="padding:0 16px 18px">' + body + btn + '</div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function p2TgtGo(k, field) {
+  _p2SheetClose('p2TwOv');
+  var d = P2_TGT_DEF[k] || {};
+  if (d.how === 'month') {
+    if (currentView !== 'plan') switchView('plan');
+    setTimeout(function() {
+      var el = document.getElementById('p2MonCur'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var inp = el && el.querySelector('input.p2-in[onchange*="\'' + (field || k) + '\'"]'); if (inp) setTimeout(function() { try { inp.focus(); } catch (eF) {} }, 400);
+    }, 120);
+    return;
+  }
+  _p2GoIdeal(d.how === 'root' ? function() {
+    var arr = (typeof _idealEnsure === 'function') ? _idealEnsure() : (state.idealMembers || []);
+    var root = arr.filter(function(m) { return !m.parentId && !m.deleted; })[0];
+    if (root && typeof idqOpen === 'function') idqOpen(root.id);
+  } : null);
+}
+// PLANから理想MAPへ移る（下に「← PLANに戻る」を出す）
+function _p2GoIdeal(after) {
+  window._p2BackY = window.scrollY || (document.scrollingElement || {}).scrollTop || 0;
+  switchView('ideal');
+  var b = document.getElementById('p2BackPill');
+  if (!b) { b = document.createElement('div'); b.id = 'p2BackPill'; b.className = 'p2-back'; b.onclick = p2BackToPlan; document.body.appendChild(b); }
+  b.innerHTML = '← PLANに戻る'; b.style.display = '';
+  if (after) setTimeout(after, 350);
+}
+function p2BackToPlan() {
+  var y = window._p2BackY || 0;
+  _p2BackHide();
+  switchView('plan');
+  setTimeout(function() { try { window.scrollTo(0, y); } catch (e) {} }, 120);
+}
+function _p2BackHide() { var b = document.getElementById('p2BackPill'); if (b) b.style.display = 'none'; }
 // ⚙ 目標設定のツール（右から出すパネル。常時は表示しない）
 function p2DrawerOpen() {
   _p2SheetClose('p2DwOv');
@@ -15594,16 +15739,23 @@ function _p2NorthHtml() {
   var h = '<div class="p2-card">' + (typeof _p2StepperHtml === 'function' ? _p2StepperHtml() : '') + '<div class="p2-t">' + icn('star') + ' 目標設定<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : icn('compass') + ' 目標をつくる') + '</span></div>';
   if (hasGoal) {
     // v483: タイトル・月収を大きく＋スローガン（タップで編集）
+    // v572: いちばん大事な目標月収を先に、その下にタイトル・期日
     h += '<div style="text-align:center;padding:6px 0 4px">'
-      + '<div style="font-size:25px;font-weight:900;letter-spacing:.5px;line-height:1.25">' + evEsc(p.title) + '</div>'
+      + (p.income ? '<div onclick="p2GoalEdit()" style="cursor:pointer;font-size:13px;font-weight:700;color:var(--text-mid)">目標月収 <b style="font-size:34px;font-weight:900;color:var(--accent);letter-spacing:.5px">' + Math.round((+p.income) / 10000).toLocaleString() + '</b><span style="font-size:15px;font-weight:800;color:var(--accent)">万円</span></div>' : '')
+      + '<div style="font-size:23px;font-weight:900;letter-spacing:.5px;line-height:1.25">' + evEsc(p.title) + '</div>'
       + '<div class="p2-meta" style="margin-top:1px">' + evEsc(String(p.deadline).replace('-', '年')) + '月まで</div>';
     h += '<div style="margin-top:4px"><span class="p2a-lk" onclick="p2LifeOpen()">🏡 理想の生活を見る ›</span></div>'; // v555
     var nxM = _p2Next(); // v551: 次の山（最短目標）
-    if (!nxM.isFinal) h += '<div onclick="p2GoalEdit()" style="margin:8px auto 2px;display:inline-block;border:1.5px dashed var(--accent);border-radius:12px;padding:6px 14px;cursor:pointer">'
-      + '<span class="p2-meta">⛰ 次の山</span> <b style="font-size:18px;font-family:Inter,sans-serif">' + evEsc(nxM.title) + '</b> '
-      + (nxM.deadline ? '<span class="p2-meta">' + evEsc(nxM.deadline.replace('-', '年')) + '月まで</span>' : '<span class="p2-meta" style="color:var(--accent)">期日を決める ›</span>')
-      + (nxM.title === 'BR' ? '<div class="p2-meta">目標ファーストボーナス ¥' + nxM.fb.toLocaleString() + '</div>' : (nxM.inc ? '<div class="p2-meta">月 ' + nxM.inc.toLocaleString() + '万円</div>' : '')) + (nxM.suggested ? '<div class="p2-meta" style="color:var(--accent)">最終ゴールから逆算した例 › 決める</div>' : '') + '</div>'; // v559
-    if (p.income) h += '<div style="margin-top:4px;font-size:13px;font-weight:700;color:var(--text-mid)">目標月収 <b style="font-size:28px;font-weight:900;color:var(--accent);letter-spacing:.5px">' + Math.round((+p.income) / 10000).toLocaleString() + '</b><span style="font-size:14px;font-weight:800;color:var(--accent)">万円</span></div>';
+    if (!nxM.isFinal) {
+      var _nxBR = nxM.title === 'BR';
+      h += '<div onclick="' + (_nxBR ? 'p2GoalEdit()' : 'p2NxIncOpen()') + '" style="margin:8px auto 2px;display:inline-block;border:1.5px dashed var(--accent);border-radius:12px;padding:6px 14px;cursor:pointer">'
+        + '<div class="p2-meta">⛰ 次の山' + (nxM.deadline ? '（' + evEsc(nxM.deadline.replace('-', '年')) + '月まで）' : '') + '</div>'
+        + (_nxBR ? '<span class="p2-meta">ファーストボーナス</span> <b style="font-size:20px;color:var(--accent);font-family:Inter,sans-serif">' + Math.round(nxM.fb / 10000).toLocaleString() + '<small style="font-size:12px">万円</small></b>'
+          : (nxM.inc ? '<span class="p2-meta">月収</span> <b style="font-size:20px;color:var(--accent);font-family:Inter,sans-serif">' + nxM.inc.toLocaleString() + '<small style="font-size:12px">万円</small></b>' : '<span class="p2-meta" style="color:var(--accent)">月収を決める</span>'))
+        + ' <span class="p2-meta">→</span> <b style="font-size:18px;font-family:Inter,sans-serif">' + evEsc(nxM.title) + '</b>'
+        + (!nxM.deadline ? '<div class="p2-meta" style="color:var(--accent)">期日を決める ›</div>' : '')
+        + (nxM.suggested ? '<div class="p2-meta" style="color:var(--accent)">最終ゴールから逆算した例 › タップで決める</div>' : '') + '</div>';
+    }
     var motto = (p2.motto || '').trim();
     h += motto
       ? '<div onclick="p2MottoOpen()" style="margin-top:6px;font-size:15px;font-weight:800;font-style:italic;color:var(--text);cursor:pointer" title="タップで編集">『' + evEsc(motto) + '』</div>'
@@ -15658,7 +15810,7 @@ function _p2MonthHtml(ym, off, forceOpen) {
     var pace = (isCur && actV > 0 && !noPace) ? _p2Pace(actV) : null;
     if (_it9 && _it9[k] !== undefined && !(k === 'front' && !(+_it9.front > 0))) { // v548: 理想MAPの新規フロント0人なら入力欄（月の目標）
       return '<div class="p2-row"><span class="p2-lb">' + lb + '</span>'
-        + '<span class="p2-ideal" onclick="switchView(\'ideal\')" title="理想MAPで変更">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
+        + '<span class="p2-ideal" onclick="p2TgtWhy(\'' + k + '\')" title="目標の決まり方・変え方">' + (+_it9[k] || 0).toLocaleString() + '<small>理想MAP ›</small></span>'
         + '<span style="flex:none;width:86px;text-align:right"><span class="p2-num" style="font-size:15px;font-weight:700">' + (actV || 0).toLocaleString() + '</span>'
         + (pace !== null ? '<div class="p2-meta">着地 ' + pace.toLocaleString() + '</div>' : '<div class="p2-meta">実績</div>') + '</span></div>';
     }
@@ -15671,7 +15823,7 @@ function _p2MonthHtml(ym, off, forceOpen) {
     + (m.declared ? '<span style="font-size:10px;color:var(--accent);font-weight:800">✓設定済み</span>' : '')
     + '<span class="sp"></span></div>';
   var inner = ''
-    + (_it9 ? '<div class="p2-idealnote" onclick="switchView(\'ideal\')">' + icn('target') + ' フロント・PT・チームB1は<b>理想MAP</b>の数字です（変更は理想MAPで ›）</div>' : '')
+    + (_it9 ? '<div class="p2-idealnote" onclick="_p2GoIdeal()">' + icn('target') + ' フロント・PT・チームB1は<b>理想MAP</b>の数字です（変更は理想MAPで ›）</div>' : '')
     + '<div class="p2-meta" style="margin-bottom:2px">🧍 自分</div>'
     + row('front', 'フロント（人）', act.front, sug)
     + row('upt', 'ユーザーPT', act.upt, '')
@@ -16431,7 +16583,7 @@ function _p2BBCalc(gsv) {
 var P2GW_Q = [
   { id:'housing_type', ph:1, q:'理想の住まいは？', type:'select', opts:[{v:'持ち家',ic:'🏡'},{v:'賃貸',ic:'🏢'},{v:'まだ決めてない',ic:'🤔'}] },
   { id:'housing_style', ph:1, q:'どんなタイプ？', type:'select', opts:[{v:'タワマン',ic:'🏙️'},{v:'マンション',ic:'🏢'},{v:'一軒家',ic:'🏡'},{v:'まだ決めてない',ic:'🤔'}] },
-  { id:'housing_area', ph:1, q:'どのあたりに住みたい？', type:'input', ph2:'例：港区、渋谷、大阪...', hint:'具体的な場所が決まってなくても大丈夫！' },
+  { id:'housing_area', ph:1, q:'どのあたりに住みたい？', type:'input', ph2:'例：大濠、南青山、新町...', hint:'具体的な場所が決まってなくても大丈夫！' },
   { id:'housing_cost', ph:1, q:'住居費は月いくらのイメージ？', type:'slider', min:5, max:100, step:1, unit:'万円', dv:15, cost:true },
   { id:'food_style', ph:1, q:'理想の食生活は？', type:'select', opts:[{v:'好きなものを自由に',ic:'🍣'},{v:'健康重視のこだわり食',ic:'🥗'},{v:'高級レストラン中心',ic:'🥂'}] },
   { id:'food_cost', ph:1, q:'月の食費イメージは？', type:'slider', min:3, max:300, step:1, unit:'万円', dv:8, cost:true },
@@ -16766,7 +16918,10 @@ function p2SimApply() {
   var n = (idx >= 0 && idx < 4) ? cfg.fronts[idx] : Math.max.apply(null, cfg.fronts);
   if (!n) n = Math.max.apply(null, cfg.fronts);
   var ym = _p2Ym(0);
+  var _fi = _p2FrontIdeal(ym); // v573
+  if (_fi !== null) { _p2SheetClose('p2SimOv'); toast('今月のフロントは理想MAPの数字（' + _fi + '人）です。' + n + '人にするなら理想MAPで新しいB1を足してください'); return; }
   _p2M(ym).front = n;
+  var _rmS = _p2Rm(); if (!_rmS.rows.front) _rmS.rows.front = {}; _rmS.rows.front[ym] = n; // v573: ロードマップにも（ロードマップの数字が優先されて反映されなかった）
   saveGoals();
   _p2SheetClose('p2SimOv');
   toast('✍ 今月のフロント目標に ' + n + '人 を入れました。「設定」で確定しよう');
@@ -17108,6 +17263,15 @@ function _p2RmYms(rm) {
 function _p2RmFront(rm, ym) { return _p2FrontTgt(ym); } // v548: 横線・表・タイル・ファネルで同じ数字
 // v548: 月のフロント目標は1つのルールで決める
 //  ① その月の理想MAPで新規フロントを組んでいれば（1人以上）それ ② 無ければ月の目標（横線のF／表のフロント行／右の入力＝同じ値）
+// v573: その月のFが理想MAPで決まっているか（理想MAPに新しいB1がいる月）。決まっていれば人数、なければ null
+function _p2FrontIdeal(ym) {
+  var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
+  return (it && +it.front > 0) ? +it.front : null;
+}
+function _p2IdealGo(sheet) { if (sheet) _p2SheetClose(sheet); _p2GoIdeal(); }
+function _p2FrontIdealHtml(n, sheet) {
+  return '<div class="p2-fro"><b>' + n + '</b>人<span class="p2-meta">理想MAPの数字（新しいB1の人数）</span><span class="p2a-lk" onclick="_p2IdealGo(\'' + (sheet || '') + '\')">理想MAPで変更 ›</span></div>';
+}
 function _p2FrontTgt(ym) {
   var it = (typeof idealTargets === 'function') ? idealTargets(ym) : null;
   if (it && +it.front > 0) return +it.front;
@@ -17462,12 +17626,13 @@ function _p2RmRender() {
       var v = d.k === 'front' ? _p2RmFront(rm, ym) : ((rm.rows[d.k] || {})[ym] !== undefined ? rm.rows[d.k][ym] : '');
       var ph = '';
       if (d.k === 'br' && (v === '' || v == null)) { ph = ' placeholder="予測' + _p2RmBrPred(rm, ym) + '" title="フロント行から自動予測（' + _p2Gap().rates.brLead + 'ヶ月後にBR着）" style="color:var(--accent)"'; }
+      if (d.k === 'front' && _p2FrontIdeal(ym) !== null) { h += '<td><span class="p2rm-ro" onclick="_p2IdealGo(\'p2RmOv\')" title="理想MAPの数字（変更は理想MAPで）">' + v + '<i>理想</i></span></td>'; return; } // v573
       h += '<td><input class="p2rm-in" type="number" inputmode="numeric" value="' + v + '"' + ph + ' onfocus="edSelAll(this)" onchange="p2RmCell(\'' + d.k + '\',\'' + ym + '\',this.value)"></td>';
     });
     h += '</tr>';
   });
   h += '</table></div>';
-  h += '<div class="p2-meta" style="margin-top:6px">🎯 の金色チップは目標設定の期日（自動表示）。フロント行に入れた数字は各月の「目標」の下書きになります</div>';
+  h += '<div class="p2-meta" style="margin-top:6px">🎯 の金色チップは目標設定の期日（自動表示）。フロント行に入れた数字は各月の「目標」の下書きになります' + (yms.some(function(y9) { return _p2FrontIdeal(y9) !== null; }) ? '。「理想」の月のフロントは理想MAPの新しいB1の人数（変更は理想MAPで）' : '') + '</div>';
   el.innerHTML = h;
 }
 function p2RmStart(y, m) {
@@ -17478,6 +17643,7 @@ function p2RmStart(y, m) {
   saveGoals(); _p2RmRender();
 }
 function p2RmCell(row, ym, v) {
+  if (row === 'front' && _p2FrontIdeal(ym) !== null) { toast('この月のフロントは理想MAPの数字です（変更は理想MAPで）'); _p2RmRender(); return; } // v573
   var rm = _p2Rm();
   if (!rm.rows[row]) rm.rows[row] = {};
   var n = (v === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0));
@@ -17500,7 +17666,8 @@ function p2RmMsForm(ym, msId) {
     + '<div style="padding:0 16px 18px">'
     // v547: この月のフロント目標（F）はマイルストーン無しでも入れられる
     + '<div class="p2-meta">この月のフロント目標（F）</div>'
-    + '<input class="fi" id="p2rmF" type="number" inputmode="numeric" min="0" placeholder="例：4（空欄＝なし）" value="' + _p2RmFront(rm, ym) + '" onfocus="edSelAll(this)" style="margin:4px 0 12px;max-width:180px">'
+    + (_p2FrontIdeal(ym) !== null ? _p2FrontIdealHtml(_p2FrontIdeal(ym), 'p2RmMsOv') // v573: 理想MAPで決まる月は入力させない（入れても反映されなかった）
+      : '<input class="fi" id="p2rmF" type="number" inputmode="numeric" min="0" placeholder="例：4（空欄＝なし）" value="' + _p2RmFront(rm, ym) + '" onfocus="edSelAll(this)" style="margin:4px 0 12px;max-width:180px">')
     + '<div class="p2-meta">マイルストーン' + (editing ? '' : '（任意）') + '</div>'
     + '<input class="fi" id="p2rmT" placeholder="例：SAマカオ早期達成 / 香港TRIP / BD" value="' + evEsc(editing ? editing.t : '') + '" style="margin:4px 0 6px">'
     + '<input class="fi" id="p2rmS" placeholder="補足（例：60人タッチ / LOIカウント）任意" value="' + evEsc(editing && editing.sub ? editing.sub : '') + '" style="margin-bottom:8px">'
@@ -17542,7 +17709,7 @@ function p2RmMsSave(ym, msId) {
   }
   if (!t) {
     if (msId) { toast('マイルストーンの名前を入力してください（消す時は「削除」）'); return; }
-    if (!fChanged) { toast('フロント目標かマイルストーンを入力してください'); return; }
+    if (!fChanged) { toast(fEl ? 'フロント目標かマイルストーンを入力してください' : 'マイルストーンを入力してください（この月のフロントは理想MAPで変更）'); return; }
     saveGoals();
     _p2SheetClose('p2RmMsOv');
     _p2RmRender();
@@ -18029,16 +18196,18 @@ function p2GapAlloc() {
   if (!confirm('📤 ロードマップに割り振ります（該当セルは上書き）：\n\n' + prev + '\n\nよろしいですか？')) return;
   var rm = _p2Rm();
   if (brItem.gap !== null && brItem.gap > 0 && !rm.rowDefs.some(function(d) { return d.k === 'br'; })) { rm.rowDefs.push({ k: 'br', lb: 'フロントBR' }); }
+  var _idealSkip = 0;
   plans.forEach(function(pl) {
     if (!rm.rows[pl.k]) rm.rows[pl.k] = {};
     pl.steps.forEach(function(st) {
+      if (pl.k === 'front' && _p2FrontIdeal(st.ym) !== null) { _idealSkip++; return; } // v573: 理想MAPで決まる月はそのまま
       rm.rows[pl.k][st.ym] = st.v;
       if (pl.sync && st.v !== '') _p2M(st.ym).front = st.v; // フロントは月の目標と連動
     });
   });
   saveGoals();
   _p2SheetClose('p2GapOv');
-  toast('📤 ロードマップに割り振りました。微調整はロードマップでどうぞ');
+  toast('📤 ロードマップに割り振りました。微調整はロードマップでどうぞ' + (_idealSkip ? '（今月のフロントは理想MAPの数字のまま）' : ''));
   p2RmOpen();
   if (currentView === 'plan') renderPlan();
 }
@@ -18417,7 +18586,7 @@ function loadEvents(uid) {
     var _all = list || [];
     state.trashEvents = _all.filter(function(e){ return !!e.deleted; });
     state.events = _all.filter(function(e){ return !e.deleted; });
-    window._evLoadedUid = uid; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} }, 800); // v567
+    window._evLoadedUid = uid; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); // v567・v571
     try {
       var _cut = new Date(Date.now() - 30 * 86400000).toISOString();
       state.trashEvents = state.trashEvents.filter(function(e){
@@ -18507,6 +18676,42 @@ function _tsUnlink(m, h) {
   var e = findEvent(h.evId);
   delete h.evId;
   if (e) { e.tsOff = e.tsOff || {}; e.tsOff[m.id] = 1; saveEventDoc(e); }
+}
+// v571: v570より前に入れた予定もまとめて研修履歴につなぐ（今月を開いた時に1回。30日前以降の予定）
+//   すでに同じステップの記録があれば新しく作らずにその記録につなぐ。済んだステップ・先に進んでいる人はつながない
+var _tsMigKey = '';
+function _tsEvMigrate() {
+  if (viewingOwnerUid || (typeof _aggActive !== 'undefined' && _aggActive) || !window._evLoadedUid || window._evLoadedUid !== eventsUid() || window._fdLoadedMonth !== state.currentMonth) return;
+  if (String(state.currentMonth || '').replace('.', '-') !== _p2Ym(0)) return; // 今月のMAPだけ
+  var key = eventsUid() + '|' + state.currentMonth; if (_tsMigKey === key) return; _tsMigKey = key;
+  var t = evTodayYmd(), cut = (function() { var d = new Date(); d.setDate(d.getDate() - 30); return evYmd(d); })();
+  var steps = TITLE_OPTIONS['研修生'] || [], n = 0;
+  (state.events || []).slice().forEach(function(e) {
+    if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || !e.date || e.date < cut) return;
+    var step = _tsStepOf(e); if (!step) return;
+    var mids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
+    var offCh = false;
+    mids.forEach(function(mid) {
+      if (e.tsOff && e.tsOff[mid]) return;
+      var m = _mFind(mid); if (!m || m.deleted) return;
+      var hs = m.traineeHistory || [];
+      if (hs.some(function(h) { return h && h.evId === e.id; })) return; // つながり済み
+      if (!_tsIsTrainee(m)) return;
+      var same = hs.filter(function(h) { return h && !h.ir && !h.evId && h.status === step; });
+      var hit = same.filter(function(h) { return h.date === e.date; })[0] || same.filter(function(h) { return h.result === 'planned'; })[0];
+      if (hit) { hit.evId = e.id; n++; return; } // 手で入れた記録につなぐ（日付・Aさんは下で予定に合わせる。結果入りはそのまま）
+      var past = e.date < t;
+      var ahead = steps.indexOf(String(m.title || '').trim()) > steps.indexOf(step);
+      if (same.length || (past && ahead)) { e.tsOff = e.tsOff || {}; e.tsOff[mid] = 1; offCh = true; return; } // 済んだステップ・先に進んでいる人はつながない
+      n++;
+    });
+    if (offCh) saveEventDoc(e); else _tsFromEvent(e);
+  });
+  if (n) {
+    autoSave();
+    try { renderCurrentView(); } catch (eR) {}
+    setTimeout(function() { toast('🎓 これまでの予定を研修履歴に' + n + '件つなぎました'); }, 2600); // 自動保存の「保存しました」の後に
+  }
 }
 function saveEventDoc(e) {
   try { _tsFromEvent(e); } catch (eTs) {} // v570
@@ -29397,7 +29602,7 @@ function fsLoadFromFirestore(uid) {
     if (loaded.current || loaded.ideal || loaded.stats) {
       toast('データを読み込みました ✓');
     }
-    if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} }, 800); } // v567
+    if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); } // v567・v571
     renderCurrentView();
     updateLTSV('current', state.members);
     // v511: 変更検知の基準＝読込直後（描画時の再計算で付く集計値も含めた状態）
