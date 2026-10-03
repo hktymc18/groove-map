@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v583';
+var APP_JS_VERSION = 'v584';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v583';
+  var DATA_VERSION = 'v584';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4567,7 +4567,7 @@ function _idealOwnFx(m, members) {
   (members || state.idealMembers || []).forEach(function(c) { if (c && c.parentId === m.id && !c.deleted && !isBROrAbove(c.title)) cf += _idealFxMap[c.id] || 0; });
   return Math.max(_idealFix(m), cf) - cf;
 }
-// v583: 理想MAPで審査前（研修生・タイトル空欄）の人はGSV 1,000P以上で自動でLOI。1,000P未満に戻したら元のタイトルへ（ユーザーは変えない）
+// v583・v584: 理想MAPで審査前（研修生・B1〜BM）の人はGSV 1,000P以上で自動でLOI。1,000P未満に戻したら元のタイトルへ（ユーザー・タイトル空欄は変えない）
 function _idealAutoLoi(members) {
   var up = [], down = [];
   members.forEach(function(m) {
@@ -4580,7 +4580,7 @@ function _idealAutoLoi(members) {
     }
     if (t === 'ユーザー' || m.idealKind === 'user' || g < LOI_MONTHLY_MIN) return;
     var c = memberCat(m);
-    if (!(c === '研修生' || (t === '' && c === ''))) return;
+    if (!(c === '研修生' || /^B\d+$/.test(t) || t === 'BM')) return; // v584: 研修生と B1〜BM
     m.idAutoLoi = { t: m.title || '', tr: !!m.trainee };
     m.title = 'LOI'; m.trainee = false; up.push(m);
   });
@@ -4988,6 +4988,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v584', d:'2026-10-04', items:['🆕 理想MAPでGSV 1,000P以上になると自動でLOIになる人を「研修生とB1〜BM」に変更（タイトル空欄の人は変えません）。1,000P未満に戻すと元のタイトルに戻ります'] },
   { v:'v583', d:'2026-10-04', items:['🎯 理想MAPの固定PT：上の人の固定PTには、BRでない下の人の分が入っている前提に。下の人の固定を上に二重に足さないように直しました（上の人の固定が空欄・少ない時は、下の人の固定の合計を使います）','🆕 理想MAPで審査前の人（研修生・タイトル空欄）は、GSVが1,000P以上になると自動でLOIに。1,000P未満に戻すと元のタイトルに戻ります（ユーザーは変えません・現状MAPは変わりません）','新規B1に数えるのは、今までどおり今月スタートの人だけです'] },
   { v:'v582', d:'2026-10-04', items:['📊 データタブに「ざっくり」を追加（はじめて開くとこちら。今までの画面は「くわしく」で、最後に開いた方を覚えます）','① 先月のコミッション（確定）を先々月と比べて ▲▼ で。② 全ユニオン共通のやること：BRを増やす（審査中の全員が今月1,000pt）・BRを維持する（維持ライン1,000pt）・自分の成長（PLANの自分磨き）','③ 🔥S稼働 ◯/30人（30人でこの仕事一本で食える）。点線＝あと一歩（Aの人と、B・Cで稼働率70%以上の人）。目標の人数は変えられます','④ コミッションを動かす数字：B1数 × 新規の平均GSV × 平均稼働人数（1ハウディあたり）、1人あたりの平均GSV（先月との差つき）','⑤ 理想MAPとの差：稼働・BR・GSVで差がある人を自動で並べて、その場で＋タスク（紙の照らし合わせの代わり）','数字を押すと、その数字だけの推移・名前・数え方が出ます'] },
   { v:'v581', d:'2026-10-04', items:['🎯 理想MAPのポイントは、メンバーの「固定で上がる見込み（固定PT）」を上がったものとして計算（その人と上の人のGSV・チームGSV・コミッション・PLANのチームPT/ユーザーPTに反映）','固定PTは現状MAPのその人の値を使います（理想で追加した人は0）。理想MAPでGSVを入れる時は、固定込みの数字を入れればそのまま表示されます','🔧 OLの記録を保存した直後にすぐ開き直すと、画面が消えてしまうことがあったのを修正'] },
