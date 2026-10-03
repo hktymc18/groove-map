@@ -241,6 +241,10 @@ tr:last-child td{border-bottom:none;}
 .membercard.visitor .mc-group,.membercard.visitor .mc-no{color:#8a7a2f;}
 .membercard.visitor #mcQr img,.membercard.visitor #mcQr canvas{outline:3px solid #2361e8;}
 .mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
+/* 🎟 予約受付中のお知らせバー（QR直下・タップでUPCOMINGの該当行へ） */
+.rsvptop{display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--amber);border-radius:12px;padding:11px 14px;margin-top:14px;font-size:13.5px;cursor:pointer;text-align:left;}
+/* UPCOMINGの展開ボックス（オンライン申請・予約・Zoom情報） */
+.upx{margin:4px 0 10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);text-align:center;}
 /* 次回の開催予定（搭乗券風ストリップ） */
 .nextwrap{margin-top:26px;text-align:left;}
 .next-head{display:flex;align-items:center;gap:12px;font-size:10.5px;font-weight:700;letter-spacing:.3em;color:var(--sub);}
@@ -620,6 +624,7 @@ tr:last-child td{border-bottom:none;}
       <div id="mcQr"></div>
       <div class="mc-no mono" id="mcNo"></div>
     </div>
+    <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="trArea"></div>
     <div id="dlrArea"></div>
@@ -1010,18 +1015,16 @@ function showCardView(token){
       if(c.active === false){
         // ⛔ 無効メンバー: 先のハウディの予定・受付系をすべて非表示。
         // 領収書の控え（下のrenderReceipts）と受講履歴はそのまま見られる
-        ['dlrArea', 'selfArea', 'onlineArea', 'rsvpArea', 'nextArea'].forEach(function(id){ $(id).innerHTML = ''; });
+        ['dlrArea', 'selfArea', 'onlineArea', 'rsvpArea', 'nextArea', 'rsvpTop'].forEach(function(id){ $(id).innerHTML = ''; });
       } else {
         renderDlrTicket(c);
         renderSelfEvents(c);
         // 🎓 研修生には先のハウディの予定（開催予定・オンライン受講の申請・予約）を表示しない。
         // 研修生の受講はDLRチケット・当日の受付経由のみ（昇格すると同じURLで表示されるようになる）
         if(c.trainee){
-          $('onlineArea').innerHTML = ''; $('rsvpArea').innerHTML = ''; $('nextArea').innerHTML = '';
+          $('onlineArea').innerHTML = ''; $('rsvpArea').innerHTML = ''; $('nextArea').innerHTML = ''; $('rsvpTop').innerHTML = '';
         } else {
-          renderOnlineEvents(c);
-          renderRsvpEvents(c);
-          renderNextEvents(c);
+          renderUpcoming(c);
         }
       }
       renderReceipts(c);
@@ -1232,258 +1235,295 @@ function payLinkHasAmount(link){ return link.indexOf('paypay.me/') === 0; }
 function payLinkUrl(link, fee){
   return 'https://' + link + (payLinkHasAmount(link) && fee > 0 ? '/' + fee : '');
 }
-// オンライン受講: 直近のオンライン受付イベントを会員証の下に表示（申請→承認待ち→Zoom参加）
-function renderOnlineEvents(c){
-  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
-    var evs = [];
-    qs.forEach(function(d){
-      var ev = d.data(); ev.id = d.id;
-      if(ev.online && (ev.unions || []).indexOf(c.union) >= 0) evs.push(ev);
-    });
-    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    // 受付終了済みのイベントは申請フォームを出さない（申請済み・承認済みの人には結果・Zoom情報を表示継続）
-    evs = evs.filter(function(ev){
-      if(!ev.recClosed) return true;
-      var mark = c['online_' + ev.id] || '';
-      if(mark === 'reapply'){
-        try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-        return false;
-      }
-      var applied = false;
-      try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-      return !!mark || applied;
-    });
-    evs = evs.slice(0, 4);
-    if(!evs.length){ $('onlineArea').innerHTML = ''; return; }
-    $('onlineArea').innerHTML = evs.map(function(ev, i){
-      var mark = c['online_' + ev.id] || '';
-      var applied = false;
-      try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-      if(mark === 'reapply'){   // 申請が削除された → 再申請できる状態に戻す
-        try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
-        mark = ''; applied = false;
-      }
-      var head = '<b>💻 オンライン受講：' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</b>'
-        + (ev.speaker ? '<span class="se-sub">🎤 ' + esc(ev.speaker) + '</span>' : '');
-      var body;
-      if(mark === 'approved'){
-        var zRow = function(label, value, btnId, btnLabel){
-          return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;">'
-            + '<span style="flex:0 0 92px;font-size:12px;color:var(--sub);text-align:left;">' + label + '</span>'
-            + '<b class="mono" style="flex:1;text-align:left;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(value) + '</b>'
-            + '<button id="' + btnId + '" style="flex:0 0 auto;width:auto;padding:5px 10px;font-size:11.5px;">' + btnLabel + '</button>'
-            + '</div>';
-        };
-        body = '<div class="se-done">✓ 受講が承認されました</div>'
-          + (ev.zoomUrl
-            ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する（この端末で開く）</a>'
-            : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoomの参加情報は当日までにここに表示されます。開催時間に開き直してください。</p>')
-          + ((ev.zoomId || ev.zoomPw || ev.zoomUrl)
-            ? '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:8px;">'
-              + '<div style="font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--sub);margin-bottom:4px;">PCで参加する場合</div>'
-              + (ev.zoomId ? zRow('ミーティングID', fmtZoomId(ev.zoomId), 'zcId_' + i, 'コピー') : '')
-              + (ev.zoomPw ? zRow('パスコード', ev.zoomPw, 'zcPw_' + i, 'コピー') : '')
-              + (ev.zoomUrl ? zRow('参加URL', ev.zoomUrl.replace(/^https?:\/\//, ''), 'zcUrl_' + i, 'URLをコピー') : '')
-              + '<p style="font-size:11.5px;color:var(--sub);margin:6px 0 0;text-align:left;">PCのZoomで「参加」→ 上のIDとパスコードを入力。またはURLをコピーしてPCのブラウザに貼り付けてください。</p>'
-              + '</div>'
-            : '');
-      } else if(mark === 'rejected'){
-        body = '<p style="color:var(--accent);font-weight:700;font-size:14px;">申請が承認されませんでした。<br><span style="font-weight:400;font-size:12.5px;">内容に不備があった可能性があります。Uラインまたは受付担当に確認してください。</span></p>';
-      } else if(applied){
-        body = '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請済み・承認待ちです</p>'
-          + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
-      } else {
-        body = '<button class="primary" id="olOpen_' + i + '">オンライン受講を申請する</button>'
-          + '<div class="hide" id="olForm_' + i + '" style="text-align:left;margin-top:10px;">'
-          + (function(){
-              var prev = '';
-              try{ prev = localStorage.getItem('bci_pl_' + c.no) || ''; }catch(e){}
-              return '<div style="border:1px solid var(--line);border-radius:10px;margin-top:10px;padding:10px 12px;">'
-                + '<div style="font-weight:700;font-size:13px;">📜 オンライン受講 誓約書</div>'
-                + (prev ? '<div style="font-size:12px;color:var(--green);margin:4px 0 2px;">✅ この端末で同意済み（' + esc(prev) + '）。今回の申請にも同じ内容で誓約します。</div>' : '')
-                + '<div id="olPtext_' + i + '" style="max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.65;text-align:left;color:var(--ink);background:var(--paper);">'
-                + pledgeBodyHtml() + '</div>'
-                + '<div class="chkrow"><input type="checkbox" id="olPledge_' + i + '"' + (prev ? ' checked' : ' disabled') + '>'
-                + '<label for="olPledge_' + i + '" style="font-size:13px;">誓約内容に同意する（誓約日: 本日）</label></div>'
-                + (prev ? '' : '<div id="olPnote_' + i + '" style="font-size:11.5px;color:var(--amber);">※誓約内容を最後までスクロールするとチェックできます</div>')
-                + '</div>';
-            })()
-          + (ev.onlinePayLink
-            ? '<a id="olPayBtn_' + i + '" href="' + esc(payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000)) + '" target="_blank" rel="noopener" '
-              + 'style="display:block;text-align:center;text-decoration:none;padding:11px;border-radius:10px;background:#e60012;color:#fff;font-weight:700;font-size:14.5px;margin-top:10px;">'
-              + '💰 PayPayで ' + yen(ev.onlineFee || 1000) + ' を送る</a>'
-              + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
-              + '<div id="olPayQr_' + i + '" style="background:#fff;padding:4px;border-radius:6px;flex:0 0 auto;"></div>'
-              + '<span style="font-size:11.5px;color:var(--sub);text-align:left;">'
-              + (payLinkHasAmount(ev.onlinePayLink)
-                ? 'タップでPayPayが開き、宛先と金額が入った状態になります。'
-                : 'タップでPayPayの送金画面が開きます（宛先入り）。金額 ' + yen(ev.onlineFee || 1000) + ' はPayPay側で入力してください。')
-              + 'PCで見ている場合はスマホでQRを読んでください。</span></div>'
-            : '')
-          + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPay_' + i + '"><label for="olPay_' + i + '" style="font-size:13px;">受講料 ' + yen(ev.onlineFee || 1000) + ' をPayPayで送金済み'
-          + (ev.onlinePayTo ? '<br><span style="color:var(--sub);font-size:12px;">送金先: ' + esc(ev.onlinePayTo) + '</span>' : '') + '</label></div>'
-          + '<div class="chkrow"><input type="checkbox" id="olEnv_' + i + '"><label for="olEnv_' + i + '" style="font-size:13px;">環境責任者'
-          + (ev.onlineEnvName ? '（' + esc(ev.onlineEnvName) + '）' : '') + 'の受講許可済</label></div>'
-          + '<button class="primary" id="olGo_' + i + '" style="width:100%;margin-top:8px;">申請する</button>'
-          + '<div class="se-msg" id="olMsg_' + i + '"></div>'
-          + '</div>';
-      }
-      return '<div class="selfevent" id="ol_' + i + '" style="border-color:var(--focus);">' + head + body + '</div>';
-    }).join('');
-    evs.forEach(function(ev, i){
-      // PC参加用のコピー（承認済み表示）
-      var bId = $('zcId_' + i), bPw = $('zcPw_' + i), bUrl = $('zcUrl_' + i);
-      if(bId) bId.onclick = function(){ copyText(fmtZoomId(ev.zoomId), bId); };
-      if(bPw) bPw.onclick = function(){ copyText(ev.zoomPw || '', bPw); };
-      if(bUrl) bUrl.onclick = function(){ copyText(ev.zoomUrl || '', bUrl); };
-      // 誓約書: 最後までスクロールで同意チェックを解禁（全文が収まっている場合はフォームを開いた時点で解禁）
-      var pt = $('olPtext_' + i);
-      var unlockPledge = function(){
-        var cb = $('olPledge_' + i);
-        if(cb) cb.disabled = false;
-        var nt = $('olPnote_' + i);
-        if(nt){ nt.textContent = '最後まで確認しました。チェックを入れてください'; nt.style.color = 'var(--green)'; }
-      };
-      if(pt) pt.addEventListener('scroll', function(){
-        if(pt.scrollTop + pt.clientHeight >= pt.scrollHeight - 6) unlockPledge();
-      });
-      var op = $('olOpen_' + i);
-      if(op) op.onclick = function(){
-        op.classList.add('hide'); $('olForm_' + i).classList.remove('hide');
-        // 表示後にサイズが確定するので、スクロール不要の場合はここで解禁
-        if(pt && pt.scrollHeight <= pt.clientHeight + 6) unlockPledge();
-      };
-      var pq = $('olPayQr_' + i);
-      if(pq && ev.onlinePayLink) makeQr(pq, payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000), 64);
-      var go = $('olGo_' + i);
-      if(!go) return;
-      go.onclick = function(){
-        if(!$('olPledge_' + i).checked){
-          $('olMsg_' + i).textContent = '誓約内容を最後まで確認して「同意する」にチェックを入れてください'; return;
-        }
-        if(!$('olPay_' + i).checked){
-          $('olMsg_' + i).textContent = 'PayPay送金のチェックを入れてください'; return;
-        }
-        if(!$('olEnv_' + i).checked){
-          $('olMsg_' + i).textContent = '環境責任者の受講許可のチェックを入れてください'; return;
-        }
-        var env = ev.onlineEnvName || '';
-        go.disabled = true;
-        var pd = new Date();
-        var pledgeLocal = pd.getFullYear() + '/' + (pd.getMonth() + 1) + '/' + pd.getDate() + ' ' + nowHM();
-        // 誓約書アーカイブ（申請1件につき1レコード。ルール未公開などで書けなくても申請は成立させる）
-        db.collection('checkinPledges').add({
-          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
-          eventId: ev.id, eventDate: ev.date || '', eventName: ev.name || '',
-          ver: PLEDGE_VER, envApprover: env,
-          at: FV.serverTimestamp(), atLocal: pledgeLocal, atMs: Date.now(), cardToken: gCardToken
-        }).catch(function(){});
-        try{ localStorage.setItem('bci_pl_' + c.no, pledgeLocal); }catch(e){}
-        db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
-          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
-          method: 'online', status: 'pending',
-          fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
-          envApprover: env, envApproved: true, pledged: true, pledgeLocal: pledgeLocal, pledgeVer: PLEDGE_VER, paypaySent: true,
-          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self-online'
-        }).then(function(){
-          try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
-          $('ol_' + i).innerHTML = '<b>💻 オンライン受講：' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</b>'
-            + '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請しました。承認をお待ちください</p>'
-            + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
-        }).catch(function(){
-          go.disabled = false;
-          $('olMsg_' + i).textContent = '申請できません。すでに申請済みか、受付が終了しています。';
-        });
-      };
-    });
-  }).catch(function(){});
+/* ── UPCOMING統合: 今後の予定・オンライン受講の申請・予約（RSVP）を1つのリストに ──
+   大きいカードの羅列をやめ、UPCOMINGの行に状態チップ（💻受講可/⏳承認待ち/✓受講OK/
+   🎟予約受付中…）を付け、行タップで展開して申請・予約・Zoom情報を出す。
+   表示は直近3イベント（従来どおり）。ただし予約受付中（未予約）のイベントだけは
+   3件圏外でも行を追加する（予約締切が先に来るため、予約手段が埋もれないように）。
+   当日セルフ受付中のイベントは専用カードがあるためここには出さない */
+function olState(c, ev){
+  if(!ev.online) return '';
+  var mark = c['online_' + ev.id] || '';
+  var applied = false;
+  try{ applied = !!localStorage.getItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+  if(mark === 'reapply'){   // 申請が削除された → 再申請できる状態に戻す
+    try{ localStorage.removeItem('bci_ol_' + ev.id + '_' + c.no); }catch(e){}
+    mark = ''; applied = false;
+  }
+  if(mark === 'approved') return 'approved';
+  if(mark === 'rejected') return 'rejected';
+  if(applied) return 'pending';
+  return ev.recClosed ? '' : 'can';
 }
-
-// 🎟 予約（RSVP）: rsvp=true のイベントは、開催 rsvpDays 日前になると「予約する」ボタンを表示。
-// 予約は checkinEvents/{id}/rsvps/{会員番号} に1回だけ作成（未ログイン・トークン照合、ルールで保証）
-function renderRsvpEvents(c){
-  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
-    var t0 = new Date(todayStr() + 'T00:00:00').getTime();
-    var evs = [];
-    qs.forEach(function(d){
-      var ev = d.data(); ev.id = d.id;
-      if(!ev.rsvp) return;
-      if((ev.unions || []).indexOf(c.union) < 0) return;
-      var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
-      var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - t0) / 86400000);
-      if(diff > days) return;   // まだ受付期間前
-      evs.push(ev);
-    });
-    evs.sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    evs = evs.slice(0, 3);
-    if(!evs.length){ $('rsvpArea').innerHTML = ''; return; }
-    $('rsvpArea').innerHTML = evs.map(function(ev, i){
-      var done = false;
-      try{ done = !!localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
-      return '<div class="selfevent">'
-        + '<b>🎟 予約受付中：' + esc(ev.name || '') + '</b>'
-        + '<span class="se-sub">' + esc(ev.date || '') + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</span>'
-        + (done
-          ? '<div class="se-done">✓ 予約済みです</div>'
-            + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">当日は会場で通常どおりチェックインしてください。変更・取消は受付担当へ。</p>'
-          : '<button class="primary" id="rsGo_' + i + '">予約する</button>'
-            + '<div class="se-msg" id="rsMsg_' + i + '"></div>')
+// 予約（RSVP）: 開催 rsvpDays 日前（デフォルト4）〜 rsvpDeadline（予約締切日・任意）の間だけ受付
+function rsvpState(c, ev){
+  if(!ev.rsvp) return '';
+  var done = false;
+  try{ done = !!localStorage.getItem('bci_rs_' + ev.id + '_' + c.no); }catch(e){}
+  if(done) return 'done';
+  var t = todayStr();
+  var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
+  var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000);
+  if(diff > days) return '';
+  if(ev.rsvpDeadline && t > ev.rsvpDeadline) return 'closed';
+  return 'open';
+}
+function rsvpDlLabel(ev){
+  if(!ev.rsvpDeadline) return '';
+  return ev.rsvpDeadline === todayStr() ? '本日締切' : '締切' + ev.rsvpDeadline.slice(5).replace('-', '/');
+}
+// 展開部分: オンライン受講（申請フォーム・承認待ち・Zoom情報は従来カードの中身をそのまま移植）
+function upOnlineBody(c, ev, i, st){
+  if(st === 'approved'){
+    var zRow = function(label, value, btnId, btnLabel){
+      return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;">'
+        + '<span style="flex:0 0 92px;font-size:12px;color:var(--sub);text-align:left;">' + label + '</span>'
+        + '<b class="mono" style="flex:1;text-align:left;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(value) + '</b>'
+        + '<button id="' + btnId + '" style="flex:0 0 auto;width:auto;padding:5px 10px;font-size:11.5px;">' + btnLabel + '</button>'
         + '</div>';
-    }).join('');
-    evs.forEach(function(ev, i){
-      var b = $('rsGo_' + i);
-      if(!b) return;
-      b.onclick = function(){
-        b.disabled = true;
-        db.collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
-          no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
-          eventDate: ev.date || '', eventName: ev.name || '',
-          cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
-        }).then(function(){
-          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
-          renderRsvpEvents(c);
-        }).catch(function(){
-          // すでに予約済み（作成のみ許可のため上書きは失敗する）
-          try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
-          renderRsvpEvents(c);
-        });
-      };
-    });
-  }).catch(function(){});
+    };
+    return '<div class="se-done">✓ 受講が承認されました</div>'
+      + (ev.zoomUrl
+        ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する（この端末で開く）</a>'
+        : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoomの参加情報は当日までにここに表示されます。開催時間に開き直してください。</p>')
+      + ((ev.zoomId || ev.zoomPw || ev.zoomUrl)
+        ? '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:8px;">'
+          + '<div style="font-size:10.5px;font-weight:700;letter-spacing:.2em;color:var(--sub);margin-bottom:4px;">PCで参加する場合</div>'
+          + (ev.zoomId ? zRow('ミーティングID', fmtZoomId(ev.zoomId), 'zcId_' + i, 'コピー') : '')
+          + (ev.zoomPw ? zRow('パスコード', ev.zoomPw, 'zcPw_' + i, 'コピー') : '')
+          + (ev.zoomUrl ? zRow('参加URL', ev.zoomUrl.replace(/^https?:\/\//, ''), 'zcUrl_' + i, 'URLをコピー') : '')
+          + '<p style="font-size:11.5px;color:var(--sub);margin:6px 0 0;text-align:left;">PCのZoomで「参加」→ 上のIDとパスコードを入力。またはURLをコピーしてPCのブラウザに貼り付けてください。</p>'
+          + '</div>'
+        : '');
+  }
+  if(st === 'rejected'){
+    return '<p style="color:var(--accent);font-weight:700;font-size:14px;">申請が承認されませんでした。<br><span style="font-weight:400;font-size:12.5px;">内容に不備があった可能性があります。Uラインまたは受付担当に確認してください。</span></p>';
+  }
+  if(st === 'pending'){
+    return '<p style="color:var(--amber);font-weight:700;font-size:14px;">申請済み・承認待ちです</p>'
+      + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">承認されるとここにZoom参加ボタンが表示されます。</p>';
+  }
+  return '<button class="primary" id="olOpen_' + i + '" style="width:100%;">オンライン受講を申請する</button>'
+    + '<div class="hide" id="olForm_' + i + '" style="text-align:left;margin-top:10px;">'
+    + (function(){
+        var prev = '';
+        try{ prev = localStorage.getItem('bci_pl_' + c.no) || ''; }catch(e){}
+        return '<div style="border:1px solid var(--line);border-radius:10px;margin-top:10px;padding:10px 12px;">'
+          + '<div style="font-weight:700;font-size:13px;">📜 オンライン受講 誓約書</div>'
+          + (prev ? '<div style="font-size:12px;color:var(--green);margin:4px 0 2px;">✅ この端末で同意済み（' + esc(prev) + '）。今回の申請にも同じ内容で誓約します。</div>' : '')
+          + '<div id="olPtext_' + i + '" style="max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.65;text-align:left;color:var(--ink);background:var(--paper);">'
+          + pledgeBodyHtml() + '</div>'
+          + '<div class="chkrow"><input type="checkbox" id="olPledge_' + i + '"' + (prev ? ' checked' : ' disabled') + '>'
+          + '<label for="olPledge_' + i + '" style="font-size:13px;">誓約内容に同意する（誓約日: 本日）</label></div>'
+          + (prev ? '' : '<div id="olPnote_' + i + '" style="font-size:11.5px;color:var(--amber);">※誓約内容を最後までスクロールするとチェックできます</div>')
+          + '</div>';
+      })()
+    + (ev.onlinePayLink
+      ? '<a id="olPayBtn_' + i + '" href="' + esc(payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000)) + '" target="_blank" rel="noopener" '
+        + 'style="display:block;text-align:center;text-decoration:none;padding:11px;border-radius:10px;background:#e60012;color:#fff;font-weight:700;font-size:14.5px;margin-top:10px;">'
+        + '💰 PayPayで ' + yen(ev.onlineFee || 1000) + ' を送る</a>'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
+        + '<div id="olPayQr_' + i + '" style="background:#fff;padding:4px;border-radius:6px;flex:0 0 auto;"></div>'
+        + '<span style="font-size:11.5px;color:var(--sub);text-align:left;">'
+        + (payLinkHasAmount(ev.onlinePayLink)
+          ? 'タップでPayPayが開き、宛先と金額が入った状態になります。'
+          : 'タップでPayPayの送金画面が開きます（宛先入り）。金額 ' + yen(ev.onlineFee || 1000) + ' はPayPay側で入力してください。')
+        + 'PCで見ている場合はスマホでQRを読んでください。</span></div>'
+      : '')
+    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="olPay_' + i + '"><label for="olPay_' + i + '" style="font-size:13px;">受講料 ' + yen(ev.onlineFee || 1000) + ' をPayPayで送金済み'
+    + (ev.onlinePayTo ? '<br><span style="color:var(--sub);font-size:12px;">送金先: ' + esc(ev.onlinePayTo) + '</span>' : '') + '</label></div>'
+    + '<div class="chkrow"><input type="checkbox" id="olEnv_' + i + '"><label for="olEnv_' + i + '" style="font-size:13px;">環境責任者'
+    + (ev.onlineEnvName ? '（' + esc(ev.onlineEnvName) + '）' : '') + 'の受講許可済</label></div>'
+    + '<button class="primary" id="olGo_' + i + '" style="width:100%;margin-top:8px;">申請する</button>'
+    + '<div class="se-msg" id="olMsg_' + i + '"></div>'
+    + '</div>';
 }
-
-// 次回の開催予定: 自ユニオンの直近イベントを搭乗券風に表示
-// （セルフ受付中・オンライン対応のイベントは専用カードが出るのでここでは省く）
-function renderNextEvents(c){
+function upBindOnline(c, ev, i, st){
+  if(st === 'approved'){
+    var bId = $('zcId_' + i), bPw = $('zcPw_' + i), bUrl = $('zcUrl_' + i);
+    if(bId) bId.onclick = function(e){ e.stopPropagation(); copyText(fmtZoomId(ev.zoomId), bId); };
+    if(bPw) bPw.onclick = function(e){ e.stopPropagation(); copyText(ev.zoomPw || '', bPw); };
+    if(bUrl) bUrl.onclick = function(e){ e.stopPropagation(); copyText(ev.zoomUrl || '', bUrl); };
+    return;
+  }
+  if(st !== 'can') return;
+  // 誓約書: 最後までスクロールで同意チェックを解禁（全文が収まっている場合はフォームを開いた時点で解禁）
+  var pt = $('olPtext_' + i);
+  var unlockPledge = function(){
+    var cb = $('olPledge_' + i);
+    if(cb) cb.disabled = false;
+    var nt = $('olPnote_' + i);
+    if(nt){ nt.textContent = '最後まで確認しました。チェックを入れてください'; nt.style.color = 'var(--green)'; }
+  };
+  if(pt) pt.addEventListener('scroll', function(){
+    if(pt.scrollTop + pt.clientHeight >= pt.scrollHeight - 6) unlockPledge();
+  });
+  var op = $('olOpen_' + i);
+  if(op) op.onclick = function(){
+    op.classList.add('hide'); $('olForm_' + i).classList.remove('hide');
+    if(pt && pt.scrollHeight <= pt.clientHeight + 6) unlockPledge();
+  };
+  var pq = $('olPayQr_' + i);
+  if(pq && ev.onlinePayLink) makeQr(pq, payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000), 64);
+  var go = $('olGo_' + i);
+  if(!go) return;
+  go.onclick = function(){
+    if(!$('olPledge_' + i).checked){
+      $('olMsg_' + i).textContent = '誓約内容を最後まで確認して「同意する」にチェックを入れてください'; return;
+    }
+    if(!$('olPay_' + i).checked){
+      $('olMsg_' + i).textContent = 'PayPay送金のチェックを入れてください'; return;
+    }
+    if(!$('olEnv_' + i).checked){
+      $('olMsg_' + i).textContent = '環境責任者の受講許可のチェックを入れてください'; return;
+    }
+    var env = ev.onlineEnvName || '';
+    go.disabled = true;
+    var pd = new Date();
+    var pledgeLocal = pd.getFullYear() + '/' + (pd.getMonth() + 1) + '/' + pd.getDate() + ' ' + nowHM();
+    // 誓約書アーカイブ（申請1件につき1レコード。ルール未公開などで書けなくても申請は成立させる）
+    db.collection('checkinPledges').add({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      eventId: ev.id, eventDate: ev.date || '', eventName: ev.name || '',
+      ver: PLEDGE_VER, envApprover: env,
+      at: FV.serverTimestamp(), atLocal: pledgeLocal, atMs: Date.now(), cardToken: gCardToken
+    }).catch(function(){});
+    try{ localStorage.setItem('bci_pl_' + c.no, pledgeLocal); }catch(e){}
+    db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      method: 'online', status: 'pending',
+      fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
+      envApprover: env, envApproved: true, pledged: true, pledgeLocal: pledgeLocal, pledgeVer: PLEDGE_VER, paypaySent: true,
+      cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self-online'
+    }).then(function(){
+      try{ localStorage.setItem('bci_ol_' + ev.id + '_' + c.no, '1'); }catch(e){}
+      renderUpcoming(c, ev.id);
+    }).catch(function(){
+      go.disabled = false;
+      $('olMsg_' + i).textContent = '申請できません。すでに申請済みか、受付が終了しています。';
+    });
+  };
+}
+// 展開部分: 予約（RSVP）
+function upRsvpBody(c, ev, i, rs){
+  if(rs === 'done'){
+    return '<div class="se-done">✓ 予約済みです</div>'
+      + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">当日は会場で通常どおりチェックインしてください。変更・取消は受付担当へ。</p>';
+  }
+  if(rs === 'closed'){
+    return '<p style="color:var(--sub);font-size:13px;margin:0;">予約受付は終了しました（' + esc(rsvpDlLabel(ev)) + '）。参加希望は受付担当へご連絡ください。</p>';
+  }
+  return (ev.rsvpDeadline
+      ? '<p style="font-size:12.5px;font-weight:700;color:var(--amber);margin:0 0 6px;">🎟 予約' + esc(rsvpDlLabel(ev)) + '</p>' : '')
+    + '<button class="primary" id="rsGo_' + i + '" style="width:100%;">予約する</button>'
+    + '<div class="se-msg" id="rsMsg_' + i + '"></div>';
+}
+function upBindRsvp(c, ev, i){
+  var b = $('rsGo_' + i);
+  if(!b) return;
+  b.onclick = function(){
+    b.disabled = true;
+    db.collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      eventDate: ev.date || '', eventName: ev.name || '',
+      cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
+    }).then(function(){
+      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+      renderUpcoming(c, ev.id);
+    }).catch(function(){
+      // すでに予約済み（作成のみ許可のため上書きは失敗する）
+      try{ localStorage.setItem('bci_rs_' + ev.id + '_' + c.no, '1'); }catch(e){}
+      renderUpcoming(c, ev.id);
+    });
+  };
+}
+// 🎟 予約受付中のお知らせバー（QR直下）: タップでUPCOMINGの該当行を開いてスクロール
+function renderRsvpTop(c, all){
+  var el = $('rsvpTop');
+  if(!el) return;
+  var list = all.filter(function(ev){ return rsvpState(c, ev) === 'open'; });
+  if(!list.length){ el.innerHTML = ''; return; }
+  el.innerHTML = list.map(function(ev){
+    return '<div class="rsvptop" data-rt="' + esc(ev.id) + '">🎟 <b>予約受付中: ' + esc(ev.name || '') + '</b>'
+      + '<span style="color:var(--sub);font-size:12.5px;">' + esc((ev.date || '').slice(5).replace('-', '/'))
+      + (ev.rsvpDeadline ? '・' + esc(rsvpDlLabel(ev)) : '') + '</span>'
+      + '<span style="margin-left:auto;color:var(--sub);">›</span></div>';
+  }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('[data-rt]'), function(bn){
+    bn.onclick = function(){
+      var id = bn.getAttribute('data-rt');
+      var x = $('upx_' + id);
+      if(x) x.classList.remove('hide');
+      var row = document.querySelector('[data-up="' + id + '"]');
+      try{ (row || $('nextArea')).scrollIntoView({ behavior: 'smooth', block: 'center' }); }catch(e){}
+    };
+  });
+}
+function renderUpcoming(c, openId){
   db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
-    var t = todayStr(), evs = [];
+    var t = todayStr(), all = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
       if((ev.unions || []).indexOf(c.union) < 0) return;
-      if(ev.online) return;
-      if(ev.mode === 'self' && ev.selfOpen) return;
-      // 予約受付中のイベントは専用カード（🎟）が出るのでここでは省く
-      if(ev.rsvp){
-        var days = parseInt(ev.rsvpDays, 10); if(isNaN(days) || days < 0) days = 4;
-        var diff = Math.round((new Date(ev.date + 'T00:00:00').getTime() - new Date(t + 'T00:00:00').getTime()) / 86400000);
-        if(diff <= days) return;
-      }
-      evs.push(ev);
+      if(ev.mode === 'self' && ev.selfOpen) return;   // セルフ受付中は専用カードが出る
+      all.push(ev);
     });
-    evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
-    evs = evs.slice(0, 3);
-    if(!evs.length){ $('nextArea').innerHTML = ''; return; }
-    $('nextArea').innerHTML = '<div class="nextwrap">'
-      + '<div class="next-head">UPCOMING</div>'
-      + evs.map(function(ev){
-          return '<div class="nextrow">'
-            + '<span class="nd">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
-            + '<span class="nn">' + esc(ev.name || '') + '</span>'
-            + (ev.date === t ? '<span class="today-pill">TODAY</span>' : '')
-            + (ev.speaker ? '<span class="ns">🎤 ' + esc(ev.speaker) + '</span>' : '')
-            + '</div>';
-        }).join('')
-      + '</div>';
+    all.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    renderRsvpTop(c, all);
+    var rows = all.slice(0, 3);   // 直近3つ（従来どおり）
+    // 予約受付中・予約済みのイベントは3件圏外でも行を追加
+    // （予約ボタンと「✓予約済み」の確認が埋もれて消えないように）
+    all.forEach(function(ev){
+      var rs = rsvpState(c, ev);
+      if(rows.indexOf(ev) < 0 && (rs === 'open' || rs === 'done')) rows.push(ev);
+    });
+    rows.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    if(!rows.length){ $('nextArea').innerHTML = ''; return; }
+    var binds = [];
+    var html = rows.map(function(ev, i){
+      var ol = olState(c, ev), rs = rsvpState(c, ev);
+      var chip = '';
+      if(rs === 'open') chip = '<span class="pill a">🎟 予約受付中' + (ev.rsvpDeadline ? '・' + esc(rsvpDlLabel(ev)) : '') + '</span>';
+      else if(rs === 'done') chip = '<span class="pill g">✓ 予約済み</span>';
+      else if(ol === 'can') chip = '<span class="pill a">💻 受講可</span>';
+      else if(ol === 'pending') chip = '<span class="pill n">⏳ 承認待ち</span>';
+      else if(ol === 'approved') chip = '<span class="pill g">✓ 受講OK</span>';
+      else if(ol === 'rejected') chip = '<span class="pill n">要確認</span>';
+      var body = '';
+      if(ol) body += upOnlineBody(c, ev, i, ol);
+      if(rs) body += upRsvpBody(c, ev, i, rs);
+      var canOpen = !!body;
+      var opened = canOpen && (ev.id === openId || (ol === 'approved' && ev.date === t));   // 当日×承認済みは自動展開
+      if(canOpen) binds.push({ ev: ev, i: i, ol: ol, rs: rs });
+      return '<div class="nextrow"' + (canOpen ? ' data-up="' + esc(ev.id) + '" style="cursor:pointer;"' : '') + '>'
+        + '<span class="nd">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
+        + '<span class="nn">' + esc(ev.name || '') + '</span>'
+        + (ev.date === t ? '<span class="today-pill">TODAY</span>' : '')
+        + (chip
+          ? '<span class="ns" style="margin-left:auto;">' + chip + '</span>'
+          : (ev.speaker ? '<span class="ns">🎤 ' + esc(ev.speaker) + '</span>' : ''))
+        + (canOpen ? '<span class="upar" style="color:var(--sub);flex:0 0 auto;">' + (opened ? '▾' : '▸') + '</span>' : '')
+        + '</div>'
+        + (canOpen
+          ? '<div id="upx_' + esc(ev.id) + '" class="upx' + (opened ? '' : ' hide') + '">'
+            + (ev.speaker ? '<div style="font-size:12px;color:var(--sub);margin-bottom:6px;">🎤 ' + esc(ev.speaker) + '</div>' : '')
+            + body + '</div>'
+          : '');
+    }).join('');
+    $('nextArea').innerHTML = '<div class="nextwrap"><div class="next-head">UPCOMING</div>' + html + '</div>';
+    Array.prototype.forEach.call($('nextArea').querySelectorAll('[data-up]'), function(row){
+      row.onclick = function(){
+        var x = $('upx_' + row.getAttribute('data-up'));
+        if(!x) return;
+        x.classList.toggle('hide');
+        var ar = row.querySelector('.upar');
+        if(ar) ar.textContent = x.classList.contains('hide') ? '▸' : '▾';
+      };
+    });
+    binds.forEach(function(bd){
+      if(bd.ol) upBindOnline(c, bd.ev, bd.i, bd.ol);
+      if(bd.rs === 'open') upBindRsvp(c, bd.ev, bd.i);
+    });
   }).catch(function(){});
 }
 // 電子領収書: 受付でピッとした瞬間に発行されたものを会員証に表示
@@ -3171,7 +3211,8 @@ function rsvpListModal(ev){
               + '</div>';
           }).join('') + '</div>'
         : '<p style="color:var(--sub);font-size:13.5px;">まだ予約はありません。会員証に「予約する」ボタンが表示されるのは開催'
-          + (ev.rsvpDays != null ? esc(ev.rsvpDays) : 4) + '日前からです。</p>')
+          + (ev.rsvpDays != null ? esc(ev.rsvpDays) : 4) + '日前から'
+          + (ev.rsvpDeadline ? '、締切は ' + esc(ev.rsvpDeadline) + ' まで' : '') + 'です。</p>')
       + '<div class="btns">' + (rows.length ? '<button id="rvCsv">CSV出力</button>' : '') + '<button id="rvClose">閉じる</button></div>', true);
     $('rvClose').onclick = closeModal;
     var cb = $('rvCsv');
@@ -3251,6 +3292,8 @@ function eventForm(ev){
         + '<div id="rowRsvp" class="' + (ev && ev.rsvp ? '' : 'hide') + '" style="margin-left:22px;">'
         + '<label>予約ボタンを表示する日（開催の何日前から）</label>'
         + '<input type="text" id="evRsvpDays" inputmode="numeric" value="' + esc(ev && ev.rsvpDays != null ? ev.rsvpDays : 4) + '" style="width:80px;">'
+        + '<label>予約締切日（任意。過ぎると会員証の「予約する」が自動で閉じます）</label>'
+        + '<input type="date" id="evRsvpDl" value="' + esc((ev && ev.rsvpDeadline) || '') + '" style="width:190px;">'
         + '</div>'
       : '')
     + chk
@@ -3309,6 +3352,7 @@ function eventForm(ev){
         if(!$('evRsvpDays')) return (ev && ev.rsvpDays != null) ? ev.rsvpDays : 4;
         var n = parseInt($('evRsvpDays').value, 10); return isNaN(n) || n < 0 ? 4 : n;
       })(),
+      rsvpDeadline: $('evRsvpDl') ? $('evRsvpDl').value : ((ev && ev.rsvpDeadline) || ''),
       online: $('evOnline').checked,
       onlineFee: (function(){ var n = parseInt($('evOnFee').value, 10); return isNaN(n) ? 1000 : n; })(),
       onlinePayTo: $('evOnPay').value.trim(),
