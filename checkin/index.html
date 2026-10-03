@@ -1001,8 +1001,13 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v8';
+var APP_VER = 'v9';
 var CHANGELOG = [
+  { v: 'v9', d: '2026/10/03', items: [
+    '予約の取消申請: 受付で先に予約を削除済みの場合でも、申請が受付の予約一覧に届くようになりました（「予約は削除済み」と表示。承認すると会員証が予約受付中に戻ります）',
+    'イベント一覧の🎟予約ボタンに、未処理の取消申請の件数（⏳取消申請 n）を表示',
+    '会員証: 取消申請の送信に失敗したときに「申請中」と表示されてしまう不具合を修正。申請中の画面に「申請を送り直す」ボタンを追加'
+  ] },
   { v: 'v8', d: '2026/10/03', items: ['DLR会場受講の予約: 日程は今後のDLR / P&P からの選択のみになりました（「その他（日付を手入力）」を廃止）'] },
   { v: 'v7', d: '2026/10/03', items: [
     '名簿: テーブルの見出し行（番号・氏名…）もスクロールしても固定されるようになりました'
@@ -1537,7 +1542,9 @@ function upRsvpBody(c, ev, i, rs){
   }
   if(rs === 'cancelreq'){
     return '<p style="color:var(--amber);font-weight:700;font-size:14px;margin:0;">⏳ 取消を申請中です</p>'
-      + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">受付が確認すると予約が取り消されます。却下された場合は予約が継続します。</p>';
+      + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">受付が確認すると予約が取り消されます。却下された場合は予約が継続します。</p>'
+      + '<button id="rcRe_' + i + '" class="ghost" style="width:100%;margin-top:10px;font-size:12px;">受付に届いていない場合: 申請を送り直す</button>'
+      + '<div class="se-msg" id="rcMsg_' + i + '"></div>';
   }
   if(rs === 'closed'){
     return '<p style="color:var(--sub);font-size:13px;margin:0;">予約受付は終了しました（' + esc(rsvpDlLabel(ev)) + '）。参加希望は受付担当へご連絡ください。</p>';
@@ -1548,22 +1555,35 @@ function upRsvpBody(c, ev, i, rs){
     + '<div class="se-msg" id="rsMsg_' + i + '"></div>';
 }
 function upBindRsvp(c, ev, i){
-  // 予約の取消申請（予約済みのときだけ表示される）
+  // 予約の取消申請（予約済みのときだけ表示される）。送信に失敗したら「申請中」にはせず、その旨を表示する
+  function sendCancel(){
+    return db.collection('checkinEvents').doc(ev.id).collection('rsvpCancels').doc(c.no).set({
+      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
+      eventDate: ev.date || '', eventName: ev.name || '',
+      cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
+    });
+  }
   var rc = $('rcGo_' + i);
   if(rc) rc.onclick = function(){
     if(!window.confirm('「' + (ev.name || '') + '」の予約の取消を申請しますか？\n受付が確認すると予約が取り消されます。')) return;
     rc.disabled = true;
-    db.collection('checkinEvents').doc(ev.id).collection('rsvpCancels').doc(c.no).set({
-      no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
-      eventDate: ev.date || '', eventName: ev.name || '',
-      cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
-    }).then(function(){
+    sendCancel().then(function(){
       try{ localStorage.setItem('bci_rc_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
       renderUpcoming(c, ev.id);
     }).catch(function(){
-      // すでに申請済み（作成のみ許可のため上書きは失敗する）
-      try{ localStorage.setItem('bci_rc_' + ev.id + '_' + c.no, String(Date.now())); }catch(e){}
-      renderUpcoming(c, ev.id);
+      rc.disabled = false;
+      $('rcMsg_' + i).textContent = '取消申請を送れませんでした。すでに申請済みの場合はそのままお待ちください。解決しない場合は受付にお声がけください。';
+    });
+  };
+  // 申請中の表示なのに受付に届いていない（旧版で送信失敗を申請中と表示していた）場合の再送
+  var rr = $('rcRe_' + i);
+  if(rr) rr.onclick = function(){
+    rr.disabled = true;
+    sendCancel().then(function(){
+      $('rcMsg_' + i).textContent = '取消申請を送り直しました。受付の確認をお待ちください。';
+    }).catch(function(){
+      // 作成のみ許可のため、すでに届いている申請があると失敗する
+      $('rcMsg_' + i).textContent = '申請はすでに受付に届いています。受付の確認をお待ちください。（解決しない場合は受付にお声がけください）';
     });
   };
   var b = $('rsGo_' + i);
@@ -1670,7 +1690,7 @@ function renderUpcoming(c, openId){
     });
     binds.forEach(function(bd){
       if(bd.ol) upBindOnline(c, bd.ev, bd.i, bd.ol);
-      if(bd.rs === 'open' || bd.rs === 'done') upBindRsvp(c, bd.ev, bd.i);
+      if(bd.rs === 'open' || bd.rs === 'done' || bd.rs === 'cancelreq') upBindRsvp(c, bd.ev, bd.i);
     });
   }).catch(function(){});
 }
@@ -3226,7 +3246,7 @@ function renderEvents(){
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
       + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
-      + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span></button>' : '')
+      + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span><span id="rcCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canRec ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canRec ? '<button data-a="imp" data-id="' + esc(ev.id) + '">📥 取込</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
@@ -3258,6 +3278,11 @@ function renderEvents(){
         db.collection('checkinEvents').doc(ev.id).collection('rsvps').count().get().then(function(s){
           var el = $('rvCt_' + ev.id);
           if(el && s.data().count) el.innerHTML = ' <span class="pill g">' + s.data().count + '名</span>';
+        }).catch(function(){});
+        // 本人からの取消申請（未処理）があれば目立たせる
+        db.collection('checkinEvents').doc(ev.id).collection('rsvpCancels').get().then(function(qs){
+          var el = $('rcCt_' + ev.id);
+          if(el && qs.size) el.innerHTML = ' <span class="pill a">⏳取消申請 ' + qs.size + '</span>';
         }).catch(function(){});
       }catch(e){}
     }
@@ -3388,12 +3413,22 @@ function rsvpListModal(ev){
       if(a.status === 'pending' || a.status === 'rejected') return;
       att[d.id] = 1;
     });
-    // 🎟 本人からの取消申請（会員番号 → 申請doc）。予約が無いゴミ申請は無視
+    // 🎟 本人からの取消申請（会員番号 → 申請doc）。予約がすでに削除されている申請も
+    // （会員証が「予約済み」のまま残っている人の解除依頼として）一覧の末尾に出す
     var cancels = {};
     res[2].forEach(function(d){ cancels[d.id] = d.data(); });
+    var rsvCount = rows.length;
+    var hasRsv = {};
+    rows.forEach(function(r){ hasRsv[r.id] = 1; });
+    Object.keys(cancels).forEach(function(id){
+      if(hasRsv[id]) return;
+      var cx = cancels[id];
+      rows.push({ id: id, name: cx.name || id, group: cx.group || '', union: cx.union || '',
+        cardToken: cx.cardToken || '', orphan: true });
+    });
     var cancelCount = rows.filter(function(r){ return cancels[r.id]; }).length;
-    var attended = rows.filter(function(r){ return att[r.id]; }).length;
-    modal('<h2>🎟 予約一覧 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '（' + rows.length + '名・参加済み ' + attended + '名）</h2>'
+    var attended = rows.filter(function(r){ return !r.orphan && att[r.id]; }).length;
+    modal('<h2>🎟 予約一覧 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '（' + rsvCount + '名・参加済み ' + attended + '名）</h2>'
       + (cancelCount ? '<p style="font-size:13px;color:var(--amber);font-weight:700;margin:0 0 6px;">⏳ 取消申請が ' + cancelCount + ' 件あります。「取消を承認」で予約が削除され、本人の会員証に反映されます。</p>' : '')
       + (rows.length
         ? '<div style="max-height:55vh;overflow:auto;">' + rows.map(function(r, i){
@@ -3401,14 +3436,15 @@ function rsvpListModal(ev){
               + '<span class="mono" style="color:var(--sub);font-size:12px;width:1.8em;text-align:right;">' + (i + 1) + '</span>'
               + '<b style="flex:1;min-width:120px;">' + esc(r.name || '') + '</b>'
               + '<span style="color:var(--sub);font-size:12px;">' + esc(r.group || '') + (r.union ? '・' + esc(r.union) : '') + '</span>'
-              + (att[r.id] ? '<span class="pill g">✓ 参加済み</span>' : '<span class="pill n">予約のみ</span>')
+              + (r.orphan ? '<span class="pill n">予約は削除済み</span>'
+                : att[r.id] ? '<span class="pill g">✓ 参加済み</span>' : '<span class="pill n">予約のみ</span>')
               + (cancels[r.id]
                 ? '<span class="pill a">⏳ 取消申請 ' + esc((cancels[r.id].atLocal || '')) + '</span>'
                   + '<button data-rv="capprove" data-i="' + i + '" class="danger" style="padding:4px 10px;font-size:12px;">取消を承認</button>'
-                  + '<button data-rv="creject" data-i="' + i + '" style="padding:4px 10px;font-size:12px;">却下</button>'
+                  + (r.orphan ? '' : '<button data-rv="creject" data-i="' + i + '" style="padding:4px 10px;font-size:12px;">却下</button>')
                 : '')
               + '<button data-rv="copy" data-i="' + i + '" title="氏名をコピー" style="padding:4px 10px;font-size:12px;">📋</button>'
-              + '<button data-rv="del" data-i="' + i + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">削除</button>'
+              + (r.orphan ? '' : '<button data-rv="del" data-i="' + i + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">削除</button>')
               + '</div>';
           }).join('') + '</div>'
         : '<p style="color:var(--sub);font-size:13.5px;">まだ予約はありません。会員証に「予約する」ボタンが表示されるのは開催'
@@ -3419,7 +3455,7 @@ function rsvpListModal(ev){
     var cb = $('rvCsv');
     if(cb) cb.onclick = function(){
       var out = [['会員番号', '氏名', '系列', 'ユニオン', '予約日時', '参加']];
-      rows.forEach(function(r){ out.push([r.id, r.name || '', r.group || '', r.union || '', r.atLocal || '', att[r.id] ? '参加済み' : '']); });
+      rows.forEach(function(r){ if(!r.orphan) out.push([r.id, r.name || '', r.group || '', r.union || '', r.atLocal || '', att[r.id] ? '参加済み' : '']); });
       csvDownload('予約一覧_' + (ev.name || '') + '_' + (ev.date || '') + '.csv', out);
     };
     document.querySelector('.modal').addEventListener('click', function(e){

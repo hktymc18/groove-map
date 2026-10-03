@@ -395,16 +395,16 @@ service cloud.firestore {
                    .data.get('unions',[]).hasAny([ckMyUnion()]));
       }
 
-      // 🎟 予約の取消申請: 予約済みの本人（未ログイン・会員証トークン照合）が、
-      // 自分の予約（rsvps/{会員番号}が存在）に対して1件だけ作成できる。
+      // 🎟 予約の取消申請: 本人（未ログイン・会員証トークン照合）が自分の番号で1件だけ作成できる。
+      // 予約docの存在は求めない（受付側で先に削除済みでも、会員証の「予約済み」表示を解除する
+      // 依頼として受付に届くようにするため）。
       // 本人による変更・削除は不可＝確定操作は受付（承認=予約と申請を削除／却下=申請のみ削除）
       match /rsvpCancels/{rid} {
         allow read: if signedIn();
         allow create: if request.auth == null
           && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
           && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
-               .data.get('no','') == rid
-          && exists(/databases/$(database)/documents/checkinEvents/$(eid)/rsvps/$(rid));
+               .data.get('no','') == rid;
         allow update: if false;
         allow delete: if signedIn();
       }
