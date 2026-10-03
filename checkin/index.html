@@ -522,6 +522,7 @@ tr:last-child td{border-bottom:none;}
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
+      <label style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;white-space:nowrap;margin:0;cursor:pointer;"><input type="checkbox" id="qShowOff" style="width:auto;margin:0;">無効も表示</label>
       <button class="primary" id="btnAddMember">＋ メンバー追加</button>
       <button id="btnCsvIn">CSV取込</button>
       <button id="btnCsvOut">CSV出力</button>
@@ -881,6 +882,10 @@ function groupDatalist(list){
 }
 var gMembers = [];          // gRosterUnion の名簿
 var gMembersLoaded = false;
+// 名簿の表示設定: 無効メンバーは通常非表示（「無効も表示」で切替・端末ごとに記憶）、
+// 列見出しタップで並べ替え（番号は TS2→TS10 になる自然順）
+var gRosterShowOff = (function(){ try{ return localStorage.getItem('bci_roster_showoff') === '1'; }catch(e){ return false; } })();
+var gRosterSort = { k: 'no', asc: true };
 var gSel = {};              // 名簿の選択状態 {no: true}
 var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.getMonth()+1}; })();
 var gEvents = [];           // 表示月のイベント（gUnion 参加分）
@@ -975,12 +980,17 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v2026.10.04';
+var APP_VER = 'v5';
 var CHANGELOG = [
-  { v: 'v2026.10.04', items: [
+  { v: 'v5', d: '2026/10/04', items: [
+    '名簿: 無効メンバーは通常非表示になりました（検索欄の横の「無効も表示」で切替）',
+    '名簿: 列見出し（番号・氏名・系列・状態）をタップで並べ替えできます',
+    'バージョン表記を連番（v5〜）にし、お知らせに更新日を表示しました'
+  ] },
+  { v: 'v4', d: '2026/10/04', items: [
     '画面上部にバージョン表示と📣お知らせ（この画面）を追加しました'
   ] },
-  { v: 'v2026.10.03', items: [
+  { v: 'v3', d: '2026/10/03', items: [
     '会員証: 先の予定・オンライン受講・予約を「UPCOMING」に統合。行をタップすると申請や予約ができます',
     '会員証: 予約受付中はQRの下にお知らせバーが出ます（締切日つき）',
     '予約に締切日を設定できるようになりました（締切後は自動で受付終了）',
@@ -988,14 +998,14 @@ var CHANGELOG = [
     '受付が予約を削除すると、本人の会員証も「予約受付中」に戻るようになりました',
     '研修生登録: UPルビーは名簿にある系列からの選択のみになりました（表記ゆれ対策）'
   ] },
-  { v: 'v2026.10.02', items: [
+  { v: 'v2', d: '2026/10/02', items: [
     '研修生の会員証がVISITOR PASSデザイン（ヒヨコ色）になりました',
     '研修生・無効メンバーの会員証には先のハウディの予定を表示しません',
     '休会を廃止して無効化に統合しました（領収書・出席履歴は残ります）',
     '「受付を終了」がどの端末からも記録できるようになりました',
     '集計タブ: 受付が終わっていないイベントは案内が出ます（終了後に反映）'
   ] },
-  { v: 'v2026.10.01', items: [
+  { v: 'v1', d: '2026/10/01', items: [
     '受付システムのホーム画面名を「受付管理」・専用アイコンに分離しました',
     '研修後入力に研修生の検索（担当者・紹介者・フリーワード等）を追加しました'
   ] }
@@ -1023,6 +1033,7 @@ function showChangelog(){
   modal('<h2>📣 お知らせ（更新履歴）</h2>'
     + CHANGELOG.map(function(cl){
         return '<div style="margin:0 0 14px;"><b style="font-size:14px;">' + esc(cl.v) + '</b>'
+          + (cl.d ? '<span style="color:var(--sub);font-size:12px;margin-left:8px;">' + esc(cl.d) + ' 更新</span>' : '')
           + '<ul style="margin:4px 0 0;padding-left:1.3em;font-size:13.5px;line-height:1.8;">'
           + cl.items.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('')
           + '</ul></div>';
@@ -2299,8 +2310,13 @@ function loadMembers(cb){
 function renderRoster(){
   var edit = canEditRoster();
   var q = ($('q').value || '').trim();
+  function sth(k, label){
+    var cur = gRosterSort.k === k;
+    return '<th data-sk="' + k + '" style="cursor:pointer;white-space:nowrap;" title="タップで並べ替え">'
+      + label + (cur ? (gRosterSort.asc ? ' ▲' : ' ▼') : '') + '</th>';
+  }
   $('rosterHead').innerHTML = (edit ? '<th style="width:2em;"><input type="checkbox" id="selAllChk" title="表示中を全選択"></th>' : '')
-    + '<th>番号</th><th>氏名</th><th>系列</th><th>状態</th><th>操作</th>';
+    + sth('no', '番号') + sth('name', '氏名') + sth('group', '系列') + sth('st', '状態') + '<th>操作</th>';
   $('roBadge').classList.toggle('hide', edit);
   // 会員証の発行・印刷はログイン済みなら誰でも可。削除・グレード変更・取込は管理者のみ
   $('bulkRow').classList.remove('hide');
@@ -2314,8 +2330,26 @@ function renderRoster(){
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   $('btnGroupRen').classList.toggle('hide', !edit);
-  var tb = $('rosterBody'), html = '', shown = 0;
-  gMembers.forEach(function(m){
+  // 並べ替え（番号: プレフィックス＋数字の自然順 / 氏名: ふりがな優先 / 系列: 表記ゆれ同一視 / 状態: 有効→無効）
+  var natRe = /^([^0-9]*)([0-9]*)/;
+  function rosterCmp(a, b){
+    var k = gRosterSort.k, r = 0;
+    if(k === 'no'){
+      var ma = natRe.exec(a.no || ''), mb = natRe.exec(b.no || '');
+      r = ma[1] < mb[1] ? -1 : ma[1] > mb[1] ? 1 : (parseInt(ma[2] || '0', 10) - parseInt(mb[2] || '0', 10));
+      if(!r) r = (a.no || '') < (b.no || '') ? -1 : (a.no || '') > (b.no || '') ? 1 : 0;
+    } else if(k === 'name'){
+      r = String(a.kana || a.name || '').localeCompare(String(b.kana || b.name || ''), 'ja');
+    } else if(k === 'group'){
+      r = groupKey(a.group).localeCompare(groupKey(b.group), 'ja');
+    } else if(k === 'st'){
+      r = (ckMemberOff(a) ? 1 : 0) - (ckMemberOff(b) ? 1 : 0);
+    }
+    return gRosterSort.asc ? r : -r;
+  }
+  var tb = $('rosterBody'), html = '', shown = 0, offHidden = 0;
+  gMembers.slice().sort(rosterCmp).forEach(function(m){
+    if(!gRosterShowOff && ckMemberOff(m)){ offHidden++; return; }
     var name = m.name || '';
     if(q && name.indexOf(q) < 0 && m.no.indexOf(q) < 0 && (m.group||'').indexOf(q) < 0) return;
     shown++;
@@ -2344,11 +2378,28 @@ function renderRoster(){
   var cols = edit ? 6 : 5;
   tb.innerHTML = html || '<tr><td colspan="' + cols + '" style="color:var(--sub)">メンバーがいません。'
     + (edit ? '「＋ メンバー追加」または「CSV取込」で登録してください。' : '') + '</td></tr>';
-  $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名）'
+  $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名'
+    + (offHidden ? '・無効 ' + offHidden + '名は非表示' : '') + '）'
     + (edit ? '' : ' ※閲覧のみ（編集はこのユニオンの管理者が行えます）');
+  var so = $('qShowOff');
+  if(so) so.checked = gRosterShowOff;
   updateSelCount();
 }
 $('q').addEventListener('input', renderRoster);
+$('qShowOff').onchange = function(){
+  gRosterShowOff = this.checked;
+  try{ localStorage.setItem('bci_roster_showoff', gRosterShowOff ? '1' : '0'); }catch(e){}
+  renderRoster();
+};
+// 列見出しタップで並べ替え（同じ列をもう一度タップで昇順⇄降順）
+$('rosterHead').addEventListener('click', function(e){
+  var th = e.target.closest ? e.target.closest('th[data-sk]') : null;
+  if(!th) return;
+  var k = th.getAttribute('data-sk');
+  if(gRosterSort.k === k) gRosterSort.asc = !gRosterSort.asc;
+  else gRosterSort = { k: k, asc: true };
+  renderRoster();
+});
 
 /* ── 選択・一括削除 ── */
 function selCount(){ return Object.keys(gSel).length; }
