@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v576';
+var APP_JS_VERSION = 'v577';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v576';
+  var DATA_VERSION = 'v577';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4955,6 +4955,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v577', d:'2026-10-04', items:['📊 受付連携で取り込む稼働率を「今月」から「直近1ヶ月」（1ヶ月前の翌日〜今日。例：10/4なら9/5〜10/4）の出席÷開催数に。月初でも数字がブレにくくなります（過去の月のMAPはその月の数字のまま）'] },
   { v:'v576', d:'2026-10-04', items:['📝 アウトライン企画書（ATTACK LISTから移動）：メンバー編集の活動タブ「＋ 追加 → アウトライン企画書」から。Cはその人（名前・キャリア・タイトル・稼働・稼働率はMAPから自動・直せます）、Bは自分。課題・伝えていただきたい事・望む結果は定型文ボタンつき','📤 「LINEで送る」でLINEの送り先を選ぶ画面が開きます（AさんのLINE IDの登録は不要）。「コピー」も。送った日が「送信済み」で残ります','🗂 企画書はOL（予定）とひとつ：日時・テーマ・場所・参加者はOLと同じ。活動タブのOLに「📝企画書」の印、「📝企画書」で絞り込んで見返せます。OLの企画画面からも開けます','↻ 「前回の企画書から作る」で課題・伝えていただきたい事・望む結果を引き継げます'] },
   { v:'v575', d:'2026-10-03', items:['🎯 PLAN「今月にやること」の目標に出どころの印（理想MAP・ロードマップ・今月の目標）。理想MAPの数字は紫に','👆 タイルを押すと「この目標は理想MAPの数字です」と変え方を案内：フロントは自分の直下に新しいB1を足す画面、ユーザーPTは自分のカード、平均稼働人数は今月の目標の入力欄へ直接移動','← 理想MAPに移ったら画面の下に「PLANに戻る」。押すと元の位置に戻ります'] },
   { v:'v574', d:'2026-10-03', items:['✏️ 目標設定「どのあたりに住みたい？」の例を「大濠、南青山、新町」に変更'] },
@@ -6157,8 +6158,8 @@ function ckLinkRender() {
     + '<span class="ms-x" onclick="ckLinkClose()">✕</span></div>'
     + '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px">受付ユニオン</div>' + unionSel
     + '<div style="max-height:44vh;overflow-y:auto;margin-top:10px">' + (rows || '<div style="padding:16px;color:var(--text-dim);font-size:13px">このMAPにメンバーがいません</div>') + '</div>'
-    + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + evEsc((state.currentMonth || currentMonthStr())) + ' の稼働率を取り込む</button>'
-    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率は受付システムの「集計」の数字をそのまま取り込みます（MAPでは計算しません）。稼働タイプSの人は自動更新の対象外です。</div>'
+    + '<button type="button" onclick="ckLinkApply()" style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:var(--go-ink);font-size:15px;font-weight:800;margin-top:12px">リンクを保存して ' + (_ckIsNowMonth() ? '直近1ヶ月' : evEsc((state.currentMonth || currentMonthStr())) + ' ') + 'の稼働率を取り込む</button>'
+    + '<div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.6">稼働率は受付システムが計算した数字をそのまま取り込みます（MAPでは計算しません）。今月のMAPは<b>直近1ヶ月</b>（1ヶ月前の翌日〜今日）の出席÷開催数、過去の月のMAPはその月の数字です。</div>'
     + '</div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -6179,7 +6180,7 @@ function ckLinkApply() {
     renderCurrentView();
     if (held) {
       var d0 = new Date(), today0 = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
-      toast('連携完了 ✓ 新規リンク' + newLinks + '名・受付システムの集計（' + _ckStatWhen(st) + '時点・開催' + held + '回）を' + updated + '名に反映'
+      toast('連携完了 ✓ 新規リンク' + newLinks + '名・' + _ckRateLabel(st) + '稼働率（' + _ckStatWhen(st) + '時点・開催' + held + '回）を' + updated + '名に反映'
         + (skipped ? '（休会中など集計外の' + skipped + '名は変更なし）' : '')
         + (st.calcDay && st.calcDay !== today0 ? '　※最新にするには受付システムの「集計」を開いてから、もう一度連携してください' : ''));
     } else if (st) toast('リンクを保存しました（' + _ckMonthKey() + ' はまだ受付が終了した開催がないため稼働率は未更新）');
@@ -6189,10 +6190,14 @@ function ckLinkApply() {
 // v536: 稼働率はMAPでは計算せず、受付システムが集計した数字（checkinStats/{ユニオン}__{YYYY-MM}）を読むだけ。
 //        計算式は受付システムの1か所だけ＝受付システムの集計画面と必ず同じ数字になる
 function _ckStatDocId(union, key) { return String(union || '').replace(/\//g, '／') + '__' + key; }
+// v577: 今月のMAPは「直近1ヶ月」（受付システムの checkinStats/{ユニオン}__last1m・例 9/5〜10/4）。無ければ今月の集計。過去の月のMAPはその月の集計
+function _ckIsNowMonth() { var d = new Date(); return _ckMonthKey() === d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function _ckRateLabel(st) { return st && st.from && st.to ? '直近1ヶ月（' + _ckMD(st.from) + '〜' + _ckMD(st.to) + '）' : _ckMonthKey().replace('-', '.') + 'の'; }
+function _ckMD(ymd) { var p = String(ymd || '').split('-'); return parseInt(p[1], 10) + '/' + parseInt(p[2], 10); }
 function ckImportRates(done) {
   var un = _ckLink.sel, month = _ckMonthKey();
-  db.collection('checkinStats').doc(_ckStatDocId(un, month)).get().then(function(snap) {
-    var st = snap && snap.exists ? (snap.data() || {}) : null;
+  var getSt = function(key) { return db.collection('checkinStats').doc(_ckStatDocId(un, key)).get().then(function(s) { return s && s.exists ? (s.data() || {}) : null; }); };
+  (_ckIsNowMonth() ? getSt('last1m').then(function(r) { return (r && r.held) ? r : getSt(month); }) : getSt(month)).then(function(st) {
     if (!st || !st.held) { done(0, 0, st); return; }
     var rates = st.rates || {}, updated = 0, skipped = 0;
     _ckOwnMembers().forEach(function(m) {
@@ -6245,7 +6250,7 @@ function renderMembers() {
     return '<span class="ml-pill' + (_memberFilter===f[0]?' active':'') + '" onclick="setMemberFilter(\'' + f[0] + '\')">' + f[1] + ' ' + f[2] + '</span>';
   }).join('')
     + (mergedCt > 0 ? '<span class="ml-pill" style="border-style:dashed;color:' + (incM ? 'var(--accent)' : 'var(--text-dim)') + '" onclick="toggleMemberIncMerged()" title="集計・カテゴリに結合メンバーを含めるか">' + icn('link') + (incM ? '結合込み ✓' : '結合除外') + '</span>' : '')
-    + (!viewingOwnerUid ? '<span class="ml-pill" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</span>' : '')
+    + (!viewingOwnerUid ? '<span class="ml-pill" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて直近1ヶ月の稼働率を取り込む">⟲ 受付連携</span>' : '')
     + '</div>';
   if (!list.length) { wrap.innerHTML = html + '<div class="ck-empty">該当するメンバーがいません</div>'; return; }
   html += '<div class="ml-list">' + list.map(function(m){
