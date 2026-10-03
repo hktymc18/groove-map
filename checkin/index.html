@@ -429,6 +429,7 @@ tr:last-child td{border-bottom:none;}
     <span class="brand">BASE CHECK-IN<span class="dot">●</span></span>
     <span class="unionchip" id="unionBadge"></span>
     <select id="unionSel" class="hide"></select>
+    <button id="verBtn" title="更新のお知らせ" style="border:none;background:transparent;color:var(--sub);font-size:11px;padding:2px 6px;letter-spacing:.02em;"></button>
     <nav>
       <button class="on" data-pane="pKiosk">受付</button>
       <button data-pane="pRoster">名簿</button>
@@ -634,6 +635,7 @@ tr:last-child td{border-bottom:none;}
     <div id="nextArea"></div>
     <div id="rcptArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
+    <p id="verCard" style="text-align:center;font-size:10.5px;color:var(--sub);margin-top:10px;cursor:pointer;"></p>
     <p class="mc-err" id="mcErr"></p>
   </div>
 </div>
@@ -663,6 +665,7 @@ tr:last-child td{border-bottom:none;}
     <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
       <h2 style="margin:0;font-size:18px;">🎓 研修生登録</h2>
       <span id="trUnionLbl" style="font-size:12.5px;color:var(--sub);"></span>
+      <button id="verBtnTr" title="更新のお知らせ" style="border:none;background:transparent;color:var(--sub);font-size:10.5px;padding:2px 4px;"></button>
       <span style="flex:1"></span>
       <span id="trMe" style="font-size:12px;color:var(--sub);"></span>
     </div>
@@ -968,6 +971,68 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
     if(_tm) _tm.content = sw.t;
   }catch(e){}
 })();
+/* ── 📣 バージョンとお知らせ（更新履歴） ──
+   checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
+   ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
+   未読の更新があると📣の横に赤丸が付き、開くと既読になる */
+var APP_VER = 'v2026.10.04';
+var CHANGELOG = [
+  { v: 'v2026.10.04', items: [
+    '画面上部にバージョン表示と📣お知らせ（この画面）を追加しました'
+  ] },
+  { v: 'v2026.10.03', items: [
+    '会員証: 先の予定・オンライン受講・予約を「UPCOMING」に統合。行をタップすると申請や予約ができます',
+    '会員証: 予約受付中はQRの下にお知らせバーが出ます（締切日つき）',
+    '予約に締切日を設定できるようになりました（締切後は自動で受付終了）',
+    '予約の取消申請ができるようになりました（受付が承認すると取消されます）',
+    '受付が予約を削除すると、本人の会員証も「予約受付中」に戻るようになりました',
+    '研修生登録: UPルビーは名簿にある系列からの選択のみになりました（表記ゆれ対策）'
+  ] },
+  { v: 'v2026.10.02', items: [
+    '研修生の会員証がVISITOR PASSデザイン（ヒヨコ色）になりました',
+    '研修生・無効メンバーの会員証には先のハウディの予定を表示しません',
+    '休会を廃止して無効化に統合しました（領収書・出席履歴は残ります）',
+    '「受付を終了」がどの端末からも記録できるようになりました',
+    '集計タブ: 受付が終わっていないイベントは案内が出ます（終了後に反映）'
+  ] },
+  { v: 'v2026.10.01', items: [
+    '受付システムのホーム画面名を「受付管理」・専用アイコンに分離しました',
+    '研修後入力に研修生の検索（担当者・紹介者・フリーワード等）を追加しました'
+  ] }
+];
+function verInit(){
+  var seen = '';
+  try{ seen = localStorage.getItem('bci_seen_ver') || ''; }catch(e){}
+  var dot = seen !== APP_VER
+    ? ' <i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);vertical-align:2px;"></i>'
+    : '';
+  ['verBtn', 'verBtnTr'].forEach(function(id){
+    var b = $(id);
+    if(!b) return;
+    b.innerHTML = '📣 ' + APP_VER + dot;
+    b.onclick = showChangelog;
+  });
+  var vc = $('verCard');
+  if(vc){
+    vc.innerHTML = 'BASE CHECK-IN ' + APP_VER + (dot ? dot + ' 新しい更新があります（タップで表示）' : '');
+    vc.onclick = showChangelog;
+  }
+}
+function showChangelog(){
+  try{ localStorage.setItem('bci_seen_ver', APP_VER); }catch(e){}
+  modal('<h2>📣 お知らせ（更新履歴）</h2>'
+    + CHANGELOG.map(function(cl){
+        return '<div style="margin:0 0 14px;"><b style="font-size:14px;">' + esc(cl.v) + '</b>'
+          + '<ul style="margin:4px 0 0;padding-left:1.3em;font-size:13.5px;line-height:1.8;">'
+          + cl.items.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('')
+          + '</ul></div>';
+      }).join('')
+    + '<p style="font-size:11.5px;color:var(--sub);">表示が古いままのときは、ページを開き直す（PCは Ctrl+F5）と最新になります。</p>'
+    + '<div class="btns"><button id="clClose">閉じる</button></div>', true);
+  $('clClose').onclick = closeModal;
+  verInit();   // 既読になったので赤丸を消す
+}
+verInit();
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
