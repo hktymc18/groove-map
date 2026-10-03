@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v578';
+var APP_JS_VERSION = 'v579';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v578';
+  var DATA_VERSION = 'v579';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4955,6 +4955,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v579', d:'2026-10-04', items:['🕖 企画書の日時：時刻は「時」「分」の2つの欄に。時を入れると自動で分に移ります','💻 PCでは「LINEで送る」ボタンを出さないように（スマホ・タブレットだけ）。PCは「コピー」してLINEに貼り付け'] },
   { v:'v578', d:'2026-10-04', items:['📝 アウトライン企画書：「伝えていただきたい事」「望む結果」は定型文のボタンをなくして自由入力だけに','🔧 課題の定型文ボタンを押すと画面が一番上に戻ってしまっていたのを修正（押した場所のまま）'] },
   { v:'v577', d:'2026-10-04', items:['📊 受付連携で取り込む稼働率を「今月」から「直近1ヶ月」（1ヶ月前の翌日〜今日。例：10/4なら9/5〜10/4）の出席÷開催数に。月初でも数字がブレにくくなります（過去の月のMAPはその月の数字のまま）'] },
   { v:'v576', d:'2026-10-04', items:['📝 アウトライン企画書（ATTACK LISTから移動）：メンバー編集の活動タブ「＋ 追加 → アウトライン企画書」から。Cはその人（名前・キャリア・タイトル・稼働・稼働率はMAPから自動・直せます）、Bは自分。課題・伝えていただきたい事・望む結果は定型文ボタンつき','📤 「LINEで送る」でLINEの送り先を選ぶ画面が開きます（AさんのLINE IDの登録は不要）。「コピー」も。送った日が「送信済み」で残ります','🗂 企画書はOL（予定）とひとつ：日時・テーマ・場所・参加者はOLと同じ。活動タブのOLに「📝企画書」の印、「📝企画書」で絞り込んで見返せます。OLの企画画面からも開けます','↻ 「前回の企画書から作る」で課題・伝えていただきたい事・望む結果を引き継げます'] },
@@ -10592,7 +10593,7 @@ function _otlSyncFromEvent(o, e, firstMid) {
 }
 // ── 開く ──
 // 企画書の見た目は使う時だけ読み込む（index.htmlを軽く保つ）
-function _otlCss() { if (document.getElementById('otlCss')) return; var st = document.createElement('style'); st.id = 'otlCss'; st.textContent = ".ms-sheet.otl-sheet{max-height:92vh;height:92vh;display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}\n#otlBody{display:flex;flex-direction:column;flex:1;min-height:0}\n.otl-wrap{padding:0 2px 12px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}\n.otl-foot{display:flex;gap:8px;margin:0 -16px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex:none}\n.otl-foot .p2-btn{flex:1;text-align:center;margin:0;padding:12px}\n.otl-foot .otl-line{background:#06C755;border-color:#06C755;color:#fff}\n.otl-st{margin-left:8px;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--surface2);color:var(--text-dim);vertical-align:middle}\n.otl-st.sent{background:color-mix(in srgb,#06C755 18%,transparent);color:#06C755}\n.otl-sec{margin:16px 0 4px;font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.5px;border-bottom:1px solid var(--border);padding-bottom:4px}\n.otl-lb{display:block;font-size:12px;font-weight:800;color:var(--text-mid);margin:10px 0 4px} .otl-lb small{font-weight:500;color:var(--text-dim);margin-left:6px}\n.otl-dt{display:flex;gap:8px} .otl-dt .fi{flex:1;min-width:0}\n.otl-p{display:flex;align-items:center;gap:6px;margin-bottom:6px} .otl-p .fi{flex:1;min-width:0}\n.otl-pk{flex:none;width:24px;height:24px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}\n.otl-c{border:1px solid var(--border);border-radius:12px;padding:8px;margin-bottom:8px;background:var(--surface2)}\n.otl-cm{display:grid;grid-template-columns:1.4fr 1fr 0.8fr 1fr;gap:6px} .otl-cm .fi{min-width:0;padding:8px 6px;font-size:13px}\n@media(max-width:520px){.otl-cm{grid-template-columns:1fr 1fr}}\n.otl-pc{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--text-dim)} .otl-pc .fi{flex:1}\n.otl-mid{flex:none;font-size:9.5px;font-weight:800;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:1px 5px}\n.otl-del{flex:none;color:var(--text-dim);cursor:pointer;padding:4px 6px}\n.otl-add,.otl-rowadd{display:inline-block;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer;margin:2px 0}\n.otl-auto{font-size:11px;color:var(--text-dim);margin-bottom:4px}\n.otl-row{display:flex;align-items:center;gap:4px;margin-bottom:4px} .otl-row .fi{flex:1;min-width:0}\n.otl-eg{font-size:11px;color:var(--text-dim);opacity:.75;margin:-2px 0 6px 14px;line-height:1.5}\n.otl-pre{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px} .otl-pre span{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:14px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text-mid)}\n.otl-pre .otl-rowadd{border-style:dashed;color:var(--accent)}\n.otl-prevbtn{margin:8px 0 2px;padding:9px 12px;border-radius:10px;border:1px dashed var(--accent);color:var(--accent);font-size:12.5px;font-weight:800;cursor:pointer} .otl-prevbtn small{display:block;font-weight:500;color:var(--text-dim);font-size:11px;margin-top:2px}\n.otl-prev{margin-top:16px} .otl-prevh{font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer}\n.otl-pre-tx{white-space:pre-wrap;font-family:inherit;font-size:12.5px;line-height:1.7;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;color:var(--text)}\n.otl-chip{flex:none;font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;border:1px solid var(--border2);color:var(--text-dim);cursor:pointer;white-space:nowrap}\n.otl-chip.sent{border-color:#06C755;color:#06C755}\n.olp-otl{display:block;width:100%;margin-top:8px;padding:11px;border-radius:12px;border:1.5px dashed var(--accent);background:transparent;color:var(--accent);font-size:13.5px;font-weight:800;cursor:pointer}"; document.head.appendChild(st); }
+function _otlCss() { if (document.getElementById('otlCss')) return; var st = document.createElement('style'); st.id = 'otlCss'; st.textContent = ".ms-sheet.otl-sheet{max-height:92vh;height:92vh;display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}\n#otlBody{display:flex;flex-direction:column;flex:1;min-height:0}\n.otl-wrap{padding:0 2px 12px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}\n.otl-foot{display:flex;gap:8px;margin:0 -16px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex:none}\n.otl-foot .p2-btn{flex:1;text-align:center;margin:0;padding:12px}\n.otl-foot .otl-line{background:#06C755;border-color:#06C755;color:#fff}\n.otl-st{margin-left:8px;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:8px;background:var(--surface2);color:var(--text-dim);vertical-align:middle}\n.otl-st.sent{background:color-mix(in srgb,#06C755 18%,transparent);color:#06C755}\n.otl-sec{margin:16px 0 4px;font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.5px;border-bottom:1px solid var(--border);padding-bottom:4px}\n.otl-lb{display:block;font-size:12px;font-weight:800;color:var(--text-mid);margin:10px 0 4px} .otl-lb small{font-weight:500;color:var(--text-dim);margin-left:6px}\n.otl-dt{display:flex;gap:8px} .otl-dt .fi{flex:1;min-width:0}\n.otl-tm{display:flex;align-items:center;gap:4px;flex:1;min-width:0} .otl-tm .fi{width:0;flex:1;text-align:center} .otl-tm b{color:var(--text-dim)}\n.otl-p{display:flex;align-items:center;gap:6px;margin-bottom:6px} .otl-p .fi{flex:1;min-width:0}\n.otl-pk{flex:none;width:24px;height:24px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}\n.otl-c{border:1px solid var(--border);border-radius:12px;padding:8px;margin-bottom:8px;background:var(--surface2)}\n.otl-cm{display:grid;grid-template-columns:1.4fr 1fr 0.8fr 1fr;gap:6px} .otl-cm .fi{min-width:0;padding:8px 6px;font-size:13px}\n@media(max-width:520px){.otl-cm{grid-template-columns:1fr 1fr}}\n.otl-pc{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--text-dim)} .otl-pc .fi{flex:1}\n.otl-mid{flex:none;font-size:9.5px;font-weight:800;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:1px 5px}\n.otl-del{flex:none;color:var(--text-dim);cursor:pointer;padding:4px 6px}\n.otl-add,.otl-rowadd{display:inline-block;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer;margin:2px 0}\n.otl-auto{font-size:11px;color:var(--text-dim);margin-bottom:4px}\n.otl-row{display:flex;align-items:center;gap:4px;margin-bottom:4px} .otl-row .fi{flex:1;min-width:0}\n.otl-eg{font-size:11px;color:var(--text-dim);opacity:.75;margin:-2px 0 6px 14px;line-height:1.5}\n.otl-pre{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px} .otl-pre span{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:14px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;color:var(--text-mid)}\n.otl-pre .otl-rowadd{border-style:dashed;color:var(--accent)}\n.otl-prevbtn{margin:8px 0 2px;padding:9px 12px;border-radius:10px;border:1px dashed var(--accent);color:var(--accent);font-size:12.5px;font-weight:800;cursor:pointer} .otl-prevbtn small{display:block;font-weight:500;color:var(--text-dim);font-size:11px;margin-top:2px}\n.otl-prev{margin-top:16px} .otl-prevh{font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer}\n.otl-pre-tx{white-space:pre-wrap;font-family:inherit;font-size:12.5px;line-height:1.7;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;color:var(--text)}\n.otl-chip{flex:none;font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;border:1px solid var(--border2);color:var(--text-dim);cursor:pointer;white-space:nowrap}\n.otl-chip.sent{border-color:#06C755;color:#06C755}\n.olp-otl{display:block;width:100%;margin-top:8px;padding:11px;border-radius:12px;border:1.5px dashed var(--accent);background:transparent;color:var(--accent);font-size:13.5px;font-weight:800;cursor:pointer}"; document.head.appendChild(st); }
 var _otl = null;
 function otlNew(mid) { // 活動タブ「＋ 追加 → 企画書」：この人がCの新しいOL＋企画書（最初に入力した時にOLができる）
   var m = _mFind(mid); if (!m) return;
@@ -10666,6 +10667,19 @@ function _otlText() { if (!_otl) return ''; var o = _otl.o; return outlineToText
 // ── 入力 ──
 function otlSet(k, val) { if (!_otl) return; _otl.o.v[k] = val; _otlChanged(); }
 function otlWhen(k, part, val) { if (!_otl) return; var w = _otl.o.v[k] = _otl.o.v[k] || { date: '', time: '' }; w[part] = val; _otlChanged(); }
+function otlTimeIn(k, part, el) {
+  var v = String(el.value || '').replace(/[^0-9０-９]/g, '').replace(/[０-９]/g, function(ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); }).slice(0, 2);
+  if (el.value !== v) el.value = v;
+  if (part === 'h' && (v.length === 2 || (v.length === 1 && +v >= 3))) { var mm = document.getElementById('otlTM_' + k); if (mm) { try { mm.focus(); mm.select(); } catch (eF) {} } } // 時を入れたら分へ
+  otlTimeFix(k, true);
+}
+function otlTimeFix(k, live) {
+  var h = (document.getElementById('otlTH_' + k) || {}).value || '', m = (document.getElementById('otlTM_' + k) || {}).value || '';
+  var t = '';
+  if (h !== '') { var hh = Math.min(29, parseInt(h, 10) || 0), mi = m === '' ? 0 : Math.min(59, parseInt(m, 10) || 0); t = String(hh).padStart(2, '0') + ':' + String(mi).padStart(2, '0'); }
+  if (!live && m !== '' && m.length === 1) { var me = document.getElementById('otlTM_' + k); if (me) me.value = '0' + m; }
+  otlWhen(k, 'time', t);
+}
 function otlAsan(val) { if (!_otl) return; _otl.asan = val; _otlChanged(); }
 function otlB(k, val) { if (!_otl) return; (_otl.o.v[k] = _otl.o.v[k] || { b: '', c: [] }).b = val; _otl.o.writer = olTrim(val) || _otl.o.writer; _otlChanged(); }
 function otlC(k, i, part, val) {
@@ -10737,6 +10751,10 @@ function otlCopy() {
   var t = _otlText(); if (!t) { toast('まだ何も入力されていません'); return; }
   _otlCopyRaw(t, function(ok) { toast(ok ? '📋 コピーしました（LINEに貼り付けて送ってください）' : '⚠️ コピーできませんでした'); if (ok) _otlMarkSent(); });
 }
+function _otlMobile() { // v579: 「LINEで送る」はスマホ・タブレットだけ（PCでは使えないので出さない）
+  var ua = navigator.userAgent || '';
+  return /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
+}
 function otlLine() { // LINEの「送り先を選ぶ」画面を開く（AさんのLINE IDは不要。LINEの友だちから選ぶ）
   var t = _otlText(); if (!t) { toast('まだ何も入力されていません'); return; }
   var u = 'https://line.me/R/share?text=' + encodeURIComponent(t);
@@ -10752,7 +10770,11 @@ function _otlFieldHtml(f) {
   var lb = '<label class="otl-lb">' + evEsc(f.label) + '</label>';
   if (f.type === 'datetime') {
     var w = v[k] || {};
-    return lb + '<div class="otl-dt"><input class="fi" type="date" value="' + evEsc(w.date || '') + '" onchange="otlWhen(\'' + k + '\',\'date\',this.value)"' + dis + '><input class="fi" type="time" value="' + evEsc(w.time || '') + '" onchange="otlWhen(\'' + k + '\',\'time\',this.value)"' + dis + '></div>';
+    // v579: 時刻は「時」「分」の2欄。時を入れたら自動で分へ（ブラウザ標準の時刻欄は移動がブラウザ次第のため）
+    var tp = String(w.time || '').split(':');
+    return lb + '<div class="otl-dt"><input class="fi" type="date" value="' + evEsc(w.date || '') + '" onchange="otlWhen(\'' + k + '\',\'date\',this.value)"' + dis + '>'
+      + '<span class="otl-tm"><input class="fi" id="otlTH_' + k + '" inputmode="numeric" maxlength="2" placeholder="時" value="' + evEsc(tp[0] || '') + '" oninput="otlTimeIn(\'' + k + '\',\'h\',this)" onfocus="this.select()"' + dis + '><b>:</b>'
+      + '<input class="fi" id="otlTM_' + k + '" inputmode="numeric" maxlength="2" placeholder="分" value="' + evEsc(tp[1] || '') + '" oninput="otlTimeIn(\'' + k + '\',\'m\',this)" onfocus="this.select()" onblur="otlTimeFix(\'' + k + '\')"' + dis + '></span></div>';
   }
   if (f.type === 'text') return lb + '<input class="fi" value="' + evEsc(v[k] || '') + '" oninput="otlSet(\'' + k + '\',this.value)"' + dis + '>';
   if (f.type === 'textarea') return lb + '<textarea class="fi" rows="2" oninput="otlSet(\'' + k + '\',this.value)"' + dis + '>' + evEsc(v[k] || '') + '</textarea>';
@@ -10796,14 +10818,14 @@ function _otlRender() {
   var st = o.sentAt ? '送信済み ' + parseInt(o.sentAt.slice(5, 7), 10) + '/' + parseInt(o.sentAt.slice(8, 10), 10) : (e ? '下書き' : '未保存');
   var prevE = !ro && _otl.mid ? _otlPrevFor(_otl.mid, e && e.id) : null;
   var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">📝 アウトライン企画書<span class="otl-st' + (o.sentAt ? ' sent' : '') + '">' + st + '</span></div>'
-    + '<div style="font-size:11px;color:var(--text-dim)">LINEでAさんに送る企画書。入力すると自動で保存され、OL（予定）にも反映されます</div></div>'
+    + '<div style="font-size:11px;color:var(--text-dim)">LINEでAさんに送る企画書。入力すると自動で保存され、OL（予定）にも反映されます' + (_otlMobile() ? '' : '。PCは「コピー」してLINEに貼り付けてください') + '</div></div>'
     + '<span class="ms-x" onclick="otlClose()">✕</span></div><div class="otl-wrap">';
   h += '<div class="otl-to"><label class="otl-lb">送る相手（Aさん）<small>文面には出ません</small></label><input class="fi" placeholder="Aさんの名前（任意）" value="' + evEsc(_otl.asan || '') + '" oninput="otlAsan(this.value)"' + (ro ? ' disabled' : '') + '></div>';
   if (prevE && !_otl.prev) h += '<div class="otl-prevbtn" onclick="otlFromPrev()">↻ 前回の企画書から作る<small>' + (prevE.date ? parseInt(prevE.date.slice(5, 7), 10) + '/' + parseInt(prevE.date.slice(8), 10) + ' ' : '') + '課題・伝えていただきたい事・望む結果を引き継ぐ</small></div>';
   o.tpl.forEach(function(f) { h += _otlFieldHtml(f); });
   h += '<div class="otl-prev"><div class="otl-prevh" onclick="otlPrevToggle()">' + (_otl.showPrev ? '▼' : '▶') + ' プレビュー（送る文面）</div>'
     + (_otl.showPrev ? '<pre id="otlPrevTx" class="otl-pre-tx">' + evEsc(_otlText() || '（まだ何も入力されていません）') + '</pre>' : '') + '</div>';
-  h += '</div><div class="otl-foot"><span class="p2-btn" onclick="otlCopy()">📋 コピー</span><span class="p2-btn pri otl-line" onclick="otlLine()">LINEで送る</span></div>';
+  h += '</div><div class="otl-foot"><span class="p2-btn' + (_otlMobile() ? '' : ' pri') + '" onclick="otlCopy()">📋 コピー</span>' + (_otlMobile() ? '<span class="p2-btn pri otl-line" onclick="otlLine()">LINEで送る</span>' : '') + '</div>';
   var ow = body.querySelector('.otl-wrap'), st0 = ow ? ow.scrollTop : 0; // v578: 作り直してもスクロールの位置はそのまま
   body.innerHTML = h;
   var nw = body.querySelector('.otl-wrap'); if (nw && st0) nw.scrollTop = st0;
