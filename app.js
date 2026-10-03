@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v581';
+var APP_JS_VERSION = 'v582';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3924,7 +3924,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v581';
+  var DATA_VERSION = 'v582';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4956,6 +4956,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v582', d:'2026-10-04', items:['📊 データタブに「ざっくり」を追加（はじめて開くとこちら。今までの画面は「くわしく」で、最後に開いた方を覚えます）','① 先月のコミッション（確定）を先々月と比べて ▲▼ で。② 全ユニオン共通のやること：BRを増やす（審査中の全員が今月1,000pt）・BRを維持する（維持ライン1,000pt）・自分の成長（PLANの自分磨き）','③ 🔥S稼働 ◯/30人（30人でこの仕事一本で食える）。点線＝あと一歩（Aの人と、B・Cで稼働率70%以上の人）。目標の人数は変えられます','④ コミッションを動かす数字：B1数 × 新規の平均GSV × 平均稼働人数（1ハウディあたり）、1人あたりの平均GSV（先月との差つき）','⑤ 理想MAPとの差：稼働・BR・GSVで差がある人を自動で並べて、その場で＋タスク（紙の照らし合わせの代わり）','数字を押すと、その数字だけの推移・名前・数え方が出ます'] },
   { v:'v581', d:'2026-10-04', items:['🎯 理想MAPのポイントは、メンバーの「固定で上がる見込み（固定PT）」を上がったものとして計算（その人と上の人のGSV・チームGSV・コミッション・PLANのチームPT/ユーザーPTに反映）','固定PTは現状MAPのその人の値を使います（理想で追加した人は0）。理想MAPでGSVを入れる時は、固定込みの数字を入れればそのまま表示されます','🔧 OLの記録を保存した直後にすぐ開き直すと、画面が消えてしまうことがあったのを修正'] },
   { v:'v580', d:'2026-10-04', items:['🗂 PLANの「今週の作戦」と「今月の行動量」を1枚の「今週やること」にまとめました。大きく「あと何件」、行は「名前・バー・数・＋」だけ','＋＝予定を入れる（ST・CT取りは予約）。行を押すと、今週・今月の数字、やった（＋1）、今週の予定、数字の理由が見られます','下の「今週／今月」で今月の分に切り替え。？＝数字の決まり方・1分で体験、⋯＝係数の設定・動員を計画','HOMEにも同じカードの短い版（足りない行だけ）'] },
   { v:'v579', d:'2026-10-04', items:['🕖 企画書の日時：時刻は「時」「分」の2つの欄に。時を入れると自動で分に移ります','💻 PCでは「LINEで送る」ボタンを出さないように（スマホ・タブレットだけ）。PCは「コピー」してLINEに貼り付け'] },
@@ -10989,6 +10990,7 @@ function _dtHistLoad() {
       if (ms.length) {
         var curMs = ms.filter(function(m) { return !m.deleted && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType); });
         ent.auto = _dtAutoCounts(ms, curMs, mon);
+        try { ent.ez = _dtEzCalc(curMs, mon); } catch (eEz) {} // v582: ざっくりの数字（その月のMAPから）
       }
       var st = r[1] && r[1].stats;
       ((st && st.monthly) || []).forEach(function(row) {
@@ -11116,6 +11118,317 @@ function _dtFmt(v, meta, short) {
   return (Math.round(v * 10) / 10).toLocaleString();
 }
 function _dtReadOnly() { return !!((typeof _aggActive !== 'undefined' && _aggActive) || (viewingOwnerUid && !state.isEditor)); }
+// ════ v582: データタブ「ざっくり」（コミッション → 全ユニオン共通のやること → S稼働 → コミッションを動かす数字 → 理想MAPとの差） ════
+var DT_EZ_EXAM = ['LOI', 'Q2', 'Q3', 'Q4']; // 審査中（毎月 LOI_MONTHLY_MIN 以上が条件）
+var DT_EZ_ACT_R = { S: 4, A: 3, B: 2, C: 1 };
+var _dtMode = 'ez'; // ez=ざっくり／full=くわしく（今までの画面）。最後に開いた方を覚える
+try { if (localStorage.getItem('gm_dtMode') === 'full') _dtMode = 'full'; } catch (eDm) {}
+function dtMode(m, tab) {
+  _dtMode = m === 'full' ? 'full' : 'ez';
+  try { localStorage.setItem('gm_dtMode', _dtMode); } catch (e) {}
+  if (tab) { dtTab(tab); } else _dtApplyTab();
+  if (_dtMode === 'ez') renderDtEz();
+  try { window.scrollTo(0, 0); } catch (e2) {}
+}
+function _dtEzName(m) { return (m && ((m.lastName || '') + (m.firstName ? ' ' + m.firstName : ''))).trim() || '(無名)'; }
+function _dtEzShort(m) { return (m && (m.lastName || m.firstName)) || '(無名)'; }
+function _dtEzBiz(m) { var c = memberCat(m); return c !== '研修生' && !m.trainee && (m.title || '').trim() !== 'ユーザー'; }
+// 1ヶ月分の数字（今月＝今のMAP、過去の月＝その月のMAPの記録）
+function _dtEzCalc(curMs, mon) {
+  var team = (curMs || []).filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || '') && (m.title || '').trim() !== 'OUT'; });
+  var root = team.filter(function(m) { return !m.parentId; })[0] || null;
+  var out = { mon: mon, S: 0, sIds: [], near: [], actN: 0, news: [], newN: 0, newAvg: null, perAvg: null, br: 0, exam: [], examOk: 0, brs: [], brOk: 0 };
+  var actS = 0, actAny = false, biz = 0, newSum = 0;
+  team.forEach(function(m) {
+    var t = (m.title || '').trim(), a = m.activity, r = parseInt(m.actRate, 10), g = m.ptCurrent || 0;
+    if (a === 'S') { out.S++; out.sIds.push(m.id); }
+    else if (a === 'A' || ((a === 'B' || a === 'C') && !isNaN(r) && r >= 70)) out.near.push(m); // あと一歩でS：Aと、B・Cで稼働率70%以上
+    if (isNaN(r) && a === 'S') r = 120;
+    if (!isNaN(r) && DT_EZ_ACT_R[a]) { actS += r; actAny = true; } // 平均稼働人数＝稼働率の合計÷100（1ハウディあたり）
+    if (_dtEzBiz(m)) biz++;
+    if (m.parentId && _dtEzBiz(m) && _ymOfStart(m) === mon) { out.news.push(m); newSum += g; }
+    if (root && m.id !== root.id && isBROrAbove(t)) out.br++;
+    if (DT_EZ_EXAM.indexOf(t) >= 0) { out.exam.push(m); if (g >= LOI_MONTHLY_MIN) out.examOk++; }
+    if (t === 'BR') { out.brs.push(m); if (g >= BR_MAINTAIN) out.brOk++; }
+  });
+  out.actN = actAny ? Math.round(actS / 10) / 10 : null;
+  out.newN = out.news.length;
+  out.newAvg = out.newN ? Math.round(newSum / out.newN) : null;
+  out.perAvg = root && biz ? Math.round((root.ptCurrent || 0) / biz) : null;
+  out.near.sort(function(a, b) { return (DT_EZ_ACT_R[b.activity] || 0) - (DT_EZ_ACT_R[a.activity] || 0) || (parseInt(b.actRate, 10) || 0) - (parseInt(a.actRate, 10) || 0); });
+  return out;
+}
+function _dtEzNow() { var cur = state.currentMonth || currentMonthStr(); return _dtEzCalc(membersForMap('current'), cur); }
+function _dtEzHist(i) { // i=0〜10：11ヶ月前〜先月（無ければ null）
+  var cur = state.currentMonth || currentMonthStr(), mon = addMonths(cur, i - 11);
+  var h = _dtHist && _dtHist.mon && _dtHist.mon[mon];
+  return (h && h.ez) || null;
+}
+function _dtEzSeries(k, now) { var out = []; for (var i = 0; i < 11; i++) { var e = _dtEzHist(i); out.push(e && e[k] !== null && e[k] !== undefined ? e[k] : null); } out.push(now[k]); return out; }
+function _dtEzSGoal() { try { return +(_p2().sGoal) || 30; } catch (e) { return 30; } }
+function _dtEzN(v, d) { if (v === null || v === undefined) return '—'; return (Math.round(v * (d ? 10 : 1)) / (d ? 10 : 1)).toLocaleString(); }
+function _dtEzDiff(cur, prev, d, unit) {
+  if (cur === null || cur === undefined || prev === null || prev === undefined) return '<i class="eq">先月 —</i>';
+  var x = Math.round((cur - prev) * (d ? 10 : 1)) / (d ? 10 : 1);
+  if (!x) return '<i class="eq">先月と同じ</i>';
+  return '<i class="' + (x > 0 ? 'up' : 'dn') + '">' + (x > 0 ? '▲ ' : '▼ ') + Math.abs(x).toLocaleString() + (unit || '') + '</i>';
+}
+function _dtEzCss() {
+  if (document.getElementById('dtEzCss')) return;
+  var st = document.createElement('style'); st.id = 'dtEzCss';
+  st.textContent = "#dtModeBar{padding:10px 12px 0}#dtModeBar .seg{display:flex;background:var(--surface2);border-radius:12px;padding:3px;max-width:520px;margin:0 auto}#dtModeBar .seg span{flex:1;text-align:center;padding:8px;border-radius:9px;font-size:13px;font-weight:800;color:var(--text-dim);cursor:pointer;user-select:none}#dtModeBar .seg span.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.22)}\n"
+    + ".dtez{padding:12px 12px 90px;display:grid;gap:12px;max-width:1180px;margin:0 auto}.dtez-c{display:flex;flex-direction:column;gap:12px;min-width:0}\n"
+    + "@media (min-width:900px){.dtez{grid-template-columns:1fr 1fr;align-items:start}}\n"
+    + ".dtez-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px;cursor:pointer}\n"
+    + ".dtez-hd{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);font-weight:800}.dtez-hd span{margin-left:auto;font-weight:600;font-size:11.5px;opacity:.85}\n"
+    + ".dtez-big{font-family:Inter,sans-serif;font-size:38px;font-weight:800;letter-spacing:-1px;margin:6px 0 4px;color:var(--text)}.dtez-big em{font-style:normal;font-size:15px;color:var(--text-dim);font-weight:700;letter-spacing:0}\n"
+    + ".dtez-chg{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:800;padding:5px 10px;border-radius:999px;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.dtez-chg.dn{color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}.dtez-chg small{font-weight:600;color:var(--text-dim);font-size:12px}\n"
+    + ".dtez-na{display:inline-block;margin:8px 0 2px;font-size:14px;font-weight:800;color:var(--gold)}\n"
+    + ".dtez-bars{display:flex;align-items:flex-end;gap:5px;height:60px;margin-top:14px}.dtez-bars i{flex:1;border-radius:4px 4px 2px 2px;background:var(--surface3);min-height:3px}.dtez-bars i.p{background:color-mix(in srgb,var(--gold) 45%,var(--surface3))}.dtez-bars i.l{background:var(--gold)}.dtez-bars i.now{background:repeating-linear-gradient(135deg,var(--surface3) 0 4px,transparent 4px 8px);border:1px dashed var(--border2)}\n"
+    + ".dtez-bl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-dim);margin-top:5px}\n"
+    + ".dtez-list{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden}.dtez-lh{display:flex;padding:14px 16px 6px;font-size:12.5px;color:var(--text-dim);font-weight:800}.dtez-lh span{margin-left:auto;font-weight:600;font-size:11.5px;opacity:.85}\n"
+    + ".dtez-pr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border);cursor:pointer}.dtez-lh+.dtez-pr{border-top:0}\n"
+    + ".dtez-pi{width:34px;height:34px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}\n"
+    + ".dtez-pn{flex:1;min-width:0}.dtez-pn b{display:block;font-size:14px;color:var(--text)}.dtez-pn small{display:block;font-size:11.5px;color:var(--text-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dtez-pn small em{font-style:normal;color:var(--gold);font-weight:700}\n"
+    + ".dtez-pv{text-align:right;flex:none}.dtez-pv b{font-family:Inter,sans-serif;font-size:20px;font-weight:800;color:var(--text)}.dtez-pv b em{font-style:normal;font-size:12px;color:var(--text-dim)}.dtez-pv i{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--accent)}.dtez-pv i.w{color:var(--gold)}\n"
+    + ".dtez-srow{display:flex;align-items:baseline;gap:8px;margin:6px 0 10px;flex-wrap:wrap}.dtez-srow b{font-family:Inter,sans-serif;font-size:34px;font-weight:800;color:var(--text)}.dtez-srow b em{font-style:normal;font-size:15px;color:var(--text-dim);font-weight:700}.dtez-srow .r{font-size:13px;color:var(--text-dim);font-weight:700}.dtez-srow .c{margin-left:auto;font-size:12.5px;font-weight:800}\n"
+    + ".dtez-dots{display:grid;grid-template-columns:repeat(15,1fr);gap:5px}.dtez-dots i{aspect-ratio:1;border-radius:50%;background:var(--surface3)}.dtez-dots i.on{background:#2CE5B8}.dtez-dots i.nx{background:transparent;border:1.5px dashed color-mix(in srgb,#2CE5B8 65%,transparent)}\n"
+    + ".dtez-note{font-size:12px;color:var(--text-dim);margin-top:10px;line-height:1.6}.dtez-note b{color:var(--text)}\n"
+    + ".dtez-sec{font-size:12.5px;color:var(--text-dim);font-weight:800;margin:4px 4px -4px;display:flex}.dtez-sec span{margin-left:auto;font-weight:600;font-size:11.5px;opacity:.85}\n"
+    + ".dtez-fr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--border);cursor:pointer}.dtez-fr:first-child{border-top:0}\n"
+    + ".dtez-op{width:16px;text-align:center;color:var(--text-dim);font-weight:800;font-size:15px;flex:none}\n"
+    + ".dtez-fn{flex:1;min-width:0}.dtez-fn b{display:block;font-size:14px;color:var(--text)}.dtez-fn small{display:block;font-size:11px;color:var(--text-dim);margin-top:2px}\n"
+    + ".dtez-fv{text-align:right;flex:none}.dtez-fv b{font-family:Inter,sans-serif;font-size:21px;font-weight:800;color:var(--text)}.dtez-fv b em{font-style:normal;font-size:12px;color:var(--text-dim);margin-left:2px}\n"
+    + ".dtez-fv i,.dtez-srow .c i{display:block;font-style:normal;font-size:11.5px;font-weight:700}.dtez i.up{color:var(--accent)}.dtez i.dn,.dtez-sh i.dn{color:var(--gold)}.dtez i.eq{color:var(--text-dim);font-weight:600}\n"
+    + ".dtez-gr{display:flex;align-items:center;gap:10px;padding:11px 16px;border-top:1px solid var(--border);font-size:13.5px}.dtez-sh .dtez-gr{padding:11px 0}\n"
+    + ".dtez-gr .nm{font-weight:800;width:68px;flex:none;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dtez-gr .df{flex:1;min-width:0;color:var(--text-dim);font-size:12.5px;line-height:1.7}.dtez-gr .df b{color:var(--text)}\n"
+    + ".dtez-tk{font-size:12px;font-weight:800;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);border-radius:999px;padding:5px 10px;flex:none;cursor:pointer;white-space:nowrap}.dtez-tk.dn{color:var(--text-dim);border-color:var(--border)}\n"
+    + ".dtez-tag{font-size:10.5px;font-weight:800;padding:2px 6px;border-radius:5px;margin-right:4px}.dtez-tag.act{background:color-mix(in srgb,#2CE5B8 18%,transparent);color:#1fbf98}.dtez-tag.br{background:color-mix(in srgb,#8B7CFF 22%,transparent);color:#8B7CFF}.dtez-tag.gsv{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold)}\n"
+    + ".dtez-more{display:block;text-align:center;padding:11px;font-size:12.5px;color:var(--text-dim);border-top:1px solid var(--border);cursor:pointer}\n"
+    + ".dtez-todo{border:1px dashed color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--gold);font-size:13px;font-weight:700;border-radius:14px;padding:12px 14px;display:flex;cursor:pointer}.dtez-todo span{margin-left:auto;white-space:nowrap}\n"
+    + ".dtez-lk{display:flex;padding:13px 16px;font-size:13.5px;font-weight:700;color:var(--text);border-top:1px solid var(--border);cursor:pointer}.dtez-lk:first-child{border-top:0}.dtez-lk small{color:var(--text-dim);font-weight:500;font-size:12px;margin-left:8px}.dtez-lk span{margin-left:auto;color:var(--text-dim)}\n"
+    + ".dtez-sh .big{font-family:Inter,sans-serif;font-size:38px;font-weight:800;color:var(--text);margin:0 0 2px}.dtez-sh .big em{font-style:normal;font-size:15px;color:var(--text-dim)}\n"
+    + ".dtez-say{font-size:14px;line-height:1.6;margin:4px 0 12px;color:var(--text)}.dtez-say b{color:var(--accent)}\n"
+    + ".dtez-mm{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-top:4px}\n"
+    + ".dtez-kv{display:flex;gap:8px;margin-top:14px}.dtez-kv div{flex:1;background:var(--surface2);border-radius:12px;padding:10px 12px;font-size:11.5px;color:var(--text-dim)}.dtez-kv b{display:block;color:var(--text);font-size:16px;margin-top:2px}\n"
+    + ".dtez-how{font-size:12px;color:var(--text-dim);margin-top:14px;line-height:1.7}.dtez-how b{color:var(--text)}\n"
+    + ".dtez-h2{font-size:12px;color:var(--text-dim);font-weight:800;margin:16px 0 6px}\n"
+    + ".dtez-ppl{display:flex;flex-wrap:wrap;gap:6px}.dtez-ppl span{font-size:12px;padding:5px 9px;border-radius:999px;background:var(--surface2);color:var(--text);cursor:pointer}.dtez-ppl span small{color:var(--text-dim);margin-left:4px}\n"
+    + ".dtez-ms{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);font-size:13.5px;cursor:pointer}.dtez-ms .nm{font-weight:800;width:76px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dtez-ms .tl{font-size:11px;color:var(--text-dim);width:30px;flex:none}\n"
+    + ".dtez-ms .bar{flex:1;height:6px;border-radius:4px;background:var(--surface2);position:relative;overflow:hidden}.dtez-ms .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)}.dtez-ms .bar i.w{background:var(--gold)}\n"
+    + ".dtez-ms .v{width:104px;text-align:right;font-size:12px;color:var(--text-dim)}.dtez-ms .v b{color:var(--text);font-size:13.5px}.dtez-ms .v small{display:block;font-size:10.5px}\n"
+    + ".dtez-chips{display:flex;gap:6px;margin:10px 0 4px;flex-wrap:wrap}.dtez-chips span{padding:6px 11px;border-radius:9px;background:var(--surface2);color:var(--text-dim);font-size:12px;font-weight:700;cursor:pointer}.dtez-chips span.on{background:var(--accent);color:#06231c}\n"
+    + ".dtez-gin{display:flex;align-items:center;gap:8px;margin-top:10px}.dtez-gin input{width:80px;text-align:center}";
+  document.head.appendChild(st);
+}
+// 12ヶ月の線（目盛りなし）。goal があれば点線で
+function _dtEzLine(vals, goal) {
+  var W = 354, H = 92, pad = 8, ok = vals.filter(function(v) { return v !== null && v !== undefined; });
+  if (!ok.length) return '<div class="dtez-note">まだ記録がありません（月ごとのMAPの記録から自動で出ます）</div>';
+  var mx = Math.max.apply(null, ok.concat(goal ? [goal] : [])), mn = Math.min.apply(null, ok.concat([0]));
+  var rng = mx - mn || 1, x = function(i) { return pad + i * (W - pad * 2) / 11; }, y = function(v) { return H - pad - (v - mn) / rng * (H - pad * 2); };
+  var d = '', last = null;
+  vals.forEach(function(v, i) { if (v === null || v === undefined) return; d += (d ? ' L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1); last = i; });
+  var g = goal ? '<line x1="0" x2="' + W + '" y1="' + y(goal).toFixed(1) + '" y2="' + y(goal).toFixed(1) + '" stroke="#2CE5B8" stroke-dasharray="4 5" stroke-opacity=".55"/><text x="' + (W - 2) + '" y="' + (y(goal) - 4).toFixed(1) + '" fill="currentColor" opacity=".55" font-size="10" text-anchor="end">' + goal + '人</text>' : '';
+  var ms = _dtMonths();
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="display:block;width:100%;color:var(--text-dim)">' + g + '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>'
+    + (last !== null ? '<circle cx="' + x(last).toFixed(1) + '" cy="' + y(vals[last]).toFixed(1) + '" r="5" fill="var(--accent)"/>' : '') + '</svg>'
+    + '<div class="dtez-mm"><span>' + ms[0].lbl + '</span><span>' + ms[11].lbl + '</span></div>';
+}
+// 理想MAPとの差（稼働が上がる・BRになる・GSVを500以上上げる）
+function _dtEzFixSub(m, kids) { var s = _idealFix(m); (kids[m.id] || []).forEach(function(c) { if (!isBROrAbove(c.title)) s += _dtEzFixSub(c, kids); }); return s; }
+function _dtEzHasTask(mid) {
+  return (state.events || []).some(function(e) { return e && !e.deleted && e.type === 'task' && !e.done && (e.memberId === mid || (e.memberIds || []).indexOf(mid) >= 0); });
+}
+function _dtEzGap() {
+  if (!_hasIdeal()) return null;
+  var curMap = _idealCurMap(), kids = {}, out = [];
+  state.idealMembers.forEach(function(m) { if (m && !m.deleted) (kids[m.parentId || ''] = kids[m.parentId || ''] || []).push(m); });
+  state.idealMembers.forEach(function(i) {
+    if (!i || i.deleted || i.idealNew || /^(MG_|AG\d+_)/.test(i.id || '')) return;
+    var c = curMap[i.id]; if (!c || c.deleted || (c.title || '').trim() === 'OUT') return;
+    var it = [], ct = (c.title || '').trim(), itl = (i.title || '').trim();
+    if (isBROrAbove(itl) && !isBROrAbove(ct) && memberCat(c) === 'BA') it.push({ k: 'br', t: ct + ' → <b>' + evEsc(itl) + '</b>' + (DT_EZ_EXAM.indexOf(ct) >= 0 && (c.ptCurrent || 0) < LOI_MONTHLY_MIN ? '・今月あと' + (LOI_MONTHLY_MIN - (c.ptCurrent || 0)).toLocaleString() + 'pt' : ''), tx: ct + '→' + itl });
+    if ((DT_EZ_ACT_R[i.activity] || 0) > (DT_EZ_ACT_R[c.activity] || 0)) { var cr = parseInt(c.actRate, 10); it.push({ k: 'act', t: (c.activity || '−') + (!isNaN(cr) && c.activity !== 'S' ? '（' + cr + '%）' : '') + ' → <b>' + i.activity + '</b>', tx: (c.activity || '−') + '→' + i.activity }); }
+    var gi = i.ptCurrent || 0, gc = c.ptCurrent || 0;
+    if (gi - (gc + _dtEzFixSub(i, kids)) >= 500) it.push({ k: 'gsv', t: gc.toLocaleString() + ' → <b>' + gi.toLocaleString() + '</b>', tx: 'GSV ' + gc.toLocaleString() + '→' + gi.toLocaleString() });
+    if (it.length) out.push({ m: c, items: it, task: _dtEzHasTask(c.id) });
+  });
+  var pr = { br: 0, act: 1, gsv: 2 };
+  out.sort(function(a, b) { return (a.task ? 1 : 0) - (b.task ? 1 : 0) || pr[a.items[0].k] - pr[b.items[0].k]; });
+  return out;
+}
+var DT_EZ_TAG = { act: '稼働', br: 'BR', gsv: 'GSV' };
+function _dtEzGapRow(g) {
+  var ro = _dtReadOnly() || !!viewingOwnerUid;
+  return '<div class="dtez-gr"><span class="nm" onclick="dtEzMem(\'' + g.m.id + '\')">' + evEsc(_dtEzShort(g.m)) + '</span><span class="df">'
+    + g.items.map(function(x) { return '<span style="display:inline-block;margin-right:8px"><span class="dtez-tag ' + x.k + '">' + DT_EZ_TAG[x.k] + '</span>' + x.t + '</span>'; }).join('') + '</span>'
+    + (ro ? '' : (g.task ? '<span class="dtez-tk dn" onclick="dtEzMem(\'' + g.m.id + '\')">✓ タスクあり</span>' : '<span class="dtez-tk" onclick="dtEzTask(\'' + g.m.id + '\')">＋タスク</span>')) + '</div>';
+}
+function dtEzTask(mid) {
+  var g = (_dtEzGap() || []).filter(function(x) { return x.m.id === mid; })[0];
+  _p2SheetClose('dtEzOv');
+  openEventModal(null, mid, '', 'task');
+  if (g) {
+    var lb = { act: '稼働UP', br: 'BRへ', gsv: 'GSV UP' }[g.items[0].k];
+    var ti = document.getElementById('evTitle');
+    if (ti) { ti.value = lb + '：' + _dtEzShort(g.m) + 'さん ' + g.items.map(function(x) { return x.tx; }).join('・'); try { ti.dispatchEvent(new Event('input')); } catch (eI) {} }
+  }
+}
+function dtEzMem(mid) { _p2SheetClose('dtEzOv'); if (typeof openEdit === 'function') openEdit(mid); }
+// ── 画面 ──
+function renderDtEz() {
+  var box = document.getElementById('dtEz'); if (!box) return;
+  _dtEzCss();
+  var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), ro = _dtReadOnly();
+  var cm = _dtVals('コミッション'), lm = ms[10], pm = ms[9];
+  // ① 先月のコミッション（確定した月で比べる）
+  var c1 = cm[10], c0 = cm[9];
+  var h = '<div class="dtez-c"><div class="dtez-card" onclick="dtEzOpen(\'comm\')"><div class="dtez-hd">' + lm.m + '月のコミッション<span>確定した月で比べます</span></div>';
+  if (c1 === null) h += '<div class="dtez-na">' + (ro ? '未入力' : '＋ ' + lm.m + '月の金額を入れる') + '</div>';
+  else {
+    h += '<div class="dtez-big">¥' + Math.round(c1).toLocaleString() + '</div>';
+    if (c0 !== null) { var dc = c1 - c0; h += '<div class="dtez-chg' + (dc < 0 ? ' dn' : '') + '">' + (dc ? (dc > 0 ? '▲ ' : '▼ ') + '¥' + Math.abs(Math.round(dc)).toLocaleString() : '±0') + ' <small>' + pm.m + '月より' + (c0 ? '（' + (dc >= 0 ? '+' : '−') + Math.abs(Math.round(dc / c0 * 100)) + '%）' : '') + '</small></div>'; }
+  }
+  var cmx = Math.max.apply(null, cm.slice(0, 11).map(function(v) { return v || 0; }).concat([1]));
+  h += '<div class="dtez-bars">' + cm.slice(0, 11).map(function(v, i) { return '<i class="' + (i === 10 ? 'l' : (i === 9 ? 'p' : '')) + '" style="height:' + (v ? Math.max(4, Math.round(v / cmx * 100)) : 4) + '%"></i>'; }).join('') + '<i class="now" style="height:' + (c1 ? Math.max(4, Math.round(c1 / cmx * 100)) : 30) + '%"></i></div>'
+    + '<div class="dtez-bl"><span>' + ms[0].lbl + '</span><span>' + pm.lbl + '　' + lm.lbl + '　' + ms[11].lbl + '(途中)</span></div></div>';
+  // ② 全ユニオン共通のやること
+  var mo = String(state.currentMonth || currentMonthStr()).replace('.', '-'), sk = [];
+  try { if (state.goals && typeof _p2M === 'function') sk = _p2M(mo).skill || []; } catch (eSk) {}
+  var skDone = sk.filter(function(s) { return s && s.done; }).length;
+  var examNg = now.exam.filter(function(m) { return (m.ptCurrent || 0) < LOI_MONTHLY_MIN; }), brNg = now.brs.filter(function(m) { return (m.ptCurrent || 0) < BR_MAINTAIN; });
+  var nms = function(a) { return a.slice(0, 3).map(_dtEzShort).join('・') + (a.length > 3 ? ' ほか' + (a.length - 3) + '人' : ''); };
+  h += '<div class="dtez-list"><div class="dtez-lh">全ユニオン共通のやること<span>' + ms[11].m + '月の今</span></div>'
+    + '<div class="dtez-pr" onclick="dtEzOpen(\'exam\')"><span class="dtez-pi">🚀</span><div class="dtez-pn"><b>BRを増やす</b><small>' + (now.exam.length ? '審査中の全員が今月' + LOI_MONTHLY_MIN.toLocaleString() + 'pt' + (examNg.length ? '・<em>あと少し：' + evEsc(nms(examNg)) + '</em>' : '・全員クリア ✓') : '審査中（LOI〜Q4）の人はいません') + '</small></div>'
+    + '<div class="dtez-pv"><b>' + (now.exam.length ? now.examOk + '<em>/' + now.exam.length + '</em>' : '—') + '</b><i class="' + (prev && now.br < prev.br ? 'w' : '') + '">BR ' + now.br + '人' + (prev ? (now.br - prev.br ? '（' + (now.br > prev.br ? '▲' : '▼') + Math.abs(now.br - prev.br) + '）' : '') : '') + '</i></div></div>'
+    + '<div class="dtez-pr" onclick="dtEzOpen(\'brk\')"><span class="dtez-pi">🛡</span><div class="dtez-pn"><b>BRを維持する</b><small>' + (now.brs.length ? '維持ライン ' + BR_MAINTAIN.toLocaleString() + 'pt' + (brNg.length ? '・<em>あと少し：' + evEsc(nms(brNg)) + '</em>' : '・全員クリア ✓') : 'BRの人はまだいません') + '</small></div>'
+    + '<div class="dtez-pv"><b>' + (now.brs.length ? now.brOk + '<em>/' + now.brs.length + '</em>' : '—') + '</b>' + (brNg.length ? '<i class="w">あと' + brNg.length + '人</i>' : '') + '</div></div>'
+    + '<div class="dtez-pr" onclick="dtEzGo(\'grow\')"><span class="dtez-pi">🌱</span><div class="dtez-pn"><b>自分の成長</b><small>' + (sk.length ? '今月の自分磨き：' + evEsc(sk.map(function(s) { return s.t; }).join('・')) : 'リーダーとしての在り方・スキルUP（PLANの今月の目標で決める）') + '</small></div>'
+    + '<div class="dtez-pv">' + (sk.length ? '<b>' + skDone + '<em>/' + sk.length + '</em></b>' : '') + '<i class="w">PLANで ›</i></div></div></div>';
+  // ③ S稼働 ◯/30人
+  var sg = _dtEzSGoal(), nx = Math.max(0, Math.min(now.near.length, sg - now.S)), dots = '';
+  for (var i = 0; i < Math.max(sg, now.S); i++) dots += '<i class="' + (i < now.S ? 'on' : (i < now.S + nx ? 'nx' : '')) + '"></i>';
+  h += '<div class="dtez-card" onclick="dtEzOpen(\'s\')"><div class="dtez-hd">🔥 S稼働<span>' + sg + '人でこの仕事一本で食える</span></div>'
+    + '<div class="dtez-srow"><b>' + now.S + '<em> / ' + sg + '人</em></b><span class="r">' + (now.S >= sg ? '達成 🎉' : 'あと ' + (sg - now.S) + '人') + '</span><span class="c">' + _dtEzDiff(now.S, prev ? prev.S : null, false, '') + '</span></div>'
+    + '<div class="dtez-dots">' + dots + '</div>'
+    + '<div class="dtez-note">点線＝あと一歩（Aの人と、B・Cで稼働率70%以上の人）<b>' + now.near.length + '人</b></div></div></div>';
+  // ④ コミッションを動かす数字
+  var fr = function(k, op, lb, sub, v, unit, d) {
+    return '<div class="dtez-fr" onclick="dtEzOpen(\'' + k + '\')"><span class="dtez-op">' + op + '</span><div class="dtez-fn"><b>' + lb + '</b><small>' + sub + '</small></div><div class="dtez-fv"><b>' + _dtEzN(v, d) + (unit && v !== null ? '<em>' + unit + '</em>' : '') + '</b>' + _dtEzDiff(v, prev ? prev[k] : null, d, '') + '</div></div>';
+  };
+  h += '<div class="dtez-c"><div class="dtez-sec">コミッションを動かす数字<span>' + ms[11].m + '月の今・先月との差</span></div>'
+    + '<div class="dtez-list">' + fr('newN', '', 'B1数', 'LOIをふくむ今月の新規メンバー', now.newN, '人') + fr('newAvg', '×', '新規の平均GSV', '今月の新規メンバー1人あたり', now.newAvg, '') + fr('actN', '×', '平均稼働人数', '1ハウディあたり・自分からのチーム', now.actN, '人', true) + '</div>'
+    + '<div class="dtez-list">' + fr('perAvg', '', '1人あたりの平均GSV', 'チームGSV ÷ 人数（チームが大きくなったら見る）', now.perAvg, '') + '</div>';
+  // ⑤ 理想MAPとの差
+  var gap = _dtEzGap();
+  if (gap === null) h += '<div class="dtez-list"><div class="dtez-lh">理想MAPとの差</div><div class="dtez-lk" onclick="switchView(\'ideal\')">理想MAPを作ると、稼働・BR・GSVの差がここに並びます<span>›</span></div></div>';
+  else if (!gap.length) h += '<div class="dtez-list"><div class="dtez-lh">理想MAPとの差<span>紙の照らし合わせの代わり</span></div><div class="dtez-lk" onclick="switchView(\'ideal\')">現状は理想MAPに届いています 🎉<span>›</span></div></div>';
+  else h += '<div class="dtez-list"><div class="dtez-lh">理想MAPとの差 ' + gap.length + '人<span>紙の照らし合わせの代わり</span></div>' + gap.slice(0, 3).map(_dtEzGapRow).join('')
+    + (gap.length > 3 ? '<span class="dtez-more" onclick="dtEzOpen(\'gap\')">ほか ' + (gap.length - 3) + '人 すべて見る ›</span>' : '') + '</div>';
+  if (!ro && c1 === null) h += '<div class="dtez-todo" onclick="dtInputOpen(10)">✏️ ' + lm.m + '月のコミッションを入れると比べられます<span>入力 ›</span></div>';
+  h += '<div class="dtez-list">'
+    + '<div class="dtez-lk" onclick="dtMode(\'full\',\'sum\')">稼働・人数<small>S/A/B/C・総人数・OUT</small><span>›</span></div>'
+    + '<div class="dtez-lk" onclick="dtMode(\'full\',\'trend\')">これまでの推移<small>12ヶ月のグラフ・表</small><span>›</span></div>'
+    + '<div class="dtez-lk" onclick="dtMode(\'full\',\'train\')">研修<small>フロー・結果・Aさん別</small><span>›</span></div>'
+    + '<div class="dtez-lk" onclick="dtMode(\'full\',\'pl\')">パワーライン・地域<span>›</span></div></div></div>';
+  box.innerHTML = '<div class="dtez">' + h + '</div>';
+}
+function dtEzGo(w) {
+  _p2SheetClose('dtEzOv');
+  if (w === 'grow') { if (typeof p2WhyGo === 'function') p2WhyGo('month'); else switchView('plan'); }
+}
+// ── タップしたら、その数字だけ（下から） ──
+var _dtEzGapF = '';
+function dtEzOpen(k) {
+  _dtEzCss();
+  _p2SheetClose('dtEzOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'dtEzOv'; ov.style.zIndex = '612';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('dtEzOv'); };
+  ov.innerHTML = '<div class="ms-sheet dtez-sh" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div><div id="dtEzBody"></div></div>';
+  document.body.appendChild(ov);
+  if (k === 'gap') _dtEzGapF = '';
+  _dtEzRender(k);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function _dtEzHd(t, sub) { return '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + t + '</div>' + (sub ? '<div style="font-size:11px;color:var(--text-dim)">' + sub + '</div>' : '') + '</div><span class="ms-x" onclick="_p2SheetClose(\'dtEzOv\')">✕</span></div><div style="padding:0 16px 20px">'; }
+function _dtEzBar(m, line, extra) {
+  var g = m.ptCurrent || 0, ok = g >= line, pct = Math.min(100, Math.round(g / line * 100));
+  return '<div class="dtez-ms" onclick="dtEzMem(\'' + m.id + '\')"><span class="nm">' + evEsc(_dtEzName(m)) + '</span><span class="tl">' + evEsc((m.title || '').trim()) + '</span><span class="bar"><i class="' + (ok ? '' : 'w') + '" style="width:' + pct + '%"></i></span>'
+    + '<span class="v"><b>' + g.toLocaleString() + '</b> ' + (ok ? '✓' : 'あと' + (line - g).toLocaleString()) + (extra ? '<small>' + extra + '</small>' : '') + '</span></div>';
+}
+function _dtEzDaysLeft() {
+  var d = new Date(), cur = state.currentMonth || currentMonthStr();
+  if (cur !== d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0')) return null;
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() - d.getDate();
+}
+var DT_EZ_DEF = {
+  newN: { lb: 'B1数', u: '人', how: '登録月が今月の人（研修生・ユーザー・OUTを除く。LOIもGSVに関係なく数える）。MAPから自動' },
+  newAvg: { lb: '新規の平均GSV', u: 'pt', how: '登録月が今月の人（研修生・ユーザー・OUTを除く）のGSVの平均。MAPから自動' },
+  actN: { lb: '平均稼働人数', u: '人', d: true, how: '1ハウディあたりに来る見込みの人数＝自分から始まるチームの稼働率の合計÷100（Sで稼働率が未入力の人は120%）。MAPから自動' },
+  perAvg: { lb: '1人あたりの平均GSV', u: 'pt', how: '自分のチームGSV ÷ 人数（研修生・ユーザー・OUTを除く）。MAPから自動' }
+};
+function _dtEzRender(k) {
+  var body = document.getElementById('dtEzBody'); if (!body) return;
+  var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), h = '', left = _dtEzDaysLeft();
+  if (k === 'comm') {
+    var cm = _dtVals('コミッション'), f = function(v) { return v === null ? '未入力' : '¥' + Math.round(v).toLocaleString(); };
+    h = _dtEzHd('コミッション（確定した月）') + '<div class="dtez-kv" style="margin-top:4px"><div>' + ms[10].lbl + '<b>' + f(cm[10]) + '</b></div><div>' + ms[9].lbl + '<b>' + f(cm[9]) + '</b></div><div>1年前<b>' + f(cm[0]) + '</b></div></div>'
+      + (_dtReadOnly() ? '' : '<div class="dtez-kv"><div style="cursor:pointer;color:var(--accent);font-weight:800;text-align:center" onclick="_p2SheetClose(\'dtEzOv\');dtInputOpen(10)">✏️ ' + ms[10].lbl + 'を入力・直す</div><div style="cursor:pointer;color:var(--text-dim);font-weight:700;text-align:center" onclick="_p2SheetClose(\'dtEzOv\');dtInputOpen(11)">' + ms[11].lbl + '（今月）を入力</div></div>')
+      + '<div class="dtez-how">今月（' + ms[11].lbl + '）の分は月末に確定するので、確定した先月と先々月で比べます<br><b>コミッション ＝ B1数 × 新規の平均GSV × 稼働</b>（チームが大きくなったら BR数 × BRの平均GSV × 稼働）</div>';
+  } else if (k === 'exam') {
+    var ex = now.exam.slice().sort(function(a, b) { return (a.ptCurrent || 0) - (b.ptCurrent || 0); });
+    h = _dtEzHd('BRを増やす', '審査中（LOI〜Q4）は毎月 ' + LOI_MONTHLY_MIN.toLocaleString() + 'pt 以上が条件') + '<div class="big">' + (ex.length ? now.examOk + '<em> / ' + ex.length + '人 クリア</em>' : '—') + '</div>'
+      + '<div class="dtez-say">審査中の全員を今月 <b>' + LOI_MONTHLY_MIN.toLocaleString() + 'pt</b> 以上に' + (left !== null ? '。月末まであと <b>' + left + '日</b>' : '') + '<br>BR以上 <b>' + now.br + '人</b>' + (prev ? '（先月 ' + prev.br + '人）' : '') + '</div>'
+      + (ex.length ? ex.map(function(m) { var t = (m.title || '').trim(), cum = (m.loiCumPt || 0) + (m.ptCurrent || 0); return _dtEzBar(m, LOI_MONTHLY_MIN, (t === 'Q3' || t === 'Q4') ? '累計 ' + cum.toLocaleString() + '/' + BR_PROMOTE_CUM.toLocaleString() : ''); }).join('') : '<div class="dtez-note">審査中の人はいません</div>')
+      + '<div class="dtez-how">名前を押すとその人のカード。累計はQ3・Q4の人だけ（BRは累計' + BR_PROMOTE_CUM.toLocaleString() + 'pt）</div>';
+  } else if (k === 'brk') {
+    var bs = now.brs.slice().sort(function(a, b) { return (a.ptCurrent || 0) - (b.ptCurrent || 0); });
+    h = _dtEzHd('BRを維持する', 'BRは毎月 GSV ' + BR_MAINTAIN.toLocaleString() + 'pt 以上で維持（ゴールド以上は条件が別）') + '<div class="big">' + (bs.length ? now.brOk + '<em> / ' + bs.length + '人 維持ライン達成</em>' : '—') + '</div>'
+      + '<div class="dtez-say">今月の維持ラインは <b>GSV ' + BR_MAINTAIN.toLocaleString() + 'pt</b>' + (left !== null ? '。月末まであと <b>' + left + '日</b>' : '') + '</div>'
+      + (bs.length ? bs.map(function(m) { return _dtEzBar(m, BR_MAINTAIN); }).join('') : '<div class="dtez-note">BRの人はまだいません</div>');
+  } else if (k === 's') {
+    var sg = _dtEzSGoal(), ser = _dtEzSeries('S', now), pace = null, pv = [];
+    for (var i = 8; i <= 11; i++) if (ser[i] !== null) pv.push(ser[i]);
+    if (pv.length >= 2) { var per = (pv[pv.length - 1] - pv[0]) / (pv.length - 1); if (per > 0 && now.S < sg) pace = Math.ceil((sg - now.S) / per); }
+    var dS = prev ? now.S - prev.S : null;
+    var newS = prev ? (membersForMap('current').filter(function(m) { return now.sIds.indexOf(m.id) >= 0 && prev.sIds.indexOf(m.id) < 0; })) : [];
+    h = _dtEzHd('S稼働', sg + '人でこの仕事一本で食える') + '<div class="big">' + now.S + '<em> / ' + sg + '人</em></div>'
+      + '<div class="dtez-say">' + (dS === null ? '' : (dS > 0 ? '先月より <b>' + dS + '人ふえました</b>。' : (dS < 0 ? '先月より ' + (-dS) + '人へりました。' : '先月と同じです。'))) + (now.S >= sg ? '<b>目標達成 🎉</b>' : (pace ? 'このペースだと <b>' + sg + '人まであと' + pace + 'ヶ月</b>' : sg + '人まで あと <b>' + (sg - now.S) + '人</b>')) + '</div>'
+      + _dtEzLine(ser, sg)
+      + '<div class="dtez-h2">あと一歩でS（Aの人と、B・Cで稼働率70%以上の人）' + now.near.length + '人</div>'
+      + (now.near.length ? '<div class="dtez-ppl">' + now.near.map(function(m) { return '<span onclick="dtEzMem(\'' + m.id + '\')">' + evEsc(_dtEzName(m)) + '<small>' + m.activity + (m.actRate !== '' && m.actRate != null ? ' ' + m.actRate + '%' : '') + '</small></span>'; }).join('') + '</div>' : '<div class="dtez-note">いません</div>')
+      + (newS.length ? '<div class="dtez-h2">今月新しくSになった人</div><div class="dtez-ppl">' + newS.map(function(m) { return '<span onclick="dtEzMem(\'' + m.id + '\')">' + evEsc(_dtEzName(m)) + '</span>'; }).join('') + '</div>' : '')
+      + (_dtReadOnly() ? '' : '<div class="dtez-gin"><span class="dtez-note" style="margin:0">目標</span><input class="fi" id="dtEzSG" type="number" inputmode="numeric" value="' + sg + '" onfocus="this.select()"><span class="dtez-note" style="margin:0">人</span><span class="dtez-tk" onclick="dtEzSGoalSave()">保存</span></div>')
+      + '<div class="dtez-how">数え方：現状MAPで稼働がSの人（OUTを除く）。MAPから自動</div>';
+  } else if (k === 'gap') {
+    var gap = _dtEzGap() || [], cnt = { act: 0, br: 0, gsv: 0 };
+    gap.forEach(function(g) { g.items.forEach(function(x) { cnt[x.k]++; }); });
+    var fl = _dtEzGapF, rows = gap.filter(function(g) { return !fl || g.items.some(function(x) { return x.k === fl; }); });
+    h = _dtEzHd('理想MAPとの差 ' + gap.length + '人', '理想MAPで決めた形と、今の現状MAPの差')
+      + '<div class="dtez-chips"><span class="' + (!fl ? 'on' : '') + '" onclick="dtEzGapF(\'\')">すべて</span>' + ['act', 'br', 'gsv'].map(function(x) { return '<span class="' + (fl === x ? 'on' : '') + '" onclick="dtEzGapF(\'' + x + '\')">' + DT_EZ_TAG[x] + ' ' + cnt[x] + '</span>'; }).join('') + '</div>'
+      + rows.map(_dtEzGapRow).join('')
+      + '<div class="dtez-how">稼働が上がる人・BRになる人（審査中や B〜BM → BR以上）・GSVを500pt以上上げる人を並べます（固定PTの分は除いて比べます）。＋タスク＝その人に紐づいたタスクを作ります。タスクがある人は ✓</div>';
+  } else {
+    var df = DT_EZ_DEF[k]; if (!df) { body.innerHTML = ''; return; }
+    var v = now[k], pvv = prev ? prev[k] : null, ser2 = _dtEzSeries(k, now), yr = ser2[0];
+    var dd = (v !== null && pvv !== null) ? Math.round((v - pvv) * (df.d ? 10 : 1)) / (df.d ? 10 : 1) : null;
+    h = _dtEzHd(df.lb) + '<div class="big">' + _dtEzN(v, df.d) + '<em> ' + df.u + '</em></div>'
+      + '<div class="dtez-say">' + (k === 'newAvg' && now.newN ? ms[11].lbl + 'の新規 <b>' + now.newN + '人</b>の平均。' : '') + (dd === null ? '先月の記録がありません' : (dd ? '先月（' + _dtEzN(pvv, df.d) + '）より <b>' + Math.abs(dd).toLocaleString() + (dd > 0 ? ' 多い' : ' 少ない') + '</b>' : '先月と同じです')) + '</div>'
+      + _dtEzLine(ser2)
+      + '<div class="dtez-kv"><div>先月<b>' + _dtEzN(pvv, df.d) + '</b></div><div>1年前<b>' + _dtEzN(yr, df.d) + '</b></div>' + (k === 'newAvg' || k === 'newN' ? '<div>今月の新規<b>' + now.newN + '人</b></div>' : '') + '</div>'
+      + ((k === 'newAvg' || k === 'newN') && now.news.length ? '<div class="dtez-h2">今月の新規</div><div class="dtez-ppl">' + now.news.map(function(m) { return '<span onclick="dtEzMem(\'' + m.id + '\')">' + evEsc(_dtEzName(m)) + '<small>' + (m.ptCurrent || 0).toLocaleString() + '</small></span>'; }).join('') + '</div>' : '')
+      + '<div class="dtez-how">数え方：' + df.how + '</div>';
+  }
+  body.innerHTML = h + '</div>';
+}
+function dtEzGapF(f) { _dtEzGapF = f; _dtEzRender('gap'); }
+function dtEzSGoalSave() {
+  var v = parseInt((document.getElementById('dtEzSG') || {}).value, 10);
+  if (!(v > 0)) { toast('人数を入れてください'); return; }
+  _p2().sGoal = v; saveGoals(); toast('S稼働の目標を ' + v + '人 にしました');
+  _p2SheetClose('dtEzOv'); renderDtEz();
+}
 // ── タブ ──
 function dtTab(t) {
   _dtTab = t;
@@ -11127,12 +11440,17 @@ function dtTab(t) {
   try { var bar = document.getElementById('dtTabs'); if (bar && bar.getBoundingClientRect().top < 0 && bar.scrollIntoView) bar.scrollIntoView({ block: 'start' }); } catch (e2) {}
 }
 function _dtApplyTab() {
+  var ez = _dtMode === 'ez'; // v582: ざっくり／くわしく
+  var mb = document.getElementById('dtModeBar');
+  if (mb) { _dtEzCss(); mb.innerHTML = '<div class="seg"><span class="' + (ez ? 'on' : '') + '" onclick="dtMode(\'ez\')">ざっくり</span><span class="' + (ez ? '' : 'on') + '" onclick="dtMode(\'full\')">くわしく</span></div>'; }
+  var ezb = document.getElementById('dtEz'); if (ezb) ezb.style.display = ez ? '' : 'none';
   var bar = document.getElementById('dtTabs');
   if (bar) {
+    bar.style.display = ez ? 'none' : '';
     bar.innerHTML = DT_TABS.map(function(t) { return '<div class="dt-tab' + (t[0] === _dtTab ? ' on' : '') + '" onclick="dtTab(\'' + t[0] + '\')">' + t[1] + '</div>'; }).join('');
   }
   var ps = document.querySelectorAll('#view-stats .dt-pane');
-  for (var i = 0; i < ps.length; i++) ps[i].style.display = ps[i].getAttribute('data-p') === _dtTab ? '' : 'none';
+  for (var i = 0; i < ps.length; i++) ps[i].style.display = (!ez && ps[i].getAttribute('data-p') === _dtTab) ? '' : 'none';
 }
 // ── 小さな推移の線（12ヶ月） ──
 function _dtSpark(vals, color) {
@@ -11700,6 +12018,7 @@ function renderStats() {
   buildAutoStats(); // v520: 自動集計を先に（サマリーのタイルが今月の最新値を出せるように）
   _dtHistLoad(); // v529: 過去の月の数字をその月のデータから（読み込めたら描き直す）
   renderDataHub();
+  if (_dtMode === 'ez') renderDtEz(); // v582
   if (_dtTab === 'trend') renderDtTrend();
   var s = state.stats;
   // 閲覧のみ（共有ビュー/合算）の場合は入力を無効化してバナーで明示（無言で保存されない事故を防ぐ）
