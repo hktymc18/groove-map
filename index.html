@@ -2916,7 +2916,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div id="signupForm" style="display:none">
       <div style="font-size:13px;color:var(--text-dim);text-align:center;margin-bottom:16px">アカウントを作成してください</div>
       <div style="font-size:12px;color:var(--gold);line-height:1.6;margin:0 2px 6px;text-align:left">⚠️ お名前は<b>本名（フルネーム）</b>で登録してください。ニックネームだと受付の名簿・MAPの共有・承認とつながりません</div>
-      <input id="signupName" type="text" placeholder="本名（フルネーム） 例：山内 北斗" oninput="window._sgNameOk=false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
+      <input id="signupName" type="text" placeholder="本名（フルネーム） 例：山田 太郎" oninput="window._sgNameOk=false" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <input id="signupOrg" type="text" placeholder="屋号" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none">
       <select id="signupArea" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">活動地域を選択</option></select>
       <select id="signupUnion" onchange="onUnionSelect(this,'signupUpBd')" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:16px;margin-bottom:12px;font-family:'Inter','Noto Sans JP',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">所属ユニオンを選択</option></select>
@@ -2961,7 +2961,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v586</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v587</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3380,7 +3380,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   <div class="sheet">
     <div style="font-size:16px;font-weight:700;margin-bottom:16px" id="profileModalTitle">プロフィール設定</div>
     <div id="profileMandatoryNote" style="display:none;font-size:13px;color:var(--accent);background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5">続けるには、ユニオン名・活動地域・UPルビー・UPBD の入力が必要です。</div>
-    <div class="fr"><label class="fl">お名前（本名・フルネーム）</label><input class="fi" id="profileName" placeholder="山内 北斗"><div style="font-size:11px;color:var(--text-dim);margin-top:4px">ニックネームだと受付の名簿・MAPの共有・承認とつながりません</div></div>
+    <div class="fr"><label class="fl">お名前（本名・フルネーム）</label><input class="fi" id="profileName" placeholder="山田 太郎"><div style="font-size:11px;color:var(--text-dim);margin-top:4px">ニックネームだと受付の名簿・MAPの共有・承認とつながりません</div></div>
     <div class="fr"><label class="fl">屋号</label><input class="fi" id="profileOrg" placeholder="GROOVE"></div>
     <div class="fr"><label class="fl">所属ユニオン <span style="color:var(--accent)">*</span></label><select class="fi" id="profileUnion" onchange="onUnionSelect(this,'profileUpBd')" style="-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">ユニオンを選択</option></select></div>
     <div class="fr"><label class="fl">活動地域 <span style="color:var(--accent)">*</span></label><select class="fi" id="profileArea" style="-webkit-appearance:none;appearance:none;cursor:pointer"><option value="">活動地域を選択</option></select></div>
@@ -3906,7 +3906,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v586';</script>
-<script src="app.js?v=v586"></script>
+<script>window.GM_EXPECT_JS='v587';</script>
+<script src="app.js?v=v587"></script>
 </body>
 </html>
