@@ -780,7 +780,7 @@ body.practice .topbar{top:var(--pxh,36px);}
         <div id="trDlrTop"></div>
         <label>氏名</label><textarea id="trName" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>ふりがな（任意）</label><textarea id="trKana" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
-        <label>紹介者（任意）</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
+        <label>紹介者</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>UPルビー</label>
         <select id="trUp"></select>
         <label>性別（任意）</label>
@@ -1105,8 +1105,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v19';
+var APP_VER = 'v20';
 var CHANGELOG = [
+  { v: 'v20', d: '2026/10/04', items: ['研修生登録: 紹介者は必須になりました（「任意」の表示を削除。未入力だと登録できません）'] },
   { v: 'v19', d: '2026/10/04', items: [
     '▶ 使い方ガイドの全ミッションに動画がつきました（25本・大きめの字幕つき・音なし）。ミッションの「▶ 動画」から見られます'
   ] },
@@ -1328,7 +1329,8 @@ var GX_ROLES = [
   { k: 'tr', e: '🎓', name: '研修担当', view: 'vTrainer', master: '研修マスター', missions: [
     { id: 'tr1', t: '研修生を登録する', sub: '1分・その場でQRを渡す', steps: [
       { sel: '#trTabReg', click: true, t: '「＋登録」タブ', x: '<b>「＋登録」</b>を押してみて！新しい研修生を登録する画面だよ。' },
-      { sel: '#trName', pre: gxTrTab('trTabReg'), t: '名前を入れる', x: '研修生の<b>名前</b>を入れてね。ふりがな・紹介者は分かれば入れておくと検索しやすいよ。' },
+      { sel: '#trName', pre: gxTrTab('trTabReg'), t: '名前を入れる', x: '研修生の<b>名前</b>を入れてね。ふりがなは分かれば入れておくと検索しやすいよ。' },
+      { sel: '#trRef', pre: gxTrTab('trTabReg'), t: '紹介者を入れる（必須）', x: '<b>紹介者</b>は必ず入れてね。あとで紹介者から研修生をさがせるよ。' },
       { sel: '#trUp', pre: gxTrTab('trTabReg'), t: 'UPルビーを選ぶ', x: 'UPルビーは<b>一覧から選ぶだけ</b>。打ち間違いの心配なし！' },
       { sel: '#trGo', pre: gxTrTab('trTabReg'), t: '登録してQRを渡す', x: '押すと番号が決まって<b>会員証のQRが出る</b>よ。本人のスマホで読み取ってもらえば完了！' }
     ] },
@@ -4731,6 +4733,7 @@ $('trTabList').onclick = function(){ trTab(false); trRenderList(); };
 $('trGo').onclick = function(){
   var name = $('trName').value.replace(/[\r\n]/g, '').trim();
   if(!name){ toast('氏名を入力してください'); return; }
+  if(!$('trRef').value.replace(/[\r\n]/g, '').trim()){ toast('紹介者を入力してください'); $('trRef').focus(); return; }
   var up = $('trUp').value;
   if(!up){ toast('UPルビーを選択してください'); return; }
   var no = nextMemberNo(gTrMembers, gUnion);
@@ -4739,7 +4742,7 @@ $('trGo').onclick = function(){
   var data = {
     no: no, union: gUnion, name: name, group: up,
     kana: $('trKana').value.trim(), sex: gTrSex,
-    referrer: $('trRef').value.trim(),
+    referrer: $('trRef').value.replace(/[\r\n]/g, '').trim(),
     grade: '', active: true, trainee: true, trainings: {},
     regBy: gUser.uid, regByName: gProf.name || '',
     createdAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp()
