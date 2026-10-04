@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v585';
+var APP_JS_VERSION = 'v586';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3340,7 +3340,6 @@ function openAdminPanel() {
   if (!isCurrentAdmin()) { toast('権限がありません'); return; }
   closeProfileModal(null);
   document.getElementById('adminPanel').classList.add('open');
-  var ub = document.getElementById('adminUsageBox'); if (ub) { ub.style.display = 'none'; ub.innerHTML = ''; } // 前回の古い集計を出さない
   loadAdminUsers();
 }
 function closeAdminPanel() {
@@ -3360,67 +3359,7 @@ function _adminFindUser(uid) {
   for (var i=0;i<_adminUsers.length;i++) if (_adminUsers[i].id === uid) return _adminUsers[i];
   return null;
 }
-// ── 📦 データ使用状況レポート（管理者・手動実行のみ） ──
-// 各ユーザーの当月MAP/データ/GOALドキュメントを読んでJSONサイズを概算集計。
-// 実行にはユーザー数×3回の読み取りが発生するため、ボタンを押した時だけ動く。
-function _fmtKB(bytes) {
-  if (bytes >= 1048576) return (bytes/1048576).toFixed(2) + ' MB';
-  if (bytes >= 1024) return (bytes/1024).toFixed(1) + ' KB';
-  return bytes + ' B';
-}
-var _adminUsageBusy = false;
-function adminUsageReport() {
-  if (!isCurrentAdmin()) { toast('権限がありません'); return; }
-  if (_adminUsageBusy) { toast('集計中です…'); return; }
-  var box = document.getElementById('adminUsageBox');
-  if (!box) return;
-  // 一覧と同じ権限スコープ（ユニオンリーダーは自ユニオンのみ）
-  var users = _adminScopedUsers();
-  if (!users.length) { toast('先にユーザー一覧を読み込んでください'); return; }
-  _adminUsageBusy = true;
-  var month = state.currentMonth || currentMonthStr();
-  box.style.display = '';
-  box.innerHTML = '集計中… 0/' + users.length + '人';
-  var rows = [], done = 0;
-  var jobs = users.map(function(u) {
-    var uid = u.id;
-    var paths = ['maps/'+uid+'/months/'+month+'_current', 'maps/'+uid+'/stats/'+month, 'maps/'+uid+'/meta/goals'];
-    for (var ai = 0; ai < 8; ai++) paths.push('maps/'+uid+'/meta/avatars'+ai); // 写真チャンクも計測
-    return Promise.all(paths.map(function(pth){
-      return fsGet(pth).then(function(d){ return d ? JSON.stringify(d).length : 0; }).catch(function(){ return null; });
-    })).then(function(sizes) {
-      var err = sizes.every(function(s){ return s === null; });
-      var n = function(x){ return x || 0; };
-      var mapB = n(sizes[0]), statB = n(sizes[1]), goalB = n(sizes[2]);
-      var phB = 0; for (var pi = 3; pi < sizes.length; pi++) phB += n(sizes[pi]);
-      rows.push({ name: u.name || u.email || uid.slice(0,6), total: mapB + statB + goalB + phB, map: mapB, stat: statB, goal: goalB, photo: phB, err: err });
-      done++;
-      box.innerHTML = '集計中… ' + done + '/' + users.length + '人';
-    });
-  });
-  Promise.all(jobs).then(function() {
-    _adminUsageBusy = false;
-    rows.sort(function(a,b){ return b.total - a.total; });
-    var total = rows.reduce(function(s,r){ return s + r.total; }, 0);
-    var photoTotal = rows.reduce(function(s,r){ return s + r.photo; }, 0);
-    var now = new Date();
-    var h = '<b>📦 当月データの概算サイズ</b>（' + month + '・' + users.length + '人・' + (now.getMonth()+1) + '/' + now.getDate() + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + '時点）<br>'
-      + '合計 <b style="color:var(--accent)">' + _fmtKB(total) + '</b>'
-      + ' <small style="color:var(--text-dim)">うち写真 ' + _fmtKB(photoTotal) + '／当月分のみ・過去月とATTACK LIST等は含まず</small>'
-      + '<div style="border-top:1px solid var(--border);margin:8px 0"></div>';
-    rows.slice(0, 15).forEach(function(r, i) {
-      h += '<div style="display:flex;justify-content:space-between;gap:8px"><span>' + (i+1) + '. ' + evEsc(r.name) + (r.err ? ' <small style="color:var(--text-dim)">(取得不可)</small>' : '') + '</span>'
-        + '<span style="font-family:Inter,IBM Plex Mono,monospace;color:var(--text-mid)">' + (r.err ? '—' : _fmtKB(r.total) + (r.photo ? ' <small style="color:var(--text-dim)">📷' + _fmtKB(r.photo) + '</small>' : '')) + '</span></div>';
-    });
-    if (rows.length > 15) h += '<div style="color:var(--text-dim)">…ほか' + (rows.length-15) + '人</div>';
-    h += '<div style="color:var(--text-dim);margin-top:8px;font-size:11px">※JSONサイズの概算（インデックス等は含まないため実際より小さめ）。正確な合計は Firebaseコンソール → 使用量 で確認できます。</div>';
-    box.innerHTML = h;
-  }).catch(function(e) {
-    _adminUsageBusy = false;
-    box.innerHTML = '集計に失敗しました: ' + evEsc(e && e.message || '');
-  });
-}
-// 権限スコープ：オーナーは全体、ユニオンリーダー(admin)は自ユニオンのみ（一覧と集計で共通）
+// v586: データ使用状況レポートは廃止（他のユーザーのデータを読むため。ルールで管理者も読めなくした）
 function _adminScopedUsers() {
   var owner = (currentUser && currentUser.uid === OWNER_UID);
   var myUnion = (currentUser && currentUser.union) ? currentUser.union : '';
@@ -3925,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v585';
+  var DATA_VERSION = 'v586';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5406,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v586', d:'2026-10-04', items:['🔒 あなたのMAP・予定・データ・目標シート・ATTACK LISTは、あなたと、あなたが共有した人だけが見られるようにしました（管理者も見られません。データベースのルールで守っています）','📝 新規登録・プロフィールのお名前は「本名（フルネーム）」で。ニックネームだと受付の名簿・MAPの共有・承認とつながりません'] },
   { v:'v585', d:'2026-10-04', items:['🐞 バグ・要望のページを追加（管理者と、管理者が指定した人だけが見られます。☰メニュー／設定から）','報告：種類（バグ・要望）・画面・内容・スクショ3枚まで。書いた人・日時・版・端末は自動で残ります','管理者：改修する／運用回避／対応しないの切り分け・コメント・やりとり。「改修する」を選んでClaudeへの指示としてまとめてコピー（コピーしたものは対応中に）'] },
   { v:'v584', d:'2026-10-04', items:['🆕 理想MAPでGSV 1,000P以上になると自動でLOIになる人を「研修生とB1〜BM」に変更（タイトル空欄の人は変えません）。1,000P未満に戻すと元のタイトルに戻ります'] },
   { v:'v583', d:'2026-10-04', items:['🎯 理想MAPの固定PT：上の人の固定PTには、BRでない下の人の分が入っている前提に。下の人の固定を上に二重に足さないように直しました（上の人の固定が空欄・少ない時は、下の人の固定の合計を使います）','🆕 理想MAPで審査前の人（研修生・タイトル空欄）は、GSVが1,000P以上になると自動でLOIに。1,000P未満に戻すと元のタイトルに戻ります（ユーザーは変えません・現状MAPは変わりません）','新規B1に数えるのは、今までどおり今月スタートの人だけです'] },
@@ -29671,7 +29611,12 @@ function doSignup() {
   var pass  = (document.getElementById('signupPass')||{}).value||'';
   var chk   = document.getElementById('privacyCheck');
   var errEl = document.getElementById('signupError');
-  if (!name)  { _sgErr(errEl, 'お名前を入力してください'); return; }
+  if (!name)  { _sgErr(errEl, 'お名前（本名・フルネーム）を入力してください'); return; }
+  // v586: ニックネーム登録の防止（本名でないと受付の名簿・共有・承認とつながらない）。漢字が無い・短すぎる時は確認
+  if ((name.replace(/[\s　]/g, '').length < 3 || !/[\u4E00-\u9FFF]/.test(name)) && !window._sgNameOk) {
+    _sgErr(errEl, '「' + name + '」は本名（フルネーム）ですか？ ニックネームだと受付の名簿・MAPの共有・承認とつながりません。本名ならもう一度「登録」を押してください');
+    window._sgNameOk = true; return;
+  }
   if (!org)   { _sgErr(errEl, '屋号を入力してください'); return; }
   if (!union) { _sgErr(errEl, '所属ユニオンを選択してください'); return; }
   if (!area)  { _sgErr(errEl, '活動地域を入力してください'); return; }
