@@ -428,6 +428,12 @@ tr:last-child td{border-bottom:none;}
 .gx-foot{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:10px 14px;border:2px solid #e8c95a;border-radius:16px;font-size:13px;background:var(--amber-soft);}
 .gx-foot b{color:var(--ink);}
 .gx-hint{position:fixed;z-index:3004;width:300px;}
+.gx-bt{display:flex;flex-direction:column;gap:6px;align-items:stretch;}
+.gx-vid{border:2px solid #e8c95a;background:transparent;color:var(--amber);border-radius:999px;padding:4px 10px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;width:auto;}
+.gx-vbox{background:var(--card);color:var(--ink);border-radius:20px;overflow:hidden;width:min(900px,100%);max-height:94vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.5);}
+.gx-vhead{position:relative;background:linear-gradient(160deg,#ffe066,#ffb703);color:#3a2a00;padding:12px 48px 12px 16px;font-size:16px;}
+.gx-vhead .gx-close{position:absolute;right:8px;top:7px;border:none;background:rgba(255,255,255,.55);color:#3a2a00;border-radius:50%;width:30px;height:30px;padding:0;font-size:16px;cursor:pointer;}
+.gx-vbox video{display:block;width:100%;max-height:calc(94vh - 120px);background:#000;object-fit:contain;}
 .gx-badge{display:inline-block;background:#e0604f;color:#fff;font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:3px;animation:gxHop 1.6s ease-in-out infinite;}
 .gx-info{display:inline-block;margin-top:3px;font-size:11px;font-weight:800;color:#a65a00;background:#fff1c9;border-radius:999px;padding:1px 8px;}
 .gx-conf{position:fixed;top:-20px;z-index:3100;width:9px;height:14px;border-radius:2px;pointer-events:none;animation:gxFall linear forwards;}
@@ -1099,8 +1105,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v18';
+var APP_VER = 'v19';
 var CHANGELOG = [
+  { v: 'v19', d: '2026/10/04', items: [
+    '▶ 使い方ガイドの全ミッションに動画がつきました（25本・大きめの字幕つき・音なし）。ミッションの「▶ 動画」から見られます'
+  ] },
   { v: 'v18', d: '2026/10/04', items: [
     '🧪 練習モードができました！🔰使い方 →「受付する人」→「練習モードで受付を体験」から。ダミーの名簿・イベントで、QRでピッ〜受付終了・集計まで何回でも試せます（本番には一切記録されません）'
   ] },
@@ -1448,7 +1457,8 @@ function gxOpenMenu(){
         return '<div class="gx-mis"><div class="gx-stamp ' + (d ? 'done">済' : 'todo">' + (i + 1)) + '</div>'
           + '<div class="tx"><b>' + esc(m.t) + '</b><small>' + esc(m.sub) + '</small>'
           + (m.info && m.info(st) ? '<span class="gx-info">' + esc(m.info(st)) + '</span>' : '') + '</div>'
-          + '<button class="gx-btn" data-gm="' + i + '" style="font-size:12.5px;padding:7px 13px;">' + (d ? 'もう一度' : 'やってみる') + '</button></div>';
+          + '<div class="gx-bt"><button class="gx-btn" data-gm="' + i + '" style="font-size:12.5px;padding:7px 13px;">' + (d ? 'もう一度' : 'やってみる') + '</button>'
+          + (GX_VIDEOS.indexOf(m.id) >= 0 ? '<button class="gx-vid" data-gv="' + i + '">▶ 動画</button>' : '') + '</div></div>';
       }).join('')
     + '<div class="gx-foot"><span style="font-size:24px;">🏅</span><div style="flex:1;">'
     + (done === total
@@ -1461,15 +1471,40 @@ function gxOpenMenu(){
   document.body.appendChild(host);
   host.addEventListener('click', function(e){
     if(e.target === host){ gxCloseMenu(); return; }
-    var t = e.target.closest ? e.target.closest('[data-gr],[data-gm],#gxMClose,#gxPractice') : null;
+    var t = e.target.closest ? e.target.closest('[data-gr],[data-gm],[data-gv],#gxMClose,#gxPractice') : null;
     if(!t) return;
     if(t.id === 'gxMClose'){ gxCloseMenu(); return; }
     if(t.id === 'gxPractice'){ if(gPractice) gxCloseMenu(); else practiceStart(); return; }
     if(t.getAttribute('data-gr')){ gxMenuRole = t.getAttribute('data-gr'); gxOpenMenu(); return; }
+    if(t.getAttribute('data-gv') != null){ gxPlay(role, +t.getAttribute('data-gv')); return; }
     gxStart(role, +t.getAttribute('data-gm'));
   });
 }
 
+/* ▶ ミッションの動画（ダミーデータで操作を撮影・大きめの字幕つき）。checkin/guide/<ミッションID>.mp4 */
+var GX_VIDEOS = ['set1', 'set2', 'set3', 'set4', 'rec1', 'rec2', 'rec3', 'rec4', 'rec5',
+  'adm1', 'adm2', 'adm3', 'adm4', 'adm5', 'adm6', 'st1', 'st2', 'st3', 'st4', 'st5', 'tr1', 'tr2', 'tr3', 'tr4', 'tr5'];
+function gxPlay(role, mi){
+  var m = role.missions[mi];
+  gxCloseMenu();
+  var host = document.createElement('div');
+  host.id = 'gxVideo'; host.className = 'gx-back';
+  host.innerHTML = '<div class="gx-vbox"><div class="gx-vhead"><b>▶ ' + esc(m.t) + '</b><button class="gx-close" data-gp="close" title="とじる">✕</button></div>'
+    + '<video src="guide/' + m.id + '.mp4" controls autoplay muted playsinline preload="auto"></video>'
+    + '<div class="gx-row" style="padding:10px 14px 14px;"><button class="gx-lnk" data-gp="menu">‹ ガイドにもどる</button>'
+    + '<button class="gx-btn" data-gp="try">やってみる ›</button></div></div>';
+  document.body.appendChild(host);
+  var v = host.querySelector('video');
+  v.onerror = function(){ toast('動画を読み込めませんでした。通信状態を確認してください'); };
+  host.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-gp]') : null;
+    if(!b && e.target !== host) return;
+    var a = b ? b.getAttribute('data-gp') : 'close';
+    v.pause(); host.parentNode.removeChild(host);
+    if(a === 'menu') gxOpenMenu();
+    if(a === 'try') gxStart(role, mi);
+  });
+}
 /* スポットライトツアー */
 var gxTour = null;
 function gxFind(sel){
