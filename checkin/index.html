@@ -100,6 +100,13 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
   box-shadow:0 8px 22px rgba(0,0,0,.18);}
 .sugitem{padding:8px 12px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
 .sugitem:last-child{border-bottom:none;}
+.rmlist{max-height:220px;overflow:auto;margin-top:6px;}
+.rmhint{display:none;color:var(--sub);font-size:12.5px;padding:10px 12px;}
+@media (min-width:700px){
+  .rmgrid{display:grid;grid-template-columns:minmax(220px,1fr) 1.25fr;gap:14px;align-items:start;}
+  .rmlist{margin-top:0;min-height:150px;max-height:280px;border:1px solid var(--line);border-radius:10px;background:var(--paper);}
+  .rmhint{display:block;}
+}
 .sugitem:hover{background:var(--paper);}
 /* 🎓 研修生登録ページ（スマホ向け・大きめの入力とボタン） */
 #vTrainer input,#vTrainer select,#vTrainer textarea{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
@@ -203,16 +210,25 @@ tr:last-child td{border-bottom:none;}
 .matrix th.stk,.matrix td.stk{position:sticky;background:var(--card);z-index:1;box-sizing:border-box;}
 .matrix th.stk{z-index:2;}
 .matrix .stname{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--sub);}
-.matrix .stk1{left:0;min-width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis;}
-.matrix .stk2{left:104px;min-width:72px;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
-.matrix .stk3{left:176px;min-width:64px;max-width:64px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+.matrix .stk1{left:0;min-width:96px;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:normal;line-height:1.3;}
+.matrix .stk2{left:96px;min-width:64px;max-width:64px;overflow:hidden;text-overflow:ellipsis;font-size:12px;}
+.matrix .stk3{left:160px;min-width:54px;max-width:54px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+/* 列幅の最適化: 余白を詰めて、1画面に入るイベント列を増やす */
+.matrix{font-size:13px;min-width:0;}
+.matrix th,.matrix td{padding:6px 6px;}
+.matrix th.stk1,.matrix td.stk1{padding-left:10px;}
+.matrix th:not(.stk){font-size:11.5px;letter-spacing:0;text-align:center;}
+.matrix td.mk,.matrix thead th:not(.stk){min-width:38px;padding-left:3px;padding-right:3px;}
+/* 集計タブを開いている間はページ幅を広げて、表を横に大きく使う */
+body:has(#pStats.on) main{max-width:min(1600px,100%);}
 /* 出席マトリクスのヘッダー行固定: 表自体を縦スクロール枠にして、日付行を常に上に表示。
    border-collapse だと固定行の罫線が消えるため、下線は box-shadow で描く */
 .mxwrap{max-height:72vh;overflow:auto;}
 .matrix thead th{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--line);}
 .matrix thead th.stk{z-index:4;}
 .matrix thead th.stk3{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
-.matrix .stk4{left:240px;min-width:76px;max-width:76px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+.matrix .stk4{left:214px;min-width:52px;max-width:52px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+.matrix thead th.stk3,.matrix thead th.stk4{line-height:1.25;white-space:normal;}
 .matrix.has1m .stk3{box-shadow:none;} .matrix.has1m thead th.stk3{box-shadow:0 1px 0 var(--line);}
 .matrix thead th.stk4{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
 .sectionhead{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;flex-wrap:wrap;}
@@ -1105,8 +1121,12 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v20';
+var APP_VER = 'v21';
 var CHANGELOG = [
+  { v: 'v21', d: '2026/10/04', items: [
+    'MC・スピーカー・運営の登録: PCでは名前の候補を入力欄の右に表示（日本語変換の候補と重ならないように）',
+    '集計: 集計タブではページ幅を広げ、表の列幅を最適化。1画面に表示できるイベントの列が増えました'
+  ] },
   { v: 'v20', d: '2026/10/04', items: ['研修生登録: 紹介者は必須になりました（「任意」の表示を削除。未入力だと登録できません）'] },
   { v: 'v19', d: '2026/10/04', items: [
     '▶ 使い方ガイドの全ミッションに動画がつきました（25本・大きめの字幕つき・音なし）。ミッションの「▶ 動画」から見られます'
@@ -7012,9 +7032,10 @@ function roleModal(role){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   var lbl = roleLabel(role);
   modal('<h2>' + lbl + 'を登録</h2>'
-    + '<label>名簿から名前検索（全ユニオン対象）</label>'
-    + '<input type="text" id="rmQ" placeholder="氏名の一部を入力">'
-    + '<div id="rmList" style="max-height:220px;overflow:auto;margin-top:6px;"></div>'
+    // PCでは候補リストを入力欄の右に出す（日本語変換の候補ウィンドウが入力欄の下に重なって見えなくなるため）
+    + '<div class="rmgrid"><div><label>名簿から名前検索（全ユニオン対象）</label>'
+    + '<input type="text" id="rmQ" placeholder="氏名の一部を入力"></div>'
+    + '<div id="rmList" class="rmlist"><div class="rmhint">名前を入力すると、ここに候補が出ます</div></div></div>'
     + (role === 'speaker'
       ? '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px;">'
         + '<label>名簿にいない場合（ゲストスピーカー）</label>'
@@ -7022,11 +7043,11 @@ function roleModal(role){
         + '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button id="rmGuestGo">ゲストスピーカーとして登録</button></div>'
         + '</div>'
       : '')
-    + '<div class="btns"><button id="rmClose">閉じる</button></div>');
+    + '<div class="btns"><button id="rmClose">閉じる</button></div>', true);
   $('rmClose').onclick = function(){ closeModal(); focusScan(); };
   $('rmQ').addEventListener('input', function(){
     var q = this.value.trim(), el = $('rmList');
-    if(!q){ el.innerHTML = ''; return; }
+    if(!q){ el.innerHTML = '<div class="rmhint">名前を入力すると、ここに候補が出ます</div>'; return; }
     var hits = searchRoster(q, 12);
     el.innerHTML = hits.length
       ? hits.map(sugItemHtml).join('')
@@ -7928,7 +7949,7 @@ function renderStatMatrix(){
       + '</tfoot>'
     : '';
   var html = '<div class="tblwrap mxwrap"><table class="matrix' + (rc ? ' has1m' : '') + '"><thead><tr>'
-    + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', rc ? '当月' : '稼働率', 'stk stk3') + (rc ? th('rate1m', '直近1ヶ月', 'stk stk4') : '')
+    + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', rc ? '当月' : '稼働率', 'stk stk3') + (rc ? th('rate1m', '直近<br>1ヶ月', 'stk stk4') : '')
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
     + th('count', '回数') + '</tr></thead><tbody>'
     + (view.length ? view.map(function(r){
