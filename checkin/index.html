@@ -442,6 +442,21 @@ tr:last-child td{border-bottom:none;}
   .gx-back{padding:0;align-items:stretch;}
   .gx-panel{width:100%;max-height:none;height:100%;border-radius:0;}
 }
+/* 🧪 練習モード */
+.px-bar{position:sticky;top:0;z-index:40;background:repeating-linear-gradient(-45deg,#ffd83d 0 14px,#ffcf1f 14px 28px);color:#3a2a00;
+  font-weight:900;text-align:center;padding:7px 10px;font-size:13.5px;letter-spacing:.03em;}
+.px-bar button{margin-left:10px;border:2px solid #3a2a00;background:#fffdf3;color:#3a2a00;font-weight:800;border-radius:999px;padding:3px 12px;font-size:12.5px;cursor:pointer;width:auto;}
+body.practice .topbar{top:var(--pxh,36px);}
+.px-cards{margin:0 0 12px;}
+.px-h{font-size:12.5px;font-weight:800;color:var(--amber);margin:0 0 6px;}
+.px-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+.px-card{position:relative;text-align:left;border:none;border-radius:14px;padding:10px 54px 10px 12px;background:linear-gradient(150deg,#fff6c9,#ffe066);color:#3a2a00;
+  box-shadow:0 3px 0 #c98a00;cursor:pointer;min-height:56px;}
+.px-card:active{transform:translateY(2px);box-shadow:0 1px 0 #c98a00;}
+.px-card b{display:block;font-size:13.5px;} .px-card small{font-size:11px;opacity:.75;}
+.px-card.off{background:linear-gradient(150deg,#eee,#cfcfcf);box-shadow:0 3px 0 #999;color:#444;}
+.px-qr{position:absolute;right:10px;top:50%;margin-top:-18px;width:36px;height:36px;border:3px solid #fff;border-radius:4px;
+  background:conic-gradient(#222 25%,#fff 0 50%,#222 0 75%,#fff 0) 0 0/9px 9px;}
 </style>
 </head>
 <body>
@@ -856,7 +871,10 @@ function showView(id){
 // 各タブの上部メニューを topbar の直下に固定するための高さ計測（折返しで高さが変わるため実測）
 function setTbh(){
   var tb = document.querySelector('#vApp .topbar');
-  if(tb && tb.offsetHeight) document.documentElement.style.setProperty('--tbh', tb.offsetHeight + 'px');
+  // 練習モードの帯（上に固定）があれば、その下に topbar・各タブの固定ヘッダーを並べる
+  var px = $('pxBar'), pxh = px ? px.offsetHeight : 0;
+  document.documentElement.style.setProperty('--pxh', pxh + 'px');
+  if(tb && tb.offsetHeight) document.documentElement.style.setProperty('--tbh', (tb.offsetHeight + pxh) + 'px');
   // 名簿の固定ヘッダー高さ（一括操作行の表示/折返しで変わるため実測）→ 表の内部スクロール高さに使う
   var ph = document.querySelector('#pRoster .panehead');
   if(ph && ph.offsetHeight) document.documentElement.style.setProperty('--phh', ph.offsetHeight + 'px');
@@ -1081,8 +1099,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v17';
+var APP_VER = 'v18';
 var CHANGELOG = [
+  { v: 'v18', d: '2026/10/04', items: [
+    '🧪 練習モードができました！🔰使い方 →「受付する人」→「練習モードで受付を体験」から。ダミーの名簿・イベントで、QRでピッ〜受付終了・集計まで何回でも試せます（本番には一切記録されません）'
+  ] },
   { v: 'v17', d: '2026/10/04', items: [
     '🔰 使い方ガイドに「📋 名簿・管理者」のミッション6つ（さがす・並べる／編集／無効化と削除のちがい／昇格／まとめて直す・バックアップ／予約・オンライン・会計）',
     '「📊 集計を見る」のミッション5つ（集計タブ／数字の見かた／出席表と稼働率／名前から編集／CSV出力と再集計）'
@@ -1415,6 +1436,12 @@ function gxOpenMenu(){
             + '<small>スタンプ ' + n + '/' + t + (n === t ? ' 🏅' : '') + '</small><div class="gx-bar"><i style="width:' + Math.round(n / t * 100) + '%"></i></div></div>';
         }).join('') + '</div>'
       : '')
+    + (role.k === 'rec'
+      ? '<div class="gx-mis" style="background:repeating-linear-gradient(-45deg,#fff3b8 0 12px,#ffe98f 12px 24px);color:#3a2a00;">'
+        + '<div class="gx-stamp" style="background:#fff;font-size:20px;">🧪</div><div class="tx"><b style="color:#3a2a00;">練習モードで受付を体験</b>'
+        + '<small style="color:#6b5600;">ダミーの名簿・イベントで、QRでピッ〜受付終了まで何回でも。本番には記録されません</small></div>'
+        + '<button class="gx-btn" id="gxPractice" style="font-size:12.5px;padding:7px 13px;">' + (gPractice ? '練習中' : 'はじめる') + '</button></div>'
+      : '')
     + '<div class="gx-h">' + role.e + ' ' + esc(role.name) + 'のミッション</div>'
     + role.missions.map(function(m, i){
         var d = gxIsDone(m.id);
@@ -1434,9 +1461,10 @@ function gxOpenMenu(){
   document.body.appendChild(host);
   host.addEventListener('click', function(e){
     if(e.target === host){ gxCloseMenu(); return; }
-    var t = e.target.closest ? e.target.closest('[data-gr],[data-gm],#gxMClose') : null;
+    var t = e.target.closest ? e.target.closest('[data-gr],[data-gm],#gxMClose,#gxPractice') : null;
     if(!t) return;
     if(t.id === 'gxMClose'){ gxCloseMenu(); return; }
+    if(t.id === 'gxPractice'){ if(gPractice) gxCloseMenu(); else practiceStart(); return; }
     if(t.getAttribute('data-gr')){ gxMenuRole = t.getAttribute('data-gr'); gxOpenMenu(); return; }
     gxStart(role, +t.getAttribute('data-gm'));
   });
@@ -1667,6 +1695,158 @@ function gxHintOnce(view){
   document.addEventListener('pointerdown', gxHintClose.off, true);
 }
 ['guideBtn', 'guideBtnTr'].forEach(function(id){ var b = $(id); if(b) b.onclick = gxOpenMenu; });
+/* ── 🧪 練習モード: ダミーの名簿・イベントで受付を体験（本番データには一切書かない） ──
+   練習中は db / FV をメモリ上の練習用データベースに差し替える。アプリの処理は呼び出し時に
+   グローバルの db を見るので、受付・名簿・集計の操作はすべて練習用データに対して行われる。
+   やめるときはページを読み込み直して本番に戻す（練習の状態を一切持ち越さない） */
+var gPractice = false;
+function pxMakeDb(store){
+  var listeners = {}, DEL = { __pxDel: 1 };
+  function ts(){ var d = new Date(); return { toDate: function(){ return d; }, toMillis: function(){ return d.getTime(); }, seconds: Math.floor(d.getTime() / 1000) }; }
+  function parentOf(p){ return p.split('/').slice(0, -1).join('/'); }
+  function notify(coll){ (listeners[coll] || []).forEach(function(fn){ setTimeout(fn, 0); }); }
+  function docsIn(coll, filters){
+    var out = [];
+    Object.keys(store).forEach(function(p){
+      if(p.indexOf(coll + '/') !== 0) return;
+      var id = p.slice(coll.length + 1);
+      if(id.indexOf('/') >= 0) return;
+      var d = store[p], ok = true;
+      filters.forEach(function(f){
+        var v = d[f.field];
+        if(f.op === '==' && v !== f.value) ok = false;
+        if(f.op === '>=' && !(v >= f.value)) ok = false;
+        if(f.op === '<=' && !(v <= f.value)) ok = false;
+      });
+      if(ok) out.push({ id: id, d: d });
+    });
+    return out;
+  }
+  function docSnap(id, d){ return { id: id, exists: !!d, data: function(){ return d ? JSON.parse(JSON.stringify(d)) : undefined; } }; }
+  function qSnap(list){
+    var docs = list.map(function(x){ return docSnap(x.id, x.d); });
+    return { docs: docs, size: docs.length, empty: !docs.length, forEach: function(cb){ docs.forEach(cb); } };
+  }
+  function clean(data){
+    var o = {};
+    Object.keys(data || {}).forEach(function(k){ var v = data[k]; o[k] = (v && v.__pxTs) ? ts() : v; });
+    return o;
+  }
+  function Doc(path){ this.path = path; this.id = path.split('/').pop(); }
+  Doc.prototype.get = function(){ return Promise.resolve(docSnap(this.id, store[this.path])); };
+  Doc.prototype.set = function(data, opts){
+    var p = this.path, cur = (opts && opts.merge && store[p]) ? store[p] : {}, out = {};
+    Object.keys(cur).forEach(function(k){ out[k] = cur[k]; });
+    Object.keys(data || {}).forEach(function(k){ if(data[k] === DEL) delete out[k]; else out[k] = data[k]; });
+    store[p] = clean(out); notify(parentOf(p)); notify(p);
+    return Promise.resolve();
+  };
+  Doc.prototype.update = function(data){
+    if(!store[this.path]) return Promise.reject({ code: 'not-found', message: 'No document to update' });
+    return this.set(data, { merge: true });
+  };
+  Doc.prototype['delete'] = function(){ delete store[this.path]; notify(parentOf(this.path)); notify(this.path); return Promise.resolve(); };
+  Doc.prototype.collection = function(n){ return new Coll(this.path + '/' + n, []); };
+  Doc.prototype.onSnapshot = function(a, b){
+    var cb = typeof a === 'function' ? a : b, self = this;
+    var fn = function(){ cb(docSnap(self.id, store[self.path])); };
+    (listeners[self.path] = listeners[self.path] || []).push(fn); setTimeout(fn, 0);
+    return function(){ listeners[self.path] = (listeners[self.path] || []).filter(function(x){ return x !== fn; }); };
+  };
+  function Coll(path, filters){ this.path = path; this.filters = filters; this.id = path.split('/').pop(); }
+  Coll.prototype.doc = function(id){ return new Doc(this.path + '/' + (id || ('px' + Math.random().toString(36).slice(2, 10)))); };
+  Coll.prototype.where = function(f, op, v){ return new Coll(this.path, this.filters.concat([{ field: f, op: op, value: v }])); };
+  Coll.prototype.orderBy = function(){ return this; };
+  Coll.prototype.limit = function(){ return this; };
+  Coll.prototype.get = function(){ return Promise.resolve(qSnap(docsIn(this.path, this.filters))); };
+  Coll.prototype.add = function(data){ var d = this.doc(); return d.set(data).then(function(){ return d; }); };
+  Coll.prototype.count = function(){ var self = this; return { get: function(){ return Promise.resolve({ data: function(){ return { count: docsIn(self.path, self.filters).length }; } }); } }; };
+  Coll.prototype.onSnapshot = function(a, b){
+    var cb = typeof a === 'function' ? a : b, self = this;
+    var fn = function(){ cb(qSnap(docsIn(self.path, self.filters))); };
+    (listeners[self.path] = listeners[self.path] || []).push(fn); setTimeout(fn, 0);
+    return function(){ listeners[self.path] = (listeners[self.path] || []).filter(function(x){ return x !== fn; }); };
+  };
+  function Batch(){ this.ops = []; }
+  Batch.prototype.set = function(r, d, o){ this.ops.push(function(){ return r.set(d, o); }); return this; };
+  Batch.prototype.update = function(r, d){ this.ops.push(function(){ return r.update(d); }); return this; };
+  Batch.prototype['delete'] = function(r){ this.ops.push(function(){ return r['delete'](); }); return this; };
+  Batch.prototype.commit = function(){ return Promise.all(this.ops.map(function(f){ return f(); })); };
+  return {
+    db: { collection: function(n){ return new Coll(n, []); }, batch: function(){ return new Batch(); } },
+    FV: { serverTimestamp: function(){ return { __pxTs: 1 }; }, 'delete': function(){ return DEL; } }
+  };
+}
+var PX_MEMBERS = [
+  { no: 'P001', name: '練習 太郎', kana: 'れんしゅう たろう', group: 'ジェッ子BD', sex: 'm' },
+  { no: 'P002', name: '練習 花子', kana: 'れんしゅう はなこ', group: 'ジェッ子BD', sex: 'f' },
+  { no: 'P003', name: 'ピヨ 次郎', kana: 'ぴよ じろう', group: 'ひよこBD', sex: 'm' },
+  { no: 'P004', name: 'ジェッ子 ちゃん', kana: 'じぇっこ', group: 'ひよこBD', sex: 'f', grade: 'BR' },
+  { no: 'P005', name: 'お休み 三郎', kana: 'おやすみ さぶろう', group: 'ひよこBD', sex: 'm', active: false }
+];
+function pxSeed(){
+  var u = gUnion || gRosterUnion || 'ANTARES', t = todayStr(), st = {};
+  st['checkinUnions/' + u] = { name: u, issuer: '（練習）' + u };
+  st['checkinEvents/pxEvent'] = { date: t, month: t.slice(0, 7), name: '🧪 練習ハウディ', hostUnion: u, unions: [u], fee1: 1000, fee2: 500 };
+  PX_MEMBERS.forEach(function(m, i){
+    var tok = 'px' + (i + 1) + 'practicepracticepracticepract';
+    var d = { no: m.no, name: m.name, kana: m.kana, group: m.group, sex: m.sex, union: u, grade: m.grade || '',
+      cardToken: tok, cardSig: tok.slice(0, 6) };
+    if(m.active === false) d.active = false;
+    st['checkinMembers/' + m.no] = d;
+    st['cards/' + tok] = { no: m.no, name: m.name, group: m.group, union: u, active: m.active !== false };
+  });
+  return st;
+}
+function practiceStart(){
+  if(gPractice) return;
+  if(gRec && !window.confirm('いま本番の受付中です。練習モードを始めると本番の受付画面を閉じます（本番の記録はそのまま残ります）。\n始めますか？')) return;
+  gxEnd(); gxCloseMenu(); closeModal();
+  if(gRec) stopReception();
+  var px = pxMakeDb(pxSeed());
+  db = px.db; FV = px.FV;
+  gPractice = true;
+  document.body.classList.add('practice');
+  var bar = document.createElement('div');
+  bar.id = 'pxBar'; bar.className = 'px-bar';
+  bar.innerHTML = '🧪 練習モード中 — 本番のデータには記録されません <button id="pxExit">練習をやめる</button>';
+  $('vApp').insertBefore(bar, $('vApp').firstChild);
+  $('pxExit').onclick = function(){
+    if(window.confirm('練習モードを終わって本番の画面に戻りますか？（練習の記録は消えます）')) location.reload();
+  };
+  setTimeout(setTbh, 0);
+  var d = new Date(); gMonth = { y: d.getFullYear(), m: d.getMonth() + 1 };
+  gEventUnion = gStatUnion = gRosterUnion = gUnion || gRosterUnion;
+  gMembersLoaded = false; gMembers = [];
+  loadMembers(); loadEvents();
+  db.collection('checkinEvents').doc('pxEvent').get().then(function(s){
+    var ev = s.data(); ev.id = 'pxEvent';
+    startReception(ev);
+    setTimeout(pxPanel, 300);
+    toast('🧪 練習用の名簿とイベントで受付を始めました。下の練習用カードをタップしてみよう！');
+  });
+}
+// 受付画面の練習用カード（タップでQRを読んだのと同じ動き）
+function pxPanel(){
+  if(!gPractice) return;
+  var old = $('pxCards'); if(old) old.parentNode.removeChild(old);
+  var st = $('stage'); if(!st) return;
+  var box = document.createElement('div');
+  box.id = 'pxCards'; box.className = 'px-cards';
+  box.innerHTML = '<div class="px-h">🐣 練習用カード（タップでピッ）— 番号を手で入れて受付してもOK</div><div class="px-row">'
+    + PX_MEMBERS.map(function(m, i){
+        return '<button class="px-card' + (m.active === false ? ' off' : '') + '" data-pxi="' + i + '"><b>' + esc(m.name) + '</b><small>No.' + esc(m.no)
+          + (m.active === false ? '・無効' : m.grade ? '・' + esc(m.grade) : '') + '</small><span class="px-qr"></span></button>';
+      }).join('') + '</div>';
+  st.parentNode.insertBefore(box, st);
+  box.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-pxi]') : null;
+    if(!b || !gRec) return;
+    var m = PX_MEMBERS[+b.getAttribute('data-pxi')], tok = 'px' + (+b.getAttribute('data-pxi') + 1) + 'practicepracticepracticepract';
+    $('numIn').value = 'm:' + m.no + ':' + tok.slice(0, 6);
+    $('btnManual').click();
+  };
+}
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
