@@ -88,23 +88,24 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       // ---- AttackList：人物リスト ----
+      // v586: 本人と、本人が共有した人だけ（管理者も読めない）
       match /people/{pid} {
-        allow read:  if isAdmin() || ownerActive(uid)
+        allow read:  if ownerActive(uid)
                      || (signedIn() && notDisabled(uid)
                          && exists(/databases/$(database)/documents/users/$(uid)/settings/share)
                          && get(/databases/$(database)/documents/users/$(uid)/settings/share)
                               .data.get('sharedWith', []).hasAny([myEmail()]));
-        allow write: if isAdmin() || ownerActive(uid);
+        allow write: if ownerActive(uid);
       }
       // ---- AttackList：共有設定（受信側が全ユーザー分を読んで判定するため read は広め） ----
       match /settings/{sid} {
         allow read:  if signedIn();
-        allow write: if isAdmin() || ownerActive(uid);
+        allow write: if ownerActive(uid);
       }
-      // ---- 目標シート ----
+      // ---- 目標シート（v586: 本人だけ） ----
       match /appData/{aid} {
-        allow read:  if isAdmin() || ownerActive(uid);
-        allow write: if isAdmin() || ownerActive(uid);
+        allow read:  if ownerActive(uid);
+        allow write: if ownerActive(uid);
       }
     }
 
@@ -137,30 +138,31 @@ service cloud.firestore {
           && myShareDoc(uid).get('scope', 'all') != 'map';
     }
 
-    // データ本体：read=オーナー/管理者/共有された人、write=オーナー/管理者/共有編集者
+    // データ本体：read=本人/共有された人、write=本人/共有編集者
+    // v586: 管理者（オーナー・ユニオン管理者）でも、共有されていないMAP・予定・データは読み書きできない
     match /maps/{uid}/months/{doc} {
-      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
-      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+      allow read:  if ownerActive(uid) || isSharedToMap(uid);
+      allow write: if ownerActive(uid) || canEditMap(uid);
     }
     match /maps/{uid}/stats/{doc} {
-      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
-      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+      allow read:  if ownerActive(uid) || isSharedToMap(uid);
+      allow write: if ownerActive(uid) || canEditMap(uid);
     }
     match /maps/{uid}/events/{doc} {
-      allow read:  if isAdmin() || ownerActive(uid) || canSeeSchedule(uid);
-      allow write: if isAdmin() || ownerActive(uid) || (canEditMap(uid) && canSeeSchedule(uid));
+      allow read:  if ownerActive(uid) || canSeeSchedule(uid);
+      allow write: if ownerActive(uid) || (canEditMap(uid) && canSeeSchedule(uid));
     }
     match /maps/{uid}/meta/{doc} {
-      allow read:  if isAdmin() || ownerActive(uid) || isSharedToMap(uid);
-      allow write: if isAdmin() || ownerActive(uid) || canEditMap(uid);
+      allow read:  if ownerActive(uid) || isSharedToMap(uid);
+      allow write: if ownerActive(uid) || canEditMap(uid);
     }
-    // 共有設定サブコレクション：作成・変更はオーナー/管理者のみ（共有編集者でも変更不可）
+    // 共有設定サブコレクション：作成・変更は本人のみ（共有編集者でも変更不可。v586: 管理者も不可）
     // v355 連鎖共有: このMAPの共有を受けている人は、自分の共有相手向けに
     //   「閲覧専用の派生共有(derived:true, via:自分)」を作成・削除できる。
     //   既存の直接共有ドキュメントは上書き不可（derived==true のものだけ更新可）＝権限の格下げ防止。
     match /maps/{uid}/shared/{rid} {
-      allow read:  if isAdmin() || ownerActive(uid) || isSelf(rid);
-      allow create, update: if isAdmin() || ownerActive(uid)
+      allow read:  if ownerActive(uid) || isSelf(rid);
+      allow create, update: if ownerActive(uid)
         || ( signedIn() && notDisabled(request.auth.uid)
              && request.resource.data.get('derived', false) == true
              && request.resource.data.get('via', '') == request.auth.uid
@@ -168,7 +170,7 @@ service cloud.firestore {
              && rid != request.auth.uid
              && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
              && (resource == null || resource.data.get('derived', false) == true) );
-      allow delete: if isAdmin() || ownerActive(uid)
+      allow delete: if ownerActive(uid)
         || ( signedIn() && resource.data.get('derived', false) == true
              && resource.data.get('via', '') == request.auth.uid );
     }
@@ -186,7 +188,7 @@ service cloud.firestore {
     }
     // FCM端末トークン: 本人のみ登録・掃除できる
     match /users/{uid}/fcmTokens/{tok} {
-      allow read, write: if isSelf(uid) || isAdmin();
+      allow read, write: if isSelf(uid);
     }
 
     // ============ v424: マイトレーニング（本人のみ・共有経路とは完全分離） ============
@@ -218,10 +220,10 @@ service cloud.firestore {
 
     // ============ MAP 受信側の共有インデックス ============
     match /sharedWith/{uid}/from/{ownerUid} {
-      allow read:   if isSelf(uid) || isAdmin();
-      // 共有レコードを作るのはオーナー（ownerUid）本人
-      allow write:  if isAdmin() || (isSelf(ownerUid) && notDisabled(ownerUid));
-      allow delete: if isSelf(uid) || isSelf(ownerUid) || isAdmin();
+      allow read:   if isSelf(uid);
+      // 共有レコードを作るのはオーナー（ownerUid）本人（v586: 管理者も不可）
+      allow write:  if isSelf(ownerUid) && notDisabled(ownerUid);
+      allow delete: if isSelf(uid) || isSelf(ownerUid);
     }
 
     // ============ BASE CHECK-IN（ハウディ受付・稼働率管理） ============
