@@ -17307,9 +17307,9 @@ function _p2NorthHtml(lite) {
   if (n.life) cAll += '<span class="p2-chip">🏠' + evEsc(String(n.life).slice(0, 40)) + '</span>';
   if (cAll) h += '<div style="margin-top:8px">' + cAll + '</div>';
   // ツールボタン
-  if (lite) return h + '</div>';
   var ck = _p2CkCount();
   if (typeof _p2GapSummary === 'function') h += _p2GapSummary();
+  if (lite) return h + '</div>'; // v593: 目標のページはギャップのまとめまで（ツールのボタンはツールのページへ）
   h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
     + '<span class="p2-btn" style="margin:0" onclick="p2GapOpen()">' + icn('calc') + ' ギャップ</span>'
     + '<span class="p2-btn" style="margin:0" onclick="p2RmOpen()">🗺 年間ロードマップ</span>'
