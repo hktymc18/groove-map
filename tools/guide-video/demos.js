@@ -197,6 +197,7 @@ const DEMOS = {
     await h.cap('<b>「＋ 登録」</b> タブを開きます'); await h.tap('#trTabReg');
     await h.cap('研修生の <b>名前</b> を入れます', 1500); await h.type('#trName', '練習 はなこ');
     await h.type('#trKana', 'れんしゅう はなこ', 300);
+    await h.cap('<b>紹介者</b> も入れます（必須）', 1500); await h.type('#trRef', '山田 太郎', 400);
     const v = await h.p.evaluate(() => { const o = Array.from(document.getElementById('trUp').options).find(x => x.value); return o ? o.value : ''; });
     await h.cap('<b>UPルビー</b> は 一覧から 選ぶだけ', 1500); await h.select('#trUp', v);
     await h.cap('<b>「登録して会員証QRを表示」</b> を押すと…', 1800); await h.tap('#trGo', 1500);
