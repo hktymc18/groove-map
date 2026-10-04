@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v592';
+var APP_JS_VERSION = 'v593';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -686,7 +686,7 @@ function showCopyBtn() {
 var PC_FAMILY_COLORS = ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF'];
 
 function isPCMode() {
-  return window.innerWidth >= 768;
+  return window.innerWidth >= 768 && window.innerHeight > 500; // v593: スマホの横向き（高さ500以下）はPC表示にしない
 }
 
 
@@ -1392,7 +1392,7 @@ function renderPCMap(mapType) {
 window.addEventListener('keydown', function(ev) {
   if (ev.isComposing || ev.keyCode === 229) ev.stopImmediatePropagation();
 }, true);
-var _lastPcMode = (typeof window !== 'undefined') ? (window.innerWidth >= 768) : null; // 読込時の表示（最初の回転も検知できるように）
+var _lastPcMode = (typeof window !== 'undefined') ? isPCMode() : null; // 読込時の表示（最初の回転も検知できるように）
 // v561: 1001-6 PC表示⇄スマホ表示が切り替わったかを確かめて作り直す。スマホ表示になったらMAPの全画面（PC専用）を解除
 //        （横向きで運動会を全画面にしたまま縦に戻すと、全画面の枠が残ってスマホの画面と重なり崩れていた）
 //        iPhoneは回した直後の幅がまだ古いことがあるため、回転の少し後と4秒ごとの見回りでも確かめる
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v592';
+  var DATA_VERSION = 'v593';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4010,6 +4010,8 @@ function switchView(v) {
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
   if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   currentView = v;
+  if (v !== 'plan') { _p2Pg = ''; _p2PgI = 0; try { document.body.classList.remove('ux-pg', 'ux-hub'); } catch (eUx) {} } // v593: PLANのページは離れたら入口へ
+  try { _uxSync(); } catch (eUs) {}
   window._selectedCardId = null;
   ['home','members','current','ideal','stats','ol','events','goals','month','plan'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
@@ -5345,6 +5347,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v593', d:'2026-10-05', items:['🧭 PLANの最初の画面が、ゲームのような「入口」になりました。大きなタイル（想い・目標・ロードマップ・◯月の目標・今週やること）から選びます。次にやるところがミント色に光るので、上から順に迷わず進めます','📄 タイルを押すと全画面で1つずつ表示。左下の「戻る」と右下の「つぎ」で順番に進めます。◯月の目標は「S稼働 → 今月 → 来月」を横にめくれて、S稼働は数字ボタンを押すだけで決まります','📱 スマホを横にしても使えるようになりました。横向きではPC表示に切り替わらず、下のタブが左の列に移ります。PLANのタイルは横一列に並びます（予定は縦向きで見やすく作っています）'] },
   { v:'v592', d:'2026-10-05', items:['📊 データタブ（くわしく）の「平均稼働」を、％ではなく「平均稼働人数（1ハウディあたり）」に。自分から始まるチームの稼働率の合計÷100＝1回のハウディに来る見込みの人数です（推移・表・タイルも人数で。過去の月はその月のMAPの記録から出し直します）'] },
   { v:'v591', d:'2026-10-05', items:['🔥 S稼働の階段（5→10→15→30→50→100）。今の人数から「次の段」を自動で出します（30人＝NS一本メシ）。PLANの目標カード・データタブに表示し、次の段に届いたらお祝い','📅 今月の目標にS稼働（必須：入れないと設定できません）・コミッション・BRを増やす／維持する・自分の成長（在り方・スキル）を追加。今までの行はそのまま','🗺 スマホのPLANにも年間マイルストーン（PCと同じ横軸。横にスワイプ）','✓ あと一歩Sの人・1,000ptに届いていない審査中やBRの人のタスクを終えると、つながる目標（今月S稼働・次の段まで など）を表示'] },
   { v:'v590', d:'2026-10-05', items:['表記は「フロントBR」のままに戻しました（数え方は v589 のとおり、間にBRでない人がいても数えます）'] },
@@ -15877,6 +15880,261 @@ function _p2Pace(v) {
   return Math.round(v / days * dim);
 }
 // ── メイン描画 ──
+// ════ v593: 共通の画面の作り（eFOOTBALL式）＋スマホ横向き ════
+//  ① 入口＝大きなタイル（次にやるところが光る）→ ② 押すと1画面に1つ（上：どこにいるか・⌂／下：戻る・●・次へ）
+//  縦は2列・横は1列に自動で並び替え。スマホを横にした時はPC表示にせず、下のタブを左の細い列へ
+function _uxLand() { return !isPCMode() && window.innerWidth > window.innerHeight; }
+function _uxSync() {
+  try {
+    var b = document.body; if (!b) return;
+    _uxCss();
+    var land = _uxLand();
+    b.classList.toggle('ux-land', land);
+    b.classList.toggle('ux-ev', currentView === 'events' && land && !window._uxEvOk);
+    b.classList.toggle('ux-bh0', currentView !== 'current' && currentView !== 'ideal'); // 横向きは左の列で移動するので「メニューにもどる」の帯は不要（MAPは現状/理想の切替があるので残す）
+    if (isPCMode()) b.classList.remove('ux-pg');
+  } catch (e) {}
+}
+window.addEventListener('resize', function() { _uxSync(); });
+window.addEventListener('orientationchange', function() { setTimeout(_uxSync, 300); });
+function uxEvKeep() { window._uxEvOk = true; _uxSync(); }
+function _uxCss() {
+  if (document.getElementById('uxCss')) return;
+  var st = document.createElement('style'); st.id = 'uxCss';
+  st.textContent =
+    // スマホ横向きの外枠：下のタブ → 左の細い列／上の帯は1行に
+    "body.ux-land{padding-left:calc(62px + env(safe-area-inset-left))}"
+    + "body.ux-land .mobile-tabbar{flex-direction:column;justify-content:center;gap:4px;top:0;bottom:0;right:auto;left:0;width:calc(62px + env(safe-area-inset-left));padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) env(safe-area-inset-left);border-top:none;border-right:1px solid var(--border)}"
+    + "body.ux-land .mtab{flex:none;padding:8px 0}body.ux-land .scroll-area{padding-bottom:calc(env(safe-area-inset-bottom) + 14px)}"
+    + "body.ux-hub:not(.ux-land) .p2-fab{bottom:calc(env(safe-area-inset-bottom) + 74px)}"
+    + "body.ux-land .fab{bottom:calc(env(safe-area-inset-bottom) + 14px)}body.ux-land .p2-fab{top:calc(env(safe-area-inset-top) + 4px);bottom:auto;width:38px;height:38px;font-size:17px}"
+    + "body.ux-land .map3d-btn{left:calc(76px + env(safe-area-inset-left));bottom:calc(env(safe-area-inset-bottom) + 14px)}"
+    + "body.ux-land .p2-banner{bottom:calc(env(safe-area-inset-bottom) + 12px);left:calc(78px + env(safe-area-inset-left))}"
+    + "body.ux-land .hdr-top{padding:5px 12px;flex-wrap:nowrap}body.ux-land .hdr-top>div:first-child{display:none!important}"
+    + "body.ux-land .back-home-bar{padding:5px 14px}body.ux-land.ux-bh0 .back-home-bar{display:none!important}"
+    + "body.ux-land #view-plan{max-width:none;padding:8px 16px 6px}#view-plan .ux-hub{padding:0}body.ux-pg #view-plan{padding-top:0}"
+    // 予定は縦向き用
+    + "#uxEvRot{display:none}body.ux-ev #uxEvRot{display:flex;position:fixed;inset:0;z-index:700;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px}"
+    + "#uxEvRot b{font-size:17px}#uxEvRot span{font-size:12.5px;color:var(--text-dim)}#uxEvRot u{margin-top:6px;color:var(--accent);font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;border:1.5px solid var(--border2);padding:9px 16px;border-radius:12px}"
+    // 1画面1つのページ中は上の帯・下のタブを隠して全画面（横向きは左の列だけ残す）
+    + "body.ux-pg header,body.ux-pg .back-home-bar,body.ux-pg #p2Fab,body.ux-pg .p2-banner{display:none!important}"
+    + "body.ux-pg:not(.ux-land) .mobile-tabbar{display:none!important}body.ux-pg .scroll-area{padding-bottom:calc(env(safe-area-inset-bottom) + 84px)!important}"
+    // 入口（タイル）
+    + ".ux-hub{padding:14px 14px 10px}.ux-hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.ux-hd h1{font-size:26px;font-weight:900;letter-spacing:1px;margin:0}"
+    + ".ux-hd .r{margin-left:auto;font-size:11.5px;color:var(--text-dim);font-weight:700}.ux-why{font-size:12.5px;color:var(--text-mid);font-weight:700;margin:3px 0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+    + ".ux-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}"
+    + ".ux-t{--c:var(--accent);position:relative;min-height:150px;border-radius:16px;padding:12px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer;-webkit-tap-highlight-color:transparent;"
+    + "background:linear-gradient(150deg,color-mix(in srgb,var(--c) 28%,var(--surface)) 0%,color-mix(in srgb,var(--c) 7%,var(--surface)) 70%);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);transition:transform .12s}"
+    + "body.light .ux-t{background:linear-gradient(150deg,color-mix(in srgb,var(--c) 20%,#fff) 0%,#fff 75%)}.ux-t:active{transform:scale(.97)}"
+    + ".ux-t .ic{position:absolute;right:10px;top:10px;font-size:46px;line-height:1;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}"
+    + ".ux-t b{font-size:19px;font-weight:900;letter-spacing:.3px;white-space:nowrap}.ux-t .st{font-size:11.5px;color:var(--text-mid);font-weight:600;margin-top:2px;line-height:1.4}.ux-t .st em{font-style:normal;color:var(--c);font-weight:800}"
+    + ".ux-t .bd{position:absolute;left:10px;top:10px;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:20px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c)}"
+    + ".ux-t.next{border:2px solid var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent),0 0 22px color-mix(in srgb,var(--accent) 40%,transparent)}.ux-t.next .bd{background:var(--accent);color:#06251C}"
+    + ".ux-t.w{grid-column:span 2;min-height:108px}"
+    + ".ux-c-rose{--c:#FF7AB6}.ux-c-gold{--c:var(--gold)}.ux-c-sky{--c:#5AD7FF}.ux-c-mint{--c:var(--accent)}.ux-c-pur{--c:var(--purple)}"
+    + "body.light .ux-c-rose{--c:#E0559A}body.light .ux-c-sky{--c:#1E9FD0}"
+    + ".ux-foot{display:flex;align-items:center;gap:10px;margin-top:10px}.ux-foot .lad{flex:1;min-width:0;display:none}"
+    + ".ux-sb{flex:1;height:48px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:800;color:var(--text);cursor:pointer;position:relative;white-space:nowrap;padding:0 14px}"
+    + ".ux-sb small{font-size:10.5px;color:var(--text-dim);font-weight:600}.ux-sb.hot{border-color:var(--purple);color:var(--purple)}.ux-sb .dot{position:absolute;top:7px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--red)}"
+    // 横向きの入口：タイルを横一列に（画面の高さいっぱい）
+    + "body.ux-land .ux-hub{padding:10px 16px 8px}body.ux-land .ux-hd h1{font-size:22px}body.ux-land .ux-why{display:inline;margin:0}"
+    + "body.ux-land .ux-tiles{display:flex;margin-top:8px}body.ux-land .ux-t{flex:1;min-width:0;min-height:0;height:max(140px,calc(var(--vvh,100vh) - 168px))}body.ux-land .ux-t.wide{flex:1.6}"
+    + "body.ux-land .ux-t .ic{left:0;right:0;top:44px;text-align:center;font-size:54px}body.ux-land .ux-t b{font-size:16px}body.ux-land .ux-t .st{font-size:11px;min-height:31px}"
+    + "body.ux-land .ux-foot .lad{display:flex;align-items:center;gap:8px}body.ux-land .ux-sb{flex:none;height:42px}"
+    + ".ux-foot .lad .s-lad{margin:0;padding:0;border:none;flex:1}.ux-foot .lad .s-ladh{display:none}.ux-foot .lad .s-steps{margin-top:0}.ux-foot .lad .s-steps .st small{display:none}"
+    // 1画面1つのページ
+    + ".ux-pg{min-height:100%}.ux-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;margin:0 -14px;padding:calc(env(safe-area-inset-top) + 10px) 14px 8px;background:var(--bg)}body.ux-land .ux-top{margin:0 -16px;padding:6px 16px}"
+    + ".ux-crumb{font-size:12.5px;color:var(--text-dim);font-weight:700;cursor:pointer}.ux-crumb b{color:var(--text-mid)}"
+    + ".ux-home{margin-left:auto;width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-mid);cursor:pointer;font-size:16px}"
+    + ".ux-body{padding:2px 0 14px}.ux-step{font-size:12px;font-weight:800;color:var(--accent)}.ux-h2{font-size:28px;font-weight:900;margin:2px 0 0}"
+    + ".ux-req{display:inline-block;font-size:10.5px;font-weight:800;color:var(--gold);border:1px solid var(--gold);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:6px}"
+    + ".ux-btm{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;align-items:center;gap:10px;padding:10px 14px calc(env(safe-area-inset-bottom) + 10px);background:var(--header-bg);border-top:1px solid var(--border);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}"
+    + "body.ux-land .ux-btm{left:calc(62px + env(safe-area-inset-left));padding:7px 14px calc(env(safe-area-inset-bottom) + 7px)}"
+    + ".ux-bk{height:48px;padding:0 18px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border2);display:flex;align-items:center;font-size:15px;font-weight:800;cursor:pointer;flex:none;color:var(--text)}"
+    + ".ux-nx{height:48px;padding:0 18px;border-radius:13px;background:var(--accent);color:#06251C;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;cursor:pointer;margin-left:auto;white-space:nowrap}"
+    + "body.ux-land .ux-bk,body.ux-land .ux-nx{height:40px}"
+    + ".ux-dots{display:flex;gap:12px;margin:0 auto}.ux-dots span{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--text-dim);font-weight:700;cursor:pointer}"
+    + ".ux-dots i{width:8px;height:8px;border-radius:50%;background:var(--border2)}.ux-dots .on{color:var(--accent)}.ux-dots .on i{background:var(--accent);width:22px;border-radius:5px}"
+    + ".ux-dots+.ux-nx{margin-left:0}"
+    + "@media(max-width:400px){.ux-dots span{font-size:0;gap:0}.ux-nx{padding:0 14px;font-size:14px}}"
+    + ".ux-list{display:grid;gap:8px;margin-top:10px}body.ux-land .ux-list{grid-template-columns:1fr 1fr 1fr}"
+    + ".ux-li{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:14.5px;font-weight:800}"
+    + ".ux-li .ic{font-size:22px;flex:none;width:28px;text-align:center}.ux-li small{display:block;font-size:11px;color:var(--text-dim);font-weight:600;margin-top:1px}.ux-li .ch{margin-left:auto;color:var(--text-dim);font-weight:700}"
+    + ".ux-sec{font-size:12px;font-weight:800;color:var(--text-dim);margin:14px 2px 0}"
+    + ".ux-pg .p2-card{margin-left:0;margin-right:0}"
+    // S稼働のページ
+    + ".ux-now{display:flex;align-items:baseline;gap:6px;margin-top:12px}.ux-now b{font-size:54px;font-weight:900;font-family:'Inter',sans-serif;line-height:1}.ux-now span{font-size:15px;color:var(--text-mid);font-weight:700}"
+    + ".ux-nxs{font-size:13.5px;color:var(--text-mid);font-weight:700;margin-top:4px}.ux-nxs em{font-style:normal;color:var(--gold);font-weight:900;font-size:16px}"
+    + ".ux-s .s-lad{border:none;margin-top:6px;padding-top:4px}.ux-s .s-ladh{display:none}"
+    + ".ux-inp{margin-top:18px;border:2px solid var(--gold);border-radius:16px;background:var(--surface);padding:10px 16px;display:flex;align-items:center;gap:6px}"
+    + ".ux-inp span{font-size:13px;color:var(--text-mid);font-weight:700;white-space:nowrap}.ux-inp input{flex:1;min-width:0;text-align:right;background:transparent;border:none;outline:none;color:var(--text);font-size:34px;font-weight:900;font-family:'Inter',sans-serif;padding:0}"
+    + ".ux-inp small{font-size:14px;color:var(--text-mid);font-weight:700}.ux-inp.ok{border-color:var(--accent)}"
+    + ".ux-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}"
+    + ".ux-chips span{height:46px;border-radius:11px;background:var(--surface2);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:16px;font-weight:800;cursor:pointer}"
+    + ".ux-chips span small{font-size:9px;color:var(--text-dim);font-weight:700}.ux-chips .on{background:var(--accent);border-color:var(--accent);color:#06251C}.ux-chips .on small{color:#06251C}"
+    + ".ux-info{display:flex;gap:10px;align-items:center;margin-top:14px;padding:11px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:12.5px;color:var(--text-mid);font-weight:600;line-height:1.45;cursor:pointer}"
+    + ".ux-info i{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid #5AD7FF;color:#5AD7FF;font-style:normal;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:12px;font-family:Georgia,serif}"
+    + ".ux-info b{color:var(--text)}.ux-info .go{margin-left:auto;color:var(--accent);font-weight:800;white-space:nowrap}"
+    + "body.ux-land .ux-two{display:flex;gap:24px}body.ux-land .ux-two>div{flex:1;min-width:0}body.ux-land .ux-inp{margin-top:6px}";
+  document.head.appendChild(st);
+  if (!document.getElementById('uxEvRot')) {
+    var r = document.createElement('div'); r.id = 'uxEvRot';
+    r.innerHTML = '<div style="font-size:40px">📱</div><b>予定は縦向きで見やすく作っています</b><span>スマホを縦にしてください</span><u onclick="uxEvKeep()">このまま横で見る</u>';
+    document.body.appendChild(r);
+  }
+}
+// 入口のタイル1枚
+function _uxTile(o) {
+  return '<div class="ux-t ux-c-' + o.c + (o.next ? ' next' : '') + (o.w ? ' w' : '') + (o.wide ? ' wide' : '') + '" onclick="' + o.on + '">'
+    + (o.next ? '<span class="bd">次はここ</span>' : (o.bd ? '<span class="bd">' + o.bd + '</span>' : ''))
+    + '<div class="ic">' + o.ic + '</div><b>' + o.lb + '</b><div class="st">' + (o.st || '') + '</div></div>';
+}
+// ページの下の帯（戻る・●・次へ）
+function _uxBtm(back, dots, cur, dotOn, next, nextOn) {
+  var h = '<div class="ux-btm"><span class="ux-bk" onclick="' + back + '">‹ 戻る</span>';
+  if (dots && dots.length > 1) h += '<div class="ux-dots">' + dots.map(function(d, i) { return '<span class="' + (i === cur ? 'on' : '') + '" onclick="' + dotOn + '(' + i + ')"><i></i>' + d + '</span>'; }).join('') + '</div>';
+  if (next) h += '<span class="ux-nx" onclick="' + nextOn + '">' + next + '</span>';
+  return h + '</div>';
+}
+// 横にスワイプでページ送り
+function _uxSwipe(el, prev, next) {
+  if (!el || el._uxSw) return; el._uxSw = 1;
+  var x0 = null, y0 = 0;
+  el.addEventListener('touchstart', function(e) { if (e.touches.length !== 1) { x0 = null; return; } var t = e.target; if (t && t.closest && t.closest('input,textarea,select,.p2r-scroll')) { x0 = null; return; } x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  el.addEventListener('touchend', function(e) {
+    if (x0 === null) return; var t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) { if (dx < 0) next(); else prev(); }
+  }, { passive: true });
+}
+
+// ════ PLAN：入口（タイル）と、1画面1つのページ ════
+var _p2Pg = '', _p2PgI = 0;
+var P2_PG = { why: '想い', goal: '目標', rm: 'ロードマップ', mon: '', do: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し' };
+var P2_PG_FLOW = ['why', 'goal', 'rm', 'mon', 'do'];
+function _p2PgTitle(k) { return k === 'mon' ? parseInt(_p2Ym(0).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
+function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
+function p2Go(k, i) {
+  _p2Pg = k || ''; _p2PgI = i || 0;
+  if (currentView !== 'plan') { switchView('plan'); return; }
+  renderPlan();
+  try { var sa = document.getElementById('scrollArea'); if (sa) sa.scrollTop = 0; } catch (e) {}
+}
+function p2PgSub(i) { p2Go(_p2Pg, i); }
+function p2Back() { if (_p2PgI > 0) p2Go(_p2Pg, _p2PgI - 1); else p2Go(''); }
+function _p2PgSubs(k) { var ym = _p2Ym(0); return k === 'mon' ? ['S稼働', 'ほかの目標', parseInt(_p2Ym(1).slice(5), 10) + '月'] : []; }
+function _p2WhyDone() { var n = _p2().north || {}; return !!(String(_p2WhyText() || '').trim() || _p2G().p1 || (n.wants || []).length || (n.be || []).length); }
+function _p2TodayLeft() {
+  var t = evTodayYmd();
+  return (state.events || []).filter(function(e) { return e && !e.deleted && e.type !== 'event' && e.date === t && !e.done; }).length;
+}
+function _p2DoRest(ym) {
+  var rest = 0;
+  try { _p2DoRows(ym).forEach(function(r) { if (!(r.ok || r.wOk)) rest += r.short || 0; }); } catch (e) {}
+  return rest;
+}
+// 次にやるところ（想い → 目標 → 今月の目標 → 今週やること）
+function _p2NextKey() {
+  var p = state.goals.plan;
+  if (!_p2WhyDone()) return 'why';
+  if (!(p.title && p.deadline)) return 'goal';
+  if (!_p2Declared(_p2Ym(0))) return 'mon';
+  return 'do';
+}
+function _p2HubHtml() {
+  var ym = _p2Ym(0), p = state.goals.plan, m = _p2M(ym), nk = _p2NextKey();
+  var d0 = new Date(), left = new Date(d0.getFullYear(), d0.getMonth() + 1, 0).getDate() - d0.getDate() + 1;
+  var why = String(_p2WhyText() || '').split('\n').filter(Boolean)[0] || (_p2().motto || '');
+  var S = 0, ez = null; try { ez = _dtEzNow(); S = ez.S; } catch (e) { S = _sNow(); }
+  var nx = _p2Next(), rest = _p2DoRest(ym), tl = _p2TodayLeft(), rv = !!_p2ReviewHtml();
+  var inc = p.income ? Math.round((+p.income) / 10000).toLocaleString() : '';
+  var T = [
+    { k: 'why', c: 'rose', ic: '💗', lb: '想い', bd: _p2WhyDone() ? '✓ 書いた' : '', st: _p2WhyDone() ? '価値観・やりたいこと' : 'なぜやるのかを<br><em>書いてみる</em>' },
+    { k: 'goal', c: 'gold', ic: '🏆', lb: '目標', bd: (p.title && p.deadline) ? '✓ 決めた' : '', st: (p.title && p.deadline) ? evEsc(p.title) + '<br>' + (inc ? '<em>月収' + inc + '万</em>・' : '') + evEsc(String(p.deadline).replace('-', '/')) : '目標を<br><em>つくる</em>' },
+    { k: 'rm', c: 'sky', ic: '🗺️', lb: 'ロードマップ', st: (!nx.isFinal && nx.title) ? '次の山 <em>' + evEsc(nx.title) + '</em>' + (nx.deadline ? '<br>' + evEsc(nx.deadline.replace('-', '/')) + 'まで' : '') : '年間のマイルストーン' },
+    { k: 'mon', c: 'mint', ic: '🎯', lb: _p2PgTitle('mon'), bd: _p2Declared(ym) ? '✓ 設定ずみ' : '',
+      st: (m.s === '' || m.s == null) ? 'S稼働の目標を<br><em>まだ決めていない</em>' : (_p2Declared(ym) ? 'S稼働 目標 <em>' + m.s + '人</em><br>今 ' + S + '人' : 'S稼働 ' + m.s + '人<br><em>設定するを押す</em>') },
+    { k: 'do', c: 'pur', ic: '✅', lb: '今週やること', w: 1, st: (rest ? '今週 <em>あと' + rest + '件</em>' : '今週の分は予定ずみ ✓') + (tl ? '・今日のタスク <em>' + tl + '件</em>' : '') }
+  ];
+  var h = '<div class="ux-hub"><div class="ux-hd"><h1>PLAN</h1>' + (why ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span></div>'
+    + '<div class="ux-tiles">' + T.map(function(t) { t.next = t.k === nk; t.on = 'p2Go(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
+    + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div>'
+    + '<span class="ux-sb' + (rv ? ' hot' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (rv ? '<span class="dot"></span>' : '') + '</span>'
+    + '<span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
+  return h;
+}
+function _p2PageHtml() {
+  var k = _p2Pg, ym = _p2Ym(0), body = '', subs = _p2PgSubs(k), i = Math.min(_p2PgI, Math.max(0, subs.length - 1));
+  var fi = P2_PG_FLOW.indexOf(k), next = '', nextOn = '';
+  if (fi >= 0 && fi < P2_PG_FLOW.length - 1) { next = 'つぎ：' + _p2PgTitle(P2_PG_FLOW[fi + 1]) + ' ›'; nextOn = 'p2Go(\'' + P2_PG_FLOW[fi + 1] + '\')'; }
+  var li = function(ic, t, sub, on) { return '<div class="ux-li" onclick="' + on + '"><span class="ic">' + ic + '</span><span>' + t + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="ch">›</span></div>'; };
+  if (k === 'why') {
+    var nb = _p2Notes(), wt = String(_p2WhyText() || '').trim();
+    body = (wt ? '<div class="p2-card" onclick="p2NotesOpen(\'why\',\'read\')" style="cursor:pointer"><div class="p2-meta">🔥 やる理由</div><div style="font-size:15px;font-weight:700;line-height:1.7;white-space:pre-wrap;margin-top:4px">' + evEsc(wt.slice(0, 220)) + (wt.length > 220 ? '…' : '') + '</div></div>' : '')
+      + '<div class="ux-list">'
+      + li('🔥', 'やる理由', wt ? '書いた・' + _p2NbChars(wt) + '字' : 'なぜ「今」全力で動く？', 'p2NotesOpen(\'why\')')
+      + li('🧭', '価値観ワーク', 'やりたいこと・なりたい自分を選ぶ', 'p2GwOpen(1)')
+      + li('📓', '想いのノート', '動かなかったら1年後・成功した毎日 など', 'p2NotesOpen()')
+      + li('🏡', '理想の生活', 'いくらあれば理想の暮らし？', 'p2LifeOpen()')
+      + li('🌈', '夢100', ((_p2G().dreams || []).length ? (_p2G().dreams.filter(function(d) { return d.done; }).length + '/' + _p2G().dreams.length + ' 達成') : 'やりたいことを100個'), 'p2DreamOpen()')
+      + '</div>';
+  } else if (k === 'goal') {
+    body = _p2NorthHtml(true)
+      + '<div class="ux-list">' + li('✎', '目標をなおす', '目標月収・タイトル・期日', 'p2Wiz()') + li('📆', '年別目標', '1年ごとの目標', 'p2YearsOpen()') + li('🧮', 'ギャップ', '今と目標の差を計算', 'p2GapOpen()') + '</div>';
+  } else if (k === 'rm') {
+    body = _p2PcRailHtml() + '<div class="ux-list">' + li('🗺', '年間ロードマップを編集', '月ごとのフロント数・マイルストーン', 'p2RmOpen()') + li('📆', '年別目標', '', 'p2YearsOpen()') + li('🎮', 'シミュレーション', 'フロント数で月収がどう変わるか', 'p2SimOpen()') + '</div>';
+  } else if (k === 'mon') {
+    if (i === 0) body = _p2SPageHtml(ym);
+    else body = _p2MonthHtml(i === 1 ? ym : _p2Ym(1), i === 1 ? 0 : 1, true);
+    if (i < 2) { next = i === 0 ? 'つぎ：ほかの目標 ›' : (_p2Declared(ym) ? 'つぎ：来月 ›' : '✅ 目標を設定する'); nextOn = i === 0 ? 'p2PgSub(1)' : (_p2Declared(ym) ? 'p2PgSub(2)' : 'p2Declare(\'' + ym + '\')'); }
+  } else if (k === 'do') {
+    body = _p2DoHtml(ym) + _p2UnionHtml();
+    next = '📅 予定へ ›'; nextOn = 'switchView(\'events\')';
+  } else if (k === 'rev') {
+    var rv = _p2ReviewHtml(), past = '';
+    Object.keys(_p2().months || {}).sort().reverse().slice(0, 12).forEach(function(y) {
+      var r = _p2().months[y].review; if (!r || r.skipped) return;
+      past += '<div class="p2-card"><div class="p2-t">' + _p2YmLabel(y) + 'の振り返り</div>' + (r.g ? '<div class="p2-meta">👍 ' + evEsc(r.g) + '</div>' : '') + (r.b ? '<div class="p2-meta">🤔 ' + evEsc(r.b) + '</div>' : '') + (r.c ? '<div class="p2-meta">🔧 ' + evEsc(r.c) + '</div>' : '') + '</div>';
+    });
+    body = rv || '<div class="p2-meta" style="padding:6px 2px 4px">前の月の振り返りは、月が変わると最初にここに出ます</div>';
+    if (past) body += '<div class="ux-sec">これまでの振り返り</div>' + past;
+  } else if (k === 'tool') {
+    var ck = _p2CkCount(), ib = (_p2().inbox || []).filter(function(x) { return x && x.st !== 'done'; }).length, dr = _p2G().dreams || [];
+    body = '<div class="ux-list">'
+      + li('🧮', 'ギャップ', '今と目標の差', 'p2GapOpen()')
+      + li('🗺', '年間ロードマップ', '', 'p2RmOpen()')
+      + li('📆', '年別目標', '', 'p2YearsOpen()')
+      + li('🎮', 'シミュレーション', '', 'p2SimOpen()')
+      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2DreamOpen()')
+      + li('✅', 'チェック', ck.done + '/' + ck.total, 'p2CheckOpen()')
+      + li('💴', 'BB早見表', '', 'p2BbOpen()')
+      + li('✍️', '書き出し', '未整理 ' + ib + '件', 'p2Go(\'inb\')')
+      + li('⚙️', '今週やることの設定', '動員の計画など', 'p2DoMenu(\'more\')')
+      + '</div>';
+  } else if (k === 'inb') {
+    body = _p2InboxHtml();
+  }
+  var back = (k === 'inb') ? 'p2Go(\'tool\')' : 'p2Back()';
+  return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && i ? '・' + subs[i] : '') + '</b></span><span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
+    + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, subs, i, 'p2PgSub', next, nextOn) + '</div>';
+}
+// S稼働（いちばん大事な数字）
+function _p2SPageHtml(ym) {
+  var m = _p2M(ym), S = 0, near = 0;
+  try { var ez = _dtEzNow(); S = ez.S; near = ez.near.length; } catch (e) { S = _sNow(); }
+  var nx = _sNext(S), v = (m.s === '' || m.s == null) ? '' : +m.s;
+  var cands = [S + 1, S + 2, nx, _sNext(nx)].filter(function(x, j, a) { return x > 0 && a.indexOf(x) === j; }).sort(function(a, b) { return a - b; });
+  while (cands.length < 4) cands.push(cands[cands.length - 1] + 1);
+  cands = cands.slice(0, 4);
+  return '<div class="ux-s"><div class="ux-step">1 / 3　いちばん大事な数字から</div><h2 class="ux-h2">S稼働<span class="ux-req">必ず決める</span></h2>'
+    + '<div class="ux-two"><div><div class="ux-now"><span>今</span><b>' + S + '</b><span>人</span></div>'
+    + '<div class="ux-nxs">次の段 <em>' + nx + '人</em>' + (S_STEP_NOTE[nx] ? '（' + S_STEP_NOTE[nx] + '）' : '') + '・あと' + Math.max(0, nx - S) + '人</div>'
+    + _sLadderHtml(S) + '</div>'
+    + '<div><div class="ux-inp' + (v !== '' ? ' ok' : '') + '"><span>' + parseInt(ym.slice(5), 10) + '月の目標</span><input type="number" inputmode="numeric" placeholder="' + nx + '" value="' + v + '" onfocus="edSelAll(this)" onchange="p2SetM(\'' + ym + '\',\'s\',this.value)"><small>人</small></div>'
+    + '<div class="ux-chips">' + cands.map(function(c) { return '<span class="' + (v === c ? 'on' : '') + '" onclick="p2SetM(\'' + ym + '\',\'s\',' + c + ')">' + c + (c === nx ? '<small>次の段</small>' : '') + '</span>'; }).join('') + '</div>'
+    + '<div class="ux-info" onclick="dtEzOpen(\'s\')"><i>i</i><span><b>あと一歩の人 ' + near + '人</b><br>今月Sになれそうな人・S稼働って？</span><span class="go">見る ›</span></div>'
+    + '</div></div></div>';
+}
+setTimeout(function() { try { _uxSync(); } catch (e) {} }, 0);
 function renderPlan() {
   var wrap = document.getElementById('view-plan');
   if (!wrap) return;
@@ -15896,6 +16154,7 @@ function renderPlan() {
     // v537: PCは「大きな目標（ヒーロー）→ マイルストーンの横線 → 今月やること｜目標の入力」。
     //        目標設定のツール類は ⚙ で右から出すパネルへ（常時は出さない）。書き出しは右下の✍️メモパッド
     wrap.classList.add('p2pc-on');
+    document.body.classList.remove('ux-pg', 'ux-hub');
     var tabYm = _p2Ym(_p2PcTab);
     wrap.innerHTML = _p2PcHeroHtml()
       + _p2PcRailHtml()
@@ -15905,7 +16164,12 @@ function renderPlan() {
       + _p2MonthHtml(tabYm, _p2PcTab, true) + unn + '</div></div>';
   } else {
     wrap.classList.remove('p2pc-on');
-    wrap.innerHTML = alertH + rev + north + rm + doH + mon + unn + inb; // v591: 目標（S稼働の階段）→ 年間マイルストーン → 今週やること → 今月の目標
+    // v593: スマホは入口（タイル）→ 押すと1画面に1つのページ（縦横どちらでも）
+    _uxCss();
+    wrap.innerHTML = _p2Pg ? _p2PageHtml() : _p2HubHtml();
+    document.body.classList.toggle('ux-pg', !!_p2Pg);
+    document.body.classList.toggle('ux-hub', !_p2Pg);
+    if (_p2Pg === 'mon') _uxSwipe(wrap, function() { if (_p2PgI > 0) p2PgSub(_p2PgI - 1); }, function() { if (_p2PgI < 2) p2PgSub(_p2PgI + 1); });
   }
   if (typeof _p2FabBadge === 'function') _p2FabBadge();
   _p2BannerSync();
@@ -16926,7 +17190,8 @@ function p2TgtGo(k, field) {
   _p2SheetClose('p2TwOv');
   var d = P2_TGT_DEF[k] || {};
   if (d.how === 'month') {
-    if (currentView !== 'plan') switchView('plan');
+    _p2PgSet('mon', 1);
+    if (currentView !== 'plan') switchView('plan'); else renderPlan();
     setTimeout(function() {
       var el = document.getElementById('p2MonCur'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       var inp = el && el.querySelector('input.p2-in[onchange*="\'' + (field || k) + '\'"]'); if (inp) setTimeout(function() { try { inp.focus(); } catch (eF) {} }, 400);
@@ -16987,12 +17252,12 @@ function p2DrawerOpen() {
 }
 
 // ── 北極星 ──
-function _p2NorthHtml() {
-  // v474: GOALハブ（目標＋5ツールの入口）
+function _p2NorthHtml(lite) {
+  // v474: GOALハブ（目標＋5ツールの入口）。v593: lite＝PLANの「目標」ページ用（ステップ表示・ツールのボタンなし）
   var p = state.goals.plan, p2 = _p2(), n = p2.north, g = _p2G();
   var chips = function(arr, pre) { return (arr || []).slice(0, 8).map(function(x) { return '<span class="p2-chip">' + pre + evEsc(x) + '</span>'; }).join(''); };
   var hasGoal = !!(p.title && p.deadline);
-  var h = '<div class="p2-card">' + (typeof _p2StepperHtml === 'function' ? _p2StepperHtml() : '') + '<div class="p2-t">' + icn('star') + ' 目標設定<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : icn('compass') + ' 目標をつくる') + '</span></div>';
+  var h = '<div class="p2-card">' + (!lite && typeof _p2StepperHtml === 'function' ? _p2StepperHtml() : '') + '<div class="p2-t">' + icn('star') + ' 目標設定<span class="sp"></span><span class="p2-btn" style="margin:0;padding:6px 12px" onclick="p2Wiz()">' + (hasGoal ? '✎ 編集' : icn('compass') + ' 目標をつくる') + '</span></div>';
   if (hasGoal) {
     // v483: タイトル・月収を大きく＋スローガン（タップで編集）
     // v572: いちばん大事な目標月収を先に、その下にタイトル・期日
@@ -17042,6 +17307,7 @@ function _p2NorthHtml() {
   if (n.life) cAll += '<span class="p2-chip">🏠' + evEsc(String(n.life).slice(0, 40)) + '</span>';
   if (cAll) h += '<div style="margin-top:8px">' + cAll + '</div>';
   // ツールボタン
+  if (lite) return h + '</div>';
   var ck = _p2CkCount();
   if (typeof _p2GapSummary === 'function') h += _p2GapSummary();
   h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">'
@@ -18852,7 +19118,7 @@ function p2WhyGo(where) {
   else if (where === 'rm') p2RmOpen();
   else if (where === 'coef') p2CoefSheet();
   else if (where === 'cal') switchView('events');
-  else if (where === 'month') { if (currentView !== 'plan') switchView('plan'); setTimeout(function() { var el = document.getElementById('p2MonCur'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120); }
+  else if (where === 'month') { _p2PgSet('mon', 1); if (currentView !== 'plan') switchView('plan'); else renderPlan(); setTimeout(function() { var el = document.getElementById('p2MonCur'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120); }
 }
 function p2WhyAdd(key) { _p2SheetClose('p2WhyOv'); p2AddKindEv(P2_WHY_KIND[key] || 'CT'); }
 function _p2WhyKeys() {
@@ -19351,6 +19617,7 @@ function p2StepGo(i) {
   if (i === 1) { p2YearsOpen(); return; }
   if (i === 2) { p2GapOpen(); return; }
   if (i === 3) { p2RmOpen(); return; }
+  if ((i === 4 || i === 5) && !isPCMode()) { p2Go(i === 4 ? 'mon' : 'do', i === 4 ? 1 : 0); return; }
   if (i === 4) { var el = document.getElementById('p2MonCur'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   if (i === 5) { var f = document.getElementById('p2FunCard'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   if (i === 6) { switchView('home'); return; }
