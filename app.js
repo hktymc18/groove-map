@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v591';
+var APP_JS_VERSION = 'v592';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v591';
+  var DATA_VERSION = 'v592';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v592', d:'2026-10-05', items:['📊 データタブ（くわしく）の「平均稼働」を、％ではなく「平均稼働人数（1ハウディあたり）」に。自分から始まるチームの稼働率の合計÷100＝1回のハウディに来る見込みの人数です（推移・表・タイルも人数で。過去の月はその月のMAPの記録から出し直します）'] },
   { v:'v591', d:'2026-10-05', items:['🔥 S稼働の階段（5→10→15→30→50→100）。今の人数から「次の段」を自動で出します（30人＝NS一本メシ）。PLANの目標カード・データタブに表示し、次の段に届いたらお祝い','📅 今月の目標にS稼働（必須：入れないと設定できません）・コミッション・BRを増やす／維持する・自分の成長（在り方・スキル）を追加。今までの行はそのまま','🗺 スマホのPLANにも年間マイルストーン（PCと同じ横軸。横にスワイプ）','✓ あと一歩Sの人・1,000ptに届いていない審査中やBRの人のタスクを終えると、つながる目標（今月S稼働・次の段まで など）を表示'] },
   { v:'v590', d:'2026-10-05', items:['表記は「フロントBR」のままに戻しました（数え方は v589 のとおり、間にBRでない人がいても数えます）'] },
   { v:'v589', d:'2026-10-05', items:['⛰ PLANの「次の山」の条件と「必要数とギャップ」のBRの人数を、リーディングと同じ「第1世代BR」（自分から下で最初に出てくるBR。間にBRでない人がいても数える）にそろえました'] },
@@ -8763,7 +8764,7 @@ function _aggSumMonthly(statsList){
       var nums=[]; rows.forEach(function(r){ var n=_aggNum(r[i]); if(n!==null)nums.push(n); });
       if(!nums.length){ vals.push(''); continue; }
       var s=nums.reduce(function(a,b){return a+b;},0);
-      if(lb==='平均稼働') s=Math.round(s/nums.length*10)/10;
+      if(lb==='平均稼働') s=Math.round(s/nums.length*10)/10; // 旧データ（％）。v592の平均稼働人数はチームの合計
       vals.push(String(Math.round(s*10)/10));
     }
     return { label:lb, vals:vals };
@@ -11437,9 +11438,10 @@ function _dtAutoCounts(allMs, curMs, fmon) {
     if (!isNaN(r9) && ['S','A','B','C'].indexOf(m.activity) >= 0) { _rN9++; _rS9 += r9; }
   });
   counts.rate = _rN9 ? Math.round(_rS9 / _rN9) : '';
+  counts.actN = _rN9 ? Math.round(_rS9 / 10) / 10 : ''; // v592: 平均稼働人数＝自分から始まるチームの稼働率の合計÷100（1ハウディあたりに来る人数）
   return counts;
 }
-var DT_AUTO_KEY = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','総人数':'uni','OUT':'out','研修生':'tr'};
+var DT_AUTO_KEY = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','平均稼働人数':'actN','総人数':'uni','OUT':'out','研修生':'tr'}; // v592: 平均稼働人数（1ハウディあたり）
 // v529: 推移グラフの過去の月は「その月のデータ」から出す。
 //   従来は表示中の月の保存データに入っている12ヶ月分の欄だけを読んでいたため、翌月コピーで引き継がれなかった月や
 //   あとから増えた行（総人数など）は、データがあってもグラフに出なかった
@@ -11512,6 +11514,9 @@ function buildAutoStats() {
     var _bi9 = -1; s.monthly.forEach(function(r, i){ if (r.label === 'B1') _bi9 = i; });
     s.monthly.splice(_bi9 >= 0 ? _bi9 + 1 : s.monthly.length, 0, { label: '研修生', vals: ['','','','','','','','','','','',''] });
   }
+  // v592: 「平均稼働（％）」の行 → 「平均稼働人数」。％の値は単位が違うので消す（過去の月はその月のMAPの記録から人数で出し直す）
+  s.monthly.forEach(function(r){ if (r.label === '平均稼働') { r.label = '平均稼働人数'; r.vals = r.vals.map(function(){ return ''; }); } });
+  if (!s.monthly.some(function(r){ return r.label === '平均稼働人数'; })) s.monthly.push({ label: '平均稼働人数', vals: ['','','','','','','','','','','',''] });
   // v521: 総人数は自動（新しい行）。UNIVERSE＝UNIVERSE RIDE（ゼネラルイベント）の参加人数なので手入力に戻す
   if (!s.monthly.some(function(r){ return r.label === '総人数'; })) s.monthly.unshift({ label: '総人数', vals: ['','','','','','','','','','','',''] });
   if (!s.uniFix521) {
@@ -11546,7 +11551,7 @@ var _dtMonthIdx = 11;           // 推移で選んでいる月（0〜11、11=表
 var DT_MANUAL = ['UNIVERSE', 'コミッション']; // v521: 手入力の項目
 var DT_METRICS = [
   { k: '総人数', lb: '総人数', unit: '人' },
-  { k: '平均稼働', lb: '平均稼働', unit: '%' },
+  { k: '平均稼働人数', lb: '平均稼働人数', unit: '人', sub: '1ハウディあたり' }, // v592: ％ではなく人数
   { k: 'S', lb: 'S稼働', unit: '人' },
   { k: 'A', lb: 'A', unit: '人' },
   { k: 'B', lb: 'B', unit: '人' },
@@ -12047,8 +12052,8 @@ function _dtDonut(cnt) {
 function renderDataHub() {
   var box = document.getElementById('dataHub'); if (!box) return;
   var ro = _dtReadOnly();
-  var tiles = ['総人数', '平均稼働', 'S', 'OUT', 'B1', '研修生', 'UNIVERSE', 'コミッション'];
-  var colors = { '総人数': '#2CE5B8', '平均稼働': '#8B7CFF', 'S': '#2CE5B8', 'OUT': '#FF5D73', 'B1': '#FFD166', '研修生': '#5AD7FF', 'UNIVERSE': '#C583FF', 'コミッション': '#FFB454' };
+  var tiles = ['総人数', '平均稼働人数', 'S', 'OUT', 'B1', '研修生', 'UNIVERSE', 'コミッション'];
+  var colors = { '総人数': '#2CE5B8', '平均稼働人数': '#8B7CFF', 'S': '#2CE5B8', 'OUT': '#FF5D73', 'B1': '#FFD166', '研修生': '#5AD7FF', 'UNIVERSE': '#C583FF', 'コミッション': '#FFB454' };
   var h = '<div class="dt-grid">';
   tiles.forEach(function(k) {
     var meta = _dtMeta(k), v = _dtVals(k), cur = v[11], prev = v[10];
@@ -12085,7 +12090,7 @@ function renderDataHub() {
     var ml = _dtMonths()[11];
     h += '<div class="dt-todo" onclick="dtInputOpen(11)">' + icn('pencil') + ' ' + ml.m + '月の' + miss.join('・') + 'が未入力です<span>入力する ›</span></div>';
   }
-  h += '<div class="dt-foot">' + icn('refresh') + ' 総人数・平均稼働・S〜C・OUT・B1・研修生は現状MAPから自動集計（UNIVERSE・コミッションは手入力）</div>';
+  h += '<div class="dt-foot">' + icn('refresh') + ' 総人数・平均稼働人数・S〜C・OUT・B1・研修生は現状MAPから自動集計（UNIVERSE・コミッションは手入力）</div>';
   box.innerHTML = h;
   _dtApplyTab();
 }
@@ -12560,7 +12565,7 @@ function renderStats() {
     roBanner.textContent = _aggActive ? '合算表示中：閲覧のみ（入力・保存はできません）' : '共有MAPを閲覧中：閲覧のみ（入力・保存はできません）';
     roBanner.style.display = statsReadOnly ? '' : 'none';
   }
-  var hlRows = ['平均稼働','UNIVERSE'];
+  var hlRows = ['平均稼働人数','UNIVERSE'];
   var hl2Rows = ['B1'];
   var comRows = ['コミッション'];
 
@@ -12597,7 +12602,7 @@ function renderStats() {
   }
 
   var EDITABLE_ROWS = ['UNIVERSE','コミッション']; // v521: UNIVERSE（UNIVERSE RIDE参加人数）とコミッションは手入力
-  var AUTO_ROWS = ['マケ・PG','DLR動員','S','A','B','C','B1','平均稼働','OUT','総人数','研修生'];
+  var AUTO_ROWS = ['マケ・PG','DLR動員','S','A','B','C','B1','平均稼働人数','OUT','総人数','研修生'];
   var tbody = document.getElementById('statsTblBody');
   tbody.innerHTML = '';
   (s.monthly||[]).forEach(function(row) {
@@ -28914,7 +28919,7 @@ function openTaskForMember() {
 function getDefaultStats() {
   return { monthly:[
     {label:'総人数',vals:['','','','','','']},
-    {label:'平均稼働',vals:['','','','','','']},
+    {label:'平均稼働人数',vals:['','','','','','']},
     {label:'S',vals:['','','','','','']},{label:'A',vals:['','','','','','']},
     {label:'B',vals:['','','','','','']},{label:'C',vals:['','','','','','']},
     {label:'OUT',vals:['','','','','','']},{label:'B1',vals:['','','','','','']},{label:'研修生',vals:['','','','','','']},
