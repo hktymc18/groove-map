@@ -1081,8 +1081,12 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v16';
+var APP_VER = 'v17';
 var CHANGELOG = [
+  { v: 'v17', d: '2026/10/04', items: [
+    '🔰 使い方ガイドに「📋 名簿・管理者」のミッション6つ（さがす・並べる／編集／無効化と削除のちがい／昇格／まとめて直す・バックアップ／予約・オンライン・会計）',
+    '「📊 集計を見る」のミッション5つ（集計タブ／数字の見かた／出席表と稼働率／名前から編集／CSV出力と再集計）'
+  ] },
   { v: 'v16', d: '2026/10/04', items: [
     '🔰 使い方ガイドに「🚀 はじめの準備」を追加（名簿を登録→会員証を配る→イベントを作る→受付担当を決める）',
     '名簿やイベントがまだ無いときは「まずはここから！」と表示。会員証の未発行人数・今月のイベント数もミッションに表示します',
@@ -1318,9 +1322,68 @@ var GX_ROLES = [
       { sel: '#trTabReg', t: 'いちばんカンタンなのは…', x: '登録した直後に<b>QRを見せて、本人のスマホで読み取ってもらう</b>こと！その場で渡せるよ。' }
     ] }
   ] },
-  { k: 'adm', e: '📋', name: '名簿・管理者', view: 'vApp', soon: true },
-  { k: 'stat', e: '📊', name: '集計を見る', view: 'vApp', soon: true }
+  { k: 'adm', e: '📋', name: '名簿・管理者', view: 'vApp', master: '名簿マスター', missions: [
+    { id: 'adm1', t: 'メンバーをさがす・並べる', sub: '1分・検索と並べ替え', steps: [
+      { sel: 'nav button[data-pane="pRoster"]', click: true, t: '「名簿」タブ', x: '<b>「名簿」</b>タブを押してみて！' },
+      { sel: '#q', pre: gxPane('pRoster'), t: '検索', x: '名前・番号・系列の一部を入れると<b>すぐ絞り込める</b>よ。' },
+      { sel: '#rosterHead', pre: gxPane('pRoster'), t: '並べ替え', x: '見出し（番号・氏名・系列・状態）を押すと<b>並べ替え</b>。もう一度押すと逆順になるよ。' },
+      { sel: '#qShowOff', pre: gxPane('pRoster'), t: '無効の人も見る', x: '無効にした人はふだん隠れているよ。<b>チェックを入れると表示</b>されて、有効化に戻すこともできるよ。' }
+    ] },
+    { id: 'adm2', t: 'メンバーを編集する', sub: '1分・名前や系列を直す', steps: [
+      { sel: gxQ('#rosterBody button[data-a="edit"]'), pre: gxPane('pRoster'), t: '「編集」', x: '<b>「編集」</b>で名前・系列・性別・かな・グレードを直せるよ。保存すると会員証にも反映されるよ。', miss: '「編集」ボタンはユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: 'nav button[data-pane="pStats"]', t: '集計からも編集できる', x: '<b>「集計」</b>の出席表で名前を押しても、同じ編集ができるよ。稼働率を見ながら直せて便利！' }
+    ] },
+    { id: 'adm3', t: '無効化と削除のちがい', sub: '1分・やめた人・休んでいる人', steps: [
+      { sel: gxQ('#rosterBody button[data-a="tog"]'), pre: gxPane('pRoster'), t: '「無効化」', x: 'やめた人・休んでいる人は<b>削除ではなく無効化</b>！集計と受付の対象から外れるけど、出席履歴や領収書は残って、「有効化」でいつでも戻せるよ。', miss: '「無効化」ボタンはユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: gxQ('#rosterBody button[data-a="del"]'), pre: gxPane('pRoster'), t: '「削除」', x: '<b>削除は、間違えて登録した人だけ</b>にしてね。迷ったら無効化でOK。', miss: '「削除」ボタンはユニオン管理者・受付管理者の名簿に出るよ。' }
+    ] },
+    { id: 'adm4', t: '研修生を昇格させる', sub: '1分・正規メンバーへ', steps: [
+      { sel: gxQ('#rosterBody button[data-a="promote"]'), pre: gxPane('pRoster'), t: '⭐ 昇格', x: '条件を満たした研修生には<b>「⭐ 昇格」</b>ボタンが出るよ。押すと同じ会員証のまま正規メンバーのカードに変わるよ。',
+        miss: '<b>' + trPromoteRule() + '</b>の研修生には、名簿に「昇格待ち」と「⭐ 昇格」ボタンが出るよ。' },
+      { sel: null, t: '間違えて昇格したら', x: '名簿の<b>「編集」→「🎓 研修履歴」</b>から研修生に戻せるよ。研修の記録や面談シートはそのまま残るよ。' }
+    ] },
+    { id: 'adm5', t: 'まとめて直す・バックアップ', sub: '2分・系列名・グレード・CSV', steps: [
+      { sel: '#btnGroupRen', pre: gxPane('pRoster'), t: '系列名変更', x: '「山田BD」「山田 BD」みたいな<b>表記ゆれをまとめて直せる</b>よ。似ている系列は自動で候補に出るよ。', miss: '「系列名変更」はユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: '#btnGradeSel', pre: gxPane('pRoster'), t: 'グレード変更', x: '名簿の左のチェックで人を選んで<b>グレード（BR・JETCLUB）をまとめて変更</b>。会員証の色も変わるよ。', miss: '「グレード変更」はユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: '#btnCsvOut', pre: gxPane('pRoster'), t: 'CSV出力', x: '名簿を<b>CSVで保存</b>できるよ。ときどきバックアップしておくと安心！' }
+    ] },
+    { id: 'adm6', t: '予約・オンライン・会計', sub: '2分・イベントごとの管理', steps: [
+      { sel: 'nav button[data-pane="pEvents"]', click: true, t: '「イベント」タブ', x: '<b>「イベント」</b>タブを押してみて！' },
+      { sel: gxQ('#evList button[data-a="rsvps"]'), pre: gxPane('pEvents'), t: '🎟 予約', x: '予約受付をONにしたイベントは<b>「🎟 予約」</b>で予約した人の一覧。取消申請もここで承認・却下するよ。', miss: 'イベントで予約受付をONにすると、一覧に「🎟 予約」ボタンが出るよ。' },
+      { sel: gxQ('#evList button[data-a="online"]'), pre: gxPane('pEvents'), t: '💻 オンライン', x: 'オンライン受講の申請は<b>「💻 オンライン」</b>で承認。承認するとその人の会員証にZoomの案内が出るよ。', miss: 'イベントでオンライン受講をONにすると、一覧に「💻 オンライン」ボタンが出るよ。' },
+      { sel: gxQ('#evList button[data-a="fin"]'), pre: gxPane('pEvents'), t: '会計', x: 'イベントごとの<b>会計</b>はここから入力・修正できるよ。', miss: 'イベント一覧の各行に「会計」ボタンがあるよ。' }
+    ] }
+  ] },
+  { k: 'stat', e: '📊', name: '集計を見る', view: 'vApp', master: '集計マスター', missions: [
+    { id: 'st1', t: '集計タブをひらく', sub: '1分・月とユニオンを切り替え', steps: [
+      { sel: 'nav button[data-pane="pStats"]', click: true, t: '「集計」タブ', x: '<b>「集計」</b>タブを押してみて！出席と稼働率がまとめて見られるよ。' },
+      { sel: '#stNext', pre: gxStatPane, t: '月を切り替える', x: '◀ ▶ で<b>見たい月</b>に切り替えられるよ。' },
+      { sel: '#stUnionSel', pre: gxStatPane, t: 'ユニオンを切り替える', x: '複数のユニオンを見られる人は、ここで<b>ユニオンを切り替え</b>できるよ。' }
+    ] },
+    { id: 'st2', t: '数字の見かた', sub: '1分・開催数と平均稼動数', steps: [
+      { sel: gxQ('#statBody .tile'), pre: gxStatPane, t: '開催数', x: '開催数には<b>過去のハウディと、今日「受付を終了」したハウディ</b>が入るよ。これからの予定は入らないから安心してね。', miss: 'その月にハウディが開催されると、ここに開催数や平均稼動数が出るよ。' },
+      { sel: gxQ('#stPendInfo'), pre: gxStatPane, t: '？ボタン', x: '今日の受付がまだ終わっていないときは<b>「？」</b>が出るよ。「受付を終了」すると集計に入るよ。', miss: '今日の受付がまだ終わっていないときは、ここに「？」ボタンが出るよ。「受付を終了」すると集計に入るよ。' }
+    ] },
+    { id: 'st3', t: '出席表と稼働率', sub: '2分・だれが何回来たか', steps: [
+      { sel: '#statMatrix', pre: gxStatPane, t: '出席表', x: '<b>●が出席</b>。稼働率＝出席÷開催数だよ。登録して1ヶ月たっていない人は、<b>登録した日からのハウディ</b>で計算するよ（「10/10登録〜」と出るよ）。', miss: 'ハウディが開催されると、メンバーごとの出席表がここに出るよ。' },
+      { sel: '#statQ', pre: gxStatPane, t: '絞り込み', x: '名前・番号・系列で<b>絞り込み</b>できるよ。系列ごとに見たいときに便利！', miss: '出席表の上に絞り込みの欄があるよ。' },
+      { sel: gxQ('#statMatrix thead th[data-sk="rate"]'), pre: gxStatPane, t: '並べ替え', x: '見出しを押すと<b>並べ替え</b>。稼働率の高い順・低い順もすぐわかるよ。', miss: '出席表の見出しを押すと並べ替えできるよ。' }
+    ] },
+    { id: 'st4', t: '名前から編集する', sub: '1分・その場で無効化・編集', steps: [
+      { sel: gxQ('#statMatrix .stname'), pre: gxStatPane, click: true, t: '名前を押す', x: '出席表の<b>名前（点線の下線）</b>を押してみて！', miss: '出席表の名前を押すと、その人の操作シートが開くよ。' },
+      { sel: function(){ var x = document.querySelector('.modal button[data-sm]'); return x ? x.parentNode : null; }, t: '操作シート', x: '名簿と同じく<b>会員証・編集・昇格・無効化・削除</b>がその場でできるよ。操作すると集計もすぐ更新されるよ。', miss: '操作シートでは、名簿と同じく会員証・編集・昇格・無効化・削除ができるよ。' }
+    ] },
+    { id: 'st5', t: 'CSV出力と再集計', sub: '1分・保存と更新', steps: [
+      { sel: '#btnStatCsv', pre: gxStatPane, t: 'CSV出力', x: '出席表を<b>CSVで保存</b>できるよ。エクセルで開けるよ。' },
+      { sel: '#btnStatReload', pre: gxStatPane, t: '再集計', x: '受付のあとで数字が古いと思ったら<b>「再集計」</b>。最新の出席で計算し直すよ。' }
+    ] }
+  ] }
 ];
+// 集計タブを開き、まだ集計していなければ読み込む（ツアーで光らせる対象を出すため）
+function gxStatPane(){
+  gxPane('pStats')();
+  if(!gStat && $('btnStatReload') && !($('statBody').textContent || '').trim()) $('btnStatReload').click();
+}
 var gxMenuRole = '';
 function gxRoleName(k){ var n = ''; GX_ROLES.forEach(function(r){ if(r.k === k) n = r.name; }); return n; }
 function gxView(){ return ($('vTrainer') && !$('vTrainer').classList.contains('hide')) ? 'vTrainer' : 'vApp'; }
@@ -1427,9 +1490,13 @@ function gxStart(role, mi){
   })();
 }
 function gxShow(){
-  var t = gxTour, st = t.m.steps[t.i], last = t.i === t.m.steps.length - 1;
+  var t = gxTour, st = t.m.steps[t.i];
   if(st.pre) try{ st.pre(); }catch(e){}
   t.el = gxFind(st.sel);
+  gxRender();
+}
+function gxRender(){
+  var t = gxTour, st = t.m.steps[t.i], last = t.i === t.m.steps.length - 1;
   if(t.el && t.el.scrollIntoView){
     var r = t.el.getBoundingClientRect();
     if(r.top < 80 || r.bottom > window.innerHeight - 40) t.el.scrollIntoView({ block: 'center' });
@@ -1461,6 +1528,8 @@ function gxPos(){
   if(!t) return;
   var st = t.gate ? { sel: null } : t.m.steps[t.i];
   if(t.el && !document.body.contains(t.el)) t.el = gxFind(st.sel);
+  // 対象があとから表示された（集計の読み込み完了など）→ 本物を光らせる案内に切り替える
+  if(!t.el && st.sel && !t.gate){ var f = gxFind(st.sel); if(f){ t.el = f; gxRender(); return; } }
   var hole = t.host.querySelector('.gx-hole'), ring = t.host.querySelector('.gx-ring'), dim = t.host.querySelector('.gx-dimall');
   var bub = t.host.querySelector('.gx-bub'), tail = t.host.querySelector('.gx-tail'), jet = t.host.querySelector('.gx-jet');
   var vw = window.innerWidth, vh = window.innerHeight;
