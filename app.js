@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v594';
+var APP_JS_VERSION = 'v595';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v594';
+  var DATA_VERSION = 'v595';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4017,7 +4017,8 @@ function switchView(v) {
   if (v !== 'plan') { _p2Pg = ''; _p2PgI = 0; try { document.body.classList.remove('ux-pg', 'ux-hub'); } catch (eUx) {} } // v593: PLANのページは離れたら入口へ
   try { _uxSync(); } catch (eUs) {}
   window._selectedCardId = null;
-  ['home','members','current','ideal','stats','ol','events','goals','month','plan'].forEach(function(n) {
+  if (v === 'menu') { try { _uxMenuView(); } catch (eMv) {} } // v595
+  ['home','members','current','ideal','stats','ol','events','goals','month','plan','menu'].forEach(function(n) {
     var el = document.getElementById('view-'+n);
     if (el) el.style.display = (n===v ? '' : 'none');
   });
@@ -4046,7 +4047,7 @@ function switchView(v) {
       bh.style.display = 'none';
     } else if (v === 'current' || v === 'ideal') {
       // 現状/理想の切り替えトグル
-      bh.innerHTML = '<span onclick="switchView(\'home\')">‹ メニュー</span>'
+      bh.innerHTML = '<span onclick="event.stopPropagation();switchView(\'menu\')">‹ メニュー</span>'
         + '<span class="bhb-toggle">'
         + '<span class="bhb-t' + (v==='current'?' on':'') + '" onclick="event.stopPropagation();switchView(\'current\')">現状MAP</span>'
         + '<span class="bhb-t' + (v==='ideal'?' on':'') + '" onclick="event.stopPropagation();switchView(\'ideal\')">理想MAP</span>'
@@ -4057,6 +4058,7 @@ function switchView(v) {
       bh.style.display = 'flex';
     }
   }
+  if (bh) bh.onclick = function() { switchView(isPCMode() ? 'home' : 'menu'); }; // v595: スマホの「メニューにもどる」はメニューの入口へ
   updateFabVisibility();
   if (typeof _p2BannerSync === 'function') _p2BannerSync();
   if (v !== 'events') { var sh = document.getElementById('evDaySheet'); if (sh) sh.classList.remove('open'); }
@@ -4069,6 +4071,7 @@ function switchView(v) {
     }
   }
   if (v==='home') renderHome();
+  else if (v==='menu') renderMenuHub();
   else if (v==='members') renderMembers();
   else if (v==='current') { renderTree('current'); updateLTSV('current', state.members); }
   else if (v==='ideal') { renderTree('ideal'); renderCommission(); }
@@ -4494,34 +4497,7 @@ function fbMemTgl(uid) {
   _fbSaveCfg({ members: cfg.members, names: cfg.names, updatedAt: new Date().toISOString() }).then(function() { toast((u && u.name || '') + (i >= 0 ? ' を外しました' : ' を追加しました')); }, function() { toast('保存できませんでした（Firestoreのルールが反映されているか確認してください）'); });
 }
 // ── モバイル：メニュータブ（隠れタブへの常設導線） ──
-function openMobileMenu() {
-  closeMobileMenu();
-  var items = [
-    { v:'plan',    ic:icn('compass'), lb:'PLAN',    sub:'目標・計画・振り返り' },
-    { v:'ol',      ic:icn('clipboard'), lb:'OL',      sub:'フレッシュ・アウトライン' },
-    { v:'members', ic:icn('users'), lb:'メンバー', sub:'一覧・絞り込み' },
-    { v:'ideal',   ic:icn('target'), lb:'理想MAP', sub:'ありたい組織図' }
-  ].filter(function(it){ return !(it.v==='members' && typeof membersTabHidden==='function' && membersTabHidden()); });
-  var rows = items.map(function(it){
-    var on = currentView === it.v;
-    return '<div class="ms-act" onclick="closeMobileMenu();switchView(\'' + it.v + '\')" style="' + (on?'color:var(--accent)':'') + '"><span class="ms-aic">' + it.ic + '</span>' + it.lb + (on?' <span style="color:var(--accent)">✓</span>':'') + '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + it.sub + '</span><span class="ms-ch">›</span></div>';
-  }).join('');
-  if (sharedOwners && sharedOwners.length) rows += '<div class="ms-act" onclick="closeMobileMenu();openSharedDashboard()"><span class="ms-aic">' + icn('share2') + '</span>共有MAP<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + sharedOwners.length + '件</span><span class="ms-ch">›</span></div>';
-  rows += '<div class="ms-act" onclick="closeMobileMenu();openReapproachSheet()"><span class="ms-aic">' + icn('refresh') + '</span>再アプローチ' + ((_reapproach && _reapproach.length) ? '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + _reapproach.length + '件</span>' : '') + '<span class="ms-ch">›</span></div>'; // v361
-  if (currentUser && currentUser.union) rows += '<div class="ms-act" onclick="closeMobileMenu();openUnionListSheet()"><span class="ms-aic">' + icn('landmark') + '</span>ユニオン予定<span class="ms-ch">›</span></div>'; // v392
-  if (typeof _fitOwner === 'function' && _fitOwner()) rows += '<div class="ms-act" onclick="closeMobileMenu();fitOpen()"><span class="ms-aic">' + icn('dumbbell') + '</span>トレーニング<span class="ms-ch">›</span></div>'; // v424: オーナー専用
-  if (_fb.ok) rows += '<div class="ms-act" onclick="closeMobileMenu();fbOpen()"><span class="ms-aic">🐞</span>バグ・要望' + (_fb.newN ? '<span style="margin-left:8px;font-size:11px;font-weight:800;background:var(--gold);color:#2a1a00;border-radius:999px;padding:1px 7px">新着 ' + _fb.newN + '</span>' : '') + '<span class="ms-ch">›</span></div>'; // v585
-  if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) rows += '<div class="ms-act" onclick="closeMobileMenu();openAdminPanel()"><span class="ms-aic">' + icn('shield') + '</span>アカウント管理<span class="ms-ch">›</span></div>';
-  rows += '<div class="ms-act" onclick="closeMobileMenu();openProfileModal()"><span class="ms-aic">' + icn('gear') + '</span>設定・プロフィール<span class="ms-ch">›</span></div>';
-  var ov = document.createElement('div');
-  ov.className = 'ms-overlay'; ov.id = 'mobileMenuOv';
-  ov.onclick = function(e){ if (e.target === ov) closeMobileMenu(); };
-  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">☰ メニュー</div></div><span class="ms-x" onclick="closeMobileMenu()">✕</span></div>'
-    + '<div class="ms-list">' + rows + '</div></div>';
-  document.body.appendChild(ov);
-  requestAnimationFrame(function(){ ov.classList.add('show'); });
-}
+function openMobileMenu() { switchView('menu'); } // v595: メニューは入口のタイル（シートではなく1つの画面）
 function closeMobileMenu() {
   var ov = document.getElementById('mobileMenuOv');
   if (ov) { ov.classList.remove('show'); setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
@@ -4987,6 +4963,7 @@ function _renderCurrentViewNow() {
   else if (currentView === 'ideal') { renderTree('ideal'); renderCommission(); }
   else if (currentView === 'stats') renderStats();
   else if (currentView === 'ol') renderOL();
+  else if (currentView === 'menu') renderMenuHub();
   if (!window._keepSpinner) _hideSwitching(); // 共有MAP読込中は全データが揃うまで維持
 }
 // デバウンス：連続呼び出し（結合リスナー多重発火等）を1フレームにまとめる。
@@ -5351,6 +5328,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v595', d:'2026-10-05', items:['☰ メニューもPLANと同じ「入口」の形に。PLANを大きく、理想MAP・OL・メンバー・再アプローチをタイルで並べました。PLANのタイルには次にやること（想い→目標→今月の目標→今週やること）が出ます','☀️ 今日・ユニオン予定・設定などは下のボタンに。「‹ メニューにもどる」もこの画面に戻ります','📱 横向きではタイルが横一列に並びます'] },
   { v:'v594', d:'2026-10-05', items:['🗺 スマホを横にすると、MAPがPC版と同じ「左から右へ広がる組織図」で全画面に表示されるようになりました（縦はいつものリストのまま）','🧹 横向きのMAPは上のボタン類を1行にまとめました（年月・現状/理想・LTSV・🔍・絞り込み）。研修生/BRなどの絞り込み・並び・地域・受付連携・CSV・共有は「絞り込み・表示」を押すと右から出ます','🎯 理想MAPも横向きで組織図に。「理想 vs 現状」はLTSVのボタンから開けます'] },
   { v:'v593', d:'2026-10-05', items:['🧭 PLANの最初の画面が、ゲームのような「入口」になりました。大きなタイル（想い・目標・ロードマップ・◯月の目標・今週やること）から選びます。次にやるところがミント色に光るので、上から順に迷わず進めます','📄 タイルを押すと全画面で1つずつ表示。左下の「戻る」と右下の「つぎ」で順番に進めます。◯月の目標は「S稼働 → 今月 → 来月」を横にめくれて、S稼働は数字ボタンを押すだけで決まります','📱 スマホを横にしても使えるようになりました。横向きではPC表示に切り替わらず、下のタブが左の列に移ります。PLANのタイルは横一列に並びます（予定は縦向きで見やすく作っています）'] },
   { v:'v592', d:'2026-10-05', items:['📊 データタブ（くわしく）の「平均稼働」を、％ではなく「平均稼働人数（1ハウディあたり）」に。自分から始まるチームの稼働率の合計÷100＝1回のハウディに来る見込みの人数です（推移・表・タイルも人数で。過去の月はその月のMAPの記録から出し直します）'] },
@@ -16257,6 +16235,54 @@ window.addEventListener('resize', function() {
   }
   _uxMapWas = now;
 });
+// ════ v595: メニューも入口のタイルに（PLANを大きく・次にやることを表示。縦は2列・横は1列） ════
+function _uxMenuCss() {
+  if (document.getElementById('uxMenuCss')) return;
+  var st = document.createElement('style'); st.id = 'uxMenuCss';
+  st.textContent = "#view-menu{padding:14px 14px 110px;max-width:640px;margin:0 auto}body.ux-land #view-menu{max-width:none;padding:8px 16px 6px}"
+    + ".ux-sm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.ux-sm .ux-sb{height:46px;font-size:13px;padding:0 8px;flex:none;min-width:0;overflow:hidden;text-overflow:ellipsis}"
+    + "body.ux-land .ux-sm{display:flex;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:6px}body.ux-land .ux-sm::-webkit-scrollbar{display:none}body.ux-land .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px;overflow:visible}"
+    + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#2a1a00;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
+    + "body.ux-land #view-menu .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
+    + ".ux-t .ic .lic{width:48px;height:48px;color:var(--c);stroke-width:1.8}body.ux-land .ux-t .ic .lic{width:56px;height:56px}.ux-sb .lic{width:16px;height:16px}";
+  document.head.appendChild(st);
+}
+function _uxMenuView() {
+  var v = document.getElementById('view-menu');
+  if (!v) { var sa = document.getElementById('scrollArea'); if (!sa) return null; v = document.createElement('div'); v.id = 'view-menu'; v.style.display = 'none'; sa.appendChild(v); }
+  return v;
+}
+function renderMenuHub() {
+  var v = _uxMenuView(); if (!v) return;
+  _uxCss(); _uxMenuCss();
+  var ym = _p2Ym(0), nk = 'do', planSt = '';
+  try {
+    nk = _p2NextKey();
+    var m = _p2M(ym), mLb = parseInt(ym.slice(5), 10) + '月の目標';
+    planSt = nk === 'why' ? '次は <em>想い</em>：なぜやるのかを書く'
+      : nk === 'goal' ? '次は <em>目標</em>をつくる'
+      : nk === 'mon' ? mLb + '：<em>' + ((m.s === '' || m.s == null) ? 'S稼働をまだ決めていない' : '設定するを押す') + '</em>'
+      : (function() { var r = _p2DoRest(ym), t = _p2TodayLeft(); return (r ? '今週 <em>あと' + r + '件</em>' : '今週の分は予定ずみ ✓') + (t ? '・今日のタスク <em>' + t + '件</em>' : ''); })();
+  } catch (e) {}
+  var cnt = function(arr) { return (arr || []).filter(function(x) { return x && !x.deleted; }).length; };
+  var T = [{ k: 'plan', c: 'mint', ic: icn('compass'), lb: 'PLAN', w: 1, wide: 1, next: nk !== 'do', st: planSt || '目標・計画・振り返り', on: 'switchView(\'plan\')' },
+    { k: 'ideal', c: 'pur', ic: icn('target'), lb: '理想MAP', st: 'ありたい組織図<br><em>' + cnt(state.idealMembers) + '人</em>', on: 'switchView(\'ideal\')' },
+    { k: 'ol', c: 'sky', ic: icn('clipboard'), lb: 'OL', st: 'フレッシュ・<br>アウトライン', on: 'switchView(\'ol\')' }];
+  if (!(typeof membersTabHidden === 'function' && membersTabHidden())) T.push({ k: 'members', c: 'gold', ic: icn('users'), lb: 'メンバー', st: '一覧・絞り込み<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'members\')' });
+  T.push({ k: 're', c: 'rose', ic: icn('refresh'), lb: '再アプローチ', st: '声をかけたい人' + ((_reapproach && _reapproach.length) ? '<br><em>' + _reapproach.length + '人</em>' : ''), on: 'openReapproachSheet()' });
+  if (T.length % 2 === 0) T[T.length - 1].w = 1; // 縦2列で端数が出ないように
+  var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
+  var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')');
+  if (currentUser && currentUser.union) S += sb(icn('calendar') + ' ユニオン予定', 'openUnionListSheet()');
+  if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
+  if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
+  if (_fb && _fb.ok) S += sb('🐞 バグ・要望', 'fbOpen()', _fb.newN || '');
+  if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
+  S += sb(icn('gear') + ' 設定', 'openProfileModal()');
+  v.innerHTML = '<div class="ux-hub"><div class="ux-hd"><h1>メニュー</h1><span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
+    + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
+    + '<div class="ux-sm">' + S + '</div></div>';
+}
 function renderPlan() {
   var wrap = document.getElementById('view-plan');
   if (!wrap) return;
