@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v588';
+var APP_JS_VERSION = 'v589';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v588';
+  var DATA_VERSION = 'v589';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v589', d:'2026-10-05', items:['⛰ PLANの「次の山」の条件と「必要数とギャップ」のBRの人数を、リーディングと同じ「第1世代BR」（自分から下で最初に出てくるBR。間にBRでない人がいても数える）にそろえました'] },
   { v:'v588', d:'2026-10-05', items:['💎 リーディングボーナスの計算を資料どおりに：BRの世代（第1世代＝自分から下で最初に出てくるBR）× タイトルでもらえる範囲（ゴールド第1世代〜ブルーダイヤ・チームエリート第6世代）。「範囲の世代×5%」と「第1世代×10%」の高い方。自分のGSVが2,000〜3,000未満は範囲の世代すべて2.5%、2,000未満は0','🏅 理想MAPのタイトル（ゴールド以上）は、維持要件（第1世代のBRの人数・系列のLTSV）に合わせて自動で決まります','📈 理想MAPの「理想 vs 現状」に、タイトルが上がった時のリーディングの額と、足りない要件を表示'] },
   { v:'v587', d:'2026-10-04', items:['📝 お名前の入力例を「山田 太郎」に'] },
   { v:'v586', d:'2026-10-04', items:['🔒 あなたのMAP・予定・データ・目標シート・ATTACK LISTは、あなたと、あなたが共有した人だけが見られるようにしました（管理者も見られません。データベースのルールで守っています）','📝 新規登録・プロフィールのお名前は「本名（フルネーム）」で。ニックネームだと受付の名簿・MAPの共有・承認とつながりません'] },
@@ -16260,7 +16261,7 @@ function p2LfKeep() { if (_p2LfMode === 'near') _p2().lifeNearDismiss = _p2LfTot
 var P2_RANK = ['BR', 'GOLD', 'LAPIS', 'RUBY', 'EMERALD', 'DIAMOND', 'BLUE DIAMOND', 'TEAM ELITE'];
 var P2_LADDER = ['BR', 'RUBY', 'EMERALD', 'DIAMOND', 'BLUE DIAMOND', 'TEAM ELITE']; // BRの次はRUBYを目指すのが基本
 var P2_TITLE_JP = { 'BR': 'ブランドレプリゼンタティブ', 'GOLD': 'ゴールド', 'LAPIS': 'ラピス', 'RUBY': 'ルビー', 'EMERALD': 'エメラルド', 'DIAMOND': 'ダイヤモンド', 'BLUE DIAMOND': 'ブルーダイヤモンド', 'TEAM ELITE': 'チームエリート' };
-// 昇格条件：フロントBRの人数が揃ってから、パワーライン（フロントの系列のLTSV）を◯ヶ月クオリファイ
+// 昇格条件：第1世代BRの人数が揃ってから、パワーライン（フロントの系列のLTSV）を◯ヶ月クオリファイ
 var P2_REQ = {
   'GOLD': { br: 1, pl: [], mo: 0 },
   'LAPIS': { br: 2, pl: [], mo: 0 },
@@ -16519,13 +16520,13 @@ function p2NxSave() {
   if (currentView === 'plan') renderPlan();
   toast('⛰ 次の山：月収 ' + p2.next.inc + '万円・' + p2.next.title);
 }
-// 次の山までの進み具合（フロントBRの人数・パワーライン）
+// 次の山までの進み具合（第1世代BRの人数・パワーライン）。v589: 第1世代＝自分から下で最初に出てくるBR（リーディングと同じ）
 function _p2NextProg(en) {
   var req = P2_REQ[en]; if (!req) return null;
   var ms = membersForMap('current').filter(function(m) { return !m.deleted; });
   var root = ms.filter(function(m) { return !m.parentId; })[0]; if (!root) return null;
   var fr = ms.filter(function(m) { return m.parentId === root.id; });
-  var br = fr.filter(function(m) { return isBROrAbove(m.title); }).length;
+  var br = _lbGens(root.id, _lbKids(ms))[0].length; // v589
   var lt = (typeof ltsvMap === 'function') ? ltsvMap(ms) : {};
   var lines = fr.map(function(f) { return lt[f.id] || 0; }).sort(function(a, b) { return b - a; });
   return { req: req, br: br, pl: req.pl.map(function(t, i) { return { t: t, v: lines[i] || 0, ok: (lines[i] || 0) >= t }; }) };
@@ -16539,7 +16540,7 @@ function _p2ReqHtml(nx) {
   var man = function(v) { return (v >= 10000 ? (Math.round(v / 1000) / 10) + '万' : v.toLocaleString()) ; };
   var brOk = pr.br >= pr.req.br;
   return '<div class="p2h-req">' + (cur ? cur + '<span class="sep">→</span>' : '') + evEsc(en) + 'の条件'
-    + '<span class="rq' + (brOk ? ' ok' : '') + '">フロントBR <b>' + pr.br + '</b>/' + pr.req.br + '人' + (brOk ? ' ✓' : '') + '</span>'
+    + '<span class="rq' + (brOk ? ' ok' : '') + '">第1世代BR <b>' + pr.br + '</b>/' + pr.req.br + '人' + (brOk ? ' ✓' : '') + '</span>'
     + (pr.pl.length ? '<span class="rq-l">パワーライン</span>' + pr.pl.map(function(x) { return '<span class="rq' + (x.ok ? ' ok' : '') + '" title="系列のLTSV ' + x.v.toLocaleString() + 'P">' + man(x.t) + (x.ok ? ' ✓' : '<small>（' + man(x.v) + '）</small>') + '</span>'; }).join('') : '') // v552: RUBY・LAPIS・GOLDはフロントBRの人数だけ
     + (pr.req.mo ? '<span class="rq-m">揃ってから' + pr.req.mo + 'ヶ月クオリファイ</span>' : '') + '</div>';
 }
@@ -19444,7 +19445,7 @@ function _p2YmAdd(ym, n) {
   y += Math.floor((mo - 1) / 12); mo = (((mo - 1) % 12) + 12) % 12 + 1; // 負方向の年またぎも正しく
   return y + '-' + String(mo).padStart(2, '0');
 }
-// フロントBRの予測（現在数＋lead ヶ月前までに入れるフロントの累計）
+// 第1世代BRの予測（現在数＋lead ヶ月前までに入れるフロントの累計）
 function _p2RmBrPred(rm, ym) {
   var lead = _p2Gap().rates.brLead;
   var base = _p2GapAuto().br;
@@ -19464,10 +19465,10 @@ function _p2GapAuto() {
   var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; });
   var br = 0, qr = 0, cand = 0;
   ms.forEach(function(m) {
-    if (root && m.parentId === root.id && memberCat(m) === 'BR') br++;
     if ((m.title || '').trim() === 'ルビー') qr++;
     if (m.priority === '高') cand++; // v497: 候補=優先度「高」（金の船フラグ廃止）
   });
+  if (root) br = _lbGens(root.id, _lbKids(ms))[0].length; // v589: 第1世代BR（自分から下で最初に出てくるBR）
   return { br: br, dist: root ? (root.ptCurrent || 0) : 0, qr: qr, exp: null, env: null, cand: cand };
 }
 // 目標の自動提案（月収から）
@@ -19477,7 +19478,7 @@ function _p2GapCalc() {
   var auto = _p2GapAuto();
   var num = function(v) { return (v === '' || v === undefined || v === null) ? null : (parseInt(v, 10) || 0); };
   var defs = [
-    { k: 'br',   lb: 'フロントBR',  unit: '人', tAuto: null, cAuto: auto.br },
+    { k: 'br',   lb: '第1世代BR',  unit: '人', tAuto: null, cAuto: auto.br },
     { k: 'dist', lb: '流通',       unit: 'P',  tAuto: g.rates.distDef, cAuto: auto.dist },
     { k: 'qr',   lb: 'Qルビー',    unit: '人', tAuto: incMan ? Math.ceil(incMan / g.rates.qrYen) : null, cAuto: auto.qr },
     { k: 'exp',  lb: 'エキスパート', unit: '人', tAuto: null, cAuto: auto.exp },
@@ -19536,11 +19537,11 @@ function _p2GapRender() {
     + '<input class="fi" type="number" inputmode="numeric" value="' + (cd.cIsAuto ? '' : cd.c) + '" placeholder="' + _p2GapAuto().cand + '" style="padding:7px 4px;text-align:center;font-size:13px;border-top-width:1px' + (cd.cIsAuto ? ';color:var(--accent)' : '') + '" onfocus="edSelAll(this)" onchange="p2GapSet(\'c\',\'cand\',this.value)" title="空欄=優先度「高」の人数から自動">'
     + '<span style="text-align:center;border-top:1px solid var(--border);padding-top:6px">' + candGapTxt + '</span>';
   h += '</div>';
-  h += '<div class="p2-meta" style="margin-top:8px">現状の緑数字はMAPから自動（フロントBR=直下のBR・流通=チームPT・Qルビー=ルビーの人数・候補=優先度「高」）。上書き入力も可</div>';
+  h += '<div class="p2-meta" style="margin-top:8px">現状の緑数字はMAPから自動（第1世代BR=自分から下で最初に出てくるBR・流通=チームPT・Qルビー=ルビーの人数・候補=優先度「高」）。上書き入力も可</div>';
   var brIt = calc.items[0];
   if (brIt.gap !== null && brIt.gap > 0) {
     var leadTo = p.deadline ? _p2YmAdd(p.deadline, -g.rates.brLead) : null;
-    h += '<div class="p2-meta" style="margin-top:4px">🕐 フロントBRはLOI→Q2→Q3→BRで最短' + g.rates.brLead + 'ヶ月。あと' + brIt.gap + '人なら<b style="color:#F6C744">' + (leadTo ? _p2YmLabel(leadTo) + 'までにフロント' + brIt.gap + '人' : 'フロント' + brIt.gap + '人（早いほど◎）') + '</b>が必要です</div>';
+    h += '<div class="p2-meta" style="margin-top:4px">🕐 第1世代BRはLOI→Q2→Q3→BRで最短' + g.rates.brLead + 'ヶ月。あと' + brIt.gap + '人なら<b style="color:#F6C744">' + (leadTo ? _p2YmLabel(leadTo) + 'までにフロント' + brIt.gap + '人' : 'フロント' + brIt.gap + '人（早いほど◎）') + '</b>が必要です</div>';
   }
   // 単価・倍率の設定
   h += '<details style="margin-top:8px"><summary style="font-size:12px;color:var(--text-dim);cursor:pointer">' + icn('gear') + ' 単価・倍率の設定</summary>'
@@ -19615,11 +19616,11 @@ function p2GapAlloc() {
     var f = pl.steps[0], l = pl.steps[pl.steps.length - 1];
     return '・' + pl.lb + '：' + parseInt(f.ym.slice(5), 10) + '月 ' + f.v + ' → ' + parseInt(l.ym.slice(5), 10) + '月 ' + l.v;
   }).join('\n');
-  if (brLate) prev += (prev ? '\n' : '') + '⚠️ フロントBR：期日まで' + lead + 'ヶ月を切っているため、今月フロントを入れても最短' + _p2YmLabel(_p2YmAdd(_p2Ym(0), lead)) + '着です（フロント行は変更しません）';
+  if (brLate) prev += (prev ? '\n' : '') + '⚠️ 第1世代BR：期日まで' + lead + 'ヶ月を切っているため、今月フロントを入れても最短' + _p2YmLabel(_p2YmAdd(_p2Ym(0), lead)) + '着です（フロント行は変更しません）';
   if (!plans.length) { alert(prev); return; }
   if (!confirm('📤 ロードマップに割り振ります（該当セルは上書き）：\n\n' + prev + '\n\nよろしいですか？')) return;
   var rm = _p2Rm();
-  if (brItem.gap !== null && brItem.gap > 0 && !rm.rowDefs.some(function(d) { return d.k === 'br'; })) { rm.rowDefs.push({ k: 'br', lb: 'フロントBR' }); }
+  if (brItem.gap !== null && brItem.gap > 0 && !rm.rowDefs.some(function(d) { return d.k === 'br'; })) { rm.rowDefs.push({ k: 'br', lb: '第1世代BR' }); }
   var _idealSkip = 0;
   plans.forEach(function(pl) {
     if (!rm.rows[pl.k]) rm.rows[pl.k] = {};
