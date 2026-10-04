@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v595';
+var APP_JS_VERSION = 'v596';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v595';
+  var DATA_VERSION = 'v596';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4013,8 +4013,11 @@ function updateFabVisibility() {
 function switchView(v) {
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
   if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
+  var _prevView = currentView;
   currentView = v;
   if (v !== 'plan') { _p2Pg = ''; _p2PgI = 0; try { document.body.classList.remove('ux-pg', 'ux-hub'); } catch (eUx) {} } // v593: PLANのページは離れたら入口へ
+  if (v !== 'stats') { _dtPg = ''; try { document.body.classList.remove('ux-dt'); } catch (eUd) {} } // v596
+  else if (!isPCMode() && _prevView !== 'stats') { _dtMode = 'ez'; } // v596: スマホのデータは毎回入口から
   try { _uxSync(); } catch (eUs) {}
   window._selectedCardId = null;
   if (v === 'menu') { try { _uxMenuView(); } catch (eMv) {} } // v595
@@ -5328,6 +5331,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v596', d:'2026-10-05', items:['📊 データ（ざっくり）もタイルの「入口」に。コミッション・S稼働・BR・動かす数字・理想との差を大きなタイルで並べ、入力がまだのところが光ります','📈 タイルを押すと、12ヶ月の棒グラフ＋くわしい数字の1画面に。下の●と「つぎ」で順番に見られます。スマホを横にすると、左にグラフ・右に数字の2列で大きく見られます','🔎 推移・稼働・人数・研修・地域（くわしく）は入口の下のボタンから'] },
   { v:'v595', d:'2026-10-05', items:['☰ メニューもPLANと同じ「入口」の形に。PLANを大きく、理想MAP・OL・メンバー・再アプローチをタイルで並べました。PLANのタイルには次にやること（想い→目標→今月の目標→今週やること）が出ます','☀️ 今日・ユニオン予定・設定などは下のボタンに。「‹ メニューにもどる」もこの画面に戻ります','📱 横向きではタイルが横一列に並びます'] },
   { v:'v594', d:'2026-10-05', items:['🗺 スマホを横にすると、MAPがPC版と同じ「左から右へ広がる組織図」で全画面に表示されるようになりました（縦はいつものリストのまま）','🧹 横向きのMAPは上のボタン類を1行にまとめました（年月・現状/理想・LTSV・🔍・絞り込み）。研修生/BRなどの絞り込み・並び・地域・受付連携・CSV・共有は「絞り込み・表示」を押すと右から出ます','🎯 理想MAPも横向きで組織図に。「理想 vs 現状」はLTSVのボタンから開けます'] },
   { v:'v593', d:'2026-10-05', items:['🧭 PLANの最初の画面が、ゲームのような「入口」になりました。大きなタイル（想い・目標・ロードマップ・◯月の目標・今週やること）から選びます。次にやるところがミント色に光るので、上から順に迷わず進めます','📄 タイルを押すと全画面で1つずつ表示。左下の「戻る」と右下の「つぎ」で順番に進めます。◯月の目標は「S稼働 → 今月 → 来月」を横にめくれて、S稼働は数字ボタンを押すだけで決まります','📱 スマホを横にしても使えるようになりました。横向きではPC表示に切り替わらず、下のタブが左の列に移ります。PLANのタイルは横一列に並びます（予定は縦向きで見やすく作っています）'] },
@@ -11645,6 +11649,7 @@ var _dtMode = 'ez'; // ez=ざっくり／full=くわしく（今までの画面�
 try { if (localStorage.getItem('gm_dtMode') === 'full') _dtMode = 'full'; } catch (eDm) {}
 function dtMode(m, tab) {
   _dtMode = m === 'full' ? 'full' : 'ez';
+  if (_dtMode === 'full') { _dtPg = ''; document.body.classList.remove('ux-dt', 'ux-pg'); } // v596
   try { localStorage.setItem('gm_dtMode', _dtMode); } catch (e) {}
   if (tab) { dtTab(tab); } else _dtApplyTab();
   if (_dtMode === 'ez') renderDtEz();
@@ -11798,6 +11803,7 @@ function dtEzTask(mid) {
 function dtEzMem(mid) { _p2SheetClose('dtEzOv'); if (typeof openEdit === 'function') openEdit(mid); }
 // ── 画面 ──
 function renderDtEz() {
+  if (_dtUx()) return; // v596: スマホは入口のタイル → 1画面1つ
   var box = document.getElementById('dtEz'); if (!box) return;
   _dtEzCss();
   var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), ro = _dtReadOnly();
@@ -11890,7 +11896,7 @@ var DT_EZ_DEF = {
   perAvg: { lb: '1人あたりの平均GSV', u: 'pt', how: '自分のチームGSV ÷ 人数（研修生・ユーザー・OUTを除く）。MAPから自動' }
 };
 function _dtEzRender(k) {
-  var body = document.getElementById('dtEzBody'); if (!body) return;
+  var body = document.getElementById('dtEzBody'); if (!body) { if (_dtPg && currentView === 'stats' && !isPCMode()) _dtUx(); return; } // v596: ページの中で描き直す（理想との差の絞り込みなど）
   var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), h = '', left = _dtEzDaysLeft();
   if (k === 'comm') {
     var cm = _dtVals('コミッション'), f = function(v) { return v === null ? '未入力' : '¥' + Math.round(v).toLocaleString(); };
@@ -16282,6 +16288,119 @@ function renderMenuHub() {
   v.innerHTML = '<div class="ux-hub"><div class="ux-hd"><h1>メニュー</h1><span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
     + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
     + '<div class="ux-sm">' + S + '</div></div>';
+}
+// ════ v596: データ（スマホ）も入口のタイル → 1画面1つ（左にグラフ・右にくわしい数字。縦は上下・横は左右） ════
+var _dtPg = '', DT_PG = [
+  { k: 'comm', lb: 'コミッション' }, { k: 's', lb: 'S稼働' }, { k: 'exam', lb: 'BR' }, { k: 'move', lb: '動かす数字' }, { k: 'gap', lb: '理想との差' }
+];
+function _dtPgIdx(k) { for (var i = 0; i < DT_PG.length; i++) if (DT_PG[i].k === k) return i; return -1; }
+function dtGo(k) {
+  _dtPg = k || '';
+  if (currentView !== 'stats') { switchView('stats'); return; }
+  renderDtEz();
+  try { var sa = document.getElementById('scrollArea'); if (sa) sa.scrollTop = 0; } catch (e) {}
+}
+function dtGoI(i) { if (DT_PG[i]) dtGo(DT_PG[i].k); }
+function _dtUxCss() {
+  if (document.getElementById('dtUxCss')) return;
+  var st = document.createElement('style'); st.id = 'dtUxCss';
+  st.textContent = "body.ux-dt #dtModeBar,body.ux-dt #dtTabs{display:none!important}#dtEz .ux-hub{padding:8px 14px 0}#dtEz .ux-pg{padding:0 14px}body.ux-land #dtEz .ux-hub{padding:8px 16px 0}body.ux-land #dtEz .ux-pg{padding:0 16px}"
+    + "#dtPgBody .ms-hd,#dtPgBody svg[viewBox='0 0 354 92'],#dtPgBody svg[viewBox='0 0 354 92']+.dtez-mm{display:none!important}#dtPgBody>div{padding:0!important}"
+    + ".dtu-ch{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 12px 6px}.dtu-cht{font-size:15px;font-weight:900;display:flex;align-items:baseline;gap:8px}.dtu-cht small{font-size:11px;color:var(--text-dim);font-weight:700}"
+    + ".dtu-leg{display:flex;gap:12px;font-size:10.5px;color:var(--text-mid);font-weight:700;margin-top:3px}.dtu-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}"
+    + ".ux-bars{width:100%;height:auto;display:block;margin-top:4px}.dtu-det{margin-top:12px}.dtu-det .big{font-size:40px}"
+    + ".dtu-big{display:flex;align-items:baseline;gap:6px;margin-top:2px}.dtu-big b{font-size:38px;font-weight:900;font-family:'Inter',sans-serif;line-height:1.05}.dtu-big span{font-size:13px;color:var(--text-mid);font-weight:700}"
+    + "body.ux-land .dtu-pg{display:flex;gap:16px;align-items:flex-start}body.ux-land .dtu-pg>.dtu-ch{flex:1.35;min-width:0;position:sticky;top:50px}body.ux-land .dtu-pg>.dtu-det{flex:1;min-width:0;margin-top:0}"
+    + "body.ux-land #dtEz .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
+    + ".ux-t .ic .lic{width:48px;height:48px;color:var(--c);stroke-width:1.8}body.ux-land .ux-t .ic .lic{width:56px;height:56px}.ux-sb .lic{width:16px;height:16px}"
+    + "#dtEz .ux-sm{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}#dtEz .ux-sm .ux-sb{height:46px;font-size:12.5px;padding:0 6px}"
+    + "body.ux-land #dtEz .ux-sm{display:flex;justify-content:flex-end}body.ux-land #dtEz .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px}";
+  document.head.appendChild(st);
+}
+// 12ヶ月の棒グラフ（最後＝今月を濃く。goal＝点線）
+function _uxBars(vals, o) {
+  o = o || {};
+  var W = 600, H = 230, L = 8, R = 8, B = 26, T = 22, n = vals.length, mx = 0, c = o.color || 'var(--accent)';
+  vals.forEach(function(v) { if (v > mx) mx = v; });
+  if (o.goal > mx) mx = o.goal;
+  mx = (mx || 1) * 1.15;
+  var y = function(v) { return T + (H - T - B) * (1 - v / mx); }, bw = (W - L - R) / n, h = '', f = o.fmt || function(v) { return (Math.round(v * 10) / 10).toLocaleString(); };
+  h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--border2)"/>';
+  if (o.goal) h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(o.goal) + '" y2="' + y(o.goal) + '" stroke="var(--purple)" stroke-width="1.5" stroke-dasharray="6 5"/><text x="' + (W - R) + '" y="' + (y(o.goal) - 5) + '" fill="var(--purple)" font-size="12" font-weight="800" text-anchor="end">' + (o.goalLb || '目標') + '</text>';
+  vals.forEach(function(v, i) {
+    var x = L + i * bw + bw * 0.18, w = bw * 0.64, cur = i === n - 1, lb = (o.lbls && o.lbls[i]) || '';
+    if (v === null || v === undefined) h += '<text x="' + (x + w / 2) + '" y="' + (y(0) - 5) + '" fill="var(--text-dim)" font-size="12" text-anchor="middle">—</text>';
+    else {
+      var top = y(v), hh = Math.max(2, y(0) - top);
+      h += '<rect x="' + x + '" y="' + (y(0) - hh) + '" width="' + w + '" height="' + hh + '" rx="5" fill="' + c + '" opacity="' + (cur ? 1 : 0.45) + '"/>';
+      h += '<text x="' + (x + w / 2) + '" y="' + (y(0) - hh - 6) + '" fill="' + (cur ? 'var(--text)' : 'var(--text-mid)') + '" font-size="12.5" font-weight="800" text-anchor="middle">' + f(v) + '</text>';
+    }
+    h += '<text x="' + (x + w / 2) + '" y="' + (H - 7) + '" fill="' + (cur ? c : 'var(--text-dim)') + '" font-size="12" font-weight="700" text-anchor="middle">' + lb + '</text>';
+  });
+  return '<svg class="ux-bars" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img">' + h + '</svg>';
+}
+function _dtMan(v) { return Math.abs(v) >= 10000 ? (Math.round(v / 1000) / 10).toLocaleString() + '万' : Math.round(v).toLocaleString(); }
+// 入口（タイル）
+function _dtHubHtml() {
+  var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), cm = _dtVals('コミッション'), lm = ms[10], c1 = cm[10], c0 = cm[9], ro = _dtReadOnly();
+  var sg = _dtEzSGoal(now.S), gap = _dtEzGap();
+  var cSt = c1 === null ? (ro ? lm.m + '月は未入力' : '<em>＋ ' + lm.m + '月の金額を入れる</em>') : lm.m + '月のコミッション' + (c0 !== null && c1 - c0 ? '・<em>' + (c1 > c0 ? '▲ ' : '▼ ') + '¥' + Math.abs(Math.round(c1 - c0)).toLocaleString() + '</em>' : '');
+  var nk = (c1 === null && !ro) ? 'comm' : 's';
+  var T = [
+    { k: 'comm', c: 'gold', ic: icn('coin'), lb: c1 === null ? 'コミッション' : '¥' + Math.round(c1).toLocaleString(), w: 1, wide: 1, st: cSt },
+    { k: 's', c: 'mint', ic: icn('flame'), lb: 'S稼働 ' + now.S + '<small style="font-size:13px;color:var(--text-mid)"> / ' + sg + '人</small>', st: now.S >= sg ? '次の段に届いた 🎉' : '次の段まで<em> あと' + (sg - now.S) + '人</em>' },
+    { k: 'exam', c: 'pur', ic: icn('rocket'), lb: 'BR ' + now.br + '<small style="font-size:13px;color:var(--text-mid)">人</small>', st: now.exam.length ? '審査中 全員1,000pt<br><em>' + now.examOk + '/' + now.exam.length + '人</em>' : 'BR全員の維持<br><em>' + (now.brs.length ? now.brOk + '/' + now.brs.length + '人' : '—') + '</em>' },
+    { k: 'move', c: 'sky', ic: icn('calc'), lb: '動かす数字', st: 'B1 <em>' + now.newN + '人</em> × 新規の平均<br>× 平均稼働人数' },
+    { k: 'gap', c: 'rose', ic: icn('target'), lb: '理想との差', st: gap === null ? '理想MAPを<br><em>つくる</em>' : (gap.length ? '<em>' + gap.length + '人</em> 差があります' : '理想に届いています 🎉') }
+  ];
+  var sb = function(t, on) { return '<span class="ux-sb" onclick="' + on + '">' + t + '</span>'; };
+  return '<div class="ux-hub"><div class="ux-hd"><h1>データ</h1><span class="r">' + ms[11].lbl + '・残り' + _dtEzDaysLeft() + '日</span></div>'
+    + '<div class="ux-tiles" style="margin-top:10px">' + T.map(function(t) { t.next = t.k === nk; t.on = 'dtGo(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
+    + '<div class="ux-sm">' + sb(icn('trend') + ' 推移', 'dtMode(\'full\',\'trend\')') + sb(icn('users') + ' 稼働・人数', 'dtMode(\'full\',\'sum\')') + sb(icn('cap') + ' 研修・地域', 'dtMode(\'full\',\'train\')') + '</div></div>';
+}
+// 1画面1つ（グラフ＋くわしい数字）
+function _dtPageHtml(k) {
+  var now = _dtEzNow(), ms = _dtMonths(), lbls = ms.map(function(m) { return m.lbl; }), i = _dtPgIdx(k), ch = '', det = '<div id="dtPgBody"></div>';
+  if (k === 'comm') {
+    var cm = _dtVals('コミッション');
+    ch = '<div class="dtu-cht">コミッションの推移<small>確定した月（今月は月末に確定）</small></div>' + _uxBars(cm, { lbls: lbls, color: 'var(--gold)', fmt: _dtMan });
+  } else if (k === 's') {
+    var sg = _dtEzSGoal(now.S);
+    ch = '<div class="dtu-cht">S稼働の推移<small>直近12ヶ月</small></div><div class="dtu-leg"><span><i style="background:var(--accent)"></i>S稼働（人）</span><span><i style="border:1.5px dashed var(--purple)"></i>次の段 ' + sg + '人</span></div>'
+      + _uxBars(_dtEzSeries('S', now), { lbls: lbls, goal: sg, goalLb: '次の段 ' + sg + '人' });
+  } else if (k === 'exam') {
+    ch = '<div class="dtu-cht">BRの人数<small>直近12ヶ月</small></div>' + _uxBars(_dtEzSeries('br', now), { lbls: lbls, color: 'var(--purple)' });
+    det += '<div class="ux-list"><div class="ux-li" onclick="dtEzOpen(\'brk\')"><span class="ic">' + icn('shield') + '</span><span>BRを維持する<small>BR全員 ' + BR_MAINTAIN.toLocaleString() + 'pt・' + (now.brs.length ? now.brOk + '/' + now.brs.length + '人' : '—') + '</small></span><span class="ch">›</span></div></div>';
+  } else if (k === 'move') {
+    ch = '<div class="dtu-cht">B1数（今月スタート）<small>直近12ヶ月</small></div>' + _uxBars(_dtEzSeries('newN', now), { lbls: lbls, color: '#5AD7FF' });
+    det = '<div class="dtu-big"><span>コミッション ＝</span></div><div style="font-size:13px;color:var(--text-mid);font-weight:700;line-height:1.7">B1数 × 新規の平均GSV × 平均稼働人数</div>' + det
+      + '<div class="ux-list">'
+      + '<div class="ux-li" onclick="dtEzOpen(\'newAvg\')"><span class="ic">×</span><span>新規の平均GSV<small>今月の新規メンバー1人あたり・' + (now.newAvg === null || now.newAvg === undefined ? '—' : Math.round(now.newAvg).toLocaleString()) + '</small></span><span class="ch">›</span></div>'
+      + '<div class="ux-li" onclick="dtEzOpen(\'actN\')"><span class="ic">×</span><span>平均稼働人数<small>1ハウディあたり・' + (now.actN === '' || now.actN === null || now.actN === undefined ? '—' : now.actN + '人') + '</small></span><span class="ch">›</span></div>'
+      + '<div class="ux-li" onclick="dtEzOpen(\'perAvg\')"><span class="ic">÷</span><span>1人あたりの平均GSV<small>チームGSV ÷ 人数</small></span><span class="ch">›</span></div></div>';
+  } else if (k === 'gap') {
+    ch = '';
+  }
+  var next = i < DT_PG.length - 1 ? 'つぎ：' + DT_PG[i + 1].lb + ' ›' : '';
+  return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="dtGo(\'\')">データ › <b>' + DT_PG[i].lb + '</b></span><span class="ux-home" onclick="dtGo(\'\')" title="データの入口へ">⌂</span></div>'
+    + '<div class="ux-body"><div class="dtu-pg">' + (ch ? '<div class="dtu-ch">' + ch + '</div>' : '') + '<div class="dtu-det"' + (ch ? '' : ' style="margin-top:0;flex:1"') + '>' + det + '</div></div></div>'
+    + _uxBtm('dtGo(\'\')', DT_PG.map(function(p) { return p.lb; }), i, 'dtGoI', next, next ? 'dtGoI(' + (i + 1) + ')' : '') + '</div>';
+}
+// スマホのデータ（ざっくり）は入口とページ。描いたら true
+function _dtUx() {
+  if (isPCMode() || currentView !== 'stats') { document.body.classList.remove('ux-dt'); return false; }
+  var box = document.getElementById('dtEz'); if (!box) return false;
+  _uxCss(); _dtEzCss(); _dtUxCss();
+  document.body.classList.add('ux-dt');
+  if (_dtPgIdx(_dtPg) < 0) _dtPg = '';
+  box.innerHTML = _dtPg ? _dtPageHtml(_dtPg) : _dtHubHtml();
+  document.body.classList.toggle('ux-pg', !!_dtPg);
+  if (_dtPg) {
+    var pb = document.getElementById('dtPgBody'), k = _dtPg === 'move' ? 'newN' : _dtPg;
+    if (pb) { pb.id = 'dtEzBody'; try { _dtEzRender(k); } catch (e) {} pb.id = 'dtPgBody'; }
+    _uxSwipe(box, function() { var i = _dtPgIdx(_dtPg); if (i > 0) dtGoI(i - 1); }, function() { var i = _dtPgIdx(_dtPg); if (i < DT_PG.length - 1) dtGoI(i + 1); });
+  }
+  return true;
 }
 function renderPlan() {
   var wrap = document.getElementById('view-plan');
