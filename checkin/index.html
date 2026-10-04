@@ -100,6 +100,13 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
   box-shadow:0 8px 22px rgba(0,0,0,.18);}
 .sugitem{padding:8px 12px;cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--line);}
 .sugitem:last-child{border-bottom:none;}
+.rmlist{max-height:220px;overflow:auto;margin-top:6px;}
+.rmhint{display:none;color:var(--sub);font-size:12.5px;padding:10px 12px;}
+@media (min-width:700px){
+  .rmgrid{display:grid;grid-template-columns:minmax(220px,1fr) 1.25fr;gap:14px;align-items:start;}
+  .rmlist{margin-top:0;min-height:150px;max-height:280px;border:1px solid var(--line);border-radius:10px;background:var(--paper);}
+  .rmhint{display:block;}
+}
 .sugitem:hover{background:var(--paper);}
 /* 🎓 研修生登録ページ（スマホ向け・大きめの入力とボタン） */
 #vTrainer input,#vTrainer select,#vTrainer textarea{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
@@ -203,16 +210,25 @@ tr:last-child td{border-bottom:none;}
 .matrix th.stk,.matrix td.stk{position:sticky;background:var(--card);z-index:1;box-sizing:border-box;}
 .matrix th.stk{z-index:2;}
 .matrix .stname{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--sub);}
-.matrix .stk1{left:0;min-width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis;}
-.matrix .stk2{left:104px;min-width:72px;max-width:72px;overflow:hidden;text-overflow:ellipsis;}
-.matrix .stk3{left:176px;min-width:64px;max-width:64px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+.matrix .stk1{left:0;min-width:96px;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:normal;line-height:1.3;}
+.matrix .stk2{left:96px;min-width:64px;max-width:64px;overflow:hidden;text-overflow:ellipsis;font-size:12px;}
+.matrix .stk3{left:160px;min-width:54px;max-width:54px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+/* 列幅の最適化: 余白を詰めて、1画面に入るイベント列を増やす */
+.matrix{font-size:13px;min-width:0;}
+.matrix th,.matrix td{padding:6px 6px;}
+.matrix th.stk1,.matrix td.stk1{padding-left:10px;}
+.matrix th:not(.stk){font-size:11.5px;letter-spacing:0;text-align:center;}
+.matrix td.mk,.matrix thead th:not(.stk){min-width:38px;padding-left:3px;padding-right:3px;}
+/* 集計タブを開いている間はページ幅を広げて、表を横に大きく使う */
+body:has(#pStats.on) main{max-width:min(1600px,100%);}
 /* 出席マトリクスのヘッダー行固定: 表自体を縦スクロール枠にして、日付行を常に上に表示。
    border-collapse だと固定行の罫線が消えるため、下線は box-shadow で描く */
 .mxwrap{max-height:72vh;overflow:auto;}
 .matrix thead th{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--line);}
 .matrix thead th.stk{z-index:4;}
 .matrix thead th.stk3{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
-.matrix .stk4{left:240px;min-width:76px;max-width:76px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+.matrix .stk4{left:214px;min-width:52px;max-width:52px;box-shadow:3px 0 5px rgba(17,24,32,.08);}
+.matrix thead th.stk3,.matrix thead th.stk4{line-height:1.25;white-space:normal;}
 .matrix.has1m .stk3{box-shadow:none;} .matrix.has1m thead th.stk3{box-shadow:0 1px 0 var(--line);}
 .matrix thead th.stk4{box-shadow:3px 0 5px rgba(17,24,32,.08),0 1px 0 var(--line);}
 .sectionhead{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;flex-wrap:wrap;}
@@ -428,6 +444,12 @@ tr:last-child td{border-bottom:none;}
 .gx-foot{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:10px 14px;border:2px solid #e8c95a;border-radius:16px;font-size:13px;background:var(--amber-soft);}
 .gx-foot b{color:var(--ink);}
 .gx-hint{position:fixed;z-index:3004;width:300px;}
+.gx-bt{display:flex;flex-direction:column;gap:6px;align-items:stretch;}
+.gx-vid{border:2px solid #e8c95a;background:transparent;color:var(--amber);border-radius:999px;padding:4px 10px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;width:auto;}
+.gx-vbox{background:var(--card);color:var(--ink);border-radius:20px;overflow:hidden;width:min(900px,100%);max-height:94vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.5);}
+.gx-vhead{position:relative;background:linear-gradient(160deg,#ffe066,#ffb703);color:#3a2a00;padding:12px 48px 12px 16px;font-size:16px;}
+.gx-vhead .gx-close{position:absolute;right:8px;top:7px;border:none;background:rgba(255,255,255,.55);color:#3a2a00;border-radius:50%;width:30px;height:30px;padding:0;font-size:16px;cursor:pointer;}
+.gx-vbox video{display:block;width:100%;max-height:calc(94vh - 120px);background:#000;object-fit:contain;}
 .gx-badge{display:inline-block;background:#e0604f;color:#fff;font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:3px;animation:gxHop 1.6s ease-in-out infinite;}
 .gx-info{display:inline-block;margin-top:3px;font-size:11px;font-weight:800;color:#a65a00;background:#fff1c9;border-radius:999px;padding:1px 8px;}
 .gx-conf{position:fixed;top:-20px;z-index:3100;width:9px;height:14px;border-radius:2px;pointer-events:none;animation:gxFall linear forwards;}
@@ -442,6 +464,21 @@ tr:last-child td{border-bottom:none;}
   .gx-back{padding:0;align-items:stretch;}
   .gx-panel{width:100%;max-height:none;height:100%;border-radius:0;}
 }
+/* 🧪 練習モード */
+.px-bar{position:sticky;top:0;z-index:40;background:repeating-linear-gradient(-45deg,#ffd83d 0 14px,#ffcf1f 14px 28px);color:#3a2a00;
+  font-weight:900;text-align:center;padding:7px 10px;font-size:13.5px;letter-spacing:.03em;}
+.px-bar button{margin-left:10px;border:2px solid #3a2a00;background:#fffdf3;color:#3a2a00;font-weight:800;border-radius:999px;padding:3px 12px;font-size:12.5px;cursor:pointer;width:auto;}
+body.practice .topbar{top:var(--pxh,36px);}
+.px-cards{margin:0 0 12px;}
+.px-h{font-size:12.5px;font-weight:800;color:var(--amber);margin:0 0 6px;}
+.px-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+.px-card{position:relative;text-align:left;border:none;border-radius:14px;padding:10px 54px 10px 12px;background:linear-gradient(150deg,#fff6c9,#ffe066);color:#3a2a00;
+  box-shadow:0 3px 0 #c98a00;cursor:pointer;min-height:56px;}
+.px-card:active{transform:translateY(2px);box-shadow:0 1px 0 #c98a00;}
+.px-card b{display:block;font-size:13.5px;} .px-card small{font-size:11px;opacity:.75;}
+.px-card.off{background:linear-gradient(150deg,#eee,#cfcfcf);box-shadow:0 3px 0 #999;color:#444;}
+.px-qr{position:absolute;right:10px;top:50%;margin-top:-18px;width:36px;height:36px;border:3px solid #fff;border-radius:4px;
+  background:conic-gradient(#222 25%,#fff 0 50%,#222 0 75%,#fff 0) 0 0/9px 9px;}
 </style>
 </head>
 <body>
@@ -759,7 +796,7 @@ tr:last-child td{border-bottom:none;}
         <div id="trDlrTop"></div>
         <label>氏名</label><textarea id="trName" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>ふりがな（任意）</label><textarea id="trKana" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
-        <label>紹介者（任意）</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
+        <label>紹介者</label><textarea id="trRef" rows="1" autocomplete="off" autocorrect="off" enterkeyhint="next"></textarea>
         <label>UPルビー</label>
         <select id="trUp"></select>
         <label>性別（任意）</label>
@@ -856,7 +893,10 @@ function showView(id){
 // 各タブの上部メニューを topbar の直下に固定するための高さ計測（折返しで高さが変わるため実測）
 function setTbh(){
   var tb = document.querySelector('#vApp .topbar');
-  if(tb && tb.offsetHeight) document.documentElement.style.setProperty('--tbh', tb.offsetHeight + 'px');
+  // 練習モードの帯（上に固定）があれば、その下に topbar・各タブの固定ヘッダーを並べる
+  var px = $('pxBar'), pxh = px ? px.offsetHeight : 0;
+  document.documentElement.style.setProperty('--pxh', pxh + 'px');
+  if(tb && tb.offsetHeight) document.documentElement.style.setProperty('--tbh', (tb.offsetHeight + pxh) + 'px');
   // 名簿の固定ヘッダー高さ（一括操作行の表示/折返しで変わるため実測）→ 表の内部スクロール高さに使う
   var ph = document.querySelector('#pRoster .panehead');
   if(ph && ph.offsetHeight) document.documentElement.style.setProperty('--phh', ph.offsetHeight + 'px');
@@ -1081,8 +1121,23 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v16';
+var APP_VER = 'v21';
 var CHANGELOG = [
+  { v: 'v21', d: '2026/10/04', items: [
+    'MC・スピーカー・運営の登録: PCでは名前の候補を入力欄の右に表示（日本語変換の候補と重ならないように）',
+    '集計: 集計タブではページ幅を広げ、表の列幅を最適化。1画面に表示できるイベントの列が増えました'
+  ] },
+  { v: 'v20', d: '2026/10/04', items: ['研修生登録: 紹介者は必須になりました（「任意」の表示を削除。未入力だと登録できません）'] },
+  { v: 'v19', d: '2026/10/04', items: [
+    '▶ 使い方ガイドの全ミッションに動画がつきました（25本・大きめの字幕つき・音なし）。ミッションの「▶ 動画」から見られます'
+  ] },
+  { v: 'v18', d: '2026/10/04', items: [
+    '🧪 練習モードができました！🔰使い方 →「受付する人」→「練習モードで受付を体験」から。ダミーの名簿・イベントで、QRでピッ〜受付終了・集計まで何回でも試せます（本番には一切記録されません）'
+  ] },
+  { v: 'v17', d: '2026/10/04', items: [
+    '🔰 使い方ガイドに「📋 名簿・管理者」のミッション6つ（さがす・並べる／編集／無効化と削除のちがい／昇格／まとめて直す・バックアップ／予約・オンライン・会計）',
+    '「📊 集計を見る」のミッション5つ（集計タブ／数字の見かた／出席表と稼働率／名前から編集／CSV出力と再集計）'
+  ] },
   { v: 'v16', d: '2026/10/04', items: [
     '🔰 使い方ガイドに「🚀 はじめの準備」を追加（名簿を登録→会員証を配る→イベントを作る→受付担当を決める）',
     '名簿やイベントがまだ無いときは「まずはここから！」と表示。会員証の未発行人数・今月のイベント数もミッションに表示します',
@@ -1294,7 +1349,8 @@ var GX_ROLES = [
   { k: 'tr', e: '🎓', name: '研修担当', view: 'vTrainer', master: '研修マスター', missions: [
     { id: 'tr1', t: '研修生を登録する', sub: '1分・その場でQRを渡す', steps: [
       { sel: '#trTabReg', click: true, t: '「＋登録」タブ', x: '<b>「＋登録」</b>を押してみて！新しい研修生を登録する画面だよ。' },
-      { sel: '#trName', pre: gxTrTab('trTabReg'), t: '名前を入れる', x: '研修生の<b>名前</b>を入れてね。ふりがな・紹介者は分かれば入れておくと検索しやすいよ。' },
+      { sel: '#trName', pre: gxTrTab('trTabReg'), t: '名前を入れる', x: '研修生の<b>名前</b>を入れてね。ふりがなは分かれば入れておくと検索しやすいよ。' },
+      { sel: '#trRef', pre: gxTrTab('trTabReg'), t: '紹介者を入れる（必須）', x: '<b>紹介者</b>は必ず入れてね。あとで紹介者から研修生をさがせるよ。' },
       { sel: '#trUp', pre: gxTrTab('trTabReg'), t: 'UPルビーを選ぶ', x: 'UPルビーは<b>一覧から選ぶだけ</b>。打ち間違いの心配なし！' },
       { sel: '#trGo', pre: gxTrTab('trTabReg'), t: '登録してQRを渡す', x: '押すと番号が決まって<b>会員証のQRが出る</b>よ。本人のスマホで読み取ってもらえば完了！' }
     ] },
@@ -1318,9 +1374,68 @@ var GX_ROLES = [
       { sel: '#trTabReg', t: 'いちばんカンタンなのは…', x: '登録した直後に<b>QRを見せて、本人のスマホで読み取ってもらう</b>こと！その場で渡せるよ。' }
     ] }
   ] },
-  { k: 'adm', e: '📋', name: '名簿・管理者', view: 'vApp', soon: true },
-  { k: 'stat', e: '📊', name: '集計を見る', view: 'vApp', soon: true }
+  { k: 'adm', e: '📋', name: '名簿・管理者', view: 'vApp', master: '名簿マスター', missions: [
+    { id: 'adm1', t: 'メンバーをさがす・並べる', sub: '1分・検索と並べ替え', steps: [
+      { sel: 'nav button[data-pane="pRoster"]', click: true, t: '「名簿」タブ', x: '<b>「名簿」</b>タブを押してみて！' },
+      { sel: '#q', pre: gxPane('pRoster'), t: '検索', x: '名前・番号・系列の一部を入れると<b>すぐ絞り込める</b>よ。' },
+      { sel: '#rosterHead', pre: gxPane('pRoster'), t: '並べ替え', x: '見出し（番号・氏名・系列・状態）を押すと<b>並べ替え</b>。もう一度押すと逆順になるよ。' },
+      { sel: '#qShowOff', pre: gxPane('pRoster'), t: '無効の人も見る', x: '無効にした人はふだん隠れているよ。<b>チェックを入れると表示</b>されて、有効化に戻すこともできるよ。' }
+    ] },
+    { id: 'adm2', t: 'メンバーを編集する', sub: '1分・名前や系列を直す', steps: [
+      { sel: gxQ('#rosterBody button[data-a="edit"]'), pre: gxPane('pRoster'), t: '「編集」', x: '<b>「編集」</b>で名前・系列・性別・かな・グレードを直せるよ。保存すると会員証にも反映されるよ。', miss: '「編集」ボタンはユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: 'nav button[data-pane="pStats"]', t: '集計からも編集できる', x: '<b>「集計」</b>の出席表で名前を押しても、同じ編集ができるよ。稼働率を見ながら直せて便利！' }
+    ] },
+    { id: 'adm3', t: '無効化と削除のちがい', sub: '1分・やめた人・休んでいる人', steps: [
+      { sel: gxQ('#rosterBody button[data-a="tog"]'), pre: gxPane('pRoster'), t: '「無効化」', x: 'やめた人・休んでいる人は<b>削除ではなく無効化</b>！集計と受付の対象から外れるけど、出席履歴や領収書は残って、「有効化」でいつでも戻せるよ。', miss: '「無効化」ボタンはユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: gxQ('#rosterBody button[data-a="del"]'), pre: gxPane('pRoster'), t: '「削除」', x: '<b>削除は、間違えて登録した人だけ</b>にしてね。迷ったら無効化でOK。', miss: '「削除」ボタンはユニオン管理者・受付管理者の名簿に出るよ。' }
+    ] },
+    { id: 'adm4', t: '研修生を昇格させる', sub: '1分・正規メンバーへ', steps: [
+      { sel: gxQ('#rosterBody button[data-a="promote"]'), pre: gxPane('pRoster'), t: '⭐ 昇格', x: '条件を満たした研修生には<b>「⭐ 昇格」</b>ボタンが出るよ。押すと同じ会員証のまま正規メンバーのカードに変わるよ。',
+        miss: '<b>' + trPromoteRule() + '</b>の研修生には、名簿に「昇格待ち」と「⭐ 昇格」ボタンが出るよ。' },
+      { sel: null, t: '間違えて昇格したら', x: '名簿の<b>「編集」→「🎓 研修履歴」</b>から研修生に戻せるよ。研修の記録や面談シートはそのまま残るよ。' }
+    ] },
+    { id: 'adm5', t: 'まとめて直す・バックアップ', sub: '2分・系列名・グレード・CSV', steps: [
+      { sel: '#btnGroupRen', pre: gxPane('pRoster'), t: '系列名変更', x: '「山田BD」「山田 BD」みたいな<b>表記ゆれをまとめて直せる</b>よ。似ている系列は自動で候補に出るよ。', miss: '「系列名変更」はユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: '#btnGradeSel', pre: gxPane('pRoster'), t: 'グレード変更', x: '名簿の左のチェックで人を選んで<b>グレード（BR・JETCLUB）をまとめて変更</b>。会員証の色も変わるよ。', miss: '「グレード変更」はユニオン管理者・受付管理者の名簿に出るよ。' },
+      { sel: '#btnCsvOut', pre: gxPane('pRoster'), t: 'CSV出力', x: '名簿を<b>CSVで保存</b>できるよ。ときどきバックアップしておくと安心！' }
+    ] },
+    { id: 'adm6', t: '予約・オンライン・会計', sub: '2分・イベントごとの管理', steps: [
+      { sel: 'nav button[data-pane="pEvents"]', click: true, t: '「イベント」タブ', x: '<b>「イベント」</b>タブを押してみて！' },
+      { sel: gxQ('#evList button[data-a="rsvps"]'), pre: gxPane('pEvents'), t: '🎟 予約', x: '予約受付をONにしたイベントは<b>「🎟 予約」</b>で予約した人の一覧。取消申請もここで承認・却下するよ。', miss: 'イベントで予約受付をONにすると、一覧に「🎟 予約」ボタンが出るよ。' },
+      { sel: gxQ('#evList button[data-a="online"]'), pre: gxPane('pEvents'), t: '💻 オンライン', x: 'オンライン受講の申請は<b>「💻 オンライン」</b>で承認。承認するとその人の会員証にZoomの案内が出るよ。', miss: 'イベントでオンライン受講をONにすると、一覧に「💻 オンライン」ボタンが出るよ。' },
+      { sel: gxQ('#evList button[data-a="fin"]'), pre: gxPane('pEvents'), t: '会計', x: 'イベントごとの<b>会計</b>はここから入力・修正できるよ。', miss: 'イベント一覧の各行に「会計」ボタンがあるよ。' }
+    ] }
+  ] },
+  { k: 'stat', e: '📊', name: '集計を見る', view: 'vApp', master: '集計マスター', missions: [
+    { id: 'st1', t: '集計タブをひらく', sub: '1分・月とユニオンを切り替え', steps: [
+      { sel: 'nav button[data-pane="pStats"]', click: true, t: '「集計」タブ', x: '<b>「集計」</b>タブを押してみて！出席と稼働率がまとめて見られるよ。' },
+      { sel: '#stNext', pre: gxStatPane, t: '月を切り替える', x: '◀ ▶ で<b>見たい月</b>に切り替えられるよ。' },
+      { sel: '#stUnionSel', pre: gxStatPane, t: 'ユニオンを切り替える', x: '複数のユニオンを見られる人は、ここで<b>ユニオンを切り替え</b>できるよ。' }
+    ] },
+    { id: 'st2', t: '数字の見かた', sub: '1分・開催数と平均稼動数', steps: [
+      { sel: gxQ('#statBody .tile'), pre: gxStatPane, t: '開催数', x: '開催数には<b>過去のハウディと、今日「受付を終了」したハウディ</b>が入るよ。これからの予定は入らないから安心してね。', miss: 'その月にハウディが開催されると、ここに開催数や平均稼動数が出るよ。' },
+      { sel: gxQ('#stPendInfo'), pre: gxStatPane, t: '？ボタン', x: '今日の受付がまだ終わっていないときは<b>「？」</b>が出るよ。「受付を終了」すると集計に入るよ。', miss: '今日の受付がまだ終わっていないときは、ここに「？」ボタンが出るよ。「受付を終了」すると集計に入るよ。' }
+    ] },
+    { id: 'st3', t: '出席表と稼働率', sub: '2分・だれが何回来たか', steps: [
+      { sel: '#statMatrix', pre: gxStatPane, t: '出席表', x: '<b>●が出席</b>。稼働率＝出席÷開催数だよ。登録して1ヶ月たっていない人は、<b>登録した日からのハウディ</b>で計算するよ（「10/10登録〜」と出るよ）。', miss: 'ハウディが開催されると、メンバーごとの出席表がここに出るよ。' },
+      { sel: '#statQ', pre: gxStatPane, t: '絞り込み', x: '名前・番号・系列で<b>絞り込み</b>できるよ。系列ごとに見たいときに便利！', miss: '出席表の上に絞り込みの欄があるよ。' },
+      { sel: gxQ('#statMatrix thead th[data-sk="rate"]'), pre: gxStatPane, t: '並べ替え', x: '見出しを押すと<b>並べ替え</b>。稼働率の高い順・低い順もすぐわかるよ。', miss: '出席表の見出しを押すと並べ替えできるよ。' }
+    ] },
+    { id: 'st4', t: '名前から編集する', sub: '1分・その場で無効化・編集', steps: [
+      { sel: gxQ('#statMatrix .stname'), pre: gxStatPane, click: true, t: '名前を押す', x: '出席表の<b>名前（点線の下線）</b>を押してみて！', miss: '出席表の名前を押すと、その人の操作シートが開くよ。' },
+      { sel: function(){ var x = document.querySelector('.modal button[data-sm]'); return x ? x.parentNode : null; }, t: '操作シート', x: '名簿と同じく<b>会員証・編集・昇格・無効化・削除</b>がその場でできるよ。操作すると集計もすぐ更新されるよ。', miss: '操作シートでは、名簿と同じく会員証・編集・昇格・無効化・削除ができるよ。' }
+    ] },
+    { id: 'st5', t: 'CSV出力と再集計', sub: '1分・保存と更新', steps: [
+      { sel: '#btnStatCsv', pre: gxStatPane, t: 'CSV出力', x: '出席表を<b>CSVで保存</b>できるよ。エクセルで開けるよ。' },
+      { sel: '#btnStatReload', pre: gxStatPane, t: '再集計', x: '受付のあとで数字が古いと思ったら<b>「再集計」</b>。最新の出席で計算し直すよ。' }
+    ] }
+  ] }
 ];
+// 集計タブを開き、まだ集計していなければ読み込む（ツアーで光らせる対象を出すため）
+function gxStatPane(){
+  gxPane('pStats')();
+  if(!gStat && $('btnStatReload') && !($('statBody').textContent || '').trim()) $('btnStatReload').click();
+}
 var gxMenuRole = '';
 function gxRoleName(k){ var n = ''; GX_ROLES.forEach(function(r){ if(r.k === k) n = r.name; }); return n; }
 function gxView(){ return ($('vTrainer') && !$('vTrainer').classList.contains('hide')) ? 'vTrainer' : 'vApp'; }
@@ -1352,13 +1467,20 @@ function gxOpenMenu(){
             + '<small>スタンプ ' + n + '/' + t + (n === t ? ' 🏅' : '') + '</small><div class="gx-bar"><i style="width:' + Math.round(n / t * 100) + '%"></i></div></div>';
         }).join('') + '</div>'
       : '')
+    + (role.k === 'rec'
+      ? '<div class="gx-mis" style="background:repeating-linear-gradient(-45deg,#fff3b8 0 12px,#ffe98f 12px 24px);color:#3a2a00;">'
+        + '<div class="gx-stamp" style="background:#fff;font-size:20px;">🧪</div><div class="tx"><b style="color:#3a2a00;">練習モードで受付を体験</b>'
+        + '<small style="color:#6b5600;">ダミーの名簿・イベントで、QRでピッ〜受付終了まで何回でも。本番には記録されません</small></div>'
+        + '<button class="gx-btn" id="gxPractice" style="font-size:12.5px;padding:7px 13px;">' + (gPractice ? '練習中' : 'はじめる') + '</button></div>'
+      : '')
     + '<div class="gx-h">' + role.e + ' ' + esc(role.name) + 'のミッション</div>'
     + role.missions.map(function(m, i){
         var d = gxIsDone(m.id);
         return '<div class="gx-mis"><div class="gx-stamp ' + (d ? 'done">済' : 'todo">' + (i + 1)) + '</div>'
           + '<div class="tx"><b>' + esc(m.t) + '</b><small>' + esc(m.sub) + '</small>'
           + (m.info && m.info(st) ? '<span class="gx-info">' + esc(m.info(st)) + '</span>' : '') + '</div>'
-          + '<button class="gx-btn" data-gm="' + i + '" style="font-size:12.5px;padding:7px 13px;">' + (d ? 'もう一度' : 'やってみる') + '</button></div>';
+          + '<div class="gx-bt"><button class="gx-btn" data-gm="' + i + '" style="font-size:12.5px;padding:7px 13px;">' + (d ? 'もう一度' : 'やってみる') + '</button>'
+          + (GX_VIDEOS.indexOf(m.id) >= 0 ? '<button class="gx-vid" data-gv="' + i + '">▶ 動画</button>' : '') + '</div></div>';
       }).join('')
     + '<div class="gx-foot"><span style="font-size:24px;">🏅</span><div style="flex:1;">'
     + (done === total
@@ -1371,14 +1493,40 @@ function gxOpenMenu(){
   document.body.appendChild(host);
   host.addEventListener('click', function(e){
     if(e.target === host){ gxCloseMenu(); return; }
-    var t = e.target.closest ? e.target.closest('[data-gr],[data-gm],#gxMClose') : null;
+    var t = e.target.closest ? e.target.closest('[data-gr],[data-gm],[data-gv],#gxMClose,#gxPractice') : null;
     if(!t) return;
     if(t.id === 'gxMClose'){ gxCloseMenu(); return; }
+    if(t.id === 'gxPractice'){ if(gPractice) gxCloseMenu(); else practiceStart(); return; }
     if(t.getAttribute('data-gr')){ gxMenuRole = t.getAttribute('data-gr'); gxOpenMenu(); return; }
+    if(t.getAttribute('data-gv') != null){ gxPlay(role, +t.getAttribute('data-gv')); return; }
     gxStart(role, +t.getAttribute('data-gm'));
   });
 }
 
+/* ▶ ミッションの動画（ダミーデータで操作を撮影・大きめの字幕つき）。checkin/guide/<ミッションID>.mp4 */
+var GX_VIDEOS = ['set1', 'set2', 'set3', 'set4', 'rec1', 'rec2', 'rec3', 'rec4', 'rec5',
+  'adm1', 'adm2', 'adm3', 'adm4', 'adm5', 'adm6', 'st1', 'st2', 'st3', 'st4', 'st5', 'tr1', 'tr2', 'tr3', 'tr4', 'tr5'];
+function gxPlay(role, mi){
+  var m = role.missions[mi];
+  gxCloseMenu();
+  var host = document.createElement('div');
+  host.id = 'gxVideo'; host.className = 'gx-back';
+  host.innerHTML = '<div class="gx-vbox"><div class="gx-vhead"><b>▶ ' + esc(m.t) + '</b><button class="gx-close" data-gp="close" title="とじる">✕</button></div>'
+    + '<video src="guide/' + m.id + '.mp4" controls autoplay muted playsinline preload="auto"></video>'
+    + '<div class="gx-row" style="padding:10px 14px 14px;"><button class="gx-lnk" data-gp="menu">‹ ガイドにもどる</button>'
+    + '<button class="gx-btn" data-gp="try">やってみる ›</button></div></div>';
+  document.body.appendChild(host);
+  var v = host.querySelector('video');
+  v.onerror = function(){ toast('動画を読み込めませんでした。通信状態を確認してください'); };
+  host.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-gp]') : null;
+    if(!b && e.target !== host) return;
+    var a = b ? b.getAttribute('data-gp') : 'close';
+    v.pause(); host.parentNode.removeChild(host);
+    if(a === 'menu') gxOpenMenu();
+    if(a === 'try') gxStart(role, mi);
+  });
+}
 /* スポットライトツアー */
 var gxTour = null;
 function gxFind(sel){
@@ -1427,9 +1575,13 @@ function gxStart(role, mi){
   })();
 }
 function gxShow(){
-  var t = gxTour, st = t.m.steps[t.i], last = t.i === t.m.steps.length - 1;
+  var t = gxTour, st = t.m.steps[t.i];
   if(st.pre) try{ st.pre(); }catch(e){}
   t.el = gxFind(st.sel);
+  gxRender();
+}
+function gxRender(){
+  var t = gxTour, st = t.m.steps[t.i], last = t.i === t.m.steps.length - 1;
   if(t.el && t.el.scrollIntoView){
     var r = t.el.getBoundingClientRect();
     if(r.top < 80 || r.bottom > window.innerHeight - 40) t.el.scrollIntoView({ block: 'center' });
@@ -1461,6 +1613,8 @@ function gxPos(){
   if(!t) return;
   var st = t.gate ? { sel: null } : t.m.steps[t.i];
   if(t.el && !document.body.contains(t.el)) t.el = gxFind(st.sel);
+  // 対象があとから表示された（集計の読み込み完了など）→ 本物を光らせる案内に切り替える
+  if(!t.el && st.sel && !t.gate){ var f = gxFind(st.sel); if(f){ t.el = f; gxRender(); return; } }
   var hole = t.host.querySelector('.gx-hole'), ring = t.host.querySelector('.gx-ring'), dim = t.host.querySelector('.gx-dimall');
   var bub = t.host.querySelector('.gx-bub'), tail = t.host.querySelector('.gx-tail'), jet = t.host.querySelector('.gx-jet');
   var vw = window.innerWidth, vh = window.innerHeight;
@@ -1598,6 +1752,158 @@ function gxHintOnce(view){
   document.addEventListener('pointerdown', gxHintClose.off, true);
 }
 ['guideBtn', 'guideBtnTr'].forEach(function(id){ var b = $(id); if(b) b.onclick = gxOpenMenu; });
+/* ── 🧪 練習モード: ダミーの名簿・イベントで受付を体験（本番データには一切書かない） ──
+   練習中は db / FV をメモリ上の練習用データベースに差し替える。アプリの処理は呼び出し時に
+   グローバルの db を見るので、受付・名簿・集計の操作はすべて練習用データに対して行われる。
+   やめるときはページを読み込み直して本番に戻す（練習の状態を一切持ち越さない） */
+var gPractice = false;
+function pxMakeDb(store){
+  var listeners = {}, DEL = { __pxDel: 1 };
+  function ts(){ var d = new Date(); return { toDate: function(){ return d; }, toMillis: function(){ return d.getTime(); }, seconds: Math.floor(d.getTime() / 1000) }; }
+  function parentOf(p){ return p.split('/').slice(0, -1).join('/'); }
+  function notify(coll){ (listeners[coll] || []).forEach(function(fn){ setTimeout(fn, 0); }); }
+  function docsIn(coll, filters){
+    var out = [];
+    Object.keys(store).forEach(function(p){
+      if(p.indexOf(coll + '/') !== 0) return;
+      var id = p.slice(coll.length + 1);
+      if(id.indexOf('/') >= 0) return;
+      var d = store[p], ok = true;
+      filters.forEach(function(f){
+        var v = d[f.field];
+        if(f.op === '==' && v !== f.value) ok = false;
+        if(f.op === '>=' && !(v >= f.value)) ok = false;
+        if(f.op === '<=' && !(v <= f.value)) ok = false;
+      });
+      if(ok) out.push({ id: id, d: d });
+    });
+    return out;
+  }
+  function docSnap(id, d){ return { id: id, exists: !!d, data: function(){ return d ? JSON.parse(JSON.stringify(d)) : undefined; } }; }
+  function qSnap(list){
+    var docs = list.map(function(x){ return docSnap(x.id, x.d); });
+    return { docs: docs, size: docs.length, empty: !docs.length, forEach: function(cb){ docs.forEach(cb); } };
+  }
+  function clean(data){
+    var o = {};
+    Object.keys(data || {}).forEach(function(k){ var v = data[k]; o[k] = (v && v.__pxTs) ? ts() : v; });
+    return o;
+  }
+  function Doc(path){ this.path = path; this.id = path.split('/').pop(); }
+  Doc.prototype.get = function(){ return Promise.resolve(docSnap(this.id, store[this.path])); };
+  Doc.prototype.set = function(data, opts){
+    var p = this.path, cur = (opts && opts.merge && store[p]) ? store[p] : {}, out = {};
+    Object.keys(cur).forEach(function(k){ out[k] = cur[k]; });
+    Object.keys(data || {}).forEach(function(k){ if(data[k] === DEL) delete out[k]; else out[k] = data[k]; });
+    store[p] = clean(out); notify(parentOf(p)); notify(p);
+    return Promise.resolve();
+  };
+  Doc.prototype.update = function(data){
+    if(!store[this.path]) return Promise.reject({ code: 'not-found', message: 'No document to update' });
+    return this.set(data, { merge: true });
+  };
+  Doc.prototype['delete'] = function(){ delete store[this.path]; notify(parentOf(this.path)); notify(this.path); return Promise.resolve(); };
+  Doc.prototype.collection = function(n){ return new Coll(this.path + '/' + n, []); };
+  Doc.prototype.onSnapshot = function(a, b){
+    var cb = typeof a === 'function' ? a : b, self = this;
+    var fn = function(){ cb(docSnap(self.id, store[self.path])); };
+    (listeners[self.path] = listeners[self.path] || []).push(fn); setTimeout(fn, 0);
+    return function(){ listeners[self.path] = (listeners[self.path] || []).filter(function(x){ return x !== fn; }); };
+  };
+  function Coll(path, filters){ this.path = path; this.filters = filters; this.id = path.split('/').pop(); }
+  Coll.prototype.doc = function(id){ return new Doc(this.path + '/' + (id || ('px' + Math.random().toString(36).slice(2, 10)))); };
+  Coll.prototype.where = function(f, op, v){ return new Coll(this.path, this.filters.concat([{ field: f, op: op, value: v }])); };
+  Coll.prototype.orderBy = function(){ return this; };
+  Coll.prototype.limit = function(){ return this; };
+  Coll.prototype.get = function(){ return Promise.resolve(qSnap(docsIn(this.path, this.filters))); };
+  Coll.prototype.add = function(data){ var d = this.doc(); return d.set(data).then(function(){ return d; }); };
+  Coll.prototype.count = function(){ var self = this; return { get: function(){ return Promise.resolve({ data: function(){ return { count: docsIn(self.path, self.filters).length }; } }); } }; };
+  Coll.prototype.onSnapshot = function(a, b){
+    var cb = typeof a === 'function' ? a : b, self = this;
+    var fn = function(){ cb(qSnap(docsIn(self.path, self.filters))); };
+    (listeners[self.path] = listeners[self.path] || []).push(fn); setTimeout(fn, 0);
+    return function(){ listeners[self.path] = (listeners[self.path] || []).filter(function(x){ return x !== fn; }); };
+  };
+  function Batch(){ this.ops = []; }
+  Batch.prototype.set = function(r, d, o){ this.ops.push(function(){ return r.set(d, o); }); return this; };
+  Batch.prototype.update = function(r, d){ this.ops.push(function(){ return r.update(d); }); return this; };
+  Batch.prototype['delete'] = function(r){ this.ops.push(function(){ return r['delete'](); }); return this; };
+  Batch.prototype.commit = function(){ return Promise.all(this.ops.map(function(f){ return f(); })); };
+  return {
+    db: { collection: function(n){ return new Coll(n, []); }, batch: function(){ return new Batch(); } },
+    FV: { serverTimestamp: function(){ return { __pxTs: 1 }; }, 'delete': function(){ return DEL; } }
+  };
+}
+var PX_MEMBERS = [
+  { no: 'P001', name: '練習 太郎', kana: 'れんしゅう たろう', group: 'ジェッ子BD', sex: 'm' },
+  { no: 'P002', name: '練習 花子', kana: 'れんしゅう はなこ', group: 'ジェッ子BD', sex: 'f' },
+  { no: 'P003', name: 'ピヨ 次郎', kana: 'ぴよ じろう', group: 'ひよこBD', sex: 'm' },
+  { no: 'P004', name: 'ジェッ子 ちゃん', kana: 'じぇっこ', group: 'ひよこBD', sex: 'f', grade: 'BR' },
+  { no: 'P005', name: 'お休み 三郎', kana: 'おやすみ さぶろう', group: 'ひよこBD', sex: 'm', active: false }
+];
+function pxSeed(){
+  var u = gUnion || gRosterUnion || 'ANTARES', t = todayStr(), st = {};
+  st['checkinUnions/' + u] = { name: u, issuer: '（練習）' + u };
+  st['checkinEvents/pxEvent'] = { date: t, month: t.slice(0, 7), name: '🧪 練習ハウディ', hostUnion: u, unions: [u], fee1: 1000, fee2: 500 };
+  PX_MEMBERS.forEach(function(m, i){
+    var tok = 'px' + (i + 1) + 'practicepracticepracticepract';
+    var d = { no: m.no, name: m.name, kana: m.kana, group: m.group, sex: m.sex, union: u, grade: m.grade || '',
+      cardToken: tok, cardSig: tok.slice(0, 6) };
+    if(m.active === false) d.active = false;
+    st['checkinMembers/' + m.no] = d;
+    st['cards/' + tok] = { no: m.no, name: m.name, group: m.group, union: u, active: m.active !== false };
+  });
+  return st;
+}
+function practiceStart(){
+  if(gPractice) return;
+  if(gRec && !window.confirm('いま本番の受付中です。練習モードを始めると本番の受付画面を閉じます（本番の記録はそのまま残ります）。\n始めますか？')) return;
+  gxEnd(); gxCloseMenu(); closeModal();
+  if(gRec) stopReception();
+  var px = pxMakeDb(pxSeed());
+  db = px.db; FV = px.FV;
+  gPractice = true;
+  document.body.classList.add('practice');
+  var bar = document.createElement('div');
+  bar.id = 'pxBar'; bar.className = 'px-bar';
+  bar.innerHTML = '🧪 練習モード中 — 本番のデータには記録されません <button id="pxExit">練習をやめる</button>';
+  $('vApp').insertBefore(bar, $('vApp').firstChild);
+  $('pxExit').onclick = function(){
+    if(window.confirm('練習モードを終わって本番の画面に戻りますか？（練習の記録は消えます）')) location.reload();
+  };
+  setTimeout(setTbh, 0);
+  var d = new Date(); gMonth = { y: d.getFullYear(), m: d.getMonth() + 1 };
+  gEventUnion = gStatUnion = gRosterUnion = gUnion || gRosterUnion;
+  gMembersLoaded = false; gMembers = [];
+  loadMembers(); loadEvents();
+  db.collection('checkinEvents').doc('pxEvent').get().then(function(s){
+    var ev = s.data(); ev.id = 'pxEvent';
+    startReception(ev);
+    setTimeout(pxPanel, 300);
+    toast('🧪 練習用の名簿とイベントで受付を始めました。下の練習用カードをタップしてみよう！');
+  });
+}
+// 受付画面の練習用カード（タップでQRを読んだのと同じ動き）
+function pxPanel(){
+  if(!gPractice) return;
+  var old = $('pxCards'); if(old) old.parentNode.removeChild(old);
+  var st = $('stage'); if(!st) return;
+  var box = document.createElement('div');
+  box.id = 'pxCards'; box.className = 'px-cards';
+  box.innerHTML = '<div class="px-h">🐣 練習用カード（タップでピッ）— 番号を手で入れて受付してもOK</div><div class="px-row">'
+    + PX_MEMBERS.map(function(m, i){
+        return '<button class="px-card' + (m.active === false ? ' off' : '') + '" data-pxi="' + i + '"><b>' + esc(m.name) + '</b><small>No.' + esc(m.no)
+          + (m.active === false ? '・無効' : m.grade ? '・' + esc(m.grade) : '') + '</small><span class="px-qr"></span></button>';
+      }).join('') + '</div>';
+  st.parentNode.insertBefore(box, st);
+  box.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('[data-pxi]') : null;
+    if(!b || !gRec) return;
+    var m = PX_MEMBERS[+b.getAttribute('data-pxi')], tok = 'px' + (+b.getAttribute('data-pxi') + 1) + 'practicepracticepracticepract';
+    $('numIn').value = 'm:' + m.no + ':' + tok.slice(0, 6);
+    $('btnManual').click();
+  };
+}
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
@@ -4447,6 +4753,7 @@ $('trTabList').onclick = function(){ trTab(false); trRenderList(); };
 $('trGo').onclick = function(){
   var name = $('trName').value.replace(/[\r\n]/g, '').trim();
   if(!name){ toast('氏名を入力してください'); return; }
+  if(!$('trRef').value.replace(/[\r\n]/g, '').trim()){ toast('紹介者を入力してください'); $('trRef').focus(); return; }
   var up = $('trUp').value;
   if(!up){ toast('UPルビーを選択してください'); return; }
   var no = nextMemberNo(gTrMembers, gUnion);
@@ -4455,7 +4762,7 @@ $('trGo').onclick = function(){
   var data = {
     no: no, union: gUnion, name: name, group: up,
     kana: $('trKana').value.trim(), sex: gTrSex,
-    referrer: $('trRef').value.trim(),
+    referrer: $('trRef').value.replace(/[\r\n]/g, '').trim(),
     grade: '', active: true, trainee: true, trainings: {},
     regBy: gUser.uid, regByName: gProf.name || '',
     createdAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp()
@@ -6725,9 +7032,10 @@ function roleModal(role){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   var lbl = roleLabel(role);
   modal('<h2>' + lbl + 'を登録</h2>'
-    + '<label>名簿から名前検索（全ユニオン対象）</label>'
-    + '<input type="text" id="rmQ" placeholder="氏名の一部を入力">'
-    + '<div id="rmList" style="max-height:220px;overflow:auto;margin-top:6px;"></div>'
+    // PCでは候補リストを入力欄の右に出す（日本語変換の候補ウィンドウが入力欄の下に重なって見えなくなるため）
+    + '<div class="rmgrid"><div><label>名簿から名前検索（全ユニオン対象）</label>'
+    + '<input type="text" id="rmQ" placeholder="氏名の一部を入力"></div>'
+    + '<div id="rmList" class="rmlist"><div class="rmhint">名前を入力すると、ここに候補が出ます</div></div></div>'
     + (role === 'speaker'
       ? '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px;">'
         + '<label>名簿にいない場合（ゲストスピーカー）</label>'
@@ -6735,11 +7043,11 @@ function roleModal(role){
         + '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button id="rmGuestGo">ゲストスピーカーとして登録</button></div>'
         + '</div>'
       : '')
-    + '<div class="btns"><button id="rmClose">閉じる</button></div>');
+    + '<div class="btns"><button id="rmClose">閉じる</button></div>', true);
   $('rmClose').onclick = function(){ closeModal(); focusScan(); };
   $('rmQ').addEventListener('input', function(){
     var q = this.value.trim(), el = $('rmList');
-    if(!q){ el.innerHTML = ''; return; }
+    if(!q){ el.innerHTML = '<div class="rmhint">名前を入力すると、ここに候補が出ます</div>'; return; }
     var hits = searchRoster(q, 12);
     el.innerHTML = hits.length
       ? hits.map(sugItemHtml).join('')
@@ -7641,7 +7949,7 @@ function renderStatMatrix(){
       + '</tfoot>'
     : '';
   var html = '<div class="tblwrap mxwrap"><table class="matrix' + (rc ? ' has1m' : '') + '"><thead><tr>'
-    + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', rc ? '当月' : '稼働率', 'stk stk3') + (rc ? th('rate1m', '直近1ヶ月', 'stk stk4') : '')
+    + th('name', '氏名', 'stk stk1') + th('group', '系列', 'stk stk2') + th('rate', rc ? '当月' : '稼働率', 'stk stk3') + (rc ? th('rate1m', '直近<br>1ヶ月', 'stk stk4') : '')
     + gStat.evs.map(function(ev, i){ return th('ev' + i, esc((ev.date || '').slice(5).replace('-', '/'))); }).join('')
     + th('count', '回数') + '</tr></thead><tbody>'
     + (view.length ? view.map(function(r){
