@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v587';
+var APP_JS_VERSION = 'v588';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3864,7 +3864,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v587';
+  var DATA_VERSION = 'v588';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4915,7 +4915,7 @@ function recalcGSV(members) {
   (kids[''] || []).forEach(calc);
   // 親不明の孤児も個別に計算
   members.forEach(function(m) { if (!m.deleted && !visiting[m.id]) calc(m); });
-  if (fx) { _idealFxMap = fxMap; _idealAutoLoi(members); }
+  if (fx) { _idealFxMap = fxMap; _idealAutoLoi(members); _idealAutoTitle(members); } // v588: タイトルは要件どおり
 }
 var _idealFxMap = {};
 // v583: 理想MAPでその人の「自分の分」に入る固定PT（その人のGSVの固定 − BRでない直下の固定）。GSVを手で入れた時・ユーザーPTで使う
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v588', d:'2026-10-05', items:['💎 リーディングボーナスの計算を資料どおりに：BRの世代（第1世代＝自分から下で最初に出てくるBR）× タイトルでもらえる範囲（ゴールド第1世代〜ブルーダイヤ・チームエリート第6世代）。「範囲の世代×5%」と「第1世代×10%」の高い方。自分のGSVが2,000〜3,000未満は範囲の世代すべて2.5%、2,000未満は0','🏅 理想MAPのタイトル（ゴールド以上）は、維持要件（第1世代のBRの人数・系列のLTSV）に合わせて自動で決まります','📈 理想MAPの「理想 vs 現状」に、タイトルが上がった時のリーディングの額と、足りない要件を表示'] },
   { v:'v587', d:'2026-10-04', items:['📝 お名前の入力例を「山田 太郎」に'] },
   { v:'v586', d:'2026-10-04', items:['🔒 あなたのMAP・予定・データ・目標シート・ATTACK LISTは、あなたと、あなたが共有した人だけが見られるようにしました（管理者も見られません。データベースのルールで守っています）','📝 新規登録・プロフィールのお名前は「本名（フルネーム）」で。ニックネームだと受付の名簿・MAPの共有・承認とつながりません'] },
   { v:'v585', d:'2026-10-04', items:['🐞 バグ・要望のページを追加（管理者と、管理者が指定した人だけが見られます。☰メニュー／設定から）','報告：種類（バグ・要望）・画面・内容・スクショ3枚まで。書いた人・日時・版・端末は自動で残ります','管理者：改修する／運用回避／対応しないの切り分け・コメント・やりとり。「改修する」を選んでClaudeへの指示としてまとめてコピー（コピーしたものは対応中に）'] },
@@ -8960,6 +8961,7 @@ function _idealDiff(m) {
   if (d) parts.push({ t: (d > 0 ? '+' : '−') + Math.abs(d).toLocaleString(), c: d > 0 ? 'up' : 'dn' });
   if ((m.activity || '') !== (cur.activity || '')) parts.push({ t: (cur.activity || '−') + '→' + (m.activity || '−'), c: 'act' });
   if (m.idAutoLoi) parts.push({ t: ((cur.title || '').trim() || '−') + '→LOI', c: 'new' }); // v583
+  else if (isBROrAbove(m.title) && (m.title || '').trim() !== (cur.title || '').trim()) parts.push({ t: ((cur.title || '').trim() || '−') + '→' + (m.title || '').trim(), c: 'new' }); // v588: タイトルの差
   return { isNew: false, parts: parts };
 }
 function idealDiffHtml(m, mapType) {
@@ -9009,9 +9011,9 @@ function renderIdealSum() {
     + bar('平均稼働', I.rate, C.rate, pc)
     + '</div><div class="ids-comm"><div class="ids-ct">コミッション<b>' + yen(I.comm.total) + '</b><small>現状 ' + yen(C.comm.total) + (I.comm.total - C.comm.total > 0 ? '（あと ' + yen(I.comm.total - C.comm.total) + '）' : '') + '</small></div>'
     + '<div class="ids-cb">'
-    + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', 'BR系列']].map(function(x) {
+    + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', (function() { var l9 = lbCalc(membersForMap('ideal')); return l9.rank >= 0 ? LB_DEF[l9.rank].t + '・第' + l9.n + '世代まで' + (l9.rate === 0.025 ? '（2.5%）' : '') : 'ゴールドから'; })()]].map(function(x) {
       return '<div><span>' + x[0] + '</span><b>' + yen(I.comm[x[1]]) + '</b><small>' + x[2] + '</small><small>現状 ' + yen(C.comm[x[1]]) + '</small></div>';
-    }).join('') + '</div></div></div>'
+    }).join('') + '</div>' + _lbUpHtml(membersForMap('ideal')) + '</div></div>'
     + _idealGuideHtml(I)
     + (state.isEditor ? '<div class="ids-hint">カードをタップ → GSV・稼働の変更／直下に新規B1を追加。カードの <span class="idd up">+800</span> <span class="idd act">B→A</span> <span class="idd new">NEW</span> は現状との差</div>' : '')
     + '</div>';
@@ -9384,39 +9386,112 @@ function calcBBGSV(members) {
   return 0;
 }
 
-// LB計算
-function calcLBCommission(bbGSV, members) {
-  var roots = members.filter(function(m){ return !m.parentId; });
-  if (roots.length === 0) return 0;
-  var rootId = roots[0].id;
-  
-  // 1段目BR以上の配下ポイント合計（BR自身含む）
-  var brDirectChildren = members.filter(function(m){
-    return m.parentId === rootId && isBROrAbove(m.title);
+// ════ v588: リーディングボーナス（ブランドレプリゼンタティブの世代 × タイトルでもらえる範囲） ════
+//  第1世代＝自分から下にたどって最初に出てくるBR以上（間にBRでない人がいてもよい）。その下で最初のBR＝第2世代…
+//  各BRのポイント＝そのBRのGSV（下のBRの分は入らない＝MAPのGSVと同じ）
+//  自分のGSV 3,000以上：「範囲の世代の合計×5%」と「第1世代の合計×10%」の高い方／2,000〜3,000未満：範囲の世代の合計×2.5%／2,000未満：0
+//  金額＝ポイント×%×126×1.08
+var LB_DEF = [ // タイトル・もらえる世代・タイトル維持要件（第1世代のBR人数・リーダーシップチーム＝系列のLTSV）
+  { t: 'ゴールド', g: 1, br: 1, pl: [] },
+  { t: 'ラピス', g: 2, br: 2, pl: [] },
+  { t: 'ルビー', g: 3, br: 4, pl: [] },
+  { t: 'エメラルド', g: 4, br: 4, pl: [10000] },
+  { t: 'ダイヤモンド', g: 5, br: 5, pl: [20000, 10000] },
+  { t: 'ブルーダイヤモンド', g: 6, br: 6, pl: [30000, 20000, 10000] },
+  { t: 'チームエリート', g: 6, br: 6, pl: [40000, 30000, 20000, 10000] }
+];
+var LB_RANK = { 'ゴールド': 0, 'G': 0, 'ラピス': 1, 'L': 1, 'ルビー': 2, 'R': 2, 'エメラルド': 3, 'E': 3, 'ダイヤモンド': 4, 'D': 4, 'ブルーダイヤモンド': 5, 'BD': 5, 'チームエリート': 6, 'PD': 6, 'TE': 6 };
+function _lbRankOf(title) { var t = normTitle(title || ''); return LB_RANK[t] !== undefined ? LB_RANK[t] : -1; } // -1＝BR（ゴールド未満）やBR未満
+function _lbKids(members) { var k = {}; members.forEach(function(m) { if (m && !m.deleted) (k[m.parentId || ''] = k[m.parentId || ''] || []).push(m); }); return k; }
+// 世代ごとのBR（gens[0]＝第1世代…gens[5]＝第6世代）
+function _lbGens(id, kids) {
+  var gens = [[], [], [], [], [], []], seen = {};
+  (function walk(pid, g) {
+    if (seen[pid]) return; seen[pid] = 1;
+    (kids[pid] || []).forEach(function(c) {
+      if (isBROrAbove(c.title)) { if (g < 6) gens[g].push(c); walk(c.id, g + 1); }
+      else walk(c.id, g);
+    });
+  })(id, 0);
+  return gens;
+}
+function _lbSum(list) { var s = 0; list.forEach(function(m) { s += m.ptCurrent || 0; }); return s; }
+// その人が満たしているタイトル（要件どおり）。-1＝BR
+function _lbQualRank(m, kids, lt) {
+  var g1 = _lbGens(m.id, kids)[0].length;
+  var lines = (kids[m.id] || []).map(function(c) { return lt[c.id] || 0; }).sort(function(a, b) { return b - a; });
+  var r = -1;
+  LB_DEF.forEach(function(d, i) { if (g1 >= d.br && d.pl.every(function(v, j) { return (lines[j] || 0) >= v; })) r = i; });
+  return r;
+}
+// 要件までの残り（第1世代のBR・系列のLTSV）
+function _lbReqGap(m, kids, lt, rank) {
+  var d = LB_DEF[rank], g1 = _lbGens(m.id, kids)[0].length;
+  var lines = (kids[m.id] || []).map(function(c) { return lt[c.id] || 0; }).sort(function(a, b) { return b - a; });
+  return { br: Math.max(0, d.br - g1), g1: g1, pl: d.pl.map(function(v, j) { return { need: v, have: lines[j] || 0, ok: (lines[j] || 0) >= v }; }) };
+}
+function lbCalc(members, rankOverride) {
+  var ms = (members || []).filter(function(m) { return m && !m.deleted; });
+  var root = ms.filter(function(m) { return !m.parentId; })[0];
+  var out = { rank: -1, gsv: 0, n: 0, sumN: 0, g1: 0, rate: 0, a: 0, b: 0, total: 0, gens: [] };
+  if (!root) return out;
+  out.rank = (rankOverride !== undefined && rankOverride !== null) ? rankOverride : _lbRankOf(root.title);
+  out.gsv = root.ptCurrent || 0;
+  var gens = _lbGens(root.id, _lbKids(ms));
+  out.gens = gens.map(function(l) { return { n: l.length, pt: _lbSum(l) }; });
+  out.g1 = out.gens[0].pt;
+  if (out.rank < 0) return out;
+  out.n = LB_DEF[out.rank].g;
+  for (var i = 0; i < out.n; i++) out.sumN += out.gens[i].pt;
+  if (out.gsv >= 3000) {
+    out.rate = 0.05;
+    out.a = Math.floor(out.sumN * 0.05 * 126 * 1.08);
+    out.b = Math.floor(out.g1 * 0.10 * 126 * 1.08);
+    out.total = Math.max(out.a, out.b);
+  } else if (out.gsv >= 2000) {
+    out.rate = 0.025; // 2,000〜3,000未満：範囲の世代すべて2.5%
+    out.a = Math.floor(out.sumN * 0.025 * 126 * 1.08);
+    out.total = out.a;
+  }
+  return out;
+}
+function calcLBCommission(bbGSV, members) { return lbCalc(members).total; }
+// 理想MAPのタイトル（ゴールド以上）は要件に合わせて自動で決める（BR以上の人だけ。BRかどうかは変えない）
+function _idealAutoTitle(members) {
+  var ms = members.filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || ''); });
+  var kids = _lbKids(ms), lt = ltsvMap(ms), chg = [];
+  ms.forEach(function(m) {
+    if (!isBROrAbove(m.title)) { if (m.idAutoTitle) delete m.idAutoTitle; return; }
+    var cur = _lbRankOf(m.title), q = _lbQualRank(m, kids, lt);
+    if (q === cur) return;
+    var to = q < 0 ? 'BR' : LB_DEF[q].t, from = (m.title || '').trim();
+    if (!m.idAutoTitle) m.idAutoTitle = from;
+    m.title = to;
+    if (m.idAutoTitle === to) delete m.idAutoTitle;
+    chg.push(m.lastName ? (m.lastName + 'さん ' + from + '→' + to) : (from + '→' + to));
   });
-  var brTotal = 0;
-  // ptCurrentは積み上げ済みのため、二重計上を避けて各自の分(ptSelf)で合算
-  brDirectChildren.forEach(function(br) {
-    brTotal += (typeof br.ptSelf === 'number' ? br.ptSelf : (br.ptCurrent || 0));
-    getAllDescendants(br.id, members).forEach(function(d){ brTotal += (typeof d.ptSelf === 'number' ? d.ptSelf : (d.ptCurrent || 0)); });
-  });
-  
-  // LBポイント = BR以上の配下全体合計
-  var lbPt = brTotal;
-  
-  var rate = 0;
-  if (bbGSV >= 3000) rate = 0.05;
-  else if (bbGSV >= 2000) rate = 0.025;
-  else return 0;
-  
-  var lbCom = Math.floor(lbPt * rate * 126 * 1.08);
-  
-  // 6: 直下BR以上×0.1×126×1.08 と比較
-  var directBRPt = 0;
-  brDirectChildren.forEach(function(br){ directBRPt += (br.ptCurrent || 0); });
-  var alt = Math.floor(directBRPt * 0.1 * 126 * 1.08);
-  
-  return Math.max(lbCom, alt);
+  if (chg.length && typeof currentView !== 'undefined' && currentView === 'ideal' && typeof toast === 'function') toast('タイトルを要件に合わせました（理想MAP）：' + chg.slice(0, 2).join('・') + (chg.length > 2 ? ' ほか' + (chg.length - 2) + '人' : ''));
+}
+// 「タイトルが上がると、リーディングがいくらになるか」（理想MAPの自分より上のタイトルごと）
+function _lbUpHtml(members) {
+  var ms = (members || []).filter(function(m) { return m && !m.deleted; });
+  var root = ms.filter(function(m) { return !m.parentId; })[0];
+  if (!root || !isBROrAbove(root.title)) return '';
+  var kids = _lbKids(ms), lt = ltsvMap(ms), now = lbCalc(ms), yen = function(v) { return '¥' + Math.round(v || 0).toLocaleString(); };
+  var man = function(v) { return v >= 10000 ? (Math.round(v / 1000) / 10) + '万' : v.toLocaleString(); };
+  var rows = '';
+  for (var r = now.rank + 1; r < LB_DEF.length; r++) {
+    var c = lbCalc(ms, r), gap = _lbReqGap(root, kids, lt, r), up = c.total - now.total;
+    var need = [];
+    if (gap.br) need.push('第1世代BR あと' + gap.br + '人');
+    gap.pl.forEach(function(p) { if (!p.ok) need.push('系列LTSV ' + man(p.need) + 'P（今 ' + man(p.have) + '）'); });
+    var hint = '';
+    if (up <= 0) hint = now.gsv < 2000 ? '自分のGSVが2,000以上になるともらえます' : (c.b >= c.a && c.b > 0 ? '今は「第1世代×10%」の方が多いので同じ額です（第2世代より下のBRが増えると上がります）' : (c.gens[LB_DEF[r].g - 1] && !c.gens[LB_DEF[r].g - 1].n ? '第' + LB_DEF[r].g + '世代にBRがいると増えます' : ''));
+    rows += '<div class="ids-lbr"><span class="t">' + LB_DEF[r].t + '<small>第' + LB_DEF[r].g + '世代まで</small></span><span class="v"><b>' + yen(c.total) + '</b>' + (up > 0 ? '<em>＋' + yen(up) + '</em>' : '') + '</span>'
+      + '<span class="n">' + (need.length ? need.join('・') : '要件はそろっています') + (hint ? '<br>' + hint : '') + '</span></div>';
+  }
+  if (!rows) return '';
+  return '<div class="ids-lbup"><div class="ids-lbh">📈 タイトルが上がると、リーディングは<small>今の理想MAPのまま・今 ' + (now.rank >= 0 ? LB_DEF[now.rank].t : 'BR') + ' ' + yen(now.total) + '</small></div>' + rows + '</div>';
 }
 
 // コミッション再計算（BB/LBは自動、SBは手入力維持）
