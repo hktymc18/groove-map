@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v599';
+var APP_JS_VERSION = 'v600';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v599';
+  var DATA_VERSION = 'v600';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v600', d:'2026-10-05', items:['🗺 ロードマップ：横軸の月を押すと、その月の画面（フロント目標・流通を＋−で・マイルストーンを足す）。左右にめくると次の月','🧰 ツールも1画面ずつに：ギャップ（1行ずつ＋−・あと何項目）、チェック（丸を押すだけ）、BB早見表（GSVを＋−すると金額が大きく出る）'] },
   { v:'v599', d:'2026-10-05', items:['💗 想いを1問1答に：やる理由 → 動かなかったら1年後 → 成功した毎日 → やりたいこと → なりたい自分 → 理想の生活 → 夢100 → まとめ。例のボタンを押すだけでも書けます','🏆 目標を作り直しました：目標月収（＋−と候補）→ タイトル（月収から自動・押して変更）→ 期日（1年後・2年後のボタン）→ 次の山 → スローガン → 目標カード。目標カードに月収・タイトル・期日・スローガン・S稼働の階段・BB換算がまとまります'] },
   { v:'v598', d:'2026-10-05', items:['✅ 今週やることを作り直しました：CT取り・CT・FT・PG・DLRが「今 / 目標」のバーつきで並び、あと何件かがひと目でわかります。行を押すとその行動の画面（予約・やった・今週の予定・結果待ち）。左右にめくると次の行動','🔁 振り返りは1問1答に：うまくいった理由 → うまくいかなかった理由 → 来月変えること → まとめ。例のボタンを押すだけでも書けます'] },
   { v:'v597', d:'2026-10-05', items:['🎯 ◯月の目標を1画面に1つずつに作り直しました：S稼働 → コミッション → BRを増やす → BRを維持 → 自分の数字 → チームの数字 → 研修の数字 → 自分の成長 → 確認。数字は＋−と候補ボタンで決められます（数字を押せば直接入力も）','👤 BRを増やす・維持するでは、審査中・BRの人が進み具合のバーつきで並びます。人を押すと「その人の画面」が開き、タスクや予定をその場で入れられます（左右にめくると次の人）','✅ 最後の確認ページで、決めた所は✓・まだの所は点線。押すとそのページへ。来月の目標もここから決められます','ⓘ 説明は右上の（i）にまとめました'] },
@@ -16006,7 +16007,7 @@ function _uxSwipe(el, prev, next) {
 
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
-var P2_PG = { why: '想い', goal: '目標', rm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し' };
+var P2_PG = { why: '想い', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表' };
 var P2_PG_FLOW = ['why', 'goal', 'rm', 'mon', 'do'];
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
@@ -16079,8 +16080,17 @@ function _p2PageHtml() {
   } else if (k === 'goal') { // v599: 目標月収 → タイトル → 期日 → 次の山 → スローガン → 目標カード
     _ux2Css(); body = _p2GoalPageHtml(i);
     if (i < P2_GOAL_PG.length - 1) { next = P2_GOAL_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：ロードマップ ›'; nextOn = 'p2Go(\'rm\')'; }
-  } else if (k === 'rm') {
-    body = _p2PcRailHtml() + '<div class="ux-list">' + li('🗺', '年間ロードマップを編集', '月ごとのフロント数・マイルストーン', 'p2RmOpen()') + li('📆', '年別目標', '', 'p2YearsOpen()') + li('🎮', 'シミュレーション', 'フロント数で月収がどう変わるか', 'p2SimOpen()') + '</div>';
+  } else if (k === 'rm') { // v600: 横軸の月を押すと月の画面
+    _ux2Css(); body = _p2RmPageHtml();
+  } else if (k === 'rmm') {
+    _ux2Css(); body = _p2RmMonthHtml();
+    var nym = _p2YmAdd(_p2RmYm || _p2Ym(0), 1); next = parseInt(nym.slice(5), 10) + '月 ›'; nextOn = 'p2RmMonth(\'' + nym + '\')';
+  } else if (k === 'gap') { // v600: ギャップ（1行ずつ＋−）
+    _ux2Css(); body = _p2GapPageHtml(); next = '📤 ロードマップに割り振る'; nextOn = 'p2GapAlloc()';
+  } else if (k === 'ck') {
+    body = _p2CkPageHtml();
+  } else if (k === 'bb') {
+    _ux2Css(); body = _p2BbPageHtml();
   } else if (k === 'mon') { // v597: 1画面に1つずつ（S稼働 → … → 確認）
     _ux2Css();
     var MP = _p2MonPages(), mym = _p2MYm();
@@ -16105,20 +16115,20 @@ function _p2PageHtml() {
   } else if (k === 'tool') {
     var ck = _p2CkCount(), ib = (_p2().inbox || []).filter(function(x) { return x && x.st !== 'done'; }).length, dr = _p2G().dreams || [];
     body = '<div class="ux-list">'
-      + li('🧮', 'ギャップ', '今と目標の差', 'p2GapOpen()')
-      + li('🗺', '年間ロードマップ', '', 'p2RmOpen()')
+      + li('🧮', 'ギャップ', '今と目標の差', 'p2Go(\'gap\')')
+      + li('🗺', 'ロードマップ', '月ごとのフロント・マイルストーン', 'p2Go(\'rm\')')
       + li('📆', '年別目標', '', 'p2YearsOpen()')
       + li('🎮', 'シミュレーション', '', 'p2SimOpen()')
-      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2DreamOpen()')
-      + li('✅', 'チェック', ck.done + '/' + ck.total, 'p2CheckOpen()')
-      + li('💴', 'BB早見表', '', 'p2BbOpen()')
+      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2Go(\'why\',6)')
+      + li('✅', 'チェック', ck.done + '/' + ck.total, 'p2Go(\'ck\')')
+      + li('💴', 'BB早見表', 'GSVからボーナスの目安', 'p2Go(\'bb\')')
       + li('✍️', '書き出し', '未整理 ' + ib + '件', 'p2Go(\'inb\')')
       + li('⚙️', '今週やることの設定', '動員の計画など', 'p2DoMenu(\'more\')')
       + '</div>';
   } else if (k === 'inb') {
     body = _p2InboxHtml();
   }
-  var back = (k === 'inb') ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : 'p2Back()');
+  var back = (k === 'inb' || k === 'ck' || k === 'bb' || k === 'gap') ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : (k === 'rmm' ? 'p2Go(\'rm\')' : 'p2Back()'));
   return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && (i || k === 'dok') && k !== 'do' ? '・' + subs[i] : '') + '</b></span><span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
     + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, subs, i, 'p2PgSub', next, nextOn) + '</div>';
 }
@@ -16769,6 +16779,7 @@ function _p2DoPageHtml(i) {
 function _p2Swipe(d) {
   if (!_p2Pg || isPCMode()) return;
   if (_p2Pg === 'dok') { var ks = _p2DoKeysShown(), j = ks.indexOf(_p2DoKey); if (ks[j + d]) p2DoGoK(ks[j + d]); return; }
+  if (_p2Pg === 'rmm') { p2RmMonth(_p2YmAdd(_p2RmYm || _p2Ym(0), d)); return; }
   var n = _p2PgSubs(_p2Pg).length, i = _p2PgI + d;
   if (n > 1 && i >= 0 && i < n) p2PgSub(i);
 }
@@ -16971,7 +16982,103 @@ function _p2GoalPageHtml(i) {
       return '<div class="ux-ck' + (x[1] ? '' : ' no') + '" onclick="p2PgSub(' + x[2] + ')"><i>' + (x[1] ? '✓' : '!') + '</i><span>' + x[0] + '</span><b>' + (x[1] ? '' : '決める ›') + '</b></div>';
     }).join('') + '</div>'
     + '<div class="ux-list" style="margin-top:12px"><div class="ux-li" onclick="p2YearsOpen()"><span class="ic">' + icn('calendar') + '</span><span>年別目標<small>1年ごとの目標</small></span><span class="ch">›</span></div>'
-    + '<div class="ux-li" onclick="p2GapOpen()"><span class="ic">' + icn('calc') + '</span><span>ギャップ<small>今と目標の差</small></span><span class="ch">›</span></div></div>';
+    + '<div class="ux-li" onclick="p2Go(\'gap\')"><span class="ic">' + icn('calc') + '</span><span>ギャップ<small>今と目標の差</small></span><span class="ch">›</span></div></div>';
+}
+// ════ v600: ロードマップ（横軸 → 月の画面）とツール（ギャップ・チェック・BB早見表）を型に ════
+// 1行の −［数字］＋（1画面に3〜5行）
+function _uxRowStep(lb, sub, val, ph, minusOn, plusOn, inputOn) {
+  var has = !(val === '' || val == null);
+  return '<div class="ux-rw"><span class="lb">' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</span><div style="display:flex;align-items:center;gap:6px;flex:none">'
+    + '<span class="ux-pm" onclick="' + minusOn + '">−</span><div class="ux-sv' + (has ? ' ok' : '') + '"><input type="number" inputmode="numeric" placeholder="' + (ph === '' || ph == null ? '-' : ph) + '" value="' + (has ? val : '') + '" onfocus="edSelAll(this)" onchange="' + inputOn + '"></div>'
+    + '<span class="ux-pm" onclick="' + plusOn + '">＋</span></div></div>';
+}
+// ── ロードマップ ──
+var _p2RmYm = '';
+function p2RmMonth(ym) { _p2RmYm = ym; p2Go('rmm'); }
+function p2RmStep(row, ym, d) {
+  var rm = _p2Rm(), cur = row === 'front' ? _p2FrontTgt(ym) : ((rm.rows[row] || {})[ym]);
+  var st = row === 'dist' ? 500 : 1, v = (cur === '' || cur == null) ? (d > 0 ? st : 0) : Math.max(0, (+cur || 0) + d * st);
+  p2RmCell(row, ym, String(v));
+}
+function _p2RmPageHtml() {
+  var rm = _p2Rm(), cur = _p2Ym(0);
+  var rail = _p2PcRailHtml().replace(/(class="p2r-col[^"]*") onclick="p2RmMsForm\('(\d{4}-\d{2})'\)"/g, '$1 onclick="p2RmMonth(\'$2\')"');
+  var ms = (rm.ms || []).filter(function(m) { return (m.ym2 || m.ym) >= cur; }).sort(function(a, b) { return a.ym.localeCompare(b.ym); });
+  return '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">ロードマップ' + _uxIb('rm') + '</h2><div class="ux-sub">月を押すと、その月のフロント目標とマイルストーン</div>'
+    + '<div style="margin:10px -14px 0">' + rail + '</div>'
+    + '<div class="ux-sec">この先のマイルストーン</div>'
+    + (ms.length ? '<div class="ux-list">' + ms.slice(0, 6).map(function(m) {
+      return '<div class="ux-li" onclick="p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><span class="ic" style="color:' + (m.color || 'var(--accent)') + '">' + (m.emoji ? evEsc(m.emoji) : '🚩') + '</span><span>' + evEsc(m.t || '') + '<small>' + _p2YmLabel(m.ym) + (m.ym2 ? '〜' + _p2YmLabel(m.ym2) : '') + (m.sub ? '・' + evEsc(m.sub) : '') + '</small></span><span class="ch">›</span></div>';
+    }).join('') + '</div>' : '<div class="ux-empty">まだありません。月を押すと足せます</div>')
+    + '<div class="ux-list" style="margin-top:14px"><div class="ux-li" onclick="p2RmOpen()"><span class="ic">' + icn('ruler') + '</span><span>表でまとめて編集<small>月ごとのフロント・流通・Qルビーなど</small></span><span class="ch">›</span></div>'
+    + '<div class="ux-li" onclick="p2Go(\'gap\')"><span class="ic">' + icn('calc') + '</span><span>ギャップから割り振る<small>目標との差を月に分ける</small></span><span class="ch">›</span></div></div>';
+}
+UX_INFO.rm = { t: 'ロードマップ', h: '先月から期日までの横の線です。<b>F</b>＝その月のフロント目標、🚩＝マイルストーン、⛰＝次の山。<br>月を押すと、その月のフロント目標・流通を＋−で決めたり、マイルストーンを足したりできます' };
+function _p2RmMonthHtml() {
+  var ym = _p2RmYm || _p2Ym(0), rm = _p2Rm(), cur = _p2Ym(0), f = _p2FrontTgt(ym), dist = (rm.rows.dist || {})[ym];
+  var ms = (rm.ms || []).filter(function(m) { return m.ym === ym || (m.ym2 && m.ym <= ym && m.ym2 >= ym); });
+  var diff = _p2YmDiff(cur, ym);
+  return '<div class="ux-step">' + (diff === 0 ? '今月' : (diff > 0 ? diff + 'ヶ月後' : (-diff) + 'ヶ月前')) + '</div><h2 class="ux-h2">' + _p2YmLabel(ym) + '</h2>'
+    + '<div class="ux-box">' + _uxRowStep('フロント目標', 'その月に新しく入る直下の人数', f, '', 'p2RmStep(\'front\',\'' + ym + '\',-1)', 'p2RmStep(\'front\',\'' + ym + '\',1)', 'p2RmCell(\'front\',\'' + ym + '\',this.value)')
+    + _uxRowStep('流通（P）', '500ずつ', dist, '', 'p2RmStep(\'dist\',\'' + ym + '\',-1)', 'p2RmStep(\'dist\',\'' + ym + '\',1)', 'p2RmCell(\'dist\',\'' + ym + '\',this.value)') + '</div>'
+    + '<div class="ux-sec">マイルストーン</div>'
+    + (ms.length ? '<div class="ux-list">' + ms.map(function(m) { return '<div class="ux-li" onclick="p2RmMsForm(\'' + m.ym + '\',\'' + m.id + '\')"><span class="ic">' + (m.emoji ? evEsc(m.emoji) : '🚩') + '</span><span>' + evEsc(m.t || '') + (m.sub ? '<small>' + evEsc(m.sub) + '</small>' : '') + '</span><span class="ch">›</span></div>'; }).join('') + '</div>' : '')
+    + '<span class="ux-lk" onclick="p2RmMsForm(\'' + ym + '\')">＋ この月にマイルストーンを足す</span>'
+    + (diff === 0 || diff === 1 ? '<span class="ux-lk" onclick="p2MonFor(' + diff + ')">' + parseInt(ym.slice(5), 10) + '月の目標を決める ›</span>' : '');
+}
+// ── ギャップ ──
+var P2_GAP_STEP = { br: 1, dist: 500, qr: 1, exp: 1, env: 1 };
+UX_INFO.gap = { t: 'ギャップ', h: '目標月収から必要な数を逆算し、今の数（MAPから自動）との差を出します。<br><b>フロントBR</b>＝自分から下で最初に出てくるBR、<b>流通</b>＝チームPT、<b>Qルビー</b>＝ルビーの人数。<br>フロントBRは LOI→Q2→Q3→BR で最短3ヶ月かかるので、期日の3ヶ月前までにフロントが必要です。<br>単価・倍率は「くわしい設定」から' };
+function p2GapStep(k, d) {
+  var calc = _p2GapCalc(), it = calc.items.filter(function(x) { return x.k === k; })[0], st = P2_GAP_STEP[k] || 1;
+  var cur = it && it.t !== null ? it.t : 0;
+  p2GapSet('t', k, String(Math.max(0, cur + d * st)));
+}
+function _p2GapPageHtml() {
+  var calc = _p2GapCalc(), p = state.goals.plan, inc = p.income ? Math.round(p.income / 10000) : 0, g = _p2Gap();
+  var left = calc.items.filter(function(it) { return it.gap !== null && it.gap > 0; }).length;
+  var rows = calc.items.map(function(it) {
+    var sub = '今 <b>' + (it.c === null ? '—' : it.c.toLocaleString()) + '</b>' + (it.cIsAuto && it.c !== null ? '（MAP）' : '') + '・' + (it.gap === null ? '—' : (it.gap <= 0 ? '<span style="color:var(--accent)">達成✓</span>' : '<span style="color:var(--gold)">あと' + it.gap.toLocaleString() + '</span>'));
+    if (it.cAuto === null) sub += '・今を入れる <input type="number" inputmode="numeric" value="' + (it.cIsAuto ? '' : it.c) + '" style="width:54px;padding:3px 6px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text)" onchange="p2GapSet(\'c\',\'' + it.k + '\',this.value)">';
+    return _uxRowStep(it.lb + (it.unit ? '（' + it.unit + '）' : ''), sub, it.t === null ? '' : it.t, '', 'p2GapStep(\'' + it.k + '\',-1)', 'p2GapStep(\'' + it.k + '\',1)', 'p2GapSet(\'t\',\'' + it.k + '\',this.value)');
+  }).join('');
+  var cd = calc.cand;
+  return '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">ギャップ' + _uxIb('gap') + '</h2>'
+    + '<div class="ux-sub">目標：' + (p.title ? evEsc(_p2TitleEn(p.title)) : '未設定') + (inc ? '・月収 ' + inc + '万円' : '') + (p.deadline ? '・' + evEsc(String(p.deadline).replace('-', '/')) + 'まで' : '') + '</div>'
+    + '<div class="ux-sum">' + (left ? '<span>あと</span><b>' + left + '<small> 項目</small></b>' : '<b style="font-size:24px;color:var(--accent)">全部とどいています ✓</b>') + '</div>'
+    + '<div class="ux-box">' + rows + '</div>'
+    + '<div class="ux-hint pu">⛴ Qルビー候補（QR×' + g.rates.candX + '）：目標 <b>' + (cd.t === null ? '—' : cd.t) + '</b>・今 <b>' + cd.c + '</b>' + (cd.gap > 0 ? '・あと' + cd.gap : '') + '</div>'
+    + '<span class="ux-lk" onclick="p2GapOpen()">くわしい設定（単価・倍率）›</span>';
+}
+// ── チェック ──
+function _p2CkPageHtml() {
+  _ux2Css(); _p2DoCss2();
+  var ck = _p2().check || {}, cnt = _p2CkCount();
+  var sec = function(title, items, pre) {
+    var done = 0; items.forEach(function(x, i) { if (ck[pre + '_' + i]) done++; });
+    return '<div class="ux-sec">' + title + '　' + done + ' / ' + items.length + '</div><div class="ux-pr" style="cursor:default;padding:6px 12px"><div class="nm"><div class="bar" style="margin:0"><i style="width:' + Math.round(done / Math.max(1, items.length) * 100) + '%;background:var(--accent)"></i></div></div></div>'
+      + items.map(function(it, i) {
+        var on = !!ck[pre + '_' + i], dt = ck[pre + '_d_' + i] || '';
+        return '<div class="ux-sk' + (on ? ' done' : '') + '"><span class="ck" onclick="p2CkTgl(\'' + pre + '\',' + i + ')">' + (on ? '✓' : '') + '</span><span class="t">' + evEsc(it) + (dt ? '<small style="display:block;font-size:11px;color:var(--text-dim);font-weight:600;text-decoration:none">' + dt.replace(/-/g, '/') + '</small>' : '') + '</span>'
+          + (on ? '' : '<span class="x" title="今日のタスクにする" onclick="p2CkTask(\'' + pre + '\',' + i + ')">' + icn('checksq') + '</span>') + '</div>';
+      }).join('');
+  };
+  return '<h2 class="ux-h2">チェック</h2><div class="ux-sum"><b>' + cnt.done + '<small> / ' + cnt.total + '</small></b><span>' + (cnt.done >= cnt.total ? '準備万端 🎉' : '準備のチェック') + '</span></div>'
+    + sec('必須アイテム', P2_CK_ESS, 'ess') + sec('TRAINING', P2_CK_TR, 'tr');
+}
+// ── BB早見表 ──
+var _p2BbG = 0;
+function p2BbSet(v) { _p2BbG = Math.max(0, Math.round(parseFloat(v) || 0)); renderPlan(); }
+function p2BbStep(d) { var c = _p2BbG || 0, st = c >= 10000 ? 1000 : 500; p2BbSet(c + d * st); }
+function _p2BbPageHtml() {
+  var root = _p2OwnRoot(), own = root ? (root.ptCurrent || 0) : 0;
+  if (!_p2BbG) _p2BbG = own || 3000;
+  var v = _p2BBCalc(_p2BbG);
+  return '<h2 class="ux-h2">BB早見表</h2><div class="ux-sub">GSVを変えると、ビルディングボーナス（税抜・目安）がわかります' + (own ? '・今月のGSV ' + own.toLocaleString() + 'pt' : '') + '</div>'
+    + '<div class="ux-sum" style="margin-top:16px"><b style="font-size:46px;color:var(--gold)">¥' + v.toLocaleString() + '</b></div>'
+    + _uxStepG(_p2BbG, 'p2BbStep(-1)', 'p2BbStep(1)', 'p2BbSet(this.value)', 'pt', 3000)
+    + '<div class="ux-chips">' + [2000, 3000, 5000, 10000].map(function(c) { return '<span class="' + (_p2BbG === c ? 'on' : '') + '" onclick="p2BbSet(' + c + ')">' + c.toLocaleString() + '<small>¥' + Math.round(_p2BBCalc(c) / 1000).toLocaleString() + '千</small></span>'; }).join('') + '</div>'
+    + (own && _p2BbG !== own ? '<span class="ux-lk" onclick="p2BbSet(' + own + ')">今月のGSVに戻す ›</span>' : '');
 }
 function renderPlan() {
   var wrap = document.getElementById('view-plan');
