@@ -635,6 +635,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnTrainers" class="hide">🎓 研修生登録の担当</button>
       <button id="btnAdminsView">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
+      <button id="btnDelUnion" class="ghost hide" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
       <label style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;white-space:nowrap;margin:0;cursor:pointer;"><input type="checkbox" id="qShowOff" style="width:auto;margin:0;">無効も表示</label>
@@ -1121,8 +1122,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v21';
+var APP_VER = 'v22';
 var CHANGELOG = [
+  { v: 'v22', d: '2026/10/05', items: ['オーナー向け: 名簿タブに「🗑 ユニオン削除」を追加（綴り間違いなどで作ったユニオンを削除。名簿・イベント・ユーザー登録が無いユニオンだけ削除できます）'] },
   { v: 'v21', d: '2026/10/04', items: [
     'MC・スピーカー・運営の登録: PCでは名前の候補を入力欄の右に表示（日本語変換の候補と重ならないように）',
     '集計: 集計タブではページ幅を広げ、表の列幅を最適化。1画面に表示できるイベントの列が増えました'
@@ -3150,6 +3152,68 @@ $('btnAddUnion').onclick = function(){
     }).catch(function(e){ toast(permMsg(e, 'ユニオン追加はオーナーまたはそのユニオンの管理者のみ可能です')); });
   };
 };
+/* オーナーのみ: ユニオンの削除（綴り間違いで作ったもの等）。名簿・イベント・ユーザーが
+   1件でも紐づいていたら削除しない（データが宙に浮くため）。ルール上も削除はオーナーのみ */
+$('btnDelUnion').onclick = function(){
+  if(!isOwner()) return;
+  var opts = gUnions.map(function(u){ return '<option' + (u === gRosterUnion ? ' selected' : '') + '>' + esc(u) + '</option>'; }).join('');
+  modal('<h2>🗑 ユニオン削除</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">綴り間違いなどで作ってしまったユニオンを削除します。'
+    + '名簿・イベント・ユーザー登録が1件でもあるユニオンは削除できません。</p>'
+    + '<label>削除するユニオン</label><select id="duSel">' + opts + '</select>'
+    + '<div id="duUse" style="font-size:13px;margin:10px 0 0;min-height:1.6em;"></div>'
+    + '<div class="btns"><button id="duCancel">キャンセル</button><button class="danger" id="duGo" disabled>削除する</button></div>');
+  $('duCancel').onclick = closeModal;
+  var cur = '', ok = false;
+  function check(){
+    var un = $('duSel').value; cur = un; ok = false;
+    $('duGo').disabled = true;
+    $('duUse').innerHTML = '<span style="color:var(--sub);">使われていないか確認中…</span>';
+    Promise.all([
+      db.collection('checkinMembers').where('union', '==', un).get(),
+      db.collection('checkinEvents').where('unions', 'array-contains', un).get(),
+      db.collection('checkinEvents').where('hostUnion', '==', un).get(),
+      db.collection('users').where('union', '==', un).get()
+    ]).then(function(r){
+      if(cur !== un) return;
+      var ev = {};
+      r[1].forEach(function(d){ ev[d.id] = 1; }); r[2].forEach(function(d){ ev[d.id] = 1; });
+      var nm = r[0].size, ne = Object.keys(ev).length, nu = r[3].size;
+      ok = !nm && !ne && !nu;
+      $('duUse').innerHTML = ok
+        ? '<span style="color:var(--green);font-weight:700;">✓ 名簿・イベント・ユーザーとも0件。削除できます。</span>'
+        : '<span style="color:var(--accent);font-weight:700;">削除できません</span>（名簿 ' + nm + '名・イベント ' + ne + '件・ユーザー登録 ' + nu + '人）。'
+          + '<br><span style="color:var(--sub);">先に名簿やイベントを正しいユニオンへ移すか削除してから、もう一度お試しください。</span>';
+      $('duGo').disabled = !ok;
+    }).catch(function(e){ if(cur === un) $('duUse').textContent = '確認できませんでした: ' + e.message; });
+  }
+  $('duSel').onchange = check;
+  check();
+  $('duGo').onclick = function(){
+    var un = cur;
+    if(!ok || !window.confirm('ユニオン「' + un + '」を削除しますか？（元に戻せません）')) return;
+    $('duGo').disabled = true;
+    // ドキュメントIDが表示名と違う場合があるので、名前で探して消す
+    db.collection('checkinUnions').get().then(function(qs){
+      var ids = [];
+      qs.forEach(function(d){ if((d.data().name || d.id) === un) ids.push(d.id); });
+      if(!ids.length) ids.push(un);
+      return Promise.all(ids.map(function(id){ return db.collection('checkinUnions').doc(id).delete(); }));
+    }).then(function(){
+      closeModal(); toast('「' + un + '」を削除しました');
+      gUnions = gUnions.filter(function(u){ return u !== un; });
+      delete gCkAdmins[un];
+      if(gUnion === un && gUnions.length) gUnion = gUnions[0];
+      if(gRosterUnion === un) gRosterUnion = gUnion;
+      if(gEventUnion === un) gEventUnion = gUnion;
+      if(gStatUnion === un) gStatUnion = gUnion;
+      if(gFinUnion === un) gFinUnion = gUnion;
+      refreshUnionSelectors();
+      setupHeaderUnionSel();
+      gSel = {}; loadMembers();
+    }).catch(function(e){ $('duGo').disabled = false; toast(permMsg(e, 'ユニオンの削除はオーナーのみ可能です')); });
+  };
+};
 function canEditRoster(){ return canEditUnion(gRosterUnion); }
 
 /* ---------- タブ ---------- */
@@ -3203,6 +3267,7 @@ function renderRoster(){
   $('btnGradeSel').classList.toggle('hide', !edit);
   $('btnDelAll').classList.toggle('hide', !edit);
   $('btnAddUnion').classList.toggle('hide', !isOwner());
+  $('btnDelUnion').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnTrainers').classList.toggle('hide', !edit);
   $('btnAddMember').classList.toggle('hide', !edit);
