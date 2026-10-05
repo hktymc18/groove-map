@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v601';
+var APP_JS_VERSION = 'v602';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v601';
+  var DATA_VERSION = 'v602';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v602', d:'2026-10-05', items:['想い：「やる理由」などの作文は、書くほど伸びる罫線の紙に。字数と「次の1枚まであと◯字」が出ます','想い：やりたいこと・やりたくないこと・なりたい自分・なりたくない自分を箇条書きに。最低5個ずつ、思いつくなら何個でも（Enterで次々に追加・その場で書き直し・✕で消す）','理想MAPの「理想 vs 現状」の平均稼働を、％ではなく人数（1ハウディあたり）に'] },
   { v:'v601', d:'2026-10-05', items:['📊 データの各ページを作り直しました：グラフ＋大きな数字＋数字3つ＋「動かせる人」。S稼働はあと一歩の人、BRは審査中・維持がまだの人、動かす数字は今月スタートした人、理想との差は差がある人が並びます','👤 人を押すと「その人の画面」が開き、タスク・予定をその場で入れられます（左右にめくると次の人）','💰 コミッションのページから先月の金額をすぐ入れられます'] },
   { v:'v600', d:'2026-10-05', items:['🗺 ロードマップ：横軸の月を押すと、その月の画面（フロント目標・流通を＋−で・マイルストーンを足す）。左右にめくると次の月','🧰 ツールも1画面ずつに：ギャップ（1行ずつ＋−・あと何項目）、チェック（丸を押すだけ）、BB早見表（GSVを＋−すると金額が大きく出る）'] },
   { v:'v599', d:'2026-10-05', items:['💗 想いを1問1答に：やる理由 → 動かなかったら1年後 → 成功した毎日 → やりたいこと → なりたい自分 → 理想の生活 → 夢100 → まとめ。例のボタンを押すだけでも書けます','🏆 目標を作り直しました：目標月収（＋−と候補）→ タイトル（月収から自動・押して変更）→ 期日（1年後・2年後のボタン）→ 次の山 → スローガン → 目標カード。目標カードに月収・タイトル・期日・スローガン・S稼働の階段・BB換算がまとまります'] },
@@ -8934,9 +8935,9 @@ function _idealStats(members) {
     if (m.activity === 'S') s++;
     var r = parseInt(m.actRate, 10);
     if (isNaN(r) && m.activity === 'S') r = 120;
-    if (!isNaN(r) && ['S', 'A', 'B', 'C'].indexOf(m.activity) >= 0) { rn++; rs += r; }
+    if (!isNaN(r) && ['S', 'A', 'B', 'C'].indexOf(m.activity) >= 0 && !/^(MG_|AG\d+_)/.test(m.id || '')) { rn++; rs += r; } // v602: データタブと同じ数え方
   });
-  return { newB1: nb, newFront: nbF, newUser: nu, gsv: root ? (root.ptCurrent || 0) : 0, s: s, rate: rn ? Math.round(rs / rn) : null, n: act.length, comm: commCalc(ms) };
+  return { newB1: nb, newFront: nbF, newUser: nu, gsv: root ? (root.ptCurrent || 0) : 0, s: s, rate: rn ? Math.round(rs / rn) : null, actN: rn ? Math.round(rs / 10) / 10 : null, n: act.length, comm: commCalc(ms) }; // v602: actN＝平均稼働人数（稼働率の合計÷100・データタブと同じ）
 }
 // v581: 理想MAPで上がったものとして足す固定PT（「固定で上がる見込み」）。現状MAPの同じ人の値を使う（理想で追加した人は0）
 function _idealFix(m) {
@@ -9010,7 +9011,7 @@ function renderIdealSum() {
     + bar('チームのB1', I.newB1, C.newB1, ppl, '自分のB1を含む・ユーザー ' + (I.newUser || 0) + '人は数えない')
     + bar('チームGSV', I.gsv, C.gsv, pt, _idealFixSum() ? '固定PT込み' : '')
     + bar('S稼働', I.s, C.s, ppl)
-    + bar('平均稼働', I.rate, C.rate, pc)
+    + bar('平均稼働人数', I.actN, C.actN, function(v) { return (v === null || v === undefined) ? '—' : (Math.round(v * 10) / 10).toLocaleString() + '人'; }, '1ハウディあたり') // v602: ％ではなく人数
     + '</div><div class="ids-comm"><div class="ids-ct">コミッション<b>' + yen(I.comm.total) + '</b><small>現状 ' + yen(C.comm.total) + (I.comm.total - C.comm.total > 0 ? '（あと ' + yen(I.comm.total - C.comm.total) + '）' : '') + '</small></div>'
     + '<div class="ids-cb">'
     + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', (function() { var l9 = lbCalc(membersForMap('ideal')); return l9.rank >= 0 ? LB_DEF[l9.rank].t + '・第' + l9.n + '世代まで' + (l9.rate === 0.025 ? '（2.5%）' : '') : 'ゴールドから'; })()]].map(function(x) {
@@ -16858,10 +16859,54 @@ var P2_WHY_PG = [
   { k: 'why', lb: 'やる理由', ex: ['家族との時間を増やしたい', 'お金の不安をなくしたい', '自分の可能性を試したい', '仲間と一緒に成長したい', '親に恩返ししたい'] },
   { k: 'ifnot', lb: '1年後', ex: ['今と同じ毎日が続く', '時間に追われたまま', 'やりたいことを我慢している', '後悔している'] },
   { k: 'success', lb: '成功した毎日', ex: ['朝ゆっくり家族と過ごす', '好きな場所で働く', '行きたい時に旅行に行く', '人に感謝される毎日'] },
-  { k: 'wantdo', lb: 'やりたいこと', ex: ['家族と旅行', '好きなことを仕事に', '満員電車に乗らない', '嫌な人と働かない'] },
-  { k: 'wantbe', lb: 'なりたい自分', ex: ['人を引っ張れる自分', '約束を守る自分', '言い訳しない自分', '感謝される自分'] },
+  { k: 'want_do', lb: 'やりたいこと', list: 1, ex: ['家族と海外旅行', '好きな時に好きな場所へ', '親に家を建てる', '仲間と事業を広げる', '毎朝ゆっくりコーヒー'] },
+  { k: 'not_want_do', lb: 'やりたくないこと', list: 1, ex: ['満員電車に乗る', '時間に追われる', '嫌な人と働く', 'お金で何かを諦める', '家族との時間を削る'] },
+  { k: 'want_be', lb: 'なりたい自分', list: 1, ex: ['人を引っ張れる自分', '約束を守る自分', '感謝される自分', 'いつも笑顔の自分', '挑戦し続ける自分'] },
+  { k: 'not_want_be', lb: 'なりたくない自分', list: 1, ex: ['言い訳する自分', '人のせいにする自分', 'すぐ諦める自分', '不平ばかり言う自分', '流される自分'] },
   { k: 'life', lb: '理想の生活' }, { k: 'dream', lb: '夢100' }, { k: 'done', lb: 'まとめ' }
 ];
+var P2_LIST_Q = { want_do: 'お金も時間も無限にあったら、何をする？', not_want_do: 'これだけは続けたくない、ってことは？', want_be: '3年後、周りにどう思われたい？', not_want_be: 'こうはなりたくない、ってどんな自分？' };
+var P2_LIST_OLD = { want_do: 'wants', not_want_do: 'notWants', want_be: 'be', not_want_be: 'notBe' };
+// 箇条書き（最低5個・いくつでも）。価値観ワークの答え（ans）にそのまま入れる。空なら前の「北極星」の分を引き継ぐ
+function _p2Lst(id) {
+  var a = _p2G().ans;
+  if (!Array.isArray(a[id])) a[id] = [];
+  if (!a[id].filter(function(x) { return String(x || '').trim(); }).length) {
+    var old = ((_p2().north || {})[P2_LIST_OLD[id]] || []).map(function(x) { return String(x || '').trim(); }).filter(Boolean);
+    if (!old.length) old = _p2LstFromNote(id);
+    if (old.length) a[id] = old.slice();
+  }
+  a[id] = a[id].map(function(x) { return String(x == null ? '' : x); });
+  return a[id];
+}
+// 前の作文（やりたいこと・やりたくないこと等）に書いた箇条書きを拾う
+function _p2LstFromNote(id) {
+  var nk = (id === 'want_do' || id === 'not_want_do') ? 'wantdo' : 'wantbe', ns = (_p2().notes || {})[nk];
+  var t = String((ns && ns.cur) || ''); if (!t.trim()) return [];
+  var cur = '', out = [], hasHd = /【/.test(t);
+  t.split('\n').forEach(function(l) {
+    var m = l.match(/【(.+?)】/); if (m) { cur = m[1]; return; }
+    var x = l.replace(/^\s*[・\-\*●○◯]\s*|^\s*\d+[\.．、)）]\s*/, '').trim(); if (!x) return;
+    if (hasHd ? cur === P2_NB_SRCLB[id] : (id === 'want_do' || id === 'want_be')) out.push(x);
+  });
+  return out;
+}
+function _p2LstN(id) { return _p2Lst(id).filter(function(x) { return x.trim(); }).length; }
+function _p2LstSave(id) { // 北極星（north）にも同じ内容を入れる
+  var n = _p2(); if (!n.north) n.north = {};
+  n.north[P2_LIST_OLD[id]] = _p2Lst(id).map(function(x) { return x.trim(); }).filter(Boolean);
+  saveGoals();
+}
+function p2LstAdd(id, v, keep) {
+  var t = String(v == null ? (document.getElementById('uxLiAdd') || {}).value || '' : v).trim(); if (!t) return;
+  var L = _p2Lst(id); for (var i = L.length - 1; i >= 0; i--) if (!L[i].trim()) L.splice(i, 1);
+  if (L.indexOf(t) < 0) L.push(t);
+  _p2LstSave(id); renderPlan();
+  if (keep !== false) setTimeout(function() { var e = document.getElementById('uxLiAdd'); if (e) try { e.focus(); } catch (eF) {} }, 30);
+}
+function p2LstSet(id, i, v) { var L = _p2Lst(id), t = String(v || '').trim(); if (t) L[i] = t; else L.splice(i, 1); _p2LstSave(id); if (!t) renderPlan(); }
+function p2LstDel(id, i) { _p2Lst(id).splice(i, 1); _p2LstSave(id); renderPlan(); }
+function p2LstEx(id, t) { var L = _p2Lst(id), ix = L.indexOf(t); if (ix >= 0) { L.splice(ix, 1); _p2LstSave(id); renderPlan(); } else p2LstAdd(id, t, false); }
 function p2NbEx(k, t) {
   var n = _p2Notes()[k], cur = String(n.cur || '');
   var lines = cur.split('\n').map(function(x) { return x.trim(); });
@@ -16871,17 +16916,63 @@ function p2NbEx(k, t) {
   renderPlan();
 }
 function _p2NbDone(k) { return _p2NbChars(_p2Notes()[k].cur) > 0; }
+// 作文：書くほど伸びる紙（原稿用紙の枚数と、次の1枚まで）
+function p2Essay(el, k) {
+  p2NbInput(k, el.value);
+  try { el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, el._minH || 0) + 'px'; } catch (e) {}
+  var ch = _p2NbChars(el.value), nx = document.getElementById('uxEsNext');
+  if (nx) nx.textContent = '次の1枚まであと' + (400 - (ch % 400)) + '字';
+}
+function _p2EssayFit() {
+  var el = document.getElementById('uxEssay'); if (!el) return;
+  var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 700;
+  el._minH = Math.max(320, Math.round(vh * 0.62));
+  el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, el._minH) + 'px';
+}
+function _p2WhyCss() {
+  if (document.getElementById('p2WhyCss')) return;
+  var st = document.createElement('style'); st.id = 'p2WhyCss';
+  st.textContent = ".ux-hs{display:flex;gap:8px;overflow-x:auto;margin:12px -14px 0;padding:0 14px 4px;scrollbar-width:none}.ux-hs::-webkit-scrollbar{display:none}"
+    + ".ux-hs span{flex:none;padding:8px 12px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--border);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap}.ux-hs span.on{border-color:var(--accent);color:var(--accent)}"
+    + ".ux-paper{display:block;width:100%;box-sizing:border-box;margin-top:12px;border-radius:16px;border:1.5px solid var(--border2);padding:6px 16px 40px;font-size:16.5px;line-height:34px;color:var(--text);font-weight:600;outline:none;resize:none;font-family:inherit;overflow:hidden;"
+    + "background-color:var(--surface);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 33px,color-mix(in srgb,var(--text-dim) 22%,transparent) 33px,color-mix(in srgb,var(--text-dim) 22%,transparent) 34px);background-attachment:local;background-position:0 6px}"
+    + ".ux-paper:focus{border-color:var(--accent)}"
+    + ".ux-cnt{display:flex;align-items:baseline;gap:8px;margin-top:10px;font-size:12px;color:var(--text-dim);font-weight:700}.ux-cnt b{font-size:19px;color:var(--text);font-family:'Inter',sans-serif}.ux-cnt .r{margin-left:auto}"
+    + ".ux-lst{display:flex;flex-direction:column;gap:7px;margin-top:12px}"
+    + ".ux-lrow{display:flex;align-items:center;gap:10px;padding:4px 6px 4px 12px;border-radius:13px;background:var(--surface);border:1px solid var(--border)}"
+    + ".ux-lrow .no{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;background:color-mix(in srgb,var(--rose,#FF7AB6) 18%,var(--surface2));color:var(--text);font-family:'Inter',sans-serif}"
+    + ".ux-lrow input{flex:1;min-width:0;height:44px;background:transparent;border:none;outline:none;color:var(--text);font-size:15.5px;font-weight:700}"
+    + ".ux-lrow .x{width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);cursor:pointer;flex:none}"
+    + ".ux-lrow.add{border-style:dashed;border-color:var(--border2);background:transparent}.ux-lrow.add .no{background:var(--accent);color:#06251C}"
+    + ".ux-lrow.add span.go{height:36px;padding:0 14px;border-radius:10px;background:var(--accent);color:#06251C;display:flex;align-items:center;font-weight:900;cursor:pointer;flex:none}"
+    + ".ux-five{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--text-mid);font-weight:800}.ux-five i{width:22px;height:8px;border-radius:5px;background:var(--surface3)}.ux-five i.on{background:var(--accent)}";
+  document.head.appendChild(st);
+}
 function _p2WhyPageHtml(i) {
-  _p2DoCss2();
+  _p2DoCss2(); _p2WhyCss();
   var P = P2_WHY_PG, pg = P[i] || P[0], k = pg.k, N = P.length;
   var head = '<div class="ux-step">' + (i + 1) + ' / ' + N + '　' + pg.lb + '</div>';
+  if (pg.list) {
+    var L = _p2Lst(k), n = _p2LstN(k), five = '';
+    for (var j = 0; j < 5; j++) five += '<i class="' + (j < n ? 'on' : '') + '"></i>';
+    return head + '<h2 class="ux-h2">' + pg.lb + '</h2><div class="ux-sub" style="margin-top:2px">' + P2_LIST_Q[k] + '</div>'
+      + '<div class="ux-five">' + five + '<span>' + (n >= 5 ? n + '個 ✓　思いつくなら何個でも' : n + ' / 5個（最低5個）') + '</span></div>'
+      + '<div class="ux-lst">' + L.map(function(t, x) {
+        if (!t.trim()) return '';
+        return '<div class="ux-lrow"><span class="no">' + (x + 1) + '</span><input value="' + evEsc(t) + '" onchange="p2LstSet(\'' + k + '\',' + x + ',this.value)"><span class="x" onclick="p2LstDel(\'' + k + '\',' + x + ')">✕</span></div>';
+      }).join('')
+      + '<div class="ux-lrow add"><span class="no">＋</span><input id="uxLiAdd" enterkeyhint="done" placeholder="' + (n < 5 ? (n + 1) + '個目を書く' : 'もっと書く') + '" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){event.preventDefault();p2LstAdd(\'' + k + '\')}"><span class="go" onclick="p2LstAdd(\'' + k + '\')">追加</span></div></div>'
+      + '<div class="ux-sec">思いつかない時は（押すと足せます）</div><div class="ux-ex">' + pg.ex.map(function(t) { return '<span class="' + (L.indexOf(t) >= 0 ? 'on' : '') + '" onclick="p2LstEx(\'' + k + '\',\'' + t + '\')">' + t + '</span>'; }).join('') + '</div>';
+  }
   if (pg.ex) {
-    var d = _p2NbDef(k), n = _p2Notes()[k], cur = String(n.cur || ''), ch = _p2NbChars(cur);
+    var d = _p2NbDef(k), nb = _p2Notes()[k], cur = String(nb.cur || ''), ch = _p2NbChars(cur);
     var lines = cur.split('\n').map(function(x) { return x.trim(); });
-    return head + '<div class="ux-q">' + evEsc(d.q) + '</div>'
-      + '<div class="ux-ex">' + pg.ex.map(function(t) { return '<span class="' + (lines.indexOf(t) >= 0 ? 'on' : '') + '" onclick="p2NbEx(\'' + k + '\',\'' + t + '\')">' + t + '</span>'; }).join('') + '</div>'
-      + '<textarea class="ux-ta" style="min-height:190px" placeholder="' + evEsc(d.hint || '思いつくまま全部') + '" oninput="p2NbInput(\'' + k + '\',this.value)">' + evEsc(cur) + '</textarea>'
-      + '<div style="display:flex;align-items:center;margin-top:8px;font-size:12px;color:var(--text-dim);font-weight:700"><span>' + ch.toLocaleString() + '字' + (n.curAt ? '・' + _p2NbFmtDate(n.curAt) : '') + '</span><span class="ux-skip" onclick="p2NotesOpen(\'' + k + '\')">ノートで開く（前の版）</span></div>';
+    setTimeout(_p2EssayFit, 0);
+    return head + '<div class="ux-q" style="font-size:22px">' + evEsc(d.q) + '</div>'
+      + '<div class="ux-hs">' + pg.ex.map(function(t) { return '<span class="' + (lines.indexOf(t) >= 0 ? 'on' : '') + '" onclick="p2NbEx(\'' + k + '\',\'' + t + '\')">＋ ' + t + '</span>'; }).join('') + '</div>'
+      + '<div class="ux-cnt"><b id="p2NbCnt">' + ch.toLocaleString() + '字（原稿用紙' + _p2NbSheets(ch) + '枚）</b><span class="r" id="uxEsNext">次の1枚まであと' + (400 - (ch % 400)) + '字</span></div>'
+      + '<textarea id="uxEssay" class="ux-paper" placeholder="' + evEsc(d.hint || '思いつくまま全部、書き殴ろう') + '" oninput="p2Essay(this,\'' + k + '\')">' + evEsc(cur) + '</textarea>'
+      + '<div style="display:flex;align-items:center;margin-top:8px;font-size:12px;color:var(--text-dim);font-weight:700"><span id="p2NbSaved">' + (nb.curAt ? _p2NbFmtDate(nb.curAt) + 'に書いた' : '書くと自動で保存') + '</span><span class="ux-skip" onclick="p2NotesOpen(\'' + k + '\')">前の版・新しく書く</span></div>';
   }
   if (k === 'life') {
     var tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
@@ -16910,8 +17001,9 @@ function _p2WhyPageHtml(i) {
   var drn = (_p2().dreams || []).length;
   return head + '<h2 class="ux-h2">わたしの想い</h2>'
     + (_p2NbDone('why') ? '<div class="ux-ans" onclick="p2PgSub(0)"><small>🔥 やる理由</small><div>' + evEsc(String(_p2Notes().why.cur).slice(0, 120)) + (String(_p2Notes().why.cur).length > 120 ? '…' : '') + '</div></div>' : '')
-    + '<div class="ux-chk">' + P.slice(0, 5).map(function(p, j) { return ck(j, p.lb, _p2NbDone(p.k), _p2NbChars(_p2Notes()[p.k].cur) + '<em>字</em>'); }).join('')
-    + ck(5, '理想の生活', tot2 > 0, (Math.round(tot2 * 10) / 10) + '<em>万/月</em>') + ck(6, '夢100', drn > 0, drn + '<em>個</em>') + '</div>';
+    + '<div class="ux-chk">' + P.slice(0, 3).map(function(p, j) { return ck(j, p.lb, _p2NbDone(p.k), _p2NbChars(_p2Notes()[p.k].cur).toLocaleString() + '<em>字</em>'); }).join('')
+    + P.slice(3, 7).map(function(p, j) { var n2 = _p2LstN(p.k); return '<div class="ux-ck' + (n2 >= 5 ? '' : ' no') + '" onclick="p2PgSub(' + (j + 3) + ')"><i>' + (n2 >= 5 ? '✓' : '!') + '</i><span>' + p.lb + '</span><b>' + n2 + '<em>/ 5個</em></b></div>'; }).join('')
+    + ck(7, '理想の生活', tot2 > 0, (Math.round(tot2 * 10) / 10) + '<em>万/月</em>') + ck(8, '夢100', drn > 0, drn + '<em>個</em>') + '</div>';
 }
 // ── 目標 ──
 var P2_GOAL_PG = [{ k: 'inc', lb: '目標月収' }, { k: 'title', lb: 'タイトル' }, { k: 'dl', lb: '期日' }, { k: 'next', lb: '次の山' }, { k: 'motto', lb: 'スローガン' }, { k: 'done', lb: '目標カード' }];
@@ -17299,6 +17391,7 @@ function _p2NbList() {
   if (_p2WhyStale()) h += '<div class="p2nb-ban">✍️ <b>やる理由</b>は、最低でも半年に1回は新しく書くのがおすすめです' + (last ? '（前回 ' + _p2NbFmtDate(last) + '・' + ago + 'ヶ月前）' : '（まだ書いていません）')
     + '<span class="p2-btn pri" onclick="p2NbNew(\'why\')">新しく書く</span></div>';
   P2_NOTES.forEach(function(d) {
+    if (d.k === 'wantdo' || d.k === 'wantbe') return; // v602: 箇条書きページに移った
     var n = ns[d.k], ch = _p2NbChars(n.cur), lt = _p2NbLast(n);
     var prev = String(n.cur || '').split('\n').filter(Boolean).slice(0, 2).join(' / ');
     h += '<div class="p2nb-card"><div class="p2nb-ct">' + evEsc(d.t) + '</div>'
