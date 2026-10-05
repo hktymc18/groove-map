@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v620';
+var APP_JS_VERSION = 'v621';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v620';
+  var DATA_VERSION = 'v621';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5343,6 +5343,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v621', d:'2026-10-06', items:['🔑 ログインボタンを押しても「…」のまま止まることがある不具合を修正：プロフィールの読み込みに失敗した時は自動で読み直し、それでもだめな時は理由と「アプリを修復して開き直す」ボタンを出すように'] },
   { v:'v620', d:'2026-10-06', items:['📅 予定・ToDo（スマホ）を元の使い方に戻しました：日をタップ＝その日の一覧、＋予定＝今までの入力画面、予定をタップ＝今までの操作。ToDoも今までの一覧に（上下の帯の見た目だけ新しいまま）','🐛 OLを一度開くと、ほかの画面で下のタブと上の帯が消えてボタンが押せなくなる不具合を修正','📱 iPhoneでスクロールした時に画面全体がずれて上に余白が出て、ボタンが押せなくなるのを防ぐように'] },
   { v:'v619', d:'2026-10-05', items:['スマホでもバージョンと更新内容を見られるように：「今日」の一番下と「設定」→ このアプリ（お知らせ・更新内容／バージョン・保存した時刻）'] },
   { v:'v618', d:'2026-10-05', items:['スマホの「今日」をタイルに：今日の手帳・今日の予定・今週やること・気になる人・再アプローチ','再アプローチを1つの画面に（時期が来た人／まだ早い人・「＋ 人を足す」で自分でも追加・手帳へ入れる）','設定をリストに（プロフィール・見た目・通知・カレンダー・毎日のいつもの行・翌月コピー など）。押すと1項目ずつ','スマホでは上の帯（年月・翌月コピー）をなくして画面を広く。翌月コピーは設定とMAPの「⋯」から'] },
@@ -33618,7 +33619,10 @@ if (auth) {
     if (fbUser) {
       _startupPrefetch(fbUser.uid); // v511: プロフィール確認と並列にMAP・予定・目標を取得開始
       // Firestoreからプロフィール取得
-      fsGet('users/' + fbUser.uid).catch(function() {
+      var _pfErr = null;
+      // v621: 読めない時はすぐ諦めず、少し待って2回まで読み直す（起動直後の通信の不調で「…」のまま止まる対策）
+      var _pfGet = function(n) { return _fsGetRaw('users/' + fbUser.uid).catch(function(e) { _pfErr = e; if (n <= 0) throw e; return new Promise(function(r) { setTimeout(r, 1500); }).then(function() { return _pfGet(n - 1); }); }); };
+      (_fsTakePrefetch('d:users/' + fbUser.uid) || Promise.reject(null)).catch(function() { return _pfGet(2); }).catch(function() {
         // v451: オフライン等で読めない場合は前回ログイン時のスナップショットで起動
         try {
           var sp = JSON.parse(localStorage.getItem('gm_lastProfile') || 'null');
@@ -33630,6 +33634,7 @@ if (auth) {
           // プロフィール未作成（新規登録の途中 or 異常）→ アプリに入れず待機（保存失敗トースト等を防ぐ）
           if (typeof closeApprovalGate === 'function') closeApprovalGate();
           var ls0 = document.getElementById('loginScreen'); if (ls0) ls0.style.display = 'flex';
+          _loginStuck(_pfErr ? 'プロフィールを読み込めませんでした（' + ((_pfErr && (_pfErr.code || _pfErr.message)) || '通信エラー') + '）。電波の良い所でもう一度「ログイン」を押してください' : 'プロフィールが見つかりませんでした。新規登録の途中の場合は「新規登録」から登録を完了してください');
           return;
         }
         var user = profile;
@@ -33660,6 +33665,32 @@ function switchAuthTab(tab) {
   }
 }
 
+// v621: ログインが進まない時の案内（ボタンを戻す＋アプリのデータを消して開き直す「修復」）
+function _loginStuck(msg) {
+  try {
+    clearTimeout(window._loginTo);
+    var btn = document.querySelector('#loginForm button'); if (btn) { btn.textContent = 'ログイン'; btn.disabled = false; }
+    var errEl = document.getElementById('loginError'); if (!errEl) return;
+    errEl.innerHTML = evEsc(msg) + '<div style="margin-top:10px"><span onclick="gmRepair()" style="display:inline-block;padding:8px 14px;border-radius:10px;border:1px solid currentColor;cursor:pointer;font-weight:700">それでも入れない時：アプリを修復して開き直す</span></div>';
+    errEl.style.display = '';
+  } catch (e) {}
+}
+// アプリが端末に保存しているデータ（ログイン情報・Firestoreのキャッシュ・オフライン用ファイル）を消して開き直す。
+// MAPなどのデータはサーバーにあるので消えない
+function gmRepair() {
+  if (!confirm('アプリの保存データ（ログイン情報・キャッシュ）を消して開き直します。MAPや予定のデータはサーバーにあるので消えません。よろしいですか？')) return;
+  var done = function() { try { location.reload(); } catch (e) {} };
+  var jobs = [];
+  try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs) { return Promise.all(rs.map(function(r) { return r.unregister(); })); })); } catch (e1) {}
+  try { if (window.caches && caches.keys) jobs.push(caches.keys().then(function(ks) { return Promise.all(ks.map(function(k) { return caches.delete(k); })); })); } catch (e2) {}
+  try {
+    var delDb = function(n) { return new Promise(function(r) { try { var q = indexedDB.deleteDatabase(n); q.onsuccess = q.onerror = q.onblocked = function() { r(); }; } catch (e) { r(); } }); };
+    if (window.indexedDB && indexedDB.databases) jobs.push(indexedDB.databases().then(function(L) { return Promise.all((L || []).map(function(d) { return delDb(d.name); })); }));
+    else if (window.indexedDB) jobs.push(delDb('firebaseLocalStorageDb'));
+  } catch (e3) {}
+  try { localStorage.removeItem('gm_lastProfile'); } catch (e4) {}
+  Promise.race([Promise.all(jobs.map(function(j) { return j.catch(function() {}); })), new Promise(function(r) { setTimeout(r, 4000); })]).then(done, done);
+}
 function doLogin() {
   var email = ((document.getElementById('loginEmail')||{}).value||'').trim();
   var pass  = ((document.getElementById('loginPass')||{}).value||'').trim();
@@ -33669,12 +33700,20 @@ function doLogin() {
   if (auth) {
     var btn = document.querySelector('#loginForm button');
     if (btn) { btn.textContent = '...'; btn.disabled = true; }
+    errEl.style.display = 'none';
+    // v621: 20秒たっても入れない時は、止まったままにせず案内と修復ボタンを出す
+    clearTimeout(window._loginTo);
+    window._loginTo = setTimeout(function() {
+      var ls = document.getElementById('loginScreen');
+      if (ls && ls.style.display !== 'none' && btn && btn.disabled) _loginStuck('ログインに時間がかかっています。電波を確認して、もう一度「ログイン」を押してください');
+    }, 20000);
     auth.signInWithEmailAndPassword(email, pass)
       .then(function() {
         errEl.style.display = 'none';
         // onAuthStateChanged が loginSuccess を呼ぶ
       })
       .catch(function(err) {
+        clearTimeout(window._loginTo);
         errEl.textContent = 'ログインに失敗しました: ' + (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' ? 'メールアドレスまたはパスワードが違います' : err.message);
         errEl.style.display = '';
         if (btn) { btn.textContent = 'ログイン'; btn.disabled = false; }
@@ -33795,6 +33834,7 @@ function checkPendingApprovals(){
 }
 
 function loginSuccess(user) {
+  clearTimeout(window._loginTo);
   currentUser = user;
   try { localStorage.setItem('gm_lastProfile', JSON.stringify(user)); } catch(eLp) {} // v451: オフライン起動用スナップショット
   // 承認制：承認待ち/無効はゲート表示してアプリに入れない（オーナー・レガシー(status無し=active)は通過）
