@@ -1,0 +1,47 @@
+// v620：カレンダー・ToDoを元の仕様に（上下の帯の見た目だけ新しいまま）＋OLの設定がほかの画面に残る不具合
+const T = require('../lib/head.js')();
+const { w, c, sleep, setWH, $, $$ } = T;
+T.run(async () => {
+  T.login();
+  w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '', mapType: 'both' }, { id: 'f1', lastName: '佐藤', firstName: '花', title: 'B1', parentId: 'r', mapType: 'both' }];
+  w.state.events = [{ id: 'e1', title: '佐藤CT', date: '2026-10-14', time: '20:00', type: 'event', memberIds: ['f1'], ownerUid: T.OWNER },
+    { id: 't1', title: '電話する', date: '2026-10-14', type: 'task', ownerUid: T.OWNER }];
+  w._evLoadedUid = T.OWNER;
+  w.state.currentMonth = '2026.10';
+  setWH(390, 844);
+  w.switchView('events'); w.setEventsMode('calendar'); w._uxSync(); await sleep(80);
+  console.log('=== ① 上下の帯はそのまま ===');
+  c('上の帯（今日・検索・⋯）', !!$('#evCalendar .cv-td') && !!$('#evCalendar .cv-ib'));
+  c('下の帯（‹戻る・月週日ToDo・＋予定）', !!$('#evCalendar .ev-cal-bottom.cv-b .cv-seg') && $('#evCalendar .cv-add').textContent.indexOf('予定') >= 0);
+  console.log('=== ② 日タップ・追加・予定タップは元どおり ===');
+  w.selCalDay('2026-10-14'); await sleep(50);
+  c('日タップ＝その日の一覧（下から出るシート）', !!$('#dayShOv') && !$('#evCalendar.cv-on'));
+  w.closeCalDaySheet(); await sleep(250);
+  w.cvAdd('cal'); await sleep(50);
+  const mo = $('#eventModal');
+  c('＋予定＝元の入力画面', mo && mo.classList.contains('open') && !$('#efPg'));
+  w.closeEventModal && w.closeEventModal(); await sleep(50);
+  w.openEventAdd('f1'); await sleep(30);
+  c('メンバーから＋予定も元の入力画面', $('#eventModal').classList.contains('open') && !$('#efPg'));
+  w.closeEventModal && w.closeEventModal(); await sleep(50);
+  w.openEventActions('e1'); await sleep(50);
+  c('予定タップ＝元の操作シート（新しい予定の画面は出ない）', !$('#efPg') && !$('#epPg'));
+  w.closeEventActions && w.closeEventActions();
+  w.openEventActions('t1'); await sleep(50);
+  c('タスクタップも新しいタスクの画面は出ない', !$('#tkPg'));
+  w.closeEventActions && w.closeEventActions();
+  console.log('=== ③ ToDoは元どおり ===');
+  w.setEventsMode('agenda'); await sleep(80);
+  c('今日の手帳は出ない', !w.document.body.classList.contains('dp-on') && !$('#dpIn') && $('#evAgenda .cv-add').textContent.indexOf('ToDo') >= 0);
+  console.log('=== ④ 今日 ===');
+  w.switchView('home'); await sleep(30);
+  c('今日のタイルは「今日のToDo」', $('.tdy').textContent.indexOf('今日のToDo') >= 0 && $('.tdy').textContent.indexOf('手帳') < 0 && $('.tdy').textContent.indexOf('電話する') >= 0);
+  console.log('=== ⑤ OLの設定がほかの画面に残らない ===');
+  w.switchView('ol'); await sleep(30);
+  c('OLでは入口用の設定', w.document.body.classList.contains('olh-on'));
+  w.switchView('stats'); await sleep(30);
+  w.renderOlTab(); await sleep(10);
+  c('データ画面でOLが再描画されても下のタブが消えない', !w.document.body.classList.contains('olh-on'));
+  w.switchView('current'); w.renderOlTab(); await sleep(10);
+  c('MAPでも同じ', !w.document.body.classList.contains('olh-on'));
+});

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v619';
+var APP_JS_VERSION = 'v620';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v619';
+  var DATA_VERSION = 'v620';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4719,6 +4719,15 @@ function _iosViewportReset() {
     if (window.scrollY || window.pageYOffset) window.scrollTo(0, 0);
   } catch(e0) {}
 }
+// v620: スクロールの勢いでページ全体（本来は動かない）がずれると、上に余白が出てボタンの位置と押せる位置がずれる（iPhone 17 Pro）。
+//        入力中以外でずれたら、すぐ0に戻す
+window.addEventListener('scroll', function() {
+  try {
+    if (typeof isPCMode === 'function' && isPCMode()) return;
+    if (_vvEditableFocus()) return;
+    if (window.scrollY || window.pageYOffset || (document.scrollingElement && document.scrollingElement.scrollTop)) _iosViewportReset();
+  } catch (e) {}
+}, { passive: true });
 // v305: 収納アニメ(約300ms)の後にiOSが再度ズラすことがあるため、複数回に分けて復元
 document.addEventListener('focusout', function() {
   if (typeof isPCMode === 'function' && isPCMode()) return; // v414: PCでは走らせない（欄の移動ごとに3回の再計算が発生していた）
@@ -5334,6 +5343,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v620', d:'2026-10-06', items:['📅 予定・ToDo（スマホ）を元の使い方に戻しました：日をタップ＝その日の一覧、＋予定＝今までの入力画面、予定をタップ＝今までの操作。ToDoも今までの一覧に（上下の帯の見た目だけ新しいまま）','🐛 OLを一度開くと、ほかの画面で下のタブと上の帯が消えてボタンが押せなくなる不具合を修正','📱 iPhoneでスクロールした時に画面全体がずれて上に余白が出て、ボタンが押せなくなるのを防ぐように'] },
   { v:'v619', d:'2026-10-05', items:['スマホでもバージョンと更新内容を見られるように：「今日」の一番下と「設定」→ このアプリ（お知らせ・更新内容／バージョン・保存した時刻）'] },
   { v:'v618', d:'2026-10-05', items:['スマホの「今日」をタイルに：今日の手帳・今日の予定・今週やること・気になる人・再アプローチ','再アプローチを1つの画面に（時期が来た人／まだ早い人・「＋ 人を足す」で自分でも追加・手帳へ入れる）','設定をリストに（プロフィール・見た目・通知・カレンダー・毎日のいつもの行・翌月コピー など）。押すと1項目ずつ','スマホでは上の帯（年月・翌月コピー）をなくして画面を広く。翌月コピーは設定とMAPの「⋯」から'] },
   { v:'v617', d:'2026-10-05', items:['🤝 OL（スマホ）を作り直しました。上の古い帯をなくし、3〜7人OL・個別OL・要フォローを大きい数字で。今月の3〜7人OLは①②③の枠、フレッシュは要フォロー順（あいている日数を大きく・＋ですぐ企画）','📝 OLの企画は1枚で：個別／3〜7人 → だれと（要フォロー順のリスト）→ いつ（時刻は今までの数字パッド）→ Aさん・内容。カレンダーにも入ります','✍ 日付が過ぎた予定のOLは「反応を記入」から反応を書くだけ（保存で実施済み）。人を押すと、その人のOLの記録が並びます'] },
@@ -17019,7 +17029,9 @@ function _ppRender() {
 //  その日の予定：上半分に小さな月（短いラベル）＋下半分にその日の予定。下にスワイプで全体に戻る。横向きは左右に並べる
 var _cvSplitOn = false;
 function _cvOn() { return typeof isPCMode === 'function' && !isPCMode(); }
-function _cvSplitShown() { return _cvOn() && _evMode === 'calendar' && (_cvSplitOn || _uxLand()); }
+// v620: 新しい入力（予定の画面・予定を足す・その日の予定・今日の手帳）は不評のため止めて元の仕様に戻す。上下の帯（_cvDecorate）だけ残す
+function _cvNew() { return false; }
+function _cvSplitShown() { return _cvNew() && _cvOn() && _evMode === 'calendar' && (_cvSplitOn || _uxLand()); }
 function _cvSync() {
   try {
     var on = _cvOn();
@@ -17104,7 +17116,7 @@ function _cvDecorate() {
       var seg = [['cal', '月', "setEventsMode('calendar')"], ['week', '週', "setEventsMode('week')"], ['day', '日', "setEventsMode('day')"], ['agenda', 'ToDo', "setEventsMode('agenda')"]];
       bt.innerHTML = '<div class="cv-bk" onclick="cvBack()">‹ 戻る</div>'
         + '<div class="cv-seg">' + seg.map(function(s) { return '<span class="' + (s[0] === p[1] ? 'on' : '') + '" onclick="' + s[2] + '">' + s[1] + (s[0] === 'agenda' ? '<i class="bb-badge" style="display:none"></i>' : '') + '</span>'; }).join('') + '</div>'
-        + '<div class="cv-add" onclick="cvAdd(\'' + p[1] + '\')">' + (p[1] === 'agenda' ? '＋ 書く' : '＋ 予定') + '</div>';
+        + '<div class="cv-add" onclick="cvAdd(\'' + p[1] + '\')">' + (p[1] === 'agenda' ? '＋ ToDo' : '＋ 予定') + '</div>';
       try { updateEventsBadge(); } catch (e) {}
     }
   });
@@ -17151,7 +17163,7 @@ function _cvAfterCal() {
   var on = _cvSplitShown();
   cal.classList.toggle('cv-on', on);
   if (!_cvOn()) return;
-  if (!on) { _cvTipOnce(); return; }
+  if (!on) { if (_cvNew()) _cvTipOnce(); return; }
   var ym = _calYear + '-' + evPad2(_calMonth + 1);
   if (!_calSelDate || _calSelDate.slice(0, 7) !== ym) _calSelDate = _cvDefDay();
   var box = document.getElementById('cvSplit');
@@ -17624,7 +17636,7 @@ function _efRender() {
   pg.innerHTML = _efHtml(o); pg.scrollTop = st0;
 }
 // スマホで「予定を足す」を開く入口（PCは今までの入力画面）
-function evAddFor(mid, date) { if (_cvOn()) eaOpen({ member: mid || '', date: date || '' }); else openEventModal(null, mid || '', date || '', 'event'); }
+function evAddFor(mid, date) { if (_cvNew()) eaOpen({ member: mid || '', date: date || '' }); else openEventModal(null, mid || '', date || '', 'event'); }
 
 // ════ v615: タイトルは「カテゴリのカード」→ 押すと開いてリストから選ぶ（その人の画面・フロント追加で共通）
 //  カードに選べる範囲（FT〜CO など）と今のタイトルを出す
@@ -17762,7 +17774,7 @@ function naSave(after) {
 //  横向きは手帳を開いた形（左：今日やるべき事／右：タイムスケジュール＝その日の予定）
 var _dpDay = '', _dpAll = false;
 var DP_GOAL = 10;
-function _dpOn() { return typeof isPCMode === 'function' && !isPCMode() && !_dpAll; }
+function _dpOn() { return _cvNew() && typeof isPCMode === 'function' && !isPCMode() && !_dpAll; } // v620: ToDoは元の仕様に戻す
 function _dpCss() {
   if (document.getElementById('dpCss')) return;
   var st = document.createElement('style'); st.id = 'dpCss';
@@ -18090,7 +18102,7 @@ function olNeed() { _olNeed = !_olNeed; renderOlTab(); }
 function _olHubRender() {
   var wrap = document.getElementById('olTabWrap'); if (!wrap) return;
   _uxCss(); _ux2Css(); _olhCss();
-  document.body.classList.add('olh-on');
+  document.body.classList.toggle('olh-on', currentView === 'ol'); // v620: OL以外の画面で再描画された時に上の帯・下のタブまで消えていた
   if (_olMigrateOutline()) { if (typeof autoSave === 'function') autoSave(); }
   var ym = state.currentMonth || currentMonthStr(), t = evTodayYmd(), evs = _olEvents(), fr = _olFreshMembers(), can = _olCanEdit();
   var p = String(ym).split('.');
@@ -18258,7 +18270,7 @@ function _olpgRender() {
 function _tdyCss() {
   if (document.getElementById('tdyCss')) return;
   var st = document.createElement('style'); st.id = 'tdyCss';
-  st.textContent = "body.ux-nh header{display:none!important}body.ux-nh:not(.ux-pg) .scroll-area{padding-top:env(safe-area-inset-top)}"
+  st.textContent = "body.ux-nh header{display:none!important}body.ux-nh:not(.ux-pg){padding-top:env(safe-area-inset-top)}body.ux-nh:not(.ux-pg) #mxTop{padding-top:8px}body.ux-nh:not(.ux-pg) .olh{padding-top:10px}"
     + ".tdy{padding:14px 14px 20px;max-width:760px;margin:0 auto}.tdy-hd{display:flex;align-items:flex-end;gap:8px}.tdy-hd h1{margin:0;font-size:21px;font-weight:900;flex:1;line-height:1.35}.tdy-hd h1 small{display:block;font-size:12.5px;color:var(--text-dim);font-weight:800}"
     + ".tdy-st{flex:none;font-size:13px;font-weight:900;color:var(--gold);background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px 10px}.tdy-bell{flex:none;position:relative;width:38px;height:38px;border-radius:11px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}.tdy-bell i{position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--red)}"
     + ".tdy-tl{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}body.ux-land .tdy-tl{grid-template-columns:repeat(4,1fr)}"
@@ -18298,11 +18310,11 @@ function _tdyRender() {
   var h = '<div class="tdy"><div class="tdy-hd"><h1><small>' + (+p[1]) + '月' + (+p[2]) + '日（' + '日月火水木金土'.charAt(new Date(+p[0], p[1] - 1, +p[2]).getDay()) + '）</small>' + evEsc(gameGreeting()) + (name ? '、' + evEsc(name.split(/\s/)[0]) + 'さん' : '') + '</h1>'
     + (sk ? '<span class="tdy-st">🔥 ' + sk + '日連続</span>' : '') + '<span class="tdy-bell" onclick="openReleaseNotes()" title="お知らせ">' + icn('bell') + (hasUnseenNotes() ? '<i></i>' : '') + '</span></div>';
   try { h += birthdayHtml(); } catch (eB) {}
-  // 今日の手帳
-  var L = _dpTasks(t), n = L.length, dn = L.filter(function(e) { return e.done; }).length, segs = Math.max(DP_GOAL, n), bar = '';
-  for (var i = 0; i < segs; i++) { var e0 = L[i]; bar += '<i class="' + (i >= DP_GOAL ? 'x ' : '') + (e0 ? (e0.done ? 'd' : 'f') : '') + '"></i>'; }
-  h += '<div class="tdy-tl"><div class="tdy-t w" style="--c:var(--purple)" onclick="tdyGo(\'dp\')"><b>📓 今日の手帳</b><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="v">' + n + (n < DP_GOAL ? '<small>/' + DP_GOAL + '件</small>' : '<small>件</small>') + '</span><span class="s">やった ' + dn + '・' + (n < DP_GOAL ? 'あと' + (DP_GOAL - n) + '件で今日の' + DP_GOAL + '件' : (n > DP_GOAL ? DP_GOAL + '件 ＋' + (n - DP_GOAL) : DP_GOAL + '件 そろいました')) + '</span></div>'
-    + '<div class="tdy-bar" style="grid-template-columns:repeat(' + segs + ',1fr)">' + bar + '</div></div>';
+  // 今日のToDo（v620: 手帳は止めて元のToDoへ）
+  var L = (state.events || []).filter(function(e) { return e && e.type === 'task' && !e.deleted && e.date === t && evShowMine(e); }), n = L.length, dn = L.filter(function(e) { return e.done; }).length;
+  var un = L.filter(function(e) { return !e.done; });
+  h += '<div class="tdy-tl"><div class="tdy-t w" style="--c:var(--purple)" onclick="tdyGo(\'dp\')"><b>✅ 今日のToDo</b><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="v">' + n + '<small>件</small></span><span class="s">' + (n ? 'やった ' + dn + '・のこり ' + un.length : 'まだありません') + '</span></div>'
+    + (un.length ? '<span class="s">' + evEsc(un.slice(0, 3).map(function(e) { return e.title || ''; }).join('・')) + (un.length > 3 ? ' ほか' + (un.length - 3) + '件' : '') + '</span>' : '') + '</div>';
   // 今日の予定
   var evs = (state.events || []).filter(function(e) { return e && e.type !== 'task' && !e.deleted && evShowMine(e) && (e.date === t || (e.endDate && e.date <= t && t <= e.endDate)); }).sort(evSortFn);
   h += '<div class="tdy-t" style="--c:var(--sky,#3B8FE0)" onclick="tdyGo(\'cal\')"><b>📅 今日の予定</b><div>' + (evs.length ? evs.slice(0, 3).map(function(e) { var c = evColorOf(e) || '#8B7CFF'; return '<div class="tdy-ev" style="--c:' + c + '"><b>' + evEsc(e.time && e.date === t ? e.time : '終日') + '</b><i></i><span>' + evEsc(e.title || '') + '</span></div>'; }).join('') + (evs.length > 3 ? '<span class="s">ほか ' + (evs.length - 3) + '件</span>' : '') : '<span class="s">予定はありません</span>') + '</div></div>';
@@ -18325,7 +18337,7 @@ function _tdyRender() {
       var m = x.it.m, nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
       h += '<div class="tdy-p" onclick="ppOpen(\'' + m.id + '\',\'current\')"><div class="b"><b>' + evEsc(nm) + '<em>' + evEsc(m.title || '—') + '</em></b><small>' + x.it.reasons.map(function(r) { return '<span>' + evEsc(r.t) + '</span>'; }).join('') + '</small></div>'
         + (x.k !== 'leader' ? '<span class="bt" onclick="event.stopPropagation();ckRecord(\'' + m.id + '\',\'' + x.k + '\')">' + (x.k === 'trainee' ? '研修' : 'OL') + '</span>' : '')
-        + '<span class="bt g" onclick="event.stopPropagation();tdyToDp(\'' + m.id + '\')">手帳へ</span></div>';
+        + '<span class="bt g" onclick="event.stopPropagation();tdyToDp(\'' + m.id + '\')">ToDoへ</span></div>';
     });
     if (ppl.length > 4) h += '<div class="tdy-more" onclick="window._tdyAll=!window._tdyAll;_tdyRender()">' + (showAll ? '少なく表示' : 'すべて表示（' + ppl.length + '人）') + '</div>';
   }
@@ -18336,7 +18348,7 @@ function _tdyRender() {
   wrap.innerHTML = h;
 }
 function tdyGo(k) {
-  if (k === 'dp') { _dpDay = evTodayYmd(); switchView('events'); setEventsMode('agenda'); return; }
+  if (k === 'dp') { switchView('events'); setEventsMode('agenda'); return; }
   if (k === 'cal') { switchView('events'); setEventsMode('calendar'); var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); selCalDay(evTodayYmd()); return; }
   if (k === 'do') { p2Go('do'); return; }
   if (k === 'ppl') { var el = document.getElementById('tdyPpl'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
@@ -18346,7 +18358,7 @@ function tdyToDp(mid) {
   var e = _tdMakeTask((m.lastName || m.firstName || '') + 'さん フォロー', evTodayYmd(), '');
   e.memberIds = [mid]; e.memberId = mid; e.vis = 'both'; e.selfShow = true;
   state.events.push(e); saveEventDoc(e); updateEventsBadge();
-  toast('📓 今日の手帳に「' + e.title + '」を入れました');
+  toast('✅ 今日のToDoに「' + e.title + '」を入れました');
   _tdyRender();
 }
 // ── 再アプローチ ──
@@ -18359,7 +18371,7 @@ function _rpRow(r, i) {
   var d = _rpDays(r), hot = d >= 90, c = hot ? 'var(--gold)' : 'var(--border2)';
   var m = r.mid ? (state.members || []).filter(function(x) { return x.id === r.mid; })[0] : null;
   return '<div class="rp-r" style="--c:' + c + '" onclick="reapTap(' + i + ')"><div class="b"><b>' + evEsc(r.name || '(無名)') + '</b><small>' + evEsc((r.date ? (+r.date.slice(5, 7)) + '/' + (+r.date.slice(8, 10)) + ' に' + (r.manual ? '入れた' : '流れた') : '')) + (hot ? '' : '・あと' + (90 - d) + '日') + (r.memo ? '・' + evEsc(r.memo) : '') + (m ? '' : '') + '</small></div>'
-    + '<div class="d"' + (hot ? '' : ' style="color:var(--text-dim)"') + '><b>' + d + '</b><small>日</small></div><span class="bt" onclick="event.stopPropagation();reapToDp(' + i + ')">手帳へ</span></div>';
+    + '<div class="d"' + (hot ? '' : ' style="color:var(--text-dim)"') + '><b>' + d + '</b><small>日</small></div><span class="bt" onclick="event.stopPropagation();reapToDp(' + i + ')">ToDoへ</span></div>';
 }
 function _rpRender() {
   _uxCss(); _ux2Css(); _tdyCss(); _efCss();
@@ -18399,7 +18411,7 @@ function reapToDp(i) {
   var e = _tdMakeTask(r.name + ' 再アプローチ', evTodayYmd(), ''); e.priority = 'high'; e.memo = (r.memo || '');
   if (r.mid) { e.memberIds = [r.mid]; e.memberId = r.mid; e.vis = 'both'; e.selfShow = true; }
   state.events.push(e); saveEventDoc(e); updateEventsBadge();
-  toast('📓 今日の手帳に「' + e.title + '」を入れました');
+  toast('✅ 今日のToDoに「' + e.title + '」を入れました');
 }
 function reapTap(i) {
   var r = (_reapproach || [])[i]; if (!r) return;
@@ -18409,7 +18421,7 @@ function reapTap(i) {
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('rpOv'); };
   ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(r.name) + '</div><div style="font-size:11.5px;color:var(--text-dim)">' + _rpDays(r) + '日経過' + (r.memo ? '・' + evEsc(r.memo) : '') + '</div></div><span class="ms-x" onclick="_p2SheetClose(\'rpOv\')">✕</span></div>'
     + '<div class="ux-list" style="padding:0 16px 18px">' + (m ? '<div class="ux-li" onclick="_p2SheetClose(\'rpOv\');reapClose();ppOpen(\'' + m.id + '\',\'current\')"><span class="ic">' + icn('user') + '</span><span>その人の画面<small>メモ・研修履歴</small></span><span class="ch">›</span></div>' : '')
-    + '<div class="ux-li" onclick="_p2SheetClose(\'rpOv\');reapToDp(' + i + ')"><span class="ic">📓</span><span>今日の手帳に入れる</span><span class="ch">›</span></div>'
+    + '<div class="ux-li" onclick="_p2SheetClose(\'rpOv\');reapToDp(' + i + ')"><span class="ic">✅</span><span>今日のToDoに入れる</span><span class="ch">›</span></div>'
     + '<div class="ux-li" onclick="_p2SheetClose(\'rpOv\');reapDelete(' + i + ')"><span class="ic" style="color:var(--red)">' + icn('trash') + '</span><span style="color:var(--red)">リストから外す</span><span class="ch">›</span></div></div></div>';
   document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
 }
@@ -18429,8 +18441,7 @@ function _stRender() {
       + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
       + _stLi('🎨', '見た目', (light ? 'ライト' : 'ダーク') + '・メンバータブ ' + (membersTabHidden() ? '非表示' : '表示'), "setOpen('look')")
       + _stLi(icn('bell'), '通知', pushOn ? 'オン' : 'オフ', "setOpen('ntf')") + '</div>'
-      + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', '週の始まり・スクロール・予定の帯・Google連携', 'openCalSettings()')
-      + _stLi('📓', '毎日のいつもの行', evEsc((typeof _dpDaily === 'function' ? _dpDaily().join('・') : '') || 'なし'), 'dpDailyEdit()') + '</div>'
+      + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', '週の始まり・スクロール・予定の帯・Google連携', 'openCalSettings()') + '</div>'
       + '<div class="st-gh">MAP・データ</div><div class="st-ls">' + (state.isEditor && !viewingOwnerUid ? _stLi('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
       + _stLi('📄', '変更履歴', '追加・削除・タイトル変更', 'showHistoryModal()')
       + (typeof openShareModal === 'function' && !viewingOwnerUid ? _stLi(icn('link'), 'MAPの共有', '見せる・一緒に編集', 'openShareModal()') : '')
@@ -18864,7 +18875,7 @@ function _uxMemRender() {
 function uxMemTask(mid, type) {
   var m = _uxMemFind(mid), ctxK = _uxMemSt ? String(_uxMemSt.list).split(':')[0] : '';
   if (type === 'task' && ctxK === 'gap' && typeof dtEzTask === 'function') { dtEzTask(mid); return; } // v601: 理想との差は「稼働UP：◯◯さん…」のタスク
-  if (type !== 'task' && _cvOn()) { eaOpen({ member: mid }); return; } // v613
+  if (type !== 'task' && _cvNew()) { eaOpen({ member: mid }); return; } // v613
   openEventModal(null, mid, '', type);
   if (type === 'task' && m) {
     var nm = (m.lastName || m.firstName || '') + 'さん', line = UX_MEM_CTX[ctxK] && UX_MEM_CTX[ctxK].line ? UX_MEM_CTX[ctxK].line() : 0;
@@ -21309,7 +21320,7 @@ function p2ListManualSave() {
 function p2OpenAL() { if (typeof AL_URL !== 'undefined') window.open(AL_URL, '_blank'); _p2Al.at = 0; setTimeout(function() { _p2AlLoad(true); }, 60000); }
 // v548: 「＋予定」＝種類を入れた状態で予定の入力を開く（メンバーを選んで保存）
 function p2AddKindEv(kind) {
-  if (_cvOn()) { eaOpen({ date: evTodayYmd(), title: kind + ' ' }); return; } // v613
+  if (_cvNew()) { eaOpen({ date: evTodayYmd(), title: kind + ' ' }); return; } // v613
   openEventModal(null, null, evTodayYmd(), 'event');
   var ti = document.getElementById('evTitle');
   if (ti) { ti.value = kind + ' '; try { evKindAuto(); } catch (eK) {} try { ti.focus(); } catch (eF) {} }
@@ -28700,7 +28711,7 @@ function _calSwipeInit() {
     var dx = tt.clientX - _calTS.x, dy = tt.clientY - _calTS.y;
     _calTS = null;
     if (Math.abs(dx) > 60 && Math.abs(dy) < 50) calShiftMonth(dx < 0 ? 1 : -1);
-    else if (dy < -60 && Math.abs(dx) < 50 && _cvOn() && _calScrollMode !== 'v' && !window._calDrag) cvSplit(true); // v612: 上にスワイプ→その日の予定
+    else if (dy < -60 && Math.abs(dx) < 50 && _cvNew() && _calScrollMode !== 'v' && !window._calDrag) cvSplit(true); // v612: 上にスワイプ→その日の予定
   }, { passive: true });
 }
 // v511: データ到着のたびの再描画（予定・カテゴリ・ユニオン予定）を次のフレームで1回にまとめる
@@ -28747,7 +28758,7 @@ function dayVShift(d) {
 }
 function dayVToday() { _dayVDate = evTodayYmd(); renderDayV(); }
 function openEventAddTime(ds, h) {
-  if (_cvOn()) { eaOpen({ date: ds, time: evPad2(h) + ':00', end: evPad2(Math.min(h + 1, 29)) + ':00' }); return; } // v613
+  if (_cvNew()) { eaOpen({ date: ds, time: evPad2(h) + ':00', end: evPad2(Math.min(h + 1, 29)) + ':00' }); return; } // v613
   openEventModal(null, '', ds, 'event');
   buildTimeSelects(evPad2(h) + ':00', evPad2(Math.min(h + 1, 29)) + ':00');
 }
@@ -29267,8 +29278,8 @@ function openEventActions(id) {
   }
   var e = findEvent(id);
   if (!e) return;
-  if (_cvOn() && e.type !== 'task') { closeEventActions(); epOpen(id); return; }
-  if (_cvOn() && e.type === 'task') { closeEventActions(); tkOpen(id); return; } // v616: タスクの画面 // v613: スマホの予定は「予定の画面」
+  if (_cvNew() && e.type !== 'task') { closeEventActions(); epOpen(id); return; }
+  if (_cvNew() && e.type === 'task') { closeEventActions(); tkOpen(id); return; } // v616: タスクの画面 // v613: スマホの予定は「予定の画面」
   // v357: PCの全画面ToDoでは操作シートを開かず、右の詳細パネルで編集
   var _ag357 = document.getElementById('evAgenda');
   if (isPCMode() && _ag357 && _ag357.classList.contains('full')) { tdSelect(id); return; }
@@ -30879,7 +30890,7 @@ function selCalDay(ds) {
     return;
   }
   // v612: スマホ＝日タップで「その日の予定」（上にカレンダー・下にその日）。同じ日をもう一度タップ→その日に追加
-  if (_cvOn()) {
+  if (_cvNew()) {
     if (ds === _calSelDate && (_cvSplitOn || _uxLand()) && eventsUid()) { openEventAddDate(ds); return; }
     _calSelDate = ds; _cvSplitOn = true;
     renderCalendar();
@@ -31090,7 +31101,7 @@ function closeCalDaySheet(keepSel) {
   if (!keepSel) { _calSelDate = ''; renderCalendar(); }
 }
 function openCalDaySheet(ds) {
-  if (_cvOn() && currentView === 'events' && _evMode === 'calendar') { _calSelDate = ds; _cvSplitOn = true; renderCalendar(); return; } // v612
+  if (_cvNew() && currentView === 'events' && _evMode === 'calendar') { _calSelDate = ds; _cvSplitOn = true; renderCalendar(); return; } // v612
   var old = document.getElementById('dayShOv');
   if (old && old.parentNode) old.parentNode.removeChild(old);
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'dayShOv';
