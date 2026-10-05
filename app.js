@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v606';
+var APP_JS_VERSION = 'v607';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v606';
+  var DATA_VERSION = 'v607';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v607', d:'2026-10-05', items:['MAP（スマホ縦）を作り直し：上は「現状/理想・月」「LTSV・稼働・S」「全段・段・地域・絞り込み」の3段だけに','メンバーの行：木の線で字下げ、稼働（S/A/B/C）とGSVは右の列にそろえて固定。5段より深い所は横にスクロール','タイトルを大きな色の札に（BR=紫・審査中=オレンジ・研修生=水色・フレッシュ=金・そのほか=灰）','並びは「フロントが多い順」が標準に（絞り込みの中で変えられます）','地域・絞り込みは下から出る大きなボタンで。ほかの人を「うすく表示／かくす」を選べます','行を押すとその人の画面（右下で編集・この人の下に追加）。下の帯に「＋追加」と「受付連携」'] },
   { v:'v606', d:'2026-10-05', items:['PLANの入口：横向きでもタイルが画面に収まるように（見出しを1行に・振り返りとツールも見出しに）','横向きのタイルに中身：やる理由の一文・期日まであと◯ヶ月・この先3ヶ月のロードマップ・S稼働の進み・今週の残りの行動'] },
   { v:'v605', d:'2026-10-05', items:['データの入口：横向きでもタイルが画面に収まるように（見出しを1行に・くわしくのボタンも見出しに）','横向きのタイルに直近6ヶ月の小さな推移グラフ','横向きの表示チームは小さいボタンに'] },
   { v:'v604', d:'2026-10-05', items:['データ：横向きにするとグラフが画面いっぱいに（eFootballの分析画面のように）','横向きの数字は上の帯に。「あと一歩」などのボタンを押すと、人の一覧が右から出ます','横向きの表示チームは小さいボタンに（押すと選べます）'] },
@@ -6581,6 +6582,7 @@ function ckLinkApply() {
     }
   });
   ckImportRates(function(updated, held, st, skipped) {
+    try { var dL = new Date(); localStorage.setItem('gm_ckLast_' + ((currentUser && currentUser.uid) || ''), (dL.getMonth() + 1) + '/' + dL.getDate()); } catch (eL) {} // v607: 前回の取り込み日
     autoSave();
     ckLinkClose();
     if (currentView === 'members') renderMembers();
@@ -7891,18 +7893,18 @@ function titleRank(t) {
   return t ? 100 : 50; // 不明タイトルはB帯の下・無題より上
 }
 // v526: ツリー・運動会MAPの並び順（端末ごとに記憶）
-var TREE_SORTS = [['title','標準（タイトル順）'],['region','地域ごと'],['gsv','GSVが高い順'],['org','組織が大きい順'],['start','登録が古い順']];
-var _treeSortMode = 'title';
+var TREE_SORTS = [['front','フロントが多い順'],['title','タイトル順'],['region','地域ごと'],['gsv','GSVが高い順'],['org','組織が大きい順'],['start','登録が古い順']];
+var _treeSortMode = 'front'; // v607: 標準はフロントが多い順
 try { var _tsm0 = localStorage.getItem('gm_treeSort'); if (_tsm0 && TREE_SORTS.some(function(s) { return s[0] === _tsm0; })) _treeSortMode = _tsm0; } catch(e) {}
 function treeSortSelectHtml(extraStyle) {
-  var on = _treeSortMode !== 'title';
+  var on = _treeSortMode !== 'front';
   return '<select class="mc-chip tree-sort-sel" onchange="setTreeSort(this.value)" title="ツリー・運動会MAPの並び順"'
     + ' style="-webkit-appearance:none;appearance:none;outline:none;border-color:' + (on ? '#8B7CFF' : 'var(--border)') + ';background:' + (on ? '#8B7CFF' : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text-dim)') + (extraStyle ? ';' + extraStyle : '') + '">'
     + TREE_SORTS.map(function(s) { return '<option value="' + s[0] + '"' + (s[0] === _treeSortMode ? ' selected' : '') + '>並び：' + s[1] + '</option>'; }).join('')
     + '</select>';
 }
 function setTreeSort(mode) {
-  if (!TREE_SORTS.some(function(s) { return s[0] === mode; })) mode = 'title';
+  if (!TREE_SORTS.some(function(s) { return s[0] === mode; })) mode = 'front';
   _treeSortMode = mode;
   try { localStorage.setItem('gm_treeSort', mode); } catch(e) {}
   _childIdxSrc = null; // 子リストのキャッシュを作り直す
@@ -7940,6 +7942,9 @@ function _treeSortCmp(members, mode) {
     return na < nb ? -1 : (na > nb ? 1 : 0);
   };
   if (mode === 'title') return base;
+  if (mode === 'front') { // v607: フロント（直下の人数）が多い順 → タイトル順
+    return function(a, b) { var fa = cnt[a.id] || 0, fb = cnt[b.id] || 0; return fb - fa || base(a, b); };
+  }
   if (mode === 'gsv') {
     return function(a, b) { var d = (+b.ptCurrent || 0) - (+a.ptCurrent || 0); return d || base(a, b); };
   }
@@ -8080,6 +8085,7 @@ function renderTree(mapType) {
   if (mapType === 'current') { buildRegionChipsInto(ownMembers, 'mapRegionChips'); setTimeout(applyRegionDim, 200); } // 地域絞り込み（モバイル）
   var roots = childrenOf('', members);
   if (roots.length && !viewingOwnerUid) _gmHadRoot(); // v559: 自分を登録済みの印
+  if (_mxOn()) { _mxSync(); updateLTSV(mapType, ownMembers); _mxRender(mapType, members, container); return; } // v607: スマホ縦は新しい行（木の線＋右の列をそろえる）
 
   if (roots.length === 0) {
     container.innerHTML = emptyStateHTML('map');
@@ -15896,6 +15902,7 @@ function _uxSync() {
     b.classList.toggle('ux-bh0', currentView !== 'current' && currentView !== 'ideal'); // 横向きは左の列で移動するので「メニューにもどる」の帯は不要（MAPは現状/理想の切替があるので残す）
     if (isPCMode()) b.classList.remove('ux-pg');
     _uxMapSync(); // v594
+    _mxSync(); // v607
   } catch (e) {}
 }
 window.addEventListener('resize', function() { _uxSync(); });
@@ -16340,6 +16347,286 @@ function uxMapDrClose(now) {
   if (now) { dr.parentNode.removeChild(dr); return; }
   dr.classList.remove('show'); setTimeout(function() { if (dr.parentNode) dr.parentNode.removeChild(dr); }, 200);
 }
+// ════ v607: MAP（スマホ縦）を作り直し — 上は3段（切替・数字・チップ）、行は「木の線＋右の列をそろえる」、下に追加と受付連携 ════
+var _mxHide = false; try { _mxHide = localStorage.getItem('gm_mxHide') === '1'; } catch (e) {}
+function _mxOn() { return !isPCMode() && !_uxLand() && (currentView === 'current' || currentView === 'ideal'); }
+// タイトルのカテゴリ（BR → 審査中 → 研修生 → フレッシュ → そのほか）
+function _mxCat(m, mapType) {
+  var t = (m.title || '').trim();
+  if (t === 'OUT') return 'out';
+  if (isBROrAbove(t)) return 'br';
+  if (['LOI', 'Q1', 'Q2', 'Q3', 'Q4'].indexOf(t) >= 0) return 'ex';
+  if (m.trainee || memberCat(m) === '研修生') return 'tr';
+  if (mapType !== 'ideal' && t !== 'BM' && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m)) return 'fr';
+  return 'ot';
+}
+var MX_CATS = [['br', 'BR'], ['ex', '審査中'], ['tr', '研修生'], ['fr', 'フレッシュ'], ['ot', 'そのほか']];
+function _mxCss() {
+  if (document.getElementById('mxCss')) return;
+  var st = document.createElement('style'); st.id = 'mxCss';
+  st.textContent = ":root{--mxbr:#9B7BFF;--mxex:#FF7A33;--mxtr:#1FA9DA;--mxfr:#D19500;--mxot:#56627A;--mxout:#3A4254}body.light{--mxbr:#7C4DFF;--mxex:#EE5F1B;--mxtr:#1A9BC9;--mxfr:#C98A00;--mxot:#5B6B86;--mxout:#9AA3B5}"
+    + "body.ux-mx header,body.ux-mx .back-home-bar,body.ux-mx .map3d-btn,body.ux-mx #fab,body.ux-mx .fab,body.ux-mx .p2-banner{display:none!important}"
+    + "body.ux-mx #view-current>*:not(#mxTop):not(#treeCurrent):not(.overlay),body.ux-mx #view-ideal>*:not(#mxTop):not(#treeIdeal):not(.overlay){display:none!important}"
+    + "body.ux-mx #treeCurrent,body.ux-mx #treeIdeal{overflow-x:auto;overflow-y:hidden;padding:0 0 150px;margin:0;-webkit-overflow-scrolling:touch}"
+    + "#mxTop{position:sticky;top:0;z-index:40;background:var(--bg);padding:calc(env(safe-area-inset-top) + 8px) 0 0}"
+    + ".mx1{display:flex;align-items:center;gap:7px;padding:0 12px}.mx1 .sp{flex:1}"
+    + ".mxseg{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:3px;flex:none}.mxseg span{padding:6px 12px;border-radius:9px;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}.mxseg .on{background:var(--accent);color:var(--go-ink,#06251C)}.mxseg .on.pu{background:var(--purple);color:#fff}"
+    + ".mxc{flex:none;height:38px;padding:0 11px;border-radius:11px;background:var(--surface);border:1.5px solid var(--border2);display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:900;color:var(--text);cursor:pointer;white-space:nowrap;font-family:inherit;-webkit-appearance:none;appearance:none;outline:none}"
+    + ".mxc.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}.mxc.pu{border-color:var(--purple);color:var(--purple)}.mxc small{font-size:11px;color:var(--text-dim);font-weight:800}.mxc .n{background:var(--accent);color:var(--go-ink,#06251C);border-radius:9px;font-size:11px;padding:0 6px;line-height:17px}"
+    + ".mxi{width:38px;padding:0;justify-content:center;font-size:17px}.mxsel{position:relative}.mxsel select{position:absolute;inset:0;opacity:0;width:100%;height:100%;font-size:16px}"
+    + ".mx2{display:flex;align-items:baseline;gap:14px;padding:8px 16px 6px;cursor:pointer}.mx2 small{font-size:11.5px;color:var(--text-dim);font-weight:800;margin-right:4px}.mx2 b{font-size:25px;font-weight:900;font-family:'Inter',sans-serif;color:var(--accent)}.mx2 i{font-style:normal;font-size:18px;font-weight:900;font-family:'Inter',sans-serif}.mx2 em{font-style:normal;margin-left:auto;font-size:12px;font-weight:800;color:var(--text-dim)}"
+    + ".mx3{display:flex;gap:7px;padding:2px 12px 9px;overflow-x:auto;scrollbar-width:none}.mx3::-webkit-scrollbar{display:none}"
+    + ".mxlg{display:flex;gap:10px;padding:0 14px 7px;font-size:11px;font-weight:800;color:var(--text-mid);overflow-x:auto;scrollbar-width:none;white-space:nowrap}.mxlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;background:var(--k)}"
+    + ".mxh{display:flex;align-items:center;padding:5px 12px 4px 14px;font-size:11px;font-weight:800;color:var(--text-dim);border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg)}.mxh .a{flex:1}.mxh .a em{font-style:normal;color:var(--accent);margin-left:6px}.mxh .b{width:46px;text-align:center}.mxh .c{width:70px;text-align:right}"
+    // 行
+    + ".mxin{width:max-content;min-width:100%;background:var(--surface)}"
+    + ".mr{display:flex;align-items:center;min-height:58px;padding:0 0 0 12px;border-bottom:1px solid var(--border);background:var(--surface);cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative}"
+    + ".mr:active{background:var(--surface2)}.mr.dim>*:not(.mc){opacity:.3}.mr.dim .mc>*{opacity:.3}.mr.sel{background:color-mix(in srgb,var(--accent) 10%,var(--surface))}.mr.out .n{text-decoration:line-through;opacity:.6}"
+    + ".mg{position:relative;flex:none;align-self:stretch}.mg i{position:absolute;top:0;bottom:0;border-left:2px solid var(--lc)}.mg i.el{bottom:50%;border-bottom:2px solid var(--lc);border-bottom-left-radius:8px;width:12px}.mg i.dn{top:50%}"
+    + ".mt{flex:none;width:20px;height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-dim);margin-right:2px}.mt.on{color:var(--text-mid);font-weight:900}"
+    + ".mav{flex:none;width:36px;height:36px;border-radius:50%;border:2.5px solid var(--k);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text);overflow:hidden;margin-right:9px}.mav img{width:100%;height:100%;object-fit:cover}"
+    + ".mn{flex:1;min-width:112px;padding:7px 8px 7px 0}.mn .l1{display:flex;align-items:center;gap:6px;white-space:nowrap;min-width:0}"
+    + ".tp{flex:none;font-size:13.5px;font-weight:900;color:#fff;background:var(--k);border-radius:7px;padding:1px 7px;line-height:1.4;font-family:'Inter','Noto Sans JP',sans-serif;letter-spacing:.2px;max-width:92px;overflow:hidden;text-overflow:ellipsis}"
+    + ".mn .n{font-size:15.5px;font-weight:900;overflow:hidden;text-overflow:ellipsis;min-width:0}.mn .n.female{color:var(--female)}.mn .l1 .lic.mor{width:15px!important;height:15px!important;flex:none}"
+    + ".mn .l2{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:11.5px;color:var(--text-dim);font-weight:800;white-space:nowrap}"
+    + ".mn .bd2{font-size:10.5px;font-weight:900;color:#fff;border-radius:6px;padding:0 5px;line-height:16px}.mn .l2 .idd{font-size:10px}"
+    + ".mc{position:sticky;right:0;z-index:2;display:flex;align-items:center;align-self:stretch;background:inherit;padding:0 12px 0 6px;box-shadow:-8px 0 10px -8px rgba(0,0,0,.25)}"
+    + ".ma{width:46px;display:flex;flex-direction:column;align-items:center}.ma b{width:31px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16.5px;font-weight:900;font-family:'Inter',sans-serif;color:#fff;background:var(--ac)}.ma small{font-size:10px;font-weight:900;color:var(--ac);margin-top:1px}"
+    + ".mgv{width:70px;text-align:right}.mgv b{display:block;font-size:16px;font-weight:900;font-family:'Inter',sans-serif}.mgv small{font-size:10px;color:var(--text-dim);font-weight:800;white-space:nowrap}"
+    // 下の帯
+    + "#mxBtm{display:none}body.ux-mx #mxBtm{display:flex;position:fixed;left:0;right:0;z-index:45;align-items:center;gap:10px;padding:8px 12px;background:var(--header-bg);border-top:1px solid var(--border);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}"
+    + "#mxBtm .bk{height:50px;padding:0 16px;border-radius:15px;background:var(--surface);border:1.5px solid var(--border2);display:flex;align-items:center;font-size:15.5px;font-weight:900;color:var(--text);cursor:pointer}"
+    + "#mxBtm .nx{margin-left:auto;height:50px;padding:0 18px;border-radius:15px;background:var(--accent);color:var(--go-ink,#06251C);display:flex;flex-direction:column;justify-content:center;font-size:15.5px;font-weight:900;line-height:1.15;cursor:pointer}#mxBtm .nx small{font-size:10.5px;font-weight:800;opacity:.75}#mxBtm .nx.pu{background:var(--purple);color:#fff}"
+    // 下から出すシート
+    + ".mxs .ms-sheet{padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}.mxs h4{font-size:20px;font-weight:900;margin:2px 0 4px}.mxs h5{font-size:12.5px;color:var(--text-mid);font-weight:800;margin:14px 0 7px}"
+    + ".mxg{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mxg>div{min-height:62px;border-radius:14px;background:var(--surface);border:1.5px solid var(--border2);padding:9px 13px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}"
+    + ".mxg>div b{font-size:16.5px;font-weight:900}.mxg>div span{font-size:12px;color:var(--text-mid);font-weight:800}.mxg>div.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}.mxg>div.on b{color:var(--accent)}"
+    + ".mxg.mxs2>div{min-height:46px;justify-content:center}.mxg.c4{grid-template-columns:repeat(4,1fr)}.mxg.c4>div{min-height:50px;align-items:center;justify-content:center}"
+    + ".mxm{display:flex;gap:8px}.mxm span{flex:1;height:42px;border-radius:12px;background:var(--surface);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}.mxm span.on{border-color:var(--accent);color:var(--accent)}"
+    + ".mxq{width:100%;box-sizing:border-box;height:46px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:16px;padding:0 14px;outline:none}.mxq:focus{border-color:var(--accent)}"
+    + ".mxhit{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:15px;font-weight:800}.mxhit small{color:var(--text-dim);font-weight:700;font-size:12px}.mxhit em{margin-left:auto;font-style:normal;color:var(--accent);font-size:12.5px;font-weight:900}";
+  document.head.appendChild(st);
+}
+// 1行（木の線・開閉・アバター・タイトル・名前 ／ 右に固定：稼働・GSV）
+function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) {
+  var cat = _mxCat(m, mapType), k = 'var(--mx' + cat + ')', W = 14, g = '';
+  for (var i = 0; i < lines.length; i++) if (lines[i]) g += '<i style="left:' + (i * W + 6) + 'px;--lc:' + fc + '"></i>';
+  if (depth > 0) {
+    var x = (depth - 1) * W + 6;
+    g += '<i class="el" style="left:' + x + 'px;--lc:' + fc + '"></i>' + (last ? '' : '<i class="dn" style="left:' + x + 'px;--lc:' + fc + '"></i>');
+  }
+  var gw = depth > 0 ? depth * W + 4 : 0;
+  var t = (m.title || (typeof getLatestStatus === 'function' ? (getLatestStatus(m) || '') : '') || '').trim();
+  var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+  var ph = _avatars[m.id], av = ph ? '<img src="' + ph + '" alt="">' : evEsc((m.lastName || m.firstName || '?').charAt(0));
+  var act = m.activity || '', rate = m.actRate ? m.actRate : (act === 'S' ? 120 : '');
+  var ac = act === 'S' ? 'var(--s)' : act === 'A' ? 'var(--a)' : act === 'B' ? 'var(--b)' : act === 'C' ? 'var(--c)' : 'var(--text-dim)';
+  var idle = '';
+  if (t !== 'OUT' && mapType === 'current' && typeof memberIdleDays === 'function') { var d9 = memberIdleDays(m); if (d9 >= 30) idle = '<span class="bd2" style="background:' + (d9 >= 60 ? 'var(--red)' : '#6b7280') + '">' + (d9 >= 60 ? '⚠' : '') + d9 + '日</span>'; }
+  var bday = (typeof _bdayIn30 === 'function' && _bdayIn30(m) !== null) ? '<span class="bd2" style="background:#FF5D8F">' + icn('cake', 'width:11px;height:11px;vertical-align:-1px') + _bdayMD(m) + '</span>' : '';
+  var rs = restartSuffix(m, true), foreign = !!m._foreign;
+  var l2 = idle + bday + (rs ? '<span class="bd2" style="background:#FB923C">' + rs + '</span>' : '')
+    + (foreign ? '<span>' + icn('link', 'width:11px;height:11px') + evEsc(m._ownerName || '下位') + '</span>' : '')
+    + (m.region ? '<span>📍' + evEsc(String(m.region).substring(0, 5)) + '</span>' : '')
+    + (nKids ? '<span>フロント' + nKids + '人</span>' : '')
+    + (mapType === 'ideal' ? '<span class="idd-row">' + idealDiffHtml(m, mapType) + '</span>' : '');
+  var pt = m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '—';
+  return '<div class="mr' + (t === 'OUT' ? ' out' : '') + (window._selectedCardId === m.id ? ' sel' : '') + '" id="nc-' + m.id + '" data-cid="' + m.id + '" onclick="mxTap(\'' + m.id + '\')">'
+    + '<div class="mg" style="width:' + gw + 'px">' + g + '</div>'
+    + (nKids ? '<span class="mt on" onclick="event.stopPropagation();mxTgl(\'' + m.id + '\')">' + (kidsShown ? '▼' : '▶') + '</span>' : '<span class="mt"></span>')
+    + '<div class="mav" style="--k:' + k + '">' + av + '</div>'
+    + '<div class="mn"><div class="l1">' + (t ? '<span class="tp" style="--k:' + k + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="n ' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</div>'
+    + (l2 ? '<div class="l2">' + l2 + '</div>' : '') + '</div>'
+    + '<div class="mc"><div class="ma" style="--ac:' + ac + '"><b>' + (act || '—') + '</b><small>' + (rate ? rate + '%' : '') + '</small></div>'
+    + '<div class="mgv"><b>' + pt + '</b><small>' + (m.ptFixed > 0 ? '固定 ' + m.ptFixed.toLocaleString() : 'GSV') + '</small></div></div></div>';
+}
+var MX_FAM = ['#2CE5B8', '#8B7CFF', '#FFB454', '#FF5D73', '#5AD7FF', '#4ADE80', '#FF9F6E', '#C583FF'];
+// 段の初期値（端末ごとに記憶）を一度だけ当てる
+function _mxLevelGet() { try { return localStorage.getItem('gm_mapLevel') || ''; } catch (e) { return ''; } }
+function _mxLevelInit(members) {
+  if (window._mxLvInit) return; window._mxLvInit = true;
+  var lv = _mxLevelGet(); if (!lv) return;
+  if (!window._treeOpen) window._treeOpen = {};
+  members.forEach(function(m) { var d = calcMemberDepth(m, members); window._treeOpen[m.id] = lv === 'all' ? true : (d < parseInt(lv, 10)); });
+}
+function _mxMatch(m, mapType) {
+  if (mapType !== 'current') return true;
+  var regF = regionFilter || '', catF = mapCatFilter || '';
+  var r = normalizeRegionValue(m.region || '');
+  var ok = !regF || (regF === '__NONE__' ? !r : r === normalizeRegionValue(regF));
+  if (ok && catF) ok = memberMatchesFilter(m, catF);
+  return ok;
+}
+function _mxRender(mapType, members, container) {
+  _mxCss(); _mxLevelInit(members);
+  if (!window._treeOpen) window._treeOpen = {};
+  var filt = mapType === 'current' && !!(regionFilter || mapCatFilter), hide = filt && _mxHide, keep = null, byId = {};
+  members.forEach(function(m) { byId[m.id] = m; });
+  if (hide) { // 合う人と、その上の人だけ残す
+    keep = {};
+    members.forEach(function(m) { if (!_mxMatch(m, mapType)) return; var c = m, g = 0; while (c && !keep[c.id] && g++ < 300) { keep[c.id] = 1; c = byId[c.parentId]; } });
+  }
+  var rows = [], ids = [];
+  var walk = function(m, depth, lines, last, fc) {
+    var kids = childrenOf(m.id, members); if (keep) kids = kids.filter(function(x) { return keep[x.id]; });
+    var open = hide ? true : ((m.id in window._treeOpen) ? !!window._treeOpen[m.id] : depth < 2);
+    var html = _mxRowHtml(m, mapType, depth, lines, last, fc, kids.length, open, open && kids.length);
+    if (filt && !_mxMatch(m, mapType)) html = html.replace('class="mr', 'class="mr dim');
+    rows.push(html); if (!m._foreign) ids.push(m.id);
+    if (!open) return;
+    var nl = depth > 0 ? lines.concat([!last]) : lines;
+    kids.forEach(function(c, i) { walk(c, depth + 1, nl, i === kids.length - 1, depth === 0 && roots.length === 1 ? MX_FAM[i % MX_FAM.length] : fc); });
+  };
+  var roots = childrenOf('', members); if (keep) roots = roots.filter(function(x) { return keep[x.id]; });
+  roots.forEach(function(r, i) { walk(r, 0, [], i === roots.length - 1, roots.length === 1 ? 'var(--border2)' : MX_FAM[i % MX_FAM.length]); });
+  _uxLists.map = { ids: ids, title: mapType === 'ideal' ? '理想MAP' : 'MAP' };
+  container.innerHTML = roots.length ? '<div class="mxin">' + rows.join('') + '</div>' : (filt ? '<div class="ux-empty" style="margin:20px">条件に合う人がいません</div>' : emptyStateHTML('map'));
+  _mxTop(mapType); _mxBtm(mapType);
+}
+// 上の3段（切替・数字・チップ）＋凡例＋列の見出し
+function _mxTop(mapType) {
+  var view = document.getElementById(mapType === 'ideal' ? 'view-ideal' : 'view-current'); if (!view) return;
+  var top = document.getElementById('mxTop');
+  if (!top || top.parentNode !== view) { if (top) top.parentNode.removeChild(top); top = document.createElement('div'); top.id = 'mxTop'; view.insertBefore(top, view.firstChild); }
+  var cur = mapType === 'current', own = membersForMap(mapType).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; });
+  var ys = document.getElementById('selYear'), msel = document.getElementById('selMonth'), ym = '', opts = '';
+  if (ys && msel) {
+    ym = ys.value + '-' + msel.value;
+    Array.prototype.forEach.call(ys.options, function(yo) { Array.prototype.forEach.call(msel.options, function(mo) { var v = yo.value + '-' + mo.value; opts += '<option value="' + v + '"' + (v === ym ? ' selected' : '') + '>' + yo.value + '年' + parseInt(mo.value, 10) + '月</option>'; }); });
+  }
+  var ymLb = msel ? (ys && String(ys.value) !== String(new Date().getFullYear()) ? ys.value + '年' : '') + parseInt(msel.value, 10) + '月' : '';
+  var sh = document.getElementById('sharedMapBtn'), shOn = sh && sh.style.display !== 'none';
+  var lt = (document.getElementById(cur ? 'ltsvC' : 'ltsvI') || {}).textContent || '-';
+  var sN = own.filter(function(m) { return m.activity === 'S'; }).length, actN = (document.getElementById('actCount') || {}).textContent || '';
+  var lv = _mxLevelGet() || ((document.getElementById('levelSelect') || {}).value) || '2', maxD = 0;
+  var lsel = document.getElementById('levelSelect'); if (lsel) maxD = Math.max(0, lsel.options.length - 1);
+  var lvOpts = ''; for (var n = 1; n <= Math.max(maxD, 1); n++) lvOpts += '<option value="' + n + '"' + (String(n) === lv ? ' selected' : '') + '>' + n + '段</option>';
+  var regLb = !regionFilter ? '全地域' : (regionFilter === '__NONE__' ? '未設定' : regionFilter), fN = mapCatFilter ? 1 : 0;
+  var sortLb = ''; TREE_SORTS.forEach(function(s) { if (s[0] === _treeSortMode) sortLb = s[1]; });
+  top.innerHTML = '<div class="mx1"><div class="mxseg"><span class="' + (cur ? 'on' : '') + '" onclick="switchView(\'current\')">現状</span><span class="' + (cur ? '' : 'on pu') + '" onclick="switchView(\'ideal\')">理想</span></div>'
+    + (opts ? '<span class="mxc mxsel">' + ymLb + ' ▾<select onchange="mxYm(this.value)">' + opts + '</select></span>' : '')
+    + (shOn ? '<span class="mxc pu" onclick="openSharedDashboard()">' + evEsc((sh.textContent || '共有MAP').replace('共有MAP', '共有').trim()) + '</span>' : '')
+    + '<span class="sp"></span><span class="mxc mxi" onclick="mxSearch()" title="名前で探す">🔍</span><span class="mxc mxi" onclick="mxMore()" title="そのほか">⋯</span></div>'
+    + '<div class="mx2" onclick="' + (cur ? 'showLtsvDetail()' : 'uxMapIdealSum()') + '"><span><small>' + (cur ? 'LTSV' : 'LTSV 目標') + '</small><b' + (cur ? '' : ' style="color:var(--purple)"') + '>' + evEsc(lt) + '</b></span>'
+    + (cur ? '<span><small>稼働</small><i>' + evEsc(actN) + '</i></span><span><small>S</small><i style="color:var(--accent)">' + sN + '</i></span>' : '<em>理想 vs 現状 ›</em>') + '</div>'
+    + '<div class="mx3"><span class="mxc' + (lv === 'all' ? ' on' : '') + '" onclick="mxLevel(\'all\')">全段</span>'
+    + '<span class="mxc mxsel' + (lv !== 'all' ? ' on' : '') + '">' + (lv !== 'all' ? lv : '2') + '段 ▾<select onchange="mxLevel(this.value)">' + (lv === 'all' ? '<option value="all" selected>段を選ぶ</option>' : '') + lvOpts + '</select></span>'
+    + (cur ? '<span class="mxc' + (regionFilter ? ' on' : '') + '" onclick="mxRegion()">📍 ' + evEsc(regLb) + (regionFilter ? ' <span onclick="event.stopPropagation();mxSetRegion(\'\')" style="margin-left:2px;color:var(--text-dim)">×</span>' : ' ▾') + '</span>' : '')
+    + '<span class="mxc' + (fN ? ' on' : '') + '" onclick="mxFilter()">絞り込み' + (fN ? ' <span class="n">1</span>' : ' ▾') + '</span></div>'
+    + '<div class="mxlg">' + MX_CATS.map(function(c) { return '<span><i style="--k:var(--mx' + c[0] + ')"></i>' + c[1] + '</span>'; }).join('') + '</div>'
+    + '<div class="mxh"><span class="a">名前<em>' + evEsc(sortLb) + '</em></span><span class="b">稼働</span><span class="c">GSV</span></div>';
+}
+function _mxBtm(mapType) {
+  var b = document.getElementById('mxBtm');
+  if (!b) { b = document.createElement('div'); b.id = 'mxBtm'; document.body.appendChild(b); }
+  var tb = document.getElementById('mobileTabbar'); b.style.bottom = (tb && tb.offsetHeight ? tb.offsetHeight : 62) + 'px';
+  var cur = mapType === 'current', ed = state.isEditor, last = '';
+  try { last = localStorage.getItem('gm_ckLast_' + ((currentUser && currentUser.uid) || '')) || ''; } catch (e) {}
+  b.innerHTML = (ed ? '<span class="bk" onclick="onFabClick()">＋ 追加</span>' : '')
+    + (cur ? (viewingOwnerUid ? '' : '<span class="nx" onclick="ckLinkOpen()">⟲ 受付連携' + (last ? '<small>前回 ' + evEsc(last) + '</small>' : '') + '</span>')
+      : '<span class="nx pu" onclick="uxMapIdealSum()">理想 vs 現状</span>');
+}
+function _mxSync() {
+  var on = _mxOn();
+  document.body.classList.toggle('ux-mx', on);
+  if (!on) { var t = document.getElementById('mxTop'); if (t && t.parentNode) t.parentNode.removeChild(t); }
+}
+// 操作
+function mxTap(id) {
+  if (/^MG_/.test(id)) { mgNodeClick(id); return; }
+  window._selectedCardId = id;
+  if (currentView === 'ideal') { if (state.isEditor) idqOpen(id); return; }
+  uxMem(id, 'map');
+}
+function mxTgl(id) {
+  if (!window._treeOpen) window._treeOpen = {};
+  var el = document.querySelector('#nc-' + id + ' .mt'), open = el && el.textContent === '▼';
+  window._treeOpen[id] = !open;
+  renderTree(currentView === 'ideal' ? 'ideal' : 'current');
+}
+function mxLevel(v) {
+  try { localStorage.setItem('gm_mapLevel', v); } catch (e) {}
+  var s = document.getElementById('levelSelect'); if (s) s.value = v;
+  expandToLevel(v);
+}
+function mxYm(v) {
+  var p = String(v).split('-'), y = document.getElementById('selYear'), m = document.getElementById('selMonth');
+  if (y) y.value = p[0]; if (m) m.value = p[1];
+  if (typeof onYearMonthChange === 'function') onYearMonthChange();
+}
+function mxJump(id) {
+  var mt = 'current', members = composeMergedInto(membersForMap(mt), mt), byId = {};
+  members.forEach(function(m) { byId[m.id] = m; });
+  if (!window._treeOpen) window._treeOpen = {};
+  var c = byId[id], g = 0; while (c && c.parentId && g++ < 300) { window._treeOpen[c.parentId] = true; c = byId[c.parentId]; }
+  if (currentView !== 'current') switchView('current'); else renderTree(mt);
+  setTimeout(function() {
+    var el = document.getElementById('nc-' + id); if (!el) return;
+    window._selectedCardId = id; selectedParentId = id;
+    Array.prototype.forEach.call(document.querySelectorAll('.mr.sel'), function(x) { x.classList.remove('sel'); });
+    el.classList.add('sel');
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+  }, 120);
+}
+// 下から出すシート（共通）
+function _mxSheet(id, html) {
+  _p2SheetClose(id);
+  var ov = document.createElement('div'); ov.className = 'ms-overlay mxs'; ov.id = id; ov.style.zIndex = '650';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose(id); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-height:88vh;overflow-y:auto"><div class="ms-grip"></div>' + html + '</div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  return ov;
+}
+function mxRegion() {
+  var own = membersForMap('current').filter(function(m) { return !m.deleted; }), ro = _regionOrder(own), none = own.filter(function(m) { return !(m.region || '').trim(); }).length;
+  var tile = function(v, lb, n) { var on = (regionFilter || '') === v; return '<div class="' + (on ? 'on' : '') + '" onclick="mxSetRegion(\'' + v + '\')"><b>' + evEsc(lb) + '</b><span>' + n + '人</span></div>'; };
+  _mxSheet('mxRegOv', '<h4>地域</h4><div class="mxg">' + tile('', '全地域', own.length) + ro.keys.map(function(r) { return tile(r, r, ro.cnt[r]); }).join('') + (none ? tile('__NONE__', '未設定', none) : '') + '</div>'
+    + '<h5>ほかの地域の人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>');
+}
+function _mxRe() { renderTree(currentView === 'ideal' ? 'ideal' : 'current'); }
+function mxSetRegion(v) { regionFilter = v || ''; window._pcFocusLineage = ''; _p2SheetClose('mxRegOv'); _mxRe(); }
+function mxHideSet(v) { _mxHide = !!v; try { localStorage.setItem('gm_mxHide', v ? '1' : '0'); } catch (e) {} _p2SheetClose('mxRegOv'); _p2SheetClose('mxFltOv'); _mxRe(); }
+function mxFilter() {
+  var cur = currentView === 'current', own = membersForMap(currentView).filter(function(m) { return !m.deleted; }), h = '<h4>' + (cur ? '絞り込み・並び' : '並び') + '</h4>';
+  if (cur) {
+    var n = function(f) { return own.filter(function(m) { return memberMatchesFilter(m, f); }).length; };
+    var bd = own.filter(function(m) { return typeof _bdayIn30 === 'function' && _bdayIn30(m) !== null; }).length;
+    var tile = function(v, lb, c) { return '<div class="' + ((mapCatFilter || '') === v ? 'on' : '') + '" onclick="mxSetCat(\'' + v + '\')"><b>' + lb + '</b><span>' + (v === 'bday' ? '30日以内・' : '') + c + '人</span></div>'; };
+    h += '<div class="mxg">' + tile('', 'すべて', own.length) + tile('fresh', 'フレッシュ', n('fresh')) + tile('br', 'BR', n('br')) + tile('trainee', '研修生', n('trainee')) + tile('bday', '誕生日', bd) + '</div>'
+      + '<h5>審査中（タイトル）</h5><div class="mxg c4">' + ['LOI', 'Q2', 'Q3', 'Q4'].map(function(t) { var c = own.filter(function(m) { return (m.title || '').trim() === t; }).length; return '<div class="' + (mapCatFilter === 'qbr:' + t ? 'on' : '') + '" onclick="mxSetCat(\'qbr:' + t + '\')"><b>' + t + '</b><span>' + c + '人</span></div>'; }).join('') + '</div>'
+      + '<h5>ほかの人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>';
+  }
+  h += '<h5>並び</h5><div class="mxg mxs2">' + TREE_SORTS.map(function(s) { return '<div class="' + (s[0] === _treeSortMode ? 'on' : '') + '" onclick="_p2SheetClose(\'mxFltOv\');setTreeSort(\'' + s[0] + '\')"><b style="font-size:14.5px">' + s[1] + '</b></div>'; }).join('') + '</div>';
+  _mxSheet('mxFltOv', h);
+}
+function mxSetCat(f) { _p2SheetClose('mxFltOv'); if (f === 'bday' && typeof mapBdayChipTap === 'function') { mapBdayChipTap(); return; } mapCatFilter = f || ''; _mxRe(); }
+function mxSearch() {
+  _mxSheet('mxSrOv', '<h4>名前で探す</h4><input class="mxq" id="mxQ" type="search" placeholder="名前を入れる" autocomplete="off" oninput="mxSearchRun(this.value)"><div id="mxHits" style="margin-top:6px"></div>'
+    + '<span class="ux-lk" onclick="_p2SheetClose(\'mxSrOv\');openSearchModal()">条件でくわしく探す ›</span>');
+  setTimeout(function() { var q = document.getElementById('mxQ'); if (q) try { q.focus(); } catch (e) {} }, 250);
+}
+function mxSearchRun(q) {
+  var box = document.getElementById('mxHits'); if (!box) return;
+  q = String(q || '').trim().toLowerCase(); if (!q) { box.innerHTML = ''; return; }
+  var mt = currentView === 'ideal' ? 'ideal' : 'current', hits = composeMergedInto(membersForMap(mt), mt).filter(function(m) { return !m.deleted && ((m.lastName || '') + (m.firstName || '') + ' ' + (m.lastName || '') + ' ' + (m.firstName || '')).toLowerCase().indexOf(q) >= 0; }).slice(0, 12);
+  box.innerHTML = hits.length ? hits.map(function(m) { return '<div class="mxhit" onclick="_p2SheetClose(\'mxSrOv\');mxJump(\'' + m.id + '\')">' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small><em>ここへ ›</em></div>'; }).join('') : '<div class="ux-empty">見つかりません</div>';
+}
+function mxMore() {
+  var cur = currentView === 'current', vis = function(id) { var e = document.getElementById(id); return !!(e && e.style.display !== 'none'); };
+  var li = function(ic, t, sub, on) { return '<div class="ux-li" onclick="_p2SheetClose(\'mxMoreOv\');' + on + '"><span class="ic">' + ic + '</span><span>' + t + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="ch">›</span></div>'; };
+  _ux2Css();
+  _mxSheet('mxMoreOv', '<h4>そのほか</h4><div class="ux-list" style="margin-top:8px">'
+    + (cur && !viewingOwnerUid ? li('⟲', '受付連携', '受付の名簿と稼働率', 'ckLinkOpen()') : '')
+    + (!cur ? li(icn('target'), '理想 vs 現状', '', 'uxMapIdealSum()') : '')
+    + (vis('copyMonthBtn') ? li('→', '翌月にコピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
+    + (vis('shareBtn') ? li(icn('link'), '共有', 'MAPを見せる・一緒に編集', 'openShareModal()') : '')
+    + (vis('sharedMapBtn') ? li(icn('users'), '共有MAP', '見せてもらっているMAP', 'openSharedDashboard()') : '')
+    + (cur ? li('🧊', '3Dで見る', '', 'open3DMap()') : '')
+    + (cur ? li('📄', 'CSV出力', '', 'exportCSV(\'current\')') : '')
+    + li(icn('search'), '条件でくわしく探す', '', 'openSearchModal()')
+    + '</div>');
+}
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
   var src = document.getElementById('idealSum'); if (!src) return;
@@ -16668,7 +16955,8 @@ var _uxMemSt = null;
 var UX_MEM_CTX = {
   exam: { lb: '審査中の1,000pt', line: function() { return LOI_MONTHLY_MIN; } },
   brk: { lb: 'BRの維持', line: function() { return BR_MAINTAIN; } },
-  near: { lb: 'あと一歩でS' }
+  near: { lb: 'あと一歩でS' },
+  map: { lb: 'MAP' } // v607
 };
 function uxMem(id, list) {
   _ux2Css();
@@ -16701,6 +16989,7 @@ function _uxMemRender() {
   else if (ctxK === 'near') say = '稼働 <b>' + (m.activity || '—') + (m.actRate ? '・' + m.actRate + '%' : '') + '</b>。<em>あと一歩でS</em>。今月の動きに誘ってSに';
   else if (ctxK === 'gap') say = '<b>理想MAPとの差</b><br>' + (typeof _dtGapSay === 'function' ? _dtGapSay(m.id) : '');
   else if (ctxK === 'news') say = '<b>今月スタート</b>。GSV <em>' + pt.toLocaleString() + '</em>。最初の1ヶ月の動きを一緒に';
+  else if (ctxK === 'map') say = '今月GSV <b>' + (pt ? pt.toLocaleString() : '—') + '</b>' + (m.ptFixed > 0 ? '（固定 ' + m.ptFixed.toLocaleString() + '）' : '') + (m.region ? '・📍' + evEsc(m.region) : '');
   else say = '今月GSV <b>' + pt.toLocaleString() + '</b>';
   var nm = _uxName(m);
   var h = '<div class="ux-top"><span class="ux-crumb" onclick="uxMemClose()">' + evEsc((L && L.title) || ctx.lb || 'メンバー') + ' › <b>' + evEsc(nm) + '</b></span><span class="ux-home" onclick="uxMemClose()" title="閉じる">✕</span></div>'
@@ -16711,11 +17000,14 @@ function _uxMemRender() {
     + '<div class="ux-kv"><div>今月GSV<b>' + pt.toLocaleString() + '</b></div><div>稼働<b>' + (m.activity || '—') + (m.actRate ? '<small style="font-size:11px;color:var(--text-dim)"> ' + m.actRate + '%</small>' : '') + '</b></div><div>直下<b>' + kids + '人</b></div></div></div></div>'
     + '<div><div class="ux-say">' + say + '</div>'
     + '<div class="ux-acts"><span class="p" onclick="uxMemTask(\'' + m.id + '\',\'task\')">＋ タスクにする</span><span onclick="uxMemTask(\'' + m.id + '\',\'event\')">' + icn('calendar') + ' 予定を入れる</span></div>'
-    + (state.isEditor && !viewingOwnerUid ? '<span class="ux-lk" onclick="uxMemClose();openEdit(\'' + m.id + '\')">' + icn('pencil') + ' メンバー情報を編集</span>' : '')
+    + (ctxK === 'map' && state.isEditor ? '<div class="ux-acts" style="grid-template-columns:1fr;margin-top:8px"><span onclick="uxMemClose();fabSelectParent(\'' + m.id + '\')">＋ この人の下に追加</span></div>' : '')
+    + (ctxK === 'map' ? '<div class="mxinfo" style="margin-top:12px">' + memberInfoHtml(m) + '</div>' : '')
+    + (ctxK !== 'map' && state.isEditor && !viewingOwnerUid ? '<span class="ux-lk" onclick="uxMemClose();openEdit(\'' + m.id + '\')">' + icn('pencil') + ' メンバー情報を編集</span>' : '')
     + (ids.length > 1 ? '<div class="ux-pgr"><span class="' + (i > 0 ? '' : 'off') + '" onclick="uxMemGo(-1)">‹</span>' + (i + 1) + ' / ' + ids.length + '<span class="' + (i < ids.length - 1 ? '' : 'off') + '" onclick="uxMemGo(1)">›</span></div>' : '')
     + '</div></div>';
   var nx = ids[i + 1] ? _uxMemFind(ids[i + 1]) : null;
-  h += '<div class="ux-btm"><span class="ux-bk" onclick="uxMemClose()">‹ 一覧へ</span>' + (nx ? '<span class="ux-nx" onclick="uxMemGo(1)">つぎの人：' + evEsc(nx.lastName || nx.firstName || '') + ' ›</span>' : '') + '</div>';
+  if (ctxK === 'map') h += '<div class="ux-btm"><span class="ux-bk" onclick="uxMemClose()">‹ MAPへ</span>' + (state.isEditor ? '<span class="ux-nx" onclick="uxMemClose();openEdit(\'' + m.id + '\')">' + icn('pencil') + ' 編集する</span>' : (nx ? '<span class="ux-nx" onclick="uxMemGo(1)">つぎの人 ›</span>' : '')) + '</div>'; // v607: MAPから
+  else h += '<div class="ux-btm"><span class="ux-bk" onclick="uxMemClose()">‹ 一覧へ</span>' + (nx ? '<span class="ux-nx" onclick="uxMemGo(1)">つぎの人：' + evEsc(nx.lastName || nx.firstName || '') + ' ›</span>' : '') + '</div>';
   var pg = document.getElementById('uxMemPg');
   if (!pg) { pg = document.createElement('div'); pg.id = 'uxMemPg'; document.body.appendChild(pg); _uxSwipe(pg, function() { uxMemGo(-1); }, function() { uxMemGo(1); }); }
   pg.innerHTML = h; pg.scrollTop = 0;
@@ -30879,6 +31171,7 @@ function closeLtsvModal(e) {
 }
 
 function jumpToMember(id) {
+  if (!isPCMode() && !_uxLand()) { var lm = document.getElementById('ltsvModal'); if (lm) lm.classList.remove('open'); mxJump(id); return; } // v607
   // モーダルを閉じる
   var modal = document.getElementById('ltsvModal');
   if (modal) modal.classList.remove('open');
