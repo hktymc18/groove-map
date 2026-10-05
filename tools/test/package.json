@@ -1,0 +1,7 @@
+{
+  "name": "groove-map-tests",
+  "private": true,
+  "description": "GROOVE MAP の自動テスト（jsdom）と画面写真の道具",
+  "scripts": { "test": "bash run.sh" },
+  "devDependencies": { "jsdom": "^24.1.0" }
+}
