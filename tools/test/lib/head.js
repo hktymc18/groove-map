@@ -8,6 +8,7 @@ module.exports = function (opt) {
   process.on('unhandledRejection', () => {});
   const html = require('./load_html.js')();
   const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
+  const T0 = {}; // ログインの流れを試す用（authCb＝onAuthStateChangedに渡された関数・signIn＝ログインの結果）
   const dbStub = {
     settings() {}, enablePersistence() { return Promise.resolve(); },
     doc(p) { return { set() { return Promise.resolve(); }, get() { return Promise.resolve({ exists: false, data: () => null }); }, delete() { return Promise.resolve(); }, update() { return Promise.resolve(); }, onSnapshot() { return () => {}; }, collection(c) { return dbStub.collection(p + '/' + c); } }; },
@@ -17,7 +18,7 @@ module.exports = function (opt) {
   const fbStub = {
     initializeApp: () => {},
     firestore: Object.assign(() => dbStub, { FieldValue: { delete: () => '__DEL__', serverTimestamp: () => '', arrayUnion: (...a) => a }, CACHE_SIZE_UNLIMITED: -1 }),
-    auth: Object.assign(() => ({ onAuthStateChanged() {}, signOut() { return Promise.resolve(); } }), { GoogleAuthProvider: function () {} }),
+    auth: Object.assign(() => ({ onAuthStateChanged(cb) { T0.authCb = cb; }, signInWithEmailAndPassword() { return T0.signIn ? T0.signIn() : new Promise(() => {}); }, signOut() { return Promise.resolve(); } }), { GoogleAuthProvider: function () {} }),
     messaging: Object.assign(() => ({}), { isSupported: () => false }),
     apps: [],
   };
@@ -36,7 +37,7 @@ module.exports = function (opt) {
     }
   });
   const w = dom.window;
-  const T = { w, dbStub, OWNER, fails: 0 };
+  const T = Object.assign(T0, { w, dbStub, OWNER, fails: 0 });
   T.c = (n, cond, x) => { console.log((cond ? 'PASS' : 'FAIL') + ': ' + n + (x !== undefined ? '  [' + x + ']' : '')); if (!cond) T.fails++; };
   T.sleep = ms => new Promise(r => setTimeout(r, ms));
   T.setWH = (W, H) => { Object.defineProperty(w, 'innerWidth', { value: W, configurable: true }); Object.defineProperty(w, 'innerHeight', { value: H, configurable: true }); };
