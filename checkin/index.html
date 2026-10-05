@@ -1129,8 +1129,12 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v23';
+var APP_VER = 'v24';
 var CHANGELOG = [
+  { v: 'v24', d: '2026/10/06', items: [
+    'セキュリティ強化: 名簿・出席・会計・集計などのデータは、自分のユニオンと自分が管理しているユニオンの分だけ読めるようになりました（データベース側でも制限）',
+    '他ユニオンのメンバーの受付: 会員証のQRや番号を読み取ると、会員証から照会してビジターとして受付できます（名簿を見られなくても受付OK）'
+  ] },
   { v: 'v23', d: '2026/10/06', items: ['名簿・イベント・会計・集計のユニオン切替は、自分のユニオンと自分が管理しているユニオンだけ表示されるようになりました（他ユニオンのデータは見られません）'] },
   { v: 'v22', d: '2026/10/05', items: ['オーナー向け: 名簿タブに「🗑 ユニオン削除」を追加（綴り間違いなどで作ったユニオンを削除。名簿・イベント・ユーザー登録が無いユニオンだけ削除できます）'] },
   { v: 'v21', d: '2026/10/04', items: [
@@ -3575,6 +3579,10 @@ function memberForm(m){
           if(sn.exists){
             throw { code: 'dup', name: (sn.data() && sn.data().name) || '' };
           }
+        }, function(e){
+          // 他ユニオンの番号は中身を読めない（読めない＝存在する）ので重複として扱う
+          if(e && e.code === 'permission-denied') throw { code: 'dup', name: '他ユニオン' };
+          throw e;
         })
       : Promise.resolve();
     pre.then(function(){
@@ -4850,6 +4858,9 @@ $('trGo').onclick = function(){
   db.collection('checkinMembers').doc(no).get().then(function(sn){
     if(sn.exists) throw { code: 'dup' };
     return db.collection('checkinMembers').doc(no).set(data);
+  }, function(e){
+    if(e && e.code === 'permission-denied') throw { code: 'dup' };   // 他ユニオンで使用中の番号
+    throw e;
   }).then(function(){
     return issueCard(data, function(){
       gTrMembers.push(data);
@@ -6536,10 +6547,11 @@ function startReception(ev){
   $('recent').innerHTML = '<li style="color:var(--sub)">まだ受付はありません</li>';
   stageIdle();
 
-  // 全ユニオンの名簿をロード（他ユニオンのメンバーもビジターとして1スキャンで受付できるように）
-  var unionSet = gUnions.slice();
-  (ev.unions || []).forEach(function(u){ if(unionSet.indexOf(u) < 0) unionSet.push(u); });
-  if(!unionSet.length) unionSet = [gUnion];
+  // 見られるユニオンの名簿をロード（他ユニオンの名簿はDBルールで読めないため、
+  // 他ユニオンのメンバーはスキャン時に会員証（番号→カード）から照会してビジター受付する）
+  var unionSet = ckViewableUnions();
+  if(unionSet.indexOf(gUnion) < 0) unionSet.push(gUnion);
+  (ev.unions || []).forEach(function(u){ if(unionSet.indexOf(u) < 0 && ckCanView(u)) unionSet.push(u); });
   var loads = unionSet.map(function(u){
     return db.collection('checkinMembers').where('union', '==', u).get().then(function(qs){
       qs.forEach(function(d){
@@ -6547,7 +6559,7 @@ function startReception(ev){
         if(!ckMemberOff(m)) gRec.roster[d.id] = m;
         else gRec.off[d.id] = m;   // 無効メンバー: スキャン時に「未登録」ではなく無効の案内を出す用
       });
-    });
+    }).catch(function(){});   // 読めないユニオンは飛ばす（スキャン時の照会で対応）
   });
   Promise.all(loads).then(function(){
     toast('名簿を読み込みました（' + Object.keys(gRec.roster).length + '名）。受付を開始できます');
@@ -6940,6 +6952,8 @@ function scan(raw, method){
   if(sig && !/^[0-9a-f]{4,}$/.test(sig)) sig = null;
   no = no.replace(/\.0$/, '');
   var member = gRec.roster[no];
+  // 会員証から照会した他ユニオンの人は名簿を読めないので、署名が変わっていたら会員証から照会し直す
+  if(member && member.viaCard && sig && member.cardSig && sig !== member.cardSig){ delete gRec.roster[no]; member = null; }
   if(member && sig && member.cardSig && sig !== member.cardSig){
     // 受付開始後に会員証が再発行されていると、開始時に読み込んだ名簿の署名が古い。
     // 弾く前に名簿の最新を1件だけ取り直し、最新の署名と一致すればそのまま受付する
@@ -6957,23 +6971,51 @@ function scan(raw, method){
     });
     return;
   }
-  if(!member){
-    beep('ng');
-    var offm = gRec.off && gRec.off[no];
-    if(offm){
-      setStage('ng',
-        '<span class="hit-badge">無効のメンバー</span>'
-        + '<div class="hit-name">' + esc(offm.name || no) + '</div>'
-        + '<p class="stage-sub">このメンバーは無効化されています。名簿から「有効化」すると受付できます。</p>');
-      return;
-    }
-    setStage('ng',
-      '<span class="hit-badge">未登録の番号</span>'
-      + '<div class="hit-name mono" style="font-size:30px;">' + esc(no) + '</div>'
-      + '<p class="stage-sub">名簿にない番号です。「ゲスト受付」から手動で登録できます。</p>');
+  if(!member && !(gRec.off && gRec.off[no])){
+    // 名簿にない番号: 他ユニオンのメンバーかもしれないので会員証から照会する
+    var ev0 = gRec.ev;
+    ckVisitorLookup(no, sig).then(function(v){
+      if(!gRec || gRec.ev !== ev0) return;
+      if(v && v.active){ gRec.roster[no] = v; checkinMember(v, method, null); return; }
+      if(v){ gRec.off[no] = v; }
+      scanMiss(no);
+    });
     return;
   }
+  if(!member){ scanMiss(no); return; }
   checkinMember(member, method, null);
+}
+// 他ユニオンのメンバー照会（名簿は見られないので、番号→会員証から氏名・所属を引く）
+// QRの署名があればカードのトークン先頭と一致するものだけ受け付ける
+function ckVisitorLookup(no, sig){
+  return db.collection('cardClaims').doc(no).get().then(function(s){
+    var t = s.exists ? (s.data().t || '') : '';
+    if(!t || (sig && t.indexOf(sig) !== 0)) return null;
+    return db.collection('cards').doc(t).get().then(function(c){
+      if(!c.exists) return null;
+      var d = c.data();
+      if(d.rcptOnly || String(d.no || '') !== no) return null;
+      return { no: no, name: d.name || '', group: d.group || '', union: d.union || '',
+        grade: d.grade || '', trainee: !!d.trainee, trainings: d.trainings || {},
+        active: d.active !== false, cardToken: t, cardSig: t.slice(0, 6), viaCard: true };
+    });
+  }).catch(function(){ return null; });
+}
+function scanMiss(no){
+  if(!gRec) return;
+  beep('ng');
+  var offm = gRec.off && gRec.off[no];
+  if(offm){
+    setStage('ng',
+      '<span class="hit-badge">無効のメンバー</span>'
+      + '<div class="hit-name">' + esc(offm.name || no) + '</div>'
+      + '<p class="stage-sub">このメンバーは無効化されています。名簿から「有効化」すると受付できます。</p>');
+    return;
+  }
+  setStage('ng',
+    '<span class="hit-badge">未登録の番号</span>'
+    + '<div class="hit-name mono" style="font-size:30px;">' + esc(no) + '</div>'
+    + '<p class="stage-sub">名簿・会員証にない番号です。「ゲスト受付」から手動で登録できます。</p>');
 }
 function roleLabel(r){
   return r === 'mc' ? 'MC' : r === 'speaker' ? 'スピーカー'
@@ -7114,7 +7156,7 @@ function roleModal(role){
   var lbl = roleLabel(role);
   modal('<h2>' + lbl + 'を登録</h2>'
     // PCでは候補リストを入力欄の右に出す（日本語変換の候補ウィンドウが入力欄の下に重なって見えなくなるため）
-    + '<div class="rmgrid"><div><label>名簿から名前検索（全ユニオン対象）</label>'
+    + '<div class="rmgrid"><div><label>名簿から名前検索（見られるユニオンの名簿が対象）</label>'
     + '<input type="text" id="rmQ" placeholder="氏名の一部を入力"></div>'
     + '<div id="rmList" class="rmlist"><div class="rmhint">名前を入力すると、ここに候補が出ます</div></div></div>'
     + (role === 'speaker'
@@ -7573,7 +7615,9 @@ function impPreview(ev){
   }
   $('impPrev').disabled = true;
   var uns = ev.unions || [];
-  Promise.all(uns.map(fetchMembers).concat([
+  Promise.all(uns.map(function(u){
+    return fetchMembers(u).catch(function(){ return []; });   // 見られないユニオンの名簿は飛ばす
+  }).concat([
     db.collection('checkinEvents').doc(ev.id).collection('attendance').get()
   ])).then(function(res){
     var byNo = {}, byName = {};
