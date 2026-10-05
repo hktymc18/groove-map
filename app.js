@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v604';
+var APP_JS_VERSION = 'v605';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v604';
+  var DATA_VERSION = 'v605';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v605', d:'2026-10-05', items:['データの入口：横向きでもタイルが画面に収まるように（見出しを1行に・くわしくのボタンも見出しに）','横向きのタイルに直近6ヶ月の小さな推移グラフ','横向きの表示チームは小さいボタンに'] },
   { v:'v604', d:'2026-10-05', items:['データ：横向きにするとグラフが画面いっぱいに（eFootballの分析画面のように）','横向きの数字は上の帯に。「あと一歩」などのボタンを押すと、人の一覧が右から出ます','横向きの表示チームは小さいボタンに（押すと選べます）'] },
   { v:'v603', d:'2026-10-05', items:['ロードマップの表を作り直し：項目を1つずつ（●・スワイプで切り替え）、月を縦に並べて＋−で決める。期間は‹ ›でずらす','行の編集・マイルストーンも1画面に：名前・何ヶ月つづくか・色を大きく選べる','ギャップの「今の数・単価・倍率」を1画面に（MAPの数を＋−で直す・自動に戻す）','ギャップの割り振りは、月ごとの数を確認してから入れる画面に','ツールの「夢100」が別のページを開いていたのを直しました'] },
   { v:'v602', d:'2026-10-05', items:['想い：「やる理由」などの作文は、書くほど伸びる罫線の紙に。字数と「次の1枚まであと◯字」が出ます','想い：やりたいこと・やりたくないこと・なりたい自分・なりたくない自分を箇条書きに。最低5個ずつ、思いつくなら何個でも（Enterで次々に追加・その場で書き直し・✕で消す）','理想MAPの「理想 vs 現状」の平均稼働を、％ではなく人数（1ハウディあたり）に'] },
@@ -15989,7 +15990,7 @@ function _uxCss() {
 function _uxTile(o) {
   return '<div class="ux-t ux-c-' + o.c + (o.next ? ' next' : '') + (o.w ? ' w' : '') + (o.wide ? ' wide' : '') + '" onclick="' + o.on + '">'
     + (o.next ? '<span class="bd">次はここ</span>' : (o.bd ? '<span class="bd">' + o.bd + '</span>' : ''))
-    + '<div class="ic">' + o.ic + '</div><b>' + o.lb + '</b><div class="st">' + (o.st || '') + '</div></div>';
+    + '<div class="ic">' + o.ic + '</div>' + (o.x || '') + '<b>' + o.lb + '</b><div class="st">' + (o.st || '') + '</div></div>';
 }
 // ページの下の帯（戻る・●・次へ）
 function _uxBtm(back, dots, cur, dotOn, next, nextOn) {
@@ -16396,9 +16397,18 @@ function _dtHubHtml() {
     { k: 'gap', c: 'rose', ic: icn('target'), lb: '理想との差', st: gap === null ? '理想MAPを<br><em>つくる</em>' : (gap.length ? '<em>' + gap.length + '人</em> 差があります' : '理想に届いています 🎉') }
   ];
   var sb = function(t, on) { return '<span class="ux-sb" onclick="' + on + '">' + t + '</span>'; };
+  var sm = sb(icn('trend') + ' 推移', 'dtMode(\'full\',\'trend\')') + sb(icn('users') + ' 稼働・人数', 'dtMode(\'full\',\'sum\')') + sb(icn('cap') + ' 研修・地域', 'dtMode(\'full\',\'train\')');
+  var tiles = '<div class="ux-tiles" style="margin-top:10px">' + T.map(function(t) { t.next = t.k === nk; t.on = 'dtGo(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>';
+  if (_uxLand()) { // v605: 横は1行の見出し（表示チーム・くわしくのボタン・残り日数）＋画面いっぱいのタイル（小さな推移つき）
+    _dtLandCss(); var tm = _dtTeamLb();
+    var sp = { comm: [cm, 'var(--gold)', _dtMan], s: [_dtEzSeries('S', now), 'var(--accent)'], exam: [_dtEzSeries('br', now), 'var(--purple)'], move: [_dtEzSeries('newN', now), '#5AD7FF'] };
+    T.forEach(function(t) { if (!sp[t.k]) t.c += ' dtu-nsp'; else t.x = _dtuSpark(sp[t.k][0].slice(-6), sp[t.k][1], ms.slice(-6), sp[t.k][2]); });
+    tiles = '<div class="ux-tiles" style="margin-top:10px">' + T.map(function(t) { t.next = t.k === nk; t.on = 'dtGo(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>';
+    return '<div class="ux-hub dtu-lh"><div class="ux-hd"><h1>データ</h1>' + (tm ? '<span class="dtu-tmb" onclick="dtTeamTgl()">' + icn('users') + ' ' + evEsc(tm) + '</span>' : '')
+      + '<span class="r">' + ms[11].lbl + '・残り' + _dtEzDaysLeft() + '日</span><div class="ux-sm">' + sm + '</div></div>' + tiles + '</div>';
+  }
   return '<div class="ux-hub"><div class="ux-hd"><h1>データ</h1><span class="r">' + ms[11].lbl + '・残り' + _dtEzDaysLeft() + '日</span></div>'
-    + '<div class="ux-tiles" style="margin-top:10px">' + T.map(function(t) { t.next = t.k === nk; t.on = 'dtGo(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
-    + '<div class="ux-sm">' + sb(icn('trend') + ' 推移', 'dtMode(\'full\',\'trend\')') + sb(icn('users') + ' 稼働・人数', 'dtMode(\'full\',\'sum\')') + sb(icn('cap') + ' 研修・地域', 'dtMode(\'full\',\'train\')') + '</div></div>';
+    + tiles + '<div class="ux-sm">' + sm + '</div></div>';
 }
 // 1画面1つ（グラフ＋くわしい数字）
 function _dtPageHtml(k) {
@@ -16436,6 +16446,7 @@ function _dtUx() {
   document.body.classList.add('ux-dt');
   if (_dtPgIdx(_dtPg) < 0) _dtPg = '';
   box.innerHTML = _dtPg ? _dtPageHtml2(_dtPg) : _dtHubHtml(); // v601: グラフ＋数字＋動かせる人
+  if (!_dtPg && _uxLand()) { _dtHubFit(); requestAnimationFrame(_dtHubFit); }
   document.body.classList.toggle('ux-pg', !!_dtPg);
   if (_dtPg) {
     var pb = document.getElementById('dtPgBody'), k = _dtPg === 'move' ? 'newN' : _dtPg;
@@ -17414,8 +17425,12 @@ function _dtTeamLb() {
 function _dtLandCss() {
   if (document.getElementById('dtLandCss')) return;
   var st = document.createElement('style'); st.id = 'dtLandCss';
-  st.textContent = "body.ux-land.ux-dt.ux-pg #teamPickStats{display:none}"
-    + "body.ux-land.ux-dt.ux-pg.dtu-tm #teamPickStats{display:block;position:fixed;top:8px;left:calc(74px + env(safe-area-inset-left));right:12px;z-index:300;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding-bottom:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}"
+  st.textContent = "body.ux-land.ux-dt #teamPickStats{display:none}"
+    + ".dtu-lh .ux-hd{flex-wrap:nowrap;align-items:center}.dtu-lh .ux-hd .r{margin-left:auto;white-space:nowrap}.dtu-lh .ux-hd .ux-sm{margin:0;padding:0;flex:none}.dtu-lh .ux-tiles{margin-top:8px!important}"
+    + ".dtu-lh .ux-t .bd{left:auto;right:10px}body.ux-land .dtu-lh .ux-t .ic{top:14px;left:14px;right:auto;text-align:left}body.ux-land .dtu-lh .ux-t .ic .lic{width:38px;height:38px}"
+    + "body.ux-land .dtu-lh .ux-t.dtu-nsp .ic{left:0;right:0;top:auto;bottom:calc(50% + 10px);text-align:center}body.ux-land .dtu-lh .ux-t.dtu-nsp .ic .lic{width:56px;height:56px}"
+    + ".dtu-sp{display:block;width:100%;flex:1;min-height:0;max-height:150px;margin:60px 0 8px}"
+    + "body.ux-land.ux-dt.dtu-tm #teamPickStats{display:block;position:fixed;top:8px;left:calc(74px + env(safe-area-inset-left));right:12px;z-index:300;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding-bottom:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}"
     + ".dtu-lp .dtu-hd{display:flex;align-items:center;gap:12px;padding:8px 0 6px}"
     + ".dtu-hd .t{min-width:0;flex:none;max-width:34%}.dtu-hd .t .ux-crumb{font-size:11.5px;display:block}.dtu-hd h2{font-size:20px;font-weight:900;margin:1px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dtu-hd h2 small{display:block;font-size:11px;color:var(--text-dim);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
     + ".dtu-hd .k{flex:1;min-width:0;display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:none}.dtu-hd .k>:first-child{margin-left:auto}.dtu-hd .k::-webkit-scrollbar{display:none}"
@@ -17441,9 +17456,29 @@ function _dtChartFit() {
   o.W = W; o.H = H; o.fs = H >= 230 ? 15 : 13;
   el.innerHTML = _uxBars(_dtChartArgs[0], o);
 }
+// v605: タイルの小さな推移（直近6ヶ月・今月を濃く）
+function _dtuSpark(vals, c, ms, fmt) {
+  var n = vals.length, mx = 0, W = 120, H = 96, bw = W / n, h = '', f = fmt || function(v) { return (Math.round(v * 10) / 10).toLocaleString(); };
+  vals.forEach(function(v) { if (v > mx) mx = v; }); mx = mx || 1;
+  vals.forEach(function(v, i) {
+    var x = i * bw + bw * 0.2, w = bw * 0.6, cur = i === n - 1;
+    if (v === null || v === undefined) { h += '<rect x="' + x + '" y="' + (H - 13) + '" width="' + w + '" height="1.5" fill="var(--text-dim)" opacity=".5"/>'; }
+    else { var hh = Math.max(2, (H - 26) * v / mx); h += '<rect x="' + x + '" y="' + (H - 13 - hh) + '" width="' + w + '" height="' + hh + '" rx="2.5" fill="' + c + '" opacity="' + (cur ? 1 : .4) + '"/>'; if (cur) h += '<text x="' + (x + w / 2) + '" y="' + (H - 17 - hh) + '" font-size="10" font-weight="800" text-anchor="middle" fill="var(--text)">' + f(v) + '</text>'; }
+    h += '<text x="' + (x + w / 2) + '" y="' + H + '" font-size="9" font-weight="700" text-anchor="middle" fill="' + (cur ? c : 'var(--text-dim)') + '">' + ((ms[i] && ms[i].m) || '') + '</text>';
+  });
+  return '<svg class="dtu-sp" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMax meet">' + h + '</svg>';
+}
+// v605: 横の入口はタイルを画面の下まで（実寸で合わせる）
+function _dtHubFit() {
+  var tl = document.querySelector('#dtEz .dtu-lh .ux-tiles'); if (!tl) return;
+  var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 390, top = tl.getBoundingClientRect().top;
+  var h = Math.round(vh - top - 12 - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0));
+  if (!(h > 110)) return;
+  Array.prototype.forEach.call(tl.querySelectorAll('.ux-t'), function(t) { t.style.height = h + 'px'; });
+}
 var _dtFitWas = '';
 window.addEventListener('resize', function() {
-  if (currentView !== 'stats' || !_dtPg || isPCMode()) return;
+  if (currentView !== 'stats' || isPCMode()) return;
   var key = (_uxLand() ? 'L' : 'P') + Math.round((window.innerWidth || 0) / 40);
   if (key === _dtFitWas) return; _dtFitWas = key;
   setTimeout(function() { try { _dtUx(); } catch (e) {} }, 120);
