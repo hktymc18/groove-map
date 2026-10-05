@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v623';
+var APP_JS_VERSION = 'v624';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v623';
+  var DATA_VERSION = 'v624';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5344,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v624', d:'2026-10-06', items:['🔒 受付連携は自分のユニオンの名簿だけ見られるように（自分のユニオンが受付に無い時に、他のユニオンの名簿や研修記録を代わりに読んでしまう不具合を修正）'] },
   { v:'v623', d:'2026-10-06', items:['🎓 研修生の進み具合を受付システムと連動：MAPを開くと1日1回、受付で記録された受講（PG・DLR・EXP・PA・面談シート・BPC済み・CO）を研修生のステップに「進んだ」で自動で入れます（タイトルも進みます・MAPで入れた記録は上書きしません・履歴に「受付から」と表示）','➕ 受付連携の「名簿から追加」で入れた研修生は、紹介者の直下に置かれ、受講済みの研修とタイトルもいっしょに入るように','⭐ 受付で昇格した研修生がいたらお知らせ（MAPの研修結果は自動では変えません）'] },
   { v:'v622', d:'2026-10-06', items:['◎ MAPの「運動会」を「サークル」に名前を変えました（切り替えボタン・上の見出し・並び順の説明）'] },
   { v:'v621', d:'2026-10-06', items:['🔑 ログインボタンを押しても「…」のまま止まることがある不具合を修正：プロフィールの読み込みに失敗した時は自動で読み直し、それでもだめな時は理由と「アプリを修復して開き直す」ボタンを出すように'] },
@@ -6506,9 +6507,12 @@ function _ckOwnMembers() {
   });
 }
 // 自分のユニオン名＋地域で受付のユニオンを選ぶ（v623: 研修の自動取り込みでも使う）
+function _ckIsOwner() { return !!currentUser && currentUser.uid === OWNER_UID; }
 function _ckPickUnion(unions, unionId) {
+  // v624: オーナー以外は自分のユニオンだけ（指定があっても自分のユニオン以外は無視）
   var sel = unionId || '';
-  if (sel) return sel;
+  if (sel && _ckIsOwner()) return sel;
+  sel = '';
   // 自分のユニオン名＋地域で自動選択（地域欄が未設定の受付ユニオンは名前一致のみで許容）
   var myU = _ckNorm((currentUser && currentUser.union) || '');
   var myA = _ckNorm((currentUser && currentUser.area) || '');
@@ -6520,7 +6524,8 @@ function _ckPickUnion(unions, unionId) {
     if (sel) return;
     if (myU && _ckNorm(u.id).indexOf(myU) === 0 && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
   });
-  return sel || (unions[0] && unions[0].id) || '';
+  // v624: 自分のユニオンが受付に無い時、他のユニオン（先頭）を代わりに使わない（他ユニオンの名簿が見えてしまうため）
+  return sel || (_ckIsOwner() && unions[0] ? unions[0].id : '');
 }
 // ── v623: 研修の進み具合を受付システムから取り込む（受付→MAPの一方通行。MAPで入れた記録は上書きしない） ──
 //  受付の受講記録（PG/DLR/EXP/PA/CO/BPC済み）と面談シートの提出を、MAPの研修ステップ「進んだ」として足す
@@ -6603,6 +6608,9 @@ function ckLinkOpen(unionId) {
     qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
     if (!unions.length) { toast('受付システムに有効化されたユニオンがまだありません'); return; }
     var sel = _ckPickUnion(unions, unionId);
+    if (!sel) { toast('あなたのユニオン（' + ((currentUser && currentUser.union) || '未設定') + '）は受付システムにまだ登録されていません'); return; }
+    // v624: ユニオンの切替はオーナーだけ（他の人は自分のユニオンの名簿だけ）
+    if (!_ckIsOwner()) unions = unions.filter(function(u) { return u.id === sel; });
     _ckLink = { unions: unions, sel: sel };
     _ckPgI = 0; // v608
     ckLinkLoad();

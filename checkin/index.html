@@ -1049,8 +1049,15 @@ function groupKey(s){
   try{ s = s.normalize('NFKC'); }catch(e){}
   return s.replace(/[ 　\t]/g, '').toLowerCase();
 }
+// 見られるユニオン: オーナーは全ユニオン。それ以外は自分のユニオン＋自分が管理者（コア/受付管理者）のユニオンだけ
+// （他ユニオンの名簿・出席・会計・集計を選べないようにする）
+function ckViewableUnions(){
+  if(isOwner()) return gUnions.slice();
+  return gUnions.filter(function(u){ return u === gUnion || canEditUnion(u); });
+}
+function ckCanView(un){ return ckViewableUnions().indexOf(un) >= 0 || un === gUnion; }
 function fillUnionSel(sel, current){
-  var list = gUnions.slice();
+  var list = ckViewableUnions();
   if(list.indexOf(current) < 0) list.push(current);
   sel.innerHTML = list.map(function(u){
     return '<option' + (u === current ? ' selected' : '') + '>' + esc(u) + '</option>';
@@ -1122,8 +1129,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v22';
+var APP_VER = 'v23';
 var CHANGELOG = [
+  { v: 'v23', d: '2026/10/06', items: ['名簿・イベント・会計・集計のユニオン切替は、自分のユニオンと自分が管理しているユニオンだけ表示されるようになりました（他ユニオンのデータは見られません）'] },
   { v: 'v22', d: '2026/10/05', items: ['オーナー向け: 名簿タブに「🗑 ユニオン削除」を追加（綴り間違いなどで作ったユニオンを削除。名簿・イベント・ユーザー登録が無いユニオンだけ削除できます）'] },
   { v: 'v21', d: '2026/10/04', items: [
     'MC・スピーカー・運営の登録: PCでは名前の候補を入力欄の右に表示（日本語変換の候補と重ならないように）',
@@ -2883,6 +2891,11 @@ function olNotify(total, ev){
 /* 各タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
 function renderRosterUnionSel(){ fillUnionSel($('rosterUnionSel'), gRosterUnion); }
 function refreshUnionSelectors(){
+  // 見られないユニオンが選ばれていたら自分のユニオンに戻す
+  if(!ckCanView(gRosterUnion)) gRosterUnion = gUnion;
+  if(!ckCanView(gEventUnion)) gEventUnion = gUnion;
+  if(!ckCanView(gStatUnion)) gStatUnion = gUnion;
+  if(!ckCanView(gFinUnion)) gFinUnion = gUnion;
   renderRosterUnionSel();
   fillUnionSel($('evUnionSel'), gEventUnion);
   fillUnionSel($('stUnionSel'), gStatUnion);
@@ -3240,6 +3253,7 @@ function fetchMembers(union){
   });
 }
 function loadMembers(cb){
+  if(!ckCanView(gRosterUnion)) gRosterUnion = gUnion;
   fetchMembers(gRosterUnion).then(function(arr){
     gMembers = arr;
     gMembersLoaded = true;
@@ -4161,6 +4175,7 @@ $('fnPrev').onclick = function(){ shiftMonth(-1); };
 $('fnNext').onclick = function(){ shiftMonth(1); };
 
 function loadEvents(){
+  if(!ckCanView(gEventUnion)) gEventUnion = gUnion;
   var key = monthKey(gMonth.y, gMonth.m);
   $('evMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('stMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
@@ -6336,6 +6351,7 @@ $('btnFinCsv').onclick = function(){
 
 /* 会計タブ: 月内イベントの会計状況一覧 */
 function loadFinanceTab(){
+  if(!ckCanView(gFinUnion)) gFinUnion = gUnion;
   $('fnMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('btnRcptSet').classList.toggle('hide', !canEditUnion(gFinUnion));
   $('btnRcptCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
@@ -7821,6 +7837,7 @@ function ckRefreshIfStale(union){
 var gStat = null;
 $('btnStatReload').onclick = function(){ loadStats(); };
 function loadStats(){
+  if(!ckCanView(gStatUnion)) gStatUnion = gUnion;
   var key = monthKey(gMonth.y, gMonth.m);
   $('statBody').innerHTML = '<p style="color:var(--sub)">集計中…</p>';
   db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
