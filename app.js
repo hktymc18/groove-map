@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v616';
+var APP_JS_VERSION = 'v617';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v616';
+  var DATA_VERSION = 'v617';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4011,6 +4011,7 @@ function updateFabVisibility() {
 
 // ── VIEW SWITCH ──
 function switchView(v) {
+  if (v !== 'ol') { document.body.classList.remove('olh-on'); var _om9 = document.getElementById('olmPg'); if (_om9 && _om9.parentNode) _om9.parentNode.removeChild(_om9); _olmId = ''; } // v617
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
   if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   var _prevView = currentView;
@@ -5333,6 +5334,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v617', d:'2026-10-05', items:['🤝 OL（スマホ）を作り直しました。上の古い帯をなくし、3〜7人OL・個別OL・要フォローを大きい数字で。今月の3〜7人OLは①②③の枠、フレッシュは要フォロー順（あいている日数を大きく・＋ですぐ企画）','📝 OLの企画は1枚で：個別／3〜7人 → だれと（要フォロー順のリスト）→ いつ（時刻は今までの数字パッド）→ Aさん・内容。カレンダーにも入ります','✍ 日付が過ぎた予定のOLは「反応を記入」から反応を書くだけ（保存で実施済み）。人を押すと、その人のOLの記録が並びます'] },
   { v:'v616', d:'2026-10-05', items:['📓 ToDo（スマホ）が「今日の手帳」になりました。紙の手帳と同じように行が並び、空いた行に直接書いてEnterで次の行へ。10行目に「今日の10件」の線があり、それより先も何件でも書けます（＋αの分は金色に）','📋 毎日のいつもの行（最初は「計画立案する」）が毎朝1行目に入ります。下の「毎日のいつもの行を変える」から追加・削除','↪ 前の日の残りは「今日に入れる」か「日を選ぶ」。やっていないタスクはふりかえり（今日の21時から・過ぎた日）で、明日／カレンダーで選んだ日へまとめて・1件ずつ移せます','✍ 1週間の書いた数・10件書いた日の連続・今日学んだ事も手帳に。行を押すとタスクの画面（やる日・時刻（今までの数字パッド）・優先A/B/C・だれの・通知・メモ）','📱 横向きは手帳を開いた形（左：やるべき事／右：その日のタイムスケジュール）。今までのToDo（期限なし・リスト・完了・ゴミ箱・検索）は一番下の「すべてのタスク」から'] },
   { v:'v615', d:'2026-10-05', items:['➕ メンバーをタップした画面の右下が「フロント追加」になりました。押すとその人の直下に新しい人を足せます（MAPの＋追加も同じ新しい画面）。名前・性別・タイトル、研修生なら研修の予定、それ以外は稼働・GSV（任意）。「追加してくわしく入れる」でそのままその人の画面へ','🏷 タイトルはカテゴリのカード（研修生 FT〜CO・審査中 LOI〜Q4・BA B1〜BM・BR BR〜TE）を押すと、リストが開いて選べます。今のタイトルはカードに表示','📅 スタート月は年と月をリストで選べるようにしました（何年も前の人もすぐ）'] },
   { v:'v614', d:'2026-10-05', items:['📅 予定の入力を「1枚」に戻しました（スマホ）。上から 名前 → 日付（長押しした日が入っています・間違えた時だけ「日付を変える」）→ 開始〜終了の時刻 → だれと（名前でさがすリスト）の順です','👥 だれかを選ぶと「この予定を出すカレンダー」（メンバーだけ・自分だけ・両方）が出ます','🎨 色（カテゴリ）は今までのカテゴリ画面で選べます（名前・色の編集もそこで）。通知・場所・メモ・繰り返しは押すとその場で開いて入れられます','✏️ 予定をタップすると同じ1枚で中身を直せます（変えたらその場で保存）。右下は「別の日にも入れる」'] },
@@ -10375,6 +10377,8 @@ function _olFreshRow(m, evs) {
 function renderOlTab() {
   var wrap = document.getElementById('olTabWrap');
   if (!wrap) return;
+  if (_olOn()) { _olHubRender(); return; } // v617: スマホは新しいOLの入口
+  document.body.classList.remove('olh-on');
   if (_olMigrateOutline()) { if (typeof autoSave === 'function') autoSave(); }
   var ym = state.currentMonth || currentMonthStr();
   var t = evTodayYmd();
@@ -10498,6 +10502,7 @@ function olFreshTap(mid) {
     renderOlTab();
     return;
   }
+  if (_olOn()) { olmOpen(mid); return; } // v617
   openOlPopup(mid);
 }
 function olSelPlan() {
@@ -10591,6 +10596,7 @@ function olPlanStart(o) {
   var mids = (o.mids || []).filter(function(id) { return !!_olMem(id); });
   _olp = { mode: 'new', kind: o.kind || '', mids: mids, guests: [], date: o.date || evTodayYmd(), time: '', asan: '', what: '', note: '', pnotes: {}, st: 'planned',
     gid: '', orig: [], legacy: null, q: '', showP: false, back: '' };
+  if (!_olp.kind && _olOn()) _olp.kind = mids.length >= OL_GROUP_MIN ? 'group' : 'solo'; // v617: スマホは1枚（種類は上で切り替え）
   _olp.step = _olp.kind ? _olAfterKindStep() : 'type';
   _olpRender();
 }
@@ -10606,16 +10612,19 @@ function olEventOpen(key, opts) {
   ev.recs.forEach(function(x) { if (x.rec.pnote) pn[x.mid] = x.rec.pnote; });
   _olp = { mode: 'edit', step: 'detail', kind: ev.kind, mids: ev.mids.slice(), guests: ev.guests.slice(), date: ev.date, time: ev.time, asan: ev.asan, what: ev.what, note: ev.note,
     pnotes: pn, st: opts.result ? 'done' : ev.st, gid: ev.gid, orig: ev.mids.slice(), legacy: ev.gid ? null : ev.recs[0], hostRecs: ev.recs.filter(function(x) { return x.rec.hostOnly; }),
-    q: '', showP: !!Object.keys(pn).length, back: '', ro: !_olCanEdit(), focusNote: !!opts.result };
+    q: '', showP: !!Object.keys(pn).length, back: '', ro: !_olCanEdit(), focusNote: !!opts.result, res: !!opts.result };
   _olpRender();
 }
 function closeOlPlan() {
+  try { if (document.getElementById('tpOv')) closeTimePad(false); } catch (eT) {}
+  var pg9 = document.getElementById('olpPg'); if (pg9 && pg9.parentNode) { pg9.parentNode.removeChild(pg9); setTimeout(function() { if (currentView === 'ol') renderOlTab(); else if (_olmId) _olmRender(); }, 0); } // v617
   var ov = document.getElementById('olpOv');
   if (ov) { ov._closing = true; ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
   _olp = null;
 }
 function _olpRender() {
   if (!_olp) return;
+  if (_olOn()) { _olpgRender(); return; } // v617: スマホは1枚のページ
   var ov = document.getElementById('olpOv');
   if (ov && ov._closing) { if (ov.parentNode) ov.parentNode.removeChild(ov); ov = null; } // v581: 閉じている途中のシートは使わない（保存直後に開き直すと消えていた）
   if (!ov) {
@@ -10688,6 +10697,7 @@ function _olpPeopleHtml() {
 }
 function olpSearch(v) { if (!_olp) return; _olp.q = v || ''; _olpRenderList(); }
 function _olpRenderList() {
+  if (_olOn() && _olp) { _olpgRender(); return; } // v617
   var box = document.getElementById('olpList');
   if (!box || !_olp) return;
   var q = (_olp.q || '').replace(/[\s　]/g, '').toLowerCase();
@@ -18023,6 +18033,219 @@ function _tkRender() {
   if (!pg) { pg = document.createElement('div'); pg.id = 'tkPg'; pg.className = 'tkpg'; document.body.appendChild(pg); }
   var a = document.activeElement; if (a && pg.contains(a) && (a.id === 'tkMemo' || a.id === 'tkQ')) return;
   pg.innerHTML = h; pg.scrollTop = st0;
+}
+
+// ════ v617: OL（スマホ）— 入口（大きい数字・3〜7人OLの枠・反応を記入・フレッシュ要フォロー順）／企画は1枚／その人のOL／反応を記入
+//  データ・保存は今までと同じ（_olp と olpSave。予定（種類OL）にも入る）。PCは今までどおり
+var _olmId = '', _olNeed = false;
+function _olhCss() {
+  if (document.getElementById('olhCss')) return;
+  var st = document.createElement('style'); st.id = 'olhCss';
+  st.textContent = "body.olh-on header,body.olh-on .back-home-bar,body.olh-on #olFab,body.olh-on #teamPickOl{display:none!important}body.olh-on:not(.ux-land) .mobile-tabbar{display:none!important}"
+    + "body.olh-on .scroll-area{padding-bottom:calc(env(safe-area-inset-bottom) + 90px)!important}"
+    + ".olh{padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;max-width:760px;margin:0 auto}"
+    + ".olh-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}.olh-top h1{margin:0;font-size:25px;font-weight:900;flex:1}"
+    + ".olh-mon{display:flex;align-items:center;gap:2px;height:38px;border-radius:11px;background:var(--surface);border:1px solid var(--border);font-weight:900;font-size:14.5px}.olh-mon span{padding:0 10px;cursor:pointer;color:var(--text-dim);font-size:17px}"
+    + ".olh-kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.olh-kp>div{border-radius:15px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--c) 40%,var(--border));padding:9px 10px;cursor:pointer}.olh-kp>div.on{background:color-mix(in srgb,var(--c) 12%,var(--surface));border-color:var(--c)}"
+    + ".olh-kp small{display:block;font-size:11.5px;font-weight:900;color:var(--text-mid)}.olh-kp b{font-size:27px;font-weight:900;font-family:Inter,'Noto Sans JP',sans-serif;color:var(--c)}.olh-kp b small{display:inline;font-size:13px;color:var(--text-dim)}.olh-kp em{display:block;font-style:normal;font-size:10.5px;color:var(--text-dim);font-weight:800}"
+    + ".olh-sec{font-size:13px;font-weight:900;color:var(--text-mid);margin:16px 2px 7px;display:flex;align-items:center;gap:6px}.olh-sec em{margin-left:auto;font-style:normal;font-size:12.5px;color:var(--accent)}.olh-sec em.r{color:var(--red)}"
+    + ".olh-sl{display:flex;align-items:center;gap:10px;border-radius:15px;padding:10px 12px;margin-bottom:7px;background:var(--surface);border:1.5px solid var(--border);cursor:pointer}"
+    + ".olh-sl .n{font-size:20px;font-weight:900;color:var(--accent);font-family:Inter,sans-serif;width:22px;flex:none}.olh-sl.done{border-color:color-mix(in srgb,var(--accent) 50%,var(--border));background:color-mix(in srgb,var(--accent) 7%,var(--surface))}.olh-sl.plan{border-color:color-mix(in srgb,var(--gold) 50%,var(--border))}"
+    + ".olh-sl .st{flex:none;font-size:11px;font-weight:900;border-radius:7px;padding:2px 7px;color:#fff;background:var(--c)}.olh-sl .b{flex:1;min-width:0}.olh-sl .b b{display:block;font-size:15px;font-weight:900}.olh-sl .b small{display:block;font-size:12px;color:var(--text-mid);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+    + ".olh-sl.empty{border-style:dashed;color:var(--accent);font-weight:900;font-size:15px}.olh-sl.over{border-color:color-mix(in srgb,var(--red) 45%,var(--border))}"
+    + ".olh-sl .go{flex:none;height:36px;padding:0 12px;border-radius:10px;background:var(--accent);color:var(--go-ink);font-weight:900;font-size:13px;display:flex;align-items:center}"
+    + ".olh-fr{display:flex;align-items:center;gap:10px;border-radius:14px;padding:9px 10px 9px 12px;margin-bottom:6px;background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--c);cursor:pointer}"
+    + ".olh-fr .b{flex:1;min-width:0}.olh-fr .b b{font-size:15.5px;font-weight:900}.olh-fr .b b em{font-style:normal;font-size:11px;font-weight:900;border-radius:6px;padding:1px 6px;margin-left:5px;vertical-align:2px;background:var(--surface2);color:var(--text-mid)}.olh-fr .b small{display:block;font-size:11.5px;color:var(--text-mid);font-weight:800}"
+    + ".olh-fr .d{flex:none;text-align:right;font-weight:900;color:var(--c);min-width:44px}.olh-fr .d b{font-size:20px;font-family:Inter,sans-serif}.olh-fr .d small{display:block;font-size:10px;color:var(--text-dim)}"
+    + ".olh-fr .ad{flex:none;width:40px;height:40px;border-radius:11px;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;border:1.5px solid color-mix(in srgb,var(--accent) 40%,var(--surface))}"
+    + ".olh-fr.crit{--c:var(--red)}.olh-fr.warn{--c:var(--gold)}.olh-fr.ok{--c:var(--accent)}.olh-fr .female{color:var(--female)}"
+    + "#olpPg,#olmPg{position:fixed;inset:0;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 96px)}#olpPg{z-index:520}#olmPg{z-index:510}"
+    + "body.ux-land #olpPg,body.ux-land #olmPg{padding:8px 18px 76px}#olpPg .ux-btm,#olmPg .ux-btm{left:0;z-index:521}"
+    + ".olpk{display:grid;grid-template-columns:1fr 1fr;gap:8px}.olpk span{min-height:54px;border-radius:14px;background:var(--surface);border:2px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:15px;cursor:pointer}.olpk span small{font-size:10.5px;color:var(--text-dim);font-weight:800}"
+    + ".olpk span.on{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}.olpk span.on small{color:var(--go-ink)}"
+    + ".olpc{font-style:normal;color:var(--accent)}.olpc.w{color:var(--red)}"
+    + ".olpcat{font-size:11.5px;font-weight:900;color:var(--text-dim);padding:6px 12px 2px;background:var(--surface2)}"
+    + ".olpsug{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.olpsug span{height:34px;padding:0 11px;border-radius:10px;background:var(--surface);border:1.5px solid var(--border2);display:flex;align-items:center;font-size:13.5px;font-weight:900;cursor:pointer}"
+    + ".olres{font-size:20px;font-weight:900;margin:4px 0 2px;line-height:1.4}.olres small{display:block;font-size:13px;color:var(--text-mid);font-weight:800;margin-top:3px}"
+    + ".olpn{display:flex;align-items:center;gap:8px;margin-top:7px}.olpn b{flex:none;width:76px;font-size:13.5px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.olpn input{flex:1;min-width:0}"
+    + ".olm-h{display:flex;gap:12px;align-items:center;border-radius:18px;background:var(--surface);border:1.5px solid var(--border);padding:14px}.olm-h .av{width:56px;height:56px;flex:none;border-radius:50%;border:3px solid var(--c);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;background:var(--surface2)}"
+    + ".olm-h h2{margin:0;font-size:20px;font-weight:900}.olm-h h2 em{font-style:normal;font-size:12px;border-radius:7px;padding:2px 7px;vertical-align:3px;background:var(--surface2);color:var(--text-mid)}.olm-h p{margin:3px 0 0;font-size:12.5px;color:var(--text-mid);font-weight:800}"
+    + ".olm-h .big{margin-left:auto;text-align:center;color:var(--c);flex:none}.olm-h .big b{font-size:30px;font-family:Inter,sans-serif;font-weight:900;display:block;line-height:1}.olm-h .big small{font-size:11px;font-weight:900}"
+    + ".olm-tl{position:relative;padding-left:18px}.olm-tl::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;border-left:2px solid var(--border2)}"
+    + ".olm-ti{position:relative;border-radius:13px;background:var(--surface);border:1px solid var(--border);padding:9px 11px;margin-bottom:7px;cursor:pointer}.olm-ti::before{content:'';position:absolute;left:-17px;top:13px;width:10px;height:10px;border-radius:50%;background:var(--c)}"
+    + ".olm-ti b{font-size:14.5px;font-weight:900}.olm-ti b span{font-size:11px;color:#fff;background:var(--c);border-radius:6px;padding:1px 6px;margin-left:6px}.olm-ti small{display:block;font-size:12.5px;color:var(--text-mid);font-weight:800;margin-top:2px;white-space:pre-wrap}";
+  document.head.appendChild(st);
+}
+function _olOn() { return typeof isPCMode === 'function' && !isPCMode(); }
+function _olWdJ(ymd) { var p = ymd.split('-'); return '日月火水木金土'.charAt(new Date(+p[0], p[1] - 1, +p[2]).getDay()); }
+function _olLbl2(ev) { return ev.date ? (+ev.date.slice(5, 7)) + '/' + (+ev.date.slice(8, 10)) + '（' + _olWdJ(ev.date) + '）' + (ev.time ? ' ' + ev.time : '') : '日付未定'; }
+function olMon(d) { var ym = String(state.currentMonth || currentMonthStr()).replace('.', '-'); mxYm(_p2YmAdd(ym, d)); }
+function olNeed() { _olNeed = !_olNeed; renderOlTab(); }
+function _olHubRender() {
+  var wrap = document.getElementById('olTabWrap'); if (!wrap) return;
+  _uxCss(); _ux2Css(); _olhCss();
+  document.body.classList.add('olh-on');
+  if (_olMigrateOutline()) { if (typeof autoSave === 'function') autoSave(); }
+  var ym = state.currentMonth || currentMonthStr(), t = evTodayYmd(), evs = _olEvents(), fr = _olFreshMembers(), can = _olCanEdit();
+  var p = String(ym).split('.');
+  var grp = evs.filter(function(ev) { return ev.kind === 'group' && (_olInMonth(ev, ym) || (!ev.date && ev.st === 'planned')); }).sort(function(a, b) { return (a.date || '9999').localeCompare(b.date || '9999'); });
+  var gD = grp.filter(function(ev) { return ev.st === 'done'; }).length;
+  var solo = evs.filter(function(ev) { return ev.kind === 'solo' && _olInMonth(ev, ym); }), sD = solo.filter(function(ev) { return ev.st === 'done'; }).length;
+  var rows = fr.shown.map(function(m) { return _olFreshRow(m, evs); });
+  var crit = rows.filter(function(r) { return r.sev === 'crit'; }).length, need = rows.filter(function(r) { return r.sev !== 'ok'; }).length;
+  var h = '<div class="olh"><div class="olh-top"><h1>OL</h1><div class="olh-mon"><span onclick="olMon(-1)">‹</span>' + p[0] + '年' + (+p[1]) + '月<span onclick="olMon(1)">›</span></div></div>'
+    + '<div class="olh-kp"><div style="--c:var(--accent)"><small>3〜7人OL</small><b>' + gD + '<small>/' + OL_GROUP_GOAL + '回</small></b><em>' + (grp.length - gD ? '予定 ' + (grp.length - gD) : (gD >= OL_GROUP_GOAL ? '今月クリア' : 'あと' + (OL_GROUP_GOAL - gD) + '回')) + '</em></div>'
+    + '<div style="--c:var(--purple)"><small>個別OL</small><b>' + sD + '<small>件</small></b><em>' + (solo.length - sD ? '予定 ' + (solo.length - sD) : '今月') + '</em></div>'
+    + '<div class="' + (_olNeed ? 'on' : '') + '" style="--c:var(--red)" onclick="olNeed()"><small>要フォロー</small><b>' + need + '<small>人</small></b><em>' + (crit ? '30日以上 ' + crit : '14日以上・未接触') + '</em></div></div>';
+  // 今月の3〜7人OL（枠）
+  h += '<div class="olh-sec">今月の3〜7人OL<em>最低' + OL_GROUP_GOAL + '回</em></div>';
+  var nS = Math.max(OL_GROUP_GOAL, grp.length);
+  for (var i = 0; i < nS; i++) {
+    var num = String.fromCharCode(0x2460 + Math.min(i, 19)), ev = grp[i];
+    if (ev) h += '<div class="olh-sl ' + (ev.st === 'done' ? 'done' : 'plan') + '" onclick="olEventOpen(\'' + _olKeyAttr(ev.key) + '\')"><span class="n">' + num + '</span><span class="st" style="--c:' + (ev.st === 'done' ? 'var(--accent)' : 'var(--gold)') + '">' + (ev.st === 'done' ? '✓' : '予定') + '</span>'
+      + '<div class="b"><b>' + _olLbl2(ev) + '・' + ev.n + '人</b><small>' + evEsc(_olEvNames(ev, 4)) + (ev.asan ? '　A:' + evEsc(ev.asan) : '') + (ev.what ? '・' + evEsc(ev.what) : '') + '</small></div>›</div>';
+    else h += '<div class="olh-sl empty"' + (can ? ' onclick="olPlanStart({kind:\'group\'})"' : '') + '><span class="n">' + num + '</span>' + (can ? '＋ 企画する' : 'まだありません') + '</div>';
+  }
+  // 反応を記入（日付が過ぎた予定）・次の予定
+  var plans = evs.filter(function(ev) { return ev.st === 'planned'; });
+  var over = plans.filter(function(ev) { return ev.date && ev.date < t; }).sort(function(a, b) { return a.date.localeCompare(b.date); });
+  var up = plans.filter(function(ev) { return !ev.date || ev.date >= t; }).sort(function(a, b) { return (a.date || '9999').localeCompare(b.date || '9999'); });
+  if (over.length) {
+    h += '<div class="olh-sec">反応を記入<em class="r">' + over.length + '件</em></div>';
+    over.forEach(function(ev) { h += '<div class="olh-sl over" onclick="olEventOpen(\'' + _olKeyAttr(ev.key) + '\',{result:true})"><div class="b"><b>' + _olLbl2(ev) + '　' + _olKindLabel(ev.kind) + '</b><small>' + evEsc(_olEvNames(ev, 4)) + (ev.asan ? '　A:' + evEsc(ev.asan) : '') + '</small></div>' + (can ? '<span class="go">反応を記入</span>' : '›') + '</div>'; });
+  }
+  if (up.length) {
+    h += '<div class="olh-sec">次のOL<em style="color:var(--text-dim)">' + up.length + '件</em></div>';
+    up.slice(0, 6).forEach(function(ev) { h += '<div class="olh-sl" onclick="olEventOpen(\'' + _olKeyAttr(ev.key) + '\')"><span class="st" style="--c:' + (ev.kind === 'group' ? 'var(--accent)' : 'var(--purple)') + '">' + (ev.kind === 'group' ? '3〜7人' : '個別') + '</span><div class="b"><b>' + _olLbl2(ev) + '</b><small>' + evEsc(_olEvNames(ev, 4)) + (ev.asan ? '　A:' + evEsc(ev.asan) : '') + '</small></div>›</div>'; });
+  }
+  // フレッシュ（要フォロー順）
+  rows.sort(function(a, b) { var da = (a.days === null ? 99999 : a.days), db = (b.days === null ? 99999 : b.days); return db - da; });
+  var vis = _olNeed ? rows.filter(function(r) { return r.sev !== 'ok'; }) : rows;
+  h += '<div class="olh-sec">フレッシュ（要フォロー順・' + vis.length + '人）' + (_olNeed ? '<em onclick="olNeed()" style="cursor:pointer">すべて表示</em>' : '') + '</div>';
+  if (!fr.shown.length && !fr.hidden.length) h += '<div class="efr0" style="background:var(--surface);border-radius:14px;padding:16px">現状MAPに LOI / Q2 / Q3 / B1〜B6 のメンバーがいません。タイトルを設定すると自動で表示されます</div>';
+  vis.forEach(function(r) {
+    var m = r.m, sub = r.last ? '最終 ' + _olMD(r.last.date) + ' ' + (r.last.kind === 'group' ? '3〜7人' : '個別') : 'まだOLなし';
+    if (r.next) sub += '・次 ' + _olMD(r.next.date);
+    h += '<div class="olh-fr ' + r.sev + '" onclick="olmOpen(\'' + m.id + '\')"><div class="b"><b class="' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(_olNm(m)) + '<em>' + evEsc((m.title || '').trim() || '—') + '</em></b><small>' + sub + '</small></div>'
+      + '<div class="d">' + (r.days === null ? '<b style="font-size:13px">未接触</b>' : '<b>' + r.days + '</b><small>日</small>') + '</div>'
+      + (can ? '<span class="ad" onclick="event.stopPropagation();olPlanStart({mids:[\'' + m.id + '\']})">＋</span>' : '') + '</div>';
+  });
+  h += olHiddenSectionHtml(fr.hidden) + '</div>';
+  h += '<div class="ux-btm"><span class="ux-bk" onclick="switchView(\'home\')">‹ 戻る</span>' + (can ? '<span class="ux-nx" onclick="olPlanStart()">＋ OLを企画</span>' : '') + '</div>';
+  wrap.innerHTML = h;
+  if (_olmId && document.getElementById('olmPg')) _olmRender();
+}
+// ── その人のOL ──
+function olmOpen(mid) { _olmId = mid; _olmRender(); }
+function olmClose() { _olmId = ''; var p = document.getElementById('olmPg'); if (p && p.parentNode) p.parentNode.removeChild(p); }
+function olmHide() { var id = _olmId; if (!id) return; olmClose(); setOlHidden(id, true); renderOlTab(); }
+function _olmRender() {
+  var m = _olMem(_olmId); if (!m) { olmClose(); return; }
+  _uxCss(); _ux2Css(); _olhCss(); _efCss();
+  var evs = _olEvents(), r = _olFreshRow(m, evs), can = _olCanEdit(), t = evTodayYmd();
+  var mine = evs.filter(function(ev) { return ev.mids.indexOf(m.id) >= 0; }).sort(function(a, b) { return (b.date || '9999').localeCompare(a.date || '9999'); });
+  var c = r.sev === 'crit' ? 'var(--red)' : (r.sev === 'warn' ? 'var(--gold)' : 'var(--accent)');
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="olmClose()">OL › <b>' + evEsc(_olNm(m)) + '</b></span><span class="ux-home" onclick="olmClose()" title="閉じる">✕</span></div>'
+    + '<div class="olm-h" style="--c:' + c + '"><div class="av">' + evEsc((m.lastName || m.firstName || '?').charAt(0)) + '</div><div><h2>' + evEsc(_olNm(m)) + ' <em>' + evEsc((m.title || '').trim() || '—') + '</em></h2>'
+    + '<p>' + (r.last ? '最終OL ' + _olMD(r.last.date) + '（' + (r.last.kind === 'group' ? '3〜7人' : '個別') + '）' : 'まだOLなし') + (r.next ? '・次 ' + _olMD(r.next.date) : '') + '</p></div>'
+    + '<div class="big">' + (r.days === null ? '<b style="font-size:17px">未接触</b>' : '<b>' + r.days + '</b><small>日あいている</small>') + '</div></div>'
+    + '<div class="olh-sec">OLの記録（' + mine.length + '件）</div>';
+  if (!mine.length) h += '<div class="efr0" style="background:var(--surface);border-radius:14px;padding:16px">まだOLの記録はありません</div>';
+  else {
+    h += '<div class="olm-tl">' + mine.map(function(ev) {
+      var cc = ev.st === 'planned' ? 'var(--gold)' : (ev.kind === 'group' ? 'var(--accent)' : 'var(--purple)');
+      var others = ev.mids.filter(function(x) { return x !== m.id; }).map(function(x) { var o = _olMem(x); return o ? _olShortNm(o) : ''; }).filter(Boolean);
+      var pn = ''; ev.recs.forEach(function(x) { if (x.mid === m.id && x.rec.pnote) pn = x.rec.pnote; });
+      var lines = [ev.what || '', ev.asan ? 'A:' + ev.asan : '', others.length ? others.join('・') + 'と' : ''].filter(Boolean).join('　');
+      return '<div class="olm-ti" style="--c:' + cc + '" onclick="olEventOpen(\'' + _olKeyAttr(ev.key) + '\'' + (ev.st === 'planned' && ev.date && ev.date < t ? ',{result:true}' : '') + ')"><b>' + _olLbl2(ev) + '<span>' + (ev.kind === 'group' ? '3〜7人' : '個別') + (ev.st === 'planned' ? '・予定' : '') + '</span></b>'
+        + '<small>' + evEsc(lines || '（内容なし）') + (ev.note || pn ? '\n反応：' + evEsc([ev.note, pn].filter(Boolean).join(' / ')) : (ev.st === 'planned' && ev.date && ev.date < t ? '\n→ 反応を記入' : '')) + '</small></div>';
+    }).join('') + '</div>';
+  }
+  if (can) h += '<div class="efft"><span style="color:var(--text-dim)" onclick="olmHide()">✕ OL対象外にする</span></div>';
+  h += '<div class="ux-btm"><span class="ux-bk" onclick="olmClose()">‹ 戻る</span>' + (can ? '<span class="ux-nx" onclick="olPlanStart({mids:[\'' + m.id + '\']})">＋ この人とOL</span>' : '') + '</div>';
+  var pg = document.getElementById('olmPg'), st0 = pg ? pg.scrollTop : 0;
+  if (!pg) { pg = document.createElement('div'); pg.id = 'olmPg'; document.body.appendChild(pg); }
+  pg.innerHTML = h; pg.scrollTop = st0;
+}
+// ── OLを企画＝1枚／反応を記入 ──
+function _olpWhoRows() {
+  var q = (_olp.q || '').replace(/[\s　]/g, '').toLowerCase(), evs = _olEvents();
+  var all = (state.members || []).filter(function(m) { return !m.deleted && !/^(MG_|AG\d+_)/.test(m.id); });
+  if (q) all = all.filter(function(m) { return ((m.lastName || '') + (m.firstName || '')).replace(/[\s　]/g, '').toLowerCase().indexOf(q) >= 0; });
+  var used = {}, fresh = all.filter(function(m) { return OL_FRESH_TITLES.indexOf((m.title || '').trim()) >= 0 && !m.olHidden; }).map(function(m) { return _olFreshRow(m, evs); })
+    .sort(function(a, b) { var da = (a.days === null ? 99999 : a.days), db = (b.days === null ? 99999 : b.days); return db - da; });
+  fresh.forEach(function(r) { used[r.m.id] = 1; });
+  var mc = function(m) { return (typeof memberCat === 'function') ? memberCat(m) : ''; }, rest = all.filter(function(m) { return !used[m.id]; });
+  var cats = [['フレッシュ（要フォロー順）', fresh]];
+  if (q || _olp.more) cats.push(['研修生', rest.filter(function(m) { return mc(m) === '研修生'; })], ['BR', rest.filter(function(m) { return mc(m) === 'BR'; })], ['その他', rest.filter(function(m) { return mc(m) !== '研修生' && mc(m) !== 'BR'; })]);
+  var h = '';
+  cats.forEach(function(c) {
+    if (!c[1].length) return;
+    h += '<div class="olpcat">' + c[0] + '</div>';
+    c[1].forEach(function(x) {
+      var r = x.m ? x : null, m = r ? r.m : x, on = _olp.mids.indexOf(m.id) >= 0;
+      var col = r ? (r.sev === 'crit' ? 'var(--red)' : (r.sev === 'warn' ? 'var(--gold)' : 'var(--accent)')) : 'var(--text-dim)';
+      h += '<div class="efr' + (on ? ' on' : '') + '" onclick="olpToggle(\'' + m.id + '\')"><i>' + (on ? '✓' : '') + '</i>' + evEsc(_olNm(m)) + ' <span style="font-size:11px;color:var(--text-dim)">' + evEsc((m.title || '').trim()) + '</span>'
+        + '<small style="color:' + col + '">' + (r ? (r.days === null ? '未接触' : r.days + '日') : '') + '</small></div>';
+    });
+  });
+  if (!q && !_olp.more) h += '<div class="efr" style="justify-content:center;color:var(--accent)" onclick="_olp.more=true;_olpRender()">＋ ほかのメンバーも出す</div>';
+  return h || '<div class="efr0">該当するメンバーがいません</div>';
+}
+function _olpCnt() {
+  var n = _olp.mids.length + _olp.guests.length;
+  if (_olp.kind === 'group') return n < OL_GROUP_MIN ? '<em class="olpc w">' + n + '人・あと' + (OL_GROUP_MIN - n) + '人（3〜7人）</em>' : '<em class="olpc' + (n > OL_GROUP_MAX ? ' w' : '') + '">' + n + '人 ' + (n > OL_GROUP_MAX ? '（7人までが目安）' : '✓（3〜7人）') + '</em>';
+  return '<em class="olpc' + (n > OL_SOLO_MAX ? ' w' : '') + '">' + n + '人（2人まで）</em>';
+}
+function olpOpenDate() { if (!_olp) return; _olp.dOpen = !_olp.dOpen; _olpRender(); }
+function _olpPadDone() { var s = document.getElementById('olT'); if (!s || !_olp) return; _olp.time = s.value || ''; _olpRender(); }
+function _olpgHtml() {
+  var p = _olp, ro = p.ro, t = evTodayYmd();
+  var sug = function(f, id) { if (ro) return ''; var rs = _olpRecent(f); return rs.length ? '<div class="olpsug">' + rs.map(function(v) { return '<span onclick="olpChip(\'' + f + '\',\'' + evEsc(v).replace(/'/g, '') + '\')">' + evEsc(v) + '</span>'; }).join('') + '</div>' : ''; };
+  var noteHtml = function() {
+    var h = '<div class="efl">反応' + (p.mids.length > 1 ? '（みんな共通）' : '') + '</div><textarea class="efta" id="olpNote" placeholder="反応を記入" oninput="olpField(\'note\',this.value)"' + (ro ? ' disabled' : '') + '>' + evEsc(p.note || '') + '</textarea>';
+    if (p.mids.length > 1) {
+      h += '<div class="efl">人ごとの反応（任意）</div>';
+      p.mids.forEach(function(id) { var m = _olMem(id); h += '<div class="olpn"><b>' + evEsc(m ? _olShortNm(m) : '') + '</b><input class="efin" placeholder="この人だけの反応" value="' + evEsc(p.pnotes[id] || '') + '" oninput="olpPnote(\'' + id + '\',this.value)"' + (ro ? ' disabled' : '') + '></div>'; });
+    }
+    return h;
+  };
+  var head = '<div class="ux-top"><span class="ux-crumb" onclick="closeOlPlan()">OL › <b>' + (p.res ? '反応を記入' : (p.mode === 'edit' ? (ro ? 'OLの内容' : 'OLを直す') : 'OLを企画')) + '</b></span><span class="ux-home" onclick="closeOlPlan()" title="閉じる">✕</span></div>';
+  if (p.res) { // 反応を記入（日付が過ぎた予定のOL）
+    var names = p.mids.map(function(id) { var m = _olMem(id); return m ? _olNm(m) : ''; }).filter(Boolean).concat(p.guests);
+    return head + '<div class="olres">' + evEsc(names.join('・')) + '<small>' + (p.date ? _olLbl2({ date: p.date, time: p.time }) : '日付未定') + '　' + _olKindLabel(p.kind) + (p.asan ? '　A:' + evEsc(p.asan) : '') + (p.what ? '・' + evEsc(p.what) : '') + '</small></div>'
+      + noteHtml()
+      + '<div class="efft"><span class="m" onclick="_olp.res=false;_olpRender()">日付・人・内容を直す ›</span></div>'
+      + '<div class="ux-btm"><span class="ux-bk" onclick="closeOlPlan()">‹ 戻る</span><span class="ux-nx" onclick="olpSave()">✓ 保存</span></div>';
+  }
+  var h = head + '<div class="olpk"><span class="' + (p.kind === 'solo' ? 'on' : '') + '" onclick="olpSetKind(\'solo\')">個別OL<small>マンツーマン（2人まで）</small></span><span class="' + (p.kind === 'group' ? 'on' : '') + '" onclick="olpSetKind(\'group\')">3〜7人OL<small>今月 ' + _olMonthGroupCount() + ' / ' + OL_GROUP_GOAL + '回</small></span></div>';
+  h += '<div class="efl">だれと ' + _olpCnt() + '</div>';
+  if (p.mids.length || p.guests.length) h += '<div class="efsel">' + p.mids.map(function(id) { var m = _olMem(id); return '<span onclick="' + (ro ? '' : 'olpRemovePerson(\'' + id + '\')') + '">' + evEsc(m ? _olNm(m) : '(不明)') + (ro ? '' : ' ✕') + '</span>'; }).join('') + p.guests.map(function(g, i) { return '<span onclick="' + (ro ? '' : 'olpRemoveGuest(' + i + ')') + '">' + evEsc(g) + (ro ? '' : ' ✕') + '</span>'; }).join('') + '</div>';
+  if (!ro) h += '<div class="efw"><input id="olpQ" placeholder="🔍 名前でさがす" value="' + evEsc(p.q || '') + '" oninput="olpSearch(this.value)" autocomplete="off"><div id="olpWhoLs" style="max-height:300px;overflow-y:auto">' + _olpWhoRows() + '</div></div>';
+  var rel = p.date === t ? '今日' : (p.date === _evYmdAdd(t, 1) ? '明日' : '');
+  h += '<div class="efl">いつ</div><div class="efd" style="margin-top:0"><b>' + (p.date ? _olLbl2({ date: p.date }) : '日付未定') + (rel ? '<small>' + rel + '</small>' : '') + '</b><span class="sp"></span>' + (ro ? '' : '<span class="eflk" onclick="olpOpenDate()">' + (p.dOpen ? '閉じる' : '日付を変える') + '</span>') + '</div>';
+  if (p.dOpen && !ro) h += '<div class="efdi"><small>日付</small><input id="olpDate" type="date" value="' + evEsc(p.date || '') + '" onchange="olpField(\'date\',this.value);_olpRender()"></div>';
+  h += '<div class="wnt"><input id="olT" type="text" readonly placeholder="時刻（任意）" value="' + evEsc(p.time || '') + '"' + (ro ? '' : ' onclick="openTimePad(\'olT\')"') + '>' + (p.time && !ro ? '<span class="ad" onclick="_olp.time=\'\';_olpRender()">なし</span>' : '') + '</div>';
+  h += '<div class="efl">Aさん</div><input class="efin" id="olpAsan" placeholder="担当（Aさん）" value="' + evEsc(p.asan || '') + '" oninput="olpField(\'asan\',this.value)"' + (ro ? ' disabled' : '') + '>' + sug('asan');
+  h += '<div class="efl">内容（任意）</div><input class="efin" id="olpWhat" placeholder="例：ビジョン共有" value="' + evEsc(p.what || '') + '" oninput="olpField(\'what\',this.value)"' + (ro ? ' disabled' : '') + '>' + sug('what');
+  if (p.st === 'done') h += noteHtml();
+  else if (p.mode === 'edit' && !ro) h += '<div class="efft"><span class="m" onclick="_olp.st=\'done\';_olp.res=true;_olpRender()">反応を記入（実施済みにする）›</span></div>';
+  if (p.mode === 'edit' && !ro) {
+    h += '<div class="efft">' + (p.gid ? '<span class="m" onclick="otlFromOl(\'' + p.gid + '\',\'' + (p.mids[0] || '') + '\')">📝 アウトライン企画書</span>' : '<span></span>') + '<span class="d" onclick="olpDelete()">' + icn('trash') + ' この企画を消す</span></div>';
+  }
+  h += '<div class="ux-btm"><span class="ux-bk" onclick="closeOlPlan()">' + (p.mode === 'edit' ? '‹ 戻る' : 'キャンセル') + '</span>' + (ro ? '' : '<span class="ux-nx" onclick="olpSave()">' + (p.mode === 'edit' ? '✓ 保存' : (p.st === 'done' ? '✓ 記録する' : '✓ 予定に入れる')) + '</span>') + '</div>';
+  return h;
+}
+function _olpgRender() {
+  if (!_olp) return;
+  _uxCss(); _ux2Css(); _olhCss(); _efCss();
+  var pg = document.getElementById('olpPg'), st0 = pg ? pg.scrollTop : 0;
+  if (!pg) { pg = document.createElement('div'); pg.id = 'olpPg'; document.body.appendChild(pg); }
+  var a = document.activeElement;
+  if (a && pg.contains(a) && a.id === 'olpQ') { var l = document.getElementById('olpWhoLs'); if (l) l.innerHTML = _olpWhoRows(); return; }
+  if (a && pg.contains(a) && /^(olpNote|olpAsan|olpWhat)$/.test(a.id) && !_olp._force) return;
+  pg.innerHTML = _olpgHtml(); pg.scrollTop = st0;
+  if (_olp.focusNote) { _olp.focusNote = false; setTimeout(function() { var f = document.getElementById('olpNote'); if (f) try { f.focus(); } catch (e) {} }, 120); }
 }
 
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
@@ -31255,7 +31478,8 @@ function openTimePad(targetId) {
   if (targetId === 'evtF_time' || targetId === 'evtF_timeEnd') { _tpStartId = 'evtF_time'; _tpEndId = 'evtF_timeEnd'; _tpIsTask = false; }
   else if (targetId === 'tqTime') { _tpStartId = 'tqTime'; _tpEndId = 'tqTimeEndX'; _tpIsTask = true; }
   else if (targetId === 'wnT' || targetId === 'wnTE') { _tpStartId = 'wnT'; _tpEndId = 'wnTE'; _tpIsTask = false; }
-  else if (targetId === 'tkT') { _tpStartId = 'tkT'; _tpEndId = 'tkTEndX'; _tpIsTask = true; } // v616: タスクの画面 // v613: 予定の画面・予定を足す // v456: クイック追加もカレンダーと同じ時刻パッド
+  else if (targetId === 'tkT') { _tpStartId = 'tkT'; _tpEndId = 'tkTEndX'; _tpIsTask = true; } // v616: タスクの画面
+  else if (targetId === 'olT') { _tpStartId = 'olT'; _tpEndId = 'olTEndX'; _tpIsTask = true; } // v617: OLの企画 // v613: 予定の画面・予定を足す // v456: クイック追加もカレンダーと同じ時刻パッド
   else { _tpStartId = 'evTime'; _tpEndId = 'evTimeEnd'; _tpIsTask = (_evType === 'task'); }
   if (_tpStartId === 'evTime' && typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
   _tpTarget = targetId;
@@ -31427,6 +31651,7 @@ function closeTimePad(commit) {
   _tqPadSync();
   if (_tpStartId === 'tqTime' && typeof _tqRenderChips === 'function') { try { _tqRenderChips(); } catch(eTq9) {} }
   if (_tpStartId === 'tkT' && document.getElementById('tkT')) { try { _tkPadDone(); } catch(eTk) {} } // v616
+  if (_tpStartId === 'olT' && document.getElementById('olT')) { try { _olpPadDone(); } catch(eOl) {} } // v617
   if (_tpStartId === 'wnT' && document.getElementById('wnT')) { var _wnOv = ov; if (_wnOv) _wnOv.id = ''; try { _wnPadDone(); } catch(eWn) {} } // v613
   if (ov) {
     // v343: ふわっとフェードアウト（idを外して、フェード中でも次のパッドをすぐ開けるように）
