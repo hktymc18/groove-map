@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v618';
+var APP_JS_VERSION = 'v619';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v618';
+  var DATA_VERSION = 'v619';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5334,6 +5334,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v619', d:'2026-10-05', items:['スマホでもバージョンと更新内容を見られるように：「今日」の一番下と「設定」→ このアプリ（お知らせ・更新内容／バージョン・保存した時刻）'] },
   { v:'v618', d:'2026-10-05', items:['スマホの「今日」をタイルに：今日の手帳・今日の予定・今週やること・気になる人・再アプローチ','再アプローチを1つの画面に（時期が来た人／まだ早い人・「＋ 人を足す」で自分でも追加・手帳へ入れる）','設定をリストに（プロフィール・見た目・通知・カレンダー・毎日のいつもの行・翌月コピー など）。押すと1項目ずつ','スマホでは上の帯（年月・翌月コピー）をなくして画面を広く。翌月コピーは設定とMAPの「⋯」から'] },
   { v:'v617', d:'2026-10-05', items:['🤝 OL（スマホ）を作り直しました。上の古い帯をなくし、3〜7人OL・個別OL・要フォローを大きい数字で。今月の3〜7人OLは①②③の枠、フレッシュは要フォロー順（あいている日数を大きく・＋ですぐ企画）','📝 OLの企画は1枚で：個別／3〜7人 → だれと（要フォロー順のリスト）→ いつ（時刻は今までの数字パッド）→ Aさん・内容。カレンダーにも入ります','✍ 日付が過ぎた予定のOLは「反応を記入」から反応を書くだけ（保存で実施済み）。人を押すと、その人のOLの記録が並びます'] },
   { v:'v616', d:'2026-10-05', items:['📓 ToDo（スマホ）が「今日の手帳」になりました。紙の手帳と同じように行が並び、空いた行に直接書いてEnterで次の行へ。10行目に「今日の10件」の線があり、それより先も何件でも書けます（＋αの分は金色に）','📋 毎日のいつもの行（最初は「計画立案する」）が毎朝1行目に入ります。下の「毎日のいつもの行を変える」から追加・削除','↪ 前の日の残りは「今日に入れる」か「日を選ぶ」。やっていないタスクはふりかえり（今日の21時から・過ぎた日）で、明日／カレンダーで選んだ日へまとめて・1件ずつ移せます','✍ 1週間の書いた数・10件書いた日の連続・今日学んだ事も手帳に。行を押すとタスクの画面（やる日・時刻（今までの数字パッド）・優先A/B/C・だれの・通知・メモ）','📱 横向きは手帳を開いた形（左：やるべき事／右：その日のタイムスケジュール）。今までのToDo（期限なし・リスト・完了・ゴミ箱・検索）は一番下の「すべてのタスク」から'] },
@@ -13201,6 +13202,8 @@ function updateLastSaved() {
   var h = String(now.getHours()).padStart(2, '0');
   var m = String(now.getMinutes()).padStart(2, '0');
   el.textContent = h + ':' + m + ' saved';
+  window._gmSavedHM = h + ':' + m;
+  try { [].forEach.call(document.querySelectorAll('.gm-saved'), function(x) { x.textContent = h + ':' + m + ' 保存済み'; }); } catch (e) {}
 }
 
 function saveCurrent() {
@@ -18275,10 +18278,17 @@ function _tdyCss() {
     + ".st-gh{font-size:12.5px;font-weight:900;color:var(--text-mid);margin:14px 4px 6px}.st-ls{border-radius:15px;background:var(--surface);border:1.5px solid var(--border);overflow:hidden}"
     + ".st-ls>div{display:flex;align-items:center;gap:11px;min-height:54px;padding:6px 14px;border-bottom:1px solid var(--border);font-size:15px;font-weight:900;cursor:pointer}.st-ls>div:last-child{border-bottom:none}.st-ls>div>span:nth-child(2){flex:1;min-width:0}"
     + ".st-ls small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-ls .ic{width:24px;text-align:center;flex:none;color:var(--text-mid)}.st-ls .ch{color:var(--text-dim);flex:none}"
+    + ".tdy-ver{margin:20px 0 24px;text-align:center;font-size:12px;color:var(--text-dim);font-weight:800;cursor:pointer;line-height:1.7}.tdy-ver b{color:var(--text-mid);font-family:Inter,sans-serif}.tdy-ver u{text-decoration:none;color:var(--accent)}.tdy-ver i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-left:3px;vertical-align:1px}"
+    + ".st-ls .nw{flex:none;background:var(--red);color:#fff;font-size:10px;padding:2px 7px;border-radius:9px;font-weight:900;font-style:normal}"
     + ".st-sel{width:100%;box-sizing:border-box;height:50px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:16px;font-weight:800;padding:0 12px}";
   document.head.appendChild(st);
 }
 // ── 今日 ──
+// バージョン・保存時刻・更新内容（スマホは上の帯がないので画面の下に出す）
+function _verLine() {
+  var hm = window._gmSavedHM;
+  return '<div class="tdy-ver" onclick="openReleaseNotes()">GROOVE MAP <b>' + evEsc(APP_JS_VERSION) + '</b>' + '<span class="gm-saved" style="margin-left:8px">' + (hm ? hm + ' 保存済み' : '') + '</span><br><u>📣 更新内容を見る ›</u>' + (hasUnseenNotes() ? '<i></i>' : '') + '</div>';
+}
 function _tdyRender() {
   var wrap = document.getElementById('view-home'); if (!wrap) return;
   _uxCss(); _ux2Css(); _tdyCss(); _dpCss();
@@ -18322,7 +18332,7 @@ function _tdyRender() {
   // インサイト（たたむ）
   var ins = ''; try { ins = insightsHtml(); } catch (eI) {}
   if (ins) h += '<details class="home-insights" style="margin-top:14px"><summary style="cursor:pointer;font-size:12.5px;font-weight:800;color:var(--text-mid);padding:10px 2px">📈 インサイト（コーチ・気づき）</summary>' + ins + '</details>';
-  h += '</div>';
+  h += _verLine() + '</div>';
   wrap.innerHTML = h;
 }
 function tdyGo(k) {
@@ -18425,6 +18435,8 @@ function _stRender() {
       + _stLi('📄', '変更履歴', '追加・削除・タイトル変更', 'showHistoryModal()')
       + (typeof openShareModal === 'function' && !viewingOwnerUid ? _stLi(icn('link'), 'MAPの共有', '見せる・一緒に編集', 'openShareModal()') : '')
       + (sharedOwners && sharedOwners.length ? _stLi(icn('users'), '共有MAP', '見せてもらっているMAP', 'openSharedDashboard()') : '') + '</div>'
+      + '<div class="st-gh">このアプリ</div><div class="st-ls"><div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">📣</span><span>お知らせ・更新内容<small>' + evEsc(RELEASE_NOTES[0].v + '（' + RELEASE_NOTES[0].d + '）' + (RELEASE_NOTES[0].items[0] || '')) + '</small></span>' + (hasUnseenNotes() ? '<em class="nw">NEW</em>' : '') + '<span class="ch">›</span></div>'
+      + '<div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">ℹ</span><span>バージョン<small class="gm-saved">' + (window._gmSavedHM ? window._gmSavedHM + ' 保存済み' : '') + '</small></span><span style="flex:none;font-family:Inter,sans-serif;color:var(--text-mid)">' + evEsc(APP_JS_VERSION) + '</span></div></div>'
       + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
       + (_fb && _fb.ok ? _stLi('🐞', 'バグ・要望', '', 'fbOpen()') : '')
       + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true)
