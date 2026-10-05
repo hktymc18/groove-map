@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v605';
+var APP_JS_VERSION = 'v606';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v605';
+  var DATA_VERSION = 'v606';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v606', d:'2026-10-05', items:['PLANの入口：横向きでもタイルが画面に収まるように（見出しを1行に・振り返りとツールも見出しに）','横向きのタイルに中身：やる理由の一文・期日まであと◯ヶ月・この先3ヶ月のロードマップ・S稼働の進み・今週の残りの行動'] },
   { v:'v605', d:'2026-10-05', items:['データの入口：横向きでもタイルが画面に収まるように（見出しを1行に・くわしくのボタンも見出しに）','横向きのタイルに直近6ヶ月の小さな推移グラフ','横向きの表示チームは小さいボタンに'] },
   { v:'v604', d:'2026-10-05', items:['データ：横向きにするとグラフが画面いっぱいに（eFootballの分析画面のように）','横向きの数字は上の帯に。「あと一歩」などのボタンを押すと、人の一覧が右から出ます','横向きの表示チームは小さいボタンに（押すと選べます）'] },
   { v:'v603', d:'2026-10-05', items:['ロードマップの表を作り直し：項目を1つずつ（●・スワイプで切り替え）、月を縦に並べて＋−で決める。期間は‹ ›でずらす','行の編集・マイルストーンも1画面に：名前・何ヶ月つづくか・色を大きく選べる','ギャップの「今の数・単価・倍率」を1画面に（MAPの数を＋−で直す・自動に戻す）','ギャップの割り振りは、月ごとの数を確認してから入れる画面に','ツールの「夢100」が別のページを開いていたのを直しました'] },
@@ -16010,6 +16011,81 @@ function _uxSwipe(el, prev, next) {
   }, { passive: true });
 }
 
+// ════ v606: PLANの入口（横）— 見出し1行（振り返り・ツールも）、タイルは画面いっぱい・中身つき ════
+function _p2LandCss() {
+  if (document.getElementById('p2LandCss')) return;
+  var st = document.createElement('style'); st.id = 'p2LandCss';
+  st.textContent = ".p2-lh .ux-hd{flex-wrap:nowrap;align-items:center;gap:10px}.p2-lh .ux-hd .ux-why{min-width:0;flex:0 1 auto}.p2-lh .ux-hd .r{margin-left:auto;white-space:nowrap}"
+    + ".p2-lh .ux-hd .ux-sb{height:38px;padding:0 12px;font-size:12.5px;flex:none}.p2-lh .ux-tiles{margin-top:8px}"
+    + "body.ux-land .p2-lh .ux-t .ic{top:14px;left:14px;right:auto;text-align:left;font-size:34px}body.ux-land .p2-lh .ux-t .ic .lic{width:36px;height:36px}.p2-lh .ux-t .bd{left:auto;right:10px}"
+    + "body.ux-land .p2-lh .ux-t.p2-nx .ic{left:0;right:0;top:auto;bottom:calc(50% + 6px);text-align:center;font-size:50px}"
+    + ".p2x{flex:1;min-height:0;margin:60px 0 8px;display:flex;flex-direction:column;justify-content:flex-start;gap:5px;overflow:hidden}.p2x>*{flex:none}"
+    + ".p2x .q{font-size:13px;font-weight:700;line-height:1.55;color:var(--text);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}.p2x .q::before{content:'“';color:var(--c);font-weight:900;margin-right:2px}"
+    + ".p2x .bg{font-size:min(28px,2.8vw);font-weight:900;font-family:'Inter',sans-serif;line-height:1;color:var(--c);white-space:nowrap}.p2x .bg small{font-size:11px;color:var(--text-mid);font-weight:800;margin-left:3px}"
+    + ".p2x .bar{height:7px;border-radius:5px;background:var(--surface3);overflow:hidden}.p2x .bar i{display:block;height:100%;border-radius:5px;background:var(--c)}.p2x .cap{font-size:10.5px;color:var(--text-dim);font-weight:700}"
+    + ".p2x .rw{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--text-mid);white-space:nowrap;overflow:hidden}.p2x .rw b{flex:none;min-width:30px;color:var(--text);font-weight:900}.p2x .rw span{overflow:hidden;text-overflow:ellipsis}.p2x .rw em{font-style:normal;color:var(--c);font-weight:900;margin-left:auto;flex:none}"
+    + ".p2-lh .ux-foot{margin-top:8px}";
+  document.head.appendChild(st);
+}
+function _p2HubX(k) {
+  var ym = _p2Ym(0), p = state.goals.plan;
+  if (k === 'why') {
+    var t = String(_p2WhyText() || '').replace(/\s+/g, ' ').trim();
+    return t ? '<div class="p2x"><div class="q">' + evEsc(t.slice(0, 120)) + '</div></div>' : '';
+  }
+  if (k === 'goal') {
+    if (!(p.deadline && /^\d{4}-\d{2}$/.test(p.deadline))) return '';
+    var rem = _p2YmDiff(ym, p.deadline), st = String(p.setAt || '').slice(0, 7), tot = st && /^\d{4}-\d{2}$/.test(st) ? _p2YmDiff(st, p.deadline) : 0;
+    var pc = tot > 0 ? Math.max(0, Math.min(100, Math.round((tot - rem) / tot * 100))) : 0;
+    return '<div class="p2x"><div class="bg">' + (rem > 0 ? 'あと' + rem + '<small>ヶ月</small>' : '期日の月') + '</div>' + (tot > 0 ? '<div class="bar"><i style="width:' + pc + '%"></i></div>' : '') + '<div class="cap">期日まで</div></div>';
+  }
+  if (k === 'rm') {
+    var rm = _p2Rm(), rows = '';
+    for (var i = 0; i < 3; i++) {
+      var y = _p2Ym(i), f = _p2FrontTgt(y), ms = (rm.ms || []).filter(function(m) { return m.ym === y || (m.ym2 && m.ym <= y && m.ym2 >= y); }).map(function(m) { return m.t; });
+      if (p.deadline === y && p.title) ms.unshift(_p2TitleEn(p.title));
+      rows += '<div class="rw"><b>' + parseInt(y.slice(5), 10) + '月</b><span>' + (ms.length ? '🚩 ' + evEsc(ms.join('・')) : '') + '</span>' + (f !== '' && f != null ? '<em>F' + f + '</em>' : '') + '</div>';
+    }
+    return '<div class="p2x">' + rows + '</div>';
+  }
+  if (k === 'mon') {
+    var m = _p2M(ym), S = 0; try { S = _dtEzNow().S; } catch (e) { S = _sNow(); }
+    if (m.s === '' || m.s == null) return '';
+    var pc2 = Math.min(100, Math.round(S / Math.max(1, +m.s) * 100));
+    return '<div class="p2x"><div class="bg">' + S + '<small>/ ' + m.s + '人</small></div><div class="bar"><i style="width:' + pc2 + '%"></i></div><div class="cap">' + (S >= +m.s ? '達成 🎉' : 'あと' + (m.s - S) + '人') + (m.front !== '' && m.front != null ? '・F' + m.front : '') + '</div></div>';
+  }
+  if (k === 'do') {
+    var rs = []; try { rs = _p2DoRows(ym).filter(function(r) { return !(r.ok || r.wOk) && r.short > 0; }); } catch (e2) {}
+    if (!rs.length) return '';
+    return '<div class="p2x">' + rs.slice(0, 4).map(function(r) { return '<div class="rw"><span>' + evEsc(r.lb) + '</span><em>あと' + r.short + (r.unit || '') + '</em></div>'; }).join('') + (rs.length > 4 ? '<div class="cap">ほか ' + (rs.length - 4) + '件</div>' : '') + '</div>';
+  }
+  return '';
+}
+function _p2HubLand(T, nk, S, rv, left, why) {
+  _p2LandCss();
+  var ym = _p2Ym(0);
+  var tiles = T.map(function(t) { t.next = t.k === nk; t.on = 'p2Go(\'' + t.k + '\')'; t.x = _p2HubX(t.k); if (!t.x) t.c += ' p2-nx'; return _uxTile(t); }).join('');
+  return '<div class="ux-hub p2-lh"><div class="ux-hd"><h1>PLAN</h1>' + (why && !_p2HubX('why') ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span>'
+    + '<span class="ux-sb' + (rv ? ' hot' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (rv ? '<span class="dot"></span>' : '') + '</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div>'
+    + '<div class="ux-tiles">' + tiles + '</div>'
+    + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div></div></div>';
+}
+var _p2HubWas = '';
+window.addEventListener('resize', function() { // 回したら入口を描き直す（縦⇄横でタイルの形が変わる）
+  if (currentView !== 'plan' || _p2Pg || isPCMode()) return;
+  var key = (_uxLand() ? 'L' : 'P') + Math.round((window.innerWidth || 0) / 40) + '_' + Math.round((window.innerHeight || 0) / 40);
+  if (key === _p2HubWas) return; _p2HubWas = key;
+  setTimeout(function() { try { if (currentView === 'plan' && !_p2Pg) renderPlan(); } catch (e) {} }, 150);
+});
+// タイルの高さを画面の下まで（下の帯の分を引く）
+function _uxTilesFit(root) {
+  var tl = root && root.querySelector('.ux-tiles'); if (!tl) return;
+  var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 390, top = tl.getBoundingClientRect().top;
+  var ft = root.querySelector('.ux-foot'), fh = ft ? ft.offsetHeight + 8 : 0;
+  var h = Math.round(vh - top - fh - 12);
+  if (!(h > 110)) return;
+  Array.prototype.forEach.call(tl.querySelectorAll('.ux-t'), function(t) { t.style.height = h + 'px'; });
+}
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
 var P2_PG = { why: '想い', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
@@ -16068,6 +16144,7 @@ function _p2HubHtml() {
       st: (m.s === '' || m.s == null) ? 'S稼働の目標を<br><em>まだ決めていない</em>' : (_p2Declared(ym) ? 'S稼働 目標 <em>' + m.s + '人</em><br>今 ' + S + '人' : 'S稼働 ' + m.s + '人<br><em>設定するを押す</em>') },
     { k: 'do', c: 'pur', ic: '✅', lb: '今週やること', w: 1, st: (rest ? '今週 <em>あと' + rest + '件</em>' : '今週の分は予定ずみ ✓') + (tl ? '・今日のタスク <em>' + tl + '件</em>' : '') }
   ];
+  if (_uxLand()) return _p2HubLand(T, nk, S, rv, left, why); // v606: 横は見出し1行＋中身のあるタイル
   var h = '<div class="ux-hub"><div class="ux-hd"><h1>PLAN</h1>' + (why ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span></div>'
     + '<div class="ux-tiles">' + T.map(function(t) { t.next = t.k === nk; t.on = 'p2Go(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
     + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div>'
@@ -17602,6 +17679,7 @@ function renderPlan() {
     wrap.innerHTML = _p2Pg ? _p2PageHtml() : _p2HubHtml();
     document.body.classList.toggle('ux-pg', !!_p2Pg);
     document.body.classList.toggle('ux-hub', !_p2Pg);
+    if (!_p2Pg && _uxLand()) { var lh = wrap.querySelector('.p2-lh'); _uxTilesFit(lh); requestAnimationFrame(function() { _uxTilesFit(wrap.querySelector('.p2-lh')); }); } // v606
     if (_p2Pg) _uxSwipe(wrap, function() { _p2Swipe(-1); }, function() { _p2Swipe(1); }); // 横にスワイプでページ送り（今のページで判断）
     if (_p2Pg === 'dok') { // v598: 行動の画面は今までの中身（今週・今月の数・予約・予定・結果待ち）をページに
       var pb8 = document.getElementById('p2DoPg'); if (pb8) { pb8.id = 'p2DoBody'; try { _p2DoRender(); } catch (eDr) {} pb8.id = 'p2DoPg'; }
