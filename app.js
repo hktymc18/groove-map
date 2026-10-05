@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v602';
+var APP_JS_VERSION = 'v603';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v602';
+  var DATA_VERSION = 'v603';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v603', d:'2026-10-05', items:['ロードマップの表を作り直し：項目を1つずつ（●・スワイプで切り替え）、月を縦に並べて＋−で決める。期間は‹ ›でずらす','行の編集・マイルストーンも1画面に：名前・何ヶ月つづくか・色を大きく選べる','ギャップの「今の数・単価・倍率」を1画面に（MAPの数を＋−で直す・自動に戻す）','ギャップの割り振りは、月ごとの数を確認してから入れる画面に','ツールの「夢100」が別のページを開いていたのを直しました'] },
   { v:'v602', d:'2026-10-05', items:['想い：「やる理由」などの作文は、書くほど伸びる罫線の紙に。字数と「次の1枚まであと◯字」が出ます','想い：やりたいこと・やりたくないこと・なりたい自分・なりたくない自分を箇条書きに。最低5個ずつ、思いつくなら何個でも（Enterで次々に追加・その場で書き直し・✕で消す）','理想MAPの「理想 vs 現状」の平均稼働を、％ではなく人数（1ハウディあたり）に'] },
   { v:'v601', d:'2026-10-05', items:['📊 データの各ページを作り直しました：グラフ＋大きな数字＋数字3つ＋「動かせる人」。S稼働はあと一歩の人、BRは審査中・維持がまだの人、動かす数字は今月スタートした人、理想との差は差がある人が並びます','👤 人を押すと「その人の画面」が開き、タスク・予定をその場で入れられます（左右にめくると次の人）','💰 コミッションのページから先月の金額をすぐ入れられます'] },
   { v:'v600', d:'2026-10-05', items:['🗺 ロードマップ：横軸の月を押すと、その月の画面（フロント目標・流通を＋−で・マイルストーンを足す）。左右にめくると次の月','🧰 ツールも1画面ずつに：ギャップ（1行ずつ＋−・あと何項目）、チェック（丸を押すだけ）、BB早見表（GSVを＋−すると金額が大きく出る）'] },
@@ -16009,7 +16010,7 @@ function _uxSwipe(el, prev, next) {
 
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
-var P2_PG = { why: '想い', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表' };
+var P2_PG = { why: '想い', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
 var P2_PG_FLOW = ['why', 'goal', 'rm', 'mon', 'do'];
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
@@ -16029,6 +16030,7 @@ function _p2PgSubs(k) {
   if (k === 'do') return ['今週', '今月'];
   if (k === 'dok') return _p2DoRows(_p2Ym(0)).map(function(r) { return r.lb; });
   if (k === 'rev') return _p2RvPages();
+  if (k === 'rmt') return _p2RmDefs(_p2Rm()).map(function(d) { return d.lb; }); // v603
   return [];
 }
 function _p2WhyDone() { var n = _p2().north || {}; return !!(String(_p2WhyText() || '').trim() || _p2G().p1 || (n.wants || []).length || (n.be || []).length); }
@@ -16089,6 +16091,18 @@ function _p2PageHtml() {
     var nym = _p2YmAdd(_p2RmYm || _p2Ym(0), 1); next = parseInt(nym.slice(5), 10) + '月 ›'; nextOn = 'p2RmMonth(\'' + nym + '\')';
   } else if (k === 'gap') { // v600: ギャップ（1行ずつ＋−）
     _ux2Css(); body = _p2GapPageHtml(); next = '📤 ロードマップに割り振る'; nextOn = 'p2GapAlloc()';
+  } else if (k === 'rmt') { // v603: 表は1項目ずつ（月を縦に −［数字］＋）
+    _ux2Css(); body = _p2RmtHtml(i);
+    if (i < subs.length - 1) { next = subs[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'ロードマップへ ›'; nextOn = 'p2Go(\'rm\')'; }
+  } else if (k === 'rmrows') {
+    _ux2Css(); body = _p2RmRowsHtml(); next = '表へ ›'; nextOn = 'p2Go(\'rmt\')';
+  } else if (k === 'rmms') {
+    _ux2Css(); body = _p2RmMsHtml(); next = '✅ 保存する'; nextOn = 'p2RmMsSave2()';
+  } else if (k === 'gapset') {
+    _ux2Css(); body = _p2GapSetHtml(); next = 'ギャップへ ›'; nextOn = 'p2Go(\'gap\')';
+  } else if (k === 'gapal') {
+    _ux2Css(); body = _p2GapAlHtml(); var GP = _p2GapAllocPlan();
+    if (GP.plans.length) { next = '📤 割り振る'; nextOn = 'p2GapAllocDo()'; }
   } else if (k === 'ck') {
     body = _p2CkPageHtml();
   } else if (k === 'bb') {
@@ -16121,7 +16135,7 @@ function _p2PageHtml() {
       + li('🗺', 'ロードマップ', '月ごとのフロント・マイルストーン', 'p2Go(\'rm\')')
       + li('📆', '年別目標', '', 'p2YearsOpen()')
       + li('🎮', 'シミュレーション', '', 'p2SimOpen()')
-      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2Go(\'why\',6)')
+      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2Go(\'why\',8)')
       + li('✅', 'チェック', ck.done + '/' + ck.total, 'p2Go(\'ck\')')
       + li('💴', 'BB早見表', 'GSVからボーナスの目安', 'p2Go(\'bb\')')
       + li('✍️', '書き出し', '未整理 ' + ib + '件', 'p2Go(\'inb\')')
@@ -16130,7 +16144,8 @@ function _p2PageHtml() {
   } else if (k === 'inb') {
     body = _p2InboxHtml();
   }
-  var back = (k === 'inb' || k === 'ck' || k === 'bb' || k === 'gap') ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : (k === 'rmm' ? 'p2Go(\'rm\')' : 'p2Back()'));
+  var back = (k === 'inb' || k === 'ck' || k === 'bb' || k === 'gap') ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
+  if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && (i || k === 'dok') && k !== 'do' ? '・' + subs[i] : '') + '</b></span><span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
     + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, subs, i, 'p2PgSub', next, nextOn) + '</div>';
 }
@@ -17093,6 +17108,7 @@ var _p2RmYm = '';
 function p2RmMonth(ym) { _p2RmYm = ym; p2Go('rmm'); }
 function p2RmStep(row, ym, d) {
   var rm = _p2Rm(), cur = row === 'front' ? _p2FrontTgt(ym) : ((rm.rows[row] || {})[ym]);
+  if (row === 'br' && (cur === '' || cur == null)) cur = _p2RmBrPred(rm, ym); // v603: 空なら予測から
   var st = row === 'dist' ? 500 : 1, v = (cur === '' || cur == null) ? (d > 0 ? st : 0) : Math.max(0, (+cur || 0) + d * st);
   p2RmCell(row, ym, String(v));
 }
@@ -17124,7 +17140,7 @@ function _p2RmMonthHtml() {
 }
 // ── ギャップ ──
 var P2_GAP_STEP = { br: 1, dist: 500, qr: 1, exp: 1, env: 1 };
-UX_INFO.gap = { t: 'ギャップ', h: '目標月収から必要な数を逆算し、今の数（MAPから自動）との差を出します。<br><b>フロントBR</b>＝自分から下で最初に出てくるBR、<b>流通</b>＝チームPT、<b>Qルビー</b>＝ルビーの人数。<br>フロントBRは LOI→Q2→Q3→BR で最短3ヶ月かかるので、期日の3ヶ月前までにフロントが必要です。<br>単価・倍率は「くわしい設定」から' };
+UX_INFO.gap = { t: 'ギャップ', h: '目標月収から必要な数を逆算し、今の数（MAPから自動）との差を出します。<br><b>フロントBR</b>＝自分から下で最初に出てくるBR、<b>流通</b>＝チームPT、<b>Qルビー</b>＝ルビーの人数。<br>フロントBRは LOI→Q2→Q3→BR で最短3ヶ月かかるので、期日の3ヶ月前までにフロントが必要です。<br>今の数の直し方・単価・倍率は「今の数・単価」から' };
 function p2GapStep(k, d) {
   var calc = _p2GapCalc(), it = calc.items.filter(function(x) { return x.k === k; })[0], st = P2_GAP_STEP[k] || 1;
   var cur = it && it.t !== null ? it.t : 0;
@@ -17135,7 +17151,7 @@ function _p2GapPageHtml() {
   var left = calc.items.filter(function(it) { return it.gap !== null && it.gap > 0; }).length;
   var rows = calc.items.map(function(it) {
     var sub = '今 <b>' + (it.c === null ? '—' : it.c.toLocaleString()) + '</b>' + (it.cIsAuto && it.c !== null ? '（MAP）' : '') + '・' + (it.gap === null ? '—' : (it.gap <= 0 ? '<span style="color:var(--accent)">達成✓</span>' : '<span style="color:var(--gold)">あと' + it.gap.toLocaleString() + '</span>'));
-    if (it.cAuto === null) sub += '・今を入れる <input type="number" inputmode="numeric" value="' + (it.cIsAuto ? '' : it.c) + '" style="width:54px;padding:3px 6px;border-radius:7px;border:1px solid var(--border2);background:var(--surface2);color:var(--text)" onchange="p2GapSet(\'c\',\'' + it.k + '\',this.value)">';
+    if (it.cAuto === null && it.cIsAuto) sub += '・<b style="color:var(--accent);cursor:pointer" onclick="p2Go(\'gapset\')">今の数を入れる ›</b>'; // v603
     return _uxRowStep(it.lb + (it.unit ? '（' + it.unit + '）' : ''), sub, it.t === null ? '' : it.t, '', 'p2GapStep(\'' + it.k + '\',-1)', 'p2GapStep(\'' + it.k + '\',1)', 'p2GapSet(\'t\',\'' + it.k + '\',this.value)');
   }).join('');
   var cd = calc.cand;
@@ -17144,7 +17160,202 @@ function _p2GapPageHtml() {
     + '<div class="ux-sum">' + (left ? '<span>あと</span><b>' + left + '<small> 項目</small></b>' : '<b style="font-size:24px;color:var(--accent)">全部とどいています ✓</b>') + '</div>'
     + '<div class="ux-box">' + rows + '</div>'
     + '<div class="ux-hint pu">⛴ Qルビー候補（QR×' + g.rates.candX + '）：目標 <b>' + (cd.t === null ? '—' : cd.t) + '</b>・今 <b>' + cd.c + '</b>' + (cd.gap > 0 ? '・あと' + cd.gap : '') + '</div>'
-    + '<span class="ux-lk" onclick="p2GapOpen()">くわしい設定（単価・倍率）›</span>';
+    + '<div class="ux-list" style="margin-top:14px"><div class="ux-li" onclick="p2Go(\'gapset\')"><span class="ic">' + icn('gear') + '</span><span>今の数・単価<small>MAPの数を直す・単価と倍率</small></span><span class="ch">›</span></div></div>';
+}
+// ════ v603: 年間ロードマップの表・行の編集・マイルストーン・ギャップの設定と割り振りも「1画面に1つ」に ════
+function _p2PgRe() { if (currentView === 'plan' && _p2Pg) renderPlan(); }
+function _p2RmtCss() {
+  if (document.getElementById('p2RmtCss')) return;
+  var st = document.createElement('style'); st.id = 'p2RmtCss';
+  st.textContent = ".ux-per{display:flex;align-items:center;gap:8px;margin-top:12px}.ux-per .ux-pm{width:46px;height:46px;border-radius:13px;font-size:20px}"
+    + ".ux-per div{flex:1;text-align:center;font-size:15px;font-weight:900;padding:12px 0;border-radius:13px;background:var(--surface);border:1px solid var(--border)}"
+    + ".ux-nb .ux-sv{border-color:var(--border2)}.ux-nb .ux-sv.ok{border-color:var(--accent)}.ux-rmt .ux-rw.cur .lb{color:var(--accent)}.ux-rmt .ux-rw.past{opacity:.5}"
+    + "body.ux-land .ux-rmt{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}body.ux-land .ux-rmt .ux-rw{border-bottom:1px solid var(--border)!important}"
+    + ".ux-rr{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--border)}.ux-rr:last-child{border-bottom:none}.ux-rr.off input{opacity:.45;text-decoration:line-through}"
+    + ".ux-rr input{flex:1;min-width:0;height:46px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;font-weight:800;padding:0 12px;outline:none}.ux-rr input:focus{border-color:var(--accent)}"
+    + ".ux-rr .b{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);cursor:pointer;flex:none;font-size:17px;font-weight:900;color:var(--text-mid)}"
+    + ".ux-rr .b.t{width:auto;padding:0 11px;font-size:13px}.ux-rr .b.dis{opacity:.25;pointer-events:none}.ux-rr .b.sp{visibility:hidden}"
+    + ".ux-cols{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}.ux-cols span{width:48px;height:48px;border-radius:14px;cursor:pointer;border:3px solid transparent;box-sizing:border-box}.ux-cols span.on{border-color:var(--text)}"
+    + ".ux-msp{margin-top:16px;padding:14px 16px;border-radius:14px;font-weight:900;font-size:18px;color:#1d2733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+    + ".ux-al{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px;margin-top:8px}"
+    + ".ux-al span{display:flex;flex-direction:column;align-items:center;padding:8px 0;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:11.5px;color:var(--text-dim);font-weight:800}"
+    + ".ux-al span b{font-size:20px;color:var(--text);font-family:'Inter',sans-serif;font-weight:900}.ux-al span.fx b{color:var(--purple);font-size:13px}";
+  document.head.appendChild(st);
+}
+// ── 表（1項目ずつ・月を縦に並べて −［数字］＋） ──
+UX_INFO.rmt = { t: 'ロードマップの表', h: '月ごとの数字を、項目を1つずつ切り替えて決めます（●・左右のスワイプで次の項目）。<br><b>フロント</b>はその月の「月の目標」と同じ数字です。紫の月は理想MAPで決まる人数で、変える時は理想MAPで。<br><b>Qルビー・エキスパート・環境数・フロントBR</b>はその月の終わりに何人いたいか（累計）。<br>フロントBRが空の月は、フロントの数から予測した人数が薄く出ます' };
+function p2RmShift(d) { var rm = _p2Rm(); rm.start = _p2YmAdd(rm.start, d); saveGoals(); renderPlan(); }
+function _p2RmtHtml(i) {
+  _p2RmtCss();
+  var rm = _p2Rm(), defs = _p2RmDefs(rm), d = defs[i] || defs[0], cur = _p2Ym(0), yms = _p2RmYms(rm), p = state.goals.plan;
+  if (!d) return '<h2 class="ux-h2">ロードマップの表</h2><div class="ux-empty">出している項目がありません</div><span class="ux-lk" onclick="p2Go(\'rmrows\')">行の編集 ›</span>';
+  var rows = yms.map(function(ym) {
+    var mo = parseInt(ym.slice(5), 10), lb = (mo === 1 || ym === yms[0] ? ym.slice(0, 4) + '年' : '') + mo + '月';
+    var ms = (rm.ms || []).filter(function(m) { return m.ym === ym || (m.ym2 && m.ym <= ym && m.ym2 >= ym); }).map(function(m) { return '🚩' + evEsc(m.t || ''); });
+    if (p && p.deadline === ym && p.title) ms.unshift('🎯' + evEsc(_p2TitleEn(p.title)));
+    if (ym === cur) ms.unshift('今月');
+    var cls = ym === cur ? ' cur' : (ym < cur ? ' past' : ''), sub = ms.join(' ');
+    if (d.k === 'front' && _p2FrontIdeal(ym) !== null) return '<div class="ux-rw' + cls + '"><span class="lb">' + lb + '<small>' + (sub || '理想MAPで決まる月') + '</small></span><span class="fix" onclick="_p2IdealGo()">' + _p2FrontIdeal(ym) + '<small>理想MAP ›</small></span></div>';
+    var v = d.k === 'front' ? _p2RmFront(rm, ym) : (rm.rows[d.k] || {})[ym], ph = '';
+    if (d.k === 'br' && (v === '' || v == null)) { ph = _p2RmBrPred(rm, ym); sub = '予測 ' + ph + '人' + (sub ? ' ' + sub : ''); }
+    return _uxRowStep(lb, sub, v, ph, 'p2RmStep(\'' + d.k + '\',\'' + ym + '\',-1)', 'p2RmStep(\'' + d.k + '\',\'' + ym + '\',1)', 'p2RmCell(\'' + d.k + '\',\'' + ym + '\',this.value)').replace('class="ux-rw"', 'class="ux-rw' + cls + '"');
+  }).join('');
+  return '<div class="ux-step">' + (defs.indexOf(d) + 1) + ' / ' + defs.length + '　' + evEsc(d.lb) + '</div>'
+    + '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">' + evEsc(d.lb) + (P2RM_CUM[d.k] ? '<small style="font-size:13px;color:var(--text-mid)">月末に何人</small>' : (d.k === 'dist' ? '<small style="font-size:13px;color:var(--text-mid)">P</small>' : '')) + _uxIb('rmt') + '</h2>'
+    + '<div class="ux-per"><span class="ux-pm" onclick="p2RmShift(-1)">‹</span><div>' + _p2YmLabel(yms[0]) + ' 〜 ' + _p2YmLabel(yms[yms.length - 1]) + '</div><span class="ux-pm" onclick="p2RmShift(1)">›</span></div>'
+    + (rm.start !== cur && (rm.start > cur || _p2YmDiff(rm.start, cur) > 1) ? '<span class="ux-lk" style="margin-top:8px" onclick="p2RmShift(' + _p2YmDiff(rm.start, cur) + ')">今月からにする</span>' : '')
+    + '<div class="ux-box ux-rmt ux-nb">' + rows + '</div>'
+    + '<div class="ux-list" style="margin-top:14px"><div class="ux-li" onclick="p2Go(\'rmrows\')"><span class="ic">' + icn('gear') + '</span><span>行の編集<small>名前・並び・出す／隠す</small></span><span class="ch">›</span></div>'
+    + '<div class="ux-li" onclick="p2Go(\'gap\')"><span class="ic">' + icn('calc') + '</span><span>ギャップから割り振る<small>目標との差を月に分ける</small></span><span class="ch">›</span></div></div>';
+}
+// ── 行の編集 ──
+UX_INFO.rmrows = { t: '行の編集', h: '表に出す項目の名前・並び順を変えたり、使わない項目を隠したりできます。<br>はじめからある項目（フロント・流通・Qルビー・エキスパート・環境数）は消せません（隠すのはOK）。自分で足した項目はゴミ箱で消せます' };
+function _p2RmRowsHtml() {
+  _p2RmtCss(); _p2WhyCss();
+  var rm = _p2Rm(), n = rm.rowDefs.length, isDef = function(k) { return P2RM_ROWS.some(function(r) { return r[0] === k; }); };
+  return '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">行の編集' + _uxIb('rmrows') + '</h2><div class="ux-sub">表に出す項目と、その順番</div>'
+    + '<div class="ux-box">' + rm.rowDefs.map(function(d, i) {
+      return '<div class="ux-rr' + (d.hide ? ' off' : '') + '"><input value="' + evEsc(d.lb) + '" onchange="p2RmRowRename(' + i + ',this.value)">'
+        + '<span class="b' + (i ? '' : ' dis') + '" onclick="p2RmRowMove(' + i + ',-1)">↑</span><span class="b' + (i < n - 1 ? '' : ' dis') + '" onclick="p2RmRowMove(' + i + ',1)">↓</span>'
+        + '<span class="b t" onclick="p2RmRowHide(' + i + ')">' + (d.hide ? '出す' : '隠す') + '</span>'
+        + (isDef(d.k) ? '<span class="b sp"></span>' : '<span class="b" onclick="p2RmRowDel(' + i + ')">' + icn('trash') + '</span>') + '</div>';
+    }).join('') + '</div>'
+    + '<div class="ux-lst"><div class="ux-lrow add"><span class="no">＋</span><input id="p2RmNewRow" enterkeyhint="done" placeholder="新しい項目（例：BR数）" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){event.preventDefault();p2RmRowAdd()}"><span class="go" onclick="p2RmRowAdd()">追加</span></div></div>';
+}
+// ── マイルストーン（1画面で名前・期間・色） ──
+var _p2MsE = null;
+function p2RmMsPg(ym, msId) {
+  var rm = _p2Rm(), m = msId ? rm.ms.filter(function(x) { return x.id === msId; })[0] : null;
+  _p2MsE = { ym: m ? m.ym : ym, id: m ? m.id : '', t: m ? (m.t || '') : '', sub: m && m.sub ? m.sub : '', n: m && m.ym2 && m.ym2 > m.ym ? _p2YmDiff(m.ym, m.ym2) + 1 : 1, color: m ? (m.color || P2RM_COLORS[0]) : P2RM_COLORS[0], from: (_p2Pg && _p2Pg !== 'rmms') ? [_p2Pg, _p2PgI] : ['rm', 0] };
+  p2Go('rmms');
+}
+function p2MsT(v) { if (!_p2MsE) return; _p2MsE.t = v; var p = document.getElementById('uxMsP'); if (p) p.textContent = '🚩 ' + (String(v).trim() || 'マイルストーン'); }
+function p2MsSub(v) { if (_p2MsE) _p2MsE.sub = v; }
+function p2MsEx(t) { if (!_p2MsE) return; _p2MsE.t = t; renderPlan(); }
+function p2MsN(d) { if (!_p2MsE) return; _p2MsE.n = Math.max(1, Math.min(12, _p2MsE.n + d)); renderPlan(); }
+function p2MsCol(c) { if (!_p2MsE) return; _p2MsE.color = c; renderPlan(); }
+function p2RmMsSave2() {
+  var e = _p2MsE; if (!e) return;
+  var t = String(e.t || '').trim();
+  if (!t) { toast('マイルストーンの名前を入れてください'); var el = document.getElementById('uxMsT'); if (el) try { el.focus(); } catch (eF) {} return; }
+  var rm = _p2Rm(), m = e.id ? rm.ms.filter(function(x) { return x.id === e.id; })[0] : null;
+  if (!m) { m = { id: 'rm_' + Date.now() + '_' + Math.floor(Math.random() * 10000), ym: e.ym }; rm.ms.push(m); }
+  m.t = t; m.sub = String(e.sub || '').trim(); m.color = e.color;
+  if (e.n > 1) m.ym2 = _p2YmAdd(m.ym, e.n - 1); else delete m.ym2;
+  saveGoals(); toast('🚩 ' + t + ' を保存しました');
+  var f = e.from; _p2MsE = null; p2Go(f[0], f[1]);
+}
+function p2RmMsDel2() {
+  var e = _p2MsE; if (!e || !e.id) return;
+  if (!confirm('このマイルストーンを消しますか？')) return;
+  var rm = _p2Rm(); rm.ms = rm.ms.filter(function(x) { return x.id !== e.id; });
+  saveGoals(); toast('マイルストーンを消しました');
+  var f = e.from; _p2MsE = null; p2Go(f[0], f[1]);
+}
+function _p2RmMsHtml() {
+  _p2RmtCss(); _p2DoCss2();
+  if (!_p2MsE) _p2MsE = { ym: _p2Ym(0), id: '', t: '', sub: '', n: 1, color: P2RM_COLORS[0], from: ['rm', 0] };
+  var e = _p2MsE, end = _p2YmAdd(e.ym, e.n - 1);
+  return '<div class="ux-step">' + _p2YmLabel(e.ym) + '</div><h2 class="ux-h2">' + (e.id ? 'マイルストーンをなおす' : 'マイルストーンを足す') + '</h2>'
+    + '<input id="uxMsT" class="ux-ta" style="min-height:0;height:62px;font-size:21px;font-weight:900" maxlength="30" placeholder="例：香港TRIP" value="' + evEsc(e.t) + '" oninput="p2MsT(this.value)">'
+    + '<div class="ux-ex">' + ['香港TRIP', 'BD', '昇格', 'セミナー', '合宿'].map(function(t) { return '<span class="' + (e.t === t ? 'on' : '') + '" onclick="p2MsEx(\'' + t + '\')">' + t + '</span>'; }).join('') + '</div>'
+    + '<div class="ux-sec">ひとこと（なくてもOK）</div><input class="ux-ta" style="min-height:0;height:52px;font-size:16px;font-weight:700" maxlength="30" placeholder="例：60人タッチ" value="' + evEsc(e.sub) + '" oninput="p2MsSub(this.value)">'
+    + '<div class="ux-sec">何ヶ月つづく？</div><div class="ux-stp"><span class="ux-pm" onclick="p2MsN(-1)">−</span><div class="ux-sv ok" style="font-size:30px;font-weight:900;font-family:Inter,sans-serif">' + e.n + '<small>ヶ月</small></div><span class="ux-pm" onclick="p2MsN(1)">＋</span></div>'
+    + '<div class="ux-sub" style="text-align:center">' + (e.n > 1 ? _p2YmLabel(e.ym) + ' 〜 ' + _p2YmLabel(end) : _p2YmLabel(e.ym) + 'だけ') + '</div>'
+    + '<div class="ux-sec">色</div><div class="ux-cols">' + P2RM_COLORS.map(function(c) { return '<span class="' + (c === e.color ? 'on' : '') + '" style="background:' + c + '" onclick="p2MsCol(\'' + c + '\')"></span>'; }).join('') + '</div>'
+    + '<div class="ux-msp" id="uxMsP" style="background:' + e.color + '">🚩 ' + evEsc(String(e.t).trim() || 'マイルストーン') + '</div>'
+    + (e.id ? '<div style="display:flex;margin-top:16px"><span class="ux-skip" onclick="p2RmMsDel2()">このマイルストーンを消す</span></div>' : '');
+}
+// ── ギャップ：今の数・単価・倍率 ──
+var P2_GAP_RATES = [
+  { k: 'qrYen', lb: '1Qルビー', u: '万円', st: 5, sub: '月収÷これ' },
+  { k: 'envYen', lb: '1環境', u: '万円', st: 10, sub: '月収÷これ' },
+  { k: 'candX', lb: '候補の倍率', u: '倍', st: 1, sub: 'Qルビー1人に' },
+  { k: 'distDef', lb: '流通の目標', u: 'P', st: 500, sub: '決めない時' },
+  { k: 'brLead', lb: 'BRまで', u: 'ヶ月', st: 1, sub: 'LOI→BRの最短' }
+];
+UX_INFO.gapset = { t: '今の数・単価', h: '<b>今の数</b>はMAPから自動で数えます（フロントBR＝自分から下で最初に出てくるBR、流通＝チームPT、Qルビー＝ルビーの人数、候補＝優先度「高」の人）。違う時は＋−で直せます。「自動に戻す」でMAPの数に戻ります。<br>エキスパート・環境数はMAPから数えられないので、自分で入れます。<br><b>単価・倍率</b>は、目標月収から必要な数を出す時の目安です' };
+function p2GapRateStep(k, d) {
+  var g = _p2Gap(), r = P2_GAP_RATES.filter(function(x) { return x.k === k; })[0]; if (!r) return;
+  g.rates[k] = Math.max(1, (+g.rates[k] || 0) + d * r.st);
+  saveGoals(); renderPlan();
+}
+function p2GapCStep(k, d) {
+  var g = _p2Gap(), auto = _p2GapAuto(), st = P2_GAP_STEP[k] || 1, ov = g.c[k];
+  var base = (ov === '' || ov == null) ? (auto[k] == null ? 0 : auto[k]) : (+ov || 0);
+  p2GapSet('c', k, String(Math.max(0, base + d * st)));
+}
+function _p2GapSetHtml() {
+  var g = _p2Gap(), calc = _p2GapCalc(), auto = _p2GapAuto();
+  var row = function(k, lb, unit, cAuto, ov) {
+    var has = !(ov === '' || ov == null), sub = (unit ? unit + '・' : '') + (cAuto === null ? '自分で入れる'
+      : (has ? 'MAPでは' + cAuto.toLocaleString() + '<br><b style="color:var(--accent);cursor:pointer" onclick="p2GapSet(\'c\',\'' + k + '\',\'\')">自動に戻す</b>' : 'MAPから自動'));
+    return _uxRowStep(lb, sub, has ? ov : '', cAuto === null ? '' : cAuto, 'p2GapCStep(\'' + k + '\',-1)', 'p2GapCStep(\'' + k + '\',1)', 'p2GapSet(\'c\',\'' + k + '\',this.value)');
+  };
+  return '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">今の数・単価' + _uxIb('gapset') + '</h2>'
+    + '<div class="ux-sec">今の数</div><div class="ux-box ux-nb">' + calc.items.map(function(it) { return row(it.k, it.lb, it.unit, it.cAuto, g.c[it.k]); }).join('')
+    + row('cand', 'Qルビー候補', '人', auto.cand, g.c.cand) + '</div>'
+    + '<div class="ux-sec">単価・倍率</div><div class="ux-box ux-nb">' + P2_GAP_RATES.map(function(r) {
+      return _uxRowStep(r.lb, r.u + '・' + r.sub, g.rates[r.k], '', 'p2GapRateStep(\'' + r.k + '\',-1)', 'p2GapRateStep(\'' + r.k + '\',1)', 'p2GapRate(\'' + r.k + '\',this.value)');
+    }).join('') + '</div>';
+}
+// ── ギャップ → ロードマップへ割り振る（確認の画面） ──
+UX_INFO.gapal = { t: '割り振り', h: '目標との差を、今月から期日までの月に階段のように分けて、ロードマップの表に入れます（入っていた数字は上書き）。<br>フロントBRは LOI→Q2→Q3→BR で時間がかかるので、「BRになるまで」の月数だけ前の月までに「フロント」として入れます。<br>理想MAPで決まる月のフロントは変えません' };
+function _p2GapAllocPlan() {
+  var calc = _p2GapCalc(), yms = _p2GapAllocYms(), n = yms.length, g = _p2Gap(), lead = g.rates.brLead, p = state.goals.plan;
+  var plans = calc.items.filter(function(it) { return it.gap !== null && it.gap > 0 && it.k !== 'br'; }).map(function(it) {
+    return { k: it.k, lb: it.lb, steps: yms.map(function(ym, i) { return { ym: ym, v: it.c + Math.round(it.gap * (i + 1) / n) }; }) };
+  });
+  var brItem = calc.items[0], brLate = false;
+  if (brItem.gap !== null && brItem.gap > 0) { // v483: BRギャップは「リードタイム前までのフロント」に逆算配置
+    var brYms = p.deadline ? yms.filter(function(ym) { return ym <= _p2YmAdd(p.deadline, -lead); }) : yms.slice(0, Math.max(1, yms.length - lead));
+    if (!brYms.length) brLate = true;
+    else {
+      var bn = brYms.length;
+      plans.push({ k: 'front', lb: 'フロント（BR逆算）', sync: true, steps: brYms.map(function(ym, i) {
+        var inc = Math.round(brItem.gap * (i + 1) / bn) - Math.round(brItem.gap * i / bn), curF = _p2RmFront(_p2Rm(), ym);
+        return { ym: ym, v: Math.max((curF === '' || curF == null) ? 0 : (+curF || 0), inc) };
+      }) });
+    }
+  }
+  return { plans: plans, brLate: brLate, lead: lead, brGap: brItem.gap };
+}
+function _p2GapAllocApply(plans) {
+  var rm = _p2Rm(), calc = _p2GapCalc(), sk = 0;
+  if (calc.items[0].gap !== null && calc.items[0].gap > 0 && !rm.rowDefs.some(function(d) { return d.k === 'br'; })) rm.rowDefs.push({ k: 'br', lb: 'フロントBR' });
+  plans.forEach(function(pl) {
+    if (!rm.rows[pl.k]) rm.rows[pl.k] = {};
+    pl.steps.forEach(function(st) {
+      if (pl.k === 'front' && _p2FrontIdeal(st.ym) !== null) { sk++; return; } // v573: 理想MAPで決まる月はそのまま
+      rm.rows[pl.k][st.ym] = st.v;
+      if (pl.sync && st.v !== '') _p2M(st.ym).front = st.v; // フロントは月の目標と連動
+    });
+  });
+  saveGoals();
+  return sk;
+}
+function p2GapAllocDo() {
+  var P = _p2GapAllocPlan();
+  if (!P.plans.length) { toast('割り振るギャップがありません'); return; }
+  var sk = _p2GapAllocApply(P.plans), k0 = P.plans[0].k, defs = _p2RmDefs(_p2Rm()), ix = 0;
+  defs.forEach(function(d, j) { if (d.k === k0) ix = j; });
+  toast('📤 ロードマップに割り振りました' + (sk ? '（理想MAPで決まる月のフロントはそのまま）' : ''));
+  p2Go('rmt', ix);
+}
+function _p2GapAlHtml() {
+  _p2RmtCss();
+  var P = _p2GapAllocPlan();
+  var h = '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">ロードマップに割り振る' + _uxIb('gapal') + '</h2>'
+    + '<div class="ux-sub">この数字を表に入れます</div>';
+  if (!P.plans.length && !P.brLate) return h + '<div class="ux-empty">割り振る差がありません<br>（全部とどいているか、目標が未入力）</div><span class="ux-lk" onclick="p2Go(\'gap\')">ギャップへ ›</span>';
+  h += P.plans.map(function(pl) {
+    return '<div class="ux-sec">' + evEsc(pl.lb) + (pl.sync ? '　' + P.lead + 'ヶ月後にBR' : '') + '</div><div class="ux-al">' + pl.steps.map(function(st) {
+      var fx = pl.k === 'front' && _p2FrontIdeal(st.ym) !== null;
+      return '<span class="' + (fx ? 'fx' : '') + '">' + parseInt(st.ym.slice(5), 10) + '月<b>' + (fx ? '理想MAP' : st.v.toLocaleString()) + '</b></span>';
+    }).join('') + '</div>';
+  }).join('');
+  if (P.brLate) h += '<div class="ux-hint pu">⚠️ フロントBR：期日まで' + P.lead + 'ヶ月を切っています。今月フロントを入れても、BRになるのは最短 <b>' + _p2YmLabel(_p2YmAdd(_p2Ym(0), P.lead)) + '</b>（フロントは変えません）</div>';
+  return h;
 }
 // ── チェック ──
 function _p2CkPageHtml() {
@@ -20431,6 +20642,7 @@ function _p2TutRender() {
   body.innerHTML = h;
 }
 function p2RmOpen() {
+  if (!isPCMode()) { _p2SheetClose('p2RmOv'); p2Go('rmt'); return; } // v603: スマホは表のページへ
   _p2SheetClose('p2RmOv');
   var ov = document.createElement('div'); ov.className = 'ms-overlay p2dr-ov'; ov.id = 'p2RmOv'; ov.style.zIndex = '610';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2RmOv'); };
@@ -20541,6 +20753,7 @@ function p2RmCell(row, ym, v) {
   if (currentView === 'plan') renderPlan();
 }
 function p2RmMsForm(ym, msId) {
+  if (!isPCMode()) { p2RmMsPg(ym, msId); return; } // v603: スマホはマイルストーンのページへ
   _p2SheetClose('p2RmMsOv');
   var rm = _p2Rm();
   var editing = null;
@@ -20821,6 +21034,7 @@ function _p2FabBadge() {
 // ============================================================
 // ── ロードマップ行の編集 ──
 function p2RmRowsOpen() {
+  if (!isPCMode()) { p2Go('rmrows'); return; } // v603
   _p2SheetClose('p2RmRowsOv');
   var rm = _p2Rm();
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2RmRowsOv'; ov.style.zIndex = '660';
@@ -20857,18 +21071,18 @@ function _p2RmRowsRender() {
 }
 function p2RmRowRename(i, v) {
   var rm = _p2Rm();
-  if (rm.rowDefs[i]) { rm.rowDefs[i].lb = String(v).trim() || rm.rowDefs[i].lb; saveGoals(); _p2RmRender(); }
+  if (rm.rowDefs[i]) { rm.rowDefs[i].lb = String(v).trim() || rm.rowDefs[i].lb; saveGoals(); _p2RmRender(); _p2PgRe(); }
 }
 function p2RmRowMove(i, dir) {
   var rm = _p2Rm();
   var j = i + dir;
   if (j < 0 || j >= rm.rowDefs.length) return;
   var t = rm.rowDefs[i]; rm.rowDefs[i] = rm.rowDefs[j]; rm.rowDefs[j] = t;
-  saveGoals(); _p2RmRowsRender(); _p2RmRender();
+  saveGoals(); _p2RmRowsRender(); _p2RmRender(); _p2PgRe();
 }
 function p2RmRowHide(i) {
   var rm = _p2Rm();
-  if (rm.rowDefs[i]) { rm.rowDefs[i].hide = !rm.rowDefs[i].hide; saveGoals(); _p2RmRowsRender(); _p2RmRender(); }
+  if (rm.rowDefs[i]) { rm.rowDefs[i].hide = !rm.rowDefs[i].hide; saveGoals(); _p2RmRowsRender(); _p2RmRender(); _p2PgRe(); }
 }
 function p2RmRowDel(i) {
   var rm = _p2Rm();
@@ -20876,7 +21090,7 @@ function p2RmRowDel(i) {
   if (!d) return;
   if (P2RM_ROWS.some(function(r) { return r[0] === d.k; })) return; // 既定行は削除不可
   rm.rowDefs.splice(i, 1);
-  saveGoals(); _p2RmRowsRender(); _p2RmRender();
+  saveGoals(); _p2RmRowsRender(); _p2RmRender(); _p2PgRe();
 }
 function p2RmRowAdd() {
   var inp = document.getElementById('p2RmNewRow');
@@ -20887,7 +21101,7 @@ function p2RmRowAdd() {
   rm.rowDefs.push({ k: k, lb: lb });
   rm.rows[k] = {};
   if (inp) inp.value = '';
-  saveGoals(); _p2RmRowsRender(); _p2RmRender();
+  saveGoals(); _p2RmRowsRender(); _p2RmRender(); _p2PgRe();
 }
 // ── 必要数とギャップ ──
 function _p2Gap() {
@@ -20962,6 +21176,7 @@ function _p2GapCalc() {
   return { items: items, cand: { t: candT, c: candC, cIsAuto: candIsAuto, gap: (candT === null) ? null : (candT - candC) } };
 }
 function p2GapOpen() {
+  if (!isPCMode()) { _p2SheetClose('p2GapOv'); p2Go('gap'); return; } // v603
   _p2SheetClose('p2GapOv');
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2GapOv'; ov.style.zIndex = '620';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2GapOv'); };
@@ -21029,7 +21244,7 @@ function p2GapRate(k, v) {
   var g = _p2Gap();
   var n = parseInt(v, 10) || 0;
   if (n > 0) g.rates[k] = n;
-  saveGoals(); _p2GapRender();
+  saveGoals(); _p2GapRender(); _p2PgRe();
 }
 // ギャップ→ロードマップ割り振り（残り月数で階段状の累計目標）
 function _p2GapAllocYms() {
@@ -21045,56 +21260,18 @@ function _p2GapAllocYms() {
   return yms;
 }
 function p2GapAlloc() {
-  var calc = _p2GapCalc();
-  var yms = _p2GapAllocYms();
-  var n = yms.length;
-  var targets = calc.items.filter(function(it) { return it.gap !== null && it.gap > 0 && it.k !== 'br'; });
-  var brItem = calc.items[0];
-  var plans = targets.map(function(it) {
-    var steps = yms.map(function(ym, i) { return { ym: ym, v: it.c + Math.round(it.gap * (i + 1) / n) }; });
-    return { k: it.k, lb: it.lb, steps: steps };
-  });
-  // v483: BRギャップは階段でなく「リードタイム前までのフロント」に逆算配置
-  var g = _p2Gap();
-  var lead = g.rates.brLead;
-  var brPlan = null, brLate = false;
-  if (brItem.gap !== null && brItem.gap > 0) {
-    var p = state.goals.plan;
-    var brYms = p.deadline ? yms.filter(function(ym) { return ym <= _p2YmAdd(p.deadline, -lead); }) : yms.slice(0, Math.max(1, yms.length - lead));
-    if (!brYms.length) { brLate = true; }
-    else {
-      var bn = brYms.length;
-      var steps = brYms.map(function(ym, i) {
-        var inc = Math.round(brItem.gap * (i + 1) / bn) - Math.round(brItem.gap * i / bn);
-        var curF = _p2RmFront(_p2Rm(), ym);
-        var base = (curF === '' || curF == null) ? 0 : (+curF || 0);
-        return { ym: ym, v: Math.max(base, inc) };
-      });
-      brPlan = { k: 'front', lb: 'フロント（BR逆算）', steps: steps, sync: true };
-      plans.push(brPlan);
-    }
-  }
-  if (!plans.length && !brLate) { toast('割り振るギャップがありません（すべて達成済みか未入力）'); return; }
+  var P = _p2GapAllocPlan(), plans = P.plans, lead = P.lead;
+  if (!plans.length && !P.brLate) { toast('割り振るギャップがありません（すべて達成済みか未入力）'); return; }
+  if (!isPCMode()) { _p2SheetClose('p2GapOv'); p2Go('gapal'); return; } // v603: スマホは確認のページ
   var prev = plans.map(function(pl) {
     if (pl.sync) return '・' + pl.lb + '：' + pl.steps.map(function(st) { return parseInt(st.ym.slice(5), 10) + '月 ' + st.v + '人'; }).join('・') + '（' + lead + 'ヶ月後にBR着）';
     var f = pl.steps[0], l = pl.steps[pl.steps.length - 1];
     return '・' + pl.lb + '：' + parseInt(f.ym.slice(5), 10) + '月 ' + f.v + ' → ' + parseInt(l.ym.slice(5), 10) + '月 ' + l.v;
   }).join('\n');
-  if (brLate) prev += (prev ? '\n' : '') + '⚠️ フロントBR：期日まで' + lead + 'ヶ月を切っているため、今月フロントを入れても最短' + _p2YmLabel(_p2YmAdd(_p2Ym(0), lead)) + '着です（フロント行は変更しません）';
+  if (P.brLate) prev += (prev ? '\n' : '') + '⚠️ フロントBR：期日まで' + lead + 'ヶ月を切っているため、今月フロントを入れても最短' + _p2YmLabel(_p2YmAdd(_p2Ym(0), lead)) + '着です（フロント行は変更しません）';
   if (!plans.length) { alert(prev); return; }
   if (!confirm('📤 ロードマップに割り振ります（該当セルは上書き）：\n\n' + prev + '\n\nよろしいですか？')) return;
-  var rm = _p2Rm();
-  if (brItem.gap !== null && brItem.gap > 0 && !rm.rowDefs.some(function(d) { return d.k === 'br'; })) { rm.rowDefs.push({ k: 'br', lb: 'フロントBR' }); }
-  var _idealSkip = 0;
-  plans.forEach(function(pl) {
-    if (!rm.rows[pl.k]) rm.rows[pl.k] = {};
-    pl.steps.forEach(function(st) {
-      if (pl.k === 'front' && _p2FrontIdeal(st.ym) !== null) { _idealSkip++; return; } // v573: 理想MAPで決まる月はそのまま
-      rm.rows[pl.k][st.ym] = st.v;
-      if (pl.sync && st.v !== '') _p2M(st.ym).front = st.v; // フロントは月の目標と連動
-    });
-  });
-  saveGoals();
+  var _idealSkip = _p2GapAllocApply(plans);
   _p2SheetClose('p2GapOv');
   toast('📤 ロードマップに割り振りました。微調整はロードマップでどうぞ' + (_idealSkip ? '（今月のフロントは理想MAPの数字のまま）' : ''));
   p2RmOpen();
