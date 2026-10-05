@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v611';
+var APP_JS_VERSION = 'v612';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v611';
+  var DATA_VERSION = 'v612';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v612', d:'2026-10-05', items:['📅 予定（スマホ）の上と下を新しくしました。カレンダー本体の見え方は今のままです。上は「‹ 年月 › 今日 🔍 ⋯」、下は「‹戻る・月｜週｜日｜ToDo・＋予定」の1行にまとめました','👆 カレンダーを上にスワイプ（または日をタップ）すると「その日の予定」に切り替わります。上に小さな月、下にその日の予定が大きな文字で並びます。下にスワイプで全体に戻ります（同じ日をもう一度タップするとその日に追加）','📱 予定もスマホを横にして使えるようになりました（左に月・右にその日の予定）'] },
   { v:'v611', d:'2026-10-05', items:['メンバーの編集（スマホ）を作り直し：MAPで人を押すと「その人の画面」。タイトル・今月の数字・やる気・優先・活動・メモ・プロフィールをタイルから1画面ずつ','押すとすぐ保存（保存ボタンなし）。数字は大きな＋−、タイトルはMAPと同じ色のボタン','上の人を変える・削除はプロフィールの一番下に','理想MAPのかんたん編集も同じ形に：「この人の下に新しい人を足す」をビジネスメンバー／ユーザーの −［人数］＋ で'] },
   { v:'v610', d:'2026-10-05', items:['MAP：スマホの横向きも縦と同じカードの一覧に（上は1行・追加と受付連携は右下）'] },
   { v:'v609', d:'2026-10-05', items:['MAP：研修ステータスのタイトル（DLR・マケ・PGなど）も研修生の水色に'] },
@@ -15904,7 +15905,8 @@ function _uxSync() {
     _uxCss();
     var land = _uxLand();
     b.classList.toggle('ux-land', land);
-    b.classList.toggle('ux-ev', currentView === 'events' && land && !window._uxEvOk);
+    b.classList.remove('ux-ev'); // v612: 予定も横向きで使える（左に月・右にその日の予定）
+    _cvSync();
     b.classList.toggle('ux-bh0', currentView !== 'current' && currentView !== 'ideal'); // 横向きは左の列で移動するので「メニューにもどる」の帯は不要（MAPは現状/理想の切替があるので残す）
     if (isPCMode()) b.classList.remove('ux-pg');
     _uxMapSync(); // v594
@@ -16990,6 +16992,287 @@ function _ppRender() {
   pg.innerHTML = h; pg.scrollTop = st0;
   document.body.classList.add('pp-on');
 }
+// ════ v612: 予定（スマホ）— カレンダー本体はそのまま。上下の帯を新しく＋上にスワイプ／日タップで「その日の予定」 ════
+//  上：‹ 年月 › 今日 … 🔍 ⋯ ／ 下：‹戻る ・ 月｜週｜日｜ToDo ・ ＋予定
+//  その日の予定：上半分に小さな月（短いラベル）＋下半分にその日の予定。下にスワイプで全体に戻る。横向きは左右に並べる
+var _cvSplitOn = false;
+function _cvOn() { return typeof isPCMode === 'function' && !isPCMode(); }
+function _cvSplitShown() { return _cvOn() && _evMode === 'calendar' && (_cvSplitOn || _uxLand()); }
+function _cvSync() {
+  try {
+    var on = _cvOn();
+    document.body.classList.toggle('cv2', on);
+    if (!on) return;
+    _cvCss();
+    _cvDecorate();
+  } catch (e) {}
+}
+function _cvCss() {
+  if (document.getElementById('cvCss')) return;
+  var st = document.createElement('style'); st.id = 'cvCss';
+  st.textContent =
+    "body.cv2 #view-events .ev-cal-x,body.cv2 #view-events .ev-cal-view{display:none!important}"
+    + ".cv-x{display:none!important}body.cv2 .full .cv-x{display:flex!important}"
+    + "body.cv2 .full .ev-cal-hdr{gap:7px;padding:6px 10px 5px}"
+    + "body.cv2 .full .ev-cal-title{flex:none;min-width:0;font-size:18px;font-weight:900;padding:0 2px}"
+    + ".cv-sp{flex:1}.cv-td{flex:none;height:34px;padding:0 12px;border-radius:10px;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-dim);font-weight:900;font-size:13px;align-items:center;cursor:pointer}"
+    + ".cv-ib{flex:none;width:36px;height:36px;border-radius:11px;border:1px solid var(--border);background:var(--surface);align-items:center;justify-content:center;color:var(--text-mid);font-size:16px;font-weight:900;cursor:pointer}"
+    + ".cv-ib svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}"
+    + "body.cv2 .full .ev-cal-bottom.cv-b{justify-content:flex-start;gap:8px;padding:7px 12px calc(env(safe-area-inset-bottom) + 7px)}"
+    + ".cv-bk{flex:none;height:44px;padding:0 13px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);font-weight:900;font-size:14px;color:var(--text-mid);display:flex;align-items:center;cursor:pointer;white-space:nowrap}"
+    + ".cv-seg{margin:0 auto;display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px;min-width:0}"
+    + ".cv-seg span{position:relative;padding:8px 10px;border-radius:9px;font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap}.cv-seg span.on{background:var(--accent);color:var(--go-ink)}"
+    + ".cv-seg .bb-badge{top:-5px;right:-5px}"
+    + ".cv-add{flex:none;height:46px;padding:0 15px;border-radius:14px;background:var(--accent);color:var(--go-ink);font-weight:900;font-size:15px;display:flex;align-items:center;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(44,229,184,.3)}"
+    + "@media(max-width:370px){.cv-seg span{padding:8px 7px;font-size:12.5px}.cv-bk{padding:0 10px}.cv-add{padding:0 11px}}"
+    // その日の予定（分割）
+    + "#cvSplit{display:none}body.cv2 #evCalendar.full.cv-on #cvSplit{display:flex;flex:1;min-height:0;flex-direction:column}"
+    + "body.cv2 #evCalendar.full.cv-on #evCalWeekdays,body.cv2 #evCalendar.full.cv-on #evCalGrid,body.cv2 #evCalendar.full.cv-on #calNextBar{display:none!important}"
+    + ".cvm{flex:none;padding:0 4px;touch-action:pan-y}.cvm-wk,.cvm-gr{display:grid;grid-template-columns:repeat(7,1fr)}"
+    + ".cvm-wk span{text-align:center;font-size:11.5px;font-weight:900;color:var(--text-dim);padding:3px 0}.cvm-wk .su{color:var(--red)}.cvm-wk .sa{color:var(--sky,#3B8FE0)}"
+    + ".cvm-c{height:64px;border-top:1px solid var(--border);padding:3px 1px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;overflow:hidden;min-width:0}"
+    + ".cvm-c>i{font-style:normal;font-size:13.5px;font-weight:800;font-family:Inter,'Noto Sans JP',sans-serif;width:24px;height:24px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text)}"
+    + ".cvm-c.o>i{opacity:.35}.cvm-c.su>i,.cvm-c.hol>i{color:var(--red)}.cvm-c.sa>i{color:var(--sky,#3B8FE0)}"
+    + ".cvm-c.td>i{background:var(--accent);color:var(--go-ink)}.cvm-c.sel{background:var(--accent-dim);border-radius:10px}.cvm-c.sel>i{box-shadow:0 0 0 2px var(--accent)}"
+    + ".cvm-c u{flex:none;text-decoration:none;font-size:10px;font-weight:900;border-radius:4px;padding:0 3px;line-height:14px;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:clip}"
+    + ".cvm-c em{font-style:normal;font-size:9.5px;font-weight:900;color:var(--text-dim);line-height:11px}"
+    + ".cvd{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface);border-top:1px solid var(--border);border-radius:18px 18px 0 0;margin-top:4px}"
+    + ".cvd-hd{flex:none;padding:4px 14px 6px;touch-action:pan-x}.cvd-gr{display:flex;justify-content:center;padding:3px 0 5px;color:var(--text-dim);font-size:10.5px;font-weight:800;gap:6px;align-items:center;cursor:pointer}.cvd-gr i{width:38px;height:5px;border-radius:3px;background:var(--border2)}"
+    + ".cvd-t{display:flex;align-items:baseline;gap:8px}.cvd-t b{font-size:18px;font-weight:900}.cvd-t small{font-size:12.5px;color:var(--text-dim);font-weight:800}"
+    + ".cvd-ls{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(env(safe-area-inset-bottom) + 14px)}"
+    + ".cvr{display:flex;align-items:center;gap:11px;padding:10px 2px;border-bottom:1px solid var(--border);cursor:pointer}"
+    + ".cvr .tm{flex:none;width:52px;text-align:right;font-family:Inter,'Noto Sans JP',sans-serif;font-weight:900;font-size:16px;color:var(--text)}.cvr .tm small{display:block;font-size:11px;color:var(--text-dim);font-weight:800}.cvr .tm.ad{font-size:12.5px;color:var(--text-mid)}"
+    + ".cvr .bar{flex:none;width:5px;align-self:stretch;border-radius:3px;background:var(--c)}"
+    + ".cvr .bd{flex:1;min-width:0}.cvr .bd b{display:block;font-size:16.5px;font-weight:900;line-height:1.3;word-break:break-all}.cvr .bd small{display:block;font-size:12.5px;color:var(--text-mid);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+    + ".cvr .ch{flex:none;color:var(--text-dim);font-size:20px}.cvr.dn .bd b{text-decoration:line-through;opacity:.55}"
+    + ".cvr .ck{flex:none;width:26px;height:26px;border-radius:7px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--go-ink)}.cvr .ck.on{background:var(--accent);border-color:var(--accent)}"
+    + ".cvd-g{font-size:12px;font-weight:900;color:var(--text-dim);margin:12px 2px 2px}"
+    + ".cvd-em{padding:22px 6px;text-align:center;color:var(--text-dim);font-size:13.5px;font-weight:700;line-height:1.7}"
+    + ".cvd-tp{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}.cvd-tp span{display:flex;align-items:center;gap:6px;height:38px;padding:0 12px;border-radius:11px;border:1.5px solid var(--border2);background:var(--surface2);font-size:13.5px;font-weight:900;cursor:pointer}.cvd-tp i{width:9px;height:9px;border-radius:50%}"
+    // 横向き：左に月・右にその日／帯は細く
+    + "body.ux-land.cv2 .full .ev-cal-hdr{padding:3px 10px}body.ux-land.cv2 .full .ev-cal-bottom.cv-b{padding:4px 10px calc(env(safe-area-inset-bottom) + 4px)}"
+    + "body.ux-land .cv-bk,body.ux-land .cv-add{height:38px}body.ux-land .cv-seg span{padding:6px 12px}"
+    + "body.ux-land.cv2 #evCalendar.full.cv-on #cvSplit{flex-direction:row}"
+    + "body.ux-land .cvm{width:54%;display:flex;flex-direction:column}body.ux-land .cvm-gr{flex:1;grid-auto-rows:1fr}body.ux-land .cvm-c{height:auto;flex-direction:row;flex-wrap:wrap;justify-content:center;align-content:flex-start}"
+    + "body.ux-land .cvd{margin:0;border-radius:0;border-top:none;border-left:1px solid var(--border)}body.ux-land .cvd-gr{display:none}"
+    + "body.ux-land.cv2 .full{padding-left:env(safe-area-inset-left)}";
+  document.head.appendChild(st);
+}
+var CV_IC = {
+  srch: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.6-4.6"/></svg>'
+};
+function _cvDecorate() {
+  var P = [['evCalendar', 'cal'], ['evWeek', 'week'], ['evDayV', 'day'], ['evAgenda', 'agenda']];
+  P.forEach(function(p) {
+    var root = document.getElementById(p[0]); if (!root) return;
+    var hd = root.querySelector('.ev-cal-hdr');
+    if (hd && !hd.querySelector('.cv-x')) {
+      var h = '';
+      if (p[1] === 'cal') h += '<div class="cv-x cv-td" onclick="cvToday()">今日</div>';
+      if (p[1] === 'week') h += '<div class="cv-x cv-td" onclick="weekShift(0)">今週</div>';
+      if (p[1] === 'day') h += '<div class="cv-x cv-td" onclick="dayVToday()">今日</div>';
+      h += '<div class="cv-x cv-sp"></div>';
+      if (p[1] !== 'agenda') h += '<div class="cv-x cv-ib" onclick="calOpenSearch()" title="検索">' + CV_IC.srch + '</div>';
+      h += '<div class="cv-x cv-ib" onclick="openCalSettings()" title="設定">⋯</div>';
+      hd.insertAdjacentHTML('beforeend', h);
+    }
+    var bt = root.querySelector('.ev-cal-bottom');
+    if (bt && !bt.classList.contains('cv-b')) {
+      bt.classList.add('cv-b');
+      var seg = [['cal', '月', "setEventsMode('calendar')"], ['week', '週', "setEventsMode('week')"], ['day', '日', "setEventsMode('day')"], ['agenda', 'ToDo', "setEventsMode('agenda')"]];
+      bt.innerHTML = '<div class="cv-bk" onclick="cvBack()">‹ 戻る</div>'
+        + '<div class="cv-seg">' + seg.map(function(s) { return '<span class="' + (s[0] === p[1] ? 'on' : '') + '" onclick="' + s[2] + '">' + s[1] + (s[0] === 'agenda' ? '<i class="bb-badge" style="display:none"></i>' : '') + '</span>'; }).join('') + '</div>'
+        + '<div class="cv-add" onclick="cvAdd(\'' + p[1] + '\')">' + (p[1] === 'agenda' ? '＋ タスク' : '＋ 予定') + '</div>';
+      try { updateEventsBadge(); } catch (e) {}
+    }
+  });
+  var cal = document.getElementById('evCalendar');
+  if (cal && !document.getElementById('cvSplit')) {
+    var d = document.createElement('div'); d.id = 'cvSplit';
+    var g = document.getElementById('evCalGrid');
+    if (g && g.nextSibling) cal.insertBefore(d, g.nextSibling); else cal.appendChild(d);
+  }
+}
+function cvBack() {
+  if (_evMode === 'agenda') { todoHdrBack(); return; }
+  if (_evMode === 'calendar' && _cvSplitOn && !_uxLand()) { cvSplit(false); return; }
+  switchView('home');
+}
+function cvAdd(k) {
+  if (k === 'agenda') { openTaskQuickSheet(); return; }
+  if (k === 'week') { openEventAddDate(evTodayYmd()); return; }
+  if (k === 'day') { openEventAddDate(_dayVDate || evTodayYmd()); return; }
+  openEventAddDate((_cvSplitShown() && _calSelDate) ? _calSelDate : (_calSelDate || evTodayYmd()));
+}
+function cvToday() {
+  var n = new Date();
+  _calYear = n.getFullYear(); _calMonth = n.getMonth();
+  if (_cvSplitShown()) { _calSelDate = evTodayYmd(); renderCalendar(); return; }
+  calGoToday();
+}
+function cvSplit(on) {
+  _cvSplitOn = !!on;
+  if (on) {
+    if (!_calSelDate || _calSelDate.slice(0, 7) !== _calYear + '-' + evPad2(_calMonth + 1)) _calSelDate = _cvDefDay();
+    try { if (!localStorage.getItem('gm_cvTip')) localStorage.setItem('gm_cvTip', '1'); } catch (e) {}
+  } else if (!_uxLand()) _calSelDate = '';
+  renderCalendar();
+}
+function _cvDefDay() {
+  var t = evTodayYmd();
+  return (t.slice(0, 7) === _calYear + '-' + evPad2(_calMonth + 1)) ? t : (_calYear + '-' + evPad2(_calMonth + 1) + '-01');
+}
+// renderCalendar の最後に呼ばれる：分割の表示を整える
+function _cvAfterCal() {
+  var cal = document.getElementById('evCalendar');
+  if (!cal) return;
+  var on = _cvSplitShown();
+  cal.classList.toggle('cv-on', on);
+  if (!_cvOn()) return;
+  if (!on) { _cvTipOnce(); return; }
+  var ym = _calYear + '-' + evPad2(_calMonth + 1);
+  if (!_calSelDate || _calSelDate.slice(0, 7) !== ym) _calSelDate = _cvDefDay();
+  var box = document.getElementById('cvSplit');
+  if (!box) { _cvDecorate(); box = document.getElementById('cvSplit'); }
+  if (!box) return;
+  var keep = 0, ls0 = box.querySelector('.cvd-ls');
+  if (ls0 && box.getAttribute('data-ds') === _calSelDate) keep = ls0.scrollTop;
+  box.setAttribute('data-ds', _calSelDate);
+  box.innerHTML = '<div class="cvm" id="cvMini">' + _cvMiniHtml() + '</div>'
+    + '<div class="cvd"><div class="cvd-hd" id="cvDayHd"><div class="cvd-gr" onclick="cvSplit(false)"><i></i>下にスワイプでカレンダー全体に戻る</div>' + _cvDayTitle(_calSelDate) + '</div>'
+    + '<div class="cvd-ls" id="cvDayLs">' + _cvDayHtml(_calSelDate) + '</div></div>';
+  var ls = box.querySelector('.cvd-ls'); if (ls && keep) ls.scrollTop = keep;
+  _cvSwipe(document.getElementById('cvMini'), true);
+  _cvSwipe(document.getElementById('cvDayHd'), false);
+  _cvSwipe(ls, false, true);
+  if (!_evTpl && typeof _evTplEnsure === 'function') { try { _evTplEnsure().then(function() { if (_cvSplitShown()) _cvAfterCal(); }); } catch (e) {} }
+}
+function _cvTipOnce() {
+  try {
+    if (_calScrollMode === 'v' || localStorage.getItem('gm_cvTip')) return;
+    localStorage.setItem('gm_cvTip', '1');
+  } catch (e) { return; }
+  setTimeout(function() { if (currentView === 'events' && _evMode === 'calendar') toast('↑ 上にスワイプ（日をタップ）で、その日の予定が大きく出ます'); }, 600);
+}
+function _cvSwipe(el, months, listTop) {
+  if (!el || el._cvSw) return;
+  el._cvSw = true;
+  var s = null;
+  el.addEventListener('touchstart', function(ev) { var t = ev.touches[0]; s = { x: t.clientX, y: t.clientY, top: listTop ? el.scrollTop : 0 }; }, { passive: true });
+  el.addEventListener('touchend', function(ev) {
+    if (!s) return;
+    var t = ev.changedTouches[0], dx = t.clientX - s.x, dy = t.clientY - s.y, st = s.top; s = null;
+    if (months && Math.abs(dx) > 60 && Math.abs(dy) < 50) { calShiftMonth(dx < 0 ? 1 : -1); return; }
+    if (_uxLand()) return;
+    if (dy > (listTop ? 90 : 50) && Math.abs(dx) < 60 && (!listTop || st <= 0)) cvSplit(false);
+  }, { passive: true });
+}
+function _cvLbl(e) {
+  var tt = String(e.title || '').replace(/^\s+/, '');
+  var w = tt.split(/[\s　・,、]+/)[0] || tt;
+  return w.length > 4 ? w.slice(0, 4) : w;
+}
+function _cvMiniHtml() {
+  var byDate = _calByDate();
+  var WD = ['日', '月', '火', '水', '木', '金', '土'];
+  var h = '<div class="cvm-wk">';
+  for (var i = 0; i < 7; i++) { var w = (i + _weekStart) % 7; h += '<span class="' + (w === 0 ? 'su' : (w === 6 ? 'sa' : '')) + '">' + WD[w] + '</span>'; }
+  h += '</div><div class="cvm-gr">';
+  var rs = new Date(_calYear, _calMonth, 1);
+  rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
+  var last = new Date(_calYear, _calMonth + 1, 0);
+  var weeks = Math.ceil((Math.round((last - rs) / 86400000) + 1) / 7);
+  var t = evTodayYmd(), cur = new Date(rs.getTime()), land = _uxLand();
+  for (var k = 0; k < weeks * 7; k++) {
+    var ds = evYmd(cur), dw = cur.getDay(), hol = jpHoliday(ds);
+    var cls = 'cvm-c' + (cur.getMonth() !== _calMonth ? ' o' : '') + (dw === 0 ? ' su' : (dw === 6 ? ' sa' : '')) + (hol ? ' hol' : '') + (ds === t ? ' td' : '') + (ds === _calSelDate ? ' sel' : '');
+    var list = (byDate[ds] || []).slice().sort(function(a, b) { return evSortFn(a.ev, b.ev); });
+    var max = land ? 2 : 2, lb = '';
+    for (var j = 0; j < list.length && j < max; j++) {
+      var e = list[j].ev, col = evColorOf(e) || e.color || '#8B7CFF';
+      lb += '<u style="background:' + col + ';color:' + catTextColor(col) + '">' + evEsc(_cvLbl(e)) + '</u>';
+    }
+    if (list.length > max) lb += '<em>+' + (list.length - max) + '</em>';
+    h += '<div class="' + cls + '" data-ds="' + ds + '" onclick="selCalDay(\'' + ds + '\')"><i>' + cur.getDate() + '</i>' + lb + '</div>';
+    cur.setDate(cur.getDate() + 1);
+  }
+  return h + '</div>';
+}
+function _cvRel(ds) {
+  var t = evTodayYmd();
+  var p = ds.split('-'), q = t.split('-');
+  var d = Math.round((new Date(+p[0], p[1] - 1, +p[2]) - new Date(+q[0], q[1] - 1, +q[2])) / 86400000);
+  return d === 0 ? '今日' : (d === 1 ? '明日' : (d === -1 ? '昨日' : (d === 2 ? 'あさって' : '')));
+}
+function _cvDayTitle(ds) {
+  var p = ds.split('-'), dt = new Date(+p[0], p[1] - 1, +p[2]);
+  var hol = jpHoliday(ds), rel = _cvRel(ds);
+  return '<div class="cvd-t"><b>' + (+p[1]) + '/' + (+p[2]) + '（' + '日月火水木金土'.charAt(dt.getDay()) + '）</b>'
+    + '<small>' + [rel, hol].filter(Boolean).map(evEsc).join(' ・ ') + '</small></div>';
+}
+function _cvMemNames(e) {
+  var ids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
+  var out = [];
+  ids.forEach(function(id) {
+    for (var i = 0; i < (state.members || []).length; i++) {
+      var m = state.members[i];
+      if (m.id === id) { out.push(((m.lastName || '') + ' ' + (m.firstName || '')).trim()); break; }
+    }
+  });
+  return out;
+}
+function _cvRow(e, ds) {
+  var isT = e.type === 'task', col = evColorOf(e) || (isT ? 'var(--border2)' : '#8B7CFF');
+  var tm;
+  if (isT) tm = '<div class="tm"><span class="ck' + (e.done ? ' on' : '') + '" style="margin-left:auto" onclick="event.stopPropagation();toggleEventDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span></div>';
+  else if (e.time && !e.allDay) tm = '<div class="tm">' + evEsc(e.time) + (e.endTime ? '<small>〜' + evEsc(e.endTime) + '</small>' : '') + '</div>';
+  else tm = '<div class="tm ad">' + ((e.endDate && e.endDate > e.date) ? (ds === e.date ? '〜' + (+e.endDate.split('-')[1]) + '/' + (+e.endDate.split('-')[2]) : '続き') : '終日') + '</div>';
+  var sub = [];
+  var nm = _cvMemNames(e); if (nm.length) sub.push('👤 ' + nm.join('・'));
+  if (e.place) sub.push('📍 ' + e.place);
+  if (isT) sub.unshift(e.time ? 'タスク ' + e.time : 'タスク');
+  if (e.union) sub.push('ユニオン予定');
+  if (e.done && !isT) sub.unshift('✓ やった');
+  return '<div class="cvr' + (e.done ? ' dn' : '') + '" style="--c:' + col + '" onclick="openEventActions(\'' + e.id + '\')">' + tm + '<i class="bar"></i>'
+    + '<div class="bd"><b>' + evEsc(e.title || '（無題）') + '</b>' + (sub.length ? '<small>' + evEsc(sub.join('　')) + '</small>' : '') + '</div><span class="ch">›</span></div>';
+}
+function _cvDayHtml(ds) {
+  var evs = (state.events || []).filter(function(e) {
+    if (e.type === 'task' || !evShowMine(e)) return false;
+    return e.date === ds || (e.endDate && e.date <= ds && ds <= e.endDate);
+  });
+  var tks = (state.events || []).filter(function(e) { return e.date === ds && e.type === 'task' && evTdMine(e); });
+  evs.sort(evSortFn); tks.sort(evSortFn);
+  var h = '';
+  // 時刻なし・連日を上に、そのあと時刻順
+  evs.sort(function(a, b) { var x = (a.time && !a.allDay) ? 1 : 0, y = (b.time && !b.allDay) ? 1 : 0; return x !== y ? x - y : evSortFn(a, b); });
+  h += evs.map(function(e) { return _cvRow(e, ds); }).join('');
+  if (typeof _olCalOn === 'function' && _olCalOn() && !viewingOwnerUid && state.freshData) {
+    _olEvents().forEach(function(o) {
+      if (o.date !== ds || o.st !== 'planned' || !o.recs.length) return;
+      if (o.gid && _olEvFind(o.gid)) return;
+      var nm = o.kind === 'group' ? '3〜7人OL（' + o.n + '人）' : '個別OL ' + _olEvNames(o, 2);
+      h += '<div class="cvr" style="--c:#B48CFF" onclick="openOlRecordModal(\'' + o.recs[0].mid + '\',' + o.recs[0].idx + ')"><div class="tm' + (o.time ? '' : ' ad') + '">' + evEsc(o.time || 'OL') + '</div><i class="bar"></i>'
+        + '<div class="bd"><b>' + evEsc(nm) + '</b><small>' + evEsc(['OL予定', o.what || '', o.asan ? 'A:' + o.asan : ''].filter(Boolean).join('　')) + '</small></div><span class="ch">›</span></div>';
+    });
+  }
+  if (typeof _fitOwner === 'function' && _fitOwner() && !viewingOwnerUid && _fitCal && _fitCal[ds] && _fitCal[ds].s) {
+    var fe = _fitCal[ds], past = !fe.done && ds < evTodayYmd();
+    h += '<div class="cvr" style="--c:' + (past ? '#6b7280' : '#F472B6') + '" onclick="fitOpen(\'' + ds + '\',\'' + (fe.done ? 'work' : 'dash') + '\')"><div class="tm' + (fe.tm ? '' : ' ad') + '">' + evEsc(fe.tm || '💪') + '</div><i class="bar"></i>'
+      + '<div class="bd"><b>' + evEsc(_fitLabelName(fe.s)) + '</b><small>' + (fe.done ? '✓実施済み' : (past ? '未実施' : 'トレーニング予定')) + '</small></div><span class="ch">›</span></div>';
+  }
+  if (tks.length) h += '<div class="cvd-g">タスク ' + tks.length + '</div>' + tks.map(function(e) { return _cvRow(e, ds); }).join('');
+  if (!h) h = '<div class="cvd-em">この日の予定はありません<br><span style="font-size:12px">右下の「＋ 予定」か、同じ日をもう一度タップで足せます</span></div>';
+  var tp = _evTpl || [];
+  if (eventsUid() && tp.length) {
+    h += '<div class="cvd-g">テンプレで即登録（1タップ）</div><div class="cvd-tp">' + tp.map(function(t) {
+      var c = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : '#9ca3af';
+      return '<span onclick="evTplQuickAdd(\'' + evEsc(t.id) + '\',\'' + ds + '\')"><i style="background:' + c + '"></i>' + evEsc(t.name || '') + '</span>';
+    }).join('') + '</div>';
+  }
+  return h;
+}
+
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
   var src = document.getElementById('idealSum'); if (!src) return;
@@ -25878,6 +26161,7 @@ if ('serviceWorker' in navigator) {
 // ── 表示モード ──
 function setEventsMode(mode) {
   _evMode = mode;
+  _cvSync(); // v612: スマホの上下の帯
   var a = document.getElementById('evSegAgenda');
   var w = document.getElementById('evSegWeek');
   var c = document.getElementById('evSegCal');
@@ -27211,6 +27495,7 @@ function _calSwipeInit() {
     var dx = tt.clientX - _calTS.x, dy = tt.clientY - _calTS.y;
     _calTS = null;
     if (Math.abs(dx) > 60 && Math.abs(dy) < 50) calShiftMonth(dx < 0 ? 1 : -1);
+    else if (dy < -60 && Math.abs(dx) < 50 && _cvOn() && _calScrollMode !== 'v' && !window._calDrag) cvSplit(true); // v612: 上にスワイプ→その日の予定
   }, { passive: true });
 }
 // v511: データ到着のたびの再描画（予定・カテゴリ・ユニオン予定）を次のフレームで1回にまとめる
@@ -28983,42 +29268,8 @@ function yvGo(y, m, ds) {
   if (_calScrollMode !== 'v') { renderCalendar(); if (typeof _calFadeGrid === 'function') _calFadeGrid(); }
   else _calScrollToYmd(y + '-' + evPad2(m + 1) + '-' + (ds ? ds.slice(8, 10) : '01'), true);
 }
-function renderCalendar() {
-  if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
-  // v297: 日別は自動表示しない（日タップでボトムシート）。グリッドが常に全画面を使える
-  var title = document.getElementById('evCalTitle');
-  if (title) title.textContent = _calYear + '年 ' + (_calMonth+1) + '月';
-  var grid = document.getElementById('evCalGrid');
-  if (!grid) return;
-  // S3: 週の始まり設定を反映（曜日ヘッダも回転）
-  var wdRow = document.getElementById('evCalWeekdays');
-  if (wdRow) {
-    var WDN = ['日','月','火','水','木','金','土'], wdh = '';
-    for (var wi = 0; wi < 7; wi++) {
-      var wd2 = (wi + _weekStart) % 7;
-      wdh += '<span class="' + (wd2 === 0 ? 'ev-sun' : (wd2 === 6 ? 'ev-sat' : '')) + '">' + WDN[wd2] + '</span>';
-    }
-    wdRow.innerHTML = wdh;
-  }
-  // v320: 横（既定）＝表示中の月だけを描画し、左右スワイプ/‹›でページ送り
-  // v298: 縦＝前後の月へシームレスに繋がる連続週カレンダー（前6ヶ月〜先12ヶ月）
-  var _hMode = (_calScrollMode !== 'v');
-  var now = new Date();
-  var rs, re;
-  if (_hMode) {
-    rs = new Date(_calYear, _calMonth, 1);
-    rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
-    rs.setHours(0, 0, 0, 0);
-    re = new Date(_calYear, _calMonth + 1, 0);
-  } else {
-    rs = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-    rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
-    rs.setHours(0, 0, 0, 0);
-    re = new Date(now.getFullYear(), now.getMonth() + 13, 0);
-  }
-  _calRangeStart = rs;
-  _calRangeWeeks = Math.ceil((Math.round((re - rs) / 86400000) + 1) / 7);
-  var t = evTodayYmd();
+// v612: 日ごとの予定（月表示・その日の予定で共通）
+function _calByDate() {
   var byDate = {};
   (state.events||[]).forEach(function(e) {
     if (!e.date) return;
@@ -29059,6 +29310,45 @@ function renderCalendar() {
       (byDate[_fk] = byDate[_fk] || []).push({ ev: { id: 'FT_' + _fk, type: 'event', date: _fk, time: _fe.tm || '', title: _fitLabelName(_fe.s) + (_fe.done ? '✓' : ''), color: _ftPast ? '#6b7280' : '#F472B6', _fit: true }, span: '' });
     }
   }
+  return byDate;
+}
+function renderCalendar() {
+  if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
+  // v297: 日別は自動表示しない（日タップでボトムシート）。グリッドが常に全画面を使える
+  var title = document.getElementById('evCalTitle');
+  if (title) title.textContent = _calYear + '年 ' + (_calMonth+1) + '月';
+  var grid = document.getElementById('evCalGrid');
+  if (!grid) return;
+  // S3: 週の始まり設定を反映（曜日ヘッダも回転）
+  var wdRow = document.getElementById('evCalWeekdays');
+  if (wdRow) {
+    var WDN = ['日','月','火','水','木','金','土'], wdh = '';
+    for (var wi = 0; wi < 7; wi++) {
+      var wd2 = (wi + _weekStart) % 7;
+      wdh += '<span class="' + (wd2 === 0 ? 'ev-sun' : (wd2 === 6 ? 'ev-sat' : '')) + '">' + WDN[wd2] + '</span>';
+    }
+    wdRow.innerHTML = wdh;
+  }
+  // v320: 横（既定）＝表示中の月だけを描画し、左右スワイプ/‹›でページ送り
+  // v298: 縦＝前後の月へシームレスに繋がる連続週カレンダー（前6ヶ月〜先12ヶ月）
+  var _hMode = (_calScrollMode !== 'v');
+  var now = new Date();
+  var rs, re;
+  if (_hMode) {
+    rs = new Date(_calYear, _calMonth, 1);
+    rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
+    rs.setHours(0, 0, 0, 0);
+    re = new Date(_calYear, _calMonth + 1, 0);
+  } else {
+    rs = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+    rs.setDate(rs.getDate() - ((rs.getDay() - _weekStart + 7) % 7));
+    rs.setHours(0, 0, 0, 0);
+    re = new Date(now.getFullYear(), now.getMonth() + 13, 0);
+  }
+  _calRangeStart = rs;
+  _calRangeWeeks = Math.ceil((Math.round((re - rs) / 86400000) + 1) / 7);
+  var t = evTodayYmd();
+  var byDate = _calByDate();
   var _slotN = (typeof isPCMode === 'function' && isPCMode()) ? 6 : 8; // v391: PCは6段にして帯の縦にゆとり
   var html = '';
   var cur = new Date(rs.getTime());
@@ -29276,6 +29566,7 @@ function renderCalendar() {
   }
   _calNextBarUpdate(); // v312: 次の予定バー
   renderCalDayList();
+  _cvAfterCal(); // v612
 }
 // v298: 連続カレンダーのスクロール制御
 var _calRangeStart = null; // 描画範囲の先頭（週の開始日）
@@ -29372,6 +29663,13 @@ function selCalDay(ds) {
     _calSelDate = ds;
     renderCalendar();
     renderPcDayPanel();
+    return;
+  }
+  // v612: スマホ＝日タップで「その日の予定」（上にカレンダー・下にその日）。同じ日をもう一度タップ→その日に追加
+  if (_cvOn()) {
+    if (ds === _calSelDate && (_cvSplitOn || _uxLand()) && eventsUid()) { openEventAddDate(ds); return; }
+    _calSelDate = ds; _cvSplitOn = true;
+    renderCalendar();
     return;
   }
   // v297: 日タップ→日別ボトムシート。シート表示中に同じ日を再タップ→その日に即追加
@@ -29579,6 +29877,7 @@ function closeCalDaySheet(keepSel) {
   if (!keepSel) { _calSelDate = ''; renderCalendar(); }
 }
 function openCalDaySheet(ds) {
+  if (_cvOn() && currentView === 'events' && _evMode === 'calendar') { _calSelDate = ds; _cvSplitOn = true; renderCalendar(); return; } // v612
   var old = document.getElementById('dayShOv');
   if (old && old.parentNode) old.parentNode.removeChild(old);
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'dayShOv';
