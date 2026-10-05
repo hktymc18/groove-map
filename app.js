@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v622';
+var APP_JS_VERSION = 'v623';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v622';
+  var DATA_VERSION = 'v623';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4013,6 +4013,7 @@ function updateFabVisibility() {
 function switchView(v) {
   if (v !== 'ol') { document.body.classList.remove('olh-on'); var _om9 = document.getElementById('olmPg'); if (_om9 && _om9.parentNode) _om9.parentNode.removeChild(_om9); _olmId = ''; } // v617
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
+  if (v === 'current') setTimeout(function() { try { ckTrAuto(); } catch (eCk) {} }, 1500); // v623: MAPを開いた時に受付の研修記録を取り込む（1日1回）
   if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   var _prevView = currentView;
   currentView = v;
@@ -5343,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v623', d:'2026-10-06', items:['🎓 研修生の進み具合を受付システムと連動：MAPを開くと1日1回、受付で記録された受講（PG・DLR・EXP・PA・面談シート・BPC済み・CO）を研修生のステップに「進んだ」で自動で入れます（タイトルも進みます・MAPで入れた記録は上書きしません・履歴に「受付から」と表示）','➕ 受付連携の「名簿から追加」で入れた研修生は、紹介者の直下に置かれ、受講済みの研修とタイトルもいっしょに入るように','⭐ 受付で昇格した研修生がいたらお知らせ（MAPの研修結果は自動では変えません）'] },
   { v:'v622', d:'2026-10-06', items:['◎ MAPの「運動会」を「サークル」に名前を変えました（切り替えボタン・上の見出し・並び順の説明）'] },
   { v:'v621', d:'2026-10-06', items:['🔑 ログインボタンを押しても「…」のまま止まることがある不具合を修正：プロフィールの読み込みに失敗した時は自動で読み直し、それでもだめな時は理由と「アプリを修復して開き直す」ボタンを出すように'] },
   { v:'v620', d:'2026-10-06', items:['📅 予定・ToDo（スマホ）を元の使い方に戻しました：日をタップ＝その日の一覧、＋予定＝今までの入力画面、予定をタップ＝今までの操作。ToDoも今までの一覧に（上下の帯の見た目だけ新しいまま）','🐛 OLを一度開くと、ほかの画面で下のタブと上の帯が消えてボタンが押せなくなる不具合を修正','📱 iPhoneでスクロールした時に画面全体がずれて上に余白が出て、ボタンが押せなくなるのを防ぐように'] },
@@ -6503,6 +6505,95 @@ function _ckOwnMembers() {
     return !m.deleted && !/^MG_/.test(m.id || '') && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
   });
 }
+// 自分のユニオン名＋地域で受付のユニオンを選ぶ（v623: 研修の自動取り込みでも使う）
+function _ckPickUnion(unions, unionId) {
+  var sel = unionId || '';
+  if (sel) return sel;
+  // 自分のユニオン名＋地域で自動選択（地域欄が未設定の受付ユニオンは名前一致のみで許容）
+  var myU = _ckNorm((currentUser && currentUser.union) || '');
+  var myA = _ckNorm((currentUser && currentUser.area) || '');
+  unions.forEach(function(u) {
+    if (sel) return;
+    if (_ckNorm(u.id) === myU && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
+  });
+  unions.forEach(function(u) {  // 部分一致（BASE REVE東京 など）
+    if (sel) return;
+    if (myU && _ckNorm(u.id).indexOf(myU) === 0 && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
+  });
+  return sel || (unions[0] && unions[0].id) || '';
+}
+// ── v623: 研修の進み具合を受付システムから取り込む（受付→MAPの一方通行。MAPで入れた記録は上書きしない） ──
+//  受付の受講記録（PG/DLR/EXP/PA/CO/BPC済み）と面談シートの提出を、MAPの研修ステップ「進んだ」として足す
+var CK_TR_MAP = [['PG', 'PG'], ['DLR', 'DLR'], ['EXP', 'EXP'], ['PA', 'PA'], ['面談', '面談'], ['BPC済み', 'BPC'], ['CO', 'CO']];
+function _ckTrRecs(r) {
+  var tr = (r && r.trainings) || {}, L = [];
+  CK_TR_MAP.forEach(function(p) {
+    var rec = p[0] === '面談' ? (r.coSheet ? { at: r.coSheet.date || '' } : null) : tr[p[0]];
+    if (rec) L.push({ step: p[1], date: String(rec.at || '').slice(0, 10) });
+  });
+  return L;
+}
+// 1人ぶん取り込む。足した（または予定→進んだにした）件数を返す
+function _ckTrSync(m, r) {
+  var recs = _ckTrRecs(r); if (!recs.length) return 0;
+  m.traineeHistory = m.traineeHistory || [];
+  var H = m.traineeHistory, n = 0, bpc = false;
+  recs.forEach(function(x) {
+    var same = H.filter(function(h) { return h.status === x.step && !h.ir; });
+    if (same.some(function(h) { return h.result !== 'planned'; })) return; // MAPに記録あり（進んだ／流れた）→ 触らない
+    var pl = same[0];
+    if (pl) { pl.result = 'next'; if (x.date) pl.date = x.date; pl.ck = 1; }
+    else {
+      var e = { status: x.step, date: x.date, aSan: '', result: 'next', ck: 1 }, at = H.length;
+      if (x.date) { at = 0; for (var i = 0; i < H.length; i++) if (!H[i].date || H[i].date <= x.date) at = i + 1; }
+      H.splice(at, 0, e);
+    }
+    n++; if (x.step === 'BPC') bpc = true;
+  });
+  if (!n) return 0;
+  if (bpc && m.traineeResult !== 'BC' && m.traineeResult !== '流れた') m.traineeResult = 'BC'; // MAPのBPCと同じ決まり（BPC実施→BC）
+  m.traineeStatus = getLatestStatus(m);
+  syncTraineeTitle(m);
+  return n;
+}
+function _ckIsTrainee(m) { var t = (m.title || '').trim(); return !!m.trainee || !t || detectCategory(t) === '研修生'; }
+// 名簿と照らして取り込む（つながっていない研修生は、名前が1人だけ一致すればつなぐ）。{ n: 件数, ppl: 人数, promo: [受付で昇格した人] }
+function _ckTrSyncAll(roster) {
+  var byNo = {}, byName = {}, out = { n: 0, ppl: 0, promo: [] };
+  roster.forEach(function(r) { byNo[r.no] = r; var k = _ckNorm(r.name); if (k) (byName[k] = byName[k] || []).push(r); });
+  _ckOwnMembers().forEach(function(m) {
+    var r = m.checkinNo ? byNo[m.checkinNo] : null;
+    if (!r && _ckIsTrainee(m)) { var c = byName[_ckNorm((m.lastName || '') + (m.firstName || ''))] || []; if (c.length === 1 && c[0].trainee) { r = c[0]; m.checkinNo = r.no; } }
+    if (!r || !_ckIsTrainee(m)) return; // MAPで研修生の人だけ（LOI以降・BRなどの過去の記録は足さない＝研修の集計を変えない）
+    var k = _ckTrSync(m, r); if (k) { out.n += k; out.ppl++; }
+    if (r.trainee === false && m.trainee && !m.ckPromoSeen && (m.traineeHistory || []).length) { m.ckPromoSeen = 1; out.promo.push(_ckMapName(m)); } // 受付で昇格 → 知らせるだけ
+  });
+  return out;
+}
+// MAPを開いた時に自動で（1日1回）。自分のMAPを編集できる時だけ
+function ckTrAuto(force) {
+  try {
+    if (!db || !currentUser || viewingOwnerUid || !state.isEditor || !(state.members || []).length) return;
+    var key = 'gm_ckTr_' + currentUser.uid, today = evTodayYmd();
+    if (!force) { try { if (localStorage.getItem(key) === today) return; } catch (e0) {} }
+    if (window._ckTrBusy) return; window._ckTrBusy = true;
+    db.collection('checkinUnions').get().then(function(qs) {
+      var unions = []; qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
+      var un = _ckPickUnion(unions, ''); if (!un) return null;
+      return db.collection('checkinMembers').where('union', '==', un).get();
+    }).then(function(qs) {
+      window._ckTrBusy = false;
+      if (!qs) return;
+      try { localStorage.setItem(key, today); } catch (e1) {}
+      var roster = []; qs.forEach(function(d) { var r = d.data() || {}; r.no = d.id; if (r.active !== false) roster.push(r); });
+      var o = _ckTrSyncAll(roster);
+      if (!o.n && !o.promo.length) return;
+      _memMap = null; autoSave(); try { renderCurrentView(); } catch (e2) {}
+      if (o.n) toast('🎓 受付から研修の記録を取り込みました（' + o.ppl + '人・' + o.n + '件）');
+      if (o.promo.length) setTimeout(function() { toast('⭐ 受付で昇格した人：' + o.promo.slice(0, 3).join('・') + (o.promo.length > 3 ? ' ほか' + (o.promo.length - 3) + '人' : '') + '（MAPの研修結果は必要なら直してください）'); }, o.n ? 3200 : 0);
+    }).catch(function() { window._ckTrBusy = false; });
+  } catch (e) { window._ckTrBusy = false; }
+}
 var _ckLink = null;
 function ckLinkOpen(unionId) {
   if (viewingOwnerUid) { toast('受付連携は自分のMAP表示中に使えます'); return; }
@@ -6511,21 +6602,7 @@ function ckLinkOpen(unionId) {
     var unions = [];
     qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
     if (!unions.length) { toast('受付システムに有効化されたユニオンがまだありません'); return; }
-    var sel = unionId || '';
-    if (!sel) {
-      // 自分のユニオン名＋地域で自動選択（地域欄が未設定の受付ユニオンは名前一致のみで許容）
-      var myU = _ckNorm((currentUser && currentUser.union) || '');
-      var myA = _ckNorm((currentUser && currentUser.area) || '');
-      unions.forEach(function(u) {
-        if (sel) return;
-        if (_ckNorm(u.id) === myU && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
-      });
-      unions.forEach(function(u) {  // 部分一致（BASE REVE東京 など）
-        if (sel) return;
-        if (myU && _ckNorm(u.id).indexOf(myU) === 0 && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
-      });
-      if (!sel) sel = unions[0].id;
-    }
+    var sel = _ckPickUnion(unions, unionId);
     _ckLink = { unions: unions, sel: sel };
     _ckPgI = 0; // v608
     ckLinkLoad();
@@ -9622,6 +9699,7 @@ function renderTraineeHistory(m) {
     } else if (h.date) { var ds = document.createElement('span'); ds.textContent = h.date; meta.appendChild(ds); }
     if (h.rs) { var rsB = document.createElement('span'); rsB.textContent = '🔄リスケ' + h.rs + '回'; rsB.style.color = h.rs >= 3 ? 'var(--red)' : 'var(--text-dim)'; meta.appendChild(rsB); }
     if (h.aSan) { var as2 = document.createElement('span'); as2.textContent = 'A: ' + h.aSan; meta.appendChild(as2); }
+    if (h.ck) { var ck2 = document.createElement('span'); ck2.textContent = '受付から'; ck2.style.color = 'var(--accent)'; meta.appendChild(ck2); } // v623
     var rs = document.createElement('span');
     rs.textContent = h.result === 'left' ? '✗ 流れた' : (h.result === 'planned' ? (h.tbd ? '📅 調整中' : '📅 予定') : (h.ir ? '✓ 実施' : '✓ 進んだ'));
     rs.style.color = h.result === 'left' ? 'var(--red)' : (h.result === 'planned' ? '#FFB454' : 'var(--accent)');
@@ -16681,7 +16759,7 @@ function mxMore() {
 // ════ v608: 受付連携を1画面のページに（①稼働を取り込む ②名簿から追加 ③名前をそろえる） ════
 var _ckPgI = 0;
 var CK_PG = ['稼働を取り込む', '名簿から追加', '名前をそろえる'];
-function _ckInfo() { if (!UX_INFO.ck) UX_INFO.ck = { t: '受付連携', h: '<b>① 稼働を取り込む</b>：受付システムの名簿とMAPの人をつないで、受付が数えた稼働率をそのまま入れます（MAPでは計算しません）。名前が同じ人は自動でつなぎ、同じ名前が何人もいる時だけ選びます。<br><b>② 名簿から追加</b>：受付の名簿にいて、MAPにまだいない人を追加します。紹介者がMAPにいれば、その人の下に置きます。名前・性別・研修生は名簿のまま入ります。<br><b>③ 名前をそろえる</b>：つないだ人で、MAPと名簿の名前の字が違う時（高橋⇔髙橋など）に、名簿の名前にそろえます' }; }
+function _ckInfo() { if (!UX_INFO.ck) UX_INFO.ck = { t: '受付連携', h: '<b>① 稼働を取り込む</b>：受付システムの名簿とMAPの人をつないで、受付が数えた稼働率をそのまま入れます（MAPでは計算しません）。名前が同じ人は自動でつなぎ、同じ名前が何人もいる時だけ選びます。<br><b>② 名簿から追加</b>：受付の名簿にいて、MAPにまだいない人を追加します。紹介者がMAPにいれば、その人の下に置きます。名前・性別・研修生は名簿のまま入り、受付で受講済みの研修（PG・DLRなど）もステップに入ります。<br><b>③ 名前をそろえる</b>：つないだ人で、MAPと名簿の名前の字が違う時（高橋⇔髙橋など）に、名簿の名前にそろえます<br><b>研修の進み具合</b>：MAPを開くと1日1回、受付で記録された受講（PG・DLR・EXP・PA・面談シート・BPC・CO）を研修生のステップに自動で入れます。MAPで入れた記録は上書きしません' }; }
 function _ckPgCss() {
   if (document.getElementById('ckPgCss')) return;
   var st = document.createElement('style'); st.id = 'ckPgCss';
@@ -16788,6 +16866,7 @@ function ckAddApply() {
       state.members.push({ id: id, lastName: nm.last, firstName: nm.first, gender: a.r.sex === 'f' ? 'female' : 'male', title: a.r.grade === 'BR' ? 'BR' : '', activity: '', actRate: '', morale: 1, priority: '',
         ptCurrent: 0, ptFixed: 0, ptSelf: 0, trainee: !!a.r.trainee, parentId: pid, mapType: 'both', memo: '', nextDate: '', aSan: '', instaUrl: '', lineId: '',
         traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '', region: area, birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '', month: cm, checkinNo: a.r.no });
+      try { _ckTrSync(state.members[state.members.length - 1], a.r); } catch (eT) {} // v623: 研修の進み具合（受講済み・タイトル）もいっしょに
       made[a.r.no] = id; n++;
     });
     if (rest.length === left.length) break;
@@ -33900,6 +33979,7 @@ function loginSuccess(user) {
   // v329: 起動画面はモバイル＝予定タブ（月カレンダー）。PCは従来どおりホーム
   applyTabPrefs();
   switchView(isPCMode() ? 'home' : 'events');
+  setTimeout(function() { ckTrAuto(); }, 8000); // v623: 受付の研修記録を1日1回取り込む
 }
 
 function _resetAuthErrMsg(code) {
