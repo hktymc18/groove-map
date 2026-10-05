@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v612';
+var APP_JS_VERSION = 'v613';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v612';
+  var DATA_VERSION = 'v613';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v613', d:'2026-10-05', items:['🗓 予定をタップすると「予定の画面」が開きます（スマホ）。上に大きく名前と日時、下のタイル（いつ・なに・だれと・通知・メモ・場所）を押すと、その項目だけのページで直せます。変えたらその場で保存されます','⧉ 右下の「別の日にも入れる」で、同じ予定を日付だけ選んで入れられます。消す・今までの編集画面は下のほうにあります','➕ 予定を足すのが「なに？→いつ？→だれと？」の3つの質問になりました。いつもの予定（テンプレ）や最近の予定はタップするだけで決まります。時刻は今までと同じ「開始〜終了」の欄と数字パッドです'] },
   { v:'v612', d:'2026-10-05', items:['📅 予定（スマホ）の上と下を新しくしました。カレンダー本体の見え方は今のままです。上は「‹ 年月 › 今日 🔍 ⋯」、下は「‹戻る・月｜週｜日｜ToDo・＋予定」の1行にまとめました','👆 カレンダーを上にスワイプ（または日をタップ）すると「その日の予定」に切り替わります。上に小さな月、下にその日の予定が大きな文字で並びます。下にスワイプで全体に戻ります（同じ日をもう一度タップするとその日に追加）','📱 予定もスマホを横にして使えるようになりました（左に月・右にその日の予定）'] },
   { v:'v611', d:'2026-10-05', items:['メンバーの編集（スマホ）を作り直し：MAPで人を押すと「その人の画面」。タイトル・今月の数字・やる気・優先・活動・メモ・プロフィールをタイルから1画面ずつ','押すとすぐ保存（保存ボタンなし）。数字は大きな＋−、タイトルはMAPと同じ色のボタン','上の人を変える・削除はプロフィールの一番下に','理想MAPのかんたん編集も同じ形に：「この人の下に新しい人を足す」をビジネスメンバー／ユーザーの −［人数］＋ で'] },
   { v:'v610', d:'2026-10-05', items:['MAP：スマホの横向きも縦と同じカードの一覧に（上は1行・追加と受付連携は右下）'] },
@@ -16978,7 +16979,7 @@ function _ppRender() {
   var ideal = _pp.map === 'ideal', L = ideal ? PP_PG_I : PP_PG, nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)', body = '', btm = '';
   if (!_pp.pg) {
     body = _ppHub(m);
-    btm = '<div class="ux-btm"><span class="ux-bk" onclick="ppClose()">‹ ' + (ideal ? '理想MAPへ' : 'MAPへ') + '</span>' + (ideal ? '' : '<span class="ux-nx" onclick="ppClose();openEventModal(null,\'' + m.id + '\',\'\',\'event\')">＋ 予定・タスク</span>') + '</div>';
+    btm = '<div class="ux-btm"><span class="ux-bk" onclick="ppClose()">‹ ' + (ideal ? '理想MAPへ' : 'MAPへ') + '</span>' + (ideal ? '' : '<span class="ux-nx" onclick="ppClose();evAddFor(\'' + m.id + '\')">＋ 予定</span>') + '</div>';
   } else {
     var i = -1; L.forEach(function(x, k) { if (x[0] === _pp.pg) i = k; });
     body = '<div class="ux-step">' + (i + 1) + ' / ' + L.length + '　' + L[i][1] + '</div>' + _ppPage(m, _pp.pg);
@@ -17272,6 +17273,381 @@ function _cvDayHtml(ds) {
   }
   return h;
 }
+
+// ════ v613: 予定の画面（タップで開く：タイル→1項目ずつのページ・その場で保存）＋予定を足す（なに→いつ→だれと） ════
+//  保存は今までの入力画面（eventModal）を見えないまま使う＝通知・Google連携・OL連動などは今までどおり
+//  時刻の入力は今までと同じ「開始〜終了」の欄＋数字パッド
+var _ep = null, _ea = null, _whoQv = '';
+var EP_PG = [['when', 'いつ'], ['what', 'なに'], ['who', 'だれと'], ['ntf', '通知'], ['memo', 'メモ・場所']];
+var EA_ST = ['なに', 'いつ', 'だれと'];
+var EV_RMD = [['', 'なし'], ['0', '時刻ちょうど'], ['10', '10分前'], ['30', '30分前'], ['60', '1時間前'], ['1440', '前日']];
+function _epCss() {
+  if (document.getElementById('epCss')) return;
+  var st = document.createElement('style'); st.id = 'epCss';
+  st.textContent = "#epPg,#eaPg{position:fixed;inset:0;z-index:520;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(env(safe-area-inset-bottom) + 96px)}"
+    + "body.ux-land #epPg,body.ux-land #eaPg{padding:0 18px 76px}#epPg .ux-btm,#eaPg .ux-btm{left:0;z-index:521}"
+    + "body.ep-silent #eventModal{display:none!important}"
+    + ".eph{margin-top:10px;padding:14px 16px;border-radius:18px;background:var(--surface);border:1.5px solid var(--border);border-left:7px solid var(--c)}"
+    + ".eph .k{font-size:12px;font-weight:900;color:var(--c)}.eph h1{margin:3px 0 3px;font-size:24px;font-weight:900;line-height:1.3;word-break:break-all}.eph p{margin:0;font-size:14.5px;font-weight:800;color:var(--text-mid)}"
+    + ".eph .dn{margin-top:11px;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:12px;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-dim);font-size:14px;font-weight:900;cursor:pointer}.eph .dn.on{background:var(--accent);color:var(--go-ink)}"
+    + ".wn7{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.wn7 span{height:54px;border-radius:12px;background:var(--surface);border:1.5px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:16px;cursor:pointer;font-family:Inter,'Noto Sans JP',sans-serif}"
+    + ".wn7 span small{font-size:10px;color:var(--text-dim);font-weight:800}.wn7 span.su small{color:var(--red)}.wn7 span.sa small{color:var(--sky,#3B8FE0)}.wn7 span.on{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}.wn7 span.on small{color:var(--go-ink)}"
+    + ".wnt{display:flex;gap:6px;align-items:center}.wnt input{flex:1;min-width:0;height:52px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:19px;font-weight:800;text-align:center;font-family:Inter,'Noto Sans JP',sans-serif;cursor:pointer;outline:none}"
+    + ".wnt input.off{opacity:.35}.wnt>b{color:var(--text-dim)}.wnt .ad{flex:none;height:46px;padding:0 13px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface);display:flex;align-items:center;font-size:13px;font-weight:900;cursor:pointer}.wnt .ad.on{background:var(--accent);color:var(--go-ink);border-color:var(--accent)}"
+    + ".wnd{width:100%;box-sizing:border-box;height:48px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:16px;font-weight:800;padding:0 12px}"
+    + ".wnc{display:flex;flex-wrap:wrap;gap:8px}.wnc span{min-height:44px;padding:0 14px;border-radius:13px;background:var(--surface);border:1.5px solid var(--border2);display:flex;align-items:center;gap:7px;font-size:15px;font-weight:900;cursor:pointer}"
+    + ".wnc span i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}.wnc span small{font-size:11px;color:var(--text-dim);font-weight:800}.wnc span.on{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}"
+    + ".eaq{font-size:12.5px;font-weight:900;color:var(--accent);margin-top:14px}.eaq+h2{margin:2px 0 12px;font-size:25px;font-weight:900}"
+    + ".easum{margin-top:18px;padding:11px 13px;border-radius:13px;background:var(--surface);border:1.5px dashed var(--border2);font-size:13.5px;font-weight:800;color:var(--text-mid);line-height:1.6}.easum b{color:var(--text)}"
+    + ".ealk{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:22px;font-size:13px;font-weight:800}.ealk span{color:var(--text-mid);cursor:pointer;text-decoration:underline}"
+    + ".wnx{font-size:12.5px;color:var(--text-dim);font-weight:700;margin-top:6px;line-height:1.6}";
+  document.head.appendChild(st);
+}
+function _evYmdAdd(ds, n) { var p = ds.split('-'), d = new Date(+p[0], p[1] - 1, +p[2]); d.setDate(d.getDate() + n); return evYmd(d); }
+function _evDayLbl(ds) {
+  if (!ds) return '日付なし';
+  var p = ds.split('-'), dt = new Date(+p[0], p[1] - 1, +p[2]), rel = _cvRel(ds);
+  return (+p[1]) + '/' + (+p[2]) + '（' + '日月火水木金土'.charAt(dt.getDay()) + '）' + (rel ? ' ' + rel : '');
+}
+function _evWhenLbl(o) {
+  var s = _evDayLbl(o.date);
+  if (o.endDate && o.endDate > o.date) s += ' 〜 ' + _evDayLbl(o.endDate).replace(/ .*$/, '');
+  if (o.allDay || !o.time) s += (o.endDate && o.endDate > o.date) ? '' : '　終日';
+  else s += '　' + o.time + (o.end ? '〜' + o.end : '');
+  return s;
+}
+function _evMemNm(id) {
+  var m = (typeof findMemberAny === 'function') ? findMemberAny(id) : null;
+  return m ? ((m.lastName || '') + ' ' + (m.firstName || '')).trim() : '';
+}
+// ── 「いつ」のページ（予定の画面・予定を足す で共通） ──
+function _whenHtml(o) {
+  var t = evTodayYmd(), h = '<div class="ppl">日付</div><div class="wnc" style="margin-top:8px">';
+  [['今日', 0], ['明日', 1], ['あさって', 2], ['来週', 7]].forEach(function(x) { var d = _evYmdAdd(t, x[1]); h += '<span class="' + (o.date === d ? 'on' : '') + '" onclick="wnDate(\'' + d + '\')">' + x[0] + '</span>'; });
+  h += '</div><div class="wn7" style="margin-top:8px">';
+  for (var i = 0; i < 7; i++) {
+    var d = _evYmdAdd(t, i), p = d.split('-'), w = new Date(+p[0], p[1] - 1, +p[2]).getDay();
+    h += '<span class="' + (w === 0 ? 'su' : (w === 6 ? 'sa' : '')) + (o.date === d ? ' on' : '') + '" onclick="wnDate(\'' + d + '\')">' + (+p[2]) + '<small>' + '日月火水木金土'.charAt(w) + '</small></span>';
+  }
+  h += '</div><div class="ppl">📅 ほかの日</div><input type="date" class="wnd" style="margin-top:8px" value="' + evEsc(o.date || '') + '" onchange="if(this.value)wnDate(this.value)">'
+    + '<div class="ppl">時刻（任意）開始〜終了</div><div class="wnt" style="margin-top:8px">'
+    + '<input id="wnT" type="text" readonly placeholder="なし" class="' + (o.allDay ? 'off' : '') + '" value="' + evEsc(o.allDay ? '' : (o.time || '')) + '" onclick="openTimePad(\'wnT\')"><b>〜</b>'
+    + '<input id="wnTE" type="text" readonly placeholder="なし" class="' + (o.allDay ? 'off' : '') + '" value="' + evEsc(o.allDay ? '' : (o.end || '')) + '" onclick="openTimePad(\'wnTE\')">'
+    + '<span class="ad' + (o.allDay ? ' on' : '') + '" onclick="wnAllDay()">終日</span></div>'
+    + '<div class="ppl">何日か続く（終了日・なくてもOK）</div><div class="wnt" style="margin-top:8px"><input type="date" class="wnd" style="flex:1;cursor:auto;font-size:16px" value="' + evEsc(o.endDate || '') + '" onchange="wnEnd(this.value)">'
+    + (o.endDate ? '<span class="ad" onclick="wnEnd(\'\')">なし</span>' : '') + '</div>';
+  return h;
+}
+function _whenSet(fn) { // fn(o) で値を変える → 予定の画面は保存、足すは描き直し
+  if (_ea) { fn(_ea); _eaRender(); return; }
+  var e = _epE(); if (!e) return;
+  var o = { date: e.date || '', time: e.time || '', end: e.endTime || '', allDay: !!e.allDay, endDate: e.endDate || '' }, o0 = JSON.stringify(o);
+  fn(o);
+  if (JSON.stringify(o) === o0) { _epRender(); return; }
+  _epSave(function() {
+    document.getElementById('evDate').value = o.date;
+    buildTimeSelects(o.allDay ? '' : o.time, o.allDay ? '' : o.end);
+    evToggleAllDay(!!o.allDay);
+    var de = document.getElementById('evDateEnd'); if (de) de.value = o.endDate || '';
+  }, 'いつ');
+}
+function wnDate(d) {
+  _whenSet(function(o) {
+    if (o.endDate && o.date && o.endDate > o.date) { // 連日は長さを保って移動
+      var p1 = o.date.split('-'), p2 = d.split('-'), n = Math.round((new Date(+p2[0], p2[1] - 1, +p2[2]) - new Date(+p1[0], p1[1] - 1, +p1[2])) / 86400000);
+      o.endDate = _evYmdAdd(o.endDate, n);
+    }
+    o.date = d;
+  });
+}
+function wnAllDay() { _whenSet(function(o) { o.allDay = !o.allDay; if (o.allDay) { o.time = ''; o.end = ''; } }); }
+function wnEnd(v) { _whenSet(function(o) { o.endDate = (v && v > o.date) ? v : ''; }); }
+function _wnPadDone() {
+  var s = document.getElementById('wnT'), en = document.getElementById('wnTE');
+  if (!s || !en) return;
+  var a = s.value || '', b = en.value || '';
+  _whenSet(function(o) { o.time = a; o.end = a ? b : ''; if (a) o.allDay = false; });
+}
+// ── 「だれと」（共通） ──
+function _whoCands(sel) {
+  var q = String(_whoQv || '').replace(/\s/g, ''), out = [], seen = {};
+  var add = function(m) { if (!m || seen[m.id]) return; seen[m.id] = 1; out.push(m); };
+  var all = state.members || [];
+  if (q) {
+    all.forEach(function(m) { if (((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0 || (m.furigana || '').indexOf(q) >= 0) add(m); });
+    return out.slice(0, 30);
+  }
+  sel.forEach(function(id) { add(findMemberAny(id)); });
+  (state.events || []).slice().sort(function(a, b) { return (b.date || '') < (a.date || '') ? -1 : 1; }).forEach(function(e) {
+    if (out.length >= 10) return;
+    ((e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : [])).forEach(function(id) { for (var i = 0; i < all.length; i++) if (all[i].id === id) add(all[i]); });
+  });
+  all.forEach(function(m) { if (out.length < 16 && (m.trainee || m.memberCat === '研修生')) add(m); });
+  return out;
+}
+function _whoListHtml(sel) {
+  var c = _whoCands(sel);
+  if (!c.length) return '<div class="wnx">' + (_whoQv ? '見つかりません' : '名前で探してください') + '</div>';
+  return '<div class="wnc">' + c.map(function(m) {
+    var on = sel.indexOf(m.id) >= 0, k = (typeof _mxCat === 'function') ? _mxCat(m, 'current') : '';
+    return '<span class="' + (on ? 'on' : '') + '" style="--c:var(--mx' + (k || 'ot') + ',var(--accent))" onclick="whoTgl(\'' + m.id + '\')"><i></i>' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + (m.title ? ' <small>' + evEsc(m.title) + '</small>' : '') + (on ? ' ✓' : '') + '</span>';
+  }).join('') + '</div>';
+}
+function _whoHtml(sel, vis) {
+  var h = '<input class="ppin" id="whoQ" placeholder="🔍 名前でさがす" value="' + evEsc(_whoQv) + '" oninput="whoQ(this.value)" autocomplete="off" style="margin-top:4px">'
+    + '<div class="ppl">' + (_whoQv ? 'さがした結果' : '最近の人・研修中の人') + '</div><div id="whoLs" style="margin-top:8px">' + _whoListHtml(sel) + '</div>';
+  if (sel.length && vis !== null) {
+    h += '<div class="ppl">この予定を出すカレンダー</div><div class="ppb sm" style="--n:2">'
+      + '<span class="' + (vis !== 'member' ? 'on' : '') + '" onclick="whoVis(\'both\')">自分にも出す<small>自分とメンバー</small></span>'
+      + '<span class="' + (vis === 'member' ? 'on' : '') + '" onclick="whoVis(\'member\')">メンバーだけ<small>自分には出さない</small></span></div>';
+  }
+  return h;
+}
+function whoQ(v) { _whoQv = v || ''; var l = document.getElementById('whoLs'); if (l) l.innerHTML = _whoListHtml(_ea ? _ea.mids : _epMids()); }
+function whoTgl(id) {
+  if (_ea) { var i = _ea.mids.indexOf(id); if (i >= 0) _ea.mids.splice(i, 1); else _ea.mids.push(id); _eaRender(); return; }
+  _epSave(function() {
+    var i2 = _evMemberIds.indexOf(id);
+    if (i2 >= 0) _evMemberIds.splice(i2, 1); else _evMemberIds.push(id);
+  }, 'だれと');
+}
+function whoVis(v) {
+  if (_ea) { _ea.vis = v; _eaRender(); return; }
+  _epSave(function() { selEvVis(v); }, 'カレンダー');
+}
+// ════ 予定の画面 ════
+function _epE() { return _ep ? findEvent(_ep.id) : null; }
+function _epMids() { var e = _epE(); return e ? ((e.memberIds && e.memberIds.length) ? e.memberIds.slice() : (e.memberId ? [e.memberId] : [])) : []; }
+function epOpen(id) { var e = findEvent(id); if (!e) return; _whoQv = ''; _ep = { id: id, pg: '' }; _epRender(); }
+function epClose() { try { if (document.getElementById('tpOv')) closeTimePad(false); } catch (e0) {} var p = document.getElementById('epPg'); if (p && p.parentNode) p.parentNode.removeChild(p); _ep = null; try { if (currentView === 'events') renderEvents(); } catch (e) {} }
+function epGo(pg) { if (!_ep) return; _ep.pg = pg; _whoQv = ''; _epRender(); var p = document.getElementById('epPg'); if (p) p.scrollTop = 0; }
+function epGoI(i) { if (EP_PG[i]) epGo(EP_PG[i][0]); }
+function epNext(d) { if (!_ep || !_ep.pg) return; var i = -1; EP_PG.forEach(function(x, k) { if (x[0] === _ep.pg) i = k; }); if (EP_PG[i + d]) epGoI(i + d); }
+function _epSave(fn, msg) {
+  var e = _epE(); if (!e) return;
+  document.body.classList.add('ep-silent');
+  window._evQuiet = true;
+  try { _evDraft = null; openEventModal(e.id); fn(); saveEvent(); }
+  catch (x) { try { closeEventModal(true); } catch (y) {} }
+  window._evQuiet = false;
+  document.body.classList.remove('ep-silent');
+  if (msg) toast('✓ ' + msg + 'を保存しました');
+  _epRender();
+}
+function epTitle(v) { v = String(v || '').trim(); var e = _epE(); if (!e || !v || v === e.title) return; _epSave(function() { document.getElementById('evTitle').value = v; }, '名前'); }
+function epCat(cid) { _epSave(function() { _evCategoryId = cid; }, '色'); }
+function epRemind(v) { _epSave(function() { document.getElementById('evRemind').value = v; }, '通知'); }
+var _epMemoT = 0;
+function epMemo(v) { clearTimeout(_epMemoT); _epMemoT = setTimeout(function() { var e = _epE(); if (!e || (e.memo || '') === v.trim()) return; var a = document.activeElement; _epSave(function() { document.getElementById('evMemo').value = v; }, ''); try { if (a && a.id === 'epMemoTx') document.getElementById('epMemoTx').focus(); } catch (x) {} }, 900); }
+function epPlace(v) { var e = _epE(); if (!e || (e.place || '') === String(v || '').trim()) return; _epSave(function() { document.getElementById('evPlace').value = v; }, '場所'); }
+function epDone() { var e = _epE(); if (!e) return; toggleEventDone(e.id); _epRender(); }
+function epDel() { var e = _epE(); if (!e) return; var id = e.id; epClose(); _evDeleteById(id); }
+function epDelSeries() { var e = _epE(); if (!e) return; var id = e.id; epClose(); evActDeleteSeries(id); }
+function epOld() { var e = _epE(); if (!e) return; var id = e.id; epClose(); openEventEdit(id); }
+function epDup() {
+  var e = _epE(); if (!e) return;
+  var t = evTodayYmd();
+  var o = { date: e.date === t ? _evYmdAdd(t, 1) : t, title: e.title || '', cat: e.categoryId || '', time: e.time || '', end: e.endTime || '', allDay: !!e.allDay,
+    mids: _epMids(), memo: e.memo || '', place: e.place || '', remind: (e.remindBefore === undefined || e.remindBefore === null) ? '' : String(e.remindBefore), dupStage: e.templateStage || '', step: 2 };
+  if (e.endDate && e.endDate > e.date) { var p1 = e.date.split('-'), p2 = e.endDate.split('-'); o.endDate = _evYmdAdd(o.date, Math.round((new Date(+p2[0], p2[1] - 1, +p2[2]) - new Date(+p1[0], p1[1] - 1, +p1[2])) / 86400000)); }
+  epClose();
+  eaOpen(o);
+  toast('日付を選んで「予定に入れる」');
+}
+function _epHub(e) {
+  var col = evColorOf(e) || '#8B7CFF', cat = e.categoryId ? findCategory(e.categoryId) : null, kind = evKindOf(e);
+  var w = { date: e.date, time: e.time, end: e.endTime, allDay: e.allDay, endDate: e.endDate };
+  var mids = _epMids(), nms = mids.map(_evMemNm).filter(Boolean);
+  var rb = (e.remindBefore === undefined || e.remindBefore === null) ? '' : String(e.remindBefore), rl = '';
+  EV_RMD.forEach(function(x) { if (x[0] === rb) rl = x[1]; });
+  var tl = function(c, pg, ttl, val) { return '<div style="--c:' + c + '" onclick="epGo(\'' + pg + '\')"><b>' + ttl + '</b><span>' + val + '</span></div>'; };
+  var h = '<div class="eph" style="--c:' + col + '"><div class="k">● ' + evEsc([kind, cat && cat.name !== kind ? cat.name : ''].filter(Boolean).join('・') || '予定') + (e.seriesId ? '　🔁 繰り返し' : '') + '</div>'
+    + '<h1>' + evEsc(e.title || '（無題）') + '</h1><p>' + evEsc(_evWhenLbl(w)) + '</p>'
+    + (e.templateStage ? '<span class="dn' + (e.done ? ' on' : '') + '" onclick="epDone()">' + (e.done ? '✓ 実施済み（タップで取り消し）' : '📊 実施済みにする（実績+1）') + '</span>' : (e.done ? '<span class="dn on" onclick="epDone()">✓ やった（タップで取り消し）</span>' : ''))
+    + '</div><div class="pptl">'
+    + tl('var(--accent)', 'when', '📅 いつ', evEsc(_evWhenLbl(w)))
+    + tl(col, 'what', '✏️ なに', '<em>' + evEsc(e.title || '') + '</em>' + (cat ? '<br>色：' + evEsc(cat.name) : ''))
+    + tl('var(--sky,#3B8FE0)', 'who', '👤 だれと', nms.length ? evEsc(nms.join('・')) : 'なし')
+    + tl('var(--gold)', 'ntf', '🔔 通知', evEsc(rl || 'なし'))
+    + tl('var(--purple)', 'memo', '📝 メモ・場所', evEsc([e.place ? '📍' + e.place : '', e.memo || ''].filter(Boolean).join(' ') || 'なし'))
+    + '</div>';
+  h += '<div class="ppfoot">' + (e.seriesId ? '<span class="d" onclick="epDel()">' + icn('trash') + ' この回だけ消す</span><span class="d" onclick="epDelSeries()">' + icn('trash') + ' 以降すべて消す</span>' : '<span class="d" onclick="epDel()">' + icn('trash') + ' この予定を消す</span>')
+    + '<span class="m" onclick="epOld()">今までの編集画面 ›</span></div>';
+  return h;
+}
+function _epPage(e, pg) {
+  if (pg === 'when') return _whenHtml({ date: e.date || '', time: e.time || '', end: e.endTime || '', allDay: !!e.allDay, endDate: e.endDate || '' });
+  if (pg === 'what') {
+    var cs = state.categories || [], h = '<div class="ppl">予定の名前</div><input class="ppin" value="' + evEsc(e.title || '') + '" onchange="epTitle(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()">'
+      + '<div class="wnx">種類：' + evEsc(evKindOf(e) || 'なし') + '（名前から自動。CT・ST・FT などを名前に入れると実績にもつながります）</div>';
+    h += '<div class="ppl">色（カテゴリ）</div><div class="wnc" style="margin-top:8px"><span class="' + (!e.categoryId ? 'on' : '') + '" style="--c:var(--border2)" onclick="epCat(\'\')"><i></i>なし</span>'
+      + cs.map(function(c) { return '<span class="' + (e.categoryId === c.id ? 'on' : '') + '" style="--c:' + evEsc(c.color) + '" onclick="epCat(\'' + evEsc(c.id) + '\')"><i></i>' + evEsc(c.name) + '</span>'; }).join('') + '</div>';
+    return h;
+  }
+  if (pg === 'who') return _whoHtml(_epMids(), (typeof evVis === 'function' ? (evVis(e) || 'both') : 'both'));
+  if (pg === 'ntf') {
+    var rb = (e.remindBefore === undefined || e.remindBefore === null) ? '' : String(e.remindBefore);
+    return '<div class="ppl">いつ知らせる？</div><div class="ppb sm" style="--n:2">' + EV_RMD.map(function(x) { return '<span class="' + (rb === x[0] ? 'on' : '') + '" onclick="epRemind(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>'
+      + '<div class="wnx">時刻のない予定は、その日の朝に知らせます（通知をオンにしている端末のみ）</div>';
+  }
+  if (pg === 'memo') return '<div class="ppl">📍 場所</div><input class="ppin" value="' + evEsc(e.place || '') + '" placeholder="例：オンライン・〇〇カフェ" onchange="epPlace(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()">'
+    + '<div class="ppl">📝 メモ</div><textarea class="ppmemo" id="epMemoTx" style="min-height:38vh" placeholder="メモ（自動で保存）" oninput="epMemo(this.value)">' + evEsc(e.memo || '') + '</textarea>';
+  return '';
+}
+function _epRender() {
+  var e = _epE(); if (!e) { var p0 = document.getElementById('epPg'); if (p0 && p0.parentNode) p0.parentNode.removeChild(p0); _ep = null; return; }
+  _uxCss(); _ux2Css(); _ppCss(); _epCss();
+  var body, btm, L = EP_PG;
+  if (!_ep.pg) {
+    body = _epHub(e);
+    btm = '<div class="ux-btm"><span class="ux-bk" onclick="epClose()">‹ 戻る</span><span class="ux-nx" onclick="epDup()">⧉ 別の日にも入れる</span></div>';
+  } else {
+    var i = -1; L.forEach(function(x, k) { if (x[0] === _ep.pg) i = k; });
+    body = '<div class="ux-step">' + (i + 1) + ' / ' + L.length + '　' + L[i][1] + '</div>' + _epPage(e, _ep.pg);
+    btm = _uxBtm('epGo(\'\')', L.map(function(x) { return x[1]; }), i, 'epGoI', i < L.length - 1 ? L[i + 1][1] + ' ›' : '✓ 終わる', i < L.length - 1 ? 'epGoI(' + (i + 1) + ')' : 'epGo(\'\')');
+  }
+  var cur = (L.filter(function(x) { return x[0] === _ep.pg; })[0] || ['', ''])[1];
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="' + (_ep.pg ? 'epGo(\'\')' : 'epClose()') + '">' + (_ep.pg ? evEsc(e.title || '予定') + ' › <b>' + cur + '</b>' : '予定 › <b>' + evEsc(e.title || '') + '</b>') + '</span><span class="ux-home" onclick="epClose()" title="閉じる">✕</span></div>' + body + btm;
+  var pg = document.getElementById('epPg'), st0 = pg ? pg.scrollTop : 0;
+  if (!pg) { pg = document.createElement('div'); pg.id = 'epPg'; document.body.appendChild(pg); _uxSwipe(pg, function() { epNext(-1); }, function() { epNext(1); }); }
+  var a = document.activeElement;
+  if (a && pg.contains(a) && (a.tagName === 'TEXTAREA' || a.id === 'whoQ')) return; // 書いている間は描き直さない
+  pg.innerHTML = h; pg.scrollTop = st0;
+}
+// ════ 予定を足す：1 なに → 2 いつ → 3 だれと ════
+function eaOpen(o) {
+  if (!eventsUid()) { toast('ログインが必要です'); return; }
+  o = o || {};
+  _whoQv = '';
+  _ea = { step: o.step || 1, title: o.title || '', tpl: null, cat: o.cat || '', date: o.date || evTodayYmd(), time: o.time || '', end: o.end || '', allDay: !!o.allDay, endDate: o.endDate || '',
+    mids: o.mids ? o.mids.slice() : (o.member ? [o.member] : []), preset: o.member || '', vis: o.member ? 'member' : 'both', memo: o.memo || '', place: o.place || '', remind: o.remind || '', dupStage: o.dupStage || '' };
+  if (!_evTpl) { try { _evTplEnsure().then(function() { if (_ea && _ea.step === 1) _eaRender(); }); } catch (e) {} }
+  _eaRender();
+}
+function eaClose() { try { if (document.getElementById('tpOv')) closeTimePad(false); } catch (e0) {} var p = document.getElementById('eaPg'); if (p && p.parentNode) p.parentNode.removeChild(p); _ea = null; }
+function eaGoI(i) { if (!_ea) return; if (i > 0 && !_eaTitleOk()) return; _ea.step = i + 1; _whoQv = ''; _eaRender(); var p = document.getElementById('eaPg'); if (p) p.scrollTop = 0; }
+function eaNext() { if (!_ea) return; if (_ea.step >= 3) { eaSave(); return; } eaGoI(_ea.step); }
+function _eaTitleOk() {
+  var ti = document.getElementById('eaTitle'); if (ti) _ea.title = ti.value;
+  if (!String(_ea.title || '').trim()) { toast('予定の名前を入れてください'); if (ti) try { ti.focus(); } catch (e) {} return false; }
+  return true;
+}
+function eaTitleIn(v) { if (_ea) _ea.title = v; }
+function _eaTplList() {
+  return (_evTpl || []).filter(function(t) { return t && t.type === 'event' && !t.unionScope; }).sort(function(a, b) { return (b.useCount || 0) - (a.useCount || 0); });
+}
+function _eaRecent() {
+  var seen = {}, out = [], names = {};
+  _eaTplList().forEach(function(t) { names[String(t.name || '').replace(/\{name\}/g, '').trim()] = 1; });
+  (state.events || []).filter(function(e) { return e.type === 'event' && e.title && !/^UN_/.test(e.id); })
+    .sort(function(a, b) { return (b.createdAt || b.date || '') < (a.createdAt || a.date || '') ? -1 : 1; })
+    .forEach(function(e) { var k = String(e.title).trim(); if (out.length < 10 && !seen[k] && !names[k]) { seen[k] = 1; out.push(e); } });
+  return out;
+}
+function eaTpl(id) {
+  var t = (typeof _evTplFind === 'function') ? _evTplFind(id) : null; if (!t || !_ea) return;
+  var nm = _ea.mids.length ? (_evMemNm(_ea.mids[0]).split(' ')[0] || '') : '';
+  _ea.tpl = t;
+  _ea.title = String(t.name || '').replace(/\{name\}/g, nm).trim() || (t.name || '');
+  _ea.cat = (typeof _evTplAutoCat === 'function' ? _evTplAutoCat(t) : '') || t.categoryId || '';
+  _ea.allDay = !!t.allDay;
+  _ea.time = t.allDay ? '' : (t.defaultTime || '');
+  _ea.end = '';
+  if (_ea.time && t.defaultTimeEnd) _ea.end = t.defaultTimeEnd;
+  else if (_ea.time && t.durationMin) { var hm = _ea.time.split(':'), tot = (+hm[0] || 0) * 60 + (+hm[1] || 0) + t.durationMin; if (tot < 1800) _ea.end = evPad2(Math.floor(tot / 60)) + ':' + evPad2(tot % 60); }
+  _ea.remind = (t.notifyOffset === '' || t.notifyOffset === undefined || t.notifyOffset === null) ? '' : String(t.notifyOffset);
+  if (t.memo && !_ea.memo) _ea.memo = t.memo;
+  _eaTo2();
+}
+function _eaTo2() { var ti = document.getElementById('eaTitle'); if (ti) ti.value = _ea.title; eaGoI(1); }
+function eaRecent(i) {
+  var e = _eaRecent()[i]; if (!e || !_ea) return;
+  _ea.tpl = null; _ea.title = e.title; _ea.cat = e.categoryId || '';
+  _ea.time = e.allDay ? '' : (e.time || ''); _ea.end = e.allDay ? '' : (e.endTime || ''); _ea.allDay = !!e.allDay;
+  _eaTo2();
+}
+function eaToTask() { var o = _ea; eaClose(); openEventModal(null, o ? (o.mids[0] || '') : '', o ? o.date : '', 'task'); var ti = document.getElementById('evTitle'); if (o && ti && o.title) ti.value = o.title; }
+function eaToOld() {
+  var o = _ea; if (!o) return;
+  var ti = document.getElementById('eaTitle'); if (ti) o.title = ti.value;
+  eaClose(); _evDraft = null;
+  openEventModal(null, o.preset || '', o.date, 'event');
+  _eaFill(o);
+}
+function _eaFill(o) {
+  document.getElementById('evTitle').value = String(o.title || '').trim();
+  try { evKindAuto(); } catch (e) {}
+  buildTimeSelects(o.allDay ? '' : o.time, o.allDay ? '' : o.end);
+  evToggleAllDay(!!o.allDay);
+  var de = document.getElementById('evDateEnd'); if (de) de.value = (o.endDate && o.endDate > o.date) ? o.endDate : '';
+  _evCategoryId = o.cat || ''; try { updateEvCategoryDisplay(); } catch (e2) {}
+  _evMemberIds = o.mids.slice();
+  if (o.mids.length) selEvVis(o.vis === 'member' ? 'member' : 'both');
+  try { updateEvMemberDisplay(); } catch (e3) {}
+  document.getElementById('evRemind').value = o.remind || '';
+  document.getElementById('evMemo').value = o.memo || '';
+  var pl = document.getElementById('evPlace'); if (pl) pl.value = o.place || '';
+  _evTplSel = o.tpl || null;
+  _evDupStage = o.dupStage || '';
+}
+function eaSave() {
+  var o = _ea; if (!o || !_eaTitleOk()) return;
+  var n0 = (state.events || []).length;
+  document.body.classList.add('ep-silent');
+  window._evQuiet = true;
+  try { _evDraft = null; openEventModal(null, o.preset || '', o.date, 'event'); _eaFill(o); saveEvent(); }
+  catch (x) { try { closeEventModal(true); } catch (y) {} }
+  window._evQuiet = false;
+  document.body.classList.remove('ep-silent');
+  if ((state.events || []).length <= n0) return; // 保存できなかった（理由はトースト）
+  if (o.tpl) { o.tpl.useCount = (o.tpl.useCount || 0) + 1; try { _evTplSaveAll(); } catch (e) {} }
+  eaClose();
+  toast('✓ 「' + String(o.title).trim() + '」を ' + _evDayLbl(o.date).replace(/ .*$/, '') + ' に入れました');
+  if (currentView === 'events' && _evMode === 'calendar' && _cvOn()) {
+    var p = o.date.split('-'); _calYear = +p[0]; _calMonth = +p[1] - 1; _calSelDate = o.date; _cvSplitOn = true;
+    renderCalendar();
+  }
+}
+function _eaSum(o) {
+  var s = '<b>' + evEsc(String(o.title || '').trim() || '（名前なし）') + '</b>';
+  if (o.step >= 2) s += '　<b>' + evEsc(_evWhenLbl(o)) + '</b>';
+  if (o.step >= 3 && o.mids.length) s += '　👤 <b>' + evEsc(o.mids.map(_evMemNm).filter(Boolean).join('・')) + '</b>';
+  return '<div class="easum">いま：' + s + (o.step >= 3 ? '<br><small>通知・メモ・場所は、入れたあと予定の画面から（テンプレの通知はそのまま入ります）</small>' : '') + '</div>';
+}
+function _eaRender() {
+  if (!_ea) return;
+  _uxCss(); _ux2Css(); _ppCss(); _epCss();
+  var o = _ea, b = '';
+  if (o.step === 1) {
+    b = '<div class="eaq">1 / 3</div><h2>なにをする？</h2>'
+      + '<input class="ppin" id="eaTitle" placeholder="予定の名前（例：CT 鈴木さん）" value="' + evEsc(o.title) + '" oninput="eaTitleIn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();eaNext();}" autocomplete="off">'
+      + '<div class="wnx">CT・ST・FT などを名前に入れると、実績にもつながります</div>';
+    var tp = _eaTplList();
+    if (tp.length) b += '<div class="ppl">いつもの予定（タップで日時まで入る）</div><div class="wnc" style="margin-top:8px">' + tp.map(function(t) {
+      var c = (t.categoryId && findCategory(t.categoryId)) ? findCategory(t.categoryId).color : 'var(--border2)';
+      return '<span style="--c:' + evEsc(c) + '" onclick="eaTpl(\'' + evEsc(t.id) + '\')"><i></i>' + evEsc(String(t.name || '').replace(/\{name\}/g, '…')) + (t.defaultTime && !t.allDay ? ' <small>' + evEsc(t.defaultTime) + '</small>' : '') + '</span>';
+    }).join('') + '</div>';
+    var rc = _eaRecent();
+    if (rc.length) b += '<div class="ppl">最近の予定（タップで決まる）</div><div class="wnc" style="margin-top:8px">' + rc.map(function(e, i) {
+      return '<span style="--c:' + evEsc(evColorOf(e) || 'var(--border2)') + '" onclick="eaRecent(' + i + ')"><i></i>' + evEsc(e.title) + '</span>';
+    }).join('') + '</div>';
+    b += '<div class="ealk"><span onclick="eaToTask()">タスクにする ›</span><span onclick="eaToOld()">詳しく入力（繰り返し・ユニオン予定など）›</span></div>';
+  } else if (o.step === 2) {
+    b = '<div class="eaq">2 / 3</div><h2>いつ？</h2>' + _whenHtml(o) + _eaSum(o);
+  } else {
+    b = '<div class="eaq">3 / 3（なくてもOK）</div><h2>だれと？</h2>' + _whoHtml(o.mids, o.vis) + _eaSum(o);
+  }
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="eaClose()">予定を足す › <b>' + EA_ST[o.step - 1] + '</b></span><span class="ux-home" onclick="eaClose()" title="やめる">✕</span></div>' + b
+    + _uxBtm(o.step === 1 ? 'eaClose()' : 'eaGoI(' + (o.step - 2) + ')', EA_ST, o.step - 1, 'eaGoI', o.step < 3 ? '次へ ›' : '✓ 予定に入れる', 'eaNext()');
+  var pg = document.getElementById('eaPg');
+  if (!pg) { pg = document.createElement('div'); pg.id = 'eaPg'; document.body.appendChild(pg); }
+  var a = document.activeElement;
+  if (a && pg.contains(a) && a.id === 'whoQ') return;
+  pg.innerHTML = h;
+  if (o.step === 1 && !o.title) { var ti = document.getElementById('eaTitle'); if (ti) try { ti.focus(); } catch (e) {} }
+}
+// スマホで「予定を足す」を開く入口（PCは今までの入力画面）
+function evAddFor(mid, date) { if (_cvOn()) eaOpen({ member: mid || '', date: date || '' }); else openEventModal(null, mid || '', date || '', 'event'); }
 
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
@@ -17662,6 +18038,7 @@ function _uxMemRender() {
 function uxMemTask(mid, type) {
   var m = _uxMemFind(mid), ctxK = _uxMemSt ? String(_uxMemSt.list).split(':')[0] : '';
   if (type === 'task' && ctxK === 'gap' && typeof dtEzTask === 'function') { dtEzTask(mid); return; } // v601: 理想との差は「稼働UP：◯◯さん…」のタスク
+  if (type !== 'task' && _cvOn()) { eaOpen({ member: mid }); return; } // v613
   openEventModal(null, mid, '', type);
   if (type === 'task' && m) {
     var nm = (m.lastName || m.firstName || '') + 'さん', line = UX_MEM_CTX[ctxK] && UX_MEM_CTX[ctxK].line ? UX_MEM_CTX[ctxK].line() : 0;
@@ -20106,6 +20483,7 @@ function p2ListManualSave() {
 function p2OpenAL() { if (typeof AL_URL !== 'undefined') window.open(AL_URL, '_blank'); _p2Al.at = 0; setTimeout(function() { _p2AlLoad(true); }, 60000); }
 // v548: 「＋予定」＝種類を入れた状態で予定の入力を開く（メンバーを選んで保存）
 function p2AddKindEv(kind) {
+  if (_cvOn()) { eaOpen({ date: evTodayYmd(), title: kind + ' ' }); return; } // v613
   openEventModal(null, null, evTodayYmd(), 'event');
   var ti = document.getElementById('evTitle');
   if (ti) { ti.value = kind + ' '; try { evKindAuto(); } catch (eK) {} try { ti.focus(); } catch (eF) {} }
@@ -27542,6 +27920,7 @@ function dayVShift(d) {
 }
 function dayVToday() { _dayVDate = evTodayYmd(); renderDayV(); }
 function openEventAddTime(ds, h) {
+  if (_cvOn()) { eaOpen({ date: ds, time: evPad2(h) + ':00', end: evPad2(Math.min(h + 1, 29)) + ':00' }); return; } // v613
   openEventModal(null, '', ds, 'event');
   buildTimeSelects(evPad2(h) + ':00', evPad2(Math.min(h + 1, 29)) + ':00');
 }
@@ -28061,6 +28440,7 @@ function openEventActions(id) {
   }
   var e = findEvent(id);
   if (!e) return;
+  if (_cvOn() && e.type !== 'task') { closeEventActions(); epOpen(id); return; } // v613: スマホの予定は「予定の画面」
   // v357: PCの全画面ToDoでは操作シートを開かず、右の詳細パネルで編集
   var _ag357 = document.getElementById('evAgenda');
   if (isPCMode() && _ag357 && _ag357.classList.contains('full')) { tdSelect(id); return; }
@@ -30358,8 +30738,8 @@ function mpToggle(id) {
   if (typeof evTplOnMemberChange === 'function') evTplOnMemberChange(); // {name}置換を更新
 }
 // v311: 入口で種別を自動決定（カレンダー系＝予定、ToDo＝タスク）
-function openEventAdd(memberId) { openEventModal(null, memberId, '', 'event'); }
-function openEventAddDate(date) { openEventModal(null, '', date, 'event'); }
+function openEventAdd(memberId) { evAddFor(memberId, ''); } // v613: スマホは「予定を足す」（なに→いつ→だれと）
+function openEventAddDate(date) { evAddFor('', date); }
 function openTaskAdd() {
   openEventModal(null, '', '', 'task');
   // v315: リスト画面から追加した場合はそのリストを既定にセット（Lifebear式）
@@ -30491,7 +30871,8 @@ function openTimePad(targetId) {
   } catch(e1) {}
   // v364: 対象ペアを決定（テンプレ作成 or 予定追加）
   if (targetId === 'evtF_time' || targetId === 'evtF_timeEnd') { _tpStartId = 'evtF_time'; _tpEndId = 'evtF_timeEnd'; _tpIsTask = false; }
-  else if (targetId === 'tqTime') { _tpStartId = 'tqTime'; _tpEndId = 'tqTimeEndX'; _tpIsTask = true; } // v456: クイック追加もカレンダーと同じ時刻パッド
+  else if (targetId === 'tqTime') { _tpStartId = 'tqTime'; _tpEndId = 'tqTimeEndX'; _tpIsTask = true; }
+  else if (targetId === 'wnT' || targetId === 'wnTE') { _tpStartId = 'wnT'; _tpEndId = 'wnTE'; _tpIsTask = false; } // v613: 予定の画面・予定を足す // v456: クイック追加もカレンダーと同じ時刻パッド
   else { _tpStartId = 'evTime'; _tpEndId = 'evTimeEnd'; _tpIsTask = (_evType === 'task'); }
   if (_tpStartId === 'evTime' && typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
   _tpTarget = targetId;
@@ -30662,6 +31043,7 @@ function closeTimePad(commit) {
   // v456: クイック追加の時刻はstateへ同期してからチップを描き直す（クリアボタンの表示更新）
   _tqPadSync();
   if (_tpStartId === 'tqTime' && typeof _tqRenderChips === 'function') { try { _tqRenderChips(); } catch(eTq9) {} }
+  if (_tpStartId === 'wnT' && document.getElementById('wnT')) { var _wnOv = ov; if (_wnOv) _wnOv.id = ''; try { _wnPadDone(); } catch(eWn) {} } // v613
   if (ov) {
     // v343: ふわっとフェードアウト（idを外して、フェード中でも次のパッドをすぐ開けるように）
     ov.id = '';
@@ -31580,13 +31962,14 @@ function _saveEventBody() {
   var _contIds = (e.memberIds || []).slice();
   var _contType = e.type;
   try { if (!viewingOwnerUid && e.type === 'event' && (e.olGid || evKindOf(e) === 'OL') && evIsMemberLinked(e)) _olFromEvent(e); } catch (eOl) {} // v567: OLの予定はOLの記録にも
+  var _qt9 = !!window._evQuiet; // v613: 予定の画面からの保存は自前のトースト
   saveEventDoc(e).then(function(){
     if (_repMade > 1) toast('繰り返し予定を' + _repMade + '件作成しました ✓');
     else if (_newTask) toastAction('✓ 「' + _savedTitle + '」を追加しました', '＋ 続けて追加', function(){
       openEventModal(null, _contIds[0] || '', '', _contType);
       if (_contIds.length > 1) { _evMemberIds = _contIds.slice(); updateEvMemberDisplay(); }
     }, 5000);
-    else toast('保存しました ✓');
+    else if (!_qt9) toast('保存しました ✓');
   }).catch(function(){ toast('保存に失敗しました（通信状態を確認してください）'); });
   if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   _evDraft = null; // 保存できたら下書きは不要
