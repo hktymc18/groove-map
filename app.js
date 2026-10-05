@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v609';
+var APP_JS_VERSION = 'v610';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v609';
+  var DATA_VERSION = 'v610';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v610', d:'2026-10-05', items:['MAP：スマホの横向きも縦と同じカードの一覧に（上は1行・追加と受付連携は右下）'] },
   { v:'v609', d:'2026-10-05', items:['MAP：研修ステータスのタイトル（DLR・マケ・PGなど）も研修生の水色に'] },
   { v:'v608', d:'2026-10-05', items:['受付連携を1画面のページに：①稼働を取り込む ②名簿から追加 ③名前をそろえる','名簿から追加：受付の名簿にいてMAPにいない人を、紹介者の下に自動で置いて追加（名前・性別・研修生も名簿のまま）','名前をそろえる：受付とつないだ人で字がちがう時（高橋⇔髙橋など）に名簿の名前にそろえる','MAPの横向きも、地域・絞り込み・⋯・受付連携を縦と同じ選び方に'] },
   { v:'v607', d:'2026-10-05', items:['MAP（スマホ縦）を作り直し：上は「現状/理想・月」「LTSV・稼働・S」「全段・段・地域・絞り込み」の3段だけに','メンバーの行：木の線で字下げ、稼働（S/A/B/C）とGSVは右の列にそろえて固定。5段より深い所は横にスクロール','タイトルを大きな色の札に（BR=紫・審査中=オレンジ・研修生=水色・フレッシュ=金・そのほか=灰）','並びは「フロントが多い順」が標準に（絞り込みの中で変えられます）','地域・絞り込みは下から出る大きなボタンで。ほかの人を「うすく表示／かくす」を選べます','行を押すとその人の画面（右下で編集・この人の下に追加）。下の帯に「＋追加」と「受付連携」'] },
@@ -16258,7 +16259,7 @@ function _p2SPageHtml(ym) {
 }
 setTimeout(function() { try { _uxSync(); } catch (e) {} }, 0);
 // ════ v594: MAP（スマホ横向き）＝PC版の横向きツリーを全画面。上は1行のバー、ほかは右から出す引き出しへ ════
-function _uxMapLand() { return _uxLand() && (currentView === 'current' || currentView === 'ideal'); }
+function _uxMapLand() { return false; } // v610: スマホの横向きも縦と同じカードの一覧（組織図はPCだけ）
 function _uxMapCss() {
   if (document.getElementById('uxMapCss')) return;
   var st = document.createElement('style'); st.id = 'uxMapCss';
@@ -16355,7 +16356,7 @@ function uxMapDrClose(now) {
 }
 // ════ v607: MAP（スマホ縦）を作り直し — 上は3段（切替・数字・チップ）、行は「木の線＋右の列をそろえる」、下に追加と受付連携 ════
 var _mxHide = false; try { _mxHide = localStorage.getItem('gm_mxHide') === '1'; } catch (e) {}
-function _mxOn() { return !isPCMode() && !_uxLand() && (currentView === 'current' || currentView === 'ideal'); }
+function _mxOn() { return !isPCMode() && (currentView === 'current' || currentView === 'ideal'); } // v610: 縦も横も
 // タイトルのカテゴリ（BR → 審査中 → 研修生 → フレッシュ → そのほか）
 function _mxCat(m, mapType) {
   var t = (m.title || '').trim();
@@ -16410,6 +16411,14 @@ function _mxCss() {
     + ".mxg.mxs2>div{min-height:46px;justify-content:center}.mxg.c4{grid-template-columns:repeat(4,1fr)}.mxg.c4>div{min-height:50px;align-items:center;justify-content:center}"
     + ".mxm{display:flex;gap:8px}.mxm span{flex:1;height:42px;border-radius:12px;background:var(--surface);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}.mxm span.on{border-color:var(--accent);color:var(--accent)}"
     + ".mxq{width:100%;box-sizing:border-box;height:46px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:16px;padding:0 14px;outline:none}.mxq:focus{border-color:var(--accent)}"
+    // v610: 横向き — 上は1行（切替・月・数字・チップ・🔍⋯）、追加・受付連携は右下に浮かせる、行は少し低く
+    + "body.ux-land #mxTop{display:flex;flex-wrap:wrap;align-items:center;padding-top:calc(env(safe-area-inset-top) + 6px)}body.ux-land .mx1{order:1;padding-right:0}body.ux-land .mx1 .sp{display:none}"
+    + "body.ux-land .mx2{order:2;padding:0 6px 0 12px;gap:10px}body.ux-land .mx2 b{font-size:21px}body.ux-land .mx2 i{font-size:16px}body.ux-land .mx2 em{margin-left:0}"
+    + "body.ux-land .mx3{order:3;flex:1;min-width:0;padding:6px 12px 6px 4px}body.ux-land .mxlg{display:none}body.ux-land .mxh{order:4;flex-basis:100%;padding-top:4px;padding-bottom:3px}"
+    + "body.ux-land .mxc{height:36px}body.ux-land .mr{min-height:52px}body.ux-land .mn{padding:5px 8px 5px 0}"
+    + "body.ux-land.ux-mx #mxBtm{left:auto!important;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 10px)!important;background:none;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;gap:8px}"
+    + "body.ux-land #mxBtm .bk,body.ux-land #mxBtm .nx{height:46px;box-shadow:0 6px 18px rgba(0,0,0,.28)}body.ux-land #mxBtm .nx{margin-left:0}"
+    + "body.ux-land.ux-mx #treeCurrent,body.ux-land.ux-mx #treeIdeal{padding-bottom:80px}"
     + ".mxhit{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:15px;font-weight:800}.mxhit small{color:var(--text-dim);font-weight:700;font-size:12px}.mxhit em{margin-left:auto;font-style:normal;color:var(--accent);font-size:12.5px;font-weight:900}";
   document.head.appendChild(st);
 }
@@ -16588,7 +16597,7 @@ function mxRegion() {
   var own = membersForMap('current').filter(function(m) { return !m.deleted; }), ro = _regionOrder(own), none = own.filter(function(m) { return !(m.region || '').trim(); }).length;
   var tile = function(v, lb, n) { var on = (regionFilter || '') === v; return '<div class="' + (on ? 'on' : '') + '" onclick="mxSetRegion(\'' + v + '\')"><b>' + evEsc(lb) + '</b><span>' + n + '人</span></div>'; };
   _mxSheet('mxRegOv', '<h4>地域</h4><div class="mxg">' + tile('', '全地域', own.length) + ro.keys.map(function(r) { return tile(r, r, ro.cnt[r]); }).join('') + (none ? tile('__NONE__', '未設定', none) : '') + '</div>'
-    + (_uxLand() ? '' : '<h5>ほかの地域の人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>'));
+    + '<h5>ほかの地域の人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>');
 }
 function _mxRe() { renderTree(currentView === 'ideal' ? 'ideal' : 'current'); if (_uxLand()) { _uxMapSync(); setTimeout(_applyMapDims, 220); } }
 function mxSetRegion(v) { regionFilter = v || ''; window._pcFocusLineage = ''; _p2SheetClose('mxRegOv'); _mxRe(); }
@@ -16601,7 +16610,7 @@ function mxFilter() {
     var tile = function(v, lb, c) { return '<div class="' + ((mapCatFilter || '') === v ? 'on' : '') + '" onclick="mxSetCat(\'' + v + '\')"><b>' + lb + '</b><span>' + (v === 'bday' ? '30日以内・' : '') + c + '人</span></div>'; };
     h += '<div class="mxg">' + tile('', 'すべて', own.length) + tile('fresh', 'フレッシュ', n('fresh')) + tile('br', 'BR', n('br')) + tile('trainee', '研修生', n('trainee')) + tile('bday', '誕生日', bd) + '</div>'
       + '<h5>審査中（タイトル）</h5><div class="mxg c4">' + ['LOI', 'Q2', 'Q3', 'Q4'].map(function(t) { var c = own.filter(function(m) { return (m.title || '').trim() === t; }).length; return '<div class="' + (mapCatFilter === 'qbr:' + t ? 'on' : '') + '" onclick="mxSetCat(\'qbr:' + t + '\')"><b>' + t + '</b><span>' + c + '人</span></div>'; }).join('') + '</div>'
-      + (_uxLand() ? '' : '<h5>ほかの人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>');
+      + '<h5>ほかの人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>';
   }
   h += '<h5>並び</h5><div class="mxg mxs2">' + TREE_SORTS.map(function(s) { return '<div class="' + (s[0] === _treeSortMode ? 'on' : '') + '" onclick="_p2SheetClose(\'mxFltOv\');setTreeSort(\'' + s[0] + '\')"><b style="font-size:14.5px">' + s[1] + '</b></div>'; }).join('') + '</div>';
   _mxSheet('mxFltOv', h);
@@ -16616,7 +16625,7 @@ function mxSearchRun(q) {
   var box = document.getElementById('mxHits'); if (!box) return;
   q = String(q || '').trim().toLowerCase(); if (!q) { box.innerHTML = ''; return; }
   var mt = currentView === 'ideal' ? 'ideal' : 'current', hits = composeMergedInto(membersForMap(mt), mt).filter(function(m) { return !m.deleted && ((m.lastName || '') + (m.firstName || '') + ' ' + (m.lastName || '') + ' ' + (m.firstName || '')).toLowerCase().indexOf(q) >= 0; }).slice(0, 12);
-  box.innerHTML = hits.length ? hits.map(function(m) { return '<div class="mxhit" onclick="_p2SheetClose(\'mxSrOv\');' + (_uxLand() ? 'jumpToMember' : 'mxJump') + '(\'' + m.id + '\')">' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small><em>ここへ ›</em></div>'; }).join('') : '<div class="ux-empty">見つかりません</div>';
+  box.innerHTML = hits.length ? hits.map(function(m) { return '<div class="mxhit" onclick="_p2SheetClose(\'mxSrOv\');mxJump(\'' + m.id + '\')">' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small><em>ここへ ›</em></div>'; }).join('') : '<div class="ux-empty">見つかりません</div>';
 }
 function mxMore() {
   var cur = currentView === 'current', vis = function(id) { var e = document.getElementById(id); return !!(e && e.style.display !== 'none'); };
@@ -31303,7 +31312,7 @@ function closeLtsvModal(e) {
 }
 
 function jumpToMember(id) {
-  if (!isPCMode() && !_uxLand()) { var lm = document.getElementById('ltsvModal'); if (lm) lm.classList.remove('open'); mxJump(id); return; } // v607
+  if (!isPCMode()) { var lm = document.getElementById('ltsvModal'); if (lm) lm.classList.remove('open'); mxJump(id); return; } // v607
   // モーダルを閉じる
   var modal = document.getElementById('ltsvModal');
   if (modal) modal.classList.remove('open');
