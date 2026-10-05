@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v617';
+var APP_JS_VERSION = 'v618';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v617';
+  var DATA_VERSION = 'v618';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5334,6 +5334,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v618', d:'2026-10-05', items:['スマホの「今日」をタイルに：今日の手帳・今日の予定・今週やること・気になる人・再アプローチ','再アプローチを1つの画面に（時期が来た人／まだ早い人・「＋ 人を足す」で自分でも追加・手帳へ入れる）','設定をリストに（プロフィール・見た目・通知・カレンダー・毎日のいつもの行・翌月コピー など）。押すと1項目ずつ','スマホでは上の帯（年月・翌月コピー）をなくして画面を広く。翌月コピーは設定とMAPの「⋯」から'] },
   { v:'v617', d:'2026-10-05', items:['🤝 OL（スマホ）を作り直しました。上の古い帯をなくし、3〜7人OL・個別OL・要フォローを大きい数字で。今月の3〜7人OLは①②③の枠、フレッシュは要フォロー順（あいている日数を大きく・＋ですぐ企画）','📝 OLの企画は1枚で：個別／3〜7人 → だれと（要フォロー順のリスト）→ いつ（時刻は今までの数字パッド）→ Aさん・内容。カレンダーにも入ります','✍ 日付が過ぎた予定のOLは「反応を記入」から反応を書くだけ（保存で実施済み）。人を押すと、その人のOLの記録が並びます'] },
   { v:'v616', d:'2026-10-05', items:['📓 ToDo（スマホ）が「今日の手帳」になりました。紙の手帳と同じように行が並び、空いた行に直接書いてEnterで次の行へ。10行目に「今日の10件」の線があり、それより先も何件でも書けます（＋αの分は金色に）','📋 毎日のいつもの行（最初は「計画立案する」）が毎朝1行目に入ります。下の「毎日のいつもの行を変える」から追加・削除','↪ 前の日の残りは「今日に入れる」か「日を選ぶ」。やっていないタスクはふりかえり（今日の21時から・過ぎた日）で、明日／カレンダーで選んだ日へまとめて・1件ずつ移せます','✍ 1週間の書いた数・10件書いた日の連続・今日学んだ事も手帳に。行を押すとタスクの画面（やる日・時刻（今までの数字パッド）・優先A/B/C・だれの・通知・メモ）','📱 横向きは手帳を開いた形（左：やるべき事／右：その日のタイムスケジュール）。今までのToDo（期限なし・リスト・完了・ゴミ箱・検索）は一番下の「すべてのタスク」から'] },
   { v:'v615', d:'2026-10-05', items:['➕ メンバーをタップした画面の右下が「フロント追加」になりました。押すとその人の直下に新しい人を足せます（MAPの＋追加も同じ新しい画面）。名前・性別・タイトル、研修生なら研修の予定、それ以外は稼働・GSV（任意）。「追加してくわしく入れる」でそのままその人の画面へ','🏷 タイトルはカテゴリのカード（研修生 FT〜CO・審査中 LOI〜Q4・BA B1〜BM・BR BR〜TE）を押すと、リストが開いて選べます。今のタイトルはカードに表示','📅 スタート月は年と月をリストで選べるようにしました（何年も前の人もすぐ）'] },
@@ -6905,6 +6906,7 @@ function gameDateLabel() {
 function renderHome() {
   var wrap = document.getElementById('view-home');
   if (!wrap) return;
+  if (typeof isPCMode === 'function' && !isPCMode()) { _tdyRender(); return; } // v618: スマホの今日＝タイル
   var g = getGame(), today = gameToday();
   if (g.todayMissions.date !== today) g.todayMissions = { date: today, done: [] };
   gameAward(false); // ログイン等を静かに採点
@@ -15922,6 +15924,7 @@ function _uxSync() {
     var land = _uxLand();
     b.classList.toggle('ux-land', land);
     b.classList.remove('ux-ev'); // v612: 予定も横向きで使える（左に月・右にその日の予定）
+    b.classList.toggle('ux-nh', !isPCMode()); _tdyCss(); // v618: スマホは古い上の帯（年月・翌月コピー）をなくす
     _cvSync();
     b.classList.toggle('ux-bh0', currentView !== 'current' && currentView !== 'ideal'); // 横向きは左の列で移動するので「メニューにもどる」の帯は不要（MAPは現状/理想の切替があるので残す）
     if (isPCMode()) b.classList.remove('ux-pg');
@@ -18248,6 +18251,218 @@ function _olpgRender() {
   if (_olp.focusNote) { _olp.focusNote = false; setTimeout(function() { var f = document.getElementById('olpNote'); if (f) try { f.focus(); } catch (e) {} }, 120); }
 }
 
+// ════ v618: 今日（タイルで「今日やること」だけ）・再アプローチ（1つの画面）・設定（項目のリスト→1項目ずつ）＋スマホは古い上の帯をなくす
+function _tdyCss() {
+  if (document.getElementById('tdyCss')) return;
+  var st = document.createElement('style'); st.id = 'tdyCss';
+  st.textContent = "body.ux-nh header{display:none!important}body.ux-nh:not(.ux-pg) .scroll-area{padding-top:env(safe-area-inset-top)}"
+    + ".tdy{padding:14px 14px 20px;max-width:760px;margin:0 auto}.tdy-hd{display:flex;align-items:flex-end;gap:8px}.tdy-hd h1{margin:0;font-size:21px;font-weight:900;flex:1;line-height:1.35}.tdy-hd h1 small{display:block;font-size:12.5px;color:var(--text-dim);font-weight:800}"
+    + ".tdy-st{flex:none;font-size:13px;font-weight:900;color:var(--gold);background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px 10px}.tdy-bell{flex:none;position:relative;width:38px;height:38px;border-radius:11px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}.tdy-bell i{position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--red)}"
+    + ".tdy-tl{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}body.ux-land .tdy-tl{grid-template-columns:repeat(4,1fr)}"
+    + ".tdy-t{border-radius:16px;padding:11px 12px;min-height:110px;background:linear-gradient(150deg,color-mix(in srgb,var(--c) 15%,var(--surface)) 0%,var(--surface) 75%);border:1.5px solid color-mix(in srgb,var(--c) 40%,var(--border));display:flex;flex-direction:column;justify-content:space-between;gap:6px;cursor:pointer}"
+    + ".tdy-t:active{transform:scale(.98)}.tdy-t>b{font-size:15px;font-weight:900}.tdy-t .v{font-size:28px;font-weight:900;font-family:Inter,'Noto Sans JP',sans-serif;color:var(--c);line-height:1}.tdy-t .v small{font-size:13px;color:var(--text-dim)}.tdy-t>span,.tdy-t .s{font-size:12px;color:var(--text-mid);font-weight:800;line-height:1.4}.tdy-t.w{grid-column:span 2;min-height:0}"
+    + ".tdy-bar{display:grid;gap:3px}.tdy-bar i{height:8px;border-radius:3px;background:var(--surface2)}.tdy-bar i.f{background:var(--purple)}.tdy-bar i.d{background:var(--accent)}.tdy-bar i.x{background:color-mix(in srgb,var(--gold) 45%,var(--surface))}.tdy-bar i.x.d{background:var(--gold)}"
+    + ".tdy-ev{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden}.tdy-ev b{font-family:Inter,sans-serif;width:40px;flex:none}.tdy-ev i{width:4px;height:16px;border-radius:2px;background:var(--c);flex:none}.tdy-ev span{overflow:hidden;text-overflow:ellipsis}"
+    + ".tdy-wk{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900}.tdy-wk span:first-child{width:50px;overflow:hidden;white-space:nowrap}.tdy-wk em{flex:1;height:7px;border-radius:4px;background:var(--surface2);position:relative;overflow:hidden}.tdy-wk em i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}.tdy-wk span:last-child{width:28px;text-align:right}"
+    + ".tdy-sec{font-size:13px;font-weight:900;color:var(--text-mid);margin:16px 2px 7px;display:flex}.tdy-sec em{margin-left:auto;font-style:normal;color:var(--text-dim)}"
+    + ".tdy-p{display:flex;align-items:center;gap:9px;border-radius:14px;padding:9px 10px 9px 12px;margin-bottom:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer}.tdy-p .b{flex:1;min-width:0}.tdy-p .b b{font-size:15px;font-weight:900}.tdy-p .b b em{font-style:normal;font-size:11px;font-weight:900;border-radius:6px;padding:1px 6px;margin-left:5px;background:var(--surface2);color:var(--text-mid)}"
+    + ".tdy-p .b small{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}.tdy-p .b small span{font-size:10.5px;font-weight:900;border-radius:6px;padding:1px 6px;background:color-mix(in srgb,var(--red) 12%,var(--surface));color:var(--red)}"
+    + ".tdy-p .bt{flex:none;height:36px;padding:0 10px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);font-size:12.5px;font-weight:900;display:flex;align-items:center;cursor:pointer}.tdy-p .bt.g{background:var(--accent-dim);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--surface))}"
+    + ".tdy-more{text-align:center;font-size:13px;font-weight:900;color:var(--accent);padding:6px;cursor:pointer}"
+    + "#reapPg,#setPg{position:fixed;inset:0;z-index:300;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 96px)}body.ux-land #reapPg,body.ux-land #setPg{padding:8px 18px 76px}#reapPg .ux-btm,#setPg .ux-btm{left:0;z-index:301}"
+    + ".rp-r{display:flex;align-items:center;gap:10px;border-radius:14px;padding:10px 10px 10px 12px;margin-bottom:6px;background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--c);cursor:pointer}.rp-r .b{flex:1;min-width:0}.rp-r .b b{font-size:15.5px;font-weight:900}.rp-r .b small{display:block;font-size:11.5px;color:var(--text-mid);font-weight:800}"
+    + ".rp-r .d{flex:none;text-align:right;color:var(--c);font-weight:900}.rp-r .d b{font-size:20px;font-family:Inter,sans-serif}.rp-r .d small{display:block;font-size:10px;color:var(--text-dim)}.rp-r .bt{flex:none;height:38px;padding:0 10px;border-radius:11px;font-weight:900;font-size:12.5px;display:flex;align-items:center;background:var(--accent-dim);color:var(--accent);border:1.5px solid color-mix(in srgb,var(--accent) 40%,var(--surface))}"
+    + ".st-gh{font-size:12.5px;font-weight:900;color:var(--text-mid);margin:14px 4px 6px}.st-ls{border-radius:15px;background:var(--surface);border:1.5px solid var(--border);overflow:hidden}"
+    + ".st-ls>div{display:flex;align-items:center;gap:11px;min-height:54px;padding:6px 14px;border-bottom:1px solid var(--border);font-size:15px;font-weight:900;cursor:pointer}.st-ls>div:last-child{border-bottom:none}.st-ls>div>span:nth-child(2){flex:1;min-width:0}"
+    + ".st-ls small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-ls .ic{width:24px;text-align:center;flex:none;color:var(--text-mid)}.st-ls .ch{color:var(--text-dim);flex:none}"
+    + ".st-sel{width:100%;box-sizing:border-box;height:50px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:16px;font-weight:800;padding:0 12px}";
+  document.head.appendChild(st);
+}
+// ── 今日 ──
+function _tdyRender() {
+  var wrap = document.getElementById('view-home'); if (!wrap) return;
+  _uxCss(); _ux2Css(); _tdyCss(); _dpCss();
+  if (typeof _reapproach === 'undefined' || !_reapproach) { try { _reapproachEnsure().then(function() { if (currentView === 'home') _tdyRender(); }); } catch (e0) {} }
+  var g = getGame(), t = evTodayYmd(), name = (currentUser && currentUser.name) || '', sk = gameDisplayStreak(g);
+  var p = t.split('-');
+  var h = '<div class="tdy"><div class="tdy-hd"><h1><small>' + (+p[1]) + '月' + (+p[2]) + '日（' + '日月火水木金土'.charAt(new Date(+p[0], p[1] - 1, +p[2]).getDay()) + '）</small>' + evEsc(gameGreeting()) + (name ? '、' + evEsc(name.split(/\s/)[0]) + 'さん' : '') + '</h1>'
+    + (sk ? '<span class="tdy-st">🔥 ' + sk + '日連続</span>' : '') + '<span class="tdy-bell" onclick="openReleaseNotes()" title="お知らせ">' + icn('bell') + (hasUnseenNotes() ? '<i></i>' : '') + '</span></div>';
+  try { h += birthdayHtml(); } catch (eB) {}
+  // 今日の手帳
+  var L = _dpTasks(t), n = L.length, dn = L.filter(function(e) { return e.done; }).length, segs = Math.max(DP_GOAL, n), bar = '';
+  for (var i = 0; i < segs; i++) { var e0 = L[i]; bar += '<i class="' + (i >= DP_GOAL ? 'x ' : '') + (e0 ? (e0.done ? 'd' : 'f') : '') + '"></i>'; }
+  h += '<div class="tdy-tl"><div class="tdy-t w" style="--c:var(--purple)" onclick="tdyGo(\'dp\')"><b>📓 今日の手帳</b><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="v">' + n + (n < DP_GOAL ? '<small>/' + DP_GOAL + '件</small>' : '<small>件</small>') + '</span><span class="s">やった ' + dn + '・' + (n < DP_GOAL ? 'あと' + (DP_GOAL - n) + '件で今日の' + DP_GOAL + '件' : (n > DP_GOAL ? DP_GOAL + '件 ＋' + (n - DP_GOAL) : DP_GOAL + '件 そろいました')) + '</span></div>'
+    + '<div class="tdy-bar" style="grid-template-columns:repeat(' + segs + ',1fr)">' + bar + '</div></div>';
+  // 今日の予定
+  var evs = (state.events || []).filter(function(e) { return e && e.type !== 'task' && !e.deleted && evShowMine(e) && (e.date === t || (e.endDate && e.date <= t && t <= e.endDate)); }).sort(evSortFn);
+  h += '<div class="tdy-t" style="--c:var(--sky,#3B8FE0)" onclick="tdyGo(\'cal\')"><b>📅 今日の予定</b><div>' + (evs.length ? evs.slice(0, 3).map(function(e) { var c = evColorOf(e) || '#8B7CFF'; return '<div class="tdy-ev" style="--c:' + c + '"><b>' + evEsc(e.time && e.date === t ? e.time : '終日') + '</b><i></i><span>' + evEsc(e.title || '') + '</span></div>'; }).join('') + (evs.length > 3 ? '<span class="s">ほか ' + (evs.length - 3) + '件</span>' : '') : '<span class="s">予定はありません</span>') + '</div></div>';
+  // 今週やること
+  var wk = '';
+  try { var rows = _p2DoRows(_p2Ym(0)).filter(function(r) { return r.wT > 0; }); wk = rows.slice(0, 3).map(function(r) { var pc = Math.min(100, Math.round(r.wHave / Math.max(1, r.wT) * 100)); return '<div class="tdy-wk" style="--c:' + (pc >= 100 ? 'var(--accent)' : (r.short > 0 ? 'var(--gold)' : 'var(--accent)')) + '"><span>' + evEsc(r.lb) + '</span><em><i style="width:' + pc + '%"></i></em><span>' + r.wHave + '/' + r.wT + '</span></div>'; }).join(''); } catch (eW) {}
+  h += '<div class="tdy-t" style="--c:var(--accent)" onclick="tdyGo(\'do\')"><b>🎯 今週やること</b><div>' + (wk || '<span class="s">PLANで今月の目標を決めると出ます</span>') + '</div></div>';
+  // 気になる人・再アプローチ
+  var ck = { trainee: [], fresh: [], exam: [], leader: [] }; try { ck = ckCollect(); } catch (eC) {}
+  var seen = {}, ppl = [];
+  ['trainee', 'exam', 'fresh', 'leader'].forEach(function(k) { (ck[k] || []).forEach(function(it) { if (!seen[it.m.id]) { seen[it.m.id] = 1; ppl.push({ it: it, k: k }); } }); });
+  var due = (_reapproach || []).filter(function(r) { return _rpDays(r) >= 90; }).length;
+  h += '<div class="tdy-t" style="--c:var(--red)" onclick="tdyGo(\'ppl\')"><b>👀 気になる人</b><span class="v">' + ppl.length + '<small>人</small></span><span>' + (ppl.length ? evEsc(ppl.slice(0, 2).map(function(x) { return (x.it.m.lastName || x.it.m.firstName || '') + (x.it.reasons[0] ? '：' + x.it.reasons[0].t : ''); }).join('・')) : 'フォローが必要な人はいません') + '</span></div>'
+    + '<div class="tdy-t" style="--c:var(--pink,#E0457B)" onclick="reapOpen()"><b>🔄 再アプローチ</b><span class="v">' + due + '<small>人</small></span><span>' + (due ? '声をかける時期が来た人' : '時期が来た人はまだいません（' + ((_reapproach || []).length) + '人）') + '</span></div></div>';
+  // 気になる人のリスト
+  if (ppl.length) {
+    var showAll = !!window._tdyAll, list = showAll ? ppl : ppl.slice(0, 4);
+    h += '<div class="tdy-sec" id="tdyPpl">👀 気になる人<em>' + ppl.length + '人</em></div>';
+    list.forEach(function(x) {
+      var m = x.it.m, nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+      h += '<div class="tdy-p" onclick="ppOpen(\'' + m.id + '\',\'current\')"><div class="b"><b>' + evEsc(nm) + '<em>' + evEsc(m.title || '—') + '</em></b><small>' + x.it.reasons.map(function(r) { return '<span>' + evEsc(r.t) + '</span>'; }).join('') + '</small></div>'
+        + (x.k !== 'leader' ? '<span class="bt" onclick="event.stopPropagation();ckRecord(\'' + m.id + '\',\'' + x.k + '\')">' + (x.k === 'trainee' ? '研修' : 'OL') + '</span>' : '')
+        + '<span class="bt g" onclick="event.stopPropagation();tdyToDp(\'' + m.id + '\')">手帳へ</span></div>';
+    });
+    if (ppl.length > 4) h += '<div class="tdy-more" onclick="window._tdyAll=!window._tdyAll;_tdyRender()">' + (showAll ? '少なく表示' : 'すべて表示（' + ppl.length + '人）') + '</div>';
+  }
+  // インサイト（たたむ）
+  var ins = ''; try { ins = insightsHtml(); } catch (eI) {}
+  if (ins) h += '<details class="home-insights" style="margin-top:14px"><summary style="cursor:pointer;font-size:12.5px;font-weight:800;color:var(--text-mid);padding:10px 2px">📈 インサイト（コーチ・気づき）</summary>' + ins + '</details>';
+  h += '</div>';
+  wrap.innerHTML = h;
+}
+function tdyGo(k) {
+  if (k === 'dp') { _dpDay = evTodayYmd(); switchView('events'); setEventsMode('agenda'); return; }
+  if (k === 'cal') { switchView('events'); setEventsMode('calendar'); var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); selCalDay(evTodayYmd()); return; }
+  if (k === 'do') { p2Go('do'); return; }
+  if (k === 'ppl') { var el = document.getElementById('tdyPpl'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+function tdyToDp(mid) {
+  var m = (state.members || []).filter(function(x) { return x.id === mid; })[0]; if (!m || !eventsUid()) return;
+  var e = _tdMakeTask((m.lastName || m.firstName || '') + 'さん フォロー', evTodayYmd(), '');
+  e.memberIds = [mid]; e.memberId = mid; e.vis = 'both'; e.selfShow = true;
+  state.events.push(e); saveEventDoc(e); updateEventsBadge();
+  toast('📓 今日の手帳に「' + e.title + '」を入れました');
+  _tdyRender();
+}
+// ── 再アプローチ ──
+function _rpDays(r) { try { var a = r.date.split('-'), b = evTodayYmd().split('-'); return Math.round((new Date(b[0], b[1] - 1, b[2]) - new Date(a[0], a[1] - 1, a[2])) / 86400000); } catch (e) { return 0; } }
+var _rpAdd = null;
+function reapOpen() { if (!_uxLandOrPhone()) { openReapproachSheet(); return; } _reapproachEnsure().then(function() { _rpAdd = null; _rpRender(); }); }
+function _uxLandOrPhone() { return typeof isPCMode === 'function' && !isPCMode(); }
+function reapClose() { var p = document.getElementById('reapPg'); if (p && p.parentNode) p.parentNode.removeChild(p); _rpAdd = null; if (currentView === 'home') _tdyRender(); else if (currentView === 'menu') try { renderMenuHub(); } catch (e) {} }
+function _rpRow(r, i) {
+  var d = _rpDays(r), hot = d >= 90, c = hot ? 'var(--gold)' : 'var(--border2)';
+  var m = r.mid ? (state.members || []).filter(function(x) { return x.id === r.mid; })[0] : null;
+  return '<div class="rp-r" style="--c:' + c + '" onclick="reapTap(' + i + ')"><div class="b"><b>' + evEsc(r.name || '(無名)') + '</b><small>' + evEsc((r.date ? (+r.date.slice(5, 7)) + '/' + (+r.date.slice(8, 10)) + ' に' + (r.manual ? '入れた' : '流れた') : '')) + (hot ? '' : '・あと' + (90 - d) + '日') + (r.memo ? '・' + evEsc(r.memo) : '') + (m ? '' : '') + '</small></div>'
+    + '<div class="d"' + (hot ? '' : ' style="color:var(--text-dim)"') + '><b>' + d + '</b><small>日</small></div><span class="bt" onclick="event.stopPropagation();reapToDp(' + i + ')">手帳へ</span></div>';
+}
+function _rpRender() {
+  _uxCss(); _ux2Css(); _tdyCss(); _efCss();
+  var L = (_reapproach || []).map(function(r, i) { return { r: r, i: i, d: _rpDays(r) }; }).sort(function(a, b) { return b.d - a.d; });
+  var hot = L.filter(function(x) { return x.d >= 90; }), cold = L.filter(function(x) { return x.d < 90; });
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="reapClose()">メニュー › <b>再アプローチ</b></span><span class="ux-home" onclick="reapClose()" title="閉じる">✕</span></div>'
+    + '<h2 class="ux-h2">再アプローチ</h2><div class="ux-sub">研修で「流れた」人が自動で入ります。90日たったら声をかける時期</div>';
+  if (_rpAdd) {
+    var q = String(_rpAdd.q || '').replace(/\s/g, ''), all = (state.members || []).filter(function(m) { return !m.deleted && (!q || ((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0); }).slice(0, 20);
+    h += '<div class="efl">＋ 人を足す（メンバーから選ぶ・名前だけでもOK）</div><div class="efw"><input id="rpQ" placeholder="🔍 名前でさがす／名前を入れる" value="' + evEsc(_rpAdd.q || '') + '" oninput="reapQ(this.value)" autocomplete="off"><div id="rpLs">' + _rpCands(all, q) + '</div></div>'
+      + '<div class="efl">メモ（任意）</div><input class="efin" id="rpMemo" placeholder="例：転職で忙しい・春に声かけ" value="' + evEsc(_rpAdd.memo || '') + '" oninput="_rpAdd.memo=this.value">';
+  }
+  h += '<div class="tdy-sec">🔔 時期が来た人<em style="color:var(--gold)">' + hot.length + '人</em></div>' + (hot.length ? hot.map(function(x) { return _rpRow(x.r, x.i); }).join('') : '<div class="efr0" style="background:var(--surface);border-radius:14px">まだいません</div>')
+    + '<div class="tdy-sec">まだ早い人<em>' + cold.length + '人</em></div>' + (cold.length ? cold.map(function(x) { return _rpRow(x.r, x.i); }).join('') : '<div class="efr0" style="background:var(--surface);border-radius:14px">いません</div>');
+  h += '<div class="ux-btm"><span class="ux-bk" onclick="' + (_rpAdd ? '_rpAdd=null;_rpRender()' : 'reapClose()') + '">‹ ' + (_rpAdd ? 'やめる' : '戻る') + '</span>' + (_rpAdd ? '' : '<span class="ux-nx" onclick="reapAddStart()">＋ 人を足す</span>') + '</div>';
+  var pg = document.getElementById('reapPg'), st0 = pg ? pg.scrollTop : 0;
+  if (!pg) { pg = document.createElement('div'); pg.id = 'reapPg'; document.body.appendChild(pg); }
+  var a = document.activeElement; if (a && pg.contains(a) && (a.id === 'rpQ' || a.id === 'rpMemo')) return;
+  pg.innerHTML = h; pg.scrollTop = st0;
+}
+function _rpCands(all, q) {
+  var h = all.map(function(m) { return '<div class="efr" onclick="reapAddMem(\'' + m.id + '\')"><i></i>' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small></div>'; }).join('');
+  if (q) h += '<div class="efr" style="color:var(--accent)" onclick="reapAddName()">＋「' + evEsc(_rpAdd.q) + '」を名前だけで足す</div>';
+  return h || '<div class="efr0">名前を入れてください</div>';
+}
+function reapAddStart() { _rpAdd = { q: '', memo: '' }; _rpRender(); setTimeout(function() { var i = document.getElementById('rpQ'); if (i) try { i.focus(); } catch (e) {} }, 60); }
+function reapQ(v) { if (!_rpAdd) return; _rpAdd.q = v || ''; var q = _rpAdd.q.replace(/\s/g, ''), all = (state.members || []).filter(function(m) { return !m.deleted && (!q || ((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0); }).slice(0, 20); var l = document.getElementById('rpLs'); if (l) l.innerHTML = _rpCands(all, q); }
+function _rpPush(it) {
+  _reapproach = _reapproach || [];
+  if (it.mid && _reapproach.some(function(r) { return r.mid === it.mid; })) { toast('もうリストに入っています'); return false; }
+  _reapproach.unshift(it); _reapproachSave(); try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (eB) {} toast('「' + it.name + '」を再アプローチに入れました'); _rpAdd = null; _rpRender(); return true;
+}
+function reapAddMem(mid) { var m = (state.members || []).filter(function(x) { return x.id === mid; })[0]; if (!m) return; var me = document.getElementById('rpMemo'); _rpPush({ mid: m.id, name: ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)', date: evTodayYmd(), month: state.currentMonth, memo: (me ? me.value : (_rpAdd && _rpAdd.memo) || '').trim(), manual: true }); }
+function reapAddName() { var nm = String((_rpAdd && _rpAdd.q) || '').trim(); if (!nm) return; var me = document.getElementById('rpMemo'); _rpPush({ mid: '', name: nm, date: evTodayYmd(), month: state.currentMonth, memo: (me ? me.value : '').trim(), manual: true }); }
+function reapToDp(i) {
+  var r = (_reapproach || [])[i]; if (!r || !eventsUid()) return;
+  var e = _tdMakeTask(r.name + ' 再アプローチ', evTodayYmd(), ''); e.priority = 'high'; e.memo = (r.memo || '');
+  if (r.mid) { e.memberIds = [r.mid]; e.memberId = r.mid; e.vis = 'both'; e.selfShow = true; }
+  state.events.push(e); saveEventDoc(e); updateEventsBadge();
+  toast('📓 今日の手帳に「' + e.title + '」を入れました');
+}
+function reapTap(i) {
+  var r = (_reapproach || [])[i]; if (!r) return;
+  _p2SheetClose('rpOv');
+  var m = r.mid ? (state.members || []).filter(function(x) { return x.id === r.mid; })[0] : null;
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'rpOv'; ov.style.zIndex = '320';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('rpOv'); };
+  ov.innerHTML = '<div class="ms-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(r.name) + '</div><div style="font-size:11.5px;color:var(--text-dim)">' + _rpDays(r) + '日経過' + (r.memo ? '・' + evEsc(r.memo) : '') + '</div></div><span class="ms-x" onclick="_p2SheetClose(\'rpOv\')">✕</span></div>'
+    + '<div class="ux-list" style="padding:0 16px 18px">' + (m ? '<div class="ux-li" onclick="_p2SheetClose(\'rpOv\');reapClose();ppOpen(\'' + m.id + '\',\'current\')"><span class="ic">' + icn('user') + '</span><span>その人の画面<small>メモ・研修履歴</small></span><span class="ch">›</span></div>' : '')
+    + '<div class="ux-li" onclick="_p2SheetClose(\'rpOv\');reapToDp(' + i + ')"><span class="ic">📓</span><span>今日の手帳に入れる</span><span class="ch">›</span></div>'
+    + '<div class="ux-li" onclick="_p2SheetClose(\'rpOv\');reapDelete(' + i + ')"><span class="ic" style="color:var(--red)">' + icn('trash') + '</span><span style="color:var(--red)">リストから外す</span><span class="ch">›</span></div></div></div>';
+  document.body.appendChild(ov); requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+// ── 設定 ──
+var _stPg = '';
+function setOpen(pg) { if (!_uxLandOrPhone()) { openProfileModal(); return; } _stPg = pg || ''; _stRender(); }
+function setClose() { var p = document.getElementById('setPg'); if (p && p.parentNode) p.parentNode.removeChild(p); _stPg = ''; }
+function _stLi(ic, t, sub, on, red) { return '<div onclick="' + on + '"><span class="ic">' + ic + '</span><span' + (red ? ' style="color:var(--red)"' : '') + '>' + t + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="ch">›</span></div>'; }
+function _stRender() {
+  _uxCss(); _ux2Css(); _tdyCss(); _efCss(); _ppCss();
+  var u = currentUser || {}, h = '', light = document.body.classList.contains('light');
+  var pushOn = ('Notification' in window) && Notification.permission === 'granted'; try { if (localStorage.getItem('gm_pushOff') === '1') pushOn = false; } catch (e) {}
+  var crumb = { prof: 'プロフィール', look: '見た目', ntf: '通知' }[_stPg];
+  h += '<div class="ux-top"><span class="ux-crumb" onclick="' + (_stPg ? 'setOpen()' : 'setClose()') + '">' + (_stPg ? '設定 › <b>' + crumb + '</b>' : 'メニュー › <b>設定</b>') + '</span><span class="ux-home" onclick="setClose()" title="閉じる">✕</span></div>';
+  if (!_stPg) {
+    h += '<h2 class="ux-h2">設定</h2>'
+      + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
+      + _stLi('🎨', '見た目', (light ? 'ライト' : 'ダーク') + '・メンバータブ ' + (membersTabHidden() ? '非表示' : '表示'), "setOpen('look')")
+      + _stLi(icn('bell'), '通知', pushOn ? 'オン' : 'オフ', "setOpen('ntf')") + '</div>'
+      + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', '週の始まり・スクロール・予定の帯・Google連携', 'openCalSettings()')
+      + _stLi('📓', '毎日のいつもの行', evEsc((typeof _dpDaily === 'function' ? _dpDaily().join('・') : '') || 'なし'), 'dpDailyEdit()') + '</div>'
+      + '<div class="st-gh">MAP・データ</div><div class="st-ls">' + (state.isEditor && !viewingOwnerUid ? _stLi('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
+      + _stLi('📄', '変更履歴', '追加・削除・タイトル変更', 'showHistoryModal()')
+      + (typeof openShareModal === 'function' && !viewingOwnerUid ? _stLi(icn('link'), 'MAPの共有', '見せる・一緒に編集', 'openShareModal()') : '')
+      + (sharedOwners && sharedOwners.length ? _stLi(icn('users'), '共有MAP', '見せてもらっているMAP', 'openSharedDashboard()') : '') + '</div>'
+      + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
+      + (_fb && _fb.ok ? _stLi('🐞', 'バグ・要望', '', 'fbOpen()') : '')
+      + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true)
+      + (state.isEditor && !viewingOwnerUid ? _stLi(icn('trash'), '組織MAPをクリア', 'テストデータを消す時だけ（取り消せません）', 'clearMapData()', true) : '') + '</div>';
+  } else if (_stPg === 'prof') {
+    h += '<h2 class="ux-h2">プロフィール</h2>'
+      + '<div class="ppl">お名前（本名・フルネーム）</div><input class="ppin" id="stName" value="' + evEsc(u.name || '') + '"><div class="ux-hint">ニックネームだと受付の名簿・MAPの共有・承認とつながりません</div>'
+      + '<div class="ppl">屋号</div><input class="ppin" id="stOrg" value="' + evEsc(u.org || '') + '">'
+      + '<div class="ppl">所属ユニオン *</div><select class="st-sel" id="stUnion" onchange="onUnionSelect(this,\'stUpBd\')">' + unionOptionsHtml('ユニオンを選択') + '</select>'
+      + '<div class="ppl">活動地域 *</div><select class="st-sel" id="stArea">' + areaOptionsHtml('活動地域を選択') + '</select>'
+      + '<div class="ppl">UPルビー *</div><input class="ppin" id="stUpRuby" value="' + evEsc(u.upRuby || '') + '">'
+      + '<div class="ppl">UPBD *</div><input class="ppin" id="stUpBd" value="' + evEsc(u.upBd || '') + '">'
+      + '<div class="ux-btm"><span class="ux-bk" onclick="setOpen()">‹ 戻る</span><span class="ux-nx" onclick="stSaveProf()">✓ 保存</span></div>';
+  } else if (_stPg === 'look') {
+    h += '<h2 class="ux-h2">見た目</h2><div class="ppl">テーマ</div><div class="ppb sm" style="--n:2"><span class="' + (!light ? 'on' : '') + '" onclick="setTheme(\'dark\');_stRender()">🌙 ダーク</span><span class="' + (light ? 'on' : '') + '" onclick="setTheme(\'light\');_stRender()">☀ ライト</span></div>'
+      + '<div class="ppl">メンバータブ（MAPと同じ内容の一覧）</div><div class="ppb sm" style="--n:2"><span class="' + (!membersTabHidden() ? 'on' : '') + '" onclick="setMembersTabVisible(true);_stRender()">表示</span><span class="' + (membersTabHidden() ? 'on' : '') + '" onclick="setMembersTabVisible(false);_stRender()">非表示</span></div>';
+  } else if (_stPg === 'ntf') {
+    var den = ('Notification' in window) && Notification.permission === 'denied';
+    h += '<h2 class="ux-h2">通知</h2><div class="ux-sub">予定・タスクの時刻にこの端末へ通知します</div>'
+      + (den ? '<div class="ux-hint">ブラウザ側で通知がブロックされています。iPhoneの設定→通知（またはSafariの設定）から許可してください</div>'
+        : '<div class="ppb sm" style="--n:2;margin-top:10px"><span class="' + (pushOn ? 'on' : '') + '" onclick="pushSetEnabled(true);setTimeout(_stRender,600)">オン</span><span class="' + (!pushOn ? 'on' : '') + '" onclick="pushSetEnabled(false);setTimeout(_stRender,600)">オフ</span></div>');
+  }
+  if (_stPg !== 'prof') h += '<div class="ux-btm"><span class="ux-bk" onclick="' + (_stPg ? 'setOpen()' : 'setClose()') + '">‹ 戻る</span></div>';
+  var pg = document.getElementById('setPg');
+  if (!pg) { pg = document.createElement('div'); pg.id = 'setPg'; document.body.appendChild(pg); }
+  pg.innerHTML = h; pg.scrollTop = 0;
+  if (_stPg === 'prof') { var su = document.getElementById('stUnion'); if (su) su.value = u.unionSelectedV2 ? (u.union || '') : ''; var sa = document.getElementById('stArea'); if (sa) _areaSelectSet(sa, u.area || ''); }
+}
+function stSaveProf() {
+  var g = function(id) { return ((document.getElementById(id) || {}).value || '').trim(); };
+  if (!g('stUnion') || !g('stArea') || !g('stUpRuby') || !g('stUpBd')) { toast('所属ユニオン・活動地域・UPルビー・UPBD は必須です'); return; }
+  try { populateUnionSelects(); } catch (e) {}
+  var set = function(id, v) { var el = document.getElementById(id); if (!el) return; if (el.tagName === 'SELECT') _areaSelectSet(el, v); else el.value = v; };
+  set('profileName', g('stName')); set('profileOrg', g('stOrg')); set('profileUnion', g('stUnion')); set('profileArea', g('stArea')); set('profileUpRuby', g('stUpRuby')); set('profileUpBd', g('stUpBd'));
+  saveProfile();
+  setOpen();
+}
+
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
   var src = document.getElementById('idealSum'); if (!src) return;
@@ -18303,7 +18518,7 @@ function renderMenuHub() {
     { k: 'ideal', c: 'pur', ic: icn('target'), lb: '理想MAP', st: 'ありたい組織図<br><em>' + cnt(state.idealMembers) + '人</em>', on: 'switchView(\'ideal\')' },
     { k: 'ol', c: 'sky', ic: icn('clipboard'), lb: 'OL', st: 'フレッシュ・<br>アウトライン', on: 'switchView(\'ol\')' }];
   if (!(typeof membersTabHidden === 'function' && membersTabHidden())) T.push({ k: 'members', c: 'gold', ic: icn('users'), lb: 'メンバー', st: '一覧・絞り込み<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'members\')' });
-  T.push({ k: 're', c: 'rose', ic: icn('refresh'), lb: '再アプローチ', st: '声をかけたい人' + ((_reapproach && _reapproach.length) ? '<br><em>' + _reapproach.length + '人</em>' : ''), on: 'openReapproachSheet()' });
+  T.push({ k: 're', c: 'rose', ic: icn('refresh'), lb: '再アプローチ', st: '声をかけたい人' + ((_reapproach && _reapproach.length) ? '<br><em>' + _reapproach.length + '人</em>' : ''), on: 'reapOpen()' });
   if (T.length % 2 === 0) T[T.length - 1].w = 1; // 縦2列で端数が出ないように
   var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')');
@@ -18312,7 +18527,7 @@ function renderMenuHub() {
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
   if (_fb && _fb.ok) S += sb('🐞 バグ・要望', 'fbOpen()', _fb.newN || '');
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
-  S += sb(icn('gear') + ' 設定', 'openProfileModal()');
+  S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
   v.innerHTML = '<div class="ux-hub"><div class="ux-hd"><h1>メニュー</h1><span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
     + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
     + '<div class="ux-sm">' + S + '</div></div>';
@@ -26168,6 +26383,7 @@ function reapDelete(i){
   if (!confirm('「' + _reapproach[i].name + '」をリストから削除しますか？')) return;
   _reapproach.splice(i, 1);
   _reapproachSave();
+  if (document.getElementById('reapPg')) { _rpRender(); return; } // v618
   openReapproachSheet();
 }
 // v334: 重複した通知登録の掃除＝この端末の現在の登録だけを残して他を削除
