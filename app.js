@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v598';
+var APP_JS_VERSION = 'v599';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v598';
+  var DATA_VERSION = 'v599';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v599', d:'2026-10-05', items:['💗 想いを1問1答に：やる理由 → 動かなかったら1年後 → 成功した毎日 → やりたいこと → なりたい自分 → 理想の生活 → 夢100 → まとめ。例のボタンを押すだけでも書けます','🏆 目標を作り直しました：目標月収（＋−と候補）→ タイトル（月収から自動・押して変更）→ 期日（1年後・2年後のボタン）→ 次の山 → スローガン → 目標カード。目標カードに月収・タイトル・期日・スローガン・S稼働の階段・BB換算がまとまります'] },
   { v:'v598', d:'2026-10-05', items:['✅ 今週やることを作り直しました：CT取り・CT・FT・PG・DLRが「今 / 目標」のバーつきで並び、あと何件かがひと目でわかります。行を押すとその行動の画面（予約・やった・今週の予定・結果待ち）。左右にめくると次の行動','🔁 振り返りは1問1答に：うまくいった理由 → うまくいかなかった理由 → 来月変えること → まとめ。例のボタンを押すだけでも書けます'] },
   { v:'v597', d:'2026-10-05', items:['🎯 ◯月の目標を1画面に1つずつに作り直しました：S稼働 → コミッション → BRを増やす → BRを維持 → 自分の数字 → チームの数字 → 研修の数字 → 自分の成長 → 確認。数字は＋−と候補ボタンで決められます（数字を押せば直接入力も）','👤 BRを増やす・維持するでは、審査中・BRの人が進み具合のバーつきで並びます。人を押すと「その人の画面」が開き、タスクや予定をその場で入れられます（左右にめくると次の人）','✅ 最後の確認ページで、決めた所は✓・まだの所は点線。押すとそのページへ。来月の目標もここから決められます','ⓘ 説明は右上の（i）にまとめました'] },
   { v:'v596', d:'2026-10-05', items:['📊 データ（ざっくり）もタイルの「入口」に。コミッション・S稼働・BR・動かす数字・理想との差を大きなタイルで並べ、入力がまだのところが光ります','📈 タイルを押すと、12ヶ月の棒グラフ＋くわしい数字の1画面に。下の●と「つぎ」で順番に見られます。スマホを横にすると、左にグラフ・右に数字の2列で大きく見られます','🔎 推移・稼働・人数・研修・地域（くわしく）は入口の下のボタンから'] },
@@ -16020,6 +16021,8 @@ function p2PgSub(i) { p2Go(_p2Pg, i); }
 function p2Back() { if (_p2PgI > 0) p2Go(_p2Pg, _p2PgI - 1); else p2Go(''); }
 function _p2PgSubs(k) {
   if (k === 'mon') return _p2MonPages().map(function(x) { return x.lb; });
+  if (k === 'why') return P2_WHY_PG.map(function(x) { return x.lb; });
+  if (k === 'goal') return P2_GOAL_PG.map(function(x) { return x.lb; });
   if (k === 'do') return ['今週', '今月'];
   if (k === 'dok') return _p2DoRows(_p2Ym(0)).map(function(r) { return r.lb; });
   if (k === 'rev') return _p2RvPages();
@@ -16070,19 +16073,12 @@ function _p2PageHtml() {
   var fi = P2_PG_FLOW.indexOf(k), next = '', nextOn = '';
   if (fi >= 0 && fi < P2_PG_FLOW.length - 1) { next = 'つぎ：' + _p2PgTitle(P2_PG_FLOW[fi + 1]) + ' ›'; nextOn = 'p2Go(\'' + P2_PG_FLOW[fi + 1] + '\')'; }
   var li = function(ic, t, sub, on) { return '<div class="ux-li" onclick="' + on + '"><span class="ic">' + ic + '</span><span>' + t + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="ch">›</span></div>'; };
-  if (k === 'why') {
-    var nb = _p2Notes(), wt = String(_p2WhyText() || '').trim();
-    body = (wt ? '<div class="p2-card" onclick="p2NotesOpen(\'why\',\'read\')" style="cursor:pointer"><div class="p2-meta">🔥 やる理由</div><div style="font-size:15px;font-weight:700;line-height:1.7;white-space:pre-wrap;margin-top:4px">' + evEsc(wt.slice(0, 220)) + (wt.length > 220 ? '…' : '') + '</div></div>' : '')
-      + '<div class="ux-list">'
-      + li('🔥', 'やる理由', wt ? '書いた・' + _p2NbChars(wt) + '字' : 'なぜ「今」全力で動く？', 'p2NotesOpen(\'why\')')
-      + li('🧭', '価値観ワーク', 'やりたいこと・なりたい自分を選ぶ', 'p2GwOpen(1)')
-      + li('📓', '想いのノート', '動かなかったら1年後・成功した毎日 など', 'p2NotesOpen()')
-      + li('🏡', '理想の生活', 'いくらあれば理想の暮らし？', 'p2LifeOpen()')
-      + li('🌈', '夢100', ((_p2G().dreams || []).length ? (_p2G().dreams.filter(function(d) { return d.done; }).length + '/' + _p2G().dreams.length + ' 達成') : 'やりたいことを100個'), 'p2DreamOpen()')
-      + '</div>';
-  } else if (k === 'goal') {
-    body = _p2NorthHtml(true)
-      + '<div class="ux-list">' + li('✎', '目標をなおす', '目標月収・タイトル・期日', 'p2Wiz()') + li('📆', '年別目標', '1年ごとの目標', 'p2YearsOpen()') + li('🧮', 'ギャップ', '今と目標の差を計算', 'p2GapOpen()') + '</div>';
+  if (k === 'why') { // v599: 1問1答（やる理由 → 1年後 → 成功した毎日 → やりたいこと → なりたい自分 → 理想の生活 → 夢100 → まとめ）
+    _ux2Css(); body = _p2WhyPageHtml(i);
+    if (i < P2_WHY_PG.length - 1) { next = P2_WHY_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：目標 ›'; nextOn = 'p2Go(\'goal\')'; }
+  } else if (k === 'goal') { // v599: 目標月収 → タイトル → 期日 → 次の山 → スローガン → 目標カード
+    _ux2Css(); body = _p2GoalPageHtml(i);
+    if (i < P2_GOAL_PG.length - 1) { next = P2_GOAL_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：ロードマップ ›'; nextOn = 'p2Go(\'rm\')'; }
   } else if (k === 'rm') {
     body = _p2PcRailHtml() + '<div class="ux-list">' + li('🗺', '年間ロードマップを編集', '月ごとのフロント数・マイルストーン', 'p2RmOpen()') + li('📆', '年別目標', '', 'p2YearsOpen()') + li('🎮', 'シミュレーション', 'フロント数で月収がどう変わるか', 'p2SimOpen()') + '</div>';
   } else if (k === 'mon') { // v597: 1画面に1つずつ（S稼働 → … → 確認）
@@ -16833,6 +16829,149 @@ function _p2RvPageHtml(i) {
   }
   return head.replace('4 / 4', '4 / 4') + '<h2 class="ux-h2">まとめ</h2>'
     + P2_RV_Q.map(function(Q, j) { var v = d[Q.k] || ''; return '<div class="ux-ans' + (v ? '' : ' no') + '" onclick="p2PgSub(' + j + ')"><small>' + Q.q + '</small><div>' + (v ? evEsc(v) : 'まだ書いていません ›') + '</div></div>'; }).join('');
+}
+// ════ v599: 想い（1問1答）と目標（数字を決める＋目標カード） ════
+// 汎用の −［数字］＋（月の目標以外でも使う）
+function _uxStepG(val, minusOn, plusOn, inputOn, unit, ph) {
+  var has = !(val === '' || val == null);
+  return '<div class="ux-stp"><span class="ux-pm" onclick="' + minusOn + '">−</span>'
+    + '<div class="ux-sv' + (has ? ' ok' : '') + '"><input type="number" inputmode="decimal" placeholder="' + (ph || '-') + '" value="' + (has ? val : '') + '" onfocus="edSelAll(this)" onchange="' + inputOn + '">' + (unit ? '<small>' + unit + '</small>' : '') + '</div>'
+    + '<span class="ux-pm" onclick="' + plusOn + '">＋</span></div>';
+}
+// ── 想い ──
+var P2_WHY_PG = [
+  { k: 'why', lb: 'やる理由', ex: ['家族との時間を増やしたい', 'お金の不安をなくしたい', '自分の可能性を試したい', '仲間と一緒に成長したい', '親に恩返ししたい'] },
+  { k: 'ifnot', lb: '1年後', ex: ['今と同じ毎日が続く', '時間に追われたまま', 'やりたいことを我慢している', '後悔している'] },
+  { k: 'success', lb: '成功した毎日', ex: ['朝ゆっくり家族と過ごす', '好きな場所で働く', '行きたい時に旅行に行く', '人に感謝される毎日'] },
+  { k: 'wantdo', lb: 'やりたいこと', ex: ['家族と旅行', '好きなことを仕事に', '満員電車に乗らない', '嫌な人と働かない'] },
+  { k: 'wantbe', lb: 'なりたい自分', ex: ['人を引っ張れる自分', '約束を守る自分', '言い訳しない自分', '感謝される自分'] },
+  { k: 'life', lb: '理想の生活' }, { k: 'dream', lb: '夢100' }, { k: 'done', lb: 'まとめ' }
+];
+function p2NbEx(k, t) {
+  var n = _p2Notes()[k], cur = String(n.cur || '');
+  var lines = cur.split('\n').map(function(x) { return x.trim(); });
+  var ix = lines.indexOf(t);
+  if (ix >= 0) lines.splice(ix, 1); else lines.push(t);
+  p2NbInput(k, lines.filter(function(x, j) { return x || j < lines.length - 1; }).join('\n').replace(/^\n+|\n+$/g, ''));
+  renderPlan();
+}
+function _p2NbDone(k) { return _p2NbChars(_p2Notes()[k].cur) > 0; }
+function _p2WhyPageHtml(i) {
+  _p2DoCss2();
+  var P = P2_WHY_PG, pg = P[i] || P[0], k = pg.k, N = P.length;
+  var head = '<div class="ux-step">' + (i + 1) + ' / ' + N + '　' + pg.lb + '</div>';
+  if (pg.ex) {
+    var d = _p2NbDef(k), n = _p2Notes()[k], cur = String(n.cur || ''), ch = _p2NbChars(cur);
+    var lines = cur.split('\n').map(function(x) { return x.trim(); });
+    return head + '<div class="ux-q">' + evEsc(d.q) + '</div>'
+      + '<div class="ux-ex">' + pg.ex.map(function(t) { return '<span class="' + (lines.indexOf(t) >= 0 ? 'on' : '') + '" onclick="p2NbEx(\'' + k + '\',\'' + t + '\')">' + t + '</span>'; }).join('') + '</div>'
+      + '<textarea class="ux-ta" style="min-height:190px" placeholder="' + evEsc(d.hint || '思いつくまま全部') + '" oninput="p2NbInput(\'' + k + '\',this.value)">' + evEsc(cur) + '</textarea>'
+      + '<div style="display:flex;align-items:center;margin-top:8px;font-size:12px;color:var(--text-dim);font-weight:700"><span>' + ch.toLocaleString() + '字' + (n.curAt ? '・' + _p2NbFmtDate(n.curAt) : '') + '</span><span class="ux-skip" onclick="p2NotesOpen(\'' + k + '\')">ノートで開く（前の版）</span></div>';
+  }
+  if (k === 'life') {
+    var tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
+    var rows = P2_LIFE_CATS.filter(function(c) { return c.k !== 'deadline'; }).map(function(c) {
+      var a = 0, ds = ''; try { a = _p2LfAmt(c); ds = _p2LfDesc(c); } catch (e) {}
+      return '<div class="ux-rw" style="cursor:pointer" onclick="p2LifeOpen()"><span class="lb">' + (c.ic || '') + ' ' + c.lb + '<small>' + evEsc(String(ds || 'まだ決めていない').slice(0, 30)) + '</small></span><span style="font-size:17px;font-weight:900;font-family:Inter,sans-serif">' + (a ? (Math.round(a * 10) / 10).toLocaleString() + '<small style="font-size:11px;color:var(--text-dim)">万/月</small>' : '<small style="font-size:12px;color:var(--gold)">決める ›</small>') + '</span></div>';
+    }).join('');
+    return head + '<h2 class="ux-h2">理想の生活</h2><div class="ux-sum"><b>' + (Math.round(tot * 10) / 10).toLocaleString() + '<small> 万円/月</small></b><span>理想の暮らしに必要な月収</span></div>'
+      + '<div class="ux-box">' + rows + '</div><span class="ux-lk" onclick="p2LifeOpen()">理想の生活を決める・なおす ›</span>';
+  }
+  if (k === 'dream') {
+    var dr = (_p2().dreams || []).slice(), dn = dr.filter(function(x) { return x.done; }).length, amt = 0;
+    dr.forEach(function(x) { if (!x.done) amt += parseFloat(x.amt) || 0; });
+    dr.sort(function(a, b) { if (!!a.done !== !!b.done) return a.done ? 1 : -1; return (a.dl || '9999').localeCompare(b.dl || '9999'); });
+    var showAll = _uxLists['dream:all'], list = showAll ? dr : dr.slice(0, 6);
+    return head + '<h2 class="ux-h2">夢100</h2>' + (dr.length ? '<div class="ux-sum"><b>' + dn + '<small> / ' + dr.length + '</small></b><span>達成' + (amt ? '・残り必要 ' + (Math.round(amt * 10) / 10).toLocaleString() + '万円' : '') + '</span></div>' : '')
+      + (dr.length ? list.map(function(x) {
+        return '<div class="ux-sk' + (x.done ? ' done' : '') + '"><span class="ck" onclick="p2DrTgl(\'' + x.id + '\')">' + (x.done ? '✓' : '') + '</span><span class="t" onclick="p2DrFormOpen(\'' + x.id + '\')">' + evEsc(x.t) + (x.dl || x.amt ? '<small style="display:block;font-size:11px;color:var(--text-dim);font-weight:600">' + (x.dl ? _p2DrYmLabel(x.dl) + 'まで' : '') + (x.amt ? '・' + x.amt + '万円' : '') + '</small>' : '') + '</span></div>';
+      }).join('') : '<div class="ux-empty">やりたいこと・欲しいものを100個。<br>まずは5個から</div>')
+      + (!showAll && dr.length > 6 ? '<span class="ux-more" onclick="_uxLists[\'dream:all\']=1;renderPlan()">ほか ' + (dr.length - 6) + '個 すべて見る ›</span>' : '')
+      + '<span class="ux-lk" onclick="p2DrFormOpen()">＋ 夢を追加</span>';
+  }
+  // まとめ
+  var tot2 = 0; try { tot2 = _p2GwTotal(); } catch (e) {}
+  var ck = function(idx, lb, ok, val) { return '<div class="ux-ck' + (ok ? '' : ' no') + '" onclick="p2PgSub(' + idx + ')"><i>' + (ok ? '✓' : '!') + '</i><span>' + lb + '</span><b>' + (ok ? (val || '') : '書く ›') + '</b></div>'; };
+  var drn = (_p2().dreams || []).length;
+  return head + '<h2 class="ux-h2">わたしの想い</h2>'
+    + (_p2NbDone('why') ? '<div class="ux-ans" onclick="p2PgSub(0)"><small>🔥 やる理由</small><div>' + evEsc(String(_p2Notes().why.cur).slice(0, 120)) + (String(_p2Notes().why.cur).length > 120 ? '…' : '') + '</div></div>' : '')
+    + '<div class="ux-chk">' + P.slice(0, 5).map(function(p, j) { return ck(j, p.lb, _p2NbDone(p.k), _p2NbChars(_p2Notes()[p.k].cur) + '<em>字</em>'); }).join('')
+    + ck(5, '理想の生活', tot2 > 0, (Math.round(tot2 * 10) / 10) + '<em>万/月</em>') + ck(6, '夢100', drn > 0, drn + '<em>個</em>') + '</div>';
+}
+// ── 目標 ──
+var P2_GOAL_PG = [{ k: 'inc', lb: '目標月収' }, { k: 'title', lb: 'タイトル' }, { k: 'dl', lb: '期日' }, { k: 'next', lb: '次の山' }, { k: 'motto', lb: 'スローガン' }, { k: 'done', lb: '目標カード' }];
+var P2_TITLES_JP = ['ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'チームエリート'];
+function p2GoalInc(v) {
+  var p = state.goals.plan, man = Math.max(0, Math.round(parseFloat(v) || 0));
+  p.income = man * 10000;
+  if (!_p2().titleManual && man) p.title = glTitleFromIncome(p.income);
+  saveGoals(); renderPlan();
+}
+function p2GoalIncStep(d) { var p = state.goals.plan, cur = Math.round((+p.income || 0) / 10000), st = cur >= 100 ? 10 : 5; p2GoalInc(Math.max(0, cur + d * st)); }
+function p2GoalTitle(t) { var p = state.goals.plan; if (t) { p.title = t; _p2().titleManual = true; } else { _p2().titleManual = false; p.title = glTitleFromIncome(+p.income || 0); } saveGoals(); renderPlan(); }
+function p2GoalDl(ym) { state.goals.plan.deadline = ym; saveGoals(); renderPlan(); }
+function p2GoalDlStep(d) { var p = state.goals.plan, cur = (p.deadline && /^\d{4}-\d{2}$/.test(p.deadline)) ? p.deadline : _p2Ym(12); p2GoalDl(_p2YmAdd(cur, d)); }
+function p2Motto(v) { _p2().motto = String(v || '').slice(0, 40); saveGoals(); }
+function p2MottoEx(t) { _p2().motto = t; saveGoals(); renderPlan(); }
+function _p2GoalCardHtml() {
+  var p = state.goals.plan, inc = p.income ? Math.round(p.income / 10000) : 0, rem = 0, fr = 0;
+  try { rem = _glMonthsUntil(p.deadline); fr = _glMonthlyFront(p); } catch (e) {}
+  var motto = String(_p2().motto || '').trim();
+  return '<div class="ux-card" style="--c:var(--gold);text-align:center;padding:22px 16px 18px">'
+    + '<div style="font-size:12px;color:var(--text-mid);font-weight:800">目標月収</div><div style="font-size:52px;font-weight:900;font-family:Inter,sans-serif;color:var(--gold);line-height:1.05">' + (inc ? inc.toLocaleString() : '—') + '<small style="font-size:18px">万円</small></div>'
+    + '<div style="font-size:26px;font-weight:900;letter-spacing:1px;margin-top:6px">' + evEsc(_p2TitleEn(p.title || '') || '—') + '</div>'
+    + '<div style="font-size:13px;color:var(--text-mid);font-weight:700;margin-top:4px">' + (p.deadline ? evEsc(String(p.deadline).replace('-', '年')) + '月まで' + (rem > 0 ? '・あと' + rem + 'ヶ月' : '') : '期日まだ') + (fr ? '・月あたりフロント ' + fr + '人' : '') + '</div>'
+    + (motto ? '<div style="margin-top:12px;font-size:17px;font-weight:900;font-style:italic">『' + evEsc(motto) + '』</div>' : '')
+    + _sLadderHtml(_sNow()) + '</div>';
+}
+function _p2GoalPageHtml(i) {
+  _p2DoCss2(); _sCss();
+  var P = P2_GOAL_PG, pg = P[i] || P[0], k = pg.k, p = state.goals.plan, inc = p.income ? Math.round(p.income / 10000) : '';
+  var head = function(t) { return '<div class="ux-step">' + (i + 1) + ' / ' + P.length + '　' + pg.lb + '</div><h2 class="ux-h2">' + t + '</h2>'; };
+  if (k === 'inc') {
+    var tot = 0; try { tot = Math.round(_p2GwTotal()); } catch (e) {}
+    var cands = [tot, 50, 100, 300].filter(function(x, j, a) { return x > 0 && a.indexOf(x) === j; }).slice(0, 4);
+    return head('月にいくら稼ぎたい？') + '<div class="ux-sub">' + (tot ? '理想の生活には <em>' + tot + '万円/月</em>' : '理想の生活を決めると、必要な月収がわかります') + '</div>'
+      + _uxStepG(inc, 'p2GoalIncStep(-1)', 'p2GoalIncStep(1)', 'p2GoalInc(this.value)', '万円', tot || 100)
+      + '<div class="ux-chips">' + cands.map(function(c) { return '<span class="' + (+inc === c ? 'on' : '') + '" onclick="p2GoalInc(' + c + ')">' + c + (c === tot ? '<small>理想の生活</small>' : '') + '</span>'; }).join('') + '</div>'
+      + (inc ? '<div class="ux-hint">月収' + inc + '万円は <b>' + evEsc(_p2TitleEn(glTitleFromIncome(inc * 10000))) + '</b> が目安です</div>' : '');
+  }
+  if (k === 'title') {
+    var auto = glTitleFromIncome(+p.income || 0);
+    return head('目指すタイトル') + '<div class="ux-sum"><b style="font-size:34px">' + evEsc(_p2TitleEn(p.title || '') || '—') + '</b></div>'
+      + '<div class="ux-sub">' + (inc ? '月収' + inc + '万円の目安は <b>' + evEsc(_p2TitleEn(auto)) + '</b>' : '先に目標月収を決めると、自動で決まります') + '</div>'
+      + '<div class="ux-ex">' + P2_TITLES_JP.map(function(t) { return '<span class="' + (p.title === t ? 'on' : '') + '" onclick="p2GoalTitle(\'' + t + '\')">' + _p2TitleEn(t) + '</span>'; }).join('') + '</div>'
+      + (_p2().titleManual ? '<span class="ux-lk" onclick="p2GoalTitle(\'\')">月収の目安に戻す ›</span>' : '');
+  }
+  if (k === 'dl') {
+    var dl = (p.deadline && /^\d{4}-\d{2}$/.test(p.deadline)) ? p.deadline : '', rem = dl ? _p2YmDiff(_p2Ym(0), dl) : 0;
+    return head('いつまでに？') + '<div class="ux-stp"><span class="ux-pm" onclick="p2GoalDlStep(-1)">−</span><div class="ux-sv' + (dl ? ' ok' : '') + '" style="font-size:28px;font-weight:900;font-family:Inter,sans-serif">' + (dl ? parseInt(dl.slice(0, 4), 10) + '<small>年</small>' + parseInt(dl.slice(5), 10) + '<small>月</small>' : '<small>まだ</small>') + '</div><span class="ux-pm" onclick="p2GoalDlStep(1)">＋</span></div>'
+      + '<div class="ux-chips">' + [12, 24, 36].map(function(n) { var y = _p2Ym(n); return '<span class="' + (dl === y ? 'on' : '') + '" onclick="p2GoalDl(\'' + y + '\')">' + (n / 12) + '年後<small>' + y.replace('-', '/') + '</small></span>'; }).join('') + '<span onclick="p2GoalDl(\'' + _p2Ym(6) + '\')">半年<small>' + _p2Ym(6).replace('-', '/') + '</small></span></div>'
+      + (dl ? '<div class="ux-hint">あと <b>' + rem + 'ヶ月</b>' + (_glMonthlyFront(p) ? '・月あたりの目安フロント <b>' + _glMonthlyFront(p) + '人</b>' : '') + '</div>' : '');
+  }
+  if (k === 'next') {
+    var nx = _p2Next();
+    return head('次の山') + (nx.isFinal ? '<div class="ux-empty">最終ゴールが次の山です</div>' : '<div class="ux-card" style="--c:var(--accent);text-align:center"><div style="font-size:12px;color:var(--text-mid);font-weight:800">⛰ 次の山' + (nx.deadline ? '（' + evEsc(nx.deadline.replace('-', '年')) + '月まで）' : '') + '</div>'
+      + '<div style="font-size:30px;font-weight:900;margin-top:6px">' + evEsc(nx.title || '—') + '</div>'
+      + (nx.title === 'BR' ? '<div style="font-size:14px;color:var(--text-mid);font-weight:700;margin-top:4px">ファーストボーナス ' + Math.round((nx.fb || 0) / 10000) + '万円</div>' : (nx.inc ? '<div style="font-size:14px;color:var(--text-mid);font-weight:700;margin-top:4px">月収 ' + nx.inc + '万円</div>' : ''))
+      + (nx.suggested ? '<div class="ux-sub">最終ゴールから逆算した例です</div>' : '') + '</div>')
+      + '<span class="ux-lk" onclick="' + (nx.title === 'BR' ? 'p2GoalEdit()' : 'p2NxIncOpen()') + '">次の山を決める・なおす ›</span>';
+  }
+  if (k === 'motto') {
+    var mo = String(_p2().motto || '');
+    return head('スローガン（ひとこと）') + '<div class="ux-sub">目標カードに大きく出ます。合言葉・決意・口ぐせ</div>'
+      + '<input class="ux-ta" style="min-height:0;height:60px;font-size:20px;font-weight:900" maxlength="40" placeholder="例：やる時はいましかない" value="' + evEsc(mo) + '" oninput="p2Motto(this.value)">'
+      + '<div class="ux-ex">' + ['やる時はいましかない', '仲間と頂上へ', '言い訳しない', '楽しんだ人が勝つ'].map(function(t) { return '<span class="' + (mo === t ? 'on' : '') + '" onclick="p2MottoEx(\'' + t + '\')">' + t + '</span>'; }).join('') + '</div>';
+  }
+  var root = _p2OwnRoot(), gsv = root ? (root.ptCurrent || 0) : 0;
+  return '<div class="ux-step">' + (i + 1) + ' / ' + P.length + '　目標カード</div>' + _p2GoalCardHtml()
+    + (gsv > 0 ? '<div class="ux-hint">💴 今月のGSV <b>' + gsv.toLocaleString() + 'pt</b> → BB換算 <b>¥' + _p2BBCalc(gsv).toLocaleString() + '</b>（税抜・目安）</div>' : '')
+    + (typeof _p2GapSummary === 'function' ? _p2GapSummary() : '')
+    + '<div class="ux-chk">' + [['目標月収', !!p.income, 0], ['タイトル', !!p.title, 1], ['期日', !!p.deadline, 2], ['スローガン', !!String(_p2().motto || '').trim(), 4]].map(function(x) {
+      return '<div class="ux-ck' + (x[1] ? '' : ' no') + '" onclick="p2PgSub(' + x[2] + ')"><i>' + (x[1] ? '✓' : '!') + '</i><span>' + x[0] + '</span><b>' + (x[1] ? '' : '決める ›') + '</b></div>';
+    }).join('') + '</div>'
+    + '<div class="ux-list" style="margin-top:12px"><div class="ux-li" onclick="p2YearsOpen()"><span class="ic">' + icn('calendar') + '</span><span>年別目標<small>1年ごとの目標</small></span><span class="ch">›</span></div>'
+    + '<div class="ux-li" onclick="p2GapOpen()"><span class="ic">' + icn('calc') + '</span><span>ギャップ<small>今と目標の差</small></span><span class="ch">›</span></div></div>';
 }
 function renderPlan() {
   var wrap = document.getElementById('view-plan');
