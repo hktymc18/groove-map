@@ -2,7 +2,7 @@
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
-  T.login();
+  T.login(); w._cvNew = () => w._cvOn(); // v620で止めた新しい入力（コードは残す）を確かめる
   w.state.members = [{ id: 'a1', lastName: '佐藤', firstName: '花', title: '', parentId: '', mapType: 'both', trainee: true }, { id: 'a2', lastName: '田中', firstName: '健', title: 'B1', parentId: '', mapType: 'both' }, { id: 'a3', lastName: '鈴木', firstName: '一郎', title: 'B2', parentId: '', mapType: 'both' }];
   w.state.categories = [{ id: 'c1', name: 'CT', color: '#7C6CF2' }, { id: 'c2', name: 'ST', color: '#2BA3E0' }];
   const E = (id, d, tm, t, x) => Object.assign({ id, date: d, time: tm, title: t, type: 'event', memberIds: [], createdAt: d + 'T00:00:00' }, x || {});

@@ -2,7 +2,7 @@
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
-  T.login();
+  T.login(); w._cvNew = () => w._cvOn(); // v620で止めた新しい入力（コードは残す）を確かめる
   w.state.members = [{ id: 'a1', lastName: '佐藤', firstName: '花', title: 'PG', parentId: '', mapType: 'both' }];
   const E = (id, d, tm, t, x) => Object.assign({ id, date: d, time: tm, title: t, type: 'event', memberIds: [], createdAt: d + 'T00:00:00' }, x || {});
   w.state.events = [E('e1', '2026-10-13', '19:00', 'CT 鈴木さん', { endTime: '20:00', memberIds: ['a1'], place: 'オンライン' }), E('e2', '2026-10-13', '20:00', 'ST'), E('e3', '2026-10-06', '20:00', 'ST'),
@@ -16,7 +16,7 @@ T.run(async () => {
   c('上：今日・🔍・⋯', !!hd.querySelector('.cv-td') && hd.querySelectorAll('.cv-ib').length === 2);
   const bt = $('#evCalendar .ev-cal-bottom');
   c('下：‹戻る・月週日ToDo・＋予定', bt.classList.contains('cv-b') && bt.querySelector('.cv-bk').textContent.indexOf('戻る') >= 0 && [...bt.querySelectorAll('.cv-seg span')].map(x => x.firstChild.textContent).join() === '月,週,日,ToDo' && bt.querySelector('.cv-add').textContent.indexOf('予定') >= 0);
-  c('週・日・ToDoの下の帯もそろう', ['evWeek', 'evDayV', 'evAgenda'].every(id => $('#' + id + ' .ev-cal-bottom.cv-b')) && $('#evAgenda .cv-add').textContent.indexOf('書く') >= 0);
+  c('週・日・ToDoの下の帯もそろう', ['evWeek', 'evDayV', 'evAgenda'].every(id => $('#' + id + ' .ev-cal-bottom.cv-b')) && $('#evAgenda .cv-add').textContent.indexOf('ToDo') >= 0);
   console.log('=== ② 上にスワイプ → その日の予定 ===');
   const sw = (el, x0, y0, x1, y1) => {
     const ts = new w.Event('touchstart'); ts.touches = [{ clientX: x0, clientY: y0 }]; el.dispatchEvent(ts);

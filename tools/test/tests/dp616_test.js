@@ -2,7 +2,7 @@
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
-  T.login();
+  T.login(); w._cvNew = () => w._cvOn(); // v620で止めた新しい入力（コードは残す）を確かめる
   w._evLoadedUid = 'x';
   w.state.members = [{ id: 'a1', lastName: '佐藤', firstName: '花', title: 'マケ', parentId: '', mapType: 'both', trainee: true }];
   const Tk = (id, d, t, x) => Object.assign({ id, date: d, time: '', title: t, type: 'task', done: false, memberIds: [], priority: 'normal', createdAt: '2026-10-14T0' + id.length + ':00:00Z' }, x || {});
@@ -70,7 +70,7 @@ T.run(async () => {
   w.dpDailyDel(1); w._p2SheetClose('dpDlOv');
   w.dpAllTasks(true); c('すべてのタスク（今までのToDo）＋手帳に戻るボタン', !w.document.body.classList.contains('dp-on') && !!$('.dpback'));
   w.cvBack(); c('‹戻るで手帳へ', w.document.body.classList.contains('dp-on') && !!$('.dph'));
-  w.cvAdd('agenda'); c('右下「＋ 書く」は書く行へ', $('#evAgenda .cv-add').textContent.indexOf('書く') >= 0);
+  w.cvAdd('agenda'); c('右下「＋ ToDo」', $('#evAgenda .cv-add').textContent.indexOf('ToDo') >= 0);
   console.log('=== ⑥ 横向き・PC ===');
   setWH(844, 390); w._uxSync(); w.renderAgenda(); await sleep(10);
   c('横向き：右にタイムスケジュール（その日の予定）', !!$('.dpr .dpts') && $('.dpr').textContent.indexOf('19:00 ST') >= 0);

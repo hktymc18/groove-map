@@ -57,7 +57,7 @@ body.light{
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* キーボード操作時の視認可能なフォーカスリング（マウス/タップでは出ない） */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none} /* v620: iPhoneでページ全体が引っぱられて上に余白が出て、ボタンが押せなくなるのを防ぐ */
 body{font-family:'Inter','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
 
 /* ── HEADER ── */
@@ -333,7 +333,7 @@ input::-webkit-input-placeholder { color: var(--placeholder, #3a3f4a) !important
 input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 
 /* ── SCROLL AREA ── */
-.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 .scroll-area::-webkit-scrollbar{display:none}
 
 /* ── BANNER ── */
@@ -2962,7 +2962,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v619</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v620</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3907,7 +3907,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v619';</script>
-<script src="app.js?v=v619"></script>
+<script>window.GM_EXPECT_JS='v620';</script>
+<script src="app.js?v=v620"></script>
 </body>
 </html>
