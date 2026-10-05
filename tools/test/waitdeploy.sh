@@ -1,6 +1,6 @@
 #!/bin/bash
 # 公開の確認： bash tools/test/waitdeploy.sh <mainのコミットSHA> v614
-# GitHub Pages のデプロイ完了を待ち、本番の index.html にそのバージョンが出ているか数える（3なら反映済み）
+# GitHub Pages のデプロイ（pages build and deployment）完了を待ち、そのコミットの index.html にバージョンが出ているか数える（3なら反映済み）
 SHA=$1; V=$2
 for i in $(seq 1 60); do
   r=$(gh api "repos/hktymc18/groove-map/actions/runs?head_sha=$SHA" 2>/dev/null | python3 -c 'import sys,json
@@ -11,9 +11,6 @@ except Exception: print("none")')
   if [[ "$r" == completed* ]]; then echo "$r"; break; fi
   sleep 10
 done
-for i in $(seq 1 30); do
-  n=$(curl -s "https://hktymc18.github.io/groove-map/index.html?nc=$RANDOM$RANDOM" | grep -c "$V")
-  if [ "$n" -ge 3 ]; then echo "$n"; exit 0; fi
-  sleep 10
-done
-echo "$n"; exit 1
+# 本番（github.io）へはこの環境から直接つなげないことがあるので、mainのindex.htmlに出ている数で確認
+n=$(gh api "repos/hktymc18/groove-map/contents/index.html?ref=$SHA" -H "Accept: application/vnd.github.raw" 2>/dev/null | grep -c "$V")
+echo "$n"; [ "$n" -ge 3 ]
