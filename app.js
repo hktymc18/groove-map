@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v621';
+var APP_JS_VERSION = 'v622';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -2079,7 +2079,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   // ── ツールバー＋スクロール容器 ──
   var bar = document.createElement('div');
   bar.style.cssText = 'display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap';
-  bar.innerHTML = '<b style="font-size:13px">◎ 運動会MAP</b>'
+  bar.innerHTML = '<b style="font-size:13px">◎ サークルMAP</b>'
     + '<span style="font-size:11px;color:var(--text-dim)">' + (state.currentMonth || '') + '・' + members.length + '人・レーン=段数／' + (_rgO ? '線の色=系列・帯の色=地域' : '色=系列') + '</span>'
     + treeSortSelectHtml()
     + (_rgO ? '<span class="orbit-rg-legend" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--text-mid)">'
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v621';
+  var DATA_VERSION = 'v622';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5343,6 +5343,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v622', d:'2026-10-06', items:['◎ MAPの「運動会」を「サークル」に名前を変えました（切り替えボタン・上の見出し・並び順の説明）'] },
   { v:'v621', d:'2026-10-06', items:['🔑 ログインボタンを押しても「…」のまま止まることがある不具合を修正：プロフィールの読み込みに失敗した時は自動で読み直し、それでもだめな時は理由と「アプリを修復して開き直す」ボタンを出すように'] },
   { v:'v620', d:'2026-10-06', items:['📅 予定・ToDo（スマホ）を元の使い方に戻しました：日をタップ＝その日の一覧、＋予定＝今までの入力画面、予定をタップ＝今までの操作。ToDoも今までの一覧に（上下の帯の見た目だけ新しいまま）','🐛 OLを一度開くと、ほかの画面で下のタブと上の帯が消えてボタンが押せなくなる不具合を修正','📱 iPhoneでスクロールした時に画面全体がずれて上に余白が出て、ボタンが押せなくなるのを防ぐように'] },
   { v:'v619', d:'2026-10-05', items:['スマホでもバージョンと更新内容を見られるように：「今日」の一番下と「設定」→ このアプリ（お知らせ・更新内容／バージョン・保存した時刻）'] },
@@ -7925,7 +7926,7 @@ var _treeSortMode = 'front'; // v607: 標準はフロントが多い順
 try { var _tsm0 = localStorage.getItem('gm_treeSort'); if (_tsm0 && TREE_SORTS.some(function(s) { return s[0] === _tsm0; })) _treeSortMode = _tsm0; } catch(e) {}
 function treeSortSelectHtml(extraStyle) {
   var on = _treeSortMode !== 'front';
-  return '<select class="mc-chip tree-sort-sel" onchange="setTreeSort(this.value)" title="ツリー・運動会MAPの並び順"'
+  return '<select class="mc-chip tree-sort-sel" onchange="setTreeSort(this.value)" title="ツリー・サークルMAPの並び順"'
     + ' style="-webkit-appearance:none;appearance:none;outline:none;border-color:' + (on ? '#8B7CFF' : 'var(--border)') + ';background:' + (on ? '#8B7CFF' : 'transparent') + ';color:' + (on ? '#fff' : 'var(--text-dim)') + (extraStyle ? ';' + extraStyle : '') + '">'
     + TREE_SORTS.map(function(s) { return '<option value="' + s[0] + '"' + (s[0] === _treeSortMode ? ' selected' : '') + '>並び：' + s[1] + '</option>'; }).join('')
     + '</select>';
@@ -16368,7 +16369,7 @@ function uxMapDr() {
   var vis = function(id) { var e = document.getElementById(id); return !!(e && e.style.display !== 'none'); };
   var b = function(t, on, cls) { return '<span class="b' + (cls ? ' ' + cls : '') + '" onclick="' + on + '">' + t + '</span>'; };
   dr.innerHTML = '<div class="pn"><div class="hd">絞り込み・表示<span onclick="uxMapDrClose()">✕</span></div>'
-    + '<h5>表示</h5><div class="pc">' + b('ツリー', '', 'on') + (cur ? b('🧊 3D', 'uxMapDrClose();open3DMap()') : '') + '<span class="b off" title="運動会・テーブル・カンバンはPCで">運動会・表はPCで</span></div>'
+    + '<h5>表示</h5><div class="pc">' + b('ツリー', '', 'on') + (cur ? b('🧊 3D', 'uxMapDrClose();open3DMap()') : '') + '<span class="b off" title="サークル・テーブル・カンバンはPCで">サークル・表はPCで</span></div>'
     + (cur ? '<h5>人</h5><div id="uxDrCat"></div>' : '')
     + '<h5>並び' + (cur ? '・地域' : '') + '</h5><div id="uxDrSort"></div>' + (cur ? '<div id="uxDrReg" style="margin-top:6px"></div>' : '')
     + '<h5>その他</h5><div class="pc">'
