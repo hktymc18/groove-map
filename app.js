@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v607';
+var APP_JS_VERSION = 'v608';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v607';
+  var DATA_VERSION = 'v608';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v608', d:'2026-10-05', items:['受付連携を1画面のページに：①稼働を取り込む ②名簿から追加 ③名前をそろえる','名簿から追加：受付の名簿にいてMAPにいない人を、紹介者の下に自動で置いて追加（名前・性別・研修生も名簿のまま）','名前をそろえる：受付とつないだ人で字がちがう時（高橋⇔髙橋など）に名簿の名前にそろえる','MAPの横向きも、地域・絞り込み・⋯・受付連携を縦と同じ選び方に'] },
   { v:'v607', d:'2026-10-05', items:['MAP（スマホ縦）を作り直し：上は「現状/理想・月」「LTSV・稼働・S」「全段・段・地域・絞り込み」の3段だけに','メンバーの行：木の線で字下げ、稼働（S/A/B/C）とGSVは右の列にそろえて固定。5段より深い所は横にスクロール','タイトルを大きな色の札に（BR=紫・審査中=オレンジ・研修生=水色・フレッシュ=金・そのほか=灰）','並びは「フロントが多い順」が標準に（絞り込みの中で変えられます）','地域・絞り込みは下から出る大きなボタンで。ほかの人を「うすく表示／かくす」を選べます','行を押すとその人の画面（右下で編集・この人の下に追加）。下の帯に「＋追加」と「受付連携」'] },
   { v:'v606', d:'2026-10-05', items:['PLANの入口：横向きでもタイルが画面に収まるように（見出しを1行に・振り返りとツールも見出しに）','横向きのタイルに中身：やる理由の一文・期日まであと◯ヶ月・この先3ヶ月のロードマップ・S稼働の進み・今週の残りの行動'] },
   { v:'v605', d:'2026-10-05', items:['データの入口：横向きでもタイルが画面に収まるように（見出しを1行に・くわしくのボタンも見出しに）','横向きのタイルに直近6ヶ月の小さな推移グラフ','横向きの表示チームは小さいボタンに'] },
@@ -6502,6 +6503,7 @@ function ckLinkOpen(unionId) {
       if (!sel) sel = unions[0].id;
     }
     _ckLink = { unions: unions, sel: sel };
+    _ckPgI = 0; // v608
     ckLinkLoad();
   }).catch(function(e) { toast('受付システムに接続できません: ' + (e && e.message || '')); });
 }
@@ -6523,10 +6525,11 @@ function ckLinkLoad() {
       return { m: m, kind: 'none' };
     });
     _ckLink.rosterCount = roster.length;
-    ckLinkRender();
+    _ckLink.roster = roster; // v608
+    if (!isPCMode()) ckPgRender(); else ckLinkRender(); // v608: スマホは1画面のページ
   }).catch(function(e) { toast('受付名簿の読込に失敗しました: ' + (e && e.message || '')); });
 }
-function ckLinkClose() { var o = document.getElementById('ckLinkOv'); if (o && o.parentNode) o.parentNode.removeChild(o); }
+function ckLinkClose() { var o = document.getElementById('ckLinkOv'); if (o && o.parentNode) o.parentNode.removeChild(o); var p = document.getElementById('ckPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('ck-pg'); }
 function ckLinkRender() {
   ckLinkClose();
   var L = _ckLink;
@@ -16294,8 +16297,10 @@ function _uxMapBarHtml() {
     + '<span class="uxm-seg"><span class="' + (cur ? 'on' : '') + '" onclick="switchView(\'current\')">現状</span><span class="' + (cur ? '' : 'on pu') + '" onclick="switchView(\'ideal\')">理想</span></span>'
     + '<span class="uxm-c ' + (cur ? 'ac' : 'pu') + '" onclick="' + (cur ? 'showLtsvDetail()' : 'uxMapIdealSum()') + '">LTSV ' + lt + (cur ? '<small>稼働 ' + act + '</small>' : '<small>理想 vs 現状 ›</small>') + '</span>'
     + '<span class="sp"></span>'
-    + (cur ? '<span class="uxm-c" onclick="openSearchModal()" title="検索">🔍</span>' : '')
-    + '<span class="uxm-c" onclick="uxMapDr()">絞り込み・表示 <span class="n">' + cnt + '</span></span>';
+    + (cur ? '<span class="uxm-c' + (regionFilter ? ' ac' : '') + '" onclick="mxRegion()">📍 ' + evEsc(!regionFilter ? '全地域' : (regionFilter === '__NONE__' ? '未設定' : regionFilter)) + '</span>' : '') // v608: 縦と同じ選び方
+    + '<span class="uxm-c' + (mapCatFilter && cur ? ' ac' : '') + '" onclick="mxFilter()">絞り込み' + (mapCatFilter && cur ? ' <span class="n">1</span>' : '') + '</span>'
+    + '<span class="uxm-c" onclick="mxSearch()" title="名前で探す">🔍</span><span class="uxm-c" onclick="mxMore()" title="そのほか">⋯</span>'
+    + (cur && !viewingOwnerUid ? '<span class="uxm-c ac" onclick="ckLinkOpen()" style="font-family:inherit">⟲ 受付連携</span>' : '');
 }
 function _uxMapSync() {
   var on = _uxMapLand();
@@ -16582,9 +16587,9 @@ function mxRegion() {
   var own = membersForMap('current').filter(function(m) { return !m.deleted; }), ro = _regionOrder(own), none = own.filter(function(m) { return !(m.region || '').trim(); }).length;
   var tile = function(v, lb, n) { var on = (regionFilter || '') === v; return '<div class="' + (on ? 'on' : '') + '" onclick="mxSetRegion(\'' + v + '\')"><b>' + evEsc(lb) + '</b><span>' + n + '人</span></div>'; };
   _mxSheet('mxRegOv', '<h4>地域</h4><div class="mxg">' + tile('', '全地域', own.length) + ro.keys.map(function(r) { return tile(r, r, ro.cnt[r]); }).join('') + (none ? tile('__NONE__', '未設定', none) : '') + '</div>'
-    + '<h5>ほかの地域の人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>');
+    + (_uxLand() ? '' : '<h5>ほかの地域の人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>'));
 }
-function _mxRe() { renderTree(currentView === 'ideal' ? 'ideal' : 'current'); }
+function _mxRe() { renderTree(currentView === 'ideal' ? 'ideal' : 'current'); if (_uxLand()) { _uxMapSync(); setTimeout(_applyMapDims, 220); } }
 function mxSetRegion(v) { regionFilter = v || ''; window._pcFocusLineage = ''; _p2SheetClose('mxRegOv'); _mxRe(); }
 function mxHideSet(v) { _mxHide = !!v; try { localStorage.setItem('gm_mxHide', v ? '1' : '0'); } catch (e) {} _p2SheetClose('mxRegOv'); _p2SheetClose('mxFltOv'); _mxRe(); }
 function mxFilter() {
@@ -16595,7 +16600,7 @@ function mxFilter() {
     var tile = function(v, lb, c) { return '<div class="' + ((mapCatFilter || '') === v ? 'on' : '') + '" onclick="mxSetCat(\'' + v + '\')"><b>' + lb + '</b><span>' + (v === 'bday' ? '30日以内・' : '') + c + '人</span></div>'; };
     h += '<div class="mxg">' + tile('', 'すべて', own.length) + tile('fresh', 'フレッシュ', n('fresh')) + tile('br', 'BR', n('br')) + tile('trainee', '研修生', n('trainee')) + tile('bday', '誕生日', bd) + '</div>'
       + '<h5>審査中（タイトル）</h5><div class="mxg c4">' + ['LOI', 'Q2', 'Q3', 'Q4'].map(function(t) { var c = own.filter(function(m) { return (m.title || '').trim() === t; }).length; return '<div class="' + (mapCatFilter === 'qbr:' + t ? 'on' : '') + '" onclick="mxSetCat(\'qbr:' + t + '\')"><b>' + t + '</b><span>' + c + '人</span></div>'; }).join('') + '</div>'
-      + '<h5>ほかの人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>';
+      + (_uxLand() ? '' : '<h5>ほかの人は</h5><div class="mxm"><span class="' + (_mxHide ? '' : 'on') + '" onclick="mxHideSet(0)">うすく表示</span><span class="' + (_mxHide ? 'on' : '') + '" onclick="mxHideSet(1)">かくす</span></div>');
   }
   h += '<h5>並び</h5><div class="mxg mxs2">' + TREE_SORTS.map(function(s) { return '<div class="' + (s[0] === _treeSortMode ? 'on' : '') + '" onclick="_p2SheetClose(\'mxFltOv\');setTreeSort(\'' + s[0] + '\')"><b style="font-size:14.5px">' + s[1] + '</b></div>'; }).join('') + '</div>';
   _mxSheet('mxFltOv', h);
@@ -16610,7 +16615,7 @@ function mxSearchRun(q) {
   var box = document.getElementById('mxHits'); if (!box) return;
   q = String(q || '').trim().toLowerCase(); if (!q) { box.innerHTML = ''; return; }
   var mt = currentView === 'ideal' ? 'ideal' : 'current', hits = composeMergedInto(membersForMap(mt), mt).filter(function(m) { return !m.deleted && ((m.lastName || '') + (m.firstName || '') + ' ' + (m.lastName || '') + ' ' + (m.firstName || '')).toLowerCase().indexOf(q) >= 0; }).slice(0, 12);
-  box.innerHTML = hits.length ? hits.map(function(m) { return '<div class="mxhit" onclick="_p2SheetClose(\'mxSrOv\');mxJump(\'' + m.id + '\')">' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small><em>ここへ ›</em></div>'; }).join('') : '<div class="ux-empty">見つかりません</div>';
+  box.innerHTML = hits.length ? hits.map(function(m) { return '<div class="mxhit" onclick="_p2SheetClose(\'mxSrOv\');' + (_uxLand() ? 'jumpToMember' : 'mxJump') + '(\'' + m.id + '\')">' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small><em>ここへ ›</em></div>'; }).join('') : '<div class="ux-empty">見つかりません</div>';
 }
 function mxMore() {
   var cur = currentView === 'current', vis = function(id) { var e = document.getElementById(id); return !!(e && e.style.display !== 'none'); };
@@ -16626,6 +16631,132 @@ function mxMore() {
     + (cur ? li('📄', 'CSV出力', '', 'exportCSV(\'current\')') : '')
     + li(icn('search'), '条件でくわしく探す', '', 'openSearchModal()')
     + '</div>');
+}
+// ════ v608: 受付連携を1画面のページに（①稼働を取り込む ②名簿から追加 ③名前をそろえる） ════
+var _ckPgI = 0;
+var CK_PG = ['稼働を取り込む', '名簿から追加', '名前をそろえる'];
+function _ckInfo() { if (!UX_INFO.ck) UX_INFO.ck = { t: '受付連携', h: '<b>① 稼働を取り込む</b>：受付システムの名簿とMAPの人をつないで、受付が数えた稼働率をそのまま入れます（MAPでは計算しません）。名前が同じ人は自動でつなぎ、同じ名前が何人もいる時だけ選びます。<br><b>② 名簿から追加</b>：受付の名簿にいて、MAPにまだいない人を追加します。紹介者がMAPにいれば、その人の下に置きます。名前・性別・研修生は名簿のまま入ります。<br><b>③ 名前をそろえる</b>：つないだ人で、MAPと名簿の名前の字が違う時（高橋⇔髙橋など）に、名簿の名前にそろえます' }; }
+function _ckPgCss() {
+  if (document.getElementById('ckPgCss')) return;
+  var st = document.createElement('style'); st.id = 'ckPgCss';
+  st.textContent = "#ckPg{position:fixed;inset:0;z-index:292;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(env(safe-area-inset-bottom) + 96px)}body.ux-land #ckPg{left:calc(62px + env(safe-area-inset-left));padding:0 16px 76px}"
+    + "#ckPg .ux-btm{z-index:293}body.ck-pg .fab,body.ck-pg #mxBtm{display:none!important}"
+    + ".ckr{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border)}.ckr .nm{flex:1;min-width:0}.ckr .nm b{display:block;font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ckr .nm small{display:block;font-size:12px;color:var(--text-mid);font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+    + ".ckr .r{flex:none;text-align:right;font-size:13px;font-weight:900;color:var(--accent)}.ckr .r.d{color:var(--text-dim);font-weight:700}"
+    + ".ckb{width:28px;height:28px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;cursor:pointer;background:var(--surface2);border:1.5px solid var(--border2);color:transparent}.ckb.on{background:var(--accent);border-color:var(--accent);color:var(--go-ink,#06251C)}"
+    + ".ckp{flex:none;max-width:52%;height:36px;border-radius:10px;border:1.5px solid var(--gold);color:var(--gold);background:var(--surface);font-size:13px;font-weight:900;padding:0 8px;-webkit-appearance:none;appearance:none;outline:none}"
+    + ".ckp.ok{border-color:var(--accent);color:var(--accent)}.ckun{width:100%;height:46px;border-radius:13px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:15px;font-weight:800;padding:0 12px;margin-top:10px}"
+    + ".ckmore{display:block;text-align:center;font-size:13px;font-weight:800;color:var(--text-mid);padding:12px;cursor:pointer}";
+  document.head.appendChild(st);
+}
+// 名簿の「山田 太郎」→ 姓・名
+function _ckSplit(nm) { var p = String(nm || '').trim().split(/[\s　]+/); return { last: p[0] || '', first: p.slice(1).join(' ') }; }
+// 名前の似ている度合い（同じ字の割合）。低い時は「別の人かも」
+function _ckSim(a, b) { a = _ckNorm(a); b = _ckNorm(b); if (!a || !b) return 0; var n = 0, bb = b.split(''); a.split('').forEach(function(ch) { var i = bb.indexOf(ch); if (i >= 0) { n++; bb.splice(i, 1); } }); return n / Math.max(a.length, b.length); }
+function _ckMapName(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).trim(); }
+// 追加する人・名前をそろえる人を数える
+function _ckPrep() {
+  var L = _ckLink, own = _ckOwnMembers(), byName = {}, nos = {};
+  own.forEach(function(m) { var k = _ckNorm((m.lastName || '') + (m.firstName || '')); if (k) (byName[k] = byName[k] || []).push(m); if (m.checkinNo) nos[m.checkinNo] = 1; });
+  var old = {}; (L.adds || []).forEach(function(a) { old[a.r.no] = a; });
+  var adds = (L.roster || []).filter(function(r) { return !nos[r.no] && !byName[_ckNorm(r.name)]; }).map(function(r) {
+    var o = old[r.no]; return o ? o : { r: r, pid: '', on: false, auto: false };
+  });
+  var addByName = {}; adds.forEach(function(a) { (addByName[_ckNorm(a.r.name)] = addByName[_ckNorm(a.r.name)] || []).push(a); });
+  adds.forEach(function(a) {
+    if (old[a.r.no]) return;
+    var k = _ckNorm(a.r.referrer || '');
+    if (!k) return;
+    var hit = byName[k], hit2 = addByName[k];
+    if (hit && hit.length === 1) { a.pid = hit[0].id; a.on = true; a.auto = true; }
+    else if (!hit && hit2 && hit2.length === 1 && hit2[0] !== a) { a.pid = 'new:' + hit2[0].r.no; a.on = true; a.auto = true; }
+  });
+  L.adds = adds;
+  var oldF = {}; (L.fixes || []).forEach(function(f) { oldF[f.m.id] = f; });
+  L.fixes = (L.items || []).filter(function(it) { return it.kind === 'linked' && it.r && _ckNorm(it.r.name) && _ckNorm(it.r.name) !== _ckNorm((it.m.lastName || '') + (it.m.firstName || '')); })
+    .map(function(it) { var sim = _ckSim(it.r.name, _ckMapName(it.m)); return oldF[it.m.id] || { m: it.m, r: it.r, on: sim >= 0.5, far: sim < 0.5 }; });
+}
+function _ckTreeOpts(sel) {
+  var own = _ckOwnMembers(), h = '<option value="">置き場所を選ぶ ▾</option>';
+  var walk = function(pid, d) { own.filter(function(m) { return (m.parentId || '') === pid; }).forEach(function(m) { h += '<option value="' + m.id + '"' + (m.id === sel ? ' selected' : '') + '>' + '　'.repeat(Math.min(d, 6)) + evEsc(_ckMapName(m)) + 'の下</option>'; if (d < 40) walk(m.id, d + 1); }); };
+  walk('', 0);
+  return h;
+}
+function ckPgGo(i) { _ckPgI = i; ckPgRender(); var p = document.getElementById('ckPg'); if (p) p.scrollTop = 0; }
+function ckPgRender() {
+  _ux2Css(); _ckPgCss(); _ckInfo(); _ckPrep();
+  var L = _ckLink, i = _ckPgI, items = L.items || [], body = '';
+  var nLinked = items.filter(function(x) { return x.kind === 'linked'; }).length, nAuto = items.filter(function(x) { return x.kind === 'auto'; }).length, nMulti = items.filter(function(x) { return x.kind === 'multi'; }).length, nNone = items.filter(function(x) { return x.kind === 'none'; }).length;
+  var unionSel = '<select class="ckun" onchange="_ckLink.sel=this.value;_ckLink.adds=null;_ckLink.fixes=null;ckLinkLoad()">' + L.unions.map(function(u) { return '<option value="' + evEsc(u.id) + '"' + (u.id === L.sel ? ' selected' : '') + '>受付ユニオン：' + evEsc(u.id) + (u.area ? '（' + evEsc(u.area) + '）' : '') + '</option>'; }).join('') + '</select>';
+  var row = function(nm, sub, right) { return '<div class="ckr"><div class="nm"><b>' + nm + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + right + '</div>'; };
+  var next = '', nextOn = '';
+  if (i === 0) {
+    body = unionSel + _dtKv([['つないだ人', nLinked + '人'], ['自動で一致', nAuto + '人', '', 'var(--accent)'], ['えらぶ', nMulti + '人', '', nMulti ? 'var(--gold)' : '']]);
+    if (nMulti) body += '<div class="ux-sec">同じ名前が何人もいる（どちらか選ぶ）</div>' + items.map(function(it, k) {
+      if (it.kind !== 'multi') return '';
+      return row(evEsc(_ckMapName(it.m)), '', '<select class="ckp" id="ckSel' + k + '"><option value="">えらぶ ▾</option>' + it.cands.map(function(c) { return '<option value="' + evEsc(c.no) + '">' + evEsc(c.no) + '（' + evEsc(c.group || '系列なし') + '）</option>'; }).join('') + '</select>');
+    }).join('');
+    if (nAuto) body += '<div class="ux-sec">自動で一致（取り込むとつながる）</div>' + items.map(function(it) { return it.kind === 'auto' ? row(evEsc(_ckMapName(it.m)), evEsc(it.r.group || ''), '<span class="r">→ ' + evEsc(it.r.no) + '</span>') : ''; }).join('');
+    var linked = items.filter(function(x) { return x.kind === 'linked'; }), showL = L.showLinked;
+    if (linked.length) body += '<div class="ux-sec">つないだ人 ' + linked.length + '人</div>' + (showL ? items.map(function(it, k) { return it.kind === 'linked' ? row(evEsc(_ckMapName(it.m)), evEsc(it.r.group || ''), '<span class="r">✓ ' + evEsc(it.r.no) + '<br><span style="font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer" onclick="_ckLink.items[' + k + '].m.checkinNo=\'\';ckLinkLoad()">はずす</span></span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showLinked=1;ckPgRender()">見る ›</span>');
+    if (nNone) body += '<div class="ux-sec">受付の名簿にいない ' + nNone + '人</div>' + (L.showNone ? items.map(function(it) { return it.kind === 'none' ? row(evEsc(_ckMapName(it.m)), '', '<span class="r d">名簿になし</span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showNone=1;ckPgRender()">見る ›</span>');
+    next = '⟲ 取り込む（稼働率）'; nextOn = 'ckLinkApply()';
+  } else if (i === 1) {
+    var adds = L.adds, on = adds.filter(function(a) { return a.on && a.pid; }).length;
+    body = '<div class="ux-sum"><b>' + adds.length + '<small> 人</small></b><span>受付の名簿にいて、MAPにまだいない人</span></div>';
+    body += adds.length ? adds.map(function(a, k) {
+      var r = a.r, sx = r.sex === 'f' ? '女性' : (r.sex === 'm' ? '男性' : ''), sub = [r.referrer ? '紹介者：' + r.referrer : (r.group ? '系列：' + r.group : ''), sx, r.trainee ? '研修生' : '', r.grade === 'BR' ? 'BR' : ''].filter(Boolean).join('・');
+      var par = '';
+      if (a.pid) { if (a.pid.indexOf('new:') === 0) { var q = adds.filter(function(x) { return 'new:' + x.r.no === a.pid; })[0]; par = q ? evEsc(q.r.name) + 'の下（いっしょに追加）' : ''; } else { var pm = _ckOwnMembers().filter(function(m) { return m.id === a.pid; })[0]; par = pm ? evEsc(_ckMapName(pm)) + 'の下' : ''; } }
+      return '<div class="ckr"><span class="ckb' + (a.on && a.pid ? ' on' : '') + '" onclick="ckAddTgl(' + k + ')">✓</span><div class="nm"><b>' + evEsc(r.name) + '</b><small>' + evEsc(sub) + '</small></div>'
+        + (a.auto && a.pid ? '<span class="r" style="max-width:42%;font-size:12px">' + par + '</span>' : '<select class="ckp' + (a.pid ? ' ok' : '') + '" onchange="ckAddPid(' + k + ',this.value)">' + _ckTreeOpts(a.pid) + '</select>') + '</div>';
+    }).join('') : '<div class="ux-empty">名簿の人は全員MAPにいます 🎉</div>';
+    if (on) { next = '＋ ' + on + '人を追加する'; nextOn = 'ckAddApply()'; }
+  } else {
+    var fx = L.fixes, onF = fx.filter(function(f) { return f.on; }).length;
+    body = '<div class="ux-sum"><b>' + fx.length + '<small> 人</small></b><span>MAPと名簿で名前の字がちがう人</span></div>';
+    body += fx.length ? fx.map(function(f, k) { return '<div class="ckr"><span class="ckb' + (f.on ? ' on' : '') + '" onclick="ckFixTgl(' + k + ')">✓</span><div class="nm"><b>' + evEsc(f.r.name) + '</b><small>MAP：' + evEsc(_ckMapName(f.m)) + '</small></div>' + (f.far ? '<span class="r" style="color:var(--gold)">別の人かも<br><span style="font-size:11px;font-weight:700">つなぎ方を確認</span></span>' : '<span class="r">名簿にそろえる</span>') + '</div>'; }).join('') : '<div class="ux-empty">ちがう人はいません 🎉</div>';
+    if (onF) { next = onF + '人をそろえる'; nextOn = 'ckFixApply()'; }
+  }
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="ckLinkClose()">MAP › <b>受付連携</b></span>' + _uxIb('ck') + '<span class="ux-home" onclick="ckLinkClose()" title="閉じる">✕</span></div>'
+    + '<div class="ux-step">' + (i + 1) + ' / 3　' + CK_PG[i] + '</div><h2 class="ux-h2">' + ['受付から取り込む', '名簿から追加', '名前をそろえる'][i] + '</h2>' + body
+    + _uxBtm('ckLinkClose()', CK_PG, i, 'ckPgGo', next, nextOn);
+  var pg = document.getElementById('ckPg'), st0 = pg ? pg.scrollTop : 0;
+  if (!pg) { pg = document.createElement('div'); pg.id = 'ckPg'; document.body.appendChild(pg); }
+  pg.innerHTML = h; pg.scrollTop = st0;
+  document.body.classList.add('ck-pg');
+}
+function ckAddTgl(k) { var a = _ckLink.adds[k]; if (!a) return; if (!a.pid) { toast('先に置き場所を選んでください'); return; } a.on = !a.on; ckPgRender(); }
+function ckAddPid(k, v) { var a = _ckLink.adds[k]; if (!a) return; a.pid = v; a.on = !!v; a.auto = false; ckPgRender(); }
+function ckFixTgl(k) { var f = _ckLink.fixes[k]; if (f) { f.on = !f.on; ckPgRender(); } }
+function ckAddApply() {
+  var adds = (_ckLink.adds || []).filter(function(a) { return a.on && a.pid; }), made = {}, n = 0, cm = state.currentMonth || currentMonthStr(), guard = 0;
+  var area = normalizeRegionValue((currentUser && currentUser.area) || '');
+  var left = adds.slice();
+  while (left.length && guard++ < 50) { // 紹介者もいっしょに追加する人は、紹介者を先に作る
+    var rest = [];
+    left.forEach(function(a) {
+      var pid = a.pid;
+      if (pid.indexOf('new:') === 0) { pid = made[pid.slice(4)]; if (!pid) { rest.push(a); return; } }
+      var nm = _ckSplit(a.r.name), id = 'id-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+      state.members.push({ id: id, lastName: nm.last, firstName: nm.first, gender: a.r.sex === 'f' ? 'female' : 'male', title: a.r.grade === 'BR' ? 'BR' : '', activity: '', actRate: '', morale: 1, priority: '',
+        ptCurrent: 0, ptFixed: 0, ptSelf: 0, trainee: !!a.r.trainee, parentId: pid, mapType: 'both', memo: '', nextDate: '', aSan: '', instaUrl: '', lineId: '',
+        traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '', region: area, birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '', month: cm, checkinNo: a.r.no });
+      made[a.r.no] = id; n++;
+    });
+    if (rest.length === left.length) break;
+    left = rest;
+  }
+  _memMap = null; recalcAllGSV(); autoSave(); renderCurrentView();
+  toast('＋ ' + n + '人を名簿から追加しました（受付とつながっています）');
+  _ckLink.adds = null; ckLinkLoad();
+}
+function ckFixApply() {
+  var n = 0;
+  (_ckLink.fixes || []).forEach(function(f) { if (!f.on) return; var nm = _ckSplit(f.r.name); f.m.lastName = nm.last; f.m.firstName = nm.first; n++; });
+  _memMap = null; autoSave(); renderCurrentView();
+  toast(n + '人の名前を名簿にそろえました');
+  _ckLink.fixes = null; ckLinkLoad();
 }
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
