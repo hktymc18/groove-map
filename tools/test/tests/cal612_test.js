@@ -16,7 +16,7 @@ T.run(async () => {
   c('上：今日・🔍・⋯', !!hd.querySelector('.cv-td') && hd.querySelectorAll('.cv-ib').length === 2);
   const bt = $('#evCalendar .ev-cal-bottom');
   c('下：‹戻る・月週日ToDo・＋予定', bt.classList.contains('cv-b') && bt.querySelector('.cv-bk').textContent.indexOf('戻る') >= 0 && [...bt.querySelectorAll('.cv-seg span')].map(x => x.firstChild.textContent).join() === '月,週,日,ToDo' && bt.querySelector('.cv-add').textContent.indexOf('予定') >= 0);
-  c('週・日・ToDoの下の帯もそろう', ['evWeek', 'evDayV', 'evAgenda'].every(id => $('#' + id + ' .ev-cal-bottom.cv-b')) && $('#evAgenda .cv-add').textContent.indexOf('タスク') >= 0);
+  c('週・日・ToDoの下の帯もそろう', ['evWeek', 'evDayV', 'evAgenda'].every(id => $('#' + id + ' .ev-cal-bottom.cv-b')) && $('#evAgenda .cv-add').textContent.indexOf('書く') >= 0);
   console.log('=== ② 上にスワイプ → その日の予定 ===');
   const sw = (el, x0, y0, x1, y1) => {
     const ts = new w.Event('touchstart'); ts.touches = [{ clientX: x0, clientY: y0 }]; el.dispatchEvent(ts);

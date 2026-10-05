@@ -83,7 +83,7 @@ T.run(async () => {
   c('複製を保存', !!w.state.events.find(e => e.date === '2026-10-27' && e.title === 'CT 鈴木 健太さん'));
   w.openEventActions('e2'); w.epDel(); await sleep(5);
   c('消す', !ev('e2') && !$('#efPg'));
-  w.openEventActions('t1'); c('タスクは今までのシート', !!$('#evActOv') && !$('#efPg')); w.closeEventActions();
+  w.openEventActions('t1'); c('タスクはタスクの画面（v616）', !!$('#tkPg') && !$('#efPg')); w.tkClose();
   console.log('=== ④ その他の入口・PC ===');
   w.evAddFor('a1'); c('その人の画面から：だれとが入る（メンバーだけ）', w._ef.o.mids.join() === 'a1' && w._ef.o.vis === 'member'); w.efClose();
   w.openEventAddTime('2026-10-21', 10); c('日表示の時間タップ：時刻入り', w._ef.o.time === '10:00' && w._ef.o.end === '11:00'); w.efClose();
