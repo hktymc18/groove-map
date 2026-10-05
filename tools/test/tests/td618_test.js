@@ -18,6 +18,12 @@ T.run(async () => {
   c('今日のタイル（手帳・予定・今週やること・気になる人・再アプローチ）', !!$('.tdy') && $$('.tdy-t').length === 5);
   const tx = $('.tdy').textContent;
   c('手帳と予定と再アプローチの中身', tx.indexOf('今日の手帳') >= 0 && tx.indexOf('佐藤CT') >= 0 && tx.indexOf('声をかける時期が来た人') >= 0);
+  c('下にバージョンと「更新内容を見る」', !!$('.tdy-ver') && $('.tdy-ver').textContent.indexOf(w.APP_JS_VERSION) >= 0 && $('.tdy-ver').textContent.indexOf('更新内容') >= 0);
+  w.updateLastSaved(); c('保存した時刻も出る', /\d\d:\d\d 保存済み/.test($('.tdy-ver').textContent));
+  w.localStorage.removeItem('gm_seenNote'); w._tdyRender(); c('未読なら赤丸', !!$('.tdy-ver i'));
+  $('.tdy-ver').onclick(); await sleep(150);
+  c('タップでお知らせ（未読が消える）', !!$('#notesOv') && $('#notesOv').textContent.indexOf(w.RELEASE_NOTES[0].items[0]) >= 0 && !$('.tdy-ver i'));
+  $('#notesOv').remove();
   const n0 = w.state.events.filter(e => e.type === 'task').length;
   w.tdyToDp('f1'); await sleep(5);
   const tk = w.state.events.filter(e => e.type === 'task' && e.title.indexOf('佐藤さん フォロー') >= 0)[0];
@@ -55,6 +61,11 @@ T.run(async () => {
   w.setOpen(); await sleep(5);
   const st = $('#setPg');
   c('設定はリスト', !!st && $$('#setPg .st-ls>div').length >= 8 && st.textContent.indexOf('翌月コピー') >= 0 && st.textContent.indexOf('毎日のいつもの行') >= 0 && st.textContent.indexOf('ログアウト') >= 0);
+  c('設定に「お知らせ・更新内容」とバージョン', st.textContent.indexOf('お知らせ・更新内容') >= 0 && st.textContent.indexOf(w.RELEASE_NOTES[0].v) >= 0 && /\d\d:\d\d 保存済み/.test(st.textContent));
+  w.localStorage.removeItem('gm_seenNote'); w._stRender(); c('未読ならNEW', !!$('#setPg .nw'));
+  const rn = $$('#setPg .st-ls>div').find(x => x.textContent.indexOf('お知らせ・更新内容') >= 0); rn.onclick ? rn.onclick() : rn.click(); await sleep(80);
+  c('押すとお知らせ（設定の上に出る・NEWが消える）', !!$('#notesOv') && !!$('#setPg') && !$('#setPg .nw'));
+  $('#notesOv').remove();
   w.setOpen('look'); await sleep(5);
   c('見た目のページ', $('#setPg .ux-h2').textContent === '見た目' && $('#setPg .ux-crumb').textContent.indexOf('設定') >= 0);
   const lt0 = w.document.body.classList.contains('light');
