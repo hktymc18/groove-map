@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v614';
+var APP_JS_VERSION = 'v615';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v614';
+  var DATA_VERSION = 'v615';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5333,6 +5333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v615', d:'2026-10-05', items:['➕ メンバーをタップした画面の右下が「フロント追加」になりました。押すとその人の直下に新しい人を足せます（MAPの＋追加も同じ新しい画面）。名前・性別・タイトル、研修生なら研修の予定、それ以外は稼働・GSV（任意）。「追加してくわしく入れる」でそのままその人の画面へ','🏷 タイトルはカテゴリのカード（研修生 FT〜CO・審査中 LOI〜Q4・BA B1〜BM・BR BR〜TE）を押すと、リストが開いて選べます。今のタイトルはカードに表示','📅 スタート月は年と月をリストで選べるようにしました（何年も前の人もすぐ）'] },
   { v:'v614', d:'2026-10-05', items:['📅 予定の入力を「1枚」に戻しました（スマホ）。上から 名前 → 日付（長押しした日が入っています・間違えた時だけ「日付を変える」）→ 開始〜終了の時刻 → だれと（名前でさがすリスト）の順です','👥 だれかを選ぶと「この予定を出すカレンダー」（メンバーだけ・自分だけ・両方）が出ます','🎨 色（カテゴリ）は今までのカテゴリ画面で選べます（名前・色の編集もそこで）。通知・場所・メモ・繰り返しは押すとその場で開いて入れられます','✏️ 予定をタップすると同じ1枚で中身を直せます（変えたらその場で保存）。右下は「別の日にも入れる」'] },
   { v:'v613', d:'2026-10-05', items:['🗓 予定をタップすると「予定の画面」が開きます（スマホ）。上に大きく名前と日時、下のタイル（いつ・なに・だれと・通知・メモ・場所）を押すと、その項目だけのページで直せます。変えたらその場で保存されます','⧉ 右下の「別の日にも入れる」で、同じ予定を日付だけ選んで入れられます。消す・今までの編集画面は下のほうにあります','➕ 予定を足すのが「なに？→いつ？→だれと？」の3つの質問になりました。いつもの予定（テンプレ）や最近の予定はタップするだけで決まります。時刻は今までと同じ「開始〜終了」の欄と数字パッドです'] },
   { v:'v612', d:'2026-10-05', items:['📅 予定（スマホ）の上と下を新しくしました。カレンダー本体の見え方は今のままです。上は「‹ 年月 › 今日 🔍 ⋯」、下は「‹戻る・月｜週｜日｜ToDo・＋予定」の1行にまとめました','👆 カレンダーを上にスワイプ（または日をタップ）すると「その日の予定」に切り替わります。上に小さな月、下にその日の予定が大きな文字で並びます。下にスワイプで全体に戻ります（同じ日をもう一度タップするとその日に追加）','📱 予定もスマホを横にして使えるようになりました（左に月・右にその日の予定）'] },
@@ -13400,6 +13401,7 @@ function toggleModalSection(id) {
 // #2 FABクリック — 親選択メニュー
 function onFabClick() {
   if (!state.isEditor) return;
+  if (!isPCMode() && (state.members || []).some(function(x) { return !x.parentId && !x.deleted; }) && currentView !== 'ideal') { naOpen(window._selectedCardId || ''); return; } // v615: スマホは新しい追加画面
   var members = membersForMap(currentView === 'ideal' ? 'ideal' : 'current');
   if (members.length === 0) {
     // メンバーがいない → そのまま追加
@@ -13810,6 +13812,7 @@ function _qaStageGet() {
 }
 function openQuickAdd() {
   if (!state.isEditor) return;
+  if (!isPCMode() && (state.members || []).some(function(x) { return !x.parentId && !x.deleted; })) { naOpen(selectedParentId || ''); return; } // v615
   var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
   if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は従来フォームで
   _p2SheetClose('qaOv');
@@ -16825,7 +16828,7 @@ function ppOpen(id, map) {
 }
 function _ppFind(id, map) { var arr = map === 'ideal' ? (state.idealMembers || []) : (state.members || []); for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
 function ppClose() { var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null; }
-function ppGo(pg) { if (!_pp) return; _pp.pg = pg || ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
+function ppGo(pg) { if (!_pp) return; _pp.pg = pg || ''; _ttlOpen = ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
 function ppGoI(i) { var L = _pp && _pp.map === 'ideal' ? PP_PG_I : PP_PG; if (L[i]) ppGo(L[i][0]); }
 function ppNext(d) { // 左右スワイプ：入口ではMAPの次の人、ページでは次のページ
   if (!_pp) return;
@@ -16845,6 +16848,7 @@ function _ppSave(fn, msg) {
 }
 function _ppCatOf(t) { t = (t || '').trim(); if (t === 'OUT') return 'OUT'; var c = detectCategory(t); return c || (['FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO'].indexOf(t) >= 0 ? '研修生' : ''); }
 function ppTitle(t) {
+  _ttlOpen = ''; // v615: 選んだらカードを閉じる
   if (_pp.map === 'ideal') { idqTitle(t); _ppRender(); return; }
   _ppSave(function() {
     selCategory(_ppCatOf(t));
@@ -16936,8 +16940,7 @@ function _ppPage(m, pg) {
   if (pg === 'title') {
     var t = (m.title || '').trim(), groups = PP_TITLES.slice();
     if (ideal) groups = [['ex', '審査中', ['LOI', 'Q2', 'Q3', 'Q4']], ['ot', 'BA', ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'BM']], ['br', 'BR', ['BR', 'ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'チームエリート']], ['ot', 'そのほか', ['ユーザー']]];
-    h = '<h2 class="ux-h2">タイトル</h2><div class="ux-sub">押すとすぐ保存。色でカテゴリが分かります</div>'
-      + groups.map(function(g) { var k = 'var(--mx' + g[0] + ')'; return '<div class="ppg" style="--k:' + k + '"><i></i>' + g[1] + '</div><div class="ppt" style="--k:' + k + '">' + g[2].map(function(x) { return '<span class="' + (x === t ? 'on' : '') + '" onclick="ppTitle(\'' + x + '\')">' + (titleAbbr(x) === x ? evEsc(x) : evEsc(titleAbbr(x)) + '<small>' + evEsc(x) + '</small>') + '</span>'; }).join('') + '</div>'; }).join('');
+    h = '<h2 class="ux-h2">タイトル</h2><div class="ux-sub">カードを押すと選べます。選ぶとすぐ保存</div>' + _ttlPickHtml(t, groups, 'ppTitle', '_ppRender'); // v615: カテゴリのカード→リスト
   } else if (pg === 'num') {
     var gsv = m.ptCurrent || 0, a = m.activity || '', rate = m.actRate === '' || m.actRate == null ? '' : m.actRate;
     h = '<h2 class="ux-h2">今月の数字</h2>'
@@ -16964,7 +16967,7 @@ function _ppPage(m, pg) {
       + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="ppLast" placeholder="姓" value="' + evEsc(m.lastName || '') + '" onchange="ppName()"><input class="ppin" id="ppFirst" placeholder="名" value="' + evEsc(m.firstName || '') + '" onchange="ppName()"></div>'
       + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (m.gender !== 'female' ? 'on' : '') + '" onclick="ppGender(\'male\')">男性</span><span class="' + (m.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="ppGender(\'female\')">女性</span></div>'
       + '<div class="ppl">地域</div><div class="ppt" style="--k:var(--accent)">' + regs.map(function(r) { return '<span class="' + (r === rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'' + evEsc(r) + '\',\'地域を保存しました\')">' + evEsc(r) + '</span>'; }).join('') + '<span class="' + (!rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'\',\'地域を外しました\')">未設定</span><span onclick="var v=prompt(\'地域を入力\',\'\');if(v)ppSetF(\'fRegion\',v.trim(),\'地域を保存しました\')">＋ ほか</span></div>'
-      + '<div class="ppl">スタート月（組織に入った月）</div><div class="ux-stp"><span class="ux-pm" onclick="ppStart(-1)">−</span><div class="ux-sv' + (sm ? ' ok' : '') + '" style="font-size:24px;font-weight:900;font-family:Inter,sans-serif">' + (sm ? parseInt(sm.slice(0, 4), 10) + '<small>年</small>' + parseInt(sm.slice(5), 10) + '<small>月</small>' : '<small>まだ</small>') + '</div><span class="ux-pm" onclick="ppStart(1)">＋</span></div>'
+      + '<div class="ppl">スタート月（組織に入った月）</div>' + _ymSelHtml(sm, 'ppStartYM') // v615: 年・月をリストで
       + '<div class="ppl">誕生日</div><input class="ppin" type="date" value="' + evEsc(m.birthday || '') + '" onchange="ppBirth(this.value)">'
       + '<div class="ppl">研修生</div><div class="ppb sm" style="--n:2"><span class="' + (!m.trainee ? 'on' : '') + '" onclick="ppTrainee(0)">いいえ</span><span class="' + (m.trainee ? 'on' : '') + '" style="--a:var(--mxtr)" onclick="ppTrainee(1)">研修生（水色）</span></div>'
       + '<div class="ppl">Instagram・LINE</div><input class="ppin" placeholder="InstagramのURL" value="' + evEsc(m.instaUrl || '') + '" onchange="ppSetF(\'fInsta\',this.value.trim(),\'保存しました\')"><input class="ppin" style="margin-top:8px" placeholder="LINE ID または URL" value="' + evEsc(m.lineId || '') + '" onchange="ppSetF(\'fLine\',this.value.trim(),\'保存しました\')">'
@@ -16980,7 +16983,7 @@ function _ppRender() {
   var ideal = _pp.map === 'ideal', L = ideal ? PP_PG_I : PP_PG, nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)', body = '', btm = '';
   if (!_pp.pg) {
     body = _ppHub(m);
-    btm = '<div class="ux-btm"><span class="ux-bk" onclick="ppClose()">‹ ' + (ideal ? '理想MAPへ' : 'MAPへ') + '</span>' + (ideal ? '' : '<span class="ux-nx" onclick="ppClose();evAddFor(\'' + m.id + '\')">＋ 予定</span>') + '</div>';
+    btm = '<div class="ux-btm"><span class="ux-bk" onclick="ppClose()">‹ ' + (ideal ? '理想MAPへ' : 'MAPへ') + '</span>' + (ideal ? '' : '<span class="ux-nx" onclick="naOpen(\'' + m.id + '\')">＋ フロント追加</span>') + '</div>';
   } else {
     var i = -1; L.forEach(function(x, k) { if (x[0] === _pp.pg) i = k; });
     body = '<div class="ux-step">' + (i + 1) + ' / ' + L.length + '　' + L[i][1] + '</div>' + _ppPage(m, _pp.pg);
@@ -17605,6 +17608,136 @@ function _efRender() {
 }
 // スマホで「予定を足す」を開く入口（PCは今までの入力画面）
 function evAddFor(mid, date) { if (_cvOn()) eaOpen({ member: mid || '', date: date || '' }); else openEventModal(null, mid || '', date || '', 'event'); }
+
+// ════ v615: タイトルは「カテゴリのカード」→ 押すと開いてリストから選ぶ（その人の画面・フロント追加で共通）
+//  カードに選べる範囲（FT〜CO など）と今のタイトルを出す
+var _ttlOpen = '';
+function _ttlCss() {
+  if (document.getElementById('ttlCss')) return;
+  var st = document.createElement('style'); st.id = 'ttlCss';
+  st.textContent = ".ttc{margin-top:10px;border-radius:16px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--k) 45%,var(--border));overflow:hidden}"
+    + ".ttc .hd{display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;min-height:60px}.ttc .hd>i{width:12px;align-self:stretch;border-radius:5px;background:var(--k);flex:none}"
+    + ".ttc .hd b{display:block;font-size:17px;font-weight:900}.ttc .hd small{display:block;font-size:12.5px;color:var(--text-mid);font-weight:800;margin-top:2px}"
+    + ".ttc .hd .cur{margin-left:auto;font-size:15px;font-weight:900;color:#fff;background:var(--k);border-radius:9px;padding:4px 11px;flex:none}.ttc .hd .ch{margin-left:auto;color:var(--text-dim);font-size:18px;flex:none}.ttc .hd .cur+.ch{margin-left:6px}"
+    + ".ttc.on{border-color:var(--k)}.ttc .ls{border-top:1px solid var(--border)}"
+    + ".ttc .rw{display:flex;align-items:center;gap:12px;min-height:50px;padding:0 16px;border-bottom:1px solid var(--border);cursor:pointer;font-size:16px;font-weight:900}.ttc .rw:last-child{border-bottom:none}"
+    + ".ttc .rw em{font-style:normal;min-width:44px;font-family:Inter,'Noto Sans JP',sans-serif}.ttc .rw small{font-size:12.5px;color:var(--text-dim);font-weight:800}"
+    + ".ttc .rw.on{background:color-mix(in srgb,var(--k) 14%,var(--surface))}.ttc .rw.on::after{content:'✓';margin-left:auto;color:var(--k);font-size:18px}"
+    + ".ymsel{display:flex;gap:8px;margin-top:8px}.ymsel select{flex:1;min-width:0;width:auto;font-size:17px;font-weight:900}";
+  document.head.appendChild(st);
+}
+// groups: [[色キー, カテゴリ名, [タイトル…]]…]  pick: 'ppTitle' などの関数名
+function _ttlPickHtml(cur, groups, pick, reFn) {
+  _ttlCss();
+  cur = (cur || '').trim();
+  return groups.map(function(g, i) {
+    var k = 'var(--mx' + g[0] + ')', has = g[2].indexOf(cur) >= 0, open = _ttlOpen === g[1];
+    var ab = function(x) { return titleAbbr(x) || x; };
+    var rng = g[2].length > 1 ? ab(g[2][0]) + '〜' + ab(g[2][g[2].length - 1]) : ab(g[2][0]);
+    var h = '<div class="ttc' + (open ? ' on' : '') + '" style="--k:' + k + '"><div class="hd" onclick="ttlTgl(\'' + g[1] + '\',\'' + reFn + '\')"><i></i><div><b>' + evEsc(g[1]) + '</b><small>' + evEsc(rng) + '</small></div>'
+      + (has ? '<span class="cur">' + evEsc(ab(cur)) + '</span>' : '') + '<span class="ch">' + (open ? '▾' : '›') + '</span></div>';
+    if (open) h += '<div class="ls">' + g[2].map(function(x) {
+      return '<div class="rw' + (x === cur ? ' on' : '') + '" onclick="' + pick + '(\'' + evEsc(x) + '\')"><em>' + evEsc(ab(x)) + '</em>' + (ab(x) !== x ? '<small>' + evEsc(x) + '</small>' : '') + '</div>';
+    }).join('') + '</div>';
+    return h + '</div>';
+  }).join('');
+}
+function ttlTgl(cat, reFn) { _ttlOpen = _ttlOpen === cat ? '' : cat; try { window[reFn](); } catch (e) {} }
+// スタート月：年と月をリストで
+function _ymSelHtml(sm, fn) {
+  _ttlCss();
+  var y0 = new Date().getFullYear(), y = sm ? parseInt(sm.slice(0, 4), 10) : 0, mo = sm ? parseInt(sm.slice(5, 7), 10) : 0;
+  var ys = '<option value="">年</option>';
+  for (var i = y0 + 1; i >= 1990; i--) ys += '<option value="' + i + '"' + (i === y ? ' selected' : '') + '>' + i + '年</option>';
+  var ms = '<option value="">月</option>';
+  for (var j = 1; j <= 12; j++) ms += '<option value="' + j + '"' + (j === mo ? ' selected' : '') + '>' + j + '月</option>';
+  return '<div class="ymsel"><select id="ymY" class="ppin" onchange="' + fn + '()">' + ys + '</select><select id="ymM" class="ppin" onchange="' + fn + '()">' + ms + '</select></div>';
+}
+function ppStartYM() {
+  var y = (document.getElementById('ymY') || {}).value, mo = (document.getElementById('ymM') || {}).value;
+  if (!y || !mo) return;
+  ppSetF('fStartMonth', y + '-' + String(mo).padStart(2, '0'), 'スタート月を ' + y + '年' + mo + '月 に');
+}
+// ════ v615: フロント追加（その人の直下に新しい人を足す）— かんたん追加・くわしく登録の新しい形
+//  名前・性別・タイトル（カード）＋研修生なら研修の予定／それ以外は稼働・GSV（任意）。くわしくは追加後に「その人の画面」で
+var _na = null;
+var NA_GROUPS = [['tr', '研修生', ['FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO']], ['ex', '審査中', ['LOI', 'Q2', 'Q3', 'Q4']], ['ot', 'BA', ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'BM']],
+  ['br', 'BR', ['BR', 'ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'PD', 'チームエリート']]];
+function _naCss() {
+  if (document.getElementById('naCss')) return;
+  var st = document.createElement('style'); st.id = 'naCss';
+  st.textContent = "#naPg{position:fixed;inset:0;z-index:520;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(env(safe-area-inset-bottom) + 96px)}"
+    + "body.ux-land #naPg{padding:0 18px 76px}#naPg .ux-btm{left:0;z-index:521}"
+    + ".nap{display:flex;align-items:center;gap:10px;margin-top:8px;padding:12px 14px;border-radius:15px;background:var(--surface);border:1.5px solid var(--border)}.nap b{font-size:16px;font-weight:900;flex:1;min-width:0}.nap b small{display:block;font-size:12px;color:var(--text-dim);font-weight:800}"
+    + ".nap select{max-width:52%;height:40px;border-radius:11px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:14px;font-weight:800;padding:0 8px}"
+    + ".nalk{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:20px;font-size:13.5px;font-weight:900}.nalk span{color:var(--accent);cursor:pointer}";
+  document.head.appendChild(st);
+}
+function _naTrCat(t) { return NA_GROUPS[0][2].indexOf(t) >= 0; }
+function naOpen(pid) {
+  if (!state.isEditor) return;
+  var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
+  if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は今までの画面で
+  var t = 'マケ'; try { var v = localStorage.getItem('gm_naTitle'); if (v) t = v; } catch (e) {}
+  _ttlOpen = '';
+  _na = { pid: pid || roots[0].id, last: '', first: '', gender: 'male', title: t, act: '', gsv: '', date: '', asan: '', chg: false };
+  _naRender();
+  setTimeout(function() { var i = document.getElementById('naLast'); if (i) try { i.focus(); } catch (e2) {} }, 60);
+}
+function naClose() { var p = document.getElementById('naPg'); if (p && p.parentNode) p.parentNode.removeChild(p); _na = null; }
+function _naKeep() { if (!_na) return; ['last', 'first', 'gsv', 'date', 'asan'].forEach(function(k) { var el = document.getElementById('na' + k.charAt(0).toUpperCase() + k.slice(1)); if (el) _na[k] = el.value; }); }
+function naSet(k, v) { if (!_na) return; _naKeep(); _na[k] = v; if (k === 'title') { _ttlOpen = ''; try { localStorage.setItem('gm_naTitle', v); } catch (e) {} } _naRender(); }
+function naTitle(t) { naSet('title', t); }
+function naChg() { naSet('chg', !(_na && _na.chg)); }
+function _naRender() {
+  if (!_na) return;
+  _uxCss(); _ux2Css(); _ppCss(); _naCss(); _ttlCss();
+  var n = _na, p = (state.members || []).filter(function(x) { return x.id === n.pid; })[0];
+  var pn = p ? ((p.lastName || '') + ' ' + (p.firstName || '')).trim() : '';
+  var tr = _naTrCat(n.title);
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="naClose()">MAP › <b>フロント追加</b></span><span class="ux-home" onclick="naClose()" title="やめる">✕</span></div>'
+    + '<h2 class="ux-h2">' + evEsc(pn || '') + 'さんの下に追加</h2>'
+    + '<div class="nap"><b>追加先<small>' + evEsc(pn) + (p && p.title ? '（' + evEsc(titleAbbr(p.title) || p.title) + '）' : '') + 'の直下</small></b>'
+    + (n.chg ? '<select onchange="naSet(\'pid\',this.value)">' + (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; }).sort(_treeSortCmp(state.members, 'title')).map(function(m) {
+      return '<option value="' + m.id + '"' + (m.id === n.pid ? ' selected' : '') + '>' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)') + '</option>'; }).join('') + '</select>'
+      : '<span class="ux-lk" style="margin:0" onclick="naChg()">変える</span>') + '</div>'
+    + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="naLast" placeholder="姓" value="' + evEsc(n.last) + '" autocomplete="off"><input class="ppin" id="naFirst" placeholder="名" value="' + evEsc(n.first) + '" autocomplete="off"></div>'
+    + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (n.gender !== 'female' ? 'on' : '') + '" onclick="naSet(\'gender\',\'male\')">男性</span><span class="' + (n.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="naSet(\'gender\',\'female\')">女性</span></div>'
+    + '<div class="ppl">タイトル（カードを押して選ぶ）</div>' + _ttlPickHtml(n.title, NA_GROUPS, 'naTitle', '_naRender');
+  if (tr) h += '<div class="ppl">研修の予定（任意・入れると研修履歴に入ります）</div><div class="ppn"><input class="ppin" id="naDate" type="date" value="' + evEsc(n.date) + '"><input class="ppin" id="naAsan" placeholder="Aさん" value="' + evEsc(n.asan) + '"></div>';
+  else h += '<div class="ppl">稼働（任意）</div><div class="ppb sm" style="--n:5">' + [['S', 'var(--s)'], ['A', 'var(--a)'], ['B', 'var(--b)'], ['C', 'var(--c)'], ['', 'var(--text-dim)']].map(function(x) { return '<span class="' + (n.act === x[0] ? 'on' : '') + '" style="--a:' + x[1] + '" onclick="naSet(\'act\',\'' + x[0] + '\')">' + (x[0] || 'なし') + '</span>'; }).join('') + '</div>'
+    + '<div class="ppl">今月のGSV（任意）</div><input class="ppin" id="naGsv" type="number" inputmode="numeric" placeholder="0" value="' + evEsc(n.gsv) + '">';
+  h += '<div class="nalk"><span onclick="naSave(\'cont\')">＋ 追加して続けて入れる</span><span onclick="naSave(\'more\')">追加してくわしく入れる ›</span></div>'
+    + '<div class="ux-btm"><span class="ux-bk" onclick="naClose()">‹ やめる</span><span class="ux-nx" onclick="naSave(\'\')">✓ 追加</span></div>';
+  var pg = document.getElementById('naPg'), st0 = pg ? pg.scrollTop : 0;
+  if (!pg) { pg = document.createElement('div'); pg.id = 'naPg'; document.body.appendChild(pg); }
+  pg.innerHTML = h; pg.scrollTop = st0;
+}
+function naSave(after) {
+  if (!_na) return; _naKeep();
+  var n = _na, last = String(n.last || '').trim(), first = String(n.first || '').trim();
+  if (!last && !first) { toast('名前を入れてください'); var i = document.getElementById('naLast'); if (i) try { i.focus(); } catch (e) {} return; }
+  var tr = _naTrCat(n.title), cat = tr ? '研修生' : (_qaCatOf(n.title) || detectCategory(n.title) || '');
+  var gsv = tr ? 0 : Math.max(0, parseInt(n.gsv, 10) || 0), cm = state.currentMonth || currentMonthStr();
+  var m = { id: 'id-' + Date.now(), lastName: last, firstName: first, gender: n.gender, title: n.title, cat: cat,
+    activity: tr ? '' : n.act, actRate: '', morale: 1, priority: '', ptCurrent: gsv, ptFixed: 0, ptSelf: gsv,
+    trainee: false, parentId: n.pid, mapType: 'both', memo: '', nextDate: '', aSan: tr ? String(n.asan || '').trim() : '', instaUrl: '', lineId: '',
+    traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
+    region: normalizeRegionValue((typeof currentUser !== 'undefined' && currentUser && currentUser.area) || ''),
+    birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '', month: cm };
+  if (tr && n.date) m.traineeHistory.push({ status: n.title, date: n.date, aSan: m.aSan || '', result: 'planned', time: '' });
+  state.members.push(m);
+  _memMap = null;
+  recalcAllGSV();
+  renderCurrentView();
+  autoSave();
+  try { gameCheck(); } catch (eG) {}
+  var nm = (last + ' ' + first).trim();
+  if (after === 'cont') { _na.last = ''; _na.first = ''; _na.gsv = ''; _na.date = ''; _na.act = ''; _naRender(); toast('✓ ' + nm + ' さんを追加しました。続けてどうぞ'); var l = document.getElementById('naLast'); if (l) try { l.focus(); } catch (e2) {} return; }
+  naClose();
+  if (after === 'more') { ppOpen(m.id, 'current'); toast('✓ ' + nm + ' さんを追加しました'); return; }
+  toastAction('✓ ' + nm + ' さんを追加しました（' + (titleAbbr(n.title) || n.title) + '）', 'くわしく ›', function() { ppOpen(m.id, 'current'); }, 6000);
+}
 
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
