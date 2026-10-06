@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v661';
+var APP_JS_VERSION = 'v662';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v661';
+  var DATA_VERSION = 'v662';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5350,6 +5350,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v662', d:'2026-10-06', items:['🔢 HOMEの小さいボタンの数字のバッジが縦向きで切れて見えなかったのを修正','◎ MAPを縦で開いてから横にした時も「◎ サークル」が出るように'] },
   { v:'v661', d:'2026-10-06', items:['🖼 HOMEのタイル（PLAN・MAP・カレンダー・TODO・分析）に写真の背景'] },
   { v:'v660', d:'2026-10-06', items:['🎮 PLANの入口のシミュレーションのタイルの文字を「B22シミュレーション」に'] },
   { v:'v659', d:'2026-10-06', items:['🗺 MAP：開いた時は「2段」が選ばれた状態に。「全段」が光るのは全段を押した時だけ（全段が光っているのに2段で出ていたのを直しました）','◎ スマホを横にすると、MAPの上に「◎ サークル」。押すとサークルMAPを画面いっぱいに（−／＋で拡大・丸を押すとその人）'] },
@@ -16883,6 +16884,7 @@ function _mxRender(mapType, members, container) {
 }
 // 上の3段（切替・数字・チップ）＋凡例＋列の見出し
 function _mxTop(mapType) {
+  window._mxLandWas = _uxLand(); // v662
   var view = document.getElementById(mapType === 'ideal' ? 'view-ideal' : 'view-current'); if (!view) return;
   var top = document.getElementById('mxTop');
   if (!top || top.parentNode !== view) { if (top) top.parentNode.removeChild(top); top = document.createElement('div'); top.id = 'mxTop'; view.insertBefore(top, view.firstChild); }
@@ -19627,13 +19629,17 @@ window.addEventListener('resize', function() {
     return;
   }
   _uxMapWas = now;
+  // v662: 縦⇄横でMAPの上の帯（横だけ「◎ サークル」）を描き直す
+  var ld = _uxLand();
+  if (window._mxLandWas !== undefined && ld !== window._mxLandWas && !isPCMode() && (currentView === 'current' || currentView === 'ideal')) { try { _mxTop(currentView); } catch (eMt) {} }
+  window._mxLandWas = ld;
 });
 // ════ v595: メニューも入口のタイルに（PLANを大きく・次にやることを表示。縦は2列・横は1列） ════
 function _uxMenuCss() {
   if (document.getElementById('uxMenuCss')) return;
   var st = document.createElement('style'); st.id = 'uxMenuCss';
   st.textContent = "#view-menu{padding:14px 14px 110px;max-width:640px;margin:0 auto}body.ux-land #view-menu{max-width:none;padding:8px 16px 6px}"
-    + ".ux-sm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.ux-sm .ux-sb{height:46px;font-size:13px;padding:0 8px;flex:none;min-width:0;overflow:hidden;text-overflow:ellipsis}"
+    + ".ux-sm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.ux-sm .ux-sb{height:46px;font-size:13px;padding:0 8px;flex:none;min-width:0;overflow:visible;white-space:nowrap;position:relative}"
     + "body.ux-land .ux-sm{display:flex;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:6px}body.ux-land .ux-sm::-webkit-scrollbar{display:none}body.ux-land .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px;overflow:visible}"
     + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#2a1a00;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
     + "body.ux-land #view-menu .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
