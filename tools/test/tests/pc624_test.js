@@ -34,15 +34,14 @@ T.run(async () => {
   w.p2Go('do'); await sleep(20);
   c('今週やること：今までのPCの一覧', $('.pcx-p').textContent.indexOf('今週やること') >= 0);
   console.log('=== ② データ ===');
-  w._dtMode = 'ez'; w.switchView('stats'); await sleep(50);
-  c('左に入口のタイル＋くわしくの表のボタン', !!$('#dtPcNav') && $('#view-stats').classList.contains('pcx-st') && $$('#dtPcNav .pcx-t').length === 4 && $$('#dtPcNav .pcx-sm span').length === 5);
-  c('右にグラフと数字のページ', $('#dtEz').classList.contains('pcx-dp') && !!$('#dtEz .dtu-pg') && !!$('#dtEz .pcx-tb'));
+  w.switchView('menu'); w.switchView('stats'); await sleep(50);
+  c('v647: PCの分析は開いたらすぐ推移（左の列なし・タブ）', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st') && w._dtTab === 'trend' && !!$('#dtTrend .dt-chart') && $('#dtModeBar').textContent.indexOf('分析') >= 0);
   w.dtPcGo('s'); await sleep(20);
-  c('S稼働へ切り替え', $('#dtEz h2').textContent === 'S稼働' && $$('#dtPcNav .pcx-t.on').length === 1);
-  w.dtMode('full', 'trend'); await sleep(30);
-  c('推移（くわしく）も左の列はそのまま', !!$('#dtPcNav') && $('#dtPcNav .pcx-sm span.on').textContent.indexOf('推移') >= 0 && $('#dtEz').style.display === 'none');
+  c('くわしく（S稼働）は左の列＋右のページ', !!$('#dtPcNav') && $('#dtEz h2').textContent === 'S稼働' && $$('#dtPcNav .pcx-t.on').length === 1 && !!$('#dtEz .pcx-tb'));
   w.dtGo('exam'); await sleep(20);
   c('ページの中のリンク（dtGo）もPCの右の欄へ', w._dtMode === 'ez' && $('#dtEz h2').textContent === 'BR');
+  w.dtGo(''); await sleep(20);
+  c('「分析へ」で推移に戻る', w._dtMode === 'full' && !$('#dtPcNav') && !!$('#dtTrend .dt-chart'));
   console.log('=== ③ スマホは今まで通り ===');
   setWH(390, 844); w._uxSync(); w.switchView('menu'); await sleep(30);
   const tl = $$('#view-menu .ux-t b').map(x => x.textContent);
@@ -76,10 +75,9 @@ T.run(async () => {
   c('スマホもサマリー（入口の「サマリー」から）', !!$('#view-plan .p2s') && $('#view-plan').textContent.indexOf('サマリー') >= 0);
   w.switchView('stats'); await sleep(30);
   c('データ：PCの左の列は出ない', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st'));
-  w.dtMode('full', 'trend'); await sleep(20);
-  c('v626: スマホも「ざっくり／くわしく」は出ない（入口へ戻るだけ）', $('#dtModeBar').textContent.indexOf('ざっくり') < 0 && $('#dtModeBar').textContent.indexOf('入口') >= 0);
+  c('v647: スマホも入口なし（「分析」の見出し）', $('#dtModeBar').textContent.indexOf('ざっくり') < 0 && $('#dtModeBar').textContent.indexOf('入口') < 0 && $('#dtModeBar').textContent.indexOf('分析') >= 0);
   w.dtMode('ez'); await sleep(20);
-  c('入口では何も出さない', $('#dtModeBar').textContent === '');
+  c('dtMode(ez)でも入口には行かず推移', w._dtMode === 'full' && w._dtTab === 'trend');
   console.log('=== v638 PCのツリーカード ===');
   setWH(1400, 900); w._uxSync();
   w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'チームエリート', parentId: '', mapType: 'both', activity: 'S', actRate: 100, ptCurrent: 30000 },
