@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v636';
+var APP_JS_VERSION = 'v637';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1244,7 +1244,7 @@ function renderPCMap(mapType) {
     tb9.setAttribute('fill', cc);
     tb9.setAttribute('pointer-events', 'none');
     g.appendChild(tb9);
-    g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 56, _tAb9, isLightTheme ? '#ffffff' : '#0a1017', 12.5, '800', 'Inter,Noto Sans JP,sans-serif', 'middle'));
+    g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 56, _tAb9, (isLightTheme || cc === '#3A3F4A') ? '#ffffff' : '#0a1017', 12.5, '800', 'Inter,Noto Sans JP,sans-serif', 'middle'));
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
     if (_sfx9) {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v636';
+  var DATA_VERSION = 'v637';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v637', d:'2026-10-06', items:['💎 PCのツリー・サークルなども、TE（チームエリート）の色をスマホと同じグレーに近い黒に（札の字は白）'] },
   { v:'v636', d:'2026-10-06', items:['💎 スマホのMAPで、TE（チームエリート）の色をグレーに近い黒に（Gの金と見分けやすく）'] },
   { v:'v635', d:'2026-10-06', items:['💎 スマホのMAPで、BR以上をタイトルごとの色に（BR=紫・G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ…PCのツリーと同じ宝石色）。明るい色の札は黒い字で見やすく'] },
   { v:'v634', d:'2026-10-06', items:['🏠 スマホの「メニュー」の名前を「HOME」に。左下のボタンも「HOME」に','📅 カレンダー・ToDoの左下の「‹ 戻る」をHOMEのマークに（押すとHOMEへ）'] },
@@ -8477,8 +8478,8 @@ function titleRingColor(title) {
   if (t==='B2'||t==='B3') return '#a78bfa';
   var isLight = document.body.classList.contains('light');
   if (t==='OUT') return isLight ? '#6b7280' : '#5b6478';
-  // v420: BR以上は宝石色で識別（G=金/L=青/R=赤/E=緑/D=白銀/BD=青ダイヤ/PD=ピンク/TE=虹金）
-  var GEM = {'BR':'#38BDF8','G':'#FFD166','ゴールド':'#FFD166','L':'#60A5FA','ラピス':'#60A5FA','R':'#FF5D73','ルビー':'#FF5D73','E':'#34D399','エメラルド':'#34D399','D':(isLight?'#94A3B8':'#E5E7EB'),'ダイヤモンド':(isLight?'#94A3B8':'#E5E7EB'),'BD':'#3B82F6','ブルーダイヤモンド':'#3B82F6','PD':'#F0ABFC','チームエリート':'#FBBF24'};
+  // v420: BR以上は宝石色で識別（G=金/L=青/R=赤/E=緑/D=白銀/BD=青ダイヤ/PD=ピンク）／v637: TE=グレーに近い黒
+  var GEM = {'BR':'#38BDF8','G':'#FFD166','ゴールド':'#FFD166','L':'#60A5FA','ラピス':'#60A5FA','R':'#FF5D73','ルビー':'#FF5D73','E':'#34D399','エメラルド':'#34D399','D':(isLight?'#94A3B8':'#E5E7EB'),'ダイヤモンド':(isLight?'#94A3B8':'#E5E7EB'),'BD':'#3B82F6','ブルーダイヤモンド':'#3B82F6','PD':'#F0ABFC','チームエリート':(isLight?'#2A2E36':'#3A3F4A'),'TE':(isLight?'#2A2E36':'#3A3F4A'),'TEAM ELITE':(isLight?'#2A2E36':'#3A3F4A')};
   if (GEM[raw] !== undefined) return GEM[raw];
   if (GEM[t] !== undefined) return GEM[t];
   if (t === 'BM') return '#C583FF'; // v420: BM=紫
