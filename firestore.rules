@@ -102,6 +102,11 @@ service cloud.firestore {
         allow read:  if signedIn();
         allow write: if ownerActive(uid);
       }
+      // ---- v668: 個人情報保護方針・利用規約の同意の履歴（追記のみ。書き換え・削除は不可） ----
+      match /consents/{ver} {
+        allow read:   if isSelf(uid) || isAdmin();
+        allow create: if isSelf(uid);
+      }
       // ---- 目標シート（v586: 本人だけ） ----
       match /appData/{aid} {
         allow read:  if ownerActive(uid);

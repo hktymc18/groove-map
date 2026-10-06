@@ -13,6 +13,7 @@ const DIR = require('path').resolve(__dirname, '../../..');
     const u = route.request().url();
     if (/app\.js/.test(u) && u.indexOf('firebase') < 0) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(DIR + '/app.js') });
     var mImg = u.match(/groove-map\/(img\/[\w.-]+\.(webp|png))/); if (mImg) return route.fulfill({ status: 200, contentType: 'image/' + mImg[2], body: fs.readFileSync(DIR + '/' + mImg[1]) });
+    var mDoc = u.match(/groove-map\/(privacy|terms)\/(\?.*)?$/); if (mDoc) return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: fs.readFileSync(DIR + '/' + mDoc[1] + '/index.html') });
     if (u.startsWith('https://hktymc18.github.io/groove-map/') && !/\.(png|js|webmanifest)/.test(u)) return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: fs.readFileSync(DIR + '/index.html') });
     if (u.indexOf('firebase-app-compat.js') >= 0) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(__dirname + '/fbstub.js', 'utf8') });
     if (u.indexOf('firebasejs') >= 0) return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });

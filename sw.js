@@ -62,8 +62,8 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v667';
-var APP_JS = './app.js?v=v667'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
+var CACHE = 'groove-map-v668';
+var APP_JS = './app.js?v=v668'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
 var ASSETS = [
   './',
   './index.html',
@@ -137,6 +137,21 @@ self.addEventListener('fetch', function (e) {
   var isHTML = req.mode === 'navigate' || accept.indexOf('text/html') >= 0;
 
   if (isHTML) {
+    // v668: 個人情報保護方針・利用規約のページ（/privacy/・/terms/）はアプリ本体と別のHTML。
+    // 下のアプリシェル共有キャッシュ（./index.html）に入れると本体が方針ページで上書きされるため、
+    // ネットワーク優先・そのURL自身のキャッシュにだけフォールバックする
+    if (/\/(privacy|terms)(\/|$)/.test(url.pathname)) {
+      e.respondWith(
+        fetch(new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' })).then(function (res) {
+          if (res && res.ok) {
+            var copy = res.clone();
+            caches.open(CACHE).then(function (c) { c.put(req, copy); });
+          }
+          return res;
+        }).catch(function () { return caches.match(req); })
+      );
+      return;
+    }
     // 受付システム（/checkin/配下）はMAP本体とは別アプリなので、下のアプリシェル共有キャッシュを使わない。
     // ネットワーク優先で常に受付システム自身のHTMLを返し、オフライン時のみそのURLのキャッシュへフォールバック
     // （これがないと、MAPを開いた後に受付URLを開くとMAPのログイン画面が返ってしまう）

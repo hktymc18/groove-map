@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v667';
+var APP_JS_VERSION = 'v668';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3391,7 +3391,8 @@ function renderAdminList() {
     return (a.name||'').localeCompare(b.name||'');
   });
   var cnt = document.getElementById('adminCount');
-  if (cnt) cnt.textContent = scoped.length + '人' + (pending.length ? '・承認待ち'+pending.length : '');
+  var _pvNo = scoped.filter(function(u){ return _pvNeed(u); }).length; // v668: 未同意の人数
+  if (cnt) cnt.textContent = scoped.length + '人' + (pending.length ? '・承認待ち'+pending.length : '') + (_pvNo ? '・未同意'+_pvNo : '');
   var html = '';
   if (pending.length) {
     html += '<div style="padding:12px 14px 4px;font-size:12px;font-weight:700;color:#FFB454">⏳ 承認待ち（' + pending.length + '）</div>';
@@ -3409,7 +3410,7 @@ function adminPendingRowHtml(u){
   var sub2 = evEsc([u.upRuby ? ('UPルビー:'+u.upRuby) : '', u.upBd ? ('UPBD:'+u.upBd) : ''].filter(Boolean).join(' / '));
   var email= evEsc(u.email || '');
   return '<div class="adm-row" style="border-left:3px solid #FFB454">'
-    + '<div class="adm-main"><div class="adm-name">' + name + ' <span class="adm-badge" style="background:rgba(255,180,84,.15);color:#FFB454">承認待ち</span></div>'
+    + '<div class="adm-main"><div class="adm-name">' + name + ' <span class="adm-badge" style="background:rgba(255,180,84,.15);color:#FFB454">承認待ち</span>' + _pvBadge(u) + '</div>'
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
@@ -3452,7 +3453,7 @@ function adminRowHtml(u) {
             + '<button class="adm-btn' + (u.role==='admin' ? ' admin' : '') + '" onclick="adminToggleRole(\'' + uid + '\')">' + (u.role==='admin' ? '管理者解除' : '管理者にする') + '</button>';
   }
   return '<div class="adm-row' + (disabled ? ' is-dis' : '') + '">'
-    + '<div class="adm-main"><div class="adm-name">' + name + ' ' + roleBadge + statusBadge + '</div>'
+    + '<div class="adm-main"><div class="adm-name">' + name + ' ' + roleBadge + statusBadge + _pvBadge(u) + '</div>'
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
@@ -3873,7 +3874,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v667';
+  var DATA_VERSION = 'v668';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5352,6 +5353,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v668', d:'2026-10-07', items:['個人情報保護方針・利用規約（2026年10月1日施行）を定めました。はじめてログインした時（方針を改定した時も）に同意の画面が出ます。主要条項の要旨を確認し、全文を読んで3つの項目に同意すると利用を開始できます','新規登録の画面から、個人情報保護方針・利用規約の全文を読めるようになりました','アカウント管理の一覧に、同意済み・未同意が表示されます'] },
   { v:'v667', d:'2026-10-06', items:['🎨 設定の「バグ・要望」も絵文字から線のアイコンに'] },
   { v:'v666', d:'2026-10-06', items:['🎨 HOMEの「バグ・要望」ボタンを絵文字から、ほかのボタンと同じ線のアイコンに'] },
   { v:'v665', d:'2026-10-06', items:['🐛 HOMEのタイルの写真とアイコンの色が消えていたのを修正','🏷 ロゴの位置を少し上に'] },
@@ -34848,7 +34850,7 @@ function doSignup() {
   if (!upBd)  { _sgErr(errEl, 'UPBDを入力してください'); return; }
   if (!email) { _sgErr(errEl, 'メールアドレスを入力してください'); return; }
   if (pass.length < 6) { _sgErr(errEl, 'パスワードは6文字以上で入力してください'); return; }
-  if (!chk || !chk.checked) { _sgErr(errEl, 'プライバシーポリシーに同意してください'); return; }
+  if (!chk || !chk.checked) { _sgErr(errEl, '個人情報保護方針と利用規約に同意してください'); return; }
 
   if (auth) {
     var btn = document.querySelector('#signupForm button');
@@ -34860,8 +34862,9 @@ function doSignup() {
           name: name, org: org, email: email, uid: uid,
           area: area, union: union, upRuby: upRuby, upBd: upBd, unionSelectedV2: true,
           role: 'member', status: 'pending', registrationComplete: true,
+          privacy: { ver: PRIVACY_VER, at: new Date().toISOString() }, // v668: 登録時の同意を記録
           createdAt: new Date().toISOString()
-        });
+        }).then(function() { return _pvRecord(uid).log; });
       })
       .then(function() {
         errEl.style.display = 'none';
@@ -34905,6 +34908,124 @@ function showApprovalGate(kind, user){
     +'<button onclick="doLogout()" style="width:100%;max-width:280px;padding:12px;border-radius:12px;border:1px solid var(--border,#2a2e38);background:transparent;color:var(--text,#e6e8ec);font-size:14px">ログアウト</button>';
   document.body.appendChild(ov);
 }
+// ============================================================
+//  v668: 個人情報保護方針・利用規約の同意ゲート
+//  同意した版を users/{uid}.privacy = {ver, at} に保存。版が今の PRIVACY_VER と違う人は
+//  アプリに入る前に同意画面を出す（閉じられない）。方針を大きく変えた時は PRIVACY_VER を上げる。
+//  同意の履歴は users/{uid}/consents/{ver} にも残す（ルールで追記のみ）
+// ============================================================
+var PRIVACY_VER = '2026-10';
+function _pvNeed(user) { var p = user && user.privacy; return !(p && p.ver === PRIVACY_VER); }
+function _pvRecord(uid) {
+  var at = new Date().toISOString(), rec = { ver: PRIVACY_VER, at: at };
+  var log = db ? db.doc('users/' + uid + '/consents/' + PRIVACY_VER).set({ ver: PRIVACY_VER, at: at, ua: String(navigator.userAgent || '').slice(0, 200) }).catch(function() {}) : null;
+  return { rec: rec, p: fsSet('users/' + uid, { privacy: rec }), log: log };
+}
+function _pvCss() {
+  return '#pvGate{position:fixed;inset:0;z-index:10001;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 18px)}'
+    + '#pvGate .pv-box{width:100%;max-width:460px;margin:auto}'
+    + '#pvGate .pv-k{display:flex;align-items:center;gap:8px;font:800 11px/1 Inter,sans-serif;letter-spacing:.24em;color:var(--accent)}'
+    + '#pvGate .pv-k .lic{width:15px;height:15px}'
+    + '#pvGate h2{font-size:19px;font-weight:700;line-height:1.45;margin:10px 0 4px;color:var(--text)}'
+    + '#pvGate .pv-meta{font-size:11px;color:var(--text-dim);letter-spacing:.04em;margin-bottom:12px}'
+    + '#pvGate .pv-lead{font-size:12.5px;color:var(--text-mid);line-height:1.75;margin-bottom:12px;text-align:justify}'
+    + '#pvGate .pv-lead b{color:var(--text)}'
+    + '#pvGate .pv-sum{border-radius:12px;background:var(--surface);border:1px solid var(--border2);max-height:min(38vh,330px);overflow:auto;-webkit-overflow-scrolling:touch}'
+    + '#pvGate .pv-sh{position:sticky;top:0;background:var(--surface2);padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--text-dim);border-bottom:1px solid var(--border)}'
+    + '#pvGate .pv-it{padding:10px 12px;border-bottom:1px solid var(--border)}'
+    + '#pvGate .pv-it:last-child{border-bottom:none}'
+    + '#pvGate .pv-t{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}'
+    + '#pvGate .pv-t i{font-style:normal;font:700 11px/1 Inter,sans-serif;color:var(--accent);min-width:16px}'
+    + '#pvGate .pv-t em{margin-left:auto;font-style:normal;font-size:10px;font-weight:700;color:var(--text-dim);border:1px solid var(--border2);border-radius:6px;padding:2px 6px;white-space:nowrap}'
+    + '#pvGate .pv-d{font-size:12px;color:var(--text-dim);line-height:1.7;text-align:justify;padding-left:24px}'
+    + '#pvGate .pv-links{display:flex;gap:8px;margin:12px 0 12px}'
+    + '#pvGate .pv-links span{flex:1;text-align:center;padding:10px 4px;border-radius:10px;border:1px solid var(--border2);font-size:11.5px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap}'
+    + '#pvGate .pv-links .lic{width:13px;height:13px;vertical-align:-2px;margin-right:4px}'
+    + '#pvGate .pv-chks{border-top:1px solid var(--border);padding-top:10px;margin-bottom:12px}'
+    + '#pvGate label{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--text);line-height:1.6;cursor:pointer;padding:6px 0}'
+    + '#pvGate label input{width:19px;height:19px;margin-top:1px;accent-color:var(--accent);flex-shrink:0}'
+    + '#pvGate .pv-go{width:100%;padding:14px;border-radius:12px;border:none;background:var(--accent);color:#06251C;font-size:15px;font-weight:700;transition:opacity .15s}'
+    + '#pvGate .pv-go:disabled{opacity:.3}'
+    + '#pvGate .pv-no{display:block;text-align:center;margin-top:12px;font-size:12.5px;color:var(--text-dim);cursor:pointer;text-decoration:underline}'
+    + '#pvGate .pv-ft{margin-top:14px;font-size:10.5px;color:var(--placeholder);line-height:1.6;text-align:center}'
+    + '#pvDoc{position:fixed;inset:0;z-index:10002;background:var(--bg);display:flex;flex-direction:column}'
+    + '#pvDoc .pv-dh{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;border-bottom:1px solid var(--border);font-weight:700;font-size:15px;color:var(--text)}'
+    + '#pvDoc .pv-dh span{margin-left:auto;padding:7px 14px;border-radius:10px;background:var(--surface2);font-size:13px;cursor:pointer}'
+    + '#pvDoc iframe{flex:1;border:none;width:100%;background:var(--bg)}'
+    + '@media (min-width:900px){#pvGate{background:rgba(5,8,14,.72);backdrop-filter:blur(6px)}#pvGate .pv-box{max-width:560px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:28px 30px 20px;box-shadow:var(--shadow)}#pvGate .pv-sum{max-height:300px}'
+    + '#pvDoc{inset:5vh 50% 5vh auto;width:min(760px,92vw);transform:translateX(50%);border-radius:18px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}}';
+}
+function _pvCssOn() { if (!document.getElementById('pvCss')) { var s = document.createElement('style'); s.id = 'pvCss'; s.textContent = _pvCss(); document.head.appendChild(s); } }
+function pvOpenDoc(kind) {
+  pvCloseDoc(); _pvCssOn();
+  var d = document.createElement('div'); d.id = 'pvDoc';
+  d.innerHTML = '<div class="pv-dh">' + (kind === 'terms' ? '利用規約' : '個人情報保護方針') + '<span onclick="pvCloseDoc()">閉じる</span></div>'
+    + '<iframe src="./' + (kind === 'terms' ? 'terms' : 'privacy') + '/?t=' + (document.body.classList.contains('light') ? 'light' : 'dark') + '" title="全文"></iframe>';
+  document.body.appendChild(d);
+}
+function pvCloseDoc() { var d = document.getElementById('pvDoc'); if (d && d.parentNode) d.parentNode.removeChild(d); }
+function closePrivacyGate() { pvCloseDoc(); var g = document.getElementById('pvGate'); if (g && g.parentNode) g.parentNode.removeChild(g); }
+var PV_SUM = [
+  ['取得する情報', '方針 第3条', '氏名、屋号、所属ユニオン、活動地域、UPルビー、UPBD及びメールアドレスのほか、ユーザーが登録する組織図・予定・目標・連絡先の情報、最終ログイン日時並びに受付システムの出欠の記録等を取得します。'],
+  ['利用目的', '方針 第4条', '本サービスの提供及び運営、利用承認、問合せへの対応、不正利用の防止並びに本サービスの改善に限り利用し、広告の配信、販売その他の目的には一切利用しません。'],
+  ['閲覧の範囲', '方針 第7条', '登録情報を閲覧できるのは、本人及び本人が共有機能により明示的に許可した者に限られます。所属ユニオンの管理者は、利用承認に必要な登録情報に限り閲覧します。'],
+  ['外国にあるサーバーへの保存', '方針 第8条', 'データは Google LLC（アメリカ合衆国）が提供する Firebase に保存され、日本国外に所在するサーバーに保存される場合があります。'],
+  ['登録対象者の情報に関する責任', '方針 第10条・規約 第5条', '他者の情報は、ユーザー自身が適法に知り得たものに限り登録できます。その取得、管理、利用及び提供に関する一切の法的責任はユーザーが負い、登録対象者からの削除等の申出には、ユーザーが速やかに対応しなければなりません。'],
+  ['禁止事項及び利用の停止', '規約 第7条・第8条・第11条', '登録した情報を本人の同意なく公開又は拡散する行為、なりすまし、不正アクセス等を禁止します。違反した場合、事前の通知なく利用を停止し、生じた損害の賠償を求めることがあります。'],
+  ['保証の否認', '規約 第10条', 'シミュレーション、目標及び収入の目安その他の数値は参考値にすぎず、将来の成果又は収入を保証するものではありません。'],
+  ['開示等の請求及び退会', '方針 第11条・第12条', '「設定」→「バグ・要望」から、又は所属ユニオンのリーダーを通じて申し出ることができます。退会の申出があった場合、アカウント及び登録情報を速やかに削除します。']
+];
+var PV_CHK = ['個人情報保護方針の全条項を読み、その内容に同意します', '利用規約の全条項を読み、その内容に同意します', '登録する他者の個人情報について、自らが一切の責任を負うことを確認しました'];
+function _pvChkSync() {
+  var cs = document.querySelectorAll('#pvGate .pv-chks input'), all = cs.length > 0;
+  for (var i = 0; i < cs.length; i++) if (!cs[i].checked) all = false;
+  var go = document.getElementById('pvGo'); if (go) go.disabled = !all;
+}
+function showPrivacyGate(user, onOk) {
+  closePrivacyGate();
+  var ls = document.getElementById('loginScreen'); if (ls) ls.style.display = 'none';
+  _pvCssOn();
+  var upd = !!(user && user.privacy && user.privacy.ver); // 以前の版に同意済み＝改定
+  var g = document.createElement('div'); g.id = 'pvGate';
+  g.innerHTML = '<div class="pv-box">'
+    + '<div class="pv-k">' + icn('shield') + 'NAVIGATOR</div>'
+    + '<h2>' + (upd ? '個人情報保護方針及び利用規約の改定について' : '個人情報保護方針及び利用規約への同意') + '</h2>'
+    + '<div class="pv-meta">第1版（' + PRIVACY_VER + '）／ 2026年10月1日施行 ／ 運営：PROMOTE</div>'
+    + '<div class="pv-lead">' + (upd
+        ? '当団体は、個人情報保護方針及び利用規約を改定しました。<b>改定後の全条項に同意いただかない限り、本サービスを引き続きご利用いただくことはできません。</b>'
+        : '本サービスのご利用にあたっては、PROMOTE（以下「当団体」）が定める個人情報保護方針及び利用規約の全条項に同意いただく必要があります。<b>同意いただけない場合、本サービスはご利用いただけません。</b>')
+      + '下記の主要条項の要旨を確認のうえ、必ず全文をお読みください。</div>'
+    + '<div class="pv-sum"><div class="pv-sh">主要条項の要旨</div>'
+    + PV_SUM.map(function(x, i) { return '<div class="pv-it"><div class="pv-t"><i>' + (i + 1) + '</i>' + x[0] + '<em>' + x[1] + '</em></div><div class="pv-d">' + x[2] + '</div></div>'; }).join('')
+    + '</div>'
+    + '<div class="pv-links"><span onclick="pvOpenDoc(\'privacy\')">' + icn('doc') + '個人情報保護方針（全文）</span><span onclick="pvOpenDoc(\'terms\')">' + icn('book') + '利用規約（全文）</span></div>'
+    + '<div class="pv-chks">' + PV_CHK.map(function(t) { return '<label><input type="checkbox" onchange="_pvChkSync()">' + t + '</label>'; }).join('') + '</div>'
+    + '<button class="pv-go" id="pvGo" disabled>同意して利用を開始する</button>'
+    + '<span class="pv-no" onclick="doLogout()">同意しない（ログアウト）</span>'
+    + '<div class="pv-ft">同意の日時及び同意した版は記録され、当団体が保管します。</div>'
+    + '</div>';
+  document.body.appendChild(g);
+  document.getElementById('pvGo').onclick = function() {
+    var btn = this; if (btn.disabled) return;
+    btn.disabled = true; btn.textContent = '...';
+    var r = _pvRecord(user.uid);
+    r.p.then(function() {
+      user.privacy = r.rec;
+      closePrivacyGate();
+      if (onOk) onOk();
+    }).catch(function(e) {
+      btn.disabled = false; btn.textContent = '同意して利用を開始する';
+      toast('⚠️ 保存できませんでした。電波の良い所でもう一度お試しください');
+      console.error(e);
+    });
+  };
+}
+// 管理者の一覧に出す同意の状態
+function _pvBadge(u) {
+  var p = u && u.privacy;
+  if (p && p.ver === PRIVACY_VER) return '<span class="adm-badge" style="background:var(--accent-dim);color:var(--accent)">同意済</span>';
+  return '<span class="adm-badge" style="background:var(--surface3);color:var(--text-dim)">' + (p && p.ver ? '旧版に同意' : '未同意') + '</span>';
+}
 // 管理者ログイン時：自ユニオン（オーナーは全体）の承認待ち件数を通知
 function checkPendingApprovals(){
   if(!isCurrentAdmin() || !db) return;
@@ -34929,6 +35050,8 @@ function loginSuccess(user) {
     return;
   }
   closeApprovalGate();
+  // v668: 個人情報保護方針・利用規約に（今の版で）同意するまでアプリに入れない
+  if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
   // Googleカレンダー連携状態をプロフィールから復元
   state.gcalConnected = !!user.gcalConnected;
   state.gcalCalendarId = user.gcalCalendarId || '';
