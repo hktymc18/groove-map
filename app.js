@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v626';
+var APP_JS_VERSION = 'v627';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v626';
+  var DATA_VERSION = 'v627';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5344,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v627', d:'2026-10-06', items:['🏆 PC版のPLANの一番上に「目標」と横いっぱいのマイルストーンをいつも表示：たたんだ形（目標月収・タイトル・期日・スローガン・次の山を1行）と、ひらいた形（大きな目標の欄）を「▼ ひらく／▲ たたむ」で切り替え（端末ごとに覚えます）'] },
   { v:'v626', d:'2026-10-06', items:['📊 データの「ざっくり／くわしく」の切り替えをなくしました（スマホは入口のタイルから・表を見ている時は「‹ データの入口へ」で戻る）','⌨️ PC版のPLANの目標入力から −／＋ ボタンをなくし、キーボードで数字を打つ形に（期日は年月を入力）'] },
   { v:'v625', d:'2026-10-06', items:['💻 PC版のPLANとデータを、スマホの新しい形に合わせて作り直し：左に入口のタイル（スマホと同じ・状態の札つき）、右に選んだページ','🎯 PLAN：10月の目標・目標は、スマホで1項目ずつだった画面を1画面にまとめて入力（その場で保存）。想い・振り返りは上のタブで項目を切り替え','📊 データ：「ざっくり／くわしく」の切り替えをやめて、左のタイルから。コミッション・S稼働・BRなどは左にグラフ・右に数字、下に月ごとの表。推移・稼働・人数・研修・パワーライン・地域も左から','💻 ノートPCなど横幅が狭い時は、左のタイルを細く（名前とアイコンだけ）'] },
   { v:'v624', d:'2026-10-06', items:['🔒 受付連携は自分のユニオンの名簿だけ見られるように（自分のユニオンが受付に無い時に、他のユニオンの名簿や研修記録を代わりに読んでしまう不具合を修正）'] },
@@ -18619,6 +18620,11 @@ function _pcxCss() {
     + ".pcx-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;align-items:start}"
     + ".pcx-c{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;min-width:0}.pcx-c.w{grid-column:1/-1}"
     + ".pcx-one{max-width:860px}"
+    + ".pcx-top{padding:12px 26px 4px}.pcx-top>*{margin-bottom:10px}"
+    + ".pcx-gb{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 16px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--gold) 40%,var(--border));background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 12%,var(--surface)),var(--surface));font-weight:900;cursor:pointer}"
+    + ".pcx-gb .inc{color:var(--gold);font-size:22px;font-family:Inter,sans-serif}.pcx-gb .inc small{font-size:12px}.pcx-gb .tt{font-size:18px;letter-spacing:1px}.pcx-gb .dl{color:var(--text-mid);font-size:13px}.pcx-gb .mt{font-style:italic;font-size:14.5px}"
+    + ".pcx-gb .nx{margin-left:auto;color:var(--text-mid);font-size:12.5px}.pcx-gb .fold,.p2h-act .p2h-fold{flex:none;font-size:12.5px;font-weight:900;color:var(--text-mid);border:1.5px solid var(--border2);border-radius:10px;padding:5px 11px;background:var(--surface);cursor:pointer;width:auto!important;white-space:nowrap}"
+    + ".pcx-gb .nx+.fold{margin-left:0}.pcx-gb .fold:first-child{margin-left:auto}"
     + ".pcx .ux-step,.pcx-st .ux-step{display:none}.pcx .ux-btm,.pcx .ux-top,.pcx-st #dtEz .ux-btm,.pcx-st #dtEz .ux-top{display:none!important}"
     + ".pcx-c .ux-h2{font-size:19px;margin-top:0}.pcx .ux-pm{display:none!important}.pcx .ux-per .ux-pm{display:flex!important}.pcx .ux-paper{min-height:260px}"
     + "#dtEz.pcx-dp .ux-pg{padding:0}#dtEz.pcx-dp .dtu-pg{display:flex;gap:18px;align-items:flex-start}#dtEz.pcx-dp .dtu-pg>.dtu-ch{flex:1.35;min-width:0;position:sticky;top:8px}#dtEz.pcx-dp .dtu-pg>.dtu-det{flex:1;min-width:0;margin-top:0}"
@@ -18643,7 +18649,31 @@ function _p2PcxHtml() {
     + (D.why ? '<div class="pcx-why">💗 ' + evEsc(D.why.slice(0, 60)) + '</div>' : '')
     + D.T.map(function(t) { t.on = 'p2Go(\'' + t.k + '\')'; return _pcxTile(t, t.k === sel, t.k === D.nk && t.k !== sel); }).join('')
     + '<div class="pcx-sm"><span class="' + (sel === 'rev' ? 'on' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (D.rv ? '<i class="dot"></i>' : '') + '</span><span class="' + (sel === 'tool' ? 'on' : '') + '" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
-  return '<div class="pcx">' + nav + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>';
+  return _p2PcxTop() + '<div class="pcx">' + nav + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>';
+}
+// v627: 一番上に目標とマイルストーン（どのページでも見える）。たたむと目標は1行・マイルストーンはそのまま。端末ごとに覚える（最初はたたんだ形）
+function _p2TopOpen() { try { return localStorage.getItem('gm_p2Top') === 'open'; } catch (e) { return false; } }
+function p2TopTgl() { try { localStorage.setItem('gm_p2Top', _p2TopOpen() ? 'closed' : 'open'); } catch (e) {} renderPlan(); }
+function _p2PcxTop() {
+  var rail = ''; try { rail = _p2PcRailHtml(); } catch (e0) {}
+  if (_p2TopOpen()) {
+    var hero = ''; try { hero = _p2PcHeroHtml(); } catch (e1) {}
+    hero = hero.replace('<div class="p2h-act">', '<div class="p2h-act"><span class="p2h-fold" onclick="p2TopTgl()" title="目標をたたむ">▲ たたむ</span>');
+    return '<div class="pcx-top">' + hero + rail + '</div>';
+  }
+  var p = state.goals.plan || {}, inc = p.income ? Math.round(p.income / 10000) : 0, rem = 0, nx = {}, motto = String(_p2().motto || '').trim();
+  try { rem = _glMonthsUntil(p.deadline); } catch (e2) {}
+  try { nx = _p2Next() || {}; } catch (e3) {}
+  var has = inc || p.title || p.deadline;
+  var bar = '<div class="pcx-gb" onclick="p2Go(\'goal\')" title="目標を開く">'
+    + (has ? (inc ? '<span class="inc">' + inc.toLocaleString() + '<small>万円</small></span>' : '')
+      + (p.title ? '<span class="tt">' + evEsc(_p2TitleEn(p.title)) + '</span>' : '')
+      + (p.deadline ? '<span class="dl">' + evEsc(String(p.deadline).replace('-', '年')) + '月まで' + (rem > 0 ? '・あと' + rem + 'ヶ月' : '') + '</span>' : '')
+      + (motto ? '<span class="mt">『' + evEsc(motto) + '』</span>' : '<span class="dl" style="color:var(--accent)">＋ スローガンを入れる</span>')
+      : '<span class="tt" style="color:var(--accent)">🏆 目標を決める ›</span>')
+    + (!nx.isFinal && nx.title ? '<span class="nx">次の山 ' + evEsc(nx.title) + (nx.deadline ? '（' + evEsc(String(nx.deadline).replace('-', '/')) + '）' : '') + '</span>' : '')
+    + '<span class="fold" onclick="event.stopPropagation();p2TopTgl()" title="目標をひらく">▼ ひらく</span></div>';
+  return '<div class="pcx-top">' + bar + rail + '</div>';
 }
 function _p2PcxHead(t, chip, right, sub) {
   return '<div class="pcx-h"><h2>' + t + '</h2>' + (chip ? '<span class="chip">' + chip + '</span>' : '') + '<div class="r">' + (right || '') + '</div></div>' + (sub ? '<div class="pcx-sub">' + sub + '</div>' : '');
