@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v666';
+var APP_JS_VERSION = 'v667';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3873,7 +3873,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v666';
+  var DATA_VERSION = 'v667';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5352,6 +5352,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v667', d:'2026-10-06', items:['🎨 設定の「バグ・要望」も絵文字から線のアイコンに'] },
   { v:'v666', d:'2026-10-06', items:['🎨 HOMEの「バグ・要望」ボタンを絵文字から、ほかのボタンと同じ線のアイコンに'] },
   { v:'v665', d:'2026-10-06', items:['🐛 HOMEのタイルの写真とアイコンの色が消えていたのを修正','🏷 ロゴの位置を少し上に'] },
   { v:'v664', d:'2026-10-06', items:['🏷 HOMEの左上にNWPのロゴ（HOMEの文字と高さをそろえて。ライトは濃い色・ダークは白）'] },
@@ -18825,7 +18826,7 @@ function _stRender() {
       + '<div class="st-gh">このアプリ</div><div class="st-ls"><div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">📣</span><span>お知らせ・更新内容<small>' + evEsc(RELEASE_NOTES[0].v + '（' + RELEASE_NOTES[0].d + '）' + (RELEASE_NOTES[0].items[0] || '')) + '</small></span>' + (hasUnseenNotes() ? '<em class="nw">NEW</em>' : '') + '<span class="ch">›</span></div>'
       + '<div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">ℹ</span><span>バージョン<small class="gm-saved">' + (window._gmSavedHM ? window._gmSavedHM + ' 保存済み' : '') + '</small></span><span style="flex:none;font-family:Inter,sans-serif;color:var(--text-mid)">' + evEsc(APP_JS_VERSION) + '</span></div></div>'
       + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
-      + (_fb && _fb.ok ? _stLi('🐞', 'バグ・要望', '', 'fbOpen()') : '')
+      + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望', '', 'fbOpen()') : '') // v667
       + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true)
       + (state.isEditor && !viewingOwnerUid ? _stLi(icn('trash'), '組織MAPをクリア', 'テストデータを消す時だけ（取り消せません）', 'clearMapData()', true) : '') + '</div>';
   } else if (_stPg === 'prof') {
