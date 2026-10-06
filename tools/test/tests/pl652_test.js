@@ -1,0 +1,35 @@
+// v652：PLANの入口にシミュレーション・チェック・夢100／タイルを終えたら入口へ／シミュレーションの見直し／チェックのタブ・予定へ・ひとこと／BB早見表の表
+const T = require('../lib/head.js')();
+const { w, c, sleep, setWH, $, $$ } = T;
+T.run(async () => {
+  T.login();
+  w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '', mapType: 'both', ptCurrent: 2500 }];
+  setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('plan'); await sleep(40);
+  w.state.goals.plan.income = 3410000; w.state.goals.plan.title = 'チームエリート'; w.state.goals.plan.deadline = '2029-12';
+  w.p2Go(''); await sleep(20);
+  const lbs = $$('#view-plan .ux-t b').map(x => x.textContent);
+  c('入口：理想・目標の下にシミュレーション、その下にチェック・夢100', lbs.slice(0, 5).join() === '理想,目標,シミュレーション,チェック,夢100');
+  w.p2Go('goal', 5); await sleep(10);
+  c('タイルの最後は「✓ 完了」で入口へ（次のタイルへは行かない）', $('.ux-btm .ux-nx').textContent === '✓ 完了' && $('.ux-btm .ux-nx').getAttribute('onclick') === "p2Go('')");
+  console.log('=== シミュレーション ===');
+  delete w._p2().sim; w._p2SimMo = 3; w.p2Go(''); w.p2Go('sim'); await sleep(20);
+  const tx = $('#view-plan').textContent;
+  c('「これだけやったら…」はなし・凡例は「new」', tx.indexOf('これだけやったら、いくら狙えるか') < 0 && $('.p2sm-lg').textContent.indexOf('new') >= 0 && $('.p2sm-lg').textContent.indexOf('に入った人') < 0);
+  c('ファーストボーナスは一番下に大きく（内訳は(i)）', !!$('.p2fb') && !$('.p2sm-k .hi') && $('.p2fb').textContent.indexOf('ビルディングボーナス') < 0 && $$('.p2sm-set ~ .p2fb, .p2fb').length === 1);
+  w.uxInfo('simfb'); c('(i)にBB・LOI特典の内訳', $('#uxInfo').textContent.indexOf('ビルディングボーナス') >= 0 && $('#uxInfo').textContent.indexOf('エリートLOI特典') >= 0); w.uxInfoClose();
+  c('戻る＝入口（入口から開いた時）', $('.ux-btm .ux-bk').getAttribute('onclick') === "p2Go('')");
+  w.p2SimDupSet(2); await sleep(5);
+  c('数字を変えたら組織図はLOIの月に', w._p2SimMo === 0 && $('.p2sm-seg span.on').textContent.indexOf('LOI') >= 0);
+  c('設定の欄は小さめ（.p2sm-set）', !!$('.p2sm-set .ux-stp'));
+  console.log('=== チェック ===');
+  w.p2Go(''); w.p2Go('ck'); await sleep(10);
+  c('必須アイテム／TRAINING はタブ', $$('.p2ck-tabs span').length === 2 && $$('.p2ck-r').length === w.P2_CK_ESS.length);
+  w.p2CkTab('tr'); await sleep(5); c('TRAININGタブ', $$('.p2ck-r').length === w.P2_CK_TR.length);
+  w.p2CkDate('tr', 0, '2026-11-03'); const n0 = w.state.events.length; w.p2CkCal('tr', 0); await sleep(5);
+  c('日付を選んで📅で予定に入る', w.state.events.length === n0 + 1 && w.state.events[w.state.events.length - 1].date === '2026-11-03');
+  w.p2CkTgl('tr', 1); await sleep(10);
+  c('チェックすると色つきのひとこと', !!$('#p2Cheer') && $('#p2Cheer').classList.contains('on') && w.P2_CHEER.some(x => $('#p2Cheer').textContent.indexOf(x[0]) === 0 || $('#p2Cheer').textContent.indexOf('準備万端') >= 0));
+  console.log('=== BB早見表 ===');
+  w.p2Go('bb'); await sleep(10);
+  c('早見表（GSV・ブロック・BB）', $$('.p2bb-t > div').length === w.P2_BB_TABLE.length + 1 && !!$('.p2bb-t .on'));
+});

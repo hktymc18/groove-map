@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v651';
+var APP_JS_VERSION = 'v652';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v651';
+  var DATA_VERSION = 'v652';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5349,6 +5349,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v652', d:'2026-10-06', items:['🎮 シミュレーション：数字を入れる欄を小さく。ファーストボーナスは一番下に大きく（内訳は（i））。組織図は左右にスワイプで月送り、数字を変えるとLOIの月から','🧭 PLANの入口に「シミュレーション」（理想・目標の下）と「チェック」「夢100」を追加','✓ 1つのタイルを最後まで入れたら、次のタイルではなく入口に戻るように','☑️ チェック：必須アイテム／TRAININGをタブに。日付はカレンダーから選べて、📅でその日の予定に入ります。チェックすると色つきのひとこと','💴 BB早見表にGSVごとの表'] },
   { v:'v651', d:'2026-10-06', items:['🎓 研修タブに「研修フロー」（じょうご・前の段から進んだ割合）を戻しました。グラフとタイルの下で、選んだ月のフローが見られます（段をタップで名前の一覧）'] },
   { v:'v650', d:'2026-10-06', items:['🎓 分析の研修タブを推移と同じ形に：上に12ヶ月のグラフ（研修生・各ステップ・BC・流れた・BC決定率から2つまで）、下にその月の数字のタイル（押すとグラフがその項目に・「人 ›」で名前の一覧）','🔢 研修の数え方を見直し：その月の日付で「進んだ／流れた」の記録がある人だけ（📅予定のままの記録・削除した人は数えない）'] },
   { v:'v649', d:'2026-10-06', items:['🐛 分析の地域タブを開いた時、「全体」が選ばれているのに12ヶ月のグラフが出ないことがあったのを修正（最初から全体を表示）'] },
@@ -16325,7 +16326,7 @@ function _p2LandCss() {
   if (document.getElementById('p2LandCss')) return;
   var st = document.createElement('style'); st.id = 'p2LandCss';
   st.textContent = ".p2-lh .ux-hd{flex-wrap:nowrap;align-items:center;gap:10px}.p2-lh .ux-hd .ux-why{min-width:0;flex:0 1 auto}.p2-lh .ux-hd .r{margin-left:auto;white-space:nowrap}"
-    + ".p2-lh .ux-hd .ux-sb{height:38px;padding:0 12px;font-size:12.5px;flex:none}.p2-lh .ux-tiles{margin-top:8px}"
+    + ".p2-lh .ux-hd .ux-sb{height:38px;padding:0 12px;font-size:12.5px;flex:none}.p2-lh .ux-tiles{margin-top:8px}.p2-lh .ux-tiles{overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;padding-bottom:2px}.p2-lh .ux-tiles::-webkit-scrollbar{display:none}body.ux-land .p2-lh .ux-t{flex:0 0 calc((100% - 40px) / 5.4);scroll-snap-align:start}body.ux-land .p2-lh .ux-tiles{padding-left:6px;margin-left:-6px}"
     + "body.ux-land .p2-lh .ux-t .ic{top:14px;left:14px;right:auto;text-align:left;font-size:34px}body.ux-land .p2-lh .ux-t .ic .lic{width:36px;height:36px}.p2-lh .ux-t .bd{left:auto;right:10px}"
     + "body.ux-land .p2-lh .ux-t.p2-nx .ic{left:0;right:0;top:auto;bottom:calc(50% + 6px);text-align:center;font-size:50px}"
     + ".p2x{flex:1;min-height:0;margin:60px 0 8px;display:flex;flex-direction:column;justify-content:flex-start;gap:5px;overflow:hidden}.p2x>*{flex:none}"
@@ -16401,7 +16402,9 @@ var P2_PG = { sim: 'シミュレーション', yrs: '年別目標', sum: 'サマ
 var P2_PG_FLOW = ['ideal', 'goal', 'rm', 'mon', 'do']; // v629: 想い→理想（作文はツールへ）
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
+var _p2From = ''; // v652: ツールから開いたか（戻る先）
 function p2Go(k, i) {
+  if (k !== _p2Pg) _p2From = _p2Pg;
   if (k === 'why') { var wi = i || 0; if (wi <= 2) { k = 'essay'; i = wi; } else if (wi <= 6) { k = 'ideal'; i = wi - 1; } else if (wi === 8) { k = 'dream'; i = 0; } else { k = 'ideal'; i = wi === 7 ? 0 : 6; } } // v629: 想い→理想・作文・夢100
   if (k !== 'mon') _p2MonYm = ''; // v597: 来月を見ていたら今月に戻す
   _p2Pg = k || ''; _p2PgI = i || 0;
@@ -16452,6 +16455,11 @@ function _p2HubData() {
   var T = [
     { k: 'ideal', c: 'rose', ic: '✨', lb: '理想', bd: _p2G().p1 ? '✓ 答えた' : '', st: _p2IdealSt() },
     { k: 'goal', c: 'gold', ic: '🏆', lb: '目標', bd: (p.title && p.deadline) ? '✓ 決めた' : '', st: (p.title && p.deadline) ? evEsc(p.title) + '<br>' + (inc ? '<em>月収' + inc + '万</em>・' : '') + evEsc(String(p.deadline).replace('-', '/')) : '目標を<br><em>つくる</em>' },
+    // v652: 理想・目標の下にシミュレーション、その下にチェックと夢100
+    (function() { var c9 = _p2SimCfg(), n9 = c9.preset > 0 ? c9.preset : Math.max(c9.fronts[1] || 0, c9.fronts[2] || 0, 1), r9 = _p2SimFbF(c9.preset > 0 ? [0, n9, n9, 0] : c9.fronts, c9);
+      return { k: 'sim', c: 'gold', ic: '🎮', lb: 'シミュレーション', w: 1, st: 'ファーストボーナス <em>¥' + r9.fb.toLocaleString() + '</em><br>組織 ' + r9.org + '人（フロント ' + (c9.preset > 0 ? n9 + '人×2ヶ月' : 'カスタム') + '）' }; })(),
+    (function() { var ck9 = _p2CkCount(); return { k: 'ck', c: 'mint', ic: '☑️', lb: 'チェック', bd: ck9.done >= ck9.total ? '✓ 準備万端' : '', st: '<em>' + ck9.done + '</em> / ' + ck9.total + '<br>必須アイテム・TRAINING' }; })(),
+    (function() { var dr9 = _p2G().dreams || []; return { k: 'dream', c: 'pur', ic: '🌈', lb: '夢100', st: dr9.length ? '<em>' + dr9.filter(function(d) { return d.done; }).length + '</em> / ' + dr9.length + ' 叶えた' : '夢を<br><em>書き出す</em>' }; })(),
     { k: 'rm', c: 'sky', ic: '🗺️', lb: 'ロードマップ', st: (!nx.isFinal && nx.title) ? '次の山 <em>' + evEsc(nx.title) + '</em>' + (nx.deadline ? '<br>' + evEsc(nx.deadline.replace('-', '/')) + 'まで' : '') : '年間のマイルストーン' },
     { k: 'mon', c: 'mint', ic: '🎯', lb: _p2PgTitle('mon'), bd: _p2Declared(ym) ? '✓ 設定ずみ' : '',
       st: (m.s === '' || m.s == null) ? 'S稼働の目標を<br><em>まだ決めていない</em>' : (_p2Declared(ym) ? 'S稼働 目標 <em>' + m.s + '人</em><br>今 ' + S + '人' : 'S稼働 ' + m.s + '人<br><em>設定するを押す</em>') },
@@ -16555,7 +16563,8 @@ function _p2PageParts() {
       + li('⚙️', '今週やることの設定', '動員の計画など', 'p2DoMenu(\'more\')')
       + '</div>';
   }
-  var back = (k === 'ck' || k === 'sim' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
+  var back = ((k === 'ck' || k === 'sim' || k === 'dream') && _p2From !== 'tool') ? 'p2Go(\'\')' : (k === 'ck' || k === 'sim' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
+  if (/^つぎ：/.test(next)) { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; } // v652: タイルを終えたら、次のタイルではなく入口へ戻る
   if (k === 'yrs') back = _p2YrsBack || 'p2Go(\'goal\',5)';
   if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back };
@@ -19358,19 +19367,19 @@ function _p2SimHtml() {
   var cfg = _p2SimCfg(), cus = !(cfg.preset > 0), n = cus ? Math.max(cfg.fronts[1] || 0, cfg.fronts[2] || 0, 1) : cfg.preset;
   if (!cus) cfg.fronts = [0, n, n, 0];
   var R9 = _p2SimFbF(cfg.fronts, cfg), nodes = _p2SimTree(cfg), mo = Math.max(0, Math.min(3, _p2SimMo));
-  if (!UX_INFO.sim) UX_INFO.sim = { t: 'シミュレーション', h: '4ヶ月でBRになる流れです。<br><b>LOIの月</b>：自分がBPC（ブランドチェンジ）<br><b>Q2・Q3の月</b>：フロントを決めた人数ずつ<br>入った人は、<b>入った翌月・翌々月</b>に「つなぐ人数」ずつ新しい人をつなぎます<br><b>BRの月</b>：4ヶ月目<br>GSV＝その月に入った人×BPCポイント＋前からいる人×ADP＋自分のADP。ファーストボーナスはBRの月のGSVから（BB＋GSV 2,000以上でエリートLOI特典5万円）<br>丸の色は入った月です' };
+  if (!UX_INFO.sim) UX_INFO.sim = { t: 'シミュレーション', h: 'これだけやったら、いくら狙えるか。4ヶ月でBRになる流れです。組織図は左右にスワイプで月を送れます。<br><b>LOIの月</b>：自分がBPC（ブランドチェンジ）<br><b>Q2・Q3の月</b>：フロントを決めた人数ずつ<br>入った人は、<b>入った翌月・翌々月</b>に「つなぐ人数」ずつ新しい人をつなぎます<br><b>BRの月</b>：4ヶ月目<br>GSV＝その月に入った人×BPCポイント＋前からいる人×ADP＋自分のADP。ファーストボーナスはBRの月のGSVから（BB＋GSV 2,000以上でエリートLOI特典5万円）<br>丸の色は入った月です' };
   var lab = ['LOI', 'Q2', 'Q3', 'BR'], ymL = function(m) { var t = (cfg.sm - 1 + m); return (((t % 12) + 12) % 12 + 1) + '月'; };
   var cnt = 1 + nodes.filter(function(x) { return x.id && x.jm <= mo; }).length, mon = R9.mons[mo] || { gsv: 0 };
   var st = function(lb, v, u, on, inp, ph) { return '<div class="ux-lb2">' + lb + '</div>' + _uxStepG(v, on + '(-1)', on + '(1)', inp + '(this.value)', u, ph || ''); };
   var pc = typeof isPCMode === 'function' && isPCMode();
-  return (pc ? '<div class="ux-sub" style="display:flex;align-items:center;gap:8px;margin-top:0">これだけやったら、いくら狙えるか' + _uxIb('sim') + '</div><div class="p2sm-pc"><div>'
-      : '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">シミュレーション' + _uxIb('sim') + '</h2><div class="ux-sub">これだけやったら、いくら狙えるか</div>')
+  setTimeout(_p2SimSwipe, 0); // v652: 組織図を左右にスワイプで月送り
+  return (pc ? '<div style="display:flex;justify-content:flex-end;margin-top:-6px">' + _uxIb('sim') + '</div><div class="p2sm-pc"><div>'
+      : '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">シミュレーション' + _uxIb('sim') + '</h2>')
     + '<div class="p2sm-seg">' + lab.map(function(l, m) { return '<span class="' + (m === mo ? 'on' : '') + '" onclick="p2SimMo(' + m + ')"><b>' + ymL(m) + '</b>' + l + '</span>'; }).join('') + '</div>'
     + (_p2SimBig(nodes, mo) ? _p2SimNumHtml(nodes, mo) : '<div class="p2sm-tree">' + _p2SimSvg(nodes, mo) + '</div>')
-    + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3] : [1, 2, 3]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）に入った人</span>'; }).join('') + '</div>'
-    + '<div class="p2sm-k"><div><small>組織</small><b>' + cnt + '<i>人</i></b></div><div><small>GSV</small><b>' + mon.gsv.toLocaleString() + '<i>P</i></b></div>'
-    + '<div class="hi"><small>ファーストボーナス</small><b>' + (mo === 3 ? '¥' + R9.fb.toLocaleString() : '<i>BRの月に</i>') + '</b></div></div>'
-    + (pc ? '</div><div>' : '')
+    + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3] : [1, 2, 3]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）<b>new</b></span>'; }).join('') + '</div>'
+    + '<div class="p2sm-k"><div><small>組織（' + ymL(mo) + '）</small><b>' + cnt + '<i>人</i></b></div><div><small>GSV（' + ymL(mo) + '）</small><b>' + mon.gsv.toLocaleString() + '<i>P</i></b></div></div>'
+    + (pc ? _p2SimFbHtml(R9) + '</div><div class="p2sm-set">' : '<div class="p2sm-set">')
     + '<div class="ux-lb2">フロント</div><div class="p2sm-md"><span class="' + (cus ? '' : 'on') + '" onclick="p2SimMode(0)">Q2・Q3の月に同じ人数</span><span class="' + (cus ? 'on' : '') + '" onclick="p2SimMode(1)">カスタム（月ごと）</span></div>'
     + (cus ? '<div class="p2sm-fc">' + cfg.fronts.map(function(v, m) {
         return '<div><small>' + ymL(m) + ' ' + lab[m] + '</small><input type="number" inputmode="numeric" min="0" value="' + (v || 0) + '" onfocus="edSelAll(this)" onchange="p2SimFSet(' + m + ',this.value)">'
@@ -19380,7 +19389,19 @@ function _p2SimHtml() {
     + st('1人がつなぐ人数（毎月）', cfg.dup, '人', 'p2SimDup', 'p2SimDupSet')
     + '<div class="ux-lb2">1人あたりBPCポイント</div><div class="ux-chips">' + [500, 1000, 1500, 2000].map(function(v) { return '<span class="' + (cfg.psv === v ? 'on' : '') + '" onclick="p2SimPsv(' + v + ')">' + v.toLocaleString() + '</span>'; }).join('') + '</div>'
     + st('自分のADP', cfg.myPsv, 'P', 'p2SimAdp', 'p2SimAdpSet')
-    + '<div class="ux-lb2">LOIの月</div>' + (pc ? '<div class="ux-stp"><div class="ux-sv ok"><input type="month" value="' + cfg.sy + '-' + String(cfg.sm).padStart(2, '0') + '" onchange="p2SimStartSet(this.value)" style="font-size:22px"></div></div>' : '<div class="ux-stp"><span class="ux-pm" onclick="p2SimStart(-1)">−</span><div class="ux-sv ok" style="font-size:26px;font-weight:900;font-family:Inter,sans-serif">' + cfg.sy + '<small>年</small>' + cfg.sm + '<small>月</small></div><span class="ux-pm" onclick="p2SimStart(1)">＋</span></div>') + (pc ? '</div></div>' : '');
+    + '<div class="ux-lb2">LOIの月</div>' + (pc ? '<div class="ux-stp"><div class="ux-sv ok"><input type="month" value="' + cfg.sy + '-' + String(cfg.sm).padStart(2, '0') + '" onchange="p2SimStartSet(this.value)" style="font-size:22px"></div></div>' : '<div class="ux-stp"><span class="ux-pm" onclick="p2SimStart(-1)">−</span><div class="ux-sv ok" style="font-size:26px;font-weight:900;font-family:Inter,sans-serif">' + cfg.sy + '<small>年</small>' + cfg.sm + '<small>月</small></div><span class="ux-pm" onclick="p2SimStart(1)">＋</span></div>') + '</div>' + (pc ? '</div>' : _p2SimFbHtml(R9));
+}
+// v652: ファーストボーナス（一番のお楽しみ）は大きく。内訳は (i) に
+function _p2SimFbHtml(R9) {
+  var bb = _p2BBCalc(Math.max(0, R9.gsv - 1000)), loi = R9.gsv >= 2000 ? 50000 : 0;
+  UX_INFO.simfb = { t: 'ファーストボーナスの内訳', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
+    + '※ GSV ' + R9.gsv.toLocaleString() + ' − 1,000P（BR昇格分）＝ ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'P がBB対象<br>'
+    + (loi ? '<b>エリートLOI特典</b>：¥50,000（BR維持で翌月進呈）' : '<b>エリートLOI特典</b>：BRの月のGSVが2,000以上で ¥50,000') };
+  return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb"><span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span><small>ファーストボーナス（BR昇格後）</small><b>¥' + R9.fb.toLocaleString() + '<i>/月</i></b></div>';
+}
+function _p2SimSwipe() {
+  var el = document.querySelector('.p2sm-tree,.p2sm-num'); if (!el || typeof _uxSwipe !== 'function') return;
+  _uxSwipe(el, function() { if (_p2SimMo > 0) p2SimMo(_p2SimMo - 1); }, function() { if (_p2SimMo < 3) p2SimMo(_p2SimMo + 1); });
 }
 // 丸で描くと多すぎる時（いちばん下の段が60人を超える）は、段ごとの人数を数字で
 function _p2SimBig(nodes, mo) {
@@ -19400,7 +19421,7 @@ function _p2SimNumHtml(nodes, mo) {
 function p2SimMode(c) { _p2SimSet(function(cf) { if (c) { cf.fronts = (cf.fronts || [0, 2, 2, 0]).slice(); cf.preset = 0; } else { var n = Math.max(1, cf.fronts[1] || 0, cf.fronts[2] || 0); cf.preset = Math.min(10, n); cf.fronts = [0, cf.preset, cf.preset, 0]; } }); }
 function p2SimFSet(m, v) { _p2SimSet(function(cf) { cf.preset = 0; cf.fronts = cf.fronts.slice(); cf.fronts[m] = Math.max(0, Math.min(30, parseInt(v, 10) || 0)); }); }
 function p2SimF(m, d) { p2SimFSet(m, (_p2SimCfg().fronts[m] || 0) + d); }
-function _p2SimSet(f) { var c = _p2SimCfg(); f(c); saveGoals(); renderPlan(); }
+function _p2SimSet(f) { var c = _p2SimCfg(); f(c); _p2SimMo = 0; saveGoals(); renderPlan(); } // v652: 数字を変えたら組織図はLOIの月から
 function p2SimMo(m) { _p2SimMo = m; renderPlan(); }
 function p2SimNSet(v) { _p2SimSet(function(c) { var n = Math.max(1, Math.min(10, parseInt(v, 10) || 1)); c.preset = n; c.fronts = [0, n, n, 0]; }); }
 function p2SimN(d) { var c = _p2SimCfg(); p2SimNSet((c.preset > 0 ? c.preset : (c.fronts[1] || 1)) + d); }
@@ -19418,13 +19439,21 @@ function _p2SimCss() {
     + ".p2sm-seg span b{display:block;font-size:15px;color:var(--text)}.p2sm-seg span.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface2));color:var(--accent)}"
     + ".p2sm-tree{margin-top:12px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--border);overflow-x:auto;text-align:center}.p2sm-tree svg{display:inline-block}"
     + ".p2sm-tree circle.nw{animation:p2smIn .45s ease-out}@keyframes p2smIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}.p2sm-tree circle{transform-box:fill-box;transform-origin:center}"
-    + ".p2sm-lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:11px;font-weight:700;color:var(--text-dim)}.p2sm-lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}"
-    + ".p2sm-k{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;margin-top:12px}.p2sm-k>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px}.p2sm-k>div.hi{border-color:#FFB454}"
+    + ".p2sm-lg{display:flex;flex-wrap:nowrap;gap:10px;margin-top:8px;font-size:10.5px;font-weight:700;color:var(--text-dim);white-space:nowrap;overflow-x:auto;scrollbar-width:none}.p2sm-lg::-webkit-scrollbar{display:none}.p2sm-lg b{color:var(--text-mid);margin-left:1px}.p2sm-lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}"
+    + ".p2sm-k{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.p2sm-k>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px}.p2sm-k>div.hi{border-color:#FFB454}"
     + ".p2sm-k small{display:block;font-size:11px;font-weight:800;color:var(--text-dim)}.p2sm-k b{font-size:21px;font-weight:900;font-family:Inter,sans-serif}.p2sm-k .hi b{color:#FFB454}.p2sm-md{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.p2sm-md span{text-align:center;padding:9px 4px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--border);font-size:12px;font-weight:800;color:var(--text-dim);cursor:pointer}.p2sm-md span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface2))}"
     + ".p2sm-fc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}.p2sm-fc>div{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:8px 6px;text-align:center}.p2sm-fc small{display:block;font-size:11px;font-weight:800;color:var(--text-dim)}"
     + ".p2sm-fc input{width:100%;background:transparent;border:none;outline:none;color:var(--text);text-align:center;font-size:26px;font-weight:900;font-family:Inter,sans-serif;padding:2px 0}.p2sm-fc p{display:flex;gap:4px;margin:2px 0 0}.p2sm-fc p span{flex:1;height:32px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;cursor:pointer}"
     + ".p2sm-num{margin-top:12px;padding:14px;border-radius:16px;background:var(--surface);border:1px solid var(--border)}.p2sm-me{width:52px;height:52px;margin:0 auto 10px;border-radius:50%;background:var(--accent);color:#06251C;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}"
     + ".p2sm-nr{display:grid;grid-template-columns:48px 1fr 70px;align-items:center;gap:8px;padding:5px 0}.p2sm-nr span{font-size:12px;font-weight:800;color:var(--text-dim)}.p2sm-nr i{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:0 auto;width:100%}.p2sm-nr b{text-align:right;font-size:17px;font-weight:900;font-family:Inter,sans-serif}.p2sm-nr b small{font-size:11px;color:var(--text-dim);margin-left:2px}.p2sm-nt{margin-top:8px;font-size:11px;font-weight:700;color:var(--text-dim);text-align:center}"
+    + ".p2sm-set .ux-lb2{margin-top:12px}.p2sm-set .ux-stp{margin-top:6px;gap:8px}.p2sm-set .ux-pm{width:40px;height:40px;border-radius:12px;font-size:22px}.p2sm-set .ux-sv{height:50px!important;border-radius:14px}.p2sm-set .ux-sv input{font-size:26px!important}.p2sm-set .ux-sv small{font-size:11px}"
+    + ".p2sm-set .ux-chips{margin-top:6px}.p2sm-set .ux-chips span{height:34px;font-size:14px}.p2sm-set .p2sm-md span{padding:6px 4px}.p2sm-set .p2sm-fc input{font-size:20px}.p2sm-set .p2sm-fc p span{height:24px}"
+    + ".p2fb-h{display:flex;align-items:center;gap:10px;margin:26px 2px 12px;font-size:19px;font-weight:900;color:var(--gold)}.p2fb-h:before{content:'';width:5px;height:24px;border-radius:3px;background:var(--gold)}"
+    + ".p2fb{position:relative;border-radius:24px;padding:26px 16px 30px;text-align:center;background:linear-gradient(135deg,#191a22 0%,#15171d 55%,#1d1520 100%);border:1px solid rgba(255,255,255,.06);box-shadow:0 14px 40px rgba(0,0,0,.35)}"
+    + ".p2fb small{display:block;font-size:14px;font-weight:600;color:#8a8f9e}.p2fb b{display:block;margin-top:6px;font-family:'Oswald','Inter',sans-serif;font-weight:700;font-size:clamp(52px,17vw,84px);line-height:1.05;letter-spacing:.005em;color:var(--gold);text-shadow:0 0 28px rgba(255,180,84,.25)}"
+    + ".p2fb b i{font-style:normal;font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:600;color:#7d8292;margin-left:6px}"
+    + ".p2fb-i{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;border:1.5px solid #5AD7FF;color:#5AD7FF;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-weight:900;font-size:14px;cursor:pointer}"
+    + "body.light .p2fb b{color:#FFC86B}"
     + ".p2sm-pc{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}.p2sm-pc .ux-lb2:first-child{margin-top:14px}.p2sm-pc .ux-sv{height:56px!important;min-height:0!important}.p2sm-pc .ux-sv input{font-size:24px!important}.p2sm-pc .ux-chips span{padding:8px 4px}.p2sm-k b i{font-style:normal;font-size:11px;color:var(--text-dim);margin-left:2px}";
   document.head.appendChild(st);
 }
@@ -20634,20 +20663,57 @@ function _p2GapAlHtml() {
   return h;
 }
 // ── チェック ──
+// v652: チェック＝必須アイテム／TRAINING をタブで。日付はカレンダーで選べて、📅で予定に入れられる
+var _p2CkTab = 'ess';
+function p2CkTab(t) { _p2CkTab = t; renderPlan(); }
 function _p2CkPageHtml() {
-  _ux2Css(); _p2DoCss2();
-  var ck = _p2().check || {}, cnt = _p2CkCount();
-  var sec = function(title, items, pre) {
-    var done = 0; items.forEach(function(x, i) { if (ck[pre + '_' + i]) done++; });
-    return '<div class="ux-sec">' + title + '　' + done + ' / ' + items.length + '</div><div class="ux-pr" style="cursor:default;padding:6px 12px"><div class="nm"><div class="bar" style="margin:0"><i style="width:' + Math.round(done / Math.max(1, items.length) * 100) + '%;background:var(--accent)"></i></div></div></div>'
-      + items.map(function(it, i) {
-        var on = !!ck[pre + '_' + i], dt = ck[pre + '_d_' + i] || '';
-        return '<div class="ux-sk' + (on ? ' done' : '') + '"><span class="ck" onclick="p2CkTgl(\'' + pre + '\',' + i + ')">' + (on ? '✓' : '') + '</span><span class="t">' + evEsc(it) + (dt ? '<small style="display:block;font-size:11px;color:var(--text-dim);font-weight:600;text-decoration:none">' + dt.replace(/-/g, '/') + '</small>' : '') + '</span>'
-          + (on ? '' : '<span class="x" title="今日のタスクにする" onclick="p2CkTask(\'' + pre + '\',' + i + ')">' + icn('checksq') + '</span>') + '</div>';
-      }).join('');
-  };
+  _ux2Css(); _p2DoCss2(); _p2CkCss();
+  var ck = _p2().check || {}, cnt = _p2CkCount(), tab = _p2CkTab === 'tr' ? 'tr' : 'ess', items = tab === 'tr' ? P2_CK_TR : P2_CK_ESS;
+  var n = function(L, pre) { var d = 0; L.forEach(function(x, i) { if (ck[pre + '_' + i]) d++; }); return d; };
+  var done = n(items, tab);
   return '<h2 class="ux-h2">チェック</h2><div class="ux-sum"><b>' + cnt.done + '<small> / ' + cnt.total + '</small></b><span>' + (cnt.done >= cnt.total ? '準備万端 🎉' : '準備のチェック') + '</span></div>'
-    + sec('必須アイテム', P2_CK_ESS, 'ess') + sec('TRAINING', P2_CK_TR, 'tr');
+    + '<div class="p2ck-tabs">' + [['ess', '🎒 必須アイテム', P2_CK_ESS], ['tr', '🎓 TRAINING', P2_CK_TR]].map(function(t) { return '<span class="' + (t[0] === tab ? 'on' : '') + '" onclick="p2CkTab(\'' + t[0] + '\')">' + t[1] + '<small>' + n(t[2], t[0]) + '/' + t[2].length + '</small></span>'; }).join('') + '</div>'
+    + '<div class="p2ck-bar"><i style="width:' + Math.round(done / Math.max(1, items.length) * 100) + '%"></i></div>'
+    + items.map(function(it, i) {
+      var on = !!ck[tab + '_' + i], dt = ck[tab + '_d_' + i] || '';
+      return '<div class="p2ck-r' + (on ? ' done' : '') + '"><span class="ck" onclick="p2CkTgl(\'' + tab + '\',' + i + ')">' + (on ? '✓' : '') + '</span><span class="t">' + evEsc(it) + '</span>'
+        + '<input class="dt" type="date" value="' + dt + '" onchange="p2CkDate(\'' + tab + '\',' + i + ',this.value)" title="日付（カレンダーから選ぶ）">'
+        + '<span class="cal" title="この日付で予定に入れる" onclick="p2CkCal(\'' + tab + '\',' + i + ')">' + icn('calendar') + '</span></div>';
+    }).join('')
+    + '<div class="ux-hint">日付を選んで 📅 を押すと、その日の予定（ToDo）に入ります</div>';
+}
+function p2CkCal(pre, i) {
+  var items = pre === 'ess' ? P2_CK_ESS : P2_CK_TR, ck = _p2().check, d = ck[pre + '_d_' + i] || evTodayYmd();
+  if (!ck[pre + '_d_' + i]) { ck[pre + '_d_' + i] = d; saveGoals(); }
+  var e = _tdMakeTask('✅ ' + items[i], d, '');
+  state.events.push(e); saveEventDoc(e);
+  try { updateEventsBadge(); } catch (e1) {}
+  toast('📅 ' + parseInt(d.slice(5, 7), 10) + '/' + parseInt(d.slice(8), 10) + ' の予定に「' + items[i] + '」を入れました');
+  if (currentView === 'plan') renderPlan();
+}
+function _p2CkCss() {
+  if (document.getElementById('p2CkCss')) return;
+  var st = document.createElement('style'); st.id = 'p2CkCss';
+  st.textContent = ".p2ck-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.p2ck-tabs span{height:48px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}"
+    + ".p2ck-tabs span small{font-size:11px;font-weight:800;color:var(--text-dim)}.p2ck-tabs span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface2))}"
+    + ".p2ck-bar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin:12px 0 6px}.p2ck-bar i{display:block;height:100%;background:var(--accent);border-radius:3px}"
+    + ".p2ck-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:13px;background:var(--surface);border:1px solid var(--border);margin-top:8px}"
+    + ".p2ck-r .ck{width:28px;height:28px;border-radius:9px;border:2px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#06251C;cursor:pointer}.p2ck-r.done .ck{background:var(--accent);border-color:var(--accent)}"
+    + ".p2ck-r .t{flex:1;min-width:0;font-size:14.5px;font-weight:800}.p2ck-r.done .t{color:var(--text-dim)}"
+    + ".p2ck-r .dt{flex:none;width:122px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;padding:0 6px;font-family:inherit}"
+    + ".p2ck-r .cal{flex:none;width:34px;height:34px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent)}.p2ck-r .cal .lic{width:18px;height:18px}"
+    // チェックした時のひとこと（goalsettingアプリのように、色つきの枠で）
+    + "#p2Cheer{position:fixed;left:50%;top:42%;z-index:900;transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;padding:14px 26px;border-radius:18px;border:2.5px solid var(--cc);color:var(--cc);background:color-mix(in srgb,var(--cc) 12%,var(--bg));font-size:26px;font-weight:900;letter-spacing:.02em;white-space:nowrap;box-shadow:0 12px 36px rgba(0,0,0,.35);transition:transform .22s cubic-bezier(.2,1.6,.4,1),opacity .18s}"
+    + "#p2Cheer.on{opacity:1;transform:translate(-50%,-50%) scale(1)}#p2Cheer small{display:block;text-align:center;font-size:12px;font-weight:800;opacity:.8;margin-top:2px}";
+  document.head.appendChild(st);
+}
+var P2_CHEER = [['いいね！', 'var(--accent)'], ['ナイス！', '#5AD7FF'], ['その調子！', 'var(--gold)'], ['GO！GO！', '#FF5D73'], ['コツコツが勝つコツ', 'var(--purple)']];
+function _p2Cheer(t, c, sub) {
+  _p2CkCss();
+  var el = document.getElementById('p2Cheer'); if (!el) { el = document.createElement('div'); el.id = 'p2Cheer'; document.body.appendChild(el); }
+  el.style.setProperty('--cc', c); el.innerHTML = evEsc(t) + (sub ? '<small>' + evEsc(sub) + '</small>' : '');
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(el._t); el._t = setTimeout(function() { el.classList.remove('on'); }, 1300);
 }
 // ── BB早見表 ──
 var _p2BbG = 0;
@@ -20661,7 +20727,16 @@ function _p2BbPageHtml() {
     + '<div class="ux-sum" style="margin-top:16px"><b style="font-size:46px;color:var(--gold)">¥' + v.toLocaleString() + '</b></div>'
     + _uxStepG(_p2BbG, 'p2BbStep(-1)', 'p2BbStep(1)', 'p2BbSet(this.value)', 'pt', 3000)
     + '<div class="ux-chips">' + [2000, 3000, 5000, 10000].map(function(c) { return '<span class="' + (_p2BbG === c ? 'on' : '') + '" onclick="p2BbSet(' + c + ')">' + c.toLocaleString() + '<small>¥' + Math.round(_p2BBCalc(c) / 1000).toLocaleString() + '千</small></span>'; }).join('') + '</div>'
-    + (own && _p2BbG !== own ? '<span class="ux-lk" onclick="p2BbSet(' + own + ')">今月のGSVに戻す ›</span>' : '');
+    + (own && _p2BbG !== own ? '<span class="ux-lk" onclick="p2BbSet(' + own + ')">今月のGSVに戻す ›</span>' : '')
+    + _p2BbTableHtml();
+}
+// v652: GSVごとのBBの表（goalsettingと同じ早見表）。押すとそのGSVに
+function _p2BbTableHtml() {
+  var near = 0; P2_BB_TABLE.forEach(function(r, i) { if (r[0] <= _p2BbG) near = i; });
+  return '<div class="ux-sec" style="margin-top:18px">早見表（税抜・目安）</div><div class="p2bb-t"><div class="hd"><span>GSV</span><span>ブロック</span><span>BB</span></div>'
+    + P2_BB_TABLE.map(function(r, i) { return '<div class="' + (i === near ? 'on' : '') + '" onclick="p2BbSet(' + r[0] + ')"><span>' + r[0].toLocaleString() + '</span><span>' + (r[0] / 500).toFixed(1) + '</span><b>¥' + r[1].toLocaleString() + '</b></div>'; }).join('')
+    + '</div><style>.p2bb-t{border-radius:14px;border:1px solid var(--border);overflow:hidden;background:var(--surface)}.p2bb-t>div{display:grid;grid-template-columns:1fr .8fr 1.3fr;padding:9px 14px;border-top:1px solid var(--border);font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif}.p2bb-t>div:first-child{border-top:none}'
+    + '.p2bb-t .hd{font-size:11.5px;color:var(--text-dim);font-weight:800;cursor:default;background:var(--surface2);font-family:inherit}.p2bb-t>div>*:nth-child(n+2){text-align:right}.p2bb-t b{color:var(--gold);font-weight:900}.p2bb-t .on{background:color-mix(in srgb,var(--gold) 14%,var(--surface))}</style>';
 }
 // ════ v601: データの中身も型に（⑥グラフ＋大きな数字＋数字3つ＋動かせる人 → ③その人の画面） ════
 UX_MEM_CTX.news = { lb: '今月の新規' };
@@ -23589,9 +23664,9 @@ function p2CkTgl(pre, i) {
   ck[key] = !ck[key];
   saveGoals(); _p2CkRender();
   if (ck[key]) {
-    var msgs = ['いいね！', 'ナイス！', 'その調子！', 'GO！GO！', 'コツコツが勝つコツ'];
-    var cnt = _p2CkCount();
-    toast(cnt.done === cnt.total ? '🎉 これで準備万端！' : msgs[Math.floor(Math.random() * msgs.length)] + '（' + cnt.done + '/' + cnt.total + '）');
+    var cnt = _p2CkCount(), cm = P2_CHEER[Math.floor(Math.random() * P2_CHEER.length)]; // v652: 色つきの枠でひとこと（ランダム）
+    if (cnt.done === cnt.total) _p2Cheer('🎉 準備万端！', 'var(--gold)', cnt.done + '/' + cnt.total);
+    else _p2Cheer(cm[0], cm[1], cnt.done + '/' + cnt.total);
   }
   if (currentView === 'plan') renderPlan();
 }
