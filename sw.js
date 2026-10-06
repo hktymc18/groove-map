@@ -62,8 +62,8 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v660';
-var APP_JS = './app.js?v=v660'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
+var CACHE = 'groove-map-v661';
+var APP_JS = './app.js?v=v661'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
 var ASSETS = [
   './',
   './index.html',
@@ -71,7 +71,8 @@ var ASSETS = [
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
-  './icon-180.png'
+  './icon-180.png',
+  './img/tile-plan.webp', './img/tile-map.webp', './img/tile-cal.webp', './img/tile-todo.webp', './img/tile-stats.webp' // v661: HOMEのタイルの背景
 ];
 /* v451: オフライン起動用にFirebase SDK（バージョン固定URL）もキャッシュ。
  * これが無いと機内モード等でSDKが読めず、認証・データ層ごと初期化に失敗して
