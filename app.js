@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v647';
+var APP_JS_VERSION = 'v648';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v647';
+  var DATA_VERSION = 'v648';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4017,7 +4017,7 @@ function switchView(v) {
   if (v !== 'ol') { document.body.classList.remove('olh-on'); var _om9 = document.getElementById('olmPg'); if (_om9 && _om9.parentNode) _om9.parentNode.removeChild(_om9); _olmId = ''; } // v617
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
   try { document.body.setAttribute('data-v', v); } catch (eDv) {}
-  if (v !== 'stats') document.body.classList.remove('dt-lf'); // v646 // v632: 左下の「‹ メニュー」を出すかの判定用
+  if (v !== 'stats') document.body.classList.remove('dt-lf', 'dt-rgx'); // v646 // v632: 左下の「‹ メニュー」を出すかの判定用
   if (v === 'current') setTimeout(function() { try { ckTrAuto(); } catch (eCk) {} }, 1500); // v623: MAPを開いた時に受付の研修記録を取り込む（1日1回）
   if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   var _prevView = currentView;
@@ -5349,6 +5349,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v648', d:'2026-10-06', items:['📱 分析の地域タブ（スマホ横）：右の「◯◯の12ヶ月」をタップすると画面いっぱいに。もう一度タップで元の表示に戻ります'] },
   { v:'v647', d:'2026-10-06', items:['📊 分析（データ）を作り直し：入口のタイル画面をなくして、開いたらすぐ「推移」。上に12ヶ月のグラフ、下にその月の数字のタイル（コミッション・S稼働・BR・B1数・平均稼働人数・総人数など）','👆 タイルを押すと上のグラフがその項目に。コミッション・S稼働・BR・B1数は「くわしく ›」で今までの1画面（あと一歩の人・審査中の人・入力など）','🗂 タブは「推移・研修・パワーライン・地域」の4つに（サマリーは推移に統合）。PCも同じタブで、グラフを横長に'] },
   { v:'v646', d:'2026-10-06', items:['📊 データの入口に「推移」「研修」のタイルを追加。下のボタンは「稼働・人数／パワーライン／地域」に','🧹 データの「理想との差」をなくしました','📱 スマホを横にすると「推移」「地域」が画面いっぱいに（推移はグラフを横いっぱいに、地域は左に比較・右に12ヶ月の推移。上の小さな帯で入口・推移・地域を切り替え）'] },
   { v:'v645', d:'2026-10-06', items:['ⓘ 説明（i）を閉じるボタンを「わかった」から「楽勝!!」に'] },
@@ -12148,12 +12149,31 @@ function _dtLfCss() {
     + "body.dt-lf #dtTrend .dt-chips{margin:0 0 6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}body.dt-lf #dtTrend .dt-chips::-webkit-scrollbar{display:none}"
     + "body.dt-lf #dtTrend .dt-card{margin:0;padding:8px 10px 4px}body.dt-lf #dtTrend .dt-th{display:flex;flex-wrap:wrap;gap:4px 18px}body.dt-lf #dtTrend .dt-th small{display:inline;margin-left:8px}"
     + "body.dt-lf .dt-pane[data-p=reg]:not([style*='none']){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px;align-items:start}"
-    + "body.dt-lf .dt-pane[data-p=reg]>*{margin:0!important;max-height:calc(var(--vvh,100vh) - 62px);overflow-y:auto}";
+    + "body.dt-lf .dt-pane[data-p=reg]>*{margin:0!important;max-height:calc(var(--vvh,100vh) - 62px);overflow-y:auto}"
+    + ".rg-zh{margin-left:auto;font-size:11px;font-weight:800;color:var(--accent)}body.dt-lf .rg-zm{cursor:zoom-in}body.dt-rgx .rg-zm{cursor:zoom-out}body.dt-lf .rg-zm .dt-ch{display:flex;align-items:center}"
+    + "body.dt-rgx .dt-pane[data-p=reg]:not([style*='none']){grid-template-columns:1fr!important}body.dt-rgx #dtRegCmp,body.dt-rgx #regTrendBody .dt-tbl,body.dt-rgx #regTrendBody>div:last-child:not(.rg-zm){display:none!important}"
+    + "body.dt-rgx .dt-pane[data-p=reg]>*{max-height:none;overflow:visible}";
   document.head.appendChild(st);
+}
+// v648: 横の地域タブで「◯◯の12ヶ月」をタップすると画面いっぱい・もう一度で元に
+var _rgxSize = null;
+function regTrendZoom() {
+  if (!document.body.classList.contains('dt-lf')) return;
+  var on = !document.body.classList.contains('dt-rgx');
+  document.body.classList.toggle('dt-rgx', on); _rgxSize = null;
+  if (!on) { regTrendRender(); return; }
+  regTrendRender();
+  requestAnimationFrame(function() {
+    var svg = document.querySelector('#regTrendBody .dt-chart'), body = document.getElementById('regTrendBody'); if (!svg || !body) return;
+    var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 390, r = svg.getBoundingClientRect();
+    var W = Math.round(body.clientWidth), H = Math.round(vh - r.top - 44);
+    _rgxSize = { W: W > 300 ? W : 700, H: H > 150 ? H : 200 }; regTrendRender();
+  });
 }
 function _dtLfSync() {
   var on = _dtLfOn(), was = document.body.classList.contains('dt-lf'), vs = document.getElementById('view-stats');
   document.body.classList.toggle('dt-lf', on);
+  if ((!on || _dtTab !== 'reg') && document.body.classList.contains('dt-rgx')) { document.body.classList.remove('dt-rgx'); _rgxSize = null; try { regTrendRender(); } catch (eRz) {} }
   var bar = document.getElementById('dtLfBar');
   if (!on) {
     if (bar && bar.parentNode) bar.parentNode.removeChild(bar);
@@ -12426,7 +12446,9 @@ function _dtDonutSegs(segs, big, small) {
 // 汎用：折れ線（series=[{name,col,vals(12)}]・1本の軸）
 function _dtLines(series, labels) {
   var pc = isPCMode();
-  var W = pc ? 760 : 360, H = pc ? 240 : 210, L = pc ? 40 : 30, R = 14, T = 16, B = 26, cw = W - L - R, ch = H - T - B;
+  var W = pc ? 760 : 360, H = pc ? 240 : 210, L = pc ? 40 : 30, R = 14, T = 16, B = 26;
+  if (_rgxSize && document.body.classList.contains('dt-rgx')) { W = _rgxSize.W; H = _rgxSize.H; L = 40; } // v648: 地域の推移を画面いっぱいに
+  var cw = W - L - R, ch = H - T - B;
   var all = []; series.forEach(function(s) { s.vals.forEach(function(v) { if (v !== null && v !== undefined) all.push(v); }); });
   var mx = _dtNice(Math.max.apply(null, all.concat([1])));
   var xOf = function(i) { return L + cw * i / (labels.length - 1); }, yOf = function(v) { return T + ch * (1 - v / mx); };
@@ -12720,7 +12742,9 @@ function regTrendRender() {
     // v521: 12ヶ月の推移をグラフで（表は「表で見る」に）
     var _lbs9 = rows.map(function(r){ return parseInt(r.mon.split('.')[1], 10) + '月'; });
     var _sr9 = [['人数', 'n', '#2CE5B8'], ['研修生', 'tr', '#5AD7FF'], ['QBR', 'q', '#FFB454'], ['BR以上', 'br', '#8B7CFF']].map(function(x){ return { name: x[0], col: x[2], vals: rows.map(function(r){ return r[x[1]]; }) }; });
-    var gh = '<div class="dt-ch" style="margin-top:2px">' + evEsc(_regTrendSel || '全体') + ' の12ヶ月</div>' + _dtLines(_sr9, _lbs9);
+    var _zm9 = document.body.classList.contains('dt-rgx'), _lf9 = document.body.classList.contains('dt-lf');
+    var gh = '<div class="rg-zm" onclick="regTrendZoom()"><div class="dt-ch" style="margin-top:2px">' + evEsc(_regTrendSel || '全体') + ' の12ヶ月'
+      + (_lf9 ? '<span class="rg-zh">' + (_zm9 ? 'タップで戻す' : 'タップで大きく') + '</span>' : '') + '</div>' + _dtLines(_sr9, _lbs9) + '</div>'; // v648: 横はタップで画面いっぱい
     var h = '<table class="tbl" style="min-width:520px"><thead><tr><th style="text-align:left;padding-left:10px">' + evEsc(_regTrendSel || '全体') + '</th>'
       + rows.map(function(r){ return '<th style="font-family:Inter,sans-serif">' + r.mon.split('.')[1] + '月</th>'; }).join('') + '</tr></thead><tbody>';
     [['人数（OUT除く）', 'n'], ['研修生', 'tr'], ['QBR（LOI〜Q4）', 'q'], ['BR以上', 'br']].forEach(function(rw){
