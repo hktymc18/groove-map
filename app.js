@@ -9134,7 +9134,8 @@ function renderIdealSum() {
   var bar = function(lb, iv, cv, fmt, sub) {
     var pct = iv > 0 ? Math.min(100, Math.round((cv || 0) / iv * 100)) : (cv ? 100 : 0);
     var done = iv > 0 && cv >= iv;
-    return '<div class="ids-row"><div class="ids-lb">' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</div>'
+    // v641: 説明は出さず、タップ／マウスを乗せた時だけ吹き出しで
+    return '<div class="ids-row"><div class="ids-lb' + (sub ? ' has-tp" onclick="idsTip(this)"><u>' + lb + '</u><small class="ids-tp">' + sub + '</small>' : '">' + lb) + '</div>'
       + '<div class="ids-bar"><i style="width:' + pct + '%"' + (done ? ' class="ok"' : '') + '></i></div>'
       + '<div class="ids-v"><b>' + fmt(iv) + '</b><small>現状 ' + fmt(cv) + '</small></div></div>';
   };
@@ -9158,12 +9159,18 @@ function renderIdealSum() {
     + '</div><div class="ids-comm"><div class="ids-ct">コミッション<b>' + yen(I.comm.total) + '</b><small>現状 ' + yen(C.comm.total) + (I.comm.total - C.comm.total > 0 ? '（あと ' + yen(I.comm.total - C.comm.total) + '）' : '') + '</small></div>'
     + '<div class="ids-cb">'
     + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', (function() { var l9 = lbCalc(membersForMap('ideal')); return l9.rank >= 0 ? LB_DEF[l9.rank].t + '・第' + l9.n + '世代まで' + (l9.rate === 0.025 ? '（2.5%）' : '') : 'ゴールドから'; })()]].map(function(x) {
-      return '<div><span>' + x[0] + '</span><b>' + yen(I.comm[x[1]]) + '</b><small>' + x[2] + '</small><small>現状 ' + yen(C.comm[x[1]]) + '</small></div>';
+      return '<div class="has-tp" onclick="idsTip(this)"><span><u>' + x[0] + '</u></span><b>' + yen(I.comm[x[1]]) + '</b><small class="ids-tp">' + x[2] + '</small><small>現状 ' + yen(C.comm[x[1]]) + '</small></div>';
     }).join('') + '</div>' + _lbUpHtml(membersForMap('ideal')) + '</div></div>'
     + _idealGuideHtml(I)
     + (state.isEditor ? '<div class="ids-hint">カードをタップ → GSV・稼働の変更／直下に新規B1を追加。カードの <span class="idd up">+800</span> <span class="idd act">B→A</span> <span class="idd new">NEW</span> は現状との差</div>' : '')
     + '</div>';
   box.innerHTML = h;
+}
+function idsTip(el) { // 説明の吹き出し（タップで開く・ほかを押すと閉じる）
+  var on = !el.classList.contains('tp-on');
+  Array.prototype.forEach.call(document.querySelectorAll('.has-tp.tp-on'), function(x) { x.classList.remove('tp-on'); });
+  if (on) el.classList.add('tp-on');
+  if (!window._idsTipDoc) { window._idsTipDoc = 1; document.addEventListener('click', function(e) { if (!e.target.closest || !e.target.closest('.has-tp')) Array.prototype.forEach.call(document.querySelectorAll('.has-tp.tp-on'), function(x) { x.classList.remove('tp-on'); }); }, true); }
 }
 function _idealFixSum() { var s = 0; (state.idealMembers || []).forEach(function(m) { if (!m.deleted) s += _idealFix(m); }); return s; } // v581
 function _idsOpen() { try { return localStorage.getItem('gm_idsOpen') !== '0'; } catch (e) { return true; } }

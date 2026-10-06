@@ -22,4 +22,13 @@ T.run(async () => {
   ms[0].ptCurrent = 3500; box.innerHTML = w._lbUpHtml(ms);
   c('GSV 3,000P以上：1つだけ', $$('.ids-lbr:not(.off) .ids-lbk').length === 1 && $('.ids-lbup').textContent.indexOf('GSV 3,000P以上') < 0);
   box.remove();
+  console.log('=== 説明はタップ／マウスで ===');
+  w.state.members = ms; w.localStorage.setItem('gm_idsOpen', '1');
+  w.switchView('ideal'); w.renderIdealSum(); await sleep(30);
+  const tp = $$('#idealSum .ids-tp');
+  const html = require('fs').readFileSync(require('path').join(__dirname, '../../../index.html'), 'utf8');
+  c('バーの下・SB/BB/LBの説明は吹き出しの中（最初は隠す・マウスで出す）', tp.length >= 5 && html.indexOf('.ids-card .ids-tp{display:none;') >= 0 && html.indexOf('@media (hover:hover){.ids-card .has-tp:hover .ids-tp{display:block}}') >= 0 && $$('#idealSum .ids-cb>div.has-tp').length === 3);
+  const card = $$('#idealSum .ids-cb>div')[1]; w.idsTip(card);
+  c('タップで吹き出し（BB：早見表）', card.classList.contains('tp-on') && card.querySelector('.ids-tp').textContent.indexOf('早見表') >= 0);
+  w.idsTip($$('#idealSum .ids-lb.has-tp')[0]); c('ほかを押すと前のは閉じる', !card.classList.contains('tp-on'));
 });
