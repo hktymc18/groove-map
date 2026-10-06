@@ -1,0 +1,33 @@
+// v642：年別目標（スマホ）を新しいページに：頂上→今の縦の道・−［］＋・タイトルはリスト・その場で保存・例に戻す
+const T = require('../lib/head.js')();
+const { w, c, sleep, setWH, $, $$ } = T;
+T.run(async () => {
+  T.login();
+  w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '', mapType: 'both', ptCurrent: 2500 }];
+  setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('plan'); await sleep(50);
+  w.state.goals.plan.income = 3410000; w.state.goals.plan.title = 'チームエリート'; w.state.goals.plan.deadline = '2029-12';
+  const p2 = w._p2(); delete p2.ladder; delete p2.years;
+  setWH(390, 844); w._uxSync && w._uxSync();
+  w.p2YearsOpen(); await sleep(30);
+  c('スマホは新しい年別目標のページ（古いシートは出ない）', !!$('.p2y') && !$('#p2GeOv') && $('.ux-crumb').textContent.indexOf('年別目標') >= 0);
+  const rows = $$('.p2y-r');
+  c('頂上（最終ゴール）→ 3年目 → 2年目 → 1年目 → 今 の順', rows.length === 5 && rows[0].classList.contains('fin') && rows[0].textContent.indexOf('2029年12月') >= 0 && rows[1].textContent.indexOf('3年目') >= 0 && rows[3].textContent.indexOf('1年目') >= 0 && rows[4].classList.contains('now'));
+  c('最初は「例」', $$('.p2y-f .ex').length === 3);
+  const L0 = w._p2Ladder(), ym1 = L0.rows[0].ym, inc0 = L0.rows[0].inc;
+  w.p2YrStep(ym1, 1); await sleep(10);
+  c('＋でその年が保存される（例が外れる）', p2.ladder && p2.ladder[ym1] && p2.ladder[ym1].inc > inc0 && $$('.p2y-f .ex').length === 2 && !!$('.p2y-f .rs'));
+  w.p2YrInc(ym1, '60'); await sleep(10);
+  c('数字を打って保存', p2.ladder[ym1].inc === 60 && w._p2Ladder().rows[0].inc === 60);
+  w.p2YrTitle(ym1, 'RUBY'); await sleep(10);
+  c('タイトルをリストで選ぶ（手動）', p2.ladder[ym1].title === 'RUBY' && w._p2Ladder().rows[0].title === 'RUBY' && w._p2Ladder().rows[0].tm);
+  w.p2YrReset(ym1); await sleep(10);
+  c('例に戻す', !p2.ladder[ym1] && $$('.p2y-f .ex').length === 3);
+  c('戻る＝目標カード', $('.ux-btm') && $('.ux-btm').innerHTML.indexOf("p2Go('goal',5)") >= 0);
+  w.p2YearsOpen('tool'); await sleep(10);
+  c('ツールから開いたら戻る＝ツール', $('.ux-btm').innerHTML.indexOf("p2Go('tool')") >= 0);
+  w.state.goals.plan.deadline = '2027-06'; w.renderPlan(); await sleep(10);
+  c('1年以内なら案内だけ', !$('.p2y') && $('.ux-empty').textContent.indexOf('1年以内') >= 0);
+  setWH(1400, 900); w._uxSync && w._uxSync(); w.state.goals.plan.deadline = '2029-12';
+  let called = ''; const ge = w.p2GoalEdit; w.p2GoalEdit = (f) => { called = f; }; w.p2YearsOpen(); w.p2GoalEdit = ge;
+  c('PCは今まで通り（目標のページの1年ごとの目標）', called === 'years');
+});
