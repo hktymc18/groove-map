@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v667';
+var APP_JS_VERSION = 'v668';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3874,7 +3874,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v667';
+  var DATA_VERSION = 'v668';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5353,6 +5353,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v668', d:'2026-10-07', items:['個人情報保護方針・利用規約（2026年10月1日施行）を定めました。はじめてログインした時（方針を改定した時も）に同意の画面が出ます。主要条項の要旨を確認し、全文を読んで3つの項目に同意すると利用を開始できます','新規登録の画面から、個人情報保護方針・利用規約の全文を読めるようになりました','アカウント管理の一覧に、同意済み・未同意が表示されます'] },
   { v:'v667', d:'2026-10-06', items:['🎨 設定の「バグ・要望」も絵文字から線のアイコンに'] },
   { v:'v666', d:'2026-10-06', items:['🎨 HOMEの「バグ・要望」ボタンを絵文字から、ほかのボタンと同じ線のアイコンに'] },
   { v:'v665', d:'2026-10-06', items:['🐛 HOMEのタイルの写真とアイコンの色が消えていたのを修正','🏷 ロゴの位置を少し上に'] },
@@ -34921,35 +34922,39 @@ function _pvRecord(uid) {
   return { rec: rec, p: fsSet('users/' + uid, { privacy: rec }), log: log };
 }
 function _pvCss() {
-  return '#pvGate{position:fixed;inset:0;z-index:10001;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:auto;padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px)}'
-    + '#pvGate .pv-box{width:100%;max-width:420px;margin:auto}'
-    + '#pvGate .pv-k{font:800 11px/1 Inter,sans-serif;letter-spacing:.24em;color:var(--accent)}'
-    + '#pvGate h2{font-size:22px;font-weight:700;margin:10px 0 6px;color:var(--text)}'
-    + '#pvGate .pv-lead{font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:18px}'
-    + '#pvGate .pv-list{border-radius:16px;background:var(--surface);border:1px solid var(--border);padding:4px 14px}'
-    + '#pvGate .pv-it{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}'
+  return '#pvGate{position:fixed;inset:0;z-index:10001;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:auto;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 18px)}'
+    + '#pvGate .pv-box{width:100%;max-width:460px;margin:auto}'
+    + '#pvGate .pv-k{display:flex;align-items:center;gap:8px;font:800 11px/1 Inter,sans-serif;letter-spacing:.24em;color:var(--accent)}'
+    + '#pvGate .pv-k .lic{width:15px;height:15px}'
+    + '#pvGate h2{font-size:19px;font-weight:700;line-height:1.45;margin:10px 0 4px;color:var(--text)}'
+    + '#pvGate .pv-meta{font-size:11px;color:var(--text-dim);letter-spacing:.04em;margin-bottom:12px}'
+    + '#pvGate .pv-lead{font-size:12.5px;color:var(--text-mid);line-height:1.75;margin-bottom:12px;text-align:justify}'
+    + '#pvGate .pv-lead b{color:var(--text)}'
+    + '#pvGate .pv-sum{border-radius:12px;background:var(--surface);border:1px solid var(--border2);max-height:min(38vh,330px);overflow:auto;-webkit-overflow-scrolling:touch}'
+    + '#pvGate .pv-sh{position:sticky;top:0;background:var(--surface2);padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--text-dim);border-bottom:1px solid var(--border)}'
+    + '#pvGate .pv-it{padding:10px 12px;border-bottom:1px solid var(--border)}'
     + '#pvGate .pv-it:last-child{border-bottom:none}'
-    + '#pvGate .pv-ic{flex:0 0 30px;height:30px;border-radius:9px;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}'
-    + '#pvGate .pv-ic .lic{width:16px;height:16px}'
-    + '#pvGate .pv-t{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:2px}'
-    + '#pvGate .pv-d{font-size:12.5px;color:var(--text-dim);line-height:1.6}'
-    + '#pvGate .pv-links{display:flex;gap:8px;margin:14px 0 16px}'
-    + '#pvGate .pv-links span{flex:1;text-align:center;padding:10px 6px;border-radius:12px;border:1px solid var(--border2);font-size:12.5px;font-weight:700;color:var(--text-mid);cursor:pointer}'
+    + '#pvGate .pv-t{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}'
+    + '#pvGate .pv-t i{font-style:normal;font:700 11px/1 Inter,sans-serif;color:var(--accent);min-width:16px}'
+    + '#pvGate .pv-t em{margin-left:auto;font-style:normal;font-size:10px;font-weight:700;color:var(--text-dim);border:1px solid var(--border2);border-radius:6px;padding:2px 6px;white-space:nowrap}'
+    + '#pvGate .pv-d{font-size:12px;color:var(--text-dim);line-height:1.7;text-align:justify;padding-left:24px}'
+    + '#pvGate .pv-links{display:flex;gap:8px;margin:12px 0 12px}'
+    + '#pvGate .pv-links span{flex:1;text-align:center;padding:10px 4px;border-radius:10px;border:1px solid var(--border2);font-size:11.5px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap}'
     + '#pvGate .pv-links .lic{width:13px;height:13px;vertical-align:-2px;margin-right:4px}'
-    + '#pvGate label{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--text);line-height:1.6;cursor:pointer;margin-bottom:14px}'
-    + '#pvGate label input{width:20px;height:20px;margin-top:1px;accent-color:var(--accent);flex-shrink:0}'
-    + '#pvGate .pv-go{width:100%;padding:14px;border-radius:14px;border:none;background:var(--accent);color:#06251C;font-size:15px;font-weight:700;transition:opacity .15s}'
-    + '#pvGate .pv-go:disabled{opacity:.35}'
-    + '#pvGate .pv-no{display:block;text-align:center;margin-top:14px;font-size:12.5px;color:var(--text-dim);cursor:pointer;text-decoration:underline}'
-    + '#pvGate .pv-ver{text-align:center;margin-top:16px;font-size:11px;color:var(--placeholder)}'
+    + '#pvGate .pv-chks{border-top:1px solid var(--border);padding-top:10px;margin-bottom:12px}'
+    + '#pvGate label{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--text);line-height:1.6;cursor:pointer;padding:6px 0}'
+    + '#pvGate label input{width:19px;height:19px;margin-top:1px;accent-color:var(--accent);flex-shrink:0}'
+    + '#pvGate .pv-go{width:100%;padding:14px;border-radius:12px;border:none;background:var(--accent);color:#06251C;font-size:15px;font-weight:700;transition:opacity .15s}'
+    + '#pvGate .pv-go:disabled{opacity:.3}'
+    + '#pvGate .pv-no{display:block;text-align:center;margin-top:12px;font-size:12.5px;color:var(--text-dim);cursor:pointer;text-decoration:underline}'
+    + '#pvGate .pv-ft{margin-top:14px;font-size:10.5px;color:var(--placeholder);line-height:1.6;text-align:center}'
     + '#pvDoc{position:fixed;inset:0;z-index:10002;background:var(--bg);display:flex;flex-direction:column}'
     + '#pvDoc .pv-dh{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;border-bottom:1px solid var(--border);font-weight:700;font-size:15px;color:var(--text)}'
     + '#pvDoc .pv-dh span{margin-left:auto;padding:7px 14px;border-radius:10px;background:var(--surface2);font-size:13px;cursor:pointer}'
     + '#pvDoc iframe{flex:1;border:none;width:100%;background:var(--bg)}'
-    + '@media (min-width:900px){#pvGate{background:rgba(5,8,14,.72);backdrop-filter:blur(6px)}#pvGate .pv-box{max-width:480px;background:var(--bg);border:1px solid var(--border);border-radius:22px;padding:30px 30px 22px;box-shadow:var(--shadow)}'
+    + '@media (min-width:900px){#pvGate{background:rgba(5,8,14,.72);backdrop-filter:blur(6px)}#pvGate .pv-box{max-width:560px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:28px 30px 20px;box-shadow:var(--shadow)}#pvGate .pv-sum{max-height:300px}'
     + '#pvDoc{inset:5vh 50% 5vh auto;width:min(760px,92vw);transform:translateX(50%);border-radius:18px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}}';
 }
-// 方針・規約の全文（アプリ内で開く。ゲートの上に重ねる）
 function _pvCssOn() { if (!document.getElementById('pvCss')) { var s = document.createElement('style'); s.id = 'pvCss'; s.textContent = _pvCss(); document.head.appendChild(s); } }
 function pvOpenDoc(kind) {
   pvCloseDoc(); _pvCssOn();
@@ -34960,28 +34965,44 @@ function pvOpenDoc(kind) {
 }
 function pvCloseDoc() { var d = document.getElementById('pvDoc'); if (d && d.parentNode) d.parentNode.removeChild(d); }
 function closePrivacyGate() { pvCloseDoc(); var g = document.getElementById('pvGate'); if (g && g.parentNode) g.parentNode.removeChild(g); }
+var PV_SUM = [
+  ['取得する情報', '方針 第3条', '氏名、屋号、所属ユニオン、活動地域、UPルビー、UPBD及びメールアドレスのほか、ユーザーが登録する組織図・予定・目標・連絡先の情報、最終ログイン日時並びに受付システムの出欠の記録等を取得します。'],
+  ['利用目的', '方針 第4条', '本サービスの提供及び運営、利用承認、問合せへの対応、不正利用の防止並びに本サービスの改善に限り利用し、広告の配信、販売その他の目的には一切利用しません。'],
+  ['閲覧の範囲', '方針 第7条', '登録情報を閲覧できるのは、本人及び本人が共有機能により明示的に許可した者に限られます。所属ユニオンの管理者は、利用承認に必要な登録情報に限り閲覧します。'],
+  ['外国にあるサーバーへの保存', '方針 第8条', 'データは Google LLC（アメリカ合衆国）が提供する Firebase に保存され、日本国外に所在するサーバーに保存される場合があります。'],
+  ['登録対象者の情報に関する責任', '方針 第10条・規約 第5条', '他者の情報は、ユーザー自身が適法に知り得たものに限り登録できます。その取得、管理、利用及び提供に関する一切の法的責任はユーザーが負い、登録対象者からの削除等の申出には、ユーザーが速やかに対応しなければなりません。'],
+  ['禁止事項及び利用の停止', '規約 第7条・第8条・第11条', '登録した情報を本人の同意なく公開又は拡散する行為、なりすまし、不正アクセス等を禁止します。違反した場合、事前の通知なく利用を停止し、生じた損害の賠償を求めることがあります。'],
+  ['保証の否認', '規約 第10条', 'シミュレーション、目標及び収入の目安その他の数値は参考値にすぎず、将来の成果又は収入を保証するものではありません。'],
+  ['開示等の請求及び退会', '方針 第11条・第12条', '「設定」→「バグ・要望」から、又は所属ユニオンのリーダーを通じて申し出ることができます。退会の申出があった場合、アカウント及び登録情報を速やかに削除します。']
+];
+var PV_CHK = ['個人情報保護方針の全条項を読み、その内容に同意します', '利用規約の全条項を読み、その内容に同意します', '登録する他者の個人情報について、自らが一切の責任を負うことを確認しました'];
+function _pvChkSync() {
+  var cs = document.querySelectorAll('#pvGate .pv-chks input'), all = cs.length > 0;
+  for (var i = 0; i < cs.length; i++) if (!cs[i].checked) all = false;
+  var go = document.getElementById('pvGo'); if (go) go.disabled = !all;
+}
 function showPrivacyGate(user, onOk) {
   closePrivacyGate();
   var ls = document.getElementById('loginScreen'); if (ls) ls.style.display = 'none';
   _pvCssOn();
-  var upd = !!(user && user.privacy && user.privacy.ver); // 以前の版に同意済み＝改定のお知らせ
-  var it = function(ic, t, d) { return '<div class="pv-it"><div class="pv-ic">' + icn(ic) + '</div><div><div class="pv-t">' + t + '</div><div class="pv-d">' + d + '</div></div></div>'; };
+  var upd = !!(user && user.privacy && user.privacy.ver); // 以前の版に同意済み＝改定
   var g = document.createElement('div'); g.id = 'pvGate';
   g.innerHTML = '<div class="pv-box">'
-    + '<div class="pv-k">NAVIGATOR</div>'
-    + '<h2>' + (upd ? '個人情報保護方針を更新しました' : 'ご利用の前に') + '</h2>'
-    + '<div class="pv-lead">' + (upd ? '内容をご確認のうえ、あらためて同意をお願いします。' : '個人情報の取り扱いと利用規約への同意をお願いします。') + '</div>'
-    + '<div class="pv-list">'
-    + it('doc', '保存する情報', 'アカウント情報と、あなたが入力したMAP・予定・目標・連絡先')
-    + it('target', '使い道', 'アプリの提供のためだけ。広告や販売には使いません')
-    + it('eye', '見られる人', 'あなたと、あなたが共有を許可した相手だけ。管理者が見るのは承認に必要な登録情報のみ')
-    + it('shield', 'メンバーの情報', '入力する他の人の情報は、ご自身の責任で大切に扱ってください')
+    + '<div class="pv-k">' + icn('shield') + 'NAVIGATOR</div>'
+    + '<h2>' + (upd ? '個人情報保護方針及び利用規約の改定について' : '個人情報保護方針及び利用規約への同意') + '</h2>'
+    + '<div class="pv-meta">第1版（' + PRIVACY_VER + '）／ 2026年10月1日施行 ／ 運営：PROMOTE</div>'
+    + '<div class="pv-lead">' + (upd
+        ? '当団体は、個人情報保護方針及び利用規約を改定しました。<b>改定後の全条項に同意いただかない限り、本サービスを引き続きご利用いただくことはできません。</b>'
+        : '本サービスのご利用にあたっては、PROMOTE（以下「当団体」）が定める個人情報保護方針及び利用規約の全条項に同意いただく必要があります。<b>同意いただけない場合、本サービスはご利用いただけません。</b>')
+      + '下記の主要条項の要旨を確認のうえ、必ず全文をお読みください。</div>'
+    + '<div class="pv-sum"><div class="pv-sh">主要条項の要旨</div>'
+    + PV_SUM.map(function(x, i) { return '<div class="pv-it"><div class="pv-t"><i>' + (i + 1) + '</i>' + x[0] + '<em>' + x[1] + '</em></div><div class="pv-d">' + x[2] + '</div></div>'; }).join('')
     + '</div>'
-    + '<div class="pv-links"><span onclick="pvOpenDoc(\'privacy\')">' + icn('doc') + '個人情報保護方針</span><span onclick="pvOpenDoc(\'terms\')">' + icn('book') + '利用規約</span></div>'
-    + '<label><input type="checkbox" id="pvChk" onchange="document.getElementById(\'pvGo\').disabled=!this.checked">個人情報保護方針と利用規約を読み、同意します</label>'
-    + '<button class="pv-go" id="pvGo" disabled>同意してはじめる</button>'
+    + '<div class="pv-links"><span onclick="pvOpenDoc(\'privacy\')">' + icn('doc') + '個人情報保護方針（全文）</span><span onclick="pvOpenDoc(\'terms\')">' + icn('book') + '利用規約（全文）</span></div>'
+    + '<div class="pv-chks">' + PV_CHK.map(function(t) { return '<label><input type="checkbox" onchange="_pvChkSync()">' + t + '</label>'; }).join('') + '</div>'
+    + '<button class="pv-go" id="pvGo" disabled>同意して利用を開始する</button>'
     + '<span class="pv-no" onclick="doLogout()">同意しない（ログアウト）</span>'
-    + '<div class="pv-ver">第1版（' + PRIVACY_VER + '）</div>'
+    + '<div class="pv-ft">同意の日時及び同意した版は記録され、当団体が保管します。</div>'
     + '</div>';
   document.body.appendChild(g);
   document.getElementById('pvGo').onclick = function() {
@@ -34993,7 +35014,7 @@ function showPrivacyGate(user, onOk) {
       closePrivacyGate();
       if (onOk) onOk();
     }).catch(function(e) {
-      btn.disabled = false; btn.textContent = '同意してはじめる';
+      btn.disabled = false; btn.textContent = '同意して利用を開始する';
       toast('⚠️ 保存できませんでした。電波の良い所でもう一度お試しください');
       console.error(e);
     });
