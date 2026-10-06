@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v658';
+var APP_JS_VERSION = 'v659';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1494,7 +1494,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   opts = opts || {};
   var wrap = targetEl || document.getElementById(mapType === 'current' ? 'pcOrbitCurrent' : 'pcOrbitIdeal');
   if (!wrap) return;
-  var isPrint = !!targetEl;
+  var isPrint = !!targetEl && !opts.screen; // v659: opts.screen＝スマホ横のサークルMAP（画面用の色・タップで開く／svgだけ置く）
   var light = forceLight || document.body.classList.contains('light');
   var _keep561 = null; // v561: 同じMAP・同じ月の描き直しはスクロール位置を保つ（左上に飛ばない）
   if (!isPrint) {
@@ -1682,8 +1682,8 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   };
   // v514: 横に細長くなりすぎないよう、レーン半径の倍率 KR を選ぶ（混む外側レーンの半円を長くして縦も使う）
   // 目標：印刷はA3横（404×281mm）、画面は表示エリアいっぱいに一番大きく見える形
-  var tgtW = isPrint ? 404 : Math.max((window.innerWidth || 1400) - (isPCMode() ? 110 : 20), 600);
-  var tgtH = isPrint ? 281 : Math.max((window.innerHeight || 900) - 230, 460);
+  var tgtW = isPrint ? 404 : (opts.screen ? opts.w : Math.max((window.innerWidth || 1400) - (isPCMode() ? 110 : 20), 600));
+  var tgtH = isPrint ? 281 : (opts.screen ? opts.h : Math.max((window.innerHeight || 900) - 230, 460));
   var bestK = 1, bestSc = 0;
   var KS = [1, 1.15, 1.3, 1.5, 1.75, 2, 2.35, 2.75, 3.25, 3.85, 4.5, 5.3, 6.2];
   for (var ki = 0; ki < KS.length; ki++) {
@@ -2077,7 +2077,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       }
     });
   }
-  if (isPrint) { wrap._orbitSize = { SW: SW, SH: SH, n: members.length, nr: nr }; wrap.appendChild(svg); return; }
+  if (isPrint || opts.screen) { wrap._orbitSize = { SW: SW, SH: SH, n: members.length, nr: nr }; wrap.appendChild(svg); return; }
 
   // ── ツールバー＋スクロール容器 ──
   var bar = document.createElement('div');
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v658';
+  var DATA_VERSION = 'v659';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4017,7 +4017,8 @@ function switchView(v) {
   if (v !== 'ol') { document.body.classList.remove('olh-on'); var _om9 = document.getElementById('olmPg'); if (_om9 && _om9.parentNode) _om9.parentNode.removeChild(_om9); _olmId = ''; } // v617
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
   try { document.body.setAttribute('data-v', v); } catch (eDv) {}
-  if (v !== 'stats') document.body.classList.remove('dt-lf', 'dt-rgx'); // v646 // v632: 左下の「‹ メニュー」を出すかの判定用
+  if (v !== 'stats') document.body.classList.remove('dt-lf', 'dt-rgx'); // v646
+  try { if (typeof mxOrbitClose === 'function') mxOrbitClose(); } catch (eMo) {} // v659 // v632: 左下の「‹ メニュー」を出すかの判定用
   if (v === 'current') setTimeout(function() { try { ckTrAuto(); } catch (eCk) {} }, 1500); // v623: MAPを開いた時に受付の研修記録を取り込む（1日1回）
   if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   var _prevView = currentView;
@@ -5349,6 +5350,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v659', d:'2026-10-06', items:['🗺 MAP：開いた時は「2段」が選ばれた状態に。「全段」が光るのは全段を押した時だけ（全段が光っているのに2段で出ていたのを直しました）','◎ スマホを横にすると、MAPの上に「◎ サークル」。押すとサークルMAPを画面いっぱいに（−／＋で拡大・丸を押すとその人）'] },
   { v:'v658', d:'2026-10-06', items:['⟲ 受付連携の「名簿から追加」：紹介者をたどって自分のMAPにつながらない人は「ほかのチームかも」として下にたたみ、最初はチェックしないように（同じユニオンの別チームの人を誤って追加しない）','紹介者もまだMAPにいない人は、紹介者にチェックを付けた時だけチェックが付きます（付いて見えるのに追加されない、をなくしました）'] },
   { v:'v657', d:'2026-10-06', items:['💴 BB早見表の表の数字を等幅に（金額の桁がそろって見やすく）'] },
   { v:'v656', d:'2026-10-06', items:['🎮 シミュレーションの「今月の目標に入れる」で、フロント人数を理想MAPにも反映（自分の直下の新しいB1をその人数に。理想MAPが空なら現状MAPをコピーしてから）','👤 はじめてMAPを開いた人は、0段目にログインした人（アカウントの名前・地域）を自動で登録'] },
@@ -16835,10 +16837,12 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
 }
 var MX_FAM = ['#2CE5B8', '#8B7CFF', '#FFB454', '#FF5D73', '#5AD7FF', '#4ADE80', '#FF9F6E', '#C583FF'];
 // 段の初期値（端末ごとに記憶）を一度だけ当てる
-function _mxLevelGet() { try { return localStorage.getItem('gm_mapLevel') || ''; } catch (e) { return ''; } }
+// v659: 段の選び方はアプリを開いている間だけ覚える（開いた時は2段。前回の「全段」が光ったまま2段で出るのを直す）
+var _mxLv = ''; try { localStorage.removeItem('gm_mapLevel'); } catch (eLv) {}
+function _mxLevelGet() { return _mxLv; }
 function _mxLevelInit(members) {
-  if (window._mxLvInit) return; window._mxLvInit = true;
-  var lv = _mxLevelGet(); if (!lv) return;
+  var lv = _mxLevelGet(); if (!lv || !members || !members.length) return;
+  var key = (state.currentMonth || '') + '|' + currentView + '|' + lv; if (window._mxLvInit === key) return; window._mxLvInit = key; // 月・MAPが変わったら選んだ段を当て直す
   if (!window._treeOpen) window._treeOpen = {};
   members.forEach(function(m) { var d = calcMemberDepth(m, members); window._treeOpen[m.id] = lv === 'all' ? true : (d < parseInt(lv, 10)); });
 }
@@ -16891,7 +16895,7 @@ function _mxTop(mapType) {
   var sh = document.getElementById('sharedMapBtn'), shOn = sh && sh.style.display !== 'none';
   var lt = (document.getElementById(cur ? 'ltsvC' : 'ltsvI') || {}).textContent || '-';
   var sN = own.filter(function(m) { return m.activity === 'S'; }).length, actN = (document.getElementById('actCount') || {}).textContent || '';
-  var lv = _mxLevelGet() || ((document.getElementById('levelSelect') || {}).value) || '2', maxD = 0;
+  var lv = _mxLevelGet() || '2', maxD = 0; // v659: 全段が光るのは「全段」を押した時だけ
   var lsel = document.getElementById('levelSelect'); if (lsel) maxD = Math.max(0, lsel.options.length - 1);
   var lvOpts = ''; for (var n = 1; n <= Math.max(maxD, 1); n++) lvOpts += '<option value="' + n + '"' + (String(n) === lv ? ' selected' : '') + '>' + n + '段</option>';
   var regLb = !regionFilter ? '全地域' : (regionFilter === '__NONE__' ? '未設定' : regionFilter), fN = mapCatFilter ? 1 : 0;
@@ -16899,7 +16903,7 @@ function _mxTop(mapType) {
   top.innerHTML = '<div class="mx1"><div class="mxseg"><span class="' + (cur ? 'on' : '') + '" onclick="switchView(\'current\')">現状</span><span class="' + (cur ? '' : 'on pu') + '" onclick="switchView(\'ideal\')">理想</span></div>'
     + (opts ? '<span class="mxc mxsel">' + ymLb + ' ▾<select onchange="mxYm(this.value)">' + opts + '</select></span>' : '')
     + (shOn ? '<span class="mxc pu" onclick="openSharedDashboard()">' + evEsc((sh.textContent || '共有MAP').replace('共有MAP', '共有').trim()) + '</span>' : '')
-    + '<span class="sp"></span><span class="mxc mxi" onclick="mxSearch()" title="名前で探す">🔍</span><span class="mxc mxi" onclick="mxMore()" title="そのほか">⋯</span></div>'
+    + '<span class="sp"></span>' + (_uxLand() ? '<span class="mxc" onclick="mxOrbitOpen()" title="サークルMAPで見る">◎ サークル</span>' : '') + '<span class="mxc mxi" onclick="mxSearch()" title="名前で探す">🔍</span><span class="mxc mxi" onclick="mxMore()" title="そのほか">⋯</span></div>'
     + '<div class="mx2" onclick="' + (cur ? 'showLtsvDetail()' : 'uxMapIdealSum()') + '"><span><small>' + (cur ? 'LTSV' : 'LTSV 目標') + '</small><b' + (cur ? '' : ' style="color:var(--purple)"') + '>' + evEsc(lt) + '</b></span>'
     + (cur ? '<span><small>稼働</small><i>' + evEsc(actN) + '</i></span><span><small>S</small><i style="color:var(--accent)">' + sN + '</i></span>' : '<em>理想 vs 現状 ›</em>') + '</div>'
     + '<div class="mx3"><span class="mxc' + (lv === 'all' ? ' on' : '') + '" onclick="mxLevel(\'all\')">全段</span>'
@@ -16938,7 +16942,7 @@ function mxTgl(id) {
   renderTree(currentView === 'ideal' ? 'ideal' : 'current');
 }
 function mxLevel(v) {
-  try { localStorage.setItem('gm_mapLevel', v); } catch (e) {}
+  _mxLv = v; window._mxLvInit = (state.currentMonth || '') + '|' + currentView + '|' + v;
   var s = document.getElementById('levelSelect'); if (s) s.value = v;
   expandToLevel(v);
 }
@@ -19559,6 +19563,48 @@ function _anCss() {
     + "body.dt-lf .an-sec,body.dt-lf .an-g{display:none!important}";
   document.head.appendChild(st);
 }
+
+// ════ v659: スマホを横にした時のサークルMAP（全画面・＋−で拡大） ════
+var _mxOz = 1;
+function mxOrbitOpen() {
+  mxOrbitClose(); _mxOz = 1;
+  var ov = document.createElement('div'); ov.id = 'mxOrbit';
+  ov.innerHTML = '<div class="hd"><b>◎ サークルMAP</b><small>' + (currentView === 'ideal' ? '理想' : '現状') + '・' + evEsc(state.currentMonth || '') + '</small><span class="sp"></span>'
+    + '<span class="b" onclick="mxOrbitZoom(-1)">−</span><span class="b" onclick="mxOrbitZoom(0)">⊡</span><span class="b" onclick="mxOrbitZoom(1)">＋</span><span class="b x" onclick="mxOrbitClose()">✕</span></div><div class="bd" id="mxOrbitBd"></div>';
+  if (!document.getElementById('mxOrbitCss')) {
+    var st = document.createElement('style'); st.id = 'mxOrbitCss';
+    st.textContent = "#mxOrbit{position:fixed;top:0;right:0;bottom:0;left:calc(62px + env(safe-area-inset-left));z-index:286;background:var(--bg);display:flex;flex-direction:column}"
+      + "#mxOrbit .hd{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 10px) 6px 12px;border-bottom:1px solid var(--border)}#mxOrbit .hd b{font-size:16px;font-weight:900}#mxOrbit .hd small{font-size:12px;color:var(--text-dim);font-weight:700}#mxOrbit .sp{flex:1}"
+      + "#mxOrbit .b{min-width:38px;height:36px;padding:0 8px;border-radius:11px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:900;cursor:pointer}#mxOrbit .b.x{margin-left:6px}"
+      + "#mxOrbit .bd{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom)}#mxOrbit svg{display:block;margin:0 auto}";
+    document.head.appendChild(st);
+  }
+  document.body.appendChild(ov);
+  mxOrbitRender();
+}
+function mxOrbitRender() {
+  var bd = document.getElementById('mxOrbitBd'); if (!bd) return;
+  var W = bd.clientWidth || window.innerWidth, H = bd.clientHeight || (window.innerHeight - 50);
+  bd.innerHTML = '';
+  renderPCOrbit(currentView === 'ideal' ? 'ideal' : 'current', bd, false, { screen: true, w: W, h: H });
+  var sv = bd.querySelector('svg'), sz = bd._orbitSize; if (!sv || !sz) return;
+  var fit = Math.min(W / sz.SW, H / sz.SH), z = fit * _mxOz;
+  sv.style.width = Math.round(sz.SW * z) + 'px'; sv.style.height = Math.round(sz.SH * z) + 'px';
+}
+function mxOrbitZoom(d) {
+  var bd = document.getElementById('mxOrbitBd'), sv = bd && bd.querySelector('svg'); if (!sv) return;
+  var cx = bd.scrollLeft + bd.clientWidth / 2, cy = bd.scrollTop + bd.clientHeight / 2, w0 = sv.clientWidth || 1;
+  _mxOz = d === 0 ? 1 : Math.max(1, Math.min(6, _mxOz * (d > 0 ? 1.4 : 1 / 1.4)));
+  var sz = bd._orbitSize, fit = Math.min(bd.clientWidth / sz.SW, bd.clientHeight / sz.SH), z = fit * _mxOz;
+  sv.style.width = Math.round(sz.SW * z) + 'px'; sv.style.height = Math.round(sz.SH * z) + 'px';
+  var k = (sv.clientWidth || 1) / w0; bd.scrollLeft = cx * k - bd.clientWidth / 2; bd.scrollTop = cy * k - bd.clientHeight / 2;
+}
+function mxOrbitClose() { var o = document.getElementById('mxOrbit'); if (o && o.parentNode) o.parentNode.removeChild(o); }
+window.addEventListener('resize', function() { // 縦に戻したら閉じる・横のままなら描き直す
+  if (!document.getElementById('mxOrbit')) return;
+  if (typeof isPCMode === 'function' && (isPCMode() || !_uxLand())) { mxOrbitClose(); return; }
+  clearTimeout(window._mxOzT); window._mxOzT = setTimeout(mxOrbitRender, 200);
+});
 
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
