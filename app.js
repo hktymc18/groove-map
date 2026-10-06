@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v635';
+var APP_JS_VERSION = 'v636';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v635';
+  var DATA_VERSION = 'v636';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v636', d:'2026-10-06', items:['💎 スマホのMAPで、TE（チームエリート）の色をグレーに近い黒に（Gの金と見分けやすく）'] },
   { v:'v635', d:'2026-10-06', items:['💎 スマホのMAPで、BR以上をタイトルごとの色に（BR=紫・G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ…PCのツリーと同じ宝石色）。明るい色の札は黒い字で見やすく'] },
   { v:'v634', d:'2026-10-06', items:['🏠 スマホの「メニュー」の名前を「HOME」に。左下のボタンも「HOME」に','📅 カレンダー・ToDoの左下の「‹ 戻る」をHOMEのマークに（押すとHOMEへ）'] },
   { v:'v633', d:'2026-10-06', items:['📅 カレンダー・ToDoの「‹ 戻る」でメニューに戻るように（スマホ）','👥 スマホのメニューから「メンバー」をなくしました（MAPの一覧と同じ内容のため）'] },
@@ -16540,12 +16541,14 @@ function _mxK(m, cat) {
   if (cat !== 'br') return 'var(--mx' + cat + ')';
   var t = (m.title || '').trim();
   if (t === 'BR' || t === 'ブランドレプリゼンタティブ') return 'var(--mxbr)';
+  if (t === 'TE' || t === 'チームエリート') return document.body.classList.contains('light') ? '#2A2E36' : '#3A3F4A'; // v636: TE＝グレーに近い黒
   var c = typeof titleRingColor === 'function' ? titleRingColor(t) : '';
   return /^#[0-9a-fA-F]{6}$/.test(c) ? c : 'var(--mxbr)';
 }
 // 明るい色（金・白銀など）の上は黒い字に
 function _mxInk(k) {
   if (!/^#[0-9a-fA-F]{6}$/.test(k)) return '';
+  if (k === '#3A3F4A' || k === '#2A2E36') return ';box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)'; // 黒い札は細い白の縁で見えるように
   var r = parseInt(k.slice(1, 3), 16), g = parseInt(k.slice(3, 5), 16), b = parseInt(k.slice(5, 7), 16);
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? ';color:#1B1F2A' : '';
 }
