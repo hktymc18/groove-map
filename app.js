@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v666';
+var APP_JS_VERSION = 'v667';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3873,7 +3873,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v666';
+  var DATA_VERSION = 'v667';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5352,6 +5352,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v667', d:'2026-10-06', items:['🎨 設定の「バグ・要望」も絵文字から線のアイコンに'] },
   { v:'v666', d:'2026-10-06', items:['🎨 HOMEの「バグ・要望」ボタンを絵文字から、ほかのボタンと同じ線のアイコンに'] },
   { v:'v665', d:'2026-10-06', items:['🐛 HOMEのタイルの写真とアイコンの色が消えていたのを修正','🏷 ロゴの位置を少し上に'] },
   { v:'v664', d:'2026-10-06', items:['🏷 HOMEの左上にNWPのロゴ（HOMEの文字と高さをそろえて。ライトは濃い色・ダークは白）'] },
