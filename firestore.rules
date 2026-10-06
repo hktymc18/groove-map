@@ -266,6 +266,27 @@ service cloud.firestore {
       return profileExists(request.auth.uid)
         ? profile(request.auth.uid).get('union','') : '';
     }
+    // 🔒 v17: ユニオンのデータ（名簿・稼働率など）を見られる人 =
+    //   オーナー／そのユニオンの所属メンバー／そのユニオンの管理者（コア・受付管理者）／研修生登録の担当
+    // （他ユニオンの人は見られない。来場した他ユニオンの人は会員証トークンで照会する＝cards/cardClaims）
+    function ckCanSee(un) {
+      return isOwnerAdmin()
+        || (signedIn() && notDisabled(request.auth.uid)
+            && (ckMyUnion() == un || isCkAdmin(un) || isCkTrainer(un)));
+    }
+    // イベント配下（出席・予約・会計・操作ログ）を見られる人 =
+    //   オーナー／参加ユニオンの所属メンバー／主催ユニオン・参加ユニオン（合同は2つ目まで）の管理者
+    function ckEventStaff(eid) {
+      return isOwnerAdmin()
+        || (signedIn() && notDisabled(request.auth.uid)
+            && ckEventStaffOf(get(/databases/$(database)/documents/checkinEvents/$(eid)).data));
+    }
+    function ckEventStaffOf(ev) {
+      return ev.get('unions', []).hasAny([ckMyUnion()])
+        || isCkAdmin(ev.get('hostUnion', ''))
+        || (ev.get('unions', []).size() > 0 && isCkAdmin(ev.get('unions', [])[0]))
+        || (ev.get('unions', []).size() > 1 && isCkAdmin(ev.get('unions', [])[1]));
+    }
 
     match /checkinUnions/{un} {
       allow read: if signedIn();
@@ -281,7 +302,7 @@ service cloud.firestore {
     // 📊 稼働率の集計結果（受付システムが計算して保存 → GROOVE MAPの受付連携は読むだけ）
     //   docId = {ユニオン}__{YYYY-MM}。書けるのはそのユニオンの有効メンバー・受付管理者・オーナー
     match /checkinStats/{sid} {
-      allow read: if signedIn();
+      allow read: if resource == null || ckCanSee(resource.data.get('union', ''));
       allow create, update: if isOwnerAdmin()
         || isCkAdmin(request.resource.data.get('union', ''))
         || (signedIn() && notDisabled(request.auth.uid)
@@ -290,14 +311,16 @@ service cloud.firestore {
     }
 
     match /checkinMembers/{no} {
-      // 合同イベントの受付・MAP連携のため、ログイン済みなら閲覧可
-      allow read: if signedIn();
+      // 🔒 見られるのは自分が関わるユニオンの名簿だけ（ckCanSee）。一覧は union で絞った検索のみ。
+      // 存在しない番号の get は可（研修生登録の番号の空き確認に使う・中身は何も見えない）
+      allow get: if resource == null || ckCanSee(resource.data.get('union',''));
+      allow list: if ckCanSee(resource.data.get('union',''));
       allow create: if isCkAdmin(request.resource.data.get('union',''));
       allow update: if isCkAdmin(resource.data.get('union',''))
                     && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')));
       // 会員証の発行・再発行・無効化はログイン済みなら誰でも可
       // （変更できるのはカード関連フィールドのみ。名簿本体の編集は管理者のみ）
-      allow update: if signedIn()
+      allow update: if ckCanSee(resource.data.get('union',''))
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['cardToken','cardSig','cardStatus']);
       // 🎓 研修生登録の担当: 研修生（trainee=true）の新規登録と、
@@ -330,7 +353,7 @@ service cloud.firestore {
                          .hasOnly(['zoomUrl', 'zoomId', 'zoomPw', 'recClosed']);
 
       match /attendance/{aid} {
-        allow read: if signedIn();
+        allow read: if ckEventStaff(eid);
         // 通常受付: オーナー、または参加ユニオン(unions配列)に所属する有効メンバー
         allow create, update, delete: if isOwnerAdmin()
           || (signedIn()
@@ -379,7 +402,7 @@ service cloud.firestore {
       // 対象は rsvp=true のイベントのみ。トークン照合で本人確認、update不可＝改ざん・二重予約は不可。
       // 受付側の追加・削除は出席と同じ権限（参加ユニオンの有効メンバー）
       match /rsvps/{rid} {
-        allow read: if signedIn();
+        allow read: if ckEventStaff(eid);
         allow create: if request.auth == null
           && get(/databases/$(database)/documents/checkinEvents/$(eid))
                .data.get('rsvp', false) == true
@@ -402,7 +425,7 @@ service cloud.firestore {
       // 依頼として受付に届くようにするため）。
       // 本人による変更・削除は不可＝確定操作は受付（承認=予約と申請を削除／却下=申請のみ削除）
       match /rsvpCancels/{rid} {
-        allow read: if signedIn();
+        allow read: if ckEventStaff(eid);
         allow create: if request.auth == null
           && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
           && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
@@ -413,7 +436,7 @@ service cloud.firestore {
 
       // 会計（BASE集計表）: 参加ユニオンの有効メンバーが記録できる
       match /finance/{fid} {
-        allow read: if signedIn();
+        allow read: if ckEventStaff(eid);
         allow create, update, delete: if isOwnerAdmin()
           || (signedIn()
               && notDisabled(request.auth.uid)
@@ -424,7 +447,7 @@ service cloud.firestore {
       // 💰 お金の操作ログ: 追記専用（だれも編集・削除できない＝改ざん防止）。
       // 記録の作成はログイン済みの有効ユーザーなら可（会計操作と同時にアプリが自動追記する）
       match /audit/{aid} {
-        allow read: if signedIn();
+        allow read: if ckEventStaff(eid);
         allow create: if isOwnerAdmin()
           || (signedIn() && notDisabled(request.auth.uid));
         allow update, delete: if false;
@@ -455,10 +478,12 @@ service cloud.firestore {
     // 📝 CO面談シートの本人入力（下書き送信箱）:
     //   担当者が本人の会員証に解錠マーカー（cards.coOpen・期限つき）を付けている間だけ、
     //   本人（未ログイン・トークン照合）が下書きを1件送信できる。
-    //   読み取りはログイン済みのみ（個人情報を含むため公開しない）。
+    //   読み取りはその人のユニオンを見られる担当者・管理者のみ（電話・住所など個人情報を含むため）。
     //   本人による変更・削除は不可＝正式記録は担当者が checkinMembers.coSheet へ保存して確定。
     match /coSheetInbox/{iid} {
-      allow read: if signedIn();
+      allow read: if isOwnerAdmin()
+        || (exists(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none')))
+            && ckCanSee(get(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none'))).data.get('union','')));
       allow create: if request.resource.data.keys().hasOnly(
           ['no','name','cardToken','ver','checks','pledge','date','sign','phone','addrBirth',
            'referrer','manager','atLocal','atMs'])
@@ -468,13 +493,15 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
              .data.get('coOpen', {}).get('until', 0) > request.time.toMillis();
       allow update: if false;
-      allow delete: if signedIn();   // 担当者の保存時の掃除用
+      allow delete: if isOwnerAdmin()   // 担当者の保存時の掃除用
+        || (exists(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none')))
+            && ckCanSee(get(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none'))).data.get('union','')));
     }
 
     // オンライン受講の誓約書アーカイブ:
     //   会員証ページ（未ログイン）から申請時に同意記録を作成。改変・削除は不可（アーカイブ）
     match /checkinPledges/{pid} {
-      allow read: if signedIn();
+      allow read: if ckCanSee(resource.data.get('union',''));
       allow create: if request.resource.data.keys().hasOnly(
         ['no', 'name', 'group', 'union', 'eventId', 'eventDate', 'eventName',
          'ver', 'envApprover', 'at', 'atLocal', 'atMs', 'cardToken']);

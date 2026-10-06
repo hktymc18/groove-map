@@ -85,6 +85,7 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hit-group{font-size:18px;font-weight:700;}
 .hit-union{font-size:14px;color:var(--sub);font-weight:700;}
 .hit-meta{color:var(--sub);font-size:13.5px;margin-top:8px;}
+.hit-warn{background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:8px 12px;margin:10px auto 0;max-width:460px;font-size:13.5px;font-weight:700;line-height:1.5;}
 .hit-badge{display:inline-block;border-radius:99px;padding:3px 18px;font-weight:700;font-size:14px;margin-bottom:8px;}
 .ok .hit-badge{background:var(--green);color:#fff;}
 .dup .hit-badge{background:var(--amber);color:#fff;}
@@ -1049,8 +1050,15 @@ function groupKey(s){
   try{ s = s.normalize('NFKC'); }catch(e){}
   return s.replace(/[ 　\t]/g, '').toLowerCase();
 }
+// 見られるユニオン: オーナーは全ユニオン。それ以外は自分のユニオン＋自分が管理者（コア/受付管理者）のユニオンだけ
+// （他ユニオンの名簿・出席・会計・集計を選べないようにする）
+function ckViewableUnions(){
+  if(isOwner()) return gUnions.slice();
+  return gUnions.filter(function(u){ return u === gUnion || canEditUnion(u); });
+}
+function ckCanView(un){ return ckViewableUnions().indexOf(un) >= 0 || un === gUnion; }
 function fillUnionSel(sel, current){
-  var list = gUnions.slice();
+  var list = ckViewableUnions();
   if(list.indexOf(current) < 0) list.push(current);
   sel.innerHTML = list.map(function(u){
     return '<option' + (u === current ? ' selected' : '') + '>' + esc(u) + '</option>';
@@ -1122,8 +1130,14 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v22';
+var APP_VER = 'v25';
 var CHANGELOG = [
+  { v: 'v25', d: '2026/10/06', items: ['受付: 合同ユニオンにチェックが付いていないユニオンの人を受付すると「合同ユニオンに入っていません」と知らせるようにしました（そのままだとそのユニオンの集計に入らないため）'] },
+  { v: 'v24', d: '2026/10/06', items: [
+    'セキュリティ強化: 名簿・出席・会計・集計などのデータは、自分のユニオンと自分が管理しているユニオンの分だけ読めるようになりました（データベース側でも制限）',
+    '他ユニオンのメンバーの受付: 会員証のQRや番号を読み取ると、会員証から照会してビジターとして受付できます（名簿を見られなくても受付OK）'
+  ] },
+  { v: 'v23', d: '2026/10/06', items: ['名簿・イベント・会計・集計のユニオン切替は、自分のユニオンと自分が管理しているユニオンだけ表示されるようになりました（他ユニオンのデータは見られません）'] },
   { v: 'v22', d: '2026/10/05', items: ['オーナー向け: 名簿タブに「🗑 ユニオン削除」を追加（綴り間違いなどで作ったユニオンを削除。名簿・イベント・ユーザー登録が無いユニオンだけ削除できます）'] },
   { v: 'v21', d: '2026/10/04', items: [
     'MC・スピーカー・運営の登録: PCでは名前の候補を入力欄の右に表示（日本語変換の候補と重ならないように）',
@@ -2883,6 +2897,11 @@ function olNotify(total, ev){
 /* 各タブのユニオン切替（全員が他ユニオンを閲覧可能。編集は権限のある人だけ） */
 function renderRosterUnionSel(){ fillUnionSel($('rosterUnionSel'), gRosterUnion); }
 function refreshUnionSelectors(){
+  // 見られないユニオンが選ばれていたら自分のユニオンに戻す
+  if(!ckCanView(gRosterUnion)) gRosterUnion = gUnion;
+  if(!ckCanView(gEventUnion)) gEventUnion = gUnion;
+  if(!ckCanView(gStatUnion)) gStatUnion = gUnion;
+  if(!ckCanView(gFinUnion)) gFinUnion = gUnion;
   renderRosterUnionSel();
   fillUnionSel($('evUnionSel'), gEventUnion);
   fillUnionSel($('stUnionSel'), gStatUnion);
@@ -3240,6 +3259,7 @@ function fetchMembers(union){
   });
 }
 function loadMembers(cb){
+  if(!ckCanView(gRosterUnion)) gRosterUnion = gUnion;
   fetchMembers(gRosterUnion).then(function(arr){
     gMembers = arr;
     gMembersLoaded = true;
@@ -3561,6 +3581,10 @@ function memberForm(m){
           if(sn.exists){
             throw { code: 'dup', name: (sn.data() && sn.data().name) || '' };
           }
+        }, function(e){
+          // 他ユニオンの番号は中身を読めない（読めない＝存在する）ので重複として扱う
+          if(e && e.code === 'permission-denied') throw { code: 'dup', name: '他ユニオン' };
+          throw e;
         })
       : Promise.resolve();
     pre.then(function(){
@@ -4161,6 +4185,7 @@ $('fnPrev').onclick = function(){ shiftMonth(-1); };
 $('fnNext').onclick = function(){ shiftMonth(1); };
 
 function loadEvents(){
+  if(!ckCanView(gEventUnion)) gEventUnion = gUnion;
   var key = monthKey(gMonth.y, gMonth.m);
   $('evMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('stMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
@@ -4835,6 +4860,9 @@ $('trGo').onclick = function(){
   db.collection('checkinMembers').doc(no).get().then(function(sn){
     if(sn.exists) throw { code: 'dup' };
     return db.collection('checkinMembers').doc(no).set(data);
+  }, function(e){
+    if(e && e.code === 'permission-denied') throw { code: 'dup' };   // 他ユニオンで使用中の番号
+    throw e;
   }).then(function(){
     return issueCard(data, function(){
       gTrMembers.push(data);
@@ -6336,6 +6364,7 @@ $('btnFinCsv').onclick = function(){
 
 /* 会計タブ: 月内イベントの会計状況一覧 */
 function loadFinanceTab(){
+  if(!ckCanView(gFinUnion)) gFinUnion = gUnion;
   $('fnMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('btnRcptSet').classList.toggle('hide', !canEditUnion(gFinUnion));
   $('btnRcptCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
@@ -6520,10 +6549,11 @@ function startReception(ev){
   $('recent').innerHTML = '<li style="color:var(--sub)">まだ受付はありません</li>';
   stageIdle();
 
-  // 全ユニオンの名簿をロード（他ユニオンのメンバーもビジターとして1スキャンで受付できるように）
-  var unionSet = gUnions.slice();
-  (ev.unions || []).forEach(function(u){ if(unionSet.indexOf(u) < 0) unionSet.push(u); });
-  if(!unionSet.length) unionSet = [gUnion];
+  // 見られるユニオンの名簿をロード（他ユニオンの名簿はDBルールで読めないため、
+  // 他ユニオンのメンバーはスキャン時に会員証（番号→カード）から照会してビジター受付する）
+  var unionSet = ckViewableUnions();
+  if(unionSet.indexOf(gUnion) < 0) unionSet.push(gUnion);
+  (ev.unions || []).forEach(function(u){ if(unionSet.indexOf(u) < 0 && ckCanView(u)) unionSet.push(u); });
   var loads = unionSet.map(function(u){
     return db.collection('checkinMembers').where('union', '==', u).get().then(function(qs){
       qs.forEach(function(d){
@@ -6531,7 +6561,7 @@ function startReception(ev){
         if(!ckMemberOff(m)) gRec.roster[d.id] = m;
         else gRec.off[d.id] = m;   // 無効メンバー: スキャン時に「未登録」ではなく無効の案内を出す用
       });
-    });
+    }).catch(function(){});   // 読めないユニオンは飛ばす（スキャン時の照会で対応）
   });
   Promise.all(loads).then(function(){
     toast('名簿を読み込みました（' + Object.keys(gRec.roster).length + '名）。受付を開始できます');
@@ -6924,6 +6954,8 @@ function scan(raw, method){
   if(sig && !/^[0-9a-f]{4,}$/.test(sig)) sig = null;
   no = no.replace(/\.0$/, '');
   var member = gRec.roster[no];
+  // 会員証から照会した他ユニオンの人は名簿を読めないので、署名が変わっていたら会員証から照会し直す
+  if(member && member.viaCard && sig && member.cardSig && sig !== member.cardSig){ delete gRec.roster[no]; member = null; }
   if(member && sig && member.cardSig && sig !== member.cardSig){
     // 受付開始後に会員証が再発行されていると、開始時に読み込んだ名簿の署名が古い。
     // 弾く前に名簿の最新を1件だけ取り直し、最新の署名と一致すればそのまま受付する
@@ -6941,23 +6973,51 @@ function scan(raw, method){
     });
     return;
   }
-  if(!member){
-    beep('ng');
-    var offm = gRec.off && gRec.off[no];
-    if(offm){
-      setStage('ng',
-        '<span class="hit-badge">無効のメンバー</span>'
-        + '<div class="hit-name">' + esc(offm.name || no) + '</div>'
-        + '<p class="stage-sub">このメンバーは無効化されています。名簿から「有効化」すると受付できます。</p>');
-      return;
-    }
-    setStage('ng',
-      '<span class="hit-badge">未登録の番号</span>'
-      + '<div class="hit-name mono" style="font-size:30px;">' + esc(no) + '</div>'
-      + '<p class="stage-sub">名簿にない番号です。「ゲスト受付」から手動で登録できます。</p>');
+  if(!member && !(gRec.off && gRec.off[no])){
+    // 名簿にない番号: 他ユニオンのメンバーかもしれないので会員証から照会する
+    var ev0 = gRec.ev;
+    ckVisitorLookup(no, sig).then(function(v){
+      if(!gRec || gRec.ev !== ev0) return;
+      if(v && v.active){ gRec.roster[no] = v; checkinMember(v, method, null); return; }
+      if(v){ gRec.off[no] = v; }
+      scanMiss(no);
+    });
     return;
   }
+  if(!member){ scanMiss(no); return; }
   checkinMember(member, method, null);
+}
+// 他ユニオンのメンバー照会（名簿は見られないので、番号→会員証から氏名・所属を引く）
+// QRの署名があればカードのトークン先頭と一致するものだけ受け付ける
+function ckVisitorLookup(no, sig){
+  return db.collection('cardClaims').doc(no).get().then(function(s){
+    var t = s.exists ? (s.data().t || '') : '';
+    if(!t || (sig && t.indexOf(sig) !== 0)) return null;
+    return db.collection('cards').doc(t).get().then(function(c){
+      if(!c.exists) return null;
+      var d = c.data();
+      if(d.rcptOnly || String(d.no || '') !== no) return null;
+      return { no: no, name: d.name || '', group: d.group || '', union: d.union || '',
+        grade: d.grade || '', trainee: !!d.trainee, trainings: d.trainings || {},
+        active: d.active !== false, cardToken: t, cardSig: t.slice(0, 6), viaCard: true };
+    });
+  }).catch(function(){ return null; });
+}
+function scanMiss(no){
+  if(!gRec) return;
+  beep('ng');
+  var offm = gRec.off && gRec.off[no];
+  if(offm){
+    setStage('ng',
+      '<span class="hit-badge">無効のメンバー</span>'
+      + '<div class="hit-name">' + esc(offm.name || no) + '</div>'
+      + '<p class="stage-sub">このメンバーは無効化されています。名簿から「有効化」すると受付できます。</p>');
+    return;
+  }
+  setStage('ng',
+    '<span class="hit-badge">未登録の番号</span>'
+    + '<div class="hit-name mono" style="font-size:30px;">' + esc(no) + '</div>'
+    + '<p class="stage-sub">名簿・会員証にない番号です。「ゲスト受付」から手動で登録できます。</p>');
 }
 function roleLabel(r){
   return r === 'mc' ? 'MC' : r === 'speaker' ? 'スピーカー'
@@ -7021,12 +7081,24 @@ function checkinMember(member, method, role){
   if(ppRec) data.payMethod = 'paypay';
   writeAttendance(no, data);
   var joint = (gRec.ev.unions || []).length > 1;
+  // 登録済みのユニオンの人なのに合同ユニオンに入っていない → そのユニオンの集計に入らないことを知らせる
+  var notJoined = isVisitor && member.union && gUnions.indexOf(member.union) >= 0;
+  if(notJoined){
+    gRec.warnedUn = gRec.warnedUn || {};
+    if(!gRec.warnedUn[member.union]){
+      gRec.warnedUn[member.union] = true;
+      toast('⚠ ' + member.union + ' はこのイベントの合同ユニオンに入っていません');
+    }
+  }
   beep('ok');
   setStage('ok',
     '<span class="hit-badge">✓ 出席' + (role ? '（' + roleLabel(role) + '）' : (isVisitor ? '（ビジター）' : '')) + '</span>'
     + '<div class="hit-name">' + esc(member.name) + '</div>'
     + '<div class="hit-group">' + esc(member.group || '') + '</div>'
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
+    + (notJoined ? '<div class="hit-warn">⚠ ' + esc(member.union) + ' はこのイベントの合同ユニオンに入っていません。'
+        + 'このままだと ' + esc(member.union) + ' の集計・稼働率に入りません。'
+        + 'イベントの編集で合同ユニオンにチェックを付けてください（受付の後から付けてもOK）</div>' : '')
     + (member.trainee ? '<div style="margin:4px 0;"><span class="pill n">研修生</span> <span style="font-size:14px;font-weight:700;">チュートリアル ' + trMainProgress(member.trainings) + '/3</span>'
         + (member.dlrRsv && member.dlrRsv.date === todayStr()
           ? ' <span class="pill a">🎫 本日DLR予約 ' + esc(member.dlrRsv.timeFrom || '') + '〜</span>' : '')
@@ -7098,7 +7170,7 @@ function roleModal(role){
   var lbl = roleLabel(role);
   modal('<h2>' + lbl + 'を登録</h2>'
     // PCでは候補リストを入力欄の右に出す（日本語変換の候補ウィンドウが入力欄の下に重なって見えなくなるため）
-    + '<div class="rmgrid"><div><label>名簿から名前検索（全ユニオン対象）</label>'
+    + '<div class="rmgrid"><div><label>名簿から名前検索（見られるユニオンの名簿が対象）</label>'
     + '<input type="text" id="rmQ" placeholder="氏名の一部を入力"></div>'
     + '<div id="rmList" class="rmlist"><div class="rmhint">名前を入力すると、ここに候補が出ます</div></div></div>'
     + (role === 'speaker'
@@ -7557,7 +7629,9 @@ function impPreview(ev){
   }
   $('impPrev').disabled = true;
   var uns = ev.unions || [];
-  Promise.all(uns.map(fetchMembers).concat([
+  Promise.all(uns.map(function(u){
+    return fetchMembers(u).catch(function(){ return []; });   // 見られないユニオンの名簿は飛ばす
+  }).concat([
     db.collection('checkinEvents').doc(ev.id).collection('attendance').get()
   ])).then(function(res){
     var byNo = {}, byName = {};
@@ -7821,6 +7895,7 @@ function ckRefreshIfStale(union){
 var gStat = null;
 $('btnStatReload').onclick = function(){ loadStats(); };
 function loadStats(){
+  if(!ckCanView(gStatUnion)) gStatUnion = gUnion;
   var key = monthKey(gMonth.y, gMonth.m);
   $('statBody').innerHTML = '<p style="color:var(--sub)">集計中…</p>';
   db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
