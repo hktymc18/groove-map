@@ -16324,7 +16324,7 @@ function _uxCss() {
 }
 // 入口のタイル1枚
 function _uxTile(o) {
-  return '<div class="ux-t ux-c-' + o.c + (o.next ? ' next' : '') + (o.w ? ' w' : '') + (o.wide ? ' wide' : '') + '" onclick="' + o.on + '">'
+  return '<div class="ux-t ux-c-' + o.c + (o.next ? ' next' : '') + (o.w ? ' w' : '') + (o.wide ? ' wide' : '') + '"' + (o.img ? ' style="--img:url(\'' + o.img + '\')"' : '') + ' onclick="' + o.on + '">'
     + (o.next ? '<span class="bd">次はここ</span>' : (o.bd ? '<span class="bd">' + o.bd + '</span>' : ''))
     + '<div class="ic">' + o.ic + '</div>' + (o.x || '') + '<b>' + o.lb + '</b><div class="st">' + (o.st || '') + '</div></div>';
 }
@@ -19636,9 +19636,17 @@ function _uxMenuCss() {
     + "body.ux-land .ux-sm{display:flex;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:6px}body.ux-land .ux-sm::-webkit-scrollbar{display:none}body.ux-land .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px;overflow:visible}"
     + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#2a1a00;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
     + "body.ux-land #view-menu .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
-    + ".ux-t .ic .lic{width:48px;height:48px;color:var(--c);stroke-width:1.8}body.ux-land .ux-t .ic .lic{width:56px;height:56px}.ux-sb .lic{width:16px;height:16px}";
+    + ".ux-t .ic .lic{width:48px;height:48px;color:var(--c);stroke-width:1.8}body.ux-land .ux-t .ic .lic{width:56px;height:56px}.ux-sb .lic{width:16px;height:16px}"
+    // v661: HOMEのタイルは写真の背景（左下に文字が読めるよう、うっすらグラデーションを重ねる）
+    + "#view-menu .ux-t.ph{background:var(--img) center/cover no-repeat!important;border-color:rgba(255,255,255,.55)!important;box-shadow:0 6px 18px rgba(20,30,50,.12)}"
+    + "#view-menu .ux-t.ph:before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(to top,rgba(255,255,255,.88) 0%,rgba(255,255,255,.55) 38%,rgba(255,255,255,0) 70%)}"
+    + "#view-menu .ux-t.ph>b,#view-menu .ux-t.ph>.st{position:relative;z-index:1}#view-menu .ux-t.ph>.ic,#view-menu .ux-t.ph>.bd{z-index:2}#view-menu .ux-t.ph b{color:#111827}#view-menu .ux-t.ph .st{color:#374151}"
+    + "#view-menu .ux-t.ph.dk:before,body:not(.light) #view-menu .ux-t.ph:before{background:linear-gradient(to top,rgba(8,12,22,.86) 0%,rgba(8,12,22,.5) 40%,rgba(8,12,22,0) 72%)}"
+    + "#view-menu .ux-t.ph.dk b,body:not(.light) #view-menu .ux-t.ph b{color:#fff}#view-menu .ux-t.ph.dk .st,body:not(.light) #view-menu .ux-t.ph .st{color:rgba(255,255,255,.85)}"
+    + "body:not(.light) #view-menu .ux-t.ph{border-color:rgba(255,255,255,.12)!important}#view-menu .ux-t.ph .ic .lic{filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}";
   document.head.appendChild(st);
 }
+var UX_MENU_IMG = { plan: 'img/tile-plan.webp', map: 'img/tile-map.webp', cal: 'img/tile-cal.webp', todo: 'img/tile-todo.webp', stats: 'img/tile-stats.webp' };
 function _uxMenuView() {
   var v = document.getElementById('view-menu');
   if (!v) { var sa = document.getElementById('scrollArea'); if (!sa) return null; v = document.createElement('div'); v.id = 'view-menu'; v.style.display = 'none'; sa.appendChild(v); }
@@ -19666,6 +19674,7 @@ function renderMenuHub() {
     { k: 'cal', c: 'gold', ic: icn('calendar'), lb: 'カレンダー', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
     { k: 'todo', c: 'pur', ic: icn('checksq'), lb: 'TODO', st: '今日のタスク<br><em>' + (tkN ? 'のこり' + tkN + '件' : 'なし') + '</em>', on: 'switchView(\'events\');setEventsMode(\'agenda\')' },
     { k: 'stats', c: 'rose', ic: icn('chart'), lb: '分析', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' }];
+  T.forEach(function(t) { if (UX_MENU_IMG[t.k]) { t.c += ' ph' + (t.k === 'stats' ? ' dk' : ''); t.img = UX_MENU_IMG[t.k]; } }); // v661
   var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
     + sb(icn('target') + ' 理想MAP', 'switchView(\'ideal\')') + sb(icn('clipboard') + ' OL', 'switchView(\'ol\')')

@@ -71,7 +71,8 @@ var ASSETS = [
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
-  './icon-180.png'
+  './icon-180.png',
+  './img/tile-plan.webp', './img/tile-map.webp', './img/tile-cal.webp', './img/tile-todo.webp', './img/tile-stats.webp' // v661: HOMEのタイルの背景
 ];
 /* v451: オフライン起動用にFirebase SDK（バージョン固定URL）もキャッシュ。
  * これが無いと機内モード等でSDKが読めず、認証・データ層ごと初期化に失敗して
