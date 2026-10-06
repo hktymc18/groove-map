@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v653';
+var APP_JS_VERSION = 'v654';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v653';
+  var DATA_VERSION = 'v654';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5349,6 +5349,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v654', d:'2026-10-06', items:['🎮 シミュレーションのファーストボーナス：ライトモードは明るい背景に。金額の文字を少し小さくして、8桁（¥12,345,678）でも1行に入るように'] },
   { v:'v653', d:'2026-10-06', items:['🧭 PLANの入口のタイルを減らしました：「今週やること」は「◯月の目標」の中に。目標を設定ずみなら、タイルを押すと今週やること（上の「◯月の目標」から目標を見る・なおす）'] },
   { v:'v652', d:'2026-10-06', items:['🎮 シミュレーション：数字を入れる欄を小さく。ファーストボーナスは一番下に大きく（内訳は（i））。組織図は左右にスワイプで月送り、数字を変えるとLOIの月から','🧭 PLANの入口に「シミュレーション」（理想・目標の下）と「チェック」「夢100」を追加','✓ 1つのタイルを最後まで入れたら、次のタイルではなく入口に戻るように','☑️ チェック：必須アイテム／TRAININGをタブに。日付はカレンダーから選べて、📅でその日の予定に入ります。チェックすると色つきのひとこと','💴 BB早見表にGSVごとの表'] },
   { v:'v651', d:'2026-10-06', items:['🎓 研修タブに「研修フロー」（じょうご・前の段から進んだ割合）を戻しました。グラフとタイルの下で、選んだ月のフローが見られます（段をタップで名前の一覧）'] },
@@ -19457,10 +19458,10 @@ function _p2SimCss() {
     + ".p2sm-set .ux-chips{margin-top:6px}.p2sm-set .ux-chips span{height:34px;font-size:14px}.p2sm-set .p2sm-md span{padding:6px 4px}.p2sm-set .p2sm-fc input{font-size:20px}.p2sm-set .p2sm-fc p span{height:24px}"
     + ".p2fb-h{display:flex;align-items:center;gap:10px;margin:26px 2px 12px;font-size:19px;font-weight:900;color:var(--gold)}.p2fb-h:before{content:'';width:5px;height:24px;border-radius:3px;background:var(--gold)}"
     + ".p2fb{position:relative;border-radius:24px;padding:26px 16px 30px;text-align:center;background:linear-gradient(135deg,#191a22 0%,#15171d 55%,#1d1520 100%);border:1px solid rgba(255,255,255,.06);box-shadow:0 14px 40px rgba(0,0,0,.35)}"
-    + ".p2fb small{display:block;font-size:14px;font-weight:600;color:#8a8f9e}.p2fb b{display:block;margin-top:6px;font-family:'Oswald','Inter',sans-serif;font-weight:700;font-size:clamp(52px,17vw,84px);line-height:1.05;letter-spacing:.005em;color:var(--gold);text-shadow:0 0 28px rgba(255,180,84,.25)}"
-    + ".p2fb b i{font-style:normal;font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:600;color:#7d8292;margin-left:6px}"
+    + ".p2fb small{display:block;font-size:14px;font-weight:600;color:#8a8f9e}.p2fb b{display:block;margin-top:6px;font-family:'Oswald','Inter',sans-serif;font-weight:700;font-size:clamp(36px,11.5vw,60px);line-height:1.1;white-space:nowrap;letter-spacing:.005em;color:var(--gold);text-shadow:0 0 28px rgba(255,180,84,.25)}"
+    + ".p2fb b i{font-style:normal;font-family:'Noto Sans JP',sans-serif;font-size:17px;font-weight:600;color:#7d8292;margin-left:6px}"
     + ".p2fb-i{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;border:1.5px solid #5AD7FF;color:#5AD7FF;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-weight:900;font-size:14px;cursor:pointer}"
-    + "body.light .p2fb b{color:#FFC86B}"
+    + "body.light .p2fb{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 7%,#fff) 0%,#fbfaf6 50%,color-mix(in srgb,#E0559A 8%,#fff) 100%);border-color:var(--border);box-shadow:0 8px 24px rgba(30,40,60,.08)}body.light .p2fb small{color:var(--text-mid)}body.light .p2fb b{color:#E08A12;text-shadow:none}body.light .p2fb b i{color:var(--text-mid)}"
     + ".p2sm-pc{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}.p2sm-pc .ux-lb2:first-child{margin-top:14px}.p2sm-pc .ux-sv{height:56px!important;min-height:0!important}.p2sm-pc .ux-sv input{font-size:24px!important}.p2sm-pc .ux-chips span{padding:8px 4px}.p2sm-k b i{font-style:normal;font-size:11px;color:var(--text-dim);margin-left:2px}";
   document.head.appendChild(st);
 }
