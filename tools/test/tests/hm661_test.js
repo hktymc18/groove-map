@@ -9,4 +9,5 @@ T.run(async () => {
   c('分析は暗い写真（白い文字）', t[4].classList.contains('dk'));
   const fs = require('fs'), p = require('path');
   c('画像ファイルがある（オフライン用にSWにも）', ['plan', 'map', 'cal', 'todo', 'stats'].every(k => fs.existsSync(p.join(__dirname, '../../../img/tile-' + k + '.webp'))) && fs.readFileSync(p.join(__dirname, '../../../sw.js'), 'utf8').indexOf('img/tile-plan.webp') >= 0);
+  c('v664: 左上にロゴ（ライト用・ダーク用）とHOME', $$('#view-menu .hm-hd .hm-logo').length === 2 && $('#view-menu .hm-hd h1').textContent === 'HOME' && fs.existsSync(p.join(__dirname, '../../../img/logo-w.png')));
 });

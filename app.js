@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v663';
+var APP_JS_VERSION = 'v664';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3872,7 +3872,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v663';
+  var DATA_VERSION = 'v664';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5351,6 +5351,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v664', d:'2026-10-06', items:['🏷 HOMEの左上にNWPのロゴ（HOMEの文字と高さをそろえて。ライトは濃い色・ダークは白）'] },
   { v:'v663', d:'2026-10-06', items:['◎ スマホ横のサークルMAPで丸を押すと、その人の画面（GSV・稼働・タイトル・活動など）が開くように。閉じるとサークルMAPに戻ります'] },
   { v:'v662', d:'2026-10-06', items:['🔢 HOMEの小さいボタンの数字のバッジが縦向きで切れて見えなかったのを修正','◎ MAPを縦で開いてから横にした時も「◎ サークル」が出るように'] },
   { v:'v661', d:'2026-10-06', items:['🖼 HOMEのタイル（PLAN・MAP・カレンダー・TODO・分析）に写真の背景'] },
@@ -19645,6 +19646,9 @@ function _uxMenuCss() {
     + "body.ux-land .ux-sm{display:flex;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:6px}body.ux-land .ux-sm::-webkit-scrollbar{display:none}body.ux-land .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px;overflow:visible}"
     + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#2a1a00;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
     + "body.ux-land #view-menu .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
+    + "#view-menu .hm-hd{display:flex;align-items:baseline;gap:12px}#view-menu .hm-hd h1{margin:0}.hm-logo{height:26px;width:auto;flex:none;display:block;align-self:baseline;position:relative;top:7px}.hm-logo.w{display:none}body:not(.light) .hm-logo.w{display:block}body:not(.light) .hm-logo.d{display:none}"
+    + "#view-menu .hm-hd .hm-logo+h1{padding-left:12px;border-left:1.5px solid var(--border2);line-height:1}body.ux-land .hm-logo{height:22px;top:6px}"
+    ""
     + ".ux-t .ic .lic{width:48px;height:48px;color:var(--c);stroke-width:1.8}body.ux-land .ux-t .ic .lic{width:56px;height:56px}.ux-sb .lic{width:16px;height:16px}"
     // v661: HOMEのタイルは写真の背景（左下に文字が読めるよう、うっすらグラデーションを重ねる）
     + "#view-menu .ux-t.ph{background:var(--img) center/cover no-repeat!important;border-color:rgba(255,255,255,.55)!important;box-shadow:0 6px 18px rgba(20,30,50,.12)}"
@@ -19694,7 +19698,9 @@ function renderMenuHub() {
   if (_fb && _fb.ok) S += sb('🐞 バグ・要望', 'fbOpen()', _fb.newN || '');
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
-  v.innerHTML = '<div class="ux-hub"><div class="ux-hd"><h1>HOME</h1><span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
+  var lg = '<img class="hm-logo w" src="img/logo-w.png" alt="NWP"><img class="hm-logo d" src="img/logo-d.png" alt="NWP">'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）
+  var hd = lg + '<h1>HOME</h1>';
+  v.innerHTML = '<div class="ux-hub"><div class="ux-hd hm-hd">' + hd + '<span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
     + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
     + '<div class="ux-sm">' + S + '</div></div>';
 }
