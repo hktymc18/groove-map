@@ -446,8 +446,11 @@ service cloud.firestore {
 
       // 💰 お金の操作ログ: 追記専用（だれも編集・削除できない＝改ざん防止）。
       // 記録の作成はログイン済みの有効ユーザーなら可（会計操作と同時にアプリが自動追記する）
+      // 🔒 v18: 見られるのはオーナーと主催ユニオンのユニオン管理者（MAPの管理者）だけ。受付管理者・一般メンバーは不可
       match /audit/{aid} {
-        allow read: if ckEventStaff(eid);
+        allow read: if isOwnerAdmin()
+          || (signedIn() && notDisabled(request.auth.uid)
+              && isCkCoreAdmin(get(/databases/$(database)/documents/checkinEvents/$(eid)).data.get('hostUnion', '')));
         allow create: if isOwnerAdmin()
           || (signedIn() && notDisabled(request.auth.uid));
         allow update, delete: if false;

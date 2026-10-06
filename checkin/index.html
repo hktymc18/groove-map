@@ -1130,8 +1130,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v26';
+var APP_VER = 'v27';
 var CHANGELOG = [
+  { v: 'v27', d: '2026/10/06', items: ['会計の「📋 操作ログ」は、オーナーと主催ユニオンのユニオン管理者だけが見られるようになりました（受付管理者・一般メンバーには表示されません）'] },
   { v: 'v26', d: '2026/10/06', items: ['使い方ガイド: 「はじめの準備」に「⑤ 合同イベントを作る」（ガイド＋動画）を追加。合同イベントは主催ユニオンが1つだけ作り、参加ユニオンに全部チェック → 当日は同じイベントで受付'] },
   { v: 'v25', d: '2026/10/06', items: ['受付: 合同ユニオンにチェックが付いていないユニオンの人を受付すると「合同ユニオンに入っていません」と知らせるようにしました（そのままだとそのユニオンの集計に入らないため）'] },
   { v: 'v24', d: '2026/10/06', items: [
@@ -6067,7 +6068,8 @@ function financeModal(ev){
         ? '<p style="margin-top:10px;"><span class="pill g">✓ 確定済み</span><span style="font-size:12.5px;color:var(--sub);margin-left:8px;">編集はロックされています</span></p>'
         : '')
       + '<div class="btns"><button id="fnCancel">閉じる</button>'
-      + '<button id="fnLog">📋 操作ログ</button>'
+      // 操作ログはオーナーと主催ユニオンのユニオン管理者だけ（DBルールでも制限）
+      + (isCoreAdmin(ev.hostUnion) ? '<button id="fnLog">📋 操作ログ</button>' : '')
       + (f.locked
         ? ((ppMode && !dCash) ? '' : '<button class="primary" id="fnSlip">🖨 納金票を印刷</button>')
           + (canEditUnion(ev.hostUnion) ? '<button id="fnUnlock" class="danger">確定を解除</button>' : '')
@@ -6102,7 +6104,7 @@ function financeModal(ev){
     document.querySelector('.modal').addEventListener('input', recompute);
     recompute();
     $('fnCancel').onclick = closeModal;
-    $('fnLog').onclick = function(){ closeModal(); auditListModal(ev); };
+    if($('fnLog')) $('fnLog').onclick = function(){ closeModal(); auditListModal(ev); };
     // 受付の徴収データでBA行を入れ直す（保存済みの古い人数を最新に更新したいとき用）
     var ab = $('fnAuto');
     if(ab) ab.onclick = function(){
