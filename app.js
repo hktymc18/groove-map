@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v654';
+var APP_JS_VERSION = 'v655';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v654';
+  var DATA_VERSION = 'v655';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5349,6 +5349,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v655', d:'2026-10-06', items:['ⓘ ファーストボーナスの内訳を閉じるボタンを「とじる」に'] },
   { v:'v654', d:'2026-10-06', items:['🎮 シミュレーションのファーストボーナス：ライトモードは明るい背景に。金額の文字を少し小さくして、8桁（¥12,345,678）でも1行に入るように'] },
   { v:'v653', d:'2026-10-06', items:['🧭 PLANの入口のタイルを減らしました：「今週やること」は「◯月の目標」の中に。目標を設定ずみなら、タイルを押すと今週やること（上の「◯月の目標」から目標を見る・なおす）'] },
   { v:'v652', d:'2026-10-06', items:['🎮 シミュレーション：数字を入れる欄を小さく。ファーストボーナスは一番下に大きく（内訳は（i））。組織図は左右にスワイプで月送り、数字を変えるとLOIの月から','🧭 PLANの入口に「シミュレーション」（理想・目標の下）と「チェック」「夢100」を追加','✓ 1つのタイルを最後まで入れたら、次のタイルではなく入口に戻るように','☑️ チェック：必須アイテム／TRAININGをタブに。日付はカレンダーから選べて、📅でその日の予定に入ります。チェックすると色つきのひとこと','💴 BB早見表にGSVごとの表'] },
@@ -19402,7 +19403,7 @@ function _p2SimHtml() {
 // v652: ファーストボーナス（一番のお楽しみ）は大きく。内訳は (i) に
 function _p2SimFbHtml(R9) {
   var bb = _p2BBCalc(Math.max(0, R9.gsv - 1000)), loi = R9.gsv >= 2000 ? 50000 : 0;
-  UX_INFO.simfb = { t: 'ファーストボーナスの内訳', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
+  UX_INFO.simfb = { t: 'ファーストボーナスの内訳', ok: 'とじる', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
     + '※ GSV ' + R9.gsv.toLocaleString() + ' − 1,000P（BR昇格分）＝ ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'P がBB対象<br>'
     + (loi ? '<b>エリートLOI特典</b>：¥50,000（BR維持で翌月進呈）' : '<b>エリートLOI特典</b>：BRの月のGSVが2,000以上で ¥50,000') };
   return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb"><span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span><small>ファーストボーナス（BR昇格後）</small><b>¥' + R9.fb.toLocaleString() + '<i>/月</i></b></div>';
@@ -19816,7 +19817,7 @@ function uxInfo(k) {
   uxInfoClose();
   var ov = document.createElement('div'); ov.id = 'uxInfo';
   ov.onclick = function(e) { if (e.target === ov) uxInfoClose(); };
-  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">楽勝!!</div></div>';
+  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">' + (d.ok || '楽勝!!') + '</div></div>';
   document.body.appendChild(ov);
 }
 function uxInfoClose() { var o = document.getElementById('uxInfo'); if (o) o.parentNode.removeChild(o); }
