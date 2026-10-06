@@ -16374,7 +16374,7 @@ function _p2HubX(k) {
 function _p2HubLand(T, nk, S, rv, left, why) {
   _p2LandCss();
   var ym = _p2Ym(0);
-  var tiles = T.map(function(t) { t.next = t.k === nk; t.on = 'p2Go(\'' + t.k + '\')'; t.x = _p2HubX(t.k); if (!t.x) t.c += ' p2-nx'; return _uxTile(t); }).join('');
+  var tiles = T.map(function(t) { t.next = t.k === nk || (t.k === 'mon' && nk === 'do'); t.on = t.on || 'p2Go(\'' + t.k + '\')'; t.x = _p2HubX(t.k); if (!t.x) t.c += ' p2-nx'; return _uxTile(t); }).join('');
   return '<div class="ux-hub p2-lh"><div class="ux-hd"><h1>PLAN</h1>' + (why && !_p2HubX('why') ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span>'
     + '<span class="ux-sb' + (rv ? ' hot' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (rv ? '<span class="dot"></span>' : '') + '</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div>'
     + '<div class="ux-tiles">' + tiles + '</div>'
@@ -16461,9 +16461,10 @@ function _p2HubData() {
     (function() { var ck9 = _p2CkCount(); return { k: 'ck', c: 'mint', ic: '☑️', lb: 'チェック', bd: ck9.done >= ck9.total ? '✓ 準備万端' : '', st: '<em>' + ck9.done + '</em> / ' + ck9.total + '<br>必須アイテム・TRAINING' }; })(),
     (function() { var dr9 = _p2G().dreams || []; return { k: 'dream', c: 'pur', ic: '🌈', lb: '夢100', st: dr9.length ? '<em>' + dr9.filter(function(d) { return d.done; }).length + '</em> / ' + dr9.length + ' 叶えた' : '夢を<br><em>書き出す</em>' }; })(),
     { k: 'rm', c: 'sky', ic: '🗺️', lb: 'ロードマップ', st: (!nx.isFinal && nx.title) ? '次の山 <em>' + evEsc(nx.title) + '</em>' + (nx.deadline ? '<br>' + evEsc(nx.deadline.replace('-', '/')) + 'まで' : '') : '年間のマイルストーン' },
-    { k: 'mon', c: 'mint', ic: '🎯', lb: _p2PgTitle('mon'), bd: _p2Declared(ym) ? '✓ 設定ずみ' : '',
-      st: (m.s === '' || m.s == null) ? 'S稼働の目標を<br><em>まだ決めていない</em>' : (_p2Declared(ym) ? 'S稼働 目標 <em>' + m.s + '人</em><br>今 ' + S + '人' : 'S稼働 ' + m.s + '人<br><em>設定するを押す</em>') },
-    { k: 'do', c: 'pur', ic: '✅', lb: '今週やること', w: 1, st: (rest ? '今週 <em>あと' + rest + '件</em>' : '今週の分は予定ずみ ✓') + (tl ? '・今日のタスク <em>' + tl + '件</em>' : '') }
+    // v653: 今週やることは「◯月の目標」の中に（タイルを減らす）。設定ずみなら押すと今週やること
+    { k: 'mon', c: 'mint', ic: '🎯', lb: _p2PgTitle('mon'), bd: _p2Declared(ym) ? '✓ 設定ずみ' : '', on: _p2Declared(ym) ? 'p2Go(\'do\')' : 'p2Go(\'mon\')',
+      st: ((m.s === '' || m.s == null) ? 'S稼働 <em>未設定</em>' : (_p2Declared(ym) ? 'S稼働 <em>' + S + '/' + m.s + '人</em>' : 'S稼働 ' + m.s + '人・<em>設定する</em>'))
+        + '<br>今週 ' + (rest ? '<em>あと' + rest + '件</em>' : '予定ずみ ✓') }
   ];
   return { ym: ym, T: T, nk: nk, S: S, rv: rv, left: left, why: why };
 }
@@ -16471,13 +16472,18 @@ function _p2HubHtml() {
   var D = _p2HubData(), ym = D.ym, T = D.T, nk = D.nk, S = D.S, rv = D.rv, left = D.left, why = D.why;
   if (_uxLand()) return _p2HubLand(T, nk, S, rv, left, why); // v606: 横は見出し1行＋中身のあるタイル
   var h = '<div class="ux-hub"><div class="ux-hd"><h1>PLAN</h1>' + (why ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span></div>'
-    + '<div class="ux-tiles">' + T.map(function(t) { t.next = t.k === nk; t.on = 'p2Go(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
+    + '<div class="ux-tiles">' + T.map(function(t) { t.next = t.k === nk || (t.k === 'mon' && nk === 'do'); t.on = t.on || 'p2Go(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
     + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div>'
     + '<span class="ux-sb' + (rv ? ' hot' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (rv ? '<span class="dot"></span>' : '') + '</span>'
     + '<span class="ux-sb" onclick="p2Go(\'sum\')">📋 サマリー</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
   return h;
 }
 // v624: ページの中身（スマホは下の帯つきの1画面、PCは右の欄）
+function _p2DoMonHead(ym) { // v653: 今週やることの上に「◯月の目標」（押すと目標のページ）
+  var m = _p2M(ym), S = 0; try { S = _dtEzNow().S; } catch (e) { S = _sNow(); }
+  var dec = _p2Declared(ym), has = !(m.s === '' || m.s == null);
+  return '<div class="ux-li" style="margin:4px 0 10px" onclick="p2Go(\'mon\')"><span class="ic">🎯</span><span>' + _p2PgTitle('mon') + '<small>' + (has ? 'S稼働 目標 ' + m.s + '人・今 ' + S + '人' + (dec ? '' : '・まだ設定していない') : 'S稼働の目標をまだ決めていない') + '</small></span><span class="ch">' + (dec ? 'なおす ›' : '決める ›') + '</span></div>';
+}
 function _p2PageParts() {
   var k = _p2Pg, ym = _p2Ym(0), body = '', subs = _p2PgSubs(k), i = Math.min(_p2PgI, Math.max(0, subs.length - 1));
   var fi = P2_PG_FLOW.indexOf(k), next = '', nextOn = '';
@@ -16534,9 +16540,9 @@ function _p2PageParts() {
     body = _p2MonPageHtml(i);
     if (i < MP.length - 1) { next = MP[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; }
     else if (!_p2Declared(mym)) { next = '✅ 設定する'; nextOn = 'p2Declare(\'' + mym + '\')'; }
-    else { next = '入口へ ›'; nextOn = 'p2Go(\'\')'; }
+    else { next = '今週やること ›'; nextOn = 'p2Go(\'do\')'; } // v653
   } else if (k === 'do') { // v598: 行動の一覧（今週・今月を●でめくる）→ 押すと行動の画面
-    _ux2Css(); body = _p2DoPageHtml(i) + (i === 0 ? _p2UnionHtml() : '');
+    _ux2Css(); body = _p2DoMonHead(ym) + _p2DoPageHtml(i) + (i === 0 ? _p2UnionHtml() : ''); // v653: 上に◯月の目標
     next = '📅 予定へ ›'; nextOn = 'switchView(\'events\')';
   } else if (k === 'dok') {
     _ux2Css(); body = _p2DoKindHtml();
