@@ -15,6 +15,7 @@ T.run(async () => {
   c('選ぶとそのタイトルだけ（ダイヤモンド）', $$('.ids-lbr:not(.off)').length === 1 && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 4 && $('.ids-lbs select').value === '4');
   box.innerHTML = w._lbUpHtml(ms);
   c('選んだタイトルは描き直しても覚えている', $('.ids-lbs select').value === '4' && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 4);
+  ms[0].ptCurrent = 2500; box.innerHTML = w._lbUpHtml(ms);
   c('GSV 3,000P未満：今のまま／3,000Pを超えたらの2つ', $$('.ids-lbr:not(.off) .ids-lbk').length === 2 && $('.ids-lbr:not(.off)').textContent.indexOf('3,000Pを超えたら') >= 0 && $('.ids-lbh').textContent.indexOf('3,000Pを超えたら') >= 0);
   ms[0].ptCurrent = 3500; box.innerHTML = w._lbUpHtml(ms);
   c('GSV 3,000P以上：1つだけ', $$('.ids-lbr:not(.off) .ids-lbk').length === 1 && $('.ids-lbup').textContent.indexOf('3,000Pを超えたら') < 0);
