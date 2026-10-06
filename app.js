@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v655';
+var APP_JS_VERSION = 'v656';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v655';
+  var DATA_VERSION = 'v656';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5349,6 +5349,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v656', d:'2026-10-06', items:['🎮 シミュレーションの「今月の目標に入れる」で、フロント人数を理想MAPにも反映（自分の直下の新しいB1をその人数に。理想MAPが空なら現状MAPをコピーしてから）','👤 はじめてMAPを開いた人は、0段目にログインした人（アカウントの名前・地域）を自動で登録'] },
   { v:'v655', d:'2026-10-06', items:['ⓘ ファーストボーナスの内訳を閉じるボタンを「とじる」に'] },
   { v:'v654', d:'2026-10-06', items:['🎮 シミュレーションのファーストボーナス：ライトモードは明るい背景に。金額の文字を少し小さくして、8桁（¥12,345,678）でも1行に入るように'] },
   { v:'v653', d:'2026-10-06', items:['🧭 PLANの入口のタイルを減らしました：「今週やること」は「◯月の目標」の中に。目標を設定ずみなら、タイルを押すと今週やること（上の「◯月の目標」から目標を見る・なおす）'] },
@@ -13640,6 +13641,22 @@ function renderShareChips() {
 function _gmHadRoot() {
   if (_p2OwnRoot()) { try { localStorage.setItem('gm_hadRoot_' + ((currentUser && currentUser.uid) || ''), '1'); } catch (e) {} return true; }
   try { return localStorage.getItem('gm_hadRoot_' + ((currentUser && currentUser.uid) || '')) === '1'; } catch (e2) { return false; }
+}
+// v656: MAPの0段目＝ログインした人。はじめての人（この月も前の月もデータなし・一度も自分を登録していない）は自動で登録
+function _gmAutoSelf(uid, month) {
+  try {
+    if (!state.isEditor || viewingOwnerUid || _gmHadRoot() || !currentUser || !(currentUser.name || '').trim()) return;
+    fsGet('maps/' + uid + '/months/' + addMonths(month, -1) + '_current').then(function(d) {
+      if (d && d.members && d.members.length) return; // 前の月にデータがある人（翌月コピー前）は作らない
+      if (state.currentMonth !== month || viewingOwnerUid || (state.members || []).some(function(m) { return !m.parentId && !m.deleted; })) return;
+      var p = String(currentUser.name).trim().split(/[\s　]+/);
+      state.members.push({ id: 'id-' + Date.now() + '-' + Math.floor(Math.random() * 100000), lastName: p[0] || '', firstName: p.slice(1).join(' '), gender: 'male', title: '', activity: '', actRate: '', morale: 1, priority: '',
+        ptCurrent: 0, ptFixed: 0, ptSelf: 0, trainee: false, parentId: '', mapType: 'both', memo: '', nextDate: '', aSan: '', instaUrl: '', lineId: '',
+        traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '', region: normalizeRegionValue(currentUser.area || ''), birthday: '', age: '', startMonth: month, rollup: '', outHidden: false, badgeMode: '', month: month });
+      _memMap = null; _gmHadRoot(); recalcAllGSV(); autoSave(); renderCurrentView();
+      toast('👤 MAPの0段目に「' + String(currentUser.name).trim() + '」を登録しました（タイトル・GSVはタップで直せます）');
+    }).catch(function() {});
+  } catch (e) {}
 }
 function _gmNeedSelf() { return !!state.isEditor && !viewingOwnerUid && !_gmHadRoot(); }
 // v559: 自分（0段目）の登録。名前はアカウントの名前を入れておく
@@ -23393,14 +23410,43 @@ function p2SimApply() {
   var n = (idx >= 0 && idx < 4) ? cfg.fronts[idx] : Math.max.apply(null, cfg.fronts);
   if (!n) n = Math.max.apply(null, cfg.fronts);
   var ym = _p2Ym(0);
-  var _fi = _p2FrontIdeal(ym); // v573
-  if (_fi !== null) { _p2SheetClose('p2SimOv'); toast('今月のフロントは理想MAPの数字（' + _fi + '人）です。' + n + '人にするなら理想MAPで新しいB1を足してください'); return; }
+  var _toI = _idealSetFront(n); // v656: シミュレーションのフロント人数を理想MAP（自分の直下の新規B1）にも
   _p2M(ym).front = n;
   var _rmS = _p2Rm(); if (!_rmS.rows.front) _rmS.rows.front = {}; _rmS.rows.front[ym] = n; // v573: ロードマップにも（ロードマップの数字が優先されて反映されなかった）
   saveGoals();
   _p2SheetClose('p2SimOv');
-  toast('✍ 今月のフロント目標に ' + n + '人 を入れました。「設定」で確定しよう');
+  toast('✍ 今月のフロント目標に ' + n + '人 を入れました' + (_toI ? '（理想MAPの自分のB1も ' + n + '人に）' : '') + '。「設定」で確定しよう');
   renderPlan();
+}
+// v656: 理想MAPの「自分のB1（自分の直下の今月の新規）」を n人にそろえる。理想MAPが空なら現状MAPをコピーしてから
+function _idealSetFront(n) {
+  if (!state.isEditor || viewingOwnerUid) return false;
+  n = Math.max(0, parseInt(n, 10) || 0);
+  var isRoot = function(m) { return m && !m.parentId && !m.deleted; };
+  if (!(state.idealMembers || []).some(isRoot)) {
+    var cur = (state.members || []).filter(function(m) { return !m.deleted && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType); });
+    if (!cur.some(isRoot)) return false;
+    state.idealMembers = JSON.parse(JSON.stringify(cur)).map(function(m) { m.mapType = 'ideal'; return m; });
+  }
+  var arr = state.idealMembers, root = arr.filter(isRoot)[0], ym = state.currentMonth || currentMonthStr();
+  var have = _idealStats(arr).newFront;
+  if (have === n) return true;
+  if (n > have) {
+    for (var i = have; i < n; i++) {
+      var k = arr.filter(function(m) { return m.idealNew && m.idealKind === 'biz'; }).length + 1;
+      arr.push({ id: 'id-' + Date.now() + '-' + Math.floor(Math.random() * 100000) + '-' + i, lastName: '新規', firstName: (k <= 20 ? String.fromCharCode(0x2460 + k - 1) : String(k)), gender: 'male',
+        title: IDQ_BIZ.title, activity: IDQ_BIZ.act, actRate: IDQ_BIZ.rate, morale: 1, priority: '', ptCurrent: IDQ_BIZ.gsv, ptFixed: 0, ptSelf: IDQ_BIZ.gsv, trainee: false,
+        parentId: root.id, mapType: 'ideal', idealNew: true, idealKind: 'biz', memo: '', region: root.region || '', startMonth: ym, month: ym, traineeHistory: [], fromSim: true });
+    }
+  } else { // 減らす：シミュレーション・かんたん追加で足した新規（配下なし）から、新しい順に
+    var kids = function(id) { return arr.some(function(x) { return x.parentId === id && !x.deleted; }); };
+    var cand = arr.filter(function(m) { return m.parentId === root.id && m.idealNew && m.idealKind === 'biz' && !m.deleted && !kids(m.id) && isNewB1(m, ym); });
+    var drop = {};
+    for (var j = cand.length - 1, left = have - n; j >= 0 && left > 0; j--, left--) drop[cand[j].id] = 1;
+    state.idealMembers = arr.filter(function(x) { return !drop[x.id]; });
+  }
+  _idealAfter('');
+  return true;
 }
 // ── ⑤BB早見表 ──
 function p2BbOpen() {
@@ -36044,6 +36090,7 @@ function fsLoadFromFirestore(uid) {
     if (loaded.current || loaded.ideal || loaded.stats) {
       toast('データを読み込みました ✓');
     }
+    if (!state.members.length && !loaded.current) _gmAutoSelf(uid, month); // v656: はじめての人は0段目に自分を自動で
     if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); } // v567・v571
     renderCurrentView();
     updateLTSV('current', state.members);
