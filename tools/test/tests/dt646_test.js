@@ -29,7 +29,16 @@ T.run(async () => {
   c('グラフは実寸で描く', $('#dtTrend .dt-chart').getAttribute('viewBox') === '0 0 760 280');
   w.dtTab('reg'); await sleep(20);
   c('横の地域も画面いっぱい', w.document.body.classList.contains('dt-lf') && $('#dtLfBar span.on').textContent === '地域');
+  w.regTrendZoom(); await sleep(60);
+  c('v648: 地域の「◯◯の12ヶ月」をタップで画面いっぱい（左の比較を隠す）', w.document.body.classList.contains('dt-rgx'));
+  w._rgxSize = { W: 900, H: 260 }; w.regTrendRender(); await sleep(60);
+  const sv = $('#regTrendBody .dt-chart');
+  c('グラフは実寸で描く', !sv || sv.getAttribute('viewBox') === '0 0 900 260');
+  w.regTrendZoom(); await sleep(60);
+  c('もう一度タップで元に戻る', !w.document.body.classList.contains('dt-rgx') && w._rgxSize === null);
+  w.regTrendZoom(); await sleep(20);
   w.dtTab('train'); await sleep(10);
+  c('ほかのタブへ行くと大きい表示は解除', !w.document.body.classList.contains('dt-rgx'));
   c('ほかのタブは今まで通り', !w.document.body.classList.contains('dt-lf') && !$('#dtLfBar'));
   w.dtTab('trend'); await sleep(10); w.switchView('plan'); await sleep(10);
   c('ほかの画面へ行くと戻る', !w.document.body.classList.contains('dt-lf'));
