@@ -11768,9 +11768,11 @@ var DT_METRICS = [
   { k: 'コミッション', lb: 'コミッション', unit: '円', yen: true }
 ];
 var DT_ACT_COLORS = { S: '#2CE5B8', A: '#FF5D73', B: '#5AD7FF', C: '#FFB454' };
-function _dtMeta(k) { for (var i = 0; i < DT_METRICS.length; i++) if (DT_METRICS[i].k === k) return DT_METRICS[i]; return { k: k, lb: k, unit: '' }; }
+function _dtMeta(k) { if (_dtSrc) return _dtSrc.meta(k); for (var i = 0; i < DT_METRICS.length; i++) if (DT_METRICS[i].k === k) return DT_METRICS[i]; return { k: k, lb: k, unit: '' }; }
 function _dtRow(k) { var ms = (state.stats && state.stats.monthly) || []; for (var i = 0; i < ms.length; i++) if (ms[i].label === k) return ms[i]; return null; }
+var _dtSrc = null; // v650: 研修タブなど、推移と同じグラフに別の数字を出す時（{ vals(k), meta(k), pick }）
 function _dtVals(k) {
+  if (_dtSrc) return _dtSrc.vals(k);
   var r = _dtRow(k), v = (r && r.vals) ? r.vals.slice(-12) : [];
   while (v.length < 12) v.unshift('');
   var out = v.map(function(x) { return (x === '' || x === null || x === undefined || isNaN(Number(x))) ? null : Number(x); });
@@ -12398,7 +12400,7 @@ function _dtChartSvg(months) {
     });
   }
   // 月ごとのタップ領域
-  for (var ti = 0; ti < 12; ti++) h += '<rect class="dt-hit" x="' + (xOf(ti) - cw / 22) + '" y="0" width="' + (cw / 11) + '" height="' + H + '" fill="transparent" onclick="dtPickMonth(' + ti + ')"/>';
+  for (var ti = 0; ti < 12; ti++) h += '<rect class="dt-hit" x="' + (xOf(ti) - cw / 22) + '" y="0" width="' + (cw / 11) + '" height="' + H + '" fill="transparent" onclick="' + (_dtSrc ? _dtSrc.pick : 'dtPickMonth') + '(' + ti + ')"/>';
   return h + '</svg>';
 }
 function renderDtTrend() {
@@ -12474,10 +12476,11 @@ function _dtLines(series, labels) {
 }
 
 // ── 研修 ──
-function renderDtTrain() {
-  var box = document.getElementById('dtTrain'); if (!box) return;
-  _dtDrill = {};
-  var fmon = state.currentMonth;
+function renderDtTrain() { _dtTrRender(); } // v650: 推移と同じ形（上にグラフ・下に選んだ月のタイル）
+function _dtTrainOld(fmon, asanOnly) {
+  var box = { innerHTML: '' };
+  if (!asanOnly) _dtDrill = {};
+  fmon = fmon || state.currentMonth;
   var trainees = monthTrainees(fmon);
   var total = trainees.length;
   var inMon = function(m, step) { var hs = m.traineeHistory || []; for (var i = 0; i < hs.length; i++) if (hs[i].status === step && _ymToMon(hs[i].date) === fmon) return true; return false; };
@@ -12523,7 +12526,7 @@ function renderDtTrain() {
   var amap = {};
   trainees.forEach(function(m) {
     (m.traineeHistory || []).forEach(function(hh) {
-      if (!hh.aSan || _ymToMon(hh.date) !== fmon) return;
+      if (!hh.aSan || _ymToMon(hh.date) !== fmon || hh.result === 'planned' || m.deleted) return; // v650: 予定・削除した人は数えない
       var a = amap[hh.aSan] || (amap[hh.aSan] = { name: hh.aSan, ms: {}, steps: {} });
       a.ms[m.id] = m;
       a.steps[hh.status] = (a.steps[hh.status] || 0) + 1;
@@ -12552,9 +12555,78 @@ function renderDtTrain() {
     }
   });
   h += '</div>';
+  if (asanOnly) return h.slice(h.indexOf('<div class="dt-card"><div class="dt-ch">' + icn('users') + ' Aさん別'));
   box.innerHTML = h;
+  return h;
 }
 function dtAsanTgl(n) { _dtAsanOpen = (_dtAsanOpen === n) ? '' : n; renderDtTrain(); }
+// ════ v650: 研修＝推移と同じ形。数え方：その月の日付で「実施（進んだ・流れた）」の記録がある人（予定は数えない・削除した人は数えない） ════
+var DT_TR_K = [['n', '研修生', '人'], ['マケ', 'マケ', '人'], ['PG', 'PG', '人'], ['DLR', 'DLR', '人'], ['EXP', 'EXP', '人'], ['PA', 'PA', '人'], ['面談', '面談', '人'], ['BPC', 'BPC', '人'], ['CO', 'CO', '人'], ['BC', 'BC（成約）', '人'], ['ユーザー', 'ユーザー', '人'], ['流れた', '流れた', '人', 1], ['rate', 'BC決定率', '%']];
+var _dtTrSel = ['PG', 'BC'], _dtTrIdx = 11;
+function _dtTrMembers() { return (state.members || []).filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || ''); }); }
+function _dtTrDone(h) { return h && h.date && h.result !== 'planned'; }
+function _dtTrMonth(mon) { // 1ヶ月ぶん：{ n, マケ…CO, BC, ユーザー, 流れた, rate, L:{k:[人]} }
+  var o = { L: {} }, add = function(k, m) { (o.L[k] = o.L[k] || []).push(m); };
+  _dtTrMembers().forEach(function(m) {
+    var hs = (m.traineeHistory || []).filter(function(h) { return _dtTrDone(h) && _ymToMon(h.date) === mon; });
+    var dec = m.traineeResult && traineeDecidedMonth(m) === mon;
+    if (!hs.length && !dec) return;
+    add('n', m);
+    DT_STEPS.forEach(function(st) { if (hs.some(function(h) { return h.status === st; })) add(st, m); });
+    if (dec) add(m.traineeResult, m);
+  });
+  DT_TR_K.forEach(function(k) { if (k[0] !== 'rate') o[k[0]] = (o.L[k[0]] || []).length; });
+  var d = o.BC + o['ユーザー'] + o['流れた']; o.rate = d ? Math.round(o.BC / d * 100) : null;
+  return o;
+}
+function _dtTrData() {
+  var cur = state.currentMonth || currentMonthStr(), out = [];
+  for (var i = 0; i < 12; i++) out.push(_dtTrMonth(addMonths(cur, i - 11)));
+  return out;
+}
+function dtTrMetric(k) {
+  var i = _dtTrSel.indexOf(k);
+  if (i >= 0) { if (_dtTrSel.length > 1) _dtTrSel.splice(i, 1); } else { _dtTrSel.push(k); if (_dtTrSel.length > 2) _dtTrSel.shift(); }
+  _dtTrRender();
+}
+function dtTrPick(i) { _dtTrIdx = i; _dtTrRender(); }
+function dtTrTile(k) { _dtTrSel = [k]; _dtTrRender(); try { var c = document.querySelector('#dtTrain .dt-chips'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }
+function _dtTrRender() {
+  var box = document.getElementById('dtTrain'); if (!box) return;
+  _anCss(); _dtDrill = {};
+  var D = _dtTrData(), months = _dtMonths(), idx = _dtTrIdx, mo = months[idx], M = D[idx], P = idx > 0 ? D[idx - 1] : null;
+  var meta = function(k) { var x = DT_TR_K.filter(function(q) { return q[0] === k; })[0] || [k, k, '']; return { k: k, lb: x[1], unit: x[2], inv: !!x[3] }; };
+  var vals = function(k) { return D.map(function(o) { return o[k] === undefined ? null : o[k]; }); };
+  var chips = '<div class="dt-chips">' + DT_TR_K.map(function(k) { var i = _dtTrSel.indexOf(k[0]); return '<span class="dt-chip' + (i >= 0 ? ' on c' + i : '') + '" onclick="dtTrMetric(\'' + k[0] + '\')">' + k[1] + '</span>'; }).join('') + '</div>';
+  var head = '<div class="dt-th">' + _dtTrSel.map(function(k, si) {
+    var mt = meta(k), v = vals(k), nn = v.filter(function(x) { return x !== null; });
+    return '<span class="dt-thi c' + si + '"><i></i>' + mt.lb + ' <b>' + (v[idx] === null ? '—' : v[idx] + mt.unit) + '</b>' + _dtDelta(v[idx], idx > 0 ? v[idx - 1] : null, mt)
+      + (nn.length > 1 ? '<small>最高 ' + Math.max.apply(null, nn) + '・最低 ' + Math.min.apply(null, nn) + '</small>' : '') + '</span>';
+  }).join('') + '</div>';
+  var sv = [_dtSel, _dtMonthIdx]; _dtSel = _dtTrSel; _dtMonthIdx = idx; _dtSrc = { vals: vals, meta: meta, pick: 'dtTrPick' };
+  var svg = ''; try { svg = _dtChartSvg(months); } finally { _dtSrc = null; _dtSel = sv[0]; _dtMonthIdx = sv[1]; }
+  var on = function(k) { return _dtTrSel.indexOf(k) >= 0; };
+  var ppl = function(k) { var l = M.L[k] || []; if (!l.length) return ''; var dk = _dtDrillKey(mo.m + '月', meta(k).lb, l); return '<span class="dl" onclick="event.stopPropagation();dtDrill(\'' + dk + '\')">人 ›</span>'; };
+  var big = function(k, ic, c, sub) {
+    var mt = meta(k), v = M[k];
+    return '<div class="an-t big' + (on(k) ? ' on' : '') + '" style="--c:' + c + '" onclick="dtTrTile(\'' + k + '\')"><div class="h"><span class="ic">' + icn(ic) + '</span><span class="lb">' + mt.lb + '</span></div>'
+      + '<b>' + (v === null ? '<i class="na">—</i>' : v + '<small>' + mt.unit + '</small>') + '</b><div class="f">' + (v === null ? '' : _dtDelta(v, P ? P[k] : null, mt)) + (sub ? '<span class="sb">' + sub + '</span>' : '') + ppl(k) + '</div></div>';
+  };
+  var dec = M.BC + M['ユーザー'] + M['流れた'];
+  var h = chips + '<div class="dt-card">' + head + svg + '<div class="dt-hint">グラフの月をタップすると、その月の数字が下に出ます</div></div>'
+    + '<div class="an-sec"><span>' + mo.y + '年' + mo.m + '月の研修</span>' + (idx === 11 ? '<small>今月</small>' : '<em onclick="dtTrPick(11)">今月に戻す ›</em>') + '</div><div class="an-g four">'
+    + big('n', 'cap', '#5AD7FF', '研修の記録がある人') + big('rate', 'target', 'var(--accent)', '結果が出た ' + dec + '人のうち')
+    + big('BC', 'checksq', '#2CE5B8', '') + big('流れた', 'ban', '#FF5D73', 'ユーザー ' + M['ユーザー'] + '人')
+    + '</div><div class="an-g sm">'
+    + DT_STEPS.map(function(st) {
+      var v = M[st], pv = P ? P[st] : null;
+      return '<div class="an-t' + (on(st) ? ' on' : '') + '" onclick="dtTrTile(\'' + st + '\')"><span class="lb">' + st + '</span><b>' + v + '<small>人</small></b><div class="f">' + _dtDelta(v, pv, meta(st)) + ppl(st) + '</div></div>';
+    }).join('') + '</div>'
+    + '<div class="dt-hint" style="text-align:left;margin:8px 2px 0">数え方：その月の日付で研修履歴に「進んだ／流れた」の記録がある人（1人1回・📅予定は数えない）。受付システムの受講記録も取り込まれます</div>'
+    + '<div style="margin-top:14px">' + _dtTrainOld(state.currentMonth || currentMonthStr(), true) + '</div>';
+  box.innerHTML = h;
+}
+
 
 // ── パワーライン（v523: フロントの系列ごと。詳細でその系列の5,000P以上のメンバー） ──
 var _dtPlOpen = '';
@@ -19388,7 +19460,7 @@ function _anCss() {
   var st = document.createElement('style'); st.id = 'anCss';
   st.textContent = ".an-hd{display:flex;align-items:baseline;gap:10px;padding:10px 2px 4px}.an-hd h1{margin:0;font-size:30px;font-weight:900;letter-spacing:-.01em}.an-hd span{margin-left:auto;font-size:13px;font-weight:800;color:var(--text-dim)}"
     + ".an-sec{display:flex;align-items:baseline;gap:8px;margin:16px 2px 8px;font-size:15px;font-weight:900}.an-sec small{font-size:11.5px;color:var(--accent);font-weight:800}.an-sec em{font-style:normal;margin-left:auto;font-size:12px;color:var(--accent);font-weight:800;cursor:pointer}"
-    + ".an-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.an-g.sm{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}"
+    + ".an-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(min-width:768px) and (min-height:501px){.an-g.four{grid-template-columns:repeat(4,minmax(0,1fr))!important}}.an-g.sm{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}"
     + "@media(min-width:768px) and (min-height:501px){.an-g{grid-template-columns:repeat(3,minmax(0,1fr))}.an-g.sm{grid-template-columns:repeat(8,minmax(0,1fr))}}"
     + ".an-t{position:relative;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:9px 10px;cursor:pointer;min-width:0;display:flex;flex-direction:column;gap:2px}"
     + ".an-t .lb{font-size:11.5px;font-weight:800;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.an-t b{font-size:19px;font-weight:900;font-family:Inter,sans-serif;line-height:1.15}.an-t b small{font-size:11px;color:var(--text-dim);margin-left:2px}.an-t .na{font-style:normal;font-size:14px;color:var(--accent)}"
