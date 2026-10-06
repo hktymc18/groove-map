@@ -9134,10 +9134,9 @@ function renderIdealSum() {
   var bar = function(lb, iv, cv, fmt, sub) {
     var pct = iv > 0 ? Math.min(100, Math.round((cv || 0) / iv * 100)) : (cv ? 100 : 0);
     var done = iv > 0 && cv >= iv;
-    // v641: 説明は出さず、タップ／マウスを乗せた時だけ吹き出しで
-    return '<div class="ids-row"><div class="ids-lb' + (sub ? ' has-tp" onclick="idsTip(this)"><u>' + lb + '</u><small class="ids-tp">' + sub + '</small>' : '">' + lb) + '</div>'
-      + '<div class="ids-bar"><i style="width:' + pct + '%"' + (done ? ' class="ok"' : '') + '></i></div>'
-      + '<div class="ids-v"><b>' + fmt(iv) + '</b><small>現状 ' + fmt(cv) + '</small></div></div>';
+    // v641: 1つずつタイル（名前・理想の数字・現状までのバー・現状）。説明はタップ／マウスを乗せた時だけ吹き出しで
+    return '<div class="ids-t' + (sub ? ' has-tp" onclick="idsTip(this)"' : '"') + '><span>' + (sub ? '<u>' + lb + '</u>' : lb) + '</span><b>' + fmt(iv) + '</b>'
+      + '<i><u style="width:' + pct + '%"' + (done ? ' class="ok"' : '') + '></u></i><small>現状 ' + fmt(cv) + '</small>' + (sub ? '<small class="ids-tp">' + sub + '</small>' : '') + '</div>';
   };
   var ppl = function(v) { return (v === null || v === undefined) ? '—' : v.toLocaleString() + '人'; };
   var pt = function(v) { return (v || 0).toLocaleString(); };
@@ -9150,18 +9149,20 @@ function renderIdealSum() {
     box.innerHTML = h + '<div class="ids-mini" onclick="idsToggle()">新規B1 自分 <b>' + I.newFront + '</b>／チーム <b>' + I.newB1 + '</b>（自分を含む）・ユーザー <b>' + (I.newUser || 0) + '</b>　GSV <b>' + pt(I.gsv) + '</b>　コミッション <b>' + yen(I.comm.total) + '</b></div></div>';
     return;
   }
-  h += '<div class="ids-body"><div class="ids-bars">'
+  var lb9 = lbCalc(membersForMap('ideal'));
+  h += '<div class="ids-g">'
     + bar('自分のB1', I.newFront, C.newFront, ppl, '自分の直下の新規ビジネス') // v554
     + bar('チームのB1', I.newB1, C.newB1, ppl, '自分のB1を含む・ユーザー ' + (I.newUser || 0) + '人は数えない')
     + bar('チームGSV', I.gsv, C.gsv, pt, _idealFixSum() ? '固定PT込み' : '')
     + bar('S稼働', I.s, C.s, ppl)
     + bar('平均稼働人数', I.actN, C.actN, function(v) { return (v === null || v === undefined) ? '—' : (Math.round(v * 10) / 10).toLocaleString() + '人'; }, '1ハウディあたり') // v602: ％ではなく人数
-    + '</div><div class="ids-comm"><div class="ids-ct">コミッション<b>' + yen(I.comm.total) + '</b><small>現状 ' + yen(C.comm.total) + (I.comm.total - C.comm.total > 0 ? '（あと ' + yen(I.comm.total - C.comm.total) + '）' : '') + '</small></div>'
-    + '<div class="ids-cb">'
-    + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', (function() { var l9 = lbCalc(membersForMap('ideal')); return l9.rank >= 0 ? LB_DEF[l9.rank].t + '・第' + l9.n + '世代まで' + (l9.rate === 0.025 ? '（2.5%）' : '') : 'ゴールドから'; })()]].map(function(x) {
-      return '<div class="has-tp" onclick="idsTip(this)"><span><u>' + x[0] + '</u></span><b>' + yen(I.comm[x[1]]) + '</b><small class="ids-tp">' + x[2] + '</small><small>現状 ' + yen(C.comm[x[1]]) + '</small></div>';
-    }).join('') + '</div>' + _lbUpHtml(membersForMap('ideal')) + '</div></div>'
-    + '</div>'; // v641: 「長期目標から見た今月の目安」と下の説明書きはなし
+    // コミッション：大きい数字＋SB・BB・LBは1行（式は吹き出し）
+    + '<div class="ids-t ids-cm"><span>コミッション</span><b>' + yen(I.comm.total) + '</b><small>現状 ' + yen(C.comm.total) + '</small><div class="ids-cb">'
+    + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', lb9.rank >= 0 ? LB_DEF[lb9.rank].t + '・第' + lb9.n + '世代まで' + (lb9.rate === 0.025 ? '（2.5%）' : '') : 'ゴールドから']].map(function(x) {
+      return '<div class="has-tp" onclick="idsTip(this)"><u>' + x[0] + '</u> ' + yen(I.comm[x[1]]) + '<small class="ids-tp">' + x[2] + '<br>現状 ' + yen(C.comm[x[1]]) + '</small></div>';
+    }).join('') + '</div></div>'
+    + _lbUpHtml(membersForMap('ideal'))
+    + '</div></div>'; // v641: 「長期目標から見た今月の目安」と下の説明書きはなし
   box.innerHTML = h;
 }
 function idsTip(el) { // 説明の吹き出し（タップで開く・ほかを押すと閉じる）
@@ -9636,11 +9637,11 @@ function _lbUpHtml(members) {
   for (var r = now.rank + 1; r < LB_DEF.length; r++) {
     var c = lbCalc(ms, r), up = c.total - now.total;
     opts += '<option value="' + r + '"' + (r === sel ? ' selected' : '') + '>' + LB_DEF[r].t + '</option>';
-    rows += '<div class="ids-lbr' + (r === sel ? '' : ' off') + '" data-r="' + r + '"><div class="ids-lbk"><small>リーディング</small><b>' + yen(c.total) + '</b>' + (up > 0 ? '<em>＋' + yen(up) + '</em>' : '') + '</div></div>';
+    rows += '<div class="ids-lbr' + (r === sel ? '' : ' off') + '" data-r="' + r + '"><b>' + yen(c.total) + '</b>' + (up > 0 ? '<em>＋' + yen(up) + '</em>' : '') + '</div>';
   }
   if (!rows) return '';
-  return '<div class="ids-lbup"><div class="ids-lbh"><span>📈 タイトルが上がると</span><select onchange="lbUpSel(+this.value)">' + opts + '</select>'
-    + '<span class="ids-ib" onclick="lbUpInfo()" title="説明">i</span></div>' + rows + '</div>';
+  return '<div class="ids-t ids-lbup"><div class="ids-lbh"><span>タイトルが上がると</span><span class="ids-ib" onclick="lbUpInfo()" title="説明">i</span></div>'
+    + '<select onchange="lbUpSel(+this.value)">' + opts + '</select>' + rows + '<small>リーディング</small></div>';
 }
 function lbUpSel(r) {
   try { localStorage.setItem('gm_lbUpSel', LB_DEF[r].t); } catch (eLs) {}

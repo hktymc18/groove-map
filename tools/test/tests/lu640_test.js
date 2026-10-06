@@ -9,14 +9,14 @@ T.run(async () => {
   w.localStorage.removeItem('gm_lbUpSel');
   const box = w.document.createElement('div'); w.document.body.appendChild(box);
   box.innerHTML = w._lbUpHtml(ms);
-  const op = $$('.ids-lbh select option');
+  const op = $$('.ids-lbup select option');
   c('ゴールドより上のタイトルがリストで並ぶ', op.length === 6 && op[0].textContent === 'ラピス' && op[5].textContent === 'チームエリート');
-  c('最初は1つ上（ラピス）だけ表示', $$('.ids-lbr:not(.off)').length === 1 && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 1 && $('.ids-lbh select').value === '1');
+  c('最初は1つ上（ラピス）だけ表示', $$('.ids-lbr:not(.off)').length === 1 && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 1 && $('.ids-lbup select').value === '1');
   w.lbUpSel(4);
-  c('選ぶとそのタイトルだけ（ダイヤモンド）', $$('.ids-lbr:not(.off)').length === 1 && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 4 && $('.ids-lbh select').value === '4');
+  c('選ぶとそのタイトルだけ（ダイヤモンド）', $$('.ids-lbr:not(.off)').length === 1 && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 4 && $('.ids-lbup select').value === '4');
   box.innerHTML = w._lbUpHtml(ms);
-  c('選んだタイトルは描き直しても覚えている', $('.ids-lbh select').value === '4' && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 4);
-  c('金額は1つだけ（3,000P以上の額・あと必要のバーはなし）', $$('.ids-lbr:not(.off) .ids-lbk').length === 1 && $('.ids-lbup').textContent.indexOf('3,000P') < 0 && $('.ids-lbup').textContent.indexOf('あと必要') < 0 && !!$('.ids-lbup .ids-ib'));
+  c('選んだタイトルは描き直しても覚えている', $('.ids-lbup select').value === '4' && +$('.ids-lbr:not(.off)').getAttribute('data-r') === 4);
+  c('金額は1つだけ（3,000P以上の額・あと必要のバーはなし）', $$('.ids-lbr:not(.off) b').length === 1 && $('.ids-lbup').textContent.indexOf('3,000P') < 0 && $('.ids-lbup').textContent.indexOf('あと必要') < 0 && !!$('.ids-lbup .ids-ib'));
   w.lbUpInfo(); c('(i)で計算の説明', !!$('#uxInfo') && $('#uxInfo').textContent.indexOf('第1世代×10%') >= 0); w.uxInfoClose();
   box.remove();
   console.log('=== 説明はタップ／マウスで ===');
@@ -27,6 +27,7 @@ T.run(async () => {
   c('バーの下・SB/BB/LBの説明は吹き出しの中（最初は隠す・マウスで出す）', tp.length >= 5 && html.indexOf('.ids-card .ids-tp{display:none;') >= 0 && html.indexOf('@media (hover:hover){.ids-card .has-tp:hover .ids-tp{display:block}}') >= 0 && $$('#idealSum .ids-cb>div.has-tp').length === 3);
   const card = $$('#idealSum .ids-cb>div')[1]; w.idsTip(card);
   c('タップで吹き出し（BB：早見表）', card.classList.contains('tp-on') && card.querySelector('.ids-tp').textContent.indexOf('早見表') >= 0);
-  w.idsTip($$('#idealSum .ids-lb.has-tp')[0]); c('ほかを押すと前のは閉じる', !card.classList.contains('tp-on'));
+  w.idsTip($$('#idealSum .ids-t.has-tp')[0]); c('ほかを押すと前のは閉じる', !card.classList.contains('tp-on'));
+  c('1列のタイル（5つの数字＋コミッション＋タイトルが上がると）', $$('#idealSum .ids-g>.ids-t').length === 7 && !!$('#idealSum .ids-g>.ids-cm') && !!$('#idealSum .ids-g>.ids-lbup') && html.indexOf('.ids-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,1.6fr) minmax(0,1.4fr)') >= 0);
   c('「長期目標から見た今月の目安」と「カードをタップ〜」はなし', $('#idealSum').textContent.indexOf('長期目標から見た') < 0 && $('#idealSum').textContent.indexOf('カードをタップ') < 0);
 });
