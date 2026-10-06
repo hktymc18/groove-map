@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v659';
+var APP_JS_VERSION = 'v660';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v659';
+  var DATA_VERSION = 'v660';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5350,6 +5350,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v660', d:'2026-10-06', items:['🎮 PLANの入口のシミュレーションのタイルの文字を「B22シミュレーション」に'] },
   { v:'v659', d:'2026-10-06', items:['🗺 MAP：開いた時は「2段」が選ばれた状態に。「全段」が光るのは全段を押した時だけ（全段が光っているのに2段で出ていたのを直しました）','◎ スマホを横にすると、MAPの上に「◎ サークル」。押すとサークルMAPを画面いっぱいに（−／＋で拡大・丸を押すとその人）'] },
   { v:'v658', d:'2026-10-06', items:['⟲ 受付連携の「名簿から追加」：紹介者をたどって自分のMAPにつながらない人は「ほかのチームかも」として下にたたみ、最初はチェックしないように（同じユニオンの別チームの人を誤って追加しない）','紹介者もまだMAPにいない人は、紹介者にチェックを付けた時だけチェックが付きます（付いて見えるのに追加されない、をなくしました）'] },
   { v:'v657', d:'2026-10-06', items:['💴 BB早見表の表の数字を等幅に（金額の桁がそろって見やすく）'] },
@@ -16480,8 +16481,7 @@ function _p2HubData() {
     { k: 'ideal', c: 'rose', ic: '✨', lb: '理想', bd: _p2G().p1 ? '✓ 答えた' : '', st: _p2IdealSt() },
     { k: 'goal', c: 'gold', ic: '🏆', lb: '目標', bd: (p.title && p.deadline) ? '✓ 決めた' : '', st: (p.title && p.deadline) ? evEsc(p.title) + '<br>' + (inc ? '<em>月収' + inc + '万</em>・' : '') + evEsc(String(p.deadline).replace('-', '/')) : '目標を<br><em>つくる</em>' },
     // v652: 理想・目標の下にシミュレーション、その下にチェックと夢100
-    (function() { var c9 = _p2SimCfg(), n9 = c9.preset > 0 ? c9.preset : Math.max(c9.fronts[1] || 0, c9.fronts[2] || 0, 1), r9 = _p2SimFbF(c9.preset > 0 ? [0, n9, n9, 0] : c9.fronts, c9);
-      return { k: 'sim', c: 'gold', ic: '🎮', lb: 'シミュレーション', w: 1, st: 'ファーストボーナス <em>¥' + r9.fb.toLocaleString() + '</em><br>組織 ' + r9.org + '人（フロント ' + (c9.preset > 0 ? n9 + '人×2ヶ月' : 'カスタム') + '）' }; })(),
+    { k: 'sim', c: 'gold', ic: '🎮', lb: 'シミュレーション', w: 1, st: 'B22シミュレーション' }, // v660
     (function() { var ck9 = _p2CkCount(); return { k: 'ck', c: 'mint', ic: '☑️', lb: 'チェック', bd: ck9.done >= ck9.total ? '✓ 準備万端' : '', st: '<em>' + ck9.done + '</em> / ' + ck9.total + '<br>必須アイテム・TRAINING' }; })(),
     (function() { var dr9 = _p2G().dreams || []; return { k: 'dream', c: 'pur', ic: '🌈', lb: '夢100', st: dr9.length ? '<em>' + dr9.filter(function(d) { return d.done; }).length + '</em> / ' + dr9.length + ' 叶えた' : '夢を<br><em>書き出す</em>' }; })(),
     { k: 'rm', c: 'sky', ic: '🗺️', lb: 'ロードマップ', st: (!nx.isFinal && nx.title) ? '次の山 <em>' + evEsc(nx.title) + '</em>' + (nx.deadline ? '<br>' + evEsc(nx.deadline.replace('-', '/')) + 'まで' : '') : '年間のマイルストーン' },
