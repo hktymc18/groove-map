@@ -18825,7 +18825,7 @@ function _stRender() {
       + '<div class="st-gh">このアプリ</div><div class="st-ls"><div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">📣</span><span>お知らせ・更新内容<small>' + evEsc(RELEASE_NOTES[0].v + '（' + RELEASE_NOTES[0].d + '）' + (RELEASE_NOTES[0].items[0] || '')) + '</small></span>' + (hasUnseenNotes() ? '<em class="nw">NEW</em>' : '') + '<span class="ch">›</span></div>'
       + '<div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">ℹ</span><span>バージョン<small class="gm-saved">' + (window._gmSavedHM ? window._gmSavedHM + ' 保存済み' : '') + '</small></span><span style="flex:none;font-family:Inter,sans-serif;color:var(--text-mid)">' + evEsc(APP_JS_VERSION) + '</span></div></div>'
       + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
-      + (_fb && _fb.ok ? _stLi('🐞', 'バグ・要望', '', 'fbOpen()') : '')
+      + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望', '', 'fbOpen()') : '') // v667
       + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true)
       + (state.isEditor && !viewingOwnerUid ? _stLi(icn('trash'), '組織MAPをクリア', 'テストデータを消す時だけ（取り消せません）', 'clearMapData()', true) : '') + '</div>';
   } else if (_stPg === 'prof') {
