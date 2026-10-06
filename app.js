@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v656';
+var APP_JS_VERSION = 'v657';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v656';
+  var DATA_VERSION = 'v657';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5349,6 +5349,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v657', d:'2026-10-06', items:['💴 BB早見表の表の数字を等幅に（金額の桁がそろって見やすく）'] },
   { v:'v656', d:'2026-10-06', items:['🎮 シミュレーションの「今月の目標に入れる」で、フロント人数を理想MAPにも反映（自分の直下の新しいB1をその人数に。理想MAPが空なら現状MAPをコピーしてから）','👤 はじめてMAPを開いた人は、0段目にログインした人（アカウントの名前・地域）を自動で登録'] },
   { v:'v655', d:'2026-10-06', items:['ⓘ ファーストボーナスの内訳を閉じるボタンを「とじる」に'] },
   { v:'v654', d:'2026-10-06', items:['🎮 シミュレーションのファーストボーナス：ライトモードは明るい背景に。金額の文字を少し小さくして、8桁（¥12,345,678）でも1行に入るように'] },
@@ -20761,7 +20762,7 @@ function _p2BbTableHtml() {
   var near = 0; P2_BB_TABLE.forEach(function(r, i) { if (r[0] <= _p2BbG) near = i; });
   return '<div class="ux-sec" style="margin-top:18px">早見表（税抜・目安）</div><div class="p2bb-t"><div class="hd"><span>GSV</span><span>ブロック</span><span>BB</span></div>'
     + P2_BB_TABLE.map(function(r, i) { return '<div class="' + (i === near ? 'on' : '') + '" onclick="p2BbSet(' + r[0] + ')"><span>' + r[0].toLocaleString() + '</span><span>' + (r[0] / 500).toFixed(1) + '</span><b>¥' + r[1].toLocaleString() + '</b></div>'; }).join('')
-    + '</div><style>.p2bb-t{border-radius:14px;border:1px solid var(--border);overflow:hidden;background:var(--surface)}.p2bb-t>div{display:grid;grid-template-columns:1fr .8fr 1.3fr;padding:9px 14px;border-top:1px solid var(--border);font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif}.p2bb-t>div:first-child{border-top:none}'
+    + '</div><style>.p2bb-t{border-radius:14px;border:1px solid var(--border);overflow:hidden;background:var(--surface)}.p2bb-t>div{display:grid;grid-template-columns:1fr .8fr 1.3fr;padding:9px 14px;border-top:1px solid var(--border);font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}.p2bb-t>div:first-child{border-top:none}'
     + '.p2bb-t .hd{font-size:11.5px;color:var(--text-dim);font-weight:800;cursor:default;background:var(--surface2);font-family:inherit}.p2bb-t>div>*:nth-child(n+2){text-align:right}.p2bb-t b{color:var(--gold);font-weight:900}.p2bb-t .on{background:color-mix(in srgb,var(--gold) 14%,var(--surface))}</style>';
 }
 // ════ v601: データの中身も型に（⑥グラフ＋大きな数字＋数字3つ＋動かせる人 → ③その人の画面） ════
