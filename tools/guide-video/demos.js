@@ -86,6 +86,32 @@ const DEMOS = {
     await h.cap('任命された人は <b>研修受講カード</b> から研修生を登録できます', 3200); await h.closeModal();
     await h.cap('これで <b>準備OK</b>！ 次は「受付する人」のミッションへ', 2600);
   } },
+  set5: { role: R.setup, title: '⑤ 合同イベントを作る',
+    prep: p => pcPrep(p, Object.assign({ 'checkinUnions/ANTARES': { name: 'ANTARES' }, 'checkinUnions/BASE REVE': { name: 'BASE REVE' },
+      'checkinMembers/301': { no: '301', name: '森 ひかり', kana: 'もり ひかり', group: '森BD', union: 'BASE REVE', sex: 'f', cardToken: 'tok301tok301tok301tok301tok301to', cardSig: 'tok301' } },
+      { 'checkinEvents/evToday': { date: '2000-01-01', month: '2000-01', name: 'OLD', unions: ['ZZZ'] } })), run: async h => {
+    await h.cap('合同イベントは <b>主催ユニオンが1つだけ</b> 作ります。<br>相手のユニオンは 作らなくてOK！', 3400);
+    await h.tap('nav button[data-pane="pEvents"]');
+    await h.cap('<b>「＋ 新規イベント」</b> を押します', 1800); await h.tap('#btnAddEvent', 900);
+    await h.p.fill('#evDate', day(0)); await h.type('#evName', '合同ハウディ', 300);
+    const capTop = on => h.p.evaluate(on => { const c = document.getElementById('vcap'); c.style.top = on ? '64px' : ''; c.style.bottom = on ? 'auto' : ''; }, on);
+    await capTop(true);   // チェック欄はフォームの一番下にあるので、字幕を上に出して隠さない
+    await h.point('#evUnionsBox'); await h.cap('<b>「合同ユニオン」</b> で いっしょに開くユニオンに <b>全部チェック</b>', 2600);
+    await h.tap('#evU0', 900);
+    await h.cap('チェックしたユニオンの人の出席が <b>それぞれの集計・稼働率</b> に入ります', 3000);
+    await capTop(false);
+    await h.tap('#evSave', 1200);
+    await h.point('#evList .jointtag'); await h.cap('一覧に <b>「合同」</b> と出ます。<br>相手ユニオンの画面にも 同じイベントが出ます', 3400);
+    await h.cap('当日は それぞれのPCで <b>同じイベント</b> の「受付を開始」', 2600);
+    await h.tap('#evList button[data-a="rec"]', 1400);
+    await h.p.fill('#numIn', 'm:101:tok101'); await h.tap('#btnManual', 900);
+    await h.p.fill('#numIn', 'm:301:tok301'); await h.tap('#btnManual', 900);
+    await h.cap('相手ユニオンの人も <b>会員証のQR</b> でピッ！', 2600);
+    await h.point('#unionTallyTile'); await h.cap('<b>ユニオン別の人数</b> も出ます。<br>出席は1つにまとまるので 二重受付も防げます', 3600);
+    await h.cap('受付中に <b>「⚠ 合同ユニオンに入っていません」</b> と出たら チェック漏れ', 3000);
+    await h.tap('nav button[data-pane="pEvents"]', 600);
+    await h.point('#evList button[data-a="editev"]'); await h.cap('イベントの <b>「編集」</b> でチェックすればOK。<br>受付の あとからでも 集計に入ります', 4000);
+  } },
   // ── 🎫 受付する人 ──
   rec1: { role: R.rec, title: '① 受付を始める', prep: p => pcPrep(p), run: async h => {
     await h.cap('まずは <b>「受付」</b> タブを開きます'); await h.tap('nav button[data-pane="pKiosk"]');

@@ -14,7 +14,7 @@
 cd tools/guide-video
 python3 mkpage.py                      # 撮影用ページを www/ に作る（index.html を変えたら毎回）
 (cd www && python3 -m http.server 8899 &)
-node run.js                            # 全ミッション（25本）
+node run.js                            # 全ミッション（26本）
 node run.js rec1 tr1                   # 一部だけ
 ```
 - `CHROME=/path/to/chrome` でブラウザを指定できます
