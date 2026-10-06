@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v638';
+var APP_JS_VERSION = 'v639';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1072,12 +1072,7 @@ function renderPCMap(mapType) {
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
     g.appendChild(rect);
 
-    // 系列カラー左ボーダー
-    var lb=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    lb.setAttribute('x',rx); lb.setAttribute('y',ry2+3);
-    lb.setAttribute('width','4'); lb.setAttribute('height',NODE_H-6);
-    lb.setAttribute('rx','2'); lb.setAttribute('fill',col);
-    g.appendChild(lb);
+    // v639: 系列カラーの左ボーダーはやめた（枠と光り方だけ）
 
     function txt(x,y,content,fill,fs,fw,ff,anchor){
       var t=document.createElementNS('http://www.w3.org/2000/svg','text');
@@ -3876,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v638';
+  var DATA_VERSION = 'v639';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5353,6 +5348,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v639', d:'2026-10-06', items:['💻 PCのMAPのツリーカードの左の色の線をなくしました（枠と光り方はそのまま）'] },
   { v:'v638', d:'2026-10-06', items:['💻 PCのMAPのツリーカードをスマホと同じ並びに：1行目にタイトルの札＋名前、2行目に色付きの稼働の札とGSV（ラベルつき）。枠と光り方は今のまま'] },
   { v:'v637', d:'2026-10-06', items:['💎 PCのツリー・サークルなども、TE（チームエリート）の色をスマホと同じグレーに近い黒に（札の字は白）'] },
   { v:'v636', d:'2026-10-06', items:['💎 スマホのMAPで、TE（チームエリート）の色をグレーに近い黒に（Gの金と見分けやすく）'] },
