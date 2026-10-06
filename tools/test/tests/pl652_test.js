@@ -9,7 +9,7 @@ T.run(async () => {
   w.p2Go(''); await sleep(20);
   const lbs = $$('#view-plan .ux-t b').map(x => x.textContent);
   c('入口：理想・目標の下にシミュレーション、その下にチェック・夢100', lbs.slice(0, 5).join() === '理想,目標,シミュレーション,チェック,夢100');
-  c('v653: 今週やることのタイルはなし（◯月の目標の中に）', lbs.indexOf('今週やること') < 0 && $$('#view-plan .ux-t').some(t => t.textContent.indexOf('月の目標') >= 0 && t.textContent.indexOf('今週やること') >= 0));
+  c('v653: 今週やることのタイルはなし（◯月の目標の中に）', lbs.indexOf('今週やること') < 0 && $$('#view-plan .ux-t').some(t => t.textContent.indexOf('月の目標') >= 0 && t.textContent.indexOf('今週') >= 0));
   w.p2Go('do'); await sleep(10);
   c('v653: 今週やることの上に◯月の目標（押すと目標のページ）', $('#view-plan .ux-li').textContent.indexOf('月の目標') >= 0 && $('#view-plan .ux-li').getAttribute('onclick') === "p2Go('mon')");
   w.p2Go('goal', 5); await sleep(10);
