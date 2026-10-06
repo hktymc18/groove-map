@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v644';
+var APP_JS_VERSION = 'v645';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v644';
+  var DATA_VERSION = 'v645';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5348,6 +5348,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v645', d:'2026-10-06', items:['ⓘ 説明（i）を閉じるボタンを「わかった」から「楽勝!!」に'] },
   { v:'v644', d:'2026-10-06', items:['🎮 シミュレーションに「カスタム（月ごと）」：LOI・Q2・Q3・BRの月ごとにフロントの人数を決められます（LOIの月にフロントを出す形も。LOIの月に入った人はピンク）','👥 人数が多くて丸で描ききれない時は、段ごとの人数をバーと数字で表示します'] },
   { v:'v643', d:'2026-10-06', items:['🎮 シミュレーションを組織図で見えるように：自分を一番上に、入った人が丸でつながっていきます（色＝入った月）。LOI・Q2・Q3・BRの月を押すと、その月までの組織に','📊 組織人数・GSV・ファーストボーナスを大きく。フロント・1人がつなぐ人数・BPCポイント・ADP・LOIの月を変えるとその場で組織図も変わります（PCは左に組織図・右に入力）'] },
   { v:'v642', d:'2026-10-06', items:['📆 年別目標（スマホ）を作り直し：上が頂上（最終ゴール）、下が今の縦の道。1年ごとの月収を −／＋ で、タイトルはリストで。直すとその場で保存（「例に戻す」で元に戻せます）','⛰ 次の山（スマホ）：月収・タイトル・いつまでにを、そのページで直接決められるように（古い「目標をなおす」のシートはスマホでは出ません）。BRの前はファーストボーナスとBRになる月','🧹 「書き出し」（右下の✍️・PCのメモパッド・ツールの書き出し）をなくしました'] },
@@ -19614,7 +19615,7 @@ function uxInfo(k) {
   uxInfoClose();
   var ov = document.createElement('div'); ov.id = 'uxInfo';
   ov.onclick = function(e) { if (e.target === ov) uxInfoClose(); };
-  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">わかった</div></div>';
+  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">楽勝!!</div></div>';
   document.body.appendChild(ov);
 }
 function uxInfoClose() { var o = document.getElementById('uxInfo'); if (o) o.parentNode.removeChild(o); }
