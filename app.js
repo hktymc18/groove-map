@@ -17058,10 +17058,23 @@ function _ckPrep() {
     if (hit && hit.length === 1) { a.pid = hit[0].id; a.on = true; a.auto = true; }
     else if (!hit && hit2 && hit2.length === 1 && hit2[0] !== a) { a.pid = 'new:' + hit2[0].r.no; a.on = true; a.auto = true; }
   });
+  // v658: 紹介者をたどって自分のMAPにつながらない人は「ほかのチームかも」（最初はチェックしない・下にたたむ）
+  adds.forEach(function(a) { a.other = !_ckAddLinked(a, adds); if (!old[a.r.no] && a.other) a.on = false; });
   L.adds = adds;
   var oldF = {}; (L.fixes || []).forEach(function(f) { oldF[f.m.id] = f; });
   L.fixes = (L.items || []).filter(function(it) { return it.kind === 'linked' && it.r && _ckNorm(it.r.name) && _ckNorm(it.r.name) !== _ckNorm((it.m.lastName || '') + (it.m.firstName || '')); })
     .map(function(it) { var sim = _ckSim(it.r.name, _ckMapName(it.m)); return oldF[it.m.id] || { m: it.m, r: it.r, on: sim >= 0.5, far: sim < 0.5 }; });
+}
+function _ckAddByNo(adds, no) { for (var i = 0; i < adds.length; i++) if (adds[i].r.no === no) return adds[i]; return null; }
+function _ckAddLinked(a, adds, seen) { // 置き場所をたどると自分のMAPの人にたどり着くか
+  seen = seen || {}; if (!a || !a.pid || seen[a.r.no]) return false; seen[a.r.no] = 1;
+  if (a.pid.indexOf('new:') !== 0) return true;
+  return _ckAddLinked(_ckAddByNo(adds, a.pid.slice(4)), adds, seen);
+}
+function _ckAddEff(a, adds, seen) { // 実際に追加される（チェック＋紹介者もいっしょに追加される）
+  seen = seen || {}; if (!a || !a.on || !a.pid || seen[a.r.no]) return false; seen[a.r.no] = 1;
+  if (a.pid.indexOf('new:') !== 0) return true;
+  return _ckAddEff(_ckAddByNo(adds, a.pid.slice(4)), adds, seen);
 }
 function _ckTreeOpts(sel) {
   var own = _ckOwnMembers(), h = '<option value="">置き場所を選ぶ ▾</option>';
@@ -17089,15 +17102,19 @@ function ckPgRender() {
     if (nNone) body += '<div class="ux-sec">受付の名簿にいない ' + nNone + '人</div>' + (L.showNone ? items.map(function(it) { return it.kind === 'none' ? row(evEsc(_ckMapName(it.m)), '', '<span class="r d">名簿になし</span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showNone=1;ckPgRender()">見る ›</span>');
     next = '⟲ 取り込む（稼働率）'; nextOn = 'ckLinkApply()';
   } else if (i === 1) {
-    var adds = L.adds, on = adds.filter(function(a) { return a.on && a.pid; }).length;
-    body = '<div class="ux-sum"><b>' + adds.length + '<small> 人</small></b><span>受付の名簿にいて、MAPにまだいない人</span></div>';
-    body += adds.length ? adds.map(function(a, k) {
+    var adds = L.adds, on = adds.filter(function(a) { return _ckAddEff(a, adds); }).length, nOther = adds.filter(function(a) { return a.other; }).length;
+    var rowA = function(a, k) {
       var r = a.r, sx = r.sex === 'f' ? '女性' : (r.sex === 'm' ? '男性' : ''), sub = [r.referrer ? '紹介者：' + r.referrer : (r.group ? '系列：' + r.group : ''), sx, r.trainee ? '研修生' : '', r.grade === 'BR' ? 'BR' : ''].filter(Boolean).join('・');
-      var par = '';
-      if (a.pid) { if (a.pid.indexOf('new:') === 0) { var q = adds.filter(function(x) { return 'new:' + x.r.no === a.pid; })[0]; par = q ? evEsc(q.r.name) + 'の下（いっしょに追加）' : ''; } else { var pm = _ckOwnMembers().filter(function(m) { return m.id === a.pid; })[0]; par = pm ? evEsc(_ckMapName(pm)) + 'の下' : ''; } }
-      return '<div class="ckr"><span class="ckb' + (a.on && a.pid ? ' on' : '') + '" onclick="ckAddTgl(' + k + ')">✓</span><div class="nm"><b>' + evEsc(r.name) + '</b><small>' + evEsc(sub) + '</small></div>'
+      var par = '', eff = _ckAddEff(a, adds), wait = a.on && a.pid && !eff; // 紹介者にチェックが付いていない
+      if (a.pid) { if (a.pid.indexOf('new:') === 0) { var q = _ckAddByNo(adds, a.pid.slice(4)); par = q ? evEsc(q.r.name) + 'の下' + (wait ? '<br><span style="color:var(--gold)">（' + evEsc(q.r.name) + 'を追加すると一緒に）</span>' : '（いっしょに追加）') : ''; } else { var pm = _ckOwnMembers().filter(function(m) { return m.id === a.pid; })[0]; par = pm ? evEsc(_ckMapName(pm)) + 'の下' : ''; } }
+      return '<div class="ckr"><span class="ckb' + (eff ? ' on' : '') + '" onclick="ckAddTgl(' + k + ')">✓</span><div class="nm"><b>' + evEsc(r.name) + '</b><small>' + evEsc(sub) + '</small></div>'
         + (a.auto && a.pid ? '<span class="r" style="max-width:42%;font-size:12px">' + par + '</span>' : '<select class="ckp' + (a.pid ? ' ok' : '') + '" onchange="ckAddPid(' + k + ',this.value)">' + _ckTreeOpts(a.pid) + '</select>') + '</div>';
-    }).join('') : '<div class="ux-empty">名簿の人は全員MAPにいます 🎉</div>';
+    };
+    body = '<div class="ux-sum"><b>' + (adds.length - nOther) + '<small> 人</small></b><span>受付の名簿にいて、MAPにまだいない人' + (nOther ? '（ほかのチームかも ' + nOther + '人は下に）' : '') + '</span></div>';
+    body += adds.length ? adds.map(function(a, k) { return a.other ? '' : rowA(a, k); }).join('') : '<div class="ux-empty">名簿の人は全員MAPにいます 🎉</div>';
+    if (nOther) body += '<div class="ux-sec">ほかのチームかも ' + nOther + '人<span style="font-weight:600;font-size:11.5px;color:var(--text-dim);margin-left:6px">紹介者が自分のMAPにいない人</span></div>'
+      + (L.showOther ? adds.map(function(a, k) { return a.other ? rowA(a, k) : ''; }).join('') + '<div class="ux-hint">自分のチームの人だけ、置き場所を選んで追加してください</div>'
+        : '<span class="ckmore" onclick="_ckLink.showOther=1;ckPgRender()">表示する ›</span>');
     if (on) { next = '＋ ' + on + '人を追加する'; nextOn = 'ckAddApply()'; }
   } else {
     var fx = L.fixes, onF = fx.filter(function(f) { return f.on; }).length;
