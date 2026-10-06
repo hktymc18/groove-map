@@ -12135,6 +12135,10 @@ function _dtApplyTab() {
   for (var i = 0; i < ps.length; i++) ps[i].style.display = (!ez && ps[i].getAttribute('data-p') === _dtTab) ? '' : 'none';
   try { _dtPcxNav(); } catch (eNv) {} // v624
   try { _dtLfSync(); } catch (eLf) {} // v646
+  if (!ez && _dtTab === 'reg' && currentView === 'stats') { // v649: 地域タブは最初から「全体」の12ヶ月を出す（タブを覚えていて dtTab を通らない時も）
+    var rb = document.getElementById('regTrendBody');
+    if (rb && !rb.querySelector('svg') && rb.textContent.indexOf('読み込み中') < 0) { try { regTrendRender(); } catch (eRg) {} }
+  }
 }
 // ════ v646: スマホを横にしたら「推移」「地域」を画面いっぱいに ════
 var _dtLfSize = null;
