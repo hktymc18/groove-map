@@ -35,7 +35,7 @@ T.run(async () => {
   c('今週やること：今までのPCの一覧', $('.pcx-p').textContent.indexOf('今週やること') >= 0);
   console.log('=== ② データ ===');
   w._dtMode = 'ez'; w.switchView('stats'); await sleep(50);
-  c('左に入口のタイル＋くわしくの表のボタン', !!$('#dtPcNav') && $('#view-stats').classList.contains('pcx-st') && $$('#dtPcNav .pcx-t').length === 5 && $$('#dtPcNav .pcx-sm span').length === 5);
+  c('左に入口のタイル＋くわしくの表のボタン', !!$('#dtPcNav') && $('#view-stats').classList.contains('pcx-st') && $$('#dtPcNav .pcx-t').length === 4 && $$('#dtPcNav .pcx-sm span').length === 5);
   c('右にグラフと数字のページ', $('#dtEz').classList.contains('pcx-dp') && !!$('#dtEz .dtu-pg') && !!$('#dtEz .pcx-tb'));
   w.dtPcGo('s'); await sleep(20);
   c('S稼働へ切り替え', $('#dtEz h2').textContent === 'S稼働' && $$('#dtPcNav .pcx-t.on').length === 1);
