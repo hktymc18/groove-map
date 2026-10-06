@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v630';
+var APP_JS_VERSION = 'v631';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v630';
+  var DATA_VERSION = 'v631';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5344,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v631', d:'2026-10-06', items:['📱 スマホのメニューのタイルを PLAN・MAP・カレンダー・TODO・分析（データ）に。理想MAP・OL・メンバー・再アプローチは下のボタンから'] },
   { v:'v630', d:'2026-10-06', items:['💻 PC版のPLANを作り直し：左の大きなタイルをやめて上にタブ（サマリー・理想・目標・ロードマップ・今月の目標・今週やること・振り返り・ツール）','📋 新しく「サマリー」：目標月収・タイトル・スローガン・次の山・マイルストーン・年ごとの目標・理想の生活・やりたいこと／なりたい自分・今月の目標と今・今週やることを1画面で（スマホは入口の「📋 サマリー」から）','🏆 目標：ポップアップをやめて画面に直接。①最終ゴール → ②1年ごとの目標 → ③次の山の順に並べ、スローガンも同じページで','🎯 今月の目標（PC）：表で入力（数字を打って Enter で次の欄・今・あと・めやすも横に）'] },
   { v:'v629', d:'2026-10-06', items:['✨ PLANの「想い」を「理想」に作り直し：①理想の生活（20問）をページの中で1問ずつサクサク答える（答えた分は横／下の一覧にすぐ並び、押すとその分野だけ答え直せる）→ ひと区切り（理想の生活に必要な月収を「目標月収にする／今のまま」から選べる・今日はここまででもOK）→ ②やりたいこと／やりたくないこと → ③なりたい自分／なりたくない自分 → まとめ','✍️ やる理由・1年後・成功した毎日の作文と、夢100は「ツール」の中に移しました'] },
   { v:'v628', d:'2026-10-06', items:['PC版のPLANの一番上の目標・マイルストーンの帯をやめて、元の形に戻しました'] },
@@ -19086,14 +19087,20 @@ function renderMenuHub() {
       : (function() { var r = _p2DoRest(ym), t = _p2TodayLeft(); return (r ? '今週 <em>あと' + r + '件</em>' : '今週の分は予定ずみ ✓') + (t ? '・今日のタスク <em>' + t + '件</em>' : ''); })();
   } catch (e) {}
   var cnt = function(arr) { return (arr || []).filter(function(x) { return x && !x.deleted; }).length; };
+  // v631: タイルは PLAN・MAP・カレンダー・TODO・分析（データ）。理想MAP・OL・メンバー・再アプローチは下の小さいボタンへ
+  var td = evTodayYmd(), evN = 0, tkN = 0, S0 = null;
+  (state.events || []).forEach(function(e) { if (!e || e.deleted || e.date !== td) return; if (e.type === 'task') { if (!e.done) tkN++; } else evN++; });
+  try { S0 = _dtEzNow().S; } catch (eS) {}
   var T = [{ k: 'plan', c: 'mint', ic: icn('compass'), lb: 'PLAN', w: 1, wide: 1, next: nk !== 'do', st: planSt || '目標・計画・振り返り', on: 'switchView(\'plan\')' },
-    { k: 'ideal', c: 'pur', ic: icn('target'), lb: '理想MAP', st: 'ありたい組織図<br><em>' + cnt(state.idealMembers) + '人</em>', on: 'switchView(\'ideal\')' },
-    { k: 'ol', c: 'sky', ic: icn('clipboard'), lb: 'OL', st: 'フレッシュ・<br>アウトライン', on: 'switchView(\'ol\')' }];
-  if (!(typeof membersTabHidden === 'function' && membersTabHidden())) T.push({ k: 'members', c: 'gold', ic: icn('users'), lb: 'メンバー', st: '一覧・絞り込み<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'members\')' });
-  T.push({ k: 're', c: 'rose', ic: icn('refresh'), lb: '再アプローチ', st: '声をかけたい人' + ((_reapproach && _reapproach.length) ? '<br><em>' + _reapproach.length + '人</em>' : ''), on: 'reapOpen()' });
-  if (T.length % 2 === 0) T[T.length - 1].w = 1; // 縦2列で端数が出ないように
+    { k: 'map', c: 'sky', ic: icn('map'), lb: 'MAP', st: '組織図・メンバー<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'current\')' },
+    { k: 'cal', c: 'gold', ic: icn('calendar'), lb: 'カレンダー', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
+    { k: 'todo', c: 'pur', ic: icn('checksq'), lb: 'TODO', st: '今日のタスク<br><em>' + (tkN ? 'のこり' + tkN + '件' : 'なし') + '</em>', on: 'switchView(\'events\');setEventsMode(\'agenda\')' },
+    { k: 'stats', c: 'rose', ic: icn('chart'), lb: '分析', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' }];
   var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
-  var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')');
+  var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
+    + sb(icn('target') + ' 理想MAP', 'switchView(\'ideal\')') + sb(icn('clipboard') + ' OL', 'switchView(\'ol\')')
+    + (!(typeof membersTabHidden === 'function' && membersTabHidden()) ? sb(icn('users') + ' メンバー', 'switchView(\'members\')') : '')
+    + sb(icn('refresh') + ' 再アプローチ', 'reapOpen()', (_reapproach && _reapproach.length) || '');
   if (currentUser && currentUser.union) S += sb(icn('calendar') + ' ユニオン予定', 'openUnionListSheet()');
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
