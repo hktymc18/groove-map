@@ -60,6 +60,11 @@ T.run(async () => {
   c('v633: カレンダーの「‹ 戻る」はメニューへ', w.currentView === 'menu');
   w.switchView('events'); w.setEventsMode('agenda'); await sleep(30); w.cvBack(); await sleep(20);
   c('ToDoの「‹ 戻る」もメニューへ', w.currentView === 'menu');
+  w.switchView('events'); w.setEventsMode('calendar'); await sleep(30);
+  c('v634: カレンダーの左下はHOMEのマーク', !!$('#evCalendar .cv-bk svg') && $('#evCalendar .cv-bk').textContent.indexOf('戻る') < 0);
+  $('#evCalendar .cv-bk').onclick(); await sleep(20);
+  c('押すとHOME（メニュー）へ', w.currentView === 'menu' && $('#view-menu h1').textContent === 'HOME');
+  c('左下のボタンもHOME', $('#uxMenuBk').textContent.indexOf('HOME') >= 0);
   setWH(1400, 900); w._uxSync();
   c('PCは今まで通り（タブバーの指定なし）', !w.document.body.classList.contains('ux-nt'));
   setWH(390, 844); w._uxSync();

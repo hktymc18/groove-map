@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v633';
+var APP_JS_VERSION = 'v634';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v633';
+  var DATA_VERSION = 'v634';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v634', d:'2026-10-06', items:['🏠 スマホの「メニュー」の名前を「HOME」に。左下のボタンも「HOME」に','📅 カレンダー・ToDoの左下の「‹ 戻る」をHOMEのマークに（押すとHOMEへ）'] },
   { v:'v633', d:'2026-10-06', items:['📅 カレンダー・ToDoの「‹ 戻る」でメニューに戻るように（スマホ）','👥 スマホのメニューから「メンバー」をなくしました（MAPの一覧と同じ内容のため）'] },
   { v:'v632', d:'2026-10-06', items:['📱 スマホの下のタブバー（MAP・予定・データ・メニュー）をなくしました。メニューのタイルから入り、どの画面も左下の「‹ メニュー」で戻れます（MAPは下の帯の中・カレンダーは今までどおり「‹ 戻る」）','上の「‹ メニューにもどる」の帯もなくして、左下に一本化しました'] },
   { v:'v631', d:'2026-10-06', items:['📱 スマホのメニューのタイルを PLAN・MAP・カレンダー・TODO・分析（データ）に。理想MAP・OL・メンバー・再アプローチは下のボタンから'] },
@@ -16703,7 +16704,7 @@ function _mxBtm(mapType) {
   var cur = mapType === 'current', ed = state.isEditor, last = '';
   try { last = localStorage.getItem('gm_ckLast_' + ((currentUser && currentUser.uid) || '')) || ''; } catch (e) {}
   b.style.bottom = (tb && tb.offsetHeight ? tb.offsetHeight : 0) + 'px'; // v632: タブバーがない時は画面の一番下
-  b.innerHTML = (_uxLand() ? '' : '<span class="bk mn" onclick="switchView(\'menu\')">‹ メニュー</span>') + (ed ? '<span class="bk" onclick="onFabClick()">＋ 追加</span>' : '')
+  b.innerHTML = (_uxLand() ? '' : '<span class="bk mn" onclick="switchView(\'menu\')">' + icn('home') + ' HOME</span>') + (ed ? '<span class="bk" onclick="onFabClick()">＋ 追加</span>' : '')
     + (cur ? (viewingOwnerUid ? '' : '<span class="nx" onclick="ckLinkOpen()">⟲ 受付連携' + (last ? '<small>前回 ' + evEsc(last) + '</small>' : '') + '</span>')
       : '<span class="nx pu" onclick="uxMapIdealSum()">理想 vs 現状</span>');
 }
@@ -17246,7 +17247,7 @@ function _cvDecorate() {
     if (bt && !bt.classList.contains('cv-b')) {
       bt.classList.add('cv-b');
       var seg = [['cal', '月', "setEventsMode('calendar')"], ['week', '週', "setEventsMode('week')"], ['day', '日', "setEventsMode('day')"], ['agenda', 'ToDo', "setEventsMode('agenda')"]];
-      bt.innerHTML = '<div class="cv-bk" onclick="cvBack()">‹ 戻る</div>'
+      bt.innerHTML = '<div class="cv-bk" onclick="cvHome()" title="HOME">' + icn('home') + '</div>' // v634: 戻る→HOMEのマーク
         + '<div class="cv-seg">' + seg.map(function(s) { return '<span class="' + (s[0] === p[1] ? 'on' : '') + '" onclick="' + s[2] + '">' + s[1] + (s[0] === 'agenda' ? '<i class="bb-badge" style="display:none"></i>' : '') + '</span>'; }).join('') + '</div>'
         + '<div class="cv-add" onclick="cvAdd(\'' + p[1] + '\')">' + (p[1] === 'agenda' ? '＋ ToDo' : '＋ 予定') + '</div>';
       try { updateEventsBadge(); } catch (e) {}
@@ -17259,6 +17260,7 @@ function _cvDecorate() {
     if (g && g.nextSibling) cal.insertBefore(d, g.nextSibling); else cal.appendChild(d);
   }
 }
+function cvHome() { switchView(isPCMode() ? 'home' : 'menu'); } // v634: カレンダー・ToDoの左下＝HOME（メニュー）へ
 function cvBack() {
   if (_evMode === 'agenda') { if (_dpAll && (!_todoNav || _todoNav.type === 'home')) { dpAllTasks(false); return; } todoHdrBack(); return; }
   if (_evMode === 'calendar' && _cvSplitOn && !_uxLand()) { cvSplit(false); return; }
@@ -18509,7 +18511,7 @@ function _rpRender() {
   _uxCss(); _ux2Css(); _tdyCss(); _efCss();
   var L = (_reapproach || []).map(function(r, i) { return { r: r, i: i, d: _rpDays(r) }; }).sort(function(a, b) { return b.d - a.d; });
   var hot = L.filter(function(x) { return x.d >= 90; }), cold = L.filter(function(x) { return x.d < 90; });
-  var h = '<div class="ux-top"><span class="ux-crumb" onclick="reapClose()">メニュー › <b>再アプローチ</b></span><span class="ux-home" onclick="reapClose()" title="閉じる">✕</span></div>'
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="reapClose()">HOME › <b>再アプローチ</b></span><span class="ux-home" onclick="reapClose()" title="閉じる">✕</span></div>'
     + '<h2 class="ux-h2">再アプローチ</h2><div class="ux-sub">研修で「流れた」人が自動で入ります。90日たったら声をかける時期</div>';
   if (_rpAdd) {
     var q = String(_rpAdd.q || '').replace(/\s/g, ''), all = (state.members || []).filter(function(m) { return !m.deleted && (!q || ((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0); }).slice(0, 20);
@@ -18567,7 +18569,7 @@ function _stRender() {
   var u = currentUser || {}, h = '', light = document.body.classList.contains('light');
   var pushOn = ('Notification' in window) && Notification.permission === 'granted'; try { if (localStorage.getItem('gm_pushOff') === '1') pushOn = false; } catch (e) {}
   var crumb = { prof: 'プロフィール', look: '見た目', ntf: '通知' }[_stPg];
-  h += '<div class="ux-top"><span class="ux-crumb" onclick="' + (_stPg ? 'setOpen()' : 'setClose()') + '">' + (_stPg ? '設定 › <b>' + crumb + '</b>' : 'メニュー › <b>設定</b>') + '</span><span class="ux-home" onclick="setClose()" title="閉じる">✕</span></div>';
+  h += '<div class="ux-top"><span class="ux-crumb" onclick="' + (_stPg ? 'setOpen()' : 'setClose()') + '">' + (_stPg ? '設定 › <b>' + crumb + '</b>' : 'HOME › <b>設定</b>') + '</span><span class="ux-home" onclick="setClose()" title="閉じる">✕</span></div>';
   if (!_stPg) {
     h += '<h2 class="ux-h2">設定</h2>'
       + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
@@ -19049,12 +19051,13 @@ function _uxNavBk() {
       + "body.ux-nt:not(.ux-land) #mxBtm{padding-bottom:calc(env(safe-area-inset-bottom) + 8px)}#mxBtm .bk.mn{flex:0 0 auto!important;width:auto!important;padding:0 13px;color:var(--text-mid)}"
       + "#uxMenuBk{display:none}body.ux-nt:not(.ux-land):not(.ux-pg):not(.ux-mx):not(.olh-on):not(.cal-fs):not(.ck-pg) #uxMenuBk{display:flex}"
       + "body[data-v=menu] #uxMenuBk,body[data-v=events] #uxMenuBk{display:none!important}"
+      + "#uxMenuBk .lic,#mxBtm .mn .lic{width:18px;height:18px;margin-right:6px}.cv-bk .lic{width:22px;height:22px}"
       + "#uxMenuBk{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:44;height:48px;padding:0 16px;border-radius:15px;align-items:center;font-size:15px;font-weight:900;color:var(--text);background:var(--surface);border:1.5px solid var(--border2);box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}"
       + "body.ux-nt:not(.ux-land) .fab{bottom:calc(env(safe-area-inset-bottom) + 14px)}body.ux-nt:not(.ux-land):not(.ux-pg) .scroll-area{padding-bottom:calc(env(safe-area-inset-bottom) + 76px)}";
     document.head.appendChild(st);
   }
   if (!document.getElementById('uxMenuBk')) {
-    var el = document.createElement('div'); el.id = 'uxMenuBk'; el.textContent = '‹ メニュー';
+    var el = document.createElement('div'); el.id = 'uxMenuBk'; el.innerHTML = icn('home') + ' HOME'; // v634: メニュー→HOME
     el.onclick = function() { switchView('menu'); };
     document.body.appendChild(el);
   }
@@ -19129,7 +19132,7 @@ function renderMenuHub() {
   if (_fb && _fb.ok) S += sb('🐞 バグ・要望', 'fbOpen()', _fb.newN || '');
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
-  v.innerHTML = '<div class="ux-hub"><div class="ux-hd"><h1>メニュー</h1><span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
+  v.innerHTML = '<div class="ux-hub"><div class="ux-hd"><h1>HOME</h1><span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
     + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
     + '<div class="ux-sm">' + S + '</div></div>';
 }
