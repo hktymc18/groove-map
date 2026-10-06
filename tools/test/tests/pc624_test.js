@@ -48,6 +48,7 @@ T.run(async () => {
   const tl = $$('#view-menu .ux-t b').map(x => x.textContent);
   c('v631: メニューのタイルは PLAN・MAP・カレンダー・TODO・分析', JSON.stringify(tl) === JSON.stringify(['PLAN', 'MAP', 'カレンダー', 'TODO', '分析']), JSON.stringify(tl));
   c('理想MAP・OL・再アプローチは下のボタンに', ['理想MAP', 'OL', '再アプローチ'].every(t => $('#view-menu .ux-sm').textContent.indexOf(t) >= 0));
+  c('v633: メンバーのボタンはなし', $('#view-menu .ux-sm').textContent.indexOf('メンバー') < 0);
   $$('#view-menu .ux-t')[4].click(); await sleep(30);
   c('分析＝データタブ', w.currentView === 'stats');
   c('v632: スマホは下のタブバーなし・左下に「‹ メニュー」', w.document.body.classList.contains('ux-nt') && !!$('#uxMenuBk') && w.document.getElementById('uxNavCss').textContent.indexOf('.mobile-tabbar') >= 0 && w.document.body.getAttribute('data-v') === 'stats');
@@ -55,6 +56,10 @@ T.run(async () => {
   c('「‹ メニュー」でメニューへ', w.currentView === 'menu');
   w.switchView('current'); await sleep(30);
   c('MAPは下の帯の中に「‹ メニュー」', !!$('#mxBtm .bk.mn'));
+  w.switchView('events'); w.setEventsMode('calendar'); await sleep(30); w.cvBack(); await sleep(20);
+  c('v633: カレンダーの「‹ 戻る」はメニューへ', w.currentView === 'menu');
+  w.switchView('events'); w.setEventsMode('agenda'); await sleep(30); w.cvBack(); await sleep(20);
+  c('ToDoの「‹ 戻る」もメニューへ', w.currentView === 'menu');
   setWH(1400, 900); w._uxSync();
   c('PCは今まで通り（タブバーの指定なし）', !w.document.body.classList.contains('ux-nt'));
   setWH(390, 844); w._uxSync();
