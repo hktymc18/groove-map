@@ -2019,6 +2019,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     if (!isPrint) {
       g.addEventListener('click', function(ev) {
         ev.stopPropagation();
+        if (opts.screen && !/^AG\d+_/.test(m.id) && typeof mxTap === 'function') { mxTap(m.id); return; } // v663: スマホ横のサークルMAPは丸を押すとその人の画面（くわしく）
         if (/^MG_/.test(m.id)) { if (typeof mgNodeClick === 'function') mgNodeClick(m.id); }
         else if (/^AG\d+_/.test(m.id)) { /* 合算表示は閲覧のみ */ }
         else if (state.isEditor && typeof openEdit === 'function') openEdit(m.id);
@@ -17223,7 +17224,7 @@ function ppOpen(id, map) {
   _ppRender();
 }
 function _ppFind(id, map) { var arr = map === 'ideal' ? (state.idealMembers || []) : (state.members || []); for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
-function ppClose() { var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null; }
+function ppClose() { var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null;  if (document.getElementById('mxOrbit') && typeof mxOrbitRender === 'function') setTimeout(mxOrbitRender, 0); } // v663: サークルMAPを開いていたら描き直す
 function ppGo(pg) { if (!_pp) return; _pp.pg = pg || ''; _ttlOpen = ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
 function ppGoI(i) { var L = _pp && _pp.map === 'ideal' ? PP_PG_I : PP_PG; if (L[i]) ppGo(L[i][0]); }
 function ppNext(d) { // 左右スワイプ：入口ではMAPの次の人、ページでは次のページ
