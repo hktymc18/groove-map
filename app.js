@@ -20761,7 +20761,7 @@ function _p2BbTableHtml() {
   var near = 0; P2_BB_TABLE.forEach(function(r, i) { if (r[0] <= _p2BbG) near = i; });
   return '<div class="ux-sec" style="margin-top:18px">早見表（税抜・目安）</div><div class="p2bb-t"><div class="hd"><span>GSV</span><span>ブロック</span><span>BB</span></div>'
     + P2_BB_TABLE.map(function(r, i) { return '<div class="' + (i === near ? 'on' : '') + '" onclick="p2BbSet(' + r[0] + ')"><span>' + r[0].toLocaleString() + '</span><span>' + (r[0] / 500).toFixed(1) + '</span><b>¥' + r[1].toLocaleString() + '</b></div>'; }).join('')
-    + '</div><style>.p2bb-t{border-radius:14px;border:1px solid var(--border);overflow:hidden;background:var(--surface)}.p2bb-t>div{display:grid;grid-template-columns:1fr .8fr 1.3fr;padding:9px 14px;border-top:1px solid var(--border);font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif}.p2bb-t>div:first-child{border-top:none}'
+    + '</div><style>.p2bb-t{border-radius:14px;border:1px solid var(--border);overflow:hidden;background:var(--surface)}.p2bb-t>div{display:grid;grid-template-columns:1fr .8fr 1.3fr;padding:9px 14px;border-top:1px solid var(--border);font-size:14px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}.p2bb-t>div:first-child{border-top:none}'
     + '.p2bb-t .hd{font-size:11.5px;color:var(--text-dim);font-weight:800;cursor:default;background:var(--surface2);font-family:inherit}.p2bb-t>div>*:nth-child(n+2){text-align:right}.p2bb-t b{color:var(--gold);font-weight:900}.p2bb-t .on{background:color-mix(in srgb,var(--gold) 14%,var(--surface))}</style>';
 }
 // ════ v601: データの中身も型に（⑥グラフ＋大きな数字＋数字3つ＋動かせる人 → ③その人の画面） ════
