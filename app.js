@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v632';
+var APP_JS_VERSION = 'v633';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v632';
+  var DATA_VERSION = 'v633';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v633', d:'2026-10-06', items:['📅 カレンダー・ToDoの「‹ 戻る」でメニューに戻るように（スマホ）','👥 スマホのメニューから「メンバー」をなくしました（MAPの一覧と同じ内容のため）'] },
   { v:'v632', d:'2026-10-06', items:['📱 スマホの下のタブバー（MAP・予定・データ・メニュー）をなくしました。メニューのタイルから入り、どの画面も左下の「‹ メニュー」で戻れます（MAPは下の帯の中・カレンダーは今までどおり「‹ 戻る」）','上の「‹ メニューにもどる」の帯もなくして、左下に一本化しました'] },
   { v:'v631', d:'2026-10-06', items:['📱 スマホのメニューのタイルを PLAN・MAP・カレンダー・TODO・分析（データ）に。理想MAP・OL・メンバー・再アプローチは下のボタンから'] },
   { v:'v630', d:'2026-10-06', items:['💻 PC版のPLANを作り直し：左の大きなタイルをやめて上にタブ（サマリー・理想・目標・ロードマップ・今月の目標・今週やること・振り返り・ツール）','📋 新しく「サマリー」：目標月収・タイトル・スローガン・次の山・マイルストーン・年ごとの目標・理想の生活・やりたいこと／なりたい自分・今月の目標と今・今週やることを1画面で（スマホは入口の「📋 サマリー」から）','🏆 目標：ポップアップをやめて画面に直接。①最終ゴール → ②1年ごとの目標 → ③次の山の順に並べ、スローガンも同じページで','🎯 今月の目標（PC）：表で入力（数字を打って Enter で次の欄・今・あと・めやすも横に）'] },
@@ -17261,7 +17262,7 @@ function _cvDecorate() {
 function cvBack() {
   if (_evMode === 'agenda') { if (_dpAll && (!_todoNav || _todoNav.type === 'home')) { dpAllTasks(false); return; } todoHdrBack(); return; }
   if (_evMode === 'calendar' && _cvSplitOn && !_uxLand()) { cvSplit(false); return; }
-  switchView('home');
+  switchView(isPCMode() ? 'home' : 'menu'); // v633: スマホはメニューへ戻る
 }
 function cvAdd(k) {
   if (k === 'agenda') { if (_dpOn()) { dpFocus(); return; } openTaskQuickSheet(); return; } // v616: 手帳は空いた行に書く
@@ -18570,7 +18571,7 @@ function _stRender() {
   if (!_stPg) {
     h += '<h2 class="ux-h2">設定</h2>'
       + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
-      + _stLi('🎨', '見た目', (light ? 'ライト' : 'ダーク') + '・メンバータブ ' + (membersTabHidden() ? '非表示' : '表示'), "setOpen('look')")
+      + _stLi('🎨', '見た目', light ? 'ライト' : 'ダーク', "setOpen('look')")
       + _stLi(icn('bell'), '通知', pushOn ? 'オン' : 'オフ', "setOpen('ntf')") + '</div>'
       + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', '週の始まり・スクロール・予定の帯・Google連携', 'openCalSettings()') + '</div>'
       + '<div class="st-gh">MAP・データ</div><div class="st-ls">' + (state.isEditor && !viewingOwnerUid ? _stLi('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
@@ -18594,7 +18595,7 @@ function _stRender() {
       + '<div class="ux-btm"><span class="ux-bk" onclick="setOpen()">‹ 戻る</span><span class="ux-nx" onclick="stSaveProf()">✓ 保存</span></div>';
   } else if (_stPg === 'look') {
     h += '<h2 class="ux-h2">見た目</h2><div class="ppl">テーマ</div><div class="ppb sm" style="--n:2"><span class="' + (!light ? 'on' : '') + '" onclick="setTheme(\'dark\');_stRender()">🌙 ダーク</span><span class="' + (light ? 'on' : '') + '" onclick="setTheme(\'light\');_stRender()">☀ ライト</span></div>'
-      + '<div class="ppl">メンバータブ（MAPと同じ内容の一覧）</div><div class="ppb sm" style="--n:2"><span class="' + (!membersTabHidden() ? 'on' : '') + '" onclick="setMembersTabVisible(true);_stRender()">表示</span><span class="' + (membersTabHidden() ? 'on' : '') + '" onclick="setMembersTabVisible(false);_stRender()">非表示</span></div>';
+      ; // v633: メンバーの一覧はMAPと同じ内容なので、スマホのメニューからは外した（表示/非表示の切り替えもなし）
   } else if (_stPg === 'ntf') {
     var den = ('Notification' in window) && Notification.permission === 'denied';
     h += '<h2 class="ux-h2">通知</h2><div class="ux-sub">予定・タスクの時刻にこの端末へ通知します</div>'
@@ -19121,7 +19122,6 @@ function renderMenuHub() {
   var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
     + sb(icn('target') + ' 理想MAP', 'switchView(\'ideal\')') + sb(icn('clipboard') + ' OL', 'switchView(\'ol\')')
-    + (!(typeof membersTabHidden === 'function' && membersTabHidden()) ? sb(icn('users') + ' メンバー', 'switchView(\'members\')') : '')
     + sb(icn('refresh') + ' 再アプローチ', 'reapOpen()', (_reapproach && _reapproach.length) || '');
   if (currentUser && currentUser.union) S += sb(icn('calendar') + ' ユニオン予定', 'openUnionListSheet()');
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
@@ -29735,7 +29735,7 @@ function todoNavTo(type, id) {
 // v321: 全画面ToDoヘッダーの左ボタン（リスト内＝‹一覧へ／一覧＝✕メニューへ）
 function todoHdrBack() {
   if (_todoNav && _todoNav.type !== 'home') { todoNavTo('home'); return; }
-  switchView('home');
+  switchView(isPCMode() ? 'home' : 'menu'); // v633: スマホはメニューへ戻る
 }
 // v321: リスト内のその場即追加（今見ているリスト/ラベル/星付き/次の7日間に合わせた初期値）
 function _todoQuickBase() {
