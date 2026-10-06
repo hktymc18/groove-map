@@ -11,6 +11,13 @@ T.run(async () => {
   c('左に入口のタイル（5つ）＋振り返り・ツール', !!$('.pcx') && $$('.pcx-n .pcx-t').length === 5 && $('.pcx-n').textContent.indexOf('振り返り') >= 0);
   c('最初から右にページ（選んだタイルが光る）', $$('.pcx-n .pcx-t.on').length === 1 && !!$('.pcx-p .pcx-h'));
   c('スマホ用の下の帯・上の帯の形は使わない', !w.document.body.classList.contains('ux-pg') && !w.document.body.classList.contains('ux-hub'));
+  console.log('=== v627: 一番上に目標とマイルストーン ===');
+  w.localStorage.removeItem('gm_p2Top'); w.state.goals.plan.income = 3410000; w.state.goals.plan.title = 'チームエリート'; w.state.goals.plan.deadline = '2027-12'; w._p2().motto = 'やる時はいましかない'; w.renderPlan(); await sleep(10);
+  c('最初はたたんだ形：目標の1行＋マイルストーン', !!$('.pcx-top .pcx-gb') && $('.pcx-gb').textContent.indexOf('341') >= 0 && $('.pcx-gb').textContent.indexOf('やる時はいましかない') >= 0 && $('.pcx-top').textContent.indexOf('マイルストーン') >= 0);
+  w.p2TopTgl(); await sleep(10);
+  c('ひらく：大きな目標＋マイルストーン（たたむボタン）', !$('.pcx-gb') && !!$('.pcx-top .p2h-fold') && $('.pcx-top').textContent.indexOf('マイルストーン') >= 0 && w.localStorage.getItem('gm_p2Top') === 'open');
+  w.p2TopTgl(); await sleep(10);
+  c('たたむと戻る', !!$('.pcx-gb'));
   w.p2Go('mon'); await sleep(20);
   const n = w._p2MonPages().length;
   c('10月の目標：1項目ずつ→全部をカードで1画面に', $$('.pcx-p .pcx-c').length === n && $('.pcx-p').textContent.indexOf('今月（10月）') >= 0);
