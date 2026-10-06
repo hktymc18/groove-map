@@ -2709,13 +2709,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2-banner{position:fixed;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:485;background:#7f1d1d;color:#fecaca;font-size:12.5px;font-weight:700;text-align:center;padding:11px 14px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.45);border:1px solid rgba(254,202,202,.35);cursor:pointer;display:none;animation:p2bIn .35s ease}
 @keyframes p2bIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(min-width:768px) and (min-height:501px){.p2-banner{left:auto;right:24px;bottom:24px;max-width:340px}}
-.p2-fab{position:fixed;right:16px;bottom:158px;width:52px;height:52px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:23px;z-index:496;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-@media(min-width:768px) and (min-height:501px){.p2-fab{bottom:26px;right:88px}}
-.p2-ink{position:fixed;inset:0;z-index:645;background:var(--bg);display:none;flex-direction:column;padding:16px}
-.p2-ink.show{display:flex}
-.p2-ink textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:16px;line-height:2;resize:none;font-family:inherit;margin-top:10px}
-.p2-inbrow{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px dashed var(--border);font-size:12.5px}
-.p2-inbrow:last-child{border-bottom:none}
 .p2-ib{flex:none;font-size:11px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;color:var(--text-mid)}
 /* ── v474 GOALスイート（ウィザード/シミュ/夢100/チェック/BB表） ── */
 .gw2-body{padding:4px 16px 12px;min-height:300px}
@@ -2806,13 +2799,6 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2rm-mini .ml{font-size:10px;color:var(--text-dim);font-weight:700}
 .p2rm-mini .mf{font-size:14px;font-weight:800;color:var(--accent)}
 /* v481: PC浮きメモパッド */
-.p2pad{position:fixed;right:24px;bottom:92px;width:340px;max-height:70vh;background:var(--surface);border:1px solid var(--border2);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.5);z-index:640;display:none;flex-direction:column;overflow:hidden}
-.p2pad.show{display:flex}
-.p2pad-hd{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border)}
-.p2pad-tab{flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--text-dim);border:1px solid var(--border);border-radius:9px;padding:6px;cursor:pointer}
-.p2pad-tab.on{border-color:var(--accent);color:var(--accent);background:rgba(44,229,184,.08)}
-.p2pad-bd{padding:10px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
-.p2pad textarea{min-height:170px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:10px;font-size:13.5px;outline:none;resize:vertical}
 /* v478: 夢100 大画面レイアウト＋入力分離 */
 .p2dr-addbtn{display:block;text-align:center;background:var(--accent);color:#04211a;font-weight:800;border-radius:12px;padding:12px;cursor:pointer;margin:10px 0}
 @media(min-width:768px) and (min-height:501px){
@@ -2962,7 +2948,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v641</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v642</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3907,7 +3893,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v641';</script>
-<script src="app.js?v=v641"></script>
+<script>window.GM_EXPECT_JS='v642';</script>
+<script src="app.js?v=v642"></script>
 </body>
 </html>
