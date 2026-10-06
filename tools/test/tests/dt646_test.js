@@ -22,6 +22,12 @@ T.run(async () => {
   c('くわしく›でS稼働のページ（あと一歩の人など）', w._dtMode === 'ez' && w._dtPg === 's' && $('#dtEz').textContent.indexOf('あと一歩') >= 0 && $('.ux-crumb').textContent.indexOf('分析') >= 0);
   w.dtGo(''); await sleep(20);
   c('戻ると推移', w._dtMode === 'full' && w._dtTab === 'trend' && !$('#view-stats .ux-hub') && $('#dtEz').style.display === 'none' && !w.document.body.classList.contains('ux-pg'));
+  w.dtTab('reg'); w.switchView('menu'); w.localStorage.setItem('gm_dtTab', 'reg'); w._dtTab = 'reg';
+  const rb0 = w.document.getElementById('regTrendBody'); rb0.innerHTML = '<div>地域を選ぶと…</div>';
+  let calls = 0; const rr = w.regTrendRender; w.regTrendRender = function() { calls++; };
+  w.switchView('stats'); w.renderStats(); await sleep(20); w.regTrendRender = rr;
+  c('v649: 地域タブを覚えたまま開いても「全体」の推移を描く', calls >= 1);
+  w.dtTab('trend');
   console.log('=== 横向き ===');
   setWH(844, 390); w._uxSync && w._uxSync(); w.dispatchEvent(new w.Event('resize')); w.dtTab('trend'); await sleep(40);
   c('横の推移は画面いっぱい（小さな帯・タイルは隠す）', w.document.body.classList.contains('dt-lf') && !!$('#dtLfBar') && $('#dtLfBar').textContent.indexOf('地域') >= 0);
