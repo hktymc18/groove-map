@@ -19645,9 +19645,9 @@ function _uxMenuCss() {
     + "body.ux-land .ux-sm{display:flex;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:6px}body.ux-land .ux-sm::-webkit-scrollbar{display:none}body.ux-land .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px;overflow:visible}"
     + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#2a1a00;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
     + "body.ux-land #view-menu .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
-    + "#view-menu .hm-hd{display:flex;align-items:center;gap:12px}#view-menu .hm-hd h1{margin:0}.hm-logo{height:38px;width:auto;flex:none;display:block}.hm-logo.w{display:none}body:not(.light) .hm-logo.w{display:block}body:not(.light) .hm-logo.d{display:none}"
-    + "#view-menu .hm-hd .hm-logo+h1{padding-left:12px;border-left:1.5px solid var(--border2)}body.ux-land .hm-logo{height:30px}"
-    + ".hm-lw{display:flex;flex-direction:column;gap:6px}.hm-lw h1{border:none!important;padding:0!important}"
+    + "#view-menu .hm-hd{display:flex;align-items:baseline;gap:12px}#view-menu .hm-hd h1{margin:0}.hm-logo{height:26px;width:auto;flex:none;display:block;align-self:baseline;position:relative;top:7px}.hm-logo.w{display:none}body:not(.light) .hm-logo.w{display:block}body:not(.light) .hm-logo.d{display:none}"
+    + "#view-menu .hm-hd .hm-logo+h1{padding-left:12px;border-left:1.5px solid var(--border2);line-height:1}body.ux-land .hm-logo{height:22px;top:6px}"
+    ""
     + ".ux-t .ic .lic{width:48px;height:48px;color:var(--c);stroke-width:1.8}body.ux-land .ux-t .ic .lic{width:56px;height:56px}.ux-sb .lic{width:16px;height:16px}"
     // v661: HOMEのタイルは写真の背景（左下に文字が読めるよう、うっすらグラデーションを重ねる）
     + "#view-menu .ux-t.ph{background:var(--img) center/cover no-repeat!important;border-color:rgba(255,255,255,.55)!important;box-shadow:0 6px 18px rgba(20,30,50,.12)}"
@@ -19698,7 +19698,7 @@ function renderMenuHub() {
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
   var lg = '<img class="hm-logo w" src="img/logo-w.png" alt="NWP"><img class="hm-logo d" src="img/logo-d.png" alt="NWP">'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）
-  var hd = window._hmLogoMode === 'only' ? lg : (window._hmLogoMode === 'top' ? '<div class="hm-lw">' + lg + '<h1>HOME</h1></div>' : lg + '<h1>HOME</h1>');
+  var hd = lg + '<h1>HOME</h1>';
   v.innerHTML = '<div class="ux-hub"><div class="ux-hd hm-hd">' + hd + '<span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
     + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
     + '<div class="ux-sm">' + S + '</div></div>';
