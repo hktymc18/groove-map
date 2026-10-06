@@ -19614,7 +19614,7 @@ function uxInfo(k) {
   uxInfoClose();
   var ov = document.createElement('div'); ov.id = 'uxInfo';
   ov.onclick = function(e) { if (e.target === ov) uxInfoClose(); };
-  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">わかった</div></div>';
+  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">楽勝!!</div></div>';
   document.body.appendChild(ov);
 }
 function uxInfoClose() { var o = document.getElementById('uxInfo'); if (o) o.parentNode.removeChild(o); }
