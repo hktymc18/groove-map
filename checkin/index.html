@@ -847,6 +847,7 @@ var firebaseConfig = {
   appId: "1:565556414915:web:f8c3489260e8d9d6e49576"
 };
 var OWNER_UID = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
+var OWNER_UIDS = [OWNER_UID, 'E4WT7EHai5c6WANUgASz42Euu1y1']; // v28: オーナー（馬越さんを追加）。firestore.rules の isOwnerUid と一致させること
 
 firebase.initializeApp(firebaseConfig);
 var auth = firebase.auth();
@@ -1033,7 +1034,7 @@ var gSel = {};              // 名簿の選択状態 {no: true}
 var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.getMonth()+1}; })();
 var gEvents = [];           // 表示月のイベント（gUnion 参加分）
 var gRec = null;            // 受付中 {ev, roster:{no:member}, att:{id:rec}, unsub}
-function isOwner(){ return gUser && gUser.uid === OWNER_UID; }
+function isOwner(){ return !!gUser && OWNER_UIDS.indexOf(gUser.uid) >= 0; }
 // コア管理者 = オーナー or MAPのユニオン管理者(role=admin)。受付管理者の任命はこの権限のみ
 function isCoreAdmin(un){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === un); }
 // 受付管理者 = checkinUnions/{un}.admins に登録されたユーザー。このシステム内では管理者と同等
@@ -1130,8 +1131,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v27';
+var APP_VER = 'v28';
 var CHANGELOG = [
+  { v: 'v28', d: '2026/10/07', items: ['オーナー（すべてのユニオンを管理できる人）に馬越さんを追加しました'] },
   { v: 'v27', d: '2026/10/06', items: ['会計の「📋 操作ログ」は、オーナーと主催ユニオンのユニオン管理者だけが見られるようになりました（受付管理者・一般メンバーには表示されません）'] },
   { v: 'v26', d: '2026/10/06', items: ['使い方ガイド: 「はじめの準備」に「⑤ 合同イベントを作る」（ガイド＋動画）を追加。合同イベントは主催ユニオンが1つだけ作り、参加ユニオンに全部チェック → 当日は同じイベントで受付'] },
   { v: 'v25', d: '2026/10/06', items: ['受付: 合同ユニオンにチェックが付いていないユニオンの人を受付すると「合同ユニオンに入っていません」と知らせるようにしました（そのままだとそのユニオンの集計に入らないため）'] },

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v668';
+var APP_JS_VERSION = 'v669';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3336,10 +3336,12 @@ function setMembersTabVisible(v) {
 // ── プロフィール設定 ──
 var _profileMandatory = false; // 必須項目未入力 → 強制入力モード（閉じられない）
 var OWNER_UID = 'j2DPDAccCygHmR9i5K3bTvHnH0V2'; // 永久管理者（ルールと一致させること）
+var OWNER_UIDS = [OWNER_UID, 'E4WT7EHai5c6WANUgASz42Euu1y1']; // v669: オーナー（馬越さんを追加）。firestore.rules の isOwnerUid と一致させること
+function isOwnerUid(uid) { return OWNER_UIDS.indexOf(uid) >= 0; }
 
 // 現在のユーザーが管理者か（オーナー or role:'admin'）
 function isCurrentAdmin() {
-  return !!currentUser && (currentUser.uid === OWNER_UID || currentUser.role === 'admin');
+  return !!currentUser && (isOwnerUid(currentUser.uid) || currentUser.role === 'admin');
 }
 
 // ===== アカウント管理（管理者のみ） =====
@@ -3369,7 +3371,7 @@ function _adminFindUser(uid) {
 }
 // v586: データ使用状況レポートは廃止（他のユーザーのデータを読むため。ルールで管理者も読めなくした）
 function _adminScopedUsers() {
-  var owner = (currentUser && currentUser.uid === OWNER_UID);
+  var owner = !!(currentUser && isOwnerUid(currentUser.uid));
   var myUnion = (currentUser && currentUser.union) ? currentUser.union : '';
   return owner ? _adminUsers : _adminUsers.filter(function(u){ return (u.union||'') === myUnion; });
 }
@@ -3385,7 +3387,7 @@ function renderAdminList() {
   var pending = list.filter(function(u){ return u.status === 'pending'; });
   var others  = list.filter(function(u){ return u.status !== 'pending'; });
   others.sort(function(a,b) {
-    function rank(u){ return u.id===OWNER_UID ? 0 : (u.role==='admin' ? 1 : 2); }
+    function rank(u){ return isOwnerUid(u.id) ? 0 : (u.role==='admin' ? 1 : 2); }
     var ra=rank(a), rb=rank(b);
     if (ra!==rb) return ra-rb;
     return (a.name||'').localeCompare(b.name||'');
@@ -3436,7 +3438,7 @@ function adminReject(uid){
 }
 function adminRowHtml(u) {
   var uid = u.id;
-  var isOwner = uid === OWNER_UID;
+  var isOwner = isOwnerUid(uid);
   var disabled = u.status === 'disabled';
   var roleBadge = isOwner ? '<span class="adm-badge owner">オーナー</span>'
                  : (u.role==='admin' ? '<span class="adm-badge admin">管理者</span>' : '');
@@ -3460,7 +3462,7 @@ function adminRowHtml(u) {
     + '</div><div class="adm-actions">' + actions + '</div></div>';
 }
 function adminToggleStatus(uid) {
-  if (uid === OWNER_UID) { toast('オーナーは変更できません'); return; }
+  if (isOwnerUid(uid)) { toast('オーナーは変更できません'); return; }
   var u = _adminFindUser(uid); if (!u) return;
   var disable = u.status !== 'disabled';
   if (!confirm((disable ? 'このアカウントを無効化（全データ閲覧不可）にしますか？' : 'このアカウントを有効化しますか？') + '\n' + (u.name||'') + '（' + (u.email||'') + '）')) return;
@@ -3473,7 +3475,7 @@ function adminToggleStatus(uid) {
   renderAdminList();
 }
 function adminToggleRole(uid) {
-  if (uid === OWNER_UID) { toast('オーナーは変更できません'); return; }
+  if (isOwnerUid(uid)) { toast('オーナーは変更できません'); return; }
   var u = _adminFindUser(uid); if (!u) return;
   var makeAdmin = u.role !== 'admin';
   if (!confirm((makeAdmin ? 'このアカウントを共同管理者にしますか？' : '共同管理者を解除しますか？') + '\n' + (u.name||'') + '（' + (u.email||'') + '）')) return;
@@ -3874,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v668';
+  var DATA_VERSION = 'v669';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5353,6 +5355,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v669', d:'2026-10-07', items:['オーナー（すべてのユニオンの承認・受付の管理ができる人）に馬越さんを追加しました'] },
   { v:'v668', d:'2026-10-07', items:['個人情報保護方針・利用規約（2026年10月1日施行）を定めました。はじめてログインした時（方針を改定した時も）に同意の画面が出ます。主要条項の要旨を確認し、全文を読んで3つの項目に同意すると利用を開始できます','新規登録の画面から、個人情報保護方針・利用規約の全文を読めるようになりました','アカウント管理の一覧に、同意済み・未同意が表示されます'] },
   { v:'v667', d:'2026-10-06', items:['🎨 設定の「バグ・要望」も絵文字から線のアイコンに'] },
   { v:'v666', d:'2026-10-06', items:['🎨 HOMEの「バグ・要望」ボタンを絵文字から、ほかのボタンと同じ線のアイコンに'] },
@@ -6560,7 +6563,7 @@ function _ckOwnMembers() {
   });
 }
 // 自分のユニオン名＋地域で受付のユニオンを選ぶ（v623: 研修の自動取り込みでも使う）
-function _ckIsOwner() { return !!currentUser && currentUser.uid === OWNER_UID; }
+function _ckIsOwner() { return !!currentUser && isOwnerUid(currentUser.uid); }
 function _ckPickUnion(unions, unionId) {
   // v624: オーナー以外は自分のユニオンだけ（指定があっても自分のユニオン以外は無視）
   var sel = unionId || '';
@@ -35029,7 +35032,7 @@ function _pvBadge(u) {
 // 管理者ログイン時：自ユニオン（オーナーは全体）の承認待ち件数を通知
 function checkPendingApprovals(){
   if(!isCurrentAdmin() || !db) return;
-  var owner = currentUser.uid === OWNER_UID;
+  var owner = isOwnerUid(currentUser.uid);
   var myUnion = currentUser.union || '';
   // v511: 全ユーザーを読んでいたのを「承認待ちのみ」のクエリに（読み取り件数を大幅削減）
   db.collection('users').where('status', '==', 'pending').get().then(function(snap){
@@ -35045,7 +35048,7 @@ function loginSuccess(user) {
   currentUser = user;
   try { localStorage.setItem('gm_lastProfile', JSON.stringify(user)); } catch(eLp) {} // v451: オフライン起動用スナップショット
   // 承認制：承認待ち/無効はゲート表示してアプリに入れない（オーナー・レガシー(status無し=active)は通過）
-  if (user.uid !== OWNER_UID && (user.status === 'pending' || user.status === 'disabled')) {
+  if (!isOwnerUid(user.uid) && (user.status === 'pending' || user.status === 'disabled')) {
     showApprovalGate(user.status, user);
     return;
   }
