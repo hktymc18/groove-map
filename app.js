@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v642';
+var APP_JS_VERSION = 'v643';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v642';
+  var DATA_VERSION = 'v643';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5348,6 +5348,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v643', d:'2026-10-06', items:['🎮 シミュレーションを組織図で見えるように：自分を一番上に、入った人が丸でつながっていきます（色＝入った月）。LOI・Q2・Q3・BRの月を押すと、その月までの組織に','📊 組織人数・GSV・ファーストボーナスを大きく。フロント・1人がつなぐ人数・BPCポイント・ADP・LOIの月を変えるとその場で組織図も変わります（PCは左に組織図・右に入力）'] },
   { v:'v642', d:'2026-10-06', items:['📆 年別目標（スマホ）を作り直し：上が頂上（最終ゴール）、下が今の縦の道。1年ごとの月収を −／＋ で、タイトルはリストで。直すとその場で保存（「例に戻す」で元に戻せます）','⛰ 次の山（スマホ）：月収・タイトル・いつまでにを、そのページで直接決められるように（古い「目標をなおす」のシートはスマホでは出ません）。BRの前はファーストボーナスとBRになる月','🧹 「書き出し」（右下の✍️・PCのメモパッド・ツールの書き出し）をなくしました'] },
   { v:'v641', d:'2026-10-06', items:['🎯 理想MAPの「理想 vs 現状」をすっきり：「長期目標から見た今月の目安」と下の説明書きをなくしました','💻 PCは横1列のタイルに（自分のB1・チームのB1・チームGSV・S稼働・平均稼働人数・コミッション・タイトルが上がると）。画面の上1/3に収まり、組織図が広く見えます','📱 スマホは横棒・SB/BB/LBのカード・タイトルが上がるの縦並び。小さい説明文は隠して、名前（点線）をタップすると吹き出しで出ます（PCはマウスを乗せると）','📈 タイトルが上がると：リストでタイトルを選ぶと、そのタイトルのリーディングと今との差だけを表示。計算のしかたは（i）に'] },
   { v:'v640', d:'2026-10-06', items:['🎯 理想MAPの「タイトルが上がると、リーディングは」を、タイトルのボタンを選んでその1つだけ表示するように（縦に長くならない・選んだタイトルは次も覚えています）'] },
@@ -16291,7 +16292,7 @@ function _uxTilesFit(root) {
 }
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
-var P2_PG = { yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
+var P2_PG = { sim: 'シミュレーション', yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
 var P2_PG_FLOW = ['ideal', 'goal', 'rm', 'mon', 'do']; // v629: 想い→理想（作文はツールへ）
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
@@ -16392,6 +16393,8 @@ function _p2PageParts() {
   } else if (k === 'rmm') {
     _ux2Css(); body = _p2RmMonthHtml();
     var nym = _p2YmAdd(_p2RmYm || _p2Ym(0), 1); next = parseInt(nym.slice(5), 10) + '月 ›'; nextOn = 'p2RmMonth(\'' + nym + '\')';
+  } else if (k === 'sim') { // v643: シミュレーション（組織図で）
+    _ux2Css(); _p2YrsCss(); _p2SimCss(); body = _p2SimHtml(); next = '今月の目標に入れる ›'; nextOn = 'p2SimApply()';
   } else if (k === 'yrs') { // v642: 年別目標
     _ux2Css(); body = _p2YrsHtml(); next = '次の山 ›'; nextOn = 'p2Go(\'goal\',3)';
   } else if (k === 'gap') { // v600: ギャップ（1行ずつ＋−）
@@ -16447,7 +16450,7 @@ function _p2PageParts() {
       + li('⚙️', '今週やることの設定', '動員の計画など', 'p2DoMenu(\'more\')')
       + '</div>';
   }
-  var back = (k === 'ck' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
+  var back = (k === 'ck' || k === 'sim' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
   if (k === 'yrs') back = _p2YrsBack || 'p2Go(\'goal\',5)';
   if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back };
@@ -18743,7 +18746,7 @@ function _pcxTile(t, on, next) {
     + '<span class="ic">' + t.ic + '</span><b>' + t.lb + '</b><div class="st">' + (t.st || '') + '</div></div>';
 }
 // ── PLAN（PC） ──
-var P2_PCX_PAR = { essay: 'tool', dream: 'tool', gap: 'tool', ck: 'tool', bb: 'tool', inb: 'tool', gapset: 'tool', gapal: 'tool', rmm: 'rm', rmt: 'rm', rmrows: 'rm', rmms: 'rm', dok: 'do' };
+var P2_PCX_PAR = { essay: 'tool', dream: 'tool', gap: 'tool', ck: 'tool', bb: 'tool', sim: 'tool', gapset: 'tool', gapal: 'tool', rmm: 'rm', rmt: 'rm', rmrows: 'rm', rmms: 'rm', dok: 'do' };
 function _p2PcxHtml() {
   _uxCss(); _ux2Css(); _pcxCss();
   var D = _p2HubData(), ym = D.ym;
@@ -19211,6 +19214,87 @@ function p2NxDlStep(d) { var nx = _p2Next(); p2NxDl(_p2YmAdd(nx.deadline || _p2Y
 function p2NxFbSet(v) { _p2NxPut({ fb: Math.max(0, parseInt(v, 10) || 0) * 10000 }); }
 function p2NxFbStep(d) { var nx = _p2Next(); p2NxFbSet(Math.max(0, Math.round((nx.fb || 0) / 10000) + d * 5)); }
 function p2NxKeep() { _p2NxPut({}); toast('⛰ 次の山を決めました'); }
+
+// ════ v643: シミュレーション：組織図で見る（LOIの月 → Q2 → Q3 → BRの月。入った人が翌月・翌々月に人をつなぐ） ════
+var _p2SimMo = 3;
+var P2_SIM_COL = ['', '#5AD7FF', '#8B7CFF', '#FFB454']; // 入った月の色（Q2・Q3・BRの月）
+// _p2SimFb と同じ増え方で、1人ずつ親をつけた木にする
+function _p2SimTree(cfg) {
+  var nodes = [{ id: 0, p: -1, jm: -1, g: 0 }];
+  for (var m = 0; m < 4; m++) {
+    for (var f = 0; f < (cfg.fronts[m] || 0); f++) nodes.push({ id: nodes.length, p: 0, jm: m, g: 1 });
+    if (cfg.dup > 0) {
+      var add = [];
+      nodes.forEach(function(x) { var act = m - x.jm; if (x.id && (act === 1 || act === 2)) for (var d = 0; d < cfg.dup; d++) add.push({ p: x.id, jm: m, g: x.g + 1 }); });
+      add.forEach(function(a) { a.id = nodes.length; nodes.push(a); });
+    }
+  }
+  return nodes;
+}
+function _p2SimSvg(nodes, mo) {
+  nodes = nodes.filter(function(x) { return !x.id || x.jm <= mo; }); // その月までに入った人だけで並べ直す
+  var kids = {}; nodes.forEach(function(x) { if (x.p >= 0) (kids[x.p] = kids[x.p] || []).push(x.id); });
+  var leaves = 0, X = {}, maxG = 0;
+  (function lay(id) { var ch = kids[id] || []; if (!ch.length) { X[id] = leaves++; return; } ch.forEach(lay); X[id] = (X[ch[0]] + X[ch[ch.length - 1]]) / 2; })(0);
+  nodes.forEach(function(x) { if (x.g > maxG) maxG = x.g; });
+  var sp = Math.max(9, Math.min(34, 330 / Math.max(1, leaves))), W = Math.max(330, leaves * sp + 16), lh = 58, H = maxG * lh + 44;
+  var off = (W - leaves * sp) / 2 + sp / 2, px = function(id) { return off + X[id] * sp; }, py = function(g) { return 22 + g * lh; };
+  var r = Math.max(3.5, Math.min(11, sp * 0.36)), lines = '', dots = '';
+  nodes.forEach(function(x) {
+    var on = x.jm <= mo, c = x.id ? P2_SIM_COL[x.jm] : 'var(--accent)';
+    if (x.p >= 0 && on) { var y0 = py(x.g - 1) + (x.g === 1 ? 15 : r), y1 = py(x.g) - r, ym = (y0 + y1) / 2;
+      lines += '<path d="M' + px(x.p) + ' ' + y0 + 'V' + ym + 'H' + px(x.id) + 'V' + y1 + '" />'; }
+    if (!x.id) dots += '<circle cx="' + px(0) + '" cy="' + py(0) + '" r="15" fill="var(--accent)"/><text x="' + px(0) + '" y="' + (py(0) + 4) + '" text-anchor="middle" font-size="11" font-weight="900" fill="#06251C">自分</text>';
+    else if (on) dots += '<circle cx="' + px(x.id) + '" cy="' + py(x.g) + '" r="' + r + '" fill="' + c + '"' + (x.jm === mo ? ' class="nw"' : '') + '/>';
+  });
+  return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '"><g fill="none" stroke="var(--border2)" stroke-width="1.5">' + lines + '</g>' + dots + '</svg>';
+}
+function _p2SimHtml() {
+  var cfg = _p2SimCfg(), n = cfg.preset > 0 ? cfg.preset : Math.max(cfg.fronts[1] || 0, cfg.fronts[2] || 0, 1);
+  cfg.fronts = [0, n, n, 0];
+  var R9 = _p2SimFb(n, cfg), nodes = _p2SimTree(cfg), mo = Math.max(0, Math.min(3, _p2SimMo));
+  if (!UX_INFO.sim) UX_INFO.sim = { t: 'シミュレーション', h: '4ヶ月でBRになる流れです。<br><b>LOIの月</b>：自分がBPC（ブランドチェンジ）<br><b>Q2・Q3の月</b>：フロントを決めた人数ずつ<br>入った人は、<b>入った翌月・翌々月</b>に「つなぐ人数」ずつ新しい人をつなぎます<br><b>BRの月</b>：4ヶ月目<br>GSV＝その月に入った人×BPCポイント＋前からいる人×ADP＋自分のADP。ファーストボーナスはBRの月のGSVから（BB＋GSV 2,000以上でエリートLOI特典5万円）<br>丸の色は入った月です' };
+  var lab = ['LOI', 'Q2', 'Q3', 'BR'], ymL = function(m) { var t = (cfg.sm - 1 + m); return (((t % 12) + 12) % 12 + 1) + '月'; };
+  var cnt = 1 + nodes.filter(function(x) { return x.id && x.jm <= mo; }).length, mon = R9.mons[mo] || { gsv: 0 };
+  var st = function(lb, v, u, on, inp, ph) { return '<div class="ux-lb2">' + lb + '</div>' + _uxStepG(v, on + '(-1)', on + '(1)', inp + '(this.value)', u, ph || ''); };
+  var pc = typeof isPCMode === 'function' && isPCMode();
+  return (pc ? '<div class="ux-sub" style="display:flex;align-items:center;gap:8px;margin-top:0">これだけやったら、いくら狙えるか' + _uxIb('sim') + '</div><div class="p2sm-pc"><div>'
+      : '<h2 class="ux-h2" style="display:flex;align-items:center;gap:8px">シミュレーション' + _uxIb('sim') + '</h2><div class="ux-sub">これだけやったら、いくら狙えるか</div>')
+    + '<div class="p2sm-seg">' + lab.map(function(l, m) { return '<span class="' + (m === mo ? 'on' : '') + '" onclick="p2SimMo(' + m + ')"><b>' + ymL(m) + '</b>' + l + '</span>'; }).join('') + '</div>'
+    + '<div class="p2sm-tree">' + _p2SimSvg(nodes, mo) + '</div>'
+    + '<div class="p2sm-lg">' + [1, 2, 3].map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）に入った人</span>'; }).join('') + '</div>'
+    + '<div class="p2sm-k"><div><small>組織</small><b>' + cnt + '<i>人</i></b></div><div><small>GSV</small><b>' + mon.gsv.toLocaleString() + '<i>P</i></b></div>'
+    + '<div class="hi"><small>ファーストボーナス</small><b>' + (mo === 3 ? '¥' + R9.fb.toLocaleString() : '<i>BRの月に</i>') + '</b></div></div>'
+    + (pc ? '</div><div>' : '')
+    + st('フロント（Q2・Q3の月に）', n, '人', 'p2SimN', 'p2SimNSet')
+    + st('1人がつなぐ人数（毎月）', cfg.dup, '人', 'p2SimDup', 'p2SimDupSet')
+    + '<div class="ux-lb2">1人あたりBPCポイント</div><div class="ux-chips">' + [500, 1000, 1500, 2000].map(function(v) { return '<span class="' + (cfg.psv === v ? 'on' : '') + '" onclick="p2SimPsv(' + v + ')">' + v.toLocaleString() + '</span>'; }).join('') + '</div>'
+    + st('自分のADP', cfg.myPsv, 'P', 'p2SimAdp', 'p2SimAdpSet')
+    + '<div class="ux-lb2">LOIの月</div>' + (pc ? '<div class="ux-stp"><div class="ux-sv ok"><input type="month" value="' + cfg.sy + '-' + String(cfg.sm).padStart(2, '0') + '" onchange="p2SimStartSet(this.value)" style="font-size:22px"></div></div>' : '<div class="ux-stp"><span class="ux-pm" onclick="p2SimStart(-1)">−</span><div class="ux-sv ok" style="font-size:26px;font-weight:900;font-family:Inter,sans-serif">' + cfg.sy + '<small>年</small>' + cfg.sm + '<small>月</small></div><span class="ux-pm" onclick="p2SimStart(1)">＋</span></div>') + (pc ? '</div></div>' : '');
+}
+function _p2SimSet(f) { var c = _p2SimCfg(); f(c); saveGoals(); renderPlan(); }
+function p2SimMo(m) { _p2SimMo = m; renderPlan(); }
+function p2SimNSet(v) { _p2SimSet(function(c) { var n = Math.max(1, Math.min(10, parseInt(v, 10) || 1)); c.preset = n; c.fronts = [0, n, n, 0]; }); }
+function p2SimN(d) { var c = _p2SimCfg(); p2SimNSet((c.preset > 0 ? c.preset : (c.fronts[1] || 1)) + d); }
+function p2SimDupSet(v) { _p2SimSet(function(c) { c.dup = Math.max(0, Math.min(5, parseInt(v, 10) || 0)); }); }
+function p2SimDup(d) { p2SimDupSet(_p2SimCfg().dup + d); }
+function p2SimPsv(v) { _p2SimSet(function(c) { c.psv = v; }); }
+function p2SimAdpSet(v) { _p2SimSet(function(c) { c.myPsv = Math.max(0, Math.min(3000, parseInt(v, 10) || 0)); }); }
+function p2SimAdp(d) { p2SimAdpSet(_p2SimCfg().myPsv + d * 100); }
+function p2SimStartSet(ym) { if (!/^\d{4}-\d{2}$/.test(ym || '')) return; _p2SimSet(function(c) { c.sy = parseInt(ym.slice(0, 4), 10); c.sm = parseInt(ym.slice(5), 10); }); }
+function p2SimStart(d) { _p2SimSet(function(c) { var t = c.sy * 12 + (c.sm - 1) + d; c.sy = Math.floor(t / 12); c.sm = t % 12 + 1; }); }
+function _p2SimCss() {
+  if (document.getElementById('p2SimCss')) return;
+  var st = document.createElement('style'); st.id = 'p2SimCss';
+  st.textContent = ".p2sm-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}.p2sm-seg span{text-align:center;padding:8px 4px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--border);font-size:11.5px;font-weight:800;color:var(--text-dim);cursor:pointer}"
+    + ".p2sm-seg span b{display:block;font-size:15px;color:var(--text)}.p2sm-seg span.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface2));color:var(--accent)}"
+    + ".p2sm-tree{margin-top:12px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--border);overflow-x:auto;text-align:center}.p2sm-tree svg{display:inline-block}"
+    + ".p2sm-tree circle.nw{animation:p2smIn .45s ease-out}@keyframes p2smIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}.p2sm-tree circle{transform-box:fill-box;transform-origin:center}"
+    + ".p2sm-lg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:11px;font-weight:700;color:var(--text-dim)}.p2sm-lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px}"
+    + ".p2sm-k{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;margin-top:12px}.p2sm-k>div{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px}.p2sm-k>div.hi{border-color:#FFB454}"
+    + ".p2sm-k small{display:block;font-size:11px;font-weight:800;color:var(--text-dim)}.p2sm-k b{font-size:21px;font-weight:900;font-family:Inter,sans-serif}.p2sm-k .hi b{color:#FFB454}.p2sm-pc{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:start}.p2sm-pc .ux-lb2:first-child{margin-top:14px}.p2sm-pc .ux-sv{height:56px!important;min-height:0!important}.p2sm-pc .ux-sv input{font-size:24px!important}.p2sm-pc .ux-chips span{padding:8px 4px}.p2sm-k b i{font-style:normal;font-size:11px;color:var(--text-dim);margin-left:2px}";
+  document.head.appendChild(st);
+}
 
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
@@ -22939,6 +23023,7 @@ function _p2SimCfg() {
   return p2.sim;
 }
 function p2SimOpen() {
+  if (true) { p2Go('sim'); return; } // v643: シートをやめて組織図のページに
   _p2SheetClose('p2SimOv');
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2SimOv'; ov.style.zIndex = '610';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('p2SimOv'); };
