@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v650';
+var APP_JS_VERSION = 'v651';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v650';
+  var DATA_VERSION = 'v651';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5349,6 +5349,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v651', d:'2026-10-06', items:['🎓 研修タブに「研修フロー」（じょうご・前の段から進んだ割合）を戻しました。グラフとタイルの下で、選んだ月のフローが見られます（段をタップで名前の一覧）'] },
   { v:'v650', d:'2026-10-06', items:['🎓 分析の研修タブを推移と同じ形に：上に12ヶ月のグラフ（研修生・各ステップ・BC・流れた・BC決定率から2つまで）、下にその月の数字のタイル（押すとグラフがその項目に・「人 ›」で名前の一覧）','🔢 研修の数え方を見直し：その月の日付で「進んだ／流れた」の記録がある人だけ（📅予定のままの記録・削除した人は数えない）'] },
   { v:'v649', d:'2026-10-06', items:['🐛 分析の地域タブを開いた時、「全体」が選ばれているのに12ヶ月のグラフが出ないことがあったのを修正（最初から全体を表示）'] },
   { v:'v648', d:'2026-10-06', items:['📱 分析の地域タブ（スマホ横）：右の「◯◯の12ヶ月」をタップすると画面いっぱいに。もう一度タップで元の表示に戻ります'] },
@@ -12592,6 +12593,22 @@ function dtTrMetric(k) {
 }
 function dtTrPick(i) { _dtTrIdx = i; _dtTrRender(); }
 function dtTrTile(k) { _dtTrSel = [k]; _dtTrRender(); try { var c = document.querySelector('#dtTrain .dt-chips'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }
+function _dtTrFunnel(M, mo) {
+  var cnt = DT_STEPS.map(function(st) { return M.L[st] || []; }), mx = Math.max.apply(null, cnt.map(function(l) { return l.length; }).concat([1]));
+  var W = 340, rowH = 34, H = DT_STEPS.length * rowH + 6, cx = 190, maxW = 230, svg = '<svg class="dt-funnel" viewBox="0 0 ' + W + ' ' + H + '">';
+  DT_STEPS.forEach(function(st, i) {
+    var n = cnt[i].length, w = Math.max(n ? 14 : 4, maxW * n / mx), y = i * rowH + 3;
+    var nw = i < DT_STEPS.length - 1 ? Math.max(cnt[i + 1].length ? 14 : 4, maxW * cnt[i + 1].length / mx) : w * 0.9;
+    var dk = _dtDrillKey(mo.m + '月', st, cnt[i]);
+    svg += '<path d="M' + (cx - w / 2).toFixed(1) + ',' + y + ' L' + (cx + w / 2).toFixed(1) + ',' + y + ' L' + (cx + nw / 2).toFixed(1) + ',' + (y + rowH - 6) + ' L' + (cx - nw / 2).toFixed(1) + ',' + (y + rowH - 6) + ' Z" fill="#2CE5B8" fill-opacity="' + (1 - i * 0.07).toFixed(2) + '"' + (n ? ' style="cursor:pointer" onclick="dtDrill(\'' + dk + '\')"' : '') + '/>';
+    svg += '<text x="8" y="' + (y + rowH / 2 + 1) + '" font-size="12.5" font-weight="800" fill="var(--text)">' + st + '</text>';
+    svg += '<text x="' + cx + '" y="' + (y + rowH / 2 + 1) + '" text-anchor="middle" font-size="13" font-weight="900" fill="' + (n ? '#06251C' : 'var(--text-dim)') + '" pointer-events="none">' + n + '人</text>';
+    if (i > 0 && cnt[i - 1].length) { var cv = Math.round(n / cnt[i - 1].length * 100); svg += '<text x="' + (W - 4) + '" y="' + (y + 11) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="' + (cv >= 60 ? '#22C55E' : (cv >= 30 ? '#FFB454' : '#FF5D73')) + '">↓ ' + cv + '%</text>'; }
+  });
+  svg += '</svg>';
+  return '<div class="dt-card" style="margin-top:12px"><div class="dt-ch">' + icn('funnel') + ' ' + mo.m + '月の研修フロー<span style="color:var(--text-dim)">研修生 ' + M.n + '人</span></div>'
+    + (M.n ? svg + '<div class="dt-hint">右の％＝前の段階から進んだ割合（歩留まり）。段をタップで内訳</div>' : '<div class="ev-empty" style="padding:16px">この月の研修の記録はありません</div>') + '</div>';
+}
 function _dtTrRender() {
   var box = document.getElementById('dtTrain'); if (!box) return;
   _anCss(); _dtDrill = {};
@@ -12618,11 +12635,7 @@ function _dtTrRender() {
     + '<div class="an-sec"><span>' + mo.y + '年' + mo.m + '月の研修</span>' + (idx === 11 ? '<small>今月</small>' : '<em onclick="dtTrPick(11)">今月に戻す ›</em>') + '</div><div class="an-g four">'
     + big('n', 'cap', '#5AD7FF', '研修の記録がある人') + big('rate', 'target', 'var(--accent)', '結果が出た ' + dec + '人のうち')
     + big('BC', 'checksq', '#2CE5B8', '') + big('流れた', 'ban', '#FF5D73', 'ユーザー ' + M['ユーザー'] + '人')
-    + '</div><div class="an-g sm">'
-    + DT_STEPS.map(function(st) {
-      var v = M[st], pv = P ? P[st] : null;
-      return '<div class="an-t' + (on(st) ? ' on' : '') + '" onclick="dtTrTile(\'' + st + '\')"><span class="lb">' + st + '</span><b>' + v + '<small>人</small></b><div class="f">' + _dtDelta(v, pv, meta(st)) + ppl(st) + '</div></div>';
-    }).join('') + '</div>'
+    + '</div>' + _dtTrFunnel(M, mo) // v651: じょうご（研修フロー・前の段から進んだ割合）はそのまま見られるように
     + '<div class="dt-hint" style="text-align:left;margin:8px 2px 0">数え方：その月の日付で研修履歴に「進んだ／流れた」の記録がある人（1人1回・📅予定は数えない）。受付システムの受講記録も取り込まれます</div>'
     + '<div style="margin-top:14px">' + _dtTrainOld(state.currentMonth || currentMonthStr(), true) + '</div>';
   box.innerHTML = h;
