@@ -2915,7 +2915,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">
         <input type="checkbox" id="privacyCheck" style="width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex-shrink:0">
         <label for="privacyCheck" style="font-size:13px;color:var(--text-dim);line-height:1.5;cursor:pointer">
-          <span style="color:var(--accent);text-decoration:underline">プライバシーポリシー</span>および<span style="color:var(--accent);text-decoration:underline">利用規約</span>に同意します
+          <span style="color:var(--accent);text-decoration:underline" onclick="event.preventDefault();pvOpenDoc('privacy')">個人情報保護方針</span>と<span style="color:var(--accent);text-decoration:underline" onclick="event.preventDefault();pvOpenDoc('terms')">利用規約</span>を読み、同意します
         </label>
       </div>
       <div id="signupError" style="color:#FF5D73;font-size:13px;text-align:center;margin-bottom:12px;display:none"></div>

@@ -2,7 +2,7 @@
 (function () {
   var OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
   var store = window.__FBDATA || {};
-  store['users/' + OWNER] = store['users/' + OWNER] || { name: '山内北斗', org: '山内北斗', area: '福岡', union: 'GRANT', upRuby: 'テスト', upBd: 'テスト', unionSelectedV2: true, status: 'active', email: 't@example.com' };
+  store['users/' + OWNER] = store['users/' + OWNER] || { name: '山内北斗', org: '山内北斗', area: '福岡', union: 'GRANT', upRuby: 'テスト', upBd: 'テスト', unionSelectedV2: true, status: 'active', email: 't@example.com', privacy: { ver: '2026-10', at: '2026-10-01T00:00:00Z' } };
   function cp(d) { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }
   function snap(path) { var d = store[path]; return { exists: d !== undefined, id: path.split('/').pop(), data: function () { return cp(d); }, get: function (k) { return d ? d[k] : undefined; }, ref: docRef(path) }; }
   function docRef(path) {

@@ -1,0 +1,35 @@
+// v668：個人情報保護方針・利用規約の同意ゲート
+const T = require('../lib/head.js')();
+const { w, c, sleep, $ } = T;
+const fs = require('fs'), p = require('path'), R = p.join(__dirname, '../../..');
+T.run(async () => {
+  T.login();
+  const writes = [];
+  const d0 = T.dbStub.doc;
+  w.db = Object.assign({}, T.dbStub, { doc(path) { const r = d0(path); r.set = (d) => { writes.push([path, d]); return Promise.resolve(); }; return r; } });
+  c('未同意・旧版は止める／今の版は通す', w._pvNeed({}) && w._pvNeed({ privacy: { ver: '2025-01' } }) && !w._pvNeed({ privacy: { ver: w.PRIVACY_VER } }));
+  let ok = 0;
+  const u = { uid: T.OWNER, name: 'x' };
+  w.showPrivacyGate(u, () => { ok++; });
+  c('同意画面が出る（はじめての人）', !!$('#pvGate') && /ご利用の前に/.test($('#pvGate h2').textContent));
+  c('チェックするまで押せない', $('#pvGo').disabled === true);
+  const chk = $('#pvChk'); chk.checked = true; chk.dispatchEvent(new w.Event('change'));
+  c('チェックすると押せる', $('#pvGo').disabled === false);
+  w.pvOpenDoc('privacy');
+  c('全文はアプリ内で開く（方針）', !!$('#pvDoc iframe') && /privacy\/\?t=dark$/.test($('#pvDoc iframe').getAttribute('src')));
+  w.pvCloseDoc();
+  $('#pvGo').click(); await sleep(30);
+  const wr = writes.find(x => x[0] === 'users/' + T.OWNER);
+  c('同意した版と日時をプロフィールに保存', wr && wr[1].privacy && wr[1].privacy.ver === w.PRIVACY_VER && !!wr[1].privacy.at);
+  c('同意の履歴も残す', writes.some(x => x[0] === 'users/' + T.OWNER + '/consents/' + w.PRIVACY_VER));
+  c('同意したらアプリへ進む', ok === 1 && !$('#pvGate') && !w._pvNeed(u));
+  w.showPrivacyGate({ uid: 'u2', privacy: { ver: '2025-01' } }, () => {});
+  c('改定時は「更新しました」', /更新しました/.test($('#pvGate h2').textContent));
+  w.closePrivacyGate();
+  const src = String(w.loginSuccess);
+  c('ログイン時、データ読み込みより前にゲート', src.indexOf('_pvNeed(user)') > 0 && src.indexOf('_pvNeed(user)') < src.indexOf('fsLoadFromFirestore'));
+  c('新規登録でも同意を保存', /privacy: \{ ver: PRIVACY_VER/.test(String(w.doSignup)));
+  c('管理者の一覧に同意の状態', /同意済/.test(w._pvBadge({ privacy: { ver: w.PRIVACY_VER } })) && /未同意/.test(w._pvBadge({})));
+  c('方針・規約のページがある', fs.existsSync(R + '/privacy/index.html') && fs.existsSync(R + '/terms/index.html'));
+  c('ルール：同意の履歴は本人が追記のみ', /match \/consents\/\{ver\}[\s\S]{0,200}allow create: if isSelf\(uid\);/.test(fs.readFileSync(R + '/firestore.rules', 'utf8')));
+});
