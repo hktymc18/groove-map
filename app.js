@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v628';
+var APP_JS_VERSION = 'v629';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v628';
+  var DATA_VERSION = 'v629';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5344,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v629', d:'2026-10-06', items:['✨ PLANの「想い」を「理想」に作り直し：①理想の生活（20問）をページの中で1問ずつサクサク答える（答えた分は横／下の一覧にすぐ並び、押すとその分野だけ答え直せる）→ ひと区切り（理想の生活に必要な月収を「目標月収にする／今のまま」から選べる・今日はここまででもOK）→ ②やりたいこと／やりたくないこと → ③なりたい自分／なりたくない自分 → まとめ','✍️ やる理由・1年後・成功した毎日の作文と、夢100は「ツール」の中に移しました'] },
   { v:'v628', d:'2026-10-06', items:['PC版のPLANの一番上の目標・マイルストーンの帯をやめて、元の形に戻しました'] },
   { v:'v627', d:'2026-10-06', items:['🏆 PC版のPLANの一番上に「目標」と横いっぱいのマイルストーンをいつも表示：たたんだ形（目標月収・タイトル・期日・スローガン・次の山を1行）と、ひらいた形（大きな目標の欄）を「▼ ひらく／▲ たたむ」で切り替え（端末ごとに覚えます）'] },
   { v:'v626', d:'2026-10-06', items:['📊 データの「ざっくり／くわしく」の切り替えをなくしました（スマホは入口のタイルから・表を見ている時は「‹ データの入口へ」で戻る）','⌨️ PC版のPLANの目標入力から −／＋ ボタンをなくし、キーボードで数字を打つ形に（期日は年月を入力）'] },
@@ -16232,11 +16233,12 @@ function _uxTilesFit(root) {
 }
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
-var P2_PG = { why: '想い', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
-var P2_PG_FLOW = ['why', 'goal', 'rm', 'mon', 'do'];
+var P2_PG = { why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', inb: '書き出し', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
+var P2_PG_FLOW = ['ideal', 'goal', 'rm', 'mon', 'do']; // v629: 想い→理想（作文はツールへ）
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
 function p2Go(k, i) {
+  if (k === 'why') { var wi = i || 0; if (wi <= 2) { k = 'essay'; i = wi; } else if (wi <= 6) { k = 'ideal'; i = wi - 1; } else if (wi === 8) { k = 'dream'; i = 0; } else { k = 'ideal'; i = wi === 7 ? 0 : 6; } } // v629: 想い→理想・作文・夢100
   if (k !== 'mon') _p2MonYm = ''; // v597: 来月を見ていたら今月に戻す
   _p2Pg = k || ''; _p2PgI = i || 0;
   if (currentView !== 'plan') { switchView('plan'); return; }
@@ -16248,6 +16250,8 @@ function p2Back() { if (_p2PgI > 0) p2Go(_p2Pg, _p2PgI - 1); else p2Go(''); }
 function _p2PgSubs(k) {
   if (k === 'mon') return _p2MonPages().map(function(x) { return x.lb; });
   if (k === 'why') return P2_WHY_PG.map(function(x) { return x.lb; });
+  if (k === 'ideal') return P2_IDEAL_PG.slice();
+  if (k === 'essay') return P2_WHY_PG.slice(0, 3).map(function(x) { return x.lb; });
   if (k === 'goal') return P2_GOAL_PG.map(function(x) { return x.lb; });
   if (k === 'do') return ['今週', '今月'];
   if (k === 'dok') return _p2DoRows(_p2Ym(0)).map(function(r) { return r.lb; });
@@ -16268,7 +16272,7 @@ function _p2DoRest(ym) {
 // 次にやるところ（想い → 目標 → 今月の目標 → 今週やること）
 function _p2NextKey() {
   var p = state.goals.plan;
-  if (!_p2WhyDone()) return 'why';
+  if (!_p2WhyDone()) return 'ideal';
   if (!(p.title && p.deadline)) return 'goal';
   if (!_p2Declared(_p2Ym(0))) return 'mon';
   return 'do';
@@ -16282,7 +16286,7 @@ function _p2HubData() {
   var nx = _p2Next(), rest = _p2DoRest(ym), tl = _p2TodayLeft(), rv = !!_p2ReviewHtml();
   var inc = p.income ? Math.round((+p.income) / 10000).toLocaleString() : '';
   var T = [
-    { k: 'why', c: 'rose', ic: '💗', lb: '想い', bd: _p2WhyDone() ? '✓ 書いた' : '', st: _p2WhyDone() ? '価値観・やりたいこと' : 'なぜやるのかを<br><em>書いてみる</em>' },
+    { k: 'ideal', c: 'rose', ic: '✨', lb: '理想', bd: _p2G().p1 ? '✓ 答えた' : '', st: _p2IdealSt() },
     { k: 'goal', c: 'gold', ic: '🏆', lb: '目標', bd: (p.title && p.deadline) ? '✓ 決めた' : '', st: (p.title && p.deadline) ? evEsc(p.title) + '<br>' + (inc ? '<em>月収' + inc + '万</em>・' : '') + evEsc(String(p.deadline).replace('-', '/')) : '目標を<br><em>つくる</em>' },
     { k: 'rm', c: 'sky', ic: '🗺️', lb: 'ロードマップ', st: (!nx.isFinal && nx.title) ? '次の山 <em>' + evEsc(nx.title) + '</em>' + (nx.deadline ? '<br>' + evEsc(nx.deadline.replace('-', '/')) + 'まで' : '') : '年間のマイルストーン' },
     { k: 'mon', c: 'mint', ic: '🎯', lb: _p2PgTitle('mon'), bd: _p2Declared(ym) ? '✓ 設定ずみ' : '',
@@ -16310,6 +16314,16 @@ function _p2PageParts() {
   if (k === 'why') { // v599: 1問1答（やる理由 → 1年後 → 成功した毎日 → やりたいこと → なりたい自分 → 理想の生活 → 夢100 → まとめ）
     _ux2Css(); body = _p2WhyPageHtml(i);
     if (i < P2_WHY_PG.length - 1) { next = P2_WHY_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：目標 ›'; nextOn = 'p2Go(\'goal\')'; }
+  } else if (k === 'ideal') { // v629: 理想（①理想の生活20問 → ひと区切り → ②やりたい／やりたくない → ③なりたい／なりたくない → まとめ）
+    _ux2Css(); body = _p2IdealPageHtml(i);
+    if (i === 0) { next = 'ひと区切り ›'; nextOn = 'p2PgSub(1)'; }
+    else if (i < P2_IDEAL_PG.length - 1) { next = P2_IDEAL_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; }
+    else { next = 'つぎ：目標 ›'; nextOn = 'p2Go(\'goal\')'; }
+  } else if (k === 'essay') { // v629: やる理由の作文はツールの中
+    _ux2Css(); body = _p2StepFix(_p2WhyPageHtml(i), i, 3, P2_WHY_PG[i].lb);
+    if (i < 2) { next = P2_WHY_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'ツールへ ›'; nextOn = 'p2Go(\'tool\')'; }
+  } else if (k === 'dream') {
+    _ux2Css(); body = _p2StepFix(_p2WhyPageHtml(8), -1);
   } else if (k === 'goal') { // v599: 目標月収 → タイトル → 期日 → 次の山 → スローガン → 目標カード
     _ux2Css(); body = _p2GoalPageHtml(i);
     if (i < P2_GOAL_PG.length - 1) { next = P2_GOAL_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：ロードマップ ›'; nextOn = 'p2Go(\'rm\')'; }
@@ -16364,7 +16378,8 @@ function _p2PageParts() {
       + li('🗺', 'ロードマップ', '月ごとのフロント・マイルストーン', 'p2Go(\'rm\')')
       + li('📆', '年別目標', '', 'p2YearsOpen()')
       + li('🎮', 'シミュレーション', '', 'p2SimOpen()')
-      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2Go(\'why\',8)')
+      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2Go(\'dream\')')
+      + li('✍️', 'やる理由（作文）', 'やる理由・1年後・成功した毎日', 'p2Go(\'essay\')')
       + li('✅', 'チェック', ck.done + '/' + ck.total, 'p2Go(\'ck\')')
       + li('💴', 'BB早見表', 'GSVからボーナスの目安', 'p2Go(\'bb\')')
       + li('✍️', '書き出し', '未整理 ' + ib + '件', 'p2Go(\'inb\')')
@@ -16373,7 +16388,7 @@ function _p2PageParts() {
   } else if (k === 'inb') {
     body = _p2InboxHtml();
   }
-  var back = (k === 'inb' || k === 'ck' || k === 'bb' || k === 'gap') ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
+  var back = (k === 'inb' || k === 'ck' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
   if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back };
 }
@@ -18640,7 +18655,7 @@ function _pcxTile(t, on, next) {
     + '<span class="ic">' + t.ic + '</span><b>' + t.lb + '</b><div class="st">' + (t.st || '') + '</div></div>';
 }
 // ── PLAN（PC） ──
-var P2_PCX_PAR = { gap: 'tool', ck: 'tool', bb: 'tool', inb: 'tool', gapset: 'tool', gapal: 'tool', rmm: 'rm', rmt: 'rm', rmrows: 'rm', rmms: 'rm', dok: 'do' };
+var P2_PCX_PAR = { essay: 'tool', dream: 'tool', gap: 'tool', ck: 'tool', bb: 'tool', inb: 'tool', gapset: 'tool', gapal: 'tool', rmm: 'rm', rmt: 'rm', rmrows: 'rm', rmms: 'rm', dok: 'do' };
 function _p2PcxHtml() {
   _uxCss(); _ux2Css(); _pcxCss();
   var D = _p2HubData(), ym = D.ym;
@@ -18710,7 +18725,7 @@ function _p2PcxPane(D) {
   var tabs = subs.length > 1 ? '<div class="pcx-tabs">' + subs.map(function(t, j) { return '<span class="' + (j === i ? 'on' : '') + '" onclick="p2PgSub(' + j + ')">' + (j + 1) + '. ' + t + '</span>'; }).join('') + '</div>' : '';
   var right = (par || (P.back && P.back !== 'p2Back()') ? b('‹ 戻る', par && P.back === 'p2Back()' ? 'p2Go(\'' + par + '\')' : P.back) : (i > 0 ? b('‹ 前へ', 'p2PgSub(' + (i - 1) + ')') : ''))
     + (P.next ? b(P.next, P.nextOn, 'p') : '');
-  return _p2PcxHead(_p2PgTitle(k) || 'PLAN', '', right) + tabs + '<div class="pcx-one">' + P.body + '</div>';
+  return _p2PcxHead(_p2PgTitle(k) || 'PLAN', '', right) + tabs + '<div class="pcx-one"' + (k === 'ideal' && !i ? ' style="max-width:none"' : '') + '>' + P.body + '</div>';
 }
 // ── データ（PC） ──
 var DT_PCX_FULL = [['trend', '推移', 'trend'], ['sum', '稼働・人数', 'users'], ['train', '研修', 'cap'], ['pl', 'パワーライン', 'zap'], ['reg', '地域', 'pin']];
@@ -18767,6 +18782,117 @@ function _dtPcxTable() {
       + rows.map(function(r) { return '<tr><td>' + r[0] + '</td>' + idx.map(function(j) { return '<td class="' + (j === ms.length - 1 ? 'cur' : '') + '">' + f(r[1][j]) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div>';
   } catch (e) { return ''; }
 }
+// ════ v629: 理想（旧・想い）＝ ①理想の生活（20問をページの中で）→ ひと区切り → ②やりたい／やりたくない → ③なりたい／なりたくない → まとめ ════
+var P2_IDEAL_PG = ['理想の生活', 'ひと区切り', 'やりたいこと', 'やりたくないこと', 'なりたい自分', 'なりたくない自分', 'まとめ'];
+function _p2IdealQs() { return P2GW_Q.filter(function(q) { return q.ph === 1 && _p2GwShow(q); }); }
+function _p2IdealAnsN() { var a = _p2G().ans; return _p2IdealQs().filter(function(q) { var v = a[q.id]; return v !== undefined && v !== null && v !== ''; }).length; }
+function _p2IdealSt() {
+  var g = _p2G(), n = _p2IdealQs().length, k = _p2IdealAnsN(), tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
+  if (g.p1) return '理想の生活 <em>月' + tot + '万</em><br>やりたいこと ' + _p2LstN('want_do') + '・なりたい自分 ' + _p2LstN('want_be');
+  if (k) return '理想の生活 <em>' + k + '/' + n + '</em><br>続きから答える';
+  return '理想の生活から<br><em>サクサク答える</em>';
+}
+function _p2GwInline() { return !!document.getElementById('p2GwWrap') && !document.getElementById('p2GwOv') && _p2Pg === 'ideal'; }
+function _p2StepFix(h, i, n, lb) { return h.replace(/<div class="ux-step">[^<]*<\/div>/, i < 0 ? '' : '<div class="ux-step">' + (i + 1) + ' / ' + n + '　' + lb + '</div>'); }
+function _p2IdealPageHtml(i) {
+  _p2IdealCss();
+  if (i === 0) return '<div class="p2id"><div class="p2id-q"><div id="p2GwWrap"></div></div><div class="p2id-l" id="p2IdList">' + _p2IdealListHtml() + '</div></div>';
+  if (i === 1) return _p2IdealCkHtml();
+  if (i >= 2 && i <= 5) return _p2StepFix(_p2WhyPageHtml(i + 1), i, P2_IDEAL_PG.length, P2_IDEAL_PG[i]);
+  return _p2IdealSumHtml();
+}
+// 質問を出す（はじめて開いた時は、まだ答えていない最初の質問から）
+function _p2IdealAfter() {
+  if (!document.getElementById('p2GwWrap')) return;
+  _p2GwPh = 1;
+  var q = P2GW_Q[_p2GwStep];
+  if (window._p2GwFresh || !q || q.ph !== 1 || !_p2GwShow(q)) {
+    var a = _p2G().ans, Q = _p2IdealQs(), first = Q[0];
+    if (!window._p2GwFresh) for (var j = 0; j < Q.length; j++) { var v = a[Q[j].id]; if (v === undefined || v === null || v === '') { first = Q[j]; break; } }
+    _p2GwStep = Math.max(0, P2GW_Q.indexOf(first));
+    window._p2GwFresh = 0;
+  }
+  _p2GwRender();
+}
+// 答えの一覧（理想の生活）。✎でその分野の質問へ
+function _p2IdealListHtml() {
+  var a = _p2G().ans, tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
+  var m0 = _p2LfMode; _p2LfMode = '';
+  var rows = P2_LIFE_CATS.filter(function(c) { return c.k !== 'deadline'; }).map(function(c) {
+    var done = c.ids.some(function(id) { var v = a[id]; return v !== undefined && v !== null && v !== ''; }), amt = 0, ds = '';
+    try { amt = _p2LfAmt(c); ds = _p2LfDesc(c); } catch (e2) {}
+    return '<div class="p2id-r' + (done ? '' : ' no') + '" onclick="p2IdealCat(\'' + c.k + '\')"><span class="lb">' + c.ic + ' ' + c.lb + (ds ? '<small>' + evEsc(String(ds).slice(0, 28)) + '</small>' : '') + '</span><span class="v">' + (done ? amt + '万' : 'これから') + '</span><span class="e">✎</span></div>';
+  }).join('');
+  _p2LfMode = m0;
+  return '<div class="p2id-h">🏡 あなたの理想の生活<b>' + tot + '<small>万円/月</small></b></div>' + rows
+    + '<div class="ux-sub" style="font-size:12px">答えた分はすぐここに並びます。押すとその分野の質問へ</div>';
+}
+function _p2IdealListPaint() { var el = document.getElementById('p2IdList'); if (el) el.innerHTML = _p2IdealListHtml(); }
+function p2IdealCat(k) {
+  var c = P2_LIFE_CATS.filter(function(x) { return x.k === k; })[0]; if (!c) return;
+  var id = c.ids.filter(function(x) { var q = _p2LfQ(x); return q && _p2GwShow(q); })[0] || c.ids[0];
+  var ix = -1; for (var i = 0; i < P2GW_Q.length; i++) if (P2GW_Q[i].id === id) ix = i;
+  if (ix < 0) return;
+  _p2GwStep = ix; _p2GwPh = 1;
+  if (_p2Pg === 'ideal' && !_p2PgI && document.getElementById('p2GwWrap')) { _p2GwRender(); return; }
+  p2Go('ideal', 0);
+}
+// ①が終わった：理想の生活の答えを記録（目標月収はここで聞く）
+function _p2IdealPh1Done() {
+  var g = _p2G(), n = _p2().north, a = g.ans;
+  var lifeBits = [];
+  if (a.housing_style && a.housing_style !== 'まだ決めてない') lifeBits.push(a.housing_style + (a.housing_area ? '（' + a.housing_area + '）' : ''));
+  if (a.car_name) lifeBits.push(a.car_name);
+  if (a.travel_first) lifeBits.push('旅行:' + a.travel_first);
+  if (lifeBits.length) n.life = lifeBits.join('・');
+  g.p1 = true; g.wiz = true; _p2().wiz = true;
+  try { _p2LfSnap(); } catch (e) {}
+  saveGoals();
+  p2Go('ideal', 1);
+}
+function _p2IdealCkHtml() {
+  var a = _p2G().ans, p = state.goals.plan, tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
+  var k = _p2IdealAnsN(), n = _p2IdealQs().length;
+  if (!k) return '<h2 class="ux-h2">ひと区切り</h2><div class="ux-empty">まず ① 理想の生活に答えよう</div><span class="ux-lk" onclick="p2PgSub(0)">理想の生活に答える ›</span>';
+  var rank = glTitleFromIncome(tot * 10000), dl = a.deadline ? String(a.deadline) : '', cur = p.income ? Math.round(p.income / 10000) : 0;
+  var same = cur === tot && (!dl || dl === p.deadline);
+  return '<h2 class="ux-h2">🎉 ひと区切り</h2><div class="ux-sub">' + (k < n ? 'ここまで ' + k + ' / ' + n + '問。続きはいつでも答えられます' : '理想の生活の質問に全部答えました') + '</div>'
+    + (tot <= 0 ? '<div class="ux-hint" style="margin-top:12px">金額の質問（住居費・食費など）はこれから。答えると理想の生活に必要な月収が出ます</div>' : '<div class="ux-card" style="--c:var(--gold);text-align:center;padding:18px 14px;margin-top:12px"><div style="font-size:12.5px;color:var(--text-mid);font-weight:800">理想の生活に必要な月収</div>'
+    + '<div style="font-size:44px;font-weight:900;font-family:Inter,sans-serif;color:var(--gold);line-height:1.1">' + tot + '<small style="font-size:16px">万円</small></div>'
+    + '<div style="font-size:20px;font-weight:900;letter-spacing:1px">' + evEsc(_p2TitleEn(rank)) + '</div>' + (dl ? '<div style="font-size:13px;color:var(--text-mid);font-weight:700;margin-top:2px">' + evEsc(dl.replace('-', '年')) + '月までに</div>' : '') + '</div>')
+    + (tot > 0 ? (same ? '<div class="ux-hint" style="text-align:center">✓ 目標月収はこの金額になっています</div>'
+      : '<div class="ux-sec">目標月収にしますか？' + (cur ? '（今の目標：月' + cur + '万）' : '') + '</div><div class="ux-acts"><span class="p" onclick="p2IdealApply()">目標にする</span><span onclick="p2PgSub(2)">今のまま</span></div>') : '')
+    + '<div class="ux-sec">つぎは</div><div class="ux-list">'
+    + '<div class="ux-li" onclick="p2PgSub(2)"><span class="ic">②</span><span>やりたいこと／やりたくないこと<small>思いつくまま・押すだけでも足せる</small></span><span class="ch">›</span></div>'
+    + '<div class="ux-li" onclick="p2Go(\'\')"><span class="ic">☕</span><span>今日はここまで<small>続きはいつでも</small></span><span class="ch">›</span></div></div>';
+}
+function p2IdealApply() {
+  var a = _p2G().ans, p = state.goals.plan, tot = _p2GwTotal();
+  if (tot > 0) { p.income = tot * 10000; if (!_p2().titleManual) p.title = glTitleFromIncome(p.income); }
+  if (a.deadline) p.deadline = (typeof _normYm === 'function' ? (_normYm(a.deadline) || a.deadline) : a.deadline);
+  saveGoals(); toast('🏆 目標月収を月' + tot + '万円にしました'); renderPlan();
+}
+function _p2IdealSumHtml() {
+  var tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
+  var lst = function(k, j, lb) {
+    var L = _p2Lst(k).filter(function(t) { return String(t || '').trim(); });
+    return '<div class="ux-li" onclick="p2PgSub(' + j + ')"><span class="ic">' + (L.length >= 5 ? '✓' : '!') + '</span><span>' + lb + '<small>' + (L.length ? evEsc(L.slice(0, 3).join('・')) + (L.length > 3 ? ' ほか' + (L.length - 3) : '') : 'まだ') + '</small></span><span class="ch">' + L.length + '</span></div>';
+  };
+  return '<h2 class="ux-h2">わたしの理想</h2>'
+    + '<div class="ux-sum" onclick="p2PgSub(0)" style="cursor:pointer"><b>' + tot + '<small> 万円/月</small></b><span>理想の生活（' + _p2IdealAnsN() + ' / ' + _p2IdealQs().length + '問）</span></div>'
+    + '<div class="p2id-l" style="margin-top:8px">' + _p2IdealListHtml() + '</div>'
+    + '<div class="ux-list" style="margin-top:12px">' + lst('want_do', 2, 'やりたいこと') + lst('not_want_do', 3, 'やりたくないこと') + lst('want_be', 4, 'なりたい自分') + lst('not_want_be', 5, 'なりたくない自分') + '</div>';
+}
+function _p2IdealCss() {
+  if (document.getElementById('p2IdCss')) return;
+  var st = document.createElement('style'); st.id = 'p2IdCss';
+  st.textContent = ".p2id{display:flex;flex-direction:column;gap:14px}.p2id-q .gw2-body{min-height:0}.p2id-q .gw2-foot{position:static}"
+    + ".pcx .p2id{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}.pcx .p2id-q{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 8px}"
+    + ".p2id-l{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 14px}.p2id-h{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);margin-bottom:6px}.p2id-h b{margin-left:auto;font-size:22px;color:var(--gold);font-family:Inter,sans-serif}.p2id-h b small{font-size:11px}"
+    + ".p2id-r{display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--border);cursor:pointer;font-weight:800;font-size:14px}.p2id-r .lb{flex:1;min-width:0}.p2id-r .lb small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
+    + ".p2id-r .v{font-family:Inter,sans-serif;font-weight:900}.p2id-r.no .v{color:var(--text-dim);font-size:12px;font-family:inherit}.p2id-r .e{color:var(--text-dim);font-size:12px}.p2id-r:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}";
+  document.head.appendChild(st);
+}
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
   var src = document.getElementById('idealSum'); if (!src) return;
@@ -18812,7 +18938,7 @@ function renderMenuHub() {
   try {
     nk = _p2NextKey();
     var m = _p2M(ym), mLb = parseInt(ym.slice(5), 10) + '月の目標';
-    planSt = nk === 'why' ? '次は <em>想い</em>：なぜやるのかを書く'
+    planSt = nk === 'ideal' ? '次は <em>理想</em>：理想の生活に答える'
       : nk === 'goal' ? '次は <em>目標</em>をつくる'
       : nk === 'mon' ? mLb + '：<em>' + ((m.s === '' || m.s == null) ? 'S稼働をまだ決めていない' : '設定するを押す') + '</em>'
       : (function() { var r = _p2DoRest(ym), t = _p2TodayLeft(); return (r ? '今週 <em>あと' + r + '件</em>' : '今週の分は予定ずみ ✓') + (t ? '・今日のタスク <em>' + t + '件</em>' : ''); })();
@@ -20130,6 +20256,7 @@ function renderPlan() {
       var pb8 = document.getElementById('p2DoPg'); if (pb8) { pb8.id = 'p2DoBody'; try { _p2DoRender(); } catch (eDr) {} pb8.id = 'p2DoPg'; }
     }
   }
+  if (_p2Pg === 'ideal' && !_p2PgI) _p2IdealAfter(); // v629: 理想の生活の質問をページの中に
   if (typeof _p2FabBadge === 'function') _p2FabBadge();
   _p2BannerSync();
   try { _p2Celebrate(ym); } catch (eC) {} // v553
@@ -22373,6 +22500,10 @@ function _p2GwTotal() {
 }
 var _p2GwPh = 1; // v551: ウィザードは1つのパートだけ（①理想の生活20問で終わり。②③は⚙から書きたい時に）
 function p2GwOpen(ph) {
+  // v629: 理想の生活（20問）・やりたいこと等は「理想」のページで答える（ポップアップはやめた）
+  if (!ph || ph === 1) { _p2SheetClose('p2GeOv'); _p2SheetClose('p2LfOv'); _p2GwStep = 0; window._p2GwFresh = 1; p2Go('ideal', 0); return; }
+  if (ph === 2) { p2Go('ideal', 2); return; }
+  if (ph === 3) { p2Go('essay', 0); return; }
   _p2GwPh = ph || 1;
   _p2SheetClose('p2GwOv');
   var g = _p2G(), n = _p2().north, p = state.goals.plan;
@@ -22467,7 +22598,7 @@ function _p2GwNextStep() {
   while (next < P2GW_Q.length && !_p2GwShow(P2GW_Q[next])) next++;
   return next;
 }
-function _p2GwSave(id, val) { _p2G().ans[id] = val; saveGoals(); }
+function _p2GwSave(id, val) { _p2G().ans[id] = val; saveGoals(); if (_p2GwInline()) setTimeout(_p2IdealListPaint, 0); }
 function p2GwSel(v) { _p2GwSave(P2GW_Q[_p2GwStep].id, v); setTimeout(p2GwNext, 250); }
 function p2GwSlide(v) {
   var q = P2GW_Q[_p2GwStep];
@@ -22498,6 +22629,7 @@ function p2GwNext(skipped) {
   if (q.type === 'slider' && (g.ans[q.id] === undefined || g.ans[q.id] === '') && !skipped) _p2GwSave(q.id, q.dv);
   var next = _p2GwNextStep();
   var phaseEnds = (next >= P2GW_Q.length) || (P2GW_Q[next].ph !== q.ph);
+  if (phaseEnds && _p2GwInline()) { _p2IdealPh1Done(); return; } // v629: 理想のページの中で答えている時は「ひと区切り」へ（目標月収は勝手に変えない）
   if (phaseEnds) _p2GwFinishPhase(q.ph);
   if (phaseEnds) { // v551: 1つのパートが終わったら閉じる（続けて次のパートに入らない）
     _p2SheetClose('p2GwOv');

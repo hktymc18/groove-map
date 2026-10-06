@@ -20,8 +20,8 @@ T.run(async () => {
   w.p2Go('goal'); await sleep(20);
   c('目標：6つを1画面に', $$('.pcx-p .pcx-c').length === 6);
   c('v626: PCの期日はキーボードで入れる（＋−なし）', !!$('.pcx-p input[type=month]') && w.document.getElementById('pcxCss').textContent.indexOf('.pcx .ux-pm{display:none') >= 0);
-  w.p2Go('why'); await sleep(20);
-  c('想い：項目のタブ（10）＋次へ', $$('.pcx-tabs span').length === 10 && !!$('.pcx-h .pcx-b.p'));
+  w.p2Go('ideal'); await sleep(20);
+  c('理想：項目のタブ（7）＋次へ', $$('.pcx-tabs span').length === 7 && !!$('.pcx-h .pcx-b.p'));
   w.p2PgSub(3); await sleep(20);
   c('タブで項目を切り替え', $$('.pcx-tabs span')[3].classList.contains('on'));
   w.p2Go('gap'); await sleep(20);
