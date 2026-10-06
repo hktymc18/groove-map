@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v623';
+var APP_JS_VERSION = 'v624';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v623';
+  var DATA_VERSION = 'v624';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5344,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v624', d:'2026-10-06', items:['💻 PC版のPLANとデータを、スマホの新しい形に合わせて作り直し：左に入口のタイル（スマホと同じ・状態の札つき）、右に選んだページ','🎯 PLAN：10月の目標・目標は、スマホで1項目ずつだった画面を1画面にまとめて入力（その場で保存）。想い・振り返りは上のタブで項目を切り替え','📊 データ：「ざっくり／くわしく」の切り替えをやめて、左のタイルから。コミッション・S稼働・BRなどは左にグラフ・右に数字、下に月ごとの表。推移・稼働・人数・研修・パワーライン・地域も左から','💻 ノートPCなど横幅が狭い時は、左のタイルを細く（名前とアイコンだけ）'] },
   { v:'v623', d:'2026-10-06', items:['🎓 研修生の進み具合を受付システムと連動：MAPを開くと1日1回、受付で記録された受講（PG・DLR・EXP・PA・面談シート・BPC済み・CO）を研修生のステップに「進んだ」で自動で入れます（タイトルも進みます・MAPで入れた記録は上書きしません・履歴に「受付から」と表示）','➕ 受付連携の「名簿から追加」で入れた研修生は、紹介者の直下に置かれ、受講済みの研修とタイトルもいっしょに入るように','⭐ 受付で昇格した研修生がいたらお知らせ（MAPの研修結果は自動では変えません）'] },
   { v:'v622', d:'2026-10-06', items:['◎ MAPの「運動会」を「サークル」に名前を変えました（切り替えボタン・上の見出し・並び順の説明）'] },
   { v:'v621', d:'2026-10-06', items:['🔑 ログインボタンを押しても「…」のまま止まることがある不具合を修正：プロフィールの読み込みに失敗した時は自動で読み直し、それでもだめな時は理由と「アプリを修復して開き直す」ボタンを出すように'] },
@@ -11936,6 +11937,7 @@ function dtEzMem(mid) { _p2SheetClose('dtEzOv'); if (typeof openEdit === 'functi
 // ── 画面 ──
 function renderDtEz() {
   if (_dtUx()) return; // v596: スマホは入口のタイル → 1画面1つ
+  if (_dtPcxRender()) return; // v624: PCは左に入口のタイル／右に選んだページ
   var box = document.getElementById('dtEz'); if (!box) return;
   _dtEzCss();
   var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), ro = _dtReadOnly();
@@ -12104,6 +12106,7 @@ function _dtApplyTab() {
   }
   var ps = document.querySelectorAll('#view-stats .dt-pane');
   for (var i = 0; i < ps.length; i++) ps[i].style.display = (!ez && ps[i].getAttribute('data-p') === _dtTab) ? '' : 'none';
+  try { _dtPcxNav(); } catch (eNv) {} // v624
 }
 // ── 小さな推移の線（12ヶ月） ──
 function _dtSpark(vals, color) {
@@ -16256,7 +16259,8 @@ function _p2NextKey() {
   if (!_p2Declared(_p2Ym(0))) return 'mon';
   return 'do';
 }
-function _p2HubHtml() {
+// v624: 入口のタイルの中身（スマホの入口とPCの左の列で共通）
+function _p2HubData() {
   var ym = _p2Ym(0), p = state.goals.plan, m = _p2M(ym), nk = _p2NextKey();
   var d0 = new Date(), left = new Date(d0.getFullYear(), d0.getMonth() + 1, 0).getDate() - d0.getDate() + 1;
   var why = String(_p2WhyText() || '').split('\n').filter(Boolean)[0] || (_p2().motto || '');
@@ -16271,6 +16275,10 @@ function _p2HubHtml() {
       st: (m.s === '' || m.s == null) ? 'S稼働の目標を<br><em>まだ決めていない</em>' : (_p2Declared(ym) ? 'S稼働 目標 <em>' + m.s + '人</em><br>今 ' + S + '人' : 'S稼働 ' + m.s + '人<br><em>設定するを押す</em>') },
     { k: 'do', c: 'pur', ic: '✅', lb: '今週やること', w: 1, st: (rest ? '今週 <em>あと' + rest + '件</em>' : '今週の分は予定ずみ ✓') + (tl ? '・今日のタスク <em>' + tl + '件</em>' : '') }
   ];
+  return { ym: ym, T: T, nk: nk, S: S, rv: rv, left: left, why: why };
+}
+function _p2HubHtml() {
+  var D = _p2HubData(), ym = D.ym, T = D.T, nk = D.nk, S = D.S, rv = D.rv, left = D.left, why = D.why;
   if (_uxLand()) return _p2HubLand(T, nk, S, rv, left, why); // v606: 横は見出し1行＋中身のあるタイル
   var h = '<div class="ux-hub"><div class="ux-hd"><h1>PLAN</h1>' + (why ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span></div>'
     + '<div class="ux-tiles">' + T.map(function(t) { t.next = t.k === nk; t.on = 'p2Go(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
@@ -16279,7 +16287,8 @@ function _p2HubHtml() {
     + '<span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
   return h;
 }
-function _p2PageHtml() {
+// v624: ページの中身（スマホは下の帯つきの1画面、PCは右の欄）
+function _p2PageParts() {
   var k = _p2Pg, ym = _p2Ym(0), body = '', subs = _p2PgSubs(k), i = Math.min(_p2PgI, Math.max(0, subs.length - 1));
   var fi = P2_PG_FLOW.indexOf(k), next = '', nextOn = '';
   if (fi >= 0 && fi < P2_PG_FLOW.length - 1) { next = 'つぎ：' + _p2PgTitle(P2_PG_FLOW[fi + 1]) + ' ›'; nextOn = 'p2Go(\'' + P2_PG_FLOW[fi + 1] + '\')'; }
@@ -16352,6 +16361,10 @@ function _p2PageHtml() {
   }
   var back = (k === 'inb' || k === 'ck' || k === 'bb' || k === 'gap') ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
   if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
+  return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back };
+}
+function _p2PageHtml() {
+  var P = _p2PageParts(), k = P.k, subs = P.subs, i = P.i, body = P.body, next = P.next, nextOn = P.nextOn, back = P.back;
   return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && (i || k === 'dok') && k !== 'do' ? '・' + subs[i] : '') + '</b></span><span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
     + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, subs, i, 'p2PgSub', next, nextOn) + '</div>';
 }
@@ -18567,6 +18580,150 @@ function stSaveProf() {
   setOpen();
 }
 
+// ════ v624: PLAN・データ（PC）＝左に入口のタイル（スマホと同じ）／右に選んだページ（1項目ずつ→1画面に） ════
+function _pcxCss() {
+  if (document.getElementById('pcxCss')) return;
+  var st = document.createElement('style'); st.id = 'pcxCss';
+  st.textContent =
+    ".pcx{display:grid;grid-template-columns:300px minmax(0,1fr);gap:0;min-height:100%;align-items:start}"
+    + "#view-stats.pcx-st{display:grid!important;grid-template-columns:300px minmax(0,1fr);align-items:start}#view-stats.pcx-st>*{grid-column:2;min-width:0}#view-stats.pcx-st>#dtPcNav{grid-column:1;grid-row:1/span 40}"
+    + "#view-stats.pcx-st>*:not(#dtPcNav){margin-left:26px;margin-right:26px}#view-stats.pcx-st #dtModeBar,#view-stats.pcx-st #dtTabs{display:none!important}"
+    + ".pcx-n{position:sticky;top:0;padding:16px 14px 20px;border-right:1px solid var(--border);min-height:calc(100vh - 70px)}"
+    + ".pcx-n h1{display:flex;align-items:baseline;justify-content:space-between;font-size:26px;font-weight:900;letter-spacing:1px;margin:0 4px 12px}.pcx-n h1 small{font-size:12px;color:var(--text-mid);font-weight:800;letter-spacing:0}"
+    + ".pcx-why{font-size:12px;color:var(--text-mid);font-weight:700;margin:-6px 4px 10px;line-height:1.5}"
+    + ".pcx-t{position:relative;display:block;border-radius:16px;border:1.5px solid var(--border);background:linear-gradient(135deg,color-mix(in srgb,var(--c) 16%,var(--surface)),var(--surface) 72%);padding:11px 46px 11px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}"
+    + ".pcx-t:hover{border-color:color-mix(in srgb,var(--c) 60%,var(--border))}.pcx-t.on{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent)}"
+    + ".pcx-t>b{display:block;font-size:15.5px;font-weight:900;line-height:1.3}.pcx-t>b small{font-size:12px}.pcx-t .st{font-size:12px;color:var(--text-mid);font-weight:700;margin-top:2px;line-height:1.45}.pcx-t .st em{font-style:normal;color:var(--c);font-weight:900}"
+    + ".pcx-t .ic{position:absolute;right:11px;top:10px;font-size:22px;line-height:1;color:var(--c)}.pcx-t .ic .lic{width:24px;height:24px}"
+    + ".pcx-t .bd{display:inline-block;font-size:10.5px;font-weight:900;border-radius:9px;padding:2px 8px;margin-bottom:4px;background:color-mix(in srgb,var(--c) 20%,transparent);color:var(--c)}.pcx-t .bd.nx{background:var(--accent);color:var(--go-ink,#06231b)}"
+    + ".pcx-sm{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pcx-sm span{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:5px;min-height:38px;padding:0 10px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap;position:relative}"
+    + ".pcx-sm span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}.pcx-sm span .dot{position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--red)}.pcx-sm .lic{width:15px;height:15px}"
+    + ".pcx-p{padding:16px 26px 90px;min-width:0}"
+    + ".pcx-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.pcx-h h2{font-size:24px;font-weight:900}.pcx-h .chip{font-size:12px;font-weight:900;color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);border-radius:9px;padding:3px 9px}"
+    + ".pcx-h .r{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}.pcx-b{display:inline-flex;align-items:center;gap:5px;height:38px;padding:0 14px;border-radius:11px;border:1.5px solid var(--border2);background:var(--surface);font-size:13px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap}"
+    + ".pcx-b.p{background:var(--accent);border-color:var(--accent);color:var(--go-ink,#06231b)}.pcx-b.on{border-color:var(--accent);color:var(--accent)}.pcx-b .lic{width:15px;height:15px}"
+    + ".pcx-sub{font-size:12.5px;color:var(--text-mid);font-weight:700;margin-bottom:12px}"
+    + ".pcx-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}.pcx-tabs span{padding:7px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.pcx-tabs span.on{background:var(--accent);border-color:var(--accent);color:var(--go-ink,#06231b)}"
+    + ".pcx-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;align-items:start}"
+    + ".pcx-c{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;min-width:0}.pcx-c.w{grid-column:1/-1}"
+    + ".pcx-one{max-width:860px}"
+    + ".pcx .ux-step,.pcx-st .ux-step{display:none}.pcx .ux-btm,.pcx .ux-top,.pcx-st #dtEz .ux-btm,.pcx-st #dtEz .ux-top{display:none!important}"
+    + ".pcx-c .ux-h2{font-size:19px;margin-top:0}.pcx .ux-paper{min-height:260px}"
+    + "#dtEz.pcx-dp .ux-pg{padding:0}#dtEz.pcx-dp .dtu-pg{display:flex;gap:18px;align-items:flex-start}#dtEz.pcx-dp .dtu-pg>.dtu-ch{flex:1.35;min-width:0;position:sticky;top:8px}#dtEz.pcx-dp .dtu-pg>.dtu-det{flex:1;min-width:0;margin-top:0}"
+    + ".pcx-tb{width:100%;border-collapse:collapse;font-size:13px}.pcx-tb th,.pcx-tb td{padding:7px 8px;border-top:1px solid var(--border);text-align:right;font-family:Inter,'Noto Sans JP',sans-serif;font-weight:800;white-space:nowrap}"
+    + ".pcx-tb th{color:var(--text-dim);font-size:11.5px}.pcx-tb td:first-child,.pcx-tb th:first-child{text-align:left}.pcx-tb td.cur{color:var(--accent)}"
+    // ノートPCなど狭い時：左は細く（アイコンと名前だけ）
+    + "@media (max-width:1279px){.pcx,#view-stats.pcx-st{grid-template-columns:184px minmax(0,1fr)}.pcx-t{padding:10px 34px 10px 12px}.pcx-t .st,.pcx-t .bd,.pcx-why,.pcx-n h1 small{display:none}.pcx-t>b{font-size:14px}.pcx-t .ic{right:9px;font-size:18px}.pcx-sm span{flex:1 1 100%}.pcx-p{padding:14px 18px 90px}#view-stats.pcx-st>*:not(#dtPcNav){margin-left:18px;margin-right:18px}.pcx-g{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}}";
+  document.head.appendChild(st);
+}
+function _pcxTile(t, on, next) {
+  return '<div class="pcx-t ux-c-' + t.c + (on ? ' on' : '') + '" onclick="' + t.on + '">' + (next ? '<span class="bd nx">次はここ</span>' : (t.bd ? '<span class="bd">' + t.bd + '</span>' : ''))
+    + '<span class="ic">' + t.ic + '</span><b>' + t.lb + '</b><div class="st">' + (t.st || '') + '</div></div>';
+}
+// ── PLAN（PC） ──
+var P2_PCX_PAR = { gap: 'tool', ck: 'tool', bb: 'tool', inb: 'tool', gapset: 'tool', gapal: 'tool', rmm: 'rm', rmt: 'rm', rmrows: 'rm', rmms: 'rm', dok: 'do' };
+function _p2PcxHtml() {
+  _uxCss(); _ux2Css(); _pcxCss();
+  var D = _p2HubData(), ym = D.ym;
+  if (!_p2Pg) _p2Pg = D.nk || 'mon';
+  var sel = P2_PCX_PAR[_p2Pg] || _p2Pg;
+  var nav = '<div class="pcx-n"><h1>PLAN<small>' + parseInt(ym.slice(5), 10) + '月・残り' + D.left + '日</small></h1>'
+    + (D.why ? '<div class="pcx-why">💗 ' + evEsc(D.why.slice(0, 60)) + '</div>' : '')
+    + D.T.map(function(t) { t.on = 'p2Go(\'' + t.k + '\')'; return _pcxTile(t, t.k === sel, t.k === D.nk && t.k !== sel); }).join('')
+    + '<div class="pcx-sm"><span class="' + (sel === 'rev' ? 'on' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (D.rv ? '<i class="dot"></i>' : '') + '</span><span class="' + (sel === 'tool' ? 'on' : '') + '" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
+  return '<div class="pcx">' + nav + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>';
+}
+function _p2PcxHead(t, chip, right, sub) {
+  return '<div class="pcx-h"><h2>' + t + '</h2>' + (chip ? '<span class="chip">' + chip + '</span>' : '') + '<div class="r">' + (right || '') + '</div></div>' + (sub ? '<div class="pcx-sub">' + sub + '</div>' : '');
+}
+function _p2PcxPane(D) {
+  var k = _p2Pg, ym = D.ym, b = function(lb, on, cls) { return '<span class="pcx-b' + (cls ? ' ' + cls : '') + '" onclick="' + on + '">' + lb + '</span>'; };
+  if (k === 'mon') { // 1項目ずつ → カードで全部
+    _ux2Css();
+    var MP = _p2MonPages(), mym = _p2MYm(), dec = _p2Declared(mym), cur = !_p2MonYm;
+    var right = b('今月（' + parseInt(_p2Ym(0).slice(5), 10) + '月）', 'p2MonFor(0)', cur ? 'on' : '') + b('来月（' + parseInt(_p2Ym(1).slice(5), 10) + '月）', 'p2MonFor(1)', cur ? '' : 'on')
+      + (dec ? '' : b('✅ 設定する', 'p2Declare(\'' + mym + '\')', 'p'));
+    var cards = MP.map(function(x, i) { return x.k === 'done' ? '' : '<div class="pcx-c' + (x.k === 's' ? ' w' : '') + '">' + _p2MonPageHtml(i) + '</div>'; }).join('');
+    var done = MP.length - 1;
+    return _p2PcxHead(_p2PgTitle('mon'), dec ? '✓ 設定ずみ' : '', right, 'スマホでは1項目ずつの画面を、PCでは1画面にまとめています。入れたらその場で保存')
+      + '<div class="pcx-g">' + cards + '<div class="pcx-c w">' + _p2MonPageHtml(done) + '</div></div>';
+  }
+  if (k === 'goal') {
+    _ux2Css();
+    var p = state.goals.plan;
+    return _p2PcxHead('目標', (p.title && p.deadline) ? '✓ 決めた' : '', '', '目標月収・タイトル・期日・次の山・スローガンを1画面で。入れたらその場で保存')
+      + '<div class="pcx-g">' + P2_GOAL_PG.map(function(x, i) { return '<div class="pcx-c' + (x.k === 'done' ? ' w' : '') + '">' + _p2GoalPageHtml(i) + '</div>'; }).join('') + '</div>';
+  }
+  if (k === 'do') { // 今までのPCの「今週やること」をそのまま右に
+    return _p2PcxHead('今週やること', '', b('⚙ 設定', 'p2DoMenu(\'more\')') + b('📅 予定へ', 'switchView(\'events\')', 'p'))
+      + '<div class="pcx-one" style="max-width:none">' + _p2DoHtml(ym) + _p2PcTilesHtml(ym) + _p2UnionHtml() + '</div>';
+  }
+  if (k === 'rm') {
+    var P0 = _p2PageParts(); // 中身（見出し・横軸のマイルストーン・この先・表／ギャップへ）はスマホと同じ
+    return '<div class="pcx-one" style="max-width:none">' + P0.body + '</div>';
+  }
+  // そのほか（想い・振り返り・ツールと、その先のページ）：上に項目のタブ・右上に「次へ」
+  var P = _p2PageParts(), subs = P.subs, i = P.i, par = P2_PCX_PAR[k];
+  var tabs = subs.length > 1 ? '<div class="pcx-tabs">' + subs.map(function(t, j) { return '<span class="' + (j === i ? 'on' : '') + '" onclick="p2PgSub(' + j + ')">' + (j + 1) + '. ' + t + '</span>'; }).join('') + '</div>' : '';
+  var right = (par || (P.back && P.back !== 'p2Back()') ? b('‹ 戻る', par && P.back === 'p2Back()' ? 'p2Go(\'' + par + '\')' : P.back) : (i > 0 ? b('‹ 前へ', 'p2PgSub(' + (i - 1) + ')') : ''))
+    + (P.next ? b(P.next, P.nextOn, 'p') : '');
+  return _p2PcxHead(_p2PgTitle(k) || 'PLAN', '', right) + tabs + '<div class="pcx-one">' + P.body + '</div>';
+}
+// ── データ（PC） ──
+var DT_PCX_FULL = [['trend', '推移', 'trend'], ['sum', '稼働・人数', 'users'], ['train', '研修', 'cap'], ['pl', 'パワーライン', 'zap'], ['reg', '地域', 'pin']];
+function _dtPcxOn() { return typeof isPCMode === 'function' && isPCMode() && currentView === 'stats'; }
+// 左の列（ざっくりのタイル＋くわしくの表）。#view-stats の先頭に置く
+function _dtPcxNav() {
+  var vs = document.getElementById('view-stats'); if (!vs) return;
+  if (!_dtPcxOn()) { vs.classList.remove('pcx-st'); var o = document.getElementById('dtPcNav'); if (o && o.parentNode) o.parentNode.removeChild(o); return; }
+  _uxCss(); _ux2Css(); _pcxCss();
+  var D; try { D = _dtHubData(); } catch (e) { return; }
+  if (_dtMode === 'ez' && _dtPgIdx(_dtPg) < 0) _dtPg = D.nk;
+  var nav = document.getElementById('dtPcNav');
+  if (!nav) { nav = document.createElement('div'); nav.id = 'dtPcNav'; vs.insertBefore(nav, vs.firstChild); }
+  vs.classList.add('pcx-st');
+  var ez = _dtMode === 'ez';
+  nav.className = 'pcx-n';
+  nav.innerHTML = '<h1>データ<small>' + D.ms[11].lbl + '・残り' + _dtEzDaysLeft() + '日</small></h1>'
+    + D.T.map(function(t) { t.on = 'dtPcGo(\'' + t.k + '\')'; return _pcxTile(t, ez && t.k === _dtPg, t.k === D.nk && !(ez && t.k === _dtPg)); }).join('')
+    + '<div class="pcx-sm">' + DT_PCX_FULL.map(function(f) { return '<span class="' + (!ez && _dtTab === f[0] ? 'on' : '') + '" onclick="dtMode(\'full\',\'' + f[0] + '\')">' + icn(f[2]) + ' ' + f[1] + '</span>'; }).join('') + '</div>';
+}
+function dtPcGo(k) {
+  _dtMode = 'ez'; _dtPg = k || ''; _dtDr = '';
+  try { localStorage.setItem('gm_dtMode', 'ez'); } catch (e) {}
+  _dtApplyTab(); renderDtEz();
+  try { var sa = document.getElementById('scrollArea'); if (sa) sa.scrollTop = 0; } catch (e2) {}
+}
+// 右の欄（ざっくりの1ページ）。描いたら true
+function _dtPcxRender() {
+  if (!_dtPcxOn()) return false;
+  var box = document.getElementById('dtEz'); if (!box) return false;
+  _uxCss(); _ux2Css(); _dtEzCss(); _dtUxCss(); _pcxCss();
+  _dtPcxNav();
+  if (_dtPgIdx(_dtPg) < 0) _dtPg = 'comm';
+  var k = _dtPg, i = _dtPgIdx(k), ro = _dtReadOnly(), ms = _dtMonths();
+  var tmp = document.createElement('div'); tmp.innerHTML = _dtPageHtml2(k);
+  [].forEach.call(tmp.querySelectorAll('.ux-top,.ux-btm'), function(x) { x.parentNode.removeChild(x); });
+  var right = ''; // 入力・くわしくのボタンはページの中（スマホと同じ場所）にある
+  box.classList.add('pcx-dp');
+  box.innerHTML = '<div class="pcx-h" style="margin-top:14px"><h2>' + DT_PG[i].lb + '</h2><div class="r">' + right + '</div></div>'
+    + '<div class="pcx-sub">左にグラフ・右にくわしい数字（スマホと同じ並び）</div>' + tmp.innerHTML + _dtPcxTable();
+  var pb = document.getElementById('dtPgBody');
+  if (pb) { pb.id = 'dtEzBody'; try { _dtEzRender(k === 'move' ? 'newN' : k); } catch (e) {} pb.id = 'dtPgBody'; }
+  return true;
+}
+// PCだけ：グラフの下に月ごとの表
+function _dtPcxTable() {
+  try {
+    var now = _dtEzNow(), ms = _dtMonths(), cm = _dtVals('コミッション');
+    var rows = [['コミッション（万円）', cm.map(function(v) { return v === null ? null : Math.round(v / 1000) / 10; })], ['S稼働（人）', _dtEzSeries('S', now)], ['BR（人）', _dtEzSeries('br', now)], ['B1数（人）', _dtEzSeries('newN', now)]];
+    var idx = []; for (var j = Math.max(0, ms.length - 8); j < ms.length; j++) idx.push(j);
+    var f = function(v) { return v === null || v === undefined || v === '' ? '—' : (+v).toLocaleString(); };
+    return '<div class="pcx-c" style="margin-top:16px"><div class="dtu-cht" style="margin-bottom:6px">月ごとの表<small>直近8ヶ月（今月は途中）</small></div><table class="pcx-tb"><tr><th></th>'
+      + idx.map(function(j) { return '<th>' + ms[j].lbl + '</th>'; }).join('') + '</tr>'
+      + rows.map(function(r) { return '<tr><td>' + r[0] + '</td>' + idx.map(function(j) { return '<td class="' + (j === ms.length - 1 ? 'cur' : '') + '">' + f(r[1][j]) + '</td>'; }).join('') + '</tr>'; }).join('') + '</table></div>';
+  } catch (e) { return ''; }
+}
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
   var src = document.getElementById('idealSum'); if (!src) return;
@@ -18642,6 +18799,7 @@ var _dtPg = '', DT_PG = [
 ];
 function _dtPgIdx(k) { for (var i = 0; i < DT_PG.length; i++) if (DT_PG[i].k === k) return i; return -1; }
 function dtGo(k) {
+  if (_dtPcxOn()) { dtPcGo(k); return; } // v624
   _dtPg = k || ''; _dtDr = ''; document.body.classList.remove('dtu-tm');
   if (currentView !== 'stats') { switchView('stats'); return; }
   renderDtEz();
@@ -18688,7 +18846,8 @@ function _uxBars(vals, o) {
 }
 function _dtMan(v) { return Math.abs(v) >= 10000 ? (Math.round(v / 1000) / 10).toLocaleString() + '万' : Math.round(v).toLocaleString(); }
 // 入口（タイル）
-function _dtHubHtml() {
+// v624: 入口のタイルの中身（スマホの入口とPCの左の列で共通）
+function _dtHubData() {
   var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), cm = _dtVals('コミッション'), lm = ms[10], c1 = cm[10], c0 = cm[9], ro = _dtReadOnly();
   var sg = _dtEzSGoal(now.S), gap = _dtEzGap();
   var cSt = c1 === null ? (ro ? lm.m + '月は未入力' : '<em>＋ ' + lm.m + '月の金額を入れる</em>') : lm.m + '月のコミッション' + (c0 !== null && c1 - c0 ? '・<em>' + (c1 > c0 ? '▲ ' : '▼ ') + '¥' + Math.abs(Math.round(c1 - c0)).toLocaleString() + '</em>' : '');
@@ -18700,6 +18859,10 @@ function _dtHubHtml() {
     { k: 'move', c: 'sky', ic: icn('calc'), lb: '動かす数字', st: 'B1 <em>' + now.newN + '人</em> × 新規の平均<br>× 平均稼働人数' },
     { k: 'gap', c: 'rose', ic: icn('target'), lb: '理想との差', st: gap === null ? '理想MAPを<br><em>つくる</em>' : (gap.length ? '<em>' + gap.length + '人</em> 差があります' : '理想に届いています 🎉') }
   ];
+  return { now: now, ms: ms, cm: cm, T: T, nk: nk };
+}
+function _dtHubHtml() {
+  var D = _dtHubData(), now = D.now, ms = D.ms, cm = D.cm, T = D.T, nk = D.nk;
   var sb = function(t, on) { return '<span class="ux-sb" onclick="' + on + '">' + t + '</span>'; };
   var sm = sb(icn('trend') + ' 推移', 'dtMode(\'full\',\'trend\')') + sb(icn('users') + ' 稼働・人数', 'dtMode(\'full\',\'sum\')') + sb(icn('cap') + ' 研修・地域', 'dtMode(\'full\',\'train\')');
   var tiles = '<div class="ux-tiles" style="margin-top:10px">' + T.map(function(t) { t.next = t.k === nk; t.on = 'dtGo(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>';
@@ -19898,6 +20061,7 @@ function renderPlan() {
     //        目標設定のツール類は ⚙ で右から出すパネルへ（常時は出さない）。書き出しは右下の✍️メモパッド
     wrap.classList.add('p2pc-on');
     document.body.classList.remove('ux-pg', 'ux-hub');
+    if (_p2PcxOld !== true) { wrap.innerHTML = _p2PcxHtml(); } else { // v624: 左に入口のタイル／右に選んだページ（_p2PcxOld=true で今までの1画面）
     var tabYm = _p2Ym(_p2PcTab);
     wrap.innerHTML = _p2PcHeroHtml()
       + _p2PcRailHtml()
@@ -19905,6 +20069,7 @@ function renderPlan() {
       + '<div class="p2pc-r">' + alertH + rev
       + '<div class="p2pc-tabs"><span class="' + (_p2PcTab === 0 ? 'on' : '') + '" onclick="p2PcTab(0)">今月（' + parseInt(ym.slice(5), 10) + '月）</span><span class="' + (_p2PcTab === 1 ? 'on' : '') + '" onclick="p2PcTab(1)">来月（' + parseInt(_p2Ym(1).slice(5), 10) + '月）</span></div>'
       + _p2MonthHtml(tabYm, _p2PcTab, true) + unn + '</div></div>';
+    }
   } else {
     wrap.classList.remove('p2pc-on');
     // v593: スマホは入口（タイル）→ 押すと1画面に1つのページ（縦横どちらでも）
@@ -19926,6 +20091,7 @@ function renderPlan() {
 }
 // ════ v537: PLAN（PC）──────────────────────────────────────────
 var _p2PcTab = 0; // 右の目標入力：0=今月／1=来月
+var _p2PcxOld = false; // v624
 function p2PcTab(i) { _p2PcTab = i ? 1 : 0; renderPlan(); }
 function _p2YmAdd(ym, k) { var y = parseInt(ym.slice(0, 4), 10), m = parseInt(ym.slice(5, 7), 10) - 1 + k; y += Math.floor(m / 12); m = ((m % 12) + 12) % 12; return y + '-' + String(m + 1).padStart(2, '0'); }
 function _p2YmDiff(a, b) { return (parseInt(b.slice(0, 4), 10) - parseInt(a.slice(0, 4), 10)) * 12 + parseInt(b.slice(5, 7), 10) - parseInt(a.slice(5, 7), 10); }
