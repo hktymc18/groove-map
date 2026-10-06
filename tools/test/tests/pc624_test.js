@@ -50,6 +50,14 @@ T.run(async () => {
   c('理想MAP・OL・再アプローチは下のボタンに', ['理想MAP', 'OL', '再アプローチ'].every(t => $('#view-menu .ux-sm').textContent.indexOf(t) >= 0));
   $$('#view-menu .ux-t')[4].click(); await sleep(30);
   c('分析＝データタブ', w.currentView === 'stats');
+  c('v632: スマホは下のタブバーなし・左下に「‹ メニュー」', w.document.body.classList.contains('ux-nt') && !!$('#uxMenuBk') && w.document.getElementById('uxNavCss').textContent.indexOf('.mobile-tabbar') >= 0 && w.document.body.getAttribute('data-v') === 'stats');
+  $('#uxMenuBk').onclick(); await sleep(20);
+  c('「‹ メニュー」でメニューへ', w.currentView === 'menu');
+  w.switchView('current'); await sleep(30);
+  c('MAPは下の帯の中に「‹ メニュー」', !!$('#mxBtm .bk.mn'));
+  setWH(1400, 900); w._uxSync();
+  c('PCは今まで通り（タブバーの指定なし）', !w.document.body.classList.contains('ux-nt'));
+  setWH(390, 844); w._uxSync();
   setWH(390, 844); w._uxSync(); w.switchView('plan'); await sleep(30);
   c('PLAN：スマホは入口のタイル', !$('.pcx2') && !!$('#view-plan .ux-hub, #view-plan .ux-pg'));
   w.p2Go('sum'); await sleep(20);
