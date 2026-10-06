@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v665';
+var APP_JS_VERSION = 'v666';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3774,7 +3774,8 @@ var ICONS = {
   gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13.5M19 12v7.5a2 2 0 01-2 2H7a2 2 0 01-2-2V12M7.5 8a2.5 2.5 0 010-5C10.5 3 12 8 12 8s1.5-5 4.5-5a2.5 2.5 0 010 5"/>',
   ruler: '<path d="M21.3 15.3a2.4 2.4 0 010 3.4l-2.6 2.6a2.4 2.4 0 01-3.4 0L2.7 8.7a2.4 2.4 0 010-3.4l2.6-2.6a2.4 2.4 0 013.4 0z"/><path d="M14.5 12.5l2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/>',
   flag: '<path d="M5 21.5V3.5"/><path d="M5 4h12.5l-2.5 4.5 2.5 4.5H5"/>',
-  inbox: '<path d="M3 13.5l2.8-8.2A1.5 1.5 0 017.2 4.3h9.6a1.5 1.5 0 011.4 1l2.8 8.2V19a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 19z"/><path d="M3 13.5h5l1.5 2.5h5l1.5-2.5h5"/>'
+  inbox: '<path d="M3 13.5l2.8-8.2A1.5 1.5 0 017.2 4.3h9.6a1.5 1.5 0 011.4 1l2.8 8.2V19a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 19z"/><path d="M3 13.5h5l1.5 2.5h5l1.5-2.5h5"/>',
+  bug: '<path d="M8 2l1.9 1.9M16 2l-1.9 1.9"/><path d="M9 7.1V6a3 3 0 016 0v1.1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 014-4h4a4 4 0 014 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9M6.5 9C4.6 8.8 3 7.2 3 5.2M6 13H2M3 21c0-2.1 1.7-3.9 3.8-4M20.97 5c0 2.1-1.6 3.8-3.5 4M22 13h-4M17.2 17c2.1.1 3.8 1.9 3.8 4"/>'
 };
 // v501: やる気レベル＝色分き線画アイコン（1=緑の芽・2=オレンジの稲妻・3=赤の炎）
 var MORALE_COLORS = ['', '#4ADE80', '#FFB454', '#FF5D73'];
@@ -3872,7 +3873,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v665';
+  var DATA_VERSION = 'v666';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5351,6 +5352,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v666', d:'2026-10-06', items:['🎨 HOMEの「バグ・要望」ボタンを絵文字から、ほかのボタンと同じ線のアイコンに'] },
   { v:'v665', d:'2026-10-06', items:['🐛 HOMEのタイルの写真とアイコンの色が消えていたのを修正','🏷 ロゴの位置を少し上に'] },
   { v:'v664', d:'2026-10-06', items:['🏷 HOMEの左上にNWPのロゴ（HOMEの文字と高さをそろえて。ライトは濃い色・ダークは白）'] },
   { v:'v663', d:'2026-10-06', items:['◎ スマホ横のサークルMAPで丸を押すと、その人の画面（GSV・稼働・タイトル・活動など）が開くように。閉じるとサークルMAPに戻ります'] },
@@ -19695,7 +19697,7 @@ function renderMenuHub() {
   if (currentUser && currentUser.union) S += sb(icn('calendar') + ' ユニオン予定', 'openUnionListSheet()');
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
-  if (_fb && _fb.ok) S += sb('🐞 バグ・要望', 'fbOpen()', _fb.newN || '');
+  if (_fb && _fb.ok) S += sb(icn('bug') + ' バグ・要望', 'fbOpen()', _fb.newN || ''); // v666: 絵文字ではなくアイコン
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
   var lg = '<img class="hm-logo w" src="img/logo-w.png" alt="NWP"><img class="hm-logo d" src="img/logo-d.png" alt="NWP">'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）
