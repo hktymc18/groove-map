@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v627';
+var APP_JS_VERSION = 'v628';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v627';
+  var DATA_VERSION = 'v628';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5344,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v628', d:'2026-10-06', items:['PC版のPLANの一番上の目標・マイルストーンの帯をやめて、元の形に戻しました'] },
   { v:'v627', d:'2026-10-06', items:['🏆 PC版のPLANの一番上に「目標」と横いっぱいのマイルストーンをいつも表示：たたんだ形（目標月収・タイトル・期日・スローガン・次の山を1行）と、ひらいた形（大きな目標の欄）を「▼ ひらく／▲ たたむ」で切り替え（端末ごとに覚えます）'] },
   { v:'v626', d:'2026-10-06', items:['📊 データの「ざっくり／くわしく」の切り替えをなくしました（スマホは入口のタイルから・表を見ている時は「‹ データの入口へ」で戻る）','⌨️ PC版のPLANの目標入力から −／＋ ボタンをなくし、キーボードで数字を打つ形に（期日は年月を入力）'] },
   { v:'v625', d:'2026-10-06', items:['💻 PC版のPLANとデータを、スマホの新しい形に合わせて作り直し：左に入口のタイル（スマホと同じ・状態の札つき）、右に選んだページ','🎯 PLAN：10月の目標・目標は、スマホで1項目ずつだった画面を1画面にまとめて入力（その場で保存）。想い・振り返りは上のタブで項目を切り替え','📊 データ：「ざっくり／くわしく」の切り替えをやめて、左のタイルから。コミッション・S稼働・BRなどは左にグラフ・右に数字、下に月ごとの表。推移・稼働・人数・研修・パワーライン・地域も左から','💻 ノートPCなど横幅が狭い時は、左のタイルを細く（名前とアイコンだけ）'] },
@@ -18649,7 +18650,7 @@ function _p2PcxHtml() {
     + (D.why ? '<div class="pcx-why">💗 ' + evEsc(D.why.slice(0, 60)) + '</div>' : '')
     + D.T.map(function(t) { t.on = 'p2Go(\'' + t.k + '\')'; return _pcxTile(t, t.k === sel, t.k === D.nk && t.k !== sel); }).join('')
     + '<div class="pcx-sm"><span class="' + (sel === 'rev' ? 'on' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (D.rv ? '<i class="dot"></i>' : '') + '</span><span class="' + (sel === 'tool' ? 'on' : '') + '" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
-  return _p2PcxTop() + '<div class="pcx">' + nav + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>';
+  return '<div class="pcx">' + nav + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>'; // v628: 上の目標の帯（_p2PcxTop）は出さない
 }
 // v627: 一番上に目標とマイルストーン（どのページでも見える）。たたむと目標は1行・マイルストーンはそのまま。端末ごとに覚える（最初はたたんだ形）
 function _p2TopOpen() { try { return localStorage.getItem('gm_p2Top') === 'open'; } catch (e) { return false; } }
