@@ -9161,9 +9161,7 @@ function renderIdealSum() {
     + [['SB', 'sb', 'newフロント ' + I.comm.sbN + '人・' + pt(I.comm.sbPt) + 'P × 3%'], ['BB', 'bb', 'GSV ' + pt(I.comm.bbPt) + 'P・早見表'], ['LB', 'lb', (function() { var l9 = lbCalc(membersForMap('ideal')); return l9.rank >= 0 ? LB_DEF[l9.rank].t + '・第' + l9.n + '世代まで' + (l9.rate === 0.025 ? '（2.5%）' : '') : 'ゴールドから'; })()]].map(function(x) {
       return '<div class="has-tp" onclick="idsTip(this)"><span><u>' + x[0] + '</u></span><b>' + yen(I.comm[x[1]]) + '</b><small class="ids-tp">' + x[2] + '</small><small>現状 ' + yen(C.comm[x[1]]) + '</small></div>';
     }).join('') + '</div>' + _lbUpHtml(membersForMap('ideal')) + '</div></div>'
-    + _idealGuideHtml(I)
-    + (state.isEditor ? '<div class="ids-hint">カードをタップ → GSV・稼働の変更／直下に新規B1を追加。カードの <span class="idd up">+800</span> <span class="idd act">B→A</span> <span class="idd new">NEW</span> は現状との差</div>' : '')
-    + '</div>';
+    + '</div>'; // v641: 「長期目標から見た今月の目安」と下の説明書きはなし
   box.innerHTML = h;
 }
 function idsTip(el) { // 説明の吹き出し（タップで開く・ほかを押すと閉じる）
@@ -9626,44 +9624,21 @@ function _idealAutoTitle(members) {
   if (chg.length && typeof currentView !== 'undefined' && currentView === 'ideal' && typeof toast === 'function') toast('タイトルを要件に合わせました（理想MAP）：' + chg.slice(0, 2).join('・') + (chg.length > 2 ? ' ほか' + (chg.length - 2) + '人' : ''));
 }
 // 「タイトルが上がると、リーディングがいくらになるか」（理想MAPの自分より上のタイトルごと）
-// v641: タイトルはリストで選んで1つだけ。大きい数字＋あと必要なもの（バー）だけにして、計算の説明は (i) へ。
-//       自分のGSVが3,000P未満の時は「今のGSV」と「3,000P以上」の2つの額を並べる
+// v641: タイトルはリストで選んで1つだけ・大きい数字だけ。計算の説明は (i) へ
 function _lbUpHtml(members) {
   var ms = (members || []).filter(function(m) { return m && !m.deleted; });
   var root = ms.filter(function(m) { return !m.parentId; })[0];
   if (!root || !isBROrAbove(root.title)) return '';
-  var kids = _lbKids(ms), lt = ltsvMap(ms), now = lbCalc(ms), yen = function(v) { return '¥' + Math.round(v || 0).toLocaleString(); };
-  var man = function(v) { return v >= 10000 ? (Math.round(v / 1000) / 10) + '万' : v.toLocaleString(); };
-  var ms3 = null;
-  if (now.gsv < 3000) { // 自分のGSVだけ3,000にした場合（ほかの人はそのまま）
-    var r3 = {}; for (var k3 in root) r3[k3] = root[k3]; r3.ptCurrent = 3000;
-    ms3 = ms.map(function(m) { return m === root ? r3 : m; });
-  }
-  var r0 = Math.max(0, now.rank); // 今のタイトル（BRの時はゴールドから）
-  if (r0 >= LB_DEF.length) return '';
-  var rows = '', opts = '', sel = Math.min(now.rank + 1, LB_DEF.length - 1), sv = '';
+  var now = lbCalc(ms), yen = function(v) { return '¥' + Math.round(v || 0).toLocaleString(); };
+  var rows = '', opts = '', sel = now.rank + 1, sv = '';
   try { sv = localStorage.getItem('gm_lbUpSel') || ''; } catch (eLs) {}
-  for (var q = r0; q < LB_DEF.length; q++) if (LB_DEF[q].t === sv) sel = q;
-  var big = function(lb, v, up, hi) {
-    return '<div class="ids-lbk' + (hi ? ' hi' : '') + '"><small>' + lb + '</small><b>' + yen(v) + '</b>' + (up > 0 ? '<em>＋' + yen(up) + '</em>' : '') + '</div>';
-  };
-  var bar = function(lb, have, need, unit, fmt) {
-    var ok = have >= need, pct = need > 0 ? Math.min(100, Math.round(have / need * 100)) : 100;
-    return '<div class="ids-lbq' + (ok ? ' ok' : '') + '"><span>' + lb + '</span><i><u style="width:' + pct + '%"></u></i><b>' + (ok ? '✓' : fmt(have) + '<small> / ' + fmt(need) + unit + '</small>') + '</b></div>';
-  };
-  for (var r = r0; r < LB_DEF.length; r++) {
-    var cur = r === now.rank, c = lbCalc(ms, r), gap = _lbReqGap(root, kids, lt, r);
-    var vals = ms3 ? big('今のGSV ' + now.gsv.toLocaleString() + 'P', c.total, c.total - now.total) + big('GSV 3,000P以上', lbCalc(ms3, r).total, lbCalc(ms3, r).total - now.total, 1)
-      : big('リーディング', c.total, c.total - now.total, 1);
-    var req = '';
-    if (!cur) {
-      req = bar('フロントBR', gap.g1, LB_DEF[r].br, '人', function(v) { return v; });
-      gap.pl.forEach(function(p, k) { req += bar('系列LTSV ' + (k + 1) + '本目', p.have, p.need, 'P', man); });
-      req = '<div class="ids-lbn">' + (gap.br || gap.pl.some(function(p) { return !p.ok; }) ? 'あと必要' : '要件はそろっています') + '</div>' + req;
-    }
-    opts += '<option value="' + r + '"' + (r === sel ? ' selected' : '') + '>' + LB_DEF[r].t + (cur ? '（今）' : '') + '</option>';
-    rows += '<div class="ids-lbr' + (r === sel ? '' : ' off') + '" data-r="' + r + '"><div class="ids-lbv' + (ms3 ? '' : ' one') + '">' + vals + '</div>' + req + '</div>';
+  for (var q = now.rank + 1; q < LB_DEF.length; q++) if (LB_DEF[q].t === sv) sel = q;
+  for (var r = now.rank + 1; r < LB_DEF.length; r++) {
+    var c = lbCalc(ms, r), up = c.total - now.total;
+    opts += '<option value="' + r + '"' + (r === sel ? ' selected' : '') + '>' + LB_DEF[r].t + '</option>';
+    rows += '<div class="ids-lbr' + (r === sel ? '' : ' off') + '" data-r="' + r + '"><div class="ids-lbk"><small>リーディング</small><b>' + yen(c.total) + '</b>' + (up > 0 ? '<em>＋' + yen(up) + '</em>' : '') + '</div></div>';
   }
+  if (!rows) return '';
   return '<div class="ids-lbup"><div class="ids-lbh"><span>📈 タイトルが上がると</span><select onchange="lbUpSel(+this.value)">' + opts + '</select>'
     + '<span class="ids-ib" onclick="lbUpInfo()" title="説明">i</span></div>' + rows + '</div>';
 }
@@ -9678,7 +9653,7 @@ function lbUpInfo() {
   UX_INFO.lbup = { t: 'リーディングの計算', h: '今の理想MAPのまま、タイトルだけ上がった時のリーディング。<b>＋</b>は今の額との差です。<br>'
     + '<b>自分のGSV 3,000P以上</b>：「もらえる世代のBRのGSV合計×5%」と「第1世代×10%」の高い方<br><b>2,000〜3,000P未満</b>：もらえる世代の合計×2.5%<br><b>2,000P未満</b>：もらえません<br>'
     + '<b>もらえる世代</b>：' + LB_DEF.map(function(d) { return d.t + ' 第' + d.g; }).join('・') + '世代まで<br>'
-    + '<b>あと必要</b>：そのタイトルの要件（第1世代のBRの人数・系列のLTSV）と今の差。額が変わらない時は、第2世代より下にBRが増えると上がります' };
+    + '額が変わらない時は、第2世代より下にBRが増えると上がります' };
   if (typeof _ux2Css === 'function') _ux2Css();
   uxInfo('lbup');
 }
