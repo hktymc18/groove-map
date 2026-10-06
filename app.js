@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v634';
+var APP_JS_VERSION = 'v635';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v634';
+  var DATA_VERSION = 'v635';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v635', d:'2026-10-06', items:['💎 スマホのMAPで、BR以上をタイトルごとの色に（BR=紫・G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ…PCのツリーと同じ宝石色）。明るい色の札は黒い字で見やすく'] },
   { v:'v634', d:'2026-10-06', items:['🏠 スマホの「メニュー」の名前を「HOME」に。左下のボタンも「HOME」に','📅 カレンダー・ToDoの左下の「‹ 戻る」をHOMEのマークに（押すとHOMEへ）'] },
   { v:'v633', d:'2026-10-06', items:['📅 カレンダー・ToDoの「‹ 戻る」でメニューに戻るように（スマホ）','👥 スマホのメニューから「メンバー」をなくしました（MAPの一覧と同じ内容のため）'] },
   { v:'v632', d:'2026-10-06', items:['📱 スマホの下のタブバー（MAP・予定・データ・メニュー）をなくしました。メニューのタイルから入り、どの画面も左下の「‹ メニュー」で戻れます（MAPは下の帯の中・カレンダーは今までどおり「‹ 戻る」）','上の「‹ メニューにもどる」の帯もなくして、左下に一本化しました'] },
@@ -16533,7 +16534,21 @@ function _mxCat(m, mapType) {
   if (mapType !== 'ideal' && t !== 'BM' && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m)) return 'fr';
   return 'ot';
 }
-var MX_CATS = [['br', 'BR'], ['ex', '審査中'], ['tr', '研修生'], ['fr', 'フレッシュ'], ['ot', 'そのほか']];
+var MX_CATS = [['br', 'BR以上'], ['ex', '審査中'], ['tr', '研修生'], ['fr', 'フレッシュ'], ['ot', 'そのほか']];
+// v635: BR以上はタイトルの色（BR=紫・G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ…PCのツリーと同じ宝石色）
+function _mxK(m, cat) {
+  if (cat !== 'br') return 'var(--mx' + cat + ')';
+  var t = (m.title || '').trim();
+  if (t === 'BR' || t === 'ブランドレプリゼンタティブ') return 'var(--mxbr)';
+  var c = typeof titleRingColor === 'function' ? titleRingColor(t) : '';
+  return /^#[0-9a-fA-F]{6}$/.test(c) ? c : 'var(--mxbr)';
+}
+// 明るい色（金・白銀など）の上は黒い字に
+function _mxInk(k) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(k)) return '';
+  var r = parseInt(k.slice(1, 3), 16), g = parseInt(k.slice(3, 5), 16), b = parseInt(k.slice(5, 7), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? ';color:#1B1F2A' : '';
+}
 function _mxCss() {
   if (document.getElementById('mxCss')) return;
   var st = document.createElement('style'); st.id = 'mxCss';
@@ -16590,7 +16605,7 @@ function _mxCss() {
 }
 // 1行（木の線・開閉・アバター・タイトル・名前 ／ 右に固定：稼働・GSV）
 function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) {
-  var cat = _mxCat(m, mapType), k = 'var(--mx' + cat + ')', W = 14, g = '';
+  var cat = _mxCat(m, mapType), k = _mxK(m, cat), W = 14, g = '';
   for (var i = 0; i < lines.length; i++) if (lines[i]) g += '<i style="left:' + (i * W + 6) + 'px;--lc:' + fc + '"></i>';
   if (depth > 0) {
     var x = (depth - 1) * W + 6;
@@ -16616,7 +16631,7 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
     + '<div class="mg" style="width:' + gw + 'px">' + g + '</div>'
     + (nKids ? '<span class="mt on" onclick="event.stopPropagation();mxTgl(\'' + m.id + '\')">' + (kidsShown ? '▼' : '▶') + '</span>' : '<span class="mt"></span>')
     + '<div class="mav" style="--k:' + k + '">' + av + '</div>'
-    + '<div class="mn"><div class="l1">' + (t ? '<span class="tp" style="--k:' + k + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="n ' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</div>'
+    + '<div class="mn"><div class="l1">' + (t ? '<span class="tp" style="--k:' + k + _mxInk(k) + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="n ' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</div>'
     + (l2 ? '<div class="l2">' + l2 + '</div>' : '') + '</div>'
     + '<div class="mc"><div class="ma" style="--ac:' + ac + '"><b>' + (act || '—') + '</b><small>' + (rate ? rate + '%' : '') + '</small></div>'
     + '<div class="mgv"><b>' + pt + '</b><small>' + (m.ptFixed > 0 ? '固定 ' + m.ptFixed.toLocaleString() : 'GSV') + '</small></div></div></div>';
@@ -16694,7 +16709,7 @@ function _mxTop(mapType) {
     + '<span class="mxc mxsel' + (lv !== 'all' ? ' on' : '') + '">' + (lv !== 'all' ? lv : '2') + '段 ▾<select onchange="mxLevel(this.value)">' + (lv === 'all' ? '<option value="all" selected>段を選ぶ</option>' : '') + lvOpts + '</select></span>'
     + (cur ? '<span class="mxc' + (regionFilter ? ' on' : '') + '" onclick="mxRegion()">📍 ' + evEsc(regLb) + (regionFilter ? ' <span onclick="event.stopPropagation();mxSetRegion(\'\')" style="margin-left:2px;color:var(--text-dim)">×</span>' : ' ▾') + '</span>' : '')
     + '<span class="mxc' + (fN ? ' on' : '') + '" onclick="mxFilter()">絞り込み' + (fN ? ' <span class="n">1</span>' : ' ▾') + '</span></div>'
-    + '<div class="mxlg">' + MX_CATS.map(function(c) { return '<span><i style="--k:var(--mx' + c[0] + ')"></i>' + c[1] + '</span>'; }).join('') + '</div>'
+    + '<div class="mxlg">' + MX_CATS.map(function(c) { return '<span><i style="--k:' + (c[0] === 'br' ? 'linear-gradient(135deg,var(--mxbr) 0 30%,#FFD166 30% 50%,#FF5D73 50% 70%,#34D399 70%)' : 'var(--mx' + c[0] + ')') + '"></i>' + c[1] + '</span>'; }).join('') + '</div>'
     + '<div class="mxh"><span class="a">名前<em>' + evEsc(sortLb) + '</em></span><span class="b">稼働</span><span class="c">GSV</span></div>';
 }
 function _mxBtm(mapType) {
@@ -17052,12 +17067,12 @@ function ppDelKid(kind) {
 }
 function _ppActLb(m) { var a = m.activity || '', r = m.actRate ? m.actRate : (a === 'S' ? 120 : ''); return a ? a + (r !== '' ? ' ' + r + '%' : '') : '—'; }
 function _ppHub(m) {
-  var ideal = _pp.map === 'ideal', cat = _mxCat(m, ideal ? 'ideal' : 'current'), k = 'var(--mx' + cat + ')';
+  var ideal = _pp.map === 'ideal', cat = _mxCat(m, ideal ? 'ideal' : 'current'), k = _mxK(m, cat);
   var arr = ideal ? (state.idealMembers || []) : (state.members || []), par = null, kids = 0;
   arr.forEach(function(x) { if (x.id === m.parentId) par = x; if (x.parentId === m.id && !x.deleted) kids++; });
   var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)', t = (m.title || '').trim();
   var av = _avatars[m.id] ? '<img src="' + _avatars[m.id] + '" alt="">' : evEsc((m.lastName || m.firstName || '?').charAt(0));
-  var h = '<div class="pph" style="--k:' + k + '"><div class="av">' + av + '</div><div style="min-width:0"><h3>' + (t ? '<span class="tp" style="background:' + k + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</h3>'
+  var h = '<div class="pph" style="--k:' + k + '"><div class="av">' + av + '</div><div style="min-width:0"><h3>' + (t ? '<span class="tp" style="background:' + k + _mxInk(k) + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</h3>'
     + '<small>' + (par ? evEsc(((par.lastName || '') + ' ' + (par.firstName || '')).trim()) + 'さんの下' : 'いちばん上') + (m.region ? '・📍' + evEsc(m.region) : '') + (kids ? '・フロント' + kids + '人' : '') + '</small></div></div>';
   var idle = (!ideal && typeof memberIdleDays === 'function') ? memberIdleDays(m) : -1;
   h += _dtKv([['今月GSV', (m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '—') + (m.ptFixed > 0 ? '<small style="display:block;font-size:10.5px;color:var(--text-dim)">固定 ' + m.ptFixed.toLocaleString() + '</small>' : '')], ['稼働', _ppActLb(m), '', 'var(--accent)'],
