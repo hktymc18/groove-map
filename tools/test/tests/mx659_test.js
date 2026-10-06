@@ -14,6 +14,8 @@ T.run(async () => {
   w.mxLevel('2'); await sleep(20);
   c('2段に戻す', on()[0].indexOf('2段') === 0);
   console.log('=== 横のサークルMAP ===');
+  setWH(844, 390); w.dispatchEvent(new w.Event('resize')); await sleep(40);
+  c('v662: 縦で開いてから横にしても「◎ サークル」が出る', $('.mx1').textContent.indexOf('サークル') >= 0);
   setWH(844, 390); w._uxSync && w._uxSync(); w.switchView('current'); await sleep(40);
   c('横向きは上に「◎ サークル」', $('.mx1').textContent.indexOf('サークル') >= 0);
   w.mxOrbitOpen(); await sleep(30);
