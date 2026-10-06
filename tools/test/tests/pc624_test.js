@@ -44,6 +44,12 @@ T.run(async () => {
   w.dtGo('exam'); await sleep(20);
   c('ページの中のリンク（dtGo）もPCの右の欄へ', w._dtMode === 'ez' && $('#dtEz h2').textContent === 'BR');
   console.log('=== ③ スマホは今まで通り ===');
+  setWH(390, 844); w._uxSync(); w.switchView('menu'); await sleep(30);
+  const tl = $$('#view-menu .ux-t b').map(x => x.textContent);
+  c('v631: メニューのタイルは PLAN・MAP・カレンダー・TODO・分析', JSON.stringify(tl) === JSON.stringify(['PLAN', 'MAP', 'カレンダー', 'TODO', '分析']), JSON.stringify(tl));
+  c('理想MAP・OL・再アプローチは下のボタンに', ['理想MAP', 'OL', '再アプローチ'].every(t => $('#view-menu .ux-sm').textContent.indexOf(t) >= 0));
+  $$('#view-menu .ux-t')[4].click(); await sleep(30);
+  c('分析＝データタブ', w.currentView === 'stats');
   setWH(390, 844); w._uxSync(); w.switchView('plan'); await sleep(30);
   c('PLAN：スマホは入口のタイル', !$('.pcx2') && !!$('#view-plan .ux-hub, #view-plan .ux-pg'));
   w.p2Go('sum'); await sleep(20);
