@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v625';
+var APP_JS_VERSION = 'v626';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v625';
+  var DATA_VERSION = 'v626';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5344,6 +5344,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v626', d:'2026-10-06', items:['📊 データの「ざっくり／くわしく」の切り替えをなくしました（スマホは入口のタイルから・表を見ている時は「‹ データの入口へ」で戻る）','⌨️ PC版のPLANの目標入力から −／＋ ボタンをなくし、キーボードで数字を打つ形に（期日は年月を入力）'] },
   { v:'v625', d:'2026-10-06', items:['💻 PC版のPLANとデータを、スマホの新しい形に合わせて作り直し：左に入口のタイル（スマホと同じ・状態の札つき）、右に選んだページ','🎯 PLAN：10月の目標・目標は、スマホで1項目ずつだった画面を1画面にまとめて入力（その場で保存）。想い・振り返りは上のタブで項目を切り替え','📊 データ：「ざっくり／くわしく」の切り替えをやめて、左のタイルから。コミッション・S稼働・BRなどは左にグラフ・右に数字、下に月ごとの表。推移・稼働・人数・研修・パワーライン・地域も左から','💻 ノートPCなど横幅が狭い時は、左のタイルを細く（名前とアイコンだけ）'] },
   { v:'v624', d:'2026-10-06', items:['🔒 受付連携は自分のユニオンの名簿だけ見られるように（自分のユニオンが受付に無い時に、他のユニオンの名簿や研修記録を代わりに読んでしまう不具合を修正）'] },
   { v:'v623', d:'2026-10-06', items:['🎓 研修生の進み具合を受付システムと連動：MAPを開くと1日1回、受付で記録された受講（PG・DLR・EXP・PA・面談シート・BPC済み・CO）を研修生のステップに「進んだ」で自動で入れます（タイトルも進みます・MAPで入れた記録は上書きしません・履歴に「受付から」と表示）','➕ 受付連携の「名簿から追加」で入れた研修生は、紹介者の直下に置かれ、受講済みの研修とタイトルもいっしょに入るように','⭐ 受付で昇格した研修生がいたらお知らせ（MAPの研修結果は自動では変えません）'] },
@@ -12105,7 +12106,10 @@ function dtTab(t) {
 function _dtApplyTab() {
   var ez = _dtMode === 'ez'; // v582: ざっくり／くわしく
   var mb = document.getElementById('dtModeBar');
-  if (mb) { _dtEzCss(); mb.innerHTML = '<div class="seg"><span class="' + (ez ? 'on' : '') + '" onclick="dtMode(\'ez\')">ざっくり</span><span class="' + (ez ? '' : 'on') + '" onclick="dtMode(\'full\')">くわしく</span></div>'; }
+  if (mb) { // v626: 「ざっくり／くわしく」の切り替えはやめた（スマホは入口のタイル・PCは左の列から選ぶ）。くわしくの表を見ている時だけ入口へ戻る
+    _dtEzCss();
+    mb.innerHTML = ez ? '' : '<div class="dt-bk" onclick="dtMode(\'ez\')" style="display:inline-flex;align-items:center;gap:4px;margin:6px 2px 2px;padding:8px 12px;border-radius:11px;border:1.5px solid var(--border2);background:var(--surface);font-size:13px;font-weight:900;color:var(--text-mid);cursor:pointer">‹ データの入口へ</div>';
+  }
   var ezb = document.getElementById('dtEz'); if (ezb) ezb.style.display = ez ? '' : 'none';
   var bar = document.getElementById('dtTabs');
   if (bar) {
@@ -18616,7 +18620,7 @@ function _pcxCss() {
     + ".pcx-c{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;min-width:0}.pcx-c.w{grid-column:1/-1}"
     + ".pcx-one{max-width:860px}"
     + ".pcx .ux-step,.pcx-st .ux-step{display:none}.pcx .ux-btm,.pcx .ux-top,.pcx-st #dtEz .ux-btm,.pcx-st #dtEz .ux-top{display:none!important}"
-    + ".pcx-c .ux-h2{font-size:19px;margin-top:0}.pcx .ux-paper{min-height:260px}"
+    + ".pcx-c .ux-h2{font-size:19px;margin-top:0}.pcx .ux-pm{display:none!important}.pcx .ux-per .ux-pm{display:flex!important}.pcx .ux-paper{min-height:260px}"
     + "#dtEz.pcx-dp .ux-pg{padding:0}#dtEz.pcx-dp .dtu-pg{display:flex;gap:18px;align-items:flex-start}#dtEz.pcx-dp .dtu-pg>.dtu-ch{flex:1.35;min-width:0;position:sticky;top:8px}#dtEz.pcx-dp .dtu-pg>.dtu-det{flex:1;min-width:0;margin-top:0}"
     + ".pcx-tb{width:100%;border-collapse:collapse;font-size:13px}.pcx-tb th,.pcx-tb td{padding:7px 8px;border-top:1px solid var(--border);text-align:right;font-family:Inter,'Noto Sans JP',sans-serif;font-weight:800;white-space:nowrap}"
     + ".pcx-tb th{color:var(--text-dim);font-size:11.5px}.pcx-tb td:first-child,.pcx-tb th:first-child{text-align:left}.pcx-tb td.cur{color:var(--accent)}"
@@ -19561,6 +19565,9 @@ function _p2GoalPageHtml(i) {
   }
   if (k === 'dl') {
     var dl = (p.deadline && /^\d{4}-\d{2}$/.test(p.deadline)) ? p.deadline : '', rem = dl ? _p2YmDiff(_p2Ym(0), dl) : 0;
+    if (isPCMode()) return head('いつまでに？') + '<div class="ux-stp"><div class="ux-sv' + (dl ? ' ok' : '') + '"><input type="month" value="' + dl + '" onchange="if(this.value)p2GoalDl(this.value)" style="font-size:26px"></div></div>' // v626: PCはキーボードで入れる
+      + '<div class="ux-chips">' + [12, 24, 36].map(function(n) { var y = _p2Ym(n); return '<span class="' + (dl === y ? 'on' : '') + '" onclick="p2GoalDl(\'' + y + '\')">' + (n / 12) + '年後<small>' + y.replace('-', '/') + '</small></span>'; }).join('') + '</div>'
+      + (dl ? '<div class="ux-hint">あと <b>' + rem + 'ヶ月</b>' + (_glMonthlyFront(p) ? '・月あたりの目安フロント <b>' + _glMonthlyFront(p) + '人</b>' : '') + '</div>' : '');
     return head('いつまでに？') + '<div class="ux-stp"><span class="ux-pm" onclick="p2GoalDlStep(-1)">−</span><div class="ux-sv' + (dl ? ' ok' : '') + '" style="font-size:28px;font-weight:900;font-family:Inter,sans-serif">' + (dl ? parseInt(dl.slice(0, 4), 10) + '<small>年</small>' + parseInt(dl.slice(5), 10) + '<small>月</small>' : '<small>まだ</small>') + '</div><span class="ux-pm" onclick="p2GoalDlStep(1)">＋</span></div>'
       + '<div class="ux-chips">' + [12, 24, 36].map(function(n) { var y = _p2Ym(n); return '<span class="' + (dl === y ? 'on' : '') + '" onclick="p2GoalDl(\'' + y + '\')">' + (n / 12) + '年後<small>' + y.replace('-', '/') + '</small></span>'; }).join('') + '<span onclick="p2GoalDl(\'' + _p2Ym(6) + '\')">半年<small>' + _p2Ym(6).replace('-', '/') + '</small></span></div>'
       + (dl ? '<div class="ux-hint">あと <b>' + rem + 'ヶ月</b>' + (_glMonthlyFront(p) ? '・月あたりの目安フロント <b>' + _glMonthlyFront(p) + '人</b>' : '') + '</div>' : '');
@@ -19726,6 +19733,7 @@ function p2RmMsPg(ym, msId) {
 function p2MsT(v) { if (!_p2MsE) return; _p2MsE.t = v; var p = document.getElementById('uxMsP'); if (p) p.textContent = '🚩 ' + (String(v).trim() || 'マイルストーン'); }
 function p2MsSub(v) { if (_p2MsE) _p2MsE.sub = v; }
 function p2MsEx(t) { if (!_p2MsE) return; _p2MsE.t = t; renderPlan(); }
+function p2MsNSet(v) { if (!_p2MsE) return; _p2MsE.n = Math.max(1, Math.min(12, parseInt(v, 10) || 1)); renderPlan(); } // v626: PCは数字を打つ
 function p2MsN(d) { if (!_p2MsE) return; _p2MsE.n = Math.max(1, Math.min(12, _p2MsE.n + d)); renderPlan(); }
 function p2MsCol(c) { if (!_p2MsE) return; _p2MsE.color = c; renderPlan(); }
 function p2RmMsSave2() {
@@ -19754,7 +19762,7 @@ function _p2RmMsHtml() {
     + '<input id="uxMsT" class="ux-ta" style="min-height:0;height:62px;font-size:21px;font-weight:900" maxlength="30" placeholder="例：香港TRIP" value="' + evEsc(e.t) + '" oninput="p2MsT(this.value)">'
     + '<div class="ux-ex">' + ['香港TRIP', 'BD', '昇格', 'セミナー', '合宿'].map(function(t) { return '<span class="' + (e.t === t ? 'on' : '') + '" onclick="p2MsEx(\'' + t + '\')">' + t + '</span>'; }).join('') + '</div>'
     + '<div class="ux-sec">ひとこと（なくてもOK）</div><input class="ux-ta" style="min-height:0;height:52px;font-size:16px;font-weight:700" maxlength="30" placeholder="例：60人タッチ" value="' + evEsc(e.sub) + '" oninput="p2MsSub(this.value)">'
-    + '<div class="ux-sec">何ヶ月つづく？</div><div class="ux-stp"><span class="ux-pm" onclick="p2MsN(-1)">−</span><div class="ux-sv ok" style="font-size:30px;font-weight:900;font-family:Inter,sans-serif">' + e.n + '<small>ヶ月</small></div><span class="ux-pm" onclick="p2MsN(1)">＋</span></div>'
+    + '<div class="ux-sec">何ヶ月つづく？</div><div class="ux-stp"><span class="ux-pm" onclick="p2MsN(-1)">−</span><div class="ux-sv ok" style="font-size:30px;font-weight:900;font-family:Inter,sans-serif">' + (isPCMode() ? '<input type="number" min="1" max="12" value="' + e.n + '" onfocus="edSelAll(this)" onchange="p2MsNSet(this.value)">' : e.n) + '<small>ヶ月</small></div><span class="ux-pm" onclick="p2MsN(1)">＋</span></div>'
     + '<div class="ux-sub" style="text-align:center">' + (e.n > 1 ? _p2YmLabel(e.ym) + ' 〜 ' + _p2YmLabel(end) : _p2YmLabel(e.ym) + 'だけ') + '</div>'
     + '<div class="ux-sec">色</div><div class="ux-cols">' + P2RM_COLORS.map(function(c) { return '<span class="' + (c === e.color ? 'on' : '') + '" style="background:' + c + '" onclick="p2MsCol(\'' + c + '\')"></span>'; }).join('') + '</div>'
     + '<div class="ux-msp" id="uxMsP" style="background:' + e.color + '">🚩 ' + evEsc(String(e.t).trim() || 'マイルストーン') + '</div>'

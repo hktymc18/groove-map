@@ -18,6 +18,7 @@ T.run(async () => {
   c('来月に切り替え', $('.pcx-p h2').textContent.indexOf('11月') >= 0); w.p2MonFor(0);
   w.p2Go('goal'); await sleep(20);
   c('目標：6つを1画面に', $$('.pcx-p .pcx-c').length === 6);
+  c('v626: PCの期日はキーボードで入れる（＋−なし）', !!$('.pcx-p input[type=month]') && w.document.getElementById('pcxCss').textContent.indexOf('.pcx .ux-pm{display:none') >= 0);
   w.p2Go('why'); await sleep(20);
   c('想い：項目のタブ（10）＋次へ', $$('.pcx-tabs span').length === 10 && !!$('.pcx-h .pcx-b.p'));
   w.p2PgSub(3); await sleep(20);
@@ -41,4 +42,8 @@ T.run(async () => {
   c('PLAN：スマホは入口のタイル', !$('.pcx') && !!$('#view-plan .ux-hub, #view-plan .ux-pg'));
   w.switchView('stats'); await sleep(30);
   c('データ：PCの左の列は出ない', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st'));
+  w.dtMode('full', 'trend'); await sleep(20);
+  c('v626: スマホも「ざっくり／くわしく」は出ない（入口へ戻るだけ）', $('#dtModeBar').textContent.indexOf('ざっくり') < 0 && $('#dtModeBar').textContent.indexOf('入口') >= 0);
+  w.dtMode('ez'); await sleep(20);
+  c('入口では何も出さない', $('#dtModeBar').textContent === '');
 });
