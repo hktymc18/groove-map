@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v631';
+var APP_JS_VERSION = 'v632';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3868,7 +3868,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v631';
+  var DATA_VERSION = 'v632';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4013,6 +4013,7 @@ function updateFabVisibility() {
 function switchView(v) {
   if (v !== 'ol') { document.body.classList.remove('olh-on'); var _om9 = document.getElementById('olmPg'); if (_om9 && _om9.parentNode) _om9.parentNode.removeChild(_om9); _olmId = ''; } // v617
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
+  try { document.body.setAttribute('data-v', v); } catch (eDv) {} // v632: 左下の「‹ メニュー」を出すかの判定用
   if (v === 'current') setTimeout(function() { try { ckTrAuto(); } catch (eCk) {} }, 1500); // v623: MAPを開いた時に受付の研修記録を取り込む（1日1回）
   if (v !== 'ideal') { try { _p2BackHide(); } catch (eB) {} } // v575
   var _prevView = currentView;
@@ -5344,6 +5345,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v632', d:'2026-10-06', items:['📱 スマホの下のタブバー（MAP・予定・データ・メニュー）をなくしました。メニューのタイルから入り、どの画面も左下の「‹ メニュー」で戻れます（MAPは下の帯の中・カレンダーは今までどおり「‹ 戻る」）','上の「‹ メニューにもどる」の帯もなくして、左下に一本化しました'] },
   { v:'v631', d:'2026-10-06', items:['📱 スマホのメニューのタイルを PLAN・MAP・カレンダー・TODO・分析（データ）に。理想MAP・OL・メンバー・再アプローチは下のボタンから'] },
   { v:'v630', d:'2026-10-06', items:['💻 PC版のPLANを作り直し：左の大きなタイルをやめて上にタブ（サマリー・理想・目標・ロードマップ・今月の目標・今週やること・振り返り・ツール）','📋 新しく「サマリー」：目標月収・タイトル・スローガン・次の山・マイルストーン・年ごとの目標・理想の生活・やりたいこと／なりたい自分・今月の目標と今・今週やることを1画面で（スマホは入口の「📋 サマリー」から）','🏆 目標：ポップアップをやめて画面に直接。①最終ゴール → ②1年ごとの目標 → ③次の山の順に並べ、スローガンも同じページで','🎯 今月の目標（PC）：表で入力（数字を打って Enter で次の欄・今・あと・めやすも横に）'] },
   { v:'v629', d:'2026-10-06', items:['✨ PLANの「想い」を「理想」に作り直し：①理想の生活（20問）をページの中で1問ずつサクサク答える（答えた分は横／下の一覧にすぐ並び、押すとその分野だけ答え直せる）→ ひと区切り（理想の生活に必要な月収を「目標月収にする／今のまま」から選べる・今日はここまででもOK）→ ②やりたいこと／やりたくないこと → ③なりたい自分／なりたくない自分 → まとめ','✍️ やる理由・1年後・成功した毎日の作文と、夢100は「ツール」の中に移しました'] },
@@ -16038,6 +16040,7 @@ function _uxSync() {
     b.classList.toggle('ux-land', land);
     b.classList.remove('ux-ev'); // v612: 予定も横向きで使える（左に月・右にその日の予定）
     b.classList.toggle('ux-nh', !isPCMode()); _tdyCss(); // v618: スマホは古い上の帯（年月・翌月コピー）をなくす
+    b.classList.toggle('ux-nt', !isPCMode()); _uxNavBk(); // v632: スマホは下のタブバーをなくし、左下の「‹ メニュー」に
     _cvSync();
     b.classList.toggle('ux-bh0', currentView !== 'current' && currentView !== 'ideal'); // 横向きは左の列で移動するので「メニューにもどる」の帯は不要（MAPは現状/理想の切替があるので残す）
     if (isPCMode()) b.classList.remove('ux-pg');
@@ -16698,7 +16701,8 @@ function _mxBtm(mapType) {
   var tb = document.getElementById('mobileTabbar'); b.style.bottom = (tb && tb.offsetHeight ? tb.offsetHeight : 62) + 'px';
   var cur = mapType === 'current', ed = state.isEditor, last = '';
   try { last = localStorage.getItem('gm_ckLast_' + ((currentUser && currentUser.uid) || '')) || ''; } catch (e) {}
-  b.innerHTML = (ed ? '<span class="bk" onclick="onFabClick()">＋ 追加</span>' : '')
+  b.style.bottom = (tb && tb.offsetHeight ? tb.offsetHeight : 0) + 'px'; // v632: タブバーがない時は画面の一番下
+  b.innerHTML = (_uxLand() ? '' : '<span class="bk mn" onclick="switchView(\'menu\')">‹ メニュー</span>') + (ed ? '<span class="bk" onclick="onFabClick()">＋ 追加</span>' : '')
     + (cur ? (viewingOwnerUid ? '' : '<span class="nx" onclick="ckLinkOpen()">⟲ 受付連携' + (last ? '<small>前回 ' + evEsc(last) + '</small>' : '') + '</span>')
       : '<span class="nx pu" onclick="uxMapIdealSum()">理想 vs 現状</span>');
 }
@@ -19035,6 +19039,24 @@ function _p2MonPcHtml(b) {
     + row('🎓', 'PG', 'teamPg', '人', act.teamPg, '', '') + row('🎟', 'DLR動員', 'teamDlr', '人', act.teamDlr, '', '')
     + '</table></div>'
     + '<div class="pcx-c" style="margin-top:14px">' + _p2MonPageHtml(grow) + '</div>';
+}
+// ════ v632: スマホの下のタブバーをやめる → どの画面も左下に「‹ メニュー」（自分の下の帯がある画面はその中に） ════
+function _uxNavBk() {
+  if (!document.getElementById('uxNavCss')) {
+    var st = document.createElement('style'); st.id = 'uxNavCss';
+    st.textContent = "body.ux-nt:not(.ux-land) .mobile-tabbar,body.ux-nt:not(.ux-land) .back-home-bar{display:none!important}"
+      + "body.ux-nt:not(.ux-land) #mxBtm{padding-bottom:calc(env(safe-area-inset-bottom) + 8px)}#mxBtm .bk.mn{flex:0 0 auto!important;width:auto!important;padding:0 13px;color:var(--text-mid)}"
+      + "#uxMenuBk{display:none}body.ux-nt:not(.ux-land):not(.ux-pg):not(.ux-mx):not(.olh-on):not(.cal-fs):not(.ck-pg) #uxMenuBk{display:flex}"
+      + "body[data-v=menu] #uxMenuBk,body[data-v=events] #uxMenuBk{display:none!important}"
+      + "#uxMenuBk{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:44;height:48px;padding:0 16px;border-radius:15px;align-items:center;font-size:15px;font-weight:900;color:var(--text);background:var(--surface);border:1.5px solid var(--border2);box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}"
+      + "body.ux-nt:not(.ux-land) .fab{bottom:calc(env(safe-area-inset-bottom) + 14px)}body.ux-nt:not(.ux-land):not(.ux-pg) .scroll-area{padding-bottom:calc(env(safe-area-inset-bottom) + 76px)}";
+    document.head.appendChild(st);
+  }
+  if (!document.getElementById('uxMenuBk')) {
+    var el = document.createElement('div'); el.id = 'uxMenuBk'; el.textContent = '‹ メニュー';
+    el.onclick = function() { switchView('menu'); };
+    document.body.appendChild(el);
+  }
 }
 // 理想MAP：上に出していた「理想 vs 現状」はシートで
 function uxMapIdealSum() {
