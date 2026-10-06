@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v662';
+var APP_JS_VERSION = 'v663';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -2019,6 +2019,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     if (!isPrint) {
       g.addEventListener('click', function(ev) {
         ev.stopPropagation();
+        if (opts.screen && !/^AG\d+_/.test(m.id) && typeof mxTap === 'function') { mxTap(m.id); return; } // v663: スマホ横のサークルMAPは丸を押すとその人の画面（くわしく）
         if (/^MG_/.test(m.id)) { if (typeof mgNodeClick === 'function') mgNodeClick(m.id); }
         else if (/^AG\d+_/.test(m.id)) { /* 合算表示は閲覧のみ */ }
         else if (state.isEditor && typeof openEdit === 'function') openEdit(m.id);
@@ -3871,7 +3872,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v662';
+  var DATA_VERSION = 'v663';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5350,6 +5351,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v663', d:'2026-10-06', items:['◎ スマホ横のサークルMAPで丸を押すと、その人の画面（GSV・稼働・タイトル・活動など）が開くように。閉じるとサークルMAPに戻ります'] },
   { v:'v662', d:'2026-10-06', items:['🔢 HOMEの小さいボタンの数字のバッジが縦向きで切れて見えなかったのを修正','◎ MAPを縦で開いてから横にした時も「◎ サークル」が出るように'] },
   { v:'v661', d:'2026-10-06', items:['🖼 HOMEのタイル（PLAN・MAP・カレンダー・TODO・分析）に写真の背景'] },
   { v:'v660', d:'2026-10-06', items:['🎮 PLANの入口のシミュレーションのタイルの文字を「B22シミュレーション」に'] },
@@ -17223,7 +17225,7 @@ function ppOpen(id, map) {
   _ppRender();
 }
 function _ppFind(id, map) { var arr = map === 'ideal' ? (state.idealMembers || []) : (state.members || []); for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
-function ppClose() { var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null; }
+function ppClose() { var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null;  if (document.getElementById('mxOrbit') && typeof mxOrbitRender === 'function') setTimeout(mxOrbitRender, 0); } // v663: サークルMAPを開いていたら描き直す
 function ppGo(pg) { if (!_pp) return; _pp.pg = pg || ''; _ttlOpen = ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
 function ppGoI(i) { var L = _pp && _pp.map === 'ideal' ? PP_PG_I : PP_PG; if (L[i]) ppGo(L[i][0]); }
 function ppNext(d) { // 左右スワイプ：入口ではMAPの次の人、ページでは次のページ

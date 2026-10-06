@@ -21,6 +21,11 @@ T.run(async () => {
   w.mxOrbitOpen(); await sleep(30);
   c('サークルMAPを全画面で（全員の丸）', !!$('#mxOrbit svg') && $$('#mxOrbit svg .oval-node').length === ms.length);
   w.mxOrbitZoom(1); c('＋で拡大', w._mxOz > 1);
+  const nd = $$('#mxOrbit svg .oval-node').filter(g => g.textContent.indexOf('前0') >= 0)[0] || $$('#mxOrbit svg .oval-node')[1];
+  nd.dispatchEvent(new w.MouseEvent('click', { bubbles: true })); await sleep(30);
+  c('v663: 丸を押すとその人の画面（くわしく）', !!$('#ppPg') || !!$('#uxMemPg'));
+  w.ppClose && w.ppClose(); w.uxMemClose && $('#uxMemPg') && w.uxMemClose(); await sleep(10);
+  c('閉じるとサークルMAPに戻る', !!$('#mxOrbit svg'));
   w.mxOrbitClose(); c('✕で閉じる', !$('#mxOrbit'));
   setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('current'); await sleep(20);
   c('縦は「サークル」ボタンなし', $('.mx1').textContent.indexOf('サークル') < 0);
