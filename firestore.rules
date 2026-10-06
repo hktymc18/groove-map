@@ -27,10 +27,14 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(uid)).data;
     }
 
+    // オーナー（固定・永久）。v669: 馬越さんを追加（app.js の OWNER_UIDS・checkin の OWNER_UIDS と一致させること）
+    function isOwnerUid() {
+      return signedIn() && request.auth.uid in ['j2DPDAccCygHmR9i5K3bTvHnH0V2', 'E4WT7EHai5c6WANUgASz42Euu1y1'];
+    }
     // オーナー(固定・永久) または role=='admin' を付与された共同管理者
     function isAdmin() {
       return signedIn() && (
-        request.auth.uid == 'j2DPDAccCygHmR9i5K3bTvHnH0V2' ||
+        isOwnerUid() ||
         (profileExists(request.auth.uid) && profile(request.auth.uid).get('role','') == 'admin')
       );
     }
@@ -46,7 +50,7 @@ service cloud.firestore {
 
     // 承認制ヘルパー
     function isOwnerAdmin() {
-      return signedIn() && request.auth.uid == 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
+      return isOwnerUid();
     }
     function isUnionAdmin() {
       return signedIn() && profileExists(request.auth.uid) && profile(request.auth.uid).get('role','') == 'admin';
