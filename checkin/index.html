@@ -1130,8 +1130,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v25';
+var APP_VER = 'v26';
 var CHANGELOG = [
+  { v: 'v26', d: '2026/10/06', items: ['使い方ガイド: 「はじめの準備」に「⑤ 合同イベントを作る」（ガイド＋動画）を追加。合同イベントは主催ユニオンが1つだけ作り、参加ユニオンに全部チェック → 当日は同じイベントで受付'] },
   { v: 'v25', d: '2026/10/06', items: ['受付: 合同ユニオンにチェックが付いていないユニオンの人を受付すると「合同ユニオンに入っていません」と知らせるようにしました（そのままだとそのユニオンの集計に入らないため）'] },
   { v: 'v24', d: '2026/10/06', items: [
     'セキュリティ強化: 名簿・出席・会計・集計などのデータは、自分のユニオンと自分が管理しているユニオンの分だけ読めるようになりました（データベース側でも制限）',
@@ -1326,7 +1327,14 @@ var GX_ROLES = [
     { id: 'set4', t: '受付担当を決める', sub: '1分・当日受付する人を任命', steps: [
       { sel: '#btnCkAdmins', pre: gxPane('pRoster'), t: '👑 受付管理者', x: '当日受付をする人を<b>受付管理者</b>に任命しよう。任命された人は、この「受付管理」で受付や名簿の操作ができるよ。', miss: '任命はユニオン管理者だけができるよ（名簿タブの「👑 受付管理者」）。' },
       { sel: '#btnTrainers', pre: gxPane('pRoster'), t: '🎓 研修生登録の担当', x: '研修担当の人はここで任命。任命された人は<b>「研修受講カード」</b>から研修生を登録できるよ。', miss: '任命はユニオン管理者だけができるよ（名簿タブの「🎓 研修生登録の担当」）。' },
-      { sel: null, t: '準備OK！🎉', x: 'これで準備は完了！次は<b>「受付する人」</b>のミッションで、当日の受付の流れを見てみよう。' }
+      { sel: null, t: '準備OK！🎉', x: 'これで準備は完了！ほかのユニオンと<b>合同イベント</b>を開くときは「⑤ 合同イベントを作る」も見てね。次は<b>「受付する人」</b>のミッションで、当日の受付の流れを見てみよう。' }
+    ] },
+    { id: 'set5', t: '合同イベントを作る', sub: '2分・ほかのユニオンといっしょに開催', steps: [
+      { sel: 'nav button[data-pane="pEvents"]', click: true, t: '「イベント」タブ', x: 'ほかのユニオンといっしょに開く<b>合同イベント</b>も、<b>「イベント」</b>タブから作るよ。' },
+      { sel: '#btnAddEvent', pre: gxPane('pEvents'), click: true, t: '作るのは主催ユニオンだけ', x: '合同イベントは<b>主催ユニオンが1つだけ</b>作るよ。相手のユニオンは作らなくてOK！<br><small>※それぞれで作ると別々のイベントになって、二重受付や稼働率のズレの原因になるよ。</small><br><b>「＋ 新規イベント」</b>を押してみて！', miss: '「＋ 新規イベント」はユニオン管理者・受付管理者の画面に出るよ。' },
+      { sel: '#evUnionsBox', t: '参加するユニオンを全部チェック', x: '<b>「合同ユニオン」</b>で、いっしょに開くユニオンに<b>全部チェック</b>！チェックしたユニオンの人の出席が、それぞれのユニオンの集計・稼働率に入るよ。', miss: '「＋ 新規イベント」の画面の<b>「合同ユニオン」</b>で、いっしょに開くユニオンに全部チェックを付けるよ（ほかのユニオンが登録されていると出るよ）。' },
+      { sel: null, t: '当日は同じイベントで受付', x: '保存すると、相手ユニオンのイベント一覧・受付タブにも<b>「（合同）」</b>で出るよ。当日はそれぞれのPCで<b>同じイベント</b>の「受付を開始」すればOK！出席は1つにまとまって、別のPCで受付済みの人は「出席済み」と出るよ。' },
+      { sel: null, t: 'チェックし忘れたら？', x: '受付中に<b>「⚠ ○○ はこのイベントの合同ユニオンに入っていません」</b>と出たらチェック漏れ。イベントの<b>「編集」</b>でチェックを付ければ、受付済みの分も集計に入るよ（あとからでもOK）。<br><small>※相手ユニオンの人は会員証のQR・番号で受付するよ。会員証を発行しておいてね。</small>' }
     ] }
   ] },
   { k: 'rec', e: '🎫', name: '受付する人', view: 'vApp', master: '受付マスター', missions: [
@@ -1520,7 +1528,7 @@ function gxOpenMenu(){
 }
 
 /* ▶ ミッションの動画（ダミーデータで操作を撮影・大きめの字幕つき）。checkin/guide/<ミッションID>.mp4 */
-var GX_VIDEOS = ['set1', 'set2', 'set3', 'set4', 'rec1', 'rec2', 'rec3', 'rec4', 'rec5',
+var GX_VIDEOS = ['set1', 'set2', 'set3', 'set4', 'set5', 'rec1', 'rec2', 'rec3', 'rec4', 'rec5',
   'adm1', 'adm2', 'adm3', 'adm4', 'adm5', 'adm6', 'st1', 'st2', 'st3', 'st4', 'st5', 'tr1', 'tr2', 'tr3', 'tr4', 'tr5'];
 function gxPlay(role, mi){
   var m = role.missions[mi];
@@ -4492,11 +4500,11 @@ function eventForm(ev){
   var evUnions = (ev && ev.unions) || [];
   var others = gUnions.filter(function(u){ return u !== host; });
   var chk = others.length
-    ? '<label>合同ユニオン（任意）</label>' + others.map(function(u, i){
+    ? '<div id="evUnionsBox"><label>合同ユニオン（合同のときだけ・いっしょに開くユニオンを全部チェック）</label>' + others.map(function(u, i){
         return '<div class="chkrow"><input type="checkbox" id="evU' + i + '" value="' + esc(u) + '"'
           + (evUnions.indexOf(u) >= 0 ? ' checked' : '')
           + '><label for="evU' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc(u) + '</label></div>';
-      }).join('')
+      }).join('') + '</div>'
     : '';
   var isSelfCur = ev && ev.mode === 'self';
   modal(
