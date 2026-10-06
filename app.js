@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v639';
+var APP_JS_VERSION = 'v640';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3871,7 +3871,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v639';
+  var DATA_VERSION = 'v640';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5348,6 +5348,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v640', d:'2026-10-06', items:['🎯 理想MAPの「タイトルが上がると、リーディングは」を、タイトルのボタンを選んでその1つだけ表示するように（縦に長くならない・選んだタイトルは次も覚えています）'] },
   { v:'v639', d:'2026-10-06', items:['💻 PCのMAPのツリーカードの左の色の線をなくしました（枠と光り方はそのまま）'] },
   { v:'v638', d:'2026-10-06', items:['💻 PCのMAPのツリーカードをスマホと同じ並びに：1行目にタイトルの札＋名前、2行目に色付きの稼働の札とGSV（ラベルつき）。枠と光り方は今のまま'] },
   { v:'v637', d:'2026-10-06', items:['💎 PCのツリー・サークルなども、TE（チームエリート）の色をスマホと同じグレーに近い黒に（札の字は白）'] },
@@ -9624,7 +9625,10 @@ function _lbUpHtml(members) {
   if (!root || !isBROrAbove(root.title)) return '';
   var kids = _lbKids(ms), lt = ltsvMap(ms), now = lbCalc(ms), yen = function(v) { return '¥' + Math.round(v || 0).toLocaleString(); };
   var man = function(v) { return v >= 10000 ? (Math.round(v / 1000) / 10) + '万' : v.toLocaleString(); };
-  var rows = '';
+  var rows = '', chips = '', sel = now.rank + 1, sv = '';
+  // v640: 全タイトルを並べると縦に長いので、タイトルを選んで1つだけ出す（選んだタイトルは覚えておく）
+  try { sv = localStorage.getItem('gm_lbUpSel') || ''; } catch (eLs) {}
+  for (var r0 = now.rank + 1; r0 < LB_DEF.length; r0++) if (LB_DEF[r0].t === sv) sel = r0;
   for (var r = now.rank + 1; r < LB_DEF.length; r++) {
     var c = lbCalc(ms, r), gap = _lbReqGap(root, kids, lt, r), up = c.total - now.total;
     var need = [];
@@ -9632,11 +9636,19 @@ function _lbUpHtml(members) {
     gap.pl.forEach(function(p) { if (!p.ok) need.push('系列LTSV ' + man(p.need) + 'P（今 ' + man(p.have) + '）'); });
     var hint = '';
     if (up <= 0) hint = now.gsv < 2000 ? '自分のGSVが2,000以上になるともらえます' : (c.b >= c.a && c.b > 0 ? '今は「第1世代×10%」の方が多いので同じ額です（第2世代より下のBRが増えると上がります）' : (c.gens[LB_DEF[r].g - 1] && !c.gens[LB_DEF[r].g - 1].n ? '第' + LB_DEF[r].g + '世代にBRがいると増えます' : ''));
-    rows += '<div class="ids-lbr"><span class="t">' + LB_DEF[r].t + '<small>第' + LB_DEF[r].g + '世代まで</small></span><span class="v"><b>' + yen(c.total) + '</b>' + (up > 0 ? '<em>＋' + yen(up) + '</em>' : '') + '</span>'
+    chips += '<button type="button" data-r="' + r + '"' + (r === sel ? ' class="on"' : '') + ' onclick="lbUpSel(' + r + ')">' + LB_DEF[r].t + '</button>';
+    rows += '<div class="ids-lbr' + (r === sel ? '' : ' off') + '" data-r="' + r + '"><span class="t">' + LB_DEF[r].t + '<small>第' + LB_DEF[r].g + '世代まで</small></span><span class="v"><b>' + yen(c.total) + '</b>' + (up > 0 ? '<em>＋' + yen(up) + '</em>' : '') + '</span>'
       + '<span class="n">' + (need.length ? need.join('・') : '要件はそろっています') + (hint ? '<br>' + hint : '') + '</span></div>';
   }
   if (!rows) return '';
-  return '<div class="ids-lbup"><div class="ids-lbh">📈 タイトルが上がると、リーディングは<small>今の理想MAPのまま・今 ' + (now.rank >= 0 ? LB_DEF[now.rank].t : 'BR') + ' ' + yen(now.total) + '</small></div>' + rows + '</div>';
+  return '<div class="ids-lbup"><div class="ids-lbh">📈 タイトルが上がると、リーディングは<small>今の理想MAPのまま・今 ' + (now.rank >= 0 ? LB_DEF[now.rank].t : 'BR') + ' ' + yen(now.total) + '</small></div><div class="ids-lbc">' + chips + '</div>' + rows + '</div>';
+}
+function lbUpSel(r) {
+  try { localStorage.setItem('gm_lbUpSel', LB_DEF[r].t); } catch (eLs) {}
+  Array.prototype.forEach.call(document.querySelectorAll('.ids-lbup [data-r]'), function(el) {
+    var on = +el.getAttribute('data-r') === r;
+    if (el.tagName === 'BUTTON') el.classList.toggle('on', on); else el.classList.toggle('off', !on);
+  });
 }
 
 // コミッション再計算（BB/LBは自動、SBは手入力維持）
