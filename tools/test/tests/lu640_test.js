@@ -1,7 +1,7 @@
 // v640/v641：理想 vs 現状の「タイトルが上がると、リーディングは」をリストで選んで1つだけ（大きい数字だけ・説明は(i)）
 //            バー・SB/BB/LBの説明はタップ／マウスで吹き出し。「長期目標から見た今月の目安」と下の説明書きはなし
 const T = require('../lib/head.js')();
-const { w, c, sleep, $, $$ } = T;
+const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
   T.login();
   const ms = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '', mapType: 'both', ptCurrent: 2500 },
@@ -21,6 +21,7 @@ T.run(async () => {
   box.remove();
   console.log('=== 説明はタップ／マウスで ===');
   w.state.members = ms; w.localStorage.setItem('gm_idsOpen', '1');
+  setWH(1400, 900); w._uxSync && w._uxSync();
   w.switchView('ideal'); w.renderIdealSum(); await sleep(30);
   const tp = $$('#idealSum .ids-tp');
   const html = require('fs').readFileSync(require('path').join(__dirname, '../../../index.html'), 'utf8');
@@ -28,6 +29,9 @@ T.run(async () => {
   const card = $$('#idealSum .ids-cb>div')[1]; w.idsTip(card);
   c('タップで吹き出し（BB：早見表）', card.classList.contains('tp-on') && card.querySelector('.ids-tp').textContent.indexOf('早見表') >= 0);
   w.idsTip($$('#idealSum .ids-t.has-tp')[0]); c('ほかを押すと前のは閉じる', !card.classList.contains('tp-on'));
-  c('1列のタイル（5つの数字＋コミッション＋タイトルが上がると）', $$('#idealSum .ids-g>.ids-t').length === 7 && !!$('#idealSum .ids-g>.ids-cm') && !!$('#idealSum .ids-g>.ids-lbup') && html.indexOf('.ids-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,1.6fr) minmax(0,1.4fr)') >= 0);
+  c('1列のタイル（5つの数字＋コミッション＋タイトルが上がると）', $$('#idealSum .ids-g>.ids-t').length === 7 && !!$('#idealSum .ids-g>.ids-cm') && !!$('#idealSum .ids-g>.ids-tu') && html.indexOf('.ids-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,1.6fr) minmax(0,1.4fr)') >= 0);
+  setWH(390, 844); w._uxSync && w._uxSync(); w.renderIdealSum(); await sleep(20);
+  c('スマホは横棒の行・SB/BB/LBのカード・タイトルが上がる（1つ前の形）', $$('#idealSum .ids-row').length === 5 && !$('#idealSum .ids-g') && $$('#idealSum .ids-cb>div.has-tp').length === 3 && !!$('#idealSum .ids-lbup .ids-lbk') && $$('#idealSum .ids-lb.has-tp').length >= 3);
+  w.lbUpSel(2); c('スマホでもタイトルを選べる', $('#idealSum .ids-lbup select').value === '2' && +$('#idealSum .ids-lbr:not(.off)').getAttribute('data-r') === 2);
   c('「長期目標から見た今月の目安」と「カードをタップ〜」はなし', $('#idealSum').textContent.indexOf('長期目標から見た') < 0 && $('#idealSum').textContent.indexOf('カードをタップ') < 0);
 });
