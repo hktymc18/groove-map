@@ -19,7 +19,7 @@ T.run(async () => {
   const tx = $('#view-plan').textContent;
   c('「これだけやったら…」はなし・凡例は「new」', tx.indexOf('これだけやったら、いくら狙えるか') < 0 && $('.p2sm-lg').textContent.indexOf('new') >= 0 && $('.p2sm-lg').textContent.indexOf('に入った人') < 0);
   c('ファーストボーナスは一番下に大きく（内訳は(i)）', !!$('.p2fb') && !$('.p2sm-k .hi') && $('.p2fb').textContent.indexOf('ビルディングボーナス') < 0 && $$('.p2sm-set ~ .p2fb, .p2fb').length === 1);
-  w.uxInfo('simfb'); c('(i)にBB・LOI特典の内訳', $('#uxInfo').textContent.indexOf('ビルディングボーナス') >= 0 && $('#uxInfo').textContent.indexOf('エリートLOI特典') >= 0); w.uxInfoClose();
+  w.uxInfo('simfb'); c('(i)にBB・LOI特典の内訳', $('#uxInfo').textContent.indexOf('ビルディングボーナス') >= 0 && $('#uxInfo').textContent.indexOf('エリートLOI特典') >= 0 && $('#uxInfo .ok').textContent === 'とじる'); w.uxInfoClose();
   c('戻る＝入口（入口から開いた時）', $('.ux-btm .ux-bk').getAttribute('onclick') === "p2Go('')");
   w.p2SimDupSet(2); await sleep(5);
   c('数字を変えたら組織図はLOIの月に', w._p2SimMo === 0 && $('.p2sm-seg span.on').textContent.indexOf('LOI') >= 0);

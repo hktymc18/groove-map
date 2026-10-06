@@ -19402,7 +19402,7 @@ function _p2SimHtml() {
 // v652: ファーストボーナス（一番のお楽しみ）は大きく。内訳は (i) に
 function _p2SimFbHtml(R9) {
   var bb = _p2BBCalc(Math.max(0, R9.gsv - 1000)), loi = R9.gsv >= 2000 ? 50000 : 0;
-  UX_INFO.simfb = { t: 'ファーストボーナスの内訳', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
+  UX_INFO.simfb = { t: 'ファーストボーナスの内訳', ok: 'とじる', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
     + '※ GSV ' + R9.gsv.toLocaleString() + ' − 1,000P（BR昇格分）＝ ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'P がBB対象<br>'
     + (loi ? '<b>エリートLOI特典</b>：¥50,000（BR維持で翌月進呈）' : '<b>エリートLOI特典</b>：BRの月のGSVが2,000以上で ¥50,000') };
   return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb"><span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span><small>ファーストボーナス（BR昇格後）</small><b>¥' + R9.fb.toLocaleString() + '<i>/月</i></b></div>';
@@ -19816,7 +19816,7 @@ function uxInfo(k) {
   uxInfoClose();
   var ov = document.createElement('div'); ov.id = 'uxInfo';
   ov.onclick = function(e) { if (e.target === ov) uxInfoClose(); };
-  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">楽勝!!</div></div>';
+  ov.innerHTML = '<div class="bx"><h4><i>i</i>' + d.t + '</h4><div class="tx">' + d.h + '</div><div class="ok" onclick="uxInfoClose()">' + (d.ok || '楽勝!!') + '</div></div>';
   document.body.appendChild(ov);
 }
 function uxInfoClose() { var o = document.getElementById('uxInfo'); if (o) o.parentNode.removeChild(o); }
