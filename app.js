@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v637';
+var APP_JS_VERSION = 'v638';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1091,12 +1091,14 @@ function renderPCMap(mapType) {
     }
     var nameStr = ((m.lastName||'')+(m.firstName||'')).replace(/\s+/g,'').substring(0,8);
     // v490: 稼働表示（右端）と重ならない幅に名前を自動フィット（縮小→…省略）
-    var _actStr9 = m.activity ? (m.actRate ? m.activity + m.actRate + '%' : (m.activity==='S' ? 'S 120%' : m.activity)) : ''; // v492: Sも実測優先
-    var _actW9 = _actStr9 ? _actStr9.length * 9.5 + 12 : 0;
-    var _nameMax9 = (NODE_W - 16 - _actW9) - 61 - 4; // 61=アバター分の左オフセット
+    // v638: 1行目＝タイトルの札＋名前（スマホと同じ並び）。稼働は2行目の札へ
+    var _tAb9 = (typeof titleAbbr === 'function') ? (titleAbbr((m.title || '').trim()) || '-') : ((m.title || '-'));
+    if (!(m.title || '').trim()) _tAb9 = '-';
+    var _pw9 = Math.max(26, _tAb9.length * 8.5 + 12);
+    var _nameMax9 = (NODE_W - 14) - 61 - _pw9 - 6; // 61=アバター分の左オフセット
     var _estW9 = function(str, fs) { var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) w9 += str.charCodeAt(q9) > 255 ? fs : fs * 0.58; return w9; };
     var nameFs = 18;
-    var _fss9 = [18, 16, 14.5, 13]; // v497: 漢字4文字＋S100%が収まる18pxを上限に統一（短い名前だけ大きく目立たない）
+    var _fss9 = [17, 15.5, 14, 13]; // v638: 札の横に入る大きさ
     for (var _fi9 = 0; _fi9 < _fss9.length; _fi9++) { nameFs = _fss9[_fi9]; if (_estW9(nameStr, nameFs) <= _nameMax9) break; }
     while (nameStr.length > 2 && _estW9(nameStr + '…', nameFs) > _nameMax9 && _estW9(nameStr, nameFs) > _nameMax9) { nameStr = nameStr.slice(0, -1); if (_estW9(nameStr + '…', nameFs) <= _nameMax9) { nameStr += '…'; break; } }
     var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#f2f4f8');
@@ -1225,40 +1227,46 @@ function renderPCMap(mapType) {
     ring.setAttribute('fill','none'); ring.setAttribute('stroke', titleRingColor(m.title)); ring.setAttribute('stroke-width','2.5');
     ring.setAttribute('pointer-events','none');
     g.appendChild(ring);
-    // 1行目: 名前 + 稼働
-    g.appendChild(txt(_pcTx, ry2+30, nameStr, nameColor, nameFs, '700', 'Noto Sans JP,Inter,sans-serif'));
-    if(m.activity){
-      var ac=m.activity==='S'?'#2CE5B8':m.activity==='A'?'#8B7CFF':m.activity==='B'?'#5AD7FF':'#FFB454';
-      var actStr=m.actRate?m.activity+m.actRate+'%':(m.activity==='S'?'S 120%':m.activity); // v492: Sも実測優先
-      g.appendChild(txt(rx+NODE_W-16, ry2+30, actStr, ac, 17, '700', 'Inter,sans-serif', 'end'));
-    }
-    // 2行目: タイトル + GSV(固定)。v468: モバイルと同じ「色付きバッジ（ピル）」表示に
-    var _tAb9 = (typeof titleAbbr === 'function') ? (titleAbbr((m.title || '').trim()) || '-') : ((m.title || '-'));
-    if (!(m.title || '').trim()) _tAb9 = '-';
-    var _sfx9 = titleMonthsSuffix(m) + restartSuffix(m, true);
-    var _pw9 = Math.max(34, _tAb9.length * 10 + 16);
+    // v638: 1行目＝タイトルの札＋名前（スマホと同じ）
     var tb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    tb9.setAttribute('x', _pcTx); tb9.setAttribute('y', ry2 + 42);
-    tb9.setAttribute('width', _pw9); tb9.setAttribute('height', 20);
-    tb9.setAttribute('rx', 10);
-    tb9.setAttribute('fill', cc);
-    tb9.setAttribute('pointer-events', 'none');
+    tb9.setAttribute('x', _pcTx); tb9.setAttribute('y', ry2 + 12);
+    tb9.setAttribute('width', _pw9); tb9.setAttribute('height', 19); tb9.setAttribute('rx', 6);
+    tb9.setAttribute('fill', cc); tb9.setAttribute('pointer-events', 'none');
+    if (cc === '#3A3F4A') { tb9.setAttribute('stroke', 'rgba(255,255,255,.35)'); tb9.setAttribute('stroke-width', '1'); }
     g.appendChild(tb9);
-    g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 56, _tAb9, (isLightTheme || cc === '#3A3F4A') ? '#ffffff' : '#0a1017', 12.5, '800', 'Inter,Noto Sans JP,sans-serif', 'middle'));
+    var _tInk9 = (isLightTheme || cc === '#3A3F4A' || cc === '#2A2E36') ? '#ffffff' : '#0a1017';
+    if (/^#[0-9a-fA-F]{6}$/.test(cc) && typeof catTextColor === 'function' && isLightTheme) _tInk9 = catTextColor(cc) === '#111' ? '#1B1F2A' : '#ffffff';
+    g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 26, _tAb9, _tInk9, 12, '900', 'Inter,Noto Sans JP,sans-serif', 'middle'));
+    g.appendChild(txt(_pcTx + _pw9 + 6, ry2 + 28, nameStr, nameColor, nameFs, '800', 'Noto Sans JP,Inter,sans-serif'));
+    // 2行目＝稼働の札（色）＋何ヶ月目 ／ 右にGSV（ラベルつき）
+    var _act9 = m.activity || '', _rate9 = m.actRate ? m.actRate : (_act9 === 'S' ? 120 : '');
+    var ac = _act9 === 'S' ? '#2CE5B8' : _act9 === 'A' ? '#8B7CFF' : _act9 === 'B' ? '#5AD7FF' : _act9 === 'C' ? '#FFB454' : (isLightTheme ? '#94A3B8' : '#8D9AB8');
+    var actStr = _act9 ? _act9 + (_rate9 !== '' ? ' ' + _rate9 + '%' : '') : '—';
+    var _aw9 = Math.max(30, actStr.length * 7.6 + 14);
+    var ab9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    ab9.setAttribute('x', _pcTx); ab9.setAttribute('y', ry2 + 41);
+    ab9.setAttribute('width', _aw9); ab9.setAttribute('height', 20); ab9.setAttribute('rx', 7);
+    ab9.setAttribute('fill', ac); ab9.setAttribute('pointer-events', 'none');
+    g.appendChild(ab9);
+    g.appendChild(txt(_pcTx + _aw9 / 2, ry2 + 55, actStr, _act9 && _act9 !== 'A' ? '#062019' : '#ffffff', 12, '900', 'Inter,sans-serif', 'middle'));
+    var _sfx9 = titleMonthsSuffix(m) + restartSuffix(m, true);
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
+    var _lbW9 = 24; // 「GSV」の小さいラベル
+    var _gx9 = rx + NODE_W - 14 - (kids(m.id).length ? 10 : 0); // 配下がいる時は右端の開閉ボタンと重ならないように
     if (_sfx9) {
       // v472: 右端のGSV表示に重なる場合は短縮（ヶ月目→ヶ月）、それでも入らなければ非表示（ホバーの詳細で確認可）
       var _est9 = function(str){ var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) { w9 += str.charCodeAt(q9) > 255 ? 11 : 6.5; } return w9; };
-      var _gsvW9 = (gsvStr + (fixStr ? ' ' + fixStr : '')).length * 9 + 12;
-      var _sfxX9 = _pcTx + _pw9 + 6;
-      var _avail9 = (rx + NODE_W - 16) - _gsvW9 - _sfxX9;
+      var _gsvW9 = (gsvStr + (fixStr ? ' ' + fixStr : '')).length * 8.6 + 10 + _lbW9;
+      var _sfxX9 = _pcTx + _aw9 + 6;
+      var _avail9 = _gx9 - _gsvW9 - _sfxX9;
       var _s9 = _sfx9;
       if (_est9(_s9) > _avail9) _s9 = _s9.replace(/ヶ月目/g, 'ヶ月');
       if (_est9(_s9) > _avail9) _s9 = '';
-      if (_s9) g.appendChild(txt(_sfxX9, ry2 + 56, _s9, gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif'));
+      if (_s9) g.appendChild(txt(_sfxX9, ry2 + 55, _s9, gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif'));
     }
-    g.appendChild(txt(rx+NODE_W-16, ry2+55, gsvStr+(fixStr?' '+fixStr:''), gsvColor, 16, '600', 'Inter,sans-serif', 'end'));
+    var _gl9 = txt(_gx9, ry2 + 55, 'GSV', gsvColor, 9, '800', 'Inter,sans-serif', 'end'); _gl9.setAttribute('opacity', '0.6'); _gl9.setAttribute('class', 'tc-gsvl'); g.appendChild(_gl9); // カードの色に合わせて読める色
+    g.appendChild(txt(_gx9 - _lbW9, ry2 + 56, gsvStr + (fixStr ? ' ' + fixStr : ''), gsvColor, 15.5, '800', 'Inter,sans-serif', 'end'));
     // 地域（カードの外・右上に小さく）
     if(m.region){
       var _rgT = txt(rx+NODE_W-2, ry2-4, m.region.substring(0,6), gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif', 'end');
@@ -3868,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v637';
+  var DATA_VERSION = 'v638';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5345,6 +5353,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v638', d:'2026-10-06', items:['💻 PCのMAPのツリーカードをスマホと同じ並びに：1行目にタイトルの札＋名前、2行目に色付きの稼働の札とGSV（ラベルつき）。枠と光り方は今のまま'] },
   { v:'v637', d:'2026-10-06', items:['💎 PCのツリー・サークルなども、TE（チームエリート）の色をスマホと同じグレーに近い黒に（札の字は白）'] },
   { v:'v636', d:'2026-10-06', items:['💎 スマホのMAPで、TE（チームエリート）の色をグレーに近い黒に（Gの金と見分けやすく）'] },
   { v:'v635', d:'2026-10-06', items:['💎 スマホのMAPで、BR以上をタイトルごとの色に（BR=紫・G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ…PCのツリーと同じ宝石色）。明るい色の札は黒い字で見やすく'] },

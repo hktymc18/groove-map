@@ -80,4 +80,12 @@ T.run(async () => {
   c('v626: スマホも「ざっくり／くわしく」は出ない（入口へ戻るだけ）', $('#dtModeBar').textContent.indexOf('ざっくり') < 0 && $('#dtModeBar').textContent.indexOf('入口') >= 0);
   w.dtMode('ez'); await sleep(20);
   c('入口では何も出さない', $('#dtModeBar').textContent === '');
+  console.log('=== v638 PCのツリーカード ===');
+  setWH(1400, 900); w._uxSync();
+  w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'チームエリート', parentId: '', mapType: 'both', activity: 'S', actRate: 100, ptCurrent: 30000 },
+    { id: 'q', lastName: '中村', firstName: '陸', title: 'Q2', parentId: 'r', mapType: 'both', activity: 'B', actRate: 70, ptCurrent: 3200 }];
+  w.switchView('current'); w.renderCurrentView && w.renderCurrentView(); await sleep(60);
+  const tt = Array.from(w.document.querySelectorAll('#view-current svg text')).map(x => x.textContent);
+  c('1行目にタイトルの札（TE・Q2）＋名前', tt.indexOf('TE') >= 0 && tt.indexOf('Q2') >= 0 && tt.some(x => x.indexOf('山内') >= 0));
+  c('2行目に稼働の札（S 100%）とGSVのラベル', tt.indexOf('S 100%') >= 0 && tt.indexOf('B 70%') >= 0 && w.document.querySelectorAll('#view-current .tc-gsvl').length === 2);
 });
