@@ -1,0 +1,31 @@
+// v681：PC（MacBook）の新しい外枠＋分析・推移
+const T = require('../lib/head.js')();
+const { w, c, sleep, setWH, $, $$ } = T;
+T.run(async () => {
+  T.login();
+  w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'G', parentId: '', mapType: 'both', activity: 'S', actRate: 120 }, { id: 'a', lastName: '佐藤', firstName: '健太', title: 'BR', parentId: 'r', mapType: 'both', activity: 'S', actRate: 110 }];
+  setWH(1470, 956); w._uxSync(); w.switchView('stats'); await sleep(40);
+  c('横幅1100以上のPCは新しい画面（px3）', w.document.body.classList.contains('px3'));
+  c('左メニューは文字つき（分析・PLAN…）＋ロゴ＋自分', $('.pcs-item[data-view=stats] .pcs-lb').textContent === '分析' && !!$('#pcsBrand') && !!$('#pcsMe'));
+  c('分析の見出しにタブ・検索（⌘K）・月の切り替え', !!$('#dtModeBar .px3-hd') && $$('#dtModeBar .px3-tabs span').length === 4 && /⌘K/.test($('#dtModeBar').textContent) && !!$('#dtModeBar .px3-mon'));
+  c('推移：数字の帯（6つ）＋グラフ＋その月の数字＋稼働構成', $$('#dtTrend .px3-k').length === 6 && !!$('#px3Ch') && /月の数字/.test($('#dtTrend').textContent) && !!$('#dtTrend .px3-comp'));
+  const n0 = w._dtSel.length; w.dtToggleMetric('総人数'); await sleep(10);
+  c('数字を押すとグラフに線を足す', w._dtSel.indexOf('総人数') >= 0 && $('#dtTrend .px3-k.on') !== null);
+  w._px3Tip(3, 200);
+  c('グラフにマウスを乗せるとその月の数字', $('#px3Tip').style.display === 'block' && /年/.test($('#px3Tip').textContent));
+  w.dtPickMonth(5); await sleep(10);
+  c('グラフの月を押すと右がその月に（今月に戻す）', /今月に戻す/.test($('#dtTrend').textContent)); w.dtPickMonth(11);
+  w.sharedOwners = [{ uid: 'x1', org: 'LIEN' }]; w.renderTeamPickBars();
+  c('表示チームは左メニューに', $('#pcsTeams').classList.contains('has') && /LIEN/.test($('#pcsTeams').textContent));
+  const ev = (k, o) => w.document.dispatchEvent(new w.KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true }), o));
+  w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }));
+  c('⌘Kで検索が開く', !!$('#px3Pal'));
+  $('#px3PalQ').value = '佐藤'; w._px3PalRender();
+  c('人の名前で探せる', /佐藤 健太/.test($('#px3PalLs').textContent));
+  w.px3PalClose();
+  w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: '2', bubbles: true })); await sleep(20);
+  c('数字キー2で研修タブ', w._dtTab === 'train');
+  w.dtMode('full', 'trend');
+  setWH(1000, 800); w._uxSync(); await sleep(10);
+  c('横幅1100未満（iPadなど）は今まで通り', !w.document.body.classList.contains('px3'));
+});

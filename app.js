@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v680';
+var APP_JS_VERSION = 'v681';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v680';
+  var DATA_VERSION = 'v681';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v681', d:'2026-10-07', items:['PC（MacBookなど横幅の広い画面）の新しい画面 第1弾：左のメニューを文字つきに（表示チームも左に）・分析を作り直し（上に数字の帯、大きいグラフはマウスを乗せるとその月の数字、グラフの月を押すと右にその月の内訳）','⌘K（WindowsはCtrl+K）で人の名前や画面を探してすぐ移動。分析では ←→ で月、1〜4 でタブを切り替え'] },
   { v:'v680', d:'2026-10-07', items:['受付連携の「名簿から追加」：紹介者をたどっても自分のMAPの人につながらない人（紹介者なし・紹介者がMAPにいない人とその紹介の人）は、候補に出さないようにしました（「ほかのチームかも」の欄はなくしました）'] },
   { v:'v679', d:'2026-10-07', items:['予定の編集画面：項目の文字の大きさをそろえました（iPhoneでは入力欄だけ大きく、カテゴリ・関連メンバーの欄と大きさがバラバラだったのを、小さい方に統一）'] },
   { v:'v678', d:'2026-10-07', items:['ホーム画面に追加したアプリで、カレンダーが画面の上6割だけに縮み、下が空白になる不具合を修正（iPhone 17。キーボードを閉じた後も画面の高さが小さいまま戻らないiOSの不具合への対策を、ホーム画面アプリにも適用。開き直さなくても数秒で自動で戻ります）'] },
@@ -9039,6 +9040,7 @@ function renderTeamPickBars(){
     h+='</div></div>';
     el.innerHTML=h;
   });
+  try { _px3Teams(); } catch (ePx) {} // v681: PCは左のメニューに表示チーム
 }
 function renderTeamCompare(){
   var wrap=document.getElementById('teamCompareWrap'); if(!wrap) return;
@@ -12180,7 +12182,7 @@ function _dtApplyTab() {
   var mb = document.getElementById('dtModeBar');
   if (mb) { // v626: 「ざっくり／くわしく」の切り替えはやめた（スマホは入口のタイル・PCは左の列から選ぶ）。くわしくの表を見ている時だけ入口へ戻る
     _dtEzCss();
-    mb.innerHTML = ez ? '' : _anHeadHtml(); // v647: 入口へ戻るボタンはやめて「分析」の見出し
+    mb.innerHTML = _px3On() ? _px3StatsHd() : (ez ? '' : _anHeadHtml()); // v647: 入口へ戻るボタンはやめて「分析」の見出し／v681: PC（MacBook）は新しい見出し（タブ・検索・月）
   }
   var ezb = document.getElementById('dtEz'); if (ezb) ezb.style.display = ez ? '' : 'none';
   var bar = document.getElementById('dtTabs');
@@ -12459,6 +12461,7 @@ function _dtChartSvg(months) {
 }
 function renderDtTrend() {
   var box = document.getElementById('dtTrend'); if (!box) return;
+  if (_px3On() && !_dtSrc) { _px3Trend(box); return; } // v681: PC（MacBook）は新しい推移
   var months = _dtMonths(), mo = months[_dtMonthIdx], ro = _dtReadOnly();
   var chips = '<div class="dt-chips"><span class="dt-chip mix' + (_dtSel[0] === '__MIX__' ? ' on' : '') + '" onclick="dtToggleMetric(\'__MIX__\')">稼働構成</span>'
     + DT_METRICS.map(function(m) {
@@ -16273,6 +16276,7 @@ function _uxSync() {
     b.classList.toggle('ux-bh0', currentView !== 'current' && currentView !== 'ideal'); // 横向きは左の列で移動するので「メニューにもどる」の帯は不要（MAPは現状/理想の切替があるので残す）
     if (isPCMode()) b.classList.remove('ux-pg');
     _uxMapSync(); // v594
+    try { _px3Sync(); } catch (ePx) {} // v681
     _mxSync(); // v607
   } catch (e) {}
 }
@@ -36533,6 +36537,286 @@ function fsSaveToFirestore(uid) {
   p3 = p3.then(function(){ _fsSavedSig[_stPath] = _stSig; });
   return p1.then(function(){ return p2; }).then(function(){ return p3; });
 }
+
+// ════════════════════════════════════════════════════════════
+//  v681: PC（MacBook・横幅1100px以上）の新しい画面 — Phase1：外枠（文字つきの左メニュー・表示チーム・自分）＋分析
+//  ・スマホの部品をそのまま使わず、PC向けに「一度に見せる・マウスを乗せると出る・キーボードで速く」
+//  ・⌘K（Ctrl+K）で人・画面を探して移動／分析は ←→ で月・1〜4 でタブ
+// ════════════════════════════════════════════════════════════
+function _px3On() { return typeof isPCMode === 'function' && isPCMode() && (window.innerWidth || 0) >= 1100; }
+function _px3Css() {
+  if (document.getElementById('px3Css')) return;
+  var st = document.createElement('style'); st.id = 'px3Css';
+  st.textContent =
+    // 左メニュー（幅220・文字つき）
+    "body.px3{padding-left:220px!important}"
+    + "body.px3 #evCalendar.full,body.px3 #evDayV.full,body.px3 #evWeek.full,body.px3 #evAgenda.full{left:220px}"
+    + "body.px3 .pc-sidebar{width:220px;align-items:stretch;padding:16px 12px 14px;gap:2px;background:color-mix(in srgb,var(--bg) 82%,#000);overflow-y:auto}"
+    + "body.px3 .pcs-item{flex-direction:row;width:auto;height:40px;padding:0 10px;gap:12px;justify-content:flex-start;border-radius:10px;flex:none}"
+    + "body.px3 .pcs-item:hover{background:var(--surface)}body.px3 .pcs-item.active{background:var(--surface2)}"
+    + "body.px3 .pcs-ic{width:22px;height:22px;background:none!important;box-shadow:none!important;border-radius:0;filter:none!important;font-size:17px}"
+    + "body.px3 .pcs-ic .nav-svg{stroke:var(--text-mid);width:19px;height:19px}body.px3 .pcs-item.active .nav-svg{stroke:var(--accent)}"
+    + "body.px3 .pcs-lb{font-size:13.5px;font-weight:800;color:var(--text-mid);letter-spacing:0}body.px3 .pcs-item.active .pcs-lb{color:var(--text)}"
+    + "#pcsBrand,#pcsTeams,#pcsMe{display:none}"
+    + "body.px3 #pcsBrand{display:flex;align-items:center;gap:9px;padding:4px 8px 18px;cursor:pointer}body.px3 #pcsBrand img{height:18px}body.px3 #pcsBrand img.d{display:none}body.light.px3 #pcsBrand img.w{display:none}body.light.px3 #pcsBrand img.d{display:block}"
+    + "body.px3 #pcsBrand b{font:900 12.5px Inter,sans-serif;letter-spacing:.2em;background:linear-gradient(100deg,#1f66d1,#14a9c4 50%,#7cc35a);-webkit-background-clip:text;background-clip:text;color:transparent}"
+    + "body.px3[data-v=stats] #pcsTeams.has{display:block}#pcsTeams .h{font-size:10.5px;font-weight:800;color:var(--text-dim);letter-spacing:.12em;padding:18px 10px 6px;display:flex}#pcsTeams .h em{margin-left:auto;font-style:normal;letter-spacing:0;color:var(--accent)}"
+    + "#pcsTeams .t{display:flex;align-items:center;gap:9px;height:32px;padding:0 10px;border-radius:9px;font-size:12.5px;font-weight:800;color:var(--text-mid);cursor:pointer}#pcsTeams .t:hover{background:var(--surface)}"
+    + "#pcsTeams .t i{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;color:var(--go-ink,#06251C)}#pcsTeams .t.on{color:var(--text)}#pcsTeams .t.on i{background:var(--accent);border-color:var(--accent)}"
+    + "#pcsTeams .t span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#pcsTeams .t .lic{width:12px;height:12px;opacity:.6}"
+    + "body.px3 #pcsMe{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;margin-top:10px;flex:none}"
+    + "#pcsMe .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#5AD7FF);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#06251C;flex:none}"
+    + "#pcsMe b{display:block;font-size:12.5px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pcsMe small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pcsMe>div{min-width:0;flex:1}"
+    // 分析：古い上の帯・タブ・表示チームの帯・左の列は使わない
+    + "body.px3[data-v=stats] header,body.px3[data-v=stats] #dtTabs,body.px3[data-v=stats] #teamPickStats,body.px3[data-v=stats] #dtPcNav,body.px3[data-v=stats] .back-home-bar{display:none!important}"
+    + "body.px3[data-v=stats] #view-stats{padding:0 28px 28px;max-width:none}"
+    // くわしく（BRなど）を開いた時も見出しを出す・左の列の空きをなくす
+    + "body.px3 #view-stats.pcx-st{display:block!important}body.px3 #view-stats.pcx-st>*:not(#dtPcNav){margin-left:0;margin-right:0}body.px3 #view-stats.pcx-st #dtModeBar,body.px3.ux-dt #dtModeBar{display:block!important}"
+    // 見出し（タブ・検索・月）
+    + ".px3-hd{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:16px;height:64px;margin:0 -28px 18px;padding:0 28px;background:var(--bg);border-bottom:1px solid var(--border)}"
+    + ".px3-hd h1{margin:0;font-size:21px;font-weight:900;white-space:nowrap}.px3-tabs{display:flex;align-self:stretch;margin-left:6px}"
+    + ".px3-tabs span{display:flex;align-items:center;padding:0 12px;font-size:13.5px;font-weight:800;color:var(--text-dim);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}.px3-tabs span:hover{color:var(--text)}.px3-tabs span.on{color:var(--text);border-color:var(--accent)}"
+    + ".px3-tabs kbd,.px3-chip kbd{font:600 10px Inter,sans-serif;color:var(--placeholder);margin-left:6px;border:1px solid var(--border2);border-radius:5px;padding:0 4px}.px3-tabs kbd{border:none;padding:0}"
+    + ".px3-hd .sp{flex:1}.px3-chip{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:800;color:var(--text-mid);cursor:pointer;white-space:nowrap}.px3-chip:hover{border-color:var(--border2)}.px3-chip .lic{width:15px;height:15px}"
+    + ".px3-mon{display:flex;align-items:center;gap:2px;height:34px;padding:0 4px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}.px3-mon b{padding:0 8px;font-size:13px;font-weight:900;white-space:nowrap}"
+    + ".px3-mon i{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:16px;font-weight:800;color:var(--text-dim);cursor:pointer}.px3-mon i:hover{background:var(--surface2);color:var(--text)}"
+    + ".px3-left{font-size:12.5px;font-weight:800;color:var(--text-dim);white-space:nowrap}"
+    // 推移
+    + ".px3-tr{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:auto minmax(380px,calc(100vh - 340px)) auto;gap:14px}"
+    + ".px3-k{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px 8px;cursor:pointer;min-width:0;transition:border-color .12s}.px3-k:hover{border-color:var(--border2)}"
+    + ".px3-k.on{border-color:var(--c);box-shadow:inset 0 3px 0 var(--c)}.px3-k .h{display:flex;font-size:12px;font-weight:900;color:var(--text-dim);gap:6px;white-space:nowrap}.px3-k .h .dt-delta,.px3-k .h span:last-child{margin-left:auto}"
+    + ".px3-k b{display:block;font:900 25px Inter,sans-serif;margin-top:4px;white-space:nowrap;font-variant-numeric:tabular-nums}.px3-k b small{font:800 12px 'Noto Sans JP',sans-serif;color:var(--text-dim);margin-left:3px}.px3-k b i{font-style:normal;font-size:14px;color:var(--accent)}"
+    + ".px3-k svg{display:block;width:100%;height:30px;margin-top:6px}"
+    + ".px3-c{background:var(--surface);border:1px solid var(--border);border-radius:16px;min-width:0;min-height:0;display:flex;flex-direction:column;position:relative}"
+    + ".px3-ch{display:flex;align-items:center;gap:10px;padding:14px 18px 0;font-size:14px;font-weight:900;white-space:nowrap}.px3-ch small{font-size:12px;font-weight:700;color:var(--text-dim)}.px3-ch .r{margin-left:auto;display:flex;gap:12px;align-items:center;font-size:12px;font-weight:800;color:var(--text-dim)}"
+    + ".px3-ch .lg{display:flex;align-items:center;gap:5px}.px3-ch .lg i{width:10px;height:3px;border-radius:2px;background:var(--c)}.px3-ch .lk{color:var(--accent);cursor:pointer}"
+    + "#px3Ch{flex:1;min-height:0;position:relative;padding:4px 10px 6px}#px3Ch svg{display:block;width:100%;height:100%}"
+    + "#px3Tip{position:absolute;pointer-events:none;z-index:5;min-width:190px;background:var(--surface2);border:1px solid var(--border2);border-radius:11px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:none}"
+    + "#px3Tip b{display:block;font-size:13px;font-weight:900;margin-bottom:5px}#px3Tip div{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--text-mid);padding:2px 0}#px3Tip div i{width:7px;height:7px;border-radius:50%;background:var(--c)}#px3Tip div em{margin-left:auto;font-style:normal;font:800 12.5px Inter,sans-serif;color:var(--text)}"
+    + ".px3-mr{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:800}.px3-mr:hover{background:var(--surface2)}.px3-mr i{width:8px;height:8px;border-radius:50%;background:var(--border2);flex:none}.px3-mr.on i{background:var(--c)}"
+    + ".px3-mr em{margin-left:auto;font:900 14px Inter,sans-serif;font-style:normal;font-variant-numeric:tabular-nums;white-space:nowrap}.px3-mr .dt-delta{min-width:46px;text-align:right}.px3-mr .na{color:var(--text-dim);font:700 12px 'Noto Sans JP',sans-serif}"
+    + ".px3-sec{font-size:12px;font-weight:900;color:var(--text-dim);padding:12px 10px 6px;display:flex}.px3-sec em{margin-left:auto;font-style:normal;color:var(--text)}"
+    + ".px3-pp{display:flex;flex-wrap:wrap;gap:6px;padding:0 10px}.px3-pp span{font-size:12px;font-weight:800;padding:4px 9px;border-radius:8px;background:var(--surface2);cursor:pointer}.px3-pp span:hover{background:var(--surface3)}.px3-pp span small{color:var(--text-dim);margin-left:4px}"
+    + ".px3-c.px3-comp{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:20px;padding:12px 18px}.px3-comp .bar{flex:1;display:flex;height:28px;border-radius:9px;overflow:hidden;font:900 12px Inter,sans-serif;color:#06251C;background:var(--surface2)}"
+    + ".px3-comp .bar span{display:flex;align-items:center;padding-left:9px;white-space:nowrap;overflow:hidden;min-width:0}.px3-comp .ttl{font-size:14px;font-weight:900;white-space:nowrap}.px3-comp .ttl small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700}"
+    // ⌘K
+    + "#px3Pal{position:fixed;inset:0;z-index:2000;background:rgba(5,8,14,.55);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:flex-start;padding-top:14vh}"
+    + "#px3Pal .bx{width:min(620px,90vw);background:var(--surface);border:1px solid var(--border2);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}"
+    + "#px3Pal input{width:100%;border:none;outline:none;background:transparent;color:var(--text);font-size:17px;font-weight:700;padding:18px 20px;border-bottom:1px solid var(--border)}"
+    + "#px3Pal .ls{max-height:52vh;overflow-y:auto;padding:6px}#px3Pal .it{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer}"
+    + "#px3Pal .it small{margin-left:auto;font-size:11.5px;color:var(--text-dim);font-weight:700}#px3Pal .it.on{background:var(--accent-dim);color:var(--text)}#px3Pal .it .lic{width:16px;height:16px;color:var(--text-dim)}#px3Pal .em{padding:18px;text-align:center;color:var(--text-dim);font-size:13px}";
+  document.head.appendChild(st);
+}
+// 左メニュー：ロゴ・文字・表示チーム・自分
+var PX3_LB = { home: 'ホーム', current: 'MAP', members: 'メンバー', ol: 'OL', events: '予定・ToDo', stats: '分析', plan: 'PLAN' };
+function _px3Side() {
+  var sb = document.getElementById('pcSidebar'); if (!sb) return;
+  if (!document.getElementById('pcsBrand')) {
+    var br = document.createElement('div'); br.id = 'pcsBrand'; br.title = 'ホーム';
+    br.onclick = function() { switchView('home'); };
+    br.innerHTML = '<img class="w" src="img/logo-w.png" alt="NWP"><img class="d" src="img/logo-d.png" alt="NWP"><b>NAVIGATOR</b>';
+    sb.insertBefore(br, sb.firstChild);
+  }
+  Array.prototype.forEach.call(sb.querySelectorAll('.pcs-item[data-view]'), function(it) {
+    var lb = it.querySelector('.pcs-lb'), v = it.getAttribute('data-view');
+    if (lb && PX3_LB[v]) { if (!lb.getAttribute('data-o')) lb.setAttribute('data-o', lb.textContent); lb.textContent = _px3On() ? PX3_LB[v] : lb.getAttribute('data-o'); }
+  });
+  var sp = sb.querySelector('.pcs-spacer');
+  if (!document.getElementById('pcsTeams')) { var tm = document.createElement('div'); tm.id = 'pcsTeams'; sb.insertBefore(tm, sp); }
+  if (!document.getElementById('pcsMe')) {
+    var me = document.createElement('div'); me.id = 'pcsMe'; me.title = 'プロフィール・設定';
+    me.onclick = function() { if (typeof openProfileModal === 'function') openProfileModal(); };
+    sb.appendChild(me);
+  }
+  var u = (typeof currentUser !== 'undefined' && currentUser) || {}, nm = u.name || u.displayName || '';
+  document.getElementById('pcsMe').innerHTML = '<span class="av">' + evEsc((nm || '？').charAt(0)) + '</span><div><b>' + evEsc(nm || 'ゲスト') + '</b><small>' + evEsc([u.union, u.area].filter(Boolean).join('・')) + '</small></div>';
+  _px3Teams();
+}
+function _px3Teams() {
+  var el = document.getElementById('pcsTeams'); if (!el) return;
+  var owners = (typeof sharedOwners !== 'undefined' && sharedOwners) || [];
+  el.classList.toggle('has', owners.length > 0);
+  if (!owners.length) { el.innerHTML = ''; return; }
+  var sel = typeof _teamSelection === 'function' ? _teamSelection() : [''];
+  var row = function(uid, nm, edit) { var on = sel.indexOf(uid) >= 0; return '<div class="t' + (on ? ' on' : '') + '" onclick="teamChip(\'' + uid + '\')"><i>' + (on ? '✓' : '') + '</i><span>' + evEsc(nm) + '</span>' + (edit ? icn('pencil') : '') + '</div>'; };
+  el.innerHTML = '<div class="h">表示チーム' + ((typeof _aggActive !== 'undefined' && _aggActive) ? '<em>合算中</em>' : '') + '</div>' + row('', '自分', false)
+    + owners.map(function(o) { return row(o.uid, (o.org || o.name || o.email || '共有').substring(0, 14), o.perm === 'edit'); }).join('');
+}
+function _px3Sync() {
+  var on = _px3On();
+  document.body.classList.toggle('px3', on);
+  if (on) _px3Css();
+  _px3Side();
+}
+// 月を前後へ（上の帯の年・月を動かして、いつもの月替えを使う）
+function px3Mon(d) {
+  var y = document.getElementById('selYear'), m = document.getElementById('selMonth'); if (!y || !m) return;
+  var p = String(state.currentMonth || currentMonthStr()).split('.'), t = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1 + d, 1);
+  var ty = String(t.getFullYear()), tm = String(t.getMonth() + 1);
+  if (!Array.prototype.some.call(y.options, function(o) { return o.value === ty; })) { var o = document.createElement('option'); o.value = ty; o.textContent = ty + '年'; y.appendChild(o); }
+  y.value = ty; m.value = tm;
+  onYearMonthChange();
+}
+function _px3Ym() { var p = String(state.currentMonth || currentMonthStr()).split('.'); return parseInt(p[0], 10) + '年' + parseInt(p[1], 10) + '月'; }
+// 分析の見出し
+function _px3StatsHd() {
+  var ez = _dtMode === 'ez', left = ''; try { left = '残り' + _dtEzDaysLeft() + '日'; } catch (e) {}
+  return '<div class="px3-hd"><h1>分析</h1><div class="px3-tabs">' + DT_TABS.map(function(t, i) {
+    return '<span class="' + (!ez && t[0] === _dtTab ? 'on' : '') + '" onclick="dtMode(\'full\',\'' + t[0] + '\')">' + t[1] + '<kbd>' + (i + 1) + '</kbd></span>';
+  }).join('') + '</div><div class="sp"></div>'
+    + '<span class="px3-chip" onclick="px3Pal()">' + icn('search') + '検索・移動<kbd>⌘K</kbd></span>'
+    + '<span class="px3-mon"><i onclick="px3Mon(-1)" title="前の月（←）">‹</i><b>' + _px3Ym() + '</b><i onclick="px3Mon(1)" title="次の月（→）">›</i></span>'
+    + (left ? '<span class="px3-left">' + left + '</span>' : '') + '</div>';
+}
+// ── 推移：数字の帯＋大きいグラフ（マウスを乗せるとその月の数字）＋右にその月の内訳＋稼働構成 ──
+var PX3_K = [
+  { k: 'コミッション', c: '#FFB454' }, { k: 'S', c: '#8B7CFF' }, { k: '平均稼働人数', c: '#2CE5B8' },
+  { k: '__BR', c: '#C583FF', lb: 'BR', u: '人' }, { k: 'B1', c: '#5AD7FF', lb: 'B1数' }, { k: '総人数', c: '#4ADE80' }
+];
+function _px3Col(k) { for (var i = 0; i < PX3_K.length; i++) if (PX3_K[i].k === k) return PX3_K[i].c; return ['#FF87B3', '#FFD166', '#67B7FF', '#FF9F6E', '#C583FF', '#3ED5C4', '#FF5D73'][Math.abs(String(k).length * 7 + String(k).charCodeAt(0)) % 7]; }
+function _px3Vals(k) { if (k === '__BR') { try { return _dtEzSeries('br', _dtEzNow()); } catch (e) { return []; } } return _dtVals(k); }
+function _px3Fmt(v, k) {
+  if (v === null || v === undefined || v === '') return null;
+  var meta = k === '__BR' ? { unit: '人' } : _dtMeta(k);
+  if (meta.yen) return '¥' + Math.round(v).toLocaleString();
+  return (Math.round(v * 10) / 10).toLocaleString() + '<small>' + (meta.unit || '') + '</small>';
+}
+function _px3Spark(v, c) {
+  var pts = []; v.forEach(function(x, i) { if (x !== null && x !== undefined) pts.push([i, x]); });
+  if (pts.length < 2) return '<svg viewBox="0 0 120 30"></svg>';
+  var mx = Math.max.apply(null, pts.map(function(p) { return p[1]; })), mn = Math.min.apply(null, pts.map(function(p) { return p[1]; }));
+  return '<svg viewBox="0 0 120 30" preserveAspectRatio="none"><polyline fill="none" stroke="' + c + '" stroke-width="2" vector-effect="non-scaling-stroke" points="' + pts.map(function(p) { return (p[0] * 120 / 11).toFixed(1) + ',' + (27 - (p[1] - mn) / ((mx - mn) || 1) * 23).toFixed(1); }).join(' ') + '"/></svg>';
+}
+function _px3Sel() { var s = (_dtSel || []).filter(function(k) { return k !== '__MIX__'; }); return s.length ? s : ['S', '平均稼働人数']; }
+function _px3Trend(box) {
+  var ms = _dtMonths(), idx = _dtMonthIdx, mo = ms[idx], sel = _px3Sel(), ro = _dtReadOnly(), now = null;
+  try { now = _dtEzNow(); } catch (e) {}
+  var kp = PX3_K.map(function(o) {
+    var v = _px3Vals(o.k), a = v[idx], p = idx > 0 ? v[idx - 1] : null, meta = o.k === '__BR' ? { unit: '人' } : _dtMeta(o.k), f = _px3Fmt(a, o.k);
+    var man = DT_MANUAL.indexOf(o.k) >= 0, tap = o.k === '__BR' ? 'dtPcGo(\'exam\')' : ((f === null && man && !ro) ? 'dtInputOpen(' + idx + ')' : 'dtToggleMetric(\'' + o.k + '\')');
+    return '<div class="px3-k' + (sel.indexOf(o.k) >= 0 ? ' on' : '') + '" style="--c:' + o.c + '" onclick="' + tap + '" title="' + (o.k === '__BR' ? 'BRのくわしく' : 'グラフに出す・消す') + '">'
+      + '<div class="h">' + (o.lb || meta.lb) + (f !== null && p !== null && p !== undefined ? _dtDelta(a, p, meta) : '<span></span>') + '</div>'
+      + '<b>' + (f !== null ? f : '<i>' + (man && !ro ? '＋ 入力' : '—') + '</i>') + '</b>' + _px3Spark(v, o.c) + '</div>';
+  }).join('');
+  var lg = sel.map(function(k) { return '<span class="lg" style="--c:' + _px3Col(k) + '"><i></i>' + _dtMeta(k).lb + '</span>'; }).join('');
+  var rows = DT_METRICS.map(function(m) {
+    var v = _dtVals(m.k), a = v[idx], p = idx > 0 ? v[idx - 1] : null, f = _px3Fmt(a, m.k), man = DT_MANUAL.indexOf(m.k) >= 0;
+    var tap = f === null && man && !ro ? 'dtInputOpen(' + idx + ')' : 'dtToggleMetric(\'' + m.k + '\')';
+    return '<div class="px3-mr' + (sel.indexOf(m.k) >= 0 ? ' on' : '') + '" style="--c:' + _px3Col(m.k) + '" onclick="' + tap + '"><i></i>' + m.lb + '<em>' + (f !== null ? f.replace(/<small>/, ' <small style="font-size:11px;color:var(--text-dim)">') : '<span class="na">' + (man && !ro ? '＋ 入力' : '—') + '</span>') + '</em>' + (f !== null && p !== null && p !== undefined ? _dtDelta(a, p, m) : '<span style="min-width:46px"></span>') + '</div>';
+  }).join('');
+  var ppl = '';
+  if (idx === 11 && now) {
+    var byId = {}; (membersForMap('current') || []).forEach(function(m) { byId[m.id] = m; });
+    var sm = (now.sIds || []).map(function(id) { return byId[id]; }).filter(Boolean), sg = 0; try { sg = _dtEzSGoal(now.S); } catch (e2) {}
+    var chip = function(m, sub) { return '<span onclick="dtEzMem(\'' + m.id + '\')">' + evEsc(_dtEzName(m)) + (sub ? '<small>' + evEsc(sub) + '</small>' : '') + '</span>'; };
+    ppl = '<div class="px3-sec">S稼働の人<em>' + sm.length + '人' + (sg && now.S < sg ? '<span style="color:var(--text-dim);font-weight:700">　次の段 ' + sg + '人まで あと' + (sg - now.S) + '</span>' : '') + '</em></div><div class="px3-pp">' + (sm.length ? sm.map(function(m) { return chip(m, ''); }).join('') : '<span style="cursor:default;color:var(--text-dim)">まだいません</span>') + '</div>'
+      + ((now.near || []).length ? '<div class="px3-sec">あと一歩でS<em>' + now.near.length + '人</em></div><div class="px3-pp">' + now.near.map(function(m) { return chip(m, (m.activity || '') + (m.actRate !== '' && m.actRate != null ? ' ' + m.actRate + '%' : '')); }).join('') + '</div>' : '');
+  }
+  var comp = ['S', 'A', 'B', 'C'].map(function(k) { var v = _dtVals(k)[idx]; return { k: k, n: v || 0, c: DT_ACT_COLORS[k] }; }), tr = _dtVals('研修生')[idx] || 0, tot = comp.reduce(function(s, x) { return s + x.n; }, 0) + tr;
+  var compH = tot ? comp.concat([{ k: '研修生', n: tr, c: 'var(--surface3)' }]).filter(function(x) { return x.n; }).map(function(x) { return '<span style="flex:' + x.n + ';background:' + x.c + (x.k === '研修生' ? ';color:var(--text-mid)' : '') + '" title="' + x.k + ' ' + x.n + '人">' + x.k + ' ' + x.n + '</span>'; }).join('') : '<span style="flex:1;color:var(--text-dim);font-family:inherit;font-weight:700">この月の記録がありません</span>';
+  box.innerHTML = '<div class="px3-tr">' + '<div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px">' + kp + '</div>'
+    + '<div class="px3-c" style="grid-column:1/5"><div class="px3-ch">12ヶ月の推移<small>上の数字を押すと線を出し入れ（2つまで）</small><div class="r">' + lg + '</div></div><div id="px3Ch"></div><div id="px3Tip"></div></div>'
+    + '<div class="px3-c" style="grid-column:5/7;overflow:hidden"><div class="px3-ch">' + mo.y + '年' + mo.m + '月の数字' + (idx === 11 ? '<small>今月</small>' : '') + '<div class="r">' + (idx !== 11 ? '<span class="lk" onclick="dtPickMonth(11)">今月に戻す ›</span>' : '<small>グラフの月を押すと切り替わる</small>') + '</div></div>'
+    + '<div style="overflow-y:auto;padding:8px 8px 12px;min-height:0">' + rows + ppl + '</div></div>'
+    + '<div class="px3-c px3-comp"><div class="ttl">稼働構成<small>' + mo.m + '月・' + tot + '人</small></div><div class="bar">' + compH + '</div></div>'
+    + '</div>';
+  _px3Draw();
+}
+// グラフ（実際の大きさで描く：文字がつぶれない）
+function _px3Draw() {
+  var host = document.getElementById('px3Ch'); if (!host) return;
+  var W = Math.max(300, host.clientWidth - 20), H = Math.max(200, host.clientHeight - 10), L = 46, R = 50, T = 16, B = 30, cw = W - L - R, ch = H - T - B;
+  var ms = _dtMonths(), idx = _dtMonthIdx, sel = _px3Sel(), xOf = function(i) { return L + cw * i / 11; };
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+  h += '<rect x="' + (xOf(idx) - cw / 22) + '" y="' + T + '" width="' + (cw / 11) + '" height="' + ch + '" rx="8" fill="var(--accent-dim)"/>';
+  for (var g = 0; g <= 4; g++) { var gy = T + ch * g / 4; h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--border)"/>'; }
+  ms.forEach(function(m, i) { h += '<text x="' + xOf(i) + '" y="' + (H - 9) + '" text-anchor="middle" font-size="12" fill="' + (i === idx ? 'var(--text)' : 'var(--text-dim)') + '" font-weight="' + (i === idx ? 900 : 600) + '">' + m.lbl + '</text>'; });
+  sel.forEach(function(k, si) {
+    var meta = _dtMeta(k), v = _dtVals(k), c = _px3Col(k), nn = v.filter(function(x) { return x !== null; });
+    var mx = _dtNice(Math.max.apply(null, nn.concat([1]))), yOf = function(x) { return T + ch * (1 - x / mx); };
+    for (var g2 = 0; g2 <= 4; g2++) { var lv = mx * (1 - g2 / 4), ls = meta.yen ? (lv >= 10000 ? Math.round(lv / 10000) + '万' : Math.round(lv)) : Math.round(lv * 10) / 10; h += '<text x="' + (si ? W - R + 8 : L - 8) + '" y="' + (T + ch * g2 / 4 + 4) + '" text-anchor="' + (si ? 'start' : 'end') + '" font-size="11" fill="' + c + '" opacity=".85">' + ls + '</text>'; }
+    var pts = []; v.forEach(function(x, i) { if (x !== null) pts.push(i); });
+    if (!pts.length) return;
+    var d = pts.map(function(i, n) { return (n ? 'L' : 'M') + xOf(i).toFixed(1) + ',' + yOf(v[i]).toFixed(1); }).join(' ');
+    if (pts.length > 1) h += '<path d="' + d + ' L' + xOf(pts[pts.length - 1]).toFixed(1) + ',' + (T + ch) + ' L' + xOf(pts[0]).toFixed(1) + ',' + (T + ch) + ' Z" fill="' + c + '" opacity=".08"/>';
+    h += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach(function(i) { h += '<circle cx="' + xOf(i) + '" cy="' + yOf(v[i]) + '" r="' + (i === idx ? 5.5 : 3.5) + '" fill="' + (i === idx ? c : 'var(--surface)') + '" stroke="' + c + '" stroke-width="2"/>'; });
+  });
+  h += '<line id="px3X" x1="0" x2="0" y1="' + T + '" y2="' + (T + ch) + '" stroke="var(--text-mid)" stroke-dasharray="3 3" style="display:none"/>';
+  for (var i = 0; i < 12; i++) h += '<rect x="' + (xOf(i) - cw / 22) + '" y="0" width="' + (cw / 11) + '" height="' + H + '" fill="transparent" style="cursor:pointer" onmouseenter="_px3Tip(' + i + ',' + xOf(i).toFixed(1) + ')" onmouseleave="_px3Tip(-1)" onclick="dtPickMonth(' + i + ')"/>';
+  host.innerHTML = h + '</svg>';
+}
+function _px3Tip(i, x) {
+  var tip = document.getElementById('px3Tip'), ln = document.getElementById('px3X'); if (!tip) return;
+  if (i < 0) { tip.style.display = 'none'; if (ln) ln.style.display = 'none'; return; }
+  var mo = _dtMonths()[i], keys = PX3_K.map(function(o) { return o.k; }), host = document.getElementById('px3Ch');
+  tip.innerHTML = '<b>' + mo.y + '年' + mo.m + '月</b>' + keys.map(function(k) {
+    var f = _px3Fmt(_px3Vals(k)[i], k), lb = k === '__BR' ? 'BR' : (k === 'B1' ? 'B1数' : _dtMeta(k).lb);
+    return '<div style="--c:' + _px3Col(k) + '"><i></i>' + lb + '<em>' + (f === null ? '—' : f.replace(/<small>.*<\/small>/, '')) + '</em></div>';
+  }).join('');
+  tip.style.display = 'block';
+  if (ln) { ln.setAttribute('x1', x); ln.setAttribute('x2', x); ln.style.display = ''; }
+  var hw = host ? host.clientWidth : 800, left = x + 22;
+  if (left + 210 > hw) left = x - 210;
+  tip.style.left = left + 'px'; tip.style.top = '64px';
+}
+// ── ⌘K：人・画面を探して移動 ──
+var _px3PalI = 0, _px3PalL = [];
+function _px3PalItems() {
+  var L = [];
+  [['home', 'ホーム', 'home'], ['current', 'MAP（現状）', 'map'], ['events', '予定・ToDo', 'calendar'], ['plan', 'PLAN', 'compass'], ['stats', '分析', 'chart'], ['members', 'メンバー', 'users'], ['ol', 'OL', 'doc']].forEach(function(v) { L.push({ t: v[1], s: '画面', ic: v[2], go: function() { switchView(v[0]); } }); });
+  DT_TABS.forEach(function(t) { L.push({ t: '分析 › ' + t[1], s: '分析', ic: 'chart', go: function() { switchView('stats'); dtMode('full', t[0]); } }); });
+  [['ideal', '理想', 0], ['sim', 'シミュレーション'], ['ck', 'チェック'], ['do', '今週やること'], ['road', 'ロードマップ']].forEach(function(p) { L.push({ t: 'PLAN › ' + p[1], s: 'PLAN', ic: 'compass', go: function() { switchView('plan'); if (p.length > 2) p2Go(p[0], p[2]); else p2Go(p[0]); } }); });
+  ((state && state.members) || []).forEach(function(m) {
+    var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim(); if (!nm) return;
+    L.push({ t: nm, s: [(m.title || '').trim(), m.region || ''].filter(Boolean).join('・') || 'メンバー', ic: 'user', q: (m.lastName || '') + (m.firstName || '') + (m.kana || ''), go: function() { if (typeof openEdit === 'function') openEdit(m.id); } });
+  });
+  return L;
+}
+function px3Pal() {
+  _px3Css(); px3PalClose();
+  var ov = document.createElement('div'); ov.id = 'px3Pal';
+  ov.innerHTML = '<div class="bx"><input id="px3PalQ" placeholder="人の名前・画面を探す（例：佐藤、シミュレーション）" autocomplete="off"><div class="ls" id="px3PalLs"></div></div>';
+  ov.onclick = function(e) { if (e.target === ov) px3PalClose(); };
+  document.body.appendChild(ov);
+  var q = document.getElementById('px3PalQ');
+  q.oninput = function() { _px3PalI = 0; _px3PalRender(); };
+  q.onkeydown = function(e) {
+    if (e.key === 'ArrowDown') { _px3PalI = Math.min(_px3PalL.length - 1, _px3PalI + 1); _px3PalRender(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { _px3PalI = Math.max(0, _px3PalI - 1); _px3PalRender(); e.preventDefault(); }
+    else if (e.key === 'Enter') { e.preventDefault(); px3PalGo(_px3PalI); }
+    else if (e.key === 'Escape') { e.preventDefault(); px3PalClose(); }
+  };
+  _px3PalI = 0; _px3PalRender(); q.focus();
+}
+function _px3PalRender() {
+  var ls = document.getElementById('px3PalLs'), q = document.getElementById('px3PalQ'); if (!ls || !q) return;
+  var k = String(q.value || '').replace(/[\s　]/g, '').toLowerCase();
+  _px3PalL = _px3PalItems().filter(function(it) { return !k || (it.t + (it.q || '') + it.s).replace(/[\s　]/g, '').toLowerCase().indexOf(k) >= 0; }).slice(0, 40);
+  ls.innerHTML = _px3PalL.length ? _px3PalL.map(function(it, i) { return '<div class="it' + (i === _px3PalI ? ' on' : '') + '" onmouseenter="_px3PalI=' + i + ';_px3PalRender()" onclick="px3PalGo(' + i + ')">' + icn(it.ic) + evEsc(it.t) + '<small>' + evEsc(it.s) + '</small></div>'; }).join('') : '<div class="em">見つかりません</div>';
+  var on = ls.querySelector('.it.on'); if (on && on.scrollIntoView) try { on.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+}
+function px3PalGo(i) { var it = _px3PalL[i]; px3PalClose(); if (it) try { it.go(); } catch (e) { console.error(e); } }
+function px3PalClose() { var o = document.getElementById('px3Pal'); if (o && o.parentNode) o.parentNode.removeChild(o); }
+// キーボード：⌘K（Ctrl+K）＝検索／分析は ←→ で月・1〜4でタブ
+document.addEventListener('keydown', function(e) {
+  try {
+    if (!_px3On()) return;
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && String(e.key).toLowerCase() === 'k') { e.preventDefault(); if (document.getElementById('px3Pal')) px3PalClose(); else px3Pal(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey || document.getElementById('px3Pal')) return;
+    var t = e.target, tg = t && t.tagName;
+    if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || (t && t.isContentEditable)) return;
+    if (document.querySelector('.overlay.open,.ms-overlay.open,.sheet-ov.open,#pvGate,#eventModal.open')) return;
+    if (currentView !== 'stats') return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); px3Mon(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); px3Mon(1); }
+    else if (/^[1-4]$/.test(e.key) && DT_TABS[+e.key - 1]) { e.preventDefault(); dtMode('full', DT_TABS[+e.key - 1][0]); }
+  } catch (eK) {}
+});
+window.addEventListener('resize', function() {
+  clearTimeout(window._px3Rt);
+  window._px3Rt = setTimeout(function() { try { var was = document.body.classList.contains('px3'); _px3Sync(); if (currentView === 'stats' && (was !== _px3On() || _px3On())) { _dtApplyTab(); if (_dtTab === 'trend' && _dtMode !== 'ez') renderDtTrend(); } } catch (e) {} }, 150);
+});
 
 // ── START ──
 try {
