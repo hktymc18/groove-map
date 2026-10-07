@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v670';
+var APP_JS_VERSION = 'v671';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v670';
+  var DATA_VERSION = 'v671';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5355,6 +5355,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v671', d:'2026-10-07', items:['ToDoの「完了タスク」「ゴミ箱」などから戻れなくなっていたのを修正：左上に「‹」（ToDoへ戻る）を出しました。下の「ToDo」を押しても一覧に戻ります'] },
   { v:'v670', d:'2026-10-07', items:['プロフィールで名前を変えた時、ATTACK LIST・GOAL SETTING の表示名も変わるようにしました（これまでは古い名前のままでした）','ATTACK LIST・GOAL SETTING にも個人情報保護方針・利用規約の同意画面を入れました（同意はアプリ共通。どれか1つで同意すれば、ほかでは出ません）'] },
   { v:'v669', d:'2026-10-07', items:['オーナー（すべてのユニオンの承認・受付の管理ができる人）に馬越さんを追加しました'] },
   { v:'v668', d:'2026-10-07', items:['個人情報保護方針・利用規約（2026年10月1日施行）を定めました。はじめてログインした時（方針を改定した時も）に同意の画面が出ます。主要条項の要旨を確認し、全文を読んで3つの項目に同意すると利用を開始できます','新規登録の画面から、個人情報保護方針・利用規約の全文を読めるようになりました','アカウント管理の一覧に、同意済み・未同意が表示されます'] },
@@ -17428,6 +17429,7 @@ function _cvCss() {
   var st = document.createElement('style'); st.id = 'cvCss';
   st.textContent =
     "body.cv2 #view-events .ev-cal-x,body.cv2 #view-events .ev-cal-view{display:none!important}"
+    + "body.cv2 #view-events #tdHdrX.td-back{display:flex!important;flex:none;width:36px;height:36px;border-radius:11px;border:1px solid var(--border);background:var(--surface);align-items:center;justify-content:center;color:var(--text-mid);font-size:24px;font-weight:700;line-height:1;padding:0 0 3px;cursor:pointer}" // v671: 完了タスク・ゴミ箱などからToDoへ戻る ‹
     + ".cv-x{display:none!important}body.cv2 .full .cv-x{display:flex!important}"
     + "body.cv2 .full .ev-cal-hdr{gap:7px;padding:6px 10px 5px}"
     + "body.cv2 .full .ev-cal-title{flex:none;min-width:0;font-size:18px;font-weight:900;padding:0 2px}"
@@ -17495,7 +17497,7 @@ function _cvDecorate() {
     var bt = root.querySelector('.ev-cal-bottom');
     if (bt && !bt.classList.contains('cv-b')) {
       bt.classList.add('cv-b');
-      var seg = [['cal', '月', "setEventsMode('calendar')"], ['week', '週', "setEventsMode('week')"], ['day', '日', "setEventsMode('day')"], ['agenda', 'ToDo', "setEventsMode('agenda')"]];
+      var seg = [['cal', '月', "setEventsMode('calendar')"], ['week', '週', "setEventsMode('week')"], ['day', '日', "setEventsMode('day')"], ['agenda', 'ToDo', "cvTodoTab()"]];
       bt.innerHTML = '<div class="cv-bk" onclick="cvHome()" title="HOME">' + icn('home') + '</div>' // v634: 戻る→HOMEのマーク
         + '<div class="cv-seg">' + seg.map(function(s) { return '<span class="' + (s[0] === p[1] ? 'on' : '') + '" onclick="' + s[2] + '">' + s[1] + (s[0] === 'agenda' ? '<i class="bb-badge" style="display:none"></i>' : '') + '</span>'; }).join('') + '</div>'
         + '<div class="cv-add" onclick="cvAdd(\'' + p[1] + '\')">' + (p[1] === 'agenda' ? '＋ ToDo' : '＋ 予定') + '</div>';
@@ -17508,6 +17510,11 @@ function _cvDecorate() {
     var g = document.getElementById('evCalGrid');
     if (g && g.nextSibling) cal.insertBefore(d, g.nextSibling); else cal.appendChild(d);
   }
+}
+// v671: 下の「ToDo」＝ToDoへ。完了タスク・ゴミ箱などを見ている時は、押すとToDoの一覧に戻る
+function cvTodoTab() {
+  if (_evMode === 'agenda' && _todoNav && _todoNav.type !== 'home') { todoNavTo('home'); return; }
+  setEventsMode('agenda');
 }
 function cvHome() { switchView(isPCMode() ? 'home' : 'menu'); } // v634: カレンダー・ToDoの左下＝HOME（メニュー）へ
 function cvBack() {
@@ -30924,7 +30931,7 @@ function _renderAgendaCore() {
   var _navH = _todoNav || { type: 'home' };
   var _atHome = (_navH.type === 'home');
   var _hx = document.getElementById('tdHdrX');
-  if (_hx) { _hx.textContent = _atHome ? '✕' : '‹'; _hx.title = _atHome ? '閉じる' : 'ToDoへ戻る'; }
+  if (_hx) { _hx.textContent = _atHome ? '✕' : '‹'; _hx.title = _atHome ? '閉じる' : 'ToDoへ戻る'; _hx.classList.toggle('td-back', !_atHome); } // v671: 新デザインでも‹は出す
   var _ht = document.getElementById('tdHdrTitle');
   if (_ht) _ht.textContent = 'ToDo';
   var _qa = document.getElementById('evQuickAdd');
