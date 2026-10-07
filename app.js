@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v681';
+var APP_JS_VERSION = 'v682';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v681';
+  var DATA_VERSION = 'v682';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v682', d:'2026-10-07', items:['PLAN › 理想を2つのセットに：①理想の生活は答え終わったら同じページに「理想の生活に必要な月収」を出して「✓ 完了」で終われる（この金額を目標月収にするボタンも）','②やりたいこと・やりたくないこと・なりたい自分・なりたくない自分の4ページで1セット。最後のページの「✓ 完了」で終われます'] },
   { v:'v681', d:'2026-10-07', items:['PC（MacBookなど横幅の広い画面）の新しい画面 第1弾：左のメニューを文字つきに（表示チームも左に）・分析を作り直し（上に数字の帯、大きいグラフはマウスを乗せるとその月の数字、グラフの月を押すと右にその月の内訳）','⌘K（WindowsはCtrl+K）で人の名前や画面を探してすぐ移動。分析では ←→ で月、1〜4 でタブを切り替え'] },
   { v:'v680', d:'2026-10-07', items:['受付連携の「名簿から追加」：紹介者をたどっても自分のMAPの人につながらない人（紹介者なし・紹介者がMAPにいない人とその紹介の人）は、候補に出さないようにしました（「ほかのチームかも」の欄はなくしました）'] },
   { v:'v679', d:'2026-10-07', items:['予定の編集画面：項目の文字の大きさをそろえました（iPhoneでは入力欄だけ大きく、カテゴリ・関連メンバーの欄と大きさがバラバラだったのを、小さい方に統一）'] },
@@ -16556,7 +16557,7 @@ function _p2DoMonHead(ym) { // v653: 今週やることの上に「◯月の目�
 }
 function _p2PageParts() {
   var k = _p2Pg, ym = _p2Ym(0), body = '', subs = _p2PgSubs(k), i = Math.min(_p2PgI, Math.max(0, subs.length - 1));
-  var fi = P2_PG_FLOW.indexOf(k), next = '', nextOn = '';
+  var fi = P2_PG_FLOW.indexOf(k), next = '', nextOn = '', dots = null, dotI = null, dotOn = null; // v682: 下の●を作り直す時だけ（理想の2セット）
   if (fi >= 0 && fi < P2_PG_FLOW.length - 1) { next = 'つぎ：' + _p2PgTitle(P2_PG_FLOW[fi + 1]) + ' ›'; nextOn = 'p2Go(\'' + P2_PG_FLOW[fi + 1] + '\')'; }
   var li = function(ic, t, sub, on) { return '<div class="ux-li" onclick="' + on + '"><span class="ic">' + ic + '</span><span>' + t + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="ch">›</span></div>'; };
   if (k === 'why') { // v599: 1問1答（やる理由 → 1年後 → 成功した毎日 → やりたいこと → なりたい自分 → 理想の生活 → 夢100 → まとめ）
@@ -16564,11 +16565,16 @@ function _p2PageParts() {
     if (i < P2_WHY_PG.length - 1) { next = P2_WHY_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：目標 ›'; nextOn = 'p2Go(\'goal\')'; }
   } else if (k === 'sum') { // v630: サマリー（決めたことを全部1画面で）
     body = _p2SumHtml();
-  } else if (k === 'ideal') { // v629: 理想（①理想の生活20問 → ひと区切り → ②やりたい／やりたくない → ③なりたい／なりたくない → まとめ）
+  } else if (k === 'ideal') { // v629: 理想／v682: 2セット＝①理想の生活20問（答え終わったら同じページに金額→完了）／②やりたいこと〜なりたくない自分の4ページ（最後で完了）
+    if (i === 1) { i = 0; _p2PgI = 0; } // ひと区切りのページはなくした（①の同じページに）
     _ux2Css(); body = _p2IdealPageHtml(i);
-    if (i === 0) { next = 'ひと区切り ›'; nextOn = 'p2PgSub(1)'; }
-    else if (i < P2_IDEAL_PG.length - 1) { next = P2_IDEAL_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; }
-    else { next = 'つぎ：目標 ›'; nextOn = 'p2Go(\'goal\')'; }
+    var _idDone = (function() { var Q = _p2IdealQs(); return Q.length && (_p2G().p1 || _p2IdealAnsN() >= Q.length); })();
+    if (i === 0) { if (_idDone) { next = '✓ 完了'; nextOn = 'p2IdealFinish(0)'; } else { next = ''; nextOn = ''; } } // 答え終わるまでは「完了」を出さない
+    else if (i >= 2 && i <= 5) {
+      dots = P2_IDEAL_PG.slice(2, 6); dotI = i - 2; dotOn = 'p2IdSetB';
+      if (i < 5) { next = P2_IDEAL_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = '✓ 完了'; nextOn = 'p2IdealFinish(1)'; }
+    } else { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; }
+    dots = dots || [];
   } else if (k === 'essay') { // v629: やる理由の作文はツールの中
     _ux2Css(); body = _p2StepFix(_p2WhyPageHtml(i), i, 3, P2_WHY_PG[i].lb);
     if (i < 2) { next = P2_WHY_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'ツールへ ›'; nextOn = 'p2Go(\'tool\')'; }
@@ -16643,12 +16649,13 @@ function _p2PageParts() {
   if (/^つぎ：/.test(next)) { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; } // v652: タイルを終えたら、次のタイルではなく入口へ戻る
   if (k === 'yrs') back = _p2YrsBack || 'p2Go(\'goal\',5)';
   if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
-  return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back };
+  if (k === 'ideal') back = (i === 0 || i === 2 || i === 6) ? 'p2Go(\'\')' : 'p2PgSub(' + (i - 1) + ')'; // v682: セットの最初は入口へ
+  return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back, dots: dots, dotI: dotI, dotOn: dotOn };
 }
 function _p2PageHtml() {
   var P = _p2PageParts(), k = P.k, subs = P.subs, i = P.i, body = P.body, next = P.next, nextOn = P.nextOn, back = P.back;
   return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && (i || k === 'dok') && k !== 'do' ? '・' + subs[i] : '') + '</b></span><span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
-    + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, subs, i, 'p2PgSub', next, nextOn) + '</div>';
+    + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, P.dots || subs, P.dotI !== null && P.dotI !== undefined ? P.dotI : i, P.dotOn || 'p2PgSub', next, nextOn) + '</div>';
 }
 // S稼働（いちばん大事な数字）
 function _p2SPageHtml(ym) {
@@ -19047,7 +19054,7 @@ function _p2PcxPane(D) {
   }
   // そのほか（想い・振り返り・ツールと、その先のページ）：上に項目のタブ・右上に「次へ」
   var P = _p2PageParts(), subs = P.subs, i = P.i, par = P2_PCX_PAR[k];
-  var tabs = subs.length > 1 ? '<div class="pcx-tabs">' + subs.map(function(t, j) { return '<span class="' + (j === i ? 'on' : '') + '" onclick="p2PgSub(' + j + ')">' + (j + 1) + '. ' + t + '</span>'; }).join('') + '</div>' : '';
+  var _tn = 0, tabs = subs.length > 1 ? '<div class="pcx-tabs">' + subs.map(function(t, j) { if (k === 'ideal' && j === 1) return ''; _tn++; return '<span class="' + (j === i ? 'on' : '') + '" onclick="p2PgSub(' + j + ')">' + _tn + '. ' + t + '</span>'; }).join('') + '</div>' : ''; // v682: 理想は「ひと区切り」のタブなし
   var right = (par || (P.back && P.back !== 'p2Back()') ? b('‹ 戻る', par && P.back === 'p2Back()' ? 'p2Go(\'' + par + '\')' : P.back) : (i > 0 ? b('‹ 前へ', 'p2PgSub(' + (i - 1) + ')') : ''))
     + (P.next ? b(P.next, P.nextOn, 'p') : '');
   return _p2PcxHead(_p2PgTitle(k) || 'PLAN', '', right) + tabs + '<div class="pcx-one"' + (k === 'ideal' && !i ? ' style="max-width:none"' : '') + '>' + P.body + '</div>';
@@ -19123,7 +19130,7 @@ function _p2IdealPageHtml(i) {
   _p2IdealCss();
   if (i === 0) return '<div class="p2id"><div class="p2id-q"><div id="p2GwWrap"></div></div><div class="p2id-l" id="p2IdList">' + _p2IdealListHtml() + '</div></div>';
   if (i === 1) return _p2IdealCkHtml();
-  if (i >= 2 && i <= 5) return _p2StepFix(_p2WhyPageHtml(i + 1), i, P2_IDEAL_PG.length, P2_IDEAL_PG[i]);
+  if (i >= 2 && i <= 5) return _p2StepFix(_p2WhyPageHtml(i + 1), i - 2, 4, P2_IDEAL_PG[i]); // v682: 4ページで1セット（1/4〜4/4）
   return _p2IdealSumHtml();
 }
 // 質問を出す（はじめて開いた時は、まだ答えていない最初の質問から）
@@ -19134,9 +19141,7 @@ function _p2IdealAfter() {
   var openQ = window._p2IdOpenQ; window._p2IdOpenQ = 0;
   var Qd = _p2IdealQs();
   if (!openQ && Qd.length && (_p2G().p1 || _p2IdealAnsN() >= Qd.length)) {
-    wrap.innerHTML = '<div class="p2id-dn"><div class="t">' + icn('checksq') + ' 理想の生活はすべて答えました</div>'
-      + '<div class="s">直したい所は、上の一覧の ✎ から変えられます</div>'
-      + '<div class="ux-acts"><span onclick="p2IdealRedo()">↺ はじめから答え直す</span><span class="p" onclick="p2PgSub(1)">ひと区切りへ ›</span></div></div>';
+    wrap.innerHTML = _p2IdealDoneHtml();
     return;
   }
   _p2GwPh = 1;
@@ -19149,6 +19154,29 @@ function _p2IdealAfter() {
   }
   _p2GwRender();
 }
+// v682: 理想の生活に答え終わった時（同じページに金額・目標月収にする・はじめから答え直す・つぎは）
+function _p2IdealDoneHtml() {
+  var a = _p2G().ans, p = state.goals.plan, tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
+  var rank = glTitleFromIncome(tot * 10000), dl = a.deadline ? String(a.deadline) : '', cur = p.income ? Math.round(p.income / 10000) : 0;
+  var same = cur === tot && (!dl || dl === p.deadline), b2 = _p2LstN('want_do') + _p2LstN('not_want_do') + _p2LstN('want_be') + _p2LstN('not_want_be');
+  return '<div class="p2id-dn"><div class="t">' + icn('checksq') + ' 理想の生活はすべて答えました</div>'
+    + (tot > 0 ? '<div class="p2id-amt"><span>理想の生活に必要な月収</span><b>' + tot + '<small>万円/月</small></b><em>' + evEsc(_p2TitleEn(rank)) + (dl ? '<small>' + evEsc(dl.replace('-', '年')) + '月までに</small>' : '') + '</em></div>'
+      + (same ? '<div class="s" style="text-align:center">✓ 目標月収はこの金額になっています</div>' : '<div class="ux-acts" style="grid-template-columns:1fr"><span class="p" onclick="p2IdealApply()">この金額を目標月収にする' + (cur ? '<small style="font-weight:700;margin-left:6px;opacity:.8">（今：月' + cur + '万）</small>' : '') + '</span></div>')
+      : '<div class="s">金額の質問（住居費・食費など）に答えると、理想の生活に必要な月収が出ます</div>')
+    + '<div class="s">直したい所は、上の一覧の ✎ から変えられます</div>'
+    + '<div class="ux-acts" style="grid-template-columns:1fr"><span onclick="p2IdealRedo()">↺ はじめから答え直す</span></div>'
+    + '<div class="ux-list" style="margin-top:12px"><div class="ux-li" onclick="p2PgSub(2)"><span class="ic">②</span><span>' + (b2 ? 'やりたいこと・なりたい自分を見直す' : 'つぎは：やりたいこと・なりたい自分') + '<small>やりたい／やりたくない・なりたい／なりたくない（4ページで1セット）</small></span><span class="ch">›</span></div>'
+    + (b2 ? '<div class="ux-li" onclick="p2PgSub(6)"><span class="ic">📋</span><span>わたしの理想（まとめ）</span><span class="ch">›</span></div>' : '') + '</div></div>';
+}
+// v682: 1セット終わり（理想の生活／やりたいこと〜なりたくない自分）→ PLANの入口へ
+function p2IdealFinish(set) {
+  var g = _p2G();
+  if (set === 1) g.p2done = true; else g.p1 = true;
+  try { saveGoals(); } catch (e) {}
+  toast(set === 1 ? '✓ やりたいこと・なりたい自分を記録しました' : '✓ 理想の生活を記録しました');
+  p2Go('');
+}
+function p2IdSetB(j) { p2PgSub(j + 2); }
 // v674: はじめから答え直す（1問目から質問を出す）
 function p2IdealRedo() {
   window._p2IdOpenQ = 1; window._p2GwFresh = 1;
@@ -19195,7 +19223,9 @@ function _p2IdealPh1Done() {
   g.p1 = true; g.wiz = true; _p2().wiz = true;
   try { _p2LfSnap(); } catch (e) {}
   saveGoals();
-  p2Go('ideal', 1);
+  window._p2IdOpenQ = 0;
+  p2Go('ideal', 0); // v682: 同じページに金額と「完了」（ひと区切りのページへは行かない）
+  setTimeout(function() { try { var d = document.querySelector('#p2GwWrap .p2id-dn'); if (d && d.scrollIntoView) d.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }, 60);
 }
 function _p2IdealCkHtml() {
   var a = _p2G().ans, p = state.goals.plan, tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
@@ -19241,7 +19271,7 @@ function p2IdealRedoAll() { window._p2IdOpenQ = 1; window._p2GwFresh = 1; p2Go('
 function _p2IdealCss() {
   if (document.getElementById('p2IdCss')) return;
   var st = document.createElement('style'); st.id = 'p2IdCss';
-  st.textContent = ".p2id{display:flex;flex-direction:column;gap:14px}.p2id>.p2id-l{order:-1}.p2is-c{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px 4px;margin-top:10px}.p2is-h{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:900;padding:2px 0 8px;cursor:pointer}.p2is-h i{width:4px;height:16px;border-radius:2px;background:var(--c)}.p2is-h em{font-style:normal;font-family:Inter,sans-serif;font-size:12px;font-weight:900;color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface));border-radius:8px;padding:1px 8px}.p2is-h .e{margin-left:auto;color:var(--text-dim);display:flex}.p2is-h .e .lic{width:15px;height:15px}.p2is-i{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--border);font-size:14px;font-weight:700;line-height:1.5}.p2is-i b{flex:none;width:18px;font-family:Inter,sans-serif;font-size:12px;color:var(--c)}.p2is-i.no{color:var(--text-dim);font-size:13px;cursor:pointer}.p2id-dn{padding:14px 12px 6px}.p2id-dn .t{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:900;color:var(--accent)}.p2id-dn .t .lic{width:18px;height:18px}.p2id-dn .s{font-size:12.5px;color:var(--text-dim);font-weight:700;margin-top:4px}.pcx .p2id>.p2id-l,.pcx2 .p2id>.p2id-l{order:0}.p2id-q .gw2-body{min-height:0}.p2id-q .gw2-foot{position:static}"
+  st.textContent = ".p2id{display:flex;flex-direction:column;gap:14px}.p2id>.p2id-l{order:-1}.p2id-amt{margin:12px 0 6px;padding:16px 14px;border-radius:16px;text-align:center;background:linear-gradient(150deg,color-mix(in srgb,var(--gold) 16%,var(--surface)),var(--surface) 70%);border:1.5px solid color-mix(in srgb,var(--gold) 40%,var(--border))}.p2id-amt span{display:block;font-size:12.5px;font-weight:800;color:var(--text-mid)}.p2id-amt b{display:block;font:900 44px/1.1 Inter,sans-serif;color:var(--gold)}.p2id-amt b small{font-size:16px}.p2id-amt em{display:block;font-style:normal;font-size:19px;font-weight:900;letter-spacing:1px}.p2id-amt em small{display:block;font-size:12.5px;letter-spacing:0;color:var(--text-mid);font-weight:700}.p2id-dn .s{margin-top:8px}.p2is-c{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:10px 14px 4px;margin-top:10px}.p2is-h{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:900;padding:2px 0 8px;cursor:pointer}.p2is-h i{width:4px;height:16px;border-radius:2px;background:var(--c)}.p2is-h em{font-style:normal;font-family:Inter,sans-serif;font-size:12px;font-weight:900;color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface));border-radius:8px;padding:1px 8px}.p2is-h .e{margin-left:auto;color:var(--text-dim);display:flex}.p2is-h .e .lic{width:15px;height:15px}.p2is-i{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--border);font-size:14px;font-weight:700;line-height:1.5}.p2is-i b{flex:none;width:18px;font-family:Inter,sans-serif;font-size:12px;color:var(--c)}.p2is-i.no{color:var(--text-dim);font-size:13px;cursor:pointer}.p2id-dn{padding:14px 12px 6px}.p2id-dn .t{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:900;color:var(--accent)}.p2id-dn .t .lic{width:18px;height:18px}.p2id-dn .s{font-size:12.5px;color:var(--text-dim);font-weight:700;margin-top:4px}.pcx .p2id>.p2id-l,.pcx2 .p2id>.p2id-l{order:0}.p2id-q .gw2-body{min-height:0}.p2id-q .gw2-foot{position:static}"
     + ".pcx .p2id,.pcx2 .p2id{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}.pcx .p2id-q,.pcx2 .p2id-q{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 8px}"
     + ".p2id-l{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 14px}.p2id-h{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);margin-bottom:6px}.p2id-h b{margin-left:auto;font-size:22px;color:var(--gold);font-family:Inter,sans-serif}.p2id-h b small{font-size:11px}"
     + ".p2id-r{display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--border);cursor:pointer;font-weight:800;font-size:14px}.p2id-r .lb{flex:1;min-width:0}.p2id-r .lb small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"

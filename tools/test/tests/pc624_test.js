@@ -28,7 +28,7 @@ T.run(async () => {
   c('「目標をなおす」もPCでは目標のページへ', w._p2Pg === 'goal' && !$('#p2GeOv'));
   c('スローガンも目標のページで', !!$('.pcx-gl input.pcx-in'));
   w.p2Go('ideal'); await sleep(20);
-  c('理想：項目のタブ（7）＋次へ', $$('.pcx-tabs span').length === 7 && !!$('.pcx-h .pcx-b.p'));
+  c('理想：項目のタブ（6・v682でひと区切りはなし）', $$('.pcx-tabs span').length === 6 && $('.pcx-tabs').textContent.indexOf('ひと区切り') < 0);
   w.p2Go('gap'); await sleep(20);
   c('ツールの先のページでも「ツール」のタブ・戻るあり', $('.pcx2-tabs span.on').textContent.indexOf('ツール') >= 0 && $('.pcx-h').textContent.indexOf('戻る') >= 0);
   w.p2Go('do'); await sleep(20);
