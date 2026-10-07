@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v669';
+var APP_JS_VERSION = 'v670';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3672,7 +3672,7 @@ function saveProfile() {
   // Firestoreに保存（role/status は本人が触らない＝送らない）
   if (USE_FIREBASE && currentUser.uid) {
     fsSet('users/' + currentUser.uid, {
-      name: name, org: org, area: area, union: union,
+      name: name, displayName: name, org: org, area: area, union: union, // v670: displayName も（ATTACK LIST・GOAL SETTING は displayName を優先して表示するため）
       upRuby: upRuby, upBd: upBd, unionSelectedV2: true,
       email: currentUser.email, uid: currentUser.uid,
       registrationComplete: true, updatedAt: new Date().toISOString()
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v669';
+  var DATA_VERSION = 'v670';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5355,6 +5355,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v670', d:'2026-10-07', items:['プロフィールで名前を変えた時、ATTACK LIST・GOAL SETTING の表示名も変わるようにしました（これまでは古い名前のままでした）','ATTACK LIST・GOAL SETTING にも個人情報保護方針・利用規約の同意画面を入れました（同意はアプリ共通。どれか1つで同意すれば、ほかでは出ません）'] },
   { v:'v669', d:'2026-10-07', items:['オーナー（すべてのユニオンの承認・受付の管理ができる人）に馬越さんを追加しました'] },
   { v:'v668', d:'2026-10-07', items:['個人情報保護方針・利用規約（2026年10月1日施行）を定めました。はじめてログインした時（方針を改定した時も）に同意の画面が出ます。主要条項の要旨を確認し、全文を読んで3つの項目に同意すると利用を開始できます','新規登録の画面から、個人情報保護方針・利用規約の全文を読めるようになりました','アカウント管理の一覧に、同意済み・未同意が表示されます'] },
   { v:'v667', d:'2026-10-06', items:['🎨 設定の「バグ・要望」も絵文字から線のアイコンに'] },
