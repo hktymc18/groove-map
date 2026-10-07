@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v686';
+var APP_JS_VERSION = 'v687';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v686';
+  var DATA_VERSION = 'v687';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v687', d:'2026-10-07', items:['計画シートを紙の記入例に合わせて作り直しました。上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）で、＋−ボタンやバーはやめてマスに書くだけにしました','改善点は数字の1行ごとに「先月の結果から、今月どうするか」を書けます。先月目標に届かなかった数字は赤','いちばん上の1行で「マイルストーンまであと何ヶ月・フロントBRあと何本 → 今月のNEWフロント → 数字の目標」のつながりが見えます','数字の目標は自分で考えて入れます（自動では入りません）','MAPのユーザーは 名前｜GSV、ビジネスは 名前｜稼働（A〜Cは稼働率）／タイトル｜GSV','行動は紙と同じ ✔・行動・実行期日 の表。空いた行に書けば足されます（ToDoにも入ります）','印刷（A3横）も改善点を表の列にしました'] },
   { v:'v686', d:'2026-10-07', items:['PLANを作り直しました。いちばん上の「今月の計画シート」で、紙の計画立案シートと同じ並び（年の目標・月間目標・MAP・数字・改善点・4分野の行動）で1ヶ月の計画を立てられます','MAPは上が流通（ユーザー）・下がビジネスの陸上トラック型。理想MAPと切りかえられ、点線の丸がこれから出すNEWフロントです','数字の表は先月と今月を並べて表示。予定・研修の記録・MAPから数えられるものは自動、項目は自分で変えられます','行動はToDoのタスクとして入ります（期日つきでカレンダーにも出て、どちらでチェックしても同じ）','「シートを印刷」でA3横に印刷・PDFにできます','前の画面（目標・今週やること・振り返り・サマリーなど）はツールの中に残しています','v685の「戦略」はいったん取り下げました'] },
   { v:'v684', d:'2026-10-07', items:['ユニオン予定のボタンをHOMEから「設定 › カレンダー」の一番上に移しました'] },
   { v:'v683', d:'2026-10-07', items:['HOMEのタイルの並びを変更：PLANの下は 左上MAP・右上ANALYSIS（分析）／左下CALENDAR・右下TODO'] },
@@ -36866,13 +36867,14 @@ window.addEventListener('resize', function() {
 });
 
 // ════ v686: 計画シート（PLANの中心）── 紙の「計画立案シート」と同じ並び ════
+//   v687: 記入例に合わせて作り直し。1枚・書き込むだけ（＋−・バーなし）・改善点は数字の1行ごと・目標は自分で入れる
 //   年の目標 → 月間目標（月収・NEWフロント）→ MAP（上＝流通・下＝ビジネス）→ 数字の表（先月｜今月）→ 改善点 → 4分野の行動
 //   行動はToDoのタスクそのもの（planYm・planCat付き）＝ToDo・カレンダーとどちらでチェックしても同じ
-var P2_SH_PG = ['目標・MAP', '数字', '行動', '改善点'];
+var P2_SH_PG = []; // v687: ページは分けない（紙と同じ1枚を上から順に）
 var P2_SH_CAT = [{ k: 'front', lb: 'フロント作りに関して', s: 'フロント作り', c: 'var(--accent)' }, { k: 'dist', lb: '流通アップに関して', s: '流通アップ', c: '#5AD7FF' }, { k: 'dline', lb: 'Dラインに対して', s: 'Dライン', c: 'var(--purple)' }, { k: 'self', lb: '自己成長', s: '自己成長', c: 'var(--gold)' }];
 var P2_SH_AUTO = [['', '手入力'], ['front', 'MAP：今月の直下フロント'], ['ct', '予定：CT'], ['ft', '予定：FT'], ['ctget', '予定：CT取り'], ['st', '予定：ST'], ['snst', '予定：SNST'], ['dlr', '研修の記録：DLR'], ['pg', '研修の記録：PG']];
 var P2_SH_KPI_DEF = [{ id: 'front', lb: 'フロント（B1）', a: 'front' }, { id: 'dlr', lb: 'DLR動員数', a: 'dlr' }, { id: 'pg', lb: 'マケPG数', a: 'pg' }, { id: 'ft', lb: 'FT数', a: 'ft' }, { id: 'ct', lb: 'CT数', a: 'ct' }, { id: 'ids', lb: 'IDシェア数', a: '' }, { id: 'seed', lb: 'SEED動員数', a: '' }, { id: 'ur', lb: 'UR動員数', a: '' }];
-var _p2ShYm = '', _p2ShMapMode = 'ideal', _p2ShCat = 'front', _p2ShKEd = false;
+var _p2ShYm = '', _p2ShMapMode = 'ideal', _p2ShKEd = false;
 function _p2Sh() {
   var p2 = _p2(); if (!p2.sheet) p2.sheet = {};
   var s = p2.sheet;
@@ -36970,13 +36972,13 @@ function p2ShKMove(i, d) { var K = _p2Sh().kpi, j = i + d; if (!K[i] || !K[j]) r
 function p2ShKAdd() { var K = _p2Sh().kpi; if (K.length >= 12) { toast('12項目までです'); return; } K.push({ id: 'k' + Date.now().toString(36), lb: '新しい項目', a: '' }); saveGoals(); renderPlan(); }
 function p2ShKReset() { if (!confirm('数字の項目を最初の8項目に戻しますか？（入れた目標は残ります）')) return; _p2Sh().kpi = JSON.parse(JSON.stringify(P2_SH_KPI_DEF)); saveGoals(); renderPlan(); }
 function p2ShKz(v) { if (_p2ShRo()) return; _p2ShM(_p2ShYmN()).kaizen = String(v || '').slice(0, 2000); saveGoals(); }
-function p2ShCat(k) { _p2ShCat = k; renderPlan(); }
+function p2ShFr(v) { if (_p2ShRo()) return; var ym = _p2ShYmN(); if (_p2FrontIdeal(ym) !== null) { toast('NEWフロントの目標は理想MAPの人数です（理想MAPで直す）'); renderPlan(); return; } p2RmCell('front', ym, String(v === '' || v == null ? '' : Math.max(0, parseInt(v, 10) || 0))); }
 function p2ShMap(k) { _p2ShMapMode = k === 'cur' ? 'cur' : 'ideal'; renderPlan(); }
 function p2ShActAdd(cat) {
   if (_p2ShRo()) { toast('このMAPは編集できません'); return; }
-  var ti = document.getElementById('p2ShIn_' + cat), di = document.getElementById('p2ShDt_' + cat);
-  var t = String((ti && ti.value) || '').trim(); if (!t) { if (ti) ti.focus(); return; }
-  var e = _tdMakeTask(t.slice(0, 120), (di && di.value) || '', '');
+  var ti = document.getElementById('p2ShIn_' + cat);
+  var t = String((ti && ti.value) || '').trim(); if (!t) return;
+  var e = _tdMakeTask(t.slice(0, 120), '', '');
   e.planYm = _p2ShYmN(); e.planCat = cat;
   state.events.push(e); saveEventDoc(e);
   try { updateEventsBadge(); } catch (eB) {}
@@ -36986,7 +36988,6 @@ function p2ShActAdd(cat) {
 function p2ShActTg(id) { var e = findEvent(id); if (!e) return; toggleEventDone(id); if (currentView === 'plan') renderPlan(); }
 function p2ShActDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; e.updatedAt = new Date().toISOString(); saveEventDoc(e); renderPlan(); }
 function p2ShActDel(id) { if (!confirm('この行動を消しますか？（ToDoからも消えます）')) return; _evDeleteById(id); if (currentView === 'plan') renderPlan(); }
-function p2ShAddDt(cat, el) { var lb = document.getElementById('p2ShDl_' + cat); if (lb) lb.textContent = el.value ? parseInt(el.value.slice(5, 7), 10) + '/' + parseInt(el.value.slice(8), 10) : '期日'; }
 // ── MAP（陸上トラック型：上＝流通（ユーザー）・下＝ビジネス）──
 function _p2ShIsUser(m) { var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t) || m.idealKind === 'user'; }
 function _p2ShGsv(n) { n = +n || 0; return n >= 10000 ? (Math.round(n / 100) / 10) + 'k' : String(n); }
@@ -37027,10 +37028,16 @@ function _p2ShMapSvg(o) {
   var node = function(m, x, y, col) {
     if (m._ph) return '<path d="M' + cx + ',' + cy + ' L' + x.toFixed(1) + ',' + y.toFixed(1) + '" stroke="' + C.dash + '" stroke-width="' + Math.max(1.2, 2 * fs) + '" stroke-dasharray="4 4"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R.toFixed(1) + '" fill="' + (light ? '#fff' : 'rgba(44,229,184,.08)') + '" stroke="' + C.dash + '" stroke-width="2" stroke-dasharray="5 4"/><text x="' + x.toFixed(1) + '" y="' + (y + 4 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * fs).toFixed(1) + '" font-weight="900" fill="' + C.dash + '">NEW</text>';
     var dash = !!m.idealNew && useIdeal, nm = String(m.lastName || m.firstName || '').slice(0, 3), act = String(m.activity || ''), r = R.toFixed(1), X = x.toFixed(1), Y = y.toFixed(1);
+    var rt = (act === 'A' || act === 'B' || act === 'C') && m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10)) ? parseInt(m.actRate, 10) + '%' : '';
+    if (m !== root && _p2ShIsUser(m)) return '<circle cx="' + X + '" cy="' + Y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + (dash ? C.dash : col) + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>' // ユーザー：名前｜GSV
+      + '<line x1="' + (x - R).toFixed(1) + '" x2="' + (x + R).toFixed(1) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + C.mid + '" stroke-width=".7"/>'
+      + '<text x="' + X + '" y="' + (y - 5 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (9 * fs * (nm.length > 2 ? .85 : 1)).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(nm || 'NEW') + '</text>'
+      + '<text x="' + X + '" y="' + (y + 13 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8.5 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + _p2ShGsv(m.ptCurrent) + '</text>';
     return '<circle cx="' + X + '" cy="' + Y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + (dash ? C.dash : col) + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>'
       + '<line x1="' + (x - R).toFixed(1) + '" x2="' + (x + R).toFixed(1) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + C.mid + '" stroke-width=".7"/><line x1="' + X + '" x2="' + X + '" y1="' + (y - R).toFixed(1) + '" y2="' + (y + R).toFixed(1) + '" stroke="' + C.mid + '" stroke-width=".7"/>'
       + '<text x="' + (x - R / 2).toFixed(1) + '" y="' + (y - 4 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8.5 * fs * (nm.length > 2 ? .82 : 1)).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(nm || (dash ? 'NEW' : '')) + '</text>'
-      + '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y - 4 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (10 * fs).toFixed(1) + '" font-weight="900" fill="' + (ACT[act] || C.sub) + '">' + evEsc(act) + '</text>'
+      + '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y - (rt ? 9 : 4) * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (10 * fs).toFixed(1) + '" font-weight="900" fill="' + (ACT[act] || C.sub) + '">' + evEsc(act) + '</text>'
+      + (rt ? '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y - 1.5 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (6.5 * fs).toFixed(1) + '" font-weight="800" fill="' + (ACT[act] || C.sub) + '">' + rt + '</text>' : '')
       + '<text x="' + (x - R / 2).toFixed(1) + '" y="' + (y + 11 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + evEsc(_p2ShIsUser(m) ? 'U' : titleAbbr(m.title || '')) + '</text>'
       + '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y + 11 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (7.2 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + _p2ShGsv(m.ptCurrent) + '</text>';
   };
@@ -37038,54 +37045,116 @@ function _p2ShMapSvg(o) {
   h += node(root, cx, cy, '#FFD166');
   return { svg: '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans JP,Inter,sans-serif">' + h + '</svg>', n: ms.length, ideal: useIdeal };
 }
-// ── 部品 ──
-function _p2ShTopHtml(ym) {
-  var un = (currentUser && currentUser.union) || '';
-  return '<div class="sh-top"><div class="mo"><span onclick="p2ShMon(-1)">‹</span><b>' + parseInt(ym.slice(0, 4), 10) + '年' + _p2ShMonLb(ym) + '</b><span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></div>' + (un ? '<span class="un">【' + evEsc(un) + '】</span>' : '') + '</div>';
-}
-function _p2ShYearHtml() {
-  var Y = _p2ShYear();
-  var ms = Y.ms ? '<em>' + _p2ShMonLb(Y.ms.ym) + ' ' + evEsc(Y.ms.t || '') + '</em>' : (Y.nx && Y.nx.title && !Y.nx.isFinal ? '<em>次の山 ' + evEsc(Y.nx.title) + (Y.nx.deadline ? '（' + _p2ShMonLb(Y.nx.deadline) + '）' : '') + '</em>' : '—');
-  return '<div class="sh-c sh-yr"><div class="hd">年の目標<span class="r" onclick="p2Go(\'year\')">直す ›</span></div>'
-    + (Y.title || Y.inc ? '<div class="ln">' + (Y.dl ? '<span>' + parseInt(Y.dl.slice(0, 4), 10) + '年' + _p2ShMonLb(Y.dl) + '</span>' : '') + '<span>目標月収 <b>' + (Y.inc ? Y.inc.toLocaleString() + '<small>万</small>' : '—') + '</b></span><span class="t">' + evEsc(Y.title || '—') + '</span></div>'
-      + '<div class="ms">マイルストーン ' + ms + (Y.rem > 0 ? '・あと' + Y.rem + 'ヶ月' : '') + '</div>'
-      : '<div class="ms" style="margin-top:6px">まだ決めていません。<span style="color:var(--accent);cursor:pointer" onclick="p2Go(\'goal\',0)">目標を決める ›</span></div>') + '</div>';
-}
-function _p2ShMonHtml(ym) {
-  var I = _p2ShInc(ym), F = _p2ShFr(ym), ro = _p2ShRo();
-  var pi = I.t ? _p2ShPct(I.now, I.t) : 0, pf = F.t ? _p2ShPct(F.now, F.t) : 0;
-  var pm = function(on) { return ro ? '' : '<span class="pm" onclick="' + on + '">' + (on.indexOf('-1') >= 0 ? '−' : '＋') + '</span>'; };
-  return '<div class="sh-c sh-mg"><div class="hd">' + _p2ShMonLb(ym) + 'の月間目標</div><div class="two">'
-    + '<div><div class="lb">月収（万円）</div><div class="v">' + pm('p2ShIncStep(-1)') + '<b>' + (I.t === null ? '—' : I.t) + '</b>' + pm('p2ShIncStep(1)') + (I.now !== null ? '<small>今 ' + I.now + '</small>' : '') + '</div><div class="sh-bar" style="--c:var(--gold)"><i style="width:' + pi + '%"></i></div></div>'
-    + '<div><div class="lb">NEWフロント（人）' + (F.ideal ? ' <span class="sh-tag">理想MAP</span>' : '') + '</div><div class="v">' + (F.ideal ? '' : pm('p2ShFrStep(-1)')) + '<b>' + (F.t === null ? '—' : F.t) + '</b>' + (F.ideal ? '' : pm('p2ShFrStep(1)')) + '<small>今 ' + F.now + '</small></div><div class="sh-bar"><i style="width:' + pf + '%"></i></div></div>'
-    + '</div></div>';
-}
-function _p2ShMapHtml(ym, W, H) {
-  var F = _p2ShFr(ym), cm = String(state.currentMonth || '').replace('.', '-'), same = !cm || cm === ym;
-  var mode = _p2ShMapMode, newN = mode === 'cur' && same && F.t !== null ? Math.max(0, F.t - F.now) : 0;
-  var M = _p2ShMapSvg({ W: W, H: H, mode: mode, newN: newN });
-  var hasI = _hasIdeal();
-  return '<div class="sh-c sh-map"><div class="hd">MAP<span style="font-weight:700;color:var(--text-dim)">' + (M.ideal ? _p2ShMonLb(cm || ym) + 'の理想MAP' : (mode === 'ideal' && !hasI ? '現状（理想MAPはまだ）' : '現状')) + '</span>'
-    + '<span class="tg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span><span class="' + (mode !== 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">今月の理想</span></span></div>'
-    + (M.empty ? '<div class="sh-note">MAPに自分（いちばん上の人）がまだいません</div>' : M.svg)
-    + '<div class="nt">上＝流通（ユーザー）・下＝ビジネス。丸は 名前｜稼働／タイトル｜GSV' + (newN ? '・点線＝今月これから出すNEWフロント' : (M.ideal ? '・点線＝理想MAPで足した人' : '')) + (same ? '' : '・MAPは' + _p2ShMonLb(cm) + 'のもの') + '</div>'
-    + '<span class="lk" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
+// ── 部品（v687：紙と同じ1枚。＋−・バー・タグはやめて、マスに書くだけ）──
+function _p2ShCss2() {
+  if (document.getElementById('p2ShCss2')) return;
+  var st = document.createElement('style'); st.id = 'p2ShCss2';
+  st.textContent = ''
+    + '.sp-h{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:2px 0 8px;border-bottom:1.5px solid var(--border)}.sp-h h1{margin:0;font-size:18px;font-weight:900}.sp-h .ym{display:flex;align-items:center;gap:4px;font:900 16px Inter,sans-serif}.sp-h .ym span{width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--text-mid);cursor:pointer}.sp-h .ym span.off{opacity:.25;pointer-events:none}.sp-h .un{margin-left:auto;font-size:12px;font-weight:800;color:var(--text-mid)}.sp-h .pr{font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}'
+    + '.sp-ln{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-mid)}.sp-ln .f{font:900 17px Inter,sans-serif;color:var(--text);border-bottom:1.5px solid color-mix(in srgb,var(--text) 25%,transparent);padding:0 4px;min-width:30px;text-align:center}.sp-ln .lb{font-weight:900;color:var(--text)}.sp-ln.go{cursor:pointer}.sp-ln .now{margin-left:auto;color:var(--text-dim)}.sp-ln .now b{color:#FF8A7A;font-family:Inter,sans-serif}'
+    + '.sp-in{width:56px;background:transparent;border:0;border-bottom:1.5px solid color-mix(in srgb,var(--text) 25%,transparent);color:var(--text);font:900 17px Inter,sans-serif;text-align:center;padding:1px 2px;border-radius:0}.sp-in::placeholder{color:var(--text-dim);font-weight:700}.sp-in:focus{outline:none;border-bottom-color:var(--accent)}'
+    + '.sp-why{margin:8px 0 2px;padding:7px 10px;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 8px 8px 0;font-size:11.5px;line-height:1.6;font-weight:700;color:var(--text-mid)}.sp-why b{color:var(--accent)}'
+    + '.sp-sec{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin:16px 0 6px;font-size:13.5px;font-weight:900}.sp-sec small{font-size:11px;font-weight:700;color:var(--text-dim)}.sp-sec .r{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer}.sp-sec .tg{font-size:11.5px;font-weight:800;color:var(--text-dim)}.sp-sec .tg span{cursor:pointer;padding:0 2px}.sp-sec .tg span.on{color:var(--text);text-decoration:underline;text-underline-offset:3px}'
+    + '.sp-map{border:1px solid var(--border);border-radius:12px;padding:6px;background:color-mix(in srgb,var(--surface) 70%,transparent)}.sp-map svg{display:block;width:100%;height:auto}.sp-leg{font-size:10.5px;line-height:1.6;font-weight:700;color:var(--text-dim);margin-top:5px}'
+    + '.sp-kr{border-bottom:1px solid var(--border);padding:9px 0}.sp-kr .a{display:flex;align-items:center;gap:8px}.sp-kr .nm{font-size:13px;font-weight:900;flex:1;min-width:0}.sp-kr .pv{font-size:11px;font-weight:800;color:var(--text-dim);white-space:nowrap}.sp-kr .pv b{font:900 13px Inter,sans-serif;color:var(--text-mid)}.sp-kr .pv b.ng{color:#FF6B7F}.sp-kr .pv b.ok{color:var(--accent)}'
+    + '.sp-kr .cu{display:flex;align-items:baseline;gap:3px;font-size:11px;font-weight:800;color:var(--text-dim);white-space:nowrap}.sp-kr .cu .sp-in{width:40px;font-size:16px}.sp-kr .cu .v{font:900 14px Inter,sans-serif;color:#FF8A7A;min-width:16px;text-align:center}.sp-kr .cu .sp-in.v{width:34px;font-size:14px;color:#FF8A7A}'
+    + '.sp-kz{width:100%;box-sizing:border-box;margin-top:6px;font:700 12.5px/1.55 inherit;font-family:inherit;color:var(--text);padding:6px 9px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);resize:none;min-height:34px;overflow:hidden}.sp-kz::placeholder{color:var(--text-dim)}.sp-kz:focus{outline:none;border-style:solid;border-color:var(--accent)}'
+    + '.sp-at{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}.sp-at .h{display:flex;align-items:center;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:900}.sp-at .h span{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--text-dim)}'
+    + '.sp-at .r{display:flex;align-items:stretch;border-top:1px solid var(--border);min-height:32px;font-size:12.5px;font-weight:700}.sp-at .c{width:32px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;cursor:pointer}.sp-at .x{flex:1;min-width:0;border-left:1px solid var(--border);display:flex;align-items:center}.sp-at .x input{width:100%;background:transparent;border:0;color:var(--text);font:700 13px inherit;font-family:inherit;padding:6px 8px}.sp-at .x input::placeholder{color:var(--text-dim)}.sp-at .x input:focus{outline:none;background:color-mix(in srgb,var(--accent) 6%,transparent)}.sp-at .r.dn .x input{color:var(--text-dim);text-decoration:line-through}'
+    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;opacity:0;cursor:pointer}.sp-at .d.od{color:#FF6B7F}.sp-at .r.nw .c{color:var(--text-dim)}'
+    + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
+    // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
+    + '.sp-pc{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start;margin-top:4px}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
+    + '.sp-tb{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}.sp-tb th{font-size:11px;font-weight:800;color:var(--text-dim);padding:4px 6px;border-bottom:1px solid var(--border);text-align:center}.sp-tb td{border-bottom:1px solid var(--border);padding:5px 6px;text-align:center;font:800 14px Inter,sans-serif}.sp-tb td.n{text-align:left;font:900 12.5px inherit;font-family:inherit;white-space:nowrap}.sp-tb td.ng{color:#FF6B7F}.sp-tb td.v{color:#FF8A7A}.sp-tb td.k{text-align:left;width:50%;padding:3px 0 3px 8px}.sp-tb td.k .sp-kz{margin:0;border-color:transparent;background:transparent;padding:4px 6px}.sp-tb td.k .sp-kz:hover{border-color:var(--border)}.sp-tb .sp-in{width:44px;font-size:14px}.sp-tb .sp-in.v{color:#FF8A7A}';
+  document.head.appendChild(st);
 }
 function _p2ShPrevYm(ym) { return _p2YmAdd(ym, -1); }
-function _p2ShKpiCards(ym) {
-  var K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv), ro = _p2ShRo();
-  var h = '<div class="ux-sub">' + _p2ShMonLb(ym) + 'の目標を決める。<span class="sh-tag au">自動</span> は予定・研修の記録・MAPから数えます</div>';
-  h += K.map(function(k) {
-    var X = _p2ShKv(ym, k, A), Pv = _p2ShKv(pv, k, Ap), p = _p2ShPct(X.v, X.t);
-    var tv = X.t === null ? (X.ph !== null ? '<span class="tv ph">' + X.ph + '</span>' : '<span class="tv ph">-</span>') : '<span class="tv">' + X.t + '</span>';
-    return '<div class="sh-k"><div class="r1"><b>' + evEsc(k.lb) + '</b>' + (k.a ? '<span class="sh-tag au">自動</span>' : '<span class="sh-tag">入力</span>') + '<span class="pv">' + _p2ShMonLb(pv) + ' ' + (Pv.v === null ? '—' : Pv.v) + '/' + (Pv.t === null ? '—' : Pv.t) + '</span></div>'
-      + '<div class="r2">' + (k.a || ro ? '' : '<span class="pm" onclick="p2ShKV(\'' + k.id + '\',-1)">−</span>') + '<span class="now">' + (X.v === null ? 0 : X.v) + '</span>' + (k.a || ro ? '' : '<span class="pm" onclick="p2ShKV(\'' + k.id + '\',1)">＋</span>')
-      + '<span class="sl">/</span>' + (ro ? '' : '<span class="pm" onclick="p2ShKT(\'' + k.id + '\',-1)">−</span>') + tv + (ro ? '' : '<span class="pm" onclick="p2ShKT(\'' + k.id + '\',1)">＋</span>')
-      + '<div class="sh-bar" style="--c:' + _p2ShCol(p) + '"><i style="width:' + p + '%"></i></div></div></div>';
+function _p2ShShort(lb) { return String(lb || '').replace(/（.*?）/g, '').replace(/動員数$|数$/, ''); }
+// 年の目標 → 今月のNEWフロント → 数字 のつながりを1行で
+function _p2ShWhy(ym) {
+  var Y = _p2ShYear(), cur = _p2Ym(0), F = _p2ShFr(ym), t = '', tym = '', lb = '';
+  if (Y.ms) { tym = Y.ms.ym; lb = String(Y.ms.t || ''); t = String(lb).toUpperCase().trim(); }
+  else if (Y.nx && Y.nx.title && Y.nx.deadline) { tym = Y.nx.deadline; t = lb = Y.nx.title; }
+  var parts = [];
+  if (tym) { var n = _p2YmDiff(cur, tym); parts.push(evEsc(lb) + '（' + _p2ShMonLb(tym) + '）まで' + (n > 0 ? 'あと<b>' + n + 'ヶ月</b>' : '<b>今月</b>')); }
+  var req = P2_REQ[t]; if (req) { var g = req.br - (_p2GapAuto().br || 0); if (g > 0) parts.push('フロントBR あと<b>' + g + '本</b>'); }
+  var h = parts.join('・');
+  h += (h ? ' → ' : '') + (F.t !== null ? '今月 NEWフロント <b>' + F.t + '人</b>' : '今月のNEWフロントを決める');
+  var A = _p2Act(ym), ks = _p2Sh().kpi.filter(function(k) { return k.a !== 'front'; }).map(function(k) { var X = _p2ShKv(ym, k, A); return X.t === null ? '' : evEsc(_p2ShShort(k.lb)) + ' <b>' + X.t + '</b>'; }).filter(Boolean);
+  if (ks.length) h += ' → ' + ks.join('・');
+  return '<div class="sp-why">' + h + '</div>';
+}
+function _p2ShHeadHtml(ym, pc) {
+  var un = (currentUser && currentUser.union) || '';
+  return '<div class="sp-h"><h1>計画立案シート</h1><span class="ym"><span onclick="p2ShMon(-1)">‹</span>' + parseInt(ym.slice(0, 4), 10) + '年' + _p2ShMonLb(ym) + '<span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></span>'
+    + (un ? '<span class="un">【' + evEsc(un) + '】</span>' : '<span class="un"></span>') + (pc ? '<span class="pr" onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>' : '') + '</div>';
+}
+function _p2ShYearLn() {
+  var Y = _p2ShYear();
+  if (!(Y.title || Y.inc)) return '<div class="sp-ln go" onclick="p2Go(\'goal\',0)">年の目標がまだです。<b style="color:var(--accent)">目標を決める ›</b></div>';
+  var ms = Y.ms ? '<span class="f">' + parseInt(Y.ms.ym.slice(5), 10) + '</span>月 <span class="lb">' + evEsc(Y.ms.t || '') + '</span>' : (Y.nx && Y.nx.title && !Y.nx.isFinal && Y.nx.deadline ? '<span class="f">' + parseInt(Y.nx.deadline.slice(5), 10) + '</span>月 <span class="lb">' + evEsc(Y.nx.title) + '</span>' : '<span class="f">&nbsp;</span>月');
+  return '<div class="sp-ln go" onclick="p2Go(\'year\')" title="年の目標・ロードマップを開く"><span class="f">' + (Y.dl ? Y.dl.slice(0, 4) : '&nbsp;') + '</span>年 目標月収<span class="f">' + (Y.inc || '&nbsp;') + '</span>万 目標タイトル<span class="f" style="font-size:14px">' + evEsc(Y.title || '') + '</span> マイルストーン' + ms + '</div>';
+}
+function _p2ShMonLn(ym) {
+  var I = _p2ShInc(ym), F = _p2ShFr(ym), ro = _p2ShRo();
+  var inp = function(v, on, ph) { return ro ? '<span class="f">' + (v === null ? '&nbsp;' : v) + '</span>' : '<input class="sp-in" type="number" inputmode="decimal" value="' + (v === null ? '' : v) + '" placeholder="' + (ph || '') + '" onfocus="edSelAll(this)" onchange="' + on + '">'; };
+  return '<div class="sp-ln"><span class="lb">月間目標</span> 月収' + inp(I.t, 'p2ShInc(this.value)') + '万 NEWフロント' + (F.ideal ? '<span class="f" title="理想MAPの人数">' + (F.t === null ? '&nbsp;' : F.t) + '</span>' : inp(F.t, 'p2ShFr(this.value)')) + '人'
+    + '<span class="now">今 <b>' + F.now + '</b>人' + (I.now !== null ? '・<b>' + I.now + '</b>万' : '') + '</span></div>';
+}
+function _p2ShMapBox(ym, W, H, pc) {
+  var F = _p2ShFr(ym), cm = String(state.currentMonth || '').replace('.', '-'), same = !cm || cm === ym, hasI = _hasIdeal();
+  var mode = _p2ShMapMode === 'cur' || !hasI ? 'cur' : 'ideal', newN = same && F.t !== null ? Math.max(0, F.t - F.now) : 0;
+  if (mode === 'ideal') newN = 0; // 理想MAPには足す人がもう入っている
+  var M = _p2ShMapSvg({ W: W, H: H, mode: mode, newN: newN });
+  var sec = '<div class="sp-sec"><span>＜' + (hasI ? '<span class="tg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span>/<span class="' + (mode === 'ideal' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">理想</span></span>' : '現状') + 'MAP＞</span>' + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
+  var leg = '上＝流通（名前｜GSV）・下＝ビジネス（名前｜稼働／タイトル｜GSV）' + (newN ? '・点線＝今月出すNEWフロント' : (M.ideal ? '・点線＝理想MAPで足した人' : ''));
+  var how = 'Howdy稼働基準　S：120%参加（本気レベル）　A：仕事切り替え期日確定　B：仕事以外は基本的に来る　C：参加可能でも中々来ない（A〜Cは稼働率）';
+  var body = M.empty ? '<div class="sp-leg">MAPに自分（いちばん上の人）がまだいません</div>' : '<div class="sp-map">' + M.svg + '</div>';
+  if (pc) return sec + '<div class="mw"><div>' + body + '</div><div class="sp-leg">' + leg.replace(/・/g, '<br>') + '<br><br>' + how.replace(/　/g, '<br>') + '</div></div>';
+  return sec + body + '<div class="sp-leg">' + leg + '<br>' + how + '</div>';
+}
+function _p2ShKin(ym, k, X, which) { // which: 't'＝今月の目標 / 'v'＝手入力の進捗
+  if (_p2ShRo()) return '<span class="' + (which === 'v' ? 'v' : '') + '">' + ((which === 't' ? X.t : X.v) === null ? '—' : (which === 't' ? X.t : X.v)) + '</span>';
+  if (which === 't') return '<input class="sp-in" type="number" inputmode="numeric" value="' + (X.t === null ? '' : X.t) + '" onfocus="edSelAll(this)" onchange="p2ShKT(\'' + k.id + '\',0,this.value)">';
+  return '<input class="sp-in v" type="number" inputmode="numeric" value="' + (X.v === null ? '' : X.v) + '" placeholder="0" onfocus="edSelAll(this)" onchange="p2ShKV(\'' + k.id + '\',0,this.value)">';
+}
+function _p2ShKzIn(ym, id) { var t = String(((_p2ShM(ym).kz || {})[id]) || ''); return '<textarea class="sp-kz" rows="1" placeholder="先月の結果から、今月どうする？" oninput="_p2ShGrow(this)" onchange="p2ShKzR(\'' + id + '\',this.value)"' + (_p2ShRo() ? ' readonly' : '') + '>' + evEsc(t) + '</textarea>'; }
+function _p2ShGrow(el) { try { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } catch (e) {} }
+function p2ShKzR(id, v) { if (_p2ShRo()) return; var m = _p2ShM(_p2ShYmN()); m.kz = m.kz || {}; m.kz[id] = String(v || '').slice(0, 300); saveGoals(); }
+function _p2ShRows(ym) { // スマホ：1項目＝1行（先月 目標→結果｜今月 目標・今｜改善点）
+  var K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv);
+  return K.map(function(k) {
+    var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap), ng = P.t !== null && P.v !== null && P.v < P.t;
+    return '<div class="sp-kr"><div class="a"><span class="nm">' + evEsc(k.lb) + '</span><span class="pv">' + _p2ShMonLb(pv) + ' <b>' + (P.t === null ? '—' : P.t) + '</b>→<b class="' + (P.t === null || P.v === null ? '' : (ng ? 'ng' : 'ok')) + '">' + (P.v === null ? '—' : P.v) + '</b></span>'
+      + '<span class="cu">' + _p2ShMonLb(ym) + ' ' + _p2ShKin(ym, k, X, 't') + ' 今 ' + (k.a ? '<span class="v">' + (X.v || 0) + '</span>' : _p2ShKin(ym, k, X, 'v')) + '</span></div>' + _p2ShKzIn(ym, k.id) + '</div>';
   }).join('');
-  h += '<span class="ux-lk" onclick="p2ShKEd()">' + (_p2ShKEd ? '▲ 項目の編集を閉じる' : '⚙ 項目を変える（名前・数え方・追加）') + '</span>';
-  if (_p2ShKEd) h += _p2ShKEdHtml();
-  return h;
+}
+function _p2ShTable(ym) { // PC：紙の表（先月 目標・結果｜今月 目標・進捗｜改善点）
+  var K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv);
+  return '<table class="sp-tb"><tr><th></th><th colspan="2">先月（' + _p2ShMonLb(pv) + '）</th><th colspan="2">今月（' + _p2ShMonLb(ym) + '）</th><th style="text-align:left;padding-left:14px">＜改善点＞ 先月の結果から、今月どうする</th></tr><tr><th></th><th>目標</th><th>結果</th><th>目標</th><th>現在の進捗</th><th></th></tr>'
+    + K.map(function(k) {
+      var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap), ng = P.t !== null && P.v !== null && P.v < P.t;
+      return '<tr><td class="n">' + evEsc(k.lb) + '</td><td>' + (P.t === null ? '—' : P.t) + '</td><td class="' + (ng ? 'ng' : '') + '">' + (P.v === null ? '—' : P.v) + '</td><td>' + _p2ShKin(ym, k, X, 't') + '</td><td class="v">' + (k.a ? (X.v || 0) : _p2ShKin(ym, k, X, 'v')) + '</td><td class="k">' + _p2ShKzIn(ym, k.id) + '</td></tr>';
+    }).join('') + '</table>';
+}
+function _p2ShActTbl(ym, c, minRows) {
+  var td = evTodayYmd(), L = _p2ShActs(ym, c.k), ro = _p2ShRo();
+  var r = L.map(function(e) {
+    var od = !e.done && e.date && e.date < td;
+    return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c" onclick="p2ShActTg(\'' + e.id + '\')">' + (e.done ? '✔' : '') + '</span><span class="x"><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '></span>'
+      + '<span class="d' + (od ? ' od' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '/') + (ro ? '' : '<input type="date" value="' + (e.date || '') + '" onchange="p2ShActDate(\'' + e.id + '\',this.value)">') + '</span></div>';
+  }).join('');
+  if (!ro) r += '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '" placeholder="＋ 書く" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAdd(\'' + c.k + '\')"></span><span class="d">/</span></div>';
+  for (var j = L.length + (ro ? 0 : 1); j < (minRows || 0); j++) r += '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>';
+  return '<div class="sp-at"><div class="h">' + c.lb + '<span>実行期日</span></div>' + r + '</div>';
+}
+function p2ShActEdit(id, v) {
+  var e = findEvent(id); if (!e) return; v = String(v || '').trim();
+  if (!v) { if (confirm('この行動を消しますか？（ToDoからも消えます）')) { _evDeleteById(id); } renderPlan(); return; }
+  e.title = v.slice(0, 120); e.updatedAt = new Date().toISOString(); saveEventDoc(e);
+}
+function _p2ShFoot(pc) {
+  return '<div class="sp-ft"><span onclick="p2ShKEd()">' + (_p2ShKEd ? '▲ 項目の編集を閉じる' : '⚙ 数字の項目を変える') + '</span>' + (pc ? '' : '<span onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>') + '</div>' + (_p2ShKEd ? _p2ShKEdHtml() : '');
 }
 function _p2ShKEdHtml() {
   var K = _p2Sh().kpi;
@@ -37094,87 +37163,49 @@ function _p2ShKEdHtml() {
       + '<span class="x" onclick="p2ShKMove(' + i + ',-1)" title="上へ">↑</span><span class="x" onclick="p2ShKDel(' + i + ')" title="消す">×</span></div>';
   }).join('') + '<div style="display:flex;gap:14px;margin-top:6px"><span class="ux-lk" style="margin:0" onclick="p2ShKAdd()">＋ 項目を足す</span><span class="ux-lk" style="margin:0;color:var(--text-dim)" onclick="p2ShKReset()">最初の8項目に戻す</span></div></div>';
 }
-function _p2ShKpiTable(ym) { // PC・印刷：先月（目標・結果）｜今月（目標・進捗）
-  var K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv), ro = _p2ShRo();
-  return '<table class="sh-tb"><tr><th></th><th class="g" colspan="2">先月（' + _p2ShMonLb(pv) + '）</th><th class="g" colspan="2" style="color:var(--accent)">今月（' + _p2ShMonLb(ym) + '）</th><th></th></tr><tr><th></th><th>目標</th><th>結果</th><th>目標</th><th style="text-align:left;padding-left:12px">現在の進捗</th><th></th></tr>'
-    + K.map(function(k) {
-      var X = _p2ShKv(ym, k, A), Pv = _p2ShKv(pv, k, Ap), p = _p2ShPct(X.v, X.t);
-      var tin = ro ? (X.t === null ? '—' : X.t) : '<input type="number" inputmode="numeric" value="' + (X.t === null ? '' : X.t) + '" placeholder="' + (X.ph !== null ? X.ph : '-') + '" onfocus="edSelAll(this)" onchange="p2ShKT(\'' + k.id + '\',0,this.value)">';
-      var vin = k.a || ro ? '<b style="min-width:22px;text-align:right">' + (X.v === null ? 0 : X.v) + '</b>' : '<input type="number" inputmode="numeric" value="' + (X.v === null ? '' : X.v) + '" placeholder="0" onfocus="edSelAll(this)" onchange="p2ShKV(\'' + k.id + '\',0,this.value)">';
-      return '<tr><td class="n">' + evEsc(k.lb) + '</td><td class="d">' + (Pv.t === null ? '—' : Pv.t) + '</td><td style="color:' + (Pv.t !== null && Pv.v !== null && Pv.v >= Pv.t ? 'var(--accent)' : 'var(--text-mid)') + '">' + (Pv.v === null ? '—' : Pv.v) + '</td><td>' + tin + '</td>'
-        + '<td class="pr"><div>' + vin + '<div class="sh-bar" style="--c:' + _p2ShCol(p) + '"><i style="width:' + p + '%"></i></div></div></td><td style="width:48px">' + (k.a ? '<span class="sh-tag au">自動</span>' : '<span class="sh-tag">入力</span>') + '</td></tr>';
-    }).join('') + '</table>';
+function _p2ShAfter() { try { Array.prototype.forEach.call(document.querySelectorAll('#view-plan .sp-kz'), _p2ShGrow); } catch (e) {} }
+// ── スマホ：上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）──
+function _p2ShPageHtml() {
+  _p2ShCss(); _p2ShCss2();
+  var ym = _p2ShYmN();
+  setTimeout(_p2ShAfter, 0);
+  return _p2ShHeadHtml(ym) + _p2ShYearLn() + _p2ShWhy(ym) + _p2ShMonLn(ym) + _p2ShMapBox(ym, 640, 430)
+    + '<div class="sp-sec">数字と改善点<small>先月の結果 → 改善点 → 今月の目標</small></div>' + _p2ShRows(ym) + _p2ShFoot()
+    + '<div class="sp-sec">行動<small>✔＝やった・期日を入れるとToDo・カレンダーにも</small></div>' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c); }).join('');
 }
-function _p2ShKzHtml(ym) {
-  var pv = _p2ShPrevYm(ym), pm = _p2Sh().m[pv] || {}, prev = String(pm.kaizen || '').trim();
-  if (!prev) { var rv = (_p2().months[pv] || {}).review; if (rv && rv.c) prev = String(rv.c); } // 前の「振り返り」の変えること
-  var cur = String(_p2ShM(ym).kaizen || '');
-  return '<div class="sh-c sh-kz"><div class="hd">改善点</div>'
-    + (prev ? '<div class="pv"><b style="color:var(--text-dim)">先月（' + _p2ShMonLb(pv) + '）：</b>' + evEsc(prev) + '</div>' : '')
-    + '<textarea placeholder="うまくいかなかったこと・次に変えること" onchange="p2ShKz(this.value)"' + (_p2ShRo() ? ' readonly' : '') + '>' + evEsc(cur) + '</textarea></div>';
-}
-function _p2ShActList(ym, c, compact) {
-  var td = evTodayYmd(), L = _p2ShActs(ym, c.k), ro = _p2ShRo();
-  var it = L.map(function(e) {
-    var od = !e.done && e.date && e.date < td, dl = e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '期日';
-    return '<div class="it' + (e.done ? ' dn' : '') + '"><span class="ck" onclick="p2ShActTg(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span><span class="t">' + evEsc(e.title || '') + '</span>'
-      + '<span class="dt' + (od ? ' od' : '') + '">' + dl + (ro ? '' : '<input type="date" value="' + (e.date || '') + '" onchange="p2ShActDate(\'' + e.id + '\',this.value)">') + '</span>' + (ro ? '' : '<span class="x" onclick="p2ShActDel(\'' + e.id + '\')">×</span>') + '</div>';
-  }).join('');
-  var add = ro ? '' : '<div class="sh-add"><input type="text" id="p2ShIn_' + c.k + '" placeholder="＋ 行動を足す" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2ShActAdd(\'' + c.k + '\')}"><span class="dt2"><span id="p2ShDl_' + c.k + '">期日</span><input type="date" id="p2ShDt_' + c.k + '" onchange="p2ShAddDt(\'' + c.k + '\',this)"></span><b onclick="p2ShActAdd(\'' + c.k + '\')">足す</b></div>';
-  var dn = L.filter(function(e) { return e.done; }).length;
-  return '<div class="sh-c sh-al" style="border-left:3px solid ' + c.c + '"><div class="hd" style="color:var(--text)">' + c.lb + '<span style="margin-left:auto;color:var(--text-dim)">' + dn + '/' + L.length + '</span></div>'
-    + (it || (compact ? '' : '<div class="sh-note" style="margin-top:6px">まだありません</div>')) + add + '</div>';
-}
-// ── スマホ：4ページ ──
-function _p2ShPageHtml(i) {
-  _p2ShCss();
-  var ym = _p2ShYmN(), h = _p2ShTopHtml(ym);
-  if (i === 0) return h + _p2ShYearHtml() + _p2ShMonHtml(ym) + _p2ShMapHtml(ym, 640, 430);
-  if (i === 1) return h + _p2ShKpiCards(ym);
-  if (i === 2) {
-    var cats = '<div class="sh-cats">' + P2_SH_CAT.map(function(c) { var n = _p2ShActs(ym, c.k).length; return '<span style="--c:' + c.c + '" class="' + (_p2ShCat === c.k ? 'on' : '') + '" onclick="p2ShCat(\'' + c.k + '\')">' + c.s + '<small>' + n + '</small></span>'; }).join('') + '</div>';
-    var c0 = P2_SH_CAT.filter(function(c) { return c.k === _p2ShCat; })[0] || P2_SH_CAT[0];
-    return h + cats + _p2ShActList(ym, c0) + '<div class="sh-note">期日を入れた行動は <b>ToDo・カレンダー</b> にも出ます。どちらでチェックしても同じです</div>';
-  }
-  return h + _p2ShKzHtml(ym) + '<div class="sh-note">先月の改善点を見ながら、今月変えることを書きます</div>';
-}
-// ── PC：1画面 ──
-function _p2ShPcHtml(b) {
-  _p2ShCss();
-  var ym = _p2ShYmN(), un = (currentUser && currentUser.union) || '';
-  var right = '<span class="pcx-b" onclick="p2ShMon(-1)">‹</span><span class="pcx-b" style="cursor:default">' + parseInt(ym.slice(0, 4), 10) + '年' + _p2ShMonLb(ym) + '</span><span class="pcx-b" onclick="p2ShMon(1)"' + (ym >= _p2Ym(1) ? ' style="opacity:.3;pointer-events:none"' : '') + '>›</span>'
-    + b('🖨 印刷・PDF（A3）', 'p2ShPrint()', 'p');
-  return _p2PcxHead('計画立案シート' + (un ? '<small style="margin-left:8px;font-size:14px;color:var(--text-mid)">【' + evEsc(un) + '】</small>' : ''), '', right, '')
-    + '<div class="sh-pc"><div class="main"><div class="gr">' + _p2ShYearHtml() + _p2ShMonHtml(ym) + '</div>'
-    + _p2ShMapHtml(ym, 1000, 400)
-    + '<div class="kb"><div class="sh-c"><div class="hd" style="margin-bottom:4px">数字<span class="r" onclick="p2ShKEd()">' + (_p2ShKEd ? '閉じる' : '⚙ 項目を変える') + '</span></div>' + _p2ShKpiTable(ym) + (_p2ShKEd ? _p2ShKEdHtml() : '') + '</div>' + _p2ShKzHtml(ym) + '</div></div>'
-    + '<div class="side">' + P2_SH_CAT.map(function(c) { return _p2ShActList(ym, c, true); }).join('') + '<div class="sh-note">期日を入れた行動はToDo・カレンダーにも出ます</div></div></div>';
+// ── PC：紙と同じ1枚 ──
+function _p2ShPcHtml() {
+  _p2ShCss(); _p2ShCss2();
+  var ym = _p2ShYmN();
+  setTimeout(_p2ShAfter, 0);
+  return _p2ShHeadHtml(ym, true) + '<div class="sp-pc"><div><div class="gl">' + _p2ShYearLn() + _p2ShMonLn(ym) + '</div>' + _p2ShWhy(ym) + _p2ShMapBox(ym, 680, 300, true) + _p2ShTable(ym) + _p2ShFoot(true) + '</div>'
+    + '<div>' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c, 6); }).join('') + '</div></div>';
 }
 // ── 印刷（A3横・紙の計画立案シートと同じ並び）──
 function _p2ShPrintHtml(ym) {
-  var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv), un = (currentUser && currentUser.union) || '';
-  var M = _p2ShMapSvg({ W: 1000, H: 520, mode: _p2ShMapMode, light: true, newN: _p2ShMapMode === 'cur' && F.t !== null ? Math.max(0, F.t - F.now) : 0 });
+  var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv), un = (currentUser && currentUser.union) || '', kz = _p2ShM(ym).kz || {};
+  var hasI = _hasIdeal(), mode = _p2ShMapMode === 'cur' || !hasI ? 'cur' : 'ideal';
+  var M = _p2ShMapSvg({ W: 1000, H: 470, mode: mode, light: true, newN: mode === 'cur' && F.t !== null ? Math.max(0, F.t - F.now) : 0 });
   var v = function(x) { return x === null || x === undefined ? '' : x; };
-  var rows = K.map(function(k) { var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap); return '<tr><th>' + evEsc(k.lb) + '</th><td>' + v(P.t) + '</td><td>' + v(P.v) + '</td><td>' + v(X.t) + '</td><td>' + v(X.v) + '</td></tr>'; }).join('');
+  var rows = K.map(function(k) { var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap); return '<tr><th>' + evEsc(k.lb) + '</th><td>' + v(P.t) + '</td><td>' + v(P.v) + '</td><td>' + v(X.t) + '</td><td>' + v(X.v) + '</td><td class="kz">' + evEsc(kz[k.id] || '') + '</td></tr>'; }).join('');
   var acts = P2_SH_CAT.map(function(c) {
     var L = _p2ShActs(ym, c.k), n = Math.max(7, L.length), r = '';
-    for (var j = 0; j < n; j++) { var e = L[j]; r += '<tr><td class="ck">' + (e && e.done ? '✓' : '') + '</td><td>' + (e ? evEsc(e.title || '') : '') + '</td><td class="dd">' + (e && e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '') + '</td></tr>'; }
-    return '<div class="al"><table><tr><th colspan="2">' + c.lb + '</th><th class="dd">実行期日</th></tr>' + r + '</table></div>';
+    for (var j = 0; j < n; j++) { var e = L[j]; r += '<tr><td class="ck">' + (e && e.done ? '✔' : '') + '</td><td>' + (e ? evEsc(e.title || '') : '') + '</td><td class="dd">' + (e && e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '/') + '</td></tr>'; }
+    return '<div class="al"><div class="at">' + c.lb + '</div><table><tr><th></th><th></th><th class="dd">実行期日</th></tr>' + r + '</table></div>';
   }).join('');
+  var ms = Y.ms ? parseInt(Y.ms.ym.slice(5), 10) + '月 ' + evEsc(Y.ms.t || '') : '';
   var css = '@page{size:A3 landscape;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans JP","Hiragino Sans",sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.pg{width:404mm;height:279mm;display:grid;grid-template-columns:1fr 112mm;gap:5mm}.hd{display:flex;align-items:baseline;gap:8mm;border-bottom:2px solid #111;padding-bottom:2mm}.hd h1{margin:0;font-size:22pt}.hd .ym,.hd .un{font-size:14pt;font-weight:700}'
-    + '.gl{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:3mm}.gl div{border:1.5px solid #111;padding:2mm 3mm;font-size:10.5pt}.gl b{font-size:15pt;margin:0 1.5mm}.gl small{color:#555}'
-    + '.mp{border:1.5px solid #111;margin-top:3mm;padding:2mm}.mp h2{margin:0;font-size:11pt}.mp svg{display:block;width:100%;height:auto;max-height:118mm}.lg{font-size:8.5pt;color:#333;margin-top:1mm}'
-    + '.bt{display:grid;grid-template-columns:1fr 78mm;gap:3mm;margin-top:3mm}table{border-collapse:collapse;width:100%}.kp th,.kp td{border:1px solid #111;padding:1.2mm 2mm;font-size:10pt;text-align:center}.kp tr>th:first-child{text-align:left;width:34%}.kz{border:1.5px solid #111;padding:2mm;font-size:10pt;white-space:pre-wrap}.kz h3{margin:0 0 1mm;font-size:10.5pt}'
-    + '.al{margin-bottom:3mm}.al th,.al td{border:1px solid #111;padding:1.1mm 1.5mm;font-size:9.5pt;height:6.4mm}.al th{background:#eee;text-align:left}.al .ck{width:6mm;text-align:center}.al .dd{width:18mm;text-align:center}';
-  var leg = 'Howdy稼働基準　S：120%　A：仕事辞める日確定　B：仕事以外　C：来れるけど来ない';
+    + '.pg{width:404mm;height:279mm;display:grid;grid-template-columns:1fr 100mm;gap:7mm}.hd{display:flex;align-items:baseline;gap:8mm}.hd h1{margin:0;font-size:20pt}.hd span{font-size:14pt;font-weight:700}'
+    + '.l{font-size:12.5pt;margin-top:3mm}.l u{text-decoration:none;border-bottom:1px solid #111;padding:0 3mm;font-weight:700;font-size:14pt}'
+    + '.mp{margin-top:2mm}.mp h2{margin:0;font-size:12pt}.mp svg{display:block;width:100%;height:auto;max-height:122mm}.lg{font-size:8.5pt;color:#333}'
+    + 'table{border-collapse:collapse;width:100%}.kp{margin-top:2mm}.kp th,.kp td{border:1px solid #111;padding:1.3mm 2mm;font-size:10pt;text-align:center}.kp tr>th:first-child{text-align:left;width:26mm}.kp td.kz{text-align:left;width:52%}'
+    + '.al{margin-bottom:4mm}.al .at{font-weight:700;font-size:10.5pt;margin-bottom:1mm}.al th,.al td{border:1px solid #111;padding:1mm 1.5mm;font-size:9.5pt;height:6.2mm}.al th{font-weight:400;font-size:8.5pt}.al .ck{width:6mm;text-align:center}.al .dd{width:17mm;text-align:center}';
   return '<!doctype html><html><head><meta charset="utf-8"><title>計画立案シート_' + ym + '</title><style>' + css + '</style></head><body><div class="pg"><div>'
-    + '<div class="hd"><h1>計画立案シート</h1><span class="ym">' + parseInt(ym.slice(0, 4), 10) + '年' + _p2ShMonLb(ym) + '</span><span class="un">【' + evEsc(un || '　　　　') + '】</span></div>'
-    + '<div class="gl"><div>' + (Y.dl ? parseInt(Y.dl.slice(0, 4), 10) + '年' : '　年') + '　目標月収<b>' + (Y.inc || '') + '</b>万　目標タイトル<b>' + evEsc(Y.title || '') + '</b><br><small>マイルストーン（月）</small> ' + (Y.ms ? _p2ShMonLb(Y.ms.ym) + ' ' + evEsc(Y.ms.t || '') : '') + '</div>'
-    + '<div>' + _p2ShMonLb(ym) + 'の月間目標　月収<b>' + (I.t === null ? '' : I.t) + '</b>万　NEWフロント<b>' + (F.t === null ? '' : F.t) + '</b>人</div></div>'
-    + '<div class="mp"><h2>＜MAP＞' + (M.ideal ? '　今月の理想' : '') + '</h2>' + (M.svg || '') + '<div class="lg">上＝流通／下＝ビジネス　丸：名前｜稼働／タイトル｜GSV　' + leg + '</div></div>'
-    + '<div class="bt"><table class="kp"><tr><th></th><th colspan="2">先月（' + _p2ShMonLb(pv) + '）</th><th colspan="2">今月（' + _p2ShMonLb(ym) + '）</th></tr><tr><th></th><th>目標</th><th>結果</th><th>目標</th><th>現在の進捗状況</th></tr>' + rows + '</table>'
-    + '<div class="kz"><h3>＜改善点＞</h3>' + evEsc(String(_p2ShM(ym).kaizen || '')) + '</div></div></div>'
+    + '<div class="hd"><h1>計画立案シート</h1><span>' + parseInt(ym.slice(0, 4), 10) + '年　' + _p2ShMonLb(ym) + '</span><span>【ユニオン名：' + evEsc(un) + '】</span></div>'
+    + '<div class="l"><u>' + (Y.dl ? Y.dl.slice(0, 4) : '') + '</u>年　目標月収 <u>' + (Y.inc ? Y.inc + '万' : '') + '</u>　目標タイトル <u>' + evEsc(Y.title || '') + '</u>　マイルストーン <u>' + ms + '</u></div>'
+    + '<div class="l">月間目標　月収 <u>' + (I.t === null ? '' : I.t + '万') + '</u>　NEWフロント <u>' + (F.t === null ? '' : F.t) + '</u>人</div>'
+    + '<div class="mp"><h2>＜' + (M.ideal ? '理想' : '現状') + 'MAP＞</h2>' + (M.svg || '') + '<div class="lg">Howdy稼働基準　S：120%参加（本気レベル）　A：仕事切り替え期日確定　B：仕事以外は基本的に来る　C：参加可能でも中々来ない（A〜Cは稼働率を%で記載）</div></div>'
+    + '<table class="kp"><tr><th></th><th colspan="2">先月</th><th colspan="2">今月</th><th rowspan="2">＜改善点＞</th></tr><tr><th></th><th>目標</th><th>結果</th><th>目標</th><th>現在の進捗状況</th></tr>' + rows + '</table></div>'
     + '<div>' + acts + '</div></div><script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script></body></html>';
 }
 function p2ShPrint() {
