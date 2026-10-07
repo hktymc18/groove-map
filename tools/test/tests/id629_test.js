@@ -16,9 +16,10 @@ T.run(async () => {
   c('一覧の分野を押すとその質問へ', $('#p2GwWrap').textContent.indexOf('旅行') >= 0);
   // 最後まで進める
   const g = w._p2G(); g.ans.housing_cost = 20; g.ans.food_cost = 10; w.state.goals.plan.income = 0;
-  let guard = 0; while (w._p2Pg === 'ideal' && !w._p2PgI && guard++ < 40) { w.p2GwNext(true); await sleep(5); }
-  c('最後まで答えると「ひと区切り」へ（目標月収は勝手に変えない）', w._p2PgI === 1 && $('#view-plan').textContent.indexOf('ひと区切り') >= 0 && !w.state.goals.plan.income && g.p1 === true);
-  c('「目標月収にしますか？」', $('#view-plan').textContent.indexOf('目標月収にしますか') >= 0);
+  let guard = 0; while (!g.p1 && guard++ < 40) { w.p2GwNext(true); await sleep(5); }
+  await sleep(20);
+  c('v682: 最後まで答えると同じページに金額（目標月収は勝手に変えない）', w._p2PgI === 0 && !!$('#p2GwWrap .p2id-amt') && /理想の生活に必要な月収/.test($('#view-plan').textContent) && !w.state.goals.plan.income && g.p1 === true);
+  c('v682: 「この金額を目標月収にする」と下に「✓ 完了」', /この金額を目標月収にする/.test($('#view-plan').textContent) && /完了/.test($('.ux-btm .ux-nx').textContent));
   w.p2IdealApply(); await sleep(10);
   c('目標にする→目標月収が理想の生活の合計に', w.state.goals.plan.income === w._p2GwTotal() * 10000 && w._p2GwTotal() >= 30);
   w.p2PgSub(2); await sleep(10);
@@ -38,5 +39,5 @@ T.run(async () => {
   c('「20問から作り直す」も理想のページへ（ポップアップなし）', w._p2Pg === 'ideal' && !$('#p2GwOv'));
   console.log('=== PC ===');
   setWH(1400, 900); w._uxSync(); w.p2Go('ideal', 0); await sleep(30);
-  c('PC：左に質問（v674: 答え終わっていれば「やり直す」ボタン）・右に答えの一覧', !!$('.pcx2 .p2id #p2GwWrap .gw2-bubble, .pcx2 .p2id #p2GwWrap .p2id-dn') && !!$('.pcx2 #p2IdList') && $$('.pcx-tabs span').length === 7);
+  c('PC：左に質問（v674: 答え終わっていれば「やり直す」ボタン）・右に答えの一覧', !!$('.pcx2 .p2id #p2GwWrap .gw2-bubble, .pcx2 .p2id #p2GwWrap .p2id-dn') && !!$('.pcx2 #p2IdList') && $$('.pcx-tabs span').length === 6);
 });

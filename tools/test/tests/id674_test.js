@@ -6,7 +6,7 @@ T.run(async () => {
   w.switchView('plan'); w.p2Go('ideal', 0); await sleep(80);
   c('まだ答えていない時は質問が出る', !$('#p2GwWrap .p2id-dn') && $('#p2GwWrap').innerHTML.length > 0);
   w._p2G().p1 = true; w.p2Go('ideal', 0); await sleep(80);
-  c('答え終わったら「すべて答えました」と2つのボタン', !!$('#p2GwWrap .p2id-dn') && /はじめから答え直す/.test($('#p2GwWrap').textContent) && /ひと区切りへ/.test($('#p2GwWrap').textContent));
+  c('答え終わったら「すべて答えました」と「はじめから答え直す」・下に「✓ 完了」（v682）', !!$('#p2GwWrap .p2id-dn') && /はじめから答え直す/.test($('#p2GwWrap').textContent) && /完了/.test($('.ux-btm .ux-nx').textContent));
   w.p2IdealRedo(); await sleep(50);
   c('「はじめから答え直す」で1問目の質問', !$('#p2GwWrap .p2id-dn') && w._p2GwStep === w.P2GW_Q.indexOf(w._p2IdealQs()[0]));
   w.p2Go('ideal', 0); await sleep(80);
