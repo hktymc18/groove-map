@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v679';
+var APP_JS_VERSION = 'v680';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v679';
+  var DATA_VERSION = 'v680';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v680', d:'2026-10-07', items:['受付連携の「名簿から追加」：紹介者をたどっても自分のMAPの人につながらない人（紹介者なし・紹介者がMAPにいない人とその紹介の人）は、候補に出さないようにしました（「ほかのチームかも」の欄はなくしました）'] },
   { v:'v679', d:'2026-10-07', items:['予定の編集画面：項目の文字の大きさをそろえました（iPhoneでは入力欄だけ大きく、カテゴリ・関連メンバーの欄と大きさがバラバラだったのを、小さい方に統一）'] },
   { v:'v678', d:'2026-10-07', items:['ホーム画面に追加したアプリで、カレンダーが画面の上6割だけに縮み、下が空白になる不具合を修正（iPhone 17。キーボードを閉じた後も画面の高さが小さいまま戻らないiOSの不具合への対策を、ホーム画面アプリにも適用。開き直さなくても数秒で自動で戻ります）'] },
   { v:'v677', d:'2026-10-07', items:['HOME左上のロゴを新しいNWPのロゴに差し替えました'] },
@@ -17097,6 +17098,15 @@ function _ckPrep() {
     var o = old[r.no]; return o ? o : { r: r, pid: '', on: false, auto: false };
   });
   var addByName = {}; adds.forEach(function(a) { (addByName[_ckNorm(a.r.name)] = addByName[_ckNorm(a.r.name)] || []).push(a); });
+  // v680: 紹介者をたどっても自分のMAPの人にたどり着かない人（紹介者なし・紹介者がMAPにいない・その紹介の人）は候補に出さない
+  var _tie = function(a, seen) {
+    seen = seen || {}; if (seen[a.r.no]) return false; seen[a.r.no] = 1;
+    var k = _ckNorm(a.r.referrer || ''); if (!k) return false;
+    if (byName[k]) return true;
+    return (addByName[k] || []).some(function(b) { return b !== a && _tie(b, seen); });
+  };
+  adds = adds.filter(function(a) { return _tie(a); });
+  addByName = {}; adds.forEach(function(a) { (addByName[_ckNorm(a.r.name)] = addByName[_ckNorm(a.r.name)] || []).push(a); });
   adds.forEach(function(a) {
     if (old[a.r.no]) return;
     var k = _ckNorm(a.r.referrer || '');
@@ -17105,8 +17115,8 @@ function _ckPrep() {
     if (hit && hit.length === 1) { a.pid = hit[0].id; a.on = true; a.auto = true; }
     else if (!hit && hit2 && hit2.length === 1 && hit2[0] !== a) { a.pid = 'new:' + hit2[0].r.no; a.on = true; a.auto = true; }
   });
-  // v658: 紹介者をたどって自分のMAPにつながらない人は「ほかのチームかも」（最初はチェックしない・下にたたむ）
-  adds.forEach(function(a) { a.other = !_ckAddLinked(a, adds); if (!old[a.r.no] && a.other) a.on = false; });
+  // v680: つながらない人は上で候補から外したので「ほかのチームかも」の欄はなくした（紹介者がMAPに同じ名前で何人もいる人は、置き場所を選べば追加できる）
+  adds.forEach(function(a) { a.other = false; });
   L.adds = adds;
   var oldF = {}; (L.fixes || []).forEach(function(f) { oldF[f.m.id] = f; });
   L.fixes = (L.items || []).filter(function(it) { return it.kind === 'linked' && it.r && _ckNorm(it.r.name) && _ckNorm(it.r.name) !== _ckNorm((it.m.lastName || '') + (it.m.firstName || '')); })
@@ -17157,8 +17167,8 @@ function ckPgRender() {
       return '<div class="ckr"><span class="ckb' + (eff ? ' on' : '') + '" onclick="ckAddTgl(' + k + ')">✓</span><div class="nm"><b>' + evEsc(r.name) + '</b><small>' + evEsc(sub) + '</small></div>'
         + (a.auto && a.pid ? '<span class="r" style="max-width:42%;font-size:12px">' + par + '</span>' : '<select class="ckp' + (a.pid ? ' ok' : '') + '" onchange="ckAddPid(' + k + ',this.value)">' + _ckTreeOpts(a.pid) + '</select>') + '</div>';
     };
-    body = '<div class="ux-sum"><b>' + (adds.length - nOther) + '<small> 人</small></b><span>受付の名簿にいて、MAPにまだいない人' + (nOther ? '（ほかのチームかも ' + nOther + '人は下に）' : '') + '</span></div>';
-    body += adds.length ? adds.map(function(a, k) { return a.other ? '' : rowA(a, k); }).join('') : '<div class="ux-empty">名簿の人は全員MAPにいます 🎉</div>';
+    body = '<div class="ux-sum"><b>' + (adds.length - nOther) + '<small> 人</small></b><span>受付の名簿にいて、MAPにまだいない人</span></div><div class="ux-sub" style="font-size:12px;margin:-4px 0 8px">紹介者をたどると自分のMAPにつながる人だけ出しています</div>';
+    body += adds.length ? adds.map(function(a, k) { return a.other ? '' : rowA(a, k); }).join('') : '<div class="ux-empty">追加できる人はいません（自分のMAPにつながる名簿の人は全員MAPにいます）</div>';
     if (nOther) body += '<div class="ux-sec">ほかのチームかも ' + nOther + '人<span style="font-weight:600;font-size:11.5px;color:var(--text-dim);margin-left:6px">紹介者が自分のMAPにいない人</span></div>'
       + (L.showOther ? adds.map(function(a, k) { return a.other ? rowA(a, k) : ''; }).join('') + '<div class="ux-hint">自分のチームの人だけ、置き場所を選んで追加してください</div>'
         : '<span class="ckmore" onclick="_ckLink.showOther=1;ckPgRender()">表示する ›</span>');
