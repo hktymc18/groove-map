@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v671';
+var APP_JS_VERSION = 'v672';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v671';
+  var DATA_VERSION = 'v672';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5355,6 +5355,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v672', d:'2026-10-07', items:['MAP・PLAN・分析の上のボタンを少し下げました（時計のすぐ下は押しても反応しにくいため）','分析の「表示チーム」を1行の大きめのボタンに（2行に折り返して押しにくかったのを修正。多い時は横にスクロール）'] },
   { v:'v671', d:'2026-10-07', items:['ToDoの「完了タスク」「ゴミ箱」などから戻れなくなっていたのを修正：左上に「‹」（ToDoへ戻る）を出しました。下の「ToDo」を押しても一覧に戻ります'] },
   { v:'v670', d:'2026-10-07', items:['プロフィールで名前を変えた時、ATTACK LIST・GOAL SETTING の表示名も変わるようにしました（これまでは古い名前のままでした）','ATTACK LIST・GOAL SETTING にも個人情報保護方針・利用規約の同意画面を入れました（同意はアプリ共通。どれか1つで同意すれば、ほかでは出ません）'] },
   { v:'v669', d:'2026-10-07', items:['オーナー（すべてのユニオンの承認・受付の管理ができる人）に馬越さんを追加しました'] },
@@ -8995,22 +8996,31 @@ function enterAggregate(sel){
 function teamPick(uid){ // 旧API互換（単一選択）
   applyTeamSelection([uid||'']);
 }
+function _tpCss(){
+  if(document.getElementById('tpCss')) return;
+  var st=document.createElement('style'); st.id='tpCss';
+  st.textContent='.tp-bar{padding:6px 0 2px}.tp-hd{display:flex;align-items:baseline;gap:8px;padding:0 14px 6px}.tp-hd span{font-size:11.5px;font-weight:900;color:var(--text-dim)}.tp-hd em{font-style:normal;font-size:10.5px;color:var(--text-dim);margin-left:auto;display:flex;align-items:center;gap:3px}.tp-hd em .lic{width:12px;height:12px}'
+    +'.tp-row{display:flex;gap:7px;overflow-x:auto;padding:0 14px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tp-row::-webkit-scrollbar{display:none}'
+    +'.tp-c{flex:none;display:flex;align-items:center;gap:4px;height:36px;padding:0 14px;border-radius:11px;border:1.5px solid var(--border2);background:var(--surface);font-size:13px;font-weight:900;color:var(--text-mid);white-space:nowrap;cursor:pointer}'
+    +'.tp-c .lic{width:12px;height:12px;opacity:.7}.tp-c.on{background:var(--accent);border-color:var(--accent);color:var(--go-ink)}';
+  document.head.appendChild(st);
+}
 function renderTeamPickBars(){
+  _tpCss();
   var els=[document.getElementById('teamPickStats'), document.getElementById('teamPickOl')];
   var owners=sharedOwners||[];
   var sel=_teamSelection();
   els.forEach(function(el){
     if(!el) return;
     if(!owners.length){ el.innerHTML=''; return; }
-    var h='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 14px 0">'
-      +'<span style="font-size:11px;font-weight:800;color:var(--text-dim)">表示チーム</span>'
-      +'<span class="tc-b'+(sel.indexOf('')>=0?' on':'')+'" onclick="teamChip(\'\')">自分</span>';
+    // v672: 1行・横スクロールの大きめのチップに（折り返して2行になり、小さくて押しにくかった）
+    var h='<div class="tp-bar"><div class="tp-hd"><span>表示チーム</span><em>'+(_aggActive? icn('calc')+' 合算表示中（閲覧のみ）':'複数選ぶと合算表示')+'</em></div><div class="tp-row">'
+      +'<span class="tp-c'+(sel.indexOf('')>=0?' on':'')+'" onclick="teamChip(\'\')">自分</span>';
     owners.forEach(function(o){
       var nm=(o.org||o.name||o.email||'共有').substring(0,10);
-      h+='<span class="tc-b'+(sel.indexOf(o.uid)>=0?' on':'')+'" onclick="teamChip(\''+o.uid+'\')">'+evEsc(nm)+(o.perm==='edit'?' ✏️':'')+'</span>';
+      h+='<span class="tp-c'+(sel.indexOf(o.uid)>=0?' on':'')+'" onclick="teamChip(\''+o.uid+'\')">'+evEsc(nm)+(o.perm==='edit'?icn('pencil'):'')+'</span>';
     });
-    h+='<span style="font-size:10px;color:var(--text-dim)">'+(_aggActive? icn('calc')+' 合算表示中（閲覧のみ）':'複数選ぶと合算表示')+'</span>';
-    h+='</div>';
+    h+='</div></div>';
     el.innerHTML=h;
   });
 }
@@ -18660,7 +18670,7 @@ function _olpgRender() {
 function _tdyCss() {
   if (document.getElementById('tdyCss')) return;
   var st = document.createElement('style'); st.id = 'tdyCss';
-  st.textContent = "body.ux-nh header{display:none!important}body.ux-nh:not(.ux-pg){padding-top:env(safe-area-inset-top)}body.ux-nh:not(.ux-pg) #mxTop{padding-top:8px}body.ux-nh:not(.ux-pg) .olh{padding-top:10px}"
+  st.textContent = "body.ux-nh header{display:none!important}body.ux-nh:not(.ux-pg){padding-top:calc(env(safe-area-inset-top) + 12px)}body.ux-nh:not(.ux-pg) #mxTop{padding-top:8px}body.ux-nh:not(.ux-pg) .olh{padding-top:10px}"
     + ".tdy{padding:14px 14px 20px;max-width:760px;margin:0 auto}.tdy-hd{display:flex;align-items:flex-end;gap:8px}.tdy-hd h1{margin:0;font-size:21px;font-weight:900;flex:1;line-height:1.35}.tdy-hd h1 small{display:block;font-size:12.5px;color:var(--text-dim);font-weight:800}"
     + ".tdy-st{flex:none;font-size:13px;font-weight:900;color:var(--gold);background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px 10px}.tdy-bell{flex:none;position:relative;width:38px;height:38px;border-radius:11px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}.tdy-bell i{position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--red)}"
     + ".tdy-tl{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}body.ux-land .tdy-tl{grid-template-columns:repeat(4,1fr)}"
