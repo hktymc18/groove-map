@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v673';
+var APP_JS_VERSION = 'v674';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v673';
+  var DATA_VERSION = 'v674';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5355,6 +5355,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v674', d:'2026-10-07', items:['PLAN › 理想：答え終わっている時は、一番上に「あなたの理想の生活」、その下に「はじめから答え直す」「ひと区切りへ」のボタンを出すようにしました（質問は✎を押した時・答え直す時だけ出ます）'] },
   { v:'v673', d:'2026-10-07', items:['PLAN › 理想（スマホ）：記入済みの「あなたの理想の生活」を上、質問を下にしました。一覧の✎を押すと、その分野の質問まで送ります'] },
   { v:'v672', d:'2026-10-07', items:['MAP・PLAN・分析の上のボタンを少し下げました（時計のすぐ下は押しても反応しにくいため）','分析の「表示チーム」を1行の大きめのボタンに（2行に折り返して押しにくかったのを修正。多い時は横にスクロール）'] },
   { v:'v671', d:'2026-10-07', items:['ToDoの「完了タスク」「ゴミ箱」などから戻れなくなっていたのを修正：左上に「‹」（ToDoへ戻る）を出しました。下の「ToDo」を押しても一覧に戻ります'] },
@@ -19100,7 +19101,17 @@ function _p2IdealPageHtml(i) {
 }
 // 質問を出す（はじめて開いた時は、まだ答えていない最初の質問から）
 function _p2IdealAfter() {
-  if (!document.getElementById('p2GwWrap')) return;
+  var wrap = document.getElementById('p2GwWrap');
+  if (!wrap) return;
+  // v674: 答え終わっている時は、一覧の下に質問ではなく「やり直す」などのボタンを出す（✎・やり直すを押した時だけ質問）
+  var openQ = window._p2IdOpenQ; window._p2IdOpenQ = 0;
+  var Qd = _p2IdealQs();
+  if (!openQ && Qd.length && (_p2G().p1 || _p2IdealAnsN() >= Qd.length)) {
+    wrap.innerHTML = '<div class="p2id-dn"><div class="t">' + icn('checksq') + ' 理想の生活はすべて答えました</div>'
+      + '<div class="s">直したい所は、上の一覧の ✎ から変えられます</div>'
+      + '<div class="ux-acts"><span onclick="p2IdealRedo()">↺ はじめから答え直す</span><span class="p" onclick="p2PgSub(1)">ひと区切りへ ›</span></div></div>';
+    return;
+  }
   _p2GwPh = 1;
   var q = P2GW_Q[_p2GwStep];
   if (window._p2GwFresh || !q || q.ph !== 1 || !_p2GwShow(q)) {
@@ -19110,6 +19121,12 @@ function _p2IdealAfter() {
     window._p2GwFresh = 0;
   }
   _p2GwRender();
+}
+// v674: はじめから答え直す（1問目から質問を出す）
+function p2IdealRedo() {
+  window._p2IdOpenQ = 1; window._p2GwFresh = 1;
+  _p2IdealAfter();
+  try { if (!isPCMode()) document.getElementById('p2GwWrap').scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {}
 }
 // 答えの一覧（理想の生活）。✎でその分野の質問へ
 function _p2IdealListHtml() {
@@ -19137,6 +19154,7 @@ function p2IdealCat(k) {
     try { if (!isPCMode()) document.getElementById('p2GwWrap').scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (eSc) {}
     return;
   }
+  window._p2IdOpenQ = 1; // v674: ✎は答え終わっていても質問を出す
   p2Go('ideal', 0);
 }
 // ①が終わった：理想の生活の答えを記録（目標月収はここで聞く）
@@ -19188,7 +19206,7 @@ function _p2IdealSumHtml() {
 function _p2IdealCss() {
   if (document.getElementById('p2IdCss')) return;
   var st = document.createElement('style'); st.id = 'p2IdCss';
-  st.textContent = ".p2id{display:flex;flex-direction:column;gap:14px}.p2id>.p2id-l{order:-1}.pcx .p2id>.p2id-l,.pcx2 .p2id>.p2id-l{order:0}.p2id-q .gw2-body{min-height:0}.p2id-q .gw2-foot{position:static}"
+  st.textContent = ".p2id{display:flex;flex-direction:column;gap:14px}.p2id>.p2id-l{order:-1}.p2id-dn{padding:14px 12px 6px}.p2id-dn .t{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:900;color:var(--accent)}.p2id-dn .t .lic{width:18px;height:18px}.p2id-dn .s{font-size:12.5px;color:var(--text-dim);font-weight:700;margin-top:4px}.pcx .p2id>.p2id-l,.pcx2 .p2id>.p2id-l{order:0}.p2id-q .gw2-body{min-height:0}.p2id-q .gw2-foot{position:static}"
     + ".pcx .p2id,.pcx2 .p2id{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}.pcx .p2id-q,.pcx2 .p2id-q{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 8px}"
     + ".p2id-l{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 14px}.p2id-h{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);margin-bottom:6px}.p2id-h b{margin-left:auto;font-size:22px;color:var(--gold);font-family:Inter,sans-serif}.p2id-h b small{font-size:11px}"
     + ".p2id-r{display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--border);cursor:pointer;font-weight:800;font-size:14px}.p2id-r .lb{flex:1;min-width:0}.p2id-r .lb small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
