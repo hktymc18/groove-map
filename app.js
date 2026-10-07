@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v685';
+var APP_JS_VERSION = 'v684';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v685';
+  var DATA_VERSION = 'v684';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,7 +5363,6 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v685', d:'2026-10-07', items:['PLANに「戦略」を追加（PLANの下のボタン・ツールから）。最終目標→最短目標→今とのギャップ→必要なルビー候補・フロント・ホットリスト・ST→マイルストーンと照らしたペース（月何人・いつLOIを揃えるか）→戦略、の順に1ページずつ決められます'] },
   { v:'v684', d:'2026-10-07', items:['ユニオン予定のボタンをHOMEから「設定 › カレンダー」の一番上に移しました'] },
   { v:'v683', d:'2026-10-07', items:['HOMEのタイルの並びを変更：PLANの下は 左上MAP・右上ANALYSIS（分析）／左下CALENDAR・右下TODO'] },
   { v:'v682', d:'2026-10-07', items:['PLAN › 理想を2つのセットに：①理想の生活は答え終わったら同じページに「理想の生活に必要な月収」を出して「✓ 完了」で終われる（この金額を目標月収にするボタンも）','②やりたいこと・やりたくないこと・なりたい自分・なりたくない自分の4ページで1セット。最後のページの「✓ 完了」で終われます'] },
@@ -16451,7 +16450,7 @@ function _p2HubLand(T, nk, S, rv, left, why) {
   var ym = _p2Ym(0);
   var tiles = T.map(function(t) { t.next = t.k === nk || (t.k === 'mon' && nk === 'do'); t.on = t.on || 'p2Go(\'' + t.k + '\')'; t.x = _p2HubX(t.k); if (!t.x) t.c += ' p2-nx'; return _uxTile(t); }).join('');
   return '<div class="ux-hub p2-lh"><div class="ux-hd"><h1>PLAN</h1>' + (why && !_p2HubX('why') ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span>'
-    + '<span class="ux-sb' + (rv ? ' hot' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (rv ? '<span class="dot"></span>' : '') + '</span><span class="ux-sb" onclick="p2Go(\'stg\')">🧭 戦略</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div>'
+    + '<span class="ux-sb' + (rv ? ' hot' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (rv ? '<span class="dot"></span>' : '') + '</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div>'
     + '<div class="ux-tiles">' + tiles + '</div>'
     + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div></div></div>';
 }
@@ -16473,7 +16472,7 @@ function _uxTilesFit(root) {
 }
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
-var P2_PG = { stg: '戦略', sim: 'シミュレーション', yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
+var P2_PG = { sim: 'シミュレーション', yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
 var P2_PG_FLOW = ['ideal', 'goal', 'rm', 'mon', 'do']; // v629: 想い→理想（作文はツールへ）
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
@@ -16499,7 +16498,6 @@ function _p2PgSubs(k) {
   if (k === 'dok') return _p2DoRows(_p2Ym(0)).map(function(r) { return r.lb; });
   if (k === 'rev') return _p2RvPages();
   if (k === 'rmt') return _p2RmDefs(_p2Rm()).map(function(d) { return d.lb; }); // v603
-  if (k === 'stg') return P2_STG_PG.slice(); // v685
   return [];
 }
 function _p2WhyDone() { var n = _p2().north || {}; return !!(String(_p2WhyText() || '').trim() || _p2G().p1 || (n.wants || []).length || (n.be || []).length); }
@@ -16550,7 +16548,7 @@ function _p2HubHtml() {
     + '<div class="ux-tiles">' + T.map(function(t) { t.next = t.k === nk || (t.k === 'mon' && nk === 'do'); t.on = t.on || 'p2Go(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
     + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div>'
     + '<span class="ux-sb' + (rv ? ' hot' : '') + '" onclick="p2Go(\'rev\')">🔁 振り返り' + (rv ? '<span class="dot"></span>' : '') + '</span>'
-    + '<span class="ux-sb" onclick="p2Go(\'stg\')">🧭 戦略</span><span class="ux-sb" onclick="p2Go(\'sum\')">📋 サマリー</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
+    + '<span class="ux-sb" onclick="p2Go(\'sum\')">📋 サマリー</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div></div>';
   return h;
 }
 // v624: ページの中身（スマホは下の帯つきの1画面、PCは右の欄）
@@ -16567,9 +16565,6 @@ function _p2PageParts() {
   if (k === 'why') { // v599: 1問1答（やる理由 → 1年後 → 成功した毎日 → やりたいこと → なりたい自分 → 理想の生活 → 夢100 → まとめ）
     _ux2Css(); body = _p2WhyPageHtml(i);
     if (i < P2_WHY_PG.length - 1) { next = P2_WHY_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：目標 ›'; nextOn = 'p2Go(\'goal\')'; }
-  } else if (k === 'stg') { // v685: 戦略（最終目標→最短目標→ギャップ→必要な数→ペース→戦略）
-    _ux2Css(); body = _p2StHtml(i);
-    if (i < P2_STG_PG.length - 1) { next = P2_STG_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; }
   } else if (k === 'sum') { // v630: サマリー（決めたことを全部1画面で）
     body = _p2SumHtml();
   } else if (k === 'ideal') { // v629: 理想／v682: 2セット＝①理想の生活20問（答え終わったら同じページに金額→完了）／②やりたいこと〜なりたくない自分の4ページ（最後で完了）
@@ -16641,7 +16636,6 @@ function _p2PageParts() {
   } else if (k === 'tool') {
     var ck = _p2CkCount(), dr = _p2G().dreams || [];
     body = '<div class="ux-list">'
-      + li('🧭', '戦略を立てる', '最終目標→最短目標→ギャップ→必要な数→ペース→戦略', 'p2Go(\'stg\')') // v685
       + li('🧮', 'ギャップ', '今と目標の差', 'p2Go(\'gap\')')
       + li('🗺', 'ロードマップ', '月ごとのフロント・マイルストーン', 'p2Go(\'rm\')')
       + li('📆', '年別目標', '', 'p2YearsOpen(\'tool\')')
@@ -18986,7 +18980,7 @@ function _pcxTile(t, on, next) {
     + '<span class="ic">' + t.ic + '</span><b>' + t.lb + '</b><div class="st">' + (t.st || '') + '</div></div>';
 }
 // ── PLAN（PC） ──
-var P2_PCX_PAR = { stg: 'tool', essay: 'tool', dream: 'tool', gap: 'tool', ck: 'tool', bb: 'tool', sim: 'tool', gapset: 'tool', gapal: 'tool', rmm: 'rm', rmt: 'rm', rmrows: 'rm', rmms: 'rm', dok: 'do' };
+var P2_PCX_PAR = { essay: 'tool', dream: 'tool', gap: 'tool', ck: 'tool', bb: 'tool', sim: 'tool', gapset: 'tool', gapal: 'tool', rmm: 'rm', rmt: 'rm', rmrows: 'rm', rmms: 'rm', dok: 'do' };
 function _p2PcxHtml() {
   _uxCss(); _ux2Css(); _pcxCss();
   var D = _p2HubData(), ym = D.ym;
@@ -36858,213 +36852,6 @@ window.addEventListener('resize', function() {
   clearTimeout(window._px3Rt);
   window._px3Rt = setTimeout(function() { try { var was = document.body.classList.contains('px3'); _px3Sync(); if (currentView === 'stats' && (was !== _px3On() || _px3On())) { _dtApplyTab(); if (_dtTab === 'trend' && _dtMode !== 'ez') renderDtTrend(); } } catch (e) {} }, 150);
 });
-
-// ════ v685: 戦略（サブメニュー）── 最終目標 → 最短目標 → ギャップ → 必要な数 → ペース → 戦略 ════
-//   ルビー候補＝目標月収÷20万（Qルビー）×2（発掘するもの・係数でフロントからは出さない）
-//   フロント＝タイトルの目安（plan.frontTable）−今の直下／BRの山はファーストボーナスのシミュレーションから
-//   ホットリスト＝フロント×1フロントあたりのリスト（個人で違う・既定3）／ST＝新しく知り合う人数＝リストの不足分
-//   LOIカウント月＝期日−3ヶ月（LOI→Q2→Q3→BR）。フロントはそれまでに出す
-var P2_STG_PG = ['最終目標', '最短目標', 'ギャップ', '必要な数', 'ペース', '戦略'];
-function _p2St() {
-  var p2 = _p2(); if (!p2.strat) p2.strat = {};
-  var s = p2.strat;
-  s.memo = s.memo || {}; s.cm = s.cm || {}; s.pace = s.pace || {}; s.fr = s.fr || {}; s.stv = s.stv || {};
-  if (!(+s.hl > 0)) s.hl = 3;
-  if (s.tg !== 'fin') s.tg = 'nx';
-  return s;
-}
-function _p2StCss() {
-  if (document.getElementById('p2StCss')) return;
-  var st = document.createElement('style'); st.id = 'p2StCss';
-  st.textContent = '.st-tg{display:flex;gap:6px;margin:10px 0 2px;max-width:560px}.st-tg span{flex:1;text-align:center;padding:9px 6px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:800;color:var(--text-mid);cursor:pointer;line-height:1.3}.st-tg span small{display:block;font-size:10.5px;font-weight:700;opacity:.8}.st-tg span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}'
-    + '.st-tb{width:100%;max-width:560px;border-collapse:separate;border-spacing:0;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;font-size:13px}.st-tb th{font-size:11px;color:var(--text-dim);font-weight:800;padding:9px 6px 6px;text-align:center}.st-tb th:first-child{text-align:left;padding-left:12px}.st-tb td{padding:9px 6px;border-top:1px solid var(--border);text-align:center;font-weight:900;font-family:Inter,sans-serif;font-size:15px}.st-tb td:first-child{text-align:left;padding-left:12px;font-family:inherit;font-size:12.5px;font-weight:800;color:var(--text-mid)}.st-tb td small{display:block;font-size:10.5px;font-weight:800;margin-top:1px}.st-tb .gp{color:var(--gold)}.st-tb .ok{color:var(--accent)}.st-tb td.n{color:var(--text-mid)}'
-    + '.st-nd{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;max-width:560px}.st-nd>div{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 12px 10px;position:relative}.st-nd .lb{font-size:12px;font-weight:800;color:var(--text-mid)}.st-nd .v{font-size:30px;font-weight:900;font-family:Inter,sans-serif;line-height:1.15;margin-top:4px}.st-nd .v small{font-size:13px;margin-left:2px}.st-nd .sb{font-size:11px;color:var(--text-dim);font-weight:700;margin-top:4px;line-height:1.5}.st-nd .sb b{color:var(--text)}.st-nd .c1{--c:var(--purple)}.st-nd .c2{--c:var(--accent)}.st-nd .c3{--c:var(--gold)}.st-nd .c4{--c:#5AD7FF}.st-nd>div{border-color:color-mix(in srgb,var(--c) 40%,var(--border))}.st-nd .v{color:var(--c)}'
-    + '.st-pc{margin-top:12px;max-width:560px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:4px 0}.st-pr{display:flex;align-items:center;gap:8px;padding:7px 12px;border-top:1px solid var(--border)}.st-pr:first-child{border-top:0}.st-pr .m{width:62px;flex:none;font-size:12.5px;font-weight:900}.st-pr .m small{display:block;font-size:10px;color:var(--text-dim);font-weight:700}.st-pr .fl{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:4px}.st-pr .fl i{font-style:normal;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:8px;background:color-mix(in srgb,var(--c,var(--accent)) 14%,transparent);color:var(--c,var(--accent));white-space:nowrap}.st-pr .cu{width:44px;flex:none;text-align:right;font-size:11px;color:var(--text-dim);font-weight:800;font-family:Inter,sans-serif}.st-pr .ux-pm{width:30px;height:30px;font-size:16px}.st-pr .nv{width:26px;text-align:center;font-weight:900;font-family:Inter,sans-serif;font-size:17px}.st-pr.loi{background:color-mix(in srgb,var(--gold) 10%,transparent)}.st-pr.dl{background:color-mix(in srgb,var(--accent) 10%,transparent)}.st-pr.after .nv,.st-pr.after .ux-pm{opacity:.35}.pcx2 .st-pr .ux-pm,.pcx .st-pr .ux-pm{display:flex!important;align-items:center;justify-content:center;cursor:pointer}'
-    + '.st-cd{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--border)}.st-cd:first-child{border-top:0}.st-cd .nm{flex:none;min-width:84px;font-weight:900;font-size:14px}.st-cd .nm small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:700}.st-cd input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px dashed var(--border);color:var(--text);font-size:13px;padding:6px 2px;font-family:inherit}.st-cd .x{flex:none;color:var(--text-dim);cursor:pointer;font-size:12px;font-weight:800;padding:4px}'
-    + '.st-pk{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-width:560px}.st-pk span{padding:7px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:800;cursor:pointer}.st-pk span small{color:var(--text-dim);font-size:10.5px;margin-left:4px}.st-pk span.on{border-color:var(--purple);color:var(--purple)}'
-    + '.st-sum{margin-top:6px;max-width:560px;border-radius:18px;padding:14px 16px;background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 20%,var(--surface)),var(--surface) 75%);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);font-size:13px;font-weight:700;line-height:1.8;color:var(--text-mid)}.st-sum h3{margin:0 0 4px;font-size:17px;font-weight:900;color:var(--text)}.st-sum b{color:var(--text);font-family:Inter,sans-serif}.st-sum em{font-style:normal;color:var(--gold);font-weight:900}'
-    + '.st-ta{width:100%;max-width:560px;box-sizing:border-box;min-height:70px;margin-top:6px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:600 13.5px/1.6 inherit;padding:10px 12px;resize:vertical;font-family:inherit}';
-  document.head.appendChild(st);
-}
-function _p2StJp(en) { return P2_TITLE_JP[en] || en || ''; }
-function _p2StDlLb(ym) { return ym ? parseInt(ym.slice(0, 4), 10) + '年' + parseInt(ym.slice(5), 10) + '月' : '—'; }
-// 目標ひとつ分（最短 or 最終）の目標・今・必要な数
-function _p2StGoal(which) {
-  var p = state.goals.plan, s = _p2St(), g = _p2Gap(), auto = _p2GapAuto(), o;
-  if (which === 'fin') o = { k: 'fin', lb: '最終目標', title: _p2TitleEn(p.title || ''), inc: p.income ? Math.round(p.income / 10000) : 0, dl: /^\d{4}-\d{2}$/.test(p.deadline || '') ? p.deadline : '', fb: 0 };
-  else { var nx = _p2Next(); o = { k: 'nx', lb: '最短目標', title: nx.title || '', inc: +nx.inc || 0, dl: nx.deadline || '', fb: +nx.fb || 0, isFinal: !!nx.isFinal }; }
-  if (!o.inc && o.title && o.title !== 'BR') o.inc = _p2IncOfTitle(o.title);
-  o.br = { t: P2_REQ[o.title] ? P2_REQ[o.title].br : null, c: auto.br };
-  o.qr = { t: o.title !== 'BR' && o.inc ? Math.ceil(o.inc / g.rates.qrYen) : null, c: auto.qr };
-  o.cand = { t: o.qr.t ? o.qr.t * g.rates.candX : null, c: auto.cand };
-  var ft = (p.frontTable || {})[_p2StJp(o.title)], fc = _glCurrentFront();
-  o.fr = { t: ft != null ? +ft : null, c: fc, src: 'タイトルの目安' };
-  if (o.title === 'BR' && o.fb > 0) { // BRの山：ファーストボーナスに必要な月◯人×4ヶ月（シミュレーション）
-    var fp = null; try { fp = _p2FbPlan(o.fb); } catch (e) {}
-    if (fp && fp.n) { o.fr = { t: fc + fp.n * 4, c: fc, src: 'シミュレーション（月' + fp.n + '人×4ヶ月）' }; }
-  }
-  var gapF = o.fr.t === null ? 0 : Math.max(0, o.fr.t - o.fr.c);
-  var ov = s.fr[which];
-  var front = (ov === '' || ov == null) ? gapF : Math.max(0, +ov || 0);
-  var ln = _p2ListN(), list = front * (+s.hl || 3), listNow = ln.n;
-  var stOv = s.stv[which];
-  var stAuto = listNow === null ? list : Math.max(0, list - listNow);
-  o.need = { cand: o.cand.t === null ? null : Math.max(0, o.cand.t - o.cand.c), front: front, frontAuto: gapF, frontManual: !(ov === '' || ov == null),
-    list: list, listNow: listNow, listSrc: ln.src, st: (stOv === '' || stOv == null) ? stAuto : Math.max(0, +stOv || 0), stAuto: stAuto, stManual: !(stOv === '' || stOv == null) };
-  // ペース：今月〜LOIカウント月（期日−3）にフロントを出す
-  var lead = g.rates.brLead || 3, now = _p2Ym(0);
-  o.loi = o.dl ? _p2YmAdd(o.dl, -lead) : '';
-  o.lead = lead;
-  // フロントを出す期間：BRの山は自分のLOI〜BRの4ヶ月、それ以外は今月〜LOIカウント月
-  o.br1 = o.title === 'BR';
-  o.w0 = o.br1 ? (o.loi > now ? o.loi : now) : now; o.w1 = o.br1 ? o.dl : o.loi;
-  o.months = o.dl ? _p2YmDiff(o.w0, o.w1) + 1 : 0;
-  return o;
-}
-// ペースの月ごとのフロント（自分で直した月はその数、ほかは残りを均等に）
-function _p2StPace(o) {
-  var s = _p2St(), pc = s.pace[o.k] || {}, now = _p2Ym(0), rows = [];
-  if (!o.dl) return { rows: rows, sum: 0, per: 0 };
-  var end = o.dl > o.loi ? o.dl : o.loi, n = Math.max(0, o.months), F = o.need.front;
-  var fixed = 0, free = 0, m;
-  for (m = o.w0; m <= o.w1; m = _p2YmAdd(m, 1)) { if (pc[m] !== undefined && pc[m] !== '') fixed += +pc[m] || 0; else free++; }
-  var rest = Math.max(0, F - fixed), base = free ? Math.floor(rest / free) : 0, extra = free ? rest - base * free : 0, sum = 0, guard = 0;
-  var rm = _p2Rm(), ms = (rm.ms || []);
-  for (m = now; m <= end && guard < 60; m = _p2YmAdd(m, 1), guard++) {
-    var before = m >= o.w0 && m <= o.w1, man = pc[m] !== undefined && pc[m] !== '', v = 0;
-    if (before) { if (man) v = +pc[m] || 0; else { v = base + (extra > 0 ? 1 : 0); if (extra > 0) extra--; } }
-    sum += v;
-    rows.push({ ym: m, v: v, man: man, before: before, cum: sum, loi: m === o.loi, dl: m === o.dl,
-      ms: ms.filter(function(x) { return x.ym === m || (x.ym2 && x.ym <= m && x.ym2 >= m); }) });
-  }
-  return { rows: rows, sum: sum, per: n > 0 ? Math.ceil(F / n) : 0 };
-}
-// フロントBRの足りない本数 → LOIカウント月までに何人スタートさせるか
-function _p2StBrLine(o) {
-  if (o.br1 || o.br.t === null || o.br.t - o.br.c <= 0 || !o.loi) return '';
-  var n = o.br.t - o.br.c;
-  return '<br>🏅 フロントBR あと <b>' + n + '本</b>：<em>' + _p2StDlLb(o.loi) + '</em> までに <b>' + n + '人</b>のLOIカウントをスタート';
-}
-function p2StTg(t) { _p2St().tg = t === 'fin' ? 'fin' : 'nx'; saveGoals(); renderPlan(); }
-function p2StSet(k, which, v) { var s = _p2St(); s[k][which] = (v === '' || v == null) ? '' : Math.max(0, parseInt(v, 10) || 0); saveGoals(); renderPlan(); }
-function p2StStep(k, which, d) { var o = _p2StGoal(which), cur = k === 'fr' ? o.need.front : o.need.st; p2StSet(k, which, Math.max(0, cur + d)); }
-function p2StHl(d, v) { var s = _p2St(); s.hl = Math.max(1, v !== undefined ? (parseInt(v, 10) || 1) : (+s.hl || 3) + d); saveGoals(); renderPlan(); }
-function p2StPace(which, ym, d) { var s = _p2St(), o = _p2StGoal(which), P = _p2StPace(o), r = P.rows.filter(function(x) { return x.ym === ym; })[0]; if (!s.pace[which]) s.pace[which] = {}; s.pace[which][ym] = Math.max(0, (r ? r.v : 0) + d); saveGoals(); renderPlan(); }
-function p2StPaceReset(which) { _p2St().pace[which] = {}; saveGoals(); renderPlan(); toast('均等に戻しました'); }
-function p2StToRm(which) {
-  var o = _p2StGoal(which), P = _p2StPace(o), rm = _p2Rm(), n = 0, sk = 0;
-  if (!rm.rows.front) rm.rows.front = {};
-  P.rows.forEach(function(r) { if (!r.before) return; if (_p2FrontIdeal(r.ym) !== null) { sk++; return; } rm.rows.front[r.ym] = r.v; _p2M(r.ym).front = r.v; n++; });
-  saveGoals(); renderPlan(); toast('📤 ロードマップに' + n + 'ヶ月分入れました' + (sk ? '（理想MAPで決めた' + sk + 'ヶ月はそのまま）' : ''));
-}
-function p2StMemo(k, v) { _p2St().memo[k] = String(v || '').slice(0, 1000); saveGoals(); }
-function p2StCm(mid, v) { _p2St().cm[mid] = String(v || '').slice(0, 200); saveGoals(); }
-function p2StCand(mid, on) {
-  var m = (state.members || []).filter(function(x) { return x.id === mid; })[0]; if (!m) return;
-  if (viewingOwnerUid && !state.isEditor) { toast('このMAPは編集できません'); return; }
-  m.priority = on ? '高' : ''; autoSave(); renderPlan();
-}
-var _p2StPk = false, _p2StQ = '';
-function p2StPk() { _p2StPk = !_p2StPk; renderPlan(); }
-function p2StQ(v) { _p2StQ = String(v || ''); var b = document.getElementById('p2StPkL'); if (b) b.innerHTML = _p2StPkList(); }
-function _p2StPkList() {
-  var root = _p2OwnRoot(), q = _p2StQ.trim();
-  var ms = (state.members || []).filter(function(m) { return !m.deleted && (!root || m.id !== root.id) && (m.title || '').trim() !== 'OUT' && m.priority !== '高' && (!q || _uxName(m).indexOf(q) >= 0); });
-  ms.sort(function(a, b) { return (isBROrAbove(b.title) ? 1 : 0) - (isBROrAbove(a.title) ? 1 : 0) || (+b.ptCurrent || 0) - (+a.ptCurrent || 0); });
-  return ms.slice(0, 40).map(function(m) { return '<span onclick="p2StCand(\'' + m.id + '\',1)">＋ ' + evEsc(_uxName(m)) + '<small>' + evEsc(m.title || '') + '</small></span>'; }).join('') || '<span style="cursor:default;color:var(--text-dim)">いません</span>';
-}
-function _p2StTgHtml() {
-  var s = _p2St(), a = _p2StGoal('nx'), b = _p2StGoal('fin');
-  var c = function(o) { return '<span class="' + (s.tg === o.k ? 'on' : '') + '" onclick="p2StTg(\'' + o.k + '\')">' + o.lb + '<small>' + evEsc(o.title || '—') + '・' + _p2StDlLb(o.dl) + '</small></span>'; };
-  return '<div class="st-tg">' + c(a) + c(b) + '</div>';
-}
-function _p2StHtml(i) {
-  _p2StCss(); _p2DoCss2(); _sCss(); _p2YrsCss();
-  if (i === 3 || i === 5) { try { _p2AlLoad(); } catch (eAl) {} } // ホットリストの人数（ATTACK LIST）
-  var step = function(t) { return '<div class="ux-step">' + (i + 1) + ' / ' + P2_STG_PG.length + '　' + P2_STG_PG[i] + '</div>' + (t ? '<h2 class="ux-h2">' + t + '</h2>' : ''); };
-  var s = _p2St(), p = state.goals.plan;
-  if (i === 0) { // 最終目標：月収・タイトル・期日を1画面で
-    var inc = p.income ? Math.round(p.income / 10000) : '', dl = (p.deadline && /^\d{4}-\d{2}$/.test(p.deadline)) ? p.deadline : '';
-    return step('最終目標') + '<div class="ux-sub">いちばん先のゴール。月収を決めるとタイトルは自動で入ります</div>'
-      + '<div class="ux-lb2">月収</div>' + _uxStepG(inc, 'p2GoalIncStep(-1)', 'p2GoalIncStep(1)', 'p2GoalInc(this.value)', '万円/月', 100)
-      + '<div class="ux-lb2">タイトル' + (_p2().titleManual ? '<span class="ux-lk" style="display:inline;margin:0 0 0 8px;padding:0" onclick="p2GoalTitle(\'\')">月収に合わせる ›</span>' : '') + '</div>'
-      + '<div class="ux-ex" style="margin-top:6px">' + P2_TITLES_JP.map(function(t) { return '<span class="' + (p.title === t ? 'on' : '') + '" onclick="p2GoalTitle(\'' + t + '\')">' + _p2TitleEn(t) + '</span>'; }).join('') + '</div>'
-      + '<div class="ux-lb2">いつまでに</div><div class="ux-stp"><span class="ux-pm" onclick="p2GoalDlStep(-1)">−</span><div class="ux-sv' + (dl ? ' ok' : '') + '" style="font-size:26px;font-weight:900;font-family:Inter,sans-serif">' + (dl ? parseInt(dl.slice(0, 4), 10) + '<small>年</small>' + parseInt(dl.slice(5), 10) + '<small>月</small>' : '<small>まだ</small>') + '</div><span class="ux-pm" onclick="p2GoalDlStep(1)">＋</span></div>'
-      + '<div class="ux-chips">' + [12, 24, 36].map(function(n) { var y = _p2Ym(n); return '<span class="' + (dl === y ? 'on' : '') + '" onclick="p2GoalDl(\'' + y + '\')">' + (n / 12) + '年後<small>' + y.replace('-', '/') + '</small></span>'; }).join('') + '</div>'
-      + (dl ? '<div class="ux-hint">あと <b>' + _p2YmDiff(_p2Ym(0), dl) + 'ヶ月</b></div>' : '');
-  }
-  if (i === 1) { // 最短目標＝次の山（目標の「次の山」と同じもの）
-    var h = _p2GoalPageHtml(3).replace(/<h2 class="ux-h2"([^>]*)>次の山/, '<div class="ux-step">2 / ' + P2_STG_PG.length + '　最短目標</div><h2 class="ux-h2"$1>最短目標').replace('最終ゴールが次の山です', '最終目標がそのまま最短目標です').replace('最終ゴールを見る ›', '最終目標を見る ›');
-    return h + '<div class="ux-sub" style="margin-top:10px">最終目標の手前で、まず届かせる山（1年以内が目安）</div>';
-  }
-  var o = _p2StGoal(s.tg), A = _p2StGoal('nx'), F = _p2StGoal('fin'), f = function(v) { return v === null || v === undefined ? '—' : (+v).toLocaleString(); };
-  if (i === 2) { // ギャップ：今 → 最短目標 → 最終目標
-    var cell = function(it) { if (it.t === null) return '<td class="n">—</td>'; var g = it.t - it.c; return '<td>' + f(it.t) + '<small class="' + (g > 0 ? 'gp' : 'ok') + '">' + (g > 0 ? 'あと' + g : '達成✓') + '</small></td>'; };
-    var curInc = 0; try { curInc = Math.round(commCalc(state.members || []).total / 10000); } catch (e) {}
-    var rows = [
-      ['タイトル', evEsc(_p2TitleEn(_p2CurTitle()) || '—'), '<td>' + evEsc(A.title || '—') + '</td>', '<td>' + evEsc(F.title || '—') + '</td>'],
-      ['月収（万円）', f(curInc) + '<small style="color:var(--text-dim)">見込み</small>', A.title === 'BR' ? '<td>FB ' + Math.round((A.fb || 0) / 10000) + '<small style="color:var(--text-dim)">ファーストボーナス</small></td>' : '<td>' + f(A.inc) + '</td>', '<td>' + f(F.inc) + '</td>'],
-      ['フロントBR', f(A.br.c), cell(A.br), cell(F.br)],
-      ['フロント（直下）', f(A.fr.c), cell(A.fr), cell(F.fr)],
-      ['ルビー（Qルビー）', f(A.qr.c), cell(A.qr), cell(F.qr)],
-      ['ルビー候補', f(A.cand.c), cell(A.cand), cell(F.cand)]
-    ];
-    return step('今から目標までのギャップ') + '<div class="ux-sub">今の数はMAPから自動。ルビー候補＝優先度「高」の人</div>'
-      + '<table class="st-tb"><tr><th></th><th>今</th><th>最短目標<br>' + _p2StDlLb(A.dl) + '</th><th>最終目標<br>' + _p2StDlLb(F.dl) + '</th></tr>'
-      + rows.map(function(r) { return '<tr><td>' + r[0] + '</td><td class="n">' + r[1] + '</td>' + r[2] + r[3] + '</tr>'; }).join('') + '</table>'
-      + '<div class="ux-hint">ルビー＝目標月収÷' + _p2Gap().rates.qrYen + '万円、ルビー候補＝その' + _p2Gap().rates.candX + '倍。フロントはタイトルの目安（BRの山はファーストボーナスのシミュレーション）。<span class="ux-lk" style="display:inline;margin:0;padding:0" onclick="p2Go(\'gapset\')">単価・倍率を直す ›</span></div>';
-  }
-  if (i === 3) { // 必要な数
-    var N = o.need, ls = N.listNow === null ? (N.listSrc === 'loading' ? '読み込み中' : '未連携') : N.listNow + '人';
-    return step('必要な数') + _p2StTgHtml()
-      + '<div class="st-nd">'
-      + '<div class="c1"><div class="lb">💎 ルビー候補</div><div class="v">' + (N.cand === null ? '—' : N.cand) + '<small>人 発掘</small></div><div class="sb">目標 <b>' + f(o.cand.t) + '</b>・今 <b>' + o.cand.c + '</b><br>フロントを6人ぐらいすぐ出せそうな人。ダウンライン全体から見つける</div></div>'
-      + '<div class="c2"><div class="lb">👥 フロント</div><div class="v">' + N.front + '<small>人</small></div><div class="sb">' + evEsc(o.fr.src) + (o.fr.t === null ? '' : '：' + o.fr.t + '人−今' + o.fr.c + '人') + (N.frontManual ? '<br><b style="color:var(--accent)">自分で決めた数</b>' : '') + '</div></div>'
-      + '<div class="c3"><div class="lb">📋 ホットリスト</div><div class="v">' + N.list + '<small>人</small></div><div class="sb">フロント×' + s.hl + '人・今 <b>' + ls + '</b>' + (N.listNow !== null ? (N.listNow >= N.list ? '<br><b style="color:var(--accent)">足りています✓</b>' : '<br>あと <b>' + (N.list - N.listNow) + '人</b>') : '') + '</div></div>'
-      + '<div class="c4"><div class="lb">🤝 ST（知り合う人数）</div><div class="v">' + N.st + '<small>人</small></div><div class="sb">' + (N.stManual ? '<b style="color:var(--accent)">自分で決めた数</b>' : 'リストの足りない分を新しい出会いで') + '</div></div>'
-      + '</div>'
-      + '<div class="ux-box">' + _uxRowStep('フロント', '必要な人数（自分で直せる）', N.frontManual ? N.front : '', N.frontAuto, 'p2StStep(\'fr\',\'' + o.k + '\',-1)', 'p2StStep(\'fr\',\'' + o.k + '\',1)', 'p2StSet(\'fr\',\'' + o.k + '\',this.value)')
-      + _uxRowStep('1フロントに必要なリスト', '自分の場合（人によって違う）', s.hl, 3, 'p2StHl(-1)', 'p2StHl(1)', 'p2StHl(0,this.value)')
-      + _uxRowStep('ST（知り合う人数）', 'リストの不足分（自分で直せる）', N.stManual ? N.st : '', N.stAuto, 'p2StStep(\'stv\',\'' + o.k + '\',-1)', 'p2StStep(\'stv\',\'' + o.k + '\',1)', 'p2StSet(\'stv\',\'' + o.k + '\',this.value)') + '</div>'
-      + ((N.frontManual || N.stManual) ? '<span class="ux-lk" onclick="p2StSet(\'fr\',\'' + o.k + '\',\'\');p2StSet(\'stv\',\'' + o.k + '\',\'\')">自動の数に戻す ›</span>' : '');
-  }
-  if (i === 4) { // ペース：マイルストーンと照らして、月に何人・いつLOIを揃えるか
-    if (!o.dl) return step('ペース') + _p2StTgHtml() + '<div class="ux-empty">' + o.lb + 'の期日がまだです<br><span class="ux-lk" onclick="p2PgSub(' + (o.k === 'fin' ? 0 : 1) + ')">期日を決める ›</span></div>';
-    var P = _p2StPace(o), late = o.months <= 0;
-    var hd = '<div class="st-sum"><h3>' + evEsc(o.title || '') + '・' + _p2StDlLb(o.dl) + '</h3>'
-      + (late ? (o.br1 ? 'BRの月（' + _p2StDlLb(o.dl) + '）を過ぎています。最短目標の期日を直してください' : 'LOIのカウント月（' + _p2StDlLb(o.loi) + '）を過ぎています。期日をのばすか、今いるメンバーで揃える作戦に')
-        : !o.need.front ? 'フロントの人数は届いています ✓ 今いるフロントからBR・ルビー候補を育てる'
-        : (o.br1 ? 'フロント <b>' + o.need.front + '人</b> を自分のLOI〜BRの <em>' + _p2StDlLb(o.w0) + '〜' + _p2StDlLb(o.w1) + '</em> に出す → <b>月' + P.per + '人</b>ペース'
-          : 'フロント <b>' + o.need.front + '人</b> を <em>' + _p2StDlLb(o.loi) + '</em> までに出す → <b>月' + P.per + '人</b>ペース<br>LOIのカウントを揃える月：<em>' + _p2StDlLb(o.loi) + '</em>（LOI→Q2→Q3→BR で' + o.lead + 'ヶ月）')
-          + (P.sum < o.need.front ? '<br><span style="color:var(--gold)">⚠ 月ごとの合計が ' + P.sum + '人（あと' + (o.need.front - P.sum) + '人）</span>' : '')) + _p2StBrLine(o) + '</div>';
-    var rows2 = P.rows.map(function(r) {
-      var fl = (r.ms || []).map(function(x) { return '<i style="--c:' + (x.color || 'var(--accent)') + '">' + (x.emoji ? evEsc(x.emoji) : '🚩') + ' ' + evEsc(x.t || '') + '</i>'; }).join('')
-        + (r.loi ? '<i style="--c:var(--gold)">' + (o.br1 ? '自分のLOI' : 'LOIを揃える') + '</i>' : '') + (r.dl ? '<i style="--c:var(--accent)">⛰ ' + evEsc(o.title || '') + '</i>' : '')
-        + (o.k === 'fin' && A.dl === r.ym && !r.dl ? '<i style="--c:var(--purple)">最短目標 ' + evEsc(A.title || '') + '</i>' : '');
-      var ctl = r.before ? '<span class="ux-pm" onclick="p2StPace(\'' + o.k + '\',\'' + r.ym + '\',-1)">−</span><span class="nv"' + (r.man ? ' style="color:var(--accent)"' : '') + '>' + r.v + '</span><span class="ux-pm" onclick="p2StPace(\'' + o.k + '\',\'' + r.ym + '\',1)">＋</span>' : '<span class="nv" style="opacity:.35">—</span>';
-      return '<div class="st-pr' + (r.loi ? ' loi' : '') + (r.dl ? ' dl' : '') + (r.before ? '' : ' after') + '"><span class="m">' + parseInt(r.ym.slice(5), 10) + '月<small>' + r.ym.slice(0, 4) + '</small></span><span class="fl">' + fl + '</span>' + ctl + '<span class="cu">' + (r.before ? '計' + r.cum : '') + '</span></div>';
-    }).join('');
-    return step('ペース') + _p2StTgHtml() + hd + (late ? '' : '<div class="st-pc">' + rows2 + '</div>'
-      + '<div style="display:flex;gap:14px;flex-wrap:wrap"><span class="ux-lk" onclick="p2StToRm(\'' + o.k + '\')">📤 この数をロードマップに入れる ›</span>' + (Object.keys(s.pace[o.k] || {}).length ? '<span class="ux-lk" onclick="p2StPaceReset(\'' + o.k + '\')">均等に戻す</span>' : '') + '<span class="ux-lk" onclick="p2RmMsPg(\'' + _p2Ym(0) + '\')">🚩 マイルストーンを足す ›</span></div>');
-  }
-  // 戦略：どうやって達成するか
-  var N2 = o.need, P2 = o.dl ? _p2StPace(o) : null;
-  var cands = (state.members || []).filter(function(m) { return !m.deleted && m.priority === '高'; });
-  var sum = '<div class="st-sum"><h3>' + evEsc(o.title || '—') + ' を ' + _p2StDlLb(o.dl) + ' までに</h3>'
-    + '💎 ルビー候補 あと <b>' + (N2.cand === null ? '—' : N2.cand) + '人</b> 発掘<br>'
-    + (!N2.front ? '👥 フロントの人数は届いています ✓' : '👥 フロント <b>' + N2.front + '人</b>') + (N2.front && P2 && o.months > 0 ? '（月' + P2.per + '人' + (o.br1 ? '' : '・<em>' + _p2StDlLb(o.loi) + '</em>にLOIを揃える') + '）' : '') + '<br>'
-    + '📋 ホットリスト <b>' + N2.list + '人</b>・🤝 ST <b>' + N2.st + '人</b>' + _p2StBrLine(o) + '</div>';
-  var cl = cands.map(function(m) { return '<div class="st-cd"><span class="nm">' + evEsc(_uxName(m)) + '<small>' + evEsc(m.title || '') + ((+m.ptCurrent) ? '・' + (+m.ptCurrent).toLocaleString() + 'P' : '') + '</small></span><input placeholder="どう関わる？（例：今月FTを2回）" value="' + evEsc(s.cm[m.id] || '') + '" onchange="p2StCm(\'' + m.id + '\',this.value)"><span class="x" onclick="p2StCand(\'' + m.id + '\',0)" title="候補から外す">外す</span></div>'; }).join('');
-  var memo = function(k, lb, ph) { return '<div class="ux-sec">' + lb + '</div><textarea class="st-ta" placeholder="' + ph + '" onchange="p2StMemo(\'' + k + '\',this.value)">' + evEsc(s.memo[k] || '') + '</textarea>'; };
-  return step('戦略') + _p2StTgHtml() + sum
-    + '<div class="ux-sec">💎 ルビー候補（' + cands.length + '人' + (o.cand.t ? ' / 目標' + o.cand.t + '人' : '') + '）</div>'
-    + (cl ? '<div class="ux-box" style="padding:0">' + cl + '</div>' : '<div class="ux-empty" style="margin-top:8px">まだいません。下から選ぶか、MAPで優先度を「高」に</div>')
-    + '<span class="ux-lk" onclick="p2StPk()">' + (_p2StPk ? '▲ 閉じる' : '＋ 候補を選ぶ（MAPから）') + '</span>'
-    + (_p2StPk ? '<input class="st-ta" style="min-height:0;height:40px" placeholder="名前でさがす" value="' + evEsc(_p2StQ) + '" oninput="p2StQ(this.value)"><div class="st-pk" id="p2StPkL">' + _p2StPkList() + '</div>' : '')
-    + memo('cand', '💎 ルビー候補の発掘・育て方', '例：BR以上の人と毎週MTG／ダウンの動きが速い人を探す')
-    + memo('front', '👥 フロントの出し方', '例：月' + (P2 && P2.per ? P2.per : 2) + '人。DLRとFTを月初に入れる')
-    + memo('list', '📋 リスト・ST（新しい出会い）', '例：週に2人新しく知り合う。コミュニティに顔を出す');
-}
 
 // ── START ──
 try {
