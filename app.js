@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v672';
+var APP_JS_VERSION = 'v673';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v672';
+  var DATA_VERSION = 'v673';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5355,6 +5355,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v673', d:'2026-10-07', items:['PLAN › 理想（スマホ）：記入済みの「あなたの理想の生活」を上、質問を下にしました。一覧の✎を押すと、その分野の質問まで送ります'] },
   { v:'v672', d:'2026-10-07', items:['MAP・PLAN・分析の上のボタンを少し下げました（時計のすぐ下は押しても反応しにくいため）','分析の「表示チーム」を1行の大きめのボタンに（2行に折り返して押しにくかったのを修正。多い時は横にスクロール）'] },
   { v:'v671', d:'2026-10-07', items:['ToDoの「完了タスク」「ゴミ箱」などから戻れなくなっていたのを修正：左上に「‹」（ToDoへ戻る）を出しました。下の「ToDo」を押しても一覧に戻ります'] },
   { v:'v670', d:'2026-10-07', items:['プロフィールで名前を変えた時、ATTACK LIST・GOAL SETTING の表示名も変わるようにしました（これまでは古い名前のままでした）','ATTACK LIST・GOAL SETTING にも個人情報保護方針・利用規約の同意画面を入れました（同意はアプリ共通。どれか1つで同意すれば、ほかでは出ません）'] },
@@ -19130,7 +19131,12 @@ function p2IdealCat(k) {
   var ix = -1; for (var i = 0; i < P2GW_Q.length; i++) if (P2GW_Q[i].id === id) ix = i;
   if (ix < 0) return;
   _p2GwStep = ix; _p2GwPh = 1;
-  if (_p2Pg === 'ideal' && !_p2PgI && document.getElementById('p2GwWrap')) { _p2GwRender(); return; }
+  if (_p2Pg === 'ideal' && !_p2PgI && document.getElementById('p2GwWrap')) {
+    _p2GwRender();
+    // v673: スマホは記入済み（理想の生活）が上・質問が下なので、押した分野の質問まで送る
+    try { if (!isPCMode()) document.getElementById('p2GwWrap').scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (eSc) {}
+    return;
+  }
   p2Go('ideal', 0);
 }
 // ①が終わった：理想の生活の答えを記録（目標月収はここで聞く）
@@ -19182,7 +19188,7 @@ function _p2IdealSumHtml() {
 function _p2IdealCss() {
   if (document.getElementById('p2IdCss')) return;
   var st = document.createElement('style'); st.id = 'p2IdCss';
-  st.textContent = ".p2id{display:flex;flex-direction:column;gap:14px}.p2id-q .gw2-body{min-height:0}.p2id-q .gw2-foot{position:static}"
+  st.textContent = ".p2id{display:flex;flex-direction:column;gap:14px}.p2id>.p2id-l{order:-1}.pcx .p2id>.p2id-l,.pcx2 .p2id>.p2id-l{order:0}.p2id-q .gw2-body{min-height:0}.p2id-q .gw2-foot{position:static}"
     + ".pcx .p2id,.pcx2 .p2id{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}.pcx .p2id-q,.pcx2 .p2id-q{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 8px}"
     + ".p2id-l{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:12px 14px}.p2id-h{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);margin-bottom:6px}.p2id-h b{margin-left:auto;font-size:22px;color:var(--gold);font-family:Inter,sans-serif}.p2id-h b small{font-size:11px}"
     + ".p2id-r{display:flex;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid var(--border);cursor:pointer;font-weight:800;font-size:14px}.p2id-r .lb{flex:1;min-width:0}.p2id-r .lb small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"
