@@ -54,9 +54,13 @@ const DEMOS = {
   set1: { role: R.setup, title: '① 名簿を登録する', prep: p => pcPrep(p), run: async h => {
     await h.cap('<b>「名簿」</b> タブを開きます'); await h.tap('nav button[data-pane="pRoster"]');
     await h.cap('<b>「CSV取込」</b> で まとめて登録できます', 2000); await h.tap('#btnCsvIn', 900);
-    await h.cap('1行1名で <b>番号,氏名,系列</b>。エクセルから貼り付けてOK', 1600);
-    await h.type('#csvText', '201,伊藤 学,伊藤BD\n202,中村 ゆい,伊藤BD', 600);
-    await h.tap('#csvGo', 1500); await h.closeModal();
+    await h.p.evaluate(() => { const u = window.__stubStore['checkinUnions/ANTARES']; if (u) u.noPrefix = 'AN'; });   // 有効化のあとに頭文字を設定
+    await h.cap('<b>「📄 テンプレート」</b> の列で作って、エクセルから貼り付け or ファイルを選ぶ', 2600);
+    await h.type('#csvText', '番号,姓,名,系列\n,伊藤,学,伊藤BD\n,中村,ゆい,伊藤BD', 600);
+    await h.cap('<b>番号が空欄なら自動で発番</b>。「確認する」を押すと…', 2000); await h.tap('#csvGo', 1500);
+    await h.cap('取り込む前に <b>確認画面</b>。他のユニオンと番号が重なっていないかも自動でチェック', 3400);
+    await h.tap('#imGo', 1500);
+    await h.cap('取り込み完了！ 発番した人の一覧はCSVで保存できます', 2600); await h.closeModal();
     await h.cap('1人ずつなら <b>「＋ メンバー追加」</b>', 1800); await h.tap('#btnAddMember', 800);
     await h.cap('名前と系列を入れて保存。<b>番号は自動</b> で振られます', 1500); await h.type('#mfName', '小林 あおい', 300); await h.type('#mfGroup', '伊藤BD', 300);
     await h.tap('#mfSave', 1200); await h.closeModal();
@@ -65,7 +69,8 @@ const DEMOS = {
   set2: { role: R.setup, title: '② 会員証を配る', prep: p => pcPrep(p).then(() => p.click('nav button[data-pane="pRoster"]')), run: async h => {
     await h.cap('<b>「会員証一括発行」</b> で まだの人に まとめて発行', 2000); await h.tap('#btnCardBulk', 900); await h.tap('#cbGo', 1800); await h.closeModal();
     await h.cap('いちばんラクなのは <b>「受け取りリンク」</b>', 2000); await h.tap('#btnReceiveLink', 900);
-    await h.cap('この <b>共通URLをLINEグループに貼るだけ</b>！<br>みんなが自分の番号を入れて受け取れます', 3800); await h.tap('#rlClose', 500);
+    await h.cap('この <b>共通URLをLINEグループに貼るだけ</b>！<br>みんなが <b>番号とお名前（姓）</b> を入れて受け取れます', 3800); await h.tap('#rlClose', 500);
+    await h.cap('番号を知らない人（新しく発番したユニオン）には、会場でQRを読んでもらうか、個別にLINEで', 3200);
     await h.cap('その場で渡すなら 名簿の <b>「会員証」</b> ボタン', 2000); await h.tap('#rosterBody button[data-a="card"]', 1200);
     await h.cap('QRを <b>本人のスマホで読み取って</b> もらえば完了！', 3200); await h.closeModal();
   } },

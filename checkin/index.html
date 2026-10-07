@@ -823,16 +823,17 @@ body.practice .topbar{top:var(--pxh,36px);}
 <div id="vReceive" class="hide">
   <div class="gate">
     <h1>スマホ会員証の受け取り</h1>
-    <p class="s">お手持ちのQRカード（紙カード）の会員番号を入力すると、あなた専用のスマホ会員証が開きます。</p>
+    <p class="s">会員番号と、お名前（姓）を入力すると、あなた専用のスマホ会員証が開きます。</p>
     <label for="rvNo">会員番号</label>
-    <input type="text" id="rvNo" autocapitalize="characters" autocorrect="off" autocomplete="off" placeholder="例: 412211 / RV0012" style="text-align:center;font-size:20px;letter-spacing:.12em;">
+    <input type="text" id="rvNo" autocapitalize="characters" autocorrect="off" autocomplete="off" placeholder="例: RV0012 / 412211" style="text-align:center;font-size:20px;letter-spacing:.12em;">
+    <label for="rvName">お名前（姓だけでOK）</label>
+    <input type="text" id="rvName" autocorrect="off" autocomplete="family-name" placeholder="例: 山田" style="text-align:center;font-size:18px;">
     <button class="primary" id="rvGo" style="width:100%;margin-top:12px;padding:13px;font-size:16px;">会員証を開く</button>
     <p class="mc-err" id="rvErr"></p>
     <div class="notice" style="text-align:left;margin-top:16px;">
-      カードの番号が「<b>REVE ○○</b>」の方へ：システム化にともない、新しい番号
-      「<b>RV00○○</b>」に変わりました（例: REVE 12 → <b>RV0012</b>）。<br>
-      そのまま「REVE 12」と入力しても自動で新しい番号に変換されます。<br>
-      <b>数字のみの番号の方は今までどおり</b>です。
+      ・会員番号は、QRカード（紙カード）や、ユニオンの管理者からのお知らせに書かれています。<br>
+      ・お名前は、名簿に登録されている漢字で入力してください（姓だけ、またはフルネーム）。<br>
+      ・「REVE 12」のような旧表記の番号も、自動で新しい番号（RV0012）に変換されます。
     </div>
     <p style="font-size:12.5px;color:var(--sub);margin-top:14px;line-height:1.8;">開いたら、ブラウザの「ホーム画面に追加」をしておくと次回すぐ使えます。<br>番号がわからない場合は受付にお問い合わせください。</p>
   </div>
@@ -981,6 +982,88 @@ function randToken(){
   return s;
 }
 function cardUrl(token){ return location.href.split('#')[0] + '#c=' + token; }
+/* 🔑 会員証の受け取りキー（番号＋お名前で照合）:
+   受け取りリンクで「番号だけ」入れれば誰の会員証でも開けてしまう（連番だと推測できる）のを防ぐため、
+   cardKeys/{sha256(番号|お名前)} = { t: 会員証トークン } を作り、番号とお名前（姓 or フルネーム）の両方が合う時だけ開く。
+   お名前は NFKC・空白除去・小文字化で比較（全角/半角・スペースの違いは無視）。
+   姓と名の間にスペースが無い名前は、先頭2〜4文字を「姓の候補」として登録する */
+function sha256hex(str){
+  var s = unescape(encodeURIComponent(String(str))), rr = function(v, n){ return (v >>> n) | (v << (32 - n)); };
+  var mp = Math.pow, maxWord = mp(2, 32), i, j, out = '', words = [], bitLen = s.length * 8;
+  var hash = [], k = [], pc = 0, comp = {};
+  for(var c = 2; pc < 64; c++){
+    if(!comp[c]){
+      for(i = 0; i < 313; i += c) comp[i] = c;
+      hash[pc] = (mp(c, 0.5) * maxWord) | 0;
+      k[pc++] = (mp(c, 1 / 3) * maxWord) | 0;
+    }
+  }
+  s += '\x80';
+  while(s.length % 64 - 56) s += '\x00';
+  for(i = 0; i < s.length; i++){ j = s.charCodeAt(i); words[i >> 2] |= j << ((3 - i) % 4) * 8; }
+  words[words.length] = (bitLen / maxWord) | 0;
+  words[words.length] = bitLen;
+  for(j = 0; j < words.length;){
+    var w = words.slice(j, j += 16), old = hash;
+    hash = hash.slice(0, 8);
+    for(i = 0; i < 64; i++){
+      var w15 = w[i - 15], w2 = w[i - 2], a = hash[0], e = hash[4];
+      var t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i]
+        + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+      var t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(t1 + t2) | 0].concat(hash);
+      hash[4] = (hash[4] + t1) | 0;
+    }
+    for(i = 0; i < 8; i++) hash[i] = (hash[i] + old[i]) | 0;
+  }
+  for(i = 0; i < 8; i++) for(j = 3; j + 1; j--){ var b = (hash[i] >> (j * 8)) & 255; out += (b < 16 ? '0' : '') + b.toString(16); }
+  return out;
+}
+function ckClaimNorm(s){
+  s = String(s || '');
+  try{ s = s.normalize('NFKC'); }catch(e){}
+  return s.replace(/[\s　・･]/g, '').toLowerCase();
+}
+// 照合に使うお名前の候補（フルネーム＋姓）
+function ckClaimNames(name){
+  var raw = String(name || '');
+  try{ raw = raw.normalize('NFKC'); }catch(e){}
+  var parts = raw.trim().split(/[\s　]+/).filter(function(x){ return x; });
+  var full = ckClaimNorm(raw), out = [];
+  if(!full) return out;
+  out.push(full);
+  if(parts.length > 1) out.push(ckClaimNorm(parts[0]));
+  else for(var n = 2; n <= Math.min(4, full.length - 1); n++) out.push(full.slice(0, n));
+  return out.filter(function(x, i){ return x && out.indexOf(x) === i; });
+}
+function ckNormNo(no){ return String(no || '').toUpperCase(); }
+function ckClaimId(no, nm){ return sha256hex('bci1|' + ckNormNo(no) + '|' + nm); }
+function ckClaimIds(no, name){ return ckClaimNames(name).map(function(x){ return ckClaimId(no, x); }); }
+// バッチに受け取りキーを追加／削除（発行・再発行・無効化・名前変更で使う）
+function ckClaimSet(batch, no, name, token){
+  ckClaimIds(no, name).forEach(function(id){ batch.set(db.collection('cardKeys').doc(id), { t: token, no: String(no) }); });
+}
+function ckClaimDel(batch, no, name){
+  ckClaimIds(no, name).forEach(function(id){ batch.delete(db.collection('cardKeys').doc(id)); });
+}
+// 名簿を開いた管理者の端末で、受け取りキーが未作成・名前変更後の人の分を作り直す（既存会員の移行も兼ねる）
+function ckClaimSync(list, un){
+  if(!canEditUnion(un)) return;
+  var need = list.filter(function(m){ return m.cardToken && !ckMemberOff(m) && m.claimName !== (m.name || ''); });
+  if(!need.length) return;
+  var i = 0;
+  (function next(){
+    if(i >= need.length) return;
+    var batch = db.batch(), end = Math.min(i + 60, need.length), part = need.slice(i, end);
+    part.forEach(function(m){
+      if(m.claimName && m.claimName !== m.name) ckClaimDel(batch, m.no, m.claimName);
+      ckClaimSet(batch, m.no, m.name, m.cardToken);
+      batch.set(db.collection('checkinMembers').doc(m.no), { claimName: m.name || '' }, { merge: true });
+    });
+    i = end;
+    batch.commit().then(function(){ part.forEach(function(m){ m.claimName = m.name || ''; }); next(); }).catch(function(){});   // ルール未反映でも名簿表示は止めない
+  })();
+}
 /* 🎓 研修生のチュートリアル項目。main=メイン3項目（進捗の分母）。
    internal=内部管理項目: 記録されるまで会員証には表示しない */
 var TR_ITEMS = [
@@ -1192,8 +1275,13 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v29';
+var APP_VER = 'v30';
 var CHANGELOG = [
+  { v: 'v30', d: '2026/10/07', items: [
+    '名簿の取込を一新: テンプレート（番号・姓・名・ふりがな・系列・性別・グレード）、ファイルの読み込み、取り込む前の確認画面。番号が空欄の人は自動で発番します',
+    '番号の重複対策: 他のユニオンと同じ番号は上書きせず、確認画面で知らせます（新しい番号で取り込むこともできます）。ユニオンの「番号の頭文字」は必須・重複不可になりました',
+    '会員証の受け取りリンク: 会員番号に加えてお名前（姓）の入力が必要になりました（番号だけでは他の人の会員証が開けないように）'
+  ] },
   { v: 'v29', d: '2026/10/07', items: [
     '📝 研修生の宿題「目標設定」: PAを受講済みにすると、研修生の会員証に宿題が出ます（NAVIGATORの目標設定「理想の生活」と同じ質問）。提出するとPAの担当者に届きます',
     '研修受講カード: 届いた宿題は上の「🔔 目標設定の宿題が届いています」から確認。研修生のチェックリストのPA行からも見られ、「もう一度書いてもらう」もできます',
@@ -1376,14 +1464,14 @@ var GX_ROLES = [
     { id: 'set1', t: '名簿を登録する', sub: '2分・CSVでまとめて／1人ずつ',
       info: function(st){ return st.members > 0 ? '登録 ' + st.members + '人' : (st.members === 0 ? 'まだ0人' : ''); }, steps: [
       { sel: 'nav button[data-pane="pRoster"]', click: true, t: '「名簿」タブ', x: 'まずは<b>「名簿」</b>タブを押してみて！メンバーの一覧を管理する画面だよ。' },
-      { sel: '#btnCsvIn', pre: gxPane('pRoster'), t: 'CSV取込でまとめて登録', x: 'エクセル等の名簿を<b>まとめて登録</b>！1行1名で<b>番号,氏名,系列</b>（かな・グレードは任意）。同じ番号は上書きされるから、やり直しもOK。', miss: '「CSV取込」はユニオン管理者・受付管理者の画面に出るよ。' },
+      { sel: '#btnCsvIn', pre: gxPane('pRoster'), t: 'CSV取込でまとめて登録', x: 'エクセル等の名簿を<b>まとめて登録</b>！「📄 テンプレート」の列（番号・姓・名・ふりがな・系列・性別・グレード）で作って貼り付けるか、ファイルを選んでね。<b>番号が空欄なら自動で発番</b>。取り込む前に確認画面が出るから安心だよ。', miss: '「CSV取込」はユニオン管理者・受付管理者の画面に出るよ。' },
       { sel: '#btnAddMember', pre: gxPane('pRoster'), t: '1人ずつ追加', x: '<b>「＋ メンバー追加」</b>なら1人ずつ。番号は自動で振られるよ。', miss: '「＋ メンバー追加」はユニオン管理者・受付管理者の画面に出るよ。' },
       { sel: '#rosterBody', pre: gxPane('pRoster'), t: '登録できたか確認', x: '登録した人はここに並ぶよ。見出し（番号・氏名…）を押すと並べ替えもできるよ。' }
     ] },
     { id: 'set2', t: '会員証を配る', sub: '2分・LINEでまとめて配れる',
       info: function(st){ return st.unissued > 0 ? '未発行 ' + st.unissued + '人' : (st.members > 0 ? '全員発行済み ✓' : ''); }, steps: [
       { sel: '#btnCardBulk', pre: gxPane('pRoster'), t: '会員証一括発行', x: 'まだ会員証が無い人に<b>まとめて発行</b>。一人ひとり専用のURLとQRができるよ。' },
-      { sel: '#btnReceiveLink', pre: gxPane('pRoster'), t: '受け取りリンク（いちばんラク！）', x: '<b>共通のURLをLINEグループに貼るだけ</b>。みんなが自分の番号を入れると、自分の会員証を受け取れるよ。' },
+      { sel: '#btnReceiveLink', pre: gxPane('pRoster'), t: '受け取りリンク（いちばんラク！）', x: '<b>共通のURLをLINEグループに貼るだけ</b>。みんなが<b>自分の番号とお名前（姓）</b>を入れると、自分の会員証を受け取れるよ。番号を知らない人には、会場でQRを読んでもらうか個別にLINEしてね。' },
       { sel: '#btnPrintCards', pre: gxPane('pRoster'), t: 'カード印刷', x: '紙で渡したいときは<b>カード印刷</b>。QR付きのカードを印刷できるよ。' },
       { sel: gxQ('#rosterBody button[data-a="card"]'), pre: gxPane('pRoster'), t: 'その場で渡す', x: '名簿の<b>「会員証」</b>ボタンでQRを出して、本人のスマホで読み取ってもらえばその場で渡せるよ。', miss: '名簿に登録すると、各行に「会員証」ボタンが出るよ。' }
     ] },
@@ -3027,32 +3115,43 @@ if(gCardToken){ showCardView(gCardToken); }
 if(gReceiveMode){
   showView('vReceive');
   var rvOpen = function(){
-    // 全角→半角・大文字化・空白等を除去。旧表記「REVE 12」は新番号 RV0012 に自動変換
+    // 番号: 全角→半角・大文字化・空白等を除去。旧表記「REVE 12」→ RV0012、「RX12」→ RX0012（英字＋3桁以下は4桁に）
     var no = $('rvNo').value
       .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '');
-    var m = no.match(/^(?:REVE|RV)(\d{1,4})$/);
+    var m = no.match(/^(?:REVE|RV)(\d{1,4})$/), m2 = no.match(/^([A-Z]{2,4})(\d{1,3})$/);
     if(m) no = 'RV' + ('0000' + m[1]).slice(-4);
+    else if(m2) no = m2[1] + ('0000' + m2[2]).slice(-4);
+    var nm = ckClaimNorm($('rvName').value);
     $('rvErr').textContent = '';
     if(!no){ $('rvErr').textContent = '会員番号を入力してください'; return; }
+    if(!nm){ $('rvErr').textContent = 'お名前（姓）を入力してください'; return; }
     $('rvGo').disabled = true;
-    db.collection('cardClaims').doc(no).get().then(function(sn){
-      if(sn.exists && sn.data().t){
-        gCardToken = sn.data().t;
-        try{ history.replaceState(null, '', location.href.split('#')[0] + '#c=' + gCardToken); }catch(e){}
-        showCardView(gCardToken);
-      } else {
-        $('rvGo').disabled = false;
-        $('rvErr').textContent = 'この番号の会員証が見つかりません。番号を確認するか、受付にお問い合わせください。';
-      }
-    }).catch(function(e){
+    function show(t){
+      gCardToken = t;
+      try{ history.replaceState(null, '', location.href.split('#')[0] + '#c=' + gCardToken); }catch(e){}
+      showCardView(gCardToken);
+    }
+    function miss(){
       $('rvGo').disabled = false;
-      $('rvErr').textContent = (e && e.code === 'permission-denied')
-        ? 'システムの設定が完了していないため開けません。受付（管理者）にお知らせください。'
-        : '読み込みに失敗しました。電波の良いところでもう一度お試しください。';
-    });
+      $('rvErr').textContent = '番号とお名前が一致する会員証が見つかりません。番号と、名簿に登録されている漢字のお名前を確認するか、ユニオンの管理者にお問い合わせください。';
+    }
+    // 移行中の保険: 受け取りキーがまだ無い会員は、番号→会員証を引いてお名前を照合（DBルール反映後は未ログインでは使えない）
+    function legacy(){
+      return db.collection('cardClaims').doc(no).get().then(function(cl){
+        var t = cl.exists && cl.data().t;
+        if(!t){ miss(); return; }
+        return db.collection('cards').doc(t).get().then(function(c){
+          if(c.exists && ckClaimNames(c.data().name).indexOf(nm) >= 0) show(t); else miss();
+        });
+      }).catch(function(){ miss(); });
+    }
+    db.collection('cardKeys').doc(ckClaimId(no, nm)).get().then(function(sn){
+      if(sn.exists && sn.data().t) show(sn.data().t); else legacy();
+    }, function(){ legacy(); });
   };
+  $('rvName').addEventListener('keydown', function(e){ if(e.key === 'Enter') rvOpen(); });
   $('rvGo').onclick = rvOpen;
   $('rvNo').addEventListener('keydown', function(e){ if(e.key === 'Enter') rvOpen(); });
 }
@@ -3503,15 +3602,23 @@ $('btnAddUnion').onclick = function(){
   modal('<h2>ユニオン追加</h2>'
     + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">追加すると名簿の取込先・合同イベントの選択肢に表示されます。</p>'
     + '<label>ユニオン名</label><input type="text" id="nuName" placeholder="例: BASE REVE">'
+    + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">NAVIGATOR（MAP）のプロフィールのユニオン名と<b>同じ表記</b>にしてください（MAPとの連携に使います）。</p>'
+    + '<label>地域</label><input type="text" id="nuArea" placeholder="例: 福岡">'
+    + '<label>会員番号の頭文字（英字2〜4文字・他のユニオンと重複不可）</label>'
+    + '<input type="text" id="nuPre" autocapitalize="characters" placeholder="例: RV → RV0001, RV0002…">'
+    + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">番号は全国のユニオンで共通の台帳です。新しく番号を付ける時は「頭文字＋4桁」になります。</p>'
     + '<div class="btns"><button id="nuCancel">キャンセル</button><button class="primary" id="nuGo">追加</button></div>');
   $('nuCancel').onclick = closeModal;
   $('nuGo').onclick = function(){
     var name = $('nuName').value.trim();
     if(!name){ toast('ユニオン名を入力してください'); return; }
     if(gUnions.indexOf(name) >= 0){ toast('「' + name + '」は既に存在します'); return; }
+    var pre = ckPrefixNorm($('nuPre').value), perr = ckPrefixError(pre, name);
+    if(perr){ toast(perr); return; }
     db.collection('checkinUnions').doc(name).set({
-      name: name, createdBy: gUser.uid, createdAt: FV.serverTimestamp()
+      name: name, area: $('nuArea').value.trim(), noPrefix: pre, createdBy: gUser.uid, createdAt: FV.serverTimestamp()
     }).then(function(){
+      gUnionPrefix[name] = pre;
       closeModal(); toast('「' + name + '」を追加しました');
       gUnions.push(name); gUnions.sort();
       gRosterUnion = name;
@@ -3614,6 +3721,7 @@ function loadMembers(cb){
     gMembers = arr;
     gMembersLoaded = true;
     renderRoster();
+    ckClaimSync(arr, gRosterUnion);   // 🔑 受け取りキーの作成・名前変更の反映（管理者のみ・裏で）
     // 集計タブから編集・無効化等をした場合は集計も描き直す（氏名・系列・状態の変更を反映）
     if(gStat && $('pStats').classList.contains('on')) loadStats();
     if(cb) cb();
@@ -4130,11 +4238,13 @@ function issueCard(m, cb){
     createdAt: FV.serverTimestamp()
   });
   batch.set(db.collection('checkinMembers').doc(m.no), {
-    cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
+    cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued', claimName: m.name || ''
   }, { merge: true });
-  batch.set(db.collection('cardClaims').doc(m.no), { t: token });   // 受け取りリンク用（番号→カード）
+  batch.set(db.collection('cardClaims').doc(m.no), { t: token });   // 番号→カード（ログインしている受付・管理者用）
+  if(m.claimName && m.claimName !== m.name) ckClaimDel(batch, m.no, m.claimName);   // 名前が変わっていたら古いキーを消す
+  ckClaimSet(batch, m.no, m.name, token);   // 🔑 受け取りリンク用（番号＋お名前→カード）
   return batch.commit().then(function(){
-    m.cardToken = token; m.cardSig = token.slice(0, 6);
+    m.cardToken = token; m.cardSig = token.slice(0, 6); m.claimName = m.name || '';
     hwMoveToken(oldToken, token);   // 📝 目標設定の宿題も新しい会員証へ
     if(cb) cb(token);
   }).catch(function(e){ toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）')); });
@@ -4143,9 +4253,10 @@ function revokeCard(m, cb){
   var batch = db.batch();
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
   batch.set(db.collection('checkinMembers').doc(m.no), {
-    cardToken: FV.delete(), cardSig: FV.delete(), cardStatus: 'revoked'
+    cardToken: FV.delete(), cardSig: FV.delete(), cardStatus: 'revoked', claimName: FV.delete()
   }, { merge: true });
   batch.delete(db.collection('cardClaims').doc(m.no));
+  ckClaimDel(batch, m.no, m.claimName || m.name);
   return batch.commit().then(function(){
     delete m.cardToken; delete m.cardSig;
     if(cb) cb();
@@ -4262,7 +4373,7 @@ $('btnCardBulk').onclick = function(){
         loadMembers();
         return;
       }
-      var batch = db.batch(), end = Math.min(i + 150, targets.length);
+      var batch = db.batch(), end = Math.min(i + 60, targets.length);   // 1人あたり最大8件の書き込み（上限500件/回）
       for(; i < end; i++){
         var m = targets[i], token = randToken();
         batch.set(db.collection('cards').doc(token), {
@@ -4272,9 +4383,10 @@ $('btnCardBulk').onclick = function(){
           createdAt: FV.serverTimestamp()
         });
         batch.set(db.collection('checkinMembers').doc(m.no), {
-          cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued'
+          cardToken: token, cardSig: token.slice(0, 6), cardStatus: 'issued', claimName: m.name || ''
         }, { merge: true });
         batch.set(db.collection('cardClaims').doc(m.no), { t: token });
+        ckClaimSet(batch, m.no, m.name, token);
       }
       batch.commit().then(nextBatch).catch(function(e){
         toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）'));
@@ -4288,17 +4400,17 @@ $('btnReceiveLink').onclick = function(){
   var url = location.href.split('#')[0] + '#receive';
   var issued = gMembers.filter(function(m){ return m.cardToken; });
   var lineMsg = '📱 スマホ会員証の受け取り\n'
-    + 'こちらを開いて、QRカード（紙カード）の会員番号を入力してください👇\n'
+    + 'こちらを開いて、会員番号とお名前（姓）を入力してください👇\n'
     + url + '\n'
     + '開いたら「ホーム画面に追加」をしておくと次回すぐ使えます！';
   modal('<h2>📮 会員証の受け取りリンク</h2>'
     + '<p style="font-size:13.5px;">この共通URLをLINEグループ等に貼るだけで配布できます。'
-    + '開いた人が自分の会員番号を入力すると、本人専用の会員証が開きます。</p>'
+    + '開いた人が自分の<b>会員番号とお名前（姓）</b>を入力すると、本人専用の会員証が開きます（番号だけでは開けません）。</p>'
     + '<input type="text" id="rlUrl" readonly value="' + esc(url) + '" style="width:100%;font-size:12.5px;">'
     + '<div class="btns" style="justify-content:flex-start;margin-top:8px;">'
     + '<button class="primary" id="rlCopy">URLをコピー</button>'
     + '<button id="rlMsg">LINE用の案内文ごとコピー</button></div>'
-    + '<label style="margin-top:14px;">受け取り用データ（番号→会員証の対応表）</label>'
+    + '<label style="margin-top:14px;">受け取り用データ（番号＋お名前→会員証）</label>'
     + '<p style="font-size:12.5px;color:var(--sub);margin:2px 0 8px;">「' + esc(gRosterUnion) + '」の発行済み <b>'
     + issued.length + '名</b> 分を生成します。今後の発行・再発行・無効化は自動で反映されるため、'
     + '<b>この生成は最初に1回だけでOK</b>です（何度押しても安全）。</p>'
@@ -4314,9 +4426,13 @@ $('btnReceiveLink').onclick = function(){
     var i = 0;
     function nextBatch(){
       if(i >= issued.length){ toast(issued.length + '名分の受け取りデータを生成しました'); closeModal(); return; }
-      var batch = db.batch(), end = Math.min(i + 400, issued.length);
+      var batch = db.batch(), end = Math.min(i + 60, issued.length);
       for(; i < end; i++){
-        batch.set(db.collection('cardClaims').doc(issued[i].no), { t: issued[i].cardToken });
+        var im = issued[i];
+        batch.set(db.collection('cardClaims').doc(im.no), { t: im.cardToken });
+        if(im.claimName && im.claimName !== im.name) ckClaimDel(batch, im.no, im.claimName);
+        ckClaimSet(batch, im.no, im.name, im.cardToken);   // 🔑 番号＋お名前で受け取れるように
+        batch.set(db.collection('checkinMembers').doc(im.no), { claimName: im.name || '' }, { merge: true });
       }
       batch.commit().then(nextBatch).catch(function(e){
         g.disabled = false;
@@ -4364,63 +4480,251 @@ $('btnPrintCards').onclick = function(){
   };
 };
 
-$('btnCsvIn').onclick = function(){
-  // 取込先ユニオン: オーナーは選択可、ユニオン管理者は自ユニオン固定
+/* 📥 名簿の取込（全国展開用）
+   1) 貼り付け or ファイル（UTF-8 / Shift_JIS 自動判定）。見出し行があれば列名で判定（旧形式「番号,氏名,系列,かな,グレード」も可）
+   2) 取り込む前に確認: 新規／更新／自動発番（番号が空欄）／他ユニオンと番号が重複／ファイル内の重複／系列の表記ゆれ
+   3) 番号は全ユニオン共通の台帳なので、他ユニオンの番号は上書きしない（オーナーでも）。重複した人は新しい番号で取り込める */
+var IM_COLS = { no: ['番号', '会員番号', 'no', 'no.', '№'], name: ['氏名', '名前', 'お名前', 'フルネーム'], sei: ['姓', '苗字', '名字'], mei: ['名'],
+  kana: ['ふりがな', 'フリガナ', 'かな', 'カナ', 'よみがな', 'よみ'], group: ['系列', 'upルビー', 'ルビー'], sex: ['性別'], grade: ['グレード'] };
+var IM_HEAD = ['番号', '姓', '名', 'ふりがな', '系列', '性別', 'グレード'];
+function imSplit(ln){
+  if(ln.indexOf('\t') >= 0) return ln.split('\t');
+  var out = [], cur = '', q = false;
+  for(var i = 0; i < ln.length; i++){
+    var ch = ln.charAt(i);
+    if(q){ if(ch === '"'){ if(ln.charAt(i + 1) === '"'){ cur += '"'; i++; } else q = false; } else cur += ch; }
+    else if(ch === '"') q = true;
+    else if(ch === ','){ out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+function imNfkc(s){ s = String(s == null ? '' : s); try{ s = s.normalize('NFKC'); }catch(e){} return s.trim(); }
+function imName(s){ return String(s == null ? '' : s).replace(/　/g, ' ').replace(/\s+/g, ' ').trim(); }
+function imSex(v){ v = imNfkc(v).toLowerCase(); return /^(男|男性|m|male)$/.test(v) ? 'm' : (/^(女|女性|f|female)$/.test(v) ? 'f' : ''); }
+function imGrade(v){
+  v = imNfkc(v).toUpperCase().replace(/[\s・]/g, '');
+  if(!v || /^(一般|なし|無し|白|-)$/.test(v)) return '';
+  if(v === 'BR' || v === 'ブランドレプリゼンタティブ' || v === 'ゴールド') return 'BR';
+  if(v === 'JETCLUB' || v === 'JET' || v === 'ジェットクラブ' || v === 'ブラック') return 'JETCLUB';
+  return null;   // 不明
+}
+function imParse(text){
+  var lines = String(text || '').split(/\r?\n/).filter(function(l){ return l.replace(/[,\t\s"]/g, ''); });
+  if(!lines.length) return { rows: [], head: false };
+  var first = imSplit(lines[0]).map(function(c){ return imNfkc(c).toLowerCase(); });
+  var idx = {}, head = false;
+  Object.keys(IM_COLS).forEach(function(k){
+    for(var i = 0; i < first.length; i++){
+      if(IM_COLS[k].indexOf(first[i]) >= 0 && idx[k] == null){ idx[k] = i; head = true; break; }
+    }
+  });
+  if(!head) idx = { no: 0, name: 1, group: 2, kana: 3, grade: 4 };   // 旧形式（見出しなし）
+  var rows = [];
+  lines.slice(head ? 1 : 0).forEach(function(ln, li){
+    var c = imSplit(ln);
+    var g = function(k){ return idx[k] == null ? '' : String(c[idx[k]] == null ? '' : c[idx[k]]).trim(); };
+    var name = imName(g('name'));
+    if(!name && (g('sei') || g('mei'))) name = imName(g('sei') + ' ' + g('mei'));
+    var no = imNfkc(g('no')).toUpperCase().replace(/\s/g, '').replace(/\.0$/, '');
+    if(!name && !no) return;
+    if(!head && /番号|氏名/.test(no + name)) return;   // 見出しっぽい行
+    var gr = g('grade');
+    rows.push({ line: li + (head ? 2 : 1), no: no, name: name, kana: imName(g('kana')), group: imName(g('group')),
+      sex: imSex(g('sex')), grade: imGrade(gr), gradeRaw: gr });
+  });
+  return { rows: rows, head: head };
+}
+// 番号の頭文字（会員番号プレフィックス）: 2〜4文字の英字・ユニオンごとに重複不可
+function ckPrefixNorm(s){ return String(s || '').replace(/[Ａ-Ｚａ-ｚ]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); }).toUpperCase().replace(/[^A-Z]/g, ''); }
+function ckPrefixUsedBy(pre, except){
+  var hit = '';
+  gUnions.forEach(function(u){ if(!hit && u !== except && unionNoPrefix(u) === pre) hit = u; });
+  return hit;
+}
+function ckPrefixError(pre, except){
+  if(!/^[A-Z]{2,4}$/.test(pre)) return '番号の頭文字は英字2〜4文字で入れてください（例: RV, ANT）';
+  var u = ckPrefixUsedBy(pre, except);
+  return u ? '頭文字「' + pre + '」は「' + u + '」が使っています。別の文字にしてください' : '';
+}
+function imPad4(n){ var s = String(n); while(s.length < 4) s = '0' + s; return s; }
+$('btnCsvIn').onclick = function(){ imOpen(gRosterUnion, ''); };
+function imOpen(un, text){
   var unionPicker = isOwner()
     ? '<select id="csvUnion" style="font-weight:700;">' + gUnions.map(function(u){
-        return '<option' + (u === gRosterUnion ? ' selected' : '') + '>' + esc(u) + '</option>';
+        return '<option' + (u === un ? ' selected' : '') + '>' + esc(u) + '</option>';
       }).join('') + '</select>'
-    : '<b id="csvUnionFixed">' + esc(gRosterUnion) + '</b>';
-  modal(
-    '<h2>CSV取込</h2>'
+    : '<b id="csvUnionFixed">' + esc(un) + '</b>';
+  modal('<h2>📥 名簿の取込</h2>'
     + '<div style="background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13.5px;margin-bottom:10px;">'
-    + '⚠ 取り込む全員の所属ユニオンは ' + unionPicker + ' になります。<br>'
-    + '複数ユニオンが混ざったCSVは、ユニオンごとに分けて取り込んでください。</div>'
-    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">1行1名。列: <b>番号,氏名,系列</b>（,かな,グレード は任意）。カンマ・タブ区切りどちらも可。既存番号は上書きされます。</p>'
-    + '<textarea id="csvText" rows="10" placeholder="412211,馬越 雅哉,馬越BD"></textarea>'
-    + '<div class="btns"><button id="csvCancel">キャンセル</button><button class="primary" id="csvGo">取り込む</button></div>'
-  );
+    + '⚠ 取り込む全員の所属ユニオンは ' + unionPicker + ' になります。複数ユニオンが混ざった名簿は、ユニオンごとに分けて取り込んでください。</div>'
+    + '<p style="font-size:13px;margin:0 0 6px;"><b>テンプレートの列</b>: 番号・姓・名・ふりがな・系列・性別・グレード'
+    + ' <button id="imTpl" style="padding:4px 10px;font-size:12px;">📄 テンプレートをダウンロード</button></p>'
+    + '<ul style="font-size:12.5px;color:var(--sub);margin:0 0 8px 18px;padding:0;line-height:1.7;">'
+    + '<li><b>番号が空欄の人は自動で発番</b>します（ユニオンの頭文字＋4桁。QRカードが無いユニオンはすべて空欄でOK）</li>'
+    + '<li>氏名は <b>NAVIGATOR（MAP）と同じ漢字</b>で。MAPのメンバーと名前で自動的につながります</li>'
+    + '<li>系列（UPルビー）は表記をそろえてください（ゆれは取り込む前の確認画面でそろえられます）</li>'
+    + '<li>取り込む前に確認画面が出ます（まだ保存されません）。旧形式「番号,氏名,系列,かな,グレード」も使えます</li></ul>'
+    + '<input type="file" id="imFile" accept=".csv,.txt,.tsv,text/csv,text/plain" style="margin-bottom:6px;">'
+    + '<textarea id="csvText" rows="8" placeholder="エクセルの表をそのまま貼り付けてもOK（見出し行つき）">' + esc(text || '') + '</textarea>'
+    + '<div class="btns"><button id="csvCancel">キャンセル</button><button class="primary" id="csvGo">確認する ›</button></div>', true);
   $('csvCancel').onclick = closeModal;
-  $('csvGo').onclick = function(){
-    var target = isOwner() ? $('csvUnion').value : gRosterUnion;
-    var lines = $('csvText').value.split(/\r?\n/), rows = [];
-    lines.forEach(function(ln){
-      ln = ln.trim(); if(!ln) return;
-      var c = ln.indexOf('\t') >= 0 ? ln.split('\t') : ln.split(',');
-      var no = (c[0]||'').trim().replace(/\.0$/,'');
-      var name = (c[1]||'').trim();
-      if(!no || !name) return;
-      if(/番号|氏名/.test(no + name)) return;   // ヘッダー行スキップ
-      rows.push({ no:no, name:name, group:(c[2]||'').trim(), kana:(c[3]||'').trim(), grade:(c[4]||'').trim() });
-    });
-    if(!rows.length){ toast('取り込める行がありません'); return; }
-    $('csvGo').disabled = true;
-    var i = 0, total = rows.length;
-    function nextBatch(){
-      if(i >= total){
-        closeModal();
-        toast(total + '名を「' + target + '」として取り込みました');
-        if(target !== gRosterUnion){ gRosterUnion = target; renderRosterUnionSel(); }
-        gSel = {};
-        loadMembers();
-        return;
-      }
-      var batch = db.batch(), end = Math.min(i + 400, total);
-      for(; i < end; i++){
-        var r = rows[i];
-        batch.set(db.collection('checkinMembers').doc(r.no), {
-          no: r.no, union: target, name: r.name, group: r.group, kana: r.kana,
-          grade: r.grade, active: true, updatedAt: FV.serverTimestamp()
-        }, {merge: true});
-      }
-      batch.commit().then(nextBatch).catch(function(e){
-        $('csvGo').disabled = false;
-        toast(permMsg(e, 'CSV取込はユニオン管理者・受付管理者のみ可能です'));
-      });
-    }
-    nextBatch();
+  $('imTpl').onclick = function(){ csvDownload('名簿テンプレート.csv', [IM_HEAD]); };
+  $('imFile').onchange = function(){
+    var f = this.files && this.files[0];
+    if(!f) return;
+    var rd = new FileReader();
+    rd.onload = function(){
+      var buf = rd.result, txt = '';
+      try{ txt = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+      catch(e){ try{ txt = new TextDecoder('shift_jis').decode(buf); }catch(e2){ txt = ''; } }
+      $('csvText').value = txt.replace(/^﻿/, '');
+    };
+    rd.readAsArrayBuffer(f);
   };
-};
+  $('csvGo').onclick = function(){
+    var target = isOwner() ? $('csvUnion').value : un;
+    var raw = $('csvText').value, p = imParse(raw);
+    if(!p.rows.length){ toast('取り込める行がありません'); return; }
+    $('csvGo').disabled = true; $('csvGo').textContent = '確認中…';
+    imCheck(target, p.rows).then(function(st){ imPreview(target, p.rows, st, raw); })
+      .catch(function(e){ $('csvGo').disabled = false; $('csvGo').textContent = '確認する ›'; toast(permMsg(e, '名簿を確認できませんでした')); });
+  };
+}
+// 既存の名簿・他ユニオンの番号を確認して、行ごとの扱い（kind）を決める
+function imCheck(target, rows){
+  // 頭文字はその場で読み直す（ログイン後に追加・変更されたユニオンでも正しく自動発番するため）
+  var uPre = db.collection('checkinUnions').doc(target).get().then(function(s){
+    if(s.exists && s.data().noPrefix) gUnionPrefix[target] = s.data().noPrefix;
+  }).catch(function(){});
+  return Promise.all([fetchMembers(target), uPre]).then(function(res){
+    var list = res[0];
+    var mine = {}, seen = {};
+    list.forEach(function(m){ mine[m.no] = m; });
+    rows.forEach(function(r){
+      r.kind = ''; r.conflict = ''; r.groupFix = '';
+      if(r.no){ if(seen[r.no]) r.dupFile = true; seen[r.no] = true; }
+    });
+    // 他ユニオンの番号か（読めない＝他ユニオンで使用中）
+    var probe = rows.filter(function(r){ return r.no && !mine[r.no] && !r.dupFile; }), i = 0;
+    function step(){
+      if(i >= probe.length) return Promise.resolve();
+      var part = probe.slice(i, i += 40);
+      return Promise.all(part.map(function(r){
+        return db.collection('checkinMembers').doc(r.no).get().then(function(s){
+          if(s.exists && (s.data().union || '') !== target) r.conflict = s.data().union || '他ユニオン';
+        }, function(e){ if(e && e.code === 'permission-denied') r.conflict = '他ユニオン'; else r.err = true; });
+      })).then(step);
+    }
+    return step().then(function(){
+      // 系列の表記ゆれ: 同じ比較キーで一番多い表記にそろえる候補
+      var cnt = {};
+      list.concat(rows).forEach(function(x){ var g = x.group; if(!g) return; var k = groupKey(g); cnt[k] = cnt[k] || {}; cnt[k][g] = (cnt[k][g] || 0) + 1; });
+      var rep = {};
+      Object.keys(cnt).forEach(function(k){ var best = '', n = -1; Object.keys(cnt[k]).forEach(function(g){ if(cnt[k][g] > n){ n = cnt[k][g]; best = g; } }); rep[k] = best; });
+      rows.forEach(function(r){
+        if(r.group && rep[groupKey(r.group)] !== r.group) r.groupFix = rep[groupKey(r.group)];
+        r.kind = !r.name ? 'noname' : r.dupFile ? 'dup' : !r.no ? 'auto' : mine[r.no] ? 'update' : r.conflict ? 'conflict' : r.err ? 'err' : 'new';
+      });
+      return { list: list, mine: mine };
+    });
+  });
+}
+var IM_KIND = { 'new': ['新規', 'g'], 'update': ['更新', 'n'], 'auto': ['番号を自動発番', 'g'], 'conflict': ['⚠ 他ユニオンと番号が重複', 'a'],
+  'dup': ['⚠ ファイル内で番号が重複（2つ目以降は取り込まない）', 'a'], 'noname': ['⚠ 氏名なし（取り込まない）', 'a'], 'err': ['⚠ 確認できなかった（取り込まない）', 'a'] };
+function imPreview(target, rows, st, raw){
+  var pre = unionNoPrefix(target);
+  var c = {}; rows.forEach(function(r){ c[r.kind] = (c[r.kind] || 0) + 1; });
+  var fixes = rows.filter(function(r){ return r.groupFix; });
+  var badGrade = rows.filter(function(r){ return r.grade === null; });
+  var needNo = (c.auto || 0) + (c.conflict || 0);
+  var sum = ['new', 'update', 'auto', 'conflict', 'dup', 'noname', 'err'].filter(function(k){ return c[k]; }).map(function(k){
+    return '<span class="pill ' + IM_KIND[k][1] + '" style="margin:2px 4px 2px 0;display:inline-block;">' + esc(IM_KIND[k][0]) + ' ' + c[k] + '名</span>';
+  }).join('');
+  var tbl = rows.slice(0, 400).map(function(r){
+    return '<tr><td class="mono">' + esc(r.no || '（自動）') + '</td><td>' + esc(r.name || '—') + '</td><td>' + esc(r.group || '')
+      + (r.groupFix ? ' → <b>' + esc(r.groupFix) + '</b>' : '') + '</td><td>' + (r.sex === 'm' ? '男' : r.sex === 'f' ? '女' : '') + '</td>'
+      + '<td><span class="pill ' + IM_KIND[r.kind][1] + '">' + esc(IM_KIND[r.kind][0].replace(/（.*）/, '')) + '</span>'
+      + (r.conflict ? '<br><small style="color:var(--sub);">' + esc(r.conflict) + ' が使用中</small>' : '') + '</td></tr>';
+  }).join('');
+  modal('<h2>📥 取り込む前の確認 — ' + esc(target) + '</h2>'
+    + '<p style="margin:0 0 8px;">' + sum + '</p>'
+    + (c.conflict ? '<div style="background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:8px;">'
+      + '<b>他のユニオンが同じ番号を使っている人が ' + c.conflict + '名</b> います（番号は全国のユニオンで共通です）。<br>'
+      + '<label class="chkrow" style="margin:6px 0 0;color:inherit;font-weight:700;"><input type="checkbox" id="imRenum" checked> 新しい番号（' + esc(pre || '頭文字') + '＋4桁）で取り込む</label>'
+      + '<small>外すと、この人たちは取り込みません。新しい番号の人は、紙のQRカードの番号が使えなくなるので、スマホ会員証を配ってください。</small></div>' : '')
+    + (fixes.length ? '<label class="chkrow" style="font-size:13px;"><input type="checkbox" id="imFix" checked> 系列の表記ゆれをそろえる（' + fixes.length + '名・表の「→」の表記にします）</label>' : '')
+    + (badGrade.length ? '<p style="font-size:12.5px;color:var(--amber);">グレードが読み取れない行が ' + badGrade.length + '件あります（BR / JETCLUB / 空欄 のどれか）。その人のグレードは変更しません。</p>' : '')
+    + (needNo && !pre ? '<p style="font-size:13px;color:var(--accent);font-weight:700;">番号を自動発番するには、先に「⚙ ユニオン設定」で番号の頭文字を決めてください。</p>' : '')
+    + '<div class="tblwrap" style="max-height:44vh;"><table><thead><tr><th>番号</th><th>氏名</th><th>系列</th><th>性別</th><th>扱い</th></tr></thead><tbody>' + tbl + '</tbody></table></div>'
+    + (rows.length > 400 ? '<p style="font-size:12px;color:var(--sub);">（先頭400行を表示）</p>' : '')
+    + '<div class="btns"><button id="imBack">‹ 戻る</button><button class="primary" id="imGo">取り込む</button></div>', true);
+  function count(){
+    var renum = $('imRenum') ? $('imRenum').checked : false;
+    return rows.filter(function(r){ return r.kind === 'new' || r.kind === 'update' || r.kind === 'auto' || (r.kind === 'conflict' && renum); }).length;
+  }
+  function upd(){
+    var n = count(), renum = $('imRenum') ? $('imRenum').checked : false;
+    var blocked = !pre && ((c.auto || 0) + (renum ? (c.conflict || 0) : 0)) > 0;
+    $('imGo').textContent = n + '名を取り込む';
+    $('imGo').disabled = !n || blocked;
+  }
+  upd();
+  if($('imRenum')) $('imRenum').onchange = upd;
+  $('imBack').onclick = function(){ imOpen(target, raw); };
+  $('imGo').onclick = function(){
+    $('imGo').disabled = true;
+    imCommit(target, rows, st, { renum: $('imRenum') ? $('imRenum').checked : false, fix: $('imFix') ? $('imFix').checked : false });
+  };
+}
+function imCommit(target, rows, st, opt){
+  var pre = unionNoPrefix(target), re = new RegExp('^' + pre + '(\\d+)$'), max = 0;
+  st.list.forEach(function(m){ var x = re.exec(m.no || ''); if(x) max = Math.max(max, parseInt(x[1], 10)); });
+  rows.forEach(function(r){ var x = r.no && re.exec(r.no); if(x) max = Math.max(max, parseInt(x[1], 10)); });
+  var todo = rows.filter(function(r){ return r.kind === 'new' || r.kind === 'update' || r.kind === 'auto' || (r.kind === 'conflict' && opt.renum); });
+  todo.forEach(function(r){
+    r.saveNo = r.no;
+    if(r.kind === 'auto' || r.kind === 'conflict') r.saveNo = pre + imPad4(++max);
+  });
+  var i = 0;
+  function next(){
+    if(i >= todo.length){ imDone(target, todo); return; }
+    var batch = db.batch(), end = Math.min(i + 400, todo.length);
+    for(; i < end; i++){
+      var r = todo[i], d = { no: r.saveNo, union: target, name: r.name, active: true, updatedAt: FV.serverTimestamp() };
+      var grp = opt.fix && r.groupFix ? r.groupFix : r.group;
+      if(grp) d.group = grp;
+      if(r.kana) d.kana = r.kana;
+      if(r.sex) d.sex = r.sex;
+      if(r.grade !== null && r.gradeRaw) d.grade = r.grade;
+      if(r.kind !== 'update') d.createdAt = FV.serverTimestamp();
+      if(r.kind === 'conflict') d.oldNo = r.no;
+      batch.set(db.collection('checkinMembers').doc(r.saveNo), d, { merge: true });
+    }
+    batch.commit().then(next).catch(function(e){
+      toast(permMsg(e, '取り込みに失敗しました（名簿の取込はユニオン管理者・受付管理者のみ可能です）'));
+      if($('imGo')) $('imGo').disabled = false;
+    });
+  }
+  next();
+}
+function imDone(target, done){
+  var numbered = done.filter(function(r){ return r.saveNo !== r.no; });
+  if(target !== gRosterUnion){ gRosterUnion = target; renderRosterUnionSel(); }
+  gSel = {};
+  loadMembers();
+  modal('<h2>✓ ' + done.length + '名を取り込みました — ' + esc(target) + '</h2>'
+    + (numbered.length ? '<p style="font-size:13.5px;">番号を自動で付けた人が <b>' + numbered.length + '名</b> います。'
+      + '一覧はCSVで保存できます（本人に番号を知らせる時に使えます。個人情報なので取り扱いに注意してください）。</p>'
+      + '<div class="btns" style="justify-content:flex-start;"><button id="imNoCsv">📄 発番した人の一覧（CSV）</button></div>' : '')
+    + '<p style="font-size:13px;color:var(--sub);">次は「会員証一括発行」で会員証を作り、配布してください（📮 受け取りリンク／会場でQR／個別にLINE）。</p>'
+    + '<div class="btns"><button class="primary" id="imClose">閉じる</button></div>');
+  $('imClose').onclick = closeModal;
+  if($('imNoCsv')) $('imNoCsv').onclick = function(){
+    csvDownload('発番一覧_' + target + '.csv', [['番号', '氏名', '系列', '元の番号']].concat(numbered.map(function(r){ return [r.saveNo, r.name, r.groupFix || r.group || '', r.no || '']; })));
+  };
+}
 $('btnCsvOut').onclick = function(){
   var rows = [['番号','氏名','系列','かな','状態','性別']];
   gMembers.forEach(function(m){
@@ -5260,6 +5564,7 @@ $('tqUndo').onclick = function(){
   batch.delete(db.collection('checkinMembers').doc(m.no));
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
   batch.delete(db.collection('cardClaims').doc(m.no));
+  ckClaimDel(batch, m.no, m.name);
   batch.commit().then(function(){
     gTrToday = gTrToday.filter(function(x){ return x.no !== m.no; });
     gTrMembers = gTrMembers.filter(function(x){ return x.no !== m.no; });
@@ -6640,17 +6945,17 @@ $('btnRcptSet').onclick = function(){
   db.collection('checkinUnions').doc(un).get().then(function(sn){
     var s0 = sn.exists ? sn.data() : null;
     var cur = (s0 && s0.issuer) || '';
-    var curPre = (s0 && s0.noPrefix) || '';
+    var curPre = (s0 && s0.noPrefix) || unionNoPrefix(un);
     modal('<h2>⚙ ユニオン設定 — ' + esc(un) + '</h2>'
       + '<label>領収書の発行者名</label>'
       + '<input type="text" id="rsIssuer" value="' + esc(cur) + '" placeholder="例: 株式会社PROMOTE">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
       + '<b>未設定（空欄）の間、このユニオンでは電子領収書は発行されません。</b></p>'
-      + '<label style="margin-top:14px;">会員番号プレフィックス（自動発番）</label>'
+      + '<label style="margin-top:14px;">会員番号の頭文字（自動発番・英字2〜4文字・他のユニオンと重複不可）</label>'
       + '<input type="text" id="rsPrefix" value="' + esc(curPre) + '" placeholder="例: RV → RV0001, RV0002…">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
-      + 'メンバー追加時に「プレフィックス+4桁」で自動発番します。'
-      + '未設定の場合、BASE REVE=RV / BASE ANTARES=ANT の初期値が使われ、その他のユニオンは手入力です。</p>'
+      + 'メンバー追加・研修生登録・名簿の取込（番号が空欄の人）で「頭文字＋4桁」を自動発番します。'
+      + '番号は全国のユニオンで共通なので、頭文字は他のユニオンと重ならないものにしてください。</p>'
       + '<label style="margin-top:14px;">地域</label>'
       + '<input type="text" id="rsArea" value="' + esc((s0 && s0.area) || '') + '" placeholder="例: 福岡">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
@@ -6672,10 +6977,10 @@ $('btnRcptSet').onclick = function(){
         issuer: $('rsIssuer').value.trim(),
         area: $('rsArea').value.trim(),
         payLink: pl,
-        noPrefix: $('rsPrefix').value
-          .replace(/[Ａ-Ｚａ-ｚ]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
-          .toUpperCase().replace(/[^A-Z]/g, '')
+        noPrefix: ckPrefixNorm($('rsPrefix').value)
       };
+      var perr = ckPrefixError(upd.noPrefix, un);
+      if(perr){ toast(perr); return; }
       db.collection('checkinUnions').doc(un).set(upd, { merge: true })
         .then(function(){
           gUnionPrefix[un] = upd.noPrefix;
