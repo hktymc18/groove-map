@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BASE CHECK-IN 導入手順書</title>
+<meta name="description" content="受付システム BASE CHECK-IN を新しく使い始めるユニオンの、ユニオン管理者・受付管理者向けの手順書">
+<link rel="icon" href="icon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 受付システム（checkin/index.html）と同じ色 */
+:root{
+  --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
+  --accent:#c0392b; --accent-soft:#f7e6e2;
+  --green:#2e6b52; --green-soft:#e3efe8;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#2b5fa8; --focus-soft:#e4ecf7;
+  --chick:#ffd83d;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#171915; --card:#22241f; --ink:#e9e7de; --sub:#a3a194; --line:#3a3c34;
+    --accent:#e0604f; --accent-soft:#3d2723;
+    --green:#79c29e; --green-soft:#243a2f;
+    --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0; --focus-soft:#1f2a38;
+  }
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",system-ui,sans-serif;font-size:15.5px;line-height:1.8;-webkit-text-size-adjust:100%;}
+a{color:var(--focus);}
+h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;line-height:1.35;}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+.wrap{max-width:880px;margin:0 auto;padding:0 16px 80px;}
+/* ヘッダー */
+.hero{display:flex;gap:18px;align-items:center;padding:28px 0 18px;}
+.hero .jk{width:84px;height:84px;flex:0 0 auto;}
+.hero .brand{font-family:"IBM Plex Mono",monospace;font-size:12.5px;letter-spacing:.12em;color:var(--sub);}
+.hero .brand b{color:var(--ink);} .hero .brand i{color:var(--accent);font-style:normal;}
+.hero h1{margin:4px 0 6px;font-size:28px;font-weight:900;}
+.hero p{margin:0;color:var(--sub);font-size:14px;}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:700;font-size:14px;}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff;}
+@media (prefers-color-scheme: dark){ .btn.primary{color:#10261b;} }
+/* 目次 */
+.toc{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);margin:0 -16px;padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+.toc::-webkit-scrollbar{display:none;}
+.toc a{flex:0 0 auto;padding:5px 11px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap;}
+/* 共通パーツ */
+section{scroll-margin-top:56px;}
+h2.sec{display:flex;align-items:center;gap:10px;font-size:22px;margin:42px 0 6px;}
+h2.sec .tag{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;}
+.tag.adm{background:var(--accent-soft);color:var(--accent);}
+.tag.rcp{background:var(--green-soft);color:var(--green);}
+.tag.own{background:var(--focus-soft);color:var(--focus);}
+.lead{color:var(--sub);margin:0 0 14px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0;}
+.step{display:grid;grid-template-columns:40px 1fr;gap:4px 12px;}
+.step .no{width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:900;font-family:"IBM Plex Mono",monospace;}
+.step h3{margin:3px 0 2px;font-size:17px;}
+.step .body{grid-column:2;}
+.where{display:inline-block;font-size:12.5px;font-weight:700;color:var(--sub);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:1px 8px;margin:2px 0 6px;}
+.ui{display:inline-block;font-weight:700;border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:0 6px;font-size:.92em;white-space:nowrap;}
+ol,ul{padding-left:1.3em;margin:6px 0;}
+li{margin:2px 0;}
+.note{border-radius:10px;padding:10px 14px;margin:10px 0;font-size:14px;}
+.note.warn{background:var(--amber-soft);color:var(--amber);}
+.note.ok{background:var(--green-soft);color:var(--green);}
+.note.info{background:var(--focus-soft);color:var(--focus);}
+.note b{color:inherit;}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0;}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top;}
+th{font-size:12.5px;color:var(--sub);font-weight:700;}
+.tblwrap{overflow-x:auto;}
+/* 役割 */
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;}
+.role{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;position:relative;}
+.role .who{font-weight:900;font-size:16px;margin:2px 0 4px;}
+.role ul{font-size:13.5px;padding-left:1.1em;}
+.role.own{border-top:4px solid var(--focus);} .role.adm{border-top:4px solid var(--accent);} .role.rcp{border-top:4px solid var(--green);}
+@media (max-width:640px){
+  .roles{grid-template-columns:1fr;} .hero h1{font-size:23px;} .hero .jk{width:64px;height:64px;}
+  .card{padding:14px 14px;}
+  .step{grid-template-columns:30px 1fr;gap:4px 10px;}
+  .step .no{width:28px;height:28px;font-size:13px;}
+  /* 表はスマホでは1行ずつのカードに */
+  table.stk tr:first-child{display:none;}
+  table.stk tr{display:block;padding:8px 0;border-bottom:1px solid var(--line);}
+  table.stk td{display:block;border:0;padding:1px 0;}
+  table.stk td:first-child{font-weight:900;}
+}
+/* 全体の流れ */
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;}
+.flow span{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13.5px;font-weight:700;}
+.flow span.a{border-color:var(--accent);} .flow span.r{border-color:var(--green);} .flow span.o{border-color:var(--focus);}
+.flow em{color:var(--sub);font-style:normal;}
+/* 動画 */
+details.vid{margin:8px 0 0;}
+details.vid summary{cursor:pointer;font-weight:700;color:var(--focus);font-size:14px;list-style:none;}
+details.vid summary::-webkit-details-marker{display:none;}
+details.vid video{width:100%;max-width:640px;border-radius:10px;border:1px solid var(--line);margin-top:8px;background:#000;}
+/* FAQ */
+details.qa{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0;}
+details.qa summary{cursor:pointer;font-weight:700;}
+details.qa p,details.qa ul{margin:8px 0 2px;font-size:14.5px;}
+/* チェックリスト */
+.ck label{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+.ck input{margin-top:6px;width:18px;height:18px;flex:0 0 auto;accent-color:var(--green);}
+.ck .r{font-size:11.5px;font-weight:700;border-radius:99px;padding:1px 8px;margin-right:6px;}
+.pg{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 2px;}
+.pg i{display:block;height:100%;background:var(--green);width:0;transition:width .2s;}
+.foot{color:var(--sub);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px;}
+@media print{
+  .toc,.links,details.vid,.noprint{display:none !important;}
+  body{background:#fff;color:#000;font-size:12.5px;}
+  .card,.role,details.qa{break-inside:avoid;border-color:#bbb;}
+  details.qa{display:block;} details.qa > *{display:block;}
+  h2.sec{break-after:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <svg class="jk" viewBox="0 0 100 100" aria-hidden="true"><path d="M46 10 q4 -8 8 0 q3 -6 6 1" fill="none" stroke="#f2b400" stroke-width="3" stroke-linecap="round"/><ellipse cx="50" cy="64" rx="34" ry="30" fill="#ffd83d"/><circle cx="50" cy="38" r="25" fill="#ffe066"/><ellipse cx="22" cy="66" rx="9" ry="14" fill="#ffcf1f" transform="rotate(25 22 66)"/><ellipse cx="78" cy="66" rx="9" ry="14" fill="#ffcf1f" transform="rotate(-25 78 66)"/><circle cx="40" cy="35" r="4.2" fill="#2b2b2b"/><circle cx="60" cy="35" r="4.2" fill="#2b2b2b"/><path d="M44 45 l6 6 l6 -6 z" fill="#ff9a1f"/><ellipse cx="33" cy="44" rx="4.5" ry="2.6" fill="#ff9aa2" opacity=".7"/><ellipse cx="67" cy="44" rx="4.5" ry="2.6" fill="#ff9aa2" opacity=".7"/></svg>
+  <div>
+    <div class="brand"><b>BASE CHECK-IN</b><i>●</i> 導入手順書</div>
+    <h1>受付システムの始め方</h1>
+    <p>ユニオン管理者・受付管理者の方へ。ユニオンで受付システムを使い始めるまでの手順と、当日の受付までをまとめました。</p>
+  </div>
+</header>
+<div class="links noprint">
+  <a class="btn primary" href="./" target="_blank" rel="noopener">受付管理を開く ›</a>
+  <a class="btn" href="#check">✅ チェックリスト</a>
+  <a class="btn" href="#faq">困ったとき</a>
+  <a class="btn" href="javascript:window.print()">🖨 印刷する</a>
+</div>
+
+<nav class="toc" aria-label="目次">
+  <a href="#roles">役割</a><a href="#flow">全体の流れ</a><a href="#admin">ユニオン管理者</a><a href="#staff">受付管理者</a>
+  <a href="#s-roster">名簿</a><a href="#s-card">会員証</a><a href="#s-event">イベント</a><a href="#s-day">当日の受付</a><a href="#s-stat">集計・MAP</a>
+  <a href="#faq">困ったとき</a><a href="#privacy">個人情報</a><a href="#check">チェックリスト</a>
+</nav>
+
+<!-- ───────── 役割 ───────── -->
+<section id="roles">
+<h2 class="sec">だれが何をする？</h2>
+<p class="lead">ユニオン管理者が受付管理者を決めたら、あとの作業は基本的に<b>受付管理者</b>が行います。</p>
+<div class="roles">
+  <div class="role own"><div class="tag own" style="display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;">オーナー</div>
+    <div class="who">本部（オーナー）</div>
+    <ul><li>受付システムにユニオンを登録する</li><li>ユニオン名・地域・会員番号の頭文字を決める</li></ul></div>
+  <div class="role adm"><div class="tag adm" style="display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;">最初の1回</div>
+    <div class="who">ユニオン管理者</div>
+    <ul><li>受付管理者を任命する</li><li>ユニオン設定（領収書の発行者名など）を確認する</li><li>このページを受付管理者に渡す</li><li>会計の操作ログを確認する（ユニオン管理者とオーナーだけが見られます）</li></ul></div>
+  <div class="role rcp"><div class="tag rcp" style="display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;">ふだんの作業</div>
+    <div class="who">受付管理者</div>
+    <ul><li>名簿の取り込み・会員証の配布</li><li>イベントの作成・当日の受付・会計</li><li>研修担当の任命・集計の確認</li></ul></div>
+</div>
+<div class="note info">ユニオン管理者は、NAVIGATOR（MAP）で管理者になっている人です。受付システムでもそのまま管理者として扱われます。</div>
+</section>
+
+<!-- ───────── 全体の流れ ───────── -->
+<section id="flow">
+<h2 class="sec">全体の流れ</h2>
+<div class="flow">
+  <span class="o">0. ユニオン登録</span><em>›</em>
+  <span class="a">1. 受付管理者の任命</span><em>›</em>
+  <span class="r">2. 名簿の取り込み</span><em>›</em>
+  <span class="r">3. 会員証の配布</span><em>›</em>
+  <span class="r">4. イベント作成</span><em>›</em>
+  <span class="r">5. 当日の受付</span><em>›</em>
+  <span class="r">6. 集計・MAP連携</span>
+</div>
+<p class="lead">目安：ユニオン管理者の作業は10分ほど。名簿と会員証の準備は、名簿ができていれば30分〜1時間ほどです。</p>
+</section>
+
+<!-- ───────── ユニオン管理者 ───────── -->
+<section id="admin">
+<h2 class="sec"><span class="tag adm">ユニオン管理者</span>最初にやること</h2>
+
+<div class="card step"><div class="no">0</div><div>
+  <h3>オーナーにユニオンを登録してもらう</h3>
+  <p style="margin:2px 0;">次の3つをオーナーに伝えてください。</p>
+  <div class="tblwrap"><table class="stk">
+    <tr><th>項目</th><th>例</th><th>注意</th></tr>
+    <tr><td>ユニオン名</td><td>BASE REVE</td><td><b>NAVIGATOR（MAP）のプロフィールと同じ表記</b>にします。MAPとの連携に使います。</td></tr>
+    <tr><td>地域</td><td>福岡</td><td>同じ名前のユニオンが複数の地域にある場合の見分けに使います。</td></tr>
+    <tr><td>会員番号の頭文字</td><td class="mono">RV</td><td>英字2〜4文字。<b>他のユニオンと同じものは使えません</b>。新しく番号を付ける人は「頭文字＋4桁」（RV0001…）になります。</td></tr>
+  </table></div>
+</div></div>
+
+<div class="card step"><div class="no">1</div><div>
+  <h3>受付管理を開いてログインする</h3>
+  <span class="where">受付管理のページ</span>
+  <ul>
+    <li><b>NAVIGATOR（GROOVE MAP）と同じメールアドレス・パスワード</b>でログインできます。</li>
+    <li>スマホでもPCでも使えますが、<b>受付管理者の作業はPCがおすすめ</b>です。</li>
+    <li>受付管理者になる人にも、アカウントが必要です。まだ無い人は、ログイン画面の「新規登録」で作ってもらいます。<b>所属ユニオンは正式なユニオン名と同じ表記</b>で入れてもらってください（任命の一覧に出なくなるため）。</li>
+  </ul>
+</div></div>
+
+<div class="card step"><div class="no">2</div><div>
+  <h3>受付管理者を任命する</h3>
+  <span class="where">名簿タブ ›「👑 受付管理者」</span>
+  <ol>
+    <li>名簿タブの <span class="ui">👑 受付管理者</span> を押します。</li>
+    <li>ユニオンのアカウント一覧から、受付をする人にチェックを付けて保存します。</li>
+    <li>他のユニオンの人に手伝ってもらう場合は「他ユニオンから追加」で追加できます。</li>
+  </ol>
+  <div class="note ok">任命された人は、名簿・会員証・イベント・受付・会計・集計の操作ができるようになります。</div>
+  <details class="vid"><summary>▶ 動画で見る（約30秒）</summary><video src="guide/set4.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+
+<div class="card step"><div class="no">3</div><div>
+  <h3>ユニオン設定を確認する</h3>
+  <span class="where">会計タブ ›「⚙ ユニオン設定」</span>
+  <ul>
+    <li><b>領収書の発行者名</b>：空欄の間は、電子領収書が発行されません。</li>
+    <li><b>会員番号の頭文字</b>・<b>地域</b>：オーナーが登録した内容を確認します。</li>
+    <li><b>PayPay受け取りリンク</b>：オンライン受講の送金先（使う場合のみ）。</li>
+  </ul>
+  <p style="font-size:13.5px;color:var(--sub);margin:4px 0 0;">この設定は受付管理者でも変更できます。</p>
+</div></div>
+
+<div class="card step"><div class="no">4</div><div>
+  <h3>受付管理者にこのページを渡す</h3>
+  <p style="margin:2px 0;">このページのURLを受付管理者にLINEなどで送ってください。ここから先は、受付管理者の作業です。</p>
+  <div class="note info">ユニオン管理者があとから見るもの：<b>会計 ›「📋 操作ログ」</b>（だれが・いつ・お金に関わるどんな操作をしたかの記録。ユニオン管理者とオーナーだけが見られます）、<b>集計タブ</b>。</div>
+</div></div>
+</section>
+
+<!-- ───────── 受付管理者 ───────── -->
+<section id="staff">
+<h2 class="sec"><span class="tag rcp">受付管理者</span>準備から当日まで</h2>
+<p class="lead">画面上部の <span class="ui">🔰 使い方</span> から、ジェッ子ちゃんのガイドと動画でも同じ操作を確認できます。<b>🧪 練習モード</b>なら、本番に記録せずに受付を体験できます。</p>
+
+<div class="card step"><div class="no">1</div><div>
+  <h3>研修担当を任命する（研修生を扱う場合）</h3>
+  <span class="where">名簿タブ ›「🎓 研修生登録の担当」</span>
+  <p style="margin:2px 0;">任命された人は「研修受講カード」（受付管理のURLの最後に <span class="mono">#trainer</span>）から研修生を登録・記録できます。</p>
+</div></div>
+</section>
+
+<section id="s-roster">
+<div class="card step"><div class="no">2</div><div>
+  <h3>名簿を作る</h3>
+  <span class="where">名簿タブ ›「CSV取込」›「📄 テンプレートをダウンロード」</span>
+  <p style="margin:2px 0;">テンプレートをエクセルやスプレッドシートで開き、1行に1人ずつ入れます。</p>
+  <div class="tblwrap"><table class="stk">
+    <tr><th>列</th><th>入れる内容</th><th>ポイント</th></tr>
+    <tr><td>番号</td><td>QRカードの会員番号</td><td><b>QRカードがあるユニオン</b>：カードの番号をそのまま。<br><b>QRカードが無いユニオン</b>：<b>空欄でOK</b>（頭文字＋4桁で自動発番）。</td></tr>
+    <tr><td>姓・名</td><td>山田 ／ 太郎</td><td><b>NAVIGATOR（MAP）と同じ漢字</b>で。MAPのメンバーと名前で自動的につながります（髙／高、齋藤／斉藤なども同じに）。</td></tr>
+    <tr><td>ふりがな</td><td>やまだ たろう</td><td>任意。検索しやすくなります。</td></tr>
+    <tr><td>系列</td><td>山田BD</td><td>UPルビー。<b>表記をそろえてください</b>（「山田BD」「山田 BD」はそろえる）。</td></tr>
+    <tr><td>性別</td><td>男 ／ 女</td><td>集計の男女別に使います。</td></tr>
+    <tr><td>グレード</td><td>BR ／ JETCLUB ／ 空欄</td><td>会員証の色が変わります（空欄＝一般）。</td></tr>
+  </table></div>
+  <div class="note warn">名簿は個人情報です。共有はユニオン内の必要な人だけにして、作業が終わったファイルは削除してください。</div>
+</div></div>
+
+<div class="card step"><div class="no">3</div><div>
+  <h3>名簿を取り込む</h3>
+  <span class="where">名簿タブ ›「CSV取込」</span>
+  <ol>
+    <li><span class="ui">ファイルを選択</span> で名簿のファイルを選ぶか、エクセルの表をそのまま貼り付けます（見出し行つき）。</li>
+    <li><span class="ui">確認する</span> を押すと、<b>取り込む前の確認画面</b>が出ます（まだ保存されません）。</li>
+    <li>内容を確認して <span class="ui">○名を取り込む</span> を押します。</li>
+    <li>番号を自動で付けた人がいる場合は <span class="ui">📄 発番した人の一覧（CSV）</span> で保存しておくと、本人に番号を知らせるときに使えます。</li>
+  </ol>
+  <div class="tblwrap"><table class="stk">
+    <tr><th>確認画面の表示</th><th>意味・どうする？</th></tr>
+    <tr><td>新規 ／ 更新</td><td>新しく登録 ／ 登録済みの人を上書き。そのままでOK。</td></tr>
+    <tr><td>番号を自動発番</td><td>番号が空欄の人。頭文字＋4桁の番号が付きます。</td></tr>
+    <tr><td>⚠ 他ユニオンと番号が重複</td><td>番号は全国のユニオンで共通のため、同じ番号は使えません。「新しい番号で取り込む」にチェックすると、新しい番号で登録します（この人の紙のQRカードは使えなくなるので、スマホ会員証を配ってください）。</td></tr>
+    <tr><td>⚠ ファイル内で番号が重複</td><td>同じ番号が2行以上。2つ目以降は取り込みません。ファイルを直してください。</td></tr>
+    <tr><td>系列の表記ゆれ</td><td>「山田 BD → 山田BD」のように、一番多い表記にそろえる候補です。チェックしたままでOK。</td></tr>
+  </table></div>
+  <p style="font-size:13.5px;color:var(--sub);margin:4px 0 0;">1人ずつ追加する時は <span class="ui">＋ メンバー追加</span>（番号は自動）。</p>
+  <details class="vid"><summary>▶ 動画で見る（約45秒）</summary><video src="guide/set1.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+</section>
+
+<section id="s-card">
+<div class="card step"><div class="no">4</div><div>
+  <h3>会員証を発行して配る</h3>
+  <span class="where">名簿タブ ›「会員証一括発行」</span>
+  <p style="margin:2px 0;">まず <span class="ui">会員証一括発行</span> で、まだ会員証が無い人全員の分を作ります。配り方はユニオンによって変わります。</p>
+  <div class="tblwrap"><table class="stk">
+    <tr><th style="width:34%;">ユニオン</th><th>おすすめの配り方</th></tr>
+    <tr><td><b>QRカードがある</b><br><small>（本人が自分の番号を知っている）</small></td><td>名簿タブの <span class="ui">受け取りリンク</span> のURLをLINEグループに貼るだけ。<br>各自が <b>会員番号＋お名前（姓）</b> を入れると、自分の会員証が開きます。</td></tr>
+    <tr><td><b>QRカードが無い（新しく発番）</b><br><small>（本人は番号を知らない）</small></td><td>① <b>初回のハウディ会場で配る</b>：名簿の <span class="ui">会員証</span> ›「📱 QRで渡す」を本人のスマホで読み取ってもらう（1人10秒）。<br>② 来なかった人には、名簿の <span class="ui">会員証</span> ›「URLをコピー」で<b>個別にLINE</b>。<br>③ 発番一覧で番号を知らせれば、受け取りリンクも使えます。</td></tr>
+  </table></div>
+  <div class="note info"><b>受け取りリンクの案内文（例）</b><br>📱 スマホ会員証の受け取り<br>こちらを開いて、会員番号とお名前（姓）を入力してください👇<br>（受け取りリンクのURL）<br>開いたら「ホーム画面に追加」をしておくと次回すぐ使えます！<br><small>名簿タブ ›「受け取りリンク」›「LINE用の案内文ごとコピー」で、そのまま貼れる文章をコピーできます。</small></div>
+  <ul style="font-size:14px;">
+    <li>番号だけでは他の人の会員証は開けません（お名前も必要）。お名前は<b>名簿に登録した漢字</b>で入れてもらいます。</li>
+    <li>紙のカードが欲しい場合は <span class="ui">カード印刷</span>（QR付き）。</li>
+  </ul>
+  <details class="vid"><summary>▶ 動画で見る（約30秒）</summary><video src="guide/set2.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+</section>
+
+<section id="s-event">
+<div class="card step"><div class="no">5</div><div>
+  <h3>イベントを作る</h3>
+  <span class="where">イベントタブ ›「＋ 新規イベント」</span>
+  <ul>
+    <li>日付・名前・料金（第1部・第2部）を入れて保存します。予約受付・オンライン受講もここでONにできます。</li>
+    <li><b>合同イベント</b>：作るのは<b>主催ユニオンだけ</b>。「合同ユニオン」で、いっしょに開くユニオンに<b>全部チェック</b>します。相手ユニオンの画面にも同じイベントが出るので、当日はそれぞれのPCで<b>同じイベント</b>の受付を開始します（別々に作ると二重受付や稼働率のズレの原因になります）。</li>
+  </ul>
+  <details class="vid"><summary>▶ 動画で見る：イベントを作る</summary><video src="guide/set3.mp4" controls preload="none" playsinline></video></details>
+  <details class="vid"><summary>▶ 動画で見る：合同イベントを作る</summary><video src="guide/set5.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+</section>
+
+<section id="s-day">
+<div class="card step"><div class="no">6</div><div>
+  <h3>当日の受付</h3>
+  <span class="where">受付タブ</span>
+  <ol>
+    <li>イベントを選んで <span class="ui">受付を開始</span>（今日のイベントは最初から選ばれています）。</li>
+    <li>会員証のQRをQRリーダー・カメラで読む（番号の手入力・名前検索も可）。<b>緑ならOK</b>。</li>
+    <li>名簿にいない人は <span class="ui">ゲスト受付</span>、登壇者は <span class="ui">スピーカーを登録</span>（料金なし）。</li>
+    <li>終わったら <span class="ui">受付を終了</span>。これで集計（稼働率）に入ります。続けて会計を入力・確定します。</li>
+  </ol>
+  <ul style="font-size:14px;">
+    <li><b>他ユニオンの人</b>も会員証のQRで受付できます（ビジター）。合同イベントで「⚠ ○○ は合同ユニオンに入っていません」と出たら、イベントの「編集」でチェックを付けてください（あとからでもOK）。</li>
+    <li>間違えた受付は、人数のタイルから一覧を開いて <span class="ui">取消</span>。あとで払う人は「未徴収にする」。</li>
+    <li>はじめての人は、<span class="ui">🔰 使い方</span> ›「受付する人」›<b>🧪 練習モード</b>で一度体験しておくと安心です。</li>
+  </ul>
+  <details class="vid"><summary>▶ 動画で見る：受付を始める</summary><video src="guide/rec1.mp4" controls preload="none" playsinline></video></details>
+  <details class="vid"><summary>▶ 動画で見る：QRでピッ・番号で受付</summary><video src="guide/rec2.mp4" controls preload="none" playsinline></video></details>
+  <details class="vid"><summary>▶ 動画で見る：受付終了と会計</summary><video src="guide/rec5.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+</section>
+
+<section id="s-stat">
+<div class="card step"><div class="no">7</div><div>
+  <h3>集計とNAVIGATOR（MAP）との連携</h3>
+  <span class="where">集計タブ ／ NAVIGATOR の受付連携</span>
+  <ul>
+    <li><b>集計タブ</b>：月ごとの開催数・出席表・稼働率。名前を押すと、その人をその場で編集できます。</li>
+    <li><b>NAVIGATOR</b>：MAPのメンバーと受付の名簿が<b>名前で自動的につながり</b>、稼働率や研修の記録がMAPに入ります。一度つながると以後は会員番号で固定されます。同姓同名や漢字違いの人は、NAVIGATOR（MAP）の「受付連携」の画面で手動で選んでください。</li>
+  </ul>
+  <details class="vid"><summary>▶ 動画で見る：集計タブ</summary><video src="guide/st1.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+</section>
+
+<!-- ───────── 困ったとき ───────── -->
+<section id="faq">
+<h2 class="sec">困ったとき</h2>
+<details class="qa"><summary>受付管理者の任命の一覧に、その人が出てこない</summary>
+  <p>その人のアカウントの「所属ユニオン」の表記が、正式なユニオン名と違う可能性があります。NAVIGATORのプロフィールでユニオン名を直してもらうか、「他ユニオンから追加」で追加してください。</p></details>
+<details class="qa"><summary>取り込みで「他ユニオンと番号が重複」と出た</summary>
+  <p>その番号は、すでに他のユニオンの人が使っています。「新しい番号で取り込む」にチェックして取り込み、その人にはスマホ会員証を配ってください（紙のQRカードの番号は使えません）。</p></details>
+<details class="qa"><summary>番号を自動で付けられない（「頭文字を決めてください」と出る）</summary>
+  <p>会計タブ ›「⚙ ユニオン設定」で会員番号の頭文字（英字2〜4文字）を入れてください。他のユニオンと同じ頭文字は使えません。</p></details>
+<details class="qa"><summary>メンバーが受け取りリンクで会員証を開けない</summary>
+  <ul><li>会員番号と、<b>名簿に登録されている漢字</b>のお名前（姓 または フルネーム）が合っているか確認してください。</li>
+  <li>会員証がまだ発行されていない可能性があります（名簿の「会員証」から確認）。</li>
+  <li>うまくいかない時は、名簿の <span class="ui">会員証</span> ›「URLをコピー」で直接送るのが確実です。</li></ul></details>
+<details class="qa"><summary>スマホを機種変更した・会員証のURLをなくした</summary>
+  <p>受け取りリンクから番号＋お名前で開き直せます。URLが他の人に知られた可能性がある時は、名簿の <span class="ui">会員証</span> ›「再発行」（古いURLはすぐ使えなくなります）。</p></details>
+<details class="qa"><summary>やめた人・しばらく来ない人は？</summary>
+  <p>削除ではなく <span class="ui">無効化</span> にしてください。集計と受付の対象から外れますが、出席履歴や領収書は残り、「有効化」でいつでも戻せます。削除は間違えて登録した人だけにしてください。</p></details>
+<details class="qa"><summary>「権限がありません」と出る</summary>
+  <p>受付管理者に任命されているか、ユニオン管理者に確認してください。任命された直後は、ページを再読み込み（PCは Ctrl+F5、スマホは開き直し）すると反映されます。</p></details>
+<details class="qa"><summary>他のユニオンのデータは見える？</summary>
+  <p>見えません。名簿・出席・会計・集計は、自分のユニオンと、自分が管理者に任命されているユニオンの分だけ見られます。</p></details>
+</section>
+
+<!-- ───────── 個人情報 ───────── -->
+<section id="privacy">
+<h2 class="sec">個人情報の取り扱い</h2>
+<div class="card">
+  <ul>
+    <li>名簿のファイル、発番一覧のCSV、会員証のURLは<b>個人情報</b>です。必要な人以外に渡さないでください。</li>
+    <li>名簿のファイルは、取り込みが終わったら削除してください（受付システムに保存されています）。</li>
+    <li>会員証のURLは本人専用です。LINEグループには<b>受け取りリンク（共通URL）</b>を貼り、個人のURLは本人にだけ送ってください。</li>
+    <li>PCを共有する場合は、作業が終わったらログアウトしてください。</li>
+  </ul>
+</div>
+</section>
+
+<!-- ───────── チェックリスト ───────── -->
+<section id="check">
+<h2 class="sec">✅ チェックリスト</h2>
+<p class="lead noprint">チェックはこの端末に保存されます（他の人には共有されません）。</p>
+<div class="pg noprint"><i id="pgBar"></i></div>
+<div class="card ck" id="ckList">
+  <label><input type="checkbox" data-k="c0"><span><span class="r tag own">オーナー</span>ユニオンを登録した（ユニオン名・地域・頭文字）</span></label>
+  <label><input type="checkbox" data-k="c1"><span><span class="r tag adm">ユニオン管理者</span>受付管理を開いてログインできた</span></label>
+  <label><input type="checkbox" data-k="c2"><span><span class="r tag adm">ユニオン管理者</span>受付管理者を任命した</span></label>
+  <label><input type="checkbox" data-k="c3"><span><span class="r tag adm">ユニオン管理者</span>ユニオン設定（領収書の発行者名・頭文字・地域）を確認した</span></label>
+  <label><input type="checkbox" data-k="c4"><span><span class="r tag adm">ユニオン管理者</span>このページを受付管理者に渡した</span></label>
+  <label><input type="checkbox" data-k="c5"><span><span class="r tag rcp">受付管理者</span>（研修生を扱う場合）研修担当を任命した</span></label>
+  <label><input type="checkbox" data-k="c6"><span><span class="r tag rcp">受付管理者</span>テンプレートで名簿を作った（氏名はNAVIGATORと同じ漢字・系列をそろえた）</span></label>
+  <label><input type="checkbox" data-k="c7"><span><span class="r tag rcp">受付管理者</span>名簿を取り込んだ（確認画面で重複・表記ゆれを確認）</span></label>
+  <label><input type="checkbox" data-k="c8"><span><span class="r tag rcp">受付管理者</span>会員証を一括発行した</span></label>
+  <label><input type="checkbox" data-k="c9"><span><span class="r tag rcp">受付管理者</span>会員証を配った（受け取りリンク／会場でQR／個別にLINE）</span></label>
+  <label><input type="checkbox" data-k="c10"><span><span class="r tag rcp">受付管理者</span>イベントを作った（合同は主催だけ・全部チェック）</span></label>
+  <label><input type="checkbox" data-k="c11"><span><span class="r tag rcp">受付管理者</span>練習モードで受付を体験した</span></label>
+  <label><input type="checkbox" data-k="c12"><span><span class="r tag rcp">受付管理者</span>当日の受付 → 受付を終了 → 会計の確定までできた</span></label>
+</div>
+</section>
+
+<p class="foot">BASE CHECK-IN 導入手順書 ・ 画面が変わった時はこのページも更新されます。わからないことは、ユニオン管理者またはオーナーに聞いてください。</p>
+</div>
+<script>
+// チェックリストの進み具合（この端末だけに保存）
+(function(){
+  var KEY = 'bci_manual_ck', st = {};
+  try{ st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }catch(e){ st = {}; }
+  var boxes = document.querySelectorAll('#ckList input[type=checkbox]');
+  function paint(){
+    var n = 0;
+    for(var i = 0; i < boxes.length; i++) if(boxes[i].checked) n++;
+    var bar = document.getElementById('pgBar');
+    if(bar) bar.style.width = Math.round(n / boxes.length * 100) + '%';
+  }
+  for(var i = 0; i < boxes.length; i++){
+    boxes[i].checked = !!st[boxes[i].getAttribute('data-k')];
+    boxes[i].onchange = function(){
+      st[this.getAttribute('data-k')] = this.checked;
+      try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
+      paint();
+    };
+  }
+  paint();
+  // 動画は開いた時だけ読み込む／閉じたら止める
+  var vids = document.querySelectorAll('details.vid');
+  for(var j = 0; j < vids.length; j++){
+    vids[j].addEventListener('toggle', function(){ var v = this.querySelector('video'); if(v && !this.open) v.pause(); });
+  }
+})();
+</script>
+</body>
+</html>
