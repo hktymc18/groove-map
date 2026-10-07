@@ -38,5 +38,5 @@ T.run(async () => {
   c('「20問から作り直す」も理想のページへ（ポップアップなし）', w._p2Pg === 'ideal' && !$('#p2GwOv'));
   console.log('=== PC ===');
   setWH(1400, 900); w._uxSync(); w.p2Go('ideal', 0); await sleep(30);
-  c('PC：左に質問・右に答えの一覧', !!$('.pcx2 .p2id #p2GwWrap .gw2-bubble') && !!$('.pcx2 #p2IdList') && $$('.pcx-tabs span').length === 7);
+  c('PC：左に質問（v674: 答え終わっていれば「やり直す」ボタン）・右に答えの一覧', !!$('.pcx2 .p2id #p2GwWrap .gw2-bubble, .pcx2 .p2id #p2GwWrap .p2id-dn') && !!$('.pcx2 #p2IdList') && $$('.pcx-tabs span').length === 7);
 });
