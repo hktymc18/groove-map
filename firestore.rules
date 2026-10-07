@@ -250,7 +250,11 @@ service cloud.firestore {
       return isOwnerAdmin()
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('role','') == 'admin'
-            && profile(request.auth.uid).get('union','') == un);
+            && profile(request.auth.uid).get('union','') == un)
+        // 🔗 v20: 兼務のユニオン管理者（オーナーが checkinUnions/{un}.coreAdmins に指定）
+        || (signedIn() && notDisabled(request.auth.uid)
+            && exists(/databases/$(database)/documents/checkinUnions/$(un))
+            && get(/databases/$(database)/documents/checkinUnions/$(un)).data.get('coreAdmins', []).hasAny([request.auth.uid]));
     }
     // 受付システムの管理権限: コア管理者 or 任命された受付管理者
     // （checkinUnions/{un}.admins にUIDが登録されたユーザー）
@@ -290,6 +294,11 @@ service cloud.firestore {
         || (signedIn() && notDisabled(request.auth.uid)
             && ckEventStaffOf(get(/databases/$(database)/documents/checkinEvents/$(eid)).data));
     }
+    function ckEventAdminOf(ev) {
+      return isCkAdmin(ev.get('hostUnion', ''))
+        || (ev.get('unions', []).size() > 0 && isCkAdmin(ev.get('unions', [])[0]))
+        || (ev.get('unions', []).size() > 1 && isCkAdmin(ev.get('unions', [])[1]));
+    }
     function ckEventStaffOf(ev) {
       return ev.get('unions', []).hasAny([ckMyUnion()])
         || isCkAdmin(ev.get('hostUnion', ''))
@@ -301,10 +310,13 @@ service cloud.firestore {
       allow read: if signedIn();
       // 有効化・受付管理者(admins)の変更はコア管理者のみ。
       // 受付管理者は発行者名(issuer)などadmins以外の設定は変更できる
-      allow create: if isCkCoreAdmin(un);
-      allow update: if isCkCoreAdmin(un)
+      // 兼務のユニオン管理者（coreAdmins）の指定・解除はオーナーのみ
+      allow create: if isCkCoreAdmin(un)
+        && (isOwnerAdmin() || !('coreAdmins' in request.resource.data));
+      allow update: if (isCkCoreAdmin(un)
+            && (isOwnerAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['coreAdmins'])))
         || (isCkAdmin(un)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins']));
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins']));
       allow delete: if isOwnerAdmin();
     }
 
@@ -444,13 +456,11 @@ service cloud.firestore {
       }
 
       // 会計（BASE集計表）: 参加ユニオンの有効メンバーが記録できる
+      // 💴 v20: 会計は主催・参加ユニオンのユニオン管理者・受付管理者（兼務含む）とオーナーだけ（一般メンバーは不可）
       match /finance/{fid} {
-        allow read: if ckEventStaff(eid);
-        allow create, update, delete: if isOwnerAdmin()
-          || (signedIn()
-              && notDisabled(request.auth.uid)
-              && get(/databases/$(database)/documents/checkinEvents/$(eid))
-                   .data.get('unions',[]).hasAny([ckMyUnion()]));
+        allow read, create, update, delete: if isOwnerAdmin()
+          || (signedIn() && notDisabled(request.auth.uid)
+              && ckEventAdminOf(get(/databases/$(database)/documents/checkinEvents/$(eid)).data));
       }
 
       // 💰 お金の操作ログ: 追記専用（だれも編集・削除できない＝改ざん防止）。
