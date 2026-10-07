@@ -1146,6 +1146,7 @@ var gUnions = [];           // checkinUnions 一覧
 var FEATURE_PAYPAY = true;    // 2026-09-30 復活（オーナー指示）
 var RSVP_UNIONS = ['BASE REVE'];
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
+var gCoreAdmins = {};       // ユニオン名 → 兼務のユニオン管理者のUID（checkinUnions.coreAdmins・オーナーが指定）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
 // 初期の命名規則（ユニオン設定で上書き可能）
 var DEFAULT_NO_PREFIX = { 'BASE REVE': 'RV', 'BASE ANTARES': 'ANT' };
@@ -1184,7 +1185,22 @@ var gEvents = [];           // 表示月のイベント（gUnion 参加分）
 var gRec = null;            // 受付中 {ev, roster:{no:member}, att:{id:rec}, unsub}
 function isOwner(){ return !!gUser && OWNER_UIDS.indexOf(gUser.uid) >= 0; }
 // コア管理者 = オーナー or MAPのユニオン管理者(role=admin)。受付管理者の任命はこの権限のみ
-function isCoreAdmin(un){ return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === un); }
+function isCoreAdmin(un){
+  return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === un)
+    || !!(gUser && (gCoreAdmins[un] || []).indexOf(gUser.uid) >= 0);   // 兼務のユニオン管理者（オーナーが指定）
+}
+// 💴 会計を扱える人: オーナー／そのイベントの主催・参加ユニオンのユニオン管理者・受付管理者（兼務含む）。一般メンバーは不可
+function canFinEv(ev){
+  if(isOwner()) return true;
+  if(!ev) return false;
+  return [ev.hostUnion].concat(ev.unions || []).some(function(u){ return u && canEditUnion(u); });
+}
+function canFinAny(){ return isOwner() || gUnions.some(function(u){ return canEditUnion(u); }); }
+function ckApplyFinUi(){
+  var b = document.querySelector('nav button[data-pane="pFin"]'), ok = canFinAny();
+  if(b) b.classList.toggle('hide', !ok);
+  if(!ok && $('pFin') && $('pFin').classList.contains('on')){ var k = document.querySelector('nav button[data-pane="pKiosk"]'); if(k) k.click(); }
+}
 // 受付管理者 = checkinUnions/{un}.admins に登録されたユーザー。このシステム内では管理者と同等
 function isCkStaffAdmin(un){ return !!(gUser && (gCkAdmins[un] || []).indexOf(gUser.uid) >= 0); }
 function canEditUnion(un){ return isCoreAdmin(un) || isCkStaffAdmin(un); }
@@ -1279,8 +1295,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v33';
+var APP_VER = 'v34';
 var CHANGELOG = [
+  { v: 'v34', d: '2026/10/07', items: ['会計タブ・会計の入力は、ユニオン管理者・受付管理者・オーナーだけになりました（一般メンバーには表示されません。受付は今までどおりできます）', '🔗 兼務のユニオン管理者: 複数のユニオンを管理する人を、オーナーが「👥 管理者一覧」から指定できるようになりました。指定された人は、そのユニオンでもユニオン管理者として扱われます'] },
   { v: 'v33', d: '2026/10/07', items: ['NAVIGATORや別の受付のタブを開いていると、名簿タブの「受付管理者」「研修生登録の担当」「管理者一覧」などが開くまで1分ほどかかることがあった問題を修正'] },
   { v: 'v32', d: '2026/10/07', items: ['名簿の取込: テンプレートをExcel（.xlsx）に。100人分の枠（罫線）・見出し固定・性別とグレードはプルダウン・記入のしかたのシートつき。取込でExcelのファイルをそのまま選べるようになりました'] },
   { v: 'v31', d: '2026/10/07', items: ['📘 導入手順書（ユニオン管理者・受付管理者向け）を追加。🔰 使い方のメニューと、ログイン画面から開けます'] },
@@ -3207,6 +3224,7 @@ function afterLogin(){
       var un = d.data().name || d.id;
       gUnions.push(un);
       gCkAdmins[un] = d.data().admins || [];
+      gCoreAdmins[un] = d.data().coreAdmins || [];
       gUnionPrefix[un] = d.data().noPrefix || '';
     });
     gUnions.sort();
@@ -3271,6 +3289,7 @@ function enterApp(){
   loadEvents();
   ckRefreshIfStale(gUnion);   // MAP連携用の稼働率の集計を今日の状態に（日付が変わった後の初回だけ）
   loadStats();
+  ckApplyFinUi();
   loadFinanceTab();
   initOnlineAlert();
 }
@@ -3575,10 +3594,10 @@ $('btnAdminsView').onclick = function(){
       byUid[d.id] = { name: u.name || d.id.slice(0, 8), union: u.union || un, role: u.role || '' };
     });
     var s0 = res[1].exists ? res[1].data() : {};
-    var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice();
+    var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice(), cores = (s0.coreAdmins || []).slice();
     // 他ユニオン所属の兼務者はプロフィールを個別取得して所属付きで表示
     var need = {};
-    admins.concat(trainers).forEach(function(uid){ if(!byUid[uid]) need[uid] = 1; });
+    admins.concat(trainers, cores).forEach(function(uid){ if(!byUid[uid]) need[uid] = 1; });
     return Promise.all(Object.keys(need).map(function(uid){
       return db.collection('users').doc(uid).get().then(function(sn){
         var u = sn.exists ? sn.data() : {};
@@ -3598,6 +3617,10 @@ $('btnAdminsView').onclick = function(){
       var h = '<label>ユニオン管理者（アカウント権限）</label>'
         + (roleAdmins.map(function(uid){ return row(uid, '<span class="pill g">ユニオン管理者</span>'); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
+        + '<label style="margin-top:14px;">🔗 ユニオン管理者（兼務・オーナーが指定）</label>'
+        + (cores.map(function(uid){ return row(uid, '<span class="pill g">兼務</span>'); }).join('')
+          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
+        + (isOwner() ? '<div class="btns" style="justify-content:flex-start;margin-top:6px;"><button id="avCore">✏️ 兼務のユニオン管理者を設定</button></div>' : '')
         + '<label style="margin-top:14px;">👑 受付管理者（任命制・管理者と同じ操作ができる）</label>'
         + (admins.map(function(uid){ return row(uid, ''); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
@@ -3608,9 +3631,68 @@ $('btnAdminsView').onclick = function(){
       modal('<h2>👥 管理者一覧 — ' + esc(un) + '</h2>' + h
         + '<div class="btns"><button id="avClose">閉じる</button></div>', true);
       $('avClose').onclick = closeModal;
+      if($('avCore')) $('avCore').onclick = function(){
+        coreAdminsModal(un, cores.map(function(uid){ var u = byUid[uid] || {}; return { uid: uid, name: u.name || uid.slice(0, 8), union: u.union || '?', checked: true }; }));
+      };
     });
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
 };
+/* 🔗 兼務のユニオン管理者（オーナーのみ）: 他のユニオン所属のユニオン管理者を、このユニオンでもユニオン管理者として扱う。
+   受付管理者の任命・会計の操作ログなど、ユニオン管理者だけの操作もできる（checkinUnions/{un}.coreAdmins） */
+function coreAdminsModal(un, rows){
+  if(!isOwner()) return;
+  var others = gUnions.filter(function(u){ return u !== un; });
+  modal('<h2>🔗 兼務のユニオン管理者 — ' + esc(un) + '</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">チェックした人は、所属ユニオンに関係なく、このユニオンの<b>ユニオン管理者</b>として扱われます'
+    + '（受付管理者の任命・会計の操作ログもできます）。設定できるのはオーナーだけです。</p>'
+    + '<div id="caList"></div>'
+    + (others.length
+      ? '<label style="margin-top:12px;">他のユニオンの人を追加</label><div style="display:flex;gap:8px;align-items:center;">'
+        + '<select id="caUn" style="flex:1;min-width:0;">' + others.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('') + '</select>'
+        + '<button id="caLoad">ユーザーを表示</button></div>'
+      : '')
+    + '<div class="btns"><button id="caCancel">キャンセル</button><button class="primary" id="caSave">保存</button></div>', true);
+  function paint(){
+    $('caList').innerHTML = rows.map(function(r, i){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
+        + '<input type="checkbox" id="cax_' + i + '"' + (r.checked ? ' checked' : '') + '>'
+        + '<label for="cax_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">' + esc(r.name) + '</label>'
+        + '<span class="pill n">所属: ' + esc(r.union) + '</span>'
+        + (r.role === 'admin' ? '<span class="pill g">所属先の管理者</span>' : '') + '</div>';
+    }).join('') || '<p style="font-size:12px;color:var(--sub);margin:4px 0;">まだいません。下で選んで追加できます。</p>';
+    rows.forEach(function(r, i){ var cb = $('cax_' + i); if(cb) cb.onchange = function(){ r.checked = cb.checked; }; });
+  }
+  paint();
+  var ld = $('caLoad');
+  if(ld) ld.onclick = function(){
+    var xun = $('caUn').value;
+    ld.disabled = true;
+    db.collection('users').where('union', '==', xun).get().then(function(qs){
+      var added = 0;
+      qs.forEach(function(d){
+        var u = d.data();
+        if(u.status === 'disabled' || rows.some(function(r){ return r.uid === d.id; })) return;
+        rows.push({ uid: d.id, name: u.name || d.id.slice(0, 8), union: xun, role: u.role || '', checked: false });
+        added++;
+      });
+      ld.disabled = false;
+      if(!added){ toast('「' + xun + '」に追加できるユーザーがいません'); return; }
+      rows.sort(function(a, b){ return (b.role === 'admin') - (a.role === 'admin') || ((a.union + a.name) < (b.union + b.name) ? -1 : 1); });
+      paint();
+    }).catch(function(e){ ld.disabled = false; toast('ユーザー読込エラー: ' + e.message); });
+  };
+  $('caCancel').onclick = closeModal;
+  $('caSave').onclick = function(){
+    var arr = rows.filter(function(r){ return r.checked; }).map(function(r){ return r.uid; });
+    $('caSave').disabled = true;
+    db.collection('checkinUnions').doc(un).set({ coreAdmins: arr }, { merge: true }).then(function(){
+      gCoreAdmins[un] = arr;
+      closeModal();
+      toast('兼務のユニオン管理者を保存しました（' + arr.length + '名）');
+      refreshUnionSelectors(); ckApplyFinUi(); renderRoster();
+    }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, '兼務の設定はオーナーのみ可能です')); });
+  };
+}
 $('btnAddUnion').onclick = function(){
   modal('<h2>ユニオン追加</h2>'
     + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">追加すると名簿の取込先・合同イベントの選択肢に表示されます。</p>'
@@ -5092,7 +5174,7 @@ function renderEvents(){
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
       + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
       + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span><span id="rcCt_' + esc(ev.id) + '"></span></button>' : '')
-      + (canRec ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
+      + (canFinEv(ev) ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canRec ? '<button data-a="imp" data-id="' + esc(ev.id) + '">📥 取込</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
@@ -5644,7 +5726,8 @@ function trainerEnter(){
     var d = sn.exists ? sn.data() : {};
     gUnionPrefix[gUnion] = d.noPrefix || '';   // 自動発番用（このページはafterLoginを通らない）
     gCkAdmins[gUnion] = d.admins || [];        // canEditUnion（検索パネルの管理者判定）用
-    var isAdmin = isOwner() || gProf.role === 'admin' || ((d.admins || []).indexOf(gUser.uid) >= 0);
+    gCoreAdmins[gUnion] = d.coreAdmins || [];
+    var isAdmin = isOwner() || gProf.role === 'admin' || ((d.admins || []).indexOf(gUser.uid) >= 0) || ((d.coreAdmins || []).indexOf(gUser.uid) >= 0);
     var allowed = isAdmin || ((d.trainers || []).indexOf(gUser.uid) >= 0);
     if(!allowed){
       $('trDeny').classList.remove('hide');
@@ -6853,6 +6936,7 @@ function printCashSlip(ev, f, live){
 }
 
 function financeModal(ev){
+  if(!canFinEv(ev)){ toast('会計は、ユニオン管理者・受付管理者だけが扱えます'); return; }
   var finRef = db.collection('checkinEvents').doc(ev.id).collection('finance').doc('main');
   var attRef = db.collection('checkinEvents').doc(ev.id).collection('attendance');
   var ppMode = ev.payMode === 'paypay';   // 💳 PayPay集金イベント: BA人数はPayPay受領も数える
@@ -7324,6 +7408,12 @@ $('btnFinCsv').onclick = function(){
 /* 会計タブ: 月内イベントの会計状況一覧 */
 function loadFinanceTab(){
   if(!ckCanView(gFinUnion)) gFinUnion = gUnion;
+  // 会計はユニオン管理者・受付管理者・オーナーだけ。自分が管理するユニオンを優先して開く
+  if(!isOwner() && !canEditUnion(gFinUnion)){
+    var mine = gUnions.filter(function(u){ return canEditUnion(u); })[0];
+    if(mine){ gFinUnion = mine; if($('finUnionSel')) fillUnionSel($('finUnionSel'), gFinUnion); }
+    else { $('finBody').innerHTML = '<p style="color:var(--sub)">会計は、ユニオン管理者・受付管理者だけが見られます。</p>'; return; }
+  }
   $('fnMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('btnRcptSet').classList.toggle('hide', !canEditUnion(gFinUnion));
   $('btnRcptCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
@@ -7461,7 +7551,8 @@ $('btnRecStop').onclick = function(){
     .then(function(){ ckRefreshForEvent(ev); })   // 当日分を稼働率の分母に入れた集計をMAPへ
     .catch(function(){ toast('⚠️ 受付終了の記録に失敗しました。電波を確認して、もう一度「受付を終了」を押してください（集計に反映されません）'); });
   // 受付終了 → そのまま会計入力へ
-  if(window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
+  if(canFinEv(ev) && window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
+  else if(!canFinEv(ev)) toast('受付を終了しました（会計の入力はユニオン管理者・受付管理者が行います）');
 };
 
 function startReception(ev){
