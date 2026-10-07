@@ -35,13 +35,13 @@ T.run(async () => {
   c('今週やること：今までのPCの一覧', $('.pcx-p').textContent.indexOf('今週やること') >= 0);
   console.log('=== ② データ ===');
   w.switchView('menu'); w.switchView('stats'); await sleep(50);
-  c('v647: PCの分析は開いたらすぐ推移（左の列なし・タブ）', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st') && w._dtTab === 'trend' && !!$('#dtTrend .dt-chart') && $('#dtModeBar').textContent.indexOf('分析') >= 0);
+  c('v647: PCの分析は開いたらすぐ推移（左の列なし・タブ）', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st') && w._dtTab === 'trend' && !!$('#dtTrend .dt-chart, #dtTrend #px3Ch') && $('#dtModeBar').textContent.indexOf('分析') >= 0);
   w.dtPcGo('s'); await sleep(20);
   c('くわしく（S稼働）は左の列＋右のページ', !!$('#dtPcNav') && $('#dtEz h2').textContent === 'S稼働' && $$('#dtPcNav .pcx-t.on').length === 1 && !!$('#dtEz .pcx-tb'));
   w.dtGo('exam'); await sleep(20);
   c('ページの中のリンク（dtGo）もPCの右の欄へ', w._dtMode === 'ez' && $('#dtEz h2').textContent === 'BR');
   w.dtGo(''); await sleep(20);
-  c('「分析へ」で推移に戻る', w._dtMode === 'full' && !$('#dtPcNav') && !!$('#dtTrend .dt-chart'));
+  c('「分析へ」で推移に戻る', w._dtMode === 'full' && !$('#dtPcNav') && !!$('#dtTrend .dt-chart, #dtTrend #px3Ch'));
   console.log('=== ③ スマホは今まで通り ===');
   setWH(390, 844); w._uxSync(); w.switchView('menu'); await sleep(30);
   const tl = $$('#view-menu .ux-t b').map(x => x.textContent);
