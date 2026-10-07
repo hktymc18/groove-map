@@ -45,10 +45,10 @@ T.run(async () => {
   console.log('=== ③ スマホは今まで通り ===');
   setWH(390, 844); w._uxSync(); w.switchView('menu'); await sleep(30);
   const tl = $$('#view-menu .ux-t b').map(x => x.textContent);
-  c('v631: メニューのタイルは PLAN・MAP・カレンダー・TODO・分析', JSON.stringify(tl) === JSON.stringify(['PLAN', 'MAP', 'カレンダー', 'TODO', '分析']), JSON.stringify(tl));
+  c('v631・v683: メニューのタイルは PLAN・MAP・ANALYSIS・CALENDAR・TODO', JSON.stringify(tl) === JSON.stringify(['PLAN', 'MAP', 'ANALYSIS', 'CALENDAR', 'TODO']), JSON.stringify(tl));
   c('理想MAP・OL・再アプローチは下のボタンに', ['理想MAP', 'OL', '再アプローチ'].every(t => $('#view-menu .ux-sm').textContent.indexOf(t) >= 0));
   c('v633: メンバーのボタンはなし', $('#view-menu .ux-sm').textContent.indexOf('メンバー') < 0);
-  $$('#view-menu .ux-t')[4].click(); await sleep(30);
+  $$('#view-menu .ux-t')[2].click(); await sleep(30);
   c('分析＝データタブ', w.currentView === 'stats');
   c('v632: スマホは下のタブバーなし・左下に「‹ メニュー」', w.document.body.classList.contains('ux-nt') && !!$('#uxMenuBk') && w.document.getElementById('uxNavCss').textContent.indexOf('.mobile-tabbar') >= 0 && w.document.body.getAttribute('data-v') === 'stats');
   $('#uxMenuBk').onclick(); await sleep(20);
