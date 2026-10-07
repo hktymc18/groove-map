@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v683';
+var APP_JS_VERSION = 'v684';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v683';
+  var DATA_VERSION = 'v684';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v684', d:'2026-10-07', items:['ユニオン予定のボタンをHOMEから「設定 › カレンダー」の一番上に移しました'] },
   { v:'v683', d:'2026-10-07', items:['HOMEのタイルの並びを変更：PLANの下は 左上MAP・右上ANALYSIS（分析）／左下CALENDAR・右下TODO'] },
   { v:'v682', d:'2026-10-07', items:['PLAN › 理想を2つのセットに：①理想の生活は答え終わったら同じページに「理想の生活に必要な月収」を出して「✓ 完了」で終われる（この金額を目標月収にするボタンも）','②やりたいこと・やりたくないこと・なりたい自分・なりたくない自分の4ページで1セット。最後のページの「✓ 完了」で終われます'] },
   { v:'v681', d:'2026-10-07', items:['PC（MacBookなど横幅の広い画面）の新しい画面 第1弾：左のメニューを文字つきに（表示チームも左に）・分析を作り直し（上に数字の帯、大きいグラフはマウスを乗せるとその月の数字、グラフの月を押すと右にその月の内訳）','⌘K（WindowsはCtrl+K）で人の名前や画面を探してすぐ移動。分析では ←→ で月、1〜4 でタブを切り替え'] },
@@ -18878,7 +18879,7 @@ function _stRender() {
       + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
       + _stLi('🎨', '見た目', light ? 'ライト' : 'ダーク', "setOpen('look')")
       + _stLi(icn('bell'), '通知', pushOn ? 'オン' : 'オフ', "setOpen('ntf')") + '</div>'
-      + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', '週の始まり・スクロール・予定の帯・Google連携', 'openCalSettings()') + '</div>'
+      + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', (currentUser && currentUser.union ? 'ユニオン予定・' : '') + '週の始まり・スクロール・予定の帯・Google連携', 'openCalSettings()') + '</div>'
       + '<div class="st-gh">MAP・データ</div><div class="st-ls">' + (state.isEditor && !viewingOwnerUid ? _stLi('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
       + _stLi('📄', '変更履歴', '追加・削除・タイトル変更', 'showHistoryModal()')
       + (typeof openShareModal === 'function' && !viewingOwnerUid ? _stLi(icn('link'), 'MAPの共有', '見せる・一緒に編集', 'openShareModal()') : '')
@@ -19809,7 +19810,7 @@ function renderMenuHub() {
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
     + sb(icn('target') + ' 理想MAP', 'switchView(\'ideal\')') + sb(icn('clipboard') + ' OL', 'switchView(\'ol\')')
     + sb(icn('refresh') + ' 再アプローチ', 'reapOpen()', (_reapproach && _reapproach.length) || '');
-  if (currentUser && currentUser.union) S += sb(icn('calendar') + ' ユニオン予定', 'openUnionListSheet()');
+  // v684: ユニオン予定は「設定 › カレンダー」の中へ
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
   if (_fb && _fb.ok) S += sb(icn('bug') + ' バグ・要望', 'fbOpen()', _fb.newN || ''); // v666: 絵文字ではなくアイコン
@@ -28699,7 +28700,9 @@ function openCalSettings() {
   ov.innerHTML = '<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('gear') + ' カレンダー設定</div></div>'
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
-    + '<div style="padding:4px 16px 20px"><div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
+    + '<div style="padding:4px 16px 20px">'
+    + (currentUser && currentUser.union ? '<div class="fr"><label class="fl">ユニオン予定</label><button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openUnionListSheet()">' + icn('calendar') + ' ' + evEsc(currentUser.union) + 'のユニオン予定を見る</button></div>' : '') // v684: HOMEから移動
+    + '<div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
     + '<div class="rg">' + wsBtn(1, '月曜はじまり') + wsBtn(0, '日曜はじまり') + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">月表示のスクロール</label>'
     + '<div class="rg">'
