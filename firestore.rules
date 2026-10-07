@@ -510,6 +510,38 @@ service cloud.firestore {
             && ckCanSee(get(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none'))).data.get('union','')));
     }
 
+    // 📝 目標設定の宿題（研修生がPAのあと会員証から答える。NAVIGATORの目標設定と同じ質問・同じ形式）
+    //   ドキュメントID = 会員証のトークン（URLを知っている本人と担当者だけが開ける＝cards と同じ扱い）
+    //   本人（未ログイン）: 会員証にPAの受講記録がある間だけ提出・書き直しできる。届け先はPAの担当者（trUid）に固定
+    //   担当者・そのユニオンの研修担当/管理者・オーナー: 一覧・既読・書き直し依頼・削除
+    match /goalHw/{t} {
+      allow get: if true;
+      allow list: if signedIn() && notDisabled(request.auth.uid)
+        && (resource.data.get('trUid', '') == request.auth.uid
+            || isCkTrainer(resource.data.get('union', ''))
+            || isOwnerAdmin());
+      allow create, update: if (
+          request.resource.data.keys().hasOnly(['no','name','union','group','trUid','trName','ans','total','status','atMs','atLocal','ver'])
+          && request.resource.data.get('status', '') == 'submitted'
+          && request.resource.data.get('ans', null) is map
+          && request.resource.data.ans.size() <= 40
+          && exists(/databases/$(database)/documents/cards/$(t))
+          && get(/databases/$(database)/documents/cards/$(t)).data.get('rcptOnly', false) == false
+          && get(/databases/$(database)/documents/cards/$(t)).data.get('no', '') == request.resource.data.get('no', '__x')
+          && get(/databases/$(database)/documents/cards/$(t)).data.get('union', '') == request.resource.data.get('union', '__x')
+          && get(/databases/$(database)/documents/cards/$(t)).data.get('trainings', {}).get('PA', null) != null
+          && get(/databases/$(database)/documents/cards/$(t)).data.get('trainings', {}).get('PA', {}).get('by', '') == request.resource.data.get('trUid', '__x')
+        );
+      // 担当側: 既読・書き直し依頼（中身は変えられない）／会員証の再発行時の付け替え
+      allow update: if signedIn() && notDisabled(request.auth.uid)
+        && (resource.data.get('trUid', '') == request.auth.uid || isCkTrainer(resource.data.get('union', '')))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'seenMs', 'redoMs', 'redoBy'])
+        && request.resource.data.get('status', '') in ['submitted', 'redo'];
+      allow create: if signedIn() && notDisabled(request.auth.uid) && isCkTrainer(request.resource.data.get('union', ''));
+      allow delete: if isOwnerAdmin()
+        || (signedIn() && notDisabled(request.auth.uid) && isCkTrainer(resource.data.get('union', '')));
+    }
+
     // オンライン受講の誓約書アーカイブ:
     //   会員証ページ（未ログイン）から申請時に同意記録を作成。改変・削除は不可（アーカイブ）
     match /checkinPledges/{pid} {
