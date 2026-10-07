@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v682';
+var APP_JS_VERSION = 'v683';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v682';
+  var DATA_VERSION = 'v683';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v683', d:'2026-10-07', items:['HOMEのタイルの並びを変更：PLANの下は 左上MAP・右上ANALYSIS（分析）／左下CALENDAR・右下TODO'] },
   { v:'v682', d:'2026-10-07', items:['PLAN › 理想を2つのセットに：①理想の生活は答え終わったら同じページに「理想の生活に必要な月収」を出して「✓ 完了」で終われる（この金額を目標月収にするボタンも）','②やりたいこと・やりたくないこと・なりたい自分・なりたくない自分の4ページで1セット。最後のページの「✓ 完了」で終われます'] },
   { v:'v681', d:'2026-10-07', items:['PC（MacBookなど横幅の広い画面）の新しい画面 第1弾：左のメニューを文字つきに（表示チームも左に）・分析を作り直し（上に数字の帯、大きいグラフはマウスを乗せるとその月の数字、グラフの月を押すと右にその月の内訳）','⌘K（WindowsはCtrl+K）で人の名前や画面を探してすぐ移動。分析では ←→ で月、1〜4 でタブを切り替え'] },
   { v:'v680', d:'2026-10-07', items:['受付連携の「名簿から追加」：紹介者をたどっても自分のMAPの人につながらない人（紹介者なし・紹介者がMAPにいない人とその紹介の人）は、候補に出さないようにしました（「ほかのチームかも」の欄はなくしました）'] },
@@ -19798,10 +19799,11 @@ function renderMenuHub() {
   (state.events || []).forEach(function(e) { if (!e || e.deleted || e.date !== td) return; if (e.type === 'task') { if (!e.done) tkN++; } else evN++; });
   try { S0 = _dtEzNow().S; } catch (eS) {}
   var T = [{ k: 'plan', c: 'mint', ic: icn('compass'), lb: 'PLAN', w: 1, wide: 1, next: nk !== 'do', st: planSt || '目標・計画・振り返り', on: 'switchView(\'plan\')' },
+    // v683: PLANの下は 左上MAP・右上ANALYSIS／左下CALENDAR・右下TODO
     { k: 'map', c: 'sky', ic: icn('map'), lb: 'MAP', st: '組織図・メンバー<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'current\')' },
-    { k: 'cal', c: 'gold', ic: icn('calendar'), lb: 'カレンダー', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
-    { k: 'todo', c: 'pur', ic: icn('checksq'), lb: 'TODO', st: '今日のタスク<br><em>' + (tkN ? 'のこり' + tkN + '件' : 'なし') + '</em>', on: 'switchView(\'events\');setEventsMode(\'agenda\')' },
-    { k: 'stats', c: 'rose', ic: icn('chart'), lb: '分析', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' }];
+    { k: 'stats', c: 'rose', ic: icn('chart'), lb: 'ANALYSIS', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' },
+    { k: 'cal', c: 'gold', ic: icn('calendar'), lb: 'CALENDAR', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
+    { k: 'todo', c: 'pur', ic: icn('checksq'), lb: 'TODO', st: '今日のタスク<br><em>' + (tkN ? 'のこり' + tkN + '件' : 'なし') + '</em>', on: 'switchView(\'events\');setEventsMode(\'agenda\')' }];
   T.forEach(function(t) { if (UX_MENU_IMG[t.k]) { t.c += ' ph' + (t.k === 'stats' ? ' dk' : ''); t.img = UX_MENU_IMG[t.k]; } }); // v661
   var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
