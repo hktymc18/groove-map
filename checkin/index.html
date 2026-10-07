@@ -915,7 +915,10 @@ var OWNER_UIDS = [OWNER_UID, 'E4WT7EHai5c6WANUgASz42Euu1y1']; // v28: オーナ�
 firebase.initializeApp(firebaseConfig);
 var auth = firebase.auth();
 var db = firebase.firestore();
-try { db.enablePersistence({ synchronizeTabs: true }).catch(function(){}); } catch(e){}
+// v33: 端末内のキャッシュ（enablePersistence・タブ間共有）は使わない。
+// 同じサイトの NAVIGATOR や別の受付タブと「代表タブ」を共有する仕組みのため、代表になったタブが裏に回って
+// ブラウザに止められると、このタブの新しい読み込み（受付管理者・研修担当・管理者一覧など）が最大1分ほど待たされていた。
+// 受付中の書き込みは、このページを開いている間はメモリで再送されるので、通信が切れても消えない。
 var FV = firebase.firestore.FieldValue;
 
 /* ---------- utils ---------- */
@@ -1276,8 +1279,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v32';
+var APP_VER = 'v33';
 var CHANGELOG = [
+  { v: 'v33', d: '2026/10/07', items: ['NAVIGATORや別の受付のタブを開いていると、名簿タブの「受付管理者」「研修生登録の担当」「管理者一覧」などが開くまで1分ほどかかることがあった問題を修正'] },
   { v: 'v32', d: '2026/10/07', items: ['名簿の取込: テンプレートをExcel（.xlsx）に。100人分の枠（罫線）・見出し固定・性別とグレードはプルダウン・記入のしかたのシートつき。取込でExcelのファイルをそのまま選べるようになりました'] },
   { v: 'v31', d: '2026/10/07', items: ['📘 導入手順書（ユニオン管理者・受付管理者向け）を追加。🔰 使い方のメニューと、ログイン画面から開けます'] },
   { v: 'v30', d: '2026/10/07', items: [
