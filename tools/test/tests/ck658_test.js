@@ -1,4 +1,4 @@
-// v658：受付の「名簿から追加」で、紹介者が自分のMAPにつながらない人は「ほかのチームかも」（チェックなし・たたむ）
+// v658・v680：受付の「名簿から追加」で、紹介者をたどって自分のMAPにつながらない人は候補に出さない
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
@@ -16,13 +16,14 @@ T.run(async () => {
   w._ckPgI = 1; w.ckPgRender(); await sleep(10);
   const A = w._ckLink.adds, by = no => A.filter(a => a.r.no === no)[0];
   c('自分のMAPにつながる人は自動でチェック（紹介の紹介も）', by('1').on && !by('1').other && by('2').on && !by('2').other);
-  c('ほかのチームかも：中西さん・その紹介・紹介者なしはチェックなし', by('3').other && !by('3').on && by('4').other && !by('4').on && by('5').other);
-  c('ほかのチームは最初たたむ（一覧に名前が出ない）', $('#ckPg').textContent.indexOf('ほかのチームかも 3人') >= 0 && $('#ckPg').textContent.indexOf('高橋 健') < 0);
+  c('v680: つながらない人（中西さん・その紹介・紹介者なし）は候補に出さない', !by('3') && !by('4') && !by('5') && A.length === 2);
+  c('一覧にも名前が出ない・「ほかのチームかも」もない', ['中西 優衣', '高橋 健', '木村 空', 'ほかのチームかも'].every(t => $('#ckPg').textContent.indexOf(t) < 0));
   c('追加する人数は2人', $('.ux-btm .ux-nx').textContent.indexOf('2人') >= 0);
-  w._ckLink.showOther = 1; w.ckPgRender(); await sleep(5);
-  c('表示すると並ぶ', $('#ckPg').textContent.indexOf('高橋 健') >= 0);
-  by('4').on = true; w.ckPgRender(); await sleep(5);
-  c('紹介者（中西さん）にチェックが無ければ、その下の人はチェックが付いて見えない・数えない', !w._ckAddEff(by('4'), A) && $('.ux-btm .ux-nx').textContent.indexOf('2人') >= 0 && $('#ckPg').textContent.indexOf('を追加すると一緒に') >= 0);
   const n0 = w.state.members.length; w.ckLinkLoad = () => {}; w.ckAddApply(); await sleep(10);
-  c('追加は自分のチームの2人だけ', w.state.members.length === n0 + 2 && !w.state.members.some(m => m.lastName === '高橋' || m.lastName === '中西'));
+  c('追加は自分のチームの2人だけ', w.state.members.length === n0 + 2 && !w.state.members.some(m => m.lastName === '高橋' || m.lastName === '中西' || m.lastName === '木村'));
+  // 紹介者がMAPに同じ名前で2人いる時も「つながる」（置き場所は自分で選ぶ）
+  w.state.members.push({ id: 'b', lastName: '佐藤', firstName: '花', title: '', parentId: 'r', mapType: 'both' });
+  w._ckLink = { unions: [{ id: 'U' }], sel: 'U', roster: [{ no: '9', name: '山本 光', referrer: '佐藤 花' }], items: [] };
+  w.ckPgRender(); await sleep(5);
+  c('紹介者がMAPに2人いる時は候補に出す（置き場所は選ぶ・チェックなし）', w._ckLink.adds.length === 1 && !w._ckLink.adds[0].pid && !w._ckLink.adds[0].on && $('#ckPg').textContent.indexOf('山本 光') >= 0);
 });
