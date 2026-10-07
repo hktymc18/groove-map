@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v677';
+var APP_JS_VERSION = 'v678';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v677';
+  var DATA_VERSION = 'v678';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4568,11 +4568,19 @@ function _vvhTarget() {
     if (_vvKb.wk === wk && _vvKb.pre && h < _vvKb.pre - 100) return _vvKb.pre; // キーボードを閉じたのに小さいまま＝iOSの古い値
     _vvKb.stale = false; // 正しい高さに戻った（または向きが変わった）→ 以後は実測値
   }
-  if (!_vvStandalone()) {
-    var vv = window.visualViewport, sc = vv && vv.scale ? vv.scale : 1;
-    var ch = Math.round((document.documentElement && document.documentElement.clientHeight) || 0);
-    if (sc < 1.05 && ch && h < ch - 100) return ch; // v556: タブ表示で見えている高さだけが縮んだまま
+  var vv = window.visualViewport, sc = vv && vv.scale ? vv.scale : 1;
+  var ch = Math.round((document.documentElement && document.documentElement.clientHeight) || 0);
+  if (_vvStandalone()) {
+    // v678: ホーム画面アプリでも、キーボードを閉じた後に見えている高さが「キーボード分小さいまま」戻らないことがある
+    //        （iPhone 17：カレンダーが画面の上6割だけ・下が空白）。ホーム画面アプリはブラウザの帯が無いので、
+    //        入力中でなければ本来の高さ＝画面の高さ（縦なら screen.height・横なら screen.width）。それより100px以上小さい時は古い値とみなす
+    var iw = Math.round(window.innerWidth || 0), sw = (window.screen && screen.width) || 0, sh = (window.screen && screen.height) || 0, full = 0;
+    if (sw && sh) { if (Math.abs(iw - sw) <= 2) full = sh; else if (Math.abs(iw - sh) <= 2) full = sw; }
+    var want = Math.max(ch, full);
+    if (sc < 1.05 && want && h < want - 100) return want;
+    return h;
   }
+  if (sc < 1.05 && ch && h < ch - 100) return ch; // v556: タブ表示で見えている高さだけが縮んだまま
   return h;
 }
 function _vvhUpdate() {
@@ -5355,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v678', d:'2026-10-07', items:['ホーム画面に追加したアプリで、カレンダーが画面の上6割だけに縮み、下が空白になる不具合を修正（iPhone 17。キーボードを閉じた後も画面の高さが小さいまま戻らないiOSの不具合への対策を、ホーム画面アプリにも適用。開き直さなくても数秒で自動で戻ります）'] },
   { v:'v677', d:'2026-10-07', items:['HOME左上のロゴを新しいNWPのロゴに差し替えました'] },
   { v:'v676', d:'2026-10-07', items:['PLAN › 理想の生活：19問目を「社会貢献のためにいくら使いたい？（寄附、食糧支援、ボランティアなど）」に変更（金額は必要月収に入ります）','📝 研修生のときに受付システムの会員証で答えた「目標設定」の宿題を、会員証の「📲 NAVIGATORに引き継ぐ」から理想の生活に入れられるようになりました（空いている項目だけ入ります）'] },
   { v:'v675', d:'2026-10-07', items:['PLAN › 理想・まとめ：書いた内容を全部見せるように（やりたいこと・やりたくないこと・なりたい自分・なりたくない自分も、途中で省略せず全部並びます）。一番下に「はじめから答え直す」、直したい所は各項目の✎から'] },
