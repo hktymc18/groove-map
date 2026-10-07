@@ -1276,8 +1276,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v31';
+var APP_VER = 'v32';
 var CHANGELOG = [
+  { v: 'v32', d: '2026/10/07', items: ['名簿の取込: テンプレートをExcel（.xlsx）に。100人分の枠（罫線）・見出し固定・性別とグレードはプルダウン・記入のしかたのシートつき。取込でExcelのファイルをそのまま選べるようになりました'] },
   { v: 'v31', d: '2026/10/07', items: ['📘 導入手順書（ユニオン管理者・受付管理者向け）を追加。🔰 使い方のメニューと、ログイン画面から開けます'] },
   { v: 'v30', d: '2026/10/07', items: [
     '名簿の取込を一新: テンプレート（番号・姓・名・ふりがな・系列・性別・グレード）、ファイルの読み込み、取り込む前の確認画面。番号が空欄の人は自動で発番します',
@@ -4495,6 +4496,195 @@ $('btnPrintCards').onclick = function(){
 var IM_COLS = { no: ['番号', '会員番号', 'no', 'no.', '№'], name: ['氏名', '名前', 'お名前', 'フルネーム'], sei: ['姓', '苗字', '名字'], mei: ['名'],
   kana: ['ふりがな', 'フリガナ', 'かな', 'カナ', 'よみがな', 'よみ'], group: ['系列', 'upルビー', 'ルビー'], sex: ['性別'], grade: ['グレード'] };
 var IM_HEAD = ['番号', '姓', '名', 'ふりがな', '系列', '性別', 'グレード'];
+/* 📊 名簿テンプレート（Excel .xlsx）の書き出しと、.xlsx の読み込み（外部ライブラリなし）
+   書き出し: 100人分の罫線つきの枠・見出し固定・性別/グレードはプルダウン・番号は文字列（先頭の0が消えない）
+   読み込み: 取込でエクセルのファイルをそのまま選べるように（1枚目のシートを表として読む） */
+var XL_ROWS = 100;
+function xlUtf8(s){
+  if(window.TextEncoder) return new TextEncoder().encode(s);
+  var b = unescape(encodeURIComponent(s)), a = new Uint8Array(b.length);
+  for(var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+  return a;
+}
+var XL_CRC = null;
+function xlCrc32(a){
+  if(!XL_CRC){
+    XL_CRC = [];
+    for(var n = 0; n < 256; n++){ var c = n; for(var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); XL_CRC[n] = c >>> 0; }
+  }
+  var crc = 0xFFFFFFFF;
+  for(var i = 0; i < a.length; i++) crc = XL_CRC[(crc ^ a[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+// 無圧縮（STORE）のzipを作る
+function xlZip(files){
+  var parts = [], central = [], off = 0;
+  files.forEach(function(f){
+    var name = xlUtf8(f.name), data = xlUtf8(f.text), crc = xlCrc32(data);
+    var lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, 0, true); lh.setUint16(12, 0x5C21, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), name, data);
+    var ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, 0, true); ch.setUint16(14, 0x5C21, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+    ch.setUint16(28, name.length, true); ch.setUint32(42, off, true);
+    central.push(new Uint8Array(ch.buffer), name);
+    off += 30 + name.length + data.length;
+  });
+  var csize = 0; central.forEach(function(p){ csize += p.length; });
+  var end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, csize, true); end.setUint32(16, off, true);
+  return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+function xlEsc(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function xlCol(i){ return String.fromCharCode(65 + i); }
+function xlTemplate(un, pre){
+  var NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  var X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  var W = [12, 12, 12, 20, 16, 8, 12];
+  var cols = W.map(function(w, i){ return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1" style="2"/>'; }).join('');
+  var rows = '<row r="1" ht="22" customHeight="1">' + IM_HEAD.map(function(h, i){ return '<c r="' + xlCol(i) + '1" t="inlineStr" s="1"><is><t>' + xlEsc(h) + '</t></is></c>'; }).join('') + '</row>';
+  for(var r = 2; r <= XL_ROWS + 1; r++){
+    var cs = '';
+    for(var c = 0; c < IM_HEAD.length; c++) cs += '<c r="' + xlCol(c) + r + '" s="2"/>';
+    rows += '<row r="' + r + '">' + cs + '</row>';
+  }
+  var last = XL_ROWS + 1;
+  var dv = function(sq, list, title, msg){
+    return '<dataValidation' + (list ? ' type="list"' : '') + ' allowBlank="1" showInputMessage="1" showErrorMessage="' + (list ? 1 : 0) + '"'
+      + ' promptTitle="' + xlEsc(title) + '" prompt="' + xlEsc(msg) + '" sqref="' + sq + '">' + (list ? '<formula1>"' + xlEsc(list) + '"</formula1>' : '') + '</dataValidation>';
+  };
+  var sheet1 = X + '<worksheet ' + NS + '><sheetViews><sheetView tabSelected="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+    + '<sheetFormatPr defaultRowHeight="18"/><cols>' + cols + '</cols><sheetData>' + rows + '</sheetData>'
+    + '<dataValidations count="5">'
+    + dv('A2:A' + last, '', '番号', 'QRカードの番号。カードが無い人は空欄でOK（' + (pre ? pre + '0001' : '頭文字＋4桁') + ' のように自動で発番します）')
+    + dv('B2:C' + last, '', '姓・名', 'NAVIGATOR（MAP）と同じ漢字で入れてください')
+    + dv('E2:E' + last, '', '系列', 'UPルビー。表記をそろえてください（例: 山田BD）')
+    + dv('F2:F' + last, '男,女', '性別', '男 / 女 から選んでください')
+    + dv('G2:G' + last, 'BR,JETCLUB', 'グレード', 'BR / JETCLUB から選択。一般の人は空欄')
+    + '</dataValidations><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/></worksheet>';
+  var help = ['名簿テンプレートの記入のしかた' + (un ? '（' + un + '）' : ''), '',
+    '・「名簿」シートに1行1人で入れてください（' + XL_ROWS + '人分の枠があります。足りない時は下に続けてOK）。',
+    '・番号: QRカードの会員番号。カードが無い人は空欄でOK。' + (pre ? '「' + pre + '0001」' : '「頭文字＋4桁」') + 'のように自動で発番します。',
+    '・姓・名: NAVIGATOR（MAP）と同じ漢字で。MAPのメンバーと名前で自動的につながります（髙／高、齋藤／斉藤なども同じに）。',
+    '・ふりがな: 任意。検索しやすくなります。',
+    '・系列: UPルビー。表記をそろえてください（「山田BD」と「山田 BD」は同じにする）。',
+    '・性別: 男 / 女（集計の男女別に使います）。',
+    '・グレード: BR / JETCLUB。一般の人は空欄。', '',
+    '取り込み方: 受付管理の「名簿」タブ ›「CSV取込」で、このファイルを選ぶか、表をコピーして貼り付け →「確認する」→ 内容を確認して「取り込む」。',
+    '※ 見出し行（1行目）は消さないでください。', '※ 名簿は個人情報です。取り込みが終わったらファイルを削除してください。'];
+  var sheet2 = X + '<worksheet ' + NS + '><sheetFormatPr defaultRowHeight="18"/><cols><col min="1" max="1" width="110" customWidth="1"/></cols><sheetData>'
+    + help.map(function(t, i){ return '<row r="' + (i + 1) + '">' + (t ? '<c r="A' + (i + 1) + '" t="inlineStr" s="' + (i === 0 ? 3 : 4) + '"><is><t>' + xlEsc(t) + '</t></is></c>' : '') + '</row>'; }).join('')
+    + '</sheetData></worksheet>';
+  var styles = X + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    + '<fonts count="3"><font><sz val="11"/><name val="游ゴシック"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="游ゴシック"/></font><font><b/><sz val="14"/><name val="游ゴシック"/></font></fonts>'
+    + '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2E6B52"/><bgColor indexed="64"/></patternFill></fill></fills>'
+    + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
+    + '<border><left style="thin"><color rgb="FFB7B4A8"/></left><right style="thin"><color rgb="FFB7B4A8"/></right><top style="thin"><color rgb="FFB7B4A8"/></top><bottom style="thin"><color rgb="FFB7B4A8"/></bottom><diagonal/></border></borders>'
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+    + '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+    + '<xf numFmtId="49" fontId="1" fillId="2" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+    + '<xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+    + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+    + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf></cellXfs>'
+    + '<cellStyles count="1"><cellStyle name="標準" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+  var WS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml';
+  return xlZip([
+    { name: '[Content_Types].xml', text: X + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'
+      + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+      + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="' + WS + '"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="' + WS + '"/>'
+      + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+    { name: '_rels/.rels', text: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { name: 'xl/workbook.xml', text: X + '<workbook ' + NS + '><sheets><sheet name="名簿" sheetId="1" r:id="rId1"/><sheet name="記入のしかた" sheetId="2" r:id="rId2"/></sheets></workbook>' },
+    { name: 'xl/_rels/workbook.xml.rels', text: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+      + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>'
+      + '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: 'xl/worksheets/sheet1.xml', text: sheet1 },
+    { name: 'xl/worksheets/sheet2.xml', text: sheet2 },
+    { name: 'xl/styles.xml', text: styles }
+  ]);
+}
+function xlDownload(blob, name){
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+// ── 読み込み: .xlsx → タブ区切りのテキスト（1枚目のシート） ──
+function xlUnzip(buf){
+  var dv = new DataView(buf), u8 = new Uint8Array(buf), eocd = -1;
+  for(var i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 66000); i--){ if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; } }
+  if(eocd < 0) return Promise.reject(new Error('zip'));
+  var n = dv.getUint16(eocd + 10, true), p = dv.getUint32(eocd + 16, true), ents = {};
+  var dec = window.TextDecoder ? new TextDecoder('utf-8') : null;
+  for(var k = 0; k < n; k++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    var method = dv.getUint16(p + 10, true), csz = dv.getUint32(p + 20, true);
+    var nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true);
+    var name = dec ? dec.decode(u8.subarray(p + 46, p + 46 + nl)) : '';
+    var ds = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true);
+    ents[name] = { method: method, data: u8.subarray(ds, ds + csz) };
+    p += 46 + nl + el + cl;
+  }
+  return Promise.resolve(ents);
+}
+function xlEntryText(e){
+  if(!e) return Promise.resolve('');
+  if(e.method === 0) return Promise.resolve(new TextDecoder('utf-8').decode(e.data));
+  if(e.method !== 8 || !window.DecompressionStream) return Promise.reject(new Error('inflate'));
+  var st = new Blob([e.data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Response(st).text();
+}
+function xlTags(doc, tag){ return doc.getElementsByTagNameNS ? doc.getElementsByTagNameNS('*', tag) : doc.getElementsByTagName(tag); }
+function xlToTsv(buf){
+  return xlUnzip(buf).then(function(ents){
+    var wbRel = ents['xl/_rels/workbook.xml.rels'], wb = ents['xl/workbook.xml'];
+    return Promise.all([xlEntryText(wb), xlEntryText(wbRel), xlEntryText(ents['xl/sharedStrings.xml'])]).then(function(r){
+      var P = new DOMParser(), target = 'xl/worksheets/sheet1.xml';
+      try{
+        var first = xlTags(P.parseFromString(r[0], 'application/xml'), 'sheet')[0];
+        var rid = first && (first.getAttribute('r:id') || first.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id'));
+        var rels = xlTags(P.parseFromString(r[1], 'application/xml'), 'Relationship');
+        for(var i = 0; i < rels.length; i++) if(rels[i].getAttribute('Id') === rid){
+          var t = rels[i].getAttribute('Target');
+          target = t.charAt(0) === '/' ? t.slice(1) : 'xl/' + t.replace(/^\.\//, '');
+        }
+      }catch(e){}
+      var ss = [];
+      if(r[2]){
+        var sis = xlTags(P.parseFromString(r[2], 'application/xml'), 'si');
+        for(var s = 0; s < sis.length; s++){
+          var ts = xlTags(sis[s], 't'), txt = '';
+          for(var j = 0; j < ts.length; j++){ var inRph = false, a = ts[j].parentNode; while(a && a !== sis[s]){ if(a.localName === 'rPh') inRph = true; a = a.parentNode; } if(!inRph) txt += ts[j].textContent; }
+          ss.push(txt);
+        }
+      }
+      return xlEntryText(ents[target] || ents['xl/worksheets/sheet1.xml']).then(function(x){
+        var rows = xlTags(P.parseFromString(x, 'application/xml'), 'row'), out = [];
+        for(var ri = 0; ri < rows.length; ri++){
+          var cells = xlTags(rows[ri], 'c'), line = [];
+          for(var ci = 0; ci < cells.length; ci++){
+            var c = cells[ci], ref = c.getAttribute('r') || '', col = 0, m = /^([A-Z]+)/.exec(ref);
+            if(m) for(var q = 0; q < m[1].length; q++) col = col * 26 + (m[1].charCodeAt(q) - 64);
+            col = m ? col - 1 : line.length;
+            var tp = c.getAttribute('t'), v = xlTags(c, 'v')[0], val = '';
+            if(tp === 's') val = ss[parseInt(v ? v.textContent : '-1', 10)] || '';
+            else if(tp === 'inlineStr'){ var it = xlTags(c, 't'); for(var z = 0; z < it.length; z++) val += it[z].textContent; }
+            else val = v ? v.textContent : '';
+            while(line.length < col) line.push('');
+            line[col] = String(val).replace(/[\t\r\n]+/g, ' ');
+          }
+          if(line.join('').trim()) out.push(line.join('\t'));
+        }
+        return out.join('\n');
+      });
+    });
+  });
+}
 function imSplit(ln){
   if(ln.indexOf('\t') >= 0) return ln.split('\t');
   var out = [], cur = '', q = false;
@@ -4568,23 +4758,32 @@ function imOpen(un, text){
     + '<div style="background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:10px 14px;font-size:13.5px;margin-bottom:10px;">'
     + '⚠ 取り込む全員の所属ユニオンは ' + unionPicker + ' になります。複数ユニオンが混ざった名簿は、ユニオンごとに分けて取り込んでください。</div>'
     + '<p style="font-size:13px;margin:0 0 6px;"><b>テンプレートの列</b>: 番号・姓・名・ふりがな・系列・性別・グレード'
-    + ' <button id="imTpl" style="padding:4px 10px;font-size:12px;">📄 テンプレートをダウンロード</button></p>'
+    + ' <button id="imTpl" style="padding:4px 10px;font-size:12px;">📄 テンプレート（Excel・100人分）</button></p>'
     + '<ul style="font-size:12.5px;color:var(--sub);margin:0 0 8px 18px;padding:0;line-height:1.7;">'
     + '<li><b>番号が空欄の人は自動で発番</b>します（ユニオンの頭文字＋4桁。QRカードが無いユニオンはすべて空欄でOK）</li>'
     + '<li>氏名は <b>NAVIGATOR（MAP）と同じ漢字</b>で。MAPのメンバーと名前で自動的につながります</li>'
     + '<li>系列（UPルビー）は表記をそろえてください（ゆれは取り込む前の確認画面でそろえられます）</li>'
     + '<li>取り込む前に確認画面が出ます（まだ保存されません）。旧形式「番号,氏名,系列,かな,グレード」も使えます</li></ul>'
-    + '<input type="file" id="imFile" accept=".csv,.txt,.tsv,text/csv,text/plain" style="margin-bottom:6px;">'
+    + '<input type="file" id="imFile" accept=".xlsx,.csv,.txt,.tsv,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="margin-bottom:6px;">'
     + '<textarea id="csvText" rows="8" placeholder="エクセルの表をそのまま貼り付けてもOK（見出し行つき）">' + esc(text || '') + '</textarea>'
     + '<div class="btns"><button id="csvCancel">キャンセル</button><button class="primary" id="csvGo">確認する ›</button></div>', true);
   $('csvCancel').onclick = closeModal;
-  $('imTpl').onclick = function(){ csvDownload('名簿テンプレート.csv', [IM_HEAD]); };
+  $('imTpl').onclick = function(){
+    var t = isOwner() && $('csvUnion') ? $('csvUnion').value : un;
+    xlDownload(xlTemplate(t, unionNoPrefix(t)), '名簿テンプレート_' + t + '.xlsx');
+  };
   $('imFile').onchange = function(){
     var f = this.files && this.files[0];
     if(!f) return;
+    if(/\.xls$/i.test(f.name)){ toast('古い形式（.xls）は読めません。エクセルで「.xlsx」か「CSV」で保存し直してください'); return; }
     var rd = new FileReader();
     rd.onload = function(){
-      var buf = rd.result, txt = '';
+      var buf = rd.result, txt = '', head = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+      if(/\.xlsx$/i.test(f.name) || (head[0] === 0x50 && head[1] === 0x4B)){   // エクセル（zip）
+        xlToTsv(buf).then(function(t){ $('csvText').value = t; if(!t) toast('表が空のようです（1枚目のシートを読み込みます）'); })
+          .catch(function(){ toast('エクセルのファイルを読み込めませんでした。表をコピーして貼り付けるか、CSVで保存してください'); });
+        return;
+      }
       try{ txt = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
       catch(e){ try{ txt = new TextDecoder('shift_jis').decode(buf); }catch(e2){ txt = ''; } }
       $('csvText').value = txt.replace(/^﻿/, '');
