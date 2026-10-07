@@ -553,6 +553,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <label for="liPw">パスワード</label><input type="password" id="liPw" autocomplete="current-password">
       <button class="primary" id="btnLogin">ログイン</button>
       <div class="alt">アカウントがない方は <a id="toSignup">新規登録</a></div>
+      <div class="alt"><a href="manual.html" target="_blank" rel="noopener">📘 はじめて導入するユニオンの方へ（導入手順書）</a></div>
     </div>
     <div id="signupForm" class="hide">
       <label for="suName">名前</label><input type="text" id="suName">
@@ -1275,8 +1276,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v30';
+var APP_VER = 'v31';
 var CHANGELOG = [
+  { v: 'v31', d: '2026/10/07', items: ['📘 導入手順書（ユニオン管理者・受付管理者向け）を追加。🔰 使い方のメニューと、ログイン画面から開けます'] },
   { v: 'v30', d: '2026/10/07', items: [
     '名簿の取込を一新: テンプレート（番号・姓・名・ふりがな・系列・性別・グレード）、ファイルの読み込み、取り込む前の確認画面。番号が空欄の人は自動で発番します',
     '番号の重複対策: 他のユニオンと同じ番号は上書きせず、確認画面で知らせます（新しい番号で取り込むこともできます）。ユニオンの「番号の頭文字」は必須・重複不可になりました',
@@ -1653,6 +1655,12 @@ function gxOpenMenu(){
         + '<div class="gx-stamp" style="background:#fff;font-size:20px;">🧪</div><div class="tx"><b style="color:#3a2a00;">練習モードで受付を体験</b>'
         + '<small style="color:#6b5600;">ダミーの名簿・イベントで、QRでピッ〜受付終了まで何回でも。本番には記録されません</small></div>'
         + '<button class="gx-btn" id="gxPractice" style="font-size:12.5px;padding:7px 13px;">' + (gPractice ? '練習中' : 'はじめる') + '</button></div>'
+      : '')
+    + (gxView() === 'vApp'
+      ? '<a class="gx-mis" href="manual.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">'
+        + '<div class="gx-stamp" style="background:#fff;font-size:20px;">📘</div><div class="tx"><b>導入手順書（ユニオン管理者・受付管理者向け）</b>'
+        + '<small>ユニオンで使い始めるまでの手順・名簿の作り方・会員証の配り方・困ったとき</small></div>'
+        + '<span class="gx-btn" style="font-size:12.5px;padding:7px 13px;">ひらく ›</span></a>'
       : '')
     + '<div class="gx-h">' + role.e + ' ' + esc(role.name) + 'のミッション</div>'
     + role.missions.map(function(m, i){
