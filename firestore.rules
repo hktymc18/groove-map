@@ -331,7 +331,7 @@ service cloud.firestore {
       // （変更できるのはカード関連フィールドのみ。名簿本体の編集は管理者のみ）
       allow update: if ckCanSee(resource.data.get('union',''))
                     && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['cardToken','cardSig','cardStatus']);
+                         .hasOnly(['cardToken','cardSig','cardStatus','claimName']);
       // 🎓 研修生登録の担当: 研修生（trainee=true）の新規登録と、
       // 研修生のチュートリアル記録（trainings）・CO面談シート（coSheet）・
       // 紹介者（referrer）・DLR予約（dlrRsv）の更新、自分が登録した研修生の削除（取消用）だけ可
@@ -472,10 +472,24 @@ service cloud.firestore {
     // 受け取りリンク用: 会員番号 → 会員証トークンの対応表。
     // 共通URLから本人が自分の番号でカードを開くために get のみ公開（list 不可）。
     // 作成・更新・削除は発行/再発行/無効化と連動（ログイン済みのみ）。
+    // 番号→会員証（受付のビジター照会など、ログインしている人だけ）。
+    // 🔒 v19: 未ログインでは読めない（番号だけで他人の会員証が開けてしまうため）。受け取りリンクは cardKeys を使う
     match /cardClaims/{no} {
-      allow get: if true;
+      allow get: if signedIn();
       allow list: if false;
       allow create, update, delete: if signedIn();
+    }
+
+    // 🔑 受け取りリンク用: cardKeys/{sha256(番号|お名前)} = { t: 会員証トークン, no }
+    //   番号とお名前（姓 or フルネーム）の両方が合う時だけ見つかる。一覧は不可
+    match /cardKeys/{k} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['t', 'no'])
+        && request.resource.data.get('t', '') is string
+        && request.resource.data.get('no', '') is string;
+      allow delete: if signedIn();
     }
 
     match /cards/{token} {
