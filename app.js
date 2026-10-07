@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v676';
+var APP_JS_VERSION = 'v677';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v676';
+  var DATA_VERSION = 'v677';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5355,7 +5355,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v676', d:'2026-10-07', items:['HOME左上のロゴを新しいNWPのロゴに差し替えました'] },
+  { v:'v677', d:'2026-10-07', items:['HOME左上のロゴを新しいNWPのロゴに差し替えました'] },
+  { v:'v676', d:'2026-10-07', items:['PLAN › 理想の生活：19問目を「社会貢献のためにいくら使いたい？（寄附、食糧支援、ボランティアなど）」に変更（金額は必要月収に入ります）','📝 研修生のときに受付システムの会員証で答えた「目標設定」の宿題を、会員証の「📲 NAVIGATORに引き継ぐ」から理想の生活に入れられるようになりました（空いている項目だけ入ります）'] },
   { v:'v675', d:'2026-10-07', items:['PLAN › 理想・まとめ：書いた内容を全部見せるように（やりたいこと・やりたくないこと・なりたい自分・なりたくない自分も、途中で省略せず全部並びます）。一番下に「はじめから答え直す」、直したい所は各項目の✎から'] },
   { v:'v674', d:'2026-10-07', items:['PLAN › 理想：答え終わっている時は、一番上に「あなたの理想の生活」、その下に「はじめから答え直す」「ひと区切りへ」のボタンを出すようにしました（質問は✎を押した時・答え直す時だけ出ます）'] },
   { v:'v673', d:'2026-10-07', items:['PLAN › 理想（スマホ）：記入済みの「あなたの理想の生活」を上、質問を下にしました。一覧の✎を押すと、その分野の質問まで送ります'] },
@@ -21349,7 +21350,7 @@ var P2_LIFE_CATS = [
   { k: 'beauty', ic: '💄', lb: '美容', ids: ['beauty_cost'], col: '#FF5D73' },
   { k: 'health', ic: '💪', lb: '健康', ids: ['health_cost'], col: '#4ADE80' },
   { k: 'save', ic: '💰', lb: '貯金', ids: ['savings'], col: '#FFD166' },
-  { k: 'social', ic: '🥣', lb: '社会貢献', ids: ['social_packs'], col: '#67B7FF' },
+  { k: 'social', ic: '🤝', lb: '社会貢献', ids: ['social_cost'], col: '#67B7FF' },
   { k: 'deadline', ic: '📅', lb: 'いつまでに', ids: ['deadline'], col: '' }
 ];
 var _p2LfOpen = '';
@@ -21367,7 +21368,7 @@ function _p2LfAmt(cat) { // その分野の月額（万円）
     var loan = a.car_loan;
     if (loan && (a.transport === '外車' || a.transport === '国産車')) n += Math.floor(_p2CarMonthly(loan.price, loan.down, loan.years, loan.rate)) + (parseInt(loan.insurance, 10) || 0) + (parseInt(loan.parking, 10) || 0) + (parseInt(loan.gas, 10) || 0);
   }
-  if (cat.k === 'social') n += Math.floor((parseInt(a.social_packs, 10) || 0) * 0.3);
+  if (cat.k === 'social') n += _p2SocialLegacy(a);
   return n;
 }
 function _p2LfDesc(cat) { // その分野の中身（選んだもの・書いたもの）
@@ -21378,9 +21379,9 @@ function _p2LfDesc(cat) { // その分野の中身（選んだもの・書いた
     if (id === 'car_loan' || v === undefined || v === null || v === '' || v === 'まだ決めてない') return;
     if (id === 'deadline') { var d = String(v); bits.push(parseInt(d.slice(0, 4), 10) + '年' + parseInt(d.slice(5, 7), 10) + '月'); return; }
     if (id === 'travel_first') { bits.push('一発目 ' + v); return; }
-    if (id === 'social_packs') { bits.push('ビタミール ' + v + 'パック'); return; }
     bits.push(String(v));
   });
+  if (cat.k === 'social' && _p2SocialLegacy(a)) bits.push('ビタミール ' + a.social_packs + 'パック（前の質問の答え）');
   return bits.join('・');
 }
 function _p2LfAnswered(cat) { var a = _p2LfA(); return cat.ids.some(function(id) { var v = a[id]; return v !== undefined && v !== null && v !== ''; }); }
@@ -23235,7 +23236,7 @@ var P2GW_Q = [
   { id:'beauty_cost', ph:1, q:'美容に月いくらかけたい？', type:'slider', min:0, max:100, step:1, unit:'万円', dv:3, cost:true },
   { id:'health_cost', ph:1, q:'健康に月いくらかけたい？', type:'slider', min:0, max:100, step:1, unit:'万円', dv:2, cost:true, hint:'ジム、サプリ、整体など' },
   { id:'savings', ph:1, q:'月いくら貯金したい？', type:'slider', min:1, max:100, step:1, unit:'万円', dv:10, cost:true },
-  { id:'social_packs', ph:1, q:'ビタミール何パック送りたい？', type:'slider', min:1, max:100, step:1, unit:'パック', dv:30, hint:'栄養不足の子どもたちに届きます' },
+  { id:'social_cost', ph:1, q:'社会貢献のためにいくら使いたい？', type:'slider', min:0, max:100, step:1, unit:'万円', dv:3, cost:true, hint:'寄附、食糧支援、ボランティアなど' }, // v676: 旧「ビタミール何パック（social_packs）」から変更。受付システムの宿題（checkin/index.html の HW_Q）と同じ質問
   { id:'deadline', ph:1, q:'__TOTAL__', type:'ym', hint:'いつまでに実現したい？' },
   { id:'want_do', ph:2, q:'やりたいことを5つ教えて！', type:'multi5', hint:'お金も時間も無限にあったら何する？' },
   { id:'not_want_do', ph:2, q:'やりたくないことを5つ教えて！', type:'multi5', hint:'絶対に続けたくないことは？' },
@@ -23248,6 +23249,11 @@ var P2GW_Q = [
 var P2GW_AV = ['😎','🔥','💪','🎯','✨','🚀','👊','🌟'];
 var _p2GwStep = 0;
 function _p2GwShow(q) { var g = _p2G(); return !q.showIf || q.showIf(g.ans); }
+// v676: 19問目の旧回答（ビタミールのパック数）は、新しい質問（社会貢献の金額）に答えるまで従来どおり月額に入れる
+function _p2SocialLegacy(a) {
+  if (!a || (a.social_cost !== undefined && a.social_cost !== null && a.social_cost !== '')) return 0;
+  return Math.floor((parseInt(a.social_packs, 10) || 0) * 0.3);
+}
 function _p2CarMonthly(price, down, years, rate) {
   var loan = (parseInt(price, 10) || 0) - (parseInt(down, 10) || 0);
   if (loan <= 0 || !years) return 0;
@@ -23264,8 +23270,7 @@ function _p2GwTotal() {
     total += Math.floor(_p2CarMonthly(loan.price, loan.down, loan.years, loan.rate));
     total += (parseInt(loan.insurance, 10) || 0) + (parseInt(loan.parking, 10) || 0) + (parseInt(loan.gas, 10) || 0);
   }
-  var packs = parseInt(g.ans.social_packs, 10) || 0;
-  if (packs > 0) total += Math.floor(packs * 0.3);
+  total += _p2SocialLegacy(g.ans);
   return total;
 }
 var _p2GwPh = 1; // v551: ウィザードは1つのパートだけ（①理想の生活20問で終わり。②③は⚙から書きたい時に）
@@ -27242,6 +27247,53 @@ try {
     if (history.replaceState) history.replaceState(null, '', location.pathname);
   }
 } catch(ePM) {}
+// v676: 研修生のときの宿題（受付システムの会員証「📝 宿題：目標設定」）を PLAN の理想の生活へ引き継ぐ。
+//   会員証の「📲 NAVIGATORに引き継ぐ」→ ?gwImport=会員証トークン で開く。空いている項目だけ入れる（答えてある所は上書きしない）
+var _gwImpTok = (function() {
+  try {
+    var m = /[?&]gwImport=([A-Za-z0-9_-]+)/.exec(location.search || '');
+    if (m) { sessionStorage.setItem('gm_gwImport', m[1]); if (history.replaceState) history.replaceState(null, '', location.pathname); return m[1]; }
+    return sessionStorage.getItem('gm_gwImport') || '';
+  } catch (e) { return ''; }
+})();
+function _gwFilled(v) { return v !== undefined && v !== null && v !== ''; }
+function gwImportTry(tries) {
+  if (!_gwImpTok) return;
+  tries = tries || 0;
+  // ログインして目標データを読み終わるまで待つ（ログイン画面で止まっていても、ログイン後に続きをやる）
+  if (!(window._p2GoalsLoaded && typeof currentUser !== 'undefined' && currentUser && db)) {
+    if (tries < 900) setTimeout(function() { gwImportTry(tries + 1); }, 1000);
+    return;
+  }
+  var tok = _gwImpTok; _gwImpTok = '';
+  try { sessionStorage.removeItem('gm_gwImport'); } catch (e) {}
+  db.collection('goalHw').doc(tok).get().then(function(sn) {
+    if (!sn.exists) { toast('宿題の答えが見つかりませんでした（会員証の画面からもう一度お試しください）'); return; }
+    var d = sn.data() || {}, src = d.ans || {}, g = _p2G(), a = g.ans, add = [], kept = 0;
+    P2GW_Q.forEach(function(q) {
+      if (q.ph !== 1 || !_gwFilled(src[q.id])) return;
+      if (_gwFilled(a[q.id])) kept++; else add.push(q.id);
+    });
+    if (!add.length) { toast(kept ? '理想の生活はすでに答えてあるので、引き継ぐ項目はありませんでした' : '引き継げる答えがありませんでした'); return; }
+    if (!confirm('研修生のときの宿題（目標設定）の答えを、PLANの「理想の生活」に入れますか？\n\n' + (d.name || '') + '　月' + (d.total || 0) + '万円\n空いている ' + add.length + ' 項目に入れます' + (kept ? '（すでに答えてある ' + kept + ' 項目はそのまま）' : ''))) return;
+    add.forEach(function(id) { var v = src[id]; a[id] = (v && typeof v === 'object') ? JSON.parse(JSON.stringify(v)) : v; });
+    var p = state.goals.plan, tot = _p2GwTotal(), n = _p2().north;
+    if (!p.income && tot > 0) { p.income = tot * 10000; p.title = glTitleFromIncome(p.income); }
+    if (!p.deadline && a.deadline) p.deadline = (typeof _normYm === 'function' ? (_normYm(a.deadline) || a.deadline) : a.deadline);
+    if (!n.life) {
+      var lifeBits = [];
+      if (a.housing_style && a.housing_style !== 'まだ決めてない') lifeBits.push(a.housing_style + (a.housing_area ? '（' + a.housing_area + '）' : ''));
+      if (a.car_name) lifeBits.push(a.car_name);
+      if (a.travel_first) lifeBits.push('旅行:' + a.travel_first);
+      if (lifeBits.length) n.life = lifeBits.join('・');
+    }
+    if (_p2IdealAnsN() >= _p2IdealQs().length) { g.p1 = true; g.wiz = true; _p2().wiz = true; try { _p2LfSnap(); } catch (eS) {} }
+    saveGoals();
+    toast('🌟 宿題の答えを理想の生活に入れました（' + add.length + '項目）');
+    try { p2Go('ideal', 0); } catch (eG) {}
+  }).catch(function() { toast('宿題の答えを読み込めませんでした。通信状態を確認してください'); });
+}
+setTimeout(gwImportTry, 1500);
 // v335: ホーム最上部のクイック追加（Enterで即マイリストへ・連続入力可）と検索の切替
 function _tdMakeTask(title, date, listId) {
   return { id: genEventId(), done: false, createdAt: new Date().toISOString(),
