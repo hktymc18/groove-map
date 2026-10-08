@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v699';
+var APP_JS_VERSION = 'v700';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3877,7 +3877,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v699';
+  var DATA_VERSION = 'v700';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5364,6 +5364,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v700', d:'2026-10-08', items:['計画シートのMAP：拡大・縮小は全画面にせず、その枠の中でできるようにしました（＋−・全体／ピンチ・ctrl＋ホイール／ドラッグで移動）','MAPの枠の高さは、下の帯を上下にドラッグして変えられます。「📌 上に固定」でMAPを見ながら下の改善点や行動を書けます','右側（スマホは下）の課題の欄をたためるようにしました'] },
   { v:'v699', d:'2026-10-08', items:['計画シートの行動の欄：記入例は空いた行に薄く出すだけにして、押しても入らないようにしました（全部手入力）','「＋ 書く」の行をなくし、空いた行にそのまま書けるようにしました','「＋ 行を追加」で行を増やせます'] },
   { v:'v698', d:'2026-10-08', items:['計画シートのMAPを「⤢ 拡大」で全画面にできるようにしました（＋−で拡大・ドラッグで動かす。拡大したまま人を押して課題を書けます）','課題はふだんは計画シートの中だけ。「→ 残す先」から、行動（4分野）・タスク・予定・メモ（メンバーの中）を選んで入れられます','残した先とは連動します（課題を書き直すと、まだ済んでいない行動・タスク・予定とメモも同じ文に）。残した先は課題の下に印で出ます','スマホの行動は、フロント作り・流通アップ・Dライン・自己成長ごとに ▼／▶ でたためます'] },
   { v:'v697', d:'2026-10-08', items:['スマホ版の計画シートの行動の欄にも、記入例（PDFの例）を全部出しました。押すと書く欄に入ります','「数字と改善点」を ▼／▶ でたためるようにしました（たたむと1行のまとめだけ。MAPを見ながら行動を書く時に）。端末ごとに覚えます'] },
@@ -37368,14 +37369,19 @@ function _p2ShMapBox(ym, W, H, pc) {
   var F = _p2ShFr(ym), cm = String(state.currentMonth || '').replace('.', '-'), same = !cm || cm === ym, hasI = _hasIdeal();
   var mode = _p2ShMapMode === 'cur' || !hasI ? 'cur' : 'ideal', newN = same && F.t !== null ? Math.max(0, F.t - F.now) : 0;
   if (mode === 'ideal') newN = 0; // 理想MAPには足す人がもう入っている
-  var kind = _p2ShMapKind(_p2ShMapMt()), vw = _p2Sh().mapView || '';
+  var kind = _p2ShMapKind(_p2ShMapMt()), vw = _p2Sh().mapView || '', pin = _p2ShPin(pc);
   var sec = '<div class="sp-sec" style="align-items:center"><span>＜' + (hasI ? '<span class="tg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span>/<span class="' + (mode === 'ideal' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">理想</span></span>' : '現状') + 'MAP＞</span>' + _uxIb('shmap')
     + '<span class="sp-vw"><span class="' + (kind === 'circle' ? 'on' : '') + '" onclick="p2ShMapView(\'circle\')">サークル</span>｜<span class="' + (kind === 'sheet' ? 'on' : '') + '" onclick="p2ShMapView(\'sheet\')">シート型</span>' + (vw ? '<span onclick="p2ShMapView(\'\')" style="margin-left:4px">（自動に戻す）</span>' : '') + '</span>'
-    + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r" onclick="p2ShMapZoom()" style="margin-left:auto">⤢ 拡大</span><span class="r" style="margin-left:10px" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
-  var map;
-  if (kind === 'circle') map = '<div class="sp-map" style="padding:0"><div id="p2ShOrb" style="height:' + (pc ? 620 : 440) + 'px"></div></div>';
-  else { var M = _p2ShMapSvg({ W: W, H: H, mode: mode, newN: newN, tap: !_p2ShRo(), iss: _p2ShIss(ym) }); map = M.empty ? '<div class="sp-leg">MAPに自分（いちばん上の人）がまだいません</div>' : '<div class="sp-map">' + M.svg + '</div>'; }
-  return sec + '<div class="sp-mw' + (pc ? '' : ' m') + '">' + map + (_p2ShZ ? '<div class="iss"><div class="iss-em">拡大の画面で書いています</div></div>' : _p2ShIssHtml(ym)) + '</div>';
+    + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r sp-pn' + (pin ? ' on' : '') + '" onclick="p2ShPinTgl()" style="margin-left:auto">📌 ' + (pin ? '上に固定中' : '上に固定') + '</span><span class="r" style="margin-left:10px" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
+  // v700: MAPは枠の中で拡大・縮小（全画面にしない）。枠の高さは下の帯をドラッグで変える。描くのは後（_p2ShMapDraw）
+  _p2ShMapPc = !!pc; _p2ShMapO = { mode: mode, newN: newN };
+  var map = '<div class="sp-mc"><div class="sp-map sp-mf" id="p2ShMF" data-kind="' + kind + '" style="height:' + _p2ShMapH(pc) + 'px"><div id="p2ShMI"></div></div>'
+    + '<div class="sp-zc"><span onclick="p2ShZoom(-1)">−</span><b id="p2ShZL">' + Math.round(_p2ShZ * 100) + '%</b><span onclick="p2ShZoom(1)">＋</span><span class="w" onclick="p2ShZoom(0)">全体</span></div>'
+    + '<div class="sp-mh" onpointerdown="p2ShMapRs(event)" title="上下にドラッグで枠の高さを変えられます"><i></i></div></div>';
+  var ic = _p2ShIssC(), iss = ic ? (pc ? '<div class="iss-c" onclick="p2ShIssTgl()" title="課題をひらく"><span>‹</span><span class="v">課<br>題</span>' + (_p2ShIssN(ym) ? '<b>' + _p2ShIssN(ym) + '</b>' : '') + '</div>'
+    : '<div class="iss"><div class="iss-hd" onclick="p2ShIssTgl()" style="cursor:pointer">課題<small>' + _p2ShMonLb(ym) + (_p2ShIssN(ym) ? '・' + _p2ShIssN(ym) + '人' : '') + '</small><span class="tg">▸ ひらく</span></div></div>') : _p2ShIssHtml(ym);
+  if (pc) return '<div class="sp-mpin' + (pin ? ' on' : '') + '">' + sec + '<div class="sp-mw' + (ic ? ' ic' : '') + '">' + map + iss + '</div></div>';
+  return '<div class="sp-mpin' + (pin ? ' on' : '') + '">' + sec + '<div class="sp-mw m">' + map + '</div></div><div class="sp-mw m sp-mis">' + iss + '</div>';
 }
 function _p2ShKin(ym, k, X, which) { // which: 't'＝今月の目標 / 'v'＝手入力の進捗
   if (_p2ShRo()) return '<span class="' + (which === 'v' ? 'v' : '') + '">' + ((which === 't' ? X.t : X.v) === null ? '—' : (which === 't' ? X.t : X.v)) + '</span>';
@@ -37445,7 +37451,7 @@ function _p2ShKzHead(ym) { // v697: 数字と改善点はたためる（MAPを�
   return '<div class="sp-sec sp-fold" style="align-items:center;cursor:pointer" onclick="p2ShKzTgl()">' + (op ? '▼' : '▶') + ' 数字と改善点' + '<span onclick="event.stopPropagation()">' + _uxIb('shkz') + '</span>'
     + '<span class="r">' + (op ? 'たたむ' : 'ひらく') + '</span></div>' + (op ? '' : (sum ? '<div class="sp-leg" style="margin-top:0">' + sum + '</div>' : ''));
 }
-function _p2ShAfter() { try { Array.prototype.forEach.call(document.querySelectorAll('#view-plan .sp-kz'), _p2ShGrow); } catch (e) {} try { _p2ShOrbDraw(); } catch (e2) {} try { if (_p2ShZ) _p2ShZoomRender(); } catch (e3) {} }
+function _p2ShAfter() { try { Array.prototype.forEach.call(document.querySelectorAll('#view-plan .sp-kz'), _p2ShGrow); } catch (e) {} try { _p2ShMapDraw(); } catch (e2) {} }
 // ════ v696: 10人以上はサークルMAP・人を押して課題を書く・課題 → 行動（分野を選ぶ）════
 var _p2ShIssSel = '', _p2ShIssAct = ''; // 課題を書いている人／「行動にする」で分野を選んでいる人
 function _p2ShMapMt() { var hasI = _hasIdeal(); return (_p2ShMapMode === 'cur' || !hasI) ? 'current' : 'ideal'; }
@@ -37456,6 +37462,7 @@ function _p2ShMem(mid) { var a = membersForMap(_p2ShMapMt()).concat(state.member
 function _p2ShIss(ym) { var m = _p2ShM(ym); m.iss = m.iss || {}; return m.iss; }
 function p2ShIssTap(mid) {
   if (!mid || /^__new/.test(mid)) return;
+  if (_p2ShIssC()) _p2ShLs('gm_shIssC', null); // たたんでいても、人を押したら課題をひらく
   _p2ShIssSel = mid; _p2ShIssAct = ''; renderPlan();
   setTimeout(function() { var el = document.getElementById('p2ShIssIn'); if (el) { try { el.focus(); el.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }, 40);
 }
@@ -37486,7 +37493,7 @@ function _p2ShIssHtml(ym) {
   };
   var list = ids.filter(function(id) { return id !== _p2ShIssSel; }).map(row).join('');
   var sel = _p2ShIssSel && !ro ? row(_p2ShIssSel) : '';
-  return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small></div>' + sel + list
+  return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small><span class="tg" onclick="p2ShIssTgl()">' + (_p2ShMapPc ? 'たたむ ›' : '▾ たたむ') + '</span></div>' + sel + list
     + (sel || list ? '' : '<div class="iss-em">MAPの人を押すと、その人の課題を書けます</div>') + '</div>';
 }
 function _p2ShIssCss() {
@@ -37496,71 +37503,88 @@ function _p2ShIssCss() {
     + '.iss-r .t{font-size:12.5px;line-height:1.55;margin-top:3px;cursor:pointer;white-space:pre-wrap}.iss-r.on{background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:10px;padding:8px}.iss-r .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.iss-r .cats span{font-size:11.5px;font-weight:900;padding:5px 9px;border-radius:9px;border:1px solid var(--c);color:var(--c);cursor:pointer}.iss-r .lk{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.iss-r .lk i{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--c,var(--text-mid)) 16%,transparent);color:var(--text-mid);cursor:pointer}.iss-em{font-size:12px;color:var(--text-dim);padding:8px 0;border-top:1px solid var(--border)}'
     + '.sp-mw{display:grid;grid-template-columns:minmax(0,1fr) 320px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--surface) 70%,transparent)}.sp-mw .sp-map{border:0;border-radius:0}.sp-mw .iss{border-left:1px solid var(--border);padding:12px 14px;max-height:640px;overflow:auto}'
     + '.sp-mw.m{display:block}.sp-mw.m .iss{border-left:0;border-top:1px solid var(--border);max-height:none}#p2ShOrb{position:relative}#p2ShOrb svg{display:block;width:100%;height:100%}#p2ShOrb g[data-mid]{cursor:pointer}#p2ShOrb g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}.sp-map svg g.shn{cursor:pointer}'
-    + '.sp-vw{font-size:11.5px;font-weight:800;color:var(--text-dim)}.sp-vw span{cursor:pointer;padding:0 2px}.sp-vw span.on{color:var(--text);text-decoration:underline;text-underline-offset:3px}';
+    + '.sp-vw{font-size:11.5px;font-weight:800;color:var(--text-dim)}.sp-vw span{cursor:pointer;padding:0 2px}.sp-vw span.on{color:var(--text);text-decoration:underline;text-underline-offset:3px}'
+    // v700: 枠の中で拡大・枠の高さを変える・上に固定・課題をたたむ
+    + '.sp-mc{position:relative;min-width:0}.sp-mf{overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0!important;user-select:none;-webkit-user-select:none;cursor:grab}.sp-mw .sp-mf,.sp-mf{border:0;border-radius:0}'
+    + '#p2ShMI{position:relative}#p2ShMI svg{display:block;width:100%;height:100%}#p2ShMI g[data-mid],#p2ShMI g.shn{cursor:pointer}#p2ShMI g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}'
+    + '.sp-zc{position:absolute;top:8px;right:8px;z-index:2;display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 90%,transparent)}.sp-zc span{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;font-weight:900;font-size:15px;color:var(--text);cursor:pointer}.sp-zc span.w{font-size:11.5px;padding:0 7px}.sp-zc b{font:800 11px Inter,sans-serif;color:var(--text-dim);min-width:38px;text-align:center}'
+    + '.sp-mh{height:16px;display:flex;align-items:center;justify-content:center;cursor:ns-resize;touch-action:none;border-top:1px solid var(--border);background:color-mix(in srgb,var(--surface) 85%,transparent)}.sp-mh i{width:46px;height:4px;border-radius:3px;background:var(--text-dim);opacity:.55}.sp-mh:hover i{opacity:1}'
+    + '.sp-mpin.on{position:sticky;top:0;z-index:6;background:var(--bg,#0b0e15);padding-bottom:8px;box-shadow:0 8px 12px -10px rgba(0,0,0,.5)}.sp-pn.on{color:var(--accent)!important}'
+    + '.sp-mw:not(.m) .iss{contain:size;max-height:none}.sp-mw.ic{grid-template-columns:minmax(0,1fr) 40px}.iss-c{border-left:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;font-size:12.5px;font-weight:900;color:var(--text-mid)}.iss-c .v{line-height:1.25;text-align:center}.iss-c b{background:#FFB454;color:#111;border-radius:9px;padding:1px 6px;font-size:11px}'
+    + '.iss-hd{display:flex;align-items:baseline}.iss-hd .tg{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;white-space:nowrap}.sp-mis{margin-top:8px}.sp-mis .iss{border-top:0!important}';
   document.head.appendChild(st);
 }
-// サークルMAPを置く（描いた後で）。課題のある人は光らせる
-function _p2ShOrbDraw() {
-  var el = document.getElementById('p2ShOrb'); if (!el) return;
-  var w = el.clientWidth || 600, h = el.clientHeight || 420;
-  try { renderPCOrbit(_p2ShMapMt(), el, false, { screen: true, w: w, h: h, onTap: p2ShIssTap }); } catch (e) { el.innerHTML = '<div class="sp-leg" style="padding:20px">サークルMAPを描けませんでした</div>'; return; }
-  var I = _p2ShIss(_p2ShYmN());
-  Array.prototype.forEach.call(el.querySelectorAll('g[data-mid]'), function(g) { if (I[g.getAttribute('data-mid')]) g.classList.add('iss-on'); });
-}
-// ════ v698: MAPを拡大（全画面・＋−）・課題 → 行動／タスク／予定 ════
-var _p2ShZ = 0; // 拡大の倍率（0＝閉じている）
-function _p2ShZoomOn() { return !!document.getElementById('p2ShZoomOv'); }
-function p2ShMapZoom() { _p2ShZ = 1; _p2ShZoomRender(); renderPlan(); }
-function p2ShZoomClose() { var o = document.getElementById('p2ShZoomOv'); if (o) o.remove(); _p2ShZ = 0; document.body.classList.remove('shz-open'); renderPlan(); }
-function p2ShZoom(d) { var Z = [1, 1.5, 2, 3, 4], i = Z.indexOf(_p2ShZ); if (i < 0) i = 0; _p2ShZ = d === 0 ? 1 : Z[Math.max(0, Math.min(Z.length - 1, i + d))]; _p2ShZoomSize(); }
-function _p2ShZoomSize() {
-  var m = document.getElementById('p2ShZM'), in2 = document.getElementById('p2ShZI'); if (!m || !in2) return;
-  var cx = m.scrollLeft + m.clientWidth / 2, cy = m.scrollTop + m.clientHeight / 2, ow = in2.offsetWidth || 1, oh = in2.offsetHeight || 1;
-  in2.style.width = (m.clientWidth * _p2ShZ) + 'px'; in2.style.height = (m.clientHeight * _p2ShZ) + 'px';
-  m.scrollLeft = cx * (in2.offsetWidth / ow) - m.clientWidth / 2; m.scrollTop = cy * (in2.offsetHeight / oh) - m.clientHeight / 2;
-  var lb = document.getElementById('p2ShZL'); if (lb) lb.textContent = Math.round(_p2ShZ * 100) + '%';
-}
-function _p2ShZoomCss() {
-  if (document.getElementById('p2ShZCss')) return;
-  var st = document.createElement('style'); st.id = 'p2ShZCss';
-  st.textContent = '#p2ShZoomOv{position:fixed;inset:0;z-index:530;background:var(--bg,#0b0e15);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}'
-    + '.shz-h{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);flex:none}.shz-h b{font-size:15px;font-weight:900;margin-right:auto}.shz-h .z{min-width:34px;height:34px;border-radius:10px;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;color:var(--text);padding:0 8px;font-size:13px}.shz-h .l{font:800 12px Inter,sans-serif;color:var(--text-dim);min-width:40px;text-align:center}.shz-h .x{margin-left:6px;font-size:13px;font-weight:900;color:var(--accent);cursor:pointer;padding:6px}'
-    + '.shz-b{flex:1;min-height:0;display:flex}.shz-m{flex:1;min-width:0;overflow:auto;-webkit-overflow-scrolling:touch;cursor:grab}.shz-m svg{display:block;width:100%;height:100%}.shz-i{width:340px;flex:none;border-left:1px solid var(--border);padding:12px 14px;overflow:auto}'
-    + '@media (max-width:820px){.shz-b{flex-direction:column}.shz-i{width:auto;border-left:0;border-top:1px solid var(--border);max-height:38vh;padding-bottom:calc(env(safe-area-inset-bottom) + 12px)}}'
-    + '#p2ShZI{position:relative}#p2ShZI g[data-mid],#p2ShZI g.shn{cursor:pointer}#p2ShZI g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}body.shz-open{overflow:hidden}';
-  document.head.appendChild(st);
-}
-// 拡大の画面を描く（課題を書くたびに描き直す。倍率とスクロールは保つ）
-function _p2ShZoomRender() {
-  if (!_p2ShZ) return;
-  _p2ShZoomCss(); _p2ShIssCss(); _p2ShCss2();
-  var ov = document.getElementById('p2ShZoomOv'), keep = null;
-  if (ov) { var m0 = document.getElementById('p2ShZM'); if (m0) keep = { l: m0.scrollLeft, t: m0.scrollTop }; }
-  else { ov = document.createElement('div'); ov.id = 'p2ShZoomOv'; document.body.appendChild(ov); document.body.classList.add('shz-open'); }
-  var ym = _p2ShYmN(), mt = _p2ShMapMt(), kind = _p2ShMapKind(mt);
-  ov.innerHTML = '<div class="shz-h"><b>＜' + (mt === 'ideal' ? '理想' : '現状') + 'MAP＞</b><span class="z" onclick="p2ShZoom(-1)">−</span><span class="l" id="p2ShZL">' + Math.round(_p2ShZ * 100) + '%</span><span class="z" onclick="p2ShZoom(1)">＋</span><span class="z" onclick="p2ShZoom(0)">全体</span><span class="x" onclick="p2ShZoomClose()">✕ 閉じる</span></div>'
-    + '<div class="shz-b"><div class="shz-m" id="p2ShZM"><div id="p2ShZI"></div></div><div class="shz-i">' + _p2ShIssHtml(ym) + '</div></div>';
-  var m = document.getElementById('p2ShZM'), in2 = document.getElementById('p2ShZI');
-  in2.style.width = (m.clientWidth * _p2ShZ) + 'px'; in2.style.height = (m.clientHeight * _p2ShZ) + 'px';
-  if (kind === 'circle') {
-    try { renderPCOrbit(mt, in2, false, { screen: true, w: m.clientWidth, h: m.clientHeight, onTap: p2ShIssTap }); } catch (e) {}
-    var I = _p2ShIss(ym); Array.prototype.forEach.call(in2.querySelectorAll('g[data-mid]'), function(g) { if (I[g.getAttribute('data-mid')]) g.classList.add('iss-on'); });
+// ════ v700: MAPは初めの枠の中で拡大・縮小（＋−・ピンチ・ctrl/⌘＋ホイール・ドラッグで動かす）。枠の高さは下の帯で変える。📌で上に固定 ════
+var _p2ShZ = 1, _p2ShMS = null, _p2ShMapPc = false, _p2ShMapO = { mode: 'ideal', newN: 0 }; // 倍率／枠のスクロール位置（描き直しても保つ）
+function _p2ShLs(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
+function _p2ShMapH(pc) { var v = parseInt(_p2ShLs(pc ? 'gm_shMapH' : 'gm_shMapHm'), 10); return v >= 140 && v <= 1400 ? v : (pc ? 460 : 320); }
+function _p2ShPin(pc) { var v = _p2ShLs(pc ? 'gm_shPin' : 'gm_shPinM'); return v === null ? !!pc : v === '1'; }
+function p2ShPinTgl() { var pc = _p2ShMapPc; _p2ShLs(pc ? 'gm_shPin' : 'gm_shPinM', _p2ShPin(pc) ? '0' : '1'); renderPlan(); }
+function _p2ShIssC() { return _p2ShLs('gm_shIssC') === '1'; }
+function _p2ShIssN(ym) { var I = _p2ShIss(ym); return Object.keys(I).filter(function(k) { return I[k]; }).length; }
+function p2ShIssTgl() { _p2ShLs('gm_shIssC', _p2ShIssC() ? null : '1'); if (_p2ShIssC()) _p2ShIssSel = ''; renderPlan(); }
+// 枠の中にMAPを描く（サークル／シート型）。課題のある人は光らせる
+function _p2ShMapDraw() {
+  var f = document.getElementById('p2ShMF'), I = document.getElementById('p2ShMI'); if (!f || !I) return;
+  var fw = f.clientWidth || 600, fh = f.clientHeight || 400, ym = _p2ShYmN(), mt = _p2ShMapMt(), Is = _p2ShIss(ym);
+  I.style.width = Math.round(fw * _p2ShZ) + 'px'; I.style.height = Math.round(fh * _p2ShZ) + 'px';
+  if (f.getAttribute('data-kind') === 'circle') {
+    try { renderPCOrbit(mt, I, false, { screen: true, w: fw, h: fh, onTap: p2ShIssTap }); } catch (e) { I.innerHTML = '<div class="sp-leg" style="padding:20px">サークルMAPを描けませんでした</div>'; }
+    Array.prototype.forEach.call(I.querySelectorAll('g[data-mid]'), function(g) { if (Is[g.getAttribute('data-mid')]) g.classList.add('iss-on'); });
   } else {
-    var F = _p2ShFr(ym), W = 1300, H = Math.max(520, Math.round(1300 * m.clientHeight / Math.max(1, m.clientWidth)));
-    var M = _p2ShMapSvg({ W: W, H: H, mode: mt === 'ideal' ? 'ideal' : 'cur', newN: mt === 'ideal' || F.t === null ? 0 : Math.max(0, F.t - F.now), tap: !_p2ShRo(), iss: _p2ShIss(ym) });
-    in2.innerHTML = M.svg || '';
+    var W = _p2ShMapPc ? 1300 : 640, H = Math.max(Math.round(W * .28), Math.round(W * fh / Math.max(1, fw)));
+    var M = _p2ShMapSvg({ W: W, H: H, mode: _p2ShMapO.mode, newN: _p2ShMapO.newN, tap: !_p2ShRo(), iss: Is });
+    I.innerHTML = M.empty ? '<div class="sp-leg" style="padding:14px">MAPに自分（いちばん上の人）がまだいません</div>' : (M.svg || '');
   }
-  if (keep) { m.scrollLeft = keep.l; m.scrollTop = keep.t; }
-  // ドラッグで動かす（PC）
-  var dr = null; m.onmousedown = function(e) { if (e.target.closest && e.target.closest('g[data-mid],g.shn')) return; dr = { x: e.clientX, y: e.clientY, l: m.scrollLeft, t: m.scrollTop }; };
-  m.onmousemove = function(e) { if (!dr) return; m.scrollLeft = dr.l - (e.clientX - dr.x); m.scrollTop = dr.t - (e.clientY - dr.y); };
-  m.onmouseup = m.onmouseleave = function() { dr = null; };
+  try { var pn = f.closest('.sp-mpin'), hd = document.querySelector('#view-plan .pcx2-hd') || document.querySelector('#view-plan .ux-top'); if (pn) pn.style.top = (pn.classList.contains('on') && hd && getComputedStyle(hd).position === 'sticky' ? hd.offsetHeight : 0) + 'px'; } catch (eT) {} // 固定は上の見出しの下に
+  if (_p2ShMS) { f.scrollLeft = _p2ShMS.l; f.scrollTop = _p2ShMS.t; }
+  f.onscroll = function() { _p2ShMS = { l: f.scrollLeft, t: f.scrollTop }; };
+  _p2ShMapGest(f);
+}
+// 倍率を変える（px,py：枠の中のこの点は動かさない。なければ真ん中）
+function _p2ShZSet(z, px, py) {
+  z = Math.max(1, Math.min(4, +z || 1));
+  var f = document.getElementById('p2ShMF'), I = document.getElementById('p2ShMI');
+  var lb = document.getElementById('p2ShZL'); if (lb) lb.textContent = Math.round(z * 100) + '%';
+  if (!f || !I) { _p2ShZ = z; return; }
+  var fw = f.clientWidth, fh = f.clientHeight; if (px == null) { px = fw / 2; py = fh / 2; }
+  var ow = I.offsetWidth || 1, oh = I.offsetHeight || 1, ax = (f.scrollLeft + px) / ow, ay = (f.scrollTop + py) / oh;
+  _p2ShZ = z; I.style.width = Math.round(fw * z) + 'px'; I.style.height = Math.round(fh * z) + 'px';
+  f.scrollLeft = ax * I.offsetWidth - px; f.scrollTop = ay * I.offsetHeight - py;
+  _p2ShMS = { l: f.scrollLeft, t: f.scrollTop };
+}
+function p2ShZoom(d) {
+  var Z = [1, 1.5, 2, 3, 4], z;
+  if (d === 0) z = 1; else if (d > 0) z = Z.filter(function(x) { return x > _p2ShZ + .01; })[0] || 4; else z = Z.filter(function(x) { return x < _p2ShZ - .01; }).pop() || 1;
+  _p2ShZSet(z);
+}
+function _p2ShMapGest(f) { // ピンチ・ctrl＋ホイールで拡大縮小、マウスはドラッグで動かす（動かした時は人を押したことにしない）
+  if (f._g) return; f._g = 1;
+  f.addEventListener('wheel', function(e) { if (!e.ctrlKey && !e.metaKey) return; e.preventDefault(); var r = f.getBoundingClientRect(); _p2ShZSet(_p2ShZ * Math.exp(-e.deltaY / 300), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+  var pz = null, dist = function(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY) || 1; };
+  f.addEventListener('touchstart', function(e) { if (e.touches.length !== 2) return; var r = f.getBoundingClientRect(); pz = { d: dist(e.touches), z: _p2ShZ, x: (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top }; }, { passive: true });
+  f.addEventListener('touchmove', function(e) { if (!pz || e.touches.length !== 2) return; e.preventDefault(); _p2ShZSet(pz.z * dist(e.touches) / pz.d, pz.x, pz.y); }, { passive: false });
+  f.addEventListener('touchend', function(e) { if (e.touches.length < 2) pz = null; });
+  var dr = null, moved = false;
+  f.addEventListener('mousedown', function(e) { if (e.button !== 0) return; dr = { x: e.clientX, y: e.clientY, l: f.scrollLeft, t: f.scrollTop }; moved = false; });
+  f.addEventListener('mousemove', function(e) { if (!dr) return; var dx = e.clientX - dr.x, dy = e.clientY - dr.y; if (Math.abs(dx) + Math.abs(dy) > 4) moved = true; if (moved) { f.scrollLeft = dr.l - dx; f.scrollTop = dr.t - dy; } });
+  f.addEventListener('mouseup', function() { dr = null; }); f.addEventListener('mouseleave', function() { dr = null; });
+  f.addEventListener('click', function(e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+}
+// 枠の下の帯をドラッグ → 枠の高さ（端末に覚える）
+function p2ShMapRs(e) {
+  var f = document.getElementById('p2ShMF'); if (!f) return;
+  try { e.preventDefault(); } catch (eP) {}
+  var y0 = e.clientY, h0 = f.clientHeight, h = h0, pc = _p2ShMapPc;
+  var mv = function(ev) { h = Math.round(Math.max(140, Math.min(1400, h0 + ev.clientY - y0))); f.style.height = h + 'px'; var I = document.getElementById('p2ShMI'); if (I) I.style.height = Math.round(h * _p2ShZ) + 'px'; };
+  var up = function() { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up); if (h !== h0) { _p2ShLs(pc ? 'gm_shMapH' : 'gm_shMapHm', String(h)); _p2ShMapDraw(); } };
+  document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
 }
 // 課題 → タスク／予定（その人つき・課題の文を入れて入力の画面を開く。課題のメモは残す）
 function _p2ShIssTitle(mid) { var t = _p2ShIss(_p2ShYmN())[mid] || '', m = _p2ShMem(mid); return ((m ? (m.lastName || _uxName(m)) + 'さん：' : '') + t).slice(0, 120); }
 function p2ShIssEv(mid, type) {
   if (_p2ShRo()) return;
-  var t = _p2ShIssTitle(mid); if (_p2ShZoomOn()) p2ShZoomClose();
+  var t = _p2ShIssTitle(mid);
   _p2ShIssAct = '';
   openEventModal(null, mid, '', type === 'task' ? 'task' : 'event');
   setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30);
@@ -37583,7 +37607,6 @@ function p2ShIssTo(mid, kind) {
   var ym = _p2ShYmN(), t = _p2ShIssTitle(mid), L = _p2ShIssL(ym, mid);
   if (kind === 'memo') { if (_p2ShMemoPut(ym, mid, _p2ShIss(ym)[mid])) { L.memo = 1; saveGoals(); toast('🗒 メンバーのメモに入れました'); } _p2ShIssAct = ''; renderPlan(); return; }
   // タスク・予定：入力の画面を開く（その人・課題の文が入った状態）。保存されたら連動
-  if (_p2ShZoomOn()) p2ShZoomClose();
   _p2ShIssAct = '';
   _p2ShIssPend = { mid: mid, kind: kind, at: new Date().toISOString(), ym: ym };
   openEventModal(null, mid, '', kind === 'task' ? 'task' : 'event');
