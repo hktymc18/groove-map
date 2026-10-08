@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v689';
+var APP_JS_VERSION = 'v690';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v689';
+  var DATA_VERSION = 'v690';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v690', d:'2026-10-08', items:['PLAN › 目標を1画面にしました（最終目標の月収・タイトル・期日 → 次の山 → スローガン を上から順に。ページ送りなし）'] },
   { v:'v689', d:'2026-10-08', items:['大きい更新があった時は、アップデート後に最初に開いた時だけ更新内容を表示するようにしました（1人1回。スマホとMacで見た記録は共通）','これまでの更新内容は、HOMEのベルと設定の「お知らせ・更新内容」から見られます'] },
   { v:'v688', d:'2026-10-07', pop: { t: 'PLANが「計画シート」になりました', items: ['紙の計画立案シートと同じ並び（目標 → MAP → 数字と改善点 → 行動）で1ヶ月の計画を書けます', '改善点は数字の1行ごと。行動はToDo・カレンダーにも入ります', '「シートを印刷」でA3横に印刷・PDFにできます'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートの説明文をなくしました（MAP・数字と改善点・行動の横の i を押すと出ます）','改善点の欄は、項目ごとに記入例を薄く出すようにしました','行動の空いた行にも記入例を出します'] },
   { v:'v687', d:'2026-10-07', items:['計画シートを紙の記入例に合わせて作り直しました。上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）で、＋−ボタンやバーはやめてマスに書くだけにしました','改善点は数字の1行ごとに「先月の結果から、今月どうするか」を書けます。先月目標に届かなかった数字は赤','いちばん上の1行で「マイルストーンまであと何ヶ月・フロントBRあと何本 → 今月のNEWフロント → 数字の目標」のつながりが見えます','数字の目標は自分で考えて入れます（自動では入りません）','MAPのユーザーは 名前｜GSV、ビジネスは 名前｜稼働（A〜Cは稼働率）／タイトル｜GSV','行動は紙と同じ ✔・行動・実行期日 の表。空いた行に書けば足されます（ToDoにも入ります）','印刷（A3横）も改善点を表の列にしました'] },
@@ -16533,7 +16534,7 @@ function _p2PgSubs(k) {
   if (k === 'why') return P2_WHY_PG.map(function(x) { return x.lb; });
   if (k === 'ideal') return P2_IDEAL_PG.slice();
   if (k === 'essay') return P2_WHY_PG.slice(0, 3).map(function(x) { return x.lb; });
-  if (k === 'goal') return P2_GOAL_PG.map(function(x) { return x.lb; });
+  if (k === 'goal') return []; // v690: 目標は1画面（ページを分けない）
   if (k === 'do') return ['今週', '今月'];
   if (k === 'dok') return _p2DoRows(_p2Ym(0)).map(function(r) { return r.lb; });
   if (k === 'rev') return _p2RvPages();
@@ -16625,9 +16626,8 @@ function _p2PageParts() {
     if (i < 2) { next = P2_WHY_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'ツールへ ›'; nextOn = 'p2Go(\'tool\')'; }
   } else if (k === 'dream') {
     _ux2Css(); body = _p2StepFix(_p2WhyPageHtml(8), -1);
-  } else if (k === 'goal') { // v599: 目標月収 → タイトル → 期日 → 次の山 → スローガン → 目標カード
-    _ux2Css(); body = _p2GoalPageHtml(i);
-    if (i < P2_GOAL_PG.length - 1) { next = P2_GOAL_PG[i + 1].lb + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'つぎ：ロードマップ ›'; nextOn = 'p2Go(\'rm\')'; }
+  } else if (k === 'goal') { // v690: 最終目標（月収・タイトル・期日）・次の山・スローガンを1画面で（v599は6ページ）
+    _ux2Css(); body = _p2GoalOneHtml();
   } else if (k === 'rm') { // v600: 横軸の月を押すと月の画面
     _ux2Css(); body = _p2RmPageHtml();
   } else if (k === 'rmm') {
@@ -16701,6 +16701,7 @@ function _p2PageParts() {
   if (k === 'yrs') back = _p2YrsBack || 'p2Go(\'goal\',5)';
   if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   if (k === 'ideal') back = (i === 0 || i === 2 || i === 6) ? 'p2Go(\'\')' : 'p2PgSub(' + (i - 1) + ')'; // v682: セットの最初は入口へ
+  if (k === 'goal') { back = _p2From === 'year' ? 'p2Go(\'year\')' : 'p2Go(\'\')'; next = '✓ 完了'; nextOn = back; } // v690
   return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back, dots: dots, dotI: dotI, dotOn: dotOn };
 }
 function _p2PageHtml() {
@@ -20682,6 +20683,42 @@ function _p2GoalPageHtml(i) {
     }).join('') + '</div>'
     + '<div class="ux-list" style="margin-top:12px"><div class="ux-li" onclick="p2YearsOpen()"><span class="ic">' + icn('calendar') + '</span><span>年別目標<small>1年ごとの目標</small></span><span class="ch">›</span></div>'
     + '<div class="ux-li" onclick="p2Go(\'gap\')"><span class="ic">' + icn('calc') + '</span><span>ギャップ<small>今と目標の差</small></span><span class="ch">›</span></div></div>';
+}
+// ════ v690: 目標を1画面で（最終目標 → 次の山 → スローガン）════
+function _p2GoalOneHtml() {
+  _p2DoCss2(); _sCss(); _p2YrsCss(); _p2ShCss2();
+  if (!document.getElementById('p2G1Css')) { var st = document.createElement('style'); st.id = 'p2G1Css';
+    st.textContent = '.g1-sec{display:flex;align-items:baseline;gap:8px;margin:18px 0 4px;font-size:15px;font-weight:900}.g1-sec:first-child{margin-top:4px}.g1-sec small{font-size:11px;font-weight:800;color:var(--gold)}.g1-sec .r{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}'
+      + '.g1-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;font-weight:800;color:var(--text-mid)}.g1-row .lb{width:58px;flex:none;color:var(--text)}.g1-row .sp-in{width:84px;font-size:22px}.g1-row .hint{font-size:11.5px;color:var(--text-dim);font-weight:700}.g1-row .hint b{color:var(--gold);cursor:pointer}'
+      + '.g1-row input[type=month]{background:transparent;border:0;border-bottom:1.5px solid color-mix(in srgb,var(--text) 25%,transparent);color:var(--text);font:900 18px Inter,sans-serif;padding:2px 0}body:not(.light) .g1-row input[type=month]{color-scheme:dark}.g1-row .ux-ex{margin-top:0;gap:6px;flex:1;min-width:0}.g1-row .ux-ex span{padding:6px 10px;font-size:12px}'
+      + '.g1-row input.g1-t{flex:1;min-width:0;background:transparent;border:0;border-bottom:1.5px solid color-mix(in srgb,var(--text) 25%,transparent);color:var(--text);font:900 17px inherit;font-family:inherit;padding:4px 0}.g1-row input.g1-t:focus,.g1-row input[type=month]:focus{outline:none;border-bottom-color:var(--accent)}'
+      + '.g1-lk{display:flex;gap:18px;margin-top:16px;font-size:12.5px;font-weight:800}.g1-lk span{color:var(--accent);cursor:pointer}';
+    document.head.appendChild(st); }
+  var p = state.goals.plan, inc = p.income ? Math.round(p.income / 10000) : '', tot = 0; try { tot = Math.round(_p2GwTotal()); } catch (e) {}
+  var dl = (p.deadline && /^\d{4}-\d{2}$/.test(p.deadline)) ? p.deadline : '', auto = glTitleFromIncome(+p.income || 0);
+  var num = function(v, on, w) { return '<input class="sp-in" type="number" inputmode="decimal" value="' + (v === '' || v == null ? '' : v) + '" onfocus="edSelAll(this)" onchange="' + on + '"' + (w ? ' style="width:' + w + 'px"' : '') + '>'; };
+  var mon = function(v, on) { return '<input type="month" value="' + (v || '') + '" onchange="if(this.value)' + on + '">'; };
+  var h = '<div class="g1-sec">最終目標</div>'
+    + '<div class="g1-row"><span class="lb">月収</span>' + num(inc, 'p2GoalInc(this.value)') + '万円' + (tot && tot !== +inc ? '<span class="hint">理想の生活 <b onclick="p2GoalInc(' + tot + ')">' + tot + '万</b></span>' : '') + '</div>'
+    + '<div class="g1-row"><span class="lb">タイトル</span><div class="ux-ex">' + P2_TITLES_JP.map(function(t) { return '<span class="' + (p.title === t ? 'on' : '') + '" onclick="p2GoalTitle(\'' + t + '\')">' + _p2TitleEn(t) + '</span>'; }).join('') + '</div>'
+    + (_p2().titleManual && auto && auto !== p.title ? '<span class="hint">月収の目安は <b onclick="p2GoalTitle(\'\')">' + evEsc(_p2TitleEn(auto)) + '</b></span>' : '') + '</div>'
+    + '<div class="g1-row"><span class="lb">期日</span>' + mon(dl, 'p2GoalDl(this.value)') + (dl ? '<span class="hint">あと' + _p2YmDiff(_p2Ym(0), dl) + 'ヶ月</span>' : '') + '</div>';
+  var nx = _p2Next();
+  h += '<div class="g1-sec" id="g1Nx">次の山' + (nx.suggested && !nx.isFinal ? '<small>例</small><span class="r" onclick="p2NxKeep()">この例で決める</span>' : '') + '</div>';
+  if (nx.isFinal) h += '<div class="g1-row">最終目標がそのまま次の山です</div>';
+  else if (nx.title === 'BR' && nx.curR < 0) {
+    h += '<div class="g1-row"><span class="lb">目標</span><b style="color:var(--text);font:900 17px Inter,sans-serif">BR</b><span class="hint">ファーストボーナス</span>' + num(Math.round((nx.fb || 0) / 10000), 'p2NxFbSet(this.value)', 70) + '万円</div>'
+      + '<div class="g1-row"><span class="lb">BRの月</span>' + mon(nx.deadline, 'p2NxDl(this.value)') + '</div>';
+  } else {
+    var list = P2_RANK.filter(function(t) { var r = _p2Rank(t), fr = _p2Rank(nx.fin); return r > nx.curR && (fr < 0 || r <= fr); });
+    h += '<div class="g1-row"><span class="lb">月収</span>' + num(nx.inc || '', 'p2NxSetInc(this.value)') + '万円</div>'
+      + '<div class="g1-row"><span class="lb">タイトル</span><div class="ux-ex">' + list.map(function(t) { return '<span class="' + (nx.title === t ? 'on' : '') + '" onclick="p2NxPick(\'' + t + '\')">' + t + '</span>'; }).join('') + '</div></div>'
+      + '<div class="g1-row"><span class="lb">期日</span>' + mon(nx.deadline, 'p2NxDl(this.value)') + '</div>';
+  }
+  h += '<div class="g1-sec">スローガン</div><div class="g1-row"><input class="g1-t" maxlength="40" placeholder="例：やる時はいましかない" value="' + evEsc(String(_p2().motto || '')) + '" onchange="p2Motto(this.value)"></div>'
+    + '<div class="g1-lk"><span onclick="p2YearsOpen()">年別目標 ›</span><span onclick="p2Go(\'gap\')">ギャップ ›</span></div>';
+  if (_p2PgI === 3 && window._p2G1At !== _p2PgI + ':' + (_p2From || '')) { window._p2G1At = _p2PgI + ':' + (_p2From || ''); setTimeout(function() { var el = document.getElementById('g1Nx'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' }); }, 30); } // 「次の山」から来た時
+  return h;
 }
 // ════ v600: ロードマップ（横軸 → 月の画面）とツール（ギャップ・チェック・BB早見表）を型に ════
 // 1行の −［数字］＋（1画面に3〜5行）
