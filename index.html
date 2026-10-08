@@ -2952,7 +2952,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v725</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v726</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3678,8 +3678,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
           <div class="ed-help" id="h_badge">PCツリーで点滅させて目立たせる表示（「フレッシュ」＝スタート6ヶ月以内・BR未満／「研修生」）の設定。ケアしないと消えてしまう層を目立たせるためのものです。自動＝条件に合えば表示。条件外でもケアしたい人には「表示」、外したい人は「非表示」。</div>
           <div class="ed-memo-row">
             <span class="ed-l">メモ</span>
-            <textarea class="ed-memo" id="fMemo" placeholder="予定・心境・タスクなど"></textarea>
+            <textarea class="ed-memo" id="fMemo" placeholder="予定・心境・タスクなど（MAPを共有している人にも見えます）"></textarea>
           </div>
+          <div id="fPMemoWrap"></div>
         </div>
 
         <!-- Page 2: 研修 -->
@@ -3904,7 +3905,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v725';</script>
-<script src="app.js?v=v725"></script>
+<script>window.GM_EXPECT_JS='v726';</script>
+<script src="app.js?v=v726"></script>
 </body>
 </html>
