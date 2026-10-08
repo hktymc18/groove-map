@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v727';
+var APP_JS_VERSION = 'v728';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v727';
+  var DATA_VERSION = 'v728';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v728', d:'2026-10-08', items:['ロードマップ③の「⚙ 設定」で小数を入れられるように（例：1.5人でBR 1本）。必要な人数は切り上げで出します'] },
   { v:'v727', d:'2026-10-08', items:['PCの計画シートは、最初はMAPが上・書く欄が下（上下）の並びに。右上の「◧ 左右」を選ぶと左右の並びになり、端末で覚えます'] },
   { v:'v726', d:'2026-10-08', items:['メンバーに「🔒 自分だけのメモ」：共有しているMAPでも、共有元・共有先の人には見えないメモが書けます（MAPで人を押した画面・メンバー編集・かんたん編集のメモ）','今までの「メモ」は、MAPを共有している人にも見えることを書き添えました'] },
   { v:'v725', d:'2026-10-08', items:['バグ・要望（管理者）：「📋 Claude用にコピー」をどのタブ（新着など）でも使えるように。「ぜんぶ選ぶ」も','1件ずつは、報告を開いた画面の「📋 Claude用にコピー」から（やりとりも入る）。新着・改修するはコピーすると「対応中」に','一覧で書いた人・日時の行が縦に崩れていたのを直しました'] },
@@ -25379,7 +25380,7 @@ function _p2GapCalc() {
     return { k: d.k, lb: d.lb, unit: d.unit, t: t, c: c, cIsAuto: cIsAuto, cAuto: d.cAuto, gap: gap };
   });
   var qrT = items[2].t || 0;
-  var candT = qrT ? qrT * g.rates.candX : null;
+  var candT = qrT ? Math.ceil(qrT * g.rates.candX - 1e-9) : null;
   var candC = num(g.c.cand); var candIsAuto = (candC === null);
   if (candC === null) candC = auto.cand;
   return { items: items, cand: { t: candT, c: candC, cIsAuto: candIsAuto, gap: (candT === null) ? null : (candT - candC) } };
@@ -25451,7 +25452,7 @@ function p2GapSet(col, k, v) {
 }
 function p2GapRate(k, v) {
   var g = _p2Gap();
-  var n = parseInt(v, 10) || 0;
+  var n = k === 'brLead' || k === 'distDef' ? (parseInt(v, 10) || 0) : _p2Dec(v); // v728: 単価・倍率は小数もOK
   if (n > 0) g.rates[k] = n;
   saveGoals(); _p2GapRender(); _p2PgRe();
 }
@@ -38365,7 +38366,7 @@ function _p2YrCalc() {
     { k: 'env', lb: '環境', u: 'つ', c: cv('env'), a: inc ? Math.ceil(inc / g.rates.envYen) : null }
   ];
   var rows = defs.map(function(d) { d.co = num(g.c[d.k]); d.ca = auto[d.k] == null ? null : auto[d.k]; var t = num(Y.t[d.k]); d.man = t !== null; if (t === null) t = d.a; d.t = t; return d; });
-  var qr = rows[2]; rows[3].a = qr.t ? qr.t * g.rates.candX : null; if (!rows[3].man) rows[3].t = rows[3].a;
+  var qr = rows[2]; rows[3].a = qr.t ? Math.ceil(qr.t * g.rates.candX - 1e-9) : null; if (!rows[3].man) rows[3].t = rows[3].a;
   rows.forEach(function(d) { d.gap = d.t === null || d.c === null ? null : d.t - d.c; });
   var loi = _p2YmAdd(dl, -4), needBR = 0, needFr, dlF;
   if (isBR) { // 自分がBRになる：シミュレーションの月ごとのフロント（LOI〜Q4）
@@ -38374,7 +38375,7 @@ function _p2YrCalc() {
     dlF = _p2YmAdd(loi, last);
   } else {
     var b = rows[0]; needBR = b.t === null ? 0 : Math.max(0, b.t - (b.c || 0));
-    needFr = needBR * Y.ratio; dlF = loi;
+    needFr = Math.ceil(needBR * Y.ratio - 1e-9); dlF = loi; // v728: 1.5人で1本なども（小数は切り上げ）
   }
   var months = []; for (var ym = cur, i = 0; ym <= dlF && i < 36; ym = _p2YmAdd(ym, 1), i++) months.push(ym);
   return { nx: nx, Y: Y, cur: cur, isBR: isBR, dl: dl, loi: loi, dlF: dlF, needBR: needBR, needFr: needFr, months: months, rows: rows, ratio: Y.ratio, minNear: isBR ? _p2BrMin() : _p2YmAdd(cur, 4) };
@@ -38400,7 +38401,8 @@ function p2YrF(ym, v) {
   var n = String(v).trim() === '' ? '' : Math.max(0, parseInt(String(v).replace(/[^0-9]/g, ''), 10) || 0);
   rm.rows.front[ym] = n; _p2M(ym).front = n; saveGoals(); renderPlan();
 }
-function p2YrSet(k, v) { if (_p2ShRo()) return; var Y = _p2Yr(), n = Math.max(1, parseInt(v, 10) || 0); if (n) Y[k] = n; saveGoals(); renderPlan(); }
+function p2YrSet(k, v) { if (_p2ShRo()) return; var Y = _p2Yr(), n = _p2Dec(v); if (n > 0) Y[k] = n; saveGoals(); renderPlan(); }
+function _p2Dec(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[，、,]/g, '.').replace(/[０-９．]/g, function(ch) { return ch === '．' ? '.' : String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })); return isNaN(n) ? 0 : Math.round(n * 100) / 100; } // v728: 小数（全角・カンマも）
 function p2YrT(k, v) { if (_p2ShRo()) return; var Y = _p2Yr(); if (String(v).trim() === '') delete Y.t[k]; else Y.t[k] = Math.max(0, parseInt(v, 10) || 0); saveGoals(); renderPlan(); }
 function p2YrShift() { var C = _p2YrCalc(); _p2NxPut({ deadline: _p2YmAdd(C.dl, 1) }); toast('⭐ 直近の目標を ' + _p2YmJa(_p2YmAdd(C.dl, 1)) + ' にしました'); }
 function p2YrMo(ym) { _p2YrMoSel = _p2YrMoSel === ym ? '' : ym; renderPlan(); if (_p2YrMoSel) setTimeout(function() { var el = document.getElementById('p2YrMm'); if (el) try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {} }, 30); }
@@ -38563,7 +38565,7 @@ function _p2YrGapHtml(C, ro, lk, on) {
   var calc = C.isBR
     ? '<div><small>BRになる月</small><b class="gd">' + parseInt(C.dl.slice(5), 10) + '<i>月</i></b></div><div><small>必要なフロント（シミュレーション）</small><b class="gd">' + C.needFr + '<i>人</i></b></div><div><small>フロントの締め切り</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>'
     : '<div><small>必要なフロントBR</small><b>' + C.needBR + '<i>本</i></b></div><div><small>必要なフロント（' + C.ratio + '人で1本）</small><b class="gd">' + C.needFr + '<i>人</i></b></div><div><small>フロントを出す締め切り（LOIの月）</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>';
-  var gr = _p2Gap().rates, row = function(lb, sub, val, on, u) { return '<label class="yr-sr"><span>' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="number" inputmode="numeric" value="' + val + '" onfocus="edSelAll(this)" onchange="' + on + '"><em>' + u + '</em></label>'; };
+  var gr = _p2Gap().rates, row = function(lb, sub, val, on, u) { return '<label class="yr-sr"><span>' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="text" inputmode="decimal" autocomplete="off" value="' + val + '" onfocus="edSelAll(this)" onchange="' + on + '"><em>' + u + '</em></label>'; };
   var set = lk || ro || !_p2YrSetOn ? '' : '<div class="yr-sp"><div class="hd">計算の設定<span onclick="p2YrSetTgl()">閉じる</span></div>' // v721: ふだんは隠す（⚙で開く）
     + row('BR 1本に必要なフロント', '', C.ratio, 'p2YrSet(\'ratio\',this.value)', '人')
     + row('1Qルビーあたりの月収', '', gr.qrYen, 'p2GapRate(\'qrYen\',this.value)', '万円')
