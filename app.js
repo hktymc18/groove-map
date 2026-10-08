@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v708';
+var APP_JS_VERSION = 'v709';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v708';
+  var DATA_VERSION = 'v709';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v709', d:'2026-10-08', items:['🎁 シミュレーション：人数などを変えて金額が変わったら、ファーストボーナスはまた「押して見る」に戻ります（自分のタイミングで見られます）','止まったら「前回より ＋¥◯」も出ます','ファーストボーナスの欄は組織図の下に。BRの月を選んだ時だけ出ます（ほかの月は「BRを選ぶと見られます」）'] },
   { v:'v708', d:'2026-10-08', items:['🐛 PCで理想MAP（サークル）の拡大・縮小（＋−・全体）が効かなくなっていたのを修正（計画シートのサークルMAPの方が動いていました）'] },
   { v:'v707', d:'2026-10-08', pop: { t: 'PCの計画シートが「左にMAP・右に書く欄」になりました', items: ['MAPは左に出たまま動かないので、見ながら右の数字・改善点・行動を書けます（右だけスクロール）', '行を詰めて、数字8行と行動4分野がひと目で見渡せます。右上の「上下」で前の並びにも戻せます', '上の帯（年月・翌月コピー・共有MAP）はなくして画面を広く。年月の切りかえと翌月コピーはMAPの画面の上へ'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['PCの計画シートを左右2分割に：左＝MAP（縦いっぱい・拡大縮小）と課題、右＝数字と改善点・行動（2列）','右上の「◧ 左右｜⬒ 上下」で並びを切りかえ（端末に覚えます）','改善点の空いた欄は1行に詰めて、記入例は薄く1行で'] },
   { v:'v706', d:'2026-10-08', items:['PC：上の帯（年月・翌月コピー・共有MAP）をなくして、どの画面も上が広くなりました','年月の切りかえ（‹ 2026年10月 ›）・翌月コピー・共有MAPは、MAPの画面の上の帯に移しました（分析は今まで通り分析の上）','バージョンと保存の時刻は左下のプロフィールの下に'] },
@@ -19667,7 +19668,7 @@ function _p2SimHtml() {
     + (_p2SimBig(nodes, mo) ? _p2SimNumHtml(nodes, mo) : '<div class="p2sm-tree">' + _p2SimSvg(nodes, mo) + '</div>')
     + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3, 4] : [1, 2, 3, 4]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）<b>new</b></span>'; }).join('') + '</div>'
     + '<div class="p2sm-k"><div><small>組織（' + ymL(mo) + '）</small><b>' + cnt + '<i>人</i></b></div><div><small>GSV（' + ymL(mo) + '）</small><b>' + mon.gsv.toLocaleString() + '<i>P</i></b></div></div>'
-    + (pc ? _p2SimFbHtml(R9) + '</div><div class="p2sm-set">' : '<div class="p2sm-set">')
+    + (pc ? (mo === 4 ? _p2SimFbHtml(R9) : _p2SimFbHint(ymL(4))) + '</div><div class="p2sm-set">' : '<div class="p2sm-set">')
     + '<div class="ux-lb2">フロント</div><div class="p2sm-md"><span class="' + (cus ? '' : 'on') + '" onclick="p2SimMode(0)">Q2・Q3の月に同じ人数</span><span class="' + (cus ? 'on' : '') + '" onclick="p2SimMode(1)">カスタム（月ごと）</span></div>'
     + (cus ? '<div class="p2sm-fc">' + cfg.fronts.map(function(v, m) {
         return '<div><small>' + ymL(m) + ' ' + lab[m] + '</small><input type="number" inputmode="numeric" min="0" value="' + (v || 0) + '" onfocus="edSelAll(this)" onchange="p2SimFSet(' + m + ',this.value)">'
@@ -19677,7 +19678,7 @@ function _p2SimHtml() {
     + st('1人がつなぐ人数（毎月）', cfg.dup, '人', 'p2SimDup', 'p2SimDupSet')
     + '<div class="ux-lb2">1人あたりBPCポイント</div><div class="ux-chips">' + [500, 1000, 1500, 2000].map(function(v) { return '<span class="' + (cfg.psv === v ? 'on' : '') + '" onclick="p2SimPsv(' + v + ')">' + v.toLocaleString() + '</span>'; }).join('') + '</div>'
     + st('自分のADP', cfg.myPsv, 'P', 'p2SimAdp', 'p2SimAdpSet')
-    + '<div class="ux-lb2">LOIの月</div>' + (pc ? '<div class="ux-stp"><div class="ux-sv ok"><input type="month" value="' + cfg.sy + '-' + String(cfg.sm).padStart(2, '0') + '" onchange="p2SimStartSet(this.value)" style="font-size:22px"></div></div>' : '<div class="ux-stp"><span class="ux-pm" onclick="p2SimStart(-1)">−</span><div class="ux-sv ok" style="font-size:26px;font-weight:900;font-family:Inter,sans-serif">' + cfg.sy + '<small>年</small>' + cfg.sm + '<small>月</small></div><span class="ux-pm" onclick="p2SimStart(1)">＋</span></div>') + '</div>' + (pc ? '</div>' : _p2SimFbHtml(R9));
+    + '<div class="ux-lb2">LOIの月</div>' + (pc ? '<div class="ux-stp"><div class="ux-sv ok"><input type="month" value="' + cfg.sy + '-' + String(cfg.sm).padStart(2, '0') + '" onchange="p2SimStartSet(this.value)" style="font-size:22px"></div></div>' : '<div class="ux-stp"><span class="ux-pm" onclick="p2SimStart(-1)">−</span><div class="ux-sv ok" style="font-size:26px;font-weight:900;font-family:Inter,sans-serif">' + cfg.sy + '<small>年</small>' + cfg.sm + '<small>月</small></div><span class="ux-pm" onclick="p2SimStart(1)">＋</span></div>') + '</div>' + (pc ? '</div>' : (mo === 4 ? _p2SimFbHtml(R9) : _p2SimFbHint(ymL(4))));
 }
 // ════ v694: シミュレーション（スマホ）を1画面に：結果 → 設定（マスに書くだけ）→ 月ごとの組織図 ════
 function _p2SimOneHtml() {
@@ -19699,8 +19700,6 @@ function _p2SimOneHtml() {
   var inp = function(v, on, w) { return '<input class="sp-in" type="number" inputmode="numeric" value="' + v + '" onfocus="edSelAll(this)" onchange="' + on + '(this.value)"' + (w ? ' style="width:' + w + 'px"' : '') + '>'; };
   setTimeout(_p2SimSwipe, 0);
   return '<div class="sp-sec" style="align-items:center;margin-top:2px;font-size:18px">シミュレーション' + _uxIb('sim') + '</div>'
-    + '<div class="sm1-r"><div class="fb"><small>ファーストボーナス（BR昇格後）' + (_p2FbShown ? _uxIb('simfb').replace('class="ux-ib"', 'class="ux-ib" style="display:inline-flex;width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle"') : '') + '</small><b>' + _p2FbAmt(R9.fb) + (_p2FbShown ? '<i>/月</i>' : '') + '</b></div>'
-    + '<div class="k">組織（' + ymL(mo) + '）<b>' + cnt + '</b>人<br>GSV <b>' + mon.gsv.toLocaleString() + '</b>P</div></div>'
     + '<div class="sm1-g">'
     + (cus ? '' : '<div>フロント（月に）' + inp(n, 'p2SimNSet') + '</div>')
     + '<div>1人がつなぐ人数' + inp(cfg.dup, 'p2SimDupSet') + '</div>'
@@ -19712,24 +19711,31 @@ function _p2SimOneHtml() {
     + '<span class="sm1-md" onclick="p2SimMode(' + (cus ? 0 : 1) + ')">' + (cus ? 'Q2・Q3の月に同じ人数にする' : 'フロントを月ごとに変える ›') + '</span>'
     + '<div class="p2sm-seg" style="margin-top:12px">' + lab.map(function(l, m) { return '<span class="' + (m === mo ? 'on' : '') + '" onclick="p2SimMo(' + m + ')"><b>' + ymL(m) + '</b>' + l + '</span>'; }).join('') + '</div>'
     + (_p2SimBig(nodes, mo) ? _p2SimNumHtml(nodes, mo) : '<div class="p2sm-tree">' + _p2SimSvg(nodes, mo) + '</div>')
-    + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3, 4] : [1, 2, 3, 4]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）<b>new</b></span>'; }).join('') + '</div>';
+    + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3, 4] : [1, 2, 3, 4]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）<b>new</b></span>'; }).join('') + '</div>'
+    // v709: ファーストボーナスは組織図の下（結果として見る）。BRの月を選んだ時だけ（ほかの月は組織とGSVだけ）
+    + '<div class="sm1-r"><div class="fb">' + (mo === 4 ? '<small>ファーストボーナス（BR昇格後）' + (_p2FbShown ? _uxIb('simfb').replace('class="ux-ib"', 'class="ux-ib" style="display:inline-flex;width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle"') : '') + '</small><b>' + _p2FbAmt(R9.fb, '<i>/月</i>') + '</b>'
+      : '<small>ファーストボーナス</small><span class="fbh" onclick="p2SimMo(4)">' + ymL(4) + '（BR）を選ぶと見られます ›</span>') + '</div>'
+    + '<div class="k">組織（' + ymL(mo) + '）<b>' + cnt + '</b>人<br>GSV <b>' + mon.gsv.toLocaleString() + '</b>P</div></div>';
 }
 function p2SimPsvSet(v) { var n = Math.max(0, Math.min(10000, parseInt(v, 10) || 0)); if (n) p2SimPsv(n); }
 // ════ v704: ファーストボーナスはボタンを押してから。数字がスロットのリールみたいにぐるぐる回って、右の桁（一の位）から止まる ════
-var _p2FbShown = false, _p2FbLast = null, _p2FbQuick = false;
-function _p2FbAmt(v) {
+// v709: 数字を変えて金額が変わったら、また隠す（押すまで見えない）。止まったら「前回より ±¥◯」
+var _p2FbShown = false, _p2FbLast = null, _p2FbQuick = false, _p2FbSeen = null, _p2FbBase = null, _p2FbDiff = null, _p2FbChg = false;
+function _p2FbAmt(v, suf) { suf = suf || ''; // suf：「/月」（金額のすぐ後ろ・差の札より前）
   _p2FbCss();
-  if (!_p2FbShown) return '<span class="fbq" onclick="p2FbReveal()"><i>🎁</i>押して見る</span>';
+  if (!_p2FbShown) return '<span class="fbq" onclick="p2FbReveal()"><i>🎁</i>押して見る</span>' + (_p2FbChg ? '<span class="fbc">条件が変わりました</span>' : '');
   var s = '¥' + (+v || 0).toLocaleString(), lab = ' aria-label="' + s + '" id="p2FbR" onclick="p2FbAgain()" title="もう一度回す"';
-  if (_p2FbLast === v) return '<span class="fbr"' + lab + '>' + s + '</span>';
-  _p2FbLast = v; setTimeout(_p2FbSpin, 40);
+  var dB = function(on) { return _p2FbDiff ? '<span class="fbd' + (_p2FbDiff > 0 ? '' : ' dn') + (on ? ' on' : '') + '" id="p2FbD">前回より ' + (_p2FbDiff > 0 ? '＋' : '−') + '¥' + Math.abs(_p2FbDiff).toLocaleString() + '</span>' : ''; };
+  if (_p2FbLast === v) return '<span class="fbr"' + lab + '>' + s + '</span>' + suf + dB(true);
+  if (_p2FbBase !== null) { _p2FbDiff = v !== _p2FbBase ? v - _p2FbBase : null; _p2FbBase = null; }
+  _p2FbLast = v; _p2FbSeen = v; setTimeout(_p2FbSpin, 40);
   var k = 0, D = s.replace(/\D/g, '').length;
   return '<span class="fbr fbsp"' + lab + '>' + s.split('').map(function(ch) {
     if (!/\d/.test(ch)) return '<span class="rc">' + ch + '</span>';
     var n = 10 * (2 + (D - 1 - k++)) + (+ch), st = ''; // 左の桁ほど多く回る
     for (var i = 0; i <= n; i++) st += '<span>' + (i % 10) + '</span>';
     return '<span class="rl"><span class="rs" data-n="' + n + '">' + st + '</span></span>';
-  }).join('') + '</span>';
+  }).join('') + '</span>' + suf + dB(false);
 }
 function _p2FbSpin() {
   var R = document.getElementById('p2FbR'); if (!R || !R.classList.contains('fbsp')) return;
@@ -19740,9 +19746,9 @@ function _p2FbSpin() {
     c.style.transform = 'translateY(-' + (+c.getAttribute('data-n') * 1.1) + 'em)';
   });
   _p2FbQuick = true;
-  setTimeout(function() { var r = document.getElementById('p2FbR'); if (!r) return; r.classList.remove('fbsp'); r.classList.add('hit'); try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) {} }, end * 1000 + 30);
+  setTimeout(function() { var r = document.getElementById('p2FbR'); if (!r) return; r.classList.remove('fbsp'); r.classList.add('hit'); var dd = document.getElementById('p2FbD'); if (dd) dd.classList.add('on'); try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) {} }, end * 1000 + 30);
 }
-function p2FbReveal() { _p2FbShown = true; _p2FbLast = null; _p2FbQuick = false; renderPlan(); }
+function p2FbReveal() { _p2FbShown = true; _p2FbLast = null; _p2FbQuick = false; _p2FbChg = false; _p2FbBase = _p2FbSeen; _p2FbDiff = null; renderPlan(); }
 function p2FbAgain() { _p2FbLast = null; _p2FbQuick = false; renderPlan(); }
 function _p2FbCss() {
   if (document.getElementById('p2FbCss')) return;
@@ -19750,17 +19756,18 @@ function _p2FbCss() {
   st.textContent = '.fbq{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:8px 16px;border-radius:12px;background:linear-gradient(135deg,#FFD166,#FFB454);color:#3a2400;font:900 15px "Noto Sans JP",sans-serif;cursor:pointer;animation:fbq 1.6s infinite}.fbq i{font-style:normal}'
     + '@keyframes fbq{0%{box-shadow:0 0 0 0 rgba(255,209,102,.55)}70%{box-shadow:0 0 0 12px rgba(255,209,102,0)}100%{box-shadow:0 0 0 0 rgba(255,209,102,0)}}'
     + '.fbr{display:inline-flex;align-items:flex-end;cursor:pointer;transform-origin:left center}.fbr .rl{display:inline-block;height:1.1em;line-height:1.1em;overflow:hidden}.fbr .rs{display:flex;flex-direction:column}.fbr .rs span{height:1.1em;line-height:1.1em}.fbr .rc{line-height:1.1em}.fbr.fbsp .rs{filter:blur(.7px)}'
-    + '.fbr.hit{animation:fbhit .7s ease-out}@keyframes fbhit{0%{transform:scale(1)}30%{transform:scale(1.1);text-shadow:0 0 22px rgba(255,209,102,.95)}100%{transform:scale(1);text-shadow:none}}'
+    + '.fbh{display:inline-block;margin-top:6px;font:800 13px "Noto Sans JP",sans-serif;color:var(--accent);cursor:pointer}.fbc{display:block;margin-top:6px;font:800 11px "Noto Sans JP",sans-serif;color:var(--text-dim)}.fbd{display:block;margin-top:5px;font:900 12.5px "Noto Sans JP",Inter,sans-serif;color:var(--accent);opacity:0;transform:translateY(4px);transition:opacity .4s,transform .4s}.fbd.dn{color:#FF8A7A}.fbd.on{opacity:1;transform:none}.fbr.hit{animation:fbhit .7s ease-out}@keyframes fbhit{0%{transform:scale(1)}30%{transform:scale(1.1);text-shadow:0 0 22px rgba(255,209,102,.95)}100%{transform:scale(1);text-shadow:none}}'
     + '@media (prefers-reduced-motion:reduce){.fbr .rs{transition:none!important}.fbr.hit{animation:none}}';
   document.head.appendChild(st);
 }
 // v652: ファーストボーナス（一番のお楽しみ）は大きく。内訳は (i) に
+function _p2SimFbHint(lb) { _p2FbCss(); return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb"><span class="fbh" onclick="p2SimMo(4)">' + lb + '（BR）を選ぶと見られます ›</span></div>'; } // v709: BRの月だけ
 function _p2SimFbHtml(R9) {
   var bb = _p2BBCalc(Math.max(0, R9.gsv - 1000)), loi = R9.gsv >= 2000 ? 50000 : 0;
   UX_INFO.simfb = { t: 'ファーストボーナスの内訳', ok: 'とじる', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
     + '※ GSV ' + R9.gsv.toLocaleString() + ' − 1,000P（BR昇格分）＝ ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'P がBB対象<br>'
     + (loi ? '<b>エリートLOI特典</b>：¥50,000（BR維持で翌月進呈）' : '<b>エリートLOI特典</b>：BRの月のGSVが2,000以上で ¥50,000') };
-  return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb">' + (_p2FbShown ? '<span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span>' : '') + '<small>ファーストボーナス（BR昇格後）</small><b>' + _p2FbAmt(R9.fb) + (_p2FbShown ? '<i>/月</i>' : '') + '</b></div>';
+  return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb">' + (_p2FbShown ? '<span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span>' : '') + '<small>ファーストボーナス（BR昇格後）</small><b>' + _p2FbAmt(R9.fb, '<i>/月</i>') + '</b></div>';
 }
 function _p2SimSwipe() {
   var el = document.querySelector('.p2sm-tree,.p2sm-num'); if (!el || typeof _uxSwipe !== 'function') return;
@@ -19784,7 +19791,7 @@ function _p2SimNumHtml(nodes, mo) {
 function p2SimMode(c) { _p2SimSet(function(cf) { if (c) { cf.fronts = (cf.fronts || _p2SimFr(2)).slice(); cf.preset = 0; } else { var n = Math.max(1, cf.fronts[1] || 0, cf.fronts[2] || 0); cf.preset = Math.min(10, n); cf.fronts = _p2SimFr(cf.preset); } }); }
 function p2SimFSet(m, v) { _p2SimSet(function(cf) { cf.preset = 0; cf.fronts = cf.fronts.slice(); cf.fronts[m] = Math.max(0, Math.min(30, parseInt(v, 10) || 0)); }); }
 function p2SimF(m, d) { p2SimFSet(m, (_p2SimCfg().fronts[m] || 0) + d); }
-function _p2SimSet(f) { var c = _p2SimCfg(); f(c); _p2SimMo = 0; saveGoals(); renderPlan(); } // v652: 数字を変えたら組織図はLOIの月から
+function _p2SimSet(f) { var c = _p2SimCfg(), b0 = null; try { b0 = _p2SimFbF(c.fronts, c).fb; } catch (e) {} f(c); try { if (_p2FbShown && _p2SimFbF(c.fronts, c).fb !== b0) { _p2FbShown = false; _p2FbChg = true; _p2FbDiff = null; } } catch (e2) {} _p2SimMo = 0; saveGoals(); renderPlan(); } // v709: 金額が変わったらまた隠す // v652: 数字を変えたら組織図はLOIの月から
 function p2SimMo(m) { _p2SimMo = m; renderPlan(); }
 function p2SimNSet(v) { _p2SimSet(function(c) { var n = Math.max(1, Math.min(10, parseInt(v, 10) || 1)); c.preset = n; c.fronts = _p2SimFr(n); }); }
 function p2SimN(d) { var c = _p2SimCfg(); p2SimNSet((c.preset > 0 ? c.preset : (c.fronts[1] || 1)) + d); }
