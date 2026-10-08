@@ -26,6 +26,7 @@
   }
 }
 *{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;}
 body{background:var(--paper);color:var(--ink);
   font-family:"Noto Sans JP",-apple-system,"Hiragino Sans",sans-serif;font-size:14.5px;line-height:1.7;}
@@ -1300,8 +1301,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v39';
+var APP_VER = 'v40';
 var CHANGELOG = [
+  { v: 'v40', d: '2026/10/09', items: ['🔤 iPhoneを横にした後などに、一部の文字だけ大きくなってしまうことがあったのを直しました'] },
   { v: 'v39', d: '2026/10/09', items: ['🧾 スマホ会員証がない人（紙カードの人など）にも電子領収書: 受付直後の「📱 領収書QRを表示」を本人のスマホで読み取ってもらうと、宛名・金額入りの領収書が開きます', '渡し忘れても、出席者一覧・合同出席者の「🧾 領収書」から同じ領収書をもう一度表示できます（2枚目は作りません）。未徴収・返金・PayPay⇔現金の変更にも自動で追従'] },
   { v: 'v38', d: '2026/10/09', items: ['📋 イベントタブに「合同出席者」ボタン（単独イベントは「出席者」）: 終わったイベントも、全ユニオンの出席者・ユニオン別の人数・ビジター・受付担当者を一覧で見られます（ユニオンで絞り込み・CSV出力も可）', '➕ 合同イベントで、合同ユニオンに入っていないユニオンの人を受付すると、主催ユニオンの管理者・受付管理者にはその場で「合同ユニオンに追加」ボタンが出ます（押すとそのユニオンの集計に入ります）'] },
   { v: 'v37', d: '2026/10/09', items: ['💴💳 イベントの「支払い方法」に「現金とPayPayの両方」を追加。受付のたびに画面の「💴 現金で受領」「📱 PayPayで受領」をワンタップで選べます（何もしなければ現金）。受付画面にはPayPayの送金QRも表示', '会計: 現金計・PayPay計を分けて表示。PayPay分は納金票に「現金外」として別記'] },
