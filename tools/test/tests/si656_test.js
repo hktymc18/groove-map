@@ -6,7 +6,7 @@ T.run(async () => {
   w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '', mapType: 'both', ptCurrent: 2500 }];
   w.state.idealMembers = [];
   setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('plan'); await sleep(30);
-  const cfg = w._p2SimCfg(); cfg.preset = 3; cfg.fronts = [0, 3, 3, 0];
+  const cfg = w._p2SimCfg(); cfg.preset = 3; cfg.fronts = [0, 3, 3, 0]; const lm = w._p2Ym(-1); cfg.sy = +lm.slice(0, 4); cfg.sm = +lm.slice(5); // v719: 今月＝Q2の月
   w.p2SimApply(); await sleep(20);
   const I = w._idealStats(w.state.idealMembers);
   c('理想MAPが空なら現状からコピーして、自分のB1を3人に', I.newFront === 3 && w.state.idealMembers.some(m => !m.parentId && m.id === 'r'));
