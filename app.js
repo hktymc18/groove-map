@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v695';
+var APP_JS_VERSION = 'v696';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -2019,6 +2019,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     if (!isPrint) {
       g.addEventListener('click', function(ev) {
         ev.stopPropagation();
+        if (opts.onTap && !/^(AG\d+|MG)_/.test(m.id)) { opts.onTap(m.id); return; } // v696: 計画シートは押すと課題
         if (opts.screen && !/^AG\d+_/.test(m.id) && typeof mxTap === 'function') { mxTap(m.id); return; } // v663: スマホ横のサークルMAPは丸を押すとその人の画面（くわしく）
         if (/^MG_/.test(m.id)) { if (typeof mgNodeClick === 'function') mgNodeClick(m.id); }
         else if (/^AG\d+_/.test(m.id)) { /* 合算表示は閲覧のみ */ }
@@ -3876,7 +3877,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v695';
+  var DATA_VERSION = 'v696';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5364,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v696', d:'2026-10-08', pop: { t: '計画シートのMAPで、人ごとの課題を書けるようになりました', items: ['MAPの人を押すと、その人の今月の課題を書けます（課題のある人は光ります）', '「→ 行動にする」で、4分野から選んで行動に入れられます', '10人以上になったら、MAPは見慣れたサークルMAPに自動で切りかわります（シート型にも戻せます）'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートのMAPの人を押すと、その人の課題を書けるようにしました（MAPの横／下に一覧）','課題の「→ 行動にする」で、フロント作り・流通アップ・Dライン・自己成長から選んで行動に入れられます','組織が10人以上（自分を除く）になったら、MAPを理想MAPと同じサークルMAPに自動で切りかえます（サークル｜シート型で選べます）。印刷もサークルMAPになります','シート型のMAPも、名前を姓・名の2段のフルネームで出すようにしました'] },
   { v:'v695', d:'2026-10-08', items:['PC版の計画シート：MAPを横いっぱいに広げ、行動（フロント作り・流通アップ・Dライン・自己成長）は数字と改善点の下に4つ横並びにしました'] },
   { v:'v694', d:'2026-10-08', items:['PLAN › シミュレーションを1画面にしました（いちばん上にファーストボーナス、その下に設定をマスに書くだけ、下に月ごとの組織図）'] },
   { v:'v693', d:'2026-10-08', items:['PLAN › 年別目標を表1つにしました（最終目標 → 1年ごとの月収・タイトル → 今 を1画面で。月収はマスに書くだけ）'] },
@@ -37261,21 +37263,30 @@ function _p2ShMapSvg(o) {
   var node = function(m, x, y, col) {
     if (m._ph) return '<path d="M' + cx + ',' + cy + ' L' + x.toFixed(1) + ',' + y.toFixed(1) + '" stroke="' + C.dash + '" stroke-width="' + Math.max(1.2, 2 * fs) + '" stroke-dasharray="4 4"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R.toFixed(1) + '" fill="' + (light ? '#fff' : 'rgba(44,229,184,.08)') + '" stroke="' + C.dash + '" stroke-width="2" stroke-dasharray="5 4"/><text x="' + x.toFixed(1) + '" y="' + (y + 4 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * fs).toFixed(1) + '" font-weight="900" fill="' + C.dash + '">NEW</text>';
     var dash = !!m.idealNew && useIdeal, nm = String(m.lastName || m.firstName || '').slice(0, 3), act = String(m.activity || ''), r = R.toFixed(1), X = x.toFixed(1), Y = y.toFixed(1);
+    var l1 = String(m.lastName || '').slice(0, 4), l2 = String(m.firstName || '').slice(0, 4); if (!l1) { l1 = l2; l2 = ''; } // v696: 名前は姓・名の2段（今のMAPと同じ）
+    var nm2 = function(cxx, y1, y2, fz) { if (!l1) return '<text x="' + cxx + '" y="' + y2 + '" text-anchor="middle" font-size="' + fz + '" font-weight="900" fill="' + C.dash + '">' + (dash ? 'NEW' : '') + '</text>'; var k = Math.max(l1.length, l2.length) > 2 ? .8 : 1;
+      return l2 ? '<text x="' + cxx + '" y="' + y1 + '" text-anchor="middle" font-size="' + (fz * k).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(l1) + '</text><text x="' + cxx + '" y="' + y2 + '" text-anchor="middle" font-size="' + (fz * k).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(l2) + '</text>'
+        : '<text x="' + cxx + '" y="' + y2 + '" text-anchor="middle" font-size="' + (fz * k).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(l1) + '</text>'; };
     var rt = (act === 'A' || act === 'B' || act === 'C') && m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10)) ? parseInt(m.actRate, 10) + '%' : '';
     if (m !== root && _p2ShIsUser(m)) return '<circle cx="' + X + '" cy="' + Y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + (dash ? C.dash : col) + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>' // ユーザー：名前｜GSV
       + '<line x1="' + (x - R).toFixed(1) + '" x2="' + (x + R).toFixed(1) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + C.mid + '" stroke-width=".7"/>'
-      + '<text x="' + X + '" y="' + (y - 5 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (9 * fs * (nm.length > 2 ? .85 : 1)).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(nm || 'NEW') + '</text>'
+      + nm2(X, (y - R * .52).toFixed(1), (y - R * .14).toFixed(1), 8.2 * fs)
       + '<text x="' + X + '" y="' + (y + 13 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8.5 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + _p2ShGsv(m.ptCurrent) + '</text>';
     return '<circle cx="' + X + '" cy="' + Y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + (dash ? C.dash : col) + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>'
       + '<line x1="' + (x - R).toFixed(1) + '" x2="' + (x + R).toFixed(1) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + C.mid + '" stroke-width=".7"/><line x1="' + X + '" x2="' + X + '" y1="' + (y - R).toFixed(1) + '" y2="' + (y + R).toFixed(1) + '" stroke="' + C.mid + '" stroke-width=".7"/>'
-      + '<text x="' + (x - R / 2).toFixed(1) + '" y="' + (y - 4 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8.5 * fs * (nm.length > 2 ? .82 : 1)).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(nm || (dash ? 'NEW' : '')) + '</text>'
+      + nm2((x - R / 2).toFixed(1), (y - R * .5).toFixed(1), (y - R * .12).toFixed(1), 7.6 * fs)
       + '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y - (rt ? 9 : 4) * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (10 * fs).toFixed(1) + '" font-weight="900" fill="' + (ACT[act] || C.sub) + '">' + evEsc(act) + '</text>'
       + (rt ? '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y - 1.5 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (6.5 * fs).toFixed(1) + '" font-weight="800" fill="' + (ACT[act] || C.sub) + '">' + rt + '</text>' : '')
       + '<text x="' + (x - R / 2).toFixed(1) + '" y="' + (y + 11 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + evEsc(_p2ShIsUser(m) ? 'U' : titleAbbr(m.title || '')) + '</text>'
       + '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y + 11 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (7.2 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + _p2ShGsv(m.ptCurrent) + '</text>';
   };
-  ['u', 'b'].forEach(function(s) { lanes[s].forEach(function(arr) { arr.forEach(function(m) { var p = P[m.id]; h += node(m, p[0], p[1], PAL[(lin[m.id] || 0) % PAL.length]); }); }); });
-  h += node(root, cx, cy, '#FFD166');
+  var wrapN = function(m, x, y, col) { // v696: 押すと課題・課題のある人は金の輪
+    var inner = node(m, x, y, col); if (m._ph) return inner;
+    var mk = o.iss && o.iss[m.id] ? '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (R + 4).toFixed(1) + '" fill="none" stroke="#FFB454" stroke-width="2.4" opacity=".9"/>' : '';
+    return o.tap ? '<g class="shn" data-mid="' + evEsc(m.id) + '" onclick="p2ShIssTap(\'' + String(m.id).replace(/'/g, '') + '\')">' + mk + inner + '</g>' : mk + inner;
+  };
+  ['u', 'b'].forEach(function(s) { lanes[s].forEach(function(arr) { arr.forEach(function(m) { var p = P[m.id]; h += wrapN(m, p[0], p[1], PAL[(lin[m.id] || 0) % PAL.length]); }); }); });
+  h += wrapN(root, cx, cy, '#FFD166');
   return { svg: '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans JP,Inter,sans-serif">' + h + '</svg>', n: ms.length, ideal: useIdeal };
 }
 // ── 部品（v687：紙と同じ1枚。＋−・バー・タグはやめて、マスに書くだけ）──
@@ -37335,13 +37346,18 @@ function _p2ShMonLn(ym) {
     + '<span class="now">今 <b>' + F.now + '</b>人' + (I.now !== null ? '・<b>' + I.now + '</b>万' : '') + '</span></div>';
 }
 function _p2ShMapBox(ym, W, H, pc) {
+  _p2ShIssCss();
   var F = _p2ShFr(ym), cm = String(state.currentMonth || '').replace('.', '-'), same = !cm || cm === ym, hasI = _hasIdeal();
   var mode = _p2ShMapMode === 'cur' || !hasI ? 'cur' : 'ideal', newN = same && F.t !== null ? Math.max(0, F.t - F.now) : 0;
   if (mode === 'ideal') newN = 0; // 理想MAPには足す人がもう入っている
-  var M = _p2ShMapSvg({ W: W, H: H, mode: mode, newN: newN });
-  var sec = '<div class="sp-sec" style="align-items:center"><span>＜' + (hasI ? '<span class="tg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span>/<span class="' + (mode === 'ideal' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">理想</span></span>' : '現状') + 'MAP＞</span>' + _uxIb('shmap') + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
-  var body = M.empty ? '<div class="sp-leg">MAPに自分（いちばん上の人）がまだいません</div>' : '<div class="sp-map">' + M.svg + '</div>';
-  return sec + body;
+  var kind = _p2ShMapKind(_p2ShMapMt()), vw = _p2Sh().mapView || '';
+  var sec = '<div class="sp-sec" style="align-items:center"><span>＜' + (hasI ? '<span class="tg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span>/<span class="' + (mode === 'ideal' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">理想</span></span>' : '現状') + 'MAP＞</span>' + _uxIb('shmap')
+    + '<span class="sp-vw"><span class="' + (kind === 'circle' ? 'on' : '') + '" onclick="p2ShMapView(\'circle\')">サークル</span>｜<span class="' + (kind === 'sheet' ? 'on' : '') + '" onclick="p2ShMapView(\'sheet\')">シート型</span>' + (vw ? '<span onclick="p2ShMapView(\'\')" style="margin-left:4px">（自動に戻す）</span>' : '') + '</span>'
+    + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
+  var map;
+  if (kind === 'circle') map = '<div class="sp-map" style="padding:0"><div id="p2ShOrb" style="height:' + (pc ? 620 : 440) + 'px"></div></div>';
+  else { var M = _p2ShMapSvg({ W: W, H: H, mode: mode, newN: newN, tap: !_p2ShRo(), iss: _p2ShIss(ym) }); map = M.empty ? '<div class="sp-leg">MAPに自分（いちばん上の人）がまだいません</div>' : '<div class="sp-map">' + M.svg + '</div>'; }
+  return sec + '<div class="sp-mw' + (pc ? '' : ' m') + '">' + map + _p2ShIssHtml(ym) + '</div>';
 }
 function _p2ShKin(ym, k, X, which) { // which: 't'＝今月の目標 / 'v'＝手入力の進捗
   if (_p2ShRo()) return '<span class="' + (which === 'v' ? 'v' : '') + '">' + ((which === 't' ? X.t : X.v) === null ? '—' : (which === 't' ? X.t : X.v)) + '</span>';
@@ -37393,7 +37409,66 @@ function _p2ShKEdHtml() {
       + '<span class="x" onclick="p2ShKMove(' + i + ',-1)" title="上へ">↑</span><span class="x" onclick="p2ShKDel(' + i + ')" title="消す">×</span></div>';
   }).join('') + '<div style="display:flex;gap:14px;margin-top:6px"><span class="ux-lk" style="margin:0" onclick="p2ShKAdd()">＋ 項目を足す</span><span class="ux-lk" style="margin:0;color:var(--text-dim)" onclick="p2ShKReset()">最初の8項目に戻す</span></div></div>';
 }
-function _p2ShAfter() { try { Array.prototype.forEach.call(document.querySelectorAll('#view-plan .sp-kz'), _p2ShGrow); } catch (e) {} }
+function _p2ShAfter() { try { Array.prototype.forEach.call(document.querySelectorAll('#view-plan .sp-kz'), _p2ShGrow); } catch (e) {} try { _p2ShOrbDraw(); } catch (e2) {} }
+// ════ v696: 10人以上はサークルMAP・人を押して課題を書く・課題 → 行動（分野を選ぶ）════
+var _p2ShIssSel = '', _p2ShIssAct = ''; // 課題を書いている人／「行動にする」で分野を選んでいる人
+function _p2ShMapMt() { var hasI = _hasIdeal(); return (_p2ShMapMode === 'cur' || !hasI) ? 'current' : 'ideal'; }
+function _p2ShMapCount(mt) { return membersForMap(mt).filter(function(m) { return !m.deleted && m.parentId && String(m.title || '').trim() !== 'OUT'; }).length; }
+function _p2ShMapKind(mt) { var v = _p2Sh().mapView; if (v === 'circle' || v === 'sheet') return v; return _p2ShMapCount(mt) >= 10 ? 'circle' : 'sheet'; }
+function p2ShMapView(v) { _p2Sh().mapView = v; saveGoals(); renderPlan(); }
+function _p2ShMem(mid) { var a = membersForMap(_p2ShMapMt()).concat(state.members || []); for (var i = 0; i < a.length; i++) if (a[i] && a[i].id === mid) return a[i]; return null; }
+function _p2ShIss(ym) { var m = _p2ShM(ym); m.iss = m.iss || {}; return m.iss; }
+function p2ShIssTap(mid) {
+  if (!mid || /^__new/.test(mid)) return;
+  _p2ShIssSel = mid; _p2ShIssAct = ''; renderPlan();
+  setTimeout(function() { var el = document.getElementById('p2ShIssIn'); if (el) { try { el.focus(); el.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }, 40);
+}
+function p2ShIssSave(mid, v) { if (_p2ShRo()) return; var I = _p2ShIss(_p2ShYmN()), t = String(v || '').trim().slice(0, 300); if (t) I[mid] = t; else delete I[mid]; saveGoals(); }
+function p2ShIssDone() { var el = document.getElementById('p2ShIssIn'); if (el && _p2ShIssSel) p2ShIssSave(_p2ShIssSel, el.value); _p2ShIssSel = ''; renderPlan(); }
+function p2ShIssAct(mid) { _p2ShIssAct = _p2ShIssAct === mid ? '' : mid; renderPlan(); }
+function p2ShIssToAct(mid, cat) {
+  if (_p2ShRo()) return;
+  var t = _p2ShIss(_p2ShYmN())[mid], m = _p2ShMem(mid); if (!t) return;
+  var e = _tdMakeTask(((m ? (m.lastName || _uxName(m)) + 'さん：' : '') + t).slice(0, 120), '', '');
+  e.planYm = _p2ShYmN(); e.planCat = cat; if (m) e.memberId = m.id;
+  state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  _p2ShIssAct = ''; renderPlan();
+  var c = P2_SH_CAT.filter(function(x) { return x.k === cat; })[0]; toast('✓ 「' + (c ? c.lb : '') + '」に入れました');
+}
+function _p2ShIssHtml(ym) {
+  var I = _p2ShIss(ym), ro = _p2ShRo(), ids = Object.keys(I).filter(function(k) { return I[k]; });
+  var pv = (_p2Sh().m[_p2ShPrevYm(ym)] || {}).iss || {};
+  var row = function(mid) {
+    var m = _p2ShMem(mid), nm = m ? _uxName(m) : '（いない人）', ttl = m ? titleAbbr(m.title || '') : '';
+    if (_p2ShIssSel === mid && !ro) return '<div class="iss-r on"><div class="h"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small><span class="x" onclick="p2ShIssDone()">完了</span></div>'
+      + '<textarea id="p2ShIssIn" class="sp-kz" rows="2" placeholder="' + evEsc(pv[mid] ? '先月：' + pv[mid] : '例：審査フォロー。Q3の動員が足りない→DLRを2週目までに') + '" oninput="_p2ShGrow(this)" onchange="p2ShIssSave(\'' + mid + '\',this.value)">' + evEsc(I[mid] || '') + '</textarea></div>';
+    var acts = _p2ShIssAct === mid ? '<div class="cats">' + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="p2ShIssToAct(\'' + mid + '\',\'' + c.k + '\')">' + c.s + '</span>'; }).join('') + '</div>' : '';
+    return '<div class="iss-r"><div class="h" onclick="p2ShIssTap(\'' + mid + '\')"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small>' + (ro ? '' : '<span class="a" onclick="event.stopPropagation();p2ShIssAct(\'' + mid + '\')">→ 行動にする</span>') + '</div>'
+      + '<div class="t" onclick="p2ShIssTap(\'' + mid + '\')">' + evEsc(I[mid] || '') + '</div>' + acts + '</div>';
+  };
+  var list = ids.filter(function(id) { return id !== _p2ShIssSel; }).map(row).join('');
+  var sel = _p2ShIssSel && !ro ? row(_p2ShIssSel) : '';
+  return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small></div>' + sel + list
+    + (sel || list ? '' : '<div class="iss-em">MAPの人を押すと、その人の課題を書けます</div>') + '</div>';
+}
+function _p2ShIssCss() {
+  if (document.getElementById('p2IssCss')) return;
+  var st = document.createElement('style'); st.id = 'p2IssCss';
+  st.textContent = '.iss-hd{font-size:13px;font-weight:900;margin-bottom:4px}.iss-hd small{margin-left:6px;font-size:11px;color:var(--text-dim);font-weight:700}.iss-r{padding:8px 0;border-top:1px solid var(--border)}.iss-r .h{display:flex;align-items:baseline;gap:6px;cursor:pointer}.iss-r .h b{font-size:13px}.iss-r .h small{font-size:10.5px;color:var(--text-dim);font-weight:800}.iss-r .h .a,.iss-r .h .x{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;white-space:nowrap}'
+    + '.iss-r .t{font-size:12.5px;line-height:1.55;margin-top:3px;cursor:pointer;white-space:pre-wrap}.iss-r.on{background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:10px;padding:8px}.iss-r .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.iss-r .cats span{font-size:11.5px;font-weight:900;padding:5px 9px;border-radius:9px;border:1px solid var(--c);color:var(--c);cursor:pointer}.iss-em{font-size:12px;color:var(--text-dim);padding:8px 0;border-top:1px solid var(--border)}'
+    + '.sp-mw{display:grid;grid-template-columns:minmax(0,1fr) 320px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--surface) 70%,transparent)}.sp-mw .sp-map{border:0;border-radius:0}.sp-mw .iss{border-left:1px solid var(--border);padding:12px 14px;max-height:640px;overflow:auto}'
+    + '.sp-mw.m{display:block}.sp-mw.m .iss{border-left:0;border-top:1px solid var(--border);max-height:none}#p2ShOrb{position:relative}#p2ShOrb svg{display:block;width:100%;height:100%}#p2ShOrb g[data-mid]{cursor:pointer}#p2ShOrb g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}.sp-map svg g.shn{cursor:pointer}'
+    + '.sp-vw{font-size:11.5px;font-weight:800;color:var(--text-dim)}.sp-vw span{cursor:pointer;padding:0 2px}.sp-vw span.on{color:var(--text);text-decoration:underline;text-underline-offset:3px}';
+  document.head.appendChild(st);
+}
+// サークルMAPを置く（描いた後で）。課題のある人は光らせる
+function _p2ShOrbDraw() {
+  var el = document.getElementById('p2ShOrb'); if (!el) return;
+  var w = el.clientWidth || 600, h = el.clientHeight || 420;
+  try { renderPCOrbit(_p2ShMapMt(), el, false, { screen: true, w: w, h: h, onTap: p2ShIssTap }); } catch (e) { el.innerHTML = '<div class="sp-leg" style="padding:20px">サークルMAPを描けませんでした</div>'; return; }
+  var I = _p2ShIss(_p2ShYmN());
+  Array.prototype.forEach.call(el.querySelectorAll('g[data-mid]'), function(g) { if (I[g.getAttribute('data-mid')]) g.classList.add('iss-on'); });
+}
 // ── スマホ：上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）──
 function _p2ShPageHtml() {
   _p2ShCss(); _p2ShCss2();
@@ -37417,6 +37492,10 @@ function _p2ShPrintHtml(ym) {
   var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv), un = (currentUser && currentUser.union) || '', kz = _p2ShM(ym).kz || {};
   var hasI = _hasIdeal(), mode = _p2ShMapMode === 'cur' || !hasI ? 'cur' : 'ideal';
   var M = _p2ShMapSvg({ W: 1000, H: 470, mode: mode, light: true, newN: mode === 'cur' && F.t !== null ? Math.max(0, F.t - F.now) : 0 });
+  if (_p2ShMapKind(_p2ShMapMt()) === 'circle') { // v696: 10人以上はサークルMAP（MAPのA3印刷と同じ描き方）
+    try { var dv = document.createElement('div'); dv.style.cssText = 'position:absolute;left:-99999px;top:0;width:1400px'; document.body.appendChild(dv);
+      renderPCOrbit(_p2ShMapMt(), dv, true, {}); var sv = dv.querySelector('svg'); if (sv) M = { svg: sv.outerHTML, ideal: _p2ShMapMt() === 'ideal' }; dv.remove(); } catch (eP) {}
+  }
   var v = function(x) { return x === null || x === undefined ? '' : x; };
   var rows = K.map(function(k) { var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap); return '<tr><th>' + evEsc(k.lb) + '</th><td>' + v(P.t) + '</td><td>' + v(P.v) + '</td><td>' + v(X.t) + '</td><td>' + v(X.v) + '</td><td class="kz">' + evEsc(kz[k.id] || '') + '</td></tr>'; }).join('');
   var acts = P2_SH_CAT.map(function(c) {
