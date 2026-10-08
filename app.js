@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v715';
+var APP_JS_VERSION = 'v716';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1334,6 +1334,7 @@ function renderPCMap(mapType) {
       g.addEventListener('click',function(ev){
         ev.stopPropagation();
         selectCard(mid,ev); applyFocus(lin);
+        if (typeof _mapIssShown === 'function' && _mapIssShown() && !/^(MG|AG\d+)_/.test(mid)) { mapIssTap(mid); return; } // v716: 課題パネルを出している時は、押すとその人の課題
         if(/^MG_/.test(mid)){ if(typeof mgNodeClick==='function') mgNodeClick(mid); }
         else if(state.isEditor && mapType === 'ideal' && typeof idqOpen === 'function') idqOpen(mid); // v524: 理想MAPはかんたん編集
         else if(state.isEditor && typeof openEdit==='function') openEdit(mid);
@@ -2034,6 +2035,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       g.addEventListener('click', function(ev) {
         ev.stopPropagation();
         if (opts.onTap && !/^(AG\d+|MG)_/.test(m.id)) { opts.onTap(m.id); return; } // v696: 計画シートは押すと課題
+        if (!targetEl && typeof _mapIssShown === 'function' && _mapIssShown() && !/^(AG\d+|MG)_/.test(m.id)) { mapIssTap(m.id); return; } // v716: MAP画面の課題パネル
         if (opts.screen && !/^AG\d+_/.test(m.id) && typeof mxTap === 'function') { mxTap(m.id); return; } // v663: スマホ横のサークルMAPは丸を押すとその人の画面（くわしく）
         if (/^MG_/.test(m.id)) { if (typeof mgNodeClick === 'function') mgNodeClick(m.id); }
         else if (/^AG\d+_/.test(m.id)) { /* 合算表示は閲覧のみ */ }
@@ -3891,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v715';
+  var DATA_VERSION = 'v716';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v716', d:'2026-10-08', items:['PC：MAPの画面に「📝 課題」パネル。現状／理想を切りかえても出たままで、人のカード・丸を押すとその人の課題を書けます','自分・全体のメモ、残す先（行動・やること・予定・メモ）は計画シートの課題パネルと同じ'] },
   { v:'v715', d:'2026-10-08', pop: { t: 'PLANに「やること」ができました', items: ['今月から長期（来月以降・いつか）まで、やることを時系列で1か所に。人に紐づかない「自分・全体」のタスクもOK', '数値の目標（例：ST開催 7/8）は＋−で進める。タスクには サブタスク も付けられます', '📅 を押すと、いつでもカレンダーの予定に入れられます。計画シートの課題パネルから「やることへ」も'], go: ['やることを開く', "switchView('plan');p2Go('yk')"] }, items:['PLANに「やること」タブ：今月から長期まで時系列（期限切れ → 今月 → 来月… → いつか）','タスク（人・自分・全体）とサブタスク、数値の目標（7/8 の形で＋−）','📅でいつでもカレンダーの予定に（入れた予定は札になって押すと開く）','計画シートの課題パネルに「＋ 自分・全体のメモ」。人の課題も自分・全体のメモも「やることへ」入れられます'] },
   { v:'v714', d:'2026-10-08', items:['計画シートのシート型MAPの丸を、理想MAP（サークル）と同じデザインに：研修生＝水色・LOI〜Q4＝オレンジ・フレッシュ＝金のうすい色、BR以上はタイトルの色の太い枠で光る、4分割（名前・稼働・タイトル・(固定)とGSV）','ライトテーマでは丸が黒くならず、明るい色で表示されます'] },
   { v:'v713', d:'2026-10-08', items:['スマホの計画シートの文字を大きく：見出し17px・項目名16px・数字18px・書く欄と行動の行16px（いちばん小さい文字も12px）','書く欄を16pxにしたので、iPhoneで押した時に画面が勝手に拡大しなくなりました','数字の行は2段に：1段目＝項目名と今の数、2段目＝先月の目標→結果（達成／届かず）と今月の目標','行動の行は押しやすい高さ（44px）に'] },
@@ -37298,6 +37301,7 @@ function _px3Sync() {
   document.body.classList.toggle('px3', on);
   if (on) _px3Css();
   _px3Side();
+  try { _mapIssSync(); } catch (eMi) {} // v716
   try { // v706: 版・保存・同期の点は、PCは左下へ（スマホは上の帯に戻す）
     var vt = document.getElementById('versionTag'), box = vt && vt.parentNode, dot = document.getElementById('userDot'), hdr = document.querySelector('header .hdr-top'), slot = document.getElementById('pcsVer');
     if (on && slot && box && box.parentNode !== slot) { if (dot) slot.appendChild(dot); slot.appendChild(box); }
@@ -37897,17 +37901,52 @@ function _p2ShMapMt() { var hasI = _hasIdeal(); return (_p2ShMapMode === 'cur' |
 function _p2ShMapCount(mt) { return membersForMap(mt).filter(function(m) { return !m.deleted && m.parentId && String(m.title || '').trim() !== 'OUT'; }).length; }
 function _p2ShMapKind(mt) { var v = _p2Sh().mapView; if (v === 'circle' || v === 'sheet') return v; return _p2ShMapCount(mt) >= 10 ? 'circle' : 'sheet'; }
 function p2ShMapView(v) { _p2Sh().mapView = v; saveGoals(); renderPlan(); }
-function _p2ShMem(mid) { var a = membersForMap(_p2ShMapMt()).concat(state.members || []); for (var i = 0; i < a.length; i++) if (a[i] && a[i].id === mid) return a[i]; return null; }
+function _p2ShMem(mid) { var a = membersForMap(_p2ShMapMt()).concat(state.members || [], state.idealMembers || []); for (var i = 0; i < a.length; i++) if (a[i] && a[i].id === mid) return a[i]; return null; }
 function _p2ShIss(ym) { var m = _p2ShM(ym); m.iss = m.iss || {}; return m.iss; }
+// ════ v716: MAP画面（PC）の右に課題パネル：現状／理想を切りかえても出たまま。人のカード・丸を押すとその人の課題 ════
+var _mapIssOn = false; try { _mapIssOn = localStorage.getItem('gm_mapIss') === '1'; } catch (e) {}
+function _mapIssShown() { return _mapIssOn && (currentView === 'current' || currentView === 'ideal') && typeof _px3On === 'function' && _px3On(); }
+function mapIssTgl() { _mapIssOn = !_mapIssOn; try { localStorage.setItem('gm_mapIss', _mapIssOn ? '1' : '0'); } catch (e) {} _mapIssSync(); }
+function mapIssTap(mid) { p2ShIssTap(mid); }
+function _mapIssSync() {
+  var on = _mapIssShown(); document.body.classList.toggle('map-iss', on);
+  Array.prototype.forEach.call(document.querySelectorAll('.pt-iss'), function(b) { b.classList.toggle('on', _mapIssOn); });
+  var p = document.getElementById('mapIssP');
+  if (!on) { if (p) p.style.display = 'none'; return; }
+  _mapIssRender();
+}
+function _mapIssRender() {
+  _p2ShIssCss(); _mapIssCss();
+  var p = document.getElementById('mapIssP');
+  if (!p) { p = document.createElement('div'); p.id = 'mapIssP'; document.body.appendChild(p); }
+  p.style.display = '';
+  var ym = _p2ShYmN();
+  p.innerHTML = '<div class="mi-h"><b>📝 課題</b><small>' + _p2ShMonLb(ym) + '・' + (currentView === 'ideal' ? '理想MAP' : '現状MAP') + 'を見ながら</small><span onclick="mapIssTgl()" title="閉じる">✕</span></div>'
+    + '<div class="mi-s">MAPの人を押すと、その人の課題を書けます。現状／理想を切りかえても出たままです</div>'
+    + _p2ShIssHtml(ym).replace(/id="p2ShIssIn"/g, 'id="mapIssIn"');
+}
+function _mapIssCss() {
+  if (document.getElementById('mapIssCss')) return;
+  var st = document.createElement('style'); st.id = 'mapIssCss';
+  st.textContent = '#mapIssP{position:fixed;top:0;right:0;bottom:0;width:340px;z-index:60;background:var(--surface);border-left:1px solid var(--border);overflow:auto;padding:12px 14px 30px;box-shadow:-8px 0 24px rgba(0,0,0,.25)}'
+    + 'body.px3.map-iss #view-current,body.px3.map-iss #view-ideal{margin-right:340px}#mapIssP .mi-h{display:flex;align-items:baseline;gap:8px}#mapIssP .mi-h b{font-size:15px;font-weight:900}#mapIssP .mi-h small{font-size:11.5px;color:var(--text-dim);font-weight:800}#mapIssP .mi-h span{margin-left:auto;cursor:pointer;color:var(--text-dim);font-weight:900;padding:2px 6px}'
+    + '#mapIssP .mi-s{font-size:11.5px;color:var(--text-dim);font-weight:700;line-height:1.5;margin:6px 0 8px}#mapIssP .iss-hd{display:none}#mapIssP .iss{padding:0}#mapIssP .iss-r .t{font-size:13.5px}#mapIssP .iss-r .h b{font-size:14px}'
+    + 'body.px3.map-iss .pc-toolbar{flex-wrap:wrap;row-gap:8px}body.px3.map-iss .pc-toolbar .pt-search{min-width:0;flex:0 0 auto;padding:0 11px}body.px3.map-iss #pcSearchText{display:none}#mapIssP textarea.sp-kz{width:100%!important;box-sizing:border-box;font-size:14px}'
+    + '.pt-iss.on{background:color-mix(in srgb,var(--accent) 18%,transparent)!important;color:var(--accent)!important;border-color:color-mix(in srgb,var(--accent) 50%,transparent)!important}';
+  document.head.appendChild(st);
+}
+// v716: 課題パネルは計画シートの中と、MAP画面の右（PC）の2か所。書いたら見えている方を描き直す
+function _p2IssRe() { if (currentView === 'plan') renderPlan(); else if (_mapIssShown()) _mapIssRender(); }
+function _p2ShIssInEl() { return (_mapIssShown() && document.getElementById('mapIssIn')) || document.getElementById('p2ShIssIn'); }
 function p2ShIssTap(mid) {
   if (!mid || /^__new/.test(mid)) return;
   if (_p2ShIssC()) _p2ShLs('gm_shIssC', null); // たたんでいても、人を押したら課題をひらく
-  _p2ShIssSel = mid; _p2ShIssAct = ''; renderPlan();
-  setTimeout(function() { var el = document.getElementById('p2ShIssIn'); if (el) { try { el.focus(); el.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }, 40);
+  _p2ShIssSel = mid; _p2ShIssAct = ''; _p2IssRe();
+  setTimeout(function() { var el = _p2ShIssInEl(); if (el) { try { el.focus(); el.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }, 40);
 }
 function p2ShIssSave(mid, v) { if (_p2ShRo()) return; var ym = _p2ShYmN(), I = _p2ShIss(ym), t = String(v || '').trim().slice(0, 300), o = I[mid] || ''; if (t) I[mid] = t; else delete I[mid]; if (o && o !== t) { try { _p2ShIssSync(ym, mid, o, t); } catch (e) {} } saveGoals(); }
-function p2ShIssDone() { var el = document.getElementById('p2ShIssIn'); if (el && _p2ShIssSel) p2ShIssSave(_p2ShIssSel, el.value); _p2ShIssSel = ''; renderPlan(); }
-function p2ShIssAct(mid) { _p2ShIssAct = _p2ShIssAct === mid ? '' : mid; renderPlan(); }
+function p2ShIssDone() { var el = _p2ShIssInEl(); if (el && _p2ShIssSel) p2ShIssSave(_p2ShIssSel, el.value); _p2ShIssSel = ''; _p2IssRe(); }
+function p2ShIssAct(mid) { _p2ShIssAct = _p2ShIssAct === mid ? '' : mid; _p2IssRe(); }
 function p2ShIssToAct(mid, cat) {
   if (_p2ShRo()) return;
   var t = _p2ShIss(_p2ShYmN())[mid], m = _p2ShMem(mid); if (!t) return;
@@ -37915,7 +37954,7 @@ function p2ShIssToAct(mid, cat) {
   e.planYm = _p2ShYmN(); e.planCat = cat; if (m) e.memberId = m.id;
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
   _p2ShIssL(_p2ShYmN(), mid).act = e.id; saveGoals(); // v698: 連動
-  _p2ShIssAct = ''; renderPlan();
+  _p2ShIssAct = ''; _p2IssRe();
   var c = P2_SH_CAT.filter(function(x) { return x.k === cat; })[0]; toast('✓ 「' + (c ? c.lb : '') + '」に入れました');
 }
 function _p2ShIssHtml(ym) {
@@ -37943,18 +37982,18 @@ function _p2ShIssHtml(ym) {
   return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small><span class="tg" onclick="p2ShIssTgl()">' + (_p2ShMapPc && !_p2ShMapLr ? 'たたむ ›' : '▾ たたむ') + '</span></div>' + fin + sel + list + fr
     + (sel || list || fr ? '' : '<div class="iss-em">MAPの人を押すと、その人の課題を書けます。人に紐づかないことは上の欄に</div>') + '</div>';
 }
-function p2ShIssFAdd(el) { if (_p2ShRo()) return; var v = String((el && el.value) || '').trim(); if (!v) return; var m = _p2ShM(_p2ShYmN()); m.issF = m.issF || []; m.issF.push({ id: 'f' + Date.now().toString(36), t: v.slice(0, 200) }); saveGoals(); renderPlan(); setTimeout(function() { var n = document.querySelector('.iss-fi'); if (n) n.focus(); }, 30); }
+function p2ShIssFAdd(el) { if (_p2ShRo()) return; var v = String((el && el.value) || '').trim(); if (!v) return; var m = _p2ShM(_p2ShYmN()); m.issF = m.issF || []; m.issF.push({ id: 'f' + Date.now().toString(36), t: v.slice(0, 200) }); saveGoals(); _p2IssRe(); setTimeout(function() { var n = _mapIssShown() ? document.querySelector('#mapIssP .iss-fi') : document.querySelector('#view-plan .iss-fi'); if (n) n.focus(); }, 30); }
 function _p2ShIssF(id) { return (_p2ShM(_p2ShYmN()).issF || []).filter(function(f) { return f.id === id; })[0]; }
-function p2ShIssFEd(id) { if (_p2ShRo()) return; var f = _p2ShIssF(id); if (!f) return; var v = prompt('メモを直す（空にすると消す）', f.t); if (v === null) return; v = String(v).trim(); if (!v) { p2ShIssFTo(id, 'del'); return; } var o = f.t; f.t = v.slice(0, 200); var e = f.yk && findEvent(f.yk); if (e && !e.done && e.title === o) { e.title = f.t; e.updatedAt = new Date().toISOString(); saveEventDoc(e); } saveGoals(); renderPlan(); }
+function p2ShIssFEd(id) { if (_p2ShRo()) return; var f = _p2ShIssF(id); if (!f) return; var v = prompt('メモを直す（空にすると消す）', f.t); if (v === null) return; v = String(v).trim(); if (!v) { p2ShIssFTo(id, 'del'); return; } var o = f.t; f.t = v.slice(0, 200); var e = f.yk && findEvent(f.yk); if (e && !e.done && e.title === o) { e.title = f.t; e.updatedAt = new Date().toISOString(); saveEventDoc(e); } saveGoals(); _p2IssRe(); }
 function p2ShIssFTo(id, kind) {
   if (_p2ShRo()) return;
   var ym = _p2ShYmN(), m = _p2ShM(ym), f = _p2ShIssF(id); if (!f) return;
   _p2ShIssAct = '';
-  if (kind === 'del') { m.issF = (m.issF || []).filter(function(x) { return x.id !== id; }); saveGoals(); renderPlan(); return; }
+  if (kind === 'del') { m.issF = (m.issF || []).filter(function(x) { return x.id !== id; }); saveGoals(); _p2IssRe(); return; }
   if (kind === 'ev') { openEventModal(null, '', '', 'event'); setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = f.t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30); return; }
   var e = _tdMakeTask(f.t.slice(0, 120), '', ''); e.yk = 1; e.planYm = ym; e.subs = []; e.who = 'me';
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
-  f.yk = e.id; saveGoals(); renderPlan(); toast('✅ やることに入れました');
+  f.yk = e.id; saveGoals(); _p2IssRe(); toast('✅ やることに入れました');
 }
 function _p2ShIssCss() {
   if (document.getElementById('p2IssCss')) return;
@@ -38070,9 +38109,9 @@ function p2ShIssTo(mid, kind) {
   if (kind === 'yk') { // v715: やることへ（その人つき）
     var ey = _tdMakeTask(t, '', ''); ey.yk = 1; ey.planYm = ym; ey.subs = []; ey.memberId = mid; ey.memberIds = [mid]; ey.vis = 'both'; ey.selfShow = true;
     state.events.push(ey); saveEventDoc(ey); try { updateEventsBadge(); } catch (eB) {}
-    L.yk = ey.id; saveGoals(); _p2ShIssAct = ''; renderPlan(); toast('✅ やることに入れました'); return;
+    L.yk = ey.id; saveGoals(); _p2ShIssAct = ''; _p2IssRe(); toast('✅ やることに入れました'); return;
   }
-  if (kind === 'memo') { if (_p2ShMemoPut(ym, mid, _p2ShIss(ym)[mid])) { L.memo = 1; saveGoals(); toast('🗒 メンバーのメモに入れました'); } _p2ShIssAct = ''; renderPlan(); return; }
+  if (kind === 'memo') { if (_p2ShMemoPut(ym, mid, _p2ShIss(ym)[mid])) { L.memo = 1; saveGoals(); toast('🗒 メンバーのメモに入れました'); } _p2ShIssAct = ''; _p2IssRe(); return; }
   // タスク・予定：入力の画面を開く（その人・課題の文が入った状態）。保存されたら連動
   _p2ShIssAct = '';
   _p2ShIssPend = { mid: mid, kind: kind, at: new Date().toISOString(), ym: ym };
