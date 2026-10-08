@@ -31,7 +31,7 @@ T.run(async () => {
   console.log('=== 次の山（スマホ） ===');
   w.state.goals.plan.deadline = '2029-12'; delete p2.next; delete p2.ladder;
   w.p2Go('goal', 3); await sleep(20);
-  c('次の山のページに月収・タイトル・いつまでに（例つき）', $('#view-plan').textContent.indexOf('月収') >= 0 && $$('#view-plan .ux-ex span').length >= 3 && $('#view-plan').textContent.indexOf('いつまでに') >= 0 && $('#view-plan').textContent.indexOf('この例で決める') >= 0);
+  c('次の山のページに月収・タイトル・いつまでに（例つき）', $('#view-plan').textContent.indexOf('月収') >= 0 && $$('#view-plan .ux-ex span').length >= 3 && $('#view-plan').textContent.indexOf('期日') >= 0 && $('#view-plan').textContent.indexOf('この例で決める') >= 0); // v690: 1画面の「次の山」
   w.p2NxSetInc('60'); await sleep(10);
   c('月収を入れるとその場で保存・タイトルは自動', p2.next && p2.next.inc === 60 && !p2.next.tm && p2.next.title === w._p2NxAuto9(60, w._p2Next()) && $('#view-plan').textContent.indexOf('この例で決める') < 0);
   w.p2NxPick('RUBY'); await sleep(10);
