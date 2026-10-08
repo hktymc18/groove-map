@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v747';
+var APP_JS_VERSION = 'v748';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v747';
+  var DATA_VERSION = 'v748';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v748', d:'2026-10-09', items:['計画シート・MAPの課題パネル：書いた課題と「自分・全体のメモ」を 🗑 で消せるように（書いている時も「完了」の横に 🗑）。消した後は「↩ 元に戻す」で戻せます'] },
   { v:'v747', d:'2026-10-09', items:['iPhoneで、予定の入力などの一部の文字だけが大きくなってしまうことがあったのを直しました（画面を横にした後などにSafariが文字を自動で拡大していたため、自動拡大を止めました）'] },
   { v:'v746', d:'2026-10-09', items:['PLAN › チェック：日付は最初「未設定」に（チェックしても勝手に日付が入らないように）','日付を押すと、計画シートの期日と同じ窓で「ToDoに入れる／予定に入れる」を選んで、日にち・時間を入れられます','ToDoでチェックすると、チェックリストにもチェックが入ります。「期日を消す」で未設定に戻ります'] },
   { v:'v745', d:'2026-10-09', items:['分析 › 推移：「新規B1の平均GSV」を追加（その月の新規B1＝タイトルB1・その月にBCになった人のGSVの平均）。PCは上のカードのいちばん右、スマホは下の小さいタイル','グラフは押した項目の1つだけに。比べたい時だけ「⇄ 比較」を押して、もう1つ選ぶと2本を重ねて見られます（研修も同じ）'] },
@@ -38429,6 +38430,14 @@ function p2ShIssTap(mid) {
   setTimeout(function() { var el = _p2ShIssInEl(); if (el) { try { el.focus(); el.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }, 40);
 }
 function p2ShIssSave(mid, v) { if (_p2ShRo()) return; var ym = _p2ShYmN(), I = _p2ShIss(ym), t = String(v || '').trim().slice(0, 300), o = I[mid] || ''; if (t) I[mid] = t; else delete I[mid]; if (o && o !== t) { try { _p2ShIssSync(ym, mid, o, t); } catch (e) {} } saveGoals(); }
+// v748: 人の課題を消す（🗑。残した先のやること・予定などはそのまま）。↩ 元に戻す
+function p2ShIssDel(mid) {
+  if (_p2ShRo()) return;
+  var ym = _p2ShYmN(), I = _p2ShIss(ym), o = I[mid]; if (!o && _p2ShIssSel !== mid) return;
+  delete I[mid]; if (_p2ShIssSel === mid) _p2ShIssSel = ''; if (_p2ShIssAct === mid) _p2ShIssAct = '';
+  saveGoals(); _p2IssRe();
+  if (o) toastAction('🗑 課題を消しました', '↩ 元に戻す', function() { var I2 = _p2ShIss(ym); if (!I2[mid]) I2[mid] = o; saveGoals(); _p2IssRe(); });
+}
 function p2ShIssDone() { var el = _p2ShIssInEl(); if (el && _p2ShIssSel) p2ShIssSave(_p2ShIssSel, el.value); _p2ShIssSel = ''; _p2IssRe(); }
 function p2ShIssAct(mid) { _p2ShIssAct = _p2ShIssAct === mid ? '' : mid; _p2IssRe(); }
 function p2ShIssToAct(mid, cat) {
@@ -38446,11 +38455,11 @@ function _p2ShIssHtml(ym) {
   var pv = (_p2Sh().m[_p2ShPrevYm(ym)] || {}).iss || {};
   var row = function(mid) {
     var m = _p2ShMem(mid), nm = m ? _uxName(m) : '（いない人）', ttl = m ? titleAbbr(m.title || '') : '';
-    if (_p2ShIssSel === mid && !ro) return '<div class="iss-r on"><div class="h"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small><span class="x" onclick="p2ShIssDone()">完了</span></div>'
+    if (_p2ShIssSel === mid && !ro) return '<div class="iss-r on"><div class="h"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small><span class="x" onclick="p2ShIssDone()">完了</span><span class="dl" onmousedown="event.preventDefault()" onclick="p2ShIssDel(\'' + mid + '\')" title="この課題を消す">' + icn('trash') + '</span></div>'
       + '<textarea id="p2ShIssIn" class="sp-kz" rows="2" placeholder="' + evEsc(pv[mid] ? '先月：' + pv[mid] : '例：審査フォロー。Q3の動員が足りない→DLRを2週目までに') + '" oninput="_p2ShGrow(this)" onchange="p2ShIssSave(\'' + mid + '\',this.value)">' + evEsc(I[mid] || '') + '</textarea></div>';
     var acts = _p2ShIssAct === mid ? '<div class="cats">' + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="p2ShIssToAct(\'' + mid + '\',\'' + c.k + '\')">' + c.s + '</span>'; }).join('')
       + '<span style="--c:var(--accent)" onclick="p2ShIssTo(\'' + mid + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'ev\')">📅 予定</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'memo\')">🗒 メモ</span></div>' : '';
-    return '<div class="iss-r"><div class="h" onclick="p2ShIssTap(\'' + mid + '\')"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small>' + (ro ? '' : '<span class="a" onclick="event.stopPropagation();p2ShIssAct(\'' + mid + '\')">→ 残す先</span>') + '</div>'
+    return '<div class="iss-r"><div class="h" onclick="p2ShIssTap(\'' + mid + '\')"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small>' + (ro ? '' : '<span class="a" onclick="event.stopPropagation();p2ShIssAct(\'' + mid + '\')">→ 残す先</span><span class="dl" onclick="event.stopPropagation();p2ShIssDel(\'' + mid + '\')" title="この課題を消す">' + icn('trash') + '</span>') + '</div>'
       + '<div class="t" onclick="p2ShIssTap(\'' + mid + '\')">' + evEsc(I[mid] || '') + '</div>' + _p2ShIssBadges(ym, mid) + acts + '</div>';
   };
   var list = ids.filter(function(id) { return id !== _p2ShIssSel; }).map(row).join('');
@@ -38459,7 +38468,7 @@ function _p2ShIssHtml(ym) {
   var F = _p2ShM(ym).issF || [], fr = F.map(function(f) {
     var acts = _p2ShIssAct === 'F:' + f.id ? '<div class="cats"><span style="--c:var(--accent)" onclick="p2ShIssFTo(\'' + f.id + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2ShIssFTo(\'' + f.id + '\',\'ev\')">📅 予定</span><span style="--c:#FF6B7F" onclick="p2ShIssFTo(\'' + f.id + '\',\'del\')">✕ 消す</span></div>' : '';
     var yk = f.yk && findEvent(f.yk); yk = yk && !yk.deleted ? yk : null;
-    return '<div class="iss-r"><div class="h"><b>👤 自分・全体</b>' + (ro ? '' : '<span class="a" onclick="p2ShIssAct(\'F:' + f.id + '\')">→ 残す先</span>') + '</div><div class="t" onclick="p2ShIssFEd(\'' + f.id + '\')">' + evEsc(f.t) + '</div>'
+    return '<div class="iss-r"><div class="h"><b>👤 自分・全体</b>' + (ro ? '' : '<span class="a" onclick="p2ShIssAct(\'F:' + f.id + '\')">→ 残す先</span><span class="dl" onclick="event.stopPropagation();p2ShIssFTo(\'' + f.id + '\',\'del\')" title="このメモを消す">' + icn('trash') + '</span>') + '</div><div class="t" onclick="p2ShIssFEd(\'' + f.id + '\')">' + evEsc(f.t) + '</div>'
       + (yk ? '<div class="lk"><i style="--c:var(--accent)">✅ やること' + (yk.done ? ' ✓' : '') + '</i></div>' : '') + acts + '</div>';
   }).join('');
   var fin = ro ? '' : '<input class="iss-fi" placeholder="＋ 自分・全体のメモ（Enter）" maxlength="200" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2ShIssFAdd(this)}">';
@@ -38473,7 +38482,11 @@ function p2ShIssFTo(id, kind) {
   if (_p2ShRo()) return;
   var ym = _p2ShYmN(), m = _p2ShM(ym), f = _p2ShIssF(id); if (!f) return;
   _p2ShIssAct = '';
-  if (kind === 'del') { m.issF = (m.issF || []).filter(function(x) { return x.id !== id; }); saveGoals(); _p2IssRe(); return; }
+  if (kind === 'del') { // v748: 確認なしで消して ↩ 元に戻す
+    var L0 = m.issF || [], ix = L0.indexOf(f); m.issF = L0.filter(function(x) { return x.id !== id; }); saveGoals(); _p2IssRe();
+    toastAction('🗑 メモを消しました', '↩ 元に戻す', function() { var mm = _p2ShM(ym); mm.issF = mm.issF || []; if (!mm.issF.some(function(x) { return x.id === f.id; })) mm.issF.splice(Math.min(ix, mm.issF.length), 0, f); saveGoals(); _p2IssRe(); });
+    return;
+  }
   if (kind === 'ev') { openEventModal(null, '', '', 'event'); setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = f.t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30); return; }
   var e = _tdMakeTask(f.t.slice(0, 120), '', ''); e.yk = 1; e.planYm = ym; e.subs = []; e.who = 'me';
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
@@ -38482,7 +38495,7 @@ function p2ShIssFTo(id, kind) {
 function _p2ShIssCss() {
   if (document.getElementById('p2IssCss')) return;
   var st = document.createElement('style'); st.id = 'p2IssCss';
-  st.textContent = '.iss-hd{font-size:13px;font-weight:900;margin-bottom:4px}.iss-hd small{margin-left:6px;font-size:11px;color:var(--text-dim);font-weight:700}.iss-r{padding:8px 0;border-top:1px solid var(--border)}.iss-r .h{display:flex;align-items:baseline;gap:6px;cursor:pointer}.iss-r .h b{font-size:13px}.iss-r .h small{font-size:10.5px;color:var(--text-dim);font-weight:800}.iss-r .h .a,.iss-r .h .x{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;white-space:nowrap}'
+  st.textContent = '.iss-hd{font-size:13px;font-weight:900;margin-bottom:4px}.iss-hd small{margin-left:6px;font-size:11px;color:var(--text-dim);font-weight:700}.iss-r{padding:8px 0;border-top:1px solid var(--border)}.iss-r .h{display:flex;align-items:baseline;gap:6px;cursor:pointer}.iss-r .h b{font-size:13px}.iss-r .h small{font-size:10.5px;color:var(--text-dim);font-weight:800}.iss-r .h .dl{flex:none;display:flex;align-items:center;padding:2px 2px 2px 8px;color:var(--text-dim);cursor:pointer;align-self:center}.iss-r .h .dl .lic{width:15px;height:15px}.iss-r .h .dl:hover{color:#FF6B7F}.iss-r .h .a,.iss-r .h .x{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;white-space:nowrap}'
     + '.iss-r .t{font-size:12.5px;line-height:1.55;margin-top:3px;cursor:pointer;white-space:pre-wrap}.iss-r.on{background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:10px;padding:8px}.iss-r .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.iss-r .cats span{font-size:11.5px;font-weight:900;padding:5px 9px;border-radius:9px;border:1px solid var(--c);color:var(--c);cursor:pointer}.iss-r .lk{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.iss-r .lk i{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--c,var(--text-mid)) 16%,transparent);color:var(--text-mid);cursor:pointer}.iss-em{font-size:12px;color:var(--text-dim);padding:8px 0;border-top:1px solid var(--border)}.iss-fi{width:100%;box-sizing:border-box;margin:4px 0 6px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text);font-weight:700;font-size:13px;font-family:inherit;padding:7px 9px}.iss-fi:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-mw{display:grid;grid-template-columns:minmax(0,1fr) 320px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--surface) 70%,transparent)}.sp-mw .sp-map{border:0;border-radius:0}.sp-mw .iss{border-left:1px solid var(--border);padding:12px 14px;max-height:640px;overflow:auto}'
     + '.sp-mw.m{display:block}.sp-mw.m .iss{border-left:0;border-top:1px solid var(--border);max-height:none}#p2ShOrb{position:relative}#p2ShOrb svg{display:block;width:100%;height:100%}#p2ShOrb g[data-mid]{cursor:pointer}#p2ShOrb g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}.sp-map svg g.shn{cursor:pointer}'
