@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v709';
+var APP_JS_VERSION = 'v710';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v709';
+  var DATA_VERSION = 'v710';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v710', d:'2026-10-08', items:['PC：MAPの上の帯を1行に。現状/理想 → ‹ 年月 › → LTSV・稼働（1行の札）→ 表示の切りかえ（アイコン。マウスを乗せると名前）→ 検索 → 受付連携・全画面・「⋯」','「⋯」の中に翌月コピー・共有MAP・CSV・共有。翌月コピーは、月末の7日前〜翌月7日までは月の横にも「→ 翌月」が出ます'] },
   { v:'v709', d:'2026-10-08', items:['🎁 シミュレーション：人数などを変えて金額が変わったら、ファーストボーナスはまた「押して見る」に戻ります（自分のタイミングで見られます）','止まったら「前回より ＋¥◯」も出ます','ファーストボーナスの欄は組織図の下に。BRの月を選んだ時だけ出ます（ほかの月は「BRを選ぶと見られます」）'] },
   { v:'v708', d:'2026-10-08', items:['🐛 PCで理想MAP（サークル）の拡大・縮小（＋−・全体）が効かなくなっていたのを修正（計画シートのサークルMAPの方が動いていました）'] },
   { v:'v707', d:'2026-10-08', pop: { t: 'PCの計画シートが「左にMAP・右に書く欄」になりました', items: ['MAPは左に出たまま動かないので、見ながら右の数字・改善点・行動を書けます（右だけスクロール）', '行を詰めて、数字8行と行動4分野がひと目で見渡せます。右上の「上下」で前の並びにも戻せます', '上の帯（年月・翌月コピー・共有MAP）はなくして画面を広く。年月の切りかえと翌月コピーはMAPの画面の上へ'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['PCの計画シートを左右2分割に：左＝MAP（縦いっぱい・拡大縮小）と課題、右＝数字と改善点・行動（2列）','右上の「◧ 左右｜⬒ 上下」で並びを切りかえ（端末に覚えます）','改善点の空いた欄は1行に詰めて、記入例は薄く1行で'] },
@@ -36908,6 +36909,12 @@ function _px3Css() {
     "body.px3{padding-left:220px!important}"
     + "body.px3 header{display:none!important}" // v706: PCは上の帯をなくす（年月・翌月コピー・共有MAPはMAPの上、版・保存は左下へ）
     + "#pcsVer{display:none}body.px3 #pcsVer{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0 0;flex:none}body.px3 #pcsVer>div{flex-direction:row!important;gap:8px!important;align-items:center!important}body.px3 #pcsVer #versionTag,body.px3 #pcsVer #lastSavedTag{font-size:10px!important}"
+    // v710: MAPの上の帯を1行に（LTSVは1行の札・表示の切りかえはアイコン・たまに使う物は「⋯」）
+    + "body.px3 .pc-toolbar{flex-wrap:nowrap;gap:8px}body.px3 .pc-toolbar .pt-ltsv{padding:5px 12px;gap:10px;box-shadow:none;flex:none}body.px3 .pc-toolbar .pt-ltsv>div{display:flex;align-items:baseline;gap:6px}body.px3 .pc-toolbar .pt-ltsv-val{font-size:16px}body.px3 .pc-toolbar .pt-act{white-space:nowrap}"
+    + "body.px3 .pv-seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:11px;background:var(--surface2);flex:none}body.px3 .pv-seg .pv-btn{padding:5px 9px;background:transparent;display:flex;align-items:center;box-shadow:none}body.px3 .pv-seg .pv-btn.active{background:var(--accent)}body.px3 .pc-toolbar-ideal .pv-seg .pv-btn.active{background:var(--purple)}body.px3 .pv-btn .pv-lb{display:none}body.px3 .pv-btn .lic{width:18px;height:18px}.pv-btn .lic{margin-right:4px}body.px3 .pv-btn .lic{margin-right:0}"
+    + "body.px3 .pc-toolbar .pt-search{min-width:130px;max-width:230px}body.px3 .pc-toolbar .pt-ic{padding:5px 11px;font-size:15px;line-height:1.2}body.px3 .mapFsBtn .fs-lb{display:none}body.px3 .pt-modebadge{display:none}body.px3 #pcShareBtn{display:none!important}body.px3 .pc-toolbar .pt-mapseg .pt-ms{padding:6px 12px}"
+    + "@media (max-width:1380px){body.px3 .pc-toolbar .pt-search{min-width:0;flex:0 0 auto;padding:0 11px}body.px3 #pcSearchText{display:none}}"
+    + ".px3-more{position:fixed;z-index:700;min-width:230px;padding:6px;border-radius:14px;background:var(--surface);border:1px solid var(--border);box-shadow:0 14px 40px rgba(0,0,0,.45)}.px3-more .it{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer}.px3-more .it:hover{background:var(--surface2)}.px3-more .it i{font-style:normal;width:22px;text-align:center;color:var(--accent);font-weight:900}.px3-more .it b{display:block;font-size:13px}.px3-more .it small{font-size:11px;color:var(--text-dim)}"
     + ".pt-mon{display:none}body.px3 .pt-mon{display:flex;align-items:center;gap:6px;flex:none}body.px3 .pt-mon .px3-mon{margin:0}.pt-mon .pt-cp{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}.pt-mon .pt-sh{color:var(--purple);border-color:var(--purple)}"
     + "body.px3 #evCalendar.full,body.px3 #evDayV.full,body.px3 #evWeek.full,body.px3 #evAgenda.full{left:220px}"
     + "body.px3 .pc-sidebar{width:220px;align-items:stretch;padding:16px 12px 14px;gap:2px;background:color-mix(in srgb,var(--bg) 82%,#000);overflow-y:auto}"
@@ -36996,12 +37003,29 @@ function _px3Side() {
 function _px3MonBar() {
   var els = document.querySelectorAll('.pt-mon[data-pcmon]'); if (!els.length) return;
   var vis = function(id) { var e = document.getElementById(id); return !!e && e.style.display !== 'none'; };
-  var n = (document.getElementById('sharedMapCount') || {}).textContent || '';
+  // v710: 翌月コピーはふだん「⋯」の中。見ている月の残り7日〜翌月の7日までだけ、月の横に出す
+  var cp = false;
+  try { var p = String(state.currentMonth || '').split('.'), y = +p[0], mo = +p[1], now = new Date(), last = new Date(y, mo, 0), st = new Date(y, mo - 1, last.getDate() - 6), en = new Date(y, mo, 8); cp = vis('copyMonthBtn') && now >= st && now < en; } catch (e) {}
   var h = '<span class="px3-mon"><i onclick="px3Mon(-1)" title="前の月">‹</i><b>' + _px3Ym() + '</b><i onclick="px3Mon(1)" title="次の月">›</i></span>'
-    + (vis('copyMonthBtn') ? '<div class="pt-action pt-cp" onclick="copyToNextMonth()" title="今月のMAPを来月へ">→ 翌月コピー</div>' : '')
-    + (vis('sharedMapBtn') ? '<div class="pt-action pt-sh" onclick="openSharedDashboard()">共有MAP ' + evEsc(n) + '</div>' : '');
+    + (cp ? '<div class="pt-action pt-cp" onclick="copyToNextMonth()" title="今月のMAPを来月へ">→ 翌月</div>' : '');
   Array.prototype.forEach.call(els, function(e) { e.innerHTML = h; });
 }
+// v710: MAPの上の帯の「⋯」（翌月コピー・共有MAP・CSV・共有）
+function px3MapMore(btn, mt) {
+  if (document.getElementById('px3More')) { px3MoreClose(); return; }
+  var vis = function(id) { var e = document.getElementById(id); return !!e && e.style.display !== 'none'; };
+  var n = (document.getElementById('sharedMapCount') || {}).textContent || '';
+  var it = function(ic, lb, sub, js) { return '<div class="it" onclick="px3MoreClose();' + js + '"><i>' + ic + '</i><div><b>' + lb + '</b><small>' + sub + '</small></div></div>'; };
+  var h = (vis('copyMonthBtn') ? it('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
+    + (vis('sharedMapBtn') ? it(icn('users'), '共有MAP ' + evEsc(n), '見せてもらっているMAP', 'openSharedDashboard()') : '')
+    + (mt === 'current' ? it('⇩', 'CSV', 'このMAPを表で書き出す', "exportCSV('current')") : '')
+    + (mt === 'current' && vis('pcShareBtn') ? it('↗', '共有', 'このMAPを人に見せる', 'openShareModal()') : '');
+  if (!h) h = '<div class="it"><div><small>ほかの操作はありません</small></div></div>';
+  var d = document.createElement('div'); d.id = 'px3More'; d.className = 'px3-more'; d.innerHTML = h; document.body.appendChild(d);
+  var r = btn.getBoundingClientRect(); d.style.top = Math.round(r.bottom + 6) + 'px'; d.style.right = Math.round(window.innerWidth - r.right) + 'px';
+  setTimeout(function() { document.addEventListener('click', px3MoreClose, { once: true }); }, 0);
+}
+function px3MoreClose() { var d = document.getElementById('px3More'); if (d) d.remove(); }
 function _px3Teams() {
   var el = document.getElementById('pcsTeams'); if (!el) return;
   var owners = (typeof sharedOwners !== 'undefined' && sharedOwners) || [];

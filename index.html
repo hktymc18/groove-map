@@ -2952,7 +2952,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v709</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v710</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3037,21 +3037,22 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <!-- PC統合ツールバー -->
     <div class="pc-toolbar" id="pcToolbarC">
-      <div class="pt-mon" data-pcmon></div><div class="pt-sep"></div>
       <div class="pt-mapseg">
         <span class="pt-ms cur active" onclick="switchView('current')"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> 現状MAP</span>
         <span class="pt-ms idl" onclick="switchView('ideal')">🎯 理想MAP</span>
       </div>
-      <div class="pt-sep"></div>
+      <div class="pt-mon" data-pcmon></div>
       <div class="pt-ltsv" onclick="showLtsvDetail()">
         <div><div class="pt-ltsv-label">LTSV</div><div class="pt-ltsv-val" id="pcLtsvC">-</div></div>
         <div class="pt-act">稼働 <span id="pcActC">-</span></div>
       </div>
       <div class="pt-sep"></div>
-      <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')">ツリー</div>
-      <div class="pv-btn" id="pvOrbit" onclick="switchPCView('orbit')">◎ サークル</div>
-      <div class="pv-btn" id="pvTable" onclick="switchPCView('table')">テーブル</div>
-      <div class="pv-btn" id="pvKanban" onclick="switchPCView('kanban')">カンバン</div>
+      <div class="pv-seg">
+      <div class="pv-btn active" id="pvTree" onclick="switchPCView('tree')" title="ツリー"><svg class="lic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg><span class="pv-lb">ツリー</span></div>
+      <div class="pv-btn" id="pvOrbit" onclick="switchPCView('orbit')" title="サークル"><svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><span class="pv-lb">サークル</span></div>
+      <div class="pv-btn" id="pvTable" onclick="switchPCView('table')" title="テーブル"><svg class="lic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M3 15h18M9 4v16"/></svg><span class="pv-lb">テーブル</span></div>
+      <div class="pv-btn" id="pvKanban" onclick="switchPCView('kanban')" title="カンバン"><svg class="lic" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="9.5" y="4" width="5" height="11" rx="1"/><rect x="16" y="4" width="5" height="7" rx="1"/></svg><span class="pv-lb">カンバン</span></div>
+      </div>
       <div class="pt-sep"></div>
       <div class="pt-search" onclick="openSearchModal()">
         <span style="font-size:13px;display:flex;align-items:center"><svg class="lic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
@@ -3059,9 +3060,9 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span id="pcSearchClear" style="display:none;font-size:14px;color:var(--text-dim);cursor:pointer" onclick="event.stopPropagation();clearSearch()">✕</span>
       </div>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
-        <div class="pt-action mapFsBtn" onclick="mapFullscreen()" title="MAPだけを画面いっぱいに表示（画面共有向け）">⛶ 全画面</div>
         <div class="pt-action" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</div>
-        <div class="pt-action" onclick="exportCSV('current')">CSV</div>
+        <div class="pt-action pt-ic mapFsBtn" onclick="mapFullscreen()" title="全画面（MAPだけを画面いっぱいに・画面共有向け）"><span class="fs-ic">⛶</span><span class="fs-lb"> 全画面</span></div>
+        <div class="pt-action pt-ic pt-more" onclick="px3MapMore(this,'current')" title="その他（翌月コピー・共有MAP・CSV・共有）">⋯</div>
         <div class="pt-action" id="pcShareBtn" onclick="openShareModal()" style="display:none">共有</div>
         <span style="font-size:11px;color:var(--text-dim);font-family:'Inter','IBM Plex Mono',monospace" id="searchResultCount"></span>
       </div>
@@ -3083,20 +3084,23 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div style="display:none"><span id="ltsvI"></span><span id="commTotal"></span><div id="commTableWrap"></div></div>
     <!-- PC統合ツールバー(理想) -->
     <div class="pc-toolbar pc-toolbar-ideal" id="pcToolbarI">
-      <div class="pt-mon" data-pcmon></div><div class="pt-sep"></div>
       <div class="pt-mapseg">
         <span class="pt-ms cur" onclick="switchView('current')"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> 現状MAP</span>
         <span class="pt-ms idl active" onclick="switchView('ideal')">🎯 理想MAP</span>
       </div>
+      <div class="pt-mon" data-pcmon></div>
       <span class="pt-modebadge">🎯 理想MAPを表示中 — 目標の組織図です</span>
       <div class="pt-sep"></div>
       <div class="pt-ltsv" style="border-color:rgba(139,124,255,.3);background:rgba(139,124,255,.06)">
         <div><div class="pt-ltsv-label">LTSV 目標</div><div class="pt-ltsv-val" id="pcLtsvI" style="color:var(--purple)">-</div></div>
       </div>
       <div class="pt-sep"></div>
-      <div class="pv-btn active" id="pvTreeI" onclick="switchPCView('tree')">ツリー</div>
-      <div class="pv-btn" id="pvOrbitI" onclick="switchPCView('orbit')">◎ サークル</div>
-      <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')">テーブル</div>
+      <div class="pv-seg">
+      <div class="pv-btn active" id="pvTreeI" onclick="switchPCView('tree')" title="ツリー"><svg class="lic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg><span class="pv-lb">ツリー</span></div>
+      <div class="pv-btn" id="pvOrbitI" onclick="switchPCView('orbit')" title="サークル"><svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><span class="pv-lb">サークル</span></div>
+      <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')" title="テーブル"><svg class="lic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M3 15h18M9 4v16"/></svg><span class="pv-lb">テーブル</span></div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center"><div class="pt-action pt-ic pt-more" onclick="px3MapMore(this,'ideal')" title="その他（翌月コピー・共有MAP・CSV）">⋯</div></div>
     </div>
     <div class="sec-label mobile-tree" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">目標ツリー <span id="treeSortSlotI" class="tree-sort-slot" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
     <div class="pc-filter-bar" id="pcFilterIdeal"></div>
@@ -3899,7 +3903,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v709';</script>
-<script src="app.js?v=v709"></script>
+<script>window.GM_EXPECT_JS='v710';</script>
+<script src="app.js?v=v710"></script>
 </body>
 </html>
