@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v736';
+var APP_JS_VERSION = 'v737';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v736';
+  var DATA_VERSION = 'v737';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v737', d:'2026-10-09', items:['分析 › 研修：いちばん上に研修フロー（じょうご）、その下にその月の数字、折れ線グラフはいちばん下に','説明の文は (i) に入れて、ふだんは出さないようにしました'] },
   { v:'v736', d:'2026-10-09', items:['PLANのタイルを「年の目標 → 計画シート → やること」の順に','計画シートの行動の実行期日：押すと「✅ ToDoに入れる／📅 予定に入れる」を選んで日にち（予定は時間も）を入れる窓に。勝手に今日が入らなくなりました','ToDoにした行動はToDoのチェックと連動、予定にした行動は左の□で自分でチェック。ToDoで消した行動は「ToDoで消しました」と出ます（戻す・外す）','やること：登録したタスクの名前・人、数値の目標の名前・目標・単位・月・人を、押して直せるように'] },
   { v:'v735', d:'2026-10-08', items:['アプリのアイコンを新しくしました（ホーム画面・ブラウザのタブ・ログイン画面・通知）'] },
   { v:'v734', d:'2026-10-08', items:['やることのサブタスクを、ロードマップの戦略・戦術と同じ書き方に：タスクの下にいつも出して、「＋ サブタスク」で大きい欄が開き、Enterで続けて書けます','サブタスクは押すと直せます（空にすると消える）'] },
@@ -12888,12 +12889,12 @@ function _dtTrFunnel(M, mo) {
     if (i > 0 && cnt[i - 1].length) { var cv = Math.round(n / cnt[i - 1].length * 100); svg += '<text x="' + (W - 4) + '" y="' + (y + 11) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="' + (cv >= 60 ? '#22C55E' : (cv >= 30 ? '#FFB454' : '#FF5D73')) + '">↓ ' + cv + '%</text>'; }
   });
   svg += '</svg>';
-  return '<div class="dt-card" style="margin-top:12px"><div class="dt-ch">' + icn('funnel') + ' ' + mo.m + '月の研修フロー<span style="color:var(--text-dim)">研修生 ' + M.n + '人</span></div>'
-    + (M.n ? svg + '<div class="dt-hint">右の％＝前の段階から進んだ割合（歩留まり）。段をタップで内訳</div>' : '<div class="ev-empty" style="padding:16px">この月の研修の記録はありません</div>') + '</div>';
+  return '<div class="dt-card"><div class="dt-ch">' + icn('funnel') + ' ' + mo.m + '月の研修フロー<span style="color:var(--text-dim)">研修生 ' + M.n + '人</span>' + _uxIb('dtFn') + '</div>' // v737: 説明は(i)へ
+    + (M.n ? svg : '<div class="ev-empty" style="padding:16px">この月の研修の記録はありません</div>') + '</div>';
 }
 function _dtTrRender() {
   var box = document.getElementById('dtTrain'); if (!box) return;
-  _anCss(); _dtDrill = {};
+  _anCss(); _ux2Css(); _dtDrill = {}; // v737: (i)の見た目
   var D = _dtTrData(), months = _dtMonths(), idx = _dtTrIdx, mo = months[idx], M = D[idx], P = idx > 0 ? D[idx - 1] : null;
   var meta = function(k) { var x = DT_TR_K.filter(function(q) { return q[0] === k; })[0] || [k, k, '']; return { k: k, lb: x[1], unit: x[2], inv: !!x[3] }; };
   var vals = function(k) { return D.map(function(o) { return o[k] === undefined ? null : o[k]; }); };
@@ -12913,13 +12914,20 @@ function _dtTrRender() {
       + '<b>' + (v === null ? '<i class="na">—</i>' : v + '<small>' + mt.unit + '</small>') + '</b><div class="f">' + (v === null ? '' : _dtDelta(v, P ? P[k] : null, mt)) + (sub ? '<span class="sb">' + sub + '</span>' : '') + ppl(k) + '</div></div>';
   };
   var dec = M.BC + M['ユーザー'] + M['流れた'];
-  var h = chips + '<div class="dt-card">' + head + svg + '<div class="dt-hint">グラフの月をタップすると、その月の数字が下に出ます</div></div>'
-    + '<div class="an-sec"><span>' + mo.y + '年' + mo.m + '月の研修</span>' + (idx === 11 ? '<small>今月</small>' : '<em onclick="dtTrPick(11)">今月に戻す ›</em>') + '</div><div class="an-g four">'
+  if (!UX_INFO.dtFn) {
+    UX_INFO.dtFn = { t: '研修フロー', h: 'その月に研修の記録がある人を、段階ごとに並べたじょうごです。<br>右の％＝前の段階から進んだ割合（歩留まり）。60％以上は緑、30％以上は黄、それより下は赤。<br>段をタップすると、その段の人の内訳が出ます' };
+    UX_INFO.dtCnt = { t: '研修の数え方', h: 'その月の日付で、研修履歴に「進んだ／流れた」の記録がある人を数えます（1人1回・📅予定は数えない）。<br>受付システムの受講記録も取り込まれます。<br>タイルを押すと、下のグラフでその数字の推移が見られます' };
+    UX_INFO.dtCh = { t: '月ごとの推移', h: '上のボタンで見たい数字を選びます（2つまで重ねて表示）。<br>グラフの月をタップすると、その月の数字が上（研修フロー・その月の研修）に出ます' };
+  }
+  // v737: 上から じょうご（研修フロー）→ その月の数字 → 前からの表 → 折れ線グラフ（いちばん下）。説明は(i)に
+  if (!document.getElementById('dtIbCss')) { var st9 = document.createElement('style'); st9.id = 'dtIbCss'; st9.textContent = '.dt-ch .ux-ib,.an-sec .ux-ib{width:20px;height:20px;font-size:11px;border-width:1.2px;margin-left:6px;flex:none;align-self:center}#dtTrain .dt-trc{margin-top:16px}'; document.head.appendChild(st9); }
+  var h = _dtTrFunnel(M, mo)
+    + '<div class="an-sec"><span>' + mo.y + '年' + mo.m + '月の研修</span>' + _uxIb('dtCnt') + (idx === 11 ? '<small>今月</small>' : '<em onclick="dtTrPick(11)">今月に戻す ›</em>') + '</div><div class="an-g four">'
     + big('n', 'cap', '#5AD7FF', '研修の記録がある人') + big('rate', 'target', 'var(--accent)', '結果が出た ' + dec + '人のうち')
     + big('BC', 'checksq', '#2CE5B8', '') + big('流れた', 'ban', '#FF5D73', 'ユーザー ' + M['ユーザー'] + '人')
-    + '</div>' + _dtTrFunnel(M, mo) // v651: じょうご（研修フロー・前の段から進んだ割合）はそのまま見られるように
-    + '<div class="dt-hint" style="text-align:left;margin:8px 2px 0">数え方：その月の日付で研修履歴に「進んだ／流れた」の記録がある人（1人1回・📅予定は数えない）。受付システムの受講記録も取り込まれます</div>'
-    + '<div style="margin-top:14px">' + _dtTrainOld(state.currentMonth || currentMonthStr(), true) + '</div>';
+    + '</div>'
+    + '<div style="margin-top:14px">' + _dtTrainOld(state.currentMonth || currentMonthStr(), true) + '</div>'
+    + '<div class="dt-trc"><div class="an-sec"><span>月ごとの推移</span>' + _uxIb('dtCh') + '</div>' + chips + '<div class="dt-card">' + head + svg + '</div></div>';
   box.innerHTML = h;
 }
 
