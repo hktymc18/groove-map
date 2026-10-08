@@ -27,7 +27,7 @@ T.run(async () => {
   c('NEWフロントを書く（ロードマップと同じ数字）', +w._p2FrontTgt(ym) === 2);
   c('v703: つながり：マイルストーンまで・フロントBRあと・今月NEWフロント', /あと2ヶ月/.test($$('.st-c')[1].textContent) && /フロントBR あと3本/.test($$('.st-c')[1].textContent) && $$('.st-c .sp-in')[1].value === '2');
   const svg = $('.sp-map svg').innerHTML;
-  c('MAP：流通・ビジネス・点線のNEW（目標2−今1）・稼働率（説明はiの中）', /流通/.test(svg) && /ビジネス/.test(svg) && /NEW/.test(svg) && /80%/.test(svg));
+  c('MAP：流通・ビジネス・点線のNEW（目標2−今1）・稼働率（説明はiの中）', /流通/.test(svg) && /ビジネス/.test(svg) && /NEW/.test(svg) && /[ABC]80/.test(svg));
   c('数字は8行（1項目＝1行）', $$('.sp-kr').length === 8);
   c('v688: 説明文は画面に出さず i の中', !$('.sp-leg') && !/Howdy稼働基準/.test(v()) && $$('#view-plan .ux-ib').length >= 3);
   c('v688: 改善点の欄は項目ごとに記入例（同じ文の繰り返しなし）', /S-SET/.test($$('.sp-kr')[0].querySelector('.sp-kz').placeholder) && /CT取りを前月25日/.test($$('.sp-kr')[4].querySelector('.sp-kz').placeholder) && new Set($$('.sp-kz').map(x => x.placeholder)).size === 8);
