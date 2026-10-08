@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v707';
+var APP_JS_VERSION = 'v708';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1736,7 +1736,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   var NS = 'http://www.w3.org/2000/svg';
   var svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 ' + SW + ' ' + SH);
-  svg.setAttribute('id', isPrint ? 'orbitSvgPrint' : (mapType === 'current' ? 'orbitSvgC' : 'orbitSvgI'));
+  svg.setAttribute('id', isPrint ? 'orbitSvgPrint' : opts.screen ? 'orbitSvgScr' + (mapType === 'current' ? 'C' : 'I') : (mapType === 'current' ? 'orbitSvgC' : 'orbitSvgI')); // v708: 計画シート・スマホ横のサークルは別のid（同じidだとMAPの画面の＋−が計画シートの方を動かしていた）
   svg.setAttribute('data-lh', Lh.toFixed(1));
   var bg = light ? '#ffffff' : 'var(--bg)';
   svg.style.background = bg;
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v707';
+  var DATA_VERSION = 'v708';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v708', d:'2026-10-08', items:['🐛 PCで理想MAP（サークル）の拡大・縮小（＋−・全体）が効かなくなっていたのを修正（計画シートのサークルMAPの方が動いていました）'] },
   { v:'v707', d:'2026-10-08', pop: { t: 'PCの計画シートが「左にMAP・右に書く欄」になりました', items: ['MAPは左に出たまま動かないので、見ながら右の数字・改善点・行動を書けます（右だけスクロール）', '行を詰めて、数字8行と行動4分野がひと目で見渡せます。右上の「上下」で前の並びにも戻せます', '上の帯（年月・翌月コピー・共有MAP）はなくして画面を広く。年月の切りかえと翌月コピーはMAPの画面の上へ'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['PCの計画シートを左右2分割に：左＝MAP（縦いっぱい・拡大縮小）と課題、右＝数字と改善点・行動（2列）','右上の「◧ 左右｜⬒ 上下」で並びを切りかえ（端末に覚えます）','改善点の空いた欄は1行に詰めて、記入例は薄く1行で'] },
   { v:'v706', d:'2026-10-08', items:['PC：上の帯（年月・翌月コピー・共有MAP）をなくして、どの画面も上が広くなりました','年月の切りかえ（‹ 2026年10月 ›）・翌月コピー・共有MAPは、MAPの画面の上の帯に移しました（分析は今まで通り分析の上）','バージョンと保存の時刻は左下のプロフィールの下に'] },
   { v:'v705', d:'2026-10-08', items:['PC：左上の屋号・名前の表示をなくしました（左下のプロフィールと同じだったため）'] },
