@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v720';
+var APP_JS_VERSION = 'v721';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v720';
+  var DATA_VERSION = 'v721';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5381,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v721', d:'2026-10-08', items:['ロードマップ③の計算の設定（BR 1本に必要なフロント・単価・ルビー候補）は、ふだん隠して「⚙ 設定」で開くように。1行ずつの見やすい形にしました','「1ヶ月5人以上は無理なペース（赤）」をなくしました'] },
   { v:'v720', d:'2026-10-08', items:['年の目標・ロードマップの③で、今の数もその場で書きかえられるように（空ならMAPの数が薄く出る・違う数にしたら「MAP ◯ に戻す」）','単価（1Qルビー・1環境・ルビー候補の倍率）も③の下で直せます。前の「今の数・単価」の画面には飛ばなくなりました'] },
   { v:'v719', d:'2026-10-08', items:['シミュレーションのボタンを「📅 ロードマップのペースに入れる」に：LOI〜BRの月ごとのフロントを、年の目標・ロードマップのF（計画シート・月の目標と同じ数字）に入れて、そのままロードマップを開きます','今月の分は理想MAPの自分のB1にも。BRを目指している人は、直近の目標（BRの月）もシミュレーションにそろえます','押した後の「『設定』で確定しよう」という古い案内をなくしました'] },
   { v:'v718', d:'2026-10-08', items:['年の目標・ロードマップと計画シートに「📄 サマリー」：右上（スマホは見出しの下）の「✎ 編集｜📄 サマリー」で、見るだけの1枚に切りかえ','ロードマップのサマリー：最終・直近の目標、マイルストーン、必要なフロント・締め切り・ペース、ギャップ、戦略のメモ','計画シートのサマリー：年の目標・マイルストーン・月収・NEWフロント、今月の数字（先月の結果つき）、改善点、行動（次にやること・期限切れ）、課題'] },
@@ -38240,12 +38241,14 @@ function p2ShPrint() {
   setTimeout(function() { window.print(); setTimeout(done, 1500); }, 200);
 }
 // ════ v717: 年の目標・ロードマップ（①マイルストーン ②直近の目標 ③今→必要→ギャップ ④フロントのペース ⑤戦略のメモ）════
-var P2_YR_LOCK = 15; // ③の表と⑤は組織（自分をのぞく）が15人から
+var P2_YR_LOCK = 15;
+var _p2YrSetOn = false; // v721: ③の計算の設定（ふだんは隠す）
+function p2YrSetTgl() { _p2YrSetOn = !_p2YrSetOn; renderPlan(); } // ③の表と⑤は組織（自分をのぞく）が15人から
 var _p2YrMoSel = '', _p2YrAct = '';
 function _p2Yr() {
   var p2 = _p2(); if (!p2.yr) p2.yr = {};
   var y = p2.yr; if (!y.t) y.t = {}; if (!y.memo) y.memo = [];
-  if (!(+y.ratio > 0)) y.ratio = 2; if (!(+y.max > 0)) y.max = 5;
+  if (!(+y.ratio > 0)) y.ratio = 2;
   return y;
 }
 function _p2YrOrgN() {
@@ -38281,7 +38284,7 @@ function _p2YrCalc() {
     needFr = needBR * Y.ratio; dlF = loi;
   }
   var months = []; for (var ym = cur, i = 0; ym <= dlF && i < 36; ym = _p2YmAdd(ym, 1), i++) months.push(ym);
-  return { nx: nx, Y: Y, cur: cur, isBR: isBR, dl: dl, loi: loi, dlF: dlF, needBR: needBR, needFr: needFr, months: months, rows: rows, max: Y.max, ratio: Y.ratio, minNear: isBR ? _p2BrMin() : _p2YmAdd(cur, 4) };
+  return { nx: nx, Y: Y, cur: cur, isBR: isBR, dl: dl, loi: loi, dlF: dlF, needBR: needBR, needFr: needFr, months: months, rows: rows, ratio: Y.ratio, minNear: isBR ? _p2BrMin() : _p2YmAdd(cur, 4) };
 }
 // ペース：理想MAPで決まる月はそのまま、残りを均等に
 function _p2YrEven(C) {
@@ -38373,7 +38376,7 @@ function _p2YrCss() {
     + '.yr-near{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-size:14px;font-weight:800;color:var(--text-mid)}'
     + 'table.yr-gp{width:100%;border-collapse:collapse}.yr-gp th{font-size:11.5px;color:var(--text-dim);font-weight:800;text-align:center;padding:4px;border-bottom:1px solid var(--border)}.yr-gp td{padding:7px 4px;border-bottom:1px solid var(--border);text-align:center;font:900 16px Inter,sans-serif}.yr-gp td.n{text-align:left;font:900 14px inherit;font-family:inherit}.yr-gp td.n small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:700}.yr-gp td small{font-size:11px;color:var(--text-dim);font-weight:700;margin-left:1px}.yr-gp td.g{color:#FF6B7F}.yr-gp td.g.ok{color:var(--accent)}.yr-gp td.g.dm{color:var(--text-dim)}.yr-gp .yr-in{width:84px;padding:5px 6px;text-align:center;font-size:15px}.yr-gp .yr-in::placeholder{color:var(--text-dim)}.yr-gp .yr-in.ov{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}.yr-gp i.rs{display:block;font-style:normal;font-size:10.5px;font-weight:800;color:var(--accent);cursor:pointer;margin-top:3px;white-space:nowrap}'
     + '.yr-calc{margin-top:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.yr-calc>div{padding:10px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)}.yr-calc small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:800}.yr-calc b{font:900 22px Inter,sans-serif}.yr-calc b i{font-style:normal;font-size:12px;color:var(--text-mid);margin-left:2px}.yr-calc .or{color:#FB923C}.yr-calc .gd{color:var(--gold)}'
-    + '.yr-set{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:12px;color:var(--text-dim);font-weight:800;align-items:center}.yr-set .yr-in{font-size:14px;padding:4px 8px;width:56px;text-align:center}.yr-set>span{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;margin-right:6px}'
+    + '.yr-gear{margin-left:auto;font-size:12px;font-weight:800;color:var(--text-mid);cursor:pointer;padding:4px 10px;border-radius:9px;border:1px solid var(--border);white-space:nowrap}.yr-gear.on{color:var(--accent);border-color:var(--accent)}.yr-sp{margin-top:12px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);padding:4px 14px 6px}.yr-sp .hd{display:flex;align-items:center;font-size:12.5px;font-weight:900;color:var(--text-mid);padding:8px 0 6px}.yr-sp .hd span{margin-left:auto;font-size:12px;color:var(--accent);cursor:pointer}.yr-sr{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--border);cursor:text}.yr-sr>span{flex:1;min-width:0;font-size:13.5px;font-weight:800}.yr-sr small{display:block;font-size:11px;color:var(--text-dim);font-weight:700;margin-top:1px}.yr-sr input{width:64px;flex:none;text-align:right;background:transparent;border:0;border-bottom:1.5px solid var(--border);border-radius:0;color:var(--text);font:900 17px Inter,sans-serif;padding:3px 2px;-moz-appearance:textfield}.yr-sr input::-webkit-inner-spin-button{-webkit-appearance:none}.yr-sr input:focus{outline:none;border-color:var(--accent)}.yr-sr em{flex:none;width:30px;font-style:normal;font-size:12px;color:var(--text-mid);font-weight:800}.yr-set{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:12px;color:var(--text-dim);font-weight:800;align-items:center}.yr-set .yr-in{font-size:14px;padding:4px 8px;width:56px;text-align:center}.yr-set>span{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;margin-right:6px}'
     + '.yr-pace{display:flex;flex-wrap:wrap;gap:8px}.yr-pace>div{width:84px;padding:8px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);text-align:center;box-sizing:border-box}.yr-pace small{display:block;font-size:11.5px;color:var(--text-mid);font-weight:800;margin-bottom:4px}.yr-pace .yr-in{width:100%;text-align:center;box-sizing:border-box}.yr-pace .yr-in::placeholder{color:var(--text-dim)}.yr-pace>div.ng{border-color:#FF6B7F;background:color-mix(in srgb,#FF6B7F 10%,var(--surface2))}.yr-pace>div.ng .yr-in,.yr-pace>div.ng b{color:#FF6B7F}.yr-pace>div b{font:900 18px Inter,sans-serif;display:block;padding:5px 0}.yr-pace>div.fx b{color:var(--purple)}.yr-pace>div i{display:block;font-style:normal;font-size:10px;color:var(--purple);font-weight:800;cursor:pointer}'
     + '.yr-psum{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:14px;font-weight:800}.yr-psum .ok{color:var(--accent)}.yr-psum .ngt{color:#FF6B7F}.yr-psum small{color:var(--text-dim);font-size:12px}'
     + '.yr-warn{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid #FF6B7F;background:color-mix(in srgb,#FF6B7F 8%,transparent);font-size:13px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}'
@@ -38424,7 +38427,7 @@ function _p2YrTlHtml(C, ro, sum) {
     if (ym < cur) { g += '<div></div>'; return; }
     if (ym > C.dlF) { g += '<div class="' + (ym <= C.dl ? 'dz' : '') + '"><span class="fv dm">' + (ym <= C.dl ? '–' : '') + '</span></div>'; return; }
     var v = _p2FrontTgt(ym), fx = _p2FrontIdeal(ym) !== null, has = v !== '' && v != null;
-    g += '<div><span class="fv ' + (!has ? 'dm' : (+v >= C.max ? 'ng' : (fx ? 'fx' : 'ok'))) + '">' + (has ? v : '·') + '</span></div>';
+    g += '<div><span class="fv ' + (!has ? 'dm' : (fx ? 'fx' : 'ok')) + '">' + (has ? v : '·') + '</span></div>';
   });
   var dlT = C.isBR ? (C.dlF === C.loi ? 'LOIの月' : P2_SIM_LAB[_p2YmDiff(C.loi, C.dlF)] + 'の月') : 'LOIの月';
   var dl = !C.needFr ? (C.isBR ? 'シミュレーションのフロントが0人です' : 'フロントBRは足りています ✓（直近の目標の条件）')
@@ -38467,23 +38470,26 @@ function _p2YrGapHtml(C, ro, lk, on) {
   var calc = C.isBR
     ? '<div><small>BRになる月</small><b class="gd">' + parseInt(C.dl.slice(5), 10) + '<i>月</i></b></div><div><small>必要なフロント（シミュレーション）</small><b class="gd">' + C.needFr + '<i>人</i></b></div><div><small>フロントの締め切り</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>'
     : '<div><small>必要なフロントBR</small><b>' + C.needBR + '<i>本</i></b></div><div><small>必要なフロント（' + C.ratio + '人で1本）</small><b class="gd">' + C.needFr + '<i>人</i></b></div><div><small>フロントを出す締め切り（LOIの月）</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>';
-  var gr = _p2Gap().rates, rt = function(k, v) { return '<input class="yr-in" type="number" inputmode="numeric" value="' + v + '" onfocus="edSelAll(this)" onchange="p2GapRate(\'' + k + '\',this.value)">'; };
-  var set = lk || ro ? '' : '<div class="yr-set">設定：<span>フロント <input class="yr-in" type="number" value="' + C.ratio + '" onchange="p2YrSet(\'ratio\',this.value)"> 人で BR 1本</span><span>1ヶ月に <input class="yr-in" type="number" value="' + C.max + '" onchange="p2YrSet(\'max\',this.value)"> 人以上は無理なペース</span></div>'
-    + '<div class="yr-set">単価：<span>1Qルビー ' + rt('qrYen', gr.qrYen) + ' 万</span><span>1環境 ' + rt('envYen', gr.envYen) + ' 万</span><span>ルビー候補＝Qルビー× ' + rt('candX', gr.candX) + '</span></div>';
-  return '<div class="yr-sec"><div class="yr-h"><span class="st">3</span>今 → 必要 → ギャップ<small>薄い数字は自動（今＝MAPから・必要＝直近の目標から）。違う時はその場で書きかえ</small></div>'
+  var gr = _p2Gap().rates, row = function(lb, sub, val, on, u) { return '<label class="yr-sr"><span>' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="number" inputmode="numeric" value="' + val + '" onfocus="edSelAll(this)" onchange="' + on + '"><em>' + u + '</em></label>'; };
+  var set = lk || ro || !_p2YrSetOn ? '' : '<div class="yr-sp"><div class="hd">計算の設定<span onclick="p2YrSetTgl()">閉じる</span></div>' // v721: ふだんは隠す（⚙で開く）
+    + row('BR 1本に必要なフロント', '', C.ratio, 'p2YrSet(\'ratio\',this.value)', '人')
+    + row('1Qルビーあたりの月収', 'Qルビーの必要数＝月収÷これ', gr.qrYen, 'p2GapRate(\'qrYen\',this.value)', '万円')
+    + row('1環境あたりの月収', '環境の必要数＝月収÷これ', gr.envYen, 'p2GapRate(\'envYen\',this.value)', '万円')
+    + row('ルビー候補', 'Qルビー1人あたり', gr.candX, 'p2GapRate(\'candX\',this.value)', '人') + '</div>';
+  return '<div class="yr-sec"><div class="yr-h"><span class="st">3</span>今 → 必要 → ギャップ<small>薄い数字は自動（今＝MAPから・必要＝直近の目標から）。違う時はその場で書きかえ</small>' + (lk || ro ? '' : '<span class="yr-gear' + (_p2YrSetOn ? ' on' : '') + '" onclick="p2YrSetTgl()" title="計算の設定">⚙ 設定</span>') + '</div>'
     + (lk ? lkH : tb) + '<div class="yr-calc">' + calc + '</div>' + set + '</div>';
 }
 function _p2YrPaceHtml(C, ro) {
-  var ev = _p2YrEven(C), tot = 0, bad = false;
+  var ev = _p2YrEven(C), tot = 0;
   var box = C.months.map(function(ym) {
-    var v = _p2FrontTgt(ym), fx = _p2FrontIdeal(ym) !== null, has = v !== '' && v != null, ng = has && +v >= C.max; tot += has ? +v : 0; if (ng) bad = true;
+    var v = _p2FrontTgt(ym), fx = _p2FrontIdeal(ym) !== null, has = v !== '' && v != null, ng = false; tot += has ? +v : 0;
     var mo = parseInt(ym.slice(5), 10);
     if (fx || ro) return '<div class="' + (ng ? 'ng' : '') + (fx ? ' fx' : '') + '"><small>' + mo + '月</small><b>' + (has ? v : '—') + '</b>' + (fx ? '<i onclick="_p2IdealGo()">理想MAP ›</i>' : '') + '</div>';
     return '<div class="' + (ng ? 'ng' : '') + '"><small>' + mo + '月</small><input class="yr-in" type="number" inputmode="numeric" value="' + (has ? v : '') + '" placeholder="' + (ev[ym] === undefined ? '' : ev[ym]) + '" onfocus="edSelAll(this)" onchange="p2YrF(\'' + ym + '\',this.value)"></div>';
   }).join('');
   var late = C.needFr > 0 && !C.months.length;
-  var sum = C.months.length ? '<div class="yr-psum">合計 <b class="' + (tot >= C.needFr ? 'ok' : 'ngt') + '">' + tot + ' / ' + C.needFr + '人</b>' + (tot >= C.needFr ? '<span class="ok">✓ 足りています</span>' : '<span class="ngt">あと ' + (C.needFr - tot) + '人</span>') + '<small>1ヶ月 ' + C.max + '人以上は赤</small></div>' : '';
-  var warn = (bad || late) && !ro ? '<div class="yr-warn">⚠ ' + (late ? 'フロントを出す月が残っていません' : '無理なペースの月があります') + '。直近の目標を後ろにずらすと、ペースがゆるくなります <span class="yr-btn go" onclick="p2YrShift()">直近の目標を1ヶ月ずらす →</span></div>' : '';
+  var sum = C.months.length ? '<div class="yr-psum">合計 <b class="' + (tot >= C.needFr ? 'ok' : 'ngt') + '">' + tot + ' / ' + C.needFr + '人</b>' + (tot >= C.needFr ? '<span class="ok">✓ 足りています</span>' : '<span class="ngt">あと ' + (C.needFr - tot) + '人</span>') + '</div>' : '';
+  var warn = late && !ro ? '<div class="yr-warn">⚠ フロントを出す月が残っていません。直近の目標を後ろにずらしてください <span class="yr-btn go" onclick="p2YrShift()">直近の目標を1ヶ月ずらす →</span></div>' : '';
   return '<div class="yr-sec"><div class="yr-h"><span class="st">4</span>フロントのペース<small>今月から締め切りの月まで（計画シート・月の目標と同じ数字）</small>' + (ro || !C.months.length ? '' : '<span class="r" onclick="p2YrEven()">均等に割り振る</span>') + '</div>'
     + (box ? '<div class="yr-pace">' + box + '</div>' : '') + sum + warn + '</div>';
 }
@@ -38564,11 +38570,11 @@ function _p2ShSumHtml(ym) {
 function _p2YrSumHtml(C, lk) {
   var nx = C.nx, money = C.isBR ? (nx.fb ? '<b>ファーストボーナス ' + Math.round(nx.fb / 10000) + '万</b>' : '') : (nx.inc ? '<b>月収 ' + nx.inc + '万</b>' : '');
   var near = '<div class="yr-goal" style="border-color:color-mix(in srgb,var(--gold) 70%,var(--border))"><span class="lb">直近の目標</span><b>' + _p2YmJa(C.dl) + '</b>までに<b class="t">' + evEsc(nx.title || '—') + '</b>' + money + '</div>';
-  var tot = 0, mx = 0; C.months.forEach(function(ym) { var v = _p2FrontTgt(ym); v = v === '' || v == null ? 0 : +v; tot += v; mx = Math.max(mx, v); });
+  var tot = 0; C.months.forEach(function(ym) { var v = _p2FrontTgt(ym); tot += v === '' || v == null ? 0 : +v; });
   var cv = _p2FrontTgt(C.cur); cv = cv === '' || cv == null ? 0 : +cv;
-  var need = '<div class="sm-g4"><div class="sm-c"><small>必要なフロント</small><b class="gd">' + C.needFr + '<i>人</i></b><em>割り振り ' + tot + '人</em></div>'
+  var need = '<div class="sm-g4"><div class="sm-c"><small>必要なフロント</small><b class="gd">' + C.needFr + '<i>人</i></b></div>'
     + '<div class="sm-c"><small>締め切り（' + (C.isBR ? 'フロントを出す月' : 'LOIの月') + '）</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>'
-    + '<div class="sm-c"><small>今月のペース</small><b class="ac">' + cv + '<i>人</i></b></div><div class="sm-c"><small>1ヶ月の最大</small><b' + (mx >= C.max ? ' style="color:#FF6B7F"' : '') + '>' + mx + '<i>人</i></b></div></div>';
+    + '<div class="sm-c"><small>今月のペース</small><b class="ac">' + cv + '<i>人</i></b></div><div class="sm-c"><small>割り振ったフロント</small><b' + (tot >= C.needFr ? ' class="ac"' : '') + '>' + tot + '<i>/ ' + C.needFr + '人</i></b></div></div>';
   var gap = lk ? '' : '<div class="sm-h">ギャップ<small>今 → 必要</small></div><div class="sm-gl">' + C.rows.map(function(r) { return '<div>' + r.lb + '<em class="' + (r.gap === null ? 'dm' : (r.gap <= 0 ? 'ok' : '')) + '">' + (r.gap === null ? '—' : (r.gap > 0 ? 'あと' + r.gap.toLocaleString() + r.u : '✓')) + '</em></div>'; }).join('') + '</div>';
   var mm = lk ? '' : '<div class="sm-h">戦略・やり方のメモ</div>' + (_p2Yr().memo.map(function(f) { var y = f.yk && findEvent(f.yk); y = y && !y.deleted ? y : null; return '<div class="sm-sg">' + evEsc(f.t) + (y ? '<span class="' + (y.done ? 'ok' : '') + '">✅ やること' + (y.done ? ' ✓' : '') + '</span>' : '<span>入れ先まだ</span>') + '</div>'; }).join('') || '<div class="sm-em">まだありません</div>');
   return '<div class="sm">' + _p2YrGoalHtml().replace(' onclick="p2Go(\'goal\',0)"', '').replace('<span class="ed">✎ 直す</span>', '') + near

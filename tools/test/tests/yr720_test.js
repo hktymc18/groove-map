@@ -18,7 +18,12 @@ T.run(async () => {
   c('MAPと違う数にしたら「MAP 1 に戻す」', w._p2YrCalc().rows[0].c === 3 && /MAP 1 に戻す/.test($('.yr-gp').textContent));
   $$('.yr-gp i.rs')[0].onclick(); await sleep(20);
   c('戻すとMAPの数', w._p2YrCalc().rows[0].c === 1 && !$('.yr-gp i.rs'));
-  const rate = $$('.yr-set input').find(i => /qrYen/.test(i.getAttribute('onchange')));
+  c('v721: 計算の設定はふだん隠す（⚙ 設定で開く）', !$('.yr-sp') && !!$('.yr-gear'));
+  w.p2YrSetTgl(); await sleep(20);
+  c('v721: 開くと1行ずつの設定（BR 1本のフロント・単価・候補）', $$('.yr-sp .yr-sr').length === 4 && !/1ヶ月に/.test($('.yr-sp').textContent));
+  const rate = $$('.yr-sp input').find(i => /qrYen/.test(i.getAttribute('onchange')));
   rate.value = '10'; rate.onchange(); await sleep(20);
-  c('単価もこの画面で（1Qルビー10万→必要10人）', w._p2Gap().rates.qrYen === 10 && w._p2YrCalc().rows[2].t === 10 && w._p2Pg === 'year');
+  c('単価もこの画面で（1Qルビー10万→必要10人）・設定は開いたまま', w._p2Gap().rates.qrYen === 10 && w._p2YrCalc().rows[2].t === 10 && w._p2Pg === 'year' && !!$('.yr-sp'));
+  w.p2YrSetTgl(); await sleep(20);
+  c('v721: 閉じる', !$('.yr-sp'));
 });

@@ -18,7 +18,7 @@ T.run(async () => {
   w.p2YrEven(); await sleep(20);
   c('④均等に割り振る（計画シート・月の目標と同じ数字）', C.months.every(ym => w._p2FrontTgt(ym) === 2) && w._p2M(cur).front === 2 && /6 \/ 6人/.test($('.yr-psum').textContent));
   w.p2YrF(cur, 5); await sleep(20);
-  c('1ヶ月5人以上は赤・「1ヶ月ずらす」', !!$('.yr-pace .ng') && !!$('.yr-warn') && /1ヶ月ずらす/.test($('.yr-warn').textContent));
+  c('v721: 5人以上でも赤にしない（無理なペースの表示はなし）', !$('.yr-pace .ng') && !$('.yr-g .fv.ng') && !$('.yr-warn') && !/無理なペース/.test($('#view-plan').textContent));
   w.p2YrShift(); await sleep(20);
   c('ずらすと直近の目標の月が1ヶ月後ろに', w._p2Next().deadline === w._p2YmAdd(dl, 1) && w._p2YrCalc().months.length === 4);
   w.p2YrMo(w._p2YmAdd(cur, 2)); await sleep(20);
