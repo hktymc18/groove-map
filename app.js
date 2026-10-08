@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v690';
+var APP_JS_VERSION = 'v691';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v690';
+  var DATA_VERSION = 'v691';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v691', d:'2026-10-08', items:['PLAN › ロードマップを1画面にしました（月を縦に並べた表に、フロント・流通などの目標をその場で書けます）','マイルストーンは月の横の「＋」で足し、押すと名前を直せます。⛰次の山・🏔最終目標の月も表に出ます'] },
   { v:'v690', d:'2026-10-08', items:['PLAN › 目標を1画面にしました（最終目標の月収・タイトル・期日 → 次の山 → スローガン を上から順に。ページ送りなし）'] },
   { v:'v689', d:'2026-10-08', items:['大きい更新があった時は、アップデート後に最初に開いた時だけ更新内容を表示するようにしました（1人1回。スマホとMacで見た記録は共通）','これまでの更新内容は、HOMEのベルと設定の「お知らせ・更新内容」から見られます'] },
   { v:'v688', d:'2026-10-07', pop: { t: 'PLANが「計画シート」になりました', items: ['紙の計画立案シートと同じ並び（目標 → MAP → 数字と改善点 → 行動）で1ヶ月の計画を書けます', '改善点は数字の1行ごと。行動はToDo・カレンダーにも入ります', '「シートを印刷」でA3横に印刷・PDFにできます'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートの説明文をなくしました（MAP・数字と改善点・行動の横の i を押すと出ます）','改善点の欄は、項目ごとに記入例を薄く出すようにしました','行動の空いた行にも記入例を出します'] },
@@ -16628,8 +16629,8 @@ function _p2PageParts() {
     _ux2Css(); body = _p2StepFix(_p2WhyPageHtml(8), -1);
   } else if (k === 'goal') { // v690: 最終目標（月収・タイトル・期日）・次の山・スローガンを1画面で（v599は6ページ）
     _ux2Css(); body = _p2GoalOneHtml();
-  } else if (k === 'rm') { // v600: 横軸の月を押すと月の画面
-    _ux2Css(); body = _p2RmPageHtml();
+  } else if (k === 'rm') { // v691: 1画面（月ごとの表にその場で書く）。v600は横軸 → 月の画面
+    _ux2Css(); body = _p2RmOneHtml();
   } else if (k === 'rmm') {
     _ux2Css(); body = _p2RmMonthHtml();
     var nym = _p2YmAdd(_p2RmYm || _p2Ym(0), 1); next = parseInt(nym.slice(5), 10) + '月 ›'; nextOn = 'p2RmMonth(\'' + nym + '\')';
@@ -16643,7 +16644,7 @@ function _p2PageParts() {
     _ux2Css(); body = _p2RmtHtml(i);
     if (i < subs.length - 1) { next = subs[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'ロードマップへ ›'; nextOn = 'p2Go(\'rm\')'; }
   } else if (k === 'rmrows') {
-    _ux2Css(); body = _p2RmRowsHtml(); next = '表へ ›'; nextOn = 'p2Go(\'rmt\')';
+    _ux2Css(); body = _p2RmRowsHtml(); next = '✓ 完了'; nextOn = 'p2Go(\'rm\')'; // v691: 表はロードマップの1画面
   } else if (k === 'rmms') {
     _ux2Css(); body = _p2RmMsHtml(); next = '✅ 保存する'; nextOn = 'p2RmMsSave2()';
   } else if (k === 'gapset') {
@@ -16699,7 +16700,7 @@ function _p2PageParts() {
   var back = ((k === 'ck' || k === 'sim' || k === 'dream') && _p2From !== 'tool') ? 'p2Go(\'\')' : (k === 'ck' || k === 'sim' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
   if (/^つぎ：/.test(next)) { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; } // v652: タイルを終えたら、次のタイルではなく入口へ戻る
   if (k === 'yrs') back = _p2YrsBack || 'p2Go(\'goal\',5)';
-  if (k === 'rmrows') back = 'p2Go(\'rmt\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
+  if (k === 'rmrows') back = 'p2Go(\'rm\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   if (k === 'ideal') back = (i === 0 || i === 2 || i === 6) ? 'p2Go(\'\')' : 'p2PgSub(' + (i - 1) + ')'; // v682: セットの最初は入口へ
   if (k === 'goal') { back = _p2From === 'year' ? 'p2Go(\'year\')' : 'p2Go(\'\')'; next = '✓ 完了'; nextOn = back; } // v690
   return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back, dots: dots, dotI: dotI, dotOn: dotOn };
@@ -20749,6 +20750,55 @@ function _p2RmPageHtml() {
     }).join('') + '</div>' : '<div class="ux-empty">まだありません。月を押すと足せます</div>')
     + '<div class="ux-list" style="margin-top:14px"><div class="ux-li" onclick="p2RmOpen()"><span class="ic">' + icn('ruler') + '</span><span>表でまとめて編集<small>月ごとのフロント・流通・Qルビーなど</small></span><span class="ch">›</span></div>'
     + '<div class="ux-li" onclick="p2Go(\'gap\')"><span class="ic">' + icn('calc') + '</span><span>ギャップから割り振る<small>目標との差を月に分ける</small></span><span class="ch">›</span></div></div>';
+}
+// ════ v691: ロードマップを1画面に（月を縦に並べて、数字とマイルストーンをその場で書く）════
+var _p2RmEd = null; // マイルストーンを書いている所 { ym, id }
+UX_INFO.rm1 = { t: 'ロードマップ', h: '月ごとの目標を表に書きます。<b>フロント</b>はその月に新しく入る直下の人数（月の目標・計画シートと同じ数字。理想MAPで決めた月は理想MAPの人数）。<br>Qルビー・エキスパート・環境数は月末の累計。<br>🚩はマイルストーン（押すと名前を直せる・空にすると消える）。⛰＝次の山、🏔＝最終目標の月' };
+function p2RmEd(ym, id) { _p2RmEd = { ym: ym, id: id || '' }; renderPlan(); setTimeout(function() { var el = document.getElementById('p2RmMsIn'); if (el) { el.focus(); try { el.select(); } catch (e) {} } }, 30); }
+function p2RmEdCancel() { _p2RmEd = null; renderPlan(); }
+function p2RmEdSave() {
+  var e = _p2RmEd, el = document.getElementById('p2RmMsIn'); if (!e) return;
+  var t = String((el && el.value) || '').trim(), rm = _p2Rm(), m = e.id ? rm.ms.filter(function(x) { return x.id === e.id; })[0] : null;
+  if (!t) { if (m && confirm('このマイルストーンを消しますか？')) { rm.ms = rm.ms.filter(function(x) { return x.id !== e.id; }); saveGoals(); } _p2RmEd = null; renderPlan(); return; }
+  if (!m) { m = { id: 'rm_' + Date.now() + '_' + Math.floor(Math.random() * 10000), ym: e.ym, color: P2RM_COLORS[rm.ms.length % P2RM_COLORS.length] }; rm.ms.push(m); }
+  m.t = t.slice(0, 30); saveGoals(); _p2RmEd = null; renderPlan();
+}
+function p2RmEdDel() { var e = _p2RmEd; if (!e || !e.id) return; if (!confirm('このマイルストーンを消しますか？')) return; var rm = _p2Rm(); rm.ms = rm.ms.filter(function(x) { return x.id !== e.id; }); saveGoals(); _p2RmEd = null; renderPlan(); }
+function _p2RmOneHtml() {
+  _p2ShCss2();
+  if (!document.getElementById('p2Rm1Css')) { var st = document.createElement('style'); st.id = 'p2Rm1Css';
+    st.textContent = '.rm1-w{overflow-x:auto;margin:6px -2px 0;-webkit-overflow-scrolling:touch}.rm1{width:100%;border-collapse:collapse;font-size:12px}.rm1 th{font-size:10.5px;font-weight:800;color:var(--text-dim);padding:4px 3px;border-bottom:1px solid var(--border);white-space:nowrap}.rm1 th small{font-size:9px}.rm1 td{padding:5px 3px;text-align:center;border-top:1px solid var(--border)}.rm1 tr.ms td{border-top:0;padding:0 3px 7px;text-align:left}'
+      + '.rm1 td.m{text-align:left;font:900 13px Inter,sans-serif;white-space:nowrap;padding-left:2px}.rm1 td.m small{display:block;font-size:9.5px;color:var(--text-dim);font-weight:700}.rm1 tr.cur td.m{color:var(--accent)}.rm1 td.m .ad{font-style:normal;font-size:9.5px;font-weight:800;color:var(--text-dim);margin-left:3px;cursor:pointer;opacity:.75;white-space:nowrap}.rm1 .sp-in{width:42px;font-size:15px}.rm1 .sp-in.w{width:56px}.rm1 .lk{font:900 15px Inter,sans-serif;color:var(--text-mid)}'
+      + '.rm1-ms{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.rm1-ms span{font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:8px;cursor:pointer;background:color-mix(in srgb,var(--c,#5AD7FF) 22%,transparent);color:var(--text)}.rm1-ms span.mk{background:none;color:var(--gold);cursor:default;padding:3px 2px}.rm1-ms span.add{background:none;color:var(--text-dim);padding:3px 4px}'
+      + '.rm1-ed{display:flex;gap:6px;align-items:center}.rm1-ed input{flex:1;min-width:0;background:transparent;border:0;border-bottom:1.5px solid var(--accent);color:var(--text);font:800 13px inherit;font-family:inherit;padding:4px 2px}.rm1-ed input:focus{outline:none}.rm1-ed b{font-size:12px;padding:5px 10px;border-radius:8px;background:var(--accent);color:#06281f;cursor:pointer}.rm1-ed i{font-style:normal;font-size:12px;color:var(--text-dim);cursor:pointer;padding:4px}';
+    document.head.appendChild(st); }
+  var rm = _p2Rm(), defs = _p2RmDefs(rm), cur = _p2Ym(0), p = state.goals.plan, nx = {}; try { nx = _p2Next() || {}; } catch (e) {}
+  var fin = /^\d{4}-\d{2}$/.test(p.deadline || '') ? p.deadline : '', last = _p2YmAdd(cur, 11);
+  [fin, nx.deadline].forEach(function(d) { if (d && d > last) last = d; });
+  if (_p2YmDiff(cur, last) > 23) last = _p2YmAdd(cur, 23);
+  var ro = !!(viewingOwnerUid && !state.isEditor), rows = '';
+  for (var ym = cur, g = 0; ym <= last && g < 24; ym = _p2YmAdd(ym, 1), g++) {
+    var cells = defs.map(function(d) {
+      var v = d.k === 'front' ? _p2FrontTgt(ym) : (rm.rows[d.k] || {})[ym], has = !(v === '' || v == null);
+      if (d.k === 'front' && _p2FrontIdeal(ym) !== null) return '<td><span class="lk" title="理想MAPの人数">' + v + '</span></td>';
+      if (ro) return '<td>' + (has ? v : '') + '</td>';
+      return '<td><input class="sp-in' + (d.k === 'dist' ? ' w' : '') + '" type="number" inputmode="numeric" value="' + (has ? v : '') + '" onfocus="edSelAll(this)" onchange="p2RmCell(\'' + d.k + '\',\'' + ym + '\',this.value)"></td>';
+    }).join('');
+    var ms = (rm.ms || []).filter(function(m) { return m.ym === ym; });
+    var mk = (fin === ym ? '<span class="mk">🏔 ' + evEsc(_p2TitleEn(p.title || '') || '最終目標') + '</span>' : '') + (nx.deadline === ym && !nx.isFinal ? '<span class="mk">⛰ ' + evEsc(nx.title || '次の山') + '</span>' : '');
+    var line;
+    if (_p2RmEd && _p2RmEd.ym === ym) {
+      var em = _p2RmEd.id ? rm.ms.filter(function(m) { return m.id === _p2RmEd.id; })[0] : null;
+      line = '<div class="rm1-ed"><input id="p2RmMsIn" maxlength="30" placeholder="🚩 マイルストーン（例：EMERALD）" value="' + evEsc(em ? em.t || '' : '') + '" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){event.preventDefault();p2RmEdSave()}"><b onclick="p2RmEdSave()">保存</b>' + (em ? '<i onclick="p2RmEdDel()">消す</i>' : '') + '<i onclick="p2RmEdCancel()">✕</i></div>';
+    } else {
+      line = '<div class="rm1-ms">' + mk + ms.map(function(m) { return '<span style="--c:' + (m.color || '#5AD7FF') + '"' + (ro ? '' : ' onclick="p2RmEd(\'' + ym + '\',\'' + m.id + '\')"') + '>' + (m.emoji ? evEsc(m.emoji) : '🚩') + ' ' + evEsc(m.t || '') + (m.ym2 ? '〜' + parseInt(m.ym2.slice(5), 10) + '月' : '') + '</span>'; }).join('') + '</div>';
+      if (!mk && !ms.length) line = ''; // マイルストーンの無い月は行を出さない（＋は月の横）
+    }
+    rows += '<tr class="' + (ym === cur ? 'cur' : '') + '"><td class="m">' + parseInt(ym.slice(5), 10) + '月' + (ro ? '' : '<i class="ad" onclick="p2RmEd(\'' + ym + '\')" title="マイルストーンを足す">＋</i>') + (ym.slice(5) === '01' || g === 0 ? '<small>' + ym.slice(0, 4) + '</small>' : '') + '</td>' + cells + '</tr>' + (line ? '<tr class="ms"><td></td><td colspan="' + defs.length + '">' + line + '</td></tr>' : '');
+  }
+  return '<div class="sp-sec" style="align-items:center;margin-top:2px;font-size:18px">ロードマップ' + _uxIb('rm1') + '</div>'
+    + '<div class="rm1-w"><table class="rm1"><tr><th></th>' + defs.map(function(d) { return '<th>' + evEsc(d.lb) + (d.k === 'dist' ? '<small>（P）</small>' : '') + '</th>'; }).join('') + '</tr>' + rows + '</table></div>'
+    + '<div class="sp-ft" style="margin-top:12px"><span onclick="p2Go(\'rmrows\')">⚙ 項目を変える</span><span onclick="p2Go(\'gap\')">ギャップから割り振る ›</span></div>';
 }
 UX_INFO.rm = { t: 'ロードマップ', h: '先月から期日までの横の線です。<b>F</b>＝その月のフロント目標、🚩＝マイルストーン、⛰＝次の山。<br>月を押すと、その月のフロント目標・流通を＋−で決めたり、マイルストーンを足したりできます' };
 function _p2RmMonthHtml() {
