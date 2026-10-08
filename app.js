@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v703';
+var APP_JS_VERSION = 'v704';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3890,7 +3890,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v703';
+  var DATA_VERSION = 'v704';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5377,6 +5377,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v704', d:'2026-10-08', items:['🎰 シミュレーションのファーストボーナスは「押して見る」で表示：数字がスロットみたいにぐるぐる回って、右の桁から順に止まります（金額を押すともう一度回せます）','数字を変えたら、新しい金額でまた回って止まります'] },
   { v:'v703', d:'2026-10-08', items:['計画シートの上（目標まわり）をすっきり：紙の下線の行をやめて、見出し1行と「年の目標 › マイルストーン › 今月の目標 › 今月の数字」のカード1列に。MAPと下の欄が広くなりました','今月の月収・NEWフロントはカードの中でそのまま書けます。年の目標・マイルストーンのカードを押すとロードマップへ'] },
   { v:'v702', d:'2026-10-08', pop: { t: 'BRになる月が「Q4の翌月」になりました', items: ['週ごとの昇格（Q4の月の7・14・21日締め）はなくなり、LOI → Q2 → Q3 → Q4 → BR の流れになりました', 'Q4の月末で、その月1,000P・累計5,000Pを満たしていれば、翌月からBRです', 'シミュレーション・目標（BRの月・最短の月）・ギャップの月数を新しい流れに合わせました'], go: ['シミュレーションを見る', "switchView('plan');p2Go('sim')"] }, items:['BRの判定を新しいルールに：週ごとの昇格はなく、Q4の月末で今月1,000P・累計5,000Pなら翌月BR（LOI→Q2→Q3→Q4→BR）','PLANの「BRまでの道のり」：最短のBRは今月LOIから4ヶ月後（Q4の翌月）。Q4の人は「◯月末までにあと◯P → ◯月からBR」','シミュレーションを5ヶ月（LOI・Q2・Q3・Q4・BR）に。フロントはQ2・Q3、ファーストボーナスはBRになった月のGSVで計算','目標ファーストボーナスの表・ギャップの「BRまで」・目標の「LOI→BRまでの月数」を4ヶ月に（3ヶ月のままだった人は自動で4ヶ月に）'] },
   { v:'v701', d:'2026-10-08', items:['MAPのカード：「GSV」の文字をなくし、稼働の札とポイントが重ならないようにしました（入りきらない時は文字を少し小さく・固定PTはカードの右上に表示）'] },
@@ -19692,7 +19693,7 @@ function _p2SimOneHtml() {
   var inp = function(v, on, w) { return '<input class="sp-in" type="number" inputmode="numeric" value="' + v + '" onfocus="edSelAll(this)" onchange="' + on + '(this.value)"' + (w ? ' style="width:' + w + 'px"' : '') + '>'; };
   setTimeout(_p2SimSwipe, 0);
   return '<div class="sp-sec" style="align-items:center;margin-top:2px;font-size:18px">シミュレーション' + _uxIb('sim') + '</div>'
-    + '<div class="sm1-r"><div class="fb"><small>ファーストボーナス（BR昇格後）' + _uxIb('simfb').replace('class="ux-ib"', 'class="ux-ib" style="display:inline-flex;width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle"') + '</small><b>¥' + R9.fb.toLocaleString() + '<i>/月</i></b></div>'
+    + '<div class="sm1-r"><div class="fb"><small>ファーストボーナス（BR昇格後）' + (_p2FbShown ? _uxIb('simfb').replace('class="ux-ib"', 'class="ux-ib" style="display:inline-flex;width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle"') : '') + '</small><b>' + _p2FbAmt(R9.fb) + (_p2FbShown ? '<i>/月</i>' : '') + '</b></div>'
     + '<div class="k">組織（' + ymL(mo) + '）<b>' + cnt + '</b>人<br>GSV <b>' + mon.gsv.toLocaleString() + '</b>P</div></div>'
     + '<div class="sm1-g">'
     + (cus ? '' : '<div>フロント（月に）' + inp(n, 'p2SimNSet') + '</div>')
@@ -19708,13 +19709,52 @@ function _p2SimOneHtml() {
     + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3, 4] : [1, 2, 3, 4]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）<b>new</b></span>'; }).join('') + '</div>';
 }
 function p2SimPsvSet(v) { var n = Math.max(0, Math.min(10000, parseInt(v, 10) || 0)); if (n) p2SimPsv(n); }
+// ════ v704: ファーストボーナスはボタンを押してから。数字がスロットのリールみたいにぐるぐる回って、右の桁（一の位）から止まる ════
+var _p2FbShown = false, _p2FbLast = null, _p2FbQuick = false;
+function _p2FbAmt(v) {
+  _p2FbCss();
+  if (!_p2FbShown) return '<span class="fbq" onclick="p2FbReveal()"><i>🎁</i>押して見る</span>';
+  var s = '¥' + (+v || 0).toLocaleString(), lab = ' aria-label="' + s + '" id="p2FbR" onclick="p2FbAgain()" title="もう一度回す"';
+  if (_p2FbLast === v) return '<span class="fbr"' + lab + '>' + s + '</span>';
+  _p2FbLast = v; setTimeout(_p2FbSpin, 40);
+  var k = 0, D = s.replace(/\D/g, '').length;
+  return '<span class="fbr fbsp"' + lab + '>' + s.split('').map(function(ch) {
+    if (!/\d/.test(ch)) return '<span class="rc">' + ch + '</span>';
+    var n = 10 * (2 + (D - 1 - k++)) + (+ch), st = ''; // 左の桁ほど多く回る
+    for (var i = 0; i <= n; i++) st += '<span>' + (i % 10) + '</span>';
+    return '<span class="rl"><span class="rs" data-n="' + n + '">' + st + '</span></span>';
+  }).join('') + '</span>';
+}
+function _p2FbSpin() {
+  var R = document.getElementById('p2FbR'); if (!R || !R.classList.contains('fbsp')) return;
+  var cols = R.querySelectorAll('.rs'), b0 = _p2FbQuick ? .55 : 1.3, st = _p2FbQuick ? .1 : .28, end = 0;
+  Array.prototype.forEach.call(cols, function(c, j) {
+    var d = b0 + (cols.length - 1 - j) * st; end = Math.max(end, d); // 右の桁から止まる
+    c.style.transition = 'transform ' + d + 's cubic-bezier(.12,.72,.28,1.06)';
+    c.style.transform = 'translateY(-' + (+c.getAttribute('data-n') * 1.1) + 'em)';
+  });
+  _p2FbQuick = true;
+  setTimeout(function() { var r = document.getElementById('p2FbR'); if (!r) return; r.classList.remove('fbsp'); r.classList.add('hit'); try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) {} }, end * 1000 + 30);
+}
+function p2FbReveal() { _p2FbShown = true; _p2FbLast = null; _p2FbQuick = false; renderPlan(); }
+function p2FbAgain() { _p2FbLast = null; _p2FbQuick = false; renderPlan(); }
+function _p2FbCss() {
+  if (document.getElementById('p2FbCss')) return;
+  var st = document.createElement('style'); st.id = 'p2FbCss';
+  st.textContent = '.fbq{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:8px 16px;border-radius:12px;background:linear-gradient(135deg,#FFD166,#FFB454);color:#3a2400;font:900 15px "Noto Sans JP",sans-serif;cursor:pointer;animation:fbq 1.6s infinite}.fbq i{font-style:normal}'
+    + '@keyframes fbq{0%{box-shadow:0 0 0 0 rgba(255,209,102,.55)}70%{box-shadow:0 0 0 12px rgba(255,209,102,0)}100%{box-shadow:0 0 0 0 rgba(255,209,102,0)}}'
+    + '.fbr{display:inline-flex;align-items:flex-end;cursor:pointer;transform-origin:left center}.fbr .rl{display:inline-block;height:1.1em;line-height:1.1em;overflow:hidden}.fbr .rs{display:flex;flex-direction:column}.fbr .rs span{height:1.1em;line-height:1.1em}.fbr .rc{line-height:1.1em}.fbr.fbsp .rs{filter:blur(.7px)}'
+    + '.fbr.hit{animation:fbhit .7s ease-out}@keyframes fbhit{0%{transform:scale(1)}30%{transform:scale(1.1);text-shadow:0 0 22px rgba(255,209,102,.95)}100%{transform:scale(1);text-shadow:none}}'
+    + '@media (prefers-reduced-motion:reduce){.fbr .rs{transition:none!important}.fbr.hit{animation:none}}';
+  document.head.appendChild(st);
+}
 // v652: ファーストボーナス（一番のお楽しみ）は大きく。内訳は (i) に
 function _p2SimFbHtml(R9) {
   var bb = _p2BBCalc(Math.max(0, R9.gsv - 1000)), loi = R9.gsv >= 2000 ? 50000 : 0;
   UX_INFO.simfb = { t: 'ファーストボーナスの内訳', ok: 'とじる', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
     + '※ GSV ' + R9.gsv.toLocaleString() + ' − 1,000P（BR昇格分）＝ ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'P がBB対象<br>'
     + (loi ? '<b>エリートLOI特典</b>：¥50,000（BR維持で翌月進呈）' : '<b>エリートLOI特典</b>：BRの月のGSVが2,000以上で ¥50,000') };
-  return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb"><span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span><small>ファーストボーナス（BR昇格後）</small><b>¥' + R9.fb.toLocaleString() + '<i>/月</i></b></div>';
+  return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb">' + (_p2FbShown ? '<span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span>' : '') + '<small>ファーストボーナス（BR昇格後）</small><b>' + _p2FbAmt(R9.fb) + (_p2FbShown ? '<i>/月</i>' : '') + '</b></div>';
 }
 function _p2SimSwipe() {
   var el = document.querySelector('.p2sm-tree,.p2sm-num'); if (!el || typeof _uxSwipe !== 'function') return;
