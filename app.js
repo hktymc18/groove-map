@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v750';
+var APP_JS_VERSION = 'v751';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v750';
+  var DATA_VERSION = 'v751';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v751', d:'2026-10-09', items:['スマホのMAP：研修生（水色）と審査中のLOI〜Q4（オレンジ）の人の丸が、PCのように光るように（ケアの印を「非表示」にした人・OUTは光りません）'] },
   { v:'v750', d:'2026-10-09', items:['MAPのかんたん追加（フロント追加）で研修生を足すと、選んだ研修の段階（マケなど）が研修履歴に「✓ 進んだ」で入るように（日付が空なら今日・先の日は予定）。分析の研修フローにもすぐ出ます'] },
   { v:'v749', d:'2026-10-09', items:['分析 › 研修：MAPで「研修生」の人が、研修の記録（マケ・PG…）がまだ無いと 0人 になっていたのを直しました。その月のMAPの研修生も数えます','記録がまだ無い時は「研修生は N人いますが、この月の研修の記録はまだありません」と出します（記録はその人の「研修」タブから）'] },
   { v:'v748', d:'2026-10-09', items:['計画シート・MAPの課題パネル：書いた課題と「自分・全体のメモ」を 🗑 で消せるように（書いている時も「完了」の横に 🗑）。消した後は「↩ 元に戻す」で戻せます'] },
@@ -17384,6 +17385,7 @@ function _mxCss() {
     + ".mr:active{background:var(--surface2)}.mr.dim>*:not(.mc){opacity:.3}.mr.dim .mc>*{opacity:.3}.mr.sel{background:color-mix(in srgb,var(--accent) 10%,var(--surface))}.mr.out .n{text-decoration:line-through;opacity:.6}"
     + ".mg{position:relative;flex:none;align-self:stretch}.mg i{position:absolute;top:0;bottom:0;border-left:2px solid var(--lc)}.mg i.el{bottom:50%;border-bottom:2px solid var(--lc);border-bottom-left-radius:8px;width:12px}.mg i.dn{top:50%}"
     + ".mt{flex:none;width:20px;height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-dim);margin-right:2px}.mt.on{color:var(--text-mid);font-weight:900}"
+    + "@keyframes mxGlow{0%,100%{box-shadow:0 0 4px 0 var(--k)}50%{box-shadow:0 0 12px 3px var(--k),0 0 24px 4px var(--k)}}.mav.glw{animation:mxGlow 1.8s ease-in-out infinite}.mr.out .mav.glw,body.print .mav.glw{animation:none}"
     + ".mav{flex:none;width:36px;height:36px;border-radius:50%;border:2.5px solid var(--k);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text);overflow:hidden;margin-right:9px}.mav img{width:100%;height:100%;object-fit:cover}"
     + ".mn{flex:1;min-width:112px;padding:7px 8px 7px 0}.mn .l1{display:flex;align-items:center;gap:6px;white-space:nowrap;min-width:0}"
     + ".tp{flex:none;font-size:13.5px;font-weight:900;color:#fff;background:var(--k);border-radius:7px;padding:1px 7px;line-height:1.4;font-family:'Inter','Noto Sans JP',sans-serif;letter-spacing:.2px;max-width:92px;overflow:hidden;text-overflow:ellipsis}"
@@ -17442,7 +17444,7 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
   return '<div class="mr' + (t === 'OUT' ? ' out' : '') + (window._selectedCardId === m.id ? ' sel' : '') + '" id="nc-' + m.id + '" data-cid="' + m.id + '" onclick="mxTap(\'' + m.id + '\')">'
     + '<div class="mg" style="width:' + gw + 'px">' + g + '</div>'
     + (nKids ? '<span class="mt on" onclick="event.stopPropagation();mxTgl(\'' + m.id + '\')">' + (kidsShown ? '▼' : '▶') + '</span>' : '<span class="mt"></span>')
-    + '<div class="mav" style="--k:' + k + '">' + av + '</div>'
+    + '<div class="mav' + (mapType === 'current' && t !== 'OUT' && m.badgeMode !== 'off' && (cat === 'tr' || cat === 'ex') ? ' glw' : '') + '" style="--k:' + k + '">' + av + '</div>' // v751: 研修生・審査中はPCのように光る
     + '<div class="mn"><div class="l1">' + (t ? '<span class="tp" style="--k:' + k + _mxInk(k) + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="n ' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</div>'
     + (l2 ? '<div class="l2">' + l2 + '</div>' : '') + '</div>'
     + '<div class="mc"><div class="ma" style="--ac:' + ac + '"><b>' + (act || '—') + '</b><small>' + (rate ? rate + '%' : '') + '</small></div>'
