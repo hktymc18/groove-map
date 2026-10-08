@@ -1,0 +1,30 @@
+// v702：週次のBR昇格はなくなり、Q4の翌月にBR（LOI→Q2→Q3→Q4→BR）。判定・道のり・シミュレーション・ギャップの月数
+const T = require('../lib/head.js')();
+const { w, c, sleep, setWH, $ } = T;
+T.run(async () => {
+  T.login(); setWH(390, 844);
+  const tr = (title, pt, cum) => w._computeTitleTransition({ id: 'x', title, ptCurrent: pt, loiCumPt: cum, startMonth: '2026-01' }, '2026-11');
+  c('判定：Q3は累計5,000Pでも次はQ4', tr('Q3', 2000, 4000).to === 'Q4');
+  c('判定：Q4の月末で1,000P・累計5,000P → 翌月BR', tr('Q4', 1000, 4000).to === 'BR' && tr('Q4', 1000, 4000).kind === 'promote');
+  c('判定：Q4で累計未達は降格', tr('Q4', 1000, 3000).kind === 'demote');
+  const now = w._p2Ym(0), root = () => w.state.members[0];
+  w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'B3', parentId: '', mapType: 'both', ptCurrent: 300 }];
+  c('道のり：今月LOIなら最短のBRは4ヶ月後（Q4の翌月）', w._p2BrMin() === w._p2YmAdd(now, 4));
+  const h1 = w._p2BrPathHtml('');
+  c('道のり：LOI→Q2→Q3→Q4（◯月）→BR の表示', /Q4（\d+月）→/.test(h1) && h1.indexOf('Q4の月）にBR') < 0);
+  root().title = 'Q2'; root().loiCumPt = 1500; root().ptCurrent = 1200;
+  c('道のり：Q2なら3ヶ月後にBR', w._p2BrMin() === w._p2YmAdd(now, 3));
+  root().title = 'Q4'; root().loiCumPt = 3500; root().ptCurrent = 1000;
+  const h4 = w._p2BrPathHtml('');
+  c('道のり：Q4は月末まで・来月からBR（締め日・翌日からBRはなし）', w._p2BrMin() === w._p2YmAdd(now, 1) && /月末<\/b>までに/.test(h4) && h4.indexOf('締め日') < 0 && h4.indexOf('翌日から') < 0 && /あと <b>500P/.test(h4));
+  const cfg = w._p2SimCfg(), R = w._p2SimFb(2, cfg);
+  c('シミュレーション：5ヶ月（LOI・Q2・Q3・Q4・BR）・フロントはQ2・Q3', R.mons.length === 5 && w._p2SimFr(2).join() === '0,2,2,0,0');
+  c('シミュレーション：累計はLOI〜Q4、ファーストボーナスはBRの月のGSV', R.cum === R.mons.slice(0, 4).reduce((s, x) => s + x.gsv, 0) && R.gsv === R.mons[4].gsv && R.fb === w._p2FirstBonus(R.mons[4].gsv));
+  const fp = w._p2FbPlanHtml(300000, w._p2YmAdd(now, 4));
+  c('目標ファーストボーナス：表に Q4 と BR の行', /<td>[^<]*Q4<\/td>/.test(fp) && /<td>[^<]*BR<\/td>/.test(fp) && fp.indexOf('Q4 → 翌月BR') >= 0);
+  const p2 = w._p2(); delete p2.br702; w.state.goals.plan.pipeline = 3; p2.gap = p2.gap || {}; p2.gap.rates = { brLead: 3 }; w._p2();
+  c('ギャップ・目標のLOI→BRの月数は3→4に', w.state.goals.plan.pipeline === 4 && p2.gap.rates.brLead === 4);
+  w._p2().gap.rates.brLead = 3; w._p2(); c('自分で直した後は変えない（1回だけ）', w._p2().gap.rates.brLead === 3);
+  w.switchView('plan'); w.p2Go('sim'); await sleep(30);
+  c('シミュレーション画面：Q4・BRのタブ', /Q4/.test($('.p2sm-seg').textContent) && /BR/.test($('.p2sm-seg').textContent) && $('.p2sm-seg').querySelectorAll('span').length === 5);
+});
