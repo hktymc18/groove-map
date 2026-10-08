@@ -5364,7 +5364,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v696', d:'2026-10-08', pop: { t: '計画シートのMAPで、人ごとの課題を書けるようになりました', items: ['MAPの人を押すと、その人の今月の課題を書けます（課題のある人は光ります）', '「→ 行動にする」で、4分野から選んで行動に入れられます', '10人以上になったら、MAPは見慣れたサークルMAPに自動で切りかわります（シート型にも戻せます）'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートのMAPの人を押すと、その人の課題を書けるようにしました（MAPの横／下に一覧）','課題の「→ 行動にする」で、フロント作り・流通アップ・Dライン・自己成長から選んで行動に入れられます','組織が10人以上（自分を除く）になったら、MAPを理想MAPと同じサークルMAPに自動で切りかえます（サークル｜シート型で選べます）。印刷もサークルMAPになります','シート型のMAPも、名前を姓・名の2段のフルネームで出すようにしました'] },
+  { v:'v696', d:'2026-10-08', pop: { t: '計画シートのMAPで、人ごとの課題を書けるようになりました', items: ['MAPの人を押すと、その人の今月の課題を書けます（課題のある人は光ります）', '「→ 行動にする」で、4分野から選んで行動に入れられます', '10人以上になったら、MAPは見慣れたサークルMAPに自動で切りかわります（シート型にも戻せます）'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートのMAPの人を押すと、その人の課題を書けるようにしました（MAPの横／下に一覧）','課題の「→ 行動にする」で、フロント作り・流通アップ・Dライン・自己成長から選んで行動に入れられます','組織が10人以上（自分を除く）になったら、MAPを理想MAPと同じサークルMAPに自動で切りかえます（サークル｜シート型で選べます）。印刷もサークルMAPになります','シート型のMAPも、名前を姓・名の2段のフルネームで出すようにしました','PC版の行動の欄に、記入例（PDFの例）を全部薄く出しました。押すと書く欄に入ります'] },
   { v:'v695', d:'2026-10-08', items:['PC版の計画シート：MAPを横いっぱいに広げ、行動（フロント作り・流通アップ・Dライン・自己成長）は数字と改善点の下に4つ横並びにしました'] },
   { v:'v694', d:'2026-10-08', items:['PLAN › シミュレーションを1画面にしました（いちばん上にファーストボーナス、その下に設定をマスに書くだけ、下に月ごとの組織図）'] },
   { v:'v693', d:'2026-10-08', items:['PLAN › 年別目標を表1つにしました（最終目標 → 1年ごとの月収・タイトル → 今 を1画面で。月収はマスに書くだけ）'] },
@@ -37105,6 +37105,12 @@ var P2_SH_CAT = [{ k: 'front', lb: 'フロント作りに関して', s: 'フロ�
 var P2_SH_AUTO = [['', '手入力'], ['front', 'MAP：今月の直下フロント'], ['ct', '予定：CT'], ['ft', '予定：FT'], ['ctget', '予定：CT取り'], ['st', '予定：ST'], ['snst', '予定：SNST'], ['dlr', '研修の記録：DLR'], ['pg', '研修の記録：PG']];
 var P2_SH_KZ_EX = { front: '研修最後まで通らなかった人が多かったので、S-SETの計画立案する', dlr: 'FTからの動員が少なかったので、FTの改善のアドバイスをもらう', pg: 'AさんのTupができなかったので、Aさんリストの作成とネタ集めをする', ft: '何て言っていいかわからなかったので、当日Aさんに連絡できるように依頼する', ct: 'CTが後手後手になっていたので、CT取りを前月25日にする', ids: 'DAYの声掛けがギリギリになっていたので、1週間前に声掛けする', seed: '日程調整ができなくて不参加が多かったので、仕事を調整できるようにする', ur: 'AさんからURのTupしてもらうように計画立案する' }; // v688: 記入例
 var P2_SH_ACT_EX = { front: 'リストアップ書き直し', dist: 'トリートメント練習', dline: 'プレゼン練習（PG）', self: '4つのタイプを読む' };
+var P2_SH_ACT_EXS = { // v696: 記入例のPDFの行動（PCは空いた行に全部薄く出す・押すと書く欄に入る）
+  front: ['リストアップ書き直し', 'Uラインと立案ミーティング', 'サイドラインにOL時間をもらう'],
+  dist: ['自身の愛用度（ADP注文 5日）', 'トリートメント練習', 'FamilyDATAで作戦ミーティング', 'Before＆After写真作る', '体感ネタを10個集める'],
+  dline: ['プレゼン練習（PG）', '夢を育てる時間を作る', '体感会をする', 'OUTLINEを組む', 'リストミーティング', 'FamilyDATAで作戦ミーティング'],
+  self: ['4つのタイプを読む', '2×2=6を読む', 'メラビアン変化', 'FUNDAMENTALを受講', '感謝ページ（GS）を作る'] };
+function p2ShActEx(cat, t) { var el = document.getElementById('p2ShIn_' + cat); if (!el) return; el.value = t; el.focus(); try { el.setSelectionRange(t.length, t.length); } catch (e) {} }
 UX_INFO.shmap = { t: '＜現状/理想MAP＞', h: '上＝流通（ユーザー）：名前｜GSV<br>下＝ビジネス：名前｜稼働／タイトル｜GSV<br>点線＝今月これから出すNEWフロント（理想MAPでは足した人）<br><br><b>Howdy稼働基準</b><br>S：120%参加（本気レベル）<br>A：仕事切り替え期日確定<br>B：仕事以外は基本的に来る<br>C：参加可能でも中々来ない<br>A〜Cは稼働率を%で記載' };
 UX_INFO.shkz = { t: '数字と改善点', h: '1行に1項目。先月の目標→結果（届かなかったら赤）、改善点、今月の目標と今の数。<br>改善点は「先月の結果から、今月どうするか」を書きます。<br>今の数はMAP・予定・研修の記録から数えられる項目は自動で入ります' };
 UX_INFO.shact = { t: '行動', h: '✔＝やった。空いた行に書くと足されます。<br>期日を入れるとToDo・カレンダーにも出て、どちらでチェックしても同じです' };
@@ -37305,7 +37311,7 @@ function _p2ShCss2() {
     + '.sp-kz{width:100%;box-sizing:border-box;margin-top:6px;font:700 12.5px/1.55 inherit;font-family:inherit;color:var(--text);padding:6px 9px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);resize:none;min-height:34px;overflow:hidden}.sp-kz::placeholder{color:var(--text-dim)}.sp-kz:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-at{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}.sp-at .h{display:flex;align-items:center;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:900}.sp-at .h span{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--text-dim)}'
     + '.sp-at .r{display:flex;align-items:stretch;border-top:1px solid var(--border);min-height:32px;font-size:12.5px;font-weight:700}.sp-at .c{width:32px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;cursor:pointer}.sp-at .x{flex:1;min-width:0;border-left:1px solid var(--border);display:flex;align-items:center}.sp-at .x input{width:100%;background:transparent;border:0;color:var(--text);font:700 13px inherit;font-family:inherit;padding:6px 8px}.sp-at .x input::placeholder{color:var(--text-dim)}.sp-at .x input:focus{outline:none;background:color-mix(in srgb,var(--accent) 6%,transparent)}.sp-at .r.dn .x input{color:var(--text-dim);text-decoration:line-through}'
-    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;opacity:0;cursor:pointer}.sp-at .d.od{color:#FF6B7F}.sp-at .r.nw .c{color:var(--text-dim)}'
+    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;opacity:0;cursor:pointer}.sp-at .d.od{color:#FF6B7F}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
     + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
     // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
     + '.sp-pc{margin-top:4px}.sp-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.sp-acts .sp-at{margin-bottom:0}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
@@ -37390,8 +37396,10 @@ function _p2ShActTbl(ym, c, minRows) {
     return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c" onclick="p2ShActTg(\'' + e.id + '\')">' + (e.done ? '✔' : '') + '</span><span class="x"><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '></span>'
       + '<span class="d' + (od ? ' od' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '/') + (ro ? '' : '<input type="date" value="' + (e.date || '') + '" onchange="p2ShActDate(\'' + e.id + '\',this.value)">') + '</span></div>';
   }).join('');
-  if (!ro) r += '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '" placeholder="＋ ' + (L.length ? '書く' : '例：' + (P2_SH_ACT_EX[c.k] || '')) + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAdd(\'' + c.k + '\')"></span><span class="d">/</span></div>';
-  for (var j = L.length + (ro ? 0 : 1); j < (minRows || 0); j++) r += '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>';
+  if (!ro) r += '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '" placeholder="＋ ' + (L.length || minRows ? '書く' : '例：' + (P2_SH_ACT_EX[c.k] || '')) + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAdd(\'' + c.k + '\')"></span><span class="d">/</span></div>';
+  var exs = minRows && !ro ? (P2_SH_ACT_EXS[c.k] || []) : [], used = L.map(function(e) { return e.title; });
+  exs.filter(function(t) { return used.indexOf(t) < 0; }).forEach(function(t) { r += '<div class="r ex" onclick="p2ShActEx(\'' + c.k + '\',\'' + t.replace(/'/g, '') + '\')" title="押すと書く欄に入ります"><span class="c"></span><span class="x"><i>例：' + evEsc(t) + '</i></span><span class="d">/</span></div>'; });
+  for (var j = L.length + (ro ? 0 : 1) + exs.length; j < (minRows || 0); j++) r += '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>';
   return '<div class="sp-at"><div class="h">' + c.lb + '<span>実行期日</span></div>' + r + '</div>';
 }
 function p2ShActEdit(id, v) {

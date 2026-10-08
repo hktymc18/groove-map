@@ -21,6 +21,6 @@ T.run(async () => {
   w.viewingOwnerUid = 'x'; reset(); w._rnPopCheck(); await sleep(10);
   c('他の人のMAPを見ている時は出さない', !$('#rnPopOv')); w.viewingOwnerUid = null;
   const big = w.RELEASE_NOTES.filter(n => n.pop).map(n => n.v);
-  c('出すのは大きい更新（pop付き）だけ', big.indexOf('v688') >= 0 && !w.RELEASE_NOTES[0].pop === (w.RELEASE_NOTES[0].v !== 'v688'));
+  c('出すのは大きい更新（pop付き）だけ', big.indexOf('v688') >= 0 && big.length < w.RELEASE_NOTES.length && w.RELEASE_NOTES.filter(n => n.v === 'v687')[0].pop === undefined);
   w.fsSet = of;
 });
