@@ -2952,7 +2952,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v715</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v716</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3060,6 +3060,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
         <span id="pcSearchClear" style="display:none;font-size:14px;color:var(--text-dim);cursor:pointer" onclick="event.stopPropagation();clearSearch()">✕</span>
       </div>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <div class="pt-action pt-iss" onclick="mapIssTgl()" title="課題パネル（MAPの人を押すと、その人の課題を書ける）">📝 課題</div>
         <div class="pt-action" onclick="ckLinkOpen()" title="受付システムの名簿と紐づけて当月の稼働率を取り込む">⟲ 受付連携</div>
         <div class="pt-action pt-ic mapFsBtn" onclick="mapFullscreen()" title="全画面（MAPだけを画面いっぱいに・画面共有向け）"><span class="fs-ic">⛶</span><span class="fs-lb"> 全画面</span></div>
         <div class="pt-action pt-ic pt-more" onclick="px3MapMore(this,'current')" title="その他（翌月コピー・共有MAP・CSV・共有）">⋯</div>
@@ -3100,7 +3101,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
       <div class="pv-btn" id="pvOrbitI" onclick="switchPCView('orbit')" title="サークル"><svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg><span class="pv-lb">サークル</span></div>
       <div class="pv-btn" id="pvTableI" onclick="switchPCView('table')" title="テーブル"><svg class="lic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9.5h18M3 15h18M9 4v16"/></svg><span class="pv-lb">テーブル</span></div>
       </div>
-      <div style="margin-left:auto;display:flex;gap:6px;align-items:center"><div class="pt-action pt-ic pt-more" onclick="px3MapMore(this,'ideal')" title="その他（翌月コピー・共有MAP・CSV）">⋯</div></div>
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center"><div class="pt-action pt-iss" onclick="mapIssTgl()" title="課題パネル（MAPの人を押すと、その人の課題を書ける）">📝 課題</div><div class="pt-action pt-ic pt-more" onclick="px3MapMore(this,'ideal')" title="その他（翌月コピー・共有MAP・CSV）">⋯</div></div>
     </div>
     <div class="sec-label mobile-tree" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">目標ツリー <span id="treeSortSlotI" class="tree-sort-slot" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
     <div class="pc-filter-bar" id="pcFilterIdeal"></div>
@@ -3903,7 +3904,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v715';</script>
-<script src="app.js?v=v715"></script>
+<script>window.GM_EXPECT_JS='v716';</script>
+<script src="app.js?v=v716"></script>
 </body>
 </html>
