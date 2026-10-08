@@ -2952,7 +2952,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v705</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v706</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3037,6 +3037,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <!-- PC統合ツールバー -->
     <div class="pc-toolbar" id="pcToolbarC">
+      <div class="pt-mon" data-pcmon></div><div class="pt-sep"></div>
       <div class="pt-mapseg">
         <span class="pt-ms cur active" onclick="switchView('current')"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> 現状MAP</span>
         <span class="pt-ms idl" onclick="switchView('ideal')">🎯 理想MAP</span>
@@ -3082,6 +3083,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     <div style="display:none"><span id="ltsvI"></span><span id="commTotal"></span><div id="commTableWrap"></div></div>
     <!-- PC統合ツールバー(理想) -->
     <div class="pc-toolbar pc-toolbar-ideal" id="pcToolbarI">
+      <div class="pt-mon" data-pcmon></div><div class="pt-sep"></div>
       <div class="pt-mapseg">
         <span class="pt-ms cur" onclick="switchView('current')"><svg class="lic" viewBox="0 0 24 24"><path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg> 現状MAP</span>
         <span class="pt-ms idl active" onclick="switchView('ideal')">🎯 理想MAP</span>
@@ -3897,7 +3899,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v705';</script>
-<script src="app.js?v=v705"></script>
+<script>window.GM_EXPECT_JS='v706';</script>
+<script src="app.js?v=v706"></script>
 </body>
 </html>
