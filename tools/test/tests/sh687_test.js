@@ -31,7 +31,9 @@ T.run(async () => {
   c('数字は8行（1項目＝1行）', $$('.sp-kr').length === 8);
   c('v688: 説明文は画面に出さず i の中', !$('.sp-leg') && !/Howdy稼働基準/.test(v()) && $$('#view-plan .ux-ib').length >= 3);
   c('v688: 改善点の欄は項目ごとに記入例（同じ文の繰り返しなし）', /S-SET/.test($$('.sp-kr')[0].querySelector('.sp-kz').placeholder) && /CT取りを前月25日/.test($$('.sp-kr')[4].querySelector('.sp-kz').placeholder) && new Set($$('.sp-kz').map(x => x.placeholder)).size === 8);
-  c('v697: 行動の欄に記入例を全部（スマホも）', /例：リストアップ書き直し/.test($('.sp-at').textContent) && $$('.sp-at .r.ex').length === 3 + 5 + 6 + 5);
+  c('v699: 記入例は空いた行の薄い文字だけ（全部・押しても入らない）・「＋ 書く」はなし', $$('.sp-at .r.nw input').filter(x => /^例：/.test(x.placeholder)).length === 3 + 5 + 6 + 5 && !/＋ 書く/.test($('#view-plan').innerHTML) && !$('.sp-at .r.ex'));
+  const r0 = $$('.sp-at')[0].querySelectorAll('.r').length; w.p2ShActRow('front'); await sleep(10);
+  c('v699: 行を追加', $$('.sp-at')[0].querySelectorAll('.r').length === r0 + 1);
   w.p2ShKzTgl(); await sleep(10);
   c('v697: 数字と改善点をたためる（1行のまとめだけ）', $$('.sp-kr').length === 0 && /ひらく/.test($('.sp-fold').textContent));
   w.p2ShKzTgl(); await sleep(10);
@@ -47,7 +49,7 @@ T.run(async () => {
   const ids = $$('.sp-kr')[5].querySelectorAll('.sp-in'); ids[1].value = '3'; ids[1].onchange(); await sleep(10);
   c('自動で数えない項目は今の数も書ける', w._p2ShKv(ym, w._p2ShK('ids')).v === 3);
   c('行動：4分野の表（✔・行動・実行期日）', $$('.sp-at').length === 4 && /実行期日/.test($('.sp-at .h').textContent));
-  const n0 = s.events.length, ni = $('#p2ShIn_front'); ni.value = 'リストアップ書き直し'; ni.onchange(); await sleep(40);
+  const n0 = s.events.length, ni = $('#p2ShIn_front_0'); ni.value = 'リストアップ書き直し'; ni.onchange(); await sleep(40);
   const e = s.events[s.events.length - 1];
   c('空いた行に書くと行動が足される（＝ToDoのタスク）', s.events.length === n0 + 1 && e.type === 'task' && e.planCat === 'front' && e.planYm === ym && /リストアップ書き直し/.test($('.sp-at').innerHTML));
   w.p2ShActDate(e.id, ym + '-25'); await sleep(10);
