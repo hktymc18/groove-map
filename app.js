@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v712';
+var APP_JS_VERSION = 'v713';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v712';
+  var DATA_VERSION = 'v713';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v713', d:'2026-10-08', items:['スマホの計画シートの文字を大きく：見出し17px・項目名16px・数字18px・書く欄と行動の行16px（いちばん小さい文字も12px）','書く欄を16pxにしたので、iPhoneで押した時に画面が勝手に拡大しなくなりました','数字の行は2段に：1段目＝項目名と今の数、2段目＝先月の目標→結果（達成／届かず）と今月の目標','行動の行は押しやすい高さ（44px）に'] },
   { v:'v712', d:'2026-10-08', items:['PCのホームの「インサイト」を作り直し：ひらくと4枚のカード（コーチの一言｜先週からの組織（メンバー・GSV・フォロー要の数字）｜今日の気づき｜先月からの変化（3列）'] },
   { v:'v711', d:'2026-10-08', pop: { t: 'PCのホームを作り直しました', items: ['上に「今月の目標」の帯：月収・NEWフロント・マイルストーンまでの月数（押すと計画シート）', '3列で「今日（予定・ToDo）｜今週やること・今月の行動｜気になる人・再アプローチ」。ToDoと行動はホームでチェック・追加できます', 'インサイトは下にたたんで置いています'], go: ['ホームを見る', "switchView('home')"] }, items:['PCのホームを新しく：今月の目標の帯＋3列（今日｜今週と今月の行動｜人）','今日のToDoはホームでチェック・「＋ 今日のToDoを足す」で追加','計画シートの行動（まだの物）を期限の近い順に。期限切れは赤','連続日数・レベル・今週のXPは右上の小さな札に（押すと実績）'] },
   { v:'v710', d:'2026-10-08', items:['PC：MAPの上の帯を1行に。現状/理想 → ‹ 年月 › → LTSV・稼働（1行の札）→ 表示の切りかえ（アイコン。マウスを乗せると名前）→ 検索 → 受付連携・全画面・「⋯」','「⋯」の中に翌月コピー・共有MAP・CSV・共有。翌月コピーは、月末の7日前〜翌月7日までは月の横にも「→ 翌月」が出ます'] },
@@ -37670,8 +37671,11 @@ function _p2ShRows(ym) { // スマホ：1項目＝1行（先月 目標→結果�
   var K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv);
   return K.map(function(k) {
     var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap), ng = P.t !== null && P.v !== null && P.v < P.t;
-    return '<div class="sp-kr"><div class="a"><span class="nm">' + evEsc(k.lb) + '</span><span class="pv">' + _p2ShMonLb(pv) + ' <b>' + (P.t === null ? '—' : P.t) + '</b>→<b class="' + (P.t === null || P.v === null ? '' : (ng ? 'ng' : 'ok')) + '">' + (P.v === null ? '—' : P.v) + '</b></span>'
-      + '<span class="cu">' + _p2ShMonLb(ym) + ' ' + _p2ShKin(ym, k, X, 't') + ' 今 ' + (k.a ? '<span class="v">' + (X.v || 0) + '</span>' : _p2ShKin(ym, k, X, 'v')) + '</span></div>' + _p2ShKzIn(ym, k.id) + '</div>';
+    // v713: 文字を大きくしたので2段（1段目＝項目名と今の数字｜2段目＝先月の目標→結果と今月の目標）
+    var pvR = P.t === null || P.v === null ? '' : (ng ? '<em class="ng">届かず</em>' : '<em class="ok">達成</em>');
+    return '<div class="sp-kr"><div class="a"><span class="nm">' + evEsc(k.lb) + '</span><span class="nw">今 ' + (k.a ? '<span class="v">' + (X.v || 0) + '</span>' : _p2ShKin(ym, k, X, 'v')) + '</span></div>'
+      + '<div class="b"><span class="pv">' + _p2ShMonLb(pv) + ' <b>' + (P.t === null ? '—' : P.t) + '</b>→<b class="' + (P.t === null || P.v === null ? '' : (ng ? 'ng' : 'ok')) + '">' + (P.v === null ? '—' : P.v) + '</b>' + pvR + '</span>'
+      + '<span class="cu">' + _p2ShMonLb(ym) + 'の目標 ' + _p2ShKin(ym, k, X, 't') + '</span></div>' + _p2ShKzIn(ym, k.id) + '</div>';
   }).join('');
 }
 function _p2ShTable(ym) { // PC：紙の表（先月 目標・結果｜今月 目標・進捗｜改善点）
@@ -37918,9 +37922,25 @@ function _p2ShPageHtml() {
   _p2ShCss(); _p2ShCss2();
   var ym = _p2ShYmN();
   setTimeout(_p2ShAfter, 0);
-  return _p2ShTopHtml(ym) + _p2ShMapBox(ym, 640, 430)
+  _p2ShMbCss(); // v713: スマホは文字を大きく（入力は16px以上＝iPhoneで勝手に拡大しない）
+  return '<div class="sp-mb">' + _p2ShTopHtml(ym) + _p2ShMapBox(ym, 640, 430)
     + _p2ShKzHead(ym) + (_p2ShKzOpen() ? _p2ShRows(ym) + _p2ShFoot() : '')
-    + '<div class="sp-sec" style="align-items:center">行動' + _uxIb('shact') + '</div>' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c); }).join('');
+    + '<div class="sp-sec" style="align-items:center">行動' + _uxIb('shact') + '</div>' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c); }).join('') + '</div>';
+}
+function _p2ShMbCss() {
+  if (document.getElementById('p2ShMbCss')) return;
+  var st = document.createElement('style'); st.id = 'p2ShMbCss';
+  st.textContent = '.sp-mb .st-h>b{font-size:18px}.sp-mb .st-h .ym{font-size:17px}.sp-mb .st-h .ym span{width:32px;height:32px}.sp-mb .st-h .un{font-size:13px}'
+    + '.sp-mb .st-c{padding:9px 11px 10px}.sp-mb .st-c .l{font-size:12px}.sp-mb .st-c .v{font-size:14px}.sp-mb .st-c .v b{font-size:20px}.sp-mb .st-c .v .t{font-size:15px}.sp-mb .st-c .v small{font-size:12.5px}.sp-mb .st-c .l .now b{font-size:13px}.sp-mb .st-c .sp-in{width:46px;font-size:18px}.sp-mb .st-g:not(.pc) .st-k .v{font-size:12px}.sp-mb .st-g:not(.pc) .st-k .v b{font-size:16px}'
+    + '.sp-mb .sp-sec{font-size:17px;margin-top:20px}.sp-mb .sp-sec small,.sp-mb .sp-sec .tg,.sp-mb .sp-vw,.sp-mb .sp-sec .r{font-size:13px}.sp-mb .sp-leg{font-size:12px}.sp-mb .sp-ft{font-size:14px}'
+    + '.sp-mb .sp-kr{padding:12px 0}.sp-mb .sp-kr .a{align-items:baseline}.sp-mb .sp-kr .nm{font-size:16px}.sp-mb .sp-kr .nw{font-size:13px;font-weight:800;color:var(--text-dim);white-space:nowrap}.sp-mb .sp-kr .nw .v,.sp-mb .sp-kr .nw .sp-in.v{font:900 18px Inter,sans-serif;color:#FF8A7A}.sp-mb .sp-kr .nw .sp-in.v{width:46px}'
+    + '.sp-mb .sp-kr .b{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:6px}.sp-mb .sp-kr .pv{font-size:13px}.sp-mb .sp-kr .pv b{font-size:18px}.sp-mb .sp-kr .pv em{font-style:normal;font-size:11.5px;font-weight:900;margin-left:6px;padding:1px 6px;border-radius:6px}.sp-mb .sp-kr .pv em.ng{color:#FF6B7F;background:color-mix(in srgb,#FF6B7F 14%,transparent)}.sp-mb .sp-kr .pv em.ok{color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}'
+    + '.sp-mb .sp-kr .cu{font-size:13px;align-items:baseline}.sp-mb .sp-kr .cu .sp-in{width:56px;font-size:18px}'
+    + '.sp-mb .sp-kz{font-size:16px;line-height:1.5;padding:9px 11px;min-height:42px;margin-top:8px}'
+    + '.sp-mb .sp-at{border-radius:14px}.sp-mb .sp-at .h{font-size:15px;padding:11px 12px}.sp-mb .sp-at .h span{font-size:12px}.sp-mb .sp-at .r{min-height:44px;font-size:16px}.sp-mb .sp-at .c{width:40px;font-size:15px}.sp-mb .sp-at .x input{font-size:16px;padding:10px 10px}.sp-mb .sp-at .d{width:64px;font-size:14px}.sp-mb .sp-at .addr{font-size:15px;padding:12px}'
+    + '.sp-mb .iss{padding:12px 14px}.sp-mb .iss-hd{font-size:15px}.sp-mb .iss-hd small{font-size:12px}.sp-mb .iss-hd .tg{font-size:13px}.sp-mb .iss-r .h b{font-size:15px}.sp-mb .iss-r .h small{font-size:12px}.sp-mb .iss-r .h .a,.sp-mb .iss-r .h .x{font-size:13px}.sp-mb .iss-r .t{font-size:15px}.sp-mb .iss-r .cats span{font-size:13px;padding:7px 11px}.sp-mb .iss-r .lk i{font-size:12.5px}.sp-mb .iss-em{font-size:13px}'
+    + '.sp-mb .sp-zc span{min-width:36px;height:36px;font-size:17px}.sp-mb .sp-zc span.w{font-size:13px}.sp-mb .sp-zc b{font-size:12.5px}';
+  document.head.appendChild(st);
 }
 // ── PC：紙と同じ1枚 ──
 function _p2ShPcHtml() {
