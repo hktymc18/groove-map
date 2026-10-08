@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v753';
+var APP_JS_VERSION = 'v754';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v753';
+  var DATA_VERSION = 'v754';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v754', d:'2026-10-09', items:['ホームのタイル「ANALYSIS」を「ANALYTICS」に'] },
   { v:'v753', d:'2026-10-09', items:['MAPのフロント追加：研修生を選ぶと「🎓 研修の記録」（研修の日・Aさん）が研修生のカードの中に出るように（下にあって見落としやすかったため）','研修の日は「今日／昨日／📅日付」から選べて、「PGを10/14に進んだで入れます」のようにどう入るかも出ます'] },
   { v:'v752', d:'2026-10-09', items:['分析 › 研修：上に月のチップ（10月・9月・8月…と研修生の人数）を出して、表示する月を選べるように。研修フロー・その月の数字・Aさん別がその月になります'] },
   { v:'v751', d:'2026-10-09', items:['スマホのMAP：研修生（水色）と審査中のLOI〜Q4（オレンジ）の人の丸が、PCのように光るように（ケアの印を「非表示」にした人・OUTは光りません）'] },
@@ -20528,9 +20529,9 @@ function renderMenuHub() {
   (state.events || []).forEach(function(e) { if (!e || e.deleted || e.date !== td) return; if (e.type === 'task') { if (!e.done) tkN++; } else evN++; });
   try { S0 = _dtEzNow().S; } catch (eS) {}
   var T = [{ k: 'plan', c: 'mint', ic: icn('compass'), lb: 'PLAN', w: 1, wide: 1, next: nk !== 'do', st: planSt || '目標・計画・振り返り', on: 'switchView(\'plan\')' },
-    // v683: PLANの下は 左上MAP・右上ANALYSIS／左下CALENDAR・右下TODO
+    // v683: PLANの下は 左上MAP・右上ANALYTICS／左下CALENDAR・右下TODO
     { k: 'map', c: 'sky', ic: icn('map'), lb: 'MAP', st: '組織図・メンバー<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'current\')' },
-    { k: 'stats', c: 'rose', ic: icn('chart'), lb: 'ANALYSIS', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' },
+    { k: 'stats', c: 'rose', ic: icn('chart'), lb: 'ANALYTICS', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' },
     { k: 'cal', c: 'gold', ic: icn('calendar'), lb: 'CALENDAR', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
     { k: 'todo', c: 'pur', ic: icn('checksq'), lb: 'TODO', st: '今日のタスク<br><em>' + (tkN ? 'のこり' + tkN + '件' : 'なし') + '</em>', on: 'switchView(\'events\');setEventsMode(\'agenda\')' }];
   T.forEach(function(t) { if (UX_MENU_IMG[t.k]) { t.c += ' ph' + (t.k === 'stats' ? ' dk' : ''); t.img = UX_MENU_IMG[t.k]; } }); // v661
