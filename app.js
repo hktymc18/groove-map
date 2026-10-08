@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v733';
+var APP_JS_VERSION = 'v734';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v733';
+  var DATA_VERSION = 'v734';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v734', d:'2026-10-08', items:['やることのサブタスクを、ロードマップの戦略・戦術と同じ書き方に：タスクの下にいつも出して、「＋ サブタスク」で大きい欄が開き、Enterで続けて書けます','サブタスクは押すと直せます（空にすると消える）'] },
   { v:'v733', d:'2026-10-08', items:['やることの書く欄の文字が小さかったのを16pxに','同じ原因で小さくなっていた入力欄（戦略・戦術、課題パネルのメモ、イベントの欄、計画シートの行動など）も、決めていた大きさで出るように直しました'] },
   { v:'v732', d:'2026-10-08', items:['年の目標・ロードマップ：最終目標の帯の文字を大きく。スローガンは重ならないように下の行に出します'] },
   { v:'v731', d:'2026-10-08', items:['夢100を期間で絞れるように（すべて・今月・3ヶ月・半年・1年・今年、または「◯年◯月まで」を選ぶ）','その期間に必要な金額と、あと何ヶ月・月あたりいくら必要かを出します（期日を決めていない夢は入れません）'] },
@@ -16782,7 +16783,7 @@ function _p2DoMonHead(ym) { // v653: 今週やることの上に「◯月の目�
 // ════ v715: やること（PLANのタブ）：今月から長期まで時系列に1か所で。タスク（サブタスクつき）と数値の目標（7/8）。📅でいつでも予定に入れる ════
 //   タスク＝state.events（type:'task'・planYm＝'YYYY-MM' か 'someday'・yk:1。計画シートの行動（planCat）も同じ所に並ぶ）
 //   数値の目標＝plan2.yk［{ id, t, g（目標）, v（今）, ym, mid（人）, who（'me'|'all'）, cal:[予定のid] }］
-var _p2YkOpen = '', _p2YkF = '', _p2YkDn = false, _p2YkAddTy = 't', _p2YkAddYm = '', _p2YkAddWho = 'me', _p2YkDraft = null;
+var _p2YkSubIn = '', _p2YkOpen = '', _p2YkF = '', _p2YkDn = false, _p2YkAddTy = 't', _p2YkAddYm = '', _p2YkAddWho = 'me', _p2YkDraft = null;
 function _p2YkN() { var p2 = _p2(); p2.yk = p2.yk || []; return p2.yk; }
 function _p2YkTasks() { return (state.events || []).filter(function(e) { return e && !e.deleted && e.type === 'task' && (e.yk || e.planCat) && /^(\d{4}-\d{2}|someday)$/.test(e.planYm || ''); }); }
 function _p2YkWho(o) { // 人の札：メンバー｜自分｜全体
@@ -16833,9 +16834,12 @@ function _p2YkRow(e, td) {
   var h = '<div class="yk-r' + (e.done ? ' dn' : '') + (op ? ' op' : '') + '"><div class="ln"><span class="ck" onclick="p2YkDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span>'
     + '<span class="t" onclick="p2YkOpen(\'' + e.id + '\')">' + (c ? '<i class="tg" style="--c:' + c.c + '">' + evEsc(c.s) + '</i>' : '') + evEsc(e.title || '') + (subs.length ? '<small class="sb">' + sd + '/' + subs.length + '</small>' : '') + '</span>'
     + _p2YkWhoChip(e) + '<span class="dt' + (e.date && e.date < td && !e.done ? ' ng' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '') + '</span>' + _p2YkCalChip(e.ykCal, 't', e.id) + '</div>';
+  // v734: サブタスクはいつも下に（戦略・戦術と同じ書き方：「＋ サブタスク」で大きい欄・Enterで続けて）
+  var ro9 = _p2ShRo ? _p2ShRo() : false;
+  h += '<div class="yk-k">' + subs.map(function(s, i) { return '<div class="sr' + (s.dn ? ' dn' : '') + '"><span class="ck" onclick="p2YkSub(\'' + e.id + '\',' + i + ')">' + (s.dn ? '✓' : '') + '</span><span class="st" onclick="p2YkSubEd(\'' + e.id + '\',' + i + ')">' + evEsc(s.t) + '</span>' + (ro9 ? '' : '<span class="x" onclick="p2YkSubDel(\'' + e.id + '\',' + i + ')">✕</span>') + '</div>'; }).join('')
+    + (ro9 ? '' : (_p2YkSubIn === e.id ? '<input class="yk-si" id="p2YkSi" placeholder="サブタスクを書く（Enterで次も）" maxlength="100" autocomplete="off" onkeydown="p2YkSiKey(event,\'' + e.id + '\',this)" onblur="p2YkSiBlur(\'' + e.id + '\',this)">' : '<div class="yk-sa" onclick="p2YkSubOpen(\'' + e.id + '\')">＋ サブタスク</div>')) + '</div>';
   if (op) {
-    h += '<div class="sub">' + subs.map(function(s, i) { return '<div class="sr' + (s.dn ? ' dn' : '') + '"><span class="ck" onclick="p2YkSub(\'' + e.id + '\',' + i + ')">' + (s.dn ? '✓' : '') + '</span><span>' + evEsc(s.t) + '</span><span class="x" onclick="p2YkSubDel(\'' + e.id + '\',' + i + ')">✕</span></div>'; }).join('')
-      + '<input class="sa" placeholder="＋ サブタスク（Enter）" maxlength="100" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YkSubAdd(\'' + e.id + '\',this)}">'
+    h += '<div class="sub">'
       + '<div class="ops">期限 <input type="date" value="' + (e.date || '') + '" onchange="p2YkDate(\'' + e.id + '\',this.value)"> 月 <select onchange="p2YkYm(\'' + e.id + '\',this.value)">' + _p2YkYmOpts(e.planYm) + '</select><span class="del" onclick="p2YkDel(\'' + e.id + '\')">消す</span></div></div>';
   }
   return h + '</div>';
@@ -16872,6 +16876,10 @@ function p2YkOpen(id) { _p2YkOpen = _p2YkOpen === id ? '' : id; renderPlan(); }
 function p2YkDone(id) { try { toggleEventDone(id); } catch (e) {} renderPlan(); }
 function _p2YkSave(e) { e.updatedAt = new Date().toISOString(); saveEventDoc(e); renderPlan(); }
 function p2YkSubAdd(id, el) { var e = findEvent(id), v = String((el && el.value) || '').trim(); if (!e || !v) return; e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); setTimeout(function() { var s = document.querySelector('.yk-r.op .sa'); if (s) s.focus(); }, 30); }
+function p2YkSubOpen(id) { _p2YkSubIn = id; renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkSi'); if (n) { n.focus(); try { n.scrollIntoView({ block: 'center' }); } catch (e) {} } }, 30); }
+function p2YkSiKey(ev, id, el) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); var v = String(el.value || '').trim(); if (!v) return; el.value = ''; var e = findEvent(id); if (!e) return; e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); setTimeout(function() { var n = document.getElementById('p2YkSi'); if (n) n.focus(); }, 30); } else if (ev.key === 'Escape') { _p2YkSubIn = ''; renderPlan(); } }
+function p2YkSiBlur(id, el) { setTimeout(function() { if (!document.body.contains(el)) return; var v = String(el.value || '').trim(), e = findEvent(id); _p2YkSubIn = ''; if (v && e) { e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); } else renderPlan(); }, 120); }
+function p2YkSubEd(id, i) { var e = findEvent(id); if (!e || !e.subs || !e.subs[i] || (_p2ShRo && _p2ShRo())) return; var v = prompt('サブタスクを直す（空にすると消す）', e.subs[i].t); if (v === null) return; v = String(v).trim(); if (v) e.subs[i].t = v.slice(0, 100); else e.subs.splice(i, 1); _p2YkSave(e); }
 function p2YkSub(id, i) { var e = findEvent(id); if (!e || !e.subs || !e.subs[i]) return; e.subs[i].dn = !e.subs[i].dn; _p2YkSave(e); }
 function p2YkSubDel(id, i) { var e = findEvent(id); if (!e || !e.subs) return; e.subs.splice(i, 1); _p2YkSave(e); }
 function p2YkDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; if (v) e.planYm = v.slice(0, 7); _p2RpForce = true; _p2YkSave(e); }
@@ -16918,7 +16926,7 @@ function _p2YkCss() {
     + '.yk-f{display:flex;align-items:center;gap:10px;margin:10px 2px 4px;font-size:12.5px;font-weight:800;color:var(--text-dim)}.yk-f label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}'
     + '.yk-g{margin-top:14px}.yk-gh{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);padding:0 4px 6px;border-bottom:1px solid var(--border)}.yk-g.cur .yk-gh{color:var(--accent)}.yk-g.od .yk-gh{color:#FF6B7F}.yk-gh em{font-style:normal;font-size:11.5px;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text-mid)}.yk-gh small{margin-left:auto;font-size:11.5px;color:var(--text-dim)}'
     + '.yk-r{border-bottom:1px solid var(--border)}.yk-r .ln{display:flex;align-items:center;gap:8px;padding:9px 4px;min-height:44px}.yk-r .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#0b0f17}.yk-r .ck:hover{border-color:var(--accent)}.yk-r.dn>.ln .ck{background:var(--accent);border-color:var(--accent)}'
-    + '.yk-r .t{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-r.dn>.ln .t{color:var(--text-dim);text-decoration:line-through}.yk-r .t .tg{font-style:normal;font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:6px;color:var(--c);border:1px solid var(--c)}.yk-r .t .sb{margin-left:6px;font:800 11px Inter,sans-serif;color:var(--text-dim);padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 8%,transparent)}'
+    + '.yk-r .t{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-r.dn>.ln .t{color:var(--text-dim);text-decoration:line-through}.yk-r .t .tg{font-style:normal;font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:6px;color:var(--c);border:1px solid var(--c)}.yk-k{margin:-4px 0 6px 34px;padding-left:12px;border-left:2px solid var(--border)}.yk-k .sr{display:flex;align-items:center;gap:8px;padding:6px 0}.yk-k .sr .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:900;color:#0b0f17}.yk-k .sr.dn .ck{background:var(--accent);border-color:var(--accent)}.yk-k .sr .st{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-k .sr.dn .st{color:var(--text-dim);text-decoration:line-through}.yk-k .sr .x{flex:none;color:var(--text-dim);cursor:pointer;padding:2px 6px;font-size:13px}.yk-sa{font-size:13.5px;font-weight:800;color:var(--text-dim);padding:6px 0;cursor:pointer}.yk-sa:hover{color:var(--accent)}.yk-si{width:100%;box-sizing:border-box;margin:4px 0;background:var(--bg);border:1.5px solid var(--accent);border-radius:12px;color:var(--text);font-weight:700;font-size:16px;font-family:inherit;padding:10px 12px;outline:none}.yk-r .t .sb{margin-left:6px;font:800 11px Inter,sans-serif;color:var(--text-dim);padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 8%,transparent)}'
     + '.yk-r .who{flex:none;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,#5AD7FF 14%,transparent);color:#5AD7FF;white-space:nowrap}.yk-r .who.me{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.yk-r .who.all{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold)}'
     + '.yk-r .dt{flex:none;min-width:38px;text-align:right;font:800 12.5px Inter,sans-serif;color:var(--text-mid)}.yk-r .dt.ng{color:#FF6B7F}.yk-r .cal{flex:none;font-size:12px;font-weight:900;padding:4px 8px;border-radius:9px;border:1px solid var(--border);color:var(--text-mid);cursor:pointer;white-space:nowrap}.yk-r .cal.on{border-color:color-mix(in srgb,#8B7CFF 60%,var(--border));color:#c7bfff;background:color-mix(in srgb,#8B7CFF 14%,transparent)}'
     + '.yk-r.nm .ic{width:22px;text-align:center;flex:none}.yk-r .pm{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;cursor:pointer;flex:none}.yk-r .pm.p{border-color:var(--accent);color:var(--accent)}.yk-r .nv{flex:none;min-width:52px;text-align:center;font:900 18px Inter,sans-serif;display:inline-flex;align-items:baseline;gap:1px}.yk-r .nvi{width:46px;box-sizing:border-box;text-align:center;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font:900 17px Inter,sans-serif;padding:4px 2px;outline:none}.yk-r .nvi:focus{border-color:var(--accent)}.yk-r.nm.ok .nvi{color:var(--accent)}.yk-r .nv i{font-style:normal;font-size:13px;color:var(--text-mid)}.yk-r.nm.ok .nv{color:var(--accent)}'
