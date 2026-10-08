@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v749';
+var APP_JS_VERSION = 'v750';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v749';
+  var DATA_VERSION = 'v750';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v750', d:'2026-10-09', items:['MAPのかんたん追加（フロント追加）で研修生を足すと、選んだ研修の段階（マケなど）が研修履歴に「✓ 進んだ」で入るように（日付が空なら今日・先の日は予定）。分析の研修フローにもすぐ出ます'] },
   { v:'v749', d:'2026-10-09', items:['分析 › 研修：MAPで「研修生」の人が、研修の記録（マケ・PG…）がまだ無いと 0人 になっていたのを直しました。その月のMAPの研修生も数えます','記録がまだ無い時は「研修生は N人いますが、この月の研修の記録はまだありません」と出します（記録はその人の「研修」タブから）'] },
   { v:'v748', d:'2026-10-09', items:['計画シート・MAPの課題パネル：書いた課題と「自分・全体のメモ」を 🗑 で消せるように（書いている時も「完了」の横に 🗑）。消した後は「↩ 元に戻す」で戻せます'] },
   { v:'v747', d:'2026-10-09', items:['iPhoneで、予定の入力などの一部の文字だけが大きくなってしまうことがあったのを直しました（画面を横にした後などにSafariが文字を自動で拡大していたため、自動拡大を止めました）'] },
@@ -14539,6 +14540,18 @@ function qaGenderSel(g) {
   if (f9) f9.classList.toggle('sel', g === 'female');
 }
 function _qaGsvVal() { var v = parseInt(((document.getElementById('qaGsv') || {}).value || ''), 10); return isNaN(v) ? 0 : Math.max(0, v); }
+// v750: かんたん追加・フロント追加で研修生を足した時、選んだ研修の段階を履歴に「✓ 進んだ」で入れる
+//   日付が空なら今日。日付が明日以降なら「予定」（その日が来たら研修タブで進んだに）
+function _qaTrStep(m, stage, d) {
+  if (!stage) return '';
+  var td = evTodayYmd(); d = d || td;
+  var res = d <= td ? 'next' : 'planned';
+  m.traineeHistory = m.traineeHistory || [];
+  m.traineeHistory.push({ status: stage, date: d, aSan: m.aSan || '', result: res, time: '' });
+  if (res === 'next' && stage === 'BPC' && m.traineeResult !== 'BC') { m.traineeResult = 'BC'; m.traineeResultMonth = _ymToMon(d); }
+  try { m.traineeStatus = getLatestStatus(m); } catch (e) {}
+  return res;
+}
 function qaSave(cont) {
   try { if (typeof isPCMode === 'function' && isPCMode()) _pcTreeCaptureView(); } catch(ePv) {} // v519: 923-7 追加後も見ていた位置のまま（中央に戻さない）
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
@@ -14564,7 +14577,7 @@ function qaSave(cont) {
   // v496: 研修の予定（日付＋時刻＋Aさん）→ 研修履歴に「予定」として登録（921-2）
   var _qd = qcat === '研修生' ? ((document.getElementById('qaDate') || {}).value || '') : '';
   if (qcat !== '研修生') m.aSan = '';
-  if (_qd) m.traineeHistory.push({ status: stage, date: _qd, aSan: m.aSan || '', result: 'planned', time: '' }); // v519: 923-9 時刻欄は廃止
+  if (qcat === '研修生') _qaTrStep(m, stage, _qd); // v750: 選んだ研修の段階を「進んだ」で（日付が先の日なら予定）
   state.members.push(m);
   window._pcFocusLineage = ''; // v519: 923-8 追加先を選ぶクリックで付いた系列フォーカスを解除（他の系列が暗いまま残らない）
   _memMap = null;
@@ -14573,7 +14586,7 @@ function qaSave(cont) {
   autoSave();
   try { gameCheck(); } catch(eG) {}
   var nm = (last + ' ' + first).trim();
-  toast('⚡ ' + nm + ' さんを追加しました（' + stage + (_qd ? '・' + parseInt(_qd.slice(5, 7), 10) + '/' + parseInt(_qd.slice(8, 10), 10) + ' 予定' : '') + '）');
+  var _qr = (m.traineeHistory[0] || {}); toast('⚡ ' + nm + ' さんを追加しました（' + stage + (_qr.date ? '・' + parseInt(_qr.date.slice(5, 7), 10) + '/' + parseInt(_qr.date.slice(8, 10), 10) + (_qr.result === 'planned' ? ' 予定' : ' ✓進んだ') : '') + '）');
   if (cont) {
     var l9 = document.getElementById('qaLast'), f9 = document.getElementById('qaFirst');
     var g9 = document.getElementById('qaGsv'); if (g9) g9.value = ''; _qaAct = 'x'; qaActSel('x'); // v565
@@ -18751,7 +18764,7 @@ function _naRender() {
     + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="naLast" placeholder="姓" value="' + evEsc(n.last) + '" autocomplete="off"><input class="ppin" id="naFirst" placeholder="名" value="' + evEsc(n.first) + '" autocomplete="off"></div>'
     + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (n.gender !== 'female' ? 'on' : '') + '" onclick="naSet(\'gender\',\'male\')">男性</span><span class="' + (n.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="naSet(\'gender\',\'female\')">女性</span></div>'
     + '<div class="ppl">タイトル（カードを押して選ぶ）</div>' + _ttlPickHtml(n.title, NA_GROUPS, 'naTitle', '_naRender');
-  if (tr) h += '<div class="ppl">研修の予定（任意・入れると研修履歴に入ります）</div><div class="ppn"><input class="ppin" id="naDate" type="date" value="' + evEsc(n.date) + '"><input class="ppin" id="naAsan" placeholder="Aさん" value="' + evEsc(n.asan) + '"></div>';
+  if (tr) h += '<div class="ppl">研修の日（空なら今日。今日までの日は「✓ 進んだ」、先の日は「予定」で研修履歴に入ります）</div><div class="ppn"><input class="ppin" id="naDate" type="date" value="' + evEsc(n.date) + '"><input class="ppin" id="naAsan" placeholder="Aさん" value="' + evEsc(n.asan) + '"></div>';
   else h += '<div class="ppl">稼働（任意）</div><div class="ppb sm" style="--n:5">' + [['S', 'var(--s)'], ['A', 'var(--a)'], ['B', 'var(--b)'], ['C', 'var(--c)'], ['', 'var(--text-dim)']].map(function(x) { return '<span class="' + (n.act === x[0] ? 'on' : '') + '" style="--a:' + x[1] + '" onclick="naSet(\'act\',\'' + x[0] + '\')">' + (x[0] || 'なし') + '</span>'; }).join('') + '</div>'
     + '<div class="ppl">今月のGSV（任意）</div><input class="ppin" id="naGsv" type="number" inputmode="numeric" placeholder="0" value="' + evEsc(n.gsv) + '">';
   h += '<div class="nalk"><span onclick="naSave(\'cont\')">＋ 追加して続けて入れる</span><span onclick="naSave(\'more\')">追加してくわしく入れる ›</span></div>'
@@ -18772,7 +18785,7 @@ function naSave(after) {
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
     region: normalizeRegionValue((typeof currentUser !== 'undefined' && currentUser && currentUser.area) || ''),
     birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '', month: cm };
-  if (tr && n.date) m.traineeHistory.push({ status: n.title, date: n.date, aSan: m.aSan || '', result: 'planned', time: '' });
+  if (tr) _qaTrStep(m, n.title, n.date); // v750
   state.members.push(m);
   _memMap = null;
   recalcAllGSV();
