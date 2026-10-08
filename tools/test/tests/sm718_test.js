@@ -8,7 +8,7 @@ T.run(async () => {
   w.state.members = ms; w.switchView('plan'); await sleep(30);
   const cur = w._p2Ym(0);
   w._p2().next = { title: 'RUBY', tm: true, inc: 80, deadline: w._p2YmAdd(cur, 6) };
-  w._p2Yr().memo.push({ id: 'y1', t: '紹介ルートを増やす' });
+  w._ys().push({ id: 'y1', t: '紹介ルートを増やす', kids: [] });
   w.p2Go('year'); await sleep(30);
   c('ロードマップ：編集とサマリーの切りかえ（最初は編集）', !!$('.sm-seg') && /編集/.test($('.sm-seg span.on').textContent) && !!$('.yr-near'));
   w.p2SumTgl('yr', 1); await sleep(30);
