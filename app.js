@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v751';
+var APP_JS_VERSION = 'v752';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v751';
+  var DATA_VERSION = 'v752';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v752', d:'2026-10-09', items:['分析 › 研修：上に月のチップ（10月・9月・8月…と研修生の人数）を出して、表示する月を選べるように。研修フロー・その月の数字・Aさん別がその月になります'] },
   { v:'v751', d:'2026-10-09', items:['スマホのMAP：研修生（水色）と審査中のLOI〜Q4（オレンジ）の人の丸が、PCのように光るように（ケアの印を「非表示」にした人・OUTは光りません）'] },
   { v:'v750', d:'2026-10-09', items:['MAPのかんたん追加（フロント追加）で研修生を足すと、選んだ研修の段階（マケなど）が研修履歴に「✓ 進んだ」で入るように（日付が空なら今日・先の日は予定）。分析の研修フローにもすぐ出ます'] },
   { v:'v749', d:'2026-10-09', items:['分析 › 研修：MAPで「研修生」の人が、研修の記録（マケ・PG…）がまだ無いと 0人 になっていたのを直しました。その月のMAPの研修生も数えます','記録がまだ無い時は「研修生は N人いますが、この月の研修の記録はまだありません」と出します（記録はその人の「研修」タブから）'] },
@@ -12956,8 +12957,13 @@ function _dtTrRender() {
     UX_INFO.dtCh = { t: '月ごとの推移', h: '上のボタンで見たい数字を選びます（2つまで重ねて表示）。<br>グラフの月をタップすると、その月の数字が上（研修フロー・その月の研修）に出ます' };
   }
   // v737: 上から じょうご（研修フロー）→ その月の数字 → 前からの表 → 折れ線グラフ（いちばん下）。説明は(i)に
-  if (!document.getElementById('dtIbCss')) { var st9 = document.createElement('style'); st9.id = 'dtIbCss'; st9.textContent = '.dt-ch .ux-ib,.an-sec .ux-ib{width:20px;height:20px;font-size:11px;border-width:1.2px;margin-left:6px;flex:none;align-self:center}#dtTrain .dt-trc{margin-top:16px}'; document.head.appendChild(st9); }
-  var h = _dtTrFunnel(M, mo)
+  if (!document.getElementById('dtIbCss')) { var st9 = document.createElement('style'); st9.id = 'dtIbCss'; st9.textContent = '.dt-ch .ux-ib,.an-sec .ux-ib{width:20px;height:20px;font-size:11px;border-width:1.2px;margin-left:6px;flex:none;align-self:center}#dtTrain .dt-trc{margin-top:16px}#dtTrain .dt-trm{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-bottom:2px}#dtTrain .dt-trm::-webkit-scrollbar{display:none}#dtTrain .dt-trm span{flex:none;display:flex;flex-direction:column;align-items:center;padding:6px 12px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap;line-height:1.25}#dtTrain .dt-trm span i{font-style:normal;font-size:9.5px;color:var(--accent)}#dtTrain .dt-trm span b{font:800 11px Inter,sans-serif;color:var(--text-dim)}#dtTrain .dt-trm span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}#dtTrain .dt-trm span.on b{color:var(--accent)}'; document.head.appendChild(st9); }
+  // v752: 表示する月を選ぶ（新しい月から。押すとその月のフロー・数字に）
+  var mnav = '<div class="dt-trm">' + months.map(function(x, i) { return { x: x, i: i }; }).reverse().map(function(o) {
+    var n9 = D[o.i] ? D[o.i].n : 0;
+    return '<span class="' + (o.i === idx ? 'on' : '') + '" onclick="dtTrPick(' + o.i + ')">' + (o.x.y !== months[11].y ? String(o.x.y).slice(2) + '年' : '') + o.x.m + '月' + (o.i === 11 ? '<i>今月</i>' : '') + '<b>' + n9 + '人</b></span>';
+  }).join('') + '</div>';
+  var h = mnav + _dtTrFunnel(M, mo)
     + '<div class="an-sec"><span>' + mo.y + '年' + mo.m + '月の研修</span>' + _uxIb('dtCnt') + (idx === 11 ? '<small>今月</small>' : '<em onclick="dtTrPick(11)">今月に戻す ›</em>') + '</div><div class="an-g four">'
     + big('n', 'cap', '#5AD7FF', '研修中の人・記録がある人') + big('rate', 'target', 'var(--accent)', '結果が出た ' + dec + '人のうち')
     + big('BC', 'checksq', '#2CE5B8', '') + big('流れた', 'ban', '#FF5D73', 'ユーザー ' + M['ユーザー'] + '人')
