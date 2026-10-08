@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v748';
+var APP_JS_VERSION = 'v749';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v748';
+  var DATA_VERSION = 'v749';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v749', d:'2026-10-09', items:['分析 › 研修：MAPで「研修生」の人が、研修の記録（マケ・PG…）がまだ無いと 0人 になっていたのを直しました。その月のMAPの研修生も数えます','記録がまだ無い時は「研修生は N人いますが、この月の研修の記録はまだありません」と出します（記録はその人の「研修」タブから）'] },
   { v:'v748', d:'2026-10-09', items:['計画シート・MAPの課題パネル：書いた課題と「自分・全体のメモ」を 🗑 で消せるように（書いている時も「完了」の横に 🗑）。消した後は「↩ 元に戻す」で戻せます'] },
   { v:'v747', d:'2026-10-09', items:['iPhoneで、予定の入力などの一部の文字だけが大きくなってしまうことがあったのを直しました（画面を横にした後などにSafariが文字を自動で拡大していたため、自動拡大を止めました）'] },
   { v:'v746', d:'2026-10-09', items:['PLAN › チェック：日付は最初「未設定」に（チェックしても勝手に日付が入らないように）','日付を押すと、計画シートの期日と同じ窓で「ToDoに入れる／予定に入れる」を選んで、日にち・時間を入れられます','ToDoでチェックすると、チェックリストにもチェックが入ります。「期日を消す」で未設定に戻ります'] },
@@ -12881,15 +12882,19 @@ var _dtTrSel = ['BC'], _dtTrIdx = 11;
 function _dtTrMembers() { return (state.members || []).filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || ''); }); }
 function _dtTrDone(h) { return h && h.date && h.result !== 'planned'; }
 function _dtTrMonth(mon) { // 1ヶ月ぶん：{ n, マケ…CO, BC, ユーザー, 流れた, rate, L:{k:[人]} }
-  var o = { L: {} }, add = function(k, m) { (o.L[k] = o.L[k] || []).push(m); };
+  var o = { L: {} }, add = function(k, m) { (o.L[k] = o.L[k] || []).push(m); }, seen = {};
   _dtTrMembers().forEach(function(m) {
     var hs = (m.traineeHistory || []).filter(function(h) { return _dtTrDone(h) && _ymToMon(h.date) === mon; });
     var dec = m.traineeResult && traineeDecidedMonth(m) === mon;
     if (!hs.length && !dec) return;
-    add('n', m);
+    add('n', m); seen[m.id] = 1;
     DT_STEPS.forEach(function(st) { if (hs.some(function(h) { return h.status === st; })) add(st, m); });
     if (dec) add(m.traineeResult, m);
   });
+  // v749: その月のMAPで「研修生」の人も研修生に数える（まだ研修の記録が無い・予定だけの人が 0人 になっていた）
+  var cur = state.currentMonth || currentMonthStr(), H = _dtHist && _dtHist.mon && _dtHist.mon[mon];
+  var mapMs = mon === cur ? _dtTrMembers() : ((H && H.plMs) || []);
+  mapMs.forEach(function(m) { if (!m || m.deleted || seen[m.id] || /^(MG_|AG\d+_)/.test(m.id || '') || (m.title || '').trim() === 'OUT' || memberCat(m) !== '研修生') return; add('n', m); seen[m.id] = 1; });
   DT_TR_K.forEach(function(k) { if (k[0] !== 'rate') o[k[0]] = (o.L[k[0]] || []).length; });
   var d = o.BC + o['ユーザー'] + o['流れた']; o.rate = d ? Math.round(o.BC / d * 100) : null;
   return o;
@@ -12919,7 +12924,7 @@ function _dtTrFunnel(M, mo) {
   });
   svg += '</svg>';
   return '<div class="dt-card"><div class="dt-ch">' + icn('funnel') + ' ' + mo.m + '月の研修フロー<span style="color:var(--text-dim)">研修生 ' + M.n + '人</span>' + _uxIb('dtFn') + '</div>' // v737: 説明は(i)へ
-    + (M.n ? svg : '<div class="ev-empty" style="padding:16px">この月の研修の記録はありません</div>') + '</div>';
+    + (cnt.some(function(l) { return l.length; }) ? svg : '<div class="ev-empty" style="padding:16px">' + (M.n ? '研修生は ' + M.n + '人いますが、この月の研修の記録（マケ・PG…）はまだありません<br><small>研修の記録は、その人の「研修」タブで入れられます</small>' : 'この月の研修の記録はありません') + '</div>') + '</div>';
 }
 function _dtTrRender() {
   var box = document.getElementById('dtTrain'); if (!box) return;
@@ -12944,7 +12949,7 @@ function _dtTrRender() {
   };
   var dec = M.BC + M['ユーザー'] + M['流れた'];
   if (!UX_INFO.dtFn) {
-    UX_INFO.dtFn = { t: '研修フロー', h: 'その月に研修の記録がある人を、段階ごとに並べたじょうごです。<br>右の％＝前の段階から進んだ割合（歩留まり）。60％以上は緑、30％以上は黄、それより下は赤。<br>段をタップすると、その段の人の内訳が出ます' };
+    UX_INFO.dtFn = { t: '研修フロー', h: '研修生の数は、その月のMAPで「研修生」の人と、その月に研修の記録がある人です。じょうごは、その月に研修の記録がある人を、段階ごとに並べたじょうごです。<br>右の％＝前の段階から進んだ割合（歩留まり）。60％以上は緑、30％以上は黄、それより下は赤。<br>段をタップすると、その段の人の内訳が出ます' };
     UX_INFO.dtCnt = { t: '研修の数え方', h: 'その月の日付で、研修履歴に「進んだ／流れた」の記録がある人を数えます（1人1回・📅予定は数えない）。<br>受付システムの受講記録も取り込まれます。<br>タイルを押すと、下のグラフでその数字の推移が見られます' };
     UX_INFO.dtCh = { t: '月ごとの推移', h: '上のボタンで見たい数字を選びます（2つまで重ねて表示）。<br>グラフの月をタップすると、その月の数字が上（研修フロー・その月の研修）に出ます' };
   }
@@ -12952,7 +12957,7 @@ function _dtTrRender() {
   if (!document.getElementById('dtIbCss')) { var st9 = document.createElement('style'); st9.id = 'dtIbCss'; st9.textContent = '.dt-ch .ux-ib,.an-sec .ux-ib{width:20px;height:20px;font-size:11px;border-width:1.2px;margin-left:6px;flex:none;align-self:center}#dtTrain .dt-trc{margin-top:16px}'; document.head.appendChild(st9); }
   var h = _dtTrFunnel(M, mo)
     + '<div class="an-sec"><span>' + mo.y + '年' + mo.m + '月の研修</span>' + _uxIb('dtCnt') + (idx === 11 ? '<small>今月</small>' : '<em onclick="dtTrPick(11)">今月に戻す ›</em>') + '</div><div class="an-g four">'
-    + big('n', 'cap', '#5AD7FF', '研修の記録がある人') + big('rate', 'target', 'var(--accent)', '結果が出た ' + dec + '人のうち')
+    + big('n', 'cap', '#5AD7FF', '研修中の人・記録がある人') + big('rate', 'target', 'var(--accent)', '結果が出た ' + dec + '人のうち')
     + big('BC', 'checksq', '#2CE5B8', '') + big('流れた', 'ban', '#FF5D73', 'ユーザー ' + M['ユーザー'] + '人')
     + '</div>'
     + '<div style="margin-top:14px">' + _dtTrainOld(state.currentMonth || currentMonthStr(), true) + '</div>'
