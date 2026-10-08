@@ -18,9 +18,9 @@ T.run(async () => {
   c('数値の目標（グラフなし・0/8）', !!n1 && n1.g === 8 && n1.t === 'ST開催' && $('.yk-r.nm .nvi').value === '0' && /\/8/.test($('.yk-r.nm .nv').textContent) && !$('.yk-r.nm .bar'));
   w.p2YkNV(n1.id, 1); w.p2YkNV(n1.id, 1); await sleep(10);
   c('＋で進める（2/8）', $('.yk-r.nm .nvi').value === '2');
-  w.p2YkSubOpen(t1.id); await sleep(40); const sa = $('#p2YkSi'); sa.value = '1冊目'; w.p2YkSiKey({ key: 'Enter', isComposing: false, preventDefault() {} }, t1.id, sa); await sleep(40);
+  w.p2YkSubOpen('t', t1.id); await sleep(40); const sa = $('#p2YkSi'); sa.value = '1冊目'; w.p2YkSiKey({ key: 'Enter', isComposing: false, preventDefault() {} }, 't', t1.id, sa); await sleep(40);
   c('サブタスク（v734：「＋ サブタスク」で書く・0/1）', (t1.subs || []).length === 1 && /0\/1/.test($('.yk-r .sb').textContent) && !!$('#p2YkSi'));
-  w.p2YkSub(t1.id, 0); await sleep(10);
+  w.p2YkSub('t', t1.id, 0); await sleep(10);
   c('サブタスクをチェック（1/1）', t1.subs[0].dn === true && /1\/1/.test($('.yk-r .sb').textContent));
   w.p2YkCal('t', t1.id); await sleep(10); $('#p2YkPd').value = cur + '-20'; $('#p2YkPt').value = '19:00'; w.p2YkCalOk(); await sleep(20);
   const ev = w.state.events.find(e => e.type === 'event' && e.title === '本を2冊読む');
