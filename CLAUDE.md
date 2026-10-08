@@ -36,3 +36,7 @@ cd ~
   `APP_VER` を連番で1つ上げ（v5 → v6）、`CHANGELOG` の先頭に
   `{ v: 'v6', d: 'YYYY/MM/DD'（JSTの更新日）, items: [ユーザー向けの変更点…] }` を追記する
   （画面上部の📣お知らせに表示され、未読の人には赤丸が付く）。
+- GROOVE MAP本体の `RELEASE_NOTES` は、ユーザーに知らせたい大きい更新のときだけ
+  `pop: { t: 見出し, items: [3つまで], go: ['ボタン名', 'onclickのJS'] }` を付ける
+  （アップデート後に最初に開いた時、まだ見ていない pop 付きの更新だけを1回まとめて表示する。
+  「見た」は users/{uid}.seenNote と端末の localStorage。細かい修正には付けない）。

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v688';
+var APP_JS_VERSION = 'v689';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v688';
+  var DATA_VERSION = 'v689';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,7 +5363,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v688', d:'2026-10-07', items:['計画シートの説明文をなくしました（MAP・数字と改善点・行動の横の i を押すと出ます）','改善点の欄は、項目ごとに記入例を薄く出すようにしました','行動の空いた行にも記入例を出します'] },
+  { v:'v689', d:'2026-10-08', items:['大きい更新があった時は、アップデート後に最初に開いた時だけ更新内容を表示するようにしました（1人1回。スマホとMacで見た記録は共通）','これまでの更新内容は、HOMEのベルと設定の「お知らせ・更新内容」から見られます'] },
+  { v:'v688', d:'2026-10-07', pop: { t: 'PLANが「計画シート」になりました', items: ['紙の計画立案シートと同じ並び（目標 → MAP → 数字と改善点 → 行動）で1ヶ月の計画を書けます', '改善点は数字の1行ごと。行動はToDo・カレンダーにも入ります', '「シートを印刷」でA3横に印刷・PDFにできます'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートの説明文をなくしました（MAP・数字と改善点・行動の横の i を押すと出ます）','改善点の欄は、項目ごとに記入例を薄く出すようにしました','行動の空いた行にも記入例を出します'] },
   { v:'v687', d:'2026-10-07', items:['計画シートを紙の記入例に合わせて作り直しました。上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）で、＋−ボタンやバーはやめてマスに書くだけにしました','改善点は数字の1行ごとに「先月の結果から、今月どうするか」を書けます。先月目標に届かなかった数字は赤','いちばん上の1行で「マイルストーンまであと何ヶ月・フロントBRあと何本 → 今月のNEWフロント → 数字の目標」のつながりが見えます','数字の目標は自分で考えて入れます（自動では入りません）','MAPのユーザーは 名前｜GSV、ビジネスは 名前｜稼働（A〜Cは稼働率）／タイトル｜GSV','行動は紙と同じ ✔・行動・実行期日 の表。空いた行に書けば足されます（ToDoにも入ります）','印刷（A3横）も改善点を表の列にしました'] },
   { v:'v686', d:'2026-10-07', items:['PLANを作り直しました。いちばん上の「今月の計画シート」で、紙の計画立案シートと同じ並び（年の目標・月間目標・MAP・数字・改善点・4分野の行動）で1ヶ月の計画を立てられます','MAPは上が流通（ユーザー）・下がビジネスの陸上トラック型。理想MAPと切りかえられ、点線の丸がこれから出すNEWフロントです','数字の表は先月と今月を並べて表示。予定・研修の記録・MAPから数えられるものは自動、項目は自分で変えられます','行動はToDoのタスクとして入ります（期日つきでカレンダーにも出て、どちらでチェックしても同じ）','「シートを印刷」でA3横に印刷・PDFにできます','前の画面（目標・今週やること・振り返り・サマリーなど）はツールの中に残しています','v685の「戦略」はいったん取り下げました'] },
   { v:'v684', d:'2026-10-07', items:['ユニオン予定のボタンをHOMEから「設定 › カレンダー」の一番上に移しました'] },
@@ -5786,11 +5787,47 @@ var RELEASE_NOTES = [
   { v:'v226〜232', d:'2026-07-08', items:['GOAL再設計：頂上（最重要目標）→道のり（通過点）→今月のフォーカス','育成パイプライン逆算（LOIカウント月・間に合う/警告）','OL育成をダッシュボード化（PC表・停滞警告・経過ソート）','金の船グリッド・3〜7人OLテーブル'] },
   { v:'v222〜225', d:'2026-07-07', items:['GOALタブ新設：価値観→年間→月間→日々の逆算プランナー','マイルストーン（サクセストリップ/アカデミー）','ダークモードの文字色改善・編集パネルのボタン配置変更'] }
 ];
-function hasUnseenNotes() {
-  try { return localStorage.getItem('gm_seenNote') !== RELEASE_NOTES[0].v; } catch(e) { return false; }
+// v689: 「見た」は1人1回（プロフィール users/{uid}.seenNote）＋端末（localStorage）。どちらかで見ていれば見た扱い
+function _rnNum(v) { var m = String(v || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; }
+function _rnSeen() { var a = 0, b = 0; try { a = _rnNum(localStorage.getItem('gm_seenNote')); } catch(e) {} try { b = _rnNum(currentUser && currentUser.seenNote); } catch(e2) {} return Math.max(a, b); }
+function _rnMarkSeen() {
+  var v = RELEASE_NOTES[0].v;
+  try { localStorage.setItem('gm_seenNote', v); } catch(e) {}
+  try { if (currentUser && currentUser.uid && _rnNum(currentUser.seenNote) < _rnNum(v)) { currentUser.seenNote = v; fsSet('users/' + currentUser.uid, { seenNote: v }).catch(function(){}); } } catch(e2) {}
+}
+function hasUnseenNotes() { return _rnSeen() < _rnNum(RELEASE_NOTES[0].v); }
+// v689: アップデート後に最初に開いた時だけ、大きい更新（pop付き）をまとめて1回出す
+function _rnPopCheck() {
+  if (window._rnPopDone) return; window._rnPopDone = true;
+  try {
+    if (!currentUser || !currentUser.uid || viewingOwnerUid) return;
+    if (/[?&](ev|todo)=/.test(location.search || '')) return; // 通知やリンクから開いた時は邪魔しない
+    var seen = _rnSeen();
+    if (!seen) { // 初めての人：過去のお知らせは見た扱い（登録から3日以内）
+      var ca = Date.parse(currentUser.createdAt || '');
+      if (!isNaN(ca) && Date.now() - ca < 3 * 86400000) { _rnMarkSeen(); return; }
+    }
+    var L = RELEASE_NOTES.filter(function(n) { return n.pop && _rnNum(n.v) > seen; });
+    if (!L.length) return;
+    _rnMarkSeen(); _rnPopShow(L.slice(0, 3));
+  } catch (e) {}
+}
+function _rnPopShow(L) {
+  var old = document.getElementById('rnPopOv'); if (old) old.remove();
+  var go = L[0].pop.go;
+  var ov = document.createElement('div'); ov.id = 'rnPopOv'; ov.className = 'trophy-ov'; ov.style.zIndex = '700'; ov.style.alignItems = 'center';
+  var close = 'var o=document.getElementById(\'rnPopOv\');if(o)o.remove();';
+  ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = '<div class="trophy-sheet" style="border-radius:20px;margin:0 16px;padding:20px 18px 18px;max-width:440px">'
+    + '<div style="font-size:12px;font-weight:800;color:var(--accent)">✨ アップデート（' + evEsc(L[0].v) + '）</div>'
+    + L.map(function(n, i) { return '<div style="margin-top:' + (i ? 14 : 8) + 'px"><div style="font-size:' + (i ? 15 : 19) + 'px;font-weight:900;line-height:1.4">' + evEsc(n.pop.t) + '</div>'
+      + (n.pop.items && n.pop.items.length ? '<ul style="margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.65;color:var(--text-mid);font-weight:700">' + n.pop.items.slice(0, 3).map(function(t) { return '<li>' + evEsc(t) + '</li>'; }).join('') + '</ul>' : '') + '</div>'; }).join('')
+    + (go ? '<button class="btn-primary" style="width:100%;margin-top:16px;padding:13px;border-radius:12px;border:0;background:var(--accent);color:#06281f;font-size:15px;font-weight:900;cursor:pointer" onclick="' + close + go[1] + '">' + evEsc(go[0]) + ' ›</button>' : '')
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12.5px;font-weight:800"><span style="color:var(--text-dim);cursor:pointer" onclick="' + close + 'openReleaseNotes()">これまでの更新を見る</span><span style="color:var(--text-mid);cursor:pointer;padding:6px 4px" onclick="' + close + '">閉じる</span></div></div>';
+  document.body.appendChild(ov);
 }
 function openReleaseNotes() {
-  try { localStorage.setItem('gm_seenNote', RELEASE_NOTES[0].v); } catch(e) {}
+  _rnMarkSeen();
   var old = document.getElementById('notesOv'); if (old && old.parentNode) old.parentNode.removeChild(old);
   var body = RELEASE_NOTES.map(function(n, i){
     return '<div class="rn-item' + (i===0?' latest':'') + '">'
@@ -35043,6 +35080,7 @@ function doSignup() {
           area: area, union: union, upRuby: upRuby, upBd: upBd, unionSelectedV2: true,
           role: 'member', status: 'pending', registrationComplete: true,
           privacy: { ver: PRIVACY_VER, at: new Date().toISOString() }, // v668: 登録時の同意を記録
+          seenNote: RELEASE_NOTES[0].v, // v689: 初めての人に過去のお知らせは出さない
           createdAt: new Date().toISOString()
         }).then(function() { return _pvRecord(uid).log; });
       })
@@ -35232,6 +35270,7 @@ function loginSuccess(user) {
   closeApprovalGate();
   // v668: 個人情報保護方針・利用規約に（今の版で）同意するまでアプリに入れない
   if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
+  setTimeout(function() { try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容
   // Googleカレンダー連携状態をプロフィールから復元
   state.gcalConnected = !!user.gcalConnected;
   state.gcalCalendarId = user.gcalCalendarId || '';

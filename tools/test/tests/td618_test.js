@@ -62,7 +62,7 @@ T.run(async () => {
   const st = $('#setPg');
   c('設定はリスト', !!st && $$('#setPg .st-ls>div').length >= 8 && st.textContent.indexOf('翌月コピー') >= 0 && st.textContent.indexOf('毎日のいつもの行') < 0 && st.textContent.indexOf('ログアウト') >= 0);
   c('設定に「お知らせ・更新内容」とバージョン', st.textContent.indexOf('お知らせ・更新内容') >= 0 && st.textContent.indexOf(w.RELEASE_NOTES[0].v) >= 0 && /\d\d:\d\d 保存済み/.test(st.textContent));
-  w.localStorage.removeItem('gm_seenNote'); w._stRender(); c('未読ならNEW', !!$('#setPg .nw'));
+  w.localStorage.removeItem('gm_seenNote'); w.currentUser.seenNote = ''; w._stRender(); c('未読ならNEW', !!$('#setPg .nw'));
   const rn = $$('#setPg .st-ls>div').find(x => x.textContent.indexOf('お知らせ・更新内容') >= 0); rn.onclick ? rn.onclick() : rn.click(); await sleep(80);
   c('押すとお知らせ（設定の上に出る・NEWが消える）', !!$('#notesOv') && !!$('#setPg') && !$('#setPg .nw'));
   $('#notesOv').remove();
