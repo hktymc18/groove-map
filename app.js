@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v743';
+var APP_JS_VERSION = 'v744';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v743';
+  var DATA_VERSION = 'v744';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v744', d:'2026-10-09', items:['PCのカレンダー：左のToDoメニューをなくして、カレンダーを横いっぱいに（ToDoを選んだ時だけ左にメニュー）','PC：上に「月・週・日｜ToDo」の切りかえ（スマホと同じ形）と「今日」「＋ 予定」。どの画面からでも1回で切りかえられます','ToDoを開いた時の表示を「すべて」から「今日」に（スマホ・PC）'] },
   { v:'v743', d:'2026-10-09', items:['計画シートの実行期日：ToDoに入れる時も時間を入れられるように（任意。予定と同じ数字パッド・「なし」で消す）','行動を書いてすぐ期日を押すと、次の行にカーソルが移ってキーボードで期日の窓が隠れていたのを直しました'] },
   { v:'v742', d:'2026-10-09', items:['PLAN：チェック（必須アイテム・TRAINING）を入口のタイルに','🧰 ツールは「やる理由（作文）」と「BB早見表」だけに（入口のタイルにあるもの・年別目標・ギャップ・前の画面はなくしました）。目標のページの「年別目標 ›」「ギャップ ›」もなくしました','やる理由の作文：書く欄の上に「📦 アーカイブする」（いまの作文を日付つきで残して白紙から）と「🗂 過去の作文」（読む・この作文から書き直す・消す）'] },
   { v:'v741', d:'2026-10-09', items:['分析 › パワーライン：月はじめ（今月のポイントがまだ少ない時）に「0本」になって、先月までのパワーラインが見えなかったのを直しました','月ごとに見られるように（上の 10月・9月・8月…を押す。それぞれの月のMAPから出します）。今月がまだ0本の時は、いちばん新しい月を出します','前の月との差（▲▼）と「表で見る」も、それぞれの月のMAPの数字に'] },
@@ -17986,10 +17987,44 @@ function _cvSync() {
   try {
     var on = _cvOn();
     document.body.classList.toggle('cv2', on);
+    try { _pcvSync(!on); } catch (eP) {} // v744: PCも同じ「月・週・日・ToDo」の切りかえ
     if (!on) return;
     _cvCss();
     _cvDecorate();
   } catch (e) {}
+}
+// v744: PCのカレンダー・ToDo：左のToDoメニューはToDoの時だけ。上に「月・週・日｜ToDo」の切りかえ（スマホと同じ形）と「今日」「＋ 予定」
+function _pcvSync(on) {
+  document.body.classList.toggle('pcv', !!on);
+  if (!on) return;
+  _pcvCss();
+  [['evCalendar', 'cal'], ['evWeek', 'week'], ['evDayV', 'day'], ['evAgenda', 'agenda']].forEach(function(p) {
+    var root = document.getElementById(p[0]), hd = root && root.querySelector('.ev-cal-hdr'); if (!hd || hd.querySelector('.pcv-seg')) return;
+    var seg = [['cal', '月', "setEventsMode('calendar')"], ['week', '週', "setEventsMode('week')"], ['day', '日', "setEventsMode('day')"]];
+    var td = p[1] === 'cal' ? 'cvToday()' : (p[1] === 'week' ? 'weekShift(0)' : (p[1] === 'day' ? 'dayVToday()' : ''));
+    var h = (td ? '<div class="pcv-td" onclick="' + td + '">' + (p[1] === 'week' ? '今週' : '今日') + '</div>' : '')
+      + '<div class="pcv-seg"><div class="g">' + seg.map(function(s) { return '<span class="' + (s[0] === p[1] ? 'on' : '') + '" onclick="' + s[2] + '">' + s[1] + '</span>'; }).join('') + '</div>'
+      + '<div class="g"><span class="' + (p[1] === 'agenda' ? 'on' : '') + '" onclick="cvTodoTab()">' + icn('checksq') + ' ToDo<i class="bb-badge" style="display:none"></i></span></div></div>'
+      + (p[1] === 'agenda' ? '' : '<div class="pcv-add" onclick="cvAdd(\'' + p[1] + '\')">＋ 予定</div>');
+    var ttl = hd.querySelector('.ev-cal-title'), nx = ttl && ttl.nextElementSibling && ttl.nextElementSibling.classList.contains('ev-cal-nav') && !ttl.nextElementSibling.classList.contains('pc-only') ? ttl.nextElementSibling : ttl;
+    if (nx) nx.insertAdjacentHTML('afterend', h); else hd.insertAdjacentHTML('beforeend', h);
+  });
+  try { updateEventsBadge(); } catch (e) {}
+}
+function _pcvCss() {
+  if (document.getElementById('pcvCss')) return;
+  var st = document.createElement('style'); st.id = 'pcvCss';
+  st.textContent = ".pcv-seg,.pcv-td,.pcv-add{display:none}"
+    + "body.pcv #view-events .pcv-seg{display:flex;gap:8px;margin:0 auto}body.pcv #view-events .pcv-td,body.pcv #view-events .pcv-add{display:flex}"
+    + ".pcv-seg .g{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px}"
+    + ".pcv-seg span{position:relative;display:flex;align-items:center;gap:5px;padding:7px 18px;border-radius:9px;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap}.pcv-seg span:hover{color:var(--text)}.pcv-seg span.on{background:var(--accent);color:var(--go-ink)}.pcv-seg span .lic{width:16px;height:16px}.pcv-seg .bb-badge{top:-5px;right:-5px}"
+    + ".pcv-td{flex:none;height:34px;padding:0 14px;border-radius:10px;border:1.5px solid var(--accent);color:var(--accent);background:var(--accent-dim);font-weight:900;font-size:13.5px;align-items:center;cursor:pointer}"
+    + ".pcv-add{flex:none;height:38px;padding:0 16px;border-radius:11px;background:var(--accent);color:var(--go-ink);font-weight:900;font-size:14px;align-items:center;cursor:pointer;white-space:nowrap}"
+    // 左のToDoメニューはカレンダーでは出さない（ToDoを選んだ時だけ）・古い切りかえのボタンは隠す
+    + "body.pcv #evCalendar.full #pcCalSide{display:none!important}body.pcv #evCalendar.full .ev-cal-weekdays,body.pcv #evCalendar.full .ev-cal-grid,body.pcv #evCalendar.full #calNextBar{margin-left:0!important}"
+    + "body.pcv #view-events .ev-cal-view,body.pcv #view-events .ev-cal-nav.pc-only[onclick^=\"setEventsMode\"],body.pcv #evCalendar .ev-cal-nav.pc-only[onclick^=\"openEventAddDate\"]{display:none!important}"
+    + "body.pcv #view-events .ev-cal-hdr{gap:8px}";
+  document.head.appendChild(st);
 }
 function _cvCss() {
   if (document.getElementById('cvCss')) return;
@@ -31185,7 +31220,7 @@ function evGrpToggle(k) { _evGrpCol[k] = !_evGrpCol[k]; renderAgenda(); }
 // ── v315: Lifebear式ToDo＝リスト/ラベル（maps/{uid}/meta/todoMeta に保存） ──
 var _todoMeta = null; // {lists:[{id,name,color}], labels:[{id,name,color}]}
 var _todoNav = { type: 'home' }; // home | {type:'smart',key:'my'|'star'|'week'|'done'} | {type:'list',id} | {type:'label',id}
-var _todoFilter = { type: 'all', id: '' }; // v337: ホーム一覧の絞り込み（all|today|list|label）
+var _todoFilter = { type: 'today', id: '' }; // v337: ホーム一覧の絞り込み（all|today|list|label）。v744: 最初は「今日」
 function todoSetFilter(type, id) {
   if (window._tdChipDragJust && Date.now() - window._tdChipDragJust < 600) return; // v366: 並べ替え直後の誤タップ防止
   _todoFilter = { type: type || 'all', id: id || '' };
@@ -31351,7 +31386,7 @@ function todoPickDel(kind, id) {
   if (kind === 'label' && _evLabelId === id) { _evLabelId = ''; updateTodoMetaDisplay(); }
   if (kind === 'list' && _evListId === id) { _evListId = ''; updateTodoMetaDisplay(); }
   if (typeof _tqListId !== 'undefined' && _tqListId === id) { _tqListId = ''; _tqRenderChips(); }
-  if (_todoFilter && _todoFilter.type === kind && _todoFilter.id === id) _todoFilter = { type: 'all', id: '' };
+  if (_todoFilter && _todoFilter.type === kind && _todoFilter.id === id) _todoFilter = { type: 'today', id: '' };
   renderAgenda();
   _todoPickerRender(kind);
   toast('' + (kind === 'label' ? 'ラベル' : 'リスト') + '「' + it.name + '」を削除しました');
@@ -32074,7 +32109,7 @@ function _renderAgendaCore() {
   // v337: 絞り込みチップ（すべて/今日/リスト/ラベル）。削除済みリストの絞り込みは自動解除
   var F = _todoFilter || { type: 'all', id: '' };
   if ((F.type === 'list' && !_todoListById(F.id)) || (F.type === 'label' && !_todoLabelById(F.id))) {
-    F = _todoFilter = { type: 'all', id: '' };
+    F = _todoFilter = { type: 'today', id: '' };
   }
   function fchip(sel, onclick, inner, attrs) { return '<div class="td-fchip' + (sel ? ' sel' : '') + '"' + (attrs ? ' ' + attrs : '') + ' onclick="' + onclick + '">' + inner + '</div>'; }
   var fch = '<div class="td-filters">'
