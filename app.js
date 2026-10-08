@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v694';
+var APP_JS_VERSION = 'v695';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v694';
+  var DATA_VERSION = 'v695';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v695', d:'2026-10-08', items:['PC版の計画シート：MAPを横いっぱいに広げ、行動（フロント作り・流通アップ・Dライン・自己成長）は数字と改善点の下に4つ横並びにしました'] },
   { v:'v694', d:'2026-10-08', items:['PLAN › シミュレーションを1画面にしました（いちばん上にファーストボーナス、その下に設定をマスに書くだけ、下に月ごとの組織図）'] },
   { v:'v693', d:'2026-10-08', items:['PLAN › 年別目標を表1つにしました（最終目標 → 1年ごとの月収・タイトル → 今 を1画面で。月収はマスに書くだけ）'] },
   { v:'v692', d:'2026-10-08', items:['PLAN › ギャップを1画面にしました（目標・今・差の表、単価・倍率、ロードマップへの割り振りを1つの画面で）','目標は空なら月収から自動、今の数は空ならMAPから自動で、薄い数字で出ます'] },
@@ -37296,7 +37297,7 @@ function _p2ShCss2() {
     + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;opacity:0;cursor:pointer}.sp-at .d.od{color:#FF6B7F}.sp-at .r.nw .c{color:var(--text-dim)}'
     + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
     // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
-    + '.sp-pc{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start;margin-top:4px}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
+    + '.sp-pc{margin-top:4px}.sp-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.sp-acts .sp-at{margin-bottom:0}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
     + '.sp-tb{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}.sp-tb th{font-size:11px;font-weight:800;color:var(--text-dim);padding:4px 6px;border-bottom:1px solid var(--border);text-align:center}.sp-tb td{border-bottom:1px solid var(--border);padding:5px 6px;text-align:center;font:800 14px Inter,sans-serif}.sp-tb td.n{text-align:left;font:900 12.5px inherit;font-family:inherit;white-space:nowrap}.sp-tb td.ng{color:#FF6B7F}.sp-tb td.v{color:#FF8A7A}.sp-tb td.k{text-align:left;width:50%;padding:3px 0 3px 8px}.sp-tb td.k .sp-kz{margin:0;border-color:transparent;background:transparent;padding:4px 6px}.sp-tb td.k .sp-kz:hover{border-color:var(--border)}.sp-tb .sp-in{width:44px;font-size:14px}.sp-tb .sp-in.v{color:#FF8A7A}';
   document.head.appendChild(st);
 }
@@ -37407,8 +37408,9 @@ function _p2ShPcHtml() {
   _p2ShCss(); _p2ShCss2();
   var ym = _p2ShYmN();
   setTimeout(_p2ShAfter, 0);
-  return _p2ShHeadHtml(ym, true) + '<div class="sp-pc"><div><div class="gl">' + _p2ShYearLn() + _p2ShMonLn(ym) + '</div>' + _p2ShWhy(ym) + _p2ShMapBox(ym, 900, 330, true) + _p2ShTable(ym) + _p2ShFoot(true) + '</div>'
-    + '<div>' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c, 6); }).join('') + '</div></div>';
+  // v695: MAPは横いっぱい。行動の4分野は数字と改善点の下に横並び（MAP → 数字と改善点 → 行動 の順で上から）
+  return _p2ShHeadHtml(ym, true) + '<div class="sp-pc"><div class="gl">' + _p2ShYearLn() + _p2ShMonLn(ym) + '</div>' + _p2ShWhy(ym) + _p2ShMapBox(ym, 1300, 380, true) + _p2ShTable(ym) + _p2ShFoot(true)
+    + '<div class="sp-sec" style="align-items:center">行動' + _uxIb('shact') + '</div><div class="sp-acts">' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c, 5); }).join('') + '</div></div>';
 }
 // ── 印刷（A3横・紙の計画立案シートと同じ並び）──
 function _p2ShPrintHtml(ym) {
