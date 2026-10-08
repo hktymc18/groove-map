@@ -52,6 +52,7 @@ T.run(async () => {
   w.p2ShPinTgl(); await sleep(20);
   w.state.members = mk(12); w.renderPlan(); await sleep(40);
   c('10人以上はサークルMAP（自動）', $('#p2ShMF').dataset.kind === 'circle' && !!$('#p2ShMI svg'));
+  c('v708: 計画シートのサークルはMAPの画面と別のid（MAPの＋−が効く）', $('#p2ShMI svg').id !== 'orbitSvgI' && $('#p2ShMI svg').id !== 'orbitSvgC');
   w.p2ShMapView('sheet'); await sleep(20);
   c('シート型に切りかえられる', $('#p2ShMF').dataset.kind === 'sheet' && !!$('.sp-map svg'));
   w.p2ShMapView(''); await sleep(20);
