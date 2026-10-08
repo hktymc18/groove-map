@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v691';
+var APP_JS_VERSION = 'v692';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v691';
+  var DATA_VERSION = 'v692';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v692', d:'2026-10-08', items:['PLAN › ギャップを1画面にしました（目標・今・差の表、単価・倍率、ロードマップへの割り振りを1つの画面で）','目標は空なら月収から自動、今の数は空ならMAPから自動で、薄い数字で出ます'] },
   { v:'v691', d:'2026-10-08', items:['PLAN › ロードマップを1画面にしました（月を縦に並べた表に、フロント・流通などの目標をその場で書けます）','マイルストーンは月の横の「＋」で足し、押すと名前を直せます。⛰次の山・🏔最終目標の月も表に出ます'] },
   { v:'v690', d:'2026-10-08', items:['PLAN › 目標を1画面にしました（最終目標の月収・タイトル・期日 → 次の山 → スローガン を上から順に。ページ送りなし）'] },
   { v:'v689', d:'2026-10-08', items:['大きい更新があった時は、アップデート後に最初に開いた時だけ更新内容を表示するようにしました（1人1回。スマホとMacで見た記録は共通）','これまでの更新内容は、HOMEのベルと設定の「お知らせ・更新内容」から見られます'] },
@@ -16638,8 +16639,8 @@ function _p2PageParts() {
     _ux2Css(); _p2YrsCss(); _p2SimCss(); body = _p2SimHtml(); next = '今月の目標に入れる ›'; nextOn = 'p2SimApply()';
   } else if (k === 'yrs') { // v642: 年別目標
     _ux2Css(); body = _p2YrsHtml(); next = '次の山 ›'; nextOn = 'p2Go(\'goal\',3)';
-  } else if (k === 'gap') { // v600: ギャップ（1行ずつ＋−）
-    _ux2Css(); body = _p2GapPageHtml(); next = '📤 ロードマップに割り振る'; nextOn = 'p2GapAlloc()';
+  } else if (k === 'gap') { // v692: 1画面（目標・今・差の表 → 単価・倍率 → 割り振り）。v600は1行ずつ＋−と別ページ
+    _ux2Css(); body = _p2GapOneHtml(); next = '📤 ロードマップに割り振る'; nextOn = 'p2GapAllocDo()';
   } else if (k === 'rmt') { // v603: 表は1項目ずつ（月を縦に −［数字］＋）
     _ux2Css(); body = _p2RmtHtml(i);
     if (i < subs.length - 1) { next = subs[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'ロードマップへ ›'; nextOn = 'p2Go(\'rm\')'; }
@@ -16703,6 +16704,7 @@ function _p2PageParts() {
   if (k === 'rmrows') back = 'p2Go(\'rm\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   if (k === 'ideal') back = (i === 0 || i === 2 || i === 6) ? 'p2Go(\'\')' : 'p2PgSub(' + (i - 1) + ')'; // v682: セットの最初は入口へ
   if (k === 'goal') { back = _p2From === 'year' ? 'p2Go(\'year\')' : 'p2Go(\'\')'; next = '✓ 完了'; nextOn = back; } // v690
+  if (k === 'gap' && /^(rm|goal|year|sheet)$/.test(_p2From || '')) back = 'p2Go(\'' + _p2From + '\')'; // v692: 来た所へ戻る
   return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back, dots: dots, dotI: dotI, dotOn: dotOn };
 }
 function _p2PageHtml() {
@@ -20942,6 +20944,39 @@ function _p2RmMsHtml() {
     + '<div class="ux-msp" id="uxMsP" style="background:' + e.color + '">🚩 ' + evEsc(String(e.t).trim() || 'マイルストーン') + '</div>'
     + (e.id ? '<div style="display:flex;margin-top:16px"><span class="ux-skip" onclick="p2RmMsDel2()">このマイルストーンを消す</span></div>' : '');
 }
+// ════ v692: ギャップを1画面に（目標・今・差の表 → 単価・倍率 → ロードマップへの割り振り）════
+UX_INFO.gap1 = { t: 'ギャップ', h: '目標月収から必要な数を逆算し、今の数との差を出します。<br><b>目標</b>は空なら月収から自動（薄い数字）。<b>今</b>は空ならMAPから自動（フロントBR＝自分から下で最初に出てくるBR、流通＝チームPT、Qルビー＝ルビーの人数、候補＝優先度「高」の人）。<br>下の「割り振る」で、差を今月から期日までの月に分けてロードマップに入れます（フロントBRは LOI→BR の月数だけ前の月までにフロントとして入れる）' };
+function _p2GapOneHtml() {
+  _p2ShCss2();
+  if (!document.getElementById('p2Gap1Css')) { var st = document.createElement('style'); st.id = 'p2Gap1Css';
+    st.textContent = '.gp1{width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px}.gp1 th{font-size:10.5px;font-weight:800;color:var(--text-dim);padding:4px;border-bottom:1px solid var(--border)}.gp1 td{padding:8px 4px;border-top:1px solid var(--border);text-align:center}.gp1 td.n{text-align:left;font-weight:900;font-size:13px;white-space:nowrap}.gp1 td.n small{display:block;font-size:10px;color:var(--text-dim);font-weight:700}.gp1 .sp-in{width:66px;font-size:16px}.gp1 .sp-in::placeholder{color:var(--text-dim);font-weight:800}.gp1 td.g{font:900 13px Inter,sans-serif;white-space:nowrap}.gp1 td.g.ng{color:var(--gold)}.gp1 td.g.ok{color:var(--accent)}.gp1 td.ro{font:900 16px Inter,sans-serif;color:var(--text-mid)}'
+      + '.gp1-r{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:4px}.gp1-r div{text-align:center;font-size:10.5px;font-weight:800;color:var(--text-dim);line-height:1.3}.gp1-r .sp-in{width:100%;font-size:15px;margin-top:4px}.gp1-r small{display:block;font-size:9.5px;margin-top:2px}'
+      + '.gp1-al{margin-top:4px;font-size:12px;line-height:1.7;font-weight:700;color:var(--text-mid)}.gp1-al b{color:var(--text)}.gp1-al .w{color:var(--gold)}';
+    document.head.appendChild(st); }
+  var calc = _p2GapCalc(), g = _p2Gap(), p = state.goals.plan, inc = p.income ? Math.round(p.income / 10000) : 0, ro = !!(viewingOwnerUid && !state.isEditor);
+  var f = function(v) { return v === null || v === undefined ? '' : (+v).toLocaleString(); };
+  var inp = function(col, k, v, ph) { return ro ? '<span class="ro">' + f(v === '' ? ph : v) + '</span>' : '<input class="sp-in" type="number" inputmode="numeric" value="' + (v === '' || v == null ? '' : v) + '" placeholder="' + (ph === null || ph === undefined ? '' : ph) + '" onfocus="edSelAll(this)" onchange="p2GapSet(\'' + col + '\',\'' + k + '\',this.value)">'; };
+  var gp = function(it) { return it.gap === null ? '<td class="g">—</td>' : (it.gap <= 0 ? '<td class="g ok">✓</td>' : '<td class="g ng">あと' + it.gap.toLocaleString() + '</td>'); };
+  var rows = calc.items.map(function(it) {
+    var tv = g.t[it.k], cv = g.c[it.k];
+    return '<tr><td class="n">' + evEsc(it.lb) + (it.unit ? '<small>' + it.unit + '</small>' : '') + '</td><td>' + inp('t', it.k, tv === undefined ? '' : tv, it.k === 'br' || it.k === 'exp' ? '' : (it.t === null ? '' : it.t)) + '</td><td>' + inp('c', it.k, cv === undefined ? '' : cv, it.cAuto) + '</td>' + gp(it) + '</tr>';
+  }).join('');
+  var cd = calc.cand;
+  rows += '<tr><td class="n">Qルビー候補<small>Qルビー×' + g.rates.candX + '</small></td><td class="ro">' + f(cd.t) + '</td><td>' + inp('c', 'cand', g.c.cand === undefined ? '' : g.c.cand, _p2GapAuto().cand) + '</td>' + gp({ gap: cd.gap }) + '</tr>';
+  var rates = '<div class="gp1-r">' + P2_GAP_RATES.map(function(r) {
+    return '<div>' + r.lb + (ro ? '<b style="display:block;font-size:15px;color:var(--text)">' + g.rates[r.k] + '</b>' : '<input class="sp-in" type="number" inputmode="numeric" value="' + g.rates[r.k] + '" onfocus="edSelAll(this)" onchange="p2GapRate(\'' + r.k + '\',this.value)">') + '<small>' + r.u + '</small></div>';
+  }).join('') + '</div>';
+  var P = _p2GapAllocPlan(), al = P.plans.map(function(pl) {
+    if (pl.sync) return '<div>・<b>' + evEsc(pl.lb) + '</b>：' + pl.steps.map(function(s) { return parseInt(s.ym.slice(5), 10) + '月 ' + s.v + '人'; }).join('・') + '</div>';
+    var a = pl.steps[0], z = pl.steps[pl.steps.length - 1];
+    return '<div>・<b>' + evEsc(pl.lb) + '</b>：' + parseInt(a.ym.slice(5), 10) + '月 ' + a.v.toLocaleString() + ' → ' + parseInt(z.ym.slice(5), 10) + '月 ' + z.v.toLocaleString() + '</div>';
+  }).join('') + (P.brLate ? '<div class="w">・フロントBRは期日までに LOI→BR（' + P.lead + 'ヶ月）が間に合いません。期日をのばすか、今いるメンバーで揃える</div>' : '');
+  return '<div class="sp-sec" style="align-items:center;margin-top:2px;font-size:18px">ギャップ' + _uxIb('gap1') + '</div>'
+    + '<div class="sp-leg" style="margin-top:0">目標：' + (p.title ? evEsc(_p2TitleEn(p.title)) : '未設定') + (inc ? '・月収' + inc + '万' : '') + (p.deadline ? '・' + evEsc(String(p.deadline).replace('-', '/')) + 'まで' : '') + '</div>'
+    + '<table class="gp1"><tr><th></th><th>目標</th><th>今</th><th>差</th></tr>' + rows + '</table>'
+    + '<div class="sp-sec">単価・倍率</div>' + rates
+    + '<div class="sp-sec">ロードマップへの割り振り</div><div class="gp1-al">' + (al || '割り振るギャップはありません') + '</div>';
+}
 // ── ギャップ：今の数・単価・倍率 ──
 var P2_GAP_RATES = [
   { k: 'qrYen', lb: '1Qルビー', u: '万円', st: 5, sub: '月収÷これ' },
@@ -21016,7 +21051,7 @@ function p2GapAllocDo() {
   var sk = _p2GapAllocApply(P.plans), k0 = P.plans[0].k, defs = _p2RmDefs(_p2Rm()), ix = 0;
   defs.forEach(function(d, j) { if (d.k === k0) ix = j; });
   toast('📤 ロードマップに割り振りました' + (sk ? '（理想MAPで決まる月のフロントはそのまま）' : ''));
-  p2Go('rmt', ix);
+  p2Go('rm'); // v691: ロードマップは1画面
 }
 function _p2GapAlHtml() {
   _p2RmtCss();
