@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v718';
+var APP_JS_VERSION = 'v719';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v718';
+  var DATA_VERSION = 'v719';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5381,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v719', d:'2026-10-08', items:['シミュレーションのボタンを「📅 ロードマップのペースに入れる」に：LOI〜BRの月ごとのフロントを、年の目標・ロードマップのF（計画シート・月の目標と同じ数字）に入れて、そのままロードマップを開きます','今月の分は理想MAPの自分のB1にも。BRを目指している人は、直近の目標（BRの月）もシミュレーションにそろえます','押した後の「『設定』で確定しよう」という古い案内をなくしました'] },
   { v:'v718', d:'2026-10-08', items:['年の目標・ロードマップと計画シートに「📄 サマリー」：右上（スマホは見出しの下）の「✎ 編集｜📄 サマリー」で、見るだけの1枚に切りかえ','ロードマップのサマリー：最終・直近の目標、マイルストーン、必要なフロント・締め切り・ペース、ギャップ、戦略のメモ','計画シートのサマリー：年の目標・マイルストーン・月収・NEWフロント、今月の数字（先月の結果つき）、改善点、行動（次にやること・期限切れ）、課題'] },
   { v:'v717', d:'2026-10-08', pop: { t: '年の目標・ロードマップを作り直しました', items: ['マイルストーンの線に、直近の目標から逆算した LOI→Q2→Q3→Q4→BR と、月ごとのフロント（F）が並びます。月を押すとイベント（例：SA早期達成）も書けます', '直近の目標から「必要なフロント」と締め切りを出して、月ごとのペースに割り振り。無理なペースの月は赤くなり、「1ヶ月ずらす」で調整できます', '組織15人からは、今→必要→ギャップの表（エキスパート・環境も）と、戦略のメモ（あとから やること・予定へ）が使えます'], go: ['ロードマップを開く', "switchView('plan');p2Go('year')"] }, items:['年の目標・ロードマップを1画面に：①マイルストーン ②直近の目標 ③今→必要→ギャップ ④フロントのペース ⑤戦略のメモ','S稼働の段と、目標・ロードマップ・年別目標・ギャップの4つの入口はなくしました（最終目標は「✎ 直す」から）','④のフロントの数字は、計画シート・月の目標と同じ数字です'] },
   { v:'v716', d:'2026-10-08', items:['PC：MAPの画面に「📝 課題」パネル。現状／理想を切りかえても出たままで、人のカード・丸を押すとその人の課題を書けます','自分・全体のメモ、残す先（行動・やること・予定・メモ）は計画シートの課題パネルと同じ'] },
@@ -16932,7 +16933,7 @@ function _p2PageParts() {
     _ux2Css(); body = _p2RmMonthHtml();
     var nym = _p2YmAdd(_p2RmYm || _p2Ym(0), 1); next = parseInt(nym.slice(5), 10) + '月 ›'; nextOn = 'p2RmMonth(\'' + nym + '\')';
   } else if (k === 'sim') { // v643: シミュレーション（組織図で）
-    _ux2Css(); _p2YrsCss(); _p2SimCss(); body = isPCMode() ? _p2SimHtml() : _p2SimOneHtml(); next = '今月の目標に入れる ›'; nextOn = 'p2SimApply()'; // v694: スマホは1画面
+    _ux2Css(); _p2YrsCss(); _p2SimCss(); body = isPCMode() ? _p2SimHtml() : _p2SimOneHtml(); next = 'ロードマップのペースに入れる ›'; nextOn = 'p2SimApply()'; // v694: スマホは1画面
   } else if (k === 'yrs') { // v693: 年別目標は表1つ（v642はカード＋−）
     _ux2Css(); body = _p2YrsOneHtml(); next = '✓ 完了';
   } else if (k === 'gap') { // v692: 1画面（目標・今・差の表 → 単価・倍率 → 割り振り）。v600は1行ずつ＋−と別ページ
@@ -19919,7 +19920,7 @@ function _p2SimHtml() {
   var cfg = _p2SimCfg(), cus = !(cfg.preset > 0), n = cus ? Math.max(cfg.fronts[1] || 0, cfg.fronts[2] || 0, 1) : cfg.preset;
   if (!cus) cfg.fronts = _p2SimFr(n);
   var R9 = _p2SimFbF(cfg.fronts, cfg), nodes = _p2SimTree(cfg), mo = Math.max(0, Math.min(4, _p2SimMo));
-  if (!UX_INFO.sim) UX_INFO.sim = { t: 'シミュレーション', h: 'これだけやったら、いくら狙えるか。LOI → Q2 → Q3 → Q4 → <b>5ヶ月目にBR</b>の流れです（Q4の月末で今月1,000P・累計5,000Pを満たせば翌月BR。週ごとの昇格はありません）。組織図は左右にスワイプで月を送れます。<br><b>LOIの月</b>：自分がBPC（ブランドチェンジ）<br><b>Q2・Q3の月</b>：フロントを決めた人数ずつ<br>入った人は、<b>入った翌月・翌々月</b>に「つなぐ人数」ずつ新しい人をつなぎます<br><b>BRの月</b>：5ヶ月目（Q4の翌月）<br>GSV＝その月に入った人×BPCポイント＋前からいる人×ADP＋自分のADP。ファーストボーナスはBRの月のGSVから（BB＋GSV 2,000以上でエリートLOI特典5万円）<br>丸の色は入った月です' };
+  if (!UX_INFO.sim) UX_INFO.sim = { t: 'シミュレーション', h: 'これだけやったら、いくら狙えるか。LOI → Q2 → Q3 → Q4 → <b>5ヶ月目にBR</b>の流れです（Q4の月末で今月1,000P・累計5,000Pを満たせば翌月BR。週ごとの昇格はありません）。組織図は左右にスワイプで月を送れます。<br><b>LOIの月</b>：自分がBPC（ブランドチェンジ）<br><b>Q2・Q3の月</b>：フロントを決めた人数ずつ<br>入った人は、<b>入った翌月・翌々月</b>に「つなぐ人数」ずつ新しい人をつなぎます<br><b>BRの月</b>：5ヶ月目（Q4の翌月）<br>GSV＝その月に入った人×BPCポイント＋前からいる人×ADP＋自分のADP。ファーストボーナスはBRの月のGSVから（BB＋GSV 2,000以上でエリートLOI特典5万円）<br>丸の色は入った月です<br><b>ロードマップのペースに入れる</b>：月ごとのフロントを、年の目標・ロードマップのFに入れます（計画シート・月の目標と同じ数字。今月の分は理想MAPの自分のB1にも）' };
   var lab = P2_SIM_LAB, ymL = function(m) { var t = (cfg.sm - 1 + m); return (((t % 12) + 12) % 12 + 1) + '月'; };
   var cnt = 1 + nodes.filter(function(x) { return x.id && x.jm <= mo; }).length, mon = R9.mons[mo] || { gsv: 0 };
   var st = function(lb, v, u, on, inp, ph) { return '<div class="ux-lb2">' + lb + '</div>' + _uxStepG(v, on + '(-1)', on + '(1)', inp + '(this.value)', u, ph || ''); };
@@ -24120,7 +24121,7 @@ function p2SimOpen() {
     + '<div><label>開始月</label><select id="p2sM" onchange="p2SimRun()">' + mOpts + '</select></div></div>'
     + '<div id="p2sResults"></div>'
     + '<div class="p2-meta" style="margin:10px 0 4px">🎁 ファーストボーナス</div><div id="p2sFB"></div>'
-    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:12px" onclick="p2SimApply()">✍ この人数を今月の目標に入れる</span>'
+    + '<span class="p2-btn pri" style="display:block;text-align:center;margin-top:12px" onclick="p2SimApply()">📅 ロードマップのペースに入れる</span>'
     + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -24195,20 +24196,27 @@ function p2SimFront(el) {
   cfg.fronts[parseInt(el.getAttribute('data-m'), 10)] = parseInt(el.value, 10) || 0;
   p2SimRun();
 }
+// v719: 「ロードマップのペースに入れる」：LOI〜BRの月ごとのフロントを、ロードマップのF（＝計画シート・月の目標と同じ数字）へ。今月の分は理想MAPの自分のB1にも
+function _p2SimYms(cfg) { var st = cfg.sy + '-' + String(cfg.sm).padStart(2, '0'), out = []; for (var i = 0; i < 5; i++) out.push(_p2YmAdd(st, i)); return out; }
 function p2SimApply() {
-  var cfg = _p2SimCfg();
-  var now = new Date();
-  var idx = (now.getFullYear() * 12 + now.getMonth() + 1) - (cfg.sy * 12 + cfg.sm);
-  var n = (idx >= 0 && idx < 5) ? cfg.fronts[idx] : Math.max.apply(null, cfg.fronts);
-  if (!n) n = Math.max.apply(null, cfg.fronts);
-  var ym = _p2Ym(0);
-  var _toI = _idealSetFront(n); // v656: シミュレーションのフロント人数を理想MAP（自分の直下の新規B1）にも
-  _p2M(ym).front = n;
-  var _rmS = _p2Rm(); if (!_rmS.rows.front) _rmS.rows.front = {}; _rmS.rows.front[ym] = n; // v573: ロードマップにも（ロードマップの数字が優先されて反映されなかった）
+  var cfg = _p2SimCfg(), yms = _p2SimYms(cfg), cur = _p2Ym(0), rm = _p2Rm(), put = [], toI = false;
+  if (!rm.rows.front) rm.rows.front = {};
+  yms.forEach(function(ym, i) {
+    if (ym < cur) return; // 過ぎた月はそのまま
+    var n = Math.max(0, +cfg.fronts[i] || 0);
+    if (ym === cur) toI = _idealSetFront(n); // v656: 今月は理想MAPの自分のB1も
+    rm.rows.front[ym] = n; _p2M(ym).front = n;
+    put.push(parseInt(ym.slice(5), 10) + '月 ' + n + '人');
+  });
+  if (!put.length) { toast('LOIの月からBRの月まで、もう過ぎています。シミュレーションのLOIの月を今月以降にしてください'); return; }
+  var nx = null; try { nx = _p2Next(); } catch (e) {}
+  var brYm = yms[4], nxSet = false;
+  if (nx && nx.title === 'BR' && nx.deadline !== brYm) { var p2 = _p2(); p2.next = { title: 'BR', tm: !!nx.tm, inc: 0, deadline: brYm, fb: +nx.fb || 0 }; nxSet = true; } // BRを目指す人は、直近の目標（BRの月）もそろえる
   saveGoals();
   _p2SheetClose('p2SimOv');
-  toast('✍ 今月のフロント目標に ' + n + '人 を入れました' + (_toI ? '（理想MAPの自分のB1も ' + n + '人に）' : '') + '。「設定」で確定しよう');
-  renderPlan();
+  _p2ShLs('gm_sum_yr', null);
+  toast('📅 ロードマップのペースに入れました：' + put.join('・') + (nxSet ? '（直近の目標：' + _p2YmJa(brYm) + 'にBR）' : '') + (toI ? '。今月の理想MAPの自分のB1も ' + (+cfg.fronts[yms.indexOf(cur)] || 0) + '人に' : ''));
+  p2Go('year');
 }
 // v656: 理想MAPの「自分のB1（自分の直下の今月の新規）」を n人にそろえる。理想MAPが空なら現状MAPをコピーしてから
 function _idealSetFront(n) {

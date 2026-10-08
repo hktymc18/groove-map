@@ -43,7 +43,7 @@ T.run(async () => {
   w.p2SimPsv(1000); w.p2SimAdp(1); w.p2SimStart(1); await sleep(5);
   c('BPCポイント・ADP・LOIの月', w._p2SimCfg().psv === 1000 && w._p2SimCfg().myPsv === 400 && $$('.p2sm-seg span')[0].textContent.indexOf('月') >= 0);
   w.uxInfo('sim'); c('(i)のボタンは「楽勝!!」', !!$('#uxInfo') && $('#uxInfo .ok').textContent === '楽勝!!'); w.uxInfoClose();
-  c('戻る＝入口（v652）・次＝今月の目標に入れる', $('.ux-btm').innerHTML.indexOf("p2Go('')") >= 0 && $('.ux-btm').textContent.indexOf('今月の目標に入れる') >= 0);
+  c('戻る＝入口（v652）・次＝ロードマップのペースに入れる（v719）', $('.ux-btm').innerHTML.indexOf("p2Go('')") >= 0 && $('.ux-btm').textContent.indexOf('ロードマップのペースに入れる') >= 0);
   console.log('=== v644 カスタム ===');
   w.p2SimPsv(1500); w.p2SimMode(1); w.p2SimDupSet(1); w.p2SimFSet(0, 1); w.p2SimFSet(1, 2); w.p2SimFSet(2, 1); w.p2SimFSet(3, 0); w.p2SimMo(4); await sleep(5);
   const c3 = w._p2SimCfg(), R3 = w._p2SimFbF(c3.fronts, c3);
