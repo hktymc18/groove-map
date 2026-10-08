@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v731';
+var APP_JS_VERSION = 'v732';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v731';
+  var DATA_VERSION = 'v732';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v732', d:'2026-10-08', items:['年の目標・ロードマップ：最終目標の帯の文字を大きく。スローガンは重ならないように下の行に出します'] },
   { v:'v731', d:'2026-10-08', items:['夢100を期間で絞れるように（すべて・今月・3ヶ月・半年・1年・今年、または「◯年◯月まで」を選ぶ）','その期間に必要な金額と、あと何ヶ月・月あたりいくら必要かを出します（期日を決めていない夢は入れません）'] },
   { v:'v730', d:'2026-10-08', items:['やることの書く欄を大きく1行に。ふつうに書いて「足す」でタスク','数値の目標は、書いてから「🔢 数値」をオン → 目標・単位・今の数を入れて足す','数値の目標は「今の数」をその場で打ちこめます（＋−でもOK）。7/8回のように進み具合が出ます'] },
   { v:'v729', d:'2026-10-08', items:['ロードマップ③の「MAP ◯ に戻す」をなくしました（MAPの数に戻したい時は、欄を空にします）'] },
@@ -38480,8 +38481,8 @@ function _p2YrCss() {
   if (document.getElementById('p2YrCss')) return;
   var st = document.createElement('style'); st.id = 'p2YrCss';
   st.textContent = '.yr{max-width:1180px}.yr .st{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;font:900 12px Inter,sans-serif;background:var(--accent);color:#06251c;flex:none}'
-    + '.yr-goal{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;padding:11px 14px;border-radius:14px;cursor:pointer;border:1px solid color-mix(in srgb,var(--gold) 40%,var(--border));background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 12%,var(--surface)),var(--surface) 70%)}'
-    + '.yr-goal .lb{font-size:12px;font-weight:900;color:var(--gold)}.yr-goal b{font-size:17px;font-weight:900}.yr-goal .t{color:var(--gold);letter-spacing:.5px}.yr-goal small{font-size:12px;color:var(--text-mid);font-weight:700}.yr-goal .mt{font-style:italic}.yr-goal .ed{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent)}'
+    + '.yr-goal{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;padding:14px 16px;border-radius:14px;cursor:pointer;border:1px solid color-mix(in srgb,var(--gold) 40%,var(--border));background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 12%,var(--surface)),var(--surface) 70%)}'
+    + '.yr-goal .lb{font-size:13.5px;font-weight:900;color:var(--gold)}.yr-goal b{font-size:21px;font-weight:900}.yr-goal .t{color:var(--gold);letter-spacing:.5px}.yr-goal small{font-size:13.5px;color:var(--text-mid);font-weight:800}.yr-goal .mt{flex-basis:100%;order:9;font-size:16px;font-weight:900;color:var(--text);letter-spacing:.3px;padding-top:6px;border-top:1px dashed color-mix(in srgb,var(--gold) 35%,var(--border))}.yr-goal .ed{margin-left:auto;font-size:13.5px;font-weight:800;color:var(--accent)}'
     + '.yr-tl{margin-top:12px;padding:10px 0 8px;border-bottom:1px solid var(--border);background:var(--bg)}body.px3 .yr-tl{position:sticky;top:var(--yrTop,0px);z-index:5}'
     + '.yr-h{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:15px;font-weight:900;margin-bottom:8px}.yr-h small{font-weight:700;color:var(--text-dim);font-size:12px}.yr-h .ux-ib{width:20px;height:20px;font-size:11px;border-width:1.2px;margin-left:2px;align-self:center}.yr-h .r{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}'
     + '.yr-sc{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}.yr-g{display:grid;grid-template-columns:40px repeat(var(--n),minmax(56px,1fr));min-width:calc(40px + var(--n) * 56px)}.yr-g>div{text-align:center;font-size:12px;font-weight:800;padding:2px 0}'
@@ -38510,7 +38511,7 @@ function _p2YrCss() {
     + '.yr-warn{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid #FF6B7F;background:color-mix(in srgb,#FF6B7F 8%,transparent);font-size:13px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}'
     + '.yr-lock{display:block;line-height:1.7;padding:14px;border-radius:12px;border:1px dashed var(--border);text-align:center;font-size:14px;font-weight:900;color:var(--text-mid)}.yr-lock small{display:block;font-size:12px;color:var(--text-dim);font-weight:700}.yr-lock b{color:var(--gold)}'
     + '.yr .iss .iss-r .h b{font-size:13px}.yr .iss-em{border-top:0}'
-    + '@media (max-width:640px){.yr-calc{gap:6px}.yr-calc>div{padding:8px}.yr-calc small{font-size:10.5px}.yr-calc b{font-size:19px}.yr-pace>div{width:calc(33.3% - 6px)}.yr-goal b{font-size:15px}.yr-h small{flex-basis:100%;padding-left:30px}.yr-gp td{font-size:14px}.yr-gp td.n{font-size:13px}.yr-gp .yr-in{width:64px}.yr-sec{padding:12px}}';
+    + '@media (max-width:640px){.yr-calc{gap:6px}.yr-calc>div{padding:8px}.yr-calc small{font-size:10.5px}.yr-calc b{font-size:19px}.yr-pace>div{width:calc(33.3% - 6px)}.yr-goal b{font-size:19px}.yr-h small{flex-basis:100%;padding-left:30px}.yr-gp td{font-size:14px}.yr-gp td.n{font-size:13px}.yr-gp .yr-in{width:64px}.yr-sec{padding:12px}}';
   document.head.appendChild(st);
 }
 function _p2YrAfter() {

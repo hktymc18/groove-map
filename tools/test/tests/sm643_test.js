@@ -14,7 +14,7 @@ T.run(async () => {
   const dots = () => $$('.p2sm-tree circle').length;
   c('組織図（自分＋BRの月までの全員）＝組織人数', dots() === R.org && $('.sm1-r .k').textContent.indexOf(R.org) >= 0 && $('.sm1-r .k').textContent.indexOf('人') >= 0);
   c('v704: ファーストボーナスは最初は隠す（押して見る）', !!$('.sm1-r .fbq') && $('.sm1-r .fb').textContent.indexOf(R.fb.toLocaleString()) < 0 && !$('.sm1-r .fb .ux-ib'));
-  w.p2FbReveal(); await sleep(20);
+  w.p2FbReveal(); await sleep(80); // 回し始めは少しあと（並列だと遅れる）
   c('v704: 押すと数字がぐるぐる回る（桁ごとのリール）', !!$('#p2FbR.fbsp') && $$('#p2FbR .rs').length === String(R.fb).length && $('#p2FbR').getAttribute('aria-label') === '¥' + R.fb.toLocaleString());
   c('v704: 右の桁から順に止まる（左ほど長く回る）', (() => { const cs = $$('#p2FbR .rs'); return cs.length > 1 && parseFloat(cs[0].style.transition.split(' ')[1]) > parseFloat(cs[cs.length - 1].style.transition.split(' ')[1]) && /translateY\(-/.test(cs[0].style.transform); })());
   await sleep(3500);
