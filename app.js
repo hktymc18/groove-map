@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v756';
+var APP_JS_VERSION = 'v757';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v756';
+  var DATA_VERSION = 'v757';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v757', d:'2026-10-09', items:['使い方ガイドを設定から開いた時、設定のページが残ったまま下の画面で説明が始まり、関係ない所が光っていたのを直しました（説明を始める前に、上に重なっているページを閉じます）','光らせる所がほかの物に隠れている時は、見えている所だけを光らせる（全部隠れている時は真ん中に説明）ようにしました'] },
   { v:'v756', d:'2026-10-09', items:['使い方ガイドの説明（スポットライト）を増やしました：年の目標・ロードマップ、メンバーの画面（スマホ）／編集（PC）、フロント追加、受付連携、チェック、理想、夢100、シミュレーション、分析の研修・パワーライン・地域、OL、メンバー','「❓ 使い方」の画面ごとのガイドを MAP・PLAN・予定・ANALYTICS・そのほか に分けて並べました'] },
   { v:'v755', d:'2026-10-09', items:['❓ 使い方ガイドができました：はじめて開いた時の案内（このアプリでできること）、HOMEの「はじめのステップ」（できたら自動でチェック）、画面を初めて開いた時に大事なところを光らせて説明','一度見たら出ません。あとから見返す時は HOME（PCは左のメニュー）の「❓ 使い方」か、設定の「使い方ガイド」から。よくある質問もあります','ユニオン管理者には、管理者向けの説明（アカウント管理・ユニオンのチェック項目・ユニオン予定）も出ます'], pop:{ t:'❓ 使い方ガイドができました', items:['はじめての案内・はじめのステップ・画面ごとの説明','あとからは「❓ 使い方」でいつでも見返せます'], go:['使い方を見る','gdMenu()'] } },
   { v:'v754', d:'2026-10-09', items:['ホームのタイル「ANALYSIS」を「ANALYTICS」に'] },
@@ -39422,10 +39423,10 @@ function _gdStepsHtml() {
   } catch (e) { return ''; }
 }
 function gdStepsHide() { _gdSave(function(g) { g.stepsHide = 1; }); try { toast('「❓ 使い方」からいつでも表示できます'); } catch (e) {} _gdReHome(); }
-function gdStepsShow() { _gdSave(function(g) { g.stepsHide = 0; g.stepsDone = 0; }); gdMenuX(); switchView(isPCMode() ? 'home' : 'menu'); }
+function gdStepsShow() { _gdSave(function(g) { g.stepsHide = 0; g.stepsDone = 0; }); gdMenuX(); _gdClosePages(); switchView(isPCMode() ? 'home' : 'menu'); }
 function _gdReHome() { try { if (currentView === 'menu' && typeof renderMenuHub === 'function') renderMenuHub(); else if (currentView === 'home') renderHome(); } catch (e) {} }
 function gdStepGo(k) {
-  var pc = isPCMode();
+  var pc = isPCMode(); gdMenuX(); _gdClosePages();
   if (k === 'self' || k === 'front') {
     switchView('current');
     setTimeout(function() { gdPoint(k === 'self' ? ['.onb-b', '#mxBtm [onclick="onFabClick()"]', '#fab'] : ['#mxBtm [onclick="onFabClick()"]', '#fab'], k === 'self' ? '自分を登録' : 'フロントを追加', k === 'self' ? 'ここを押して、あなた自身を0段目に登録します' : '＋ 追加を押すと、あなたの直下（フロント）に人を足せます。研修生も選べます'); }, 500);
@@ -39604,13 +39605,32 @@ function _gdSpotRender() {
   o.onclick = function(ev) { if (ev.target === o || ev.target.classList.contains('dim')) gdTourGo(1); };
   setTimeout(_gdPlace, el ? 60 : 0);
 }
+// 光らせる所が、ほかの画面の下に隠れていないか（真ん中の点で一番上にある要素を見る）
+function _gdVisTop(el) { // 上から見て、ほかの物に隠れていない最初の高さ（-1＝ぜんぶ隠れている）
+  try {
+    var r = el.getBoundingClientRect(), x = r.left + Math.min(r.width / 2, 60), H = window.innerHeight;
+    var sp = document.getElementById('gdSpot'), pv = sp ? sp.style.visibility : '';
+    if (sp) sp.style.visibility = 'hidden';
+    var res = -1;
+    for (var y = Math.max(2, r.top + 4); y < Math.min(H - 2, r.bottom); y += 16) {
+      var hit = document.elementFromPoint(x, y);
+      if (hit && (el === hit || el.contains(hit) || hit.contains(el))) { res = y - 4; break; }
+    }
+    if (sp) sp.style.visibility = pv;
+    if (r.bottom <= 0 || r.top >= H) return r.top; // 画面の外（スクロールで見える）は隠れている扱いにしない
+    return res;
+  } catch (e) { return 0; }
+}
+function _gdCovered(el) { return _gdVisTop(el) < 0; }
 function _gdPlace() {
   var T = _gdT, o = document.getElementById('gdSpot'); if (!T || !o) return;
   var S = T.steps[T.i], el = _gdVis(S.s), b = o.querySelector('.bub'), h = o.querySelector('.hole'), W = window.innerWidth, H = window.innerHeight;
   var bw = Math.min(320, W - 24), bh = b ? b.offsetHeight : 160;
   if (!el || !h) { if (b) { b.style.left = Math.round((W - bw) / 2) + 'px'; b.style.top = Math.round((H - bh) / 2) + 'px'; } return; }
-  var r = el.getBoundingClientRect(), pad = 6;
-  var x = Math.max(4, r.left - pad), y = Math.max(4, r.top - pad), w = Math.min(W - 8, r.width + pad * 2), hh = Math.min(H - 8, r.height + pad * 2);
+  if (_gdCovered(el)) { h.style.display = 'none'; o.classList.add('nohole'); if (!o.querySelector('.dim')) o.insertAdjacentHTML('afterbegin', '<div class="dim"></div>'); b.style.left = Math.round((W - bw) / 2) + 'px'; b.style.top = Math.round((H - bh) / 2) + 'px'; return; }
+  h.style.display = ''; var dm = o.querySelector('.dim'); if (dm) dm.remove();
+  var r = el.getBoundingClientRect(), pad = 6, vt = Math.max(r.top, _gdVisTop(el)); // 上が固定の物に隠れている時は、見えている所から
+  var x = Math.max(4, r.left - pad), y = Math.max(4, vt - pad), w = Math.min(W - 8, r.width + pad * 2), hh = Math.min(H - 8 - y, r.bottom - vt + pad * 2);
   h.style.left = x + 'px'; h.style.top = y + 'px'; h.style.width = w + 'px'; h.style.height = hh + 'px';
   var top = (y + hh + 12 + bh < H) ? y + hh + 12 : (y - bh - 12 > 4 ? y - bh - 12 : Math.max(8, H - bh - 12));
   var left = Math.max(12, Math.min(W - bw - 12, r.left + r.width / 2 - bw / 2));
@@ -39665,20 +39685,28 @@ function gdMenu() {
     ['（管理者）ユニオンの予定を全員に出すには？', '予定を足す時の「共有範囲」で「ユニオン全員」を選ぶと、ユニオンの全員のカレンダーに出ます。'],
     ['（管理者）アカウント管理は？', 'HOMEの「🛡 アカウント管理」から、メンバーのアカウントを確認・管理できます。']);
   o.innerHTML = '<div class="in"><div class="top"><h2>❓ 使い方</h2><span onclick="gdMenuX()">✕</span></div>'
-    + '<div class="sec">はじめに</div><div class="ls">' + li('👋', 'はじめての案内をもう一度', 'このアプリでできること（30秒）', 'gdMenuX();gdIntro(1)', G.intro)
+    + '<div class="sec">はじめに</div><div class="ls">' + li('👋', 'はじめての案内をもう一度', 'このアプリでできること（30秒）', 'gdMenuX();_gdClosePages();gdIntro(1)', G.intro)
     + li('🚀', 'はじめのステップを表示', 'HOMEにチェックリストを出す', 'gdStepsShow()', G.stepsDone) + '</div>'
     + GD_MENU.map(function(g) { // v756: 画面ごとのガイドを場所ごとに
       var ks = g[1].filter(function(k) { return GD_TOURS[k] && !(k === 'me' && !isPCMode()) && !(k === 'pp' && isPCMode()); });
       return '<div class="sec">画面ごとのガイド：' + g[0] + '</div><div class="ls">' + ks.map(function(k) { var T = GD_TOURS[k]; return li(T.ic, T.lb, T.go ? '' : _gdHowOpen(k), 'gdMenuTour(\'' + k + '\')', G.tour[k]); }).join('') + '</div>';
     }).join('')
-    + (adm ? '<div class="sec">管理者向け</div><div class="ls">' + li('🛡', 'アカウント管理', 'メンバーのアカウント', 'gdMenuX();openAdminPanel()') + li('⚙', 'ユニオンのチェック項目', 'PLAN › チェック', "gdMenuX();gdStepGo('ack')") + '</div>' : '')
+    + (adm ? '<div class="sec">管理者向け</div><div class="ls">' + li('🛡', 'アカウント管理', 'メンバーのアカウント', 'gdMenuX();_gdClosePages();openAdminPanel()') + li('⚙', 'ユニオンのチェック項目', 'PLAN › チェック', "gdMenuX();gdStepGo('ack')") + '</div>' : '')
     + '<div class="sec">よくある質問</div>' + faq.map(function(q) { return '<details><summary>' + q[0] + '</summary><p>' + q[1] + '</p></details>'; }).join('') + '</div>';
 }
 var GD_MENU = [['MAP', ['map', 'pp', 'me', 'na', 'cklink', 'members']], ['PLAN', ['plan', 'year', 'sheet', 'yk', 'check', 'ideal', 'dream', 'sim']], ['予定・ToDo', ['cal', 'todo']], ['ANALYTICS', ['stats', 'train', 'pl', 'reg']], ['そのほか', ['ol']]];
 function _gdHowOpen(k) { return ({ pp: 'MAPで人を押した画面', me: 'PCでMAPの人を押した画面', na: 'MAPの＋ 追加' })[k] || ''; }
+// v757: ガイドを始める前に、上に重なっている全画面のページ（設定・メンバーの画面・フロント追加・受付連携・編集など）を閉じる
+//   （設定から「使い方」を開いた時、設定のページが残ったまま下の画面で説明が始まり、関係ない所が光っていた）
+function _gdClosePages() {
+  ['setClose', 'ppClose', 'naClose', 'ckLinkClose', 'reapClose', 'tkClose', 'efClose', 'uxMemClose', 'fitClose', 'gdTourX'].forEach(function(fn) { try { if (typeof window[fn] === 'function') window[fn](); } catch (e) {} });
+  try { if (document.querySelector('#modal.open') && typeof closeMemberEdit === 'function') closeMemberEdit(); } catch (e2) {}
+  try { Array.prototype.forEach.call(document.querySelectorAll('.overlay.open'), function(o) { o.classList.remove('open'); }); } catch (e3) {}
+  try { var mm = document.getElementById('mobileMenu'); if (mm) mm.classList.remove('open'); } catch (e4) {}
+}
 function gdMenuX() { var o = document.getElementById('gdMenuOv'); if (o) o.remove(); }
 function gdMenuTour(k) {
-  gdMenuX(); var T = GD_TOURS[k]; if (!T) return;
+  gdMenuX(); _gdClosePages(); var T = GD_TOURS[k]; if (!T) return;
   var go = T.go;
   if (!go) { // 開き方が人によって違う画面：見本の人で開く
     var ms = (state.members || []).filter(function(m) { return m && !m.deleted; }), m = ms.filter(function(x) { return x.parentId; })[0] || ms[0];

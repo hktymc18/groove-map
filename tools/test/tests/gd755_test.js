@@ -42,6 +42,13 @@ T.run(async () => {
   c('v756: 分析の研修は train と判定', w._gdTourKey() === 'train');
   w.gdTour('cklink', true); await sleep(10);
   c('v756: 受付連携は、画面に要素が無くても説明（真ん中の吹き出し）', !!$('#gdSpot .bub') && /受付連携/.test($('#gdSpot .bub').textContent)); w.gdTourX();
+  // v757: 設定（全画面のページ）から使い方を開いて画面ごとのガイドを押すと、設定のページを閉じてからその画面で説明
+  w.setOpen(); await sleep(10);
+  const hadSet = !!$('#setPg');
+  w.gdMenu(); w.gdMenuTour('dream'); await sleep(900);
+  c('v757: 設定から開いても、設定のページを閉じてその画面へ', hadSet && !$('#setPg') && w.currentView === 'plan' && w._p2Pg === 'dream' && !!$('#gdSpot')); w.gdTourX();
+  w.ppOpen('a', 'current'); await sleep(10); w.gdMenu(); w.gdMenuTour('year'); await sleep(900);
+  c('v757: メンバーの画面を開いたままでも閉じてから', !$('#ppPg') && w._p2Pg === 'year'); w.gdTourX();
   w.Element.prototype.getBoundingClientRect = gb;
   // ④ 使い方ガイド
   w.gdMenu(); await sleep(5);
