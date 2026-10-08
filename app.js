@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v744';
+var APP_JS_VERSION = 'v745';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v744';
+  var DATA_VERSION = 'v745';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v745', d:'2026-10-09', items:['分析 › 推移：「新規B1の平均GSV」を追加（その月の新規B1＝タイトルB1・その月にBCになった人のGSVの平均）。PCは上のカードのいちばん右、スマホは下の小さいタイル','グラフは押した項目の1つだけに。比べたい時だけ「⇄ 比較」を押して、もう1つ選ぶと2本を重ねて見られます（研修も同じ）'] },
   { v:'v744', d:'2026-10-09', items:['PCのカレンダー：左のToDoメニューをなくして、カレンダーを横いっぱいに（ToDoを選んだ時だけ左にメニュー）','PC：上に「月・週・日｜ToDo」の切りかえ（スマホと同じ形）と「今日」「＋ 予定」。どの画面からでも1回で切りかえられます','ToDoを開いた時の表示を「すべて」から「今日」に（スマホ・PC）'] },
   { v:'v743', d:'2026-10-09', items:['計画シートの実行期日：ToDoに入れる時も時間を入れられるように（任意。予定と同じ数字パッド・「なし」で消す）','行動を書いてすぐ期日を押すと、次の行にカーソルが移ってキーボードで期日の窓が隠れていたのを直しました'] },
   { v:'v742', d:'2026-10-09', items:['PLAN：チェック（必須アイテム・TRAINING）を入口のタイルに','🧰 ツールは「やる理由（作文）」と「BB早見表」だけに（入口のタイルにあるもの・年別目標・ギャップ・前の画面はなくしました）。目標のページの「年別目標 ›」「ギャップ ›」もなくしました','やる理由の作文：書く欄の上に「📦 アーカイブする」（いまの作文を日付つきで残して白紙から）と「🗂 過去の作文」（読む・この作文から書き直す・消す）'] },
@@ -11921,6 +11922,10 @@ function _dtAutoCounts(allMs, curMs, fmon) {
   });
   // v520: 平均稼働・総人数・OUT・研修生も現状MAPから自動集計
   var _curMs9 = (curMs || []).filter(function(m){ return !m.deleted && !/^(MG_|AG\d+_)/.test(m.id); });
+  // v745: 新規B1（その月にBC決定した人・タイトルがB1の人）の平均GSV（ptCurrent）
+  var _b1s = _curMs9.filter(function(m){ return (m.title || '').trim() === 'B1' || (m.traineeResult === 'BC' && traineeDecidedMonth(m) === fmon); });
+  counts.b1g = _b1s.length ? Math.round(_b1s.reduce(function(a, m){ return a + (+m.ptCurrent || 0); }, 0) / _b1s.length) : '';
+  counts.b1n = _b1s.length;
   var _act9 = _curMs9.filter(function(m){ return (m.title || '').trim() !== 'OUT'; });
   counts.out = _curMs9.length - _act9.length;
   counts.uni = _act9.length;
@@ -11935,7 +11940,7 @@ function _dtAutoCounts(allMs, curMs, fmon) {
   counts.actN = _rN9 ? Math.round(_rS9 / 10) / 10 : ''; // v592: 平均稼働人数＝自分から始まるチームの稼働率の合計÷100（1ハウディあたりに来る人数）
   return counts;
 }
-var DT_AUTO_KEY = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','平均稼働人数':'actN','総人数':'uni','OUT':'out','研修生':'tr'}; // v592: 平均稼働人数（1ハウディあたり）
+var DT_AUTO_KEY = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','B1平均GSV':'b1g','マケ・PG':'make','DLR動員':'dlr','平均稼働':'rate','平均稼働人数':'actN','総人数':'uni','OUT':'out','研修生':'tr'}; // v592: 平均稼働人数（1ハウディあたり）
 // v529: 推移グラフの過去の月は「その月のデータ」から出す。
 //   従来は表示中の月の保存データに入っている12ヶ月分の欄だけを読んでいたため、翌月コピーで引き継がれなかった月や
 //   あとから増えた行（総人数など）は、データがあってもグラフに出なかった
@@ -12013,6 +12018,7 @@ function buildAutoStats() {
   s.monthly.forEach(function(r){ if (r.label === '平均稼働') { r.label = '平均稼働人数'; r.vals = r.vals.map(function(){ return ''; }); } });
   if (!s.monthly.some(function(r){ return r.label === '平均稼働人数'; })) s.monthly.push({ label: '平均稼働人数', vals: ['','','','','','','','','','','',''] });
   // v521: 総人数は自動（新しい行）。UNIVERSE＝UNIVERSE RIDE（ゼネラルイベント）の参加人数なので手入力に戻す
+  if (!s.monthly.some(function(r){ return r.label === 'B1平均GSV'; })) { var _bj9 = -1; s.monthly.forEach(function(r, i){ if (r.label === 'B1') _bj9 = i; }); s.monthly.splice(_bj9 >= 0 ? _bj9 + 1 : s.monthly.length, 0, { label: 'B1平均GSV', vals: ['','','','','','','','','','','',''] }); } // v745
   if (!s.monthly.some(function(r){ return r.label === '総人数'; })) s.monthly.unshift({ label: '総人数', vals: ['','','','','','','','','','','',''] });
   if (!s.uniFix521) {
     // v520で「UNIVERSE＝総人数」として自動で入れてしまった今月の値を取り消す（総人数と完全に一致する場合のみ）
@@ -12041,7 +12047,23 @@ function dataScrollTo(id) { var el = document.getElementById(id); if (el && el.s
 var DT_TABS = [['trend', '推移'], ['train', '研修'], ['pl', 'パワーライン'], ['reg', '地域']]; // v647: サマリーは推移に統合（開いたらすぐ推移）
 var _dtTab = 'trend';
 try { var _dt0 = localStorage.getItem('gm_dtTab'); if (_dt0 && DT_TABS.some(function(t) { return t[0] === _dt0; })) _dtTab = _dt0; } catch (eDt0) {}
-var _dtSel = ['平均稼働人数', 'S']; // v647: 最初は平均稼働人数とS稼働      // 推移で表示中の項目（2つまで）
+var _dtSel = ['平均稼働人数']; // 推移で表示中の項目（v745: いつもは1つ。「⇄ 比較」をオンにした時だけ2つ）
+var _dtCmp = false; // v745: 比較モード（推移・研修 共通）
+function _dtPickSel(sel, k) { // 選んだ時の動き：ふだんはその1つに切りかえ／比較中は2つ目に足す（同じのを押すと外す）
+  sel = (sel || []).filter(function(x) { return x !== '__MIX__'; });
+  if (!_dtCmp) return [k];
+  var i = sel.indexOf(k);
+  if (i >= 0) { if (sel.length > 1) sel.splice(i, 1); return sel; }
+  if (sel.length < 2) sel.push(k); else sel[1] = k;
+  return sel;
+}
+function dtCmp(on) {
+  _dtCmp = on === undefined ? !_dtCmp : !!on;
+  if (!_dtCmp) { _dtSel = _dtSel.slice(0, 1); _dtTrSel = _dtTrSel.slice(0, 1); }
+  try { renderDtTrend(); } catch (e) {} try { _dtTrRender(); } catch (e2) {}
+  if (_dtCmp) toast('⇄ 比べたい項目をもう1つ押してください');
+}
+function _dtCmpBtn(n) { return '<span class="dt-cmp' + (_dtCmp ? ' on' : '') + '" onclick="event.stopPropagation();dtCmp()">' + (_dtCmp ? '⇄ 比較中' + (n < 2 ? '（もう1つ選ぶ）' : '') + ' ✕' : '⇄ 比較') + '</span>'; }
 var _dtMonthIdx = 11;           // 推移で選んでいる月（0〜11、11=表示中の月）
 var DT_MANUAL = ['UNIVERSE', 'コミッション']; // v521: 手入力の項目
 var DT_METRICS = [
@@ -12053,6 +12075,7 @@ var DT_METRICS = [
   { k: 'C', lb: 'C', unit: '人' },
   { k: 'OUT', lb: 'OUT', unit: '人', inv: true },
   { k: 'B1', lb: '新規BC(B1)', unit: '人' },
+  { k: 'B1平均GSV', lb: '新規B1の平均GSV', unit: 'pt', sub: '新規B1（LOI）の平均' }, // v745
   { k: '研修生', lb: '研修生', unit: '人' },
   { k: 'マケ・PG', lb: 'マケ・PG', unit: '人' },
   { k: 'DLR動員', lb: 'DLR動員', unit: '人' },
@@ -12620,11 +12643,7 @@ function dtOpenTrend(k) {
 function dtToggleMetric(k) {
   if (k === '__MIX__') { _dtSel = ['__MIX__']; }
   else {
-    var cur = _dtSel.filter(function(x) { return x !== '__MIX__'; });
-    var i = cur.indexOf(k);
-    if (i >= 0) { if (cur.length > 1) cur.splice(i, 1); }
-    else { cur.push(k); if (cur.length > 2) cur.shift(); }
-    _dtSel = cur;
+    _dtSel = _dtPickSel(_dtSel, k); // v745: ふだんは1つ・比較中だけ2つ
   }
   renderDtTrend();
 }
@@ -12713,7 +12732,7 @@ function renderDtTrend() {
       var meta = _dtMeta(k), v = _dtVals(k), nn = v.filter(function(x) { return x !== null; });
       return '<span class="dt-thi c' + si + '"><i></i>' + meta.lb + ' <b>' + _dtFmt(v[11], meta) + (meta.yen || v[11] === null ? '' : meta.unit) + '</b>' + _dtDelta(v[11], v[10], meta)
         + (nn.length > 1 ? '<small>最高 ' + _dtFmt(Math.max.apply(null, nn), meta, true) + '・最低 ' + _dtFmt(Math.min.apply(null, nn), meta, true) + '</small>' : '') + '</span>';
-    }).join('') + '</div>';
+    }).join('') + _dtCmpBtn(_dtSel.length) + '</div>';
   }
   var h = chips + '<div class="dt-card">' + head + _dtChartSvg(months) + '<div class="dt-hint">グラフの月をタップすると、その月の数字が下に出ます</div></div>';
   h += _anTilesHtml(_dtMonthIdx); // v647: 選んだ月の数字はタイルで（押すとグラフがその項目に）
@@ -12855,7 +12874,7 @@ function _dtTrainOld(fmon, asanOnly) {
 function dtAsanTgl(n) { _dtAsanOpen = (_dtAsanOpen === n) ? '' : n; renderDtTrain(); }
 // ════ v650: 研修＝推移と同じ形。数え方：その月の日付で「実施（進んだ・流れた）」の記録がある人（予定は数えない・削除した人は数えない） ════
 var DT_TR_K = [['n', '研修生', '人'], ['マケ', 'マケ', '人'], ['PG', 'PG', '人'], ['DLR', 'DLR', '人'], ['EXP', 'EXP', '人'], ['PA', 'PA', '人'], ['面談', '面談', '人'], ['BPC', 'BPC', '人'], ['CO', 'CO', '人'], ['BC', 'BC（成約）', '人'], ['ユーザー', 'ユーザー', '人'], ['流れた', '流れた', '人', 1], ['rate', 'BC決定率', '%']];
-var _dtTrSel = ['PG', 'BC'], _dtTrIdx = 11;
+var _dtTrSel = ['BC'], _dtTrIdx = 11;
 function _dtTrMembers() { return (state.members || []).filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || ''); }); }
 function _dtTrDone(h) { return h && h.date && h.result !== 'planned'; }
 function _dtTrMonth(mon) { // 1ヶ月ぶん：{ n, マケ…CO, BC, ユーザー, 流れた, rate, L:{k:[人]} }
@@ -12878,12 +12897,11 @@ function _dtTrData() {
   return out;
 }
 function dtTrMetric(k) {
-  var i = _dtTrSel.indexOf(k);
-  if (i >= 0) { if (_dtTrSel.length > 1) _dtTrSel.splice(i, 1); } else { _dtTrSel.push(k); if (_dtTrSel.length > 2) _dtTrSel.shift(); }
+  _dtTrSel = _dtPickSel(_dtTrSel, k); // v745
   _dtTrRender();
 }
 function dtTrPick(i) { _dtTrIdx = i; _dtTrRender(); }
-function dtTrTile(k) { _dtTrSel = [k]; _dtTrRender(); try { var c = document.querySelector('#dtTrain .dt-chips'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }
+function dtTrTile(k) { _dtTrSel = _dtPickSel(_dtTrSel, k); _dtTrRender(); try { var c = document.querySelector('#dtTrain .dt-chips'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }
 function _dtTrFunnel(M, mo) {
   var cnt = DT_STEPS.map(function(st) { return M.L[st] || []; }), mx = Math.max.apply(null, cnt.map(function(l) { return l.length; }).concat([1]));
   var W = 340, rowH = 34, H = DT_STEPS.length * rowH + 6, cx = 190, maxW = 230, svg = '<svg class="dt-funnel" viewBox="0 0 ' + W + ' ' + H + '">';
@@ -12911,7 +12929,7 @@ function _dtTrRender() {
     var mt = meta(k), v = vals(k), nn = v.filter(function(x) { return x !== null; });
     return '<span class="dt-thi c' + si + '"><i></i>' + mt.lb + ' <b>' + (v[idx] === null ? '—' : v[idx] + mt.unit) + '</b>' + _dtDelta(v[idx], idx > 0 ? v[idx - 1] : null, mt)
       + (nn.length > 1 ? '<small>最高 ' + Math.max.apply(null, nn) + '・最低 ' + Math.min.apply(null, nn) + '</small>' : '') + '</span>';
-  }).join('') + '</div>';
+  }).join('') + _dtCmpBtn(_dtTrSel.length) + '</div>';
   var sv = [_dtSel, _dtMonthIdx]; _dtSel = _dtTrSel; _dtMonthIdx = idx; _dtSrc = { vals: vals, meta: meta, pick: 'dtTrPick' };
   var svg = ''; try { svg = _dtChartSvg(months); } finally { _dtSrc = null; _dtSel = sv[0]; _dtMonthIdx = sv[1]; }
   var on = function(k) { return _dtTrSel.indexOf(k) >= 0; };
@@ -20303,7 +20321,7 @@ function _anHeadHtml() {
 }
 function anTile(k) { // タイルを押す：グラフをその項目に（上へ）
   if (k === '__BR') { dtGo('exam'); return; }
-  _dtSel = [k]; renderDtTrend();
+  _dtSel = _dtPickSel(_dtSel, k); renderDtTrend(); // v745
   try { var c = document.querySelector('#dtTrend .dt-chips'); if (c && c.scrollIntoView) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {}
 }
 function _anTilesHtml(idx) {
@@ -20327,8 +20345,8 @@ function _anTilesHtml(idx) {
     + big({ k: 'B1', lb: 'B1数', ic: 'calc', c: '#5AD7FF', d: 'move', sub: 'コミッションを動かす数字' })
     + big({ k: '平均稼働人数', lb: '平均稼働人数', ic: 'users', c: '#8B7CFF', sub: '1ハウディあたり' })
     + big({ k: '総人数', lb: '総人数', ic: 'users', c: '#2CE5B8' })
-    + '</div><div class="an-g sm">';
-  ['研修生', 'OUT', 'A', 'B', 'C', 'マケ・PG', 'DLR動員', 'UNIVERSE'].forEach(function(k) {
+    + '</div><div class="an-g sm s9">';
+  ['B1平均GSV', '研修生', 'OUT', 'A', 'B', 'C', 'マケ・PG', 'DLR動員', 'UNIVERSE'].forEach(function(k) { // v745: 新規B1の平均GSV
     var meta = _dtMeta(k), a = v(k), empty = a[0] === null || a[0] === undefined, man = DT_MANUAL.indexOf(k) >= 0;
     var tap = empty && man && !ro ? 'dtInputOpen(' + idx + ')' : 'anTile(\'' + k + '\')';
     h += '<div class="an-t' + (on(k) ? ' on' : '') + '" onclick="' + tap + '"><span class="lb">' + meta.lb + '</span><b>' + (empty ? '<i class="na">' + (man && !ro ? '＋ 入力' : '—') + '</i>' : (Math.round(a[0] * 10) / 10).toLocaleString() + '<small>' + meta.unit + '</small>') + '</b>'
@@ -20341,8 +20359,8 @@ function _anCss() {
   var st = document.createElement('style'); st.id = 'anCss';
   st.textContent = ".an-hd{display:flex;align-items:baseline;gap:10px;padding:10px 2px 4px}.an-hd h1{margin:0;font-size:30px;font-weight:900;letter-spacing:-.01em}.an-hd span{margin-left:auto;font-size:13px;font-weight:800;color:var(--text-dim)}"
     + ".an-sec{display:flex;align-items:baseline;gap:8px;margin:16px 2px 8px;font-size:15px;font-weight:900}.an-sec small{font-size:11.5px;color:var(--accent);font-weight:800}.an-sec em{font-style:normal;margin-left:auto;font-size:12px;color:var(--accent);font-weight:800;cursor:pointer}"
-    + ".an-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(min-width:768px) and (min-height:501px){.an-g.four{grid-template-columns:repeat(4,minmax(0,1fr))!important}}.an-g.sm{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}"
-    + "@media(min-width:768px) and (min-height:501px){.an-g{grid-template-columns:repeat(3,minmax(0,1fr))}.an-g.sm{grid-template-columns:repeat(8,minmax(0,1fr))}}"
+    + ".an-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(min-width:768px) and (min-height:501px){.an-g.four{grid-template-columns:repeat(4,minmax(0,1fr))!important}}.an-g.sm{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.an-g.sm.s9{grid-template-columns:repeat(3,minmax(0,1fr))}"
+    + "@media(min-width:768px) and (min-height:501px){.an-g{grid-template-columns:repeat(3,minmax(0,1fr))}.an-g.sm{grid-template-columns:repeat(8,minmax(0,1fr))}.an-g.sm.s9{grid-template-columns:repeat(9,minmax(0,1fr))}}"
     + ".an-t{position:relative;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:9px 10px;cursor:pointer;min-width:0;display:flex;flex-direction:column;gap:2px}"
     + ".an-t .lb{font-size:11.5px;font-weight:800;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.an-t b{font-size:19px;font-weight:900;font-family:Inter,sans-serif;line-height:1.15}.an-t b small{font-size:11px;color:var(--text-dim);margin-left:2px}.an-t .na{font-style:normal;font-size:14px;color:var(--accent)}"
     + ".an-t .f{font-size:11px;font-weight:700;color:var(--text-dim);min-height:14px}.an-t.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}"
@@ -37694,7 +37712,8 @@ function _px3StatsHd() {
 // ── 推移：数字の帯＋大きいグラフ（マウスを乗せるとその月の数字）＋右にその月の内訳＋稼働構成 ──
 var PX3_K = [
   { k: 'コミッション', c: '#FFB454' }, { k: 'S', c: '#8B7CFF' }, { k: '平均稼働人数', c: '#2CE5B8' },
-  { k: '__BR', c: '#C583FF', lb: 'BR', u: '人' }, { k: 'B1', c: '#5AD7FF', lb: 'B1数' }, { k: '総人数', c: '#4ADE80' }
+  { k: '__BR', c: '#C583FF', lb: 'BR', u: '人' }, { k: 'B1', c: '#5AD7FF', lb: 'B1数' }, { k: '総人数', c: '#4ADE80' },
+  { k: 'B1平均GSV', c: '#FF87B3', lb: '新規B1 平均GSV' } // v745: いちばん右
 ];
 function _px3Col(k) { for (var i = 0; i < PX3_K.length; i++) if (PX3_K[i].k === k) return PX3_K[i].c; return ['#FF87B3', '#FFD166', '#67B7FF', '#FF9F6E', '#C583FF', '#3ED5C4', '#FF5D73'][Math.abs(String(k).length * 7 + String(k).charCodeAt(0)) % 7]; }
 function _px3Vals(k) { if (k === '__BR') { try { return _dtEzSeries('br', _dtEzNow()); } catch (e) { return []; } } return _dtVals(k); }
@@ -37710,7 +37729,7 @@ function _px3Spark(v, c) {
   var mx = Math.max.apply(null, pts.map(function(p) { return p[1]; })), mn = Math.min.apply(null, pts.map(function(p) { return p[1]; }));
   return '<svg viewBox="0 0 120 30" preserveAspectRatio="none"><polyline fill="none" stroke="' + c + '" stroke-width="2" vector-effect="non-scaling-stroke" points="' + pts.map(function(p) { return (p[0] * 120 / 11).toFixed(1) + ',' + (27 - (p[1] - mn) / ((mx - mn) || 1) * 23).toFixed(1); }).join(' ') + '"/></svg>';
 }
-function _px3Sel() { var s = (_dtSel || []).filter(function(k) { return k !== '__MIX__'; }); return s.length ? s : ['S', '平均稼働人数']; }
+function _px3Sel() { var s = (_dtSel || []).filter(function(k) { return k !== '__MIX__'; }); return s.length ? s : ['平均稼働人数']; }
 function _px3Trend(box) {
   var ms = _dtMonths(), idx = _dtMonthIdx, mo = ms[idx], sel = _px3Sel(), ro = _dtReadOnly(), now = null;
   try { now = _dtEzNow(); } catch (e) {}
@@ -37737,8 +37756,8 @@ function _px3Trend(box) {
   }
   var comp = ['S', 'A', 'B', 'C'].map(function(k) { var v = _dtVals(k)[idx]; return { k: k, n: v || 0, c: DT_ACT_COLORS[k] }; }), tr = _dtVals('研修生')[idx] || 0, tot = comp.reduce(function(s, x) { return s + x.n; }, 0) + tr;
   var compH = tot ? comp.concat([{ k: '研修生', n: tr, c: 'var(--surface3)' }]).filter(function(x) { return x.n; }).map(function(x) { return '<span style="flex:' + x.n + ';background:' + x.c + (x.k === '研修生' ? ';color:var(--text-mid)' : '') + '" title="' + x.k + ' ' + x.n + '人">' + x.k + ' ' + x.n + '</span>'; }).join('') : '<span style="flex:1;color:var(--text-dim);font-family:inherit;font-weight:700">この月の記録がありません</span>';
-  box.innerHTML = '<div class="px3-tr">' + '<div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px">' + kp + '</div>'
-    + '<div class="px3-c" style="grid-column:1/5"><div class="px3-ch">12ヶ月の推移<small>上の数字を押すと線を出し入れ（2つまで）</small><div class="r">' + lg + '</div></div><div id="px3Ch"></div><div id="px3Tip"></div></div>'
+  box.innerHTML = '<div class="px3-tr">' + '<div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(' + PX3_K.length + ',minmax(0,1fr));gap:12px">' + kp + '</div>'
+    + '<div class="px3-c" style="grid-column:1/5"><div class="px3-ch">12ヶ月の推移<small>' + (_dtCmp ? 'もう1つ押すと重ねて比べられます' : '上の数字を押すと、その項目のグラフに') + '</small><div class="r">' + lg + _dtCmpBtn(sel.length) + '</div></div><div id="px3Ch"></div><div id="px3Tip"></div></div>'
     + '<div class="px3-c" style="grid-column:5/7;overflow:hidden"><div class="px3-ch">' + mo.y + '年' + mo.m + '月の数字' + (idx === 11 ? '<small>今月</small>' : '') + '<div class="r">' + (idx !== 11 ? '<span class="lk" onclick="dtPickMonth(11)">今月に戻す ›</span>' : '<small>グラフの月を押すと切り替わる</small>') + '</div></div>'
     + '<div style="overflow-y:auto;padding:8px 8px 12px;min-height:0">' + rows + ppl + '</div></div>'
     + '<div class="px3-c px3-comp"><div class="ttl">稼働構成<small>' + mo.m + '月・' + tot + '人</small></div><div class="bar">' + compH + '</div></div>'
