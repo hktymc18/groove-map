@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v728';
+var APP_JS_VERSION = 'v729';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v728';
+  var DATA_VERSION = 'v729';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v729', d:'2026-10-08', items:['ロードマップ③の「MAP ◯ に戻す」をなくしました（MAPの数に戻したい時は、欄を空にします）'] },
   { v:'v728', d:'2026-10-08', items:['ロードマップ③の「⚙ 設定」で小数を入れられるように（例：1.5人でBR 1本）。必要な人数は切り上げで出します'] },
   { v:'v727', d:'2026-10-08', items:['PCの計画シートは、最初はMAPが上・書く欄が下（上下）の並びに。右上の「◧ 左右」を選ぶと左右の並びになり、端末で覚えます'] },
   { v:'v726', d:'2026-10-08', items:['メンバーに「🔒 自分だけのメモ」：共有しているMAPでも、共有元・共有先の人には見えないメモが書けます（MAPで人を押した画面・メンバー編集・かんたん編集のメモ）','今までの「メモ」は、MAPを共有している人にも見えることを書き添えました'] },
@@ -38557,8 +38558,7 @@ function _p2YrGapHtml(C, ro, lk, on) {
     var need = ro ? f(r.t) + '<small>' + r.u + '</small>' : '<input class="yr-in" type="number" inputmode="numeric" value="' + (r.man ? r.t : '') + '" placeholder="' + (r.a === null ? '' : r.a) + '" onfocus="edSelAll(this)" onchange="p2YrT(\'' + r.k + '\',this.value)">';
     var gp = r.gap === null ? '<td class="g dm">—</td>' : (r.gap <= 0 ? '<td class="g ok">✓</td>' : '<td class="g">あと' + r.gap.toLocaleString() + '<small>' + r.u + '</small></td>');
     var now = ro ? f(r.c) + (r.c === null ? '' : '<small>' + r.u + '</small>') // v720: 今の数もこの表で直す（空ならMAPから自動）
-      : '<input class="yr-in' + (r.co !== null ? ' ov' : '') + '" type="number" inputmode="numeric" value="' + (r.co === null ? '' : r.co) + '" placeholder="' + (r.ca === null ? '' : r.ca) + '" onfocus="edSelAll(this)" onchange="p2GapSet(\'c\',\'' + r.k + '\',this.value)">'
-        + (r.co !== null && r.ca !== null ? '<i class="rs" onclick="p2GapSet(\'c\',\'' + r.k + '\',\'\')">MAP ' + f(r.ca) + ' に戻す</i>' : '');
+      : '<input class="yr-in' + (r.co !== null ? ' ov' : '') + '" type="number" inputmode="numeric" value="' + (r.co === null ? '' : r.co) + '" placeholder="' + (r.ca === null ? '' : r.ca) + '" onfocus="edSelAll(this)" onchange="p2GapSet(\'c\',\'' + r.k + '\',this.value)">'; // v729: 「MAP ◯ に戻す」はなくした（空にすると自動に戻る）
     return '<tr><td class="n">' + r.lb + (r.sub ? '<small>' + r.sub + '</small>' : '') + '</td><td>' + now + '</td><td>' + need + '</td>' + gp + '</tr>';
   }).join('') + '</table>';
   var lkH = '<div class="yr-lock" style="margin-bottom:10px">🔒 今・必要な数・ギャップの表は、組織が<b>' + P2_YR_LOCK + '人</b>になると使えます<small>今 ' + on + '人（自分をのぞく）。必要なフロントと締め切りだけ下に出します</small></div>';
