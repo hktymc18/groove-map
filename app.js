@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v713';
+var APP_JS_VERSION = 'v714';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v713';
+  var DATA_VERSION = 'v714';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v714', d:'2026-10-08', items:['計画シートのシート型MAPの丸を、理想MAP（サークル）と同じデザインに：研修生＝水色・LOI〜Q4＝オレンジ・フレッシュ＝金のうすい色、BR以上はタイトルの色の太い枠で光る、4分割（名前・稼働・タイトル・(固定)とGSV）','ライトテーマでは丸が黒くならず、明るい色で表示されます'] },
   { v:'v713', d:'2026-10-08', items:['スマホの計画シートの文字を大きく：見出し17px・項目名16px・数字18px・書く欄と行動の行16px（いちばん小さい文字も12px）','書く欄を16pxにしたので、iPhoneで押した時に画面が勝手に拡大しなくなりました','数字の行は2段に：1段目＝項目名と今の数、2段目＝先月の目標→結果（達成／届かず）と今月の目標','行動の行は押しやすい高さ（44px）に'] },
   { v:'v712', d:'2026-10-08', items:['PCのホームの「インサイト」を作り直し：ひらくと4枚のカード（コーチの一言｜先週からの組織（メンバー・GSV・フォロー要の数字）｜今日の気づき｜先月からの変化（3列）'] },
   { v:'v711', d:'2026-10-08', pop: { t: 'PCのホームを作り直しました', items: ['上に「今月の目標」の帯：月収・NEWフロント・マイルストーンまでの月数（押すと計画シート）', '3列で「今日（予定・ToDo）｜今週やること・今月の行動｜気になる人・再アプローチ」。ToDoと行動はホームでチェック・追加できます', 'インサイトは下にたたんで置いています'], go: ['ホームを見る', "switchView('home')"] }, items:['PCのホームを新しく：今月の目標の帯＋3列（今日｜今週と今月の行動｜人）','今日のToDoはホームでチェック・「＋ 今日のToDoを足す」で追加','計画シートの行動（まだの物）を期限の近い順に。期限切れは赤','連続日数・レベル・今週のXPは右上の小さな札に（押すと実績）'] },
@@ -37506,23 +37507,34 @@ function _p2ShMapSvg(o) {
   line.forEach(function(e) { var a = P[e[0]], b = P[e[1]]; if (!a || !b) return; h += '<path d="M' + a[0].toFixed(1) + ',' + a[1].toFixed(1) + ' L' + b[0].toFixed(1) + ',' + b[1].toFixed(1) + '" stroke="' + PAL[(lin[e[1]] || 0) % PAL.length] + '" stroke-width="' + Math.max(1.2, 2 * fs) + '" opacity=".8"/>'; });
   var node = function(m, x, y, col) {
     if (m._ph) return '<path d="M' + cx + ',' + cy + ' L' + x.toFixed(1) + ',' + y.toFixed(1) + '" stroke="' + C.dash + '" stroke-width="' + Math.max(1.2, 2 * fs) + '" stroke-dasharray="4 4"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + R.toFixed(1) + '" fill="' + (light ? '#fff' : 'rgba(44,229,184,.08)') + '" stroke="' + C.dash + '" stroke-width="2" stroke-dasharray="5 4"/><text x="' + x.toFixed(1) + '" y="' + (y + 4 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (11 * fs).toFixed(1) + '" font-weight="900" fill="' + C.dash + '">NEW</text>';
-    var dash = !!m.idealNew && useIdeal, nm = String(m.lastName || m.firstName || '').slice(0, 3), act = String(m.activity || ''), r = R.toFixed(1), X = x.toFixed(1), Y = y.toFixed(1);
-    var l1 = String(m.lastName || '').slice(0, 4), l2 = String(m.firstName || '').slice(0, 4); if (!l1) { l1 = l2; l2 = ''; } // v696: 名前は姓・名の2段（今のMAPと同じ）
-    var nm2 = function(cxx, y1, y2, fz) { if (!l1) return '<text x="' + cxx + '" y="' + y2 + '" text-anchor="middle" font-size="' + fz + '" font-weight="900" fill="' + C.dash + '">' + (dash ? 'NEW' : '') + '</text>'; var k = Math.max(l1.length, l2.length) > 2 ? .8 : 1;
-      return l2 ? '<text x="' + cxx + '" y="' + y1 + '" text-anchor="middle" font-size="' + (fz * k).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(l1) + '</text><text x="' + cxx + '" y="' + y2 + '" text-anchor="middle" font-size="' + (fz * k).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(l2) + '</text>'
-        : '<text x="' + cxx + '" y="' + y2 + '" text-anchor="middle" font-size="' + (fz * k).toFixed(1) + '" font-weight="900" fill="' + C.fg + '">' + evEsc(l1) + '</text>'; };
-    var rt = (act === 'A' || act === 'B' || act === 'C') && m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10)) ? parseInt(m.actRate, 10) + '%' : '';
-    if (m !== root && _p2ShIsUser(m)) return '<circle cx="' + X + '" cy="' + Y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + (dash ? C.dash : col) + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>' // ユーザー：名前｜GSV
-      + '<line x1="' + (x - R).toFixed(1) + '" x2="' + (x + R).toFixed(1) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + C.mid + '" stroke-width=".7"/>'
-      + nm2(X, (y - R * .52).toFixed(1), (y - R * .14).toFixed(1), 8.2 * fs)
-      + '<text x="' + X + '" y="' + (y + 13 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8.5 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + _p2ShGsv(m.ptCurrent) + '</text>';
-    return '<circle cx="' + X + '" cy="' + Y + '" r="' + r + '" fill="' + C.fill + '" stroke="' + (dash ? C.dash : col) + '" stroke-width="2.2"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>'
-      + '<line x1="' + (x - R).toFixed(1) + '" x2="' + (x + R).toFixed(1) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + C.mid + '" stroke-width=".7"/><line x1="' + X + '" x2="' + X + '" y1="' + (y - R).toFixed(1) + '" y2="' + (y + R).toFixed(1) + '" stroke="' + C.mid + '" stroke-width=".7"/>'
-      + nm2((x - R / 2).toFixed(1), (y - R * .5).toFixed(1), (y - R * .12).toFixed(1), 7.6 * fs)
-      + '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y - (rt ? 9 : 4) * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (10 * fs).toFixed(1) + '" font-weight="900" fill="' + (ACT[act] || C.sub) + '">' + evEsc(act) + '</text>'
-      + (rt ? '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y - 1.5 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (6.5 * fs).toFixed(1) + '" font-weight="800" fill="' + (ACT[act] || C.sub) + '">' + rt + '</text>' : '')
-      + '<text x="' + (x - R / 2).toFixed(1) + '" y="' + (y + 11 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (8 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + evEsc(_p2ShIsUser(m) ? 'U' : titleAbbr(m.title || '')) + '</text>'
-      + '<text x="' + (x + R / 2).toFixed(1) + '" y="' + (y + 11 * fs).toFixed(1) + '" text-anchor="middle" font-size="' + (7.2 * fs).toFixed(1) + '" font-weight="800" fill="' + C.sub + '">' + _p2ShGsv(m.ptCurrent) + '</text>';
+    // v714: 丸のデザインはサークルMAP（理想MAP）と同じ：塗り（研修生＝水色・LOI〜Q4＝オレンジ・フレッシュ＝金のうすい色）、枠（BR以上＝タイトルの色で太く光る）、4分割の文字
+    var dash = !!m.idealNew && useIdeal, X = x.toFixed(1), Y = y.toFixed(1), r = R, f = function(v) { return v.toFixed(1); };
+    var tt = String(m.title || '').trim(), isT = typeof memberCat === 'function' ? memberCat(m) === '研修生' : !!m.trainee;
+    var isLOI = ['LOI', 'Q1', 'Q2', 'Q3', 'Q4'].indexOf(tt) >= 0, brUp = typeof isBROrAbove === 'function' && isBROrAbove(m.title);
+    var fr = !useIdeal && !brUp && !isLOI && !isT && tt !== 'BM' && tt !== 'OUT' && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
+    var stroke = dash ? C.dash : ((brUp && typeof titleRingColor === 'function' ? titleRingColor(m.title) : '') || (isLOI ? '#FB923C' : (isT ? '#5AD7FF' : (fr ? '#FFD166' : col))));
+    var fill = light ? '#ffffff' : '#161920';
+    if (isT) fill = light ? 'rgba(90,215,255,0.18)' : 'rgba(90,215,255,0.22)';
+    if (isLOI) fill = 'rgba(251,146,60,0.14)';
+    if (fr) fill = 'rgba(255,209,102,0.13)';
+    var txC = light ? '#1a1f2b' : '#f2f4f8', dmC = light ? '#3a4560' : '#cbd5e1', dvC = light ? '#556070' : '#7d8aa0', sw = (brUp ? 3 : 1.6) * Math.max(.8, fs);
+    var nmC = m.gender === 'female' ? (light ? '#db2777' : '#f9a8d4') : txC;
+    var tx = function(xx, yy, s, fz, fw, c) { return '<text x="' + f(xx) + '" y="' + f(yy) + '" text-anchor="middle" font-size="' + f(fz) + '" font-weight="' + fw + '" fill="' + c + '">' + evEsc(s) + '</text>'; };
+    var h0 = '<g' + (brUp && !light ? ' style="filter:drop-shadow(0 0 ' + f(6 * fs) + 'px ' + stroke + '88)"' : '') + '><circle cx="' + X + '" cy="' + Y + '" r="' + f(r) + '" fill="' + (light ? '#fff' : '#161920') + '"/>'
+      + '<circle cx="' + X + '" cy="' + Y + '" r="' + f(r) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + f(sw) + '"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>';
+    var ln = String(m.lastName || '').replace(/\s+/g, '').slice(0, 4), fn = String(m.firstName || '').replace(/\s+/g, '').slice(0, 4); if (!ln && !fn) ln = dash ? 'NEW' : '—';
+    var nmH = function(cxx, cyy, scale) { var mx = Math.max(ln.length, fn.length), fz = r * scale * (mx <= 2 ? 1 : (mx === 3 ? .73 : .57)); return fn ? tx(cxx, cyy, ln, fz, 800, nmC) + tx(cxx, cyy + fz, fn, fz, 800, nmC) : tx(cxx, cyy + fz * .38, ln, fz, 800, nmC); };
+    if (m !== root && _p2ShIsUser(m)) // ユーザー：上＝名前｜下＝GSV（2分割）
+      return h0 + '<line x1="' + f(x - r) + '" x2="' + f(x + r) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + dvC + '" stroke-width="' + f(.9 * Math.max(.8, fs)) + '" opacity=".5"/>'
+        + nmH(x, y - r * .5, .34) + tx(x, y + r * .52, String(m.ptCurrent > 0 ? m.ptCurrent : 0), r * .3, 700, dmC) + '</g>';
+    var qx = r * .46, qy = r * .46, ar = (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) ? parseInt(m.actRate, 10) : null, at = String(m.activity || '').trim();
+    var act = ar !== null ? at + ar : (at === 'S' ? 'S120' : at), ttl = (_p2ShIsUser(m) ? 'U' : titleAbbr(m.title || '')) || '';
+    var pf = m.ptFixed > 0 ? m.ptFixed : 0, pc = m.ptCurrent > 0 ? m.ptCurrent : 0, fsP = r * (Math.max(String(pf).length + 2, String(pc).length) >= 6 ? .21 : .25);
+    return h0 + '<line x1="' + X + '" x2="' + X + '" y1="' + f(y - r) + '" y2="' + f(y + r) + '" stroke="' + dvC + '" stroke-width="' + f(.9 * Math.max(.8, fs)) + '" opacity=".5"/><line x1="' + f(x - r) + '" x2="' + f(x + r) + '" y1="' + Y + '" y2="' + Y + '" stroke="' + dvC + '" stroke-width="' + f(.9 * Math.max(.8, fs)) + '" opacity=".5"/>'
+      + nmH(x - r * .40, y - r * .40, .30)
+      + (act ? tx(x + qx, y - qy + r * .13, act, r * (act.length >= 4 ? .28 : .35), 800, txC) : '')
+      + (ttl ? tx(x - qx, y + qy + r * .12, ttl, r * (String(ttl).length >= 4 ? .23 : .31), 700, dmC) : '')
+      + (pf || pc ? tx(x + qx, y + qy - fsP * .2, '(' + pf + ')', fsP, 700, dmC) + tx(x + qx, y + qy + fsP * .9, String(pc), fsP, 700, dmC) : '') + '</g>';
   };
   var wrapN = function(m, x, y, col) { // v696: 押すと課題・課題のある人は金の輪
     var inner = node(m, x, y, col); if (m._ph) return inner;
@@ -37814,7 +37826,7 @@ function _p2ShMapDraw() {
     Array.prototype.forEach.call(I.querySelectorAll('g[data-mid]'), function(g) { if (Is[g.getAttribute('data-mid')]) g.classList.add('iss-on'); });
   } else {
     var W = _p2ShMapPc ? 1300 : 640, H = Math.max(Math.round(W * .28), Math.round(W * fh / Math.max(1, fw)));
-    var M = _p2ShMapSvg({ W: W, H: H, mode: _p2ShMapO.mode, newN: _p2ShMapO.newN, tap: !_p2ShRo(), iss: Is });
+    var M = _p2ShMapSvg({ W: W, H: H, mode: _p2ShMapO.mode, newN: _p2ShMapO.newN, tap: !_p2ShRo(), iss: Is, light: document.body.classList.contains('light') }); // v714: ライトテーマは明るい丸（黒くならない）
     I.innerHTML = M.empty ? '<div class="sp-leg" style="padding:14px">MAPに自分（いちばん上の人）がまだいません</div>' : (M.svg || '');
   }
   try { var pn = f.closest('.sp-mpin'), hd = document.querySelector('#view-plan .pcx2-hd') || document.querySelector('#view-plan .ux-top'); if (pn) pn.style.top = (pn.classList.contains('on') && hd && getComputedStyle(hd).position === 'sticky' ? hd.offsetHeight : 0) + 'px'; } catch (eT) {} // 固定は上の見出しの下に
