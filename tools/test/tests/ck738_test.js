@@ -13,7 +13,7 @@ T.run(async () => {
   w._p2().check = { ess_0: true, ess_d_0: '2026-10-01' };
   w.p2Go('ck'); await sleep(30);
   const tx = () => ($('#view-plan')).textContent;
-  c('設定がない時は標準の項目（前のチェックはそのまま）', $$('.p2ck-r').length === w.P2_CK_ESS.length && $$('.p2ck-r')[0].classList.contains('done') && $$('.p2ck-r .dt')[0].value === '2026-10-01');
+  c('設定がない時は標準の項目（前のチェックはそのまま）', $$('.p2ck-r').length === w.P2_CK_ESS.length && $$('.p2ck-r')[0].classList.contains('done') && /10\/1/.test($$('.p2ck-r .dtc')[0].textContent));
   c('一般メンバーには設定のリンクが出ない', tx().indexOf('ユニオンのチェック項目を設定') < 0);
   // 管理者
   w.currentUser.role = 'admin'; w.renderPlan(); await sleep(10);
@@ -39,7 +39,7 @@ T.run(async () => {
   // 新しい項目をチェック・日付
   const ix = saved.d.ess.indexOf(nw);
   w.p2CkTgl('ess', ix); await sleep(10);
-  c('新しい項目もチェックできる', w._p2().check[nw.id] === true && !!w._p2().check[nw.id + '_d']);
+  c('新しい項目もチェックできる（v746: 日付は勝手に入らない）', w._p2().check[nw.id] === true && !w._p2().check[nw.id + '_d']);
   // 別の人：読み込みで反映
   store = { ess: [{ id: 'cX', t: 'ユニオンの項目だけ' }], tr: [] };
   w.currentUser.role = 'member'; w._p2CkLoad(true); await sleep(20);
