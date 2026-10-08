@@ -12,7 +12,7 @@ T.run(async () => {
   c('タブは 推移・研修・パワーライン・地域（サマリーは推移に統合）', $$('#dtTabs .dt-tab').map(x => x.textContent).join() === '推移,研修,パワーライン,地域');
   c('理想との差はなし', typeof w._dtEzGap === 'undefined' && !w.DT_PG.some(p => p.k === 'gap'));
   const big = $$('#dtTrend .an-t.big');
-  c('今月の数字：コミッション・S稼働・BR・B1数・平均稼働人数・総人数＋小さいタイル', big.length === 6 && big[0].textContent.indexOf('コミッション') >= 0 && big[1].textContent.indexOf('S稼働') >= 0 && $$('#dtTrend .an-g.sm .an-t').length === 8);
+  c('今月の数字：コミッション・S稼働・BR・B1数・平均稼働人数・総人数＋小さいタイル', big.length === 6 && big[0].textContent.indexOf('コミッション') >= 0 && big[1].textContent.indexOf('S稼働') >= 0 && $$('#dtTrend .an-g.sm .an-t').length === 9 && /新規B1の平均GSV/.test($$('#dtTrend .an-g.sm .an-t')[0].textContent)); // v745: 新規B1の平均GSV
   w.anTile('S'); await sleep(10);
   c('タイルを押すとグラフがその項目に', w._dtSel.join() === 'S' && $('#dtTrend .an-t.big.on').textContent.indexOf('S稼働') >= 0);
   w.dtPickMonth(9); await sleep(10);

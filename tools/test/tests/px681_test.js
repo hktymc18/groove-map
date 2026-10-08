@@ -8,7 +8,7 @@ T.run(async () => {
   c('横幅1100以上のPCは新しい画面（px3）', w.document.body.classList.contains('px3'));
   c('左メニューは文字つき（分析・PLAN…）＋ロゴ＋自分', $('.pcs-item[data-view=stats] .pcs-lb').textContent === '分析' && !!$('#pcsBrand') && !!$('#pcsMe'));
   c('分析の見出しにタブ・検索（⌘K）・月の切り替え', !!$('#dtModeBar .px3-hd') && $$('#dtModeBar .px3-tabs span').length === 4 && /⌘K/.test($('#dtModeBar').textContent) && !!$('#dtModeBar .px3-mon'));
-  c('推移：数字の帯（6つ）＋グラフ＋その月の数字＋稼働構成', $$('#dtTrend .px3-k').length === 6 && !!$('#px3Ch') && /月の数字/.test($('#dtTrend').textContent) && !!$('#dtTrend .px3-comp'));
+  c('推移：数字の帯（v745: 7つ・いちばん右に新規B1 平均GSV）＋グラフ＋その月の数字＋稼働構成', $$('#dtTrend .px3-k').length === 7 && /新規B1 平均GSV/.test($$('#dtTrend .px3-k')[6].textContent) && !!$('#px3Ch') && /月の数字/.test($('#dtTrend').textContent) && !!$('#dtTrend .px3-comp'));
   const n0 = w._dtSel.length; w.dtToggleMetric('総人数'); await sleep(10);
   c('数字を押すとグラフに線を足す', w._dtSel.indexOf('総人数') >= 0 && $('#dtTrend .px3-k.on') !== null);
   w._px3Tip(3, 200);
