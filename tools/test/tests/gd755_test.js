@@ -29,10 +29,23 @@ T.run(async () => {
   w.gdTour('map', true); await sleep(80);
   c('MAPのスポットライト（説明の吹き出し・何ステップか）', !!$('#gdSpot .bub') && /1 \//.test($('#gdSpot .bub .n').textContent) && w._gdSt().tour.map === 1);
   w.gdTourGo(1); await sleep(80); c('次へで2つ目', /2 \//.test($('#gdSpot .bub .n').textContent));
-  w.gdTourX(); c('スキップで閉じる', !$('#gdSpot')); w.Element.prototype.getBoundingClientRect = gb;
+  w.gdTourX(); c('スキップで閉じる', !$('#gdSpot'));
+  // v756: ほかの画面にも
+  w.switchView('plan'); w.p2Go('year'); await sleep(30); w.gdTour('year', true); await sleep(30);
+  c('v756: 年の目標・ロードマップのスポットライト', !!$('#gdSpot .bub') && w._gdSt().tour.year === 1); w.gdTourX();
+  w.switchView('current'); w.naOpen('r'); await sleep(20);
+  c('v756: フロント追加の画面は na と判定', w._gdTourKey() === 'na'); w.gdTour('na', true); await sleep(30);
+  c('v756: フロント追加のスポットライト', /追加先/.test($('#gdSpot .bub').textContent)); w.gdTourX(); w.naClose();
+  w.ppOpen('a', 'current'); await sleep(20);
+  c('v756: メンバーの画面は pp と判定', w._gdTourKey() === 'pp'); w.ppClose();
+  w.switchView('stats'); w.dtTab('train'); await sleep(30);
+  c('v756: 分析の研修は train と判定', w._gdTourKey() === 'train');
+  w.gdTour('cklink', true); await sleep(10);
+  c('v756: 受付連携は、画面に要素が無くても説明（真ん中の吹き出し）', !!$('#gdSpot .bub') && /受付連携/.test($('#gdSpot .bub').textContent)); w.gdTourX();
+  w.Element.prototype.getBoundingClientRect = gb;
   // ④ 使い方ガイド
   w.gdMenu(); await sleep(5);
-  c('使い方：案内・ステップ・画面ごと・管理者・よくある質問', !!$('#gdMenuOv') && /はじめての案内をもう一度/.test($('#gdMenuOv').textContent) && $$('#gdMenuOv details').length >= 6 && /管理者向け/.test($('#gdMenuOv').textContent) && /✓ 見た/.test($('#gdMenuOv').textContent));
+  c('使い方：案内・ステップ・画面ごと・管理者・よくある質問', !!$('#gdMenuOv') && /年の目標・ロードマップ/.test($('#gdMenuOv').textContent) && /フロント追加/.test($('#gdMenuOv').textContent) && /はじめての案内をもう一度/.test($('#gdMenuOv').textContent) && $$('#gdMenuOv details').length >= 6 && /管理者向け/.test($('#gdMenuOv').textContent) && /✓ 見た/.test($('#gdMenuOv').textContent));
   w.gdStepsShow(); await sleep(20);
   c('「はじめのステップを表示」でHOMEにまた出る', !$('#gdMenuOv') && !!$('.gds'));
   w.currentUser.role = 'member'; w.currentUser.uid = 'someone'; w.gdMenu(); await sleep(5);
