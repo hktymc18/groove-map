@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v692';
+var APP_JS_VERSION = 'v693';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v692';
+  var DATA_VERSION = 'v693';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v693', d:'2026-10-08', items:['PLAN › 年別目標を表1つにしました（最終目標 → 1年ごとの月収・タイトル → 今 を1画面で。月収はマスに書くだけ）'] },
   { v:'v692', d:'2026-10-08', items:['PLAN › ギャップを1画面にしました（目標・今・差の表、単価・倍率、ロードマップへの割り振りを1つの画面で）','目標は空なら月収から自動、今の数は空ならMAPから自動で、薄い数字で出ます'] },
   { v:'v691', d:'2026-10-08', items:['PLAN › ロードマップを1画面にしました（月を縦に並べた表に、フロント・流通などの目標をその場で書けます）','マイルストーンは月の横の「＋」で足し、押すと名前を直せます。⛰次の山・🏔最終目標の月も表に出ます'] },
   { v:'v690', d:'2026-10-08', items:['PLAN › 目標を1画面にしました（最終目標の月収・タイトル・期日 → 次の山 → スローガン を上から順に。ページ送りなし）'] },
@@ -16637,8 +16638,8 @@ function _p2PageParts() {
     var nym = _p2YmAdd(_p2RmYm || _p2Ym(0), 1); next = parseInt(nym.slice(5), 10) + '月 ›'; nextOn = 'p2RmMonth(\'' + nym + '\')';
   } else if (k === 'sim') { // v643: シミュレーション（組織図で）
     _ux2Css(); _p2YrsCss(); _p2SimCss(); body = _p2SimHtml(); next = '今月の目標に入れる ›'; nextOn = 'p2SimApply()';
-  } else if (k === 'yrs') { // v642: 年別目標
-    _ux2Css(); body = _p2YrsHtml(); next = '次の山 ›'; nextOn = 'p2Go(\'goal\',3)';
+  } else if (k === 'yrs') { // v693: 年別目標は表1つ（v642はカード＋−）
+    _ux2Css(); body = _p2YrsOneHtml(); next = '✓ 完了';
   } else if (k === 'gap') { // v692: 1画面（目標・今・差の表 → 単価・倍率 → 割り振り）。v600は1行ずつ＋−と別ページ
     _ux2Css(); body = _p2GapOneHtml(); next = '📤 ロードマップに割り振る'; nextOn = 'p2GapAllocDo()';
   } else if (k === 'rmt') { // v603: 表は1項目ずつ（月を縦に −［数字］＋）
@@ -16700,7 +16701,7 @@ function _p2PageParts() {
   }
   var back = ((k === 'ck' || k === 'sim' || k === 'dream') && _p2From !== 'tool') ? 'p2Go(\'\')' : (k === 'ck' || k === 'sim' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
   if (/^つぎ：/.test(next)) { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; } // v652: タイルを終えたら、次のタイルではなく入口へ戻る
-  if (k === 'yrs') back = _p2YrsBack || 'p2Go(\'goal\',5)';
+  if (k === 'yrs') { back = _p2YrsBack || (/^(goal|year|gap|rm)$/.test(_p2From || '') ? 'p2Go(\'' + _p2From + '\')' : 'p2Go(\'\')'); nextOn = back; } // v693
   if (k === 'rmrows') back = 'p2Go(\'rm\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
   if (k === 'ideal') back = (i === 0 || i === 2 || i === 6) ? 'p2Go(\'\')' : 'p2PgSub(' + (i - 1) + ')'; // v682: セットの最初は入口へ
   if (k === 'goal') { back = _p2From === 'year' ? 'p2Go(\'year\')' : 'p2Go(\'\')'; next = '✓ 完了'; nextOn = back; } // v690
@@ -19491,6 +19492,33 @@ function _p2YrsCss() {
     + ".p2y-r .ux-stp{margin-top:8px}.p2y-f{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:11.5px;font-weight:800;color:var(--text-dim)}.p2y-f .ex{color:var(--gold)}.p2y-f .rs{margin-left:auto;color:var(--accent);cursor:pointer}"
     + ".ux-lb2{font-size:12.5px;font-weight:800;color:var(--text-mid);margin:18px 0 0;display:flex;align-items:center}";
   document.head.appendChild(st);
+}
+// ════ v693: 年別目標を表1つに（最終目標 → 1年ごと → 今。月収とタイトルをその場で書く）════
+function _p2YrsOneHtml() {
+  _p2YrsCss(); _p2ShCss2();
+  if (!document.getElementById('p2Yr1Css')) { var st = document.createElement('style'); st.id = 'p2Yr1Css';
+    st.textContent = '.yr1{width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px}.yr1 th{font-size:10.5px;font-weight:800;color:var(--text-dim);padding:4px;border-bottom:1px solid var(--border);text-align:left}.yr1 td{padding:9px 4px;border-top:1px solid var(--border);vertical-align:middle}.yr1 td.y{font:900 14px Inter,sans-serif;white-space:nowrap}.yr1 td.y small{display:block;font-size:10px;color:var(--text-dim);font-weight:700;font-family:inherit}'
+      + '.yr1 .sp-in{width:64px;font-size:17px}.yr1 select{-webkit-appearance:none;appearance:none;background:transparent;border:0;border-bottom:1.5px solid color-mix(in srgb,var(--text) 25%,transparent);color:var(--text);font:900 12px Inter,sans-serif;padding:4px 10px 4px 0;max-width:190px}.yr1 select:focus{outline:none;border-bottom-color:var(--accent)}'
+      + '.yr1 td.x{font-size:11px;font-weight:800;color:var(--text-dim);white-space:nowrap;text-align:right}.yr1 td.x .ex{color:var(--gold)}.yr1 td.x .rs{color:var(--accent);cursor:pointer}.yr1 tr.fin td{background:color-mix(in srgb,var(--gold) 9%,transparent)}.yr1 tr.fin .v,.yr1 tr.now .v{font:900 17px Inter,sans-serif}.yr1 tr.now td{color:var(--text-mid)}.yr1 .t{font:900 13px Inter,sans-serif}';
+    document.head.appendChild(st); }
+  if (!UX_INFO.yrs1) UX_INFO.yrs1 = { t: '年別目標', h: '最終目標の期日から<b>1年ずつさかのぼった</b>目標です。最初は今の月収から最終目標までをなだらかにつないだ<b>例</b>（黄色）が入っています。<br>月収を書くとタイトルは月収の目安で自動。タイトルを選ぶとそのタイトルで決まります。「例に戻す」で例に戻ります' };
+  var head = '<div class="sp-sec" style="align-items:center;margin-top:2px;font-size:18px">年別目標' + _uxIb('yrs1') + '</div>';
+  var L = _p2Ladder();
+  if (!L) return head + '<div class="ux-empty">最終目標の期日を決めると、1年ごとの目標が出ます<br><span class="ux-lk" onclick="p2Go(\'goal\')">期日を決める ›</span></div>';
+  if (!L.rows.length) return head + '<div class="ux-empty">最終目標まで1年以内です。<br>最終目標がそのまま次の山になります<br><span class="ux-lk" onclick="p2Go(\'goal\')">目標を見る ›</span></div>';
+  var ro = !!(viewingOwnerUid && !state.isEditor), lab = function(ym) { return parseInt(ym.slice(0, 4), 10) + '年<small>' + parseInt(ym.slice(5), 10) + '月</small>'; };
+  var fin = L.fin || { ym: L.dl, inc: 0, title: _p2TitleEn(state.goals.plan.title || '') };
+  var rows = '<tr class="fin"><td class="y">' + lab(fin.ym) + '</td><td><span class="v">' + (fin.inc || '—') + '</span>万</td><td class="t">🏔 ' + evEsc(fin.title || '—') + '</td><td class="x"><span class="rs" onclick="p2Go(\'goal\')">最終目標 ›</span></td></tr>';
+  for (var i = L.rows.length - 1; i >= 0; i--) {
+    var r = L.rows[i], auto = _p2TitleByInc(r.inc) || '—';
+    var sel = ro ? '<span class="t">' + evEsc(r.title || '—') + '</span>' : '<select onchange="p2YrTitle(\'' + r.ym + '\',this.value)"><option value=""' + (r.tm ? '' : ' selected') + '>' + evEsc(auto) + '（自動）</option>' + P2_RANK.map(function(t) { return '<option value="' + t + '"' + (r.tm && r.title === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>';
+    var inc = ro ? '<span class="v">' + r.inc + '</span>' : '<input class="sp-in" type="number" inputmode="numeric" value="' + r.inc + '"' + (r.ex ? ' style="color:var(--gold)"' : '') + ' onfocus="edSelAll(this)" onchange="p2YrInc(\'' + r.ym + '\',this.value)">';
+    rows += '<tr><td class="y">' + lab(r.ym) + '</td><td>' + inc + '万</td><td>' + sel + '</td><td class="x">' + (r.ex ? '<span class="ex">例</span>' : (ro ? '' : '<span class="rs" onclick="p2YrReset(\'' + r.ym + '\')">例に戻す</span>')) + '</td></tr>';
+  }
+  var cur = _p2TitleEn(_p2CurTitle()) || '—', ci = 0; try { ci = Math.round(commCalc(membersForMap('current')).total / 10000); } catch (e) {}
+  rows += '<tr class="now"><td class="y">今<small>' + parseInt(_p2Ym(0).slice(5), 10) + '月</small></td><td><span class="v">' + ci + '</span>万<small style="font-size:10px">見込み</small></td><td class="t">' + evEsc(cur) + '</td><td></td></tr>';
+  return head + '<div class="sp-leg" style="margin-top:0">最終目標まで 約' + L.n + '年' + '</div>'
+    + '<table class="yr1"><tr><th></th><th>月収</th><th>タイトル</th><th></th></tr>' + rows + '</table>';
 }
 function _p2YrsCol(en) { return typeof titleRingColor === 'function' ? titleRingColor(en === 'BR' ? 'BR' : (P2_TITLE_JP[en] || en)) : 'var(--accent)'; }
 function _p2YrsHtml() {
