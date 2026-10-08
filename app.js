@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v755';
+var APP_JS_VERSION = 'v756';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v755';
+  var DATA_VERSION = 'v756';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v756', d:'2026-10-09', items:['使い方ガイドの説明（スポットライト）を増やしました：年の目標・ロードマップ、メンバーの画面（スマホ）／編集（PC）、フロント追加、受付連携、チェック、理想、夢100、シミュレーション、分析の研修・パワーライン・地域、OL、メンバー','「❓ 使い方」の画面ごとのガイドを MAP・PLAN・予定・ANALYTICS・そのほか に分けて並べました'] },
   { v:'v755', d:'2026-10-09', items:['❓ 使い方ガイドができました：はじめて開いた時の案内（このアプリでできること）、HOMEの「はじめのステップ」（できたら自動でチェック）、画面を初めて開いた時に大事なところを光らせて説明','一度見たら出ません。あとから見返す時は HOME（PCは左のメニュー）の「❓ 使い方」か、設定の「使い方ガイド」から。よくある質問もあります','ユニオン管理者には、管理者向けの説明（アカウント管理・ユニオンのチェック項目・ユニオン予定）も出ます'], pop:{ t:'❓ 使い方ガイドができました', items:['はじめての案内・はじめのステップ・画面ごとの説明','あとからは「❓ 使い方」でいつでも見返せます'], go:['使い方を見る','gdMenu()'] } },
   { v:'v754', d:'2026-10-09', items:['ホームのタイル「ANALYSIS」を「ANALYTICS」に'] },
   { v:'v753', d:'2026-10-09', items:['MAPのフロント追加：研修生を選ぶと「🎓 研修の記録」（研修の日・Aさん）が研修生のカードの中に出るように（下にあって見落としやすかったため）','研修の日は「今日／昨日／📅日付」から選べて、「PGを10/14に進んだで入れます」のようにどう入るかも出ます'] },
@@ -39322,7 +39323,7 @@ function _gdAutoOk() { // 自動で出してよい時（テストの自動ブラ
   try { if (navigator.webdriver) return false; } catch (e) {}
   return !!(currentUser && currentUser.uid) && !viewingOwnerUid;
 }
-function _gdBusy() { return !!document.querySelector('#gdIntro,#gdSpot,#gdMenuOv,#rnPopOv,#naPg,#p2ShDtOv,#p2CkAdmOv,.overlay.open,#tpOv'); }
+function _gdBusy(skip) { return ['#gdIntro', '#gdSpot', '#gdMenuOv', '#rnPopOv', '#naPg', '#ckPg', '#p2ShDtOv', '#p2CkAdmOv', '.overlay.open', '#tpOv'].some(function(q) { return q !== skip && !!document.querySelector(q); }); }
 function _gdCss() {
   if (document.getElementById('gdCss')) return;
   var st = document.createElement('style'); st.id = 'gdCss';
@@ -39486,6 +39487,83 @@ var GD_TOURS = {
     { s: ['#pcTdSide', '.td-filters'], t: '絞り込み', d: '最初は「今日」。すべて・メンバーのタスク・リストで切りかえ' },
     { s: ['.td-row'], t: '完了・削除', d: '右にスワイプで完了、左にスワイプで削除（PCはマウスを乗せると🗑）' }
   ] },
+  year: { lb: '年の目標・ロードマップ', ic: '🏆', go: "switchView('plan');p2Go('year')", steps: [
+    { s: ['.yr-goal'], t: '最終目標', d: '月収・タイトル・期日・スローガン。押すと直せます' },
+    { s: ['.yr-tl'], t: '① マイルストーン', d: '今から期日までの月の線。⭐が直近の目標。月を押すと、その月のくわしく' },
+    { s: [".yr-sec:has([onclick=\"uxInfo('yr2')\"])"], t: '② 直近の目標', d: 'まず目指すタイトルと期日を決めます' },
+    { s: [".yr-sec:has([onclick=\"uxInfo('yr3')\"])"], t: '③ 今 → 必要 → ギャップ', d: '目標までに必要な数と、今との差。⚙で単価などを直せます（15人以上のチームで使えます）' },
+    { s: [".yr-sec:has([onclick=\"uxInfo('yr4')\"])"], t: '④ フロントのペース', d: '毎月何人フロントを作るか。「均等に割り振る」で自動で入ります' },
+    { s: [function() { var i = document.querySelector("#view-plan [onclick=\"uxInfo('yr5')\"]"); return i && i.parentNode && i.parentNode.parentNode; }], t: '⑤ 戦略・戦術', d: '戦略 → 戦術 → タスクの順に書いて、あとから計画シート・やること・予定に入れられます' },
+    { s: ["[onclick=\"p2SumTgl('yr',1)\"]"], t: 'サマリー', d: '見るだけの1枚に切りかえ。印刷・共有にも' }
+  ] },
+  check: { lb: 'チェック', ic: '☑️', go: "switchView('plan');p2Go('ck')", steps: [
+    { s: ['.p2ck-tabs'], t: '必須アイテム・TRAINING', d: '2つのリストをタブで切りかえます' },
+    { s: ['.p2ck-r .ck'], t: 'やったらチェック', d: '左の□を押してチェック。予定やToDoでチェックしても、ここに入ります' },
+    { s: ['.p2ck-r .dtc'], t: '日付', d: '押すと「ToDoに入れる／予定に入れる」を選んで、日にち・時間を入れられます' },
+    { s: ['[onclick="p2CkAdm()"]'], t: 'ユニオンの項目（管理者）', d: 'ここから、ユニオンのチェック項目を追加・並べかえ・削除できます。保存すると全員に反映されます' }
+  ] },
+  ideal: { lb: '理想', ic: '✨', go: "switchView('plan');p2Go('ideal',0)", steps: [
+    { c: 1, t: '理想の生活', d: '住まい・食・旅行など、理想の生活を選んでいくと、必要な月収が出ます。目標の月収を決める時に使います' },
+    { s: ['.p2id-r'], t: '項目ごとに', d: '項目を押して答えます。答えた項目は金額が入ります' },
+    { s: ['.gw2-opt'], t: '選ぶだけ', d: '当てはまるものを押すだけで答えられます' }
+  ] },
+  dream: { lb: '夢100', ic: '🌈', go: "switchView('plan');p2Go('dream')", steps: [
+    { c: 1, t: '夢100', d: 'やりたいこと・欲しいものを100個まで書き出す場所です。叶えたらチェック' },
+    { s: ['[onclick="p2DrFormOpen()"]'], t: '夢を足す', d: '期日と金額も入れると、期間で絞って「その期間に必要な金額・月あたり」が出ます' }
+  ] },
+  sim: { lb: 'シミュレーション', ic: '🎮', go: "switchView('plan');p2Go('sim')", steps: [
+    { s: ['.sm1-g', '#view-plan .sp-in'], t: '数字を入れる', d: 'フロントの人数などを入れると、BRまでの道のりを月ごとに計算します' },
+    { s: ['.p2sm-seg', '[onclick="p2SimMo(0)"]'], t: '月ごとの組織図', d: '月を押すと、その月の組織図（LOI → Q2 → … → BR）' },
+    { s: ['[onclick="p2SimMode(1)"]'], t: '月ごとに変える', d: 'フロントの人数を月ごとに変えて試せます。決まったら「ロードマップのペースに入れる」' }
+  ] },
+  pp: { lb: 'メンバーの画面', ic: '👤', go: '', steps: [
+    { s: ["[onclick=\"ppGo('title')\"]"], t: 'タイトル', d: 'タイトル（マケ〜CO・LOI〜Q4・B1〜・BR〜）を選びます' },
+    { s: ["[onclick=\"ppGo('num')\"]"], t: '今月の数字', d: 'GSVと稼働（S〜C）を入れます' },
+    { s: ['[onclick="ppOld(2)"]'], t: '研修ステップ・結果', d: '研修の記録（マケ → PG → … → CO）と結果を入れます。分析の研修フローに出ます' },
+    { s: ['[onclick="ppOld(3)"]'], t: '活動', d: 'その人とのOL・予定・タスクの記録' },
+    { s: ["[onclick=\"ppGo('memo')\"]"], t: 'メモ', d: '自由に書けるメモ。課題パネルからも入れられます' },
+    { s: ['#ppPg [onclick^="naOpen"]'], t: 'フロント追加', d: 'この人の下に、直接人を足せます' }
+  ] },
+  me: { lb: 'メンバーの編集', ic: '👤', go: '', steps: [
+    { s: [function() { var t = document.querySelector('#modal.open .me-tab'); return t && t.parentNode; }], t: '4つのタブ', d: '基本（名前・地域・誕生日）／月次（タイトル・GSV・稼働）／研修（研修の記録）／活動（OL・予定・タスク）' },
+    { s: ['#modal.open #meTabTrainee'], t: '研修', d: '研修の記録（マケ → … → CO）と結果。予定にした段階は、やったら「✓ 進んだ」に' },
+    { s: ['#modal.open [onclick^="openParentPicker"]'], t: 'アップライン', d: '誰の下にいるかを変えられます' },
+    { s: ['#modal.open #btnDel'], t: '削除', d: 'この人をMAPから消します（変更履歴に残ります）' }
+  ] },
+  na: { lb: 'フロント追加', ic: '➕', go: '', steps: [
+    { s: ['#naPg .nap'], t: '追加先', d: 'この人の直下に足します。「変える」で別の人の下にも' },
+    { s: ['#naLast'], t: '名前', d: '姓と名を入れます' },
+    { s: ['#naPg .ttc'], t: 'タイトル', d: '研修生・審査中・BA・BR からカードを押して選びます' },
+    { s: ['#naPg .tre'], t: '研修の記録', d: '研修生の時は、研修の日（今日・昨日・日付）とAさん。選んだ段階が「✓ 進んだ」で入ります' },
+    { s: ['#naPg .nalk'], t: '続けて入れる', d: '「＋ 追加して続けて入れる」で何人も続けて。「くわしく」でその人の画面へ' }
+  ] },
+  cklink: { lb: '受付連携', ic: '⟲', go: "switchView('current');ckLinkOpen()", steps: [
+    { c: 1, t: '受付連携', d: '受付（BASE CHECK-IN）の記録を、MAPにまとめて取り込みます：<br>① 稼働を取り込む ② 名簿から追加 ③ 名前をそろえる' },
+    { s: ['#ckPg .ux-step', '#ckPg .ux-h2'], t: '今のページ', d: '上から順に確かめて、よければ下のボタンで取り込みます' },
+    { s: ['#ckPg .ux-nx'], t: '取り込む・次へ', d: 'ここで取り込み、次のページへ進みます' }
+  ] },
+  train: { lb: '分析 › 研修', ic: '🎓', go: "switchView('stats');dtTab('train')", steps: [
+    { s: ['#dtTrain .dt-trm'], t: '月を選ぶ', d: '見たい月を押すと、その月の研修に切りかわります' },
+    { s: ['#dtTrain .dt-funnel', '#dtTrain .dt-card'], t: '研修フロー', d: 'マケ → PG → … → CO の人数と、次に進んだ割合' },
+    { s: ['#dtTrain .an-g'], t: 'その月の数字', d: '研修生・BC決定率・BC・流れた。「人 ›」で誰かを見られます' }
+  ] },
+  pl: { lb: '分析 › パワーライン', ic: '⚡', go: "switchView('stats');dtTab('pl')", steps: [
+    { s: ['#dtPl .dt-plm'], t: '月を選ぶ', d: '月はじめはまだ少ないので、先月までの月も選べます' },
+    { s: ['#dtPl .dt-pr', '#dtPl .dt-card'], t: 'パワーライン', d: 'LTSV 5,000P以上のフロントの系列。押すと、その系列で5,000P以上の人' }
+  ] },
+  reg: { lb: '分析 › 地域', ic: '📍', go: "switchView('stats');dtTab('reg')", steps: [
+    { s: ['#dtRegCmp', '#dtReg'], t: '地域の比較', d: '地域ごとの人数・研修生・BR以上などを比べられます' }
+  ] },
+  ol: { lb: 'OL', ic: '🤝', go: "switchView('ol')", steps: [
+    { s: ['[onclick="olNeed()"]'], t: '要フォロー', d: '14日以上OLをしていない人。押すと一覧' },
+    { s: ['.olh-sl'], t: '3〜7人OL', d: '今月の3〜7人OLの枠。押して企画します' },
+    { s: ['.olh-fr'], t: 'フレッシュ', d: '要フォロー順に並びます。＋ですぐ企画' },
+    { s: ['[onclick="olPlanStart()"]'], t: 'OLを企画', d: '個別・3〜7人を選んで、だれと・いつ・内容を入れます。カレンダーにも入ります' }
+  ] },
+  members: { lb: 'メンバー', ic: '👥', go: "switchView('members')", steps: [
+    { s: ['.ml-pill'], t: '絞り込み', d: '研修生・フレッシュ・BRで絞れます' },
+    { s: ['.ml-card'], t: 'メンバー', d: '押すと、その人の画面（タイトル・数字・研修・活動）へ' }
+  ] },
   stats: { lb: 'ANALYTICS', ic: '📊', go: "switchView('stats')", steps: [
     { s: ['#dtTabs', '.px3-tabs', '.an-hd'], t: '4つのタブ', d: '推移・研修・パワーライン・地域' },
     { s: ['.px3-k', '#dtTrend .dt-chips'], t: '項目を選ぶ', d: '押すと、その項目の12ヶ月のグラフに' },
@@ -39495,16 +39573,17 @@ var GD_TOURS = {
 };
 var _gdT = null;
 function _gdVis(sels) {
-  for (var i = 0; i < sels.length; i++) {
-    var L = document.querySelectorAll(sels[i]);
+  for (var i = 0; i < (sels || []).length; i++) {
+    var L = [];
+    try { if (typeof sels[i] === 'function') { var f = sels[i](); L = f ? [f] : []; } else L = document.querySelectorAll(sels[i]); } catch (eQ) { L = []; } // v756: 関数でも選べる・使えないセレクタは飛ばす
     for (var j = 0; j < L.length; j++) { var r = L[j].getBoundingClientRect(); if (r.width > 4 && r.height > 4 && getComputedStyle(L[j]).visibility !== 'hidden') return L[j]; }
   }
   return null;
 }
 function gdTour(key, force) {
   var T = GD_TOURS[key]; if (!T) return;
-  var steps = T.steps.filter(function(s) { return !!_gdVis(s.s); }).map(function(s) { return { s: s.s, low: s.low, t: s.t, d: s.d + (s.adm && _gdAdm() ? '<br><b style="color:#C583FF">管理者：</b>' + s.adm : '') }; });
-  if (!steps.length) { if (force) toast('この画面で説明できる所が見つかりませんでした'); return; }
+  var steps = T.steps.filter(function(s) { return s.c || !!_gdVis(s.s); }).map(function(s) { return { s: s.c ? [] : s.s, low: s.low, t: s.t, d: s.d + (s.adm && _gdAdm() ? '<br><b style="color:#C583FF">管理者：</b>' + s.adm : '') }; });
+  if (!steps.length || steps.every(function(x) { return !x.s.length; }) && !T.steps.some(function(x) { return x.c; })) { if (force) toast('この画面で説明できる所が見つかりませんでした'); return; }
   _gdT = { key: key, steps: steps, i: 0 };
   _gdSave(function(g) { g.tour[key] = 1; });
   _gdSpotRender();
@@ -39538,12 +39617,19 @@ function _gdPlace() {
   b.style.left = left + 'px'; b.style.top = top + 'px';
 }
 window.addEventListener('resize', function() { if (_gdT) _gdPlace(); });
+var GD_TOUR_HOST = { na: '#naPg', cklink: '#ckPg', me: '.overlay.open' }; // その画面自体が「ほかの窓」に当たるもの
 function _gdTourKey() {
   try {
+    if (document.getElementById('naPg')) return 'na';
+    if (document.getElementById('ckPg')) return 'cklink';
+    if (document.querySelector('#modal.open.me-mode')) return 'me';
+    if (document.getElementById('ppPg')) return (typeof _pp !== 'undefined' && _pp && !_pp.pg) ? 'pp' : '';
     if (currentView === 'current') return 'map';
-    if (currentView === 'plan') return !_p2Pg ? 'plan' : ({ sheet: 'sheet', yk: 'yk' })[_p2Pg] || '';
+    if (currentView === 'plan') return !_p2Pg ? 'plan' : ({ sheet: 'sheet', yk: 'yk', year: 'year', ck: 'check', ideal: 'ideal', dream: 'dream', sim: 'sim' })[_p2Pg] || '';
     if (currentView === 'events') return (typeof _evMode !== 'undefined' && _evMode === 'agenda') ? 'todo' : 'cal';
-    if (currentView === 'stats') return 'stats';
+    if (currentView === 'stats') return ({ train: 'train', pl: 'pl', reg: 'reg' })[typeof _dtTab !== 'undefined' ? _dtTab : ''] || 'stats';
+    if (currentView === 'ol') return 'ol';
+    if (currentView === 'members') return 'members';
   } catch (e) {}
   return '';
 }
@@ -39554,8 +39640,8 @@ function _gdTourSoon() { // 画面を開いた時：その画面のスポット�
     _gdTm = null;
     try {
       if (!_gdAutoOk()) return;
-      var G = _gdSt(); if (!G.intro || _gdBusy()) return;
-      var k = _gdTourKey(); if (!k || G.tour[k]) return;
+      var G = _gdSt(); if (!G.intro) return;
+      var k = _gdTourKey(); if (!k || G.tour[k] || _gdBusy(GD_TOUR_HOST[k])) return;
       gdTour(k);
     } catch (e) {}
   }, 900);
@@ -39581,19 +39667,32 @@ function gdMenu() {
   o.innerHTML = '<div class="in"><div class="top"><h2>❓ 使い方</h2><span onclick="gdMenuX()">✕</span></div>'
     + '<div class="sec">はじめに</div><div class="ls">' + li('👋', 'はじめての案内をもう一度', 'このアプリでできること（30秒）', 'gdMenuX();gdIntro(1)', G.intro)
     + li('🚀', 'はじめのステップを表示', 'HOMEにチェックリストを出す', 'gdStepsShow()', G.stepsDone) + '</div>'
-    + '<div class="sec">画面ごとのガイド（押すとその画面で説明します）</div><div class="ls">'
-    + Object.keys(GD_TOURS).map(function(k) { var T = GD_TOURS[k]; return li(T.ic, T.lb, '', 'gdMenuTour(\'' + k + '\')', G.tour[k]); }).join('') + '</div>'
+    + GD_MENU.map(function(g) { // v756: 画面ごとのガイドを場所ごとに
+      var ks = g[1].filter(function(k) { return GD_TOURS[k] && !(k === 'me' && !isPCMode()) && !(k === 'pp' && isPCMode()); });
+      return '<div class="sec">画面ごとのガイド：' + g[0] + '</div><div class="ls">' + ks.map(function(k) { var T = GD_TOURS[k]; return li(T.ic, T.lb, T.go ? '' : _gdHowOpen(k), 'gdMenuTour(\'' + k + '\')', G.tour[k]); }).join('') + '</div>';
+    }).join('')
     + (adm ? '<div class="sec">管理者向け</div><div class="ls">' + li('🛡', 'アカウント管理', 'メンバーのアカウント', 'gdMenuX();openAdminPanel()') + li('⚙', 'ユニオンのチェック項目', 'PLAN › チェック', "gdMenuX();gdStepGo('ack')") + '</div>' : '')
     + '<div class="sec">よくある質問</div>' + faq.map(function(q) { return '<details><summary>' + q[0] + '</summary><p>' + q[1] + '</p></details>'; }).join('') + '</div>';
 }
+var GD_MENU = [['MAP', ['map', 'pp', 'me', 'na', 'cklink', 'members']], ['PLAN', ['plan', 'year', 'sheet', 'yk', 'check', 'ideal', 'dream', 'sim']], ['予定・ToDo', ['cal', 'todo']], ['ANALYTICS', ['stats', 'train', 'pl', 'reg']], ['そのほか', ['ol']]];
+function _gdHowOpen(k) { return ({ pp: 'MAPで人を押した画面', me: 'PCでMAPの人を押した画面', na: 'MAPの＋ 追加' })[k] || ''; }
 function gdMenuX() { var o = document.getElementById('gdMenuOv'); if (o) o.remove(); }
 function gdMenuTour(k) {
   gdMenuX(); var T = GD_TOURS[k]; if (!T) return;
-  try { (new Function(T.go))(); } catch (e) {}
-  setTimeout(function() { gdTour(k, true); }, 700);
+  var go = T.go;
+  if (!go) { // 開き方が人によって違う画面：見本の人で開く
+    var ms = (state.members || []).filter(function(m) { return m && !m.deleted; }), m = ms.filter(function(x) { return x.parentId; })[0] || ms[0];
+    if (k === 'na') go = "switchView('current');naOpen('" + (ms.filter(function(x) { return !x.parentId; })[0] || {}).id + "')";
+    else if (m && k === 'pp') go = isPCMode() ? "switchView('current');openEdit('" + m.id + "')" : "switchView('current');ppOpen('" + m.id + "','current')";
+    else if (m && k === 'me') go = "switchView('current');openEdit('" + m.id + "')";
+    if (!go) { toast('メンバーを追加すると見られます'); return; }
+    if (k === 'pp' && isPCMode()) k = 'me';
+  }
+  try { (new Function(go))(); } catch (e) {}
+  setTimeout(function() { gdTour(k, true); }, 800);
 }
 // 画面を切りかえた時にスポットライトを確かめる（switchView・p2Go・setEventsMode・dtTab を包む）
-(function() { ['switchView', 'p2Go', 'setEventsMode', 'dtTab'].forEach(function(n) { var f = window[n]; if (typeof f !== 'function' || f._gd) return; var w = function() { var r = f.apply(this, arguments); try { _gdTourSoon(); } catch (e) {} return r; }; w._gd = 1; window[n] = w; }); })();
+(function() { ['switchView', 'p2Go', 'setEventsMode', 'dtTab', 'ppOpen', 'openEdit', 'naOpen', 'ckPgRender'].forEach(function(n) { var f = window[n]; if (typeof f !== 'function' || f._gd) return; var w = function() { var r = f.apply(this, arguments); try { _gdTourSoon(); } catch (e) {} return r; }; w._gd = 1; window[n] = w; }); })();
 
 try {
   initTheme();
