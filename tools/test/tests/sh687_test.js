@@ -31,7 +31,11 @@ T.run(async () => {
   c('数字は8行（1項目＝1行）', $$('.sp-kr').length === 8);
   c('v688: 説明文は画面に出さず i の中', !$('.sp-leg') && !/Howdy稼働基準/.test(v()) && $$('#view-plan .ux-ib').length >= 3);
   c('v688: 改善点の欄は項目ごとに記入例（同じ文の繰り返しなし）', /S-SET/.test($$('.sp-kr')[0].querySelector('.sp-kz').placeholder) && /CT取りを前月25日/.test($$('.sp-kr')[4].querySelector('.sp-kz').placeholder) && new Set($$('.sp-kz').map(x => x.placeholder)).size === 8);
-  c('v688: 行動の空き行も記入例', /例：リストアップ書き直し/.test($('#p2ShIn_front').placeholder));
+  c('v697: 行動の欄に記入例を全部（スマホも）', /例：リストアップ書き直し/.test($('.sp-at').textContent) && $$('.sp-at .r.ex').length === 3 + 5 + 6 + 5);
+  w.p2ShKzTgl(); await sleep(10);
+  c('v697: 数字と改善点をたためる（1行のまとめだけ）', $$('.sp-kr').length === 0 && /ひらく/.test($('.sp-fold').textContent));
+  w.p2ShKzTgl(); await sleep(10);
+  c('v697: ひらくと戻る', $$('.sp-kr').length === 8);
   c('目標は割合で自動に入れない（空のまま）', w._p2ShKv(ym, w._p2ShK('ct')).t === null && $$('.sp-kr')[4].querySelector('.sp-in').value === '');
   const ct = $$('.sp-kr')[4].querySelector('.sp-in'); ct.value = '32'; ct.onchange(); await sleep(10);
   c('今月の目標を書く', w._p2ShKv(ym, w._p2ShK('ct')).t === 32);
