@@ -16844,7 +16844,7 @@ function _p2YkSave(e) { e.updatedAt = new Date().toISOString(); saveEventDoc(e);
 function p2YkSubAdd(id, el) { var e = findEvent(id), v = String((el && el.value) || '').trim(); if (!e || !v) return; e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); setTimeout(function() { var s = document.querySelector('.yk-r.op .sa'); if (s) s.focus(); }, 30); }
 function p2YkSub(id, i) { var e = findEvent(id); if (!e || !e.subs || !e.subs[i]) return; e.subs[i].dn = !e.subs[i].dn; _p2YkSave(e); }
 function p2YkSubDel(id, i) { var e = findEvent(id); if (!e || !e.subs) return; e.subs.splice(i, 1); _p2YkSave(e); }
-function p2YkDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; if (v) e.planYm = v.slice(0, 7); _p2YkSave(e); }
+function p2YkDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; if (v) e.planYm = v.slice(0, 7); _p2RpForce = true; _p2YkSave(e); }
 function p2YkYm(id, v) { var e = findEvent(id); if (!e) return; e.planYm = v; if (e.date && v !== 'someday' && e.date.slice(0, 7) !== v) e.date = ''; _p2YkSave(e); }
 function p2YkDel(id) { if (!confirm('このやることを消しますか？（ToDoからも消えます）')) return; _p2YkOpen = ''; _evDeleteById(id); renderPlan(); }
 function _p2YkNById(id) { return _p2YkN().filter(function(n) { return n.id === id; })[0]; }
@@ -21709,9 +21709,15 @@ function _dtPageHtml2(k) {
     + '<div class="ux-body"><div class="dtu-pg">' + (ch ? '<div class="dtu-ch">' + ch + '</div>' : '') + '<div class="dtu-det"' + (ch ? '' : ' style="margin-top:0;flex:1"') + '>' + det + '</div></div></div>'
     + btm + '</div>';
 }
+var _p2RpForce = false;
 function renderPlan() {
   var wrap = document.getElementById('view-plan');
   if (!wrap) return;
+  if (!_p2RpForce) { // v724: 日付を選んでいる間は描き直さない（描き直すと選んでいる日付の入力が消える）。離れたら描き直す
+    var ae = document.activeElement;
+    if (ae && ae.tagName === 'INPUT' && ae.type === 'date' && wrap.contains(ae)) { if (!ae._rpw) { ae._rpw = 1; ae.addEventListener('blur', function() { setTimeout(function() { if (currentView === 'plan') renderPlan(); }, 0); }, { once: true }); } return; }
+  }
+  _p2RpForce = false;
   _p2();
   try { _gmHadRoot(); } catch (eHr) {} // v562: 案内はPLANに出さないが「自分を登録済み」の印は付ける
   var ym = _p2Ym(0);
@@ -37655,7 +37661,7 @@ function p2ShActAdd(cat) {
   setTimeout(function() { var el = document.getElementById('p2ShIn_' + cat); if (el) el.focus(); }, 30); // 続けて足せるように
 }
 function p2ShActTg(id) { var e = findEvent(id); if (!e) return; toggleEventDone(id); if (currentView === 'plan') renderPlan(); }
-function p2ShActDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; e.updatedAt = new Date().toISOString(); saveEventDoc(e); renderPlan(); }
+function p2ShActDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; e.updatedAt = new Date().toISOString(); saveEventDoc(e); _p2RpForce = true; renderPlan(); }
 function p2ShActDel(id) { if (!confirm('この行動を消しますか？（ToDoからも消えます）')) return; _evDeleteById(id); if (currentView === 'plan') renderPlan(); }
 // ── MAP（陸上トラック型：上＝流通（ユーザー）・下＝ビジネス）──
 function _p2ShIsUser(m) { var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t) || m.idealKind === 'user'; }
@@ -38634,7 +38640,7 @@ function ysSet(k, v) {
   if (k === 't') { v = String(v || '').trim(); if (!v) return; var o = it.t; it.t = v.slice(0, 200); var L = it.L, e = L && L.id ? findEvent(L.id) : null; if (e && !e.done && e.title === o.slice(0, 120)) { e.title = it.t.slice(0, 120); e.updatedAt = new Date().toISOString(); saveEventDoc(e); } if (L && L.k === 'ykn') _p2YkN().forEach(function(x) { if (x.id === L.id && x.t === o.slice(0, 60)) x.t = it.t.slice(0, 60); }); }
   else if (k === 'n') { var n = parseInt(v, 10); if (n > 0) it.n = n; else delete it.n; }
   else if (k === 'd' || k === 'rep' || k === 'u') { if (v) it[k] = v; else delete it[k]; }
-  saveGoals(); renderPlan();
+  saveGoals(); _p2RpForce = true; renderPlan();
 }
 function ysWho(w) { var f = _ysFind(_ysEd); if (!f) return; var a = f.it.who = f.it.who || [], i = a.indexOf(w); if (i >= 0) a.splice(i, 1); else a.push(w); if (!a.length) delete f.it.who; _ysQ = ''; saveGoals(); renderPlan(); setTimeout(function() { var q = document.getElementById('ysQ'); if (q && w !== 'me' && w !== 'all') q.focus(); }, 30); }
 function ysQ(v) { _ysQ = v; var b = document.getElementById('ysRes'); if (b) b.innerHTML = _ysRes(); }
