@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v735';
+var APP_JS_VERSION = 'v736';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v735';
+  var DATA_VERSION = 'v736';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v736', d:'2026-10-09', items:['PLANのタイルを「年の目標 → 計画シート → やること」の順に','計画シートの行動の実行期日：押すと「✅ ToDoに入れる／📅 予定に入れる」を選んで日にち（予定は時間も）を入れる窓に。勝手に今日が入らなくなりました','ToDoにした行動はToDoのチェックと連動、予定にした行動は左の□で自分でチェック。ToDoで消した行動は「ToDoで消しました」と出ます（戻す・外す）','やること：登録したタスクの名前・人、数値の目標の名前・目標・単位・月・人を、押して直せるように'] },
   { v:'v735', d:'2026-10-08', items:['アプリのアイコンを新しくしました（ホーム画面・ブラウザのタブ・ログイン画面・通知）'] },
   { v:'v734', d:'2026-10-08', items:['やることのサブタスクを、ロードマップの戦略・戦術と同じ書き方に：タスクの下にいつも出して、「＋ サブタスク」で大きい欄が開き、Enterで続けて書けます','サブタスクは押すと直せます（空にすると消える）'] },
   { v:'v733', d:'2026-10-08', items:['やることの書く欄の文字が小さかったのを16pxに','同じ原因で小さくなっていた入力欄（戦略・戦術、課題パネルのメモ、イベントの欄、計画シートの行動など）も、決めていた大きさで出るように直しました'] },
@@ -16755,10 +16756,10 @@ function _p2HubData() {
   // v686: 計画シートが中心（今月の計画シート → 年の目標・ロードマップ → 理想・夢100・シミュレーション）
   var SH = _p2ShSum(ym), f9 = function(v) { return v === null || v === undefined ? '—' : v; };
   var T = [
+    { k: 'year', c: 'gold', ic: '🏆', lb: '年の目標・ロードマップ', w: 1, st: (p.title || inc) ? evEsc(_p2TitleEn(p.title || '')) + (inc ? '・<em>月収' + inc + '万</em>' : '') + (p.deadline ? '・' + evEsc(String(p.deadline).replace('-', '/')) + 'まで' : '') + (!nx.isFinal && nx.title ? '<br>次の山 ' + evEsc(nx.title) + (nx.deadline ? '（' + evEsc(nx.deadline.replace('-', '/')) + '）' : '') : '') : '目標を<br><em>決める</em>' },
     { k: 'sheet', c: 'mint', ic: '📋', lb: parseInt(ym.slice(5), 10) + '月の計画シート', w: 1, bd: '今月',
       st: '月収 <em>' + f9(SH.inc.now) + '</em> / ' + f9(SH.inc.t) + '万・NEWフロント <em>' + SH.fr.now + '</em> / ' + f9(SH.fr.t) + '人<br>行動 <em>' + SH.done + '</em> / ' + SH.n + ' 完了' + (SH.od ? '・<span style="color:#FF5D73">期日すぎ ' + SH.od + '</span>' : '') },
     (function() { var cy = _p2Ym(0), tk = _p2YkTasks().filter(function(e) { return !e.done && (e.planYm === cy || (e.date && e.date.slice(0, 7) === cy)); }).length, nn = _p2YkN().filter(function(n) { return n.ym === cy; }); return { k: 'yk', c: 'mint', ic: '✅', lb: 'やること', w: 1, st: '今月 <em>' + tk + '</em>件' + (nn.length ? '・数値の目標 <em>' + nn.filter(function(n) { return n.v >= n.g; }).length + '</em> / ' + nn.length + ' 達成' : '') + '<br>今月から長期まで・📅で予定に' }; })(),
-    { k: 'year', c: 'gold', ic: '🏆', lb: '年の目標・ロードマップ', w: 1, st: (p.title || inc) ? evEsc(_p2TitleEn(p.title || '')) + (inc ? '・<em>月収' + inc + '万</em>' : '') + (p.deadline ? '・' + evEsc(String(p.deadline).replace('-', '/')) + 'まで' : '') + (!nx.isFinal && nx.title ? '<br>次の山 ' + evEsc(nx.title) + (nx.deadline ? '（' + evEsc(nx.deadline.replace('-', '/')) + '）' : '') : '') : '目標を<br><em>決める</em>' },
     { k: 'ideal', c: 'rose', ic: '✨', lb: '理想', bd: _p2G().p1 ? '✓ 答えた' : '', st: _p2IdealSt() },
     (function() { var dr9 = _p2G().dreams || []; return { k: 'dream', c: 'pur', ic: '🌈', lb: '夢100', st: dr9.length ? '<em>' + dr9.filter(function(d) { return d.done; }).length + '</em> / ' + dr9.length + ' 叶えた' : '夢を<br><em>書き出す</em>' }; })(),
     { k: 'sim', c: 'gold', ic: '🎮', lb: 'シミュレーション', w: 1, st: 'B22シミュレーション' }
@@ -16841,6 +16842,7 @@ function _p2YkRow(e, td) {
     + (ro9 ? '' : (_p2YkSubIn === e.id ? '<input class="yk-si" id="p2YkSi" placeholder="サブタスクを書く（Enterで次も）" maxlength="100" autocomplete="off" onkeydown="p2YkSiKey(event,\'' + e.id + '\',this)" onblur="p2YkSiBlur(\'' + e.id + '\',this)">' : '<div class="yk-sa" onclick="p2YkSubOpen(\'' + e.id + '\')">＋ サブタスク</div>')) + '</div>';
   if (op) {
     h += '<div class="sub">'
+      + '<div class="yk-ed"><input class="yk-et" value="' + evEsc(e.title || '') + '" maxlength="120" autocomplete="off" onchange="p2YkTitle(\'' + e.id + '\',this.value)" aria-label="名前"><select onchange="p2YkWhoSet(\'' + e.id + '\',this.value)">' + _p2YkWhoOpts(e.memberId || e.who || 'me') + '</select></div>' // v736: 名前と人も直せる
       + '<div class="ops">期限 <input type="date" value="' + (e.date || '') + '" onchange="p2YkDate(\'' + e.id + '\',this.value)"> 月 <select onchange="p2YkYm(\'' + e.id + '\',this.value)">' + _p2YkYmOpts(e.planYm) + '</select><span class="del" onclick="p2YkDel(\'' + e.id + '\')">消す</span></div></div>';
   }
   return h + '</div>';
@@ -16848,9 +16850,27 @@ function _p2YkRow(e, td) {
 function _p2YkYmOpts(sel) { var cur = _p2Ym(0), o = ''; for (var i = -1; i <= 12; i++) { var y = _p2YmAdd(cur, i); o += '<option value="' + y + '"' + (y === sel ? ' selected' : '') + '>' + _p2YkYmLb(y) + '</option>'; } return o + '<option value="someday"' + (sel === 'someday' ? ' selected' : '') + '>いつか</option>'; }
 function _p2YkNRow(n) {
   var ok = n.v >= n.g;
-  return '<div class="yk-r nm' + (ok ? ' ok' : '') + '"><div class="ln"><span class="ic">📊</span><span class="t" onclick="p2YkNEd(\'' + n.id + '\')">' + evEsc(n.t) + '</span>'
+  return '<div class="yk-r nm' + (ok ? ' ok' : '') + '"><div class="ln"><span class="ic">📊</span><span class="t" onclick="p2YkOpen(\'' + n.id + '\')">' + evEsc(n.t) + '</span>'
     + '<span class="pm" onclick="p2YkNV(\'' + n.id + '\',-1)">−</span><span class="nv"><input class="nvi" inputmode="decimal" autocomplete="off" value="' + (+n.v || 0) + '" onfocus="edSelAll(this)" onchange="p2YkNSet(\'' + n.id + '\',this.value)" aria-label="今の数"><i>/' + n.g + evEsc(n.u || '') + '</i></span><span class="pm p" onclick="p2YkNV(\'' + n.id + '\',1)">＋</span>'
-    + _p2YkWhoChip(n) + _p2YkCalChip(n.cal, 'n', n.id) + '</div></div>';
+    + _p2YkWhoChip(n) + _p2YkCalChip(n.cal, 'n', n.id) + '</div>'
+    + (_p2YkOpen === n.id ? '<div class="sub"><div class="yk-ed"><input class="yk-et" value="' + evEsc(n.t) + '" maxlength="60" autocomplete="off" onchange="p2YkNF(\'' + n.id + '\',\'t\',this.value)" aria-label="名前"><select onchange="p2YkNF(\'' + n.id + '\',\'who\',this.value)">' + _p2YkWhoOpts(n.mid || n.who || 'me') + '</select></div>'
+      + '<div class="ops">目標 <input class="yk-en" inputmode="decimal" autocomplete="off" value="' + n.g + '" onfocus="edSelAll(this)" onchange="p2YkNF(\'' + n.id + '\',\'g\',this.value)"> 単位 <input class="yk-eu" maxlength="6" autocomplete="off" value="' + evEsc(n.u || '') + '" placeholder="回" onchange="p2YkNF(\'' + n.id + '\',\'u\',this.value)"> 月 <select onchange="p2YkNF(\'' + n.id + '\',\'ym\',this.value)">' + _p2YkYmOpts(n.ym) + '</select><span class="del" onclick="p2YkNF(\'' + n.id + '\',\'del\')">消す</span></div></div>' : '') + '</div>'; // v736: 名前・目標・単位・月・人を直せる
+}
+function _p2YkWhoOpts(sel) {
+  var mem = (typeof membersForMap === 'function' ? membersForMap('current') : (state.members || [])).filter(function(m) { return m && !m.deleted && m.parentId && String(m.title || '').trim() !== 'OUT'; });
+  return '<option value="me"' + (sel === 'me' ? ' selected' : '') + '>👤 自分</option><option value="all"' + (sel === 'all' ? ' selected' : '') + '>全体</option>' + mem.map(function(m) { return '<option value="' + m.id + '"' + (sel === m.id ? ' selected' : '') + '>' + evEsc((m.lastName || '') + (m.firstName ? ' ' + m.firstName : '')) + '</option>'; }).join('');
+}
+function p2YkTitle(id, v) { var e = findEvent(id); v = String(v || '').trim(); if (!e || !v) return; e.title = v.slice(0, 120); _p2YkSave(e); }
+function p2YkWhoSet(id, w) { var e = findEvent(id); if (!e) return; if (w === 'me' || w === 'all') { e.who = w; delete e.memberId; e.memberIds = []; } else { e.memberId = w; e.memberIds = [w]; e.vis = 'both'; e.selfShow = true; delete e.who; } _p2YkSave(e); }
+function p2YkNF(id, k, v) {
+  var n = _p2YkNById(id); if (!n) return;
+  if (k === 'del') { if (!confirm('この数値の目標を消しますか？')) return; var L = _p2YkN(); L.splice(L.indexOf(n), 1); _p2YkOpen = ''; }
+  else if (k === 't') { v = String(v || '').trim(); if (v) n.t = v.slice(0, 60); }
+  else if (k === 'g') { var g = _p2Dec(v); if (g > 0) n.g = g; }
+  else if (k === 'u') n.u = String(v || '').trim().slice(0, 6);
+  else if (k === 'ym') n.ym = v;
+  else if (k === 'who') { if (v === 'me' || v === 'all') { n.who = v; n.mid = ''; } else { n.mid = v; n.who = ''; } }
+  saveGoals(); renderPlan();
 }
 // ── 操作 ──
 function _p2YkKeep() { var g = function(id) { var el = document.getElementById(id); return el ? el.value : ''; }; _p2YkDraft = { t: g('p2YkIn'), g: g('p2YkG'), u: g('p2YkU'), v: g('p2YkV') }; }
@@ -16927,7 +16947,7 @@ function _p2YkCss() {
     + '.yk-f{display:flex;align-items:center;gap:10px;margin:10px 2px 4px;font-size:12.5px;font-weight:800;color:var(--text-dim)}.yk-f label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}'
     + '.yk-g{margin-top:14px}.yk-gh{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);padding:0 4px 6px;border-bottom:1px solid var(--border)}.yk-g.cur .yk-gh{color:var(--accent)}.yk-g.od .yk-gh{color:#FF6B7F}.yk-gh em{font-style:normal;font-size:11.5px;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text-mid)}.yk-gh small{margin-left:auto;font-size:11.5px;color:var(--text-dim)}'
     + '.yk-r{border-bottom:1px solid var(--border)}.yk-r .ln{display:flex;align-items:center;gap:8px;padding:9px 4px;min-height:44px}.yk-r .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#0b0f17}.yk-r .ck:hover{border-color:var(--accent)}.yk-r.dn>.ln .ck{background:var(--accent);border-color:var(--accent)}'
-    + '.yk-r .t{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-r.dn>.ln .t{color:var(--text-dim);text-decoration:line-through}.yk-r .t .tg{font-style:normal;font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:6px;color:var(--c);border:1px solid var(--c)}.yk-k{margin:-4px 0 6px 34px;padding-left:12px;border-left:2px solid var(--border)}.yk-k .sr{display:flex;align-items:center;gap:8px;padding:6px 0}.yk-k .sr .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:900;color:#0b0f17}.yk-k .sr.dn .ck{background:var(--accent);border-color:var(--accent)}.yk-k .sr .st{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-k .sr.dn .st{color:var(--text-dim);text-decoration:line-through}.yk-k .sr .x{flex:none;color:var(--text-dim);cursor:pointer;padding:2px 6px;font-size:13px}.yk-sa{font-size:13.5px;font-weight:800;color:var(--text-dim);padding:6px 0;cursor:pointer}.yk-sa:hover{color:var(--accent)}.yk-si{width:100%;box-sizing:border-box;margin:4px 0;background:var(--bg);border:1.5px solid var(--accent);border-radius:12px;color:var(--text);font-weight:700;font-size:16px;font-family:inherit;padding:10px 12px;outline:none}.yk-r .t .sb{margin-left:6px;font:800 11px Inter,sans-serif;color:var(--text-dim);padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 8%,transparent)}'
+    + '.yk-r .t{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-r.dn>.ln .t{color:var(--text-dim);text-decoration:line-through}.yk-r .t .tg{font-style:normal;font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:6px;color:var(--c);border:1px solid var(--c)}.yk-ed{display:flex;gap:8px;margin-bottom:8px}.yk-ed .yk-et{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:9px 11px;outline:none}.yk-ed .yk-et:focus{border-color:var(--accent)}.yk-ed select{max-width:40%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:6px 8px;font-size:15px;font-weight:800;font-family:inherit}.yk-en,.yk-eu{width:62px;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-weight:900;font-size:16px;font-family:inherit;padding:5px 6px;text-align:center}.yk-k{margin:-4px 0 6px 34px;padding-left:12px;border-left:2px solid var(--border)}.yk-k .sr{display:flex;align-items:center;gap:8px;padding:6px 0}.yk-k .sr .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:900;color:#0b0f17}.yk-k .sr.dn .ck{background:var(--accent);border-color:var(--accent)}.yk-k .sr .st{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-k .sr.dn .st{color:var(--text-dim);text-decoration:line-through}.yk-k .sr .x{flex:none;color:var(--text-dim);cursor:pointer;padding:2px 6px;font-size:13px}.yk-sa{font-size:13.5px;font-weight:800;color:var(--text-dim);padding:6px 0;cursor:pointer}.yk-sa:hover{color:var(--accent)}.yk-si{width:100%;box-sizing:border-box;margin:4px 0;background:var(--bg);border:1.5px solid var(--accent);border-radius:12px;color:var(--text);font-weight:700;font-size:16px;font-family:inherit;padding:10px 12px;outline:none}.yk-r .t .sb{margin-left:6px;font:800 11px Inter,sans-serif;color:var(--text-dim);padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 8%,transparent)}'
     + '.yk-r .who{flex:none;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,#5AD7FF 14%,transparent);color:#5AD7FF;white-space:nowrap}.yk-r .who.me{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.yk-r .who.all{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold)}'
     + '.yk-r .dt{flex:none;min-width:38px;text-align:right;font:800 12.5px Inter,sans-serif;color:var(--text-mid)}.yk-r .dt.ng{color:#FF6B7F}.yk-r .cal{flex:none;font-size:12px;font-weight:900;padding:4px 8px;border-radius:9px;border:1px solid var(--border);color:var(--text-mid);cursor:pointer;white-space:nowrap}.yk-r .cal.on{border-color:color-mix(in srgb,#8B7CFF 60%,var(--border));color:#c7bfff;background:color-mix(in srgb,#8B7CFF 14%,transparent)}'
     + '.yk-r.nm .ic{width:22px;text-align:center;flex:none}.yk-r .pm{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;cursor:pointer;flex:none}.yk-r .pm.p{border-color:var(--accent);color:var(--accent)}.yk-r .nv{flex:none;min-width:52px;text-align:center;font:900 18px Inter,sans-serif;display:inline-flex;align-items:baseline;gap:1px}.yk-r .nvi{width:46px;box-sizing:border-box;text-align:center;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font:900 17px Inter,sans-serif;padding:4px 2px;outline:none}.yk-r .nvi:focus{border-color:var(--accent)}.yk-r.nm.ok .nvi{color:var(--accent)}.yk-r .nv i{font-style:normal;font-size:13px;color:var(--text-mid)}.yk-r.nm.ok .nv{color:var(--accent)}'
@@ -19385,7 +19405,7 @@ function _p2PcxHtml() {
   var mk = { ideal: !!g.p1, goal: !!(p.title && p.deadline), mon: _p2Declared(_p2Ym(0)) };
   var tab = function(k, lb) { return '<span class="' + (k === sel ? 'on' : '') + '" onclick="p2Go(\'' + k + '\')">' + lb + (mk[k] ? '<i>✓</i>' : (k === D.nk ? '<i class="w">●</i>' : '')) + (k === 'rev' && D.rv ? '<i class="r">●</i>' : '') + '</span>'; };
   var hd = '<div class="pcx2-hd"><h1>PLAN<small>' + parseInt(ym.slice(5), 10) + '月・残り' + D.left + '日</small></h1><div class="pcx2-tabs">'
-    + tab('sheet', '計画シート') + tab('yk', 'やること') + tab('year', '年の目標・ロードマップ') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') // v686
+    + tab('year', '年の目標・ロードマップ') + tab('sheet', '計画シート') + tab('yk', 'やること') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') // v686
     + '<b class="sep"></b>' + (D.rv ? tab('rev', '振り返り') : '') + tab('tool', 'ツール') + '</div></div>';
   return '<div class="pcx2">' + hd + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>'; // v630: 左の大きなタイルの列をやめて、上にタブ
 }
@@ -37678,7 +37698,7 @@ function _p2ShKv(ym, k, A) {
 function _p2ShPct(v, t) { return t ? Math.max(0, Math.min(100, Math.round((+v || 0) / t * 100))) : 0; }
 function _p2ShCol(p) { return p >= 100 ? 'var(--accent)' : (p >= 50 ? '#5AD7FF' : 'var(--gold)'); }
 function _p2ShActs(ym, cat) {
-  return (state.events || []).filter(function(e) { return e && !e.deleted && e.type === 'task' && e.planYm === ym && (!cat || e.planCat === cat); })
+  return (state.events || []).filter(function(e) { return e && !e.deleted && (e.type === 'task' || e.planCat) && e.planYm === ym && (!cat || e.planCat === cat); })
     .sort(function(a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0) || String(a.date || '9999').localeCompare(String(b.date || '9999')) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')); });
 }
 function _p2ShSum(ym) { // 入口のタイル用
@@ -37761,6 +37781,46 @@ function p2ShActAdd(cat) {
   renderPlan();
   setTimeout(function() { var el = document.getElementById('p2ShIn_' + cat); if (el) el.focus(); }, 30); // 続けて足せるように
 }
+function _p2ShActGone(ym, cat) { return (state.trashEvents || []).filter(function(e) { return e && e.planCat === cat && e.planYm === ym && !e.shOut; }); }
+function p2ShGone(id, back) {
+  var e = (state.trashEvents || []).filter(function(x) { return x.id === id; })[0]; if (!e) return;
+  if (back) { try { tdTrashRestore(id); } catch (er) {} } else { e.shOut = 1; try { saveEventDoc(e); } catch (er2) {} }
+  _p2RpForce = true; renderPlan();
+}
+var _p2ShDtS = null; // { id, kind:'todo'|'ev' }
+function p2ShDt(id) { var e = findEvent(id); if (!e || _p2ShRo()) return; _p2ShDtS = { id: id, kind: e.type === 'task' ? 'todo' : 'ev' }; _p2ShDtRender(); }
+function p2ShDtNew(cat, j) {
+  var ti = document.getElementById('p2ShIn_' + cat + '_' + j), v = ti ? String(ti.value || '').trim() : '';
+  if (!v) { toast('先に行動を書いてください'); if (ti) ti.focus(); return; }
+  var row = ti.closest ? ti.closest('.r') : null;
+  var id = row && row.dataset.eid;
+  if (!id) { var e = _tdMakeTask(v.slice(0, 120), '', ''); e.planYm = _p2ShYmN(); e.planCat = cat; state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {} id = e.id; if (row) row.dataset.eid = id; ti.value = ''; }
+  p2ShDt(id);
+}
+function p2ShDtKind(k) { if (_p2ShDtS) { _p2ShDtS.kind = k; var d = document.getElementById('p2ShDtD'), t = document.getElementById('p2ShDtT'); _p2ShDtS.d = d ? d.value : ''; _p2ShDtS.t = t ? t.value : ''; _p2ShDtRender(true); } }
+function p2ShDtX() { _p2ShDtS = null; var o = document.getElementById('p2ShDtOv'); if (o) o.remove(); }
+function _p2ShDtRender(keep) {
+  var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return;
+  var d = keep ? (S.d || '') : (e.date || ''), t = keep ? (S.t || '') : (e.time || ''), ev = S.kind === 'ev';
+  var o = document.getElementById('p2ShDtOv'); if (!o) { o = document.createElement('div'); o.id = 'p2ShDtOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2ShDtX(); }; document.body.appendChild(o); }
+  o.innerHTML = '<div class="shdt"><div class="hd">実行期日<span onclick="p2ShDtX()">✕</span></div><div class="tt">' + evEsc(e.title || '') + '</div>'
+    + '<div class="seg"><span class="' + (ev ? '' : 'on') + '" onclick="p2ShDtKind(\'todo\')">✅ ToDoに入れる</span><span class="' + (ev ? 'on' : '') + '" onclick="p2ShDtKind(\'ev\')">📅 予定に入れる</span></div>'
+    + '<div class="nt">' + (ev ? 'カレンダーの予定に入ります。やったら左の□に自分でチェック' : 'ToDoに入ります。ToDoでチェックすると、ここにもチェックが入ります') + '</div>'
+    + '<label>日にち<input type="date" id="p2ShDtD" value="' + d + '"></label>' + (ev ? '<label>時間<input type="time" id="p2ShDtT" value="' + t + '"></label>' : '')
+    + '<div class="bt"><span class="go" onclick="p2ShDtOk()">入れる</span>' + (e.date ? '<span class="cl" onclick="p2ShDtClear()">期日を消す</span>' : '') + '</div></div>';
+}
+function p2ShDtOk() {
+  var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return;
+  var d = (document.getElementById('p2ShDtD') || {}).value || '', t = (document.getElementById('p2ShDtT') || {}).value || '';
+  if (!d) { toast('日にちを選んでください'); return; }
+  e.date = d; e.updatedAt = new Date().toISOString();
+  if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (t && !e.endTime) { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
+  else { e.type = 'task'; e.time = ''; delete e.endTime; }
+  saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  p2ShDtX(); _p2RpForce = true; renderPlan();
+  toast((S.kind === 'ev' ? '📅 予定に入れました（' : '✅ ToDoに入れました（') + _p2ShMd(d) + (S.kind === 'ev' && t ? ' ' + t : '') + '）');
+}
+function p2ShDtClear() { var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return; e.date = ''; e.time = ''; e.type = 'task'; delete e.endTime; e.updatedAt = new Date().toISOString(); saveEventDoc(e); p2ShDtX(); _p2RpForce = true; renderPlan(); }
 function p2ShActTg(id) { var e = findEvent(id); if (!e) return; toggleEventDone(id); if (currentView === 'plan') renderPlan(); }
 function p2ShActDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; e.updatedAt = new Date().toISOString(); saveEventDoc(e); _p2RpForce = true; renderPlan(); }
 function p2ShActDel(id) { if (!confirm('この行動を消しますか？（ToDoからも消えます）')) return; _evDeleteById(id); if (currentView === 'plan') renderPlan(); }
@@ -37857,7 +37917,7 @@ function _p2ShCss2() {
     + '.sp-kz{width:100%;box-sizing:border-box;margin-top:6px;font-weight:700;font-size:12.5px;line-height:1.55;font-family:inherit;color:var(--text);padding:6px 9px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);resize:none;min-height:34px;overflow:hidden}.sp-kz::placeholder{color:var(--text-dim)}.sp-kz:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-at{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}.sp-at .h{display:flex;align-items:center;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:900}.sp-at .h span{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--text-dim)}'
     + '.sp-at .r{display:flex;align-items:stretch;border-top:1px solid var(--border);min-height:32px;font-size:12.5px;font-weight:700}.sp-at .c{width:32px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;cursor:pointer}.sp-at .x{flex:1;min-width:0;border-left:1px solid var(--border);display:flex;align-items:center}.sp-at .x input{width:100%;background:transparent;border:0;color:var(--text);font-weight:700;font-size:13px;font-family:inherit;padding:6px 8px}.sp-at .x input::placeholder{color:var(--text-dim)}.sp-at .x input:focus{outline:none;background:color-mix(in srgb,var(--accent) 6%,transparent)}.sp-at .r.dn .x input{color:var(--text-dim);text-decoration:line-through}'
-    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;box-sizing:border-box;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none}.sp-at .d i.dl{font-style:normal;pointer-events:none}.sp-at .d.od{color:#FF6B7F}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
+    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;box-sizing:border-box;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none}.sp-at .d i.dl{font-style:normal;pointer-events:none}.sp-at .d.od{color:#FF6B7F}.sp-at .d.dd{flex-direction:column;gap:1px;line-height:1.1}.sp-at .d.dd b{font-weight:900}.sp-at .d.dd small{font-size:9.5px;font-weight:900;color:var(--accent)}.sp-at .d.dd.ev small{color:#5AD7FF}.sp-at .r.gone .gx{display:flex;flex-direction:column;justify-content:center;padding:4px 8px;font-size:13px;color:var(--text-dim)}.sp-at .r.gone .gx em{font-style:normal;font-size:10.5px;font-weight:900;color:#FF6B7F}.sp-at .r.gone .c{color:#FF6B7F}.sp-at .d.gd{flex-direction:column;gap:2px}.sp-at .d.gd i{font-style:normal;font-size:11px;font-weight:900;color:var(--accent);cursor:pointer}.sp-at .d.gd i+i{color:var(--text-dim)}.shdt-ov{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}body.px3 .shdt-ov{align-items:center}.shdt{width:100%;max-width:440px;background:var(--surface);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box}body.px3 .shdt{border-radius:18px}.shdt .hd{display:flex;align-items:center;font-size:13px;font-weight:900;color:var(--text-mid)}.shdt .hd span{margin-left:auto;cursor:pointer;padding:4px 6px}.shdt .tt{font-size:17px;font-weight:900;margin:6px 0 12px;word-break:break-all}.shdt .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.shdt .seg span{padding:12px 8px;border-radius:12px;border:1.5px solid var(--border);text-align:center;font-size:14.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.shdt .seg span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.shdt .nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:8px 2px 4px;line-height:1.5}.shdt label{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;font-weight:900;color:var(--text-mid)}.shdt label input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:10px 12px}.shdt .bt{display:flex;align-items:center;gap:12px;margin-top:16px}.shdt .bt .go{flex:1;text-align:center;padding:13px;border-radius:12px;background:var(--accent);color:#06281f;font-weight:900;font-size:15px;cursor:pointer}.shdt .bt .cl{font-size:13px;font-weight:800;color:#FF6B7F;cursor:pointer;padding:8px}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
     + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
     // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
     + '.sp-pc{margin-top:4px}.sp-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.sp-acts .sp-at{margin-bottom:0}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
@@ -37998,15 +38058,19 @@ function _p2ShTable(ym) { // PC：紙の表（先月 目標・結果｜今月 �
 function _p2ShActTbl(ym, c, minRows) {
   var td = evTodayYmd(), L = _p2ShActs(ym, c.k), ro = _p2ShRo();
   var r = L.map(function(e) {
-    var od = !e.done && e.date && e.date < td;
-    return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c" onclick="p2ShActTg(\'' + e.id + '\')">' + (e.done ? '✔' : '') + '</span><span class="x"><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '></span>'
-      + '<span class="d' + (od ? ' od' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '/') + (ro ? '' : '<input type="date" value="' + (e.date || '') + '" onclick="_p2ShPick(this)" onchange="p2ShActDate(\'' + e.id + '\',this.value)">') + '</span></div>';
+    var od = !e.done && e.date && e.date < td, ev = e.type !== 'task';
+    // v736: 期日を押すと「ToDo か 予定」を選んで日時を入れる窓（勝手に今日が入らない）。予定は時間も
+    var dl = e.date ? '<b>' + parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) + '</b><small>' + (ev ? '予定' + (e.time ? ' ' + e.time : '') : 'ToDo') + '</small>' : '<b>/</b>';
+    return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c" onclick="p2ShActTg(\'' + e.id + '\')" title="やったらチェック">' + (e.done ? '✔' : '') + '</span><span class="x"><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '></span>'
+      + '<span class="d dd' + (od ? ' od' : '') + (ev ? ' ev' : '') + '"' + (ro ? '' : ' onclick="p2ShDt(\'' + e.id + '\')"') + '>' + dl + '</span></div>';
   }).join('');
+  // v736: ToDoで消した行動は、消したとわかるように残す（戻す・外す）
+  r += _p2ShActGone(ym, c.k).map(function(e) { return '<div class="r gone"><span class="c">✕</span><span class="x gx"><s>' + evEsc(e.title || '') + '</s><em>ToDoで消しました</em></span><span class="d gd">' + (ro ? '' : '<i onclick="p2ShGone(\'' + e.id + '\',1)">戻す</i><i onclick="p2ShGone(\'' + e.id + '\',0)">外す</i>') + '</span></div>'; }).join('');
   // v699: 空いた行はそのまま書く欄（記入例は薄く見せるだけ・押しても入らない）。「＋ 行を追加」で行を増やす
   var used = L.map(function(e) { return e.title; }), exU = (P2_SH_ACT_EXS[c.k] || []).filter(function(t) { return used.indexOf(t) < 0; });
   var xr = +((_p2ShM(ym).xr || {})[c.k]) || 0, nE = ro ? Math.max(0, (minRows || 0) - L.length) : Math.max(exU.length, 1, (minRows || 0) - L.length) + xr;
   for (var j = 0; j < nE; j++) r += ro ? '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>'
-    : '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '_' + j + '" placeholder="' + (j < exU.length ? '例：' + evEsc(exU[j]) : '') + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAddV(\'' + c.k + '\',this)"></span><span class="d"><i class="dl">' + (_p2ShNwD[c.k + '_' + j] ? _p2ShMd(_p2ShNwD[c.k + '_' + j]) : '/') + '</i><input type="date" value="' + (_p2ShNwD[c.k + '_' + j] || '') + '" onclick="_p2ShPick(this)" onchange="p2ShActNwD(\'' + c.k + '\',' + j + ',this)"></span></div>';
+    : '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '_' + j + '" placeholder="' + (j < exU.length ? '例：' + evEsc(exU[j]) : '') + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAddV(\'' + c.k + '\',this)"></span><span class="d dd" onclick="p2ShDtNew(\'' + c.k + '\',' + j + ')"><b>/</b></span></div>';
   if (!ro) r += '<div class="addr" onclick="p2ShActRow(\'' + c.k + '\')">＋ 行を追加</div>';
   if (!minRows) { // v698: スマホは分野ごとにたためる（端末ごとに覚える）
     var cl = _p2ShActClosed(c.k), dn = L.filter(function(e) { return e.done; }).length;
