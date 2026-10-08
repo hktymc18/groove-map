@@ -1300,8 +1300,10 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v37';
+var APP_VER = 'v39';
 var CHANGELOG = [
+  { v: 'v39', d: '2026/10/09', items: ['🧾 スマホ会員証がない人（紙カードの人など）にも電子領収書: 受付直後の「📱 領収書QRを表示」を本人のスマホで読み取ってもらうと、宛名・金額入りの領収書が開きます', '渡し忘れても、出席者一覧・合同出席者の「🧾 領収書」から同じ領収書をもう一度表示できます（2枚目は作りません）。未徴収・返金・PayPay⇔現金の変更にも自動で追従'] },
+  { v: 'v38', d: '2026/10/09', items: ['📋 イベントタブに「合同出席者」ボタン（単独イベントは「出席者」）: 終わったイベントも、全ユニオンの出席者・ユニオン別の人数・ビジター・受付担当者を一覧で見られます（ユニオンで絞り込み・CSV出力も可）', '➕ 合同イベントで、合同ユニオンに入っていないユニオンの人を受付すると、主催ユニオンの管理者・受付管理者にはその場で「合同ユニオンに追加」ボタンが出ます（押すとそのユニオンの集計に入ります）'] },
   { v: 'v37', d: '2026/10/09', items: ['💴💳 イベントの「支払い方法」に「現金とPayPayの両方」を追加。受付のたびに画面の「💴 現金で受領」「📱 PayPayで受領」をワンタップで選べます（何もしなければ現金）。受付画面にはPayPayの送金QRも表示', '会計: 現金計・PayPay計を分けて表示。PayPay分は納金票に「現金外」として別記'] },
   { v: 'v36', d: '2026/10/09', items: ['集計タブが「集計中…」のまま表示されないことがあった問題を修正（他のユニオンのイベントがある月に起きていました）'] },
   { v: 'v35', d: '2026/10/08', items: ['領収書: ユニオン設定で「住所」「電話番号」「インボイス登録番号」を任意で設定できるように（入れた項目だけ載ります）。登録番号がある時は「10%対象・うち消費税」も表示', '会場で受け取った領収書に「現金受領／PayPay受領」を表示'] },
@@ -5213,6 +5215,7 @@ function renderEvents(){
       + (isSelf && canDel ? '<button data-a="selftog" data-id="' + esc(ev.id) + '"' + (ev.selfOpen ? '' : ' class="primary"') + '>'
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
+      + ((canRec || canFinEv(ev)) ? '<button data-a="atts" data-id="' + esc(ev.id) + '">📋 ' + ((ev.unions || []).length > 1 ? '合同出席者' : '出席者') + '</button>' : '')
       + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
       + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span><span id="rcCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canFinEv(ev) ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
@@ -5256,6 +5259,105 @@ function renderEvents(){
     }
   });
 }
+/* 📋 出席者一覧（イベント全体・全ユニオン）: 終わったイベントも受付を開き直さずに見られる。
+   合同イベントは参加ユニオン別の人数、合同外から来た人はビジターとして別に数える */
+var CK_METHOD_LABEL = { scan: 'QR', manual: '手入力', self: 'セルフ', online: '💻 オンライン', guest: 'ゲスト受付', 'import': '取込' };
+function evAttCat(ev, a){
+  var u = a.union || '';
+  if(!u) return 'ゲスト';
+  return (ev.unions || []).indexOf(u) >= 0 ? u : 'ビジター（' + u + '）';
+}
+function evAttModal(ev){
+  db.collection('checkinEvents').doc(ev.id).collection('attendance').get().then(function(qs){
+    var rows = [];
+    qs.forEach(function(d){
+      var a = d.data();
+      if(a.status === 'pending' || a.status === 'rejected') return;
+      a._id = d.id; rows.push(a);
+    });
+    rows.sort(function(x, y){ return attSortKey(x) - attSortKey(y); });
+    // 受付担当者: 新しい記録は名前を保存済み。古い記録はアカウントから名前を引く（分からなければ空欄）
+    var need = {}, names = {};
+    rows.forEach(function(a){ if(!a.byName && a.by) need[a.by] = 1; });
+    return Promise.all(Object.keys(need).map(function(uid){
+      return db.collection('users').doc(uid).get()
+        .then(function(sn){ if(sn.exists) names[uid] = sn.data().name || ''; })
+        .catch(function(){});
+    })).then(function(){
+      rows.forEach(function(a){ a._by = a.byName || names[a.by] || ''; a._cat = evAttCat(ev, a); });
+      // 領収書の発行者（主催ユニオンの設定）: 会員証がない人の領収書QRを後から出す用
+      return db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get()
+        .then(function(sn){ return sn.exists ? ckRcptInfo(sn.data()) : null; })
+        .catch(function(){ return null; })
+        .then(function(info){ evAttShow(ev, rows, info); });
+    });
+  }).catch(function(e){ toast(permMsg(e, '出席者一覧を見られるのは、参加ユニオンのメンバー・管理者だけです')); });
+}
+function evAttShow(ev, rows, info){
+  // 領収書QRを出せる人 = 受付できる人（参加ユニオンのメンバー・オーナー）と会計を扱う管理者
+  var canRc = !!(info && info.by) && (isOwner() || (gProf && (ev.unions || []).indexOf(gProf.union) >= 0) || canFinEv(ev));
+  function rcOk(a){ return canRc && (a.fee || 0) > 0 && a.paid !== false && ckNoCardRec(a._id, a); }
+  // カテゴリの並び: 参加ユニオン（主催→合同の順）→ ビジター → ゲスト
+  var cats = (ev.unions || []).slice(), cnt = {};
+  rows.forEach(function(a){ cnt[a._cat] = (cnt[a._cat] || 0) + 1; if(cats.indexOf(a._cat) < 0) cats.push(a._cat); });
+  var joint = (ev.unions || []).length > 1;
+  var tally = cats.filter(function(c){ return cnt[c] || (ev.unions || []).indexOf(c) >= 0; }).map(function(c){
+    return '<span class="pill ' + ((ev.unions || []).indexOf(c) >= 0 ? 'g' : 'n') + '" style="margin:2px 4px 2px 0;">'
+      + esc(c) + ' ' + (cnt[c] || 0) + '名</span>';
+  }).join('');
+  modal('<h2>📋 ' + (joint ? '合同出席者' : '出席者') + ' — ' + esc((ev.date || '').slice(5).replace('-', '/')) + ' ' + esc(ev.name || '') + '</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 6px;">'
+    + (joint ? '合同: ' + esc((ev.unions || []).join(' + ')) + '　' : '') + '合計 <b style="color:var(--ink);">' + rows.length + '名</b></p>'
+    + '<div style="margin:0 0 8px;">' + tally + '</div>'
+    + (rows.some(function(a){ return a._cat.indexOf('ビジター') === 0; })
+      ? '<p style="font-size:12px;color:var(--sub);margin:0 0 8px;">ビジター = 合同ユニオンに入っていないユニオンの人（そのユニオンの稼働率には入りません。イベントの編集で合同ユニオンに追加すると入ります）</p>' : '')
+    + '<div style="display:flex;gap:8px;align-items:center;margin:0 0 8px;">'
+    + '<select id="eaSel" style="flex:1;min-width:0;"><option value="">すべて（' + rows.length + '名）</option>'
+    + cats.filter(function(c){ return cnt[c]; }).map(function(c){ return '<option value="' + esc(c) + '">' + esc(c) + '（' + cnt[c] + '名）</option>'; }).join('')
+    + '</select><button id="eaCsv">⬇ CSV</button></div>'
+    + '<div id="eaList" style="max-height:55vh;overflow:auto;"></div>'
+    + '<div class="btns"><button id="eaClose">閉じる</button></div>', true);
+  function cur(){ var v = $('eaSel').value; return rows.filter(function(a){ return !v || a._cat === v; }); }
+  function draw(){
+    var list = cur();
+    var rcCol = list.some(rcOk);
+    $('eaList').innerHTML = list.length ? '<div class="tblwrap"><table><thead><tr><th>時刻</th><th>氏名・系列</th><th>ユニオン</th><th>区分</th><th>受付担当</th>' + (rcCol ? '<th>領収書</th>' : '') + '</tr></thead><tbody>'
+      + list.map(function(a){
+          var tags = '';
+          if(a.role) tags += '<span class="pill g">' + esc(roleLabel(a.role)) + '</span> ';
+          if(a.guest) tags += '<span class="pill n">ゲスト</span> ';
+          if(a._cat.indexOf('ビジター') === 0) tags += '<span class="pill a">ビジター</span> ';
+          tags += '<span style="font-size:11.5px;color:var(--sub);">' + esc(CK_METHOD_LABEL[a.method] || a.method || '') + '</span>';
+          return '<tr><td class="mono">' + esc(a.atLocal || '') + '</td><td><b>' + esc(a.name || '') + '</b>'
+            + (a.group ? '<div style="font-size:11.5px;color:var(--sub);">' + esc(a.group) + '</div>' : '') + '</td>'
+            + '<td>' + esc(a.union || '') + '</td><td>' + tags + '</td>'
+            + '<td style="font-size:12.5px;">' + esc(a._by) + '</td>'
+            + (rcCol ? '<td>' + (rcOk(a) ? '<button data-ear="' + esc(a._id) + '" style="padding:4px 10px;font-size:12px;white-space:nowrap;">🧾 ' + (a.rcptToken ? '再表示' : '発行') + '</button>' : '') + '</td>' : '')
+            + '</tr>';
+        }).join('') + '</tbody></table></div>'
+      : '<p style="color:var(--sub);font-size:13.5px;">まだ出席はありません。</p>';
+  }
+  draw();
+  $('eaSel').onchange = draw;
+  $('eaList').onclick = function(e){
+    var bt = e.target.closest ? e.target.closest('button[data-ear]') : null;
+    if(!bt) return;
+    var id = bt.getAttribute('data-ear'), a = null;
+    rows.forEach(function(r){ if(r._id === id) a = r; });
+    if(a) ckRcptQr(ev, id, a, info, function(){ evAttModal(ev); });
+  };
+  $('eaClose').onclick = closeModal;
+  $('eaCsv').onclick = function(){
+    var out = [['受付時刻', '番号', '氏名', '系列', 'ユニオン', '区分', '役割', '受付方法', '徴収額', '受付担当']];
+    cur().forEach(function(a){
+      var fee = (a.fee || 0) > 0 && a.paid !== false ? (a.fee || 0) - (a.refund || 0) : 0;
+      out.push([a.atLocal || '', a.guest ? '' : (a.no || a._id), a.name || '', a.group || '', a.union || '',
+        a.guest ? 'ゲスト' : (a._cat.indexOf('ビジター') === 0 ? 'ビジター' : '参加'),
+        roleLabel(a.role || ''), CK_METHOD_LABEL[a.method] || a.method || '', fee, a._by]);
+    });
+    csvDownload('出席者_' + (ev.date || '') + '_' + (ev.name || '').replace(/[\\/:*?"<>|\s]/g, '') + ($('eaSel').value ? '_' + $('eaSel').value.replace(/[\\/:*?"<>|\s]/g, '') : '') + '.csv', out);
+  };
+}
 $('evList').addEventListener('click', function(e){
   var b = e.target.closest ? e.target.closest('button') : null;
   if(!b) return;
@@ -5267,6 +5369,7 @@ $('evList').addEventListener('click', function(e){
   if(a === 'imp'){ importModal(ev); }
   if(a === 'online'){ onlineModal(ev); }
   if(a === 'rsvps'){ rsvpListModal(ev); }
+  if(a === 'atts'){ evAttModal(ev); }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
@@ -7812,8 +7915,10 @@ function syncReceipt(no){
   if(!gRec) return;
   if(!gRec.issuer) return;   // 発行者名が未設定のユニオンでは電子領収書を発行しない
   var m = gRec.roster[no];
-  if(!m || !m.cardToken) return;
   var a = gRec.att[no];
+  // 会員証の人はその会員証へ。会員証がない人はその場QRで発行済みの領収書（rcptToken）へ
+  var tok = (m && m.cardToken) || (a && a.rcptToken) || '';
+  if(!tok) return;
   var key = 'rcpt_' + gRec.ev.id, u = {};
   if(a && (a.fee || 0) > 0 && a.paid !== false && !a.rcptNone){
     u[key] = ckRcptWith({ d: gRec.ev.date || '', ev: gRec.ev.name || '',
@@ -7822,7 +7927,7 @@ function syncReceipt(no){
   } else {
     u[key] = FV.delete();   // 未徴収・取消は領収書も取り下げ
   }
-  db.collection('cards').doc(m.cardToken).set(u, { merge: true }).catch(function(){});
+  db.collection('cards').doc(tok).set(u, { merge: true }).catch(function(){});
 }
 function payModal(no){
   var a = gRec && gRec.att[no];
@@ -7950,6 +8055,8 @@ function attListModal(mode){
       + pay
       + '<button data-ala="copy" data-no="' + esc(x.id) + '" title="他システムへの入力用に氏名をコピー" style="padding:4px 10px;font-size:12px;">📋 名前コピー</button>'
       + (fee > 0 ? '<button data-ala="pay" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">会計</button>' : '')
+      + (fee > 0 && a.paid !== false && gRec.issuer && ckNoCardRec(x.id, a)
+          ? '<button data-ala="rcpt" data-no="' + esc(x.id) + '" title="会員証がない人に領収書をQRで渡す" style="padding:4px 10px;font-size:12px;">🧾 領収書</button>' : '')
       + (a.role && !a.guest ? '<button data-ala="unrole" data-no="' + esc(x.id) + '" style="padding:4px 10px;font-size:12px;">役割解除</button>' : '')
       + '<button data-ala="del" data-no="' + esc(x.id) + '" class="danger ghost" style="padding:4px 10px;font-size:12px;">取消</button>'
       + '</div>';
@@ -7967,6 +8074,10 @@ function attListModal(mode){
     if(!a) return;
     if(act === 'copy'){ copyText(a.name || '', b); return; }   // 一覧は開いたまま連続コピーできる
     if(act === 'pay'){ closeModal(); payModal(no); }
+    if(act === 'rcpt'){
+      ckRcptQr(gRec.ev, no, a, gRec.rcptInfo || { by: gRec.issuer }, function(){ attListModal(mode); });
+      return;
+    }
     if(act === 'unrole'){
       if(!window.confirm(a.name + ' さんの役割（' + roleLabel(a.role) + '）を解除しますか？出席の記録は残ります。')) return;
       a.role = '';
@@ -8170,6 +8281,29 @@ function ckBindPayPick(no, fee){
   $('ppkPp').onclick = function(){ pick(true); };
   ckStageHold();
 }
+// ➕ 受付中の合同イベントに、チェック漏れのユニオンを追加する（主催ユニオンの管理者・受付管理者のみ）。
+// 出席の記録には本人の所属ユニオンが入っているので、追加した時点でそのユニオンの集計・稼働率に入る
+function ckAddJointUnion(un, btn){
+  if(!gRec || !un) return;
+  var ev = gRec.ev, nu = (ev.unions || []).slice();
+  if(nu.indexOf(un) >= 0){ if(btn){ btn.disabled = true; btn.textContent = '✓ 追加済み'; } return; }
+  nu.push(un);
+  if(btn) btn.disabled = true;
+  db.collection('checkinEvents').doc(ev.id).set({ unions: nu }, { merge: true }).then(function(){
+    ev.unions = nu;
+    gEvents.forEach(function(x){ if(x.id === ev.id) x.unions = nu.slice(); });
+    if(gRec.warnedUn) delete gRec.warnedUn[un];
+    if(ev.recClosed) ckRefreshForEvent(ev);
+    renderTallies();
+    renderEvents();   // イベント一覧の「合同:」表示も更新
+    if(btn) btn.textContent = '✓ ' + un + ' を追加しました';
+    toast(un + ' を合同ユニオンに追加しました。' + un + ' の人の出席は ' + un + ' の集計に入ります');
+    focusScan();
+  }).catch(function(e){
+    if(btn) btn.disabled = false;
+    toast(permMsg(e, '合同ユニオンの追加は、主催ユニオンの管理者・受付管理者のみ可能です'));
+  });
+}
 function checkinMember(member, method, role){
   if(!gRec) return;
   // 最終ガード: 無効メンバーはどの経路からでも受付させない
@@ -8217,6 +8351,7 @@ function checkinMember(member, method, role){
     fee: fee, paid: true, refund: 0
   };
   if(isVisitor) data.visitor = true;
+  if(!member.cardToken) data.noCard = true;   // 会員証なし（領収書はその場QRで渡す）
   if(role) data.role = role;
   var ppRec = fee > 0 && gRec.payMode;   // 💳 PayPay集金イベント: 徴収はPayPay受領として記録
   if(ppRec) data.payMethod = 'paypay';
@@ -8225,6 +8360,9 @@ function checkinMember(member, method, role){
   var joint = (gRec.ev.unions || []).length > 1;
   // 登録済みのユニオンの人なのに合同ユニオンに入っていない → そのユニオンの集計に入らないことを知らせる
   var notJoined = isVisitor && member.union && gUnions.indexOf(member.union) >= 0;
+  // 合同イベントなら、主催ユニオンの管理者・受付管理者はその場で合同ユニオンに追加できる
+  var canAddUn = notJoined && joint && canEditUnion(gRec.ev.hostUnion);
+  var canRcptQr = fee > 0 && !member.cardToken && !!gRec.issuer;   // 会員証がない人: 領収書はQRで渡す
   if(notJoined){
     gRec.warnedUn = gRec.warnedUn || {};
     if(!gRec.warnedUn[member.union]){
@@ -8240,7 +8378,10 @@ function checkinMember(member, method, role){
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
     + (notJoined ? '<div class="hit-warn">⚠ ' + esc(member.union) + ' はこのイベントの合同ユニオンに入っていません。'
         + 'このままだと ' + esc(member.union) + ' の集計・稼働率に入りません。'
-        + 'イベントの編集で合同ユニオンにチェックを付けてください（受付の後から付けてもOK）</div>' : '')
+        + (canAddUn ? '下のボタンで合同ユニオンに追加できます。'
+          : 'イベントの編集で合同ユニオンにチェックを付けてください（受付の後から付けてもOK）')
+        + (canAddUn ? '<div><button id="stgAddUn" class="primary" style="margin-top:8px;">＋ ' + esc(member.union) + ' を合同ユニオンに追加</button></div>' : '')
+        + '</div>' : '')
     + (member.trainee ? '<div style="margin:4px 0;"><span class="pill n">研修生</span> <span style="font-size:14px;font-weight:700;">チュートリアル ' + trMainProgress(member.trainings) + '/3</span>'
         + (member.dlrRsv && member.dlrRsv.date === todayStr()
           ? ' <span class="pill a">🎫 本日DLR予約 ' + esc(member.dlrRsv.timeFrom || '') + '〜</span>' : '')
@@ -8248,9 +8389,15 @@ function checkinMember(member, method, role){
     + '<p class="hit-meta">' + nowHM()
     + (fee > 0 ? '　<b id="stgFeeTxt">' + (ppRec ? '💳 PayPay ' : (ppPick ? '💴 現金 ' : '')) + yen(fee) + ' 徴収</b>' : '') + '</p>'
     + (ppPick ? ckPayPickHtml() : '')
+    + (canRcptQr ? '<button id="stgRcpt" style="margin-top:8px;">📱 領収書QRを表示</button> ' : '')
     + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
-    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''), ppPick);
+    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''), ppPick || canAddUn || canRcptQr);
+  var rq = $('stgRcpt');
+  if(rq) rq.onclick = function(){ guestRcptQr(no, member.name || '', fee); };
   if(ppPick) ckBindPayPick(no, fee);
+  else if(canAddUn) ckStageHold();
+  var au = $('stgAddUn');
+  if(au) au.onclick = function(){ ckAddJointUnion(member.union, au); };
   var su = $('stgUnpaid');
   if(su) su.onclick = function(){
     setPay(no, { paid: false });
@@ -8363,6 +8510,7 @@ function writeAttendance(id, data){
   data.atLocal = nowHM();
   data.atMs = Date.now();
   data.by = gUser.uid;
+  if(gProf && gProf.name) data.byName = gProf.name;   // 📋 出席者一覧の「受付担当」表示用
   // 楽観表示: 書込はバックグラウンド（オフライン時は自動キューイング）
   gRec.att[id] = data; renderTallies();
   db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(id)
@@ -8377,30 +8525,51 @@ function writeAttendance(id, data){
    宛名・金額入りの電子領収書ページを一回性のURLで発行し、QRで本人のスマホに渡す */
 function guestRcptQr(no, name, fee){
   if(!gRec || !gRec.issuer){ toast('ユニオン設定で領収書の発行者名を設定すると使えます'); return; }
-  var token = randToken();
-  var docData = {
-    no: no, name: name, union: gRec.ev.hostUnion || gUnion,
-    rcptOnly: true, createdAt: FV.serverTimestamp()
-  };
-  var ga = gRec.att[no] || {};
-  docData['rcpt_' + gRec.ev.id] = ckRcptWith({
-    d: gRec.ev.date || '', ev: gRec.ev.name || '', amt: fee, no: no, at: Date.now(),
-    pm: ga.payMethod === 'paypay' ? 'PayPay' : '現金'
-  }, gRec.rcptInfo || { by: gRec.issuer });
-  db.collection('cards').doc(token).set(docData).then(function(){
-    // イベント削除時に一括で取り下げられるよう、出席記録に領収書トークンを残す＋操作ログ
-    if(gRec.att[no]) gRec.att[no].rcptToken = token;
-    db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
-      .set({ rcptToken: token }, { merge: true }).catch(function(){});
-    auditLog(gRec.ev.id, '領収書QR発行', name, yen(fee));
+  ckRcptQr(gRec.ev, no, gRec.att[no], gRec.rcptInfo || { by: gRec.issuer }, function(){ focusScan(); });
+}
+// 会員証がない人（名簿の紙カードの人・ゲスト）の電子領収書をQRで渡す。
+// 1人1枚: 発行済み（rcptToken あり）なら同じ領収書を最新の金額・受領方法に更新して再表示する
+function ckRcptQr(ev, id, a, info, onClose){
+  if(!a){ toast('出席の記録が見つかりません'); return; }
+  if(!info || !info.by){ toast('ユニオン設定で領収書の発行者名を設定すると使えます'); return; }
+  var fee = a.fee || 0;
+  if(fee <= 0 || a.paid === false){ toast('徴収済みの人だけ領収書を発行できます'); return; }
+  var isNew = !a.rcptToken, token = a.rcptToken || randToken();
+  var key = 'rcpt_' + ev.id, docData = {};
+  docData[key] = ckRcptWith({
+    d: ev.date || '', ev: ev.name || '', amt: fee - (a.refund || 0), no: id, at: Date.now(),
+    pm: a.payMethod === 'paypay' ? 'PayPay' : '現金'
+  }, info);
+  if(isNew){
+    docData.no = id; docData.name = a.name || ''; docData.union = ev.hostUnion || gUnion;
+    docData.rcptOnly = true; docData.createdAt = FV.serverTimestamp();
+  }
+  var w = isNew ? db.collection('cards').doc(token).set(docData)
+                : db.collection('cards').doc(token).set(docData, { merge: true });
+  w.then(function(){
+    if(isNew){
+      // イベント削除・受付取消のときに一緒に取り下げられるよう、出席記録に領収書トークンを残す＋操作ログ
+      a.rcptToken = token;
+      db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(id)
+        .set({ rcptToken: token }, { merge: true }).catch(function(){});
+      auditLog(ev.id, '領収書QR発行', a.name || id, yen(fee - (a.refund || 0)));
+    }
     modal('<h2>📱 電子領収書</h2>'
-      + '<p style="font-size:13.5px;">' + esc(name) + ' さん本人のスマホでこのQRを読み取ってもらってください。'
-      + '宛名・金額入りの領収書ページが開きます（スクリーンショット保存OK）。</p>'
+      + '<p style="font-size:13.5px;">' + esc(a.name || '') + ' さん本人のスマホでこのQRを読み取ってもらってください。'
+      + '宛名・金額入りの領収書ページが開きます（スクリーンショット保存OK）。'
+      + (isNew ? '' : '<br><span style="color:var(--sub);font-size:12.5px;">発行済みの領収書をもう一度表示しています（2枚目は作りません）。</span>') + '</p>'
       + '<div id="grQr" style="display:flex;justify-content:center;background:#fff;padding:14px;border-radius:12px;"></div>'
       + '<div class="btns"><button id="grClose">閉じる</button></div>', true);
     makeQr($('grQr'), cardUrl(token), 220);
-    $('grClose').onclick = function(){ closeModal(); focusScan(); };
+    $('grClose').onclick = function(){ closeModal(); if(onClose) onClose(); };
   }).catch(function(e){ toast(permMsg(e, '領収書の発行に失敗しました')); });
+}
+// 会員証がない人か（＝その場QR領収書の対象）。受付中は名簿のカード有無でも判定する
+function ckNoCardRec(id, a){
+  if(!a || a.cardToken) return false;
+  if(a.rcptToken || a.guest || a.noCard) return true;
+  var m = gRec && gRec.roster[id];
+  return !!(m && !m.cardToken);
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
