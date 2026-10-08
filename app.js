@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v752';
+var APP_JS_VERSION = 'v753';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v752';
+  var DATA_VERSION = 'v753';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v753', d:'2026-10-09', items:['MAPのフロント追加：研修生を選ぶと「🎓 研修の記録」（研修の日・Aさん）が研修生のカードの中に出るように（下にあって見落としやすかったため）','研修の日は「今日／昨日／📅日付」から選べて、「PGを10/14に進んだで入れます」のようにどう入るかも出ます'] },
   { v:'v752', d:'2026-10-09', items:['分析 › 研修：上に月のチップ（10月・9月・8月…と研修生の人数）を出して、表示する月を選べるように。研修フロー・その月の数字・Aさん別がその月になります'] },
   { v:'v751', d:'2026-10-09', items:['スマホのMAP：研修生（水色）と審査中のLOI〜Q4（オレンジ）の人の丸が、PCのように光るように（ケアの印を「非表示」にした人・OUTは光りません）'] },
   { v:'v750', d:'2026-10-09', items:['MAPのかんたん追加（フロント追加）で研修生を足すと、選んだ研修の段階（マケなど）が研修履歴に「✓ 進んだ」で入るように（日付が空なら今日・先の日は予定）。分析の研修フローにもすぐ出ます'] },
@@ -18695,7 +18696,7 @@ function _ttlCss() {
   document.head.appendChild(st);
 }
 // groups: [[色キー, カテゴリ名, [タイトル…]]…]  pick: 'ppTitle' などの関数名
-function _ttlPickHtml(cur, groups, pick, reFn) {
+function _ttlPickHtml(cur, groups, pick, reFn, extra) { // v753: extra＝{ グループ名: 選んでいる時にカードの中に出すHTML }
   _ttlCss();
   cur = (cur || '').trim();
   return groups.map(function(g, i) {
@@ -18707,6 +18708,7 @@ function _ttlPickHtml(cur, groups, pick, reFn) {
     if (open) h += '<div class="ls">' + g[2].map(function(x) {
       return '<div class="rw' + (x === cur ? ' on' : '') + '" onclick="' + pick + '(\'' + evEsc(x) + '\')"><em>' + evEsc(ab(x)) + '</em>' + (ab(x) !== x ? '<small>' + evEsc(x) + '</small>' : '') + '</div>';
     }).join('') + '</div>';
+    if (has && extra && extra[g[1]]) h += extra[g[1]];
     return h + '</div>';
   }).join('');
 }
@@ -18734,7 +18736,10 @@ var NA_GROUPS = [['tr', '研修生', ['FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', 
 function _naCss() {
   if (document.getElementById('naCss')) return;
   var st = document.createElement('style'); st.id = 'naCss';
-  st.textContent = "#naPg{position:fixed;inset:0;z-index:520;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(env(safe-area-inset-bottom) + 96px)}"
+  st.textContent = "#naPg .tre{margin:0 12px 12px;padding:10px 12px 12px;border-radius:12px;background:color-mix(in srgb,var(--k) 9%,var(--surface));border:1.5px solid color-mix(in srgb,var(--k) 45%,transparent)}#naPg .tre .tl{font-size:13px;font-weight:900;color:var(--k);margin-bottom:6px}#naPg .tre .r{display:flex;align-items:center;gap:10px;margin-top:8px}#naPg .tre .r em{flex:none;width:64px;font-style:normal;font-size:13px;font-weight:900;color:var(--text-mid)}#naPg .tre .r .ppin{flex:1;min-width:0;margin:0}"
+    + "#naPg .dch{flex:1;display:flex;gap:6px}#naPg .dch span,#naPg .dch label{position:relative;flex:1;display:flex;align-items:center;justify-content:center;height:42px;border-radius:11px;border:1.5px solid var(--border2);background:var(--surface);font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap;overflow:hidden}#naPg .dch .on{border-color:var(--k);color:var(--k);background:color-mix(in srgb,var(--k) 14%,var(--surface))}#naPg .dch label input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:0;font-size:16px;cursor:pointer}"
+    + "#naPg .tre .st{margin-top:10px;font-size:12.5px;font-weight:800;color:var(--accent);line-height:1.5}#naPg .tre .st.pl{color:#FFB454}"
+    + "#naPg{position:fixed;inset:0;z-index:520;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(env(safe-area-inset-bottom) + 96px)}"
     + "body.ux-land #naPg{padding:0 18px 76px}#naPg .ux-btm{left:0;z-index:521}"
     + ".nap{display:flex;align-items:center;gap:10px;margin-top:8px;padding:12px 14px;border-radius:15px;background:var(--surface);border:1.5px solid var(--border)}.nap b{font-size:16px;font-weight:900;flex:1;min-width:0}.nap b small{display:block;font-size:12px;color:var(--text-dim);font-weight:800}"
     + ".nap select{max-width:52%;height:40px;border-radius:11px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text);font-size:14px;font-weight:800;padding:0 8px}"
@@ -18757,6 +18762,17 @@ function _naKeep() { if (!_na) return; ['last', 'first', 'gsv', 'date', 'asan'].
 function naSet(k, v) { if (!_na) return; _naKeep(); _na[k] = v; if (k === 'title') { _ttlOpen = ''; try { localStorage.setItem('gm_naTitle', v); } catch (e) {} } _naRender(); }
 function naTitle(t) { naSet('title', t); }
 function naChg() { naSet('chg', !(_na && _na.chg)); }
+// v753: 研修生を選んだ時の「研修の記録」（研修の日・Aさん・どう入るか）
+function _naTrBox(n) {
+  var td = evTodayYmd(), yd = evYmd(new Date(Date.parse(td.replace(/-/g, '/')) - 864e5)), d = n.date || td, fut = d > td;
+  var md = function(x) { return parseInt(x.slice(5, 7), 10) + '/' + parseInt(x.slice(8, 10), 10); };
+  var cus = !!n.date && n.date !== td && n.date !== yd, st = titleAbbr(n.title) || n.title;
+  return '<div class="tre"><div class="tl">🎓 研修の記録</div>'
+    + '<div class="r"><em>研修の日</em><div class="dch"><span class="' + (d === td ? 'on' : '') + '" onclick="naSet(\'date\',\'\')">今日</span><span class="' + (d === yd ? 'on' : '') + '" onclick="naSet(\'date\',\'' + yd + '\')">昨日</span>'
+    + '<label class="' + (cus ? 'on' : '') + '">' + (cus ? md(n.date) : '📅 日付') + '<input type="date" id="naDate" value="' + evEsc(n.date || '') + '" onchange="naSet(\'date\',this.value)"></label></div></div>'
+    + '<div class="r"><em>Aさん</em><input class="ppin" id="naAsan" placeholder="Aさんの名前（任意）" value="' + evEsc(n.asan || '') + '" autocomplete="off"></div>'
+    + '<div class="st' + (fut ? ' pl' : '') + '">' + (fut ? '📅 「' + evEsc(st) + '」を ' + md(d) + ' の予定で研修履歴に入れます' : '✓ 「' + evEsc(st) + '」を ' + md(d) + ' に「進んだ」で研修履歴に入れます') + '</div></div>';
+}
 function _naRender() {
   if (!_na) return;
   _uxCss(); _ux2Css(); _ppCss(); _naCss(); _ttlCss();
@@ -18771,9 +18787,9 @@ function _naRender() {
       : '<span class="ux-lk" style="margin:0" onclick="naChg()">変える</span>') + '</div>'
     + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="naLast" placeholder="姓" value="' + evEsc(n.last) + '" autocomplete="off"><input class="ppin" id="naFirst" placeholder="名" value="' + evEsc(n.first) + '" autocomplete="off"></div>'
     + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (n.gender !== 'female' ? 'on' : '') + '" onclick="naSet(\'gender\',\'male\')">男性</span><span class="' + (n.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="naSet(\'gender\',\'female\')">女性</span></div>'
-    + '<div class="ppl">タイトル（カードを押して選ぶ）</div>' + _ttlPickHtml(n.title, NA_GROUPS, 'naTitle', '_naRender');
-  if (tr) h += '<div class="ppl">研修の日（空なら今日。今日までの日は「✓ 進んだ」、先の日は「予定」で研修履歴に入ります）</div><div class="ppn"><input class="ppin" id="naDate" type="date" value="' + evEsc(n.date) + '"><input class="ppin" id="naAsan" placeholder="Aさん" value="' + evEsc(n.asan) + '"></div>';
-  else h += '<div class="ppl">稼働（任意）</div><div class="ppb sm" style="--n:5">' + [['S', 'var(--s)'], ['A', 'var(--a)'], ['B', 'var(--b)'], ['C', 'var(--c)'], ['', 'var(--text-dim)']].map(function(x) { return '<span class="' + (n.act === x[0] ? 'on' : '') + '" style="--a:' + x[1] + '" onclick="naSet(\'act\',\'' + x[0] + '\')">' + (x[0] || 'なし') + '</span>'; }).join('') + '</div>'
+    + '<div class="ppl">タイトル（カードを押して選ぶ）</div>' + _ttlPickHtml(n.title, NA_GROUPS, 'naTitle', '_naRender', tr ? { '研修生': _naTrBox(n) } : null);
+  // v753: 研修の日・Aさんは「研修生」のカードの中（選んだすぐ下）に出す
+  if (!tr) h += '<div class="ppl">稼働（任意）</div><div class="ppb sm" style="--n:5">' + [['S', 'var(--s)'], ['A', 'var(--a)'], ['B', 'var(--b)'], ['C', 'var(--c)'], ['', 'var(--text-dim)']].map(function(x) { return '<span class="' + (n.act === x[0] ? 'on' : '') + '" style="--a:' + x[1] + '" onclick="naSet(\'act\',\'' + x[0] + '\')">' + (x[0] || 'なし') + '</span>'; }).join('') + '</div>'
     + '<div class="ppl">今月のGSV（任意）</div><input class="ppin" id="naGsv" type="number" inputmode="numeric" placeholder="0" value="' + evEsc(n.gsv) + '">';
   h += '<div class="nalk"><span onclick="naSave(\'cont\')">＋ 追加して続けて入れる</span><span onclick="naSave(\'more\')">追加してくわしく入れる ›</span></div>'
     + '<div class="ux-btm"><span class="ux-bk" onclick="naClose()">‹ やめる</span><span class="ux-nx" onclick="naSave(\'\')">✓ 追加</span></div>';
