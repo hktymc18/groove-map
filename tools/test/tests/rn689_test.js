@@ -9,7 +9,7 @@ T.run(async () => {
   w.localStorage.setItem('gm_seenNote', 'v687'); u.seenNote = 'v687'; u.createdAt = '2025-01-01T00:00:00Z';
   reset(); w._rnPopCheck(); await sleep(10);
   c('前の版まで見た人：更新内容が1回出る', !!$('#rnPopOv') && /計画シート/.test($('#rnPopOv').textContent));
-  c('新しい場所へ飛ぶボタン（いちばん新しい pop のボタン）', /計画シートを開く|シミュレーションを見る/.test($('#rnPopOv').textContent));
+  c('新しい場所へ飛ぶボタン（いちばん新しい pop のボタン）', (() => { const p = w.RELEASE_NOTES.filter(n => n.pop && n.pop.go)[0]; return !!p && $('#rnPopOv').textContent.indexOf(p.pop.go[0]) >= 0; })());
   c('見た記録：端末とプロフィール（1人1回）', w.localStorage.getItem('gm_seenNote') === w.RELEASE_NOTES[0].v && u.seenNote === w.RELEASE_NOTES[0].v && sets.some(x => /^users\//.test(x[0]) && x[1].seenNote === w.RELEASE_NOTES[0].v));
   reset(); w._rnPopCheck(); await sleep(10);
   c('2回目は出ない', !$('#rnPopOv'));
