@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v739';
+var APP_JS_VERSION = 'v740';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v739';
+  var DATA_VERSION = 'v740';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v740', d:'2026-10-09', items:['やること：数値の目標（📊）にも「＋ サブタスク」','名前を押して直す時は、名前の欄が行そのものに（名前は1つだけ）。下に だれの・期限・月（数値は 今・目標・単位）をラベル付きで。「完了」で閉じる','消すのはToDoと同じ：左にスワイプ → 🗑 消す（右にスワイプで済み）。消した後は「↩ 元に戻す」'] },
   { v:'v739', d:'2026-10-09', items:['計画シートの実行期日（予定に入れる）：時間を予定と同じ「開始〜終了」の数字パッドで入れられるように（1900 と打つと 19:00〜20:00、続けて終了も打てます）'] },
   { v:'v738', d:'2026-10-09', items:['PLAN › チェック：項目をユニオンごとに管理者が設定できるように（チェックの画面のいちばん下「⚙ ユニオンのチェック項目を設定」）','項目の追加・名前の変更・並べかえ・外す・標準に戻すができ、保存するとユニオンの全員に反映','今までのチェックと日付はそのまま残ります'] },
   { v:'v737', d:'2026-10-09', items:['分析 › 研修：いちばん上に研修フロー（じょうご）、その下にその月の数字、折れ線グラフはいちばん下に','説明の文は (i) に入れて、ふだんは出さないようにしました'] },
@@ -16806,7 +16807,7 @@ function _p2YkWho(o) { // 人の札：メンバー｜自分｜全体
 function _p2YkPass(o) { if (!_p2YkF) return true; var w = _p2YkWho(o); return _p2YkF === w.k || _p2YkF === w.id; }
 function _p2YkYmLb(ym) { var c = _p2Ym(0); return ym === 'someday' ? 'いつか' : (ym === c ? parseInt(ym.slice(5), 10) + '月（今月）' : (ym.slice(0, 4) !== c.slice(0, 4) ? parseInt(ym.slice(0, 4), 10) + '年' : '') + parseInt(ym.slice(5), 10) + '月'); }
 function _p2YkHtml() {
-  _p2YkCss();
+  _p2YkCss(); _p2YkSwBind();
   var cur = _p2Ym(0), td = evTodayYmd(), ro = _p2ShRo ? _p2ShRo() : false;
   if (!_p2YkAddYm) _p2YkAddYm = cur;
   var T = _p2YkTasks().filter(_p2YkPass), N = _p2YkN().filter(_p2YkPass);
@@ -16841,30 +16842,47 @@ function _p2YkCalChip(ids, kind, id) {
   return '<span class="cal' + (ev ? ' on' : '') + '" onclick="event.stopPropagation();' + (ev ? 'openEventModal(\'' + ev.id + '\')' : 'p2YkCal(\'' + kind + '\',\'' + id + '\')') + '" title="' + (ev ? '入れた予定を開く' : '予定に入れる') + '">📅' + (ev ? ' ' + parseInt(ev.date.slice(5, 7), 10) + '/' + parseInt(ev.date.slice(8), 10) + (ev.time ? ' ' + ev.time : '') : '') + '</span>';
 }
 function _p2YkRow(e, td) {
-  var op = _p2YkOpen === e.id, subs = e.subs || [], sd = subs.filter(function(s) { return s.dn; }).length;
+  var op = _p2YkOpen === e.id, subs = e.subs || [], sd = subs.filter(function(s) { return s.dn; }).length, ro9 = _p2ShRo ? _p2ShRo() : false;
   var c = e.planCat ? (P2_SH_CAT || []).filter(function(x) { return x.k === e.planCat; })[0] : null;
-  var h = '<div class="yk-r' + (e.done ? ' dn' : '') + (op ? ' op' : '') + '"><div class="ln"><span class="ck" onclick="p2YkDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span>'
-    + '<span class="t" onclick="p2YkOpen(\'' + e.id + '\')">' + (c ? '<i class="tg" style="--c:' + c.c + '">' + evEsc(c.s) + '</i>' : '') + evEsc(e.title || '') + (subs.length ? '<small class="sb">' + sd + '/' + subs.length + '</small>' : '') + '</span>'
-    + _p2YkWhoChip(e) + '<span class="dt' + (e.date && e.date < td && !e.done ? ' ng' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '') + '</span>' + _p2YkCalChip(e.ykCal, 't', e.id) + '</div>';
-  // v734: サブタスクはいつも下に（戦略・戦術と同じ書き方：「＋ サブタスク」で大きい欄・Enterで続けて）
-  var ro9 = _p2ShRo ? _p2ShRo() : false;
-  h += '<div class="yk-k">' + subs.map(function(s, i) { return '<div class="sr' + (s.dn ? ' dn' : '') + '"><span class="ck" onclick="p2YkSub(\'' + e.id + '\',' + i + ')">' + (s.dn ? '✓' : '') + '</span><span class="st" onclick="p2YkSubEd(\'' + e.id + '\',' + i + ')">' + evEsc(s.t) + '</span>' + (ro9 ? '' : '<span class="x" onclick="p2YkSubDel(\'' + e.id + '\',' + i + ')">✕</span>') + '</div>'; }).join('')
-    + (ro9 ? '' : (_p2YkSubIn === e.id ? '<input class="yk-si" id="p2YkSi" placeholder="サブタスクを書く（Enterで次も）" maxlength="100" autocomplete="off" onkeydown="p2YkSiKey(event,\'' + e.id + '\',this)" onblur="p2YkSiBlur(\'' + e.id + '\',this)">' : '<div class="yk-sa" onclick="p2YkSubOpen(\'' + e.id + '\')">＋ サブタスク</div>')) + '</div>';
-  if (op) {
-    h += '<div class="sub">'
-      + '<div class="yk-ed"><input class="yk-et" value="' + evEsc(e.title || '') + '" maxlength="120" autocomplete="off" onchange="p2YkTitle(\'' + e.id + '\',this.value)" aria-label="名前"><select onchange="p2YkWhoSet(\'' + e.id + '\',this.value)">' + _p2YkWhoOpts(e.memberId || e.who || 'me') + '</select></div>' // v736: 名前と人も直せる
-      + '<div class="ops">期限 <input type="date" value="' + (e.date || '') + '" onchange="p2YkDate(\'' + e.id + '\',this.value)"> 月 <select onchange="p2YkYm(\'' + e.id + '\',this.value)">' + _p2YkYmOpts(e.planYm) + '</select><span class="del" onclick="p2YkDel(\'' + e.id + '\')">消す</span></div></div>';
+  var h = '<div class="yk-r' + (e.done ? ' dn' : '') + (op ? ' op' : '') + '">';
+  if (op) { // v740: 直す時は名前の欄が行そのものになる（名前は1つだけ）
+    h += '<div class="ln ed"><span class="ck" onclick="p2YkDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span><input class="yk-et" id="p2YkEt" value="' + evEsc(e.title || '') + '" maxlength="120" autocomplete="off" enterkeyhint="done" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)this.blur()" onchange="p2YkTitle(\'' + e.id + '\',this.value)" aria-label="やること"><span class="yk-ok" onclick="p2YkOpen(\'' + e.id + '\')">完了</span></div>';
+  } else {
+    h += '<div class="yk-lw"' + (ro9 ? '' : ' data-ykk="t" data-ykid="' + e.id + '"') + '>' + (ro9 ? '' : '<span class="yk-dl" onclick="p2YkDelNow(\'t\',\'' + e.id + '\')">' + icn('trash') + '<small>消す</small></span>')
+      + '<div class="ln"><span class="ck" onclick="p2YkDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span>'
+      + '<span class="t" onclick="p2YkOpen(\'' + e.id + '\')">' + (c ? '<i class="tg" style="--c:' + c.c + '">' + evEsc(c.s) + '</i>' : '') + evEsc(e.title || '') + (subs.length ? '<small class="sb">' + sd + '/' + subs.length + '</small>' : '') + '</span>'
+      + _p2YkWhoChip(e) + '<span class="dt' + (e.date && e.date < td && !e.done ? ' ng' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '') + '</span>' + _p2YkCalChip(e.ykCal, 't', e.id)
+      + (ro9 ? '' : '<span class="yk-hx" onclick="p2YkDelNow(\'t\',\'' + e.id + '\')" title="消す">' + icn('trash') + '</span>') + '</div></div>';
   }
-  return h + '</div>';
+  if (op) h += '<div class="yk-fm"><div class="fr"><em>だれの</em><select onchange="p2YkWhoSet(\'' + e.id + '\',this.value)">' + _p2YkWhoOpts(e.memberId || e.who || 'me') + '</select></div>'
+    + '<div class="fr"><em>期限</em><input type="date" value="' + (e.date || '') + '" onchange="p2YkDate(\'' + e.id + '\',this.value)"></div>'
+    + '<div class="fr"><em>月</em><select onchange="p2YkYm(\'' + e.id + '\',this.value)">' + _p2YkYmOpts(e.planYm) + '</select></div>'
+    + '<div class="fd" onclick="p2YkDelNow(\'t\',\'' + e.id + '\')">' + icn('trash') + ' このやることを消す</div></div>';
+  return h + _p2YkSubsHtml('t', e.id, subs, ro9) + '</div>';
+}
+// v734/v740: サブタスク（やること・数値の目標どちらにも）。「＋ サブタスク」で大きい欄・Enterで続けて
+function _p2YkSubsHtml(kind, id, subs, ro9) {
+  var a = '\'' + kind + '\',\'' + id + '\'';
+  return '<div class="yk-k">' + subs.map(function(s, i) { return '<div class="sr' + (s.dn ? ' dn' : '') + '"><span class="ck" onclick="p2YkSub(' + a + ',' + i + ')">' + (s.dn ? '✓' : '') + '</span><span class="st" onclick="p2YkSubEd(' + a + ',' + i + ')">' + evEsc(s.t) + '</span>' + (ro9 ? '' : '<span class="x" onclick="p2YkSubDel(' + a + ',' + i + ')">✕</span>') + '</div>'; }).join('')
+    + (ro9 ? '' : (_p2YkSubIn === kind + ':' + id ? '<input class="yk-si" id="p2YkSi" placeholder="サブタスクを書く（Enterで次も）" maxlength="100" autocomplete="off" onkeydown="p2YkSiKey(event,' + a + ',this)" onblur="p2YkSiBlur(' + a + ',this)">' : '<div class="yk-sa" onclick="p2YkSubOpen(' + a + ')">＋ サブタスク</div>')) + '</div>';
 }
 function _p2YkYmOpts(sel) { var cur = _p2Ym(0), o = ''; for (var i = -1; i <= 12; i++) { var y = _p2YmAdd(cur, i); o += '<option value="' + y + '"' + (y === sel ? ' selected' : '') + '>' + _p2YkYmLb(y) + '</option>'; } return o + '<option value="someday"' + (sel === 'someday' ? ' selected' : '') + '>いつか</option>'; }
 function _p2YkNRow(n) {
-  var ok = n.v >= n.g;
-  return '<div class="yk-r nm' + (ok ? ' ok' : '') + '"><div class="ln"><span class="ic">📊</span><span class="t" onclick="p2YkOpen(\'' + n.id + '\')">' + evEsc(n.t) + '</span>'
-    + '<span class="pm" onclick="p2YkNV(\'' + n.id + '\',-1)">−</span><span class="nv"><input class="nvi" inputmode="decimal" autocomplete="off" value="' + (+n.v || 0) + '" onfocus="edSelAll(this)" onchange="p2YkNSet(\'' + n.id + '\',this.value)" aria-label="今の数"><i>/' + n.g + evEsc(n.u || '') + '</i></span><span class="pm p" onclick="p2YkNV(\'' + n.id + '\',1)">＋</span>'
-    + _p2YkWhoChip(n) + _p2YkCalChip(n.cal, 'n', n.id) + '</div>'
-    + (_p2YkOpen === n.id ? '<div class="sub"><div class="yk-ed"><input class="yk-et" value="' + evEsc(n.t) + '" maxlength="60" autocomplete="off" onchange="p2YkNF(\'' + n.id + '\',\'t\',this.value)" aria-label="名前"><select onchange="p2YkNF(\'' + n.id + '\',\'who\',this.value)">' + _p2YkWhoOpts(n.mid || n.who || 'me') + '</select></div>'
-      + '<div class="ops">目標 <input class="yk-en" inputmode="decimal" autocomplete="off" value="' + n.g + '" onfocus="edSelAll(this)" onchange="p2YkNF(\'' + n.id + '\',\'g\',this.value)"> 単位 <input class="yk-eu" maxlength="6" autocomplete="off" value="' + evEsc(n.u || '') + '" placeholder="回" onchange="p2YkNF(\'' + n.id + '\',\'u\',this.value)"> 月 <select onchange="p2YkNF(\'' + n.id + '\',\'ym\',this.value)">' + _p2YkYmOpts(n.ym) + '</select><span class="del" onclick="p2YkNF(\'' + n.id + '\',\'del\')">消す</span></div></div>' : '') + '</div>'; // v736: 名前・目標・単位・月・人を直せる
+  var ok = n.v >= n.g, op = _p2YkOpen === n.id, ro9 = _p2ShRo ? _p2ShRo() : false, subs = n.subs || [], sd = subs.filter(function(s) { return s.dn; }).length;
+  var h = '<div class="yk-r nm' + (ok ? ' ok' : '') + (op ? ' op' : '') + '">';
+  if (op) {
+    h += '<div class="ln ed"><span class="ic">📊</span><input class="yk-et" id="p2YkEt" value="' + evEsc(n.t) + '" maxlength="60" autocomplete="off" enterkeyhint="done" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)this.blur()" onchange="p2YkNF(\'' + n.id + '\',\'t\',this.value)" aria-label="数値の目標"><span class="yk-ok" onclick="p2YkOpen(\'' + n.id + '\')">完了</span></div>'
+      + '<div class="yk-fm"><div class="fr"><em>今</em><input class="nb" inputmode="decimal" autocomplete="off" value="' + (+n.v || 0) + '" onfocus="edSelAll(this)" onchange="p2YkNSet(\'' + n.id + '\',this.value)"><em class="s">目標</em><input class="nb" inputmode="decimal" autocomplete="off" value="' + n.g + '" onfocus="edSelAll(this)" onchange="p2YkNF(\'' + n.id + '\',\'g\',this.value)"><em class="s">単位</em><input class="nb u" maxlength="6" autocomplete="off" value="' + evEsc(n.u || '') + '" placeholder="回" onchange="p2YkNF(\'' + n.id + '\',\'u\',this.value)"></div>'
+      + '<div class="fr"><em>だれの</em><select onchange="p2YkNF(\'' + n.id + '\',\'who\',this.value)">' + _p2YkWhoOpts(n.mid || n.who || 'me') + '</select></div>'
+      + '<div class="fr"><em>月</em><select onchange="p2YkNF(\'' + n.id + '\',\'ym\',this.value)">' + _p2YkYmOpts(n.ym) + '</select></div>'
+      + '<div class="fd" onclick="p2YkDelNow(\'n\',\'' + n.id + '\')">' + icn('trash') + ' この目標を消す</div></div>';
+  } else {
+    h += '<div class="yk-lw"' + (ro9 ? '' : ' data-ykk="n" data-ykid="' + n.id + '"') + '>' + (ro9 ? '' : '<span class="yk-dl" onclick="p2YkDelNow(\'n\',\'' + n.id + '\')">' + icn('trash') + '<small>消す</small></span>')
+      + '<div class="ln"><span class="ic">📊</span><span class="t" onclick="p2YkOpen(\'' + n.id + '\')">' + evEsc(n.t) + (subs.length ? '<small class="sb">' + sd + '/' + subs.length + '</small>' : '') + '</span>'
+      + '<span class="pm" onclick="p2YkNV(\'' + n.id + '\',-1)">−</span><span class="nv"><input class="nvi" inputmode="decimal" autocomplete="off" value="' + (+n.v || 0) + '" onfocus="edSelAll(this)" onchange="p2YkNSet(\'' + n.id + '\',this.value)" aria-label="今の数"><i>/' + n.g + evEsc(n.u || '') + '</i></span><span class="pm p" onclick="p2YkNV(\'' + n.id + '\',1)">＋</span>'
+      + _p2YkWhoChip(n) + _p2YkCalChip(n.cal, 'n', n.id) + (ro9 ? '' : '<span class="yk-hx" onclick="p2YkDelNow(\'n\',\'' + n.id + '\')" title="消す">' + icn('trash') + '</span>') + '</div></div>';
+  }
+  return h + _p2YkSubsHtml('n', n.id, subs, ro9) + '</div>';
 }
 function _p2YkWhoOpts(sel) {
   var mem = (typeof membersForMap === 'function' ? membersForMap('current') : (state.members || [])).filter(function(m) { return m && !m.deleted && m.parentId && String(m.title || '').trim() !== 'OUT'; });
@@ -16903,19 +16921,60 @@ function p2YkAdd() {
   }
   _p2YkDraft = null; renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkIn'); if (n) n.focus(); }, 30);
 }
-function p2YkOpen(id) { _p2YkOpen = _p2YkOpen === id ? '' : id; renderPlan(); }
+function p2YkOpen(id) { if (window._ykSwAt && Date.now() - window._ykSwAt < 350) return; _p2YkOpen = _p2YkOpen === id ? '' : id; renderPlan(); if (_p2YkOpen) setTimeout(function() { var el = document.getElementById('p2YkEt'); if (el) try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {} }, 30); }
 function p2YkDone(id) { try { toggleEventDone(id); } catch (e) {} renderPlan(); }
 function _p2YkSave(e) { e.updatedAt = new Date().toISOString(); saveEventDoc(e); renderPlan(); }
-function p2YkSubAdd(id, el) { var e = findEvent(id), v = String((el && el.value) || '').trim(); if (!e || !v) return; e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); setTimeout(function() { var s = document.querySelector('.yk-r.op .sa'); if (s) s.focus(); }, 30); }
-function p2YkSubOpen(id) { _p2YkSubIn = id; renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkSi'); if (n) { n.focus(); try { n.scrollIntoView({ block: 'center' }); } catch (e) {} } }, 30); }
-function p2YkSiKey(ev, id, el) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); var v = String(el.value || '').trim(); if (!v) return; el.value = ''; var e = findEvent(id); if (!e) return; e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); setTimeout(function() { var n = document.getElementById('p2YkSi'); if (n) n.focus(); }, 30); } else if (ev.key === 'Escape') { _p2YkSubIn = ''; renderPlan(); } }
-function p2YkSiBlur(id, el) { setTimeout(function() { if (!document.body.contains(el)) return; var v = String(el.value || '').trim(), e = findEvent(id); _p2YkSubIn = ''; if (v && e) { e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); } else renderPlan(); }, 120); }
-function p2YkSubEd(id, i) { var e = findEvent(id); if (!e || !e.subs || !e.subs[i] || (_p2ShRo && _p2ShRo())) return; var v = prompt('サブタスクを直す（空にすると消す）', e.subs[i].t); if (v === null) return; v = String(v).trim(); if (v) e.subs[i].t = v.slice(0, 100); else e.subs.splice(i, 1); _p2YkSave(e); }
-function p2YkSub(id, i) { var e = findEvent(id); if (!e || !e.subs || !e.subs[i]) return; e.subs[i].dn = !e.subs[i].dn; _p2YkSave(e); }
-function p2YkSubDel(id, i) { var e = findEvent(id); if (!e || !e.subs) return; e.subs.splice(i, 1); _p2YkSave(e); }
+function _p2YkSo(kind, id) { return kind === 'n' ? _p2YkNById(id) : findEvent(id); }
+function _p2YkSoSave(kind, o) { if (kind === 'n') { saveGoals(); renderPlan(); } else _p2YkSave(o); }
+function _p2YkSubPush(kind, id, v) { var o = _p2YkSo(kind, id); v = String(v || '').trim(); if (!o || !v) return false; o.subs = o.subs || []; o.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSoSave(kind, o); return true; }
+function p2YkSubOpen(kind, id) { _p2YkSubIn = kind + ':' + id; renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkSi'); if (n) { n.focus(); try { n.scrollIntoView({ block: 'center' }); } catch (e) {} } }, 30); }
+function p2YkSiKey(ev, kind, id, el) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); var v = String(el.value || '').trim(); if (!v) return; el.value = ''; _p2YkSubPush(kind, id, v); setTimeout(function() { var n = document.getElementById('p2YkSi'); if (n) n.focus(); }, 30); } else if (ev.key === 'Escape') { _p2YkSubIn = ''; renderPlan(); } }
+function p2YkSiBlur(kind, id, el) { setTimeout(function() { if (!document.body.contains(el)) return; var v = String(el.value || '').trim(); _p2YkSubIn = ''; if (!v || !_p2YkSubPush(kind, id, v)) renderPlan(); }, 120); }
+function p2YkSubEd(kind, id, i) { var o = _p2YkSo(kind, id); if (!o || !o.subs || !o.subs[i] || (_p2ShRo && _p2ShRo())) return; var v = prompt('サブタスクを直す（空にすると消す）', o.subs[i].t); if (v === null) return; v = String(v).trim(); if (v) o.subs[i].t = v.slice(0, 100); else o.subs.splice(i, 1); _p2YkSoSave(kind, o); }
+function p2YkSub(kind, id, i) { var o = _p2YkSo(kind, id); if (!o || !o.subs || !o.subs[i]) return; o.subs[i].dn = !o.subs[i].dn; _p2YkSoSave(kind, o); }
+function p2YkSubDel(kind, id, i) { var o = _p2YkSo(kind, id); if (!o || !o.subs) return; o.subs.splice(i, 1); _p2YkSoSave(kind, o); }
 function p2YkDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; if (v) e.planYm = v.slice(0, 7); _p2RpForce = true; _p2YkSave(e); }
 function p2YkYm(id, v) { var e = findEvent(id); if (!e) return; e.planYm = v; if (e.date && v !== 'someday' && e.date.slice(0, 7) !== v) e.date = ''; _p2YkSave(e); }
-function p2YkDel(id) { if (!confirm('このやることを消しますか？（ToDoからも消えます）')) return; _p2YkOpen = ''; _evDeleteById(id); renderPlan(); }
+function p2YkDel(id) { p2YkDelNow('t', id); }
+// v740: 消す（左にスワイプ→🗑／直す画面の「消す」）。確認は出さず「↩ 元に戻す」で戻せる
+function p2YkDelNow(kind, id) {
+  _p2YkOpen = '';
+  if (kind === 'n') {
+    var L = _p2YkN(), n = _p2YkNById(id); if (!n) return; var ix = L.indexOf(n); L.splice(ix, 1); saveGoals(); renderPlan();
+    toastAction('「' + n.t + '」を消しました', '↩ 元に戻す', function() { var L2 = _p2YkN(); if (!_p2YkNById(n.id)) L2.splice(Math.min(ix, L2.length), 0, n); saveGoals(); if (currentView === 'plan') renderPlan(); });
+    return;
+  }
+  var e = findEvent(id); if (!e) return; var t = e.title || '';
+  _evDeleteById(id); renderPlan();
+  toastAction('「' + t + '」を消しました（ToDoからも）', '↩ 元に戻す', function() { tdTrashRestore(id); if (currentView === 'plan') renderPlan(); });
+}
+// v740: ToDoと同じスワイプ（左＝🗑を出す・右＝済み）。やることの画面全体に1回だけ
+var _ykSw = null;
+function _p2YkSwBind() {
+  if (window._ykSwBound) return; window._ykSwBound = true;
+  var openLn = null, W = 84;
+  function close(ln) { if (!ln) return; ln.style.transition = 'transform .18s'; ln.style.transform = ''; ln._open = false; if (openLn === ln) openLn = null; }
+  document.addEventListener('touchstart', function(ev) {
+    var t = ev.target; if (!t || !t.closest) return;
+    if (t.closest('.yk-dl')) { _ykSw = null; return; }
+    var lw = t.closest('.yk-lw[data-ykid]'), ln = lw ? lw.querySelector('.ln') : null;
+    if (openLn && ln !== openLn) close(openLn);
+    if (!ln || t.closest('input,select')) { _ykSw = null; return; }
+    var p = ev.touches[0]; _ykSw = { lw: lw, ln: ln, x: p.clientX, y: p.clientY, dx: 0, on: false };
+  }, { passive: true });
+  document.addEventListener('touchmove', function(ev) {
+    var S = _ykSw; if (!S) return; var p = ev.touches[0], dx = p.clientX - S.x, dy = p.clientY - S.y;
+    if (!S.on) { if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) { _ykSw = null; return; } if (Math.abs(dx) > 14) S.on = true; }
+    if (S.on) { S.dx = Math.max(-110, Math.min(S.lw.getAttribute('data-ykk') === 't' ? 110 : 0, (S.ln._open ? -W : 0) + dx)); S.ln.style.transition = 'none'; S.ln.style.transform = 'translateX(' + S.dx + 'px)'; }
+  }, { passive: true });
+  document.addEventListener('touchend', function() {
+    var S = _ykSw; _ykSw = null; if (!S || !S.on) return;
+    window._ykSwAt = Date.now(); // スワイプ直後のタップで開かないように
+    if (S.dx < -55) { S.ln.style.transition = 'transform .18s'; S.ln.style.transform = 'translateX(-' + W + 'px)'; S.ln._open = true; openLn = S.ln; return; }
+    close(S.ln);
+    if (S.dx > 70 && S.lw.getAttribute('data-ykk') === 't') p2YkDone(S.lw.getAttribute('data-ykid'));
+  }, { passive: true });
+}
 function _p2YkNById(id) { return _p2YkN().filter(function(n) { return n.id === id; })[0]; }
 function p2YkNSet(id, v) { var n = _p2YkNById(id); if (!n) return; n.v = Math.max(0, _p2Dec(v)); saveGoals(); renderPlan(); } // v730: 今の数を直接
 function p2YkNV(id, d) { var n = _p2YkNById(id); if (!n) return; n.v = Math.max(0, (+n.v || 0) + d); saveGoals(); renderPlan(); }
@@ -16961,7 +17020,7 @@ function _p2YkCss() {
     + '.yk-r .who{flex:none;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,#5AD7FF 14%,transparent);color:#5AD7FF;white-space:nowrap}.yk-r .who.me{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.yk-r .who.all{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold)}'
     + '.yk-r .dt{flex:none;min-width:38px;text-align:right;font:800 12.5px Inter,sans-serif;color:var(--text-mid)}.yk-r .dt.ng{color:#FF6B7F}.yk-r .cal{flex:none;font-size:12px;font-weight:900;padding:4px 8px;border-radius:9px;border:1px solid var(--border);color:var(--text-mid);cursor:pointer;white-space:nowrap}.yk-r .cal.on{border-color:color-mix(in srgb,#8B7CFF 60%,var(--border));color:#c7bfff;background:color-mix(in srgb,#8B7CFF 14%,transparent)}'
     + '.yk-r.nm .ic{width:22px;text-align:center;flex:none}.yk-r .pm{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;cursor:pointer;flex:none}.yk-r .pm.p{border-color:var(--accent);color:var(--accent)}.yk-r .nv{flex:none;min-width:52px;text-align:center;font:900 18px Inter,sans-serif;display:inline-flex;align-items:baseline;gap:1px}.yk-r .nvi{width:46px;box-sizing:border-box;text-align:center;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font:900 17px Inter,sans-serif;padding:4px 2px;outline:none}.yk-r .nvi:focus{border-color:var(--accent)}.yk-r.nm.ok .nvi{color:var(--accent)}.yk-r .nv i{font-style:normal;font-size:13px;color:var(--text-mid)}.yk-r.nm.ok .nv{color:var(--accent)}'
-    + '.yk-r .sub{padding:0 6px 10px 34px}.yk-r .sr{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:14px;font-weight:700}.yk-r .sr .ck{width:18px;height:18px;font-size:11px}.yk-r .sr.dn .ck{background:var(--accent);border-color:var(--accent)}.yk-r .sr.dn span:nth-child(2){color:var(--text-dim);text-decoration:line-through}.yk-r .sr .x{margin-left:auto;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 6px}'
+    + '.yk-r .sub{padding:0 6px 10px 34px}.yk-lw{position:relative;overflow:hidden}.yk-lw>.ln{position:relative;z-index:1;background:var(--bg);touch-action:pan-y}.yk-dl{position:absolute;top:0;right:0;bottom:0;width:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:color-mix(in srgb,#FF6B7F 18%,var(--surface));color:#FF6B7F;cursor:pointer}.yk-dl .lic{width:20px;height:20px}.yk-dl small{font-size:11px;font-weight:900}.yk-hx{display:none;flex:none;color:var(--text-dim);cursor:pointer;padding:4px}.yk-hx .lic{width:16px;height:16px}body.px3 .yk-r .ln:hover .yk-hx{display:flex}.yk-hx:hover{color:#FF6B7F}.yk-r .ln.ed{gap:10px}.yk-r .ln.ed .yk-et{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--accent);border-radius:11px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:10px 12px;outline:none}.yk-ok{flex:none;padding:9px 14px;border-radius:10px;background:var(--accent);color:#06251c;font-weight:900;font-size:13.5px;cursor:pointer}.yk-fm{margin:0 4px 8px 34px;padding:4px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border)}.yk-fm .fr{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}.yk-fm .fr em{flex:none;width:52px;font-style:normal;font-size:13px;font-weight:900;color:var(--text-mid)}.yk-fm .fr em.s{width:auto;margin-left:6px}.yk-fm select,.yk-fm input{min-width:0;box-sizing:border-box;background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font-size:16px;font-weight:800;font-family:inherit;outline:none}.yk-fm select{flex:1}.yk-fm input[type=date]{flex:1}.yk-fm input.nb{width:64px;text-align:center;font-family:Inter,sans-serif;font-weight:900}.yk-fm input.nb.u{font-family:inherit;font-weight:800}.yk-fm input:focus{border-color:var(--accent)}.yk-fm .fd{display:flex;align-items:center;gap:6px;justify-content:center;padding:11px 0 7px;color:#FF6B7F;font-size:13.5px;font-weight:900;cursor:pointer}.yk-fm .fd .lic{width:16px;height:16px}.yk-r .sr{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:14px;font-weight:700}.yk-r .sr .ck{width:18px;height:18px;font-size:11px}.yk-r .sr.dn .ck{background:var(--accent);border-color:var(--accent)}.yk-r .sr.dn span:nth-child(2){color:var(--text-dim);text-decoration:line-through}.yk-r .sr .x{margin-left:auto;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 6px}'
     + '.yk-r .sa{width:100%;box-sizing:border-box;margin-top:4px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text);font-weight:700;font-size:16px;font-family:inherit;padding:7px 9px}.yk-r .ops{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:12px;font-weight:800;color:var(--text-dim)}.yk-r .ops input,.yk-r .ops select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;font-family:inherit}.yk-r .ops .del{margin-left:auto;color:#FF6B7F;cursor:pointer}'
     + '.yk-em{font-size:12.5px;color:var(--text-dim);padding:10px 4px}'
     + '.yk-pop{position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}.yk-pop.on{display:flex}.yk-pop>div{width:min(400px,92vw);background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px}.yk-pop h3{margin:0 0 8px;font-size:16px}.yk-pop .pt{font-weight:900;font-size:14px;margin-bottom:6px}.yk-pop label{display:block;font-size:12px;color:var(--text-dim);font-weight:800;margin-top:10px}.yk-pop input{display:block;width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg,#0b0e15);border:1px solid var(--border);border-radius:10px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:9px 10px}.yk-pop .bt{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.yk-pop .bt span{padding:9px 14px;border-radius:11px;font-weight:900;cursor:pointer;border:1px solid var(--border)}.yk-pop .bt span.go{background:var(--accent);color:#06251c;border-color:var(--accent)}'
