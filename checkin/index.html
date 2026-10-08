@@ -347,6 +347,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .nextrow .today-pill + .ns{margin-left:0;}
 /* 電子領収書 */
 .receipt{background:#fdfcf7;color:#26241f;border-radius:12px;padding:24px 20px 16px;text-align:center;}
+.receipt .rc-by{color:#26241f;font-size:13.5px;}
 .rstamp{
   display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
   width:62px;height:62px;border:2.5px solid rgba(192,57,43,.8);border-radius:50%;
@@ -1295,8 +1296,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v34';
+var APP_VER = 'v35';
 var CHANGELOG = [
+  { v: 'v35', d: '2026/10/08', items: ['領収書: ユニオン設定で「住所」「電話番号」「インボイス登録番号」を任意で設定できるように（入れた項目だけ載ります）。登録番号がある時は「10%対象・うち消費税」も表示', '会場で受け取った領収書に「現金受領／PayPay受領」を表示'] },
   { v: 'v34', d: '2026/10/07', items: ['会計タブ・会計の入力は、ユニオン管理者・受付管理者・オーナーだけになりました（一般メンバーには表示されません。受付は今までどおりできます）', '🔗 兼務のユニオン管理者: 複数のユニオンを管理する人を、オーナーが「👥 管理者一覧」から指定できるようになりました。指定された人は、そのユニオンでもユニオン管理者として扱われます'] },
   { v: 'v33', d: '2026/10/07', items: ['NAVIGATORや別の受付のタブを開いていると、名簿タブの「受付管理者」「研修生登録の担当」「管理者一覧」などが開くまで1分ほどかかることがあった問題を修正'] },
   { v: 'v32', d: '2026/10/07', items: ['名簿の取込: テンプレートをExcel（.xlsx）に。100人分の枠（罫線）・見出し固定・性別とグレードはプルダウン・記入のしかたのシートつき。取込でExcelのファイルをそのまま選べるようになりました'] },
@@ -2641,6 +2643,36 @@ function pledgeBodyHtml(){
     + PLEDGE_ITEMS.map(function(t){ return '<li style="margin-bottom:5px;">' + esc(t) + '</li>'; }).join('')
     + '</ol>';
 }
+/* 🧾 領収書の発行者情報（ユニオン設定）: 発行者名（必須）＋ 住所・電話番号・インボイス登録番号（任意）。
+   発行のたびに領収書へ写して保存する（あとで設定を変えても、発行済みの領収書の記載は変わらない）。
+   登録番号がある時は適格簡易請求書として「10%対象・うち消費税」も表示する */
+function ckInvNorm(s){
+  return String(s || '').replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+    .toUpperCase().replace(/[^T0-9]/g, '');
+}
+function ckRcptInfo(d){
+  d = d || {};
+  return { by: d.issuer || '', ad: d.issuerAddr || '', tel: d.issuerTel || '', inv: d.invoiceNo || '' };
+}
+// 領収書データ（base）に発行者情報を足す（空の項目は入れない）
+function ckRcptWith(base, info){
+  info = info || {};
+  base.by = info.by || '';
+  if(info.ad) base.ad = info.ad;
+  if(info.tel) base.tel = info.tel;
+  if(info.inv) base.inv = info.inv;
+  return base;
+}
+function ckRcptTax(amt){ return Math.floor((Number(amt) || 0) * 10 / 110); }   // 10%（税込金額から逆算・切り捨て）
+// 領収書の発行者欄（画面・印刷共通）
+function ckRcptIssuerHtml(r, cls){
+  return '<b class="' + (cls || '') + '">' + esc(r.by || '') + '</b>'
+    + (r.ad ? '<br>' + esc(r.ad) : '') + (r.tel ? '<br>TEL ' + esc(r.tel) : '')
+    + (r.inv ? '<br>登録番号 ' + esc(r.inv) : '');
+}
+function ckRcptTaxLine(r){
+  return r.inv ? '（10%対象 ' + yen(r.amt || 0) + '・うち消費税 ' + yen(ckRcptTax(r.amt)) + '）' : '';
+}
 // PayPay受け取りリンクの正規化: paypay.me（マイリンク）と qr.paypay.ne.jp（送金リンク）の両対応
 function normPayLink(s){
   s = String(s || '');
@@ -3089,8 +3121,9 @@ function printReceipts(year, c){
       + '<div class="rp-to">' + esc(c.name || '') + '　様</div>'
       + '<div class="rp-amt">' + yen(r.amt || 0) + '−</div>'
       + '<div class="rp-note">但し セミナー受講料として' + (r.pm ? '（' + esc(r.pm) + '受領）' : '') + '</div>'
+      + (r.inv ? '<div class="rp-note">' + esc(ckRcptTaxLine(r)) + '</div>' : '')
       + '<div class="rp-note">' + esc(dj) + '　' + esc(r.ev || '') + '</div>'
-      + '<div class="rp-by">' + esc(r.by || '') + '</div>'
+      + '<div class="rp-by">' + ckRcptIssuerHtml(r, '') + '</div>'
       + '</div>';
   }).join('');
   $('rcptPrint').innerHTML =
@@ -3115,10 +3148,11 @@ function receiptModal(key, r, c){
     + yen(r.amt || 0) + '−</div>'
     + '<div style="font-size:12.5px;color:#6f6b60;">但し セミナー受講料として'
     + (r.pm ? '（' + esc(r.pm) + '受領）' : '') + '</div>'
+    + (r.inv ? '<div style="font-size:12.5px;color:#6f6b60;">' + esc(ckRcptTaxLine(r)) + '</div>' : '')
     + '<div style="font-size:12.5px;color:#6f6b60;margin-top:4px;">' + esc(dateJp) + '　' + esc(r.ev || '') + '</div>'
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:22px;">'
-    + '<div style="text-align:left;font-size:11.5px;color:#6f6b60;">上記金額を正に受領いたしました<br>'
-    + '<b style="color:#26241f;font-size:13.5px;">' + esc(r.by || '') + '</b></div>'
+    + '<div style="text-align:left;font-size:11.5px;color:#6f6b60;line-height:1.6;">上記金額を正に受領いたしました<br>'
+    + ckRcptIssuerHtml(r, 'rc-by') + '</div>'
     + '<div class="rstamp"><span>受領</span><span style="font-size:9.5px;">' + esc(stampDate) + '</span></div>'
     + '</div>'
     + '<div style="font-size:10px;color:#a39e91;margin-top:14px;">電子的に発行された領収書です（5万円未満のため収入印紙は不要）</div>'
@@ -6606,9 +6640,9 @@ function trWrite(m, k, rec){
 }
 function onlineModal(ev){
   // 電子領収書の発行者名（主催ユニオンの設定）
-  var olIssuer = '';
+  var olIssuer = '', olInfo = null;
   db.collection('checkinUnions').doc(ev.hostUnion || '').get().then(function(s){
-    if(s.exists && s.data().issuer) olIssuer = s.data().issuer;
+    if(s.exists && s.data().issuer){ olIssuer = s.data().issuer; olInfo = ckRcptInfo(s.data()); }
   }).catch(function(){});
   // ライブ承認画面: 開いている間もリアルタイムで新着申請が追加される（当日ラッシュ対応）。
   // 再描画は申請の構成が変わったときだけにして、入力途中の金額・チェックを守る
@@ -6759,8 +6793,8 @@ function onlineModal(ev){
         var u = {}; u['online_' + ev.id] = val;
         // 電子領収書: 承認と同時に発行、却下・申請削除で取り下げ
         if(val === 'approved' && olIssuer && !a.rcptNone){
-          u['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
-                                 by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
+          u['rcpt_' + ev.id] = ckRcptWith({ d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
+                                 no: a.id, at: Date.now(), pm: 'PayPay' }, olInfo || { by: olIssuer });
         } else {
           u['rcpt_' + ev.id] = FV.delete();
         }
@@ -6805,8 +6839,8 @@ function onlineModal(ev){
         if(!a.cardToken){ toast('この申請には会員証の情報がないため発行できません'); return; }
         b.disabled = true;
         var ru = {};
-        ru['rcpt_' + ev.id] = { d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
-                                by: olIssuer, no: a.id, at: Date.now(), pm: 'PayPay' };
+        ru['rcpt_' + ev.id] = ckRcptWith({ d: ev.date || '', ev: ev.name || '', amt: a.fee || 0,
+                                no: a.id, at: Date.now(), pm: 'PayPay' }, olInfo || { by: olIssuer });
         db.collection('cards').doc(a.cardToken).set(ru, { merge: true })
           .then(function(){ return attRef.set({ rcptNone: false }, { merge: true }).catch(function(){}); })
           .then(function(){
@@ -7246,6 +7280,14 @@ $('btnRcptSet').onclick = function(){
       + '<input type="text" id="rsIssuer" value="' + esc(cur) + '" placeholder="例: 株式会社PROMOTE">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
       + '<b>未設定（空欄）の間、このユニオンでは電子領収書は発行されません。</b></p>'
+      + '<label style="margin-top:10px;">領収書の住所（任意）</label>'
+      + '<input type="text" id="rsAddr" value="' + esc((s0 && s0.issuerAddr) || '') + '" placeholder="例: 福岡県福岡市中央区…">'
+      + '<label>領収書の電話番号（任意）</label>'
+      + '<input type="tel" id="rsTel" value="' + esc((s0 && s0.issuerTel) || '') + '" placeholder="例: 092-000-0000">'
+      + '<label>インボイス登録番号（任意）</label>'
+      + '<input type="text" id="rsInv" value="' + esc((s0 && s0.invoiceNo) || '') + '" placeholder="例: T1234567890123">'
+      + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">入れた項目だけ領収書に載ります。登録番号を入れると、適格簡易請求書として「10%対象・うち消費税」も表示します。'
+      + '変更はこれから発行する領収書から反映されます（発行済みの領収書はそのまま）。</p>'
       + '<label style="margin-top:14px;">会員番号の頭文字（自動発番・英字2〜4文字・他のユニオンと重複不可）</label>'
       + '<input type="text" id="rsPrefix" value="' + esc(curPre) + '" placeholder="例: RV → RV0001, RV0002…">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
@@ -7268,8 +7310,13 @@ $('btnRcptSet').onclick = function(){
       var plIn = $('rsPayLink').value.trim();
       var pl = normPayLink(plIn);
       if(plIn && !pl){ toast('PayPay受け取りリンクの形式が違います（例: paypay.me/xxxx または https://qr.paypay.ne.jp/…）'); return; }
+      var inv = ckInvNorm($('rsInv').value);
+      if(inv && !/^T\d{13}$/.test(inv)){ toast('インボイス登録番号は「T＋13桁の数字」で入れてください（例: T1234567890123）'); return; }
       var upd = {
         issuer: $('rsIssuer').value.trim(),
+        issuerAddr: $('rsAddr').value.trim(),
+        issuerTel: $('rsTel').value.trim(),
+        invoiceNo: inv,
         area: $('rsArea').value.trim(),
         payLink: pl,
         noPrefix: ckPrefixNorm($('rsPrefix').value)
@@ -7584,7 +7631,7 @@ function startReception(ev){
   // 電子領収書の発行者名とPayPay受け取りリンク（主催ユニオンの設定を読む）
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
     if(gRec && gRec.ev === ev && s.exists){
-      if(s.data().issuer) gRec.issuer = s.data().issuer;
+      if(s.data().issuer){ gRec.issuer = s.data().issuer; gRec.rcptInfo = ckRcptInfo(s.data()); }
       if(!gRec.payLink && s.data().payLink){ gRec.payLink = s.data().payLink; renderFeeRow(); }
     }
   }).catch(function(){});
@@ -7750,9 +7797,9 @@ function syncReceipt(no){
   var a = gRec.att[no];
   var key = 'rcpt_' + gRec.ev.id, u = {};
   if(a && (a.fee || 0) > 0 && a.paid !== false && !a.rcptNone){
-    u[key] = { d: gRec.ev.date || '', ev: gRec.ev.name || '',
+    u[key] = ckRcptWith({ d: gRec.ev.date || '', ev: gRec.ev.name || '',
                amt: (a.fee || 0) - (a.refund || 0),
-               by: gRec.issuer, no: no, at: Date.now() };
+               no: no, at: Date.now(), pm: a.payMethod === 'paypay' ? 'PayPay' : '現金' }, gRec.rcptInfo || { by: gRec.issuer });
   } else {
     u[key] = FV.delete();   // 未徴収・取消は領収書も取り下げ
   }
@@ -8288,10 +8335,9 @@ function guestRcptQr(no, name, fee){
     no: no, name: name, union: gRec.ev.hostUnion || gUnion,
     rcptOnly: true, createdAt: FV.serverTimestamp()
   };
-  docData['rcpt_' + gRec.ev.id] = {
-    d: gRec.ev.date || '', ev: gRec.ev.name || '', amt: fee,
-    by: gRec.issuer, no: no, at: Date.now()
-  };
+  docData['rcpt_' + gRec.ev.id] = ckRcptWith({
+    d: gRec.ev.date || '', ev: gRec.ev.name || '', amt: fee, no: no, at: Date.now()
+  }, gRec.rcptInfo || { by: gRec.issuer });
   db.collection('cards').doc(token).set(docData).then(function(){
     // イベント削除時に一括で取り下げられるよう、出席記録に領収書トークンを残す＋操作ログ
     if(gRec.att[no]) gRec.att[no].rcptToken = token;
