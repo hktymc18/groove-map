@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v726';
+var APP_JS_VERSION = 'v727';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v726';
+  var DATA_VERSION = 'v727';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v727', d:'2026-10-08', items:['PCの計画シートは、最初はMAPが上・書く欄が下（上下）の並びに。右上の「◧ 左右」を選ぶと左右の並びになり、端末で覚えます'] },
   { v:'v726', d:'2026-10-08', items:['メンバーに「🔒 自分だけのメモ」：共有しているMAPでも、共有元・共有先の人には見えないメモが書けます（MAPで人を押した画面・メンバー編集・かんたん編集のメモ）','今までの「メモ」は、MAPを共有している人にも見えることを書き添えました'] },
   { v:'v725', d:'2026-10-08', items:['バグ・要望（管理者）：「📋 Claude用にコピー」をどのタブ（新着など）でも使えるように。「ぜんぶ選ぶ」も','1件ずつは、報告を開いた画面の「📋 Claude用にコピー」から（やりとりも入る）。新着・改修するはコピーすると「対応中」に','一覧で書いた人・日時の行が縦に崩れていたのを直しました'] },
   { v:'v724', d:'2026-10-08', items:['年の目標・ロードマップの⑤を「戦略・戦術」に作り直し：戦略の下に戦術、戦術の下にタスクを、思いつくまま何個でも書けます（字と枠を大きく）','行を押すと、期日（毎週・毎月も）・対象者（名前で探す・何人でも）・数値を入れられます','あとから「→ 入れる先」で、やること（数値があれば数値の目標）・計画シートの行動（4分野）・予定・メンバーのメモに。入れた先は札で出て、タスクのチェックは入れた先にもつながります'] },
@@ -37879,8 +37880,8 @@ function _p2ShTopHtml(ym, pc) {
   var ar = '<span class="st-ar">›</span>';
   return h + '<div class="st-g' + (pc ? ' pc' : '') + '">' + c1 + ar + c2 + ar + c3 + ar + c4 + '</div>';
 }
-function _p2ShLay() { return _p2ShLs('gm_shLay') === 'tb' ? 'tb' : 'lr'; }
-function p2ShLayTgl(v) { _p2ShLs('gm_shLay', v === 'tb' ? 'tb' : null); _p2ShMS = null; renderPlan(); }
+function _p2ShLay() { return _p2ShLs('gm_shLay') === 'lr' ? 'lr' : 'tb'; } // v727: 最初は上下（左右は選んだ人だけ）
+function p2ShLayTgl(v) { _p2ShLs('gm_shLay', v === 'lr' ? 'lr' : null); _p2ShMS = null; renderPlan(); }
 function _p2ShTopCss() {
   if (document.getElementById('p2ShTopCss')) return;
   var st = document.createElement('style'); st.id = 'p2ShTopCss';

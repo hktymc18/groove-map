@@ -13,11 +13,13 @@ T.run(async () => {
   c('v710: 受付連携は外・表示の切りかえはアイコン（名前はマウスを乗せると）', /受付連携/.test($('#pcToolbarC').textContent) && $$('#pcToolbarC .pv-seg .pv-btn svg').length === 4 && $('#pvOrbit').title === 'サークル');
   c('v706: 版・保存は左下', !!$('#pcsVer #versionTag'));
   w.switchView('plan'); w.p2Go('sheet'); await sleep(40);
+  c('v727: 最初は上下', !$('.sp-lr') && !!$('.sp-pn') && !w.localStorage.getItem('gm_shLay'));
+  w.p2ShLayTgl('lr'); await sleep(30);
   c('v707: 計画シートは左右2分割（左にMAP・右に数字と行動）', !!$('.sp-lr .sp-lrL #p2ShMF') && !!$('.sp-lrR .sp-acts') && !$('.sp-lrL .sp-acts'));
   c('v707: 左右の時は「上に固定」はなし（左はいつも見える）', !$('.sp-pn') && !!$('.st-h .lay span.on') && /左右/.test($('.st-h .lay span.on').textContent));
   c('v707: 課題はMAPの下', !!$('.sp-lrL .sp-mis .iss'));
   w.p2ShLayTgl('tb'); await sleep(30);
-  c('v707: 「上下」で前の並び', !$('.sp-lr') && !!$('.sp-pn') && w.localStorage.getItem('gm_shLay') === 'tb');
+  c('v707: 「上下」で前の並び', !$('.sp-lr') && !!$('.sp-pn') && !w.localStorage.getItem('gm_shLay'));
   w.p2ShLayTgl('lr'); await sleep(30);
-  c('v707: 「左右」に戻す', !!$('.sp-lr') && !w.localStorage.getItem('gm_shLay'));
+  c('v707: 「左右」は選んだ時だけ（覚える）', !!$('.sp-lr') && w.localStorage.getItem('gm_shLay') === 'lr');
 });
