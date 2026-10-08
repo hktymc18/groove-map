@@ -1296,8 +1296,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v35';
+var APP_VER = 'v36';
 var CHANGELOG = [
+  { v: 'v36', d: '2026/10/09', items: ['集計タブが「集計中…」のまま表示されないことがあった問題を修正（他のユニオンのイベントがある月に起きていました）'] },
   { v: 'v35', d: '2026/10/08', items: ['領収書: ユニオン設定で「住所」「電話番号」「インボイス登録番号」を任意で設定できるように（入れた項目だけ載ります）。登録番号がある時は「10%対象・うち消費税」も表示', '会場で受け取った領収書に「現金受領／PayPay受領」を表示'] },
   { v: 'v34', d: '2026/10/07', items: ['会計タブ・会計の入力は、ユニオン管理者・受付管理者・オーナーだけになりました（一般メンバーには表示されません。受付は今までどおりできます）', '🔗 兼務のユニオン管理者: 複数のユニオンを管理する人を、オーナーが「👥 管理者一覧」から指定できるようになりました。指定された人は、そのユニオンでもユニオン管理者として扱われます'] },
   { v: 'v33', d: '2026/10/07', items: ['NAVIGATORや別の受付のタブを開いていると、名簿タブの「受付管理者」「研修生登録の担当」「管理者一覧」などが開くまで1分ほどかかることがあった問題を修正'] },
@@ -9036,10 +9037,14 @@ function loadStats(){
             if(a.status === 'pending' || a.status === 'rejected') return;
             visits.push({ date: ev.date || '', evName: ev.name || '', host: ev.hostUnion || '', who: a.name || '' });
           });
-        });
+        }).catch(function(){});   // 参考表示のみ: 読めない他ユニオンのイベントは飛ばす（DBルールで閲覧制限あり）
     });
+    // どれか1つでも失敗したら「集計中…」のまま止まらないよう、必ずエラーを表示する
     Promise.all(reads.concat(vreads).concat([fetchMembers(gStatUnion)])).then(function(results){
       renderStats(evs, attMaps, results[results.length - 1], visits, pendingEvs);
+    }).catch(function(e){
+      $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc((e && e.message) || String(e))
+        + '</p><p style="color:var(--sub);font-size:13px;">「再集計」を押しても直らない場合は、オーナーに連絡してください。</p>';
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
 }
