@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v697';
+var APP_JS_VERSION = 'v698';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3877,7 +3877,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v697';
+  var DATA_VERSION = 'v698';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5364,6 +5364,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v698', d:'2026-10-08', items:['計画シートのMAPを「⤢ 拡大」で全画面にできるようにしました（＋−で拡大・ドラッグで動かす。拡大したまま人を押して課題を書けます）','課題はふだんは計画シートの中だけ。「→ 残す先」から、行動（4分野）・タスク・予定・メモ（メンバーの中）を選んで入れられます','残した先とは連動します（課題を書き直すと、まだ済んでいない行動・タスク・予定とメモも同じ文に）。残した先は課題の下に印で出ます','スマホの行動は、フロント作り・流通アップ・Dライン・自己成長ごとに ▼／▶ でたためます'] },
   { v:'v697', d:'2026-10-08', items:['スマホ版の計画シートの行動の欄にも、記入例（PDFの例）を全部出しました。押すと書く欄に入ります','「数字と改善点」を ▼／▶ でたためるようにしました（たたむと1行のまとめだけ。MAPを見ながら行動を書く時に）。端末ごとに覚えます'] },
   { v:'v696', d:'2026-10-08', pop: { t: '計画シートのMAPで、人ごとの課題を書けるようになりました', items: ['MAPの人を押すと、その人の今月の課題を書けます（課題のある人は光ります）', '「→ 行動にする」で、4分野から選んで行動に入れられます', '10人以上になったら、MAPは見慣れたサークルMAPに自動で切りかわります（シート型にも戻せます）'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートのMAPの人を押すと、その人の課題を書けるようにしました（MAPの横／下に一覧）','課題の「→ 行動にする」で、フロント作り・流通アップ・Dライン・自己成長から選んで行動に入れられます','組織が10人以上（自分を除く）になったら、MAPを理想MAPと同じサークルMAPに自動で切りかえます（サークル｜シート型で選べます）。印刷もサークルMAPになります','シート型のMAPも、名前を姓・名の2段のフルネームで出すようにしました','PC版の行動の欄に、記入例（PDFの例）を全部薄く出しました。押すと書く欄に入ります'] },
   { v:'v695', d:'2026-10-08', items:['PC版の計画シート：MAPを横いっぱいに広げ、行動（フロント作り・流通アップ・Dライン・自己成長）は数字と改善点の下に4つ横並びにしました'] },
@@ -37360,11 +37361,11 @@ function _p2ShMapBox(ym, W, H, pc) {
   var kind = _p2ShMapKind(_p2ShMapMt()), vw = _p2Sh().mapView || '';
   var sec = '<div class="sp-sec" style="align-items:center"><span>＜' + (hasI ? '<span class="tg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span>/<span class="' + (mode === 'ideal' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">理想</span></span>' : '現状') + 'MAP＞</span>' + _uxIb('shmap')
     + '<span class="sp-vw"><span class="' + (kind === 'circle' ? 'on' : '') + '" onclick="p2ShMapView(\'circle\')">サークル</span>｜<span class="' + (kind === 'sheet' ? 'on' : '') + '" onclick="p2ShMapView(\'sheet\')">シート型</span>' + (vw ? '<span onclick="p2ShMapView(\'\')" style="margin-left:4px">（自動に戻す）</span>' : '') + '</span>'
-    + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
+    + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r" onclick="p2ShMapZoom()" style="margin-left:auto">⤢ 拡大</span><span class="r" style="margin-left:10px" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
   var map;
   if (kind === 'circle') map = '<div class="sp-map" style="padding:0"><div id="p2ShOrb" style="height:' + (pc ? 620 : 440) + 'px"></div></div>';
   else { var M = _p2ShMapSvg({ W: W, H: H, mode: mode, newN: newN, tap: !_p2ShRo(), iss: _p2ShIss(ym) }); map = M.empty ? '<div class="sp-leg">MAPに自分（いちばん上の人）がまだいません</div>' : '<div class="sp-map">' + M.svg + '</div>'; }
-  return sec + '<div class="sp-mw' + (pc ? '' : ' m') + '">' + map + _p2ShIssHtml(ym) + '</div>';
+  return sec + '<div class="sp-mw' + (pc ? '' : ' m') + '">' + map + (_p2ShZ ? '<div class="iss"><div class="iss-em">拡大の画面で書いています</div></div>' : _p2ShIssHtml(ym)) + '</div>';
 }
 function _p2ShKin(ym, k, X, which) { // which: 't'＝今月の目標 / 'v'＝手入力の進捗
   if (_p2ShRo()) return '<span class="' + (which === 'v' ? 'v' : '') + '">' + ((which === 't' ? X.t : X.v) === null ? '—' : (which === 't' ? X.t : X.v)) + '</span>';
@@ -37401,8 +37402,14 @@ function _p2ShActTbl(ym, c, minRows) {
   var exs = !ro ? (P2_SH_ACT_EXS[c.k] || []) : [], used = L.map(function(e) { return e.title; });
   exs.filter(function(t) { return used.indexOf(t) < 0; }).forEach(function(t) { r += '<div class="r ex" onclick="p2ShActEx(\'' + c.k + '\',\'' + t.replace(/'/g, '') + '\')" title="押すと書く欄に入ります"><span class="c"></span><span class="x"><i>例：' + evEsc(t) + '</i></span><span class="d">/</span></div>'; });
   for (var j = L.length + (ro ? 0 : 1) + exs.length; j < (minRows || 0); j++) r += '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>';
+  if (!minRows) { // v698: スマホは分野ごとにたためる（端末ごとに覚える）
+    var cl = _p2ShActClosed(c.k), dn = L.filter(function(e) { return e.done; }).length;
+    return '<div class="sp-at' + (cl ? ' cl' : '') + '"><div class="h" style="cursor:pointer" onclick="p2ShActTgl(\'' + c.k + '\')">' + (cl ? '▶ ' : '▼ ') + c.lb + '<span>' + (cl ? dn + '/' + L.length : '実行期日') + '</span></div>' + (cl ? '' : r) + '</div>';
+  }
   return '<div class="sp-at"><div class="h">' + c.lb + '<span>実行期日</span></div>' + r + '</div>';
 }
+function _p2ShActClosed(k) { try { return (JSON.parse(localStorage.getItem('gm_shActC') || '[]') || []).indexOf(k) >= 0; } catch (e) { return false; } }
+function p2ShActTgl(k) { var a = []; try { a = JSON.parse(localStorage.getItem('gm_shActC') || '[]') || []; } catch (e) {} var i = a.indexOf(k); if (i >= 0) a.splice(i, 1); else a.push(k); try { localStorage.setItem('gm_shActC', JSON.stringify(a)); } catch (e2) {} renderPlan(); }
 function p2ShActEdit(id, v) {
   var e = findEvent(id); if (!e) return; v = String(v || '').trim();
   if (!v) { if (confirm('この行動を消しますか？（ToDoからも消えます）')) { _evDeleteById(id); } renderPlan(); return; }
@@ -37426,7 +37433,7 @@ function _p2ShKzHead(ym) { // v697: 数字と改善点はたためる（MAPを�
   return '<div class="sp-sec sp-fold" style="align-items:center;cursor:pointer" onclick="p2ShKzTgl()">' + (op ? '▼' : '▶') + ' 数字と改善点' + '<span onclick="event.stopPropagation()">' + _uxIb('shkz') + '</span>'
     + '<span class="r">' + (op ? 'たたむ' : 'ひらく') + '</span></div>' + (op ? '' : (sum ? '<div class="sp-leg" style="margin-top:0">' + sum + '</div>' : ''));
 }
-function _p2ShAfter() { try { Array.prototype.forEach.call(document.querySelectorAll('#view-plan .sp-kz'), _p2ShGrow); } catch (e) {} try { _p2ShOrbDraw(); } catch (e2) {} }
+function _p2ShAfter() { try { Array.prototype.forEach.call(document.querySelectorAll('#view-plan .sp-kz'), _p2ShGrow); } catch (e) {} try { _p2ShOrbDraw(); } catch (e2) {} try { if (_p2ShZ) _p2ShZoomRender(); } catch (e3) {} }
 // ════ v696: 10人以上はサークルMAP・人を押して課題を書く・課題 → 行動（分野を選ぶ）════
 var _p2ShIssSel = '', _p2ShIssAct = ''; // 課題を書いている人／「行動にする」で分野を選んでいる人
 function _p2ShMapMt() { var hasI = _hasIdeal(); return (_p2ShMapMode === 'cur' || !hasI) ? 'current' : 'ideal'; }
@@ -37440,7 +37447,7 @@ function p2ShIssTap(mid) {
   _p2ShIssSel = mid; _p2ShIssAct = ''; renderPlan();
   setTimeout(function() { var el = document.getElementById('p2ShIssIn'); if (el) { try { el.focus(); el.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }, 40);
 }
-function p2ShIssSave(mid, v) { if (_p2ShRo()) return; var I = _p2ShIss(_p2ShYmN()), t = String(v || '').trim().slice(0, 300); if (t) I[mid] = t; else delete I[mid]; saveGoals(); }
+function p2ShIssSave(mid, v) { if (_p2ShRo()) return; var ym = _p2ShYmN(), I = _p2ShIss(ym), t = String(v || '').trim().slice(0, 300), o = I[mid] || ''; if (t) I[mid] = t; else delete I[mid]; if (o && o !== t) { try { _p2ShIssSync(ym, mid, o, t); } catch (e) {} } saveGoals(); }
 function p2ShIssDone() { var el = document.getElementById('p2ShIssIn'); if (el && _p2ShIssSel) p2ShIssSave(_p2ShIssSel, el.value); _p2ShIssSel = ''; renderPlan(); }
 function p2ShIssAct(mid) { _p2ShIssAct = _p2ShIssAct === mid ? '' : mid; renderPlan(); }
 function p2ShIssToAct(mid, cat) {
@@ -37449,6 +37456,7 @@ function p2ShIssToAct(mid, cat) {
   var e = _tdMakeTask(((m ? (m.lastName || _uxName(m)) + 'さん：' : '') + t).slice(0, 120), '', '');
   e.planYm = _p2ShYmN(); e.planCat = cat; if (m) e.memberId = m.id;
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  _p2ShIssL(_p2ShYmN(), mid).act = e.id; saveGoals(); // v698: 連動
   _p2ShIssAct = ''; renderPlan();
   var c = P2_SH_CAT.filter(function(x) { return x.k === cat; })[0]; toast('✓ 「' + (c ? c.lb : '') + '」に入れました');
 }
@@ -37459,9 +37467,10 @@ function _p2ShIssHtml(ym) {
     var m = _p2ShMem(mid), nm = m ? _uxName(m) : '（いない人）', ttl = m ? titleAbbr(m.title || '') : '';
     if (_p2ShIssSel === mid && !ro) return '<div class="iss-r on"><div class="h"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small><span class="x" onclick="p2ShIssDone()">完了</span></div>'
       + '<textarea id="p2ShIssIn" class="sp-kz" rows="2" placeholder="' + evEsc(pv[mid] ? '先月：' + pv[mid] : '例：審査フォロー。Q3の動員が足りない→DLRを2週目までに') + '" oninput="_p2ShGrow(this)" onchange="p2ShIssSave(\'' + mid + '\',this.value)">' + evEsc(I[mid] || '') + '</textarea></div>';
-    var acts = _p2ShIssAct === mid ? '<div class="cats">' + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="p2ShIssToAct(\'' + mid + '\',\'' + c.k + '\')">' + c.s + '</span>'; }).join('') + '</div>' : '';
-    return '<div class="iss-r"><div class="h" onclick="p2ShIssTap(\'' + mid + '\')"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small>' + (ro ? '' : '<span class="a" onclick="event.stopPropagation();p2ShIssAct(\'' + mid + '\')">→ 行動にする</span>') + '</div>'
-      + '<div class="t" onclick="p2ShIssTap(\'' + mid + '\')">' + evEsc(I[mid] || '') + '</div>' + acts + '</div>';
+    var acts = _p2ShIssAct === mid ? '<div class="cats">' + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="p2ShIssToAct(\'' + mid + '\',\'' + c.k + '\')">' + c.s + '</span>'; }).join('')
+      + '<span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'task\')">📝 タスク</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'ev\')">📅 予定</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'memo\')">🗒 メモ</span></div>' : '';
+    return '<div class="iss-r"><div class="h" onclick="p2ShIssTap(\'' + mid + '\')"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small>' + (ro ? '' : '<span class="a" onclick="event.stopPropagation();p2ShIssAct(\'' + mid + '\')">→ 残す先</span>') + '</div>'
+      + '<div class="t" onclick="p2ShIssTap(\'' + mid + '\')">' + evEsc(I[mid] || '') + '</div>' + _p2ShIssBadges(ym, mid) + acts + '</div>';
   };
   var list = ids.filter(function(id) { return id !== _p2ShIssSel; }).map(row).join('');
   var sel = _p2ShIssSel && !ro ? row(_p2ShIssSel) : '';
@@ -37472,7 +37481,7 @@ function _p2ShIssCss() {
   if (document.getElementById('p2IssCss')) return;
   var st = document.createElement('style'); st.id = 'p2IssCss';
   st.textContent = '.iss-hd{font-size:13px;font-weight:900;margin-bottom:4px}.iss-hd small{margin-left:6px;font-size:11px;color:var(--text-dim);font-weight:700}.iss-r{padding:8px 0;border-top:1px solid var(--border)}.iss-r .h{display:flex;align-items:baseline;gap:6px;cursor:pointer}.iss-r .h b{font-size:13px}.iss-r .h small{font-size:10.5px;color:var(--text-dim);font-weight:800}.iss-r .h .a,.iss-r .h .x{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;white-space:nowrap}'
-    + '.iss-r .t{font-size:12.5px;line-height:1.55;margin-top:3px;cursor:pointer;white-space:pre-wrap}.iss-r.on{background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:10px;padding:8px}.iss-r .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.iss-r .cats span{font-size:11.5px;font-weight:900;padding:5px 9px;border-radius:9px;border:1px solid var(--c);color:var(--c);cursor:pointer}.iss-em{font-size:12px;color:var(--text-dim);padding:8px 0;border-top:1px solid var(--border)}'
+    + '.iss-r .t{font-size:12.5px;line-height:1.55;margin-top:3px;cursor:pointer;white-space:pre-wrap}.iss-r.on{background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:10px;padding:8px}.iss-r .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.iss-r .cats span{font-size:11.5px;font-weight:900;padding:5px 9px;border-radius:9px;border:1px solid var(--c);color:var(--c);cursor:pointer}.iss-r .lk{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.iss-r .lk i{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--c,var(--text-mid)) 16%,transparent);color:var(--text-mid);cursor:pointer}.iss-em{font-size:12px;color:var(--text-dim);padding:8px 0;border-top:1px solid var(--border)}'
     + '.sp-mw{display:grid;grid-template-columns:minmax(0,1fr) 320px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--surface) 70%,transparent)}.sp-mw .sp-map{border:0;border-radius:0}.sp-mw .iss{border-left:1px solid var(--border);padding:12px 14px;max-height:640px;overflow:auto}'
     + '.sp-mw.m{display:block}.sp-mw.m .iss{border-left:0;border-top:1px solid var(--border);max-height:none}#p2ShOrb{position:relative}#p2ShOrb svg{display:block;width:100%;height:100%}#p2ShOrb g[data-mid]{cursor:pointer}#p2ShOrb g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}.sp-map svg g.shn{cursor:pointer}'
     + '.sp-vw{font-size:11.5px;font-weight:800;color:var(--text-dim)}.sp-vw span{cursor:pointer;padding:0 2px}.sp-vw span.on{color:var(--text);text-decoration:underline;text-underline-offset:3px}';
@@ -37485,6 +37494,112 @@ function _p2ShOrbDraw() {
   try { renderPCOrbit(_p2ShMapMt(), el, false, { screen: true, w: w, h: h, onTap: p2ShIssTap }); } catch (e) { el.innerHTML = '<div class="sp-leg" style="padding:20px">サークルMAPを描けませんでした</div>'; return; }
   var I = _p2ShIss(_p2ShYmN());
   Array.prototype.forEach.call(el.querySelectorAll('g[data-mid]'), function(g) { if (I[g.getAttribute('data-mid')]) g.classList.add('iss-on'); });
+}
+// ════ v698: MAPを拡大（全画面・＋−）・課題 → 行動／タスク／予定 ════
+var _p2ShZ = 0; // 拡大の倍率（0＝閉じている）
+function _p2ShZoomOn() { return !!document.getElementById('p2ShZoomOv'); }
+function p2ShMapZoom() { _p2ShZ = 1; _p2ShZoomRender(); renderPlan(); }
+function p2ShZoomClose() { var o = document.getElementById('p2ShZoomOv'); if (o) o.remove(); _p2ShZ = 0; document.body.classList.remove('shz-open'); renderPlan(); }
+function p2ShZoom(d) { var Z = [1, 1.5, 2, 3, 4], i = Z.indexOf(_p2ShZ); if (i < 0) i = 0; _p2ShZ = d === 0 ? 1 : Z[Math.max(0, Math.min(Z.length - 1, i + d))]; _p2ShZoomSize(); }
+function _p2ShZoomSize() {
+  var m = document.getElementById('p2ShZM'), in2 = document.getElementById('p2ShZI'); if (!m || !in2) return;
+  var cx = m.scrollLeft + m.clientWidth / 2, cy = m.scrollTop + m.clientHeight / 2, ow = in2.offsetWidth || 1, oh = in2.offsetHeight || 1;
+  in2.style.width = (m.clientWidth * _p2ShZ) + 'px'; in2.style.height = (m.clientHeight * _p2ShZ) + 'px';
+  m.scrollLeft = cx * (in2.offsetWidth / ow) - m.clientWidth / 2; m.scrollTop = cy * (in2.offsetHeight / oh) - m.clientHeight / 2;
+  var lb = document.getElementById('p2ShZL'); if (lb) lb.textContent = Math.round(_p2ShZ * 100) + '%';
+}
+function _p2ShZoomCss() {
+  if (document.getElementById('p2ShZCss')) return;
+  var st = document.createElement('style'); st.id = 'p2ShZCss';
+  st.textContent = '#p2ShZoomOv{position:fixed;inset:0;z-index:530;background:var(--bg,#0b0e15);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}'
+    + '.shz-h{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);flex:none}.shz-h b{font-size:15px;font-weight:900;margin-right:auto}.shz-h .z{min-width:34px;height:34px;border-radius:10px;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;color:var(--text);padding:0 8px;font-size:13px}.shz-h .l{font:800 12px Inter,sans-serif;color:var(--text-dim);min-width:40px;text-align:center}.shz-h .x{margin-left:6px;font-size:13px;font-weight:900;color:var(--accent);cursor:pointer;padding:6px}'
+    + '.shz-b{flex:1;min-height:0;display:flex}.shz-m{flex:1;min-width:0;overflow:auto;-webkit-overflow-scrolling:touch;cursor:grab}.shz-m svg{display:block;width:100%;height:100%}.shz-i{width:340px;flex:none;border-left:1px solid var(--border);padding:12px 14px;overflow:auto}'
+    + '@media (max-width:820px){.shz-b{flex-direction:column}.shz-i{width:auto;border-left:0;border-top:1px solid var(--border);max-height:38vh;padding-bottom:calc(env(safe-area-inset-bottom) + 12px)}}'
+    + '#p2ShZI{position:relative}#p2ShZI g[data-mid],#p2ShZI g.shn{cursor:pointer}#p2ShZI g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}body.shz-open{overflow:hidden}';
+  document.head.appendChild(st);
+}
+// 拡大の画面を描く（課題を書くたびに描き直す。倍率とスクロールは保つ）
+function _p2ShZoomRender() {
+  if (!_p2ShZ) return;
+  _p2ShZoomCss(); _p2ShIssCss(); _p2ShCss2();
+  var ov = document.getElementById('p2ShZoomOv'), keep = null;
+  if (ov) { var m0 = document.getElementById('p2ShZM'); if (m0) keep = { l: m0.scrollLeft, t: m0.scrollTop }; }
+  else { ov = document.createElement('div'); ov.id = 'p2ShZoomOv'; document.body.appendChild(ov); document.body.classList.add('shz-open'); }
+  var ym = _p2ShYmN(), mt = _p2ShMapMt(), kind = _p2ShMapKind(mt);
+  ov.innerHTML = '<div class="shz-h"><b>＜' + (mt === 'ideal' ? '理想' : '現状') + 'MAP＞</b><span class="z" onclick="p2ShZoom(-1)">−</span><span class="l" id="p2ShZL">' + Math.round(_p2ShZ * 100) + '%</span><span class="z" onclick="p2ShZoom(1)">＋</span><span class="z" onclick="p2ShZoom(0)">全体</span><span class="x" onclick="p2ShZoomClose()">✕ 閉じる</span></div>'
+    + '<div class="shz-b"><div class="shz-m" id="p2ShZM"><div id="p2ShZI"></div></div><div class="shz-i">' + _p2ShIssHtml(ym) + '</div></div>';
+  var m = document.getElementById('p2ShZM'), in2 = document.getElementById('p2ShZI');
+  in2.style.width = (m.clientWidth * _p2ShZ) + 'px'; in2.style.height = (m.clientHeight * _p2ShZ) + 'px';
+  if (kind === 'circle') {
+    try { renderPCOrbit(mt, in2, false, { screen: true, w: m.clientWidth, h: m.clientHeight, onTap: p2ShIssTap }); } catch (e) {}
+    var I = _p2ShIss(ym); Array.prototype.forEach.call(in2.querySelectorAll('g[data-mid]'), function(g) { if (I[g.getAttribute('data-mid')]) g.classList.add('iss-on'); });
+  } else {
+    var F = _p2ShFr(ym), W = 1300, H = Math.max(520, Math.round(1300 * m.clientHeight / Math.max(1, m.clientWidth)));
+    var M = _p2ShMapSvg({ W: W, H: H, mode: mt === 'ideal' ? 'ideal' : 'cur', newN: mt === 'ideal' || F.t === null ? 0 : Math.max(0, F.t - F.now), tap: !_p2ShRo(), iss: _p2ShIss(ym) });
+    in2.innerHTML = M.svg || '';
+  }
+  if (keep) { m.scrollLeft = keep.l; m.scrollTop = keep.t; }
+  // ドラッグで動かす（PC）
+  var dr = null; m.onmousedown = function(e) { if (e.target.closest && e.target.closest('g[data-mid],g.shn')) return; dr = { x: e.clientX, y: e.clientY, l: m.scrollLeft, t: m.scrollTop }; };
+  m.onmousemove = function(e) { if (!dr) return; m.scrollLeft = dr.l - (e.clientX - dr.x); m.scrollTop = dr.t - (e.clientY - dr.y); };
+  m.onmouseup = m.onmouseleave = function() { dr = null; };
+}
+// 課題 → タスク／予定（その人つき・課題の文を入れて入力の画面を開く。課題のメモは残す）
+function _p2ShIssTitle(mid) { var t = _p2ShIss(_p2ShYmN())[mid] || '', m = _p2ShMem(mid); return ((m ? (m.lastName || _uxName(m)) + 'さん：' : '') + t).slice(0, 120); }
+function p2ShIssEv(mid, type) {
+  if (_p2ShRo()) return;
+  var t = _p2ShIssTitle(mid); if (_p2ShZoomOn()) p2ShZoomClose();
+  _p2ShIssAct = '';
+  openEventModal(null, mid, '', type === 'task' ? 'task' : 'event');
+  setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30);
+}
+// ════ v698: 課題の「残す先」（行動・タスク・予定・メモ）を選んで連動。課題は計画シートの中が基本 ════
+//   m.issL[mid] = { act: id, task: id, ev: id, memo: 1 }。課題を書き直すと、残した先の文も直す（済み・書きかえた物は触らない）
+var _p2ShIssPend = null; // 予定・タスクの入力画面で保存されるのを待つ { mid, kind, at, ym }
+function _p2ShIssL(ym, mid) { var m = _p2ShM(ym); m.issL = m.issL || {}; if (mid && !m.issL[mid]) m.issL[mid] = {}; return mid ? m.issL[mid] : m.issL; }
+function _p2ShMemoHead(ym) { return '【' + parseInt(ym.slice(0, 4), 10) + '年' + parseInt(ym.slice(5), 10) + '月の課題】'; }
+function _p2ShMemoPut(ym, mid, t) { // メンバーのメモの「【◯年◯月の課題】…」の行を書く（あれば置きかえ・空なら消す）
+  var lists = [state.members || [], state.idealMembers || []], hit = false, head = _p2ShMemoHead(ym);
+  lists.forEach(function(L) { L.forEach(function(m) { if (m.id !== mid) return; hit = true;
+    var lines = String(m.memo || '').split('\n').filter(function(l) { return l.indexOf(head) !== 0; });
+    if (t) lines.unshift(head + t); m.memo = lines.join('\n').replace(/^\n+|\n+$/g, ''); }); });
+  if (hit) autoSave();
+  return hit;
+}
+function p2ShIssTo(mid, kind) {
+  if (_p2ShRo()) return;
+  var ym = _p2ShYmN(), t = _p2ShIssTitle(mid), L = _p2ShIssL(ym, mid);
+  if (kind === 'memo') { if (_p2ShMemoPut(ym, mid, _p2ShIss(ym)[mid])) { L.memo = 1; saveGoals(); toast('🗒 メンバーのメモに入れました'); } _p2ShIssAct = ''; renderPlan(); return; }
+  // タスク・予定：入力の画面を開く（その人・課題の文が入った状態）。保存されたら連動
+  if (_p2ShZoomOn()) p2ShZoomClose();
+  _p2ShIssAct = '';
+  _p2ShIssPend = { mid: mid, kind: kind, at: new Date().toISOString(), ym: ym };
+  openEventModal(null, mid, '', kind === 'task' ? 'task' : 'event');
+  setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30);
+  _p2ShIssWatch(0);
+}
+function _p2ShIssWatch(n) { // 入力の画面で保存されたか見る（閉じたら少し待って終わり）
+  if (!_p2ShIssPend) return;
+  var P = _p2ShIssPend, L0 = _p2ShIssL(P.ym, P.mid), used = [L0.act, L0.task, L0.ev];
+  var hit = (state.events || []).filter(function(e) { return e && !e.deleted && !e.planCat && used.indexOf(e.id) < 0 && String(e.createdAt || '') >= P.at && (e.memberId === P.mid || (e.memberIds || []).indexOf(P.mid) >= 0) && (P.kind === 'task' ? e.type === 'task' : e.type !== 'task'); })[0];
+  if (hit) { _p2ShIssL(P.ym, P.mid)[P.kind === 'task' ? 'task' : 'ev'] = hit.id; saveGoals(); _p2ShIssPend = null; if (currentView === 'plan') renderPlan(); return; }
+  var open = !!(document.getElementById('eventModal') && document.getElementById('eventModal').classList.contains('open'));
+  if (!open && n > 6) { _p2ShIssPend = null; return; }
+  if (n < 1200) setTimeout(function() { _p2ShIssWatch(n + 1); }, 500);
+}
+function _p2ShIssBadges(ym, mid) {
+  var L = (_p2ShM(ym).issL || {})[mid] || {}, b = [];
+  if (L.act) { var a = findEvent(L.act); if (a && !a.deleted) { var c = P2_SH_CAT.filter(function(x) { return x.k === a.planCat; })[0]; b.push('<i style="--c:' + (c ? c.c : 'var(--accent)') + '">' + (c ? c.s : '行動') + (a.done ? ' ✓' : '') + '</i>'); } }
+  if (L.task) { var k = findEvent(L.task); if (k && !k.deleted) b.push('<i onclick="event.stopPropagation();openEventModal(\'' + k.id + '\')">📝 タスク' + (k.date ? ' ' + parseInt(k.date.slice(5, 7), 10) + '/' + parseInt(k.date.slice(8), 10) : '') + (k.done ? ' ✓' : '') + '</i>'); }
+  if (L.ev) { var v = findEvent(L.ev); if (v && !v.deleted) b.push('<i onclick="event.stopPropagation();openEventModal(\'' + v.id + '\')">📅 ' + (v.date ? parseInt(v.date.slice(5, 7), 10) + '/' + parseInt(v.date.slice(8), 10) : '予定') + (v.time ? ' ' + v.time : '') + '</i>'); }
+  if (L.memo) b.push('<i>🗒 メモ</i>');
+  return b.length ? '<div class="lk">' + b.join('') + '</div>' : '';
+}
+function _p2ShIssSync(ym, mid, oldT, newT) { // 課題を書き直したら、残した先も同じ文に（済み・自分で書きかえた物はそのまま）
+  var L = (_p2ShM(ym).issL || {})[mid]; if (!L) return;
+  var m = _p2ShMem(mid), pre = m ? (m.lastName || _uxName(m)) + 'さん：' : '', o = (pre + oldT).slice(0, 120), n = (pre + newT).slice(0, 120);
+  ['act', 'task', 'ev'].forEach(function(k) { var e = L[k] && findEvent(L[k]); if (e && !e.deleted && !e.done && e.title === o && newT) { e.title = n; e.updatedAt = new Date().toISOString(); saveEventDoc(e); } });
+  if (L.memo) _p2ShMemoPut(ym, mid, newT);
 }
 // ── スマホ：上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）──
 function _p2ShPageHtml() {
