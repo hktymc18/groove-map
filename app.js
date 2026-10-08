@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v721';
+var APP_JS_VERSION = 'v722';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v721';
+  var DATA_VERSION = 'v722';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5381,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v722', d:'2026-10-08', items:['年の目標・ロードマップの説明文を見出しの横の (i) にまとめて、画面をすっきりさせました'] },
   { v:'v721', d:'2026-10-08', items:['ロードマップ③の計算の設定（BR 1本に必要なフロント・単価・ルビー候補）は、ふだん隠して「⚙ 設定」で開くように。1行ずつの見やすい形にしました','「1ヶ月5人以上は無理なペース（赤）」をなくしました'] },
   { v:'v720', d:'2026-10-08', items:['年の目標・ロードマップの③で、今の数もその場で書きかえられるように（空ならMAPの数が薄く出る・違う数にしたら「MAP ◯ に戻す」）','単価（1Qルビー・1環境・ルビー候補の倍率）も③の下で直せます。前の「今の数・単価」の画面には飛ばなくなりました'] },
   { v:'v719', d:'2026-10-08', items:['シミュレーションのボタンを「📅 ロードマップのペースに入れる」に：LOI〜BRの月ごとのフロントを、年の目標・ロードマップのF（計画シート・月の目標と同じ数字）に入れて、そのままロードマップを開きます','今月の分は理想MAPの自分のB1にも。BRを目指している人は、直近の目標（BRの月）もシミュレーションにそろえます','押した後の「『設定』で確定しよう」という古い案内をなくしました'] },
@@ -38242,6 +38243,12 @@ function p2ShPrint() {
 }
 // ════ v717: 年の目標・ロードマップ（①マイルストーン ②直近の目標 ③今→必要→ギャップ ④フロントのペース ⑤戦略のメモ）════
 var P2_YR_LOCK = 15;
+// v722: 説明は (i) に
+UX_INFO.yr1 = { t: 'マイルストーン', h: '月を押すと「直近の目標をこの月にする」や、イベント（例：SA早期達成）を書けます。<br><b>逆算</b>：直近の目標の月から LOI → Q2 → Q3 → Q4 → BR。<br><b>F</b>：その月のフロント（計画シート・月の目標と同じ数字）。フロントを出す締め切りより右は薄い帯です' };
+UX_INFO.yr2 = { t: '直近の目標', h: '最終目標までの通過点（1年前後）。ここから「必要な数」と「フロントを出す締め切り」が決まります。BRを目指す時は、月収の代わりにファーストボーナスの目標です' };
+UX_INFO.yr3 = { t: '今 → 必要 → ギャップ', h: '薄い数字は自動です。違う時はその場で書きかえられます（空にすると自動に戻る）。<br><b>今</b>：MAPから（フロントBR＝自分から下で最初に出てくるBR、流通＝チームPT、Qルビー＝ルビーの人数、候補＝優先度「高」の人）<br><b>必要</b>：直近の目標から（フロントBR＝タイトルの条件、Qルビー＝月収÷1Qルビーあたりの月収、環境＝月収÷1環境あたりの月収、ルビー候補＝Qルビー×倍率）<br><b>エキスパート</b>：流通のプロ・アカデミーを卒業したメンバー<br>計算のもとは「⚙ 設定」で変えられます。組織が' + P2_YR_LOCK + '人（自分をのぞく）になると表が使えます' };
+UX_INFO.yr4 = { t: 'フロントのペース', h: '今月から、フロントを出す締め切りの月まで。数字は計画シート・月の目標と同じです（理想MAPで決まる月は理想MAPの人数）。<br>「均等に割り振る」で必要なフロントを月に分けます。シミュレーションの「ロードマップのペースに入れる」からも入ります' };
+UX_INFO.yr5 = { t: '戦略・やり方のメモ', h: '思いついたらメモ。あとから「→ 残す先」で、やること・予定に入れる先を決めます。組織が' + P2_YR_LOCK + '人（自分をのぞく）になると使えます' };
 var _p2YrSetOn = false; // v721: ③の計算の設定（ふだんは隠す）
 function p2YrSetTgl() { _p2YrSetOn = !_p2YrSetOn; renderPlan(); } // ③の表と⑤は組織（自分をのぞく）が15人から
 var _p2YrMoSel = '', _p2YrAct = '';
@@ -38268,7 +38275,7 @@ function _p2YrCalc() {
     { k: 'dist', lb: '流通（チームPT）', u: 'P', c: cv('dist'), a: null },
     { k: 'qr', lb: 'Qルビー', u: '人', c: cv('qr'), a: qrA },
     { k: 'cand', lb: 'ルビー候補', u: '人', c: cv('cand'), a: null },
-    { k: 'exp', lb: 'エキスパート', u: '人', c: cv('exp'), a: null, sub: '流通のプロ・アカデミー卒業' },
+    { k: 'exp', lb: 'エキスパート', u: '人', c: cv('exp'), a: null },
     { k: 'env', lb: '環境', u: 'つ', c: cv('env'), a: inc ? Math.ceil(inc / g.rates.envYen) : null }
   ];
   var rows = defs.map(function(d) { d.co = num(g.c[d.k]); d.ca = auto[d.k] == null ? null : auto[d.k]; var t = num(Y.t[d.k]); d.man = t !== null; if (t === null) t = d.a; d.t = t; return d; });
@@ -38355,7 +38362,7 @@ function _p2YrCss() {
     + '.yr-goal{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;padding:11px 14px;border-radius:14px;cursor:pointer;border:1px solid color-mix(in srgb,var(--gold) 40%,var(--border));background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 12%,var(--surface)),var(--surface) 70%)}'
     + '.yr-goal .lb{font-size:12px;font-weight:900;color:var(--gold)}.yr-goal b{font-size:17px;font-weight:900}.yr-goal .t{color:var(--gold);letter-spacing:.5px}.yr-goal small{font-size:12px;color:var(--text-mid);font-weight:700}.yr-goal .mt{font-style:italic}.yr-goal .ed{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent)}'
     + '.yr-tl{margin-top:12px;padding:10px 0 8px;border-bottom:1px solid var(--border);background:var(--bg)}body.px3 .yr-tl{position:sticky;top:var(--yrTop,0px);z-index:5}'
-    + '.yr-h{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:15px;font-weight:900;margin-bottom:8px}.yr-h small{font-weight:700;color:var(--text-dim);font-size:12px}.yr-h .r{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}'
+    + '.yr-h{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:15px;font-weight:900;margin-bottom:8px}.yr-h small{font-weight:700;color:var(--text-dim);font-size:12px}.yr-h .ux-ib{width:20px;height:20px;font-size:11px;border-width:1.2px;margin-left:2px;align-self:center}.yr-h .r{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}'
     + '.yr-sc{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}.yr-g{display:grid;grid-template-columns:40px repeat(var(--n),minmax(56px,1fr));min-width:calc(40px + var(--n) * 56px)}.yr-g>div{text-align:center;font-size:12px;font-weight:800;padding:2px 0}'
     + '.yr-g .rl{text-align:left;color:var(--text-dim);font-size:11px;display:flex;align-items:center;position:sticky;left:0;z-index:3;background:var(--bg)}.yr-g .fl{grid-column:2/-1;position:relative;padding:0}'
     + '.yr-chip{position:absolute;transform:translateX(-50%);white-space:nowrap;font-size:11px;font-weight:900;padding:2px 8px;border-radius:9px;border:1px solid var(--c,var(--accent));color:var(--c,var(--accent));background:color-mix(in srgb,var(--c,var(--accent)) 14%,transparent);cursor:pointer;line-height:17px}'
@@ -38431,9 +38438,9 @@ function _p2YrTlHtml(C, ro, sum) {
   });
   var dlT = C.isBR ? (C.dlF === C.loi ? 'LOIの月' : P2_SIM_LAB[_p2YmDiff(C.loi, C.dlF)] + 'の月') : 'LOIの月';
   var dl = !C.needFr ? (C.isBR ? 'シミュレーションのフロントが0人です' : 'フロントBRは足りています ✓（直近の目標の条件）')
-    : (C.months.length ? 'フロントは <b>' + _p2YmJa(C.dlF) + '</b> までに <b>' + C.needFr + '人</b>（' + dlT + 'が締め切り。そこから右は薄い帯）' : '<span class="ng">フロントの締め切り（' + dlT + '）が過ぎています。直近の目標を後ろにずらしてください</span>');
+    : (C.months.length ? 'フロントは <b>' + _p2YmJa(C.dlF) + '</b> までに <b>' + C.needFr + '人</b>（' + dlT + '）' : '<span class="ng">フロントの締め切り（' + dlT + '）が過ぎています。直近の目標を後ろにずらしてください</span>');
   if (sum) return '<div class="yr-tl"><div class="yr-sc"><div class="yr-g" style="--n:' + n + '">' + g.replace(/ onclick="p2YrMo\('[^']*'\)"/g, '') + '</div></div><div class="yr-dl">' + dl + '</div></div>';
-  return '<div class="yr-tl"><div class="yr-h"><span class="st">1</span>マイルストーン<small>月を押すと、直近の目標にしたり、イベント（例：SA早期達成）を書けます</small></div>'
+  return '<div class="yr-tl"><div class="yr-h"><span class="st">1</span>マイルストーン' + _uxIb('yr1') + '</div>'
     + '<div class="yr-sc"><div class="yr-g" style="--n:' + n + '">' + g + '</div></div><div class="yr-dl">' + dl + '</div>' + _p2YrMmHtml(C, ro, yms) + '</div>';
 }
 function _p2YrMmHtml(C, ro, yms) {
@@ -38452,7 +38459,7 @@ function _p2YrNearHtml(C, ro) {
   var dis = ro ? ' disabled' : '';
   var money = C.isBR ? '・ファーストボーナス <input class="yr-in n" type="number" inputmode="numeric" value="' + Math.round((+nx.fb || 0) / 10000) + '" onfocus="edSelAll(this)" onchange="p2NxFbSet(this.value)"' + dis + '>万'
     : '・月収 <input class="yr-in n" type="number" inputmode="numeric" value="' + (+nx.inc || '') + '" placeholder="' + (_p2IncOfTitle(nx.title) || '') + '" onfocus="edSelAll(this)" onchange="p2NxSetInc(this.value)"' + dis + '>万';
-  return '<div class="yr-sec"><div class="yr-h"><span class="st">2</span>直近の目標<small>最終目標までの通過点（1年前後）</small></div><div class="yr-near">'
+  return '<div class="yr-sec"><div class="yr-h"><span class="st">2</span>直近の目標' + _uxIb('yr2') + '</div><div class="yr-near">'
     + '<select class="yr-in" onchange="p2NxDl(this.value)"' + dis + '>' + mo + '</select>までに'
     + '<select class="yr-in" onchange="p2NxPick(this.value)"' + dis + '>' + ts.map(function(t) { return '<option' + (t === nx.title ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' + money + '</div></div>';
 }
@@ -38473,10 +38480,10 @@ function _p2YrGapHtml(C, ro, lk, on) {
   var gr = _p2Gap().rates, row = function(lb, sub, val, on, u) { return '<label class="yr-sr"><span>' + lb + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="number" inputmode="numeric" value="' + val + '" onfocus="edSelAll(this)" onchange="' + on + '"><em>' + u + '</em></label>'; };
   var set = lk || ro || !_p2YrSetOn ? '' : '<div class="yr-sp"><div class="hd">計算の設定<span onclick="p2YrSetTgl()">閉じる</span></div>' // v721: ふだんは隠す（⚙で開く）
     + row('BR 1本に必要なフロント', '', C.ratio, 'p2YrSet(\'ratio\',this.value)', '人')
-    + row('1Qルビーあたりの月収', 'Qルビーの必要数＝月収÷これ', gr.qrYen, 'p2GapRate(\'qrYen\',this.value)', '万円')
-    + row('1環境あたりの月収', '環境の必要数＝月収÷これ', gr.envYen, 'p2GapRate(\'envYen\',this.value)', '万円')
-    + row('ルビー候補', 'Qルビー1人あたり', gr.candX, 'p2GapRate(\'candX\',this.value)', '人') + '</div>';
-  return '<div class="yr-sec"><div class="yr-h"><span class="st">3</span>今 → 必要 → ギャップ<small>薄い数字は自動（今＝MAPから・必要＝直近の目標から）。違う時はその場で書きかえ</small>' + (lk || ro ? '' : '<span class="yr-gear' + (_p2YrSetOn ? ' on' : '') + '" onclick="p2YrSetTgl()" title="計算の設定">⚙ 設定</span>') + '</div>'
+    + row('1Qルビーあたりの月収', '', gr.qrYen, 'p2GapRate(\'qrYen\',this.value)', '万円')
+    + row('1環境あたりの月収', '', gr.envYen, 'p2GapRate(\'envYen\',this.value)', '万円')
+    + row('Qルビー1人あたりのルビー候補', '', gr.candX, 'p2GapRate(\'candX\',this.value)', '人') + '</div>';
+  return '<div class="yr-sec"><div class="yr-h"><span class="st">3</span>今 → 必要 → ギャップ' + _uxIb('yr3') + '' + (lk || ro ? '' : '<span class="yr-gear' + (_p2YrSetOn ? ' on' : '') + '" onclick="p2YrSetTgl()" title="計算の設定">⚙ 設定</span>') + '</div>'
     + (lk ? lkH : tb) + '<div class="yr-calc">' + calc + '</div>' + set + '</div>';
 }
 function _p2YrPaceHtml(C, ro) {
@@ -38490,11 +38497,11 @@ function _p2YrPaceHtml(C, ro) {
   var late = C.needFr > 0 && !C.months.length;
   var sum = C.months.length ? '<div class="yr-psum">合計 <b class="' + (tot >= C.needFr ? 'ok' : 'ngt') + '">' + tot + ' / ' + C.needFr + '人</b>' + (tot >= C.needFr ? '<span class="ok">✓ 足りています</span>' : '<span class="ngt">あと ' + (C.needFr - tot) + '人</span>') + '</div>' : '';
   var warn = late && !ro ? '<div class="yr-warn">⚠ フロントを出す月が残っていません。直近の目標を後ろにずらしてください <span class="yr-btn go" onclick="p2YrShift()">直近の目標を1ヶ月ずらす →</span></div>' : '';
-  return '<div class="yr-sec"><div class="yr-h"><span class="st">4</span>フロントのペース<small>今月から締め切りの月まで（計画シート・月の目標と同じ数字）</small>' + (ro || !C.months.length ? '' : '<span class="r" onclick="p2YrEven()">均等に割り振る</span>') + '</div>'
+  return '<div class="yr-sec"><div class="yr-h"><span class="st">4</span>フロントのペース' + _uxIb('yr4') + '' + (ro || !C.months.length ? '' : '<span class="r" onclick="p2YrEven()">均等に割り振る</span>') + '</div>'
     + (box ? '<div class="yr-pace">' + box + '</div>' : '') + sum + warn + '</div>';
 }
 function _p2YrMemoHtml(ro, lk, on) {
-  var hd = '<div class="yr-h"><span class="st">5</span>戦略・やり方のメモ<small>思いついたらメモ。あとから入れる先（やること・予定）を決めます</small></div>';
+  var hd = '<div class="yr-h"><span class="st">5</span>戦略・やり方のメモ' + _uxIb('yr5') + '</div>';
   if (lk) return '<div class="yr-sec">' + hd + '<div class="yr-lock">🔒 組織が<b>' + P2_YR_LOCK + '人</b>になると使えます<small>今 ' + on + '人（自分をのぞく）。それまでは計画シートの「行動」と「やること」で進めましょう</small></div></div>';
   var L = _p2Yr().memo, rows = L.map(function(f) {
     var acts = _p2YrAct === f.id ? '<div class="cats"><span style="--c:var(--accent)" onclick="p2YrMemoTo(\'' + f.id + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2YrMemoTo(\'' + f.id + '\',\'ev\')">📅 予定</span><span style="--c:#FF6B7F" onclick="p2YrMemoTo(\'' + f.id + '\',\'del\')">✕ 消す</span></div>' : '';
@@ -38502,7 +38509,7 @@ function _p2YrMemoHtml(ro, lk, on) {
     return '<div class="iss-r"><div class="h"><b>💡 メモ</b>' + (ro ? '' : '<span class="a" onclick="p2YrMemoAct(\'' + f.id + '\')">→ 残す先</span>') + '</div><div class="t" onclick="p2YrMemoEd(\'' + f.id + '\')">' + evEsc(f.t) + '</div>'
       + (yk ? '<div class="lk"><i style="--c:var(--accent)">✅ やること' + (yk.done ? ' ✓' : '') + '</i></div>' : '') + acts + '</div>';
   }).join('');
-  return '<div class="yr-sec">' + hd + '<div class="iss">' + (ro ? '' : '<input class="iss-fi" placeholder="＋ 戦略・やり方のメモ（例：紹介ルートを増やす。毎週ST2回）Enter" maxlength="200" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YrMemoAdd(this)}">')
+  return '<div class="yr-sec">' + hd + '<div class="iss">' + (ro ? '' : '<input class="iss-fi" placeholder="＋ 戦略・やり方のメモ（Enter）" maxlength="200" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YrMemoAdd(this)}">')
     + rows + (rows ? '' : '<div class="iss-em">まだメモはありません</div>') + '</div></div>';
 }
 // ════ v718: サマリー（見るだけの1枚）。ロードマップ・計画シートの右上「✎ 編集｜📄 サマリー」で切りかえ ════
