@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v723';
+var APP_JS_VERSION = 'v724';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v723';
+  var DATA_VERSION = 'v724';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5381,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v724', d:'2026-10-08', items:['年の目標・ロードマップの⑤を「戦略・戦術」に作り直し：戦略の下に戦術、戦術の下にタスクを、思いつくまま何個でも書けます（字と枠を大きく）','行を押すと、期日（毎週・毎月も）・対象者（名前で探す・何人でも）・数値を入れられます','あとから「→ 入れる先」で、やること（数値があれば数値の目標）・計画シートの行動（4分野）・予定・メンバーのメモに。入れた先は札で出て、タスクのチェックは入れた先にもつながります'] },
   { v:'v723', d:'2026-10-08', items:['計画シートの行動：実行期日をタップしても入力できなかったのを直しました（空いた行でも先に日付を選べる・名前を書いてすぐ日付を押しても選べる）'] },
   { v:'v722', d:'2026-10-08', items:['年の目標・ロードマップの説明文を見出しの横の (i) にまとめて、画面をすっきりさせました'] },
   { v:'v721', d:'2026-10-08', items:['ロードマップ③の計算の設定（BR 1本に必要なフロント・単価・ルビー候補）は、ふだん隠して「⚙ 設定」で開くように。1行ずつの見やすい形にしました','「1ヶ月5人以上は無理なペース（赤）」をなくしました'] },
@@ -38271,7 +38272,7 @@ UX_INFO.yr1 = { t: 'マイルストーン', h: '月を押すと「直近の目�
 UX_INFO.yr2 = { t: '直近の目標', h: '最終目標までの通過点（1年前後）。ここから「必要な数」と「フロントを出す締め切り」が決まります。BRを目指す時は、月収の代わりにファーストボーナスの目標です' };
 UX_INFO.yr3 = { t: '今 → 必要 → ギャップ', h: '薄い数字は自動です。違う時はその場で書きかえられます（空にすると自動に戻る）。<br><b>今</b>：MAPから（フロントBR＝自分から下で最初に出てくるBR、流通＝チームPT、Qルビー＝ルビーの人数、候補＝優先度「高」の人）<br><b>必要</b>：直近の目標から（フロントBR＝タイトルの条件、Qルビー＝月収÷1Qルビーあたりの月収、環境＝月収÷1環境あたりの月収、ルビー候補＝Qルビー×倍率）<br><b>エキスパート</b>：流通のプロ・アカデミーを卒業したメンバー<br>計算のもとは「⚙ 設定」で変えられます。組織が' + P2_YR_LOCK + '人（自分をのぞく）になると表が使えます' };
 UX_INFO.yr4 = { t: 'フロントのペース', h: '今月から、フロントを出す締め切りの月まで。数字は計画シート・月の目標と同じです（理想MAPで決まる月は理想MAPの人数）。<br>「均等に割り振る」で必要なフロントを月に分けます。シミュレーションの「ロードマップのペースに入れる」からも入ります' };
-UX_INFO.yr5 = { t: '戦略・やり方のメモ', h: '思いついたらメモ。あとから「→ 残す先」で、やること・予定に入れる先を決めます。組織が' + P2_YR_LOCK + '人（自分をのぞく）になると使えます' };
+UX_INFO.yr5 = { t: '戦略・戦術', h: '戦略の下に戦術、戦術の下にタスクを、思いつくまま何個でも書けます。<br>行を押すと、期日・対象者（名前で探す）・数値を入れられます。<br>あとから「→ 入れる先」で、やること（数値があれば数値の目標）・計画シートの行動・予定・メンバーのメモに入れます。入れた先は札で出て、済んだら ✓。<br>組織が' + P2_YR_LOCK + '人（自分をのぞく）になると使えます' };
 var _p2YrSetOn = false; // v721: ③の計算の設定（ふだんは隠す）
 function p2YrSetTgl() { _p2YrSetOn = !_p2YrSetOn; renderPlan(); } // ③の表と⑤は組織（自分をのぞく）が15人から
 var _p2YrMoSel = '', _p2YrAct = '';
@@ -38523,6 +38524,170 @@ function _p2YrPaceHtml(C, ro) {
   return '<div class="yr-sec"><div class="yr-h"><span class="st">4</span>フロントのペース' + _uxIb('yr4') + '' + (ro || !C.months.length ? '' : '<span class="r" onclick="p2YrEven()">均等に割り振る</span>') + '</div>'
     + (box ? '<div class="yr-pace">' + box + '</div>' : '') + sum + warn + '</div>';
 }
+// ════ v724: ⑤ 戦略・戦術（戦略 → 戦術 → タスクを何個でも。期日・対象者・数値。入れる先は後から選ぶ）════
+var _ysAdd = null, _ysAct = '', _ysEd = '', _ysQ = '';
+var YS_LV = ['戦略', '戦術', 'タスク'];
+function _ys() {
+  var Y = _p2Yr(); if (!Y.st) Y.st = [];
+  if (Y.memo && Y.memo.length && !Y.stMig) { Y.memo.forEach(function(f) { Y.st.push({ id: 's' + f.id, t: f.t, kids: [], L: f.yk ? { k: 'yk', id: f.yk } : null }); }); Y.stMig = 1; } // v717のメモ→戦略
+  return Y.st;
+}
+function _ysFind(id, list, par, lv) {
+  list = list || _ys(); lv = lv || 0;
+  for (var i = 0; i < list.length; i++) { var x = list[i]; if (x.id === id) return { it: x, list: list, par: par || null, lv: lv }; var r = _ysFind(id, x.kids || [], x, lv + 1); if (r) return r; }
+  return null;
+}
+function _ysMem(id) { var ms = state.members || []; for (var i = 0; i < ms.length; i++) if (ms[i].id === id && !ms[i].deleted) return ms[i]; return null; }
+function _ysWhoLb(w) { return w === 'me' ? '自分' : (w === 'all' ? '全体' : (function(m) { return m ? (m.lastName || _uxName(m)) : '（いない人）'; })(_ysMem(w))); }
+function _ysMid(it) { return (it.who || []).filter(function(w) { return w !== 'me' && w !== 'all' && _ysMem(w); }); }
+function _ysMd(d) { return parseInt(d.slice(5, 7), 10) + '/' + parseInt(d.slice(8), 10); }
+function _ysDone(it) { var L = it.L; if (L && (L.k === 'yk' || L.k === 'act' || L.k === 'ev')) { var e = findEvent(L.id); if (e && !e.deleted) return !!e.done; } return !!it.dn; }
+function _ysTasks(it, lv) { if (lv === 1) return (it.kids || []).slice(); var a = []; (it.kids || []).forEach(function(k) { a = a.concat(k.kids || []); }); return a; } // タスク＝3段目だけ
+function _ysMeta(it) {
+  var m = [];
+  if (it.rep || it.d) m.push('📅 ' + (it.rep ? (it.rep === 'w' ? '毎週' : '毎月') + (it.d ? '（' + _ysMd(it.d) + 'まで）' : '') : _ysMd(it.d)));
+  if ((it.who || []).length) m.push('👤 ' + it.who.map(_ysWhoLb).join('・'));
+  if (+it.n > 0) m.push('🔢 ' + it.n + (it.u || ''));
+  return m.length ? '<div class="ys-mt">' + m.map(function(x) { return '<span>' + evEsc(x) + '</span>'; }).join('') + '</div>' : '';
+}
+function _ysBadge(it) {
+  var L = it.L; if (!L) return '';
+  if (L.k === 'ykn') { var n = _p2YkN().filter(function(x) { return x.id === L.id; })[0]; return n ? '<i class="b">✅ やること ' + (+n.v || 0) + '/' + n.g + '</i>' : ''; }
+  if (L.k === 'memo') return '<i class="b">🗒 メモ</i>';
+  var e = findEvent(L.id); if (!e || e.deleted) return '';
+  var lb = L.k === 'yk' ? '✅ やること' : (L.k === 'ev' ? '📅 予定' + (e.date ? ' ' + _ysMd(e.date) : '') : '📋 ' + ((P2_SH_CAT.filter(function(c) { return c.k === e.planCat; })[0] || {}).s || '行動'));
+  return '<i class="b' + (e.done ? ' ok' : '') + '" onclick="event.stopPropagation();openEventModal(\'' + e.id + '\')">' + lb + (e.done ? ' ✓' : '') + '</i>';
+}
+function _ysDest(it) {
+  var hasM = _ysMid(it).length > 0;
+  return '<div class="ys-dest"><span style="--c:var(--accent)" onclick="ysTo(\'' + it.id + '\',\'yk\')">✅ やること' + (+it.n > 0 ? '（数値の目標）' : '') + '</span>'
+    + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="ysTo(\'' + it.id + '\',\'act:' + c.k + '\')">📋 ' + c.s + '</span>'; }).join('')
+    + '<span style="--c:#5AD7FF" onclick="ysTo(\'' + it.id + '\',\'ev\')">📅 予定</span>' + (hasM ? '<span style="--c:var(--text-mid)" onclick="ysTo(\'' + it.id + '\',\'memo\')">🗒 メンバーのメモ</span>' : '') + '</div>';
+}
+function _ysRow(it, lv, ro) {
+  var isT = lv === 2 || (lv === 1 && !(it.kids || []).length && false), dn = _ysDone(it), T = _ysTasks(it, lv), tn = T.filter(_ysDone).length;
+  var prog = lv < 2 && T.length ? '<em>タスク ' + tn + '/' + T.length + '</em>' : '';
+  var ck = lv === 2 ? '<span class="ck' + (dn ? ' on' : '') + '" onclick="event.stopPropagation();ysDn(\'' + it.id + '\')">' + (dn ? '✓' : '') + '</span>' : '<span class="lv">' + YS_LV[lv] + '</span>';
+  var h = '<div class="ys-r l' + lv + (dn && lv === 2 ? ' dn' : '') + '"><div class="ln" onclick="' + (ro ? '' : 'ysEdit(\'' + it.id + '\')') + '">' + ck + '<div class="tx"><div class="t">' + evEsc(it.t) + '</div>' + _ysMeta(it) + '</div>'
+    + '<div class="rt">' + prog + _ysBadge(it) + (ro ? '' : '<b onclick="event.stopPropagation();ysAct(\'' + it.id + '\')">' + (it.L ? '変える' : '→ 入れる先') + '</b>') + '</div></div>' + (_ysAct === it.id && !ro ? _ysDest(it) : '');
+  if (lv < 2) {
+    h += '<div class="ys-k">' + (it.kids || []).map(function(k) { return _ysRow(k, lv + 1, ro); }).join('');
+    if (!ro) h += _ysAdd && _ysAdd.pid === it.id ? '<input class="ys-in" id="ysIn" placeholder="' + YS_LV[lv + 1] + 'を書く（Enterで次も）" maxlength="200" onkeydown="ysKey(event,this)" onblur="ysAddBlur(this)">'
+      : '<div class="ys-add" onclick="ysAddOpen(\'' + it.id + '\')">＋ ' + YS_LV[lv + 1] + '</div>';
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+function _p2YrStHtml(ro, lk, on) {
+  var hd = '<div class="yr-h"><span class="st">5</span>戦略・戦術' + _uxIb('yr5') + '</div>';
+  if (lk) return '<div class="yr-sec">' + hd + '<div class="yr-lock">🔒 組織が<b>' + P2_YR_LOCK + '人</b>になると使えます<small>今 ' + on + '人（自分をのぞく）。それまでは計画シートの「行動」と「やること」で進めましょう</small></div></div>';
+  _ysCss();
+  var S = _ys(), body = S.map(function(s) { return '<div class="ys-c">' + _ysRow(s, 0, ro) + '</div>'; }).join('');
+  var add = ro ? '' : (_ysAdd && _ysAdd.pid === '' ? '<div class="ys-c"><input class="ys-in big" id="ysIn" placeholder="戦略を書く（例：紹介ルートを増やす）" maxlength="200" onkeydown="ysKey(event,this)" onblur="ysAddBlur(this)"></div>' : '<div class="ys-new" onclick="ysAddOpen(\'\')">＋ 戦略を書く</div>');
+  return '<div class="yr-sec">' + hd + body + (S.length || ro ? '' : '<div class="ys-em">思いつくまま書いて、あとから「→ 入れる先」でやること・計画シート・予定に入れます</div>') + add + '</div>' + _ysEdHtml();
+}
+// ── 書く ──
+function ysAddOpen(pid) { _ysAdd = { pid: pid }; _ysAct = ''; renderPlan(); setTimeout(function() { var n = document.getElementById('ysIn'); if (n) { n.focus(); try { n.scrollIntoView({ block: 'center' }); } catch (e) {} } }, 30); }
+function ysKey(ev, el) { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); ysAddDo(el, true); } else if (ev.key === 'Escape') { _ysAdd = null; renderPlan(); } }
+function ysAddBlur(el) { setTimeout(function() { if (!document.body.contains(el)) return; if (String(el.value || '').trim()) ysAddDo(el, false); else { _ysAdd = null; renderPlan(); } }, 120); }
+function ysAddDo(el, more) {
+  if (_p2ShRo() || !_ysAdd) return; var v = String((el && el.value) || '').trim(); if (!v) return; el.value = '';
+  var it = { id: 'y' + Date.now().toString(36) + Math.floor(Math.random() * 1000), t: v.slice(0, 200), kids: [] };
+  if (_ysAdd.pid) { var f = _ysFind(_ysAdd.pid); if (!f) return; f.it.kids = f.it.kids || []; f.it.kids.push(it); } else _ys().push(it);
+  saveGoals(); if (!more) _ysAdd = null; renderPlan();
+  if (more) setTimeout(function() { var n = document.getElementById('ysIn'); if (n) n.focus(); }, 30);
+}
+function ysDn(id) {
+  var f = _ysFind(id); if (!f) return; var L = f.it.L, e = L && (L.k === 'yk' || L.k === 'act' || L.k === 'ev') ? findEvent(L.id) : null;
+  if (e && !e.deleted) { try { toggleEventDone(e.id); } catch (er) {} } else { f.it.dn = !f.it.dn; saveGoals(); }
+  renderPlan();
+}
+function ysAct(id) { _ysAct = _ysAct === id ? '' : id; renderPlan(); }
+// ── 入れる先 ──
+function ysTo(id, kind) {
+  if (_p2ShRo()) return; var f = _ysFind(id); if (!f) return; var it = f.it, mids = _ysMid(it), ym = it.d ? it.d.slice(0, 7) : _p2Ym(0), who = (it.who || [])[0] === 'all' ? 'all' : 'me';
+  _ysAct = '';
+  if (kind === 'memo') { mids.forEach(function(mid) { var m = _ysMem(mid); if (m) m.memo = (String(m.memo || '').trim() ? m.memo + '\n' : '') + '【' + YS_LV[f.lv] + '】' + it.t; }); try { autoSave(); } catch (e) {} it.L = { k: 'memo' }; saveGoals(); renderPlan(); toast('🗒 メンバーのメモに入れました'); return; }
+  if (kind === 'ev') {
+    openEventModal(null, mids[0] || '', it.d || '', 'event');
+    var at = new Date().toISOString(), t = it.t;
+    setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30);
+    (function watch(n) { var hit = (state.events || []).filter(function(e) { return e && !e.deleted && e.type !== 'task' && String(e.createdAt || '') >= at && e.title === t; })[0];
+      if (hit) { it.L = { k: 'ev', id: hit.id }; saveGoals(); if (currentView === 'plan') renderPlan(); return; }
+      var op = !!(document.getElementById('eventModal') && document.getElementById('eventModal').classList.contains('open')); if (!op && n > 6) return; if (n < 1200) setTimeout(function() { watch(n + 1); }, 500); })(0);
+    return;
+  }
+  if (kind === 'yk' && +it.n > 0) { var nid = 'n' + Date.now().toString(36); _p2YkN().push({ id: nid, t: it.t.slice(0, 60), g: +it.n, v: 0, ym: ym, mid: mids[0] || '', who: mids.length ? '' : who, cal: [] }); it.L = { k: 'ykn', id: nid }; saveGoals(); renderPlan(); toast('✅ やること（数値の目標）に入れました'); return; }
+  var e = _tdMakeTask(it.t.slice(0, 120), it.d || '', '');
+  if (kind === 'yk') { e.yk = 1; e.planYm = ym; e.subs = (it.kids || []).map(function(k) { return { t: k.t.slice(0, 100), dn: _ysDone(k) }; }); }
+  else { e.planYm = ym; e.planCat = kind.slice(4); }
+  if (mids.length) { e.memberId = mids[0]; e.memberIds = mids.slice(); e.vis = 'both'; e.selfShow = true; } else if (kind === 'yk') e.who = who;
+  state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  it.L = { k: kind === 'yk' ? 'yk' : 'act', id: e.id }; saveGoals(); renderPlan();
+  toast(kind === 'yk' ? '✅ やることに入れました' : '📋 計画シートの「' + ((P2_SH_CAT.filter(function(c) { return c.k === kind.slice(4); })[0] || {}).s || '') + '」に入れました（' + parseInt(ym.slice(5), 10) + '月）');
+}
+// ── 直す（スマホは下から・PCは窓）──
+function ysEdit(id) { _ysEd = id; _ysQ = ''; _ysAct = ''; renderPlan(); setTimeout(function() { var t = document.getElementById('ysEdT'); if (t) { _p2ShGrow && _p2ShGrow(t); } }, 30); }
+function ysEdClose() { _ysEd = ''; renderPlan(); }
+function ysSet(k, v) {
+  if (_p2ShRo()) return; var f = _ysFind(_ysEd); if (!f) return; var it = f.it;
+  if (k === 't') { v = String(v || '').trim(); if (!v) return; var o = it.t; it.t = v.slice(0, 200); var L = it.L, e = L && L.id ? findEvent(L.id) : null; if (e && !e.done && e.title === o.slice(0, 120)) { e.title = it.t.slice(0, 120); e.updatedAt = new Date().toISOString(); saveEventDoc(e); } if (L && L.k === 'ykn') _p2YkN().forEach(function(x) { if (x.id === L.id && x.t === o.slice(0, 60)) x.t = it.t.slice(0, 60); }); }
+  else if (k === 'n') { var n = parseInt(v, 10); if (n > 0) it.n = n; else delete it.n; }
+  else if (k === 'd' || k === 'rep' || k === 'u') { if (v) it[k] = v; else delete it[k]; }
+  saveGoals(); renderPlan();
+}
+function ysWho(w) { var f = _ysFind(_ysEd); if (!f) return; var a = f.it.who = f.it.who || [], i = a.indexOf(w); if (i >= 0) a.splice(i, 1); else a.push(w); if (!a.length) delete f.it.who; _ysQ = ''; saveGoals(); renderPlan(); setTimeout(function() { var q = document.getElementById('ysQ'); if (q && w !== 'me' && w !== 'all') q.focus(); }, 30); }
+function ysQ(v) { _ysQ = v; var b = document.getElementById('ysRes'); if (b) b.innerHTML = _ysRes(); }
+function _ysRes() {
+  var q = String(_ysQ || '').replace(/\s/g, '').toLowerCase(); if (!q) return '';
+  var f = _ysFind(_ysEd), sel = f ? (f.it.who || []) : [];
+  var L = (state.members || []).filter(function(m) { return m && !m.deleted && sel.indexOf(m.id) < 0 && ((m.lastName || '') + (m.firstName || '') + (m.kana || '')).replace(/\s/g, '').toLowerCase().indexOf(q) >= 0; }).slice(0, 8);
+  return L.length ? L.map(function(m) { return '<span onclick="ysWho(\'' + m.id + '\')">＋ ' + evEsc(_uxName(m)) + '<small>' + evEsc(titleAbbr(m.title || '')) + '</small></span>'; }).join('') : '<em>見つかりません</em>';
+}
+function ysDel() {
+  var f = _ysFind(_ysEd); if (!f) return;
+  if (!confirm('この' + YS_LV[f.lv] + 'を消しますか？' + ((f.it.kids || []).length ? '（下に書いたものも消えます）' : '') + '\n入れた先（やること・予定など）は残ります')) return;
+  f.list.splice(f.list.indexOf(f.it), 1); _ysEd = ''; saveGoals(); renderPlan();
+}
+function _ysEdHtml() {
+  if (!_ysEd) return ''; var f = _ysFind(_ysEd); if (!f) { _ysEd = ''; return ''; }
+  var it = f.it, who = it.who || [];
+  var chips = ['me', 'all'].map(function(w) { return '<span class="' + (who.indexOf(w) >= 0 ? 'on' : '') + '" onclick="ysWho(\'' + w + '\')">' + (w === 'me' ? '自分' : '全体') + '</span>'; }).join('')
+    + who.filter(function(w) { return w !== 'me' && w !== 'all'; }).map(function(w) { return '<span class="on">' + evEsc(_ysWhoLb(w)) + '<i onclick="ysWho(\'' + w + '\')">✕</i></span>'; }).join('');
+  return '<div class="ys-ov" onclick="if(event.target===this)ysEdClose()"><div class="ys-sh"><div class="hd"><b>' + YS_LV[f.lv] + '</b><span onclick="ysEdClose()">完了</span></div>'
+    + '<textarea id="ysEdT" rows="2" maxlength="200" oninput="_p2ShGrow&&_p2ShGrow(this)" onchange="ysSet(\'t\',this.value)">' + evEsc(it.t) + '</textarea>'
+    + '<div class="fl"><label>📅 期日</label><div class="v"><input type="date" value="' + (it.d || '') + '" onchange="ysSet(\'d\',this.value)"><select onchange="ysSet(\'rep\',this.value)"><option value="">くり返しなし</option><option value="w"' + (it.rep === 'w' ? ' selected' : '') + '>毎週</option><option value="m"' + (it.rep === 'm' ? ' selected' : '') + '>毎月</option></select></div></div>'
+    + '<div class="fl"><label>👤 対象者</label><div class="v col"><div class="wc">' + chips + '</div><input id="ysQ" class="q" placeholder="🔍 名前で探す" value="' + evEsc(_ysQ) + '" oninput="ysQ(this.value)"><div class="res" id="ysRes">' + _ysRes() + '</div></div></div>'
+    + '<div class="fl"><label>🔢 数値</label><div class="v"><input type="number" inputmode="numeric" class="n" value="' + (+it.n > 0 ? it.n : '') + '" placeholder="例：8" onchange="ysSet(\'n\',this.value)"><input class="u" maxlength="6" value="' + evEsc(it.u || '') + '" placeholder="回・人" onchange="ysSet(\'u\',this.value)"></div></div>'
+    + '<div class="fl"><label>→ 入れる先</label><div class="v col">' + (it.L ? '<div class="cur">いま：' + (_ysBadge(it) || '（入れた先は消えています）') + '</div>' : '') + _ysDest(it) + '</div></div>'
+    + '<div class="ft"><span class="del" onclick="ysDel()">この' + YS_LV[f.lv] + 'を消す</span></div></div></div>';
+}
+function _ysCss() {
+  if (document.getElementById('ysCss')) return;
+  var st = document.createElement('style'); st.id = 'ysCss';
+  st.textContent = '.ys-c{border:1px solid var(--border);border-radius:16px;background:var(--surface2);padding:6px 14px 10px;margin-top:12px}'
+    + '.ys-r .ln{display:flex;align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer}.ys-r .tx{flex:1;min-width:0}.ys-r .t{font-size:16px;font-weight:800;line-height:1.5;word-break:break-word}.ys-r.l0>.ln .t{font-size:18px;font-weight:900}.ys-r.dn>.ln .t{text-decoration:line-through;color:var(--text-dim)}'
+    + '.ys-r .lv{flex:none;font-size:11px;font-weight:900;padding:3px 7px;border-radius:7px;margin-top:3px;color:var(--gold);background:color-mix(in srgb,var(--gold) 16%,transparent)}.ys-r.l1>.ln .lv{color:#5AD7FF;background:color-mix(in srgb,#5AD7FF 16%,transparent)}'
+    + '.ys-r .ck{flex:none;width:24px;height:24px;margin-top:1px;border-radius:8px;border:2px solid var(--border2,var(--border));display:flex;align-items:center;justify-content:center;font-weight:900;color:#06281f}.ys-r .ck.on{background:var(--accent);border-color:var(--accent)}'
+    + '.ys-r .ys-mt{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;width:auto}.ys-r .ys-mt span{font-size:13px;font-weight:800;color:var(--text-mid);white-space:nowrap}'
+    + '.ys-r .rt{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:46%}.ys-r .rt em{font-style:normal;font:800 12px Inter,sans-serif;color:var(--text-mid)}.ys-r .rt b{font-size:13px;font-weight:900;color:var(--accent);white-space:nowrap;padding:2px 0}.ys-r .rt i.b{font-style:normal;font-size:12px;font-weight:900;padding:3px 8px;border-radius:8px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);white-space:nowrap}.ys-r .rt i.b.ok{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text-mid)}'
+    + '.ys-k{margin-left:12px;padding-left:12px;border-left:2px solid var(--border)}.ys-r.l1{border-top:1px solid var(--border)}.ys-r.l2>.ln{padding:8px 0}'
+    + '.ys-add{font-size:14px;font-weight:800;color:var(--text-dim);padding:9px 0;cursor:pointer}.ys-add:hover{color:var(--accent)}'
+    + '.ys-in{width:100%;box-sizing:border-box;margin:6px 0;background:var(--bg);border:1.5px solid var(--accent);border-radius:12px;color:var(--text);font:700 16px inherit;font-family:inherit;padding:11px 12px}.ys-in:focus{outline:none}.ys-in.big{font-size:17px;margin:6px 0 2px}'
+    + '.ys-new{margin-top:12px;padding:14px;border-radius:14px;border:1.5px dashed var(--accent);color:var(--accent);font-size:16px;font-weight:900;text-align:center;cursor:pointer}.ys-em{margin-top:8px;font-size:14px;font-weight:700;color:var(--text-mid);line-height:1.6}'
+    + '.ys-dest{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 10px}.ys-dest span{font-size:13.5px;font-weight:900;padding:8px 12px;border-radius:11px;border:1.5px solid var(--c);color:var(--c);cursor:pointer;background:var(--surface)}'
+    + '.ys-ov{position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}.ys-sh{width:100%;max-width:560px;max-height:88vh;overflow:auto;background:var(--surface);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box}'
+    + 'body.px3 .ys-ov,body.pc .ys-ov{align-items:center}body.px3 .ys-sh{border-radius:18px}'
+    + '.ys-sh .hd{display:flex;align-items:center;margin-bottom:8px}.ys-sh .hd b{font-size:13px;font-weight:900;color:var(--text-mid)}.ys-sh .hd span{margin-left:auto;font-size:15px;font-weight:900;color:var(--accent);cursor:pointer;padding:4px 2px}'
+    + '.ys-sh textarea{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text);font:800 17px/1.5 inherit;font-family:inherit;padding:10px 12px;resize:none}'
+    + '.ys-sh .fl{display:flex;gap:10px;padding:12px 0;border-top:1px solid var(--border);margin-top:10px}.ys-sh .fl label{flex:none;width:88px;font-size:14px;font-weight:900;color:var(--text-mid);padding-top:9px}.ys-sh .fl .v{flex:1;min-width:0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ys-sh .fl .v.col{flex-direction:column;align-items:stretch}'
+    + '.ys-sh input,.ys-sh select{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font:800 16px inherit;font-family:inherit;padding:8px 10px;min-width:0}.ys-sh input.n{width:90px;text-align:center}.ys-sh input.u{width:90px}.ys-sh input:focus,.ys-sh select:focus,.ys-sh textarea:focus{outline:none;border-color:var(--accent)}'
+    + '.ys-sh .wc{display:flex;flex-wrap:wrap;gap:6px}.ys-sh .wc span{font-size:14px;font-weight:900;padding:7px 12px;border-radius:10px;border:1px solid var(--border);cursor:pointer;color:var(--text-mid)}.ys-sh .wc span.on{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:var(--accent);color:var(--accent)}.ys-sh .wc span i{font-style:normal;margin-left:6px;opacity:.7}'
+    + '.ys-sh .res{display:flex;flex-wrap:wrap;gap:6px}.ys-sh .res span{font-size:14px;font-weight:800;padding:7px 11px;border-radius:10px;background:var(--surface2);cursor:pointer}.ys-sh .res span small{margin-left:5px;font-size:11px;color:var(--text-dim)}.ys-sh .res em{font-style:normal;font-size:13px;color:var(--text-dim)}'
+    + '.ys-sh .cur{font-size:13px;font-weight:800;color:var(--text-mid)}.ys-sh .cur i.b{font-style:normal;margin-left:4px;color:var(--accent)}.ys-sh .ft{margin-top:14px;text-align:center}.ys-sh .ft .del{font-size:13px;font-weight:800;color:#FF6B7F;cursor:pointer}'
+    + '@media (max-width:640px){.ys-c{padding:4px 12px 8px}.ys-k{margin-left:6px;padding-left:10px}.ys-sh .fl{flex-direction:column;gap:6px}.ys-sh .fl label{width:auto;padding-top:0}}';
+  document.head.appendChild(st);
+}
 function _p2YrMemoHtml(ro, lk, on) {
   var hd = '<div class="yr-h"><span class="st">5</span>戦略・やり方のメモ' + _uxIb('yr5') + '</div>';
   if (lk) return '<div class="yr-sec">' + hd + '<div class="yr-lock">🔒 組織が<b>' + P2_YR_LOCK + '人</b>になると使えます<small>今 ' + on + '人（自分をのぞく）。それまでは計画シートの「行動」と「やること」で進めましょう</small></div></div>';
@@ -38556,7 +38721,7 @@ function _p2SumCss() {
     + '.sm-a{border-top:3px solid var(--c)}.sm-a .h{display:flex;justify-content:space-between;font-size:13.5px;font-weight:900}.sm-a .h span{font:900 13px Inter,sans-serif;color:var(--text-mid)}.sm-a .nx{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--text-mid)}.sm-a .nx b{color:var(--text)}.sm-a .od{margin-top:4px;font-size:12px;font-weight:900;color:#FF6B7F}'
     + '.sm-is b{flex:none;font-size:14px;font-weight:900;min-width:64px}.sm-is small{font-size:11px;color:var(--text-dim);margin-left:3px}.sm-is .lk{margin:0 0 0 auto;display:flex;gap:5px;flex-wrap:wrap}.sm-is .lk i{font-style:normal;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;color:var(--text-mid);border:1px solid var(--border);white-space:nowrap}'
     + '.sm-gl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.sm-gl>div{padding:9px 11px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:13px;font-weight:800;display:flex;justify-content:space-between;gap:6px}.sm-gl em{font-style:normal;color:#FF6B7F;white-space:nowrap}.sm-gl em.ok{color:var(--accent)}.sm-gl em.dm{color:var(--text-dim)}'
-    + '.sm-sg span{margin-left:auto;font-size:12px;color:var(--text-mid);white-space:nowrap}.sm-sg span.ok{color:var(--accent)}.sm-em{font-size:12.5px;color:var(--text-dim);font-weight:700;padding:4px 2px}'
+    + '.sm-st{padding:10px 13px;border-radius:12px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px}.sm-st .h{display:flex;align-items:baseline;gap:10px;font-size:15px;font-weight:900}.sm-st .h span{margin-left:auto;font-size:12px;color:var(--text-mid);white-space:nowrap}.sm-st .h span.ok{color:var(--accent)}.sm-st .k{display:flex;gap:6px;font-size:13.5px;font-weight:700;color:var(--text-mid);margin-top:4px}.sm-st .k small{color:var(--text-dim)}.sm-st .k em{font-style:normal;margin-left:auto;font-size:12px}.sm-sg span{margin-left:auto;font-size:12px;color:var(--text-mid);white-space:nowrap}.sm-sg span.ok{color:var(--accent)}.sm-em{font-size:12.5px;color:var(--text-dim);font-weight:700;padding:4px 2px}'
     + '.sm .yr-goal{cursor:default}.sm .yr-goal+.yr-goal{margin-top:8px}.sm .yr-tl{border-bottom:0;padding-top:0;margin-top:0}.sm .yr-g .mo{cursor:default}.sm .yr-g .mo:hover{background:none}.sm .yr-chip{cursor:default}'
     + '@media (max-width:760px){.sm-g4,.sm-kg,.sm-ag{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sm-gl{grid-template-columns:repeat(2,minmax(0,1fr))}.sm-c,.sm-k,.sm-a{padding:10px 11px}.sm-c b,.sm-k .v{font-size:20px}.sm-seg span{padding:6px 9px;font-size:12px}}';
   document.head.appendChild(st);
@@ -38606,7 +38771,11 @@ function _p2YrSumHtml(C, lk) {
     + '<div class="sm-c"><small>締め切り（' + (C.isBR ? 'フロントを出す月' : 'LOIの月') + '）</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>'
     + '<div class="sm-c"><small>今月のペース</small><b class="ac">' + cv + '<i>人</i></b></div><div class="sm-c"><small>割り振ったフロント</small><b' + (tot >= C.needFr ? ' class="ac"' : '') + '>' + tot + '<i>/ ' + C.needFr + '人</i></b></div></div>';
   var gap = lk ? '' : '<div class="sm-h">ギャップ<small>今 → 必要</small></div><div class="sm-gl">' + C.rows.map(function(r) { return '<div>' + r.lb + '<em class="' + (r.gap === null ? 'dm' : (r.gap <= 0 ? 'ok' : '')) + '">' + (r.gap === null ? '—' : (r.gap > 0 ? 'あと' + r.gap.toLocaleString() + r.u : '✓')) + '</em></div>'; }).join('') + '</div>';
-  var mm = lk ? '' : '<div class="sm-h">戦略・やり方のメモ</div>' + (_p2Yr().memo.map(function(f) { var y = f.yk && findEvent(f.yk); y = y && !y.deleted ? y : null; return '<div class="sm-sg">' + evEsc(f.t) + (y ? '<span class="' + (y.done ? 'ok' : '') + '">✅ やること' + (y.done ? ' ✓' : '') + '</span>' : '<span>入れ先まだ</span>') + '</div>'; }).join('') || '<div class="sm-em">まだありません</div>');
+  var mm = lk ? '' : '<div class="sm-h">戦略・戦術</div>' + (_ys().map(function(st) { // v724
+    var T = _ysTasks(st, 0), tn = T.filter(_ysDone).length;
+    return '<div class="sm-st"><div class="h"><b>' + evEsc(st.t) + '</b>' + (T.length ? '<span class="' + (tn === T.length ? 'ok' : '') + '">タスク ' + tn + '/' + T.length + '</span>' : '') + '</div>'
+      + (st.kids || []).map(function(k) { var K = _ysTasks(k, 1), kn = K.filter(_ysDone).length; return '<div class="k">・' + evEsc(k.t) + (+k.n > 0 ? ' <small>' + k.n + evEsc(k.u || '') + '</small>' : '') + (K.length ? '<em>' + kn + '/' + K.length + '</em>' : '') + '</div>'; }).join('') + '</div>';
+  }).join('') || '<div class="sm-em">まだありません</div>');
   return '<div class="sm">' + _p2YrGoalHtml().replace(' onclick="p2Go(\'goal\',0)"', '').replace('<span class="ed">✎ 直す</span>', '') + near
     + '<div class="sm-h">マイルストーン</div>' + _p2YrTlHtml(C, true, true)
     + '<div class="sm-h">必要なこと</div>' + need + gap + mm + '</div>';
@@ -38617,7 +38786,7 @@ function _p2YearPageHtml(pc) {
   setTimeout(_p2YrAfter, 0);
   var hd = pc ? '' : '<h2 class="ux-h2">年の目標・ロードマップ</h2><div class="sm-bar">' + _p2SumSeg('yr') + '</div>';
   if (_p2SumOn('yr')) return hd + '<div class="yr">' + _p2YrSumHtml(C, lk) + '</div>';
-  return hd + '<div class="yr">' + _p2YrGoalHtml() + _p2YrTlHtml(C, ro) + _p2YrNearHtml(C, ro) + _p2YrGapHtml(C, ro, lk, on) + _p2YrPaceHtml(C, ro) + _p2YrMemoHtml(ro, lk, on) + '</div>';
+  return hd + '<div class="yr">' + _p2YrGoalHtml() + _p2YrTlHtml(C, ro) + _p2YrNearHtml(C, ro) + _p2YrGapHtml(C, ro, lk, on) + _p2YrPaceHtml(C, ro) + _p2YrStHtml(ro, lk, on) + '</div>';
 }
 
 // ── START ──
