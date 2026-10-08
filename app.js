@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v741';
+var APP_JS_VERSION = 'v742';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v741';
+  var DATA_VERSION = 'v742';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v742', d:'2026-10-09', items:['PLAN：チェック（必須アイテム・TRAINING）を入口のタイルに','🧰 ツールは「やる理由（作文）」と「BB早見表」だけに（入口のタイルにあるもの・年別目標・ギャップ・前の画面はなくしました）。目標のページの「年別目標 ›」「ギャップ ›」もなくしました','やる理由の作文：書く欄の上に「📦 アーカイブする」（いまの作文を日付つきで残して白紙から）と「🗂 過去の作文」（読む・この作文から書き直す・消す）'] },
   { v:'v741', d:'2026-10-09', items:['分析 › パワーライン：月はじめ（今月のポイントがまだ少ない時）に「0本」になって、先月までのパワーラインが見えなかったのを直しました','月ごとに見られるように（上の 10月・9月・8月…を押す。それぞれの月のMAPから出します）。今月がまだ0本の時は、いちばん新しい月を出します','前の月との差（▲▼）と「表で見る」も、それぞれの月のMAPの数字に'] },
   { v:'v740', d:'2026-10-09', items:['やること：数値の目標（📊）にも「＋ サブタスク」','名前を押して直す時は、名前の欄が行そのものに（名前は1つだけ）。下に だれの・期限・月（数値は 今・目標・単位）をラベル付きで。「完了」で閉じる','消すのはToDoと同じ：左にスワイプ → 🗑 消す（右にスワイプで済み）。消した後は「↩ 元に戻す」'] },
   { v:'v739', d:'2026-10-09', items:['計画シートの実行期日（予定に入れる）：時間を予定と同じ「開始〜終了」の数字パッドで入れられるように（1900 と打つと 19:00〜20:00、続けて終了も打てます）'] },
@@ -16818,7 +16819,8 @@ function _p2HubData() {
     (function() { var cy = _p2Ym(0), tk = _p2YkTasks().filter(function(e) { return !e.done && (e.planYm === cy || (e.date && e.date.slice(0, 7) === cy)); }).length, nn = _p2YkN().filter(function(n) { return n.ym === cy; }); return { k: 'yk', c: 'mint', ic: '✅', lb: 'やること', w: 1, st: '今月 <em>' + tk + '</em>件' + (nn.length ? '・数値の目標 <em>' + nn.filter(function(n) { return n.v >= n.g; }).length + '</em> / ' + nn.length + ' 達成' : '') + '<br>今月から長期まで・📅で予定に' }; })(),
     { k: 'ideal', c: 'rose', ic: '✨', lb: '理想', bd: _p2G().p1 ? '✓ 答えた' : '', st: _p2IdealSt() },
     (function() { var dr9 = _p2G().dreams || []; return { k: 'dream', c: 'pur', ic: '🌈', lb: '夢100', st: dr9.length ? '<em>' + dr9.filter(function(d) { return d.done; }).length + '</em> / ' + dr9.length + ' 叶えた' : '夢を<br><em>書き出す</em>' }; })(),
-    { k: 'sim', c: 'gold', ic: '🎮', lb: 'シミュレーション', w: 1, st: 'B22シミュレーション' }
+    { k: 'sim', c: 'gold', ic: '🎮', lb: 'シミュレーション', w: 1, st: 'B22シミュレーション' },
+    (function() { var ck = _p2CkCount(); return { k: 'ck', c: 'mint', ic: '☑️', lb: 'チェック', w: 1, bd: ck.total && ck.done >= ck.total ? '✓ 完了' : '', st: '<em>' + ck.done + '</em> / ' + ck.total + ' 完了・必須アイテム／TRAINING' }; })() // v742: チェックリストを入口のタイルに
   ];
   return { ym: ym, T: T, nk: nk, S: S, rv: rv, left: left, why: why };
 }
@@ -17154,24 +17156,10 @@ function _p2PageParts() {
       else { next = '✅ 保存する'; nextOn = 'p2RvDone()'; }
       if (i < 3) body += '<div style="display:flex;margin-top:12px"><span class="ux-skip" onclick="p2RvDone(true)">今回はスキップ</span></div>';
     }
-  } else if (k === 'tool') {
-    var ck = _p2CkCount(), dr = _p2G().dreams || [];
-    body = '<div class="ux-sec" style="margin-top:0">前の画面（しばらく残します）</div><div class="ux-list">' // v686: 計画シートにまとめた画面
-      + li('🏆', '目標', '月収・タイトル・期日・次の山', 'p2Go(\'goal\')')
-      + li('🎯', _p2PgTitle('mon'), 'S稼働・コミッションなど', 'p2Go(\'mon\')')
-      + li('📝', '今週やること', '', 'p2Go(\'do\')')
-      + li('🔁', '振り返り', '', 'p2Go(\'rev\')')
-      + li('📋', 'サマリー', '', 'p2Go(\'sum\')')
-      + '</div><div class="ux-sec">ツール</div><div class="ux-list">'
-      + li('🧮', 'ギャップ', '今と目標の差', 'p2Go(\'gap\')')
-      + li('🗺', 'ロードマップ', '月ごとのフロント・マイルストーン', 'p2Go(\'rm\')')
-      + li('📆', '年別目標', '', 'p2YearsOpen(\'tool\')')
-      + li('🎮', 'シミュレーション', '', 'p2SimOpen()')
-      + li('🌈', '夢100', dr.length ? dr.filter(function(d) { return d.done; }).length + '/' + dr.length : '', 'p2Go(\'dream\')')
+  } else if (k === 'tool') { // v742: ツールは入口のタイルに無いものだけ（やる理由の作文・BB早見表）
+    body = '<div class="ux-list" style="margin-top:0">'
       + li('✍️', 'やる理由（作文）', 'やる理由・1年後・成功した毎日', 'p2Go(\'essay\')')
-      + li('✅', 'チェック', ck.done + '/' + ck.total, 'p2Go(\'ck\')')
       + li('💴', 'BB早見表', 'GSVからボーナスの目安', 'p2Go(\'bb\')')
-      + li('⚙️', '今週やることの設定', '動員の計画など', 'p2DoMenu(\'more\')')
       + '</div>';
   }
   var back = ((k === 'ck' || k === 'sim' || k === 'dream') && _p2From !== 'tool') ? 'p2Go(\'\')' : (k === 'ck' || k === 'sim' || k === 'bb' || k === 'gap' || ((k === 'essay' || k === 'dream') && !i)) ? 'p2Go(\'tool\')' : (k === 'dok' ? 'p2Go(\'do\')' : ((k === 'rmm' || k === 'rmt') ? 'p2Go(\'rm\')' : 'p2Back()'));
@@ -19510,7 +19498,7 @@ function _pcxTile(t, on, next) {
     + '<span class="ic">' + t.ic + '</span><b>' + t.lb + '</b><div class="st">' + (t.st || '') + '</div></div>';
 }
 // ── PLAN（PC） ──
-var P2_PCX_PAR = { essay: 'tool', gap: 'tool', ck: 'tool', bb: 'tool', gapset: 'tool', gapal: 'tool', rm: 'tool', rmm: 'tool', rmt: 'tool', rmrows: 'tool', rmms: 'tool', dok: 'tool', do: 'tool', sum: 'tool', goal: 'tool', mon: 'tool', rev: 'tool' }; // v686: 前の画面はツールの下
+var P2_PCX_PAR = { essay: 'tool', gap: 'tool', bb: 'tool', gapset: 'tool', gapal: 'tool', rm: 'tool', rmm: 'tool', rmt: 'tool', rmrows: 'tool', rmms: 'tool', dok: 'tool', do: 'tool', sum: 'tool', goal: 'tool', mon: 'tool', rev: 'tool' }; // v686: 前の画面はツールの下
 function _p2PcxHtml() {
   _uxCss(); _ux2Css(); _pcxCss();
   var D = _p2HubData(), ym = D.ym;
@@ -19519,7 +19507,7 @@ function _p2PcxHtml() {
   var mk = { ideal: !!g.p1, goal: !!(p.title && p.deadline), mon: _p2Declared(_p2Ym(0)) };
   var tab = function(k, lb) { return '<span class="' + (k === sel ? 'on' : '') + '" onclick="p2Go(\'' + k + '\')">' + lb + (mk[k] ? '<i>✓</i>' : (k === D.nk ? '<i class="w">●</i>' : '')) + (k === 'rev' && D.rv ? '<i class="r">●</i>' : '') + '</span>'; };
   var hd = '<div class="pcx2-hd"><h1>PLAN<small>' + parseInt(ym.slice(5), 10) + '月・残り' + D.left + '日</small></h1><div class="pcx2-tabs">'
-    + tab('year', '年の目標・ロードマップ') + tab('sheet', '計画シート') + tab('yk', 'やること') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') // v686
+    + tab('year', '年の目標・ロードマップ') + tab('sheet', '計画シート') + tab('yk', 'やること') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') + tab('ck', 'チェック') // v686・v742: チェック
     + '<b class="sep"></b>' + (D.rv ? tab('rev', '振り返り') : '') + tab('tool', 'ツール') + '</div></div>';
   return '<div class="pcx2">' + hd + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>'; // v630: 左の大きなタイルの列をやめて、上にタブ
 }
@@ -20956,6 +20944,7 @@ function _p2DoCss2() {
     + ".ux-ex{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.ux-ex span{padding:9px 13px;border-radius:12px;background:var(--surface2);border:1.5px solid var(--border);font-size:13px;font-weight:800;cursor:pointer}"
     + ".ux-ex span.on{background:color-mix(in srgb,var(--accent) 16%,var(--surface2));border-color:var(--accent);color:var(--accent)}"
     + ".ux-ta{width:100%;box-sizing:border-box;margin-top:14px;min-height:150px;border-radius:16px;border:2px solid var(--border2);background:var(--surface);padding:12px 14px;font-size:15px;color:var(--text);line-height:1.6;font-weight:600;outline:none;resize:vertical;font-family:inherit}"
+    + ".es-ab{display:flex;gap:8px;margin-top:10px}.es-ab span{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 8px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer;text-align:center}.es-ab span b{font:900 11.5px Inter,sans-serif;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}"
     + ".ux-ta:focus{border-color:var(--accent)}.ux-skip{font-size:13px;color:var(--text-dim);font-weight:800;text-decoration:underline;cursor:pointer;margin-left:auto;white-space:nowrap}"
     + ".ux-ans{margin-top:8px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);cursor:pointer}.ux-ans small{display:block;font-size:11px;color:var(--text-dim);font-weight:800}.ux-ans div{font-size:14px;font-weight:700;margin-top:4px;line-height:1.6;white-space:pre-wrap}"
     + ".ux-ans.no div{color:var(--gold)}";
@@ -21181,8 +21170,9 @@ function _p2WhyPageHtml(i) {
     return head + '<div class="ux-q" style="font-size:22px">' + evEsc(d.q) + '</div>'
       + '<div class="ux-hs">' + pg.ex.map(function(t) { return '<span class="' + (lines.indexOf(t) >= 0 ? 'on' : '') + '" onclick="p2NbEx(\'' + k + '\',\'' + t + '\')">＋ ' + t + '</span>'; }).join('') + '</div>'
       + '<div class="ux-cnt"><b id="p2NbCnt">' + ch.toLocaleString() + '字（原稿用紙' + _p2NbSheets(ch) + '枚）</b><span class="r" id="uxEsNext">次の1枚まであと' + (400 - (ch % 400)) + '字</span></div>'
+      + '<div class="es-ab"><span onclick="p2EsArc(\'' + k + '\')">📦 アーカイブする</span><span onclick="p2EsArcList(\'' + k + '\')">🗂 過去の作文' + ((nb.vers || []).length ? '<b>' + nb.vers.length + '</b>' : '') + '</span></div>' // v742: 書く欄の上（すぐ見える所）
       + '<textarea id="uxEssay" class="ux-paper" placeholder="' + evEsc(d.hint || '思いつくまま全部、書き殴ろう') + '" oninput="p2Essay(this,\'' + k + '\')">' + evEsc(cur) + '</textarea>'
-      + '<div style="display:flex;align-items:center;margin-top:8px;font-size:12px;color:var(--text-dim);font-weight:700"><span id="p2NbSaved">' + (nb.curAt ? _p2NbFmtDate(nb.curAt) + 'に書いた' : '書くと自動で保存') + '</span><span class="ux-skip" onclick="p2NotesOpen(\'' + k + '\')">前の版・新しく書く</span></div>';
+      + '<div style="display:flex;align-items:center;margin-top:8px;font-size:12px;color:var(--text-dim);font-weight:700"><span id="p2NbSaved">' + (nb.curAt ? _p2NbFmtDate(nb.curAt) + 'に書いた' : '書くと自動で保存') + '</span></div>';
   }
   if (k === 'life') {
     var tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
@@ -21306,7 +21296,7 @@ function _p2GoalPageHtml(i) {
         + '<div class="ux-chips">' + [6, 12].map(function(n) { var y = _p2Ym(n); return '<span class="' + (nx.deadline === y ? 'on' : '') + '" onclick="p2NxDl(\'' + y + '\')">' + (n === 6 ? '半年' : '1年') + '<small>' + y.replace('-', '/') + '</small></span>'; }).join('') + '</div>';
     }
     if (nx.suggested) h9 += '<span class="ux-lk" onclick="p2NxKeep()">この例で決める ›</span>';
-    return h9 + '<span class="ux-lk" onclick="p2YearsOpen()">年別目標を見る ›</span>';
+    return h9;
   }
   if (k === 'motto') {
     var mo = String(_p2().motto || '');
@@ -21321,8 +21311,7 @@ function _p2GoalPageHtml(i) {
     + '<div class="ux-chk">' + [['目標月収', !!p.income, 0], ['タイトル', !!p.title, 1], ['期日', !!p.deadline, 2], ['スローガン', !!String(_p2().motto || '').trim(), 4]].map(function(x) {
       return '<div class="ux-ck' + (x[1] ? '' : ' no') + '" onclick="p2PgSub(' + x[2] + ')"><i>' + (x[1] ? '✓' : '!') + '</i><span>' + x[0] + '</span><b>' + (x[1] ? '' : '決める ›') + '</b></div>';
     }).join('') + '</div>'
-    + '<div class="ux-list" style="margin-top:12px"><div class="ux-li" onclick="p2YearsOpen()"><span class="ic">' + icn('calendar') + '</span><span>年別目標<small>1年ごとの目標</small></span><span class="ch">›</span></div>'
-    + '<div class="ux-li" onclick="p2Go(\'gap\')"><span class="ic">' + icn('calc') + '</span><span>ギャップ<small>今と目標の差</small></span><span class="ch">›</span></div></div>';
+    ;
 }
 // ════ v690: 目標を1画面で（最終目標 → 次の山 → スローガン）════
 function _p2GoalOneHtml() {
@@ -21356,7 +21345,7 @@ function _p2GoalOneHtml() {
       + '<div class="g1-row"><span class="lb">期日</span>' + mon(nx.deadline, 'p2NxDl(this.value)') + '</div>';
   }
   h += '<div class="g1-sec">スローガン</div><div class="g1-row"><input class="g1-t" maxlength="40" placeholder="例：やる時はいましかない" value="' + evEsc(String(_p2().motto || '')) + '" onchange="p2Motto(this.value)"></div>'
-    + '<div class="g1-lk"><span onclick="p2YearsOpen()">年別目標 ›</span><span onclick="p2Go(\'gap\')">ギャップ ›</span></div>';
+    ; // v742: 年別目標・ギャップのリンクはなくした
   if (_p2PgI === 3 && window._p2G1At !== _p2PgI + ':' + (_p2From || '')) { window._p2G1At = _p2PgI + ':' + (_p2From || ''); setTimeout(function() { var el = document.getElementById('g1Nx'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' }); }, 30); } // 「次の山」から来た時
   return h;
 }
@@ -22177,6 +22166,40 @@ function p2NbKeep(k) { // いまの作文を日付つきの版として残す
   if (last && last.text === t) { toast('この内容はもう残してあります'); return; }
   n.vers.push({ text: t, at: evTodayYmd(), n: _p2NbChars(t) });
   saveGoals(); toast('📌 ' + _p2NbFmtDate(evTodayYmd()) + 'の版として残しました');
+}
+// v742: やる理由の作文のアーカイブ（作文のページから。過去の作文は一覧で読める・消せる）
+function p2EsArc(k) {
+  var n = _p2Notes()[k]; n.vers = n.vers || [];
+  var t = String(n.cur || '');
+  if (!_p2NbChars(t)) { toast('まだ何も書いていません'); return; }
+  if (!confirm('いまの作文をアーカイブして、白紙から書きますか？（「🗂 過去の作文」でいつでも読めます）')) return;
+  var last = n.vers[n.vers.length - 1];
+  if (!(last && last.text === t)) n.vers.push({ text: t, at: n.curAt || evTodayYmd(), n: _p2NbChars(t) });
+  n.cur = ''; n.curAt = '';
+  saveGoals(); renderPlan(); toast('📦 アーカイブしました（' + n.vers.length + '件）');
+}
+var _p2EsArc = null;
+function p2EsArcList(k, open) {
+  _p2EsArc = { k: k, open: open === undefined ? -1 : open };
+  var n = _p2Notes()[k], d = _p2NbDef(k), V = (n.vers || []).map(function(v, i) { return { v: v, i: i }; }).sort(function(a, b) { return String(b.v.at || '').localeCompare(String(a.v.at || '')) || b.i - a.i; }); // 新しい順
+  try { _p2ShCss2(); } catch (e0) {}
+  if (!document.getElementById('p2EsArcCss')) { var st = document.createElement('style'); st.id = 'p2EsArcCss'; st.textContent = '.esarc{max-height:86vh;display:flex;flex-direction:column}.esarc .ls{overflow:auto;margin-top:8px}.esarc .it{border:1px solid var(--border);border-radius:13px;padding:11px 13px;margin-top:8px;background:var(--bg);cursor:pointer}.esarc .it .d{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:900}.esarc .it .d small{font-size:12px;color:var(--text-dim);font-weight:800}.esarc .it .d i{margin-left:auto;font-style:normal;color:var(--text-dim)}.esarc .it .pv{margin-top:4px;font-size:13px;color:var(--text-mid);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.esarc .it .tx{margin-top:8px;font-size:15px;line-height:1.85;white-space:pre-wrap;word-break:break-all}.esarc .it .ac{display:flex;gap:14px;justify-content:flex-end;margin-top:10px;font-size:13px;font-weight:900}.esarc .it .ac span{cursor:pointer;color:var(--accent)}.esarc .it .ac span.x{color:#FF6B7F}'; document.head.appendChild(st); }
+  var o = document.getElementById('p2EsArcOv'); if (!o) { o = document.createElement('div'); o.id = 'p2EsArcOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2EsArcX(); }; document.body.appendChild(o); }
+  o.innerHTML = '<div class="shdt esarc"><div class="hd">🗂 過去の作文・' + evEsc(d.t) + '<span onclick="p2EsArcX()">✕</span></div>'
+    + (V.length ? '<div class="ls">' + V.map(function(x) {
+      var op = _p2EsArc.open === x.i, t = String(x.v.text || '');
+      return '<div class="it" onclick="p2EsArcList(\'' + k + '\',' + (op ? -1 : x.i) + ')"><div class="d">' + _p2NbFmtDate(x.v.at) + '<small>' + (x.v.n || _p2NbChars(t)).toLocaleString() + '字</small><i>' + (op ? '▲' : '読む ›') + '</i></div>'
+        + (op ? '<div class="tx">' + evEsc(t) + '</div><div class="ac"><span onclick="event.stopPropagation();p2EsArcUse(\'' + k + '\',' + x.i + ')">この作文から書き直す</span><span class="x" onclick="event.stopPropagation();p2EsArcDel(\'' + k + '\',' + x.i + ')">消す</span></div>' : '<div class="pv">' + evEsc(t.replace(/\s+/g, ' ').slice(0, 60)) + '</div>') + '</div>';
+    }).join('') + '</div>' : '<div class="nt">まだありません。「📦 アーカイブする」で、いまの作文を日付つきで残して白紙から書けます</div>') + '</div>';
+}
+function p2EsArcX() { _p2EsArc = null; var o = document.getElementById('p2EsArcOv'); if (o) o.remove(); }
+function p2EsArcDel(k, i) { var n = _p2Notes()[k]; if (!n.vers || !n.vers[i] || !confirm(_p2NbFmtDate(n.vers[i].at) + 'の作文を消しますか？（元に戻せません）')) return; n.vers.splice(i, 1); saveGoals(); p2EsArcList(k); if (currentView === 'plan') renderPlan(); }
+function p2EsArcUse(k, i) { // 過去の作文をいまの作文にする（いまの作文はアーカイブ）
+  var n = _p2Notes()[k], v = n.vers && n.vers[i]; if (!v) return;
+  var t = String(n.cur || '');
+  if (_p2NbChars(t) && !confirm('いまの作文はアーカイブして、' + _p2NbFmtDate(v.at) + 'の作文から書き直しますか？')) return;
+  if (_p2NbChars(t) && !n.vers.some(function(x) { return x.text === t; })) n.vers.push({ text: t, at: n.curAt || evTodayYmd(), n: _p2NbChars(t) });
+  n.cur = v.text; n.curAt = evTodayYmd(); saveGoals(); p2EsArcX(); if (currentView === 'plan') renderPlan(); toast('✍️ ' + _p2NbFmtDate(v.at) + 'の作文から書き直します');
 }
 function p2NbNew(k) { // 新しく書く：いまの作文は版として残して、白紙から
   var n = _p2Notes()[k]; n.vers = n.vers || [];

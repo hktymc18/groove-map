@@ -30,7 +30,7 @@ T.run(async () => {
   c('まとめ：理想の生活と4つの一覧', $('#view-plan').textContent.indexOf('わたしの理想') >= 0 && $('#view-plan').textContent.indexOf('なりたくない自分') >= 0 && $('#view-plan').textContent.indexOf('家族と海外旅行') >= 0);
   console.log('=== ツール ===');
   w.p2Go('tool'); await sleep(10);
-  c('ツールに夢100とやる理由（作文）', $('#view-plan').textContent.indexOf('夢100') >= 0 && $('#view-plan').textContent.indexOf('やる理由（作文）') >= 0);
+  c('v742: ツールはやる理由（作文）とBB早見表だけ（夢100は入口のタイル）', $$('#view-plan .ux-li').length === 2 && $('#view-plan').textContent.indexOf('やる理由（作文）') >= 0 && $('#view-plan').textContent.indexOf('BB早見表') >= 0 && $('#view-plan').textContent.indexOf('夢100') < 0);
   w.p2Go('essay'); await sleep(10);
   c('作文のページ（やる理由）', !!$('#uxEssay'));
   w.p2Go('why', 8); await sleep(10);
