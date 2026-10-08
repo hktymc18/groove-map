@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v754';
+var APP_JS_VERSION = 'v755';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v754';
+  var DATA_VERSION = 'v755';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v755', d:'2026-10-09', items:['❓ 使い方ガイドができました：はじめて開いた時の案内（このアプリでできること）、HOMEの「はじめのステップ」（できたら自動でチェック）、画面を初めて開いた時に大事なところを光らせて説明','一度見たら出ません。あとから見返す時は HOME（PCは左のメニュー）の「❓ 使い方」か、設定の「使い方ガイド」から。よくある質問もあります','ユニオン管理者には、管理者向けの説明（アカウント管理・ユニオンのチェック項目・ユニオン予定）も出ます'], pop:{ t:'❓ 使い方ガイドができました', items:['はじめての案内・はじめのステップ・画面ごとの説明','あとからは「❓ 使い方」でいつでも見返せます'], go:['使い方を見る','gdMenu()'] } },
   { v:'v754', d:'2026-10-09', items:['ホームのタイル「ANALYSIS」を「ANALYTICS」に'] },
   { v:'v753', d:'2026-10-09', items:['MAPのフロント追加：研修生を選ぶと「🎓 研修の記録」（研修の日・Aさん）が研修生のカードの中に出るように（下にあって見落としやすかったため）','研修の日は「今日／昨日／📅日付」から選べて、「PGを10/14に進んだで入れます」のようにどう入るかも出ます'] },
   { v:'v752', d:'2026-10-09', items:['分析 › 研修：上に月のチップ（10月・9月・8月…と研修生の人数）を出して、表示する月を選べるように。研修フロー・その月の数字・Aさん別がその月になります'] },
@@ -7236,7 +7237,7 @@ function renderHome() {
   // FTUE（Phase G）：最初の5分チェックリスト。完了までホーム最上部に表示
   var ftueHtml = '';
   try {
-    if (!g.ftueDone) {
+    if (false && !g.ftueDone) { // v755: はじめのステップ（_gdStepsHtml）に置きかえ
       var _mAll = (state.members || []).filter(function(m){ return !m.deleted; });
       var _hasRoot = _mAll.some(function(m){ return !m.parentId; });
       var _p3 = state.goals && state.goals.plan && state.goals.plan.title;
@@ -7260,6 +7261,9 @@ function renderHome() {
             }).join('')
           + '</div>';
       }
+    }
+    ftueHtml = _gdStepsHtml(); // v755
+    if (false) {
     }
   } catch(e) {}
   // おかえりカード（7日以上離脱・大きいストリークが残っている）
@@ -19504,6 +19508,7 @@ function _stRender() {
       + (sharedOwners && sharedOwners.length ? _stLi(icn('users'), '共有MAP', '見せてもらっているMAP', 'openSharedDashboard()') : '') + '</div>'
       + '<div class="st-gh">このアプリ</div><div class="st-ls"><div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">📣</span><span>お知らせ・更新内容<small>' + evEsc(RELEASE_NOTES[0].v + '（' + RELEASE_NOTES[0].d + '）' + (RELEASE_NOTES[0].items[0] || '')) + '</small></span>' + (hasUnseenNotes() ? '<em class="nw">NEW</em>' : '') + '<span class="ch">›</span></div>'
       + '<div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">ℹ</span><span>バージョン<small class="gm-saved">' + (window._gmSavedHM ? window._gmSavedHM + ' 保存済み' : '') + '</small></span><span style="flex:none;font-family:Inter,sans-serif;color:var(--text-mid)">' + evEsc(APP_JS_VERSION) + '</span></div></div>'
+      + '<div class="st-gh">使い方</div><div class="st-ls">' + _stLi('❓', '使い方ガイド', 'はじめての案内・画面ごとの説明・よくある質問', 'gdMenu()') + '</div>' // v755
       + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
       + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望', '', 'fbOpen()') : '') // v667
       + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true)
@@ -20544,10 +20549,12 @@ function renderMenuHub() {
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
   if (_fb && _fb.ok) S += sb(icn('bug') + ' バグ・要望', 'fbOpen()', _fb.newN || ''); // v666: 絵文字ではなくアイコン
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
+  S += sb('❓ 使い方', 'gdMenu()'); // v755
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
   var lg = '<img class="hm-logo w" src="img/logo-w.png" alt="NWP"><img class="hm-logo d" src="img/logo-d.png" alt="NWP">'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）
   var hd = lg + '<h1>HOME</h1>';
   v.innerHTML = '<div class="ux-hub"><div class="ux-hd hm-hd">' + hd + '<span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
+    + _gdStepsHtml() // v755: はじめのステップ
     + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
     + '<div class="ux-sm">' + S + '</div></div>';
 }
@@ -36229,7 +36236,7 @@ function loginSuccess(user) {
   closeApprovalGate();
   // v668: 個人情報保護方針・利用規約に（今の版で）同意するまでアプリに入れない
   if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
-  setTimeout(function() { try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容
+  setTimeout(function() { try { if (_gdAuto()) return; } catch (eGd) {} try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容（v755: はじめての人は先に使い方の案内）
   // Googleカレンダー連携状態をプロフィールから復元
   state.gcalConnected = !!user.gcalConnected;
   state.gcalCalendarId = user.gcalCalendarId || '';
@@ -39292,6 +39299,302 @@ function _p2YearPageHtml(pc) {
 }
 
 // ── START ──
+// ════ v755: 使い方ガイド ════
+//  ① はじめての案内（スライド・最初の1回）② はじめの5ステップ（HOMEのカード）
+//  ③ 画面ごとのスポットライト（その画面を初めて開いた時・1回）④ 使い方ガイド（いつでも見返せる・よくある質問）
+//  「見た」は users/{uid}.guide ＋ 端末（localStorage gm_guide）。どちらかで見ていれば見た扱い。ユニオン管理者には管理者の説明も
+function _gdAdm() { try { return typeof isCurrentAdmin === 'function' && isCurrentAdmin(); } catch (e) { return false; } }
+function _gdSt() {
+  var a = {}, b = {};
+  try { a = JSON.parse(localStorage.getItem('gm_guide') || '{}') || {}; } catch (e) {}
+  try { b = (currentUser && currentUser.guide) || {}; } catch (e2) {}
+  var o = { tour: {} };
+  [a, b].forEach(function(x) { Object.keys(x || {}).forEach(function(k) { if (k === 'tour') Object.keys(x.tour || {}).forEach(function(t) { if (x.tour[t]) o.tour[t] = 1; }); else if (x[k]) o[k] = x[k]; }); });
+  return o;
+}
+function _gdSave(fn) {
+  var o = _gdSt(); fn(o);
+  try { localStorage.setItem('gm_guide', JSON.stringify(o)); } catch (e) {}
+  try { if (currentUser && currentUser.uid && !viewingOwnerUid) { currentUser.guide = o; fsSet('users/' + currentUser.uid, { guide: o }).catch(function() {}); } } catch (e2) {}
+  return o;
+}
+function _gdAutoOk() { // 自動で出してよい時（テストの自動ブラウザ・共有MAPを見ている時は出さない）
+  try { if (navigator.webdriver) return false; } catch (e) {}
+  return !!(currentUser && currentUser.uid) && !viewingOwnerUid;
+}
+function _gdBusy() { return !!document.querySelector('#gdIntro,#gdSpot,#gdMenuOv,#rnPopOv,#naPg,#p2ShDtOv,#p2CkAdmOv,.overlay.open,#tpOv'); }
+function _gdCss() {
+  if (document.getElementById('gdCss')) return;
+  var st = document.createElement('style'); st.id = 'gdCss';
+  st.textContent = "#gdIntro{position:fixed;inset:0;z-index:985;background:rgba(6,10,18,.72);display:flex;align-items:center;justify-content:center;padding:16px}"
+    + ".gdi{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px 20px 16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}"
+    + ".gdi .ic{font-size:46px;line-height:1;text-align:center}.gdi h2{margin:12px 0 8px;font-size:21px;font-weight:900;text-align:center;line-height:1.35}"
+    + ".gdi .tx{font-size:14.5px;line-height:1.75;font-weight:700;color:var(--text-mid);min-height:96px}.gdi .tx b{color:var(--text)}.gdi .tx ul{margin:0;padding-left:18px}"
+    + ".gdi .dots{display:flex;justify-content:center;gap:6px;margin:14px 0 12px}.gdi .dots i{width:7px;height:7px;border-radius:4px;background:var(--border2)}.gdi .dots i.on{width:20px;background:var(--accent)}"
+    + ".gdi .bt{display:flex;align-items:center;gap:10px}.gdi .bt .sk{font-size:13px;font-weight:800;color:var(--text-dim);cursor:pointer;padding:8px 4px}.gdi .bt .bk{margin-left:auto;padding:11px 16px;border-radius:12px;border:1.5px solid var(--border2);font-weight:900;font-size:14px;cursor:pointer;color:var(--text-mid)}.gdi .bt .nx{padding:11px 20px;border-radius:12px;background:var(--accent);color:#06281f;font-weight:900;font-size:15px;cursor:pointer}"
+    + ".gdi .adm{display:inline-block;font-size:11px;font-weight:900;color:#C583FF;border:1px solid #C583FF;border-radius:7px;padding:1px 7px;margin-bottom:2px}"
+    // スポットライト
+    + "#gdSpot{position:fixed;inset:0;z-index:986}#gdSpot .dim{position:fixed;inset:0;background:rgba(6,10,18,.62)}"
+    + "#gdSpot .hole{position:fixed;border-radius:12px;box-shadow:0 0 0 9999px rgba(6,10,18,.62);border:2.5px solid var(--accent);transition:all .25s ease;pointer-events:none}"
+    + "#gdSpot .bub{position:fixed;width:min(320px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 15px 12px;box-shadow:0 14px 40px rgba(0,0,0,.45);transition:top .25s ease,left .25s ease}"
+    + "#gdSpot .bub .n{font-size:11px;font-weight:900;color:var(--accent)}#gdSpot .bub h3{margin:3px 0 5px;font-size:16.5px;font-weight:900}#gdSpot .bub p{margin:0;font-size:13.5px;line-height:1.7;font-weight:700;color:var(--text-mid)}"
+    + "#gdSpot .bub .bt{display:flex;align-items:center;gap:8px;margin-top:12px}#gdSpot .bub .sk{font-size:12.5px;font-weight:800;color:var(--text-dim);cursor:pointer;padding:6px 2px}#gdSpot .bub .bk{margin-left:auto;padding:8px 12px;border-radius:10px;border:1.5px solid var(--border2);font-weight:900;font-size:13px;cursor:pointer;color:var(--text-mid)}#gdSpot .bub .nx{padding:8px 16px;border-radius:10px;background:var(--accent);color:#06281f;font-weight:900;font-size:13.5px;cursor:pointer}"
+    // はじめの5ステップ
+    + ".gds{margin:10px 0 14px;padding:13px 14px 8px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 16%,var(--surface)),var(--surface));border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--border))}"
+    + ".gds .hd{display:flex;align-items:center;gap:8px}.gds .hd b{font-size:15.5px;font-weight:900}.gds .hd em{font-style:normal;font:900 13px Inter,sans-serif;color:var(--accent)}.gds .hd span{margin-left:auto;font-size:12px;font-weight:800;color:var(--text-dim);cursor:pointer;padding:2px 4px}"
+    + ".gds .bar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--text) 10%,transparent);margin:8px 0 6px;overflow:hidden}.gds .bar i{display:block;height:100%;background:var(--accent);border-radius:3px}"
+    + ".gds .r{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid color-mix(in srgb,var(--border) 70%,transparent);cursor:pointer;font-size:14px;font-weight:800}.gds .r .ck{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;color:#06281f}.gds .r.ok .ck{background:var(--accent);border-color:var(--accent)}.gds .r.ok .lb{color:var(--text-dim);text-decoration:line-through}.gds .r .lb{flex:1;min-width:0}.gds .r .lb small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700}.gds .r .go{flex:none;font-size:12.5px;color:var(--accent);font-weight:900}.gds .r.adm .lb::before{content:'管理者';font-size:10px;font-weight:900;color:#C583FF;border:1px solid #C583FF;border-radius:6px;padding:0 5px;margin-right:6px;vertical-align:1px}"
+    // 使い方ガイド（メニュー）
+    + "#gdMenuOv{position:fixed;inset:0;z-index:984;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px calc(env(safe-area-inset-bottom) + 40px)}#gdMenuOv .in{max-width:640px;margin:0 auto}"
+    + "#gdMenuOv .top{display:flex;align-items:center;padding:14px 0 6px}#gdMenuOv .top h2{margin:0;font-size:22px;font-weight:900}#gdMenuOv .top span{margin-left:auto;width:38px;height:38px;border-radius:11px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px}"
+    + "#gdMenuOv .sec{font-size:12.5px;font-weight:900;color:var(--text-dim);margin:18px 2px 7px}#gdMenuOv .ls{border:1px solid var(--border);border-radius:14px;background:var(--surface);overflow:hidden}"
+    + "#gdMenuOv .ls>div{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--border);cursor:pointer;font-size:15px;font-weight:800}#gdMenuOv .ls>div:first-child{border-top:none}#gdMenuOv .ls>div .ic{flex:none;width:26px;text-align:center;font-size:18px}#gdMenuOv .ls>div small{display:block;font-size:12px;color:var(--text-dim);font-weight:700}#gdMenuOv .ls>div .ok{margin-left:auto;font-size:11.5px;color:var(--accent);font-weight:900;flex:none}"
+    + "#gdMenuOv details{border:1px solid var(--border);border-radius:13px;background:var(--surface);margin-top:8px;padding:0 14px}#gdMenuOv summary{padding:13px 0;font-size:14.5px;font-weight:900;cursor:pointer;list-style:none}#gdMenuOv summary::-webkit-details-marker{display:none}#gdMenuOv summary::before{content:'Q. ';color:var(--accent)}#gdMenuOv details p{margin:0 0 13px;font-size:13.5px;line-height:1.75;font-weight:700;color:var(--text-mid)}";
+  document.head.appendChild(st);
+}
+// ── ① はじめての案内 ──
+function _gdSlides() {
+  var L = [
+    { ic: '👋', t: 'ようこそ NAVIGATOR へ', d: 'チームの<b>組織（MAP）</b>・<b>目標と計画（PLAN）</b>・<b>予定とToDo</b>・<b>数字（ANALYTICS）</b>を、1つのアプリで管理できます。<br>まずは使い方をかんたんに見てみましょう（30秒）' },
+    { ic: '🗺', t: 'MAP：チームの組織図', d: '<ul><li>いちばん上（0段目）は<b>あなた</b>。その下に直接誘った人（フロント）が並びます</li><li><b>＋ 追加</b>で人を足す。人を押すと、タイトル・GSV・研修の記録などを直せます</li><li>研修生（水色）と審査中（オレンジ）の人は光ります</li></ul>' },
+    { ic: '🧭', t: 'PLAN：目標と今月の計画', d: '<ul><li><b>年の目標・ロードマップ</b>で、最終目標とマイルストーンを決める</li><li><b>計画シート</b>に今月の数字・行動を書く（期日を入れるとToDoや予定にも入ります）</li><li><b>やること</b>で今月から長期まで管理</li></ul>' },
+    { ic: '📅', t: '予定・ToDo', d: '<ul><li>上（スマホは下）の<b>月・週・日｜ToDo</b>で切りかえ</li><li>計画シートやチェックリストから入れた予定・ToDoもここに出ます</li><li>ToDoは右にスワイプで完了、左で削除</li></ul>' },
+    { ic: '📊', t: 'ANALYTICS：数字の推移', d: '<ul><li>S稼働・B1数・コミッションなどの12ヶ月の推移</li><li>研修フロー・パワーライン・地域の比較</li><li>比べたい時だけ「⇄ 比較」で2本重ねられます</li></ul>' }
+  ];
+  if (_gdAdm()) L.push({ ic: '🛡', adm: 1, t: '管理者の方へ', d: '<ul><li><b>アカウント管理</b>（HOMEの🛡）でメンバーのアカウントを管理</li><li>PLAN › チェックの<b>⚙</b>で、ユニオンのチェック項目を設定（全員に反映）</li><li>予定の<b>共有範囲「ユニオン全員」</b>で、ユニオンの予定を全員のカレンダーに出せます</li></ul>' });
+  L.push({ ic: '🚀', t: 'さっそく始めましょう', d: 'HOMEの<b>「はじめのステップ」</b>を上から順にやると、すぐに使えるようになります。<br>それぞれの画面を初めて開いた時は、大事なところを光らせて説明します。<br>あとから見返す時は <b>❓ 使い方</b> から' });
+  return L;
+}
+var _gdI = 0;
+function gdIntro(force) {
+  _gdCss(); _gdI = 0;
+  var o = document.getElementById('gdIntro'); if (!o) { o = document.createElement('div'); o.id = 'gdIntro'; document.body.appendChild(o); }
+  _gdIntroRender();
+}
+function _gdIntroRender() {
+  var o = document.getElementById('gdIntro'); if (!o) return;
+  var L = _gdSlides(), s = L[_gdI], last = _gdI === L.length - 1;
+  o.innerHTML = '<div class="gdi"><div class="ic">' + s.ic + '</div><h2>' + (s.adm ? '<span class="adm">管理者</span><br>' : '') + s.t + '</h2><div class="tx">' + s.d + '</div>'
+    + '<div class="dots">' + L.map(function(x, i) { return '<i class="' + (i === _gdI ? 'on' : '') + '"></i>'; }).join('') + '</div>'
+    + '<div class="bt">' + (last ? '' : '<span class="sk" onclick="gdIntroEnd()">スキップ</span>') + (_gdI ? '<span class="bk" onclick="gdIntroGo(-1)">‹ 戻る</span>' : '<span class="bk" style="visibility:hidden"></span>')
+    + '<span class="nx" onclick="' + (last ? 'gdIntroEnd(1)' : 'gdIntroGo(1)') + '">' + (last ? 'はじめる' : '次へ ›') + '</span></div></div>';
+}
+function gdIntroGo(d) { var L = _gdSlides(); _gdI = Math.max(0, Math.min(L.length - 1, _gdI + d)); _gdIntroRender(); }
+function gdIntroEnd(go) {
+  var o = document.getElementById('gdIntro'); if (o) o.remove();
+  _gdSave(function(g) { g.intro = 1; });
+  if (go) { try { switchView(isPCMode() ? 'home' : 'menu'); } catch (e) {} }
+}
+function _gdAuto() { // 起動時：はじめての案内を出したら true
+  if (!_gdAutoOk() || _gdSt().intro || _gdBusy()) return false;
+  gdIntro(); return true;
+}
+// ── ② はじめの5ステップ ──
+function _gdSteps() {
+  var ms = (state.members || []).filter(function(m) { return m && !m.deleted; }), root = ms.filter(function(m) { return !m.parentId; })[0];
+  var p = (state.goals && state.goals.plan) || {}, ym = '', sh = null, G = _gdSt();
+  try { ym = _p2Ym(0); sh = _p2ShSum(ym); } catch (e) {}
+  var hasEv = (state.events || []).some(function(e) { return e && !e.deleted && e.type !== 'task'; });
+  var L = [
+    { k: 'self', ok: !!root, t: '自分をMAPの0段目に登録', s: 'MAPのいちばん上はあなた', go: "gdStepGo('self')" },
+    { k: 'front', ok: !!(root && ms.some(function(m) { return m.parentId === root.id; })), t: 'フロント（直下の人）を1人追加', s: '＋ 追加から', go: "gdStepGo('front')" },
+    { k: 'goal', ok: !!(p.title || p.income), t: '年の目標を決める', s: '月収・タイトル・期日', go: "gdStepGo('goal')" },
+    { k: 'sheet', ok: !!(sh && (sh.n || sh.inc && sh.inc.t)), t: '今月の計画シートを書く', s: '今月の目標と行動', go: "gdStepGo('sheet')" },
+    { k: 'ev', ok: hasEv, t: '予定を1つ入れる', s: 'カレンダーの＋から', go: "gdStepGo('ev')" }
+  ];
+  if (_gdAdm()) {
+    L.push({ k: 'ack', adm: 1, ok: !!G.admCk, t: 'ユニオンのチェック項目を確認', s: 'PLAN › チェックの⚙', go: "gdStepGo('ack')" });
+    L.push({ k: 'aac', adm: 1, ok: !!G.admAcc, t: 'アカウント管理を開いてみる', s: 'メンバーのアカウント', go: "gdStepGo('aac')" });
+  }
+  return L;
+}
+function _gdStepsHtml() {
+  try {
+    if (viewingOwnerUid || !state.isEditor) return '';
+    var G = _gdSt(); if (G.stepsHide) return '';
+    var L = _gdSteps(), n = L.filter(function(x) { return x.ok; }).length;
+    if (n === L.length) { if (!G.stepsDone) { _gdSave(function(g) { g.stepsDone = 1; g.stepsHide = 1; }); try { toast('🎉 はじめのステップがぜんぶ終わりました！'); } catch (e) {} } return ''; }
+    _gdCss();
+    return '<div class="gds"><div class="hd"><b>🚀 はじめの' + L.length + 'ステップ</b><em>' + n + ' / ' + L.length + '</em><span onclick="gdStepsHide()">閉じる ✕</span></div>'
+      + '<div class="bar"><i style="width:' + Math.round(n / L.length * 100) + '%"></i></div>'
+      + L.map(function(x) { return '<div class="r' + (x.ok ? ' ok' : '') + (x.adm ? ' adm' : '') + '" onclick="' + x.go + '"><span class="ck">' + (x.ok ? '✓' : '') + '</span><span class="lb">' + x.t + '<small>' + x.s + '</small></span>' + (x.ok ? '' : '<span class="go">やる ›</span>') + '</div>'; }).join('') + '</div>';
+  } catch (e) { return ''; }
+}
+function gdStepsHide() { _gdSave(function(g) { g.stepsHide = 1; }); try { toast('「❓ 使い方」からいつでも表示できます'); } catch (e) {} _gdReHome(); }
+function gdStepsShow() { _gdSave(function(g) { g.stepsHide = 0; g.stepsDone = 0; }); gdMenuX(); switchView(isPCMode() ? 'home' : 'menu'); }
+function _gdReHome() { try { if (currentView === 'menu' && typeof renderMenuHub === 'function') renderMenuHub(); else if (currentView === 'home') renderHome(); } catch (e) {} }
+function gdStepGo(k) {
+  var pc = isPCMode();
+  if (k === 'self' || k === 'front') {
+    switchView('current');
+    setTimeout(function() { gdPoint(k === 'self' ? ['.onb-b', '#mxBtm [onclick="onFabClick()"]', '#fab'] : ['#mxBtm [onclick="onFabClick()"]', '#fab'], k === 'self' ? '自分を登録' : 'フロントを追加', k === 'self' ? 'ここを押して、あなた自身を0段目に登録します' : '＋ 追加を押すと、あなたの直下（フロント）に人を足せます。研修生も選べます'); }, 500);
+  } else if (k === 'goal') {
+    switchView('plan'); p2Go('year');
+    setTimeout(function() { gdPoint(['#view-plan input', '#view-plan .ux-ex', '#view-plan .ux-h2'], '年の目標', '最終目標の月収・タイトル・期日を入れます。入れたら自動で保存されます'); }, 600);
+  } else if (k === 'sheet') {
+    switchView('plan'); p2Go('sheet');
+    setTimeout(function() { gdPoint(['.sp-at', '.sp-tb', '#view-plan .ux-h2'], '今月の行動', '分野ごとに今月やる行動を書きます。期日を押すとToDoか予定に入れられます'); }, 600);
+  } else if (k === 'ev') {
+    switchView('events'); setEventsMode('calendar');
+    setTimeout(function() { gdPoint(['.pcv-add', '.cv-add', '.ev-cal-badd'], '予定を足す', '＋で予定を追加します。' + (pc ? '日付をダブルクリック' : '日付を長押し') + 'でも、その日に足せます'); }, 600);
+  } else if (k === 'ack') {
+    _gdSave(function(g) { g.admCk = 1; });
+    switchView('plan'); p2Go('ck');
+    setTimeout(function() { gdPoint(['[onclick="p2CkAdm()"]'], 'ユニオンのチェック項目', 'ここから、ユニオンのチェック項目（必須アイテム・TRAINING）を追加・並べかえ・削除できます。保存すると全員に反映されます'); }, 600);
+  } else if (k === 'aac') {
+    _gdSave(function(g) { g.admAcc = 1; });
+    try { openAdminPanel(); } catch (e) {}
+  }
+}
+// ── ③ スポットライト ──
+var GD_TOURS = {
+  map: { lb: 'MAP', ic: '🗺', go: "switchView('current')", steps: [
+    { s: ['#view-current .mr', '.oval-node', '#view-current .nc'], t: 'メンバー', d: '人を押すと、くわしく（タイトル・GSV・研修の記録・メモ）を見て直せます' },
+    { s: ['#mxBtm [onclick="onFabClick()"]', '#fab'], t: '人を足す', d: '＋ 追加で、あなたの直下（フロント）や選んだ人の下に足せます。研修生を選ぶと研修の日・Aさんも一緒に入ります' },
+    { s: ['.pt-ms.idl', '[onclick="switchView(\'ideal\')"]'], t: '現状と理想', d: '今の組織（現状）と、目指す組織（理想MAP）を切りかえます。理想MAPは計画づくりに使います' },
+    { s: ['[onclick="mxFilter()"]', '.mc-chip'], t: '絞り込み・並び', d: '研修生・審査中・BR・地域などで絞ったり、並びを変えたりできます。研修生と審査中の人は光ります' },
+    { s: ['.pt-iss'], t: '課題', d: '押すと右に課題パネル。MAPの人を押して、その人の課題を書けます' },
+    { s: ['[onclick="ckLinkOpen()"]'], t: '受付連携', d: '受付（BASE CHECK-IN）の名簿・受講記録を、まとめてMAPに取り込めます' }
+  ] },
+  plan: { lb: 'PLAN', ic: '🧭', go: "switchView('plan');p2Go('')", steps: [
+    { s: ["[onclick=\"p2Go('year')\"]"], t: '年の目標・ロードマップ', d: '最終目標（月収・タイトル・期日）と、そこまでのマイルストーン。まずはここから' },
+    { s: ["[onclick=\"p2Go('sheet')\"]"], t: '今月の計画シート', d: '今月の数字・行動・改善点を1枚に。期日を入れるとToDoや予定にも入ります' },
+    { s: ["[onclick=\"p2Go('yk')\"]"], t: 'やること', d: '今月から長期までのやることと、数値の目標（8冊など）' },
+    { s: ["[onclick=\"p2Go('ck')\"]"], t: 'チェック', d: '必須アイテム・TRAININGの準備リスト', adm: '管理者は⚙でユニオンの項目を設定できます' },
+    { s: ["[onclick=\"p2Go('tool')\"]"], t: 'ツール', d: 'やる理由の作文・BB早見表' }
+  ] },
+  sheet: { lb: '計画シート', ic: '📋', go: "switchView('plan');p2Go('sheet')", steps: [
+    { s: ['.st-c'], t: '目標', d: '年の目標とマイルストーン。押すと年の目標のページへ' },
+    { s: ['.sp-map', '#p2ShMF'], t: 'MAPを見ながら', d: 'MAPを見ながら計画できます。人を押すと、その人の課題を書けます' },
+    { s: ['.iss'], t: '課題', d: '人ごとの課題と、自分・全体のメモ。「→ 残す先」で行動・やること・予定へ。🗑で消せます' },
+    { s: ['.sp-tb'], low: 1, t: '今月の数字', d: '先月の結果と、今月の目標・今の数字' },
+    { s: ['.sp-at'], low: 1, t: '行動', d: '分野ごとに行動を書きます。期日を押すとToDoか予定を選んで入れられます。やったら左の□にチェック' },
+    { s: ["[onclick=\"p2SumTgl('sh',1)\"]"], t: 'サマリー', d: '見るだけの1枚に切りかえ。印刷・PDFもできます' }
+  ] },
+  yk: { lb: 'やること', ic: '✅', go: "switchView('plan');p2Go('yk')", steps: [
+    { s: ['#p2YkIn'], t: 'やることを書く', d: '書いてEnterで追加。月と人も選べます' },
+    { s: ['.yk-add .nb'], t: '数値の目標', d: '🔢 数値をオンにすると「8冊」のような数値の目標に。今の数を押して進み具合を管理します' },
+    { s: ['.yk-r'], t: '直す・消す', d: '名前を押すと直せます。左にスワイプで消す、右にスワイプで済み。「＋ サブタスク」で細かく分けられます' }
+  ] },
+  cal: { lb: 'カレンダー', ic: '📅', go: "switchView('events');setEventsMode('calendar')", steps: [
+    { s: ['.pcv-seg', '.cv-seg'], t: '表示の切りかえ', d: '月・週・日とToDoを、ここで切りかえます' },
+    { s: ['.pcv-add', '.cv-add', '.ev-cal-badd'], t: '予定を足す', d: '＋で予定を追加。日付を長押し（PCはダブルクリック）でも、その日に足せます' },
+    { s: ['#pcDayPanel', '#evCalGrid'], t: 'その日の予定', d: '日付を押すと、その日の予定とToDoが出ます' }
+  ] },
+  todo: { lb: 'ToDo', ic: '☑️', go: "switchView('events');setEventsMode('agenda')", steps: [
+    { s: ['#tdHomeNew', '#evQuickAdd'], t: 'タスクを足す', d: '書いてEnterで追加します' },
+    { s: ['#pcTdSide', '.td-filters'], t: '絞り込み', d: '最初は「今日」。すべて・メンバーのタスク・リストで切りかえ' },
+    { s: ['.td-row'], t: '完了・削除', d: '右にスワイプで完了、左にスワイプで削除（PCはマウスを乗せると🗑）' }
+  ] },
+  stats: { lb: 'ANALYTICS', ic: '📊', go: "switchView('stats')", steps: [
+    { s: ['#dtTabs', '.px3-tabs', '.an-hd'], t: '4つのタブ', d: '推移・研修・パワーライン・地域' },
+    { s: ['.px3-k', '#dtTrend .dt-chips'], t: '項目を選ぶ', d: '押すと、その項目の12ヶ月のグラフに' },
+    { s: ['.dt-cmp'], t: '比較', d: '「⇄ 比較」を押してから、もう1つ選ぶと2本重ねて比べられます' },
+    { s: ['#px3Ch', '#dtTrend .dt-chart'], t: '月を選ぶ', d: 'グラフの月を押すと、その月の数字に切りかわります' }
+  ] }
+};
+var _gdT = null;
+function _gdVis(sels) {
+  for (var i = 0; i < sels.length; i++) {
+    var L = document.querySelectorAll(sels[i]);
+    for (var j = 0; j < L.length; j++) { var r = L[j].getBoundingClientRect(); if (r.width > 4 && r.height > 4 && getComputedStyle(L[j]).visibility !== 'hidden') return L[j]; }
+  }
+  return null;
+}
+function gdTour(key, force) {
+  var T = GD_TOURS[key]; if (!T) return;
+  var steps = T.steps.filter(function(s) { return !!_gdVis(s.s); }).map(function(s) { return { s: s.s, low: s.low, t: s.t, d: s.d + (s.adm && _gdAdm() ? '<br><b style="color:#C583FF">管理者：</b>' + s.adm : '') }; });
+  if (!steps.length) { if (force) toast('この画面で説明できる所が見つかりませんでした'); return; }
+  _gdT = { key: key, steps: steps, i: 0 };
+  _gdSave(function(g) { g.tour[key] = 1; });
+  _gdSpotRender();
+}
+function gdPoint(sels, t, d) { _gdT = { key: '', steps: [{ s: sels, t: t, d: d }], i: 0 }; _gdSpotRender(); }
+function gdTourGo(d) { if (!_gdT) return; _gdT.i += d; if (_gdT.i < 0) _gdT.i = 0; if (_gdT.i >= _gdT.steps.length) { gdTourX(); return; } _gdSpotRender(); }
+function gdTourX() { _gdT = null; var o = document.getElementById('gdSpot'); if (o) o.remove(); }
+function _gdSpotRender() {
+  _gdCss();
+  var T = _gdT; if (!T) return;
+  var S = T.steps[T.i], el = _gdVis(S.s), n = T.steps.length, last = T.i === n - 1;
+  var o = document.getElementById('gdSpot'); if (!o) { o = document.createElement('div'); o.id = 'gdSpot'; document.body.appendChild(o); }
+  if (el) { try { el.scrollIntoView({ block: S.low && isPCMode() ? 'end' : 'center', inline: 'nearest' }); } catch (e) {} } // PCの計画シートは上にMAPが固定されるので下寄せ
+  var bub = '<div class="bub">' + (n > 1 ? '<div class="n">' + (T.i + 1) + ' / ' + n + '</div>' : '') + '<h3>' + S.t + '</h3><p>' + S.d + '</p>'
+    + '<div class="bt">' + (last ? '' : '<span class="sk" onclick="gdTourX()">スキップ</span>') + (T.i ? '<span class="bk" onclick="gdTourGo(-1)">‹ 戻る</span>' : '<span class="bk" style="visibility:hidden"></span>')
+    + '<span class="nx" onclick="gdTourGo(1)">' + (last ? 'OK' : '次へ ›') + '</span></div></div>';
+  o.innerHTML = (el ? '<div class="hole"></div>' : '<div class="dim"></div>') + bub;
+  o.onclick = function(ev) { if (ev.target === o || ev.target.classList.contains('dim')) gdTourGo(1); };
+  setTimeout(_gdPlace, el ? 60 : 0);
+}
+function _gdPlace() {
+  var T = _gdT, o = document.getElementById('gdSpot'); if (!T || !o) return;
+  var S = T.steps[T.i], el = _gdVis(S.s), b = o.querySelector('.bub'), h = o.querySelector('.hole'), W = window.innerWidth, H = window.innerHeight;
+  var bw = Math.min(320, W - 24), bh = b ? b.offsetHeight : 160;
+  if (!el || !h) { if (b) { b.style.left = Math.round((W - bw) / 2) + 'px'; b.style.top = Math.round((H - bh) / 2) + 'px'; } return; }
+  var r = el.getBoundingClientRect(), pad = 6;
+  var x = Math.max(4, r.left - pad), y = Math.max(4, r.top - pad), w = Math.min(W - 8, r.width + pad * 2), hh = Math.min(H - 8, r.height + pad * 2);
+  h.style.left = x + 'px'; h.style.top = y + 'px'; h.style.width = w + 'px'; h.style.height = hh + 'px';
+  var top = (y + hh + 12 + bh < H) ? y + hh + 12 : (y - bh - 12 > 4 ? y - bh - 12 : Math.max(8, H - bh - 12));
+  var left = Math.max(12, Math.min(W - bw - 12, r.left + r.width / 2 - bw / 2));
+  b.style.left = left + 'px'; b.style.top = top + 'px';
+}
+window.addEventListener('resize', function() { if (_gdT) _gdPlace(); });
+function _gdTourKey() {
+  try {
+    if (currentView === 'current') return 'map';
+    if (currentView === 'plan') return !_p2Pg ? 'plan' : ({ sheet: 'sheet', yk: 'yk' })[_p2Pg] || '';
+    if (currentView === 'events') return (typeof _evMode !== 'undefined' && _evMode === 'agenda') ? 'todo' : 'cal';
+    if (currentView === 'stats') return 'stats';
+  } catch (e) {}
+  return '';
+}
+var _gdTm = null;
+function _gdTourSoon() { // 画面を開いた時：その画面のスポットライトをまだ見ていなければ1回だけ
+  if (_gdTm) clearTimeout(_gdTm);
+  _gdTm = setTimeout(function() {
+    _gdTm = null;
+    try {
+      if (!_gdAutoOk()) return;
+      var G = _gdSt(); if (!G.intro || _gdBusy()) return;
+      var k = _gdTourKey(); if (!k || G.tour[k]) return;
+      gdTour(k);
+    } catch (e) {}
+  }, 900);
+}
+// ── ④ 使い方ガイド ──
+function gdMenu() {
+  _gdCss();
+  try { var mo = document.getElementById('mobileMenu'); if (mo) mo.classList.remove('open'); } catch (e0) {}
+  var G = _gdSt(), adm = _gdAdm();
+  var o = document.getElementById('gdMenuOv'); if (!o) { o = document.createElement('div'); o.id = 'gdMenuOv'; document.body.appendChild(o); }
+  var li = function(ic, t, s, on, ok) { return '<div onclick="' + on + '"><span class="ic">' + ic + '</span><span>' + t + (s ? '<small>' + s + '</small>' : '') + '</span>' + (ok ? '<span class="ok">✓ 見た</span>' : '') + '</div>'; };
+  var faq = [
+    ['MAPの0段目・フロントとは？', 'いちばん上（0段目）はあなた自身です。その下に、あなたが直接誘った人（フロント・1段目）、その人が誘った人（2段目）…と並びます。人を押すと、くわしく（タイトル・GSV・研修の記録）を直せます。'],
+    ['研修の記録はどこで入れる？', 'MAPで人を押して「研修」タブから入れます。フロント追加で研修生を選ぶと、選んだ段階（マケなど）が「✓ 進んだ」で入ります（先の日は予定）。分析 › 研修のフローに出ます。'],
+    ['審査中（オレンジ）とは？', 'タイトルがLOI〜Q4の人です。研修生（水色）と一緒に、MAPで光って目立ちます。'],
+    ['計画シートの期日を入れるとどうなる？', '期日を押すと「ToDoに入れる／予定に入れる」を選べます。ToDoで済みにすると、計画シートにもチェックが入ります。'],
+    ['データは誰に見える？', '基本はあなただけです。設定の「MAPの共有」で追加した人には、閲覧か編集で見せられます（予定・タスクは見せない、もできます）。'],
+    ['使い方がわからない・おかしい時は？', 'アプリを一度閉じて開き直してください。それでも直らない時は、HOMEの「バグ・要望」から送ってください。']
+  ];
+  if (adm) faq.push(['（管理者）ユニオンのチェック項目は？', 'PLAN › チェックのいちばん下「⚙ ユニオンのチェック項目を設定」から。追加・名前の変更・並べかえ・削除ができ、保存するとユニオンの全員に反映されます。'],
+    ['（管理者）ユニオンの予定を全員に出すには？', '予定を足す時の「共有範囲」で「ユニオン全員」を選ぶと、ユニオンの全員のカレンダーに出ます。'],
+    ['（管理者）アカウント管理は？', 'HOMEの「🛡 アカウント管理」から、メンバーのアカウントを確認・管理できます。']);
+  o.innerHTML = '<div class="in"><div class="top"><h2>❓ 使い方</h2><span onclick="gdMenuX()">✕</span></div>'
+    + '<div class="sec">はじめに</div><div class="ls">' + li('👋', 'はじめての案内をもう一度', 'このアプリでできること（30秒）', 'gdMenuX();gdIntro(1)', G.intro)
+    + li('🚀', 'はじめのステップを表示', 'HOMEにチェックリストを出す', 'gdStepsShow()', G.stepsDone) + '</div>'
+    + '<div class="sec">画面ごとのガイド（押すとその画面で説明します）</div><div class="ls">'
+    + Object.keys(GD_TOURS).map(function(k) { var T = GD_TOURS[k]; return li(T.ic, T.lb, '', 'gdMenuTour(\'' + k + '\')', G.tour[k]); }).join('') + '</div>'
+    + (adm ? '<div class="sec">管理者向け</div><div class="ls">' + li('🛡', 'アカウント管理', 'メンバーのアカウント', 'gdMenuX();openAdminPanel()') + li('⚙', 'ユニオンのチェック項目', 'PLAN › チェック', "gdMenuX();gdStepGo('ack')") + '</div>' : '')
+    + '<div class="sec">よくある質問</div>' + faq.map(function(q) { return '<details><summary>' + q[0] + '</summary><p>' + q[1] + '</p></details>'; }).join('') + '</div>';
+}
+function gdMenuX() { var o = document.getElementById('gdMenuOv'); if (o) o.remove(); }
+function gdMenuTour(k) {
+  gdMenuX(); var T = GD_TOURS[k]; if (!T) return;
+  try { (new Function(T.go))(); } catch (e) {}
+  setTimeout(function() { gdTour(k, true); }, 700);
+}
+// 画面を切りかえた時にスポットライトを確かめる（switchView・p2Go・setEventsMode・dtTab を包む）
+(function() { ['switchView', 'p2Go', 'setEventsMode', 'dtTab'].forEach(function(n) { var f = window[n]; if (typeof f !== 'function' || f._gd) return; var w = function() { var r = f.apply(this, arguments); try { _gdTourSoon(); } catch (e) {} return r; }; w._gd = 1; window[n] = w; }); })();
+
 try {
   initTheme();
   applyMembersTabVisible();
