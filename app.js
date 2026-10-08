@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v700';
+var APP_JS_VERSION = 'v701';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1247,21 +1247,33 @@ function renderPCMap(mapType) {
     var _sfx9 = titleMonthsSuffix(m) + restartSuffix(m, true);
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
-    var _lbW9 = 24; // 「GSV」の小さいラベル
+    // v701: 「GSV」のラベルはなくした。数字が稼働の札にかぶる時は、文字を小さく → 固定PT（かっこ）を外す の順で収める
     var _gx9 = rx + NODE_W - 14 - (kids(m.id).length ? 10 : 0); // 配下がいる時は右端の開閉ボタンと重ならないように
+    var _pW9 = function(str, fs) { var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) w9 += /[0-9]/.test(str.charAt(q9)) ? .6 : .32; return w9 * fs; };
+    var _room9 = _gx9 - (_pcTx + _aw9 + 8), _gFs9 = 15.5, _fFs9 = 11, _fix9 = !!fixStr;
+    var _need9 = function() { return _pW9(gsvStr, _gFs9) + (_fix9 ? 4 + _pW9(fixStr, _fFs9) : 0); };
+    // 2行目に入らない時：①名前の右があいていれば右上に小さく「(固定)」 ②地域がなければカードの外の右上に「固定 ◯」 ③どちらも無理なら出さない（詳細で見られる）
+    if (_fix9 && _need9() > _room9) {
+      var _fxR9 = rx + NODE_W - 12, _fxN9 = _pcTx + _pw9 + 6 + _estW9(nameStr, nameFs) + 6, _fT9 = null;
+      if (_fxN9 < _fxR9 - _pW9(fixStr, 9.5)) _fT9 = txt(_fxR9, ry2 + 19, fixStr, gsvColor, 9.5, '800', 'Inter,sans-serif', 'end');
+      else if (!m.region) _fT9 = txt(rx + NODE_W - 2, ry2 - 4, '固定 ' + m.ptFixed.toLocaleString(), gsvColor, 11, '700', 'Noto Sans JP,Inter,sans-serif', 'end');
+      if (_fT9) { _fT9.setAttribute('opacity', '0.8'); _fT9.setAttribute('class', 'tc-fix'); g.appendChild(_fT9); _fix9 = false; }
+    }
+    while (_need9() > _room9 && _gFs9 > 12) { _gFs9 -= .5; _fFs9 = Math.max(9, _fFs9 - .25); }
+    if (_need9() > _room9) _fix9 = false;
     if (_sfx9) {
       // v472: 右端のGSV表示に重なる場合は短縮（ヶ月目→ヶ月）、それでも入らなければ非表示（ホバーの詳細で確認可）
       var _est9 = function(str){ var w9 = 0; for (var q9 = 0; q9 < str.length; q9++) { w9 += str.charCodeAt(q9) > 255 ? 11 : 6.5; } return w9; };
-      var _gsvW9 = (gsvStr + (fixStr ? ' ' + fixStr : '')).length * 8.6 + 10 + _lbW9;
       var _sfxX9 = _pcTx + _aw9 + 6;
-      var _avail9 = _gx9 - _gsvW9 - _sfxX9;
+      var _avail9 = _gx9 - _need9() - 8 - _sfxX9;
       var _s9 = _sfx9;
       if (_est9(_s9) > _avail9) _s9 = _s9.replace(/ヶ月目/g, 'ヶ月');
       if (_est9(_s9) > _avail9) _s9 = '';
       if (_s9) g.appendChild(txt(_sfxX9, ry2 + 55, _s9, gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif'));
     }
-    var _gl9 = txt(_gx9, ry2 + 55, 'GSV', gsvColor, 9, '800', 'Inter,sans-serif', 'end'); _gl9.setAttribute('opacity', '0.6'); _gl9.setAttribute('class', 'tc-gsvl'); g.appendChild(_gl9); // カードの色に合わせて読める色
-    g.appendChild(txt(_gx9 - _lbW9, ry2 + 56, gsvStr + (fixStr ? ' ' + fixStr : ''), gsvColor, 15.5, '800', 'Inter,sans-serif', 'end'));
+    var _fw9 = _fix9 ? _pW9(fixStr, _fFs9) + 4 : 0; // 並びは今まで通り「GSV (固定)」。固定は小さく右に
+    var _gt9 = txt(_gx9 - _fw9, ry2 + 56, gsvStr, gsvColor, _gFs9, '800', 'Inter,sans-serif', 'end'); _gt9.setAttribute('class', 'tc-gsv'); g.appendChild(_gt9);
+    if (_fix9) { var _ft9 = txt(_gx9, ry2 + 55.5, fixStr, gsvColor, _fFs9, '800', 'Inter,sans-serif', 'end'); _ft9.setAttribute('opacity', '0.75'); _ft9.setAttribute('class', 'tc-fix'); g.appendChild(_ft9); }
     // 地域（カードの外・右上に小さく）
     if(m.region){
       var _rgT = txt(rx+NODE_W-2, ry2-4, m.region.substring(0,6), gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif', 'end');
@@ -3877,7 +3889,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v700';
+  var DATA_VERSION = 'v701';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5364,6 +5376,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v701', d:'2026-10-08', items:['MAPのカード：「GSV」の文字をなくし、稼働の札とポイントが重ならないようにしました（入りきらない時は文字を少し小さく・固定PTはカードの右上に表示）'] },
   { v:'v700', d:'2026-10-08', items:['計画シートのMAP：拡大・縮小は全画面にせず、その枠の中でできるようにしました（＋−・全体／ピンチ・ctrl＋ホイール／ドラッグで移動）','MAPの枠の高さは、下の帯を上下にドラッグして変えられます。「📌 上に固定」でMAPを見ながら下の改善点や行動を書けます','右側（スマホは下）の課題の欄をたためるようにしました'] },
   { v:'v699', d:'2026-10-08', items:['計画シートの行動の欄：記入例は空いた行に薄く出すだけにして、押しても入らないようにしました（全部手入力）','「＋ 書く」の行をなくし、空いた行にそのまま書けるようにしました','「＋ 行を追加」で行を増やせます'] },
   { v:'v698', d:'2026-10-08', items:['計画シートのMAPを「⤢ 拡大」で全画面にできるようにしました（＋−で拡大・ドラッグで動かす。拡大したまま人を押して課題を書けます）','課題はふだんは計画シートの中だけ。「→ 残す先」から、行動（4分野）・タスク・予定・メモ（メンバーの中）を選んで入れられます','残した先とは連動します（課題を書き直すと、まだ済んでいない行動・タスク・予定とメモも同じ文に）。残した先は課題の下に印で出ます','スマホの行動は、フロント作り・流通アップ・Dライン・自己成長ごとに ▼／▶ でたためます'] },
