@@ -11,7 +11,7 @@ T.run(async () => {
   c('書く前に押すと「先に行動を書いて」', !$('#p2ShDtOv'));
   const t0 = $('#p2ShIn_front_0'); t0.value = 'リストアップ'; w.p2ShDtNew('front', 0); await sleep(30);
   const e1 = w.state.events.find(e => e.title === 'リストアップ');
-  c('書いてから押すと行動になって窓が開く（ToDo／予定を選ぶ・日付は空）', !!e1 && !!$('#p2ShDtOv') && /ToDoに入れる/.test($('#p2ShDtOv').textContent) && /予定に入れる/.test($('#p2ShDtOv').textContent) && $('#p2ShDtD').value === '' && !$('#p2ShDtT'));
+  c('書いてから押すと行動になって窓が開く（ToDo／予定を選ぶ・日付は空）', !!e1 && !!$('#p2ShDtOv') && /ToDoに入れる/.test($('#p2ShDtOv').textContent) && /予定に入れる/.test($('#p2ShDtOv').textContent) && $('#p2ShDtD').value === '' && !$('#p2ShDtTE'));
   w.p2ShDtOk(); await sleep(20);
   c('日にちを選ばないと入れない（勝手に今日にしない）', !e1.date && !!$('#p2ShDtOv'));
   $('#p2ShDtD').value = '2026-10-20'; w.p2ShDtOk(); await sleep(40);
@@ -41,5 +41,20 @@ T.run(async () => {
   w._evDeleteById(e1.id); w.renderPlan(); await sleep(20); w.p2ShGone(e1.id, 0); await sleep(20);
   c('外すと計画シートから消える', !$('.sp-at .r.gone'));
   w.p2ShDt(e2.id); await sleep(20); w.p2ShDtClear(); await sleep(20);
+  console.log('=== v743 ===');
+  const e3 = w._tdMakeTask('名刺を作る', '', ''); e3.planYm = w._p2Ym(0); e3.planCat = 'dist'; w.state.events.push(e3); w.renderPlan(); await sleep(30);
+  w.p2ShDt(e3.id); await sleep(20);
+  c('v743: ToDoにも時間（任意・1つ）', !!$('#p2ShDtT') && !$('#p2ShDtTE') && /なし（任意）/.test($('#p2ShDtT').placeholder));
+  w.openTimePad('p2ShDtT'); await sleep(10); w.tpKey('9'); w.tpKey('30'); await sleep(250);
+  c('v743: ToDoの時間は1つだけ打つと閉じる（9:30）', $('#p2ShDtT').value === '09:30' && !$('#tpOv'));
+  $('#p2ShDtD').value = '2026-10-23'; w.p2ShDtOk(); await sleep(30);
+  c('v743: ToDoに時刻つきで入る', e3.type === 'task' && e3.date === '2026-10-23' && e3.time === '09:30' && /ToDo 09:30/.test($$('.sp-at')[1].textContent));
+  // 書いてすぐ期日を押すと、次の行にカーソルが移らない
+  const inp = $$('.sp-at .r.nw input')[0], cat = inp.id.split('_')[1];
+  inp.focus(); inp.value = '下見に行く'; w._p2ShDtTap = w.Date.now(); inp.blur(); w.p2ShActAddV(cat, inp); await sleep(40);
+  const nx = w.document.activeElement;
+  c('v743: 書いてすぐ期日を押した時は、次の行の入力にカーソルが移らない', !(nx && nx.tagName === 'INPUT' && /^p2ShIn_/.test(nx.id)));
+  const inp2 = $$('.sp-at .r.nw input')[0]; inp2.focus(); inp2.value = '連絡する'; w._p2ShDtTap = 0; inp2.blur(); w.p2ShActAddV(inp2.id.split('_')[1], inp2); await sleep(40);
+  c('Enterで書いた時は今まで通り次の行へ', /^p2ShIn_/.test((w.document.activeElement || {}).id || ''));
   c('期日を消すとToDoのタスクに戻る（期日なし）', e2.type === 'task' && !e2.date && !e2.time);
 });

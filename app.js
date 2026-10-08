@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v742';
+var APP_JS_VERSION = 'v743';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v742';
+  var DATA_VERSION = 'v743';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v743', d:'2026-10-09', items:['計画シートの実行期日：ToDoに入れる時も時間を入れられるように（任意。予定と同じ数字パッド・「なし」で消す）','行動を書いてすぐ期日を押すと、次の行にカーソルが移ってキーボードで期日の窓が隠れていたのを直しました'] },
   { v:'v742', d:'2026-10-09', items:['PLAN：チェック（必須アイテム・TRAINING）を入口のタイルに','🧰 ツールは「やる理由（作文）」と「BB早見表」だけに（入口のタイルにあるもの・年別目標・ギャップ・前の画面はなくしました）。目標のページの「年別目標 ›」「ギャップ ›」もなくしました','やる理由の作文：書く欄の上に「📦 アーカイブする」（いまの作文を日付つきで残して白紙から）と「🗂 過去の作文」（読む・この作文から書き直す・消す）'] },
   { v:'v741', d:'2026-10-09', items:['分析 › パワーライン：月はじめ（今月のポイントがまだ少ない時）に「0本」になって、先月までのパワーラインが見えなかったのを直しました','月ごとに見られるように（上の 10月・9月・8月…を押す。それぞれの月のMAPから出します）。今月がまだ0本の時は、いちばん新しい月を出します','前の月との差（▲▼）と「表で見る」も、それぞれの月のMAPの数字に'] },
   { v:'v740', d:'2026-10-09', items:['やること：数値の目標（📊）にも「＋ サブタスク」','名前を押して直す時は、名前の欄が行そのものに（名前は1つだけ）。下に だれの・期限・月（数値は 今・目標・単位）をラベル付きで。「完了」で閉じる','消すのはToDoと同じ：左にスワイプ → 🗑 消す（右にスワイプで済み）。消した後は「↩ 元に戻す」'] },
@@ -33877,7 +33878,7 @@ function openTimePad(targetId) {
   else if (targetId === 'tqTime') { _tpStartId = 'tqTime'; _tpEndId = 'tqTimeEndX'; _tpIsTask = true; }
   else if (targetId === 'wnT' || targetId === 'wnTE') { _tpStartId = 'wnT'; _tpEndId = 'wnTE'; _tpIsTask = false; }
   else if (targetId === 'tkT') { _tpStartId = 'tkT'; _tpEndId = 'tkTEndX'; _tpIsTask = true; } // v616: タスクの画面
-  else if (targetId === 'p2ShDtT' || targetId === 'p2ShDtTE') { _tpStartId = 'p2ShDtT'; _tpEndId = 'p2ShDtTE'; _tpIsTask = false; } // v739: 計画シートの期日（予定）
+  else if (targetId === 'p2ShDtT' || targetId === 'p2ShDtTE') { var tk9 = !document.getElementById('p2ShDtTE'); _tpStartId = 'p2ShDtT'; _tpEndId = tk9 ? 'p2ShDtTEndX' : 'p2ShDtTE'; _tpIsTask = tk9; } // v739: 計画シートの期日（予定は開始〜終了・v743: ToDoは時刻だけ）
   else if (targetId === 'olT') { _tpStartId = 'olT'; _tpEndId = 'olTEndX'; _tpIsTask = true; } // v617: OLの企画 // v613: 予定の画面・予定を足す // v456: クイック追加もカレンダーと同じ時刻パッド
   else { _tpStartId = 'evTime'; _tpEndId = 'evTimeEnd'; _tpIsTask = (_evType === 'task'); }
   if (_tpStartId === 'evTime' && typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
@@ -37933,7 +37934,8 @@ function _p2ShReLater(cat) {
     var a = document.activeElement;
     if (a && a.tagName === 'INPUT' && a.closest && a.closest('#view-plan .sp-at, #view-plan .sp-acts')) { a.addEventListener('blur', function() { setTimeout(function() { if (currentView === 'plan') renderPlan(); }, 0); }, { once: true }); return; } // 別の欄（日付など）を触っている間は描き直さない
     renderPlan();
-    if (!a || a === document.body) { var n = document.getElementById('p2ShIn_' + cat + '_0'); if (n) n.focus(); } // Enterで書いた時は続けて書けるように
+    var dtOpen = document.getElementById('p2ShDtOv') || (window._p2ShDtTap && Date.now() - window._p2ShDtTap < 1200); // v743: 期日を押した時は次の行に移らない（キーボードで期日の窓が隠れていた）
+    if ((!a || a === document.body) && !dtOpen) { var n = document.getElementById('p2ShIn_' + cat + '_0'); if (n) n.focus(); } // Enterで書いた時は続けて書けるように
   }, 0);
 }
 function p2ShActAddV(cat, el) { // v699: 空いた行に書いたら行動に
@@ -37973,7 +37975,7 @@ function p2ShGone(id, back) {
   _p2RpForce = true; renderPlan();
 }
 var _p2ShDtS = null; // { id, kind:'todo'|'ev' }
-function p2ShDt(id) { var e = findEvent(id); if (!e || _p2ShRo()) return; _p2ShDtS = { id: id, kind: e.type === 'task' ? 'todo' : 'ev' }; _p2ShDtRender(); }
+function p2ShDt(id) { var e = findEvent(id); if (!e || _p2ShRo()) return; window._p2ShDtTap = Date.now(); try { var ae = document.activeElement; if (ae && ae.blur && ae !== document.body) ae.blur(); } catch (eF) {} _p2ShDtS = { id: id, kind: e.type === 'task' ? 'todo' : 'ev' }; _p2ShDtRender(); }
 function p2ShDtNew(cat, j) {
   var ti = document.getElementById('p2ShIn_' + cat + '_' + j), v = ti ? String(ti.value || '').trim() : '';
   if (!v) { toast('先に行動を書いてください'); if (ti) ti.focus(); return; }
@@ -37991,9 +37993,10 @@ function _p2ShDtRender(keep) {
   o.innerHTML = '<div class="shdt"><div class="hd">実行期日<span onclick="p2ShDtX()">✕</span></div><div class="tt">' + evEsc(e.title || '') + '</div>'
     + '<div class="seg"><span class="' + (ev ? '' : 'on') + '" onclick="p2ShDtKind(\'todo\')">✅ ToDoに入れる</span><span class="' + (ev ? 'on' : '') + '" onclick="p2ShDtKind(\'ev\')">📅 予定に入れる</span></div>'
     + '<div class="nt">' + (ev ? 'カレンダーの予定に入ります。やったら左の□に自分でチェック' : 'ToDoに入ります。ToDoでチェックすると、ここにもチェックが入ります') + '</div>'
-    + '<label>日にち<input type="date" id="p2ShDtD" value="' + d + '"></label>' + (ev ? '<div class="shtm"><em>時間</em><input id="p2ShDtT" type="text" readonly placeholder="開始" value="' + evEsc(t) + '" onclick="openTimePad(\'p2ShDtT\')"><b>〜</b><input id="p2ShDtTE" type="text" readonly placeholder="終了" value="' + evEsc(te) + '" onclick="openTimePad(\'p2ShDtTE\')"></div>' : '')
+    + '<label>日にち<input type="date" id="p2ShDtD" value="' + d + '"></label>' + (ev ? '<div class="shtm"><em>時間</em><input id="p2ShDtT" type="text" readonly placeholder="開始" value="' + evEsc(t) + '" onclick="openTimePad(\'p2ShDtT\')"><b>〜</b><input id="p2ShDtTE" type="text" readonly placeholder="終了" value="' + evEsc(te) + '" onclick="openTimePad(\'p2ShDtTE\')"></div>'
+      : '<div class="shtm"><em>時間</em><input id="p2ShDtT" type="text" readonly placeholder="なし（任意）" value="' + evEsc(t) + '" onclick="openTimePad(\'p2ShDtT\')"><i class="nx" onclick="var x=document.getElementById(\'p2ShDtT\');if(x)x.value=\'\'">なし</i></div>')
     + '<div class="bt"><span class="go" onclick="p2ShDtOk()">入れる</span>' + (e.date ? '<span class="cl" onclick="p2ShDtClear()">期日を消す</span>' : '') + '</div></div>';
-  if (ev) try { _pcTimeInputs(['p2ShDtT', 'p2ShDtTE']); } catch (eP) {} // PCは15分刻みのリスト・直接入力
+  try { _pcTimeInputs(ev ? ['p2ShDtT', 'p2ShDtTE'] : ['p2ShDtT']); } catch (eP) {} // PCは15分刻みのリスト・直接入力
 }
 function p2ShDtOk() {
   var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return;
@@ -38001,10 +38004,10 @@ function p2ShDtOk() {
   if (!d) { toast('日にちを選んでください'); return; }
   e.date = d; e.updatedAt = new Date().toISOString();
   if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
-  else { e.type = 'task'; e.time = ''; delete e.endTime; }
+  else { e.type = 'task'; e.time = t || ''; delete e.endTime; } // v743: ToDoも時刻（任意）
   saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
   p2ShDtX(); _p2RpForce = true; renderPlan();
-  toast((S.kind === 'ev' ? '📅 予定に入れました（' : '✅ ToDoに入れました（') + _p2ShMd(d) + (S.kind === 'ev' && t ? ' ' + t + (e.endTime ? '〜' + e.endTime : '') : '') + '）');
+  toast((S.kind === 'ev' ? '📅 予定に入れました（' : '✅ ToDoに入れました（') + _p2ShMd(d) + (t ? ' ' + t + (S.kind === 'ev' && e.endTime ? '〜' + e.endTime : '') : '') + '）');
 }
 function p2ShDtClear() { var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return; e.date = ''; e.time = ''; e.type = 'task'; delete e.endTime; e.updatedAt = new Date().toISOString(); saveEventDoc(e); p2ShDtX(); _p2RpForce = true; renderPlan(); }
 function p2ShActTg(id) { var e = findEvent(id); if (!e) return; toggleEventDone(id); if (currentView === 'plan') renderPlan(); }
@@ -38103,7 +38106,7 @@ function _p2ShCss2() {
     + '.sp-kz{width:100%;box-sizing:border-box;margin-top:6px;font-weight:700;font-size:12.5px;line-height:1.55;font-family:inherit;color:var(--text);padding:6px 9px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);resize:none;min-height:34px;overflow:hidden}.sp-kz::placeholder{color:var(--text-dim)}.sp-kz:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-at{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}.sp-at .h{display:flex;align-items:center;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:900}.sp-at .h span{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--text-dim)}'
     + '.sp-at .r{display:flex;align-items:stretch;border-top:1px solid var(--border);min-height:32px;font-size:12.5px;font-weight:700}.sp-at .c{width:32px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;cursor:pointer}.sp-at .x{flex:1;min-width:0;border-left:1px solid var(--border);display:flex;align-items:center}.sp-at .x input{width:100%;background:transparent;border:0;color:var(--text);font-weight:700;font-size:13px;font-family:inherit;padding:6px 8px}.sp-at .x input::placeholder{color:var(--text-dim)}.sp-at .x input:focus{outline:none;background:color-mix(in srgb,var(--accent) 6%,transparent)}.sp-at .r.dn .x input{color:var(--text-dim);text-decoration:line-through}'
-    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;box-sizing:border-box;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none}.sp-at .d i.dl{font-style:normal;pointer-events:none}.sp-at .d.od{color:#FF6B7F}.sp-at .d.dd{flex-direction:column;gap:1px;line-height:1.1}.sp-at .d.dd b{font-weight:900}.sp-at .d.dd small{font-size:9.5px;font-weight:900;color:var(--accent)}.sp-at .d.dd.ev small{color:#5AD7FF}.sp-at .r.gone .gx{display:flex;flex-direction:column;justify-content:center;padding:4px 8px;font-size:13px;color:var(--text-dim)}.sp-at .r.gone .gx em{font-style:normal;font-size:10.5px;font-weight:900;color:#FF6B7F}.sp-at .r.gone .c{color:#FF6B7F}.sp-at .d.gd{flex-direction:column;gap:2px}.sp-at .d.gd i{font-style:normal;font-size:11px;font-weight:900;color:var(--accent);cursor:pointer}.sp-at .d.gd i+i{color:var(--text-dim)}.shdt-ov{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}body.px3 .shdt-ov{align-items:center}.shdt{width:100%;max-width:440px;background:var(--surface);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box}body.px3 .shdt{border-radius:18px}.shdt .hd{display:flex;align-items:center;font-size:13px;font-weight:900;color:var(--text-mid)}.shdt .hd span{margin-left:auto;cursor:pointer;padding:4px 6px}.shdt .tt{font-size:17px;font-weight:900;margin:6px 0 12px;word-break:break-all}.shdt .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.shdt .seg span{padding:12px 8px;border-radius:12px;border:1.5px solid var(--border);text-align:center;font-size:14.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.shdt .seg span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.shdt .nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:8px 2px 4px;line-height:1.5}.shdt label{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;font-weight:900;color:var(--text-mid)}.shdt label input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:10px 12px}.shdt .shtm{display:flex;align-items:center;gap:6px;margin-top:10px}.shdt .shtm em{font-style:normal;font-size:14px;font-weight:900;color:var(--text-mid);margin-right:4px}.shdt .shtm input{flex:1;min-width:0;height:52px;box-sizing:border-box;border-radius:13px;border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:19px;font-weight:800;text-align:center;font-family:Inter,\'Noto Sans JP\',sans-serif;cursor:pointer;outline:none}.shdt .shtm b{color:var(--text-dim)}.shdt .bt{display:flex;align-items:center;gap:12px;margin-top:16px}.shdt .bt .go{flex:1;text-align:center;padding:13px;border-radius:12px;background:var(--accent);color:#06281f;font-weight:900;font-size:15px;cursor:pointer}.shdt .bt .cl{font-size:13px;font-weight:800;color:#FF6B7F;cursor:pointer;padding:8px}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
+    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;box-sizing:border-box;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none}.sp-at .d i.dl{font-style:normal;pointer-events:none}.sp-at .d.od{color:#FF6B7F}.sp-at .d.dd{flex-direction:column;gap:1px;line-height:1.1}.sp-at .d.dd b{font-weight:900}.sp-at .d.dd small{font-size:9.5px;font-weight:900;color:var(--accent)}.sp-at .d.dd.ev small{color:#5AD7FF}.sp-at .r.gone .gx{display:flex;flex-direction:column;justify-content:center;padding:4px 8px;font-size:13px;color:var(--text-dim)}.sp-at .r.gone .gx em{font-style:normal;font-size:10.5px;font-weight:900;color:#FF6B7F}.sp-at .r.gone .c{color:#FF6B7F}.sp-at .d.gd{flex-direction:column;gap:2px}.sp-at .d.gd i{font-style:normal;font-size:11px;font-weight:900;color:var(--accent);cursor:pointer}.sp-at .d.gd i+i{color:var(--text-dim)}.shdt-ov{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}body.px3 .shdt-ov{align-items:center}.shdt{width:100%;max-width:440px;background:var(--surface);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box}body.px3 .shdt{border-radius:18px}.shdt .hd{display:flex;align-items:center;font-size:13px;font-weight:900;color:var(--text-mid)}.shdt .hd span{margin-left:auto;cursor:pointer;padding:4px 6px}.shdt .tt{font-size:17px;font-weight:900;margin:6px 0 12px;word-break:break-all}.shdt .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.shdt .seg span{padding:12px 8px;border-radius:12px;border:1.5px solid var(--border);text-align:center;font-size:14.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.shdt .seg span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.shdt .nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:8px 2px 4px;line-height:1.5}.shdt label{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;font-weight:900;color:var(--text-mid)}.shdt label input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:10px 12px}.shdt .shtm{display:flex;align-items:center;gap:6px;margin-top:10px}.shdt .shtm em{font-style:normal;font-size:14px;font-weight:900;color:var(--text-mid);margin-right:4px}.shdt .shtm input{flex:1;min-width:0;height:52px;box-sizing:border-box;border-radius:13px;border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:19px;font-weight:800;text-align:center;font-family:Inter,\'Noto Sans JP\',sans-serif;cursor:pointer;outline:none}.shdt .shtm b{color:var(--text-dim)}.shdt .shtm i.nx{flex:none;font-style:normal;font-size:13px;font-weight:900;color:var(--text-dim);padding:8px 4px 8px 8px;cursor:pointer}.shdt .bt{display:flex;align-items:center;gap:12px;margin-top:16px}.shdt .bt .go{flex:1;text-align:center;padding:13px;border-radius:12px;background:var(--accent);color:#06281f;font-weight:900;font-size:15px;cursor:pointer}.shdt .bt .cl{font-size:13px;font-weight:800;color:#FF6B7F;cursor:pointer;padding:8px}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
     + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
     // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
     + '.sp-pc{margin-top:4px}.sp-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.sp-acts .sp-at{margin-bottom:0}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
@@ -38246,7 +38249,7 @@ function _p2ShActTbl(ym, c, minRows) {
   var r = L.map(function(e) {
     var od = !e.done && e.date && e.date < td, ev = e.type !== 'task';
     // v736: 期日を押すと「ToDo か 予定」を選んで日時を入れる窓（勝手に今日が入らない）。予定は時間も
-    var dl = e.date ? '<b>' + parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) + '</b><small>' + (ev ? '予定' + (e.time ? ' ' + e.time : '') : 'ToDo') + '</small>' : '<b>/</b>';
+    var dl = e.date ? '<b>' + parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) + '</b><small>' + (ev ? '予定' : 'ToDo') + (e.time ? ' ' + e.time : '') + '</small>' : '<b>/</b>';
     return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c" onclick="p2ShActTg(\'' + e.id + '\')" title="やったらチェック">' + (e.done ? '✔' : '') + '</span><span class="x"><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '></span>'
       + '<span class="d dd' + (od ? ' od' : '') + (ev ? ' ev' : '') + '"' + (ro ? '' : ' onclick="p2ShDt(\'' + e.id + '\')"') + '>' + dl + '</span></div>';
   }).join('');
@@ -38256,7 +38259,7 @@ function _p2ShActTbl(ym, c, minRows) {
   var used = L.map(function(e) { return e.title; }), exU = (P2_SH_ACT_EXS[c.k] || []).filter(function(t) { return used.indexOf(t) < 0; });
   var xr = +((_p2ShM(ym).xr || {})[c.k]) || 0, nE = ro ? Math.max(0, (minRows || 0) - L.length) : Math.max(exU.length, 1, (minRows || 0) - L.length) + xr;
   for (var j = 0; j < nE; j++) r += ro ? '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>'
-    : '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '_' + j + '" placeholder="' + (j < exU.length ? '例：' + evEsc(exU[j]) : '') + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAddV(\'' + c.k + '\',this)"></span><span class="d dd" onclick="p2ShDtNew(\'' + c.k + '\',' + j + ')"><b>/</b></span></div>';
+    : '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '_' + j + '" placeholder="' + (j < exU.length ? '例：' + evEsc(exU[j]) : '') + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAddV(\'' + c.k + '\',this)"></span><span class="d dd" onpointerdown="window._p2ShDtTap=Date.now()" onclick="p2ShDtNew(\'' + c.k + '\',' + j + ')"><b>/</b></span></div>';
   if (!ro) r += '<div class="addr" onclick="p2ShActRow(\'' + c.k + '\')">＋ 行を追加</div>';
   if (!minRows) { // v698: スマホは分野ごとにたためる（端末ごとに覚える）
     var cl = _p2ShActClosed(c.k), dn = L.filter(function(e) { return e.done; }).length;
