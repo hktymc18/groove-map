@@ -18,12 +18,12 @@ T.run(async () => {
   delete w._p2().sim; w._p2SimMo = 3; w.p2Go(''); w.p2Go('sim'); await sleep(20);
   const tx = $('#view-plan').textContent;
   c('「これだけやったら…」はなし・凡例は「new」', tx.indexOf('これだけやったら、いくら狙えるか') < 0 && $('.p2sm-lg').textContent.indexOf('new') >= 0 && $('.p2sm-lg').textContent.indexOf('に入った人') < 0);
-  c('ファーストボーナスは一番下に大きく（内訳は(i)）', !!$('.p2fb') && !$('.p2sm-k .hi') && $('.p2fb').textContent.indexOf('ビルディングボーナス') < 0 && $$('.p2sm-set ~ .p2fb, .p2fb').length === 1);
+  c('ファーストボーナスは大きく（v694：一番上・内訳は(i)）', !!$('.sm1-r .fb') && $('.sm1-r .fb').textContent.indexOf('ビルディングボーナス') < 0);
   w.uxInfo('simfb'); c('(i)にBB・LOI特典の内訳', $('#uxInfo').textContent.indexOf('ビルディングボーナス') >= 0 && $('#uxInfo').textContent.indexOf('エリートLOI特典') >= 0 && $('#uxInfo .ok').textContent === 'とじる'); w.uxInfoClose();
   c('戻る＝入口（入口から開いた時）', $('.ux-btm .ux-bk').getAttribute('onclick') === "p2Go('')");
   w.p2SimDupSet(2); await sleep(5);
   c('数字を変えたら組織図はLOIの月に', w._p2SimMo === 0 && $('.p2sm-seg span.on').textContent.indexOf('LOI') >= 0);
-  c('設定の欄は小さめ（.p2sm-set）', !!$('.p2sm-set .ux-stp'));
+  c('設定はマスに書くだけ（v694：＋−なし）', !!$('.sm1-g .sp-in') && !$('#view-plan .ux-stp'));
   console.log('=== チェック ===');
   w.p2Go(''); w.p2Go('ck'); await sleep(10);
   c('必須アイテム／TRAINING はタブ', $$('.p2ck-tabs span').length === 2 && $$('.p2ck-r').length === w.P2_CK_ESS.length);

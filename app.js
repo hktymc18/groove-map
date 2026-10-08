@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v693';
+var APP_JS_VERSION = 'v694';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3876,7 +3876,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v693';
+  var DATA_VERSION = 'v694';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5363,6 +5363,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v694', d:'2026-10-08', items:['PLAN › シミュレーションを1画面にしました（いちばん上にファーストボーナス、その下に設定をマスに書くだけ、下に月ごとの組織図）'] },
   { v:'v693', d:'2026-10-08', items:['PLAN › 年別目標を表1つにしました（最終目標 → 1年ごとの月収・タイトル → 今 を1画面で。月収はマスに書くだけ）'] },
   { v:'v692', d:'2026-10-08', items:['PLAN › ギャップを1画面にしました（目標・今・差の表、単価・倍率、ロードマップへの割り振りを1つの画面で）','目標は空なら月収から自動、今の数は空ならMAPから自動で、薄い数字で出ます'] },
   { v:'v691', d:'2026-10-08', items:['PLAN › ロードマップを1画面にしました（月を縦に並べた表に、フロント・流通などの目標をその場で書けます）','マイルストーンは月の横の「＋」で足し、押すと名前を直せます。⛰次の山・🏔最終目標の月も表に出ます'] },
@@ -16637,7 +16638,7 @@ function _p2PageParts() {
     _ux2Css(); body = _p2RmMonthHtml();
     var nym = _p2YmAdd(_p2RmYm || _p2Ym(0), 1); next = parseInt(nym.slice(5), 10) + '月 ›'; nextOn = 'p2RmMonth(\'' + nym + '\')';
   } else if (k === 'sim') { // v643: シミュレーション（組織図で）
-    _ux2Css(); _p2YrsCss(); _p2SimCss(); body = _p2SimHtml(); next = '今月の目標に入れる ›'; nextOn = 'p2SimApply()';
+    _ux2Css(); _p2YrsCss(); _p2SimCss(); body = isPCMode() ? _p2SimHtml() : _p2SimOneHtml(); next = '今月の目標に入れる ›'; nextOn = 'p2SimApply()'; // v694: スマホは1画面
   } else if (k === 'yrs') { // v693: 年別目標は表1つ（v642はカード＋−）
     _ux2Css(); body = _p2YrsOneHtml(); next = '✓ 完了';
   } else if (k === 'gap') { // v692: 1画面（目標・今・差の表 → 単価・倍率 → 割り振り）。v600は1行ずつ＋−と別ページ
@@ -19647,6 +19648,42 @@ function _p2SimHtml() {
     + st('自分のADP', cfg.myPsv, 'P', 'p2SimAdp', 'p2SimAdpSet')
     + '<div class="ux-lb2">LOIの月</div>' + (pc ? '<div class="ux-stp"><div class="ux-sv ok"><input type="month" value="' + cfg.sy + '-' + String(cfg.sm).padStart(2, '0') + '" onchange="p2SimStartSet(this.value)" style="font-size:22px"></div></div>' : '<div class="ux-stp"><span class="ux-pm" onclick="p2SimStart(-1)">−</span><div class="ux-sv ok" style="font-size:26px;font-weight:900;font-family:Inter,sans-serif">' + cfg.sy + '<small>年</small>' + cfg.sm + '<small>月</small></div><span class="ux-pm" onclick="p2SimStart(1)">＋</span></div>') + '</div>' + (pc ? '</div>' : _p2SimFbHtml(R9));
 }
+// ════ v694: シミュレーション（スマホ）を1画面に：結果 → 設定（マスに書くだけ）→ 月ごとの組織図 ════
+function _p2SimOneHtml() {
+  _p2ShCss2();
+  if (!document.getElementById('p2Sm1Css')) { var st = document.createElement('style'); st.id = 'p2Sm1Css';
+    st.textContent = '.sm1-r{display:flex;align-items:flex-end;gap:12px;padding:10px 14px;border-radius:16px;background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 16%,var(--surface)),var(--surface) 75%);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}.sm1-r .fb{flex:1;min-width:0}.sm1-r .fb small{display:block;font-size:11px;font-weight:800;color:var(--text-mid)}.sm1-r .fb b{font:900 30px Inter,sans-serif;color:var(--gold)}.sm1-r .fb b i{font-style:normal;font-size:12px;margin-left:2px;color:var(--text-mid)}.sm1-r .k{text-align:right;font-size:11px;font-weight:800;color:var(--text-dim);line-height:1.5}.sm1-r .k b{font:900 15px Inter,sans-serif;color:var(--text)}'
+      + '.sm1-g{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;margin-top:6px}.sm1-g>div{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;font-weight:800;color:var(--text-mid)}.sm1-g .sp-in{width:58px;font-size:17px}.sm1-g input[type=month]{background:transparent;border:0;border-bottom:1.5px solid color-mix(in srgb,var(--text) 25%,transparent);color:var(--text);font:900 14px Inter,sans-serif;width:118px}body:not(.light) .sm1-g input[type=month]{color-scheme:dark}'
+      + '.sm1-fc{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.sm1-fc div{text-align:center;font-size:10.5px;font-weight:800;color:var(--text-dim)}.sm1-fc .sp-in{width:100%;margin-top:2px}.sm1-md{font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;margin-top:6px;display:inline-block}'
+      + '.p2sm-tree,.p2sm-num{margin-top:6px}';
+    document.head.appendChild(st); }
+  if (!UX_INFO.sim) { try { _p2SimHtml(); } catch (eS) {} } // (i)の説明はPCの画面と同じ
+  var cfg = _p2SimCfg(), cus = !(cfg.preset > 0), n = cus ? Math.max(cfg.fronts[1] || 0, cfg.fronts[2] || 0, 1) : cfg.preset;
+  if (!cus) cfg.fronts = [0, n, n, 0];
+  var R9 = _p2SimFbF(cfg.fronts, cfg), nodes = _p2SimTree(cfg), mo = Math.max(0, Math.min(3, _p2SimMo));
+  var lab = ['LOI', 'Q2', 'Q3', 'BR'], ymL = function(m) { var t = (cfg.sm - 1 + m); return (((t % 12) + 12) % 12 + 1) + '月'; };
+  var cnt = 1 + nodes.filter(function(x) { return x.id && x.jm <= mo; }).length, mon = R9.mons[mo] || { gsv: 0 };
+  var bb = _p2BBCalc(Math.max(0, R9.gsv - 1000)), loi = R9.gsv >= 2000 ? 50000 : 0;
+  UX_INFO.simfb = { t: 'ファーストボーナスの内訳', ok: 'とじる', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（GSV ' + R9.gsv.toLocaleString() + ' − 1,000P＝' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'P が対象）<br>' + (loi ? '<b>エリートLOI特典</b>：¥50,000（BR維持で翌月進呈）' : '<b>エリートLOI特典</b>：BRの月のGSVが2,000以上で ¥50,000') };
+  var inp = function(v, on, w) { return '<input class="sp-in" type="number" inputmode="numeric" value="' + v + '" onfocus="edSelAll(this)" onchange="' + on + '(this.value)"' + (w ? ' style="width:' + w + 'px"' : '') + '>'; };
+  setTimeout(_p2SimSwipe, 0);
+  return '<div class="sp-sec" style="align-items:center;margin-top:2px;font-size:18px">シミュレーション' + _uxIb('sim') + '</div>'
+    + '<div class="sm1-r"><div class="fb"><small>ファーストボーナス（BR昇格後）' + _uxIb('simfb').replace('class="ux-ib"', 'class="ux-ib" style="display:inline-flex;width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle"') + '</small><b>¥' + R9.fb.toLocaleString() + '<i>/月</i></b></div>'
+    + '<div class="k">組織（' + ymL(mo) + '）<b>' + cnt + '</b>人<br>GSV <b>' + mon.gsv.toLocaleString() + '</b>P</div></div>'
+    + '<div class="sm1-g">'
+    + (cus ? '' : '<div>フロント（月に）' + inp(n, 'p2SimNSet') + '</div>')
+    + '<div>1人がつなぐ人数' + inp(cfg.dup, 'p2SimDupSet') + '</div>'
+    + '<div>1人のBPC（P）' + inp(cfg.psv, 'p2SimPsvSet', 64) + '</div>'
+    + '<div>自分のADP（P）' + inp(cfg.myPsv, 'p2SimAdpSet') + '</div>'
+    + '<div>LOIの月<input type="month" value="' + cfg.sy + '-' + String(cfg.sm).padStart(2, '0') + '" onchange="p2SimStartSet(this.value)"></div>'
+    + '</div>'
+    + (cus ? '<div class="sm1-fc">' + cfg.fronts.map(function(v, m) { return '<div>' + ymL(m) + ' ' + lab[m] + '<input class="sp-in" type="number" inputmode="numeric" value="' + (v || 0) + '" onfocus="edSelAll(this)" onchange="p2SimFSet(' + m + ',this.value)"></div>'; }).join('') + '</div>' : '')
+    + '<span class="sm1-md" onclick="p2SimMode(' + (cus ? 0 : 1) + ')">' + (cus ? 'Q2・Q3の月に同じ人数にする' : 'フロントを月ごとに変える ›') + '</span>'
+    + '<div class="p2sm-seg" style="margin-top:12px">' + lab.map(function(l, m) { return '<span class="' + (m === mo ? 'on' : '') + '" onclick="p2SimMo(' + m + ')"><b>' + ymL(m) + '</b>' + l + '</span>'; }).join('') + '</div>'
+    + (_p2SimBig(nodes, mo) ? _p2SimNumHtml(nodes, mo) : '<div class="p2sm-tree">' + _p2SimSvg(nodes, mo) + '</div>')
+    + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3] : [1, 2, 3]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）<b>new</b></span>'; }).join('') + '</div>';
+}
+function p2SimPsvSet(v) { var n = Math.max(0, Math.min(10000, parseInt(v, 10) || 0)); if (n) p2SimPsv(n); }
 // v652: ファーストボーナス（一番のお楽しみ）は大きく。内訳は (i) に
 function _p2SimFbHtml(R9) {
   var bb = _p2BBCalc(Math.max(0, R9.gsv - 1000)), loi = R9.gsv >= 2000 ? 50000 : 0;
