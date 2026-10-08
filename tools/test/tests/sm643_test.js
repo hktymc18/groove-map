@@ -13,7 +13,14 @@ T.run(async () => {
   const cfg = w._p2SimCfg(), R = w._p2SimFb(cfg.preset, cfg);
   const dots = () => $$('.p2sm-tree circle').length;
   c('組織図（自分＋BRの月までの全員）＝組織人数', dots() === R.org && $('.sm1-r .k').textContent.indexOf(R.org) >= 0 && $('.sm1-r .k').textContent.indexOf('人') >= 0);
-  c('ファーストボーナスはBRの月の額（v694：一番上）', $('.sm1-r .fb').textContent.indexOf(R.fb.toLocaleString()) >= 0);
+  c('v704: ファーストボーナスは最初は隠す（押して見る）', !!$('.sm1-r .fbq') && $('.sm1-r .fb').textContent.indexOf(R.fb.toLocaleString()) < 0 && !$('.sm1-r .fb .ux-ib'));
+  w.p2FbReveal(); await sleep(20);
+  c('v704: 押すと数字がぐるぐる回る（桁ごとのリール）', !!$('#p2FbR.fbsp') && $$('#p2FbR .rs').length === String(R.fb).length && $('#p2FbR').getAttribute('aria-label') === '¥' + R.fb.toLocaleString());
+  c('v704: 右の桁から順に止まる（左ほど長く回る）', (() => { const cs = $$('#p2FbR .rs'); return cs.length > 1 && parseFloat(cs[0].style.transition.split(' ')[1]) > parseFloat(cs[cs.length - 1].style.transition.split(' ')[1]) && /translateY\(-/.test(cs[0].style.transform); })());
+  await sleep(3500);
+  c('ファーストボーナスはBRの月の額（止まったら金色に光る）', $('#p2FbR').classList.contains('hit') && !$('#p2FbR').classList.contains('fbsp') && !!$('.sm1-r .fb .ux-ib'));
+  w.renderPlan(); await sleep(20);
+  c('v704: 同じ金額なら描き直しても回らない', !$('#p2FbR .rs') && /618|,/.test($('#p2FbR').textContent));
   w.p2SimMo(1); await sleep(5);
   c('月を選ぶとその月までに入った人だけ（Q2＝自分＋フロント）', dots() === 1 + cfg.preset);
   w.p2SimNSet(3); w.p2SimDupSet(2); w.p2SimMo(4); await sleep(5);
