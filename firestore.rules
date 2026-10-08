@@ -375,6 +375,9 @@ service cloud.firestore {
 
       match /attendance/{aid} {
         allow read: if ckEventStaff(eid);
+        // 📊 v21: 自分が見られるユニオン（ckCanSee）のメンバーの出席は、他ユニオンのイベントでも読める
+        // （集計の「他ユニオンイベントへの出席（参考）」用。一覧は union で絞った検索のみ）
+        allow read: if ckCanSee(resource.data.get('union', ''));
         // 通常受付: オーナー、または参加ユニオン(unions配列)に所属する有効メンバー
         allow create, update, delete: if isOwnerAdmin()
           || (signedIn()
