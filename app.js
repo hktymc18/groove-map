@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v729';
+var APP_JS_VERSION = 'v730';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v729';
+  var DATA_VERSION = 'v730';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v730', d:'2026-10-08', items:['やることの書く欄を大きく1行に。ふつうに書いて「足す」でタスク','数値の目標は、書いてから「🔢 数値」をオン → 目標・単位・今の数を入れて足す','数値の目標は「今の数」をその場で打ちこめます（＋−でもOK）。7/8回のように進み具合が出ます'] },
   { v:'v729', d:'2026-10-08', items:['ロードマップ③の「MAP ◯ に戻す」をなくしました（MAPの数に戻したい時は、欄を空にします）'] },
   { v:'v728', d:'2026-10-08', items:['ロードマップ③の「⚙ 設定」で小数を入れられるように（例：1.5人でBR 1本）。必要な人数は切り上げで出します'] },
   { v:'v727', d:'2026-10-08', items:['PCの計画シートは、最初はMAPが上・書く欄が下（上下）の並びに。右上の「◧ 左右」を選ぶと左右の並びになり、端末で覚えます'] },
@@ -16778,7 +16779,7 @@ function _p2DoMonHead(ym) { // v653: 今週やることの上に「◯月の目�
 // ════ v715: やること（PLANのタブ）：今月から長期まで時系列に1か所で。タスク（サブタスクつき）と数値の目標（7/8）。📅でいつでも予定に入れる ════
 //   タスク＝state.events（type:'task'・planYm＝'YYYY-MM' か 'someday'・yk:1。計画シートの行動（planCat）も同じ所に並ぶ）
 //   数値の目標＝plan2.yk［{ id, t, g（目標）, v（今）, ym, mid（人）, who（'me'|'all'）, cal:[予定のid] }］
-var _p2YkOpen = '', _p2YkF = '', _p2YkDn = false, _p2YkAddTy = 't', _p2YkAddYm = '', _p2YkAddWho = 'me';
+var _p2YkOpen = '', _p2YkF = '', _p2YkDn = false, _p2YkAddTy = 't', _p2YkAddYm = '', _p2YkAddWho = 'me', _p2YkDraft = null;
 function _p2YkN() { var p2 = _p2(); p2.yk = p2.yk || []; return p2.yk; }
 function _p2YkTasks() { return (state.events || []).filter(function(e) { return e && !e.deleted && e.type === 'task' && (e.yk || e.planCat) && /^(\d{4}-\d{2}|someday)$/.test(e.planYm || ''); }); }
 function _p2YkWho(o) { // 人の札：メンバー｜自分｜全体
@@ -16800,9 +16801,11 @@ function _p2YkHtml() {
   var mOpt = ''; for (var i = 0; i <= 6; i++) { var y9 = _p2YmAdd(cur, i); mOpt += '<option value="' + y9 + '"' + (y9 === _p2YkAddYm ? ' selected' : '') + '>' + _p2YkYmLb(y9) + '</option>'; } mOpt += '<option value="someday"' + (_p2YkAddYm === 'someday' ? ' selected' : '') + '>いつか</option>';
   var mem = (typeof membersForMap === 'function' ? membersForMap('current') : (state.members || [])).filter(function(m) { return m && !m.deleted && m.parentId && String(m.title || '').trim() !== 'OUT'; });
   var wOpt = '<option value="me"' + (_p2YkAddWho === 'me' ? ' selected' : '') + '>👤 自分</option><option value="all"' + (_p2YkAddWho === 'all' ? ' selected' : '') + '>全体</option>' + mem.map(function(m) { return '<option value="' + m.id + '"' + (_p2YkAddWho === m.id ? ' selected' : '') + '>' + evEsc((m.lastName || '') + (m.firstName || '')) + '</option>'; }).join('');
-  var h = '<div class="yk">' + (ro ? '' : '<div class="yk-add"><span class="ty"><span class="' + (_p2YkAddTy === 't' ? 'on' : '') + '" onclick="p2YkTy(\'t\')">タスク</span><span class="' + (_p2YkAddTy === 'n' ? 'on' : '') + '" onclick="p2YkTy(\'n\')">数値の目標</span></span>'
-    + '<input id="p2YkIn" maxlength="120" placeholder="' + (_p2YkAddTy === 'n' ? '例：ST開催 8（数字＝目標の回数）' : '＋ やることを書く（Enter）') + '" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YkAdd()}">'
-    + '<select onchange="_p2YkAddYm=this.value">' + mOpt + '</select><select onchange="_p2YkAddWho=this.value">' + wOpt + '</select><span class="go" onclick="p2YkAdd()">足す</span></div>')
+  // v730: 書く欄を大きく1行。基本はタスク。「🔢 数値」をオンにすると目標の数・単位・今の数
+  var nOn = _p2YkAddTy === 'n', dr = _p2YkDraft || {};
+  var h = '<div class="yk">' + (ro ? '' : '<div class="yk-add"><input id="p2YkIn" class="in" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="＋ やることを書く" value="' + evEsc(dr.t || '') + '" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YkAdd()}">'
+    + (nOn ? '<div class="nrow"><label>目標<input id="p2YkG" inputmode="decimal" autocomplete="off" placeholder="8" value="' + evEsc(dr.g || '') + '"></label><label>単位<input id="p2YkU" class="u" maxlength="6" autocomplete="off" placeholder="回" value="' + evEsc(dr.u || '') + '"></label><label>今<input id="p2YkV" inputmode="decimal" autocomplete="off" placeholder="0" value="' + evEsc(dr.v || '') + '"></label></div>' : '')
+    + '<div class="opt"><span class="nb' + (nOn ? ' on' : '') + '" onclick="p2YkTy()">🔢 数値' + (nOn ? ' ON' : '') + '</span><select onchange="_p2YkAddYm=this.value">' + mOpt + '</select><select onchange="_p2YkAddWho=this.value">' + wOpt + '</select><span class="go" onclick="p2YkAdd()">足す</span></div></div>')
     + '<div class="yk-f">人：<select onchange="_p2YkF=this.value;renderPlan()"><option value="">みんな</option><option value="me"' + (_p2YkF === 'me' ? ' selected' : '') + '>自分</option><option value="all"' + (_p2YkF === 'all' ? ' selected' : '') + '>全体</option>' + mem.map(function(m) { return '<option value="' + m.id + '"' + (_p2YkF === m.id ? ' selected' : '') + '>' + evEsc((m.lastName || '') + (m.firstName || '')) + '</option>'; }).join('') + '</select>'
     + '<label><input type="checkbox"' + (_p2YkDn ? ' checked' : '') + ' onchange="_p2YkDn=this.checked;renderPlan()"> 済みも出す</label></div>';
   if (od.length) h += '<div class="yk-g od"><div class="yk-gh">⚠ 期限切れ<em>' + od.length + '</em></div>' + od.map(function(e) { return _p2YkRow(e, td); }).join('') + '</div>';
@@ -16838,25 +16841,29 @@ function _p2YkYmOpts(sel) { var cur = _p2Ym(0), o = ''; for (var i = -1; i <= 12
 function _p2YkNRow(n) {
   var ok = n.v >= n.g;
   return '<div class="yk-r nm' + (ok ? ' ok' : '') + '"><div class="ln"><span class="ic">📊</span><span class="t" onclick="p2YkNEd(\'' + n.id + '\')">' + evEsc(n.t) + '</span>'
-    + '<span class="pm" onclick="p2YkNV(\'' + n.id + '\',-1)">−</span><b class="nv">' + n.v + '<i>/' + n.g + '</i></b><span class="pm p" onclick="p2YkNV(\'' + n.id + '\',1)">＋</span>'
+    + '<span class="pm" onclick="p2YkNV(\'' + n.id + '\',-1)">−</span><span class="nv"><input class="nvi" inputmode="decimal" autocomplete="off" value="' + (+n.v || 0) + '" onfocus="edSelAll(this)" onchange="p2YkNSet(\'' + n.id + '\',this.value)" aria-label="今の数"><i>/' + n.g + evEsc(n.u || '') + '</i></span><span class="pm p" onclick="p2YkNV(\'' + n.id + '\',1)">＋</span>'
     + _p2YkWhoChip(n) + _p2YkCalChip(n.cal, 'n', n.id) + '</div></div>';
 }
 // ── 操作 ──
-function p2YkTy(t) { _p2YkAddTy = t; renderPlan(); setTimeout(function() { var el = document.getElementById('p2YkIn'); if (el) el.focus(); }, 20); }
+function _p2YkKeep() { var g = function(id) { var el = document.getElementById(id); return el ? el.value : ''; }; _p2YkDraft = { t: g('p2YkIn'), g: g('p2YkG'), u: g('p2YkU'), v: g('p2YkV') }; }
+function p2YkTy(t) { _p2YkKeep(); _p2YkAddTy = t || (_p2YkAddTy === 'n' ? 't' : 'n'); renderPlan(); setTimeout(function() { var el = document.getElementById(_p2YkAddTy === 'n' ? 'p2YkG' : 'p2YkIn'); if (el) el.focus(); }, 20); } // 書いた文は残す
 function p2YkAdd() {
   var el = document.getElementById('p2YkIn'), v = String((el && el.value) || '').trim(); if (!v) return;
   var who = _p2YkAddWho, mid = who !== 'me' && who !== 'all' ? who : '';
   if (_p2YkAddTy === 'n') {
-    var m = v.match(/(\d+)\s*(回|人|件|本|個|P)?\s*$/), g = m ? parseInt(m[1], 10) : 0, t = m ? v.slice(0, m.index).trim() : v;
-    if (!g) { toast('目標の数を最後に入れてください（例：ST開催 8）'); return; }
-    _p2YkN().push({ id: 'n' + Date.now().toString(36), t: (t || v).slice(0, 60), g: g, v: 0, ym: _p2YkAddYm, mid: mid, who: mid ? '' : who, cal: [] }); saveGoals();
+    var gv = function(id) { var x = document.getElementById(id); return x ? String(x.value || '').trim() : ''; };
+    var g = _p2Dec(gv('p2YkG')), u = gv('p2YkU').slice(0, 6), cv = _p2Dec(gv('p2YkV')), t = v;
+    if (!(g > 0)) { var m = v.match(/(\d+(?:\.\d+)?)\s*(回|人|件|本|個|P)?\s*$/); if (m) { g = parseFloat(m[1]); u = u || m[2] || ''; t = v.slice(0, m.index).trim() || v; } }
+    if (!(g > 0)) { toast('目標の数を入れてください'); var gi = document.getElementById('p2YkG'); if (gi) gi.focus(); return; }
+    _p2YkN().push({ id: 'n' + Date.now().toString(36), t: t.slice(0, 60), g: g, v: Math.max(0, cv || 0), u: u, ym: _p2YkAddYm, mid: mid, who: mid ? '' : who, cal: [] }); saveGoals();
+    _p2YkAddTy = 't';
   } else {
     if (typeof eventsUid === 'function' && !eventsUid()) { toast('ログインすると使えます'); return; }
     var e = _tdMakeTask(v.slice(0, 120), '', ''); e.yk = 1; e.planYm = _p2YkAddYm; e.subs = [];
     if (mid) { e.memberId = mid; e.memberIds = [mid]; e.vis = 'both'; e.selfShow = true; } else e.who = who;
     state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
   }
-  renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkIn'); if (n) n.focus(); }, 30);
+  _p2YkDraft = null; renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkIn'); if (n) n.focus(); }, 30);
 }
 function p2YkOpen(id) { _p2YkOpen = _p2YkOpen === id ? '' : id; renderPlan(); }
 function p2YkDone(id) { try { toggleEventDone(id); } catch (e) {} renderPlan(); }
@@ -16868,11 +16875,12 @@ function p2YkDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || 
 function p2YkYm(id, v) { var e = findEvent(id); if (!e) return; e.planYm = v; if (e.date && v !== 'someday' && e.date.slice(0, 7) !== v) e.date = ''; _p2YkSave(e); }
 function p2YkDel(id) { if (!confirm('このやることを消しますか？（ToDoからも消えます）')) return; _p2YkOpen = ''; _evDeleteById(id); renderPlan(); }
 function _p2YkNById(id) { return _p2YkN().filter(function(n) { return n.id === id; })[0]; }
+function p2YkNSet(id, v) { var n = _p2YkNById(id); if (!n) return; n.v = Math.max(0, _p2Dec(v)); saveGoals(); renderPlan(); } // v730: 今の数を直接
 function p2YkNV(id, d) { var n = _p2YkNById(id); if (!n) return; n.v = Math.max(0, (+n.v || 0) + d); saveGoals(); renderPlan(); }
 function p2YkNEd(id) {
   var n = _p2YkNById(id); if (!n) return;
   var v = prompt('「' + n.t + '」の目標の数（0で消す）', String(n.g)); if (v === null) return;
-  var g = parseInt(v, 10); if (g === 0) { var L = _p2YkN(); L.splice(L.indexOf(n), 1); } else if (g > 0) n.g = g;
+  var g = _p2Dec(v); if (g === 0 && String(v).trim() !== '') { var L = _p2YkN(); L.splice(L.indexOf(n), 1); } else if (g > 0) n.g = g;
   saveGoals(); renderPlan();
 }
 // 📅 予定に入れる（日にち・時間を選ぶだけ。入れた予定は札になり、押すと開く）
@@ -16902,15 +16910,15 @@ function _p2YkCss() {
   if (document.getElementById('p2YkCss')) return;
   var st = document.createElement('style'); st.id = 'p2YkCss';
   st.textContent = '.yk{max-width:780px;margin:0 auto 30px}'
-    + '.yk-add{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface)}.yk-add .ty{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;flex:none}.yk-add .ty span{padding:6px 10px;font-size:12.5px;font-weight:900;color:var(--text-dim);cursor:pointer}.yk-add .ty span.on{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}'
-    + '.yk-add input{flex:1;min-width:180px;background:transparent;border:0;color:var(--text);font:700 16px inherit;font-family:inherit;outline:none;padding:6px 2px}.yk-add select,.yk-f select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:6px 8px;font-size:13px;font-weight:800;font-family:inherit}.yk-add .go{padding:7px 14px;border-radius:10px;background:var(--accent);color:#06251c;font-weight:900;font-size:13px;cursor:pointer}'
+    + '.yk-add{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--surface)}.yk-add input.in{width:100%;box-sizing:border-box;min-width:0;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font:800 17px inherit;font-family:inherit;padding:12px 14px;outline:none}.yk-add input.in:focus{border-color:var(--accent)}.yk-add input.in::placeholder{color:var(--text-dim);font-weight:700}.yk-add .opt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.yk-add .opt .go{margin-left:auto}.yk-add .nb{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap}.yk-add .nb.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.yk-add .nrow{display:flex;gap:8px;flex-wrap:wrap}.yk-add .nrow label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:900;color:var(--text-mid)}.yk-add .nrow input{width:70px;min-width:0;flex:none;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font:900 17px Inter,sans-serif;text-align:center;padding:8px 6px;outline:none}.yk-add .nrow input.u{width:64px;font:800 15px inherit;font-family:inherit}.yk-add .nrow input:focus{border-color:var(--accent)}.yk-add .ty{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;flex:none}.yk-add .ty span{padding:6px 10px;font-size:12.5px;font-weight:900;color:var(--text-dim);cursor:pointer}.yk-add .ty span.on{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}'
+    + '.yk-add select,.yk-f select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:6px 8px;font-size:13px;font-weight:800;font-family:inherit}.yk-add .go{padding:7px 14px;border-radius:10px;background:var(--accent);color:#06251c;font-weight:900;font-size:13px;cursor:pointer}'
     + '.yk-f{display:flex;align-items:center;gap:10px;margin:10px 2px 4px;font-size:12.5px;font-weight:800;color:var(--text-dim)}.yk-f label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}'
     + '.yk-g{margin-top:14px}.yk-gh{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);padding:0 4px 6px;border-bottom:1px solid var(--border)}.yk-g.cur .yk-gh{color:var(--accent)}.yk-g.od .yk-gh{color:#FF6B7F}.yk-gh em{font-style:normal;font-size:11.5px;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text-mid)}.yk-gh small{margin-left:auto;font-size:11.5px;color:var(--text-dim)}'
     + '.yk-r{border-bottom:1px solid var(--border)}.yk-r .ln{display:flex;align-items:center;gap:8px;padding:9px 4px;min-height:44px}.yk-r .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#0b0f17}.yk-r .ck:hover{border-color:var(--accent)}.yk-r.dn>.ln .ck{background:var(--accent);border-color:var(--accent)}'
     + '.yk-r .t{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-r.dn>.ln .t{color:var(--text-dim);text-decoration:line-through}.yk-r .t .tg{font-style:normal;font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:6px;color:var(--c);border:1px solid var(--c)}.yk-r .t .sb{margin-left:6px;font:800 11px Inter,sans-serif;color:var(--text-dim);padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 8%,transparent)}'
     + '.yk-r .who{flex:none;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,#5AD7FF 14%,transparent);color:#5AD7FF;white-space:nowrap}.yk-r .who.me{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.yk-r .who.all{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold)}'
     + '.yk-r .dt{flex:none;min-width:38px;text-align:right;font:800 12.5px Inter,sans-serif;color:var(--text-mid)}.yk-r .dt.ng{color:#FF6B7F}.yk-r .cal{flex:none;font-size:12px;font-weight:900;padding:4px 8px;border-radius:9px;border:1px solid var(--border);color:var(--text-mid);cursor:pointer;white-space:nowrap}.yk-r .cal.on{border-color:color-mix(in srgb,#8B7CFF 60%,var(--border));color:#c7bfff;background:color-mix(in srgb,#8B7CFF 14%,transparent)}'
-    + '.yk-r.nm .ic{width:22px;text-align:center;flex:none}.yk-r .pm{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;cursor:pointer;flex:none}.yk-r .pm.p{border-color:var(--accent);color:var(--accent)}.yk-r .nv{flex:none;min-width:52px;text-align:center;font:900 18px Inter,sans-serif}.yk-r .nv i{font-style:normal;font-size:13px;color:var(--text-mid)}.yk-r.nm.ok .nv{color:var(--accent)}'
+    + '.yk-r.nm .ic{width:22px;text-align:center;flex:none}.yk-r .pm{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;cursor:pointer;flex:none}.yk-r .pm.p{border-color:var(--accent);color:var(--accent)}.yk-r .nv{flex:none;min-width:52px;text-align:center;font:900 18px Inter,sans-serif;display:inline-flex;align-items:baseline;gap:1px}.yk-r .nvi{width:46px;box-sizing:border-box;text-align:center;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font:900 17px Inter,sans-serif;padding:4px 2px;outline:none}.yk-r .nvi:focus{border-color:var(--accent)}.yk-r.nm.ok .nvi{color:var(--accent)}.yk-r .nv i{font-style:normal;font-size:13px;color:var(--text-mid)}.yk-r.nm.ok .nv{color:var(--accent)}'
     + '.yk-r .sub{padding:0 6px 10px 34px}.yk-r .sr{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:14px;font-weight:700}.yk-r .sr .ck{width:18px;height:18px;font-size:11px}.yk-r .sr.dn .ck{background:var(--accent);border-color:var(--accent)}.yk-r .sr.dn span:nth-child(2){color:var(--text-dim);text-decoration:line-through}.yk-r .sr .x{margin-left:auto;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 6px}'
     + '.yk-r .sa{width:100%;box-sizing:border-box;margin-top:4px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text);font:700 16px inherit;font-family:inherit;padding:7px 9px}.yk-r .ops{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:12px;font-weight:800;color:var(--text-dim)}.yk-r .ops input,.yk-r .ops select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;font-family:inherit}.yk-r .ops .del{margin-left:auto;color:#FF6B7F;cursor:pointer}'
     + '.yk-em{font-size:12.5px;color:var(--text-dim);padding:10px 4px}'
