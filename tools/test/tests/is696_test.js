@@ -1,0 +1,30 @@
+// v696：10人以上はサークルMAP／人を押して課題／課題→行動（分野を選ぶ）／シート型もフルネーム
+const T = require('../lib/head.js')();
+const { w, c, sleep, setWH, $, $$ } = T;
+T.run(async () => {
+  T.login(); setWH(390, 844);
+  w.switchView('plan'); await sleep(40);
+  const mk = (n) => { const ms = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '' }]; for (let i = 0; i < n; i++) ms.push({ id: 'm' + i, lastName: '佐藤' + i, firstName: '花', title: 'B1', parentId: i < 3 ? 'r' : 'm' + (i % 3), activity: 'S' }); return ms; };
+  w.state.members = mk(5); w.state.idealMembers = [];
+  w.p2Go('sheet'); await sleep(30);
+  c('9人以下はシート型', !$('#p2ShOrb') && !!$('.sp-map svg g.shn'));
+  c('シート型もフルネーム（姓・名の2段）', /山内/.test($('.sp-map svg').innerHTML) && /北斗/.test($('.sp-map svg').innerHTML));
+  w.p2ShIssTap('m1'); await sleep(40);
+  c('人を押すと課題を書く欄', !!$('#p2ShIssIn') && /佐藤1/.test($('.iss').textContent));
+  $('#p2ShIssIn').value = '審査フォロー'; $('#p2ShIssIn').onchange(); w.p2ShIssDone(); await sleep(20);
+  const ym = w._p2Ym(0);
+  c('課題を保存・一覧に出る', w._p2ShIss(ym).m1 === '審査フォロー' && /審査フォロー/.test($('.iss').textContent));
+  c('課題のある人はMAPに印', /#FFB454/.test($('.sp-map svg').innerHTML));
+  w.p2ShIssAct('m1'); await sleep(10);
+  c('行動にする→4分野から選ぶ', $$('.iss-r .cats span').length === 4);
+  const n0 = w.state.events.length; w.p2ShIssToAct('m1', 'dline'); await sleep(20);
+  const e = w.state.events[w.state.events.length - 1];
+  c('選んだ分野に行動が入る（名前つき）', w.state.events.length === n0 + 1 && e.planCat === 'dline' && /佐藤1さん：審査フォロー/.test(e.title));
+  w.state.members = mk(12); w.renderPlan(); await sleep(40);
+  c('10人以上はサークルMAP（自動）', !!$('#p2ShOrb'));
+  w.p2ShMapView('sheet'); await sleep(20);
+  c('シート型に切りかえられる', !$('#p2ShOrb') && !!$('.sp-map svg'));
+  w.p2ShMapView(''); await sleep(20);
+  c('自動に戻す', !!$('#p2ShOrb'));
+  c('行動の4分野の欄はそのまま', $$('.sp-at').length === 4);
+});
