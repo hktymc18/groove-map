@@ -6,7 +6,11 @@ T.run(async () => {
   w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'G', parentId: '', mapType: 'both', ptCurrent: 3000 }, { id: 'a', lastName: '佐藤', firstName: '花', title: 'B1', parentId: 'r', mapType: 'both', ptCurrent: 300 }];
   w.switchView('current'); await sleep(30); try { w.showCopyBtn(); } catch (e) {}
   c('v706: PCは上の帯を出さない', w.document.body.classList.contains('px3') && /header\{display:none!important\}/.test(($('#px3Css') || {}).textContent || ''));
-  c('v706: MAPの上の帯に年月・翌月コピー', /\d+年\d+月/.test($('#pcToolbarC .pt-mon').textContent) && /翌月コピー/.test($('#pcToolbarC .pt-mon').textContent));
+  c('v706: MAPの上の帯に年月', /\d+年\d+月/.test($('#pcToolbarC .pt-mon').textContent));
+  w.px3MapMore($('#pcToolbarC .pt-more'), 'current'); await sleep(10);
+  c('v710: 「⋯」に翌月コピー・CSV', !!$('#px3More') && /翌月コピー/.test($('#px3More').textContent) && /CSV/.test($('#px3More').textContent));
+  w.px3MoreClose();
+  c('v710: 受付連携は外・表示の切りかえはアイコン（名前はマウスを乗せると）', /受付連携/.test($('#pcToolbarC').textContent) && $$('#pcToolbarC .pv-seg .pv-btn svg').length === 4 && $('#pvOrbit').title === 'サークル');
   c('v706: 版・保存は左下', !!$('#pcsVer #versionTag'));
   w.switchView('plan'); w.p2Go('sheet'); await sleep(40);
   c('v707: 計画シートは左右2分割（左にMAP・右に数字と行動）', !!$('.sp-lr .sp-lrL #p2ShMF') && !!$('.sp-lrR .sp-acts') && !$('.sp-lrL .sp-acts'));
