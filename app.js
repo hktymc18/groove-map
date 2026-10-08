@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v745';
+var APP_JS_VERSION = 'v746';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v745';
+  var DATA_VERSION = 'v746';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v746', d:'2026-10-09', items:['PLAN › チェック：日付は最初「未設定」に（チェックしても勝手に日付が入らないように）','日付を押すと、計画シートの期日と同じ窓で「ToDoに入れる／予定に入れる」を選んで、日にち・時間を入れられます','ToDoでチェックすると、チェックリストにもチェックが入ります。「期日を消す」で未設定に戻ります'] },
   { v:'v745', d:'2026-10-09', items:['分析 › 推移：「新規B1の平均GSV」を追加（その月の新規B1＝タイトルB1・その月にBCになった人のGSVの平均）。PCは上のカードのいちばん右、スマホは下の小さいタイル','グラフは押した項目の1つだけに。比べたい時だけ「⇄ 比較」を押して、もう1つ選ぶと2本を重ねて見られます（研修も同じ）'] },
   { v:'v744', d:'2026-10-09', items:['PCのカレンダー：左のToDoメニューをなくして、カレンダーを横いっぱいに（ToDoを選んだ時だけ左にメニュー）','PC：上に「月・週・日｜ToDo」の切りかえ（スマホと同じ形）と「今日」「＋ 予定」。どの画面からでも1回で切りかえられます','ToDoを開いた時の表示を「すべて」から「今日」に（スマホ・PC）'] },
   { v:'v743', d:'2026-10-09', items:['計画シートの実行期日：ToDoに入れる時も時間を入れられるように（任意。予定と同じ数字パッド・「なし」で消す）','行動を書いてすぐ期日を押すと、次の行にカーソルが移ってキーボードで期日の窓が隠れていたのを直しました'] },
@@ -21762,12 +21763,12 @@ function _p2CkPageHtml() {
     + '<div class="p2ck-tabs">' + [['ess', '🎒 必須アイテム', ESS], ['tr', '🎓 TRAINING', TR]].map(function(t) { return '<span class="' + (t[0] === tab ? 'on' : '') + '" onclick="p2CkTab(\'' + t[0] + '\')">' + t[1] + '<small>' + n(t[2]) + '/' + t[2].length + '</small></span>'; }).join('') + '</div>'
     + '<div class="p2ck-bar"><i style="width:' + Math.round(done / Math.max(1, items.length) * 100) + '%"></i></div>'
     + items.map(function(it, i) {
-      var on = !!ck[it.id], dt = ck[it.dk] || '';
+      var on = _p2CkOn(it, ck), dt = ck[it.dk] || '', ev = _p2CkEv(it, ck); // v746: 日付は「未設定」から。押すと ToDo／予定 を選んで入れる
+      var dl = dt ? '<b>' + parseInt(dt.slice(5, 7), 10) + '/' + parseInt(dt.slice(8), 10) + '</b><small>' + (ev ? (ev.type === 'task' ? 'ToDo' : '予定') + (ev.time ? ' ' + ev.time : '') : '日付だけ') + '</small>' : '<i>未設定</i>';
       return '<div class="p2ck-r' + (on ? ' done' : '') + '"><span class="ck" onclick="p2CkTgl(\'' + tab + '\',' + i + ')">' + (on ? '✓' : '') + '</span><span class="t">' + evEsc(it.t) + '</span>'
-        + '<input class="dt" type="date" value="' + dt + '" onchange="p2CkDate(\'' + tab + '\',' + i + ',this.value)" title="日付（カレンダーから選ぶ）">'
-        + '<span class="cal" title="この日付で予定に入れる" onclick="p2CkCal(\'' + tab + '\',' + i + ')">' + icn('calendar') + '</span></div>';
+        + '<span class="dtc' + (dt ? ' on' : '') + (ev && ev.type !== 'task' ? ' ev' : '') + '" onclick="p2CkDt(\'' + tab + '\',' + i + ')" title="ToDoか予定に入れる">' + dl + '</span></div>';
     }).join('')
-    + '<div class="ux-hint">日付を選んで 📅 を押すと、その日の予定（ToDo）に入ります' + (_p2CkCfg ? '<br>項目は「' + evEsc(_p2CkUn()) + '」の設定です' : '') + '</div>'
+    + '<div class="ux-hint">右の日付を押すと、ToDoか予定に入れられます' + (_p2CkCfg ? '<br>項目は「' + evEsc(_p2CkUn()) + '」の設定です' : '') + '</div>'
     + (isCurrentAdmin() && _p2CkUn() ? '<span class="ux-lk" onclick="p2CkAdm()">⚙ ユニオンのチェック項目を設定（管理者）</span>' : '');
 }
 function p2CkCal(pre, i) {
@@ -21819,6 +21820,7 @@ function _p2CkCss() {
     + ".p2ck-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:13px;background:var(--surface);border:1px solid var(--border);margin-top:8px}"
     + ".p2ck-r .ck{width:28px;height:28px;border-radius:9px;border:2px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#06251C;cursor:pointer}.p2ck-r.done .ck{background:var(--accent);border-color:var(--accent)}"
     + ".p2ck-r .t{flex:1;min-width:0;font-size:14.5px;font-weight:800}.p2ck-r.done .t{color:var(--text-dim)}"
+    + ".p2ck-r .dtc{flex:none;min-width:74px;height:40px;padding:0 10px;box-sizing:border-box;border-radius:10px;border:1px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;line-height:1.15}.p2ck-r .dtc i{font-style:normal;font-size:12.5px;font-weight:800;color:var(--text-dim)}.p2ck-r .dtc.on{border-style:solid;border-color:var(--border);background:var(--surface2)}.p2ck-r .dtc b{font:900 14px Inter,sans-serif}.p2ck-r .dtc small{font-size:10px;font-weight:900;color:var(--accent);white-space:nowrap}.p2ck-r .dtc.ev small{color:#5AD7FF}"
     + ".p2ck-r .dt{flex:none;width:122px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;padding:0 6px;font-family:inherit}"
     + ".p2ck-r .cal{flex:none;width:34px;height:34px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--accent)}.p2ck-r .cal .lic{width:18px;height:18px}"
     // チェックした時のひとこと（goalsettingアプリのように、色つきの枠で）
@@ -24838,10 +24840,13 @@ function _p2CkItems(pre) {
   return L.filter(function(x) { return x && x.t; }).map(function(x) { var m = /^(ess|tr)_(\d+)$/.exec(x.id || ''); return { id: x.id, t: x.t, dk: m ? m[1] + '_d_' + m[2] : x.id + '_d' }; });
 }
 function _p2CkIt(pre, i) { return _p2CkItems(pre)[i] || { id: pre + '_x', t: '', dk: pre + '_x_d' }; }
+// v746: 項目に入れた ToDo／予定（ck[id+'_ev']）。ToDoでチェックすると、こちらもチェック済み
+function _p2CkEv(it, ck) { var id = (ck || _p2().check || {})[it.id + '_ev'], e = id ? findEvent(id) : null; return e && !e.deleted ? e : null; }
+function _p2CkOn(it, ck) { ck = ck || _p2().check || {}; if (ck[it.id]) return true; var e = _p2CkEv(it, ck); return !!(e && e.type === 'task' && e.done); }
 function _p2CkCount() {
   _p2CkLoad();
   var ck = _p2().check || {}, done = 0, total = 0;
-  ['ess', 'tr'].forEach(function(pre) { _p2CkItems(pre).forEach(function(it) { total++; if (ck[it.id]) done++; }); });
+  ['ess', 'tr'].forEach(function(pre) { _p2CkItems(pre).forEach(function(it) { total++; if (_p2CkOn(it, ck)) done++; }); });
   return { done: done, total: total };
 }
 function p2CheckOpen() {
@@ -24883,9 +24888,9 @@ function _p2CkRender() {
 function p2CkDate(pre, i, v) { _p2().check[_p2CkIt(pre, i).dk] = v; saveGoals(); }
 function p2CkTgl(pre, i) {
   var ck = _p2().check;
-  var it = _p2CkIt(pre, i), key = it.id;
-  if (!ck[key] && !ck[it.dk]) { ck[it.dk] = evTodayYmd(); }
-  ck[key] = !ck[key];
+  var it = _p2CkIt(pre, i), key = it.id, ev = _p2CkEv(it, ck);
+  ck[key] = !_p2CkOn(it, ck); // v746: チェックしても日付は勝手に入れない
+  if (ev && ev.type === 'task' && !!ev.done !== ck[key]) { try { toggleEventDone(ev.id); } catch (eT) {} } // ToDoと連動
   saveGoals(); _p2CkRender();
   if (ck[key]) {
     var cnt = _p2CkCount(), cm = P2_CHEER[Math.floor(Math.random() * P2_CHEER.length)]; // v652: 色つきの枠でひとこと（ランダム）
@@ -38038,10 +38043,35 @@ function p2ShDtNew(cat, j) {
   if (!id) { var e = _tdMakeTask(v.slice(0, 120), '', ''); e.planYm = _p2ShYmN(); e.planCat = cat; state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {} id = e.id; if (row) row.dataset.eid = id; ti.value = ''; }
   p2ShDt(id);
 }
+// v746: チェックの項目も、計画シートの期日と同じ窓で ToDo／予定 に入れる
+function p2CkDt(pre, i) {
+  if (_p2ShRo && _p2ShRo()) return;
+  var ck = _p2().check, it = _p2CkIt(pre, i), ev = _p2CkEv(it, ck);
+  try { var ae = document.activeElement; if (ae && ae.blur && ae !== document.body) ae.blur(); } catch (eF) {}
+  _p2ShDtS = { ck: { pre: pre, i: i }, title: it.t, kind: ev && ev.type !== 'task' ? 'ev' : 'todo', d: ck[it.dk] || '', t: (ev && ev.time) || '', te: (ev && ev.endTime) || '' };
+  try { _p2ShCss2(); } catch (eC) {}
+  _p2ShDtRender(true);
+}
+function _p2CkDtOk(S, d, t, te) {
+  var ck = _p2().check, it = _p2CkIt(S.ck.pre, S.ck.i), e = _p2CkEv(it, ck);
+  if (!e) { e = _tdMakeTask('✅ ' + it.t, d, ''); state.events.push(e); ck[it.id + '_ev'] = e.id; }
+  e.date = d; e.updatedAt = new Date().toISOString();
+  if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
+  else { e.type = 'task'; e.time = t || ''; delete e.endTime; if (!!e.done !== !!ck[it.id]) e.done = !!ck[it.id]; }
+  ck[it.dk] = d; saveGoals(); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  p2ShDtX(); if (currentView === 'plan') renderPlan();
+  toast((S.kind === 'ev' ? '📅 予定に入れました（' : '✅ ToDoに入れました（') + _p2ShMd(d) + (t ? ' ' + t + (S.kind === 'ev' && e.endTime ? '〜' + e.endTime : '') : '') + '）');
+}
+function _p2CkDtClear(S) {
+  var ck = _p2().check, it = _p2CkIt(S.ck.pre, S.ck.i), e = _p2CkEv(it, ck);
+  delete ck[it.dk]; delete ck[it.id + '_ev']; saveGoals();
+  if (e) { try { _evDeleteById(e.id); } catch (eD) {} }
+  p2ShDtX(); if (currentView === 'plan') renderPlan();
+}
 function p2ShDtKind(k) { if (_p2ShDtS) { _p2ShDtS.kind = k; var d = document.getElementById('p2ShDtD'), t = document.getElementById('p2ShDtT'); var te = document.getElementById('p2ShDtTE'); _p2ShDtS.d = d ? d.value : ''; if (t) _p2ShDtS.t = t.value; if (te) _p2ShDtS.te = te.value; _p2ShDtRender(true); } }
 function p2ShDtX() { _p2ShDtS = null; var o = document.getElementById('p2ShDtOv'); if (o) o.remove(); }
 function _p2ShDtRender(keep) {
-  var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return;
+  var S = _p2ShDtS, e = S && (S.ck ? { title: S.title, date: S.d } : findEvent(S.id)); if (!e) return; // v746: チェックの項目は ck
   var d = keep ? (S.d || '') : (e.date || ''), t = keep ? (S.t || '') : (e.time || ''), te = keep ? (S.te || '') : (e.endTime || ''), ev = S.kind === 'ev';
   var o = document.getElementById('p2ShDtOv'); if (!o) { o = document.createElement('div'); o.id = 'p2ShDtOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2ShDtX(); }; document.body.appendChild(o); }
   o.innerHTML = '<div class="shdt"><div class="hd">実行期日<span onclick="p2ShDtX()">✕</span></div><div class="tt">' + evEsc(e.title || '') + '</div>'
@@ -38053,9 +38083,10 @@ function _p2ShDtRender(keep) {
   try { _pcTimeInputs(ev ? ['p2ShDtT', 'p2ShDtTE'] : ['p2ShDtT']); } catch (eP) {} // PCは15分刻みのリスト・直接入力
 }
 function p2ShDtOk() {
-  var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return;
+  var S = _p2ShDtS, e = S && (S.ck ? {} : findEvent(S.id)); if (!e) return;
   var d = (document.getElementById('p2ShDtD') || {}).value || '', t = (document.getElementById('p2ShDtT') || {}).value || '', te = (document.getElementById('p2ShDtTE') || {}).value || '';
   if (!d) { toast('日にちを選んでください'); return; }
+  if (S.ck) { _p2CkDtOk(S, d, t, te); return; }
   e.date = d; e.updatedAt = new Date().toISOString();
   if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
   else { e.type = 'task'; e.time = t || ''; delete e.endTime; } // v743: ToDoも時刻（任意）
@@ -38063,7 +38094,7 @@ function p2ShDtOk() {
   p2ShDtX(); _p2RpForce = true; renderPlan();
   toast((S.kind === 'ev' ? '📅 予定に入れました（' : '✅ ToDoに入れました（') + _p2ShMd(d) + (t ? ' ' + t + (S.kind === 'ev' && e.endTime ? '〜' + e.endTime : '') : '') + '）');
 }
-function p2ShDtClear() { var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return; e.date = ''; e.time = ''; e.type = 'task'; delete e.endTime; e.updatedAt = new Date().toISOString(); saveEventDoc(e); p2ShDtX(); _p2RpForce = true; renderPlan(); }
+function p2ShDtClear() { var S = _p2ShDtS; if (S && S.ck) { _p2CkDtClear(S); return; } var e = S && findEvent(S.id); if (!e) return; e.date = ''; e.time = ''; e.type = 'task'; delete e.endTime; e.updatedAt = new Date().toISOString(); saveEventDoc(e); p2ShDtX(); _p2RpForce = true; renderPlan(); }
 function p2ShActTg(id) { var e = findEvent(id); if (!e) return; toggleEventDone(id); if (currentView === 'plan') renderPlan(); }
 function p2ShActDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; e.updatedAt = new Date().toISOString(); saveEventDoc(e); _p2RpForce = true; renderPlan(); }
 function p2ShActDel(id) { if (!confirm('この行動を消しますか？（ToDoからも消えます）')) return; _evDeleteById(id); if (currentView === 'plan') renderPlan(); }
