@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v738';
+var APP_JS_VERSION = 'v739';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v738';
+  var DATA_VERSION = 'v739';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v739', d:'2026-10-09', items:['計画シートの実行期日（予定に入れる）：時間を予定と同じ「開始〜終了」の数字パッドで入れられるように（1900 と打つと 19:00〜20:00、続けて終了も打てます）'] },
   { v:'v738', d:'2026-10-09', items:['PLAN › チェック：項目をユニオンごとに管理者が設定できるように（チェックの画面のいちばん下「⚙ ユニオンのチェック項目を設定」）','項目の追加・名前の変更・並べかえ・外す・標準に戻すができ、保存するとユニオンの全員に反映','今までのチェックと日付はそのまま残ります'] },
   { v:'v737', d:'2026-10-09', items:['分析 › 研修：いちばん上に研修フロー（じょうご）、その下にその月の数字、折れ線グラフはいちばん下に','説明の文は (i) に入れて、ふだんは出さないようにしました'] },
   { v:'v736', d:'2026-10-09', items:['PLANのタイルを「年の目標 → 計画シート → やること」の順に','計画シートの行動の実行期日：押すと「✅ ToDoに入れる／📅 予定に入れる」を選んで日にち（予定は時間も）を入れる窓に。勝手に今日が入らなくなりました','ToDoにした行動はToDoのチェックと連動、予定にした行動は左の□で自分でチェック。ToDoで消した行動は「ToDoで消しました」と出ます（戻す・外す）','やること：登録したタスクの名前・人、数値の目標の名前・目標・単位・月・人を、押して直せるように'] },
@@ -33749,6 +33750,7 @@ function openTimePad(targetId) {
   else if (targetId === 'tqTime') { _tpStartId = 'tqTime'; _tpEndId = 'tqTimeEndX'; _tpIsTask = true; }
   else if (targetId === 'wnT' || targetId === 'wnTE') { _tpStartId = 'wnT'; _tpEndId = 'wnTE'; _tpIsTask = false; }
   else if (targetId === 'tkT') { _tpStartId = 'tkT'; _tpEndId = 'tkTEndX'; _tpIsTask = true; } // v616: タスクの画面
+  else if (targetId === 'p2ShDtT' || targetId === 'p2ShDtTE') { _tpStartId = 'p2ShDtT'; _tpEndId = 'p2ShDtTE'; _tpIsTask = false; } // v739: 計画シートの期日（予定）
   else if (targetId === 'olT') { _tpStartId = 'olT'; _tpEndId = 'olTEndX'; _tpIsTask = true; } // v617: OLの企画 // v613: 予定の画面・予定を足す // v456: クイック追加もカレンダーと同じ時刻パッド
   else { _tpStartId = 'evTime'; _tpEndId = 'evTimeEnd'; _tpIsTask = (_evType === 'task'); }
   if (_tpStartId === 'evTime' && typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
@@ -33756,6 +33758,7 @@ function openTimePad(targetId) {
   _tpBuf = '';
   var ov = document.createElement('div');
   ov.className = 'tp-ov'; ov.id = 'tpOv';
+  if (_tpStartId === 'p2ShDtT') ov.style.zIndex = '990'; // v739: 期日のシート（.shdt-ov）より上に
   ov.onclick = function(e){ if (e.target === ov) closeTimePad(true); };
   function k(v) { return '<div class="tp-key" onclick="tpKey(\'' + v + '\')">' + v + '</div>'; }
   var isTask = _tpIsTask;
@@ -37852,28 +37855,29 @@ function p2ShDtNew(cat, j) {
   if (!id) { var e = _tdMakeTask(v.slice(0, 120), '', ''); e.planYm = _p2ShYmN(); e.planCat = cat; state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {} id = e.id; if (row) row.dataset.eid = id; ti.value = ''; }
   p2ShDt(id);
 }
-function p2ShDtKind(k) { if (_p2ShDtS) { _p2ShDtS.kind = k; var d = document.getElementById('p2ShDtD'), t = document.getElementById('p2ShDtT'); _p2ShDtS.d = d ? d.value : ''; _p2ShDtS.t = t ? t.value : ''; _p2ShDtRender(true); } }
+function p2ShDtKind(k) { if (_p2ShDtS) { _p2ShDtS.kind = k; var d = document.getElementById('p2ShDtD'), t = document.getElementById('p2ShDtT'); var te = document.getElementById('p2ShDtTE'); _p2ShDtS.d = d ? d.value : ''; if (t) _p2ShDtS.t = t.value; if (te) _p2ShDtS.te = te.value; _p2ShDtRender(true); } }
 function p2ShDtX() { _p2ShDtS = null; var o = document.getElementById('p2ShDtOv'); if (o) o.remove(); }
 function _p2ShDtRender(keep) {
   var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return;
-  var d = keep ? (S.d || '') : (e.date || ''), t = keep ? (S.t || '') : (e.time || ''), ev = S.kind === 'ev';
+  var d = keep ? (S.d || '') : (e.date || ''), t = keep ? (S.t || '') : (e.time || ''), te = keep ? (S.te || '') : (e.endTime || ''), ev = S.kind === 'ev';
   var o = document.getElementById('p2ShDtOv'); if (!o) { o = document.createElement('div'); o.id = 'p2ShDtOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2ShDtX(); }; document.body.appendChild(o); }
   o.innerHTML = '<div class="shdt"><div class="hd">実行期日<span onclick="p2ShDtX()">✕</span></div><div class="tt">' + evEsc(e.title || '') + '</div>'
     + '<div class="seg"><span class="' + (ev ? '' : 'on') + '" onclick="p2ShDtKind(\'todo\')">✅ ToDoに入れる</span><span class="' + (ev ? 'on' : '') + '" onclick="p2ShDtKind(\'ev\')">📅 予定に入れる</span></div>'
     + '<div class="nt">' + (ev ? 'カレンダーの予定に入ります。やったら左の□に自分でチェック' : 'ToDoに入ります。ToDoでチェックすると、ここにもチェックが入ります') + '</div>'
-    + '<label>日にち<input type="date" id="p2ShDtD" value="' + d + '"></label>' + (ev ? '<label>時間<input type="time" id="p2ShDtT" value="' + t + '"></label>' : '')
+    + '<label>日にち<input type="date" id="p2ShDtD" value="' + d + '"></label>' + (ev ? '<div class="shtm"><em>時間</em><input id="p2ShDtT" type="text" readonly placeholder="開始" value="' + evEsc(t) + '" onclick="openTimePad(\'p2ShDtT\')"><b>〜</b><input id="p2ShDtTE" type="text" readonly placeholder="終了" value="' + evEsc(te) + '" onclick="openTimePad(\'p2ShDtTE\')"></div>' : '')
     + '<div class="bt"><span class="go" onclick="p2ShDtOk()">入れる</span>' + (e.date ? '<span class="cl" onclick="p2ShDtClear()">期日を消す</span>' : '') + '</div></div>';
+  if (ev) try { _pcTimeInputs(['p2ShDtT', 'p2ShDtTE']); } catch (eP) {} // PCは15分刻みのリスト・直接入力
 }
 function p2ShDtOk() {
   var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return;
-  var d = (document.getElementById('p2ShDtD') || {}).value || '', t = (document.getElementById('p2ShDtT') || {}).value || '';
+  var d = (document.getElementById('p2ShDtD') || {}).value || '', t = (document.getElementById('p2ShDtT') || {}).value || '', te = (document.getElementById('p2ShDtTE') || {}).value || '';
   if (!d) { toast('日にちを選んでください'); return; }
   e.date = d; e.updatedAt = new Date().toISOString();
-  if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (t && !e.endTime) { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
+  if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
   else { e.type = 'task'; e.time = ''; delete e.endTime; }
   saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
   p2ShDtX(); _p2RpForce = true; renderPlan();
-  toast((S.kind === 'ev' ? '📅 予定に入れました（' : '✅ ToDoに入れました（') + _p2ShMd(d) + (S.kind === 'ev' && t ? ' ' + t : '') + '）');
+  toast((S.kind === 'ev' ? '📅 予定に入れました（' : '✅ ToDoに入れました（') + _p2ShMd(d) + (S.kind === 'ev' && t ? ' ' + t + (e.endTime ? '〜' + e.endTime : '') : '') + '）');
 }
 function p2ShDtClear() { var S = _p2ShDtS, e = S && findEvent(S.id); if (!e) return; e.date = ''; e.time = ''; e.type = 'task'; delete e.endTime; e.updatedAt = new Date().toISOString(); saveEventDoc(e); p2ShDtX(); _p2RpForce = true; renderPlan(); }
 function p2ShActTg(id) { var e = findEvent(id); if (!e) return; toggleEventDone(id); if (currentView === 'plan') renderPlan(); }
@@ -37972,7 +37976,7 @@ function _p2ShCss2() {
     + '.sp-kz{width:100%;box-sizing:border-box;margin-top:6px;font-weight:700;font-size:12.5px;line-height:1.55;font-family:inherit;color:var(--text);padding:6px 9px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);resize:none;min-height:34px;overflow:hidden}.sp-kz::placeholder{color:var(--text-dim)}.sp-kz:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-at{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}.sp-at .h{display:flex;align-items:center;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:900}.sp-at .h span{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--text-dim)}'
     + '.sp-at .r{display:flex;align-items:stretch;border-top:1px solid var(--border);min-height:32px;font-size:12.5px;font-weight:700}.sp-at .c{width:32px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;cursor:pointer}.sp-at .x{flex:1;min-width:0;border-left:1px solid var(--border);display:flex;align-items:center}.sp-at .x input{width:100%;background:transparent;border:0;color:var(--text);font-weight:700;font-size:13px;font-family:inherit;padding:6px 8px}.sp-at .x input::placeholder{color:var(--text-dim)}.sp-at .x input:focus{outline:none;background:color-mix(in srgb,var(--accent) 6%,transparent)}.sp-at .r.dn .x input{color:var(--text-dim);text-decoration:line-through}'
-    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;box-sizing:border-box;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none}.sp-at .d i.dl{font-style:normal;pointer-events:none}.sp-at .d.od{color:#FF6B7F}.sp-at .d.dd{flex-direction:column;gap:1px;line-height:1.1}.sp-at .d.dd b{font-weight:900}.sp-at .d.dd small{font-size:9.5px;font-weight:900;color:var(--accent)}.sp-at .d.dd.ev small{color:#5AD7FF}.sp-at .r.gone .gx{display:flex;flex-direction:column;justify-content:center;padding:4px 8px;font-size:13px;color:var(--text-dim)}.sp-at .r.gone .gx em{font-style:normal;font-size:10.5px;font-weight:900;color:#FF6B7F}.sp-at .r.gone .c{color:#FF6B7F}.sp-at .d.gd{flex-direction:column;gap:2px}.sp-at .d.gd i{font-style:normal;font-size:11px;font-weight:900;color:var(--accent);cursor:pointer}.sp-at .d.gd i+i{color:var(--text-dim)}.shdt-ov{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}body.px3 .shdt-ov{align-items:center}.shdt{width:100%;max-width:440px;background:var(--surface);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box}body.px3 .shdt{border-radius:18px}.shdt .hd{display:flex;align-items:center;font-size:13px;font-weight:900;color:var(--text-mid)}.shdt .hd span{margin-left:auto;cursor:pointer;padding:4px 6px}.shdt .tt{font-size:17px;font-weight:900;margin:6px 0 12px;word-break:break-all}.shdt .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.shdt .seg span{padding:12px 8px;border-radius:12px;border:1.5px solid var(--border);text-align:center;font-size:14.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.shdt .seg span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.shdt .nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:8px 2px 4px;line-height:1.5}.shdt label{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;font-weight:900;color:var(--text-mid)}.shdt label input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:10px 12px}.shdt .bt{display:flex;align-items:center;gap:12px;margin-top:16px}.shdt .bt .go{flex:1;text-align:center;padding:13px;border-radius:12px;background:var(--accent);color:#06281f;font-weight:900;font-size:15px;cursor:pointer}.shdt .bt .cl{font-size:13px;font-weight:800;color:#FF6B7F;cursor:pointer;padding:8px}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
+    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;box-sizing:border-box;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none}.sp-at .d i.dl{font-style:normal;pointer-events:none}.sp-at .d.od{color:#FF6B7F}.sp-at .d.dd{flex-direction:column;gap:1px;line-height:1.1}.sp-at .d.dd b{font-weight:900}.sp-at .d.dd small{font-size:9.5px;font-weight:900;color:var(--accent)}.sp-at .d.dd.ev small{color:#5AD7FF}.sp-at .r.gone .gx{display:flex;flex-direction:column;justify-content:center;padding:4px 8px;font-size:13px;color:var(--text-dim)}.sp-at .r.gone .gx em{font-style:normal;font-size:10.5px;font-weight:900;color:#FF6B7F}.sp-at .r.gone .c{color:#FF6B7F}.sp-at .d.gd{flex-direction:column;gap:2px}.sp-at .d.gd i{font-style:normal;font-size:11px;font-weight:900;color:var(--accent);cursor:pointer}.sp-at .d.gd i+i{color:var(--text-dim)}.shdt-ov{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}body.px3 .shdt-ov{align-items:center}.shdt{width:100%;max-width:440px;background:var(--surface);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));box-sizing:border-box}body.px3 .shdt{border-radius:18px}.shdt .hd{display:flex;align-items:center;font-size:13px;font-weight:900;color:var(--text-mid)}.shdt .hd span{margin-left:auto;cursor:pointer;padding:4px 6px}.shdt .tt{font-size:17px;font-weight:900;margin:6px 0 12px;word-break:break-all}.shdt .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.shdt .seg span{padding:12px 8px;border-radius:12px;border:1.5px solid var(--border);text-align:center;font-size:14.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.shdt .seg span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.shdt .nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:8px 2px 4px;line-height:1.5}.shdt label{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px;font-weight:900;color:var(--text-mid)}.shdt label input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:10px 12px}.shdt .shtm{display:flex;align-items:center;gap:6px;margin-top:10px}.shdt .shtm em{font-style:normal;font-size:14px;font-weight:900;color:var(--text-mid);margin-right:4px}.shdt .shtm input{flex:1;min-width:0;height:52px;box-sizing:border-box;border-radius:13px;border:1.5px solid var(--border2);background:var(--bg);color:var(--text);font-size:19px;font-weight:800;text-align:center;font-family:Inter,\'Noto Sans JP\',sans-serif;cursor:pointer;outline:none}.shdt .shtm b{color:var(--text-dim)}.shdt .bt{display:flex;align-items:center;gap:12px;margin-top:16px}.shdt .bt .go{flex:1;text-align:center;padding:13px;border-radius:12px;background:var(--accent);color:#06281f;font-weight:900;font-size:15px;cursor:pointer}.shdt .bt .cl{font-size:13px;font-weight:800;color:#FF6B7F;cursor:pointer;padding:8px}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
     + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
     // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
     + '.sp-pc{margin-top:4px}.sp-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.sp-acts .sp-at{margin-bottom:0}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'

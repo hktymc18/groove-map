@@ -21,7 +21,16 @@ T.run(async () => {
   const e2 = w._tdMakeTask('サンプルを渡す', '', ''); e2.planYm = w._p2Ym(0); e2.planCat = 'dist'; w.state.events.push(e2); w.renderPlan(); await sleep(30);
   w.p2ShDt(e2.id); await sleep(20); w.p2ShDtKind('ev'); await sleep(20);
   c('予定を選ぶと時間も', !!$('#p2ShDtT') && /自分でチェック/.test($('#p2ShDtOv').textContent));
-  $('#p2ShDtD').value = '2026-10-22'; $('#p2ShDtT').value = '19:00'; w.p2ShDtOk(); await sleep(40);
+  c('v739: 時間は予定と同じ 開始〜終了（数字パッド）', $('#p2ShDtT').readOnly && !!$('#p2ShDtTE') && $('#p2ShDtT').type === 'text');
+  $('#p2ShDtD').value = '2026-10-22'; w.openTimePad('p2ShDtT'); await sleep(10);
+  c('v739: 押すと数字パッドが期日の窓の上に開く', !!$('#tpOv') && +$('#tpOv').style.zIndex > 950);
+  w.tpKey('19'.charAt(0)); w.tpKey('9'); w.tpKey('00'); await sleep(10);
+  c('v739: 1900 と打つと開始19:00・終了は+1時間', $('#p2ShDtT').value === '19:00' && $('#p2ShDtTE').value === '20:00');
+  w.tpKey('2'); w.tpKey('1'); w.tpKey('30'); await sleep(250);
+  c('v739: 続けて終了も打てる（21:30）・打ち終わると閉じる', $('#p2ShDtTE').value === '21:30' && !$('#tpOv'));
+  w.p2ShDtKind('todo'); await sleep(10); w.p2ShDtKind('ev'); await sleep(10);
+  c('v739: ToDo/予定を切りかえても時間は残る', $('#p2ShDtT').value === '19:00' && $('#p2ShDtTE').value === '21:30');
+  $('#p2ShDtTE').value = ''; w.p2ShDtOk(); await sleep(40);
   c('予定に入れる：カレンダーの予定（日時）・計画シートには残る', e2.type === 'event' && e2.date === '2026-10-22' && e2.time === '19:00' && e2.endTime === '20:00' && w._p2ShActs(w._p2Ym(0), 'dist').some(x => x.id === e2.id) && /予定 19:00/.test($$('.sp-at')[1].textContent));
   w.p2ShActTg(e2.id); await sleep(20);
   c('予定は左の□を手でチェック', e2.done === true);
