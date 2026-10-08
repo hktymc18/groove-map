@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v705';
+var APP_JS_VERSION = 'v706';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -680,6 +680,7 @@ function _rrect(x, px, py, w, h, r) {
 function showCopyBtn() {
   var btn = document.getElementById('copyMonthBtn');
   if (btn && state.isEditor) btn.style.display = '';
+  try { _px3MonBar(); } catch (e) {}
 }
 
 
@@ -3890,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v705';
+  var DATA_VERSION = 'v706';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -3998,6 +3999,7 @@ function onYearMonthChange() {
   var mm = String(m).padStart(2,'0');
   var _prevMonth = state.currentMonth;
   state.currentMonth = y + '.' + mm;
+  try { _px3MonBar(); } catch (eMb) {} // v706
   if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
   // v544: 読み込みが終わるまで前の月のMAPを新しい月として見せない（読み込み中の表示→読込後に描画）
   if (USE_FIREBASE && currentUser && currentUser.uid && db && state.currentMonth !== _prevMonth) {
@@ -5377,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v706', d:'2026-10-08', items:['PC：上の帯（年月・翌月コピー・共有MAP）をなくして、どの画面も上が広くなりました','年月の切りかえ（‹ 2026年10月 ›）・翌月コピー・共有MAPは、MAPの画面の上の帯に移しました（分析は今まで通り分析の上）','バージョンと保存の時刻は左下のプロフィールの下に'] },
   { v:'v705', d:'2026-10-08', items:['PC：左上の屋号・名前の表示をなくしました（左下のプロフィールと同じだったため）'] },
   { v:'v704', d:'2026-10-08', items:['🎰 シミュレーションのファーストボーナスは「押して見る」で表示：数字がスロットみたいにぐるぐる回って、右の桁から順に止まります（金額を押すともう一度回せます）','数字を変えたら、新しい金額でまた回って止まります'] },
   { v:'v703', d:'2026-10-08', items:['計画シートの上（目標まわり）をすっきり：紙の下線の行をやめて、見出し1行と「年の目標 › マイルストーン › 今月の目標 › 今月の数字」のカード1列に。MAPと下の欄が広くなりました','今月の月収・NEWフロントはカードの中でそのまま書けます。年の目標・マイルストーンのカードを押すとロードマップへ'] },
@@ -36024,6 +36027,7 @@ function showSharedButton() {
     var cnt = document.getElementById('sharedMapCount');
     if (cnt) cnt.textContent = sharedOwners.length;
   }
+  try { _px3MonBar(); } catch (e) {}
 }
 
 // ── 共有MAPダッシュボード ──
@@ -36893,7 +36897,9 @@ function _px3Css() {
   st.textContent =
     // 左メニュー（幅220・文字つき）
     "body.px3{padding-left:220px!important}"
-    + "body.px3 header .hdr-top>div:first-child{display:none!important}" // v705: 屋号・名前は左下のプロフィールと同じなので上には出さない
+    + "body.px3 header{display:none!important}" // v706: PCは上の帯をなくす（年月・翌月コピー・共有MAPはMAPの上、版・保存は左下へ）
+    + "#pcsVer{display:none}body.px3 #pcsVer{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0 0;flex:none}body.px3 #pcsVer>div{flex-direction:row!important;gap:8px!important;align-items:center!important}body.px3 #pcsVer #versionTag,body.px3 #pcsVer #lastSavedTag{font-size:10px!important}"
+    + ".pt-mon{display:none}body.px3 .pt-mon{display:flex;align-items:center;gap:6px;flex:none}body.px3 .pt-mon .px3-mon{margin:0}.pt-mon .pt-cp{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}.pt-mon .pt-sh{color:var(--purple);border-color:var(--purple)}"
     + "body.px3 #evCalendar.full,body.px3 #evDayV.full,body.px3 #evWeek.full,body.px3 #evAgenda.full{left:220px}"
     + "body.px3 .pc-sidebar{width:220px;align-items:stretch;padding:16px 12px 14px;gap:2px;background:color-mix(in srgb,var(--bg) 82%,#000);overflow-y:auto}"
     + "body.px3 .pcs-item{flex-direction:row;width:auto;height:40px;padding:0 10px;gap:12px;justify-content:flex-start;border-radius:10px;flex:none}"
@@ -36974,7 +36980,18 @@ function _px3Side() {
   }
   var u = (typeof currentUser !== 'undefined' && currentUser) || {}, nm = u.name || u.displayName || '';
   document.getElementById('pcsMe').innerHTML = '<span class="av">' + evEsc((nm || '？').charAt(0)) + '</span><div><b>' + evEsc(nm || 'ゲスト') + '</b><small>' + evEsc([u.union, u.area].filter(Boolean).join('・')) + '</small></div>';
-  _px3Teams();
+  if (!document.getElementById('pcsVer')) { var vr = document.createElement('div'); vr.id = 'pcsVer'; sb.appendChild(vr); }
+  _px3Teams(); _px3MonBar();
+}
+// v706: PCのMAPの上の帯に「‹ 年月 ›・翌月コピー・共有MAP」（もとの上の帯の代わり。中身は上の帯の部品を見て作る）
+function _px3MonBar() {
+  var els = document.querySelectorAll('.pt-mon[data-pcmon]'); if (!els.length) return;
+  var vis = function(id) { var e = document.getElementById(id); return !!e && e.style.display !== 'none'; };
+  var n = (document.getElementById('sharedMapCount') || {}).textContent || '';
+  var h = '<span class="px3-mon"><i onclick="px3Mon(-1)" title="前の月">‹</i><b>' + _px3Ym() + '</b><i onclick="px3Mon(1)" title="次の月">›</i></span>'
+    + (vis('copyMonthBtn') ? '<div class="pt-action pt-cp" onclick="copyToNextMonth()" title="今月のMAPを来月へ">→ 翌月コピー</div>' : '')
+    + (vis('sharedMapBtn') ? '<div class="pt-action pt-sh" onclick="openSharedDashboard()">共有MAP ' + evEsc(n) + '</div>' : '');
+  Array.prototype.forEach.call(els, function(e) { e.innerHTML = h; });
 }
 function _px3Teams() {
   var el = document.getElementById('pcsTeams'); if (!el) return;
@@ -36991,6 +37008,11 @@ function _px3Sync() {
   document.body.classList.toggle('px3', on);
   if (on) _px3Css();
   _px3Side();
+  try { // v706: 版・保存・同期の点は、PCは左下へ（スマホは上の帯に戻す）
+    var vt = document.getElementById('versionTag'), box = vt && vt.parentNode, dot = document.getElementById('userDot'), hdr = document.querySelector('header .hdr-top'), slot = document.getElementById('pcsVer');
+    if (on && slot && box && box.parentNode !== slot) { if (dot) slot.appendChild(dot); slot.appendChild(box); }
+    else if (!on && hdr && box && box.parentNode !== hdr) { if (dot) hdr.appendChild(dot); hdr.appendChild(box); }
+  } catch (eV) {}
 }
 // 月を前後へ（上の帯の年・月を動かして、いつもの月替えを使う）
 function px3Mon(d) {
