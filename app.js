@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v717';
+var APP_JS_VERSION = 'v718';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v717';
+  var DATA_VERSION = 'v718';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5381,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v718', d:'2026-10-08', items:['年の目標・ロードマップと計画シートに「📄 サマリー」：右上（スマホは見出しの下）の「✎ 編集｜📄 サマリー」で、見るだけの1枚に切りかえ','ロードマップのサマリー：最終・直近の目標、マイルストーン、必要なフロント・締め切り・ペース、ギャップ、戦略のメモ','計画シートのサマリー：年の目標・マイルストーン・月収・NEWフロント、今月の数字（先月の結果つき）、改善点、行動（次にやること・期限切れ）、課題'] },
   { v:'v717', d:'2026-10-08', pop: { t: '年の目標・ロードマップを作り直しました', items: ['マイルストーンの線に、直近の目標から逆算した LOI→Q2→Q3→Q4→BR と、月ごとのフロント（F）が並びます。月を押すとイベント（例：SA早期達成）も書けます', '直近の目標から「必要なフロント」と締め切りを出して、月ごとのペースに割り振り。無理なペースの月は赤くなり、「1ヶ月ずらす」で調整できます', '組織15人からは、今→必要→ギャップの表（エキスパート・環境も）と、戦略のメモ（あとから やること・予定へ）が使えます'], go: ['ロードマップを開く', "switchView('plan');p2Go('year')"] }, items:['年の目標・ロードマップを1画面に：①マイルストーン ②直近の目標 ③今→必要→ギャップ ④フロントのペース ⑤戦略のメモ','S稼働の段と、目標・ロードマップ・年別目標・ギャップの4つの入口はなくしました（最終目標は「✎ 直す」から）','④のフロントの数字は、計画シート・月の目標と同じ数字です'] },
   { v:'v716', d:'2026-10-08', items:['PC：MAPの画面に「📝 課題」パネル。現状／理想を切りかえても出たままで、人のカード・丸を押すとその人の課題を書けます','自分・全体のメモ、残す先（行動・やること・予定・メモ）は計画シートの課題パネルと同じ'] },
   { v:'v715', d:'2026-10-08', pop: { t: 'PLANに「やること」ができました', items: ['今月から長期（来月以降・いつか）まで、やることを時系列で1か所に。人に紐づかない「自分・全体」のタスクもOK', '数値の目標（例：ST開催 7/8）は＋−で進める。タスクには サブタスク も付けられます', '📅 を押すと、いつでもカレンダーの予定に入れられます。計画シートの課題パネルから「やることへ」も'], go: ['やることを開く', "switchView('plan');p2Go('yk')"] }, items:['PLANに「やること」タブ：今月から長期まで時系列（期限切れ → 今月 → 来月… → いつか）','タスク（人・自分・全体）とサブタスク、数値の目標（7/8 の形で＋−）','📅でいつでもカレンダーの予定に（入れた予定は札になって押すと開く）','計画シートの課題パネルに「＋ 自分・全体のメモ」。人の課題も自分・全体のメモも「やることへ」入れられます'] },
@@ -19372,7 +19373,7 @@ function _p2PcxPane(D) {
   var k = _p2Pg, ym = D.ym, b = function(lb, on, cls) { return '<span class="pcx-b' + (cls ? ' ' + cls : '') + '" onclick="' + on + '">' + lb + '</span>'; };
   if (k === 'sheet') return _p2ShPcHtml(b); // v686
   if (k === 'yk') return _p2PcxHead('やること', '', '') + '<div class="pcx-one" style="max-width:none">' + _p2YkHtml() + '</div>'; // v715
-  if (k === 'year') return _p2PcxHead('年の目標・ロードマップ', '', '') + '<div class="pcx-one" style="max-width:none">' + _p2YearPageHtml().replace(/^<h2 class="ux-h2">[^<]*<\/h2>/, '') + '</div>';
+  if (k === 'year') return _p2PcxHead('年の目標・ロードマップ', '', _p2SumSeg('yr')) + '<div class="pcx-one" style="max-width:none">' + _p2YearPageHtml(true) + '</div>'; // v718: 右上で編集／サマリー
   if (k === 'sum') return _p2SumHtml();
   if (k === 'goal') { // v630: 目標はポップアップをやめて画面に直接（①最終ゴール ②1年ごとの目標 ③次の山）
     var mt = String(_p2().motto || '');
@@ -37759,7 +37760,8 @@ function _p2ShTopHtml(ym, pc) {
   _p2ShTopCss();
   var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), ro = _p2ShRo(), cur = _p2Ym(0), un = (currentUser && currentUser.union) || '';
   var h = '<div class="st-h"><b>計画シート</b><span class="ym"><span onclick="p2ShMon(-1)">‹</span>' + parseInt(ym.slice(0, 4), 10) + '年' + _p2ShMonLb(ym) + '<span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></span><i></i>'
-    + (un ? '<span class="un">' + evEsc(un) + '</span>' : '') + (pc ? '<span class="lay"><span class="' + (_p2ShLay() === 'lr' ? 'on' : '') + '" onclick="p2ShLayTgl(\'lr\')" title="左にMAP・右に書く欄">◧ 左右</span><span class="' + (_p2ShLay() === 'tb' ? 'on' : '') + '" onclick="p2ShLayTgl(\'tb\')" title="上にMAP・下に書く欄">⬒ 上下</span></span><span class="pr" onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>' : '') + '</div>';
+    + (un ? '<span class="un">' + evEsc(un) + '</span>' : '') + (pc ? _p2SumSeg('sh') : '') + (pc && !_p2SumOn('sh') ? '<span class="lay"><span class="' + (_p2ShLay() === 'lr' ? 'on' : '') + '" onclick="p2ShLayTgl(\'lr\')" title="左にMAP・右に書く欄">◧ 左右</span><span class="' + (_p2ShLay() === 'tb' ? 'on' : '') + '" onclick="p2ShLayTgl(\'tb\')" title="上にMAP・下に書く欄">⬒ 上下</span></span><span class="pr" onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>' : '') + '</div>' + (pc ? '' : '<div class="sm-bar">' + _p2SumSeg('sh') + '</div>');
+  if (_p2SumOn('sh')) return h; // v718: サマリーは見出しの行だけ
   // ① 年の目標
   var c1 = (Y.title || Y.inc) ? '<div class="st-c go" onclick="p2Go(\'year\')" title="年の目標・ロードマップを開く"><div class="l">年の目標' + (Y.dl ? '・' + Y.dl.slice(0, 4) + '年' : '') + '</div><div class="v">' + (Y.inc ? '<b>' + Y.inc + '</b>万' : '') + (Y.title ? '<span class="t">' + evEsc(Y.title) + '</span>' : '') + '</div></div>'
     : '<div class="st-c go" onclick="p2Go(\'goal\',0)"><div class="l">年の目標</div><div class="v"><span class="lk">目標を決める ›</span></div></div>';
@@ -38148,8 +38150,9 @@ function _p2ShIssSync(ym, mid, oldT, newT) { // 課題を書き直したら、�
 function _p2ShPageHtml() {
   _p2ShCss(); _p2ShCss2();
   var ym = _p2ShYmN();
-  setTimeout(_p2ShAfter, 0);
-  _p2ShMbCss(); // v713: スマホは文字を大きく（入力は16px以上＝iPhoneで勝手に拡大しない）
+  _p2ShMbCss();
+  if (_p2SumOn('sh')) { _p2SumCss(); return '<div class="sp-mb">' + _p2ShTopHtml(ym) + _p2ShSumHtml(ym) + '</div>'; } // v718: サマリー
+  setTimeout(_p2ShAfter, 0); // v713: スマホは文字を大きく（入力は16px以上＝iPhoneで勝手に拡大しない）
   return '<div class="sp-mb">' + _p2ShTopHtml(ym) + _p2ShMapBox(ym, 640, 430)
     + _p2ShKzHead(ym) + (_p2ShKzOpen() ? _p2ShRows(ym) + _p2ShFoot() : '')
     + '<div class="sp-sec" style="align-items:center">行動' + _uxIb('shact') + '</div>' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c); }).join('') + '</div>';
@@ -38173,6 +38176,7 @@ function _p2ShMbCss() {
 function _p2ShPcHtml() {
   _p2ShCss(); _p2ShCss2();
   var ym = _p2ShYmN();
+  if (_p2SumOn('sh')) { _p2SumCss(); return _p2ShTopHtml(ym, true) + _p2ShSumHtml(ym); } // v718: サマリー
   setTimeout(_p2ShAfter, 0);
   // v695: MAPは横いっぱい。行動の4分野は数字と改善点の下に横並び（MAP → 数字と改善点 → 行動 の順で上から）
   var R = _p2ShKzHead(ym) + (_p2ShKzOpen() ? _p2ShTable(ym) + _p2ShFoot(true) : '')
@@ -38379,7 +38383,7 @@ function _p2YrGoalHtml() {
     + '<b class="t">' + evEsc(_p2TitleEn(p.title || '') || '—') + '</b>' + (inc ? '<b>月収 ' + inc.toLocaleString() + '万</b>' : '') + (rem > 0 ? '<small>あと' + rem + 'ヶ月</small>' : '')
     + (motto ? '<small class="mt">『' + evEsc(motto) + '』</small>' : '') + '<span class="ed">✎ 直す</span></div>';
 }
-function _p2YrTlHtml(C, ro) {
+function _p2YrTlHtml(C, ro, sum) {
   var p = state.goals.plan, rm = _p2Rm(), cur = C.cur, start = _p2YmAdd(cur, -1);
   var fin = /^\d{4}-\d{2}$/.test(p.deadline || '') ? p.deadline : '', finT = _p2TitleEn(p.title || '');
   var end = _p2YmAdd(cur, 11); [fin, C.dl].forEach(function(d) { if (d && d > end) end = d; });
@@ -38416,6 +38420,7 @@ function _p2YrTlHtml(C, ro) {
   var dlT = C.isBR ? (C.dlF === C.loi ? 'LOIの月' : P2_SIM_LAB[_p2YmDiff(C.loi, C.dlF)] + 'の月') : 'LOIの月';
   var dl = !C.needFr ? (C.isBR ? 'シミュレーションのフロントが0人です' : 'フロントBRは足りています ✓（直近の目標の条件）')
     : (C.months.length ? 'フロントは <b>' + _p2YmJa(C.dlF) + '</b> までに <b>' + C.needFr + '人</b>（' + dlT + 'が締め切り。そこから右は薄い帯）' : '<span class="ng">フロントの締め切り（' + dlT + '）が過ぎています。直近の目標を後ろにずらしてください</span>');
+  if (sum) return '<div class="yr-tl"><div class="yr-sc"><div class="yr-g" style="--n:' + n + '">' + g.replace(/ onclick="p2YrMo\('[^']*'\)"/g, '') + '</div></div><div class="yr-dl">' + dl + '</div></div>';
   return '<div class="yr-tl"><div class="yr-h"><span class="st">1</span>マイルストーン<small>月を押すと、直近の目標にしたり、イベント（例：SA早期達成）を書けます</small></div>'
     + '<div class="yr-sc"><div class="yr-g" style="--n:' + n + '">' + g + '</div></div><div class="yr-dl">' + dl + '</div>' + _p2YrMmHtml(C, ro, yms) + '</div>';
 }
@@ -38480,11 +38485,89 @@ function _p2YrMemoHtml(ro, lk, on) {
   return '<div class="yr-sec">' + hd + '<div class="iss">' + (ro ? '' : '<input class="iss-fi" placeholder="＋ 戦略・やり方のメモ（例：紹介ルートを増やす。毎週ST2回）Enter" maxlength="200" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YrMemoAdd(this)}">')
     + rows + (rows ? '' : '<div class="iss-em">まだメモはありません</div>') + '</div></div>';
 }
-function _p2YearPageHtml() {
-  _p2YrCss(); _p2ShIssCss();
+// ════ v718: サマリー（見るだけの1枚）。ロードマップ・計画シートの右上「✎ 編集｜📄 サマリー」で切りかえ ════
+function _p2SumOn(k) { return _p2ShLs('gm_sum_' + k) === '1'; }
+function p2SumTgl(k, on) { _p2ShLs('gm_sum_' + k, on ? '1' : null); _p2YrMoSel = ''; renderPlan(); try { var v = document.getElementById('view-plan'); if (v) v.scrollTop = 0; window.scrollTo(0, 0); } catch (e) {} }
+function _p2SumSeg(k) {
+  _p2SumCss(); var on = _p2SumOn(k);
+  return '<span class="sm-seg"><span class="' + (on ? '' : 'on') + '" onclick="p2SumTgl(\'' + k + '\',0)">✎ 編集</span><span class="' + (on ? 'on' : '') + '" onclick="p2SumTgl(\'' + k + '\',1)">📄 サマリー</span></span>';
+}
+function _p2SumCss() {
+  if (document.getElementById('p2SumCss')) return;
+  var st = document.createElement('style'); st.id = 'p2SumCss';
+  st.textContent = '.sm-seg{display:inline-flex;flex:none;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-family:inherit}.sm-seg span{padding:6px 11px;font-size:12.5px;font-weight:900;color:var(--text-dim);cursor:pointer;white-space:nowrap;letter-spacing:0}.sm-seg span.on{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}'
+    + '.sm-bar{display:flex;justify-content:flex-end;margin:0 0 10px}'
+    + '.sm{max-width:1180px}.sm-h{font-size:14px;margin:18px 0 8px;font-weight:900;color:var(--text-mid);display:flex;align-items:center;gap:8px}.sm-h small{font-weight:700;color:var(--text-dim);font-size:12px}'
+    + '.sm-g4,.sm-kg,.sm-ag{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.sm-c,.sm-k,.sm-a{padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);min-width:0}'
+    + '.sm-c small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:800}.sm-c b{font:900 22px Inter,sans-serif}.sm-c b i,.sm-k .v i{font-style:normal;font-size:12px;color:var(--text-mid);margin-left:2px;font-weight:800}.sm-c .t{font-size:16px;color:var(--gold);margin-left:6px}.sm-c em{font-style:normal;font-size:12px;color:var(--text-mid);font-weight:800;margin-left:6px}.sm-c .gd{color:var(--gold)}.sm-c .or{color:#FB923C}.sm-c .ac{color:var(--accent)}'
+    + '.sm-br{height:7px;border-radius:4px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden;margin-top:8px}.sm-br u{display:block;height:100%;border-radius:4px}'
+    + '.sm-k .h{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:13px;font-weight:900}.sm-k .h span{font-size:11px;font-weight:900;padding:1px 6px;border-radius:6px;white-space:nowrap}.sm-k .h span.ng{color:#FF6B7F;background:color-mix(in srgb,#FF6B7F 14%,transparent)}.sm-k .h span.ok{color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}.sm-k .v{margin-top:4px;font:900 22px Inter,sans-serif}'
+    + '.sm-kz,.sm-is,.sm-sg{padding:9px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);margin-bottom:6px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px;white-space:pre-wrap}.sm-kz b{flex:none;font-size:12px;font-weight:900;color:var(--accent);min-width:72px}'
+    + '.sm-a{border-top:3px solid var(--c)}.sm-a .h{display:flex;justify-content:space-between;font-size:13.5px;font-weight:900}.sm-a .h span{font:900 13px Inter,sans-serif;color:var(--text-mid)}.sm-a .nx{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--text-mid)}.sm-a .nx b{color:var(--text)}.sm-a .od{margin-top:4px;font-size:12px;font-weight:900;color:#FF6B7F}'
+    + '.sm-is b{flex:none;font-size:14px;font-weight:900;min-width:64px}.sm-is small{font-size:11px;color:var(--text-dim);margin-left:3px}.sm-is .lk{margin:0 0 0 auto;display:flex;gap:5px;flex-wrap:wrap}.sm-is .lk i{font-style:normal;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;color:var(--text-mid);border:1px solid var(--border);white-space:nowrap}'
+    + '.sm-gl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.sm-gl>div{padding:9px 11px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:13px;font-weight:800;display:flex;justify-content:space-between;gap:6px}.sm-gl em{font-style:normal;color:#FF6B7F;white-space:nowrap}.sm-gl em.ok{color:var(--accent)}.sm-gl em.dm{color:var(--text-dim)}'
+    + '.sm-sg span{margin-left:auto;font-size:12px;color:var(--text-mid);white-space:nowrap}.sm-sg span.ok{color:var(--accent)}.sm-em{font-size:12.5px;color:var(--text-dim);font-weight:700;padding:4px 2px}'
+    + '.sm .yr-goal{cursor:default}.sm .yr-goal+.yr-goal{margin-top:8px}.sm .yr-tl{border-bottom:0;padding-top:0;margin-top:0}.sm .yr-g .mo{cursor:default}.sm .yr-g .mo:hover{background:none}.sm .yr-chip{cursor:default}'
+    + '@media (max-width:760px){.sm-g4,.sm-kg,.sm-ag{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sm-gl{grid-template-columns:repeat(2,minmax(0,1fr))}.sm-c,.sm-k,.sm-a{padding:10px 11px}.sm-c b,.sm-k .v{font-size:20px}.sm-seg span{padding:6px 9px;font-size:12px}}';
+  document.head.appendChild(st);
+}
+// ── 計画シートのサマリー ──
+function _p2ShSumHtml(ym) {
+  var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), cur = _p2Ym(0), A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv), K = _p2Sh().kpi, M = _p2ShM(ym), td = evTodayYmd();
+  var pct = function(v, t) { return t ? Math.max(0, Math.min(100, Math.round((+v || 0) / t * 100))) : 0; };
+  var bar = function(v, t) { var p = pct(v, t); return '<div class="sm-br"><u style="width:' + p + '%;background:' + _p2ShCol(p) + '"></u></div>'; };
+  var tym = '', lb = '';
+  if (Y.ms) { tym = Y.ms.ym; lb = String(Y.ms.t || ''); } else if (Y.nx && Y.nx.title && Y.nx.deadline && !Y.nx.isFinal) { tym = Y.nx.deadline; lb = Y.nx.title; }
+  var n = tym ? _p2YmDiff(cur, tym) : 0;
+  var top = '<div class="sm-g4">'
+    + '<div class="sm-c"><small>年の目標' + (Y.dl ? '・' + Y.dl.slice(0, 4) + '年' : '') + '</small>' + (Y.inc ? '<b>' + Y.inc + '<i>万</i></b>' : '') + '<b class="t">' + evEsc(Y.title || '—') + '</b></div>'
+    + '<div class="sm-c"><small>マイルストーン' + (tym ? '・' + _p2ShMonLb(tym) : '') + '</small><b class="gd" style="font-size:17px">' + evEsc(lb || '—') + '</b>' + (tym ? '<em>' + (n > 0 ? 'あと' + n + 'ヶ月' : '今月') + '</em>' : '') + '</div>'
+    + '<div class="sm-c"><small>' + _p2ShMonLb(ym) + 'の月収</small><b>' + (I.now === null ? '—' : I.now) + '<i>/ ' + (I.t === null ? '—' : I.t) + '万</i></b>' + (I.t ? bar(I.now, I.t) : '') + '</div>'
+    + '<div class="sm-c"><small>' + _p2ShMonLb(ym) + 'のNEWフロント</small><b>' + F.now + '<i>/ ' + (F.t === null ? '—' : F.t) + '人</i></b>' + (F.t ? bar(F.now, F.t) : '') + '</div></div>';
+  var kg = K.map(function(k) {
+    var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap), t = X.t !== null ? X.t : X.ph;
+    var pb = P.t === null ? '' : '<span class="' + ((+P.v || 0) >= P.t ? 'ok' : 'ng') + '">先月 ' + (P.v === null ? '—' : P.v) + '/' + P.t + '</span>';
+    return '<div class="sm-k"><div class="h">' + evEsc(_p2ShShort(k.lb)) + pb + '</div><div class="v">' + (X.v === null ? '—' : X.v) + '<i>/ ' + (t === null ? '—' : t) + '</i></div>' + (t ? bar(X.v, t) : '<div class="sm-br"></div>') + '</div>';
+  }).join('');
+  var kz = K.filter(function(k) { return String((M.kz || {})[k.id] || '').trim(); }).map(function(k) { return '<div class="sm-kz"><b>' + evEsc(_p2ShShort(k.lb)) + '</b>' + evEsc(M.kz[k.id]) + '</div>'; }).join('');
+  var ag = P2_SH_CAT.map(function(c) {
+    var L = _p2ShActs(ym, c.k), dn = L.filter(function(e) { return e.done; }).length, od = L.filter(function(e) { return !e.done && e.date && e.date < td; }).length;
+    var nx = L.filter(function(e) { return !e.done; })[0];
+    return '<div class="sm-a" style="--c:' + c.c + '"><div class="h">' + c.s + '<span>' + dn + '/' + L.length + '</span></div><div class="sm-br"><u style="width:' + pct(dn, L.length) + '%;background:' + c.c + '"></u></div>'
+      + '<div class="nx">' + (nx ? '次：<b>' + evEsc(nx.title || '') + '</b>' + (nx.date ? ' ' + parseInt(nx.date.slice(5, 7), 10) + '/' + parseInt(nx.date.slice(8), 10) : '') : (L.length ? '全部できました ✓' : 'まだ書いていません')) + '</div>' + (od ? '<div class="od">期限切れ ' + od + '</div>' : '') + '</div>';
+  }).join('');
+  var I2 = _p2ShIss(ym), is = Object.keys(I2).filter(function(k) { return I2[k]; }).map(function(mid) {
+    var m = _p2ShMem(mid), lk = _p2ShIssBadges(ym, mid).replace(/ onclick="[^"]*"/g, '');
+    return '<div class="sm-is"><b>' + evEsc(m ? (m.lastName || _uxName(m)) : '（いない人）') + (m ? '<small>' + evEsc(titleAbbr(m.title || '')) + '</small>' : '') + '</b>' + evEsc(I2[mid]) + lk + '</div>';
+  }).join('') + (M.issF || []).map(function(f) { var y = f.yk && findEvent(f.yk); y = y && !y.deleted ? y : null; return '<div class="sm-is"><b>自分・全体</b>' + evEsc(f.t) + (y ? '<div class="lk"><i>✅ やること' + (y.done ? ' ✓' : '') + '</i></div>' : '') + '</div>'; }).join('');
+  return '<div class="sm">' + top
+    + '<div class="sm-h">' + _p2ShMonLb(ym) + 'の数字<small>今 / 目標（先月の結果）</small></div><div class="sm-kg">' + kg + '</div>'
+    + '<div class="sm-h">改善点<small>書いた項目だけ</small></div>' + (kz || '<div class="sm-em">まだ書いていません</div>')
+    + '<div class="sm-h">行動<small>やった / 書いた数・次にやること</small></div><div class="sm-ag">' + ag + '</div>'
+    + '<div class="sm-h">課題<small>MAPの人ごと・自分・全体</small></div>' + (is || '<div class="sm-em">まだ書いていません</div>') + '</div>';
+}
+// ── ロードマップのサマリー ──
+function _p2YrSumHtml(C, lk) {
+  var nx = C.nx, money = C.isBR ? (nx.fb ? '<b>ファーストボーナス ' + Math.round(nx.fb / 10000) + '万</b>' : '') : (nx.inc ? '<b>月収 ' + nx.inc + '万</b>' : '');
+  var near = '<div class="yr-goal" style="border-color:color-mix(in srgb,var(--gold) 70%,var(--border))"><span class="lb">直近の目標</span><b>' + _p2YmJa(C.dl) + '</b>までに<b class="t">' + evEsc(nx.title || '—') + '</b>' + money + '</div>';
+  var tot = 0, mx = 0; C.months.forEach(function(ym) { var v = _p2FrontTgt(ym); v = v === '' || v == null ? 0 : +v; tot += v; mx = Math.max(mx, v); });
+  var cv = _p2FrontTgt(C.cur); cv = cv === '' || cv == null ? 0 : +cv;
+  var need = '<div class="sm-g4"><div class="sm-c"><small>必要なフロント</small><b class="gd">' + C.needFr + '<i>人</i></b><em>割り振り ' + tot + '人</em></div>'
+    + '<div class="sm-c"><small>締め切り（' + (C.isBR ? 'フロントを出す月' : 'LOIの月') + '）</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>'
+    + '<div class="sm-c"><small>今月のペース</small><b class="ac">' + cv + '<i>人</i></b></div><div class="sm-c"><small>1ヶ月の最大</small><b' + (mx >= C.max ? ' style="color:#FF6B7F"' : '') + '>' + mx + '<i>人</i></b></div></div>';
+  var gap = lk ? '' : '<div class="sm-h">ギャップ<small>今 → 必要</small></div><div class="sm-gl">' + C.rows.map(function(r) { return '<div>' + r.lb + '<em class="' + (r.gap === null ? 'dm' : (r.gap <= 0 ? 'ok' : '')) + '">' + (r.gap === null ? '—' : (r.gap > 0 ? 'あと' + r.gap.toLocaleString() + r.u : '✓')) + '</em></div>'; }).join('') + '</div>';
+  var mm = lk ? '' : '<div class="sm-h">戦略・やり方のメモ</div>' + (_p2Yr().memo.map(function(f) { var y = f.yk && findEvent(f.yk); y = y && !y.deleted ? y : null; return '<div class="sm-sg">' + evEsc(f.t) + (y ? '<span class="' + (y.done ? 'ok' : '') + '">✅ やること' + (y.done ? ' ✓' : '') + '</span>' : '<span>入れ先まだ</span>') + '</div>'; }).join('') || '<div class="sm-em">まだありません</div>');
+  return '<div class="sm">' + _p2YrGoalHtml().replace(' onclick="p2Go(\'goal\',0)"', '').replace('<span class="ed">✎ 直す</span>', '') + near
+    + '<div class="sm-h">マイルストーン</div>' + _p2YrTlHtml(C, true, true)
+    + '<div class="sm-h">必要なこと</div>' + need + gap + mm + '</div>';
+}
+function _p2YearPageHtml(pc) {
+  _p2YrCss(); _p2ShIssCss(); _p2SumCss();
   var C = _p2YrCalc(), ro = _p2ShRo(), on = _p2YrOrgN(), lk = on < P2_YR_LOCK;
   setTimeout(_p2YrAfter, 0);
-  return '<h2 class="ux-h2">年の目標・ロードマップ</h2><div class="yr">' + _p2YrGoalHtml() + _p2YrTlHtml(C, ro) + _p2YrNearHtml(C, ro) + _p2YrGapHtml(C, ro, lk, on) + _p2YrPaceHtml(C, ro) + _p2YrMemoHtml(ro, lk, on) + '</div>';
+  var hd = pc ? '' : '<h2 class="ux-h2">年の目標・ロードマップ</h2><div class="sm-bar">' + _p2SumSeg('yr') + '</div>';
+  if (_p2SumOn('yr')) return hd + '<div class="yr">' + _p2YrSumHtml(C, lk) + '</div>';
+  return hd + '<div class="yr">' + _p2YrGoalHtml() + _p2YrTlHtml(C, ro) + _p2YrNearHtml(C, ro) + _p2YrGapHtml(C, ro, lk, on) + _p2YrPaceHtml(C, ro) + _p2YrMemoHtml(ro, lk, on) + '</div>';
 }
 
 // ── START ──

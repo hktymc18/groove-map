@@ -1,0 +1,33 @@
+// v718：サマリー（見るだけの1枚）。ロードマップ・計画シートの「✎ 編集｜📄 サマリー」で切りかえ
+const T = require('../lib/head.js')();
+const { w, c, sleep, setWH, $, $$ } = T;
+T.run(async () => {
+  T.login(); setWH(390, 844); w._uxSync && w._uxSync();
+  const ms = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '', mapType: 'both' }];
+  for (let i = 0; i < 16; i++) ms.push({ id: 'x' + i, lastName: '山田' + i, firstName: '太', title: i === 0 ? 'BR' : 'B1', parentId: i < 4 ? 'r' : 'x' + (i % 4), mapType: 'both' });
+  w.state.members = ms; w.switchView('plan'); await sleep(30);
+  const cur = w._p2Ym(0);
+  w._p2().next = { title: 'RUBY', tm: true, inc: 80, deadline: w._p2YmAdd(cur, 6) };
+  w._p2Yr().memo.push({ id: 'y1', t: '紹介ルートを増やす' });
+  w.p2Go('year'); await sleep(30);
+  c('ロードマップ：編集とサマリーの切りかえ（最初は編集）', !!$('.sm-seg') && /編集/.test($('.sm-seg span.on').textContent) && !!$('.yr-near'));
+  w.p2SumTgl('yr', 1); await sleep(30);
+  c('サマリー：直近の目標・マイルストーン・必要なこと・ギャップ・メモ（入力欄なし）', !!$('.sm') && /直近の目標/.test($('.sm').textContent) && /必要なフロント/.test($('.sm').textContent) && !!$('.sm-gl') && /紹介ルートを増やす/.test($('.sm').textContent) && !$('.sm input') && !$('.sm select'));
+  c('サマリーの月は押しても何も出ない', !/p2YrMo/.test($('.sm .yr-g').innerHTML));
+  c('サマリーは覚えておく', w.localStorage.getItem('gm_sum_yr') === '1');
+  w.p2SumTgl('yr', 0); await sleep(20);
+  c('編集に戻す', !$('.sm') && !!$('.yr-near'));
+  const M = w._p2ShM(cur); M.kpi = { dlr: 4 }; M.kz = { ct: 'CT取りを前月25日にする' };
+  const e = w._tdMakeTask('新規リストを10人出す', '', ''); e.planYm = cur; e.planCat = 'front'; w.state.events.push(e);
+  w._p2ShIss(cur).x1 = '審査フォロー';
+  w.p2Go('sheet'); await sleep(30);
+  c('計画シート：スマホは切りかえを見出しの下に', !!$('.sm-bar .sm-seg'));
+  w.p2SumTgl('sh', 1); await sleep(30);
+  c('計画シートのサマリー：数字・改善点・行動（次にやること）・課題', $$('.sm-k').length === w._p2Sh().kpi.length && /CT取りを前月25日にする/.test($('.sm').textContent) && /新規リストを10人出す/.test($('.sm-a').textContent) && /審査フォロー/.test($('.sm').textContent) && !$('#p2ShMF'));
+  setWH(1400, 900); w._uxSync && w._uxSync(); w.switchView('plan'); w.p2Go('sheet'); await sleep(40);
+  c('PCも計画シートのサマリー（右上に切りかえ）', !!$('.st-h .sm-seg') && !!$('.sm-g4') && !$('#p2ShMF'));
+  w.p2Go('year'); await sleep(30);
+  c('PCのロードマップは見出しの右に切りかえ', !!$('.pcx-h .sm-seg') && !$('.yr .sm-bar'));
+  w.p2SumTgl('sh', 0); w.p2Go('sheet'); await sleep(40);
+  c('編集に戻すとMAPつきのシート', !$('.sm') && !!$('#p2ShMF'));
+});
