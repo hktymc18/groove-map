@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v698';
+var APP_JS_VERSION = 'v699';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3877,7 +3877,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v698';
+  var DATA_VERSION = 'v699';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5364,6 +5364,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v699', d:'2026-10-08', items:['計画シートの行動の欄：記入例は空いた行に薄く出すだけにして、押しても入らないようにしました（全部手入力）','「＋ 書く」の行をなくし、空いた行にそのまま書けるようにしました','「＋ 行を追加」で行を増やせます'] },
   { v:'v698', d:'2026-10-08', items:['計画シートのMAPを「⤢ 拡大」で全画面にできるようにしました（＋−で拡大・ドラッグで動かす。拡大したまま人を押して課題を書けます）','課題はふだんは計画シートの中だけ。「→ 残す先」から、行動（4分野）・タスク・予定・メモ（メンバーの中）を選んで入れられます','残した先とは連動します（課題を書き直すと、まだ済んでいない行動・タスク・予定とメモも同じ文に）。残した先は課題の下に印で出ます','スマホの行動は、フロント作り・流通アップ・Dライン・自己成長ごとに ▼／▶ でたためます'] },
   { v:'v697', d:'2026-10-08', items:['スマホ版の計画シートの行動の欄にも、記入例（PDFの例）を全部出しました。押すと書く欄に入ります','「数字と改善点」を ▼／▶ でたためるようにしました（たたむと1行のまとめだけ。MAPを見ながら行動を書く時に）。端末ごとに覚えます'] },
   { v:'v696', d:'2026-10-08', pop: { t: '計画シートのMAPで、人ごとの課題を書けるようになりました', items: ['MAPの人を押すと、その人の今月の課題を書けます（課題のある人は光ります）', '「→ 行動にする」で、4分野から選んで行動に入れられます', '10人以上になったら、MAPは見慣れたサークルMAPに自動で切りかわります（シート型にも戻せます）'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['計画シートのMAPの人を押すと、その人の課題を書けるようにしました（MAPの横／下に一覧）','課題の「→ 行動にする」で、フロント作り・流通アップ・Dライン・自己成長から選んで行動に入れられます','組織が10人以上（自分を除く）になったら、MAPを理想MAPと同じサークルMAPに自動で切りかえます（サークル｜シート型で選べます）。印刷もサークルMAPになります','シート型のMAPも、名前を姓・名の2段のフルネームで出すようにしました','PC版の行動の欄に、記入例（PDFの例）を全部薄く出しました。押すと書く欄に入ります'] },
@@ -37217,6 +37218,15 @@ function p2ShKReset() { if (!confirm('数字の項目を最初の8項目に戻�
 function p2ShKz(v) { if (_p2ShRo()) return; _p2ShM(_p2ShYmN()).kaizen = String(v || '').slice(0, 2000); saveGoals(); }
 function p2ShFr(v) { if (_p2ShRo()) return; var ym = _p2ShYmN(); if (_p2FrontIdeal(ym) !== null) { toast('NEWフロントの目標は理想MAPの人数です（理想MAPで直す）'); renderPlan(); return; } p2RmCell('front', ym, String(v === '' || v == null ? '' : Math.max(0, parseInt(v, 10) || 0))); }
 function p2ShMap(k) { _p2ShMapMode = k === 'cur' ? 'cur' : 'ideal'; renderPlan(); }
+function p2ShActAddV(cat, el) { // v699: 空いた行に書いたら行動に
+  if (_p2ShRo()) { toast('このMAPは編集できません'); return; }
+  var t = String((el && el.value) || '').trim(); if (!t) return;
+  var e = _tdMakeTask(t.slice(0, 120), '', ''); e.planYm = _p2ShYmN(); e.planCat = cat;
+  state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  renderPlan();
+  setTimeout(function() { var n = document.getElementById('p2ShIn_' + cat + '_0'); if (n) n.focus(); }, 30); // 続けて書けるように
+}
+function p2ShActRow(cat) { if (_p2ShRo()) return; var m = _p2ShM(_p2ShYmN()); m.xr = m.xr || {}; m.xr[cat] = (+m.xr[cat] || 0) + 1; saveGoals(); renderPlan(); }
 function p2ShActAdd(cat) {
   if (_p2ShRo()) { toast('このMAPは編集できません'); return; }
   var ti = document.getElementById('p2ShIn_' + cat);
@@ -37313,7 +37323,7 @@ function _p2ShCss2() {
     + '.sp-kz{width:100%;box-sizing:border-box;margin-top:6px;font:700 12.5px/1.55 inherit;font-family:inherit;color:var(--text);padding:6px 9px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);resize:none;min-height:34px;overflow:hidden}.sp-kz::placeholder{color:var(--text-dim)}.sp-kz:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-at{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}.sp-at .h{display:flex;align-items:center;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:900}.sp-at .h span{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--text-dim)}'
     + '.sp-at .r{display:flex;align-items:stretch;border-top:1px solid var(--border);min-height:32px;font-size:12.5px;font-weight:700}.sp-at .c{width:32px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;cursor:pointer}.sp-at .x{flex:1;min-width:0;border-left:1px solid var(--border);display:flex;align-items:center}.sp-at .x input{width:100%;background:transparent;border:0;color:var(--text);font:700 13px inherit;font-family:inherit;padding:6px 8px}.sp-at .x input::placeholder{color:var(--text-dim)}.sp-at .x input:focus{outline:none;background:color-mix(in srgb,var(--accent) 6%,transparent)}.sp-at .r.dn .x input{color:var(--text-dim);text-decoration:line-through}'
-    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;opacity:0;cursor:pointer}.sp-at .d.od{color:#FF6B7F}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
+    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;opacity:0;cursor:pointer}.sp-at .d.od{color:#FF6B7F}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
     + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
     // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
     + '.sp-pc{margin-top:4px}.sp-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.sp-acts .sp-at{margin-bottom:0}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
@@ -37398,10 +37408,12 @@ function _p2ShActTbl(ym, c, minRows) {
     return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c" onclick="p2ShActTg(\'' + e.id + '\')">' + (e.done ? '✔' : '') + '</span><span class="x"><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '></span>'
       + '<span class="d' + (od ? ' od' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '/') + (ro ? '' : '<input type="date" value="' + (e.date || '') + '" onchange="p2ShActDate(\'' + e.id + '\',this.value)">') + '</span></div>';
   }).join('');
-  if (!ro) r += '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '" placeholder="＋ 書く" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAdd(\'' + c.k + '\')"></span><span class="d">/</span></div>';
-  var exs = !ro ? (P2_SH_ACT_EXS[c.k] || []) : [], used = L.map(function(e) { return e.title; });
-  exs.filter(function(t) { return used.indexOf(t) < 0; }).forEach(function(t) { r += '<div class="r ex" onclick="p2ShActEx(\'' + c.k + '\',\'' + t.replace(/'/g, '') + '\')" title="押すと書く欄に入ります"><span class="c"></span><span class="x"><i>例：' + evEsc(t) + '</i></span><span class="d">/</span></div>'; });
-  for (var j = L.length + (ro ? 0 : 1) + exs.length; j < (minRows || 0); j++) r += '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>';
+  // v699: 空いた行はそのまま書く欄（記入例は薄く見せるだけ・押しても入らない）。「＋ 行を追加」で行を増やす
+  var used = L.map(function(e) { return e.title; }), exU = (P2_SH_ACT_EXS[c.k] || []).filter(function(t) { return used.indexOf(t) < 0; });
+  var xr = +((_p2ShM(ym).xr || {})[c.k]) || 0, nE = ro ? Math.max(0, (minRows || 0) - L.length) : Math.max(exU.length, 1, (minRows || 0) - L.length) + xr;
+  for (var j = 0; j < nE; j++) r += ro ? '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>'
+    : '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '_' + j + '" placeholder="' + (j < exU.length ? '例：' + evEsc(exU[j]) : '') + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAddV(\'' + c.k + '\',this)"></span><span class="d">/</span></div>';
+  if (!ro) r += '<div class="addr" onclick="p2ShActRow(\'' + c.k + '\')">＋ 行を追加</div>';
   if (!minRows) { // v698: スマホは分野ごとにたためる（端末ごとに覚える）
     var cl = _p2ShActClosed(c.k), dn = L.filter(function(e) { return e.done; }).length;
     return '<div class="sp-at' + (cl ? ' cl' : '') + '"><div class="h" style="cursor:pointer" onclick="p2ShActTgl(\'' + c.k + '\')">' + (cl ? '▶ ' : '▼ ') + c.lb + '<span>' + (cl ? dn + '/' + L.length : '実行期日') + '</span></div>' + (cl ? '' : r) + '</div>';
