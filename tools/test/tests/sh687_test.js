@@ -40,13 +40,14 @@ T.run(async () => {
   c('v697: ひらくと戻る', $$('.sp-kr').length === 8);
   c('目標は割合で自動に入れない（空のまま）', w._p2ShKv(ym, w._p2ShK('ct')).t === null && $$('.sp-kr')[4].querySelector('.sp-in').value === '');
   const ct = $$('.sp-kr')[4].querySelector('.sp-in'); ct.value = '32'; ct.onchange(); await sleep(10);
+  c('v713: 2段（1段目＝項目名と今・2段目＝先月と今月の目標）', !!$$('.sp-kr')[4].querySelector('.a .nw') && !!$$('.sp-kr')[4].querySelector('.b .cu .sp-in') && !!$('.sp-mb'));
   c('今月の目標を書く', w._p2ShKv(ym, w._p2ShK('ct')).t === 32);
   c('書いた目標は「今月の数字」のカードにも', /CT <b>32<\/b>/.test($('.st-k').innerHTML));
   w._p2ShM(pv).kpi.ft = 16; w._p2ShM(pv).man = {}; w.p2Go('sheet'); await sleep(10);
   c('先月の目標→結果（届かなければ赤）', /16/.test($$('.sp-kr')[3].querySelector('.pv').textContent) && !!$$('.sp-kr')[3].querySelector('.pv b.ng'));
   const kz = $$('.sp-kr')[3].querySelector('.sp-kz'); kz.value = 'FTの改善のアドバイスをもらう'; kz.onchange(); await sleep(10);
   c('改善点はその行に書く', w._p2ShM(ym).kz.ft === 'FTの改善のアドバイスをもらう');
-  const ids = $$('.sp-kr')[5].querySelectorAll('.sp-in'); ids[1].value = '3'; ids[1].onchange(); await sleep(10);
+  const ids = $$('.sp-kr')[5].querySelector('.nw .sp-in'); ids.value = '3'; ids.onchange(); await sleep(10); // v713: 今の数は1段目
   c('自動で数えない項目は今の数も書ける', w._p2ShKv(ym, w._p2ShK('ids')).v === 3);
   c('行動：4分野の表（✔・行動・実行期日）', $$('.sp-at').length === 4 && /実行期日/.test($('.sp-at .h').textContent));
   const n0 = s.events.length, ni = $('#p2ShIn_front_0'); ni.value = 'リストアップ書き直し'; ni.onchange(); await sleep(40);
