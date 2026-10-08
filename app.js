@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v737';
+var APP_JS_VERSION = 'v738';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v737';
+  var DATA_VERSION = 'v738';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v738', d:'2026-10-09', items:['PLAN › チェック：項目をユニオンごとに管理者が設定できるように（チェックの画面のいちばん下「⚙ ユニオンのチェック項目を設定」）','項目の追加・名前の変更・並べかえ・外す・標準に戻すができ、保存するとユニオンの全員に反映','今までのチェックと日付はそのまま残ります'] },
   { v:'v737', d:'2026-10-09', items:['分析 › 研修：いちばん上に研修フロー（じょうご）、その下にその月の数字、折れ線グラフはいちばん下に','説明の文は (i) に入れて、ふだんは出さないようにしました'] },
   { v:'v736', d:'2026-10-09', items:['PLANのタイルを「年の目標 → 計画シート → やること」の順に','計画シートの行動の実行期日：押すと「✅ ToDoに入れる／📅 予定に入れる」を選んで日にち（予定は時間も）を入れる窓に。勝手に今日が入らなくなりました','ToDoにした行動はToDoのチェックと連動、予定にした行動は左の□で自分でチェック。ToDoで消した行動は「ToDoで消しました」と出ます（戻す・外す）','やること：登録したタスクの名前・人、数値の目標の名前・目標・単位・月・人を、押して直せるように'] },
   { v:'v735', d:'2026-10-08', items:['アプリのアイコンを新しくしました（ホーム画面・ブラウザのタブ・ログイン画面・通知）'] },
@@ -21605,33 +21606,66 @@ var _p2CkTab = 'ess';
 function p2CkTab(t) { _p2CkTab = t; renderPlan(); }
 function _p2CkPageHtml() {
   _ux2Css(); _p2DoCss2(); _p2CkCss();
-  var ck = _p2().check || {}, cnt = _p2CkCount(), tab = _p2CkTab === 'tr' ? 'tr' : 'ess', items = tab === 'tr' ? P2_CK_TR : P2_CK_ESS;
-  var n = function(L, pre) { var d = 0; L.forEach(function(x, i) { if (ck[pre + '_' + i]) d++; }); return d; };
-  var done = n(items, tab);
+  _p2CkLoad();
+  var ck = _p2().check || {}, cnt = _p2CkCount(), tab = _p2CkTab === 'tr' ? 'tr' : 'ess', items = _p2CkItems(tab), ESS = _p2CkItems('ess'), TR = _p2CkItems('tr');
+  var n = function(L) { var d = 0; L.forEach(function(it) { if (ck[it.id]) d++; }); return d; };
+  var done = n(items);
   return '<h2 class="ux-h2">チェック</h2><div class="ux-sum"><b>' + cnt.done + '<small> / ' + cnt.total + '</small></b><span>' + (cnt.done >= cnt.total ? '準備万端 🎉' : '準備のチェック') + '</span></div>'
-    + '<div class="p2ck-tabs">' + [['ess', '🎒 必須アイテム', P2_CK_ESS], ['tr', '🎓 TRAINING', P2_CK_TR]].map(function(t) { return '<span class="' + (t[0] === tab ? 'on' : '') + '" onclick="p2CkTab(\'' + t[0] + '\')">' + t[1] + '<small>' + n(t[2], t[0]) + '/' + t[2].length + '</small></span>'; }).join('') + '</div>'
+    + '<div class="p2ck-tabs">' + [['ess', '🎒 必須アイテム', ESS], ['tr', '🎓 TRAINING', TR]].map(function(t) { return '<span class="' + (t[0] === tab ? 'on' : '') + '" onclick="p2CkTab(\'' + t[0] + '\')">' + t[1] + '<small>' + n(t[2]) + '/' + t[2].length + '</small></span>'; }).join('') + '</div>'
     + '<div class="p2ck-bar"><i style="width:' + Math.round(done / Math.max(1, items.length) * 100) + '%"></i></div>'
     + items.map(function(it, i) {
-      var on = !!ck[tab + '_' + i], dt = ck[tab + '_d_' + i] || '';
-      return '<div class="p2ck-r' + (on ? ' done' : '') + '"><span class="ck" onclick="p2CkTgl(\'' + tab + '\',' + i + ')">' + (on ? '✓' : '') + '</span><span class="t">' + evEsc(it) + '</span>'
+      var on = !!ck[it.id], dt = ck[it.dk] || '';
+      return '<div class="p2ck-r' + (on ? ' done' : '') + '"><span class="ck" onclick="p2CkTgl(\'' + tab + '\',' + i + ')">' + (on ? '✓' : '') + '</span><span class="t">' + evEsc(it.t) + '</span>'
         + '<input class="dt" type="date" value="' + dt + '" onchange="p2CkDate(\'' + tab + '\',' + i + ',this.value)" title="日付（カレンダーから選ぶ）">'
         + '<span class="cal" title="この日付で予定に入れる" onclick="p2CkCal(\'' + tab + '\',' + i + ')">' + icn('calendar') + '</span></div>';
     }).join('')
-    + '<div class="ux-hint">日付を選んで 📅 を押すと、その日の予定（ToDo）に入ります</div>';
+    + '<div class="ux-hint">日付を選んで 📅 を押すと、その日の予定（ToDo）に入ります' + (_p2CkCfg ? '<br>項目は「' + evEsc(_p2CkUn()) + '」の設定です' : '') + '</div>'
+    + (isCurrentAdmin() && _p2CkUn() ? '<span class="ux-lk" onclick="p2CkAdm()">⚙ ユニオンのチェック項目を設定（管理者）</span>' : '');
 }
 function p2CkCal(pre, i) {
-  var items = pre === 'ess' ? P2_CK_ESS : P2_CK_TR, ck = _p2().check, d = ck[pre + '_d_' + i] || evTodayYmd();
-  if (!ck[pre + '_d_' + i]) { ck[pre + '_d_' + i] = d; saveGoals(); }
-  var e = _tdMakeTask('✅ ' + items[i], d, '');
+  var it = _p2CkIt(pre, i), ck = _p2().check, d = ck[it.dk] || evTodayYmd();
+  if (!ck[it.dk]) { ck[it.dk] = d; saveGoals(); }
+  var e = _tdMakeTask('✅ ' + it.t, d, '');
   state.events.push(e); saveEventDoc(e);
   try { updateEventsBadge(); } catch (e1) {}
-  toast('📅 ' + parseInt(d.slice(5, 7), 10) + '/' + parseInt(d.slice(8), 10) + ' の予定に「' + items[i] + '」を入れました');
+  toast('📅 ' + parseInt(d.slice(5, 7), 10) + '/' + parseInt(d.slice(8), 10) + ' の予定に「' + it.t + '」を入れました');
   if (currentView === 'plan') renderPlan();
+}
+// ── v738: ユニオンのチェック項目の設定（管理者） ──
+var _p2CkEd = null;
+function p2CkAdm() {
+  if (!isCurrentAdmin()) return;
+  _p2CkEd = { tab: _p2CkTab === 'tr' ? 'tr' : 'ess', ess: _p2CkItems('ess').map(function(x) { return { id: x.id, t: x.t }; }), tr: _p2CkItems('tr').map(function(x) { return { id: x.id, t: x.t }; }) };
+  _p2CkAdmRender();
+}
+function _p2CkAdmRender() {
+  var E = _p2CkEd; if (!E) return; _p2CkCss(); try { _p2ShCss2(); } catch (e0) {}
+  var o = document.getElementById('p2CkAdmOv'); if (!o) { o = document.createElement('div'); o.id = 'p2CkAdmOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2CkAdmX(); }; document.body.appendChild(o); }
+  var L = E[E.tab];
+  o.innerHTML = '<div class="shdt ckadm"><div class="hd">「' + evEsc(_p2CkUn()) + '」のチェック項目<span onclick="p2CkAdmX()">✕</span></div>'
+    + '<div class="nt">ここで決めた項目が、このユニオンの全員のチェックに出ます</div>'
+    + '<div class="seg">' + [['ess', '🎒 必須アイテム'], ['tr', '🎓 TRAINING']].map(function(t) { return '<span class="' + (E.tab === t[0] ? 'on' : '') + '" onclick="p2CkAdmTab(\'' + t[0] + '\')">' + t[1] + ' ' + E[t[0]].length + '</span>'; }).join('') + '</div>'
+    + '<div class="ls">' + L.map(function(x, i) { return '<div class="r"><input value="' + evEsc(x.t) + '" maxlength="40" onchange="p2CkAdmT(' + i + ',this.value)"><b class="' + (i ? '' : 'dis') + '" onclick="p2CkAdmMv(' + i + ',-1)">↑</b><b class="' + (i < L.length - 1 ? '' : 'dis') + '" onclick="p2CkAdmMv(' + i + ',1)">↓</b><b class="x" onclick="p2CkAdmDel(' + i + ')">✕</b></div>'; }).join('') + '</div>'
+    + '<div class="ad"><input id="p2CkAdmIn" maxlength="40" autocomplete="off" placeholder="＋ 項目を足す（Enter）" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2CkAdmAdd()}"></div>'
+    + '<div class="bt"><span class="go" onclick="p2CkAdmSave()">保存する</span><span class="cl" onclick="p2CkAdmReset()">標準に戻す</span></div></div>';
+}
+function p2CkAdmX() { _p2CkEd = null; var o = document.getElementById('p2CkAdmOv'); if (o) o.remove(); }
+function p2CkAdmTab(t) { if (_p2CkEd) { _p2CkEd.tab = t; _p2CkAdmRender(); } }
+function p2CkAdmT(i, v) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; v = String(v || '').trim(); if (L && L[i] && v) L[i].t = v.slice(0, 40); }
+function p2CkAdmMv(i, d) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; if (!L || !L[i + d]) return; var x = L[i]; L[i] = L[i + d]; L[i + d] = x; _p2CkAdmRender(); }
+function p2CkAdmDel(i) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; if (!L || !L[i]) return; if (!confirm('「' + L[i].t + '」を項目から外しますか？')) return; L.splice(i, 1); _p2CkAdmRender(); }
+function p2CkAdmAdd() { var el = document.getElementById('p2CkAdmIn'), v = String((el && el.value) || '').trim(); if (!v || !_p2CkEd) return; _p2CkEd[_p2CkEd.tab].push({ id: 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1000), t: v.slice(0, 40) }); _p2CkAdmRender(); setTimeout(function() { var n = document.getElementById('p2CkAdmIn'); if (n) n.focus(); }, 30); }
+function p2CkAdmReset() { if (!_p2CkEd || !confirm('このユニオンの項目を標準に戻しますか？（保存すると全員に反映）')) return; _p2CkEd.ess = _p2CkDef('ess'); _p2CkEd.tr = _p2CkDef('tr'); _p2CkAdmRender(); }
+function p2CkAdmSave() {
+  var E = _p2CkEd, un = _p2CkUn(); if (!E || !un || !isCurrentAdmin()) return;
+  var d = { ess: E.ess.map(function(x) { return { id: x.id, t: x.t }; }), tr: E.tr.map(function(x) { return { id: x.id, t: x.t }; }), at: new Date().toISOString(), by: (currentUser && currentUser.name) || '' };
+  (db ? db.doc('unions/' + un + '/cdata/mapChecklist').set(d) : Promise.resolve()).then(function() { _p2CkCfg = d; p2CkAdmX(); toast('✓ 「' + un + '」のチェック項目を保存しました'); if (currentView === 'plan') renderPlan(); })
+    .catch(function() { toast('保存できませんでした（ユニオンの管理者だけが保存できます）'); });
 }
 function _p2CkCss() {
   if (document.getElementById('p2CkCss')) return;
   var st = document.createElement('style'); st.id = 'p2CkCss';
-  st.textContent = ".p2ck-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.p2ck-tabs span{height:48px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}"
+  st.textContent = ".ckadm .ls{max-height:46vh;overflow:auto;margin-top:12px}.ckadm .r{display:flex;align-items:center;gap:6px;padding:5px 0}.ckadm .r input,.ckadm .ad input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:9px 11px}.ckadm .ad input{width:100%;border-style:dashed}.ckadm .ad input:focus,.ckadm .r input:focus{outline:none;border-color:var(--accent);border-style:solid}.ckadm .r b{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}.ckadm .r b.dis{opacity:.25;pointer-events:none}.ckadm .r b.x{color:#FF6B7F}.ckadm .ad{margin-top:8px}.p2ck-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.p2ck-tabs span{height:48px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}"
     + ".p2ck-tabs span small{font-size:11px;font-weight:800;color:var(--text-dim)}.p2ck-tabs span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface2))}"
     + ".p2ck-bar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin:12px 0 6px}.p2ck-bar i{display:block;height:100%;background:var(--accent);border-radius:3px}"
     + ".p2ck-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:13px;background:var(--surface);border:1px solid var(--border);margin-top:8px}"
@@ -24607,11 +24641,25 @@ function p2DrDel(id) {
 // ── ④チェックリスト ──
 var P2_CK_ESS = ['BPC', 'ADP登録', 'COM登録', 'GS購入', 'リストアップ', 'FamilyDATA', 'やる理由作文', '名刺作成', '本（1000倍/症状別）'];
 var P2_CK_TR = ['FT-T', 'NSE-T', 'ABC-T', 'MLM', 'S-SET', 'FFG', 'システム-T', 'WEEK', 'ST-T', 'DAY/TIARA', 'DUP', 'ディファレンス/実験', 'GS', '上映会', 'UR', 'サービス体感レッスン', 'SEED-T'];
+// v738: 項目はユニオンごとに管理者が決められる（unions/{ユニオン}/cdata/mapChecklist = { ess:[{id,t}], tr:[{id,t}] }）。無ければ標準
+//   チェックの記録は項目のid（標準の項目は今まで通り ess_0／ess_d_0 …）
+var _p2CkCfg = null, _p2CkCfgAt = 0, _p2CkCfgUn = '';
+function _p2CkUn() { return String((currentUser && currentUser.union) || '').trim(); }
+function _p2CkLoad(force) {
+  var un = _p2CkUn(); if (!un || typeof db === 'undefined' || !db) return;
+  if (!force && _p2CkCfgAt && Date.now() - _p2CkCfgAt < 600000 && _p2CkCfgUn === un) return; _p2CkCfgAt = Date.now(); _p2CkCfgUn = un;
+  fsGet('unions/' + un + '/cdata/mapChecklist').then(function(d) { var nx = d && (Array.isArray(d.ess) || Array.isArray(d.tr)) ? d : null; if (JSON.stringify(nx) === JSON.stringify(_p2CkCfg)) return; _p2CkCfg = nx; if (currentView === 'plan') renderPlan(); }).catch(function() {});
+}
+function _p2CkDef(pre) { return (pre === 'tr' ? P2_CK_TR : P2_CK_ESS).map(function(t, i) { return { id: pre + '_' + i, t: t }; }); }
+function _p2CkItems(pre) {
+  var L = _p2CkCfg && Array.isArray(_p2CkCfg[pre]) ? _p2CkCfg[pre] : _p2CkDef(pre);
+  return L.filter(function(x) { return x && x.t; }).map(function(x) { var m = /^(ess|tr)_(\d+)$/.exec(x.id || ''); return { id: x.id, t: x.t, dk: m ? m[1] + '_d_' + m[2] : x.id + '_d' }; });
+}
+function _p2CkIt(pre, i) { return _p2CkItems(pre)[i] || { id: pre + '_x', t: '', dk: pre + '_x_d' }; }
 function _p2CkCount() {
-  var ck = _p2().check || {}, done = 0;
-  var total = P2_CK_ESS.length + P2_CK_TR.length;
-  P2_CK_ESS.forEach(function(x, i) { if (ck['ess_' + i]) done++; });
-  P2_CK_TR.forEach(function(x, i) { if (ck['tr_' + i]) done++; });
+  _p2CkLoad();
+  var ck = _p2().check || {}, done = 0, total = 0;
+  ['ess', 'tr'].forEach(function(pre) { _p2CkItems(pre).forEach(function(it) { total++; if (ck[it.id]) done++; }); });
   return { done: done, total: total };
 }
 function p2CheckOpen() {
@@ -24631,31 +24679,30 @@ function _p2CkRender() {
   var el = document.getElementById('p2CkBody');
   if (!el) return;
   var ck = _p2().check;
-  var section = function(title, items, pre) {
-    var done = 0;
-    items.forEach(function(x, i) { if (ck[pre + '_' + i]) done++; });
+  var section = function(title, pre) {
+    var items = _p2CkItems(pre), done = 0;
+    items.forEach(function(it) { if (ck[it.id]) done++; });
     var pct = items.length ? Math.round(done / items.length * 100) : 0;
     var h = '<div class="p2-meta" style="margin:10px 0 2px;font-weight:800">' + title + '　' + done + '/' + items.length + '（' + pct + '%）</div>'
       + '<div class="p2d-bar"><i style="width:' + pct + '%"></i></div>';
-    items.forEach(function(item, i) {
-      var on = !!ck[pre + '_' + i];
-      var dt = ck[pre + '_d_' + i] || '';
+    items.forEach(function(it, i) {
+      var on = !!ck[it.id], dt = ck[it.dk] || '';
       h += '<div class="p2c-item' + (on ? ' done' : '') + '">'
         + '<span class="p2c-box' + (on ? ' on' : '') + '" onclick="p2CkTgl(\'' + pre + '\',' + i + ')">' + (on ? '✓' : '') + '</span>'
-        + '<span class="lb">' + evEsc(item) + '</span>'
+        + '<span class="lb">' + evEsc(it.t) + '</span>'
         + (on ? '' : '<span class="p2-ib" title="今日のタスクにする" onclick="p2CkTask(\'' + pre + '\',' + i + ')">📋</span>')
         + '<input class="p2c-date" type="date" value="' + dt + '" onchange="p2CkDate(\'' + pre + '\',' + i + ',this.value)">'
         + '</div>';
     });
     return h;
   };
-  el.innerHTML = section('🎒 必須アイテム', P2_CK_ESS, 'ess') + section('🎓 TRAINING', P2_CK_TR, 'tr');
+  el.innerHTML = section('🎒 必須アイテム', 'ess') + section('🎓 TRAINING', 'tr');
 }
-function p2CkDate(pre, i, v) { _p2().check[pre + '_d_' + i] = v; saveGoals(); }
+function p2CkDate(pre, i, v) { _p2().check[_p2CkIt(pre, i).dk] = v; saveGoals(); }
 function p2CkTgl(pre, i) {
   var ck = _p2().check;
-  var key = pre + '_' + i;
-  if (!ck[key] && !ck[pre + '_d_' + i]) { ck[pre + '_d_' + i] = evTodayYmd(); }
+  var it = _p2CkIt(pre, i), key = it.id;
+  if (!ck[key] && !ck[it.dk]) { ck[it.dk] = evTodayYmd(); }
   ck[key] = !ck[key];
   saveGoals(); _p2CkRender();
   if (ck[key]) {
@@ -24666,11 +24713,11 @@ function p2CkTgl(pre, i) {
   if (currentView === 'plan') renderPlan();
 }
 function p2CkTask(pre, i) {
-  var items = pre === 'ess' ? P2_CK_ESS : P2_CK_TR;
-  var e = _tdMakeTask('✅ ' + items[i], evTodayYmd(), '');
+  var it = _p2CkIt(pre, i);
+  var e = _tdMakeTask('✅ ' + it.t, evTodayYmd(), '');
   state.events.push(e); saveEventDoc(e);
   try { updateEventsBadge(); } catch(e1) {}
-  toast('📋 「' + items[i] + '」を今日のタスクにしました');
+  toast('📋 「' + it.t + '」を今日のタスクにしました');
 }
 
 // ============================================================
