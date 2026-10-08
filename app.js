@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v706';
+var APP_JS_VERSION = 'v707';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v706';
+  var DATA_VERSION = 'v707';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v707', d:'2026-10-08', pop: { t: 'PCの計画シートが「左にMAP・右に書く欄」になりました', items: ['MAPは左に出たまま動かないので、見ながら右の数字・改善点・行動を書けます（右だけスクロール）', '行を詰めて、数字8行と行動4分野がひと目で見渡せます。右上の「上下」で前の並びにも戻せます', '上の帯（年月・翌月コピー・共有MAP）はなくして画面を広く。年月の切りかえと翌月コピーはMAPの画面の上へ'], go: ['計画シートを開く', "switchView('plan');p2Go('sheet')"] }, items:['PCの計画シートを左右2分割に：左＝MAP（縦いっぱい・拡大縮小）と課題、右＝数字と改善点・行動（2列）','右上の「◧ 左右｜⬒ 上下」で並びを切りかえ（端末に覚えます）','改善点の空いた欄は1行に詰めて、記入例は薄く1行で'] },
   { v:'v706', d:'2026-10-08', items:['PC：上の帯（年月・翌月コピー・共有MAP）をなくして、どの画面も上が広くなりました','年月の切りかえ（‹ 2026年10月 ›）・翌月コピー・共有MAPは、MAPの画面の上の帯に移しました（分析は今まで通り分析の上）','バージョンと保存の時刻は左下のプロフィールの下に'] },
   { v:'v705', d:'2026-10-08', items:['PC：左上の屋号・名前の表示をなくしました（左下のプロフィールと同じだったため）'] },
   { v:'v704', d:'2026-10-08', items:['🎰 シミュレーションのファーストボーナスは「押して見る」で表示：数字がスロットみたいにぐるぐる回って、右の桁から順に止まります（金額を押すともう一度回せます）','数字を変えたら、新しい金額でまた回って止まります'] },
@@ -37453,7 +37454,7 @@ function _p2ShTopHtml(ym, pc) {
   _p2ShTopCss();
   var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), ro = _p2ShRo(), cur = _p2Ym(0), un = (currentUser && currentUser.union) || '';
   var h = '<div class="st-h"><b>計画シート</b><span class="ym"><span onclick="p2ShMon(-1)">‹</span>' + parseInt(ym.slice(0, 4), 10) + '年' + _p2ShMonLb(ym) + '<span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></span><i></i>'
-    + (un ? '<span class="un">' + evEsc(un) + '</span>' : '') + (pc ? '<span class="pr" onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>' : '') + '</div>';
+    + (un ? '<span class="un">' + evEsc(un) + '</span>' : '') + (pc ? '<span class="lay"><span class="' + (_p2ShLay() === 'lr' ? 'on' : '') + '" onclick="p2ShLayTgl(\'lr\')" title="左にMAP・右に書く欄">◧ 左右</span><span class="' + (_p2ShLay() === 'tb' ? 'on' : '') + '" onclick="p2ShLayTgl(\'tb\')" title="上にMAP・下に書く欄">⬒ 上下</span></span><span class="pr" onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>' : '') + '</div>';
   // ① 年の目標
   var c1 = (Y.title || Y.inc) ? '<div class="st-c go" onclick="p2Go(\'year\')" title="年の目標・ロードマップを開く"><div class="l">年の目標' + (Y.dl ? '・' + Y.dl.slice(0, 4) + '年' : '') + '</div><div class="v">' + (Y.inc ? '<b>' + Y.inc + '</b>万' : '') + (Y.title ? '<span class="t">' + evEsc(Y.title) + '</span>' : '') + '</div></div>'
     : '<div class="st-c go" onclick="p2Go(\'goal\',0)"><div class="l">年の目標</div><div class="v"><span class="lk">目標を決める ›</span></div></div>';
@@ -37475,6 +37476,8 @@ function _p2ShTopHtml(ym, pc) {
   var ar = '<span class="st-ar">›</span>';
   return h + '<div class="st-g' + (pc ? ' pc' : '') + '">' + c1 + ar + c2 + ar + c3 + ar + c4 + '</div>';
 }
+function _p2ShLay() { return _p2ShLs('gm_shLay') === 'tb' ? 'tb' : 'lr'; }
+function p2ShLayTgl(v) { _p2ShLs('gm_shLay', v === 'tb' ? 'tb' : null); _p2ShMS = null; renderPlan(); }
 function _p2ShTopCss() {
   if (document.getElementById('p2ShTopCss')) return;
   var st = document.createElement('style'); st.id = 'p2ShTopCss';
@@ -37485,26 +37488,35 @@ function _p2ShTopCss() {
     + '.st-c .v{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;margin-top:3px;font-size:12px;font-weight:800;color:var(--text-mid)}.st-c .v b{font:900 17px Inter,sans-serif;color:var(--text)}.st-c .v .t{font-weight:900;font-size:14px;color:var(--gold);letter-spacing:.3px}.st-c .v small{font-size:11px;font-weight:800;color:var(--text-dim)}.st-c .v em{font-style:normal;color:var(--accent)}.st-c .v .lk{color:var(--accent);font-weight:900}.st-c .v .dm{color:var(--text-dim)}.st-c .v .sl{width:4px}'
     + '.st-c .sp-in{width:44px;font-size:16px}.st-k .v{font-size:11.5px}.st-k .v b{font-size:15px;color:var(--accent)}.st-k .v i{font-style:normal;color:var(--text-dim)}'
     + '.st-g:not(.pc) .st-k .v{gap:0 4px;font-size:10.5px}.st-g:not(.pc) .st-k .v b{font-size:13px}.st-g:not(.pc) .st-c .v .t{font-size:13px}'
+    + '.st-h .lay{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}.st-h .lay span{padding:4px 9px;font-size:11.5px;font-weight:800;color:var(--text-dim);cursor:pointer}.st-h .lay span.on{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}'
+    // v707: 左右2分割
+    + '.sp-lr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:18px;align-items:start;margin-top:8px}'
+    + '.sp-lrL{position:sticky;top:var(--lrTop,60px);height:calc(100vh - var(--lrTop,60px) - 14px);display:flex;flex-direction:column;min-height:0}.sp-lrL>.sp-mpin{flex:1;min-height:0;display:flex;flex-direction:column}.sp-lrL>.sp-mpin>.sp-sec{margin-top:0}.sp-lrL>.sp-mpin>.sp-mw{flex:1;min-height:0;display:flex;flex-direction:column}'
+    + '.sp-lrL .sp-mc{flex:1;min-height:0;display:flex;flex-direction:column}.sp-lrL #p2ShMF{flex:1;height:auto!important;min-height:180px}.sp-lrL .sp-mh{display:none}.sp-lrL>.sp-mis{flex:none;max-height:36%;overflow:auto}'
+    + '.sp-lrR>.sp-sec:first-child,.sp-lrR>div:first-child>.sp-sec:first-child{margin-top:0}.sp-lrR .sp-acts{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}'
+    + '.sp-lrR .sp-tb{margin-top:6px}.sp-lrR .sp-tb td{padding:3px 5px;font-size:13px}.sp-lrR .sp-tb td.n{font-size:12px}.sp-lrR .sp-tb td.k .sp-kz{font-size:12px;padding:3px 6px;min-height:26px}.sp-lrR .sp-tb .sp-in{width:38px;font-size:13px}.sp-lrR .sp-tb th{white-space:nowrap;font-size:10.5px;padding:3px 4px}.sp-lrR .sp-tb td.k .sp-kz{height:28px}.sp-lrR .sp-tb td.k .sp-kz::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+    + '.sp-lrR .sp-at .h{padding:5px 9px;font-size:12px}.sp-lrR .sp-at .r{min-height:27px;font-size:12px}.sp-lrR .sp-at .x input{padding:4px 7px;font-size:12px}.sp-lrR .sp-at .c{width:26px}.sp-lrR .sp-at .d{width:46px;font-size:11px}.sp-lrR .sp-at .addr{padding:5px 9px;font-size:11.5px}'
+    + '@media (max-width:1250px){.sp-lr{grid-template-columns:1fr}.sp-lrL{position:static;height:64vh}.sp-lrR .sp-acts{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}}'
     + '@media (max-width:420px){.st-c{padding:7px 9px}.st-c .sp-in{width:38px}}';
   document.head.appendChild(st);
 }
-function _p2ShMapBox(ym, W, H, pc) {
+function _p2ShMapBox(ym, W, H, pc, lr) { // lr：v707 左右2分割の左（MAPは縦いっぱい・課題は下）
   _p2ShIssCss();
   var F = _p2ShFr(ym), cm = String(state.currentMonth || '').replace('.', '-'), same = !cm || cm === ym, hasI = _hasIdeal();
   var mode = _p2ShMapMode === 'cur' || !hasI ? 'cur' : 'ideal', newN = same && F.t !== null ? Math.max(0, F.t - F.now) : 0;
   if (mode === 'ideal') newN = 0; // 理想MAPには足す人がもう入っている
-  var kind = _p2ShMapKind(_p2ShMapMt()), vw = _p2Sh().mapView || '', pin = _p2ShPin(pc);
+  var kind = _p2ShMapKind(_p2ShMapMt()), vw = _p2Sh().mapView || '', pin = lr ? false : _p2ShPin(pc);
   var sec = '<div class="sp-sec" style="align-items:center"><span>＜' + (hasI ? '<span class="tg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span>/<span class="' + (mode === 'ideal' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">理想</span></span>' : '現状') + 'MAP＞</span>' + _uxIb('shmap')
     + '<span class="sp-vw"><span class="' + (kind === 'circle' ? 'on' : '') + '" onclick="p2ShMapView(\'circle\')">サークル</span>｜<span class="' + (kind === 'sheet' ? 'on' : '') + '" onclick="p2ShMapView(\'sheet\')">シート型</span>' + (vw ? '<span onclick="p2ShMapView(\'\')" style="margin-left:4px">（自動に戻す）</span>' : '') + '</span>'
-    + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + '<span class="r sp-pn' + (pin ? ' on' : '') + '" onclick="p2ShPinTgl()" style="margin-left:auto">📌 ' + (pin ? '上に固定中' : '上に固定') + '</span><span class="r" style="margin-left:10px" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
+    + (same ? '' : '<small>' + _p2ShMonLb(cm) + 'のMAP</small>') + (lr ? '' : '<span class="r sp-pn' + (pin ? ' on' : '') + '" onclick="p2ShPinTgl()" style="margin-left:auto">📌 ' + (pin ? '上に固定中' : '上に固定') + '</span>') + '<span class="r" style="margin-left:' + (lr ? 'auto' : '10px') + '" onclick="_p2GoIdeal()">' + (hasI ? '理想MAPで編集 ›' : '理想MAPをつくる ›') + '</span></div>';
   // v700: MAPは枠の中で拡大・縮小（全画面にしない）。枠の高さは下の帯をドラッグで変える。描くのは後（_p2ShMapDraw）
-  _p2ShMapPc = !!pc; _p2ShMapO = { mode: mode, newN: newN };
+  _p2ShMapPc = !!pc; _p2ShMapLr = !!lr; _p2ShMapO = { mode: mode, newN: newN };
   var map = '<div class="sp-mc"><div class="sp-map sp-mf" id="p2ShMF" data-kind="' + kind + '" style="height:' + _p2ShMapH(pc) + 'px"><div id="p2ShMI"></div></div>'
     + '<div class="sp-zc"><span onclick="p2ShZoom(-1)">−</span><b id="p2ShZL">' + Math.round(_p2ShZ * 100) + '%</b><span onclick="p2ShZoom(1)">＋</span><span class="w" onclick="p2ShZoom(0)">全体</span></div>'
     + '<div class="sp-mh" onpointerdown="p2ShMapRs(event)" title="上下にドラッグで枠の高さを変えられます"><i></i></div></div>';
-  var ic = _p2ShIssC(), iss = ic ? (pc ? '<div class="iss-c" onclick="p2ShIssTgl()" title="課題をひらく"><span>‹</span><span class="v">課<br>題</span>' + (_p2ShIssN(ym) ? '<b>' + _p2ShIssN(ym) + '</b>' : '') + '</div>'
+  var ic = _p2ShIssC(), iss = ic ? (pc && !lr ? '<div class="iss-c" onclick="p2ShIssTgl()" title="課題をひらく"><span>‹</span><span class="v">課<br>題</span>' + (_p2ShIssN(ym) ? '<b>' + _p2ShIssN(ym) + '</b>' : '') + '</div>'
     : '<div class="iss"><div class="iss-hd" onclick="p2ShIssTgl()" style="cursor:pointer">課題<small>' + _p2ShMonLb(ym) + (_p2ShIssN(ym) ? '・' + _p2ShIssN(ym) + '人' : '') + '</small><span class="tg">▸ ひらく</span></div></div>') : _p2ShIssHtml(ym);
-  if (pc) return '<div class="sp-mpin' + (pin ? ' on' : '') + '">' + sec + '<div class="sp-mw' + (ic ? ' ic' : '') + '">' + map + iss + '</div></div>';
+  if (pc && !lr) return '<div class="sp-mpin' + (pin ? ' on' : '') + '">' + sec + '<div class="sp-mw' + (ic ? ' ic' : '') + '">' + map + iss + '</div></div>';
   return '<div class="sp-mpin' + (pin ? ' on' : '') + '">' + sec + '<div class="sp-mw m">' + map + '</div></div><div class="sp-mw m sp-mis">' + iss + '</div>';
 }
 function _p2ShKin(ym, k, X, which) { // which: 't'＝今月の目標 / 'v'＝手入力の進捗
@@ -37513,7 +37525,7 @@ function _p2ShKin(ym, k, X, which) { // which: 't'＝今月の目標 / 'v'＝手
   return '<input class="sp-in v" type="number" inputmode="numeric" value="' + (X.v === null ? '' : X.v) + '" placeholder="0" onfocus="edSelAll(this)" onchange="p2ShKV(\'' + k.id + '\',0,this.value)">';
 }
 function _p2ShKzIn(ym, id) { var t = String(((_p2ShM(ym).kz || {})[id]) || ''), ex = P2_SH_KZ_EX[id]; return '<textarea class="sp-kz" rows="1" placeholder="' + (ex ? '例：' + ex : '') + '" oninput="_p2ShGrow(this)" onchange="p2ShKzR(\'' + id + '\',this.value)"' + (_p2ShRo() ? ' readonly' : '') + '>' + evEsc(t) + '</textarea>'; }
-function _p2ShGrow(el) { try { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } catch (e) {} }
+function _p2ShGrow(el) { try { if (!el.value && el.closest && el.closest('.sp-lrR')) { el.style.height = ''; return; } el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; } catch (e) {} }
 function p2ShKzR(id, v) { if (_p2ShRo()) return; var m = _p2ShM(_p2ShYmN()); m.kz = m.kz || {}; m.kz[id] = String(v || '').slice(0, 300); saveGoals(); }
 function _p2ShRows(ym) { // スマホ：1項目＝1行（先月 目標→結果｜今月 目標・今｜改善点）
   var K = _p2Sh().kpi, A = _p2Act(ym), pv = _p2ShPrevYm(ym), Ap = _p2Act(pv);
@@ -37617,7 +37629,7 @@ function _p2ShIssHtml(ym) {
   };
   var list = ids.filter(function(id) { return id !== _p2ShIssSel; }).map(row).join('');
   var sel = _p2ShIssSel && !ro ? row(_p2ShIssSel) : '';
-  return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small><span class="tg" onclick="p2ShIssTgl()">' + (_p2ShMapPc ? 'たたむ ›' : '▾ たたむ') + '</span></div>' + sel + list
+  return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small><span class="tg" onclick="p2ShIssTgl()">' + (_p2ShMapPc && !_p2ShMapLr ? 'たたむ ›' : '▾ たたむ') + '</span></div>' + sel + list
     + (sel || list ? '' : '<div class="iss-em">MAPの人を押すと、その人の課題を書けます</div>') + '</div>';
 }
 function _p2ShIssCss() {
@@ -37639,7 +37651,7 @@ function _p2ShIssCss() {
   document.head.appendChild(st);
 }
 // ════ v700: MAPは初めの枠の中で拡大・縮小（＋−・ピンチ・ctrl/⌘＋ホイール・ドラッグで動かす）。枠の高さは下の帯で変える。📌で上に固定 ════
-var _p2ShZ = 1, _p2ShMS = null, _p2ShMapPc = false, _p2ShMapO = { mode: 'ideal', newN: 0 }; // 倍率／枠のスクロール位置（描き直しても保つ）
+var _p2ShZ = 1, _p2ShMS = null, _p2ShMapPc = false, _p2ShMapLr = false, _p2ShMapO = { mode: 'ideal', newN: 0 }; // 倍率／枠のスクロール位置（描き直しても保つ）
 function _p2ShLs(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
 function _p2ShMapH(pc) { var v = parseInt(_p2ShLs(pc ? 'gm_shMapH' : 'gm_shMapHm'), 10); return v >= 140 && v <= 1400 ? v : (pc ? 460 : 320); }
 function _p2ShPin(pc) { var v = _p2ShLs(pc ? 'gm_shPin' : 'gm_shPinM'); return v === null ? !!pc : v === '1'; }
@@ -37650,6 +37662,8 @@ function p2ShIssTgl() { _p2ShLs('gm_shIssC', _p2ShIssC() ? null : '1'); if (_p2S
 // 枠の中にMAPを描く（サークル／シート型）。課題のある人は光らせる
 function _p2ShMapDraw() {
   var f = document.getElementById('p2ShMF'), I = document.getElementById('p2ShMI'); if (!f || !I) return;
+  try { var LL = f.closest('.sp-lrL'), hdL = document.querySelector('#view-plan .pcx2-hd'); if (LL) LL.style.setProperty('--lrTop', ((hdL && hdL.offsetHeight) || 0) + 8 + 'px'); } catch (eL) {} // v707: 左の列は見出しの下に貼りつく
+  if (!window._p2ShRsz) { window._p2ShRsz = 1; var tRs = 0; window.addEventListener('resize', function() { clearTimeout(tRs); tRs = setTimeout(function() { if (currentView === 'plan' && document.getElementById('p2ShMF')) _p2ShMapDraw(); }, 200); }); }
   var fw = f.clientWidth || 600, fh = f.clientHeight || 400, ym = _p2ShYmN(), mt = _p2ShMapMt(), Is = _p2ShIss(ym);
   I.style.width = Math.round(fw * _p2ShZ) + 'px'; I.style.height = Math.round(fh * _p2ShZ) + 'px';
   if (f.getAttribute('data-kind') === 'circle') {
@@ -37775,8 +37789,11 @@ function _p2ShPcHtml() {
   var ym = _p2ShYmN();
   setTimeout(_p2ShAfter, 0);
   // v695: MAPは横いっぱい。行動の4分野は数字と改善点の下に横並び（MAP → 数字と改善点 → 行動 の順で上から）
-  return _p2ShTopHtml(ym, true) + '<div class="sp-pc">' + _p2ShMapBox(ym, 1300, 380, true) + _p2ShKzHead(ym) + (_p2ShKzOpen() ? _p2ShTable(ym) + _p2ShFoot(true) : '')
-    + '<div class="sp-sec" style="align-items:center">行動' + _uxIb('shact') + '</div><div class="sp-acts">' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c, 5); }).join('') + '</div></div>';
+  var R = _p2ShKzHead(ym) + (_p2ShKzOpen() ? _p2ShTable(ym) + _p2ShFoot(true) : '')
+    + '<div class="sp-sec" style="align-items:center">行動' + _uxIb('shact') + '</div><div class="sp-acts">' + P2_SH_CAT.map(function(c) { return _p2ShActTbl(ym, c, 5); }).join('') + '</div>';
+  // v707: 左右2分割（左＝MAP（縦いっぱい・動かない）と課題｜右＝数字と改善点・行動（右だけスクロール・行を詰める））。「上下」で前の並び
+  if (_p2ShLay() === 'lr') return _p2ShTopHtml(ym, true) + '<div class="sp-pc sp-lr"><div class="sp-lrL">' + _p2ShMapBox(ym, 1300, 380, true, true) + '</div><div class="sp-lrR">' + R + '</div></div>';
+  return _p2ShTopHtml(ym, true) + '<div class="sp-pc">' + _p2ShMapBox(ym, 1300, 380, true) + R + '</div>';
 }
 // ── 印刷（A3横・紙の計画立案シートと同じ並び）──
 function _p2ShPrintHtml(ym) {
