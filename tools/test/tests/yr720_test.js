@@ -15,9 +15,9 @@ T.run(async () => {
   inNow('exp').value = '1'; inNow('exp').onchange(); await sleep(20);
   c('書くとその場で差が変わり、この画面のまま', w._p2Pg === 'year' && w._p2YrCalc().rows[4].c === 1 && !!$('.yr-gp'));
   inNow('br').value = '3'; inNow('br').onchange(); await sleep(20);
-  c('MAPと違う数にしたら「MAP 1 に戻す」', w._p2YrCalc().rows[0].c === 3 && /MAP 1 に戻す/.test($('.yr-gp').textContent));
-  $$('.yr-gp i.rs')[0].onclick(); await sleep(20);
-  c('戻すとMAPの数', w._p2YrCalc().rows[0].c === 1 && !$('.yr-gp i.rs'));
+  c('v729: MAPと違う数にしても「MAP ◯ に戻す」は出さない', w._p2YrCalc().rows[0].c === 3 && !/に戻す/.test($('.yr-gp').textContent) && !$('.yr-gp i.rs'));
+  inNow('br').value = ''; inNow('br').onchange(); await sleep(20);
+  c('空にするとMAPの数', w._p2YrCalc().rows[0].c === 1);
   c('v721: 計算の設定はふだん隠す（⚙ 設定で開く）', !$('.yr-sp') && !!$('.yr-gear'));
   w.p2YrSetTgl(); await sleep(20);
   c('v721: 開くと1行ずつの設定（BR 1本のフロント・単価・候補）', $$('.yr-sp .yr-sr').length === 4 && !/1ヶ月に/.test($('.yr-sp').textContent));
