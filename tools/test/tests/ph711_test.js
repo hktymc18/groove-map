@@ -17,5 +17,7 @@ T.run(async () => {
   c('ホームでチェックできる', T1.done === true && !!$('.ph-td.dn'));
   $('#phAdd').value = 'DLRの準備'; w.phAddTodo(); await sleep(20);
   c('ホームで今日のToDoを足せる', w.state.events.some(e => e.title === 'DLRの準備' && e.date === t && e.type === 'task'));
-  c('古いカード（気になるメンバー・今日のタスク）は出さない・インサイトはたたむ', !$('.home-wrap') && !!$('.ph details.home-insights') && !$('.ph details.home-insights').open);
+  c('古いカード（気になるメンバー・今日のタスク）は出さない・インサイトはたたむ', !$('.home-wrap') && !!$('.ph details.ph-ins') && !$('.ph details.ph-ins').open);
+  $('.ph-ins').open = true; await sleep(10);
+  c('v712: インサイトはカード（コーチ・先週からの組織・今日の気づき・先月からの変化）', $$('.ph-ins .ph-ic').length === 4 && !!$('.ph-ins #homeChanges') && /コーチ/.test($('.ph-ins').textContent));
 });

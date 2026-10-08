@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v711';
+var APP_JS_VERSION = 'v712';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v711';
+  var DATA_VERSION = 'v712';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v712', d:'2026-10-08', items:['PCのホームの「インサイト」を作り直し：ひらくと4枚のカード（コーチの一言｜先週からの組織（メンバー・GSV・フォロー要の数字）｜今日の気づき｜先月からの変化（3列）'] },
   { v:'v711', d:'2026-10-08', pop: { t: 'PCのホームを作り直しました', items: ['上に「今月の目標」の帯：月収・NEWフロント・マイルストーンまでの月数（押すと計画シート）', '3列で「今日（予定・ToDo）｜今週やること・今月の行動｜気になる人・再アプローチ」。ToDoと行動はホームでチェック・追加できます', 'インサイトは下にたたんで置いています'], go: ['ホームを見る', "switchView('home')"] }, items:['PCのホームを新しく：今月の目標の帯＋3列（今日｜今週と今月の行動｜人）','今日のToDoはホームでチェック・「＋ 今日のToDoを足す」で追加','計画シートの行動（まだの物）を期限の近い順に。期限切れは赤','連続日数・レベル・今週のXPは右上の小さな札に（押すと実績）'] },
   { v:'v710', d:'2026-10-08', items:['PC：MAPの上の帯を1行に。現状/理想 → ‹ 年月 › → LTSV・稼働（1行の札）→ 表示の切りかえ（アイコン。マウスを乗せると名前）→ 検索 → 受付連携・全画面・「⋯」','「⋯」の中に翌月コピー・共有MAP・CSV・共有。翌月コピーは、月末の7日前〜翌月7日までは月の横にも「→ 翌月」が出ます'] },
   { v:'v709', d:'2026-10-08', items:['🎁 シミュレーション：人数などを変えて金額が変わったら、ファーストボーナスはまた「押して見る」に戻ります（自分のタイミングで見られます）','止まったら「前回より ＋¥◯」も出ます','ファーストボーナスの欄は組織図の下に。BRの月を選んだ時だけ出ます（ほかの月は「BRを選ぶと見られます」）'] },
@@ -7236,7 +7237,7 @@ function renderHome() {
   var coachLine = buildCoachLine();
   var coachHtml = coachLine ? '<div class="home-coach">' + coachLine + '</div>' : '';
   // 週次成長レポート（Phase E：週が変わったら先週スナップショットと比較）
-  var wkHtml = '';
+  var wkHtml = '', wkD = null;
   try {
     var wkNow = gameWeekStart();
     var curMembers = (state.members || []).filter(function(m){ return !m.deleted; });
@@ -7247,6 +7248,7 @@ function renderHome() {
     if (g.wkPrev && curMembers.length) {
       var dn = curStat.n - (g.wkPrev.n || 0), dg = curStat.gsv - (g.wkPrev.gsv || 0);
       var dorm = 0; curMembers.forEach(function(m){ if (memberActivityLevel(m) === 'act-dormant') dorm++; });
+      wkD = { dn: dn, dg: dg, dorm: dorm };
       wkHtml = '<div class="home-wk">' + icn('sprout') + ' <b>先週からの組織</b>　メンバー ' + (dn >= 0 ? '+' : '') + dn + '人 ・ GSV ' + (dg >= 0 ? '+' : '') + dg.toLocaleString()
         + (dorm ? ' ・ <span style="color:var(--go-rose)">💤フォロー要 ' + dorm + '人</span>' : ' ・ 全員稼働中🔥') + '</div>';
     }
@@ -7260,10 +7262,7 @@ function renderHome() {
     + '<span class="gs-more">🏅 ›</span></div>';
   if (_px3On()) { // v711: PCは新しいホーム（今月の帯＋3列）
     wrap.innerHTML = _phHtml({ li: li, pct: pct, streak: streak, thisW: thisW, dwTxt: dwTxt, deltaCls: deltaCls, ftue: ftueHtml, comeback: comebackHtml })
-      + '<details class="home-insights"><summary style="cursor:pointer;font-size:12.5px;font-weight:800;color:var(--text-mid);padding:10px 2px;list-style-position:inside">📈 インサイト（コーチ・今週・先月からの変化）</summary>'
-      + coachHtml + wkHtml + insightsHtml()
-      + '<div class="home-sec-label"><span>' + icn('chart') + ' 先月からの変化</span><span onclick="_mcPrevCache={key:\'\',members:null};renderMonthlyChanges()" style="color:var(--text-dim);font-weight:700;font-size:11px;cursor:pointer;padding:4px 10px">↻ 更新</span></div>'
-      + '<div id="homeChanges" class="home-changes"><div class="ck-empty" style="color:var(--text-dim)">読み込み中…</div></div></details></div>';
+      + _phInsHtml(coachLine, wkD) + '</div>';
     updateHomeBadge(); renderMonthlyChanges(); return;
   }
   wrap.innerHTML = '<div class="home-wrap">'
@@ -7349,6 +7348,20 @@ function _phHtml(o) { // o: { li, pct, streak, thisW, dwTxt, deltaCls, ftue, com
   h += '<div class="ph-g">' + c1 + c2 + c3 + '</div>';
   return h;
 }
+// v712: インサイト（PC）：たたんだ見出し → ひらくと4枚のカード（コーチ｜先週からの組織｜今日の気づき｜先月からの変化）
+function _phInsHtml(coach, wk) {
+  var ins = []; try { ins = homeInsights(); } catch (e) {}
+  var sg = function(v) { return (v > 0 ? '+' : (v < 0 ? '−' : '±')) + Math.abs(v).toLocaleString(); };
+  var open = window._phInsOpen ? ' open' : '';
+  var n = (coach ? 1 : 0) + ins.length;
+  return '<details class="ph-ins"' + open + ' ontoggle="window._phInsOpen=this.open"><summary><b>📈 インサイト</b><small>コーチ・先週からの組織・今日の気づき・先月からの変化</small>' + (n ? '<em>' + n + '</em>' : '') + '<span class="ar">›</span></summary>'
+    + '<div class="ph-ig">'
+    + '<div class="ph-ic co"><div class="ph-ih">🧭 コーチの一言</div>' + (coach ? '<p>' + coach + '</p>' : '<p class="dm">今は特にありません。この調子で 👍</p>') + '</div>'
+    + '<div class="ph-ic"><div class="ph-ih">🌱 先週からの組織</div>' + (wk ? '<div class="ph-st"><div><small>メンバー</small><b class="' + (wk.dn >= 0 ? 'up' : 'dn') + '">' + sg(wk.dn) + '<i>人</i></b></div><div><small>GSV</small><b class="' + (wk.dg >= 0 ? 'up' : 'dn') + '">' + sg(wk.dg) + '</b></div><div><small>フォロー要</small><b class="' + (wk.dorm ? 'wn' : 'up') + '">' + wk.dorm + '<i>人</i></b></div></div>' : '<p class="dm">来週から先週との比較が出ます</p>') + '</div>'
+    + '<div class="ph-ic"><div class="ph-ih">💡 今日の気づき</div>' + (ins.length ? ins.map(function(x) { return '<div class="hi-item ' + x.c + '">' + evEsc(x.t) + '</div>'; }).join('') : '<p class="dm">大きな気づきはありません。組織は良好です 👍</p>') + '</div>'
+    + '<div class="ph-ic wd"><div class="ph-ih">📊 先月からの変化<span onclick="event.stopPropagation();_mcPrevCache={key:\'\',members:null};renderMonthlyChanges()">↻ 更新</span></div><div id="homeChanges" class="home-changes"><div class="ck-empty">読み込み中…</div></div></div>'
+    + '</div></details>';
+}
 function phDone(id) { try { toggleEventDone(id); } catch (e) {} if (currentView === 'home') renderHome(); }
 function phToDp(mid) { tdyToDp(mid); if (currentView === 'home') renderHome(); }
 function phAddTodo() {
@@ -7372,7 +7385,11 @@ function _phCss() {
     + '.ph-wk{display:flex;align-items:center;gap:8px;padding:6px 2px;border-top:1px solid var(--border);font-size:12.5px;font-weight:800}.ph-wk span{min-width:64px}.ph-wk .pb{flex:1}.ph-wk b{font:900 12.5px Inter,sans-serif;min-width:40px;text-align:right}'
     + '.ph-p{display:flex;align-items:center;gap:6px;padding:7px 2px;border-top:1px solid var(--border);cursor:pointer}.ph-p>div{flex:1;min-width:0}.ph-p b{font-size:13px;font-weight:900}.ph-p b em{font-style:normal;margin-left:6px;font-size:10.5px;color:var(--text-dim)}.ph-p small{display:block;font-size:11px;color:#FFB454;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ph-p .bt{flex:none;font-size:11px;font-weight:900;padding:4px 8px;border-radius:8px;border:1px solid var(--border);color:var(--text-mid)}.ph-p .bt.g{border-color:color-mix(in srgb,var(--accent) 50%,var(--border));color:var(--accent)}'
     + '.ph-em{font-size:12px;color:var(--text-dim);padding:8px 2px;text-align:center}.ph-mr{font-size:11.5px;color:var(--text-dim);padding:6px 2px 0}.ph-mr.lk{color:var(--accent);cursor:pointer;font-weight:800}.ph-bd{margin-top:12px}.ph-bd .home-bday,.ph-bd .home-bday-month{margin:6px 0 0}'
-    + '.ph .home-insights{margin-top:16px}';
+    + '.ph-ins{margin-top:16px;border:1px solid var(--border);border-radius:16px;background:var(--surface)}.ph-ins>summary{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;list-style:none}.ph-ins>summary::-webkit-details-marker{display:none}.ph-ins>summary b{font-size:13.5px;font-weight:900}.ph-ins>summary small{font-size:11.5px;color:var(--text-dim);font-weight:700}.ph-ins>summary em{font-style:normal;font-size:11px;font-weight:900;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold)}.ph-ins>summary .ar{margin-left:auto;color:var(--text-dim);font-weight:900;transition:transform .2s}.ph-ins[open]>summary .ar{transform:rotate(90deg)}'
+    + '.ph-ig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0 14px 14px}.ph-ic{border:1px solid var(--border);border-radius:14px;padding:11px 13px;background:color-mix(in srgb,var(--bg,#0b0e15) 40%,var(--surface))}.ph-ic.wd{grid-column:1/-1}.ph-ih{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:900;margin-bottom:8px}.ph-ih span{margin-left:auto;font-size:11px;font-weight:800;color:var(--text-dim);cursor:pointer}.ph-ic p{margin:0;font-size:13px;line-height:1.6;font-weight:700}.ph-ic p.dm{color:var(--text-dim);font-size:12px;font-weight:700}.ph-ic.co{border-color:color-mix(in srgb,var(--accent) 35%,var(--border))}'
+    + '.ph-st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ph-st small{display:block;font-size:10.5px;font-weight:800;color:var(--text-dim)}.ph-st b{font:900 20px Inter,sans-serif}.ph-st b i{font-style:normal;font-size:11px;margin-left:2px;color:var(--text-mid)}.ph-st b.up{color:var(--accent)}.ph-st b.dn{color:#FF6B7F}.ph-st b.wn{color:#FFB454}'
+    + '.ph-ins .hi-item{margin:0 0 6px;padding:7px 10px;font-size:12.5px;line-height:1.5;border-radius:9px;background:transparent}.ph-ins .home-changes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px}.ph-ins .home-changes .hi-item{margin:0}.ph-ins .home-changes .ck-empty,.ph-ins .home-changes .ck-more{grid-column:1/-1;font-size:12px;color:var(--text-dim)}.ph-ins .home-changes .ck-more{color:var(--accent);cursor:pointer;font-weight:800}.ph-ins .ck-empty{border:0!important;background:transparent!important;padding:4px 0!important;text-align:left!important;font-size:12px}'
+    + '@media (max-width:1250px){.ph-ig{grid-template-columns:repeat(2,minmax(0,1fr))}.ph-ins .home-changes{grid-template-columns:repeat(2,minmax(0,1fr))}}';
   document.head.appendChild(st);
 }
 // 演出
