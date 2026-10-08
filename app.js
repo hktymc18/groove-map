@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v722';
+var APP_JS_VERSION = 'v723';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v722';
+  var DATA_VERSION = 'v723';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5381,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v723', d:'2026-10-08', items:['計画シートの行動：実行期日をタップしても入力できなかったのを直しました（空いた行でも先に日付を選べる・名前を書いてすぐ日付を押しても選べる）'] },
   { v:'v722', d:'2026-10-08', items:['年の目標・ロードマップの説明文を見出しの横の (i) にまとめて、画面をすっきりさせました'] },
   { v:'v721', d:'2026-10-08', items:['ロードマップ③の計算の設定（BR 1本に必要なフロント・単価・ルビー候補）は、ふだん隠して「⚙ 設定」で開くように。1行ずつの見やすい形にしました','「1ヶ月5人以上は無理なペース（赤）」をなくしました'] },
   { v:'v720', d:'2026-10-08', items:['年の目標・ロードマップの③で、今の数もその場で書きかえられるように（空ならMAPの数が薄く出る・違う数にしたら「MAP ◯ に戻す」）','単価（1Qルビー・1環境・ルビー候補の倍率）も③の下で直せます。前の「今の数・単価」の画面には飛ばなくなりました'] },
@@ -37610,13 +37611,35 @@ function p2ShKReset() { if (!confirm('数字の項目を最初の8項目に戻�
 function p2ShKz(v) { if (_p2ShRo()) return; _p2ShM(_p2ShYmN()).kaizen = String(v || '').slice(0, 2000); saveGoals(); }
 function p2ShFr(v) { if (_p2ShRo()) return; var ym = _p2ShYmN(); if (_p2FrontIdeal(ym) !== null) { toast('NEWフロントの目標は理想MAPの人数です（理想MAPで直す）'); renderPlan(); return; } p2RmCell('front', ym, String(v === '' || v == null ? '' : Math.max(0, parseInt(v, 10) || 0))); }
 function p2ShMap(k) { _p2ShMapMode = k === 'cur' ? 'cur' : 'ideal'; renderPlan(); }
+// v723: 実行期日：空いた行でも先に日付を選べる・名前を書いてすぐ日付を押しても選べる（描き直しで日付の入力が消えないように）
+var _p2ShNwD = {};
+function _p2ShMd(d) { return parseInt(d.slice(5, 7), 10) + '/' + parseInt(d.slice(8), 10); }
+function _p2ShPick(el) { try { if (el.showPicker) el.showPicker(); } catch (e) {} }
+function _p2ShReLater(cat) {
+  setTimeout(function() {
+    var a = document.activeElement;
+    if (a && a.tagName === 'INPUT' && a.closest && a.closest('#view-plan .sp-at, #view-plan .sp-acts')) { a.addEventListener('blur', function() { setTimeout(function() { if (currentView === 'plan') renderPlan(); }, 0); }, { once: true }); return; } // 別の欄（日付など）を触っている間は描き直さない
+    renderPlan();
+    if (!a || a === document.body) { var n = document.getElementById('p2ShIn_' + cat + '_0'); if (n) n.focus(); } // Enterで書いた時は続けて書けるように
+  }, 0);
+}
 function p2ShActAddV(cat, el) { // v699: 空いた行に書いたら行動に
   if (_p2ShRo()) { toast('このMAPは編集できません'); return; }
   var t = String((el && el.value) || '').trim(); if (!t) return;
-  var e = _tdMakeTask(t.slice(0, 120), '', ''); e.planYm = _p2ShYmN(); e.planCat = cat;
+  var row = el.closest ? el.closest('.r') : null;
+  if (row && row.dataset.eid) { p2ShActEdit(row.dataset.eid, t); return; } // もう行動になっている行
+  var j = parseInt(String(el.id || '').split('_').pop(), 10), key = cat + '_' + (isNaN(j) ? 0 : j), d = _p2ShNwD[key] || '';
+  var e = _tdMakeTask(t.slice(0, 120), d, ''); e.planYm = _p2ShYmN(); e.planCat = cat; delete _p2ShNwD[key];
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
-  renderPlan();
-  setTimeout(function() { var n = document.getElementById('p2ShIn_' + cat + '_0'); if (n) n.focus(); }, 30); // 続けて書けるように
+  if (row) row.dataset.eid = e.id;
+  _p2ShReLater(cat);
+}
+function p2ShActNwD(cat, j, el) { // 空いた行の日付
+  var v = el.value || '', row = el.closest ? el.closest('.r') : null;
+  if (row && row.dataset.eid) { p2ShActDate(row.dataset.eid, v); return; }
+  if (v) _p2ShNwD[cat + '_' + j] = v; else delete _p2ShNwD[cat + '_' + j];
+  var lb = el.parentNode && el.parentNode.querySelector('.dl'); if (lb) lb.textContent = v ? _p2ShMd(v) : '/';
+  var ti = document.getElementById('p2ShIn_' + cat + '_' + j); if (ti && !ti.value) setTimeout(function() { try { ti.focus(); } catch (e) {} }, 50);
 }
 function p2ShActRow(cat) { if (_p2ShRo()) return; var m = _p2ShM(_p2ShYmN()); m.xr = m.xr || {}; m.xr[cat] = (+m.xr[cat] || 0) + 1; saveGoals(); renderPlan(); }
 function p2ShActAdd(cat) {
@@ -37726,7 +37749,7 @@ function _p2ShCss2() {
     + '.sp-kz{width:100%;box-sizing:border-box;margin-top:6px;font:700 12.5px/1.55 inherit;font-family:inherit;color:var(--text);padding:6px 9px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);resize:none;min-height:34px;overflow:hidden}.sp-kz::placeholder{color:var(--text-dim)}.sp-kz:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-at{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px}.sp-at .h{display:flex;align-items:center;padding:7px 10px;background:var(--surface);font-size:12.5px;font-weight:900}.sp-at .h span{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--text-dim)}'
     + '.sp-at .r{display:flex;align-items:stretch;border-top:1px solid var(--border);min-height:32px;font-size:12.5px;font-weight:700}.sp-at .c{width:32px;flex:none;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;cursor:pointer}.sp-at .x{flex:1;min-width:0;border-left:1px solid var(--border);display:flex;align-items:center}.sp-at .x input{width:100%;background:transparent;border:0;color:var(--text);font:700 13px inherit;font-family:inherit;padding:6px 8px}.sp-at .x input::placeholder{color:var(--text-dim)}.sp-at .x input:focus{outline:none;background:color-mix(in srgb,var(--accent) 6%,transparent)}.sp-at .r.dn .x input{color:var(--text-dim);text-decoration:line-through}'
-    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;opacity:0;cursor:pointer}.sp-at .d.od{color:#FF6B7F}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
+    + '.sp-at .d{position:relative;width:54px;flex:none;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:var(--text-mid);cursor:pointer;overflow:hidden}.sp-at .d input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;box-sizing:border-box;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none}.sp-at .d i.dl{font-style:normal;pointer-events:none}.sp-at .d.od{color:#FF6B7F}.sp-at .addr{border-top:1px solid var(--border);padding:7px 10px;font-size:12px;font-weight:800;color:var(--accent);cursor:pointer}.sp-at .r.ex{cursor:pointer}.sp-at .r.ex .x i{font-style:normal;padding:6px 8px;font-size:12.5px;color:var(--text-dim);opacity:.75}.sp-at .r.ex:hover .x i{opacity:1;color:var(--text-mid)}.sp-at .r.nw .c{color:var(--text-dim)}'
     + '.sp-ft{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;font-weight:800}.sp-ft span{color:var(--accent);cursor:pointer}.sp-ft span.m{color:var(--text-dim)}'
     // PC：紙と同じ1枚（左＝目標・MAP・数字と改善点｜右＝行動）
     + '.sp-pc{margin-top:4px}.sp-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;align-items:start}.sp-acts .sp-at{margin-bottom:0}.sp-pc .gl{display:block}.sp-pc .mw{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;margin-top:8px}.sp-pc .mw .sp-leg{font-size:11px;line-height:1.8;padding-top:6px}'
@@ -37869,13 +37892,13 @@ function _p2ShActTbl(ym, c, minRows) {
   var r = L.map(function(e) {
     var od = !e.done && e.date && e.date < td;
     return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c" onclick="p2ShActTg(\'' + e.id + '\')">' + (e.done ? '✔' : '') + '</span><span class="x"><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '></span>'
-      + '<span class="d' + (od ? ' od' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '/') + (ro ? '' : '<input type="date" value="' + (e.date || '') + '" onchange="p2ShActDate(\'' + e.id + '\',this.value)">') + '</span></div>';
+      + '<span class="d' + (od ? ' od' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '/') + (ro ? '' : '<input type="date" value="' + (e.date || '') + '" onclick="_p2ShPick(this)" onchange="p2ShActDate(\'' + e.id + '\',this.value)">') + '</span></div>';
   }).join('');
   // v699: 空いた行はそのまま書く欄（記入例は薄く見せるだけ・押しても入らない）。「＋ 行を追加」で行を増やす
   var used = L.map(function(e) { return e.title; }), exU = (P2_SH_ACT_EXS[c.k] || []).filter(function(t) { return used.indexOf(t) < 0; });
   var xr = +((_p2ShM(ym).xr || {})[c.k]) || 0, nE = ro ? Math.max(0, (minRows || 0) - L.length) : Math.max(exU.length, 1, (minRows || 0) - L.length) + xr;
   for (var j = 0; j < nE; j++) r += ro ? '<div class="r"><span class="c"></span><span class="x"></span><span class="d">/</span></div>'
-    : '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '_' + j + '" placeholder="' + (j < exU.length ? '例：' + evEsc(exU[j]) : '') + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAddV(\'' + c.k + '\',this)"></span><span class="d">/</span></div>';
+    : '<div class="r nw"><span class="c"></span><span class="x"><input id="p2ShIn_' + c.k + '_' + j + '" placeholder="' + (j < exU.length ? '例：' + evEsc(exU[j]) : '') + '" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){this.blur()}" onchange="p2ShActAddV(\'' + c.k + '\',this)"></span><span class="d"><i class="dl">' + (_p2ShNwD[c.k + '_' + j] ? _p2ShMd(_p2ShNwD[c.k + '_' + j]) : '/') + '</i><input type="date" value="' + (_p2ShNwD[c.k + '_' + j] || '') + '" onclick="_p2ShPick(this)" onchange="p2ShActNwD(\'' + c.k + '\',' + j + ',this)"></span></div>';
   if (!ro) r += '<div class="addr" onclick="p2ShActRow(\'' + c.k + '\')">＋ 行を追加</div>';
   if (!minRows) { // v698: スマホは分野ごとにたためる（端末ごとに覚える）
     var cl = _p2ShActClosed(c.k), dn = L.filter(function(e) { return e.done; }).length;
