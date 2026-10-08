@@ -1300,8 +1300,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v37';
+var APP_VER = 'v38';
 var CHANGELOG = [
+  { v: 'v38', d: '2026/10/09', items: ['📋 イベントタブに「合同出席者」ボタン（単独イベントは「出席者」）: 終わったイベントも、全ユニオンの出席者・ユニオン別の人数・ビジター・受付担当者を一覧で見られます（ユニオンで絞り込み・CSV出力も可）', '➕ 合同イベントで、合同ユニオンに入っていないユニオンの人を受付すると、主催ユニオンの管理者・受付管理者にはその場で「合同ユニオンに追加」ボタンが出ます（押すとそのユニオンの集計に入ります）'] },
   { v: 'v37', d: '2026/10/09', items: ['💴💳 イベントの「支払い方法」に「現金とPayPayの両方」を追加。受付のたびに画面の「💴 現金で受領」「📱 PayPayで受領」をワンタップで選べます（何もしなければ現金）。受付画面にはPayPayの送金QRも表示', '会計: 現金計・PayPay計を分けて表示。PayPay分は納金票に「現金外」として別記'] },
   { v: 'v36', d: '2026/10/09', items: ['集計タブが「集計中…」のまま表示されないことがあった問題を修正（他のユニオンのイベントがある月に起きていました）'] },
   { v: 'v35', d: '2026/10/08', items: ['領収書: ユニオン設定で「住所」「電話番号」「インボイス登録番号」を任意で設定できるように（入れた項目だけ載ります）。登録番号がある時は「10%対象・うち消費税」も表示', '会場で受け取った領収書に「現金受領／PayPay受領」を表示'] },
@@ -5213,6 +5214,7 @@ function renderEvents(){
       + (isSelf && canDel ? '<button data-a="selftog" data-id="' + esc(ev.id) + '"' + (ev.selfOpen ? '' : ' class="primary"') + '>'
           + (ev.selfOpen ? 'チェックイン受付を終了' : 'チェックイン受付を開始') + '</button>' : '')
       + (canRec ? '<button data-a="rec" data-id="' + esc(ev.id) + '">受付を開始</button>' : '')
+      + ((canRec || canFinEv(ev)) ? '<button data-a="atts" data-id="' + esc(ev.id) + '">📋 ' + ((ev.unions || []).length > 1 ? '合同出席者' : '出席者') + '</button>' : '')
       + (ev.online && canRec ? '<button data-a="online" data-id="' + esc(ev.id) + '">💻 オンライン<span id="obCt_' + esc(ev.id) + '"></span></button>' : '')
       + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span><span id="rcCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canFinEv(ev) ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
@@ -5256,6 +5258,88 @@ function renderEvents(){
     }
   });
 }
+/* 📋 出席者一覧（イベント全体・全ユニオン）: 終わったイベントも受付を開き直さずに見られる。
+   合同イベントは参加ユニオン別の人数、合同外から来た人はビジターとして別に数える */
+var CK_METHOD_LABEL = { scan: 'QR', manual: '手入力', self: 'セルフ', online: '💻 オンライン', guest: 'ゲスト受付', 'import': '取込' };
+function evAttCat(ev, a){
+  var u = a.union || '';
+  if(!u) return 'ゲスト';
+  return (ev.unions || []).indexOf(u) >= 0 ? u : 'ビジター（' + u + '）';
+}
+function evAttModal(ev){
+  db.collection('checkinEvents').doc(ev.id).collection('attendance').get().then(function(qs){
+    var rows = [];
+    qs.forEach(function(d){
+      var a = d.data();
+      if(a.status === 'pending' || a.status === 'rejected') return;
+      a._id = d.id; rows.push(a);
+    });
+    rows.sort(function(x, y){ return attSortKey(x) - attSortKey(y); });
+    // 受付担当者: 新しい記録は名前を保存済み。古い記録はアカウントから名前を引く（分からなければ空欄）
+    var need = {}, names = {};
+    rows.forEach(function(a){ if(!a.byName && a.by) need[a.by] = 1; });
+    return Promise.all(Object.keys(need).map(function(uid){
+      return db.collection('users').doc(uid).get()
+        .then(function(sn){ if(sn.exists) names[uid] = sn.data().name || ''; })
+        .catch(function(){});
+    })).then(function(){
+      rows.forEach(function(a){ a._by = a.byName || names[a.by] || ''; a._cat = evAttCat(ev, a); });
+      evAttShow(ev, rows);
+    });
+  }).catch(function(e){ toast(permMsg(e, '出席者一覧を見られるのは、参加ユニオンのメンバー・管理者だけです')); });
+}
+function evAttShow(ev, rows){
+  // カテゴリの並び: 参加ユニオン（主催→合同の順）→ ビジター → ゲスト
+  var cats = (ev.unions || []).slice(), cnt = {};
+  rows.forEach(function(a){ cnt[a._cat] = (cnt[a._cat] || 0) + 1; if(cats.indexOf(a._cat) < 0) cats.push(a._cat); });
+  var joint = (ev.unions || []).length > 1;
+  var tally = cats.filter(function(c){ return cnt[c] || (ev.unions || []).indexOf(c) >= 0; }).map(function(c){
+    return '<span class="pill ' + ((ev.unions || []).indexOf(c) >= 0 ? 'g' : 'n') + '" style="margin:2px 4px 2px 0;">'
+      + esc(c) + ' ' + (cnt[c] || 0) + '名</span>';
+  }).join('');
+  modal('<h2>📋 ' + (joint ? '合同出席者' : '出席者') + ' — ' + esc((ev.date || '').slice(5).replace('-', '/')) + ' ' + esc(ev.name || '') + '</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 6px;">'
+    + (joint ? '合同: ' + esc((ev.unions || []).join(' + ')) + '　' : '') + '合計 <b style="color:var(--ink);">' + rows.length + '名</b></p>'
+    + '<div style="margin:0 0 8px;">' + tally + '</div>'
+    + (rows.some(function(a){ return a._cat.indexOf('ビジター') === 0; })
+      ? '<p style="font-size:12px;color:var(--sub);margin:0 0 8px;">ビジター = 合同ユニオンに入っていないユニオンの人（そのユニオンの稼働率には入りません。イベントの編集で合同ユニオンに追加すると入ります）</p>' : '')
+    + '<div style="display:flex;gap:8px;align-items:center;margin:0 0 8px;">'
+    + '<select id="eaSel" style="flex:1;min-width:0;"><option value="">すべて（' + rows.length + '名）</option>'
+    + cats.filter(function(c){ return cnt[c]; }).map(function(c){ return '<option value="' + esc(c) + '">' + esc(c) + '（' + cnt[c] + '名）</option>'; }).join('')
+    + '</select><button id="eaCsv">⬇ CSV</button></div>'
+    + '<div id="eaList" style="max-height:55vh;overflow:auto;"></div>'
+    + '<div class="btns"><button id="eaClose">閉じる</button></div>', true);
+  function cur(){ var v = $('eaSel').value; return rows.filter(function(a){ return !v || a._cat === v; }); }
+  function draw(){
+    var list = cur();
+    $('eaList').innerHTML = list.length ? '<div class="tblwrap"><table><thead><tr><th>時刻</th><th>氏名・系列</th><th>ユニオン</th><th>区分</th><th>受付担当</th></tr></thead><tbody>'
+      + list.map(function(a){
+          var tags = '';
+          if(a.role) tags += '<span class="pill g">' + esc(roleLabel(a.role)) + '</span> ';
+          if(a.guest) tags += '<span class="pill n">ゲスト</span> ';
+          if(a._cat.indexOf('ビジター') === 0) tags += '<span class="pill a">ビジター</span> ';
+          tags += '<span style="font-size:11.5px;color:var(--sub);">' + esc(CK_METHOD_LABEL[a.method] || a.method || '') + '</span>';
+          return '<tr><td class="mono">' + esc(a.atLocal || '') + '</td><td><b>' + esc(a.name || '') + '</b>'
+            + (a.group ? '<div style="font-size:11.5px;color:var(--sub);">' + esc(a.group) + '</div>' : '') + '</td>'
+            + '<td>' + esc(a.union || '') + '</td><td>' + tags + '</td>'
+            + '<td style="font-size:12.5px;">' + esc(a._by) + '</td></tr>';
+        }).join('') + '</tbody></table></div>'
+      : '<p style="color:var(--sub);font-size:13.5px;">まだ出席はありません。</p>';
+  }
+  draw();
+  $('eaSel').onchange = draw;
+  $('eaClose').onclick = closeModal;
+  $('eaCsv').onclick = function(){
+    var out = [['受付時刻', '番号', '氏名', '系列', 'ユニオン', '区分', '役割', '受付方法', '徴収額', '受付担当']];
+    cur().forEach(function(a){
+      var fee = (a.fee || 0) > 0 && a.paid !== false ? (a.fee || 0) - (a.refund || 0) : 0;
+      out.push([a.atLocal || '', a.guest ? '' : (a.no || a._id), a.name || '', a.group || '', a.union || '',
+        a.guest ? 'ゲスト' : (a._cat.indexOf('ビジター') === 0 ? 'ビジター' : '参加'),
+        roleLabel(a.role || ''), CK_METHOD_LABEL[a.method] || a.method || '', fee, a._by]);
+    });
+    csvDownload('出席者_' + (ev.date || '') + '_' + (ev.name || '').replace(/[\\/:*?"<>|\s]/g, '') + ($('eaSel').value ? '_' + $('eaSel').value.replace(/[\\/:*?"<>|\s]/g, '') : '') + '.csv', out);
+  };
+}
 $('evList').addEventListener('click', function(e){
   var b = e.target.closest ? e.target.closest('button') : null;
   if(!b) return;
@@ -5267,6 +5351,7 @@ $('evList').addEventListener('click', function(e){
   if(a === 'imp'){ importModal(ev); }
   if(a === 'online'){ onlineModal(ev); }
   if(a === 'rsvps'){ rsvpListModal(ev); }
+  if(a === 'atts'){ evAttModal(ev); }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
@@ -8170,6 +8255,29 @@ function ckBindPayPick(no, fee){
   $('ppkPp').onclick = function(){ pick(true); };
   ckStageHold();
 }
+// ➕ 受付中の合同イベントに、チェック漏れのユニオンを追加する（主催ユニオンの管理者・受付管理者のみ）。
+// 出席の記録には本人の所属ユニオンが入っているので、追加した時点でそのユニオンの集計・稼働率に入る
+function ckAddJointUnion(un, btn){
+  if(!gRec || !un) return;
+  var ev = gRec.ev, nu = (ev.unions || []).slice();
+  if(nu.indexOf(un) >= 0){ if(btn){ btn.disabled = true; btn.textContent = '✓ 追加済み'; } return; }
+  nu.push(un);
+  if(btn) btn.disabled = true;
+  db.collection('checkinEvents').doc(ev.id).set({ unions: nu }, { merge: true }).then(function(){
+    ev.unions = nu;
+    gEvents.forEach(function(x){ if(x.id === ev.id) x.unions = nu.slice(); });
+    if(gRec.warnedUn) delete gRec.warnedUn[un];
+    if(ev.recClosed) ckRefreshForEvent(ev);
+    renderTallies();
+    renderEvents();   // イベント一覧の「合同:」表示も更新
+    if(btn) btn.textContent = '✓ ' + un + ' を追加しました';
+    toast(un + ' を合同ユニオンに追加しました。' + un + ' の人の出席は ' + un + ' の集計に入ります');
+    focusScan();
+  }).catch(function(e){
+    if(btn) btn.disabled = false;
+    toast(permMsg(e, '合同ユニオンの追加は、主催ユニオンの管理者・受付管理者のみ可能です'));
+  });
+}
 function checkinMember(member, method, role){
   if(!gRec) return;
   // 最終ガード: 無効メンバーはどの経路からでも受付させない
@@ -8225,6 +8333,8 @@ function checkinMember(member, method, role){
   var joint = (gRec.ev.unions || []).length > 1;
   // 登録済みのユニオンの人なのに合同ユニオンに入っていない → そのユニオンの集計に入らないことを知らせる
   var notJoined = isVisitor && member.union && gUnions.indexOf(member.union) >= 0;
+  // 合同イベントなら、主催ユニオンの管理者・受付管理者はその場で合同ユニオンに追加できる
+  var canAddUn = notJoined && joint && canEditUnion(gRec.ev.hostUnion);
   if(notJoined){
     gRec.warnedUn = gRec.warnedUn || {};
     if(!gRec.warnedUn[member.union]){
@@ -8240,7 +8350,10 @@ function checkinMember(member, method, role){
     + ((joint || isVisitor) ? '<div class="hit-union">' + esc(member.union || '') + '</div>' : '')
     + (notJoined ? '<div class="hit-warn">⚠ ' + esc(member.union) + ' はこのイベントの合同ユニオンに入っていません。'
         + 'このままだと ' + esc(member.union) + ' の集計・稼働率に入りません。'
-        + 'イベントの編集で合同ユニオンにチェックを付けてください（受付の後から付けてもOK）</div>' : '')
+        + (canAddUn ? '下のボタンで合同ユニオンに追加できます。'
+          : 'イベントの編集で合同ユニオンにチェックを付けてください（受付の後から付けてもOK）')
+        + (canAddUn ? '<div><button id="stgAddUn" class="primary" style="margin-top:8px;">＋ ' + esc(member.union) + ' を合同ユニオンに追加</button></div>' : '')
+        + '</div>' : '')
     + (member.trainee ? '<div style="margin:4px 0;"><span class="pill n">研修生</span> <span style="font-size:14px;font-weight:700;">チュートリアル ' + trMainProgress(member.trainings) + '/3</span>'
         + (member.dlrRsv && member.dlrRsv.date === todayStr()
           ? ' <span class="pill a">🎫 本日DLR予約 ' + esc(member.dlrRsv.timeFrom || '') + '〜</span>' : '')
@@ -8249,8 +8362,11 @@ function checkinMember(member, method, role){
     + (fee > 0 ? '　<b id="stgFeeTxt">' + (ppRec ? '💳 PayPay ' : (ppPick ? '💴 現金 ' : '')) + yen(fee) + ' 徴収</b>' : '') + '</p>'
     + (ppPick ? ckPayPickHtml() : '')
     + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
-    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''), ppPick);
+    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''), ppPick || canAddUn);
   if(ppPick) ckBindPayPick(no, fee);
+  else if(canAddUn) ckStageHold();
+  var au = $('stgAddUn');
+  if(au) au.onclick = function(){ ckAddJointUnion(member.union, au); };
   var su = $('stgUnpaid');
   if(su) su.onclick = function(){
     setPay(no, { paid: false });
@@ -8363,6 +8479,7 @@ function writeAttendance(id, data){
   data.atLocal = nowHM();
   data.atMs = Date.now();
   data.by = gUser.uid;
+  if(gProf && gProf.name) data.byName = gProf.name;   // 📋 出席者一覧の「受付担当」表示用
   // 楽観表示: 書込はバックグラウンド（オフライン時は自動キューイング）
   gRec.att[id] = data; renderTallies();
   db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(id)
