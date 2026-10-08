@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v740';
+var APP_JS_VERSION = 'v741';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v740';
+  var DATA_VERSION = 'v741';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v741', d:'2026-10-09', items:['分析 › パワーライン：月はじめ（今月のポイントがまだ少ない時）に「0本」になって、先月までのパワーラインが見えなかったのを直しました','月ごとに見られるように（上の 10月・9月・8月…を押す。それぞれの月のMAPから出します）。今月がまだ0本の時は、いちばん新しい月を出します','前の月との差（▲▼）と「表で見る」も、それぞれの月のMAPの数字に'] },
   { v:'v740', d:'2026-10-09', items:['やること：数値の目標（📊）にも「＋ サブタスク」','名前を押して直す時は、名前の欄が行そのものに（名前は1つだけ）。下に だれの・期限・月（数値は 今・目標・単位）をラベル付きで。「完了」で閉じる','消すのはToDoと同じ：左にスワイプ → 🗑 消す（右にスワイプで済み）。消した後は「↩ 元に戻す」'] },
   { v:'v739', d:'2026-10-09', items:['計画シートの実行期日（予定に入れる）：時間を予定と同じ「開始〜終了」の数字パッドで入れられるように（1900 と打つと 19:00〜20:00、続けて終了も打てます）'] },
   { v:'v738', d:'2026-10-09', items:['PLAN › チェック：項目をユニオンごとに管理者が設定できるように（チェックの画面のいちばん下「⚙ ユニオンのチェック項目を設定」）','項目の追加・名前の変更・並べかえ・外す・標準に戻すができ、保存するとユニオンの全員に反映','今までのチェックと日付はそのまま残ります'] },
@@ -11957,6 +11958,7 @@ function _dtHistLoad() {
         var curMs = ms.filter(function(m) { return !m.deleted && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType); });
         ent.auto = _dtAutoCounts(ms, curMs, mon);
         try { ent.ez = _dtEzCalc(curMs, mon); } catch (eEz) {} // v582: ざっくりの数字（その月のMAPから）
+        ent.plMs = curMs; // v741: パワーラインもその月のMAPから
       }
       var st = r[1] && r[1].stats;
       ((st && st.monthly) || []).forEach(function(row) {
@@ -12938,20 +12940,48 @@ function _dtTrRender() {
 // ── パワーライン（v523: フロントの系列ごと。詳細でその系列の5,000P以上のメンバー） ──
 var _dtPlOpen = '';
 function dtPlTgl(id) { _dtPlOpen = (_dtPlOpen === id) ? '' : id; renderDtPl(); }
+// v741: パワーラインは「月ごと」に、その月のMAP（保存データ）から出す。
+//   今までは表示中の月のMAPだけで計算していたので、月はじめ（今月のポイントがまだ少ない時）は 0本 になり、
+//   先月まであったパワーラインが見えなかった
+var _dtPlMon = ''; // 選んでいる月（'' ＝ 自動：今月に無ければいちばん新しい月）
+function dtPlMon(m) { _dtPlMon = m; _dtPlOpen = ''; renderDtPl(); }
+function _dtPlCalc(ms) {
+  ms = (ms || []).filter(function(m) { return m && !m.deleted; });
+  var lt = ltsvMap(ms), root = ms.filter(function(m) { return !m.parentId; })[0], kids = {};
+  ms.forEach(function(m) { (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  var lines = root ? (kids[root.id] || []).filter(function(f) { return (lt[f.id] || 0) >= 5000; }).sort(function(a, b) { return lt[b.id] - lt[a.id]; }) : [];
+  var byNm = {}; ms.forEach(function(m) { if (m.parentId) byNm[(m.lastName || '') + (m.firstName || '')] = lt[m.id] || 0; });
+  return { ms: ms, lt: lt, kids: kids, lines: lines, byNm: byNm };
+}
+function _dtPlMonths() { // [{ mon, P }] 新しい月から（今月＋読み込めた過去の月）
+  var cur = state.currentMonth || currentMonthStr(), out = [{ mon: cur, P: _dtPlCalc(membersForMap('current')) }];
+  var H = _dtHist && _dtHist.mon;
+  for (var i = 1; i <= 11; i++) { var mon = addMonths(cur, -i), e = H && H[mon]; if (e && e.plMs && e.plMs.length) out.push({ mon: mon, P: _dtPlCalc(e.plMs) }); }
+  return out;
+}
 function renderDtPl() {
   var box = document.getElementById('dtPl'); if (!box) return;
-  var ms = membersForMap('current').filter(function(m) { return !m.deleted; });
-  var lt = ltsvMap(ms);
-  var root = ms.filter(function(m) { return !m.parentId; })[0];
-  var kids = {}; ms.forEach(function(m) { (kids[m.parentId || ''] || (kids[m.parentId || ''] = [])).push(m); });
+  try { _dtHistLoad(); } catch (eH) {}
+  var MS = _dtPlMonths(), sel = null, auto = false;
+  if (_dtPlMon) sel = MS.filter(function(x) { return x.mon === _dtPlMon; })[0];
+  if (!sel) { sel = MS[0]; if (!sel.P.lines.length) { var f9 = MS.filter(function(x) { return x.P.lines.length; })[0]; if (f9) { sel = f9; auto = true; } } }
+  var si = MS.indexOf(sel), prevE = null, pm = addMonths(sel.mon, -1);
+  MS.forEach(function(x) { if (x.mon === pm) prevE = x; });
+  var ms = sel.P.ms, lt = sel.P.lt, kids = sel.P.kids, lines = sel.P.lines;
   var hist = {}; ((state.stats && state.stats.powerline) || []).forEach(function(r) { var v = (r.vals || []).slice(-12); while (v.length < 12) v.unshift(''); hist[r.name] = v; });
   var nm = function(m) { return (m.lastName || '') + (m.firstName || ''); };
-  var prevOf = function(m) { var v = hist[nm(m)]; var p = v ? v[10] : ''; return (p === '' || p === null || p === undefined) ? null : Number(p); };
-  var lines = root ? (kids[root.id] || []).filter(function(f) { return (lt[f.id] || 0) >= 5000; }).sort(function(a, b) { return lt[b.id] - lt[a.id]; }) : [];
+  var prevOf = function(m) {
+    if (prevE) { var pv = prevE.P.byNm[nm(m)]; return pv === undefined ? null : pv; }
+    if (si !== 0) return null;
+    var v = hist[nm(m)]; var p = v ? v[10] : ''; return (p === '' || p === null || p === undefined) ? null : Number(p);
+  };
   var mx = lines.length ? lt[lines[0].id] : 1, sum = lines.reduce(function(s9, f) { return s9 + lt[f.id]; }, 0);
   var dlt = function(cur, prev) { if (prev === null) return ''; var d = cur - prev; return d ? '<small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.abs(d).toLocaleString() + '</small>' : ''; };
-  var h = '<div class="dt-card"><div class="dt-ch">' + icn('zap') + ' パワーライン<span style="color:var(--text-dim)">LTSV 5,000P以上の系列 ' + lines.length + '本・合計 ' + sum.toLocaleString() + '</span></div>';
-  if (!lines.length) h += '<div class="ev-empty" style="padding:16px">LTSV 5,000P以上の系列はまだありません</div>';
+  var mLb = function(mon) { return parseInt(mon.slice(5), 10) + '月'; };
+  var h = (MS.length > 1 ? '<div class="dt-plm">' + MS.map(function(x, i) { return '<span class="' + (x === sel ? 'on' : '') + '" onclick="dtPlMon(\'' + x.mon + '\')">' + mLb(x.mon) + (i === 0 ? '（今月）' : '') + '<b>' + x.P.lines.length + '本</b></span>'; }).join('') + '</div>' : '')
+    + '<div class="dt-card"><div class="dt-ch">' + icn('zap') + ' パワーライン<span style="color:var(--text-dim)">LTSV 5,000P以上の系列 ' + lines.length + '本・合計 ' + sum.toLocaleString() + '</span></div>';
+  if (auto) h += '<div class="dt-plnt">今月はまだ 5,000P以上の系列がないので、' + mLb(sel.mon) + 'を出しています（ポイントが入ると今月に切りかわります）</div>';
+  if (!lines.length) h += '<div class="ev-empty" style="padding:16px">' + (si ? mLb(sel.mon) + 'は' : '') + 'LTSV 5,000P以上の系列はまだありません</div>';
   var medal = ['#FFD166', '#C0C7D2', '#E0A36B'];
   lines.forEach(function(f, i) {
     // 系列内（フロント本人を含む）で LTSV 5,000P以上のメンバー（上下関係が分かる順に）
@@ -13321,6 +13351,21 @@ function renderStats() {
     }
   });
   s.powerline = plStats;
+  // v741: 過去の月は、その月のMAP（保存データ）のLTSVで埋める。表に出すのは、どれかの月でフロントの系列が5,000P以上だった人
+  try {
+    _dtPlMonths().forEach(function(x, xi) {
+      if (!xi) return;
+      var col = 11 - xi;
+      x.P.lines.forEach(function(f) { _frontNm9[(f.lastName || '') + (f.firstName || '')] = 1; });
+      Object.keys(x.P.byNm).forEach(function(nm9) {
+        var v9 = x.P.byNm[nm9]; if (!(v9 >= 5000)) return;
+        var row = null; for (var pj = 0; pj < plStats.length; pj++) if (plStats[pj].name === nm9) { row = plStats[pj]; break; }
+        if (!row) { row = { name: nm9, vals: [] }; plStats.push(row); }
+        row.vals = row.vals || []; while (row.vals.length < 12) row.vals.unshift('');
+        row.vals[col] = v9;
+      });
+    });
+  } catch (ePl9) {}
   var plShow = plStats.filter(function(row){ return _frontNm9[row.name]; }); // v523: 表もフロントの系列だけ
 
   // 履歴が最新月しか無いうちは「-」だらけの12列を出さず、ランキング形式で表示（前月比つき）
