@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v725';
+var APP_JS_VERSION = 'v726';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v725';
+  var DATA_VERSION = 'v726';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5395,6 +5395,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v726', d:'2026-10-08', items:['メンバーに「🔒 自分だけのメモ」：共有しているMAPでも、共有元・共有先の人には見えないメモが書けます（MAPで人を押した画面・メンバー編集・かんたん編集のメモ）','今までの「メモ」は、MAPを共有している人にも見えることを書き添えました'] },
   { v:'v725', d:'2026-10-08', items:['バグ・要望（管理者）：「📋 Claude用にコピー」をどのタブ（新着など）でも使えるように。「ぜんぶ選ぶ」も','1件ずつは、報告を開いた画面の「📋 Claude用にコピー」から（やりとりも入る）。新着・改修するはコピーすると「対応中」に','一覧で書いた人・日時の行が縦に崩れていたのを直しました'] },
   { v:'v724', d:'2026-10-08', items:['年の目標・ロードマップの⑤を「戦略・戦術」に作り直し：戦略の下に戦術、戦術の下にタスクを、思いつくまま何個でも書けます（字と枠を大きく）','行を押すと、期日（毎週・毎月も）・対象者（名前で探す・何人でも）・数値を入れられます','あとから「→ 入れる先」で、やること（数値があれば数値の目標）・計画シートの行動（4分野）・予定・メンバーのメモに。入れた先は札で出て、タスクのチェックは入れた先にもつながります'] },
   { v:'v723', d:'2026-10-08', items:['計画シートの行動：実行期日をタップしても入力できなかったのを直しました（空いた行でも先に日付を選べる・名前を書いてすぐ日付を押しても選べる）'] },
@@ -14605,6 +14606,7 @@ function openEdit(id) {
     set('fPtC', m.ptCurrent);
     set('fPtF', m.ptFixed);
     set('fMemo', m.memo);
+    try { _pmCss(); var pmw = document.getElementById('fPMemoWrap'); if (pmw) pmw.innerHTML = _pmBox(m.id, 'ed'); } catch (ePm) {} // v726
     set('fNextDate', m.nextDate);
     set('fASan', m.aSan);
     set('fInsta', m.instaUrl);
@@ -17787,7 +17789,8 @@ function _ppPage(m, pg) {
       + '<div class="ppl">点滅表示（PCの組織図で目立たせる）</div><div class="ppb sm" style="--n:3">' + [['', '自動'], ['on', '表示'], ['off', '非表示']].map(function(x) { return '<span class="' + (bm === x[0] ? 'on' : '') + '" onclick="ppBadge(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>'
       + (rsOk ? '<div class="ppl">リスタート表示（BRから降格した人）</div>' + (m.rollup && m.rollup.at ? '<div class="ux-hint">🔄 ' + evEsc(String(m.rollup.at)) + ' 開始・' + _restartMonths(m) + 'ヶ月目</div><span class="ux-lk" onclick="memberRestartClear(\'' + m.id + '\');_ppRender()">解除する</span>' : '<span class="ux-lk" onclick="memberRestartSet(\'' + m.id + '\');_ppRender()">＋ リスタート表示を設定</span>') : '');
   } else if (pg === 'memo') {
-    h = '<h2 class="ux-h2">メモ</h2><div class="ux-sub">予定・心境・気づいたこと。書くと自動で保存</div><textarea class="ppmemo" placeholder="ここに書く" oninput="ppMemo(this.value)">' + evEsc(m.memo || '') + '</textarea><div class="ux-sub" id="ppMemoSv" style="text-align:right">' + (m.memo ? '保存ずみ' : '') + '</div>';
+    h = '<h2 class="ux-h2">メモ</h2><div class="ux-sub">予定・心境・気づいたこと。書くと自動で保存（MAPを共有している人にも見えます）</div><textarea class="ppmemo" placeholder="ここに書く" oninput="ppMemo(this.value)">' + evEsc(m.memo || '') + '</textarea><div class="ux-sub" id="ppMemoSv" style="text-align:right">' + (m.memo ? '保存ずみ' : '') + '</div>';
+    _pmCss(); h += _pmBox(m.id, 'pp'); // v726
   } else if (pg === 'prof') {
     var rg = (m.region || '').trim(), regs = REGION_PRESETS.slice(); if (rg && regs.indexOf(rg) < 0) regs.push(rg);
     var sm = String(m.startMonth || memberStartMonth(m) || '').replace('.', '-');
@@ -20575,6 +20578,43 @@ var UX_MEM_CTX = {
   near: { lb: 'あと一歩でS' },
   map: { lb: 'MAP' } // v607
 };
+// ════ v726: 🔒 自分だけのメモ（#4）。共有したMAPでも、共有元・共有先には見えない ════
+// users/{自分}/appData/pmemo_{MAPの持ち主} = { notes: {メンバーid: 文} }（本人だけ読み書き：firestore.rules の appData）
+var _pmC = {}, _pmT = null;
+function _pmOwner() { return viewingOwnerUid || (currentUser && currentUser.uid) || ''; }
+function _pmK(o) { return ((currentUser && currentUser.uid) || '') + '>' + o; } // 端末で別の人がログインしても混ざらない
+function _pmPath(o) { return 'users/' + currentUser.uid + '/appData/pmemo_' + o; }
+function _pmLoad(cb) {
+  var o = _pmOwner(); if (!o || !currentUser) return;
+  var c = _pmC[_pmK(o)] = _pmC[_pmK(o)] || { notes: {} };
+  if (c.ok) { if (cb) cb(); return; }
+  fsGet(_pmPath(o)).then(function(d) { c.notes = Object.assign((d && d.notes) || {}, c.notes); c.ok = 1; if (cb) cb(); }).catch(function() { c.ok = 1; if (cb) cb(); });
+}
+function _pmGet(mid) { var c = _pmC[_pmK(_pmOwner())]; return (c && c.notes[mid]) || ''; }
+function pmInput(mid, v, svId) {
+  var o = _pmOwner(); if (!o || !currentUser || !mid) return;
+  var c = _pmC[_pmK(o)] = _pmC[_pmK(o)] || { notes: {} }; v = String(v || '');
+  if (v.trim()) c.notes[mid] = v.slice(0, 3000); else delete c.notes[mid];
+  clearTimeout(_pmT);
+  _pmT = setTimeout(function() {
+    var p = db ? db.doc(_pmPath(o)).set({ notes: c.notes, at: new Date().toISOString() }) : Promise.resolve();
+    p.then(function() { var s = svId && document.getElementById(svId); if (s) s.textContent = '🔒 保存しました（自分だけ）'; }).catch(function() { toast('自分だけのメモを保存できませんでした'); });
+  }, 700);
+}
+function _pmFill(id, mid) { _pmLoad(function() { var el = document.getElementById(id); if (el && document.activeElement !== el) el.value = _pmGet(mid); }); }
+function _pmBox(mid, cls) { // 自分だけのメモの欄（どの画面でも同じ）
+  setTimeout(function() { _pmFill('pmIn_' + cls, mid); }, 0);
+  return '<div class="pm-box ' + cls + '"><div class="pm-h">🔒 自分だけのメモ<small>' + (viewingOwnerUid ? '共有元の人には見えません' : 'MAPを共有した人にも見えません') + '</small></div>'
+    + '<textarea id="pmIn_' + cls + '" class="pm-ta" placeholder="自分だけが見られるメモ" oninput="pmInput(\'' + mid + '\',this.value,\'pmSv_' + cls + '\')">' + evEsc(_pmGet(mid)) + '</textarea><div class="pm-sv" id="pmSv_' + cls + '"></div></div>';
+}
+function _pmCss() {
+  if (document.getElementById('pmCss')) return;
+  var st = document.createElement('style'); st.id = 'pmCss';
+  st.textContent = '.pm-box{margin-top:12px;padding:10px 12px;border-radius:12px;border:1px dashed color-mix(in srgb,var(--gold) 55%,var(--border));background:color-mix(in srgb,var(--gold) 6%,transparent)}.pm-h{font-size:13px;font-weight:900;color:var(--gold);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.pm-h small{font-size:11.5px;font-weight:700;color:var(--text-dim)}'
+    + '.pm-ta{width:100%;box-sizing:border-box;min-height:84px;margin-top:6px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:600 16px/1.55 inherit;font-family:inherit;padding:9px 11px;resize:vertical}.pm-ta:focus{outline:none;border-color:var(--gold)}.pm-sv{font-size:11.5px;color:var(--text-dim);font-weight:700;margin-top:4px;min-height:14px}'
+    + '.pm-shared{font-size:11.5px;font-weight:700;color:var(--text-dim);margin-top:4px}';
+  document.head.appendChild(st);
+}
 function uxMem(id, list) {
   _ux2Css();
   _uxMemSt = { id: id, list: list || '' };
@@ -20617,7 +20657,7 @@ function _uxMemRender() {
     + '<div><div class="ux-say">' + say + '</div>'
     + '<div class="ux-acts"><span class="p" onclick="uxMemTask(\'' + m.id + '\',\'task\')">＋ タスクにする</span><span onclick="uxMemTask(\'' + m.id + '\',\'event\')">' + icn('calendar') + ' 予定を入れる</span></div>'
     + (ctxK === 'map' && state.isEditor ? '<div class="ux-acts" style="grid-template-columns:1fr;margin-top:8px"><span onclick="uxMemClose();fabSelectParent(\'' + m.id + '\')">＋ この人の下に追加</span></div>' : '')
-    + (ctxK === 'map' ? '<div class="mxinfo" style="margin-top:12px">' + memberInfoHtml(m) + '</div>' : '')
+    + (ctxK === 'map' ? '<div class="mxinfo" style="margin-top:12px">' + memberInfoHtml(m) + '</div>' + (currentUser ? (_pmCss(), _pmBox(m.id, 'ux')) : '') : '')
     + (ctxK !== 'map' && state.isEditor && !viewingOwnerUid ? '<span class="ux-lk" onclick="uxMemClose();openEdit(\'' + m.id + '\')">' + icn('pencil') + ' メンバー情報を編集</span>' : '')
     + (ids.length > 1 ? '<div class="ux-pgr"><span class="' + (i > 0 ? '' : 'off') + '" onclick="uxMemGo(-1)">‹</span>' + (i + 1) + ' / ' + ids.length + '<span class="' + (i < ids.length - 1 ? '' : 'off') + '" onclick="uxMemGo(1)">›</span></div>' : '')
     + '</div></div>';
