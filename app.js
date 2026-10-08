@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v704';
+var APP_JS_VERSION = 'v705';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3890,7 +3890,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v704';
+  var DATA_VERSION = 'v705';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5377,6 +5377,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v705', d:'2026-10-08', items:['PC：左上の屋号・名前の表示をなくしました（左下のプロフィールと同じだったため）'] },
   { v:'v704', d:'2026-10-08', items:['🎰 シミュレーションのファーストボーナスは「押して見る」で表示：数字がスロットみたいにぐるぐる回って、右の桁から順に止まります（金額を押すともう一度回せます）','数字を変えたら、新しい金額でまた回って止まります'] },
   { v:'v703', d:'2026-10-08', items:['計画シートの上（目標まわり）をすっきり：紙の下線の行をやめて、見出し1行と「年の目標 › マイルストーン › 今月の目標 › 今月の数字」のカード1列に。MAPと下の欄が広くなりました','今月の月収・NEWフロントはカードの中でそのまま書けます。年の目標・マイルストーンのカードを押すとロードマップへ'] },
   { v:'v702', d:'2026-10-08', pop: { t: 'BRになる月が「Q4の翌月」になりました', items: ['週ごとの昇格（Q4の月の7・14・21日締め）はなくなり、LOI → Q2 → Q3 → Q4 → BR の流れになりました', 'Q4の月末で、その月1,000P・累計5,000Pを満たしていれば、翌月からBRです', 'シミュレーション・目標（BRの月・最短の月）・ギャップの月数を新しい流れに合わせました'], go: ['シミュレーションを見る', "switchView('plan');p2Go('sim')"] }, items:['BRの判定を新しいルールに：週ごとの昇格はなく、Q4の月末で今月1,000P・累計5,000Pなら翌月BR（LOI→Q2→Q3→Q4→BR）','PLANの「BRまでの道のり」：最短のBRは今月LOIから4ヶ月後（Q4の翌月）。Q4の人は「◯月末までにあと◯P → ◯月からBR」','シミュレーションを5ヶ月（LOI・Q2・Q3・Q4・BR）に。フロントはQ2・Q3、ファーストボーナスはBRになった月のGSVで計算','目標ファーストボーナスの表・ギャップの「BRまで」・目標の「LOI→BRまでの月数」を4ヶ月に（3ヶ月のままだった人は自動で4ヶ月に）'] },
@@ -36892,6 +36893,7 @@ function _px3Css() {
   st.textContent =
     // 左メニュー（幅220・文字つき）
     "body.px3{padding-left:220px!important}"
+    + "body.px3 header .hdr-top>div:first-child{display:none!important}" // v705: 屋号・名前は左下のプロフィールと同じなので上には出さない
     + "body.px3 #evCalendar.full,body.px3 #evDayV.full,body.px3 #evWeek.full,body.px3 #evAgenda.full{left:220px}"
     + "body.px3 .pc-sidebar{width:220px;align-items:stretch;padding:16px 12px 14px;gap:2px;background:color-mix(in srgb,var(--bg) 82%,#000);overflow-y:auto}"
     + "body.px3 .pcs-item{flex-direction:row;width:auto;height:40px;padding:0 10px;gap:12px;justify-content:flex-start;border-radius:10px;flex:none}"
