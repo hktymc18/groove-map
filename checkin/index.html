@@ -85,6 +85,10 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hit-group{font-size:18px;font-weight:700;}
 .hit-union{font-size:14px;color:var(--sub);font-weight:700;}
 .hit-meta{color:var(--sub);font-size:13.5px;margin-top:8px;}
+.paypick{display:flex;gap:10px;justify-content:center;margin-top:10px;}
+.paypick button{flex:1;max-width:240px;padding:14px 8px;white-space:nowrap;font-size:17px;font-weight:900;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);}
+.paypick button.on{border-color:var(--green);background:var(--green);color:#fff;}
+.paypick #ppkPp.on{border-color:#e60033;background:#e60033;}
 /* 📝 目標設定の宿題 */
 .hw-box{border:2px solid #e8c23a;border-radius:12px;padding:12px 14px;margin-top:10px;background:var(--card);}
 .hw-hd{font-weight:900;font-size:15px;display:flex;align-items:center;gap:8px;}
@@ -1296,8 +1300,10 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v35';
+var APP_VER = 'v37';
 var CHANGELOG = [
+  { v: 'v37', d: '2026/10/09', items: ['💴💳 イベントの「支払い方法」に「現金とPayPayの両方」を追加。受付のたびに画面の「💴 現金で受領」「📱 PayPayで受領」をワンタップで選べます（何もしなければ現金）。受付画面にはPayPayの送金QRも表示', '会計: 現金計・PayPay計を分けて表示。PayPay分は納金票に「現金外」として別記'] },
+  { v: 'v36', d: '2026/10/09', items: ['集計タブが「集計中…」のまま表示されないことがあった問題を修正（他のユニオンのイベントがある月に起きていました）'] },
   { v: 'v35', d: '2026/10/08', items: ['領収書: ユニオン設定で「住所」「電話番号」「インボイス登録番号」を任意で設定できるように（入れた項目だけ載ります）。登録番号がある時は「10%対象・うち消費税」も表示', '会場で受け取った領収書に「現金受領／PayPay受領」を表示'] },
   { v: 'v34', d: '2026/10/07', items: ['会計タブ・会計の入力は、ユニオン管理者・受付管理者・オーナーだけになりました（一般メンバーには表示されません。受付は今までどおりできます）', '🔗 兼務のユニオン管理者: 複数のユニオンを管理する人を、オーナーが「👥 管理者一覧」から指定できるようになりました。指定された人は、そのユニオンでもユニオン管理者として扱われます'] },
   { v: 'v33', d: '2026/10/07', items: ['NAVIGATORや別の受付のタブを開いていると、名簿タブの「受付管理者」「研修生登録の担当」「管理者一覧」などが開くまで1分ほどかかることがあった問題を修正'] },
@@ -5198,6 +5204,7 @@ function renderEvents(){
       + '<b>' + esc(ev.name || '') + '</b>'
       + (ev.speaker ? '<span style="color:var(--sub);font-size:13px;">🎤 ' + esc(ev.speaker) + '</span>' : '')
       + (ev.payMode === 'paypay' ? '<span class="jointtag">💳 PayPay集金</span>' : '')
+      + (ev.payMode === 'both' ? '<span class="jointtag">💴💳 現金・PayPay</span>' : '')
       + (isSelf ? '<span class="jointtag" style="background:var(--green-soft);color:var(--green);">' + esc(ev.hostLabel || 'CLAVIS') + '主催・セルフ</span>' : '')
       + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
@@ -5469,7 +5476,8 @@ function eventForm(ev){
   var isNew = !ev;
   var host = isNew ? gEventUnion : (ev.hostUnion || gEventUnion);
   // 💳/🎟 は機能スイッチで表示制御。ただし既にONで保存済みのイベントはOFFに戻せるよう表示する
-  var showPay = FEATURE_PAYPAY || !!(ev && ev.payMode === 'paypay');
+  var showPay = FEATURE_PAYPAY || !!(ev && (ev.payMode === 'paypay' || ev.payMode === 'both'));
+  var curPay = (ev && ev.payMode) || '';
   var showRsvp = RSVP_UNIONS.indexOf(host) >= 0 || !!(ev && ev.rsvp);
   var evUnions = (ev && ev.unions) || [];
   var others = gUnions.filter(function(u){ return u !== host; });
@@ -5502,8 +5510,13 @@ function eventForm(ev){
     + '<input type="text" id="evFee3" inputmode="numeric" value="' + esc(ev && ev.fee3 != null && ev.fee3 !== '' ? ev.fee3 : '') + '" placeholder="3部制のときだけ"></div>'
     + '</div>'
     + (showPay
-      ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evPayMode"' + (ev && ev.payMode === 'paypay' ? ' checked' : '') + '>'
-        + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayで集金する（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
+      ? '<label style="margin-top:10px;">支払い方法</label>'
+        + '<div class="chkrow"><input type="radio" name="evPay" id="evPayCash"' + (curPay !== 'paypay' && curPay !== 'both' ? ' checked' : '') + '>'
+        + '<label for="evPayCash" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💴 現金のみ</label></div>'
+        + '<div class="chkrow"><input type="radio" name="evPay" id="evPayMode"' + (curPay === 'paypay' ? ' checked' : '') + '>'
+        + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayのみ（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
+        + '<div class="chkrow"><input type="radio" name="evPay" id="evPayBoth"' + (curPay === 'both' ? ' checked' : '') + '>'
+        + '<label for="evPayBoth" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💴💳 現金とPayPayの両方（受付のたびに「現金」「PayPay」をワンタップで選ぶ）</label></div>'
       : '')
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evOnline"' + (ev && ev.online ? ' checked' : '') + '>'
     + '<label for="evOnline" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">オンライン受講を受け付ける（会員証から申請→承認でZoom URL自動表示）</label></div>'
@@ -5574,7 +5587,7 @@ function eventForm(ev){
       fee1: (function(){ var n = parseInt($('evFee1').value, 10); return isNaN(n) ? 1000 : n; })(),
       fee2: (function(){ var n = parseInt($('evFee2').value, 10); return isNaN(n) ? 500 : n; })(),
       fee3: (function(){ var n = parseInt($('evFee3').value, 10); return isNaN(n) ? '' : n; })(),
-      payMode: $('evPayMode') ? ($('evPayMode').checked ? 'paypay' : '') : ((ev && ev.payMode) || ''),
+      payMode: $('evPayMode') ? ($('evPayMode').checked ? 'paypay' : ($('evPayBoth') && $('evPayBoth').checked ? 'both' : '')) : ((ev && ev.payMode) || ''),
       rsvp: $('evRsvp') ? $('evRsvp').checked : !!(ev && ev.rsvp),
       rsvpDays: (function(){
         if(!$('evRsvpDays')) return (ev && ev.rsvpDays != null) ? ev.rsvpDays : 4;
@@ -6927,7 +6940,7 @@ function printCashSlip(ev, f, live){
         + item('収入計', yen(f.incomeTotal != null ? f.incomeTotal : incSum), true)
       : '')
     + line('現金徴収' + (ppMode ? '（例外分）' : ''), yen(cash) + '（' + live.cashN + '名' + (live.refN ? '・返金' + live.refN + '件' : '') + '）')
-    + (pp ? line(ppMode ? 'PayPay徴収（現金外）' : 'PayPay徴収（参考・現金外）', yen(pp)) : '')
+    + (pp ? line((ppMode || ev.payMode === 'both') ? 'PayPay徴収（現金外）' : 'PayPay徴収（参考・現金外）', yen(pp)) : '')
     + '<div class="cs-sec">支出の明細' + (ppMode ? '（預り金から支出・現金差引なし）' : '') + '</div>'
     + (expRows || item('支出なし', '¥0'))
     + item('支出計', (expOnly + shortage) ? '−' + yen(expOnly + shortage) : '¥0', true)
@@ -7030,6 +7043,10 @@ function financeModal(ev){
         + '現金計 <b class="mono">' + yen(dCash) + '</b>　PayPay計 <b class="mono">' + yen(dPp) + '</b>'
         + (dUnpaid ? '　<span style="color:var(--accent);">未徴収 ' + yen(dUnpaid) + '</span>' : '')
         + '</div>'
+        + (!ppMode && dPp
+          ? '<p style="font-size:12px;color:var(--sub);margin:0 0 4px;text-align:right;">収入のBA人数は<b>現金で受け取った人</b>の数です（封筒に入る現金）。'
+            + 'PayPay分（' + yen(dPp) + '）は現金外として納金票に別記されます</p>'
+          : '')
       : '';
     var f = snap.exists ? snap.data() : {};
     // 保存済みの収入行があっても人数が全て空/0なら、受付の徴収データからの自動集計を優先する
@@ -7111,6 +7128,7 @@ function financeModal(ev){
       '<h2>会計 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '</h2>'
       + '<p style="font-size:12px;color:var(--sub);margin:0 0 8px;">'
       + (ppMode ? '<span class="pill a">💳 PayPay集金</span>　' : '')
+      + (ev.payMode === 'both' ? '<span class="pill a">💴💳 現金・PayPay</span>　' : '')
       + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label style="color:var(--green);margin:0;">収入（＋）</label>'
       + (!f.locked && (c1000 || c500 || c3) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
@@ -7501,7 +7519,7 @@ function loadFinanceTab(){
         html += '<div class="evrow" data-id="' + esc(ev.id) + '" style="cursor:pointer;">'
           + '<span class="d mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '</span>'
           + '<b>' + esc(ev.name || '') + '</b>'
-          + (ev.payMode === 'paypay' ? '<span class="jointtag">💳</span>' : '')
+          + (ev.payMode === 'paypay' ? '<span class="jointtag">💳</span>' : (ev.payMode === 'both' ? '<span class="jointtag">💴💳</span>' : ''))
           + (ev.online ? '<span class="jointtag">💻</span>' : '')
           + '<span style="flex:1"></span>' + cells + st + '</div>';
       });
@@ -7620,6 +7638,7 @@ function startReception(ev){
            feeMode: ($('feeModeSel') ? $('feeModeSel').value : 'normal'), part: 1,
            issuer: '',
            payMode: ev.payMode === 'paypay',        // 💳 現金なし・PayPay集金イベント
+           payBoth: ev.payMode === 'both',          // 💴💳 現金とPayPayの両方（受付ごとにワンタップで選ぶ・既定は現金）
            payLink: ev.onlinePayLink || '' };
   // 受付を開き直したら締め切りを解除（オンライン申請を再開）
   if(ev.recClosed){
@@ -7698,10 +7717,10 @@ function renderFeeRow(){
   if(!gRec) return;
   var moneyIcon = gRec.payMode ? '💳' : '💰';
   if(gRec.feeMode === 'venue'){
-    $('feeInfo').textContent = moneyIcon + ' 会場代のみ受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
+    $('feeInfo').textContent = moneyIcon + ' 会場代のみ受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : (gRec.payBoth ? '（現金・PayPay）' : ''));
     $('btnPartToggle').classList.add('hide');
   } else {
-    $('feeInfo').textContent = moneyIcon + ' 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : '');
+    $('feeInfo').textContent = moneyIcon + ' 第' + gRec.part + '部受付中 — 新規 ' + yen(currentFee()) + (gRec.payMode ? '（PayPay集金）' : (gRec.payBoth ? '（現金・PayPay）' : ''));
     var b = $('btnPartToggle');
     b.classList.remove('hide');
     var f3 = evFee3(gRec.ev);   // 第3部設定ありなら 1→2→3→1 のサイクル切替
@@ -7717,7 +7736,7 @@ function renderFeeRow(){
 function renderPpPanel(){
   var pnl = $('ppPanel');
   if(!pnl) return;
-  if(!gRec || !gRec.payMode){ pnl.classList.add('hide'); return; }
+  if(!gRec || !(gRec.payMode || gRec.payBoth)){ pnl.classList.add('hide'); return; }
   pnl.classList.remove('hide');
   var fee = currentFee();
   if(gRec.payLink){
@@ -8126,6 +8145,31 @@ function roleShort(r){
     : r === 'staff' ? '受付' : r === 'unionadmin' ? '管理' : '';
 }
 // 名簿メンバーの受付（スキャン/手入力/名前検索/登壇者登録の共通処理）
+// 💴💳 支払い方法「両方」のイベント: 受付直後の画面で「現金／PayPay」をワンタップで選ぶ
+// （既定は現金。押し直せば何度でも切り替え可。選んでいる間は画面を15秒表示）
+function ckPayPickHtml(){
+  return '<div class="paypick"><button id="ppkCash" class="on">💴 現金で受領</button>'
+    + '<button id="ppkPp">📱 PayPayで受領</button></div>';
+}
+function ckStageHold(){
+  if($('stgRcpt')) return;   // 領収書QRボタンがある画面（ゲスト）は従来どおり表示したまま
+  if(stageTimer) clearTimeout(stageTimer);
+  stageTimer = setTimeout(stageIdle, 15000);
+}
+function ckBindPayPick(no, fee){
+  function pick(pp){
+    var a = gRec && gRec.att[no];
+    if(a && (a.payMethod === 'paypay') !== pp) setPay(no, { payMethod: pp ? 'paypay' : '' });
+    $('ppkCash').classList.toggle('on', !pp);
+    $('ppkPp').classList.toggle('on', pp);
+    var t = $('stgFeeTxt');
+    if(t) t.textContent = (pp ? '📱 PayPay ' : '💴 現金 ') + yen(fee) + ' 徴収';
+    ckStageHold(); focusScan();
+  }
+  $('ppkCash').onclick = function(){ pick(false); };
+  $('ppkPp').onclick = function(){ pick(true); };
+  ckStageHold();
+}
 function checkinMember(member, method, role){
   if(!gRec) return;
   // 最終ガード: 無効メンバーはどの経路からでも受付させない
@@ -8176,6 +8220,7 @@ function checkinMember(member, method, role){
   if(role) data.role = role;
   var ppRec = fee > 0 && gRec.payMode;   // 💳 PayPay集金イベント: 徴収はPayPay受領として記録
   if(ppRec) data.payMethod = 'paypay';
+  var ppPick = fee > 0 && !ppRec && gRec.payBoth;   // 💴💳 両方: 既定は現金・画面のボタンで選ぶ
   writeAttendance(no, data);
   var joint = (gRec.ev.unions || []).length > 1;
   // 登録済みのユニオンの人なのに合同ユニオンに入っていない → そのユニオンの集計に入らないことを知らせる
@@ -8201,9 +8246,11 @@ function checkinMember(member, method, role){
           ? ' <span class="pill a">🎫 本日DLR予約 ' + esc(member.dlrRsv.timeFrom || '') + '〜</span>' : '')
         + '</div>' : '')
     + '<p class="hit-meta">' + nowHM()
-    + (fee > 0 ? '　<b>' + (ppRec ? '💳 PayPay ' : '') + yen(fee) + ' 徴収</b>' : '') + '</p>'
+    + (fee > 0 ? '　<b id="stgFeeTxt">' + (ppRec ? '💳 PayPay ' : (ppPick ? '💴 現金 ' : '')) + yen(fee) + ' 徴収</b>' : '') + '</p>'
+    + (ppPick ? ckPayPickHtml() : '')
     + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
-    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''));
+    + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''), ppPick);
+  if(ppPick) ckBindPayPick(no, fee);
   var su = $('stgUnpaid');
   if(su) su.onclick = function(){
     setPay(no, { paid: false });
@@ -8335,8 +8382,10 @@ function guestRcptQr(no, name, fee){
     no: no, name: name, union: gRec.ev.hostUnion || gUnion,
     rcptOnly: true, createdAt: FV.serverTimestamp()
   };
+  var ga = gRec.att[no] || {};
   docData['rcpt_' + gRec.ev.id] = ckRcptWith({
-    d: gRec.ev.date || '', ev: gRec.ev.name || '', amt: fee, no: no, at: Date.now()
+    d: gRec.ev.date || '', ev: gRec.ev.name || '', amt: fee, no: no, at: Date.now(),
+    pm: ga.payMethod === 'paypay' ? 'PayPay' : '現金'
   }, gRec.rcptInfo || { by: gRec.issuer });
   db.collection('cards').doc(token).set(docData).then(function(){
     // イベント削除時に一括で取り下げられるよう、出席記録に領収書トークンを残す＋操作ログ
@@ -8400,12 +8449,15 @@ $('btnGuest').onclick = function(){
       fee: gfee, paid: true, refund: 0
     };
     if(gfee > 0 && gRec.payMode) gdata.payMethod = 'paypay';
+    var gPick = gfee > 0 && !gRec.payMode && gRec.payBoth;
     writeAttendance(id, gdata);
     beep('ok');
     var canRcpt = gfee > 0 && gRec.issuer;   // 発行者名が設定済みのユニオンのみ
     setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>'
-      + (gfee > 0 ? '<p class="hit-meta"><b>' + (gdata.payMethod ? '💳 PayPay ' : '') + yen(gfee) + ' 徴収</b></p>' : '')
-      + (canRcpt ? '<button id="stgRcpt" style="margin-top:8px;">📱 領収書QRを表示</button>' : ''), canRcpt);
+      + (gfee > 0 ? '<p class="hit-meta"><b id="stgFeeTxt">' + (gdata.payMethod ? '💳 PayPay ' : (gPick ? '💴 現金 ' : '')) + yen(gfee) + ' 徴収</b></p>' : '')
+      + (gPick ? ckPayPickHtml() : '')
+      + (canRcpt ? '<button id="stgRcpt" style="margin-top:8px;">📱 領収書QRを表示</button>' : ''), canRcpt || gPick);
+    if(gPick) ckBindPayPick(id, gfee);
     var rb = $('stgRcpt');
     if(rb) rb.onclick = function(){ guestRcptQr(id, name, gfee); };
     closeModal(); focusScan();
@@ -9036,10 +9088,14 @@ function loadStats(){
             if(a.status === 'pending' || a.status === 'rejected') return;
             visits.push({ date: ev.date || '', evName: ev.name || '', host: ev.hostUnion || '', who: a.name || '' });
           });
-        });
+        }).catch(function(){});   // 参考表示のみ: 読めない他ユニオンのイベントは飛ばす（DBルールで閲覧制限あり）
     });
+    // どれか1つでも失敗したら「集計中…」のまま止まらないよう、必ずエラーを表示する
     Promise.all(reads.concat(vreads).concat([fetchMembers(gStatUnion)])).then(function(results){
       renderStats(evs, attMaps, results[results.length - 1], visits, pendingEvs);
+    }).catch(function(e){
+      $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc((e && e.message) || String(e))
+        + '</p><p style="color:var(--sub);font-size:13px;">「再集計」を押しても直らない場合は、オーナーに連絡してください。</p>';
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
 }
