@@ -85,6 +85,6 @@ T.run(async () => {
   w.switchView('current'); w.renderCurrentView && w.renderCurrentView(); await sleep(60);
   const tt = Array.from(w.document.querySelectorAll('#view-current svg text')).map(x => x.textContent);
   c('1行目にタイトルの札（TE・Q2）＋名前', tt.indexOf('TE') >= 0 && tt.indexOf('Q2') >= 0 && tt.some(x => x.indexOf('山内') >= 0));
-  c('2行目に稼働の札（S 100%）とGSVのラベル', tt.indexOf('S 100%') >= 0 && tt.indexOf('B 70%') >= 0 && w.document.querySelectorAll('#view-current .tc-gsvl').length === 2);
+  c('2行目に稼働の札（S 100%）とGSVの数字（v701:「GSV」のラベルはなし）', tt.indexOf('S 100%') >= 0 && tt.indexOf('B 70%') >= 0 && w.document.querySelectorAll('#view-current .tc-gsv').length === 2 && !w.document.querySelectorAll('#view-current .tc-gsvl').length);
   c('v639: カードの左の線はなし', !Array.from(w.document.querySelectorAll('#view-current svg rect')).some(r => r.getAttribute('width') === '4'));
 });
