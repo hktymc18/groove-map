@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v710';
+var APP_JS_VERSION = 'v711';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v710';
+  var DATA_VERSION = 'v711';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v711', d:'2026-10-08', pop: { t: 'PCのホームを作り直しました', items: ['上に「今月の目標」の帯：月収・NEWフロント・マイルストーンまでの月数（押すと計画シート）', '3列で「今日（予定・ToDo）｜今週やること・今月の行動｜気になる人・再アプローチ」。ToDoと行動はホームでチェック・追加できます', 'インサイトは下にたたんで置いています'], go: ['ホームを見る', "switchView('home')"] }, items:['PCのホームを新しく：今月の目標の帯＋3列（今日｜今週と今月の行動｜人）','今日のToDoはホームでチェック・「＋ 今日のToDoを足す」で追加','計画シートの行動（まだの物）を期限の近い順に。期限切れは赤','連続日数・レベル・今週のXPは右上の小さな札に（押すと実績）'] },
   { v:'v710', d:'2026-10-08', items:['PC：MAPの上の帯を1行に。現状/理想 → ‹ 年月 › → LTSV・稼働（1行の札）→ 表示の切りかえ（アイコン。マウスを乗せると名前）→ 検索 → 受付連携・全画面・「⋯」','「⋯」の中に翌月コピー・共有MAP・CSV・共有。翌月コピーは、月末の7日前〜翌月7日までは月の横にも「→ 翌月」が出ます'] },
   { v:'v709', d:'2026-10-08', items:['🎁 シミュレーション：人数などを変えて金額が変わったら、ファーストボーナスはまた「押して見る」に戻ります（自分のタイミングで見られます）','止まったら「前回より ＋¥◯」も出ます','ファーストボーナスの欄は組織図の下に。BRの月を選んだ時だけ出ます（ほかの月は「BRを選ぶと見られます」）'] },
   { v:'v708', d:'2026-10-08', items:['🐛 PCで理想MAP（サークル）の拡大・縮小（＋−・全体）が効かなくなっていたのを修正（計画シートのサークルMAPの方が動いていました）'] },
@@ -7257,6 +7258,14 @@ function renderHome() {
     + '<span class="gs-lv">Lv.' + li.level + '<span class="gs-bar"><i style="width:' + pct + '%"></i></span></span>'
     + '<span class="gs-wk go-tnum">今週 +' + thisW + 'XP <small class="' + deltaCls + '">' + dwTxt + '</small></span>'
     + '<span class="gs-more">🏅 ›</span></div>';
+  if (_px3On()) { // v711: PCは新しいホーム（今月の帯＋3列）
+    wrap.innerHTML = _phHtml({ li: li, pct: pct, streak: streak, thisW: thisW, dwTxt: dwTxt, deltaCls: deltaCls, ftue: ftueHtml, comeback: comebackHtml })
+      + '<details class="home-insights"><summary style="cursor:pointer;font-size:12.5px;font-weight:800;color:var(--text-mid);padding:10px 2px;list-style-position:inside">📈 インサイト（コーチ・今週・先月からの変化）</summary>'
+      + coachHtml + wkHtml + insightsHtml()
+      + '<div class="home-sec-label"><span>' + icn('chart') + ' 先月からの変化</span><span onclick="_mcPrevCache={key:\'\',members:null};renderMonthlyChanges()" style="color:var(--text-dim);font-weight:700;font-size:11px;cursor:pointer;padding:4px 10px">↻ 更新</span></div>'
+      + '<div id="homeChanges" class="home-changes"><div class="ck-empty" style="color:var(--text-dim)">読み込み中…</div></div></details></div>';
+    updateHomeBadge(); renderMonthlyChanges(); return;
+  }
   wrap.innerHTML = '<div class="home-wrap">'
     + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">'
     +   '<div><div class="home-greet">' + gameGreeting() + (name ? ('、' + evEsc(name) + 'さん') : '') + '</div>'
@@ -7284,6 +7293,87 @@ function renderHome() {
     + '</div>';
   updateHomeBadge();
   renderMonthlyChanges();
+}
+// ════ v711: PCのホームを作り直し（今月の帯 → 3列：今日｜今週と今月の行動｜人。インサイトは下にたたむ）════
+function _phHtml(o) { // o: { li, pct, streak, thisW, dwTxt, deltaCls, ftue, comeback, coach, wk }
+  _phCss();
+  var t = evTodayYmd(), ym = _p2Ym(0), name = (currentUser && currentUser.name) || '';
+  var h = '<div class="ph"><div class="ph-hd"><div><h1>' + gameGreeting() + (name ? '、' + evEsc(name) + 'さん' : '') + '</h1><small>' + gameDateLabel() + '</small></div>'
+    + '<span class="ph-gm" onclick="openTrophySheet()" title="実績・ランキング"><b>🔥' + o.streak + '日</b><b>Lv.' + o.li.level + '<i><u style="width:' + o.pct + '%"></u></i></b><b>今週 +' + o.thisW + 'XP <em class="' + o.deltaCls + '">' + o.dwTxt + '</em></b></span>'
+    + '<span class="ph-bell" onclick="openReleaseNotes()" title="お知らせ">' + icn('bell') + (hasUnseenNotes() ? '<i></i>' : '') + '</span></div>'
+    + o.ftue + o.comeback;
+  // 今月の帯（計画シートと同じ数字）
+  try {
+    var I = _p2ShInc(ym), F = _p2ShFr(ym), Y = _p2ShYear(), bar = function(v, t2) { var pc = t2 ? Math.max(0, Math.min(100, Math.round((+v || 0) / t2 * 100))) : 0; return '<i class="pb"><u style="width:' + pc + '%;background:' + (pc >= 100 ? 'var(--accent)' : (pc >= 50 ? '#5AD7FF' : 'var(--gold)')) + '"></u></i>'; };
+    var ms = '', tym = '';
+    if (Y.ms) { tym = Y.ms.ym; ms = String(Y.ms.t || ''); } else if (Y.nx && Y.nx.title && Y.nx.deadline && !Y.nx.isFinal) { tym = Y.nx.deadline; ms = Y.nx.title; }
+    var n = tym ? _p2YmDiff(ym, tym) : null;
+    h += '<div class="ph-mon" onclick="p2Go(\'sheet\')" title="計画シートを開く"><span class="lb">' + _p2ShMonLb(ym) + 'の目標</span>'
+      + '<span class="it">月収 <b>' + (I.now !== null ? I.now : '—') + '</b>/' + (I.t !== null ? I.t : '—') + '万' + (I.t ? bar(I.now, I.t) : '') + '</span>'
+      + '<span class="it">NEWフロント <b>' + F.now + '</b>/' + (F.t !== null ? F.t : '—') + '人' + (F.t ? bar(F.now, F.t) : '') + '</span>'
+      + (ms ? '<span class="it ms">マイルストーン <b class="t">' + evEsc(ms) + '</b>' + (n > 0 ? 'あと<b>' + n + '</b>ヶ月' : '<b>今月</b>') + '</span>' : '')
+      + '<span class="go">計画シート ›</span></div>';
+  } catch (eM) {}
+  // ① 今日（予定・ToDo）
+  var evs = (state.events || []).filter(function(e) { return e && e.type !== 'task' && !e.deleted && evShowMine(e) && (e.date === t || (e.endDate && e.date <= t && t <= e.endDate)); }).sort(evSortFn);
+  var L = (state.events || []).filter(function(e) { return e && e.type === 'task' && !e.deleted && e.date === t && evShowMine(e); }).sort(function(a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0); });
+  var c1 = '<div class="ph-c"><div class="ph-h" onclick="tdyGo(\'cal\')">📅 今日の予定<em>' + evs.length + '件</em><span>カレンダー ›</span></div>'
+    + (evs.length ? evs.slice(0, 6).map(function(e) { return '<div class="ph-ev" style="--c:' + (evColorOf(e) || '#8B7CFF') + '" onclick="openEventModal(\'' + e.id + '\')"><b>' + evEsc(e.time && e.date === t ? e.time : '終日') + '</b><i></i><span>' + evEsc(e.title || '') + '</span></div>'; }).join('') + (evs.length > 6 ? '<div class="ph-mr">ほか ' + (evs.length - 6) + '件</div>' : '') : '<div class="ph-em">予定はありません</div>')
+    + '<div class="ph-h" style="margin-top:14px" onclick="tdyGo(\'dp\')">✅ 今日のToDo<em>' + L.filter(function(e) { return e.done; }).length + '/' + L.length + '</em><span>ToDo ›</span></div>'
+    + L.slice(0, 8).map(function(e) { return '<div class="ph-td' + (e.done ? ' dn' : '') + '"><span class="ck" onclick="phDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span><span class="tx" onclick="openEventModal(\'' + e.id + '\')">' + evEsc(e.title || '') + '</span></div>'; }).join('')
+    + (L.length > 8 ? '<div class="ph-mr">ほか ' + (L.length - 8) + '件</div>' : '') + (!L.length ? '<div class="ph-em">今日のToDoはまだありません</div>' : '')
+    + '<div class="ph-add"><input id="phAdd" placeholder="＋ 今日のToDoを足す" maxlength="120" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){phAddTodo()}"></div></div>';
+  // ② 今週やること・今月の行動（計画シート）
+  var wk = '';
+  try { wk = _p2DoRows(ym).filter(function(r) { return r.wT > 0; }).map(function(r) { var pc = Math.min(100, Math.round(r.wHave / Math.max(1, r.wT) * 100)); return '<div class="ph-wk"><span>' + evEsc(r.lb) + '</span><i class="pb"><u style="width:' + pc + '%;background:' + (pc >= 100 ? 'var(--accent)' : (r.short > 0 ? 'var(--gold)' : 'var(--accent)')) + '"></u></i><b>' + r.wHave + '/' + r.wT + '</b></div>'; }).join(''); } catch (eW) {}
+  var A = [], od = 0; try { A = _p2ShActs(ym).filter(function(e) { return !e.done; }); od = A.filter(function(e) { return e.date && e.date < t; }).length; } catch (eA) {}
+  var cat = function(k) { return (P2_SH_CAT || []).filter(function(c) { return c.k === k; })[0] || null; };
+  var c2 = '<div class="ph-c"><div class="ph-h" onclick="p2Go(\'do\')">🎯 今週やること<span>今週やること ›</span></div>' + (wk || '<div class="ph-em">PLANで今月の目標を決めると出ます</div>')
+    + '<div class="ph-h" style="margin-top:14px" onclick="p2Go(\'sheet\')">📝 今月の行動<em>のこり ' + A.length + '</em>' + (od ? '<em class="ng">期限切れ ' + od + '</em>' : '') + '<span>計画シート ›</span></div>'
+    + (A.length ? A.slice(0, 7).map(function(e) { var c = cat(e.planCat), o2 = e.date && e.date < t; return '<div class="ph-td"><span class="ck" onclick="phDone(\'' + e.id + '\')"></span><span class="tx" onclick="p2Go(\'sheet\')">' + (c ? '<i class="tg" style="--c:' + c.c + '">' + evEsc(c.s) + '</i>' : '') + evEsc(e.title || '') + '</span><span class="dt' + (o2 ? ' ng' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '') + '</span></div>'; }).join('') + (A.length > 7 ? '<div class="ph-mr">ほか ' + (A.length - 7) + '件</div>' : '') : '<div class="ph-em">計画シートに書いた行動がここに出ます</div>') + '</div>';
+  // ③ 人（気になる人・再アプローチ・誕生日）
+  var ck = { trainee: [], fresh: [], exam: [], leader: [] }; try { ck = ckCollect(); } catch (eC) {}
+  var seen = {}, ppl = [];
+  ['trainee', 'exam', 'fresh', 'leader'].forEach(function(k) { (ck[k] || []).forEach(function(it) { if (!seen[it.m.id]) { seen[it.m.id] = 1; ppl.push({ it: it, k: k }); } }); });
+  if (typeof _reapproach === 'undefined' || !_reapproach) { try { _reapproachEnsure().then(function() { if (currentView === 'home' && isPCMode()) renderHome(); }); } catch (eR) {} }
+  var due = (typeof _reapproach !== 'undefined' && _reapproach ? _reapproach : []).filter(function(r) { return _rpDays(r) >= 90; }).length;
+  var all = !!window._phAll, pl = all ? ppl : ppl.slice(0, 6);
+  var c3 = '<div class="ph-c"><div class="ph-h">👀 気になる人<em>' + ppl.length + '人</em></div>'
+    + (ppl.length ? pl.map(function(x) { var m = x.it.m, nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)';
+        return '<div class="ph-p" onclick="ppOpen(\'' + m.id + '\',\'current\')"><div><b>' + evEsc(nm) + '<em>' + evEsc(m.title || '—') + '</em></b><small>' + x.it.reasons.map(function(r) { return evEsc(r.t); }).join('・') + '</small></div>'
+          + (x.k !== 'leader' ? '<span class="bt" onclick="event.stopPropagation();ckRecord(\'' + m.id + '\',\'' + x.k + '\')">' + (x.k === 'trainee' ? '研修' : 'OL') + '</span>' : '') + '<span class="bt g" onclick="event.stopPropagation();phToDp(\'' + m.id + '\')">ToDoへ</span></div>'; }).join('')
+      + (ppl.length > 6 ? '<div class="ph-mr lk" onclick="window._phAll=!window._phAll;renderHome()">' + (all ? '少なく表示' : 'すべて表示（' + ppl.length + '人）') + '</div>' : '')
+      : '<div class="ph-em">今フォローが必要な人はいません 👍</div>')
+    + '<div class="ph-h" style="margin-top:14px" onclick="reapOpen()">🔄 再アプローチ<em>' + due + '人</em><span>ひらく ›</span></div><div class="ph-em" style="text-align:left">' + (due ? '声をかける時期が来た人がいます' : '時期が来た人はまだいません') + '</div>'
+    + (function() { var b = ''; try { b = birthdayHtml(); } catch (eB) {} return b ? '<div class="ph-bd">' + b + '</div>' : ''; })() + '</div>';
+  h += '<div class="ph-g">' + c1 + c2 + c3 + '</div>';
+  return h;
+}
+function phDone(id) { try { toggleEventDone(id); } catch (e) {} if (currentView === 'home') renderHome(); }
+function phToDp(mid) { tdyToDp(mid); if (currentView === 'home') renderHome(); }
+function phAddTodo() {
+  var el = document.getElementById('phAdd'), v = String((el && el.value) || '').trim(); if (!v || !eventsUid()) return;
+  var e = _tdMakeTask(v.slice(0, 120), evTodayYmd(), ''); state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  renderHome(); setTimeout(function() { var n = document.getElementById('phAdd'); if (n) n.focus(); }, 30);
+}
+function _phCss() {
+  if (document.getElementById('phCss')) return;
+  var st = document.createElement('style'); st.id = 'phCss';
+  st.textContent = '.ph{padding:18px 22px 40px;max-width:1500px}.ph-hd{display:flex;align-items:center;gap:14px;margin-bottom:12px}.ph-hd h1{margin:0;font-size:21px;font-weight:900}.ph-hd small{font-size:12px;color:var(--text-dim);font-weight:700}'
+    + '.ph-gm{margin-left:auto;display:flex;gap:6px;cursor:pointer}.ph-gm b{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font:800 12px Inter,"Noto Sans JP",sans-serif}.ph-gm i{width:46px;height:5px;border-radius:3px;background:color-mix(in srgb,var(--text) 12%,transparent);overflow:hidden}.ph-gm u{display:block;height:100%;background:var(--accent)}.ph-gm em{font-style:normal;font-size:11px}.ph-gm em.up{color:var(--accent)}.ph-gm em.dn{color:#FF6B7F}.ph-gm em.eq{color:var(--text-dim)}'
+    + '.ph-bell{position:relative;width:36px;height:36px;border-radius:11px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}.ph-bell i{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:#FF5D73}'
+    + '.ph-mon{display:flex;align-items:center;flex-wrap:wrap;gap:6px 22px;padding:11px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 9%,var(--surface)),var(--surface) 70%);cursor:pointer;margin-bottom:14px}.ph-mon .lb{font-size:12px;font-weight:900;color:var(--accent)}.ph-mon .it{display:inline-flex;align-items:baseline;gap:4px;font-size:12px;font-weight:800;color:var(--text-mid)}.ph-mon .it b{font:900 18px Inter,sans-serif;color:var(--text)}.ph-mon .it b.t{font-size:14px;color:var(--gold);margin-right:6px}.ph-mon .pb{width:70px;margin-left:6px;align-self:center}.ph-mon .go{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent)}'
+    + '.pb{display:inline-block;height:6px;border-radius:4px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}.pb u{display:block;height:100%;border-radius:4px}'
+    + '.ph-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}@media (max-width:1250px){.ph-g{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:900px){.ph-g{grid-template-columns:1fr}}'
+    + '.ph-c{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px}.ph-h{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:900;cursor:pointer;margin-bottom:6px}.ph-h em{font-style:normal;font-size:11px;font-weight:800;color:var(--text-dim);padding:1px 7px;border-radius:7px;background:color-mix(in srgb,var(--text) 7%,transparent)}.ph-h em.ng{color:#FF6B7F;background:color-mix(in srgb,#FF6B7F 14%,transparent)}.ph-h span{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent)}'
+    + '.ph-ev{display:flex;align-items:center;gap:8px;padding:6px 2px;border-top:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:700}.ph-ev b{font:800 12px Inter,sans-serif;min-width:42px;color:var(--text-mid)}.ph-ev i{width:4px;height:16px;border-radius:2px;background:var(--c)}.ph-ev span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    + '.ph-td{display:flex;align-items:center;gap:8px;padding:6px 2px;border-top:1px solid var(--border);font-size:13px;font-weight:700}.ph-td .ck{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:900;color:#0b0f17}.ph-td .ck:hover{border-color:var(--accent)}.ph-td.dn .ck{background:var(--accent);border-color:var(--accent)}.ph-td .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.ph-td.dn .tx{color:var(--text-dim);text-decoration:line-through}.ph-td .tg{font-style:normal;font-size:10px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:6px;color:var(--c);border:1px solid var(--c)}.ph-td .dt{flex:none;font:800 11.5px Inter,sans-serif;color:var(--text-mid)}.ph-td .dt.ng{color:#FF6B7F}'
+    + '.ph-add input{width:100%;box-sizing:border-box;margin-top:6px;background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--text);font:700 13px inherit;font-family:inherit;padding:8px 10px}.ph-add input:focus{outline:none;border-style:solid;border-color:var(--accent)}'
+    + '.ph-wk{display:flex;align-items:center;gap:8px;padding:6px 2px;border-top:1px solid var(--border);font-size:12.5px;font-weight:800}.ph-wk span{min-width:64px}.ph-wk .pb{flex:1}.ph-wk b{font:900 12.5px Inter,sans-serif;min-width:40px;text-align:right}'
+    + '.ph-p{display:flex;align-items:center;gap:6px;padding:7px 2px;border-top:1px solid var(--border);cursor:pointer}.ph-p>div{flex:1;min-width:0}.ph-p b{font-size:13px;font-weight:900}.ph-p b em{font-style:normal;margin-left:6px;font-size:10.5px;color:var(--text-dim)}.ph-p small{display:block;font-size:11px;color:#FFB454;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ph-p .bt{flex:none;font-size:11px;font-weight:900;padding:4px 8px;border-radius:8px;border:1px solid var(--border);color:var(--text-mid)}.ph-p .bt.g{border-color:color-mix(in srgb,var(--accent) 50%,var(--border));color:var(--accent)}'
+    + '.ph-em{font-size:12px;color:var(--text-dim);padding:8px 2px;text-align:center}.ph-mr{font-size:11.5px;color:var(--text-dim);padding:6px 2px 0}.ph-mr.lk{color:var(--accent);cursor:pointer;font-weight:800}.ph-bd{margin-top:12px}.ph-bd .home-bday,.ph-bd .home-bday-month{margin:6px 0 0}'
+    + '.ph .home-insights{margin-top:16px}';
+  document.head.appendChild(st);
 }
 // 演出
 function gameXpFloat(xp) {
