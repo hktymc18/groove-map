@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v719';
+var APP_JS_VERSION = 'v720';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v719';
+  var DATA_VERSION = 'v720';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5381,6 +5381,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v720', d:'2026-10-08', items:['年の目標・ロードマップの③で、今の数もその場で書きかえられるように（空ならMAPの数が薄く出る・違う数にしたら「MAP ◯ に戻す」）','単価（1Qルビー・1環境・ルビー候補の倍率）も③の下で直せます。前の「今の数・単価」の画面には飛ばなくなりました'] },
   { v:'v719', d:'2026-10-08', items:['シミュレーションのボタンを「📅 ロードマップのペースに入れる」に：LOI〜BRの月ごとのフロントを、年の目標・ロードマップのF（計画シート・月の目標と同じ数字）に入れて、そのままロードマップを開きます','今月の分は理想MAPの自分のB1にも。BRを目指している人は、直近の目標（BRの月）もシミュレーションにそろえます','押した後の「『設定』で確定しよう」という古い案内をなくしました'] },
   { v:'v718', d:'2026-10-08', items:['年の目標・ロードマップと計画シートに「📄 サマリー」：右上（スマホは見出しの下）の「✎ 編集｜📄 サマリー」で、見るだけの1枚に切りかえ','ロードマップのサマリー：最終・直近の目標、マイルストーン、必要なフロント・締め切り・ペース、ギャップ、戦略のメモ','計画シートのサマリー：年の目標・マイルストーン・月収・NEWフロント、今月の数字（先月の結果つき）、改善点、行動（次にやること・期限切れ）、課題'] },
   { v:'v717', d:'2026-10-08', pop: { t: '年の目標・ロードマップを作り直しました', items: ['マイルストーンの線に、直近の目標から逆算した LOI→Q2→Q3→Q4→BR と、月ごとのフロント（F）が並びます。月を押すとイベント（例：SA早期達成）も書けます', '直近の目標から「必要なフロント」と締め切りを出して、月ごとのペースに割り振り。無理なペースの月は赤くなり、「1ヶ月ずらす」で調整できます', '組織15人からは、今→必要→ギャップの表（エキスパート・環境も）と、戦略のメモ（あとから やること・予定へ）が使えます'], go: ['ロードマップを開く', "switchView('plan');p2Go('year')"] }, items:['年の目標・ロードマップを1画面に：①マイルストーン ②直近の目標 ③今→必要→ギャップ ④フロントのペース ⑤戦略のメモ','S稼働の段と、目標・ロードマップ・年別目標・ギャップの4つの入口はなくしました（最終目標は「✎ 直す」から）','④のフロントの数字は、計画シート・月の目標と同じ数字です'] },
@@ -38267,7 +38268,7 @@ function _p2YrCalc() {
     { k: 'exp', lb: 'エキスパート', u: '人', c: cv('exp'), a: null, sub: '流通のプロ・アカデミー卒業' },
     { k: 'env', lb: '環境', u: 'つ', c: cv('env'), a: inc ? Math.ceil(inc / g.rates.envYen) : null }
   ];
-  var rows = defs.map(function(d) { var t = num(Y.t[d.k]); d.man = t !== null; if (t === null) t = d.a; d.t = t; return d; });
+  var rows = defs.map(function(d) { d.co = num(g.c[d.k]); d.ca = auto[d.k] == null ? null : auto[d.k]; var t = num(Y.t[d.k]); d.man = t !== null; if (t === null) t = d.a; d.t = t; return d; });
   var qr = rows[2]; rows[3].a = qr.t ? qr.t * g.rates.candX : null; if (!rows[3].man) rows[3].t = rows[3].a;
   rows.forEach(function(d) { d.gap = d.t === null || d.c === null ? null : d.t - d.c; });
   var loi = _p2YmAdd(dl, -4), needBR = 0, needFr, dlF;
@@ -38370,9 +38371,9 @@ function _p2YrCss() {
     + '.yr-sec{margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--surface);border:1px solid var(--border)}'
     + '.yr-in{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font:900 16px Inter,sans-serif;padding:7px 10px}.yr-in.n{width:76px;text-align:center}select.yr-in{font-family:inherit;font-size:15px}.yr-in:focus{outline:none;border-color:var(--accent)}'
     + '.yr-near{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-size:14px;font-weight:800;color:var(--text-mid)}'
-    + 'table.yr-gp{width:100%;border-collapse:collapse}.yr-gp th{font-size:11.5px;color:var(--text-dim);font-weight:800;text-align:center;padding:4px;border-bottom:1px solid var(--border)}.yr-gp td{padding:7px 4px;border-bottom:1px solid var(--border);text-align:center;font:900 16px Inter,sans-serif}.yr-gp td.n{text-align:left;font:900 14px inherit;font-family:inherit}.yr-gp td.n small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:700}.yr-gp td small{font-size:11px;color:var(--text-dim);font-weight:700;margin-left:1px}.yr-gp td.g{color:#FF6B7F}.yr-gp td.g.ok{color:var(--accent)}.yr-gp td.g.dm{color:var(--text-dim)}.yr-gp .yr-in{width:84px;padding:5px 6px;text-align:center;font-size:15px}.yr-gp .yr-in::placeholder{color:var(--text-dim)}'
+    + 'table.yr-gp{width:100%;border-collapse:collapse}.yr-gp th{font-size:11.5px;color:var(--text-dim);font-weight:800;text-align:center;padding:4px;border-bottom:1px solid var(--border)}.yr-gp td{padding:7px 4px;border-bottom:1px solid var(--border);text-align:center;font:900 16px Inter,sans-serif}.yr-gp td.n{text-align:left;font:900 14px inherit;font-family:inherit}.yr-gp td.n small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:700}.yr-gp td small{font-size:11px;color:var(--text-dim);font-weight:700;margin-left:1px}.yr-gp td.g{color:#FF6B7F}.yr-gp td.g.ok{color:var(--accent)}.yr-gp td.g.dm{color:var(--text-dim)}.yr-gp .yr-in{width:84px;padding:5px 6px;text-align:center;font-size:15px}.yr-gp .yr-in::placeholder{color:var(--text-dim)}.yr-gp .yr-in.ov{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}.yr-gp i.rs{display:block;font-style:normal;font-size:10.5px;font-weight:800;color:var(--accent);cursor:pointer;margin-top:3px;white-space:nowrap}'
     + '.yr-calc{margin-top:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.yr-calc>div{padding:10px 12px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)}.yr-calc small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:800}.yr-calc b{font:900 22px Inter,sans-serif}.yr-calc b i{font-style:normal;font-size:12px;color:var(--text-mid);margin-left:2px}.yr-calc .or{color:#FB923C}.yr-calc .gd{color:var(--gold)}'
-    + '.yr-set{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:12px;color:var(--text-dim);font-weight:800;align-items:center}.yr-set .yr-in{font-size:14px;padding:4px 8px;width:56px;text-align:center}'
+    + '.yr-set{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:12px;color:var(--text-dim);font-weight:800;align-items:center}.yr-set .yr-in{font-size:14px;padding:4px 8px;width:56px;text-align:center}.yr-set>span{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;margin-right:6px}'
     + '.yr-pace{display:flex;flex-wrap:wrap;gap:8px}.yr-pace>div{width:84px;padding:8px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);text-align:center;box-sizing:border-box}.yr-pace small{display:block;font-size:11.5px;color:var(--text-mid);font-weight:800;margin-bottom:4px}.yr-pace .yr-in{width:100%;text-align:center;box-sizing:border-box}.yr-pace .yr-in::placeholder{color:var(--text-dim)}.yr-pace>div.ng{border-color:#FF6B7F;background:color-mix(in srgb,#FF6B7F 10%,var(--surface2))}.yr-pace>div.ng .yr-in,.yr-pace>div.ng b{color:#FF6B7F}.yr-pace>div b{font:900 18px Inter,sans-serif;display:block;padding:5px 0}.yr-pace>div.fx b{color:var(--purple)}.yr-pace>div i{display:block;font-style:normal;font-size:10px;color:var(--purple);font-weight:800;cursor:pointer}'
     + '.yr-psum{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:14px;font-weight:800}.yr-psum .ok{color:var(--accent)}.yr-psum .ngt{color:#FF6B7F}.yr-psum small{color:var(--text-dim);font-size:12px}'
     + '.yr-warn{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid #FF6B7F;background:color-mix(in srgb,#FF6B7F 8%,transparent);font-size:13px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}'
@@ -38457,14 +38458,19 @@ function _p2YrGapHtml(C, ro, lk, on) {
   var tb = '<table class="yr-gp"><tr><th style="text-align:left">項目</th><th>今</th><th>必要</th><th>差</th></tr>' + C.rows.map(function(r) {
     var need = ro ? f(r.t) + '<small>' + r.u + '</small>' : '<input class="yr-in" type="number" inputmode="numeric" value="' + (r.man ? r.t : '') + '" placeholder="' + (r.a === null ? '' : r.a) + '" onfocus="edSelAll(this)" onchange="p2YrT(\'' + r.k + '\',this.value)">';
     var gp = r.gap === null ? '<td class="g dm">—</td>' : (r.gap <= 0 ? '<td class="g ok">✓</td>' : '<td class="g">あと' + r.gap.toLocaleString() + '<small>' + r.u + '</small></td>');
-    return '<tr><td class="n">' + r.lb + (r.sub ? '<small>' + r.sub + '</small>' : '') + '</td><td>' + f(r.c) + (r.c === null ? '' : '<small>' + r.u + '</small>') + '</td><td>' + need + '</td>' + gp + '</tr>';
+    var now = ro ? f(r.c) + (r.c === null ? '' : '<small>' + r.u + '</small>') // v720: 今の数もこの表で直す（空ならMAPから自動）
+      : '<input class="yr-in' + (r.co !== null ? ' ov' : '') + '" type="number" inputmode="numeric" value="' + (r.co === null ? '' : r.co) + '" placeholder="' + (r.ca === null ? '' : r.ca) + '" onfocus="edSelAll(this)" onchange="p2GapSet(\'c\',\'' + r.k + '\',this.value)">'
+        + (r.co !== null && r.ca !== null ? '<i class="rs" onclick="p2GapSet(\'c\',\'' + r.k + '\',\'\')">MAP ' + f(r.ca) + ' に戻す</i>' : '');
+    return '<tr><td class="n">' + r.lb + (r.sub ? '<small>' + r.sub + '</small>' : '') + '</td><td>' + now + '</td><td>' + need + '</td>' + gp + '</tr>';
   }).join('') + '</table>';
   var lkH = '<div class="yr-lock" style="margin-bottom:10px">🔒 今・必要な数・ギャップの表は、組織が<b>' + P2_YR_LOCK + '人</b>になると使えます<small>今 ' + on + '人（自分をのぞく）。必要なフロントと締め切りだけ下に出します</small></div>';
   var calc = C.isBR
     ? '<div><small>BRになる月</small><b class="gd">' + parseInt(C.dl.slice(5), 10) + '<i>月</i></b></div><div><small>必要なフロント（シミュレーション）</small><b class="gd">' + C.needFr + '<i>人</i></b></div><div><small>フロントの締め切り</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>'
     : '<div><small>必要なフロントBR</small><b>' + C.needBR + '<i>本</i></b></div><div><small>必要なフロント（' + C.ratio + '人で1本）</small><b class="gd">' + C.needFr + '<i>人</i></b></div><div><small>フロントを出す締め切り（LOIの月）</small><b class="or">' + (C.months.length ? parseInt(C.dlF.slice(5), 10) + '月' : '過ぎた') + '</b></div>';
-  var set = lk || ro ? '' : '<div class="yr-set">設定：フロント <input class="yr-in" type="number" value="' + C.ratio + '" onchange="p2YrSet(\'ratio\',this.value)"> 人で BR 1本 ／ 1ヶ月に <input class="yr-in" type="number" value="' + C.max + '" onchange="p2YrSet(\'max\',this.value)"> 人以上は無理なペース</div>';
-  return '<div class="yr-sec"><div class="yr-h"><span class="st">3</span>今 → 必要 → ギャップ<small>今の数はMAPから自動・必要な数は直近の目標から</small>' + (lk || ro ? '' : '<span class="r" onclick="p2Go(\'gapset\')">今の数・単価を直す ›</span>') + '</div>'
+  var gr = _p2Gap().rates, rt = function(k, v) { return '<input class="yr-in" type="number" inputmode="numeric" value="' + v + '" onfocus="edSelAll(this)" onchange="p2GapRate(\'' + k + '\',this.value)">'; };
+  var set = lk || ro ? '' : '<div class="yr-set">設定：<span>フロント <input class="yr-in" type="number" value="' + C.ratio + '" onchange="p2YrSet(\'ratio\',this.value)"> 人で BR 1本</span><span>1ヶ月に <input class="yr-in" type="number" value="' + C.max + '" onchange="p2YrSet(\'max\',this.value)"> 人以上は無理なペース</span></div>'
+    + '<div class="yr-set">単価：<span>1Qルビー ' + rt('qrYen', gr.qrYen) + ' 万</span><span>1環境 ' + rt('envYen', gr.envYen) + ' 万</span><span>ルビー候補＝Qルビー× ' + rt('candX', gr.candX) + '</span></div>';
+  return '<div class="yr-sec"><div class="yr-h"><span class="st">3</span>今 → 必要 → ギャップ<small>薄い数字は自動（今＝MAPから・必要＝直近の目標から）。違う時はその場で書きかえ</small></div>'
     + (lk ? lkH : tb) + '<div class="yr-calc">' + calc + '</div>' + set + '</div>';
 }
 function _p2YrPaceHtml(C, ro) {
