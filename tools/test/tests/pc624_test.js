@@ -8,7 +8,7 @@ T.run(async () => {
   setWH(1400, 900); w._uxSync();
   console.log('=== ① PLAN（v630：上にタブ） ===');
   w.switchView('plan'); await sleep(50);
-  c('上にタブ（v686：計画シート・やること（v715）・年の目標・理想・夢100・シミュレーション・ツール）', !!$('.pcx2-tabs') && $$('.pcx2-tabs span').length === 7 && !$('.pcx-n'));
+  c('上にタブ（v686：計画シート・やること（v715）・年の目標・理想・夢100・シミュレーション・チェック（v742）・ツール）', !!$('.pcx2-tabs') && $$('.pcx2-tabs span').length === 8 && !$('.pcx-n'));
   c('最初は計画シート（v686）', w._p2Pg === 'sheet' && $('.pcx2-tabs span.on').textContent.indexOf('計画シート') >= 0 && !!$('.sp-pc'));
   c('スマホ用の下の帯・上の帯の形は使わない', !w.document.body.classList.contains('ux-pg') && !w.document.body.classList.contains('ux-hub'));
   w.state.goals.plan.income = 3410000; w.state.goals.plan.title = 'チームエリート'; w.state.goals.plan.deadline = '2027-12'; w._p2().motto = 'やる時はいましかない';
