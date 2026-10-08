@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v714';
+var APP_JS_VERSION = 'v715';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3891,7 +3891,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v714';
+  var DATA_VERSION = 'v715';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5379,6 +5379,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v715', d:'2026-10-08', pop: { t: 'PLANに「やること」ができました', items: ['今月から長期（来月以降・いつか）まで、やることを時系列で1か所に。人に紐づかない「自分・全体」のタスクもOK', '数値の目標（例：ST開催 7/8）は＋−で進める。タスクには サブタスク も付けられます', '📅 を押すと、いつでもカレンダーの予定に入れられます。計画シートの課題パネルから「やることへ」も'], go: ['やることを開く', "switchView('plan');p2Go('yk')"] }, items:['PLANに「やること」タブ：今月から長期まで時系列（期限切れ → 今月 → 来月… → いつか）','タスク（人・自分・全体）とサブタスク、数値の目標（7/8 の形で＋−）','📅でいつでもカレンダーの予定に（入れた予定は札になって押すと開く）','計画シートの課題パネルに「＋ 自分・全体のメモ」。人の課題も自分・全体のメモも「やることへ」入れられます'] },
   { v:'v714', d:'2026-10-08', items:['計画シートのシート型MAPの丸を、理想MAP（サークル）と同じデザインに：研修生＝水色・LOI〜Q4＝オレンジ・フレッシュ＝金のうすい色、BR以上はタイトルの色の太い枠で光る、4分割（名前・稼働・タイトル・(固定)とGSV）','ライトテーマでは丸が黒くならず、明るい色で表示されます'] },
   { v:'v713', d:'2026-10-08', items:['スマホの計画シートの文字を大きく：見出し17px・項目名16px・数字18px・書く欄と行動の行16px（いちばん小さい文字も12px）','書く欄を16pxにしたので、iPhoneで押した時に画面が勝手に拡大しなくなりました','数字の行は2段に：1段目＝項目名と今の数、2段目＝先月の目標→結果（達成／届かず）と今月の目標','行動の行は押しやすい高さ（44px）に'] },
   { v:'v712', d:'2026-10-08', items:['PCのホームの「インサイト」を作り直し：ひらくと4枚のカード（コーチの一言｜先週からの組織（メンバー・GSV・フォロー要の数字）｜今日の気づき｜先月からの変化（3列）'] },
@@ -16659,7 +16660,7 @@ function _uxTilesFit(root) {
 }
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
-var P2_PG = { sheet: '計画シート', year: '年の目標・ロードマップ', sim: 'シミュレーション', yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
+var P2_PG = { yk: 'やること', sheet: '計画シート', year: '年の目標・ロードマップ', sim: 'シミュレーション', yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
 var P2_PG_FLOW = ['ideal', 'goal', 'rm', 'mon', 'do']; // v629: 想い→理想（作文はツールへ）
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
@@ -16719,6 +16720,7 @@ function _p2HubData() {
   var T = [
     { k: 'sheet', c: 'mint', ic: '📋', lb: parseInt(ym.slice(5), 10) + '月の計画シート', w: 1, bd: '今月',
       st: '月収 <em>' + f9(SH.inc.now) + '</em> / ' + f9(SH.inc.t) + '万・NEWフロント <em>' + SH.fr.now + '</em> / ' + f9(SH.fr.t) + '人<br>行動 <em>' + SH.done + '</em> / ' + SH.n + ' 完了' + (SH.od ? '・<span style="color:#FF5D73">期日すぎ ' + SH.od + '</span>' : '') },
+    (function() { var cy = _p2Ym(0), tk = _p2YkTasks().filter(function(e) { return !e.done && (e.planYm === cy || (e.date && e.date.slice(0, 7) === cy)); }).length, nn = _p2YkN().filter(function(n) { return n.ym === cy; }); return { k: 'yk', c: 'mint', ic: '✅', lb: 'やること', w: 1, st: '今月 <em>' + tk + '</em>件' + (nn.length ? '・数値の目標 <em>' + nn.filter(function(n) { return n.v >= n.g; }).length + '</em> / ' + nn.length + ' 達成' : '') + '<br>今月から長期まで・📅で予定に' }; })(),
     { k: 'year', c: 'gold', ic: '🏆', lb: '年の目標・ロードマップ', w: 1, st: (p.title || inc) ? evEsc(_p2TitleEn(p.title || '')) + (inc ? '・<em>月収' + inc + '万</em>' : '') + (p.deadline ? '・' + evEsc(String(p.deadline).replace('-', '/')) + 'まで' : '') + (!nx.isFinal && nx.title ? '<br>次の山 ' + evEsc(nx.title) + (nx.deadline ? '（' + evEsc(nx.deadline.replace('-', '/')) + '）' : '') : '') : '目標を<br><em>決める</em>' },
     { k: 'ideal', c: 'rose', ic: '✨', lb: '理想', bd: _p2G().p1 ? '✓ 答えた' : '', st: _p2IdealSt() },
     (function() { var dr9 = _p2G().dreams || []; return { k: 'dream', c: 'pur', ic: '🌈', lb: '夢100', st: dr9.length ? '<em>' + dr9.filter(function(d) { return d.done; }).length + '</em> / ' + dr9.length + ' 叶えた' : '夢を<br><em>書き出す</em>' }; })(),
@@ -16742,6 +16744,149 @@ function _p2DoMonHead(ym) { // v653: 今週やることの上に「◯月の目�
   var dec = _p2Declared(ym), has = !(m.s === '' || m.s == null);
   return '<div class="ux-li" style="margin:4px 0 10px" onclick="p2Go(\'mon\')"><span class="ic">🎯</span><span>' + _p2PgTitle('mon') + '<small>' + (has ? 'S稼働 目標 ' + m.s + '人・今 ' + S + '人' + (dec ? '' : '・まだ設定していない') : 'S稼働の目標をまだ決めていない') + '</small></span><span class="ch">' + (dec ? 'なおす ›' : '決める ›') + '</span></div>';
 }
+// ════ v715: やること（PLANのタブ）：今月から長期まで時系列に1か所で。タスク（サブタスクつき）と数値の目標（7/8）。📅でいつでも予定に入れる ════
+//   タスク＝state.events（type:'task'・planYm＝'YYYY-MM' か 'someday'・yk:1。計画シートの行動（planCat）も同じ所に並ぶ）
+//   数値の目標＝plan2.yk［{ id, t, g（目標）, v（今）, ym, mid（人）, who（'me'|'all'）, cal:[予定のid] }］
+var _p2YkOpen = '', _p2YkF = '', _p2YkDn = false, _p2YkAddTy = 't', _p2YkAddYm = '', _p2YkAddWho = 'me';
+function _p2YkN() { var p2 = _p2(); p2.yk = p2.yk || []; return p2.yk; }
+function _p2YkTasks() { return (state.events || []).filter(function(e) { return e && !e.deleted && e.type === 'task' && (e.yk || e.planCat) && /^(\d{4}-\d{2}|someday)$/.test(e.planYm || ''); }); }
+function _p2YkWho(o) { // 人の札：メンバー｜自分｜全体
+  var mid = o.memberId || o.mid || '';
+  if (mid) { var m = (state.members || []).concat(state.idealMembers || []).filter(function(x) { return x && x.id === mid; })[0]; return { k: 'm', id: mid, lb: m ? (m.lastName || m.firstName || '？') : '（いない人）' }; }
+  return (o.who === 'all') ? { k: 'all', lb: '全体' } : { k: 'me', lb: '自分' };
+}
+function _p2YkPass(o) { if (!_p2YkF) return true; var w = _p2YkWho(o); return _p2YkF === w.k || _p2YkF === w.id; }
+function _p2YkYmLb(ym) { var c = _p2Ym(0); return ym === 'someday' ? 'いつか' : (ym === c ? parseInt(ym.slice(5), 10) + '月（今月）' : (ym.slice(0, 4) !== c.slice(0, 4) ? parseInt(ym.slice(0, 4), 10) + '年' : '') + parseInt(ym.slice(5), 10) + '月'); }
+function _p2YkHtml() {
+  _p2YkCss();
+  var cur = _p2Ym(0), td = evTodayYmd(), ro = _p2ShRo ? _p2ShRo() : false;
+  if (!_p2YkAddYm) _p2YkAddYm = cur;
+  var T = _p2YkTasks().filter(_p2YkPass), N = _p2YkN().filter(_p2YkPass);
+  var od = T.filter(function(e) { return !e.done && ((e.date && e.date < td) || (e.planYm !== 'someday' && e.planYm < cur)); });
+  var yms = {}; T.forEach(function(e) { if (od.indexOf(e) < 0) yms[e.planYm] = 1; }); N.forEach(function(n) { if (n.ym >= cur || n.ym === 'someday') yms[n.ym] = 1; }); yms[cur] = 1;
+  var keys = Object.keys(yms).filter(function(k) { return k === 'someday' || k >= cur; }).sort(function(a, b) { return a === 'someday' ? 1 : (b === 'someday' ? -1 : a.localeCompare(b)); });
+  // 上：足す
+  var mOpt = ''; for (var i = 0; i <= 6; i++) { var y9 = _p2YmAdd(cur, i); mOpt += '<option value="' + y9 + '"' + (y9 === _p2YkAddYm ? ' selected' : '') + '>' + _p2YkYmLb(y9) + '</option>'; } mOpt += '<option value="someday"' + (_p2YkAddYm === 'someday' ? ' selected' : '') + '>いつか</option>';
+  var mem = (typeof membersForMap === 'function' ? membersForMap('current') : (state.members || [])).filter(function(m) { return m && !m.deleted && m.parentId && String(m.title || '').trim() !== 'OUT'; });
+  var wOpt = '<option value="me"' + (_p2YkAddWho === 'me' ? ' selected' : '') + '>👤 自分</option><option value="all"' + (_p2YkAddWho === 'all' ? ' selected' : '') + '>全体</option>' + mem.map(function(m) { return '<option value="' + m.id + '"' + (_p2YkAddWho === m.id ? ' selected' : '') + '>' + evEsc((m.lastName || '') + (m.firstName || '')) + '</option>'; }).join('');
+  var h = '<div class="yk">' + (ro ? '' : '<div class="yk-add"><span class="ty"><span class="' + (_p2YkAddTy === 't' ? 'on' : '') + '" onclick="p2YkTy(\'t\')">タスク</span><span class="' + (_p2YkAddTy === 'n' ? 'on' : '') + '" onclick="p2YkTy(\'n\')">数値の目標</span></span>'
+    + '<input id="p2YkIn" maxlength="120" placeholder="' + (_p2YkAddTy === 'n' ? '例：ST開催 8（数字＝目標の回数）' : '＋ やることを書く（Enter）') + '" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YkAdd()}">'
+    + '<select onchange="_p2YkAddYm=this.value">' + mOpt + '</select><select onchange="_p2YkAddWho=this.value">' + wOpt + '</select><span class="go" onclick="p2YkAdd()">足す</span></div>')
+    + '<div class="yk-f">人：<select onchange="_p2YkF=this.value;renderPlan()"><option value="">みんな</option><option value="me"' + (_p2YkF === 'me' ? ' selected' : '') + '>自分</option><option value="all"' + (_p2YkF === 'all' ? ' selected' : '') + '>全体</option>' + mem.map(function(m) { return '<option value="' + m.id + '"' + (_p2YkF === m.id ? ' selected' : '') + '>' + evEsc((m.lastName || '') + (m.firstName || '')) + '</option>'; }).join('') + '</select>'
+    + '<label><input type="checkbox"' + (_p2YkDn ? ' checked' : '') + ' onchange="_p2YkDn=this.checked;renderPlan()"> 済みも出す</label></div>';
+  if (od.length) h += '<div class="yk-g od"><div class="yk-gh">⚠ 期限切れ<em>' + od.length + '</em></div>' + od.map(function(e) { return _p2YkRow(e, td); }).join('') + '</div>';
+  keys.forEach(function(ym) {
+    var nn = N.filter(function(n) { return n.ym === ym; }), tt = T.filter(function(e) { return e.planYm === ym && od.indexOf(e) < 0; });
+    var dn = tt.filter(function(e) { return e.done; }); if (!_p2YkDn) tt = tt.filter(function(e) { return !e.done; });
+    tt.sort(function(a, b) { return String(a.date || '9999').localeCompare(String(b.date || '9999')) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')); });
+    h += '<div class="yk-g' + (ym === cur ? ' cur' : '') + '"><div class="yk-gh">' + _p2YkYmLb(ym) + '<em>' + (tt.length + nn.length) + '</em>' + (dn.length ? '<small>済み ' + dn.length + '</small>' : '') + '</div>'
+      + nn.map(function(n) { return _p2YkNRow(n); }).join('') + tt.map(function(e) { return _p2YkRow(e, td); }).join('')
+      + (!nn.length && !tt.length ? '<div class="yk-em">まだありません</div>' : '') + '</div>';
+  });
+  return h + '</div>' + _p2YkCalPop();
+}
+function _p2YkWhoChip(o) { var w = _p2YkWho(o); return '<span class="who ' + w.k + '">' + (w.k === 'all' ? '全体' : '👤' + evEsc(w.lb)) + '</span>'; }
+function _p2YkCalChip(ids, kind, id) {
+  var ev = (ids || []).map(function(x) { return findEvent(x); }).filter(function(e) { return e && !e.deleted; })[0];
+  return '<span class="cal' + (ev ? ' on' : '') + '" onclick="event.stopPropagation();' + (ev ? 'openEventModal(\'' + ev.id + '\')' : 'p2YkCal(\'' + kind + '\',\'' + id + '\')') + '" title="' + (ev ? '入れた予定を開く' : '予定に入れる') + '">📅' + (ev ? ' ' + parseInt(ev.date.slice(5, 7), 10) + '/' + parseInt(ev.date.slice(8), 10) + (ev.time ? ' ' + ev.time : '') : '') + '</span>';
+}
+function _p2YkRow(e, td) {
+  var op = _p2YkOpen === e.id, subs = e.subs || [], sd = subs.filter(function(s) { return s.dn; }).length;
+  var c = e.planCat ? (P2_SH_CAT || []).filter(function(x) { return x.k === e.planCat; })[0] : null;
+  var h = '<div class="yk-r' + (e.done ? ' dn' : '') + (op ? ' op' : '') + '"><div class="ln"><span class="ck" onclick="p2YkDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span>'
+    + '<span class="t" onclick="p2YkOpen(\'' + e.id + '\')">' + (c ? '<i class="tg" style="--c:' + c.c + '">' + evEsc(c.s) + '</i>' : '') + evEsc(e.title || '') + (subs.length ? '<small class="sb">' + sd + '/' + subs.length + '</small>' : '') + '</span>'
+    + _p2YkWhoChip(e) + '<span class="dt' + (e.date && e.date < td && !e.done ? ' ng' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '') + '</span>' + _p2YkCalChip(e.ykCal, 't', e.id) + '</div>';
+  if (op) {
+    h += '<div class="sub">' + subs.map(function(s, i) { return '<div class="sr' + (s.dn ? ' dn' : '') + '"><span class="ck" onclick="p2YkSub(\'' + e.id + '\',' + i + ')">' + (s.dn ? '✓' : '') + '</span><span>' + evEsc(s.t) + '</span><span class="x" onclick="p2YkSubDel(\'' + e.id + '\',' + i + ')">✕</span></div>'; }).join('')
+      + '<input class="sa" placeholder="＋ サブタスク（Enter）" maxlength="100" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YkSubAdd(\'' + e.id + '\',this)}">'
+      + '<div class="ops">期限 <input type="date" value="' + (e.date || '') + '" onchange="p2YkDate(\'' + e.id + '\',this.value)"> 月 <select onchange="p2YkYm(\'' + e.id + '\',this.value)">' + _p2YkYmOpts(e.planYm) + '</select><span class="del" onclick="p2YkDel(\'' + e.id + '\')">消す</span></div></div>';
+  }
+  return h + '</div>';
+}
+function _p2YkYmOpts(sel) { var cur = _p2Ym(0), o = ''; for (var i = -1; i <= 12; i++) { var y = _p2YmAdd(cur, i); o += '<option value="' + y + '"' + (y === sel ? ' selected' : '') + '>' + _p2YkYmLb(y) + '</option>'; } return o + '<option value="someday"' + (sel === 'someday' ? ' selected' : '') + '>いつか</option>'; }
+function _p2YkNRow(n) {
+  var ok = n.v >= n.g;
+  return '<div class="yk-r nm' + (ok ? ' ok' : '') + '"><div class="ln"><span class="ic">📊</span><span class="t" onclick="p2YkNEd(\'' + n.id + '\')">' + evEsc(n.t) + '</span>'
+    + '<span class="pm" onclick="p2YkNV(\'' + n.id + '\',-1)">−</span><b class="nv">' + n.v + '<i>/' + n.g + '</i></b><span class="pm p" onclick="p2YkNV(\'' + n.id + '\',1)">＋</span>'
+    + _p2YkWhoChip(n) + _p2YkCalChip(n.cal, 'n', n.id) + '</div></div>';
+}
+// ── 操作 ──
+function p2YkTy(t) { _p2YkAddTy = t; renderPlan(); setTimeout(function() { var el = document.getElementById('p2YkIn'); if (el) el.focus(); }, 20); }
+function p2YkAdd() {
+  var el = document.getElementById('p2YkIn'), v = String((el && el.value) || '').trim(); if (!v) return;
+  var who = _p2YkAddWho, mid = who !== 'me' && who !== 'all' ? who : '';
+  if (_p2YkAddTy === 'n') {
+    var m = v.match(/(\d+)\s*(回|人|件|本|個|P)?\s*$/), g = m ? parseInt(m[1], 10) : 0, t = m ? v.slice(0, m.index).trim() : v;
+    if (!g) { toast('目標の数を最後に入れてください（例：ST開催 8）'); return; }
+    _p2YkN().push({ id: 'n' + Date.now().toString(36), t: (t || v).slice(0, 60), g: g, v: 0, ym: _p2YkAddYm, mid: mid, who: mid ? '' : who, cal: [] }); saveGoals();
+  } else {
+    if (typeof eventsUid === 'function' && !eventsUid()) { toast('ログインすると使えます'); return; }
+    var e = _tdMakeTask(v.slice(0, 120), '', ''); e.yk = 1; e.planYm = _p2YkAddYm; e.subs = [];
+    if (mid) { e.memberId = mid; e.memberIds = [mid]; e.vis = 'both'; e.selfShow = true; } else e.who = who;
+    state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  }
+  renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkIn'); if (n) n.focus(); }, 30);
+}
+function p2YkOpen(id) { _p2YkOpen = _p2YkOpen === id ? '' : id; renderPlan(); }
+function p2YkDone(id) { try { toggleEventDone(id); } catch (e) {} renderPlan(); }
+function _p2YkSave(e) { e.updatedAt = new Date().toISOString(); saveEventDoc(e); renderPlan(); }
+function p2YkSubAdd(id, el) { var e = findEvent(id), v = String((el && el.value) || '').trim(); if (!e || !v) return; e.subs = e.subs || []; e.subs.push({ t: v.slice(0, 100), dn: false }); _p2YkSave(e); setTimeout(function() { var s = document.querySelector('.yk-r.op .sa'); if (s) s.focus(); }, 30); }
+function p2YkSub(id, i) { var e = findEvent(id); if (!e || !e.subs || !e.subs[i]) return; e.subs[i].dn = !e.subs[i].dn; _p2YkSave(e); }
+function p2YkSubDel(id, i) { var e = findEvent(id); if (!e || !e.subs) return; e.subs.splice(i, 1); _p2YkSave(e); }
+function p2YkDate(id, v) { var e = findEvent(id); if (!e) return; e.date = v || ''; if (v) e.planYm = v.slice(0, 7); _p2YkSave(e); }
+function p2YkYm(id, v) { var e = findEvent(id); if (!e) return; e.planYm = v; if (e.date && v !== 'someday' && e.date.slice(0, 7) !== v) e.date = ''; _p2YkSave(e); }
+function p2YkDel(id) { if (!confirm('このやることを消しますか？（ToDoからも消えます）')) return; _p2YkOpen = ''; _evDeleteById(id); renderPlan(); }
+function _p2YkNById(id) { return _p2YkN().filter(function(n) { return n.id === id; })[0]; }
+function p2YkNV(id, d) { var n = _p2YkNById(id); if (!n) return; n.v = Math.max(0, (+n.v || 0) + d); saveGoals(); renderPlan(); }
+function p2YkNEd(id) {
+  var n = _p2YkNById(id); if (!n) return;
+  var v = prompt('「' + n.t + '」の目標の数（0で消す）', String(n.g)); if (v === null) return;
+  var g = parseInt(v, 10); if (g === 0) { var L = _p2YkN(); L.splice(L.indexOf(n), 1); } else if (g > 0) n.g = g;
+  saveGoals(); renderPlan();
+}
+// 📅 予定に入れる（日にち・時間を選ぶだけ。入れた予定は札になり、押すと開く）
+var _p2YkCalT = null;
+function _p2YkCalPop() { return '<div class="yk-pop" id="p2YkPop" onclick="if(event.target===this)p2YkCalX()"><div><h3>📅 予定に入れる</h3><div class="pt" id="p2YkPopT"></div><label>日にち<input type="date" id="p2YkPd" value="' + evTodayYmd() + '"></label><label>時間（なくてもOK）<input type="time" id="p2YkPt"></label><div class="bt"><span onclick="p2YkCalX()">やめる</span><span class="go" onclick="p2YkCalOk()">カレンダーに入れる</span></div></div></div>'; }
+function p2YkCal(kind, id) {
+  var o = kind === 'n' ? _p2YkNById(id) : findEvent(id); if (!o) return;
+  _p2YkCalT = { kind: kind, id: id };
+  var p = document.getElementById('p2YkPop'); if (!p) return;
+  document.getElementById('p2YkPopT').textContent = o.t || o.title || '';
+  if (o.date) document.getElementById('p2YkPd').value = o.date;
+  p.classList.add('on');
+}
+function p2YkCalX() { var p = document.getElementById('p2YkPop'); if (p) p.classList.remove('on'); _p2YkCalT = null; }
+function p2YkCalOk() {
+  var T = _p2YkCalT; if (!T) return;
+  var d = (document.getElementById('p2YkPd') || {}).value, tm = (document.getElementById('p2YkPt') || {}).value || '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) { toast('日にちを選んでください'); return; }
+  var o = T.kind === 'n' ? _p2YkNById(T.id) : findEvent(T.id); if (!o) return;
+  var mid = o.memberId || o.mid || '', ev = _tdMakeTask(o.t || o.title || '', d, ''); ev.type = 'event'; ev.time = tm;
+  if (mid) { ev.memberId = mid; ev.memberIds = [mid]; ev.vis = 'both'; ev.selfShow = true; }
+  state.events.push(ev); saveEventDoc(ev); try { updateEventsBadge(); } catch (eB) {}
+  if (T.kind === 'n') { o.cal = (o.cal || []).concat([ev.id]); saveGoals(); } else { o.ykCal = (o.ykCal || []).concat([ev.id]); o.updatedAt = new Date().toISOString(); saveEventDoc(o); }
+  p2YkCalX(); toast('📅 ' + parseInt(d.slice(5, 7), 10) + '/' + parseInt(d.slice(8), 10) + (tm ? ' ' + tm : '') + ' の予定に入れました'); renderPlan();
+}
+function _p2YkCss() {
+  if (document.getElementById('p2YkCss')) return;
+  var st = document.createElement('style'); st.id = 'p2YkCss';
+  st.textContent = '.yk{max-width:780px;margin:0 auto 30px}'
+    + '.yk-add{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface)}.yk-add .ty{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;flex:none}.yk-add .ty span{padding:6px 10px;font-size:12.5px;font-weight:900;color:var(--text-dim);cursor:pointer}.yk-add .ty span.on{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}'
+    + '.yk-add input{flex:1;min-width:180px;background:transparent;border:0;color:var(--text);font:700 16px inherit;font-family:inherit;outline:none;padding:6px 2px}.yk-add select,.yk-f select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:6px 8px;font-size:13px;font-weight:800;font-family:inherit}.yk-add .go{padding:7px 14px;border-radius:10px;background:var(--accent);color:#06251c;font-weight:900;font-size:13px;cursor:pointer}'
+    + '.yk-f{display:flex;align-items:center;gap:10px;margin:10px 2px 4px;font-size:12.5px;font-weight:800;color:var(--text-dim)}.yk-f label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}'
+    + '.yk-g{margin-top:14px}.yk-gh{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);padding:0 4px 6px;border-bottom:1px solid var(--border)}.yk-g.cur .yk-gh{color:var(--accent)}.yk-g.od .yk-gh{color:#FF6B7F}.yk-gh em{font-style:normal;font-size:11.5px;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text-mid)}.yk-gh small{margin-left:auto;font-size:11.5px;color:var(--text-dim)}'
+    + '.yk-r{border-bottom:1px solid var(--border)}.yk-r .ln{display:flex;align-items:center;gap:8px;padding:9px 4px;min-height:44px}.yk-r .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#0b0f17}.yk-r .ck:hover{border-color:var(--accent)}.yk-r.dn>.ln .ck{background:var(--accent);border-color:var(--accent)}'
+    + '.yk-r .t{flex:1;min-width:0;font-size:15px;font-weight:700;cursor:pointer;word-break:break-all}.yk-r.dn>.ln .t{color:var(--text-dim);text-decoration:line-through}.yk-r .t .tg{font-style:normal;font-size:10.5px;font-weight:900;padding:1px 6px;border-radius:6px;margin-right:6px;color:var(--c);border:1px solid var(--c)}.yk-r .t .sb{margin-left:6px;font:800 11px Inter,sans-serif;color:var(--text-dim);padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 8%,transparent)}'
+    + '.yk-r .who{flex:none;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,#5AD7FF 14%,transparent);color:#5AD7FF;white-space:nowrap}.yk-r .who.me{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}.yk-r .who.all{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold)}'
+    + '.yk-r .dt{flex:none;min-width:38px;text-align:right;font:800 12.5px Inter,sans-serif;color:var(--text-mid)}.yk-r .dt.ng{color:#FF6B7F}.yk-r .cal{flex:none;font-size:12px;font-weight:900;padding:4px 8px;border-radius:9px;border:1px solid var(--border);color:var(--text-mid);cursor:pointer;white-space:nowrap}.yk-r .cal.on{border-color:color-mix(in srgb,#8B7CFF 60%,var(--border));color:#c7bfff;background:color-mix(in srgb,#8B7CFF 14%,transparent)}'
+    + '.yk-r.nm .ic{width:22px;text-align:center;flex:none}.yk-r .pm{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;cursor:pointer;flex:none}.yk-r .pm.p{border-color:var(--accent);color:var(--accent)}.yk-r .nv{flex:none;min-width:52px;text-align:center;font:900 18px Inter,sans-serif}.yk-r .nv i{font-style:normal;font-size:13px;color:var(--text-mid)}.yk-r.nm.ok .nv{color:var(--accent)}'
+    + '.yk-r .sub{padding:0 6px 10px 34px}.yk-r .sr{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:14px;font-weight:700}.yk-r .sr .ck{width:18px;height:18px;font-size:11px}.yk-r .sr.dn .ck{background:var(--accent);border-color:var(--accent)}.yk-r .sr.dn span:nth-child(2){color:var(--text-dim);text-decoration:line-through}.yk-r .sr .x{margin-left:auto;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 6px}'
+    + '.yk-r .sa{width:100%;box-sizing:border-box;margin-top:4px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text);font:700 16px inherit;font-family:inherit;padding:7px 9px}.yk-r .ops{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:12px;font-weight:800;color:var(--text-dim)}.yk-r .ops input,.yk-r .ops select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 7px;font-size:13px;font-family:inherit}.yk-r .ops .del{margin-left:auto;color:#FF6B7F;cursor:pointer}'
+    + '.yk-em{font-size:12.5px;color:var(--text-dim);padding:10px 4px}'
+    + '.yk-pop{position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}.yk-pop.on{display:flex}.yk-pop>div{width:min(400px,92vw);background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:16px}.yk-pop h3{margin:0 0 8px;font-size:16px}.yk-pop .pt{font-weight:900;font-size:14px;margin-bottom:6px}.yk-pop label{display:block;font-size:12px;color:var(--text-dim);font-weight:800;margin-top:10px}.yk-pop input{display:block;width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg,#0b0e15);border:1px solid var(--border);border-radius:10px;color:var(--text);font:800 16px inherit;font-family:inherit;padding:9px 10px}.yk-pop .bt{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.yk-pop .bt span{padding:9px 14px;border-radius:11px;font-weight:900;cursor:pointer;border:1px solid var(--border)}.yk-pop .bt span.go{background:var(--accent);color:#06251c;border-color:var(--accent)}'
+    + '@media (max-width:640px){.yk-add select{flex:1}.yk-r .ln{flex-wrap:wrap;row-gap:4px}.yk-r .t{flex-basis:calc(100% - 34px)}.yk-r .who{margin-left:30px}.yk-r.nm .t{flex-basis:auto}}';
+  document.head.appendChild(st);
+}
 function _p2PageParts() {
   var k = _p2Pg, ym = _p2Ym(0), body = '', subs = _p2PgSubs(k), i = Math.min(_p2PgI, Math.max(0, subs.length - 1));
   var fi = P2_PG_FLOW.indexOf(k), next = '', nextOn = '', dots = null, dotI = null, dotOn = null; // v682: 下の●を作り直す時だけ（理想の2セット）
@@ -16753,6 +16898,8 @@ function _p2PageParts() {
   } else if (k === 'sheet') { // v686: 計画シート（目標・MAP → 数字 → 行動 → 改善点）
     _ux2Css(); body = _p2ShPageHtml(i);
     if (i < P2_SH_PG.length - 1) { next = P2_SH_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; }
+  } else if (k === 'yk') { // v715: やること
+    _ux2Css(); body = _p2YkHtml();
   } else if (k === 'year') { // v686: 年の目標・ロードマップ（1画面）
     _ux2Css(); body = _p2YearPageHtml();
   } else if (k === 'sum') { // v630: サマリー（決めたことを全部1画面で）
@@ -19186,7 +19333,7 @@ function _p2PcxHtml() {
   var mk = { ideal: !!g.p1, goal: !!(p.title && p.deadline), mon: _p2Declared(_p2Ym(0)) };
   var tab = function(k, lb) { return '<span class="' + (k === sel ? 'on' : '') + '" onclick="p2Go(\'' + k + '\')">' + lb + (mk[k] ? '<i>✓</i>' : (k === D.nk ? '<i class="w">●</i>' : '')) + (k === 'rev' && D.rv ? '<i class="r">●</i>' : '') + '</span>'; };
   var hd = '<div class="pcx2-hd"><h1>PLAN<small>' + parseInt(ym.slice(5), 10) + '月・残り' + D.left + '日</small></h1><div class="pcx2-tabs">'
-    + tab('sheet', '計画シート') + tab('year', '年の目標・ロードマップ') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') // v686
+    + tab('sheet', '計画シート') + tab('yk', 'やること') + tab('year', '年の目標・ロードマップ') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') // v686
     + '<b class="sep"></b>' + (D.rv ? tab('rev', '振り返り') : '') + tab('tool', 'ツール') + '</div></div>';
   return '<div class="pcx2">' + hd + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>'; // v630: 左の大きなタイルの列をやめて、上にタブ
 }
@@ -19220,6 +19367,7 @@ function _p2PcxHead(t, chip, right, sub) {
 function _p2PcxPane(D) {
   var k = _p2Pg, ym = D.ym, b = function(lb, on, cls) { return '<span class="pcx-b' + (cls ? ' ' + cls : '') + '" onclick="' + on + '">' + lb + '</span>'; };
   if (k === 'sheet') return _p2ShPcHtml(b); // v686
+  if (k === 'yk') return _p2PcxHead('やること', '', '') + '<div class="pcx-one" style="max-width:none">' + _p2YkHtml() + '</div>'; // v715
   if (k === 'year') return _p2PcxHead('年の目標・ロードマップ', '', '') + '<div class="pcx-one" style="max-width:none">' + _p2YearPageHtml().replace(/^<h2 class="ux-h2">[^<]*<\/h2>/, '') + '</div>';
   if (k === 'sum') return _p2SumHtml();
   if (k === 'goal') { // v630: 目標はポップアップをやめて画面に直接（①最終ゴール ②1年ごとの目標 ③次の山）
@@ -37778,20 +37926,41 @@ function _p2ShIssHtml(ym) {
     if (_p2ShIssSel === mid && !ro) return '<div class="iss-r on"><div class="h"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small><span class="x" onclick="p2ShIssDone()">完了</span></div>'
       + '<textarea id="p2ShIssIn" class="sp-kz" rows="2" placeholder="' + evEsc(pv[mid] ? '先月：' + pv[mid] : '例：審査フォロー。Q3の動員が足りない→DLRを2週目までに') + '" oninput="_p2ShGrow(this)" onchange="p2ShIssSave(\'' + mid + '\',this.value)">' + evEsc(I[mid] || '') + '</textarea></div>';
     var acts = _p2ShIssAct === mid ? '<div class="cats">' + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="p2ShIssToAct(\'' + mid + '\',\'' + c.k + '\')">' + c.s + '</span>'; }).join('')
-      + '<span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'task\')">📝 タスク</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'ev\')">📅 予定</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'memo\')">🗒 メモ</span></div>' : '';
+      + '<span style="--c:var(--accent)" onclick="p2ShIssTo(\'' + mid + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'ev\')">📅 予定</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'memo\')">🗒 メモ</span></div>' : '';
     return '<div class="iss-r"><div class="h" onclick="p2ShIssTap(\'' + mid + '\')"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small>' + (ro ? '' : '<span class="a" onclick="event.stopPropagation();p2ShIssAct(\'' + mid + '\')">→ 残す先</span>') + '</div>'
       + '<div class="t" onclick="p2ShIssTap(\'' + mid + '\')">' + evEsc(I[mid] || '') + '</div>' + _p2ShIssBadges(ym, mid) + acts + '</div>';
   };
   var list = ids.filter(function(id) { return id !== _p2ShIssSel; }).map(row).join('');
   var sel = _p2ShIssSel && !ro ? row(_p2ShIssSel) : '';
-  return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small><span class="tg" onclick="p2ShIssTgl()">' + (_p2ShMapPc && !_p2ShMapLr ? 'たたむ ›' : '▾ たたむ') + '</span></div>' + sel + list
-    + (sel || list ? '' : '<div class="iss-em">MAPの人を押すと、その人の課題を書けます</div>') + '</div>';
+  // v715: 人に紐づかないメモ（自分・全体）。あとから残す先（やること・予定）を決める
+  var F = _p2ShM(ym).issF || [], fr = F.map(function(f) {
+    var acts = _p2ShIssAct === 'F:' + f.id ? '<div class="cats"><span style="--c:var(--accent)" onclick="p2ShIssFTo(\'' + f.id + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2ShIssFTo(\'' + f.id + '\',\'ev\')">📅 予定</span><span style="--c:#FF6B7F" onclick="p2ShIssFTo(\'' + f.id + '\',\'del\')">✕ 消す</span></div>' : '';
+    var yk = f.yk && findEvent(f.yk); yk = yk && !yk.deleted ? yk : null;
+    return '<div class="iss-r"><div class="h"><b>👤 自分・全体</b>' + (ro ? '' : '<span class="a" onclick="p2ShIssAct(\'F:' + f.id + '\')">→ 残す先</span>') + '</div><div class="t" onclick="p2ShIssFEd(\'' + f.id + '\')">' + evEsc(f.t) + '</div>'
+      + (yk ? '<div class="lk"><i style="--c:var(--accent)">✅ やること' + (yk.done ? ' ✓' : '') + '</i></div>' : '') + acts + '</div>';
+  }).join('');
+  var fin = ro ? '' : '<input class="iss-fi" placeholder="＋ 自分・全体のメモ（Enter）" maxlength="200" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2ShIssFAdd(this)}">';
+  return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small><span class="tg" onclick="p2ShIssTgl()">' + (_p2ShMapPc && !_p2ShMapLr ? 'たたむ ›' : '▾ たたむ') + '</span></div>' + fin + sel + list + fr
+    + (sel || list || fr ? '' : '<div class="iss-em">MAPの人を押すと、その人の課題を書けます。人に紐づかないことは上の欄に</div>') + '</div>';
+}
+function p2ShIssFAdd(el) { if (_p2ShRo()) return; var v = String((el && el.value) || '').trim(); if (!v) return; var m = _p2ShM(_p2ShYmN()); m.issF = m.issF || []; m.issF.push({ id: 'f' + Date.now().toString(36), t: v.slice(0, 200) }); saveGoals(); renderPlan(); setTimeout(function() { var n = document.querySelector('.iss-fi'); if (n) n.focus(); }, 30); }
+function _p2ShIssF(id) { return (_p2ShM(_p2ShYmN()).issF || []).filter(function(f) { return f.id === id; })[0]; }
+function p2ShIssFEd(id) { if (_p2ShRo()) return; var f = _p2ShIssF(id); if (!f) return; var v = prompt('メモを直す（空にすると消す）', f.t); if (v === null) return; v = String(v).trim(); if (!v) { p2ShIssFTo(id, 'del'); return; } var o = f.t; f.t = v.slice(0, 200); var e = f.yk && findEvent(f.yk); if (e && !e.done && e.title === o) { e.title = f.t; e.updatedAt = new Date().toISOString(); saveEventDoc(e); } saveGoals(); renderPlan(); }
+function p2ShIssFTo(id, kind) {
+  if (_p2ShRo()) return;
+  var ym = _p2ShYmN(), m = _p2ShM(ym), f = _p2ShIssF(id); if (!f) return;
+  _p2ShIssAct = '';
+  if (kind === 'del') { m.issF = (m.issF || []).filter(function(x) { return x.id !== id; }); saveGoals(); renderPlan(); return; }
+  if (kind === 'ev') { openEventModal(null, '', '', 'event'); setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = f.t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30); return; }
+  var e = _tdMakeTask(f.t.slice(0, 120), '', ''); e.yk = 1; e.planYm = ym; e.subs = []; e.who = 'me';
+  state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  f.yk = e.id; saveGoals(); renderPlan(); toast('✅ やることに入れました');
 }
 function _p2ShIssCss() {
   if (document.getElementById('p2IssCss')) return;
   var st = document.createElement('style'); st.id = 'p2IssCss';
   st.textContent = '.iss-hd{font-size:13px;font-weight:900;margin-bottom:4px}.iss-hd small{margin-left:6px;font-size:11px;color:var(--text-dim);font-weight:700}.iss-r{padding:8px 0;border-top:1px solid var(--border)}.iss-r .h{display:flex;align-items:baseline;gap:6px;cursor:pointer}.iss-r .h b{font-size:13px}.iss-r .h small{font-size:10.5px;color:var(--text-dim);font-weight:800}.iss-r .h .a,.iss-r .h .x{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;white-space:nowrap}'
-    + '.iss-r .t{font-size:12.5px;line-height:1.55;margin-top:3px;cursor:pointer;white-space:pre-wrap}.iss-r.on{background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:10px;padding:8px}.iss-r .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.iss-r .cats span{font-size:11.5px;font-weight:900;padding:5px 9px;border-radius:9px;border:1px solid var(--c);color:var(--c);cursor:pointer}.iss-r .lk{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.iss-r .lk i{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--c,var(--text-mid)) 16%,transparent);color:var(--text-mid);cursor:pointer}.iss-em{font-size:12px;color:var(--text-dim);padding:8px 0;border-top:1px solid var(--border)}'
+    + '.iss-r .t{font-size:12.5px;line-height:1.55;margin-top:3px;cursor:pointer;white-space:pre-wrap}.iss-r.on{background:color-mix(in srgb,var(--accent) 6%,transparent);border-radius:10px;padding:8px}.iss-r .cats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.iss-r .cats span{font-size:11.5px;font-weight:900;padding:5px 9px;border-radius:9px;border:1px solid var(--c);color:var(--c);cursor:pointer}.iss-r .lk{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}.iss-r .lk i{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--c,var(--text-mid)) 16%,transparent);color:var(--text-mid);cursor:pointer}.iss-em{font-size:12px;color:var(--text-dim);padding:8px 0;border-top:1px solid var(--border)}.iss-fi{width:100%;box-sizing:border-box;margin:4px 0 6px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text);font:700 13px inherit;font-family:inherit;padding:7px 9px}.iss-fi:focus{outline:none;border-style:solid;border-color:var(--accent)}'
     + '.sp-mw{display:grid;grid-template-columns:minmax(0,1fr) 320px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--surface) 70%,transparent)}.sp-mw .sp-map{border:0;border-radius:0}.sp-mw .iss{border-left:1px solid var(--border);padding:12px 14px;max-height:640px;overflow:auto}'
     + '.sp-mw.m{display:block}.sp-mw.m .iss{border-left:0;border-top:1px solid var(--border);max-height:none}#p2ShOrb{position:relative}#p2ShOrb svg{display:block;width:100%;height:100%}#p2ShOrb g[data-mid]{cursor:pointer}#p2ShOrb g.iss-on{filter:drop-shadow(0 0 6px #FFB454)}.sp-map svg g.shn{cursor:pointer}'
     + '.sp-vw{font-size:11.5px;font-weight:800;color:var(--text-dim)}.sp-vw span{cursor:pointer;padding:0 2px}.sp-vw span.on{color:var(--text);text-decoration:underline;text-underline-offset:3px}'
@@ -37898,6 +38067,11 @@ function _p2ShMemoPut(ym, mid, t) { // メンバーのメモの「【◯年◯�
 function p2ShIssTo(mid, kind) {
   if (_p2ShRo()) return;
   var ym = _p2ShYmN(), t = _p2ShIssTitle(mid), L = _p2ShIssL(ym, mid);
+  if (kind === 'yk') { // v715: やることへ（その人つき）
+    var ey = _tdMakeTask(t, '', ''); ey.yk = 1; ey.planYm = ym; ey.subs = []; ey.memberId = mid; ey.memberIds = [mid]; ey.vis = 'both'; ey.selfShow = true;
+    state.events.push(ey); saveEventDoc(ey); try { updateEventsBadge(); } catch (eB) {}
+    L.yk = ey.id; saveGoals(); _p2ShIssAct = ''; renderPlan(); toast('✅ やることに入れました'); return;
+  }
   if (kind === 'memo') { if (_p2ShMemoPut(ym, mid, _p2ShIss(ym)[mid])) { L.memo = 1; saveGoals(); toast('🗒 メンバーのメモに入れました'); } _p2ShIssAct = ''; renderPlan(); return; }
   // タスク・予定：入力の画面を開く（その人・課題の文が入った状態）。保存されたら連動
   _p2ShIssAct = '';
@@ -37920,13 +38094,14 @@ function _p2ShIssBadges(ym, mid) {
   if (L.act) { var a = findEvent(L.act); if (a && !a.deleted) { var c = P2_SH_CAT.filter(function(x) { return x.k === a.planCat; })[0]; b.push('<i style="--c:' + (c ? c.c : 'var(--accent)') + '">' + (c ? c.s : '行動') + (a.done ? ' ✓' : '') + '</i>'); } }
   if (L.task) { var k = findEvent(L.task); if (k && !k.deleted) b.push('<i onclick="event.stopPropagation();openEventModal(\'' + k.id + '\')">📝 タスク' + (k.date ? ' ' + parseInt(k.date.slice(5, 7), 10) + '/' + parseInt(k.date.slice(8), 10) : '') + (k.done ? ' ✓' : '') + '</i>'); }
   if (L.ev) { var v = findEvent(L.ev); if (v && !v.deleted) b.push('<i onclick="event.stopPropagation();openEventModal(\'' + v.id + '\')">📅 ' + (v.date ? parseInt(v.date.slice(5, 7), 10) + '/' + parseInt(v.date.slice(8), 10) : '予定') + (v.time ? ' ' + v.time : '') + '</i>'); }
+  if (L.yk) { var y9 = findEvent(L.yk); if (y9 && !y9.deleted) b.push('<i style="--c:var(--accent)">✅ やること' + (y9.done ? ' ✓' : '') + '</i>'); }
   if (L.memo) b.push('<i>🗒 メモ</i>');
   return b.length ? '<div class="lk">' + b.join('') + '</div>' : '';
 }
 function _p2ShIssSync(ym, mid, oldT, newT) { // 課題を書き直したら、残した先も同じ文に（済み・自分で書きかえた物はそのまま）
   var L = (_p2ShM(ym).issL || {})[mid]; if (!L) return;
   var m = _p2ShMem(mid), pre = m ? (m.lastName || _uxName(m)) + 'さん：' : '', o = (pre + oldT).slice(0, 120), n = (pre + newT).slice(0, 120);
-  ['act', 'task', 'ev'].forEach(function(k) { var e = L[k] && findEvent(L[k]); if (e && !e.deleted && !e.done && e.title === o && newT) { e.title = n; e.updatedAt = new Date().toISOString(); saveEventDoc(e); } });
+  ['act', 'task', 'ev', 'yk'].forEach(function(k) { var e = L[k] && findEvent(L[k]); if (e && !e.deleted && !e.done && e.title === o && newT) { e.title = n; e.updatedAt = new Date().toISOString(); saveEventDoc(e); } });
   if (L.memo) _p2ShMemoPut(ym, mid, newT);
 }
 // ── スマホ：上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）──
