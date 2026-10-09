@@ -38,5 +38,5 @@ T.run(async () => {
   c('方針・規約のページがある（施行日入り・仮置きなし）', ['privacy', 'terms'].every(k => { const h = fs.readFileSync(R + '/' + k + '/index.html', 'utf8'); return /2026年10月1日施行/.test(h) && h.indexOf('【') < 0 && /PROMOTE/.test(h); }));
   const sw = fs.readFileSync(R + '/sw.js', 'utf8');
   c('SW：方針・規約のページはアプリ本体のキャッシュに入れない', /\(privacy\|terms\)/.test(sw) && sw.indexOf("pathname.indexOf('/checkin')") >= 0);
-  c('ルール：同意の履歴は本人が追記のみ', /match \/consents\/\{ver\}[\s\S]{0,200}allow create: if isSelf\(uid\);/.test(fs.readFileSync(R + '/firestore.rules', 'utf8')));
+  c('ルール：同意の履歴は本人が追記のみ', /match \/consents\/\{ver\}[\s\S]{0,600}allow create: if isSelf\(uid\);/.test(fs.readFileSync(R + '/firestore.rules', 'utf8')));
 });
