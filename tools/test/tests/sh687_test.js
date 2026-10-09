@@ -2,7 +2,7 @@
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
-  T.login(); setWH(390, 844);
+  T.login(); setWH(390, 844); w.state.goals && (w._p2().sheet = w._p2().sheet || {}); w._p2Sh().mapViewM = 'sheet'; // v775: スマホの既定はツリー（ここではシート型を試す）
   w.switchView('plan'); await sleep(50);
   const s = w.state, ym = w._p2Ym(0), pv = w._p2YmAdd(ym, -1);
   s.members = [{ id: 'r', lastName: '山内', title: 'ゴールド', parentId: '', ptCurrent: 2700, activity: 'S' },
@@ -38,8 +38,8 @@ T.run(async () => {
   c('v697: 数字と改善点をたためる（1行のまとめだけ）', $$('.sp-kr').length === 0 && /ひらく/.test($('.sp-fold').textContent));
   w.p2ShKzTgl(); await sleep(10);
   c('v697: ひらくと戻る', $$('.sp-kr').length === 8);
-  c('目標は割合で自動に入れない（空のまま）', w._p2ShKv(ym, w._p2ShK('ct')).t === null && $$('.sp-kr')[4].querySelector('.sp-in').value === '');
-  const ct = $$('.sp-kr')[4].querySelector('.sp-in'); ct.value = '32'; ct.onchange(); await sleep(10);
+  c('目標は割合で自動に入れない（空のまま）', w._p2ShKv(ym, w._p2ShK('ct')).t === null && $$('.sp-kr')[4].querySelector('.b .cu .sp-in').value === '');
+  const ct = $$('.sp-kr')[4].querySelector('.b .cu .sp-in'); ct.value = '32'; ct.onchange(); await sleep(10);
   c('v713: 2段（1段目＝項目名と今・2段目＝先月と今月の目標）', !!$$('.sp-kr')[4].querySelector('.a .nw') && !!$$('.sp-kr')[4].querySelector('.b .cu .sp-in') && !!$('.sp-mb'));
   c('今月の目標を書く', w._p2ShKv(ym, w._p2ShK('ct')).t === 32);
   c('書いた目標は「今月の数字」のカードにも', /CT <b>32<\/b>/.test($('.st-k').innerHTML));

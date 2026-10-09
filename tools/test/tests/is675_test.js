@@ -12,7 +12,7 @@ T.run(async () => {
   c('4つの項目がカードで出る', secs.length === 4);
   c('やりたいことは4つとも全部表示（ほか○ で省略しない）', secs[0] && secs[0].querySelectorAll('.p2is-i').length === 4 && /本を出す/.test(secs[0].textContent) && !/ほか/.test(secs[0].textContent));
   c('まだの項目は「書く」', secs[2] && /まだ書いていません/.test(secs[2].textContent));
-  c('一番下に「はじめから答え直す」', /はじめから答え直す/.test($('#view-plan').textContent));
+  c('一番下にパートごとの答え直し（v775）', /パートごとに答え直す/.test($('#view-plan').textContent));
   w.p2IdealRedoAll(); await sleep(80);
   c('答え直すと理想の生活の1問目から質問', w._p2PgI === 0 && !$('#p2GwWrap .p2id-dn') && w._p2GwStep === w.P2GW_Q.indexOf(w._p2IdealQs()[0]));
 });

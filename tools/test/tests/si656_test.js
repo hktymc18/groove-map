@@ -9,12 +9,12 @@ T.run(async () => {
   const cfg = w._p2SimCfg(); cfg.preset = 3; cfg.fronts = [0, 3, 3, 0]; const lm = w._p2Ym(-1); cfg.sy = +lm.slice(0, 4); cfg.sm = +lm.slice(5); // v719: 今月＝Q2の月
   w.p2SimApply(); await sleep(20);
   const I = w._idealStats(w.state.idealMembers);
-  c('理想MAPが空なら現状からコピーして、自分のB1を3人に', I.newFront === 3 && w.state.idealMembers.some(m => !m.parentId && m.id === 'r'));
+  c('v775: シミュレーションは理想MAPに人を足さない（理想MAPとは連動しない）', I.newFront === 0);
   c('今月のフロント目標も3人', +w._p2M(w._p2Ym(0)).front === 3 || w._p2FrontTgt(w._p2Ym(0)) === 3);
   cfg.preset = 1; cfg.fronts = [0, 1, 1, 0]; w.p2SimApply(); await sleep(20);
-  c('減らすと新規を外して1人に', w._idealStats(w.state.idealMembers).newFront === 1);
+  c('減らすと今月の目標も1人に', w._p2FrontTgt(w._p2Ym(0)) === 1);
   cfg.preset = 4; cfg.fronts = [0, 4, 4, 0]; w.p2SimApply(); await sleep(20);
-  c('増やすと4人に', w._idealStats(w.state.idealMembers).newFront === 4);
+  c('増やすと4人に（理想MAPはそのまま）', w._p2FrontTgt(w._p2Ym(0)) === 4 && w._idealStats(w.state.idealMembers || []).newFront === 0);
   console.log('=== 0段目に自分 ===');
   w.state.members = []; w.localStorage.removeItem('gm_hadRoot_' + w.currentUser.uid);
   w.currentUser.name = '山内 北斗';
