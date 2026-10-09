@@ -33,10 +33,10 @@ T.run(async () => {
   fi.value = 'ST会場を探す'; w.p2ShIssFAdd(fi); await sleep(20);
   const F = w._p2ShM(w._p2ShYmN()).issF; c('人に紐づかないメモを書ける', F.length === 1 && /自分・全体/.test($('.iss').textContent) && /ST会場を探す/.test($('.iss').textContent));
   w.p2ShIssAct('F:' + F[0].id); await sleep(10);
-  c('残す先：やることへ・予定・消す', /やることへ/.test($('.iss-r .cats').textContent) && /予定/.test($('.iss-r .cats').textContent));
+  c('残す先：やることへ・予定・消す', /立案へ/.test($('.iss-r .cats').textContent) && /予定/.test($('.iss-r .cats').textContent));
   w.p2ShIssFTo(F[0].id, 'yk'); await sleep(20);
   const t3 = w.state.events.find(e => e.title === 'ST会場を探す');
-  c('やることへ入る（自分・この月）・印', !!t3 && t3.yk === 1 && t3.who === 'me' && /やること/.test($('.iss .lk').textContent));
+  c('やることへ入る（自分・この月）・印', !!t3 && t3.yk === 1 && t3.who === 'me' && /立案/.test($('.iss .lk').textContent));
   w.p2ShIssSave('a', '審査フォロー'); w.p2ShIssTo('a', 'yk'); await sleep(20);
   const t4 = w.state.events.find(e => /井上.*審査フォロー/.test(e.title) && e.yk);
   c('人の課題もやることへ（その人つき）', !!t4 && t4.memberId === 'a');

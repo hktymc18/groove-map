@@ -36,7 +36,7 @@ T.run(async () => {
   c('⑤戦略を書く', !!mm && /紹介ルートを増やす/.test($('.ys-c').textContent));
   w.ysAct(mm.id); await sleep(10); w.ysTo(mm.id, 'yk'); await sleep(20);
   const e = w.findEvent(mm.L.id);
-  c('入れる先：やることへ', !!e && e.yk === 1 && e.title === '紹介ルートを増やす' && /やること/.test($('.ys-c .b').textContent));
+  c('入れる先：やることへ', !!e && e.yk === 1 && e.title === '紹介ルートを増やす' && /立案/.test($('.ys-c .b').textContent));
   setWH(1400, 900); w._uxSync && w._uxSync(); w.switchView('plan'); w.p2Go('year'); await sleep(40);
   c('PCも同じ1画面（タブ）', !!$('.yr .yr-tl') && !!$('.yr-gp'));
 });

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v760';
+var APP_JS_VERSION = 'v761';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v760';
+  var DATA_VERSION = 'v761';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5396,6 +5396,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v761', d:'2026-10-09', items:['PLANの「やること」の名前を「立案」に変えました（月間・中期・長期のタスクを管理するページ。見出しの ⓘ で説明）','立案で探せるように：「名前・人で探す」の欄と、期間（すべて・月間・中期・長期）','期日は計画シートと同じ窓に：「期日」を押すと ✅ ToDoに入れる／📅 予定に入れる を選んで日にち（予定は時間も）。書いてすぐ「📅 期日」でもOK'] },
   { v:'v760', d:'2026-10-09', items:['メンバーの研修：研修ステップの記録を🗑で消せるように（間違えて入れた時。消した後は「↩ 元に戻す」）','記録を追加の「日付」と「Aさん」を同じ大きさで横に並べました（iPhoneで重なっていたのを直しました）'] },
   { v:'v759', d:'2026-10-09', items:['分析 › パワーライン：上の月の並びを、古い月 → 今月 の順に（選んでいる月が見えるように自動で横にずらします）'] },
   { v:'v758', d:'2026-10-09', items:['メンバー（一覧）の画面をPCからもなくしました（左のメニュー・⌘K・プロフィールの「メンバータブ」の設定）。メンバーはMAPから見られます','使い方ガイドからも「メンバー」を消しました'] },
@@ -16824,7 +16825,7 @@ function _uxTilesFit(root) {
 }
 // ════ PLAN：入口（タイル）と、1画面1つのページ ════
 var _p2Pg = '', _p2PgI = 0;
-var P2_PG = { yk: 'やること', sheet: '計画シート', year: '年の目標・ロードマップ', sim: 'シミュレーション', yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
+var P2_PG = { yk: '立案', sheet: '計画シート', year: '年の目標・ロードマップ', sim: 'シミュレーション', yrs: '年別目標', sum: 'サマリー', why: '想い', ideal: '理想', essay: 'やる理由（作文）', dream: '夢100', goal: '目標', rm: 'ロードマップ', rmm: 'ロードマップ', mon: '', do: '今週やること', dok: '今週やること', rev: '振り返り', tool: 'ツール', gap: 'ギャップ', ck: 'チェック', bb: 'BB早見表', rmt: 'ロードマップの表', rmrows: '行の編集', rmms: 'マイルストーン', gapset: '今の数・単価', gapal: '割り振り' };
 var P2_PG_FLOW = ['ideal', 'goal', 'rm', 'mon', 'do']; // v629: 想い→理想（作文はツールへ）
 function _p2PgTitle(k) { return k === 'mon' ? parseInt((_p2MonYm || _p2Ym(0)).slice(5), 10) + '月の目標' : (P2_PG[k] || ''); }
 function _p2PgSet(k, i) { if (!isPCMode()) { _p2Pg = k || ''; _p2PgI = i || 0; } }
@@ -16885,7 +16886,7 @@ function _p2HubData() {
     { k: 'year', c: 'gold', ic: '🏆', lb: '年の目標・ロードマップ', w: 1, st: (p.title || inc) ? evEsc(_p2TitleEn(p.title || '')) + (inc ? '・<em>月収' + inc + '万</em>' : '') + (p.deadline ? '・' + evEsc(String(p.deadline).replace('-', '/')) + 'まで' : '') + (!nx.isFinal && nx.title ? '<br>次の山 ' + evEsc(nx.title) + (nx.deadline ? '（' + evEsc(nx.deadline.replace('-', '/')) + '）' : '') : '') : '目標を<br><em>決める</em>' },
     { k: 'sheet', c: 'mint', ic: '📋', lb: parseInt(ym.slice(5), 10) + '月の計画シート', w: 1, bd: '今月',
       st: '月収 <em>' + f9(SH.inc.now) + '</em> / ' + f9(SH.inc.t) + '万・NEWフロント <em>' + SH.fr.now + '</em> / ' + f9(SH.fr.t) + '人<br>行動 <em>' + SH.done + '</em> / ' + SH.n + ' 完了' + (SH.od ? '・<span style="color:#FF5D73">期日すぎ ' + SH.od + '</span>' : '') },
-    (function() { var cy = _p2Ym(0), tk = _p2YkTasks().filter(function(e) { return !e.done && (e.planYm === cy || (e.date && e.date.slice(0, 7) === cy)); }).length, nn = _p2YkN().filter(function(n) { return n.ym === cy; }); return { k: 'yk', c: 'mint', ic: '✅', lb: 'やること', w: 1, st: '今月 <em>' + tk + '</em>件' + (nn.length ? '・数値の目標 <em>' + nn.filter(function(n) { return n.v >= n.g; }).length + '</em> / ' + nn.length + ' 達成' : '') + '<br>今月から長期まで・📅で予定に' }; })(),
+    (function() { var cy = _p2Ym(0), tk = _p2YkTasks().filter(function(e) { return !e.done && (e.planYm === cy || (e.date && e.date.slice(0, 7) === cy)); }).length, nn = _p2YkN().filter(function(n) { return n.ym === cy; }); return { k: 'yk', c: 'mint', ic: '✅', lb: '立案', w: 1, st: '今月 <em>' + tk + '</em>件' + (nn.length ? '・数値の目標 <em>' + nn.filter(function(n) { return n.v >= n.g; }).length + '</em> / ' + nn.length + ' 達成' : '') + '<br>月間・中期・長期のタスク・ToDoや予定にも' }; })(),
     { k: 'ideal', c: 'rose', ic: '✨', lb: '理想', bd: _p2G().p1 ? '✓ 答えた' : '', st: _p2IdealSt() },
     (function() { var dr9 = _p2G().dreams || []; return { k: 'dream', c: 'pur', ic: '🌈', lb: '夢100', st: dr9.length ? '<em>' + dr9.filter(function(d) { return d.done; }).length + '</em> / ' + dr9.length + ' 叶えた' : '夢を<br><em>書き出す</em>' }; })(),
     { k: 'sim', c: 'gold', ic: '🎮', lb: 'シミュレーション', w: 1, st: 'B22シミュレーション' },
@@ -16912,9 +16913,9 @@ function _p2DoMonHead(ym) { // v653: 今週やることの上に「◯月の目�
 // ════ v715: やること（PLANのタブ）：今月から長期まで時系列に1か所で。タスク（サブタスクつき）と数値の目標（7/8）。📅でいつでも予定に入れる ════
 //   タスク＝state.events（type:'task'・planYm＝'YYYY-MM' か 'someday'・yk:1。計画シートの行動（planCat）も同じ所に並ぶ）
 //   数値の目標＝plan2.yk［{ id, t, g（目標）, v（今）, ym, mid（人）, who（'me'|'all'）, cal:[予定のid] }］
-var _p2YkSubIn = '', _p2YkOpen = '', _p2YkF = '', _p2YkDn = false, _p2YkAddTy = 't', _p2YkAddYm = '', _p2YkAddWho = 'me', _p2YkDraft = null;
+var _p2YkQ = '', _p2YkPer = '', _p2YkSubIn = '', _p2YkOpen = '', _p2YkF = '', _p2YkDn = false, _p2YkAddTy = 't', _p2YkAddYm = '', _p2YkAddWho = 'me', _p2YkDraft = null;
 function _p2YkN() { var p2 = _p2(); p2.yk = p2.yk || []; return p2.yk; }
-function _p2YkTasks() { return (state.events || []).filter(function(e) { return e && !e.deleted && e.type === 'task' && (e.yk || e.planCat) && /^(\d{4}-\d{2}|someday)$/.test(e.planYm || ''); }); }
+function _p2YkTasks() { return (state.events || []).filter(function(e) { return e && !e.deleted && (e.type === 'task' || e.type === 'event') && (e.yk || e.planCat) && /^(\d{4}-\d{2}|someday)$/.test(e.planYm || ''); }); }
 function _p2YkWho(o) { // 人の札：メンバー｜自分｜全体
   var mid = o.memberId || o.mid || '';
   if (mid) { var m = (state.members || []).concat(state.idealMembers || []).filter(function(x) { return x && x.id === mid; })[0]; return { k: 'm', id: mid, lb: m ? (m.lastName || m.firstName || '？') : '（いない人）' }; }
@@ -16924,12 +16925,8 @@ function _p2YkPass(o) { if (!_p2YkF) return true; var w = _p2YkWho(o); return _p
 function _p2YkYmLb(ym) { var c = _p2Ym(0); return ym === 'someday' ? 'いつか' : (ym === c ? parseInt(ym.slice(5), 10) + '月（今月）' : (ym.slice(0, 4) !== c.slice(0, 4) ? parseInt(ym.slice(0, 4), 10) + '年' : '') + parseInt(ym.slice(5), 10) + '月'); }
 function _p2YkHtml() {
   _p2YkCss(); _p2YkSwBind();
-  var cur = _p2Ym(0), td = evTodayYmd(), ro = _p2ShRo ? _p2ShRo() : false;
+  var cur = _p2Ym(0), ro = _p2ShRo ? _p2ShRo() : false;
   if (!_p2YkAddYm) _p2YkAddYm = cur;
-  var T = _p2YkTasks().filter(_p2YkPass), N = _p2YkN().filter(_p2YkPass);
-  var od = T.filter(function(e) { return !e.done && ((e.date && e.date < td) || (e.planYm !== 'someday' && e.planYm < cur)); });
-  var yms = {}; T.forEach(function(e) { if (od.indexOf(e) < 0) yms[e.planYm] = 1; }); N.forEach(function(n) { if (n.ym >= cur || n.ym === 'someday') yms[n.ym] = 1; }); yms[cur] = 1;
-  var keys = Object.keys(yms).filter(function(k) { return k === 'someday' || k >= cur; }).sort(function(a, b) { return a === 'someday' ? 1 : (b === 'someday' ? -1 : a.localeCompare(b)); });
   // 上：足す
   var mOpt = ''; for (var i = 0; i <= 6; i++) { var y9 = _p2YmAdd(cur, i); mOpt += '<option value="' + y9 + '"' + (y9 === _p2YkAddYm ? ' selected' : '') + '>' + _p2YkYmLb(y9) + '</option>'; } mOpt += '<option value="someday"' + (_p2YkAddYm === 'someday' ? ' selected' : '') + '>いつか</option>';
   var mem = (typeof membersForMap === 'function' ? membersForMap('current') : (state.members || [])).filter(function(m) { return m && !m.deleted && m.parentId && String(m.title || '').trim() !== 'OUT'; });
@@ -16938,21 +16935,56 @@ function _p2YkHtml() {
   var nOn = _p2YkAddTy === 'n', dr = _p2YkDraft || {};
   var h = '<div class="yk">' + (ro ? '' : '<div class="yk-add"><input id="p2YkIn" class="in" maxlength="120" autocomplete="off" enterkeyhint="done" placeholder="＋ やることを書く" value="' + evEsc(dr.t || '') + '" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YkAdd()}">'
     + (nOn ? '<div class="nrow"><label>目標<input id="p2YkG" inputmode="decimal" autocomplete="off" placeholder="8" value="' + evEsc(dr.g || '') + '"></label><label>単位<input id="p2YkU" class="u" maxlength="6" autocomplete="off" placeholder="回" value="' + evEsc(dr.u || '') + '"></label><label>今<input id="p2YkV" inputmode="decimal" autocomplete="off" placeholder="0" value="' + evEsc(dr.v || '') + '"></label></div>' : '')
-    + '<div class="opt"><span class="nb' + (nOn ? ' on' : '') + '" onclick="p2YkTy()">🔢 数値' + (nOn ? ' ON' : '') + '</span><select onchange="_p2YkAddYm=this.value">' + mOpt + '</select><select onchange="_p2YkAddWho=this.value">' + wOpt + '</select><span class="go" onclick="p2YkAdd()">足す</span></div></div>')
+    + '<div class="opt"><span class="nb' + (nOn ? ' on' : '') + '" onclick="p2YkTy()">🔢 数値' + (nOn ? ' ON' : '') + '</span><select onchange="_p2YkAddYm=this.value">' + mOpt + '</select><select onchange="_p2YkAddWho=this.value">' + wOpt + '</select>' + (nOn ? '' : '<span class="dtb" onpointerdown="window._p2ShDtTap=Date.now()" onclick="p2YkAddDt()">📅 期日</span>') + '<span class="go" onclick="p2YkAdd()">足す</span></div></div>')
     + '<div class="yk-f">人：<select onchange="_p2YkF=this.value;renderPlan()"><option value="">みんな</option><option value="me"' + (_p2YkF === 'me' ? ' selected' : '') + '>自分</option><option value="all"' + (_p2YkF === 'all' ? ' selected' : '') + '>全体</option>' + mem.map(function(m) { return '<option value="' + m.id + '"' + (_p2YkF === m.id ? ' selected' : '') + '>' + evEsc((m.lastName || '') + (m.firstName || '')) + '</option>'; }).join('') + '</select>'
-    + '<label><input type="checkbox"' + (_p2YkDn ? ' checked' : '') + ' onchange="_p2YkDn=this.checked;renderPlan()"> 済みも出す</label></div>';
+    + '<label><input type="checkbox"' + (_p2YkDn ? ' checked' : '') + ' onchange="_p2YkDn=this.checked;renderPlan()"> 済みも出す</label></div>'
+    // v761: 期間（月間・中期・長期）と名前で探す
+    + '<div class="yk-q"><input id="p2YkQ" type="search" autocomplete="off" enterkeyhint="search" placeholder="🔍 名前・人で探す" value="' + evEsc(_p2YkQ) + '" oninput="_p2YkQ=this.value;_p2YkListRe()"><div class="per">' + [['', 'すべて'], ['m', '月間'], ['mid', '中期'], ['long', '長期']].map(function(p) { return '<span class="' + (_p2YkPer === p[0] ? 'on' : '') + '" onclick="_p2YkPer=\'' + p[0] + '\';renderPlan()">' + p[1] + '</span>'; }).join('') + '</div></div>';
+  return h + '<div id="p2YkList">' + _p2YkListHtml() + '</div></div>' + _p2YkCalPop();
+}
+// v761: 期間＝月間（今月・期限切れ）／中期（来月〜6ヶ月先）／長期（7ヶ月先〜・いつか）。名前＝やること・サブタスク・人の名前
+function _p2YkPerOk(ym) { if (!_p2YkPer) return true; var cur = _p2Ym(0), mx = _p2YmAdd(cur, 6); if (_p2YkPer === 'm') return ym === cur; if (_p2YkPer === 'mid') return ym !== 'someday' && ym > cur && ym <= mx; return ym === 'someday' || ym > mx; }
+function _p2YkQOk(o) {
+  var q = String(_p2YkQ || '').replace(/[\s　]+/g, '').toLowerCase(); if (!q) return true;
+  var w = _p2YkWho(o), m = w.k === 'm' ? (state.members || []).concat(state.idealMembers || []).filter(function(x) { return x && x.id === w.id; })[0] : null;
+  var tx = [o.title || o.t || '', w.lb, m ? (m.lastName || '') + (m.firstName || '') : ''].concat((o.subs || []).map(function(x) { return x.t; })).join('|').replace(/[\s　]+/g, '').toLowerCase();
+  return tx.indexOf(q) >= 0;
+}
+function _p2YkListRe() { var el = document.getElementById('p2YkList'); if (el) el.innerHTML = _p2YkListHtml(); }
+function _p2YkListHtml() {
+  var cur = _p2Ym(0), td = evTodayYmd(), h = '', fl = !!(_p2YkPer || String(_p2YkQ || '').trim());
+  var T = _p2YkTasks().filter(_p2YkPass).filter(_p2YkQOk), N = _p2YkN().filter(_p2YkPass).filter(_p2YkQOk);
+  var od = T.filter(function(e) { return !e.done && ((e.date && e.date < td) || (e.planYm !== 'someday' && e.planYm < cur)); });
+  if (_p2YkPer && _p2YkPer !== 'm') od = [];
+  var yms = {}; T.forEach(function(e) { if (od.indexOf(e) < 0) yms[e.planYm] = 1; }); N.forEach(function(n) { if (n.ym >= cur || n.ym === 'someday') yms[n.ym] = 1; }); if (!fl) yms[cur] = 1;
+  var keys = Object.keys(yms).filter(function(k) { return (k === 'someday' || k >= cur) && _p2YkPerOk(k); }).sort(function(a, b) { return a === 'someday' ? 1 : (b === 'someday' ? -1 : a.localeCompare(b)); });
+  var n0 = 0;
   if (od.length) h += '<div class="yk-g od"><div class="yk-gh">⚠ 期限切れ<em>' + od.length + '</em></div>' + od.map(function(e) { return _p2YkRow(e, td); }).join('') + '</div>';
   keys.forEach(function(ym) {
     var nn = N.filter(function(n) { return n.ym === ym; }), tt = T.filter(function(e) { return e.planYm === ym && od.indexOf(e) < 0; });
     var dn = tt.filter(function(e) { return e.done; }); if (!_p2YkDn) tt = tt.filter(function(e) { return !e.done; });
+    if (fl && !nn.length && !tt.length) return; n0++;
     tt.sort(function(a, b) { return String(a.date || '9999').localeCompare(String(b.date || '9999')) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')); });
     h += '<div class="yk-g' + (ym === cur ? ' cur' : '') + '"><div class="yk-gh">' + _p2YkYmLb(ym) + '<em>' + (tt.length + nn.length) + '</em>' + (dn.length ? '<small>済み ' + dn.length + '</small>' : '') + '</div>'
       + nn.map(function(n) { return _p2YkNRow(n); }).join('') + tt.map(function(e) { return _p2YkRow(e, td); }).join('')
       + (!nn.length && !tt.length ? '<div class="yk-em">まだありません</div>' : '') + '</div>';
   });
-  return h + '</div>' + _p2YkCalPop();
+  if (fl && !n0 && !od.length) h += '<div class="yk-em" style="padding:22px 0">見つかりません</div>';
+  return h;
 }
 function _p2YkWhoChip(o) { var w = _p2YkWho(o); return '<span class="who ' + w.k + '">' + (w.k === 'all' ? '全体' : '👤' + evEsc(w.lb)) + '</span>'; }
+// v761: 期日は計画シートと同じ窓（✅ ToDoに入れる／📅 予定に入れる）
+function _p2YkDtChip(e, td, ro, big) {
+  var ev = e.type === 'event', ng = e.date && e.date < td && !e.done;
+  var lb = e.date ? (ev ? '📅 ' : '✅ ') + parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) + (e.time ? ' ' + e.time : '') : (big ? '未設定（押して ToDo・予定に入れる）' : '期日');
+  return '<span class="ykd' + (big ? ' big' : '') + (e.date ? (ev ? ' ev' : ' td') : '') + (ng ? ' ng' : '') + '"' + (ro ? '' : ' onpointerdown="window._p2ShDtTap=Date.now()" onclick="event.stopPropagation();p2YkDt(\'' + e.id + '\')"') + ' title="期日（ToDo・予定に入れる）">' + lb + '</span>';
+}
+function p2YkDt(id) { try { _p2ShCss2(); } catch (eC) {} p2ShDt(id); }
+function p2YkAddDt() { // 書いた物を足して、そのまま期日の窓
+  if (_p2YkAddTy === 'n') return;
+  var el = document.getElementById('p2YkIn'); if (!el || !String(el.value || '').trim()) { toast('先にやることを書いてください'); if (el) el.focus(); return; }
+  var e = p2YkAdd(1); if (e) p2YkDt(e.id);
+}
 function _p2YkCalChip(ids, kind, id) {
   var ev = (ids || []).map(function(x) { return findEvent(x); }).filter(function(e) { return e && !e.deleted; })[0];
   return '<span class="cal' + (ev ? ' on' : '') + '" onclick="event.stopPropagation();' + (ev ? 'openEventModal(\'' + ev.id + '\')' : 'p2YkCal(\'' + kind + '\',\'' + id + '\')') + '" title="' + (ev ? '入れた予定を開く' : '予定に入れる') + '">📅' + (ev ? ' ' + parseInt(ev.date.slice(5, 7), 10) + '/' + parseInt(ev.date.slice(8), 10) + (ev.time ? ' ' + ev.time : '') : '') + '</span>';
@@ -16967,11 +16999,11 @@ function _p2YkRow(e, td) {
     h += '<div class="yk-lw"' + (ro9 ? '' : ' data-ykk="t" data-ykid="' + e.id + '"') + '>' + (ro9 ? '' : '<span class="yk-dl" onclick="p2YkDelNow(\'t\',\'' + e.id + '\')">' + icn('trash') + '<small>消す</small></span>')
       + '<div class="ln"><span class="ck" onclick="p2YkDone(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span>'
       + '<span class="t" onclick="p2YkOpen(\'' + e.id + '\')">' + (c ? '<i class="tg" style="--c:' + c.c + '">' + evEsc(c.s) + '</i>' : '') + evEsc(e.title || '') + (subs.length ? '<small class="sb">' + sd + '/' + subs.length + '</small>' : '') + '</span>'
-      + _p2YkWhoChip(e) + '<span class="dt' + (e.date && e.date < td && !e.done ? ' ng' : '') + '">' + (e.date ? parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) : '') + '</span>' + _p2YkCalChip(e.ykCal, 't', e.id)
+      + _p2YkWhoChip(e) + _p2YkDtChip(e, td, ro9) + ((e.ykCal || []).length ? _p2YkCalChip(e.ykCal, 't', e.id) : '')
       + (ro9 ? '' : '<span class="yk-hx" onclick="p2YkDelNow(\'t\',\'' + e.id + '\')" title="消す">' + icn('trash') + '</span>') + '</div></div>';
   }
   if (op) h += '<div class="yk-fm"><div class="fr"><em>だれの</em><select onchange="p2YkWhoSet(\'' + e.id + '\',this.value)">' + _p2YkWhoOpts(e.memberId || e.who || 'me') + '</select></div>'
-    + '<div class="fr"><em>期限</em><input type="date" value="' + (e.date || '') + '" onchange="p2YkDate(\'' + e.id + '\',this.value)"></div>'
+    + '<div class="fr"><em>期日</em>' + _p2YkDtChip(e, evTodayYmd(), ro9, 1) + '</div>'
     + '<div class="fr"><em>月</em><select onchange="p2YkYm(\'' + e.id + '\',this.value)">' + _p2YkYmOpts(e.planYm) + '</select></div>'
     + '<div class="fd" onclick="p2YkDelNow(\'t\',\'' + e.id + '\')">' + icn('trash') + ' このやることを消す</div></div>';
   return h + _p2YkSubsHtml('t', e.id, subs, ro9) + '</div>';
@@ -17019,8 +17051,8 @@ function p2YkNF(id, k, v) {
 // ── 操作 ──
 function _p2YkKeep() { var g = function(id) { var el = document.getElementById(id); return el ? el.value : ''; }; _p2YkDraft = { t: g('p2YkIn'), g: g('p2YkG'), u: g('p2YkU'), v: g('p2YkV') }; }
 function p2YkTy(t) { _p2YkKeep(); _p2YkAddTy = t || (_p2YkAddTy === 'n' ? 't' : 'n'); renderPlan(); setTimeout(function() { var el = document.getElementById(_p2YkAddTy === 'n' ? 'p2YkG' : 'p2YkIn'); if (el) el.focus(); }, 20); } // 書いた文は残す
-function p2YkAdd() {
-  var el = document.getElementById('p2YkIn'), v = String((el && el.value) || '').trim(); if (!v) return;
+function p2YkAdd(noFocus) {
+  var el = document.getElementById('p2YkIn'), v = String((el && el.value) || '').trim(), e = null; if (!v) return;
   var who = _p2YkAddWho, mid = who !== 'me' && who !== 'all' ? who : '';
   if (_p2YkAddTy === 'n') {
     var gv = function(id) { var x = document.getElementById(id); return x ? String(x.value || '').trim() : ''; };
@@ -17031,11 +17063,12 @@ function p2YkAdd() {
     _p2YkAddTy = 't';
   } else {
     if (typeof eventsUid === 'function' && !eventsUid()) { toast('ログインすると使えます'); return; }
-    var e = _tdMakeTask(v.slice(0, 120), '', ''); e.yk = 1; e.planYm = _p2YkAddYm; e.subs = [];
+    e = _tdMakeTask(v.slice(0, 120), '', ''); e.yk = 1; e.planYm = _p2YkAddYm; e.subs = [];
     if (mid) { e.memberId = mid; e.memberIds = [mid]; e.vis = 'both'; e.selfShow = true; } else e.who = who;
     state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
   }
-  _p2YkDraft = null; renderPlan(); setTimeout(function() { var n = document.getElementById('p2YkIn'); if (n) n.focus(); }, 30);
+  _p2YkDraft = null; renderPlan(); if (!noFocus) setTimeout(function() { var n = document.getElementById('p2YkIn'); if (n) n.focus(); }, 30);
+  return e;
 }
 function p2YkOpen(id) { if (window._ykSwAt && Date.now() - window._ykSwAt < 350) return; _p2YkOpen = _p2YkOpen === id ? '' : id; renderPlan(); if (_p2YkOpen) setTimeout(function() { var el = document.getElementById('p2YkEt'); if (el) try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {} }, 30); }
 function p2YkDone(id) { try { toggleEventDone(id); } catch (e) {} renderPlan(); }
@@ -17129,6 +17162,8 @@ function _p2YkCss() {
   st.textContent = '.yk{max-width:780px;margin:0 auto 30px}'
     + '.yk-add{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:16px;border:1px solid var(--border);background:var(--surface)}.yk-add input.in{width:100%;box-sizing:border-box;min-width:0;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:12px 14px;outline:none}.yk-add input.in:focus{border-color:var(--accent)}.yk-add input.in::placeholder{color:var(--text-dim);font-weight:700}.yk-add .opt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.yk-add .opt .go{margin-left:auto}.yk-add .nb{padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap}.yk-add .nb.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}.yk-add .nrow{display:flex;gap:8px;flex-wrap:wrap}.yk-add .nrow label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:900;color:var(--text-mid)}.yk-add .nrow input{width:70px;min-width:0;flex:none;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font:900 17px Inter,sans-serif;text-align:center;padding:8px 6px;outline:none}.yk-add .nrow input.u{width:64px;font-weight:800;font-size:15px;font-family:inherit}.yk-add .nrow input:focus{border-color:var(--accent)}.yk-add .ty{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;flex:none}.yk-add .ty span{padding:6px 10px;font-size:12.5px;font-weight:900;color:var(--text-dim);cursor:pointer}.yk-add .ty span.on{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}'
     + '.yk-add select,.yk-f select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:6px 8px;font-size:13px;font-weight:800;font-family:inherit}.yk-add .go{padding:7px 14px;border-radius:10px;background:var(--accent);color:#06251c;font-weight:900;font-size:13px;cursor:pointer}'
+    + '.yk-q{display:flex;flex-direction:column;gap:8px;margin:8px 2px 2px}.yk-q input{width:100%;box-sizing:border-box;min-width:0;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-weight:700;font-size:16px;font-family:inherit;padding:10px 12px;outline:none;-webkit-appearance:none;appearance:none}.yk-q input:focus{border-color:var(--accent)}.yk-q .per{display:flex;gap:6px}.yk-q .per span{flex:1;text-align:center;padding:7px 0;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:900;color:var(--text-mid);cursor:pointer}.yk-q .per span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}'
+    + '.ykd{flex:none;font:800 12px Inter,"Noto Sans JP",sans-serif;padding:4px 8px;border-radius:9px;border:1px dashed var(--border2,var(--border));color:var(--text-dim);cursor:pointer;white-space:nowrap}.ykd.td{border-style:solid;border-color:color-mix(in srgb,var(--accent) 50%,var(--border));color:var(--accent)}.ykd.ev{border-style:solid;border-color:color-mix(in srgb,#8B7CFF 60%,var(--border));color:#c7bfff;background:color-mix(in srgb,#8B7CFF 14%,transparent)}.ykd.ng{border-color:#FF6B7F;color:#FF6B7F;background:transparent}.ykd.big{flex:1;font-size:14px;padding:9px 10px;text-align:left}.yk-add .dtb{padding:7px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap}'
     + '.yk-f{display:flex;align-items:center;gap:10px;margin:10px 2px 4px;font-size:12.5px;font-weight:800;color:var(--text-dim)}.yk-f label{display:inline-flex;align-items:center;gap:4px;cursor:pointer}'
     + '.yk-g{margin-top:14px}.yk-gh{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:900;color:var(--text-mid);padding:0 4px 6px;border-bottom:1px solid var(--border)}.yk-g.cur .yk-gh{color:var(--accent)}.yk-g.od .yk-gh{color:#FF6B7F}.yk-gh em{font-style:normal;font-size:11.5px;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text-mid)}.yk-gh small{margin-left:auto;font-size:11.5px;color:var(--text-dim)}'
     + '.yk-r{border-bottom:1px solid var(--border)}.yk-r .ln{display:flex;align-items:center;gap:8px;padding:9px 4px;min-height:44px}.yk-r .ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#0b0f17}.yk-r .ck:hover{border-color:var(--accent)}.yk-r.dn>.ln .ck{background:var(--accent);border-color:var(--accent)}'
@@ -17242,7 +17277,7 @@ function _p2PageParts() {
 }
 function _p2PageHtml() {
   var P = _p2PageParts(), k = P.k, subs = P.subs, i = P.i, body = P.body, next = P.next, nextOn = P.nextOn, back = P.back;
-  return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && (i || k === 'dok') && k !== 'do' ? '・' + subs[i] : '') + '</b></span><span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
+  return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && (i || k === 'dok') && k !== 'do' ? '・' + subs[i] : '') + '</b></span>' + (k === 'yk' ? '<span onclick="event.stopPropagation()">' + _uxIb('yk') + '</span>' : '') + '<span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
     + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, P.dots || subs, P.dotI !== null && P.dotI !== undefined ? P.dotI : i, P.dotOn || 'p2PgSub', next, nextOn) + '</div>';
 }
 // S稼働（いちばん大事な数字）
@@ -19627,7 +19662,7 @@ function _p2PcxHtml() {
   var mk = { ideal: !!g.p1, goal: !!(p.title && p.deadline), mon: _p2Declared(_p2Ym(0)) };
   var tab = function(k, lb) { return '<span class="' + (k === sel ? 'on' : '') + '" onclick="p2Go(\'' + k + '\')">' + lb + (mk[k] ? '<i>✓</i>' : (k === D.nk ? '<i class="w">●</i>' : '')) + (k === 'rev' && D.rv ? '<i class="r">●</i>' : '') + '</span>'; };
   var hd = '<div class="pcx2-hd"><h1>PLAN<small>' + parseInt(ym.slice(5), 10) + '月・残り' + D.left + '日</small></h1><div class="pcx2-tabs">'
-    + tab('year', '年の目標・ロードマップ') + tab('sheet', '計画シート') + tab('yk', 'やること') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') + tab('ck', 'チェック') // v686・v742: チェック
+    + tab('year', '年の目標・ロードマップ') + tab('sheet', '計画シート') + tab('yk', '立案') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') + tab('ck', 'チェック') // v686・v742: チェック
     + '<b class="sep"></b>' + (D.rv ? tab('rev', '振り返り') : '') + tab('tool', 'ツール') + '</div></div>';
   return '<div class="pcx2">' + hd + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>'; // v630: 左の大きなタイルの列をやめて、上にタブ
 }
@@ -19661,7 +19696,7 @@ function _p2PcxHead(t, chip, right, sub) {
 function _p2PcxPane(D) {
   var k = _p2Pg, ym = D.ym, b = function(lb, on, cls) { return '<span class="pcx-b' + (cls ? ' ' + cls : '') + '" onclick="' + on + '">' + lb + '</span>'; };
   if (k === 'sheet') return _p2ShPcHtml(b); // v686
-  if (k === 'yk') return _p2PcxHead('やること', '', '') + '<div class="pcx-one" style="max-width:none">' + _p2YkHtml() + '</div>'; // v715
+  if (k === 'yk') return _p2PcxHead('<span style="display:inline-flex;align-items:center;gap:12px;white-space:nowrap">立案' + _uxIb('yk') + '</span>', '', '') + '<div class="pcx-one" style="max-width:none">' + _p2YkHtml() + '</div>'; // v715
   if (k === 'year') return _p2PcxHead('年の目標・ロードマップ', '', _p2SumSeg('yr')) + '<div class="pcx-one" style="max-width:none">' + _p2YearPageHtml(true) + '</div>'; // v718: 右上で編集／サマリー
   if (k === 'sum') return _p2SumHtml();
   if (k === 'goal') { // v630: 目標はポップアップをやめて画面に直接（①最終ゴール ②1年ごとの目標 ③次の山）
@@ -38154,6 +38189,7 @@ function p2ShDtOk() {
   var d = (document.getElementById('p2ShDtD') || {}).value || '', t = (document.getElementById('p2ShDtT') || {}).value || '', te = (document.getElementById('p2ShDtTE') || {}).value || '';
   if (!d) { toast('日にちを選んでください'); return; }
   if (S.ck) { _p2CkDtOk(S, d, t, te); return; }
+  if (e.yk && !e.planCat) e.planYm = d.slice(0, 7); // v761: 立案のタスクは期日の月に並べる
   e.date = d; e.updatedAt = new Date().toISOString();
   if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
   else { e.type = 'task'; e.time = t || ''; delete e.endTime; } // v743: ToDoも時刻（任意）
@@ -38523,7 +38559,7 @@ function _p2ShIssHtml(ym) {
     if (_p2ShIssSel === mid && !ro) return '<div class="iss-r on"><div class="h"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small><span class="x" onclick="p2ShIssDone()">完了</span><span class="dl" onmousedown="event.preventDefault()" onclick="p2ShIssDel(\'' + mid + '\')" title="この課題を消す">' + icn('trash') + '</span></div>'
       + '<textarea id="p2ShIssIn" class="sp-kz" rows="2" placeholder="' + evEsc(pv[mid] ? '先月：' + pv[mid] : '例：審査フォロー。Q3の動員が足りない→DLRを2週目までに') + '" oninput="_p2ShGrow(this)" onchange="p2ShIssSave(\'' + mid + '\',this.value)">' + evEsc(I[mid] || '') + '</textarea></div>';
     var acts = _p2ShIssAct === mid ? '<div class="cats">' + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="p2ShIssToAct(\'' + mid + '\',\'' + c.k + '\')">' + c.s + '</span>'; }).join('')
-      + '<span style="--c:var(--accent)" onclick="p2ShIssTo(\'' + mid + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'ev\')">📅 予定</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'memo\')">🗒 メモ</span></div>' : '';
+      + '<span style="--c:var(--accent)" onclick="p2ShIssTo(\'' + mid + '\',\'yk\')">✅ 立案へ</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'ev\')">📅 予定</span><span style="--c:var(--text-mid)" onclick="p2ShIssTo(\'' + mid + '\',\'memo\')">🗒 メモ</span></div>' : '';
     return '<div class="iss-r"><div class="h" onclick="p2ShIssTap(\'' + mid + '\')"><b>' + evEsc(nm) + '</b><small>' + evEsc(ttl) + '</small>' + (ro ? '' : '<span class="a" onclick="event.stopPropagation();p2ShIssAct(\'' + mid + '\')">→ 残す先</span><span class="dl" onclick="event.stopPropagation();p2ShIssDel(\'' + mid + '\')" title="この課題を消す">' + icn('trash') + '</span>') + '</div>'
       + '<div class="t" onclick="p2ShIssTap(\'' + mid + '\')">' + evEsc(I[mid] || '') + '</div>' + _p2ShIssBadges(ym, mid) + acts + '</div>';
   };
@@ -38531,10 +38567,10 @@ function _p2ShIssHtml(ym) {
   var sel = _p2ShIssSel && !ro ? row(_p2ShIssSel) : '';
   // v715: 人に紐づかないメモ（自分・全体）。あとから残す先（やること・予定）を決める
   var F = _p2ShM(ym).issF || [], fr = F.map(function(f) {
-    var acts = _p2ShIssAct === 'F:' + f.id ? '<div class="cats"><span style="--c:var(--accent)" onclick="p2ShIssFTo(\'' + f.id + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2ShIssFTo(\'' + f.id + '\',\'ev\')">📅 予定</span><span style="--c:#FF6B7F" onclick="p2ShIssFTo(\'' + f.id + '\',\'del\')">✕ 消す</span></div>' : '';
+    var acts = _p2ShIssAct === 'F:' + f.id ? '<div class="cats"><span style="--c:var(--accent)" onclick="p2ShIssFTo(\'' + f.id + '\',\'yk\')">✅ 立案へ</span><span style="--c:var(--text-mid)" onclick="p2ShIssFTo(\'' + f.id + '\',\'ev\')">📅 予定</span><span style="--c:#FF6B7F" onclick="p2ShIssFTo(\'' + f.id + '\',\'del\')">✕ 消す</span></div>' : '';
     var yk = f.yk && findEvent(f.yk); yk = yk && !yk.deleted ? yk : null;
     return '<div class="iss-r"><div class="h"><b>👤 自分・全体</b>' + (ro ? '' : '<span class="a" onclick="p2ShIssAct(\'F:' + f.id + '\')">→ 残す先</span><span class="dl" onclick="event.stopPropagation();p2ShIssFTo(\'' + f.id + '\',\'del\')" title="このメモを消す">' + icn('trash') + '</span>') + '</div><div class="t" onclick="p2ShIssFEd(\'' + f.id + '\')">' + evEsc(f.t) + '</div>'
-      + (yk ? '<div class="lk"><i style="--c:var(--accent)">✅ やること' + (yk.done ? ' ✓' : '') + '</i></div>' : '') + acts + '</div>';
+      + (yk ? '<div class="lk"><i style="--c:var(--accent)">✅ 立案' + (yk.done ? ' ✓' : '') + '</i></div>' : '') + acts + '</div>';
   }).join('');
   var fin = ro ? '' : '<input class="iss-fi" placeholder="＋ 自分・全体のメモ（Enter）" maxlength="200" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2ShIssFAdd(this)}">';
   return '<div class="iss"><div class="iss-hd">課題<small>' + _p2ShMonLb(ym) + '</small><span class="tg" onclick="p2ShIssTgl()">' + (_p2ShMapPc && !_p2ShMapLr ? 'たたむ ›' : '▾ たたむ') + '</span></div>' + fin + sel + list + fr
@@ -38555,7 +38591,7 @@ function p2ShIssFTo(id, kind) {
   if (kind === 'ev') { openEventModal(null, '', '', 'event'); setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = f.t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30); return; }
   var e = _tdMakeTask(f.t.slice(0, 120), '', ''); e.yk = 1; e.planYm = ym; e.subs = []; e.who = 'me';
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
-  f.yk = e.id; saveGoals(); _p2IssRe(); toast('✅ やることに入れました');
+  f.yk = e.id; saveGoals(); _p2IssRe(); toast('✅ 立案に入れました');
 }
 function _p2ShIssCss() {
   if (document.getElementById('p2IssCss')) return;
@@ -38671,7 +38707,7 @@ function p2ShIssTo(mid, kind) {
   if (kind === 'yk') { // v715: やることへ（その人つき）
     var ey = _tdMakeTask(t, '', ''); ey.yk = 1; ey.planYm = ym; ey.subs = []; ey.memberId = mid; ey.memberIds = [mid]; ey.vis = 'both'; ey.selfShow = true;
     state.events.push(ey); saveEventDoc(ey); try { updateEventsBadge(); } catch (eB) {}
-    L.yk = ey.id; saveGoals(); _p2ShIssAct = ''; _p2IssRe(); toast('✅ やることに入れました'); return;
+    L.yk = ey.id; saveGoals(); _p2ShIssAct = ''; _p2IssRe(); toast('✅ 立案に入れました'); return;
   }
   if (kind === 'memo') { if (_p2ShMemoPut(ym, mid, _p2ShIss(ym)[mid])) { L.memo = 1; saveGoals(); toast('🗒 メンバーのメモに入れました'); } _p2ShIssAct = ''; _p2IssRe(); return; }
   // タスク・予定：入力の画面を開く（その人・課題の文が入った状態）。保存されたら連動
@@ -38695,7 +38731,7 @@ function _p2ShIssBadges(ym, mid) {
   if (L.act) { var a = findEvent(L.act); if (a && !a.deleted) { var c = P2_SH_CAT.filter(function(x) { return x.k === a.planCat; })[0]; b.push('<i style="--c:' + (c ? c.c : 'var(--accent)') + '">' + (c ? c.s : '行動') + (a.done ? ' ✓' : '') + '</i>'); } }
   if (L.task) { var k = findEvent(L.task); if (k && !k.deleted) b.push('<i onclick="event.stopPropagation();openEventModal(\'' + k.id + '\')">📝 タスク' + (k.date ? ' ' + parseInt(k.date.slice(5, 7), 10) + '/' + parseInt(k.date.slice(8), 10) : '') + (k.done ? ' ✓' : '') + '</i>'); }
   if (L.ev) { var v = findEvent(L.ev); if (v && !v.deleted) b.push('<i onclick="event.stopPropagation();openEventModal(\'' + v.id + '\')">📅 ' + (v.date ? parseInt(v.date.slice(5, 7), 10) + '/' + parseInt(v.date.slice(8), 10) : '予定') + (v.time ? ' ' + v.time : '') + '</i>'); }
-  if (L.yk) { var y9 = findEvent(L.yk); if (y9 && !y9.deleted) b.push('<i style="--c:var(--accent)">✅ やること' + (y9.done ? ' ✓' : '') + '</i>'); }
+  if (L.yk) { var y9 = findEvent(L.yk); if (y9 && !y9.deleted) b.push('<i style="--c:var(--accent)">✅ 立案' + (y9.done ? ' ✓' : '') + '</i>'); }
   if (L.memo) b.push('<i>🗒 メモ</i>');
   return b.length ? '<div class="lk">' + b.join('') + '</div>' : '';
 }
@@ -38796,7 +38832,8 @@ UX_INFO.yr1 = { t: 'マイルストーン', h: '月を押すと「直近の目�
 UX_INFO.yr2 = { t: '直近の目標', h: '最終目標までの通過点（1年前後）。ここから「必要な数」と「フロントを出す締め切り」が決まります。BRを目指す時は、月収の代わりにファーストボーナスの目標です' };
 UX_INFO.yr3 = { t: '今 → 必要 → ギャップ', h: '薄い数字は自動です。違う時はその場で書きかえられます（空にすると自動に戻る）。<br><b>今</b>：MAPから（フロントBR＝自分から下で最初に出てくるBR、流通＝チームPT、Qルビー＝ルビーの人数、候補＝優先度「高」の人）<br><b>必要</b>：直近の目標から（フロントBR＝タイトルの条件、Qルビー＝月収÷1Qルビーあたりの月収、環境＝月収÷1環境あたりの月収、ルビー候補＝Qルビー×倍率）<br><b>エキスパート</b>：流通のプロ・アカデミーを卒業したメンバー<br>計算のもとは「⚙ 設定」で変えられます。組織が' + P2_YR_LOCK + '人（自分をのぞく）になると表が使えます' };
 UX_INFO.yr4 = { t: 'フロントのペース', h: '今月から、フロントを出す締め切りの月まで。数字は計画シート・月の目標と同じです（理想MAPで決まる月は理想MAPの人数）。<br>「均等に割り振る」で必要なフロントを月に分けます。シミュレーションの「ロードマップのペースに入れる」からも入ります' };
-UX_INFO.yr5 = { t: '戦略・戦術', h: '戦略の下に戦術、戦術の下にタスクを、思いつくまま何個でも書けます。<br>行を押すと、期日・対象者（名前で探す）・数値を入れられます。<br>あとから「→ 入れる先」で、やること（数値があれば数値の目標）・計画シートの行動・予定・メンバーのメモに入れます。入れた先は札で出て、済んだら ✓。<br>組織が' + P2_YR_LOCK + '人（自分をのぞく）になると使えます' };
+UX_INFO.yk = { t: '立案', h: '月間、中期、長期のタスクを管理するページです。書いた後にToDo、カレンダーに追加することもできます。<br><br><b>期日</b>を押すと「✅ ToDoに入れる／📅 予定に入れる」を選べます。<br><b>月間</b>＝今月、<b>中期</b>＝来月〜6ヶ月先、<b>長期</b>＝それより先・いつか', ok: 'OK' };
+UX_INFO.yr5 = { t: '戦略・戦術', h: '戦略の下に戦術、戦術の下にタスクを、思いつくまま何個でも書けます。<br>行を押すと、期日・対象者（名前で探す）・数値を入れられます。<br>あとから「→ 入れる先」で、立案（数値があれば数値の目標）・計画シートの行動・予定・メンバーのメモに入れます。入れた先は札で出て、済んだら ✓。<br>組織が' + P2_YR_LOCK + '人（自分をのぞく）になると使えます' };
 var _p2YrSetOn = false; // v721: ③の計算の設定（ふだんは隠す）
 function p2YrSetTgl() { _p2YrSetOn = !_p2YrSetOn; renderPlan(); } // ③の表と⑤は組織（自分をのぞく）が15人から
 var _p2YrMoSel = '', _p2YrAct = '';
@@ -38902,7 +38939,7 @@ function p2YrMemoTo(id, kind) {
   if (kind === 'ev') { openEventModal(null, '', '', 'event'); setTimeout(function() { var el = document.getElementById('evTitle'); if (el) { el.value = f.t; try { el.dispatchEvent(new Event('input')); } catch (e) {} } }, 30); return; }
   var e = _tdMakeTask(f.t.slice(0, 120), '', ''); e.yk = 1; e.planYm = _p2Ym(0); e.subs = []; e.who = 'me';
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
-  f.yk = e.id; saveGoals(); renderPlan(); toast('✅ やることに入れました');
+  f.yk = e.id; saveGoals(); renderPlan(); toast('✅ 立案に入れました');
 }
 function _p2YrCss() {
   if (document.getElementById('p2YrCss')) return;
@@ -39076,15 +39113,15 @@ function _ysMeta(it) {
 }
 function _ysBadge(it) {
   var L = it.L; if (!L) return '';
-  if (L.k === 'ykn') { var n = _p2YkN().filter(function(x) { return x.id === L.id; })[0]; return n ? '<i class="b">✅ やること ' + (+n.v || 0) + '/' + n.g + '</i>' : ''; }
+  if (L.k === 'ykn') { var n = _p2YkN().filter(function(x) { return x.id === L.id; })[0]; return n ? '<i class="b">✅ 立案 ' + (+n.v || 0) + '/' + n.g + '</i>' : ''; }
   if (L.k === 'memo') return '<i class="b">🗒 メモ</i>';
   var e = findEvent(L.id); if (!e || e.deleted) return '';
-  var lb = L.k === 'yk' ? '✅ やること' : (L.k === 'ev' ? '📅 予定' + (e.date ? ' ' + _ysMd(e.date) : '') : '📋 ' + ((P2_SH_CAT.filter(function(c) { return c.k === e.planCat; })[0] || {}).s || '行動'));
+  var lb = L.k === 'yk' ? '✅ 立案' : (L.k === 'ev' ? '📅 予定' + (e.date ? ' ' + _ysMd(e.date) : '') : '📋 ' + ((P2_SH_CAT.filter(function(c) { return c.k === e.planCat; })[0] || {}).s || '行動'));
   return '<i class="b' + (e.done ? ' ok' : '') + '" onclick="event.stopPropagation();openEventModal(\'' + e.id + '\')">' + lb + (e.done ? ' ✓' : '') + '</i>';
 }
 function _ysDest(it) {
   var hasM = _ysMid(it).length > 0;
-  return '<div class="ys-dest"><span style="--c:var(--accent)" onclick="ysTo(\'' + it.id + '\',\'yk\')">✅ やること' + (+it.n > 0 ? '（数値の目標）' : '') + '</span>'
+  return '<div class="ys-dest"><span style="--c:var(--accent)" onclick="ysTo(\'' + it.id + '\',\'yk\')">✅ 立案' + (+it.n > 0 ? '（数値の目標）' : '') + '</span>'
     + P2_SH_CAT.map(function(c) { return '<span style="--c:' + c.c + '" onclick="ysTo(\'' + it.id + '\',\'act:' + c.k + '\')">📋 ' + c.s + '</span>'; }).join('')
     + '<span style="--c:#5AD7FF" onclick="ysTo(\'' + it.id + '\',\'ev\')">📅 予定</span>' + (hasM ? '<span style="--c:var(--text-mid)" onclick="ysTo(\'' + it.id + '\',\'memo\')">🗒 メンバーのメモ</span>' : '') + '</div>';
 }
@@ -39141,14 +39178,14 @@ function ysTo(id, kind) {
       var op = !!(document.getElementById('eventModal') && document.getElementById('eventModal').classList.contains('open')); if (!op && n > 6) return; if (n < 1200) setTimeout(function() { watch(n + 1); }, 500); })(0);
     return;
   }
-  if (kind === 'yk' && +it.n > 0) { var nid = 'n' + Date.now().toString(36); _p2YkN().push({ id: nid, t: it.t.slice(0, 60), g: +it.n, v: 0, ym: ym, mid: mids[0] || '', who: mids.length ? '' : who, cal: [] }); it.L = { k: 'ykn', id: nid }; saveGoals(); renderPlan(); toast('✅ やること（数値の目標）に入れました'); return; }
+  if (kind === 'yk' && +it.n > 0) { var nid = 'n' + Date.now().toString(36); _p2YkN().push({ id: nid, t: it.t.slice(0, 60), g: +it.n, v: 0, ym: ym, mid: mids[0] || '', who: mids.length ? '' : who, cal: [] }); it.L = { k: 'ykn', id: nid }; saveGoals(); renderPlan(); toast('✅ 立案（数値の目標）に入れました'); return; }
   var e = _tdMakeTask(it.t.slice(0, 120), it.d || '', '');
   if (kind === 'yk') { e.yk = 1; e.planYm = ym; e.subs = (it.kids || []).map(function(k) { return { t: k.t.slice(0, 100), dn: _ysDone(k) }; }); }
   else { e.planYm = ym; e.planCat = kind.slice(4); }
   if (mids.length) { e.memberId = mids[0]; e.memberIds = mids.slice(); e.vis = 'both'; e.selfShow = true; } else if (kind === 'yk') e.who = who;
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
   it.L = { k: kind === 'yk' ? 'yk' : 'act', id: e.id }; saveGoals(); renderPlan();
-  toast(kind === 'yk' ? '✅ やることに入れました' : '📋 計画シートの「' + ((P2_SH_CAT.filter(function(c) { return c.k === kind.slice(4); })[0] || {}).s || '') + '」に入れました（' + parseInt(ym.slice(5), 10) + '月）');
+  toast(kind === 'yk' ? '✅ 立案に入れました' : '📋 計画シートの「' + ((P2_SH_CAT.filter(function(c) { return c.k === kind.slice(4); })[0] || {}).s || '') + '」に入れました（' + parseInt(ym.slice(5), 10) + '月）');
 }
 // ── 直す（スマホは下から・PCは窓）──
 function ysEdit(id) { _ysEd = id; _ysQ = ''; _ysAct = ''; renderPlan(); setTimeout(function() { var t = document.getElementById('ysEdT'); if (t) { _p2ShGrow && _p2ShGrow(t); } }, 30); }
@@ -39216,10 +39253,10 @@ function _p2YrMemoHtml(ro, lk, on) {
   var hd = '<div class="yr-h"><span class="st">5</span>戦略・やり方のメモ' + _uxIb('yr5') + '</div>';
   if (lk) return '<div class="yr-sec">' + hd + '<div class="yr-lock">🔒 組織が<b>' + P2_YR_LOCK + '人</b>になると使えます<small>今 ' + on + '人（自分をのぞく）。それまでは計画シートの「行動」と「やること」で進めましょう</small></div></div>';
   var L = _p2Yr().memo, rows = L.map(function(f) {
-    var acts = _p2YrAct === f.id ? '<div class="cats"><span style="--c:var(--accent)" onclick="p2YrMemoTo(\'' + f.id + '\',\'yk\')">✅ やることへ</span><span style="--c:var(--text-mid)" onclick="p2YrMemoTo(\'' + f.id + '\',\'ev\')">📅 予定</span><span style="--c:#FF6B7F" onclick="p2YrMemoTo(\'' + f.id + '\',\'del\')">✕ 消す</span></div>' : '';
+    var acts = _p2YrAct === f.id ? '<div class="cats"><span style="--c:var(--accent)" onclick="p2YrMemoTo(\'' + f.id + '\',\'yk\')">✅ 立案へ</span><span style="--c:var(--text-mid)" onclick="p2YrMemoTo(\'' + f.id + '\',\'ev\')">📅 予定</span><span style="--c:#FF6B7F" onclick="p2YrMemoTo(\'' + f.id + '\',\'del\')">✕ 消す</span></div>' : '';
     var yk = f.yk && findEvent(f.yk); yk = yk && !yk.deleted ? yk : null;
     return '<div class="iss-r"><div class="h"><b>💡 メモ</b>' + (ro ? '' : '<span class="a" onclick="p2YrMemoAct(\'' + f.id + '\')">→ 残す先</span>') + '</div><div class="t" onclick="p2YrMemoEd(\'' + f.id + '\')">' + evEsc(f.t) + '</div>'
-      + (yk ? '<div class="lk"><i style="--c:var(--accent)">✅ やること' + (yk.done ? ' ✓' : '') + '</i></div>' : '') + acts + '</div>';
+      + (yk ? '<div class="lk"><i style="--c:var(--accent)">✅ 立案' + (yk.done ? ' ✓' : '') + '</i></div>' : '') + acts + '</div>';
   }).join('');
   return '<div class="yr-sec">' + hd + '<div class="iss">' + (ro ? '' : '<input class="iss-fi" placeholder="＋ 戦略・やり方のメモ（Enter）" maxlength="200" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2YrMemoAdd(this)}">')
     + rows + (rows ? '' : '<div class="iss-em">まだメモはありません</div>') + '</div></div>';
@@ -39278,7 +39315,7 @@ function _p2ShSumHtml(ym) {
   var I2 = _p2ShIss(ym), is = Object.keys(I2).filter(function(k) { return I2[k]; }).map(function(mid) {
     var m = _p2ShMem(mid), lk = _p2ShIssBadges(ym, mid).replace(/ onclick="[^"]*"/g, '');
     return '<div class="sm-is"><b>' + evEsc(m ? (m.lastName || _uxName(m)) : '（いない人）') + (m ? '<small>' + evEsc(titleAbbr(m.title || '')) + '</small>' : '') + '</b>' + evEsc(I2[mid]) + lk + '</div>';
-  }).join('') + (M.issF || []).map(function(f) { var y = f.yk && findEvent(f.yk); y = y && !y.deleted ? y : null; return '<div class="sm-is"><b>自分・全体</b>' + evEsc(f.t) + (y ? '<div class="lk"><i>✅ やること' + (y.done ? ' ✓' : '') + '</i></div>' : '') + '</div>'; }).join('');
+  }).join('') + (M.issF || []).map(function(f) { var y = f.yk && findEvent(f.yk); y = y && !y.deleted ? y : null; return '<div class="sm-is"><b>自分・全体</b>' + evEsc(f.t) + (y ? '<div class="lk"><i>✅ 立案' + (y.done ? ' ✓' : '') + '</i></div>' : '') + '</div>'; }).join('');
   return '<div class="sm">' + top
     + '<div class="sm-h">' + _p2ShMonLb(ym) + 'の数字<small>今 / 目標（先月の結果）</small></div><div class="sm-kg">' + kg + '</div>'
     + '<div class="sm-h">改善点<small>書いた項目だけ</small></div>' + (kz || '<div class="sm-em">まだ書いていません</div>')
@@ -39372,7 +39409,7 @@ function _gdSlides() {
   var L = [
     { ic: '👋', t: 'ようこそ NAVIGATOR へ', d: 'チームの<b>組織（MAP）</b>・<b>目標と計画（PLAN）</b>・<b>予定とToDo</b>・<b>数字（ANALYTICS）</b>を、1つのアプリで管理できます。<br>まずは使い方をかんたんに見てみましょう（30秒）' },
     { ic: '🗺', t: 'MAP：チームの組織図', d: '<ul><li>いちばん上（0段目）は<b>あなた</b>。その下に直接誘った人（フロント）が並びます</li><li><b>＋ 追加</b>で人を足す。人を押すと、タイトル・GSV・研修の記録などを直せます</li><li>研修生（水色）と審査中（オレンジ）の人は光ります</li></ul>' },
-    { ic: '🧭', t: 'PLAN：目標と今月の計画', d: '<ul><li><b>年の目標・ロードマップ</b>で、最終目標とマイルストーンを決める</li><li><b>計画シート</b>に今月の数字・行動を書く（期日を入れるとToDoや予定にも入ります）</li><li><b>やること</b>で今月から長期まで管理</li></ul>' },
+    { ic: '🧭', t: 'PLAN：目標と今月の計画', d: '<ul><li><b>年の目標・ロードマップ</b>で、最終目標とマイルストーンを決める</li><li><b>計画シート</b>に今月の数字・行動を書く（期日を入れるとToDoや予定にも入ります）</li><li><b>立案</b>で月間・中期・長期のタスクを管理</li></ul>' },
     { ic: '📅', t: '予定・ToDo', d: '<ul><li>上（スマホは下）の<b>月・週・日｜ToDo</b>で切りかえ</li><li>計画シートやチェックリストから入れた予定・ToDoもここに出ます</li><li>ToDoは右にスワイプで完了、左で削除</li></ul>' },
     { ic: '📊', t: 'ANALYTICS：数字の推移', d: '<ul><li>S稼働・B1数・コミッションなどの12ヶ月の推移</li><li>研修フロー・パワーライン・地域の比較</li><li>比べたい時だけ「⇄ 比較」で2本重ねられます</li></ul>' }
   ];
@@ -39474,19 +39511,19 @@ var GD_TOURS = {
   plan: { lb: 'PLAN', ic: '🧭', go: "switchView('plan');p2Go('')", steps: [
     { s: ["[onclick=\"p2Go('year')\"]"], t: '年の目標・ロードマップ', d: '最終目標（月収・タイトル・期日）と、そこまでのマイルストーン。まずはここから' },
     { s: ["[onclick=\"p2Go('sheet')\"]"], t: '今月の計画シート', d: '今月の数字・行動・改善点を1枚に。期日を入れるとToDoや予定にも入ります' },
-    { s: ["[onclick=\"p2Go('yk')\"]"], t: 'やること', d: '今月から長期までのやることと、数値の目標（8冊など）' },
+    { s: ["[onclick=\"p2Go('yk')\"]"], t: '立案', d: '月間・中期・長期のタスクと、数値の目標（8冊など）。ToDoや予定にも入れられます' },
     { s: ["[onclick=\"p2Go('ck')\"]"], t: 'チェック', d: '必須アイテム・TRAININGの準備リスト', adm: '管理者は⚙でユニオンの項目を設定できます' },
     { s: ["[onclick=\"p2Go('tool')\"]"], t: 'ツール', d: 'やる理由の作文・BB早見表' }
   ] },
   sheet: { lb: '計画シート', ic: '📋', go: "switchView('plan');p2Go('sheet')", steps: [
     { s: ['.st-c'], t: '目標', d: '年の目標とマイルストーン。押すと年の目標のページへ' },
     { s: ['.sp-map', '#p2ShMF'], t: 'MAPを見ながら', d: 'MAPを見ながら計画できます。人を押すと、その人の課題を書けます' },
-    { s: ['.iss'], t: '課題', d: '人ごとの課題と、自分・全体のメモ。「→ 残す先」で行動・やること・予定へ。🗑で消せます' },
+    { s: ['.iss'], t: '課題', d: '人ごとの課題と、自分・全体のメモ。「→ 残す先」で行動・立案・予定へ。🗑で消せます' },
     { s: ['.sp-tb'], low: 1, t: '今月の数字', d: '先月の結果と、今月の目標・今の数字' },
     { s: ['.sp-at'], low: 1, t: '行動', d: '分野ごとに行動を書きます。期日を押すとToDoか予定を選んで入れられます。やったら左の□にチェック' },
     { s: ["[onclick=\"p2SumTgl('sh',1)\"]"], t: 'サマリー', d: '見るだけの1枚に切りかえ。印刷・PDFもできます' }
   ] },
-  yk: { lb: 'やること', ic: '✅', go: "switchView('plan');p2Go('yk')", steps: [
+  yk: { lb: '立案', ic: '✅', go: "switchView('plan');p2Go('yk')", steps: [
     { s: ['#p2YkIn'], t: 'やることを書く', d: '書いてEnterで追加。月と人も選べます' },
     { s: ['.yk-add .nb'], t: '数値の目標', d: '🔢 数値をオンにすると「8冊」のような数値の目標に。今の数を押して進み具合を管理します' },
     { s: ['.yk-r'], t: '直す・消す', d: '名前を押すと直せます。左にスワイプで消す、右にスワイプで済み。「＋ サブタスク」で細かく分けられます' }
