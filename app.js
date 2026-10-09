@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v781';
+var APP_JS_VERSION = 'v782';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -879,7 +879,7 @@ function renderPCMap(mapType) {
   focusHint.textContent = '💡 カードをクリックすると系列フォーカス';
   focusHint.style.opacity = '.75';
   focusHint.onclick = function(){ applyFocus(''); };
-  outerWrap.appendChild(focusHint);
+  // v782: 系列フォーカスはやめた（見にくいため）。案内・解除ボタンも出さない
 
   // ズームコントロール
   var zoomBar = document.createElement('div');
@@ -1346,7 +1346,7 @@ function renderPCMap(mapType) {
     (function(mid,lin){
       g.addEventListener('click',function(ev){
         ev.stopPropagation();
-        selectCard(mid,ev); applyFocus(lin);
+        selectCard(mid,ev); // v782: 系列フォーカスはやめた
         if (typeof _mapIssShown === 'function' && _mapIssShown() && !/^(MG|AG\d+)_/.test(mid)) { mapIssTap(mid); return; } // v716: 課題パネルを出している時は、押すとその人の課題
         if(/^MG_/.test(mid)){ if(typeof mgNodeClick==='function') mgNodeClick(mid); }
         else if(state.isEditor && mapType === 'ideal' && typeof idqOpen === 'function') idqOpen(mid); // v524: 理想MAPはかんたん編集
@@ -1365,6 +1365,7 @@ function renderPCMap(mapType) {
 
   // 系列フォーカス
   function applyFocus(lin) {
+    lin = ''; // v782: 系列フォーカスはやめた（いつも全部の系列を同じ明るさで）
     window._pcFocusLineage = lin;
     var nodes = svg.querySelectorAll('.oval-node');
     var links = svg.querySelectorAll('.pc-link');
@@ -4060,7 +4061,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v781';
+  var DATA_VERSION = 'v782';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5565,6 +5566,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v782', d:'2026-10-09', items:['MAPの系列フォーカス（カードを押すと他の系列が薄くなる機能）と、その案内・解除の表示をなくしました'] },
   { v:'v781', d:'2026-10-09', items:['計画シートの印刷：iPhoneのホーム画面から開いたアプリで「印刷」を押しても何も起きなかったのを直しました。シートを画像にして共有の画面が出るので、「プリント」で印刷できます（画像の保存もできます）（#9）'] },
   { v:'v780', d:'2026-10-09', items:['MAPのメンバー画面で「研修」を押すと、今までの編集画面ではなく、同じ画面の中で研修のステップ・結果を記録できるようにしました（#10）','計画シートの印刷：紙がA3より小さい時（iPhoneの印刷など）は全体を縮めて1枚に入れるように。右の行動の欄が切れて消えていたのを直しました。空の欄の線の長さもそろえました（#8）'] },
   { v:'v779', d:'2026-10-09', items:['計画シートのツリーで、地域の印（ピン）がとても大きく出ていたのを直しました'] },
