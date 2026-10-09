@@ -17,6 +17,9 @@ T.run(async () => {
   c('記号（✓ ✕ ✎ ↩ ▼）はそのまま', w.emoStrip('✓ ✕ ↩ ▼') === '✓ ✕ ↩ ▼');
   const ta = w.document.createElement('textarea'); ta.value = '🎉 メモ'; d.appendChild(ta); await sleep(10);
   c('入力中の文（textarea）は触らない', ta.value === '🎉 メモ');
+  // v779: MAP・グラフの枠の中でも、差し替えた小さいアイコンは文字の大きさのまま
+  const ih = require('fs').readFileSync(require('path').join(__dirname, '../../../index.html'), 'utf8');
+  c('v779: 計画シートのMAP枠などの中でもアイコンが巨大にならない', ['#p2ShMI svg.lic', '.sp-map svg.lic', '#p2ShOrb svg.lic', '.px3-k svg.lic'].every(k => ih.indexOf(k) >= 0) && /svg\.lic\{display:inline-block;width:1\.05em;height:1\.05em/.test(ih));
   // 主な画面に絵文字が残らない
   const views = ['events', 'plan', 'current', 'menu'];
   for (const v of views) { try { w.switchView(v); } catch (e) {} await sleep(60); }
