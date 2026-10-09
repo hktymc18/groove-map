@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v759';
+var APP_JS_VERSION = 'v760';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v759';
+  var DATA_VERSION = 'v760';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5396,6 +5396,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v760', d:'2026-10-09', items:['メンバーの研修：研修ステップの記録を🗑で消せるように（間違えて入れた時。消した後は「↩ 元に戻す」）','記録を追加の「日付」と「Aさん」を同じ大きさで横に並べました（iPhoneで重なっていたのを直しました）'] },
   { v:'v759', d:'2026-10-09', items:['分析 › パワーライン：上の月の並びを、古い月 → 今月 の順に（選んでいる月が見えるように自動で横にずらします）'] },
   { v:'v758', d:'2026-10-09', items:['メンバー（一覧）の画面をPCからもなくしました（左のメニュー・⌘K・プロフィールの「メンバータブ」の設定）。メンバーはMAPから見られます','使い方ガイドからも「メンバー」を消しました'] },
   { v:'v757', d:'2026-10-09', items:['使い方ガイドを設定から開いた時、設定のページが残ったまま下の画面で説明が始まり、関係ない所が光っていたのを直しました（説明を始める前に、上に重なっているページを閉じます）','光らせる所がほかの物に隠れている時は、見えている所だけを光らせる（全部隠れている時は真ん中に説明）ようにしました'] },
@@ -10111,11 +10112,20 @@ function renderTraineeHistory(m) {
     }
     var del = document.createElement('div');
     del.className = 'th-del';
-    del.textContent = 'x';
+    del.title = 'この記録を消す';
+    del.innerHTML = icn('trash'); // v760: 小さく薄い「x」で押しにくかった → 🗑（押すと消えて「元に戻す」）
     (function(idx) {
-      del.onclick = function() {
+      del.onclick = function(ev) {
+        if (ev) ev.stopPropagation();
         var m2 = getTraineeMember();
-        if (m2 && m2.traineeHistory) { var _hx = m2.traineeHistory[idx]; m2.traineeHistory.splice(idx, 1); try { _tsUnlink(m2, _hx); } catch (eU) {} m2.traineeStatus = getLatestStatus(m2); renderTraineeHistory(null); autoSave(); } // v570
+        if (m2 && m2.traineeHistory && m2.traineeHistory[idx]) {
+          var _hx = m2.traineeHistory[idx];
+          m2.traineeHistory.splice(idx, 1); try { _tsUnlink(m2, _hx); } catch (eU) {} m2.traineeStatus = getLatestStatus(m2); renderTraineeHistory(null); autoSave(); // v570
+          toastAction('🗑 「' + (_hx.status || '記録') + '」を消しました', '↩ 元に戻す', function() {
+            var m3 = getTraineeMember() || m2; m3.traineeHistory = m3.traineeHistory || [];
+            m3.traineeHistory.splice(Math.min(idx, m3.traineeHistory.length), 0, _hx); m3.traineeStatus = getLatestStatus(m3); renderTraineeHistory(null); autoSave();
+          });
+        }
       };
     })(i);
     entry.appendChild(del);
@@ -10281,9 +10291,9 @@ function selectStep(step) {
   panel.style.display = '';
   panel.innerHTML = '<div class="step-detail">'
     + '<div class="step-detail-hdr"><span class="step-detail-badge">' + step + '</span><span style="font-size:12px;color:var(--text-dim)"> の記録を追加</span></div>'
-    + '<div style="display:flex;gap:8px;margin-bottom:10px">'
-    + '<div style="flex:1"><label class="fl">日付</label><input class="fi" id="fHistoryDate" type="date" value="' + todayStr + '" style="font-size:14px;padding:8px" onchange="this.blur()"></div>'
-    + '<div style="flex:1"><label class="fl">Aさん</label><input class="fi" id="fHistoryASan" type="text" placeholder="名前" style="font-size:14px;padding:8px"></div>'
+    + '<div class="thf-grid">' // v760: 日付とAさんを同じ幅・同じ高さに（iPhoneは日付の欄が広がって重なっていた）
+    + '<div><label class="fl">日付</label><input class="fi" id="fHistoryDate" type="date" value="' + todayStr + '" onchange="this.blur()"></div>'
+    + '<div><label class="fl">Aさん</label><input class="fi" id="fHistoryASan" type="text" placeholder="名前" autocomplete="off"></div>'
     + '</div>'
     + '<div style="margin-bottom:12px"><label class="fl" style="margin-bottom:6px">状態</label>'
     + '<div style="display:flex;gap:6px">'
