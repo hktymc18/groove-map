@@ -2384,6 +2384,8 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .ed-chev{color:var(--text-dim);font-size:10px;flex:none;pointer-events:none}
 /* 誕生日：未入力時はiOS等の日付プレースホルダを隠し「未設定」を表示 */
 .lic{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-0.15em;flex:none}
+/* v779: 絵文字から差し替えた小さいアイコンが、MAP・グラフの枠の「中のsvgは枠いっぱい」に巻き込まれて巨大にならないように */
+#p2ShMI svg.lic,#p2ShOrb svg.lic,#px3Ch svg.lic,.mp svg.lic,.px3-k svg.lic,.sh-map svg.lic,.sp-map svg.lic{display:inline-block;width:1.05em;height:1.05em;margin:0}
 .lic.mor{stroke:none;vertical-align:-0.24em}
 .ed-birth{display:flex;gap:6px}
 .ed-birth select.ed-in{min-width:0}
@@ -3044,7 +3046,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v778</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v779</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3986,7 +3988,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v778';</script>
-<script src="app.js?v=v778"></script>
+<script>window.GM_EXPECT_JS='v779';</script>
+<script src="app.js?v=v779"></script>
 </body>
 </html>
