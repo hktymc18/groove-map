@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v773';
+var APP_JS_VERSION = 'v774';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4041,7 +4041,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v773';
+  var DATA_VERSION = 'v774';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5544,6 +5544,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v774', d:'2026-10-09', items:['メンバー追加で、名前を入れた後にタイトルのカードを押すと名前が消えてしまうのを直しました（理想MAPの新しい人の名前も同じく）'] },
   { v:'v773', d:'2026-10-09', items:['設定の「組織MAPをクリア」をなくしました'] },
   { v:'v772', d:'2026-10-09', items:['理想MAPのかんたん編集を作り直しました：「ビジネスを足す」「ユーザーを足す」は1人足して閉じます（足した人が光り、元に戻すも出ます）','タイトルは大きいタイルで押しやすく（BMはB11の後ろ）。GSVは3桁区切りの大きい数字と − ＋、稼働・稼働率は同じ形の切り替えに。スマホも同じ画面です','現状MAPで名前を変えた人が、理想MAPでは古い名前のままだったのを直しました'] },
   { v:'v771', d:'2026-10-09', items:['PCでは、タブやブラウザを閉じるとログアウトするようにしました（PCを人に貸した時に中を見られないように。ATTACK LIST・GOAL SETTING と同じ）','スマホ・タブレットは今までどおりログインしたままです（通知を受け取るため）'] },
@@ -9801,7 +9802,16 @@ function _idqRender() {
 }
 function _idqUserPtSet(v) { var x = Math.max(0, parseInt(v, 10) || 0); try { localStorage.setItem('gm_idqUserPt', String(x)); } catch (e) {} }
 // 変更はその場で保存。シートは作り直さず選択表示だけ更新（入力→チップのタップが途中で消えないように）
+// v774: 新しい人の名前は、入れたまま（欄から出ないまま）ほかを押しても消えないよう、変更のたびに読み取る
+function _idqNameKeep() {
+  var m = _idqMember(), l = document.getElementById('idqLast'), f = document.getElementById('idqFirst');
+  if (!m || !l || !f) return false;
+  var ln = l.value.trim() || m.lastName, fn = f.value.trim();
+  if (ln === m.lastName && fn === (m.firstName || '')) return false;
+  m.lastName = ln; m.firstName = fn; return true;
+}
 function _idqChanged(msg) {
+  _idqNameKeep();
   _idealAfter(msg || '');
   var m = _idqMember(); if (!m) return;
   var q = function(sel, attr, v) { var cs = document.querySelectorAll(sel); for (var i = 0; i < cs.length; i++) cs[i].classList.toggle('sel', cs[i].getAttribute(attr) === String(v)); };
@@ -9862,6 +9872,7 @@ function idqUndoAdd(id) {
   _idealAfter('取り消しました'); if (document.getElementById('idqBody')) _idqRender();
 }
 function idqClose(silent) {
+  if (_idqNameKeep()) _idealAfter(''); // v774
   var ov = document.getElementById('idqOv');
   if (ov) { if (silent) { if (ov.parentNode) ov.parentNode.removeChild(ov); } else { ov.classList.remove('show'); setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); } }
 }
@@ -19117,6 +19128,7 @@ function naClose() { var p = document.getElementById('naPg'); if (p && p.parentN
 function _naKeep() { if (!_na) return; ['last', 'first', 'gsv', 'date', 'asan'].forEach(function(k) { var el = document.getElementById('na' + k.charAt(0).toUpperCase() + k.slice(1)); if (el) _na[k] = el.value; }); }
 function naSet(k, v) { if (!_na) return; _naKeep(); _na[k] = v; if (k === 'title') { _ttlOpen = ''; try { localStorage.setItem('gm_naTitle', v); } catch (e) {} } _naRender(); }
 function naTitle(t) { naSet('title', t); }
+function _naReRender() { _naKeep(); _naRender(); } // v774: タイトルのカードを開け閉めした時、入れた名前・GSVなどを消さない
 function naChg() { naSet('chg', !(_na && _na.chg)); }
 // v753: 研修生を選んだ時の「研修の記録」（研修の日・Aさん・どう入るか）
 function _naTrBox(n) {
@@ -19143,7 +19155,7 @@ function _naRender() {
       : '<span class="ux-lk" style="margin:0" onclick="naChg()">変える</span>') + '</div>'
     + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="naLast" placeholder="姓" value="' + evEsc(n.last) + '" autocomplete="off"><input class="ppin" id="naFirst" placeholder="名" value="' + evEsc(n.first) + '" autocomplete="off"></div>'
     + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (n.gender !== 'female' ? 'on' : '') + '" onclick="naSet(\'gender\',\'male\')">男性</span><span class="' + (n.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="naSet(\'gender\',\'female\')">女性</span></div>'
-    + '<div class="ppl">タイトル（カードを押して選ぶ）</div>' + _ttlPickHtml(n.title, NA_GROUPS, 'naTitle', '_naRender', tr ? { '研修生': _naTrBox(n) } : null);
+    + '<div class="ppl">タイトル（カードを押して選ぶ）</div>' + _ttlPickHtml(n.title, NA_GROUPS, 'naTitle', '_naReRender', tr ? { '研修生': _naTrBox(n) } : null);
   // v753: 研修の日・Aさんは「研修生」のカードの中（選んだすぐ下）に出す
   if (!tr) h += '<div class="ppl">稼働（任意）</div><div class="ppb sm" style="--n:5">' + [['S', 'var(--s)'], ['A', 'var(--a)'], ['B', 'var(--b)'], ['C', 'var(--c)'], ['', 'var(--text-dim)']].map(function(x) { return '<span class="' + (n.act === x[0] ? 'on' : '') + '" style="--a:' + x[1] + '" onclick="naSet(\'act\',\'' + x[0] + '\')">' + (x[0] || 'なし') + '</span>'; }).join('') + '</div>'
     + '<div class="ppl">今月のGSV（任意）</div><input class="ppin" id="naGsv" type="number" inputmode="numeric" placeholder="0" value="' + evEsc(n.gsv) + '">';
