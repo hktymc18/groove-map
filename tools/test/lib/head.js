@@ -18,7 +18,7 @@ module.exports = function (opt) {
   const fbStub = {
     initializeApp: () => {},
     firestore: Object.assign(() => dbStub, { FieldValue: { delete: () => '__DEL__', serverTimestamp: () => '', arrayUnion: (...a) => a }, CACHE_SIZE_UNLIMITED: -1 }),
-    auth: Object.assign(() => ({ onAuthStateChanged(cb) { T0.authCb = cb; }, signInWithEmailAndPassword() { return T0.signIn ? T0.signIn() : new Promise(() => {}); }, signOut() { return Promise.resolve(); } }), { GoogleAuthProvider: function () {} }),
+    auth: Object.assign(() => ({ onAuthStateChanged(cb) { T0.authCb = cb; }, signInWithEmailAndPassword() { return T0.signIn ? T0.signIn() : new Promise(() => {}); }, signOut() { return Promise.resolve(); }, setPersistence(p) { T0.persist = p; return Promise.resolve(); } }), { GoogleAuthProvider: function () {}, Auth: { Persistence: { LOCAL: 'local', SESSION: 'session', NONE: 'none' } } }),
     messaging: Object.assign(() => ({}), { isSupported: () => false }),
     apps: [],
   };
@@ -29,6 +29,8 @@ module.exports = function (opt) {
     beforeParse(w) {
       require('./fixdate.js')(w);
       w.firebase = fbStub;
+      if (opt.ua) Object.defineProperty(w.navigator, 'userAgent', { value: opt.ua, configurable: true });
+      if (opt.touch != null) Object.defineProperty(w.navigator, 'maxTouchPoints', { value: opt.touch, configurable: true });
       w.matchMedia = w.matchMedia || (q => ({ matches: false, media: q, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }));
       w.scrollTo = () => {};
       w.HTMLElement.prototype.scrollIntoView = () => {};

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v770';
+var APP_JS_VERSION = 'v771';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -44,6 +44,19 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 
 var db   = typeof firebase !== 'undefined' ? firebase.firestore() : null;
 var auth = typeof firebase !== 'undefined' ? firebase.auth()      : null;
+// v771: ログイン状態の保持（ATTACK LIST・GOAL SETTING と同じ判定）
+//  PC＝タブ／ブラウザを閉じたらログアウト（SESSION。司会や個別でPCを貸した時に中を見られないように）
+//  スマホ・タブレット＝今までどおり保持（LOCAL。通知を使うため）
+//  iPad は UA が Macintosh になるので、タッチ点が2つ以上なら iPad とみなす
+function _authMobileDev() {
+  var ua = navigator.userAgent || '';
+  return /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
+}
+var _authPersistReady = Promise.resolve();
+try {
+  var _AP = firebase.auth.Auth.Persistence;
+  _authPersistReady = auth.setPersistence(_authMobileDev() ? _AP.LOCAL : _AP.SESSION).catch(function() {});
+} catch (eAp) {}
 // オフライン永続キャッシュ：2回目以降の起動・リスナー再接続はローカルから読み、
 // 変更ぶんだけサーバー読み取り＝Firestoreの読み取り課金を大幅削減（他のfirestore呼び出しより先に実行）
 try { if (db) db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED }); } catch(eCs) {} // v387: 40MB上限で写真等が追い出されないように
@@ -4043,7 +4056,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v770';
+  var DATA_VERSION = 'v771';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5546,6 +5559,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v771', d:'2026-10-09', items:['PCでは、タブやブラウザを閉じるとログアウトするようにしました（PCを人に貸した時に中を見られないように。ATTACK LIST・GOAL SETTING と同じ）','スマホ・タブレットは今までどおりログインしたままです（通知を受け取るため）'] },
   { v:'v770', d:'2026-10-09', items:['アカウント管理で、各アカウントを受付（BASE CHECK-IN）の名簿の人と紐付けられるようにしました（🎫 受付の名簿と紐付ける）','紐付けた人を受付で「無効」にすると、NAVIGATORも使えなくなります（受付で有効に戻すと、次に開いた時から使えます。リーダーは対象外）'] },
   { v:'v769', d:'2026-10-09', items:['メンバーの「アップラインを変更」で、付け替えたい相手が出てこないことがあったのを直しました（同じMAPに出ている人なら選べます）'] },
   { v:'v768', d:'2026-10-09', items:['「分析」の見出しを「ANALYTICS」に（スマホ・PCの見出し、PCの左のメニュー、横向きの上の帯、くわしくのページの戻り先）'] },
@@ -11921,10 +11935,7 @@ function otlCopy() {
   var t = _otlText(); if (!t) { toast('まだ何も入力されていません'); return; }
   _otlCopyRaw(t, function(ok) { toast(ok ? '📋 コピーしました（LINEに貼り付けて送ってください）' : '⚠️ コピーできませんでした'); if (ok) _otlMarkSent(); });
 }
-function _otlMobile() { // v579: 「LINEで送る」はスマホ・タブレットだけ（PCでは使えないので出さない）
-  var ua = navigator.userAgent || '';
-  return /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
-}
+function _otlMobile() { return _authMobileDev(); } // v579: 「LINEで送る」はスマホ・タブレットだけ（PCでは使えないので出さない）
 function otlLine() { // LINEの「送り先を選ぶ」画面を開く（AさんのLINE IDは不要。LINEの友だちから選ぶ）
   var t = _otlText(); if (!t) { toast('まだ何も入力されていません'); return; }
   var u = 'https://line.me/R/share?text=' + encodeURIComponent(t);
@@ -36313,7 +36324,7 @@ function doLogin() {
       var ls = document.getElementById('loginScreen');
       if (ls && ls.style.display !== 'none' && btn && btn.disabled) _loginStuck('ログインに時間がかかっています。電波を確認して、もう一度「ログイン」を押してください');
     }, 20000);
-    auth.signInWithEmailAndPassword(email, pass)
+    _authPersistReady.then(function() { return auth.signInWithEmailAndPassword(email, pass); }) // v771: 保持の種類を決めてから
       .then(function() {
         errEl.style.display = 'none';
         // onAuthStateChanged が loginSuccess を呼ぶ
@@ -36373,7 +36384,7 @@ function doSignup() {
   if (auth) {
     var btn = document.querySelector('#signupForm button');
     if (btn) { btn.textContent = '...'; btn.disabled = true; }
-    auth.createUserWithEmailAndPassword(email, pass)
+    _authPersistReady.then(function() { return auth.createUserWithEmailAndPassword(email, pass); }) // v771
       .then(function(cred) {
         var uid = cred.user.uid;
         return fsSet('users/' + uid, {
