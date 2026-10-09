@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v776';
+var APP_JS_VERSION = 'v777';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3430,13 +3430,25 @@ function closeAdminPanel() {
 function loadAdminUsers() {
   var body = document.getElementById('adminBody');
   if (body) body.innerHTML = '<div class="ev-empty">読み込み中...</div>';
-  fsGetCol('users').then(function(list) {
+  _adminUsersFetch().then(function(list) {
     _adminUsers = list || [];
     renderAdminList();
     _admCkLoad(); // v770: 紐付いた受付の名簿（無効かどうか）
   }).catch(function() {
     if (body) body.innerHTML = '<div class="ev-empty">読み込みに失敗しました（権限をご確認ください）</div>';
   });
+}
+// v777: オーナー以外（ユニオン管理者）は自分のユニオンの人だけ読み込む（前は全ユニオンを読み込んでから画面で隠していた）
+function _myUnionUsersQuery(q) {
+  var un = (currentUser && currentUser.union) ? String(currentUser.union) : '';
+  if (!un || !db) return null;
+  var c = db.collection('users').where('union', '==', un);
+  return q ? q(c) : c;
+}
+function _adminUsersFetch() {
+  if (currentUser && isOwnerUid(currentUser.uid)) return fsGetCol('users');
+  var c = _myUnionUsersQuery(); if (!c) return Promise.resolve([]);
+  return c.get().then(function(snap) { var L = []; snap.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; });
 }
 function _adminFindUser(uid) {
   for (var i=0;i<_adminUsers.length;i++) if (_adminUsers[i].id === uid) return _adminUsers[i];
@@ -3446,7 +3458,7 @@ function _adminFindUser(uid) {
 function _adminScopedUsers() {
   var owner = !!(currentUser && isOwnerUid(currentUser.uid));
   var myUnion = (currentUser && currentUser.union) ? currentUser.union : '';
-  return owner ? _adminUsers : _adminUsers.filter(function(u){ return (u.union||'') === myUnion; });
+  return owner ? _adminUsers : (myUnion ? _adminUsers.filter(function(u){ return (u.union||'') === myUnion; }) : []); // v777: ユニオンが空なら誰も出さない
 }
 function renderAdminList() {
   var body = document.getElementById('adminBody');
@@ -4041,7 +4053,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v776';
+  var DATA_VERSION = 'v777';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5483,14 +5495,16 @@ function gameToggleRank() {
   toast(g.rankOptIn ? 'ランキングに参加しました' : 'ランキング非表示にしました');
   if (currentView === 'home') renderHome();
 }
-// 全ユーザーを取得し、今週XP降順で返す。
+// 自分のユニオンのユーザーを取得し、今週XP降順で返す（v777: 全ユーザー→自分のユニオンだけ）。
 // users全件読みは高コストのため10分キャッシュ（読み取り課金対策）
 var _rankFetchCache = null, _rankFetchAt = 0;
 function gameFetchRanking(cb) {
   if (!db) { cb([]); return; }
   if (_rankFetchCache && (Date.now() - _rankFetchAt) < 10 * 60 * 1000) { cb(_rankFetchCache); return; }
   var myUid = gameMyUid(), wk = gameWeekStart();
-  db.collection('users').get().then(function(snap){
+  var rq = _myUnionUsersQuery(); // v777: ランキングは自分のユニオンの人だけ
+  if (!rq) { cb([]); return; }
+  rq.get().then(function(snap){
     var rows = [];
     snap.forEach(function(d){
       var u = d.data() || {}, g = u.game || {};
@@ -5544,6 +5558,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v777', d:'2026-10-09', items:['アカウント管理：ユニオンの管理者は、自分のユニオンの人だけを読み込むようにしました（承認待ちの件数も）','ランキングは自分のユニオンの人だけになりました'] },
   { v:'v776', d:'2026-10-09', items:['計画シートのサマリー：行動は入力画面と同じ表で、何を書いたか・期日まで見えます。✔もサマリーから付けられます','サマリーの数字を押すと − ＋ で直せます。やったことは「予定に入れる」「ToDoに入れる」で記録すると、数も＋1されます','年の目標・ロードマップのサマリーの先頭に、理想で書いた「やりたいこと・なりたい自分」が出るように','理想：下のボタンを「‹ 前へ」と「次へ ›」に分けました。完了はまとめのページだけです'] },
   { v:'v775', d:'2026-10-09', items:['計画シート：今の数は − ＋ で入れられるように（予定・カレンダーからは数えません）。目標に対して何%かが今月・先月とも出ます','理想MAPの数字がPLANの目標に入らないようにしました（目標は自分で決めて、いつでも変えられます）','PCの数字の欄の小さい矢印をなくしました（押しても反応しないことがあったため）','スマホの計画シートのMAPは、MAPのツリーと同じ形で出るように（サークル・シート型にも切り替えられます）','理想のまとめから、①理想のライフスタイル ②やりたいこと・なりたい自分 ③やる理由作文 をそれぞれ答え直せるように'] },
   { v:'v774', d:'2026-10-09', items:['メンバー追加で、名前を入れた後にタイトルのカードを押すと名前が消えてしまうのを直しました（理想MAPの新しい人の名前も同じく）'] },
@@ -36634,7 +36649,9 @@ function checkPendingApprovals(){
   var owner = isOwnerUid(currentUser.uid);
   var myUnion = currentUser.union || '';
   // v511: 全ユーザーを読んでいたのを「承認待ちのみ」のクエリに（読み取り件数を大幅削減）
-  db.collection('users').where('status', '==', 'pending').get().then(function(snap){
+  var q9 = owner ? db.collection('users').where('status', '==', 'pending') : _myUnionUsersQuery(function(c) { return c.where('status', '==', 'pending'); }); // v777: 自分のユニオンだけ
+  if (!q9) return;
+  q9.get().then(function(snap){
     var list = []; snap.forEach(function(d){ list.push(Object.assign({ id: d.id }, d.data())); });
     var scoped = owner ? list : list.filter(function(u){ return (u.union||'')===myUnion; });
     var pend = scoped.filter(function(u){ return u.status==='pending'; });
