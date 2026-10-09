@@ -35,7 +35,7 @@ T.run(async () => {
   c('今週やること：今までのPCの一覧', $('.pcx-p').textContent.indexOf('今週やること') >= 0);
   console.log('=== ② データ ===');
   w.switchView('menu'); w.switchView('stats'); await sleep(50);
-  c('v647: PCの分析は開いたらすぐ推移（左の列なし・タブ）', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st') && w._dtTab === 'trend' && !!$('#dtTrend .dt-chart, #dtTrend #px3Ch') && $('#dtModeBar').textContent.indexOf('分析') >= 0);
+  c('v647: PCの分析は開いたらすぐ推移（左の列なし・タブ）', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st') && w._dtTab === 'trend' && !!$('#dtTrend .dt-chart, #dtTrend #px3Ch') && $('#dtModeBar').textContent.indexOf('ANALYTICS') >= 0);
   w.dtPcGo('s'); await sleep(20);
   c('くわしく（S稼働）は左の列＋右のページ', !!$('#dtPcNav') && $('#dtEz h2').textContent === 'S稼働' && $$('#dtPcNav .pcx-t.on').length === 1 && !!$('#dtEz .pcx-tb'));
   w.dtGo('exam'); await sleep(20);
@@ -75,7 +75,7 @@ T.run(async () => {
   c('スマホもサマリー（入口の「サマリー」から）', !!$('#view-plan .p2s') && $('#view-plan').textContent.indexOf('サマリー') >= 0);
   w.switchView('stats'); await sleep(30);
   c('データ：PCの左の列は出ない', !$('#dtPcNav') && !$('#view-stats').classList.contains('pcx-st'));
-  c('v647: スマホも入口なし（「分析」の見出し）', $('#dtModeBar').textContent.indexOf('ざっくり') < 0 && $('#dtModeBar').textContent.indexOf('入口') < 0 && $('#dtModeBar').textContent.indexOf('分析') >= 0);
+  c('v647: スマホも入口なし（「分析」の見出し）', $('#dtModeBar').textContent.indexOf('ざっくり') < 0 && $('#dtModeBar').textContent.indexOf('入口') < 0 && $('#dtModeBar').textContent.indexOf('ANALYTICS') >= 0);
   w.dtMode('ez'); await sleep(20);
   c('dtMode(ez)でも入口には行かず推移', w._dtMode === 'full' && w._dtTab === 'trend');
   console.log('=== v638 PCのツリーカード ===');

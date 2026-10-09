@@ -8,7 +8,7 @@ T.run(async () => {
   for (let i = 0; i < 12; i++) ms.push({ id: 'm' + i, lastName: '佐藤' + i, firstName: '', title: i < 4 ? 'BR' : 'PG', parentId: 'r', mapType: 'both', activity: A[i % 4], actRate: [120, 90, 60, 30][i % 4], ptCurrent: 500, region: R[i % 3], trainee: i >= 4 });
   w.state.members = ms;
   setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('menu'); w.switchView('stats'); await sleep(40);
-  c('分析を開くとすぐ推移（入口のタイル画面なし）', w._dtMode === 'full' && w._dtTab === 'trend' && !!$('#dtTrend .dt-chart') && !$('#dtEz .ux-hub') && $('#dtModeBar').textContent.indexOf('分析') >= 0);
+  c('分析を開くとすぐ推移（入口のタイル画面なし）', w._dtMode === 'full' && w._dtTab === 'trend' && !!$('#dtTrend .dt-chart') && !$('#dtEz .ux-hub') && $('#dtModeBar').textContent.indexOf('ANALYTICS') >= 0);
   c('タブは 推移・研修・パワーライン・地域（サマリーは推移に統合）', $$('#dtTabs .dt-tab').map(x => x.textContent).join() === '推移,研修,パワーライン,地域');
   c('理想との差はなし', typeof w._dtEzGap === 'undefined' && !w.DT_PG.some(p => p.k === 'gap'));
   const big = $$('#dtTrend .an-t.big');
@@ -19,7 +19,7 @@ T.run(async () => {
   c('グラフの月を選ぶとタイルもその月', $('#dtTrend .an-sec').textContent.indexOf('今月に戻す') >= 0);
   w.dtPickMonth(11);
   const dl = $$('#dtTrend .an-t.big')[1].querySelector('.dl'); dl.onclick ? dl.onclick({ stopPropagation() {} }) : dl.click(); await sleep(30);
-  c('くわしく›でS稼働のページ（あと一歩の人など）', w._dtMode === 'ez' && w._dtPg === 's' && $('#dtEz').textContent.indexOf('あと一歩') >= 0 && $('.ux-crumb').textContent.indexOf('分析') >= 0);
+  c('くわしく›でS稼働のページ（あと一歩の人など）', w._dtMode === 'ez' && w._dtPg === 's' && $('#dtEz').textContent.indexOf('あと一歩') >= 0 && $('.ux-crumb').textContent.indexOf('ANALYTICS') >= 0);
   w.dtGo(''); await sleep(20);
   c('戻ると推移', w._dtMode === 'full' && w._dtTab === 'trend' && !$('#view-stats .ux-hub') && $('#dtEz').style.display === 'none' && !w.document.body.classList.contains('ux-pg'));
   w.dtTab('reg'); w.switchView('menu'); w.localStorage.setItem('gm_dtTab', 'reg'); w._dtTab = 'reg';

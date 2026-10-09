@@ -6,7 +6,7 @@ T.run(async () => {
   w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'G', parentId: '', mapType: 'both', activity: 'S', actRate: 120 }, { id: 'a', lastName: '佐藤', firstName: '健太', title: 'BR', parentId: 'r', mapType: 'both', activity: 'S', actRate: 110 }];
   setWH(1470, 956); w._uxSync(); w.switchView('stats'); await sleep(40);
   c('横幅1100以上のPCは新しい画面（px3）', w.document.body.classList.contains('px3'));
-  c('左メニューは文字つき（分析・PLAN…）＋ロゴ＋自分', $('.pcs-item[data-view=stats] .pcs-lb').textContent === '分析' && !!$('#pcsBrand') && !!$('#pcsMe'));
+  c('左メニューは文字つき（分析・PLAN…）＋ロゴ＋自分', $('.pcs-item[data-view=stats] .pcs-lb').textContent === 'ANALYTICS' && !!$('#pcsBrand') && !!$('#pcsMe'));
   c('分析の見出しにタブ・検索（⌘K）・月の切り替え', !!$('#dtModeBar .px3-hd') && $$('#dtModeBar .px3-tabs span').length === 4 && /⌘K/.test($('#dtModeBar').textContent) && !!$('#dtModeBar .px3-mon'));
   c('推移：数字の帯（v745: 7つ・いちばん右に新規B1 平均GSV）＋グラフ＋その月の数字＋稼働構成', $$('#dtTrend .px3-k').length === 7 && /新規B1 平均GSV/.test($$('#dtTrend .px3-k')[6].textContent) && !!$('#px3Ch') && /月の数字/.test($('#dtTrend').textContent) && !!$('#dtTrend .px3-comp'));
   const n0 = w._dtSel.length; w.dtToggleMetric('総人数'); await sleep(10);
