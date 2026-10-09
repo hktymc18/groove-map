@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v763';
+var APP_JS_VERSION = 'v764';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v763';
+  var DATA_VERSION = 'v764';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5396,6 +5396,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v764', d:'2026-10-09', items:['PC：左のメニューを明るい色（白）に、選んでいる項目を濃い色（紺）に。右の画面（少し灰色）とは境界線と薄い影で分けています','ダークモードでは、選んでいる項目をうすい緑で見分けやすく'] },
   { v:'v763', d:'2026-10-09', items:['PC：左のメニューで選んでいる項目を、浮いたカードではなく右の画面と同じ背景の色でつながる形に','左下のアカウントも浮いたカードをやめて、線で区切るだけにしました'] },
   { v:'v762', d:'2026-10-09', items:['分析のパワーライン：下に「ポイントの推移」の折れ線グラフ（系列ごとのLTSV・12ヶ月。黄色の点線が5,000P。名前を押すと線を出す／消す）','スマホを横にすると、パワーラインのグラフを画面いっぱいで見られます','分析の地域：「地域を比べる」の折れ線グラフ。上の「人数・研修生・QBR・BR以上・S稼働・新規B1」で項目を選ぶと、その項目を地域ごとに12ヶ月で比べられます（地域は何個でも選べる。横向きはタップで画面いっぱい）'] },
   { v:'v761', d:'2026-10-09', items:['PLANの「やること」の名前を「立案」に変えました（月間・中期・長期のタスクを管理するページ。見出しの ⓘ で説明）','立案で探せるように：「名前・人で探す」の欄と、期間（すべて・月間・中期・長期）','期日は計画シートと同じ窓に：「期日」を押すと ✅ ToDoに入れる／📅 予定に入れる を選んで日にち（予定は時間も）。書いてすぐ「📅 期日」でもOK'] },
@@ -37784,8 +37785,10 @@ function _px3Css() {
     + "body.px3 #evCalendar.full,body.px3 #evDayV.full,body.px3 #evWeek.full,body.px3 #evAgenda.full{left:220px}"
     + "body.px3 .pc-sidebar{width:220px;align-items:stretch;padding:16px 12px 14px;gap:2px;background:color-mix(in srgb,var(--bg) 82%,#000);overflow-y:auto}"
     + "body.px3 .pcs-item{flex-direction:row;width:auto;height:40px;padding:0 10px;gap:12px;justify-content:flex-start;border-radius:10px;flex:none}"
-    // v763: 選んだ項目は浮かせず、右の画面と同じ背景の色でつなげる（タブのように右端まで）
-    + "body.px3 .pc-sidebar{border-right:none}body.px3 .pcs-item:hover{background:color-mix(in srgb,var(--bg) 55%,transparent)}body.px3 .pcs-item.active{background:var(--bg);margin-right:-12px;border-radius:10px 0 0 10px;box-shadow:none}"
+    // v764: 左のメニューは明るい色（白）・選んだ項目は濃い色。右の画面（少し灰色）とは色の差＋境界線＋薄い影で分ける
+    + "body.px3 .pc-sidebar{background:var(--surface);border-right:1px solid var(--border);box-shadow:2px 0 14px rgba(20,30,55,.06)}"
+    + "body.px3 .pcs-item:hover{background:var(--surface2)}body.px3 .pcs-item.active,body.px3 .pcs-item.active:hover{background:#1B2335;box-shadow:none}body.px3 .pc-sidebar .pcs-item.active .pcs-lb{color:#fff}body.px3 .pc-sidebar .pcs-item.active .nav-svg{stroke:#2CE5B8}"
+    + "body.px3:not(.light) .pcs-item.active,body.px3:not(.light) .pcs-item.active:hover{background:color-mix(in srgb,var(--accent) 20%,var(--bg))}"
     + "body.px3 .pcs-ic{width:22px;height:22px;background:none!important;box-shadow:none!important;border-radius:0;filter:none!important;font-size:17px}"
     + "body.px3 .pcs-ic .nav-svg{stroke:var(--text-mid);width:19px;height:19px}body.px3 .pcs-item.active .nav-svg{stroke:var(--accent)}"
     + "body.px3 .pcs-lb{font-size:13.5px;font-weight:800;color:var(--text-mid);letter-spacing:0}body.px3 .pcs-item.active .pcs-lb{color:var(--text)}"
@@ -37796,7 +37799,7 @@ function _px3Css() {
     + "#pcsTeams .t{display:flex;align-items:center;gap:9px;height:32px;padding:0 10px;border-radius:9px;font-size:12.5px;font-weight:800;color:var(--text-mid);cursor:pointer}#pcsTeams .t:hover{background:var(--surface)}"
     + "#pcsTeams .t i{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;color:var(--go-ink,#06251C)}#pcsTeams .t.on{color:var(--text)}#pcsTeams .t.on i{background:var(--accent);border-color:var(--accent)}"
     + "#pcsTeams .t span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#pcsTeams .t .lic{width:12px;height:12px;opacity:.6}"
-    + "body.px3 #pcsMe{display:flex;align-items:center;gap:10px;padding:12px 10px 9px;border-radius:0;background:none;border:none;border-top:1px solid color-mix(in srgb,var(--text) 12%,transparent);box-shadow:none;cursor:pointer;margin-top:10px;flex:none}body.px3 #pcsMe:hover{background:color-mix(in srgb,var(--bg) 55%,transparent)}"
+    + "body.px3 #pcsMe{display:flex;align-items:center;gap:10px;padding:12px 10px 9px;border-radius:0;background:none;border:none;border-top:1px solid color-mix(in srgb,var(--text) 12%,transparent);box-shadow:none;cursor:pointer;margin-top:10px;flex:none}body.px3 #pcsMe:hover{background:var(--surface2)}"
     + "#pcsMe .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#5AD7FF);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#06251C;flex:none}"
     + "#pcsMe b{display:block;font-size:12.5px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pcsMe small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pcsMe>div{min-width:0;flex:1}"
     // 分析：古い上の帯・タブ・表示チームの帯・左の列は使わない
