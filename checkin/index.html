@@ -442,32 +442,6 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 }
 @page{size:A4;margin:8mm;}
 
-/* 領収書の年間PDF出力: 専用ページ（#rp=トークン&y=年）で表示して、そのページから印刷・PDF保存する。
-   会員証ページ自体では印刷を呼ばない（iPhoneのホーム画面アプリやLINEのブラウザで、
-   一度印刷すると次から印刷画面が出なくなる・固まることがあるため） */
-#rcptPrint{display:none;}
-#rcptPrint .rp-head{font-size:11pt;font-weight:700;margin-bottom:4mm;}
-#rcptPrint .rp-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;}
-#rcptPrint .rp-item{border:0.3mm solid #888;border-radius:2mm;padding:5mm 4mm;text-align:center;page-break-inside:avoid;break-inside:avoid;}
-#rcptPrint .rp-t{font-weight:900;font-size:12pt;letter-spacing:.3em;}
-#rcptPrint .rp-no{font-size:7pt;color:#666;}
-#rcptPrint .rp-to{text-align:left;border-bottom:0.2mm solid #999;font-size:9.5pt;margin-top:3mm;padding-bottom:1mm;font-weight:700;}
-#rcptPrint .rp-amt{font-size:15pt;font-weight:900;margin:3mm 0 1mm;}
-#rcptPrint .rp-note{font-size:7.5pt;color:#444;}
-#rcptPrint .rp-by{font-size:9pt;font-weight:700;margin-top:2.5mm;}
-body.rpmode{background:#fff;}
-body.rpmode > *:not(#rcptPrint){display:none !important;}
-body.rpmode #rcptPrint{display:block;color:#000;background:#fff;max-width:200mm;margin:0 auto;padding:14px 12px 40px;}
-#rcptPrint .rp-bar{background:#f2f1ec;border:1px solid #dfddd3;border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:13px;line-height:1.7;color:#23261f;}
-#rcptPrint .rp-bar button{display:block;width:100%;padding:13px;font-size:16px;font-weight:800;border-radius:10px;border:0;background:#2e6b52;color:#fff;margin:0 0 8px;}
-#rcptPrint .rp-msg{color:#555;font-size:14px;}
-@media (max-width:560px){ body.rpmode #rcptPrint .rp-grid{grid-template-columns:1fr;} }
-@media print{
-  #rcptPrint:not(:empty){display:block !important;color:#000;background:#fff;}
-  #rcptPrint .rp-bar{display:none !important;}
-  body.rpmode #rcptPrint .rp-grid{grid-template-columns:1fr 1fr;}
-  body.rpmode #rcptPrint{padding:0;max-width:none;}
-}
 /* toast */
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);
   padding:9px 20px;border-radius:99px;font-size:13.5px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;}
@@ -908,7 +882,6 @@ body.practice .topbar{top:var(--pxh,36px);}
 </div>
 
 <div id="printArea"></div>
-<div id="rcptPrint"></div>
 <div id="modalHost"></div>
 <div id="toast"></div>
 
@@ -1298,11 +1271,6 @@ $('actLogout').onclick = function(){ auth.signOut(); };
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
 var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
 var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
-// 🧾 領収書の年間PDFページ（#rp=トークン&y=年）: 会員証の「PDF保存」から別ページで開く
-var gRcptPrint = (!gCardToken && !gReceiveMode && !gTrainerMode) ? (function(){
-  var m = /#rp=([A-Za-z0-9_-]+)(?:&y=(\d{4}))?/.exec(location.hash);
-  return m ? { t: m[1], y: m[2] || '' } : null;
-})() : null;
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
 //   区別できなくなるのを防ぐ。iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
@@ -1311,7 +1279,7 @@ var gRcptPrint = (!gCardToken && !gReceiveMode && !gTrainerMode) ? (function(){
 // ・それ以外＝受付システム本体（ログイン〜管理画面）: 受付管理（ベルアイコン）
 (function(){
   var sw = gTrainerMode ? { t: '研修受講カード', i: './icon-trainer-' }
-    : (!gCardToken && !gReceiveMode && !gRcptPrint) ? { t: '受付管理', i: './icon-admin-' }
+    : (!gCardToken && !gReceiveMode) ? { t: '受付管理', i: './icon-admin-' }
     : null;
   if(!sw) return;
   try{
@@ -1329,9 +1297,9 @@ var gRcptPrint = (!gCardToken && !gReceiveMode && !gTrainerMode) ? (function(){
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v41';
+var APP_VER = 'v42';
 var CHANGELOG = [
-  { v: 'v41', d: '2026/10/09', items: ['会員証の領収書「PDF保存」で一度保存すると、次から開けなくなることがあった問題を修正（領収書だけのページが別に開き、そこから「🖨 印刷／PDFに保存」できるようになりました）'] },
+  { v: 'v42', d: '2026/10/09', items: ['🧾 会員証の領収書「PDF保存」: 印刷画面を通さず、押してすぐPDFファイルで保存されるようになりました（これまでは印刷プレビューが開くまで20秒ほどかかっていました）'] },
   { v: 'v41', d: '2026/10/09', items: ['🔒 PCでは、タブやブラウザを閉じるとログアウトするようにしました（受付PCにログインが残らないように。NAVIGATORと同じ）。受付中はタブを開いたままにしてください（再読み込みではログアウトしません）', 'スマホ・タブレットは今までどおりログインしたままです'] },
   { v: 'v40', d: '2026/10/09', items: ['🤝 合同イベント手順書を追加（🔰 使い方 › 受付管理アプリ から開けます）: 準備・当日の受付・会員証がない方の受付と領収書・会計・集計の流れをまとめました'] },
   { v: 'v40', d: '2026/10/09', items: ['🔤 iPhoneを横にした後などに、一部の文字だけ大きくなってしまうことがあったのを直しました'] },
@@ -3130,7 +3098,7 @@ function allReceiptsModal(c){
   var ykeys = Object.keys(years).sort().reverse();
   modal('<h2>🧾 領収書（' + keys.length + '件）</h2>'
     + '<div style="max-height:52vh;overflow:auto;">' + html + '</div>'
-    + '<p style="font-size:12px;color:var(--sub);margin:10px 0 0;">PDF保存: 押すと領収書だけのページが別に開きます。そのページの「🖨 印刷／PDFに保存」から保存してください。</p>'
+    + '<p style="font-size:12px;color:var(--sub);margin:10px 0 0;">PDF保存: ボタンを押すと、その年の領収書がPDFファイルで保存されます（iPhoneのホーム画面から開いている時は共有メニューの「\"ファイル\"に保存」）。</p>'
     + '<div class="btns" style="flex-wrap:wrap;">'
     + ykeys.map(function(y){ return '<button data-rpy="' + y + '">📄 ' + y + '年分をPDF保存</button>'; }).join('')
     + '<button id="raClose">閉じる</button></div>', true);
@@ -3143,67 +3111,135 @@ function allReceiptsModal(c){
       return;
     }
     var yb = e.target.closest ? e.target.closest('button[data-rpy]') : null;
-    if(yb) openRcptPrint(yb.getAttribute('data-rpy'));
+    if(yb) rcptPdfSave(yb.getAttribute('data-rpy'), c);
   });
 }
-// 年間の領収書のA4印刷レイアウト（確定申告用）。表示・印刷は専用ページ（#rp=）で行う
-function rcptPrintHtml(year, c){
+// 年間の領収書をA4のPDFファイルにして、その場で保存（確定申告用）。
+// 印刷画面（プレビュー）を経由すると開くまで20秒ほどかかるため、
+// 端末の中で画像として描いてPDFを直接作る（外部ライブラリなし・数秒で保存）
+function rcptPdfSave(year, c){
   var keys = Object.keys(c).filter(function(k){
     return k.indexOf('rcpt_') === 0 && c[k] && (c[k].d || '').slice(0, 4) === year;
   });
   keys.sort(function(a, b){ return (c[a].d || '') < (c[b].d || '') ? -1 : 1; });
-  if(!keys.length) return '';
+  if(!keys.length){ toast('この年の領収書はありません'); return; }
   var total = 0;
   keys.forEach(function(k){ total += c[k].amt || 0; });
-  var blocks = keys.map(function(k){
+  var MM = 6;                                   // 1mm = 6px（約150dpi）
+  var PW = 210 * MM, PH = 297 * MM, M = 8 * MM, GAP = 5 * MM;
+  var IW = (PW - M * 2 - GAP) / 2, IH = 64 * MM, HEAD = 10 * MM;
+  var FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic","Meiryo",sans-serif';
+  var pages = [], cv = null, x = null, col = 0, rowY = 0;
+  function newPage(first){
+    cv = document.createElement('canvas'); cv.width = PW; cv.height = PH;
+    x = cv.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, PW, PH);
+    x.textBaseline = 'alphabetic';
+    rowY = M;
+    if(first){
+      txt(year + '年分 領収書一覧　' + (c.name || '') + '（' + keys.length + '枚・合計 ' + yen(total) + '）',
+        M, M + 5 * MM, PW - M * 2, 4 * MM, 'bold', '#000', 'left');
+      rowY = M + HEAD;
+    }
+    col = 0;
+    pages.push(cv);
+  }
+  // 1行の文字。幅に収まらなければ文字を小さくする（最小で7割）
+  function txt(t, tx, ty, maxW, size, weight, color, align){
+    t = String(t || '');
+    var sz = size;
+    x.font = (weight || 'normal') + ' ' + sz + 'px ' + FONT;
+    while(x.measureText(t).width > maxW && sz > size * 0.7){ sz -= 1; x.font = (weight || 'normal') + ' ' + sz + 'px ' + FONT; }
+    x.fillStyle = color || '#000';
+    x.textAlign = align || 'center';
+    x.fillText(t, tx, ty, maxW);
+  }
+  newPage(true);
+  keys.forEach(function(k){
+    if(rowY + IH > PH - M){ newPage(false); }
     var r = c[k], eid = k.slice(5);
     var rno = 'R' + eid.slice(-6).toUpperCase() + '-' + (r.no || c.no || '');
     var dp = (r.d || '').split('-');
     var dj = dp.length === 3 ? (dp[0] + '年' + parseInt(dp[1], 10) + '月' + parseInt(dp[2], 10) + '日') : (r.d || '');
-    return '<div class="rp-item">'
-      + '<div class="rp-t">領　収　書</div>'
-      + '<div class="rp-no">No. ' + esc(rno) + '</div>'
-      + '<div class="rp-to">' + esc(c.name || '') + '　様</div>'
-      + '<div class="rp-amt">' + yen(r.amt || 0) + '−</div>'
-      + '<div class="rp-note">但し セミナー受講料として' + (r.pm ? '（' + esc(r.pm) + '受領）' : '') + '</div>'
-      + (r.inv ? '<div class="rp-note">' + esc(ckRcptTaxLine(r)) + '</div>' : '')
-      + '<div class="rp-note">' + esc(dj) + '　' + esc(r.ev || '') + '</div>'
-      + '<div class="rp-by">' + ckRcptIssuerHtml(r, '') + '</div>'
-      + '</div>';
-  }).join('');
-  return '<div class="rp-head">' + esc(year) + '年分 領収書一覧　' + esc(c.name || '')
-    + '（' + keys.length + '枚・合計 ' + yen(total) + '）</div>'
-    + '<div class="rp-grid">' + blocks + '</div>';
+    var bx = M + col * (IW + GAP), by = rowY, cx = bx + IW / 2, w = IW - 8 * MM;
+    x.strokeStyle = '#888'; x.lineWidth = 2;
+    x.beginPath();
+    if(x.roundRect) x.roundRect(bx, by, IW, IH, 2 * MM); else x.rect(bx, by, IW, IH);
+    x.stroke();
+    var y = by + 9 * MM;
+    txt('領　収　書', cx, y, w, 4.6 * MM, 'bold', '#000');
+    y += 4 * MM; txt('No. ' + rno, cx, y, w, 2.5 * MM, 'normal', '#666');
+    y += 7 * MM; txt((c.name || '') + '　様', bx + 4 * MM, y, w, 3.4 * MM, 'bold', '#000', 'left');
+    x.strokeStyle = '#999'; x.lineWidth = 1.2;
+    x.beginPath(); x.moveTo(bx + 4 * MM, y + 1.5 * MM); x.lineTo(bx + IW - 4 * MM, y + 1.5 * MM); x.stroke();
+    y += 9 * MM; txt(yen(r.amt || 0) + '−', cx, y, w, 5.6 * MM, 'bold', '#000');
+    y += 5 * MM; txt('但し セミナー受講料として' + (r.pm ? '（' + r.pm + '受領）' : ''), cx, y, w, 2.7 * MM, 'normal', '#444');
+    if(r.inv){ y += 3.6 * MM; txt(ckRcptTaxLine(r), cx, y, w, 2.7 * MM, 'normal', '#444'); }
+    y += 3.6 * MM; txt(dj + '　' + (r.ev || ''), cx, y, w, 2.7 * MM, 'normal', '#444');
+    y += 5.4 * MM; txt(r.by || '', cx, y, w, 3.2 * MM, 'bold', '#000');
+    if(r.ad){ y += 3.6 * MM; txt(r.ad, cx, y, w, 2.6 * MM, 'normal', '#222'); }
+    if(r.tel){ y += 3.4 * MM; txt('TEL ' + r.tel, cx, y, w, 2.6 * MM, 'normal', '#222'); }
+    if(r.inv){ y += 3.4 * MM; txt('登録番号 ' + r.inv, cx, y, w, 2.6 * MM, 'normal', '#222'); }
+    col++;
+    if(col === 2){ col = 0; rowY += IH + GAP; }
+  });
+  var jpgs = pages.map(function(p){ return ckB64Bytes(p.toDataURL('image/jpeg', 0.85).split(',')[1]); });
+  var pdf = ckJpegPdf(jpgs, PW, PH);
+  var name = '領収書_' + year + '年分_' + String(c.name || '').replace(/[\\/:*?"<>|\s]/g, '') + '.pdf';
+  ckSavePdf(pdf, name);
 }
-// 「PDF保存」: 会員証ページでは印刷を呼ばず、領収書だけの専用ページを別タブで開く
-// （開けない環境＝LINE等のアプリ内ブラウザでは同じタブで開く。戻るで会員証に戻れる）
-function openRcptPrint(year){
-  if(!gCardToken) return;
-  var url = location.href.split('#')[0] + '#rp=' + gCardToken + '&y=' + year;
-  var w = null;
-  try{ w = window.open(url, '_blank'); }catch(e){ w = null; }
-  if(!w) location.href = url;
+function ckB64Bytes(b64){
+  var bin = atob(b64), u = new Uint8Array(bin.length);
+  for(var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return u;
 }
-// 専用ページ: 領収書を画面に表示し、ボタンから印刷・PDF保存
-function showRcptPrintPage(rp){
-  document.body.classList.add('rpmode');
-  var el = $('rcptPrint');
-  el.innerHTML = '<p class="rp-msg">読み込み中…</p>';
-  db.collection('cards').doc(rp.t).get().then(function(s){
-    if(!s.exists){ el.innerHTML = '<p class="rp-msg">領収書が見つかりません。会員証から開き直してください。</p>'; return; }
-    var c = s.data(), y = rp.y || String(new Date().getFullYear());
-    var body = rcptPrintHtml(y, c);
-    try{ document.title = y + '年分 領収書 ' + (c.name || ''); }catch(e){}
-    el.innerHTML = '<div class="rp-bar">'
-      + '<button id="rpPrint">🖨 印刷／PDFに保存</button>'
-      + '<div style="text-align:right;margin:-2px 0 6px;"><a href="' + esc(location.href.split('#')[0] + '#c=' + rp.t) + '" style="color:#2b5fa8;font-weight:700;">← 会員証に戻る</a></div>'
-      + '・<b>iPhone</b>：押すと印刷画面 → 右上の共有ボタン →「"ファイル"に保存」でPDFになります。<br>'
-      + '・<b>Android・PC</b>：送信先（プリンタ）で「PDFとして保存」を選びます。<br>'
-      + '・ボタンを押しても何も出ないとき（LINEで開いている等）：右上のメニューから「ブラウザで開く」を選んでください。'
-      + '</div>'
-      + (body || '<p class="rp-msg">' + esc(y) + '年の領収書はありません。</p>');
-    $('rpPrint').onclick = function(){ try{ window.print(); }catch(e){} };
-  }).catch(function(e){ el.innerHTML = '<p class="rp-msg">読み込めませんでした。電波の良いところで開き直してください。（' + esc(e.message || '') + '）</p>'; });
+// JPEG画像を1ページ1枚で並べただけの最小構成のPDFを組み立てる（A4縦）
+function ckJpegPdf(jpgs, pxW, pxH){
+  var parts = [], len = 0, offs = [];
+  function add(x){
+    if(typeof x === 'string'){ var u = new Uint8Array(x.length); for(var i = 0; i < x.length; i++) u[i] = x.charCodeAt(i) & 255; x = u; }
+    parts.push(x); len += x.length;
+  }
+  function obj(n, body){ offs[n] = len; add(n + ' 0 obj\n'); body(); add('\nendobj\n'); }
+  var n = jpgs.length, W = 595.28, H = 841.89;
+  add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1, function(){ add('<< /Type /Catalog /Pages 2 0 R >>'); });
+  var kids = [];
+  for(var i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
+  obj(2, function(){ add('<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>'); });
+  jpgs.forEach(function(jpg, i){
+    var pg = 3 + i * 3, ct = pg + 1, im = pg + 2;
+    var cs = 'q ' + W + ' 0 0 ' + H + ' 0 0 cm /Im0 Do Q';
+    obj(pg, function(){ add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] /Resources << /XObject << /Im0 ' + im + ' 0 R >> >> /Contents ' + ct + ' 0 R >>'); });
+    obj(ct, function(){ add('<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream'); });
+    obj(im, function(){
+      add('<< /Type /XObject /Subtype /Image /Width ' + pxW + ' /Height ' + pxH + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpg.length + ' >>\nstream\n');
+      add(jpg); add('\nendstream');
+    });
+  });
+  var total = 3 + n * 3, xref = len;
+  var xr = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+  for(var j = 1; j < total; j++) xr += ('0000000000' + offs[j]).slice(-10) + ' 00000 n \n';
+  add(xr + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+  return new Blob(parts, { type: 'application/pdf' });
+}
+// 保存: iPhoneのホーム画面アプリなど、ダウンロードが効かない環境は共有シート（「ファイルに保存」）
+function ckSavePdf(blob, name){
+  var standalone = window.navigator.standalone === true
+    || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  var inApp = /Line\/|FBAN|FBAV|Instagram/i.test(navigator.userAgent || '');
+  var file = null;
+  try{ file = new File([blob], name, { type: 'application/pdf' }); }catch(e){ file = null; }
+  if((standalone || inApp) && file && navigator.canShare && navigator.canShare({ files: [file] })){
+    navigator.share({ files: [file], title: name }).catch(function(){});
+    return;
+  }
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 60000);
+  toast('PDFを保存しました（' + name + '）');
 }
 function receiptModal(key, r, c){
   var eid = key.slice(5);
@@ -3247,11 +3283,6 @@ $('mcHelp').onclick = function(){
 };
 
 if(gCardToken){ showCardView(gCardToken); }
-if(gRcptPrint){ showRcptPrintPage(gRcptPrint); }
-// 同じタブで会員証⇔領収書PDFページを行き来したとき（#だけ変わる）は読み込み直して切り替える
-window.addEventListener('hashchange', function(){
-  if(gRcptPrint || /#rp=/.test(location.hash)) location.reload();
-});
 
 /* 共通受け取りリンク: 会員番号 → 自分の会員証（cardClaims/{番号} から引く） */
 if(gReceiveMode){
@@ -3299,7 +3330,7 @@ if(gReceiveMode){
 }
 
 auth.onAuthStateChanged(function(u){
-  if(gCardToken || gReceiveMode || gRcptPrint) return;   // 会員証・受け取り・領収書PDFページは通常画面に切り替えない
+  if(gCardToken || gReceiveMode) return;   // 会員証・受け取りモード中は通常画面に切り替えない
   gUser = u;
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
