@@ -1056,7 +1056,7 @@ tr.ot-done{opacity:.5}
 /* ── 研修履歴リニューアル ── */
 .th-timeline{position:relative;padding-left:20px}
 .th-timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--border)}
-.th-entry{position:relative;padding:8px 0 12px;animation:fadeSlideIn .2s ease-out}
+.th-entry{position:relative;padding:8px 38px 12px 0;animation:fadeSlideIn .2s ease-out}
 .th-entry::before{content:'';position:absolute;left:-17px;top:12px;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--bg);z-index:1}
 .th-entry.result-bc::before{background:var(--accent);border-color:var(--accent)}
 .th-entry.result-left::before{background:var(--red);border-color:var(--red)}
@@ -1069,8 +1069,9 @@ tr.ot-done{opacity:.5}
 .th-act-btn.go:active{background:var(--accent);border-color:var(--accent);color:#000}
 .th-act-btn.left:active{background:var(--red);border-color:var(--red);color:#fff}
 .th-meta{display:flex;gap:8px;align-items:center;margin-top:2px;font-size:11px;color:var(--text-dim)}
-.th-del{position:absolute;right:0;top:8px;color:var(--text-dim);font-size:14px;cursor:pointer;padding:2px 4px;opacity:0.4;transition:opacity .15s}
-.th-del:hover{opacity:1;color:var(--red)}
+.th-del{position:absolute;right:-4px;top:2px;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--red);cursor:pointer;opacity:.75;transition:opacity .15s,background .15s}.th-del .lic{width:17px;height:17px}
+.th-del:hover,.th-del:active{opacity:1;background:color-mix(in srgb,var(--red) 12%,transparent)}
+.thf-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:10px}.thf-grid>div{min-width:0}.thf-grid .fi{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;height:46px;margin:0;padding:0 12px;font-size:16px;line-height:46px;-webkit-appearance:none;appearance:none;text-align:left}.thf-grid input[type=date]::-webkit-date-and-time-value{text-align:left}
 
 /* ステップ選択UI */
 .step-flow{display:flex;flex-wrap:wrap;gap:4px 0;margin-bottom:10px;overflow:visible;padding-bottom:4px} /* v403: 横スクロール廃止・折り返し表示（タブスワイプとの競合も解消） */
@@ -2955,7 +2956,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v759</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v760</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3901,7 +3902,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v759';</script>
-<script src="app.js?v=v759"></script>
+<script>window.GM_EXPECT_JS='v760';</script>
+<script src="app.js?v=v760"></script>
 </body>
 </html>
