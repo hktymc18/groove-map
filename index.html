@@ -2505,6 +2505,74 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
 .p2td-it.sug{color:var(--text-mid)} .p2td-it.sug .tm{color:var(--accent)}
 /* v554: 理想MAPのかんたん編集 */
 .idq-sheet{max-height:92vh;overflow-y:auto}
+.idq-sheet{max-width:560px!important;padding:10px 22px calc(env(safe-area-inset-bottom) + 18px)!important}
+/* v772: かんたん編集（作り直し） */
+.iq-hd{display:flex;align-items:center;gap:12px;margin:4px 0 2px}
+.iq-av{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:var(--text);background:var(--surface2);box-shadow:0 0 0 3px var(--tc);overflow:hidden}
+.iq-av img{width:100%;height:100%;object-fit:cover}
+.iq-hn{min-width:0;flex:1}
+.iq-nm{font-size:18px;font-weight:800;display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:var(--text)}
+.iq-tp{font:800 12px/1 Inter,sans-serif;padding:4px 8px;border-radius:7px;background:var(--tc);color:var(--ti)}
+.iq-hn small{display:block;font-size:12px;color:var(--text-dim);margin-top:3px}
+.iq-x{width:36px;height:36px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--text-mid);font-size:15px;flex:none;cursor:pointer}
+.iq-add{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 6px}
+.iq-ab{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:14px;cursor:pointer;min-height:58px;user-select:none;-webkit-user-select:none;transition:transform .1s}
+.iq-ab:active{transform:scale(.97)}
+.iq-ab i{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:19px;font-weight:600;flex:none;line-height:1}
+.iq-ab b{display:block;font-size:14.5px;font-weight:800}
+.iq-ab span{display:block;font-size:11.5px;margin-top:2px}
+.iq-ab.biz{background:var(--accent);color:var(--go-ink)}
+.iq-ab.biz i{background:rgba(255,255,255,.35)}
+.iq-ab.biz span{opacity:.8}
+.iq-ab.usr{background:var(--surface2);color:var(--text)}
+.iq-ab.usr i{background:var(--surface);color:var(--gold)}
+.iq-ab.usr span{color:var(--text-dim)}
+.iq-ab.usr label{display:inline-flex;align-items:center;gap:1px;margin-left:2px;padding:1px 6px;border-radius:6px;background:var(--surface);font:800 11px Inter,sans-serif;color:var(--text-mid);cursor:text}
+.iq-ab.usr label input{width:3.4ch;border:none;background:none;font:800 11px Inter,sans-serif;color:var(--text);text-align:right;outline:none;padding:0;-moz-appearance:textfield}
+.iq-ab.usr label input::-webkit-inner-spin-button,.iq-ab.usr label input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.iq-hint{font-size:11.5px;color:var(--text-dim);margin:0 2px}
+.iq-lb{font-size:12px;font-weight:700;color:var(--text-dim);letter-spacing:.06em;margin:18px 2px 8px}
+.iq-nmin{display:flex;gap:8px}
+.iq-tl{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.iq-tl+.iq-tl{margin-top:10px}
+.iq-tl .idq-s{height:46px;min-width:0;padding:0;border-radius:12px;background:var(--surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;font:800 15px Inter,'Noto Sans JP',sans-serif;color:var(--text);position:relative}
+.iq-tl .idq-s:hover{background:var(--surface3);color:var(--text)}
+.iq-tl .idq-s small{font-size:9.5px;font-weight:600;color:var(--text-dim);margin-top:1px;white-space:nowrap}
+.iq-tl .idq-s.gem::after{content:"";position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--tc)}
+.iq-tl .idq-s.w2{grid-column:span 2}
+.iq-tl .idq-s.sel{background:var(--tc);color:var(--ti);box-shadow:0 4px 14px color-mix(in srgb,var(--tc) 45%,transparent)}
+.iq-tl .idq-s.sel small{color:inherit;opacity:.85}
+.iq-tl .idq-s.sel::after{display:none}
+.iq-rw{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border)}
+.iq-rw .k{width:58px;font-size:13px;font-weight:700;color:var(--text-mid);flex:none}
+.iq-gsv{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.iq-rb{width:44px;height:44px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text);cursor:pointer;flex:none;user-select:none;-webkit-user-select:none}
+.iq-rb:active{transform:scale(.92)}
+.iq-num{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;cursor:text}
+.iq-num input{width:7.5ch;border:none;background:none;text-align:right;font:800 24px Inter,sans-serif;color:var(--text);outline:none;padding:0;-moz-appearance:textfield}
+.iq-num input::-webkit-inner-spin-button,.iq-num input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.iq-num input:focus{background:var(--surface2);border-radius:8px}
+.iq-num b{font:700 13px Inter,sans-serif;color:var(--text-dim);margin-left:3px;width:5ch}
+.iq-num em{flex-basis:100%;text-align:center;font-style:normal;font-size:10.5px;color:var(--text-dim);font-weight:600}
+.iq-seg{display:flex;flex:1;min-width:0;background:var(--surface2);border-radius:12px;padding:3px;gap:2px}
+.iq-seg .idq-s{flex:1;min-width:0;height:40px;padding:0;border-radius:10px;display:flex;align-items:center;justify-content:center;font:800 15px Inter,sans-serif;color:var(--text-mid);background:none}
+.iq-seg .idq-s:hover{background:none;color:var(--text)}
+.iq-seg .idq-s.sel{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(20,30,55,.15)}
+body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
+.iq-seg .idq-own{flex:1;min-width:0;width:auto;height:40px;border-radius:10px;font:800 14px Inter,sans-serif}
+.iq-seg .idq-own.sel{background:var(--surface);color:var(--accent)}
+.iq-ft{display:flex;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;font-weight:700}
+.iq-ft .d{color:var(--red);cursor:pointer}
+.iq-ft .mo{margin-left:auto;color:var(--text-mid);cursor:pointer}
+.iq-ft .mo:hover{color:var(--accent)}
+@media (max-width:520px){
+  .idq-sheet{padding:8px 16px calc(env(safe-area-inset-bottom) + 18px)!important}
+  .iq-tl .idq-s{height:44px} .iq-tl .idq-s small{display:none}
+  .iq-ab{padding:10px 11px;gap:8px} .iq-ab b{font-size:14px}
+  .iq-lb{margin:14px 2px 6px} .iq-rw{padding:7px 0} .iq-rb{width:40px;height:40px} .iq-num input{font-size:22px} .iq-seg .idq-s{height:38px}
+}
+.idq-flash{animation:idqFlash 2.4s ease-out}
+@keyframes idqFlash{0%,35%{filter:drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 12px var(--accent))}100%{filter:none}}
 .idq-sec{font-size:13px;font-weight:900;margin:4px 0 8px} .idq-sec small{font-weight:600;color:var(--text-dim);margin-left:8px;font-size:11px}
 .idq-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center} .idq-chips .qa-chip{cursor:pointer;padding:5px 10px;font-size:12.5px;min-width:0}
 .idq-add2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -2976,7 +3044,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v771</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v772</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3922,7 +3990,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v771';</script>
-<script src="app.js?v=v771"></script>
+<script>window.GM_EXPECT_JS='v772';</script>
+<script src="app.js?v=v772"></script>
 </body>
 </html>

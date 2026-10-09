@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v771';
+var APP_JS_VERSION = 'v772';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4056,7 +4056,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v771';
+  var DATA_VERSION = 'v772';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5559,6 +5559,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v772', d:'2026-10-09', items:['理想MAPのかんたん編集を作り直しました：「ビジネスを足す」「ユーザーを足す」は1人足して閉じます（足した人が光り、元に戻すも出ます）','タイトルは大きいタイルで押しやすく（BMはB11の後ろ）。GSVは3桁区切りの大きい数字と − ＋、稼働・稼働率は同じ形の切り替えに。スマホも同じ画面です','現状MAPで名前を変えた人が、理想MAPでは古い名前のままだったのを直しました'] },
   { v:'v771', d:'2026-10-09', items:['PCでは、タブやブラウザを閉じるとログアウトするようにしました（PCを人に貸した時に中を見られないように。ATTACK LIST・GOAL SETTING と同じ）','スマホ・タブレットは今までどおりログインしたままです（通知を受け取るため）'] },
   { v:'v770', d:'2026-10-09', items:['アカウント管理で、各アカウントを受付（BASE CHECK-IN）の名簿の人と紐付けられるようにしました（🎫 受付の名簿と紐付ける）','紐付けた人を受付で「無効」にすると、NAVIGATORも使えなくなります（受付で有効に戻すと、次に開いた時から使えます。リーダーは対象外）'] },
   { v:'v769', d:'2026-10-09', items:['メンバーの「アップラインを変更」で、付け替えたい相手が出てこないことがあったのを直しました（同じMAPに出ている人なら選べます）'] },
@@ -8475,10 +8476,21 @@ function buildKanbanCol(title, members, color) {
 }
 
 // ── TREE ──
+// v772: 理想MAPは現状MAPのコピーなので、現状で名前・性別を変えても理想は古いままだった（写真・吹き出しは現状を見るので食い違う）。
+//   同じ人（同じid・理想で足した新規以外）の名前・性別だけは現状に合わせる（タイトル・GSVなど理想の数字はそのまま）
+function _idealSyncNames() {
+  var cur = _idealCurMap(), ch = false;
+  (state.idealMembers || []).forEach(function(m) {
+    var c = cur[m.id]; if (!c || m.idealNew) return;
+    ['lastName', 'firstName', 'gender'].forEach(function(k) { if (c[k] !== undefined && m[k] !== c[k]) { m[k] = c[k]; ch = true; } });
+  });
+  return ch;
+}
 function membersForMap(mapType) {
   var result;
   if (mapType === 'ideal') {
     if (state.idealMembers && state.idealMembers.length > 0) {
+      _idealSyncNames(); // v772: 現状MAPで名前を変えた人は、理想MAPでも同じ名前に
       result = state.idealMembers.filter(function(m) { return !m.deleted; });
     } else {
       result = state.members.filter(function(m) {
@@ -9749,22 +9761,30 @@ function idqOpen(mid) {
   _idqRender();
   requestAnimationFrame(function() { ov.classList.add('show'); });
 }
-// v557: 「この人を変える」をミニマルに。どの値も1タップ（タイトルは種類ごとの帯・B/Qは数字だけ・稼働率は100まで＋手入力）
+// v772: かんたん編集を作り直し（足すボタンは1人足して閉じる・タイトルは大きいタイル・GSVは大きい数字と − ＋・稼働はセグメント）
 var IDQ_RATES = [30, 50, 80, 100];
 var IDQ_GEMS = ['ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'チームエリート'];
+var IDQ_GEM_LB = { 'ゴールド': 'ゴールド', 'ラピス': 'ラピス', 'ルビー': 'ルビー', 'エメラルド': 'エメラルド', 'ダイヤモンド': 'ダイヤ', 'ブルーダイヤモンド': 'ブルーD', 'チームエリート': 'Tエリート' };
+function _idqCol(t) { return t === 'ユーザー' ? '#E08A1D' : (t === 'LOI' ? '#FB923C' : titleRingColor(t)); }
+function _idqInk(hex) { // 塗りの上の文字色（明るい色には濃い文字）
+  var h = String(hex || '').replace('#', ''); if (h.length !== 6) return '#fff';
+  var r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 175 ? '#141A28' : '#fff';
+}
 function _idqTitleSegs(tl) {
-  var s = function(v, lb, st) { return '<span class="idq-s' + (v === tl ? ' sel' : '') + '" data-v="' + v + '" onclick="idqTitle(\'' + v + '\')"' + (st ? ' style="' + st + '"' : '') + '>' + lb + '</span>'; };
-  var g = function(p) { return '<span class="idq-pre">' + p + '</span>'; };
-  var nums = function(p, a, b) { var o = ''; for (var i = a; i <= b; i++) o += s(p + i, String(i)); return o; };
-  return '<div class="idq-seg sq">' + s('LOI', 'LOI') + g('Q') + nums('Q', 2, 4) + '</div>'
-    + '<div class="idq-seg sbm">' + s('BM', 'BM') + s('BR', 'BR') + '</div>'
-    + '<div class="idq-seg sb">' + g('B') + nums('B', 1, 11) + '</div>'
-    + '<div class="idq-seg sgem">' + IDQ_GEMS.map(function(t) { return s(t, titleAbbr(t), '--gc:' + titleRingColor(t)); }).join('') + '</div>'
-    + '<div class="idq-seg su">' + s('ユーザー', 'ユーザー') + '</div>';
+  var s = function(v, lb, o) {
+    o = o || {}; var c = _idqCol(v);
+    return '<span class="idq-s' + (o.cls || '') + (v === tl ? ' sel' : '') + '" data-v="' + v + '" onclick="idqTitle(\'' + v + '\')" style="--tc:' + c + ';--ti:' + _idqInk(c) + '">' + lb + (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>';
+  };
+  var nums = function(p, a, b) { var o = ''; for (var i = a; i <= b; i++) o += s(p + i, p + i); return o; };
+  return '<div class="iq-tl">' + s('LOI', 'LOI') + nums('Q', 2, 4) + s('BR', 'BR') + '</div>'
+    + '<div class="iq-tl">' + nums('B', 1, 7) + nums('B', 8, 11) + s('BM', 'BM') + s('ユーザー', 'ユーザー', { cls: ' w2' }) + '</div>'
+    + '<div class="iq-tl">' + IDQ_GEMS.map(function(t) { return s(t, titleAbbr(t), { cls: ' gem', sub: IDQ_GEM_LB[t] }); }).join('') + '</div>';
 }
 function _idqIsPreset(m) { return IDQ_RATES.indexOf(parseInt(m.actRate, 10)) >= 0 && String(parseInt(m.actRate, 10)) === String(m.actRate); }
 function _idqOwnVal(m) { return (m.actRate === '' || m.actRate == null || _idqIsPreset(m)) ? '' : m.actRate; }
 function _idqOwnSel(m) { return _idqOwnVal(m) === '' ? '' : ' sel'; }
+function _idqHdStyle(m) { var c = _idqCol((m.title || '').trim()); return '--tc:' + c + ';--ti:' + _idqInk(c); }
 function _idqRender() {
   var box = document.getElementById('idqBody'), m = _idqMember(); if (!box || !m) return;
   var cur = _idealCurMap()[m.id];
@@ -9772,36 +9792,28 @@ function _idqRender() {
   var tl = (m.title || '').trim();
   var root = (state.idealMembers || []).filter(function(x) { return !x.parentId && !x.deleted; })[0];
   var isRoot = root && root.id === m.id;
-  var kids = (state.idealMembers || []).filter(function(x) { return x.parentId === m.id && !x.deleted && x.idealNew; });
-  var nBiz = kids.filter(function(x) { return x.idealKind === 'biz'; }).length, nUsr = kids.filter(function(x) { return x.idealKind === 'user'; }).length;
-  var badge = m.idealKind === 'user' ? '<span class="idd usr">USER</span>' : (m.idealKind === 'biz' ? '<span class="idd nb1">NEW B1</span>' : (m.idealNew ? '<span class="idd new">NEW</span>' : ''));
-  var fx9 = _idealFix(m);
-  var curLine = cur && !m.idealNew ? '現状：' + (cur.title || '−') + '・GSV ' + (cur.ptCurrent || 0).toLocaleString() + (fx9 ? '（固定 +' + fx9.toLocaleString() + '）' : '') + '・稼働 ' + (cur.activity || '−') + (cur.actRate !== '' && cur.actRate != null ? '（' + cur.actRate + '%）' : '') : '理想で追加した新規';
-  var lab = function(t) { return (typeof titleAbbr === 'function' && titleAbbr(t)) || t; };
-  var h = '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + evEsc(nm) + ' <span class="ot-ttl">' + evEsc(lab(tl)) + '</span> ' + badge + '</div>'
-    + '<div style="font-size:11.5px;color:var(--text-dim)">' + evEsc(curLine) + '</div></div>' + (m.idealNew ? '<span class="ms-x idq-hdel" onclick="idqDelete()" title="この新規を削除">' + icn('trash') + '</span>' : '') + '<span class="ms-x" onclick="idqClose()">✕</span></div>' // v558: 新規はスクロールしなくても削除できるよう見出しにも🗑
-    + '<div style="padding:0 16px 18px">'
-    + (m.idealKind === 'user' ? '' : '<div class="idq-sec">この人の直下に追加<small>タップするたび1人ずつ</small></div>'
-    + '<div class="idq-add2">'
-    + '<div class="idq-big biz" onclick="idqAdd(\'biz\')"><div class="t">👔 ビジネスメンバー</div><div class="d">LOI・GSV 1,500P・稼働B 80%</div><div class="c">→ ' + (isRoot ? '自分のB1' : 'チームのB1') + ' ＋1</div></div>'
-    + '<div class="idq-big usr"><div onclick="idqAdd(\'user\')"><div class="t">🛍 ユーザー</div><div class="c">→ B1には数えない</div></div>'
-    + '<div class="d" style="display:flex;align-items:center;gap:4px;margin-top:6px"><input class="fi" id="idqUserPt" type="number" inputmode="numeric" value="' + _idqUserPt() + '" style="width:80px;padding:6px 8px;text-align:right" onfocus="edSelAll(this)" onclick="event.stopPropagation()">P</div></div>'
-    + '</div>'
-    + '<div class="idq-kids">この人の直下（理想で追加）：ビジネス <b>' + nBiz + '</b>人・ユーザー <b>' + nUsr + '</b>人</div>')
-    + '<div class="idq-sec" style="margin-top:' + (m.idealKind === 'user' ? '0' : '16px') + '">この人を変える<small>変えるとすぐ保存</small></div>'
-    + (m.idealNew ? '<div style="display:flex;gap:8px;margin-bottom:8px"><input class="fi" id="idqLast" placeholder="姓（任意）" value="' + evEsc(m.lastName || '') + '" onchange="idqName()"><input class="fi" id="idqFirst" placeholder="名（任意）" value="' + evEsc(m.firstName || '') + '" onchange="idqName()"></div>' : '')
-    + '<div class="idq-rows">'
-    + '<div class="idq-row"><div class="idq-lb">タイトル</div><div class="idq-val idq-tl" id="idqTitles">' + _idqTitleSegs(tl) + '</div></div>'
-    + '<div class="idq-row"><div class="idq-lb">GSV</div><div class="idq-val"><span class="idq-gsv"><input class="fi" id="idqGsv" type="number" inputmode="numeric" value="' + (m.ptCurrent || 0) + '" onfocus="edSelAll(this)" onchange="idqGsvSet(this.value)"><i>P</i></span>'
-    + '<span class="idq-q" onclick="idqStep(-500)">−500</span><span class="idq-q" onclick="idqStep(500)">+500</span></div></div>'
-    + '<div class="idq-row"><div class="idq-lb">稼働</div><div class="idq-val"><div class="idq-seg" id="idqActs">' + ['S', 'A', 'B', 'C', ''].map(function(a) { return '<span class="idq-s' + ((m.activity || '') === a ? ' sel' : '') + '" data-a="' + a + '" onclick="idqAct(\'' + a + '\')">' + (a || '―') + '</span>'; }).join('') + '</div></div></div>'
-    + '<div class="idq-row"><div class="idq-lb">稼働率</div><div class="idq-val"><div class="idq-seg" id="idqRates">' + IDQ_RATES.map(function(r) { return '<span class="idq-s' + (String(m.actRate) === String(r) ? ' sel' : '') + '" data-r="' + r + '" onclick="idqRate(' + r + ')">' + r + '</span>'; }).join('')
-    + '<input class="idq-own' + _idqOwnSel(m) + '" id="idqRate" type="number" inputmode="numeric" min="0" max="100" placeholder="他" value="' + _idqOwnVal(m) + '" onfocus="edSelAll(this)" onchange="idqRate(this.value)"></div><span class="idq-unit">%</span></div></div>'
-    + '</div>'
-    + '<div class="idq-foot">' + (m.idealNew ? '<span class="idq-del" onclick="idqDelete()">' + icn('trash') + ' この新規を削除</span>' : (isRoot ? '' : '<span class="idq-del" onclick="idqDelete()">理想MAPから外す</span>') + '<span class="idq-more" onclick="idqClose();openEdit(\'' + m.id + '\')">くわしく編集 ›</span>') + '</div>' // v558: 新規は「くわしく編集」が開けない（現状MAPにいない）ため削除だけ
-    + '</div>';
+  var badge = m.idealKind === 'user' ? '<span class="idd usr">USER</span>' : (m.idealKind === 'biz' ? '<span class="idd nb1">NEW</span>' : (m.idealNew ? '<span class="idd new">NEW</span>' : ''));
+  var curLine = cur && !m.idealNew ? '現状 ' + (cur.title || '−') + '・' + (cur.ptCurrent || 0).toLocaleString() + 'P・' + (cur.activity || '−') + (cur.actRate !== '' && cur.actRate != null ? ' ' + cur.actRate + '%' : '') : '理想で足した新しい人';
+  var av = (typeof _avatars !== 'undefined' && _avatars[m.id]) ? '<img src="' + _avatars[m.id] + '" alt="">' : evEsc((m.lastName || m.firstName || '?').charAt(0));
+  var h = '<div class="iq-hd" id="idqHd" style="' + _idqHdStyle(m) + '"><div class="iq-av">' + av + '</div>'
+    + '<div class="iq-hn"><div class="iq-nm">' + evEsc(nm) + (tl ? ' <span class="ot-ttl iq-tp">' + evEsc(titleAbbr(tl)) + '</span>' : ' <span class="ot-ttl iq-tp" style="display:none"></span>') + ' ' + badge + '</div><small>' + evEsc(curLine) + '</small></div>'
+    + '<span class="iq-x" onclick="idqClose()" title="閉じる">✕</span></div>';
+  if (m.idealKind !== 'user') {
+    h += '<div class="iq-add"><div class="iq-ab biz" onclick="idqAdd(\'biz\')"><i>＋</i><div><b>ビジネスを足す</b><span>LOI・1,500P・B 80%</span></div></div>'
+      + '<div class="iq-ab usr" onclick="idqAdd(\'user\')"><i>＋</i><div><b>ユーザーを足す</b><span>1人 <label onclick="event.stopPropagation()"><input id="idqUserPt" type="number" inputmode="numeric" value="' + _idqUserPt() + '" onfocus="edSelAll(this)" onchange="_idqUserPtSet(this.value)">P ✎</label></span></div></div></div>'
+      + '<div class="iq-hint">押すと1人足して閉じます。ユーザーはB1に数えません</div>';
+  }
+  if (m.idealNew) h += '<div class="iq-lb">名前（なくてもOK）</div><div class="iq-nmin"><input class="fi" id="idqLast" placeholder="姓" value="' + evEsc(m.lastName || '') + '" onchange="idqName()"><input class="fi" id="idqFirst" placeholder="名" value="' + evEsc(m.firstName || '') + '" onchange="idqName()"></div>';
+  h += '<div class="iq-lb">タイトル</div><div id="idqTitles">' + _idqTitleSegs(tl) + '</div>'
+    + '<div class="iq-lb">今月の数字</div>'
+    + '<div class="iq-rw"><div class="k">GSV</div><div class="iq-gsv"><span class="iq-rb" onclick="idqStep(-500)">−</span><label class="iq-num"><input id="idqGsv" type="text" inputmode="numeric" value="' + (m.ptCurrent || 0).toLocaleString() + '" onfocus="this.value=String(this.value).replace(/[^0-9]/g, \'\');edSelAll(this)" onblur="this.value=(parseInt(this.value.replace(/[^0-9]/g, \'\'), 10) || 0).toLocaleString()" onchange="idqGsvSet(this.value)"><b>P</b><em>タップで入力・±500</em></label><span class="iq-rb" onclick="idqStep(500)">＋</span></div></div>'
+    + '<div class="iq-rw"><div class="k">稼働</div><div class="iq-seg" id="idqActs">' + ['S', 'A', 'B', 'C', ''].map(function(a) { return '<span class="idq-s' + ((m.activity || '') === a ? ' sel' : '') + '" data-a="' + a + '" onclick="idqAct(\'' + a + '\')">' + (a || '―') + '</span>'; }).join('') + '</div></div>'
+    + '<div class="iq-rw"><div class="k">稼働率</div><div class="iq-seg" id="idqRates">' + IDQ_RATES.map(function(r) { return '<span class="idq-s' + (String(m.actRate) === String(r) ? ' sel' : '') + '" data-r="' + r + '" onclick="idqRate(' + r + ')">' + r + '</span>'; }).join('')
+    + '<input class="idq-own' + _idqOwnSel(m) + '" id="idqRate" type="number" inputmode="numeric" min="0" max="100" placeholder="他 %" value="' + _idqOwnVal(m) + '" onfocus="edSelAll(this)" onchange="idqRate(this.value)"></div></div>'
+    + '<div class="iq-ft">' + (m.idealNew ? '<span class="d" onclick="idqDelete()">この新しい人を消す</span>' : (isRoot ? '<span></span>' : '<span class="d" onclick="idqDelete()">理想MAPから外す</span>') + '<span class="mo" onclick="idqClose();openEdit(\'' + m.id + '\')">くわしく編集 ›</span>') + '</div>';
   box.innerHTML = h;
 }
+function _idqUserPtSet(v) { var x = Math.max(0, parseInt(v, 10) || 0); try { localStorage.setItem('gm_idqUserPt', String(x)); } catch (e) {} }
 // 変更はその場で保存。シートは作り直さず選択表示だけ更新（入力→チップのタップが途中で消えないように）
 function _idqChanged(msg) {
   _idealAfter(msg || '');
@@ -9811,12 +9823,13 @@ function _idqChanged(msg) {
   q('#idqActs .idq-s', 'data-a', m.activity || '');
   q('#idqRates .idq-s', 'data-r', m.actRate);
   var ri = document.getElementById('idqRate'); if (ri) { if (document.activeElement !== ri) ri.value = _idqOwnVal(m); ri.classList.toggle('sel', _idqOwnVal(m) !== ''); }
-  var gi = document.getElementById('idqGsv'); if (gi && document.activeElement !== gi) gi.value = m.ptCurrent || 0;
-  var tt = document.querySelector('#idqBody .ot-ttl'); if (tt) tt.textContent = (typeof titleAbbr === 'function' && titleAbbr(m.title)) || m.title || '';
+  var gi = document.getElementById('idqGsv'); if (gi && document.activeElement !== gi) gi.value = (m.ptCurrent || 0).toLocaleString();
+  var tt = document.querySelector('#idqBody .ot-ttl'); if (tt) { tt.textContent = (typeof titleAbbr === 'function' && titleAbbr(m.title)) || m.title || ''; tt.style.display = m.title ? '' : 'none'; }
+  var hd = document.getElementById('idqHd'); if (hd) hd.setAttribute('style', _idqHdStyle(m)); // v772: 丸の輪・タイトルの色
 }
 function idqTitle(t) { var m = _idqMember(); if (!m) return; m.title = t; delete m.idAutoLoi; // v583: 手で選んだタイトルは自動で戻さない
   if (t === 'ユーザー') { if (m.idealNew) m.idealKind = 'user'; } else if (m.idealKind === 'user') m.idealKind = 'biz'; _idqChanged('タイトルを ' + t + ' に'); }
-function idqGsvSet(v) { var m = _idqMember(); if (!m) return; var g = parseInt(v, 10); if (isNaN(g)) return; setMemberGSV(m, Math.max(0, g), state.idealMembers); if (m.idealNew) m.ptSelf = Math.max(0, g); _idqChanged(); }
+function idqGsvSet(v) { var m = _idqMember(); if (!m) return; var g = parseInt(String(v).replace(/[^0-9-]/g, ''), 10); /* v772: 3桁区切りの表示でも読む */ if (isNaN(g)) return; setMemberGSV(m, Math.max(0, g), state.idealMembers); if (m.idealNew) m.ptSelf = Math.max(0, g); _idqChanged(); }
 function idqName() {
   var m = _idqMember(); if (!m) return;
   var l = document.getElementById('idqLast'), f = document.getElementById('idqFirst');
@@ -9840,15 +9853,27 @@ function idqAdd(kind) {
   var I = _idealStats(arr);
   var msg = kind === 'user' ? 'ユーザーを追加（' + up.toLocaleString() + 'P）'
     : (root && p.id === root.id ? '自分のB1 ' + I.newFront + '人目を追加' : 'チームのB1 ' + I.newB1 + '人目を追加');
+  idqClose(); // v772: 1人ずつしか足さないので、足したら閉じる
+  if (_pp && _pp.map === 'ideal' && typeof ppClose === 'function') ppClose();
   _idealAfter('');
-  _idqRender();
-  if (typeof toastAction === 'function') toastAction(msg, '元に戻す', function() { idqUndoAdd(nm.id); }, 5000); else toast(msg);
+  _idqFlash(nm.id);
+  var pn = ((p.lastName || '') || (p.firstName || '')) ? (p.lastName || p.firstName) + 'さんの下に' : '';
+  msg = pn + '「' + nm.lastName + nm.firstName + '」を足しました（' + (kind === 'user' ? up.toLocaleString() + 'P' : msg.replace(/を追加$/, '')) + '）';
+  if (typeof toastAction === 'function') toastAction(msg, '元に戻す', function() { idqUndoAdd(nm.id); }, 6000); else toast(msg);
+}
+// v772: 足した人をMAPの上で少し光らせる
+function _idqFlash(id) {
+  setTimeout(function() {
+    var q = '[data-mid="' + id + '"],[data-cid="' + id + '"]', els = document.querySelectorAll(q);
+    for (var i = 0; i < els.length; i++) { els[i].classList.remove('idq-flash'); void els[i].getBoundingClientRect; els[i].classList.add('idq-flash'); }
+    setTimeout(function() { var e2 = document.querySelectorAll('.idq-flash'); for (var j = 0; j < e2.length; j++) e2[j].classList.remove('idq-flash'); }, 2600);
+  }, 60);
 }
 function idqUndoAdd(id) {
   var arr = state.idealMembers || [];
   var drop = {}; (function walk(x) { drop[x] = 1; arr.forEach(function(y) { if (y.parentId === x) walk(y.id); }); })(id);
   state.idealMembers = arr.filter(function(x) { return !drop[x.id]; });
-  _idealAfter('取り消しました'); _idqRender();
+  _idealAfter('取り消しました'); if (document.getElementById('idqBody')) _idqRender();
 }
 function idqClose(silent) {
   var ov = document.getElementById('idqOv');
@@ -9860,7 +9885,7 @@ function idqAct(a) {
   var m = _idqMember(); if (!m) return; m.activity = a || ''; // v554: すぐ保存
   _idqChanged();
 }
-function idqStep(d) { var el = document.getElementById('idqGsv'); if (el) { el.value = Math.max(0, (parseInt(el.value, 10) || 0) + d); idqGsvSet(el.value); } }
+function idqStep(d) { var el = document.getElementById('idqGsv'); if (el) { var v = Math.max(0, (parseInt(String(el.value).replace(/[^0-9]/g, ''), 10) || 0) + d); el.value = v.toLocaleString(); idqGsvSet(v); } }
 function idqN(d) { if (!_idq) return; _idq.n = Math.max(1, Math.min(10, _idq.n + d)); var el = document.getElementById('idqN'); if (el) el.textContent = _idq.n + '人'; }
 function _idqMember() {
   if (!_idq) return null;
@@ -18191,6 +18216,7 @@ function _ppM() {
 function ppOpen(id, map) {
   if (!state.isEditor) { uxMem(id, 'map'); return; }
   map = map || 'current';
+  if (map === 'ideal' && typeof idqOpen === 'function') { window._selectedCardId = id; idqOpen(id); return; } // v772: スマホの理想MAPも同じかんたん編集（PCと同じ形）
   if (map === 'ideal') { _idealEnsure(); var im = _ppFind(id, 'ideal'); _idq = { id: id, act: im ? (im.activity || '') : '', n: 1, added: [] }; }
   _pp = { id: id, map: map, pg: '' };
   _ppRender();
