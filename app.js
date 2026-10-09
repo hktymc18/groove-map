@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v780';
+var APP_JS_VERSION = 'v781';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4060,7 +4060,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v780';
+  var DATA_VERSION = 'v781';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5565,6 +5565,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v781', d:'2026-10-09', items:['計画シートの印刷：iPhoneのホーム画面から開いたアプリで「印刷」を押しても何も起きなかったのを直しました。シートを画像にして共有の画面が出るので、「プリント」で印刷できます（画像の保存もできます）（#9）'] },
   { v:'v780', d:'2026-10-09', items:['MAPのメンバー画面で「研修」を押すと、今までの編集画面ではなく、同じ画面の中で研修のステップ・結果を記録できるようにしました（#10）','計画シートの印刷：紙がA3より小さい時（iPhoneの印刷など）は全体を縮めて1枚に入れるように。右の行動の欄が切れて消えていたのを直しました。空の欄の線の長さもそろえました（#8）'] },
   { v:'v779', d:'2026-10-09', items:['計画シートのツリーで、地域の印（ピン）がとても大きく出ていたのを直しました'] },
   { v:'v778', d:'2026-10-09', items:['アプリ全体で絵文字を出さないようにしました（線のアイコンに差し替え。まだ対応していなかった絵文字も追加し、対応のない顔などの絵文字は消します）'] },
@@ -39342,6 +39343,7 @@ function p2ShPrint() {
   f.style.width = P2_PV_W + 'px'; f.style.height = P2_PV_H + 'px';
   try { f.srcdoc = html.replace('<body>', '<body style="padding:' + P2_PV_PAD + 'px">'); } catch (e) {}
   window._p2ShPvHtml = html;
+  if (_p2PrintViaShare()) setTimeout(_p2ShPngPrep, 300); // v781 #9: 先に画像を作っておく
   _p2PvZ = 0; _p2ShPvFit();
   if (!window._p2ShPvRs) { window._p2ShPvRs = 1; window.addEventListener('resize', function() { if (document.getElementById('p2ShPv')) _p2ShPvFit(); }); }
 }
@@ -39360,8 +39362,59 @@ function _p2ShCssScope(css, sc) { // 印刷用のCSSを #p2ShPrintLayer の中�
     return sel.split(',').map(function(x) { x = x.trim(); return x === 'body' ? sc : (x === '*' ? sc + ' *' : sc + ' ' + x); }).join(',') + '{' + body + '}';
   });
 }
+// ── v781 #9: iPhoneのホーム画面アプリ（スタンドアロン）では window.print() が何も起きない。
+//   シートを画像（PNG）にして共有シートを出す（共有シートの「プリント」で印刷・「画像を保存」も）。
+//   画像はプレビューを開いた時に先に作っておく（押してから作ると共有シートが出せない＝ボタンを押した直後しか出せないため）
+function _p2PrintViaShare() { try { return isIOS() && isStandalone(); } catch (e) { return false; } }
+function _p2ShPng(html) {
+  return new Promise(function(ok, ng) {
+    try {
+      var W = P2_PV_W, H = P2_PV_H, Z = 2;
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var cssEl = doc.querySelector('style'), body = doc.body;
+      var wrap = doc.createElement('div');
+      wrap.setAttribute('style', 'width:' + W + 'px;height:' + H + 'px;padding:' + P2_PV_PAD + 'px;box-sizing:border-box;background:#fff;color:#111;font-family:"Hiragino Sans","Noto Sans JP",sans-serif');
+      if (cssEl) { var st = doc.createElement('style'); st.textContent = cssEl.textContent.replace(/@page\{[^}]*\}/g, '').replace(/@media print[^{]*\{[^{}]*\{[^{}]*\}\}/g, ''); wrap.appendChild(st); }
+      while (body.firstChild) wrap.appendChild(body.firstChild);
+      var xh = new XMLSerializer().serializeToString(wrap);
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '"><foreignObject x="0" y="0" width="' + W + '" height="' + H + '">' + xh + '</foreignObject></svg>';
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var c = document.createElement('canvas'); c.width = W * Z; c.height = H * Z;
+          var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.scale(Z, Z);
+          g.drawImage(img, 0, 0); // Safariは1回目に中身が空のことがあるので、少し待ってもう1回描く
+          setTimeout(function() { try { g.drawImage(img, 0, 0); c.toBlob(function(b) { if (b) ok(b); else ng(new Error('blob')); }, 'image/png'); } catch (e2) { ng(e2); } }, 120);
+        } catch (e1) { ng(e1); }
+      };
+      img.onerror = function() { ng(new Error('img')); };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    } catch (e) { ng(e); }
+  });
+}
+function _p2ShPngPrep() {
+  window._p2ShPvPng = null; window._p2ShPvPngErr = false;
+  var html = window._p2ShPvHtml; if (!html) return;
+  _p2ShPng(html).then(function(b) { window._p2ShPvPng = b; }).catch(function() { window._p2ShPvPngErr = true; });
+}
+function _p2ShPngShare() {
+  var b = window._p2ShPvPng;
+  if (!b) { toast(window._p2ShPvPngErr ? '画像にできませんでした。Safariで開いて印刷してください' : '印刷の準備中です。少し待ってから、もう一度押してください'); return; }
+  var nm = '計画立案シート_' + _p2ShYmN() + '.png', f = null;
+  try { f = new File([b], nm, { type: 'image/png' }); } catch (e) {}
+  if (f && navigator.canShare && navigator.canShare({ files: [f] }) && navigator.share) {
+    navigator.share({ files: [f], title: '計画立案シート' }).catch(function() {});
+    return;
+  }
+  // 共有できない時は画像を出す（長押しで共有→プリント／保存）
+  var u = URL.createObjectURL(b), o = document.createElement('div'); o.id = 'p2ShPvImg';
+  o.style.cssText = 'position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:10px';
+  o.innerHTML = '<div style="color:#fff;font-size:14px;font-weight:800;text-align:center">画像を長押し →「共有」→「プリント」で印刷できます</div><img src="' + u + '" style="max-width:100%;max-height:78vh;background:#fff"><span style="color:#fff;font-weight:900;padding:10px 18px;border:1px solid #fff;border-radius:12px;cursor:pointer" onclick="this.parentNode.remove()">閉じる</span>';
+  document.body.appendChild(o);
+}
 function p2ShPvPrint() { // この画面の上に印刷用の層を置いて印刷（プレビューやアプリの画面は印刷しない）
   var html = window._p2ShPvHtml; if (!html) return;
+  if (_p2PrintViaShare()) { _p2ShPngShare(); return; } // v781 #9: iPhoneのホーム画面アプリは画像で共有→プリント
   var old = document.getElementById('p2ShPrintLayer'); if (old) old.remove();
   var lay = document.createElement('div'); lay.id = 'p2ShPrintLayer';
   var body = html.replace(/^[\s\S]*<body>/, '').replace(/<\/body>[\s\S]*$/, ''), css = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
