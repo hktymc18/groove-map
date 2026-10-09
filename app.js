@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v765';
+var APP_JS_VERSION = 'v766';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v765';
+  var DATA_VERSION = 'v766';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5396,6 +5396,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v766', d:'2026-10-09', items:['年の目標：直近の目標が最終目標とまったく同じ数字になっていたのを直しました（例は一つ上のタイトル・途中の月に）。目標の画面でも、直近の目標の月収・タイトル・期日をいつでも直せます','計画シートの「シートを印刷」は、アプリの中のプレビューに（iPhoneのアプリで戻れなくなっていたのを直しました）。「‹ 戻る」で戻れて、「🖨 印刷」で印刷・PDF','印刷のプレビューは画面に合わせて自動の大きさ（−／＋でも変えられる）。シートの左（数字・改善点）と右（行動）の下の端がそろうようにしました'] },
   { v:'v765', d:'2026-10-09', items:['PC：左のメニューで選んでいる項目を、ブランドの緑に','ログイン画面の「NAVIGATOR」の文字をロゴと同じグラデーションの色に。下の「ver.2.0」の表示はなくしました'] },
   { v:'v764', d:'2026-10-09', items:['PC：左のメニューを明るい色（白）に、選んでいる項目を濃い色（紺）に。右の画面（少し灰色）とは境界線と薄い影で分けています','ダークモードでは、選んでいる項目をうすい緑で見分けやすく'] },
   { v:'v763', d:'2026-10-09', items:['PC：左のメニューで選んでいる項目を、浮いたカードではなく右の画面と同じ背景の色でつながる形に','左下のアカウントも浮いたカードをやめて、線で区切るだけにしました'] },
@@ -21609,9 +21610,9 @@ function _p2GoalOneHtml() {
     + (_p2().titleManual && auto && auto !== p.title ? '<span class="hint">月収の目安は <b onclick="p2GoalTitle(\'\')">' + evEsc(_p2TitleEn(auto)) + '</b></span>' : '') + '</div>'
     + '<div class="g1-row"><span class="lb">期日</span>' + mon(dl, 'p2GoalDl(this.value)') + (dl ? '<span class="hint">あと' + _p2YmDiff(_p2Ym(0), dl) + 'ヶ月</span>' : '') + '</div>';
   var nx = _p2Next();
-  h += '<div class="g1-sec" id="g1Nx">次の山' + (nx.suggested && !nx.isFinal ? '<small>例</small><span class="r" onclick="p2NxKeep()">この例で決める</span>' : '') + '</div>';
-  if (nx.isFinal) h += '<div class="g1-row">最終目標がそのまま次の山です</div>';
-  else if (nx.title === 'BR' && nx.curR < 0) {
+  h += '<div class="g1-sec" id="g1Nx">直近の目標' + (nx.suggested && !nx.isFinal ? '<small>例</small><span class="r" onclick="p2NxKeep()">この例で決める</span>' : '') + '</div>';
+  if (nx.isFinal) h += '<div class="g1-row"><span class="hint" style="margin:0">今は最終目標と同じです。月収・タイトル・期日を変えると、最終目標までの通過点にできます</span></div>'; // v766 #5: 同じでも直せるように（前は入力欄が出なかった）
+  if (nx.title === 'BR' && nx.curR < 0) {
     h += '<div class="g1-row"><span class="lb">目標</span><b style="color:var(--text);font:900 17px Inter,sans-serif">BR</b><span class="hint">ファーストボーナス</span>' + num(Math.round((nx.fb || 0) / 10000), 'p2NxFbSet(this.value)', 70) + '万円</div>'
       + '<div class="g1-row"><span class="lb">BRの月</span>' + mon(nx.deadline, 'p2NxDl(this.value)') + '</div>';
   } else {
@@ -22808,12 +22809,19 @@ function _p2NextDefault(o) {
     return { title: 'BR', inc: 0, deadline: bd, fb: _p2FbDefault() };
   }
   var L = _p2Ladder(o), finD = { title: _p2Above(fin, curR), inc: o.inc || (p.income ? Math.round(p.income / 10000) : 0), deadline: D };
+  // v766 #5: 直近の目標の例が最終目標とまったく同じ（同じ数字・同じ期日）にならないように。
+  //   今と最終目標の間にタイトルがあれば、一つ上のタイトルを最終目標までの真ん中あたりの月に置く
+  var midD = function() {
+    var mu = D ? _p2YmDiff(now, D) : 0, t = P2_RANK[curR + 1];
+    if (mu < 6 || !t || (_p2Rank(fin) >= 0 && _p2Rank(t) >= _p2Rank(fin))) return finD;
+    return { title: t, inc: _p2IncOfTitle(t), deadline: _p2YmAdd(now, Math.max(4, Math.round(mu / 2))) };
+  };
   if (L && L.rows.length) {
     var r = L.rows[0], t = _p2Above(r.title, curR);
-    if (_p2Rank(fin) >= 0 && _p2Rank(t) >= _p2Rank(fin)) return finD; // 一つ上げたら最終ゴールのタイトル＝最終ゴールそのもの
+    if (_p2Rank(fin) >= 0 && _p2Rank(t) >= _p2Rank(fin)) return midD(); // 一つ上げたら最終ゴールのタイトル
     return { title: t, inc: r.inc, deadline: r.ym };
   }
-  return finD;
+  return midD();
 }
 // GOAL SETTINGのシミュレーションと同じ計算：ブランドチェンジ→翌月n人→翌月n人→Q4→BRの月（v702: 5ヶ月）
 var P2_SIM_LAB = ['LOI', 'Q2', 'Q3', 'Q4', 'BR'];
@@ -38908,7 +38916,7 @@ function _p2ShPrintHtml(ym) {
   var M = _p2ShMapSvg({ W: 1000, H: 470, mode: mode, light: true, newN: mode === 'cur' && F.t !== null ? Math.max(0, F.t - F.now) : 0 });
   if (_p2ShMapKind(_p2ShMapMt()) === 'circle') { // v696: 10人以上はサークルMAP（MAPのA3印刷と同じ描き方）
     try { var dv = document.createElement('div'); dv.style.cssText = 'position:absolute;left:-99999px;top:0;width:1400px'; document.body.appendChild(dv);
-      renderPCOrbit(_p2ShMapMt(), dv, true, {}); var sv = dv.querySelector('svg'); if (sv) M = { svg: sv.outerHTML, ideal: _p2ShMapMt() === 'ideal' }; dv.remove(); } catch (eP) {}
+      renderPCOrbit(_p2ShMapMt(), dv, true, {}); var sv = dv.querySelector('svg'); if (sv) { sv.setAttribute('preserveAspectRatio', 'xMidYMid meet'); sv.removeAttribute('width'); sv.removeAttribute('height'); M = { svg: sv.outerHTML, ideal: _p2ShMapMt() === 'ideal' }; } dv.remove(); } catch (eP) {}
   }
   var v = function(x) { return x === null || x === undefined ? '' : x; };
   var rows = K.map(function(k) { var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap); return '<tr><th>' + evEsc(k.lb) + '</th><td>' + v(P.t) + '</td><td>' + v(P.v) + '</td><td>' + v(X.t) + '</td><td>' + v(X.v) + '</td><td class="kz">' + evEsc(kz[k.id] || '') + '</td></tr>'; }).join('');
@@ -38919,32 +38927,75 @@ function _p2ShPrintHtml(ym) {
   }).join('');
   var ms = Y.ms ? parseInt(Y.ms.ym.slice(5), 10) + '月 ' + evEsc(Y.ms.t || '') : '';
   var css = '@page{size:A3 landscape;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans JP","Hiragino Sans",sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-    + '.pg{width:404mm;height:279mm;display:grid;grid-template-columns:1fr 100mm;gap:7mm}.hd{display:flex;align-items:baseline;gap:8mm}.hd h1{margin:0;font-size:20pt}.hd span{font-size:14pt;font-weight:700}'
+    // v766 #8: 左（MAP・数字と改善点）と右（行動の4分野）の下の端をそろえる：両方の列を紙の高さいっぱいにして、表を伸ばす
+    + '.pg{width:404mm;height:279mm;display:grid;grid-template-columns:minmax(0,1fr) 100mm;gap:7mm;overflow:hidden}.pg>div{display:flex;flex-direction:column;height:279mm;min-height:0}.hd{display:flex;align-items:baseline;gap:8mm}.hd h1{margin:0;font-size:20pt}.hd span{font-size:14pt;font-weight:700}'
     + '.l{font-size:12.5pt;margin-top:3mm}.l u{text-decoration:none;border-bottom:1px solid #111;padding:0 3mm;font-weight:700;font-size:14pt}'
-    + '.mp{margin-top:2mm}.mp h2{margin:0;font-size:12pt}.mp svg{display:block;width:100%;height:auto;max-height:122mm}.lg{font-size:8.5pt;color:#333}'
-    + 'table{border-collapse:collapse;width:100%}.kp{margin-top:2mm}.kp th,.kp td{border:1px solid #111;padding:1.3mm 2mm;font-size:10pt;text-align:center}.kp tr>th:first-child{text-align:left;width:26mm}.kp td.kz{text-align:left;width:52%}'
-    + '.al{margin-bottom:4mm}.al .at{font-weight:700;font-size:10.5pt;margin-bottom:1mm}.al th,.al td{border:1px solid #111;padding:1mm 1.5mm;font-size:9.5pt;height:6.2mm}.al th{font-weight:400;font-size:8.5pt}.al .ck{width:6mm;text-align:center}.al .dd{width:17mm;text-align:center}';
+    + '.mp{margin-top:2mm;flex:none}.mp h2{margin:0;font-size:12pt}.mp svg{display:block;width:100%;height:118mm}.lg{font-size:8.5pt;color:#333}'
+    + 'table{border-collapse:collapse;width:100%}.kp{margin-top:2mm;flex:1 1 0;height:100%}.kp th,.kp td{border:1px solid #111;padding:1mm 2mm;font-size:10pt;text-align:center}.kp tr>th:first-child{text-align:left;width:26mm}.kp td.kz{text-align:left;width:52%}'
+    + '.al{flex:1 1 0;display:flex;flex-direction:column;min-height:0;margin-bottom:3mm}.al:last-child{margin-bottom:0}.al .at{font-weight:700;font-size:10.5pt;margin-bottom:1mm;flex:none}.al table{flex:1 1 0;height:100%}.al th,.al td{border:1px solid #111;padding:.6mm 1.5mm;font-size:9.5pt}.al th{font-weight:400;font-size:8.5pt;height:5mm}.al .ck{width:6mm;text-align:center}.al .dd{width:17mm;text-align:center}';
   return '<!doctype html><html><head><meta charset="utf-8"><title>計画立案シート_' + ym + '</title><style>' + css + '</style></head><body><div class="pg"><div>'
     + '<div class="hd"><h1>計画立案シート</h1><span>' + parseInt(ym.slice(0, 4), 10) + '年　' + _p2ShMonLb(ym) + '</span><span>【ユニオン名：' + evEsc(un) + '】</span></div>'
     + '<div class="l"><u>' + (Y.dl ? Y.dl.slice(0, 4) : '') + '</u>年　目標月収 <u>' + (Y.inc ? Y.inc + '万' : '') + '</u>　目標タイトル <u>' + evEsc(Y.title || '') + '</u>　マイルストーン <u>' + ms + '</u></div>'
     + '<div class="l">月間目標　月収 <u>' + (I.t === null ? '' : I.t + '万') + '</u>　NEWフロント <u>' + (F.t === null ? '' : F.t) + '</u>人</div>'
     + '<div class="mp"><h2>＜' + (M.ideal ? '理想' : '現状') + 'MAP＞</h2>' + (M.svg || '') + '<div class="lg">Howdy稼働基準　S：120%参加（本気レベル）　A：仕事切り替え期日確定　B：仕事以外は基本的に来る　C：参加可能でも中々来ない（A〜Cは稼働率を%で記載）</div></div>'
     + '<table class="kp"><tr><th></th><th colspan="2">先月</th><th colspan="2">今月</th><th rowspan="2">＜改善点＞</th></tr><tr><th></th><th>目標</th><th>結果</th><th>目標</th><th>現在の進捗状況</th></tr>' + rows + '</table></div>'
-    + '<div>' + acts + '</div></div><script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script></body></html>';
+    + '<div>' + acts + '</div></div></body></html>'; // v766 #7: 自動で印刷を開かない（アプリ内のプレビューから印刷）
 }
+// v766 #7: 「シートを印刷」はアプリ内のプレビューに（iPhoneのホーム画面アプリでは新しい窓に戻るボタンが無く、戻れなかった）
+//   上の帯：‹ 戻る｜− 自動 ＋（大きさ。自動＝画面に1枚がちょうど入る）｜🖨 印刷
+var _p2PvZ = 0; // 0＝自動
 function p2ShPrint() {
-  var html = _p2ShPrintHtml(_p2ShYmN()), w = null;
-  try { w = window.open('', '_blank'); } catch (e) {}
-  if (w && w.document) { w.document.open(); w.document.write(html); w.document.close(); return; }
-  // ポップアップが止められた時は、この画面の上に印刷用の層を出して印刷
+  var ym = _p2ShYmN(), html = _p2ShPrintHtml(ym);
+  p2ShPvX();
+  var ov = document.createElement('div'); ov.id = 'p2ShPv';
+  ov.innerHTML = '<div class="pv-hd"><span class="pv-b bk" onclick="p2ShPvX()">‹ 戻る</span><b>計画シート<small>' + _p2ShMonLb(ym) + '</small></b><span class="pv-sp"></span>'
+    + '<span class="pv-b" onclick="p2ShPvZ(-1)">−</span><span class="pv-b au" id="p2ShPvZl" onclick="p2ShPvZ(0)">自動</span><span class="pv-b" onclick="p2ShPvZ(1)">＋</span><span class="pv-b go" onclick="p2ShPvPrint()">🖨 印刷</span></div>'
+    + '<div class="pv-bd" id="p2ShPvBd"><div class="pv-pg" id="p2ShPvPg"><iframe id="p2ShPvF" title="計画シート"></iframe></div></div>';
+  if (!document.getElementById('p2ShPvCss')) {
+    var st = document.createElement('style'); st.id = 'p2ShPvCss';
+    st.textContent = '#p2ShPv{position:fixed;inset:0;z-index:9000;background:#3a3f4b;display:flex;flex-direction:column}'
+      + '#p2ShPv .pv-hd{display:flex;align-items:center;gap:6px;padding:calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 10px) 8px calc(env(safe-area-inset-left) + 10px);background:var(--surface);border-bottom:1px solid var(--border);flex:none}'
+      + '#p2ShPv .pv-hd b{font-size:15px;font-weight:900;color:var(--text);white-space:nowrap}#p2ShPv .pv-hd b small{margin-left:6px;font-size:12px;color:var(--text-dim)}#p2ShPv .pv-sp{flex:1}'
+      + '#p2ShPv .pv-b{min-width:38px;height:38px;padding:0 10px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:var(--text);cursor:pointer;white-space:nowrap;flex:none}'
+      + '#p2ShPv .pv-b.au{font-size:12.5px}#p2ShPv .pv-b.au.on{border-color:var(--accent);color:var(--accent)}#p2ShPv .pv-b.go{background:var(--accent);border-color:var(--accent);color:var(--go-ink,#06251C)}#p2ShPv .pv-b.bk{padding:0 12px}'
+      + '#p2ShPv .pv-bd{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px}#p2ShPv .pv-pg{position:relative;margin:0 auto;background:#fff;box-shadow:0 6px 30px rgba(0,0,0,.4);overflow:hidden}'
+      + '#p2ShPv iframe{position:absolute;left:0;top:0;border:0;background:#fff;transform-origin:0 0}'
+      + '@media (max-width:520px){#p2ShPv .pv-hd b small{display:none}#p2ShPv .pv-b{min-width:34px;padding:0 8px}}';
+    document.head.appendChild(st);
+  }
+  document.body.appendChild(ov);
+  var f = document.getElementById('p2ShPvF');
+  f.style.width = P2_PV_W + 'px'; f.style.height = P2_PV_H + 'px';
+  try { f.srcdoc = html.replace('<body>', '<body style="padding:' + P2_PV_PAD + 'px">'); } catch (e) {}
+  window._p2ShPvHtml = html;
+  _p2PvZ = 0; _p2ShPvFit();
+  if (!window._p2ShPvRs) { window._p2ShPvRs = 1; window.addEventListener('resize', function() { if (document.getElementById('p2ShPv')) _p2ShPvFit(); }); }
+}
+var P2_PV_PAD = 30, P2_PV_W = Math.round(404 * 96 / 25.4) + 60, P2_PV_H = Math.round(279 * 96 / 25.4) + 60; // A3横（余白を引いた所）＋まわりの白
+function _p2ShPvAuto() { var bd = document.getElementById('p2ShPvBd'); if (!bd) return 1; var w = (bd.clientWidth || window.innerWidth) - 28, h = (bd.clientHeight || window.innerHeight - 60) - 28; return Math.max(0.15, Math.min(w / P2_PV_W, h / P2_PV_H)); }
+function _p2ShPvFit() {
+  var z = _p2PvZ || _p2ShPvAuto(), pg = document.getElementById('p2ShPvPg'), f = document.getElementById('p2ShPvF'), lb = document.getElementById('p2ShPvZl'); if (!pg || !f) return;
+  f.style.transform = 'scale(' + z + ')'; pg.style.width = Math.round(P2_PV_W * z) + 'px'; pg.style.height = Math.round(P2_PV_H * z) + 'px';
+  if (lb) { lb.textContent = _p2PvZ ? Math.round(z * 100) + '%' : '自動'; lb.classList.toggle('on', !_p2PvZ); }
+}
+function p2ShPvZ(d) { if (!d) { _p2PvZ = 0; } else { var z = _p2PvZ || _p2ShPvAuto(); _p2PvZ = Math.max(0.15, Math.min(2, Math.round((z + d * 0.1) * 100) / 100)); } _p2ShPvFit(); }
+function p2ShPvX() { var o = document.getElementById('p2ShPv'); if (o) o.remove(); document.body.classList.remove('printing-sheet'); var l = document.getElementById('p2ShPrintLayer'); if (l) l.remove(); }
+function _p2ShCssScope(css, sc) { // 印刷用のCSSを #p2ShPrintLayer の中だけに効かせる（アプリの .l や table などに効かないように）
+  return css.replace(/([^{}]+)\{([^{}]*)\}/g, function(all, sel, body) {
+    sel = sel.trim(); if (/^@page/.test(sel)) return all;
+    return sel.split(',').map(function(x) { x = x.trim(); return x === 'body' ? sc : (x === '*' ? sc + ' *' : sc + ' ' + x); }).join(',') + '{' + body + '}';
+  });
+}
+function p2ShPvPrint() { // この画面の上に印刷用の層を置いて印刷（プレビューやアプリの画面は印刷しない）
+  var html = window._p2ShPvHtml; if (!html) return;
   var old = document.getElementById('p2ShPrintLayer'); if (old) old.remove();
   var lay = document.createElement('div'); lay.id = 'p2ShPrintLayer';
-  var body = html.replace(/^[\s\S]*<body>/, '').replace(/<script[\s\S]*$/, ''), css = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
-  lay.innerHTML = '<style>@media screen{#p2ShPrintLayer{display:none}}@media print{body.printing-sheet>*:not(#p2ShPrintLayer){display:none!important}#p2ShPrintLayer{display:block!important;background:#fff}}' + css.replace(/body\{/, '#p2ShPrintLayer{') + '</style>' + body;
+  var body = html.replace(/^[\s\S]*<body>/, '').replace(/<\/body>[\s\S]*$/, ''), css = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+  lay.innerHTML = '<style>@media screen{#p2ShPrintLayer{display:none}}@media print{body.printing-sheet>*:not(#p2ShPrintLayer){display:none!important}#p2ShPrintLayer{display:block!important;background:#fff}}' + _p2ShCssScope(css, '#p2ShPrintLayer') + '</style>' + body;
   document.body.appendChild(lay); document.body.classList.add('printing-sheet');
   var done = function() { document.body.classList.remove('printing-sheet'); var l = document.getElementById('p2ShPrintLayer'); if (l) l.remove(); window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
-  setTimeout(function() { window.print(); setTimeout(done, 1500); }, 200);
+  setTimeout(function() { try { window.print(); } catch (e) {} setTimeout(done, 1500); }, 200);
 }
 // ════ v717: 年の目標・ロードマップ（①マイルストーン ②直近の目標 ③今→必要→ギャップ ④フロントのペース ⑤戦略のメモ）════
 var P2_YR_LOCK = 15;

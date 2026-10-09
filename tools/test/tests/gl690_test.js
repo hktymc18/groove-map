@@ -7,7 +7,7 @@ T.run(async () => {
   w.switchView('plan'); await sleep(40);
   w.p2Go('goal'); await sleep(20);
   const t = () => $('#view-plan').textContent;
-  c('1画面に 最終目標・次の山・スローガン', /最終目標/.test(t()) && /次の山/.test(t()) && /スローガン/.test(t()));
+  c('1画面に 最終目標・直近の目標（v766: 次の山→直近の目標）・スローガン', /最終目標/.test(t()) && /直近の目標/.test(t()) && /スローガン/.test(t()));
   c('ページ送りの●はない', !/タイトル ›/.test($('.ux-btm').textContent) && /完了/.test($('.ux-btm .ux-nx').textContent));
   const inc = $('.g1-row .sp-in'); inc.value = '341'; inc.onchange(); await sleep(10);
   c('月収を書く→タイトルは目安で自動', w.state.goals.plan.income === 3410000 && w.state.goals.plan.title === 'チームエリート');
