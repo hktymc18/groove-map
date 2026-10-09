@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v779';
+var APP_JS_VERSION = 'v780';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4060,7 +4060,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v779';
+  var DATA_VERSION = 'v780';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5565,6 +5565,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v780', d:'2026-10-09', items:['MAPのメンバー画面で「研修」を押すと、今までの編集画面ではなく、同じ画面の中で研修のステップ・結果を記録できるようにしました（#10）','計画シートの印刷：紙がA3より小さい時（iPhoneの印刷など）は全体を縮めて1枚に入れるように。右の行動の欄が切れて消えていたのを直しました。空の欄の線の長さもそろえました（#8）'] },
   { v:'v779', d:'2026-10-09', items:['計画シートのツリーで、地域の印（ピン）がとても大きく出ていたのを直しました'] },
   { v:'v778', d:'2026-10-09', items:['アプリ全体で絵文字を出さないようにしました（線のアイコンに差し替え。まだ対応していなかった絵文字も追加し、対応のない顔などの絵文字は消します）'] },
   { v:'v777', d:'2026-10-09', items:['アカウント管理：ユニオンの管理者は、自分のユニオンの人だけを読み込むようにしました（承認待ちの件数も）','ランキングは自分のユニオンの人だけになりました'] },
@@ -18250,11 +18251,11 @@ function ppOpen(id, map) {
   _ppRender();
 }
 function _ppFind(id, map) { var arr = map === 'ideal' ? (state.idealMembers || []) : (state.members || []); for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
-function ppClose() { var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null;  if (document.getElementById('mxOrbit') && typeof mxOrbitRender === 'function') setTimeout(mxOrbitRender, 0); } // v663: サークルMAPを開いていたら描き直す
-function ppGo(pg) { if (!_pp) return; _pp.pg = pg || ''; _ttlOpen = ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
+function ppClose() { if (_pp && _pp.pg === 'tr') _ppTrSave(); var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null;  if (document.getElementById('mxOrbit') && typeof mxOrbitRender === 'function') setTimeout(mxOrbitRender, 0); } // v663: サークルMAPを開いていたら描き直す
+function ppGo(pg) { if (!_pp) return; if (_pp.pg === 'tr' && pg !== 'tr') { _ppTrSave(); toast('✓ 研修を保存しました'); } _pp.pg = pg || ''; _ttlOpen = ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
 function ppGoI(i) { var L = _pp && _pp.map === 'ideal' ? PP_PG_I : PP_PG; if (L[i]) ppGo(L[i][0]); }
 function ppNext(d) { // 左右スワイプ：入口ではMAPの次の人、ページでは次のページ
-  if (!_pp) return;
+  if (!_pp || _pp.pg === 'tr') return; // v780: 研修の画面はスワイプで動かない
   var L = _pp.map === 'ideal' ? PP_PG_I : PP_PG;
   if (_pp.pg) { var i = -1; L.forEach(function(x, k) { if (x[0] === _pp.pg) i = k; }); if (L[i + d]) ppGo(L[i + d][0]); return; }
   var ids = (_uxLists.map && _uxLists.map.ids) || [], j = ids.indexOf(_pp.id);
@@ -18302,7 +18303,32 @@ function ppStart(d) { var m = _ppM(); if (!m) return; var sm = String(m.startMon
 function ppBirth(v) { _ppSave(function() { _fBirthSet(v || '', ''); }, '誕生日を保存しました'); }
 var _ppMemoT = null;
 function ppMemo(v) { if (_ppMemoT) clearTimeout(_ppMemoT); _ppMemoT = setTimeout(function() { _ppMemoT = null; if (_pp && _pp.pg === 'memo') _ppSave(function() { document.getElementById('fMemo').value = v; }, ''); var s = document.getElementById('ppMemoSv'); if (s) s.textContent = '保存しました ✓'; }, 900); var s0 = document.getElementById('ppMemoSv'); if (s0) s0.textContent = '保存中…'; }
-function ppOld(tab) { var id = _pp && _pp.id; ppClose(); openEdit(id); meGo(tab); } // 研修・活動・写真は今までの画面で
+function ppOld(tab) { if (tab === 2) { ppTr(); return; } var id = _pp && _pp.id; ppClose(); openEdit(id); meGo(tab); } // 活動・写真は今までの画面で（v780: 研修はこの画面の中で）
+// ── v780: 研修（ステップ・結果）も新しい画面の中で。中身は今までの画面の研修の部分をそのまま借りて表示（記録・削除・結果の動きは同じ）。戻る時に保存 ──
+var _ppTrHome = null;
+function ppTr() {
+  var m = _ppM(); if (!m) return;
+  document.body.classList.add('pp-silent');
+  try { if (editingId !== m.id) openEdit(m.id); meGo(2); } catch (e) {}
+  _pp.pg = 'tr'; _ttlOpen = ''; _ppRender();
+  var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0;
+}
+function _ppTrNode() { return document.getElementById('traineeStatusFields'); }
+function _ppTrPark() { // 借りた部分を元の場所へ戻す
+  var n = _ppTrNode(); if (!n || !_ppTrHome || !document.getElementById('ppPg') || !document.getElementById('ppPg').contains(n)) return;
+  if (_ppTrHome.next && _ppTrHome.next.parentNode === _ppTrHome.par) _ppTrHome.par.insertBefore(n, _ppTrHome.next); else _ppTrHome.par.appendChild(n);
+}
+function _ppTrHost() {
+  var host = document.getElementById('ppTrHost'), n = _ppTrNode(); if (!host || !n) return;
+  if (!_ppTrHome || !document.getElementById('ppPg').contains(n)) _ppTrHome = { par: n.parentNode, next: n.nextSibling };
+  n.style.display = ''; host.appendChild(n);
+}
+function _ppTrSave() { // 研修の画面から出る時に保存（今までの画面の「保存」と同じ）
+  _ppTrPark();
+  document.body.classList.add('pp-silent');
+  try { if (editingId) saveMember(); } catch (e) { try { closeModal(); } catch (e2) {} }
+  document.body.classList.remove('pp-silent');
+}
 function ppDel() { var id = _pp.id; editingId = id; var n = state.members.length; ppClose(); deleteMember(); }
 function ppUp() { var id = _pp.id; ppClose(); openParentPicker(id); }
 // 理想MAP：この人の下に足す（＋で1人、−で最後に足した人を取り消す）
@@ -18405,7 +18431,12 @@ function _ppRender() {
   var m = _ppM(); if (!m) { ppClose(); return; }
   _ux2Css(); _mxCss(); _ppCss();
   var ideal = _pp.map === 'ideal', L = ideal ? PP_PG_I : PP_PG, nm = ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)', body = '', btm = '';
-  if (!_pp.pg) {
+  _ppTrPark(); // v780: 描き直す前に、借りている研修の部分を元へ
+  if (_pp.pg === 'tr') {
+    if (editingId !== m.id) { document.body.classList.add('pp-silent'); try { openEdit(m.id); meGo(2); } catch (eT) {} }
+    body = '<h2 class="ux-h2">研修</h2><div class="ux-sub">ステップ・結果を記録します。「保存して戻る」で保存</div><div id="ppTrHost" class="pp-tr" style="margin-top:14px"></div>';
+    btm = '<div class="ux-btm"><span class="ux-bk" onclick="ppGo(\'\')">‹ 戻る</span><span class="ux-nx" onclick="ppGo(\'\')">✓ 保存して戻る</span></div>';
+  } else if (!_pp.pg) {
     body = _ppHub(m);
     btm = '<div class="ux-btm"><span class="ux-bk" onclick="ppClose()">‹ ' + (ideal ? '理想MAPへ' : 'MAPへ') + '</span>' + (ideal ? '' : '<span class="ux-nx" onclick="naOpen(\'' + m.id + '\')">＋ フロント追加</span>') + '</div>';
   } else {
@@ -18413,12 +18444,13 @@ function _ppRender() {
     body = '<div class="ux-step">' + (i + 1) + ' / ' + L.length + '　' + L[i][1] + '</div>' + _ppPage(m, _pp.pg);
     btm = _uxBtm('ppGo(\'\')', L.map(function(x) { return x[1]; }), i, 'ppGoI', i < L.length - 1 ? L[i + 1][1] + ' ›' : '✓ 終わる', i < L.length - 1 ? 'ppGoI(' + (i + 1) + ')' : 'ppGo(\'\')');
   }
-  var h = '<div class="ux-top"><span class="ux-crumb" onclick="' + (_pp.pg ? 'ppGo(\'\')' : 'ppClose()') + '">' + (_pp.pg ? evEsc(nm) + ' › <b>' + (L.filter(function(x) { return x[0] === _pp.pg; })[0] || ['', ''])[1] + '</b>' : (ideal ? '理想MAP' : 'MAP') + ' › <b>' + evEsc(nm) + '</b>') + '</span><span class="ux-home" onclick="ppClose()" title="閉じる">✕</span></div>' + body + btm;
+  var h = '<div class="ux-top"><span class="ux-crumb" onclick="' + (_pp.pg ? 'ppGo(\'\')' : 'ppClose()') + '">' + (_pp.pg ? evEsc(nm) + ' › <b>' + (_pp.pg === 'tr' ? '研修' : (L.filter(function(x) { return x[0] === _pp.pg; })[0] || ['', ''])[1]) + '</b>' : (ideal ? '理想MAP' : 'MAP') + ' › <b>' + evEsc(nm) + '</b>') + '</span><span class="ux-home" onclick="ppClose()" title="閉じる">✕</span></div>' + body + btm;
   var pg = document.getElementById('ppPg'), st0 = pg ? pg.scrollTop : 0;
   if (!pg) { pg = document.createElement('div'); pg.id = 'ppPg'; document.body.appendChild(pg); _uxSwipe(pg, function() { ppNext(-1); }, function() { ppNext(1); }); }
   var keep = document.activeElement && pg.contains(document.activeElement) && document.activeElement.tagName === 'TEXTAREA';
   if (keep) return; // メモを書いている間は描き直さない
   pg.innerHTML = h; pg.scrollTop = st0;
+  if (_pp.pg === 'tr') _ppTrHost(); // v780
   document.body.classList.add('pp-on');
 }
 // ════ v612: 予定（スマホ）— カレンダー本体はそのまま。上下の帯を新しく＋上にスワイプ／日タップで「その日の予定」 ════
@@ -39269,10 +39301,12 @@ function _p2ShPrintHtml(ym) {
   var css = '@page{size:A3 landscape;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans JP","Hiragino Sans",sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     // v766 #8: 左（MAP・数字と改善点）と右（行動の4分野）の下の端をそろえる：両方の列を紙の高さいっぱいにして、表を伸ばす
     + '.pg{width:404mm;height:279mm;display:grid;grid-template-columns:minmax(0,1fr) 100mm;gap:7mm;overflow:hidden}.pg>div{display:flex;flex-direction:column;height:279mm;min-height:0}.hd{display:flex;align-items:baseline;gap:8mm}.hd h1{margin:0;font-size:20pt}.hd span{font-size:14pt;font-weight:700}'
-    + '.l{font-size:12.5pt;margin-top:3mm}.l u{text-decoration:none;border-bottom:1px solid #111;padding:0 3mm;font-weight:700;font-size:14pt}'
+    + '.l{font-size:12.5pt;margin-top:3mm;line-height:1.5}.l u{display:inline-block;min-width:14mm;text-align:center;text-decoration:none;border-bottom:1px solid #111;padding:0 3mm;font-weight:700;font-size:14pt;line-height:1.25}' // v780 #8: 空の欄も同じ長さの線（文字の位置がずれない）
     + '.mp{margin-top:2mm;flex:none}.mp h2{margin:0;font-size:12pt}.mp svg{display:block;width:100%;height:118mm}.lg{font-size:8.5pt;color:#333}'
-    + 'table{border-collapse:collapse;width:100%}.kp{margin-top:2mm;flex:1 1 0;height:100%}.kp th,.kp td{border:1px solid #111;padding:1mm 2mm;font-size:10pt;text-align:center}.kp tr>th:first-child{text-align:left;width:26mm}.kp td.kz{text-align:left;width:52%}'
+    + 'table{border-collapse:collapse;width:100%}.kp{margin-top:2mm;flex:1 1 0;height:100%}.kp th,.kp td{border:1px solid #111;padding:1mm 2mm;font-size:10pt;text-align:center}.kp tr>th:first-child{text-align:left;width:34mm;white-space:nowrap}.kp td.kz{text-align:left;width:52%}'
     + '.al{flex:1 1 0;display:flex;flex-direction:column;min-height:0;margin-bottom:3mm}.al:last-child{margin-bottom:0}.al .at{font-weight:700;font-size:10.5pt;margin-bottom:1mm;flex:none}.al table{flex:1 1 0;height:100%}.al th,.al td{border:1px solid #111;padding:.6mm 1.5mm;font-size:9.5pt}.al th{font-weight:400;font-size:8.5pt;height:5mm}.al .ck{width:6mm;text-align:center}.al .dd{width:17mm;text-align:center}';
+  // v780 #8: 紙がA3より小さい時（iPhoneの印刷はA4などになり、A3のままだと右の行動の欄が切れて消えていた）は、紙に合わせて全体を縮める
+  for (var z9 = 95; z9 >= 30; z9 -= 5) css += '@media print and (max-width:' + (Math.floor(404 * (z9 + 5) / 100) - 1) + 'mm),print and (max-height:' + (Math.floor(279 * (z9 + 5) / 100) - 1) + 'mm){.pg{zoom:' + (z9 / 100) + '}}'; // ちょうどA3（404×281mm）は縮めない
   return '<!doctype html><html><head><meta charset="utf-8"><title>計画立案シート_' + ym + '</title><style>' + css + '</style></head><body><div class="pg"><div>'
     + '<div class="hd"><h1>計画立案シート</h1><span>' + parseInt(ym.slice(0, 4), 10) + '年　' + _p2ShMonLb(ym) + '</span><span>【ユニオン名：' + evEsc(un) + '】</span></div>'
     + '<div class="l"><u>' + (Y.dl ? Y.dl.slice(0, 4) : '') + '</u>年　目標月収 <u>' + (Y.inc ? Y.inc + '万' : '') + '</u>　目標タイトル <u>' + evEsc(Y.title || '') + '</u>　マイルストーン <u>' + ms + '</u></div>'
