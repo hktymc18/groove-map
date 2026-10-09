@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v784';
+var APP_JS_VERSION = 'v785';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4061,7 +4061,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v784';
+  var DATA_VERSION = 'v785';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5566,6 +5566,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v785', d:'2026-10-09', items:['ホームに「誕生日」カード：30日以内の人を近い順に（今日・明日は目立たせる・何歳になるか・「予定」で会う約束を）', 'その先は月ごとにたたんで表示。月を押すとその月の人が開きます（近い3か月は1か月ずつ、その先はまとめて）', '「誕生日がわからない人」から、その人のプロフィールを開いて誕生日を入れられます', 'MAPの「誕生日」チップのシートも同じ形に'] },
   { v:'v784', d:'2026-10-09', items:['PCのフロント追加を、画面いっぱいではなく右側のパネルに（MAPを見ながら入れられます）', 'タイトルのカード（研修生・審査中・BA・BR）がPCでも色つきで出るように', '研修の「記録を足す」のAさん欄の表示を「名前」だけに'] },
   { v:'v783', d:'2026-10-09', pop: { t: 'メンバーの編集が新しい画面になりました', items: ['研修（ステップ・結果・記録）も活動・写真も、メンバー画面の中で。変えるとすぐ保存されます', 'ステップを押すとその記録を足せます。Aさんは最近の人から選べます', 'PCでも右側に同じ画面が出ます（MAPを見ながら直せます）'], go: ['MAPを開く', "switchView('current')"] }, items:['#10 「編集」はどこから開いても新しいメンバー画面に（スマホ・PCとも。今までの編集画面は出ません）', '研修：ステップの流れ（済み・予定・流れた・次）、研修結果、記録（新しい順）を1画面に。記録を押すと 進んだ／流れた／リスケ／消す（元に戻せる）', '記録を足す：ステップ・フォロー、今日／昨日／日付、Aさん（最近の人から選べる）、進んだ／予定／流れた', '活動：OL・タスク・企画書を足すボタンと、月ごとの一覧（すべて／OL／タスク／企画書で絞れる）', '写真：選ぶ・撮る → その場で丸く切り抜き（指で動かす・ピンチ・スライダー）。位置を直す・消す（元に戻せる）', 'プロフィールに年齢（誕生日がわからない時）、タイトルがOUTの人は「OUTの後の表示」を追加', 'PCは右側のパネルで開きます（Escで戻る・閉じる）'] },
   { v:'v782', d:'2026-10-09', items:['MAPの系列フォーカス（カードを押すと他の系列が薄くなる機能）と、その案内・解除の表示をなくしました'] },
@@ -6587,48 +6588,104 @@ function _bdayTurnAge(m) {
   if (next < t0) next = new Date(now.getFullYear() + 1, parseInt(p[2], 10) - 1, parseInt(p[3], 10));
   return next.getFullYear() - parseInt(p[1], 10);
 }
-function openBdaySheet() {
+// ════ v785: 誕生日カード（ホーム・MAPの「誕生日」シート共通）：30日以内を近い順＋その先は月ごとにたたむ＋誕生日がわからない人 ════
+var _bdOpen = {}, _bdAll = false;
+function _bdNextDate(m) { var d = _bdayDaysUntil(m); if (d === null) return null; var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate() + d); }
+function _bdPeople() { return composeMergedInto(membersForMap('current'), 'current').filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; }); }
+function _bdNm(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').trim() || '(無名)'; }
+function _bdCss() {
+  if (document.getElementById('bdCss')) return;
+  if (typeof _mxCss === 'function') _mxCss();
+  var st = document.createElement('style'); st.id = 'bdCss';
+  st.textContent = ".bdc{border-radius:18px;background:linear-gradient(160deg,color-mix(in srgb,#FF5D8F 12%,var(--surface)) 0%,var(--surface) 60%);border:1.5px solid color-mix(in srgb,#FF5D8F 42%,var(--border));padding:12px 12px 4px;margin:12px 0;text-align:left}"
+    + ".bdc.sh{background:none;border:none;padding:0 2px;margin:0}"
+    + ".bdc-h{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:900;color:var(--text)}.bdc-h>svg{color:#FF5D8F}.bdc-h em{font-style:normal;font-size:12px;font-weight:900;color:#FF5D8F;background:color-mix(in srgb,#FF5D8F 15%,transparent);padding:2px 8px;border-radius:9px}.bdc-h em.z{color:var(--text-dim);background:var(--surface3)}.bdc-h span{margin-left:auto;font-size:12px;color:var(--text-dim);font-weight:800}"
+    + ".bdr{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid var(--border);cursor:pointer}.bdc-h+.bdr{border-top:none;margin-top:4px}"
+    + ".bdr .av{width:38px;height:38px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;flex:none;border:2px solid var(--k);overflow:hidden;color:var(--text)}.bdr .av img{width:100%;height:100%;object-fit:cover}"
+    + ".bdr .m{flex:1;min-width:0}.bdr .m b{display:flex;align-items:center;gap:5px;font-size:14.5px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden}.bdr .m b.f{color:var(--female)}.bdr .m b i{font-style:normal;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:7px;background:var(--surface3);color:var(--text-mid);flex:none}"
+    + ".bdr .m small{display:block;font-size:12px;color:var(--text-dim);font-weight:700;margin-top:2px}.bdr .m small u{text-decoration:none;font-weight:900;color:var(--text-mid)}"
+    + ".bdr.td{background:color-mix(in srgb,#FF5D8F 12%,transparent);border-radius:12px;padding:9px 8px;border-top:none;margin:4px -4px}.bdr.td .m small u{color:#FF5D8F}"
+    + ".bdr .bt{flex:none;height:32px;padding:0 10px;border-radius:9px;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:900;border:1px solid var(--border2);color:var(--text-mid);background:var(--surface2);cursor:pointer}"
+    + ".bdm{display:flex;align-items:center;gap:8px;padding:11px 4px;border-top:1px solid var(--border);font-size:13.5px;font-weight:900;cursor:pointer;color:var(--text)}.bdm small{color:var(--text-dim);font-weight:800;font-size:12px;flex:none}.bdm .nm{flex:1;min-width:0;font-size:12px;color:var(--text-dim);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bdm .ch{color:var(--text-dim);flex:none}.bdm.mr{font-size:12.5px;color:var(--text-dim)}"
+    + ".bdsub{padding:0 0 4px 10px;border-left:2px solid color-mix(in srgb,#FF5D8F 40%,var(--border));margin:0 0 6px 6px}.bdsub .bdr:first-child{border-top:none}"
+    + ".bdc .em{font-size:13px;color:var(--text-mid);font-weight:700;padding:8px 2px 10px}.bdc .em b{color:var(--text)}"
+    + ".bdnb{display:flex;align-items:center;font-size:12px;color:var(--text-dim);font-weight:800;padding:10px 4px 8px;border-top:1px solid var(--border);cursor:pointer}.bdnb span{margin-left:auto;color:var(--accent)}";
+  document.head.appendChild(st);
+}
+function _bdRow(m, far, ctx) {
+  var d = _bdayDaysUntil(m), nd = _bdNextDate(m), age = _bdayTurnAge(m), mg = /^MG_/.test(m.id || '');
+  var md = (nd.getMonth() + 1) + '/' + nd.getDate(), cat = _mxCat(m, 'current'), k = _mxK(m, cat);
+  var when = d === 0 ? '今日！' : (d === 1 ? '明日' : 'あと' + d + '日');
+  var sub = far ? '<u>' + md + '（' + '日月火水木金土'.charAt(nd.getDay()) + '）</u>・' + when : '<u>' + when + '</u> ' + md;
+  var cl = ctx === 'sheet' ? "_p2SheetClose('bdayOv');" : '';
+  var av = _avatars[m.id] ? '<img src="' + _avatars[m.id] + '" alt="">' : evEsc((m.lastName || m.firstName || '?').charAt(0));
+  return '<div class="bdr' + (!far && d <= 1 ? ' td' : '') + '" onclick="' + cl + 'openEdit(\'' + m.id + '\')"><div class="av" style="--k:' + k + '">' + av + '</div>'
+    + '<div class="m"><b' + (m.gender === 'female' ? ' class="f"' : '') + '>' + evEsc(_bdNm(m)) + (m.title ? '<i>' + evEsc(titleAbbr(m.title) || m.title) + '</i>' : '') + '</b><small>' + sub + (age !== null ? '・' + age + '歳に' : '') + '</small></div>'
+    + (mg ? '' : '<span class="bt" onclick="event.stopPropagation();' + cl + 'openEventAdd(\'' + m.id + '\')" title="会う予定を入れる">' + icn('calendar') + '予定</span>') + '</div>';
+}
+function bdayCardHtml(ctx) {
+  ctx = ctx || 'home';
+  var all = _bdPeople(), has = all.filter(function(m) { return _bdayDaysUntil(m) !== null; });
+  var noBd = all.filter(function(m) { return !m.birthday && !/^MG_/.test(m.id || ''); }).length;
+  if (!has.length && ctx !== 'sheet') return ''; // 誕生日を1人も入れていない時はホームに出さない
+  _bdCss();
+  has.sort(function(a, b) { return _bdayDaysUntil(a) - _bdayDaysUntil(b); });
+  var near = has.filter(function(m) { return _bdayDaysUntil(m) <= 30; }), far = has.filter(function(m) { return _bdayDaysUntil(m) > 30; });
+  var h = '<div class="bdc' + (ctx === 'sheet' ? ' sh' : '') + '" data-ctx="' + ctx + '">';
+  if (ctx !== 'sheet') h += '<div class="bdc-h">' + icn('cake') + '誕生日<em' + (near.length ? '' : ' class="z"') + '>30日以内 ' + near.length + '人</em>' + (near.length ? '<span>近い順</span>' : '') + '</div>';
+  if (near.length) {
+    var showN = _bdAll || near.length <= 5 ? near : near.slice(0, 5);
+    h += showN.map(function(m) { return _bdRow(m, false, ctx); }).join('');
+    if (near.length > 5) h += '<div class="bdm mr" onclick="bdTgl(\'__all\')"><span>' + (_bdAll ? '少なく表示' : '＋ あと' + (near.length - 5) + '人（30日以内）') + '</span><span class="nm"></span><span class="ch">' + (_bdAll ? '⌃' : '›') + '</span></div>';
+  } else if (far.length) h += '<div class="em">次は <b>' + _bdayMD(far[0]) + ' ' + evEsc(_bdNm(far[0])) + '</b>さん（あと' + _bdayDaysUntil(far[0]) + '日）</div>';
+  else h += '<div class="em">誕生日を入れている人はまだいません</div>';
+  // その先：月ごと（近い3か月は1か月ずつ、それより先はまとめて → 押すと月ごと）
+  var G = [], by = {};
+  far.forEach(function(m) { var nd = _bdNextDate(m), key = nd.getFullYear() + '-' + String(nd.getMonth() + 1).padStart(2, '0'); if (!by[key]) { by[key] = []; G.push(key); } by[key].push(m); });
+  var mlb = function(key) { return parseInt(key.slice(5), 10) + '月'; };
+  var grp = function(key) {
+    var L = by[key], op = !!_bdOpen[key];
+    return '<div class="bdm" onclick="bdTgl(\'' + key + '\')"><span>' + mlb(key) + '</span><small>' + L.length + '人</small><span class="nm">' + (op ? '' : evEsc(L.map(function(m) { return m.lastName || m.firstName || '?'; }).join('・'))) + '</span><span class="ch">' + (op ? '⌄' : '›') + '</span></div>'
+      + (op ? '<div class="bdsub">' + L.map(function(m) { return _bdRow(m, true, ctx); }).join('') + '</div>' : '');
+  };
+  h += G.slice(0, 3).map(grp).join('');
+  if (G.length > 3) {
+    var rest = G.slice(3), n = rest.reduce(function(s, key) { return s + by[key].length; }, 0), op = !!_bdOpen.__more;
+    h += '<div class="bdm" onclick="bdTgl(\'__more\')"><span>' + mlb(rest[0]) + (rest.length > 1 ? '〜' + mlb(rest[rest.length - 1]) : '') + '</span><small>' + n + '人</small><span class="nm"></span><span class="ch">' + (op ? '⌄' : '›') + '</span></div>'
+      + (op ? '<div class="bdsub">' + rest.map(grp).join('') + '</div>' : '');
+  }
+  if (noBd > 0) h += '<div class="bdnb" onclick="bdNoOpen()">誕生日がわからない人 ' + noBd + '人<span>入れる ›</span></div>';
+  return h + '</div>';
+}
+function bdTgl(k) {
+  if (k === '__all') _bdAll = !_bdAll; else _bdOpen[k] = !_bdOpen[k];
+  Array.prototype.forEach.call(document.querySelectorAll('.bdc'), function(el) { var x = bdayCardHtml(el.getAttribute('data-ctx')); if (x) el.outerHTML = x; });
+}
+// 誕生日がわからない人 → 選ぶとその人のプロフィール（誕生日の欄）
+function bdNoOpen() {
+  _p2SheetClose('bdayOv'); _p2SheetClose('bdNoOv');
+  var L = _bdPeople().filter(function(m) { return !m.birthday && !/^MG_/.test(m.id || ''); });
+  L.sort(_treeSortCmp(state.members, 'title'));
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'bdNoOv';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('bdNoOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="overflow-y:auto;max-height:80vh"><div class="ms-grip"></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">誕生日がわからない人（' + L.length + '人）</div><div style="font-size:11px;color:var(--text-dim)">押すとプロフィールが開きます。誕生日を入れるとホームに出ます</div></div><span class="ms-x" onclick="_p2SheetClose(\'bdNoOv\')">✕</span></div>'
+    + L.map(function(m) { return '<div class="ms-act" onclick="_p2SheetClose(\'bdNoOv\');bdProf(\'' + m.id + '\')">' + evEsc(_bdNm(m)) + '<span style="margin-left:8px;font-size:11px;color:var(--text-dim)">' + evEsc(m.title || '') + '</span><span class="ms-ch">›</span></div>'; }).join('')
+    + '</div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function bdProf(id) { ppOpen(id, 'current'); if (_pp && _pp.id === id) ppGo('prof'); }
+function openBdaySheet() { // v785: ホームの誕生日カードと同じ中身（30日以内＋月ごと＋わからない人）
   _p2SheetClose('bdayOv');
-  var _all9 = composeMergedInto(membersForMap('current'), 'current').filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; });
-  var list = _all9.filter(function(m) { return _bdayIn30(m) !== null; });
-  list.sort(function(a, b) { return _bdayIn30(a) - _bdayIn30(b); });
-  // v508: 30日より先の直近5人＋誕生日未登録の人数（0人でもシートが空にならない）
-  var later = _all9.filter(function(m) { var d = _bdayDaysUntil(m); return d !== null && d > 30; });
-  later.sort(function(a, b) { return _bdayDaysUntil(a) - _bdayDaysUntil(b); });
-  later = later.slice(0, 5);
-  var noBd = _all9.filter(function(m) { return !m.birthday && !/^MG_/.test(m.id || ''); }).length;
-  var rows = list.map(function(m) {
-    var d = _bdayIn30(m);
-    var when = d === 0 ? '今日！' : (d === 1 ? '明日' : 'あと' + d + '日');
-    var age = _bdayTurnAge(m);
-    var nm = ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+$/, '');
-    var nmCol = m.gender === 'female' ? 'var(--female)' : 'var(--text)';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border)">'
-      + '<span style="display:inline-flex;color:#FF5D8F;font-size:17px">' + icn('cake') + '</span>'
-      + '<div style="flex:1;min-width:0"><div style="font-weight:800;color:' + nmCol + '">' + evEsc(nm)
-      + (m.title ? ' <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:var(--surface3);color:var(--text-mid)">' + evEsc(m.title) + '</span>' : '') + '</div>'
-      + '<div style="font-size:12px;color:var(--text-dim);margin-top:1px">' + _bdayMD(m) + '（<b style="color:' + (d <= 1 ? '#FF5D8F' : 'var(--text-mid)') + '">' + when + '</b>）' + (age !== null ? '・' + age + '歳に' : '') + '</div></div>'
-      + (m.lineId ? '<button onclick="openLineChatById(\'' + m.id + '\')" style="flex:none;padding:8px 12px;border:none;border-radius:8px;background:#06C755;color:#fff;font-size:12px;font-weight:700;cursor:pointer">LINE</button>' : '')
-      + '<button onclick="_p2SheetClose(\'bdayOv\');openEventAdd(\'' + m.id + '\')" style="flex:none;padding:8px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">＋予定</button>'
-      + '</div>';
-  }).join('');
+  var near = _bdPeople().filter(function(m) { return _bdayIn30(m) !== null; }).length;
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'bdayOv';
   ov.onclick = function(e) { if (e.target === ov) _p2SheetClose('bdayOv'); };
   ov.innerHTML = '<div class="ms-sheet" style="overflow-y:auto;max-height:80vh"><div class="ms-grip"></div>'
-    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name" style="display:flex;align-items:center;gap:6px;color:#FF5D8F">' + icn('cake') + ' 誕生日（30日以内）</div>'
-    + '<div style="font-size:10.5px;color:var(--text-dim)">' + list.length + '人・近い順。LINEでお祝い、＋予定で会う約束を</div></div>'
+    + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name" style="display:flex;align-items:center;gap:6px;color:#FF5D8F">' + icn('cake') + ' 誕生日（30日以内 ' + near + '人）</div>'
+    + '<div style="font-size:10.5px;color:var(--text-dim)">近い順。「予定」で会う約束を。その先は月を押すと開きます</div></div>'
     + '<span class="ms-x" onclick="_p2SheetClose(\'bdayOv\')">✕</span></div>'
-    + '<div style="padding:0 16px 18px">' + (rows || '<div class="ev-empty" style="padding:18px 12px">30日以内に誕生日のメンバーはいません</div>')
-    + (later.length ? ('<div style="font-size:11px;font-weight:800;color:var(--text-dim);letter-spacing:.5px;padding:14px 4px 4px">その先の誕生日</div>'
-        + later.map(function(m) {
-            var d2 = _bdayDaysUntil(m);
-            var nm2 = ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+$/, '');
-            return '<div style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text-mid)">'
-              + '<span style="font-weight:700;color:' + (m.gender === 'female' ? 'var(--female)' : 'var(--text)') + '">' + evEsc(nm2) + '</span>'
-              + '<span style="margin-left:auto;color:var(--text-dim)">' + _bdayMD(m) + '（あと' + d2 + '日）</span></div>';
-          }).join('')) : '')
-    + (noBd > 0 ? '<div style="font-size:11px;color:var(--text-dim);padding:12px 4px 0">誕生日未登録 ' + noBd + '人（メンバー編集の「基本」タブで登録できます）</div>' : '')
-    + '</div></div>';
+    + '<div style="padding:0 16px 18px">' + bdayCardHtml('sheet') + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
 }
@@ -6662,21 +6719,7 @@ function birthdayThisMonth() {
   out.sort(function(a, b){ return a.day - b.day; });
   return out;
 }
-function birthdayHtml() {
-  var html = '';
-  var bs = birthdayUpcoming();
-  if (bs.length) {
-    var names = bs.map(function(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; }).join('、');
-    html += '<div class="home-bday"><span class="home-bday-ic">' + icn('cake') + '</span><div><div class="home-bday-t">明日は ' + evEsc(names) + ' さんの誕生日！</div><div class="home-bday-s">お祝いメッセージの準備を</div></div></div>';
-  }
-  var tm = birthdayThisMonth();
-  if (tm.length) {
-    var curM = new Date().getMonth() + 1, today = new Date().getDate();
-    var list = tm.map(function(x){ var nm = ((x.m.lastName || '') + ' ' + (x.m.firstName || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || '(無名)'; var passed = x.day < today; return '<span' + (passed ? ' style="opacity:.5"' : '') + '>' + evEsc(nm) + '（' + curM + '/' + x.day + '）</span>'; }).join('、');
-    html += '<div class="home-bday-month">' + icn('cake') + ' 今月の誕生日：' + list + '</div>';
-  }
-  return html;
-}
+function birthdayHtml() { return bdayCardHtml('home'); } // v785: 「明日は〜」「今月の誕生日」は誕生日カードに
 function cockpitHtml() {
   var g = ckCollect();
   var total = g.trainee.length + g.fresh.length + g.exam.length + g.leader.length; // v417
@@ -7602,7 +7645,8 @@ function _phHtml(o) { // o: { li, pct, streak, thisW, dwTxt, deltaCls, ftue, com
       + (ppl.length > 6 ? '<div class="ph-mr lk" onclick="window._phAll=!window._phAll;renderHome()">' + (all ? '少なく表示' : 'すべて表示（' + ppl.length + '人）') + '</div>' : '')
       : '<div class="ph-em">今フォローが必要な人はいません 👍</div>')
     + '<div class="ph-h" style="margin-top:14px" onclick="reapOpen()">🔄 再アプローチ<em>' + due + '人</em><span>ひらく ›</span></div><div class="ph-em" style="text-align:left">' + (due ? '声をかける時期が来た人がいます' : '時期が来た人はまだいません') + '</div>'
-    + (function() { var b = ''; try { b = birthdayHtml(); } catch (eB) {} return b ? '<div class="ph-bd">' + b + '</div>' : ''; })() + '</div>';
+    + '</div>';
+  c1 = '<div>' + c1 + (function() { var b = ''; try { b = birthdayHtml(); } catch (eB) {} return b; })() + '</div>'; // v785: 誕生日カード（今日の予定・ToDoの下。気になる人の下だと画面の外になるため）
   h += '<div class="ph-g">' + c1 + c2 + c3 + '</div>';
   return h;
 }
