@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BASE CHECK-IN 合同イベント手順書</title>
+<meta name="description" content="複数のユニオンで開く合同イベントの準備・当日の受付・会員証がない方の受付と領収書・会計・集計の手順書">
+<link rel="icon" href="icon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 受付システム（checkin/index.html）と同じ色 */
+:root{
+  --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
+  --accent:#c0392b; --accent-soft:#f7e6e2;
+  --green:#2e6b52; --green-soft:#e3efe8;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#2b5fa8; --focus-soft:#e4ecf7;
+  --chick:#ffd83d;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#171915; --card:#22241f; --ink:#e9e7de; --sub:#a3a194; --line:#3a3c34;
+    --accent:#e0604f; --accent-soft:#3d2723;
+    --green:#79c29e; --green-soft:#243a2f;
+    --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0; --focus-soft:#1f2a38;
+  }
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",system-ui,sans-serif;font-size:15.5px;line-height:1.8;-webkit-text-size-adjust:100%;}
+a{color:var(--focus);}
+h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;line-height:1.35;}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+.wrap{max-width:880px;margin:0 auto;padding:0 16px 80px;}
+/* ヘッダー */
+.hero{display:flex;gap:18px;align-items:center;padding:28px 0 18px;}
+.hero .jk{width:84px;height:84px;flex:0 0 auto;}
+.hero .brand{font-family:"IBM Plex Mono",monospace;font-size:12.5px;letter-spacing:.12em;color:var(--sub);}
+.hero .brand b{color:var(--ink);} .hero .brand i{color:var(--accent);font-style:normal;}
+.hero h1{margin:4px 0 6px;font-size:28px;font-weight:900;}
+.hero p{margin:0;color:var(--sub);font-size:14px;}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:700;font-size:14px;}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff;}
+@media (prefers-color-scheme: dark){ .btn.primary{color:#10261b;} }
+/* 目次 */
+.toc{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);margin:0 -16px;padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+.toc::-webkit-scrollbar{display:none;}
+.toc a{flex:0 0 auto;padding:5px 11px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap;}
+/* 共通パーツ */
+section{scroll-margin-top:56px;}
+h2.sec{display:flex;align-items:center;gap:10px;font-size:22px;margin:42px 0 6px;}
+h2.sec .tag{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;}
+.tag.adm{background:var(--accent-soft);color:var(--accent);}
+.tag.rcp{background:var(--green-soft);color:var(--green);}
+.tag.own{background:var(--focus-soft);color:var(--focus);}
+.lead{color:var(--sub);margin:0 0 14px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0;}
+.step{display:grid;grid-template-columns:40px 1fr;gap:4px 12px;}
+.step .no{width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font-weight:900;font-family:"IBM Plex Mono",monospace;}
+.step h3{margin:3px 0 2px;font-size:17px;}
+.step .body{grid-column:2;}
+.where{display:inline-block;font-size:12.5px;font-weight:700;color:var(--sub);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:1px 8px;margin:2px 0 6px;}
+.ui{display:inline-block;font-weight:700;border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:0 6px;font-size:.92em;white-space:nowrap;}
+ol,ul{padding-left:1.3em;margin:6px 0;}
+li{margin:2px 0;}
+.note{border-radius:10px;padding:10px 14px;margin:10px 0;font-size:14px;}
+.note.warn{background:var(--amber-soft);color:var(--amber);}
+.note.ok{background:var(--green-soft);color:var(--green);}
+.note.info{background:var(--focus-soft);color:var(--focus);}
+.note b{color:inherit;}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0;}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top;}
+th{font-size:12.5px;color:var(--sub);font-weight:700;}
+.tblwrap{overflow-x:auto;}
+/* 役割 */
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;}
+.role{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;position:relative;}
+.role .who{font-weight:900;font-size:16px;margin:2px 0 4px;}
+.role ul{font-size:13.5px;padding-left:1.1em;}
+.role.own{border-top:4px solid var(--focus);} .role.adm{border-top:4px solid var(--accent);} .role.rcp{border-top:4px solid var(--green);}
+@media (max-width:640px){
+  .roles{grid-template-columns:1fr;} .hero h1{font-size:23px;} .hero .jk{width:64px;height:64px;}
+  .card{padding:14px 14px;}
+  .step{grid-template-columns:30px 1fr;gap:4px 10px;}
+  .step .no{width:28px;height:28px;font-size:13px;}
+  /* 表はスマホでは1行ずつのカードに */
+  table.stk tr:first-child{display:none;}
+  table.stk tr{display:block;padding:8px 0;border-bottom:1px solid var(--line);}
+  table.stk td{display:block;border:0;padding:1px 0;}
+  table.stk td:first-child{font-weight:900;}
+}
+/* 全体の流れ */
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;}
+.flow span{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13.5px;font-weight:700;}
+.flow span.a{border-color:var(--accent);} .flow span.r{border-color:var(--green);} .flow span.o{border-color:var(--focus);}
+.flow em{color:var(--sub);font-style:normal;}
+/* 動画 */
+details.vid{margin:8px 0 0;}
+details.vid summary{cursor:pointer;font-weight:700;color:var(--focus);font-size:14px;list-style:none;}
+details.vid summary::-webkit-details-marker{display:none;}
+details.vid video{width:100%;max-width:640px;border-radius:10px;border:1px solid var(--line);margin-top:8px;background:#000;}
+/* FAQ */
+details.qa{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0;}
+details.qa summary{cursor:pointer;font-weight:700;}
+details.qa p,details.qa ul{margin:8px 0 2px;font-size:14.5px;}
+/* チェックリスト */
+.ck label{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+.ck input{margin-top:6px;width:18px;height:18px;flex:0 0 auto;accent-color:var(--green);}
+.ck .r{font-size:11.5px;font-weight:700;border-radius:99px;padding:1px 8px;margin-right:6px;}
+.pg{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 2px;}
+.pg i{display:block;height:100%;background:var(--green);width:0;transition:width .2s;}
+.foot{color:var(--sub);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px;}
+@media print{
+  .toc,.links,details.vid,.noprint{display:none !important;}
+  body{background:#fff;color:#000;font-size:12.5px;}
+  .card,.role,details.qa{break-inside:avoid;border-color:#bbb;}
+  details.qa{display:block;} details.qa > *{display:block;}
+  h2.sec{break-after:avoid;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <svg class="jk" viewBox="0 0 100 100" aria-hidden="true"><path d="M46 10 q4 -8 8 0 q3 -6 6 1" fill="none" stroke="#f2b400" stroke-width="3" stroke-linecap="round"/><ellipse cx="50" cy="64" rx="34" ry="30" fill="#ffd83d"/><circle cx="50" cy="38" r="25" fill="#ffe066"/><ellipse cx="22" cy="66" rx="9" ry="14" fill="#ffcf1f" transform="rotate(25 22 66)"/><ellipse cx="78" cy="66" rx="9" ry="14" fill="#ffcf1f" transform="rotate(-25 78 66)"/><circle cx="40" cy="35" r="4.2" fill="#2b2b2b"/><circle cx="60" cy="35" r="4.2" fill="#2b2b2b"/><path d="M44 45 l6 6 l6 -6 z" fill="#ff9a1f"/><ellipse cx="33" cy="44" rx="4.5" ry="2.6" fill="#ff9aa2" opacity=".7"/><ellipse cx="67" cy="44" rx="4.5" ry="2.6" fill="#ff9aa2" opacity=".7"/></svg>
+  <div>
+    <div class="brand"><b>BASE CHECK-IN</b><i>●</i> 合同イベント手順書</div>
+    <h1>合同イベントの受付</h1>
+    <p>複数のユニオンでいっしょに開くイベントの、準備・当日の受付・会計・集計までの手順です。会員証（スマホ）を持っていない方の受付と領収書の渡し方も載せています。</p>
+  </div>
+</header>
+<div class="links noprint">
+  <a class="btn primary" href="./" target="_blank" rel="noopener">受付管理を開く ›</a>
+  <a class="btn" href="#nocard">会員証がない方</a>
+  <a class="btn" href="#check">✅ 当日チェック</a>
+  <a class="btn" href="manual.html">📘 導入手順書</a>
+  <a class="btn" href="javascript:window.print()">🖨 印刷する</a>
+</div>
+
+<nav class="toc" aria-label="目次">
+  <a href="#rule">大事なこと</a><a href="#before">準備</a><a href="#day">当日の受付</a><a href="#nocard">会員証がない方</a>
+  <a href="#money">お金・領収書</a><a href="#close">終了・会計</a><a href="#after">集計・出席者</a><a href="#faq">困ったとき</a><a href="#check">チェックリスト</a>
+</nav>
+
+<!-- ───────── 大事なこと ───────── -->
+<section id="rule">
+<h2 class="sec">まず大事なこと3つ</h2>
+<div class="card">
+  <ol>
+    <li><b>イベントを作るのは主催ユニオンだけ。</b>参加ユニオンは自分では作りません（別々に作ると、二重受付や稼働率のズレの原因になります）。</li>
+    <li><b>いっしょに開くユニオンには全部チェック。</b>「合同ユニオン」にチェックが付いているユニオンの人だけが、そのユニオンの集計・稼働率に入ります。</li>
+    <li><b>当日は全員が「同じイベント」で受付を開始。</b>PCが何台あっても、出席はリアルタイムで1つにまとまります。</li>
+  </ol>
+  <div class="flow"><span class="a">主催がイベントを作る（全部チェック）</span><em>→</em><span class="r">各ユニオンのPCで同じイベントの受付を開始</span><em>→</em><span class="r">QRでピッ（どのユニオンの人でもOK）</span><em>→</em><span class="a">主催が受付終了・会計</span><em>→</em><span class="o">各ユニオンの集計に自動で入る</span></div>
+</div>
+</section>
+
+<!-- ───────── 準備 ───────── -->
+<section id="before">
+<h2 class="sec">準備（前日まで） <span class="tag adm">主催ユニオン</span></h2>
+<div class="card step"><div class="no">1</div><div>
+  <h3>主催ユニオンがイベントを作る</h3>
+  <span class="where">イベントタブ ›「＋ 新規イベント」</span>
+  <ul>
+    <li>日付・名称・料金（第1部・第2部・必要なら第3部）を入れます。</li>
+    <li><b>合同ユニオン</b>：いっしょに開くユニオンに<b>全部チェック</b>。</li>
+    <li><b>支払い方法</b>：💴 現金のみ ／ 💳 PayPayのみ ／ 💴💳 現金とPayPayの両方 から選びます。</li>
+    <li>保存すると、イベント一覧に <span class="ui">合同: A + B</span> のタグが付きます。</li>
+  </ul>
+  <details class="vid"><summary>▶ 動画で見る：合同イベントを作る</summary><video src="guide/set5.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+
+<div class="card step"><div class="no">2</div><div>
+  <h3>参加ユニオンは「出ているか」だけ確認</h3>
+  <span class="where">イベントタブ（ユニオン: 自分のユニオン）</span>
+  <ul>
+    <li>主催が作ったイベントが、自分のユニオンのイベント一覧にも<b>合同タグ付きで</b>出ていればOK。</li>
+    <li>出ていない → 主催ユニオンに「合同ユニオンのチェック」をお願いしてください。</li>
+  </ul>
+</div></div>
+
+<div class="card step"><div class="no">3</div><div>
+  <h3>領収書・PayPayの設定は「主催ユニオン」のものが使われます</h3>
+  <span class="where">会計タブ ›「⚙ ユニオン設定」（主催ユニオン）</span>
+  <ul>
+    <li>当日の電子領収書の<b>発行者名・住所・電話・インボイス登録番号</b>と、受付画面に出る<b>PayPayの送金QR</b>は、主催ユニオンの設定です。</li>
+    <li>発行者名が空欄だと電子領収書は出ません。前日までに確認しておきましょう。</li>
+  </ul>
+</div></div>
+
+<div class="card step"><div class="no">4</div><div>
+  <h3>受付のPCを決める</h3>
+  <ul>
+    <li>おすすめは<b>ユニオンごとに1台</b>。それぞれ<b>自分のユニオンのアカウント</b>でログインします。</li>
+    <li>理由：<b>名前検索・番号の手入力で探せるのは、ログインした人が見られるユニオンの名簿だけ</b>だからです（他のユニオンの名簿は見えません）。会員証（スマホ）がない方は、自分のユニオンのPCで受付するのがいちばん確実です。</li>
+    <li>会員証（スマホ）のQRは、<b>どのPCでも読めます</b>。</li>
+  </ul>
+</div></div>
+</section>
+
+<!-- ───────── 当日 ───────── -->
+<section id="day">
+<h2 class="sec">当日の受付 <span class="tag rcp">各ユニオンの受付</span></h2>
+<div class="card step"><div class="no">5</div><div>
+  <h3>全部のPCで「同じイベント」の受付を開始</h3>
+  <span class="where">受付タブ › イベントを選ぶ › 受付を開始</span>
+  <ul>
+    <li>どのPCで受付しても、<b>出席はリアルタイムで1つにまとまります</b>（数秒で他のPCにも反映）。</li>
+    <li>右側の <span class="ui">ユニオン別</span> タイルで、ユニオンごとの人数が見られます。タップすると全員の一覧。</li>
+  </ul>
+</div></div>
+
+<div class="card step"><div class="no">6</div><div>
+  <h3>QRでピッ（どのユニオンの人でもOK）</h3>
+  <ul>
+    <li>会員証（スマホ）のQRを読むと、その人の<b>所属ユニオン</b>で記録されます。ログインしているユニオンではなく、<b>本人のユニオンの集計</b>に入ります。</li>
+    <li>「⚠ ○○ はこのイベントの合同ユニオンに入っていません」と出たら：
+      <ul>
+        <li>主催ユニオンの管理者・受付管理者のPC → その場の <span class="ui">＋ ○○ を合同ユニオンに追加</span> を押す。</li>
+        <li>それ以外のPC → 主催ユニオンに伝えて、イベントの「編集」でチェックを付けてもらう（<b>受付の後からでもOK</b>。付けた時点でそのユニオンの集計に入ります）。</li>
+      </ul></li>
+    <li>MC・スピーカー・運営は <span class="ui">MCを登録</span> などから（料金なし）。</li>
+  </ul>
+  <details class="vid"><summary>▶ 動画で見る：QRでピッ・番号で受付</summary><video src="guide/rec2.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+</section>
+
+<!-- ───────── 会員証がない方 ───────── -->
+<section id="nocard">
+<h2 class="sec">会員証（スマホ）を持っていない方の受付</h2>
+<p class="lead">紙のカードだけの方、まだ会員証を配っていない系列の方、名簿にいない方の受付です。どの場合も、受付のあと<b>電子領収書をQRで渡せます</b>（次の章）。</p>
+<div class="tblwrap"><table class="stk">
+  <tr><th>どんな方？</th><th>受付のしかた</th><th>集計</th></tr>
+  <tr><td>A. 自分のユニオンの名簿にいる<br><small>（紙カードの方・会員証未配布の方）</small></td>
+      <td><span class="ui">番号を入力</span> → <span class="ui">受付</span>、または <span class="ui">名前で検索して受付</span> に名前の一部を入れて候補をタップ。</td>
+      <td>本人のユニオンに入る</td></tr>
+  <tr><td>B. 他のユニオンの名簿にいる<br><small>（会員証なし）</small></td>
+      <td><b>その方のユニオンのPCで受付</b>（Aと同じ方法）。そのユニオンのPCがない場合は、下のCの方法で「所属ユニオン」にその方のユニオンを選んで受付。</td>
+      <td>本人のユニオンに入る<br><small>（Cの方法だとゲスト扱い）</small></td></tr>
+  <tr><td>C. どの名簿にもいない<br><small>（初めての方・ゲスト）</small></td>
+      <td><span class="ui">ゲスト受付</span> → 氏名・所属ユニオン・系列（紹介者の系列）を選んで <span class="ui">受付</span>。</td>
+      <td>選んだユニオンの「ゲスト」として入る</td></tr>
+</table></div>
+<div class="note info"><b>次からピッで済むように：</b>名簿にいない方・会員証がない方は、イベントの後に名簿へ登録して会員証を発行しておくと、次回からはQRで一瞬です。名簿の <span class="ui">会員証</span> でQRを出し、本人のスマホのカメラで読み取ってもらえば、その場で渡せます（LINE不要）。</div>
+<div class="note warn"><b>番号を入れて「未登録の番号」と出たら：</b>そのPCから見えない名簿の方です（他のユニオンの方など）。その方のユニオンのPCで受付するか、Cの <span class="ui">ゲスト受付</span> で受付してください。</div>
+</section>
+
+<!-- ───────── お金・領収書 ───────── -->
+<section id="money">
+<h2 class="sec">お金の受け取りと領収書</h2>
+<div class="card step"><div class="no">7</div><div>
+  <h3>料金の受け取り</h3>
+  <ul>
+    <li><b>お金を受け取ってからピッ</b>。受付と同時に「徴収済み」になります。あとで払う方は受付直後の <span class="ui">未徴収にする（後払い）</span>。</li>
+    <li><b>💴💳 現金とPayPayの両方</b>のイベントでは、ピッのあとに出る <span class="ui">💴 現金で受領</span> <span class="ui">📱 PayPayで受領</span> をワンタップ（何もしなければ現金）。PayPayの方には、画面上の送金QRを読んでもらいます。</li>
+    <li>間違えたら、<span class="ui">出席</span> タイル → 一覧の <span class="ui">会計</span> から直せます（未徴収⇔徴収済み・返金・PayPay⇔現金）。</li>
+  </ul>
+</div></div>
+
+<div class="card step"><div class="no">8</div><div>
+  <h3>電子領収書</h3>
+  <table class="stk">
+    <tr><th>どんな方？</th><th>領収書の渡し方</th></tr>
+    <tr><td>会員証（スマホ）がある方</td><td><b>何もしなくてOK</b>。本人の会員証に自動で届きます（会員証の「RECEIPTS」から見られます）。</td></tr>
+    <tr><td>会員証がない方<br><small>（上のA・B・Cの方）</small></td><td>受付直後の画面の <span class="ui">📱 領収書QRを表示</span> を押し、<b>本人のスマホのカメラで読み取ってもらう</b>。宛名・金額入りの領収書ページが開くので、スクリーンショットで保存してもらいます。</td></tr>
+  </table>
+  <ul>
+    <li><b>渡し忘れたら：</b><span class="ui">出席</span> タイルの一覧、またはイベントタブの <span class="ui">📋 合同出席者</span> の <span class="ui">🧾 領収書</span> から、同じ領収書をもう一度出せます（2枚目は作りません）。</li>
+    <li>未徴収に戻す・返金・PayPay⇔現金の変更、受付の取消をすると、領収書も<b>自動で取り下げ・更新</b>されます。</li>
+    <li>領収書には現金受領／PayPay受領が載ります。主催ユニオンの設定にインボイス登録番号があれば「10%対象・うち消費税」も載ります。</li>
+  </ul>
+</div></div>
+</section>
+
+<!-- ───────── 終了・会計 ───────── -->
+<section id="close">
+<h2 class="sec">受付終了と会計 <span class="tag adm">主催ユニオン</span></h2>
+<div class="card step"><div class="no">9</div><div>
+  <h3>最後に主催ユニオンが「受付を終了」</h3>
+  <ul>
+    <li>全部のPCの受付が終わってから、<b>主催ユニオン</b>が <span class="ui">受付を終了</span>。これで<b>参加ユニオン全部の集計（稼働率）</b>に入ります。</li>
+    <li>会計はイベントで<b>1つ</b>です。全部のPCで受け取ったお金がまとめて出るので、主催ユニオンの受付管理者が入力・確定します。</li>
+    <li>PCごとに現金を分けて管理している場合は、<span class="ui">📋 合同出席者</span> の <b>受付担当</b> と <b>CSV（徴収額つき）</b> で、どのPCでいくら受け取ったかを確認できます。</li>
+  </ul>
+  <details class="vid"><summary>▶ 動画で見る：受付終了と会計</summary><video src="guide/rec5.mp4" controls preload="none" playsinline></video></details>
+</div></div>
+</section>
+
+<!-- ───────── 集計・出席者 ───────── -->
+<section id="after">
+<h2 class="sec">終わったあと：集計と出席者</h2>
+<div class="card">
+  <ul>
+    <li><b>集計タブ</b>：各ユニオンの画面には<b>自分のユニオンの人だけ</b>が出ます（合同ユニオンにチェックがあったユニオンの稼働率に入ります）。</li>
+    <li><b>イベントタブ ›「📋 合同出席者」</b>：イベント全体を見られます。
+      <ul>
+        <li>合計人数・ユニオン別の人数・ビジター（合同外のユニオンの人）・ゲスト</li>
+        <li>時刻・氏名・系列・ユニオン・役割・受付方法・<b>受付担当者</b></li>
+        <li>ユニオンで絞り込み、⬇ CSVで出力</li>
+      </ul></li>
+    <li>見られるのは、参加ユニオンのメンバー・管理者だけです。</li>
+  </ul>
+</div>
+</section>
+
+<!-- ───────── FAQ ───────── -->
+<section id="faq">
+<h2 class="sec">困ったとき</h2>
+<details class="qa"><summary>ある人が自分のユニオンの集計に入っていない</summary>
+  <p>イベントの「合同ユニオン」に自分のユニオンのチェックが付いているか、主催ユニオンに確認してもらってください。後からチェックを付ければ、その時点で集計に入ります。受付終了前のイベントは、受付を終了すると稼働率に入ります。</p></details>
+<details class="qa"><summary>参加ユニオンが別々にイベントを作ってしまった</summary>
+  <p>主催ユニオンのイベント1つにまとめてください。参加ユニオン側で作ったイベントに受付が入っていなければ、そのユニオンの管理者が削除します。すでに受付が入っている場合は、オーナーに相談してください。</p></details>
+<details class="qa"><summary>他のユニオンの人の名前が検索に出てこない</summary>
+  <p>他のユニオンの名簿は見えない仕組みです。会員証（スマホ）のQRなら、どのPCでも読めます。会員証がない方は、その方のユニオンのPCで受付するか、<span class="ui">ゲスト受付</span> で所属ユニオンを選んで受付してください。</p></details>
+<details class="qa"><summary>同じ人を2台のPCで受付してしまった</summary>
+  <p>同じ会員番号は1件にまとまるので、二重には数えられません（お金だけ二重に受け取っていないか確認してください）。ゲスト受付で同じ人を2回登録した場合は、<span class="ui">出席</span> タイルの一覧から片方を <span class="ui">取消</span> してください。</p></details>
+<details class="qa"><summary>領収書QRのボタンが出ない</summary>
+  <p>主催ユニオンのユニオン設定で、領収書の発行者名が空欄になっていないか確認してください。また、料金0円の受付（スピーカー・運営など）と「未徴収」の人には出ません。</p></details>
+<details class="qa"><summary>集計タブが「集計中…」のまま</summary>
+  <p>画面を更新（PCは Ctrl+F5）してください。最新版で直っています。</p></details>
+</section>
+
+<!-- ───────── チェックリスト ───────── -->
+<section id="check">
+<h2 class="sec">✅ 当日チェックリスト</h2>
+<p class="lead">チェックはこの端末にだけ保存されます。</p>
+<div class="card ck" id="ckList">
+  <label><input type="checkbox" data-k="j1"><span><span class="r tag adm">主催</span>イベントを1つだけ作り、合同ユニオンに全部チェックした</span></label>
+  <label><input type="checkbox" data-k="j2"><span><span class="r tag adm">主催</span>支払い方法（現金／PayPay／両方）を選んだ</span></label>
+  <label><input type="checkbox" data-k="j3"><span><span class="r tag adm">主催</span>ユニオン設定の領収書の発行者名・PayPayリンクを確認した</span></label>
+  <label><input type="checkbox" data-k="j4"><span><span class="r tag rcp">参加</span>自分のユニオンのイベント一覧に合同イベントが出ている</span></label>
+  <label><input type="checkbox" data-k="j5"><span><span class="r tag rcp">全員</span>各ユニオンのPCで、自分のユニオンのアカウントでログインした</span></label>
+  <label><input type="checkbox" data-k="j6"><span><span class="r tag rcp">全員</span>全部のPCで同じイベントの受付を開始した</span></label>
+  <label><input type="checkbox" data-k="j7"><span><span class="r tag rcp">全員</span>会員証がない方には「📱 領収書QRを表示」で領収書を渡した</span></label>
+  <label><input type="checkbox" data-k="j8"><span><span class="r tag adm">主催</span>最後に受付を終了し、会計を入力・確定した</span></label>
+  <div class="pg"><i id="pgBar"></i></div>
+</div>
+</section>
+
+<p class="foot">BASE CHECK-IN 合同イベント手順書　／　<a href="manual.html">導入手順書</a>　／　画面は受付管理システムの最新版に合わせています。</p>
+</div>
+<script>
+// チェックリストの進み具合（この端末だけに保存）
+(function(){
+  var KEY = 'bci_joint_ck', st = {};
+  try{ st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }catch(e){ st = {}; }
+  var boxes = document.querySelectorAll('#ckList input[type=checkbox]');
+  function paint(){
+    var n = 0;
+    for(var i = 0; i < boxes.length; i++) if(boxes[i].checked) n++;
+    var bar = document.getElementById('pgBar');
+    if(bar) bar.style.width = Math.round(n / boxes.length * 100) + '%';
+  }
+  for(var i = 0; i < boxes.length; i++){
+    boxes[i].checked = !!st[boxes[i].getAttribute('data-k')];
+    boxes[i].onchange = function(){
+      st[this.getAttribute('data-k')] = this.checked;
+      try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
+      paint();
+    };
+  }
+  paint();
+  var vids = document.querySelectorAll('details.vid');
+  for(var j = 0; j < vids.length; j++){
+    vids[j].addEventListener('toggle', function(){ var v = this.querySelector('video'); if(v && !this.open) v.pause(); });
+  }
+})();
+</script>
+</body>
+</html>
