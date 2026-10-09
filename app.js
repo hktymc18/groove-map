@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v775';
+var APP_JS_VERSION = 'v776';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4041,7 +4041,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v775';
+  var DATA_VERSION = 'v776';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5544,6 +5544,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v776', d:'2026-10-09', items:['計画シートのサマリー：行動は入力画面と同じ表で、何を書いたか・期日まで見えます。✔もサマリーから付けられます','サマリーの数字を押すと − ＋ で直せます。やったことは「予定に入れる」「ToDoに入れる」で記録すると、数も＋1されます','年の目標・ロードマップのサマリーの先頭に、理想で書いた「やりたいこと・なりたい自分」が出るように','理想：下のボタンを「‹ 前へ」と「次へ ›」に分けました。完了はまとめのページだけです'] },
   { v:'v775', d:'2026-10-09', items:['計画シート：今の数は − ＋ で入れられるように（予定・カレンダーからは数えません）。目標に対して何%かが今月・先月とも出ます','理想MAPの数字がPLANの目標に入らないようにしました（目標は自分で決めて、いつでも変えられます）','PCの数字の欄の小さい矢印をなくしました（押しても反応しないことがあったため）','スマホの計画シートのMAPは、MAPのツリーと同じ形で出るように（サークル・シート型にも切り替えられます）','理想のまとめから、①理想のライフスタイル ②やりたいこと・なりたい自分 ③やる理由作文 をそれぞれ答え直せるように'] },
   { v:'v774', d:'2026-10-09', items:['メンバー追加で、名前を入れた後にタイトルのカードを押すと名前が消えてしまうのを直しました（理想MAPの新しい人の名前も同じく）'] },
   { v:'v773', d:'2026-10-09', items:['設定の「組織MAPをクリア」をなくしました'] },
@@ -17047,8 +17048,8 @@ function _uxTile(o) {
     + '<div class="ic">' + o.ic + '</div>' + (o.x || '') + '<b>' + o.lb + '</b><div class="st">' + (o.st || '') + '</div></div>';
 }
 // ページの下の帯（戻る・●・次へ）
-function _uxBtm(back, dots, cur, dotOn, next, nextOn) {
-  var h = '<div class="ux-btm"><span class="ux-bk" onclick="' + back + '">‹ 戻る</span>';
+function _uxBtm(back, dots, cur, dotOn, next, nextOn, backLb) {
+  var h = '<div class="ux-btm">' + (back ? '<span class="ux-bk" onclick="' + back + '">' + (backLb || '‹ 戻る') + '</span>' : '<span class="ux-bk" style="visibility:hidden"></span>'); // v776: back が空なら出さない（場所は残す）
   if (dots && dots.length > 1) h += '<div class="ux-dots' + (dots.length > 6 ? ' many' : '') + '">' + dots.map(function(d, i) { return '<span class="' + (i === cur ? 'on' : '') + '" onclick="' + dotOn + '(' + i + ')"><i></i>' + d + '</span>'; }).join('') + '</div>';
   if (next) h += '<span class="ux-nx" onclick="' + nextOn + '">' + next + '</span>';
   return h + '</div>';
@@ -17515,10 +17516,11 @@ function _p2PageParts() {
     if (i === 1) { i = 0; _p2PgI = 0; } // ひと区切りのページはなくした（①の同じページに）
     _ux2Css(); body = _p2IdealPageHtml(i);
     var _idDone = (function() { var Q = _p2IdealQs(); return Q.length && (_p2G().p1 || _p2IdealAnsN() >= Q.length); })();
-    if (i === 0) { if (_idDone) { next = '✓ 完了'; nextOn = 'p2IdealFinish(0)'; } else { next = ''; nextOn = ''; } } // 答え終わるまでは「完了」を出さない
+    // v776: 1本の流れに（理想の生活 → やりたいこと〜なりたくない自分 → まとめ）。右は「次へ」、完了はまとめだけ。左は「前へ」（最初のページは出さない）
+    if (i === 0) { next = 'やりたいこと ›'; nextOn = 'p2IdealNext(0)'; }
     else if (i >= 2 && i <= 5) {
       dots = P2_IDEAL_PG.slice(2, 6); dotI = i - 2; dotOn = 'p2IdSetB';
-      if (i < 5) { next = P2_IDEAL_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = '✓ 完了'; nextOn = 'p2IdealFinish(1)'; }
+      if (i < 5) { next = P2_IDEAL_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } else { next = 'まとめ ›'; nextOn = 'p2IdealNext(5)'; }
     } else { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; }
     dots = dots || [];
   } else if (k === 'essay') { // v629: やる理由の作文はツールの中
@@ -17586,7 +17588,7 @@ function _p2PageParts() {
   if (/^つぎ：/.test(next)) { next = '✓ 完了'; nextOn = 'p2Go(\'\')'; } // v652: タイルを終えたら、次のタイルではなく入口へ戻る
   if (k === 'yrs') { back = _p2YrsBack || (/^(goal|year|gap|rm)$/.test(_p2From || '') ? 'p2Go(\'' + _p2From + '\')' : 'p2Go(\'\')'); nextOn = back; } // v693
   if (k === 'rmrows') back = 'p2Go(\'rm\')'; else if (k === 'gapset' || k === 'gapal') back = 'p2Go(\'gap\')'; else if (k === 'rmms') back = _p2MsE ? 'p2Go(\'' + _p2MsE.from[0] + '\',' + _p2MsE.from[1] + ')' : 'p2Go(\'rm\')'; // v603
-  if (k === 'ideal') back = (i === 0 || i === 2 || i === 6) ? 'p2Go(\'\')' : 'p2PgSub(' + (i - 1) + ')'; // v682: セットの最初は入口へ
+  if (k === 'ideal') back = i === 0 ? '' : (i === 2 ? 'p2PgSub(0)' : 'p2PgSub(' + (i - 1) + ')'); // v776: 「前へ」＝前のページ（最初のページは出さない・やめる時は上のPLAN）
   if (k === 'goal') { back = _p2From === 'year' ? 'p2Go(\'year\')' : 'p2Go(\'\')'; next = '✓ 完了'; nextOn = back; } // v690
   if (k === 'gap' && /^(rm|goal|year|sheet)$/.test(_p2From || '')) back = 'p2Go(\'' + _p2From + '\')'; // v692: 来た所へ戻る
   return { k: k, subs: subs, i: i, body: body, next: next, nextOn: nextOn, back: back, dots: dots, dotI: dotI, dotOn: dotOn };
@@ -17594,7 +17596,7 @@ function _p2PageParts() {
 function _p2PageHtml() {
   var P = _p2PageParts(), k = P.k, subs = P.subs, i = P.i, body = P.body, next = P.next, nextOn = P.nextOn, back = P.back;
   return '<div class="ux-pg"><div class="ux-top"><span class="ux-crumb" onclick="p2Go(\'\')">PLAN › <b>' + _p2PgTitle(k) + (subs.length && (i || k === 'dok') && k !== 'do' ? '・' + subs[i] : '') + '</b></span>' + (k === 'yk' ? '<span onclick="event.stopPropagation()">' + _uxIb('yk') + '</span>' : '') + '<span class="ux-home" onclick="p2Go(\'\')" title="PLANの入口へ">⌂</span></div>'
-    + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, P.dots || subs, P.dotI !== null && P.dotI !== undefined ? P.dotI : i, P.dotOn || 'p2PgSub', next, nextOn) + '</div>';
+    + '<div class="ux-body" id="uxBody">' + body + '</div>' + _uxBtm(back, P.dots || subs, P.dotI !== null && P.dotI !== undefined ? P.dotI : i, P.dotOn || 'p2PgSub', next, nextOn, k === 'ideal' ? '‹ 前へ' : '') + '</div>';
 }
 // S稼働（いちばん大事な数字）
 function _p2SPageHtml(ym) {
@@ -20050,8 +20052,9 @@ function _p2PcxPane(D) {
   // そのほか（想い・振り返り・ツールと、その先のページ）：上に項目のタブ・右上に「次へ」
   var P = _p2PageParts(), subs = P.subs, i = P.i, par = P2_PCX_PAR[k];
   var _tn = 0, tabs = subs.length > 1 ? '<div class="pcx-tabs">' + subs.map(function(t, j) { if (k === 'ideal' && j === 1) return ''; _tn++; return '<span class="' + (j === i ? 'on' : '') + '" onclick="p2PgSub(' + j + ')">' + _tn + '. ' + t + '</span>'; }).join('') + '</div>' : ''; // v682: 理想は「ひと区切り」のタブなし
-  var right = (par || (P.back && P.back !== 'p2Back()') ? b('‹ 戻る', par && P.back === 'p2Back()' ? 'p2Go(\'' + par + '\')' : P.back) : (i > 0 ? b('‹ 前へ', 'p2PgSub(' + (i - 1) + ')') : ''))
-    + (P.next ? b(P.next, P.nextOn, 'p') : '');
+  var right = k === 'ideal' ? (P.back ? b('‹ 前へ', P.back) : '') // v776: 理想は「前へ／次へ」・完了はまとめだけ
+    : (par || (P.back && P.back !== 'p2Back()') ? b('‹ 戻る', par && P.back === 'p2Back()' ? 'p2Go(\'' + par + '\')' : P.back) : (i > 0 ? b('‹ 前へ', 'p2PgSub(' + (i - 1) + ')') : ''));
+  right += (P.next ? b(P.next, P.nextOn, 'p') : '');
   return _p2PcxHead(_p2PgTitle(k) || 'PLAN', '', right) + tabs + '<div class="pcx-one"' + (k === 'ideal' && !i ? ' style="max-width:none"' : '') + '>' + P.body + '</div>';
 }
 // ── データ（PC） ──
@@ -20173,6 +20176,12 @@ function p2IdealFinish(set) {
   p2Go('');
 }
 function p2IdSetB(j) { p2PgSub(j + 2); }
+// v776: 理想の「次へ」（理想の生活を答え終えていたら①の記録、なりたくない自分の次で②の記録をしてから次のページへ）
+function p2IdealNext(i) {
+  var g = _p2G();
+  if (i === 0) { var Q = _p2IdealQs(); if (Q.length && _p2IdealAnsN() >= Q.length && !g.p1) { g.p1 = true; try { saveGoals(); } catch (e) {} } p2PgSub(2); return; }
+  if (i === 5) { if (!g.p2done) { g.p2done = true; try { saveGoals(); } catch (e2) {} } window._p2IdRet = 0; p2PgSub(6); }
+}
 // v674: はじめから答え直す（1問目から質問を出す）
 function p2IdealRedo() {
   window._p2IdOpenQ = 1; window._p2GwFresh = 1;
@@ -38564,7 +38573,7 @@ function _p2CkDtClear(S) {
 function p2ShDtKind(k) { if (_p2ShDtS) { _p2ShDtS.kind = k; var d = document.getElementById('p2ShDtD'), t = document.getElementById('p2ShDtT'); var te = document.getElementById('p2ShDtTE'); _p2ShDtS.d = d ? d.value : ''; if (t) _p2ShDtS.t = t.value; if (te) _p2ShDtS.te = te.value; _p2ShDtRender(true); } }
 function p2ShDtX() { _p2ShDtS = null; var o = document.getElementById('p2ShDtOv'); if (o) o.remove(); }
 function _p2ShDtRender(keep) {
-  var S = _p2ShDtS, e = S && (S.ck ? { title: S.title, date: S.d } : findEvent(S.id)); if (!e) return; // v746: チェックの項目は ck
+  var S = _p2ShDtS, e = S && (S.ck || S.kp ? { title: S.title, date: S.d } : findEvent(S.id)); if (!e) return; // v746: チェックの項目は ck（v776: サマリーの数字は kp）
   var d = keep ? (S.d || '') : (e.date || ''), t = keep ? (S.t || '') : (e.time || ''), te = keep ? (S.te || '') : (e.endTime || ''), ev = S.kind === 'ev';
   var o = document.getElementById('p2ShDtOv'); if (!o) { o = document.createElement('div'); o.id = 'p2ShDtOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2ShDtX(); }; document.body.appendChild(o); }
   o.innerHTML = '<div class="shdt"><div class="hd">実行期日<span onclick="p2ShDtX()">✕</span></div><div class="tt">' + evEsc(e.title || '') + '</div>'
@@ -38576,10 +38585,11 @@ function _p2ShDtRender(keep) {
   try { _pcTimeInputs(ev ? ['p2ShDtT', 'p2ShDtTE'] : ['p2ShDtT']); } catch (eP) {} // PCは15分刻みのリスト・直接入力
 }
 function p2ShDtOk() {
-  var S = _p2ShDtS, e = S && (S.ck ? {} : findEvent(S.id)); if (!e) return;
+  var S = _p2ShDtS, e = S && (S.ck || S.kp ? {} : findEvent(S.id)); if (!e) return;
   var d = (document.getElementById('p2ShDtD') || {}).value || '', t = (document.getElementById('p2ShDtT') || {}).value || '', te = (document.getElementById('p2ShDtTE') || {}).value || '';
   if (!d) { toast('日にちを選んでください'); return; }
   if (S.ck) { _p2CkDtOk(S, d, t, te); return; }
+  if (S.kp) { _p2SmKpDtOk(S, d, t, te); return; }
   if (e.yk && !e.planCat) e.planYm = d.slice(0, 7); // v761: 立案のタスクは期日の月に並べる
   e.date = d; e.updatedAt = new Date().toISOString();
   if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), m = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + m; } }
@@ -39759,6 +39769,10 @@ function _p2SumCss() {
     + '.sm-is b{flex:none;font-size:14px;font-weight:900;min-width:64px}.sm-is small{font-size:11px;color:var(--text-dim);margin-left:3px}.sm-is .lk{margin:0 0 0 auto;display:flex;gap:5px;flex-wrap:wrap}.sm-is .lk i{font-style:normal;font-size:11px;font-weight:900;padding:2px 7px;border-radius:7px;color:var(--text-mid);border:1px solid var(--border);white-space:nowrap}'
     + '.sm-gl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.sm-gl>div{padding:9px 11px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:13px;font-weight:800;display:flex;justify-content:space-between;gap:6px}.sm-gl em{font-style:normal;color:#FF6B7F;white-space:nowrap}.sm-gl em.ok{color:var(--accent)}.sm-gl em.dm{color:var(--text-dim)}'
     + '.sm-st{padding:10px 13px;border-radius:12px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px}.sm-st .h{display:flex;align-items:baseline;gap:10px;font-size:15px;font-weight:900}.sm-st .h span{margin-left:auto;font-size:12px;color:var(--text-mid);white-space:nowrap}.sm-st .h span.ok{color:var(--accent)}.sm-st .k{display:flex;gap:6px;font-size:13.5px;font-weight:700;color:var(--text-mid);margin-top:4px}.sm-st .k small{color:var(--text-dim)}.sm-st .k em{font-style:normal;margin-left:auto;font-size:12px}.sm-sg span{margin-left:auto;font-size:12px;color:var(--text-mid);white-space:nowrap}.sm-sg span.ok{color:var(--accent)}.sm-em{font-size:12.5px;color:var(--text-dim);font-weight:700;padding:4px 2px}'
+    + '.sm-k.smk-tap{cursor:pointer}.sm-k.smk-tap:active{transform:scale(.98)}.sm-k .v .sp-rt{font-size:11px;vertical-align:4px}.sm-acts{margin-bottom:6px}.sm-acts .sp-at{margin-bottom:0;border-top:3px solid var(--c)}.sm-acts .sp-at .x .tx{padding:6px 8px;font-size:13px;font-weight:700;line-height:1.45}.sm-acts .sp-at .x .tx.em{color:var(--text-dim)}.sm-acts .sp-at .r.dn .tx{color:var(--text-dim);text-decoration:line-through}'
+    + '.sm-wns{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sm-wn{padding:10px 13px;border-radius:14px;background:var(--surface);border:1px solid var(--border)}.sm-wn .h{display:flex;align-items:center;font-size:13.5px;font-weight:900;margin-bottom:4px}.sm-wn .h span{margin-left:auto;color:var(--text-dim);cursor:pointer;display:inline-flex}.sm-wn .h span svg{width:15px;height:15px}.sm-wn .i{display:flex;gap:8px;font-size:13.5px;font-weight:700;padding:3px 0;line-height:1.5}.sm-wn .i b{flex:none;font:900 12px Inter,sans-serif;color:var(--accent);min-width:14px;padding-top:2px}.sm-wn .i.em{color:var(--text-dim);cursor:pointer}'
+    + '.smkp-n{font-size:13px;font-weight:800;color:var(--text-mid);margin:2px 0 10px}.smkp-n b{font:900 18px Inter,sans-serif;color:var(--text);margin:0 2px}.smkp-st{display:flex;justify-content:center;margin:4px 0 10px}.smkp-st .sp-st i{width:48px;height:48px;font-size:24px}.smkp-st .sp-st .sp-in.v{width:76px!important;font-size:30px!important;color:var(--text)!important}.smkp-add span{display:inline-flex;align-items:center;justify-content:center;gap:5px}.smkp-add svg{width:15px;height:15px}'
+    + '@media (max-width:760px){.sm-wns{grid-template-columns:1fr}}'
     + '.sm .yr-goal{cursor:default}.sm .yr-goal+.yr-goal{margin-top:8px}.sm .yr-tl{border-bottom:0;padding-top:0;margin-top:0}.sm .yr-g .mo{cursor:default}.sm .yr-g .mo:hover{background:none}.sm .yr-chip{cursor:default}'
     + '@media (max-width:760px){.sm-g4,.sm-kg,.sm-ag{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sm-gl{grid-template-columns:repeat(2,minmax(0,1fr))}.sm-c,.sm-k,.sm-a{padding:10px 11px}.sm-c b,.sm-k .v{font-size:20px}.sm-seg span{padding:6px 9px;font-size:12px}}';
   document.head.appendChild(st);
@@ -39778,11 +39792,13 @@ function _p2ShSumHtml(ym) {
     + '<div class="sm-c"><small>' + _p2ShMonLb(ym) + 'のNEWフロント</small><b>' + F.now + '<i>/ ' + (F.t === null ? '—' : F.t) + '人</i></b>' + (F.t ? bar(F.now, F.t) : '') + '</div></div>';
   var kg = K.map(function(k) {
     var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap), t = X.t !== null ? X.t : X.ph;
-    var pb = P.t === null ? '' : '<span class="' + ((+P.v || 0) >= P.t ? 'ok' : 'ng') + '">先月 ' + (P.v === null ? '—' : P.v) + '/' + P.t + '</span>';
-    return '<div class="sm-k"><div class="h">' + evEsc(_p2ShShort(k.lb)) + pb + '</div><div class="v">' + (X.v === null ? '—' : X.v) + '<i>/ ' + (t === null ? '—' : t) + '</i></div>' + (t ? bar(X.v, t) : '<div class="sm-br"></div>') + '</div>';
+    var pr = _p2ShRate(P.v, P.t), pb = P.t === null ? '' : '<span class="' + ((+P.v || 0) >= P.t ? 'ok' : 'ng') + '">先月 ' + (P.v === null ? '—' : P.v) + '/' + P.t + (pr === null ? '' : ' ' + pr + '%') + '</span>';
+    var r9 = _p2ShRate(X.v, t);
+    return '<div class="sm-k' + (_p2ShRo() ? '' : ' smk-tap') + '"' + (_p2ShRo() ? '' : ' onclick="p2SmKp(\'' + k.id + '\')"') + '><div class="h">' + evEsc(_p2ShShort(k.lb)) + pb + '</div><div class="v">' + (X.v === null ? '—' : X.v) + '<i>/ ' + (t === null ? '—' : t) + '</i>' + (r9 === null ? '' : '<em class="sp-rt ' + _p2ShRateCls(r9) + '">' + r9 + '%</em>') + '</div>' + (t ? bar(X.v, t) : '<div class="sm-br"></div>') + '</div>';
   }).join('');
   var kz = K.filter(function(k) { return String((M.kz || {})[k.id] || '').trim(); }).map(function(k) { return '<div class="sm-kz"><b>' + evEsc(_p2ShShort(k.lb)) + '</b>' + evEsc(M.kz[k.id]) + '</div>'; }).join('');
-  var ag = P2_SH_CAT.map(function(c) {
+  var ag = P2_SH_CAT.map(function(c) { return _p2ShActSum(ym, c); }).join(''); // v776: 入力画面の行動の表から、空いた行と「＋行を追加」をなくした形（✓は付けられる）
+  var ag0 = P2_SH_CAT.map(function(c) {
     var L = _p2ShActs(ym, c.k), dn = L.filter(function(e) { return e.done; }).length, od = L.filter(function(e) { return !e.done && e.date && e.date < td; }).length;
     var nx = L.filter(function(e) { return !e.done; })[0];
     return '<div class="sm-a" style="--c:' + c.c + '"><div class="h">' + c.s + '<span>' + dn + '/' + L.length + '</span></div><div class="sm-br"><u style="width:' + pct(dn, L.length) + '%;background:' + c.c + '"></u></div>'
@@ -39795,10 +39811,61 @@ function _p2ShSumHtml(ym) {
   return '<div class="sm">' + top
     + '<div class="sm-h">' + _p2ShMonLb(ym) + 'の数字<small>今 / 目標（先月の結果）</small></div><div class="sm-kg">' + kg + '</div>'
     + '<div class="sm-h">改善点<small>書いた項目だけ</small></div>' + (kz || '<div class="sm-em">まだ書いていません</div>')
-    + '<div class="sm-h">行動<small>やった / 書いた数・次にやること</small></div><div class="sm-ag">' + ag + '</div>'
+    + '<div class="sm-h">行動<small>✔＝やった（押すとチェック）</small></div><div class="sp-acts sm-acts">' + ag + '</div>'
     + '<div class="sm-h">課題<small>MAPの人ごと・自分・全体</small></div>' + (is || '<div class="sm-em">まだ書いていません</div>') + '</div>';
 }
+// v776: サマリーの行動＝入力画面の表と同じ見た目（書いた行だけ・✔は押せる・期日は見るだけ）
+function _p2ShActSum(ym, c) {
+  _p2ShCss(); try { _p2ShCss2(); } catch (e0) {}
+  var td = evTodayYmd(), L = _p2ShActs(ym, c.k), ro = _p2ShRo(), dn = L.filter(function(e) { return e.done; }).length;
+  var r = L.map(function(e) {
+    var od = !e.done && e.date && e.date < td, ev = e.type !== 'task';
+    var dl = e.date ? '<b>' + parseInt(e.date.slice(5, 7), 10) + '/' + parseInt(e.date.slice(8), 10) + '</b><small>' + (ev ? '予定' : 'ToDo') + (e.time ? ' ' + e.time : '') + '</small>' : '<b>/</b>';
+    return '<div class="r' + (e.done ? ' dn' : '') + '"><span class="c"' + (ro ? '' : ' onclick="p2ShActTg(\'' + e.id + '\')" title="やったらチェック"') + '>' + (e.done ? '✔' : '') + '</span><span class="x"><span class="tx">' + evEsc(e.title || '') + '</span></span>'
+      + '<span class="d dd' + (od ? ' od' : '') + (ev ? ' ev' : '') + '">' + dl + '</span></div>';
+  }).join('');
+  if (!L.length) r = '<div class="r"><span class="c"></span><span class="x"><span class="tx em">まだ書いていません</span></span><span class="d"></span></div>';
+  return '<div class="sp-at" style="--c:' + c.c + '"><div class="h">' + c.lb + '<span>' + dn + '/' + L.length + '</span></div>' + r + '</div>';
+}
+// v776: サマリーの数字を押す → − ＋ で数だけ／＋1 を予定・ToDoとして入れる（入れると数も＋1）
+function p2SmKp(id) {
+  if (_p2ShRo()) return;
+  var ym = _p2ShYmN(), k = _p2ShK(id); if (!k) return;
+  _p2ShCss(); try { _p2ShCss2(); } catch (e0) {}
+  var X = _p2ShKv(ym, k), t = X.t !== null ? X.t : X.ph;
+  var o = document.getElementById('p2SmKpOv'); if (!o) { o = document.createElement('div'); o.id = 'p2SmKpOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2SmKpX(); }; document.body.appendChild(o); }
+  o.innerHTML = '<div class="shdt smkp"><div class="hd">' + evEsc(k.lb) + '<span onclick="p2SmKpX()">✕</span></div>'
+    + '<div class="smkp-n">' + _p2ShMonLb(ym) + 'の目標 <b>' + (t === null ? '—' : t) + '</b>' + _p2ShRateTag(X.v, t, id) + '</div>'
+    + '<div class="smkp-st">' + _p2ShStep(ym, k, X) + '</div>'
+    + '<div class="nt">− ＋ は数だけ変えます。やったことを記録に残したい時は、下から予定・ToDoとして入れてください（入れると数も＋1）</div>'
+    + '<div class="seg smkp-add"><span onclick="p2SmKpAdd(\'' + id + '\',\'ev\')">' + icn('calendar') + ' 予定に入れる</span><span onclick="p2SmKpAdd(\'' + id + '\',\'todo\')">' + icn('checksq') + ' ToDoに入れる</span></div>'
+    + '<div class="bt"><span class="go" onclick="p2SmKpX()">閉じる</span></div></div>';
+}
+function p2SmKpX() { var o = document.getElementById('p2SmKpOv'); if (o) o.remove(); if (currentView === 'plan') renderPlan(); }
+function p2SmKpAdd(id, kind) {
+  var k = _p2ShK(id); if (!k) return;
+  var o = document.getElementById('p2SmKpOv'); if (o) o.remove();
+  _p2ShDtS = { kp: id, title: _p2ShShort(k.lb), kind: kind, d: evTodayYmd() }; _p2ShDtRender(true);
+}
+function _p2SmKpDtOk(S, d, t, te) {
+  var ym = _p2ShYmN(), m = _p2ShM(ym), k = _p2ShK(S.kp); if (!k) return;
+  var e = _tdMakeTask(S.title, d, ''); e.date = d;
+  if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), mm = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + mm; } }
+  else { e.type = 'task'; e.time = t || ''; delete e.endTime; }
+  state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
+  var nv = Math.max(0, (+_p2ShKv(ym, k).v || 0) + 1); m.man[S.kp] = nv; saveGoals();
+  p2ShDtX(); if (currentView === 'plan') renderPlan();
+  toast((S.kind === 'ev' ? '予定に入れました（' : 'ToDoに入れました（') + _p2ShMd(d) + (t ? ' ' + t : '') + '）・' + _p2ShShort(k.lb) + ' ' + nv);
+}
 // ── ロードマップのサマリー ──
+// v776: ロードマップのサマリーの先頭に「やりたいこと・なりたい自分」（理想で書いたもの）
+function _p2SumWantsHtml() {
+  var L = function(k) { var a = []; try { a = _p2Lst(k) || []; } catch (e) {} return a.filter(function(t) { return String(t || '').trim(); }); };
+  var wd = L('want_do'), wb = L('want_be');
+  var col = function(lb, a, j) { return '<div class="sm-wn"><div class="h">' + lb + '<span onclick="p2Go(\'ideal\',' + j + ')">' + icn('pencil') + '</span></div>'
+    + (a.length ? a.map(function(t, i) { return '<div class="i"><b>' + (i + 1) + '</b>' + evEsc(t) + '</div>'; }).join('') : '<div class="i em" onclick="p2Go(\'ideal\',' + j + ')">まだ書いていません　書く ›</div>') + '</div>'; };
+  return '<div class="sm-h">やりたいこと・なりたい自分<small>理想で書いたこと</small></div><div class="sm-wns">' + col('やりたいこと', wd, 2) + col('なりたい自分', wb, 4) + '</div>';
+}
 function _p2YrSumHtml(C, lk) {
   var nx = C.nx, money = C.isBR ? (nx.fb ? '<b>ファーストボーナス ' + Math.round(nx.fb / 10000) + '万</b>' : '') : (nx.inc ? '<b>月収 ' + nx.inc + '万</b>' : '');
   var near = '<div class="yr-goal" style="border-color:color-mix(in srgb,var(--gold) 70%,var(--border))"><span class="lb">直近の目標</span><b>' + _p2YmJa(C.dl) + '</b>までに<b class="t">' + evEsc(nx.title || '—') + '</b>' + money + '</div>';
@@ -39813,7 +39880,7 @@ function _p2YrSumHtml(C, lk) {
     return '<div class="sm-st"><div class="h"><b>' + evEsc(st.t) + '</b>' + (T.length ? '<span class="' + (tn === T.length ? 'ok' : '') + '">タスク ' + tn + '/' + T.length + '</span>' : '') + '</div>'
       + (st.kids || []).map(function(k) { var K = _ysTasks(k, 1), kn = K.filter(_ysDone).length; return '<div class="k">・' + evEsc(k.t) + (+k.n > 0 ? ' <small>' + k.n + evEsc(k.u || '') + '</small>' : '') + (K.length ? '<em>' + kn + '/' + K.length + '</em>' : '') + '</div>'; }).join('') + '</div>';
   }).join('') || '<div class="sm-em">まだありません</div>');
-  return '<div class="sm">' + _p2YrGoalHtml().replace(' onclick="p2Go(\'goal\',0)"', '').replace('<span class="ed">✎ 直す</span>', '') + near
+  return '<div class="sm">' + _p2SumWantsHtml() + _p2YrGoalHtml().replace(' onclick="p2Go(\'goal\',0)"', '').replace('<span class="ed">✎ 直す</span>', '') + near
     + '<div class="sm-h">マイルストーン</div>' + _p2YrTlHtml(C, true, true)
     + '<div class="sm-h">必要なこと</div>' + need + gap + mm + '</div>';
 }

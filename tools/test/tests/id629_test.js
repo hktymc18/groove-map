@@ -19,7 +19,7 @@ T.run(async () => {
   let guard = 0; while (!g.p1 && guard++ < 40) { w.p2GwNext(true); await sleep(5); }
   await sleep(20);
   c('v682: 最後まで答えると同じページに金額（目標月収は勝手に変えない）', w._p2PgI === 0 && !!$('#p2GwWrap .p2id-amt') && /理想の生活に必要な月収/.test($('#view-plan').textContent) && !w.state.goals.plan.income && g.p1 === true);
-  c('v682: 「この金額を目標月収にする」と下に「✓ 完了」', /この金額を目標月収にする/.test($('#view-plan').textContent) && /完了/.test($('.ux-btm .ux-nx').textContent));
+  c('v682: 「この金額を目標月収にする」と下に「次へ」（v776）', /この金額を目標月収にする/.test($('#view-plan').textContent) && /やりたいこと/.test($('.ux-btm .ux-nx').textContent));
   w.p2IdealApply(); await sleep(10);
   c('目標にする→目標月収が理想の生活の合計に', w.state.goals.plan.income === w._p2GwTotal() * 10000 && w._p2GwTotal() >= 30);
   w.p2PgSub(2); await sleep(10);
