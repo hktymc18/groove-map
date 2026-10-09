@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v772';
+var APP_JS_VERSION = 'v773';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3802,21 +3802,6 @@ function closeProfileModal(e) {
   if (m) m.classList.remove('open');
 }
 
-function clearMapData() {
-  if (!state.isEditor) { toast('編集権限がありません'); return; }
-  var mo = state.currentMonth || (typeof currentMonthStr === 'function' ? currentMonthStr() : '');
-  var cnt = (state.members || []).filter(function(m){ return !m.deleted; }).length;
-  if (!confirm('【組織MAPをクリア】\n\n' + mo + ' の組織MAP（現状・理想のメンバー ' + cnt + '人・OL記録）を全て削除します。\nテストデータの削除に使ってください。\n\n※この操作は取り消せません。続けますか？')) return;
-  if (!confirm('本当に削除してよろしいですか？\n\nもう一度確認：' + mo + ' のメンバー ' + cnt + '人を全て消します。')) return;
-  state.members = [];
-  state.idealMembers = [];
-  state.freshData = {};
-  window._skipMergeOnce = true; // 意図的な全消し：共同編集マージで復活させない
-  if (typeof autoSave === 'function') autoSave();
-  if (typeof closeProfileModal === 'function') closeProfileModal(null);
-  if (typeof switchView === 'function') switchView('current'); else if (typeof renderCurrentView === 'function') renderCurrentView();
-  toast('組織MAPをクリアしました ');
-}
 function saveProfile() {
   if (!currentUser || !currentUser.uid) return;
   var el = function(id){ return ((document.getElementById(id)||{}).value||'').trim(); };
@@ -4056,7 +4041,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v772';
+  var DATA_VERSION = 'v773';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5559,6 +5544,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v773', d:'2026-10-09', items:['設定の「組織MAPをクリア」をなくしました'] },
   { v:'v772', d:'2026-10-09', items:['理想MAPのかんたん編集を作り直しました：「ビジネスを足す」「ユーザーを足す」は1人足して閉じます（足した人が光り、元に戻すも出ます）','タイトルは大きいタイルで押しやすく（BMはB11の後ろ）。GSVは3桁区切りの大きい数字と − ＋、稼働・稼働率は同じ形の切り替えに。スマホも同じ画面です','現状MAPで名前を変えた人が、理想MAPでは古い名前のままだったのを直しました'] },
   { v:'v771', d:'2026-10-09', items:['PCでは、タブやブラウザを閉じるとログアウトするようにしました（PCを人に貸した時に中を見られないように。ATTACK LIST・GOAL SETTING と同じ）','スマホ・タブレットは今までどおりログインしたままです（通知を受け取るため）'] },
   { v:'v770', d:'2026-10-09', items:['アカウント管理で、各アカウントを受付（BASE CHECK-IN）の名簿の人と紐付けられるようにしました（🎫 受付の名簿と紐付ける）','紐付けた人を受付で「無効」にすると、NAVIGATORも使えなくなります（受付で有効に戻すと、次に開いた時から使えます。リーダーは対象外）'] },
@@ -19876,8 +19862,7 @@ function _stRender() {
       + '<div class="st-gh">使い方</div><div class="st-ls">' + _stLi('❓', '使い方ガイド', 'はじめての案内・画面ごとの説明・よくある質問', 'gdMenu()') + '</div>' // v755
       + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
       + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望', '', 'fbOpen()') : '') // v667
-      + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true)
-      + (state.isEditor && !viewingOwnerUid ? _stLi(icn('trash'), '組織MAPをクリア', 'テストデータを消す時だけ（取り消せません）', 'clearMapData()', true) : '') + '</div>';
+      + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true) + '</div>'; // v773: 「組織MAPをクリア」は削除
   } else if (_stPg === 'prof') {
     h += '<h2 class="ux-h2">プロフィール</h2>'
       + '<div class="ppl">お名前（本名・フルネーム）</div><input class="ppin" id="stName" value="' + evEsc(u.name || '') + '"><div class="ux-hint">ニックネームだと受付の名簿・MAPの共有・承認とつながりません</div>'
