@@ -79,15 +79,17 @@ service cloud.firestore {
       allow create: if isSelf(uid)
         && hasRequiredProfile(request.resource.data)
         && (!('role'   in request.resource.data) || request.resource.data.role   == 'member')
-        && request.resource.data.get('status','pending') != 'active';
+        && request.resource.data.get('status','pending') != 'active'
+        && !('ckNo' in request.resource.data);
 
       // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
-      //       本人は role/status を変えない範囲のみ可。
+      //       本人は role/status/ckNo（受付の名簿との紐付け）を変えない範囲のみ可。
       allow update: if isOwnerAdmin()
         || (isUnionAdmin() && sameUnionAsTarget())
         || (isSelf(uid)
             && request.resource.data.get('role','member')   == resource.data.get('role','member')
-            && request.resource.data.get('status','active') == resource.data.get('status','active'));
+            && request.resource.data.get('status','active') == resource.data.get('status','active')
+            && request.resource.data.get('ckNo','')         == resource.data.get('ckNo',''));
 
       allow delete: if isAdmin();
 
@@ -334,7 +336,10 @@ service cloud.firestore {
     match /checkinMembers/{no} {
       // 🔒 見られるのは自分が関わるユニオンの名簿だけ（ckCanSee）。一覧は union で絞った検索のみ。
       // 存在しない番号の get は可（研修生登録の番号の空き確認に使う・中身は何も見えない）
-      allow get: if resource == null || ckCanSee(resource.data.get('union',''));
+      allow get: if resource == null || ckCanSee(resource.data.get('union',''))
+        // 🔗 v770: NAVIGATORのアカウントに紐付いた本人の名簿（ログイン時に「受付で無効」かを見る）
+        || (signedIn() && profileExists(request.auth.uid)
+            && profile(request.auth.uid).get('ckNo', '') == no);
       allow list: if ckCanSee(resource.data.get('union',''));
       allow create: if isCkAdmin(request.resource.data.get('union',''));
       allow update: if isCkAdmin(resource.data.get('union',''))
