@@ -91,7 +91,8 @@ service cloud.firestore {
             && request.resource.data.get('status','active') == resource.data.get('status','active')
             && request.resource.data.get('ckNo','')         == resource.data.get('ckNo',''));
 
-      allow delete: if isAdmin();
+      // v777: 削除はオーナー／同じユニオンの管理者だけ（前はどのユニオンの管理者でも消せた）
+      allow delete: if isOwnerAdmin() || (isUnionAdmin() && sameUnionAsTarget());
 
       // ---- AttackList：人物リスト ----
       // v586: 本人と、本人が共有した人だけ（管理者も読めない）
@@ -135,7 +136,9 @@ service cloud.firestore {
       }
       // ---- v668: 個人情報保護方針・利用規約の同意の履歴（追記のみ。書き換え・削除は不可） ----
       match /consents/{ver} {
-        allow read:   if isSelf(uid) || isAdmin();
+        // v777: 同意の履歴を見られるのは本人・オーナー・同じユニオンの管理者だけ
+        allow read:   if isSelf(uid) || isOwnerAdmin() || (isUnionAdmin() && profileExists(uid)
+                        && profile(uid).get('union', '__b') == profile(request.auth.uid).get('union', '__a'));
         allow create: if isSelf(uid);
       }
       // ---- 目標シート（v586: 本人だけ） ----
