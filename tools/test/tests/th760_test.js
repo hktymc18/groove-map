@@ -6,7 +6,7 @@ T.run(async () => {
   w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'G', parentId: '', mapType: 'both' },
     { id: 'a', lastName: '稲盛', firstName: '悠', title: 'PG', trainee: true, parentId: 'r', mapType: 'both', traineeHistory: [{ status: 'マケ', date: '2026-10-08', aSan: '山内', result: 'next' }, { status: 'PG', date: '2026-10-08', aSan: '山内', result: 'next' }] }];
   w.switchView('current'); await sleep(10);
-  w.openEdit('a'); await sleep(20); try { w.meGo(2); } catch (e) {} await sleep(150);
+  w._meOpen('a'); await sleep(20); try { w.meGo(2); } catch (e) {} await sleep(150);
   const m = w.state.members[1];
   const dels = $$('#traineeHistoryWrap .th-del');
   c('記録ごとに🗑', dels.length === 2 && !!dels[0].querySelector('svg'));
