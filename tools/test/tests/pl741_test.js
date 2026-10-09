@@ -21,7 +21,7 @@ T.run(async () => {
   const tx = () => $('#dtPl').textContent;;
   c('過去の月を読み込む', w._dtHist && w._dtHist.done && !!w._dtHist.mon[m1].plMs);
   c('今月が0本なら、いちばん新しい月（先月）を出す', /佐藤花/.test(tx()) && /田中健/.test(tx()) && /2本/.test($('#dtPl .dt-ch').textContent) && /今月はまだ/.test(tx()));
-  c('月の切りかえ（今月・先月・先々月と本数）', $$('.dt-plm span').length === 3 && /0本/.test($$('.dt-plm span')[0].textContent) && /2本/.test($$('.dt-plm span')[1].textContent) && /1本/.test($$('.dt-plm span')[2].textContent));
+  c('月の切りかえ（v759: 先々月・先月・今月の順に本数）', $$('.dt-plm span').length === 3 && /1本/.test($$('.dt-plm span')[0].textContent) && /2本/.test($$('.dt-plm span')[1].textContent) && /0本/.test($$('.dt-plm span')[2].textContent) && /今月/.test($$('.dt-plm span')[2].textContent));
   c('前の月との差（佐藤さん 4,000→7,000 で ▲3,000）', /▲3,000/.test(tx()));
   w.dtPlMon(m2); await sleep(10);
   c('先々月を選ぶと1本（田中さん）', $$('#dtPl .dt-pr').length === 1 && /田中健/.test(tx()));
