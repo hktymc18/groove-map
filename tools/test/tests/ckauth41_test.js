@@ -15,6 +15,6 @@ const a = app.match(/function _authMobileDev\(\) \{[\s\S]*?\n\}/);
 c('NAVIGATOR と同じ判定式', a && a[0].replace(/\s+/g, '').indexOf(fn[0].replace(/\s+/g, '').replace('functionauthMobileDev(){', '')) > 0);
 c('PC は SESSION・スマホ／タブレットは LOCAL', /setPersistence\(authMobileDev\(\) \? firebase\.auth\.Auth\.Persistence\.LOCAL : firebase\.auth\.Auth\.Persistence\.SESSION\)/.test(h));
 c('ログイン・新規登録は保持を決めてから', /authPersistReady\.then\(function\(\)\{ return auth\.signInWithEmailAndPassword/.test(h) && /authPersistReady\.then\(function\(\)\{ return auth\.createUserWithEmailAndPassword/.test(h));
-c('APP_VER v41・お知らせ', /var APP_VER = 'v41';/.test(h) && /\{ v: 'v41', d: '2026\/10\/09'/.test(h));
+c('APP_VER v41以降・v41のお知らせ', (+(h.match(/var APP_VER = 'v(\d+)';/) || [0, 0])[1]) >= 41 && /\{ v: 'v41', d: '2026\/10\/09'/.test(h)); // 受付はその後も上がる
 console.log(fails ? 'NG ' + fails : 'ALL PASS');
 process.exit(fails ? 1 : 0);
