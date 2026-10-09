@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v768';
+var APP_JS_VERSION = 'v769';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3935,7 +3935,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v768';
+  var DATA_VERSION = 'v769';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5438,6 +5438,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v769', d:'2026-10-09', items:['メンバーの「アップラインを変更」で、付け替えたい相手が出てこないことがあったのを直しました（同じMAPに出ている人なら選べます）'] },
   { v:'v768', d:'2026-10-09', items:['「分析」の見出しを「ANALYTICS」に（スマホ・PCの見出し、PCの左のメニュー、横向きの上の帯、くわしくのページの戻り先）'] },
   { v:'v767', d:'2026-10-09', items:['サークルMAP（計画シートのMAP・MAPの◎サークル）の線を見やすく：子の丸も親の近くに寄せて、線が長く回り込むのを減らしました','となりの親の線（くし）が重なる所は、交差しない順に通る高さを変えて、1本につながって見えないようにしました'] },
   { v:'v766', d:'2026-10-09', items:['年の目標：直近の目標が最終目標とまったく同じ数字になっていたのを直しました（例は一つ上のタイトル・途中の月に）。目標の画面でも、直近の目標の月収・タイトル・期日をいつでも直せます','計画シートの「シートを印刷」は、アプリの中のプレビューに（iPhoneのアプリで戻れなくなっていたのを直しました）。「‹ 戻る」で戻れて、「🖨 印刷」で印刷・PDF','印刷のプレビューは画面に合わせて自動の大きさ（−／＋でも変えられる）。シートの左（数字・改善点）と右（行動）の下の端がそろうようにしました'] },
@@ -15326,8 +15327,12 @@ function openParentPicker(mid) {
     changed = false;
     state.members.forEach(function(x){ if (x.parentId && blocked[x.parentId] && !blocked[x.id]) { blocked[x.id] = true; changed = true; } });
   }
+  // v769: 同じMAPに出ている人なら選べるように（前は「現状／理想／両方」の区分がまったく同じ人だけで、
+  //   「現状」の人の付け替え先に「両方」の人が出てこなかった）
+  var mt = (m.mapType === 'ideal') ? 'ideal' : 'current';
+  var onMap = function(x) { var t = x.mapType || 'current'; return t === mt || t === 'both'; };
   var cands = state.members.filter(function(x){
-    return !x.deleted && !blocked[x.id] && (x.mapType||'current') === (m.mapType||'current') && x.id !== m.parentId;
+    return !x.deleted && !blocked[x.id] && onMap(x) && x.id !== m.parentId;
   });
   cands.sort(function(a,b){ return ((a.lastName||'')+(a.firstName||'')).localeCompare((b.lastName||'')+(b.firstName||''), 'ja'); });
   var nm = ((m.lastName||'')+(m.firstName||'')).trim() || '(無名)';
