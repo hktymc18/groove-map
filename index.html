@@ -844,6 +844,7 @@ tr.olt-on td{background:var(--accent-dim)}
 .dt-chips{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}.dt-chips::-webkit-scrollbar{display:none}
 @media(min-width:768px) and (min-height:501px){.dt-chips{flex-wrap:wrap}}
 .dt-chip{flex:none;font-size:12px;font-weight:800;padding:6px 12px;border-radius:14px;border:1.5px solid var(--border);color:var(--text-mid);cursor:pointer;white-space:nowrap;user-select:none;-webkit-user-select:none}
+.dt-plxc .dt-chip{display:inline-flex;align-items:center}.dt-plxc .dt-chip i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--lc);margin-right:6px;opacity:.35}.dt-plxc .dt-chip.on{border-color:var(--lc);color:var(--text);background:color-mix(in srgb,var(--lc) 15%,transparent)}.dt-plxc .dt-chip.on i{opacity:1}#dtPlX{margin-top:12px}#dtRegLn .dt-chips{padding-bottom:8px}
 .dt-chip.on.c0{border-color:#2CE5B8;color:#2CE5B8;background:rgba(44,229,184,.1)}.dt-chip.on.c1{border-color:#8B7CFF;color:#8B7CFF;background:rgba(139,124,255,.1)}
 .dt-chip.mix.on{border-color:#FFB454;color:#FFB454;background:rgba(255,180,84,.1)}
 .dt-th{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;font-size:12.5px;margin-bottom:4px}.dt-cmp{margin-left:auto;align-self:center;flex:none;padding:6px 12px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface2);font-size:12.5px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap}.dt-cmp.on{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}.dt-th small{display:block;font-size:10.5px;color:var(--text-dim);margin-top:1px}
@@ -2956,7 +2957,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v761</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v762</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3902,7 +3903,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v761';</script>
-<script src="app.js?v=v761"></script>
+<script>window.GM_EXPECT_JS='v762';</script>
+<script src="app.js?v=v762"></script>
 </body>
 </html>
