@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v769';
+var APP_JS_VERSION = 'v770';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3420,6 +3420,7 @@ function loadAdminUsers() {
   fsGetCol('users').then(function(list) {
     _adminUsers = list || [];
     renderAdminList();
+    _admCkLoad(); // v770: 紐付いた受付の名簿（無効かどうか）
   }).catch(function() {
     if (body) body.innerHTML = '<div class="ev-empty">読み込みに失敗しました（権限をご確認ください）</div>';
   });
@@ -3475,6 +3476,7 @@ function adminPendingRowHtml(u){
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
+    + _admCkLine(u)
     + '</div><div class="adm-actions">'
     + '<button class="adm-btn on" onclick="adminApprove(\'' + uid + '\')">承認</button>'
     + '<button class="adm-btn" style="border-color:#FF5D73;color:#FF5D73" onclick="adminReject(\'' + uid + '\')">却下</button>'
@@ -3518,7 +3520,113 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
+    + _admCkLine(u)
     + '</div><div class="adm-actions">' + actions + '</div></div>';
+}
+// ── v770: 受付（BASE CHECK-IN）の名簿とアカウントの紐付け ──
+//  users/{uid}.ckNo = 受付の会員番号。設定できるのはオーナーと同じユニオンの管理者だけ（本人は変えられない＝ルール）。
+//  紐付いた名簿を受付で「無効」にすると、その人はNAVIGATORも使えなくなる（ckAccessCheck）
+var _admCk = {}, _admCkP = null; // _admCk: 番号 → 名簿の中身（null＝名簿に無い）
+function _admCkLoad() {
+  if (!db) return;
+  var nos = {};
+  _adminScopedUsers().forEach(function(u) { if (u.ckNo && !(u.ckNo in _admCk)) nos[u.ckNo] = 1; });
+  var ks = Object.keys(nos); if (!ks.length) return;
+  Promise.all(ks.map(function(no) {
+    return db.doc('checkinMembers/' + no).get().then(function(d) { _admCk[no] = d.exists ? Object.assign({ no: no }, d.data()) : null; }).catch(function() {});
+  })).then(function() { if (document.getElementById('adminPanel').classList.contains('open')) renderAdminList(); });
+}
+function _admCkLine(u) {
+  if (isOwnerUid(u.id)) return '';
+  var r = u.ckNo ? _admCk[u.ckNo] : undefined, t;
+  if (!u.ckNo) t = '🎫 受付の名簿と紐付ける';
+  else t = '🎫 受付 ' + evEsc(u.ckNo) + (r ? ' ' + evEsc(r.name || '') : '')
+    + (r && r.active === false ? ' <span class="adm-badge dis">受付で無効＝利用停止中</span>' : '')
+    + (r === null ? ' <span class="adm-badge dis">名簿に見つかりません</span>' : '');
+  return '<div class="adm-ck' + (u.ckNo ? ' on' : '') + '" onclick="admCkOpen(\'' + u.id + '\')">' + t + '</div>';
+}
+// 紐付ける人のユニオン（受付側）を選ぶ。オーナー以外は自分のユニオンだけ
+function _admCkUnion(unions, u) {
+  var cur = u.ckNo && _admCk[u.ckNo] && _admCk[u.ckNo].union;
+  if (!_ckIsOwner()) return _ckPickUnion(unions, '');
+  if (cur && unions.some(function(x) { return x.id === cur; })) return cur;
+  var U = _ckNorm(u.union || ''), A = _ckNorm(u.area || ''), sel = '';
+  var okA = function(x) { return !x.area || !A || _ckNorm(x.area) === A; };
+  if (U) unions.forEach(function(x) { if (!sel && _ckNorm(x.id) === U && okA(x)) sel = x.id; });
+  if (U) unions.forEach(function(x) { if (!sel && _ckNorm(x.id).indexOf(U) === 0 && okA(x)) sel = x.id; });
+  return sel || (unions[0] ? unions[0].id : '');
+}
+function admCkOpen(uid) {
+  var u = _adminFindUser(uid); if (!u || isOwnerUid(uid)) return;
+  if (!db) { toast('オンライン時のみ使えます'); return; }
+  db.collection('checkinUnions').get().then(function(qs) {
+    var unions = [];
+    qs.forEach(function(d) { var x = d.data() || {}; unions.push({ id: d.id, area: x.area || '' }); });
+    var sel = _admCkUnion(unions, u);
+    if (!sel) { toast('受付システムに、あなたのユニオン（' + ((currentUser && currentUser.union) || '未設定') + '）がまだ登録されていません'); return; }
+    if (!_ckIsOwner()) unions = unions.filter(function(x) { return x.id === sel; });
+    _admCkP = { uid: uid, unions: unions, sel: sel, q: '', roster: null };
+    _admCkRoster();
+  }).catch(function(e) { toast('受付システムに接続できません: ' + (e && e.message || '')); });
+}
+function _admCkRoster() {
+  var P = _admCkP; P.roster = null; _admCkRender();
+  db.collection('checkinMembers').where('union', '==', P.sel).get().then(function(qs) {
+    if (_admCkP !== P) return;
+    var L = [];
+    qs.forEach(function(d) { var r = d.data() || {}; r.no = d.id; L.push(r); });
+    L.sort(function(a, b) { return ((a.active === false) - (b.active === false)) || String(a.name || '').localeCompare(String(b.name || ''), 'ja'); });
+    P.roster = L; _admCkList();
+  }).catch(function(e) { toast('受付名簿の読込に失敗しました: ' + (e && e.message || '')); });
+}
+function admCkClose() { var o = document.getElementById('admCkOv'); if (o && o.parentNode) o.parentNode.removeChild(o); _admCkP = null; }
+function _admCkRender() {
+  var P = _admCkP, u = _adminFindUser(P.uid) || {};
+  var o = document.getElementById('admCkOv');
+  if (!o) { o = document.createElement('div'); o.id = 'admCkOv'; o.className = 'adm-ck-ov'; o.onclick = function(e) { if (e.target === o) admCkClose(); }; document.body.appendChild(o); }
+  o.innerHTML = '<div class="adm-ck-box">'
+    + '<div class="adm-ck-hd"><b>受付の名簿と紐付け</b><span onclick="admCkClose()">閉じる</span></div>'
+    + '<div class="adm-ck-who">' + evEsc(u.name || '(名前未設定)') + (u.email ? '<i>' + evEsc(u.email) + '</i>' : '') + '</div>'
+    + '<div class="adm-ck-note">受付で<b>無効</b>にすると、この人はNAVIGATORも使えなくなります（有効に戻すと、次に開いた時から使えます）。</div>'
+    + (P.unions.length > 1 ? '<select class="adm-ck-in" onchange="_admCkP.sel=this.value;_admCkRoster()">' + P.unions.map(function(x) { return '<option value="' + evEsc(x.id) + '"' + (x.id === P.sel ? ' selected' : '') + '>' + evEsc(x.id) + (x.area ? '（' + evEsc(x.area) + '）' : '') + '</option>'; }).join('') + '</select>' : '<div class="adm-ck-un">' + evEsc(P.sel) + '</div>')
+    + '<input class="adm-ck-in" id="admCkQ" placeholder="名前・番号で検索" oninput="_admCkP.q=this.value;_admCkList()">'
+    + '<div class="adm-ck-list" id="admCkList"><div class="ev-empty">読み込み中...</div></div>'
+    + (u.ckNo ? '<button class="adm-btn" style="width:100%;margin-top:10px;border-color:#FF5D73;color:#FF5D73" onclick="admCkPick(\'\')">紐付けを外す</button>' : '')
+    + '</div>';
+}
+function _admCkList() {
+  var P = _admCkP, box = document.getElementById('admCkList'); if (!P || !box || !P.roster) return;
+  var u = _adminFindUser(P.uid) || {}, me = _ckNorm(u.name || ''), q = _ckNorm(P.q || '').toLowerCase();
+  var L = P.roster.filter(function(r) { return !q || (_ckNorm(r.name || '') + r.no).toLowerCase().indexOf(q) >= 0; });
+  // 名前が同じ人（候補）を先頭に
+  L = L.filter(function(r) { return me && _ckNorm(r.name || '') === me; }).concat(L.filter(function(r) { return !(me && _ckNorm(r.name || '') === me); }));
+  if (!L.length) { box.innerHTML = '<div class="ev-empty">' + (P.roster.length ? '該当する人がいません' : '名簿に人がいません') + '</div>'; return; }
+  box.innerHTML = L.slice(0, 200).map(function(r) {
+    var cur = r.no === u.ckNo, sug = me && _ckNorm(r.name || '') === me;
+    return '<div class="adm-ck-row' + (cur ? ' cur' : '') + '" data-no="' + evEsc(r.no) + '" onclick="admCkPick(this.dataset.no)">'
+      + '<span class="nm">' + evEsc(r.name || '(名前なし)') + (sug && !cur ? '<em>同じ名前</em>' : '') + '</span>'
+      + (r.active === false ? '<span class="adm-badge dis">無効</span>' : '')
+      + '<span class="no">' + evEsc(r.no) + '</span>' + (cur ? '<b>✓</b>' : '') + '</div>';
+  }).join('') + (L.length > 200 ? '<div class="ev-empty">ほか' + (L.length - 200) + '人（検索で絞ってください）</div>' : '');
+}
+function admCkPick(no) {
+  var P = _admCkP; if (!P) return;
+  var u = _adminFindUser(P.uid); if (!u) return;
+  no = String(no || '');
+  if (no && no === u.ckNo) { admCkClose(); return; }
+  var r = no ? (P.roster || []).filter(function(x) { return x.no === no; })[0] : null;
+  if (no) {
+    var dup = _adminUsers.filter(function(x) { return x.id !== u.id && x.ckNo === no; })[0];
+    if (!confirm((r ? (r.name || '') + '（' + no + '）' : no) + ' と紐付けますか？'
+      + (dup ? '\n※この番号は ' + (dup.name || dup.email || '') + ' さんのアカウントにも紐付いています' : '')
+      + (r && r.active === false ? '\n※受付で無効になっているため、この人はNAVIGATORを使えなくなります' : ''))) return;
+  } else if (!confirm('受付の名簿との紐付けを外しますか？\n（受付で無効にしても、NAVIGATORは使えるままになります）')) return;
+  u.ckNo = no;
+  if (r) _admCk[no] = r;
+  fsSet('users/' + u.id, { ckNo: no, ckSetBy: currentUser.uid, ckSetAt: new Date().toISOString() })
+    .then(function() { toast(no ? '受付の名簿と紐付けました ✓' : '紐付けを外しました'); })
+    .catch(function() { toast('保存に失敗しました'); });
+  admCkClose(); renderAdminList();
 }
 function adminToggleStatus(uid) {
   if (isOwnerUid(uid)) { toast('オーナーは変更できません'); return; }
@@ -3935,7 +4043,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v769';
+  var DATA_VERSION = 'v770';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5438,6 +5546,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v770', d:'2026-10-09', items:['アカウント管理で、各アカウントを受付（BASE CHECK-IN）の名簿の人と紐付けられるようにしました（🎫 受付の名簿と紐付ける）','紐付けた人を受付で「無効」にすると、NAVIGATORも使えなくなります（受付で有効に戻すと、次に開いた時から使えます。リーダーは対象外）'] },
   { v:'v769', d:'2026-10-09', items:['メンバーの「アップラインを変更」で、付け替えたい相手が出てこないことがあったのを直しました（同じMAPに出ている人なら選べます）'] },
   { v:'v768', d:'2026-10-09', items:['「分析」の見出しを「ANALYTICS」に（スマホ・PCの見出し、PCの左のメニュー、横向きの上の帯、くわしくのページの戻り先）'] },
   { v:'v767', d:'2026-10-09', items:['サークルMAP（計画シートのMAP・MAPの◎サークル）の線を見やすく：子の丸も親の近くに寄せて、線が長く回り込むのを減らしました','となりの親の線（くし）が重なる所は、交差しない順に通る高さを変えて、1本につながって見えないようにしました'] },
@@ -36308,15 +36417,34 @@ function showApprovalGate(kind, user){
   var pending = (kind === 'pending');
   var msg = pending
     ? 'アカウント登録を受け付けました。<br>所属ユニオンのリーダーの<b>承認</b>をお待ちください。<br>承認されると利用できます。'
-    : 'このアカウントは現在ご利用いただけません。<br>管理者にお問い合わせください。';
+    : (kind === 'ckoff'
+      ? 'このアカウントは受付システム（BASE CHECK-IN）で<b>無効</b>になっています。<br>所属ユニオンのリーダーにお問い合わせください。'
+      : 'このアカウントは現在ご利用いただけません。<br>管理者にお問い合わせください。');
   var ov=document.createElement('div'); ov.id='approvalGate';
   ov.style.cssText='position:fixed;inset:0;z-index:10000;background:var(--bg,#12141a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center';
   ov.innerHTML='<div style="font-size:46px;margin-bottom:14px">'+(pending?'⏳':'🔒')+'</div>'
     +'<div style="font-size:19px;font-weight:700;margin-bottom:12px">'+(pending?'承認待ちです':'ご利用いただけません')+'</div>'
     +'<div style="font-size:14px;color:var(--text-dim,#8a94a6);line-height:1.7;margin-bottom:26px;max-width:340px">'+msg+'</div>'
-    +'<button onclick="location.reload()" style="width:100%;max-width:280px;padding:13px;border-radius:12px;border:none;background:var(--accent,#2CE5B8);color:#08121a;font-size:15px;font-weight:700;margin-bottom:10px">承認状況を再確認</button>'
+    +'<button onclick="location.reload()" style="width:100%;max-width:280px;padding:13px;border-radius:12px;border:none;background:var(--accent,#2CE5B8);color:#08121a;font-size:15px;font-weight:700;margin-bottom:10px">'+(pending?'承認状況を再確認':'状況を再確認')+'</button>'
     +'<button onclick="doLogout()" style="width:100%;max-width:280px;padding:12px;border-radius:12px;border:1px solid var(--border,#2a2e38);background:transparent;color:var(--text,#e6e8ec);font-size:14px">ログアウト</button>';
   document.body.appendChild(ov);
+}
+// ── v770: 受付（BASE CHECK-IN）の名簿で「無効」になった人は使えなくする ──
+//  users/{uid}.ckNo（アカウント管理で紐付けた受付の会員番号）の checkinMembers/{ckNo} が active:false ならゲート。
+//  オーナー・管理者（ユニオンリーダー）と、紐付けのない人は対象外。読めない時（オフライン等）は止めない。
+//  無効だった結果は端末にも覚えておき、次に開いた時はすぐゲート→裏で読み直して有効に戻っていれば入れる
+function _ckGateExempt(user) { return !user || !user.uid || !user.ckNo || isOwnerUid(user.uid) || user.role === 'admin'; }
+function _ckOffKey(uid) { return 'gm_ckOff_' + uid; }
+function _ckOffCached(user) { try { return !_ckGateExempt(user) && localStorage.getItem(_ckOffKey(user.uid)) === String(user.ckNo); } catch (e) { return false; } }
+function ckAccessCheck(user, gated) {
+  if (_ckGateExempt(user) || !db) return;
+  window._ckAccAt = Date.now();
+  db.doc('checkinMembers/' + user.ckNo).get().then(function(d) {
+    var off = !!(d.exists && (d.data() || {}).active === false);
+    try { if (off) localStorage.setItem(_ckOffKey(user.uid), String(user.ckNo)); else localStorage.removeItem(_ckOffKey(user.uid)); } catch (e) {}
+    if (off && !gated) { try { flushPendingSave(); } catch (e1) {} showApprovalGate('ckoff', user); }
+    else if (!off && gated) { closeApprovalGate(); loginSuccess(user); }
+  }).catch(function() {});
 }
 // ============================================================
 //  v668: 個人情報保護方針・利用規約の同意ゲート
@@ -36459,9 +36587,12 @@ function loginSuccess(user) {
     showApprovalGate(user.status, user);
     return;
   }
+  // v770: 受付で無効（前回わかった）→ すぐゲート。裏で読み直して、有効に戻っていれば入れる
+  if (_ckOffCached(user)) { showApprovalGate('ckoff', user); ckAccessCheck(user, true); return; }
   closeApprovalGate();
   // v668: 個人情報保護方針・利用規約に（今の版で）同意するまでアプリに入れない
   if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
+  ckAccessCheck(user, false); // v770: 受付の名簿を確認（無効ならゲート）
   setTimeout(function() { try { if (_gdAuto()) return; } catch (eGd) {} try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容（v755: はじめての人は先に使い方の案内）
   // Googleカレンダー連携状態をプロフィールから復元
   state.gcalConnected = !!user.gcalConnected;
@@ -36514,7 +36645,11 @@ function loginSuccess(user) {
   updateLastSeen();
   if (!window._seenTimer) {
     window._seenTimer = setInterval(updateLastSeen, 5 * 60 * 1000);
-    document.addEventListener('visibilitychange', function() { if (!document.hidden) updateLastSeen(); });
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) return;
+      updateLastSeen();
+      if (currentUser && Date.now() - (window._ckAccAt || 0) > 30 * 60 * 1000) ckAccessCheck(currentUser, !!document.getElementById('approvalGate')); // v770: 開きっぱなしでも30分ごとに受付の無効を確認
+    });
   }
   // v329: 起動画面はモバイル＝予定タブ（月カレンダー）。PCは従来どおりホーム
   applyTabPrefs();

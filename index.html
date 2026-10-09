@@ -1112,6 +1112,26 @@ tr.ot-done{opacity:.5}
 .adm-btn.on{border-color:var(--accent);color:var(--accent)}
 .adm-btn.admin{border-color:var(--purple);color:var(--purple)}
 .adm-note{font-size:11px;color:var(--text-dim)}
+.adm-ck{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:6px;padding:4px 9px;border-radius:8px;border:1px dashed var(--border2);font-size:11.5px;color:var(--text-dim);cursor:pointer}
+.adm-ck.on{border-style:solid;color:var(--text)}
+.adm-ck-ov{position:fixed;inset:0;z-index:400;background:rgba(5,8,14,.55);display:flex;align-items:flex-end;justify-content:center}
+.adm-ck-box{width:100%;max-width:520px;max-height:86vh;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--border);border-radius:18px 18px 0 0;padding:14px 14px calc(env(safe-area-inset-bottom) + 14px)}
+@media (min-width:900px){.adm-ck-ov{align-items:center}.adm-ck-box{border-radius:18px;max-height:80vh}}
+.adm-ck-hd{display:flex;align-items:center;font-size:15px;color:var(--text);margin-bottom:8px}
+.adm-ck-hd span{margin-left:auto;padding:6px 12px;border-radius:9px;background:var(--surface2);font-size:12.5px;cursor:pointer}
+.adm-ck-who{font-size:14px;font-weight:700;color:var(--text)}
+.adm-ck-who i{font-style:normal;font-weight:400;font-size:11px;color:var(--text-dim);margin-left:8px}
+.adm-ck-note{font-size:11.5px;color:var(--text-dim);line-height:1.6;margin:6px 0 10px}
+.adm-ck-un{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.adm-ck-in{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box}
+.adm-ck-list{flex:1;min-height:120px;overflow:auto;border:1px solid var(--border);border-radius:10px;-webkit-overflow-scrolling:touch}
+.adm-ck-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13.5px;color:var(--text)}
+.adm-ck-row:last-child{border-bottom:none}
+.adm-ck-row.cur{background:var(--accent-dim)}
+.adm-ck-row .nm{flex:1;min-width:0}
+.adm-ck-row .nm em{font-style:normal;font-size:10px;font-weight:700;color:var(--accent);margin-left:6px}
+.adm-ck-row .no{font:600 11px/1 'Inter',monospace;color:var(--text-dim)}
+.adm-ck-row b{color:var(--accent)}
 .sd-hdr{flex-shrink:0;padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .sd-close{width:36px;height:36px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .sd-title{font-size:16px;font-weight:700;flex:1}
@@ -2956,7 +2976,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v769</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v770</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3902,7 +3922,7 @@ select.ed-in{width:auto;max-width:100%;-webkit-appearance:none;appearance:none;t
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v769';</script>
-<script src="app.js?v=v769"></script>
+<script>window.GM_EXPECT_JS='v770';</script>
+<script src="app.js?v=v770"></script>
 </body>
 </html>
