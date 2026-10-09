@@ -23,7 +23,7 @@ T.run(async () => {
   w.p2Go('sheet'); await sleep(30);
   c('計画シート：スマホは切りかえを見出しの下に', !!$('.sm-bar .sm-seg'));
   w.p2SumTgl('sh', 1); await sleep(30);
-  c('計画シートのサマリー：数字・改善点・行動（次にやること）・課題', $$('.sm-k').length === w._p2Sh().kpi.length && /CT取りを前月25日にする/.test($('.sm').textContent) && /新規リストを10人出す/.test($('.sm-a').textContent) && /審査フォロー/.test($('.sm').textContent) && !$('#p2ShMF'));
+  c('計画シートのサマリー：数字・改善点・行動（次にやること）・課題', $$('.sm-k').length === w._p2Sh().kpi.length && /CT取りを前月25日にする/.test($('.sm').textContent) && /新規リストを10人出す/.test($('.sm-acts').textContent) && /審査フォロー/.test($('.sm').textContent) && !$('#p2ShMF'));
   setWH(1400, 900); w._uxSync && w._uxSync(); w.switchView('plan'); w.p2Go('sheet'); await sleep(40);
   c('PCも計画シートのサマリー（右上に切りかえ）', !!$('.st-h .sm-seg') && !!$('.sm-g4') && !$('#p2ShMF'));
   w.p2Go('year'); await sleep(30);
