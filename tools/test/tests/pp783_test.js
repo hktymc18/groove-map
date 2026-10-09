@@ -121,7 +121,7 @@ T.run(async () => {
   setWH(1440, 900); w._uxSync && w._uxSync();
   w.openEdit('t'); await sleep(20);
   c('PCも新しい画面（今までの右の編集パネルは出ない）', w.isPCMode() && !!$('#ppPg') && !modal.classList.contains('open'));
-  c('PCは右側のパネルにするCSS', /@media\(min-width:768px\) and \(min-height:501px\)\{#ppPg\{left:auto!important;right:0;width:440px/.test(w.document.getElementById('ppCss').textContent));
+  c('PCは右側のパネルにするCSS', /@media\(min-width:768px\) and \(min-height:501px\)\{#ppPg,#naPg\{left:auto!important;right:0;width:440px/.test(w.document.getElementById('ppCss').textContent));
   w.ppGo('tr'); await sleep(5);
   w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'Escape' })); await sleep(5);
   c('Escで入口へ', w._pp && w._pp.pg === '');

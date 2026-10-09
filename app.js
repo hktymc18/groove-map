@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v783';
+var APP_JS_VERSION = 'v784';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4061,7 +4061,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v783';
+  var DATA_VERSION = 'v784';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5566,6 +5566,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v784', d:'2026-10-09', items:['PCのフロント追加を、画面いっぱいではなく右側のパネルに（MAPを見ながら入れられます）', 'タイトルのカード（研修生・審査中・BA・BR）がPCでも色つきで出るように'] },
   { v:'v783', d:'2026-10-09', pop: { t: 'メンバーの編集が新しい画面になりました', items: ['研修（ステップ・結果・記録）も活動・写真も、メンバー画面の中で。変えるとすぐ保存されます', 'ステップを押すとその記録を足せます。Aさんは最近の人から選べます', 'PCでも右側に同じ画面が出ます（MAPを見ながら直せます）'], go: ['MAPを開く', "switchView('current')"] }, items:['#10 「編集」はどこから開いても新しいメンバー画面に（スマホ・PCとも。今までの編集画面は出ません）', '研修：ステップの流れ（済み・予定・流れた・次）、研修結果、記録（新しい順）を1画面に。記録を押すと 進んだ／流れた／リスケ／消す（元に戻せる）', '記録を足す：ステップ・フォロー、今日／昨日／日付、Aさん（最近の人から選べる）、進んだ／予定／流れた', '活動：OL・タスク・企画書を足すボタンと、月ごとの一覧（すべて／OL／タスク／企画書で絞れる）', '写真：選ぶ・撮る → その場で丸く切り抜き（指で動かす・ピンチ・スライダー）。位置を直す・消す（元に戻せる）', 'プロフィールに年齢（誕生日がわからない時）、タイトルがOUTの人は「OUTの後の表示」を追加', 'PCは右側のパネルで開きます（Escで戻る・閉じる）'] },
   { v:'v782', d:'2026-10-09', items:['MAPの系列フォーカス（カードを押すと他の系列が薄くなる機能）と、その案内・解除の表示をなくしました'] },
   { v:'v781', d:'2026-10-09', items:['計画シートの印刷：iPhoneのホーム画面から開いたアプリで「印刷」を押しても何も起きなかったのを直しました。シートを画像にして共有の画面が出るので、「プリント」で印刷できます（画像の保存もできます）（#9）'] },
@@ -18307,8 +18308,9 @@ function _ppCss() {
     + ".pppb span.d{grid-column:1/-1;color:var(--red);border-color:color-mix(in srgb,var(--red) 50%,var(--border2))}"
     + ".pph .av{cursor:pointer}"
     // v783: PCは右側のパネル（組織図を見ながら直せる）
-    + "@media(min-width:768px) and (min-height:501px){#ppPg{left:auto!important;right:0;width:440px;max-width:100vw;border-left:1px solid var(--border);box-shadow:-6px 0 24px rgba(0,0,0,.35);padding:0 18px!important;display:flex;flex-direction:column}"
-    + "#ppPg>*{flex:none}#ppPg .ux-top{margin:0 -18px;padding:14px 18px 8px}#ppPg .ux-btm{position:sticky;left:auto;right:auto;bottom:0;margin:auto -18px 0;padding:10px 18px 14px;top:auto}#ppPg>.ux-btm{margin-top:auto}#ppPg>*:nth-last-child(2){margin-bottom:22px}"
+    // v784: フロント追加（#naPg）もPCは同じ右側のパネル
+    + "@media(min-width:768px) and (min-height:501px){#ppPg,#naPg{left:auto!important;right:0;width:440px;max-width:100vw;border-left:1px solid var(--border);box-shadow:-6px 0 24px rgba(0,0,0,.35);padding:0 18px!important;display:flex;flex-direction:column}"
+    + "#ppPg>*,#naPg>*{flex:none}#ppPg .ux-top,#naPg .ux-top{margin:0 -18px;padding:14px 18px 8px}#ppPg .ux-btm,#naPg .ux-btm{position:sticky!important;left:auto!important;right:auto;bottom:0;margin:auto -18px 0;padding:10px 18px 14px;top:auto}#ppPg>.ux-btm,#naPg>.ux-btm{margin-top:auto}#ppPg>*:nth-last-child(2),#naPg>*:nth-last-child(2){margin-bottom:22px}"
     + ".pps-ov{left:auto;width:440px;max-width:100vw}.pps{border-radius:20px 20px 0 0}}";
   document.head.appendChild(st);
   document.addEventListener('keydown', function(e) { // v783: Escで戻る・閉じる（PC）
@@ -19416,7 +19418,7 @@ function _ttlCss() {
 }
 // groups: [[色キー, カテゴリ名, [タイトル…]]…]  pick: 'ppTitle' などの関数名
 function _ttlPickHtml(cur, groups, pick, reFn, extra) { // v753: extra＝{ グループ名: 選んでいる時にカードの中に出すHTML }
-  _ttlCss();
+  _ttlCss(); if (typeof _mxCss === 'function') _mxCss(); // v784: PCでもカテゴリの色（--mx〜）を使えるように
   cur = (cur || '').trim();
   return groups.map(function(g, i) {
     var k = 'var(--mx' + g[0] + ')', has = g[2].indexOf(cur) >= 0, open = _ttlOpen === g[1];
