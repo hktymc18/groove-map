@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v757';
+var APP_JS_VERSION = 'v758';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v757';
+  var DATA_VERSION = 'v758';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4037,6 +4037,7 @@ function updateFabVisibility() {
 
 // ── VIEW SWITCH ──
 function switchView(v) {
+  if (v === 'members') v = 'current'; // v758: メンバー（一覧）の画面はなくした（MAPと同じ内容）
   if (v !== 'ol') { document.body.classList.remove('olh-on'); var _om9 = document.getElementById('olmPg'); if (_om9 && _om9.parentNode) _om9.parentNode.removeChild(_om9); _olmId = ''; } // v617
   if (v === 'goals' || v === 'month') v = 'plan'; // v469: GOAL/今月はPLANに統合
   try { document.body.setAttribute('data-v', v); } catch (eDv) {}
@@ -5395,6 +5396,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v758', d:'2026-10-09', items:['メンバー（一覧）の画面をPCからもなくしました（左のメニュー・⌘K・プロフィールの「メンバータブ」の設定）。メンバーはMAPから見られます','使い方ガイドからも「メンバー」を消しました'] },
   { v:'v757', d:'2026-10-09', items:['使い方ガイドを設定から開いた時、設定のページが残ったまま下の画面で説明が始まり、関係ない所が光っていたのを直しました（説明を始める前に、上に重なっているページを閉じます）','光らせる所がほかの物に隠れている時は、見えている所だけを光らせる（全部隠れている時は真ん中に説明）ようにしました'] },
   { v:'v756', d:'2026-10-09', items:['使い方ガイドの説明（スポットライト）を増やしました：年の目標・ロードマップ、メンバーの画面（スマホ）／編集（PC）、フロント追加、受付連携、チェック、理想、夢100、シミュレーション、分析の研修・パワーライン・地域、OL、メンバー','「❓ 使い方」の画面ごとのガイドを MAP・PLAN・予定・ANALYTICS・そのほか に分けて並べました'] },
   { v:'v755', d:'2026-10-09', items:['❓ 使い方ガイドができました：はじめて開いた時の案内（このアプリでできること）、HOMEの「はじめのステップ」（できたら自動でチェック）、画面を初めて開いた時に大事なところを光らせて説明','一度見たら出ません。あとから見返す時は HOME（PCは左のメニュー）の「❓ 使い方」か、設定の「使い方ガイド」から。よくある質問もあります','ユニオン管理者には、管理者向けの説明（アカウント管理・ユニオンのチェック項目・ユニオン予定）も出ます'], pop:{ t:'❓ 使い方ガイドができました', items:['はじめての案内・はじめのステップ・画面ごとの説明','あとからは「❓ 使い方」でいつでも見返せます'], go:['使い方を見る','gdMenu()'] } },
@@ -6671,7 +6673,6 @@ function homeMenuHtml() {
   var due = (typeof dueTaskCount === 'function') ? dueTaskCount() : 0;
   var items = [
     { label:'組織MAP',     emoji:'🗺',  color:'#2CE5B8', act:"homeMapChoice()" },
-    { label:'メンバー',    emoji:'👥',  color:'#5AD7FF', act:"switchView('members')" },
     { label:'OL',          emoji:'📋',  color:'#8B7CFF', act:"switchView('ol')" },
     { label:'予定',        emoji:'📅',  color:'#FFB454', act:"switchView('events')", badge: due },
     { label:'データ',      emoji:'📊',  color:'#4ADE80', act:"switchView('stats')" },
@@ -37865,7 +37866,7 @@ function _px3Tip(i, x) {
 var _px3PalI = 0, _px3PalL = [];
 function _px3PalItems() {
   var L = [];
-  [['home', 'ホーム', 'home'], ['current', 'MAP（現状）', 'map'], ['events', '予定・ToDo', 'calendar'], ['plan', 'PLAN', 'compass'], ['stats', '分析', 'chart'], ['members', 'メンバー', 'users'], ['ol', 'OL', 'doc']].forEach(function(v) { L.push({ t: v[1], s: '画面', ic: v[2], go: function() { switchView(v[0]); } }); });
+  [['home', 'ホーム', 'home'], ['current', 'MAP（現状）', 'map'], ['events', '予定・ToDo', 'calendar'], ['plan', 'PLAN', 'compass'], ['stats', '分析', 'chart'], ['ol', 'OL', 'doc']].forEach(function(v) { L.push({ t: v[1], s: '画面', ic: v[2], go: function() { switchView(v[0]); } }); });
   DT_TABS.forEach(function(t) { L.push({ t: '分析 › ' + t[1], s: '分析', ic: 'chart', go: function() { switchView('stats'); dtMode('full', t[0]); } }); });
   [['ideal', '理想', 0], ['sim', 'シミュレーション'], ['ck', 'チェック'], ['do', '今週やること'], ['road', 'ロードマップ']].forEach(function(p) { L.push({ t: 'PLAN › ' + p[1], s: 'PLAN', ic: 'compass', go: function() { switchView('plan'); if (p.length > 2) p2Go(p[0], p[2]); else p2Go(p[0]); } }); });
   ((state && state.members) || []).forEach(function(m) {
@@ -39561,10 +39562,6 @@ var GD_TOURS = {
     { s: ['.olh-fr'], t: 'フレッシュ', d: '要フォロー順に並びます。＋ですぐ企画' },
     { s: ['[onclick="olPlanStart()"]'], t: 'OLを企画', d: '個別・3〜7人を選んで、だれと・いつ・内容を入れます。カレンダーにも入ります' }
   ] },
-  members: { lb: 'メンバー', ic: '👥', go: "switchView('members')", steps: [
-    { s: ['.ml-pill'], t: '絞り込み', d: '研修生・フレッシュ・BRで絞れます' },
-    { s: ['.ml-card'], t: 'メンバー', d: '押すと、その人の画面（タイトル・数字・研修・活動）へ' }
-  ] },
   stats: { lb: 'ANALYTICS', ic: '📊', go: "switchView('stats')", steps: [
     { s: ['#dtTabs', '.px3-tabs', '.an-hd'], t: '4つのタブ', d: '推移・研修・パワーライン・地域' },
     { s: ['.px3-k', '#dtTrend .dt-chips'], t: '項目を選ぶ', d: '押すと、その項目の12ヶ月のグラフに' },
@@ -39649,7 +39646,6 @@ function _gdTourKey() {
     if (currentView === 'events') return (typeof _evMode !== 'undefined' && _evMode === 'agenda') ? 'todo' : 'cal';
     if (currentView === 'stats') return ({ train: 'train', pl: 'pl', reg: 'reg' })[typeof _dtTab !== 'undefined' ? _dtTab : ''] || 'stats';
     if (currentView === 'ol') return 'ol';
-    if (currentView === 'members') return 'members';
   } catch (e) {}
   return '';
 }
@@ -39694,7 +39690,7 @@ function gdMenu() {
     + (adm ? '<div class="sec">管理者向け</div><div class="ls">' + li('🛡', 'アカウント管理', 'メンバーのアカウント', 'gdMenuX();_gdClosePages();openAdminPanel()') + li('⚙', 'ユニオンのチェック項目', 'PLAN › チェック', "gdMenuX();gdStepGo('ack')") + '</div>' : '')
     + '<div class="sec">よくある質問</div>' + faq.map(function(q) { return '<details><summary>' + q[0] + '</summary><p>' + q[1] + '</p></details>'; }).join('') + '</div>';
 }
-var GD_MENU = [['MAP', ['map', 'pp', 'me', 'na', 'cklink', 'members']], ['PLAN', ['plan', 'year', 'sheet', 'yk', 'check', 'ideal', 'dream', 'sim']], ['予定・ToDo', ['cal', 'todo']], ['ANALYTICS', ['stats', 'train', 'pl', 'reg']], ['そのほか', ['ol']]];
+var GD_MENU = [['MAP', ['map', 'pp', 'me', 'na', 'cklink']], ['PLAN', ['plan', 'year', 'sheet', 'yk', 'check', 'ideal', 'dream', 'sim']], ['予定・ToDo', ['cal', 'todo']], ['ANALYTICS', ['stats', 'train', 'pl', 'reg']], ['そのほか', ['ol']]];
 function _gdHowOpen(k) { return ({ pp: 'MAPで人を押した画面', me: 'PCでMAPの人を押した画面', na: 'MAPの＋ 追加' })[k] || ''; }
 // v757: ガイドを始める前に、上に重なっている全画面のページ（設定・メンバーの画面・フロント追加・受付連携・編集など）を閉じる
 //   （設定から「使い方」を開いた時、設定のページが残ったまま下の画面で説明が始まり、関係ない所が光っていた）
