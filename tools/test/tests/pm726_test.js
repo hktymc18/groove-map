@@ -19,7 +19,7 @@ T.run(async () => {
   c('書くと自分の場所に保存', !!wr && wr[0] === 'users/' + me + '/appData/pmemo_own1' && wr[1].notes.a === '紹介者の情報（自分だけ）');
   c('メンバーのメモ（共有される方）は変えない', w.state.members[1].memo === '共有のメモ');
   w.uxMemClose && w.uxMemClose();
-  w.openEdit('a'); await sleep(40);
+  w._meOpen('a'); await sleep(40); // v783: 今までの編集画面（裏方）
   c('編集画面にも（共有のメモの下）', !!$('#fPMemoWrap .pm-box') && $('#pmIn_ed').value === '紹介者の情報（自分だけ）' && /共有している人にも見えます/.test($('#fMemo').placeholder));
   w.closeModal && w.closeModal();
   w.ppOpen('a'); await sleep(20); w._pp.pg = 'memo'; w._ppRender(); await sleep(30);
