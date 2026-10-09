@@ -95,18 +95,43 @@ service cloud.firestore {
 
       // ---- AttackList：人物リスト ----
       // v586: 本人と、本人が共有した人だけ（管理者も読めない）
+      // 共有された人は、本人・相手のどちらかが無効化されたら読めない（退会者の持ち出し防止）。
+      //   新方式: users/{uid}/alShares/{相手uid} があること
+      //   旧方式: settings/share の sharedWith に相手のメールアドレスがあること（新方式へ移行するまでの経過措置）
       match /people/{pid} {
-        allow read:  if ownerActive(uid)
-                     || (signedIn() && notDisabled(uid)
-                         && exists(/databases/$(database)/documents/users/$(uid)/settings/share)
-                         && get(/databases/$(database)/documents/users/$(uid)/settings/share)
-                              .data.get('sharedWith', []).hasAny([myEmail()]));
+        function alSharedToMe() {
+          return signedIn() && notDisabled(uid) && notDisabled(request.auth.uid)
+              && ( exists(/databases/$(database)/documents/users/$(uid)/alShares/$(request.auth.uid))
+                   || ( exists(/databases/$(database)/documents/users/$(uid)/settings/share)
+                        && get(/databases/$(database)/documents/users/$(uid)/settings/share)
+                             .data.get('sharedWith', []).hasAny([myEmail()]) ) );
+        }
+        allow read:  if ownerActive(uid) || alSharedToMe();
+        allow write: if ownerActive(uid);
+        // 共有された人が変えられるのはステータスだけ
+        allow update: if alSharedToMe()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']);
+      }
+      // ---- AttackList：共有設定（旧方式のメールアドレス一覧など）。本人だけが読める ----
+      // 以前はログイン済みなら誰でも読めた（全員の共有相手のメールアドレスが見えていた）ため本人のみに変更。
+      // 上の people の判定はルール内の get() で読むので、ここを閉じても共有は切れない。
+      match /settings/{sid} {
+        allow read:  if isSelf(uid);
         allow write: if ownerActive(uid);
       }
-      // ---- AttackList：共有設定（受信側が全ユーザー分を読んで判定するため read は広め） ----
-      match /settings/{sid} {
-        allow read:  if signedIn();
-        allow write: if ownerActive(uid);
+      // ---- AttackList：共有している相手（新方式。本人と、その相手の2人だけが読める） ----
+      // 作成: 本人（旧方式からの移行用）／相手が有効な共有コードを添えて自分の分を作る
+      // 削除: 本人（共有の解除）／相手（自分から外れる）
+      match /alShares/{rid} {
+        allow read:   if isSelf(uid) || isSelf(rid);
+        allow create: if (ownerActive(uid) && rid != uid)
+          || ( isSelf(rid) && rid != uid && notDisabled(rid)
+               && request.resource.data.get('code', '') is string
+               && request.resource.data.get('code', '').size() >= 8
+               && exists(/databases/$(database)/documents/alShareCodes/$(request.resource.data.get('code', '__none')))
+               && get(/databases/$(database)/documents/alShareCodes/$(request.resource.data.get('code', '__none'))).data.owner == uid
+               && get(/databases/$(database)/documents/alShareCodes/$(request.resource.data.get('code', '__none'))).data.exp > request.time.toMillis() );
+        allow delete: if isSelf(uid) || isSelf(rid);
       }
       // ---- v668: 個人情報保護方針・利用規約の同意の履歴（追記のみ。書き換え・削除は不可） ----
       match /consents/{ver} {
@@ -129,7 +154,8 @@ service cloud.firestore {
     // v355 連鎖共有: 結合経由の派生共有(derived)は「経由元(via)の共有が生きている間」のみ有効。
     //   （下位が経由元への共有を解除すると、連鎖先も自動的に読めなくなる）
     function isSharedToMap(uid) {
-      return signedIn() && notDisabled(uid)
+      // 相手（読む側）が無効化されていたら、共有されていたMAPも読めない（退会者の持ち出し防止）
+      return signedIn() && notDisabled(uid) && notDisabled(request.auth.uid)
           && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
           && ( myShareDoc(uid).get('derived', false) != true
                || exists(/databases/$(database)/documents/maps/$(uid)/shared/$(myShareDoc(uid).get('via', '__none'))) );
@@ -227,6 +253,26 @@ service cloud.firestore {
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('role', '') == 'admin'
             && profile(request.auth.uid).get('union', '') == un);
+    }
+
+    // ============ ATTACK LIST：共有コードと受信箱 ============
+    // 共有コード: docId=コード。発行した本人だけが作成・削除・一覧できる。
+    // コードを知っている人は get で1件だけ読める（一覧は不可＝総当たりで探せない）。
+    match /alShareCodes/{code} {
+      allow get:    if signedIn();
+      allow list:   if signedIn() && resource.data.owner == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.owner == request.auth.uid
+                    && notDisabled(request.auth.uid)
+                    && request.resource.data.exp is number;
+      allow delete: if signedIn() && resource.data.owner == request.auth.uid;
+    }
+    // 受信箱: 自分宛ての共有の一覧。読めるのは受け取る本人だけ。
+    // 書くのは受け取る本人（コードで受け取ったとき）か、共有する側（旧方式からの移行）。
+    // ここに書いただけでは人物リストは読めない（閲覧権限は users/{本人}/alShares で判定する）。
+    match /alSharedWith/{rid}/from/{ownerUid} {
+      allow read:   if isSelf(rid);
+      allow create, update: if isSelf(rid) || isSelf(ownerUid);
+      allow delete: if isSelf(rid) || isSelf(ownerUid);
     }
 
     // ============ MAP 受信側の共有インデックス ============
