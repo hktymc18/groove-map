@@ -1,0 +1,20 @@
+// 受付 v41：ログイン状態の保持を NAVIGATOR（v771）と同じに。PC＝SESSION／スマホ・タブレット＝LOCAL
+const fs = require('fs'), path = require('path');
+const R = path.join(__dirname, '../../..');
+const h = fs.readFileSync(R + '/checkin/index.html', 'utf8'), app = fs.readFileSync(R + '/app.js', 'utf8');
+let fails = 0;
+const c = (n, ok) => { console.log((ok ? 'PASS' : 'FAIL') + ': ' + n); if (!ok) fails++; };
+const fn = h.match(/function authMobileDev\(\)\{[\s\S]*?\n\}/);
+c('端末の判定がある', !!fn);
+const judge = (ua, touch) => new Function('navigator', fn[0] + '\nreturn authMobileDev();')({ userAgent: ua, maxTouchPoints: touch });
+c('Windows PC → PC', judge('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129.0', 0) === false);
+c('Mac（タッチなし）→ PC', judge('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari', 0) === false);
+c('iPad（Macintosh・タッチ点5）→ タブレット', judge('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari', 5) === true);
+c('iPhone・Android → スマホ', judge('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)', 5) === true && judge('Mozilla/5.0 (Linux; Android 14; Pixel 8)', 5) === true);
+const a = app.match(/function _authMobileDev\(\) \{[\s\S]*?\n\}/);
+c('NAVIGATOR と同じ判定式', a && a[0].replace(/\s+/g, '').indexOf(fn[0].replace(/\s+/g, '').replace('functionauthMobileDev(){', '')) > 0);
+c('PC は SESSION・スマホ／タブレットは LOCAL', /setPersistence\(authMobileDev\(\) \? firebase\.auth\.Auth\.Persistence\.LOCAL : firebase\.auth\.Auth\.Persistence\.SESSION\)/.test(h));
+c('ログイン・新規登録は保持を決めてから', /authPersistReady\.then\(function\(\)\{ return auth\.signInWithEmailAndPassword/.test(h) && /authPersistReady\.then\(function\(\)\{ return auth\.createUserWithEmailAndPassword/.test(h));
+c('APP_VER v41・お知らせ', /var APP_VER = 'v41';/.test(h) && /\{ v: 'v41', d: '2026\/10\/09'/.test(h));
+console.log(fails ? 'NG ' + fails : 'ALL PASS');
+process.exit(fails ? 1 : 0);
