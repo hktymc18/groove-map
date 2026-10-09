@@ -13,9 +13,9 @@ T.run(async () => {
   w.p2SimApply(); await sleep(30);
   const nx1 = w._p2YmAdd(cur, 1);
   c('今月から先の月のフロントがロードマップのFに（過ぎた月はそのまま）', w._p2FrontTgt(cur) === 2 && w._p2FrontTgt(nx1) === 3 && w._p2FrontTgt(w._p2YmAdd(cur, 2)) === 0 && w._p2M(nx1).front === 3 && w._p2Rm().rows.front[lm] === undefined);
-  c('今月の分は理想MAPの自分のB1にも', w._idealStats(w.state.idealMembers).newFront === 2);
+  c('v775: 理想MAPとは連動しない（理想MAPに人を足さない）', w._idealStats(w.state.idealMembers || []).newFront === 0);
   c('BRを目指す人は直近の目標（BRの月）もそろえる', w._p2Next().title === 'BR' && w._p2Next().deadline === w._p2YmAdd(lm, 4));
   c('そのままロードマップを開く', w._p2Pg === 'year' && !!$('.yr-tl'));
-  c('ロードマップのペースにその数字（今月は理想MAPの数字）', $('.yr-pace > div.fx b').textContent === '2' && $$('.yr-pace input')[0].value === '3');
+  c('ロードマップのペースにその数字（今月も手で直せる）', $$('.yr-pace input')[0].value === '2' && $$('.yr-pace input')[1].value === '3');
   c('古い案内（「設定」で確定）は出ない', !/「設定」で確定/.test(w.document.body.textContent));
 });

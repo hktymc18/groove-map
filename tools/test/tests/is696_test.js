@@ -2,7 +2,7 @@
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
-  T.login(); setWH(390, 844);
+  T.login(); setWH(390, 844); w.state.goals && (w._p2().sheet = w._p2().sheet || {}); w._p2Sh().mapViewM = 'sheet'; // v775: スマホの既定はツリー（ここではシート型を試す）
   w.switchView('plan'); await sleep(40);
   const mk = (n) => { const ms = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'ゴールド', parentId: '' }]; for (let i = 0; i < n; i++) ms.push({ id: 'm' + i, lastName: '佐藤' + i, firstName: '花', title: 'B1', parentId: i < 3 ? 'r' : 'm' + (i % 3), activity: 'S' }); return ms; };
   w.state.members = mk(5); w.state.idealMembers = [];
@@ -50,7 +50,7 @@ T.run(async () => {
   w.p2ShPinTgl(); await sleep(20);
   c('v700: 📌で上に固定（スマホは最初はしない）', !!$('.sp-mpin.on') && /固定中/.test($('.sp-pn').textContent));
   w.p2ShPinTgl(); await sleep(20);
-  w.state.members = mk(12); w.renderPlan(); await sleep(40);
+  w.state.members = mk(12); setWH(1440, 1000); w._uxSync && w._uxSync(); w.renderPlan(); await sleep(40); // v775: 自動でサークル／シート型を選ぶのはPC（スマホは最初ツリー）
   c('10人以上はサークルMAP（自動）', $('#p2ShMF').dataset.kind === 'circle' && !!$('#p2ShMI svg'));
   c('v708: 計画シートのサークルはMAPの画面と別のid（MAPの＋−が効く）', $('#p2ShMI svg').id !== 'orbitSvgI' && $('#p2ShMI svg').id !== 'orbitSvgC');
   w.p2ShMapView('sheet'); await sleep(20);
