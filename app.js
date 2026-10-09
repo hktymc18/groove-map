@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v758';
+var APP_JS_VERSION = 'v759';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3893,7 +3893,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v758';
+  var DATA_VERSION = 'v759';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5396,6 +5396,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v759', d:'2026-10-09', items:['分析 › パワーライン：上の月の並びを、古い月 → 今月 の順に（選んでいる月が見えるように自動で横にずらします）'] },
   { v:'v758', d:'2026-10-09', items:['メンバー（一覧）の画面をPCからもなくしました（左のメニュー・⌘K・プロフィールの「メンバータブ」の設定）。メンバーはMAPから見られます','使い方ガイドからも「メンバー」を消しました'] },
   { v:'v757', d:'2026-10-09', items:['使い方ガイドを設定から開いた時、設定のページが残ったまま下の画面で説明が始まり、関係ない所が光っていたのを直しました（説明を始める前に、上に重なっているページを閉じます）','光らせる所がほかの物に隠れている時は、見えている所だけを光らせる（全部隠れている時は真ん中に説明）ようにしました'] },
   { v:'v756', d:'2026-10-09', items:['使い方ガイドの説明（スポットライト）を増やしました：年の目標・ロードマップ、メンバーの画面（スマホ）／編集（PC）、フロント追加、受付連携、チェック、理想、夢100、シミュレーション、分析の研修・パワーライン・地域、OL、メンバー','「❓ 使い方」の画面ごとのガイドを MAP・PLAN・予定・ANALYTICS・そのほか に分けて並べました'] },
@@ -13024,7 +13025,7 @@ function renderDtPl() {
   var mx = lines.length ? lt[lines[0].id] : 1, sum = lines.reduce(function(s9, f) { return s9 + lt[f.id]; }, 0);
   var dlt = function(cur, prev) { if (prev === null) return ''; var d = cur - prev; return d ? '<small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲' : '▼') + Math.abs(d).toLocaleString() + '</small>' : ''; };
   var mLb = function(mon) { return parseInt(mon.slice(5), 10) + '月'; };
-  var h = (MS.length > 1 ? '<div class="dt-plm">' + MS.map(function(x, i) { return '<span class="' + (x === sel ? 'on' : '') + '" onclick="dtPlMon(\'' + x.mon + '\')">' + mLb(x.mon) + (i === 0 ? '（今月）' : '') + '<b>' + x.P.lines.length + '本</b></span>'; }).join('') + '</div>' : '')
+  var h = (MS.length > 1 ? '<div class="dt-plm">' + MS.slice().reverse().map(function(x) { return '<span class="' + (x === sel ? 'on' : '') + '" onclick="dtPlMon(\'' + x.mon + '\')">' + mLb(x.mon) + (x === MS[0] ? '（今月）' : '') + '<b>' + x.P.lines.length + '本</b></span>'; }).join('') + '</div>' : '')
     + '<div class="dt-card"><div class="dt-ch">' + icn('zap') + ' パワーライン<span style="color:var(--text-dim)">LTSV 5,000P以上の系列 ' + lines.length + '本・合計 ' + sum.toLocaleString() + '</span></div>';
   if (auto) h += '<div class="dt-plnt">今月はまだ 5,000P以上の系列がないので、' + mLb(sel.mon) + 'を出しています（ポイントが入ると今月に切りかわります）</div>';
   if (!lines.length) h += '<div class="ev-empty" style="padding:16px">' + (si ? mLb(sel.mon) + 'は' : '') + 'LTSV 5,000P以上の系列はまだありません</div>';
@@ -13054,6 +13055,7 @@ function renderDtPl() {
   });
   if (lines.length) h += '<div class="dt-hint">フロント（直下）ごとの系列。配下のBRは系列のLTSVに含まれます。行をタップで詳細</div>';
   box.innerHTML = h + '</div>';
+  try { var pm9 = box.querySelector('.dt-plm'), on9 = pm9 && pm9.querySelector('.on'); if (on9) pm9.scrollLeft = Math.max(0, on9.offsetLeft - pm9.clientWidth + on9.offsetWidth + 16); } catch (eSc) {} // v759: 選んでいる月（右の方）が見えるように
 }
 // ── 地域（今月の比較） ──
 var DT_REG_M = [['n', '人数'], ['tr', '研修生'], ['q', 'QBR'], ['br', 'BR以上'], ['s', 'S稼働'], ['b1', '新規B1']];
