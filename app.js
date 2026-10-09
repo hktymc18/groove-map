@@ -5566,7 +5566,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v784', d:'2026-10-09', items:['PCのフロント追加を、画面いっぱいではなく右側のパネルに（MAPを見ながら入れられます）', 'タイトルのカード（研修生・審査中・BA・BR）がPCでも色つきで出るように'] },
+  { v:'v784', d:'2026-10-09', items:['PCのフロント追加を、画面いっぱいではなく右側のパネルに（MAPを見ながら入れられます）', 'タイトルのカード（研修生・審査中・BA・BR）がPCでも色つきで出るように', '研修の「記録を足す」のAさん欄の表示を「名前」だけに'] },
   { v:'v783', d:'2026-10-09', pop: { t: 'メンバーの編集が新しい画面になりました', items: ['研修（ステップ・結果・記録）も活動・写真も、メンバー画面の中で。変えるとすぐ保存されます', 'ステップを押すとその記録を足せます。Aさんは最近の人から選べます', 'PCでも右側に同じ画面が出ます（MAPを見ながら直せます）'], go: ['MAPを開く', "switchView('current')"] }, items:['#10 「編集」はどこから開いても新しいメンバー画面に（スマホ・PCとも。今までの編集画面は出ません）', '研修：ステップの流れ（済み・予定・流れた・次）、研修結果、記録（新しい順）を1画面に。記録を押すと 進んだ／流れた／リスケ／消す（元に戻せる）', '記録を足す：ステップ・フォロー、今日／昨日／日付、Aさん（最近の人から選べる）、進んだ／予定／流れた', '活動：OL・タスク・企画書を足すボタンと、月ごとの一覧（すべて／OL／タスク／企画書で絞れる）', '写真：選ぶ・撮る → その場で丸く切り抜き（指で動かす・ピンチ・スライダー）。位置を直す・消す（元に戻せる）', 'プロフィールに年齢（誕生日がわからない時）、タイトルがOUTの人は「OUTの後の表示」を追加', 'PCは右側のパネルで開きます（Escで戻る・閉じる）'] },
   { v:'v782', d:'2026-10-09', items:['MAPの系列フォーカス（カードを押すと他の系列が薄くなる機能）と、その案内・解除の表示をなくしました'] },
   { v:'v781', d:'2026-10-09', items:['計画シートの印刷：iPhoneのホーム画面から開いたアプリで「印刷」を押しても何も起きなかったのを直しました。シートを画像にして共有の画面が出るので、「プリント」で印刷できます（画像の保存もできます）（#9）'] },
@@ -18470,7 +18470,7 @@ function _ppShAddHtml() {
   h += '<div class="ppl ppl2">日にち</div><div class="ppch"><span class="' + (S.dm === 't' ? 'on' : '') + '" onclick="ppShDay(\'t\')">今日 ' + _ppMD(_ppYmd(0)) + '</span><span class="' + (S.dm === 'y' ? 'on' : '') + '" onclick="ppShDay(\'y\')">昨日</span>'
     + '<span class="' + (S.dm === 'p' ? 'on' : '') + '" onclick="ppShDay(\'p\')">' + icn('calendar') + (S.dm === 'p' ? _ppMD(S.date) + '（' + _ppWd(S.date) + '）' : '日付を選ぶ') + '</span></div>';
   if (S.dm === 'p') h += '<input class="ppin" type="date" id="ppShDate" style="margin-top:8px" value="' + evEsc(S.date) + '" onchange="ppShDate(this.value)">';
-  h += '<div class="ppl ppl2">Aさん</div><input class="ppin" id="ppShA" placeholder="名前（なくてもOK）" autocomplete="off" value="' + evEsc(S.a) + '">';
+  h += '<div class="ppl ppl2">Aさん</div><input class="ppin" id="ppShA" placeholder="名前" autocomplete="off" value="' + evEsc(S.a) + '">';
   var sug = _ppAsanSug(); if (sug.length) h += '<div class="ppsug">' + sug.map(function(n) { return '<span onclick="ppShA(this.textContent)">' + evEsc(n) + '</span>'; }).join('') + '</div>';
   h += '<div class="ppl ppl2">どうだった</div><div class="ppseg">' + (fl ? [['next', '実施した', 'var(--accent)'], ['planned', '予定', 'var(--gold)']] : [['next', '進んだ', 'var(--accent)'], ['planned', '予定', 'var(--gold)'], ['left', '流れた', 'var(--red)']]).map(function(x) {
     return '<span class="' + (S.res === x[0] ? 'on' : '') + '" style="--c:' + x[2] + '" onclick="ppShSet(\'res\',\'' + x[0] + '\')">' + x[1] + '</span>';
