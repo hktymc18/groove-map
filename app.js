@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v766';
+var APP_JS_VERSION = 'v767';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1668,6 +1668,20 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       laneS[d9] = placeLane(d9, r9, tg).s;
     }
   };
+  // v767 #6: 内側のレーンから順に、子の目標位置を「親の今の位置＋整った木での親からのずれ」にして並べ直す
+  var follow = function() {
+    for (var d8 = 2; d8 <= maxLane; d8++) {
+      if (!byLane[d8]) continue;
+      var r8 = laneR(d8);
+      var tg8 = byLane[d8].map(function(id, k) {
+        var m8 = _byId[id], pu = m8 && m8.parentId ? uOf(m8.parentId) : null;
+        if (pu == null || uT[id] == null || uT[m8.parentId] == null) return laneS[d8][k];
+        var du8 = uT[id] - uT[m8.parentId]; if (du8 > 2) du8 -= 4; if (du8 < -2) du8 += 4;
+        return uToS(r8, pu + du8);
+      });
+      var res8 = placeLane(d8, r8, tg8); if (res8.ok) laneS[d8] = res8.s;
+    }
+  };
   // 今の KR で、全レーンの丸が重ならずに並ぶ最短の直線長 Lh を求めて配置
   var solve = function() {
     Lh = Math.max(R1, laneR(maxLane) * 0.3);
@@ -1683,7 +1697,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
         var res = placeLane(+dk, rr0, byLane[dk].map(function(id) { return uToS(rr0, uT[id]); }));
         laneS[dk] = res.s; if (!res.ok) allOk = false;
       }
-      if (allOk) { recenter(); break; }
+      if (allOk) { recenter(); follow(); recenter(); break; } // v767 #6: 子も親についていく（押し出された親から子が遠く離れて、線が長く回り込んでいた）
       Lh *= 1.18;
     }
   };
@@ -1830,19 +1844,47 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   var spineX0 = CX, spineX1 = CX;
   // v519: 923-4 隣り合う親のくし（横棒）が同じ高さで1本につながり「誰のフロントか」分からなかったため、
   //        同じレーンの親ごとに横棒の高さを3段（中・外・内）で交互にずらす
-  var trackOf = {};
+  // v767 #6: くしの横棒の高さ（レーンの間のどこを通るか）を、線が交差しない順に決める。
+  //   親Aの縦の線（親→横棒）が親Bの横棒の範囲にあれば「Aの横棒はBより内側」、Aの子への縦の線がBの範囲にあれば「Aは外側」。
+  //   範囲が重なるだけの親どうしも高さを変える（1本につながって誰のフロントか分からなくならないように）。前は3段で交互にずらすだけで、交差が残っていた
+  var rmOf = {};
   (function() {
-    var TG = Math.max(4, Math.min(12, (BAND - 2 * nr) / 4));
-    var pl = {};
+    var byP = {};
     members.forEach(function(m) {
-      if (!m.parentId || m.parentId === root.id) return;
-      var pp = posOf[m.parentId];
-      if (!pp || pp.u == null) return;
-      (pl[pp.lane] = pl[pp.lane] || {})[m.parentId] = pp.u;
+      if (!m.parentId || m.parentId === root.id || !_byId[m.parentId]) return;
+      var pp = posOf[m.parentId], pc = posOf[m.id];
+      if (!pp || pp.u == null || !pc || pc.u == null || pc.lane !== pp.lane + 1) return;
+      var o = byP[m.parentId] || (byP[m.parentId] = { id: m.parentId, lane: pp.lane, pu: pp.u, cs: [] });
+      var du = pc.u - pp.u; if (du > 2) du -= 4; if (du < -2) du += 4; o.cs.push(pp.u + du);
     });
-    for (var ln9 in pl) {
-      var ids9 = Object.keys(pl[ln9]).sort(function(a, b) { return pl[ln9][a] - pl[ln9][b]; });
-      ids9.forEach(function(id, i) { trackOf[id] = [0, 1, -1][i % 3] * TG; });
+    var lanes = {};
+    Object.keys(byP).forEach(function(id) { var o = byP[id]; o.lo = Math.min.apply(null, o.cs.concat([o.pu])); o.hi = Math.max.apply(null, o.cs.concat([o.pu])); (lanes[o.lane] = lanes[o.lane] || []).push(o); });
+    var EPS = 1e-4, inI = function(x, o) { for (var k = -1; k <= 1; k++) { var y = x + 4 * k; if (y > o.lo + EPS && y < o.hi - EPS) return true; } return false; };
+    var ovl = function(a, b) { for (var k = -1; k <= 1; k++) { if (a.lo + 4 * k < b.hi - EPS && b.lo < a.hi + 4 * k - EPS) return true; } return false; };
+    for (var L9 in lanes) {
+      var A = lanes[L9], n9 = A.length, below = A.map(function() { return []; }), indeg = A.map(function() { return 0; }), free = A.map(function() { return []; });
+      for (var i = 0; i < n9; i++) for (var j = i + 1; j < n9; j++) {
+        var a = A[i], b = A[j]; if (!ovl(a, b)) continue;
+        var aLowB = inI(a.pu, b) || b.cs.some(function(cu) { return inI(cu, a); }); // aの方が内側なら交差しない
+        var bLowA = inI(b.pu, a) || a.cs.some(function(cu) { return inI(cu, b); });
+        if (aLowB && !bLowA) { below[j].push(i); indeg[j]++; } else if (bLowA && !aLowB) { below[i].push(j); indeg[i]++; } else { free[i].push(j); free[j].push(i); }
+      }
+      var lv = A.map(function() { return -1; }), done = 0, q = [];
+      for (var i2 = 0; i2 < n9; i2++) if (!indeg[i2]) q.push(i2);
+      var outs = A.map(function() { return []; }); below.forEach(function(bs, k) { bs.forEach(function(x) { outs[x].push(k); }); });
+      var place = function(k) {
+        var mn = 0; below[k].forEach(function(x) { if (lv[x] >= 0) mn = Math.max(mn, lv[x] + 1); });
+        var used = {}; free[k].forEach(function(x) { if (lv[x] >= 0) used[lv[x]] = 1; });
+        var l = mn; while (used[l]) l++; lv[k] = l; done++;
+      };
+      while (done < n9) {
+        if (!q.length) { for (var i3 = 0; i3 < n9; i3++) if (lv[i3] < 0) { q.push(i3); break; } } // 循環（まれ）はそのまま置く
+        var k9 = q.shift(); if (lv[k9] >= 0) continue; place(k9);
+        outs[k9].forEach(function(x) { if (--indeg[x] === 0 && lv[x] < 0) q.push(x); });
+      }
+      var K = Math.max.apply(null, lv) + 1, lo9 = laneR(+L9) + nr + 3, hi9 = laneR(+L9 + 1) - nr - 3;
+      if (hi9 - lo9 < 4) { lo9 = laneR(+L9) + BAND * 0.3; hi9 = laneR(+L9) + BAND * 0.7; }
+      A.forEach(function(o, k) { rmOf[o.id] = K <= 1 ? (laneR(+L9) + BAND / 2) : lo9 + (hi9 - lo9) * (lv[k] + 0.5) / K; });
     }
   })();
   members.forEach(function(m) {
@@ -1855,13 +1897,13 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       spineX0 = Math.min(spineX0, sp.x); spineX1 = Math.max(spineX1, sp.x);
       dd = 'M' + fp(sp.x) + ',' + fp(sp.y) + ' L' + fp(p2.x) + ',' + fp(p2.y);
     } else if (p1.u != null && p2.u != null && p2.lane === p1.lane + 1) {
-      var rm = laneR(p1.lane) + BAND / 2 + (trackOf[m.parentId] || 0), a0 = lanePt(rm, p1.u);
+      var rm = rmOf[m.parentId] || (laneR(p1.lane) + BAND / 2), a0 = lanePt(rm, p1.u);
       dd = 'M' + fp(p1.x) + ',' + fp(p1.y) + ' L' + fp(a0.x) + ',' + fp(a0.y) + bandPts(rm, p1.u, p2.u) + ' L' + fp(p2.x) + ',' + fp(p2.y);
     } else {
       dd = 'M' + fp(p1.x) + ',' + fp(p1.y) + ' L' + fp(p2.x) + ',' + fp(p2.y);
     }
     var ln = document.createElementNS(NS, 'path');
-    ln.setAttribute('d', dd); ln.setAttribute('fill', 'none'); ln.setAttribute('class', 'orbit-link');
+    ln.setAttribute('d', dd); ln.setAttribute('fill', 'none'); ln.setAttribute('class', 'orbit-link'); ln.setAttribute('data-c', m.id);
     ln.setAttribute('stroke-linejoin', 'round');
     ln.setAttribute('stroke', cmap[m.id] || '#8a94a6'); ln.setAttribute('stroke-width', '2.4'); ln.setAttribute('opacity', m._ghost ? '0.25' : '0.85'); // v540: つながりの線を太く・濃く
     // v543: 929-1 共有MAPメンバーの線は点線をやめる（段の点線とまぎらわしい）。共有は丸の「共有」タグで示す
@@ -3893,7 +3935,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v766';
+  var DATA_VERSION = 'v767';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5396,6 +5438,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v767', d:'2026-10-09', items:['サークルMAP（計画シートのMAP・MAPの◎サークル）の線を見やすく：子の丸も親の近くに寄せて、線が長く回り込むのを減らしました','となりの親の線（くし）が重なる所は、交差しない順に通る高さを変えて、1本につながって見えないようにしました'] },
   { v:'v766', d:'2026-10-09', items:['年の目標：直近の目標が最終目標とまったく同じ数字になっていたのを直しました（例は一つ上のタイトル・途中の月に）。目標の画面でも、直近の目標の月収・タイトル・期日をいつでも直せます','計画シートの「シートを印刷」は、アプリの中のプレビューに（iPhoneのアプリで戻れなくなっていたのを直しました）。「‹ 戻る」で戻れて、「🖨 印刷」で印刷・PDF','印刷のプレビューは画面に合わせて自動の大きさ（−／＋でも変えられる）。シートの左（数字・改善点）と右（行動）の下の端がそろうようにしました'] },
   { v:'v765', d:'2026-10-09', items:['PC：左のメニューで選んでいる項目を、ブランドの緑に','ログイン画面の「NAVIGATOR」の文字をロゴと同じグラデーションの色に。下の「ver.2.0」の表示はなくしました'] },
   { v:'v764', d:'2026-10-09', items:['PC：左のメニューを明るい色（白）に、選んでいる項目を濃い色（紺）に。右の画面（少し灰色）とは境界線と薄い影で分けています','ダークモードでは、選んでいる項目をうすい緑で見分けやすく'] },
