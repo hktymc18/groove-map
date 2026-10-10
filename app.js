@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v787';
+var APP_JS_VERSION = 'v788';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4061,7 +4061,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v787';
+  var DATA_VERSION = 'v788';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5566,6 +5566,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v788', d:'2026-10-10', items:['スマホの計画シートの上に「PDF」「印刷」。「PDF」を押すとPDFを作って、できたら「保存・共有」（ファイルに保存・LINEで送る など）', 'スマホの印刷画面：上の帯を2段にして、「印刷」「PDF」が画面の外に出ないように'] },
   { v:'v787', d:'2026-10-10', items:['計画シートの印刷：下が切れる・右の行動の欄が重なるのを直しました', '印刷・PDFを「1枚／2枚」から選べるように（2枚＝1枚目はMAP、2枚目は数字と改善点・行動。組織が大きい人は最初から2枚）', '印刷の画面に「PDF」：印刷を通さずにPDFファイルを作って保存（スマホはできたら「保存・共有」）', '計画シートの行動の期日に「日付だけ」（ToDo・カレンダーには入れず、計画シートにだけ）', '理想：答え直す・見直すはページのいちばん下に小さく。下の「やりたいこと ›」をなくしました', '計画シートの下の「✓ 完了」をなくしました', '夢100：URLを入れた夢に「開く」（そのページへ）'] },
   { v:'v786', d:'2026-10-10', items:['PLANの入口から「立案」をなくしました', '理想のページに「‹ 戻る」（いちばん最初のページは「やりたいこと ›」しか押せなかった）', 'やりたいこと・なりたい自分の一覧は、ロードマップのサマリーではなく理想のページに', '受付の名簿で「無効」にした人（アカウントと紐付けた人）は、データも読み書きできないように（セキュリティルール）'] },
   { v:'v785', d:'2026-10-09', items:['ホームに「誕生日」カード：30日以内の人を近い順に（今日・明日は目立たせる・何歳になるか・「予定」で会う約束を）', 'その先は月ごとにたたんで表示。月を押すとその月の人が開きます（近い3か月は1か月ずつ、その先はまとめて）', '「誕生日がわからない人」から、その人のプロフィールを開いて誕生日を入れられます', 'MAPの「誕生日」チップのシートも同じ形に'] },
@@ -39155,7 +39156,7 @@ function _p2ShTopHtml(ym, pc) {
   _p2ShTopCss();
   var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), ro = _p2ShRo(), cur = _p2Ym(0), un = (currentUser && currentUser.union) || '';
   var h = '<div class="st-h"><b>計画シート</b><span class="ym"><span onclick="p2ShMon(-1)">‹</span>' + parseInt(ym.slice(0, 4), 10) + '年' + _p2ShMonLb(ym) + '<span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></span><i></i>'
-    + (un ? '<span class="un">' + evEsc(un) + '</span>' : '') + (pc ? _p2SumSeg('sh') : '') + (pc && !_p2SumOn('sh') ? '<span class="lay"><span class="' + (_p2ShLay() === 'lr' ? 'on' : '') + '" onclick="p2ShLayTgl(\'lr\')" title="左にMAP・右に書く欄">◧ 左右</span><span class="' + (_p2ShLay() === 'tb' ? 'on' : '') + '" onclick="p2ShLayTgl(\'tb\')" title="上にMAP・下に書く欄">⬒ 上下</span></span><span class="pr" onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>' : '') + '</div>' + (pc ? '' : '<div class="sm-bar">' + _p2SumSeg('sh') + '</div>');
+    + (un ? '<span class="un">' + evEsc(un) + '</span>' : '') + (pc ? _p2SumSeg('sh') : '') + (pc && !_p2SumOn('sh') ? '<span class="lay"><span class="' + (_p2ShLay() === 'lr' ? 'on' : '') + '" onclick="p2ShLayTgl(\'lr\')" title="左にMAP・右に書く欄">◧ 左右</span><span class="' + (_p2ShLay() === 'tb' ? 'on' : '') + '" onclick="p2ShLayTgl(\'tb\')" title="上にMAP・下に書く欄">⬒ 上下</span></span><span class="pr" onclick="p2ShPrint()">🖨 印刷・PDF（A3）</span>' : '') + '</div>' + (pc ? '' : '<div class="sm-bar"><span class="sh-pdf" onclick="p2ShPrint(1)">' + icn('save') + ' PDF</span><span class="sh-pdf" onclick="p2ShPrint()">' + icn('printer') + ' 印刷</span>' + _p2SumSeg('sh') + '</div>'); // v788: スマホも上からPDF・印刷
   if (_p2SumOn('sh')) return h; // v718: サマリーは見出しの行だけ
   // ① 年の目標
   var c1 = (Y.title || Y.inc) ? '<div class="st-c go" onclick="p2Go(\'year\')" title="年の目標・ロードマップを開く"><div class="l">年の目標' + (Y.dl ? '・' + Y.dl.slice(0, 4) + '年' : '') + '</div><div class="v">' + (Y.inc ? '<b>' + Y.inc + '</b>万' : '') + (Y.title ? '<span class="t">' + evEsc(Y.title) + '</span>' : '') + '</div></div>'
@@ -39691,13 +39692,14 @@ function _p2ShPrintHtml(ym, o) {
 var _p2PvZ = 0; // 0＝自動
 var _p2PvTwo = null; // v787: 2枚にするか（null＝自動）
 function p2ShPvTwo(v) { _p2PvTwo = !!v; try { localStorage.setItem('gm_shPr2', v ? '1' : '0'); } catch (e) {} p2ShPrint(); }
-function p2ShPrint() {
+function p2ShPrint(pdf) {
+  if (pdf === 1) setTimeout(function() { if (document.getElementById('p2ShPv')) p2ShPvPdf(); }, 500); // v788: スマホの「PDF」から開いた時は、すぐPDFを作り始める
   var ym = _p2ShYmN(), two = _p2PvTwo === null ? _p2ShPrintTwoAuto() : _p2PvTwo, html = _p2ShPrintHtml(ym, { two: two }), np = two ? 2 : 1;
   p2ShPvX(); window._p2ShPvN = np; window._p2ShPvTwo = two;
   var ov = document.createElement('div'); ov.id = 'p2ShPv';
   ov.innerHTML = '<div class="pv-hd"><span class="pv-b bk" onclick="p2ShPvX()">‹ 戻る</span><b>計画シート<small>' + _p2ShMonLb(ym) + '</small></b><span class="pv-sp"></span>'
-    + '<span class="pv-seg"><span class="' + (two ? '' : 'on') + '" onclick="p2ShPvTwo(0)">1枚</span><span class="' + (two ? 'on' : '') + '" onclick="p2ShPvTwo(1)">2枚</span></span>' // v787: 組織が大きい時は2枚（MAP／数字と行動）
-    + '<span class="pv-b" onclick="p2ShPvZ(-1)">−</span><span class="pv-b au" id="p2ShPvZl" onclick="p2ShPvZ(0)">自動</span><span class="pv-b" onclick="p2ShPvZ(1)">＋</span><span class="pv-b pdf" id="p2ShPvPdf" onclick="p2ShPvPdf()">' + icn('save') + ' PDF</span><span class="pv-b go" onclick="p2ShPvPrint()">🖨 印刷</span></div>'
+    + '<i class="pv-br"></i><span class="pv-seg"><span class="' + (two ? '' : 'on') + '" onclick="p2ShPvTwo(0)">1枚</span><span class="' + (two ? 'on' : '') + '" onclick="p2ShPvTwo(1)">2枚</span></span>' // v787: 組織が大きい時は2枚（MAP／数字と行動）
+    + '<span class="pv-b z" onclick="p2ShPvZ(-1)">−</span><span class="pv-b au z" id="p2ShPvZl" onclick="p2ShPvZ(0)">自動</span><span class="pv-b z" onclick="p2ShPvZ(1)">＋</span><span class="pv-b pdf" id="p2ShPvPdf" onclick="p2ShPvPdf()">' + icn('save') + ' PDF</span><span class="pv-b go" onclick="p2ShPvPrint()">🖨 印刷</span></div>'
     + '<div class="pv-bd" id="p2ShPvBd"><div class="pv-pg" id="p2ShPvPg"><iframe id="p2ShPvF" title="計画シート"></iframe></div></div>';
   if (!document.getElementById('p2ShPvCss')) {
     var st = document.createElement('style'); st.id = 'p2ShPvCss';
@@ -39710,7 +39712,9 @@ function p2ShPrint() {
       + '#p2ShPv iframe{position:absolute;left:0;top:0;border:0;background:#fff;transform-origin:0 0}'
       + '#p2ShPv .pv-seg{display:flex;border:1px solid var(--border);border-radius:11px;overflow:hidden;flex:none}#p2ShPv .pv-seg span{height:36px;padding:0 11px;display:flex;align-items:center;font-size:13px;font-weight:900;color:var(--text-mid);background:var(--surface2);cursor:pointer;white-space:nowrap}#p2ShPv .pv-seg span.on{background:var(--accent);color:var(--go-ink,#06251C)}'
       + '#p2ShPv .pv-b.pdf{gap:4px}#p2ShPv .pv-b.pdf svg{width:16px;height:16px}#p2ShPv .pv-b.pdf.rd{background:var(--accent);border-color:var(--accent);color:var(--go-ink,#06251C)}'
-      + '@media (max-width:520px){#p2ShPv .pv-hd b small{display:none}#p2ShPv .pv-b{min-width:34px;padding:0 8px}#p2ShPv .pv-hd b{display:none}#p2ShPv .pv-seg span{padding:0 8px}}';
+      + '#p2ShPv .pv-br{display:none}'
+      // v788: スマホは2段（上＝戻る・PDF・印刷／下＝1枚2枚・大きさ）。1段だと右の「印刷」「PDF」が画面の外に出ていた
+      + '@media (max-width:640px){#p2ShPv .pv-hd{flex-wrap:wrap;row-gap:8px}#p2ShPv .pv-hd b small{display:none}#p2ShPv .pv-br{display:block;flex-basis:100%;height:0;order:5}#p2ShPv .pv-seg{order:6}#p2ShPv .pv-b.z{order:7}#p2ShPv .pv-seg+.pv-b.z{margin-left:auto}#p2ShPv .pv-b{min-width:36px;padding:0 10px}#p2ShPv .pv-b.pdf,#p2ShPv .pv-b.go{padding:0 14px}}';
     document.head.appendChild(st);
   }
   document.body.appendChild(ov);
@@ -40281,7 +40285,7 @@ function _p2SumCss() {
   if (document.getElementById('p2SumCss')) return;
   var st = document.createElement('style'); st.id = 'p2SumCss';
   st.textContent = '.sm-seg{display:inline-flex;flex:none;border:1px solid var(--border);border-radius:10px;overflow:hidden;font-family:inherit}.sm-seg span{padding:6px 11px;font-size:12.5px;font-weight:900;color:var(--text-dim);cursor:pointer;white-space:nowrap;letter-spacing:0}.sm-seg span.on{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}'
-    + '.sm-bar{display:flex;justify-content:flex-end;margin:0 0 10px}'
+    + '.sm-bar{display:flex;justify-content:flex-end;margin:0 0 10px}.sm-bar .sh-pdf{display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 12px;margin-right:8px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13.5px;font-weight:900;color:var(--text);cursor:pointer;white-space:nowrap}.sm-bar .sh-pdf:first-child{margin-right:6px}.sm-bar .sh-pdf+.sh-pdf{margin-right:auto}.sm-bar .sh-pdf svg{width:16px;height:16px}'
     + '.sm{max-width:1180px}.sm-h{font-size:14px;margin:18px 0 8px;font-weight:900;color:var(--text-mid);display:flex;align-items:center;gap:8px}.sm-h small{font-weight:700;color:var(--text-dim);font-size:12px}'
     + '.sm-g4,.sm-kg,.sm-ag{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.sm-c,.sm-k,.sm-a{padding:12px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--border);min-width:0}'
     + '.sm-c small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:800}.sm-c b{font:900 22px Inter,sans-serif}.sm-c b i,.sm-k .v i{font-style:normal;font-size:12px;color:var(--text-mid);margin-left:2px;font-weight:800}.sm-c .t{font-size:16px;color:var(--gold);margin-left:6px}.sm-c em{font-style:normal;font-size:12px;color:var(--text-mid);font-weight:800;margin-left:6px}.sm-c .gd{color:var(--gold)}.sm-c .or{color:#FB923C}.sm-c .ac{color:var(--accent)}'
