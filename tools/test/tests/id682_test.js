@@ -4,7 +4,7 @@ const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
   T.login(); setWH(390, 844);
   w.switchView('plan'); w.p2Go('ideal', 0); await sleep(60);
-  c('最初のページは「前へ」を出さない・右は「やりたいこと ›」（完了ではない）', !$('.ux-btm .ux-bk[onclick]') && /やりたいこと/.test($('.ux-btm .ux-nx').textContent) && !/完了/.test($('.ux-btm').textContent));
+  c('最初のページは「‹ 戻る」でPLANへ（v786）・右は「やりたいこと ›」（完了ではない）', $('.ux-btm .ux-bk').getAttribute('onclick') === "p2Go('')" && /戻る/.test($('.ux-btm .ux-bk').textContent) && /やりたいこと/.test($('.ux-btm .ux-nx').textContent) && !/完了/.test($('.ux-btm').textContent));
   const g = w._p2G(); g.ans.housing_cost = 20; g.ans.food_cost = 10; g.p1 = true; w.p2Go('ideal', 0); await sleep(60);
   c('①答え終わったら同じページに金額（○万円/月・タイトル）', !!$('#p2GwWrap .p2id-amt') && /30/.test($('#p2GwWrap .p2id-amt').textContent));
   w.p2Go('ideal', 1); await sleep(30);

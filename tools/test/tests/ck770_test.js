@@ -87,5 +87,6 @@ T.run(async () => {
   // ⑥ ルール
   const rules = fs.readFileSync(R + '/firestore.rules', 'utf8');
   c('ルール：本人は紐付いた自分の名簿だけ読める', /match \/checkinMembers\/\{no\}[\s\S]{0,500}get\('ckNo', ''\) == no/.test(rules));
+  c('v786 ルール：名簿で無効の人は無効化と同じ（notDisabled が rosterOff を見る・オーナーと管理者は除く）', /function notDisabled\(uid\) \{[^}]*!rosterOff\(uid\)/.test(rules) && /function rosterOff\(uid\)[\s\S]{0,700}get\('role', ''\) != 'admin'[\s\S]{0,300}checkinMembers\/\$\(no\)\)\.data\.get\('active', true\) == false/.test(rules));
   c('ルール：本人は紐付け（ckNo）を変えられない', /isSelf\(uid\)[\s\S]{0,300}get\('ckNo',''\)\s*== resource\.data\.get\('ckNo',''\)/.test(rules) && /!\('ckNo' in request\.resource\.data\)/.test(rules));
 });

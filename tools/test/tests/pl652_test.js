@@ -8,7 +8,7 @@ T.run(async () => {
   w.state.goals.plan.income = 3410000; w.state.goals.plan.title = 'チームエリート'; w.state.goals.plan.deadline = '2029-12';
   w.p2Go(''); await sleep(20);
   const lbs = $$('#view-plan .ux-t b').map(x => x.textContent);
-  c('入口（v736）：年の目標・計画シート・やることの順、その下に理想・夢100・シミュレーション', lbs[0] === '年の目標・ロードマップ' && /月の計画シート/.test(lbs[1]) && lbs.slice(2, 6).join() === '立案,理想,夢100,シミュレーション', lbs.join());
+  c('入口（v736）：年の目標・計画シート・やることの順、その下に理想・夢100・シミュレーション', lbs[0] === '年の目標・ロードマップ' && /月の計画シート/.test(lbs[1]) && lbs.slice(2, 5).join() === '理想,夢100,シミュレーション', lbs.join()); // v786: 立案はなくした
   c('v686: 今週やることのタイルはなし（計画シートの行動に）', lbs.indexOf('今週やること') < 0);
   w.p2Go('do'); await sleep(10);
   c('v653: 今週やることの上に◯月の目標（押すと目標のページ）', $('#view-plan .ux-li').textContent.indexOf('月の目標') >= 0 && $('#view-plan .ux-li').getAttribute('onclick') === "p2Go('mon')");

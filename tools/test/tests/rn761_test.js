@@ -5,7 +5,7 @@ T.run(async () => {
   T.login(); setWH(390, 844); w._uxSync && w._uxSync();
   w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'G', parentId: '', mapType: 'both' }, { id: 'a', lastName: '井上', firstName: '花', title: 'LOI', parentId: 'r', mapType: 'both' }];
   w.switchView('plan'); w.p2Go(''); await sleep(20);
-  c('PLANの入口のタイルは「立案」', $$('.ux-tile, [onclick="p2Go(\'yk\')"]').some(x => /立案/.test(x.textContent)));
+  c('v786：PLANの入口に「立案」は出さない', !$$('.ux-tile').some(x => /立案/.test(x.textContent)));
   w.p2Go('yk'); await sleep(30);
   c('ページの名前は「立案」', /PLAN › 立案/.test($('.ux-crumb').textContent));
   const ib = $('.ux-top .ux-ib'); c('ⓘがある', !!ib);
