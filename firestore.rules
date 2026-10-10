@@ -11,6 +11,7 @@ rules_version = '2';
 //   - users/{uid} = 3アプリ共通プロフィール（union/area/upRuby/upBd/role/status）
 //   - オーナーUIDは固定で「永久管理者」。role=='admin' で共同管理者を動的に付与。
 //   - status=='disabled' で当該ユーザーは自分のデータを読み書き不可（管理者が設定）。
+//   - v786: 受付の名簿と紐付けた人は、名簿で「無効」にした時も同じく読み書き不可（rosterOff）。
 //   - 既存(レガシー)プロフィールは status 未設定 → 「無効化されていない」扱いでロックしない。
 // =====================================================================
 service cloud.firestore {
@@ -43,7 +44,18 @@ service cloud.firestore {
     // ※承認制のMAPアクセス制御はクライアント側(loginSuccessの承認待ちゲート)で実施。
     //   個人アプリ(GOAL SETTING / ATTACK LIST)は登録直後(pending)から使える。
     function notDisabled(uid) {
-      return profileExists(uid) && profile(uid).get('status','active') != 'disabled';
+      return profileExists(uid) && profile(uid).get('status','active') != 'disabled' && !rosterOff(uid);
+    }
+    // 🔗 v786: 受付（BASE CHECK-IN）の名簿で「無効」にした人は、データも読み書きできない（無効化と同じ扱い）
+    //   対象＝アカウント管理で名簿と紐付けた人（users/{uid}.ckNo）。オーナー・管理者は対象外（アプリの画面の判定と同じ）
+    function rosterOff(uid) {
+      let pf = profile(uid);
+      let no = pf.get('ckNo', '');
+      return no is string && no != ''
+        && !(uid in ['j2DPDAccCygHmR9i5K3bTvHnH0V2', 'E4WT7EHai5c6WANUgASz42Euu1y1'])
+        && pf.get('role', '') != 'admin'
+        && exists(/databases/$(database)/documents/checkinMembers/$(no))
+        && get(/databases/$(database)/documents/checkinMembers/$(no)).data.get('active', true) == false;
     }
     // 自分が有効なオーナー
     function ownerActive(uid) { return isSelf(uid) && notDisabled(uid); }

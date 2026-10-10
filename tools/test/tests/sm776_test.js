@@ -38,6 +38,11 @@ T.run(async () => {
   const g = w._p2G(); g.ans.want_do = ['ハワイに家族旅行', '家を建てる']; g.ans.want_be = ['みんなに頼られる人'];
   w.p2Go('year'); await sleep(30); w.p2SumTgl('yr', 1); await sleep(30);
   const wn = $('.sm-wns');
-  c('ロードマップのサマリーの先頭にやりたいこと・なりたい自分', !!wn && /ハワイに家族旅行/.test(wn.textContent) && /家を建てる/.test(wn.textContent) && /みんなに頼られる人/.test(wn.textContent) && $('.sm').firstElementChild.classList.contains('sm-h'));
+  c('v786：ロードマップのサマリーにはやりたいこと・なりたい自分を出さない（理想へ）', !wn);
+  w.p2SumTgl('yr', 0);
+  w.p2Go('ideal', 0); await sleep(30);
+  const wi = $('.p2id-w .sm-wns');
+  c('v786：理想のページにやりたいこと・なりたい自分の一覧', !!wi && /ハワイに家族旅行/.test(wi.textContent) && /家を建てる/.test(wi.textContent) && /みんなに頼られる人/.test(wi.textContent));
+  w.p2Go('year'); await sleep(30); w.p2SumTgl('yr', 1); await sleep(30);
   w.p2SumTgl('yr', 0);
 });
