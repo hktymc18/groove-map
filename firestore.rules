@@ -92,16 +92,18 @@ service cloud.firestore {
         && hasRequiredProfile(request.resource.data)
         && (!('role'   in request.resource.data) || request.resource.data.role   == 'member')
         && request.resource.data.get('status','pending') != 'active'
-        && !('ckNo' in request.resource.data);
+        && !('ckNo' in request.resource.data)
+        && !('early' in request.resource.data);
 
       // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
-      //       本人は role/status/ckNo（受付の名簿との紐付け）を変えない範囲のみ可。
+      //       本人は role/status/ckNo（受付の名簿との紐付け）/early（先行利用）を変えない範囲のみ可。
       allow update: if isOwnerAdmin()
         || (isUnionAdmin() && sameUnionAsTarget())
         || (isSelf(uid)
             && request.resource.data.get('role','member')   == resource.data.get('role','member')
             && request.resource.data.get('status','active') == resource.data.get('status','active')
-            && request.resource.data.get('ckNo','')         == resource.data.get('ckNo',''));
+            && request.resource.data.get('ckNo','')         == resource.data.get('ckNo','')
+            && request.resource.data.get('early', false)    == resource.data.get('early', false)); // v790: 先行利用は本人が変えられない
 
       // v777: 削除はオーナー／同じユニオンの管理者だけ（前はどのユニオンの管理者でも消せた）
       allow delete: if isOwnerAdmin() || (isUnionAdmin() && sameUnionAsTarget());
@@ -158,6 +160,14 @@ service cloud.firestore {
         allow read:  if ownerActive(uid);
         allow write: if ownerActive(uid);
       }
+    }
+
+    // ============ v790: 公開範囲（先行利用 → ユニオン単位 → 全国公開） ============
+    //   appAccess/mode  … ログインした人は読める（使えるかの判定）。変えられるのはオーナーだけ
+    //   appAccess/names … 登録待ちの名簿（名前）。オーナーと管理者だけ（承認した時に先行利用にするため）
+    match /appAccess/{doc} {
+      allow read:  if (doc == 'mode' && signedIn()) || isOwnerAdmin() || isUnionAdmin();
+      allow write: if (doc == 'mode' && isOwnerAdmin()) || (doc == 'names' && (isOwnerAdmin() || isUnionAdmin()));
     }
 
     // ============ MAP本体（months/stats/events/meta/shared） ============
