@@ -11,7 +11,7 @@ T.run(async () => {
   c('書く前に押すと「先に行動を書いて」', !$('#p2ShDtOv'));
   const t0 = $('#p2ShIn_front_0'); t0.value = 'リストアップ'; w.p2ShDtNew('front', 0); await sleep(30);
   const e1 = w.state.events.find(e => e.title === 'リストアップ');
-  c('書いてから押すと行動になって窓が開く（ToDo／予定を選ぶ・日付は空）', !!e1 && !!$('#p2ShDtOv') && /ToDoに入れる/.test($('#p2ShDtOv').textContent) && /予定に入れる/.test($('#p2ShDtOv').textContent) && $('#p2ShDtD').value === '' && !$('#p2ShDtTE'));
+  c('書いてから押すと行動になって窓が開く（ToDo／予定を選ぶ・日付は空）', !!e1 && !!$('#p2ShDtOv') && /ToDo/.test($('#p2ShDtOv').textContent) && /予定/.test($('#p2ShDtOv').textContent) && /日付だけ/.test($('#p2ShDtOv').textContent) /* v787: 3択 */ && $('#p2ShDtD').value === '' && !$('#p2ShDtTE'));
   w.p2ShDtOk(); await sleep(20);
   c('日にちを選ばないと入れない（勝手に今日にしない）', !e1.date && !!$('#p2ShDtOv'));
   $('#p2ShDtD').value = '2026-10-20'; w.p2ShDtOk(); await sleep(40);
