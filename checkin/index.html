@@ -424,6 +424,23 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
   .membercard.mc-black::before,.membercard.mc-black::after,.mc-deco .g-map{animation:none;}
 }
 
+/* ✨ 特別デザイン（オーナーがメンバーごとに指定: checkinMembers/cards の skin）
+   💀 reaper: 霧の中の死神。文字は白い縁取りで読みやすく、QRは白地のまま */
+.membercard.skin-reaper{background:radial-gradient(130% 95% at 50% 20%,#fbfbf9 0%,#e3e4e5 42%,#a7aaae 78%,#6f7277 100%);color:#121214;}
+.membercard.skin-reaper::before{
+  content:'';position:absolute;left:-6%;right:-6%;top:-2%;bottom:-4%;z-index:0;pointer-events:none;
+  background:url('skins/reaper.webp') center 30%/contain no-repeat;opacity:.92;
+  animation:reaperSway 7s ease-in-out infinite alternate;transform-origin:50% 100%;
+}
+.membercard.skin-reaper > *{position:relative;z-index:1;}
+.membercard.skin-reaper .mc-brand{color:#7a0b0b;text-shadow:0 0 4px #fff,0 0 8px #fff;}
+.membercard.skin-reaper .mc-union,.membercard.skin-reaper .mc-name{text-shadow:0 0 3px #fff,0 0 7px #fff,0 0 12px #fff;}
+.membercard.skin-reaper .mc-grade{display:inline-block;color:#7a0b0b;background:rgba(255,255,255,.8);border-radius:99px;padding:0 10px;}
+.membercard.skin-reaper .mc-grade:empty{visibility:hidden;}
+.membercard.skin-reaper .mc-group,.membercard.skin-reaper .mc-no{color:#1f2023;font-weight:700;text-shadow:0 0 3px #fff,0 0 7px #fff;}
+.membercard.skin-reaper #mcQr img,.membercard.skin-reaper #mcQr canvas{outline:2px solid #1b1b1e;}
+@keyframes reaperSway{from{transform:rotate(-.6deg) translateY(0);}to{transform:rotate(.6deg) translateY(-4px);}}
+@media (prefers-reduced-motion: reduce){ .membercard.skin-reaper::before{animation:none;} }
 /* 紙カード印刷 */
 #printArea{display:none;}
 @media print{
@@ -1297,8 +1314,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v42';
+var APP_VER = 'v43';
 var CHANGELOG = [
+  { v: 'v43', d: '2026/10/10', items: ['✨ 会員証の「特別デザイン」: オーナーがメンバーごとに会員証の背景を特別なデザインにできるようになりました（名簿の「会員証」から）'] },
   { v: 'v42', d: '2026/10/09', items: ['🧾 会員証の領収書「PDF保存」: 印刷画面を通さず、押してすぐPDFファイルで保存されるようになりました（これまでは印刷プレビューが開くまで20秒ほどかかっていました）'] },
   { v: 'v41', d: '2026/10/09', items: ['🔒 PCでは、タブやブラウザを閉じるとログアウトするようにしました（受付PCにログインが残らないように。NAVIGATORと同じ）。受付中はタブを開いたままにしてください（再読み込みではログアウトしません）', 'スマホ・タブレットは今までどおりログインしたままです'] },
   { v: 'v40', d: '2026/10/09', items: ['🤝 合同イベント手順書を追加（🔰 使い方 › 受付管理アプリ から開けます）: 準備・当日の受付・会員証がない方の受付と領収書・会計・集計の流れをまとめました'] },
@@ -2130,6 +2148,8 @@ function pxPanel(){
     $('btnManual').click();
   };
 }
+// ✨ 特別デザインの一覧（名簿の会員証画面でオーナーだけが選べる）
+var CARD_SKINS = { reaper: '💀 死神' };
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
@@ -2146,7 +2166,11 @@ function renderCard(c){
     brand.textContent = 'BASE CHECK-IN';
   }
   var style = GRADE_STYLES[c.grade || ''];
-  if(style){
+  var skin = !c.trainee && CARD_SKINS[c.skin || ''] ? c.skin : '';   // ✨ 特別デザインはグレードの色より優先（研修生は除く）
+  if(skin){
+    card.classList.add('skin-' + skin);
+    $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
+  } else if(style){
     card.classList.add(style, 'premium');
     $('mcGrade').textContent = GRADE_LABELS[c.grade] || c.grade;
   } else {
@@ -2191,7 +2215,7 @@ function showCardView(token){
         }
       }
       renderReceipts(c);
-      try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '', trainee: !!c.trainee })); }catch(e){}
+      try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '', trainee: !!c.trainee, skin: c.skin || '' })); }catch(e){}
       // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
       // ホーム画面ショートカットから開いた旧トークンのページでは、QRを出さず案内する
       // （旧QRを受付でスキャンすると「無効な会員証」になり続けるため、その入口で止める）
@@ -4111,7 +4135,7 @@ $('btnGradeSel').onclick = function(){
         batch.set(db.collection('cards').doc(m.cardToken), {
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
           grade: grade,
-          trainee: !!m.trainee, trainings: m.trainings || {},
+          trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
           createdAt: FV.serverTimestamp()
         });
       }
@@ -4451,7 +4475,7 @@ function refreshCardDoc(token, m){
     return ref.set({
       no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
       grade: m.grade || '',
-      trainee: !!m.trainee, trainings: m.trainings || {},
+      trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
       active: !ckMemberOff(m),   // 無効の間は本人のカードに先のハウディの予定を出さない
       createdAt: FV.serverTimestamp()
     });
@@ -4472,7 +4496,7 @@ function issueCard(m, cb){
   batch.set(db.collection('cards').doc(token), {
     no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
     grade: m.grade || '',
-    trainee: !!m.trainee, trainings: m.trainings || {},
+    trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
     createdAt: FV.serverTimestamp()
   });
   batch.set(db.collection('checkinMembers').doc(m.no), {
@@ -4521,8 +4545,28 @@ function cardModal(m){
       + '<p style="font-size:12px;color:var(--sub);margin-top:10px;">再発行=機種変更・紛失時（旧URLは即使えなくなります）。無効化=退会時。</p>'
       + '<div class="btns"><button id="cmClose">閉じる</button></div>';
   }
+  if(isOwner()){
+    // ✨ 特別デザイン（オーナーのみ）: 会員証の背景を特別なものに。発行前に選んでおけば発行時に反映
+    body += '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:6px;">'
+      + '<label>✨ 特別デザイン（オーナーだけが設定できます）</label>'
+      + '<select id="cmSkin"><option value="">なし（グレードの通常デザイン）</option>'
+      + Object.keys(CARD_SKINS).map(function(k){ return '<option value="' + k + '"' + (m.skin === k ? ' selected' : '') + '>' + esc(CARD_SKINS[k]) + '</option>'; }).join('')
+      + '</select></div>';
+  }
   modal('<h2>スマホ会員証 — ' + esc(m.name || '') + '</h2>' + body);
   $('cmClose').onclick = closeModal;
+  var sk = $('cmSkin');
+  if(sk) sk.onchange = function(){
+    var v = sk.value, batch = db.batch();
+    batch.set(db.collection('checkinMembers').doc(m.no), { skin: v ? v : FV.delete() }, { merge: true });
+    if(m.cardToken) batch.set(db.collection('cards').doc(m.cardToken), { skin: v ? v : FV.delete() }, { merge: true });
+    sk.disabled = true;
+    batch.commit().then(function(){
+      if(v) m.skin = v; else delete m.skin;
+      sk.disabled = false;
+      toast(v ? '特別デザイン「' + CARD_SKINS[v] + '」にしました（本人が会員証を開き直すと反映）' : '通常のデザインに戻しました');
+    }).catch(function(e){ sk.disabled = false; toast(permMsg(e, '変更できませんでした')); });
+  };
   var bIssue = $('cmIssue'), bCopy = $('cmCopy'), bRe = $('cmReissue'), bRv = $('cmRevoke');
   if(bIssue) bIssue.onclick = function(){
     bIssue.disabled = true;
@@ -4617,7 +4661,7 @@ $('btnCardBulk').onclick = function(){
         batch.set(db.collection('cards').doc(token), {
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
           grade: m.grade || '',
-          trainee: !!m.trainee, trainings: m.trainings || {},
+          trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
           createdAt: FV.serverTimestamp()
         });
         batch.set(db.collection('checkinMembers').doc(m.no), {
