@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v788';
+var APP_JS_VERSION = 'v789';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4061,7 +4061,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v788';
+  var DATA_VERSION = 'v789';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5566,6 +5566,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v789', d:'2026-10-10', items:['理想MAPの「＋ 追加」で、理想のかんたん追加（ビジネスを足す／ユーザーを足す）が開くように（現状MAPのフロント追加が開いていた）。人を選んでいればその人の下、選んでいなければ自分の下'] },
   { v:'v788', d:'2026-10-10', items:['スマホの計画シートの上に「PDF」「印刷」。「PDF」を押すとPDFを作って、できたら「保存・共有」（ファイルに保存・LINEで送る など）', 'スマホの印刷画面：上の帯を2段にして、「印刷」「PDF」が画面の外に出ないように'] },
   { v:'v787', d:'2026-10-10', items:['計画シートの印刷：下が切れる・右の行動の欄が重なるのを直しました', '印刷・PDFを「1枚／2枚」から選べるように（2枚＝1枚目はMAP、2枚目は数字と改善点・行動。組織が大きい人は最初から2枚）', '印刷の画面に「PDF」：印刷を通さずにPDFファイルを作って保存（スマホはできたら「保存・共有」）', '計画シートの行動の期日に「日付だけ」（ToDo・カレンダーには入れず、計画シートにだけ）', '理想：答え直す・見直すはページのいちばん下に小さく。下の「やりたいこと ›」をなくしました', '計画シートの下の「✓ 完了」をなくしました', '夢100：URLを入れた夢に「開く」（そのページへ）'] },
   { v:'v786', d:'2026-10-10', items:['PLANの入口から「立案」をなくしました', '理想のページに「‹ 戻る」（いちばん最初のページは「やりたいこと ›」しか押せなかった）', 'やりたいこと・なりたい自分の一覧は、ロードマップのサマリーではなく理想のページに', '受付の名簿で「無効」にした人（アカウントと紐付けた人）は、データも読み書きできないように（セキュリティルール）'] },
@@ -14495,8 +14496,17 @@ function toggleModalSection(id) {
 }
 
 // #2 FABクリック — 親選択メニュー
+// v789: 理想MAPの「＋ 追加」は理想のかんたん追加（選んでいる人、いなければ自分の下に ビジネス／ユーザーを足す）。現状MAPのフロント追加を開いていた
+function _idqFab(pid) {
+  if (currentView !== 'ideal' || typeof idqOpen !== 'function') return false;
+  var arr = _idealEnsure(), ok = function(id) { return id && arr.some(function(m) { return m.id === id && !m.deleted; }); };
+  var id = ok(pid) ? pid : (ok(window._selectedCardId) ? window._selectedCardId : ((arr.filter(function(m) { return !m.parentId && !m.deleted; })[0] || {}).id));
+  if (!id) return false;
+  closeFabMenu(); idqOpen(id); return true;
+}
 function onFabClick() {
   if (!state.isEditor) return;
+  if (_idqFab()) return;
   if (!isPCMode() && (state.members || []).some(function(x) { return !x.parentId && !x.deleted; }) && currentView !== 'ideal') { naOpen(window._selectedCardId || ''); return; } // v615: スマホは新しい追加画面
   var members = membersForMap(currentView === 'ideal' ? 'ideal' : 'current');
   if (members.length === 0) {
@@ -14918,6 +14928,7 @@ function _qaStageGet() {
 }
 function openQuickAdd() {
   if (!state.isEditor) return;
+  if (_idqFab(selectedParentId)) return; // v789
   if (!isPCMode() && (state.members || []).some(function(x) { return !x.parentId && !x.deleted; })) { naOpen(selectedParentId || ''); return; } // v615
   var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
   if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は従来フォームで
