@@ -32,7 +32,7 @@ T.run(async () => {
   const chip = $$('.yk-r .ykd').find(x => x.closest('.yk-r').textContent.indexOf('本を2冊') >= 0);
   c('期日は未設定（勝手に入らない）', !!chip && /期日/.test(chip.textContent) && !t1.date);
   chip.click(); await sleep(10);
-  c('期日の窓（ToDo／予定を選ぶ）', !!$('#p2ShDtOv') && /ToDoに入れる/.test($('#p2ShDtOv').textContent) && /予定に入れる/.test($('#p2ShDtOv').textContent));
+  c('期日の窓（ToDo／予定を選ぶ）', !!$('#p2ShDtOv') && /ToDo/.test($('#p2ShDtOv').textContent) && /予定/.test($('#p2ShDtOv').textContent) && /日付だけ/.test($('#p2ShDtOv').textContent) /* v787: 3択 */);
   const nx = w._p2YmAdd(cur, 1), d1 = nx + '-12';
   $('#p2ShDtD').value = d1; w.p2ShDtOk(); await sleep(10);
   c('ToDoに入る（期日の月へ移る）', t1.type === 'task' && t1.date === d1 && t1.planYm === nx && $$('.ykd.td').some(x => /\d+\/12/.test(x.textContent)));

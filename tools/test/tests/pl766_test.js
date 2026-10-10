@@ -29,7 +29,7 @@ T.run(async () => {
   c('#7 シートは自動印刷しない', !/window\.print/.test(w._p2ShPvHtml) && /計画立案シート/.test(w._p2ShPvHtml));
   c('#8 大きさ：自動（画面に合わせる）', /自動/.test($('#p2ShPvZl').textContent) && $('#p2ShPvZl').classList.contains('on'));
   w.p2ShPvZ(1); c('#8 ＋で大きく（％が出る）', /%/.test($('#p2ShPvZl').textContent)); w.p2ShPvZ(0); c('#8 自動に戻す', /自動/.test($('#p2ShPvZl').textContent));
-  c('#8 左右の列を紙の高さいっぱいに（表を伸ばして下をそろえる）', /\.pg>div\{display:flex;flex-direction:column;height:279mm/.test(w._p2ShPvHtml) && /\.al table\{flex:1 1 0/.test(w._p2ShPvHtml) && /\.kp\{margin-top:2mm;flex:1 1 0/.test(w._p2ShPvHtml));
+  c('#8 左右の列を紙の高さいっぱいに（表を伸ばして下をそろえる）', /\.pg:not\(\.one\)>div\{display:flex;flex-direction:column;height:279mm/.test(w._p2ShPvHtml) && /\.al \.aw\{flex:1 1 0;min-height:0\}\.al table\{height:100%\}/.test(w._p2ShPvHtml) && /\.kpw\{margin-top:2mm;flex:1 1 0;min-height:0\}\.kp\{height:100%\}/.test(w._p2ShPvHtml)); // v787: 表は残りの高さの箱の中で伸ばす
   let printed = 0; const wp = w.print; w.print = () => { printed++; };
   w.p2ShPvPrint(); await sleep(260);
   c('#7 印刷ボタン：印刷用の層（CSSは層の中だけ）', printed === 1 && !!$('#p2ShPrintLayer') && /#p2ShPrintLayer \.l\{/.test($('#p2ShPrintLayer style').textContent) && !/[}]\.l\{/.test($('#p2ShPrintLayer style').textContent));

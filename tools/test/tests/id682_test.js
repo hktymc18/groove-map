@@ -4,13 +4,13 @@ const { w, c, sleep, setWH, $, $$ } = T;
 T.run(async () => {
   T.login(); setWH(390, 844);
   w.switchView('plan'); w.p2Go('ideal', 0); await sleep(60);
-  c('最初のページは「‹ 戻る」でPLANへ（v786）・右は「やりたいこと ›」（完了ではない）', $('.ux-btm .ux-bk').getAttribute('onclick') === "p2Go('')" && /戻る/.test($('.ux-btm .ux-bk').textContent) && /やりたいこと/.test($('.ux-btm .ux-nx').textContent) && !/完了/.test($('.ux-btm').textContent));
+  c('最初のページは「‹ 戻る」でPLANへ（v786）・右のボタンは出さない（v787）', $('.ux-btm .ux-bk').getAttribute('onclick') === "p2Go('')" && /戻る/.test($('.ux-btm .ux-bk').textContent) && !$('.ux-btm .ux-nx'));
   const g = w._p2G(); g.ans.housing_cost = 20; g.ans.food_cost = 10; g.p1 = true; w.p2Go('ideal', 0); await sleep(60);
   c('①答え終わったら同じページに金額（○万円/月・タイトル）', !!$('#p2GwWrap .p2id-amt') && /30/.test($('#p2GwWrap .p2id-amt').textContent));
   w.p2Go('ideal', 1); await sleep(30);
   c('ひと区切りのページは①の同じページに', w._p2PgI === 0 && !!$('#p2GwWrap .p2id-amt'));
-  $('.ux-btm .ux-nx').click(); await sleep(30);
-  c('①の「次へ」→ やりたいこと（入口へは戻らない）', w._p2Pg === 'ideal' && w._p2PgI === 2);
+  w.p2IdealNext(0); await sleep(30); // v787: 下の「次へ」はなくした（ページ下の「つぎは」・一覧の ✎ から）
+  c('①のあと → やりたいこと（入口へは戻らない）', w._p2Pg === 'ideal' && w._p2PgI === 2);
   const dots = $$('.ux-btm .ux-dots span');
   c('②は4ページで1セット（●が4つ）', dots.length === 4 && dots[0].classList.contains('on'));
   c('②の1ページ目の「前へ」は理想の生活へ', /前へ/.test($('.ux-btm .ux-bk').textContent) && /p2PgSub\(0\)/.test($('.ux-btm .ux-bk').getAttribute('onclick')));
