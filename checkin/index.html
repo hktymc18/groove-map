@@ -1340,8 +1340,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v48';
+var APP_VER = 'v49';
 var CHANGELOG = [
+  { v: 'v49', d: '2026/10/11', items: ['会計: オンライン受講の人が会場のBAに数えられていた問題を修正（PayPay集金のイベントでは「BA（オンライン）」に自動で入ります）', '会計: BAの人数を手で直して保存すると、次に開いても直した人数のまま表示されるように（「⟳ 受付データから自動入力」で受付の人数に戻せます）'] },
   { v: 'v48', d: '2026/10/11', items: ['👥 受付画面の「受付担当・運営を登録」: 受付担当・ユニオン管理者・MC・スピーカーを名簿から何人でもまとめて登録（徴収なしで出席・稼働率に入ります）', '👋 受付を始めた人は「自分も受付担当として出席に入れる」をワンタップで', '🆓 名簿タブの「徴収なしメンバー」: ユニオン管理者など、いつも徴収なしの人を登録。QRでピッしても自動で¥0、QRを読まなくても受付終了時のチェック一覧から出席に入れられます', '先にピッして徴収済みの人に役割を付けたときは、¥0にする（返金扱い）か確認するように'] },
   { v: 'v47', d: '2026/10/11', items: ['終了済みのイベントで「受付を開始」を押しても、終了済みのまま開くようにしました（押し間違いで集計・稼働率が変わらない）。遅れて来た人の追加はそのままできます', '↩ 間違えて「受付を終了」したイベントは、イベントタブの「↩ 終了を取り消す」で受付前の状態に戻せます（主催ユニオンの管理者・受付管理者）'] },
   { v: 'v46', d: '2026/10/11', items: ['受付中にイベントの設定（支払い方法・料金・PayPayのQR・合同ユニオン）を変えたら、受付中のすべてのPCにすぐ反映されるようにしました（PayPayのみに変えても、別のPCで金額が¥0のままになることがあった問題の修正）'] },
@@ -7576,6 +7577,8 @@ function financeModal(ev){
     // c1000/c500/c3 はイベント設定の第1部/第2部/第3部料金に一致した徴収の人数
     var bF1 = evFee1(ev), bF2 = evFee2(ev), bF3 = evFee3(ev);
     var attCount = 0, c1000 = 0, c500 = 0, c3 = 0;
+    // オンライン受講は会場のBAと分けて数える（オンライン料金が第1部と同額でも混ざらないように）
+    var onFee = (ev.onlineFee != null ? Number(ev.onlineFee) : 1000), cOn1 = 0, cOn2 = 0;
     var adet = [], dCash = 0, dPp = 0, dUnpaid = 0, dCashN = 0, dRefN = 0;
     var mcN = [], rcN = [];   // 受付で登録したMC・受付管理者の名前（納金票の署名に自動連動）
     res[1].forEach(function(d){
@@ -7598,7 +7601,12 @@ function financeModal(ev){
           }
         }
       }
-      if(!pending && fee > 0 && a.paid !== false && (ppMode || a.payMethod !== 'paypay')){
+      if(!pending && fee > 0 && a.paid !== false && a.method === 'online'){
+        // オンライン受講（PayPay送金）: PayPay集金イベントだけ「BA（オンライン）」に自動で数える
+        // （現金のイベントでは封筒に入らないお金なので、従来どおり手入力）
+        var onet = fee - (a.refund || 0);
+        if(ppMode){ if(onet === onFee) cOn1++; else if(onet === bF2) cOn2++; }
+      } else if(!pending && fee > 0 && a.paid !== false && (ppMode || a.payMethod !== 'paypay')){
         var net = fee - (a.refund || 0);
         if(net === bF1) c1000++;
         else if(net === bF2) c500++;
@@ -7645,23 +7653,34 @@ function financeModal(ev){
     ];
     if(bF3 != null) incDef.push({ label: 'BA', unit: bF3, count: c3 || '' });
     incDef.push(
-      { label: 'BA（オンライン）', unit: (ev.onlineFee != null ? ev.onlineFee : 1000), count: '' },
-      { label: 'BA（オンライン）', unit: bF2, count: '' },
+      { label: 'BA（オンライン）', unit: onFee, count: cOn1 || '' },
+      { label: 'BA（オンライン）', unit: bF2, count: cOn2 || '' },
       { label: '', unit: '', count: '' },
       { label: '', unit: '', count: '' }
     );
     var inc = (f.income && savedHasCount) ? f.income : incDef;
+    // 受付データから自動で数えられる行（BA＝設定料金、BA（オンライン）＝PayPay集金のみ）の人数。対象外は null
+    function autoCount(label, unit){
+      var u = Number(unit);
+      if(label === 'BA'){
+        if(u === bF1) return c1000;
+        if(u === bF2) return c500;
+        if(bF3 != null && u === bF3) return c3;
+      }
+      if(label === 'BA（オンライン）' && ppMode){
+        if(u === onFee) return cOn1;
+        if(u === bF2) return cOn2;
+      }
+      return null;
+    }
     // 受付の途中で支出だけ入力して保存すると、保存済みの人数で固定されて
-    // 以降の受付（IN）が反映されなくなるため、未確定の間はBA行（設定料金に
-    // 一致する行）を常に最新の受付データで表示する。その他の行は保存値を維持
+    // 以降の受付（IN）が反映されなくなるため、未確定の間は自動の行を常に最新の受付データで表示する。
+    // ただし手で直して保存した行（manual）はそのまま（以前は開くたびに受付データで上書きされ、手入力で直せなかった）
     if(!f.locked && f.income && savedHasCount){
       inc = inc.map(function(r){
-        if((r.label || '') !== 'BA') return r;
-        var u = Number(r.unit);
-        if(u === bF1) return { label: 'BA', unit: bF1, count: c1000 || '' };
-        if(u === bF2) return { label: 'BA', unit: bF2, count: c500 || '' };
-        if(bF3 != null && u === bF3) return { label: 'BA', unit: bF3, count: c3 || '' };
-        return r;
+        if(r.manual) return r;
+        var ac = autoCount(r.label || '', r.unit);
+        return ac == null ? r : { label: r.label, unit: Number(r.unit), count: ac || '' };
       });
     }
     var exp = f.expenses || [
@@ -7714,7 +7733,7 @@ function financeModal(ev){
       + (ev.payMode === 'both' ? '<span class="pill a">💴💳 現金・PayPay</span>　' : '')
       + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label style="color:var(--green);margin:0;">収入（＋）</label>'
-      + (!f.locked && (c1000 || c500 || c3) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
+      + (!f.locked && (c1000 || c500 || c3 || cOn1 || cOn2) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
       + '</div>' + incHtml
       + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(+)計 <span id="fiTotal" class="mono">¥0</span></div>'
       + '<label style="color:var(--accent);">支出（−）</label>' + expHtml
@@ -7779,6 +7798,11 @@ function financeModal(ev){
       $('fiL0').value = 'BA'; $('fiU0').value = bF1; $('fiC0').value = c1000 || '';
       $('fiL1').value = 'BA'; $('fiU1').value = bF2; $('fiC1').value = c500 || '';
       if(bF3 != null && $('fiC2')){ $('fiL2').value = 'BA'; $('fiU2').value = bF3; $('fiC2').value = c3 || ''; }
+      inc.forEach(function(r, i){   // BA（オンライン）など、そのほかの自動の行も受付データに戻す（手入力の印も外れる）
+        if(i < 3 || !$('fiC' + i)) return;
+        var ac = autoCount($('fiL' + i).value.trim(), num($('fiU' + i).value));
+        if(ac != null) $('fiC' + i).value = ac || '';
+      });
       recompute();
       toast('受付データからBA人数を入力しました（' + yen(bF1) + '×' + c1000 + '名・' + yen(bF2) + '×' + c500 + '名'
         + (bF3 != null ? '・' + yen(bF3) + '×' + c3 + '名' : '') + '）');
@@ -7803,8 +7827,11 @@ function financeModal(ev){
     function saveFinance(lock){
       var totals = recompute();
       var income = inc.map(function(r, i){
-        return { label: $('fiL' + i).value.trim(), unit: num($('fiU' + i).value),
+        var o = { label: $('fiL' + i).value.trim(), unit: num($('fiU' + i).value),
                  count: num($('fiC' + i).value), amount: num($('fiU' + i).value) * num($('fiC' + i).value) };
+        var ac = autoCount(o.label, o.unit);
+        if(ac != null && o.count !== ac) o.manual = true;   // 受付データと違う人数＝手で直した行（次に開いても上書きしない）
+        return o;
       });
       var expenses = exp.map(function(r, i){
         return { label: $('feL' + i).value.trim(), note: $('feN' + i).value.trim(),
