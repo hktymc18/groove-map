@@ -36,7 +36,7 @@ T.run(async () => {
   const g = w._p2G(); g.ans.housing_cost = 20; g.ans.food_cost = 10; g.p1 = true; g.ans.want_do = ['好きな時に好きな場所へ']; g.ans.want_be = ['感謝される自分'];
   w.p2Go('ideal', 0); await sleep(40);
   c('理想：下の「やりたいこと ›」はない', !$('.ux-btm .ux-nx') && /戻る/.test($('.ux-btm .ux-bk').textContent));
-  const txt = $('.p2id').textContent;
+  const txt = $('#uxBody').textContent; // v791: 答え直すは .p2id の下（.p2id-ft）
   c('理想：理想の生活 → やりたいこと → 答え直す（いちばん下に小さく）', txt.indexOf('あなたの理想の生活') < txt.indexOf('やりたいこと・なりたい自分') && txt.indexOf('やりたいこと・なりたい自分') < txt.indexOf('理想の生活を答え直す') && !!$('.p2id-redo') && !$('#p2GwWrap .ux-acts span[onclick="p2IdealRedo()"]'));
   // 夢100
   w._p2().dreams = [{ id: 'd1', cat: 'do', t: 'ルート66走破', amt: 200, dl: '2027-09', url: 'https://jp.hotels.com/go/usa/route-66', done: false }, { id: 'd2', cat: 'want', t: 'ドメインだけ', url: 'example.com/x', done: false }, { id: 'd3', cat: 'want', t: '変なURL', url: 'javascript:alert(1)', done: false }];
