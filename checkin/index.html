@@ -665,6 +665,7 @@ body.practice .topbar{top:var(--pxh,36px);}
           <span style="flex:1;min-width:200px;">🔁 <b>終了済みのイベント</b>を開いています。集計（稼働率）はそのままです。ここで追加した受付も、そのまま集計に入ります。</span>
           <button id="btnReopenClose">閉じる</button>
         </div>
+        <div id="recSelfBar" class="notice hide" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"></div>
         <div class="manualrow" style="margin:0 0 10px;">
           <span id="feeInfo" style="font-weight:700;font-size:14px;"></span>
           <button id="btnPartToggle" class="hide"></button>
@@ -698,8 +699,7 @@ body.practice .topbar{top:var(--pxh,36px);}
           <label style="font-size:12.5px;font-weight:700;color:var(--sub);margin-left:8px;">登壇者・運営:</label>
           <button id="btnMC">MCを登録</button>
           <button id="btnSpeaker">スピーカーを登録</button>
-          <button id="btnStaffRole">受付管理者を登録</button>
-          <button id="btnAdminRole">ユニオン管理者を登録</button>
+          <button id="btnStaffRole">👥 受付担当・運営を登録</button>
         </div>
       </div>
       <aside class="side">
@@ -726,6 +726,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
       <button id="btnCkAdmins" class="hide">👑 受付管理者</button>
+      <button id="btnFreeMembers" class="hide" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
       <button id="btnTrainers" class="hide">🎓 研修生登録の担当</button>
       <button id="btnAdminsView">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
@@ -1339,8 +1340,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v47';
+var APP_VER = 'v48';
 var CHANGELOG = [
+  { v: 'v48', d: '2026/10/11', items: ['👥 受付画面の「受付担当・運営を登録」: 受付担当・ユニオン管理者・MC・スピーカーを名簿から何人でもまとめて登録（徴収なしで出席・稼働率に入ります）', '👋 受付を始めた人は「自分も受付担当として出席に入れる」をワンタップで', '🆓 名簿タブの「徴収なしメンバー」: ユニオン管理者など、いつも徴収なしの人を登録。QRでピッしても自動で¥0、QRを読まなくても受付終了時のチェック一覧から出席に入れられます', '先にピッして徴収済みの人に役割を付けたときは、¥0にする（返金扱い）か確認するように'] },
   { v: 'v47', d: '2026/10/11', items: ['終了済みのイベントで「受付を開始」を押しても、終了済みのまま開くようにしました（押し間違いで集計・稼働率が変わらない）。遅れて来た人の追加はそのままできます', '↩ 間違えて「受付を終了」したイベントは、イベントタブの「↩ 終了を取り消す」で受付前の状態に戻せます（主催ユニオンの管理者・受付管理者）'] },
   { v: 'v46', d: '2026/10/11', items: ['受付中にイベントの設定（支払い方法・料金・PayPayのQR・合同ユニオン）を変えたら、受付中のすべてのPCにすぐ反映されるようにしました（PayPayのみに変えても、別のPCで金額が¥0のままになることがあった問題の修正）'] },
   { v: 'v45', d: '2026/10/11', items: ['✏ ユニオン名の変更（オーナー）: 名簿・会員証・イベント・過去の出席記録・集計・NAVIGATORのユーザーまで一括で新しい名前に付け替えられるようになりました（会員番号・会員証のURLやQRは変わりません）'] },
@@ -4157,6 +4159,64 @@ function ckRenameUnion(oldUn, newUn, log){
     }).then(function(){ return { ok: !errs.length, errs: errs }; });
   });
 }
+/* 🆓 徴収なしメンバー（ユニオン設定 checkinUnions/{un}.freeRoles = { 番号: { r: 役割, n: 氏名 } }）
+   QRでピッしても自動で¥0・役割付き。QRを読まなくても、受付終了時のチェック一覧から出席に入れられる */
+$('btnFreeMembers').onclick = function(){
+  var un = gRosterUnion;
+  if(!canEditUnion(un)) return;
+  db.collection('checkinUnions').doc(un).get().then(function(sn){
+    var fr = JSON.parse(JSON.stringify((sn.exists && sn.data().freeRoles) || {}));
+    modal('<h2>🆓 徴収なしメンバー — ' + esc(un) + '</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">ユニオン管理者など、<b>いつも徴収なしで出席に入れる人</b>です。'
+      + 'QRでピッしても自動で¥0になり、QRを読まなくても「受付を終了」のときに一覧から出席に入れられます（稼働率に入ります）。</p>'
+      + '<div id="fmList"></div>'
+      + '<label style="margin-top:12px;">追加する（名簿から名前検索）</label>'
+      + '<div style="display:flex;gap:6px;"><input type="text" id="fmQ" placeholder="氏名の一部" style="flex:1;min-width:0;">'
+      + '<select id="fmRole" style="width:auto;"><option value="unionadmin">ユニオン管理者</option><option value="staff">受付担当</option><option value="mc">MC</option><option value="speaker">スピーカー</option></select></div>'
+      + '<div id="fmHits" style="max-height:30vh;overflow:auto;"></div>'
+      + '<div class="btns"><button id="fmCancel">キャンセル</button><button class="primary" id="fmSave">保存</button></div>', true);
+    function draw(){
+      var ks = Object.keys(fr);
+      $('fmList').innerHTML = ks.length ? ks.map(function(no){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid var(--line);font-size:14px;">'
+          + '<b style="flex:1;">' + esc(fr[no].n || no) + '</b><span class="mono" style="font-size:12px;color:var(--sub);">' + esc(no) + '</span>'
+          + '<span class="pill g">' + esc(roleLabel(fr[no].r)) + '</span>'
+          + '<button class="danger ghost" data-fmdel="' + esc(no) + '" style="padding:3px 10px;font-size:12px;">外す</button></div>';
+      }).join('') : '<p style="color:var(--sub);font-size:13px;margin:0;">まだいません</p>';
+    }
+    draw();
+    $('fmList').onclick = function(e){
+      var b = e.target.closest ? e.target.closest('[data-fmdel]') : null;
+      if(b){ delete fr[b.getAttribute('data-fmdel')]; draw(); }
+    };
+    $('fmQ').oninput = function(){
+      var q = this.value.replace(/[ 　]/g, '');
+      if(!q){ $('fmHits').innerHTML = ''; return; }
+      var hits = gMembers.filter(function(m){ return !ckMemberOff(m) && ((m.name || '') + (m.kana || '')).replace(/[ 　]/g, '').indexOf(q) >= 0; }).slice(0, 10);
+      $('fmHits').innerHTML = hits.map(function(m){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13.5px;">'
+          + '<span style="flex:1;">' + esc(m.name || '') + ' <span style="color:var(--sub);font-size:12px;">' + esc(m.group || '') + '</span></span>'
+          + (fr[m.no] ? '<span style="color:var(--sub);font-size:12px;">登録済み</span>' : '<button data-fmadd="' + esc(m.no) + '" style="padding:3px 10px;font-size:12px;">追加</button>') + '</div>';
+      }).join('') || '<p style="color:var(--sub);font-size:13px;">該当なし</p>';
+    };
+    $('fmHits').onclick = function(e){
+      var b = e.target.closest ? e.target.closest('[data-fmadd]') : null;
+      if(!b) return;
+      var no = b.getAttribute('data-fmadd'), m = null;
+      gMembers.forEach(function(x){ if(x.no === no) m = x; });
+      if(!m) return;
+      fr[no] = { r: $('fmRole').value, n: m.name || '' };
+      draw(); $('fmQ').oninput.call($('fmQ'));
+    };
+    $('fmCancel').onclick = closeModal;
+    $('fmSave').onclick = function(){
+      $('fmSave').disabled = true;
+      db.collection('checkinUnions').doc(un).update({ freeRoles: fr }).then(function(){
+        closeModal(); toast('徴収なしメンバーを保存しました（' + Object.keys(fr).length + '名）');
+      }).catch(function(e){ $('fmSave').disabled = false; toast(permMsg(e, '保存はユニオン管理者・受付管理者のみ可能です')); });
+    };
+  }).catch(function(e){ toast('読込エラー: ' + e.message); });
+};
 $('btnRenUnion').onclick = function(){
   if(!isOwner()) return;
   modal('<h2>✏ ユニオン名を変更</h2>'
@@ -4268,6 +4328,7 @@ function renderRoster(){
   $('btnDelUnion').classList.toggle('hide', !isOwner());
   $('btnRenUnion').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
+  $('btnFreeMembers').classList.toggle('hide', !canEditUnion(gRosterUnion));
   $('btnTrainers').classList.toggle('hide', !edit);
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
@@ -8094,6 +8155,34 @@ $('btnRecStart').onclick = function(){
   if(ev) startReception(ev);
 };
 $('btnRecStop').onclick = function(){
+  // 🆓 まだ受付していない「徴収なしメンバー」がいれば、来ていた人をチェックで出席に入れてから終了
+  var miss = (gRec && gRec.free) ? Object.keys(gRec.free).filter(function(no){ return !gRec.att[no] && !(gRec.off && gRec.off[no]); }) : [];
+  if(!miss.length){ ckRecStop(); return; }
+  modal('<h2>🆓 徴収なしメンバー</h2>'
+    + '<p style="font-size:13.5px;margin:0 0 8px;">まだ受付していない「徴収なしメンバー」です。<b>今日来ていた人にチェック</b>を入れてください（徴収なしで出席・稼働率に入ります）。</p>'
+    + miss.map(function(no, i){
+        var f = gRec.free[no], m = gRec.roster[no];
+        return '<div class="chkrow"><input type="checkbox" id="fmc' + i + '" data-no="' + esc(no) + '">'
+          + '<label for="fmc' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc((m && m.name) || f.n || no)
+          + ' <span style="color:var(--sub);font-size:12px;">' + esc(roleLabel(f.r)) + (f.u && (gRec.ev.unions || []).length > 1 ? '・' + esc(f.u) : '') + '</span></label></div>';
+      }).join('')
+    + '<div class="btns"><button id="fmBack">受付に戻る</button><button id="fmSkip">誰もいない（そのまま終了）</button><button class="primary" id="fmGo">チェックした人を入れて終了</button></div>', true);
+  $('fmBack').onclick = function(){ closeModal(); focusScan(); };
+  $('fmSkip').onclick = function(){ closeModal(); ckRecStop(); };
+  $('fmGo').onclick = function(){
+    var n = 0;
+    Array.prototype.forEach.call(document.querySelectorAll('#modalHost input[data-no]'), function(cb){
+      if(!cb.checked) return;
+      var no = cb.getAttribute('data-no'), f = gRec.free[no];
+      var m = gRec.roster[no] || { no: no, name: f.n || '', union: f.u || '', group: '' };
+      if(ckRoleAttend(m, f.r || 'unionadmin') !== 'off') n++;
+    });
+    closeModal();
+    if(n) toast(n + '名を徴収なしで出席に入れました');
+    setTimeout(ckRecStop, 300);
+  };
+};
+function ckRecStop(){
   var ev = gRec && gRec.ev;
   // この端末で受付中でない場合（別端末で受付した・ページを開き直した等）でも、
   // 選択中のイベントの「受付終了」を記録できるようにする。
@@ -8140,7 +8229,7 @@ $('btnRecStop').onclick = function(){
   // 受付終了 → そのまま会計入力へ
   if(canFinEv(ev) && window.confirm('受付を終了しました。このまま会計を入力しますか？')) financeModal(ev);
   else if(!canFinEv(ev)) toast('受付を終了しました（会計の入力はユニオン管理者・受付管理者が行います）');
-};
+}
 
 function startReception(ev){
   var tdy = todayStr(), evDate = ev.date || '';
@@ -8180,6 +8269,15 @@ function startReception(ev){
       if(!gRec.payLink && s.data().payLink){ gRec.payLink = s.data().payLink; renderFeeRow(); }
     }
   }).catch(function(){});
+  // 🆓 参加ユニオンの「徴収なしメンバー」を読む（合同は全ユニオン分）
+  gRec.free = {};
+  (ev.unions || []).forEach(function(un){
+    db.collection('checkinUnions').doc(un).get().then(function(sn){
+      if(!gRec || gRec.ev !== ev || !sn.exists) return;
+      var fr = (sn.data() || {}).freeRoles || {};
+      Object.keys(fr).forEach(function(no){ gRec.free[no] = { r: fr[no].r || 'unionadmin', n: fr[no].n || '', u: un }; });
+    }).catch(function(){});
+  });
   renderFeeRow();
   $('recNone').classList.add('hide');
   $('recArea').classList.remove('hide');
@@ -8206,6 +8304,7 @@ function startReception(ev){
     }).catch(function(){});   // 読めないユニオンは飛ばす（スキャン時の照会で対応）
   });
   Promise.all(loads).then(function(){
+    setTimeout(ckOfferSelfStaff, 600);   // 👋 受付を始めた人を受付担当として出席に（出席の読み込みを待ってから）
     toast('名簿を読み込みました（' + Object.keys(gRec.roster).length + '名）。受付を開始できます');
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 
@@ -8233,6 +8332,7 @@ $('btnReopenClose').onclick = function(){
 };
 function stopReception(){
   $('recReopenBar').classList.add('hide');
+  $('recSelfBar').classList.add('hide');
   if(gRec && gRec.unsub) gRec.unsub();
   if(gRec && gRec.evUnsub) gRec.evUnsub();
   gRec = null;
@@ -8708,7 +8808,7 @@ function scanMiss(no){
 }
 function roleLabel(r){
   return r === 'mc' ? 'MC' : r === 'speaker' ? 'スピーカー'
-    : r === 'staff' ? '受付管理者' : r === 'unionadmin' ? 'ユニオン管理者' : '';
+    : r === 'staff' ? '受付担当' : r === 'unionadmin' ? 'ユニオン管理者' : '';
 }
 // サイドタイル・履歴用の短い表示
 function roleShort(r){
@@ -8779,7 +8879,11 @@ function checkinMember(member, method, role){
   var no = member.no;
   if(gRec.att[no]){
     if(role){
-      // すでに出席済み → 役割だけ付与
+      // すでに出席済み → 役割だけ付与（徴収済みなら¥0にするか確認＝返金扱い）
+      var pa = gRec.att[no], wasPaid = (pa.fee || 0) > 0 && pa.paid !== false;
+      if(wasPaid && window.confirm(member.name + ' さんはすでに ' + yen(pa.fee || 0) + ' 徴収済みです。\n' + roleLabel(role) + 'として ¥0 にしますか？（返金扱い）')){
+        setPay(no, { fee: 0 });
+      }
       gRec.att[no].role = role;
       renderTallies();
       db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
@@ -8803,6 +8907,8 @@ function checkinMember(member, method, role){
   }
   // 参加ユニオン外のメンバーはビジターとして記録（受付操作は同じ）
   var isVisitor = (gRec.ev.unions || []).indexOf(member.union) < 0;
+  // 🆓 徴収なしメンバー（ユニオン設定）は、QRでピッしても自動で¥0・役割付き
+  if(!role && gRec.free && gRec.free[no]) role = gRec.free[no].r || 'unionadmin';
   var fee = role ? 0 : currentFee();   // 登壇者は徴収なし。お金を払ってからピッ＝スキャンと同時に計上
   var data = {
     no: no, name: member.name || '', group: member.group || '',
@@ -8914,8 +9020,125 @@ $('nameIn').addEventListener('blur', function(){
 // MC・スピーカー・運営（受付管理者/ユニオン管理者）登録（名簿から名前検索。スピーカーは名簿外ゲストも可。いずれも徴収なし）
 $('btnMC').onclick = function(){ roleModal('mc'); };
 $('btnSpeaker').onclick = function(){ roleModal('speaker'); };
-$('btnStaffRole').onclick = function(){ roleModal('staff'); };
-$('btnAdminRole').onclick = function(){ roleModal('unionadmin'); };
+$('btnStaffRole').onclick = function(){ staffModal(); };
+/* 👥 受付担当・運営（徴収なしで出席・稼働率に入る。QRの読み取り不要） */
+// 名簿の人を役割付きで出席に。出席済みなら役割だけ付ける。戻り値: 'new' | 'role' | 'paid'（徴収済みで役割を付けた）| 'off'
+function ckRoleAttend(m, role){
+  if(!gRec || !m || !m.no) return 'off';
+  var no = m.no, a = gRec.att[no];
+  if(a){
+    var paid = (a.fee || 0) > 0 && a.paid !== false;
+    a.role = role; renderTallies();
+    db.collection('checkinEvents').doc(gRec.ev.id).collection('attendance').doc(no)
+      .set({ role: role }, { merge: true }).catch(function(e){ toast(permMsg(e, '記録権限がありません')); });
+    return paid ? 'paid' : 'role';
+  }
+  if(gRec.off && gRec.off[no]) return 'off';   // 無効のメンバーは登録しない
+  var data = {
+    no: no, name: m.name || '', group: m.group || '', union: m.union || gUnion,
+    method: 'manual', sex: m.sex || '', fee: 0, paid: true, refund: 0, role: role
+  };
+  if((gRec.ev.unions || []).indexOf(data.union) < 0) data.visitor = true;
+  if(!m.cardToken) data.noCard = true;
+  writeAttendance(no, data);
+  return 'new';
+}
+// 徴収済みの人を¥0に（返金扱い。会計・領収書・操作ログも連動）
+function ckZeroFees(nos, names){
+  if(!nos.length) return;
+  if(window.confirm('うち ' + nos.length + '名（' + names.join('・') + '）はすでに徴収済みです。\n¥0 にしますか？（返金扱い）')){
+    nos.forEach(function(no){ setPay(no, { fee: 0 }); });
+  }
+}
+function staffModal(){
+  if(!gRec){ toast('先に受付を開始してください'); return; }
+  var sel = {}, order = [];
+  modal('<h2>👥 受付担当・運営を登録</h2>'
+    + '<label>役割</label><select id="smRole"><option value="staff">受付担当</option><option value="unionadmin">ユニオン管理者</option>'
+    + '<option value="mc">MC</option><option value="speaker">スピーカー</option></select>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">徴収なし（¥0）で出席に入ります（稼働率にも入ります）。QRの読み取りは不要です。何人でもまとめて選べます。</p>'
+    + '<div class="rmgrid"><div><label>名簿から名前検索（見られるユニオンの名簿が対象）</label>'
+    + '<input type="text" id="rmQ" placeholder="氏名の一部を入力"></div>'
+    + '<div id="rmList" class="rmlist"><div class="rmhint">名前を入力して、候補をタップで選択（もう一度タップで外す）</div></div></div>'
+    + '<label>選んだ人</label><div id="smSel" style="font-size:13.5px;min-height:1.6em;"><span style="color:var(--sub);">まだいません</span></div>'
+    + '<div class="btns"><button id="smClose">閉じる</button><button class="primary" id="smGo" disabled>まとめて登録</button></div>', true);
+  function drawSel(){
+    $('smSel').innerHTML = order.length
+      ? order.map(function(no){ var m = sel[no];
+          return '<span class="pill g" style="margin:2px 4px 2px 0;display:inline-block;">' + esc(m.name || no)
+            + (gRec.att[no] ? '（出席済み）' : '') + ' <a href="#" data-smx="' + esc(no) + '" style="color:inherit;text-decoration:none;">×</a></span>'; }).join('')
+      : '<span style="color:var(--sub);">まだいません</span>';
+    $('smGo').disabled = !order.length;
+    $('smGo').textContent = order.length ? order.length + '名をまとめて登録' : 'まとめて登録';
+  }
+  function drawList(){
+    var q = $('rmQ').value.trim(), el = $('rmList');
+    if(!q){ el.innerHTML = '<div class="rmhint">名前を入力して、候補をタップで選択（もう一度タップで外す）</div>'; return; }
+    var hits = searchRoster(q, 12);
+    el.innerHTML = hits.length
+      ? hits.map(function(m){ return (sel[m.no] ? '<div style="font-size:11px;color:var(--green);font-weight:700;margin:4px 0 -4px 8px;">✓ 選択中</div>' : '') + sugItemHtml(m); }).join('')
+      : '<div style="padding:8px 12px;color:var(--sub);font-size:13px;">該当なし</div>';
+  }
+  function toggle(no){
+    if(sel[no]){ delete sel[no]; order = order.filter(function(x){ return x !== no; }); }
+    else { var m = gRec.roster[no]; if(!m) return; sel[no] = m; order.push(no); }
+    drawSel(); drawList();
+  }
+  $('rmQ').addEventListener('input', drawList);
+  $('rmList').onclick = function(e){
+    var it = e.target.closest ? e.target.closest('.sugitem') : null;
+    if(it) toggle(it.getAttribute('data-no'));
+  };
+  $('smSel').onclick = function(e){
+    var x = e.target.closest ? e.target.closest('[data-smx]') : null;
+    if(x){ e.preventDefault(); toggle(x.getAttribute('data-smx')); }
+  };
+  $('smClose').onclick = function(){ closeModal(); focusScan(); };
+  $('smGo').onclick = function(){
+    var role = $('smRole').value, paidNos = [], paidNames = [], n = 0;
+    order.forEach(function(no){
+      var r = ckRoleAttend(sel[no], role);
+      if(r === 'paid'){ paidNos.push(no); paidNames.push(sel[no].name || no); }
+      if(r !== 'off') n++;
+    });
+    closeModal();
+    ckZeroFees(paidNos, paidNames);
+    beep('ok');
+    toast(n + '名を「' + roleLabel(role) + '」として登録しました（徴収なし）');
+    focusScan();
+  };
+}
+// 👋 受付を始めた人（ログイン中の本人）を受付担当として出席に入れるか、画面上部で1回だけ聞く
+function ckFindSelfMember(){
+  if(!gRec || !gProf) return null;
+  var r = gRec.roster;
+  if(gProf.ckNo && r[gProf.ckNo]) return r[gProf.ckNo];
+  var nm = String(gProf.name || '').replace(/[ 　]/g, '');
+  if(!nm) return null;
+  var hit = null, n = 0;
+  Object.keys(r).forEach(function(no){ if(String(r[no].name || '').replace(/[ 　]/g, '') === nm){ hit = r[no]; n++; } });
+  return n === 1 ? hit : null;   // 同姓同名がいる時は聞かない（取り違え防止）
+}
+function ckOfferSelfStaff(){
+  if(!gRec || !gUser) return;
+  var m = ckFindSelfMember();
+  if(!m || gRec.att[m.no]) return;
+  var k = 'bci_selfstaff_' + gRec.ev.id + '_' + gUser.uid;
+  try{ if(localStorage.getItem(k)) return; }catch(e){}
+  var bar = $('recSelfBar'), ev = gRec.ev;
+  bar.innerHTML = '<span style="flex:1;min-width:200px;">👋 <b>' + esc(m.name || '') + '</b> さん（あなた）も<b>受付担当</b>として出席に入れますか？（徴収なし・稼働率に入ります）</span>'
+    + '<button class="primary" id="rsfYes">入れる</button><button id="rsfNo">いいえ</button>';
+  bar.classList.remove('hide');
+  function done(){ bar.classList.add('hide'); try{ localStorage.setItem(k, '1'); }catch(e){} focusScan(); }
+  $('rsfYes').onclick = function(){
+    if(!gRec || gRec.ev !== ev){ done(); return; }
+    var r = ckRoleAttend(m, 'staff');
+    if(r === 'paid') ckZeroFees([m.no], [m.name || m.no]);
+    toast(m.name + ' さんを受付担当として出席に入れました');
+    done();
+  };
+  $('rsfNo').onclick = done;
+}
 function roleModal(role){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   var lbl = roleLabel(role);
