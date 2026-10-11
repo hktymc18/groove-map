@@ -1340,8 +1340,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v49';
+var APP_VER = 'v50';
 var CHANGELOG = [
+  { v: 'v50', d: '2026/10/11', items: ['✨ ユニオン専用の「追加オプション」（例: アウトライン）: オーナーが有効にしたユニオンの受付では、ピッした後に「🎓 アウトラインも受ける（＋¥500）」をタップで、その人だけ料金に追加分を足せます。会計には「アウトライン ¥500 × ○名」の行が自動で入ります'] },
   { v: 'v49', d: '2026/10/11', items: ['会計: オンライン受講の人が会場のBAに数えられていた問題を修正（PayPay集金のイベントでは「BA（オンライン）」に自動で入ります）', '会計: BAの人数を手で直して保存すると、次に開いても直した人数のまま表示されるように（「⟳ 受付データから自動入力」で受付の人数に戻せます）'] },
   { v: 'v48', d: '2026/10/11', items: ['👥 受付画面の「受付担当・運営を登録」: 受付担当・ユニオン管理者・MC・スピーカーを名簿から何人でもまとめて登録（徴収なしで出席・稼働率に入ります）', '👋 受付を始めた人は「自分も受付担当として出席に入れる」をワンタップで', '🆓 名簿タブの「徴収なしメンバー」: ユニオン管理者など、いつも徴収なしの人を登録。QRでピッしても自動で¥0、QRを読まなくても受付終了時のチェック一覧から出席に入れられます', '先にピッして徴収済みの人に役割を付けたときは、¥0にする（返金扱い）か確認するように'] },
   { v: 'v47', d: '2026/10/11', items: ['終了済みのイベントで「受付を開始」を押しても、終了済みのまま開くようにしました（押し間違いで集計・稼働率が変わらない）。遅れて来た人の追加はそのままできます', '↩ 間違えて「受付を終了」したイベントは、イベントタブの「↩ 終了を取り消す」で受付前の状態に戻せます（主催ユニオンの管理者・受付管理者）'] },
@@ -5793,6 +5794,7 @@ function evAttShow(ev, rows, info){
           var tags = '';
           if(a.role) tags += '<span class="pill g">' + esc(roleLabel(a.role)) + '</span> ';
           if(a.guest) tags += '<span class="pill n">ゲスト</span> ';
+          if((a.addon || 0) > 0) tags += '<span class="pill a">🎓 ' + esc(a.addonName || 'オプション') + '</span> ';
           if(a._cat.indexOf('ビジター') === 0) tags += '<span class="pill a">ビジター</span> ';
           tags += '<span style="font-size:11.5px;color:var(--sub);">' + esc(CK_METHOD_LABEL[a.method] || a.method || '') + '</span>';
           return '<tr><td class="mono">' + esc(a.atLocal || '') + '</td><td><b>' + esc(a.name || '') + '</b>'
@@ -5815,12 +5817,12 @@ function evAttShow(ev, rows, info){
   };
   $('eaClose').onclick = closeModal;
   $('eaCsv').onclick = function(){
-    var out = [['受付時刻', '番号', '氏名', '系列', 'ユニオン', '区分', '役割', '受付方法', '徴収額', '受付担当']];
+    var out = [['受付時刻', '番号', '氏名', '系列', 'ユニオン', '区分', '役割', '受付方法', '徴収額', '受付担当', 'オプション']];
     cur().forEach(function(a){
       var fee = (a.fee || 0) > 0 && a.paid !== false ? (a.fee || 0) - (a.refund || 0) : 0;
       out.push([a.atLocal || '', a.guest ? '' : (a.no || a._id), a.name || '', a.group || '', a.union || '',
         a.guest ? 'ゲスト' : (a._cat.indexOf('ビジター') === 0 ? 'ビジター' : '参加'),
-        roleLabel(a.role || ''), CK_METHOD_LABEL[a.method] || a.method || '', fee, a._by]);
+        roleLabel(a.role || ''), CK_METHOD_LABEL[a.method] || a.method || '', fee, a._by, (a.addon || 0) > 0 ? (a.addonName || 'オプション') : '']);
     });
     csvDownload('出席者_' + (ev.date || '') + '_' + (ev.name || '').replace(/[\\/:*?"<>|\s]/g, '') + ($('eaSel').value ? '_' + $('eaSel').value.replace(/[\\/:*?"<>|\s]/g, '') : '') + '.csv', out);
   };
@@ -7579,6 +7581,8 @@ function financeModal(ev){
     var attCount = 0, c1000 = 0, c500 = 0, c3 = 0;
     // オンライン受講は会場のBAと分けて数える（オンライン料金が第1部と同額でも混ざらないように）
     var onFee = (ev.onlineFee != null ? Number(ev.onlineFee) : 1000), cOn1 = 0, cOn2 = 0;
+    // ✨ 追加オプション（例: アウトライン）: BAは部の料金で数え、追加分は別の行に
+    var cAdd = 0, addName = '', addPrice = 0;
     var adet = [], dCash = 0, dPp = 0, dUnpaid = 0, dCashN = 0, dRefN = 0;
     var mcN = [], rcN = [];   // 受付で登録したMC・受付管理者の名前（納金票の署名に自動連動）
     res[1].forEach(function(d){
@@ -7608,6 +7612,10 @@ function financeModal(ev){
         if(ppMode){ if(onet === onFee) cOn1++; else if(onet === bF2) cOn2++; }
       } else if(!pending && fee > 0 && a.paid !== false && (ppMode || a.payMethod !== 'paypay')){
         var net = fee - (a.refund || 0);
+        if((a.addon || 0) > 0){
+          net -= a.addon; cAdd++;
+          if(!addName){ addName = a.addonName || 'オプション'; addPrice = a.addon; }
+        }
         if(net === bF1) c1000++;
         else if(net === bF2) c500++;
         else if(bF3 != null && net === bF3) c3++;
@@ -7658,7 +7666,15 @@ function financeModal(ev){
       { label: '', unit: '', count: '' },
       { label: '', unit: '', count: '' }
     );
+    if(cAdd){   // 追加オプションの行（空行の前に入れる）
+      var bi = -1;
+      incDef.forEach(function(r, i){ if(bi < 0 && !r.label && r.unit === '') bi = i; });
+      incDef.splice(bi < 0 ? incDef.length : bi, 0, { label: addName, unit: addPrice, count: cAdd });
+    }
     var inc = (f.income && savedHasCount) ? f.income : incDef;
+    if(cAdd && inc !== incDef && !inc.some(function(r){ return r.label === addName; })){
+      inc = inc.slice(); inc.push({ label: addName, unit: addPrice, count: cAdd });
+    }
     // 受付データから自動で数えられる行（BA＝設定料金、BA（オンライン）＝PayPay集金のみ）の人数。対象外は null
     function autoCount(label, unit){
       var u = Number(unit);
@@ -7667,6 +7683,7 @@ function financeModal(ev){
         if(u === bF2) return c500;
         if(bF3 != null && u === bF3) return c3;
       }
+      if(cAdd && label === addName && u === addPrice) return cAdd;
       if(label === 'BA（オンライン）' && ppMode){
         if(u === onFee) return cOn1;
         if(u === bF2) return cOn2;
@@ -7733,7 +7750,7 @@ function financeModal(ev){
       + (ev.payMode === 'both' ? '<span class="pill a">💴💳 現金・PayPay</span>　' : '')
       + (ev.speaker ? '🎤 ' + esc(ev.speaker) + '　' : '') + '<span id="fnAtt"></span></p>'
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label style="color:var(--green);margin:0;">収入（＋）</label>'
-      + (!f.locked && (c1000 || c500 || c3 || cOn1 || cOn2) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
+      + (!f.locked && (c1000 || c500 || c3 || cOn1 || cOn2 || cAdd) ? '<button id="fnAuto" style="padding:3px 10px;font-size:12px;">⟳ 受付データから自動入力</button>' : '')
       + '</div>' + incHtml
       + '<div style="text-align:right;font-weight:700;margin:4px 0 10px;">(+)計 <span id="fiTotal" class="mono">¥0</span></div>'
       + '<label style="color:var(--accent);">支出（−）</label>' + expHtml
@@ -7932,6 +7949,16 @@ $('btnRcptSet').onclick = function(){
       + '（イベント作成時に自動で引き継がれます）。<br>'
       + '・<b>paypay.me/○○</b>（マイコード→リンクを設定）… 宛先と<b>金額も自動入力</b>されます<br>'
       + '・<b>qr.paypay.ne.jp/…</b>（送る・受け取るのリンク）… 宛先のみ自動、金額は送る人が入力</p>'
+      + (isOwner()
+        ? '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px;">'
+          + '<label style="margin-top:0;">✨ 追加オプション（このユニオン専用・オーナーだけが設定）</label>'
+          + '<div class="chkrow"><input type="checkbox" id="rsAddOn"' + (s0 && s0.addon && s0.addon.on ? ' checked' : '') + '>'
+          + '<label for="rsAddOn" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">受付で、対象者だけに追加料金のオプションを付けられるようにする</label></div>'
+          + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>名前</label><input type="text" id="rsAddName" value="' + esc((s0 && s0.addon && s0.addon.name) || 'アウトライン') + '"></div>'
+          + '<div style="width:110px;"><label>追加料金（¥）</label><input type="text" id="rsAddPrice" inputmode="numeric" value="' + esc((s0 && s0.addon && s0.addon.price) || 500) + '"></div></div>'
+          + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">このユニオンが主催するイベントの受付で、ピッした後に「🎓 ○○も受ける（＋¥○○）」が出ます（例: 第1部¥1,000＋¥500＝¥1,500）。'
+          + '受け取り方法はイベントの支払い方法に従います。領収書には金額だけが載ります。</p></div>'
+        : '')
       + '<div class="btns"><button id="rsCancel">キャンセル</button><button class="primary" id="rsSave">保存</button></div>');
     $('rsCancel').onclick = closeModal;
     $('rsSave').onclick = function(){
@@ -7951,6 +7978,11 @@ $('btnRcptSet').onclick = function(){
       };
       var perr = ckPrefixError(upd.noPrefix, un);
       if(perr){ toast(perr); return; }
+      if(isOwner() && $('rsAddOn')){
+        var ap = parseInt(String($('rsAddPrice').value).replace(/[^\d]/g, ''), 10);
+        if($('rsAddOn').checked && !(ap > 0)){ toast('追加オプションの料金を入れてください'); return; }
+        upd.addon = { on: $('rsAddOn').checked, name: $('rsAddName').value.trim() || 'オプション', price: ap > 0 ? ap : 0 };
+      }
       db.collection('checkinUnions').doc(un).set(upd, { merge: true })
         .then(function(){
           gUnionPrefix[un] = upd.noPrefix;
@@ -8293,6 +8325,9 @@ function startReception(ev){
     if(gRec && gRec.ev === ev && s.exists){
       if(s.data().issuer){ gRec.issuer = s.data().issuer; gRec.rcptInfo = ckRcptInfo(s.data()); }
       gRec.unionPayLink = s.data().payLink || '';
+      var ad = s.data().addon;
+      gRec.addon = (ad && ad.on && ad.price > 0) ? { name: ad.name || 'オプション', price: Number(ad.price) } : null;
+      renderTallies();
       if(!gRec.payLink && s.data().payLink){ gRec.payLink = s.data().payLink; renderFeeRow(); }
     }
   }).catch(function(){});
@@ -8463,6 +8498,7 @@ function setPay(no, fields){
   if('paid' in fields && fields.paid !== (a.paid !== false)) ps.push(fields.paid ? '徴収済みにする（' + yen(('fee' in fields ? fields.fee : a.fee) || 0) + '）' : '未徴収にする');
   if('payMethod' in fields && fields.payMethod !== (a.payMethod || '')) ps.push(fields.payMethod === 'paypay' ? 'PayPay受領に変更' : '現金受領に変更');
   if('refund' in fields && fields.refund !== (a.refund || 0)) ps.push(fields.refund ? '返金 ' + yen(fields.refund) : '返金の取消');
+  if('addon' in fields && fields.addon !== (a.addon || 0)) ps.push(fields.addon ? (fields.addonName || 'オプション') + 'を付ける' : 'オプションを外す');
   if(ps.length) auditLog(gRec.ev.id, '会計操作', a.name || no, ps.join('・'));
   Object.keys(fields).forEach(function(k){ a[k] = fields[k]; });
   renderTallies();
@@ -8534,6 +8570,9 @@ function payModal(no){
       : '<button id="pmToPp">PayPay受領に変更</button>';
     if(paid && !refund && fee >= 500) btns += '<button id="pmRefund">¥500 返金する</button>';
     if(refund) btns += '<button id="pmUnrefund">返金を取り消す</button>';
+    if(gRec.addon) btns += (a.addon || 0) > 0
+      ? '<button id="pmAddon">' + esc(a.addonName || gRec.addon.name) + 'を外す（−' + yen(a.addon) + '）</button>'
+      : '<button id="pmAddon">🎓 ' + esc(gRec.addon.name) + 'を付ける（＋' + yen(gRec.addon.price) + '）</button>';
   } else {
     btns += '<p style="font-size:13px;color:var(--sub);">この受付は徴収対象外です（登壇者・運営・セルフ等）。</p>';
   }
@@ -8579,6 +8618,11 @@ function payModal(no){
     setPay(no, { refund: n }); closeModal(); toast(a.name + ' さんに ' + yen(n) + ' 返金しました'); focusScan();
   };
   if((b = $('pmUnrefund'))) b.onclick = function(){ setPay(no, { refund: 0 }); closeModal(); toast('返金を取り消しました'); focusScan(); };
+  if((b = $('pmAddon'))) b.onclick = function(){
+    var had = (a.addon || 0) > 0;
+    ckToggleAddon(no); closeModal();
+    toast(a.name + ' さん: ' + (had ? 'オプションを外しました' : (gRec.addon.name + 'を付けました')) + '（' + yen(a.fee || 0) + '）'); focusScan();
+  };
   if((b = $('pmFeeGo'))) b.onclick = function(){
     var n = parseInt(String($('pmFeeAmt').value).replace(/[^\d]/g, ''), 10);
     if(isNaN(n) || n < 0){ toast('金額を入力してください（無料なら0）'); return; }
@@ -8624,6 +8668,7 @@ function attListModal(mode){
     var a = x.a, fee = a.fee || 0, tags = '';
     if(a.role) tags += ' <span class="pill g">' + (a.role === 'speaker' ? '🎤 スピーカー' : roleLabel(a.role)) + '</span>';
     if(a.guest) tags += ' <span class="pill n">ゲスト</span>';
+    if((a.addon || 0) > 0) tags += ' <span class="pill a">🎓 ' + esc(a.addonName || 'オプション') + '</span>';
     if(a.method === 'online') tags += ' <span class="pill n">💻 オンライン</span>';
     var pay = '';
     if(fee > 0){
@@ -8854,14 +8899,54 @@ function ckStageHold(){
   if(stageTimer) clearTimeout(stageTimer);
   stageTimer = setTimeout(stageIdle, 15000);
 }
+// ✨ 追加オプション（ユニオン専用・例: アウトライン）: 対象者だけ料金に追加分を足す。
+// 記録: attendance.addon = 追加額, addonName = 名前（fee は足した後の金額）
+function ckAddonBtnHtml(no){
+  if(!gRec || !gRec.addon) return '';
+  var a = gRec.att[no] || {}, on = (a.addon || 0) > 0;
+  return '<div><button id="stgAddon" class="' + (on ? 'primary' : '') + '" style="margin-top:8px;font-size:15px;font-weight:800;padding:10px 16px;">'
+    + (on ? '✓ ' + esc(a.addonName || gRec.addon.name) + 'あり（タップで外す）' : '🎓 ' + esc(gRec.addon.name) + 'も受ける（＋' + yen(gRec.addon.price) + '）')
+    + '</button></div><div id="stgAddonQr" style="display:flex;justify-content:center;margin-top:6px;"></div>';
+}
+function ckToggleAddon(no){
+  var a = gRec && gRec.att[no];
+  if(!a || !gRec.addon) return;
+  if((a.addon || 0) > 0){
+    setPay(no, { fee: Math.max(0, (a.fee || 0) - a.addon), addon: 0, addonName: '' });
+  } else {
+    setPay(no, { fee: (a.fee || 0) + gRec.addon.price, addon: gRec.addon.price, addonName: gRec.addon.name });
+  }
+}
+function ckBindAddon(no){
+  var b = $('stgAddon');
+  if(!b) return;
+  b.onclick = function(){
+    ckToggleAddon(no);
+    var a = gRec.att[no] || {}, on = (a.addon || 0) > 0;
+    b.className = on ? 'primary' : '';
+    b.textContent = on ? '✓ ' + (a.addonName || gRec.addon.name) + 'あり（タップで外す）' : '🎓 ' + gRec.addon.name + 'も受ける（＋' + yen(gRec.addon.price) + '）';
+    var t = $('stgFeeTxt');
+    if(t) t.textContent = t.textContent.replace(/¥[\d,]+/, yen(a.fee || 0));
+    // PayPayで受け取るイベントは、足した後の金額の送金QRをその場に出す
+    var q = $('stgAddonQr');
+    if(q){
+      q.innerHTML = '';
+      var pp = gRec.payMode || (gRec.payBoth && a.payMethod === 'paypay');
+      if(on && pp && gRec.payLink) makeQr(q, payLinkUrl(gRec.payLink, a.fee || 0), 120);
+    }
+    ckStageHold(); focusScan();
+  };
+}
 function ckBindPayPick(no, fee){
   function pick(pp){
     var a = gRec && gRec.att[no];
     if(a && (a.payMethod === 'paypay') !== pp) setPay(no, { payMethod: pp ? 'paypay' : '' });
     $('ppkCash').classList.toggle('on', !pp);
     $('ppkPp').classList.toggle('on', pp);
-    var t = $('stgFeeTxt');
-    if(t) t.textContent = (pp ? '📱 PayPay ' : '💴 現金 ') + yen(fee) + ' 徴収';
+    var t = $('stgFeeTxt'), cur = (gRec.att[no] && gRec.att[no].fee) || fee;
+    if(t) t.textContent = (pp ? '📱 PayPay ' : '💴 現金 ') + yen(cur) + ' 徴収';
+    var aq = $('stgAddonQr'), ca = gRec.att[no] || {};
+    if(aq){ aq.innerHTML = ''; if(pp && (ca.addon || 0) > 0 && gRec.payLink) makeQr(aq, payLinkUrl(gRec.payLink, ca.fee || 0), 120); }
     ckStageHold(); focusScan();
   }
   $('ppkCash').onclick = function(){ pick(false); };
@@ -8982,13 +9067,15 @@ function checkinMember(member, method, role){
     + '<p class="hit-meta">' + nowHM()
     + (fee > 0 ? '　<b id="stgFeeTxt">' + (ppRec ? '💳 PayPay ' : (ppPick ? '💴 現金 ' : '')) + yen(fee) + ' 徴収</b>' : '') + '</p>'
     + (ppPick ? ckPayPickHtml() : '')
+    + (fee > 0 && !role ? ckAddonBtnHtml(no) : '')
     + (canRcptQr ? '<button id="stgRcpt" style="margin-top:8px;">📱 領収書QRを表示</button> ' : '')
     + (fee > 0 ? '<button id="stgUnpaid" style="margin-top:8px;">未徴収にする（後払い）</button>' : '')
     + (ppRec ? '<button id="stgCash" style="margin-top:8px;">現金で受領した（例外）</button>' : ''), ppPick || canAddUn || canRcptQr);
   var rq = $('stgRcpt');
   if(rq) rq.onclick = function(){ guestRcptQr(no, member.name || '', fee); };
   if(ppPick) ckBindPayPick(no, fee);
-  else if(canAddUn) ckStageHold();
+  else if(canAddUn || (gRec.addon && fee > 0 && !role)) ckStageHold();
+  ckBindAddon(no);
   var au = $('stgAddUn');
   if(au) au.onclick = function(){ ckAddJointUnion(member.union, au); };
   var su = $('stgUnpaid');
@@ -9335,8 +9422,11 @@ $('btnGuest').onclick = function(){
     setStage('ok', '<span class="hit-badge">✓ 出席（ゲスト）</span><div class="hit-name">' + esc(name) + '</div>'
       + (gfee > 0 ? '<p class="hit-meta"><b id="stgFeeTxt">' + (gdata.payMethod ? '💳 PayPay ' : (gPick ? '💴 現金 ' : '')) + yen(gfee) + ' 徴収</b></p>' : '')
       + (gPick ? ckPayPickHtml() : '')
+      + (gfee > 0 ? ckAddonBtnHtml(id) : '')
       + (canRcpt ? '<button id="stgRcpt" style="margin-top:8px;">📱 領収書QRを表示</button>' : ''), canRcpt || gPick);
     if(gPick) ckBindPayPick(id, gfee);
+    else if(gRec.addon && gfee > 0) ckStageHold();
+    ckBindAddon(id);
     var rb = $('stgRcpt');
     if(rb) rb.onclick = function(){ guestRcptQr(id, name, gfee); };
     closeModal(); focusScan();
@@ -9352,7 +9442,7 @@ function renderTallies(){
   var total = 0, byUnion = {}, byGroup = {}, byGroupKey = {};
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
-  var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [], hist = [];
+  var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [], hist = [], addonN = 0;
   var sexM = 0, sexF = 0;
   Object.keys(gRec.att).forEach(function(id){
     var a = gRec.att[id];
@@ -9367,6 +9457,7 @@ function renderTallies(){
     byUnion[uk] = (byUnion[uk] || 0) + 1;
     if(a.role) roles.push(a);
     var fee = a.fee || 0;
+    if((a.addon || 0) > 0) addonN++;
     if(fee > 0){
       if(a.paid === false){
         unpaid.push({ no: id, name: a.name, fee: fee });
@@ -9405,6 +9496,7 @@ function renderTallies(){
       + (refundCount ? ' ・ 返金 ' + refundCount + '件' : '')
       + (unpaid.length ? ' ・ 未徴収 ' + unpaid.length + '名（' + yen(unpaidSum) + '）' : '');
   }
+  if(gRec.addon || addonN) $('cashSub').textContent += ' ・ 🎓 ' + ((gRec.addon && gRec.addon.name) || 'オプション') + ' ' + addonN + '名';
   $('unpaidList').innerHTML = unpaid.map(function(u){
     return '<div style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0;">'
       + '<span style="color:var(--accent);font-weight:700;">未</span>'
