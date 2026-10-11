@@ -14,7 +14,7 @@ T.run(async () => {
   c('長い作文は「続きを読む」・短い作文は出さない・書いていない時は「書く ›」', !!es[0].querySelector('.more') && !es[1].querySelector('.more') && /まだ書いていません/.test(es[2].textContent) && /書く/.test(es[2].querySelector('.eh span').textContent));
   es[0].querySelector('.more').click();
   c('続きを読む → 全文（閉じる）', es[0].querySelector('p').classList.contains('op') && es[0].querySelector('.more').textContent === '閉じる');
-  es[0].querySelector('.eh span').click(); await sleep(30);
+  es[0].querySelector('.eh span:not(.x)').click(); await sleep(30);
   c('「直す」で作文のページ（やる理由）', w._p2Pg === 'essay' && w._p2PgI === 0);
   // PCの印刷・PDFはサマリーから
   w.p2Go('sheet'); await sleep(30); w.p2SumTgl('sh', 0); await sleep(30);
