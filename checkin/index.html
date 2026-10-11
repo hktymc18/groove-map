@@ -725,6 +725,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnTrainers" class="hide">🎓 研修生登録の担当</button>
       <button id="btnAdminsView">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
+      <button id="btnRenUnion" class="ghost hide" title="ユニオン名を変更（名簿・イベント・出席・集計・NAVIGATORのユーザーまで一括・オーナーのみ）">✏ ユニオン名を変更</button>
       <button id="btnDelUnion" class="ghost hide" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
@@ -1183,12 +1184,12 @@ var gUnions = [];           // checkinUnions 一覧
  * RSVP_UNIONS: 🎟 会員証からの予約受付を使えるユニオン。ここに載っていないユニオンには
  *   イベント設定のチェック自体を表示しない（シークレット機能）。 */
 var FEATURE_PAYPAY = true;    // 2026-09-30 復活（オーナー指示）
-var RSVP_UNIONS = ['BASE REVE'];
+var RSVP_UNIONS = ['REVE', 'BASE REVE'];   // 2026-10 ユニオン名変更（BASE REVE→REVE）。旧名は移行が終わるまでの互換
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
 var gCoreAdmins = {};       // ユニオン名 → 兼務のユニオン管理者のUID（checkinUnions.coreAdmins・オーナーが指定）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
 // 初期の命名規則（ユニオン設定で上書き可能）
-var DEFAULT_NO_PREFIX = { 'BASE REVE': 'RV', 'BASE ANTARES': 'ANT' };
+var DEFAULT_NO_PREFIX = { 'REVE': 'RV', 'ANTARES': 'ANT', 'BASE REVE': 'RV', 'BASE ANTARES': 'ANT' };
 function unionNoPrefix(un){ return gUnionPrefix[un] || DEFAULT_NO_PREFIX[un] || ''; }
 // 自動発番: プレフィックス+数字の既存最大値+1（4桁ゼロ埋め）。数字のみの旧番号は無視
 function nextMemberNo(list, un){
@@ -1334,8 +1335,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v44';
+var APP_VER = 'v45';
 var CHANGELOG = [
+  { v: 'v45', d: '2026/10/11', items: ['✏ ユニオン名の変更（オーナー）: 名簿・会員証・イベント・過去の出席記録・集計・NAVIGATORのユーザーまで一括で新しい名前に付け替えられるようになりました（会員番号・会員証のURLやQRは変わりません）'] },
   { v: 'v44', d: '2026/10/10', items: ['💀 特別デザイン「死神」を、暗い背景で妖しく光るデザインに変更しました'] },
   { v: 'v43', d: '2026/10/10', items: ['✨ 会員証の「特別デザイン」: オーナーがメンバーごとに会員証の背景を特別なデザインにできるようになりました（名簿の「会員証」から）'] },
   { v: 'v42', d: '2026/10/09', items: ['🧾 会員証の領収書「PDF保存」: 印刷画面を通さず、押してすぐPDFファイルで保存されるようになりました（これまでは印刷プレビューが開くまで20秒ほどかかっていました）'] },
@@ -3884,7 +3886,7 @@ function coreAdminsModal(un, rows){
 $('btnAddUnion').onclick = function(){
   modal('<h2>ユニオン追加</h2>'
     + '<p style="font-size:13px;color:var(--sub);margin:0 0 4px;">追加すると名簿の取込先・合同イベントの選択肢に表示されます。</p>'
-    + '<label>ユニオン名</label><input type="text" id="nuName" placeholder="例: BASE REVE">'
+    + '<label>ユニオン名</label><input type="text" id="nuName" placeholder="例: REVE">'
     + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">NAVIGATOR（MAP）のプロフィールのユニオン名と<b>同じ表記</b>にしてください（MAPとの連携に使います）。</p>'
     + '<label>地域</label><input type="text" id="nuArea" placeholder="例: 福岡">'
     + '<label>会員番号の頭文字（英字2〜4文字・他のユニオンと重複不可）</label>'
@@ -3973,6 +3975,235 @@ $('btnDelUnion').onclick = function(){
     }).catch(function(e){ $('duGo').disabled = false; toast(permMsg(e, 'ユニオンの削除はオーナーのみ可能です')); });
   };
 };
+/* ✏ ユニオン名の変更（オーナーのみ）: ユニオン名はデータのキーとして色々な所に入っているため、
+   全部を新しい名前に付け替える。会員番号・会員証URL・QRは変わらない。
+   途中で止まっても、同じ名前でもう一度実行すれば続きから仕上がる（何度実行しても同じ結果） */
+var CK_UNION_CDATA = ['template', 'outlineTemplate', 'mapChecklist'];   // NAVIGATOR: unions/{ユニオン}/cdata の既知のドキュメント
+function ckRenameUnion(oldUn, newUn, log){
+  var errs = [], months = {}, cardTokens = [];
+  function step(label, fn){
+    log('… ' + label);
+    return Promise.resolve().then(fn).then(function(msg){ log('✓ ' + label + (msg ? '：' + msg : '')); })
+      .catch(function(e){ errs.push(label); log('⚠ ' + label + '：' + ((e && (e.code === 'permission-denied' ? '権限がありません' : e.message)) || e)); });
+  }
+  function batchAll(ops){   // ops: [function(batch)] を400件ずつコミット
+    var i = 0;
+    function next(){
+      if(i >= ops.length) return Promise.resolve();
+      var b = db.batch(), end = Math.min(i + 400, ops.length);
+      for(; i < end; i++) ops[i](b);
+      return b.commit().then(next);
+    }
+    return next();
+  }
+  function seq(items, fn){   // 順番に処理（書き込みが集中しすぎないように）
+    var i = 0;
+    function next(){ if(i >= items.length) return Promise.resolve(); var it = items[i++]; return Promise.resolve(fn(it)).then(next); }
+    return next();
+  }
+  var oldIds = [];
+  return step('ユニオン設定を引き継ぐ', function(){
+    return db.collection('checkinUnions').get().then(function(qs){
+      var src = null, dst = null;
+      qs.forEach(function(d){
+        var nm = (d.data() || {}).name || d.id;
+        if(nm === oldUn){ oldIds.push(d.id); if(!src) src = d.data(); }
+        if(nm === newUn && !dst) dst = d.data();
+      });
+      if(!src) return '（元のユニオン設定は移行済み）';
+      var out = {}, k;
+      for(k in src) out[k] = src[k];
+      if(dst) for(k in dst){
+        if(['admins', 'trainers', 'coreAdmins'].indexOf(k) >= 0){
+          out[k] = (src[k] || []).concat((dst[k] || []).filter(function(x){ return (src[k] || []).indexOf(x) < 0; }));
+        } else if(dst[k] !== '' && dst[k] != null) out[k] = dst[k];
+      }
+      out.name = newUn;
+      out.renamedFrom = oldUn;
+      return db.collection('checkinUnions').doc(newUn).set(out, { merge: true });
+    });
+  }).then(function(){
+    return step('名簿の所属', function(){
+      return db.collection('checkinMembers').where('union', '==', oldUn).get().then(function(qs){
+        var ops = [];
+        qs.forEach(function(d){
+          var m = d.data(); if(m.cardToken) cardTokens.push(m.cardToken);
+          ops.push(function(b){ b.set(d.ref, { union: newUn }, { merge: true }); });
+        });
+        return batchAll(ops).then(function(){ return qs.size + '名'; });
+      });
+    });
+  }).then(function(){
+    return step('会員証に表示するユニオン名', function(){
+      var ops = cardTokens.map(function(t){ return function(b){ b.set(db.collection('cards').doc(t), { union: newUn }, { merge: true }); }; });
+      return batchAll(ops).then(function(){ return cardTokens.length + '枚'; });
+    });
+  }).then(function(){
+    var evAll = [];
+    return step('イベントの主催・合同ユニオン', function(){
+      return db.collection('checkinEvents').get().then(function(qs){
+        var ops = [], n = 0;
+        qs.forEach(function(d){
+          var ev = d.data() || {}; evAll.push({ id: d.id, ev: ev });
+          var us = ev.unions || [], hit = ev.hostUnion === oldUn || us.indexOf(oldUn) >= 0;
+          if(!hit) return;
+          n++;
+          months[ev.month || String(ev.date || '').slice(0, 7)] = 1;
+          var nus = [];
+          us.forEach(function(u){ u = (u === oldUn) ? newUn : u; if(nus.indexOf(u) < 0) nus.push(u); });
+          var u2 = { unions: nus };
+          if(ev.hostUnion === oldUn) u2.hostUnion = newUn;
+          ops.push(function(b){ b.set(d.ref, u2, { merge: true }); });
+        });
+        return batchAll(ops).then(function(){ return n + '件'; });
+      });
+    }).then(function(){
+      // 出席記録・予約は全イベントから探す（他ユニオンのイベントにビジターで出た記録も含む）
+      return step('出席記録・予約の所属', function(){
+        var nA = 0, nR = 0;
+        return seq(evAll, function(x){
+          var base = db.collection('checkinEvents').doc(x.id);
+          return base.collection('attendance').where('union', '==', oldUn).get().then(function(qs){
+            var ops = [];
+            qs.forEach(function(d){ nA++; months[x.ev.month || String(x.ev.date || '').slice(0, 7)] = 1; ops.push(function(b){ b.set(d.ref, { union: newUn }, { merge: true }); }); });
+            return batchAll(ops);
+          }).then(function(){
+            return base.collection('rsvps').where('union', '==', oldUn).get();
+          }).then(function(qs){
+            // 予約は上書き不可のため、作り直す（オーナーは作成・削除できる）
+            var ops = [];
+            qs.forEach(function(d){
+              nR++;
+              var r = d.data(); r.union = newUn;
+              ops.push(function(b){ b.delete(d.ref); });
+              ops.push(function(b){ b.set(d.ref, r); });
+            });
+            return seq(ops, function(op){ var b = db.batch(); op(b); return b.commit(); });
+          });
+        }).then(function(){ return '出席 ' + nA + '件・予約 ' + nR + '件'; });
+      });
+    });
+  }).then(function(){
+    return step('稼働率の集計（MAP連携）', function(){
+      var keys = Object.keys(months).filter(function(k){ return /^\d{4}-\d{2}$/.test(k); }).concat([CK_RECENT_KEY]), n = 0;
+      return seq(keys, function(k){
+        var src = db.collection('checkinStats').doc(ckStatDocId(oldUn, k));
+        return src.get().then(function(sn){
+          if(!sn.exists) return null;
+          var d = sn.data() || {}; d.union = newUn; n++;
+          return db.collection('checkinStats').doc(ckStatDocId(newUn, k)).set(d).then(function(){ return src.delete(); });
+        });
+      }).then(function(){ return n + '件'; });
+    });
+  }).then(function(){
+    return step('目標設定の宿題', function(){
+      return db.collection('goalHw').where('union', '==', oldUn).get().then(function(qs){
+        var list = [];
+        qs.forEach(function(d){ list.push(d); });
+        // 担当側の更新は中身を変えられないため、作り直す（オーナーは削除・作成できる）
+        return seq(list, function(d){
+          var r = d.data(); r.union = newUn;
+          return d.ref.delete().then(function(){ return d.ref.set(r); });
+        }).then(function(){ return list.length + '件'; });
+      });
+    });
+  }).then(function(){
+    return step('NAVIGATOR・MAPのユーザーの所属', function(){
+      return db.collection('users').where('union', '==', oldUn).get().then(function(qs){
+        var ops = [];
+        qs.forEach(function(d){ ops.push(function(b){ b.set(d.ref, { union: newUn }, { merge: true }); }); });
+        return batchAll(ops).then(function(){ return qs.size + '人'; });
+      });
+    });
+  }).then(function(){
+    return step('NAVIGATOR のユニオン設定（項目のフォーマット等）', function(){
+      var n = 0;
+      return seq(CK_UNION_CDATA, function(id){
+        var src = db.collection('unions').doc(oldUn).collection('cdata').doc(id);
+        var dst = db.collection('unions').doc(newUn).collection('cdata').doc(id);
+        return src.get().then(function(sn){
+          if(!sn.exists) return null;
+          return dst.get().then(function(dn){
+            n++;
+            return (dn.exists ? Promise.resolve() : dst.set(sn.data())).then(function(){ return src.delete(); });
+          });
+        });
+      }).then(function(){ return n + '件'; });
+    });
+  }).then(function(){
+    return step('NAVIGATOR のユニオン共有予定', function(){
+      return db.collection('unions').doc(oldUn).collection('events').get().then(function(qs){
+        var list = [];
+        qs.forEach(function(d){ list.push(d); });
+        return seq(list, function(d){
+          var dst = db.collection('unions').doc(newUn).collection('events').doc(d.id);
+          return dst.get().then(function(dn){ return dn.exists ? null : dst.set(d.data()); }).then(function(){ return d.ref.delete(); });
+        }).then(function(){ return list.length + '件'; });
+      });
+    });
+  }).then(function(){
+    if(errs.length){
+      log('⚠ 終わっていない項目があります（' + errs.join('・') + '）。元のユニオン設定は残しています。原因を解消してから、同じ名前でもう一度実行してください。');
+      return { ok: false, errs: errs };
+    }
+    return step('元のユニオン設定を削除', function(){
+      return Promise.all(oldIds.filter(function(id){ return id !== newUn; }).map(function(id){ return db.collection('checkinUnions').doc(id).delete(); }));
+    }).then(function(){ return { ok: !errs.length, errs: errs }; });
+  });
+}
+$('btnRenUnion').onclick = function(){
+  if(!isOwner()) return;
+  modal('<h2>✏ ユニオン名を変更</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 6px;">名簿・会員証・イベント・過去の出席記録・稼働率の集計・NAVIGATOR（MAP）のユーザーの所属まで、'
+    + '全部を新しい名前に付け替えます。<b>会員番号・会員証のURL・QRは変わりません。</b>受付をしていない時間に実行してください。</p>'
+    + '<label>今の名前</label><input type="text" id="ruOld" list="ruList" value="' + esc(gRosterUnion || '') + '">'
+    + '<datalist id="ruList">' + gUnions.map(function(u){ return '<option value="' + esc(u) + '">'; }).join('') + '</datalist>'
+    + '<label>新しい名前</label><input type="text" id="ruNew" placeholder="例: REVE">'
+    + '<div id="ruInfo" style="font-size:13px;margin:10px 0 0;min-height:1.6em;"></div>'
+    + '<div id="ruLog" class="mono" style="font-size:12px;white-space:pre-wrap;max-height:34vh;overflow:auto;margin-top:6px;"></div>'
+    + '<div class="btns"><button id="ruCancel">閉じる</button><button id="ruCheck">件数を確認</button><button class="primary" id="ruGo" disabled>変更する</button></div>', true);
+  var checked = '';
+  $('ruCancel').onclick = closeModal;
+  function vals(){ return { o: $('ruOld').value.trim(), n: $('ruNew').value.trim() }; }
+  $('ruOld').oninput = $('ruNew').oninput = function(){ $('ruGo').disabled = true; checked = ''; };
+  $('ruCheck').onclick = function(){
+    var v = vals();
+    if(!v.o || !v.n){ toast('今の名前と新しい名前を入れてください'); return; }
+    if(v.o === v.n){ toast('同じ名前です'); return; }
+    if(/\//.test(v.n)){ toast('ユニオン名に「/」は使えません'); return; }
+    $('ruInfo').innerHTML = '<span style="color:var(--sub);">確認中…</span>';
+    Promise.all([
+      db.collection('checkinMembers').where('union', '==', v.o).get(),
+      db.collection('checkinEvents').where('unions', 'array-contains', v.o).get(),
+      db.collection('users').where('union', '==', v.o).get()
+    ]).then(function(r){
+      var exists = gUnions.indexOf(v.n) >= 0;
+      $('ruInfo').innerHTML = '「' + esc(v.o) + '」→「<b>' + esc(v.n) + '</b>」：名簿 <b>' + r[0].size + '名</b>・イベント <b>' + r[1].size + '件</b>・NAVIGATORのユーザー <b>' + r[2].size + '人</b>'
+        + '（過去の出席記録・集計も全部）'
+        + (exists ? '<br><span style="color:var(--accent);font-weight:700;">「' + esc(v.n) + '」はすでにあります。1つのユニオンにまとめます（管理者などの設定は両方を合わせます）。</span>' : '');
+      checked = v.o + '\n' + v.n;
+      $('ruGo').disabled = false;
+    }).catch(function(e){ $('ruInfo').textContent = '確認できませんでした: ' + e.message; });
+  };
+  $('ruGo').onclick = function(){
+    var v = vals();
+    if(checked !== v.o + '\n' + v.n){ toast('先に「件数を確認」を押してください'); return; }
+    if(!window.confirm('「' + v.o + '」を「' + v.n + '」に変更します。よろしいですか？')) return;
+    $('ruGo').disabled = true; $('ruCheck').disabled = true; $('ruCancel').disabled = true;
+    var el = $('ruLog');
+    function log(t){ el.textContent += t + '\n'; el.scrollTop = el.scrollHeight; }
+    ckRenameUnion(v.o, v.n, log).then(function(res){
+      $('ruCancel').disabled = false;
+      if(res.ok){
+        log('🎉 完了しました。画面を読み込み直します…');
+        toast('「' + v.o + '」を「' + v.n + '」に変更しました');
+        setTimeout(function(){ location.reload(); }, 2500);
+      } else {
+        $('ruCheck').disabled = false;
+      }
+    });
+  };
+};
 function canEditRoster(){ return canEditUnion(gRosterUnion); }
 
 /* ---------- タブ ---------- */
@@ -4029,6 +4260,7 @@ function renderRoster(){
   $('btnDelAll').classList.toggle('hide', !edit);
   $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnDelUnion').classList.toggle('hide', !isOwner());
+  $('btnRenUnion').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnTrainers').classList.toggle('hide', !edit);
   $('btnAddMember').classList.toggle('hide', !edit);

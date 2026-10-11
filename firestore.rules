@@ -261,8 +261,10 @@ service cloud.firestore {
     // ============ v392: ユニオン共有予定（セミナー等の一括配信・購読型） ============
     // 読み: 同じユニオンに所属するメンバー。書き: オーナー or 同ユニオンの管理者(role=='admin')。
     match /unions/{un}/events/{eid} {
-      allow read: if signedIn() && profileExists(request.auth.uid)
-                  && profile(request.auth.uid).get('union', '') == un;
+      // v22: オーナーも読める（受付システムの「ユニオン名を変更」で新しい名前へ移すため）
+      allow read: if isOwnerAdmin()
+                  || (signedIn() && profileExists(request.auth.uid)
+                      && profile(request.auth.uid).get('union', '') == un);
       allow create, update, delete: if isOwnerAdmin()
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('role', '') == 'admin'

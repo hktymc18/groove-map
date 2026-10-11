@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v793';
+var APP_JS_VERSION = 'v794';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3694,9 +3694,9 @@ var UNION_LIST = [
   { name:'FORMULA',      upbd:'木下文貴' },
   { name:'REVITALIZE',   upbd:'藤原拓晶' },
   { name:'INFLUENCE',    upbd:'高島健佑' },
-  { name:'BASE ANTARES', upbd:'馬越雅哉' },
-  { name:'BASE REVE',    upbd:'浦田美沙子' },
-  { name:'LIEN LOAD',    upbd:'松田郁愛' },
+  { name:'ANTARES',      upbd:'馬越雅哉' },
+  { name:'REVE',         upbd:'浦田美沙子' },
+  { name:'LOAD',         upbd:'松田郁愛' },
   { name:'DEFI',         upbd:'中原賢三' },
   { name:'GRANDIR',      upbd:'嶽本尚希' },
   { name:'SFIDA',        upbd:'' },
@@ -4064,7 +4064,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v793';
+  var DATA_VERSION = 'v794';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5569,6 +5569,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v794', d:'2026-10-11', items:['ユニオン名の変更に対応：BASE ANTARES→ANTARES、BASE REVE→REVE、LIEN LOAD→LOAD（登録・プロフィールの選択肢も新しい名前に）'] },
   { v:'v793', d:'2026-10-11', items:['夢100：タスクと同じように、左にスワイプで「🗑 消す」・右にスワイプで「叶えた」。消しても「↩ 元に戻す」で戻せます', '夢の編集画面にも「この夢を消す」（PCはここから）'] },
   { v:'v792', d:'2026-10-11', items:['PLANの見出しの下は、前と同じようにスローガンを出すように（やる理由の作文が出ていた）'] },
   { v:'v791', d:'2026-10-11', items:['理想のページ（PC）：左に金額・やりたいこと・なりたい自分・想い（作文）、右に理想の生活の一覧を並べて、空白をなくしました', '理想のページに「想い（作文）」：やる理由・1年後・成功した毎日（長い時は「続きを読む」で全文）', 'PCの計画シートの「印刷・PDF」はサマリーから'] },
@@ -6987,7 +6988,7 @@ function _ckPickUnion(unions, unionId) {
     if (sel) return;
     if (_ckNorm(u.id) === myU && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
   });
-  unions.forEach(function(u) {  // 部分一致（BASE REVE東京 など）
+  unions.forEach(function(u) {  // 部分一致（REVE東京 など）
     if (sel) return;
     if (myU && _ckNorm(u.id).indexOf(myU) === 0 && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
   });
