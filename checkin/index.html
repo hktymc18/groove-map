@@ -1192,6 +1192,7 @@ var FEATURE_PAYPAY = true;    // 2026-09-30 復活（オーナー指示）
 var RSVP_UNIONS = ['REVE', 'BASE REVE'];   // 2026-10 ユニオン名変更（BASE REVE→REVE）。旧名は移行が終わるまでの互換
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
 var gCoreAdmins = {};       // ユニオン名 → 兼務のユニオン管理者のUID（checkinUnions.coreAdmins・オーナーが指定）
+var gUnionAddon = {};       // ユニオン名 → 追加オプションの設定（checkinUnions.addon・有効なものだけ）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
 // 初期の命名規則（ユニオン設定で上書き可能）
 var DEFAULT_NO_PREFIX = { 'REVE': 'RV', 'ANTARES': 'ANT', 'BASE REVE': 'RV', 'BASE ANTARES': 'ANT' };
@@ -1340,8 +1341,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v50';
+var APP_VER = 'v51';
 var CHANGELOG = [
+  { v: 'v51', d: '2026/10/11', items: ['🎓 追加オプション（アウトライン等）は、イベントの作成・編集で「このイベントで受け付ける」にチェックしたイベントだけで出るようにしました'] },
   { v: 'v50', d: '2026/10/11', items: ['✨ ユニオン専用の「追加オプション」（例: アウトライン）: オーナーが有効にしたユニオンの受付では、ピッした後に「🎓 アウトラインも受ける（＋¥500）」をタップで、その人だけ料金に追加分を足せます。会計には「アウトライン ¥500 × ○名」の行が自動で入ります'] },
   { v: 'v49', d: '2026/10/11', items: ['会計: オンライン受講の人が会場のBAに数えられていた問題を修正（PayPay集金のイベントでは「BA（オンライン）」に自動で入ります）', '会計: BAの人数を手で直して保存すると、次に開いても直した人数のまま表示されるように（「⟳ 受付データから自動入力」で受付の人数に戻せます）'] },
   { v: 'v48', d: '2026/10/11', items: ['👥 受付画面の「受付担当・運営を登録」: 受付担当・ユニオン管理者・MC・スピーカーを名簿から何人でもまとめて登録（徴収なしで出席・稼働率に入ります）', '👋 受付を始めた人は「自分も受付担当として出席に入れる」をワンタップで', '🆓 名簿タブの「徴収なしメンバー」: ユニオン管理者など、いつも徴収なしの人を登録。QRでピッしても自動で¥0、QRを読まなくても受付終了時のチェック一覧から出席に入れられます', '先にピッして徴収済みの人に役割を付けたときは、¥0にする（返金扱い）か確認するように'] },
@@ -3426,6 +3428,8 @@ function afterLogin(){
       gCkAdmins[un] = d.data().admins || [];
       gCoreAdmins[un] = d.data().coreAdmins || [];
       gUnionPrefix[un] = d.data().noPrefix || '';
+      var ad = d.data().addon;
+      gUnionAddon[un] = (ad && ad.on && ad.price > 0) ? ad : null;
     });
     gUnions.sort();
     if(gUnions.indexOf(gUnion) < 0){
@@ -5673,6 +5677,7 @@ function renderEvents(){
       + '<b>' + esc(ev.name || '') + '</b>'
       + (ev.speaker ? '<span style="color:var(--sub);font-size:13px;">🎤 ' + esc(ev.speaker) + '</span>' : '')
       + (ev.payMode === 'paypay' ? '<span class="jointtag">💳 PayPay集金</span>' : '')
+      + (ev.addonOn && gUnionAddon[ev.hostUnion] ? '<span class="jointtag">🎓 ' + esc(gUnionAddon[ev.hostUnion].name || 'オプション') + '</span>' : '')
       + (ev.payMode === 'both' ? '<span class="jointtag">💴💳 現金・PayPay</span>' : '')
       + (isSelf ? '<span class="jointtag" style="background:var(--green-soft);color:var(--green);">' + esc(ev.hostLabel || 'CLAVIS') + '主催・セルフ</span>' : '')
       + joint
@@ -6065,6 +6070,7 @@ function eventForm(ev){
   var showPay = FEATURE_PAYPAY || !!(ev && (ev.payMode === 'paypay' || ev.payMode === 'both'));
   var curPay = (ev && ev.payMode) || '';
   var showRsvp = RSVP_UNIONS.indexOf(host) >= 0 || !!(ev && ev.rsvp);
+  var hostAddon = gUnionAddon[host] || null;   // ✨ 主催ユニオンで追加オプションが有効なら、イベントごとにON/OFF
   var evUnions = (ev && ev.unions) || [];
   var others = gUnions.filter(function(u){ return u !== host; });
   var chk = others.length
@@ -6113,6 +6119,11 @@ function eventForm(ev){
     + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…（未入力ならユニオン設定の値）">'
     + '<label>Zoom URL（あとからでも可。承認キュー画面でも入力できます）</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
     + '</div>'
+    + ((hostAddon || (ev && ev.addonOn))
+      ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evAddon"' + (ev && ev.addonOn ? ' checked' : '') + '>'
+        + '<label for="evAddon" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 このイベントで「' + esc((hostAddon && hostAddon.name) || 'オプション') + '」を受け付ける'
+        + (hostAddon ? '（受付でピッした後に、対象者だけ＋' + yen(hostAddon.price) + '）' : '') + '</label></div>'
+      : '')
     + (showRsvp
       ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRsvp"' + (ev && ev.rsvp ? ' checked' : '') + '>'
         + '<label for="evRsvp" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎟 会員証から予約を受け付ける（UR等。期日が来ると会員証に「予約する」ボタンが自動表示）</label></div>'
@@ -6175,6 +6186,7 @@ function eventForm(ev){
       fee3: (function(){ var n = parseInt($('evFee3').value, 10); return isNaN(n) ? '' : n; })(),
       payMode: $('evPayMode') ? ($('evPayMode').checked ? 'paypay' : ($('evPayBoth') && $('evPayBoth').checked ? 'both' : '')) : ((ev && ev.payMode) || ''),
       rsvp: $('evRsvp') ? $('evRsvp').checked : !!(ev && ev.rsvp),
+      addonOn: $('evAddon') ? $('evAddon').checked : !!(ev && ev.addonOn),
       rsvpDays: (function(){
         if(!$('evRsvpDays')) return (ev && ev.rsvpDays != null) ? ev.rsvpDays : 4;
         var n = parseInt($('evRsvpDays').value, 10); return isNaN(n) || n < 0 ? 4 : n;
@@ -7956,7 +7968,7 @@ $('btnRcptSet').onclick = function(){
           + '<label for="rsAddOn" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">受付で、対象者だけに追加料金のオプションを付けられるようにする</label></div>'
           + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>名前</label><input type="text" id="rsAddName" value="' + esc((s0 && s0.addon && s0.addon.name) || 'アウトライン') + '"></div>'
           + '<div style="width:110px;"><label>追加料金（¥）</label><input type="text" id="rsAddPrice" inputmode="numeric" value="' + esc((s0 && s0.addon && s0.addon.price) || 500) + '"></div></div>'
-          + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">このユニオンが主催するイベントの受付で、ピッした後に「🎓 ○○も受ける（＋¥○○）」が出ます（例: 第1部¥1,000＋¥500＝¥1,500）。'
+          + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">イベントの作成・編集で「🎓 ○○を受け付ける」にチェックしたイベントだけ、受付でピッした後に「🎓 ○○も受ける（＋¥○○）」が出ます（例: 第1部¥1,000＋¥500＝¥1,500）。'
           + '受け取り方法はイベントの支払い方法に従います。領収書には金額だけが載ります。</p></div>'
         : '')
       + '<div class="btns"><button id="rsCancel">キャンセル</button><button class="primary" id="rsSave">保存</button></div>');
@@ -7982,6 +7994,7 @@ $('btnRcptSet').onclick = function(){
         var ap = parseInt(String($('rsAddPrice').value).replace(/[^\d]/g, ''), 10);
         if($('rsAddOn').checked && !(ap > 0)){ toast('追加オプションの料金を入れてください'); return; }
         upd.addon = { on: $('rsAddOn').checked, name: $('rsAddName').value.trim() || 'オプション', price: ap > 0 ? ap : 0 };
+        gUnionAddon[un] = upd.addon.on ? upd.addon : null;
       }
       db.collection('checkinUnions').doc(un).set(upd, { merge: true })
         .then(function(){
@@ -8326,7 +8339,8 @@ function startReception(ev){
       if(s.data().issuer){ gRec.issuer = s.data().issuer; gRec.rcptInfo = ckRcptInfo(s.data()); }
       gRec.unionPayLink = s.data().payLink || '';
       var ad = s.data().addon;
-      gRec.addon = (ad && ad.on && ad.price > 0) ? { name: ad.name || 'オプション', price: Number(ad.price) } : null;
+      gRec.unionAddon = (ad && ad.on && ad.price > 0) ? { name: ad.name || 'オプション', price: Number(ad.price) } : null;
+      gRec.addon = (ev.addonOn && gRec.unionAddon) ? gRec.unionAddon : null;   // イベントで「受け付ける」にした時だけ
       renderTallies();
       if(!gRec.payLink && s.data().payLink){ gRec.payLink = s.data().payLink; renderFeeRow(); }
     }
@@ -8403,7 +8417,7 @@ function stopReception(){
 }
 
 // 受付中のイベント設定の変更を画面に反映（ckApplyEventLive）。変わった内容は画面下のお知らせで伝える
-var CK_LIVE_KEYS = ['payMode', 'fee1', 'fee2', 'fee3', 'onlinePayLink', 'unions', 'hostUnion', 'name', 'speaker', 'recClosed'];
+var CK_LIVE_KEYS = ['payMode', 'fee1', 'fee2', 'fee3', 'onlinePayLink', 'unions', 'hostUnion', 'name', 'speaker', 'recClosed', 'addonOn'];
 function ckApplyEventLive(d){
   if(!gRec) return;
   var ev = gRec.ev, changed = [];
@@ -8415,6 +8429,7 @@ function ckApplyEventLive(d){
     gRec.closedOpen = false; $('recReopenBar').classList.add('hide');
   }
   var pm0 = gRec.payMode, pb0 = gRec.payBoth;
+  gRec.addon = (ev.addonOn && gRec.unionAddon) ? gRec.unionAddon : null;
   gRec.payMode = ev.payMode === 'paypay';
   gRec.payBoth = ev.payMode === 'both';
   gRec.payLink = ev.onlinePayLink || gRec.unionPayLink || '';
