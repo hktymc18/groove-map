@@ -661,6 +661,10 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
       <div>
+        <div id="recReopenBar" class="notice hide" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="flex:1;min-width:200px;">🔁 <b>終了済みのイベント</b>を開いています。集計（稼働率）はそのままです。ここで追加した受付も、そのまま集計に入ります。</span>
+          <button id="btnReopenClose">閉じる</button>
+        </div>
         <div class="manualrow" style="margin:0 0 10px;">
           <span id="feeInfo" style="font-weight:700;font-size:14px;"></span>
           <button id="btnPartToggle" class="hide"></button>
@@ -1335,8 +1339,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v46';
+var APP_VER = 'v47';
 var CHANGELOG = [
+  { v: 'v47', d: '2026/10/11', items: ['終了済みのイベントで「受付を開始」を押しても、終了済みのまま開くようにしました（押し間違いで集計・稼働率が変わらない）。遅れて来た人の追加はそのままできます', '↩ 間違えて「受付を終了」したイベントは、イベントタブの「↩ 終了を取り消す」で受付前の状態に戻せます（主催ユニオンの管理者・受付管理者）'] },
   { v: 'v46', d: '2026/10/11', items: ['受付中にイベントの設定（支払い方法・料金・PayPayのQR・合同ユニオン）を変えたら、受付中のすべてのPCにすぐ反映されるようにしました（PayPayのみに変えても、別のPCで金額が¥0のままになることがあった問題の修正）'] },
   { v: 'v45', d: '2026/10/11', items: ['✏ ユニオン名の変更（オーナー）: 名簿・会員証・イベント・過去の出席記録・集計・NAVIGATORのユーザーまで一括で新しい名前に付け替えられるようになりました（会員番号・会員証のURLやQRは変わりません）'] },
   { v: 'v44', d: '2026/10/10', items: ['💀 特別デザイン「死神」を、暗い背景で妖しく光るデザインに変更しました'] },
@@ -5619,6 +5624,7 @@ function renderEvents(){
       + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span><span id="rcCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canFinEv(ev) ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canRec ? '<button data-a="imp" data-id="' + esc(ev.id) + '">📥 取込</button>' : '')
+      + (canDel && ev.recClosed && ev.date === t ? '<button data-a="unclose" data-id="' + esc(ev.id) + '" title="押し間違いで終了したイベントを、受付前の状態に戻す（集計の分母から外れる）">↩ 終了を取り消す</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
       + '</div>';
@@ -5769,6 +5775,20 @@ $('evList').addEventListener('click', function(e){
   if(a === 'online'){ onlineModal(ev); }
   if(a === 'rsvps'){ rsvpListModal(ev); }
   if(a === 'atts'){ evAttModal(ev); }
+  if(a === 'unclose'){
+    // ↩ 受付終了の取り消し: 押し間違いで終了した当日のイベントを、受付前（未開催）の状態に戻す
+    if(!window.confirm('「' + (ev.name || '') + '」の受付終了を取り消して、受付前の状態に戻しますか？\n'
+      + '・集計（稼働率）の分母から外れます（MAPの稼働率も計算し直します）\n'
+      + '・出席の記録は消えません。本番で「受付を終了」すると、また集計に入ります')) return;
+    db.collection('checkinEvents').doc(id).set({ recClosed: false }, { merge: true }).then(function(){
+      ev.recClosed = false;
+      if(gRec && gRec.ev && gRec.ev.id === id){ gRec.ev.recClosed = false; gRec.closedOpen = false; $('recReopenBar').classList.add('hide'); }
+      ckRefreshForEvent(ev);
+      auditLog(id, '受付終了の取消', ev.name || '', '受付前の状態に戻した（集計の分母から外す）');
+      toast('「' + (ev.name || '') + '」を受付前の状態に戻しました（集計から外れました）');
+      renderEvents(); loadStats();
+    }).catch(function(e){ toast(permMsg(e, '取り消しに失敗しました')); });
+  }
   if(a === 'editev'){ eventForm(ev); }
   if(a === 'selftog'){
     db.collection('checkinEvents').doc(id).set({ selfOpen: !ev.selfOpen }, { merge: true })
@@ -8128,8 +8148,8 @@ function startReception(ev){
   if(evDate && evDate !== tdy && !window.confirm('⚠️「' + (ev.name || '') + '」は ' + evDate.slice(5).replace('-', '/')
       + ' のイベントです（今日ではありません）。\n受付を開始しますか？'
       + (evDate > tdy ? '\n（未来日のイベントは、受付を終了しても集計・稼働率には入りません）' : ''))) return;
-  // 当日の終了済みイベントをうっかり開き直すと集計（稼働率）から外れるため、明示的に確認する
-  if(ev.recClosed && evDate === tdy && !window.confirm('「' + (ev.name || '') + '」の受付はすでに終了しています。受付を再開しますか？\n（再開中は集計・稼働率から一旦外れます。終わったら必ずもう一度「受付を終了」を押してください）')) return;
+  // 終了済みのイベントは「終了済みのまま」開く（集計・稼働率は変わらない）。遅れて来た人の追加用
+  if(ev.recClosed && evDate === tdy && !window.confirm('「' + (ev.name || '') + '」の受付はすでに終了しています（集計に算入済み）。\n開いて追加の受付をしますか？\n（集計・稼働率はそのままです。追加した受付もそのまま集計に入ります）')) return;
   stopReception();
   // タブを受付へ
   Array.prototype.forEach.call(tabs, function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === 'pKiosk'); });
@@ -8142,13 +8162,11 @@ function startReception(ev){
            payMode: ev.payMode === 'paypay',        // 💳 現金なし・PayPay集金イベント
            payBoth: ev.payMode === 'both',          // 💴💳 現金とPayPayの両方（受付ごとにワンタップで選ぶ・既定は現金）
            payLink: ev.onlinePayLink || '' };
-  // 受付を開き直したら締め切りを解除（オンライン申請を再開）
-  if(ev.recClosed){
-    ev.recClosed = false;
-    db.collection('checkinEvents').doc(ev.id).set({ recClosed: false }, { merge: true })
-      .then(function(){ ckRefreshForEvent(ev); })
-      .catch(function(){});
-  }
+  // 終了済みのイベントを開いても、終了状態（＝集計の分母に入っている状態）は崩さない。
+  // 以前はここで終了を解除していたため、押し間違いで稼働率が変わっていた。
+  // 未開催に戻したいときは、イベント一覧の「↩ 終了を取り消す」を使う
+  gRec.closedOpen = !!ev.recClosed;
+  $('recReopenBar').classList.toggle('hide', !gRec.closedOpen);
   // 電子領収書の発行者名とPayPay受け取りリンク（主催ユニオンの設定を読む）
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
     if(gRec && gRec.ev === ev && s.exists){
@@ -8203,7 +8221,13 @@ function startReception(ev){
 
   focusScan();
 }
+$('btnReopenClose').onclick = function(){
+  var ev = gRec && gRec.ev;
+  stopReception();
+  if(ev){ ckRefreshForEvent(ev); toast('閉じました（集計はそのまま）'); }
+};
 function stopReception(){
+  $('recReopenBar').classList.add('hide');
   if(gRec && gRec.unsub) gRec.unsub();
   if(gRec && gRec.evUnsub) gRec.evUnsub();
   gRec = null;
@@ -8212,7 +8236,7 @@ function stopReception(){
 }
 
 // 受付中のイベント設定の変更を画面に反映（ckApplyEventLive）。変わった内容は画面下のお知らせで伝える
-var CK_LIVE_KEYS = ['payMode', 'fee1', 'fee2', 'fee3', 'onlinePayLink', 'unions', 'hostUnion', 'name', 'speaker'];
+var CK_LIVE_KEYS = ['payMode', 'fee1', 'fee2', 'fee3', 'onlinePayLink', 'unions', 'hostUnion', 'name', 'speaker', 'recClosed'];
 function ckApplyEventLive(d){
   if(!gRec) return;
   var ev = gRec.ev, changed = [];
@@ -8220,6 +8244,9 @@ function ckApplyEventLive(d){
     if(JSON.stringify(ev[k] == null ? null : ev[k]) !== JSON.stringify(d[k] == null ? null : d[k])){ changed.push(k); ev[k] = d[k]; }
   });
   if(!changed.length) return;
+  if(changed.indexOf('recClosed') >= 0 && !ev.recClosed && gRec.closedOpen){   // 別のPCで「終了を取り消す」が押された
+    gRec.closedOpen = false; $('recReopenBar').classList.add('hide');
+  }
   var pm0 = gRec.payMode, pb0 = gRec.payBoth;
   gRec.payMode = ev.payMode === 'paypay';
   gRec.payBoth = ev.payMode === 'both';
