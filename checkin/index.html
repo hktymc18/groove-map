@@ -1335,8 +1335,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v45';
+var APP_VER = 'v46';
 var CHANGELOG = [
+  { v: 'v46', d: '2026/10/11', items: ['受付中にイベントの設定（支払い方法・料金・PayPayのQR・合同ユニオン）を変えたら、受付中のすべてのPCにすぐ反映されるようにしました（PayPayのみに変えても、別のPCで金額が¥0のままになることがあった問題の修正）'] },
   { v: 'v45', d: '2026/10/11', items: ['✏ ユニオン名の変更（オーナー）: 名簿・会員証・イベント・過去の出席記録・集計・NAVIGATORのユーザーまで一括で新しい名前に付け替えられるようになりました（会員番号・会員証のURLやQRは変わりません）'] },
   { v: 'v44', d: '2026/10/10', items: ['💀 特別デザイン「死神」を、暗い背景で妖しく光るデザインに変更しました'] },
   { v: 'v43', d: '2026/10/10', items: ['✨ 会員証の「特別デザイン」: オーナーがメンバーごとに会員証の背景を特別なデザインにできるようになりました（名簿の「会員証」から）'] },
@@ -8152,6 +8153,7 @@ function startReception(ev){
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
     if(gRec && gRec.ev === ev && s.exists){
       if(s.data().issuer){ gRec.issuer = s.data().issuer; gRec.rcptInfo = ckRcptInfo(s.data()); }
+      gRec.unionPayLink = s.data().payLink || '';
       if(!gRec.payLink && s.data().payLink){ gRec.payLink = s.data().payLink; renderFeeRow(); }
     }
   }).catch(function(){});
@@ -8192,16 +8194,44 @@ function startReception(ev){
       qs.forEach(function(d){ gRec.att[d.id] = d.data(); });
       renderTallies();
     }, function(e){ toast('同期エラー: ' + e.message); });
+  // 受付中にイベントの設定（支払い方法・料金・PayPayリンク・合同ユニオン）が変わったら、どのPCにもすぐ反映する
+  // （以前は受付を開始した時点の設定のままで、PayPayのみに変えても別のPCは「手元金額 ¥0」の表示が続いていた）
+  gRec.evUnsub = db.collection('checkinEvents').doc(ev.id).onSnapshot(function(sn){
+    if(!gRec || gRec.ev !== ev || !sn || !sn.exists) return;
+    ckApplyEventLive(sn.data() || {});
+  }, function(){});
 
   focusScan();
 }
 function stopReception(){
   if(gRec && gRec.unsub) gRec.unsub();
+  if(gRec && gRec.evUnsub) gRec.evUnsub();
   gRec = null;
   $('recArea').classList.add('hide');
   $('recNone').classList.remove('hide');
 }
 
+// 受付中のイベント設定の変更を画面に反映（ckApplyEventLive）。変わった内容は画面下のお知らせで伝える
+var CK_LIVE_KEYS = ['payMode', 'fee1', 'fee2', 'fee3', 'onlinePayLink', 'unions', 'hostUnion', 'name', 'speaker'];
+function ckApplyEventLive(d){
+  if(!gRec) return;
+  var ev = gRec.ev, changed = [];
+  CK_LIVE_KEYS.forEach(function(k){
+    if(JSON.stringify(ev[k] == null ? null : ev[k]) !== JSON.stringify(d[k] == null ? null : d[k])){ changed.push(k); ev[k] = d[k]; }
+  });
+  if(!changed.length) return;
+  var pm0 = gRec.payMode, pb0 = gRec.payBoth;
+  gRec.payMode = ev.payMode === 'paypay';
+  gRec.payBoth = ev.payMode === 'both';
+  gRec.payLink = ev.onlinePayLink || gRec.unionPayLink || '';
+  renderFeeRow();
+  renderTallies();
+  if(pm0 !== gRec.payMode || pb0 !== gRec.payBoth){
+    toast('支払い方法が「' + (gRec.payMode ? 'PayPayのみ' : (gRec.payBoth ? '現金とPayPayの両方' : '現金のみ')) + '」に変わりました');
+  } else if(changed.some(function(k){ return /^fee/.test(k); })){
+    toast('料金の設定が変わりました（新規 ' + yen(currentFee()) + '）');
+  }
+}
 /* ── 受付の料金（ピッと同時に自動計上） ── */
 // イベントごとに設定可能（未設定の初期値: 第1部¥1,000 / 第2部・会場代のみ¥500）
 // 第3部は任意: 金額を設定したイベントだけ3部制（evFee3 が null なら2部制）
