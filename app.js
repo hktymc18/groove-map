@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v791';
+var APP_JS_VERSION = 'v792';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4064,7 +4064,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v791';
+  var DATA_VERSION = 'v792';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5569,6 +5569,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v792', d:'2026-10-11', items:['PLANの見出しの下は、前と同じようにスローガンを出すように（やる理由の作文が出ていた）'] },
   { v:'v791', d:'2026-10-11', items:['理想のページ（PC）：左に金額・やりたいこと・なりたい自分・想い（作文）、右に理想の生活の一覧を並べて、空白をなくしました', '理想のページに「想い（作文）」：やる理由・1年後・成功した毎日（長い時は「続きを読む」で全文）', 'PCの計画シートの「印刷・PDF」はサマリーから'] },
   { v:'v790', d:'2026-10-10', items:['アカウント管理に「公開範囲」（1. 先行利用 → 2. ユニオン単位 → 3. 全国公開）。変えられるのはオーナーだけ', '名簿を貼り付けると、登録しているアカウントと照らし合わせて「先行利用」にできます（表記ちがい・同じ名前も選べる。見つからない人は登録待ちの名簿に残し、承認した時に自動で先行利用に）', 'まだ使えない人には「順番にご案内しています」の画面'] },
   { v:'v789', d:'2026-10-10', items:['理想MAPの「＋ 追加」で、理想のかんたん追加（ビジネスを足す／ユーザーを足す）が開くように（現状MAPのフロント追加が開いていた）。人を選んでいればその人の下、選んでいなければ自分の下'] },
@@ -17307,7 +17308,7 @@ function _p2NextKey() {
 function _p2HubData() {
   var ym = _p2Ym(0), p = state.goals.plan, m = _p2M(ym), nk = _p2NextKey();
   var d0 = new Date(), left = new Date(d0.getFullYear(), d0.getMonth() + 1, 0).getDate() - d0.getDate() + 1;
-  var why = String(_p2WhyText() || '').split('\n').filter(Boolean)[0] || (_p2().motto || '');
+  var why = String(_p2().motto || '').trim(); // v792: PLANの見出しの下はスローガン（やる理由の作文は理想のページに出すので、ここには出さない）
   var S = 0, ez = null; try { ez = _dtEzNow(); S = ez.S; } catch (e) { S = _sNow(); }
   var nx = _p2Next(), rest = _p2DoRest(ym), tl = _p2TodayLeft(), rv = !!_p2ReviewHtml();
   var inc = p.income ? Math.round((+p.income) / 10000).toLocaleString() : '';
