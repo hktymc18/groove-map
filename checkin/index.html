@@ -8165,6 +8165,11 @@ function startReception(ev){
   // 終了済みのイベントを開いても、終了状態（＝集計の分母に入っている状態）は崩さない。
   // 以前はここで終了を解除していたため、押し間違いで稼働率が変わっていた。
   // 未開催に戻したいときは、イベント一覧の「↩ 終了を取り消す」を使う
+  // （未来日に誤って付いた終了の印だけは外す。未来日はもともと集計に入らないので稼働率は変わらない）
+  if(ev.recClosed && evDate > tdy){
+    ev.recClosed = false;
+    db.collection('checkinEvents').doc(ev.id).set({ recClosed: false }, { merge: true }).catch(function(){});
+  }
   gRec.closedOpen = !!ev.recClosed;
   $('recReopenBar').classList.toggle('hide', !gRec.closedOpen);
   // 電子領収書の発行者名とPayPay受け取りリンク（主催ユニオンの設定を読む）
