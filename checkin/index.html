@@ -477,27 +477,35 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 @keyframes bdgSheen{0%,55%{transform:translateX(-120%);}85%,100%{transform:translateX(120%);}}
 @media (prefers-reduced-motion: reduce){ .bdg::after{animation:none;} }
 .mc-hp,.mc-art,.mc-rare{display:none;}
-/* 🃏 レアカード風（skin-tcg）: 虹色ホロの枠・名前とHP・絵の窓・左下に番号とレアリティ・小さめQR（タップで拡大）。
+/* 🃏 レアカード風（skin-tcg）: 虹色ホロの細い外枠の内側いっぱいに絵を敷き、文字・QRは絵の上に重ねる。
+   上: ユニオン・名前・HP / 中央: 特性（名前＋説明）/ その下: 属性バッジ（最大3）＋技名＋威力 / 左下: 番号・通し番号・レアリティ / 右下: QR（タップで拡大）。
    系列は出さない。絵は skin ごとに .mc-art::before で指定 */
 .membercard.skin-tcg{
-  display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;text-align:left;
-  grid-template-areas:"union hp" "name hp" "grade grade" "art art" "no qr" "rare qr" "brand qr";
-  padding:20px 19px 18px;border-radius:16px;color:#fff;
+  display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;text-align:left;min-height:500px;
+  grid-template-rows:auto auto auto auto 1fr auto auto auto auto auto auto auto;
+  grid-template-areas:"union hp" "name hp" "grade grade" "badge badge" ". ." "ab ab" "abtx abtx" "atk atk" "atktx atktx" "no qr" "rare qr" "brand qr";
+  padding:18px 18px 16px;border-radius:16px;color:#fff;
   background:linear-gradient(125deg,#ff9ad5,#ffe08a 16%,#9dffb0 33%,#8fd8ff 50%,#c9a2ff 66%,#ff9ad5 83%,#ffe08a);
   background-size:300% 300%;animation:tcgHolo 8s linear infinite;
 }
 .membercard.skin-tcg::before{
-  content:'';position:absolute;inset:9px;border-radius:11px;z-index:0;pointer-events:none;
-  background:radial-gradient(90% 50% at 50% 45%,rgba(110,50,200,.35),transparent 70%),linear-gradient(170deg,#1b1328,#0b0812 60%,#05040a);
-  box-shadow:inset 0 0 0 2px #c9a84a,inset 0 0 0 4px rgba(0,0,0,.6),inset 0 0 0 5px rgba(232,206,120,.55);
+  content:'';position:absolute;inset:6px;border-radius:11px;z-index:0;pointer-events:none;
+  background:radial-gradient(90% 55% at 50% 42%,rgba(122,58,214,.55),rgba(52,18,96,.4) 50%,transparent 80%),linear-gradient(170deg,#1b1328,#0b0812 60%,#05040a);
 }
 .membercard.skin-tcg::after{
   content:'';position:absolute;inset:0;z-index:3;pointer-events:none;border-radius:inherit;
-  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.16) 46%,rgba(200,170,255,.10) 52%,transparent 62%);
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.14) 46%,rgba(200,170,255,.08) 52%,transparent 62%);
   background-size:250% 100%;animation:tcgSheen 6s ease-in-out infinite;
 }
 .membercard.skin-tcg > *{position:relative;z-index:1;}
+.membercard.skin-tcg .mc-art{display:block;position:absolute;inset:6px;border-radius:11px;overflow:hidden;z-index:0;}
+/* 文字が読めるよう、絵の上下だけ暗くする */
+.membercard.skin-tcg .mc-art::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.62),rgba(0,0,0,.18) 20%,transparent 34%,transparent 46%,rgba(0,0,0,.5) 62%,rgba(0,0,0,.82));
+}
 .membercard.skin-tcg .mc-deco,.membercard.skin-tcg .mc-group{display:none;}
+.tcg-tx{text-shadow:0 0 2px #000,0 1px 0 #000,0 0 6px #000;}
 .membercard.skin-tcg .mc-union{grid-area:union;justify-self:start;font-size:10.5px;letter-spacing:.08em;margin:0;padding:1px 10px;border-radius:5px 99px 99px 5px;
   background:linear-gradient(180deg,#f6e3a0,#c9a84a);color:#2a1d02;font-style:italic;}
 .membercard.skin-tcg .mc-name{grid-area:name;margin:2px 0 0;font-size:24px;line-height:1.15;letter-spacing:.02em;
@@ -508,38 +516,50 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-tcg .mc-hp small{font-size:11px;font-weight:900;letter-spacing:.02em;}
 .membercard.skin-tcg .mc-hp .orb{align-self:center;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:4px;border-radius:50%;
   font-size:14px;line-height:1;text-shadow:none;background:radial-gradient(circle at 35% 30%,#d9b8ff,#7a3fd0 55%,#2b0f5a);box-shadow:0 0 0 2px #e8d9ff,0 0 10px rgba(170,100,255,.9);}
-.membercard.skin-tcg .mc-grade{grid-area:grade;justify-self:stretch;margin:5px 0 0;padding:1px 8px;border-radius:3px;font-size:9.5px;letter-spacing:.14em;
-  background:linear-gradient(90deg,rgba(212,180,90,.95),rgba(212,180,90,0) 85%);color:#1f1504;}
+.membercard.skin-tcg .mc-grade{grid-area:grade;justify-self:start;margin:5px 0 0;padding:1px 26px 1px 8px;border-radius:3px;font-size:9.5px;letter-spacing:.14em;
+  background:linear-gradient(90deg,rgba(212,180,90,.95),rgba(212,180,90,.6) 70%,rgba(212,180,90,0));color:#1f1504;}
 .membercard.skin-tcg .mc-grade:empty{display:none;}
-.membercard.skin-tcg .mc-art{display:block;grid-area:art;height:270px;margin:6px 0 8px;border-radius:5px;overflow:hidden;
-  background:radial-gradient(85% 60% at 50% 40%,rgba(122,58,214,.5),rgba(52,18,96,.35) 45%,transparent 72%),linear-gradient(180deg,#0d0916,#020104);
-  box-shadow:0 0 0 2px #c9a84a,0 0 0 4px rgba(0,0,0,.55),0 0 18px rgba(150,80,255,.35);}
-.membercard.skin-tcg .mc-badge{grid-area:art;align-self:start;justify-self:start;margin:14px 0 0 8px;z-index:2;}
-.membercard.skin-tcg .mc-no{grid-area:no;align-self:end;margin:0;font-size:12px;font-weight:700;color:#e9e1ff;}
-.membercard.skin-tcg .mc-rare{display:block;grid-area:rare;justify-self:start;margin-top:4px;padding:0 7px;border-radius:3px;
-  font-family:Verdana,sans-serif;font-weight:900;font-size:12px;letter-spacing:.08em;color:#1b1203;background:linear-gradient(180deg,#fff0b8,#d4af37);}
+.membercard.skin-tcg .mc-badge{grid-area:badge;justify-self:start;margin:8px 0 0;}
+/* 特性（中央）: 赤い「特性」ラベル＋名前、下に小さく説明 */
+.mc-ab,.mc-abtx,.mc-atk,.mc-atktx{display:none;}
+.membercard.skin-tcg .mc-ab{display:flex;grid-area:ab;align-items:center;gap:8px;margin-top:6px;}
+.membercard.skin-tcg .mc-ab:empty,.membercard.skin-tcg .mc-abtx:empty,.membercard.skin-tcg .mc-atk:empty,.membercard.skin-tcg .mc-atktx:empty{display:none;}
+.mc-ab .ab-tag{flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:.3em;padding:2px 6px 2px 10px;border-radius:99px 4px 4px 99px;color:#fff;
+  background:linear-gradient(180deg,#e2463c,#9e1a14);box-shadow:0 0 0 1.5px #fff,0 1px 4px rgba(0,0,0,.6);text-shadow:none;}
+.mc-ab .ab-nm{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:20px;line-height:1.2;color:#ff7a5c;
+  text-shadow:0 0 2px #000,0 1px 0 #000,0 0 3px #000,0 0 10px rgba(255,90,60,.55);}
+.membercard.skin-tcg .mc-atktx{display:block;grid-area:atktx;margin-top:4px;font-size:11px;line-height:1.55;color:#f4f0ff;white-space:pre-wrap;}
+.membercard.skin-tcg .mc-abtx{display:block;grid-area:abtx;margin-top:4px;font-size:11px;line-height:1.55;color:#f4f0ff;white-space:pre-wrap;}
+/* 技: 属性バッジ（最大3）＋技名＋威力 */
+.membercard.skin-tcg .mc-atk{display:flex;grid-area:atk;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.22);}
+.mc-atk .el{display:flex;gap:3px;flex:0 0 auto;}
+.mc-atk .el i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-style:normal;font-size:13px;line-height:1;
+  background:radial-gradient(circle at 35% 30%,var(--e1),var(--e2) 70%);box-shadow:0 0 0 1.5px #fff,0 1px 4px rgba(0,0,0,.6);text-shadow:none;}
+.mc-atk .at-nm{flex:1;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:18px;line-height:1.2;}
+.mc-atk .at-dmg{font-family:Verdana,sans-serif;font-weight:900;font-size:22px;line-height:1;}
+.membercard.skin-tcg .mc-no{grid-area:no;align-self:end;margin:10px 0 0;font-size:11.5px;font-weight:700;color:#e9e1ff;}
+/* 左下: 通し番号＋レアリティ（斜体の文字だけ） */
+.membercard.skin-tcg .mc-rare{display:flex;grid-area:rare;align-items:baseline;gap:6px;justify-self:start;margin-top:2px;}
 .membercard.skin-tcg .mc-rare:empty{display:none;}
-.membercard.skin-tcg .mc-brand{grid-area:brand;align-self:start;margin-top:5px;font-size:8.5px;letter-spacing:.12em;color:rgba(235,225,255,.6);text-shadow:none;}
-.membercard.skin-tcg #mcQr{grid-area:qr;min-height:0;justify-self:end;align-self:end;z-index:4;cursor:zoom-in;}
-.membercard.skin-tcg #mcQr img,.membercard.skin-tcg #mcQr canvas{width:92px !important;height:92px !important;border-width:5px;outline:2px solid #c9a84a;box-shadow:0 0 12px rgba(150,80,255,.6);}
-.membercard.skin-tcg #mcQr.big{grid-area:auto;grid-column:1 / -1;grid-row:8;justify-self:center;margin-top:10px;cursor:zoom-out;}
+.mc-rare .ser{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:700;color:#fff;}
+.mc-rare .rr{font-family:Verdana,sans-serif;font-style:italic;font-weight:900;font-size:15px;letter-spacing:.04em;color:#ffe9a0;
+  text-shadow:0 0 2px #000,0 1px 0 #000,0 0 8px rgba(255,210,90,.7);}
+.membercard.skin-tcg .mc-brand{grid-area:brand;align-self:start;margin-top:5px;font-size:8.5px;letter-spacing:.12em;color:rgba(235,225,255,.65);text-shadow:0 0 3px #000;}
+.membercard.skin-tcg #mcQr{grid-area:qr;min-height:0;justify-self:end;align-self:end;margin-top:10px;z-index:4;cursor:zoom-in;}
+.membercard.skin-tcg #mcQr img,.membercard.skin-tcg #mcQr canvas{width:84px !important;height:84px !important;border-width:5px;outline:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 10px rgba(0,0,0,.6);}
+.membercard.skin-tcg #mcQr.big{grid-area:auto;grid-column:1 / -1;grid-row:13;justify-self:center;margin-top:12px;cursor:zoom-out;}
 .membercard.skin-tcg #mcQr.big img,.membercard.skin-tcg #mcQr.big canvas{width:200px !important;height:200px !important;}
 @keyframes tcgHolo{to{background-position:300% 300%;}}
 @keyframes tcgSheen{0%{background-position:120% 0;}60%,100%{background-position:-120% 0;}}
-/* 💀 死神のレアカード: 絵の窓の中で死神が妖しく光り、足もとに霧 */
+/* 💀 死神のレアカード: カード全体に死神が妖しく光る */
 .membercard.skin-reaperTcg .mc-art::before{
-  content:'';position:absolute;inset:-2% -4% -6%;pointer-events:none;
-  background:url('skins/reaper.webp') center 25%/contain no-repeat;
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:url('skins/reaper.webp') 50% 38%/122% auto no-repeat;
   filter:brightness(1.9) contrast(1.15) drop-shadow(0 0 3px rgba(190,140,255,.95)) drop-shadow(0 0 12px rgba(140,70,255,.7));
   animation:reaperSway 7s ease-in-out infinite alternate,reaperGlow 3.2s ease-in-out infinite alternate;transform-origin:50% 100%;
 }
-.membercard.skin-reaperTcg .mc-art::after{
-  content:'';position:absolute;left:-20%;right:-20%;bottom:-8%;height:45%;pointer-events:none;
-  background:radial-gradient(50% 60% at 30% 70%,rgba(150,120,220,.3),transparent 70%),radial-gradient(45% 55% at 72% 80%,rgba(90,200,170,.2),transparent 70%);
-  filter:blur(6px);animation:reaperMist 9s ease-in-out infinite alternate;
-}
 @media (prefers-reduced-motion: reduce){
-  .membercard.skin-tcg,.membercard.skin-tcg::after,.membercard.skin-reaperTcg .mc-art::before,.membercard.skin-reaperTcg .mc-art::after{animation:none;}
+  .membercard.skin-tcg,.membercard.skin-tcg::after,.membercard.skin-reaperTcg .mc-art::before{animation:none;}
 }
 /* 紙カード印刷 */
 #printArea{display:none;}
@@ -918,6 +938,10 @@ body.practice .topbar{top:var(--pxh,36px);}
       <div class="mc-name" id="mcName">…</div>
       <div class="mc-hp" id="mcHp"></div>
       <div class="mc-art" aria-hidden="true"></div>
+      <div class="mc-ab tcg-tx" id="mcAb"></div>
+      <div class="mc-abtx tcg-tx" id="mcAbTx"></div>
+      <div class="mc-atk tcg-tx" id="mcAtk"></div>
+      <div class="mc-atktx tcg-tx" id="mcAtkTx"></div>
       <div class="mc-group" id="mcGroup"></div>
       <div id="mcQr"></div>
       <div class="mc-no mono" id="mcNo"></div>
@@ -1425,8 +1449,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v52';
+var APP_VER = 'v53';
 var CHANGELOG = [
+  { v: 'v53', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 絵をカード全体に広げ、特性・技（説明つき）・属性バッジ・通し番号を表示できるようにしました'] },
   { v: 'v52', d: '2026/10/12', items: ['🏅 会員証にバッジ（役職名）を付けられるようになりました。名簿の「会員証」から、タイトル（BR〜TEAM ELITE）か役職（NTC Ambassador・EXPERT・DIRECTOR・受付・設営）を1つ選べます', '🃏 特別デザインに「レアカード風」を追加（オーナーが設定）'] },
   { v: 'v51', d: '2026/10/11', items: ['🎓 追加オプション（アウトライン等）は、イベントの作成・編集で「このイベントで受け付ける」にチェックしたイベントだけで出るようにしました'] },
   { v: 'v50', d: '2026/10/11', items: ['✨ ユニオン専用の「追加オプション」（例: アウトライン）: オーナーが有効にしたユニオンの受付では、ピッした後に「🎓 アウトラインも受ける（＋¥500）」をタップで、その人だけ料金に追加分を足せます。会計には「アウトライン ¥500 × ○名」の行が自動で入ります'] },
@@ -2288,6 +2313,20 @@ var CARD_BADGES = [
   { k: '受付', t: 'role', c: ['#8af0a8', '#1f8a43'] },
   { k: '設営', t: 'role', c: ['#ffc27a', '#c25a0a'] }
 ];
+// 🃏 レアカード風の技の属性（丸いバッジ・最大3つ）。skinAtkEls は "fire,thunder" のようにカンマ区切りで保存
+var CARD_ELEMENTS = [
+  { k: 'fire', n: '炎', i: '🔥', c: ['#ffb36b', '#d4280f'] },
+  { k: 'thunder', n: '雷', i: '⚡', c: ['#fff27a', '#e0a400'] },
+  { k: 'water', n: '水', i: '💧', c: ['#9fe0ff', '#1769c9'] },
+  { k: 'grass', n: '草', i: '🌿', c: ['#b8f58a', '#2f8f1f'] },
+  { k: 'earth', n: '土', i: '🪨', c: ['#e3b98a', '#7a4a1f'] },
+  { k: 'wind', n: '風', i: '🌀', c: ['#d8fff4', '#3aa8a0'] },
+  { k: 'magic', n: '魔法', i: '✨', c: ['#e6c4ff', '#6a2fc0'] }
+];
+function ckElement(k){
+  for(var i = 0; i < CARD_ELEMENTS.length; i++) if(CARD_ELEMENTS[i].k === k) return CARD_ELEMENTS[i];
+  return null;
+}
 function ckBadge(k){
   for(var i = 0; i < CARD_BADGES.length; i++) if(CARD_BADGES[i].k === k) return CARD_BADGES[i];
   return null;
@@ -2328,7 +2367,17 @@ function renderCard(c){
     if(c.skinName) $('mcName').textContent = c.skinName;
   }
   $('mcHp').innerHTML = tcg && c.skinHp ? '<small>HP</small>' + esc(c.skinHp) + '<i class="orb">💀</i>' : '';
-  $('mcRare').textContent = tcg ? (c.skinRare || '') : '';
+  // 左下: 通し番号（例: 1/1000）＋レアリティ（斜体の文字だけ）
+  $('mcRare').innerHTML = tcg && (c.skinSerial || c.skinRare)
+    ? (c.skinSerial ? '<span class="ser">' + esc(c.skinSerial) + '</span>' : '') + (c.skinRare ? '<span class="rr">' + esc(c.skinRare) + '</span>' : '') : '';
+  // 中央: 特性の名前＋説明 / その下: 属性バッジ＋技名＋威力（どれも任意）
+  $('mcAb').innerHTML = tcg && c.skinAbName ? '<span class="ab-tag">特性</span><span class="ab-nm">' + esc(c.skinAbName) + '</span>' : '';
+  $('mcAbTx').textContent = tcg ? (c.skinAbText || '') : '';
+  var els = tcg ? String(c.skinAtkEls || '').split(',').map(ckElement).filter(Boolean).slice(0, 3) : [];
+  $('mcAtk').innerHTML = tcg && (els.length || c.skinAtkName || c.skinAtkDmg)
+    ? '<span class="el">' + els.map(function(e){ return '<i title="' + esc(e.n) + '" style="--e1:' + e.c[0] + ';--e2:' + e.c[1] + ';">' + e.i + '</i>'; }).join('') + '</span>'
+      + '<span class="at-nm">' + esc(c.skinAtkName || '') + '</span><span class="at-dmg">' + esc(c.skinAtkDmg || '') + '</span>' : '';
+  $('mcAtkTx').textContent = tcg ? (c.skinAtkText || '') : '';
   $('mcBadge').innerHTML = ckBadgeHtml(c.badge || '');
   var qr = $('mcQr');
   qr.classList.remove('big');
@@ -2374,7 +2423,8 @@ function showCardView(token){
       }
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '', trainee: !!c.trainee, skin: c.skin || '',
-        badge: c.badge || '', skinName: c.skinName || '', skinHp: c.skinHp || '', skinRare: c.skinRare || '' })); }catch(e){}
+        badge: c.badge || '', skinName: c.skinName || '', skinHp: c.skinHp || '', skinRare: c.skinRare || '', skinSerial: c.skinSerial || '',
+        skinAbName: c.skinAbName || '', skinAbText: c.skinAbText || '', skinAtkEls: c.skinAtkEls || '', skinAtkName: c.skinAtkName || '', skinAtkDmg: c.skinAtkDmg || '', skinAtkText: c.skinAtkText || '' })); }catch(e){}
       // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
       // ホーム画面ショートカットから開いた旧トークンのページでは、QRを出さず案内する
       // （旧QRを受付でスキャンすると「無効な会員証」になり続けるため、その入口で止める）
@@ -2390,7 +2440,7 @@ function showCardView(token){
     } else {
       try{ localStorage.removeItem('bci_card_' + token); }catch(e){}
       $('mcName').textContent = '—'; $('mcQr').innerHTML = ''; $('mcNo').textContent = ''; $('mcGroup').textContent = ''; $('mcUnion').textContent = '';
-      $('mcBadge').innerHTML = ''; $('mcHp').innerHTML = ''; $('mcRare').textContent = '';
+      $('mcBadge').innerHTML = ''; $('mcHp').innerHTML = ''; $('mcRare').innerHTML = ''; $('mcAb').innerHTML = ''; $('mcAbTx').textContent = ''; $('mcAtk').innerHTML = ''; $('mcAtkTx').textContent = '';
       $('mcErr').textContent = 'この会員証は無効です。再発行された可能性があります。ユニオンの管理者に確認してください。';
     }
   }).catch(function(){
@@ -4587,7 +4637,8 @@ $('btnGradeSel').onclick = function(){
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
           grade: grade,
           trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '',
+          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
           createdAt: FV.serverTimestamp()
         });
       }
@@ -4928,7 +4979,8 @@ function refreshCardDoc(token, m){
       no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
       grade: m.grade || '',
       trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '',
+          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
       active: !ckMemberOff(m),   // 無効の間は本人のカードに先のハウディの予定を出さない
       createdAt: FV.serverTimestamp()
     });
@@ -4950,7 +5002,8 @@ function issueCard(m, cb){
     no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
     grade: m.grade || '',
     trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '',
+          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
     createdAt: FV.serverTimestamp()
   });
   batch.set(db.collection('checkinMembers').doc(m.no), {
@@ -5021,7 +5074,19 @@ function cardModal(m){
       + '<div id="cmTcg" style="display:' + (CARD_SKIN_TCG[m.skin || ''] ? 'block' : 'none') + ';margin-top:8px;">'
       + '<label>カードの表示名（空欄なら名簿の名前）</label><input type="text" id="cmTcgName" maxlength="20" value="' + esc(m.skinName || '') + '" placeholder="' + esc(m.name || '') + '" style="width:100%;">'
       + '<div style="display:flex;gap:8px;"><div style="flex:1;"><label>HP</label><input type="text" id="cmTcgHp" maxlength="5" inputmode="numeric" value="' + esc(m.skinHp || '') + '" placeholder="例: 330" style="width:100%;"></div>'
+      + '<div style="flex:1;"><label>通し番号</label><input type="text" id="cmTcgSer" maxlength="12" value="' + esc(m.skinSerial || '') + '" placeholder="例: 1/1000" style="width:100%;"></div>'
       + '<div style="flex:1;"><label>レアリティ</label><input type="text" id="cmTcgRare" maxlength="6" value="' + esc(m.skinRare || '') + '" placeholder="例: SAR" style="width:100%;"></div></div>'
+      + '<label>特性の名前（空欄なら出しません）</label><input type="text" id="cmTcgAb" maxlength="20" value="' + esc(m.skinAbName || '') + '" style="width:100%;">'
+      + '<label>特性の説明</label><textarea id="cmTcgAbTx" maxlength="120" rows="3" style="width:100%;">' + esc(m.skinAbText || '') + '</textarea>'
+      + '<label>技の属性（最大3つ）</label><div style="display:flex;gap:6px;">' + [0, 1, 2].map(function(i){
+          var cur = String(m.skinAtkEls || '').split(',')[i] || '';
+          return '<select class="cmTcgEl" style="flex:1;min-width:0;"><option value="">—</option>' + CARD_ELEMENTS.map(function(e){
+            return '<option value="' + e.k + '"' + (cur === e.k ? ' selected' : '') + '>' + e.i + ' ' + esc(e.n) + '</option>';
+          }).join('') + '</select>';
+        }).join('') + '</div>'
+      + '<div style="display:flex;gap:8px;"><div style="flex:2;"><label>技の名前</label><input type="text" id="cmTcgAtk" maxlength="16" value="' + esc(m.skinAtkName || '') + '" style="width:100%;"></div>'
+      + '<div style="flex:1;"><label>威力</label><input type="text" id="cmTcgDmg" maxlength="6" value="' + esc(m.skinAtkDmg || '') + '" placeholder="例: 50×" style="width:100%;"></div></div>'
+      + '<label>技の説明</label><textarea id="cmTcgAtkTx" maxlength="120" rows="3" style="width:100%;">' + esc(m.skinAtkText || '') + '</textarea>'
       + '<div class="btns" style="justify-content:flex-start;"><button id="cmTcgSave">表示内容を保存</button></div></div>'
       + '</div>';
   }
@@ -5048,8 +5113,11 @@ function cardModal(m){
   };
   var ts = $('cmTcgSave');
   if(ts) ts.onclick = function(){
-    var nm = $('cmTcgName').value.trim(), hp = $('cmTcgHp').value.trim(), ra = $('cmTcgRare').value.trim();
-    saveDeco({ skinName: nm, skinHp: hp, skinRare: ra }, 'カードの表示内容を保存しました（本人が会員証を開き直すと反映）', ts);
+    var v = function(id){ return $(id).value.trim(); };
+    var els = [].slice.call(document.querySelectorAll('.cmTcgEl')).map(function(x){ return x.value; }).filter(Boolean);
+    saveDeco({ skinName: v('cmTcgName'), skinHp: v('cmTcgHp'), skinSerial: v('cmTcgSer'), skinRare: v('cmTcgRare'),
+      skinAbName: v('cmTcgAb'), skinAbText: v('cmTcgAbTx'), skinAtkEls: els.join(','), skinAtkName: v('cmTcgAtk'), skinAtkDmg: v('cmTcgDmg'), skinAtkText: v('cmTcgAtkTx') },
+      'カードの表示内容を保存しました（本人が会員証を開き直すと反映）', ts);
   };
   var sk = $('cmSkin');
   if(sk) sk.onchange = function(){
@@ -5159,7 +5227,8 @@ $('btnCardBulk').onclick = function(){
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
           grade: m.grade || '',
           trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '',
+          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
           createdAt: FV.serverTimestamp()
         });
         batch.set(db.collection('checkinMembers').doc(m.no), {
