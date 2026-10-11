@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v794';
+var APP_JS_VERSION = 'v795';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4064,7 +4064,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v794';
+  var DATA_VERSION = 'v795';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5569,6 +5569,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v795', d:'2026-10-11', items:['共有MAP：共有された側からも「共有を外す」ができるように（一覧から消えて見られなくなります。結合していれば結合も解除。相手がもう一度共有すればまた見られます）'] },
   { v:'v794', d:'2026-10-11', items:['ユニオン名の変更に対応：BASE ANTARES→ANTARES、BASE REVE→REVE、LIEN LOAD→LOAD（登録・プロフィールの選択肢も新しい名前に）'] },
   { v:'v793', d:'2026-10-11', items:['夢100：タスクと同じように、左にスワイプで「🗑 消す」・右にスワイプで「叶えた」。消しても「↩ 元に戻す」で戻せます', '夢の編集画面にも「この夢を消す」（PCはここから）'] },
   { v:'v792', d:'2026-10-11', items:['PLANの見出しの下は、前と同じようにスローガンを出すように（やる理由の作文が出ていた）'] },
@@ -38067,7 +38068,31 @@ function buildSharedCard(owner) {
     card.appendChild(visBtn);
   }
 
+  // v795: 共有された側からも外せる（自分の共有MAP一覧から消す。相手がもう一度共有すればまた見られる）
+  var lvBtn = document.createElement('div');
+  lvBtn.className = 'sd-leave';
+  lvBtn.textContent = '共有を外す';
+  lvBtn.onclick = function(e) { e.stopPropagation(); leaveSharedMap(owner.uid); };
+  card.appendChild(lvBtn);
+
   return card;
+}
+function leaveSharedMap(ownerUid) {
+  if (!db || !currentUser) return;
+  var o = sharedOwners.filter(function(x) { return x.uid === ownerUid; })[0] || {}, nm = o.org || o.name || 'このMAP';
+  if (!confirm('「' + nm + '」の共有を外しますか？\n共有MAPの一覧から消えて、見られなくなります' + (isMerged(ownerUid) ? '（自分のMAPへの結合も解除します）' : '') + '。\nもう一度見たい時は、相手に共有してもらってください。')) return;
+  db.doc('maps/' + ownerUid + '/shared/' + currentUser.uid).delete().then(function() {
+    db.doc('sharedWith/' + currentUser.uid + '/from/' + ownerUid).delete().catch(function() {});
+    if (isMerged(ownerUid)) { try { unmergeMap(ownerUid); } catch (eM) {} }
+    sharedOwners = sharedOwners.filter(function(x) { return x.uid !== ownerUid; });
+    if (viewingOwnerUid === ownerUid) { closeSharedDashboard(); switchToOwner(null); } // 見ていたMAPなら自分のMAPへ
+    showSharedButton();
+    var dash = document.getElementById('sharedDashboard');
+    if (dash && dash.classList.contains('open')) { if (sharedOwners.length) openSharedDashboard(); else closeSharedDashboard(); }
+    toast('「' + nm + '」の共有を外しました');
+  }).catch(function(e) {
+    toast('⚠️ 共有を外せませんでした（' + ((e && e.code) === 'permission-denied' ? 'データベースのルールの反映待ちです' : '通信を確認してください') + '）', 4000);
+  });
 }
 
 // v495: MAP切替時に「見え方の選択状態」をリセット（系列フォーカス・カテゴリ/QBR・地域絞り込み）。

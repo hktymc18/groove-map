@@ -62,8 +62,8 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v794';
-var APP_JS = './app.js?v=v794'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
+var CACHE = 'groove-map-v795';
+var APP_JS = './app.js?v=v795'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
 var ASSETS = [
   './',
   './index.html',
