@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v792';
+var APP_JS_VERSION = 'v793';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4064,7 +4064,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v792';
+  var DATA_VERSION = 'v793';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5569,6 +5569,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v793', d:'2026-10-11', items:['夢100：タスクと同じように、左にスワイプで「🗑 消す」・右にスワイプで「叶えた」。消しても「↩ 元に戻す」で戻せます', '夢の編集画面にも「この夢を消す」（PCはここから）'] },
   { v:'v792', d:'2026-10-11', items:['PLANの見出しの下は、前と同じようにスローガンを出すように（やる理由の作文が出ていた）'] },
   { v:'v791', d:'2026-10-11', items:['理想のページ（PC）：左に金額・やりたいこと・なりたい自分・想い（作文）、右に理想の生活の一覧を並べて、空白をなくしました', '理想のページに「想い（作文）」：やる理由・1年後・成功した毎日（長い時は「続きを読む」で全文）', 'PCの計画シートの「印刷・PDF」はサマリーから'] },
   { v:'v790', d:'2026-10-10', items:['アカウント管理に「公開範囲」（1. 先行利用 → 2. ユニオン単位 → 3. 全国公開）。変えられるのはオーナーだけ', '名簿を貼り付けると、登録しているアカウントと照らし合わせて「先行利用」にできます（表記ちがい・同じ名前も選べる。見つからない人は登録待ちの名簿に残し、承認した時に自動で先行利用に）', 'まだ使えない人には「順番にご案内しています」の画面'] },
@@ -22131,10 +22132,11 @@ function _p2WhyPageHtml(i) {
     var sum = all.length ? '<div class="ux-sum"><b>' + dn + '<small> / ' + dr.length + '</small></b><span>' + (to ? _p2DrYmLabel(to) + 'までの夢・' : '') + '達成</span></div>'
       + (to ? '<div class="dr-need"><div><small>' + _p2DrYmLabel(to) + 'までに必要</small><b>' + man(amt) + '<i>万円</i></b></div><div><small>あと' + nM + 'ヶ月・月あたり</small><b>' + man(amt / nM) + '<i>万円</i></b></div></div>' + (noDl ? '<div class="dr-nt">期日を決めていない夢 ' + noDl + '個は入っていません</div>' : '')
         : (amt ? '<div class="dr-nt">残り必要 <b>' + man(amt) + '万円</b></div>' : '')) : '';
-    _p2DrCss();
+    _p2DrCss(); _p2DrSwBind();
     return head + '<h2 class="ux-h2">夢100</h2>' + flt + sum
       + (dr.length ? list.map(function(x) {
-        return '<div class="ux-sk' + (x.done ? ' done' : '') + '"><span class="ck" onclick="p2DrTgl(\'' + x.id + '\')">' + (x.done ? '✓' : '') + '</span><span class="t" onclick="p2DrFormOpen(\'' + x.id + '\')">' + evEsc(x.t) + (x.dl || x.amt ? '<small style="display:block;font-size:11px;color:var(--text-dim);font-weight:600">' + (x.dl ? _p2DrYmLabel(x.dl) + 'まで' : '') + (x.amt ? (x.dl ? '・' : '') + x.amt + '万円' : '') + '</small>' : '') + '</span>' + (_p2DrUrl(x.url) ? '<a class="dr-go" href="' + evEsc(_p2DrUrl(x.url)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + icn('link') + '開く</a>' : '') + '</div>'; // v787: URLを入れた夢は「開く」でそのページへ
+        // v793: タスクと同じスワイプ（左＝🗑 消す・右＝叶えた）
+        return '<div class="dr-lw" data-drid="' + x.id + '"><div class="dr-dl" onclick="p2DrDelU(\'' + x.id + '\')">' + icn('trash') + '<span>消す</span></div><div class="ln ux-sk' + (x.done ? ' done' : '') + '"><span class="ck" onclick="p2DrTgl(\'' + x.id + '\')">' + (x.done ? '✓' : '') + '</span><span class="t" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(x.t) + (x.dl || x.amt ? '<small style="display:block;font-size:11px;color:var(--text-dim);font-weight:600">' + (x.dl ? _p2DrYmLabel(x.dl) + 'まで' : '') + (x.amt ? (x.dl ? '・' : '') + x.amt + '万円' : '') + '</small>' : '') + '</span>' + (_p2DrUrl(x.url) ? '<a class="dr-go" href="' + evEsc(_p2DrUrl(x.url)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + icn('link') + '開く</a>' : '') + '</div></div>'; // v787: URLを入れた夢は「開く」でそのページへ
       }).join('') : (all.length ? '<div class="ux-empty">この期間の夢はありません</div>' : '<div class="ux-empty">やりたいこと・欲しいものを100個。<br>まずは5個から</div>'))
       + (!showAll && dr.length > 6 ? '<span class="ux-more" onclick="_uxLists[\'dream:all\']=1;renderPlan()">ほか ' + (dr.length - 6) + '個 すべて見る ›</span>' : '')
       + '<span class="ux-lk" onclick="p2DrFormOpen()">＋ 夢を追加</span>';
@@ -25548,7 +25550,9 @@ function _p2DrUrl(u) { u = String(u || '').trim(); if (!u) return ''; if (/^http
 function _p2DrCss() {
   if (document.getElementById('p2DrCss')) return;
   var st = document.createElement('style'); st.id = 'p2DrCss';
-  st.textContent = '.ux-sk .dr-go{flex:none;display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:6px 10px;border-radius:10px;border:1px solid color-mix(in srgb,#5AD7FF 50%,var(--border));color:#2BA8D8;font-size:12.5px;font-weight:900;text-decoration:none;white-space:nowrap}.ux-sk .dr-go svg{width:14px;height:14px}'
+  st.textContent = '.dr-lw{position:relative;overflow:hidden;border-radius:13px;margin-top:8px}.dr-lw>.ln{position:relative;z-index:1;margin-top:0;touch-action:pan-y}'
+    + '.dr-dl{position:absolute;top:0;right:0;bottom:0;width:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:color-mix(in srgb,#FF6B7F 18%,var(--surface));color:#FF6B7F;font-size:12px;font-weight:900;cursor:pointer;border-radius:0 13px 13px 0}.dr-dl svg{width:20px;height:20px}'
+    + '.ux-sk .dr-go{flex:none;display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:6px 10px;border-radius:10px;border:1px solid color-mix(in srgb,#5AD7FF 50%,var(--border));color:#2BA8D8;font-size:12.5px;font-weight:900;text-decoration:none;white-space:nowrap}.ux-sk .dr-go svg{width:14px;height:14px}'
     + '.dr-f{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}.dr-f span{padding:7px 12px;border-radius:10px;border:1px solid var(--border);font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.dr-f span.on,.dr-f select.on{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:var(--accent);color:var(--accent)}.dr-f select{padding:7px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-weight:900;font-size:13.5px;font-family:inherit}'
     + '.dr-need{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 10px}.dr-need>div{padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--border)}.dr-need small{display:block;font-size:12px;font-weight:800;color:var(--text-dim)}.dr-need b{font:900 24px Inter,sans-serif;color:var(--gold)}.dr-need b i{font-style:normal;font-size:12px;color:var(--text-mid);margin-left:2px}.dr-nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:0 0 10px}.dr-nt b{color:var(--text)}';
   document.head.appendChild(st);
@@ -25647,7 +25651,7 @@ function p2DrFormOpen(editId) {
     + '<div style="display:flex;gap:6px">'
     + '<span class="p2-btn pri" style="margin:0;flex:1;text-align:center" onclick="p2DrSave()">' + (editing ? '✔ 更新する' : '＋ 追加する') + '</span>'
     + '<span class="p2-btn" style="margin:0" onclick="_p2SheetClose(\'p2DrFormOv\')">' + (editing ? 'キャンセル' : '閉じる') + '</span>'
-    + '</div></div></div>';
+    + '</div>' + (editing ? '<div style="text-align:center;margin-top:12px"><span style="color:#FF6B7F;font-size:13px;font-weight:800;cursor:pointer" onclick="_p2SheetClose(\'p2DrFormOv\');p2DrDelU(\'' + editing.id + '\')">この夢を消す</span></div>' : '') + '</div></div>'; // v793: PCはここから消す
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
   setTimeout(function() { var t = document.getElementById('p2drT'); if (t && !editing) { try { t.focus(); } catch(e) {} } }, 120);
@@ -25698,6 +25702,40 @@ function p2DrTgl(id) {
   for (var i = 0; i < dreams.length; i++) { if (dreams[i].id === id) { dreams[i].done = !dreams[i].done; if (dreams[i].done) toast('🎉 夢を1つ達成！'); break; } }
   saveGoals(); _p2DrSync();
   if (currentView === 'plan') renderPlan();
+}
+// v793: 夢を消す（確認は出さず「↩ 元に戻す」で戻せる）
+function p2DrDelU(id) {
+  var dreams = _p2().dreams || [], ix = -1; dreams.forEach(function(d, i) { if (d.id === id) ix = i; }); if (ix < 0) return;
+  var d = dreams[ix]; dreams.splice(ix, 1); saveGoals();
+  if (currentView === 'plan') renderPlan();
+  toastAction('「' + (d.t || '夢') + '」を消しました', '↩ 元に戻す', function() { var L = _p2().dreams || (_p2().dreams = []); if (!L.some(function(x) { return x.id === d.id; })) L.splice(Math.min(ix, L.length), 0, d); saveGoals(); if (currentView === 'plan') renderPlan(); });
+}
+// v793: 夢100のスワイプ（タスクと同じ：左＝🗑を出す・右＝叶えた）。画面全体に1回だけ
+var _drSw = null;
+function _p2DrSwBind() {
+  if (window._drSwBound) return; window._drSwBound = true;
+  var openLn = null, W = 84;
+  function close(ln) { if (!ln) return; ln.style.transition = 'transform .18s'; ln.style.transform = ''; ln._open = false; if (openLn === ln) openLn = null; }
+  document.addEventListener('touchstart', function(ev) {
+    var t = ev.target; if (!t || !t.closest) return;
+    if (t.closest('.dr-dl')) { _drSw = null; return; }
+    var lw = t.closest('.dr-lw[data-drid]'), ln = lw ? lw.querySelector('.ln') : null;
+    if (openLn && ln !== openLn) close(openLn);
+    if (!ln || t.closest('a,input,select')) { _drSw = null; return; }
+    var p = ev.touches[0]; _drSw = { lw: lw, ln: ln, x: p.clientX, y: p.clientY, dx: 0, on: false };
+  }, { passive: true });
+  document.addEventListener('touchmove', function(ev) {
+    var S = _drSw; if (!S) return; var p = ev.touches[0], dx = p.clientX - S.x, dy = p.clientY - S.y;
+    if (!S.on) { if (Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)) { _drSw = null; return; } if (Math.abs(dx) > 14) S.on = true; }
+    if (S.on) { S.dx = Math.max(-110, Math.min(110, (S.ln._open ? -W : 0) + dx)); S.ln.style.transition = 'none'; S.ln.style.transform = 'translateX(' + S.dx + 'px)'; }
+  }, { passive: true });
+  document.addEventListener('touchend', function() {
+    var S = _drSw; _drSw = null; if (!S || !S.on) return;
+    window._drSwAt = Date.now(); // スワイプ直後のタップで編集が開かないように
+    if (S.dx < -55) { S.ln.style.transition = 'transform .18s'; S.ln.style.transform = 'translateX(-' + W + 'px)'; S.ln._open = true; openLn = S.ln; return; }
+    close(S.ln);
+    if (S.dx > 70) p2DrTgl(S.lw.getAttribute('data-drid'));
+  }, { passive: true });
 }
 function p2DrDel(id) {
   var dreams = _p2().dreams;
