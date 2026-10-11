@@ -2950,6 +2950,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
 .nc.merged-node::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px var(--purple-dim)}
 .merged-badge{font-size:9px;font-weight:700;color:var(--purple);border:1px solid var(--purple);background:var(--purple-dim);border-radius:6px;padding:0 4px;white-space:nowrap;flex-shrink:0}
 .sd-merge-btn{margin-top:8px;width:100%;padding:7px;border-radius:8px;border:1px solid var(--purple);background:var(--purple-dim);color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter','Noto Sans JP',sans-serif}
+.sd-leave{margin-top:10px;text-align:center;font-size:12px;font-weight:700;color:var(--text-dim);text-decoration:underline;text-underline-offset:3px;cursor:pointer} /* v795: 共有された側から外す */
 .sd-merge-btn.active{border-color:var(--red,#FF5D73);background:rgba(255,93,115,.12);color:var(--red,#FF5D73)}
 .merge-pick-ov{position:fixed;inset:0;z-index:620;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
 .merge-pick-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;width:100%;max-width:360px;max-height:80vh;display:flex;flex-direction:column}
@@ -3046,7 +3047,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v794</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v795</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3988,7 +3989,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v794';</script>
-<script src="app.js?v=v794"></script>
+<script>window.GM_EXPECT_JS='v795';</script>
+<script src="app.js?v=v795"></script>
 </body>
 </html>

@@ -233,6 +233,7 @@ service cloud.firestore {
              && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
              && (resource == null || resource.data.get('derived', false) == true) );
       allow delete: if ownerActive(uid)
+        || isSelf(rid) // v795: 共有された本人も外せる（自分の共有MAP一覧から消す）
         || ( signedIn() && resource.data.get('derived', false) == true
              && resource.data.get('via', '') == request.auth.uid );
     }
