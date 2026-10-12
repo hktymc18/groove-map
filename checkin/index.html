@@ -510,9 +510,9 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-tcg::after{
   content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
   background:radial-gradient(circle at var(--gx,30%) var(--gy,20%),rgba(255,255,255,.28),rgba(255,255,255,0) 42%);
-  transform:translateZ(46px);-webkit-backface-visibility:hidden;backface-visibility:hidden;
+  transform:translateZ(5px);-webkit-backface-visibility:hidden;backface-visibility:hidden;
 }
-.membercard.skin-tcg > *{position:relative;z-index:1;transform:translateZ(44px);-webkit-backface-visibility:hidden;backface-visibility:hidden;}
+.membercard.skin-tcg > *{position:relative;z-index:1;transform:translateZ(3px);-webkit-backface-visibility:hidden;backface-visibility:hidden;}
 .membercard.skin-tcg .mc-art{display:block;position:absolute;inset:13px;border-radius:8px;overflow:hidden;z-index:0;transform:none;
   background:radial-gradient(90% 55% at 62% 42%,rgba(122,58,214,.6),rgba(52,18,96,.42) 50%,transparent 80%),linear-gradient(170deg,#1b1328,#0b0812 60%,#05040a);
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.6);}
@@ -521,11 +521,18 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
   background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.12) 20%,transparent 32%);
 }
 /* 浮き出るキャラ: 絵の背景より手前・文字より奥 */
-.membercard.skin-tcg .mc-pop{display:block;position:absolute;left:5%;right:-11%;top:108px;bottom:32px;z-index:0;pointer-events:none;transform:translateZ(26px);}
+.membercard.skin-tcg .mc-pop{display:block;position:absolute;left:5%;right:-11%;top:108px;bottom:32px;z-index:0;pointer-events:none;transform:translateZ(1px);
+  translate:var(--px,0px) var(--py,0px);transition:translate .7s cubic-bezier(.34,1.56,.64,1);}
+/* 文字・バッジはカードの面に貼りつけ、キャラだけが傾きに合わせてずれる（手前に浮いて見える視差）。
+   ゆらゆら（tcgFloat）と同じ周期でキャラもずらす。ドラッグ中は --px/--py で動かす */
+.mc-tilt.on .membercard.skin-tcg .mc-pop{animation:tcgPopFloat 7s ease-in-out infinite alternate;}
+.mc-tilt.on.drag .membercard.skin-tcg .mc-pop{animation:none;transition:none;}
+.mc-tilt.on.still .membercard.skin-tcg .mc-pop{animation:none;}
+@keyframes tcgPopFloat{from{transform:translateZ(1px) translate(-6px,-3px);}to{transform:translateZ(1px) translate(6px,2px);}}
 .membercard.skin-tcg .mc-pop::before{content:'';position:absolute;inset:0;}
 /* キャラの下半分に薄い影（文字を読みやすく） */
 .membercard.skin-tcg .mc-shade{display:block;position:absolute;left:13px;right:13px;bottom:13px;height:58%;border-radius:0 0 8px 8px;z-index:0;pointer-events:none;
-  transform:translateZ(34px);background:linear-gradient(180deg,transparent,rgba(5,3,12,.45) 35%,rgba(5,3,12,.78));}
+  transform:translateZ(2px);background:linear-gradient(180deg,transparent,rgba(5,3,12,.45) 35%,rgba(5,3,12,.78));}
 /* 裏面（ユニオンのロゴ） */
 .membercard.skin-tcg .mc-back{display:block;position:absolute;inset:0;border-radius:inherit;z-index:0;pointer-events:none;overflow:hidden;
   background:#0c2d96;transform:rotateY(180deg) translateZ(1px);}
@@ -574,7 +581,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .mc-rare .rr{font-family:Verdana,sans-serif;font-style:italic;font-weight:900;font-size:15px;letter-spacing:.04em;color:#ffe9a0;
   text-shadow:0 0 2px #000,0 1px 0 #000,0 0 8px rgba(255,210,90,.7);}
 .membercard.skin-tcg .mc-brand{grid-area:brand;align-self:start;margin-top:5px;font-size:8.5px;letter-spacing:.12em;color:rgba(235,225,255,.65);text-shadow:0 0 3px #000;}
-.membercard.skin-tcg #mcQr{grid-area:qr;min-height:0;justify-self:end;align-self:end;margin-top:10px;z-index:4;cursor:zoom-in;transform:translateZ(48px);}
+.membercard.skin-tcg #mcQr{grid-area:qr;min-height:0;justify-self:end;align-self:end;margin-top:10px;z-index:4;cursor:zoom-in;transform:translateZ(4px);}
 .membercard.skin-tcg #mcQr img,.membercard.skin-tcg #mcQr canvas{width:84px !important;height:84px !important;border-width:5px;outline:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 10px rgba(0,0,0,.6);}
 .membercard.skin-tcg #mcQr.big{grid-area:auto;grid-column:1 / -1;grid-row:13;justify-self:center;margin-top:12px;cursor:zoom-out;}
 .membercard.skin-tcg #mcQr.big img,.membercard.skin-tcg #mcQr.big canvas{width:200px !important;height:200px !important;}
@@ -1483,8 +1490,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v57';
+var APP_VER = 'v58';
 var CHANGELOG = [
+  { v: 'v58', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 文字やバッジはカードの面に、キャラだけが浮き上がって見えるようにしました'] },
   { v: 'v57', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 裏面を縁なしにしました'] },
   { v: 'v56', d: '2026/10/12', items: ['🃏 レアカード風デザイン: キャラの顔がバッジに重ならないよう、キャラの位置を下げました'] },
   { v: 'v55', d: '2026/10/12', items: ['🃏 レアカード風デザイン: キャラを大きく、裏面を青い渦の背景・中央にロゴ・上下にユニオン名のデザインに'] },
@@ -2476,6 +2484,9 @@ function ckBindCardGesture(){
     var ry = Math.max(-28, Math.min(28, dx * 0.35)), rx = Math.max(-24, Math.min(24, -dy * 0.35));
     tilt.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
     card.style.setProperty('--gx', (50 + ry * 1.6) + '%');
+    // キャラだけ手前に浮いているように、傾きに合わせてずらす（高さ約55pxぶんの視差）
+    card.style.setProperty('--px', (55 * Math.sin(ry * Math.PI / 180)).toFixed(1) + 'px');
+    card.style.setProperty('--py', (-55 * Math.sin(rx * Math.PI / 180)).toFixed(1) + 'px');
     card.style.setProperty('--gy', (50 - rx * 1.6) + '%');
   });
   function end(tap){
@@ -2484,6 +2495,8 @@ function ckBindCardGesture(){
     st = null;
     tilt.classList.remove('drag');
     tilt.style.transform = '';
+    card.style.setProperty('--px', '0px');
+    card.style.setProperty('--py', '0px');
     if(!tap || moved) return;
     if(wasQr){
       var qr = $('mcQr');
