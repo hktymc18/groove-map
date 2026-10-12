@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v796';
+var APP_JS_VERSION = 'v797';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -519,6 +519,7 @@ function copyToNextMonth() {
       };
     } catch(e) { _rd = null; }
     // 翌月に切り替え
+    if (currentUser && !viewingOwnerUid && _fsReady === currentUser.uid + '|' + cur) _fsReady = currentUser.uid + '|' + nextMonth; // v797: 読み込み済みの月からのコピーは、翌月もそのまま保存できる
     state.currentMonth = nextMonth;
     if (state.months.indexOf(nextMonth) < 0) state.months.unshift(nextMonth);
 
@@ -4064,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v796';
+  var DATA_VERSION = 'v797';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5569,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v797', d:'2026-10-12', items:['はじめての端末でログインした直後、データを読み込み終わるまでは「読み込み中…」を表示（空のMAPや「自分を登録」が一瞬出なくなりました）','読み込み中・読み込み失敗時はクラウドへ保存しない安全装置を追加（データを空で上書きしない）'] },
   { v:'v796', d:'2026-10-11', items:['やる理由・1年後・成功した毎日の作文を「消す」で消せるように（作文のページ・理想のページ。消しても「↩ 元に戻す」で戻せます。過去の作文は「🗂 過去の作文」から消せます）'] },
   { v:'v795', d:'2026-10-11', items:['共有MAP：共有された側からも「共有を外す」ができるように（一覧から消えて見られなくなります。結合していれば結合も解除。相手がもう一度共有すればまた見られます）'] },
   { v:'v794', d:'2026-10-11', items:['ユニオン名の変更に対応：BASE ANTARES→ANTARES、BASE REVE→REVE、LIEN LOAD→LOAD（登録・プロフィールの選択肢も新しい名前に）'] },
@@ -14215,7 +14217,7 @@ function _doSaveNow() {
   _savePendingUid = null;
   fsSaveToFirestore(uid)
     .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); recordHistory(); })
-    .catch(function(e) { console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
+    .catch(function(e) { if (e && e.gmNotReady) { _fsNotReadyMsg(); return; } console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
 }
 // 画面切替・終了前に未保存分を確定させる
 function flushPendingSave() {
@@ -14302,6 +14304,7 @@ function saveCurrent() {
         }
       })
       .catch(function(err) {
+        if (err && err.gmNotReady) { _fsNotReadyMsg(); return; } // v797
         console.error('Firestore保存エラー:', err);
         toast('保存に失敗しました。再試行してください。');
       });
@@ -14465,6 +14468,11 @@ function onboardSelf() {
 }
 // #8 エンプティステート
 function emptyStateHTML(type) {
+  if (type === 'map' && USE_FIREBASE && currentUser && currentUser.uid && !_fsOwnReady(currentUser.uid)) { // v797: 読み込みが終わるまでは「自分を登録」を出さない
+    return _fsLoadErr
+      ? '<div class="empty-state"><div class="empty-state-title">データを読み込めませんでした</div><div class="empty-state-desc">通信を確認して、もう一度読み込んでください</div><span class="p2-btn pri" style="margin-top:12px" onclick="fsLoadFromFirestore(currentUser.uid)">もう一度読み込む</span></div>'
+      : '<div class="empty-state gm-loading"><div class="empty-state-title"><span class="spin"></span> 読み込み中…</div><div class="empty-state-desc">MAPのデータを取得しています</div></div>';
+  }
   if (type === 'map' && _gmNeedSelf()) { // v559: はじめての人は「まず自分を0段目に」
     var nm = (currentUser && currentUser.name) ? String(currentUser.name).trim() : '';
     return '<div class="empty-state onb">'
@@ -38534,8 +38542,13 @@ function checkAuth() {
 }
 
 // Firestoreからデータ読み込み
+// v797: 自分のMAPの読み込みが終わった「uid|月」。終わるまでは保存しない（読み込み前の空の状態で、クラウドの理想MAP・数字を上書きしない）
+var _fsReady = '', _fsLoadErr = false;
+function _fsOwnReady(uid) { return !USE_FIREBASE || !uid || viewingOwnerUid || !currentUser || uid !== currentUser.uid || _fsReady === uid + '|' + state.currentMonth; }
+function _fsNotReadyMsg() { toast(_fsLoadErr ? '⚠️ データを読み込めていないため保存していません（通信を確認して再読み込みしてください）' : '⏳ まだデータを読み込み中です。表示されてからもう一度操作してください'); }
 function fsLoadFromFirestore(uid) {
   var month = state.currentMonth;
+  _fsReady = ''; _fsLoadErr = false;
   toast('データを読み込み中...');
   loadAvatars(uid); // 写真アバター（月に依存しない・同一uidなら再取得しない）
 
@@ -38581,6 +38594,7 @@ function fsLoadFromFirestore(uid) {
     loaded.stats = data;
     // v544: 読み込み中に別の月・共有MAPへ切り替えていたら、古い結果で上書きしない
     if (state.currentMonth !== month || viewingOwnerUid) return;
+    _fsReady = uid + '|' + month; // v797
 
     // 現状MAPメンバー
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
@@ -38631,6 +38645,8 @@ function fsLoadFromFirestore(uid) {
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
     if (state.currentMonth !== month || viewingOwnerUid) return; // v544
+    _fsLoadErr = true; // v797: 読み込めなかった時は保存しない（空のデータでクラウドを上書きしない）
+    toast('⚠️ データを読み込めませんでした。通信を確認して再読み込みしてください');
     state.members      = [];
     state.idealMembers = [];
     state.stats        = getDefaultStats();
@@ -38667,6 +38683,7 @@ function mergeMembers(localArr, remoteArr) {
 var _lastMergeCheck = 0;
 var _fsSavedSig = {}; // v511: パス→最後に保存/読込した内容（変更がない文書の書き込みを省略）
 function fsSaveToFirestore(uid) {
+  if (!_fsOwnReady(uid)) { var eNr = new Error('not-loaded'); eNr.gmNotReady = true; return Promise.reject(eNr); } // v797
   var month = state.currentMonth;
   var curPath = 'maps/' + uid + '/months/' + month + '_current';
   _stampUpdatedMembers(state.members);
