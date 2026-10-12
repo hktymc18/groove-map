@@ -527,10 +527,11 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-tcg .mc-shade{display:block;position:absolute;left:13px;right:13px;bottom:13px;height:58%;border-radius:0 0 8px 8px;z-index:0;pointer-events:none;
   transform:translateZ(34px);background:linear-gradient(180deg,transparent,rgba(5,3,12,.45) 35%,rgba(5,3,12,.78));}
 /* 裏面（ユニオンのロゴ） */
-.membercard.skin-tcg .mc-back{display:block;position:absolute;inset:0;border-radius:inherit;z-index:0;pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Crect width='30' height='30' fill='%231c1c26'/%3E%3Cg fill='none' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M1 5c3-4 5 4 8 0s5 4 8 0' stroke='%23ff6fb0'/%3E%3Cpath d='M15 13c3-4 5 4 8 0s5 4 8 0' stroke='%2350d8ff'/%3E%3Cpath d='M-1 21c3-4 5 4 8 0s5 4 8 0' stroke='%23ffd75a'/%3E%3Cpath d='M16 27c3-4 5 4 8 0' stroke='%236ff5a5'/%3E%3Cpath d='M22 2c3 2-1 5 2 8' stroke='%23b996ff'/%3E%3Cpath d='M5 11c3 2-1 5 2 8' stroke='%23ff9d5c'/%3E%3C/g%3E%3C/svg%3E"),#20202a;background-size:30px 30px;transform:rotateY(180deg) translateZ(1px);}
-.membercard.skin-tcg .mc-back::before{content:'';position:absolute;inset:13px;border-radius:8px;
-  background:var(--back,linear-gradient(135deg,#2a1260,#4a1fb0 50%,#2a1260)) center/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5);}
+.membercard.skin-tcg .mc-back{display:block;position:absolute;inset:0;border-radius:inherit;z-index:0;pointer-events:none;overflow:hidden;
+  background:#0c2d96;transform:rotateY(180deg) translateZ(1px);}
+/* 裏面は縁なし（画像をカード全体に） */
+.membercard.skin-tcg .mc-back::before{content:'';position:absolute;inset:0;border-radius:inherit;
+  background:var(--back,linear-gradient(135deg,#0c2d96,#1f6fe0 50%,#0c2d96)) center/cover no-repeat;}
 .membercard.skin-tcg .mc-back b{position:absolute;left:0;right:0;top:46%;text-align:center;font-family:Verdana,sans-serif;font-weight:900;font-size:18px;letter-spacing:.2em;color:rgba(255,255,255,.85);}
 .membercard.skin-tcg .mc-deco,.membercard.skin-tcg .mc-group{display:none;}
 .tcg-tx{text-shadow:0 0 2px #000,0 1px 0 #000,0 0 6px #000;}
@@ -1482,8 +1483,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v56';
+var APP_VER = 'v57';
 var CHANGELOG = [
+  { v: 'v57', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 裏面を縁なしにしました'] },
   { v: 'v56', d: '2026/10/12', items: ['🃏 レアカード風デザイン: キャラの顔がバッジに重ならないよう、キャラの位置を下げました'] },
   { v: 'v55', d: '2026/10/12', items: ['🃏 レアカード風デザイン: キャラを大きく、裏面を青い渦の背景・中央にロゴ・上下にユニオン名のデザインに'] },
   { v: 'v54', d: '2026/10/12', items: ['🃏 レアカード風デザイン: タップで裏返る（裏はユニオンのロゴ）・ドラッグで3Dに傾く・キャラが浮き出て見えるように。技名などは1行に収まるよう自動で縮小'] },
