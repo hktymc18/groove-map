@@ -485,15 +485,17 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .mc-tilt.on,.mc-tilt.on .mc-float{transform-style:preserve-3d;}
 .mc-tilt.on{transition:transform .7s cubic-bezier(.34,1.56,.64,1);}
 .mc-tilt.on.drag{transition:none;}
-.mc-tilt.on .mc-float{animation:tcgFloat 7s ease-in-out infinite alternate;}
+.mc-tilt.on .mc-float{animation:tcgFloat 6.5s ease-in-out infinite;}
+/* 遠近感（傾けた時に手前が大きく・奥が小さく見える） */
+.cardwrap{perspective:760px;}
 .mc-tilt.on.drag .mc-float,.mc-tilt.on.still .mc-float{animation:none;}
 .cardwrap{overflow-x:clip;}
 .mc-pop,.mc-back,.mc-shade{display:none;}
 .mc-tilt.on{touch-action:none;}
 .membercard.skin-tcg{
   display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;text-align:left;min-height:500px;
-  grid-template-rows:auto auto auto auto 1fr auto auto auto auto auto auto auto;
-  grid-template-areas:"union hp" "name hp" "grade grade" "badge badge" ". ." "ab ab" "abtx abtx" "atk atk" "atktx atktx" "no qr" "rare qr" "brand qr";
+  grid-template-rows:auto auto 1fr auto auto auto auto auto auto auto auto;
+  grid-template-areas:"union hp" "name hp" ". ." "ab ab" "abtx abtx" "atk atk" "atktx atktx" "grade qrb" "badge qrb" "rare qrb" "brand qrb";
   padding:24px 24px 22px;border-radius:18px;color:#fff;overflow:visible;transform-style:preserve-3d;touch-action:none;cursor:pointer;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Crect width='30' height='30' fill='%231c1c26'/%3E%3Cg fill='none' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M1 5c3-4 5 4 8 0s5 4 8 0' stroke='%23ff6fb0'/%3E%3Cpath d='M15 13c3-4 5 4 8 0s5 4 8 0' stroke='%2350d8ff'/%3E%3Cpath d='M-1 21c3-4 5 4 8 0s5 4 8 0' stroke='%23ffd75a'/%3E%3Cpath d='M16 27c3-4 5 4 8 0' stroke='%236ff5a5'/%3E%3Cpath d='M22 2c3 2-1 5 2 8' stroke='%23b996ff'/%3E%3Cpath d='M5 11c3 2-1 5 2 8' stroke='%23ff9d5c'/%3E%3C/g%3E%3C/svg%3E"),#20202a;background-size:30px 30px;
@@ -514,22 +516,27 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 }
 .membercard.skin-tcg > *{position:relative;z-index:1;transform:translateZ(3px);-webkit-backface-visibility:hidden;backface-visibility:hidden;}
 .membercard.skin-tcg .mc-art{display:block;position:absolute;inset:13px;border-radius:8px;overflow:hidden;z-index:0;transform:none;
-  background:radial-gradient(90% 55% at 62% 42%,rgba(122,58,214,.6),rgba(52,18,96,.42) 50%,transparent 80%),linear-gradient(170deg,#1b1328,#0b0812 60%,#05040a);
+  background:radial-gradient(90% 55% at 50% 50%,rgba(122,58,214,.6),rgba(52,18,96,.42) 50%,transparent 80%) var(--bx,50%) var(--by,42%)/160% 160% no-repeat,linear-gradient(170deg,#1b1328,#0b0812 60%,#05040a);
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.6);}
 .membercard.skin-tcg .mc-art::after{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.12) 20%,transparent 32%);
 }
 /* 浮き出るキャラ: 絵の背景より手前・文字より奥 */
-.membercard.skin-tcg .mc-pop{display:block;position:absolute;left:5%;right:-11%;top:108px;bottom:32px;z-index:0;pointer-events:none;transform:translateZ(1px);
-  translate:var(--px,0px) var(--py,0px);transition:translate .7s cubic-bezier(.34,1.56,.64,1);}
+.membercard.skin-tcg .mc-pop{display:block;position:absolute;inset:13px;border-radius:8px;overflow:hidden;z-index:0;pointer-events:none;transform:translateZ(1px);}
 /* 文字・バッジはカードの面に貼りつけ、キャラだけが傾きに合わせてずれる（手前に浮いて見える視差）。
    ゆらゆら（tcgFloat）と同じ周期でキャラもずらす。ドラッグ中は --px/--py で動かす */
-.mc-tilt.on .membercard.skin-tcg .mc-pop{animation:tcgPopFloat 7s ease-in-out infinite alternate;}
-.mc-tilt.on.drag .membercard.skin-tcg .mc-pop{animation:none;transition:none;}
-.mc-tilt.on.still .membercard.skin-tcg .mc-pop{animation:none;}
-@keyframes tcgPopFloat{from{transform:translateZ(1px) translate(-6px,-3px);}to{transform:translateZ(1px) translate(6px,2px);}}
-.membercard.skin-tcg .mc-pop::before{content:'';position:absolute;inset:0;}
+/* 死神は絵の枠いっぱい。傾きと逆に背景の光がずれ、死神は大きくずれて少し拡大＝手前に浮き出て見える */
+.membercard.skin-tcg .mc-pop::before{content:'';position:absolute;inset:-7% -9% -3%;translate:var(--px,0px) var(--py,0px);scale:var(--ps,1);
+  transition:translate .7s cubic-bezier(.34,1.56,.64,1),scale .7s cubic-bezier(.34,1.56,.64,1);}
+.mc-tilt.on .membercard.skin-tcg .mc-pop::before{animation-name:reaperSway,reaperGlow,tcgPopFloat;animation-duration:7s,3.2s,6.5s;
+  animation-timing-function:ease-in-out;animation-iteration-count:infinite;animation-direction:alternate,alternate,normal;}
+.mc-tilt.on.drag .membercard.skin-tcg .mc-pop::before{animation-name:reaperSway,reaperGlow;animation-duration:7s,3.2s;animation-direction:alternate,alternate;transition:none;}
+.mc-tilt.on.still .membercard.skin-tcg .mc-pop::before{animation-name:reaperGlow;animation-duration:3.2s;animation-direction:alternate;}
+.mc-tilt.on .membercard.skin-tcg .mc-art{animation:tcgArtFloat 6.5s ease-in-out infinite;}
+.mc-tilt.on.drag .membercard.skin-tcg .mc-art,.mc-tilt.on.still .membercard.skin-tcg .mc-art{animation:none;}
+@keyframes tcgPopFloat{0%,100%{translate:-26px -12px;scale:1.07;}25%{translate:-8px 10px;scale:1.02;}50%{translate:26px 12px;scale:1.07;}75%{translate:8px -10px;scale:1.02;}}
+@keyframes tcgArtFloat{0%,100%{background-position:62% 52%,0 0;}25%{background-position:54% 40%,0 0;}50%{background-position:38% 32%,0 0;}75%{background-position:46% 46%,0 0;}}
 /* キャラの下半分に薄い影（文字を読みやすく） */
 .membercard.skin-tcg .mc-shade{display:block;position:absolute;left:13px;right:13px;bottom:13px;height:58%;border-radius:0 0 8px 8px;z-index:0;pointer-events:none;
   transform:translateZ(2px);background:linear-gradient(180deg,transparent,rgba(5,3,12,.45) 35%,rgba(5,3,12,.78));}
@@ -544,25 +551,26 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .tcg-tx{text-shadow:0 0 2px #000,0 1px 0 #000,0 0 6px #000;}
 .membercard.skin-tcg .mc-union{grid-area:union;justify-self:start;font-size:10.5px;letter-spacing:.08em;margin:0;padding:1px 10px;border-radius:5px 99px 99px 5px;
   background:linear-gradient(180deg,#f6e3a0,#c9a84a);color:#2a1d02;font-style:italic;}
-.membercard.skin-tcg .mc-name{grid-area:name;margin:2px 0 0;font-size:24px;line-height:1.15;letter-spacing:.02em;white-space:nowrap;overflow:hidden;min-width:0;
+.membercard.skin-tcg .mc-name{grid-area:name;margin:2px 0 0;font-size:20px;line-height:1.15;letter-spacing:.02em;white-space:nowrap;overflow:hidden;min-width:0;
   color:#fff;text-shadow:0 0 2px #000,0 1px 0 #000,0 0 10px rgba(170,100,255,.9);}
 .membercard.skin-tcg .mc-hp{display:flex;grid-area:hp;align-items:baseline;justify-self:end;align-self:end;gap:3px;
-  font-family:Verdana,sans-serif;font-weight:900;font-size:30px;line-height:1;color:#fff;text-shadow:0 0 2px #000,0 2px 0 #000,0 0 10px rgba(170,100,255,.8);}
+  font-family:Verdana,sans-serif;font-weight:900;font-size:24px;line-height:1;color:#fff;text-shadow:0 0 2px #000,0 2px 0 #000,0 0 10px rgba(170,100,255,.8);}
 .membercard.skin-tcg .mc-hp:empty{display:none;}
 .membercard.skin-tcg .mc-hp small{font-size:11px;font-weight:900;letter-spacing:.02em;}
-.membercard.skin-tcg .mc-hp .orb{align-self:center;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:4px;border-radius:50%;
-  font-size:14px;line-height:1;text-shadow:none;background:radial-gradient(circle at 35% 30%,#d9b8ff,#7a3fd0 55%,#2b0f5a);box-shadow:0 0 0 2px #e8d9ff,0 0 10px rgba(170,100,255,.9);}
-.membercard.skin-tcg .mc-grade{grid-area:grade;justify-self:start;margin:5px 0 0;padding:1px 26px 1px 8px;border-radius:3px;font-size:9.5px;letter-spacing:.14em;
+.membercard.skin-tcg .mc-hp .orb{align-self:center;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:4px;border-radius:50%;
+  font-size:12px;line-height:1;text-shadow:none;background:radial-gradient(circle at 35% 30%,#d9b8ff,#7a3fd0 55%,#2b0f5a);box-shadow:0 0 0 2px #e8d9ff,0 0 10px rgba(170,100,255,.9);}
+.membercard.skin-tcg .mc-grade{grid-area:grade;justify-self:start;margin:12px 0 0;padding:1px 26px 1px 8px;border-radius:3px;font-size:9.5px;letter-spacing:.14em;
   background:linear-gradient(90deg,rgba(212,180,90,.95),rgba(212,180,90,.6) 70%,rgba(212,180,90,0));color:#1f1504;}
 .membercard.skin-tcg .mc-grade:empty{display:none;}
-.membercard.skin-tcg .mc-badge{grid-area:badge;justify-self:start;margin:8px 0 0;}
+.membercard.skin-tcg .mc-badge{grid-area:badge;justify-self:start;margin:6px 0 0;}
+.membercard.skin-tcg .mc-badge .bdg{font-size:10.5px;padding:3px 11px 3px 5px;}.membercard.skin-tcg .mc-badge .bdg i{width:13px;height:13px;}
 /* 特性（中央）: 赤い「特性」ラベル＋名前、下に小さく説明 */
 .mc-ab,.mc-abtx,.mc-atk,.mc-atktx{display:none;}
 .membercard.skin-tcg .mc-ab{display:flex;grid-area:ab;align-items:center;gap:8px;margin-top:6px;min-width:0;}
 .membercard.skin-tcg .mc-ab:empty,.membercard.skin-tcg .mc-abtx:empty,.membercard.skin-tcg .mc-atk:empty,.membercard.skin-tcg .mc-atktx:empty{display:none;}
 .mc-ab .ab-tag{flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:.3em;padding:2px 6px 2px 10px;border-radius:99px 4px 4px 99px;color:#fff;
   background:linear-gradient(180deg,#e2463c,#9e1a14);box-shadow:0 0 0 1.5px #fff,0 1px 4px rgba(0,0,0,.6);text-shadow:none;}
-.mc-ab .ab-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:20px;line-height:1.25;color:#ff7a5c;
+.mc-ab .ab-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:17px;line-height:1.25;color:#ff7a5c;
   text-shadow:0 0 2px #000,0 1px 0 #000,0 0 3px #000,0 0 10px rgba(255,90,60,.55);}
 .membercard.skin-tcg .mc-abtx{display:block;grid-area:abtx;margin-top:4px;font-size:11px;line-height:1.55;color:#f4f0ff;white-space:pre-wrap;}
 .membercard.skin-tcg .mc-atktx{display:block;grid-area:atktx;margin-top:4px;font-size:11px;line-height:1.55;color:#f4f0ff;white-space:pre-wrap;}
@@ -571,9 +579,9 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .mc-atk .el{display:flex;gap:3px;flex:0 0 auto;}
 .mc-atk .el i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-style:normal;font-size:13px;line-height:1;
   background:radial-gradient(circle at 35% 30%,var(--e1),var(--e2) 70%);box-shadow:0 0 0 1.5px #fff,0 1px 4px rgba(0,0,0,.6);text-shadow:none;}
-.mc-atk .at-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:18px;line-height:1.25;}
-.mc-atk .at-dmg{flex:0 0 auto;font-family:Verdana,sans-serif;font-weight:900;font-size:22px;line-height:1;}
-.membercard.skin-tcg .mc-no{grid-area:no;align-self:end;margin:10px 0 0;font-size:11.5px;font-weight:700;color:#e9e1ff;}
+.mc-atk .at-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:"Zen Kaku Gothic New",sans-serif;font-weight:900;font-size:16px;line-height:1.25;}
+.mc-atk .at-dmg{flex:0 0 auto;font-family:Verdana,sans-serif;font-weight:900;font-size:18px;line-height:1;}
+.membercard.skin-tcg .mc-no{display:none;}
 /* 左下: 通し番号＋レアリティ（斜体の文字だけ） */
 .membercard.skin-tcg .mc-rare{display:flex;grid-area:rare;align-items:baseline;gap:6px;justify-self:start;margin-top:2px;}
 .membercard.skin-tcg .mc-rare:empty{display:none;}
@@ -581,21 +589,27 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .mc-rare .rr{font-family:Verdana,sans-serif;font-style:italic;font-weight:900;font-size:15px;letter-spacing:.04em;color:#ffe9a0;
   text-shadow:0 0 2px #000,0 1px 0 #000,0 0 8px rgba(255,210,90,.7);}
 .membercard.skin-tcg .mc-brand{grid-area:brand;align-self:start;margin-top:5px;font-size:8.5px;letter-spacing:.12em;color:rgba(235,225,255,.65);text-shadow:0 0 3px #000;}
-.membercard.skin-tcg #mcQr{grid-area:qr;min-height:0;justify-self:end;align-self:end;margin-top:10px;z-index:4;cursor:zoom-in;transform:translateZ(4px);}
-.membercard.skin-tcg #mcQr img,.membercard.skin-tcg #mcQr canvas{width:84px !important;height:84px !important;border-width:5px;outline:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.7),0 2px 10px rgba(0,0,0,.6);}
-.membercard.skin-tcg #mcQr.big{grid-area:auto;grid-column:1 / -1;grid-row:13;justify-self:center;margin-top:12px;cursor:zoom-out;}
-.membercard.skin-tcg #mcQr.big img,.membercard.skin-tcg #mcQr.big canvas{width:200px !important;height:200px !important;}
-@keyframes tcgFloat{from{transform:rotateX(4deg) rotateY(-7deg);}to{transform:rotateX(-3deg) rotateY(7deg);}}
+/* QRはふだん隠す。名前か右下の「QR」をタップすると、カードの上に大きく出る（もう一度タップで閉じる） */
+.mc-qrb{display:none;}
+.membercard.skin-tcg .mc-qrb{display:inline-flex;grid-area:qrb;align-self:end;justify-self:end;align-items:center;gap:5px;margin-top:10px;padding:6px 10px;border-radius:10px;
+  font-family:Verdana,sans-serif;font-size:11px;font-weight:900;letter-spacing:.08em;color:#fff;background:rgba(10,6,20,.6);box-shadow:0 0 0 1.5px rgba(255,255,255,.55),0 2px 8px rgba(0,0,0,.5);cursor:pointer;}
+.mc-qrb svg{width:16px;height:16px;}
+.membercard.skin-tcg #mcQr{display:none;}
+.membercard.skin-tcg #mcQr.big{display:flex;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:12px;margin:0;border-radius:inherit;
+  z-index:6;background:rgba(6,3,14,.82);cursor:zoom-out;transform:translateZ(8px);}
+.membercard.skin-tcg #mcQr.big img,.membercard.skin-tcg #mcQr.big canvas{width:220px !important;height:220px !important;border-width:8px;outline:none;box-shadow:0 0 0 2px rgba(255,255,255,.8),0 0 24px rgba(150,80,255,.7);}
+.membercard.skin-tcg #mcQr.big::after{content:'タップで閉じる';font-size:12px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.1em;}
+@keyframes tcgFloat{0%,100%{transform:rotateX(10deg) rotateY(-22deg) rotateZ(-1.5deg);}25%{transform:rotateX(-8deg) rotateY(-7deg) rotateZ(0);}50%{transform:rotateX(-10deg) rotateY(22deg) rotateZ(1.5deg);}75%{transform:rotateX(8deg) rotateY(7deg) rotateZ(0);}}
 @keyframes tcgFlipTo{0%{transform:rotateY(0);}50%{transform:rotateY(200deg) scale(1.04);}68%{transform:rotateY(170deg) scale(.98);}82%{transform:rotateY(186deg) scale(1.01);}92%{transform:rotateY(178deg);}100%{transform:rotateY(180deg);}}
 @keyframes tcgFlipFrom{0%{transform:rotateY(180deg);}50%{transform:rotateY(-20deg) scale(1.04);}68%{transform:rotateY(10deg) scale(.98);}82%{transform:rotateY(-6deg) scale(1.01);}92%{transform:rotateY(2deg);}100%{transform:rotateY(0);}}
 /* 💀 死神のレアカード: 死神が絵から浮き出て、妖しく光る */
 .membercard.skin-reaperTcg .mc-pop::before{
-  background:url('skins/reaper.webp') 50% 100%/contain no-repeat;
+  background:url('skins/reaper.webp') 50% 100%/auto 100% no-repeat;
   filter:brightness(1.9) contrast(1.15) drop-shadow(0 0 3px rgba(190,140,255,.95)) drop-shadow(0 0 12px rgba(140,70,255,.7));
   animation:reaperSway 7s ease-in-out infinite alternate,reaperGlow 3.2s ease-in-out infinite alternate;transform-origin:50% 100%;
 }
 @media (prefers-reduced-motion: reduce){
-  .mc-tilt.on .mc-float,.membercard.skin-reaperTcg .mc-pop::before{animation:none;}
+  .mc-tilt.on .mc-float,.membercard.skin-reaperTcg .mc-pop::before,.mc-tilt.on .membercard.skin-tcg .mc-pop::before,.mc-tilt.on .membercard.skin-tcg .mc-art{animation:none !important;}
 }
 /* 紙カード印刷 */
 #printArea{display:none;}
@@ -985,6 +999,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <div id="mcQr"></div>
       <div class="mc-no mono" id="mcNo"></div>
       <div class="mc-rare" id="mcRare"></div>
+      <div class="mc-qrb" id="mcQrBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>QR</div>
       <div class="mc-back" id="mcBack" aria-hidden="true"></div>
     </div>
     </div></div>
@@ -1490,8 +1505,9 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v58';
+var APP_VER = 'v59';
 var CHANGELOG = [
+  { v: 'v59', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 動きを大きく・遠近感つきに。死神をカードいっぱいに表示し、傾けると大きく浮き出るように','QRはふだん隠し、名前か右下の「QR」をタップで大きく表示（もう一度タップで閉じる）。会員番号の表示はなくしました','JETCLUB・タイトルのバッジをカードの下へ移動。名前・HP・特性名・技の数字を少し小さくしました'] },
   { v: 'v58', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 文字やバッジはカードの面に、キャラだけが浮き上がって見えるようにしました'] },
   { v: 'v57', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 裏面を縁なしにしました'] },
   { v: 'v56', d: '2026/10/12', items: ['🃏 レアカード風デザイン: キャラの顔がバッジに重ならないよう、キャラの位置を下げました'] },
@@ -2436,15 +2452,16 @@ function renderCard(c){
   $('mcBadge').innerHTML = ckBadgeHtml(c.badge || '');
   var qr = $('mcQr');
   qr.classList.remove('big');
-  // レアカード風はQRを小さく表示。タップで大きくして読み取りやすくできる
+  $('mcTilt').classList.remove('still');
+  // レアカード風はQRをふだん隠す。名前か右下の「QR」をタップすると大きく出る
   qr.onclick = null;
   makeQr(qr, 'm:' + c.no + ':' + gCardToken.slice(0, 6), 180);
   if(tcg){
     // 名前・特性名・技名は1行に収まるよう文字を自動で小さくする
     var fit = function(){
-      ckFitLine($('mcName'), 24, 14);
-      ckFitLine(card.querySelector('.ab-nm'), 20, 11);
-      ckFitLine(card.querySelector('.at-nm'), 18, 9);
+      ckFitLine($('mcName'), 20, 12);
+      ckFitLine(card.querySelector('.ab-nm'), 17, 10);
+      ckFitLine(card.querySelector('.at-nm'), 16, 9);
     };
     setTimeout(fit, 0);
     if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
@@ -2459,16 +2476,22 @@ function ckFitLine(el, max, min){
   while(sz > min && el.scrollWidth > el.clientWidth + 1){ sz -= 1; el.style.fontSize = sz + 'px'; }
 }
 // 🃏 レアカード風の操作: ドラッグで3Dに傾ける（離すとバネで戻る）・タップで裏返す（ブルンと余韻）。
-// QRのところのタップは拡大／縮小（拡大中はゆらゆらを止めて読み取りやすく）。
+// 名前か右下の「QR」をタップするとQRを大きく表示、QRをタップで閉じる（表示中はゆらゆらを止めて読み取りやすく）。
 // 3D表示ではタップの当たり判定が外側の要素になることがあるので、外側（#mcTilt）で受けて座標で判定する
 var gCardGest = false;
 function ckBindCardGesture(){
   if(gCardGest) return;
   gCardGest = true;
   var card = $('memberCard'), tilt = $('mcTilt'), st = null, moved = false;
+  function hit(el, x, y){
+    if(!el) return false;
+    var r = el.getBoundingClientRect();
+    return r.width > 0 && x >= r.left - 6 && x <= r.right + 6 && y >= r.top - 6 && y <= r.bottom + 6;
+  }
   function inQr(x, y){
-    var r = $('mcQr').getBoundingClientRect();
-    return !card.classList.contains('flipped') && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    if(card.classList.contains('flipped')) return false;
+    if($('mcQr').classList.contains('big')) return true; // 表示中はどこをタップしても閉じる
+    return hit($('mcName'), x, y) || hit($('mcQrBtn'), x, y);
   }
   tilt.addEventListener('pointerdown', function(e){
     if(!card.classList.contains('skin-tcg')) return;
@@ -2481,12 +2504,16 @@ function ckBindCardGesture(){
     if(!moved && Math.abs(dx) + Math.abs(dy) < 8) return;
     moved = true;
     tilt.classList.add('drag');
-    var ry = Math.max(-28, Math.min(28, dx * 0.35)), rx = Math.max(-24, Math.min(24, -dy * 0.35));
-    tilt.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+    var ry = Math.max(-40, Math.min(40, dx * 0.5)), rx = Math.max(-32, Math.min(32, -dy * 0.5));
+    tilt.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) rotateZ(' + (ry * 0.05).toFixed(2) + 'deg)';
     card.style.setProperty('--gx', (50 + ry * 1.6) + '%');
-    // キャラだけ手前に浮いているように、傾きに合わせてずらす（高さ約55pxぶんの視差）
-    card.style.setProperty('--px', (55 * Math.sin(ry * Math.PI / 180)).toFixed(1) + 'px');
-    card.style.setProperty('--py', (-55 * Math.sin(rx * Math.PI / 180)).toFixed(1) + 'px');
+    // 死神だけ手前に浮いているように、傾きに合わせて大きくずらして少し拡大（背景の光は逆にずらす）
+    var sy = Math.sin(ry * Math.PI / 180), sx = Math.sin(rx * Math.PI / 180);
+    card.style.setProperty('--px', (80 * sy).toFixed(1) + 'px');
+    card.style.setProperty('--py', (-80 * sx).toFixed(1) + 'px');
+    card.style.setProperty('--ps', (1 + 0.1 * Math.min(1, Math.abs(sy) + Math.abs(sx))).toFixed(3));
+    card.style.setProperty('--bx', (50 - 60 * sy).toFixed(1) + '%');
+    card.style.setProperty('--by', (42 + 60 * sx).toFixed(1) + '%');
     card.style.setProperty('--gy', (50 - rx * 1.6) + '%');
   });
   function end(tap){
@@ -2497,6 +2524,9 @@ function ckBindCardGesture(){
     tilt.style.transform = '';
     card.style.setProperty('--px', '0px');
     card.style.setProperty('--py', '0px');
+    card.style.setProperty('--ps', '1');
+    card.style.setProperty('--bx', '50%');
+    card.style.setProperty('--by', '42%');
     if(!tap || moved) return;
     if(wasQr){
       var qr = $('mcQr');
