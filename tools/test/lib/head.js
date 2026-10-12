@@ -44,7 +44,7 @@ module.exports = function (opt) {
   T.sleep = ms => new Promise(r => setTimeout(r, ms));
   T.setWH = (W, H) => { Object.defineProperty(w, 'innerWidth', { value: W, configurable: true }); Object.defineProperty(w, 'innerHeight', { value: H, configurable: true }); };
   // ログイン済みのオーナー（編集できる）
-  T.login = () => { w.db = dbStub; w.currentUser = { uid: OWNER, name: '山内北斗', area: '福岡' }; w.state.isEditor = true; };
+  T.login = () => { w.db = dbStub; w.currentUser = { uid: OWNER, name: '山内北斗', area: '福岡' }; w.state.isEditor = true; w._fsReady = OWNER + '|' + w.state.currentMonth; };
   T.$ = s => w.document.querySelector(s);
   T.$$ = s => [...w.document.querySelectorAll(s)];
   // テスト本体を読み込み完了後に実行（例外もFAILとして数える）
