@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v797';
+var APP_JS_VERSION = 'v798';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v797';
+  var DATA_VERSION = 'v798';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v798', d:'2026-10-13', items:['メンバー編集：研修中の人は、いちばん上に「次の研修（段階・日付・時間・Aさん）・前回・段階の流れ」を表示（#14）','予定日を過ぎた研修は、その場で「✓ 進んだ／流れた／リスケ」を押せます。予定がない時は「＋ 予定を入れる」から'] },
   { v:'v797', d:'2026-10-12', items:['はじめての端末でログインした直後、データを読み込み終わるまでは「読み込み中…」を表示（空のMAPや「自分を登録」が一瞬出なくなりました）','読み込み中・読み込み失敗時はクラウドへ保存しない安全装置を追加（データを空で上書きしない）'] },
   { v:'v796', d:'2026-10-11', items:['やる理由・1年後・成功した毎日の作文を「消す」で消せるように（作文のページ・理想のページ。消しても「↩ 元に戻す」で戻せます。過去の作文は「🗂 過去の作文」から消せます）'] },
   { v:'v795', d:'2026-10-11', items:['共有MAP：共有された側からも「共有を外す」ができるように（一覧から消えて見られなくなります。結合していれば結合も解除。相手がもう一度共有すればまた見られます）'] },
@@ -18357,6 +18358,18 @@ function _ppCss() {
     + ".pprc .r{flex:none;font-size:12px;font-weight:900;padding:3px 8px;border-radius:8px}.pprc .r.ok{color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}.pprc .r.ng{color:var(--red);background:color-mix(in srgb,var(--red) 14%,transparent)}.pprc .r.pl{color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent)}"
     + ".pprc .mo{flex:none;color:var(--text-dim);font-weight:900;padding:2px 2px 2px 4px}"
     + ".ppempty{font-size:13px;color:var(--text-dim);font-weight:700;text-align:center;padding:18px 10px;border:1.5px dashed var(--border2);border-radius:14px}"
+    // v798 #14: 研修中の人の「研修」タイル（横長・次の予定／前回／段階の流れ・過ぎた予定はその場で結果）
+    + ".pptr{--c:#1FA9DA;margin-top:12px;padding:12px 13px 11px;border-radius:16px;cursor:pointer;position:relative;background:linear-gradient(150deg,color-mix(in srgb,var(--c) 15%,var(--surface)) 0%,var(--surface) 75%);border:1.5px solid color-mix(in srgb,var(--c) 40%,var(--border))}"
+    + ".pptr:active{transform:scale(.99)}.pptr>b{font-size:15.5px;font-weight:900}.pptr>i{position:absolute;right:11px;top:10px;font-style:normal;color:var(--c)}.pptr>i .lic{width:20px;height:20px}"
+    + ".pptr .rw{display:flex;align-items:baseline;gap:8px;margin-top:7px;font-size:13px;font-weight:700;color:var(--text-mid);line-height:1.45;min-width:0}"
+    + ".pptr .rw .k{flex:0 0 auto;font-size:11px;font-weight:900;color:var(--text-dim);width:26px}.pptr .rw .s{flex:0 0 auto;font-weight:900;color:var(--text)}.pptr .rw.nx .s{color:var(--gold)}"
+    + ".pptr .rw .v{min-width:0;flex:1}.pptr .rw .v em{font-style:normal;font-weight:900;color:var(--text)}.pptr .rw .v small{color:var(--text-dim);font-weight:700;font-size:12px}.pptr .od{color:var(--red);font-weight:900}"
+    + ".pptr .lk{color:var(--c);font-weight:900;white-space:nowrap}"
+    + ".pptr .acts{display:flex;gap:6px;margin-top:8px}.pptr .acts span{flex:1;text-align:center;padding:8px 4px;border-radius:10px;font-size:12.5px;font-weight:900;border:1.5px solid var(--a);color:var(--a);background:color-mix(in srgb,var(--a) 10%,transparent)}"
+    + ".pptr .dots{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:9px;font-size:11px;font-weight:800;color:var(--text-dim)}.pptr .dots span{display:inline-flex;align-items:center;gap:4px}"
+    + ".pptr .dots span:before{content:'';width:8px;height:8px;border-radius:50%;border:1.5px solid var(--text-dim);box-sizing:border-box}"
+    + ".pptr .dots .ok{color:var(--accent)}.pptr .dots .ok:before{background:var(--accent);border-color:var(--accent)}.pptr .dots .pl{color:var(--gold)}.pptr .dots .pl:before{background:var(--gold);border-color:var(--gold)}"
+    + ".pptr .dots .ng{color:var(--red)}.pptr .dots .ng:before{border-color:var(--red)}.pptr .dots .nx{color:var(--text)}.pptr .dots .nx:before{border-color:var(--text)}"
     + ".ppnote{font-size:12.5px;color:var(--gold);font-weight:700;line-height:1.7;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,var(--gold) 10%,transparent);margin-top:10px}.ppnote.g{color:var(--accent);background:var(--accent-dim);cursor:pointer}"
     + ".pps-ov{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);display:flex;align-items:flex-end}"
     + ".pps{width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--surface);border-radius:22px 22px 0 0;border-top:1px solid var(--border2);padding:10px 16px calc(env(safe-area-inset-bottom) + 18px);box-sizing:border-box}"
@@ -18705,6 +18718,41 @@ function ppDelKid(kind) {
   if (!ks.length) return;
   idqUndoAdd(ks[ks.length - 1].id); _ppRender();
 }
+// v798 #14: 研修中（結果がまだ）の人は、メンバー編集のいちばん上に「次の研修・前回・段階の流れ」を出す
+function _ppTrNext(m) { // いちばん近い研修の予定（日程調整中は後ろ）＋その記録の番号
+  var r = null;
+  (m.traineeHistory || []).forEach(function(h, i) {
+    if (!h || h.ir || h.result !== 'planned') return;
+    if (!r || ((h.tbd ? 1 : 0) - (r.h.tbd ? 1 : 0) || (h.date || '').localeCompare(r.h.date || '')) < 0) r = { h: h, i: i };
+  });
+  return r;
+}
+function _ppTrTile(m) {
+  var steps = TITLE_OPTIONS['研修生'] || [], today = evTodayYmd(), best = _ppTrBest(m), nx = _ppTrNext(m);
+  var dd = function(d) { return Math.round((new Date(today + 'T00:00:00') - new Date(d + 'T00:00:00')) / 86400000); };
+  var h = '<div class="pptr" onclick="ppGo(\'tr\')"><i>' + icn('cap') + '</i><b>研修</b>';
+  if (nx) {
+    var p = nx.h, ev = p.evId && typeof findEvent === 'function' ? findEvent(p.evId) : null, od = !p.tbd && p.date && p.date < today ? dd(p.date) : 0;
+    h += '<div class="rw nx"><span class="k">次</span><span class="s">' + evEsc(p.status || '研修') + '</span><span class="v">'
+      + (p.tbd || !p.date ? '<em>日程調整中</em>' : '<em>' + _ppMD(p.date) + '（' + _ppWd(p.date) + '）' + (ev && ev.time ? ' ' + evEsc(ev.time) : '') + '</em>' + (od ? ' <span class="od">' + od + '日超過</span>' : (p.date === today ? ' <span class="od">今日</span>' : '')))
+      + (p.aSan ? ' <small>Aさん ' + evEsc(p.aSan) + '</small>' : '') + '</span></div>';
+    if (od) h += '<div class="acts"><span style="--a:var(--accent)" onclick="event.stopPropagation();ppTrSet(' + nx.i + ',\'next\')">✓ 進んだ</span><span style="--a:var(--red)" onclick="event.stopPropagation();ppTrSet(' + nx.i + ',\'left\')">流れた</span><span style="--a:var(--gold)" onclick="event.stopPropagation();ppGo(\'tr\');ppTrRs(' + nx.i + ')">リスケ</span></div>';
+  } else {
+    var ns = steps[Math.min(best + 1, steps.length - 1)] || '';
+    h += '<div class="rw nx"><span class="k">次</span><span class="s">' + evEsc(ns) + '</span><span class="v"><small>まだ予定なし</small> <span class="lk" onclick="event.stopPropagation();ppTrPlan(\'' + evEsc(ns) + '\')">＋ 予定を入れる</span></span></div>';
+  }
+  var last = null;
+  (m.traineeHistory || []).forEach(function(x) { if (x && !x.ir && _ppDone(x) && (!last || (x.date || '') >= (last.date || ''))) last = x; });
+  if (last) { var dl = last.date ? dd(last.date) : -1; h += '<div class="rw"><span class="k">前回</span><span class="s">' + evEsc(last.status || '') + '</span><span class="v">' + (last.date ? _ppMD(last.date) + '（' + (dl <= 0 ? '今日' : dl + '日前') + '）' : '') + (last.aSan ? ' <small>Aさん ' + evEsc(last.aSan) + '</small>' : '') + '</span></div>'; }
+  var by = {}; (m.traineeHistory || []).forEach(function(x) { if (x && !x.ir) (by[x.status] = by[x.status] || []).push(x); });
+  h += '<div class="dots">' + steps.map(function(st, i) {
+    var L = by[st] || [], c = L.some(_ppDone) ? 'ok' : (L.some(function(x) { return x.result === 'planned'; }) ? 'pl' : (L.some(function(x) { return x.result === 'left'; }) ? 'ng' : (i === best + 1 && !nx ? 'nx' : '')));
+    return '<span class="' + c + '">' + evEsc(st) + '</span>';
+  }).join('') + '</div>';
+  return h + '</div>';
+}
+// 予定を入れる：記録を足すシートを「予定・日付を選ぶ（明日）」で開く
+function ppTrPlan(step) { ppGo('tr'); ppTrSheet(step); if (!_ppSh) return; _ppSh.res = 'planned'; _ppSh.dm = 'p'; _ppSh.date = _ppYmd(1); _ppShRender(); }
 function _ppActLb(m) { var a = m.activity || '', r = m.actRate ? m.actRate : (a === 'S' ? 120 : ''); return a ? a + (r !== '' ? ' ' + r + '%' : '') : '—'; }
 function _ppHub(m) {
   var ideal = _pp.map === 'ideal', cat = _mxCat(m, ideal ? 'ideal' : 'current'), k = _mxK(m, cat);
@@ -18738,12 +18786,14 @@ function _ppHub(m) {
     return h;
   }
   var trn = !!(m.trainee || memberCat(m) === '研修生' || (m.traineeHistory && m.traineeHistory.length) || m.traineeResult);
+  var trOn = trn && !m.traineeResult; // v798 #14: 研修中は横長のタイルをいちばん上に
   var memo = String(m.memo || '').trim();
+  if (trOn) h += _ppTrTile(m);
   h += '<div class="pptl">'
     + tile('title', k, icn('star'), 'タイトル', t ? '<em>' + evEsc(t) + '</em>（' + (MX_CATS.filter(function(c) { return c[0] === cat; })[0] || ['', 'そのほか'])[1] + '）' : 'まだ決めていない')
     + tile('num', 'var(--accent)', icn('trend'), '今月の数字', 'GSV ' + (m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '—') + (m.ptFixed > 0 ? '・固定 ' + m.ptFixed.toLocaleString() : '') + '<br>稼働 <em>' + _ppActLb(m) + '</em>')
     + tile('mood', '#E0457B', icn('flame'), 'やる気・優先', 'やる気 <em>' + (MORALE_LABELS[moraleLv(m.morale || 1)] || '') + '</em><br>優先度 ' + (m.priority || 'なし'))
-    + (trn ? tile('tr', '#1FA9DA', icn('cap'), '研修', evEsc(getLatestStatus(m) || '') + (m.traineeResult ? '・' + evEsc(m.traineeResult) : '') || 'ステップ・結果') : '')
+    + (trn && !trOn ? tile('tr', '#1FA9DA', icn('cap'), '研修', evEsc(getLatestStatus(m) || '') + (m.traineeResult ? '・' + evEsc(m.traineeResult) : '') || 'ステップ・結果') : '')
     + tile('act', '#5AD7FF', icn('calendar'), '活動', (function() { var n = _meActItems(m).length; return n ? 'OL・予定・タスク <em>' + n + '件</em>' : 'OL・予定・タスクの記録'; })())
     + tile('memo', '#D19500', icn('pencil'), 'メモ', memo ? '「' + evEsc(memo.slice(0, 30)) + '」' : 'まだない')
     + tile('prof', '#56627A', icn('users'), 'プロフィール', '名前・性別・地域<br>誕生日・写真・SNS')
