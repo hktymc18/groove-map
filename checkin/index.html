@@ -684,6 +684,35 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .ol-hrow{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13px;line-height:1.6;}
 .ol-hrow small{display:inline-block;font-size:10.5px;color:var(--sub);margin-right:6px;}
 .ol-hrow-h{margin-bottom:2px;}
+/* 🃏 カードコレクション（#col）とショーケース */
+.col-page{text-align:left;}
+.col-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.col-tabs button{flex:1;padding:10px 6px;font-size:14px;font-weight:800;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit;}
+.col-tabs button.on{border-color:#8a55e0;background:#8a55e0;color:#fff;}
+.col-tabs b{display:inline-block;margin-left:6px;font-size:12px;opacity:.85;}
+.col-sum{font-size:13px;color:var(--sub);margin:0 0 10px;}
+.col-sum b{font-size:18px;color:inherit;}
+.col-grid{gap:14px;justify-content:flex-start;}
+.col-empty{text-align:center;color:var(--sub);font-size:13.5px;line-height:1.8;padding:40px 10px;}
+.col-h{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px;font-size:13px;line-height:1.65;background:var(--card);}
+.col-h small{display:inline-block;font-size:10.5px;color:var(--sub);margin-right:6px;}
+.col-h-hd{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+.col-h-hd b{font-family:"IBM Plex Mono",monospace;}
+.col-chip{margin-left:auto;padding:3px 9px;font-size:11.5px;font-weight:800;border-radius:99px;border:none;background:linear-gradient(135deg,#ffe08a,#c9a2ff);color:#2a1660;}
+.col-show{position:fixed;inset:0;z-index:9000;overflow-y:auto;color:#fff;background:radial-gradient(circle at 50% 30%,#3a1d6e,#0b0714 65%);padding:10px 14px 40px;}
+.col-show-top{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;opacity:.85;}
+.col-show-top button{background:none;border:none;color:#fff;font-size:22px;padding:4px 8px;}
+.col-show-stage{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;perspective:1100px;}
+.col-show-card{position:relative;}
+.col-nav{flex:0 0 auto;width:34px;height:60px;border-radius:12px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:28px;line-height:1;padding:0;}
+.col-show-tip{text-align:center;font-size:11.5px;opacity:.6;margin:10px 0;}
+.col-show-info{max-width:460px;margin:0 auto;}
+.col-show-nm{font-weight:800;font-size:15px;margin:6px 0 8px;display:flex;gap:8px;align-items:baseline;}
+.col-show-nm span{font-size:12px;opacity:.7;}
+.col-show-r{background:rgba(255,255,255,.08);border-radius:12px;padding:9px 12px;margin-bottom:8px;font-size:13px;line-height:1.65;}
+.col-show-r b{font-family:"IBM Plex Mono",monospace;}
+.col-show-r small{display:inline-block;font-size:10.5px;opacity:.65;margin-right:6px;}
+.col-ser{margin-left:8px;font-weight:800;color:#ffe08a;}
 /* 紙カード印刷 */
 #printArea{display:none;}
 @media print{
@@ -1118,6 +1147,11 @@ body.practice .topbar{top:var(--pxh,36px);}
   <div class="ol-page" id="olBox"></div>
 </div>
 
+<!-- 🃏 カードコレクション（#col・NAVIGATORのメニューから埋め込みで開く） -->
+<div id="vCol" class="hide">
+  <div class="ol-page" id="colBox"></div>
+</div>
+
 <!-- 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） -->
 <div id="vTrainer" class="hide">
   <div style="max-width:560px;margin:0 auto;padding:14px 14px 40px;">
@@ -1240,7 +1274,7 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl','vCol'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
   if(id === 'vApp') setTimeout(setTbh, 0);   // 固定ヘッダー位置の計測（表示後でないと高さが取れない）
@@ -1560,7 +1594,10 @@ var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
 // 🎓 OLチェックアウト: AさんのQR（…#ol=キー）をスマホのカメラで読むとこのページが開く（ログイン不要）
 var gOlKey = gCardToken ? null : (function(){ var m = /[#&]ol=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
 if(gOlKey) gReceiveMode = false;
-var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
+// 🃏 カードコレクション（NAVIGATORのメニューから埋め込みで開く・ログイン中のアカウントのカード）
+var gColMode = !gCardToken && !gOlKey && /[#&]col\b/.test(location.hash);
+if(gColMode) gReceiveMode = false;
+var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
 //   区別できなくなるのを防ぐ。iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
@@ -1569,7 +1606,7 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && /#trainer/.test(lo
 // ・それ以外＝受付システム本体（ログイン〜管理画面）: 受付管理（ベルアイコン）
 (function(){
   var sw = gTrainerMode ? { t: '研修受講カード', i: './icon-trainer-' }
-    : (!gCardToken && !gReceiveMode && !gOlKey) ? { t: '受付管理', i: './icon-admin-' }
+    : (!gCardToken && !gReceiveMode && !gOlKey && !gColMode) ? { t: '受付管理', i: './icon-admin-' }
     : null;
   if(!sw) return;
   try{
@@ -1587,10 +1624,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && /#trainer/.test(lo
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v65';
+var APP_VER = 'v66';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v66', d: '2026/10/13', items: ['🃏 集めたカードとOL履歴は、NAVIGATOR の「🃏 カードコレクション」で見られるようになりました（会員証には出しません）', '🎓 研修生の項目を受講済みにする時、受講した日をカレンダーで選べるようになりました'] },
   { v: 'v65', d: '2026/10/13', items: ['🃏 レアカード風デザイン（死神）: 縁と背景をホロ（虹色のうねりの縁＋きらめく背景）にしました'] },
   { v: 'v64', d: '2026/10/13', items: ['🎓 OLチェックアウト: アウトラインの後に、AさんのQRを読んで感想・気づき・タスクを送れるようになりました（会員証の「📷 OLチェックアウト」）', '🃏 特別デザインのAさんのOLでは、カードがコレクションに溜まります（通し番号つき）'] },
   { v: 'v63', d: '2026/10/13', items: ['🃏 レアカード風デザイン: 死神が枠から飛び出して見えるように（虹色の縁にかかる・影つき・傾けた時の浮き出しを強く）'] },
@@ -1899,7 +1937,7 @@ var GX_ROLES = [
     ] },
     { id: 'tr3', t: '受講を記録する', sub: '2分・面談シート・DLR予約も', steps: [
       { sel: gxQ('#tsResults [data-tr]'), pre: gxTrTab('trTabList'), click: true, t: '研修生をひらく', x: '一覧の研修生を<b>タップ</b>してみて！', miss: '研修生を登録すると、ここに一覧が出るよ。タップでチェックリストが開くよ。' },
-      { sel: gxQ('.modal button[data-tk]:not([data-tundo])'), t: '受講済みにする', x: '受講した項目の<b>「✓ 受講済みにする」</b>で、日付とあなたの名前で記録されるよ。間違えたら「取消」で戻せるよ。', miss: 'チェックリストの各項目に「✓ 受講済みにする」ボタンがあるよ。' },
+      { sel: gxQ('.modal button[data-tk]:not([data-tundo])'), t: '受講済みにする', x: '受講した項目の<b>「✓ 受講済みにする」</b>で、受講した日（カレンダーで選べる）とあなたの名前で記録されるよ。間違えたら「取消」で戻せるよ。', miss: 'チェックリストの各項目に「✓ 受講済みにする」ボタンがあるよ。' },
       { sel: gxQ('.modal button[data-tsheet]'), t: 'CO面談シート', x: '<b>📝 面談シート</b>はここから。本人のスマホで入力してもらうこともできるよ。', miss: 'チェックリストのCOの行に「📝 面談シート」ボタンがあるよ。' },
       { sel: gxQ('.modal button[data-tdlr]'), t: 'DLR会場受講の予約', x: '<b>📅 会場受講を予約</b>すると、本人の会員証に招待チケットが出るよ。', miss: 'チェックリストのDLRの行に「📅 会場受講を予約」ボタンがあるよ。' }
     ] },
@@ -2891,7 +2929,7 @@ function olDone(p, rec){
   var after = function(){ if(p.after) p.after(); };
   if(rec.special){ olGetAnim(rec, after, p.el ? p.tok : ''); return; }
   var html = '<div class="ol-ok"><div class="ol-ok-ic">✓</div><h2>チェックアウトしました</h2>'
-    + '<p>' + esc(rec.aName) + 'さんのアウトライン、お疲れさまでした！<br>感想と気づきはアップラインに届きました。</p>'
+    + '<p>' + esc(rec.aName) + 'さんのアウトライン、お疲れさまでした！<br>感想と気づきはアップラインに届きました。<br><small>OL履歴は NAVIGATOR の「🃏 カードコレクション」で見られます。</small></p>'
     + (rec.task && rec.task.text ? '<p class="ol-note">タスク: ' + esc(rec.task.text) + (rec.task.date ? '（' + esc(rec.task.date.slice(5).replace('-', '/')) + '）' : '') + '</p>' : '')
     + (p.el ? '<a class="ol-tocard" href="#c=' + esc(p.tok) + '" id="olToCard">会員証を開く</a>' : '<div class="btns"><button class="primary" id="olOkClose">閉じる</button></div>')
     + '</div>';
@@ -2903,25 +2941,25 @@ function olBindToCard(tok){
   if(a) a.onclick = function(e){ e.preventDefault(); location.replace(location.href.split('#')[0] + '#c=' + tok); location.reload(); };
 }
 // 🃏 カードGET!（特別仕様のAさんのカードがコレクションに入る演出）
-function olGetAnim(rec, after, tok){
+function olGetAnim(rec, after, tok, inCol){
   var ov = document.createElement('div');
   ov.className = 'ol-get';
   ov.innerHTML = '<div class="ol-get-burst"></div>'
     + '<div class="ol-get-t">🃏 カードGET!</div>'
     + '<div class="ol-get-stage"><div class="ol-get-card" id="olGetCard"></div></div>'
-    + '<div class="ol-get-sub"><b>' + esc(rec.aName) + '</b>さんのカード<br>No.<b>' + esc(olSerialText(rec.design, rec.serial)) + '</b>　がコレクションに追加されました</div>'
-    + '<div class="ol-get-btns">' + (tok ? '<button class="primary" id="olGetCol">コレクションを見る</button>' : '<button class="primary" id="olGetCol">コレクションを見る</button>')
-    + '<button id="olGetClose">閉じる</button></div>';
+    + '<div class="ol-get-sub"><b>' + esc(rec.aName) + '</b>さんのカード　No.<b>' + esc(olSerialText(rec.design, rec.serial)) + '</b><br>'
+    + (inCol ? 'がコレクションに入りました' : 'が NAVIGATOR の「🃏 カードコレクション」に入りました') + '</div>'
+    + '<div class="ol-get-btns">' + (tok ? '<button id="olGetCard2">会員証を開く</button>' : '')
+    + '<button class="primary" id="olGetClose">' + (inCol ? 'コレクションを見る' : '閉じる') + '</button></div>';
   document.body.appendChild(ov);
   closeModal();
-  var slot = $('olGetCard'), w = ckTcgMini(slot, rec.design, olSerialText(rec.design, rec.serial), Math.min(300, window.innerWidth - 60));
-  function close(){ if(ov.parentNode) ov.parentNode.removeChild(ov); after(); }
-  $('olGetClose').onclick = function(){ close(); if(tok){ var b = $('olBox'); if(b) b.innerHTML = '<div class="ol-ok"><div class="ol-ok-ic">✓</div><h2>チェックアウトしました</h2><p>' + esc(rec.aName) + 'さんのカードは、会員証のコレクションに入っています。</p><a class="ol-tocard" href="#c=' + esc(tok) + '" id="olToCard">会員証を開く</a></div>'; olBindToCard(tok); } };
-  $('olGetCol').onclick = function(){
-    if(tok){ location.replace(location.href.split('#')[0] + '#c=' + tok); location.reload(); return; }
+  var w = ckTcgMini($('olGetCard'), rec.design, olSerialText(rec.design, rec.serial), Math.min(300, window.innerWidth - 60));
+  function close(){ if(ov.parentNode) ov.parentNode.removeChild(ov); if(after) after(); }
+  $('olGetClose').onclick = function(){
     close();
-    var a = $('olArea'); if(a) a.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if(tok){ var b = $('olBox'); if(b){ b.innerHTML = '<div class="ol-ok"><div class="ol-ok-ic">✓</div><h2>チェックアウトしました</h2><p>' + esc(rec.aName) + 'さんのカードは、NAVIGATOR の「🃏 カードコレクション」で見られます。</p><a class="ol-tocard" href="#c=' + esc(tok) + '" id="olToCard">会員証を開く</a></div>'; olBindToCard(tok); } }
   };
+  if($('olGetCard2')) $('olGetCard2').onclick = function(){ location.replace(location.href.split('#')[0] + '#c=' + tok); location.reload(); };
   if(w) setTimeout(function(){ ckTcgGesture(w); }, 1300);
 }
 // 会員証の「🎓 OLチェックアウト」まわり（Aさん用QR・読み取りボタン・コレクション・OL履歴）
@@ -2932,59 +2970,9 @@ function renderOlArea(c){
   el.innerHTML = '<div class="ol-box">'
     + (c.olKey ? '<button class="ol-btn host" id="olHostQr">🎓 OLチェックアウトQRを出す<small>アウトラインの後に、参加者に読み取ってもらう</small></button>' : '')
     + '<button class="ol-btn" id="olScanBtn">📷 OLチェックアウト<small>アウトラインを受けたら、AさんのQRを読む</small></button>'
-    + '<div id="olCol"></div></div>';
+    + '<p class="ol-note">集めたカードとOL履歴は、NAVIGATOR の「🃏 カードコレクション」で見られます（受付の名簿と紐付いたアカウント）。</p></div>';
   if($('olHostQr')) $('olHostQr').onclick = function(){ olHostQrModal(c); };
   $('olScanBtn').onclick = function(){ olScan(function(key){ olOpenFromCard(key, c); }); };
-  db.collection('cards').doc(gCardToken).collection('ol').get().then(function(qs){
-    var L = [];
-    qs.forEach(function(d){ L.push(d.data()); });
-    olRenderCol(L);
-  }).catch(function(){});
-}
-function olRenderCol(L){
-  var box = $('olCol');
-  if(!box) return;
-  L.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
-  var groups = [], gi = {};
-  L.forEach(function(r){
-    if(!r.special) return;
-    var k = r.aNo || r.key;
-    if(!(k in gi)){ gi[k] = groups.length; groups.push({ d: r.design || {}, name: r.aName, list: [] }); }
-    groups[gi[k]].list.push(r);
-  });
-  var n = groups.reduce(function(s, g){ return s + g.list.length; }, 0);
-  var h = '';
-  if(groups.length){
-    h += '<div class="ol-col-h">🃏 コレクション<span>' + groups.length + '種類・' + n + '枚</span></div><div class="ol-grid">'
-      + groups.map(function(g, i){
-          return '<button class="ol-mini" data-gi="' + i + '"><span class="ol-slot" id="olSlot' + i + '"></span>'
-            + (g.list.length > 1 ? '<i class="ol-cnt">×' + g.list.length + '</i>' : '') + '<small>' + esc(g.name || '') + '</small></button>';
-        }).join('') + '</div>';
-  }
-  var hist = L.filter(function(r){ return !r.special; });
-  if(hist.length){
-    h += '<div class="ol-col-h">🎓 OL履歴<span>' + hist.length + '回</span></div>'
-      + hist.slice(0, 20).map(function(r){
-          return '<div class="ol-hist"><b>' + esc(olMd(r.ymd)) + '</b><span>' + esc(r.aName || '') + 'さん</span><em>' + esc(r.impression || '') + '</em></div>';
-        }).join('');
-  }
-  box.innerHTML = h;
-  groups.forEach(function(g, i){ ckTcgMini($('olSlot' + i), g.d, olSerialText(g.d, g.list[0].serial), 140); });
-  [].forEach.call(box.querySelectorAll('[data-gi]'), function(b){
-    b.onclick = function(){ olViewer(groups[+b.getAttribute('data-gi')]); };
-  });
-}
-// 集めたカードを大きく見る（傾ける・裏返す）。受けた日と通し番号の一覧つき
-function olViewer(g){
-  modal('<div class="ol-view"><div class="ol-view-card" id="olViewCard"></div>'
-    + '<p class="ol-note" style="text-align:center;">ドラッグで傾く・タップで裏返る</p>'
-    + '<div class="ol-col-h">' + esc(g.name || '') + 'さんのアウトライン<span>' + g.list.length + '回</span></div>'
-    + g.list.map(function(r){ return '<div class="ol-hist"><b>' + esc(olMd(r.ymd)) + '</b><span>No.' + esc(olSerialText(r.design, r.serial)) + '</span><em>' + esc(r.impression || '') + '</em></div>'; }).join('')
-    + '<div class="btns"><button id="olViewClose">閉じる</button></div></div>');
-  var w = ckTcgMini($('olViewCard'), g.d, olSerialText(g.d, g.list[0].serial), Math.min(300, window.innerWidth - 70));
-  w._base = w.style.transform;
-  ckTcgGesture(w);
-  $('olViewClose').onclick = closeModal;
 }
 // Aさん: 参加者に読んでもらうQR（大きく）。特別仕様のAさんはカードも一緒に
 function olHostQrModal(c){
@@ -3134,6 +3122,126 @@ function olHistModal(m){
       + '<div class="btns"><button id="olHmBack">戻る</button></div>', true);
     $('olHmBack').onclick = function(){ closeModal(); cardModal(m); };
   }).catch(function(e){ toast(permMsg(e, 'OL履歴を読み込めませんでした')); });
+}
+/* ── 🃏 カードコレクション（#col・NAVIGATORのメニューから埋め込みで開く） ──
+   ログイン中のアカウント（users/{uid}.ckNo＝受付の番号）が受けたOLチェックアウトを読み、
+   特別仕様のAさんのカード（コレクション）と、すべてのOLの記録（OL履歴）を出す。
+   見たカードは localStorage gm_card_seen に記録（NAVIGATORの新着の印と共通。同じサイトなので共有される）。#col&get=1 なら新着をカードGET!で見せる */
+var gCol = null;
+function colSeen(){ try{ return JSON.parse(localStorage.getItem('gm_card_seen') || '{}'); }catch(e){ return {}; } }
+function colMarkSeen(L){
+  var sn = colSeen();
+  L.forEach(function(r){ if(r.special) sn[r._id] = 1; });
+  try{ localStorage.setItem('gm_card_seen', JSON.stringify(sn)); }catch(e){}
+}
+function colStart(){
+  showView('vCol');
+  var box = $('colBox');
+  box.innerHTML = '<p class="ol-load">読み込み中…</p>';
+  var msg = function(t){ box.innerHTML = '<div class="gate"><h1>🃏 カードコレクション</h1><p class="s">' + t + '</p></div>'; };
+  var done = false;
+  auth.onAuthStateChanged(function(u){
+    if(done) return;
+    if(!u){ msg('NAVIGATOR にログインしてから開いてください。'); return; }
+    done = true;
+    db.collection('users').doc(u.uid).get().then(function(ps){
+      var no = ps.exists ? String(ps.data().ckNo || '') : '';
+      if(!no){ msg('このアカウントは、まだ受付の名簿と紐付いていません。<br>ユニオンの管理者に「受付の名簿と紐付ける」をお願いしてください。<br><small>紐付けると、これまでに受けたOLのカードと履歴も出ます。</small>'); return; }
+      return db.collection('olCheckouts').where('no', '==', no).get().then(function(qs){
+        var L = [];
+        qs.forEach(function(d){ var r = d.data(); r._id = d.id; L.push(r); });
+        L.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
+        var news = L.filter(function(r){ return r.special && !colSeen()[r._id]; });
+        gCol = { L: L, tab: 'col' };
+        colRender();
+        if(/[#&]get=1/.test(location.hash) && news.length){
+          (function next(i){
+            if(i >= news.length){ colMarkSeen(L); return; }
+            olGetAnim(news[i], function(){ next(i + 1); }, '', true);
+          })(0);
+        } else colMarkSeen(L);
+      });
+    }).catch(function(){ msg('読み込みに失敗しました。電波の良いところで開き直してください。'); });
+  });
+}
+function colGroups(L){
+  var groups = [], gi = {};
+  L.forEach(function(r){
+    if(!r.special) return;
+    var k = r.aNo || r.key;
+    if(!(k in gi)){ gi[k] = groups.length; groups.push({ d: r.design || {}, name: r.aName, list: [] }); }
+    groups[gi[k]].list.push(r);
+  });
+  return groups;
+}
+function colRender(){
+  var box = $('colBox'), L = gCol.L, groups = colGroups(L), n = groups.reduce(function(s, g){ return s + g.list.length; }, 0);
+  gCol.groups = groups;
+  var h = '<div class="col-tabs"><button data-ct="col"' + (gCol.tab === 'col' ? ' class="on"' : '') + '>🃏 コレクション<b>' + groups.length + '</b></button>'
+    + '<button data-ct="hist"' + (gCol.tab === 'hist' ? ' class="on"' : '') + '>🎓 OL履歴<b>' + L.length + '</b></button></div>';
+  if(gCol.tab === 'col'){
+    if(!groups.length){
+      h += '<div class="col-empty"><div style="font-size:44px;">🃏</div><p>まだカードはありません。<br>特別なカードのAさんのアウトラインを受けて、チェックアウトすると集まります。</p></div>';
+    } else {
+      h += '<div class="col-sum"><b>' + groups.length + '</b>種類・<b>' + n + '</b>枚</div><div class="ol-grid col-grid">'
+        + groups.map(function(g, i){
+            return '<button class="ol-mini" data-gi="' + i + '"><span class="ol-slot" id="colSlot' + i + '"></span>'
+              + (g.list.length > 1 ? '<i class="ol-cnt">×' + g.list.length + '</i>' : '') + '<small>' + esc(g.name || '') + '</small></button>';
+          }).join('') + '</div>';
+    }
+  } else {
+    h += L.length ? L.map(function(r, i){
+      var t = r.task || {};
+      return '<div class="col-h"><div class="col-h-hd"><b>' + esc(olMd(r.ymd)) + '</b><span>' + esc(r.aName || '') + 'さんのOL</span>'
+        + (r.special ? '<button class="col-chip" data-hi="' + i + '">🃏 No.' + esc(olSerialText(r.design, r.serial)) + '</button>' : '') + '</div>'
+        + '<div><small>感想</small>' + esc(r.impression || '') + '</div><div><small>気づき</small>' + esc(r.notice || '') + '</div>'
+        + (t.text ? '<div><small>タスク</small>📌 ' + esc(t.text) + (t.date ? '（' + esc(t.date.slice(5).replace('-', '/')) + '）' : '') + '</div>' : '') + '</div>';
+    }).join('') : '<div class="col-empty"><p>まだOLの記録はありません。<br>アウトラインを受けたら、会員証の「📷 OLチェックアウト」でAさんのQRを読もう！</p></div>';
+  }
+  box.innerHTML = '<div class="col-page">' + h + '</div>';
+  [].forEach.call(box.querySelectorAll('[data-ct]'), function(b){ b.onclick = function(){ gCol.tab = b.getAttribute('data-ct'); colRender(); }; });
+  groups.forEach(function(g, i){ if($('colSlot' + i)) ckTcgMini($('colSlot' + i), g.d, olSerialText(g.d, g.list[0].serial), 150); });
+  [].forEach.call(box.querySelectorAll('[data-gi]'), function(b){ b.onclick = function(){ colShowcase(+b.getAttribute('data-gi')); }; });
+  [].forEach.call(box.querySelectorAll('[data-hi]'), function(b){
+    b.onclick = function(){
+      var r = L[+b.getAttribute('data-hi')], k = r.aNo || r.key;
+      for(var i = 0; i < groups.length; i++) if((groups[i].list[0].aNo || groups[i].list[0].key) === k){ colShowcase(i); return; }
+    };
+  });
+}
+// 🌟 ショーケース: 暗い画面にカードを大きく（傾ける・裏返す）。左右（‹ ›・スワイプ）で次のカード。下にそのAさんのOLの記録
+function colShowcase(i){
+  var groups = gCol.groups;
+  if(!groups || !groups.length) return;
+  i = (i + groups.length) % groups.length;
+  var g = groups[i], old = $('colShow');
+  if(old) old.parentNode.removeChild(old);
+  var ov = document.createElement('div');
+  ov.className = 'col-show'; ov.id = 'colShow';
+  ov.innerHTML = '<div class="col-show-top"><span>' + (i + 1) + ' / ' + groups.length + '</span><button id="colShowX">✕</button></div>'
+    + '<div class="col-show-stage">' + (groups.length > 1 ? '<button class="col-nav l" id="colPrev">‹</button>' : '')
+    + '<div class="col-show-card" id="colShowCard"></div>' + (groups.length > 1 ? '<button class="col-nav r" id="colNext">›</button>' : '') + '</div>'
+    + '<p class="col-show-tip">ドラッグで傾く・タップで裏返る' + (groups.length > 1 ? '・左右で次のカード' : '') + '</p>'
+    + '<div class="col-show-info"><div class="col-show-nm">' + esc(g.name || '') + 'さんのアウトライン<span>' + g.list.length + '回</span></div>'
+    + g.list.map(function(r){
+        return '<div class="col-show-r"><div><b>' + esc(olMd(r.ymd)) + '</b><span class="col-ser">No.' + esc(olSerialText(r.design, r.serial)) + '</span></div>'
+          + '<div><small>感想</small>' + esc(r.impression || '') + '</div><div><small>気づき</small>' + esc(r.notice || '') + '</div></div>';
+      }).join('') + '</div>';
+  document.body.appendChild(ov);
+  var w = ckTcgMini($('colShowCard'), g.d, olSerialText(g.d, g.list[0].serial), Math.min(310, window.innerWidth - 90));
+  w._base = w.style.transform;
+  ckTcgGesture(w);
+  $('colShowX').onclick = function(){ ov.parentNode.removeChild(ov); };
+  if($('colPrev')) $('colPrev').onclick = function(){ colShowcase(i - 1); };
+  if($('colNext')) $('colNext').onclick = function(){ colShowcase(i + 1); };
+  // 情報の部分を左右にスワイプしても次のカードへ（カードの上のドラッグは傾け）
+  var info = ov.querySelector('.col-show-info'), sx = null;
+  info.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, { passive: true });
+  info.addEventListener('touchend', function(e){
+    if(sx == null || groups.length < 2) return;
+    var dx = e.changedTouches[0].clientX - sx; sx = null;
+    if(Math.abs(dx) > 60) colShowcase(i + (dx < 0 ? 1 : -1));
+  });
 }
 function showCardView(token){
   showView('vCard');
@@ -4304,6 +4412,7 @@ function ckFindCardToken(no, nm, ok, miss){
   }, function(){ legacy(); });
 }
 if(gOlKey) olStart();
+if(gColMode) colStart();
 if(gReceiveMode){
   showView('vReceive');
   var rvOpen = function(){
@@ -4328,7 +4437,7 @@ if(gReceiveMode){
 }
 
 auth.onAuthStateChanged(function(u){
-  if(gCardToken || gReceiveMode || gOlKey) return;   // 会員証・受け取り・OLチェックアウト中は通常画面に切り替えない
+  if(gCardToken || gReceiveMode || gOlKey || gColMode) return;   // 会員証・受け取り・OLチェックアウト中は通常画面に切り替えない
   gUser = u;
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
@@ -7889,9 +7998,22 @@ function trChecklist(m){
       if(!window.confirm('「' + k + '」の記録を取り消しますか？')) return;
       trWrite(m, k, null).then(function(){ closeModal(); trChecklist(m); });
     } else {
-      if(!window.confirm(m.name + ' さんの「' + k + '」を受講済みにしますか？\n（担当: ' + (gProf.name || '') + '・' + todayStr() + '）')) return;
-      trWrite(m, k, { at: todayStr(), byName: gProf.name || '', by: gUser.uid, atMs: Date.now() })
-        .then(function(){ closeModal(); trChecklist(m); });
+      // 📅 受講した日をカレンダーで選ぶ（ふだんは今日。未来の日付は選べない）
+      modal('<h2>「' + esc(k) + '」を受講済みにする</h2>'
+        + '<p style="font-size:13.5px;margin:0 0 6px;">' + esc(m.name || '') + ' さん（担当: ' + esc(gProf.name || '') + '）</p>'
+        + '<label for="tkDate">受講した日</label>'
+        + '<input type="date" id="tkDate" value="' + todayStr() + '" max="' + todayStr() + '" style="width:100%;font-size:16px;">'
+        + '<p class="mc-err" id="tkErr"></p>'
+        + '<div class="btns"><button id="tkBack">戻る</button><button class="primary" id="tkGo">✓ 受講済みにする</button></div>');
+      $('tkBack').onclick = function(){ closeModal(); trChecklist(m); };
+      $('tkGo').onclick = function(){
+        var d = $('tkDate').value;
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){ $('tkErr').textContent = '受講した日を選んでください'; return; }
+        if(d > todayStr()){ $('tkErr').textContent = '未来の日付は選べません'; return; }
+        $('tkGo').disabled = true;
+        trWrite(m, k, { at: d, byName: gProf.name || '', by: gUser.uid, atMs: Date.now() })
+          .then(function(){ closeModal(); trChecklist(m); });
+      };
     }
   });
 }
