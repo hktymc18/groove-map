@@ -592,6 +592,17 @@ service cloud.firestore {
       // オンライン申請の承認結果マーカー(online_<eventId>)の書込みに使用
       allow update: if signedIn();
     }
+    // 🃏 v24: 参加者のコレクション（OLチェックアウトの控え）。パスに会員証トークンが入る＝本人だけが開ける（cards と同じ扱い）
+    //   作成＝チェックアウトと同時（同じIDの olCheckouts が同じ番号で作られること）。会員証の再発行時は新しいトークンへ写す
+    match /cards/{token}/ol/{id} {
+      allow get, list: if true;
+      allow create: if exists(/databases/$(database)/documents/cards/$(token))
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('no', '') == request.resource.data.get('no', '__x')
+        && existsAfter(/databases/$(database)/documents/olCheckouts/$(id))
+        && getAfter(/databases/$(database)/documents/olCheckouts/$(id)).data.get('no', '') == request.resource.data.get('no', '__x');
+      allow update: if false;
+      allow delete: if signedIn();
+    }
 
     // 📝 CO面談シートの本人入力（下書き送信箱）:
     //   担当者が本人の会員証に解錠マーカー（cards.coOpen・期限つき）を付けている間だけ、
@@ -651,6 +662,58 @@ service cloud.firestore {
       allow create: if signedIn() && notDisabled(request.auth.uid) && isCkTrainer(request.resource.data.get('union', ''));
       allow delete: if isOwnerAdmin()
         || (signedIn() && notDisabled(request.auth.uid) && isCkTrainer(resource.data.get('union', '')));
+    }
+
+    // 🎓 v24: OLチェックアウト（アウトラインの後に、参加者がAさんのQRを読んで感想・気づき・タスクを送る）
+    //   olHosts/{key}: Aさん（OLをする人）。key＝QRに入る公開キー（会員証トークンとは別物＝撮られても会員証は開けない）
+    //     設定はオーナー・そのユニオンの管理者。count/lastId はチェックアウトのたびに参加者が1つ進める（通し番号＝何人目か）
+    match /olHosts/{key} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if isCkAdmin(request.resource.data.get('union', ''));
+      allow update: if (isCkAdmin(resource.data.get('union', '')) && isCkAdmin(request.resource.data.get('union', '')))
+        || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count', 'lastId'])
+            && request.resource.data.get('count', 0) == resource.data.get('count', 0) + 1
+            && getAfter(/databases/$(database)/documents/olCheckouts/$(request.resource.data.get('lastId', '__none'))).data.get('key', '') == key
+            && getAfter(/databases/$(database)/documents/olCheckouts/$(request.resource.data.get('lastId', '__none'))).data.get('serial', -1) == request.resource.data.get('count', 0));
+      allow delete: if isCkAdmin(resource.data.get('union', ''));
+    }
+    //   olCheckouts/{key_番号_YYYYMMDD}: チェックアウト（同じAさんへは1日1回）。
+    //     作成＝参加者（未ログイン）。会員証の番号・お名前・ユニオンが名簿の会員証と一致すること（cardClaims→cards で照合）
+    //     見る＝そのユニオンを見られる人（アップライン・ユニオン管理者・オーナー＝名簿と同じ範囲）＋Aさん本人＋参加者本人（NAVIGATORの紐付け ckNo）
+    //     参加者本人のNAVIGATORは、タスクを自分のToDo・予定に取り込んだ印（taskImported）だけ付けられる
+    match /olCheckouts/{id} {
+      allow get, list: if ckCanSee(resource.data.get('union', ''))
+        || (signedIn() && profileExists(request.auth.uid)
+            && (profile(request.auth.uid).get('ckNo', '__x') == resource.data.get('aNo', '__y')
+                || profile(request.auth.uid).get('ckNo', '__x') == resource.data.get('no', '__y')));
+      allow create: if request.resource.data.keys().hasOnly(
+            ['key', 'no', 'name', 'union', 'group', 'aNo', 'aName', 'aUnion', 'special', 'serial', 'design',
+             'impression', 'notice', 'task', 'ymd', 'atMs', 'atLocal', 'ver'])
+        && id == request.resource.data.get('key', '') + '_' + request.resource.data.get('no', '') + '_' + request.resource.data.get('ymd', '')
+        && request.resource.data.get('impression', '') is string && request.resource.data.impression.size() > 0 && request.resource.data.impression.size() <= 1000
+        && request.resource.data.get('notice', '') is string && request.resource.data.notice.size() > 0 && request.resource.data.notice.size() <= 1000
+        && request.resource.data.get('task', {}) is map && request.resource.data.get('task', {}).size() <= 4
+        && exists(/databases/$(database)/documents/olHosts/$(request.resource.data.get('key', '__none')))
+        && get(/databases/$(database)/documents/olHosts/$(request.resource.data.key)).data.get('on', false) == true
+        && get(/databases/$(database)/documents/olHosts/$(request.resource.data.key)).data.get('no', '') == request.resource.data.get('aNo', '__x')
+        && getAfter(/databases/$(database)/documents/olHosts/$(request.resource.data.key)).data.get('lastId', '') == id
+        && getAfter(/databases/$(database)/documents/olHosts/$(request.resource.data.key)).data.get('count', 0) == request.resource.data.get('serial', -1)
+        && exists(/databases/$(database)/documents/cardClaims/$(request.resource.data.get('no', '__none')))
+        && ckOlCard(get(/databases/$(database)/documents/cardClaims/$(request.resource.data.no)).data.get('t', '__none'), request.resource.data);
+      allow update: if signedIn() && profileExists(request.auth.uid)
+        && profile(request.auth.uid).get('ckNo', '__x') == resource.data.get('no', '__y')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['taskImported', 'taskImportedAt']);
+      allow delete: if isOwnerAdmin() || isCkAdmin(resource.data.get('union', ''));
+    }
+    // チェックアウトした会員証が、名簿の本人の有効な会員証であること
+    function ckOlCard(t, d) {
+      return exists(/databases/$(database)/documents/cards/$(t))
+        && get(/databases/$(database)/documents/cards/$(t)).data.get('no', '') == d.get('no', '__x')
+        && get(/databases/$(database)/documents/cards/$(t)).data.get('name', '') == d.get('name', '__x')
+        && get(/databases/$(database)/documents/cards/$(t)).data.get('union', '') == d.get('union', '__x')
+        && get(/databases/$(database)/documents/cards/$(t)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(t)).data.get('rcptOnly', false) == false;
     }
 
     // オンライン受講の誓約書アーカイブ:
