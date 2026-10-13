@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v801';
+var APP_JS_VERSION = 'v802';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v801';
+  var DATA_VERSION = 'v802';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v802', d:'2026-10-13', items:['NWPのロゴを、ブラウザの長押し・右クリックから画像として保存できないようにしました'] },
   { v:'v801', d:'2026-10-13', items:['🃏 カードコレクション：OLチェックアウトで集めたカード（特別なカードのAさんのOL）と、受けたすべてのOLの履歴を見られるメニューを追加しました（HOMEの下のボタン。受付の名簿と紐付いたアカウント）', 'カードを押すと大きく見られます（傾ける・裏返す・左右で次のカード）。新しいカードが届くと「新しいカード！」とお知らせします'] },
   { v:'v800', d:'2026-10-13', items:['受付連携：MAPでOUTにした人は取り込まないようにしました（つなぐ・稼働率・研修・OLチェックアウトの対象外）'] },
   { v:'v799', d:'2026-10-13', items:['🎓 OLチェックアウト：メンバーがアウトラインの後に、Aさんの会員証のQRを読んで送った「感想・気づき・タスク」が、そのメンバーの活動タブにリアルタイムで届くようになりました（受付の番号と紐付いたメンバー）。押すとくわしく見られます', 'MAPのカードに新着の印（🎓）。活動を開くと消えます。最後の活動にも数えます', '自分のNAVIGATORが受付の番号と紐付いている人は、OLチェックアウトで決めたタスクが自分のToDo・予定に自動で入ります'] },
@@ -21542,7 +21543,7 @@ function _uxMenuCss() {
     + "body.ux-land .ux-sm{display:flex;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:6px}body.ux-land .ux-sm::-webkit-scrollbar{display:none}body.ux-land .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px;overflow:visible}"
     + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#2a1a00;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
     + "body.ux-land #view-menu .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
-    // v801: ロゴは<img>ではなく背景（長押し・右クリックの「画像を保存」・ドラッグで持ち出せないように）
+    // v802: ロゴは<img>ではなく背景（長押し・右クリックの「画像を保存」・ドラッグで持ち出せないように）
     + ".gm-lg{display:block;aspect-ratio:198/104;background:center/contain no-repeat;font-style:normal;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;pointer-events:none}.gm-lg.w{background-image:url(img/logo-w.png)}.gm-lg.d{background-image:url(img/logo-d.png)}"
     + "#view-menu .hm-hd{display:flex;align-items:baseline;gap:12px}#view-menu .hm-hd h1{margin:0}.hm-logo{height:26px;width:auto;flex:none;display:block;align-self:baseline;position:relative;top:4px}.hm-logo.w{display:none}body:not(.light) .hm-logo.w{display:block}body:not(.light) .hm-logo.d{display:none}"
     + "#view-menu .hm-hd .hm-logo+h1{padding-left:12px;border-left:1.5px solid var(--border2);line-height:1}body.ux-land .hm-logo{height:22px;top:3px}"
@@ -21598,7 +21599,7 @@ function renderMenuHub() {
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
   S += sb('❓ 使い方', 'gdMenu()'); // v755
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
-  var lg = '<i class="hm-logo gm-lg w" role="img" aria-label="NWP"></i><i class="hm-logo gm-lg d" role="img" aria-label="NWP"></i>'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）。v801: 画像として保存されないよう背景で表示
+  var lg = '<i class="hm-logo gm-lg w" role="img" aria-label="NWP"></i><i class="hm-logo gm-lg d" role="img" aria-label="NWP"></i>'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）。v802: 画像として保存されないよう背景で表示
   var hd = lg + '<h1>HOME</h1>';
   v.innerHTML = '<div class="ux-hub"><div class="ux-hd hm-hd">' + hd + '<span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
     + _gdStepsHtml() // v755: はじめのステップ
@@ -39037,7 +39038,7 @@ function _px3Side() {
   if (!document.getElementById('pcsBrand')) {
     var br = document.createElement('div'); br.id = 'pcsBrand'; br.title = 'ホーム';
     br.onclick = function() { switchView('home'); };
-    br.innerHTML = '<i class="gm-lg w" role="img" aria-label="NWP"></i><i class="gm-lg d" role="img" aria-label="NWP"></i><b>NAVIGATOR</b>'; // v801: 背景で表示（画像保存させない）
+    br.innerHTML = '<i class="gm-lg w" role="img" aria-label="NWP"></i><i class="gm-lg d" role="img" aria-label="NWP"></i><b>NAVIGATOR</b>'; // v802: 背景で表示（画像保存させない）
     sb.insertBefore(br, sb.firstChild);
   }
   Array.prototype.forEach.call(sb.querySelectorAll('.pcs-item[data-view]'), function(it) {
