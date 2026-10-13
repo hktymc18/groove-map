@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v798';
+var APP_JS_VERSION = 'v799';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v798';
+  var DATA_VERSION = 'v799';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v799', d:'2026-10-13', items:['🎓 OLチェックアウト：メンバーがアウトラインの後に、Aさんの会員証のQRを読んで送った「感想・気づき・タスク」が、そのメンバーの活動タブにリアルタイムで届くようになりました（受付の番号と紐付いたメンバー）。押すとくわしく見られます', 'MAPのカードに新着の印（🎓）。活動を開くと消えます。最後の活動にも数えます', '自分のNAVIGATORが受付の番号と紐付いている人は、OLチェックアウトで決めたタスクが自分のToDo・予定に自動で入ります'] },
   { v:'v798', d:'2026-10-13', items:['メンバー編集：研修中の人は、いちばん上に「次の研修（段階・日付・時間・Aさん）・前回・段階の流れ」を表示（#14）','予定日を過ぎた研修は、その場で「✓ 進んだ／流れた／リスケ」を押せます。予定がない時は「＋ 予定を入れる」から'] },
   { v:'v797', d:'2026-10-12', items:['はじめての端末でログインした直後、データを読み込み終わるまでは「読み込み中…」を表示（空のMAPや「自分を登録」が一瞬出なくなりました）','読み込み中・読み込み失敗時はクラウドへ保存しない安全装置を追加（データを空で上書きしない）'] },
   { v:'v796', d:'2026-10-11', items:['やる理由・1年後・成功した毎日の作文を「消す」で消せるように（作文のページ・理想のページ。消しても「↩ 元に戻す」で戻せます。過去の作文は「🗂 過去の作文」から消せます）'] },
@@ -8899,6 +8900,7 @@ function memberLastActivity(m) {
   (m.traineeHistory || []).forEach(function(h){ if (h.date && h.date > last) last = h.date; });
   var ev = _evLastActFor(m.id);
   if (ev > last) last = ev;
+  _olCoFor(m).forEach(function(r) { var d = _olCoYmd(r); if (d > last) last = d; }); // v799: OLチェックアウトも活動に
   return last;
 }
 function memberActivityLevel(m) {
@@ -9025,6 +9027,7 @@ function buildNodeHTML(m, members, mapType, depth, familyColor, inFamily, family
         var _r9 = _id9 >= 60;
         return '<span title="最終活動から' + _id9 + '日" style="font-size:9px;font-weight:800;color:#fff;background:' + (_r9 ? '#FF5D73' : '#6b7280') + ';border-radius:6px;padding:1px 5px;white-space:nowrap">' + (_r9 ? '\uD83D\uDEA8' : '\uD83D\uDCA4') + _id9 + '日</span>';
       })()
+    + (!isForeign && mapType === 'current' ? _olCoBadge(m) : '') // v799: OLチェックアウトの新着
     + (isForeign ? '<span class="merged-badge">' + icn('link') + evEsc(m._ownerName || '下位') + '</span>' : '')
     + '</div>'
     + '<div style="display:flex;align-items:center;gap:4px;margin-top:2px">' + parentChip
@@ -14625,6 +14628,110 @@ var _meActF = {};
 function meActAdd(btn) { var pk = btn && btn.parentNode && btn.parentNode.querySelector('.me-act-pick'); if (pk) pk.style.display = pk.style.display === 'none' ? 'flex' : 'none'; }
 function meActFilter(mid, f) { _meActF[mid] = f; var m = _mFind(mid); if (m) meRenderExtras(m); }
 // v361: 「活動」＝OL・タスク・予定・研修予定を1本の時系列で（新しい順）。v783: 新しいメンバー画面の「活動」と共通
+// ── 🎓 v799: OLチェックアウト（受付システム）──
+//   メンバーがアウトラインの後に、Aさんの会員証のQRを読んで送った「感想・気づき・タスク」（olCheckouts）を、
+//   受付の会員番号（m.checkinNo）でつないで活動タブにリアルタイム表示する（onSnapshot）。
+//   自分のNAVIGATORが受付の番号と紐付いている人（currentUser.ckNo）は、自分宛てのタスクを自分のToDo・予定に取り込む
+var _olCo = { uid: '', byNo: {}, key: '', unsub: [], selfUnsub: null, timer: null, importing: {} };
+function _olCoStop() { _olCo.unsub.forEach(function(u) { try { u(); } catch (e) {} }); _olCo.unsub = []; }
+function _olCoStart() {
+  if (!USE_FIREBASE || !currentUser || !currentUser.uid || viewingOwnerUid) return;
+  if (_olCo.uid !== currentUser.uid) { // ログインし直した時は購読をやり直す
+    _olCoStop(); if (_olCo.selfUnsub) { try { _olCo.selfUnsub(); } catch (e) {} }
+    _olCo = { uid: currentUser.uid, byNo: {}, key: '', unsub: [], selfUnsub: null, timer: _olCo.timer, importing: {} };
+  }
+  if (!_olCo.timer) _olCo.timer = setInterval(_olCoStart, 30000); // メンバーの紐付けが増えたら購読し直す
+  _olCoSelf();
+  var nos = {};
+  _ckOwnMembers().forEach(function(m) { if (m.checkinNo) nos[String(m.checkinNo)] = 1; });
+  var list = Object.keys(nos).sort(), own = _ckIsOwner(), un = currentUser.union || '';
+  var key = (own ? '*' : un) + '|' + list.join(',');
+  if (key === _olCo.key) return;
+  _olCoStop(); _olCo.key = key; _olCo.byNo = {};
+  if (!list.length || (!own && !un)) { _olCoRefresh(); return; }
+  for (var i = 0; i < list.length; i += 10) (function(chunk) {
+    var q = db.collection('olCheckouts');
+    if (!own) q = q.where('union', '==', un); // 見られるのは自分のユニオン（ルール: 名簿と同じ範囲）
+    q = q.where('no', 'in', chunk);
+    _olCo.unsub.push(q.onSnapshot(function(qs) {
+      chunk.forEach(function(no) { _olCo.byNo[no] = []; });
+      qs.forEach(function(d) { var r = d.data(); r._id = d.id; (_olCo.byNo[r.no] = _olCo.byNo[r.no] || []).push(r); });
+      _olCoRefresh();
+    }, function(err) { console.log('olCheckouts listener err:', err && err.message); }));
+  })(list.slice(i, i + 10));
+}
+// 自分宛て（参加者本人）のタスクを自分のToDo・予定に取り込む（取り込んだ印を付けて二重に入れない）
+function _olCoSelf() {
+  if (_olCo.selfUnsub || !currentUser || !currentUser.ckNo || viewingOwnerUid) return;
+  if (window._evLoadedUid !== currentUser.uid) return; // 予定・ToDoの読み込みを待つ
+  _olCo.selfUnsub = db.collection('olCheckouts').where('no', '==', String(currentUser.ckNo)).onSnapshot(function(qs) {
+    qs.forEach(function(d) {
+      var r = d.data(), t = r.task || {};
+      if (r.taskImported || !t.text || (t.mode !== 'todo' && t.mode !== 'event') || _olCo.importing[d.id]) return;
+      _olCo.importing[d.id] = 1;
+      d.ref.update({ taskImported: true, taskImportedAt: Date.now() }).then(function() {
+        var e = _tdMakeTask(t.text, t.date || '', '');
+        if (t.mode === 'event') e.type = 'event';
+        e.memo = '🎓 ' + (r.aName || '') + 'さんのアウトラインで決めたこと（OLチェックアウト）';
+        state.events.push(e); saveEventDoc(e);
+        try { updateEventsBadge(); } catch (x) {}
+        try { if (currentView === 'events' && typeof renderEvents === 'function') renderEvents(); } catch (x) {}
+        toast('🎓 OLチェックアウトのタスク「' + t.text + '」を' + (t.mode === 'event' ? '予定' : 'ToDo') + 'に入れました');
+      }).catch(function() { delete _olCo.importing[d.id]; });
+    });
+  }, function(err) { console.log('olCheckouts self err:', err && err.message); });
+}
+var _olCoRT = null;
+function _olCoRefresh() {
+  clearTimeout(_olCoRT);
+  _olCoRT = setTimeout(function() {
+    try { var mo = document.getElementById('modal'); if (editingId && mo && mo.classList.contains('open')) { var m = _mFind(editingId); if (m) meRenderExtras(m); } } catch (e) {}
+    try { if (_pp) _ppRender(); } catch (e) {}
+    try { if (currentView === 'current') renderCurrentViewLazy(); } catch (e) {}
+  }, 300);
+}
+function _olCoFor(m) { return (m && m.checkinNo && _olCo.byNo[String(m.checkinNo)]) || []; }
+function _olCoYmd(r) { var y = String(r.ymd || ''); return y.length === 8 ? y.slice(0, 4) + '-' + y.slice(4, 6) + '-' + y.slice(6) : ''; }
+// 新着（3日以内・まだ開いていない）の数＝MAPのカードに「🎓」の印
+function _olCoSeen() { try { return JSON.parse(localStorage.getItem('gm_olco_seen') || '{}'); } catch (e) { return {}; } }
+function _olCoNew(m) {
+  var L = _olCoFor(m); if (!L.length) return 0;
+  var sn = _olCoSeen(), t = Date.now() - 3 * 864e5;
+  return L.filter(function(r) { return (r.atMs || 0) > t && !sn[r._id]; }).length;
+}
+function _olCoMarkSeen(m) {
+  var L = _olCoFor(m); if (!L.length) return;
+  var sn = _olCoSeen(), ch = false;
+  L.forEach(function(r) { if (!sn[r._id]) { sn[r._id] = 1; ch = true; } });
+  if (ch) { try { localStorage.setItem('gm_olco_seen', JSON.stringify(sn)); } catch (e) {} }
+}
+function _olCoBadge(m, cls) {
+  var n = _olCoNew(m);
+  return n ? (cls ? '<span class="' + cls + '" style="background:#8a55e0" title="OLチェックアウトの新着">🎓' + n + '</span>'
+    : '<span title="OLチェックアウトの新着" style="font-size:9px;font-weight:800;color:#fff;background:#8a55e0;border-radius:6px;padding:1px 5px;white-space:nowrap">🎓' + n + '</span>') : '';
+}
+// 1件をくわしく（感想・気づき・タスク）
+function olCoOpen(id) {
+  var r = null;
+  Object.keys(_olCo.byNo).forEach(function(k) { _olCo.byNo[k].forEach(function(x) { if (x._id === id) r = x; }); });
+  if (!r) return;
+  var old = document.getElementById('olCoDlg'); if (old) old.remove();
+  var t = r.task || {}, md = function(d) { return d ? d.split('-').slice(1).map(Number).join('/') : ''; };
+  var box = document.createElement('div');
+  box.id = 'olCoDlg';
+  box.style.cssText = 'position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px';
+  box.innerHTML = '<div style="background:var(--surface,#16202b);color:var(--text,#fff);border-radius:16px;max-width:440px;width:100%;max-height:86vh;overflow:auto;padding:18px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.5)">'
+    + '<div style="font-size:11px;letter-spacing:.2em;color:#b996ff;font-weight:800">🎓 OLチェックアウト</div>'
+    + '<div style="font-size:17px;font-weight:800;margin:4px 0 2px">' + evEsc(r.name || '') + 'さん</div>'
+    + '<div style="font-size:12.5px;color:var(--text-dim)">' + md(_olCoYmd(r)) + '・A：' + evEsc(r.aName || '') + 'さん' + (r.special ? '・🃏 カード No.' + evEsc(String(r.serial || '')) : '') + '</div>'
+    + '<div style="margin-top:12px;font-size:11px;color:var(--text-dim);font-weight:700">感想</div><div style="white-space:pre-wrap;line-height:1.7">' + evEsc(r.impression || '') + '</div>'
+    + '<div style="margin-top:10px;font-size:11px;color:var(--text-dim);font-weight:700">気づき</div><div style="white-space:pre-wrap;line-height:1.7">' + evEsc(r.notice || '') + '</div>'
+    + (t.text ? '<div style="margin-top:10px;font-size:11px;color:var(--text-dim);font-weight:700">タスク</div><div>📌 ' + evEsc(t.text) + (t.date ? '（' + md(t.date) + '）' : '')
+      + ' <span style="font-size:11px;color:var(--text-dim)">' + (t.mode === 'todo' ? '本人のToDo' : t.mode === 'event' ? '本人の予定' : '記録のみ') + '</span></div>' : '')
+    + '<div style="text-align:right;margin-top:14px"><button class="me-add-btn" style="width:auto;margin:0;padding:8px 18px" onclick="document.getElementById(\'olCoDlg\').remove()">閉じる</button></div></div>';
+  box.addEventListener('click', function(e) { if (e.target === box) box.remove(); });
+  document.body.appendChild(box);
+}
 function _meActItems(m) {
   var mid = m.id, fd = (state.freshData && state.freshData[mid]) || {}, items = [];
   (state.events || []).forEach(function(e){
@@ -14639,6 +14746,7 @@ function _meActItems(m) {
   (m.traineeHistory || []).forEach(function(hh){
     if (hh.result === 'planned' && hh.date) items.push({ d: hh.date, kind: 'tr', h: hh });
   });
+  _olCoFor(m).forEach(function(r) { items.push({ d: _olCoYmd(r), kind: 'olco', r: r }); }); // v799: OLチェックアウト
   items.sort(function(a, b){ return (b.d || '').localeCompare(a.d || ''); });
   return items;
 }
@@ -14685,6 +14793,11 @@ function meRenderExtras(m) {
         + (pl ? '<span style="flex:none;background:var(--gold);color:#08121a;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">予定</span>' : '')
         + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(it.o.what || it.o.note || 'OL') + (it.o.asan ? ' <span style="color:var(--text-dim);font-size:11px">A:' + evEsc(it.o.asan) + '</span>' : '') + '</span>' + _otlBadge(_otlE(it), mid) + '</div>';
     }
+    if (it.kind === 'olco') { // v799: OLチェックアウト（Aさん・感想）
+      return '<div class="me-task" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="olCoOpen(\'' + evEsc(it.r._id) + '\')">' + dTag + '<span>🎓</span>'
+        + '<span style="flex:none;background:#8a55e0;color:#fff;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">チェックアウト</span>'
+        + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + evEsc(it.r.impression || '') + ' <span style="color:var(--text-dim);font-size:11px">A:' + evEsc(it.r.aName || '') + '</span></span></div>';
+    }
     if (it.kind === 'tr') {
       return '<div class="me-task" style="display:flex;align-items:center;gap:6px">' + dTag + '<span>🎓</span>'
         + '<span style="flex:none;background:var(--gold);color:#08121a;font-size:9.5px;font-weight:800;border-radius:7px;padding:1px 6px">予定</span>'
@@ -14700,6 +14813,7 @@ function meRenderExtras(m) {
       + '</div>';
   }).join('');
   tkBox.innerHTML = tkHtml;
+  _olCoMarkSeen(m); // v799: 開いたらOLチェックアウトの新着の印を消す
 }
 // ── 編集パネル：写真の選択/削除 ──
 var _pendingPhoto = null; // 新規追加時（IDが未確定）の一時保持
@@ -17944,7 +18058,7 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
   if (t !== 'OUT' && mapType === 'current' && typeof memberIdleDays === 'function') { var d9 = memberIdleDays(m); if (d9 >= 30) idle = '<span class="bd2" style="background:' + (d9 >= 60 ? 'var(--red)' : '#6b7280') + '">' + (d9 >= 60 ? '⚠' : '') + d9 + '日</span>'; }
   var bday = (typeof _bdayIn30 === 'function' && _bdayIn30(m) !== null) ? '<span class="bd2" style="background:#FF5D8F">' + icn('cake', 'width:11px;height:11px;vertical-align:-1px') + _bdayMD(m) + '</span>' : '';
   var rs = restartSuffix(m, true), foreign = !!m._foreign;
-  var l2 = idle + bday + (rs ? '<span class="bd2" style="background:#FB923C">' + rs + '</span>' : '')
+  var l2 = idle + bday + (mapType === 'current' ? _olCoBadge(m, 'bd2') : '') + (rs ? '<span class="bd2" style="background:#FB923C">' + rs + '</span>' : '')
     + (foreign ? '<span>' + icn('link', 'width:11px;height:11px') + evEsc(m._ownerName || '下位') + '</span>' : '')
     + (m.region ? '<span>📍' + evEsc(String(m.region).substring(0, 5)) + '</span>' : '')
     + (nKids ? '<span>フロント' + nKids + '人</span>' : '')
@@ -18609,6 +18723,7 @@ function ppTrDel(i) {
 // 活動：OL・予定・タスク・研修の予定を月ごとに（新しい順）
 function _ppActHtml(m) {
   var mid = m.id, all = _meActItems(m), fd = (state.freshData && state.freshData[mid]) || {};
+  _olCoMarkSeen(m); // v799: 活動を開いたらOLチェックアウトの新着の印を消す
   var listSt = (typeof freshNorm === 'function') ? freshNorm(fd['リスト']) : (fd['リスト'] || {});
   var grp = function(it) { return it.kind === 'task' ? 'task' : 'ol'; };
   var otlE = function(it) { return it.kind === 'ol' && it.o.gid ? _olEvFind(it.o.gid) : null; };
@@ -18639,6 +18754,7 @@ function _ppActRow(it, m, oe) {
     return row(pl ? ' pl' : '', 'openOlRecordModal(\'' + mid + '\',' + it.oi + ')', '#5AD7FF', icn('users'), evEsc(o.what || o.note || 'OL'),
       ['OL', _olKindOf(o) === 'group' ? '3〜7人' : '個別', o.asan ? 'A：' + evEsc(o.asan) : ''].filter(Boolean).join('・'), (oe && oe.outline ? _otlBadge(oe, mid) : '') + dt(pl ? '<small style="color:var(--gold)">予定</small>' : ''));
   }
+  if (it.kind === 'olco') { var r9 = it.r; return row('', 'olCoOpen(\'' + evEsc(r9._id) + '\')', '#8a55e0', '🎓', evEsc(r9.impression || ''), 'OLチェックアウト・A：' + evEsc(r9.aName || '') + (r9.special ? '・🃏' : '') + (r9.task && r9.task.text ? '・📌' + evEsc(r9.task.text) : ''), dt('')); } // v799
   if (it.kind === 'tr') return row(' pl', 'ppGo(\'tr\')', '#1FA9DA', icn('cap'), evEsc(it.h.status || '研修') + ' の予定', '研修' + (it.h.aSan ? '・A：' + evEsc(it.h.aSan) : ''), dt('<small style="color:var(--gold)">予定</small>'));
   var e = it.e, tk = it.kind === 'task';
   var ic = '<span onclick="event.stopPropagation();meToggleTask(\'' + e.id + '\',\'' + mid + '\');_ppRender()" title="' + (e.done ? '未完了に戻す' : '済みにする') + '">' + icn(e.done ? 'checksq' : (tk ? 'checksq' : 'calendar')) + '</span>';
@@ -37434,6 +37550,7 @@ function loginSuccess(user) {
     setTimeout(function() {
       checkSharedMaps();
       loadMergedConfig(); // 結合中の下位MAPを購読開始
+      try { _olCoStart(); } catch (eOl) {} // v799: OLチェックアウトの購読
     }, 1500);
   }
   // プロフィール必須項目ゲート（未入力なら強制入力）

@@ -611,6 +611,73 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 @media (prefers-reduced-motion: reduce){
   .mc-tilt.on .mc-float,.membercard.skin-reaperTcg .mc-pop::before,.mc-tilt.on .membercard.skin-tcg .mc-pop::before,.mc-tilt.on .membercard.skin-tcg .mc-art{animation:none !important;}
 }
+/* 🎓 OLチェックアウト（会員証のボタン・入力・カードGET!・コレクション） */
+.ol-box{margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;}
+.ol-btn{width:100%;padding:12px 14px;font-size:15px;font-weight:800;border-radius:12px;border:2px solid #8a55e0;background:var(--card);color:inherit;text-align:left;display:flex;flex-direction:column;gap:2px;}
+.ol-btn small{font-size:11.5px;font-weight:500;color:var(--sub);}
+.ol-btn.host{border-color:#d4af37;}
+.ol-col-h{display:flex;align-items:baseline;gap:8px;font-size:13.5px;font-weight:800;letter-spacing:.04em;margin:14px 0 6px;}
+.ol-col-h span{font-size:11.5px;color:var(--sub);font-weight:600;}
+.ol-grid{display:flex;flex-wrap:wrap;gap:12px;}
+.ol-mini{position:relative;padding:0;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:inherit;}
+.ol-slot{display:block;position:relative;overflow:hidden;border-radius:9px;}
+.ol-slot .mc-tilt,.ol-hdcard .mc-tilt,.ol-hq-card .mc-tilt{touch-action:auto;pointer-events:none;}
+.ol-cnt{position:absolute;top:-6px;right:-6px;z-index:5;background:#e2463c;color:#fff;font-style:normal;font-weight:900;font-size:12px;border-radius:99px;padding:2px 8px;box-shadow:0 0 0 2px var(--card);}
+.ol-mini small{font-size:11.5px;color:var(--sub);}
+.ol-hist{display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);font-size:13px;}
+.ol-hist b{font-family:"IBM Plex Mono",monospace;font-weight:600;}
+.ol-hist span{white-space:nowrap;}
+.ol-hist em{font-style:normal;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.ol-cam{position:relative;width:100%;aspect-ratio:1;background:#000;border-radius:12px;overflow:hidden;}
+.ol-cam video{width:100%;height:100%;object-fit:cover;display:block;}
+.ol-cam-f{position:absolute;inset:16%;border:3px solid rgba(255,255,255,.92);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35);}
+.ol-cam-msg{font-size:13px;text-align:center;margin:8px 0;}
+.ol-page{max-width:520px;margin:0 auto;padding:16px 16px 40px;}
+.ol-form{text-align:left;}
+.ol-form label{display:block;font-weight:800;font-size:13.5px;margin:12px 0 4px;}
+.ol-form label em{font-style:normal;font-size:10.5px;color:#fff;background:#e2463c;border-radius:4px;padding:1px 5px;margin-left:4px;}
+.ol-form label small{font-weight:500;color:var(--sub);}
+.ol-form textarea,.ol-form input[type=text],.ol-form input[type=date]{width:100%;box-sizing:border-box;}
+.ol-hd{display:flex;gap:12px;align-items:center;padding:12px;border-radius:14px;color:#fff;background:linear-gradient(135deg,#1b1328,#3b1a78);}
+.ol-hd.sp{background:radial-gradient(120% 120% at 20% 20%,#5b2bb0,#1b1328 70%);}
+.ol-hdicon{font-size:38px;line-height:1;}
+.ol-hdcard{flex:0 0 auto;position:relative;}
+.ol-hdt small{display:block;font-size:10px;letter-spacing:.24em;opacity:.75;}
+.ol-hdt b{display:block;font-size:17px;margin:2px 0;}
+.ol-hdt span{font-size:12.5px;opacity:.85;}
+.ol-task{margin-top:10px;padding:2px 12px 10px;border:1px dashed var(--line);border-radius:12px;}
+.ol-tkrow{margin-top:6px;}
+.ol-tkm{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;}
+.ol-form .ol-tkm label{font-weight:600;font-size:13px;margin:0;display:flex;align-items:center;gap:4px;}
+.ol-note{font-size:11.5px;color:var(--sub);margin:6px 0 0;}
+.ol-go{width:100%;margin-top:12px;padding:14px;font-size:17px;font-weight:900;}
+.ol-cancel{width:100%;margin-top:8px;}
+.ol-ok{text-align:center;padding:20px 8px;}
+.ol-ok-ic{width:64px;height:64px;border-radius:50%;background:var(--green);color:#fff;font-size:36px;line-height:64px;margin:0 auto 10px;}
+.ol-tocard{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;text-decoration:none;}
+.ol-load{text-align:center;color:var(--sub);margin-top:30vh;}
+.ol-get{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;overflow:hidden;
+  background:radial-gradient(circle at 50% 42%,rgba(122,58,214,.7),rgba(10,6,20,.95) 62%);animation:olFade .3s ease;}
+.ol-get-burst{position:absolute;inset:-30%;pointer-events:none;background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,230,150,.16) 0 6deg,transparent 6deg 18deg);
+  animation:olSpin 14s linear infinite,olFade 1s .8s both;}
+.ol-get-t{position:relative;font-size:30px;font-weight:900;letter-spacing:.06em;text-shadow:0 0 18px rgba(255,220,120,.9);animation:olPop .6s .9s both;}
+.ol-get-stage{position:relative;perspective:1000px;}
+.ol-get-card{position:relative;animation:olGetIn 1.2s cubic-bezier(.2,.9,.3,1.15) both;}
+.ol-get-sub{position:relative;text-align:center;font-size:14px;line-height:1.7;animation:olPop .5s 1.2s both;}
+.ol-get-sub b{color:#ffe08a;}
+.ol-get-btns{position:relative;display:flex;gap:10px;animation:olPop .5s 1.4s both;}
+.ol-get-btns button{padding:11px 18px;font-size:14.5px;}
+@keyframes olGetIn{0%{transform:translateY(-60vh) rotateY(720deg) scale(.3);opacity:0;}55%{opacity:1;}80%{transform:translateY(0) rotateY(-14deg) scale(1.06);}100%{transform:none;}}
+@keyframes olSpin{to{transform:rotate(360deg);}}
+@keyframes olPop{from{opacity:0;transform:scale(.8);}to{opacity:1;transform:none;}}
+@keyframes olFade{from{opacity:0;}to{opacity:1;}}
+@media (prefers-reduced-motion: reduce){ .ol-get,.ol-get *{animation:none !important;} }
+.ol-view-card,.ol-hq-card{position:relative;margin:0 auto 6px;}
+.ol-hq{text-align:center;}
+.ol-hq-qr{display:flex;justify-content:center;margin:10px 0;}
+.ol-hrow{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13px;line-height:1.6;}
+.ol-hrow small{display:inline-block;font-size:10.5px;color:var(--sub);margin-right:6px;}
+.ol-hrow-h{margin-bottom:2px;}
 /* 紙カード印刷 */
 #printArea{display:none;}
 @media print{
@@ -1009,6 +1076,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="dlrArea"></div>
     <div id="coArea"></div>
     <div id="hwArea"></div>
+    <div id="olArea"></div>
     <div id="onlineArea"></div>
     <div id="rsvpArea"></div>
     <div id="nextArea"></div>
@@ -1037,6 +1105,11 @@ body.practice .topbar{top:var(--pxh,36px);}
     </div>
     <p style="font-size:12.5px;color:var(--sub);margin-top:14px;line-height:1.8;">開いたら、ブラウザの「ホーム画面に追加」をしておくと次回すぐ使えます。<br>番号がわからない場合は受付にお問い合わせください。</p>
   </div>
+</div>
+
+<!-- 🎓 OLチェックアウト（#ol=キー・AさんのQRをスマホのカメラで読んだ時） -->
+<div id="vOl" class="hide">
+  <div class="ol-page" id="olBox"></div>
 </div>
 
 <!-- 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） -->
@@ -1161,7 +1234,7 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
   if(id === 'vApp') setTimeout(setTbh, 0);   // 固定ヘッダー位置の計測（表示後でないと高さが取れない）
@@ -1478,7 +1551,10 @@ $('actLogout').onclick = function(){ auth.signOut(); };
 /* ── スマホ会員証モード（#c=トークン で開くとログイン不要の会員証表示） ── */
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
 var gReceiveMode = !gCardToken && /#receive/.test(location.hash);
-var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
+// 🎓 OLチェックアウト: AさんのQR（…#ol=キー）をスマホのカメラで読むとこのページが開く（ログイン不要）
+var gOlKey = gCardToken ? null : (function(){ var m = /[#&]ol=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
+if(gOlKey) gReceiveMode = false;
+var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
 //   区別できなくなるのを防ぐ。iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
@@ -1487,7 +1563,7 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
 // ・それ以外＝受付システム本体（ログイン〜管理画面）: 受付管理（ベルアイコン）
 (function(){
   var sw = gTrainerMode ? { t: '研修受講カード', i: './icon-trainer-' }
-    : (!gCardToken && !gReceiveMode) ? { t: '受付管理', i: './icon-admin-' }
+    : (!gCardToken && !gReceiveMode && !gOlKey) ? { t: '受付管理', i: './icon-admin-' }
     : null;
   if(!sw) return;
   try{
@@ -1505,10 +1581,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v63';
+var APP_VER = 'v64';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v64', d: '2026/10/13', items: ['🎓 OLチェックアウト: アウトラインの後に、AさんのQRを読んで感想・気づき・タスクを送れるようになりました（会員証の「📷 OLチェックアウト」）', '🃏 特別デザインのAさんのOLでは、カードがコレクションに溜まります（通し番号つき）'] },
   { v: 'v63', d: '2026/10/13', items: ['🃏 レアカード風デザイン: 死神が枠から飛び出して見えるように（虹色の縁にかかる・影つき・傾けた時の浮き出しを強く）'] },
   { v: 'v62', d: '2026/10/13', items: ['📝 目標設定の宿題は、PGを受講済みにした時点で研修生の受講カードに出るようになりました（以前はPAの後）'] },
   { v: 'v61', d: '2026/10/13', items: ['お知らせ（更新履歴）の表示を一時停止しました'] },
@@ -2558,6 +2635,499 @@ function ckBindCardGesture(){
   tilt.addEventListener('pointerup', function(){ end(true); });
   tilt.addEventListener('pointercancel', function(){ end(false); });
 }
+/* ── 🎓 OLチェックアウト（アウトラインの後に、参加者がAさんのQRを読んで感想・気づき・タスクを送る） ──
+   olHosts/{key}: Aさん（key＝QRに入る公開キー。会員証トークンとは別物）。count＝これまでの人数（通し番号）
+   olCheckouts/{key_番号_YYYYMMDD}: アップラインのNAVIGATOR（活動タブ）・ユニオン管理者・Aさん本人が見る
+   cards/{トークン}/ol/{同じID}: 参加者のコレクション（特別仕様のAさんのカードが溜まる・通常のAさんはOL履歴）
+   同じAさんへは1日1回。タスクは参加者のNAVIGATOR（受付の番号と紐付いた人）のToDo・予定に入る */
+var OL_VER = 1;
+function olUrl(key){ return location.href.split('#')[0] + '#ol=' + key; }
+function olYmd(){ return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10).replace(/-/g, ''); }
+function olMd(ymd){ ymd = String(ymd || ''); return ymd.length === 8 ? (+ymd.slice(4, 6)) + '/' + (+ymd.slice(6)) : ''; }
+// Aさんのカードの見た目（コレクションに残す控え）。会員証トークンは入れない
+function olDesign(m){
+  var d = { no: String(m.no || ''), name: m.name || '', union: m.union || '', grade: m.grade || '', badge: m.badge || '', skin: m.skin || '' };
+  ['skinName', 'skinHp', 'skinRare', 'skinSerial', 'skinAbName', 'skinAbText', 'skinAtkEls', 'skinAtkName', 'skinAtkDmg', 'skinAtkText']
+    .forEach(function(k){ d[k] = m[k] || ''; });
+  return d;
+}
+function olSpecial(d){ return !!(d && CARD_SKIN_TCG[d.skin || '']); }
+// 通し番号＝そのAさんの何人目か。Aさんの「1/1000」の分母を使って「12/1000」と出す
+function olSerialText(d, serial){
+  var m = /\/\s*(\d+)/.exec((d && d.skinSerial) || '');
+  return serial ? (serial + (m ? '/' + m[1] : '')) : ((d && d.skinSerial) || '');
+}
+// 🃏 会員証と同じレアカードを、控え（design）から組み立てる（コレクション・Aさんの表示用。QRは付けない）
+function ckTcgBuild(d, serialText){
+  var card = $('memberCard').cloneNode(true);
+  var qr = card.querySelector('#mcQr'), qb = card.querySelector('#mcQrBtn');
+  if(qr) qr.parentNode.removeChild(qr);
+  if(qb) qb.parentNode.removeChild(qb);
+  card.removeAttribute('id');
+  [].forEach.call(card.querySelectorAll('[id]'), function(el){ el.removeAttribute('id'); });
+  card.className = 'membercard skin-' + (d.skin || '') + ' skin-tcg';
+  card.style.cssText = '';
+  var q = function(sel){ return card.querySelector(sel) || document.createElement('div'); };
+  q('.mc-name').textContent = d.skinName || d.name || '';
+  q('.mc-union').textContent = d.union || '';
+  q('.mc-no').textContent = 'No. ' + (d.no || '');
+  q('.mc-group').textContent = '';
+  q('.mc-grade').textContent = GRADE_STYLES[d.grade || ''] ? (GRADE_LABELS[d.grade] || d.grade) : '';
+  q('.mc-hp').innerHTML = d.skinHp ? '<small>HP</small>' + esc(d.skinHp) + '<i class="orb">💀</i>' : '';
+  var ser = serialText != null ? serialText : (d.skinSerial || '');
+  q('.mc-rare').innerHTML = (ser ? '<span class="ser">' + esc(ser) + '</span>' : '') + (d.skinRare ? '<span class="rr">' + esc(d.skinRare) + '</span>' : '');
+  q('.mc-ab').innerHTML = d.skinAbName ? '<span class="ab-tag">特性</span><span class="ab-nm">' + esc(d.skinAbName) + '</span>' : '';
+  q('.mc-abtx').textContent = d.skinAbText || '';
+  var els = String(d.skinAtkEls || '').split(',').map(ckElement).filter(Boolean).slice(0, 3);
+  q('.mc-atk').innerHTML = (els.length || d.skinAtkName || d.skinAtkDmg)
+    ? '<span class="el">' + els.map(function(e){ return '<i title="' + esc(e.n) + '" style="--e1:' + e.c[0] + ';--e2:' + e.c[1] + ';">' + e.i + '</i>'; }).join('') + '</span>'
+      + '<span class="at-nm">' + esc(d.skinAtkName || '') + '</span><span class="at-dmg">' + esc(d.skinAtkDmg || '') + '</span>' : '';
+  q('.mc-atktx').textContent = d.skinAtkText || '';
+  q('.mc-badge').innerHTML = ckBadgeHtml(d.badge || '');
+  var back = card.querySelector('.mc-back'), bimg = CARD_BACKS[d.union || ''];
+  if(back){
+    if(bimg){ back.style.setProperty('--back', "url('" + bimg + "')"); back.innerHTML = ''; }
+    else { back.style.removeProperty('--back'); back.innerHTML = '<b>' + esc(d.union || 'BASE CHECK-IN') + '</b>'; }
+  }
+  var wrap = document.createElement('div'), fl = document.createElement('div');
+  wrap.className = 'mc-tilt on olc-tilt'; fl.className = 'mc-float';
+  fl.appendChild(card); wrap.appendChild(fl);
+  return wrap;
+}
+function ckTcgFit(wrap){
+  var c = wrap.querySelector('.membercard');
+  if(!c) return;
+  ckFitLine(c.querySelector('.mc-name'), 20, 12);
+  ckFitLine(c.querySelector('.ab-nm'), 17, 10);
+  ckFitLine(c.querySelector('.at-nm'), 16, 9);
+}
+// 小さく表示（width=表示の幅px）。会員証と同じ幅（328px）で組んで縮小する
+function ckTcgMini(slot, d, serialText, width){
+  var w = ckTcgBuild(d, serialText), s = width / 328;
+  slot.innerHTML = '';
+  slot.appendChild(w);
+  w.style.width = '328px';
+  w.style.transformOrigin = '0 0';
+  w.style.transform = 'scale(' + s + ')';
+  ckTcgFit(w);
+  var h = (w.querySelector('.membercard') || w).offsetHeight || 500;
+  slot.style.width = width + 'px';
+  slot.style.height = Math.ceil(h * s) + 'px';
+  return w;
+}
+// 組み立てたカードの操作（会員証と同じ）: ドラッグで3Dに傾ける・タップで裏返す
+function ckTcgGesture(wrap){
+  var card = wrap.querySelector('.membercard'), st = null, moved = false;
+  wrap.style.touchAction = 'none';
+  wrap.addEventListener('pointerdown', function(e){
+    st = { x: e.clientX, y: e.clientY, id: e.pointerId }; moved = false;
+    try{ wrap.setPointerCapture(e.pointerId); }catch(x){}
+  });
+  wrap.addEventListener('pointermove', function(e){
+    if(!st || e.pointerId !== st.id) return;
+    var dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if(!moved && Math.abs(dx) + Math.abs(dy) < 8) return;
+    moved = true;
+    wrap.classList.add('drag');
+    var ry = Math.max(-40, Math.min(40, dx * 0.5)), rx = Math.max(-32, Math.min(32, -dy * 0.5));
+    wrap.style.transform = (wrap._base || '') + ' rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+    var sy = Math.sin(ry * Math.PI / 180), sx = Math.sin(rx * Math.PI / 180);
+    card.style.setProperty('--gx', (50 + ry * 1.6) + '%');
+    card.style.setProperty('--gy', (50 - rx * 1.6) + '%');
+    card.style.setProperty('--px', (80 * sy).toFixed(1) + 'px');
+    card.style.setProperty('--py', (-80 * sx).toFixed(1) + 'px');
+    card.style.setProperty('--ps', (1 + 0.1 * Math.min(1, Math.abs(sy) + Math.abs(sx))).toFixed(3));
+    card.style.setProperty('--bx', (50 - 60 * sy).toFixed(1) + '%');
+    card.style.setProperty('--by', (42 + 60 * sx).toFixed(1) + '%');
+  });
+  function end(tap){
+    if(!st) return;
+    st = null;
+    wrap.classList.remove('drag');
+    wrap.style.transform = wrap._base || '';
+    ['--px', '--py'].forEach(function(k){ card.style.setProperty(k, '0px'); });
+    card.style.setProperty('--ps', '1'); card.style.setProperty('--bx', '50%'); card.style.setProperty('--by', '42%');
+    if(!tap || moved) return;
+    if(card.classList.contains('flipped')){ card.classList.remove('flipped'); card.classList.add('unflip'); }
+    else { card.classList.remove('unflip'); card.classList.add('flipped'); }
+  }
+  wrap.addEventListener('pointerup', function(){ end(true); });
+  wrap.addEventListener('pointercancel', function(){ end(false); });
+}
+// 📷 カメラでAさんのQRを読む（会員証の「OLチェックアウト」から）。読み取りは同梱の jsQR を必要な時だけ読み込む
+function olLoadJsQr(cb){
+  if(window.jsQR) return cb(true);
+  var sc = document.createElement('script');
+  sc.src = 'jsqr.min.js';
+  sc.onload = function(){ cb(!!window.jsQR); };
+  sc.onerror = function(){ cb(false); };
+  document.head.appendChild(sc);
+}
+function olScan(onKey){
+  modal('<h2>📷 AさんのQRを読む</h2>'
+    + '<div class="ol-cam"><video id="olVid" playsinline muted autoplay></video><i class="ol-cam-f"></i></div>'
+    + '<p class="ol-cam-msg" id="olCamMsg">AさんのOLチェックアウト用QRを、枠の中に入れてください</p>'
+    + '<div class="btns"><button id="olCamClose">やめる</button></div>');
+  var stream = null, stop = false, cvs = document.createElement('canvas'), ctx = cvs.getContext('2d');
+  function msg(t){ var m = $('olCamMsg'); if(m) m.textContent = t; }
+  function end(){ stop = true; if(stream) stream.getTracks().forEach(function(t){ t.stop(); }); }
+  $('olCamClose').onclick = function(){ end(); closeModal(); };
+  var fail = function(){ msg('カメラを使えませんでした。設定でカメラを許可するか、スマホのカメラアプリでAさんのQRを読み取ってください。'); };
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ fail(); return; }
+  olLoadJsQr(function(ok){
+    if(!ok){ msg('読み取りの準備ができませんでした。電波の良いところでもう一度お試しください。'); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(function(s){
+      stream = s;
+      var v = $('olVid');
+      if(!v){ end(); return; }
+      v.srcObject = s;
+      try{ v.play(); }catch(e){}
+      (function tick(){
+        if(stop) return;
+        var vv = $('olVid');
+        if(!vv){ end(); return; }   // 画面を閉じたらカメラも止める
+        if(vv.readyState >= 2 && vv.videoWidth){
+          var sc = Math.min(1, 640 / Math.max(vv.videoWidth, vv.videoHeight));
+          cvs.width = (vv.videoWidth * sc) | 0; cvs.height = (vv.videoHeight * sc) | 0;
+          ctx.drawImage(vv, 0, 0, cvs.width, cvs.height);
+          var img = ctx.getImageData(0, 0, cvs.width, cvs.height);
+          var r = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+          if(r && r.data){
+            var mm = /[#&]ol=([A-Za-z0-9_-]+)/.exec(r.data);
+            if(mm){ end(); closeModal(); onKey(mm[1]); return; }
+            msg('これはOLチェックアウトのQRではありません。AさんのOLチェックアウト用QRを読んでください');
+          }
+        }
+        requestAnimationFrame(tick);
+      })();
+    }).catch(fail);
+  });
+}
+// 会員証から読んだ時: Aさんを確認してチェックアウト画面へ
+function olOpenFromCard(key, c){
+  db.collection('olHosts').doc(key).get().then(function(s){
+    var h = s.exists ? s.data() : null;
+    if(!h || !h.on){ toast('このQRは今は使えません。Aさんに確認してください'); return; }
+    if(String(h.no) === String(c.no)){ toast('自分のQRです。アウトラインを受けた人が読み取ってください'); return; }
+    olForm({ key: key, host: h, c: c, tok: gCardToken, after: function(){ renderOlArea(c); } });
+  }).catch(function(){ toast('読み込みに失敗しました。電波の良いところでもう一度お試しください'); });
+}
+// ✍️ チェックアウトの入力（感想・気づき＝必須、タスク＝任意）。p.el があればそこに、なければポップアップで
+function olForm(p){
+  var h = p.host, d = h.design || {}, sp = olSpecial(d);
+  var html = '<div class="ol-form">'
+    + '<div class="ol-hd' + (sp ? ' sp' : '') + '">' + (sp ? '<div class="ol-hdcard" id="olHdCard"></div>' : '<div class="ol-hdicon">🎓</div>')
+    + '<div class="ol-hdt"><small>OUTLINE CHECK-OUT</small><b>' + esc(h.name || '') + 'さんのアウトライン</b>'
+    + '<span>' + esc(p.c.name || '') + 'さん、お疲れさまでした！</span></div></div>'
+    + '<label for="olImp">感想 <em>必須</em></label><textarea id="olImp" rows="3" maxlength="1000" placeholder="アウトラインを受けた感想"></textarea>'
+    + '<label for="olNot">気づき <em>必須</em></label><textarea id="olNot" rows="3" maxlength="1000" placeholder="気づいたこと・学んだこと"></textarea>'
+    + '<div class="ol-task"><label for="olTk">タスク <small>（任意・次にやること）</small></label>'
+    + '<input type="text" id="olTk" maxlength="80" placeholder="例: 名刺を作る">'
+    + '<div class="ol-tkrow"><input type="date" id="olTkD"></div>'
+    + '<div class="ol-tkm">' + [['todo', '✅ ToDoに入れる'], ['event', '📅 予定に入れる'], ['none', '入れない（記録だけ）']].map(function(x, i){
+        return '<label><input type="radio" name="olTkM" value="' + x[0] + '"' + (i === 0 ? ' checked' : '') + '> ' + x[1] + '</label>';
+      }).join('') + '</div>'
+    + '<p class="ol-note">ToDo・予定は、あなたのNAVIGATORに入ります（NAVIGATORを使っている人）。</p></div>'
+    + '<p class="mc-err" id="olErr"></p>'
+    + '<button class="primary ol-go" id="olGo">チェックアウト</button>'
+    + (p.el ? '' : '<button class="ol-cancel" id="olCancel">やめる</button>')
+    + '</div>';
+  if(p.el) p.el.innerHTML = html; else modal(html);
+  if(sp) ckTcgMini($('olHdCard'), d, null, 96);
+  if($('olCancel')) $('olCancel').onclick = closeModal;
+  function err(t){ $('olErr').textContent = t; }
+  $('olGo').onclick = function(){
+    var imp = $('olImp').value.trim(), not = $('olNot').value.trim(), tk = $('olTk').value.trim(), tkd = $('olTkD').value;
+    var mode = (document.querySelector('input[name="olTkM"]:checked') || {}).value || 'none';
+    err('');
+    if(!imp){ err('感想を入力してください'); return; }
+    if(!not){ err('気づきを入力してください'); return; }
+    if(tk && mode !== 'none' && !tkd){ err('ToDo・予定に入れるときは、タスクの日付を入れてください'); return; }
+    var task = tk ? { text: tk, date: tkd || '', mode: mode } : {};
+    $('olGo').disabled = true;
+    olSubmit(p, { impression: imp, notice: not, task: task }).then(function(rec){
+      olDone(p, rec);
+    }).catch(function(e){
+      $('olGo').disabled = false;
+      if(e && e.dup) err('今日は' + (h.name || 'Aさん') + 'さんのチェックアウトは済んでいます（同じAさんへは1日1回）');
+      else if(e && e.off) err('このQRは今は使えません。Aさんに確認してください');
+      else err(permMsg(e, '送信できませんでした。電波の良いところでもう一度お試しください'));
+    });
+  };
+}
+// 送信: Aさんの人数を1つ進めて（通し番号）、チェックアウトとコレクションの控えを同時に書く
+function olSubmit(p, f){
+  var c = p.c, key = p.key, ymd = olYmd(), id = key + '_' + c.no + '_' + ymd;
+  var mine = db.collection('cards').doc(p.tok).collection('ol').doc(id);
+  return mine.get().then(function(s){
+    if(s.exists) return Promise.reject({ dup: true });
+    return db.runTransaction(function(tx){
+      var hRef = db.collection('olHosts').doc(key);
+      return tx.get(hRef).then(function(hs){
+        var h = hs.exists ? hs.data() : null;
+        if(!h || !h.on) return Promise.reject({ off: true });
+        var serial = (h.count || 0) + 1, des = h.design || {};
+        var rec = { key: key, no: String(c.no), name: c.name || '', union: c.union || '', group: c.group || '',
+          aNo: String(h.no || ''), aName: h.name || '', aUnion: h.union || '', special: olSpecial(des), serial: serial, design: des,
+          impression: f.impression, notice: f.notice, task: f.task, ymd: ymd,
+          atMs: Date.now(), atLocal: new Date().toLocaleString('ja-JP'), ver: OL_VER };
+        tx.set(db.collection('olCheckouts').doc(id), rec);
+        tx.set(mine, rec);
+        tx.update(hRef, { count: serial, lastId: id });
+        return rec;
+      });
+    });
+  });
+}
+// 送信後: 特別仕様のAさんなら「カードGET!」、通常のAさんは完了の表示
+function olDone(p, rec){
+  var after = function(){ if(p.after) p.after(); };
+  if(rec.special){ olGetAnim(rec, after, p.el ? p.tok : ''); return; }
+  var html = '<div class="ol-ok"><div class="ol-ok-ic">✓</div><h2>チェックアウトしました</h2>'
+    + '<p>' + esc(rec.aName) + 'さんのアウトライン、お疲れさまでした！<br>感想と気づきはアップラインに届きました。</p>'
+    + (rec.task && rec.task.text ? '<p class="ol-note">タスク: ' + esc(rec.task.text) + (rec.task.date ? '（' + esc(rec.task.date.slice(5).replace('-', '/')) + '）' : '') + '</p>' : '')
+    + (p.el ? '<a class="ol-tocard" href="#c=' + esc(p.tok) + '" id="olToCard">会員証を開く</a>' : '<div class="btns"><button class="primary" id="olOkClose">閉じる</button></div>')
+    + '</div>';
+  if(p.el){ p.el.innerHTML = html; olBindToCard(p.tok); }
+  else { modal(html); $('olOkClose').onclick = closeModal; after(); }
+}
+function olBindToCard(tok){
+  var a = $('olToCard');
+  if(a) a.onclick = function(e){ e.preventDefault(); location.replace(location.href.split('#')[0] + '#c=' + tok); location.reload(); };
+}
+// 🃏 カードGET!（特別仕様のAさんのカードがコレクションに入る演出）
+function olGetAnim(rec, after, tok){
+  var ov = document.createElement('div');
+  ov.className = 'ol-get';
+  ov.innerHTML = '<div class="ol-get-burst"></div>'
+    + '<div class="ol-get-t">🃏 カードGET!</div>'
+    + '<div class="ol-get-stage"><div class="ol-get-card" id="olGetCard"></div></div>'
+    + '<div class="ol-get-sub"><b>' + esc(rec.aName) + '</b>さんのカード<br>No.<b>' + esc(olSerialText(rec.design, rec.serial)) + '</b>　がコレクションに追加されました</div>'
+    + '<div class="ol-get-btns">' + (tok ? '<button class="primary" id="olGetCol">コレクションを見る</button>' : '<button class="primary" id="olGetCol">コレクションを見る</button>')
+    + '<button id="olGetClose">閉じる</button></div>';
+  document.body.appendChild(ov);
+  closeModal();
+  var slot = $('olGetCard'), w = ckTcgMini(slot, rec.design, olSerialText(rec.design, rec.serial), Math.min(300, window.innerWidth - 60));
+  function close(){ if(ov.parentNode) ov.parentNode.removeChild(ov); after(); }
+  $('olGetClose').onclick = function(){ close(); if(tok){ var b = $('olBox'); if(b) b.innerHTML = '<div class="ol-ok"><div class="ol-ok-ic">✓</div><h2>チェックアウトしました</h2><p>' + esc(rec.aName) + 'さんのカードは、会員証のコレクションに入っています。</p><a class="ol-tocard" href="#c=' + esc(tok) + '" id="olToCard">会員証を開く</a></div>'; olBindToCard(tok); } };
+  $('olGetCol').onclick = function(){
+    if(tok){ location.replace(location.href.split('#')[0] + '#c=' + tok); location.reload(); return; }
+    close();
+    var a = $('olArea'); if(a) a.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  if(w) setTimeout(function(){ ckTcgGesture(w); }, 1300);
+}
+// 会員証の「🎓 OLチェックアウト」まわり（Aさん用QR・読み取りボタン・コレクション・OL履歴）
+function renderOlArea(c){
+  var el = $('olArea');
+  if(!el) return;
+  if(!gCardToken || !c || c.active === false || c.rcptOnly){ el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="ol-box">'
+    + (c.olKey ? '<button class="ol-btn host" id="olHostQr">🎓 OLチェックアウトQRを出す<small>アウトラインの後に、参加者に読み取ってもらう</small></button>' : '')
+    + '<button class="ol-btn" id="olScanBtn">📷 OLチェックアウト<small>アウトラインを受けたら、AさんのQRを読む</small></button>'
+    + '<div id="olCol"></div></div>';
+  if($('olHostQr')) $('olHostQr').onclick = function(){ olHostQrModal(c); };
+  $('olScanBtn').onclick = function(){ olScan(function(key){ olOpenFromCard(key, c); }); };
+  db.collection('cards').doc(gCardToken).collection('ol').get().then(function(qs){
+    var L = [];
+    qs.forEach(function(d){ L.push(d.data()); });
+    olRenderCol(L);
+  }).catch(function(){});
+}
+function olRenderCol(L){
+  var box = $('olCol');
+  if(!box) return;
+  L.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
+  var groups = [], gi = {};
+  L.forEach(function(r){
+    if(!r.special) return;
+    var k = r.aNo || r.key;
+    if(!(k in gi)){ gi[k] = groups.length; groups.push({ d: r.design || {}, name: r.aName, list: [] }); }
+    groups[gi[k]].list.push(r);
+  });
+  var n = groups.reduce(function(s, g){ return s + g.list.length; }, 0);
+  var h = '';
+  if(groups.length){
+    h += '<div class="ol-col-h">🃏 コレクション<span>' + groups.length + '種類・' + n + '枚</span></div><div class="ol-grid">'
+      + groups.map(function(g, i){
+          return '<button class="ol-mini" data-gi="' + i + '"><span class="ol-slot" id="olSlot' + i + '"></span>'
+            + (g.list.length > 1 ? '<i class="ol-cnt">×' + g.list.length + '</i>' : '') + '<small>' + esc(g.name || '') + '</small></button>';
+        }).join('') + '</div>';
+  }
+  var hist = L.filter(function(r){ return !r.special; });
+  if(hist.length){
+    h += '<div class="ol-col-h">🎓 OL履歴<span>' + hist.length + '回</span></div>'
+      + hist.slice(0, 20).map(function(r){
+          return '<div class="ol-hist"><b>' + esc(olMd(r.ymd)) + '</b><span>' + esc(r.aName || '') + 'さん</span><em>' + esc(r.impression || '') + '</em></div>';
+        }).join('');
+  }
+  box.innerHTML = h;
+  groups.forEach(function(g, i){ ckTcgMini($('olSlot' + i), g.d, olSerialText(g.d, g.list[0].serial), 140); });
+  [].forEach.call(box.querySelectorAll('[data-gi]'), function(b){
+    b.onclick = function(){ olViewer(groups[+b.getAttribute('data-gi')]); };
+  });
+}
+// 集めたカードを大きく見る（傾ける・裏返す）。受けた日と通し番号の一覧つき
+function olViewer(g){
+  modal('<div class="ol-view"><div class="ol-view-card" id="olViewCard"></div>'
+    + '<p class="ol-note" style="text-align:center;">ドラッグで傾く・タップで裏返る</p>'
+    + '<div class="ol-col-h">' + esc(g.name || '') + 'さんのアウトライン<span>' + g.list.length + '回</span></div>'
+    + g.list.map(function(r){ return '<div class="ol-hist"><b>' + esc(olMd(r.ymd)) + '</b><span>No.' + esc(olSerialText(r.design, r.serial)) + '</span><em>' + esc(r.impression || '') + '</em></div>'; }).join('')
+    + '<div class="btns"><button id="olViewClose">閉じる</button></div></div>');
+  var w = ckTcgMini($('olViewCard'), g.d, olSerialText(g.d, g.list[0].serial), Math.min(300, window.innerWidth - 70));
+  w._base = w.style.transform;
+  ckTcgGesture(w);
+  $('olViewClose').onclick = closeModal;
+}
+// Aさん: 参加者に読んでもらうQR（大きく）。特別仕様のAさんはカードも一緒に
+function olHostQrModal(c){
+  db.collection('olHosts').doc(c.olKey).get().then(function(s){
+    var h = s.exists ? s.data() : null;
+    if(!h || !h.on){ toast('OLチェックアウトは今は止まっています（管理者に確認してください）'); return; }
+    var sp = olSpecial(h.design);
+    modal('<div class="ol-hq">' + (sp ? '<div class="ol-hq-card" id="olHqCard"></div>' : '')
+      + '<h2>🎓 ' + esc(h.name || '') + 'さんのOLチェックアウト</h2>'
+      + '<div class="ol-hq-qr" id="olHqQr"></div>'
+      + '<p>アウトラインを受けた人は、自分の会員証の<b>「📷 OLチェックアウト」</b>か、スマホのカメラでこのQRを読み取ってください。</p>'
+      + '<p class="ol-note">これまで <b>' + (h.count || 0) + '</b> 人がチェックアウトしました</p>'
+      + '<div class="btns"><button id="olHqClose">閉じる</button></div></div>');
+    if(sp) ckTcgMini($('olHqCard'), h.design, null, 110);
+    makeQr($('olHqQr'), olUrl(c.olKey), 230);
+    $('olHqClose').onclick = closeModal;
+  }).catch(function(){ toast('読み込みに失敗しました。電波の良いところでもう一度お試しください'); });
+}
+// 📱 カメラでQRを読んだ時のページ（#ol=キー）: このスマホで開いたことのある会員証を使う。無ければ番号＋姓で確認
+function olStart(){
+  showView('vOl');
+  var box = $('olBox');
+  box.innerHTML = '<p class="ol-load">読み込み中…</p>';
+  db.collection('olHosts').doc(gOlKey).get().then(function(s){
+    var h = s.exists ? s.data() : null;
+    if(!h || !h.on){
+      box.innerHTML = '<div class="gate"><h1>🎓 OLチェックアウト</h1><p class="s">このQRは今は使えません。Aさんに確認してください。</p></div>';
+      return;
+    }
+    var me = '';
+    try{ me = localStorage.getItem('bci_me') || ''; }catch(e){}
+    var ask = function(){ olAskWho(h, box); };
+    if(!me){ ask(); return; }
+    db.collection('cards').doc(me).get().then(function(cs){
+      var c = cs.exists ? cs.data() : null;
+      if(c && !c.rcptOnly && c.active !== false) olFormPage(box, h, c, me); else ask();
+    }).catch(ask);
+  }).catch(function(){
+    box.innerHTML = '<div class="gate"><h1>🎓 OLチェックアウト</h1><p class="s">読み込みに失敗しました。電波の良いところで開き直してください。</p></div>';
+  });
+}
+function olAskWho(h, box){
+  box.innerHTML = '<div class="gate"><h1>🎓 OLチェックアウト</h1>'
+    + '<p class="s"><b>' + esc(h.name || '') + 'さん</b>のアウトライン。まず、あなたの会員番号とお名前（姓）を入れてください。</p>'
+    + '<label for="olNo">会員番号</label><input type="text" id="olNo" autocapitalize="characters" autocorrect="off" autocomplete="off" placeholder="例: RV0012 / 412211" style="text-align:center;font-size:20px;letter-spacing:.12em;">'
+    + '<label for="olNm">お名前（姓だけでOK）</label><input type="text" id="olNm" autocorrect="off" autocomplete="family-name" placeholder="例: 山田" style="text-align:center;font-size:18px;">'
+    + '<button class="primary" id="olWho" style="width:100%;margin-top:12px;padding:13px;font-size:16px;">次へ</button>'
+    + '<p class="mc-err" id="olWhoErr"></p>'
+    + '<p class="ol-note">このスマホなら次回から入力は不要です。会員証の「📷 OLチェックアウト」から読むと、入力なしで進めます。</p></div>';
+  $('olWho').onclick = function(){
+    var no = ckNormNo($('olNo').value), nm = ckClaimNorm($('olNm').value);
+    $('olWhoErr').textContent = '';
+    if(!no){ $('olWhoErr').textContent = '会員番号を入力してください'; return; }
+    if(!nm){ $('olWhoErr').textContent = 'お名前（姓）を入力してください'; return; }
+    $('olWho').disabled = true;
+    var miss = function(){
+      $('olWho').disabled = false;
+      $('olWhoErr').textContent = '番号とお名前が一致する会員証が見つかりません。番号と、名簿に登録されている漢字のお名前を確認してください。';
+    };
+    ckFindCardToken(no, nm, function(t){
+      db.collection('cards').doc(t).get().then(function(cs){
+        var c = cs.exists ? cs.data() : null;
+        if(!c || c.rcptOnly || c.active === false){ miss(); return; }
+        try{ localStorage.setItem('bci_me', t); }catch(e){}
+        olFormPage(box, h, c, t);
+      }).catch(miss);
+    }, miss);
+  };
+}
+function olFormPage(box, h, c, tok){
+  if(String(h.no) === String(c.no)){
+    box.innerHTML = '<div class="gate"><h1>🎓 OLチェックアウト</h1><p class="s">これはあなた自身のQRです。アウトラインを受けた人が読み取ってください。</p></div>';
+    return;
+  }
+  box.innerHTML = '<div class="ol-wrap" id="olFormHost"></div>';
+  olForm({ key: gOlKey, host: h, c: c, tok: tok, el: $('olFormHost') });
+}
+// 会員証の再発行: コレクションを新しい会員証へ写す
+function olMoveToken(oldT, newT){
+  if(!oldT || !newT || oldT === newT) return Promise.resolve();
+  return db.collection('cards').doc(oldT).collection('ol').get().then(function(qs){
+    var ps = [];
+    qs.forEach(function(d){ ps.push(db.collection('cards').doc(newT).collection('ol').doc(d.id).set(d.data())); });
+    return Promise.all(ps);
+  }).catch(function(){});
+}
+// 🛠 管理（名簿の会員証画面）: Aさんにする／止める・OL履歴
+function olHostSet(m, on){
+  var key = m.olKey || randToken().slice(0, 20);
+  var batch = db.batch(), ref = db.collection('olHosts').doc(key);
+  if(!m.olKey){
+    batch.set(ref, { no: String(m.no), name: m.name || '', union: m.union || gRosterUnion, on: true, count: 0, lastId: '', design: olDesign(m) });
+    batch.set(db.collection('checkinMembers').doc(m.no), { olKey: key }, { merge: true });
+    if(m.cardToken) batch.set(db.collection('cards').doc(m.cardToken), { olKey: key }, { merge: true });
+  } else {
+    batch.set(ref, { on: !!on, name: m.name || '', design: olDesign(m) }, { merge: true });
+  }
+  return batch.commit().then(function(){ m.olKey = key; });
+}
+function olSyncDesign(m){
+  if(!m.olKey) return;
+  db.collection('olHosts').doc(m.olKey).set({ name: m.name || '', design: olDesign(m) }, { merge: true }).catch(function(){});
+}
+function olAdminBox(m){
+  var el = $('cmOl');
+  if(!el) return;
+  var paint = function(h){
+    el.innerHTML = (h && h.on
+        ? '<p style="font-size:13px;margin:4px 0;">✅ 受け付け中（これまで <b>' + (h.count || 0) + '</b> 人）。本人の会員証に「🎓 OLチェックアウトQRを出す」が出ます。</p>'
+          + '<div class="btns" style="justify-content:flex-start;"><button id="cmOlOff">止める</button><button id="cmOlHist">🎓 OL履歴</button></div>'
+        : '<p style="font-size:12.5px;color:var(--sub);margin:4px 0;">オンにすると、この人の会員証に「OLチェックアウト用のQR」が出ます。アウトラインを受けた人が読み取って、感想・気づき・タスクを送ります（アップラインのNAVIGATORの活動タブに届きます）。'
+          + (olSpecial(olDesign(m)) ? '<br>特別デザインのカードなので、受けた人のコレクションにカードが溜まります。' : '') + '</p>'
+          + '<div class="btns" style="justify-content:flex-start;"><button class="primary" id="cmOlOn">受け付ける</button><button id="cmOlHist">🎓 OL履歴</button></div>');
+    if($('cmOlOn')) $('cmOlOn').onclick = function(){
+      this.disabled = true;
+      olHostSet(m, true).then(function(){ toast('OLチェックアウトを受け付けます（本人が会員証を開き直すと反映）'); olAdminBox(m); })
+        .catch(function(e){ toast(permMsg(e, '設定できませんでした（オーナー・ユニオン管理者のみ）')); olAdminBox(m); });
+    };
+    if($('cmOlOff')) $('cmOlOff').onclick = function(){
+      this.disabled = true;
+      olHostSet(m, false).then(function(){ toast('OLチェックアウトを止めました'); olAdminBox(m); })
+        .catch(function(e){ toast(permMsg(e, '設定できませんでした')); olAdminBox(m); });
+    };
+    $('cmOlHist').onclick = function(){ olHistModal(m); };
+  };
+  if(!m.olKey){ paint(null); return; }
+  db.collection('olHosts').doc(m.olKey).get().then(function(s){ paint(s.exists ? s.data() : null); }).catch(function(){ paint(null); });
+}
+function olHistModal(m){
+  var col = db.collection('olCheckouts');
+  var q1 = isOwner() ? col.where('no', '==', String(m.no)) : col.where('union', '==', m.union).where('no', '==', String(m.no));
+  var q2 = isOwner() ? col.where('aNo', '==', String(m.no)) : col.where('union', '==', m.union).where('aNo', '==', String(m.no));
+  Promise.all([q1.get(), q2.get()]).then(function(rs){
+    var got = [], gave = [];
+    rs[0].forEach(function(d){ got.push(d.data()); });
+    rs[1].forEach(function(d){ gave.push(d.data()); });
+    var by = function(a, b){ return (b.atMs || 0) - (a.atMs || 0); };
+    got.sort(by); gave.sort(by);
+    var row = function(r, who){
+      var t = r.task && r.task.text ? '<div class="ol-hrow-t">📌 ' + esc(r.task.text) + (r.task.date ? '（' + esc(r.task.date.slice(5).replace('-', '/')) + '）' : '') + '</div>' : '';
+      return '<div class="ol-hrow"><div class="ol-hrow-h"><b>' + esc(olMd(r.ymd)) + '</b> ' + esc(who) + (r.special ? ' <span class="pill">🃏 No.' + esc(olSerialText(r.design, r.serial)) + '</span>' : '') + '</div>'
+        + '<div><small>感想</small>' + esc(r.impression || '') + '</div><div><small>気づき</small>' + esc(r.notice || '') + '</div>' + t + '</div>';
+    };
+    modal('<h2>🎓 OL履歴 — ' + esc(m.name || '') + '</h2>'
+      + '<label>受けたアウトライン（' + got.length + '）</label>' + (got.length ? got.map(function(r){ return row(r, (r.aName || '') + 'さんのOL'); }).join('') : '<p style="font-size:13px;color:var(--sub);">まだありません</p>')
+      + '<label style="margin-top:12px;">したアウトライン（' + gave.length + '）</label>' + (gave.length ? gave.map(function(r){ return row(r, (r.name || '') + 'さん'); }).join('') : '<p style="font-size:13px;color:var(--sub);">まだありません</p>')
+      + '<div class="btns"><button id="olHmBack">戻る</button></div>', true);
+    $('olHmBack').onclick = function(){ closeModal(); cardModal(m); };
+  }).catch(function(e){ toast(permMsg(e, 'OL履歴を読み込めませんでした')); });
+}
 function showCardView(token){
   showView('vCard');
   var cached = null;
@@ -2579,6 +3149,8 @@ function showCardView(token){
       renderTrainee(c);
       renderCoSheetEntry(c);
       renderGoalHw(c);
+      renderOlArea(c);
+      try{ localStorage.setItem('bci_me', token); }catch(e){}   // 🎓 OLチェックアウト（カメラで読んだ時）に使う「このスマホの会員証」
       if(c.active === false){
         // ⛔ 無効メンバー: 先のハウディの予定・受付系をすべて非表示。
         // 領収書の控え（下のrenderReceipts）と受講履歴はそのまま見られる
@@ -2597,7 +3169,7 @@ function showCardView(token){
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '', trainee: !!c.trainee, skin: c.skin || '',
         badge: c.badge || '', skinName: c.skinName || '', skinHp: c.skinHp || '', skinRare: c.skinRare || '', skinSerial: c.skinSerial || '',
-        skinAbName: c.skinAbName || '', skinAbText: c.skinAbText || '', skinAtkEls: c.skinAtkEls || '', skinAtkName: c.skinAtkName || '', skinAtkDmg: c.skinAtkDmg || '', skinAtkText: c.skinAtkText || '' })); }catch(e){}
+        skinAbName: c.skinAbName || '', skinAbText: c.skinAbText || '', skinAtkEls: c.skinAtkEls || '', skinAtkName: c.skinAtkName || '', skinAtkDmg: c.skinAtkDmg || '', skinAtkText: c.skinAtkText || '', olKey: c.olKey || '' })); }catch(e){}
       // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
       // ホーム画面ショートカットから開いた旧トークンのページでは、QRを出さず案内する
       // （旧QRを受付でスキャンすると「無効な会員証」になり続けるため、その入口で止める）
@@ -3698,44 +4270,50 @@ $('mcHelp').onclick = function(){
 if(gCardToken){ showCardView(gCardToken); }
 
 /* 共通受け取りリンク: 会員番号 → 自分の会員証（cardClaims/{番号} から引く） */
+// 会員番号の入力を正規化: 全角→半角・大文字化・空白等を除去。旧表記「REVE 12」→ RV0012、「RX12」→ RX0012（英字＋3桁以下は4桁に）
+function ckNormNo(raw){
+  var no = String(raw || '')
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  var m = no.match(/^(?:REVE|RV)(\d{1,4})$/), m2 = no.match(/^([A-Z]{2,4})(\d{1,3})$/);
+  if(m) no = 'RV' + ('0000' + m[1]).slice(-4);
+  else if(m2) no = m2[1] + ('0000' + m2[2]).slice(-4);
+  return no;
+}
+// 番号＋お名前（正規化済み）→ 会員証トークン（受け取りキー cardKeys。無い会員は番号→会員証でお名前を照合）
+function ckFindCardToken(no, nm, ok, miss){
+  function legacy(){
+    return db.collection('cardClaims').doc(no).get().then(function(cl){
+      var t = cl.exists && cl.data().t;
+      if(!t){ miss(); return; }
+      return db.collection('cards').doc(t).get().then(function(c){
+        if(c.exists && ckClaimNames(c.data().name).indexOf(nm) >= 0) ok(t); else miss();
+      });
+    }).catch(function(){ miss(); });
+  }
+  db.collection('cardKeys').doc(ckClaimId(no, nm)).get().then(function(sn){
+    if(sn.exists && sn.data().t) ok(sn.data().t); else legacy();
+  }, function(){ legacy(); });
+}
+if(gOlKey) olStart();
 if(gReceiveMode){
   showView('vReceive');
   var rvOpen = function(){
-    // 番号: 全角→半角・大文字化・空白等を除去。旧表記「REVE 12」→ RV0012、「RX12」→ RX0012（英字＋3桁以下は4桁に）
-    var no = $('rvNo').value
-      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '');
-    var m = no.match(/^(?:REVE|RV)(\d{1,4})$/), m2 = no.match(/^([A-Z]{2,4})(\d{1,3})$/);
-    if(m) no = 'RV' + ('0000' + m[1]).slice(-4);
-    else if(m2) no = m2[1] + ('0000' + m2[2]).slice(-4);
+    var no = ckNormNo($('rvNo').value);
     var nm = ckClaimNorm($('rvName').value);
     $('rvErr').textContent = '';
     if(!no){ $('rvErr').textContent = '会員番号を入力してください'; return; }
     if(!nm){ $('rvErr').textContent = 'お名前（姓）を入力してください'; return; }
     $('rvGo').disabled = true;
-    function show(t){
+    ckFindCardToken(no, nm, function(t){
       gCardToken = t;
       try{ history.replaceState(null, '', location.href.split('#')[0] + '#c=' + gCardToken); }catch(e){}
       showCardView(gCardToken);
-    }
-    function miss(){
+    }, function(){
       $('rvGo').disabled = false;
       $('rvErr').textContent = '番号とお名前が一致する会員証が見つかりません。番号と、名簿に登録されている漢字のお名前を確認するか、ユニオンの管理者にお問い合わせください。';
-    }
-    // 移行中の保険: 受け取りキーがまだ無い会員は、番号→会員証を引いてお名前を照合（DBルール反映後は未ログインでは使えない）
-    function legacy(){
-      return db.collection('cardClaims').doc(no).get().then(function(cl){
-        var t = cl.exists && cl.data().t;
-        if(!t){ miss(); return; }
-        return db.collection('cards').doc(t).get().then(function(c){
-          if(c.exists && ckClaimNames(c.data().name).indexOf(nm) >= 0) show(t); else miss();
-        });
-      }).catch(function(){ miss(); });
-    }
-    db.collection('cardKeys').doc(ckClaimId(no, nm)).get().then(function(sn){
-      if(sn.exists && sn.data().t) show(sn.data().t); else legacy();
-    }, function(){ legacy(); });
+    });
   };
   $('rvName').addEventListener('keydown', function(e){ if(e.key === 'Enter') rvOpen(); });
   $('rvGo').onclick = rvOpen;
@@ -3743,7 +4321,7 @@ if(gReceiveMode){
 }
 
 auth.onAuthStateChanged(function(u){
-  if(gCardToken || gReceiveMode) return;   // 会員証・受け取りモード中は通常画面に切り替えない
+  if(gCardToken || gReceiveMode || gOlKey) return;   // 会員証・受け取り・OLチェックアウト中は通常画面に切り替えない
   gUser = u;
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
@@ -4817,7 +5395,7 @@ $('btnGradeSel').onclick = function(){
           grade: grade,
           trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
           badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
-          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
           createdAt: FV.serverTimestamp()
         });
       }
@@ -5159,7 +5737,7 @@ function refreshCardDoc(token, m){
       grade: m.grade || '',
       trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
           badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
-          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
       active: !ckMemberOff(m),   // 無効の間は本人のカードに先のハウディの予定を出さない
       createdAt: FV.serverTimestamp()
     });
@@ -5182,7 +5760,7 @@ function issueCard(m, cb){
     grade: m.grade || '',
     trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
           badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
-          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
     createdAt: FV.serverTimestamp()
   });
   batch.set(db.collection('checkinMembers').doc(m.no), {
@@ -5194,6 +5772,7 @@ function issueCard(m, cb){
   return batch.commit().then(function(){
     m.cardToken = token; m.cardSig = token.slice(0, 6); m.claimName = m.name || '';
     hwMoveToken(oldToken, token);   // 📝 目標設定の宿題も新しい会員証へ
+    olMoveToken(oldToken, token);   // 🃏 OLチェックアウトのコレクションも新しい会員証へ
     if(cb) cb(token);
   }).catch(function(e){ toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）')); });
 }
@@ -5269,8 +5848,14 @@ function cardModal(m){
       + '<div class="btns" style="justify-content:flex-start;"><button id="cmTcgSave">表示内容を保存</button></div></div>'
       + '</div>';
   }
+  if(isOwner() || canEditUnion(m.union)){
+    // 🎓 OLチェックアウト（オーナー・ユニオン管理者）: この人をアウトラインをする「Aさん」にする
+    body += '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:6px;">'
+      + '<label>🎓 OLチェックアウト（アウトライン後の感想・気づき）</label><div id="cmOl"><p style="font-size:12px;color:var(--sub);">読み込み中…</p></div></div>';
+  }
   modal('<h2>スマホ会員証 — ' + esc(m.name || '') + '</h2>' + body);
   $('cmClose').onclick = closeModal;
+  olAdminBox(m);
   // 会員証の見た目に関する項目を、名簿と発行済みの会員証の両方へ保存する（未発行なら名簿だけ。発行時に引き継ぐ）
   function saveDeco(fields, ok, el){
     var batch = db.batch(), w = {};
@@ -5281,6 +5866,7 @@ function cardModal(m){
     batch.commit().then(function(){
       Object.keys(fields).forEach(function(k){ if(fields[k]) m[k] = fields[k]; else delete m[k]; });
       if(el) el.disabled = false;
+      olSyncDesign(m);   // 🎓 Aさんのカードの見た目をOLチェックアウトにも反映
       toast(ok);
     }).catch(function(e){ if(el) el.disabled = false; toast(permMsg(e, '変更できませんでした')); });
   }
@@ -5307,6 +5893,7 @@ function cardModal(m){
     batch.commit().then(function(){
       if(v) m.skin = v; else delete m.skin;
       sk.disabled = false;
+      olSyncDesign(m);
       $('cmTcg').style.display = CARD_SKIN_TCG[v] ? 'block' : 'none';
       toast(v ? '特別デザイン「' + CARD_SKINS[v] + '」にしました（本人が会員証を開き直すと反映）' : '通常のデザインに戻しました');
     }).catch(function(e){ sk.disabled = false; toast(permMsg(e, '変更できませんでした')); });
@@ -5407,7 +5994,7 @@ $('btnCardBulk').onclick = function(){
           grade: m.grade || '',
           trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
           badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
-          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '',
+          skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
           createdAt: FV.serverTimestamp()
         });
         batch.set(db.collection('checkinMembers').doc(m.no), {
