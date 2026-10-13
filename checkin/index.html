@@ -601,6 +601,12 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-tcg #mcQr.big::after{content:'タップで閉じる';font-size:12px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.1em;}
 @keyframes tcgFlipTo{0%{transform:rotateY(0);}50%{transform:rotateY(200deg) scale(1.04);}68%{transform:rotateY(170deg) scale(.98);}82%{transform:rotateY(186deg) scale(1.01);}92%{transform:rotateY(178deg);}100%{transform:rotateY(180deg);}}
 @keyframes tcgFlipFrom{0%{transform:rotateY(180deg);}50%{transform:rotateY(-20deg) scale(1.04);}68%{transform:rotateY(10deg) scale(.98);}82%{transform:rotateY(-6deg) scale(1.01);}92%{transform:rotateY(2deg);}100%{transform:rotateY(0);}}
+/* 💀 死神のレアカード: 縁と背景はホロ（虹色のうねりの縁＋きらめく背景）。背景は傾けると逆にずれる（--bx/--by） */
+.membercard.skin-reaperTcg{background:url('skins/reaper-frame.webp') center/100% 100% no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+.membercard.skin-reaperTcg .mc-art{inset:3.4% 4.6%;border-radius:4px;
+  background:url('skins/reaper-holo.webp') var(--bx,50%) var(--by,42%)/auto 125% no-repeat,#6b5a9e;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),inset 0 0 34px 6px rgba(20,10,40,.35);}
+.membercard.skin-reaperTcg .mc-art::after{background:linear-gradient(180deg,rgba(10,5,25,.5),rgba(10,5,25,.1) 20%,transparent 32%,transparent 60%,rgba(10,5,25,.35));}
 /* 💀 死神のレアカード: 死神が絵から浮き出て、妖しく光る */
 .membercard.skin-reaperTcg .mc-pop::after{background:url('skins/reaper.webp') 50% 100%/auto 100% no-repeat;}
 .membercard.skin-reaperTcg .mc-pop::before{
@@ -1581,10 +1587,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && /#trainer/.test(lo
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v64';
+var APP_VER = 'v65';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v65', d: '2026/10/13', items: ['🃏 レアカード風デザイン（死神）: 縁と背景をホロ（虹色のうねりの縁＋きらめく背景）にしました'] },
   { v: 'v64', d: '2026/10/13', items: ['🎓 OLチェックアウト: アウトラインの後に、AさんのQRを読んで感想・気づき・タスクを送れるようになりました（会員証の「📷 OLチェックアウト」）', '🃏 特別デザインのAさんのOLでは、カードがコレクションに溜まります（通し番号つき）'] },
   { v: 'v63', d: '2026/10/13', items: ['🃏 レアカード風デザイン: 死神が枠から飛び出して見えるように（虹色の縁にかかる・影つき・傾けた時の浮き出しを強く）'] },
   { v: 'v62', d: '2026/10/13', items: ['📝 目標設定の宿題は、PGを受講済みにした時点で研修生の受講カードに出るようになりました（以前はPAの後）'] },
