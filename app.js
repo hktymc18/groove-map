@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v800';
+var APP_JS_VERSION = 'v801';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v800';
+  var DATA_VERSION = 'v801';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v801', d:'2026-10-13', items:['🃏 カードコレクション：OLチェックアウトで集めたカード（特別なカードのAさんのOL）と、受けたすべてのOLの履歴を見られるメニューを追加しました（HOMEの下のボタン。受付の名簿と紐付いたアカウント）', 'カードを押すと大きく見られます（傾ける・裏返す・左右で次のカード）。新しいカードが届くと「新しいカード！」とお知らせします'] },
   { v:'v800', d:'2026-10-13', items:['受付連携：MAPでOUTにした人は取り込まないようにしました（つなぐ・稼働率・研修・OLチェックアウトの対象外）'] },
   { v:'v799', d:'2026-10-13', items:['🎓 OLチェックアウト：メンバーがアウトラインの後に、Aさんの会員証のQRを読んで送った「感想・気づき・タスク」が、そのメンバーの活動タブにリアルタイムで届くようになりました（受付の番号と紐付いたメンバー）。押すとくわしく見られます', 'MAPのカードに新着の印（🎓）。活動を開くと消えます。最後の活動にも数えます', '自分のNAVIGATORが受付の番号と紐付いている人は、OLチェックアウトで決めたタスクが自分のToDo・予定に自動で入ります'] },
   { v:'v798', d:'2026-10-13', items:['メンバー編集：研修中の人は、いちばん上に「次の研修（段階・日付・時間・Aさん）・前回・段階の流れ」を表示（#14）','予定日を過ぎた研修は、その場で「✓ 進んだ／流れた／リスケ」を押せます。予定がない時は「＋ 予定を入れる」から'] },
@@ -7668,6 +7669,7 @@ function _phHtml(o) { // o: { li, pct, streak, thisW, dwTxt, deltaCls, ftue, com
           + (x.k !== 'leader' ? '<span class="bt" onclick="event.stopPropagation();ckRecord(\'' + m.id + '\',\'' + x.k + '\')">' + (x.k === 'trainee' ? '研修' : 'OL') + '</span>' : '') + '<span class="bt g" onclick="event.stopPropagation();phToDp(\'' + m.id + '\')">ToDoへ</span></div>'; }).join('')
       + (ppl.length > 6 ? '<div class="ph-mr lk" onclick="window._phAll=!window._phAll;renderHome()">' + (all ? '少なく表示' : 'すべて表示（' + ppl.length + '人）') + '</div>' : '')
       : '<div class="ph-em">今フォローが必要な人はいません 👍</div>')
+    + (currentUser && currentUser.ckNo ? '<div class="ph-h" style="margin-top:14px" onclick="cardColOpen()">🃏 カードコレクション<em>' + (cardColNew().length ? '新着' + cardColNew().length : '') + '</em><span>ひらく ›</span></div>' : '') // v801
     + '<div class="ph-h" style="margin-top:14px" onclick="reapOpen()">🔄 再アプローチ<em>' + due + '人</em><span>ひらく ›</span></div><div class="ph-em" style="text-align:left">' + (due ? '声をかける時期が来た人がいます' : '時期が来た人はまだいません') + '</div>'
     + '</div>';
   c1 = '<div>' + c1 + (function() { var b = ''; try { b = birthdayHtml(); } catch (eB) {} return b; })() + '</div>'; // v785: 誕生日カード（今日の予定・ToDoの下。気になる人の下だと画面の外になるため）
@@ -14671,6 +14673,10 @@ function _olCoSelf() {
   if (_olCo.selfUnsub || !currentUser || !currentUser.ckNo || viewingOwnerUid) return;
   if (window._evLoadedUid !== currentUser.uid) return; // 予定・ToDoの読み込みを待つ
   _olCo.selfUnsub = db.collection('olCheckouts').where('no', '==', String(currentUser.ckNo)).onSnapshot(function(qs) {
+    var mine = [];
+    qs.forEach(function(d) { var r0 = d.data(); r0._id = d.id; mine.push(r0); });
+    _olCo.self = mine;
+    _cardColCheck(); // v801: 新しいカードの知らせ・メニューの新着
     qs.forEach(function(d) {
       var r = d.data(), t = r.task || {};
       if (r.taskImported || !t.text || (t.mode !== 'todo' && t.mode !== 'event') || _olCo.importing[d.id]) return;
@@ -14686,6 +14692,36 @@ function _olCoSelf() {
       }).catch(function() { delete _olCo.importing[d.id]; });
     });
   }, function(err) { console.log('olCheckouts self err:', err && err.message); });
+}
+// ── 🃏 v801: カードコレクション（OLチェックアウトで集めた特別仕様のAさんのカード・すべてのOLの履歴）──
+//   画面は受付システムの #col ページをそのまま埋め込む（カードの絵・動きを受付の会員証と同じ部品で出す。同じサイトなのでログインもそのまま）。
+//   見たカードは localStorage gm_card_seen（埋め込みのページと共通）。受付の名簿と紐付いた人（currentUser.ckNo）だけのメニュー
+function _cardSeen() { try { return JSON.parse(localStorage.getItem('gm_card_seen') || '{}'); } catch (e) { return {}; } }
+function cardColNew() { var sn = _cardSeen(); return (_olCo.self || []).filter(function(r) { return r.special && !sn[r._id]; }); }
+var _cardColAnn = {};
+function _cardColCheck() {
+  try { if (currentView === 'menu') renderMenuHub(); else if (currentView === 'home' && isPCMode()) renderHome(); } catch (e) {}
+  if (document.getElementById('cardColOv')) return;
+  var nw = cardColNew().filter(function(r) { return !_cardColAnn[r._id]; });
+  if (!nw.length) return;
+  nw.forEach(function(r) { _cardColAnn[r._id] = 1; });
+  var r = nw[0];
+  toastAction('🃏 新しいカード！ ' + (r.aName || '') + 'さんのカードが届きました', '見る', function() { cardColOpen(true); });
+}
+function cardColOpen(get) {
+  var old = document.getElementById('cardColOv'); if (old) old.remove();
+  var ov = document.createElement('div');
+  ov.id = 'cardColOv';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:10040;display:flex;flex-direction:column;background:var(--bg,#0b1118)';
+  ov.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;border-bottom:1px solid var(--border,#223)">'
+    + '<b style="flex:1;font-size:16px">🃏 カードコレクション</b>'
+    + '<span onclick="cardColClose()" style="padding:6px 10px;font-size:20px;cursor:pointer;color:var(--text-mid)" title="閉じる">✕</span></div>'
+    + '<iframe src="checkin/index.html#col' + (get ? '&get=1' : '') + '" title="カードコレクション" style="flex:1;width:100%;border:0;background:transparent" allow="camera"></iframe>';
+  document.body.appendChild(ov);
+}
+function cardColClose() {
+  var ov = document.getElementById('cardColOv'); if (ov) ov.remove();
+  _cardColCheck();
 }
 var _olCoRT = null;
 function _olCoRefresh() {
@@ -21552,6 +21588,7 @@ function renderMenuHub() {
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
     + sb(icn('target') + ' 理想MAP', 'switchView(\'ideal\')') + sb(icn('clipboard') + ' OL', 'switchView(\'ol\')')
     + sb(icn('refresh') + ' 再アプローチ', 'reapOpen()', (_reapproach && _reapproach.length) || '');
+  if (currentUser && currentUser.ckNo) S += sb('🃏 カードコレクション', 'cardColOpen()', cardColNew().length || ''); // v801
   // v684: ユニオン予定は「設定 › カレンダー」の中へ
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
