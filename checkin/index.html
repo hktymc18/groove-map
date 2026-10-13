@@ -1499,10 +1499,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v61';
+var APP_VER = 'v62';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v62', d: '2026/10/13', items: ['📝 目標設定の宿題は、PGを受講済みにした時点で研修生の受講カードに出るようになりました（以前はPAの後）'] },
   { v: 'v61', d: '2026/10/13', items: ['お知らせ（更新履歴）の表示を一時停止しました'] },
   { v: 'v60', d: '2026/10/13', items: ['🃏 レアカード風デザイン: 自動で揺れないようにしました（触って傾けた時だけ動きます）'] },
   { v: 'v59', d: '2026/10/12', items: ['🃏 レアカード風デザイン: 動きを大きく・遠近感つきに。死神をカードいっぱいに表示し、傾けると大きく浮き出るように','QRはふだん隠し、名前か右下の「QR」をタップで大きく表示（もう一度タップで閉じる）。会員番号の表示はなくしました','JETCLUB・タイトルのバッジをカードの下へ移動。名前・HP・特性名・技の数字を少し小さくしました'] },
@@ -2693,8 +2694,9 @@ function renderCoSheetEntry(c){
     };
   };
 }
-/* 📝 目標設定の宿題（PAの宿題）: NAVIGATOR の PLAN「目標設定 › 理想の生活」と同じ質問・同じID・同じ計算。
-   研修生が会員証から答えて提出 → PAの担当者に届く（goalHw/{会員証トークン}）。
+/* 📝 目標設定の宿題（PGの宿題）: NAVIGATOR の PLAN「目標設定 › 理想の生活」と同じ質問・同じID・同じ計算。
+   研修生が会員証から答えて提出 → PGの担当者に届く（goalHw/{会員証トークン}）。
+   ※ 以前はPAの後に出していた。PGの記録がない人（PAだけ記録済み）はPAの担当者に届く
    昇格後は NAVIGATOR の目標設定にそのまま引き継げる（NAVIGATOR側: ?gwImport=トークン）。
    ※ 質問を変えるときは app.js の P2GW_Q（ph:1）と必ず同じにすること */
 var HW_VER = 1;
@@ -2790,10 +2792,15 @@ function hwLoadDraft(){ try{ return JSON.parse(localStorage.getItem(hwDraftKey()
 function hwSaveDraft(a){ try{ localStorage.setItem(hwDraftKey(), JSON.stringify(a)); }catch(e){} }
 function hwNavUrl(){ return location.origin + location.pathname.replace(/checkin\/[^\/]*$/, '') + '?gwImport=' + gCardToken; }
 var gHw = null;   // ウィザードの状態 { c, d, a, i }
+// 宿題の届け先になる受講記録: PG（無ければ以前のPA）
+function hwTr(c){
+  var t = (c && c.trainings) || {};
+  return t.PG || t.PA || null;
+}
 function renderGoalHw(c){
   var el = $('hwArea');
   if(!el) return;
-  var pa = (c.trainings || {}).PA;
+  var pa = hwTr(c);
   if(!pa || !gCardToken || c.active === false){ el.innerHTML = ''; return; }
   db.collection('goalHw').doc(gCardToken).get().then(function(s){
     hwPaintBox(c, s.exists ? s.data() : null);
@@ -2802,10 +2809,10 @@ function renderGoalHw(c){
 function hwPaintBox(c, d){
   var el = $('hwArea');
   if(!el) return;
-  var who = ((c.trainings || {}).PA || {}).byName || '担当者';
+  var who = (hwTr(c) || {}).byName || '担当者';
   var draft = hwLoadDraft() || {}, qs = hwQs(draft);
   var n = qs.filter(function(q){ return hwFilled(draft[q.id]); }).length;
-  var h = '<div class="hw-box"><div class="hw-hd">📝 宿題：目標設定<span>PAの宿題</span></div>';
+  var h = '<div class="hw-box"><div class="hw-hd">📝 宿題：目標設定<span>PGの宿題</span></div>';
   if(d && d.status === 'redo'){
     h += '<p class="hw-msg warn">✏️ ' + esc(d.trName || who) + 'さんから<b>書き直しの依頼</b>が届いています。答えを見直して、もう一度提出してください。</p>'
       + '<button class="primary hw-go" id="hwGo">答えを見直す</button>';
@@ -2943,7 +2950,7 @@ function hwRenderSum(){
   $('hwSend').onclick = function(){ hwSubmit(); };
 }
 function hwSubmit(){
-  var g = gHw, c = g.c, pa = (c.trainings || {}).PA || {}, tot = hwTotal(g.a);
+  var g = gHw, c = g.c, pa = hwTr(c) || {}, tot = hwTotal(g.a);
   var ans = {};
   hwQs(g.a).forEach(function(q){ if(hwFilled(g.a[q.id])) ans[q.id] = g.a[q.id]; });
   $('hwSend').disabled = true;
@@ -7209,7 +7216,7 @@ function trChecklist(m){
       + (it.k === 'CO'
         ? '<button data-tsheet="1" style="padding:7px 10px;font-size:12.5px;">📝 面談シート' + (m.coSheet ? ' ✓' : '') + '</button>'
         : '')
-      + (it.k === 'PA' && r
+      + (it.k === (tr.PG ? 'PG' : 'PA') && r
         ? '<button data-thw="1" id="tcHw" style="padding:7px 10px;font-size:12.5px;">📝 宿題</button>'
         : '')
       + (it.k === 'DLR' && !r
@@ -7243,7 +7250,7 @@ function trChecklist(m){
       : '')
     + '<div class="btns"><button id="tcClose">閉じる</button></div>', true);
   $('tcClose').onclick = closeModal;
-  // 📝 宿題（目標設定）の状況をPAの行に表示
+  // 📝 宿題（目標設定）の状況をPGの行に表示（PGの記録がない以前の人はPAの行）
   if($('tcHw') && m.cardToken){
     db.collection('goalHw').doc(m.cardToken).get().then(function(s){
       var b = $('tcHw'); if(!b) return;
