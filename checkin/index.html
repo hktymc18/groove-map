@@ -601,6 +601,44 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-tcg #mcQr.big::after{content:'タップで閉じる';font-size:12px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.1em;}
 @keyframes tcgFlipTo{0%{transform:rotateY(0);}50%{transform:rotateY(200deg) scale(1.04);}68%{transform:rotateY(170deg) scale(.98);}82%{transform:rotateY(186deg) scale(1.01);}92%{transform:rotateY(178deg);}100%{transform:rotateY(180deg);}}
 @keyframes tcgFlipFrom{0%{transform:rotateY(180deg);}50%{transform:rotateY(-20deg) scale(1.04);}68%{transform:rotateY(10deg) scale(.98);}82%{transform:rotateY(-6deg) scale(1.01);}92%{transform:rotateY(2deg);}100%{transform:rotateY(0);}}
+/* 💎 DIAMOND（バッジがDIAMONDの人）: 金属のカード。文字は彫り込み風、QRはふだん収納して「QR」ボタンで大きく出す。
+   斜めの光が流れる＋写真の星がきらめく。特別デザイン（skin）・研修生のほうが優先 */
+.mc-sp{display:none;}
+.membercard.skin-dia{aspect-ratio:720/1076;min-height:0;padding:0;border-radius:16px;color:#45484e;text-align:center;
+  background:url('skins/diamond.webp') center/100% 100% no-repeat,#c3c6cb;box-shadow:0 14px 34px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.25);}
+.membercard.skin-dia .mc-deco,.membercard.skin-dia .mc-group,.membercard.skin-dia .mc-badge{display:none;}
+.membercard.skin-dia .mc-brand,.membercard.skin-dia .mc-union,.membercard.skin-dia .mc-name,.membercard.skin-dia .mc-grade,.membercard.skin-dia .mc-no{
+  position:absolute;margin:0;color:#45484e;text-shadow:0 1px 0 rgba(255,255,255,.85),0 -1px 0 rgba(0,0,0,.35);white-space:nowrap;}
+.membercard.skin-dia .mc-union{left:7%;top:4.2%;max-width:44%;overflow:hidden;text-overflow:ellipsis;font-family:Verdana,"Zen Kaku Gothic New",sans-serif;font-size:10px;font-weight:800;letter-spacing:.28em;}
+.membercard.skin-dia .mc-brand{right:7%;top:4.2%;font-family:Verdana,"Zen Kaku Gothic New",sans-serif;font-size:10px;font-weight:800;letter-spacing:.28em;}
+.membercard.skin-dia .mc-name{left:6%;right:6%;top:75.5%;overflow:hidden;font-family:"Hiragino Mincho ProN","Noto Serif JP","Yu Mincho",serif;font-size:25px;font-weight:700;letter-spacing:.12em;line-height:1.3;}
+.membercard.skin-dia .mc-grade{left:0;right:0;top:83%;min-height:0;font-family:Verdana,sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.32em;opacity:.9;}
+.membercard.skin-dia .mc-no{left:7%;bottom:5.2%;font-size:12px;font-weight:700;letter-spacing:.08em;}
+.membercard.skin-dia .mc-qrb{display:inline-flex;position:absolute;right:6%;bottom:4.2%;z-index:4;align-items:center;gap:5px;padding:6px 12px;border-radius:99px;cursor:pointer;
+  font-family:Verdana,sans-serif;font-size:11.5px;font-weight:900;letter-spacing:.12em;color:#2d3035;-webkit-tap-highlight-color:transparent;
+  background:linear-gradient(180deg,#fdfdfd,#c9ccd1);box-shadow:0 1px 0 #fff inset,0 -1px 0 rgba(0,0,0,.15) inset,0 2px 6px rgba(0,0,0,.25);}
+.membercard.skin-dia .mc-qrb svg{width:15px;height:15px;}
+.membercard.skin-dia #mcQr{display:none;}
+.membercard.skin-dia #mcQr.big{display:flex;position:absolute;inset:0;z-index:5;flex-direction:column;align-items:center;justify-content:center;gap:12px;margin:0;border-radius:inherit;
+  background:rgba(20,22,26,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);cursor:zoom-out;}
+.membercard.skin-dia #mcQr.big img,.membercard.skin-dia #mcQr.big canvas{width:200px !important;height:200px !important;border:10px solid #fff;outline:none;border-radius:10px;
+  box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 24px rgba(200,230,255,.8);}
+.membercard.skin-dia #mcQr.big::after{content:'タップで閉じる';font-size:12px;font-weight:700;color:#fff;opacity:.85;letter-spacing:.1em;}
+/* ✨ 輝き: 斜めの光が流れる＋ふちの光 */
+.membercard.skin-dia::before,.membercard.skin-dia::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;background-size:300% 100%;animation:diaSheen 4.2s ease-in-out infinite;}
+.membercard.skin-dia::before{background-image:linear-gradient(115deg,transparent 35%,rgba(255,255,255,0) 40%,rgba(255,255,255,.75) 48%,rgba(210,235,255,.55) 51%,rgba(255,255,255,0) 58%,transparent 65%);mix-blend-mode:soft-light;}
+.membercard.skin-dia::after{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.75),inset 0 0 22px rgba(255,255,255,.35);
+  background-image:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.55) 50%,transparent 58%);opacity:.55;}
+@keyframes diaSheen{0%{background-position:130% 0;}55%,100%{background-position:-30% 0;}}
+/* ✨ きらめく星（写真の星） */
+.membercard.skin-dia .mc-sp{display:block;position:absolute;z-index:3;width:130px;height:130px;margin:-65px 0 0 -65px;pointer-events:none;
+  background:url('skins/star.webp') center/contain no-repeat;opacity:0;animation:diaTw 3.4s ease-in-out infinite;}
+.membercard.skin-dia .mc-sp.s1{left:61.5%;top:31.5%;width:170px;height:170px;margin:-85px 0 0 -85px;animation-delay:.2s;}
+.membercard.skin-dia .mc-sp.s2{left:16%;top:14%;animation-delay:1.5s;}
+.membercard.skin-dia .mc-sp.s3{left:85%;top:58%;width:110px;height:110px;margin:-55px 0 0 -55px;animation-delay:2.4s;}
+.membercard.skin-dia .mc-sp.s4{left:28%;top:90%;width:96px;height:96px;margin:-48px 0 0 -48px;animation-delay:.9s;}
+@keyframes diaTw{0%,100%{opacity:0;transform:scale(.25) rotate(-8deg);}40%{opacity:1;transform:scale(1) rotate(0);}55%{opacity:.9;transform:scale(.92) rotate(3deg);}80%{opacity:0;transform:scale(.3) rotate(8deg);}}
+@media (prefers-reduced-motion: reduce){ .membercard.skin-dia::before,.membercard.skin-dia::after{animation:none;opacity:0;} .membercard.skin-dia .mc-sp{animation:none;} }
 /* 💀 死神のレアカード: 縁と背景はホロ（虹色のうねりの縁＋きらめく背景）。背景は傾けると逆にずれる（--bx/--by） */
 .membercard.skin-reaperTcg{background:url('skins/reaper-frame.webp') center/100% 100% no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 .membercard.skin-reaperTcg .mc-art{inset:3.4% 4.6%;border-radius:4px;
@@ -1103,6 +1141,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <div class="mc-rare" id="mcRare"></div>
       <div class="mc-qrb" id="mcQrBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>QR</div>
       <div class="mc-back" id="mcBack" aria-hidden="true"></div>
+      <i class="mc-sp s1" aria-hidden="true"></i><i class="mc-sp s2" aria-hidden="true"></i><i class="mc-sp s3" aria-hidden="true"></i><i class="mc-sp s4" aria-hidden="true"></i>
     </div>
     </div></div>
     <div id="rsvpTop"></div>
@@ -1624,10 +1663,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v66';
+var APP_VER = 'v67';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v67', d: '2026/10/13', items: ['💎 バッジがDIAMONDの人の会員証が、金属のDIAMONDカードになりました（光が流れて星がきらめきます。QRは「QR」ボタンで表示）'] },
   { v: 'v66', d: '2026/10/13', items: ['🃏 集めたカードとOL履歴は、NAVIGATOR の「🃏 カードコレクション」で見られるようになりました（会員証には出しません）', '🎓 研修生の項目を受講済みにする時、受講した日をカレンダーで選べるようになりました'] },
   { v: 'v65', d: '2026/10/13', items: ['🃏 レアカード風デザイン（死神）: 縁と背景をホロ（虹色のうねりの縁＋きらめく背景）にしました'] },
   { v: 'v64', d: '2026/10/13', items: ['🎓 OLチェックアウト: アウトラインの後に、AさんのQRを読んで感想・気づき・タスクを送れるようになりました（会員証の「📷 OLチェックアウト」）', '🃏 特別デザインのAさんのOLでは、カードがコレクションに溜まります（通し番号つき）'] },
@@ -2549,8 +2589,12 @@ function renderCard(c){
   }
   var style = GRADE_STYLES[c.grade || ''];
   var skin = !c.trainee && CARD_SKINS[c.skin || ''] ? c.skin : '';   // ✨ 特別デザインはグレードの色より優先（研修生は除く）
+  var dia = !c.trainee && !skin && c.badge === 'DIAMOND';            // 💎 バッジがDIAMONDの人は金属のカード（特別デザインが優先）
   if(skin){
     card.classList.add('skin-' + skin);
+    $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
+  } else if(dia){
+    card.classList.add('skin-dia');
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
   } else if(style){
     card.classList.add(style, 'premium');
@@ -2590,7 +2634,16 @@ function renderCard(c){
   $('mcTilt').classList.remove('still');
   // レアカード風はQRをふだん隠す。名前か右下の「QR」をタップすると大きく出る
   qr.onclick = null;
+  $('mcQrBtn').onclick = null;
   makeQr(qr, 'm:' + c.no + ':' + gCardToken.slice(0, 6), 180);
+  if(dia){
+    // 💎 QRはふだん収納。「QR」ボタンで大きく出て、どこかをタップで閉じる。名前は1行に収まるよう自動で小さく
+    $('mcQrBtn').onclick = function(){ qr.classList.add('big'); };
+    qr.onclick = function(){ qr.classList.remove('big'); };
+    var dfit = function(){ ckFitLine($('mcName'), 25, 13); };
+    setTimeout(dfit, 0);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(dfit);
+  }
   if(tcg){
     // 名前・特性名・技名は1行に収まるよう文字を自動で小さくする
     var fit = function(){
