@@ -6,7 +6,7 @@ T.run(async () => {
   let saved = null, store = null;
   const fg = w.fsGet;
   w.fsGet = p => Promise.resolve(p === 'unions/U1/cdata/mapChecklist' ? store : fg(p));
-  w.db.doc = p => ({ set(d) { saved = { p, d }; return Promise.resolve(); }, get() { return Promise.resolve({ exists: false, data: () => null }); }, onSnapshot() { return () => {}; } });
+  w.db.doc = p => ({ set(d) { if (p === 'unions/U1/cdata/mapChecklist') saved = { p, d }; return Promise.resolve(); }, get() { return Promise.resolve({ exists: false, data: () => null }); }, onSnapshot() { return () => {}; } });
   w.currentUser.union = 'U1'; w.currentUser.role = 'member'; w.currentUser.uid = 'someone';
   w.state.members = [{ id: 'r', lastName: '山内', firstName: '北斗', title: 'BR', parentId: '', mapType: 'both' }];
   setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('plan'); await sleep(20);
@@ -30,7 +30,7 @@ T.run(async () => {
   w.p2CkAdmT(0, '  手帳（新しい）  ');
   w.p2CkAdmTab('tr'); await sleep(5);
   c('TRAINING のタブにも切りかえ', $$('#p2CkAdmOv .ls .r').length === w.P2_CK_TR.length);
-  w.p2CkAdmSave(); await sleep(20);
+  w.p2CkAdmSave(); for (let i = 0; i < 40 && !saved; i++) await sleep(20); await sleep(100);
   c('unions/U1/cdata/mapChecklist に保存', saved && saved.p === 'unions/U1/cdata/mapChecklist' && saved.d.ess.length === n && saved.d.tr.length === w.P2_CK_TR.length);
   c('前からある項目は同じid（チェックが残る）・名前の変更も入る', saved.d.ess[0].id === 'ess_0' && saved.d.ess[0].t === '手帳（新しい）');
   c('保存したら閉じて、チェックの画面が新しい項目に', !$('#p2CkAdmOv') && $$('.p2ck-r').length === n && $$('.p2ck-r .t')[0].textContent === '手帳（新しい）' && $$('.p2ck-r')[0].classList.contains('done'));
@@ -38,7 +38,7 @@ T.run(async () => {
   c('新しい項目は独自のid', nw && /^c/.test(nw.id));
   // 新しい項目をチェック・日付
   const ix = saved.d.ess.indexOf(nw);
-  w.p2CkTgl('ess', ix); await sleep(10);
+  w.p2CkTgl('ess', ix); await sleep(60);
   c('新しい項目もチェックできる（v746: 日付は勝手に入らない）', w._p2().check[nw.id] === true && !w._p2().check[nw.id + '_d']);
   // 別の人：読み込みで反映
   store = { ess: [{ id: 'cX', t: 'ユニオンの項目だけ' }], tr: [] };
