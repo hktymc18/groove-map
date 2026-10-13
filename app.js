@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v799';
+var APP_JS_VERSION = 'v800';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v799';
+  var DATA_VERSION = 'v800';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v800', d:'2026-10-13', items:['受付連携：MAPでOUTにした人は取り込まないようにしました（つなぐ・稼働率・研修・OLチェックアウトの対象外）'] },
   { v:'v799', d:'2026-10-13', items:['🎓 OLチェックアウト：メンバーがアウトラインの後に、Aさんの会員証のQRを読んで送った「感想・気づき・タスク」が、そのメンバーの活動タブにリアルタイムで届くようになりました（受付の番号と紐付いたメンバー）。押すとくわしく見られます', 'MAPのカードに新着の印（🎓）。活動を開くと消えます。最後の活動にも数えます', '自分のNAVIGATORが受付の番号と紐付いている人は、OLチェックアウトで決めたタスクが自分のToDo・予定に自動で入ります'] },
   { v:'v798', d:'2026-10-13', items:['メンバー編集：研修中の人は、いちばん上に「次の研修（段階・日付・時間・Aさん）・前回・段階の流れ」を表示（#14）','予定日を過ぎた研修は、その場で「✓ 進んだ／流れた／リスケ」を押せます。予定がない時は「＋ 予定を入れる」から'] },
   { v:'v797', d:'2026-10-12', items:['はじめての端末でログインした直後、データを読み込み終わるまでは「読み込み中…」を表示（空のMAPや「自分を登録」が一瞬出なくなりました）','読み込み中・読み込み失敗時はクラウドへ保存しない安全装置を追加（データを空で上書きしない）'] },
@@ -6980,6 +6981,10 @@ function _ckOwnMembers() {
     return !m.deleted && !/^MG_/.test(m.id || '') && (m.mapType === 'current' || m.mapType === 'both' || !m.mapType);
   });
 }
+// v800: MAPでOUTにした人は受付連携で取り込まない（つなぐ・稼働率・研修・OLの取り込みの対象外）。
+//   ※「名簿から追加」では、OUTの人も名前・番号の照合には使う（MAPにいる人として、もう一度追加されないように）
+function _ckIsOut(m) { return (m.title || '').trim() === 'OUT'; }
+function _ckSyncMembers() { return _ckOwnMembers().filter(function(m) { return !_ckIsOut(m); }); }
 // 自分のユニオン名＋地域で受付のユニオンを選ぶ（v623: 研修の自動取り込みでも使う）
 function _ckIsOwner() { return !!currentUser && isOwnerUid(currentUser.uid); }
 function _ckPickUnion(unions, unionId) {
@@ -7040,7 +7045,7 @@ function _ckIsTrainee(m) { var t = (m.title || '').trim(); return !!m.trainee ||
 function _ckTrSyncAll(roster) {
   var byNo = {}, byName = {}, out = { n: 0, ppl: 0, promo: [] };
   roster.forEach(function(r) { byNo[r.no] = r; var k = _ckNorm(r.name); if (k) (byName[k] = byName[k] || []).push(r); });
-  _ckOwnMembers().forEach(function(m) {
+  _ckSyncMembers().forEach(function(m) { // v800: OUTの人は除く
     var r = m.checkinNo ? byNo[m.checkinNo] : null;
     if (!r && _ckIsTrainee(m)) { var c = byName[_ckNorm((m.lastName || '') + (m.firstName || ''))] || []; if (c.length === 1 && c[0].trainee) { r = c[0]; m.checkinNo = r.no; } }
     if (!r || !_ckIsTrainee(m)) return; // MAPで研修生の人だけ（LOI以降・BRなどの過去の記録は足さない＝研修の集計を変えない）
@@ -7100,7 +7105,8 @@ function ckLinkLoad() {
       var k = _ckNorm(r.name);
       if (k) { (byName[k] = byName[k] || []).push(r); }
     });
-    _ckLink.items = _ckOwnMembers().map(function(m) {
+    _ckLink.nOut = _ckOwnMembers().filter(_ckIsOut).length; // v800: OUTの人は出さない・取り込まない
+    _ckLink.items = _ckSyncMembers().map(function(m) {
       if (m.checkinNo && byNo[m.checkinNo]) return { m: m, kind: 'linked', r: byNo[m.checkinNo] };
       var cands = byName[_ckNorm((m.lastName || '') + (m.firstName || ''))] || [];
       if (cands.length === 1) return { m: m, kind: 'auto', r: cands[0] };
@@ -7195,7 +7201,7 @@ function ckImportRates(done) {
   (_ckIsNowMonth() ? getSt('last1m').then(function(r) { return (r && r.held) ? r : getSt(month); }) : getSt(month)).then(function(st) {
     if (!st || !st.held) { done(0, 0, st); return; }
     var rates = st.rates || {}, updated = 0, skipped = 0;
-    _ckOwnMembers().forEach(function(m) {
+    _ckSyncMembers().forEach(function(m) { // v800: OUTの人の稼働率は取り込まない
       if (!m.checkinNo) return; // v492: Sタイプも実測稼働率を取り込む
       var r = rates[m.checkinNo];
       if (!r) { skipped++; return; } // 休会中・無効などで受付システムの集計に出ていない人は変更しない
@@ -14643,7 +14649,7 @@ function _olCoStart() {
   if (!_olCo.timer) _olCo.timer = setInterval(_olCoStart, 30000); // メンバーの紐付けが増えたら購読し直す
   _olCoSelf();
   var nos = {};
-  _ckOwnMembers().forEach(function(m) { if (m.checkinNo) nos[String(m.checkinNo)] = 1; });
+  _ckSyncMembers().forEach(function(m) { if (m.checkinNo) nos[String(m.checkinNo)] = 1; }); // v800: OUTの人は除く
   var list = Object.keys(nos).sort(), own = _ckIsOwner(), un = currentUser.union || '';
   var key = (own ? '*' : un) + '|' + list.join(',');
   if (key === _olCo.key) return;
@@ -18353,6 +18359,7 @@ function ckPgRender() {
     var linked = items.filter(function(x) { return x.kind === 'linked'; }), showL = L.showLinked;
     if (linked.length) body += '<div class="ux-sec">つないだ人 ' + linked.length + '人</div>' + (showL ? items.map(function(it, k) { return it.kind === 'linked' ? row(evEsc(_ckMapName(it.m)), evEsc(it.r.group || ''), '<span class="r">✓ ' + evEsc(it.r.no) + '<br><span style="font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer" onclick="_ckLink.items[' + k + '].m.checkinNo=\'\';ckLinkLoad()">はずす</span></span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showLinked=1;ckPgRender()">見る ›</span>');
     if (nNone) body += '<div class="ux-sec">受付の名簿にいない ' + nNone + '人</div>' + (L.showNone ? items.map(function(it) { return it.kind === 'none' ? row(evEsc(_ckMapName(it.m)), '', '<span class="r d">名簿になし</span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showNone=1;ckPgRender()">見る ›</span>');
+    if (L.nOut) body += '<div class="ux-hint" style="margin-top:14px">MAPでOUTにした ' + L.nOut + '人は取り込みません</div>'; // v800
     next = '⟲ 取り込む（稼働率）'; nextOn = 'ckLinkApply()';
   } else if (i === 1) {
     var adds = L.adds, on = adds.filter(function(a) { return _ckAddEff(a, adds); }).length, nOther = adds.filter(function(a) { return a.other; }).length;
