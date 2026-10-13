@@ -516,20 +516,25 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-tcg > *{position:relative;z-index:1;transform:translateZ(3px);-webkit-backface-visibility:hidden;backface-visibility:hidden;}
 .membercard.skin-tcg .mc-art{display:block;position:absolute;inset:13px;border-radius:8px;overflow:hidden;z-index:0;transform:none;
   background:radial-gradient(90% 55% at 50% 50%,rgba(122,58,214,.6),rgba(52,18,96,.42) 50%,transparent 80%) var(--bx,50%) var(--by,42%)/160% 160% no-repeat,linear-gradient(170deg,#1b1328,#0b0812 60%,#05040a);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6);}
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 0 46px 14px rgba(0,0,0,.85);} /* 周りを暗く沈める＝背景が奥に引っ込んで見える */
 .membercard.skin-tcg .mc-art::after{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.12) 20%,transparent 32%);
 }
 /* 浮き出るキャラ: 絵の背景より手前・文字より奥 */
-.membercard.skin-tcg .mc-pop{display:block;position:absolute;inset:13px;border-radius:8px;overflow:hidden;z-index:0;pointer-events:none;transform:translateZ(1px);}
+/* 死神は絵の枠をはみ出して虹色の縁にもかかる（カードの外には出さない）＝枠から飛び出して見える */
+.membercard.skin-tcg .mc-pop{display:block;position:absolute;inset:0;border-radius:inherit;overflow:hidden;z-index:0;pointer-events:none;transform:translateZ(1px);}
 /* 文字・バッジはカードの面に貼りつけ、キャラだけが傾きに合わせてずれる（手前に浮いて見える視差）。ドラッグ中は --px/--py で動かす */
 /* 死神は絵の枠いっぱい。傾きと逆に背景の光がずれ、死神は大きくずれて少し拡大＝手前に浮き出て見える */
-.membercard.skin-tcg .mc-pop::before{content:'';position:absolute;inset:-7% -9% -3%;translate:var(--px,0px) var(--py,0px);scale:var(--ps,1);
+.membercard.skin-tcg .mc-pop::before,.membercard.skin-tcg .mc-pop::after{content:'';position:absolute;inset:-1% -8% 2.5%;
   transition:translate .7s cubic-bezier(.34,1.56,.64,1),scale .7s cubic-bezier(.34,1.56,.64,1);}
+.membercard.skin-tcg .mc-pop::before{z-index:1;translate:var(--px,0px) var(--py,0px);scale:var(--ps,1);}
+/* 死神の影（黒いシルエットをぼかして、傾きと逆へずらす）＝死神が背景から離れて浮いて見える */
+.membercard.skin-tcg .mc-pop::after{z-index:0;filter:brightness(0) blur(8px);opacity:.9;
+  translate:calc(var(--sx,0px) + 14px) calc(var(--sy,0px) + 20px);scale:.96;}
 /* 触っていない時は動かさない（妖しい光の明滅だけ） */
 .mc-tilt.on .membercard.skin-tcg .mc-pop::before{animation:reaperGlow 3.2s ease-in-out infinite alternate;}
-.mc-tilt.on.drag .membercard.skin-tcg .mc-pop::before{transition:none;}
+.mc-tilt.on.drag .membercard.skin-tcg .mc-pop::before,.mc-tilt.on.drag .membercard.skin-tcg .mc-pop::after{transition:none;}
 .membercard.skin-tcg .mc-art{transition:background-position .7s cubic-bezier(.34,1.56,.64,1);}
 .mc-tilt.on.drag .membercard.skin-tcg .mc-art{transition:none;}
 /* キャラの下半分に薄い影（文字を読みやすく） */
@@ -597,6 +602,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 @keyframes tcgFlipTo{0%{transform:rotateY(0);}50%{transform:rotateY(200deg) scale(1.04);}68%{transform:rotateY(170deg) scale(.98);}82%{transform:rotateY(186deg) scale(1.01);}92%{transform:rotateY(178deg);}100%{transform:rotateY(180deg);}}
 @keyframes tcgFlipFrom{0%{transform:rotateY(180deg);}50%{transform:rotateY(-20deg) scale(1.04);}68%{transform:rotateY(10deg) scale(.98);}82%{transform:rotateY(-6deg) scale(1.01);}92%{transform:rotateY(2deg);}100%{transform:rotateY(0);}}
 /* 💀 死神のレアカード: 死神が絵から浮き出て、妖しく光る */
+.membercard.skin-reaperTcg .mc-pop::after{background:url('skins/reaper.webp') 50% 100%/auto 100% no-repeat;}
 .membercard.skin-reaperTcg .mc-pop::before{
   background:url('skins/reaper.webp') 50% 100%/auto 100% no-repeat;
   filter:brightness(1.9) contrast(1.15) drop-shadow(0 0 3px rgba(190,140,255,.95)) drop-shadow(0 0 12px rgba(140,70,255,.7));
@@ -1499,10 +1505,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && /#trainer/.test(location.hash
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v62';
+var APP_VER = 'v63';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v63', d: '2026/10/13', items: ['🃏 レアカード風デザイン: 死神が枠から飛び出して見えるように（虹色の縁にかかる・影つき・傾けた時の浮き出しを強く）'] },
   { v: 'v62', d: '2026/10/13', items: ['📝 目標設定の宿題は、PGを受講済みにした時点で研修生の受講カードに出るようになりました（以前はPAの後）'] },
   { v: 'v61', d: '2026/10/13', items: ['お知らせ（更新履歴）の表示を一時停止しました'] },
   { v: 'v60', d: '2026/10/13', items: ['🃏 レアカード風デザイン: 自動で揺れないようにしました（触って傾けた時だけ動きます）'] },
@@ -2515,11 +2522,13 @@ function ckBindCardGesture(){
     card.style.setProperty('--gx', (50 + ry * 1.6) + '%');
     // 死神だけ手前に浮いているように、傾きに合わせて大きくずらして少し拡大（背景の光は逆にずらす）
     var sy = Math.sin(ry * Math.PI / 180), sx = Math.sin(rx * Math.PI / 180);
-    card.style.setProperty('--px', (80 * sy).toFixed(1) + 'px');
-    card.style.setProperty('--py', (-80 * sx).toFixed(1) + 'px');
-    card.style.setProperty('--ps', (1 + 0.1 * Math.min(1, Math.abs(sy) + Math.abs(sx))).toFixed(3));
-    card.style.setProperty('--bx', (50 - 60 * sy).toFixed(1) + '%');
-    card.style.setProperty('--by', (42 + 60 * sx).toFixed(1) + '%');
+    card.style.setProperty('--px', (90 * sy).toFixed(1) + 'px');
+    card.style.setProperty('--py', (-90 * sx).toFixed(1) + 'px');
+    card.style.setProperty('--ps', (1 + 0.15 * Math.min(1, Math.abs(sy) + Math.abs(sx))).toFixed(3));
+    card.style.setProperty('--sx', (-50 * sy).toFixed(1) + 'px'); // 影は逆へ
+    card.style.setProperty('--sy', (50 * sx).toFixed(1) + 'px');
+    card.style.setProperty('--bx', (50 - 90 * sy).toFixed(1) + '%');
+    card.style.setProperty('--by', (42 + 90 * sx).toFixed(1) + '%');
     card.style.setProperty('--gy', (50 - rx * 1.6) + '%');
   });
   function end(tap){
@@ -2531,6 +2540,8 @@ function ckBindCardGesture(){
     card.style.setProperty('--px', '0px');
     card.style.setProperty('--py', '0px');
     card.style.setProperty('--ps', '1');
+    card.style.setProperty('--sx', '0px');
+    card.style.setProperty('--sy', '0px');
     card.style.setProperty('--bx', '50%');
     card.style.setProperty('--by', '42%');
     if(!tap || moved) return;
