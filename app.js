@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v802';
+var APP_JS_VERSION = 'v803';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v802';
+  var DATA_VERSION = 'v803';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v803', d:'2026-10-13', items:['分析 › 研修：月の並びを古い月→新しい月（グラフと同じ）に。開いた時は今月（右端）から','くわしく（コミッション・S稼働・BR・動かす数字）：グラフの月を押すと、その月の数字と人（S稼働の人・あと一歩・BR以上・審査中・スタートした人）が出ます。「今月に戻す」で戻ります'] },
   { v:'v802', d:'2026-10-13', items:['NWPのロゴを、ブラウザの長押し・右クリックから画像として保存できないようにしました'] },
   { v:'v801', d:'2026-10-13', items:['🃏 カードコレクション：OLチェックアウトで集めたカード（特別なカードのAさんのOL）と、受けたすべてのOLの履歴を見られるメニューを追加しました（HOMEの下のボタン。受付の名簿と紐付いたアカウント）', 'カードを押すと大きく見られます（傾ける・裏返す・左右で次のカード）。新しいカードが届くと「新しいカード！」とお知らせします'] },
   { v:'v800', d:'2026-10-13', items:['受付連携：MAPでOUTにした人は取り込まないようにしました（つなぐ・稼働率・研修・OLチェックアウトの対象外）'] },
@@ -12524,17 +12525,17 @@ function _dtEzBiz(m) { var c = memberCat(m); return c !== '研修生' && !m.trai
 function _dtEzCalc(curMs, mon) {
   var team = (curMs || []).filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || '') && (m.title || '').trim() !== 'OUT'; });
   var root = team.filter(function(m) { return !m.parentId; })[0] || null;
-  var out = { mon: mon, S: 0, sIds: [], near: [], actN: 0, news: [], newN: 0, newAvg: null, perAvg: null, br: 0, exam: [], examOk: 0, brs: [], brOk: 0 };
+  var out = { mon: mon, S: 0, sIds: [], sList: [], brList: [], near: [], actN: 0, news: [], newN: 0, newAvg: null, perAvg: null, br: 0, exam: [], examOk: 0, brs: [], brOk: 0 };
   var actS = 0, actAny = false, biz = 0, newSum = 0;
   team.forEach(function(m) {
     var t = (m.title || '').trim(), a = m.activity, r = parseInt(m.actRate, 10), g = m.ptCurrent || 0;
-    if (a === 'S') { out.S++; out.sIds.push(m.id); }
+    if (a === 'S') { out.S++; out.sIds.push(m.id); out.sList.push(m); }
     else if (a === 'A' || ((a === 'B' || a === 'C') && !isNaN(r) && r >= 70)) out.near.push(m); // あと一歩でS：Aと、B・Cで稼働率70%以上
     if (isNaN(r) && a === 'S') r = 120;
     if (!isNaN(r) && DT_EZ_ACT_R[a]) { actS += r; actAny = true; } // 平均稼働人数＝稼働率の合計÷100（1ハウディあたり）
     if (_dtEzBiz(m)) biz++;
     if (m.parentId && _dtEzBiz(m) && _ymOfStart(m) === mon) { out.news.push(m); newSum += g; }
-    if (root && m.id !== root.id && isBROrAbove(t)) out.br++;
+    if (root && m.id !== root.id && isBROrAbove(t)) { out.br++; out.brList.push(m); }
     if (DT_EZ_EXAM.indexOf(t) >= 0) { out.exam.push(m); if (g >= LOI_MONTHLY_MIN) out.examOk++; }
     if (t === 'BR') { out.brs.push(m); if (g >= BR_MAINTAIN) out.brOk++; }
   });
@@ -13297,10 +13298,11 @@ function _dtTrRender() {
   }
   // v737: 上から じょうご（研修フロー）→ その月の数字 → 前からの表 → 折れ線グラフ（いちばん下）。説明は(i)に
   if (!document.getElementById('dtIbCss')) { var st9 = document.createElement('style'); st9.id = 'dtIbCss'; st9.textContent = '.dt-ch .ux-ib,.an-sec .ux-ib{width:20px;height:20px;font-size:11px;border-width:1.2px;margin-left:6px;flex:none;align-self:center}#dtTrain .dt-trc{margin-top:16px}#dtTrain .dt-trm{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-bottom:2px}#dtTrain .dt-trm::-webkit-scrollbar{display:none}#dtTrain .dt-trm span{flex:none;display:flex;flex-direction:column;align-items:center;padding:6px 12px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:900;color:var(--text-mid);cursor:pointer;white-space:nowrap;line-height:1.25}#dtTrain .dt-trm span i{font-style:normal;font-size:9.5px;color:var(--accent)}#dtTrain .dt-trm span b{font:800 11px Inter,sans-serif;color:var(--text-dim)}#dtTrain .dt-trm span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}#dtTrain .dt-trm span.on b{color:var(--accent)}'; document.head.appendChild(st9); }
-  // v752: 表示する月を選ぶ（新しい月から。押すとその月のフロー・数字に）
-  var mnav = '<div class="dt-trm">' + months.map(function(x, i) { return { x: x, i: i }; }).reverse().map(function(o) {
+  // v752: 表示する月を選ぶ（押すとその月のフロー・数字に）。v803: 古い月→新しい月の順（グラフと同じ並び。開いた時は選んだ月が見える位置へ）
+  //   並べる向きを右→左（direction:rtl）にして新しい月から置く＝見た目は左が古い月・右が新しい月、開いた時は右端（今月）から
+  var mnav = '<div class="dt-trm" style="direction:rtl">' + months.map(function(x, i) { return { x: x, i: i }; }).reverse().map(function(o) {
     var n9 = D[o.i] ? D[o.i].n : 0;
-    return '<span class="' + (o.i === idx ? 'on' : '') + '" onclick="dtTrPick(' + o.i + ')">' + (o.x.y !== months[11].y ? String(o.x.y).slice(2) + '年' : '') + o.x.m + '月' + (o.i === 11 ? '<i>今月</i>' : '') + '<b>' + n9 + '人</b></span>';
+    return '<span class="' + (o.i === idx ? 'on' : '') + '" style="direction:ltr" onclick="dtTrPick(' + o.i + ')">' + (o.x.y !== months[11].y ? String(o.x.y).slice(2) + '年' : '') + o.x.m + '月' + (o.i === 11 ? '<i>今月</i>' : '') + '<b>' + n9 + '人</b></span>';
   }).join('') + '</div>';
   var h = mnav + _dtTrFunnel(M, mo)
     + '<div class="an-sec"><span>' + mo.y + '年' + mo.m + '月の研修</span>' + _uxIb('dtCnt') + (idx === 11 ? '<small>今月</small>' : '<em onclick="dtTrPick(11)">今月に戻す ›</em>') + '</div><div class="an-g four">'
@@ -13310,6 +13312,8 @@ function _dtTrRender() {
     + '<div style="margin-top:14px">' + _dtTrainOld(state.currentMonth || currentMonthStr(), true) + '</div>'
     + '<div class="dt-trc"><div class="an-sec"><span>月ごとの推移</span>' + _uxIb('dtCh') + '</div>' + chips + '<div class="dt-card">' + head + svg + '</div></div>';
   box.innerHTML = h;
+  var _trmSc = function() { try { var tm9 = box.querySelector('.dt-trm'), on9 = tm9 && tm9.querySelector('span.on'); if (on9 && tm9.clientWidth) tm9.scrollLeft += on9.getBoundingClientRect().left - tm9.getBoundingClientRect().left - (tm9.clientWidth - on9.offsetWidth) / 2; } catch (eSc) {} };
+  _trmSc(); setTimeout(_trmSc, 60); // v803: 選んでいる月（ふだんは今月＝右端）が見える位置へ
 }
 
 
@@ -20711,7 +20715,7 @@ function _dtPcxNav() {
 }
 function dtPcGo(k) {
   if (!k) { dtGo(''); return; }
-  _dtMode = 'ez'; _dtPg = k || ''; _dtDr = '';
+  _dtMode = 'ez'; if (_dtPg !== (k || '')) _dtPgMon = null; _dtPg = k || ''; _dtDr = ''; // v803: ページを変えたら月は今月に
   try { localStorage.setItem('gm_dtMode', 'ez'); } catch (e) {}
   _dtApplyTab(); renderDtEz();
   try { var sa = document.getElementById('scrollArea'); if (sa) sa.scrollTop = 0; } catch (e2) {}
@@ -21614,7 +21618,7 @@ function _dtPgIdx(k) { for (var i = 0; i < DT_PG.length; i++) if (DT_PG[i].k ===
 function dtGo(k) {
   if (!k) { _dtPg = ''; dtMode('full', _dtTab || 'trend'); return; } // v647: 入口はなくした→分析へ
   if (typeof isPCMode === 'function' && isPCMode() && currentView === 'stats') { dtPcGo(k); return; } // v624
-  _dtPg = k || ''; _dtDr = ''; document.body.classList.remove('dtu-tm');
+  if (_dtPg !== (k || '')) _dtPgMon = null; _dtPg = k || ''; _dtDr = ''; document.body.classList.remove('dtu-tm'); // v803
   _dtMode = 'ez'; // v647: くわしくのページ
   if (currentView !== 'stats') { switchView('stats'); return; }
   _dtApplyTab();
@@ -21625,7 +21629,8 @@ function dtGoI(i) { if (DT_PG[i]) dtGo(DT_PG[i].k); }
 function _dtUxCss() {
   if (document.getElementById('dtUxCss')) return;
   var st = document.createElement('style'); st.id = 'dtUxCss';
-  st.textContent = "body.ux-dt #dtModeBar,body.ux-dt #dtTabs{display:none!important}#dtEz .ux-hub{padding:8px 14px 0}#dtEz .ux-pg{padding:0 14px}body.ux-land #dtEz .ux-hub{padding:8px 16px 0}body.ux-land #dtEz .ux-pg{padding:0 16px}"
+  st.textContent = ".dtu-mon{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:14px 2px 2px;font-size:13px}.dtu-mon b{font-size:15px;font-weight:900}.dtu-mon small{color:var(--text-dim);font-weight:700;font-size:11.5px}.dtu-mon span{margin-left:auto;color:var(--accent);font-weight:900;cursor:pointer}" // v803: 選んでいる月
+    + "body.ux-dt #dtModeBar,body.ux-dt #dtTabs{display:none!important}#dtEz .ux-hub{padding:8px 14px 0}#dtEz .ux-pg{padding:0 14px}body.ux-land #dtEz .ux-hub{padding:8px 16px 0}body.ux-land #dtEz .ux-pg{padding:0 16px}"
     + "#dtPgBody .ms-hd,#dtPgBody svg[viewBox='0 0 354 92'],#dtPgBody svg[viewBox='0 0 354 92']+.dtez-mm{display:none!important}#dtPgBody>div{padding:0!important}"
     + ".dtu-ch{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 12px 6px}.dtu-cht{font-size:15px;font-weight:900;display:flex;align-items:baseline;gap:8px}.dtu-cht small{font-size:11px;color:var(--text-dim);font-weight:700}"
     + ".dtu-leg{display:flex;gap:12px;font-size:10.5px;color:var(--text-mid);font-weight:700;margin-top:3px}.dtu-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}"
@@ -21648,15 +21653,17 @@ function _uxBars(vals, o) {
   var y = function(v) { return T + (H - T - B) * (1 - v / mx); }, bw = (W - L - R) / n, h = '', f = o.fmt || function(v) { return (Math.round(v * 10) / 10).toLocaleString(); };
   h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--border2)"/>';
   if (o.goal) h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(o.goal) + '" y2="' + y(o.goal) + '" stroke="var(--purple)" stroke-width="1.5" stroke-dasharray="6 5"/><text x="' + (L + 2) + '" y="' + (y(o.goal) - 5) + '" fill="var(--purple)" font-size="' + fs + '" font-weight="800" text-anchor="start">' + (o.goalLb || '目標') + '</text>';
+  var si = (o.sel === undefined || o.sel === null) ? n - 1 : o.sel; // v803: 濃くする月（選んだ月）
   vals.forEach(function(v, i) {
-    var x = L + i * bw + bw * 0.18, w = bw * 0.64, cur = i === n - 1, lb = (o.lbls && o.lbls[i]) || '';
+    var x = L + i * bw + bw * 0.18, w = bw * 0.64, cur = i === si, lb = (o.lbls && o.lbls[i]) || '';
     if (v === null || v === undefined) h += '<text x="' + (x + w / 2) + '" y="' + (y(0) - 5) + '" fill="var(--text-dim)" font-size="' + fs + '" text-anchor="middle">—</text>';
     else {
       var top = y(v), hh = Math.max(2, y(0) - top);
       h += '<rect x="' + x + '" y="' + (y(0) - hh) + '" width="' + w + '" height="' + hh + '" rx="5" fill="' + c + '" opacity="' + (cur ? 1 : 0.45) + '"/>';
       h += '<text x="' + (x + w / 2) + '" y="' + (y(0) - hh - 6) + '" fill="' + (cur ? 'var(--text)' : 'var(--text-mid)') + '" font-size="' + (fs + 0.5) + '" font-weight="800" text-anchor="middle">' + f(v) + '</text>';
     }
-    h += '<text x="' + (x + w / 2) + '" y="' + (H - 7) + '" fill="' + (cur ? c : 'var(--text-dim)') + '" font-size="' + fs + '" font-weight="700" text-anchor="middle">' + lb + '</text>';
+    h += '<text x="' + (x + w / 2) + '" y="' + (H - 7) + '" fill="' + (cur ? c : 'var(--text-dim)') + '" font-size="' + fs + '" font-weight="' + (cur && o.pick ? 900 : 700) + '" text-anchor="middle">' + lb + '</text>';
+    if (o.pick) h += '<rect x="' + (L + i * bw) + '" y="0" width="' + bw + '" height="' + H + '" fill="transparent" style="cursor:pointer" onclick="' + o.pick + '(' + i + ')"/>'; // v803: 月を押すとその月に
   });
   return '<svg class="ux-bars" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img">' + h + '</svg>';
 }
@@ -23042,53 +23049,73 @@ window.addEventListener('resize', function() {
   if (key === _dtFitWas) return; _dtFitWas = key;
   setTimeout(function() { try { _dtUx(); } catch (e) {} }, 120);
 });
+// v803: くわしくのページで、グラフの月を押すとその月の数字・人に（もう一度押すか「今月に戻す」で戻る）。コミッションの既定は確定した先月
+var _dtPgMon = null;
+function _dtPgDef(k) { return k === 'comm' ? 10 : 11; }
+function dtPgMon(i) { _dtPgMon = (i === _dtPgMon || i === _dtPgDef(_dtPg)) ? null : i; renderDtEz(); }
+function dtPastMem(id) { if (_mFind(id)) openEdit(id); else toast('今のMAPにはいない人です'); }
 function _dtPageHtml2(k) {
-  var now = _dtEzNow(), prev = _dtEzHist(10), ms = _dtMonths(), lbls = ms.map(function(m) { return m.lbl; }), i = _dtPgIdx(k), ro = _dtReadOnly(), land = _uxLand();
+  var now = _dtEzNow(), ms = _dtMonths(), lbls = ms.map(function(m) { return m.lbl; }), i = _dtPgIdx(k), ro = _dtReadOnly(), land = _uxLand();
+  var def = _dtPgDef(k), si = (_dtPgMon === null || _dtPgMon === undefined || _dtPgMon < 0 || _dtPgMon > 11) ? def : _dtPgMon, past = si !== 11;
+  var E = si === 11 ? now : _dtEzHist(si), prev = si > 0 ? _dtEzHist(si - 1) : null, mo = ms[si], mlb = mo.m + '月';
   var P = { t: '', sub: '', vals: null, o: null, big: '', kv: [], rest: '', dr: '' }; // t/sub＝グラフの題、big＝大きな数字、kv＝数字3つ、rest＝人の一覧など、dr＝横で右から出す時の見出し
   var more = function(key) { return '<span class="ux-lk" onclick="dtEzOpen(\'' + key + '\')">くわしく（数え方・先月との違い）›</span>'; };
   var big = function(v, unit, say, col, sm) { return { v: v, u: unit, s: say, c: col, sm: sm }; };
+  // 過去の月の人は、押すと今のその人の画面（今のMAPにいなければ知らせる）
+  var LH = function(key, list, rowOf, max) { var h0 = _uxListHtml(key, list, rowOf, max); return past ? h0.replace(/uxMem\('([^']+)','[^']*'\)/g, "dtPastMem('$1')") : h0; };
+  var monH = '<div class="dtu-mon"><b>' + mo.y + '年' + mlb + '</b>' + (si === def ? '<small>グラフの月を押すと、その月に切りかわります</small>' : '<span onclick="dtPgMon(' + def + ')">' + (def === 11 ? '今月' : ms[def].m + '月') + 'に戻す ›</span>') + '</div>';
+  var noData = '<div class="ux-empty">' + mlb + 'のMAPのデータがありません</div>';
+  var sRow = function(m) { var r = parseInt(m.actRate, 10) || 0; return { list: 'sl', v: 'S' + (r ? ' ' + r + '%' : ''), r: '', sub: (m.title || '').trim() }; };
   if (k === 's') {
-    var sg = _dtEzSGoal(now.S), dS = _dtDiff(now.S, prev ? prev.S : null);
-    var newS = prev ? membersForMap('current').filter(function(m) { return now.sIds.indexOf(m.id) >= 0 && prev.sIds.indexOf(m.id) < 0; }).length : null;
+    var sg = _dtEzSGoal(E ? E.S : now.S), dS = _dtDiff(E ? E.S : null, prev ? prev.S : null);
+    var newS = E && prev ? E.sIds.filter(function(id) { return prev.sIds.indexOf(id) < 0; }).length : null;
     P.t = 'S稼働の推移'; P.sub = '点線＝次の段 ' + sg + '人'; P.vals = _dtEzSeries('S', now); P.o = { lbls: lbls, goal: sg, goalLb: '次の段 ' + sg + '人' };
-    P.big = big(now.S, ' / ' + sg + '人', now.S >= sg ? '次の段に届いた 🎉' : 'あと' + (sg - now.S) + '人');
-    P.kv = [['先月より', dS[0], '', dS[1]], ['あと一歩', now.near.length + '人', 'DR', 'var(--accent)'], ['新しくS', newS === null ? '—' : newS + '人']];
-    P.dr = 'あと一歩でSの人';
-    P.rest = '<div class="ux-sec">あと一歩でSの人（押すとその人の画面）</div>'
-      + (now.near.length ? _uxListHtml('near', now.near, function(m) { var r = parseInt(m.actRate, 10) || 0; return { list: 'near', pct: r, v: (m.activity || '—') + (r ? ' ' + r + '%' : ''), r: 'あと一歩' }; }) : '<div class="ux-empty">今はいません</div>')
+    P.big = !E ? big('—', '', mlb + 'のデータなし') : (past ? big(E.S, ' 人', mlb + 'のS稼働') : big(E.S, ' / ' + sg + '人', E.S >= sg ? '次の段に届いた 🎉' : 'あと' + (sg - E.S) + '人'));
+    P.kv = [[(si > 0 ? ms[si - 1].m + '月' : '先月') + 'より', dS[0], '', dS[1]], ['あと一歩', E ? E.near.length + '人' : '—', 'DR', 'var(--accent)'], ['新しくS', newS === null ? '—' : newS + '人']];
+    P.dr = past ? mlb + 'の人' : 'あと一歩でSの人';
+    P.rest = monH + (!E ? noData
+      : '<div class="ux-sec">' + (past ? mlb + 'に' : '') + 'あと一歩でSの人（押すとその人の画面）</div>'
+        + (E.near.length ? LH('near', E.near, function(m) { var r = parseInt(m.actRate, 10) || 0; return { list: 'near', pct: r, v: (m.activity || '—') + (r ? ' ' + r + '%' : ''), r: 'あと一歩' }; }) : '<div class="ux-empty">' + (past ? 'いませんでした' : '今はいません') + '</div>')
+        + '<div class="ux-sec">' + mlb + 'のS稼働 ' + E.S + '人</div>' + (E.sList.length ? LH('sl', E.sList, sRow) : '<div class="ux-empty">いません</div>'))
       + more('s');
   } else if (k === 'exam') {
-    var line = LOI_MONTHLY_MIN, ex = now.exam.slice().sort(function(a, b) { var ao = (a.ptCurrent || 0) >= line, bo = (b.ptCurrent || 0) >= line; return ao !== bo ? (ao ? 1 : -1) : (b.ptCurrent || 0) - (a.ptCurrent || 0); });
-    var bk = now.brs.filter(function(m) { return (m.ptCurrent || 0) < BR_MAINTAIN; }), dB = _dtDiff(now.br, prev ? prev.br : null);
+    var line = LOI_MONTHLY_MIN, X = E || { exam: [], brs: [], brList: [], br: null, examOk: 0, brOk: 0 };
+    var ex = X.exam.slice().sort(function(a, b) { var ao = (a.ptCurrent || 0) >= line, bo = (b.ptCurrent || 0) >= line; return ao !== bo ? (ao ? 1 : -1) : (b.ptCurrent || 0) - (a.ptCurrent || 0); });
+    var bk = X.brs.filter(function(m) { return (m.ptCurrent || 0) < BR_MAINTAIN; }), dB = _dtDiff(X.br, prev ? prev.br : null);
     P.t = 'BRの人数'; P.sub = '直近12ヶ月'; P.vals = _dtEzSeries('br', now); P.o = { lbls: lbls, color: 'var(--purple)' };
-    P.big = big(now.br, ' 人', 'BR（自分の下）');
-    P.kv = [['先月より', dB[0], '', dB[1]], ['審査中 1,000pt', now.exam.length ? now.examOk + '/' + now.exam.length : '—', ex.length ? 'DR' : ''], ['BR維持', now.brs.length ? now.brOk + '/' + now.brs.length : '—', bk.length ? 'DR' : '']];
-    P.dr = '審査中・BR維持';
-    P.rest = '<div class="ux-sec">審査中（1,000ptまで）</div>'
-      + (ex.length ? _uxListHtml('exam:d', ex, function(m) { var p = m.ptCurrent || 0; return { list: 'exam:d', pct: p / line * 100, ok: p >= line, v: p.toLocaleString(), r: p >= line ? '達成' : 'あと' + (line - p).toLocaleString() }; }) : '<div class="ux-empty">今、審査中の人はいません</div>')
-      + (bk.length ? '<div class="ux-sec">BR維持がまだ（1,000ptまで）</div>' + _uxListHtml('brk:d', bk, function(m) { var p = m.ptCurrent || 0; return { list: 'brk:d', pct: p / BR_MAINTAIN * 100, v: p.toLocaleString(), r: 'あと' + (BR_MAINTAIN - p).toLocaleString() }; }) : '')
+    P.big = !E ? big('—', '', mlb + 'のデータなし') : big(X.br, ' 人', 'BR（自分の下）' + (past ? '・' + mlb : ''));
+    P.kv = [[(si > 0 ? ms[si - 1].m + '月' : '先月') + 'より', dB[0], '', dB[1]], ['審査中 1,000pt', X.exam.length ? X.examOk + '/' + X.exam.length : '—', ex.length ? 'DR' : ''], ['BR維持', X.brs.length ? X.brOk + '/' + X.brs.length : '—', bk.length ? 'DR' : '']];
+    P.dr = past ? mlb + 'の人' : '審査中・BR維持';
+    var gsvRow = function(key, ln) { return function(m) { var p = m.ptCurrent || 0; return { list: key, pct: p / ln * 100, ok: p >= ln, v: p.toLocaleString(), r: p >= ln ? '達成' : 'あと' + (ln - p).toLocaleString() }; }; };
+    P.rest = monH + (!E ? noData
+      : '<div class="ux-sec">' + (past ? mlb + 'の' : '') + '審査中（1,000ptまで）</div>'
+        + (ex.length ? LH('exam:d', ex, gsvRow('exam:d', line)) : '<div class="ux-empty">' + (past ? '審査中の人はいませんでした' : '今、審査中の人はいません') + '</div>')
+        + (bk.length ? '<div class="ux-sec">' + (past ? mlb + 'の' : '') + 'BR維持がまだ（1,000ptまで）</div>' + LH('brk:d', bk, gsvRow('brk:d', BR_MAINTAIN)) : '')
+        + '<div class="ux-sec">' + mlb + 'のBR以上 ' + X.br + '人</div>' + (X.brList.length ? LH('brl', X.brList, function(m) { return { list: 'brl', v: (m.ptCurrent || 0).toLocaleString(), r: 'GSV', sub: (m.title || '').trim() }; }) : '<div class="ux-empty">いません</div>'))
       + more('exam');
     if (_uxLists['exam:d']) _uxLists['exam:d'].title = 'BRを増やす';
     if (_uxLists['brk:d']) _uxLists['brk:d'].title = 'BRを維持';
   } else if (k === 'comm') {
-    var cm = _dtVals('コミッション'), c1 = cm[10], c0 = cm[9], dC = _dtDiff(c1 === null ? null : Math.round(c1 / 1000) / 10, c0 === null ? null : Math.round(c0 / 1000) / 10);
+    var cm = _dtVals('コミッション'), c1 = cm[si], c0 = si > 0 ? cm[si - 1] : null, dC = _dtDiff(c1 === null ? null : Math.round(c1 / 1000) / 10, c0 === null ? null : Math.round(c0 / 1000) / 10);
     P.t = 'コミッションの推移'; P.sub = '確定した月（今月は月末に確定）'; P.vals = cm; P.o = { lbls: lbls, color: 'var(--gold)', fmt: _dtMan };
-    P.big = c1 === null ? big(ms[10].m + '月は未入力', '', '', 'var(--gold)', 1) : big('¥' + Math.round(c1).toLocaleString(), '', ms[10].m + '月', 'var(--gold)');
-    P.kv = [[ms[9].m + '月より', dC[0] === '—' ? '—' : dC[0] + '万', '', dC[1]], ['B1数（今月）', now.newN + '人', 'dtGo(\'move\')'], ['平均稼働人数', now.actN === null ? '—' : now.actN + '人', 'dtGo(\'move\')']];
-    if (!ro) P.pen = ['dtInputOpen(10)', ms[10].m + '月を' + (c1 === null ? '入れる' : 'なおす')];
+    P.big = c1 === null ? big(mlb + 'は未入力', '', '', 'var(--gold)', 1) : big('¥' + Math.round(c1).toLocaleString(), '', mlb, 'var(--gold)');
+    P.kv = [[(si > 0 ? ms[si - 1].m + '月' : '前の月') + 'より', dC[0] === '—' ? '—' : dC[0] + '万', '', dC[1]], ['B1数（' + mlb + '）', E ? E.newN + '人' : '—', 'dtGo(\'move\')'], ['平均稼働人数', E && E.actN !== null ? E.actN + '人' : '—', 'dtGo(\'move\')']];
+    if (!ro) P.pen = ['dtInputOpen(' + si + ')', mlb + 'を' + (c1 === null ? '入れる' : 'なおす')];
     P.dr = 'くわしく';
-    P.rest = (ro ? '' : '<div class="ux-acts dtu-pen" style="grid-template-columns:1fr"><span class="p" onclick="dtInputOpen(10)">' + icn('pencil') + ' ' + ms[10].m + '月のコミッションを' + (c1 === null ? '入れる' : 'なおす') + '</span></div>')
+    P.rest = monH + (ro ? '' : '<div class="ux-acts dtu-pen" style="grid-template-columns:1fr"><span class="p" onclick="dtInputOpen(' + si + ')">' + icn('pencil') + ' ' + mlb + 'のコミッションを' + (c1 === null ? '入れる' : 'なおす') + '</span></div>')
       + '<div class="ux-hint">コミッション ＝ <b>B1数 × 新規の平均GSV × 平均稼働人数</b>。動かす数字を見る ›</div>'
+      + (E ? '<div class="ux-sec">' + mlb + 'スタートした人（B1） ' + E.newN + '人</div>' + (E.news.length ? LH('news', E.news.slice().sort(function(a, b) { return (b.ptCurrent || 0) - (a.ptCurrent || 0); }), function(m) { return { list: 'news', v: (m.ptCurrent || 0).toLocaleString(), r: 'GSV', sub: (m.title || '').trim() }; }) : '<div class="ux-empty">いません</div>') : noData)
       + more('comm');
   } else if (k === 'move') {
     P.t = 'B1数（今月スタート）'; P.sub = 'コミッション ＝ B1数 × 新規の平均GSV × 平均稼働人数'; P.vals = _dtEzSeries('newN', now); P.o = { lbls: lbls, color: '#5AD7FF' };
-    P.kv = [['B1数', now.newN + '人', 'dtEzOpen(\'newN\')'], ['新規の平均GSV', now.newAvg === null ? '—' : Math.round(now.newAvg).toLocaleString(), 'dtEzOpen(\'newAvg\')'], ['平均稼働人数', now.actN === null ? '—' : now.actN + '人', 'dtEzOpen(\'actN\')']];
-    P.kv.push(['今月スタート', now.news.length + '人', 'DR', 'var(--accent)']);
-    P.dr = '今月スタートした人';
-    P.rest = '<div class="ux-sec">今月スタートした人（押すとその人の画面）</div>'
-      + (now.news.length ? _uxListHtml('news', now.news.slice().sort(function(a, b) { return (b.ptCurrent || 0) - (a.ptCurrent || 0); }), function(m) { return { list: 'news', v: (m.ptCurrent || 0).toLocaleString(), r: 'GSV', sub: (m.title || '').trim() }; }) : '<div class="ux-empty">今月スタートした人はまだいません</div>')
+    P.kv = [['B1数' + (past ? '（' + mlb + '）' : ''), E ? E.newN + '人' : '—', 'dtEzOpen(\'newN\')'], ['新規の平均GSV', E && E.newAvg !== null ? Math.round(E.newAvg).toLocaleString() : '—', 'dtEzOpen(\'newAvg\')'], ['平均稼働人数', E && E.actN !== null ? E.actN + '人' : '—', 'dtEzOpen(\'actN\')']];
+    P.kv.push([(past ? mlb : '今月') + 'スタート', E ? E.news.length + '人' : '—', 'DR', 'var(--accent)']);
+    P.dr = (past ? mlb : '今月') + 'スタートした人';
+    P.rest = monH + (!E ? noData : '<div class="ux-sec">' + (past ? mlb : '今月') + 'スタートした人（押すとその人の画面）</div>'
+      + (E.news.length ? LH('news', E.news.slice().sort(function(a, b) { return (b.ptCurrent || 0) - (a.ptCurrent || 0); }), function(m) { return { list: 'news', v: (m.ptCurrent || 0).toLocaleString(), r: 'GSV', sub: (m.title || '').trim() }; }) : '<div class="ux-empty">' + (past ? mlb + 'にスタートした人はいません' : '今月スタートした人はまだいません') + '</div>'))
       + more('newN');
   }
+  if (P.o) { P.o.sel = si; P.o.pick = 'dtPgMon'; } // v803
   var next = i < DT_PG.length - 1 ? DT_PG[i + 1].lb + ' ›' : '', btm = _uxBtm('dtGo(\'\')', DT_PG.map(function(p) { return p.lb; }), i, 'dtGoI', next, next ? 'dtGoI(' + (i + 1) + ')' : '');
   _dtChartArgs = P.vals ? [P.vals, P.o] : null;
   var bigH = function(cls) { var b = P.big; return b ? '<div class="' + cls + '"><b' + (b.c ? ' style="color:' + b.c + (b.sm ? ';font-size:26px' : '') + '"' : '') + '>' + b.v + (b.u ? '<small>' + b.u + '</small>' : '') + '</b>' + (b.s ? '<span>' + b.s + '</span>' : '') + '</div>' : ''; };
