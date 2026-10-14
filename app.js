@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v803';
+var APP_JS_VERSION = 'v804';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v803';
+  var DATA_VERSION = 'v804';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v804', d:'2026-10-14', items:['メンバー編集の「活動」は直近1か月だけ表示。それより前に終わったOL・予定・タスクはたたみ、「それより前の活動を見る」で開けます','まだ終わっていないもの（未完了のタスク・予定のOL・研修の予定）は古くても表示します'] },
   { v:'v803', d:'2026-10-13', items:['分析 › 研修：月の並びを古い月→新しい月（グラフと同じ）に。開いた時は今月（右端）から','くわしく（コミッション・S稼働・BR・動かす数字）：グラフの月を押すと、その月の数字と人（S稼働の人・あと一歩・BR以上・審査中・スタートした人）が出ます。「今月に戻す」で戻ります'] },
   { v:'v802', d:'2026-10-13', items:['NWPのロゴを、ブラウザの長押し・右クリックから画像として保存できないようにしました'] },
   { v:'v801', d:'2026-10-13', items:['🃏 カードコレクション：OLチェックアウトで集めたカード（特別なカードのAさんのOL）と、受けたすべてのOLの履歴を見られるメニューを追加しました（HOMEの下のボタン。受付の名簿と紐付いたアカウント）', 'カードを押すと大きく見られます（傾ける・裏返す・左右で次のカード）。新しいカードが届くと「新しいカード！」とお知らせします'] },
@@ -18769,8 +18770,21 @@ function ppTrDel(i) {
   });
 }
 // 活動：OL・予定・タスク・研修の予定を月ごとに（新しい順）
+// v804: 活動は直近1か月だけ出し、それより前に終わった分はたたむ（「それより前の活動を見る」で開く）。
+//   まだ終わっていないもの（未完了のタスク・予定のOL・研修の予定）は古くても出す
+var _meActOld = {};
+function _meActCut() { var d0 = new Date(); d0.setMonth(d0.getMonth() - 1); return d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0'); }
+function _meActIsOld(it, cut) {
+  if (!it.d || it.d >= cut) return false;
+  if (it.kind === 'task') return !!(it.e && it.e.done);
+  if (it.kind === 'tr') return false;
+  if (it.kind === 'ol') return !(it.o && it.o.st === 'planned');
+  return true; // 過ぎた予定・OLチェックアウト
+}
 function _ppActHtml(m) {
-  var mid = m.id, all = _meActItems(m), fd = (state.freshData && state.freshData[mid]) || {};
+  var mid = m.id, every = _meActItems(m), fd = (state.freshData && state.freshData[mid]) || {};
+  var cut = _meActCut(), showOld = !!_meActOld[mid], nOld = every.filter(function(it) { return _meActIsOld(it, cut); }).length;
+  var all = showOld ? every : every.filter(function(it) { return !_meActIsOld(it, cut); });
   _olCoMarkSeen(m); // v799: 活動を開いたらOLチェックアウトの新着の印を消す
   var listSt = (typeof freshNorm === 'function') ? freshNorm(fd['リスト']) : (fd['リスト'] || {});
   var grp = function(it) { return it.kind === 'task' ? 'task' : 'ol'; };
@@ -18785,14 +18799,15 @@ function _ppActHtml(m) {
   }).join('') + '</div>';
   h += '<div class="ux-sub">リストOL：' + (listSt.done ? '完了' : (listSt.date ? '予定 ' + evEsc(listSt.date) : '未着手')) + '</div>';
   var items = f === 'otl' ? all.filter(function(it) { var e = otlE(it); return !!(e && e.outline); }) : (f === 'all' ? all : all.filter(function(it) { return grp(it) === f; }));
-  if (!items.length) return h + '<div class="ppempty">活動はまだありません。上の「足す」から</div>';
+  var oldLk = nOld ? '<div class="pplk" onclick="_meActOld[\'' + mid + '\']=' + (showOld ? 0 : 1) + ';_ppRender()">' + (showOld ? '1か月より前の活動をたたむ' : 'それより前の活動を見る（' + nOld + '件）') + '</div>' : '';
+  if (!items.length) return h + '<div class="ppempty">' + (nOld && !showOld ? '直近1か月の活動はありません' : '活動はまだありません。上の「足す」から') + '</div>' + oldLk;
   var cy = String(new Date().getFullYear()), mo = null;
   items.forEach(function(it) {
     var ym = (it.d || '').slice(0, 7), lb = ym ? (ym.slice(0, 4) !== cy ? ym.slice(0, 4) + '年' : '') + parseInt(ym.slice(5, 7), 10) + '月' : '日付なし';
     if (lb !== mo) { mo = lb; h += '<div class="ppmh">' + lb + '</div>'; }
     h += _ppActRow(it, m, otlE(it));
   });
-  return h;
+  return h + oldLk;
 }
 function _ppActRow(it, m, oe) {
   var mid = m.id, dt = function(x) { return '<div class="dt">' + (_ppMD(it.d) || '—') + (x || '') + '</div>'; };
@@ -18958,7 +18973,7 @@ function _ppHub(m) {
     + tile('num', 'var(--accent)', icn('trend'), '今月の数字', 'GSV ' + (m.ptCurrent > 0 ? m.ptCurrent.toLocaleString() : '—') + (m.ptFixed > 0 ? '・固定 ' + m.ptFixed.toLocaleString() : '') + '<br>稼働 <em>' + _ppActLb(m) + '</em>')
     + tile('mood', '#E0457B', icn('flame'), 'やる気・優先', 'やる気 <em>' + (MORALE_LABELS[moraleLv(m.morale || 1)] || '') + '</em><br>優先度 ' + (m.priority || 'なし'))
     + (trn && !trOn ? tile('tr', '#1FA9DA', icn('cap'), '研修', evEsc(getLatestStatus(m) || '') + (m.traineeResult ? '・' + evEsc(m.traineeResult) : '') || 'ステップ・結果') : '')
-    + tile('act', '#5AD7FF', icn('calendar'), '活動', (function() { var n = _meActItems(m).length; return n ? 'OL・予定・タスク <em>' + n + '件</em>' : 'OL・予定・タスクの記録'; })())
+    + tile('act', '#5AD7FF', icn('calendar'), '活動', (function() { var c9 = _meActCut(), n = _meActItems(m).filter(function(it) { return !_meActIsOld(it, c9); }).length; return n ? 'OL・予定・タスク <em>' + n + '件</em>' : 'OL・予定・タスクの記録'; })())
     + tile('memo', '#D19500', icn('pencil'), 'メモ', memo ? '「' + evEsc(memo.slice(0, 30)) + '」' : 'まだない')
     + tile('prof', '#56627A', icn('users'), 'プロフィール', '名前・性別・地域<br>誕生日・写真・SNS')
     + '</div>';
