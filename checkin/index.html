@@ -109,12 +109,13 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hw-wiz .hw-dots i.c{background:#e8c23a;}
 .hw-ph{font-size:12px;color:var(--sub);font-weight:700;margin-bottom:10px;}
 .hw-bub{display:flex;gap:10px;align-items:flex-start;font-size:17px;font-weight:800;line-height:1.45;margin-bottom:6px;}
-.hw-bub .av{font-size:28px;line-height:1;}
+.hw-bub .av{line-height:1;flex:0 0 auto;}
+.hw-bub .chick{width:34px;height:34px;display:block;}
 .hw-hint{font-size:12.5px;color:var(--sub);margin:0 0 10px 38px;}
 .hw-body{margin:12px 0;}
 .hw-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .hw-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;font-size:13.5px;font-weight:700;border:2px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);}
-.hw-opt span{font-size:24px;}
+.hw-opt span{font-size:24px;line-height:1;display:flex;}
 .hw-opt.sel{border-color:#e8c23a;background:#fff8d6;color:#33290a;}
 .hw-sv{text-align:center;font-size:36px;font-weight:900;color:var(--accent);}
 .hw-sv small{font-size:15px;}
@@ -1311,8 +1312,36 @@ var CK_ICO = {
   doc: '<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
   ok: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
   yen: '<circle cx="12" cy="12" r="9"/><path d="M8.5 7l3.5 5 3.5-5M12 12v6M9 13h6M9 16h6"/>',
-  party: '<path d="M4 20l4-11 7 7z"/><path d="M14 4v2M19 9h2M17.5 5.5l-1.5 1.5M12 9c1-1 1-3 0-4M15 12c1-1 3-1 4 0"/>'
+  party: '<path d="M4 20l4-11 7 7z"/><path d="M14 4v2M19 9h2M17.5 5.5l-1.5 1.5M12 9c1-1 1-3 0-4M15 12c1-1 3-1 4 0"/>',
+  // 目標設定の宿題（質問の選択肢・分野）
+  house: '<path d="M3 11l9-7 9 7"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-6h4v6"/>',
+  building: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/>',
+  tower: '<path d="M7 21V7l5-4 5 4v14"/><path d="M3 21h18M10.5 9h3M10.5 12.5h3M10.5 16h3"/>',
+  question: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .8-1 1.7"/><path d="M12 17h.01"/>',
+  food: '<path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M13 3l-2.5 6M19 4l-5 5"/>',
+  leaf: '<path d="M5 20c0-9 6-15 15-15 0 9-6 15-15 15z"/><path d="M5 20l8-8"/>',
+  wine: '<path d="M8 3h8l-.6 5.5a3.4 3.4 0 0 1-6.8 0z"/><path d="M12 12v8M8.5 21h7"/>',
+  sportscar: '<path d="M4 16H2.5v-2.5L5 12.5l3.5-3.5h7l3.5 3.5 2.5 1V16H20"/><path d="M10 16h4"/><circle cx="7" cy="16" r="2"/><circle cx="17" cy="16" r="2"/>',
+  car: '<path d="M5 11l2-5h10l2 5"/><rect x="3" y="11" width="18" height="6" rx="1.5"/><path d="M6 17v2M18 17v2M7 14h.01M17 14h.01"/>',
+  taxi: '<path d="M10 3h4v3"/><path d="M5 11l2-5h10l2 5"/><rect x="3" y="11" width="18" height="6" rx="1.5"/><path d="M6 17v2M18 17v2M7 14h.01M17 14h.01"/>',
+  train: '<rect x="6" y="3" width="12" height="14" rx="3"/><path d="M6 10h12M9 13.5h.01M15 13.5h.01M8.5 21l2-4M15.5 21l-2-4"/>',
+  map: '<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.5 5.5 3.5 9s-1.1 6.5-3.5 9c-2.4-2.5-3.5-5.5-3.5-9S9.6 5.5 12 3z"/>',
+  plane: '<path d="M21 3L3 10.5l7 2.5 2.5 7z"/><path d="M21 3L10 13"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  shirt: '<path d="M8 3L3 6l2 4 3-1v12h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>',
+  music: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  family: '<circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 21v-3a5 5 0 0 1 10 0v3M14 21v-2.5a3.5 3.5 0 0 1 7 0V21"/>',
+  sparkle: '<path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7z"/>',
+  health: '<path d="M20.8 8.6A5 5 0 0 0 12 5.4a5 5 0 0 0-8.8 3.2C3.2 14 12 20 12 20s8.8-6 8.8-11.4z"/><path d="M3.5 12h4l2-3 3 6 2-3h5.5"/>',
+  heart: '<path d="M12 20s-8-5-8-10.5A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 8 2.5C20 15 12 20 12 20z"/>',
+  bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>'
 };
+// 🐤 宿題のナビゲーター（ヒヨコ）。色つきのイラスト
+var CK_CHICK = '<svg class="chick" viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="26" rx="13" ry="11" fill="#ffd84a"/><circle cx="20" cy="14" r="9" fill="#ffd84a"/>'
+  + '<path d="M18 4c1-2 3-2 4 0" fill="none" stroke="#e8b923" stroke-width="2" stroke-linecap="round"/><path d="M11 25c3 0 5 3 5 6-4 0-6-3-5-6z" fill="#f2c230"/>'
+  + '<circle cx="16.5" cy="13" r="1.6" fill="#33290a"/><circle cx="23.5" cy="13" r="1.6" fill="#33290a"/><path d="M18 16.5l2 2.5 2-2.5z" fill="#f08a24"/>'
+  + '<circle cx="14" cy="17" r="1.6" fill="#ffb3a0" opacity=".8"/><circle cx="26" cy="17" r="1.6" fill="#ffb3a0" opacity=".8"/></svg>';
 function ckIco(k){
   return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (CK_ICO[k] || '') + '</svg>';
 }
@@ -1690,10 +1719,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v68';
+var APP_VER = 'v69';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v69', d: '2026/10/14', items: ['🖼 目標設定の宿題（質問・まとめ・提出完了）の絵文字を、線のアイコンとヒヨコのイラストに変えました'] },
   { v: 'v68', d: '2026/10/14', items: ['🎓 会員証のOLチェックアウトは画面のいちばん下に移し、ふだんは折りたたむようにしました（タップで開きます）', '🖼 会員証画面のアイコンを絵文字からシンプルな線のアイコンに変えました'] },
   { v: 'v67', d: '2026/10/13', items: ['💎 バッジがDIAMONDの人の会員証が、金属のDIAMONDカードになりました（光が流れて星がきらめきます。QRは「QR」ボタンで表示）'] },
   { v: 'v66', d: '2026/10/13', items: ['🃏 集めたカードとOL履歴は、NAVIGATOR の「🃏 カードコレクション」で見られるようになりました（会員証には出しません）', '🎓 研修生の項目を受講済みにする時、受講した日をカレンダーで選べるようになりました'] },
@@ -3487,18 +3517,18 @@ function renderCoSheetEntry(c){
    ※ 質問を変えるときは app.js の P2GW_Q（ph:1）と必ず同じにすること */
 var HW_VER = 1;
 var HW_Q = [
-  { id: 'housing_type', q: '理想の住まいは？', type: 'select', opts: [{ v: '持ち家', ic: '🏡' }, { v: '賃貸', ic: '🏢' }, { v: 'まだ決めてない', ic: '🤔' }] },
-  { id: 'housing_style', q: 'どんなタイプ？', type: 'select', opts: [{ v: 'タワマン', ic: '🏙️' }, { v: 'マンション', ic: '🏢' }, { v: '一軒家', ic: '🏡' }, { v: 'まだ決めてない', ic: '🤔' }] },
+  { id: 'housing_type', q: '理想の住まいは？', type: 'select', opts: [{ v: '持ち家', ic: 'house' }, { v: '賃貸', ic: 'building' }, { v: 'まだ決めてない', ic: 'question' }] },
+  { id: 'housing_style', q: 'どんなタイプ？', type: 'select', opts: [{ v: 'タワマン', ic: 'tower' }, { v: 'マンション', ic: 'building' }, { v: '一軒家', ic: 'house' }, { v: 'まだ決めてない', ic: 'question' }] },
   { id: 'housing_area', q: 'どのあたりに住みたい？', type: 'input', ph2: '例：大濠、南青山、新町...', hint: '具体的な場所が決まってなくても大丈夫！' },
   { id: 'housing_cost', q: '住居費は月いくらのイメージ？', type: 'slider', min: 5, max: 100, step: 1, unit: '万円', dv: 15, cost: true },
-  { id: 'food_style', q: '理想の食生活は？', type: 'select', opts: [{ v: '好きなものを自由に', ic: '🍣' }, { v: '健康重視のこだわり食', ic: '🥗' }, { v: '高級レストラン中心', ic: '🥂' }] },
+  { id: 'food_style', q: '理想の食生活は？', type: 'select', opts: [{ v: '好きなものを自由に', ic: 'food' }, { v: '健康重視のこだわり食', ic: 'leaf' }, { v: '高級レストラン中心', ic: 'wine' }] },
   { id: 'food_cost', q: '月の食費イメージは？', type: 'slider', min: 3, max: 300, step: 1, unit: '万円', dv: 8, cost: true },
   { id: 'clothes_cost', q: 'ファッションに月いくらかけたい？', type: 'slider', min: 1, max: 300, step: 1, unit: '万円', dv: 5, cost: true },
-  { id: 'transport', q: '理想の移動手段は？', type: 'select', opts: [{ v: '外車', ic: '🏎️' }, { v: '国産車', ic: '🚙' }, { v: '電車・自転車で十分', ic: '🚃' }, { v: 'タクシー生活', ic: '🚕' }] },
+  { id: 'transport', q: '理想の移動手段は？', type: 'select', opts: [{ v: '外車', ic: 'sportscar' }, { v: '国産車', ic: 'car' }, { v: '電車・自転車で十分', ic: 'train' }, { v: 'タクシー生活', ic: 'taxi' }] },
   { id: 'car_name', q: '何買う？', type: 'input', ph2: '例：ポルシェ911、レクサスLS...', hint: '夢の一台を書こう！', car: true },
   { id: 'car_loan', q: 'ローンシミュレーション', type: 'car_loan', car: true },
   { id: 'transport_cost', q: '月々の移動にかける金額は？', type: 'slider', min: 0, max: 30, step: 1, unit: '万円', dv: 2, cost: true, noCar: true },
-  { id: 'travel_freq', q: 'どのくらい旅行したい？', type: 'select', opts: [{ v: '月1で国内旅行', ic: '🗾' }, { v: '年数回は海外', ic: '🌏' }, { v: '毎月どこかへ', ic: '🌍' }, { v: '年1で十分', ic: '📅' }] },
+  { id: 'travel_freq', q: 'どのくらい旅行したい？', type: 'select', opts: [{ v: '月1で国内旅行', ic: 'map' }, { v: '年数回は海外', ic: 'plane' }, { v: '毎月どこかへ', ic: 'globe' }, { v: '年1で十分', ic: 'calendar' }] },
   { id: 'travel_first', q: '一発目どこに行きたい？', type: 'input', ph2: '例：ハワイ、パリ、沖縄...', hint: '夢の旅行先を教えて！' },
   { id: 'travel_cost', q: '旅行に月いくら積み立てたい？', type: 'slider', min: 1, max: 100, step: 1, unit: '万円', dv: 5, cost: true },
   { id: 'hobby', q: '趣味にいくらかけたい？', type: 'slider', min: 1, max: 100, step: 1, unit: '万円', dv: 3, cost: true },
@@ -3510,17 +3540,17 @@ var HW_Q = [
   { id: 'deadline', q: '__TOTAL__', type: 'ym', hint: 'いつまでに実現したい？' }
 ];
 var HW_CATS = [
-  { k: 'house', ic: '🏠', lb: '住まい', ids: ['housing_type', 'housing_style', 'housing_area', 'housing_cost'] },
-  { k: 'food', ic: '🍣', lb: '食', ids: ['food_style', 'food_cost'] },
-  { k: 'clothes', ic: '👗', lb: 'ファッション', ids: ['clothes_cost'] },
-  { k: 'move', ic: '🚗', lb: '移動', ids: ['transport', 'car_name', 'car_loan', 'transport_cost'] },
-  { k: 'travel', ic: '✈️', lb: '旅行', ids: ['travel_freq', 'travel_first', 'travel_cost'] },
-  { k: 'hobby', ic: '🎸', lb: '趣味', ids: ['hobby'] },
-  { k: 'parents', ic: '👪', lb: '仕送り', ids: ['parents_cost'] },
-  { k: 'beauty', ic: '💄', lb: '美容', ids: ['beauty_cost'] },
-  { k: 'health', ic: '💪', lb: '健康', ids: ['health_cost'] },
-  { k: 'save', ic: '💰', lb: '貯金', ids: ['savings'] },
-  { k: 'social', ic: '🤝', lb: '社会貢献', ids: ['social_cost'] }
+  { k: 'house', ic: 'house', lb: '住まい', ids: ['housing_type', 'housing_style', 'housing_area', 'housing_cost'] },
+  { k: 'food', ic: 'food', lb: '食', ids: ['food_style', 'food_cost'] },
+  { k: 'clothes', ic: 'shirt', lb: 'ファッション', ids: ['clothes_cost'] },
+  { k: 'move', ic: 'car', lb: '移動', ids: ['transport', 'car_name', 'car_loan', 'transport_cost'] },
+  { k: 'travel', ic: 'plane', lb: '旅行', ids: ['travel_freq', 'travel_first', 'travel_cost'] },
+  { k: 'hobby', ic: 'music', lb: '趣味', ids: ['hobby'] },
+  { k: 'parents', ic: 'family', lb: '仕送り', ids: ['parents_cost'] },
+  { k: 'beauty', ic: 'sparkle', lb: '美容', ids: ['beauty_cost'] },
+  { k: 'health', ic: 'health', lb: '健康', ids: ['health_cost'] },
+  { k: 'save', ic: 'yen', lb: '貯金', ids: ['savings'] },
+  { k: 'social', ic: 'heart', lb: '社会貢献', ids: ['social_cost'] }
 ];
 // NAVIGATOR の目標月収 → タイトル（app.js の GL_INCOME_TITLE と同じ）
 var HW_TITLES = [[3010000, 'チームエリート'], [1010000, 'ブルーダイヤモンド'], [510000, 'ダイヤモンド'], [260000, 'エメラルド'],
@@ -3565,11 +3595,11 @@ function hwSummaryHtml(a){
   var rows = HW_CATS.map(function(c){
     var done = c.ids.some(function(id){ return hwFilled(a[id]); });
     var ds = hwCatDesc(c, a);
-    return '<div class="hw-r' + (done ? '' : ' no') + '"><span class="lb">' + c.ic + ' ' + esc(c.lb)
+    return '<div class="hw-r' + (done ? '' : ' no') + '"><span class="lb">' + ckIco(c.ic) + ' ' + esc(c.lb)
       + (ds ? '<small>' + esc(ds) + '</small>' : '') + '</span><span class="v">' + (done ? hwCatAmt(c, a) + '万' : '—') + '</span></div>';
   }).join('');
   return '<div class="hw-sum"><div class="hw-tot">月 <b>' + tot + '</b>万円<small>' + esc(hwTitle(tot)) + '</small></div>'
-    + (a.deadline ? '<div class="hw-dl">📅 ' + esc(hwYm(a.deadline)) + 'までに実現したい</div>' : '')
+    + (a.deadline ? '<div class="hw-dl">' + ckIco('calendar') + ' ' + esc(hwYm(a.deadline)) + 'までに実現したい</div>' : '')
     + rows + '</div>';
 }
 // 会員証の宿題ボックス: PAの受講記録がある人だけ。下書きはこの端末に保存、提出で担当者に届く
@@ -3641,7 +3671,7 @@ function hwRenderQ(){
   var body = '';
   if(q.type === 'select'){
     body = '<div class="hw-opts">' + q.opts.map(function(o, k){
-      return '<button class="hw-opt' + (v === o.v ? ' sel' : '') + '" data-k="' + k + '"><span>' + o.ic + '</span>' + esc(o.v) + '</button>';
+      return '<button class="hw-opt' + (v === o.v ? ' sel' : '') + '" data-k="' + k + '"><span>' + ckIco(o.ic) + '</span>' + esc(o.v) + '</button>';
     }).join('') + '</div>';
   } else if(q.type === 'slider'){
     var sv = hwFilled(v) ? parseInt(v, 10) : q.dv;
@@ -3668,9 +3698,9 @@ function hwRenderQ(){
   }
   var last = hwNextIdx(g.i) >= HW_Q.length;
   modal('<div class="hw-wiz"><div class="hw-dots">' + dots + '</div>'
-    + '<div class="hw-ph">📝 理想のライフスタイル（' + (pi + 1) + '/' + qs.length + '）</div>'
-    + '<div class="hw-bub"><span class="av">🐤</span><div>' + esc(text) + '</div></div>'
-    + (q.hint ? '<div class="hw-hint">💡 ' + esc(q.hint) + '</div>' : '')
+    + '<div class="hw-ph">' + ckIco('note') + ' 理想のライフスタイル（' + (pi + 1) + '/' + qs.length + '）</div>'
+    + '<div class="hw-bub"><span class="av">' + CK_CHICK + '</span><div>' + esc(text) + '</div></div>'
+    + (q.hint ? '<div class="hw-hint">' + ckIco('bulb') + ' ' + esc(q.hint) + '</div>' : '')
     + '<div class="hw-body">' + body + '</div>'
     + '<div class="hw-foot">' + (hwPrevIdx(g.i) >= 0 ? '<button id="hwBack">←</button>' : '<button id="hwClose">とじる</button>')
     + '<button class="primary" id="hwNext">' + (last ? '確認する ✓' : '次へ →') + '</button>'
@@ -3719,7 +3749,7 @@ function hwRenderSum(){
   var g = gHw, a = g.a, qs = hwQs(a);
   var miss = qs.filter(function(q){ return !hwFilled(a[q.id]); }).length;
   var again = !!g.d;
-  modal('<div class="hw-wiz"><h2 style="margin-bottom:6px;">🏡 あなたの理想の生活</h2>'
+  modal('<div class="hw-wiz"><h2 style="margin-bottom:6px;">' + ckIco('house') + ' あなたの理想の生活</h2>'
     + '<p class="hw-note" style="margin-top:0;">分野を押すと、その質問から答え直せます</p>'
     + hwSummaryHtml(a)
     + (miss ? '<p class="hw-msg warn">まだ答えていない質問が ' + miss + ' 問あります（そのままでも提出できます）</p>' : '')
@@ -3747,7 +3777,7 @@ function hwSubmit(){
     var who = pa.byName || '担当者';
     var txt = '【目標設定の宿題を提出しました】\n' + (c.name || '') + '\n理想の生活：月' + tot + '万円（' + hwTitle(tot) + '）'
       + (ans.deadline ? '\nいつまでに：' + hwYm(ans.deadline) : '');
-    modal('<div class="hw-wiz" style="text-align:center;"><div style="font-size:44px;">🎉</div>'
+    modal('<div class="hw-wiz" style="text-align:center;"><div style="font-size:44px;color:#e8a317;">' + ckIco('party') + '</div>'
       + '<h2>提出しました！</h2><p class="hw-msg">' + esc(who) + 'さんの研修受講カードに届きました。</p>'
       + '<div class="hw-tot" style="margin:10px 0;">月 <b>' + tot + '</b>万円<small>' + esc(hwTitle(tot)) + '</small></div>'
       + '<a class="hw-line" id="hwLine" target="_blank" rel="noopener" href="https://line.me/R/share?text=' + encodeURIComponent(txt) + '">LINEで' + esc(who) + 'さんに知らせる</a>'
