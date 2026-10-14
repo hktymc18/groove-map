@@ -657,6 +657,12 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 }
 /* 🎓 OLチェックアウト（会員証のボタン・入力・カードGET!・コレクション） */
 .ol-box{margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;}
+.ico{width:1.15em;height:1.15em;vertical-align:-.2em;flex:0 0 auto;}
+/* 🎓 OLチェックアウトは会員証画面のいちばん下に、ふだん折りたたみ */
+.ol-fold{width:100%;display:flex;align-items:center;gap:8px;padding:12px 14px;margin-top:26px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit;font-size:14px;font-weight:800;text-align:left;}
+.ol-fold .ar{margin-left:auto;color:var(--sub);font-weight:400;}
+.ol-fold + .ol-box{margin-top:8px;}
+.ol-btn .t{display:flex;align-items:center;gap:7px;}
 .ol-btn{width:100%;padding:12px 14px;font-size:15px;font-weight:800;border-radius:12px;border:2px solid #8a55e0;background:var(--card);color:inherit;text-align:left;display:flex;flex-direction:column;gap:2px;}
 .ol-btn small{font-size:11.5px;font-weight:500;color:var(--sub);}
 .ol-btn.host{border-color:#d4af37;}
@@ -1150,11 +1156,11 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="dlrArea"></div>
     <div id="coArea"></div>
     <div id="hwArea"></div>
-    <div id="olArea"></div>
     <div id="onlineArea"></div>
     <div id="rsvpArea"></div>
     <div id="nextArea"></div>
     <div id="rcptArea"></div>
+    <div id="olArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
     <p id="verCard" style="text-align:center;font-size:10.5px;color:var(--sub);margin-top:10px;cursor:pointer;"></p>
     <p class="mc-err" id="mcErr"></p>
@@ -1288,6 +1294,27 @@ function esc(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// 🖼 会員証画面のアイコン（絵文字の代わりのSVG。文字色に合わせて描く）
+var CK_ICO = {
+  grad: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/><path d="M22 9v6"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  cards: '<rect x="3" y="6" width="11" height="15" rx="2"/><path d="M8 3h10a2 2 0 0 1 2 2v13"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>',
+  receipt: '<path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  ticket: '<path d="M3 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4v2h18v-2a2 2 0 0 1 0-4 2 2 0 0 0 0-4V6H3z"/><path d="M14 6v12" stroke-dasharray="2 2"/>',
+  laptop: '<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/>',
+  wait: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  note: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h5"/>',
+  pen: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>',
+  phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+  doc: '<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  ok: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+  yen: '<circle cx="12" cy="12" r="9"/><path d="M8.5 7l3.5 5 3.5-5M12 12v6M9 13h6M9 16h6"/>',
+  party: '<path d="M4 20l4-11 7 7z"/><path d="M14 4v2M19 9h2M17.5 5.5l-1.5 1.5M12 9c1-1 1-3 0-4M15 12c1-1 3-1 4 0"/>'
+};
+function ckIco(k){
+  return '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (CK_ICO[k] || '') + '</svg>';
 }
 function toast(msg){
   var t = $('toast'); t.textContent = msg; t.className = 'show';
@@ -1663,10 +1690,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v67';
+var APP_VER = 'v68';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v68', d: '2026/10/14', items: ['🎓 会員証のOLチェックアウトは画面のいちばん下に移し、ふだんは折りたたむようにしました（タップで開きます）', '🖼 会員証画面のアイコンを絵文字からシンプルな線のアイコンに変えました'] },
   { v: 'v67', d: '2026/10/13', items: ['💎 バッジがDIAMONDの人の会員証が、金属のDIAMONDカードになりました（光が流れて星がきらめきます。QRは「QR」ボタンで表示）'] },
   { v: 'v66', d: '2026/10/13', items: ['🃏 集めたカードとOL履歴は、NAVIGATOR の「🃏 カードコレクション」で見られるようになりました（会員証には出しません）', '🎓 研修生の項目を受講済みにする時、受講した日をカレンダーで選べるようになりました'] },
   { v: 'v65', d: '2026/10/13', items: ['🃏 レアカード風デザイン（死神）: 縁と背景をホロ（虹色のうねりの縁＋きらめく背景）にしました'] },
@@ -3020,10 +3048,17 @@ function renderOlArea(c){
   var el = $('olArea');
   if(!el) return;
   if(!gCardToken || !c || c.active === false || c.rcptOnly){ el.innerHTML = ''; return; }
-  el.innerHTML = '<div class="ol-box">'
-    + (c.olKey ? '<button class="ol-btn host" id="olHostQr">🎓 OLチェックアウトQRを出す<small>アウトラインの後に、参加者に読み取ってもらう</small></button>' : '')
-    + '<button class="ol-btn" id="olScanBtn">📷 OLチェックアウト<small>アウトラインを受けたら、AさんのQRを読む</small></button>'
-    + '<p class="ol-note">集めたカードとOL履歴は、NAVIGATOR の「🃏 カードコレクション」で見られます（受付の名簿と紐付いたアカウント）。</p></div>';
+  // ふだんは折りたたみ。タップで開くとQRを出す／読むボタンが出る
+  el.innerHTML = '<button class="ol-fold" id="olFold">' + ckIco('grad') + 'OLチェックアウト<span class="ar">▸</span></button>'
+    + '<div class="ol-box hide" id="olBox2">'
+    + (c.olKey ? '<button class="ol-btn host" id="olHostQr"><span class="t">' + ckIco('grad') + 'OLチェックアウトQRを出す</span><small>アウトラインの後に、参加者に読み取ってもらう</small></button>' : '')
+    + '<button class="ol-btn" id="olScanBtn"><span class="t">' + ckIco('camera') + 'OLチェックアウト</span><small>アウトラインを受けたら、AさんのQRを読む</small></button>'
+    + '<p class="ol-note">集めたカードとOL履歴は、NAVIGATOR の「' + ckIco('cards') + ' カードコレクション」で見られます（受付の名簿と紐付いたアカウント）。</p></div>';
+  $('olFold').onclick = function(){
+    var bx = $('olBox2');
+    bx.classList.toggle('hide');
+    this.querySelector('.ar').textContent = bx.classList.contains('hide') ? '▸' : '▾';
+  };
   if($('olHostQr')) $('olHostQr').onclick = function(){ olHostQrModal(c); };
   $('olScanBtn').onclick = function(){ olScan(function(key){ olOpenFromCard(key, c); }); };
 }
@@ -3563,16 +3598,16 @@ function hwPaintBox(c, d){
   var who = (hwTr(c) || {}).byName || '担当者';
   var draft = hwLoadDraft() || {}, qs = hwQs(draft);
   var n = qs.filter(function(q){ return hwFilled(draft[q.id]); }).length;
-  var h = '<div class="hw-box"><div class="hw-hd">📝 宿題：目標設定<span>PGの宿題</span></div>';
+  var h = '<div class="hw-box"><div class="hw-hd">' + ckIco('note') + ' 宿題：目標設定<span>PGの宿題</span></div>';
   if(d && d.status === 'redo'){
-    h += '<p class="hw-msg warn">✏️ ' + esc(d.trName || who) + 'さんから<b>書き直しの依頼</b>が届いています。答えを見直して、もう一度提出してください。</p>'
+    h += '<p class="hw-msg warn">' + ckIco('pen') + ' ' + esc(d.trName || who) + 'さんから<b>書き直しの依頼</b>が届いています。答えを見直して、もう一度提出してください。</p>'
       + '<button class="primary hw-go" id="hwGo">答えを見直す</button>';
   } else if(d){
     h += '<p class="hw-msg ok">✓ ' + esc(d.atLocal || '') + ' に ' + esc(d.trName || who) + 'さんへ提出しました</p>'
       + '<div class="hw-mini">理想の生活には <b>月' + (d.total || 0) + '万円</b>（' + esc(hwTitle(d.total)) + '）'
       + (d.ans && d.ans.deadline ? '・' + esc(hwYm(d.ans.deadline)) + 'までに' : '') + '</div>'
       + '<div class="hw-btns"><button id="hwView">答えを見る・直す</button>'
-      + (!c.trainee ? '<button class="primary" id="hwNav">📲 NAVIGATORに引き継ぐ</button>' : '') + '</div>'
+      + (!c.trainee ? '<button class="primary" id="hwNav">' + ckIco('phone') + ' NAVIGATORに引き継ぐ</button>' : '') + '</div>'
       + (!c.trainee ? '<p class="hw-note">NAVIGATORを使っている人は、ここから PLAN の目標設定（理想の生活）に答えを入れられます。</p>' : '');
   } else {
     h += '<p class="hw-msg">理想の生活（住まい・食・車・旅行・貯金など）を答えて、<b>月いくら必要か</b>を出してみよう！答えは <b>' + esc(who) + 'さん</b>に届きます。<br><small>約5分・途中でやめても続きから答えられます</small></p>'
@@ -3743,7 +3778,7 @@ function renderTrainee(c){
     + '<div class="next-head">VISITOR — チュートリアル ' + done + '/3</div>'
     + '<div style="height:6px;background:var(--line);border-radius:99px;margin:6px 0 8px;overflow:hidden;">'
     + '<i style="display:block;height:100%;width:' + Math.round(done / 3 * 100) + '%;background:var(--green);"></i></div>'
-    + (tr['BPC済み'] ? '<div class="se-done" style="margin:4px 0 8px;">🎉 修了 — 正規登録手続き中</div>' : '')
+    + (tr['BPC済み'] ? '<div class="se-done" style="margin:4px 0 8px;">' + ckIco('party') + ' 修了 — 正規登録手続き中</div>' : '')
     + rows + '</div>';
 }
 // 本日の「セルフチェックイン受付中」イベントを会員証の下に表示
@@ -3760,7 +3795,7 @@ function renderSelfEvents(c){
       try{ done = !!localStorage.getItem('bci_ci_' + ev.id + '_' + c.no); }catch(e){}
       return '<div class="selfevent" id="se_' + i + '">'
         + '<b>' + esc(ev.hostLabel || 'CLAVIS') + '：' + esc(ev.name || '') + '</b>'
-        + '<span class="se-sub">' + esc(ev.date || '') + (ev.speaker ? '　🎤 ' + esc(ev.speaker) : '') + '</span>'
+        + '<span class="se-sub">' + esc(ev.date || '') + (ev.speaker ? '　' + ckIco('mic') + ' ' + esc(ev.speaker) : '') + '</span>'
         + (done
           ? '<div class="se-done">✓ チェックイン済み</div>'
           : (ev.requireCode ? '<input type="text" inputmode="numeric" maxlength="4" id="seCode_' + i + '" placeholder="会場コード4桁">' : '')
@@ -3944,8 +3979,8 @@ function upOnlineBody(c, ev, i, st){
         var prev = '';
         try{ prev = localStorage.getItem('bci_pl_' + c.no) || ''; }catch(e){}
         return '<div style="border:1px solid var(--line);border-radius:10px;margin-top:10px;padding:10px 12px;">'
-          + '<div style="font-weight:700;font-size:13px;">📜 オンライン受講 誓約書</div>'
-          + (prev ? '<div style="font-size:12px;color:var(--green);margin:4px 0 2px;">✅ この端末で同意済み（' + esc(prev) + '）。今回の申請にも同じ内容で誓約します。</div>' : '')
+          + '<div style="font-weight:700;font-size:13px;">' + ckIco('doc') + ' オンライン受講 誓約書</div>'
+          + (prev ? '<div style="font-size:12px;color:var(--green);margin:4px 0 2px;">' + ckIco('ok') + ' この端末で同意済み（' + esc(prev) + '）。今回の申請にも同じ内容で誓約します。</div>' : '')
           + '<div id="olPtext_' + i + '" style="max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:12px;line-height:1.65;text-align:left;color:var(--ink);background:var(--paper);">'
           + pledgeBodyHtml() + '</div>'
           + '<div class="chkrow"><input type="checkbox" id="olPledge_' + i + '"' + (prev ? ' checked' : ' disabled') + '>'
@@ -3956,7 +3991,7 @@ function upOnlineBody(c, ev, i, st){
     + (ev.onlinePayLink
       ? '<a id="olPayBtn_' + i + '" href="' + esc(payLinkUrl(ev.onlinePayLink, ev.onlineFee || 1000)) + '" target="_blank" rel="noopener" '
         + 'style="display:block;text-align:center;text-decoration:none;padding:11px;border-radius:10px;background:#e60012;color:#fff;font-weight:700;font-size:14.5px;margin-top:10px;">'
-        + '💰 PayPayで ' + yen(ev.onlineFee || 1000) + ' を送る</a>'
+        + ckIco('yen') + ' PayPayで ' + yen(ev.onlineFee || 1000) + ' を送る</a>'
         + '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
         + '<div id="olPayQr_' + i + '" style="background:#fff;padding:4px;border-radius:6px;flex:0 0 auto;"></div>'
         + '<span style="font-size:11.5px;color:var(--sub);text-align:left;">'
@@ -4048,7 +4083,7 @@ function upRsvpBody(c, ev, i, rs){
       + '<div class="se-msg" id="rcMsg_' + i + '"></div>';
   }
   if(rs === 'cancelreq'){
-    return '<p style="color:var(--amber);font-weight:700;font-size:14px;margin:0;">⏳ 取消を申請中です</p>'
+    return '<p style="color:var(--amber);font-weight:700;font-size:14px;margin:0;">' + ckIco('wait') + ' 取消を申請中です</p>'
       + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">受付が確認すると予約が取り消されます。却下された場合は予約が継続します。</p>'
       + '<button id="rcRe_' + i + '" class="ghost" style="width:100%;margin-top:10px;font-size:12px;">受付に届いていない場合: 申請を送り直す</button>'
       + '<div class="se-msg" id="rcMsg_' + i + '"></div>';
@@ -4057,7 +4092,7 @@ function upRsvpBody(c, ev, i, rs){
     return '<p style="color:var(--sub);font-size:13px;margin:0;">予約受付は終了しました（' + esc(rsvpDlLabel(ev)) + '）。参加希望は受付担当へご連絡ください。</p>';
   }
   return (ev.rsvpDeadline
-      ? '<p style="font-size:12.5px;font-weight:700;color:var(--amber);margin:0 0 6px;">🎟 予約' + esc(rsvpDlLabel(ev)) + '</p>' : '')
+      ? '<p style="font-size:12.5px;font-weight:700;color:var(--amber);margin:0 0 6px;">' + ckIco('ticket') + ' 予約' + esc(rsvpDlLabel(ev)) + '</p>' : '')
     + '<button class="primary" id="rsGo_' + i + '" style="width:100%;">予約する</button>'
     + '<div class="se-msg" id="rsMsg_' + i + '"></div>';
 }
@@ -4118,7 +4153,7 @@ function renderRsvpTop(c, all){
   var list = all.filter(function(ev){ return rsvpState(c, ev) === 'open'; });
   if(!list.length){ el.innerHTML = ''; return; }
   el.innerHTML = list.map(function(ev){
-    return '<div class="rsvptop" data-rt="' + esc(ev.id) + '">🎟 <b>予約受付中: ' + esc(ev.name || '') + '</b>'
+    return '<div class="rsvptop" data-rt="' + esc(ev.id) + '">' + ckIco('ticket') + ' <b>予約受付中: ' + esc(ev.name || '') + '</b>'
       + '<span style="color:var(--sub);font-size:12.5px;">' + esc((ev.date || '').slice(5).replace('-', '/'))
       + (ev.rsvpDeadline ? '・' + esc(rsvpDlLabel(ev)) : '') + '</span>'
       + '<span style="margin-left:auto;color:var(--sub);">›</span></div>';
@@ -4157,11 +4192,11 @@ function renderUpcoming(c, openId){
     var html = rows.map(function(ev, i){
       var ol = olState(c, ev), rs = rsvpState(c, ev);
       var chip = '';
-      if(rs === 'open') chip = '<span class="pill a">🎟 予約受付中' + (ev.rsvpDeadline ? '・' + esc(rsvpDlLabel(ev)) : '') + '</span>';
+      if(rs === 'open') chip = '<span class="pill a">' + ckIco('ticket') + ' 予約受付中' + (ev.rsvpDeadline ? '・' + esc(rsvpDlLabel(ev)) : '') + '</span>';
       else if(rs === 'done') chip = '<span class="pill g">✓ 予約済み</span>';
-      else if(rs === 'cancelreq') chip = '<span class="pill n">⏳ 取消申請中</span>';
-      else if(ol === 'can') chip = '<span class="pill a">💻 受講可</span>';
-      else if(ol === 'pending') chip = '<span class="pill n">⏳ 承認待ち</span>';
+      else if(rs === 'cancelreq') chip = '<span class="pill n">' + ckIco('wait') + ' 取消申請中</span>';
+      else if(ol === 'can') chip = '<span class="pill a">' + ckIco('laptop') + ' 受講可</span>';
+      else if(ol === 'pending') chip = '<span class="pill n">' + ckIco('wait') + ' 承認待ち</span>';
       else if(ol === 'approved') chip = '<span class="pill g">✓ 受講OK</span>';
       else if(ol === 'rejected') chip = '<span class="pill n">要確認</span>';
       var body = '';
@@ -4176,12 +4211,12 @@ function renderUpcoming(c, openId){
         + (ev.date === t ? '<span class="today-pill">TODAY</span>' : '')
         + (chip
           ? '<span class="ns" style="margin-left:auto;">' + chip + '</span>'
-          : (ev.speaker ? '<span class="ns">🎤 ' + esc(ev.speaker) + '</span>' : ''))
+          : (ev.speaker ? '<span class="ns">' + ckIco('mic') + ' ' + esc(ev.speaker) + '</span>' : ''))
         + (canOpen ? '<span class="upar" style="color:var(--sub);flex:0 0 auto;">' + (opened ? '▾' : '▸') + '</span>' : '')
         + '</div>'
         + (canOpen
           ? '<div id="upx_' + esc(ev.id) + '" class="upx' + (opened ? '' : ' hide') + '">'
-            + (ev.speaker ? '<div style="font-size:12px;color:var(--sub);margin-bottom:6px;">🎤 ' + esc(ev.speaker) + '</div>' : '')
+            + (ev.speaker ? '<div style="font-size:12px;color:var(--sub);margin-bottom:6px;">' + ckIco('mic') + ' ' + esc(ev.speaker) + '</div>' : '')
             + body + '</div>'
           : '');
     }).join('');
@@ -4205,7 +4240,7 @@ function renderUpcoming(c, openId){
 function rcptRowHtml(k, r, attr){
   return '<div class="nextrow" ' + attr + ' style="cursor:pointer;" title="タップで領収書を表示">'
     + '<span class="nd">' + esc((r.d || '').slice(5).replace('-', '/')) + '</span>'
-    + '<span class="nn">🧾 ' + esc(r.ev || '') + '</span>'
+    + '<span class="nn">' + ckIco('receipt') + ' ' + esc(r.ev || '') + '</span>'
     + '<span class="nr"><b class="mono" style="font-size:14px;">' + yen(r.amt || 0) + '</b></span>'
     + '</div>';
 }
