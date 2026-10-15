@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v804';
+var APP_JS_VERSION = 'v805';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4065,7 +4065,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v804';
+  var DATA_VERSION = 'v805';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5570,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v805', d:'2026-10-15', items:['スマホで計画シートのMAPの人を押すと、情報のカードが出て消えなくなる問題を直しました（#15）'] },
   { v:'v804', d:'2026-10-14', items:['メンバー編集の「活動」は直近1か月だけ表示。それより前に終わったOL・予定・タスクはたたみ、「それより前の活動を見る」で開けます','まだ終わっていないもの（未完了のタスク・予定のOL・研修の予定）は古くても表示します'] },
   { v:'v803', d:'2026-10-13', items:['分析 › 研修：月の並びを古い月→新しい月（グラフと同じ）に。開いた時は今月（右端）から','くわしく（コミッション・S稼働・BR・動かす数字）：グラフの月を押すと、その月の数字と人（S稼働の人・あと一歩・BR以上・審査中・スタートした人）が出ます。「今月に戻す」で戻ります'] },
   { v:'v802', d:'2026-10-13', items:['NWPのロゴを、ブラウザの長押し・右クリックから画像として保存できないようにしました'] },
@@ -14333,7 +14334,16 @@ function saveCurrent() {
 
 // ── MODAL ──
 // #9 PC MAPツールチップ
+// v805 #15: スマホ・タブレットの指のタップでは、マウスを乗せた時の情報カードを出さない
+//   （iPhoneはタップでmouseenterが起きるのにmouseleaveが来ないため、計画シートのMAPなどでカードが消えなくなっていた）
+var _gmPtr = '';
+try {
+  document.addEventListener('pointerdown', function(e) { _gmPtr = e.pointerType || ''; if (_gmPtr === 'touch' || _gmPtr === 'pen') { try { _tipHideNow(); } catch (e2) {} } }, true);
+  document.addEventListener('touchstart', function() { _gmPtr = 'touch'; try { _tipHideNow(); } catch (e2) {} }, { capture: true, passive: true });
+} catch (eP) {}
+function _gmTouchNow() { return _gmPtr === 'touch' || _gmPtr === 'pen' || !!(window.matchMedia && matchMedia('(hover: none)').matches); }
 function showPcTooltip(mid, ev) {
+  if (_gmTouchNow()) return; // v805 #15
   var m = null;
   for (var i=0; i<state.members.length; i++) { if (state.members[i].id===mid) { m=state.members[i]; break; } }
   if (!m && /^MG_/.test(mid)) m = _mgFind(mid); // v561: 共有（結合）メンバーも表示
