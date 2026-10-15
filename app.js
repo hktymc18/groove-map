@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v806';
+var APP_JS_VERSION = 'v807';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4073,7 +4073,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v806';
+  var DATA_VERSION = 'v807';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5578,6 +5578,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v807', d:'2026-10-16', items:['データベースの読み取りを減らしました（ユニオン予定は過去120日から・手元のリストの人数は端末に6時間覚える・保存の前の読み直しを減らす など）。見た目と使い方は変わりません'] },
   { v:'v806', d:'2026-10-15', items:['ユニオン名の変更前の名前（BASE ANTARES など）のまま残っていた人は、開くと自動で新しいユニオン名に直るようにしました'] },
   { v:'v805', d:'2026-10-15', items:['スマホで計画シートのMAPの人を押すと、情報のカードが出て消えなくなる問題を直しました（#15）'] },
   { v:'v804', d:'2026-10-14', items:['メンバー編集の「活動」は直近1か月だけ表示。それより前に終わったOL・予定・タスクはたたみ、「それより前の活動を見る」で開けます','まだ終わっていないもの（未完了のタスク・予定のOL・研修の予定）は古くても表示します'] },
@@ -7077,7 +7078,7 @@ function ckTrAuto(force) {
     if (window._ckTrBusy) return; window._ckTrBusy = true;
     db.collection('checkinUnions').get().then(function(qs) {
       var unions = []; qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
-      var un = _ckPickUnion(unions, ''); if (!un) return null;
+      var un = _ckPickUnion(unions, ''); if (!un) { try { localStorage.setItem(key, today); } catch (eK) {} return null; } // v807: 受付に自分のユニオンが無い時も「今日は確認済み」に（前は開くたび・MAPを開くたびに読み直していた）
       return db.collection('checkinMembers').where('union', '==', un).get();
     }).then(function(qs) {
       window._ckTrBusy = false;
@@ -24744,16 +24745,34 @@ function _p2ActRow(ym, key, kind, lb, need) {
 function p2TsOpen(mid) { try { ppOpen(mid, 'current'); if (_pp && _pp.id === mid) ppGo('tr'); } catch (e) {} } // v570: 研修履歴の結果を入れる（v783: 新しいメンバー画面の研修へ）
 // v550: ATTACK LIST（同じFirebaseの users/{uid}/people）から「手元のリスト」＝未着手・連絡中の人数を読む（10分キャッシュ）
 var _p2Al = { n: null, apo: null, at: 0, err: false, busy: false };
+// v807: 読み取りを減らす。結果は端末に6時間覚える（開き直しても読み直さない。ATTACK LISTを開いて戻った時は読み直す＝p2OpenAL）。
+//   「数えるだけ」の読み方（count：1,000件まで1回分）が使えるSDKならそれで、使えない時（今のcompat 10.12）は今までどおり全員を読む
+function _p2AlLsKey() { return 'gm_p2Al_' + ((currentUser && currentUser.uid) || ''); }
 function _p2AlLoad(force) {
   if (!db || !currentUser || viewingOwnerUid || _p2Al.busy) return;
-  if (!force && _p2Al.at && Date.now() - _p2Al.at < 600000) return;
+  if (!force && !_p2Al.at) { try { var c0 = JSON.parse(localStorage.getItem(_p2AlLsKey()) || 'null'); if (c0 && c0.at && Date.now() - c0.at < 21600000) { _p2Al = { n: c0.n, apo: c0.apo, at: c0.at, err: false, busy: false }; return; } } catch (eL) {} }
+  if (!force && _p2Al.at && Date.now() - _p2Al.at < 21600000) return;
   _p2Al.busy = true;
-  fsGetCol('users/' + currentUser.uid + '/people').then(function(docs) {
-    var n = 0, apo = 0;
-    (docs || []).forEach(function(d) { var st = d.status || '未着手'; if (st === '未着手' || st === '連絡中') n++; else if (st === 'CT予定') apo++; });
+  var col = db.collection('users/' + currentUser.uid + '/people');
+  var done = function(n, apo) {
     _p2Al = { n: n, apo: apo, at: Date.now(), err: false, busy: false };
+    try { localStorage.setItem(_p2AlLsKey(), JSON.stringify({ n: n, apo: apo, at: _p2Al.at })); } catch (eS) {}
     if (currentView === 'plan') renderPlan();
-  }).catch(function() { _p2Al = { n: null, apo: null, at: Date.now(), err: true, busy: false }; if (currentView === 'plan') renderPlan(); });
+  };
+  var fail = function() { _p2Al = { n: null, apo: null, at: Date.now(), err: true, busy: false }; if (currentView === 'plan') renderPlan(); };
+  var full = function() { // 今までの読み方（全員を読む）
+    return fsGetCol('users/' + currentUser.uid + '/people').then(function(docs) {
+      var n = 0, apo = 0;
+      (docs || []).forEach(function(d) { var st = d.status || '未着手'; if (st === '未着手' || st === '連絡中') n++; else if (st === 'CT予定') apo++; });
+      done(n, apo);
+    });
+  };
+  var cnt = function(q) { return q.count().get().then(function(r) { return r.data().count || 0; }); };
+  if (typeof col.count !== 'function') { full().catch(fail); return; }
+  // 未着手・連絡中＋状態が未設定（＝未着手）＝ 全員 − 状態が入っている人 ＋ 未着手・連絡中の人
+  Promise.all([cnt(col), cnt(col.where('status', '>=', '')), cnt(col.where('status', 'in', ['未着手', '連絡中'])), cnt(col.where('status', '==', 'CT予定'))])
+    .then(function(r) { done(r[2] + Math.max(0, r[0] - r[1]), r[3]); })
+    .catch(function() { full().catch(fail); });
 }
 function _p2ListN() { // 連携できればATTACK LIST、できなければ手入力
   if (_p2Al.n !== null && !_p2Al.err) return { n: _p2Al.n, apo: _p2Al.apo, src: 'al' };
@@ -29069,11 +29088,14 @@ function loadUnionEvents() {
   if (!db || !currentUser || !currentUser.union || viewingOwnerUid) return;
   var un = currentUser.union;
   if (un.indexOf('/') >= 0) return;
+  // v807: 読み取りを減らす。表示に使うのは過去120日〜これからの予定だけなので、その分と設定（plan_meta）だけ読む（前はユニオンの予定を全部読んでいた）
+  var cut0 = evYmd(new Date(Date.now() - 120 * 86400000)), base = 'unions/' + un + '/events';
   Promise.all([
-    fsGetCol('unions/' + un + '/events'),
-    fsGet('maps/' + currentUser.uid + '/meta/unionPrefs')
+    db.collection(base).where('date', '>=', cut0).get().then(function(qs) { var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; }),
+    fsGet('maps/' + currentUser.uid + '/meta/unionPrefs'),
+    fsGet(base + '/plan_meta').catch(function() { return null; })
   ]).then(function(rs) {
-    _unionRaw = rs[0] || [];
+    _unionRaw = (rs[0] || []).concat(rs[2] ? [Object.assign({ id: 'plan_meta' }, rs[2])] : []);
     // v469: PLAN用メタ（ユニオン係数・マイルストーン）はカレンダー合成から分離
     try {
       window._unPlanMeta = null;
@@ -38917,6 +38939,7 @@ function fsLoadFromFirestore(uid) {
       if (typeof recalcAllGSV === 'function') recalcAllGSV();
       _fsSavedSig['maps/' + uid + '/months/' + month + '_ideal'] = loaded.ideal ? JSON.stringify(state.idealMembers || []) : '';
       _fsSavedSig['maps/' + uid + '/stats/' + month] = loaded.stats ? JSON.stringify([state.stats, state.commission, state.freshData || {}]) : '';
+      _stReadAt['maps/' + uid + '/stats/' + month] = Date.now(); // v807: 読みたて＝直後の保存は読み直さない
     } catch(eSg) {}
   }).catch(function(err) {
     console.error('Firestore読み込みエラー:', err);
@@ -38957,6 +38980,7 @@ function mergeMembers(localArr, remoteArr) {
 }
 // 保存前マージ読取りの間引き：直近60秒以内に読取り/読込済みならスキップ（大規模MAPの往復半減）
 var _lastMergeCheck = 0;
+var _stReadAt = {}; // v807: stats を保存前に読んだ時刻（パスごと）
 var _fsSavedSig = {}; // v511: パス→最後に保存/読込した内容（変更がない文書の書き込みを省略）
 function fsSaveToFirestore(uid) {
   if (!_fsOwnReady(uid)) { var eNr = new Error('not-loaded'); eNr.gmNotReady = true; return Promise.reject(eNr); } // v797
@@ -38999,7 +39023,10 @@ function fsSaveToFirestore(uid) {
     updatedAt: new Date().toISOString()
   });
   // v531: 共有MAPの相手が書き込んだOL記録を消さないよう、保存の直前に取り込んでから書く
-  var p3 = (_fsSavedSig[_stPath] === _stSig) ? Promise.resolve() : fsGet(_stPath).catch(function() { return null; }).then(function(remote) {
+  // v807: 保存の前の読み直し（相手が書いたOL記録を取り込む）は、同じ月なら60秒に1回まで（現状MAPと同じ考え方。前は保存のたびに読んでいた）
+  var _stFresh = _stReadAt[_stPath] && Date.now() - _stReadAt[_stPath] < 60000;
+  if (!_stFresh && _fsSavedSig[_stPath] !== _stSig) _stReadAt[_stPath] = Date.now();
+  var p3 = (_fsSavedSig[_stPath] === _stSig) ? Promise.resolve() : (_stFresh ? Promise.resolve(null) : fsGet(_stPath).catch(function() { return null; })).then(function(remote) {
     if (remote && _olMergeRemoteFresh(remote.freshData)) _stSig = JSON.stringify([state.stats, state.commission, state.freshData || {}]);
     return fsSet(_stPath, {
       stats: state.stats,

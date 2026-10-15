@@ -1,7 +1,8 @@
 /**
  * GROOVE MAP - CAL-4 プッシュ通知の発射役
  * 5分ごとに notifQueue を見て、fireAt を過ぎた予約を対象ユーザーの全端末へ送信し、キューを削除する。
- * デプロイ: リポジトリ直下で `firebase deploy --only functions`
+ * デプロイ: リポジトリ直下で `firebase deploy --only functions,firestore:indexes`
+ *   （期限切れタスクの検索に複合インデックスが要る。firestore.indexes.json）
  */
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
@@ -10,11 +11,15 @@ admin.initializeApp();
 
 // ユーザーの配信先トークン（古い・重複した登録は掃除）
 async function getTokens(db, uid) {
-  const tokens = [];
   const toksSnap = await db.collection('users').doc(uid).collection('fcmTokens').get();
+  return tokensFromDocs(toksSnap.docs);
+}
+// 読み込み済みのトークン文書から、送り先を選ぶ（45日以上更新のない登録・同じ端末の古い登録は掃除）
+function tokensFromDocs(docs) {
+  const tokens = [];
   const cutoff = new Date(Date.now() - 45 * 86400000).toISOString();
   const cand = [];
-  toksSnap.docs.forEach((t) => {
+  docs.forEach((t) => {
     const dd = t.data() || {};
     const ts = dd.updatedAt || '';
     if (ts && ts < cutoff) { t.ref.delete().catch(() => {}); return; }
@@ -65,17 +70,29 @@ exports.overdueReminders = onSchedule(
   async () => {
     const db = admin.firestore();
     const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10); // 日本時間の今日（YYYY-MM-DD）
-    const users = await db.collection('users').get();
-    let sent = 0;
-    for (const u of users.docs) {
-      const uid = u.id;
-      const ud = u.data() || {};
-      if (ud.status === 'disabled') continue;
-      let tokens = [];
-      try { tokens = await getTokens(db, uid); } catch (e) { continue; }
+    // v807: 読み取りを減らす。
+    //   ① 全ユーザーを読むのをやめ、通知の登録（fcmTokens）がある人だけを対象に（トークンはまとめて1回で読む）
+    //   ② その人の予定・タスクは「タスク・未完了・期限が今日より前」だけを読む（前は未完了の予定・タスクを全部読んでいた）
+    //      ※複合インデックス（type・done・date）が要る。まだ作られていない時は今までの読み方に戻す
+    //   ③ 無効にした人かどうかは、期限切れがあって送る時だけ確認する
+    const tokSnap = await db.collectionGroup('fcmTokens').get();
+    const tokByUid = {};
+    tokSnap.docs.forEach((t) => {
+      const u = t.ref.parent.parent;
+      if (!u || !u.parent || u.parent.id !== 'users') return;
+      (tokByUid[u.id] = tokByUid[u.id] || []).push(t);
+    });
+    let sent = 0, idxOk = 0, idxNg = 0;
+    for (const uid of Object.keys(tokByUid)) {
+      const tokens = tokensFromDocs(tokByUid[uid]);
       if (!tokens.length) continue;
+      const evCol = db.collection('maps').doc(uid).collection('events');
       let snap;
-      try { snap = await db.collection('maps').doc(uid).collection('events').where('done', '==', false).get(); } catch (e) { console.log(`events read error uid=${uid}: ${e}`); continue; }
+      try { snap = await evCol.where('type', '==', 'task').where('done', '==', false).where('date', '<', today).get(); idxOk++; }
+      catch (e0) {
+        idxNg++;
+        try { snap = await evCol.where('done', '==', false).get(); } catch (e) { console.log(`events read error uid=${uid}: ${e}`); continue; }
+      }
       const od = [];
       snap.docs.forEach((d) => {
         const e = d.data() || {};
@@ -86,18 +103,19 @@ exports.overdueReminders = onSchedule(
         od.push(e);
       });
       if (!od.length) continue;
+      try { const ud = (await db.collection('users').doc(uid).get()).data() || {}; if (ud.status === 'disabled') continue; } catch (eU) { continue; }
       od.sort((a, b) => (a.date < b.date ? -1 : (a.date > b.date ? 1 : 0)));
       const names = od.slice(0, 2).map((e) => String(e.title || '(無題)'));
       const body = names.join('、') + (od.length > 2 ? ` ほか${od.length - 2}件` : '') + '｜タップして一覧を開く';
       try { await pushTo(db, uid, tokens, `⚠️ 期限切れタスク ${od.length}件`, body, 'due-digest', 'gm-overdue'); sent++; } catch (e) { console.log(`overdue send error uid=${uid}: ${e}`); }
     }
-    console.log(`overdueReminders: users=${users.size} sent=${sent}`);
+    console.log(`overdueReminders: users=${Object.keys(tokByUid).length} sent=${sent} index=${idxOk}/${idxOk + idxNg}`);
   }
 );
 
 exports.sendReminders = onSchedule(
-  // v307: 通知遅延を最大1分程度に短縮（毎分起動でも無料枠の2%程度）
-  { schedule: 'every 1 minutes', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
+  // v307: 通知遅延を最大1分程度に短縮していたが、v807で5分ごとに戻した（空でも1回ごとに読み取りが1回かかるため。1日1,440回→288回）
+  { schedule: 'every 5 minutes', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
   async () => {
     const db = admin.firestore();
     const nowIso = new Date().toISOString();
