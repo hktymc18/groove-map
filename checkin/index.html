@@ -4201,8 +4201,15 @@ function renderRsvpTop(c, all){
     };
   });
 }
+// 読み取りを減らす：自分のユニオンの予定だけを読む（前は全ユニオンのこれからの予定を全部読んで、画面側で絞っていた）。
+// この読み方にはFirestoreの複合インデックス（unions＋date。firestore.indexes.json）が要る。まだ無い時は今までの読み方に戻す
+function ckUpcomingQuery(c){
+  var t = todayStr();
+  return db.collection('checkinEvents').where('unions', 'array-contains', c.union || '').where('date', '>=', t).get()
+    .catch(function(){ return db.collection('checkinEvents').where('date', '>=', t).get(); });
+}
 function renderUpcoming(c, openId){
-  db.collection('checkinEvents').where('date', '>=', todayStr()).get().then(function(qs){
+  ckUpcomingQuery(c).then(function(qs){
     var t = todayStr(), all = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
