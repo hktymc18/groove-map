@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v805';
+var APP_JS_VERSION = 'v806';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3704,6 +3704,14 @@ var UNION_LIST = [
   { name:'AMASIA',       upbd:'' },
   { name:'UPBD',         upbd:'渡邉寛' }
 ];
+// v806: 2026-10 のユニオン名変更（旧名 → 新名）。古い版のアプリで旧名のまま保存し直された人を、ログイン時に新しい名前へ直す
+var UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'LOAD' };
+function _unionRenameHeal(user) {
+  var nu = user && UNION_RENAMED[user.union || ''];
+  if (!nu) return;
+  user.union = nu;
+  if (user.uid && USE_FIREBASE) fsSet('users/' + user.uid, { union: nu }).catch(function(){});
+}
 function unionOptionsHtml(placeholder) {
   var h = '<option value="">' + (placeholder || 'ユニオンを選択') + '</option>';
   UNION_LIST.forEach(function(u){
@@ -4065,7 +4073,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v805';
+  var DATA_VERSION = 'v806';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5570,6 +5578,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v806', d:'2026-10-15', items:['ユニオン名の変更前の名前（BASE ANTARES など）のまま残っていた人は、開くと自動で新しいユニオン名に直るようにしました'] },
   { v:'v805', d:'2026-10-15', items:['スマホで計画シートのMAPの人を押すと、情報のカードが出て消えなくなる問題を直しました（#15）'] },
   { v:'v804', d:'2026-10-14', items:['メンバー編集の「活動」は直近1か月だけ表示。それより前に終わったOL・予定・タスクはたたみ、「それより前の活動を見る」で開けます','まだ終わっていないもの（未完了のタスク・予定のOL・研修の予定）は古くても表示します'] },
   { v:'v803', d:'2026-10-13', items:['分析 › 研修：月の並びを古い月→新しい月（グラフと同じ）に。開いた時は今月（右端）から','くわしく（コミッション・S稼働・BR・動かす数字）：グラフの月を押すと、その月の数字と人（S稼働の人・あと一歩・BR以上・審査中・スタートした人）が出ます。「今月に戻す」で戻ります'] },
@@ -37594,6 +37603,7 @@ function checkPendingApprovals(){
 function loginSuccess(user) {
   clearTimeout(window._loginTo);
   currentUser = user;
+  try { _unionRenameHeal(user); } catch(eUr) {} // v806: 旧ユニオン名のままの人を新しい名前へ
   try { localStorage.setItem('gm_lastProfile', JSON.stringify(user)); } catch(eLp) {} // v451: オフライン起動用スナップショット
   // 承認制：承認待ち/無効はゲート表示してアプリに入れない（オーナー・レガシー(status無し=active)は通過）
   if (!isOwnerUid(user.uid) && (user.status === 'pending' || user.status === 'disabled')) {
