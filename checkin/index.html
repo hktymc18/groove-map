@@ -919,8 +919,9 @@ body.practice .topbar{top:var(--pxh,36px);}
   /* 他の表（集計など）は横スクロールのまま */
   table{font-size:13px;}
   /* ダイアログ: 画面下からのシート */
-  .modalback{padding:0;align-items:flex-end;}
-  .modal,.modal.wide{max-width:none;border-radius:18px 18px 0 0;max-height:92vh;padding:18px 16px calc(16px + env(safe-area-inset-bottom));}
+  /* iPhoneのSafariは下のツールバーの裏まで100vhに含めるので、見えている高さ（dvh）に合わせる */
+  .modalback{padding:0;align-items:flex-end;bottom:auto;height:100vh;height:100dvh;}
+  .modal,.modal.wide{max-width:none;border-radius:18px 18px 0 0;max-height:88vh;max-height:88dvh;padding:18px 16px calc(16px + env(safe-area-inset-bottom));}
   .modal input,.modal select,.modal textarea{font-size:16px;}
   .modal .btns{position:sticky;bottom:-16px;background:var(--card);margin:16px -16px -16px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);flex-wrap:wrap;}
   .modal .btns button{flex:1 1 auto;padding:12px;}
@@ -1783,10 +1784,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v74';
+var APP_VER = 'v75';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v75', d: '2026/10/16', items: ['📱 スマホ: 名簿で削除したメンバーが、押した瞬間に一覧から消えるようにしました', '📱 スマホ: 画面の下から出る確認画面のボタンが、iPhoneの下のバーに隠れないようにしました'] },
   { v: 'v74', d: '2026/10/16', items: ['📱 スマホで受付管理を使いやすく：名簿はカード型の一覧に、管理ボタンは「⚙ 管理メニュー」にまとめました。月・ユニオンの切り替えは折り返して表示し、編集画面は画面の下から出るようにしました'] },
   { v: 'v73', d: '2026/10/16', items: ['🎓 「研修生登録の担当」の任命・解除は、ユニオン管理者だけができるようになりました（受付管理者は不可）'] },
   { v: 'v72', d: '2026/10/16', items: ['🎓 研修生の検索で担当者を選ぶと、その人が登録した研修生に加えて、その人が研修（PA・PGなど）を1つでも受講済みにした研修生も出るようになりました'] },
@@ -5986,11 +5988,18 @@ function memberAction(m, a){
       + '<button class="primary" id="mdGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
     $('mdCancel').onclick = closeModal;
     $('mdGo').onclick = function(){
+      // 📱 通信が遅いスマホでも、押した瞬間に一覧から消す（サーバーの完了を待たない）。失敗したら元に戻す
+      var keep = gMembers;
+      gMembers = gMembers.filter(function(x){ return x.no !== no; });
+      delete gSel[no];
+      closeModal(); renderRoster();
       db.collection('checkinMembers').doc(no).delete().then(function(){
-        closeModal(); toast('削除しました');
-        delete gSel[no];
+        toast('削除しました');
         loadMembers();
-      }).catch(function(err){ toast(permMsg(err, '名簿の削除はユニオン管理者・受付管理者のみ可能です')); });
+      }).catch(function(err){
+        gMembers = keep; renderRoster();
+        toast(permMsg(err, '名簿の削除はユニオン管理者・受付管理者のみ可能です'));
+      });
     };
   }
 }
