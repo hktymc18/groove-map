@@ -391,8 +391,9 @@ service cloud.firestore {
         && (isOwnerAdmin() || !('coreAdmins' in request.resource.data));
       allow update: if (isCkCoreAdmin(un)
             && (isOwnerAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['coreAdmins'])))
+        // 🎓 v25: 研修生登録の担当（trainers）の任命・解除もユニオン管理者（コア管理者）だけ。受付管理者は不可
         || (isCkAdmin(un)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins']));
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers']));
       allow delete: if isOwnerAdmin();
     }
 
