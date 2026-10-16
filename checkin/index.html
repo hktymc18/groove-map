@@ -1721,10 +1721,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v71';
+var APP_VER = 'v72';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v72', d: '2026/10/16', items: ['🎓 研修生の検索で担当者を選ぶと、その人が登録した研修生に加えて、その人が研修（PA・PGなど）を1つでも受講済みにした研修生も出るようになりました'] },
   { v: 'v71', d: '2026/10/16', items: ['🎓 研修生登録の一覧に、自分が登録した研修生に加えて、自分が研修（PA・PGなど）を受講済みにした研修生も出るようになりました', '一覧の「担当」の表示は「登録」（その研修生を登録した人）に名前を変えました'] },
   { v: 'v70', d: '2026/10/15', items: ['🔧 ユニオン名の変更前の名前（BASE ANTARES など）のまま残っていた人が、研修生登録ページで「任命されていません」と出て使えなかった問題を修正（開くと自動で新しいユニオン名に直ります）'] },
   { v: 'v69', d: '2026/10/14', items: ['🖼 目標設定の宿題（質問・まとめ・提出完了）の絵文字を、線のアイコンとヒヨコのイラストに変えました'] },
@@ -7827,6 +7828,13 @@ function trMine(m){
   var tr = m.trainings || {};
   return Object.keys(tr).some(function(k){ return tr[k] && tr[k].by === gUser.uid; });
 }
+// その研修生に関わった担当者の名前（登録した人＋受講済みにした人）
+function trPeople(m){
+  var out = [], tr = m.trainings || {};
+  if(m.regByName) out.push(m.regByName);
+  Object.keys(tr).forEach(function(k){ var n = tr[k] && tr[k].byName; if(n && out.indexOf(n) < 0) out.push(n); });
+  return out;
+}
 function trSearchBase(){
   var seeAll = canEditUnion(gUnion);
   var src = (seeAll && gTrFilter.all && gTrAll) ? gTrAll : gTrMembers;
@@ -7859,7 +7867,7 @@ function trRenderList(){
           ? selHtml('tsArea', '地域', distinct(function(m){ return m._area; }), gTrFilter.area)
             + selHtml('tsUnion', 'ユニオン', distinct(function(m){ return m.union; }), gTrFilter.union)
           : '')
-        + selHtml('tsTrainer', '登録した人', distinct(function(m){ return m.regByName; }), gTrFilter.trainer)
+        + selHtml('tsTrainer', '担当者', (function(){ var set = {}; base.forEach(function(m){ trPeople(m).forEach(function(n){ set[n] = 1; }); }); return Object.keys(set).sort(); })(), gTrFilter.trainer)
         + '</div>'
         + '<input type="text" id="tsRef" placeholder="紹介者で絞り込み（部分一致）" value="' + esc(gTrFilter.ref) + '" style="margin:0 0 6px;">'
       : '')
@@ -7923,7 +7931,8 @@ function trApplyFilter(){
   var list = trSearchBase().filter(function(m){
     if(gTrFilter.all && gTrFilter.area && (m._area || '') !== gTrFilter.area) return false;
     if(gTrFilter.all && gTrFilter.union && (m.union || '') !== gTrFilter.union) return false;
-    if(seeAll && gTrFilter.trainer && (m.regByName || '') !== gTrFilter.trainer) return false;
+    // 担当者で絞り込み: 登録した人、または1つでも受講済みにした人がその担当者なら出す
+    if(seeAll && gTrFilter.trainer && trPeople(m).indexOf(gTrFilter.trainer) < 0) return false;
     if(seeAll && gTrFilter.ref && norm(m.referrer).indexOf(norm(gTrFilter.ref)) < 0) return false;
     if(q && (norm(m.name) + norm(m.kana) + norm(m.no)).indexOf(q) < 0) return false;
     return true;
