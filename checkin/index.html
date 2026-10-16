@@ -865,6 +865,67 @@ body.practice .topbar{top:var(--pxh,36px);}
 .px-card.off{background:linear-gradient(150deg,#eee,#cfcfcf);box-shadow:0 3px 0 #999;color:#444;}
 .px-qr{position:absolute;right:10px;top:50%;margin-top:-18px;width:36px;height:36px;border:3px solid #fff;border-radius:4px;
   background:conic-gradient(#222 25%,#fff 0 50%,#222 0 75%,#fff 0) 0 0/9px 9px;}
+/* ══════ 📱 スマホ版（幅640px以下）: 管理画面を片手で操作しやすく ══════
+   ・各タブの上部メニューは折り返して1画面に収める（固定表示はやめてリストを広く）
+   ・名簿は管理ボタンを「⚙ 管理メニュー」にしまい、表はカード型に
+   ・編集などのダイアログは画面下からのシート、入力欄は16px（iPhoneの自動ズーム防止） */
+.mob-only{display:none;}
+@media (max-width:640px){
+  .mob-only{display:inline-flex;}
+  .panehead{position:static;margin:0 0 6px;padding:0;}
+  .panehead .toolrow,.panehead .monthnav{margin-bottom:8px;}
+  /* 月送り＋ユニオン＋操作ボタンの行 */
+  .monthnav{flex-wrap:wrap;gap:6px;}
+  .monthnav > b{flex:1 1 auto;min-width:0;}
+  .monthnav > label{display:none;}   /* 「ユニオン:」は選択欄にユニオン名が出るので省略 */
+  .monthnav > select{flex:1 1 100%;min-width:0;}
+  .monthnav > span[style*="flex:1"]{flex-basis:100% !important;height:0;}
+  .monthnav > button:not(.ghost){flex:1 1 30%;white-space:nowrap;padding:10px 8px;}
+  .monthnav > button.ghost{padding:8px 14px;}
+  .toolrow{gap:6px;}
+  .toolrow > label{white-space:nowrap;}
+  .toolrow > select{flex:1 1 0;min-width:0;}
+  .toolrow > button{flex:1 1 auto;padding:10px 12px;}
+  .toolrow input[type=search]{flex:1 1 100%;min-width:0;}
+  /* 名簿: 管理ボタンは「⚙ 管理メニュー」を開いた時だけ */
+  #pRoster:not(.mopen) .rmore{display:none !important;}
+  #pRoster.mopen .toolrow .rmore{flex:1 1 45%;}
+  #btnRosterMore{flex:0 0 auto;}
+  #btnAddMember{flex:1 1 100%;padding:12px;font-size:15px;}
+  /* 名簿の表 → カード */
+  #pRoster .tblwrap{max-height:none;overflow:visible;background:none;border:none;}
+  #pRoster table{min-width:0;display:block;}
+  #pRoster thead{display:block;}
+  #pRoster thead tr{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
+  #pRoster thead th{position:static;box-shadow:none;border:1px solid var(--line);border-radius:99px;padding:5px 12px;background:var(--card);}
+  #pRoster thead th:last-child{display:none;}
+  #pRoster tbody{display:grid;gap:8px;}
+  #pRoster tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"sel nm st" "sel no gr" "op op op";
+    column-gap:10px;row-gap:2px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+  #pRoster tbody td{border:none;padding:0;white-space:normal;min-width:0;}
+  #pRoster td.rc-sel{grid-area:sel;align-self:start;padding-top:3px;}
+  #pRoster td.rc-sel input{width:22px;height:22px;}
+  #pRoster td.rc-nm{grid-area:nm;font-size:15px;}
+  #pRoster td.rc-no{grid-area:no;font-size:12.5px;color:var(--sub);}
+  #pRoster td.rc-gr{grid-area:gr;font-size:12.5px;color:var(--sub);text-align:right;}
+  #pRoster td.rc-st{grid-area:st;text-align:right;white-space:nowrap;}
+  #pRoster td.rc-op{grid-area:op;margin-top:8px;}
+  #pRoster td.rc-op .rowbtns{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;}
+  #pRoster td.rc-op .rowbtns button{padding:9px 6px;font-size:13.5px;}
+  #pRoster tbody td[colspan]{grid-column:1 / -1;}
+  /* イベント・会計の行のボタンも押しやすく */
+  .evrow{padding:12px;}
+  .evrow button{padding:9px 12px;}
+  /* 他の表（集計など）は横スクロールのまま */
+  table{font-size:13px;}
+  /* ダイアログ: 画面下からのシート */
+  .modalback{padding:0;align-items:flex-end;}
+  .modal,.modal.wide{max-width:none;border-radius:18px 18px 0 0;max-height:92vh;padding:18px 16px calc(16px + env(safe-area-inset-bottom));}
+  .modal input,.modal select,.modal textarea{font-size:16px;}
+  .modal .btns{position:sticky;bottom:-16px;background:var(--card);margin:16px -16px -16px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);flex-wrap:wrap;}
+  .modal .btns button{flex:1 1 auto;padding:12px;}
+  input,select,textarea{font-size:16px;}
+}
 </style>
 </head>
 <body>
@@ -1022,22 +1083,23 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div class="toolrow">
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
-      <button id="btnCkAdmins" class="hide">👑 受付管理者</button>
-      <button id="btnFreeMembers" class="hide" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
-      <button id="btnTrainers" class="hide">🎓 研修生登録の担当</button>
-      <button id="btnAdminsView">👥 管理者一覧</button>
-      <button id="btnAddUnion" class="ghost hide" title="ユニオンを追加">＋ユニオン</button>
-      <button id="btnRenUnion" class="ghost hide" title="ユニオン名を変更（名簿・イベント・出席・集計・NAVIGATORのユーザーまで一括・オーナーのみ）">✏ ユニオン名を変更</button>
-      <button id="btnDelUnion" class="ghost hide" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
+      <button id="btnRosterMore" class="mob-only" aria-expanded="false">⚙ 管理メニュー ▸</button>
+      <button id="btnCkAdmins" class="hide rmore">👑 受付管理者</button>
+      <button id="btnFreeMembers" class="hide rmore" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
+      <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
+      <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
+      <button id="btnAddUnion" class="ghost hide rmore" title="ユニオンを追加">＋ユニオン</button>
+      <button id="btnRenUnion" class="ghost hide rmore" title="ユニオン名を変更（名簿・イベント・出席・集計・NAVIGATORのユーザーまで一括・オーナーのみ）">✏ ユニオン名を変更</button>
+      <button id="btnDelUnion" class="ghost hide rmore" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
       <label style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;white-space:nowrap;margin:0;cursor:pointer;"><input type="checkbox" id="qShowOff" style="width:auto;margin:0;">無効も表示</label>
       <button class="primary" id="btnAddMember">＋ メンバー追加</button>
-      <button id="btnCsvIn">CSV取込</button>
-      <button id="btnCsvOut">CSV出力</button>
-      <button id="btnGroupRen" class="hide">系列名変更</button>
+      <button id="btnCsvIn" class="rmore">CSV取込</button>
+      <button id="btnCsvOut" class="rmore">CSV出力</button>
+      <button id="btnGroupRen" class="hide rmore">系列名変更</button>
     </div>
-    <div class="toolrow hide" id="bulkRow">
+    <div class="toolrow hide rmore" id="bulkRow">
       <span style="font-size:13px;font-weight:700;" id="selCount">選択中: 0名</span>
       <button id="btnGradeSel" disabled>グレード変更</button>
       <button id="btnDelSel" disabled>選択を削除</button>
@@ -1721,10 +1783,12 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v72';
+var APP_VER = 'v74';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v74', d: '2026/10/16', items: ['📱 スマホで受付管理を使いやすく：名簿はカード型の一覧に、管理ボタンは「⚙ 管理メニュー」にまとめました。月・ユニオンの切り替えは折り返して表示し、編集画面は画面の下から出るようにしました'] },
+  { v: 'v73', d: '2026/10/16', items: ['🎓 「研修生登録の担当」の任命・解除は、ユニオン管理者だけができるようになりました（受付管理者は不可）'] },
   { v: 'v72', d: '2026/10/16', items: ['🎓 研修生の検索で担当者を選ぶと、その人が登録した研修生に加えて、その人が研修（PA・PGなど）を1つでも受講済みにした研修生も出るようになりました'] },
   { v: 'v71', d: '2026/10/16', items: ['🎓 研修生登録の一覧に、自分が登録した研修生に加えて、自分が研修（PA・PGなど）を受講済みにした研修生も出るようになりました', '一覧の「担当」の表示は「登録」（その研修生を登録した人）に名前を変えました'] },
   { v: 'v70', d: '2026/10/15', items: ['🔧 ユニオン名の変更前の名前（BASE ANTARES など）のまま残っていた人が、研修生登録ページで「任命されていません」と出て使えなかった問題を修正（開くと自動で新しいユニオン名に直ります）'] },
@@ -4963,7 +5027,7 @@ $('btnTrainers').onclick = function(){
         toast('研修生登録の担当を保存しました（' + arr.length + '名）');
       }).catch(function(e){
         $('trnSave').disabled = false;
-        toast(permMsg(e, '任命はユニオン管理者・受付管理者のみ可能です'));
+        toast(permMsg(e, '任命はユニオン管理者のみ可能です'));
       });
     };
   }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
@@ -5519,7 +5583,7 @@ function renderRoster(){
   $('btnRenUnion').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnFreeMembers').classList.toggle('hide', !canEditUnion(gRosterUnion));
-  $('btnTrainers').classList.toggle('hide', !edit);
+  $('btnTrainers').classList.toggle('hide', !isCoreAdmin(gRosterUnion));   // 🎓 任命はユニオン管理者だけ（受付管理者は不可）
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   $('btnGroupRen').classList.toggle('hide', !edit);
@@ -5547,15 +5611,15 @@ function renderRoster(){
     if(q && name.indexOf(q) < 0 && m.no.indexOf(q) < 0 && (m.group||'').indexOf(q) < 0) return;
     shown++;
     html += '<tr>'
-      + (edit ? '<td><input type="checkbox" class="selchk" data-no="' + esc(m.no) + '"' + (gSel[m.no] ? ' checked' : '') + '></td>' : '')
-      + '<td class="mono">' + esc(m.no) + '</td><td><b>' + esc(name) + '</b>'
+      + (edit ? '<td class="rc-sel"><input type="checkbox" class="selchk" data-no="' + esc(m.no) + '"' + (gSel[m.no] ? ' checked' : '') + '></td>' : '')
+      + '<td class="mono rc-no">' + esc(m.no) + '</td><td class="rc-nm"><b>' + esc(name) + '</b>'
       + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '')
       + (m.trainee ? ' <span class="pill n">研修生</span>'
           + (trPromoteReady(m) ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
-      + '<td>' + esc(m.group || '') + '</td>'
-      + '<td>' + (ckMemberOff(m) ? '<span class="pill n">無効</span>' : '<span class="pill g">有効</span>')
+      + '<td class="rc-gr">' + esc(m.group || '') + '</td>'
+      + '<td class="rc-st">' + (ckMemberOff(m) ? '<span class="pill n">無効</span>' : '<span class="pill g">有効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
-      + '<td><div class="rowbtns">'
+      + '<td class="rc-op"><div class="rowbtns">'
       + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
       + (edit
         ? '<button data-a="edit" data-no="' + esc(m.no) + '">編集</button>'
@@ -5584,6 +5648,14 @@ $('qShowOff').onchange = function(){
   gRosterShowOff = this.checked;
   try{ localStorage.setItem('bci_roster_showoff', gRosterShowOff ? '1' : '0'); }catch(e){}
   renderRoster();
+};
+// 📱 スマホでは名簿の管理ボタン（任命・CSV・一括操作など）を「⚙ 管理メニュー」にしまう
+$('btnRosterMore').onclick = function(){
+  var on = !$('pRoster').classList.contains('mopen');
+  $('pRoster').classList.toggle('mopen', on);
+  this.setAttribute('aria-expanded', on ? 'true' : 'false');
+  this.textContent = '⚙ 管理メニュー ' + (on ? '▾' : '▸');
+  setTbh();
 };
 // 列見出しタップで並べ替え（同じ列をもう一度タップで昇順⇄降順）
 $('rosterHead').addEventListener('click', function(e){
