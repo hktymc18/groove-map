@@ -1721,10 +1721,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v70';
+var APP_VER = 'v71';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v71', d: '2026/10/16', items: ['🎓 研修生登録の一覧に、自分が登録した研修生に加えて、自分が研修（PA・PGなど）を受講済みにした研修生も出るようになりました', '一覧の「担当」の表示は「登録」（その研修生を登録した人）に名前を変えました'] },
   { v: 'v70', d: '2026/10/15', items: ['🔧 ユニオン名の変更前の名前（BASE ANTARES など）のまま残っていた人が、研修生登録ページで「任命されていません」と出て使えなかった問題を修正（開くと自動で新しいユニオン名に直ります）'] },
   { v: 'v69', d: '2026/10/14', items: ['🖼 目標設定の宿題（質問・まとめ・提出完了）の絵文字を、線のアイコンとヒヨコのイラストに変えました'] },
   { v: 'v68', d: '2026/10/14', items: ['🎓 会員証のOLチェックアウトは画面のいちばん下に移し、ふだんは折りたたむようにしました（タップで開きます）', '🖼 会員証画面のアイコンを絵文字からシンプルな線のアイコンに変えました'] },
@@ -7794,7 +7795,7 @@ $('trToday').addEventListener('click', function(e){
    地域・ユニオン・研修担当者・紹介者・フリーワード（名前/ふりがな/番号）で検索できる。
    横断検索の範囲は「自分が担当（管理）しているユニオン」だけ
    （オーナーは全ユニオン。担当外のユニオンの研修生は読み込まない）。
-   一般の研修担当者が検索できるのは「自分が登録した研修生」の中だけ（フリーワードのみ） */
+   一般の研修担当者が検索できるのは「自分が登録した研修生」と「自分が研修を受講済みにした研修生」の中だけ（フリーワードのみ） */
 var gTrFilter = { all: false, area: '', union: '', trainer: '', ref: '', q: '' };
 var gTrAll = null;        // 担当している全ユニオンの研修生（横断検索ON時に読み込み）
 var gTrAreaMap = null;    // ユニオン名 → 活動地域
@@ -7820,11 +7821,17 @@ function trLoadAll(cb){
     cb();
   }).catch(function(e){ toast('研修生の読込エラー: ' + e.message); gTrFilter.all = false; cb(); });
 }
+// 自分の研修生＝自分が登録した人、または自分が研修（PA・PG など）を1つでも受講済みにした人
+function trMine(m){
+  if(m.regBy === gUser.uid) return true;
+  var tr = m.trainings || {};
+  return Object.keys(tr).some(function(k){ return tr[k] && tr[k].by === gUser.uid; });
+}
 function trSearchBase(){
   var seeAll = canEditUnion(gUnion);
   var src = (seeAll && gTrFilter.all && gTrAll) ? gTrAll : gTrMembers;
   return src.filter(function(m){
-    return m.trainee && !ckMemberOff(m) && (seeAll || m.regBy === gUser.uid);
+    return m.trainee && !ckMemberOff(m) && (seeAll || trMine(m));
   });
 }
 function trRenderList(){
@@ -7852,7 +7859,7 @@ function trRenderList(){
           ? selHtml('tsArea', '地域', distinct(function(m){ return m._area; }), gTrFilter.area)
             + selHtml('tsUnion', 'ユニオン', distinct(function(m){ return m.union; }), gTrFilter.union)
           : '')
-        + selHtml('tsTrainer', '研修担当者', distinct(function(m){ return m.regByName; }), gTrFilter.trainer)
+        + selHtml('tsTrainer', '登録した人', distinct(function(m){ return m.regByName; }), gTrFilter.trainer)
         + '</div>'
         + '<input type="text" id="tsRef" placeholder="紹介者で絞り込み（部分一致）" value="' + esc(gTrFilter.ref) + '" style="margin:0 0 6px;">'
       : '')
@@ -7863,7 +7870,7 @@ function trRenderList(){
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
-    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">下の一覧には自分が登録した研修生だけが表示されます。他の担当者が登録した研修生は、上の会員番号（QRカード記載）を入れると開けます。</p>')
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">下の一覧には、自分が登録した研修生と、自分が研修を受講済みにした研修生が表示されます。それ以外の研修生は、上の会員番号（QRカード記載）を入れると開けます。</p>')
     + '<div style="margin-top:14px;">' + searchHtml + '</div>'
     + '<div id="tsResults"></div>';
   // 検索条件の変更
@@ -7895,7 +7902,10 @@ function trRenderList(){
     db.collection('checkinMembers').doc(no).get().then(function(sn){
       var m = sn.exists ? sn.data() : null;
       if(m && m.trainee && !ckMemberOff(m) && m.union === gUnion){
-        m.no = no; $('trOpenNo').value = ''; trChecklist(m);
+        m.no = no; $('trOpenNo').value = '';
+        // 一覧のデータにも入れておく（受講済みにしたら、そのまま自分の一覧に出るように）
+        gTrMembers = gTrMembers.filter(function(x){ return x.no !== no; }).concat([m]);
+        trChecklist(m);
       } else {
         toast('この番号の研修生が見つかりません（' + no + '）');
       }
@@ -7929,14 +7939,14 @@ function trApplyFilter(){
             + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '')
             + (m.referrer ? '・紹介: ' + esc(m.referrer) : '')
             + (gTrFilter.all ? '・' + esc(m.union || '') + (m._area ? '（' + esc(m._area) + '）' : '') : '')
-            + (m.regByName ? '・担当: ' + esc(m.regByName) : '') + '</div></div>'
+            + (m.regByName ? '・登録: ' + esc(m.regByName) : '') + '</div></div>'
             + '<button data-tsend="' + i + '" title="会員証URLをLINE等で送る" style="padding:7px 10px;font-size:12.5px;">📨 送る</button>'
             + (bpc ? '<span class="pill g">昇格待ち</span>' : '')
             + '<span class="pill n">' + p + '/3</span>'
             + '<span style="color:var(--sub);">›</span></div>';
         }).join('')
       : '<p style="color:var(--sub);font-size:13.5px;padding:14px 2px;">'
-        + (seeAll ? '該当する研修生がいません。' : 'あなたが登録した研修生はまだいません。') + '</p>');
+        + (seeAll ? '該当する研修生がいません。' : 'あなたが登録・研修した研修生はまだいません。') + '</p>');
   Array.prototype.forEach.call(box.querySelectorAll('[data-tr]'), function(row){
     row.onclick = function(){ trChecklist(list[+row.getAttribute('data-tr')]); };
   });
