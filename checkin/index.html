@@ -331,6 +331,10 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.mc-plain::before,.membercard.mc-gold::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:url('skins/worldmap.webp') 50% 50%/100% auto no-repeat;opacity:.09;}
 .membercard.mc-gold::before{opacity:.13;mix-blend-mode:multiply;}
+/*    通常会員: BRのゴールドのように、ほんのり光って見えるパール調のグラデーション＋斜めの光 */
+.membercard.mc-plain{background:linear-gradient(135deg,#e6e8ec,#fbfbfc 36%,#ffffff 52%,#eceef1 80%,#f6f7f8);}
+.membercard.mc-plain::after{content:'';position:absolute;inset:-70%;z-index:-1;pointer-events:none;   /* 光は文字の後ろ（文字が白飛びしない） */
+  background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.85) 50%,transparent 60%);}
 /* 🐤 VISITOR PASS: 研修生の会員証はヒヨコ色×青バッジで正規カードと一目で区別できる。
    「研修生」とは書かない（VISITOR表記）。昇格すると同じURLのまま通常デザインに戻る */
 .membercard.visitor{background:#ffe680;color:#33290a;}
@@ -1790,10 +1794,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v78';
+var APP_VER = 'v79';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v79', d: '2026/10/17', items: ['✨ 通常会員の会員証を、ほんのり光って見えるパール調のグラデーションにしました'] },
   { v: 'v78', d: '2026/10/17', items: ['🗺 ゴールドの会員証にも、世界地図をうっすら透かして表示するようにしました'] },
   { v: 'v77', d: '2026/10/17', items: ['🔧 CSV・Excelの取込で、少し前に別の人が追加したメンバーを「新規」と判定してしまうことがある問題を修正（取込・採番は必ず最新の名簿で確認します）'] },
   { v: 'v76', d: '2026/10/17', items: ['🗺 通常会員の会員証の背景に、世界地図をうっすら透かして表示するようにしました'] },
