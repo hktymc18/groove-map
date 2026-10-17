@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v807';
+var APP_JS_VERSION = 'v808';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -143,7 +143,7 @@ function _startupPrefetch(uid) {
     fsPrefetch('maps/' + uid + '/months/' + mo + '_current');
     fsPrefetch('maps/' + uid + '/months/' + mo + '_ideal');
     fsPrefetch('maps/' + uid + '/stats/' + mo);
-    fsPrefetch('maps/' + uid + '/events', true);
+    try { if (db) window._evPre = { uid: uid, at: Date.now(), p: _evFetchRecent(uid) }; } catch (eEp) {} // v808: 予定は直近の分だけ先読み
     fsPrefetch('maps/' + uid + '/meta/eventCategories');
     fsPrefetch('maps/' + uid + '/meta/goals');
   } catch(e) {}
@@ -4073,7 +4073,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v807';
+  var DATA_VERSION = 'v808';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5578,6 +5578,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v808', d:'2026-10-17', items:['データベースの読み取りをさらに減らしました（予定・タスクは直近の分から読み、前の月を見た時に古い分を読む・写真は変わった時だけ読み直す）。見た目と使い方は変わりません'] },
   { v:'v807', d:'2026-10-16', items:['データベースの読み取りを減らしました（ユニオン予定は過去120日から・手元のリストの人数は端末に6時間覚える・保存の前の読み直しを減らす など）。見た目と使い方は変わりません'] },
   { v:'v806', d:'2026-10-15', items:['ユニオン名の変更前の名前（BASE ANTARES など）のまま残っていた人は、開くと自動で新しいユニオン名に直るようにしました'] },
   { v:'v805', d:'2026-10-15', items:['スマホで計画シートのMAPの人を押すと、情報のカードが出て消えなくなる問題を直しました（#15）'] },
@@ -9098,19 +9099,30 @@ function _avChunk(mid) {
   var s = 0; for (var i = 0; i < mid.length; i++) s = (s + mid.charCodeAt(i)) % 8;
   return 'avatars' + s;
 }
+// v808: 読み取りを減らす。写真を保存したら「版」（meta/avatarsVer）を書く。開いた時は版の1件だけ読み、
+//   前と同じ版で、今日すでにサーバーから読んでいれば、写真の8件は端末のFirestoreのキャッシュから読む（読み取りにならない）。
+//   版が変わった・その日はじめて・キャッシュに無い時は、今までどおりサーバーから読む
+function _avLs(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 function loadAvatars(uid) {
   if (!db || !uid || _avatarsUid === uid) return Promise.resolve();
   _avatarsUid = uid; _avatars = {};
-  var jobs = [];
-  for (var i = 0; i < 8; i++) {
-    (function(n){
-      jobs.push(fsGet('maps/' + uid + '/meta/avatars' + n).then(function(d) {
-        if (!d) return;
-        for (var k in d) { if (k !== 'updatedAt' && typeof d[k] === 'string' && d[k].indexOf('data:image') === 0) _avatars[k] = d[k]; }
-      }).catch(function(){}));
-    })(i);
-  }
-  return Promise.all(jobs).then(function(){ if (typeof renderCurrentViewLazy === 'function' && (currentView==='current'||currentView==='ideal'||currentView==='members')) renderCurrentViewLazy(); });
+  var today = evTodayYmd();
+  return db.doc('maps/' + uid + '/meta/avatarsVer').get().then(function(d) { return (d && d.exists && (d.data() || {}).v) || ''; }).catch(function() { return null; }).then(function(ver) {
+    var useCache = ver !== null && _avLs('gm_avVer_' + uid) === ver && _avLs('gm_avDay_' + uid) === today;
+    var jobs = [];
+    for (var i = 0; i < 8; i++) {
+      (function(n){
+        var ref = db.doc('maps/' + uid + '/meta/avatars' + n);
+        var p = useCache ? ref.get({ source: 'cache' }).catch(function() { return ref.get(); }) : ref.get();
+        jobs.push(p.then(function(snap) {
+          var d = snap && snap.exists ? snap.data() : null;
+          if (!d) return;
+          for (var k in d) { if (k !== 'updatedAt' && typeof d[k] === 'string' && d[k].indexOf('data:image') === 0) _avatars[k] = d[k]; }
+        }).catch(function(){}));
+      })(i);
+    }
+    return Promise.all(jobs).then(function() { if (!useCache && ver !== null) { _avLs('gm_avVer_' + uid, ver); _avLs('gm_avDay_' + uid, today); } });
+  }).then(function(){ if (typeof renderCurrentViewLazy === 'function' && (currentView==='current'||currentView==='ideal'||currentView==='members')) renderCurrentViewLazy(); });
 }
 function saveAvatar(mid, dataUrl) {
   var uid = viewingOwnerUid || (currentUser && currentUser.uid);
@@ -9121,6 +9133,7 @@ function saveAvatar(mid, dataUrl) {
   // 書き込み成功後にローカルへ反映（失敗時に「保存された風」に見せない）
   return db.doc(path).set(patch, { merge: true }).then(function() {
     if (dataUrl) _avatars[mid] = dataUrl; else delete _avatars[mid];
+    db.doc('maps/' + uid + '/meta/avatarsVer').set({ v: new Date().toISOString() }).catch(function() {}); // v808: 写真の版（ほかの端末は次に開いた時にサーバーから読み直す）
   });
 }
 // （旧compressAvatarは切り抜きシート(openPhotoCrop)に置き換えのため削除）
@@ -18805,6 +18818,7 @@ function _ppActHtml(m) {
   var mid = m.id, every = _meActItems(m), fd = (state.freshData && state.freshData[mid]) || {};
   var cut = _meActCut(), showOld = !!_meActOld[mid], nOld = every.filter(function(it) { return _meActIsOld(it, cut); }).length;
   var all = showOld ? every : every.filter(function(it) { return !_meActIsOld(it, cut); });
+  if (showOld) _evEnsureOlder(); // v808: 「それより前の活動」は古い予定・タスクも読む
   _olCoMarkSeen(m); // v799: 活動を開いたらOLチェックアウトの新着の印を消す
   var listSt = (typeof freshNorm === 'function') ? freshNorm(fd['リスト']) : (fd['リスト'] || {});
   var grp = function(it) { return it.kind === 'task' ? 'task' : 'ol'; };
@@ -27395,9 +27409,43 @@ function glMsQual(id, delta){
 }
 
 // ── Firestore ──
+// v808: 読み取りを減らす。開いた時は「直近120日〜これから」の予定・タスク＋古い未完了タスク＋ゴミ箱だけを読む（前は何年分も全部）。
+//   それより古い分は、使う時（カレンダーで前の月へ・完了タスク・検索・メンバーの「それより前の活動」）に1回だけまとめて読む（_evEnsureOlder）
+var EV_WIN_DAYS = 120;
+function _evCut() { return evYmd(new Date(Date.now() - EV_WIN_DAYS * 86400000)); }
+function _evQsList(qs) { var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; }
+function _evFetchRecent(uid) {
+  var col = db.collection('maps/' + uid + '/events'), cut = _evCut();
+  var pA = col.where('date', '>=', cut).get().then(_evQsList);
+  // 古い未完了タスク（期限切れ・期限なし）。複合インデックス type+done+date が無い間は「未完了」で読んで絞る
+  var pB = col.where('type', '==', 'task').where('done', '==', false).where('date', '<', cut).get().then(_evQsList)
+    .catch(function() { return col.where('done', '==', false).get().then(_evQsList).then(function(L) { return L.filter(function(e) { return e.type === 'task' && (e.date || '') < cut; }); }); });
+  var pC = col.where('deleted', '==', true).get().then(_evQsList); // ゴミ箱（30日で完全削除）
+  return Promise.all([pA, pB, pC]).then(function(r) { var by = {}, out = []; r.forEach(function(L) { L.forEach(function(e) { if (e && e.id && !by[e.id]) { by[e.id] = 1; out.push(e); } }); }); return out; });
+}
+var _evOlder = { uid: '', st: '' }; // st: '' | 'loading' | 'done'
+function _evEnsureOlder() {
+  var uid = window._evLoadedUid; if (!uid || !db) return;
+  if (_evOlder.uid === uid && _evOlder.st) return;
+  _evOlder = { uid: uid, st: 'loading' };
+  fsGetCol('maps/' + uid + '/events').then(function(list) {
+    if (window._evLoadedUid !== uid) return;
+    var have = {}; (state.events || []).concat(state.trashEvents || []).forEach(function(e) { if (e && e.id) have[e.id] = 1; });
+    var n = 0;
+    (list || []).forEach(function(e) { if (!e || !e.id || have[e.id]) return; n++; if (e.deleted) state.trashEvents.push(e); else state.events.push(e); });
+    _evOlder.st = 'done';
+    if (!n) return;
+    try { if (currentView === 'events') renderEventsSoon(); } catch (e1) {}
+    try { if (typeof _pp !== 'undefined' && _pp) _ppRender(); } catch (e2) {}
+    try { updateEventsBadge(); } catch (e3) {}
+  }).catch(function() { _evOlder.st = ''; });
+}
+function _evMaybeOlder(ymd) { if (ymd && String(ymd) < _evCut()) _evEnsureOlder(); }
 function loadEvents(uid) {
   if (!uid || !db) { state.events = []; state.categories = []; updateEventsBadge(); return Promise.resolve(); }
-  return fsGetCol('maps/' + uid + '/events').then(function(list) {
+  _evOlder = { uid: '', st: '' };
+  var pre = window._evPre && window._evPre.uid === uid && Date.now() - window._evPre.at < 20000 ? window._evPre.p : null; window._evPre = null;
+  return (pre || _evFetchRecent(uid)).then(function(list) {
     // v371: ゴミ箱対応 — 削除済み(deleted)は別リストに分離し、30日経過で自動完全削除
     var _all = list || [];
     state.trashEvents = _all.filter(function(e){ return !!e.deleted; });
@@ -29591,6 +29639,7 @@ function todoSearchToggle(on) {
   if (a) a.style.display = on ? 'none' : 'flex';
   if (s) s.style.display = on ? 'flex' : 'none';
   if (on) {
+    _evEnsureOlder(); // v808: 検索は古い分も
     var i = document.getElementById('evQuickInput');
     if (i) try { i.focus(); } catch(e0) {}
   } else {
@@ -32222,6 +32271,7 @@ function renderDayV() {
   if (!canvas) return;
   if (!_dayVDate) _dayVDate = evTodayYmd();
   var ds = _dayVDate;
+  _evMaybeOlder(ds); // v808
   var title = document.getElementById('dayVTitle');
   var hol = jpHoliday(ds);
   if (title) title.innerHTML = evEsc(fmtEvDate(ds, '')) + (hol ? ' <span style="font-size:11px;color:var(--red);font-weight:700">' + evEsc(hol) + '</span>' : '');
@@ -32334,6 +32384,7 @@ function renderWeek() {
   var days = [];
   for (var i = 0; i < 7; i++) { var d = new Date(base.getTime()); d.setDate(d.getDate() + i); days.push(d); }
   var first = days[0], last = days[6];
+  _evMaybeOlder(evYmd(first)); // v808
   if (title) {
     var suffix = _weekOffset === 0 ? '' : (_weekOffset === 1 ? '（来週）' : (_weekOffset === -1 ? '（先週）' : (_weekOffset > 0 ? '（＋' + _weekOffset + '週）' : '（−' + (-_weekOffset) + '週）')));
     title.textContent = (first.getMonth()+1) + '/' + first.getDate() + '〜' + (last.getMonth()+1) + '/' + last.getDate() + suffix;
@@ -32569,6 +32620,7 @@ function todoCreateKey(ev, kind, inputId, fromPicker) {
 }
 function todoNavTo(type, id) {
   _todoNav = { type: type, id: id || '' };
+  if (type === 'smart' && id === 'done') _evEnsureOlder(); // v808: 完了タスクは古い分も
   renderAgenda();
 }
 // v321: 全画面ToDoヘッダーの左ボタン（リスト内＝‹一覧へ／一覧＝✕メニューへ）
@@ -33993,6 +34045,7 @@ function _calByDate() {
 }
 function renderCalendar() {
   if (!_calYear) { var n = new Date(); _calYear = n.getFullYear(); _calMonth = n.getMonth(); }
+  _evMaybeOlder(_calYear + '-' + String(_calMonth + 1).padStart(2, '0') + '-01'); // v808: 前の月を見た時は古い分も
   // v297: 日別は自動表示しない（日タップでボトムシート）。グリッドが常に全画面を使える
   var title = document.getElementById('evCalTitle');
   if (title) title.textContent = _calYear + '年 ' + (_calMonth+1) + '月';
@@ -34335,6 +34388,7 @@ function _calMoveEvent(eid, newDs) {
   }, 5000);
 }
 function selCalDay(ds) {
+  _evMaybeOlder(ds); // v808
   calViewMenuClose(); // メニューが開いていたら閉じる
   if (window._calLpFired) return; // 長押し直後のクリックは無視（二重で開かない）
   // v354: PCはボトムシートではなく右のサイドパネルを更新（ダブルクリックで即追加）
@@ -38537,19 +38591,26 @@ var _mgAvatarsLoaded = {};
 function loadMergedAvatars(uid) {
   if (!db || !uid || _mgAvatarsLoaded[uid]) return;
   _mgAvatarsLoaded[uid] = true;
-  var pre = 'MG_' + String(uid).substring(0, 6) + '_';
+  var pre = 'MG_' + String(uid).substring(0, 6) + '_', today = evTodayYmd();
+  // v808: 自分の写真と同じく、版が同じで今日すでに読んでいれば端末のキャッシュから
+  db.doc('maps/' + uid + '/meta/avatarsVer').get().then(function(d) { return (d && d.exists && (d.data() || {}).v) || ''; }).catch(function() { return null; }).then(function(ver) {
+  var useCache = ver !== null && _avLs('gm_avVer_' + uid) === ver && _avLs('gm_avDay_' + uid) === today, jobs = [];
   for (var i = 0; i < 8; i++) {
     (function(n){
-      fsGet('maps/' + uid + '/meta/avatars' + n).then(function(d) {
+      var ref = db.doc('maps/' + uid + '/meta/avatars' + n);
+      jobs.push((useCache ? ref.get({ source: 'cache' }).catch(function() { return ref.get(); }) : ref.get()).then(function(snap) {
+        var d = snap && snap.exists ? snap.data() : null;
         if (!d) return;
         var got = false;
         for (var k in d) {
           if (k !== 'updatedAt' && typeof d[k] === 'string' && d[k].indexOf('data:image') === 0) { _avatars[pre + k] = d[k]; got = true; }
         }
         if (got && (currentView === 'current' || currentView === 'members')) renderCurrentViewLazy();
-      }).catch(function(){});
+      }).catch(function(){}));
     })(i);
   }
+  Promise.all(jobs).then(function() { if (!useCache && ver !== null) { _avLs('gm_avVer_' + uid, ver); _avLs('gm_avDay_' + uid, today); } });
+  });
 }
 function startMergeListener(uid) {
   if (!db || viewingOwnerUid) return; // 他人MAP閲覧中は購読しない
