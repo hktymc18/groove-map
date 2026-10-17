@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v809';
+var APP_JS_VERSION = 'v810';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -148,8 +148,10 @@ function _startupPrefetch(uid) {
     fsPrefetch('maps/' + uid + '/meta/goals');
   } catch(e) {}
 }
+var _fsMeta = {}; // v810: パス→直近の読み込みが端末の控え（キャッシュ）からだったか
 function _fsGetRaw(path) {
   return db.doc(path).get().then(function(doc) {
+    try { _fsMeta[path] = { fromCache: !!(doc.metadata && doc.metadata.fromCache), at: Date.now() }; } catch (eM) {}
     return doc.exists ? doc.data() : null;
   });
 }
@@ -4073,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v809';
+  var DATA_VERSION = 'v810';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4893,6 +4895,20 @@ _vvhUpdate();
 setTimeout(_vvhUpdate, 300); setTimeout(_vvhUpdate, 1000); setTimeout(_vvhUpdate, 3000);
 // v809 #16: ホーム画面アプリを開いた直後、iOSがステータスバー分を含んだ大きい高さを一瞬返し、最初の表示（カレンダー）が
 //   画面の下にはみ出していた（数秒後の取り直しまでそのまま）。開いた直後・戻ってきた直後の5秒間は0.15秒ごとに取り直す
+// v810: 30分以上うしろにあった画面（開きっぱなしのタブ・アプリ）に戻ってきた時は、自分のMAPを読み直す（古い内容のまま触って保存しないように）
+var _gmHidAt = 0;
+document.addEventListener('visibilitychange', function() {
+  try {
+    if (document.hidden) { _gmHidAt = Date.now(); return; }
+    var away = _gmHidAt ? Date.now() - _gmHidAt : 0; _gmHidAt = 0;
+    if (away < 1800000 || !USE_FIREBASE || !db || !currentUser || !currentUser.uid || viewingOwnerUid || (typeof _aggActive !== 'undefined' && _aggActive)) return;
+    if (typeof flushPendingSave === 'function') flushPendingSave();
+    setTimeout(function() {
+      var busy = document.querySelector('#modal.open') || document.getElementById('ppPg') || document.getElementById('naPg');
+      if (!busy && !viewingOwnerUid) fsLoadFromFirestore(currentUser.uid);
+    }, 1500);
+  } catch (eV) {}
+});
 function _vvhOkKey() { return 'gm_vvhOK_' + Math.round(window.innerWidth || 0) + 'x' + (((window.screen && screen.width) || 0) + 'x' + ((window.screen && screen.height) || 0)); }
 function _vvhSettle() {
   if (typeof isPCMode === 'function' && isPCMode()) return;
@@ -5602,6 +5618,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v810', d:'2026-10-17', items:['MAPのデータが古い内容で上書きされないようにしました：保存の前に、ほかの画面（別のタブ・ホーム画面アプリとSafari・別の端末）で先に保存されていないか確かめ、されていたら最新を読み込みます','通信が不安定で端末の控えを表示している時は保存しません。しばらくうしろにあった画面に戻った時は自動で読み直します'] },
   { v:'v809', d:'2026-10-17', items:['ホーム画面のアプリを開いた直後、カレンダーが画面の下にはみ出すことがある問題を直しました（#16）'] },
   { v:'v808', d:'2026-10-17', items:['データベースの読み取りをさらに減らしました（予定・タスクは直近の分から読み、前の月を見た時に古い分を読む・写真は変わった時だけ読み直す）。見た目と使い方は変わりません'] },
   { v:'v807', d:'2026-10-16', items:['データベースの読み取りを減らしました（ユニオン予定は過去120日から・手元のリストの人数は端末に6時間覚える・保存の前の読み直しを減らす など）。見た目と使い方は変わりません'] },
@@ -14284,7 +14301,7 @@ function _doSaveNow() {
   _savePendingUid = null;
   fsSaveToFirestore(uid)
     .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); recordHistory(); })
-    .catch(function(e) { if (e && e.gmNotReady) { _fsNotReadyMsg(); return; } console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
+    .catch(function(e) { if (e && e.gmNotReady) { _fsNotReadyMsg(); return; } if (e && e.gmConflict) return; /* v810: 知らせて読み直し済み */ console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); });
 }
 // 画面切替・終了前に未保存分を確定させる
 function flushPendingSave() {
@@ -14372,6 +14389,7 @@ function saveCurrent() {
       })
       .catch(function(err) {
         if (err && err.gmNotReady) { _fsNotReadyMsg(); return; } // v797
+        if (err && err.gmConflict) return; // v810: 知らせて読み直し済み
         console.error('Firestore保存エラー:', err);
         toast('保存に失敗しました。再試行してください。');
       });
@@ -38927,12 +38945,12 @@ function checkAuth() {
 
 // Firestoreからデータ読み込み
 // v797: 自分のMAPの読み込みが終わった「uid|月」。終わるまでは保存しない（読み込み前の空の状態で、クラウドの理想MAP・数字を上書きしない）
-var _fsReady = '', _fsLoadErr = false;
+var _fsReady = '', _fsLoadErr = false, _fsCacheOnly = false, _fsBase = {}; // v810: _fsCacheOnly＝端末の控えを表示中、_fsBase＝パス→読んだ時点の版
 function _fsOwnReady(uid) { return !USE_FIREBASE || !uid || viewingOwnerUid || !currentUser || uid !== currentUser.uid || _fsReady === uid + '|' + state.currentMonth; }
-function _fsNotReadyMsg() { toast(_fsLoadErr ? '⚠️ データを読み込めていないため保存していません（通信を確認して再読み込みしてください）' : '⏳ まだデータを読み込み中です。表示されてからもう一度操作してください'); }
+function _fsNotReadyMsg() { if (_fsCacheOnly) { toast('📴 通信が不安定なため、いまは保存していません。電波の良い所で開き直してください'); return; } toast(_fsLoadErr ? '⚠️ データを読み込めていないため保存していません（通信を確認して再読み込みしてください）' : '⏳ まだデータを読み込み中です。表示されてからもう一度操作してください'); }
 function fsLoadFromFirestore(uid) {
   var month = state.currentMonth;
-  _fsReady = ''; _fsLoadErr = false;
+  _fsReady = ''; _fsLoadErr = false; _fsCacheOnly = false;
   toast('データを読み込み中...');
   loadAvatars(uid); // 写真アバター（月に依存しない・同一uidなら再取得しない）
 
@@ -38940,23 +38958,9 @@ function fsLoadFromFirestore(uid) {
   // v511: 毎回の起動で読み取り1回＋削除1回が発生していたため、同じ月・同じ端末では1回だけ実行
   var _lgKey = 'gm_legacyChk_' + uid + '_' + month, _lgDone = false;
   try { _lgDone = localStorage.getItem(_lgKey) === '1'; if (!_lgDone) localStorage.setItem(_lgKey, '1'); } catch(eLg) {}
-  if (db && !_lgDone) {
-    db.doc('maps/' + uid + '/months/' + month).get().then(function(doc) {
-      if (doc.exists) {
-        // 旧形式データを新形式に変換して削除
-        var old = doc.data();
-        if (old && old.members) {
-          // 移行: 旧データを新形式で保存
-          var currentM = old.members.filter(function(m){ return !m.mapType || m.mapType==='current' || m.mapType==='both'; });
-          var idealM   = old.members.filter(function(m){ return m.mapType==='ideal' || m.mapType==='both'; });
-          db.doc('maps/' + uid + '/months/' + month + '_current').set({ members: currentM, updatedAt: new Date().toISOString() });
-          db.doc('maps/' + uid + '/months/' + month + '_ideal').set({ members: idealM, updatedAt: new Date().toISOString() });
-        }
-        // 旧ドキュメント削除
-        doc.ref.delete();
-      }
-    }).catch(function(){});
-  }
+  // v810: 旧形式は「新しい形式のデータがまだ無い月」だけ移す（前は新しいデータがあっても旧形式で上書きしていた＝古いデータに戻る原因）。
+  //   ここでは読むだけ。移すかどうかは下の読み込みが終わってから決める
+  var pLg = (db && !_lgDone) ? db.doc('maps/' + uid + '/months/' + month).get().catch(function() { return null; }) : Promise.resolve(null);
 
   // 旧パス（maps/{uid}/months/{month}）のデータは上の確認で存在時のみ削除する（v511: 無条件の毎回削除を廃止）
 
@@ -38976,9 +38980,31 @@ function fsLoadFromFirestore(uid) {
     return p3;
   }).then(function(data) {
     loaded.stats = data;
+    return pLg;
+  }).then(function(lg) {
     // v544: 読み込み中に別の月・共有MAPへ切り替えていたら、古い結果で上書きしない
     if (state.currentMonth !== month || viewingOwnerUid) return;
-    _fsReady = uid + '|' + month; // v797
+    var cP = 'maps/' + uid + '/months/' + month + '_current', iP = 'maps/' + uid + '/months/' + month + '_ideal', sP = 'maps/' + uid + '/stats/' + month;
+    // v810: 旧形式（maps/{uid}/months/{月}）があった時：新しい形式のデータが無い月だけ移す。新しいデータがある月は旧形式を消すだけ
+    if (lg && lg.exists) {
+      var old = lg.data() || {};
+      if (!loaded.current && !loaded.ideal && old.members && old.members.length) {
+        var nowL = new Date().toISOString();
+        loaded.current = { members: old.members.filter(function(m){ return !m.mapType || m.mapType==='current' || m.mapType==='both'; }), updatedAt: nowL };
+        loaded.ideal = { members: old.members.filter(function(m){ return m.mapType==='ideal' || m.mapType==='both'; }), updatedAt: nowL };
+        db.doc(cP).set(loaded.current).catch(function(){}); db.doc(iP).set(loaded.ideal).catch(function(){});
+      }
+      lg.ref.delete().catch(function(){});
+    }
+    // v810: 通信が不安定でサーバーではなく端末の控え（古いことがある）を読んだ時は、表示だけにして保存しない（古い内容でサーバーを上書きしない）
+    var fromCache = [cP, iP, sP].some(function(pp) { return _fsMeta[pp] && _fsMeta[pp].fromCache; });
+    _fsCacheOnly = fromCache;
+    if (!fromCache) _fsReady = uid + '|' + month; // v797
+    else { toast('📴 通信が不安定なため、端末の控えを表示しています（保存はしません）。少し待つと読み直します'); clearTimeout(window._fsRetryT); window._fsRetryT = setTimeout(function() { if (state.currentMonth === month && !viewingOwnerUid && _fsReady !== uid + '|' + month) fsLoadFromFirestore(uid); }, 5000); }
+    // v810: 保存の前の「ほかの画面・端末が先に保存していないか」の確認に使う、読んだ時点の版（updatedAt）
+    _fsBase[cP] = { v: (loaded.current && loaded.current.updatedAt) || '' };
+    _fsBase[iP] = { v: (loaded.ideal && loaded.ideal.updatedAt) || '' };
+    _fsBase[sP] = { v: (loaded.stats && loaded.stats.updatedAt) || '' };
 
     // 現状MAPメンバー
     if (loaded.current && loaded.current.members && loaded.current.members.length > 0) {
@@ -39068,62 +39094,56 @@ function mergeMembers(localArr, remoteArr) {
 var _lastMergeCheck = 0;
 var _stReadAt = {}; // v807: stats を保存前に読んだ時刻（パスごと）
 var _fsSavedSig = {}; // v511: パス→最後に保存/読込した内容（変更がない文書の書き込みを省略）
+// v810: 古い内容での上書きを防ぐ。保存の前に、保存する文書をサーバーから読み、読んだ時点（または前回自分が保存した時点）の版（updatedAt）と比べる。
+//   ・理想MAP・数字：ほかの画面（別のタブ・ホーム画面アプリとSafari・別の端末）が先に保存していたら、上書きせずに最新を読み込み直す
+//   ・現状MAP：今までどおりメンバー単位で合成して保存（前の「読んだ直後1分は確認せずに上書き」はやめた＝空の画面で上書きしない）
+function _fsBaseOk(path, v) { var b = _fsBase[path]; if (!b) return true; return !v || v === b.v || v === b.p; }
+function _fsBaseSet(path, v) { var b = _fsBase[path] || (_fsBase[path] = { v: '' }); b.p = v; }
+function _fsBaseDone(path, v) { var b = _fsBase[path] || (_fsBase[path] = {}); b.v = v; b.p = ''; }
+function _fsConflict(uid, month) {
+  toast('⚠️ ほかの画面（別のタブ・端末）で先に保存されていたため、最新を読み込みました（この画面の直前の変更は保存していません）');
+  if (!viewingOwnerUid && currentUser && uid === currentUser.uid && state.currentMonth === month) { try { fsLoadFromFirestore(uid); } catch (e) {} }
+}
 function fsSaveToFirestore(uid) {
   if (!_fsOwnReady(uid)) { var eNr = new Error('not-loaded'); eNr.gmNotReady = true; return Promise.reject(eNr); } // v797
   var month = state.currentMonth;
   var curPath = 'maps/' + uid + '/months/' + month + '_current';
   _stampUpdatedMembers(state.members);
-  var p1;
-  if (window._skipMergeOnce) {
-    // 全消し等の意図的な全置換はマージしない
-    window._skipMergeOnce = false;
-    p1 = fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
-  } else if (Date.now() - _lastMergeCheck < 60000) {
-    // 直近に読んだばかり＝リモートはほぼ最新。アップロードのみの高速パス
-    p1 = fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
-  } else {
-    _lastMergeCheck = Date.now();
-    p1 = fsGet(curPath).then(function(remote) {
-      if (remote && remote.members && remote.members.length) {
-        var merged = mergeMembers(state.members, remote.members);
-        if (merged.length !== state.members.length) {
-          state.members = merged;
-          _stampUpdatedMembers(state.members);
-          if (typeof renderCurrentView === 'function') setTimeout(renderCurrentView, 50);
-        } else {
-          state.members = merged;
-        }
-      }
-      return fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
-    }).catch(function() {
-      return fsSet(curPath, { members: state.members, updatedAt: new Date().toISOString() });
-    });
-  }
+  var skipMerge = !!window._skipMergeOnce; window._skipMergeOnce = false; // 翌月コピーなど、意図的な全置換はマージしない
   // v511: 前回保存（または読込）時と同じ内容なら書き込みを省略
   var _idPath = 'maps/' + uid + '/months/' + month + '_ideal';
   var _idSig = JSON.stringify(state.idealMembers || []);
   var _stPath = 'maps/' + uid + '/stats/' + month;
   var _stSig = JSON.stringify([state.stats, state.commission, state.freshData || {}]);
-  var p2 = (_fsSavedSig[_idPath] === _idSig) ? Promise.resolve() : fsSet(_idPath, {
-    members: state.idealMembers || [],
-    updatedAt: new Date().toISOString()
+  var needId = _fsSavedSig[_idPath] !== _idSig, needSt = _fsSavedSig[_stPath] !== _stSig;
+  var rd = function(path) { return _fsGetRaw(path).catch(function() { return undefined; }); }; // サーバーから（先読みは使わない）。読めない時は undefined
+  return Promise.all([skipMerge ? null : rd(curPath), needId && !skipMerge ? rd(_idPath) : null, needSt ? rd(_stPath) : null]).then(function(R) {
+    var rC = R[0], rI = R[1], rS = R[2];
+    // 理想MAP・数字：自分が読んだ後にほかの画面が保存していたら、上書きしない
+    if ((rI && !_fsBaseOk(_idPath, rI.updatedAt)) || (rS && !_fsBaseOk(_stPath, rS.updatedAt))) {
+      var eC = new Error('conflict'); eC.gmConflict = true; _fsConflict(uid, month); throw eC;
+    }
+    // 現状MAP：メンバー単位で合成（ほかの画面で足した・直したメンバーを消さない）
+    if (rC && rC.members && rC.members.length) {
+      var merged = mergeMembers(state.members, rC.members);
+      if (merged.length !== state.members.length) { state.members = merged; _stampUpdatedMembers(state.members); if (typeof renderCurrentView === 'function') setTimeout(renderCurrentView, 50); }
+      else state.members = merged;
+    }
+    var now = new Date().toISOString();
+    _lastMergeCheck = Date.now();
+    _fsBaseSet(curPath, now);
+    var p1 = fsSet(curPath, { members: state.members, updatedAt: now }).then(function() { _fsBaseDone(curPath, now); });
+    var p2 = Promise.resolve();
+    if (needId) { _fsBaseSet(_idPath, now); p2 = fsSet(_idPath, { members: state.idealMembers || [], updatedAt: now }).then(function() { _fsBaseDone(_idPath, now); _fsSavedSig[_idPath] = _idSig; }); }
+    var p3 = Promise.resolve();
+    if (needSt) {
+      // v531: 共有MAPの相手が書き込んだOL記録を消さないよう、取り込んでから書く
+      if (rS && _olMergeRemoteFresh(rS.freshData)) _stSig = JSON.stringify([state.stats, state.commission, state.freshData || {}]);
+      _fsBaseSet(_stPath, now);
+      p3 = fsSet(_stPath, { stats: state.stats, commission: state.commission, freshData: state.freshData || {}, updatedAt: now }).then(function() { _fsBaseDone(_stPath, now); _fsSavedSig[_stPath] = _stSig; });
+    }
+    return p1.then(function(){ return p2; }).then(function(){ return p3; });
   });
-  // v531: 共有MAPの相手が書き込んだOL記録を消さないよう、保存の直前に取り込んでから書く
-  // v807: 保存の前の読み直し（相手が書いたOL記録を取り込む）は、同じ月なら60秒に1回まで（現状MAPと同じ考え方。前は保存のたびに読んでいた）
-  var _stFresh = _stReadAt[_stPath] && Date.now() - _stReadAt[_stPath] < 60000;
-  if (!_stFresh && _fsSavedSig[_stPath] !== _stSig) _stReadAt[_stPath] = Date.now();
-  var p3 = (_fsSavedSig[_stPath] === _stSig) ? Promise.resolve() : (_stFresh ? Promise.resolve(null) : fsGet(_stPath).catch(function() { return null; })).then(function(remote) {
-    if (remote && _olMergeRemoteFresh(remote.freshData)) _stSig = JSON.stringify([state.stats, state.commission, state.freshData || {}]);
-    return fsSet(_stPath, {
-      stats: state.stats,
-      commission: state.commission,
-      freshData: state.freshData || {},
-      updatedAt: new Date().toISOString()
-    });
-  });
-  p2 = p2.then(function(){ _fsSavedSig[_idPath] = _idSig; });
-  p3 = p3.then(function(){ _fsSavedSig[_stPath] = _stSig; });
-  return p1.then(function(){ return p2; }).then(function(){ return p3; });
 }
 
 // ════════════════════════════════════════════════════════════
