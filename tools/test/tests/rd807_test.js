@@ -46,5 +46,6 @@ T.run(async () => {
   const n1 = log.filter(x => x === 'doc ' + sp).length;
   w.state.commission = { a: 2 }; await w.fsSaveToFirestore(uid);
   const n2 = log.filter(x => x === 'doc ' + sp).length;
-  c('保存の前の読み直しは60秒に1回まで', n1 === 1 && n2 === 1, n1 + '/' + n2);
+  // v810: 古い内容での上書きを防ぐため、数字を保存する前は毎回サーバーの版を確かめる（v807の「60秒に1回」はやめた）
+  c('v810: 数字を保存する前は毎回サーバーの版を確かめる', n1 === 1 && n2 === 2, n1 + '/' + n2);
 });
