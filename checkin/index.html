@@ -5539,21 +5539,30 @@ Array.prototype.forEach.call(tabs, function(b){
     setTimeout(setTbh, 0);   // 非表示中は高さ0で測れないため、表示後にヘッダー高さを再計測
     if(b.getAttribute('data-pane') === 'pKiosk' && gRec) focusScan();
     if(b.getAttribute('data-pane') === 'pFin') loadFinanceTab();
+    if(b.getAttribute('data-pane') === 'pStats' && (gStatDirty || !gStat)) loadStatsNow();
   };
 });
 
 /* ---------- 名簿 ---------- */
-function fetchMembers(union){
-  return db.collection('checkinMembers').where('union', '==', union).get().then(function(qs){
+// 読み取りを減らす：同じユニオンの名簿は5分のあいだ使い回す（前は起動1回で3〜5回読み直していた）。
+// 名簿タブの読み込み（loadMembers＝編集の後にも呼ばれる）は必ず読み直して、使い回しの中身も新しくする
+var gMemCache = {};
+function fetchMembers(union, fresh){
+  var c = gMemCache[union];
+  if(!fresh && c && Date.now() - c.at < 300000) return c.p.then(function(a){ return a.slice(); });
+  var p = db.collection('checkinMembers').where('union', '==', union).get().then(function(qs){
     var arr = [];
     qs.forEach(function(d){ var m = d.data(); m.no = d.id; arr.push(m); });
     arr.sort(function(a,b){ return a.no < b.no ? -1 : 1; });
     return arr;
   });
+  gMemCache[union] = { at: Date.now(), p: p };
+  p.catch(function(){ if(gMemCache[union] && gMemCache[union].p === p) delete gMemCache[union]; });
+  return p.then(function(a){ return a.slice(); });
 }
 function loadMembers(cb){
   if(!ckCanView(gRosterUnion)) gRosterUnion = gUnion;
-  fetchMembers(gRosterUnion).then(function(arr){
+  fetchMembers(gRosterUnion, true).then(function(arr){
     gMembers = arr;
     gMembersLoaded = true;
     renderRoster();
@@ -11356,6 +11365,16 @@ function ckRefreshRecentSnapshot(union){
     });
   }).catch(function(){ return null; });
 }
+// 読み取りを減らす：集計画面に出す「直近1ヶ月」は10分のあいだ使い回す（前は集計を描くたびに計算し直していた）。
+// 受付終了・再開・起動時の日付変わり（ckRefreshForEvent・ckRefreshIfStale）は今までどおり必ず計算し直す
+var gRecentCache = {};
+function ckRecentSnapCached(union){
+  var c = gRecentCache[union];
+  if(c && Date.now() - c.at < 600000) return c.p;
+  var p = ckRefreshRecentSnapshot(union);
+  gRecentCache[union] = { at: Date.now(), p: p };
+  return p;
+}
 // 画面に出さずに集計だけやり直して保存（受付終了・受付再開・起動時の日付変わりに呼ぶ）
 function ckRefreshRateSnapshot(union, key){
   if(!union || !key) return Promise.resolve();
@@ -11382,7 +11401,7 @@ function ckRefreshRateSnapshot(union, key){
 function ckRefreshForEvent(ev){
   if(!ev) return;
   var key = ev.month || String(ev.date || '').slice(0, 7);
-  (ev.unions || []).forEach(function(un){ ckRefreshRateSnapshot(un, key); ckRefreshRecentSnapshot(un); });
+  (ev.unions || []).forEach(function(un){ ckRefreshRateSnapshot(un, key); delete gRecentCache[un]; gRecentCache[un] = { at: Date.now(), p: ckRefreshRecentSnapshot(un) }; });
 }
 // 起動時：自分のユニオンの今月の集計が今日より前のまま（日付が変わって前日の開催が分母に入った等）なら作り直す
 function ckRefreshIfStale(union){
@@ -11391,14 +11410,20 @@ function ckRefreshIfStale(union){
     if(!s.exists || (s.data() || {}).calcDay !== todayStr()) ckRefreshRateSnapshot(union, key);
   }).catch(function(){});
   db.collection('checkinStats').doc(ckStatDocId(union, CK_RECENT_KEY)).get().then(function(s){   // 直近1ヶ月（MAPの稼働率）
-    if(!s.exists || (s.data() || {}).calcDay !== todayStr()) ckRefreshRecentSnapshot(union);
+    if(!s.exists || (s.data() || {}).calcDay !== todayStr()) gRecentCache[union] = { at: Date.now(), p: ckRefreshRecentSnapshot(union) };
   }).catch(function(){});
 }
 
 /* ---------- 集計 ---------- */
 var gStat = null;
-$('btnStatReload').onclick = function(){ loadStats(); };
-function loadStats(){
+// 読み取りを減らす：集計は「集計」タブを開いている時だけ計算する（前は起動・月の切りかえ・名簿の編集のたびに、開いていなくても計算していた）。
+// 開いていない時は「あとで計算する」印だけ付け、タブを開いた時に計算する
+var gStatDirty = true;
+function ckStatsOpen(){ var p = $('pStats'); return !!(p && p.classList.contains('on')); }
+function loadStats(){ if(ckStatsOpen()) loadStatsNow(); else gStatDirty = true; }
+$('btnStatReload').onclick = function(){ loadStatsNow(); };
+function loadStatsNow(){
+  gStatDirty = false;
   if(!ckCanView(gStatUnion)) gStatUnion = gUnion;
   var key = monthKey(gMonth.y, gMonth.m);
   $('statBody').innerHTML = '<p style="color:var(--sub)">集計中…</p>';
@@ -11496,7 +11521,7 @@ function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
   // 直近1ヶ月（MAPの受付連携はこちらを読む）。今月を表示している時は集計画面にも列で出す
   var _isNow = (function(){ var d = new Date(); return gMonth.y === d.getFullYear() && gMonth.m === d.getMonth() + 1; })();
   var _statTok = {};
-  ckRefreshRecentSnapshot(gStatUnion).then(function(rc){
+  ckRecentSnapCached(gStatUnion).then(function(rc){
     if(!rc || !_isNow || !gStat || gStat.tok !== _statTok) return;
     gStat.recent = rc;
     var nt = $('statRecentNote'); if(nt) nt.innerHTML = '直近1ヶ月 = ' + esc(ckMD(rc.from)) + '〜' + esc(ckMD(rc.to)) + '（開催 ' + rc.held + '回）。GROOVE MAPの稼働率はこちら';
