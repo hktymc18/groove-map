@@ -434,6 +434,28 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 @media (prefers-reduced-motion: reduce){
   .membercard.mc-black::before,.membercard.mc-black::after,.mc-deco .g-map{animation:none;}
 }
+/* 💎 RUBY（バッジがRUBYの人）: 深いルビーのグラデーション＋世界地図の透かし。
+   JETCLUBと同じく、中央の光がゆっくり脈打ち、斜めの光沢が走る。カード自体がルビーなのでバッジは出さない */
+.membercard.mc-ruby{background:url('skins/worldmap-faint.webp') 50% 50%/100% auto no-repeat,
+  linear-gradient(135deg,#5e0718,#a3122e 36%,#e0405e 54%,#9b0f2b 82%,#c42a48);color:#fff4f6;}
+.membercard.mc-ruby > *{position:relative;z-index:1;}
+.membercard.mc-ruby .mc-badge{display:none;}
+.membercard.mc-ruby .mc-brand,.membercard.mc-ruby .mc-grade{color:#ffd9e0;}
+.membercard.mc-ruby .mc-grade{text-shadow:0 0 14px rgba(255,150,175,.55);}
+.membercard.mc-ruby .mc-group,.membercard.mc-ruby .mc-no{color:#ffdbe2;}
+.membercard.mc-ruby::before{
+  content:'';position:absolute;left:-50%;top:-50%;width:200%;height:200%;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, rgba(255,170,190,.30), rgba(255,120,150,.08) 34%, transparent 58%);
+  animation:jetPulse 3.6s ease-in-out infinite alternate;
+}
+.membercard.mc-ruby::after{
+  background:linear-gradient(45deg,transparent 42%,rgba(255,215,225,.26) 50%,transparent 58%);
+  z-index:2;
+  animation:jetSheen 5.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce){
+  .membercard.mc-ruby::before,.membercard.mc-ruby::after{animation:none;}
+}
 
 /* ✨ 特別デザイン（オーナーがメンバーごとに指定: checkinMembers/cards の skin）
    💀 reaper: 闇の中で妖しく光る死神。背景は黒、死神の輪郭が紫に光って脈打ち、足もとに霧が流れる。
@@ -1794,10 +1816,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v79';
+var APP_VER = 'v80';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v80', d: '2026/10/17', items: ['💎 バッジがRUBYの人の会員証が、深いルビー色のカードになりました（世界地図の透かし入り・光がゆっくり脈打って光沢が走ります）'] },
   { v: 'v79', d: '2026/10/17', items: ['✨ 通常会員の会員証を、ほんのり光って見えるパール調のグラデーションにしました'] },
   { v: 'v78', d: '2026/10/17', items: ['🗺 ゴールドの会員証にも、世界地図をうっすら透かして表示するようにしました'] },
   { v: 'v77', d: '2026/10/17', items: ['🔧 CSV・Excelの取込で、少し前に別の人が追加したメンバーを「新規」と判定してしまうことがある問題を修正（取込・採番は必ず最新の名簿で確認します）'] },
@@ -2733,11 +2756,15 @@ function renderCard(c){
   var style = GRADE_STYLES[c.grade || ''];
   var skin = !c.trainee && CARD_SKINS[c.skin || ''] ? c.skin : '';   // ✨ 特別デザインはグレードの色より優先（研修生は除く）
   var dia = !c.trainee && !skin && c.badge === 'DIAMOND';            // 💎 バッジがDIAMONDの人は金属のカード（特別デザインが優先）
+  var ruby = !c.trainee && !skin && c.badge === 'RUBY';              // 💎 バッジがRUBYの人はルビーのカード
   if(skin){
     card.classList.add('skin-' + skin);
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
   } else if(dia){
     card.classList.add('skin-dia');
+    $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
+  } else if(ruby){
+    card.classList.add('mc-ruby', 'premium');
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
   } else if(style){
     card.classList.add(style, 'premium');
