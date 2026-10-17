@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v810';
+var APP_JS_VERSION = 'v811';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v810';
+  var DATA_VERSION = 'v811';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5618,6 +5618,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v811', d:'2026-10-17', items:['テスト用アカウントのデモ用データ作成（?demo=build で作成・?demo=restore で元に戻す）'] },
   { v:'v810', d:'2026-10-17', items:['MAPのデータが古い内容で上書きされないようにしました：保存の前に、ほかの画面（別のタブ・ホーム画面アプリとSafari・別の端末）で先に保存されていないか確かめ、されていたら最新を読み込みます','通信が不安定で端末の控えを表示している時は保存しません。しばらくうしろにあった画面に戻った時は自動で読み直します'] },
   { v:'v809', d:'2026-10-17', items:['ホーム画面のアプリを開いた直後、カレンダーが画面の下にはみ出すことがある問題を直しました（#16）'] },
   { v:'v808', d:'2026-10-17', items:['データベースの読み取りをさらに減らしました（予定・タスクは直近の分から読み、前の月を見た時に古い分を読む・写真は変わった時だけ読み直す）。見た目と使い方は変わりません'] },
@@ -39043,6 +39044,7 @@ function fsLoadFromFirestore(uid) {
       toast('データを読み込みました ✓');
     }
     if (!state.members.length && !loaded.current) _gmAutoSelf(uid, month); // v656: はじめての人は0段目に自分を自動で
+    if (!window._demoAsked && /[?&]demo=(build|restore)\b/.test(location.search || '')) { window._demoAsked = 1; setTimeout(demoToolPrompt, 900); } // v811: デモ用データ
     if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); } // v567・v571
     renderCurrentView();
     updateLTSV('current', state.members);
@@ -40058,6 +40060,140 @@ function _p2ShTreeHtml(mt, Is, newN) {
 function p2ShTreeTgl(id) { if (!window._treeOpen) window._treeOpen = {}; var el = document.querySelector('#p2ShMI .mr[data-cid="' + id + '"] .mt'); window._treeOpen[id] = !(el && el.textContent === '▼'); _p2ShMapDraw(); }
 function _p2ShMem(mid) { var a = membersForMap(_p2ShMapMt()).concat(state.members || [], state.idealMembers || []); for (var i = 0; i < a.length; i++) if (a[i] && a[i].id === mid) return a[i]; return null; }
 function _p2ShIss(ym) { var m = _p2ShM(ym); m.iss = m.iss || {}; return m.iss; }
+// ════ v811: デモ用データ（テスト用アカウントだけ）。URLに ?demo=build で開くと、2026年8月のMAPを基点に
+//   2025年8月〜2026年10月の15か月分を「上がり下がりしながら右肩上がり」のデータに書き換える。?demo=restore で書き換え前に戻す。
+//   書き換える前に、その月の現状MAP・理想MAP・数字を「_bakdemo」付きの文書に控えておく（戻す時に使う）。
+//   使えるのは、メールの@の前が「test」＋数字のアカウントだけ（本番のアカウントのデータを消さないように）
+var DEMO_BASE = '2026.08', DEMO_FROM = '2025.08', DEMO_TO = '2026.10';
+var DEMO_NEW_NAMES = [['桜井', '陽向'], ['水野', '結衣'], ['片山', '蓮'], ['小野寺', '心春'], ['宮城', '湊'], ['藤崎', '凛'], ['早瀬', '悠真'], ['北村', '紬'], ['真田', '朝陽'], ['羽田', '葵']];
+function _demoOk() { var em = String((currentUser && currentUser.email) || (typeof auth !== 'undefined' && auth && auth.currentUser && auth.currentUser.email) || ''); return /^test\d*@/i.test(em) && !viewingOwnerUid && !!db; }
+function _demoMonths() { var L = [], m = DEMO_FROM; while (m <= DEMO_TO) { L.push(m); m = addMonths(m, 1); } return L; }
+function _demoRand(seed) { var h = 2166136261; for (var i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100000) / 100000; } // 0〜1（同じ種なら同じ値）
+function demoToolPrompt() {
+  if (!_demoOk()) { toast('デモ用データはテスト用のアカウント（test○○@）だけで使えます'); return; }
+  var restore = /[?&]demo=restore\b/.test(location.search || '');
+  var msg = restore ? 'デモ用に書き換える前のデータに戻します（' + DEMO_FROM + '〜' + DEMO_TO + '）。よろしいですか？'
+    : 'このアカウントのMAPを、' + DEMO_BASE + 'のデータを基点に ' + DEMO_FROM + '〜' + DEMO_TO + ' の15か月分のデモ用データ（上がり下がりしながら右肩上がり）に書き換えます。\n書き換える前のデータは控えておき、URLの最後を ?demo=restore にして開けば戻せます。よろしいですか？';
+  if (!confirm(msg)) return;
+  (restore ? demoRestore() : demoBuild()).then(function(n) {
+    toast(restore ? '書き換える前のデータに戻しました（' + n + '件）' : 'デモ用データに書き換えました（' + n + 'か月）');
+    try { _dtHist = null; } catch (e) {}
+    try { history.replaceState(null, '', location.pathname); } catch (e2) {}
+    fsLoadFromFirestore(currentUser.uid);
+  }).catch(function(e) { toast('⚠️ できませんでした：' + ((e && e.message) || e)); });
+}
+// 書き換える前の控え（すでに控えがある月は、最初の控えを残す＝何度作り直しても元に戻せる）
+function _demoBackup(uid, mons) {
+  return Promise.all(mons.map(function(mon) {
+    return Promise.all(['months/' + mon + '_current', 'months/' + mon + '_ideal', 'stats/' + mon].map(function(sub) {
+      var src = 'maps/' + uid + '/' + sub, dst = src + '_bakdemo';
+      return _fsGetRaw(dst).then(function(had) {
+        if (had) return;
+        return _fsGetRaw(src).then(function(d) { return db.doc(dst).set({ had: !!d, data: d || null, at: new Date().toISOString() }); });
+      });
+    }));
+  }));
+}
+function demoRestore() {
+  var uid = currentUser.uid, mons = _demoMonths(), n = 0;
+  return Promise.all(mons.map(function(mon) {
+    return Promise.all(['months/' + mon + '_current', 'months/' + mon + '_ideal', 'stats/' + mon].map(function(sub) {
+      var src = 'maps/' + uid + '/' + sub, bak = src + '_bakdemo';
+      return _fsGetRaw(bak).then(function(b) {
+        if (!b) return;
+        n++;
+        return (b.had && b.data ? db.doc(src).set(b.data) : db.doc(src).delete()).then(function() { return db.doc(bak).delete(); });
+      });
+    }));
+  })).then(function() { return n; });
+}
+// 15か月分を作る（純粋な計算。テストからも呼ぶ）
+function _demoGenerate(base, baseIdeal, baseStats, uid) {
+  var mons = _demoMonths(), K = mons.length, kB = mons.indexOf(DEMO_BASE);
+  var all = (base || []).filter(function(m) { return m && !m.deleted; });
+  var root = all.filter(function(m) { return !m.parentId; })[0];
+  if (!root) throw new Error(DEMO_BASE + 'のMAPに自分（いちばん上の人）がいません');
+  // 入った順＝上から（親が先）。同じ段は元の並び
+  var order = [], seen = {}, q = [root];
+  while (q.length) { var x = q.shift(); if (seen[x.id]) continue; seen[x.id] = 1; order.push(x); all.forEach(function(c) { if (c.parentId === x.id && !seen[c.id]) q.push(c); }); }
+  all.forEach(function(m) { if (!seen[m.id]) order.push(m); }); // 親が見つからない人は最後
+  var N = order.length;
+  // 人数の割合（基点で1）・GSVの倍率：右肩上がり＋小さな上がり下がり
+  //   全体のPT（基点で1）：2025.08は約2割 → ところどころ下がりながら → 2026.10は約1.15倍
+  var C = [0.22, 0.28, 0.26, 0.35, 0.32, 0.43, 0.48, 0.45, 0.6, 0.68, 0.64, 0.82, 1, 1.06, 1.15];
+  var sizeR = function(k) { if (k >= kB) return 1 + 0.06 * (k - kB); return Math.min(1, 0.35 + 0.65 * Math.pow(k / kB, 0.9)); };
+  var gsvR = function(k) { return C[k] != null ? C[k] : 1; };
+  var baseTot = all.reduce(function(s, m) { return s + (typeof m.ptSelf === 'number' ? m.ptSelf : (m.ptCurrent || 0)); }, 0);
+  var joinK = {}; order.forEach(function(m, r) { var k = 0; while (k < kB && Math.round(N * sizeR(k)) <= r) k++; joinK[m.id] = r === 0 ? 0 : k; });
+  // 基点より後の月に入る新しい人（その月の人数ぶん）
+  var adds = [], parents = order.filter(function(m) { return m.parentId && !isBROrAbove((m.title || '').trim()) && (m.title || '').trim() !== 'OUT'; });
+  if (!parents.length) parents = [root];
+  for (var k2 = kB + 1; k2 < K; k2++) {
+    var want = Math.round(N * sizeR(k2)) - N - adds.length;
+    for (var a = 0; a < want; a++) {
+      var nm = DEMO_NEW_NAMES[adds.length % DEMO_NEW_NAMES.length], par = parents[Math.floor(_demoRand('p' + adds.length) * parents.length)];
+      var tr = adds.length % 2 === 0;
+      adds.push({ id: 'demo-' + mons[k2].replace('.', '') + '-' + a, lastName: nm[0], firstName: nm[1], gender: _demoRand('g' + adds.length) < 0.5 ? 'male' : 'female', title: tr ? '' : 'LOI', trainee: tr,
+        activity: tr ? 'B' : 'A', actRate: tr ? 60 : 85, morale: 2, priority: '', ptSelf: tr ? 0 : 300, ptCurrent: 0, ptFixed: 0, parentId: par.id, mapType: 'both', memo: '', startMonth: mons[k2], month: mons[k2], traineeHistory: [], _demoK: k2 });
+    }
+  }
+  var LV = ['C', 'B', 'A', 'S'], RATE = { S: 120, A: 95, B: 80, C: 50 };
+  var out = {};
+  mons.forEach(function(mon, k) {
+    var prog = Math.min(1, k / kB);
+    var mem = order.filter(function(m) { return joinK[m.id] <= k; }).map(function(m0) {
+      var m = JSON.parse(JSON.stringify(m0));
+      m.startMonth = mons[joinK[m.id]] || m.startMonth; m.month = mon;
+      if (k !== kB) {
+        var r = _demoRand(m.id + mon);
+        if (typeof m.ptSelf !== 'number') m.ptSelf = m.ptCurrent || 0;
+        m.ptSelf = (m.ptSelf || 0) * (0.8 + 0.4 * r); // 人ごとのばらつき（あとで月全体を曲線に合わせる）
+        // 稼働：基点の稼働を中心に、前の月ほど少し低め・ときどき上下
+        var i0 = Math.max(0, LV.indexOf(m.activity || 'B')), d = r < 0.15 ? -1 : (r > 0.88 ? 1 : 0);
+        if (k < kB && _demoRand('a' + m.id + mon) > 0.35 + 0.6 * prog) d -= 1;
+        var lv = LV[Math.max(0, Math.min(3, i0 + d))];
+        if (m.activity) { m.activity = lv; m.actRate = Math.max(20, Math.min(120, RATE[lv] - 10 + Math.round(20 * _demoRand('r' + m.id + mon)))); }
+        // 入ったばかりの頃はBRになっていない
+        var t = (m.title || '').trim();
+        if (m.parentId && isBROrAbove(t) && k - joinK[m.id] < 3) m.title = 'B5';
+      }
+      return m;
+    });
+    adds.forEach(function(a0) { if (a0._demoK <= k) { var a = JSON.parse(JSON.stringify(a0)); delete a._demoK; a.month = mon; if (k > a0._demoK) { a.ptSelf = a.trainee ? 0 : 450; } mem.push(a); } });
+    if (k !== kB) { // 月全体のPTを曲線に合わせる
+      var tot = mem.reduce(function(s, m) { return s + (m.ptSelf || 0); }, 0), f = tot > 0 ? baseTot * gsvR(k) / tot : 1;
+      mem.forEach(function(m) { m.ptSelf = Math.round((m.ptSelf || 0) * f / 10) * 10; });
+    }
+    if (k === kB) (base || []).forEach(function(m) { if (m && m.deleted) mem.push(JSON.parse(JSON.stringify(m))); }); // 基点の月は消した人もそのまま
+    recalcGSV(mem);
+    var ideal = k === kB && baseIdeal && baseIdeal.length ? baseIdeal : mem.map(function(m) { var c = JSON.parse(JSON.stringify(m)); c.mapType = 'ideal'; return c; });
+    // 数字：コミッション（手入力の項目）を右肩上がりに。12列の最後がその月
+    var st = JSON.parse(JSON.stringify((baseStats && baseStats.stats) || getDefaultStats()));
+    var comBase = 0; try { (((baseStats && baseStats.stats) || {}).monthly || []).forEach(function(rw) { if (rw.label === 'コミッション') { var v = Number((rw.vals || []).slice(-1)[0]); if (v > 0) comBase = v; } }); } catch (eC) {}
+    if (!comBase) comBase = Math.max(30000, Math.round((root.ptCurrent || 3000) * 30));
+    var comAt = function(kk) { if (kk < 0 || kk >= K) return ''; if (kk === kB) return comBase; return Math.round(comBase * gsvR(kk) * (0.96 + 0.08 * _demoRand('c' + kk)) / 100) * 100; };
+    (st.monthly || []).forEach(function(rw) {
+      var v = []; for (var j = 11; j >= 0; j--) v.push(rw.label === 'コミッション' ? comAt(k - j) : (rw.vals && rw.vals.length ? '' : ''));
+      rw.vals = v;
+    });
+    out[mon] = { current: { members: mem, updatedAt: new Date().toISOString() }, ideal: { members: ideal, updatedAt: new Date().toISOString() },
+      stats: { stats: st, commission: (baseStats && baseStats.commission) || getDefaultCommission(), freshData: k === kB ? ((baseStats && baseStats.freshData) || {}) : {}, updatedAt: new Date().toISOString() } };
+  });
+  return out;
+}
+function demoBuild() {
+  var uid = currentUser.uid, mons = _demoMonths();
+  return Promise.all([_fsGetRaw('maps/' + uid + '/months/' + DEMO_BASE + '_current'), _fsGetRaw('maps/' + uid + '/months/' + DEMO_BASE + '_ideal'), _fsGetRaw('maps/' + uid + '/stats/' + DEMO_BASE)]).then(function(r) {
+    if (!r[0] || !r[0].members || !r[0].members.length) throw new Error(DEMO_BASE + 'のMAPにデータがありません');
+    var gen = _demoGenerate(r[0].members, r[1] && r[1].members, r[2], uid);
+    return _demoBackup(uid, mons).then(function() {
+      return Promise.all(mons.map(function(mon) {
+        var g = gen[mon];
+        return Promise.all([db.doc('maps/' + uid + '/months/' + mon + '_current').set(g.current), db.doc('maps/' + uid + '/months/' + mon + '_ideal').set(g.ideal), db.doc('maps/' + uid + '/stats/' + mon).set(g.stats)]);
+      }));
+    }).then(function() { return mons.length; });
+  });
+}
 // ════ v716: MAP画面（PC）の右に課題パネル：現状／理想を切りかえても出たまま。人のカード・丸を押すとその人の課題 ════
 var _mapIssOn = false; try { _mapIssOn = localStorage.getItem('gm_mapIss') === '1'; } catch (e) {}
 function _mapIssShown() { return _mapIssOn && (currentView === 'current' || currentView === 'ideal') && typeof _px3On === 'function' && _px3On(); }
