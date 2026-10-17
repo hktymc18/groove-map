@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v808';
+var APP_JS_VERSION = 'v809';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4073,7 +4073,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v808';
+  var DATA_VERSION = 'v809';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4789,6 +4789,8 @@ function _vvhTarget() {
     //        入力中でなければ本来の高さ＝画面の高さ（縦なら screen.height・横なら screen.width）。それより100px以上小さい時は古い値とみなす
     var iw = Math.round(window.innerWidth || 0), sw = (window.screen && screen.width) || 0, sh = (window.screen && screen.height) || 0, full = 0;
     if (sw && sh) { if (Math.abs(iw - sw) <= 2) full = sh; else if (Math.abs(iw - sh) <= 2) full = sw; }
+    // v809 #16: 開いた直後にステータスバー分まで含む「画面いっぱい」の高さが返ってきた時は、前回落ち着いた高さを使う
+    if (full && h >= full - 2) { var ok = 0; try { ok = parseInt(localStorage.getItem(_vvhOkKey()) || '0', 10) || 0; } catch (eOk) {} if (ok && ok < h && ok > full - 120) return ok; }
     var want = Math.max(ch, full);
     if (sc < 1.05 && want && h < want - 100) return want;
     return h;
@@ -4889,7 +4891,29 @@ setTimeout(_pcTimeInputs, 800);
 _vvhUpdate();
 // iOSは起動直後にviewportが数回変わることがあるため、落ち着くまで数回取り直す
 setTimeout(_vvhUpdate, 300); setTimeout(_vvhUpdate, 1000); setTimeout(_vvhUpdate, 3000);
-window.addEventListener('pageshow', _vvhUpdate);
+// v809 #16: ホーム画面アプリを開いた直後、iOSがステータスバー分を含んだ大きい高さを一瞬返し、最初の表示（カレンダー）が
+//   画面の下にはみ出していた（数秒後の取り直しまでそのまま）。開いた直後・戻ってきた直後の5秒間は0.15秒ごとに取り直す
+function _vvhOkKey() { return 'gm_vvhOK_' + Math.round(window.innerWidth || 0) + 'x' + (((window.screen && screen.width) || 0) + 'x' + ((window.screen && screen.height) || 0)); }
+function _vvhSettle() {
+  if (typeof isPCMode === 'function' && isPCMode()) return;
+  var t0 = Date.now(); clearInterval(window._vvhSetT);
+  window._vvhSetT = setInterval(function() {
+    try {
+      if (Date.now() - t0 > 5000) {
+        clearInterval(window._vvhSetT);
+        // 落ち着いた高さを覚える（次に開いた直後の大きすぎる値の代わりに使う）。ホーム画面アプリ・入力中でない時だけ
+        try { if (_vvStandalone() && !_vvEditableFocus()) { var v9 = _vvNow(), sh9 = (window.screen && screen.height) || 0; if (v9 > 200 && (!sh9 || v9 < sh9 - 2)) localStorage.setItem(_vvhOkKey(), String(v9)); } } catch (eK) {}
+        return;
+      }
+      if (_vvEditableFocus()) return;
+      var cur = parseInt(document.documentElement.style.getPropertyValue('--vvh') || '0', 10) || 0;
+      if (Math.abs(_vvhTarget() - cur) > 2) _vvhUpdate();
+    } catch (eS) {}
+  }, 150);
+}
+_vvhSettle();
+window.addEventListener('pageshow', function() { _vvhUpdate(); _vvhSettle(); });
+document.addEventListener('visibilitychange', function() { if (!document.hidden) { _vvhUpdate(); _vvhSettle(); } });
 window.addEventListener('resize', _vvhUpdate);
 // v326: ホーム画面アプリなのに画面が縦に縮んだまま（下に空白・その領域はタップ不可）の場合、
 // 「指でスクロールすると直る」＝再計算で直せるため、自動で1pxスクロールを往復してiOSに再計算させる
@@ -4929,7 +4953,7 @@ setInterval(function() {
     if (_vvEditableFocus()) return; // 入力中は触らない（v515: 読み取り専用の欄は対象外＝監視を止めない）
     var h = _vvhTarget();
     var cur = parseInt(document.documentElement.style.getPropertyValue('--vvh') || '0', 10) || 0;
-    if (!cur || Math.abs(h - cur) > 24) _vvhUpdate(); // 変数が正しい高さとズレたら取り直し
+    if (!cur || Math.abs(h - cur) > 8) _vvhUpdate(); // 変数が正しい高さとズレたら取り直し（v809: 24px→8px。ステータスバーより小さいズレも直す）
     var sa = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
     if (sa && (screen.height - window.innerHeight) > 110) { _gapKicked = 0; _iosGapKick(); } // 幻のツールバー状態は何度でも蹴る
   } catch(eWd) {}
@@ -5578,6 +5602,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v809', d:'2026-10-17', items:['ホーム画面のアプリを開いた直後、カレンダーが画面の下にはみ出すことがある問題を直しました（#16）'] },
   { v:'v808', d:'2026-10-17', items:['データベースの読み取りをさらに減らしました（予定・タスクは直近の分から読み、前の月を見た時に古い分を読む・写真は変わった時だけ読み直す）。見た目と使い方は変わりません'] },
   { v:'v807', d:'2026-10-16', items:['データベースの読み取りを減らしました（ユニオン予定は過去120日から・手元のリストの人数は端末に6時間覚える・保存の前の読み直しを減らす など）。見た目と使い方は変わりません'] },
   { v:'v806', d:'2026-10-15', items:['ユニオン名の変更前の名前（BASE ANTARES など）のまま残っていた人は、開くと自動で新しいユニオン名に直るようにしました'] },
