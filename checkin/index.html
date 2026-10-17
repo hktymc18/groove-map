@@ -1788,10 +1788,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v76';
+var APP_VER = 'v77';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v77', d: '2026/10/17', items: ['🔧 CSV・Excelの取込で、少し前に別の人が追加したメンバーを「新規」と判定してしまうことがある問題を修正（取込・採番は必ず最新の名簿で確認します）'] },
   { v: 'v76', d: '2026/10/17', items: ['🗺 通常会員の会員証の背景に、世界地図をうっすら透かして表示するようにしました'] },
   { v: 'v75', d: '2026/10/16', items: ['📱 スマホ: 名簿で削除したメンバーが、押した瞬間に一覧から消えるようにしました', '📱 スマホ: 画面の下から出る確認画面のボタンが、iPhoneの下のバーに隠れないようにしました'] },
   { v: 'v74', d: '2026/10/16', items: ['📱 スマホで受付管理を使いやすく：名簿はカード型の一覧に、管理ボタンは「⚙ 管理メニュー」にまとめました。月・ユニオンの切り替えは折り返して表示し、編集画面は画面の下から出るようにしました'] },
@@ -5873,7 +5874,7 @@ function memberForm(m){
   // オーナーが所属ユニオンを切り替えたら、そのユニオンの名簿で採番・系列候補を出し直す
   var us = $('mfUnion');
   if(us && isNew) us.onchange = function(){
-    fetchMembers(us.value).then(function(list){
+    fetchMembers(us.value, true).then(function(list){   // 採番は最新の名簿で（使い回しだと直前に追加された番号と重なる）
       $('mfNo').value = nextMemberNo(list, us.value);
       $('dlGroups').innerHTML = groupDatalist(list);
     }).catch(function(){});
@@ -6759,7 +6760,8 @@ function imCheck(target, rows){
   var uPre = db.collection('checkinUnions').doc(target).get().then(function(s){
     if(s.exists && s.data().noPrefix) gUnionPrefix[target] = s.data().noPrefix;
   }).catch(function(){});
-  return Promise.all([fetchMembers(target), uPre]).then(function(res){
+  // 取込の新規/更新の判定・採番は最新の名簿で（5分の使い回しだと、直前に追加された人を「新規」と判定してしまう）
+  return Promise.all([fetchMembers(target, true), uPre]).then(function(res){
     var list = res[0];
     var mine = {}, seen = {};
     list.forEach(function(m){ mine[m.no] = m; });
@@ -6947,7 +6949,7 @@ $('btnGroupRen').onclick = function(){
       return;
     }
     // 件数は最新の名簿で数える
-    fetchMembers(gRosterUnion).then(function(list){
+    fetchMembers(gRosterUnion, true).then(function(list){
     gMembers = list;
     var total = 0;
     $('grPrev').innerHTML = olds.map(function(o){
@@ -7740,7 +7742,7 @@ function trainerEnter(){
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
 }
 function trLoadMembers(){
-  return fetchMembers(gUnion).then(function(list){
+  return fetchMembers(gUnion, true).then(function(list){   // 研修生の採番は最新の名簿で
     gTrMembers = list;
     $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
     trFillUp();
