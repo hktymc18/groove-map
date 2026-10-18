@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v812';
+var APP_JS_VERSION = 'v813';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v812';
+  var DATA_VERSION = 'v813';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5618,6 +5618,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v813', d:'2026-10-18', items:['カレンダーで研修ステップ（PGなど）の予定を作って共有メンバーのNAを選ぶと、相手のMAPのその人の研修にも予定で入るように（#18）'] },
   { v:'v812', d:'2026-10-18', items:['共有メンバーにカーソルを合わせた時、自分で入れた予定・タスクも表示（#17）'] },
   { v:'v811', d:'2026-10-17', items:['テスト用アカウントのデモ用データ作成（?demo=build で作成・?demo=restore で元に戻す）'] },
   { v:'v810', d:'2026-10-17', items:['MAPのデータが古い内容で上書きされないようにしました：保存の前に、ほかの画面（別のタブ・ホーム画面アプリとSafari・別の端末）で先に保存されていないか確かめ、されていたら最新を読み込みます','通信が不安定で端末の控えを表示している時は保存しません。しばらくうしろにあった画面に戻った時は自動で読み直します'] },
@@ -27587,6 +27588,56 @@ function _tsUnlink(m, h) {
   delete h.evId;
   if (e) { e.tsOff = e.tsOff || {}; e.tsOff[m.id] = 1; saveEventDoc(e); }
 }
+// v813 #18: 共有（結合）メンバーの研修生を関連メンバーに選んだ研修ステップの予定 → 持ち主のMAPのその人の研修履歴にも「予定」で入れる
+//   （「編集」で共有されている時だけ。持ち主の記録には extEv＝この予定のid と ext＝入れた人 を付け、日付・Aさんの変更・予定を消す・外すも同じように反映）
+//   結果（進んだ・流れた）を入れた記録は触らない。書き込むのは今開いている月の持ち主の現状MAP
+function _tsMirror(e) {
+  if (!e || !e.id || viewingOwnerUid || (typeof _aggActive !== 'undefined' && _aggActive) || /^UN_/.test(String(e.id)) || !db || !currentUser || typeof mgResolve !== 'function') return;
+  var step = e.deleted ? '' : _tsStepOf(e), off = e.tsOff || {}, by = {};
+  var mids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
+  if (step && e.date) mids.forEach(function(mid) { if (!/^MG_/.test(String(mid)) || off[mid]) return; var r = mgResolve(mid); if (r) (by[r.uid] = by[r.uid] || {})[r.srcId] = mid; });
+  (e.tsExt || []).forEach(function(u) { if (u) by[u] = by[u] || {}; });
+  var uids = Object.keys(by); if (!uids.length) return;
+  var keep = uids.filter(function(u) { return Object.keys(by[u]).length; });
+  if (keep.length) e.tsExt = keep; else delete e.tsExt; // 次に直した時に、外した人の記録も消せるように
+  var me = { uid: currentUser.uid, name: currentUser.name || '' }, asan = String(e.asan || '').trim() || _evSelfName(), month = state.currentMonth;
+  uids.forEach(function(uid) {
+    var want = by[uid], nWant = Object.keys(want).length, own = _olOwnerName(uid);
+    _olCanWriteTo(uid).then(function(ok) {
+      if (!ok) { if (nWant) toast('👁 ' + own + 'さんのMAPは閲覧のみの共有のため、研修の予定は相手のMAPに入れられませんでした'); return; }
+      var path = 'maps/' + uid + '/months/' + month + '_current';
+      return _fsGetRaw(path).then(function(doc) {
+        if (!doc || !doc.members) { if (nWant) toast(own + 'さんのMAPにまだ' + parseInt(String(month).split('.')[1], 10) + '月がないため、研修の予定を入れられませんでした'); return; }
+        var now = new Date().toISOString(), added = [], ch = 0;
+        doc.members.forEach(function(m) {
+          if (!m || m.deleted) return;
+          var hs = m.traineeHistory || [], idx = -1;
+          for (var i = 0; i < hs.length; i++) { if (hs[i] && hs[i].extEv === e.id && hs[i].ext && hs[i].ext.uid === me.uid) { idx = i; break; } }
+          var w = !!want[m.id];
+          if (idx < 0 && !(w && _tsIsTrainee(m))) return;
+          if (idx >= 0) {
+            var h = hs[idx];
+            if (h.result !== 'planned') return;
+            if (!w) hs.splice(idx, 1);
+            else if (h.status !== step || h.date !== e.date || h.aSan !== asan || h.tbd) { h.status = step; h.date = e.date; h.aSan = asan; h.tbd = false; }
+            else return;
+          } else {
+            m.traineeHistory = hs;
+            hs.push({ status: step, date: e.date, aSan: asan, result: 'planned', time: '', extEv: e.id, ext: me });
+            added.push(m.lastName || m.firstName || '');
+          }
+          try { m.traineeStatus = getLatestStatus(m); } catch (eS) {}
+          m.updatedAt = now; ch++; // 持ち主の画面の保存（メンバー単位で新しい方が勝つ）で消されないように
+        });
+        if (!ch) return;
+        return db.doc(path).set({ members: doc.members, updatedAt: now }, { merge: true }).then(function() {
+          if (state.mergedData && state.mergedData[uid]) { state.mergedData[uid] = doc.members; _mgFindCache = null; }
+          if (added.length) toast('🎓 ' + own + 'さんのMAPの' + added.slice(0, 3).join('・') + 'さんの研修「' + step + '」に予定で入れました');
+        });
+      });
+    }).catch(function() { if (nWant) toast(own + 'さんのMAPに研修の予定を入れられませんでした'); });
+  });
+}
 // v571: v570より前に入れた予定もまとめて研修履歴につなぐ（今月を開いた時に1回。30日前以降の予定）
 //   すでに同じステップの記録があれば新しく作らずにその記録につなぐ。済んだステップ・先に進んでいる人はつながない
 var _tsMigKey = '';
@@ -27607,7 +27658,7 @@ function _tsEvMigrate() {
       var hs = m.traineeHistory || [];
       if (hs.some(function(h) { return h && h.evId === e.id; })) return; // つながり済み
       if (!_tsIsTrainee(m)) return;
-      var same = hs.filter(function(h) { return h && !h.ir && !h.evId && h.status === step; });
+      var same = hs.filter(function(h) { return h && !h.ir && !h.evId && !h.extEv && h.status === step; }); // v813: 共有先が入れた予定の記録にはつながない
       var hit = same.filter(function(h) { return h.date === e.date; })[0] || same.filter(function(h) { return h.result === 'planned'; })[0];
       if (hit) { hit.evId = e.id; n++; return; } // 手で入れた記録につなぐ（日付・Aさんは下で予定に合わせる。結果入りはそのまま）
       var past = e.date < t;
@@ -27625,6 +27676,7 @@ function _tsEvMigrate() {
 }
 function saveEventDoc(e) {
   try { _tsFromEvent(e); } catch (eTs) {} // v570
+  try { if (!_viewNoSched()) _tsMirror(e); } catch (eTm) {} // v813 #18: 共有メンバーの研修生は持ち主のMAPにも
   var uid = eventsUid();
   if (!uid || !db) return Promise.resolve();
   if (_viewNoSched()) { toast('🔒 この共有MAPでは予定・タスクは保存できません（MAPのみの共有）'); return Promise.resolve(); } // v533
@@ -35008,7 +35060,7 @@ function evLinkHintRender() {
   var pk = _p2EvKey({ title: title }), step = _tsStepOf({ title: title });
   if (pk) parts.push('PLAN「' + P2_LINK_LB[pk] + '」に数えます' + (_evMemberIds.length && _evVis === 'self' ? '<span class="dim">（「自分のみ」は数えません）</span>' : ''));
   if (step) {
-    var tr = _evMemberIds.map(function(id) { return _mFind(id); }).filter(function(m) { return m && _tsIsTrainee(m); });
+    var tr = _evMemberIds.map(function(id) { return _mFind(id) || (/^MG_/.test(String(id)) && typeof _mgFind === 'function' ? _mgFind(id) : null); }).filter(function(m) { return m && _tsIsTrainee(m); }); // v813 #18: 共有メンバーも
     if (tr.length) parts.push(tr.slice(0, 3).map(function(m) { return evEsc(m.lastName || m.firstName || ''); }).join('・') + (tr.length > 3 ? ' ほか' : '') + 'さんの研修ステップ「' + step + '」に予定で入ります');
     else if (!_evMemberIds.length) parts.push('<span class="dim">関連メンバー（研修生）を選ぶと、研修ステップ「' + step + '」にも予定で入ります</span>');
   }
