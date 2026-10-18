@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v813';
+var APP_JS_VERSION = 'v814';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v813';
+  var DATA_VERSION = 'v814';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5618,6 +5618,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v814', d:'2026-10-18', items:['研修の記録を押した時に「直す」を追加。ステップ・日にち・Aさん・結果（フォローは内容）を直せます（#19）'] },
   { v:'v813', d:'2026-10-18', items:['カレンダーで研修ステップ（PGなど）の予定を作って共有メンバーのNAを選ぶと、相手のMAPのその人の研修にも予定で入るように（#18）'] },
   { v:'v812', d:'2026-10-18', items:['共有メンバーにカーソルを合わせた時、自分で入れた予定・タスクも表示（#17）'] },
   { v:'v811', d:'2026-10-17', items:['テスト用アカウントのデモ用データ作成（?demo=build で作成・?demo=restore で元に戻す）'] },
@@ -18773,7 +18774,7 @@ function _ppShRender() {
   if (!_ppSh) return;
   var o = document.getElementById('ppSh');
   if (!o) { o = document.createElement('div'); o.id = 'ppSh'; o.className = 'pps-ov'; o.onclick = function(e) { if (e.target === o) _ppShClose(); }; document.body.appendChild(o); }
-  o.innerHTML = '<div class="pps"><div class="gr"></div>' + (_ppSh.k === 'add' ? _ppShAddHtml() : _ppShMenuHtml()) + '</div>';
+  o.innerHTML = '<div class="pps"><div class="gr"></div>' + (_ppSh.k === 'add' || _ppSh.k === 'edit' ? _ppShAddHtml() : _ppShMenuHtml()) + '</div>';
 }
 function _ppAsanSug() { // 最近の研修でAさんだった人（新しい順に6人）
   var L = [], seen = {}, out = [];
@@ -18791,14 +18792,14 @@ function ppTrSheet(step) {
 }
 function _ppShSync() { var a = document.getElementById('ppShA'), f = document.getElementById('ppShFr'); if (_ppSh && a) _ppSh.a = a.value; if (_ppSh && f) _ppSh.fr = f.value; }
 function ppShSet(k, v) { if (!_ppSh) return; _ppShSync(); _ppSh[k] = v; if (k === 'step' && v === '__fr' && _ppSh.res === 'left') _ppSh.res = 'next'; _ppShRender(); }
-function ppShDay(d) { if (!_ppSh) return; _ppShSync(); _ppSh.dm = d; if (d === 't') _ppSh.date = _ppYmd(0); else if (d === 'y') _ppSh.date = _ppYmd(-1); _ppShRender(); }
-function ppShDate(v) { if (!_ppSh) return; _ppShSync(); _ppSh.date = v || _ppYmd(0); if (_ppSh.date > _ppYmd(0) && _ppSh.res === 'next') _ppSh.res = 'planned'; _ppShRender(); }
+function ppShDay(d) { if (!_ppSh) return; _ppShSync(); _ppSh.dm = d; if (d === 't') _ppSh.date = _ppYmd(0); else if (d === 'y') _ppSh.date = _ppYmd(-1); if (d !== 'p') _ppSh.dt = 1; _ppShRender(); }
+function ppShDate(v) { if (!_ppSh) return; _ppShSync(); _ppSh.dt = 1; _ppSh.date = v || _ppYmd(0); if (_ppSh.date > _ppYmd(0) && _ppSh.res === 'next') _ppSh.res = 'planned'; _ppShRender(); }
 function ppShA(n) { var a = document.getElementById('ppShA'); if (a) a.value = n; if (_ppSh) _ppSh.a = n; }
 function _ppShAddHtml() {
-  var S = _ppSh, steps = TITLE_OPTIONS['研修生'] || [], fl = S.step === '__fr';
-  var h = '<h3>記録を足す</h3>'
-    + '<div class="ppl ppl2">ステップ</div><div class="ppch">' + steps.map(function(s) { return '<span class="' + (S.step === s ? 'on' : '') + '" onclick="ppShSet(\'step\',\'' + s + '\')">' + s + '</span>'; }).join('')
-    + '<span class="' + (fl ? 'on' : '') + '" onclick="ppShSet(\'step\',\'__fr\')">' + icn('pencil') + 'フォロー</span></div>';
+  var S = _ppSh, steps = TITLE_OPTIONS['研修生'] || [], fl = S.step === '__fr', ed = S.k === 'edit';
+  var h = '<h3>' + (ed ? '記録を直す' : '記録を足す') + '</h3>';
+  if (!(ed && fl)) h += '<div class="ppl ppl2">ステップ</div><div class="ppch">' + steps.map(function(s) { return '<span class="' + (S.step === s ? 'on' : '') + '" onclick="ppShSet(\'step\',\'' + s + '\')">' + s + '</span>'; }).join('')
+    + (ed ? '' : '<span class="' + (fl ? 'on' : '') + '" onclick="ppShSet(\'step\',\'__fr\')">' + icn('pencil') + 'フォロー</span>') + '</div>'; // v814 #19: 直す時はステップ⇔フォローの切りかえはしない
   if (fl) h += '<div class="ppl ppl2">内容</div><input class="ppin" id="ppShFr" placeholder="例：ごはんフォロー・電話で状況確認" value="' + evEsc(S.fr) + '">';
   h += '<div class="ppl ppl2">日にち</div><div class="ppch"><span class="' + (S.dm === 't' ? 'on' : '') + '" onclick="ppShDay(\'t\')">今日 ' + _ppMD(_ppYmd(0)) + '</span><span class="' + (S.dm === 'y' ? 'on' : '') + '" onclick="ppShDay(\'y\')">昨日</span>'
     + '<span class="' + (S.dm === 'p' ? 'on' : '') + '" onclick="ppShDay(\'p\')">' + icn('calendar') + (S.dm === 'p' ? _ppMD(S.date) + '（' + _ppWd(S.date) + '）' : '日付を選ぶ') + '</span></div>';
@@ -18808,7 +18809,8 @@ function _ppShAddHtml() {
   h += '<div class="ppl ppl2">どうだった</div><div class="ppseg">' + (fl ? [['next', '実施した', 'var(--accent)'], ['planned', '予定', 'var(--gold)']] : [['next', '進んだ', 'var(--accent)'], ['planned', '予定', 'var(--gold)'], ['left', '流れた', 'var(--red)']]).map(function(x) {
     return '<span class="' + (S.res === x[0] ? 'on' : '') + '" style="--c:' + x[2] + '" onclick="ppShSet(\'res\',\'' + x[0] + '\')">' + x[1] + '</span>';
   }).join('') + '</div>';
-  return h + '<div class="ppbig" onclick="ppShAdd()">追加する</div><div class="pplk" onclick="_ppShClose()">やめる</div>';
+  if (ed && S.tbd) h += '<div class="ux-sub" style="margin-top:8px">いまは日程調整中です。日にちを選ぶと、その日の予定になります</div>';
+  return h + (ed ? '<div class="ppbig" onclick="ppShSave()">保存する</div>' : '<div class="ppbig" onclick="ppShAdd()">追加する</div>') + '<div class="pplk" onclick="_ppShClose()">やめる</div>';
 }
 function ppShAdd() {
   var m = _ppM(); if (!m || !_ppSh) return;
@@ -18819,6 +18821,40 @@ function ppShAdd() {
     _trAddFollow(m, t, d, a, S.res === 'planned' ? 'planned' : 'next');
   } else _trAddRec(m, S.step, d, a, S.res);
   _ppShClose();
+  try { renderCurrentView(); } catch (e) {}
+  _ppRender();
+}
+// v814 #19: 記録を直す（ステップ・日にち・Aさん・どうだった／フォローは内容）。記録を足すと同じシートで
+function ppTrEdit(i) {
+  var m = _ppM(), h = m && (m.traineeHistory || [])[i]; if (!h) return;
+  _ppSh = { k: 'edit', i: i, step: h.ir ? '__fr' : (h.status || ''), fr: h.ir ? (h.status || '') : '', date: h.date || (h.tbd ? '' : _ppYmd(0)), dm: 'p', a: h.aSan || '',
+    res: h.result === 'left' ? 'left' : (h.result === 'planned' ? 'planned' : 'next'), tbd: !!h.tbd, d0: h.date || '' };
+  _ppShRender();
+}
+function ppShSave() {
+  var m = _ppM(); if (!m || !_ppSh || _ppSh.k !== 'edit') return;
+  _ppShSync();
+  var S = _ppSh, i = S.i, h = (m.traineeHistory || [])[i]; if (!h) { _ppShClose(); return; }
+  var a = String(S.a || '').trim(), d = S.date || h.date || '', st = h.ir ? String(S.fr || '').trim() : S.step;
+  if (!st) { toast(h.ir ? '内容を入れてください' : 'ステップを選んでください'); return; }
+  var res = h.ir && S.res === 'left' ? 'next' : S.res, r0 = h.result === 'left' ? 'left' : (h.result === 'planned' ? 'planned' : 'next');
+  var dCh = !!(S.dt && d && (d !== (S.d0 || '') || S.tbd)); // 日にちを選び直した時だけ（日程調整中は日にちを選ぶとその日の予定に）
+  if (st === h.status && !dCh && a === (h.aSan || '') && res === r0) { _ppShClose(); return; }
+  // カレンダーの予定とつながった記録は、ここで直したら予定から切り離す（あとで予定を保存しても戻さない。リスケと同じ）
+  if (h.evId && (st !== h.status || dCh || a !== (h.aSan || ''))) { try { _tsUnlink(m, h); } catch (eU) {} }
+  h.status = st; h.aSan = a;
+  if (dCh) { h.date = d; h.tbd = false; }
+  _ppShClose();
+  if (res !== r0 && res !== 'planned') { editingId = m.id; setStepResult(i, res); } // 進んだ・流れた：今までのボタンと同じ（タイトル・BC・OUTの自動更新）
+  else {
+    if (res !== r0) h.result = 'planned';
+    if (!h.ir && st === 'BPC' && h.result === 'next' && m.traineeResult !== 'BC') { m.traineeResult = 'BC'; setTimeout(function() { toast('✅ BPC実施 → 研修結果を自動でBCにしました'); }, 900); }
+    if (h.result === 'planned') { m.nextDate = h.date; if (a) m.aSan = a; }
+    m.traineeStatus = getLatestStatus(m);
+    if (!h.ir) syncTraineeTitle(m);
+    autoSave();
+    toast('✓ 記録を直しました');
+  }
   try { renderCurrentView(); } catch (e) {}
   _ppRender();
 }
@@ -18833,6 +18869,7 @@ function _ppShMenuHtml() {
     if (!h.ir) L.push(['ppTrSet(' + i + ',\'left\')', icn('ban'), '流れた', 'var(--red)']);
     L.push(['ppTrRs(' + i + ')', icn('calendar'), h.tbd ? '日付を入れる' : 'リスケ（日付を変える）', '']);
   }
+  L.push(['ppTrEdit(' + i + ')', icn('pencil'), h.ir ? '直す（内容・日にち・Aさん）' : '直す（ステップ・日にち・Aさん・結果）', '']); // v814 #19
   L.push(['ppTrDel(' + i + ')', icn('trash'), 'この記録を消す', 'var(--red)']);
   return t + '<div class="ux-list" style="margin-top:12px">' + L.map(function(x) { return '<div class="ux-li" onclick="' + x[0] + '"' + (x[3] ? ' style="color:' + x[3] + '"' : '') + '><span class="ic">' + x[1] + '</span><span>' + x[2] + '</span></div>'; }).join('') + '</div><div class="pplk" onclick="_ppShClose()">閉じる</div>';
 }
