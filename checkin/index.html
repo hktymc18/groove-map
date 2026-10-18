@@ -1843,6 +1843,7 @@ var APP_VER = 'v82';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v82', d: '2026/10/18', items: ['🃏 REVEの会員証を裏返す時、1回転半したように見えていたのを、ちょうど半回転で裏になるように直しました'] },
   { v: 'v82', d: '2026/10/18', items: ['🔗 名簿の編集に「MAPで連携するユニオン」を追加。ほかの地域のユニオンのチームで活動している人は、そのユニオンを選ぶと、そのユニオンのGROOVE MAPの受付連携でこの人だけ（名前・研修の受講・稼働率）つなげるようになります（受付・集計はこれまでどおり所属ユニオンで）'] },
   { v: 'v81', d: '2026/10/18', items: ['🃏 REVEの会員証に裏面ができました（カードをタップすると裏返ります。裏面はREVEのロゴ入り）'] },
   { v: 'v80', d: '2026/10/17', items: ['💎 バッジがRUBYの人の会員証が、深いルビー色のカードになりました（世界地図の透かし入り・光がゆっくり脈打って光沢が走ります）'] },
@@ -2894,7 +2895,16 @@ function ckBindPlainFlip(){
     card.classList.remove('cbf-to', 'cbf-from');
     void card.offsetWidth;
     card.classList.add(on ? 'cbf-from' : 'cbf-to');
-    setTimeout(function(){ card.classList.toggle('back-on', !on); }, 230);   // 真横（90°）を通る頃に入れ替え
+    // 表⇄裏の入れ替えは、カードが実際に真横（90°）を通った瞬間に行う（時間で決めると端末によって遅れ、
+    // 表が裏返ったまま回り続けて1.5回転したように見えていた）。回転の向き＝変換行列の cos の符号で判定
+    var t0 = Date.now();
+    (function watch(){
+      var m = getComputedStyle(card).transform, a = 1;
+      if(m && m !== 'none'){ var v = m.replace(/^matrix(3d)?\(|\)$/g, '').split(','); a = parseFloat(v[0]); }
+      var past = on ? a > 0 : a < 0;
+      if(past || Date.now() - t0 > 900){ card.classList.toggle('back-on', !on); return; }
+      requestAnimationFrame(watch);
+    })();
     setTimeout(function(){ busy = false; }, 1000);
   });
 }
