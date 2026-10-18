@@ -580,6 +580,29 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-tcg .mc-back::before{content:'';position:absolute;inset:0;border-radius:inherit;
   background:var(--back,linear-gradient(135deg,#0c2d96,#1f6fe0 50%,#0c2d96)) center/cover no-repeat;}
 .membercard.skin-tcg .mc-back b{position:absolute;left:0;right:0;top:46%;text-align:center;font-family:Verdana,sans-serif;font-weight:900;font-size:18px;letter-spacing:.2em;color:rgba(255,255,255,.85);}
+/* 🃏 裏面（共通の背景＋ロゴ＋ユニオン名）。ポケモンカード風の黄色い立体文字を上と下（逆さ）に。
+   文字のフォント（Lilita One・約10KB・OFL）はアプリに同梱（外部のフォントが読めない時でも崩れない） */
+@font-face{font-family:'Lilita One';src:url('skins/lilita-one.woff2') format('woff2');font-display:swap;}
+.membercard .mc-back.cb .cb-name{position:absolute;left:0;right:0;top:auto;text-align:center;font-family:'Lilita One',Verdana,sans-serif;font-weight:400;line-height:1;letter-spacing:.02em;color:inherit;}
+.membercard .mc-back.cb .cb-name span{position:relative;display:inline-block;transform:rotate(-4deg);}
+.membercard .mc-back.cb .cb-name span::before{content:attr(data-t);position:absolute;left:0;top:0;z-index:0;color:#1e4aa8;-webkit-text-stroke:.25em #1e4aa8;
+  text-shadow:0 .1em 0 #0c2563,0 .13em .2em rgba(0,0,30,.55);}
+.membercard .mc-back.cb .cb-name span i{position:relative;z-index:1;font-style:normal;background:linear-gradient(180deg,#fff7a8 0%,#ffe14a 38%,#ffc21a 62%,#f39a00 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.035em #d27800;}
+.membercard .mc-back.cb .cb-name.top{top:6.5%;}
+.membercard .mc-back.cb .cb-name.bot{bottom:6.5%;transform:rotate(180deg);}
+.membercard .mc-back.cb .cb-logo{position:absolute;left:14.9%;right:14.9%;top:31%;bottom:31%;background:center/contain no-repeat;filter:drop-shadow(0 6px 12px rgba(0,0,30,.55));}
+/* 通常の会員証の裏返し（REVEなど CARD_BACKS の all のユニオン）。カードは平面のまま回して、真横で表⇄裏を入れ替える */
+.membercard.cb-flip{cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.membercard.cb-flip .mc-back{display:none;}
+.membercard.cb-flip.back-on .mc-back{display:block;position:absolute !important;inset:0;z-index:20 !important;border-radius:inherit;overflow:hidden;
+  transform:scaleX(-1);background:#0c2d96;}
+.membercard.cb-flip.back-on .mc-back::before{content:'';position:absolute;inset:0;background:var(--back) center/cover no-repeat;}
+.membercard.cb-flip.cbf-to{animation:cbFlipTo 1s ease forwards;}
+.membercard.cb-flip.cbf-from{animation:cbFlipFrom 1s ease forwards;}
+@keyframes cbFlipTo{0%{transform:perspective(900px) rotateY(0);}45%{transform:perspective(900px) rotateY(200deg) scale(1.04);}64%{transform:perspective(900px) rotateY(170deg) scale(.98);}80%{transform:perspective(900px) rotateY(186deg) scale(1.01);}92%{transform:perspective(900px) rotateY(178deg);}100%{transform:perspective(900px) rotateY(180deg);}}
+@keyframes cbFlipFrom{0%{transform:perspective(900px) rotateY(180deg);}45%{transform:perspective(900px) rotateY(-20deg) scale(1.04);}64%{transform:perspective(900px) rotateY(10deg) scale(.98);}80%{transform:perspective(900px) rotateY(-6deg) scale(1.01);}92%{transform:perspective(900px) rotateY(2deg);}100%{transform:perspective(900px) rotateY(0);}}
+@media (prefers-reduced-motion: reduce){ .membercard.cb-flip.cbf-to,.membercard.cb-flip.cbf-from{animation-duration:.01s;} }
 .membercard.skin-tcg .mc-deco,.membercard.skin-tcg .mc-group{display:none;}
 .tcg-tx{text-shadow:0 0 2px #000,0 1px 0 #000,0 0 6px #000;}
 .membercard.skin-tcg .mc-union{grid-area:union;justify-self:start;font-size:10.5px;letter-spacing:.08em;margin:0;padding:1px 10px;border-radius:5px 99px 99px 5px;
@@ -1816,10 +1839,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v80';
+var APP_VER = 'v81';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v81', d: '2026/10/18', items: ['🃏 REVEの会員証に裏面ができました（カードをタップすると裏返ります。裏面はREVEのロゴ入り）'] },
   { v: 'v80', d: '2026/10/17', items: ['💎 バッジがRUBYの人の会員証が、深いルビー色のカードになりました（世界地図の透かし入り・光がゆっくり脈打って光沢が走ります）'] },
   { v: 'v79', d: '2026/10/17', items: ['✨ 通常会員の会員証を、ほんのり光って見えるパール調のグラデーションにしました'] },
   { v: 'v78', d: '2026/10/17', items: ['🗺 ゴールドの会員証にも、世界地図をうっすら透かして表示するようにしました'] },
@@ -2782,10 +2806,13 @@ function renderCard(c){
     card.classList.add('skin-tcg');
     if(c.skinName) $('mcName').textContent = c.skinName;
     // 裏面: ユニオンのロゴ（無いユニオンはユニオン名の文字）
-    var back = $('mcBack'), bimg = CARD_BACKS[c.union || ''];
-    if(bimg){ back.style.setProperty('--back', "url('" + bimg + "')"); back.innerHTML = ''; }
-    else { back.style.removeProperty('--back'); back.innerHTML = '<b>' + esc(c.union || 'BASE CHECK-IN') + '</b>'; }
+    ckPaintBack($('mcBack'), c.union);
     ckBindCardGesture();
+  } else if(!c.trainee && (CARD_BACKS[c.union || ''] || {}).all){
+    // 🃏 通常の会員証も裏返せるユニオン（QR以外をタップ→裏返る・もう一度で表）
+    card.classList.add('cb-flip');
+    ckPaintBack($('mcBack'), c.union);
+    ckBindPlainFlip();
   }
   $('mcHp').innerHTML = tcg && c.skinHp ? '<small>HP</small>' + esc(c.skinHp) + '<i class="orb">💀</i>' : '';
   // 左下: 通し番号（例: 1/1000）＋レアリティ（斜体の文字だけ）
@@ -2826,8 +2853,50 @@ function renderCard(c){
     if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   }
 }
-// 🃏 カード裏面のユニオンロゴ（skins/ の画像）
-var CARD_BACKS = { 'ANTARES': 'skins/back-antares.webp' };
+// 🃏 カード裏面（ユニオンごと）。共通の背景（skins/back-base.webp）＋ロゴ＋ユニオン名の文字を重ねて作る。
+//   logo: ロゴ画像（背景透明・skins/）。無いユニオンは文字だけ
+//   img : 1枚に焼き込んだ裏面画像（旧方式。ANTARESはAのロゴ単体が届くまでこれ）
+//   all : true なら、特別デザイン以外の会員証（通常・ゴールド・ルビー等）もタップで裏返せる
+// ユニオンを増やす時は、ロゴを skins/ に置いてここに1行足すだけ。デザインの変更は CSS の .mc-back（cb-*）と背景画像だけ
+var CARD_BACKS = {
+  'ANTARES': { img: 'skins/back-antares.webp' },
+  'REVE': { logo: 'skins/logo-reve.webp', all: true }
+};
+var CARD_BACK_BASE = 'skins/back-base.webp';
+function ckPaintBack(back, union){
+  if(!back) return;
+  var cfg = CARD_BACKS[union || ''] || {}, nm = union || 'BASE CHECK-IN';
+  if(cfg.img){
+    back.classList.remove('cb');
+    back.style.setProperty('--back', "url('" + cfg.img + "')"); back.innerHTML = '';
+    return;
+  }
+  // 名前の長さで文字の大きさを決める（長いユニオン名でもはみ出さない）
+  var fs = Math.min(72, Math.floor(560 / Math.max(4, nm.length)));
+  var name = function(pos){ return '<b class="cb-name ' + pos + '" style="font-size:' + fs + 'px;"><span data-t="' + esc(nm) + '"><i>' + esc(nm) + '</i></span></b>'; };
+  back.classList.add('cb');
+  back.style.setProperty('--back', "url('" + CARD_BACK_BASE + "')");
+  back.innerHTML = name('top') + (cfg.logo ? '<i class="cb-logo" style="background-image:url(\'' + cfg.logo + '\');"></i>' : '') + name('bot');
+}
+// 🃏 通常の会員証の裏返し: カードを平面のまま回し、真横を向いた瞬間に表⇄裏を入れ替える
+//（特別デザインのような立体の重ね方は、光沢・透かしの切り抜きと両立しないため）
+var gPlainFlip = false;
+function ckBindPlainFlip(){
+  if(gPlainFlip) return;
+  gPlainFlip = true;
+  var card = $('memberCard'), busy = false;
+  card.addEventListener('click', function(e){
+    if(!card.classList.contains('cb-flip') || busy) return;
+    var on = card.classList.contains('back-on');
+    if(!on && e.target.closest && e.target.closest('#mcQr, .mc-qrb, button, a, input')) return;   // QR・ボタンは今までどおり
+    busy = true;
+    card.classList.remove('cbf-to', 'cbf-from');
+    void card.offsetWidth;
+    card.classList.add(on ? 'cbf-from' : 'cbf-to');
+    setTimeout(function(){ card.classList.toggle('back-on', !on); }, 230);   // 真横（90°）を通る頃に入れ替え
+    setTimeout(function(){ busy = false; }, 1000);
+  });
+}
 function ckFitLine(el, max, min){
   if(!el) return;
   var sz = max;
@@ -2953,11 +3022,7 @@ function ckTcgBuild(d, serialText){
       + '<span class="at-nm">' + esc(d.skinAtkName || '') + '</span><span class="at-dmg">' + esc(d.skinAtkDmg || '') + '</span>' : '';
   q('.mc-atktx').textContent = d.skinAtkText || '';
   q('.mc-badge').innerHTML = ckBadgeHtml(d.badge || '');
-  var back = card.querySelector('.mc-back'), bimg = CARD_BACKS[d.union || ''];
-  if(back){
-    if(bimg){ back.style.setProperty('--back', "url('" + bimg + "')"); back.innerHTML = ''; }
-    else { back.style.removeProperty('--back'); back.innerHTML = '<b>' + esc(d.union || 'BASE CHECK-IN') + '</b>'; }
-  }
+  ckPaintBack(card.querySelector('.mc-back'), d.union);
   var wrap = document.createElement('div'), fl = document.createElement('div');
   wrap.className = 'mc-tilt on olc-tilt'; fl.className = 'mc-float';
   fl.appendChild(card); wrap.appendChild(fl);
