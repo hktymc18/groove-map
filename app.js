@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v811';
+var APP_JS_VERSION = 'v812';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v811';
+  var DATA_VERSION = 'v812';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5618,6 +5618,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v812', d:'2026-10-18', items:['共有メンバーにカーソルを合わせた時、自分で入れた予定・タスクも表示（#17）'] },
   { v:'v811', d:'2026-10-17', items:['テスト用アカウントのデモ用データ作成（?demo=build で作成・?demo=restore で元に戻す）'] },
   { v:'v810', d:'2026-10-17', items:['MAPのデータが古い内容で上書きされないようにしました：保存の前に、ほかの画面（別のタブ・ホーム画面アプリとSafari・別の端末）で先に保存されていないか確かめ、されていたら最新を読み込みます','通信が不安定で端末の控えを表示している時は保存しません。しばらくうしろにあった画面に戻った時は自動で読み直します'] },
   { v:'v809', d:'2026-10-17', items:['ホーム画面のアプリを開いた直後、カレンダーが画面の下にはみ出すことがある問題を直しました（#16）'] },
@@ -9358,7 +9359,8 @@ function memberInfoHtml(m) {
     }
   } catch(e) {}
   if (/^MG_/.test(m.id)) { // v561: 共有（結合）メンバーは持ち主のMAPの予定・タスク
-    var _fl = _fgnEvents(m.id, function() { var b9 = _treeScopedEl('mem-', m.id); if (b9 && b9.classList.contains('show')) b9.innerHTML = memberInfoHtml(m); });
+    var _fl0 = _fgnEvents(m.id, function() { var b9 = _treeScopedEl('mem-', m.id); if (b9 && b9.classList.contains('show')) b9.innerHTML = memberInfoHtml(m); });
+    var _fl = _fgnWithMine(m.id, _fl0); if (!_fl.length) _fl = _fl0; // v812 #17: 自分で入れた予定・タスクも
     if (_fl === null) html += '<div class="ci-plan" style="color:var(--text-dim)">📋 予定・タスクを読み込み中…</div>';
     else if (_fl === false) html += '<div class="ci-plan" style="color:var(--text-dim)">📋 予定・タスクは共有されていません（' + evEsc(m._ownerName || '共有元') + 'さんの共有設定）</div>';
     else {
@@ -14429,7 +14431,7 @@ function showPcTooltip(mid, ev) {
   // このメンバーに紐づく予定・タスク
   // v460: 直近1ヶ月より古いものは表示しない（日付なしタスク・未来の予定は表示）
   var _evCut = (function(){ var d0 = new Date(); d0.setMonth(d0.getMonth() - 1); return d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0'); })();
-  var myEv = (_fgn ? (_fgnList || []) : (state.events || [])).filter(function(e){
+  var myEv = (_fgn ? _fgnWithMine(mid, _fgnList) : (state.events || [])).filter(function(e){
     if ((!_fgn && !evHasMember(e, m.id)) || e.deleted || !evOnMember(e)) return false;
     var ref = e.endDate || e.date;
     return !ref || String(ref) >= _evCut;
@@ -14454,13 +14456,13 @@ function showPcTooltip(mid, ev) {
     }).join('');
     var more = myEv.length > 5 ? '<div style="font-size:11px;color:var(--text-dim);margin-top:3px">ほか ' + (myEv.length - 5) + ' 件</div>' : '';
     evHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">'
-      + '<div style="font-size:11px;color:var(--text-dim);margin-bottom:2px">📋 予定・タスク' + (_fgn ? '（' + evEsc(m._ownerName || '共有元') + 'さんのMAP）' : '') + '</div>' + rows + more + '</div>';
+      + '<div style="font-size:11px;color:var(--text-dim);margin-bottom:2px">📋 予定・タスク' + (_fgn ? (Array.isArray(_fgnList) && _fgnList.length ? '（' + evEsc(m._ownerName || '共有元') + 'さんのMAP' + (_fgnMine(mid).length ? '＋あなたの分' : '') + '）' : '（あなたが入れた分）') : '') + '</div>' + rows + more + '</div>';
   } else if (_fgn) {
     evHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-dim)">📋 ' + (_fgnList === null ? '予定・タスクを読み込み中…' : (_fgnList === false ? '予定・タスクは共有されていません（' + evEsc(m._ownerName || '共有元') + 'さんの共有設定）' : '予定・タスクはありません')) + '</div>';
   }
   // OL記録（組んだアウトライン）— マップ上で見れるように（動線一本化）
   var olHtml = '';
-  var _fd = (!_fgn && state.freshData && state.freshData[m.id]) || {};
+  var _fd = (state.freshData && state.freshData[m.id]) || {}; // v812 #17: 共有メンバーも自分で残したOL記録は出す
   var _olog = (_fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
   if (_olog.length) {
     var olRows = _olog.slice(0, 4).map(function(e){
@@ -38747,6 +38749,13 @@ function _fgnEvents(mid, onLoad) {
   }
   if (onLoad) c.cbs.push(onLoad);
   return null;
+}
+// v812 #17: 共有メンバーの予定・タスク＝持ち主のMAPの分＋自分のMAPでその人に付けた分（ホバー・カードで「ありません」と出ていた）
+function _fgnMine(mid) { return (state.events || []).filter(function(e) { return e && !e.deleted && evHasMember(e, mid) && evOnMember(e); }); }
+function _fgnWithMine(mid, list) {
+  var mine = viewingOwnerUid ? [] : _fgnMine(mid), seen = {}, out = [];
+  (Array.isArray(list) ? list : []).concat(mine).forEach(function(e) { var k = e && (e.id || ''); if (!e || (k && seen[k])) return; if (k) seen[k] = 1; out.push(e); });
+  return out;
 }
 function composeMergedInto(ownMembers, mapType) {
   if (mapType !== 'current') return ownMembers;
