@@ -1839,10 +1839,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v81';
+var APP_VER = 'v82';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v82', d: '2026/10/18', items: ['🔗 名簿の編集に「MAPで連携するユニオン」を追加。ほかの地域のユニオンのチームで活動している人は、そのユニオンを選ぶと、そのユニオンのGROOVE MAPの受付連携でこの人だけ（名前・研修の受講・稼働率）つなげるようになります（受付・集計はこれまでどおり所属ユニオンで）'] },
   { v: 'v81', d: '2026/10/18', items: ['🃏 REVEの会員証に裏面ができました（カードをタップすると裏返ります。裏面はREVEのロゴ入り）'] },
   { v: 'v80', d: '2026/10/17', items: ['💎 バッジがRUBYの人の会員証が、深いルビー色のカードになりました（世界地図の透かし入り・光がゆっくり脈打って光沢が走ります）'] },
   { v: 'v79', d: '2026/10/17', items: ['✨ 通常会員の会員証を、ほんのり光って見えるパール調のグラデーションにしました'] },
@@ -5942,6 +5943,16 @@ function memberForm(m){
     + '<option value="m"' + (m.sex === 'm' ? ' selected' : '') + '>男性</option>'
     + '<option value="f"' + (m.sex === 'f' ? ' selected' : '') + '>女性</option></select>'
     + '<label>所属ユニオン</label>' + unionField
+    + (function(){   // 🔗 v82: ほかの地域のユニオンのチームで活動している人 → そのユニオンのGROOVE MAPの受付連携にこの人だけ見せる
+        var opts = gUnions.filter(function(u){ return u !== curUnion; }), sel = m.alsoUnions || [];
+        if(!opts.length) return '';
+        return '<label>MAPで連携するユニオン（任意）</label><div id="mfAlso">'
+          + opts.map(function(u, i){
+              return '<div class="chkrow"><input type="checkbox" id="mfAlso' + i + '" data-u="' + esc(u) + '"' + (sel.indexOf(u) >= 0 ? ' checked' : '') + '>'
+                + '<label for="mfAlso' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc(u) + '</label></div>';
+            }).join('')
+          + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">ほかのユニオンのチームで活動している人は、そのユニオンを選ぶと、そのユニオンのGROOVE MAP（受付連携）でこの人だけ（名前・研修の受講・稼働率）見えるようになります。受付・集計はこれまでどおりこのユニオンで行います。</p></div>';
+      })()
     + '<label>ライセンスグレード</label>'
     + '<select id="mfGrade">' + GRADES.map(function(g){
         return '<option value="' + esc(g) + '"' + ((m.grade || '') === g ? ' selected' : '') + '>'
@@ -5996,6 +6007,11 @@ function memberForm(m){
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
     data.trainings = m.trainings || {};   // 研修履歴は維持（カード再生成用）
+    if($('mfAlso')){   // 🔗 v82: MAPで連携するユニオン（所属ユニオンは入れない）
+      data.alsoUnions = Array.prototype.slice.call($('mfAlso').querySelectorAll('input[data-u]'))
+        .filter(function(x){ return x.checked; }).map(function(x){ return x.getAttribute('data-u'); })
+        .filter(function(u){ return u && u !== targetUnion; });
+    }
     if(isNew) data.createdAt = FV.serverTimestamp();
     // 新規は番号の重複を保存前にチェック（既存メンバーの上書き事故を防ぐ）
     var pre = isNew
@@ -11393,7 +11409,7 @@ function ckRateRows(evs, attMaps, unionMembers){
   unionMembers.forEach(function(m){ rosterSex[m.no] = m.sex || ''; });
   unionMembers.forEach(function(m){
     if(ckMemberOff(m)) return;   // 無効（旧休会含む）は集計に出さない（過去に出席した月は下の出席記録から行に載る）
-    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true, trainee: !!m.trainee, since: ckSinceOf(m) });
+    rows.push({ no: m.no, name: m.name, group: m.group || '', sex: m.sex || '', member: true, trainee: !!m.trainee, since: ckSinceOf(m), also: m.alsoUnions || [] });
   });
   var known = {};
   rows.forEach(function(r){ known[r.no] = true; });
@@ -11435,8 +11451,28 @@ function ckSaveRateSnapshot(union, key, evs, rows, range){
     rates: rates, calcAt: Date.now(), calcDay: todayStr(), by: gUser.uid
   };
   if(range){ doc.from = range.from; doc.to = range.to; }
-  return db.collection('checkinStats').doc(ckStatDocId(union, key)).set(doc).catch(function(){});   // ルール未反映などで書けなくても集計画面は動かす
+  // 🔗 v82: 「MAPで連携するユニオン」が付いた人の稼働率だけを、連携先ユニオンごとに別の文書へ
+  //   checkinStats/{ユニオン}__{key}__to__{連携先} = { union, view: 連携先, …同じ形… }（連携先ユニオンの人だけ読める）
+  var share = {};
+  rows.forEach(function(r){
+    if(/^g/.test(r.no) || !rates[r.no]) return;
+    (r.also || []).forEach(function(v){ if(v && v !== union) (share[v] = share[v] || {})[r.no] = rates[r.no]; });
+  });
+  doc.shareTo = Object.keys(share);
+  var ref = db.collection('checkinStats').doc(ckStatDocId(union, key));
+  return ref.get().then(function(s){ return (s && s.exists && (s.data() || {}).shareTo) || []; }, function(){ return []; }).then(function(prev){
+    return ref.set(doc).then(function(){
+      var views = doc.shareTo.slice();
+      prev.forEach(function(v){ if(views.indexOf(v) < 0) views.push(v); });   // 外した連携先は空にする
+      return Promise.all(views.map(function(v){
+        var sd = { union: union, view: v, month: key, held: doc.held, evIds: doc.evIds, rates: share[v] || {}, calcAt: doc.calcAt, calcDay: doc.calcDay, by: doc.by };
+        if(range){ sd.from = range.from; sd.to = range.to; }
+        return db.collection('checkinStats').doc(ckStatShareId(union, key, v)).set(sd).catch(function(){});
+      }));
+    });
+  }).catch(function(){});   // ルール未反映などで書けなくても集計画面は動かす
 }
+function ckStatShareId(union, key, view){ return ckStatDocId(union, key) + '__to__' + String(view || '').replace(/\//g, '／'); }
 // 直近1ヶ月（1ヶ月前の同じ日の翌日〜今日。例：10/4 → 9/5〜10/4）。GROOVE MAPの稼働率はこちらを読む
 //   checkinStats/{ユニオン}__last1m = { …月の集計と同じ形…, from, to }
 var CK_RECENT_KEY = 'last1m';

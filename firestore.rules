@@ -400,7 +400,10 @@ service cloud.firestore {
     // 📊 稼働率の集計結果（受付システムが計算して保存 → GROOVE MAPの受付連携は読むだけ）
     //   docId = {ユニオン}__{YYYY-MM}。書けるのはそのユニオンの有効メンバー・受付管理者・オーナー
     match /checkinStats/{sid} {
-      allow read: if resource == null || ckCanSee(resource.data.get('union', ''));
+      allow read: if resource == null || ckCanSee(resource.data.get('union', ''))
+        // 🔗 v82: 連携先ユニオン向けの集計（{ユニオン}__{key}__to__{連携先}・「MAPで連携するユニオン」の人の分だけ）は連携先ユニオンの人も読める
+        || (signedIn() && notDisabled(request.auth.uid)
+            && resource.data.get('view', '') != '' && resource.data.get('view', '') == ckMyUnion());
       allow create, update: if isOwnerAdmin()
         || isCkAdmin(request.resource.data.get('union', ''))
         || (signedIn() && notDisabled(request.auth.uid)
@@ -408,14 +411,21 @@ service cloud.firestore {
       allow delete: if isOwnerAdmin();
     }
 
+    function ckAlsoSee() {
+      return signedIn() && notDisabled(request.auth.uid) && ckMyUnion() != ''
+        && ckMyUnion() in resource.data.alsoUnions;
+    }
     match /checkinMembers/{no} {
       // 🔒 見られるのは自分が関わるユニオンの名簿だけ（ckCanSee）。一覧は union で絞った検索のみ。
       // 存在しない番号の get は可（研修生登録の番号の空き確認に使う・中身は何も見えない）
       allow get: if resource == null || ckCanSee(resource.data.get('union',''))
         // 🔗 v770: NAVIGATORのアカウントに紐付いた本人の名簿（ログイン時に「受付で無効」かを見る）
         || (signedIn() && profileExists(request.auth.uid)
-            && profile(request.auth.uid).get('ckNo', '') == no);
-      allow list: if ckCanSee(resource.data.get('union',''));
+            && profile(request.auth.uid).get('ckNo', '') == no)
+        || ckAlsoSee();
+      // 🔗 v82: ほかの地域のユニオンのチームで活動している人（名簿の alsoUnions に自分のユニオン）は、その人だけ見られる
+      //   GROOVE MAPの受付連携は where('alsoUnions','array-contains', 自分のユニオン) で読む
+      allow list: if ckCanSee(resource.data.get('union','')) || ckAlsoSee();
       allow create: if isCkAdmin(request.resource.data.get('union',''));
       allow update: if isCkAdmin(resource.data.get('union',''))
                     && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')));

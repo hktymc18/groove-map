@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v814';
+var APP_JS_VERSION = 'v815';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v814';
+  var DATA_VERSION = 'v815';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5618,6 +5618,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v815', d:'2026-10-18', items:['受付連携で、ほかの地域のユニオンで活動している人もつなげるように（その人のユニオンの受付管理者が名簿で「MAPで連携するユニオン」を選んだ人だけ）'] },
   { v:'v814', d:'2026-10-18', items:['研修の記録を押した時に「直す」を追加。ステップ・日にち・Aさん・結果（フォローは内容）を直せます（#19）'] },
   { v:'v813', d:'2026-10-18', items:['カレンダーで研修ステップ（PGなど）の予定を作って共有メンバーのNAを選ぶと、相手のMAPのその人の研修にも予定で入るように（#18）'] },
   { v:'v812', d:'2026-10-18', items:['共有メンバーにカーソルを合わせた時、自分で入れた予定・タスクも表示（#17）'] },
@@ -7102,6 +7103,17 @@ function _ckTrSync(m, r) {
   syncTraineeTitle(m);
   return n;
 }
+// v815: ほかの地域のユニオンの名簿にいて「MAPで連携するユニオン」に自分のユニオンが入っている人（受付システム v81）
+//   名簿の一覧（自分のユニオン）に足して使う。r._ext＝ほかのユニオンの人（r.union がその人の所属ユニオン）
+function _ckSharedRoster(un) {
+  if (!db || !un) return Promise.resolve([]);
+  return db.collection('checkinMembers').where('alsoUnions', 'array-contains', un).get().then(function(qs) {
+    var L = []; qs.forEach(function(d) { var r = d.data() || {}; r.no = d.id; if (r.active !== false && r.union && r.union !== un) { r._ext = true; L.push(r); } }); return L;
+  }).catch(function() { return []; }); // ルールが未反映などで読めない時は今までどおり（自分のユニオンだけ）
+}
+function _ckRosterWithShared(un, own) { return _ckSharedRoster(un).then(function(ext) { var seen = {}; own.forEach(function(r) { seen[r.no] = 1; }); return own.concat(ext.filter(function(r) { return !seen[r.no]; })); }); }
+function _ckSetLink(m, r) { m.checkinNo = r.no; if (r._ext) m.checkinUnion = r.union; else delete m.checkinUnion; }
+function _ckUnTag(r) { return r && r._ext ? '他ユニオン：' + r.union : ''; }
 function _ckIsTrainee(m) { var t = (m.title || '').trim(); return !!m.trainee || !t || detectCategory(t) === '研修生'; }
 // 名簿と照らして取り込む（つながっていない研修生は、名前が1人だけ一致すればつなぐ）。{ n: 件数, ppl: 人数, promo: [受付で昇格した人] }
 function _ckTrSyncAll(roster) {
@@ -7109,7 +7121,8 @@ function _ckTrSyncAll(roster) {
   roster.forEach(function(r) { byNo[r.no] = r; var k = _ckNorm(r.name); if (k) (byName[k] = byName[k] || []).push(r); });
   _ckSyncMembers().forEach(function(m) { // v800: OUTの人は除く
     var r = m.checkinNo ? byNo[m.checkinNo] : null;
-    if (!r && _ckIsTrainee(m)) { var c = byName[_ckNorm((m.lastName || '') + (m.firstName || ''))] || []; if (c.length === 1 && c[0].trainee) { r = c[0]; m.checkinNo = r.no; } }
+    if (!r && _ckIsTrainee(m)) { var c = byName[_ckNorm((m.lastName || '') + (m.firstName || ''))] || []; if (c.length === 1 && c[0].trainee) { r = c[0]; _ckSetLink(m, r); out.lk = (out.lk || 0) + 1; } }
+    if (r && (r._ext ? m.checkinUnion !== r.union : !!m.checkinUnion)) { _ckSetLink(m, r); out.lk = (out.lk || 0) + 1; } // v815: どのユニオンの人か
     if (!r || !_ckIsTrainee(m)) return; // MAPで研修生の人だけ（LOI以降・BRなどの過去の記録は足さない＝研修の集計を変えない）
     var k = _ckTrSync(m, r); if (k) { out.n += k; out.ppl++; }
     if (r.trainee === false && m.trainee && !m.ckPromoSeen && (m.traineeHistory || []).length) { m.ckPromoSeen = 1; out.promo.push(_ckMapName(m)); } // 受付で昇格 → 知らせるだけ
@@ -7123,17 +7136,21 @@ function ckTrAuto(force) {
     var key = 'gm_ckTr_' + currentUser.uid, today = evTodayYmd();
     if (!force) { try { if (localStorage.getItem(key) === today) return; } catch (e0) {} }
     if (window._ckTrBusy) return; window._ckTrBusy = true;
+    var un = '';
     db.collection('checkinUnions').get().then(function(qs) {
       var unions = []; qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
-      var un = _ckPickUnion(unions, ''); if (!un) { try { localStorage.setItem(key, today); } catch (eK) {} return null; } // v807: 受付に自分のユニオンが無い時も「今日は確認済み」に（前は開くたび・MAPを開くたびに読み直していた）
+      un = _ckPickUnion(unions, ''); if (!un) { try { localStorage.setItem(key, today); } catch (eK) {} return null; } // v807: 受付に自分のユニオンが無い時も「今日は確認済み」に（前は開くたび・MAPを開くたびに読み直していた）
       return db.collection('checkinMembers').where('union', '==', un).get();
     }).then(function(qs) {
       window._ckTrBusy = false;
       if (!qs) return;
       try { localStorage.setItem(key, today); } catch (e1) {}
       var roster = []; qs.forEach(function(d) { var r = d.data() || {}; r.no = d.id; if (r.active !== false) roster.push(r); });
+      return _ckRosterWithShared(un, roster); // v815: ほかのユニオンで活動している人も
+    }).then(function(roster) {
+      if (!roster) return;
       var o = _ckTrSyncAll(roster);
-      if (!o.n && !o.promo.length) return;
+      if (!o.n && !o.promo.length && !o.lk) return;
       _memMap = null; autoSave(); try { renderCurrentView(); } catch (e2) {}
       if (o.n) toast('🎓 受付から研修の記録を取り込みました（' + o.ppl + '人・' + o.n + '件）');
       if (o.promo.length) setTimeout(function() { toast('⭐ 受付で昇格した人：' + o.promo.slice(0, 3).join('・') + (o.promo.length > 3 ? ' ほか' + (o.promo.length - 3) + '人' : '') + '（MAPの研修結果は必要なら直してください）'); }, o.n ? 3200 : 0);
@@ -7161,6 +7178,8 @@ function ckLinkLoad() {
   db.collection('checkinMembers').where('union', '==', _ckLink.sel).get().then(function(qs) {
     var roster = [];
     qs.forEach(function(d) { var r = d.data() || {}; r.no = d.id; if (r.active !== false) roster.push(r); });
+    return _ckRosterWithShared(_ckLink.sel, roster); // v815: ほかのユニオンで活動している人も（その人だけ）
+  }).then(function(roster) {
     var byNo = {}, byName = {};
     roster.forEach(function(r) {
       byNo[r.no] = r;
@@ -7176,6 +7195,7 @@ function ckLinkLoad() {
       return { m: m, kind: 'none' };
     });
     _ckLink.rosterCount = roster.length;
+    _ckLink.nExt = roster.filter(function(r) { return r._ext; }).length;
     _ckLink.roster = roster; // v608
     if (!isPCMode()) ckPgRender(); else ckLinkRender(); // v608: スマホは1画面のページ
   }).catch(function(e) { toast('受付名簿の読込に失敗しました: ' + (e && e.message || '')); });
@@ -7195,16 +7215,16 @@ function ckLinkRender() {
     var right;
     if (it.kind === 'linked') {
       nLinked++;
-      right = '<span style="color:var(--accent);font-size:12px">✓ ' + evEsc(it.r.no) + '</span>'
+      right = (it.r._ext ? '<span style="font-size:11px;color:var(--text-dim);margin-right:6px">' + evEsc(_ckUnTag(it.r)) + '</span>' : '') + '<span style="color:var(--accent);font-size:12px">✓ ' + evEsc(it.r.no) + '</span>'
         + '<span onclick="_ckLink.items[' + i + '].m.checkinNo=\'\';ckLinkLoad()" style="font-size:11px;color:var(--text-dim);margin-left:8px;cursor:pointer;text-decoration:underline">解除</span>';
     } else if (it.kind === 'auto') {
       nAuto++;
       right = '<span style="color:var(--accent);font-size:12px">→ ' + evEsc(it.r.no) + '</span>'
-        + '<span style="font-size:11px;color:var(--text-dim);margin-left:6px">' + evEsc(it.r.group || '') + '</span>';
+        + '<span style="font-size:11px;color:var(--text-dim);margin-left:6px">' + evEsc([_ckUnTag(it.r), it.r.group || ''].filter(Boolean).join('・')) + '</span>';
     } else if (it.kind === 'multi') {
       right = '<select id="ckSel' + i + '" style="max-width:170px;padding:5px 6px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">'
         + '<option value="">同名が複数 — 選択</option>'
-        + it.cands.map(function(c) { return '<option value="' + evEsc(c.no) + '">' + evEsc(c.no) + '（' + evEsc(c.group || '系列なし') + '）</option>'; }).join('')
+        + it.cands.map(function(c) { return '<option value="' + evEsc(c.no) + '">' + evEsc(c.no) + '（' + evEsc([_ckUnTag(c), c.group || '系列なし'].filter(Boolean).join('・')) + '）</option>'; }).join('')
         + '</select>';
     } else {
       right = '<span style="font-size:11.5px;color:var(--text-dim)">名簿になし</span>';
@@ -7229,10 +7249,12 @@ function ckLinkRender() {
 function ckLinkApply() {
   var newLinks = 0;
   _ckLink.items.forEach(function(it, i) {
-    if (it.kind === 'auto') { it.m.checkinNo = it.r.no; newLinks++; }
+    if (it.kind === 'auto') { _ckSetLink(it.m, it.r); newLinks++; }
+    else if (it.kind === 'linked') _ckSetLink(it.m, it.r); // v815: どのユニオンの人かも覚え直す
     else if (it.kind === 'multi') {
       var sel = document.getElementById('ckSel' + i);
-      if (sel && sel.value) { it.m.checkinNo = sel.value; newLinks++; }
+      var rc = sel && sel.value ? it.cands.filter(function(c) { return c.no === sel.value; })[0] : null;
+      if (rc) { _ckSetLink(it.m, rc); newLinks++; }
     }
   });
   ckImportRates(function(updated, held, st, skipped) {
@@ -7260,19 +7282,32 @@ function _ckMD(ymd) { var p = String(ymd || '').split('-'); return parseInt(p[1]
 function ckImportRates(done) {
   var un = _ckLink.sel, month = _ckMonthKey();
   var getSt = function(key) { return db.collection('checkinStats').doc(_ckStatDocId(un, key)).get().then(function(s) { return s && s.exists ? (s.data() || {}) : null; }); };
-  (_ckIsNowMonth() ? getSt('last1m').then(function(r) { return (r && r.held) ? r : getSt(month); }) : getSt(month)).then(function(st) {
-    if (!st || !st.held) { done(0, 0, st); return; }
-    var rates = st.rates || {}, updated = 0, skipped = 0;
+  var pick = function(get) { return _ckIsNowMonth() ? get('last1m').then(function(r) { return (r && r.held) ? r : get(month); }) : get(month); };
+  // v815: ほかのユニオンで活動している人は、その人の所属ユニオンの集計（連携先＝自分のユニオンの分だけ）から
+  var extU = {}; _ckSyncMembers().forEach(function(m) { if (m.checkinNo && m.checkinUnion && m.checkinUnion !== un) extU[m.checkinUnion] = 1; });
+  var extSt = {};
+  var pExt = Promise.all(Object.keys(extU).map(function(u) {
+    var getX = function(key) { return db.collection('checkinStats').doc(_ckStatShareId(u, key, un)).get().then(function(s) { var d = s && s.exists ? (s.data() || {}) : null; return d && d.union === u && d.view === un ? d : null; }).catch(function() { return null; }); };
+    return pick(getX).then(function(d) { if (d && d.held) extSt[u] = d; });
+  }));
+  Promise.all([pick(getSt), pExt]).then(function(R) {
+    var st = R[0];
+    if ((!st || !st.held) && !Object.keys(extSt).length) { done(0, 0, st); return; }
+    var rates = (st && st.held && st.rates) || {}, updated = 0, skipped = 0;
     _ckSyncMembers().forEach(function(m) { // v800: OUTの人の稼働率は取り込まない
       if (!m.checkinNo) return; // v492: Sタイプも実測稼働率を取り込む
-      var r = rates[m.checkinNo];
+      var ext = m.checkinUnion && m.checkinUnion !== un;
+      if (ext && !extSt[m.checkinUnion]) return; // その人のユニオンの集計がまだ無い → 変えない
+      if (!ext && !(st && st.held)) return;
+      var r = (ext ? (extSt[m.checkinUnion].rates || {}) : rates)[m.checkinNo];
       if (!r) { skipped++; return; } // 休会中・無効などで受付システムの集計に出ていない人は変更しない
       m.actRate = r.rate;
       updated++;
     });
-    done(updated, st.held, st, skipped);
+    done(updated, (st && st.held) || 0, st, skipped);
   }).catch(function(e) { toast('稼働率の取込に失敗しました: ' + (e && e.message || '')); });
 }
+function _ckStatShareId(union, key, view) { return _ckStatDocId(union, key) + '__to__' + String(view || '').replace(/\//g, '／'); }
 function _ckStatWhen(st) {
   if (!st || !st.calcAt) return '';
   var d = new Date(st.calcAt);
@@ -18395,7 +18430,7 @@ function mxMore() {
 // ════ v608: 受付連携を1画面のページに（①稼働を取り込む ②名簿から追加 ③名前をそろえる） ════
 var _ckPgI = 0;
 var CK_PG = ['稼働を取り込む', '名簿から追加', '名前をそろえる'];
-function _ckInfo() { if (!UX_INFO.ck) UX_INFO.ck = { t: '受付連携', h: '<b>① 稼働を取り込む</b>：受付システムの名簿とMAPの人をつないで、受付が数えた稼働率をそのまま入れます（MAPでは計算しません）。名前が同じ人は自動でつなぎ、同じ名前が何人もいる時だけ選びます。<br><b>② 名簿から追加</b>：受付の名簿にいて、MAPにまだいない人を追加します。紹介者がMAPにいれば、その人の下に置きます。名前・性別・研修生は名簿のまま入り、受付で受講済みの研修（PG・DLRなど）もステップに入ります。<br><b>③ 名前をそろえる</b>：つないだ人で、MAPと名簿の名前の字が違う時（高橋⇔髙橋など）に、名簿の名前にそろえます<br><b>研修の進み具合</b>：MAPを開くと1日1回、受付で記録された受講（PG・DLR・EXP・PA・面談シート・BPC・CO）を研修生のステップに自動で入れます。MAPで入れた記録は上書きしません' }; }
+function _ckInfo() { if (!UX_INFO.ck) UX_INFO.ck = { t: '受付連携', h: '<b>① 稼働を取り込む</b>：受付システムの名簿とMAPの人をつないで、受付が数えた稼働率をそのまま入れます（MAPでは計算しません）。名前が同じ人は自動でつなぎ、同じ名前が何人もいる時だけ選びます。<br><b>② 名簿から追加</b>：受付の名簿にいて、MAPにまだいない人を追加します。紹介者がMAPにいれば、その人の下に置きます。名前・性別・研修生は名簿のまま入り、受付で受講済みの研修（PG・DLRなど）もステップに入ります。<br><b>③ 名前をそろえる</b>：つないだ人で、MAPと名簿の名前の字が違う時（高橋⇔髙橋など）に、名簿の名前にそろえます<br><b>研修の進み具合</b>：MAPを開くと1日1回、受付で記録された受講（PG・DLR・EXP・PA・面談シート・BPC・CO）を研修生のステップに自動で入れます。MAPで入れた記録は上書きしません<br><b>ほかの地域のユニオンで活動している人</b>：その人のユニオンの受付管理者に、受付システムの名簿で「MAPで連携するユニオン」に自分のユニオンを選んでもらうと、その人だけ名簿に出てつなげます（「他ユニオン」の印）。稼働率はその人のユニオンの集計、研修はその人のユニオンの受講記録から取り込みます' }; }
 function _ckPgCss() {
   if (document.getElementById('ckPgCss')) return;
   var st = document.createElement('style'); st.id = 'ckPgCss';
@@ -18476,18 +18511,19 @@ function ckPgRender() {
     body = unionSel + _dtKv([['つないだ人', nLinked + '人'], ['自動で一致', nAuto + '人', '', 'var(--accent)'], ['えらぶ', nMulti + '人', '', nMulti ? 'var(--gold)' : '']]);
     if (nMulti) body += '<div class="ux-sec">同じ名前が何人もいる（どちらか選ぶ）</div>' + items.map(function(it, k) {
       if (it.kind !== 'multi') return '';
-      return row(evEsc(_ckMapName(it.m)), '', '<select class="ckp" id="ckSel' + k + '"><option value="">えらぶ ▾</option>' + it.cands.map(function(c) { return '<option value="' + evEsc(c.no) + '">' + evEsc(c.no) + '（' + evEsc(c.group || '系列なし') + '）</option>'; }).join('') + '</select>');
+      return row(evEsc(_ckMapName(it.m)), '', '<select class="ckp" id="ckSel' + k + '"><option value="">えらぶ ▾</option>' + it.cands.map(function(c) { return '<option value="' + evEsc(c.no) + '">' + evEsc(c.no) + '（' + evEsc([_ckUnTag(c), c.group || '系列なし'].filter(Boolean).join('・')) + '）</option>'; }).join('') + '</select>');
     }).join('');
-    if (nAuto) body += '<div class="ux-sec">自動で一致（取り込むとつながる）</div>' + items.map(function(it) { return it.kind === 'auto' ? row(evEsc(_ckMapName(it.m)), evEsc(it.r.group || ''), '<span class="r">→ ' + evEsc(it.r.no) + '</span>') : ''; }).join('');
+    if (nAuto) body += '<div class="ux-sec">自動で一致（取り込むとつながる）</div>' + items.map(function(it) { return it.kind === 'auto' ? row(evEsc(_ckMapName(it.m)), evEsc([_ckUnTag(it.r), it.r.group || ''].filter(Boolean).join('・')), '<span class="r">→ ' + evEsc(it.r.no) + '</span>') : ''; }).join('');
     var linked = items.filter(function(x) { return x.kind === 'linked'; }), showL = L.showLinked;
-    if (linked.length) body += '<div class="ux-sec">つないだ人 ' + linked.length + '人</div>' + (showL ? items.map(function(it, k) { return it.kind === 'linked' ? row(evEsc(_ckMapName(it.m)), evEsc(it.r.group || ''), '<span class="r">✓ ' + evEsc(it.r.no) + '<br><span style="font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer" onclick="_ckLink.items[' + k + '].m.checkinNo=\'\';ckLinkLoad()">はずす</span></span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showLinked=1;ckPgRender()">見る ›</span>');
+    if (linked.length) body += '<div class="ux-sec">つないだ人 ' + linked.length + '人</div>' + (showL ? items.map(function(it, k) { return it.kind === 'linked' ? row(evEsc(_ckMapName(it.m)), evEsc([_ckUnTag(it.r), it.r.group || ''].filter(Boolean).join('・')), '<span class="r">✓ ' + evEsc(it.r.no) + '<br><span style="font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer" onclick="_ckLink.items[' + k + '].m.checkinNo=\'\';ckLinkLoad()">はずす</span></span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showLinked=1;ckPgRender()">見る ›</span>');
     if (nNone) body += '<div class="ux-sec">受付の名簿にいない ' + nNone + '人</div>' + (L.showNone ? items.map(function(it) { return it.kind === 'none' ? row(evEsc(_ckMapName(it.m)), '', '<span class="r d">名簿になし</span>') : ''; }).join('') : '<span class="ckmore" onclick="_ckLink.showNone=1;ckPgRender()">見る ›</span>');
     if (L.nOut) body += '<div class="ux-hint" style="margin-top:14px">MAPでOUTにした ' + L.nOut + '人は取り込みません</div>'; // v800
+    body += '<div class="ux-hint" style="margin-top:' + (L.nOut ? 6 : 14) + 'px">' + (L.nExt ? icn('link') + ' ほかのユニオンで活動している ' + L.nExt + '人も名簿に入っています（その人のユニオンの集計の稼働率を取り込みます）' : icn('link') + ' ほかの地域のユニオンで活動している人は、その人のユニオンの受付管理者に、受付システムの名簿で「MAPで連携するユニオン」にこのユニオン（' + evEsc(L.sel) + '）を選んでもらうと、ここでつなげます') + '</div>'; // v815
     next = '⟲ 取り込む（稼働率）'; nextOn = 'ckLinkApply()';
   } else if (i === 1) {
     var adds = L.adds, on = adds.filter(function(a) { return _ckAddEff(a, adds); }).length, nOther = adds.filter(function(a) { return a.other; }).length;
     var rowA = function(a, k) {
-      var r = a.r, sx = r.sex === 'f' ? '女性' : (r.sex === 'm' ? '男性' : ''), sub = [r.referrer ? '紹介者：' + r.referrer : (r.group ? '系列：' + r.group : ''), sx, r.trainee ? '研修生' : '', r.grade === 'BR' ? 'BR' : ''].filter(Boolean).join('・');
+      var r = a.r, sx = r.sex === 'f' ? '女性' : (r.sex === 'm' ? '男性' : ''), sub = [_ckUnTag(r), r.referrer ? '紹介者：' + r.referrer : (r.group ? '系列：' + r.group : ''), sx, r.trainee ? '研修生' : '', r.grade === 'BR' ? 'BR' : ''].filter(Boolean).join('・');
       var par = '', eff = _ckAddEff(a, adds), wait = a.on && a.pid && !eff; // 紹介者にチェックが付いていない
       if (a.pid) { if (a.pid.indexOf('new:') === 0) { var q = _ckAddByNo(adds, a.pid.slice(4)); par = q ? evEsc(q.r.name) + 'の下' + (wait ? '<br><span style="color:var(--gold)">（' + evEsc(q.r.name) + 'を追加すると一緒に）</span>' : '（いっしょに追加）') : ''; } else { var pm = _ckOwnMembers().filter(function(m) { return m.id === a.pid; })[0]; par = pm ? evEsc(_ckMapName(pm)) + 'の下' : ''; } }
       return '<div class="ckr"><span class="ckb' + (eff ? ' on' : '') + '" onclick="ckAddTgl(' + k + ')">✓</span><div class="nm"><b>' + evEsc(r.name) + '</b><small>' + evEsc(sub) + '</small></div>'
@@ -18529,6 +18565,7 @@ function ckAddApply() {
       state.members.push({ id: id, lastName: nm.last, firstName: nm.first, gender: a.r.sex === 'f' ? 'female' : 'male', title: a.r.grade === 'BR' ? 'BR' : '', activity: '', actRate: '', morale: 1, priority: '',
         ptCurrent: 0, ptFixed: 0, ptSelf: 0, trainee: !!a.r.trainee, parentId: pid, mapType: 'both', memo: '', nextDate: '', aSan: '', instaUrl: '', lineId: '',
         traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '', region: area, birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '', month: cm, checkinNo: a.r.no });
+      if (a.r._ext) state.members[state.members.length - 1].checkinUnion = a.r.union; // v815
       try { _ckTrSync(state.members[state.members.length - 1], a.r); } catch (eT) {} // v623: 研修の進み具合（受講済み・タイトル）もいっしょに
       made[a.r.no] = id; n++;
     });
