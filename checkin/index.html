@@ -705,11 +705,8 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-plat .mc-grade{top:78%;color:#c9ccd2;}
 .membercard.skin-plat .mc-no{bottom:5.6%;color:#cfd2d8;}
 .membercard.skin-plat .mc-qrb{bottom:4.6%;}
-.membercard.skin-plat::before{background-image:linear-gradient(115deg,transparent 38%,rgba(255,255,255,0) 42%,rgba(255,255,255,.22) 48%,rgba(220,230,245,.16) 51%,rgba(255,255,255,0) 57%,transparent 62%);mix-blend-mode:screen;}
-.membercard.skin-plat::after{box-shadow:inset 0 0 0 1.5px rgba(235,238,242,.55),inset 0 0 18px rgba(255,255,255,.12);opacity:.6;}
-/* ✨ ロゴの星がきらめく（ほかの星は出さない） */
-.membercard.skin-plat .mc-sp{display:none;}
-.membercard.skin-plat .mc-sp.s1{display:block;left:53.9%;top:35.5%;width:96px;height:96px;margin:-48px 0 0 -48px;}
+/* ✨ 反射と星はDIAMONDと同じ（光の流れ・ふちの光・4つの星）。真ん中の星だけロゴの星の位置に合わせる */
+.membercard.skin-plat .mc-sp.s1{left:53.9%;top:35.5%;}
 /* 💀 死神のレアカード: 縁と背景はホロ（虹色のうねりの縁＋きらめく背景）。背景は傾けると逆にずれる（--bx/--by） */
 .membercard.skin-reaperTcg{background:url('skins/reaper-frame.webp') center/100% 100% no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 .membercard.skin-reaperTcg .mc-art{inset:3.4% 4.6%;border-radius:4px;
