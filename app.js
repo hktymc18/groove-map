@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v818';
+var APP_JS_VERSION = 'v819';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v818';
+  var DATA_VERSION = 'v819';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4302,20 +4302,13 @@ function switchView(v) {
 // ════ v816: 総合レビュー（使い勝手のアンケート・期間はオーナーが設定）。名前は自動で付く。結果はオーナー＋オーナーが指定した人だけ ════
 // Firestore: rvConfig/main { round, title, from, to, viewers:[uid], names:{uid:名前}, rounds:[{id,title,from,to}] } ／ rvAnswers/{round}_{uid}
 //   答え（a）: { all:★1-5, nps:0-10, freq, f:{ 機能のk: { s:[使っている詳細], st:★1-5, n:'くわしく' } }, cf:[わかりにくい機能のk], cfn, sp:★1-5, good, fix, wish }
-var RV_FEATS = [ // [k, 見出し, 使っているもの（選択式）, バグ・要望の画面]
-  ['home', 'HOME（今日）', ['今日のToDo', '今日の予定', '今週やること', '気になる人', '再アプローチ', '誕生日', 'インサイト', 'はじめのステップ', 'お知らせ・更新内容', '実績・ランキング'], 'HOME'],
-  ['map', 'MAP（現状MAP）', ['ツリー表示', 'サークル表示', 'テーブル表示', 'カンバン表示', '＋ 追加（フロント）', '段の表示', '地域で絞り込み', '絞り込み・並び', '名前で探す', '条件でくわしく探す', '月の切りかえ', 'LTSV・稼働・S', '課題パネル', '全画面', 'PDFで保存', '翌月コピー', 'CSV出力', '3Dで見る'], 'MAP'],
-  ['ideal', '理想MAP', ['現状⇄理想の切替', '理想 vs 現状', 'LTSV 目標', '現状から作り直す', '課題パネル'], '理想MAP'],
-  ['member', 'メンバーの画面（MAPで人を押す）', ['タイトル', '今月の数字', '研修ステップ・結果', '活動', 'やる気・優先', 'メモ', 'プロフィール', '写真', '上の人を変える', 'フロント追加'], 'メンバー編集'],
-  ['events', '予定（カレンダー）', ['月表示', '週表示', '日表示', '予定を足す', '繰り返し', '予定の通知', 'カテゴリ（色分け）', '共有範囲', 'ユニオン予定', 'Googleカレンダー連携'], '予定'],
-  ['todo', 'ToDo', ['タスクを足す', '今日／すべて', 'メンバーのタスク', 'リスト', 'スワイプで完了・削除', '気になる人からToDoへ'], 'ToDo'],
-  ['plan', 'PLAN', ['年の目標・ロードマップ', 'マイルストーン', '戦略・戦術', '計画シート', 'シートを印刷', '理想（理想の生活）', '夢100', 'シミュレーション', 'チェック', '振り返り', 'やる理由（作文）', 'BB早見表'], 'PLAN'],
-  ['stats', 'データ（ANALYTICS）', ['推移', 'コミッション', 'S稼働', 'BR', '動かす数字', '稼働・人数', '研修', 'パワーライン', '地域', '比較'], 'データ'],
-  ['ol', 'OL', ['今月の3〜7人OL', '個別OL', '要フォロー', 'フレッシュ', 'OLを企画', '反応を記入', 'OL対象外'], 'OL'],
-  ['cklink', '受付連携', ['稼働を取り込む', '名簿から追加', '名前をそろえる', '研修の自動取り込み', 'カードコレクション'], '受付'],
-  ['share', '共有', ['MAPの共有', '共有MAP', '結合', '表示チーム切替'], 'MAP'],
-  ['settings', '設定', ['プロフィール', '見た目（ライト/ダーク）', '通知', 'カレンダー設定', '変更履歴', 'お知らせ・更新内容'], 'その他'],
-  ['guide', '使い方', ['はじめての案内', 'はじめのステップ', '画面ごとのガイド', 'よくある質問'], 'その他']
+var RV_FEATS = [ // [k, 見出し, 使っているもの（選択式）, バグ・要望の画面]。v819: 大メニュー5つ＋その他に。詳細も粗く
+  ['plan', 'PLAN', ['年の目標・ロードマップ', '計画シート', '理想（理想の生活・夢100）', 'シミュレーション', 'チェック・振り返り'], 'PLAN'],
+  ['map', 'MAP', ['現状MAP（ツリー・サークル）', '理想MAP', 'メンバーの画面（研修・活動・メモ）', '翌月コピー', '共有MAP', '受付連携'], 'MAP'],
+  ['events', '予定', ['カレンダー（月・週・日）', '予定を足す・繰り返し', '通知', 'ユニオン予定'], '予定'],
+  ['todo', 'ToDo', ['タスクを足す', '今日のToDo', 'メンバーのタスク', 'リスト'], 'ToDo'],
+  ['stats', 'データ', ['コミッション', 'S稼働・BR', '研修', '推移・比較'], 'データ'],
+  ['other', 'その他', ['HOME（今日）', 'OL', '使い方ガイド'], 'その他']
 ];
 var RV_FREQ = [['d', 'ほぼ毎日'], ['w3', '週に数回'], ['w1', '週1くらい'], ['m', '月に数回'], ['r', 'ほとんど使わない']];
 var _rv = { cfg: null, mine: null, loaded: false, step: 0, a: null, res: null, users: null, tab: 'sum', un: '', det: null, round: '' };
@@ -4383,7 +4376,7 @@ function _rvCss() {
     + ".rv-stars{display:flex;gap:6px}.rv-stars span{display:flex;cursor:pointer;color:var(--text-dim);user-select:none;opacity:.55}.rv-stars span svg{width:32px;height:32px;fill:none}.rv-stars span.on{color:var(--gold);opacity:1}.rv-stars span.on svg{fill:var(--gold)}.rv-stars.sm span svg{width:26px;height:26px}\n"
     + ".rv-nps{display:grid;grid-template-columns:repeat(11,1fr);gap:3px}.rv-nps span{text-align:center;padding:9px 0;border-radius:8px;background:var(--surface2);font:800 13px Inter,sans-serif;color:var(--text-dim);cursor:pointer}.rv-nps span.on{background:var(--accent);color:#06231c}.rv-nl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-dim);margin-top:3px}\n"
     + ".rv-ft{border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;background:var(--surface)}.rv-ft.on{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}.rv-fh{display:flex;align-items:center;gap:8px;cursor:pointer}.rv-fh b{flex:1;font-size:14px;color:var(--text)}.rv-fh .sw{font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--surface2);color:var(--text-dim)}.rv-ft.on .rv-fh .sw{background:var(--accent);color:#06231c}\n"
-    + ".rv-fb{margin-top:8px}.rv-fb .fb-lb{margin:8px 0 6px}\n"
+    + ".rv-fh .sw.x{background:var(--surface2)!important;color:var(--text-dim)!important;cursor:pointer}.rv-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.rv-tiles span{text-align:center;padding:16px 6px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);font-size:15px;font-weight:900;color:var(--text);cursor:pointer;user-select:none}.rv-tiles span.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--surface));color:var(--accent)}@media(min-width:700px){.rv-tiles{grid-template-columns:repeat(3,1fr)}}.rv-fb{margin-top:8px}.rv-fb .fb-lb{margin:8px 0 6px}\n"
     + ".rv-bar{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);margin:5px 0}.rv-bar .l{width:9.5em;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rv-bar .b{flex:1;height:9px;border-radius:5px;background:var(--surface2);overflow:hidden}.rv-bar .b i{display:block;height:100%;background:var(--accent);border-radius:5px}.rv-bar .n{width:4.2em;text-align:right;font:700 12px Inter,sans-serif;color:var(--text-dim)}\n"
     + ".rv-kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:4px 0 6px}.rv-kpi div{background:var(--surface2);border-radius:12px;padding:10px 12px}.rv-kpi small{display:block;font-size:11px;color:var(--text-dim);font-weight:700}.rv-kpi b{font:800 22px Inter,sans-serif;color:var(--text)}.rv-kpi b em{font-style:normal;font-size:12px;color:var(--text-dim);margin-left:3px}\n"
     + ".rv-cm{border-top:1px solid var(--border);padding:9px 0;font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word}.rv-cm small{display:block;color:var(--text-dim);font-size:11px;white-space:normal}.rv-cm .to{font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;margin-left:8px;white-space:nowrap}\n"
@@ -4422,10 +4415,13 @@ function _rvRender() {
     h += '</div>';
     h += '<div class="rv-q">どのくらい使っていますか</div><div class="fb-chips">' + RV_FREQ.map(function(x) { return '<span class="' + (A.freq === x[0] ? 'on' : '') + '" onclick="rvSet(\'freq\',\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>';
   } else if (s === 1) {
-    h += '<div class="fb-who">使っている機能を押して、その中で使っているものを選んでください（くわしくは書かなくても大丈夫です）</div>';
-    h += RV_FEATS.map(function(F) {
-      var f = A.f[F[0]], on = !!f;
-      var r = '<div class="rv-ft' + (on ? ' on' : '') + '"><div class="rv-fh" onclick="rvFeat(\'' + F[0] + '\')"><b>' + evEsc(F[1]) + '</b><span class="sw">' + (on ? '使っている' : '使っていない') + '</span></div>';
+    // v819: まず大メニューを選ぶ（いくつでも）→ 選んだものだけ詳細のカードが開く
+    h += '<div class="rv-q" style="margin-top:6px">よく使うものを選んでください<small>いくつでも</small></div><div class="rv-tiles">' + RV_FEATS.map(function(F) { var on = !!A.f[F[0]]; return '<span class="' + (on ? 'on' : '') + '" onclick="rvFeat(\'' + F[0] + '\')">' + (on ? '✓ ' : '') + evEsc(F[1]) + '</span>'; }).join('') + '</div>';
+    var sel = RV_FEATS.filter(function(F) { return !!A.f[F[0]]; });
+    if (sel.length) h += '<div class="fb-who" style="margin:14px 0 8px">選んだものの中で使っているものを選んでください（くわしくは書かなくても大丈夫です）</div>';
+    h += sel.map(function(F) {
+      var f = A.f[F[0]], on = true;
+      var r = '<div class="rv-ft on"><div class="rv-fh"><b>' + evEsc(F[1]) + '</b><span class="sw x" onclick="rvFeat(\'' + F[0] + '\')">✕ 外す</span></div>';
       if (on) {
         r += '<div class="rv-fb"><div class="fb-lb">使っているもの<small>いくつでも</small></div><div class="fb-chips">' + F[2].map(function(sub, j) { return '<span class="' + ((f.s || []).indexOf(sub) >= 0 ? 'on' : '') + '" onclick="rvSub(\'' + F[0] + '\',' + j + ')">' + evEsc(sub) + '</span>'; }).join('') + '</div>'
           + '<div class="fb-lb">使いやすさ</div>' + _rvStarsHtml(f.st || 0, 'rvFst(\'' + F[0] + '\',#)', true)
@@ -4451,7 +4447,7 @@ function _rvSync() { var box = document.getElementById('rvOvM'); if (!box) retur
 function rvSet(k, v) { _rvSync(); _rv.a[k] = v; _rvSaveDraft(); _rvRender(); }
 function rvSetT(k, v) { _rv.a[k] = String(v || '').trim().slice(0, 1000); _rvSaveDraft(); }
 function rvFeat(k) { _rvSync(); if (_rv.a.f[k]) delete _rv.a.f[k]; else _rv.a.f[k] = { s: [], st: 0, n: '' }; _rvSaveDraft(); _rvRender(); }
-function rvSub(k, j) { _rvSync(); var F = _rvFeat(k), f = _rv.a.f[k]; if (!F || !f) return; var sub = F[2][j], i = f.s.indexOf(sub); if (i >= 0) f.s.splice(i, 1); else f.s.push(sub); _rvSaveDraft(); _rvRender(); }
+function rvSub(k, j) { _rvSync(); var F = _rvFeat(k), f = _rv.a.f[k]; if (!F || !f) return; var sub = F[2][j]; if (!sub) return; var i = f.s.indexOf(sub); if (i >= 0) f.s.splice(i, 1); else f.s.push(sub); _rvSaveDraft(); _rvRender(); }
 function rvFst(k, v) { _rvSync(); if (_rv.a.f[k]) _rv.a.f[k].st = v; _rvSaveDraft(); _rvRender(); }
 function rvFnote(k, v) { if (_rv.a.f[k]) _rv.a.f[k].n = String(v || '').trim().slice(0, 1000); _rvSaveDraft(); }
 function rvCf(k) { _rvSync(); var i = _rv.a.cf.indexOf(k); if (i >= 0) _rv.a.cf.splice(i, 1); else _rv.a.cf.push(k); _rvSaveDraft(); _rvRender(); }
@@ -6096,6 +6092,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v819', d:'2026-10-19', items:['使い勝手レビューの「使っている機能」を、まず大きいメニュー（PLAN・MAP・予定・ToDo・データ・その他）から選び、選んだものだけ詳細を選ぶ形に（詳細も少なく）'] },
   { v:'v818', d:'2026-10-19', items:['PCでも使い勝手レビューを開けるように：左のメニューの「レビュー」（期間中）と、設定（右上の名前）の画面の「答える」「レビューの結果」から'] },
   { v:'v817', d:'2026-10-19', items:['「バグ・要望」を「バグ・要望・アイデア」に：種類にアイデア、状態に検討中・確認待ち、いつまでに（今週中・今月中・来月・いつか／日付）と「期限で見る」、対象（NAVIGATOR・受付システム）・依頼した人・Slackのリンク','管理者は馬越さんも。直した版が出たものは自動で「確認待ち」に。Slackに返す文と進捗まとめをコピーできます'] },
   { v:'v816', d:'2026-10-19', items:['使い勝手レビュー（期間限定のアンケート）：期間中はHOMEにお願いが出ます。使っている機能はその中のどれを使っているかまで選べます','結果はオーナーと指定した人だけが見られます（設定 › レビューの結果）'] },

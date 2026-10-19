@@ -23,16 +23,16 @@ T.run(async () => {
   w.rvStep(1); await sleep(5);
   c('満足度・頻度が無いと次へ進まない', w._rv.step === 0 && /満足度/.test(toastMsg));
   w.rvSet('all', 4); w.rvSet('nps', 9); w.rvSet('freq', 'w3'); w.rvStep(1); await sleep(5);
-  c('2ページ目：機能の一覧', w._rv.step === 1 && /MAP（現状MAP）/.test($('#rvOv').textContent) && /受付連携/.test($('#rvOv').textContent));
+  c('2ページ目：まず大メニュー（PLAN・MAP・予定・ToDo・データ・その他）だけ', w._rv.step === 1 && $$('#rvOv .rv-tiles span').map(e => e.textContent).join() === 'PLAN,MAP,予定,ToDo,データ,その他' && !/翌月コピー/.test($('#rvOv').textContent));
   w.rvStep(1); await sleep(5);
   c('機能を1つも選ばないと次へ進まない', w._rv.step === 1);
   w.rvFeat('map'); await sleep(5);
-  c('機能を押すと、その中の詳細が選択式で出る', /ツリー表示/.test($('#rvOv').textContent) && /サークル表示/.test($('#rvOv').textContent) && $$('#rvOv textarea').length === 1);
-  w.rvSub('map', 0); w.rvSub('map', 1); w.rvSub('map', 1); w.rvSub('map', 15); w.rvFst('map', 4); $('#rvOv textarea').value = '  サークルで名前が重なる  '; w.rvFnote('map', $('#rvOv textarea').value);
-  w.rvFeat('plan'); w.rvSub('plan', 3);
+  c('機能を押すと、その中の詳細が選択式で出る', /現状MAP（ツリー・サークル）/.test($('#rvOv').textContent) && /翌月コピー/.test($('#rvOv').textContent) && $$('#rvOv textarea').length === 1 && !/年の目標/.test($('#rvOv').textContent));
+  w.rvSub('map', 0); w.rvSub('map', 1); w.rvSub('map', 1); w.rvSub('map', 3); w.rvSub('map', 99); w.rvFst('map', 4); $('#rvOv textarea').value = '  サークルで名前が重なる  '; w.rvFnote('map', $('#rvOv textarea').value);
+  w.rvFeat('plan'); w.rvSub('plan', 1);
   c('★はタップでつく線のアイコン', $$('#rvOv .rv-stars span.on svg').length >= 4);
-  c('詳細は押すたびに選ぶ・外す', JSON.stringify(w._rv.a.f.map.s) === JSON.stringify(['ツリー表示', '翌月コピー']) && w._rv.a.f.map.st === 4 && w._rv.a.f.map.n === 'サークルで名前が重なる');
-  c('途中の答えは端末に控える', /ツリー表示/.test(w.localStorage.getItem(w._rvDraftKey()) || ''));
+  c('詳細は押すたびに選ぶ・外す', JSON.stringify(w._rv.a.f.map.s) === JSON.stringify(['現状MAP（ツリー・サークル）', '翌月コピー']) && w._rv.a.f.map.st === 4 && w._rv.a.f.map.n === 'サークルで名前が重なる');
+  c('途中の答えは端末に控える', /翌月コピー/.test(w.localStorage.getItem(w._rvDraftKey()) || ''));
   w.rvStep(1); await sleep(5);
   w.rvCf('plan'); w.rvSet('sp', 3);
   const ta = $$('#rvOv textarea'); ta[0].value = '計画シートの場所'; ta[2].value = '読み込みを速く'; ta[3].value = 'LINE通知';
@@ -54,9 +54,9 @@ T.run(async () => {
   cfg.from = ymd(-1); cfg.to = ymd(5); await w.rvInit();
   // ⑤ 結果（オーナー）
   const ans = (uid, name, union, a) => ({ id: 'r1_' + uid, round: 'r1', uid, name, union, ver: 'v816', device: 'iPhone Safari', a });
-  const res = [ans('u1', '試験 二郎', 'UA', { all: 5, nps: 10, freq: 'd', sp: 4, f: { map: { s: ['ツリー表示', 'サークル表示'], st: 5, n: '' }, plan: { s: ['計画シート'], st: 3, n: '計画シートの印刷がずれる' } }, cf: ['plan'], fix: 'PLANをわかりやすく', good: '見やすい' }),
-    ans('u2', '見本 三郎', 'UB', { all: 3, nps: 6, freq: 'w1', sp: 3, f: { map: { s: ['ツリー表示'], st: 3, n: '' } }, cf: [], wish: 'LINEに通知' }),
-    ans('u3', '例題 四郎', 'UA', { all: 4, nps: 8, freq: 'w3', f: { events: { s: ['月表示'], st: 4 } } })];
+  const res = [ans('u1', '試験 二郎', 'UA', { all: 5, nps: 10, freq: 'd', sp: 4, f: { map: { s: ['現状MAP（ツリー・サークル）', '翌月コピー'], st: 5, n: '' }, plan: { s: ['計画シート'], st: 3, n: '計画シートの印刷がずれる' } }, cf: ['plan'], fix: 'PLANをわかりやすく', good: '見やすい' }),
+    ans('u2', '見本 三郎', 'UB', { all: 3, nps: 6, freq: 'w1', sp: 3, f: { map: { s: ['現状MAP（ツリー・サークル）'], st: 3, n: '' } }, cf: [], wish: 'LINEに通知' }),
+    ans('u3', '例題 四郎', 'UA', { all: 4, nps: 8, freq: 'w3', f: { events: { s: ['カレンダー（月・週・日）'], st: 4 } } })];
   const users = [{ id: 'u1', name: '試験 二郎', union: 'UA', status: 'active' }, { id: 'u2', name: '見本 三郎', union: 'UB', status: 'active' }, { id: 'u3', name: '例題 四郎', union: 'UA', status: 'active' },
     { id: 'u4', name: '仮名 五郎', union: 'UA', status: 'active' }, { id: 'u5', name: '止めた 六郎', union: 'UA', status: 'disabled' }];
   w._rvLoadAll = () => Promise.resolve(JSON.parse(JSON.stringify(res)));
@@ -68,9 +68,9 @@ T.run(async () => {
   c('全体の満足度の平均・NPS', /4\/ 5/.test(tx()) && /\+0|0/.test(tx()));
   c('まだ答えていない人の名前', /まだ答えていない人 1人/.test(tx()) && /仮名 五郎/.test(tx()) && !/止めた 六郎/.test(tx()));
   w.rvTab('feat'); await sleep(5);
-  c('機能ごと：使っている人数・★平均・詳細の数', /MAP（現状MAP）2人・4/.test(tx()) && /ツリー表示2人/.test(tx().replace(/\s+/g, '')) && /計画シートの印刷がずれる/.test(tx()));
+  c('機能ごと：使っている人数・★平均・詳細の数', /MAP2人・4/.test(tx()) && /現状MAP（ツリー・サークル）2人/.test(tx().replace(/\s+/g, '')) && /計画シートの印刷がずれる/.test(tx()));
   w.rvUn('UB'); await sleep(5);
-  c('ユニオンで絞れる', /MAP（現状MAP）1人/.test(tx()));
+  c('ユニオンで絞れる', /MAP1人/.test(tx()));
   w.rvUn(''); w.rvTab('cm'); await sleep(5);
   c('ひとこと：直してほしい・うれしい機能・良かったところ', /PLANをわかりやすく/.test(tx()) && /LINEに通知/.test(tx()) && /見やすい/.test(tx()) && /試験 二郎・UA/.test(tx()));
   // バグ・要望に回す
@@ -80,9 +80,9 @@ T.run(async () => {
   w.rvToFb(k); await sleep(10);
   c('気になる声を「バグ・要望」に回せる（画面・誰の声か付き）', made && made.kind === 'req' && made.screen === 'PLAN' && /試験 二郎さん/.test(made.did) && /【PLAN】/.test(made.did) && /#42/.test(toastMsg));
   w.rvTab('who'); await sleep(5); w.rvDet('r1_u1'); await sleep(5);
-  c('1人ずつの答えも見られる', /ツリー表示・サークル表示/.test(tx()) && /一番直してほしいところ/.test(tx()));
+  c('1人ずつの答えも見られる', /現状MAP（ツリー・サークル）・翌月コピー/.test(tx()) && /一番直してほしいところ/.test(tx()));
   const ct = w._rvClaudeText();
-  c('Claude用にコピー：まとめと声', /回答 3人／対象 4人/.test(ct) && /MAP（現状MAP）：2人・★4/.test(ct) && /PLANをわかりやすく/.test(ct));
+  c('Claude用にコピー：まとめと声', /回答 3人／対象 4人/.test(ct) && /・MAP：2人・★4/.test(ct) && /PLANをわかりやすく/.test(ct));
   w._p2SheetClose('rvResOv');
   // ⑥ 一般の人は結果を見られない・指定された人は見られる
   w.currentUser.uid = 'u2'; c('一般の人は結果を見られない', !w._rvViewer() && !/レビューの結果/.test(w._rvStLis()));
