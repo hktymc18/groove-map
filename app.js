@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v823';
+var APP_JS_VERSION = 'v824';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v823';
+  var DATA_VERSION = 'v824';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4410,32 +4410,31 @@ function rvOpen() {
   _rv.step = 0;
   _rvSheet('rvOv'); _rvRender();
 }
+// v824: ページ＝全体 → よく使うもの（大項目だけ）→ 選んだ機能ごとに1ページずつ詳細 → ひとこと
+function _rvPages() { var A = _rv.a || {}, f = A.f || {}; return ['all', 'pick'].concat(RV_FEATS.filter(function(F) { return !!f[F[0]]; }).map(function(F) { return 'f:' + F[0]; })).concat(['note']); }
 function _rvRender() {
   var box = document.getElementById('rvOvM'); if (!box) return;
-  var A = _rv.a, s = _rv.step, h = '';
+  var A = _rv.a, P = _rvPages(); if (_rv.step >= P.length) _rv.step = P.length - 1;
+  var s = _rv.step, pg = P[s], last = s === P.length - 1, h = '';
+  var fk = pg.indexOf('f:') === 0 ? pg.slice(2) : '', FF = fk ? _rvFeat(fk) : null;
+  var nm = pg === 'all' ? '全体' : pg === 'pick' ? 'よく使うもの' : pg === 'note' ? 'ひとこと' : (FF ? FF[1] + 'について' : '');
   var top = '<div class="fb-top"><span class="t">' + evEsc((_rv.cfg && _rv.cfg.title) || '使い勝手レビュー') + '</span><span class="sp"></span><span class="fb-ic" onclick="_p2SheetClose(\'rvOv\')">✕</span></div>';
-  h += '<div class="fb-body"><div class="rv-st">' + (s + 1) + ' / 3　' + ['全体', '使っている機能', 'ひとこと'][s] + '・' + evEsc(_fbMyName()) +  'さんの名前で送ります' + (_rvDev() ? '（いまは開発メンバーだけに表示中）' : '') + (_rv.mine ? '（回答ずみ・直して送り直せます）' : '') + '</div>';
-  if (s === 0) {
+  h += '<div class="fb-body"><div class="rv-st">' + (s + 1) + ' / ' + P.length + '　' + evEsc(nm) + '・' + evEsc(_fbMyName()) + 'さんの名前で送ります' + (_rvDev() ? '（いまは開発メンバーだけに表示中）' : '') + (_rv.mine ? '（回答ずみ・直して送り直せます）' : '') + '</div>';
+  if (pg === 'all') {
     h += '<div class="rv-q">NAVIGATOR全体の満足度</div>' + _rvStarsHtml(A.all || 0, 'rvSet(\'all\',#)');
     h += '<div class="rv-q">人にすすめたいと思いますか<small>0＝思わない・10＝とても思う</small></div><div class="rv-nps">';
     for (var i = 0; i <= 10; i++) h += '<span class="' + (A.nps === i ? 'on' : '') + '" onclick="rvSet(\'nps\',' + i + ')">' + i + '</span>';
     h += '</div>';
     h += '<div class="rv-q">どのくらい使っていますか</div><div class="fb-chips">' + RV_FREQ.map(function(x) { return '<span class="' + (A.freq === x[0] ? 'on' : '') + '" onclick="rvSet(\'freq\',\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>';
-  } else if (s === 1) {
-    // v819: まず大メニューを選ぶ（いくつでも）→ 選んだものだけ詳細のカードが開く
-    h += '<div class="rv-q" style="margin-top:6px">よく使うものを選んでください<small>いくつでも</small></div><div class="rv-tiles">' + RV_FEATS.map(function(F) { var on = !!A.f[F[0]]; return '<span class="' + (on ? 'on' : '') + '" onclick="rvFeat(\'' + F[0] + '\')">' + (on ? '✓ ' : '') + evEsc(F[1]) + '</span>'; }).join('') + '</div>';
-    var sel = RV_FEATS.filter(function(F) { return !!A.f[F[0]]; });
-    if (sel.length) h += '<div class="fb-who" style="margin:14px 0 8px">選んだものの中で使っているものを選んでください（くわしくは書かなくても大丈夫です）</div>';
-    h += sel.map(function(F) {
-      var f = A.f[F[0]], on = true;
-      var r = '<div class="rv-ft on"><div class="rv-fh"><b>' + evEsc(F[1]) + '</b><span class="sw x" onclick="rvFeat(\'' + F[0] + '\')">✕ 外す</span></div>';
-      if (on) {
-        r += '<div class="rv-fb"><div class="fb-lb">使っているもの<small>いくつでも</small></div><div class="fb-chips">' + F[2].map(function(sub, j) { return '<span class="' + ((f.s || []).indexOf(sub) >= 0 ? 'on' : '') + '" onclick="rvSub(\'' + F[0] + '\',' + j + ')">' + evEsc(sub) + '</span>'; }).join('') + '</div>'
-          + '<div class="fb-lb">使いやすさ</div>' + _rvStarsHtml(f.st || 0, 'rvFst(\'' + F[0] + '\',#)', true)
-          + '<div class="fb-lb">くわしく<small>任意</small></div><textarea class="fi fb-ta" placeholder="例：〇〇の時に△△がわかりにくい" onchange="rvFnote(\'' + F[0] + '\',this.value)">' + evEsc(f.n || '') + '</textarea></div>';
-      }
-      return r + '</div>';
-    }).join('');
+  } else if (pg === 'pick') {
+    var nSel = RV_FEATS.filter(function(F) { return !!A.f[F[0]]; }).length;
+    h += '<div class="rv-q" style="margin-top:6px">よく使うものを、ぜんぶ選んでください<small>いくつでも</small></div><div class="rv-tiles">' + RV_FEATS.map(function(F) { var on = !!A.f[F[0]]; return '<span class="' + (on ? 'on' : '') + '" onclick="rvFeat(\'' + F[0] + '\')">' + (on ? '✓ ' : '') + evEsc(F[1]) + '</span>'; }).join('') + '</div>'
+      + '<div class="fb-who" style="margin-top:12px">' + (nSel ? nSel + 'つ選んでいます。次のページから、選んだものを1つずつ聞きます' : '選んだものを、次のページから1つずつ聞きます') + '</div>';
+  } else if (FF) {
+    var f = A.f[fk];
+    h += '<div class="rv-q" style="margin-top:6px">' + evEsc(FF[1]) + 'で使っているもの<small>いくつでも</small></div><div class="fb-chips">' + FF[2].map(function(sub, j) { return '<span class="' + ((f.s || []).indexOf(sub) >= 0 ? 'on' : '') + '" onclick="rvSub(\'' + fk + '\',' + j + ')">' + evEsc(sub) + '</span>'; }).join('') + '</div>'
+      + '<div class="rv-q">' + evEsc(FF[1]) + 'の使いやすさ</div>' + _rvStarsHtml(f.st || 0, 'rvFst(\'' + fk + '\',#)')
+      + '<div class="rv-q">くわしく<small>任意</small></div><textarea class="fi fb-ta" placeholder="例：〇〇の時に△△がわかりにくい" onchange="rvFnote(\'' + fk + '\',this.value)">' + evEsc(f.n || '') + '</textarea>';
   } else {
     h += '<div class="rv-q">わかりにくい・迷った機能<small>いくつでも</small></div><div class="fb-chips">' + RV_FEATS.map(function(F) { return '<span class="' + (A.cf.indexOf(F[0]) >= 0 ? 'on' : '') + '" onclick="rvCf(\'' + F[0] + '\')">' + evEsc(F[1]) + '</span>'; }).join('') + '</div>'
       + '<textarea class="fi fb-ta" placeholder="どこで・どう迷ったか（任意）" onchange="rvSetT(\'cfn\',this.value)">' + evEsc(A.cfn || '') + '</textarea>';
@@ -4445,7 +4444,7 @@ function _rvRender() {
     h += '<div class="rv-q">あったらうれしい機能<small>任意</small></div><textarea class="fi fb-ta" onchange="rvSetT(\'wish\',this.value)">' + evEsc(A.wish || '') + '</textarea>';
   }
   h += '</div><div class="fb-foot">' + (s > 0 ? '<span class="fb-btn" onclick="rvStep(-1)">‹ 戻る</span>' : '<span class="fb-btn" onclick="_p2SheetClose(\'rvOv\')">あとで</span>')
-    + (s < 2 ? '<span class="fb-btn pri" onclick="rvStep(1)">次へ ›</span>' : '<span class="fb-btn pri" onclick="rvSubmit()">' + (_rv.mine ? '送り直す' : '送る') + '</span>') + '</div>';
+    + (!last ? '<span class="fb-btn pri" onclick="rvStep(1)">次へ ›</span>' : '<span class="fb-btn pri" onclick="rvSubmit()">' + (_rv.mine ? '送り直す' : '送る') + '</span>') + '</div>';
   var b0 = box.querySelector('.fb-body'), sc = b0 ? b0.scrollTop : 0;
   box.innerHTML = top + h;
   var b1 = box.querySelector('.fb-body'); if (b1 && !_rv._toTop) b1.scrollTop = sc; _rv._toTop = false;
@@ -4460,9 +4459,10 @@ function rvFnote(k, v) { if (_rv.a.f[k]) _rv.a.f[k].n = String(v || '').trim().s
 function rvCf(k) { _rvSync(); var i = _rv.a.cf.indexOf(k); if (i >= 0) _rv.a.cf.splice(i, 1); else _rv.a.cf.push(k); _rvSaveDraft(); _rvRender(); }
 function rvStep(d) {
   _rvSync();
-  if (d > 0 && _rv.step === 0 && (!_rv.a.all || !_rv.a.freq)) { toast('満足度と使っている頻度を選んでください'); return; }
-  if (d > 0 && _rv.step === 1 && !Object.keys(_rv.a.f).length) { toast('使っている機能を1つ以上選んでください'); return; }
-  _rv.step = Math.max(0, Math.min(2, _rv.step + d)); _rv._toTop = true; _rvRender();
+  var P = _rvPages(), pg = P[_rv.step];
+  if (d > 0 && pg === 'all' && (!_rv.a.all || !_rv.a.freq)) { toast('満足度と使っている頻度を選んでください'); return; }
+  if (d > 0 && pg === 'pick' && !Object.keys(_rv.a.f).length) { toast('よく使うものを1つ以上選んでください'); return; }
+  _rv.step = Math.max(0, Math.min(P.length - 1, _rv.step + d)); _rv._toTop = true; _rvRender();
 }
 function rvSubmit() {
   _rvSync();
@@ -6125,6 +6125,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v824', d:'2026-10-19', items:['使い勝手レビュー：よく使うもの（大きいメニュー）を選んだら、次のページから選んだものを1つずつ聞く形に'] },
   { v:'v823', d:'2026-10-19', items:['使い勝手レビューに「見せる人」の設定：みんな／開発メンバーだけ（まず開発メンバーだけで試せます）'] },
   { v:'v822', d:'2026-10-19', items:['バグ・要望・アイデアで、間違えて登録した報告を消せるように（書いた本人は「新着」の間・管理者はいつでも）'] },
   { v:'v821', d:'2026-10-19', items:['ホーム画面のアプリを開いた直後に、カレンダーが画面の下にはみ出すことがある問題をもう一度直しました（はじめて開いた時・iPhone 17 Proなど）（#16）'] },
