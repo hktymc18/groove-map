@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v817';
+var APP_JS_VERSION = 'v818';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v817';
+  var DATA_VERSION = 'v818';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4346,9 +4346,17 @@ function rvInit() {
   }).then(function() {
     _rvSyncEntry();
     if (/[?&]review=1\b/.test(location.search || '') && !window._rvAsked) { window._rvAsked = 1; try { history.replaceState(null, '', location.pathname); } catch (e) {} setTimeout(rvOpen, 600); }
-  }).catch(function() { _rv.loaded = true; });
+  }).catch(function() { _rv.loaded = true; _rvSyncEntry(); }); // 読めない時（ルール反映前など）もオーナーには結果・設定の入口を出す
 }
 function _rvSyncEntry() {
+  try { // v818: PCの入口（左のメニュー・設定（プロフィール）の画面）
+    var ans = _rvActive() && !viewingOwnerUid, res = _rvViewer();
+    var sbi = document.getElementById('pcsRv'); if (sbi) { sbi.style.display = ans ? '' : 'none'; var lb = sbi.querySelector('.pcs-lb'); if (lb) lb.textContent = _rv.mine ? 'レビュー✓' : 'レビュー'; }
+    var w0 = document.getElementById('profileRvWrap'), a0 = document.getElementById('profileRvAns'), r0 = document.getElementById('profileRvRes');
+    if (w0) w0.style.display = ans || res ? '' : 'none';
+    if (a0) { a0.style.display = ans ? '' : 'none'; a0.textContent = _rv.mine ? '⭐ 使い勝手レビュー（回答ずみ・直せます）' : '⭐ 使い勝手レビューに答える'; }
+    if (r0) r0.style.display = res ? '' : 'none';
+  } catch (eP) {}
   try { if (currentView === 'home') { if (typeof renderMenuHub === 'function') renderMenuHub(); if (typeof renderHome === 'function' && typeof isPCMode === 'function' && isPCMode()) renderHome(); } } catch (e) {}
 }
 // HOMEのお願い（期間中・まだ答えていない人だけ）
@@ -6088,6 +6096,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v818', d:'2026-10-19', items:['PCでも使い勝手レビューを開けるように：左のメニューの「レビュー」（期間中）と、設定（右上の名前）の画面の「答える」「レビューの結果」から'] },
   { v:'v817', d:'2026-10-19', items:['「バグ・要望」を「バグ・要望・アイデア」に：種類にアイデア、状態に検討中・確認待ち、いつまでに（今週中・今月中・来月・いつか／日付）と「期限で見る」、対象（NAVIGATOR・受付システム）・依頼した人・Slackのリンク','管理者は馬越さんも。直した版が出たものは自動で「確認待ち」に。Slackに返す文と進捗まとめをコピーできます'] },
   { v:'v816', d:'2026-10-19', items:['使い勝手レビュー（期間限定のアンケート）：期間中はHOMEにお願いが出ます。使っている機能はその中のどれを使っているかまで選べます','結果はオーナーと指定した人だけが見られます（設定 › レビューの結果）'] },
   { v:'v815', d:'2026-10-18', items:['受付連携で、ほかの地域のユニオンで活動している人もつなげるように（その人のユニオンの受付管理者が名簿で「MAPで連携するユニオン」を選んだ人だけ）'] },
