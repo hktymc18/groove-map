@@ -170,6 +170,28 @@ service cloud.firestore {
       allow write: if (doc == 'mode' && isOwnerAdmin()) || (doc == 'names' && (isOwnerAdmin() || isUnionAdmin()));
     }
 
+    // ============ v827: MAPの共有はアップだけ（#23） ============
+    //   appShare/top … 共有してよい上の人（uids）。ログインした人は読める。変えられるのはオーナーだけ
+    match /appShare/{doc} {
+      allow read:  if signedIn();
+      allow write: if doc == 'top' && isOwnerAdmin()
+        && request.resource.data.keys().hasOnly(['uids', 'at', 'by'])
+        && request.resource.data.uids is list;
+    }
+    //   shareAudit/{共有した人}_{相手} … アップと確認できない人へのMAPの共有の記録。
+    //   書けるのは共有した本人（自分の分だけ）。見られるのはオーナーと本人。消せるのはオーナーと本人
+    match /shareAudit/{aid} {
+      allow read: if isOwnerAdmin() || (signedIn() && resource.data.fromUid == request.auth.uid);
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['fromUid', 'fromName', 'fromUnion', 'toUid', 'toName', 'toEmail', 'rel', 'how', 'perm', 'at'])
+        && request.resource.data.fromUid == request.auth.uid
+        && aid == request.auth.uid + '_' + request.resource.data.toUid
+        && request.resource.data.rel in ['down', 'unknown']
+        && request.resource.data.how in ['confirm', 'old']
+        && request.resource.data.perm in ['view', 'edit'];
+      allow delete: if isOwnerAdmin() || (signedIn() && aid.matches(request.auth.uid + '_.*'));
+    }
+
     // ============ MAP本体（months/stats/events/meta/shared） ============
     // 自分宛ての共有ドキュメント
     function myShareDoc(uid) {
