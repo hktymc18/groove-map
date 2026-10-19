@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v826';
+var APP_JS_VERSION = 'v827';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3439,6 +3439,7 @@ function loadAdminUsers() {
     renderAdminList();
     _admCkLoad(); // v770: 紐付いた受付の名簿（無効かどうか）
     _accLoad(); // v790: 公開範囲・登録待ちの名簿
+    _shAdmLoad(); // v827: 共有してよい上の人・アップ以外への共有
   }).catch(function() {
     if (body) body.innerHTML = '<div class="ev-empty">読み込みに失敗しました（権限をご確認ください）</div>';
   });
@@ -3492,7 +3493,7 @@ function renderAdminList() {
     html += pending.map(adminPendingRowHtml).join('');
     html += '<div style="height:6px;border-bottom:1px solid var(--border);margin-bottom:6px"></div>';
   }
-  html = _accPanelHtml() + html; // v790: 公開範囲・先行利用
+  html = _accPanelHtml() + _shAdmHtml() + html; // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
   if (!others.length && !pending.length) { body.innerHTML = html + '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
   html += others.map(adminRowHtml).join('');
   body.innerHTML = html;
@@ -3655,7 +3656,9 @@ function admCkPick(no) {
   } else if (!confirm('受付の名簿との紐付けを外しますか？\n（受付で無効にしても、NAVIGATORは使えるままになります）')) return;
   u.ckNo = no;
   if (r) _admCk[no] = r;
-  fsSet('users/' + u.id, { ckNo: no, ckSetBy: currentUser.uid, ckSetAt: new Date().toISOString() })
+  var ckD = { ckNo: no, ckSetBy: currentUser.uid, ckSetAt: new Date().toISOString() };
+  if (r && r.referrer && !u.referrer) { ckD.referrer = String(r.referrer).trim(); ckD.referrerFrom = 'ck'; u.referrer = ckD.referrer; } // v827: 名簿の紹介者
+  fsSet('users/' + u.id, ckD)
     .then(function() { toast(no ? '受付の名簿と紐付けました ✓' : '紐付けを外しました'); })
     .catch(function() { toast('保存に失敗しました'); });
   admCkClose(); renderAdminList();
@@ -3800,6 +3803,7 @@ function openProfileModal() {
   if (el('profileUnion')) el('profileUnion').value = currentUser.unionSelectedV2 ? (currentUser.union || '') : '';
   if (el('profileUpRuby'))el('profileUpRuby').value = currentUser.upRuby || '';
   if (el('profileUpBd')) el('profileUpBd').value  = currentUser.upBd || '';
+  if (el('profileReferrer')) el('profileReferrer').value = currentUser.referrer || ''; // v827
   var accEmail = el('profileAccountEmail');
   if (accEmail) {
     var em = currentUser.email || (auth && auth.currentUser && auth.currentUser.email) || '';
@@ -3838,6 +3842,7 @@ function saveProfile() {
   var area  = el('profileArea');
   var upRuby= el('profileUpRuby');
   var upBd  = el('profileUpBd');
+  var referrer = el('profileReferrer'); // v827: 紹介者（任意）
   var perr  = document.getElementById('profileError');
   // 必須4項目チェック
   if (!union || !area || !upRuby || !upBd) {
@@ -3847,6 +3852,8 @@ function saveProfile() {
   currentUser.name = name; currentUser.org = org;
   currentUser.area = area; currentUser.union = union;
   currentUser.upRuby = upRuby; currentUser.upBd = upBd;
+  var refCh = referrer !== (currentUser.referrer || '');
+  currentUser.referrer = referrer; if (refCh) currentUser.referrerFrom = 'self';
   currentUser.unionSelectedV2 = true; // 選択制ユニオンで確定済みの印
 
   // ヘッダー更新
@@ -3866,6 +3873,7 @@ function saveProfile() {
     fsSet('users/' + currentUser.uid, {
       name: name, displayName: name, org: org, area: area, union: union, // v670: displayName も（ATTACK LIST・GOAL SETTING は displayName を優先して表示するため）
       upRuby: upRuby, upBd: upBd, unionSelectedV2: true,
+      referrer: referrer, referrerFrom: currentUser.referrerFrom || '', // v827
       email: currentUser.email, uid: currentUser.uid,
       registrationComplete: true, updatedAt: new Date().toISOString()
     }).then(function(){ toast('プロフィールを保存しました ✓'); });
@@ -4075,7 +4083,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v826';
+  var DATA_VERSION = 'v827';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6182,6 +6190,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v827', d:'2026-10-19', items:['MAPの共有はアップ（自分の上の人）だけにしました。配下（ダウン）の人には共有できず、アップか確かめられない人は「アップです」と確認してから共有します（#23）', 'プロフィールに「紹介者」を足しました（受付の名簿と紐付いている人は、名簿の紹介者が自動で入ります）', '共有中の一覧で、アップ以外への共有に印が付きます。アカウント管理で「共有してよい上の人」と「アップ以外への共有」を見られます'] },
   { v:'v826', d:'2026-10-19', items:['PCの時刻の入力を全部同じ形に：手入力（1930→19:30）に加えて、「時」と「分」を別々に選べます（分は15分刻み・時は10時のあたりから）。予定・研修の予定・タスク・OL・期日・企画書など'] },
   { v:'v825', d:'2026-10-19', items:['レビューの結果の「まだ答えていない人」：開発メンバーだけの時は指定した人全員を、みんなの時はアカウント管理の「使える人」と同じ人を数えるように（前は一部の人が外れていた）'] },
   { v:'v824', d:'2026-10-19', items:['使い勝手レビュー：よく使うもの（大きいメニュー）を選んだら、次のページから選んだものを1つずつ聞く形に'] },
@@ -21272,6 +21281,7 @@ function _stRender() {
       + '<div class="ppl">活動地域 *</div><select class="st-sel" id="stArea">' + areaOptionsHtml('活動地域を選択') + '</select>'
       + '<div class="ppl">UPルビー *</div><input class="ppin" id="stUpRuby" value="' + evEsc(u.upRuby || '') + '">'
       + '<div class="ppl">UPBD *</div><input class="ppin" id="stUpBd" value="' + evEsc(u.upBd || '') + '">'
+      + '<div class="ppl">紹介者</div><input class="ppin" id="stReferrer" value="' + evEsc(u.referrer || '') + '" placeholder="紹介してくれた人（任意）"><div class="ux-hint">MAPの共有で、アップ（上の人）かどうかを見分けるのに使います' + (u.referrerFrom === 'ck' ? '（受付の名簿から入れました）' : '') + '</div>' // v827
       + '<div class="ux-btm"><span class="ux-bk" onclick="setOpen()">‹ 戻る</span><span class="ux-nx" onclick="stSaveProf()">✓ 保存</span></div>';
   } else if (_stPg === 'look') {
     h += '<h2 class="ux-h2">見た目</h2><div class="ppl">テーマ</div><div class="ppb sm" style="--n:2"><span class="' + (!light ? 'on' : '') + '" onclick="setTheme(\'dark\');_stRender()">🌙 ダーク</span><span class="' + (light ? 'on' : '') + '" onclick="setTheme(\'light\');_stRender()">☀ ライト</span></div>'
@@ -21293,7 +21303,7 @@ function stSaveProf() {
   if (!g('stUnion') || !g('stArea') || !g('stUpRuby') || !g('stUpBd')) { toast('所属ユニオン・活動地域・UPルビー・UPBD は必須です'); return; }
   try { populateUnionSelects(); } catch (e) {}
   var set = function(id, v) { var el = document.getElementById(id); if (!el) return; if (el.tagName === 'SELECT') _areaSelectSet(el, v); else el.value = v; };
-  set('profileName', g('stName')); set('profileOrg', g('stOrg')); set('profileUnion', g('stUnion')); set('profileArea', g('stArea')); set('profileUpRuby', g('stUpRuby')); set('profileUpBd', g('stUpBd'));
+  set('profileName', g('stName')); set('profileOrg', g('stOrg')); set('profileUnion', g('stUnion')); set('profileArea', g('stArea')); set('profileUpRuby', g('stUpRuby')); set('profileUpBd', g('stUpBd')); set('profileReferrer', g('stReferrer'));
   saveProfile();
   setOpen();
 }
@@ -38066,6 +38076,7 @@ function loginSuccess(user) {
   if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
   ckAccessCheck(user, false); // v770: 受付の名簿を確認（無効ならゲート）
   accCheck(user, false); // v790: 公開範囲を確認（まだ使えない人はゲート）
+  setTimeout(function() { _shRefFill(user); _shDailyCheck(); }, 2500); // v827: 紹介者を名簿から・前からある共有を確かめる（#23）
   setTimeout(function() { try { if (_gdAuto()) return; } catch (eGd) {} try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容（v755: はじめての人は先に使い方の案内）
   state.gcalConnected = false; state.gcalCalendarId = ''; // v820: Googleカレンダー連携はなくした
   // ゲームデータ復元
@@ -38264,6 +38275,7 @@ function loadShareUserList() {
     docs.forEach(function(d) {
       var row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)';
+      if (!d.derived) row.setAttribute('data-rid', d.recipientUid || d.id); // v827
       var emailEl = document.createElement('div');
       emailEl.style.cssText = 'flex:1;font-size:13px';
       emailEl.textContent = d.email || '';
@@ -38291,7 +38303,190 @@ function loadShareUserList() {
       if (!d.derived) row.appendChild(delEl); // v355: 連鎖共有(自動配布)は経由元の解除で消えるため手動削除なし
       listEl.appendChild(row);
     });
+    _shMarkList(docs, listEl); // v827: アップ以外への共有に印
   });
+}
+
+// ════ v827: MAPの共有はアップだけ（#23）════
+//  アップ＝自分の上の人（紹介者・UPルビー・UPBD をたどった先）。サイド（給与に関係のない別の系列）・ダウン（自分の配下）には共有させない。
+//  ① 共有してよい上の人（appShare/top.uids・オーナーがアカウント管理で足し引き）→ 誰からでも共有できる
+//  ② ダウン（相手の紹介者・UPルビー・UPBD をたどると自分／自分のMAPで自分より下にいる）→ 共有できない
+//  ③ アップ（自分の紹介者・UPルビー・UPBD をたどった先）→ 共有できる
+//  ④ どれでもない（わからない）→ 「アップです」と確認すれば共有できる。記録は shareAudit/{自分}_{相手} に残る（オーナーが見る）
+//  オーナーが共有する時は止めない。
+var SH_TOP0 = [OWNER_UIDS[1]]; // 設定が無い時の①（2人目のオーナー）
+var _shTop = null, _shUsers = null, _shUsersAt = 0;
+function _shNm(s) { return _ckNorm(s).replace(/(さん|様|さま)$/, '').toLowerCase(); }
+function _shUps(u) { return [u && u.referrer, u && u.upRuby, u && u.upBd].map(_shNm).filter(Boolean); }
+function _shLoadTop(force) {
+  if (_shTop && !force) return Promise.resolve(_shTop);
+  return fsGet('appShare/top').then(function(d) { _shTop = { uids: (d && d.uids) ? d.uids.slice() : SH_TOP0.slice() }; return _shTop; })
+    .catch(function() { return _shTop || { uids: SH_TOP0.slice() }; });
+}
+function _shLoadUsers(force) {
+  if (_shUsers && !force && Date.now() - _shUsersAt < 300000) return Promise.resolve(_shUsers);
+  return fsGetCol('users').then(function(L) { _shUsers = L || []; _shUsersAt = Date.now(); return _shUsers; });
+}
+// 自分のMAPで、自分より下にいる人の名前
+function _shMapDown(me) {
+  var all = (state.members || []).filter(function(m) { return m && !m.deleted && !m._foreign; }), byP = {}, myN = _shNm(me.name);
+  all.forEach(function(m) { (byP[m.parentId || ''] || (byP[m.parentId || ''] = [])).push(m); });
+  var start = all.filter(function(m) { return myN && _shNm(m.name) === myN; });
+  if (!start.length) start = byP[''] || [];
+  var out = {}, q = [], seen = {};
+  start.forEach(function(m) { seen[m.id] = 1; q.push(m); });
+  while (q.length) { var m = q.shift(); (byP[m.id] || []).forEach(function(k) { if (seen[k.id]) return; seen[k.id] = 1; var n = _shNm(k.name); if (n && n !== myN) out[n] = 1; q.push(k); }); }
+  return out;
+}
+// 相手との関係：'top' | 'up' | 'down' | 'unknown'
+function _shRel(me, rec, users, top) {
+  if (!rec) return 'unknown';
+  if (top && (top.uids || []).indexOf(rec.id) >= 0) return 'top';
+  var byNm = {};
+  (users || []).forEach(function(u) { var n = _shNm(u.name || u.displayName); if (n) (byNm[n] || (byNm[n] = [])).push(u); });
+  var upOf = function(u0) { // 紹介者・UPルビー・UPBD をたどる（名前のつながり）
+    var out = {}, seen = {}, q = _shUps(u0), g = 0;
+    if (u0 && u0.id) seen[u0.id] = 1;
+    while (q.length && g++ < 300) {
+      var n = q.shift(); if (out[n]) continue; out[n] = 1;
+      (byNm[n] || []).forEach(function(x) { if (seen[x.id]) return; seen[x.id] = 1; _shUps(x).forEach(function(k) { if (!out[k]) q.push(k); }); });
+    }
+    return out;
+  };
+  var myN = _shNm(me.name), recN = _shNm(rec.name || rec.displayName);
+  var down = !!(myN && upOf(rec)[myN]), up = !!(recN && upOf(me)[recN]);
+  if (down && up) return 'unknown'; // 入力が食い違っている時は確認してもらう
+  if (down) return 'down';
+  if (up) return 'up';
+  if (recN && _shMapDown(me)[recN]) return 'down';
+  return 'unknown';
+}
+var SH_REL_LB = { top: '上の人', up: 'アップ', down: 'ダウン', unknown: 'アップか不明' };
+function _shCheck(rec) {
+  if (!currentUser || isOwnerUid(currentUser.uid)) return Promise.resolve('free');
+  var me = { id: currentUser.uid, name: currentUser.name, referrer: currentUser.referrer, upRuby: currentUser.upRuby, upBd: currentUser.upBd };
+  return Promise.all([_shLoadTop(), _shLoadUsers().catch(function() { return []; })]).then(function(r) { return _shRel(me, rec, r[1], r[0]); });
+}
+// アップと確認できない相手への共有の記録（オーナーがアカウント管理で見る）
+function _shAudit(rid, rec, rel, how, perm) {
+  if (!currentUser) return Promise.resolve();
+  return fsSet('shareAudit/' + currentUser.uid + '_' + rid, {
+    fromUid: currentUser.uid, fromName: currentUser.name || '', fromUnion: currentUser.union || '',
+    toUid: rid, toName: (rec && (rec.name || rec.displayName)) || '', toEmail: (rec && rec.email) || '',
+    rel: rel === 'down' ? 'down' : 'unknown', how: how === 'old' ? 'old' : 'confirm', perm: perm === 'edit' ? 'edit' : 'view',
+    at: new Date().toISOString()
+  }).catch(function() {});
+}
+function _shAuditDel(rid) {
+  if (!db || !currentUser) return Promise.resolve();
+  return db.doc('shareAudit/' + currentUser.uid + '_' + rid).delete().catch(function() {});
+}
+var SH_HINT = '\n\n※プロフィールの「紹介者」「UPルビー」「UPBD」が入っていると、アップかどうかを自動で見分けます';
+function _shAsk(rel, rec) {
+  var nm = ((rec && (rec.name || rec.displayName)) || (rec && rec.email) || 'この人') + ' さん';
+  if (rel === 'down') { alert('⛔ 共有できません\n\n' + nm + 'は、あなたの配下（ダウン）のメンバーです。\nMAPはアップ（あなたの上の人）にだけ共有できます。' + SH_HINT); return false; }
+  if (rel === 'unknown') return confirm('⚠ ' + nm + 'がアップ（あなたの上の人）か確認できませんでした。\n\nサイド（別の系列）・ダウン（配下）の人には共有できません。\nアップの人で間違いなければ「OK」を押してください（共有した記録が残ります）。' + SH_HINT);
+  return true;
+}
+// 共有一覧：アップ以外への共有に印（前からある共有は記録にも残す）
+function _shMarkList(docs, listEl) {
+  if (!currentUser || isOwnerUid(currentUser.uid)) return;
+  var direct = docs.filter(function(d) { return !d.derived; });
+  if (!direct.length) return;
+  var me = { id: currentUser.uid, name: currentUser.name, referrer: currentUser.referrer, upRuby: currentUser.upRuby, upBd: currentUser.upBd };
+  Promise.all([_shLoadTop(), _shLoadUsers()]).then(function(r) {
+    var byId = {}; r[1].forEach(function(u) { byId[u.id] = u; });
+    direct.forEach(function(d) {
+      var rid = d.recipientUid || d.id, rec = byId[rid];
+      if (!rec) return;
+      var rel = _shRel(me, rec, r[1], r[0]), bad = rel === 'down' || rel === 'unknown';
+      if (bad && !(rel === 'unknown' && d.rel === 'ok')) _shAudit(rid, rec, rel, 'old', d.perm);
+      else if (!bad) _shAuditDel(rid);
+      if (!listEl) return;
+      var row = listEl.querySelector('[data-rid="' + rid + '"]'); if (!row || row.querySelector('.sh-rel')) return;
+      var nmEl = row.firstChild; if (nmEl && rec.name && nmEl.textContent.indexOf(rec.name) < 0) nmEl.textContent = rec.name + '（' + (d.email || '') + '）';
+      if (!bad) return;
+      var b = document.createElement('div'); b.className = 'sh-rel';
+      var ok = rel === 'unknown' && d.rel === 'ok';
+      b.style.cssText = 'font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;white-space:nowrap;' + (ok ? 'color:var(--text-dim);border:1px solid var(--border2)' : 'color:#FF8A7A;border:1px solid #FF8A7A');
+      b.textContent = rel === 'down' ? '⚠ ダウン' : (ok ? 'アップと確認ずみ' : '⚠ アップか不明');
+      b.title = rel === 'down' ? '配下（ダウン）の人への共有です。✕で外してください' : (ok ? '共有した時に「アップです」と確認しました' : 'アップと確認できない人への共有です。サイド・ダウンの人なら✕で外してください');
+      row.insertBefore(b, row.children[1] || null);
+    });
+  }).catch(function() {});
+}
+// ログイン時（1日1回）：前からある共有を確かめて記録
+function _shDailyCheck() {
+  if (!db || !currentUser || isOwnerUid(currentUser.uid)) return;
+  var k = 'gm_shChk_' + currentUser.uid, t = new Date().toDateString();
+  try { if (localStorage.getItem(k) === t) return; localStorage.setItem(k, t); } catch (e) {}
+  fsGetCol('maps/' + currentUser.uid + '/shared').then(function(docs) { _shMarkList(docs || [], null); }).catch(function() {});
+}
+// 受付（BASE CHECK-IN）の名簿と紐付いている人は、名簿の紹介者をプロフィールの「紹介者」に入れる（空の時だけ）
+function _shRefFill(user) {
+  if (!db || !user || !user.uid || !user.ckNo || user.referrer) return;
+  db.doc('checkinMembers/' + user.ckNo).get().then(function(d) {
+    var ref = d.exists ? String((d.data() || {}).referrer || '').trim() : '';
+    if (!ref || !currentUser || currentUser.uid !== user.uid || currentUser.referrer) return;
+    currentUser.referrer = ref; currentUser.referrerFrom = 'ck';
+    fsSet('users/' + user.uid, { referrer: ref, referrerFrom: 'ck' }).catch(function() {});
+  }).catch(function() {});
+}
+
+// ── アカウント管理（オーナー）：共有してよい上の人・アップ以外への共有 ──
+var _shAud = null, _shTopQ = '';
+function _shAdmLoad() {
+  if (!db || !currentUser || !isOwnerUid(currentUser.uid)) return;
+  _shLoadTop(true).then(function() { _accRe(); });
+  fsGetCol('shareAudit').then(function(L) { _shAud = (L || []).sort(function(a, b) { return String(b.at || '').localeCompare(String(a.at || '')); }); _accRe(); }).catch(function() { _shAud = _shAud || []; });
+}
+function _shUserNm(uid) { var u = _adminFindUser(uid); return u ? (u.name || u.email || uid) : (uid === OWNER_UIDS[1] ? '2人目のオーナー' : uid.slice(0, 6) + '…'); }
+function _shAdmHtml() {
+  if (!(currentUser && isOwnerUid(currentUser.uid))) return '';
+  var top = (_shTop && _shTop.uids) || null, aud = _shAud;
+  var h = '<div class="acc-box" id="shAdmBox"><div class="h">MAPの共有<small>アップ（上の人）にだけ共有できます。サイド・ダウンには共有できません</small></div>';
+  h += '<div class="acc-st" style="margin-top:8px">共有してよい上の人（誰からでも共有できる）</div>';
+  h += '<div class="acc-un">' + (top ? top.map(function(uid) { return '<span class="on" data-u="' + evEsc(uid) + '" onclick="shTopDel(this.dataset.u)">' + evEsc(_shUserNm(uid)) + ' ✕</span>'; }).join('') : '<span>読み込み中…</span>') + '<span onclick="shTopOpen()">＋ 足す</span></div>';
+  var n = aud ? aud.length : 0, nd = aud ? aud.filter(function(a) { return a.rel === 'down'; }).length : 0;
+  h += '<div class="acc-acts"><span' + (n ? ' class="on"' : '') + ' onclick="shAudOpen()">アップ以外への共有 ' + (aud ? n + '件' + (nd ? '（ダウン' + nd + '）' : '') : '…') + ' ›</span></div></div>';
+  return h;
+}
+function shTopDel(uid) {
+  if (!_shTop || !confirm(_shUserNm(uid) + ' さんを「共有してよい上の人」から外しますか？')) return;
+  _shTopSave(_shTop.uids.filter(function(x) { return x !== uid; }));
+}
+function _shTopSave(uids) {
+  _shTop = { uids: uids };
+  db.doc('appShare/top').set({ uids: uids, at: new Date().toISOString(), by: currentUser.uid }, { merge: true })
+    .then(function() { toast('✓ 共有してよい上の人を保存しました'); }).catch(function() { toast('保存できませんでした'); });
+  _accDlgClose(); renderAdminList();
+}
+function shTopOpen(q) {
+  if (q != null) _shTopQ = q;
+  var top = (_shTop && _shTop.uids) || [], k = _shNm(_shTopQ);
+  var L = _adminUsers.filter(function(u) { return _accActive(u) && top.indexOf(u.id) < 0 && (!k || _shNm((u.name || '') + (u.union || '') + (u.email || '')).indexOf(k) >= 0); })
+    .sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
+  var list = L.slice(0, 80).map(function(u) { return '<label class="r" data-u="' + u.id + '" onclick="shTopAdd(this.dataset.u)">' + evEsc(u.name || '(名前未設定)') + '<small>' + evEsc(u.union || '') + '</small></label>'; }).join('') || '<div class="nt">見つかりません</div>';
+  if (q != null && document.getElementById('shTopL')) { document.getElementById('shTopL').innerHTML = list; return; }
+  _accDlg('<div class="hd">共有してよい上の人を足す<span onclick="_accDlgClose()">閉じる</span></div>'
+    + '<div class="nt">ここに入れた人には、メンバーのだれからでもMAPを共有できます（チームの上の人）。</div>'
+    + '<input class="fi" id="shTopQ" placeholder="名前・ユニオンで探す" value="' + evEsc(_shTopQ) + '" oninput="shTopOpen(this.value)" style="margin-top:10px">'
+    + '<div id="shTopL" style="margin-top:6px">' + list + '</div>');
+}
+function shTopAdd(uid) {
+  var top = ((_shTop && _shTop.uids) || []).slice(); if (top.indexOf(uid) >= 0) return;
+  if (!confirm(_shUserNm(uid) + ' さんを「共有してよい上の人」に入れますか？')) return;
+  top.push(uid); _shTopSave(top);
+}
+function shAudOpen() {
+  var L = _shAud || [];
+  var f = function(iso) { var d = new Date(iso); return isNaN(d) ? '' : (d.getMonth() + 1) + '/' + d.getDate(); };
+  _accDlg('<div class="hd">アップ以外への共有<span onclick="_accDlgClose()">閉じる</span></div>'
+    + '<div class="nt">アップ（上の人）と確認できない人へのMAPの共有です。サイド・ダウンへの共有なら、共有した本人に「共有設定」の✕で外してもらってください（管理者は他の人の共有を変えられません）。</div>'
+    + (L.length ? L.map(function(a) {
+      return '<label class="r" style="cursor:default;flex-wrap:wrap">' + evEsc(a.fromName || '') + ' → ' + evEsc(a.toName || a.toEmail || '')
+        + '<small>' + (a.rel === 'down' ? '<b style="color:#FF8A7A">ダウン</b>' : 'アップか不明') + '・' + (a.how === 'old' ? '前からある共有' : '本人が「アップです」と確認') + (a.perm === 'edit' ? '・編集可' : '') + (a.at ? '・' + f(a.at) : '') + '</small></label>';
+    }).join('') : '<div class="nt" style="margin-top:14px">ありません</div>'));
 }
 
 function addShareUser() {
@@ -38310,7 +38505,18 @@ function addShareUser() {
     snap.forEach(function(doc) { if (!recipientDoc) recipientDoc = doc; });
     var recipientUid = recipientDoc.id;
     var recipientData = recipientDoc.data();
-
+    if (recipientUid === currentUser.uid) { toast('自分には共有できません'); return; }
+    // v827: アップにだけ共有できる（#23）
+    var rec = Object.assign({ id: recipientUid }, recipientData || {});
+    _shCheck(rec).then(function(rel) {
+      if (!_shAsk(rel, rec)) return;
+      _shDoAdd(email, recipientUid, rec, rel);
+    });
+  }).catch(function(e) {
+    toast('検索エラー: ' + e.message);
+  });
+}
+function _shDoAdd(email, recipientUid, rec, rel) {
     // 2. オーナー側: maps/{ownerUid}/shared/{recipientUid}
     var p1 = fsSet('maps/' + currentUser.uid + '/shared/' + recipientUid, {
       email: email,
@@ -38319,6 +38525,7 @@ function addShareUser() {
       scope: shareScope, // v533
       ownerUid: currentUser.uid,
       ownerName: currentUser.org || currentUser.name || '',
+      rel: rel === 'unknown' ? 'ok' : (rel === 'free' ? '' : rel), // v827: 相手との関係（ok＝本人が「アップです」と確認）
       derived: false, via: '', // v370: 過去に自動配布(derived)だった場合の残骸を明示的に打ち消す（merge保存で残ると連鎖の後片付けに誤削除されるため）
       addedAt: new Date().toISOString()
     });
@@ -38339,6 +38546,8 @@ function addShareUser() {
     p1.then(function() {
       return p2;
     }).then(function() {
+      if (rel === 'unknown') _shAudit(recipientUid, rec, 'unknown', 'confirm', sharePerm); // v827
+      else if (rel !== 'free') _shAuditDel(recipientUid);
       toast('✅ ' + email + ' に共有しました');
       document.getElementById('shareEmail').value = '';
       loadShareUserList();
@@ -38349,13 +38558,11 @@ function addShareUser() {
       toast('⚠️ 共有に失敗しました: ' + (e.message || '権限またはネットワークエラー'));
       loadShareUserList();
     });
-  }).catch(function(e) {
-    toast('検索エラー: ' + e.message);
-  });
 }
 
 function removeShareUser(id) {
   if (!db || !currentUser) return;
+  _shAuditDel(id); // v827
   db.doc('maps/' + currentUser.uid + '/shared/' + id).delete().then(function() {
     // v370: 受信側インデックス(sharedWith/{相手}/from/{自分})も必ず削除。
     // これを消し忘れていたため、解除後も相手の共有MAP一覧に自分のカードが残り続けていた（幽霊カード）
