@@ -754,7 +754,11 @@ service cloud.firestore {
         && d.name == profile(request.auth.uid).get('name', '')
         && d.union == profile(request.auth.uid).get('union', '')
         && d.a is map
-        && d.updatedAt == request.time;
+        && d.updatedAt == request.time
+        // v823: 「開発メンバーだけ」の時は、オーナーとバグ・要望・アイデアを見られる人だけが答えられる
+        && (cfg.get('scope', 'all') != 'dev' || isOwnerAdmin()
+            || (exists(/databases/$(database)/documents/fbConfig/main)
+                && request.auth.uid in get(/databases/$(database)/documents/fbConfig/main).data.get('members', [])));
     }
     match /rvConfig/main {
       allow read: if signedIn();

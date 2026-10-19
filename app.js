@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v822';
+var APP_JS_VERSION = 'v823';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v822';
+  var DATA_VERSION = 'v823';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4314,7 +4314,11 @@ var RV_FREQ = [['d', 'ほぼ毎日'], ['w3', '週に数回'], ['w1', '週1くら
 var _rv = { cfg: null, mine: null, loaded: false, step: 0, a: null, res: null, users: null, tab: 'sum', un: '', det: null, round: '' };
 function _rvIsOwner() { return !!currentUser && typeof isOwnerUid === 'function' && isOwnerUid(currentUser.uid); }
 function _rvViewer() { return !!currentUser && (_rvIsOwner() || !!(_rv.cfg && (_rv.cfg.viewers || []).indexOf(currentUser.uid) >= 0)); }
-function _rvActive() { var c = _rv.cfg, t = evTodayYmd(); return !!(c && c.round && c.from && c.to && t >= c.from && t <= c.to); }
+function _rvOpenNow() { var c = _rv.cfg, t = evTodayYmd(); return !!(c && c.round && c.from && c.to && t >= c.from && t <= c.to); } // 期間中か
+// v823: 見せる人（scope）：all＝みんな／dev＝開発メンバーだけ（オーナー＋バグ・要望・アイデアを見られる人）。お試しで先に開発メンバーに見せる
+function _rvDev() { return !!(_rv.cfg && _rv.cfg.scope === 'dev'); }
+function _rvInScope() { return !_rvDev() || _rvIsOwner() || (typeof _fb !== 'undefined' && _fb.ok === true); }
+function _rvActive() { return _rvOpenNow() && _rvInScope(); } // 自分が答えられる（期間中・見せる人に入っている）
 function _rvMD(d) { var p = String(d || '').split('-'); return p.length === 3 ? parseInt(p[1], 10) + '/' + parseInt(p[2], 10) : ''; }
 function _rvFeat(k) { for (var i = 0; i < RV_FEATS.length; i++) if (RV_FEATS[i][0] === k) return RV_FEATS[i]; return null; }
 function _rvDraftKey() { return 'gm_rvDraft_' + ((_rv.cfg && _rv.cfg.round) || '') + '_' + ((currentUser && currentUser.uid) || ''); }
@@ -4334,6 +4338,9 @@ function rvInit() {
   if (!currentUser || !db) return Promise.resolve();
   return _rvLoadCfg().then(function(c) {
     _rv.cfg = c || null; _rv.loaded = true;
+    if (_rvOpenNow() && _rvDev() && !_rvIsOwner() && typeof _fb !== 'undefined' && _fb.ok === null && typeof fbCheckAccess === 'function') return fbCheckAccess().catch(function() {}); // 開発メンバーか確かめてから
+  }).then(function() {
+    var c = _rv.cfg;
     if (!_rvActive()) { _rv.mine = null; return null; }
     return _rvLoadMine(c.round).then(function(m) { _rv.mine = m; });
   }).then(function() {
@@ -4407,7 +4414,7 @@ function _rvRender() {
   var box = document.getElementById('rvOvM'); if (!box) return;
   var A = _rv.a, s = _rv.step, h = '';
   var top = '<div class="fb-top"><span class="t">' + evEsc((_rv.cfg && _rv.cfg.title) || '使い勝手レビュー') + '</span><span class="sp"></span><span class="fb-ic" onclick="_p2SheetClose(\'rvOv\')">✕</span></div>';
-  h += '<div class="fb-body"><div class="rv-st">' + (s + 1) + ' / 3　' + ['全体', '使っている機能', 'ひとこと'][s] + '・' + evEsc(_fbMyName()) + 'さんの名前で送ります' + (_rv.mine ? '（回答ずみ・直して送り直せます）' : '') + '</div>';
+  h += '<div class="fb-body"><div class="rv-st">' + (s + 1) + ' / 3　' + ['全体', '使っている機能', 'ひとこと'][s] + '・' + evEsc(_fbMyName()) +  'さんの名前で送ります' + (_rvDev() ? '（いまは開発メンバーだけに表示中）' : '') + (_rv.mine ? '（回答ずみ・直して送り直せます）' : '') + '</div>';
   if (s === 0) {
     h += '<div class="rv-q">NAVIGATOR全体の満足度</div>' + _rvStarsHtml(A.all || 0, 'rvSet(\'all\',#)');
     h += '<div class="rv-q">人にすすめたいと思いますか<small>0＝思わない・10＝とても思う</small></div><div class="rv-nps">';
@@ -4501,7 +4508,10 @@ function _rvStats(list) {
 }
 function _rvBar(lb, v, max, tail) { return '<div class="rv-bar"><span class="l">' + evEsc(lb) + '</span><span class="b"><i style="width:' + (max ? Math.round(v / max * 100) : 0) + '%"></i></span><span class="n">' + (tail != null ? tail : v) + '</span></div>'; }
 function _rvWho(x) { return evEsc([x.name, x.union, x.device, x.ver].filter(Boolean).join('・')); }
-function _rvTargets() { return (_rv.users || []).filter(function(u) { return u && u.status === 'active' && (!_rv.un || u.union === _rv.un); }); }
+function _rvTargets() {
+  var dev = _rvDev() && _rv.round === ((_rv.cfg && _rv.cfg.round) || ''), mem = (typeof _fb !== 'undefined' && _fb.cfg && _fb.cfg.members) || [];
+  return (_rv.users || []).filter(function(u) { return u && u.status === 'active' && (!_rv.un || u.union === _rv.un) && (!dev || isOwnerUid(u.id) || mem.indexOf(u.id) >= 0); }); // v823: 開発メンバーだけの時は開発メンバーが対象
+}
 function _rvResRender() {
   var box = document.getElementById('rvResOvM'); if (!box) return;
   var c = _rv.cfg || {}, R = _rvRoundInfo(_rv.round), own = _rvIsOwner();
@@ -4512,7 +4522,7 @@ function _rvResRender() {
   var h = '<div class="fb-top"><span class="t">レビューの結果</span><span class="sp"></span>' + (own ? '<span class="fb-ic" onclick="rvCfgOpen()" title="期間・見られる人">⚙</span>' : '') + '<span class="fb-ic" onclick="_p2SheetClose(\'rvResOv\')">✕</span></div><div class="fb-body">';
   if (!_rv.round) return void (box.innerHTML = h + '<div class="fb-empty">まだレビューを始めていません' + (own ? '<br>右上の ⚙ から期間を決めて始めます' : '') + '</div></div>');
   var rounds = [{ id: c.round, title: c.title }].concat((c.rounds || []).filter(function(x) { return x.id !== c.round; }));
-  h += '<div class="rv-st">' + evEsc(R.title || '使い勝手レビュー') + '・' + _rvMD(R.from) + '〜' + _rvMD(R.to) + (R.id === c.round && _rvActive() ? '（受付中）' : '') + '</div>';
+  h += '<div class="rv-st">' + evEsc(R.title || '使い勝手レビュー') + '・' + _rvMD(R.from) + '〜' + _rvMD(R.to) + (R.id === c.round && _rvOpenNow() ? '（受付中' + (_rvDev() ? '・開発メンバーだけに表示中' : '') + '）' : '') + '</div>';
   if (rounds.length > 1) h += '<div class="fb-chips">' + rounds.map(function(x) { return '<span class="' + (x.id === _rv.round ? 'on' : '') + '" onclick="rvResOpen(\'' + x.id + '\')">' + evEsc(x.title || x.id) + '</span>'; }).join('') + '</div>';
   var uk = Object.keys(unions).sort();
   if (uk.length > 1) h += '<div class="fb-chips"><span class="' + (!_rv.un ? 'on' : '') + '" onclick="rvUn(\'\')">全ユニオン</span>' + uk.map(function(u) { return '<span class="' + (_rv.un === u ? 'on' : '') + '" onclick="rvUn(\'' + evEsc(u).replace(/'/g, '') + '\')">' + evEsc(u) + '</span>'; }).join('') + '</div>';
@@ -4610,11 +4620,15 @@ function rvCfgOpen() {
     + '<div class="fb-lb">タイトル</div><input class="fi" id="rvCT" value="' + evEsc(c.title || 'NAVIGATORの使い勝手レビュー') + '">'
     + '<div class="fb-lb">期間<small>この間だけHOMEにお願いが出て、答えられます</small></div><div class="fb-row"><input class="fi" type="date" id="rvCF" value="' + evEsc(c.from || evTodayYmd()) + '"><span>〜</span><input class="fi" type="date" id="rvCTo" value="' + evEsc(c.to || '') + '"></div>'
     + '<div class="fb-who" style="margin-top:8px">' + (c.round ? 'いまの回：' + evEsc(c.title || c.round) + '（' + _rvMD(c.from) + '〜' + _rvMD(c.to) + '）。期間だけ変えると同じ回のまま延長・短縮できます' : 'まだ始めていません') + '</div>'
+    + '<div class="fb-lb">見せる人<small>まず開発メンバーだけで試して、よければ「みんな」に</small></div><div class="fb-seg" id="rvCS"><span class="' + (c.scope !== 'dev' ? 'on' : '') + '" onclick="rvCfgScope(\'all\')">みんな</span><span class="' + (c.scope === 'dev' ? 'on' : '') + '" onclick="rvCfgScope(\'dev\')">開発メンバーだけ</span></div>'
+    + '<div class="fb-who" style="margin-top:6px">開発メンバー＝オーナーと「バグ・要望・アイデア」を見られる人' + (typeof _fb !== 'undefined' && _fb.cfg && _fb.cfg.members ? '（' + (_fb.cfg.members.length + 2) + '人）' : '') + '。「みんな」にする時は「新しい回として始める」にすると、お試しの回答と分けて集計できます</div>'
     + '<div class="fb-lb">結果を見られる人<small>オーナーは常に見られます</small></div><div id="rvCV" class="fb-who">' + ((c.viewers || []).map(function(u) { return evEsc((c.names || {})[u] || u); }).join('、') || 'まだいません') + '</div><div style="margin-top:8px"><span class="fb-btn" onclick="rvViewersOpen()">見られる人を選ぶ</span></div>'
     + '</div><div class="fb-foot">' + (c.round ? '<span class="fb-btn" onclick="rvCfgSave(1)">新しい回として始める</span>' : '') + '<span class="fb-btn pri" onclick="rvCfgSave(0)">' + (c.round ? '保存' : 'この期間で始める') + '</span></div>';
 }
+function rvCfgScope(v) { var b = document.getElementById('rvCS'); if (!b) return; b.setAttribute('data-v', v); Array.prototype.forEach.call(b.children, function(x, i) { x.classList.toggle('on', (i === 1) === (v === 'dev')); }); }
 function rvCfgSave(newRound) {
   var c = JSON.parse(JSON.stringify(_rv.cfg || {}));
+  var cs = document.getElementById('rvCS'), sv = cs && cs.getAttribute('data-v'); if (sv) c.scope = sv; else if (!c.scope) c.scope = 'all'; // v823
   var t = (document.getElementById('rvCT') || {}).value || '', f = (document.getElementById('rvCF') || {}).value || '', to = (document.getElementById('rvCTo') || {}).value || '';
   if (!f || !to || to < f) { toast('期間（はじめ〜おわり）を入れてください'); return; }
   if (newRound && !confirm('新しい回として始めますか？（今までの回の結果は残り、結果の画面で切りかえて見られます）')) return;
@@ -6111,6 +6125,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v823', d:'2026-10-19', items:['使い勝手レビューに「見せる人」の設定：みんな／開発メンバーだけ（まず開発メンバーだけで試せます）'] },
   { v:'v822', d:'2026-10-19', items:['バグ・要望・アイデアで、間違えて登録した報告を消せるように（書いた本人は「新着」の間・管理者はいつでも）'] },
   { v:'v821', d:'2026-10-19', items:['ホーム画面のアプリを開いた直後に、カレンダーが画面の下にはみ出すことがある問題をもう一度直しました（はじめて開いた時・iPhone 17 Proなど）（#16）'] },
   { v:'v820', d:'2026-10-19', items:['Googleカレンダー連携をなくしました（連携の設定・同期・「Googleカレンダーに追加」）。Googleカレンダーの「MAP予定」に作られた予定はGoogle側にそのまま残ります'] },
