@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v819';
+var APP_JS_VERSION = 'v820';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v819';
+  var DATA_VERSION = 'v820';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6092,6 +6092,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v820', d:'2026-10-19', items:['Googleカレンダー連携をなくしました（連携の設定・同期・「Googleカレンダーに追加」）。Googleカレンダーの「MAP予定」に作られた予定はGoogle側にそのまま残ります'] },
   { v:'v819', d:'2026-10-19', items:['使い勝手レビューの「使っている機能」を、まず大きいメニュー（PLAN・MAP・予定・ToDo・データ・その他）から選び、選んだものだけ詳細を選ぶ形に（詳細も少なく）'] },
   { v:'v818', d:'2026-10-19', items:['PCでも使い勝手レビューを開けるように：左のメニューの「レビュー」（期間中）と、設定（右上の名前）の画面の「答える」「レビューの結果」から'] },
   { v:'v817', d:'2026-10-19', items:['「バグ・要望」を「バグ・要望・アイデア」に：種類にアイデア、状態に検討中・確認待ち、いつまでに（今週中・今月中・来月・いつか／日付）と「期限で見る」、対象（NAVIGATOR・受付システム）・依頼した人・Slackのリンク','管理者は馬越さんも。直した版が出たものは自動で「確認待ち」に。Slackに返す文と進捗まとめをコピーできます'] },
@@ -15632,7 +15633,6 @@ function meToggleTask(id, mid) {
   try { if (e.olGid) _olFromEvent(e); } catch (eSy) {} // v567: OLの予定は記録にも
   saveEventDoc(e);
   try { _evOlPrompt(e); } catch (eOp) {} // v567: 活動タブから完了した時も「OLとして記録」を聞く
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   if (e.done && typeof gameCheck === 'function') gameCheck();
   if (typeof toast === 'function' && !_rw) toast(e.done ? '✅ タスク完了' : '⬜ 未完了に戻しました');
@@ -20009,7 +20009,7 @@ function _cvDayHtml(ds) {
 
 // ════ v614: 予定の入力＝1枚（足す・直す 共通）。上から よく使う順：名前 → 日付（1行） → 時刻 → だれと（リスト） → 出すカレンダー → 色・通知・場所メモ・繰り返し（その場で開く）
 //  足す：右下「✓ 保存」／直す（予定をタップ）：変えたらその場で保存・右下「⧉ 別の日にも入れる」
-//  保存は今までの入力画面（eventModal）を見えないまま使う＝通知・Google連携・OL連動・繰り返し・ユニオン予定は今までどおり
+//  保存は今までの入力画面（eventModal）を見えないまま使う＝通知・OL連動・繰り返し・ユニオン予定は今までどおり
 //  時刻は今までと同じ「開始〜終了」の欄＋数字パッド。色はカテゴリの選択画面（名前・色の編集もそこで）
 var _ef = null;
 var EV_RMD = [['', 'なし'], ['0', 'ちょうど'], ['10', '10分前'], ['30', '30分前'], ['60', '1時間前'], ['1440', '前日']];
@@ -20661,7 +20661,6 @@ function dpAdd(title, mid) {
   var e = _tdMakeTask(t, _dpDay || evTodayYmd(), '');
   if (mid) { e.memberIds = [mid]; e.memberId = mid; e.vis = 'both'; e.selfShow = true; }
   state.events.push(e); saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function() {});
   var n = _dpTasks(_dpDay).length;
   if (inp && title == null) inp.value = '';
   updateEventsBadge();
@@ -20682,7 +20681,6 @@ function dpPrio(id) {
 }
 function _dpMoveOne(e, d) {
   e.date = d; e.updatedAt = new Date().toISOString(); saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function() {});
 }
 function dpMove(id, d) { var e = findEvent(id); if (!e || !d) return; _dpMoveOne(e, d); updateEventsBadge(); _dpRender(); toast('↪ 「' + (e.title || '') + '」を ' + _evDayLbl(d) + ' へ'); }
 function dpMoveAll(kind, d) {
@@ -21158,7 +21156,7 @@ function _stRender() {
       + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
       + _stLi('🎨', '見た目', light ? 'ライト' : 'ダーク', "setOpen('look')")
       + _stLi(icn('bell'), '通知', pushOn ? 'オン' : 'オフ', "setOpen('ntf')") + '</div>'
-      + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', (currentUser && currentUser.union ? 'ユニオン予定・' : '') + '週の始まり・スクロール・予定の帯・Google連携', 'openCalSettings()') + '</div>'
+      + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', (currentUser && currentUser.union ? 'ユニオン予定・' : '') + '週の始まり・スクロール・予定の帯', 'openCalSettings()') + '</div>'
       + '<div class="st-gh">MAP・データ</div><div class="st-ls">' + (state.isEditor && !viewingOwnerUid ? _stLi('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
       + _stLi('📄', '変更履歴', '追加・削除・タイトル変更', 'showHistoryModal()')
       + (typeof openShareModal === 'function' && !viewingOwnerUid ? _stLi(icn('link'), 'MAPの共有', '見せる・一緒に編集', 'openShareModal()') : '')
@@ -28098,8 +28096,6 @@ function loadEvents(uid) {
     startReminderLoop();
     checkReminders();
     try { _digestSync(); } catch(eDg) {} // v410: 起動時に定時リマインダーを予約
-    // 起動時：Google連携済みなら未同期の予定・タスクを自動再送
-    if (state.gcalConnected && !viewingOwnerUid) setTimeout(function(){ try { gcalSyncPending(); } catch(e){} }, 1500);
     try { if (typeof _unionApplyToState === 'function') _unionApplyToState(); } catch(eUn) {} // v423: 月切替などの再読込後もユニオン予定を維持
     return state.events;
   }).catch(function() { state.events = []; state.categories = []; updateEventsBadge(); });
@@ -30276,7 +30272,6 @@ function tdHomeSubmit() {
   if (F.type === 'label') e.labelId = F.id;
   state.events.push(e);
   saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   renderEvents();
   var inp2 = document.getElementById('tdHomeNew');
@@ -30436,7 +30431,6 @@ function tqSave() {
   if (e.listId) try { localStorage.setItem('gm_lastListId', e.listId); } catch(eLS) {} // v344: 直近リストを記憶
   state.events.push(e);
   saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   renderEvents();
   closeTaskQuickSheet(); // v358: 追加したら自動で閉じる（✕を押す手間を廃止）
@@ -30620,354 +30614,7 @@ setTimeout(function(){
   } catch(e) {}
 }, 7000);
 
-// ============================================================
-//  Googleカレンダー連携（一方向 GROOVE→Google / クライアントのみ / 専用カレンダー「MAP予定」）
-// ============================================================
-var GCAL_CLIENT_ID = '565556414915-32tucter48uo9fueui3kiub0mc1j1h1p.apps.googleusercontent.com';
-var GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks';
-var GCAL_CAL_NAME = 'MAP予定';
-var GTASKS_BASE = 'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks';
-// Googleカレンダーのイベント色（固定11色）。カテゴリ色から最も近い色を選ぶ
-var GCAL_EVENT_COLORS = { 1:'#7986cb', 2:'#33b679', 3:'#8e24aa', 4:'#e67c73', 5:'#f6c026', 6:'#f5511d', 7:'#039be5', 8:'#616161', 9:'#3f51b5', 10:'#0b8043', 11:'#d60000' };
-function gcalNearestColorId(hex) {
-  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return '';
-  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  var best = '', bd = Infinity;
-  for (var id in GCAL_EVENT_COLORS) {
-    var c = GCAL_EVENT_COLORS[id];
-    var dr = r - parseInt(c.slice(1,3),16), dg = g - parseInt(c.slice(3,5),16), db = b - parseInt(c.slice(5,7),16);
-    var d = dr*dr + dg*dg + db*db;
-    if (d < bd) { bd = d; best = id; }
-  }
-  return best;
-}
-var _gcalToken = '', _gcalTokenExp = 0, _gcalTokenClient = null, _gcalResolve = null, _gcalReject = null;
-
-function gcalSupported() { return typeof google !== 'undefined' && google.accounts && google.accounts.oauth2; }
-function _gcalPad(n) { return (n < 10 ? '0' : '') + n; }
-
-function _gcalEnsureClient() {
-  if (_gcalTokenClient) return _gcalTokenClient;
-  if (!gcalSupported()) return null;
-  _gcalTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GCAL_CLIENT_ID,
-    scope: GCAL_SCOPE,
-    callback: function(resp) {
-      if (resp && resp.access_token) {
-        _gcalToken = resp.access_token;
-        _gcalTokenExp = Date.now() + ((parseInt(resp.expires_in, 10) || 3600) - 60) * 1000;
-        if (_gcalResolve) _gcalResolve(_gcalToken);
-        setTimeout(function(){ try { gcalSyncPending(); } catch(e){} }, 800); // 同意直後に未同期分を再送
-      } else if (_gcalReject) { _gcalReject(new Error('トークン取得失敗')); }
-      _gcalResolve = _gcalReject = null;
-    },
-    error_callback: function(err) { if (_gcalReject) _gcalReject(err || new Error('認証エラー')); _gcalResolve = _gcalReject = null; }
-  });
-  return _gcalTokenClient;
-}
-var _gcalLastPrompt = 0;
-function gcalGetToken(interactive) {
-  return new Promise(function(resolve, reject) {
-    if (_gcalToken && Date.now() < _gcalTokenExp) { resolve(_gcalToken); return; }
-    var c = _gcalEnsureClient();
-    if (!c) { reject(new Error('Googleが読み込めていません')); return; }
-    // ポップアップ連発防止：直近15秒以内に開いていたら追加で開かない
-    if (Date.now() - _gcalLastPrompt < 15000) { reject(new Error('認証待ち')); return; }
-    _gcalLastPrompt = Date.now();
-    _gcalResolve = resolve; _gcalReject = reject;
-    try { c.requestAccessToken({ prompt: interactive ? 'consent' : '' }); }
-    catch (e) { _gcalResolve = _gcalReject = null; reject(e); }
-  });
-}
-function _gcalRes(r) {
-  if (!r.ok) return r.text().then(function(t) { throw new Error(r.status + ' ' + t); });
-  return r.status === 204 ? {} : r.json();
-}
-function gcalApi(method, url, body) {
-  return gcalGetToken(false).then(function(token) {
-    var opt = { method: method, headers: { 'Authorization': 'Bearer ' + token } };
-    if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
-    return fetch(url, opt).then(function(r) {
-      if (r.status === 401) { // トークン失効 → 取り直して1回リトライ
-        _gcalToken = '';
-        return gcalGetToken(true).then(function(t2) {
-          opt.headers['Authorization'] = 'Bearer ' + t2;
-          return fetch(url, opt).then(_gcalRes);
-        });
-      }
-      return _gcalRes(r);
-    });
-  });
-}
-
-// 専用カレンダー「MAP予定」を取得 or 作成
-function gcalEnsureCalendar() {
-  if (state.gcalCalendarId) return Promise.resolve(state.gcalCalendarId);
-  return gcalApi('GET', 'https://www.googleapis.com/calendar/v3/users/me/calendarList').then(function(list) {
-    var found = '';
-    (list.items || []).forEach(function(c) { if (c.summary === GCAL_CAL_NAME) found = c.id; });
-    if (found) return found;
-    return gcalApi('POST', 'https://www.googleapis.com/calendar/v3/calendars', { summary: GCAL_CAL_NAME, timeZone: 'Asia/Tokyo' })
-      .then(function(c) { return c.id; });
-  });
-}
-
-// GROOVEイベント → Google予定 body
-function gcalEventBody(e) {
-  var cat = e.categoryId ? findCategory(e.categoryId) : null;
-  var m = e.memberId ? findMemberAny(e.memberId) : null;
-  var desc = [];
-  if (e.memo) desc.push(e.memo);
-  if (m) desc.push('メンバー: ' + ((m.lastName || '') + (m.firstName || '')).replace(/^\s+|\s+$/g, ''));
-  if (cat) desc.push('カテゴリ: ' + cat.name);
-  desc.push('（NAVIGATORより自動連携）');
-  var body = {
-    summary: (e.type === 'task' && e.done ? '✓ ' : '') + (e.title || '(無題)'),
-    description: desc.join('\n')
-  };
-  if (e.time) {
-    var st = e.date + 'T' + e.time + ':00';
-    var ed = new Date(e.date + 'T' + e.time + ':00'); ed.setHours(ed.getHours() + 1);
-    var endStr = ed.getFullYear() + '-' + _gcalPad(ed.getMonth() + 1) + '-' + _gcalPad(ed.getDate())
-      + 'T' + _gcalPad(ed.getHours()) + ':' + _gcalPad(ed.getMinutes()) + ':00';
-    body.start = { dateTime: st, timeZone: 'Asia/Tokyo' };
-    body.end = { dateTime: endStr, timeZone: 'Asia/Tokyo' };
-  } else {
-    body.start = { date: e.date };
-    var d = new Date(e.date + 'T00:00:00'); d.setDate(d.getDate() + 1);
-    body.end = { date: d.getFullYear() + '-' + _gcalPad(d.getMonth() + 1) + '-' + _gcalPad(d.getDate()) };
-  }
-  if (e.remindBefore !== '' && e.remindBefore != null) {
-    body.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: parseInt(e.remindBefore, 10) || 0 }] };
-  }
-  // カテゴリ色 → Googleの近似イベント色を引き継ぐ
-  if (cat && cat.color) { var cid = gcalNearestColorId(cat.color); if (cid) body.colorId = cid; }
-  return body;
-}
-
-// ── Google ToDo（Tasks API）：タスクはカレンダーではなくToDoへ ──
-function gtasksApi(method, url, body) {
-  return gcalApi(method, url, body).catch(function(err) {
-    // 旧トークンにtasksスコープが無い場合 → 再同意して1回リトライ
-    if (String(err.message).indexOf('403') >= 0 && /insufficient|PERMISSION/i.test(String(err.message))) {
-      _gcalToken = '';
-      return gcalGetToken(true).then(function() { return gcalApi(method, url, body); });
-    }
-    throw err;
-  });
-}
-function gtaskBody(e) {
-  var m = e.memberId ? findMemberAny(e.memberId) : null;
-  var cat = e.categoryId ? findCategory(e.categoryId) : null;
-  var notes = [];
-  if (e.memo) notes.push(e.memo);
-  if (m) notes.push('メンバー: ' + ((m.lastName || '') + (m.firstName || '')).replace(/^\s+|\s+$/g, ''));
-  if (cat) notes.push('カテゴリ: ' + cat.name);
-  notes.push('（NAVIGATORより自動連携）');
-  var body = {
-    title: e.title || '(無題)',
-    notes: notes.join('\n'),
-    status: e.done ? 'completed' : 'needsAction'
-  };
-  if (e.date) body.due = e.date + 'T00:00:00.000Z'; // Google ToDoは日付のみ（時刻不可）
-  if (!e.done) body.completed = null; // 未完了へ戻す時はcompletedをクリア
-  return body;
-}
-function gtaskUpsert(e) {
-  var body = gtaskBody(e);
-  var p = e.gtaskId
-    ? gtasksApi('PATCH', GTASKS_BASE + '/' + encodeURIComponent(e.gtaskId), body)
-    : gtasksApi('POST', GTASKS_BASE, body);
-  return p.then(function(res) {
-    if (res && res.id && res.id !== e.gtaskId) { e.gtaskId = res.id; saveEventDoc(e); }
-    return res;
-  }).catch(function(err) {
-    if (e.gtaskId && String(err.message).indexOf('404') >= 0) { // Google側で消えていた → 作り直し
-      e.gtaskId = '';
-      return gtasksApi('POST', GTASKS_BASE, gtaskBody(e)).then(function(r) { if (r && r.id) { e.gtaskId = r.id; saveEventDoc(e); } });
-    }
-    // 原因が分かるようにエラーを表示（セッション中1回だけ）
-    if (!window._gtaskErrShown) {
-      window._gtaskErrShown = true;
-      var msg = String(err && err.message || err);
-      if (/has not been used|is disabled|accessNotConfigured|SERVICE_DISABLED/i.test(msg)) {
-        toast('Google Tasks APIが未有効です（Cloud ConsoleでTasks APIを有効化してください）');
-      } else {
-        toast('ToDo同期エラー: ' + msg.substring(0, 80));
-      }
-    }
-    throw err;
-  });
-}
-function gtaskDeleteRemote(e) {
-  if (!e || !e.gtaskId) return Promise.resolve();
-  return gtasksApi('DELETE', GTASKS_BASE + '/' + encodeURIComponent(e.gtaskId)).catch(function() {});
-}
-
-// 1件アップサート（保存・完了トグル時）。タスク→Google ToDo / 予定→カレンダー
-function gcalUpsertEvent(e) {
-  if (!state.gcalConnected || !state.gcalCalendarId) return Promise.resolve();
-  if (!e.date) return Promise.resolve(); // 日付なしは連携対象外
-  if (e._union || /^UN_/.test(e.id || '')) return Promise.resolve(); // v392: ユニオン予定は各自のGoogleへは送らない（重複防止）
-  if (e.type === 'task') {
-    // 以前カレンダー予定として同期済みなら、その予定を削除してToDoへ移行
-    var mig = Promise.resolve();
-    if (e.gcalEventId) {
-      var _oldId = e.gcalEventId;
-      var _cal = encodeURIComponent(state.gcalCalendarId);
-      mig = gcalApi('DELETE', 'https://www.googleapis.com/calendar/v3/calendars/' + _cal + '/events/' + encodeURIComponent(_oldId)).catch(function(){});
-      e.gcalEventId = '';
-    }
-    return mig.then(function(){ return gtaskUpsert(e); });
-  }
-  var cal = encodeURIComponent(state.gcalCalendarId);
-  var base = 'https://www.googleapis.com/calendar/v3/calendars/' + cal + '/events';
-  var body = gcalEventBody(e);
-  var p = e.gcalEventId
-    ? gcalApi('PUT', base + '/' + encodeURIComponent(e.gcalEventId), body)
-    : gcalApi('POST', base, body);
-  return p.then(function(res) {
-    if (res && res.id && res.id !== e.gcalEventId) { e.gcalEventId = res.id; saveEventDoc(e); }
-    return res;
-  }).catch(function(err) {
-    if (e.gcalEventId && String(err.message).indexOf('404') >= 0) { // Google側で消えてた → 作り直し
-      e.gcalEventId = '';
-      return gcalApi('POST', base, gcalEventBody(e)).then(function(r) { if (r && r.id) { e.gcalEventId = r.id; saveEventDoc(e); } });
-    }
-    throw err;
-  });
-}
-function gcalDeleteRemote(e) {
-  if (!state.gcalConnected || !e) return Promise.resolve();
-  var ps = [];
-  if (e.gtaskId) ps.push(gtaskDeleteRemote(e));
-  if (state.gcalCalendarId && e.gcalEventId) {
-    var cal = encodeURIComponent(state.gcalCalendarId);
-    ps.push(gcalApi('DELETE', 'https://www.googleapis.com/calendar/v3/calendars/' + cal + '/events/' + encodeURIComponent(e.gcalEventId)).catch(function() {}));
-  }
-  return Promise.all(ps);
-}
-// 既存をまとめて同期（順次）
-function gcalSyncAll() {
-  if (!state.gcalConnected) { gcalBtnClick(); return; }
-  var evs = (state.events || []).filter(function(e) { return e.date; });
-  if (!evs.length) { toast('同期する予定がありません'); return; }
-  toast('Googleカレンダーへ同期中... (' + evs.length + '件)');
-  var i = 0;
-  (function next() {
-    if (i >= evs.length) {
-      toast('同期しました ✓ (' + evs.length + '件)');
-      try { localStorage.setItem('gm_gcalLastSync', new Date().toISOString()); } catch(e) {}
-      updateGcalBtn();
-      return;
-    }
-    gcalUpsertEvent(evs[i]).then(function() { i++; next(); }, function() { i++; next(); });
-  })();
-}
-
-// 未同期の予定・タスクだけを自動で再送（モバイルでは同意画面から戻るとアプリが
-// 再読み込みされ送信待ちが消えるため、起動時・トークン取得後に拾い直す）
-var _gcalPendingBusy = false, _gcalHintShown = false;
-function gcalSyncPending() {
-  if (_gcalPendingBusy || !state.gcalConnected || viewingOwnerUid || _aggActive) return;
-  var evs = (state.events || []).filter(function(e) {
-    if (!e.date || e.deleted) return false;
-    return (e.type === 'task') ? !e.gtaskId : !e.gcalEventId;
-  });
-  if (!evs.length) return;
-  // 有効なトークンが無い時は絶対にポップアップを開かない（無限ループ防止）。案内だけ1回出す
-  if (!(_gcalToken && Date.now() < _gcalTokenExp)) {
-    if (!_gcalHintShown) { _gcalHintShown = true; toast('Google未同期が' + evs.length + '件。予定タブの「Google同期」で送信できます'); }
-    return;
-  }
-  _gcalPendingBusy = true;
-  var i = 0, ok = 0;
-  (function next() {
-    if (i >= evs.length) {
-      _gcalPendingBusy = false;
-      if (ok > 0) toast('Google未同期 ' + ok + '件を同期しました ✓');
-      return;
-    }
-    gcalUpsertEvent(evs[i]).then(function(){ ok++; i++; next(); }, function(){ i++; next(); });
-  })();
-}
-function gcalBtnClick() {
-  if (state.gcalConnected) {
-    if (confirm('既存の予定・タスクをGoogleカレンダー「MAP予定」へまとめて同期しますか？')) gcalSyncAll();
-    return;
-  }
-  gcalConnect();
-}
-function gcalConnect() {
-  if (!eventsUid()) { toast('ログインが必要です'); return; }
-  if (!gcalSupported()) { toast('Googleの読み込み中です。少し待って再度お試しください'); return; }
-  toast('Googleと連携中...');
-  gcalGetToken(true).then(function() {
-    return gcalEnsureCalendar();
-  }).then(function(calId) {
-    state.gcalCalendarId = calId;
-    state.gcalConnected = true;
-    if (currentUser) { currentUser.gcalCalendarId = calId; currentUser.gcalConnected = true; }
-    fsSet('users/' + eventsUid(), { gcalCalendarId: calId, gcalConnected: true });
-    updateGcalBtn();
-    toast('Googleカレンダーと連携しました ✓');
-    if (confirm('既存の予定・タスクを「MAP予定」へまとめて同期しますか？')) gcalSyncAll();
-  }).catch(function(err) {
-    toast('連携に失敗しました: ' + (err && err.message ? err.message : err));
-  });
-}
-function updateGcalBtn() {
-  var b = document.getElementById('evGcalBtn');
-  if (!b) return;
-  if (state.gcalConnected) {
-    b.classList.add('on');
-    // 最終同期時刻を表示（「本当に同期されたのか」への不安を解消）
-    var lbl = 'Google同期';
-    try {
-      var ls = localStorage.getItem('gm_gcalLastSync');
-      if (ls) { var d = new Date(ls); lbl += '（' + (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + '）'; }
-    } catch(e) {}
-    b.textContent = lbl;
-  }
-  else { b.classList.remove('on'); b.textContent = 'Googleカレンダー連携'; }
-}
-
-// ── テンプレートリンク方式（連携不要：Googleカレンダーの予定作成画面を内容入りで開く） ──
-function gcalTemplateUrl(e) {
-  if (!e.date) return '';
-  var pad = function(n){ return (n < 10 ? '0' : '') + n; };
-  var y = parseInt(e.date.slice(0,4),10), mo = parseInt(e.date.slice(5,7),10), da = parseInt(e.date.slice(8,10),10);
-  var datesParam;
-  if (e.time) {
-    var tp = e.time.split(':');
-    var sd = new Date(y, mo-1, da, parseInt(tp[0],10)||0, parseInt(tp[1],10)||0);
-    var ed = new Date(sd.getTime() + 60*60000); // +1時間
-    var fmt = function(d){ return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00'; };
-    datesParam = fmt(sd) + '/' + fmt(ed);
-  } else {
-    var nd = new Date(y, mo-1, da+1); // 終日は翌日をendに（exclusive）
-    datesParam = (y+pad(mo)+pad(da)) + '/' + (nd.getFullYear()+pad(nd.getMonth()+1)+pad(nd.getDate()));
-  }
-  var cat = e.categoryId ? findCategory(e.categoryId) : null;
-  var m = e.memberId ? findMemberAny(e.memberId) : null;
-  var details = [];
-  if (e.memo) details.push(e.memo);
-  if (m) details.push('メンバー: ' + ((m.lastName||'') + (m.firstName||'')).replace(/^\s+|\s+$/g,''));
-  if (cat) details.push('カテゴリ: ' + cat.name);
-  var url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
-    + '&text=' + encodeURIComponent((e.type === 'task' && e.done ? '✓ ' : '') + (e.title || '(無題)'))
-    + '&dates=' + datesParam
-    + '&ctz=Asia/Tokyo';
-  if (details.length) url += '&details=' + encodeURIComponent(details.join('\n'));
-  return url;
-}
-function gcalOpenTemplate(id) {
-  var e = findEvent(id);
-  if (!e) return;
-  if (!e.date) { toast('日付のある予定だけカレンダーに追加できます'); return; }
-  var url = gcalTemplateUrl(e);
-  if (url) window.open(url, '_blank');
-}
+// v820: Googleカレンダー連携はなくした（GROOVE→Googleの同期・「Googleカレンダーに追加」・連携の設定）
 
 // ── アプリ内アラート ──
 // ============================================================
@@ -31594,13 +31241,6 @@ function openCalSettings() {
       + '<div class="rb' + (!pushOn ? ' sel' : '') + '" onclick="pushSetEnabled(false)">' + icn('belloff') + ' オフ</div>'
       + '</div>';
   }
-  // v306: Google連携は「同期」と「解除」を分離（オフにできるように）
-  var gcalRow = state.gcalConnected
-    ? '<div style="display:flex;gap:8px">'
-      + '<button class="fol-add" style="margin-top:0;flex:1" onclick="closeCalSettings();if(confirm(\'既存の予定・タスクを「MAP予定」へまとめて同期しますか？\'))gcalSyncAll()">今すぐ同期</button>'
-      + '<button class="fol-add" style="margin-top:0;flex:1;color:var(--red);border-color:var(--red)" onclick="gcalDisconnectAsk()">✂️ 連携を解除</button>'
-      + '</div>'
-    : '<button class="fol-add" style="margin-top:0" onclick="closeCalSettings();gcalConnect()">' + icn('link') + ' Googleカレンダーと連携する</button>';
   ov.innerHTML = '<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('gear') + ' カレンダー設定</div></div>'
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
@@ -31656,9 +31296,6 @@ function openCalSettings() {
             return '<div class="rb' + (_dgTimes.indexOf(tt) >= 0 ? ' sel' : '') + '" style="flex:none;padding:7px 12px" onclick="toggleDigestTime(\'' + tt + '\')">' + tt + '</div>';
           }).join('')
         + '</div><div style="font-size:11px;color:var(--text-dim);margin-top:6px">未完了が0件の時は通知しません。iPhoneは「ホーム画面に追加」したアプリで通知オンが必要です</div>') : '')
-    + '</div>'
-    + '<div class="fr" style="margin-top:4px"><label class="fl">Googleカレンダー同期</label>'
-    + gcalRow
     + '</div>'
     + (function(){
         // v326: 画面高さの診断表示（下部空白バグの原因特定用）
@@ -31722,22 +31359,6 @@ function pushSetEnabled(on) {
     toast('この端末への通知をオフにしました');
     openCalSettings();
   }
-}
-// v306: Google連携の解除（Google側に作成済みの予定はそのまま残す）
-function gcalDisconnectAsk() {
-  if (!confirm('Googleカレンダー連携を解除しますか？\n（「MAP予定」に作成済みの予定はGoogle側にそのまま残ります）')) return;
-  closeCalSettings();
-  gcalDisconnect();
-}
-function gcalDisconnect() {
-  state.gcalConnected = false;
-  state.gcalCalendarId = '';
-  if (currentUser) currentUser.gcalConnected = false;
-  var uid = eventsUid();
-  if (uid && db) fsSet('users/' + uid, { gcalConnected: false }).catch(function(){});
-  _gcalToken = ''; _gcalTokenExp = 0;
-  if (typeof updateGcalBtn === 'function') updateGcalBtn();
-  toast('✂️ Googleカレンダー連携を解除しました');
 }
 
 // ── v308: 3D組織マップ（Three.js・初回オープン時に遅延読込） ──
@@ -32894,7 +32515,6 @@ function renderEvents() {
   updateEventsBadge();
   updateNotifBtn();
   updateInstallBtn();
-  updateGcalBtn();
   var addBtn = document.getElementById('evAddBtn');
   if (addBtn) addBtn.style.display = eventsUid() ? '' : 'none';
   var qa = document.getElementById('evQuickAdd');
@@ -33310,7 +32930,6 @@ function todoQuickAddSubmit() {
     updatedAt: new Date().toISOString() };
   state.events.push(e);
   saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   renderEvents();
   var inp2 = document.getElementById('tdQuickNew');
@@ -33401,7 +33020,6 @@ function evQuickCreate() {
     priority: 'normal', memo: '', updatedAt: new Date().toISOString() };
   state.events.push(e);
   saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   inp.value = '';
   _evQuickFilter = ''; // 検索絞り込みを解除して通常リストに戻す
   updateEventsBadge();
@@ -33527,7 +33145,6 @@ function evActMoveTo(id, addDays) {
   e.date = nd;
   e.updatedAt = new Date().toISOString();
   saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   if (navigator.vibrate) try { navigator.vibrate(10); } catch(ev8) {}
   updateEventsBadge();
   renderEvents();
@@ -33548,7 +33165,6 @@ function _evDeleteById(id) {
   if (!e) return;
   var bak = e;
   for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === id) { state.events.splice(i, 1); break; } }
-  if (state.gcalConnected) gcalDeleteRemote(e);
   // v371: 完全削除ではなくゴミ箱へ（30日保持。ToDoホーム→ゴミ箱から復元/完全削除できる）
   e.deleted = true;
   e.deletedAt = new Date().toISOString();
@@ -33633,7 +33249,6 @@ function evActDeleteSeries(id) {
   var _delAt = new Date().toISOString();
   list.forEach(function(x){
     for (var i = 0; i < state.events.length; i++) { if (state.events[i].id === x.id) { state.events.splice(i, 1); break; } }
-    if (state.gcalConnected) gcalDeleteRemote(x);
     // v371: 一括削除もゴミ箱へ（個別に復元できる）
     x.deleted = true; x.deletedAt = _delAt; x.updatedAt = _delAt;
     state.trashEvents = state.trashEvents || [];
@@ -35245,7 +34860,6 @@ function evTplQuickAdd(tplId, ds) {
   if (t.stage) e.templateStage = t.stage;
   state.events.push(e);
   saveEventDoc(e);
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   updateEventsBadge();
   renderEvents();
   renderCalDayList(); // 開いている日シートにも即反映
@@ -35255,7 +34869,6 @@ function evTplQuickAdd(tplId, ds) {
     var uid = eventsUid();
     if (uid && db) db.doc('maps/' + uid + '/events/' + e.id).delete().catch(function(){});
     _notifQueueDelete(e.id);
-    if (state.gcalConnected) gcalDeleteRemote(e);
     updateEventsBadge(); renderEvents(); renderCalDayList();
   }, 6000);
 }
@@ -35327,7 +34940,6 @@ function _evOlPrompt(e) {
   }
 }
 function _toggleEventDoneTail(e, id) {
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   if (navigator.vibrate) try { navigator.vibrate(10); } catch(ev4) {} // v303: 触覚フィードバック（Android）
   // v303: 完了時はふわっと消えるアニメーションを見せてから再描画
   var _fin = function(){ updateEventsBadge(); renderEvents(); if (e.done) gameCheck(); };
@@ -36763,14 +36375,7 @@ function openEventModal(id, presetMember, presetDate, forceType) {
   document.getElementById('evMemo').value  = e ? (e.memo || '') : '';
   var rb = e ? e.remindBefore : (effType === 'task' ? 0 : ''); // v344: 新規タスクは通知「時刻ちょうど」が既定
   document.getElementById('evRemind').value = (rb === undefined || rb === null) ? '' : String(rb);
-  // S2: 行から移設した「Googleカレンダーに追加」リンク（未連携＆日付ありの既存予定のみ）
-  var _gr = document.getElementById('evGcalRow');
-  if (_gr) {
-    if (id && e && e.date && !state.gcalConnected) {
-      _gr.style.display = '';
-      _gr.innerHTML = '<span onclick="gcalOpenTemplate(\'' + id + '\')" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-mid);font-size:13px;cursor:pointer;text-decoration:underline">' + icn('calendar') + ' Googleカレンダーに追加</span>';
-    } else { _gr.style.display = 'none'; _gr.innerHTML = ''; }
-  }
+  var _gr = document.getElementById('evGcalRow'); if (_gr) { _gr.style.display = 'none'; _gr.innerHTML = ''; } // v820: Googleカレンダーに追加はなくした
   _evCategoryId = e ? (e.categoryId || '') : '';
   // v496: カテゴリ未設定でも色だけ付いた予定（テンプレ即登録・ユニオン予定など）は色からカテゴリを復元（921-4）
   if (e && !_evCategoryId && e.color && state.categories) {
@@ -36985,7 +36590,6 @@ function _saveEventBody() {
     }, 5000);
     else if (!_qt9) toast('保存しました ✓');
   }).catch(function(){ toast('保存に失敗しました（通信状態を確認してください）'); });
-  if (state.gcalConnected) gcalUpsertEvent(e).catch(function(){});
   _evDraft = null; // 保存できたら下書きは不要
   closeEventModal(true);
   updateEventsBadge();
@@ -38350,10 +37954,7 @@ function loginSuccess(user) {
   ckAccessCheck(user, false); // v770: 受付の名簿を確認（無効ならゲート）
   accCheck(user, false); // v790: 公開範囲を確認（まだ使えない人はゲート）
   setTimeout(function() { try { if (_gdAuto()) return; } catch (eGd) {} try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容（v755: はじめての人は先に使い方の案内）
-  // Googleカレンダー連携状態をプロフィールから復元
-  state.gcalConnected = !!user.gcalConnected;
-  state.gcalCalendarId = user.gcalCalendarId || '';
-  updateGcalBtn();
+  state.gcalConnected = false; state.gcalCalendarId = ''; // v820: Googleカレンダー連携はなくした
   // ゲームデータ復元
   state.game = user.game || defaultGame();
   updateHomeBadge();
