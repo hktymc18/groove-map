@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v816';
+var APP_JS_VERSION = 'v817';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v816';
+  var DATA_VERSION = 'v817';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4643,21 +4643,52 @@ function rvVwTgl(uid) {
 }
 // ════ v585: 🐞 バグ・要望（オーナー＋オーナーが指定した人だけ。誰が・いつ書いたかは必ず残す） ════
 // Firestore: fbConfig/main {members:[uid], names:{uid:名前}} ／ fbConfig/seq {n} ／ fbItems/{番号} ＋ imgs・notes のサブコレクション
+// v817: 検討中・確認待ちを追加。流れは 新着 → 検討中 → 改修する → 対応中 → 確認待ち → 完了（ほかに 運用回避・対応しない）
 var FB_ST = [
   { k: 'new', lb: '新着', ic: '' },
+  { k: 'review', lb: '検討中', ic: '💭' },
   { k: 'fix', lb: '改修する', ic: '🔧' },
   { k: 'doing', lb: '対応中', ic: '🛠' },
+  { k: 'check', lb: '確認待ち', ic: '👀' },
+  { k: 'done', lb: '完了', ic: '✓' },
   { k: 'wa', lb: '運用回避', ic: '🧭' },
-  { k: 'no', lb: '対応しない', ic: '✋' },
-  { k: 'done', lb: '完了', ic: '✓' }
+  { k: 'no', lb: '対応しない', ic: '✋' }
 ];
+var FB_CLOSED = { done: 1, wa: 1, no: 1 }; // 終わったもの（期限の一覧には出さない）
+// v817: 種類（バグ・改善・アイデア）・対象・期限の目安
+var FB_KINDS = [['bug', 'バグ'], ['req', '改善'], ['idea', 'アイデア']];
+function _fbKindLb(k) { return k === 'req' ? '改善' : (k === 'idea' ? 'アイデア' : 'バグ'); }
+var FB_APPS = ['NAVIGATOR', '受付システム', 'その他'];
+var FB_DUEK = [['w', '今週中'], ['m', '今月中'], ['n', '来月'], ['l', 'いつか（長期）']];
 var FB_SCREENS = ['HOME', 'MAP', '理想MAP', '予定', 'ToDo', 'PLAN', 'データ', 'OL', 'メンバー', 'メンバー編集', '受付', 'その他'];
 var FB_VIEW_LB = { home: 'HOME', current: 'MAP', ideal: '理想MAP', events: '予定', plan: 'PLAN', stats: 'データ', ol: 'OL', members: 'メンバー' };
 var FB_IMG_MAX = 3, FB_IMG_KEEP_DAYS = 60;
-var _fb = { ok: null, cfg: null, items: [], tab: 'new', sel: {}, open: null, det: null, form: null, newN: 0 };
+var _fb = { ok: null, cfg: null, items: [], tab: 'new', sel: {}, open: null, det: null, form: null, newN: 0, view: 'st', kf: '' };
 function _fbStLb(k) { for (var i = 0; i < FB_ST.length; i++) if (FB_ST[i].k === k) return FB_ST[i]; return FB_ST[0]; }
-function _fbIsOwner() { return !!currentUser && currentUser.uid === OWNER_UID; }
+function _fbIsOwner() { return !!currentUser && typeof isOwnerUid === 'function' && isOwnerUid(currentUser.uid); } // v817: オーナー（山内さん・馬越さん）は管理者
 function _fbMyName() { return (currentUser && currentUser.name) || ''; }
+function _fbYmd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function _fbDueOf(k) { // 目安 → 期限の日付（いつか＝なし）
+  var d = new Date(); d.setHours(12, 0, 0, 0);
+  if (k === 'w') { d.setDate(d.getDate() + (7 - d.getDay()) % 7); return _fbYmd(d); } // 今週の日曜
+  if (k === 'm') return _fbYmd(new Date(d.getFullYear(), d.getMonth() + 1, 0, 12));
+  if (k === 'n') return _fbYmd(new Date(d.getFullYear(), d.getMonth() + 2, 0, 12));
+  return '';
+}
+function _fbDueGrp(x) { // 期限の一覧の段：od 期限切れ／w 今週／m 今月／n 来月以降／l いつか（長期）／x 期限なし
+  if (x.due) {
+    var t = evTodayYmd();
+    if (x.due < t) return 'od';
+    if (x.due <= _fbDueOf('w')) return 'w';
+    if (x.due <= _fbDueOf('m')) return 'm';
+    return 'n';
+  }
+  return x.dueK === 'l' ? 'l' : 'x';
+}
+function _fbDueLb(x) {
+  if (x.due) { var p = x.due.split('-'); return '〜' + parseInt(p[1], 10) + '/' + parseInt(p[2], 10); }
+  return x.dueK === 'l' ? 'いつか' : '';
+}
 function _fbTs(v) { // Firestoreの日時 → Date
   if (!v) return null;
   if (typeof v.toDate === 'function') return v.toDate();
@@ -4730,8 +4761,9 @@ function _fbCss() {
     + ".fb-it{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}.fb-it .bd{flex:1;min-width:0}\n"
     + ".fb-cb{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--text-dim);flex:none;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#06231c}.fb-cb.on{background:var(--accent);border-color:var(--accent)}\n"
     + ".fb-ih{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim)}.fb-ih .no{font-family:Inter,sans-serif;font-weight:800}\n"
-    + ".fb-k{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px}.fb-k.bug{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}.fb-k.req{background:color-mix(in srgb,#5AD7FF 18%,transparent);color:#2ba9d6}\n"
-    + ".fb-st{margin-left:auto;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--surface2);color:var(--text-dim);white-space:nowrap}.fb-st.new{background:var(--gold);color:#2a1a00}.fb-st.fix,.fb-st.doing{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}.fb-st.wa{background:color-mix(in srgb,#8B7CFF 22%,transparent);color:#8B7CFF}.fb-st.done{color:var(--accent)}\n"
+    + ".fb-k{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px}.fb-k.bug{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}.fb-k.req{background:color-mix(in srgb,#5AD7FF 18%,transparent);color:#2ba9d6}.fb-k.idea{background:color-mix(in srgb,#8B7CFF 22%,transparent);color:#8B7CFF}\n"
+    + ".fb-app{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--surface2);color:var(--text-mid)}.fb-due{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold)}.fb-due.od{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red)}.fb-lb.od{color:var(--red)}.fb-ih{flex-wrap:wrap}\n"
+    + ".fb-st{margin-left:auto;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--surface2);color:var(--text-dim);white-space:nowrap}.fb-st.new{background:var(--gold);color:#2a1a00}.fb-st.fix,.fb-st.doing{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}.fb-st.wa{background:color-mix(in srgb,#8B7CFF 22%,transparent);color:#8B7CFF}.fb-st.done{color:var(--accent)}.fb-st.review{background:color-mix(in srgb,#8B7CFF 18%,transparent);color:#8B7CFF}.fb-st.check{background:color-mix(in srgb,#5AD7FF 20%,transparent);color:#2ba9d6}\n"
     + ".fb-it .tt{font-size:14px;font-weight:700;margin:6px 0 4px;line-height:1.45;color:var(--text);word-break:break-word}.fb-it .mt{font-size:11.5px;color:var(--text-dim);width:auto;height:auto;display:block;flex:initial;margin:2px 0 0}\n"
     + ".fb-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 0}\n"
     + ".fb-foot{padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);display:flex;gap:8px}.fb-foot .fb-btn{flex:1;text-align:center;padding:12px}\n"
@@ -4767,6 +4799,7 @@ function fbReload() {
   return _fbLoadItems().then(function(list) {
     _fb.items = (list || []).slice().sort(function(a, b) { return (b.no || 0) - (a.no || 0); });
     _fb.newN = _fb.items.filter(function(x) { return x.status === 'new'; }).length;
+    var nAc = _fbAutoCheck(); if (nAc) toast('👀 ' + nAc + '件を「確認待ち」にしました（直した版が出たもの）'); // v817
     _fbSyncEntry(); _fbRenderList(); _fbPurgeImgs();
   }).catch(function() { var m = document.getElementById('fbMain'); if (m) m.innerHTML = '<div class="fb-empty">読み込めませんでした（見られる人に指定されているか確認してください）</div>'; });
 }
@@ -4775,37 +4808,52 @@ function _fbRenderList(loading) {
   var own = _fbIsOwner(), cnt = {};
   _fb.items.forEach(function(x) { cnt[x.status] = (cnt[x.status] || 0) + 1; });
   var tabs = FB_ST.map(function(s) { return s.k; }).concat(['all']);
-  var h = '<div class="fb-top"><span class="t">🐞 バグ・要望</span><span class="sp"></span>' + (own ? '<span class="fb-ic" onclick="fbMembersOpen()" title="見られる人・報告できる人">⚙</span>' : '') + '<span class="fb-btn pri" onclick="fbFormOpen()">＋ 報告する</span><span class="fb-ic" onclick="_p2SheetClose(\'fbOv\')">✕</span></div>'
-    + '<div class="fb-body"><div class="fb-chips">' + tabs.map(function(k) { var lb = k === 'all' ? 'すべて' : _fbStLb(k).lb, n = k === 'all' ? _fb.items.length : (cnt[k] || 0); return '<span class="' + (_fb.tab === k ? 'on' : '') + '" onclick="fbTab(\'' + k + '\')">' + lb + (n ? '<b>' + n + '</b>' : '') + '</span>'; }).join('') + '</div>';
-  var rows = _fb.items.filter(function(x) { return _fb.tab === 'all' || x.status === _fb.tab; });
+  var kOk = function(x) { return !_fb.kf || (x.kind || 'bug') === _fb.kf; };
+  cnt = {}; _fb.items.forEach(function(x) { if (kOk(x)) cnt[x.status] = (cnt[x.status] || 0) + 1; });
+  var nOd = _fb.items.filter(function(x) { return !FB_CLOSED[x.status] && _fbDueGrp(x) === 'od'; }).length;
+  var h = '<div class="fb-top"><span class="t" style="font-size:15.5px;white-space:nowrap">バグ・要望・アイデア</span><span class="sp"></span>' + (own ? '<span class="fb-ic" onclick="fbMembersOpen()" title="見られる人・報告できる人">⚙</span>' : '') + '<span class="fb-btn pri" onclick="fbFormOpen()">＋ 書く</span><span class="fb-ic" onclick="_p2SheetClose(\'fbOv\')">✕</span></div>'
+    + '<div class="fb-body"><div class="fb-seg" style="margin-bottom:8px"><span class="' + (_fb.view !== 'due' ? 'on' : '') + '" onclick="fbView(\'st\')">状態で見る</span><span class="' + (_fb.view === 'due' ? 'on' : '') + '" onclick="fbView(\'due\')">期限で見る' + (nOd ? '<b style="color:var(--red);margin-left:4px">' + nOd + '</b>' : '') + '</span></div>'
+    + '<div class="fb-chips">' + [['', 'ぜんぶ']].concat(FB_KINDS).map(function(k) { return '<span class="' + (_fb.kf === k[0] ? 'on' : '') + '" onclick="fbKf(\'' + k[0] + '\')">' + k[1] + '</span>'; }).join('') + '</div>'
+    + (_fb.view === 'due' ? '' : '<div class="fb-chips">' + tabs.map(function(k) { var lb = k === 'all' ? 'すべて' : _fbStLb(k).lb, n = k === 'all' ? _fb.items.filter(kOk).length : (cnt[k] || 0); return '<span class="' + (_fb.tab === k ? 'on' : '') + '" onclick="fbTab(\'' + k + '\')">' + lb + (n ? '<b>' + n + '</b>' : '') + '</span>'; }).join('') + '</div>');
+  var rows = _fb.items.filter(function(x) { return kOk(x) && (_fb.view === 'due' ? !FB_CLOSED[x.status] : (_fb.tab === 'all' || x.status === _fb.tab)); });
   var pick = own; // v725: どのタブでも選んでClaude用にコピー（前は「改修する」だけ）
   if (loading && !_fb.items.length) h += '<div class="fb-empty">読み込み中…</div>';
-  else if (!rows.length) h += '<div class="fb-empty">' + (_fb.tab === 'new' ? '新着はありません' : 'ありません') + '</div>';
+  else if (!rows.length) h += '<div class="fb-empty">' + (_fb.view !== 'due' && _fb.tab === 'new' ? '新着はありません' : 'ありません') + '</div>';
   else {
     if (pick) { var allOn = rows.every(function(x) { return _fb.sel[x.id]; }); h += '<div class="fb-who" style="margin:-2px 0 8px;display:flex;align-items:center;gap:8px">直したいものにチェック → 下の「Claude用にコピー」<span style="margin-left:auto;color:var(--accent);font-weight:800;cursor:pointer;white-space:nowrap" onclick="fbPickAll(' + (allOn ? 0 : 1) + ')">' + (allOn ? '選ぶのをやめる' : 'ぜんぶ選ぶ') + '</span></div>'; }
-    h += rows.map(function(x) {
-      var st = _fbStLb(x.status);
+    var row = function(x) {
+      var st = _fbStLb(x.status), dl = _fbDueLb(x), od = !FB_CLOSED[x.status] && _fbDueGrp(x) === 'od';
       return '<div class="fb-it" onclick="fbDetailOpen(\'' + x.id + '\')">' + (pick ? '<span class="fb-cb' + (_fb.sel[x.id] ? ' on' : '') + '" onclick="event.stopPropagation();fbPick(\'' + x.id + '\')">' + (_fb.sel[x.id] ? '✓' : '') + '</span>' : '')
-        + '<div class="bd"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + (x.kind === 'req' ? 'req' : 'bug') + '">' + (x.kind === 'req' ? '要望' : 'バグ') + '</span>' + evEsc(x.screen || '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div>'
-        + '<div class="tt">' + evEsc(x.title || '') + '</div><div class="mt">' + evEsc(x.authorName || '') + '・' + _fbFmt(x.createdAt, true) + (x.ver ? '・' + evEsc(x.ver) : '') + (x.device ? '・' + evEsc(x.device) : '') + (x.imgN ? '・📷' + x.imgN : '') + (x.adminComment ? '・💬' : '') + '</div></div></div>';
-    }).join('');
+        + '<div class="bd"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + (x.kind || 'bug') + '">' + _fbKindLb(x.kind) + '</span>' + (x.app && x.app !== 'NAVIGATOR' ? '<span class="fb-app">' + evEsc(x.app) + '</span>' : '') + evEsc(x.screen || '') + (dl ? '<span class="fb-due' + (od ? ' od' : '') + '">' + dl + '</span>' : '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div>'
+        + '<div class="tt">' + evEsc(x.title || '') + '</div><div class="mt">' + (x.reqBy && x.reqBy !== x.authorName ? '依頼 ' + evEsc(x.reqBy) + '・' : '') + evEsc(x.authorName || '') + '・' + _fbFmt(x.createdAt, true) + (x.ver ? '・' + evEsc(x.ver) : '') + (x.device ? '・' + evEsc(x.device) : '') + (x.slackUrl ? '・Slack' : '') + (x.imgN ? '・📷' + x.imgN : '') + (x.adminComment ? '・💬' : '') + '</div></div></div>';
+    };
+    if (_fb.view === 'due') {
+      var G = [['od', '期限切れ'], ['w', '今週まで'], ['m', '今月まで'], ['n', '来月以降'], ['l', 'いつか（長期）'], ['x', '期限なし']];
+      h += G.map(function(g) {
+        var L = rows.filter(function(x) { return _fbDueGrp(x) === g[0]; }).sort(function(a, b) { return String(a.due || '9').localeCompare(String(b.due || '9')) || a.no - b.no; });
+        return L.length ? '<div class="fb-lb' + (g[0] === 'od' ? ' od' : '') + '">' + g[1] + '<small>' + L.length + '件</small></div>' + L.map(row).join('') : '';
+      }).join('');
+    } else h += rows.map(row).join('');
   }
   h += '</div>';
-  if (pick) { var n = Object.keys(_fb.sel).filter(function(k) { return _fb.sel[k] && rows.some(function(x) { return x.id === k; }); }).length; h += '<div class="fb-foot"><span class="fb-btn pri' + (n ? '' : ' dis') + '" onclick="fbCopyForClaude()">📋 ' + (n ? '選んだ' + n + '件を' : '') + 'Claude用にコピー</span></div>'; }
+  if (pick) { var n = Object.keys(_fb.sel).filter(function(k) { return _fb.sel[k] && rows.some(function(x) { return x.id === k; }); }).length; h += '<div class="fb-foot"><span class="fb-btn" onclick="fbCopyProgress()">💬 進捗まとめをコピー</span><span class="fb-btn pri' + (n ? '' : ' dis') + '" onclick="fbCopyForClaude()">📋 ' + (n ? '選んだ' + n + '件を' : '') + 'Claude用にコピー</span></div>'; }
   box.innerHTML = h;
 }
 function fbTab(k) { _fb.tab = k; _fbRenderList(); }
-function fbPickAll(on) { _fb.items.forEach(function(x) { if (_fb.tab === 'all' || x.status === _fb.tab) { if (on) _fb.sel[x.id] = true; else delete _fb.sel[x.id]; } }); _fbRenderList(); }
+function fbView(v) { _fb.view = v; _fbRenderList(); }
+function fbKf(k) { _fb.kf = k; _fbRenderList(); }
+function _fbInList(x) { return (!_fb.kf || (x.kind || 'bug') === _fb.kf) && (_fb.view === 'due' ? !FB_CLOSED[x.status] : (_fb.tab === 'all' || x.status === _fb.tab)); }
+function fbPickAll(on) { _fb.items.forEach(function(x) { if (_fbInList(x)) { if (on) _fb.sel[x.id] = true; else delete _fb.sel[x.id]; } }); _fbRenderList(); }
 function fbPick(id) { _fb.sel[id] = !_fb.sel[id]; _fbRenderList(); }
 // ── 報告する ──
 function fbFormOpen(id) {
   var x = id ? _fb.items.filter(function(i) { return i.id === id; })[0] : null;
   var cv = (typeof currentView !== 'undefined' && FB_VIEW_LB[currentView]) || 'その他';
-  _fb.form = x ? { id: x.id, kind: x.kind || 'bug', screen: x.screen || cv, imgs: [], keepImgN: x.imgN || 0 } : { kind: 'bug', screen: cv, imgs: [] };
+  _fb.form = x ? { id: x.id, kind: x.kind || 'bug', screen: x.screen || cv, imgs: [], keepImgN: x.imgN || 0, app: x.app || 'NAVIGATOR', dueK: x.dueK || '', due: x.due || '' } : { kind: 'bug', screen: cv, imgs: [], app: 'NAVIGATOR', dueK: '', due: '' };
   _fbCss();
   _p2SheetClose('fbFormOv');
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'fbFormOv'; ov.style.zIndex = '650';
-  ov.innerHTML = '<div class="ms-sheet fb-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (x ? '#' + x.no + ' を直す' : '🐞 報告する') + '</div><div style="font-size:11px;color:var(--text-dim)">書いた人（' + evEsc(_fbMyName()) + '）・日時・版・端末は自動で残ります</div></div><span class="ms-x" onclick="_p2SheetClose(\'fbFormOv\')">✕</span></div>'
+  ov.innerHTML = '<div class="ms-sheet fb-sheet"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (x ? '#' + x.no + ' を直す' : '書く（バグ・改善・アイデア）') + '</div><div style="font-size:11px;color:var(--text-dim)">書いた人（' + evEsc(_fbMyName()) + '）・日時・版・端末は自動で残ります</div></div><span class="ms-x" onclick="_p2SheetClose(\'fbFormOv\')">✕</span></div>'
     + '<div class="fb-body" id="fbFormBody"></div><div class="fb-foot"><span class="fb-btn" onclick="_p2SheetClose(\'fbFormOv\')">やめる</span><span class="fb-btn pri" id="fbSendBtn" onclick="fbSend()">' + (x ? '保存' : '送る') + '</span></div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
@@ -4813,24 +4861,45 @@ function fbFormOpen(id) {
 }
 function _fbFormRender(x) {
   var b = document.getElementById('fbFormBody'), f = _fb.form; if (!b) return;
-  var v = function(k) { return x ? evEsc(x[k] || '') : ''; };
-  b.innerHTML = '<div class="fb-lb">種類</div><div class="fb-seg" id="fbKind"><span class="' + (f.kind === 'bug' ? 'on' : '') + '" onclick="fbKind(\'bug\')">🐞 バグ</span><span class="' + (f.kind === 'req' ? 'on' : '') + '" onclick="fbKind(\'req\')">💡 要望</span></div>'
+  var v = function(k) { return x ? evEsc(x[k] || '') : ''; }, K = f.kind, own = _fbIsOwner();
+  var L1 = { bug: 'したこと', req: 'いま困っていること', idea: 'どんなアイデアか' }[K], L2 = { bug: '起きたこと', req: 'こうなったらうれしい', idea: 'ねらい・期待すること' }[K];
+  var P1 = { bug: '例：予定を開いて時間だけ変えて保存した', req: '例：MAPで誕生日が小さくて見えない', idea: '例：ほかの地域のユニオンの人も受付とつなぎたい' }[K], P2 = { bug: '例：関連メンバーの田中さんが消えた', req: '例：カードの右上に大きく出す', idea: '例：チームの稼働率がまとめて見られる' }[K];
+  b.innerHTML = '<div class="fb-lb">種類</div><div class="fb-seg" id="fbKind">' + FB_KINDS.map(function(k) { return '<span class="' + (K === k[0] ? 'on' : '') + '" onclick="fbKind(\'' + k[0] + '\')">' + k[1] + '</span>'; }).join('') + '</div>'
+    + '<div class="fb-lb">対象</div><div class="fb-chips" id="fbApp">' + FB_APPS.map(function(a) { return '<span class="' + (f.app === a ? 'on' : '') + '" onclick="fbFormSet(\'app\',\'' + a + '\')">' + a + '</span>'; }).join('') + '</div>'
     + '<div class="fb-lb">画面</div><select class="fi" id="fbScreen">' + FB_SCREENS.map(function(s) { return '<option' + (s === f.screen ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>'
-    + '<div class="fb-lb">タイトル<small>ひとことで</small></div><input class="fi" id="fbTitle" maxlength="80" value="' + v('title') + '" placeholder="例：予定を保存すると関連メンバーが外れる">'
-    + '<div class="fb-lb">' + (f.kind === 'req' ? 'いま困っていること' : 'したこと') + '</div><textarea class="fi fb-ta" id="fbDid" maxlength="2000" placeholder="' + (f.kind === 'req' ? '例：MAPで誕生日が小さくて見えない' : '例：予定を開いて時間だけ変えて保存した') + '">' + v('did') + '</textarea>'
-    + '<div class="fb-lb">' + (f.kind === 'req' ? 'こうなったらうれしい' : '起きたこと') + '</div><textarea class="fi fb-ta" id="fbGot" maxlength="2000" placeholder="' + (f.kind === 'req' ? '例：カードの右上に大きく出す' : '例：関連メンバーの田中さんが消えた') + '">' + v('got') + '</textarea>'
-    + (f.kind === 'req' ? '' : '<div class="fb-lb">こうなってほしい<small>任意</small></div><textarea class="fi fb-ta" id="fbWant" maxlength="2000" placeholder="例：そのまま残る">' + v('want') + '</textarea>')
+    + '<div class="fb-lb">タイトル<small>ひとことで</small></div><input class="fi" id="fbTitle" maxlength="80" value="' + v('title') + '" placeholder="' + (K === 'idea' ? '例：他ユニオンのメンバーも受付連携' : '例：予定を保存すると関連メンバーが外れる') + '">'
+    + '<div class="fb-lb">' + L1 + '</div><textarea class="fi fb-ta" id="fbDid" maxlength="2000" placeholder="' + P1 + '">' + v('did') + '</textarea>'
+    + '<div class="fb-lb">' + L2 + (K === 'idea' ? '<small>任意</small>' : '') + '</div><textarea class="fi fb-ta" id="fbGot" maxlength="2000" placeholder="' + P2 + '">' + v('got') + '</textarea>'
+    + (K === 'bug' ? '<div class="fb-lb">こうなってほしい<small>任意</small></div><textarea class="fi fb-ta" id="fbWant" maxlength="2000" placeholder="例：そのまま残る">' + v('want') + '</textarea>' : '')
+    + (own ? '<div class="fb-lb">いつまでに<small>任意・あとからでも決められます</small></div>' + _fbDueHtml(f.dueK, f.due, 'fbFormDue') : '')
+    + '<div class="fb-lb">依頼した人<small>Slackなどで受けた依頼は、その人の名前（空なら自分）</small></div><input class="fi" id="fbReqBy" maxlength="40" value="' + (x ? evEsc(x.reqBy || '') : '') + '" placeholder="例：馬越 雅哉">'
+    + '<div class="fb-lb">Slackのリンク<small>任意・メッセージの「リンクをコピー」</small></div><input class="fi" id="fbSlack" maxlength="300" value="' + v('slackUrl') + '" placeholder="https://….slack.com/archives/…">'
     + (x ? (f.keepImgN ? '<div class="fb-who" style="margin-top:12px">スクショ ' + f.keepImgN + '枚はそのまま残ります</div>' : '') : '<div class="fb-lb">スクショ<small>' + FB_IMG_MAX + '枚まで・小さくして保存します</small></div><div class="fb-imgs" id="fbImgs"></div><input type="file" id="fbFile" accept="image/*" multiple style="display:none" onchange="fbFiles(this)">');
   if (!x) _fbImgsRender();
 }
 function fbKind(k) { // 入力中の文字は残す
   var f = _fb.form; if (!f) return;
-  var keep = {}; ['fbTitle', 'fbDid', 'fbGot', 'fbWant'].forEach(function(id) { var el = document.getElementById(id); if (el) keep[id] = el.value; });
+  var keep = {}; ['fbTitle', 'fbDid', 'fbGot', 'fbWant', 'fbReqBy', 'fbSlack'].forEach(function(id) { var el = document.getElementById(id); if (el) keep[id] = el.value; });
   var sc = document.getElementById('fbScreen'); if (sc) f.screen = sc.value;
   f.kind = k;
   var x = f.id ? _fb.items.filter(function(i) { return i.id === f.id; })[0] : null;
   _fbFormRender(x);
   Object.keys(keep).forEach(function(id) { var el = document.getElementById(id); if (el) el.value = keep[id]; });
+}
+// v817: 期限の入れ方（目安をタップ／日付）。id: 入れ物のid（フォーム＝fbFormDue・詳しい画面＝fbDetDue）
+function _fbDueHtml(k, due, id) {
+  var on = id === 'fbFormDue' ? 'fbFormDue' : 'fbDetDue';
+  return '<div class="fb-chips">' + FB_DUEK.map(function(d) { return '<span class="' + (k === d[0] ? 'on' : '') + '" onclick="' + on + '(\'' + d[0] + '\')">' + d[1] + '</span>'; }).join('') + '<span class="' + (k === 'd' ? 'on' : '') + '" onclick="' + on + '(\'d\')">日付で</span>' + (k || due ? '<span onclick="' + on + '(\'\')">なし</span>' : '') + '</div>'
+    + (k === 'd' ? '<input class="fi" type="date" id="' + id + 'D" value="' + evEsc(due || '') + '" onchange="' + on + '(\'d\',this.value)">' : '');
+}
+function _fbFormKeep() { var keep = {}; ['fbTitle', 'fbDid', 'fbGot', 'fbWant', 'fbReqBy', 'fbSlack'].forEach(function(id) { var el = document.getElementById(id); if (el) keep[id] = el.value; }); var sc = document.getElementById('fbScreen'); if (sc && _fb.form) _fb.form.screen = sc.value; return keep; }
+function _fbFormRe(keep) { var f = _fb.form, x = f.id ? _fb.items.filter(function(i) { return i.id === f.id; })[0] : null; _fbFormRender(x); Object.keys(keep).forEach(function(id) { var el = document.getElementById(id); if (el) el.value = keep[id]; }); }
+function fbFormSet(k, v) { if (!_fb.form) return; var keep = _fbFormKeep(); _fb.form[k] = v; _fbFormRe(keep); }
+function fbFormDue(k, d) {
+  var f = _fb.form; if (!f) return; var keep = _fbFormKeep();
+  if (k === 'd') { f.dueK = 'd'; if (d !== undefined) f.due = d || ''; }
+  else { f.dueK = k; f.due = _fbDueOf(k); }
+  _fbFormRe(keep);
 }
 function _fbImgsRender() {
   var b = document.getElementById('fbImgs'), f = _fb.form; if (!b || !f) return;
@@ -4866,15 +4935,17 @@ function fbFiles(inp) {
 function fbSend() {
   var f = _fb.form; if (!f) return;
   var g = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  var it = { kind: f.kind, screen: g('fbScreen') || f.screen, title: g('fbTitle'), did: g('fbDid'), got: g('fbGot'), want: f.kind === 'req' ? '' : g('fbWant') };
+  var it = { kind: f.kind, screen: g('fbScreen') || f.screen, title: g('fbTitle'), did: g('fbDid'), got: g('fbGot'), want: f.kind === 'bug' ? g('fbWant') : '', app: f.app || 'NAVIGATOR', reqBy: g('fbReqBy'), slackUrl: g('fbSlack') };
+  if (_fbIsOwner()) { var dd = document.getElementById('fbFormDueD'); if (f.dueK === 'd' && dd) f.due = dd.value || ''; it.due = f.due || ''; it.dueK = f.dueK === 'd' && !f.due ? '' : (f.dueK || ''); }
   if (!it.title) { toast('タイトルを入れてください'); return; }
   if (!it.did && !it.got) { toast('内容を入れてください'); return; }
+  if (it.slackUrl && !/^https:\/\//.test(it.slackUrl)) { toast('Slackのリンクは https:// から始まるものを貼ってください'); return; }
   var btn = document.getElementById('fbSendBtn'); if (btn) btn.classList.add('dis');
   var done = function(msg) { _p2SheetClose('fbFormOv'); toast(msg); fbReload(); };
   var fail = function() { if (btn) btn.classList.remove('dis'); toast('保存できませんでした（通信・権限を確認してください）'); };
   if (f.id) { _fbUpdate(f.id, Object.assign(it, { editedAt: firebase.firestore.FieldValue.serverTimestamp() })).then(function() { done('保存しました'); }, fail); return; }
   it.ver = (typeof APP_JS_VERSION !== 'undefined' ? APP_JS_VERSION : ''); it.device = _fbDevice();
-  _fbCreate(it, f.imgs).then(function(no) { done('#' + no + ' で受け付けました。ありがとうございます'); }, fail);
+  _fbCreate(it, f.imgs).then(function(no) { done('#' + no + ' で受け付けました' + (it.slackUrl || it.reqBy ? '（「Slack用にコピー」で受けた返事を送れます）' : '。ありがとうございます')); }, fail);
 }
 // ── 1件（切り分け・コメント・やりとり） ──
 function fbDetailOpen(id) {
@@ -4894,24 +4965,27 @@ function fbDetailOpen(id) {
 function _fbItem(id) { return _fb.items.filter(function(i) { return i.id === String(id); })[0] || null; }
 function _fbDetRender() {
   var b = document.getElementById('fbDetBody'), x = _fbItem(_fb.open); if (!b || !x) return;
-  var own = _fbIsOwner(), st = _fbStLb(x.status), req = x.kind === 'req';
+  var own = _fbIsOwner(), st = _fbStLb(x.status), K = x.kind || 'bug';
   var keepAc = document.activeElement && document.activeElement.id, keep = {};
   ['fbCmt', 'fbNote', 'fbWa', 'fbDoneVer'].forEach(function(k) { var el = document.getElementById(k); if (el) keep[k] = el.value; });
   var sec = function(lb, t) { return t ? '<b>【' + lb + '】</b>' + evEsc(t) + '\n' : ''; };
-  var h = '<div class="ms-hd" style="padding:0 0 4px"><div class="ms-hinfo"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + (req ? 'req' : 'bug') + '">' + (req ? '要望' : 'バグ') + '</span>' + evEsc(x.screen || '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div></div><span class="ms-x" onclick="_p2SheetClose(\'fbDetOv\')">✕</span></div>'
+  var L1 = { bug: 'したこと', req: 'いま困っていること', idea: 'どんなアイデアか' }[K], L2 = { bug: '起きたこと', req: 'こうなったらうれしい', idea: 'ねらい・期待すること' }[K];
+  var dl = _fbDueLb(x), od = !FB_CLOSED[x.status] && _fbDueGrp(x) === 'od';
+  var h = '<div class="ms-hd" style="padding:0 0 4px"><div class="ms-hinfo"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + K + '">' + _fbKindLb(K) + '</span>' + (x.app && x.app !== 'NAVIGATOR' ? '<span class="fb-app">' + evEsc(x.app) + '</span>' : '') + evEsc(x.screen || '') + (dl ? '<span class="fb-due' + (od ? ' od' : '') + '">' + dl + '</span>' : '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div></div><span class="ms-x" onclick="_p2SheetClose(\'fbDetOv\')">✕</span></div>'
     + '<div style="font-size:16px;font-weight:800;margin:4px 0 6px;color:var(--text);word-break:break-word">' + evEsc(x.title || '') + '</div>'
-    + '<div class="fb-who">書いた人 <b>' + evEsc(x.authorName || '') + '</b>・<b>' + _fbFmt(x.createdAt) + '</b>' + (x.editedAt ? '（' + _fbFmt(x.editedAt, true) + ' に直しました）' : '') + '<br>' + evEsc(x.ver || '') + (x.device ? '・' + evEsc(x.device) : '') + '</div>'
-    + '<div class="fb-txt">' + (sec(req ? 'いま困っていること' : 'したこと', x.did) + sec(req ? 'こうなったらうれしい' : '起きたこと', x.got) + sec('こうなってほしい', x.want)).replace(/\n$/, '') + '</div>';
+    + '<div class="fb-who">' + (x.reqBy ? '依頼した人 <b>' + evEsc(x.reqBy) + '</b>・' : '') + '書いた人 <b>' + evEsc(x.authorName || '') + '</b>・<b>' + _fbFmt(x.createdAt) + '</b>' + (x.editedAt ? '（' + _fbFmt(x.editedAt, true) + ' に直しました）' : '') + '<br>' + evEsc(x.app || 'NAVIGATOR') + (x.ver ? '・' + evEsc(x.ver) : '') + (x.device ? '・' + evEsc(x.device) : '') + (/^https:\/\//.test(x.slackUrl || '') ? '・<a href="' + evEsc(x.slackUrl) + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:800">Slackを開く</a>' : '') + '</div>'
+    + '<div class="fb-txt">' + (sec(L1, x.did) + sec(L2, x.got) + sec('こうなってほしい', x.want)).replace(/\n$/, '') + '</div>';
   if (x.imgN) h += x.imgsPurged ? '<div class="fb-who">スクショは保存期間（' + FB_IMG_KEEP_DAYS + '日）を過ぎたので消えています</div>' : '<div class="fb-imgs">' + (_fb.det.imgs ? _fb.det.imgs.map(function(m) { return '<div class="fb-img" onclick="fbImgBig(\'' + m.id + '\')"><img src="' + m.data + '"></div>'; }).join('') : '<div class="fb-who">スクショを読み込み中…</div>') + '</div>';
   if (!own && x.authorUid === (currentUser && currentUser.uid) && x.status === 'new') h += '<div style="margin-top:10px"><span class="fb-btn" onclick="fbFormOpen(\'' + x.id + '\')">✎ 内容を直す</span></div>';
   if (x.status === 'wa' && x.waNote) h += '<div class="fb-lb">🧭 回避のしかた</div><div class="fb-txt" style="margin-top:0">' + evEsc(x.waNote) + '</div>';
-  if (x.status === 'done' && x.doneVer) h += '<div class="fb-lb">✓ 完了</div><div class="fb-who">' + evEsc(x.doneVer) + ' で直しました</div>';
+  if ((x.status === 'done' || x.status === 'check') && x.doneVer) h += '<div class="fb-lb">' + (x.status === 'check' ? '👀 確認待ち' : '✓ 完了') + '</div><div class="fb-who">' + evEsc(x.doneVer) + ' で直しました' + (x.status === 'check' ? '。動きを確かめて、よければ「完了」にしてください' : '') + '</div>';
   if (own) {
-    h += '<div style="margin-top:10px"><span class="fb-btn pri" onclick="fbCopyOne()">📋 Claude用にコピー</span></div>'; // v725
-    h += '<div class="fb-lb">切り分け<small>管理者だけ</small></div><div class="fb-tri">' + ['fix', 'wa', 'no'].map(function(k) { var s = _fbStLb(k); return '<span class="' + (x.status === k ? 'on' : '') + '" onclick="fbSetSt(\'' + k + '\')">' + s.ic + ' ' + s.lb + '</span>'; }).join('') + '</div>'
-      + '<div class="fb-tri" style="margin-top:6px">' + ['new', 'doing', 'done'].map(function(k) { var s = _fbStLb(k); return '<span class="' + (x.status === k ? 'on' : '') + '" onclick="fbSetSt(\'' + k + '\')">' + (s.ic ? s.ic + ' ' : '') + s.lb + '</span>'; }).join('') + '</div>';
+    h += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="fb-btn pri" onclick="fbCopyOne()">📋 Claude用にコピー</span><span class="fb-btn" onclick="fbCopySlack()">💬 Slack用にコピー</span></div>'; // v725・v817
+    h += '<div class="fb-lb">状態<small>管理者だけ</small></div><div class="fb-tri">' + ['new', 'review', 'fix', 'doing', 'check', 'done'].map(function(k) { var s = _fbStLb(k); return '<span class="' + (x.status === k ? 'on' : '') + '" onclick="fbSetSt(\'' + k + '\')">' + (s.ic ? s.ic + ' ' : '') + s.lb + '</span>'; }).join('') + '</div>'
+      + '<div class="fb-tri" style="margin-top:6px">' + ['wa', 'no'].map(function(k) { var s = _fbStLb(k); return '<span class="' + (x.status === k ? 'on' : '') + '" onclick="fbSetSt(\'' + k + '\')">' + s.ic + ' ' + s.lb + '</span>'; }).join('') + '</div>';
+    h += '<div class="fb-lb">いつまでに<small>' + (dl ? 'いま：' + dl : 'まだ決めていません') + '</small></div>' + _fbDueHtml(x.dueK === 'd' || (x.due && !x.dueK) ? 'd' : (x.dueK || ''), x.due || '', 'fbDetDue');
     if (x.status === 'wa') h += '<div class="fb-lb">回避のしかた</div><div class="fb-row"><input class="fi" id="fbWa" value="' + evEsc(x.waNote || '') + '" placeholder="例：保存する前に関連メンバーを確認する"><span class="fb-btn" onclick="fbSaveField(\'waNote\',\'fbWa\')">保存</span></div>';
-    if (x.status === 'done') h += '<div class="fb-lb">何版で直したか</div><div class="fb-row"><input class="fi" id="fbDoneVer" value="' + evEsc(x.doneVer || '') + '" placeholder="例：v585"><span class="fb-btn" onclick="fbSaveField(\'doneVer\',\'fbDoneVer\')">保存</span></div>';
+    if (x.status === 'done' || x.status === 'check') h += '<div class="fb-lb">何版で直したか</div><div class="fb-row"><input class="fi" id="fbDoneVer" value="' + evEsc(x.doneVer || '') + '" placeholder="例：v585"><span class="fb-btn" onclick="fbSaveField(\'doneVer\',\'fbDoneVer\')">保存</span></div>';
     h += '<div class="fb-lb">管理者コメント<small>任意</small></div><textarea class="fi fb-ta" id="fbCmt" placeholder="例：再現した。次の改修でまとめて直します">' + evEsc(x.adminComment || '') + '</textarea><div style="text-align:right;margin-top:6px"><span class="fb-btn" onclick="fbSaveCmt()">コメントを保存</span></div>';
   } else if (x.adminComment) h += '<div class="fb-lb">管理者コメント</div><div class="fb-txt" style="margin-top:0;color:var(--accent)">' + evEsc(x.adminComment) + '</div>';
   h += '<div class="fb-lb">やりとり</div>';
@@ -4924,6 +4998,13 @@ function _fbDetRender() {
   b.innerHTML = h;
   Object.keys(keep).forEach(function(k) { var el = document.getElementById(k); if (el) el.value = keep[k]; }); // 書きかけは残す
   if (keepAc) { var ae = document.getElementById(keepAc); if (ae) try { ae.focus({ preventScroll: true }); } catch (eF) {} }
+}
+function fbDetDue(k, d) { // v817: 期限（管理者）
+  var x = _fbItem(_fb.open); if (!x || !_fbIsOwner()) return;
+  if (k === 'd' && d === undefined) { _fbLocal(x.id, { dueK: 'd' }); _fbDetRender(); return; } // 日付の欄を出すだけ
+  var data = k === 'd' ? { dueK: 'd', due: d || '' } : { dueK: k, due: _fbDueOf(k) };
+  if (data.dueK === 'd' && !data.due) data.dueK = '';
+  _fbUpdate(x.id, data).then(function() { _fbLocal(x.id, data); _fbDetRender(); _fbRenderList(); toast(data.due || data.dueK === 'l' ? '期限を ' + _fbDueLb(data) + ' にしました' : '期限をなしにしました'); }, function() { toast('保存できませんでした'); });
 }
 function fbImgBig(k) {
   var m = (_fb.det && _fb.det.imgs || []).filter(function(x) { return x.id === k; })[0]; if (!m) return;
@@ -4970,14 +5051,16 @@ function fbNoteAdd() {
 }
 // ── まとめてClaudeへ（「改修する」で選んだもの → 指示文をコピー → 対応中に） ──
 function _fbClaudeText(list, notes) {
-  var L = ['GROOVE MAPの改修依頼（' + list.length + '件）。CLAUDE.mdの手順どおり、テスト→コミット→PR→mainへマージまでお願いします。', '直したら、完了報告に各項目の番号（#' + list[0].no + ' など）と、どの版で直したかを書いてください。', ''];
+  var hasIdea = list.some(function(x) { return x.kind === 'idea'; });
+  var L = ['GROOVE MAPの改修依頼（' + list.length + '件）。CLAUDE.mdの手順どおり、テスト→コミット→PR→mainへマージまでお願いします。' + (hasIdea ? '（アイデアは、まず設計を提案してください）' : ''), '直したら、完了報告に各項目の番号（#' + list[0].no + ' など）と、どの版で直したかを書いてください。', ''];
   list.forEach(function(x) {
-    var req = x.kind === 'req';
-    L.push('■ #' + x.no + ' ' + (req ? '要望' : 'バグ') + '／' + (x.screen || ''));
+    var K = x.kind || 'bug', dl = _fbDueLb(x);
+    L.push('■ #' + x.no + ' ' + _fbKindLb(K) + '／' + (x.app && x.app !== 'NAVIGATOR' ? x.app + '・' : '') + (x.screen || '') + (dl ? '（期限：' + (dl === 'いつか' ? '長期' : dl.replace('〜', '') + 'まで') + '）' : ''));
     L.push(x.title || '');
-    if (x.did) L.push((req ? 'いま困っていること：' : 'したこと：') + x.did);
-    if (x.got) L.push((req ? 'こうなったらうれしい：' : '起きたこと：') + x.got);
+    if (x.did) L.push({ bug: 'したこと：', req: 'いま困っていること：', idea: 'どんなアイデアか：' }[K] + x.did);
+    if (x.got) L.push({ bug: '起きたこと：', req: 'こうなったらうれしい：', idea: 'ねらい・期待すること：' }[K] + x.got);
     if (x.want) L.push('こうなってほしい：' + x.want);
+    if (x.reqBy) L.push('依頼：' + x.reqBy + (x.slackUrl ? '（Slack）' : ''));
     L.push('報告：' + (x.authorName || '') + ' ' + _fbFmt(x.createdAt) + '（' + [x.ver, x.device].filter(Boolean).join('・') + '）' + (x.imgN && !x.imgsPurged ? '・スクショ' + x.imgN + '枚あり' : ''));
     if (x.adminComment) L.push('管理者コメント：' + x.adminComment);
     if (notes && list.length === 1) { var nn = notes.filter(function(n) { return n.kind !== 'status' && n.text; }); if (nn.length) { L.push('やりとり：'); nn.forEach(function(n) { L.push('・' + (n.byName || '') + (n.admin ? '（管理者）' : '') + '：' + n.text); }); } }
@@ -5010,7 +5093,7 @@ function _fbCopyDo(list, notes) {
     var ts = firebase.firestore.FieldValue.serverTimestamp(), mv = 0;
     list.forEach(function(x) {
       delete _fb.sel[x.id];
-      if (x.status !== 'new' && x.status !== 'fix') return; // 新着・改修するだけ「対応中」へ
+      if (x.status !== 'new' && x.status !== 'fix' && x.status !== 'review') return; // 新着・検討中・改修するだけ「対応中」へ
       var from = _fbStLb(x.status).lb; mv++;
       _fbUpdate(x.id, { status: 'doing', statusAt: ts, statusBy: _fbMyName(), sentAt: ts }).then(function() { _fbAddNote(x.id, { kind: 'status', text: from + ' → 対応中（Claudeに渡した）' }).catch(function() {}); }).catch(function() {});
       x.status = 'doing';
@@ -5019,6 +5102,51 @@ function _fbCopyDo(list, notes) {
     _fbRenderList(); try { _fbDetRender(); } catch (e) {}
     toast(list.length + '件をコピーしました。Claudeのチャットに貼ってください' + (mv ? '（「対応中」に移しました）' : '') + (list.some(function(x) { return x.imgN && !x.imgsPurged; }) ? '。スクショは別に貼ってください' : ''));
   });
+}
+// v817: Slackに返す文（1件）。状態に合わせて「受けました／対応中／直しました（確認お願いします）／完了」
+function _fbSlackText(x) {
+  var st = x.status, dl = _fbDueLb(x), tt = '#' + x.no + '「' + (x.title || '') + '」', when = dl ? '（' + (dl === 'いつか' ? '長期' : dl + 'の予定') + '）' : '';
+  if (st === 'check') return '✅ ' + tt + ' は ' + (x.doneVer || '新しい版') + ' で対応しました。アプリを開き直して確認をお願いします' + (x.adminComment ? '\n' + x.adminComment : '');
+  if (st === 'done') return '✅ ' + tt + ' 完了しました' + (x.doneVer ? '（' + x.doneVer + '）' : '');
+  if (st === 'doing') return '🛠 ' + tt + ' 対応中です' + when;
+  if (st === 'fix') return '🔧 ' + tt + ' 改修することにしました' + when;
+  if (st === 'review') return '💭 ' + tt + ' 検討中です' + (x.adminComment ? '\n' + x.adminComment : '');
+  if (st === 'wa') return '🧭 ' + tt + ' は運用で回避します' + (x.waNote ? '：' + x.waNote : '');
+  if (st === 'no') return '✋ ' + tt + ' は今回は見送ります' + (x.adminComment ? '\n' + x.adminComment : '');
+  return '📥 ' + tt + ' で受けました' + when;
+}
+function fbCopySlack() { var x = _fbItem(_fb.open); if (!x) return; var t = _fbSlackText(x); _fbCopy(t).then(function(ok) { if (ok) toast('💬 コピーしました（Slackのスレッドに貼ってください）'); else _fbShowText(t); }); }
+// 進捗まとめ（期限切れ・今週まで・対応中・確認待ち・改修する・検討中・新着・この1週間の完了）
+function _fbProgressText() {
+  var open = _fb.items.filter(function(x) { return !FB_CLOSED[x.status]; }), t = evTodayYmd(), hot = function(x) { var g = _fbDueGrp(x); return g === 'od' || g === 'w'; };
+  var ln = function(x) { var dl = _fbDueLb(x); return '・#' + x.no + ' ' + (x.title || '') + '（' + _fbKindLb(x.kind) + (x.app && x.app !== 'NAVIGATOR' ? '・' + x.app : '') + (dl ? '・' + dl : '') + (x.status === 'check' && x.doneVer ? '・' + x.doneVer + 'で対応' : '') + '）'; };
+  var L = ['【NAVIGATOR 改修の進捗】' + t.slice(5).replace('-', '/') + ' 時点'];
+  var grp = function(lb, arr) { if (arr.length) { L.push('', '■ ' + lb + '（' + arr.length + '件）'); arr.sort(function(a, b) { return String(a.due || '9').localeCompare(String(b.due || '9')) || a.no - b.no; }).forEach(function(x) { L.push(ln(x)); }); } };
+  grp('期限切れ', open.filter(function(x) { return _fbDueGrp(x) === 'od'; }));
+  grp('今週まで', open.filter(function(x) { return _fbDueGrp(x) === 'w'; }));
+  grp('確認待ち（確認をお願いします）', open.filter(function(x) { return x.status === 'check' && !hot(x); }));
+  grp('対応中', open.filter(function(x) { return x.status === 'doing' && !hot(x); }));
+  grp('改修する', open.filter(function(x) { return x.status === 'fix' && !hot(x); }));
+  grp('検討中', open.filter(function(x) { return x.status === 'review' && !hot(x); }));
+  grp('新着', open.filter(function(x) { return x.status === 'new' && !hot(x); }));
+  var wk = Date.now() - 7 * 86400000;
+  grp('この1週間で完了', _fb.items.filter(function(x) { var a = _fbTs(x.statusAt); return x.status === 'done' && a && a.getTime() >= wk; }));
+  return L.join('\n') + '\n';
+}
+function fbCopyProgress() { var t = _fbProgressText(); _fbCopy(t).then(function(ok) { if (ok) toast('💬 進捗まとめをコピーしました（Slackに貼ってください）'); else _fbShowText(t); }); }
+// v817: 直した版が出たら自動で「確認待ち」に（更新のお知らせに #番号 を書いた版。Claudeに渡したもの＝改修する・対応中だけ）
+function _fbAutoCheck() {
+  if (!_fbIsOwner() || typeof RELEASE_NOTES === 'undefined') return 0;
+  var byNo = {};
+  RELEASE_NOTES.slice().reverse().forEach(function(r) { (r.items || []).forEach(function(t) { String(t).replace(/#(\d+)/g, function(m, n) { byNo[n] = r.v; return m; }); }); }); // 同じ番号が何度も出たら新しい版
+  var ts = firebase.firestore.FieldValue.serverTimestamp(), n = 0;
+  _fb.items.forEach(function(x) {
+    var v = byNo[String(x.no)]; if (!v || (x.status !== 'doing' && x.status !== 'fix')) return;
+    var from = _fbStLb(x.status).lb; n++;
+    _fbUpdate(x.id, { status: 'check', statusAt: ts, statusBy: _fbMyName(), doneVer: v }).then(function() { _fbAddNote(x.id, { kind: 'status', text: from + ' → 確認待ち（' + v + ' で直しました・自動）' }).catch(function() {}); }).catch(function() {});
+    x.status = 'check'; x.doneVer = v; x.statusAt = new Date().toISOString();
+  });
+  return n;
 }
 function _fbShowText(text) { // コピーできない端末：文章を出して手でコピー
   _p2SheetClose('fbTxtOv');
@@ -5056,7 +5184,7 @@ function fbUq(v) { _fbUq = String(v || '').toLowerCase(); _fbMemRender(); }
 function _fbMemRender() {
   var b = document.getElementById('fbMemBody'); if (!b || !_fbUsers) return;
   var cfg = _fb.cfg || { members: [], names: {} }, mem = cfg.members || [];
-  var list = _fbUsers.filter(function(u) { return u.id !== OWNER_UID && (!_fbUq || ((u.name || '') + (u.union || '') + (u.email || '')).toLowerCase().indexOf(_fbUq) >= 0); });
+  var list = _fbUsers.filter(function(u) { return !isOwnerUid(u.id) && (!_fbUq || ((u.name || '') + (u.union || '') + (u.email || '')).toLowerCase().indexOf(_fbUq) >= 0); });
   list.sort(function(a, b2) { return (mem.indexOf(b2.id) >= 0) - (mem.indexOf(a.id) >= 0) || (a.name || '').localeCompare(b2.name || ''); });
   b.innerHTML = '<div class="fb-who" style="margin-bottom:6px">選んでいる人 <b>' + mem.length + '人</b></div>' + list.slice(0, 200).map(function(u) {
     var on = mem.indexOf(u.id) >= 0;
@@ -5960,6 +6088,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v817', d:'2026-10-19', items:['「バグ・要望」を「バグ・要望・アイデア」に：種類にアイデア、状態に検討中・確認待ち、いつまでに（今週中・今月中・来月・いつか／日付）と「期限で見る」、対象（NAVIGATOR・受付システム）・依頼した人・Slackのリンク','管理者は馬越さんも。直した版が出たものは自動で「確認待ち」に。Slackに返す文と進捗まとめをコピーできます'] },
   { v:'v816', d:'2026-10-19', items:['使い勝手レビュー（期間限定のアンケート）：期間中はHOMEにお願いが出ます。使っている機能はその中のどれを使っているかまで選べます','結果はオーナーと指定した人だけが見られます（設定 › レビューの結果）'] },
   { v:'v815', d:'2026-10-18', items:['受付連携で、ほかの地域のユニオンで活動している人もつなげるように（その人のユニオンの受付管理者が名簿で「MAPで連携するユニオン」を選んだ人だけ）'] },
   { v:'v814', d:'2026-10-18', items:['研修の記録を押した時に「直す」を追加。ステップ・日にち・Aさん・結果（フォローは内容）を直せます（#19）'] },
@@ -21032,7 +21161,7 @@ function _stRender() {
       + '<div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">ℹ</span><span>バージョン<small class="gm-saved">' + (window._gmSavedHM ? window._gmSavedHM + ' 保存済み' : '') + '</small></span><span style="flex:none;font-family:Inter,sans-serif;color:var(--text-mid)">' + evEsc(APP_JS_VERSION) + '</span></div></div>'
       + '<div class="st-gh">使い方</div><div class="st-ls">' + _stLi('❓', '使い方ガイド', 'はじめての案内・画面ごとの説明・よくある質問', 'gdMenu()') + '</div>' // v755
       + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
-      + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望', '', 'fbOpen()') : '') // v667
+      + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望・アイデア', '', 'fbOpen()') : '') // v667・v817
       + _rvStLis() // v816: 使い勝手レビュー・結果
       + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true) + '</div>'; // v773: 「組織MAPをクリア」は削除
   } else if (_stPg === 'prof') {
@@ -22114,7 +22243,7 @@ function renderMenuHub() {
   // v684: ユニオン予定は「設定 › カレンダー」の中へ
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
-  if (_fb && _fb.ok) S += sb(icn('bug') + ' バグ・要望', 'fbOpen()', _fb.newN || ''); // v666: 絵文字ではなくアイコン
+  if (_fb && _fb.ok) S += sb(icn('bug') + ' バグ・要望・アイデア', 'fbOpen()', _fb.newN || ''); // v666: 絵文字ではなくアイコン
   if (_rvActive() && !viewingOwnerUid) S += sb(icn('star') + ' レビュー', 'rvOpen()', _rv.mine ? '' : '!'); // v816
   if (_rvViewer()) S += sb(icn('chart') + ' レビューの結果', 'rvResOpen()'); // v816
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
