@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v815';
+var APP_JS_VERSION = 'v816';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v815';
+  var DATA_VERSION = 'v816';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4298,6 +4298,348 @@ function switchView(v) {
   else if (v==='ol') renderOL();
   // v511: eventsはsetEventsMode内で描画済み（ここで再描画すると毎回2回描いていた）
   else if (v==='plan') renderPlan();
+}
+// ════ v816: 総合レビュー（使い勝手のアンケート・期間はオーナーが設定）。名前は自動で付く。結果はオーナー＋オーナーが指定した人だけ ════
+// Firestore: rvConfig/main { round, title, from, to, viewers:[uid], names:{uid:名前}, rounds:[{id,title,from,to}] } ／ rvAnswers/{round}_{uid}
+//   答え（a）: { all:★1-5, nps:0-10, freq, f:{ 機能のk: { s:[使っている詳細], st:★1-5, n:'くわしく' } }, cf:[わかりにくい機能のk], cfn, sp:★1-5, good, fix, wish }
+var RV_FEATS = [ // [k, 見出し, 使っているもの（選択式）, バグ・要望の画面]
+  ['home', 'HOME（今日）', ['今日のToDo', '今日の予定', '今週やること', '気になる人', '再アプローチ', '誕生日', 'インサイト', 'はじめのステップ', 'お知らせ・更新内容', '実績・ランキング'], 'HOME'],
+  ['map', 'MAP（現状MAP）', ['ツリー表示', 'サークル表示', 'テーブル表示', 'カンバン表示', '＋ 追加（フロント）', '段の表示', '地域で絞り込み', '絞り込み・並び', '名前で探す', '条件でくわしく探す', '月の切りかえ', 'LTSV・稼働・S', '課題パネル', '全画面', 'PDFで保存', '翌月コピー', 'CSV出力', '3Dで見る'], 'MAP'],
+  ['ideal', '理想MAP', ['現状⇄理想の切替', '理想 vs 現状', 'LTSV 目標', '現状から作り直す', '課題パネル'], '理想MAP'],
+  ['member', 'メンバーの画面（MAPで人を押す）', ['タイトル', '今月の数字', '研修ステップ・結果', '活動', 'やる気・優先', 'メモ', 'プロフィール', '写真', '上の人を変える', 'フロント追加'], 'メンバー編集'],
+  ['events', '予定（カレンダー）', ['月表示', '週表示', '日表示', '予定を足す', '繰り返し', '予定の通知', 'カテゴリ（色分け）', '共有範囲', 'ユニオン予定', 'Googleカレンダー連携'], '予定'],
+  ['todo', 'ToDo', ['タスクを足す', '今日／すべて', 'メンバーのタスク', 'リスト', 'スワイプで完了・削除', '気になる人からToDoへ'], 'ToDo'],
+  ['plan', 'PLAN', ['年の目標・ロードマップ', 'マイルストーン', '戦略・戦術', '計画シート', 'シートを印刷', '理想（理想の生活）', '夢100', 'シミュレーション', 'チェック', '振り返り', 'やる理由（作文）', 'BB早見表'], 'PLAN'],
+  ['stats', 'データ（ANALYTICS）', ['推移', 'コミッション', 'S稼働', 'BR', '動かす数字', '稼働・人数', '研修', 'パワーライン', '地域', '比較'], 'データ'],
+  ['ol', 'OL', ['今月の3〜7人OL', '個別OL', '要フォロー', 'フレッシュ', 'OLを企画', '反応を記入', 'OL対象外'], 'OL'],
+  ['cklink', '受付連携', ['稼働を取り込む', '名簿から追加', '名前をそろえる', '研修の自動取り込み', 'カードコレクション'], '受付'],
+  ['share', '共有', ['MAPの共有', '共有MAP', '結合', '表示チーム切替'], 'MAP'],
+  ['settings', '設定', ['プロフィール', '見た目（ライト/ダーク）', '通知', 'カレンダー設定', '変更履歴', 'お知らせ・更新内容'], 'その他'],
+  ['guide', '使い方', ['はじめての案内', 'はじめのステップ', '画面ごとのガイド', 'よくある質問'], 'その他']
+];
+var RV_FREQ = [['d', 'ほぼ毎日'], ['w3', '週に数回'], ['w1', '週1くらい'], ['m', '月に数回'], ['r', 'ほとんど使わない']];
+var _rv = { cfg: null, mine: null, loaded: false, step: 0, a: null, res: null, users: null, tab: 'sum', un: '', det: null, round: '' };
+function _rvIsOwner() { return !!currentUser && typeof isOwnerUid === 'function' && isOwnerUid(currentUser.uid); }
+function _rvViewer() { return !!currentUser && (_rvIsOwner() || !!(_rv.cfg && (_rv.cfg.viewers || []).indexOf(currentUser.uid) >= 0)); }
+function _rvActive() { var c = _rv.cfg, t = evTodayYmd(); return !!(c && c.round && c.from && c.to && t >= c.from && t <= c.to); }
+function _rvMD(d) { var p = String(d || '').split('-'); return p.length === 3 ? parseInt(p[1], 10) + '/' + parseInt(p[2], 10) : ''; }
+function _rvFeat(k) { for (var i = 0; i < RV_FEATS.length; i++) if (RV_FEATS[i][0] === k) return RV_FEATS[i]; return null; }
+function _rvDraftKey() { return 'gm_rvDraft_' + ((_rv.cfg && _rv.cfg.round) || '') + '_' + ((currentUser && currentUser.uid) || ''); }
+function _rvSaveDraft() { try { localStorage.setItem(_rvDraftKey(), JSON.stringify(_rv.a || {})); } catch (e) {} }
+// ── データの読み書き（テストで差し替えられるように1か所に） ──
+function _rvLoadCfg() { return fsGet('rvConfig/main'); }
+function _rvSaveCfg(c) { return db.doc('rvConfig/main').set(c); }
+function _rvLoadMine(round) { return _fsGetRaw('rvAnswers/' + round + '_' + currentUser.uid).catch(function() { return null; }); }
+function _rvLoadAll(round) { return db.collection('rvAnswers').where('round', '==', round).get().then(function(qs) { var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; }); }
+function _rvWrite(doc, isNew) {
+  var ts = firebase.firestore.FieldValue.serverTimestamp();
+  var d = Object.assign({}, doc, { updatedAt: ts }); if (isNew) d.createdAt = ts;
+  return db.doc('rvAnswers/' + doc.round + '_' + currentUser.uid)[isNew ? 'set' : 'update'](d);
+}
+// ── ログイン後に1回：期間中か・答えたか ──
+function rvInit() {
+  if (!currentUser || !db) return Promise.resolve();
+  return _rvLoadCfg().then(function(c) {
+    _rv.cfg = c || null; _rv.loaded = true;
+    if (!_rvActive()) { _rv.mine = null; return null; }
+    return _rvLoadMine(c.round).then(function(m) { _rv.mine = m; });
+  }).then(function() {
+    _rvSyncEntry();
+    if (/[?&]review=1\b/.test(location.search || '') && !window._rvAsked) { window._rvAsked = 1; try { history.replaceState(null, '', location.pathname); } catch (e) {} setTimeout(rvOpen, 600); }
+  }).catch(function() { _rv.loaded = true; });
+}
+function _rvSyncEntry() {
+  try { if (currentView === 'home') { if (typeof renderMenuHub === 'function') renderMenuHub(); if (typeof renderHome === 'function' && typeof isPCMode === 'function' && isPCMode()) renderHome(); } } catch (e) {}
+}
+// HOMEのお願い（期間中・まだ答えていない人だけ）
+function _rvHomeCard() {
+  try {
+    if (viewingOwnerUid || !_rvActive() || _rv.mine) return '';
+    _rvCss();
+    return '<div class="rv-card" onclick="rvOpen()"><span class="ic">' + icn('star') + '</span><span class="tx"><b>' + evEsc(_rv.cfg.title || 'NAVIGATORの使い勝手レビュー') + 'のお願い</b><small>3分ほどで終わります・' + _rvMD(_rv.cfg.to) + 'まで</small></span><span class="go">答える ›</span></div>';
+  } catch (e) { return ''; }
+}
+// 設定・メニューの入口
+function _rvStLis() {
+  var h = '';
+  if (_rvActive() && !viewingOwnerUid) h += _stLi(icn('star'), evEsc((_rv.cfg && _rv.cfg.title) || '使い勝手レビュー'), _rv.mine ? '回答ずみ（直せます）' : _rvMD(_rv.cfg.to) + 'まで', 'rvOpen()');
+  if (_rvViewer()) h += _stLi(icn('chart'), 'レビューの結果', '', 'rvResOpen()');
+  return h;
+}
+function _rvCss() {
+  if (document.getElementById('rvCss')) return;
+  if (typeof _fbCss === 'function') _fbCss();
+  var st = document.createElement('style'); st.id = 'rvCss';
+  st.textContent = ".rv-card{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:12px 14px;border-radius:14px;cursor:pointer;background:color-mix(in srgb,var(--gold) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--gold) 45%,transparent)}.rv-card .ic{color:var(--gold);display:flex}.rv-card .tx{flex:1;min-width:0}.rv-card b{display:block;font-size:14px;color:var(--text)}.rv-card small{font-size:11.5px;color:var(--text-dim)}.rv-card .go{font-size:12.5px;font-weight:900;color:var(--gold);white-space:nowrap}\n"
+    + ".rv-q{font-size:14px;font-weight:800;color:var(--text);margin:18px 0 8px}.rv-q small{font-weight:600;color:var(--text-dim);font-size:11.5px;margin-left:6px}\n"
+    + ".rv-stars{display:flex;gap:6px}.rv-stars span{display:flex;cursor:pointer;color:var(--text-dim);user-select:none;opacity:.55}.rv-stars span svg{width:32px;height:32px;fill:none}.rv-stars span.on{color:var(--gold);opacity:1}.rv-stars span.on svg{fill:var(--gold)}.rv-stars.sm span svg{width:26px;height:26px}\n"
+    + ".rv-nps{display:grid;grid-template-columns:repeat(11,1fr);gap:3px}.rv-nps span{text-align:center;padding:9px 0;border-radius:8px;background:var(--surface2);font:800 13px Inter,sans-serif;color:var(--text-dim);cursor:pointer}.rv-nps span.on{background:var(--accent);color:#06231c}.rv-nl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-dim);margin-top:3px}\n"
+    + ".rv-ft{border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;background:var(--surface)}.rv-ft.on{border-color:color-mix(in srgb,var(--accent) 55%,transparent)}.rv-fh{display:flex;align-items:center;gap:8px;cursor:pointer}.rv-fh b{flex:1;font-size:14px;color:var(--text)}.rv-fh .sw{font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--surface2);color:var(--text-dim)}.rv-ft.on .rv-fh .sw{background:var(--accent);color:#06231c}\n"
+    + ".rv-fb{margin-top:8px}.rv-fb .fb-lb{margin:8px 0 6px}\n"
+    + ".rv-bar{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);margin:5px 0}.rv-bar .l{width:9.5em;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rv-bar .b{flex:1;height:9px;border-radius:5px;background:var(--surface2);overflow:hidden}.rv-bar .b i{display:block;height:100%;background:var(--accent);border-radius:5px}.rv-bar .n{width:4.2em;text-align:right;font:700 12px Inter,sans-serif;color:var(--text-dim)}\n"
+    + ".rv-kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:4px 0 6px}.rv-kpi div{background:var(--surface2);border-radius:12px;padding:10px 12px}.rv-kpi small{display:block;font-size:11px;color:var(--text-dim);font-weight:700}.rv-kpi b{font:800 22px Inter,sans-serif;color:var(--text)}.rv-kpi b em{font-style:normal;font-size:12px;color:var(--text-dim);margin-left:3px}\n"
+    + ".rv-cm{border-top:1px solid var(--border);padding:9px 0;font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word}.rv-cm small{display:block;color:var(--text-dim);font-size:11px;white-space:normal}.rv-cm .to{font-size:11.5px;font-weight:800;color:var(--accent);cursor:pointer;margin-left:8px;white-space:nowrap}\n"
+    + ".rv-st{font-size:11.5px;color:var(--text-dim);margin:2px 0 10px}";
+  document.head.appendChild(st);
+}
+function _rvSheet(id, inner) {
+  _rvCss();
+  _p2SheetClose(id);
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = id; ov.style.zIndex = '645';
+  ov.onclick = function(e) { if (e.target === ov) _p2SheetClose(id); };
+  ov.innerHTML = '<div class="ms-sheet fb-sheet"><div class="ms-grip"></div><div id="' + id + 'M" style="display:flex;flex-direction:column;flex:1;min-height:0">' + (inner || '') + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+}
+function _rvStarsHtml(v, on, sm) { var h = '<div class="rv-stars' + (sm ? ' sm' : '') + '">'; for (var i = 1; i <= 5; i++) h += '<span class="' + (v >= i ? 'on' : '') + '" onclick="' + on.replace('#', i) + '" title="' + i + '">' + icn('star') + '</span>'; return h + '</div>'; } // ★の文字は絵文字のアイコン（いつも金色）になるので線のアイコンで
+// ── 答える ──
+function rvOpen() {
+  if (!_rvActive()) { toast('いまはレビューの期間ではありません'); return; }
+  var a = null;
+  try { a = JSON.parse(localStorage.getItem(_rvDraftKey()) || 'null'); } catch (e) {}
+  _rv.a = (_rv.mine && _rv.mine.a) ? JSON.parse(JSON.stringify(_rv.mine.a)) : (a || {});
+  _rv.a.f = _rv.a.f || {}; _rv.a.cf = _rv.a.cf || [];
+  _rv.step = 0;
+  _rvSheet('rvOv'); _rvRender();
+}
+function _rvRender() {
+  var box = document.getElementById('rvOvM'); if (!box) return;
+  var A = _rv.a, s = _rv.step, h = '';
+  var top = '<div class="fb-top"><span class="t">' + evEsc((_rv.cfg && _rv.cfg.title) || '使い勝手レビュー') + '</span><span class="sp"></span><span class="fb-ic" onclick="_p2SheetClose(\'rvOv\')">✕</span></div>';
+  h += '<div class="fb-body"><div class="rv-st">' + (s + 1) + ' / 3　' + ['全体', '使っている機能', 'ひとこと'][s] + '・' + evEsc(_fbMyName()) + 'さんの名前で送ります' + (_rv.mine ? '（回答ずみ・直して送り直せます）' : '') + '</div>';
+  if (s === 0) {
+    h += '<div class="rv-q">NAVIGATOR全体の満足度</div>' + _rvStarsHtml(A.all || 0, 'rvSet(\'all\',#)');
+    h += '<div class="rv-q">人にすすめたいと思いますか<small>0＝思わない・10＝とても思う</small></div><div class="rv-nps">';
+    for (var i = 0; i <= 10; i++) h += '<span class="' + (A.nps === i ? 'on' : '') + '" onclick="rvSet(\'nps\',' + i + ')">' + i + '</span>';
+    h += '</div>';
+    h += '<div class="rv-q">どのくらい使っていますか</div><div class="fb-chips">' + RV_FREQ.map(function(x) { return '<span class="' + (A.freq === x[0] ? 'on' : '') + '" onclick="rvSet(\'freq\',\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>';
+  } else if (s === 1) {
+    h += '<div class="fb-who">使っている機能を押して、その中で使っているものを選んでください（くわしくは書かなくても大丈夫です）</div>';
+    h += RV_FEATS.map(function(F) {
+      var f = A.f[F[0]], on = !!f;
+      var r = '<div class="rv-ft' + (on ? ' on' : '') + '"><div class="rv-fh" onclick="rvFeat(\'' + F[0] + '\')"><b>' + evEsc(F[1]) + '</b><span class="sw">' + (on ? '使っている' : '使っていない') + '</span></div>';
+      if (on) {
+        r += '<div class="rv-fb"><div class="fb-lb">使っているもの<small>いくつでも</small></div><div class="fb-chips">' + F[2].map(function(sub, j) { return '<span class="' + ((f.s || []).indexOf(sub) >= 0 ? 'on' : '') + '" onclick="rvSub(\'' + F[0] + '\',' + j + ')">' + evEsc(sub) + '</span>'; }).join('') + '</div>'
+          + '<div class="fb-lb">使いやすさ</div>' + _rvStarsHtml(f.st || 0, 'rvFst(\'' + F[0] + '\',#)', true)
+          + '<div class="fb-lb">くわしく<small>任意</small></div><textarea class="fi fb-ta" placeholder="例：〇〇の時に△△がわかりにくい" onchange="rvFnote(\'' + F[0] + '\',this.value)">' + evEsc(f.n || '') + '</textarea></div>';
+      }
+      return r + '</div>';
+    }).join('');
+  } else {
+    h += '<div class="rv-q">わかりにくい・迷った機能<small>いくつでも</small></div><div class="fb-chips">' + RV_FEATS.map(function(F) { return '<span class="' + (A.cf.indexOf(F[0]) >= 0 ? 'on' : '') + '" onclick="rvCf(\'' + F[0] + '\')">' + evEsc(F[1]) + '</span>'; }).join('') + '</div>'
+      + '<textarea class="fi fb-ta" placeholder="どこで・どう迷ったか（任意）" onchange="rvSetT(\'cfn\',this.value)">' + evEsc(A.cfn || '') + '</textarea>';
+    h += '<div class="rv-q">動きの速さ・安定</div>' + _rvStarsHtml(A.sp || 0, 'rvSet(\'sp\',#)');
+    h += '<div class="rv-q">良かったところ<small>任意</small></div><textarea class="fi fb-ta" onchange="rvSetT(\'good\',this.value)">' + evEsc(A.good || '') + '</textarea>';
+    h += '<div class="rv-q">一番直してほしいところ<small>任意</small></div><textarea class="fi fb-ta" onchange="rvSetT(\'fix\',this.value)">' + evEsc(A.fix || '') + '</textarea>';
+    h += '<div class="rv-q">あったらうれしい機能<small>任意</small></div><textarea class="fi fb-ta" onchange="rvSetT(\'wish\',this.value)">' + evEsc(A.wish || '') + '</textarea>';
+  }
+  h += '</div><div class="fb-foot">' + (s > 0 ? '<span class="fb-btn" onclick="rvStep(-1)">‹ 戻る</span>' : '<span class="fb-btn" onclick="_p2SheetClose(\'rvOv\')">あとで</span>')
+    + (s < 2 ? '<span class="fb-btn pri" onclick="rvStep(1)">次へ ›</span>' : '<span class="fb-btn pri" onclick="rvSubmit()">' + (_rv.mine ? '送り直す' : '送る') + '</span>') + '</div>';
+  var b0 = box.querySelector('.fb-body'), sc = b0 ? b0.scrollTop : 0;
+  box.innerHTML = top + h;
+  var b1 = box.querySelector('.fb-body'); if (b1 && !_rv._toTop) b1.scrollTop = sc; _rv._toTop = false;
+}
+function _rvSync() { var box = document.getElementById('rvOvM'); if (!box) return; Array.prototype.forEach.call(box.querySelectorAll('textarea'), function(t) { try { t.onchange && t.onchange(); } catch (e) {} }); }
+function rvSet(k, v) { _rvSync(); _rv.a[k] = v; _rvSaveDraft(); _rvRender(); }
+function rvSetT(k, v) { _rv.a[k] = String(v || '').trim().slice(0, 1000); _rvSaveDraft(); }
+function rvFeat(k) { _rvSync(); if (_rv.a.f[k]) delete _rv.a.f[k]; else _rv.a.f[k] = { s: [], st: 0, n: '' }; _rvSaveDraft(); _rvRender(); }
+function rvSub(k, j) { _rvSync(); var F = _rvFeat(k), f = _rv.a.f[k]; if (!F || !f) return; var sub = F[2][j], i = f.s.indexOf(sub); if (i >= 0) f.s.splice(i, 1); else f.s.push(sub); _rvSaveDraft(); _rvRender(); }
+function rvFst(k, v) { _rvSync(); if (_rv.a.f[k]) _rv.a.f[k].st = v; _rvSaveDraft(); _rvRender(); }
+function rvFnote(k, v) { if (_rv.a.f[k]) _rv.a.f[k].n = String(v || '').trim().slice(0, 1000); _rvSaveDraft(); }
+function rvCf(k) { _rvSync(); var i = _rv.a.cf.indexOf(k); if (i >= 0) _rv.a.cf.splice(i, 1); else _rv.a.cf.push(k); _rvSaveDraft(); _rvRender(); }
+function rvStep(d) {
+  _rvSync();
+  if (d > 0 && _rv.step === 0 && (!_rv.a.all || !_rv.a.freq)) { toast('満足度と使っている頻度を選んでください'); return; }
+  if (d > 0 && _rv.step === 1 && !Object.keys(_rv.a.f).length) { toast('使っている機能を1つ以上選んでください'); return; }
+  _rv.step = Math.max(0, Math.min(2, _rv.step + d)); _rv._toTop = true; _rvRender();
+}
+function rvSubmit() {
+  _rvSync();
+  if (!_rvActive()) { toast('レビューの期間が終わっています'); return; }
+  var isNew = !_rv.mine, A = JSON.parse(JSON.stringify(_rv.a));
+  var doc = { round: _rv.cfg.round, uid: currentUser.uid, name: _fbMyName(), union: (currentUser && currentUser.union) || '', ver: (typeof APP_JS_VERSION !== 'undefined' ? APP_JS_VERSION : ''), device: _fbDevice(), a: A };
+  _rvWrite(doc, isNew).then(function() {
+    _rv.mine = Object.assign({}, doc);
+    try { localStorage.removeItem(_rvDraftKey()); } catch (e) {}
+    _p2SheetClose('rvOv'); toast('✓ ' + (isNew ? '送りました。ご協力ありがとうございます！' : '送り直しました')); _rvSyncEntry();
+  }, function(e) { toast('送れませんでした：' + ((e && e.message) || '通信を確認してください')); });
+}
+// ── 結果（オーナー＋指定した人） ──
+function rvResOpen(round) {
+  if (!_rvViewer()) { toast('レビューの結果を見られる人に指定されていません'); return; }
+  _rv.round = round || (_rv.cfg && _rv.cfg.round) || '';
+  _rv.det = null;
+  _rvSheet('rvResOv', '<div class="fb-empty">読み込み中…</div>');
+  if (!_rv.round) { _rvResRender(); return; }
+  Promise.all([_rvLoadAll(_rv.round), _rv.users ? Promise.resolve(_rv.users) : fsGetCol('users').catch(function() { return null; })]).then(function(r) {
+    _rv.res = r[0] || []; _rv.users = r[1]; _rvResRender();
+  }, function() { var m = document.getElementById('rvResOvM'); if (m) m.innerHTML = '<div class="fb-empty">読み込めませんでした（結果を見られる人に指定されているか確認してください）</div>'; });
+}
+function _rvRoundInfo(id) { var c = _rv.cfg || {}; if (id === c.round) return { id: c.round, title: c.title, from: c.from, to: c.to }; return ((c.rounds || []).filter(function(x) { return x.id === id; })[0]) || { id: id }; }
+function _rvAvg(L) { L = L.filter(function(v) { return typeof v === 'number' && v > 0; }); return L.length ? Math.round(L.reduce(function(s, v) { return s + v; }, 0) / L.length * 10) / 10 : 0; }
+function _rvStats(list) {
+  var n = list.length, S = { n: n, all: _rvAvg(list.map(function(x) { return (x.a || {}).all; })), sp: _rvAvg(list.map(function(x) { return (x.a || {}).sp; })), nps: null, npsD: [], freq: {}, feats: {}, cf: {} };
+  var np = list.map(function(x) { return (x.a || {}).nps; }).filter(function(v) { return typeof v === 'number'; });
+  for (var i = 0; i <= 10; i++) S.npsD.push(np.filter(function(v) { return v === i; }).length);
+  if (np.length) S.nps = Math.round((np.filter(function(v) { return v >= 9; }).length - np.filter(function(v) { return v <= 6; }).length) / np.length * 100);
+  list.forEach(function(x) {
+    var a = x.a || {};
+    if (a.freq) S.freq[a.freq] = (S.freq[a.freq] || 0) + 1;
+    Object.keys(a.f || {}).forEach(function(k) {
+      var f = a.f[k] || {}, F = S.feats[k] = S.feats[k] || { n: 0, st: [], subs: {}, notes: [] };
+      F.n++; if (f.st) F.st.push(f.st);
+      (f.s || []).forEach(function(s) { F.subs[s] = (F.subs[s] || 0) + 1; });
+      if (f.n) F.notes.push({ x: x, t: f.n });
+    });
+    (a.cf || []).forEach(function(k) { S.cf[k] = (S.cf[k] || 0) + 1; });
+  });
+  return S;
+}
+function _rvBar(lb, v, max, tail) { return '<div class="rv-bar"><span class="l">' + evEsc(lb) + '</span><span class="b"><i style="width:' + (max ? Math.round(v / max * 100) : 0) + '%"></i></span><span class="n">' + (tail != null ? tail : v) + '</span></div>'; }
+function _rvWho(x) { return evEsc([x.name, x.union, x.device, x.ver].filter(Boolean).join('・')); }
+function _rvTargets() { return (_rv.users || []).filter(function(u) { return u && u.status === 'active' && (!_rv.un || u.union === _rv.un); }); }
+function _rvResRender() {
+  var box = document.getElementById('rvResOvM'); if (!box) return;
+  var c = _rv.cfg || {}, R = _rvRoundInfo(_rv.round), own = _rvIsOwner();
+  var all = (_rv.res || []).slice().sort(function(a, b) { return String(b.updatedAt && b.updatedAt.seconds || '').localeCompare(String(a.updatedAt && a.updatedAt.seconds || '')); });
+  var list = all.filter(function(x) { return !_rv.un || x.union === _rv.un; });
+  var S = _rvStats(list), tg = _rvTargets(), ans = {}; list.forEach(function(x) { ans[x.uid] = 1; });
+  var unions = {}; all.forEach(function(x) { if (x.union) unions[x.union] = 1; }); (_rv.users || []).forEach(function(u) { if (u && u.status === 'active' && u.union) unions[u.union] = 1; });
+  var h = '<div class="fb-top"><span class="t">レビューの結果</span><span class="sp"></span>' + (own ? '<span class="fb-ic" onclick="rvCfgOpen()" title="期間・見られる人">⚙</span>' : '') + '<span class="fb-ic" onclick="_p2SheetClose(\'rvResOv\')">✕</span></div><div class="fb-body">';
+  if (!_rv.round) return void (box.innerHTML = h + '<div class="fb-empty">まだレビューを始めていません' + (own ? '<br>右上の ⚙ から期間を決めて始めます' : '') + '</div></div>');
+  var rounds = [{ id: c.round, title: c.title }].concat((c.rounds || []).filter(function(x) { return x.id !== c.round; }));
+  h += '<div class="rv-st">' + evEsc(R.title || '使い勝手レビュー') + '・' + _rvMD(R.from) + '〜' + _rvMD(R.to) + (R.id === c.round && _rvActive() ? '（受付中）' : '') + '</div>';
+  if (rounds.length > 1) h += '<div class="fb-chips">' + rounds.map(function(x) { return '<span class="' + (x.id === _rv.round ? 'on' : '') + '" onclick="rvResOpen(\'' + x.id + '\')">' + evEsc(x.title || x.id) + '</span>'; }).join('') + '</div>';
+  var uk = Object.keys(unions).sort();
+  if (uk.length > 1) h += '<div class="fb-chips"><span class="' + (!_rv.un ? 'on' : '') + '" onclick="rvUn(\'\')">全ユニオン</span>' + uk.map(function(u) { return '<span class="' + (_rv.un === u ? 'on' : '') + '" onclick="rvUn(\'' + evEsc(u).replace(/'/g, '') + '\')">' + evEsc(u) + '</span>'; }).join('') + '</div>';
+  h += '<div class="fb-chips">' + [['sum', 'まとめ'], ['feat', '機能'], ['cm', 'ひとこと'], ['who', '回答した人']].map(function(t) { return '<span class="' + (_rv.tab === t[0] ? 'on' : '') + '" onclick="rvTab(\'' + t[0] + '\')">' + t[1] + '</span>'; }).join('') + '</div>';
+  if (_rv.det) { h += _rvDetHtml(_rv.det); }
+  else if (_rv.tab === 'sum') {
+    h += '<div class="rv-kpi"><div><small>回答</small><b>' + S.n + (tg.length ? '<em>/ ' + tg.length + '人</em>' : '<em>人</em>') + '</b></div><div><small>全体の満足度</small><b>' + (S.all || '—') + '<em>/ 5</em></b></div>'
+      + '<div><small>すすめたい度（NPS）</small><b>' + (S.nps === null ? '—' : (S.nps > 0 ? '+' : '') + S.nps) + '</b></div><div><small>速さ・安定</small><b>' + (S.sp || '—') + '<em>/ 5</em></b></div></div>';
+    var mx = Math.max.apply(null, S.npsD.concat([1]));
+    h += '<div class="fb-lb">すすめたい度の分布<small>9〜10＝すすめたい・0〜6＝すすめない</small></div>' + S.npsD.map(function(v, i) { return _rvBar(String(i), v, mx); }).join('');
+    var fm = Math.max.apply(null, RV_FREQ.map(function(x) { return S.freq[x[0]] || 0; }).concat([1]));
+    h += '<div class="fb-lb">使っている頻度</div>' + RV_FREQ.map(function(x) { return _rvBar(x[1], S.freq[x[0]] || 0, fm); }).join('');
+    var cfm = Math.max.apply(null, Object.keys(S.cf).map(function(k) { return S.cf[k]; }).concat([1]));
+    var cfk = Object.keys(S.cf).sort(function(a, b) { return S.cf[b] - S.cf[a]; });
+    if (cfk.length) h += '<div class="fb-lb">わかりにくい・迷った機能</div>' + cfk.map(function(k) { var F = _rvFeat(k); return _rvBar(F ? F[1] : k, S.cf[k], cfm); }).join('');
+    if (tg.length) { var no = tg.filter(function(u) { return !ans[u.id]; }); h += '<div class="fb-lb">まだ答えていない人 ' + no.length + '人<small>NAVIGATORを使っている人（承認ずみ）</small></div><div class="fb-who">' + (no.length ? no.map(function(u) { return evEsc(u.name || '（名前なし）') + (u.union && !_rv.un ? '<small>（' + evEsc(u.union) + '）</small>' : ''); }).join('、') : 'みんな答えました 🎉') + '</div>'; }
+  } else if (_rv.tab === 'feat') {
+    h += '<div class="fb-who">使っている人の数・使いやすさ（★の平均）・その中で使っているもの</div>';
+    var ks = RV_FEATS.map(function(F) { return F[0]; }).sort(function(a, b) { return ((S.feats[b] || {}).n || 0) - ((S.feats[a] || {}).n || 0); });
+    h += ks.map(function(k) {
+      var F = _rvFeat(k), D = S.feats[k] || { n: 0, st: [], subs: {}, notes: [] }, av = _rvAvg(D.st);
+      var r = '<div class="rv-ft on"><div class="rv-fh"><b>' + evEsc(F[1]) + '</b><span style="font-size:12px;color:var(--text-dim);font-weight:800">' + D.n + '人' + (av ? '・★' + av : '') + (S.cf[k] ? '・迷った ' + S.cf[k] + '人' : '') + '</span></div>';
+      if (D.n) {
+        var sk = F[2].slice().sort(function(a, b) { return (D.subs[b] || 0) - (D.subs[a] || 0); }), sm = Math.max.apply(null, sk.map(function(s) { return D.subs[s] || 0; }).concat([1]));
+        r += '<div class="rv-fb">' + sk.map(function(s) { return _rvBar(s, D.subs[s] || 0, sm, (D.subs[s] || 0) + '人'); }).join('')
+          + D.notes.map(function(o) { return _rvCmHtml(o.t, o.x, F[3], F[1]); }).join('') + '</div>';
+      }
+      return r + '</div>';
+    }).join('');
+  } else if (_rv.tab === 'cm') {
+    [['fix', '一番直してほしいところ'], ['wish', 'あったらうれしい機能'], ['good', '良かったところ'], ['cfn', 'わかりにくい・迷ったところ']].forEach(function(q) {
+      var L = list.filter(function(x) { return (x.a || {})[q[0]]; });
+      h += '<div class="fb-lb">' + q[1] + '<small>' + L.length + '件</small></div>' + (L.length ? L.map(function(x) { return _rvCmHtml(x.a[q[0]], x, q[0] === 'good' ? '' : 'その他'); }).join('') : '<div class="fb-who">まだありません</div>');
+    });
+  } else {
+    h += list.length ? list.map(function(x) { var a = x.a || {}; return '<div class="fb-u" onclick="rvDet(\'' + x.id + '\')"><span>' + evEsc(x.name || '') + '<br><small>' + evEsc([x.union, x.device, x.ver].filter(Boolean).join('・')) + '</small></span><span class="sp"></span><small>★' + (a.all || '—') + '・' + (typeof a.nps === 'number' ? a.nps : '—') + '</small><span class="ch">›</span></div>'; }).join('') : '<div class="fb-empty">まだ回答はありません</div>';
+  }
+  h += '</div><div class="fb-foot"><span class="fb-btn" onclick="rvCopyClaude()">📋 Claude用にコピー</span></div>';
+  box.innerHTML = h;
+}
+function _rvCmHtml(t, x, screen, label) {
+  var k = 'c' + Math.random().toString(36).slice(2, 8);
+  (_rv._cm = _rv._cm || {})[k] = { t: t, x: x, screen: screen, label: label || '' };
+  return '<div class="rv-cm">' + evEsc(t) + '<small>' + _rvWho(x) + (typeof _fb !== 'undefined' && _fb.ok && screen !== '' ? '<span class="to" onclick="rvToFb(\'' + k + '\')">→ バグ・要望に回す</span>' : '') + '</small></div>';
+}
+function _rvDetHtml(x) {
+  var a = x.a || {}, fr = RV_FREQ.filter(function(f) { return f[0] === a.freq; })[0];
+  var h = '<div class="fb-who" style="margin-bottom:8px"><span style="color:var(--accent);font-weight:800;cursor:pointer" onclick="rvDet(\'\')">‹ 一覧へ</span></div><div class="fb-who"><b>' + evEsc(x.name || '') + '</b>　' + evEsc([x.union, x.device, x.ver].filter(Boolean).join('・')) + '</div>';
+  h += '<div class="fb-txt">満足度 ★' + (a.all || '—') + '　すすめたい度 ' + (typeof a.nps === 'number' ? a.nps : '—') + '　速さ・安定 ★' + (a.sp || '—') + '　頻度 ' + (fr ? fr[1] : '—') + '</div>';
+  Object.keys(a.f || {}).forEach(function(k) { var F = _rvFeat(k), f = a.f[k] || {}; h += '<div class="fb-txt"><b>' + evEsc(F ? F[1] : k) + (f.st ? '　★' + f.st : '') + '</b>\n' + evEsc((f.s || []).join('・') || '（使っているものの選択なし）') + (f.n ? '\n' + evEsc(f.n) : '') + '</div>'; });
+  if ((a.cf || []).length || a.cfn) h += '<div class="fb-txt"><b>わかりにくい・迷った</b>\n' + evEsc((a.cf || []).map(function(k) { var F = _rvFeat(k); return F ? F[1] : k; }).join('・')) + (a.cfn ? '\n' + evEsc(a.cfn) : '') + '</div>';
+  [['good', '良かったところ'], ['fix', '一番直してほしいところ'], ['wish', 'あったらうれしい機能']].forEach(function(q) { if (a[q[0]]) h += '<div class="fb-txt"><b>' + q[1] + '</b>\n' + evEsc(a[q[0]]) + '</div>'; });
+  return h;
+}
+function rvTab(t) { _rv.tab = t; _rv.det = null; _rvResRender(); }
+function rvUn(u) { _rv.un = u; _rvResRender(); }
+function rvDet(id) { _rv.det = id ? (_rv.res || []).filter(function(x) { return x.id === id; })[0] || null : null; _rvResRender(); }
+// 気になる声を「バグ・要望」の台帳へ（番号が付く）
+function rvToFb(k) {
+  var o = (_rv._cm || {})[k]; if (!o || typeof _fbCreate !== 'function') return;
+  if (!confirm('この声を「バグ・要望」に要望として入れますか？')) return;
+  var scr = FB_SCREENS.indexOf(o.screen) >= 0 ? o.screen : 'その他';
+  _fbCreate({ kind: 'req', screen: scr, title: String(o.t).replace(/\s+/g, ' ').slice(0, 60), did: '使い勝手レビュー（' + (o.x.name || '') + 'さん' + (o.x.union ? '・' + o.x.union : '') + '）より：' + (o.label ? '【' + o.label + '】' : '') + o.t, got: '', want: '', ver: o.x.ver || '', device: o.x.device || '' }, []).then(function(no) { toast('✓ バグ・要望の #' + no + ' に入れました'); }, function() { toast('入れられませんでした'); });
+}
+function _rvClaudeText() {
+  var R = _rvRoundInfo(_rv.round), list = (_rv.res || []).filter(function(x) { return !_rv.un || x.union === _rv.un; }), S = _rvStats(list), tg = _rvTargets();
+  var L = ['NAVIGATORの使い勝手レビューの結果です（' + (R.title || '') + '・' + (R.from || '') + '〜' + (R.to || '') + (_rv.un ? '・' + _rv.un : '') + '）。声をまとめて、直す優先順位と改善案を提案してください（まだ直さない）。', ''];
+  L.push('回答 ' + S.n + '人' + (tg.length ? '／対象 ' + tg.length + '人' : '') + '・全体の満足度 ★' + (S.all || '—') + '・すすめたい度（NPS）' + (S.nps === null ? '—' : S.nps) + '・速さ・安定 ★' + (S.sp || '—'));
+  L.push('頻度：' + RV_FREQ.map(function(x) { return x[1] + ' ' + (S.freq[x[0]] || 0); }).join('・'));
+  L.push('', '■ 機能ごと（使っている人数・★平均・使っているもの）');
+  RV_FEATS.forEach(function(F) {
+    var D = S.feats[F[0]]; if (!D) { L.push('・' + F[1] + '：0人'); return; }
+    L.push('・' + F[1] + '：' + D.n + '人・★' + (_rvAvg(D.st) || '—') + (S.cf[F[0]] ? '・迷った ' + S.cf[F[0]] + '人' : '') + '／' + F[2].map(function(s) { return s + ' ' + (D.subs[s] || 0); }).join('、'));
+    D.notes.forEach(function(o) { L.push('　└ ' + o.t.replace(/\n/g, ' ') + '（' + [o.x.name, o.x.device].filter(Boolean).join('・') + '）'); });
+  });
+  [['fix', '一番直してほしいところ'], ['wish', 'あったらうれしい機能'], ['cfn', 'わかりにくい・迷ったところ'], ['good', '良かったところ']].forEach(function(q) {
+    var X = list.filter(function(x) { return (x.a || {})[q[0]]; }); if (!X.length) return;
+    L.push('', '■ ' + q[1]); X.forEach(function(x) { L.push('・' + x.a[q[0]].replace(/\n/g, ' ') + '（' + [x.name, x.device].filter(Boolean).join('・') + '）'); });
+  });
+  return L.join('\n') + '\n';
+}
+function rvCopyClaude() {
+  var t = _rvClaudeText();
+  var done = function() { toast('📋 コピーしました（Claudeに貼り付けてください）'); };
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(done, function() { prompt('コピーしてください', t); }); return; } } catch (e) {}
+  prompt('コピーしてください', t);
+}
+// ── 設定（オーナー）：タイトル・期間・見られる人・新しい回 ──
+function rvCfgOpen() {
+  if (!_rvIsOwner()) return;
+  var c = _rv.cfg || {};
+  _rvSheet('rvCfgOv');
+  var box = document.getElementById('rvCfgOvM');
+  box.innerHTML = '<div class="fb-top"><span class="t">⚙ レビューの設定</span><span class="sp"></span><span class="fb-ic" onclick="_p2SheetClose(\'rvCfgOv\')">✕</span></div><div class="fb-body">'
+    + '<div class="fb-lb">タイトル</div><input class="fi" id="rvCT" value="' + evEsc(c.title || 'NAVIGATORの使い勝手レビュー') + '">'
+    + '<div class="fb-lb">期間<small>この間だけHOMEにお願いが出て、答えられます</small></div><div class="fb-row"><input class="fi" type="date" id="rvCF" value="' + evEsc(c.from || evTodayYmd()) + '"><span>〜</span><input class="fi" type="date" id="rvCTo" value="' + evEsc(c.to || '') + '"></div>'
+    + '<div class="fb-who" style="margin-top:8px">' + (c.round ? 'いまの回：' + evEsc(c.title || c.round) + '（' + _rvMD(c.from) + '〜' + _rvMD(c.to) + '）。期間だけ変えると同じ回のまま延長・短縮できます' : 'まだ始めていません') + '</div>'
+    + '<div class="fb-lb">結果を見られる人<small>オーナーは常に見られます</small></div><div id="rvCV" class="fb-who">' + ((c.viewers || []).map(function(u) { return evEsc((c.names || {})[u] || u); }).join('、') || 'まだいません') + '</div><div style="margin-top:8px"><span class="fb-btn" onclick="rvViewersOpen()">見られる人を選ぶ</span></div>'
+    + '</div><div class="fb-foot">' + (c.round ? '<span class="fb-btn" onclick="rvCfgSave(1)">新しい回として始める</span>' : '') + '<span class="fb-btn pri" onclick="rvCfgSave(0)">' + (c.round ? '保存' : 'この期間で始める') + '</span></div>';
+}
+function rvCfgSave(newRound) {
+  var c = JSON.parse(JSON.stringify(_rv.cfg || {}));
+  var t = (document.getElementById('rvCT') || {}).value || '', f = (document.getElementById('rvCF') || {}).value || '', to = (document.getElementById('rvCTo') || {}).value || '';
+  if (!f || !to || to < f) { toast('期間（はじめ〜おわり）を入れてください'); return; }
+  if (newRound && !confirm('新しい回として始めますか？（今までの回の結果は残り、結果の画面で切りかえて見られます）')) return;
+  c.title = String(t).trim() || 'NAVIGATORの使い勝手レビュー'; c.from = f; c.to = to;
+  c.rounds = (c.rounds || []).filter(function(x) { return x.id !== c.round; });
+  if (!c.round || newRound) { if (c.round && newRound) c.rounds.unshift({ id: c.round, title: _rv.cfg.title, from: _rv.cfg.from, to: _rv.cfg.to }); c.round = 'r' + f.replace(/-/g, '') + Math.random().toString(36).slice(2, 6); }
+  c.viewers = c.viewers || []; c.names = c.names || {}; c.updatedAt = new Date().toISOString();
+  _rvSaveCfg(c).then(function() { _rv.cfg = c; _rv.mine = null; toast('✓ 保存しました'); _p2SheetClose('rvCfgOv'); rvInit(); rvResOpen(c.round); }, function() { toast('保存できませんでした（Firestoreのルールを確認してください）'); });
+}
+var _rvUq = '';
+function rvViewersOpen() {
+  if (!_rvIsOwner()) return;
+  _rvSheet('rvVwOv', '<div class="fb-top"><span class="t">結果を見られる人</span><span class="sp"></span><span class="fb-ic" onclick="_p2SheetClose(\'rvVwOv\')">✕</span></div><div style="padding:0 16px 8px"><input class="fi" placeholder="名前・ユニオンで探す" oninput="_rvUq=String(this.value||\'\').toLowerCase();_rvVwRender()"></div><div class="fb-body" id="rvVwB"><div class="fb-empty">読み込み中…</div></div>');
+  (_rv.users ? Promise.resolve(_rv.users) : fsGetCol('users')).then(function(l) { _rv.users = l || []; _rvVwRender(); }).catch(function() { var b = document.getElementById('rvVwB'); if (b) b.innerHTML = '<div class="fb-empty">読み込めませんでした</div>'; });
+}
+function _rvVwRender() {
+  var b = document.getElementById('rvVwB'); if (!b) return;
+  var c = _rv.cfg || {}, mem = c.viewers || [];
+  var list = (_rv.users || []).filter(function(u) { return u && u.status !== 'disabled' && !(typeof isOwnerUid === 'function' && isOwnerUid(u.id)) && (!_rvUq || ((u.name || '') + (u.union || '')).toLowerCase().indexOf(_rvUq) >= 0); });
+  list.sort(function(a, b2) { return (mem.indexOf(b2.id) >= 0) - (mem.indexOf(a.id) >= 0) || (a.name || '').localeCompare(b2.name || ''); });
+  b.innerHTML = list.slice(0, 200).map(function(u) { var on = mem.indexOf(u.id) >= 0; return '<div class="fb-u" onclick="rvVwTgl(\'' + u.id + '\')"><span class="fb-cb' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span><span>' + evEsc(u.name || '（名前なし）') + '<br><small>' + evEsc(u.union || '') + '</small></span></div>'; }).join('');
+}
+function rvVwTgl(uid) {
+  var c = _rv.cfg = _rv.cfg || {}; c.viewers = (c.viewers || []).slice(); c.names = Object.assign({}, c.names || {});
+  var i = c.viewers.indexOf(uid), u = (_rv.users || []).filter(function(x) { return x.id === uid; })[0];
+  if (i >= 0) { c.viewers.splice(i, 1); delete c.names[uid]; } else { c.viewers.push(uid); c.names[uid] = (u && u.name) || ''; }
+  _rvVwRender();
+  var cv = document.getElementById('rvCV'); if (cv) cv.innerHTML = c.viewers.map(function(x) { return evEsc(c.names[x] || x); }).join('、') || 'まだいません';
+  _rvSaveCfg(c).then(function() { toast((u && u.name || '') + (i >= 0 ? ' を外しました' : ' を追加しました')); }, function() { toast('保存できませんでした'); });
 }
 // ════ v585: 🐞 バグ・要望（オーナー＋オーナーが指定した人だけ。誰が・いつ書いたかは必ず残す） ════
 // Firestore: fbConfig/main {members:[uid], names:{uid:名前}} ／ fbConfig/seq {n} ／ fbItems/{番号} ＋ imgs・notes のサブコレクション
@@ -5618,6 +5960,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v816', d:'2026-10-19', items:['使い勝手レビュー（期間限定のアンケート）：期間中はHOMEにお願いが出ます。使っている機能はその中のどれを使っているかまで選べます','結果はオーナーと指定した人だけが見られます（設定 › レビューの結果）'] },
   { v:'v815', d:'2026-10-18', items:['受付連携で、ほかの地域のユニオンで活動している人もつなげるように（その人のユニオンの受付管理者が名簿で「MAPで連携するユニオン」を選んだ人だけ）'] },
   { v:'v814', d:'2026-10-18', items:['研修の記録を押した時に「直す」を追加。ステップ・日にち・Aさん・結果（フォローは内容）を直せます（#19）'] },
   { v:'v813', d:'2026-10-18', items:['カレンダーで研修ステップ（PGなど）の予定を作って共有メンバーのNAを選ぶと、相手のMAPのその人の研修にも予定で入るように（#18）'] },
@@ -7685,6 +8028,7 @@ function renderHome() {
   if (_px3On()) { // v711: PCは新しいホーム（今月の帯＋3列）
     wrap.innerHTML = _phHtml({ li: li, pct: pct, streak: streak, thisW: thisW, dwTxt: dwTxt, deltaCls: deltaCls, ftue: ftueHtml, comeback: comebackHtml })
       + _phInsHtml(coachLine, wkD) + '</div>';
+    try { var _rvc = _rvHomeCard(); if (_rvc) wrap.insertAdjacentHTML('afterbegin', _rvc); } catch (eRv) {} // v816
     updateHomeBadge(); renderMonthlyChanges(); return;
   }
   wrap.innerHTML = '<div class="home-wrap">'
@@ -20689,6 +21033,7 @@ function _stRender() {
       + '<div class="st-gh">使い方</div><div class="st-ls">' + _stLi('❓', '使い方ガイド', 'はじめての案内・画面ごとの説明・よくある質問', 'gdMenu()') + '</div>' // v755
       + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
       + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望', '', 'fbOpen()') : '') // v667
+      + _rvStLis() // v816: 使い勝手レビュー・結果
       + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true) + '</div>'; // v773: 「組織MAPをクリア」は削除
   } else if (_stPg === 'prof') {
     h += '<h2 class="ux-h2">プロフィール</h2>'
@@ -21770,12 +22115,15 @@ function renderMenuHub() {
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
   if (_fb && _fb.ok) S += sb(icn('bug') + ' バグ・要望', 'fbOpen()', _fb.newN || ''); // v666: 絵文字ではなくアイコン
+  if (_rvActive() && !viewingOwnerUid) S += sb(icn('star') + ' レビュー', 'rvOpen()', _rv.mine ? '' : '!'); // v816
+  if (_rvViewer()) S += sb(icn('chart') + ' レビューの結果', 'rvResOpen()'); // v816
   if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
   S += sb('❓ 使い方', 'gdMenu()'); // v755
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
   var lg = '<i class="hm-logo gm-lg w" role="img" aria-label="NWP"></i><i class="hm-logo gm-lg d" role="img" aria-label="NWP"></i>'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）。v802: 画像として保存されないよう背景で表示
   var hd = lg + '<h1>HOME</h1>';
   v.innerHTML = '<div class="ux-hub"><div class="ux-hd hm-hd">' + hd + '<span class="r">' + evEsc((currentUser && currentUser.name) || '') + '</span></div>'
+    + _rvHomeCard() // v816: 使い勝手レビューのお願い
     + _gdStepsHtml() // v755: はじめのステップ
     + '<div class="ux-tiles" style="margin-top:10px">' + T.map(_uxTile).join('') + '</div>'
     + '<div class="ux-sm">' + S + '</div></div>';
@@ -37915,6 +38263,7 @@ function loginSuccess(user) {
   // 管理者：承認待ち件数を通知
   checkPendingApprovals();
   setTimeout(function() { try { fbCheckAccess(); } catch (eFb) {} }, 2500); // v585: バグ・要望を見られる人か
+  setTimeout(function() { try { rvInit(); } catch (eRv) {} }, 2700); // v816: 使い勝手レビュー（期間中か・答えたか）
   // ログインステータス記録（共有相手に最終ログインが見える）
   updateLastSeen();
   if (!window._seenTimer) {
