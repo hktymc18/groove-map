@@ -785,6 +785,10 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/fbConfig/main).data.get('members', []));
     }
     function fbName() { return profile(request.auth.uid).get('name', ''); }
+    function fbMineNew(id) { // v822: 自分が書いた「新着」の報告
+      let it = get(/databases/$(database)/documents/fbItems/$(id)).data;
+      return fbOk() && it.get('authorUid', '') == request.auth.uid && it.get('status', '') == 'new';
+    }
     match /fbConfig/main {
       allow read: if fbOk();
       allow write: if isOwnerAdmin();
@@ -811,12 +815,13 @@ service cloud.firestore {
         || (fbOk() && resource.data.authorUid == request.auth.uid && resource.data.status == 'new'
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['kind','screen','title','did','got','want','editedAt','app','reqBy','slackUrl'])
             && request.resource.data.kind in ['bug','req','idea']);
-      allow delete: if isOwnerAdmin();
+      // v822: 間違えて書いた時は、書いた本人も「新着」のうちは消せる（オーナーはいつでも）。スクショ・やりとりを先に消してから本体
+      allow delete: if isOwnerAdmin() || fbMineNew(id);
       match /imgs/{k} {
         allow read: if fbOk();
         allow create: if fbOk() && request.resource.data.byUid == request.auth.uid
           && request.resource.data.data is string && request.resource.data.data.size() < 700000;
-        allow delete: if isOwnerAdmin();
+        allow delete: if isOwnerAdmin() || fbMineNew(id);
       }
       // やりとり：誰が・いつ（サーバー時刻）を必ず残す。管理者の印・状態の記録はオーナーだけ
       match /notes/{nid} {
@@ -827,7 +832,7 @@ service cloud.firestore {
           && request.resource.data.at == request.time
           && (request.resource.data.get('admin', false) == false || isOwnerAdmin())
           && (request.resource.data.get('kind', 'note') == 'note' || isOwnerAdmin());
-        allow delete: if isOwnerAdmin();
+        allow delete: if isOwnerAdmin() || fbMineNew(id);
       }
     }
   }

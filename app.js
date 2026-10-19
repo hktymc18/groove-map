@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v821';
+var APP_JS_VERSION = 'v822';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v821';
+  var DATA_VERSION = 'v822';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4980,7 +4980,7 @@ function _fbDetRender() {
     + '<div class="fb-who">' + (x.reqBy ? '依頼した人 <b>' + evEsc(x.reqBy) + '</b>・' : '') + '書いた人 <b>' + evEsc(x.authorName || '') + '</b>・<b>' + _fbFmt(x.createdAt) + '</b>' + (x.editedAt ? '（' + _fbFmt(x.editedAt, true) + ' に直しました）' : '') + '<br>' + evEsc(x.app || 'NAVIGATOR') + (x.ver ? '・' + evEsc(x.ver) : '') + (x.device ? '・' + evEsc(x.device) : '') + (/^https:\/\//.test(x.slackUrl || '') ? '・<a href="' + evEsc(x.slackUrl) + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:800">Slackを開く</a>' : '') + '</div>'
     + '<div class="fb-txt">' + (sec(L1, x.did) + sec(L2, x.got) + sec('こうなってほしい', x.want)).replace(/\n$/, '') + '</div>';
   if (x.imgN) h += x.imgsPurged ? '<div class="fb-who">スクショは保存期間（' + FB_IMG_KEEP_DAYS + '日）を過ぎたので消えています</div>' : '<div class="fb-imgs">' + (_fb.det.imgs ? _fb.det.imgs.map(function(m) { return '<div class="fb-img" onclick="fbImgBig(\'' + m.id + '\')"><img src="' + m.data + '"></div>'; }).join('') : '<div class="fb-who">スクショを読み込み中…</div>') + '</div>';
-  if (!own && x.authorUid === (currentUser && currentUser.uid) && x.status === 'new') h += '<div style="margin-top:10px"><span class="fb-btn" onclick="fbFormOpen(\'' + x.id + '\')">✎ 内容を直す</span></div>';
+  if (!own && x.authorUid === (currentUser && currentUser.uid) && x.status === 'new') h += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="fb-btn" onclick="fbFormOpen(\'' + x.id + '\')">✎ 内容を直す</span><span class="fb-btn" style="color:var(--red)" onclick="fbDelete()">🗑 消す</span></div>'; // v822
   if (x.status === 'wa' && x.waNote) h += '<div class="fb-lb">🧭 回避のしかた</div><div class="fb-txt" style="margin-top:0">' + evEsc(x.waNote) + '</div>';
   if ((x.status === 'done' || x.status === 'check') && x.doneVer) h += '<div class="fb-lb">' + (x.status === 'check' ? '👀 確認待ち' : '✓ 完了') + '</div><div class="fb-who">' + evEsc(x.doneVer) + ' で直しました' + (x.status === 'check' ? '。動きを確かめて、よければ「完了」にしてください' : '') + '</div>';
   if (own) {
@@ -4990,6 +4990,7 @@ function _fbDetRender() {
     h += '<div class="fb-lb">いつまでに<small>' + (dl ? 'いま：' + dl : 'まだ決めていません') + '</small></div>' + _fbDueHtml(x.dueK === 'd' || (x.due && !x.dueK) ? 'd' : (x.dueK || ''), x.due || '', 'fbDetDue');
     if (x.status === 'wa') h += '<div class="fb-lb">回避のしかた</div><div class="fb-row"><input class="fi" id="fbWa" value="' + evEsc(x.waNote || '') + '" placeholder="例：保存する前に関連メンバーを確認する"><span class="fb-btn" onclick="fbSaveField(\'waNote\',\'fbWa\')">保存</span></div>';
     if (x.status === 'done' || x.status === 'check') h += '<div class="fb-lb">何版で直したか</div><div class="fb-row"><input class="fi" id="fbDoneVer" value="' + evEsc(x.doneVer || '') + '" placeholder="例：v585"><span class="fb-btn" onclick="fbSaveField(\'doneVer\',\'fbDoneVer\')">保存</span></div>';
+    h += '<div style="margin-top:14px"><span class="fb-btn" style="color:var(--red)" onclick="fbDelete()">🗑 この報告を消す</span></div>'; // v822: 間違えて登録した時
     h += '<div class="fb-lb">管理者コメント<small>任意</small></div><textarea class="fi fb-ta" id="fbCmt" placeholder="例：再現した。次の改修でまとめて直します">' + evEsc(x.adminComment || '') + '</textarea><div style="text-align:right;margin-top:6px"><span class="fb-btn" onclick="fbSaveCmt()">コメントを保存</span></div>';
   } else if (x.adminComment) h += '<div class="fb-lb">管理者コメント</div><div class="fb-txt" style="margin-top:0;color:var(--accent)">' + evEsc(x.adminComment) + '</div>';
   h += '<div class="fb-lb">やりとり</div>';
@@ -5009,6 +5010,21 @@ function fbDetDue(k, d) { // v817: 期限（管理者）
   var data = k === 'd' ? { dueK: 'd', due: d || '' } : { dueK: k, due: _fbDueOf(k) };
   if (data.dueK === 'd' && !data.due) data.dueK = '';
   _fbUpdate(x.id, data).then(function() { _fbLocal(x.id, data); _fbDetRender(); _fbRenderList(); toast(data.due || data.dueK === 'l' ? '期限を ' + _fbDueLb(data) + ' にしました' : '期限をなしにしました'); }, function() { toast('保存できませんでした'); });
+}
+// v822: 間違えて登録した報告を消す（オーナーはいつでも・書いた本人は「新着」のうち）。スクショ・やりとりも消す。番号は使い回さない
+function _fbCanDel(x) { return !!x && (_fbIsOwner() || (x.authorUid === (currentUser && currentUser.uid) && x.status === 'new')); }
+function _fbDeleteDoc(id, imgN) {
+  return Promise.all([_fbDelImgs(id, imgN), _fbLoadSub(id, 'notes').then(function(L) { return Promise.all((L || []).map(function(n) { return _fbCol().doc(String(id)).collection('notes').doc(n.id).delete().catch(function() {}); })); }).catch(function() {})])
+    .then(function() { return _fbCol().doc(String(id)).delete(); });
+}
+function fbDelete() {
+  var x = _fbItem(_fb.open); if (!_fbCanDel(x)) return;
+  if (!confirm('#' + x.no + '「' + (x.title || '') + '」を消しますか？\n（スクショ・やりとりも消えます。元に戻せません）')) return;
+  _fbDeleteDoc(x.id, x.imgN).then(function() {
+    _fb.items = _fb.items.filter(function(i) { return i.id !== x.id; }); delete _fb.sel[x.id];
+    _fb.newN = _fb.items.filter(function(i) { return i.status === 'new'; }).length; _fbSyncEntry();
+    _p2SheetClose('fbDetOv'); _fb.open = null; _fbRenderList(); toast('🗑 #' + x.no + ' を消しました');
+  }, function() { toast('消せませんでした（通信・権限を確認してください）'); });
 }
 function fbImgBig(k) {
   var m = (_fb.det && _fb.det.imgs || []).filter(function(x) { return x.id === k; })[0]; if (!m) return;
@@ -6095,6 +6111,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v822', d:'2026-10-19', items:['バグ・要望・アイデアで、間違えて登録した報告を消せるように（書いた本人は「新着」の間・管理者はいつでも）'] },
   { v:'v821', d:'2026-10-19', items:['ホーム画面のアプリを開いた直後に、カレンダーが画面の下にはみ出すことがある問題をもう一度直しました（はじめて開いた時・iPhone 17 Proなど）（#16）'] },
   { v:'v820', d:'2026-10-19', items:['Googleカレンダー連携をなくしました（連携の設定・同期・「Googleカレンダーに追加」）。Googleカレンダーの「MAP予定」に作られた予定はGoogle側にそのまま残ります'] },
   { v:'v819', d:'2026-10-19', items:['使い勝手レビューの「使っている機能」を、まず大きいメニュー（PLAN・MAP・予定・ToDo・データ・その他）から選び、選んだものだけ詳細を選ぶ形に（詳細も少なく）'] },
