@@ -695,6 +695,18 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-dia .mc-sp.s4{left:28%;top:90%;width:96px;height:96px;margin:-48px 0 0 -48px;animation-delay:.9s;}
 @keyframes diaTw{0%,100%{opacity:0;transform:scale(.25) rotate(-8deg);}40%{opacity:1;transform:scale(1) rotate(0);}55%{opacity:.9;transform:scale(.92) rotate(3deg);}80%{opacity:0;transform:scale(.3) rotate(8deg);}}
 @media (prefers-reduced-motion: reduce){ .membercard.skin-dia::before,.membercard.skin-dia::after{animation:none;opacity:0;} .membercard.skin-dia .mc-sp{animation:none;} }
+/* 🖤 PLATINUM（バッジがBLUE DIAMOND・TEAM ELITEの人）: 黒い金属のカード。仕組み（QR収納・名前の自動縮小）はDIAMONDと同じで、見た目だけ上書き */
+.membercard.skin-plat{aspect-ratio:2/3;color:#e4e6ea;background:url('skins/platinum.webp') center/100% 100% no-repeat,#16171a;
+  box-shadow:0 14px 34px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.35);}
+.membercard.skin-plat .mc-brand,.membercard.skin-plat .mc-union,.membercard.skin-plat .mc-name,.membercard.skin-plat .mc-grade,.membercard.skin-plat .mc-no{
+  color:#e4e6ea;text-shadow:0 -1px 0 rgba(0,0,0,.95),0 1px 0 rgba(255,255,255,.22),0 0 8px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.9);}
+.membercard.skin-plat .mc-union,.membercard.skin-plat .mc-brand{top:4.6%;color:#cfd2d8;}
+.membercard.skin-plat .mc-name{top:70.5%;}
+.membercard.skin-plat .mc-grade{top:78%;color:#c9ccd2;}
+.membercard.skin-plat .mc-no{bottom:5.6%;color:#cfd2d8;}
+.membercard.skin-plat .mc-qrb{bottom:4.6%;}
+/* ✨ 反射と星はDIAMONDと同じ（光の流れ・ふちの光・4つの星）。真ん中の星だけロゴの星の位置に合わせる */
+.membercard.skin-plat .mc-sp.s1{left:53.9%;top:35.5%;}
 /* 💀 死神のレアカード: 縁と背景はホロ（虹色のうねりの縁＋きらめく背景）。背景は傾けると逆にずれる（--bx/--by） */
 .membercard.skin-reaperTcg{background:url('skins/reaper-frame.webp') center/100% 100% no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 .membercard.skin-reaperTcg .mc-art{inset:3.4% 4.6%;border-radius:4px;
@@ -1839,10 +1851,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v83';
+var APP_VER = 'v84';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v84', d: '2026/10/19', items: ['🖤 バッジがBLUE DIAMOND・TEAM ELITEの人の会員証を、黒い金属の「PLATINUM」デザインにしました。QRはDIAMONDと同じく、右下の「QR」ボタンで大きく出ます'] },
   { v: 'v83', d: '2026/10/18', items: ['🃏 REVEの会員証を裏返す時、1回転半したように見えていたのを、ちょうど半回転で裏になるように直しました'] },
   { v: 'v82', d: '2026/10/18', items: ['🔗 名簿の編集に「MAPで連携するユニオン」を追加。ほかの地域のユニオンのチームで活動している人は、そのユニオンを選ぶと、そのユニオンのGROOVE MAPの受付連携でこの人だけ（名前・研修の受講・稼働率）つなげるようになります（受付・集計はこれまでどおり所属ユニオンで）'] },
   { v: 'v81', d: '2026/10/18', items: ['🃏 REVEの会員証に裏面ができました（カードをタップすると裏返ります。裏面はREVEのロゴ入り）'] },
@@ -2782,12 +2795,15 @@ function renderCard(c){
   var style = GRADE_STYLES[c.grade || ''];
   var skin = !c.trainee && CARD_SKINS[c.skin || ''] ? c.skin : '';   // ✨ 特別デザインはグレードの色より優先（研修生は除く）
   var dia = !c.trainee && !skin && c.badge === 'DIAMOND';            // 💎 バッジがDIAMONDの人は金属のカード（特別デザインが優先）
+  var plat = !c.trainee && !skin && (c.badge === 'BLUE DIAMOND' || c.badge === 'TEAM ELITE');   // 🖤 PLATINUMのカード
+  if(plat) dia = true;                                               //    （QR収納などはDIAMONDと同じ仕組み）
   var ruby = !c.trainee && !skin && c.badge === 'RUBY';              // 💎 バッジがRUBYの人はルビーのカード
   if(skin){
     card.classList.add('skin-' + skin);
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
   } else if(dia){
     card.classList.add('skin-dia');
+    if(plat) card.classList.add('skin-plat');
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
   } else if(ruby){
     card.classList.add('mc-ruby', 'premium');
