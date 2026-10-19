@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v824';
+var APP_JS_VERSION = 'v825';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v824';
+  var DATA_VERSION = 'v825';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4482,8 +4482,9 @@ function rvResOpen(round) {
   _rv.det = null;
   _rvSheet('rvResOv', '<div class="fb-empty">読み込み中…</div>');
   if (!_rv.round) { _rvResRender(); return; }
-  Promise.all([_rvLoadAll(_rv.round), _rv.users ? Promise.resolve(_rv.users) : fsGetCol('users').catch(function() { return null; })]).then(function(r) {
-    _rv.res = r[0] || []; _rv.users = r[1]; _rvResRender();
+  var accP = _rvLoadAcc(); // v825: 公開範囲（アカウント管理の「使える人」と同じ数え方にする）
+  Promise.all([_rvLoadAll(_rv.round), _rv.users ? Promise.resolve(_rv.users) : fsGetCol('users').catch(function() { return null; }), accP]).then(function(r) {
+    _rv.res = r[0] || []; _rv.users = r[1]; _rv.acc = r[2]; _rvResRender();
   }, function() { var m = document.getElementById('rvResOvM'); if (m) m.innerHTML = '<div class="fb-empty">読み込めませんでした（結果を見られる人に指定されているか確認してください）</div>'; });
 }
 function _rvRoundInfo(id) { var c = _rv.cfg || {}; if (id === c.round) return { id: c.round, title: c.title, from: c.from, to: c.to }; return ((c.rounds || []).filter(function(x) { return x.id === id; })[0]) || { id: id }; }
@@ -4508,9 +4509,23 @@ function _rvStats(list) {
 }
 function _rvBar(lb, v, max, tail) { return '<div class="rv-bar"><span class="l">' + evEsc(lb) + '</span><span class="b"><i style="width:' + (max ? Math.round(v / max * 100) : 0) + '%"></i></span><span class="n">' + (tail != null ? tail : v) + '</span></div>'; }
 function _rvWho(x) { return evEsc([x.name, x.union, x.device, x.ver].filter(Boolean).join('・')); }
+// v825: 対象（回答数の分母・まだ答えていない人）
+//   開発メンバーだけの時＝オーナー＋バグ・要望・アイデアを見られる人（無効にした人を除く）
+//   みんなの時＝アカウント管理の「使える人」と同じ（承認待ち・無効でない人のうち、公開範囲で使える人）。
+//   前は「承認ずみ（status=active）」だけを数えていたため、承認の仕組みより前からいる人（statusが空）が外れていた
+function _rvLoadAcc() {
+  if (typeof _accA !== 'undefined' && _accA) return Promise.resolve(_accA);
+  if (!db) return Promise.resolve(null);
+  return db.doc('appAccess/mode').get().then(function(d) { return d.exists ? (d.data() || {}) : { mode: 'open', unions: [] }; }).catch(function() { return null; });
+}
+function _rvTargetDev() { return _rvDev() && _rv.round === ((_rv.cfg && _rv.cfg.round) || ''); }
 function _rvTargets() {
-  var dev = _rvDev() && _rv.round === ((_rv.cfg && _rv.cfg.round) || ''), mem = (typeof _fb !== 'undefined' && _fb.cfg && _fb.cfg.members) || [];
-  return (_rv.users || []).filter(function(u) { return u && u.status === 'active' && (!_rv.un || u.union === _rv.un) && (!dev || isOwnerUid(u.id) || mem.indexOf(u.id) >= 0); }); // v823: 開発メンバーだけの時は開発メンバーが対象
+  var dev = _rvTargetDev(), mem = (typeof _fb !== 'undefined' && _fb.cfg && _fb.cfg.members) || [], A = _rv.acc || (typeof _accA !== 'undefined' ? _accA : null);
+  return (_rv.users || []).filter(function(u) {
+    if (!u || u.status === 'disabled' || (_rv.un && u.union !== _rv.un)) return false;
+    if (dev) return isOwnerUid(u.id) || mem.indexOf(u.id) >= 0;
+    return _accActive(u) && _accAllowed({ uid: u.id, role: u.role, early: u.early, union: u.union }, A);
+  });
 }
 function _rvResRender() {
   var box = document.getElementById('rvResOvM'); if (!box) return;
@@ -4538,7 +4553,7 @@ function _rvResRender() {
     var cfm = Math.max.apply(null, Object.keys(S.cf).map(function(k) { return S.cf[k]; }).concat([1]));
     var cfk = Object.keys(S.cf).sort(function(a, b) { return S.cf[b] - S.cf[a]; });
     if (cfk.length) h += '<div class="fb-lb">わかりにくい・迷った機能</div>' + cfk.map(function(k) { var F = _rvFeat(k); return _rvBar(F ? F[1] : k, S.cf[k], cfm); }).join('');
-    if (tg.length) { var no = tg.filter(function(u) { return !ans[u.id]; }); h += '<div class="fb-lb">まだ答えていない人 ' + no.length + '人<small>NAVIGATORを使っている人（承認ずみ）</small></div><div class="fb-who">' + (no.length ? no.map(function(u) { return evEsc(u.name || '（名前なし）') + (u.union && !_rv.un ? '<small>（' + evEsc(u.union) + '）</small>' : ''); }).join('、') : 'みんな答えました 🎉') + '</div>'; }
+    if (tg.length) { var no = tg.filter(function(u) { return !ans[u.id]; }); h += '<div class="fb-lb">まだ答えていない人 ' + no.length + '人<small>' + (_rvTargetDev() ? '開発メンバー（オーナー＋バグ・要望・アイデアを見られる人）' : 'NAVIGATORを使える人（アカウント管理の「使える人」と同じ）') + '</small></div><div class="fb-who">' + (no.length ? no.map(function(u) { return evEsc(u.name || '（名前なし）') + (u.union && !_rv.un ? '<small>（' + evEsc(u.union) + '）</small>' : ''); }).join('、') : 'みんな答えました 🎉') + '</div>'; }
   } else if (_rv.tab === 'feat') {
     h += '<div class="fb-who">使っている人の数・使いやすさ（★の平均）・その中で使っているもの</div>';
     var ks = RV_FEATS.map(function(F) { return F[0]; }).sort(function(a, b) { return ((S.feats[b] || {}).n || 0) - ((S.feats[a] || {}).n || 0); });
@@ -6125,6 +6140,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v825', d:'2026-10-19', items:['レビューの結果の「まだ答えていない人」：開発メンバーだけの時は指定した人全員を、みんなの時はアカウント管理の「使える人」と同じ人を数えるように（前は一部の人が外れていた）'] },
   { v:'v824', d:'2026-10-19', items:['使い勝手レビュー：よく使うもの（大きいメニュー）を選んだら、次のページから選んだものを1つずつ聞く形に'] },
   { v:'v823', d:'2026-10-19', items:['使い勝手レビューに「見せる人」の設定：みんな／開発メンバーだけ（まず開発メンバーだけで試せます）'] },
   { v:'v822', d:'2026-10-19', items:['バグ・要望・アイデアで、間違えて登録した報告を消せるように（書いた本人は「新着」の間・管理者はいつでも）'] },
