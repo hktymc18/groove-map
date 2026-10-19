@@ -737,6 +737,45 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ============ v816: 使い勝手レビュー（期間限定のアンケート） ============
+    //   rvConfig/main … 回（round）・タイトル・期間・結果を見られる人（viewers）。書けるのはオーナーだけ
+    //   rvAnswers/{round}_{uid} … 1人1件（期間中は直せる）。名前・ユニオンはプロフィールのもの（自分で書きかえられない）
+    //   読めるのは本人と、オーナー・結果を見られる人だけ
+    function rvViewer() {
+      return isOwnerAdmin() || (signedIn() && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/rvConfig/main)
+        && request.auth.uid in get(/databases/$(database)/documents/rvConfig/main).data.get('viewers', []));
+    }
+    function rvAnswerOk(d) {
+      let cfg = get(/databases/$(database)/documents/rvConfig/main).data;
+      return d.keys().hasOnly(['round','uid','name','union','ver','device','a','createdAt','updatedAt'])
+        && d.uid == request.auth.uid
+        && d.round == cfg.get('round', '')
+        && d.name == profile(request.auth.uid).get('name', '')
+        && d.union == profile(request.auth.uid).get('union', '')
+        && d.a is map
+        && d.updatedAt == request.time;
+    }
+    match /rvConfig/main {
+      allow read: if signedIn();
+      allow write: if isOwnerAdmin();
+    }
+    match /rvAnswers/{id} {
+      allow get: if signedIn() && (resource == null || resource.data.uid == request.auth.uid || rvViewer());
+      allow list: if rvViewer();
+      allow create: if signedIn() && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/rvConfig/main)
+        && id == request.resource.data.round + '_' + request.auth.uid
+        && rvAnswerOk(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && notDisabled(request.auth.uid)
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.round == resource.data.round
+        && request.resource.data.createdAt == resource.data.createdAt
+        && rvAnswerOk(request.resource.data);
+      allow delete: if isOwnerAdmin();
+    }
+
     // ============ v585: バグ・要望（オーナー＋オーナーが指定した人だけ） ============
     //   fbConfig/main.members に入っている人とオーナーだけが読み書きできる。指定はオーナーだけ。
     //   書いた人（uid・プロフィールの名前）と日時（サーバー時刻）は書き換えられない。
