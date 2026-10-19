@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v820';
+var APP_JS_VERSION = 'v821';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v820';
+  var DATA_VERSION = 'v821';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5267,8 +5267,11 @@ function _vvhTarget() {
     if (sw && sh) { if (Math.abs(iw - sw) <= 2) full = sh; else if (Math.abs(iw - sh) <= 2) full = sw; }
     // v809 #16: 開いた直後にステータスバー分まで含む「画面いっぱい」の高さが返ってきた時は、前回落ち着いた高さを使う
     if (full && h >= full - 2) { var ok = 0; try { ok = parseInt(localStorage.getItem(_vvhOkKey()) || '0', 10) || 0; } catch (eOk) {} if (ok && ok < h && ok > full - 120) return ok; }
-    var want = Math.max(ch, full);
-    if (sc < 1.05 && want && h < want - 100) return want;
+    // v821 #16: ページ本来の高さ（clientHeight＝ステータスバーの下からの高さ。キーボードでは変わらない）がもっともらしい時はそれを基準に。
+    //   前は「画面いっぱい（ステータスバー分も含む）」を基準にしていたため、取り直しのたびにステータスバー分だけ下にはみ出すことがあった
+    var base = (ch && full && ch <= full + 2 && ch >= full - 120) ? ch : Math.max(ch, full);
+    if (base && h > base + 2) return base; // 見えている高さがページより大きい＝開いた直後のiOSの誤った値
+    if (sc < 1.05 && base && h < base - 100) return base;
     return h;
   }
   if (sc < 1.05 && ch && h < ch - 100) return ch; // v556: タブ表示で見えている高さだけが縮んだまま
@@ -6092,6 +6095,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v821', d:'2026-10-19', items:['ホーム画面のアプリを開いた直後に、カレンダーが画面の下にはみ出すことがある問題をもう一度直しました（はじめて開いた時・iPhone 17 Proなど）（#16）'] },
   { v:'v820', d:'2026-10-19', items:['Googleカレンダー連携をなくしました（連携の設定・同期・「Googleカレンダーに追加」）。Googleカレンダーの「MAP予定」に作られた予定はGoogle側にそのまま残ります'] },
   { v:'v819', d:'2026-10-19', items:['使い勝手レビューの「使っている機能」を、まず大きいメニュー（PLAN・MAP・予定・ToDo・データ・その他）から選び、選んだものだけ詳細を選ぶ形に（詳細も少なく）'] },
   { v:'v818', d:'2026-10-19', items:['PCでも使い勝手レビューを開けるように：左のメニューの「レビュー」（期間中）と、設定（右上の名前）の画面の「答える」「レビューの結果」から'] },

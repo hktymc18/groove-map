@@ -1599,7 +1599,7 @@ body.cal-fs .pc-sidebar{display:none!important}
 body.cal-fs .pc-toolbar{display:none!important}
 #evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full{position:fixed;inset:0;z-index:290;background:var(--bg);display:flex!important;flex-direction:column;padding-top:env(safe-area-inset-top)}
 /* v323: 「下に空白が残る」根本対策＝実際に見えている高さ(visualViewport→--vvh)をそのまま使う */
-#evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full,#map3dPane{height:var(--vvh,100dvh);bottom:auto}
+#evCalendar.full,#evDayV.full,#evWeek.full,#evAgenda.full,#map3dPane{height:var(--vvh,100dvh);height:min(var(--vvh,100dvh),100dvh);bottom:auto} /* v821 #16: アプリが取った高さがブラウザの実際の高さより大きい時（開いた直後のiOS）は、はみ出さない */
 /* v321: ToDoも全画面（リストが中でスクロール・下部バー固定） */
 #evAgenda.full #evAgendaList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #evAgenda.full .ev-quick-add{flex:none;padding-bottom:8px}
@@ -3044,7 +3044,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v820</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v821</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3990,7 +3990,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v820';</script>
-<script src="app.js?v=v820"></script>
+<script>window.GM_EXPECT_JS='v821';</script>
+<script src="app.js?v=v821"></script>
 </body>
 </html>
