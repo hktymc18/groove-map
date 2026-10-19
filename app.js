@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v825';
+var APP_JS_VERSION = 'v826';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4075,7 +4075,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v825';
+  var DATA_VERSION = 'v826';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -5334,55 +5334,72 @@ function _vvhUpdate() {
 // v354: PCは時刻をキーボードで直接入力可（1600→16:00に自動整形。モバイルは従来のテンキー）
 // v390: クリックで15分刻みのドロップダウン（Googleカレンダー式）。直接入力も併用可
 var _tdrEl = null;
-function _pcTimeDropClose() {
+function _pcTimeDropClose(fromBlur) {
+  var p = _tdrEl && _tdrEl._pcTp;
   if (_tdrEl && _tdrEl.parentNode) _tdrEl.parentNode.removeChild(_tdrEl);
   _tdrEl = null;
+  if (p) p.el._pcTpV0 = p.el.value; // あとで欄から外れた時に、もう一度保存しない
+  if (p && p.onClose && !fromBlur) { try { p.onClose(p.el.value !== p.v0); } catch (e) {} } // v826
 }
-function _pcTimeDropOpen(el, startPairId, endPairId) {
-  _pcTimeDropClose();
-  var startVal = startPairId ? ((document.getElementById(startPairId) || {}).value || '') : '';
-  var smin = -1;
-  if (startVal && /^\d{1,2}:\d{2}$/.test(startVal)) {
-    smin = parseInt(startVal.split(':')[0], 10) * 60 + parseInt(startVal.split(':')[1], 10);
-  }
-  var rows = '';
-  for (var i = 0; i < 96; i++) {
-    var hh = Math.floor(i / 4), mm = (i % 4) * 15;
-    var tv = (hh < 10 ? '0' + hh : '' + hh) + ':' + (mm === 0 ? '00' : '' + mm);
-    var hint = '';
-    if (smin >= 0) {
-      var dm = hh * 60 + mm - smin;
-      if (dm > 0) hint = '<span class="tdr-hint">' + (dm >= 60 ? (Math.floor(dm / 60) + '時間' + (dm % 60 ? (dm % 60) + '分' : '')) : dm + '分') + '</span>';
-    }
-    rows += '<div class="tdr-row' + (el.value === tv ? ' cur' : '') + '" data-tv="' + tv + '">' + tv + hint + '</div>';
-  }
-  var pop = document.createElement('div');
-  pop.className = 'pc-timedrop';
-  pop.innerHTML = rows;
-  var rect = el.getBoundingClientRect();
-  pop.style.left = Math.round(rect.left) + 'px';
-  pop.style.width = Math.round(Math.min(Math.max(rect.width, 130), 220)) + 'px';
-  var below = window.innerHeight - rect.bottom;
-  if (below < 260 && rect.top > 260) { pop.style.bottom = Math.round(window.innerHeight - rect.top + 4) + 'px'; }
-  else { pop.style.top = Math.round(rect.bottom + 4) + 'px'; }
-  pop.addEventListener('mousedown', function(ev){ ev.preventDefault(); }); // 行クリックでinputのblurを起こさない
-  pop.addEventListener('click', function(ev){
-    var r = (ev.target && ev.target.closest) ? ev.target.closest('.tdr-row') : null;
-    if (!r) return;
-    el.value = r.getAttribute('data-tv');
-    _pcTimeDropClose();
-    // 開始時刻を選んだら、終了時刻が空なら+1時間を自動セット
-    if (endPairId) {
-      var en = document.getElementById(endPairId);
-      if (en && !en.value && typeof _tplpAddMin === 'function') en.value = _tplpAddMin(el.value, 60) || '';
-    }
+// v826: PCの時刻入力を1つの形に：手入力（1930→19:30）＋「時」と「分」を別々に選ぶ（分は15分刻み）。時は最初10時のあたりから
+//   o.onSet(v)：選ぶたび／o.onClose(changed)：閉じた時（選び終わった・外を押した）
+var PC_TP_H0 = 10;
+function _pcTpCss() {
+  if (document.getElementById('pcTpCss')) return;
+  var st = document.createElement('style'); st.id = 'pcTpCss';
+  st.textContent = '.pctp{position:fixed;z-index:4000;display:flex;background:var(--surface);border:1px solid var(--border2);border-radius:12px;box-shadow:0 10px 32px rgba(0,0,0,.45);overflow:hidden;font-family:Inter,"Noto Sans JP",sans-serif;user-select:none}'
+    + '.pctp .col{display:flex;flex-direction:column;max-height:252px;overflow-y:auto;min-width:70px}.pctp .col+.col{border-left:1px solid var(--border)}'
+    + '.pctp .hd{position:sticky;top:0;z-index:1;background:var(--surface2);font-size:11px;font-weight:800;color:var(--text-dim);text-align:center;padding:5px 0}'
+    + '.pctp .it{padding:7px 10px;text-align:center;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;white-space:nowrap}.pctp .it:hover{background:var(--surface3)}'
+    + '.pctp .it.on{background:var(--accent);color:var(--go-ink,#06231c)}.pctp .it.x{font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);margin-top:auto}';
+  document.head.appendChild(st);
+}
+function _pcTpNorm(v) { var d = String(v == null ? '' : v).replace(/[０-９]/g, function(c) { return String.fromCharCode(c.charCodeAt(0) - 65248); }).replace(/[^0-9]/g, ''); return d ? _tpParse(d) : ''; }
+function pcTimePick(el, o) {
+  if (!el) return;
+  o = o || {}; _pcTimeDropClose(); _pcTpCss();
+  var v0 = el.value || '', cur = /^(\d{1,2}):(\d{2})$/.exec(v0), h = cur ? parseInt(cur[1], 10) : -1, mi = cur ? parseInt(cur[2], 10) : -1;
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  var pop = document.createElement('div'); pop.className = 'pctp';
+  var H = ''; for (var i = 0; i < 24; i++) H += '<div class="it' + (i === h ? ' on' : '') + '" data-h="' + i + '">' + i + '時</div>';
+  var M = [0, 15, 30, 45].map(function(m) { return '<div class="it' + (m === mi ? ' on' : '') + '" data-m="' + m + '">' + pad(m) + '分</div>'; }).join('');
+  pop.innerHTML = '<div class="col" data-c="h"><div class="hd">時</div>' + H + '</div><div class="col" data-c="m"><div class="hd">分</div>' + M + '<div class="it x" data-x="1">なし</div></div>';
+  var r = el.getBoundingClientRect();
+  pop.style.left = Math.round(Math.max(4, Math.min(r.left, (window.innerWidth || 1200) - 160))) + 'px';
+  if ((window.innerHeight || 800) - r.bottom < 270 && r.top > 270) pop.style.bottom = Math.round((window.innerHeight || 800) - r.top + 4) + 'px'; else pop.style.top = Math.round(r.bottom + 4) + 'px';
+  var set = function(v) { el.value = v; if (o.onSet) { try { o.onSet(v); } catch (e) {} } };
+  var mark = function() { Array.prototype.forEach.call(pop.querySelectorAll('[data-h]'), function(x) { x.classList.toggle('on', +x.getAttribute('data-h') === h); }); Array.prototype.forEach.call(pop.querySelectorAll('[data-m]'), function(x) { x.classList.toggle('on', +x.getAttribute('data-m') === mi); }); };
+  pop.addEventListener('mousedown', function(ev) { ev.preventDefault(); }); // 入力欄のフォーカスを外さない
+  pop.addEventListener('click', function(ev) {
+    var t = ev.target && ev.target.closest ? ev.target.closest('.it') : null; if (!t) return;
+    if (t.getAttribute('data-x')) { h = -1; mi = -1; set(''); _pcTimeDropClose(); return; }
+    if (t.hasAttribute('data-h')) { h = +t.getAttribute('data-h'); if (mi < 0) mi = 0; set(pad(h) + ':' + pad(mi)); mark(); return; } // 時を選んだら、続けて分を選べる
+    mi = +t.getAttribute('data-m'); if (h < 0) h = PC_TP_H0; set(pad(h) + ':' + pad(mi)); _pcTimeDropClose();
   });
   document.body.appendChild(pop);
-  _tdrEl = pop;
-  // 現在値（無ければ開始時刻→9:00）付近へスクロール
-  var tgt = el.value || startVal || '09:00';
-  var ti = (parseInt(tgt.split(':')[0], 10) || 9) * 4 + Math.floor((parseInt(tgt.split(':')[1], 10) || 0) / 15);
-  pop.scrollTop = Math.max(0, ti * 31 - 93);
+  _tdrEl = pop; pop._pcTp = { el: el, v0: v0, onClose: o.onClose };
+  var hc = pop.querySelector('[data-c="h"]'), it = pop.querySelector('[data-h="' + (h >= 0 ? h : PC_TP_H0) + '"]');
+  if (hc && it) hc.scrollTop = Math.max(0, it.offsetTop - (hc.querySelector('.hd') || { offsetHeight: 0 }).offsetHeight);
+}
+// 入力欄を手入力もできるように（読み取り専用の欄も）。外れた時に「1930」→「19:30」に整える
+function _pcTpTyping(el, after) {
+  if (!el || el._pcTpT) return; el._pcTpT = 1;
+  el.readOnly = false; if (!el.placeholder || el.placeholder === 'なし') el.placeholder = '例 1930';
+  el.setAttribute('autocomplete', 'off');
+  el.addEventListener('keydown', function(ev) { if (ev.key === 'Escape') _pcTimeDropClose(); if (ev.key === 'Enter') { ev.preventDefault(); el.blur(); } });
+  el.addEventListener('blur', function() {
+    var p = _tdrEl && _tdrEl._pcTp && _tdrEl._pcTp.el === el ? _tdrEl._pcTp : null, v0 = p ? p.v0 : el._pcTpV0;
+    var v = _pcTpNorm(el.value); el.value = v;
+    _pcTimeDropClose(true);
+    if (after && v !== (v0 == null ? v : v0)) { try { after(v); } catch (e) {} }
+  });
+  el.addEventListener('focus', function() { el._pcTpV0 = el.value || ''; });
+}
+function _pcTimeDropOpen(el, startPairId, endPairId) {
+  var en0 = endPairId ? document.getElementById(endPairId) : null, auto = !!(en0 && !en0.value); // 開いた時に終了が空なら、開始に合わせて+1時間
+  pcTimePick(el, { onSet: function(v) {
+    if (auto && v && typeof _tplpAddMin === 'function') { var en = document.getElementById(endPairId); if (en) en.value = _tplpAddMin(v, 60) || ''; }
+  } });
 }
 function _pcTimeInputs(ids) {
   if (typeof isPCMode !== 'function' || !isPCMode()) return;
@@ -5390,17 +5407,42 @@ function _pcTimeInputs(ids) {
   pair.forEach(function(idn, ix){
     var el = document.getElementById(idn);
     if (!el) return;
-    el.readOnly = false;
     el.placeholder = '例 1930';
-    el.onclick = function(){ _pcTimeDropOpen(el, ix > 0 ? pair[0] : '', ix === 0 && pair.length > 1 ? pair[1] : ''); }; // v390: ドロップダウン
-    el.onkeydown = function(ev){ if (ev.key === 'Escape') _pcTimeDropClose(); };
-    el.onblur = function(){
-      var v = (el.value || '').replace(/[^0-9]/g, '');
-      el.value = v ? _tpParse(v) : '';
-      setTimeout(_pcTimeDropClose, 120);
-    };
+    el.onclick = function(){ _pcTimeDropOpen(el, ix > 0 ? pair[0] : '', ix === 0 && pair.length > 1 ? pair[1] : ''); }; // v390→v826: 時・分を選ぶ
+    _pcTpTyping(el);
   });
 }
+// v826: PCのブラウザ標準の時刻欄（type=time）と企画書の「時」「分」の欄も、同じ「手入力＋時・分を選ぶ」に
+function _pcTpNative(el) {
+  if (el._pcTpN) return; el._pcTpN = 1;
+  try { el.type = 'text'; } catch (e) {}
+  el.setAttribute('inputmode', 'numeric');
+  _pcTpTyping(el, function() { try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {} });
+}
+function _pcTpHook(ev) {
+  try {
+    if (typeof isPCMode !== 'function' || !isPCMode()) return;
+    var el = ev.target;
+    if (ev.type === 'mousedown' && _tdrEl && _tdrEl._pcTp && !_tdrEl.contains(el)) { var pe = _tdrEl._pcTp.el; if (el !== pe && !(el && el.id && pe && el.id === pe.id)) _pcTimeDropClose(); } // 外を押したら閉じる（選んだ分は残す）
+    if (!el || el.tagName !== 'INPUT' || el.disabled || el.readOnly && !el._pcTpT) return;
+    if (el.type === 'time' || el._pcTpN) {
+      _pcTpNative(el);
+      if (!_tdrEl || !_tdrEl._pcTp || _tdrEl._pcTp.el !== el) pcTimePick(el, { onClose: function(ch) { if (ch) { try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {} } } });
+      return;
+    }
+    var m = /^otlTH_(.+)$/.exec(el.id || ''); // 企画書：時の欄で「時」「分」を選ぶ（分の欄もいっしょに入る）
+    if (m) {
+      var k = m[1], tm = document.getElementById('otlTM_' + k), tmp = { value: el.value ? (el.value + ':' + ((tm && tm.value) || '00')) : '' };
+      if (_tdrEl && _tdrEl._pcTp && _tdrEl._pcTp.el && _tdrEl._pcTp.el.id === el.id) return;
+      var shadow = el; var v0 = tmp.value;
+      pcTimePick({ getBoundingClientRect: function() { return shadow.getBoundingClientRect(); }, get value() { return tmp.value; }, set value(v) { tmp.value = v; var p = String(v || '').split(':'); shadow.value = p[0] ? String(parseInt(p[0], 10)) : ''; if (tm) tm.value = p[1] || ''; }, id: el.id },
+        { onClose: function(ch) { if (ch && typeof otlTimeFix === 'function') otlTimeFix(k); } });
+      if (_tdrEl && _tdrEl._pcTp) _tdrEl._pcTp.v0 = v0;
+    }
+  } catch (e) {}
+}
+document.addEventListener('mousedown', _pcTpHook, true);
+document.addEventListener('focusin', _pcTpHook, true);
 // v390: PCは日付欄クリックでカレンダー（ネイティブピッカー）を開く — アプリ内の全date入力に適用
 document.addEventListener('click', function(ev){
   try {
@@ -6140,6 +6182,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v826', d:'2026-10-19', items:['PCの時刻の入力を全部同じ形に：手入力（1930→19:30）に加えて、「時」と「分」を別々に選べます（分は15分刻み・時は10時のあたりから）。予定・研修の予定・タスク・OL・期日・企画書など'] },
   { v:'v825', d:'2026-10-19', items:['レビューの結果の「まだ答えていない人」：開発メンバーだけの時は指定した人全員を、みんなの時はアカウント管理の「使える人」と同じ人を数えるように（前は一部の人が外れていた）'] },
   { v:'v824', d:'2026-10-19', items:['使い勝手レビュー：よく使うもの（大きいメニュー）を選んだら、次のページから選んだものを1つずつ聞く形に'] },
   { v:'v823', d:'2026-10-19', items:['使い勝手レビューに「見せる人」の設定：みんな／開発メンバーだけ（まず開発メンバーだけで試せます）'] },
@@ -30430,6 +30473,8 @@ function tqSetDate(v) { _tqDate = v; _tqRenderChips(); }
 function tqTimeChange(v) { _tqTime = v || ''; _tqRenderChips(); } // v454
 // ── v461: PC用の時刻コンボ（15分刻みリスト＋手入力） ──
 function tqTimeDropOpen() {
+  var el9 = document.getElementById('tqTime'); // v826: PCは「時」「分」を選ぶ形に統一
+  if (el9 && typeof pcTimePick === 'function') { if (_tdrEl && _tdrEl._pcTp && _tdrEl._pcTp.el === el9) return; pcTimePick(el9, { onClose: function(ch) { if (ch) { _tqTime = el9.value || ''; _tqRenderChips(); } } }); return; }
   var host = document.getElementById('tqTimeDrop');
   if (!host || host.childElementCount) return;
   var h = '<div id="tqTimeDropIn" style="position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:60;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;max-height:216px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.45)">';
@@ -30450,7 +30495,7 @@ function tqTimeDropOpen() {
     inr.scrollTop = idx * 31;
   }
 }
-function tqTimeDropClose() { var host = document.getElementById('tqTimeDrop'); if (host) host.innerHTML = ''; }
+function tqTimeDropClose() { var host = document.getElementById('tqTimeDrop'); if (host) host.innerHTML = ''; if (_tdrEl && _tdrEl._pcTp && _tdrEl._pcTp.el && _tdrEl._pcTp.el.id === 'tqTime') _pcTimeDropClose(); }
 function tqTimePick(t) { _tqTime = t; _tqRenderChips(); }
 // 手入力の整形: '19' '1930' '9:30' '19:00' → HH:MM / 空 → クリア / 不正 → 元に戻してトースト
 function _tqNormTime(v) {
@@ -35551,6 +35596,17 @@ function openTimePad(targetId) {
   else if (targetId === 'olT') { _tpStartId = 'olT'; _tpEndId = 'olTEndX'; _tpIsTask = true; } // v617: OLの企画 // v613: 予定の画面・予定を足す // v456: クイック追加もカレンダーと同じ時刻パッド
   else { _tpStartId = 'evTime'; _tpEndId = 'evTimeEnd'; _tpIsTask = (_evType === 'task'); }
   if (_tpStartId === 'evTime' && typeof _evAllDay !== 'undefined' && _evAllDay) evToggleAllDay(false); // 時刻を触ったら終日解除
+  // v826: PCは数字のパッドではなく、手入力＋「時」「分」を選ぶ（新しい予定の画面・タスク・OL・期日など全部同じ）
+  if (typeof isPCMode === 'function' && isPCMode()) {
+    var pel = document.getElementById(targetId); if (!pel) return;
+    var isSt = targetId === _tpStartId, endId = _tpIsTask ? '' : _tpEndId;
+    _pcTpTyping(pel, function() { _tpAfterSet(); });
+    if (document.activeElement !== pel) { try { pel.focus(); } catch (eF) {} }
+    var en0 = isSt && endId ? document.getElementById(endId) : null, auto = !!(en0 && !en0.value);
+    pcTimePick(pel, { onSet: function(v) { if (auto && v && typeof _tplpAddMin === 'function') { var en = document.getElementById(endId); if (en) en.value = _tplpAddMin(v, 60) || ''; } },
+      onClose: function(ch) { if (ch) _tpAfterSet(); } });
+    return;
+  }
   _tpTarget = targetId;
   _tpBuf = '';
   var ov = document.createElement('div');
@@ -35716,13 +35772,7 @@ function _tpFixOrder() {
 function closeTimePad(commit) {
   var ov = document.getElementById('tpOv');
   if (commit) _tpCommitCurrent(); // 入力途中の値も確定して閉じる（完了ボタン）
-  _tpFixOrder(); // v468
-  // v456: クイック追加の時刻はstateへ同期してからチップを描き直す（クリアボタンの表示更新）
-  _tqPadSync();
-  if (_tpStartId === 'tqTime' && typeof _tqRenderChips === 'function') { try { _tqRenderChips(); } catch(eTq9) {} }
-  if (_tpStartId === 'tkT' && document.getElementById('tkT')) { try { _tkPadDone(); } catch(eTk) {} } // v616
-  if (_tpStartId === 'olT' && document.getElementById('olT')) { try { _olpPadDone(); } catch(eOl) {} } // v617
-  if (_tpStartId === 'wnT' && document.getElementById('wnT')) { var _wnOv = ov; if (_wnOv) _wnOv.id = ''; try { _wnPadDone(); } catch(eWn) {} } // v613
+  _tpAfterSet(ov);
   if (ov) {
     // v343: ふわっとフェードアウト（idを外して、フェード中でも次のパッドをすぐ開けるように）
     ov.id = '';
@@ -35731,6 +35781,16 @@ function closeTimePad(commit) {
     setTimeout(function(){ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 240);
   }
   _tpTarget = null; _tpBuf = '';
+}
+// v826: 時刻を入れた後の処理（パッドを閉じた時・PCで選び終わった時の共通）
+function _tpAfterSet(ov) {
+  _tpFixOrder(); // v468
+  // v456: クイック追加の時刻はstateへ同期してからチップを描き直す（クリアボタンの表示更新）
+  _tqPadSync();
+  if (_tpStartId === 'tqTime' && typeof _tqRenderChips === 'function') { try { _tqRenderChips(); } catch(eTq9) {} }
+  if (_tpStartId === 'tkT' && document.getElementById('tkT')) { try { _tkPadDone(); } catch(eTk) {} } // v616
+  if (_tpStartId === 'olT' && document.getElementById('olT')) { try { _olpPadDone(); } catch(eOl) {} } // v617
+  if (_tpStartId === 'wnT' && document.getElementById('wnT')) { var _wnOv = ov; if (_wnOv) _wnOv.id = ''; try { _wnPadDone(); } catch(eWn) {} } // v613
 }
 // v344: 終了日欄をタップしたら、空なら開始日の翌日を自動セット（連日入力の手間を削減）
 function evDateEndFocus() {
