@@ -1273,8 +1273,6 @@ tr.ot-done{opacity:.5}
 .ev-i-member{padding:1px 7px;border-radius:10px;background:var(--purple-dim);color:var(--purple);font-weight:600}
 .ev-i-asan{padding:1px 7px;border-radius:10px;border:1px solid var(--border2);color:var(--text-mid);font-weight:600} /* v545 */
 .ev-i-prio{padding:1px 6px;border-radius:10px;background:rgba(255,93,115,.14);color:var(--red);font-weight:700}
-.ev-gcal-btn{flex:none;align-self:center;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);font-size:16px;cursor:pointer;margin-left:6px}
-.ev-gcal-btn:active{background:var(--accent);border-color:var(--accent)}
 .ev-empty{text-align:center;color:var(--text-dim);font-size:13px;padding:40px 20px}
 /* 月カレンダー */
 .ev-cal-hdr{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 14px}
@@ -2967,8 +2965,6 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-<!-- Google Identity Services（Googleカレンダー連携） -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -3048,7 +3044,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v819</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v820</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3994,7 +3990,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v819';</script>
-<script src="app.js?v=v819"></script>
+<script>window.GM_EXPECT_JS='v820';</script>
+<script src="app.js?v=v820"></script>
 </body>
 </html>
