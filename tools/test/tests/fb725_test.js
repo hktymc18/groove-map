@@ -21,7 +21,7 @@ T.run(async () => {
   w.fbPickAll(1); await sleep(10);
   c('ぜんぶ選ぶ', $$('.fb-cb.on').length === 2 && /選んだ2件/.test($('.fb-foot').textContent));
   w.fbCopyForClaude(); await sleep(30);
-  c('2件をまとめてコピー（番号・本文・端末）', /改修依頼（2件）/.test(copied) && /#7 バグ／PLAN/.test(copied) && /実行期日をタップ/.test(copied) && /#8 要望／MAP/.test(copied) && /iPhone Safari/.test(copied) && !/古いもの/.test(copied));
+  c('2件をまとめてコピー（番号・本文・端末）', /改修依頼（2件）/.test(copied) && /#7 バグ／PLAN/.test(copied) && /実行期日をタップ/.test(copied) && /#8 改善／MAP/.test(copied) && /iPhone Safari/.test(copied) && !/古いもの/.test(copied));
   c('新着は「対応中」へ', ups.length === 2 && ups.every(u => u[1] === 'doing'));
   copied = ''; ups = [];
   w.fbTab('done'); await sleep(10);
