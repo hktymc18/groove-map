@@ -707,6 +707,32 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-plat .mc-qrb{bottom:4.6%;}
 /* ✨ 反射と星はDIAMONDと同じ（光の流れ・ふちの光・4つの星）。真ん中の星だけロゴの星の位置に合わせる */
 .membercard.skin-plat .mc-sp.s1{left:53.9%;top:35.5%;}
+/* 🖤 PLATINUM解禁前（COMING SOON）: 名前は出さず、会員番号とQRボタンだけ。カードの縁と線の光がゆっくり瞬く */
+.membercard.skin-soon{aspect-ratio:2/3;background:url('skins/platinum-soon.webp') center/100% 100% no-repeat,#050505;
+  box-shadow:0 14px 34px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.35);}
+.membercard.skin-soon .mc-brand,.membercard.skin-soon .mc-union,.membercard.skin-soon .mc-name,.membercard.skin-soon .mc-grade,.membercard.skin-soon .mc-sp{display:none;}
+.membercard.skin-soon .mc-no{bottom:5.6%;color:#bdb29e;text-shadow:0 1px 3px #000;}
+.membercard.skin-soon .mc-qrb{bottom:4.6%;}
+.membercard.skin-soon::before,.membercard.skin-soon::after{inset:auto;border-radius:50%;box-shadow:none;opacity:0;mix-blend-mode:screen;
+  background-size:100% 100%;background-position:center;background-repeat:no-repeat;animation:soonGlint 3.8s ease-in-out infinite;}
+.membercard.skin-soon::before{left:90.4%;top:16.7%;width:36%;height:24%;
+  background-image:radial-gradient(50% 3.5% at 50% 50%,rgba(255,238,212,.95),rgba(255,238,212,0)),radial-gradient(3.5% 42% at 50% 50%,rgba(255,238,212,.9),rgba(255,238,212,0)),
+    radial-gradient(closest-side,rgba(255,244,226,.95),rgba(255,196,120,.4) 22%,rgba(255,170,80,0) 70%);}
+.membercard.skin-soon::after{left:50%;top:75.6%;width:84%;height:9%;animation-delay:1.9s;
+  background-image:radial-gradient(4% 30% at 50% 50%,rgba(255,246,230,1),rgba(255,246,230,0)),radial-gradient(closest-side,rgba(255,226,180,.85),rgba(255,180,100,.3) 30%,rgba(255,160,80,0) 80%);}
+@keyframes soonGlint{0%,100%{opacity:.2;transform:translate(-50%,-50%) scale(.7);}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06);}}
+@media (prefers-reduced-motion: reduce){ .membercard.skin-soon::before,.membercard.skin-soon::after{animation:none;opacity:.8;transform:translate(-50%,-50%);} }
+/* 🖤 解禁の演出: 解禁後に初めて開いた時だけ、COMING SOONが光に包まれてPLATINUMに変わる（端末ごとに1回） */
+.mc-unveil{position:absolute;inset:0;z-index:6;border-radius:inherit;pointer-events:none;overflow:hidden;
+  background:url('skins/platinum-soon.webp') center/100% 100% no-repeat,#050505;}
+.mc-unveil::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,236,205,0) 40%,rgba(255,240,215,.9) 50%,rgba(255,236,205,0) 60%,transparent 70%);
+  background-size:300% 100%;background-position:130% 0;mix-blend-mode:screen;}
+.mc-unveil.go{animation:platUnveil 2.8s ease-in-out forwards;}
+.mc-unveil.go::after{animation:platSweep 2.8s ease-in-out forwards;}
+@keyframes platUnveil{0%,25%{opacity:1;filter:brightness(1) blur(0);transform:scale(1);}55%{opacity:1;filter:brightness(1.8) blur(0);transform:scale(1);}100%{opacity:0;filter:brightness(2.6) blur(12px);transform:scale(1.08);}}
+@keyframes platSweep{0%,15%{background-position:130% 0;}65%,100%{background-position:-30% 0;}}
+.membercard.plat-pop{animation:platPop 1.6s 1.4s ease-out both;}
+@keyframes platPop{0%{box-shadow:0 14px 34px rgba(0,0,0,.5);}35%{box-shadow:0 0 0 2px rgba(255,240,215,.7),0 0 46px rgba(255,226,180,.75);}100%{box-shadow:0 14px 34px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.35);}}
 /* 💀 死神のレアカード: 縁と背景はホロ（虹色のうねりの縁＋きらめく背景）。背景は傾けると逆にずれる（--bx/--by） */
 .membercard.skin-reaperTcg{background:url('skins/reaper-frame.webp') center/100% 100% no-repeat;box-shadow:0 10px 30px rgba(0,0,0,.35);}
 .membercard.skin-reaperTcg .mc-art{inset:3.4% 4.6%;border-radius:4px;
@@ -1158,6 +1184,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide rmore" title="ユニオンを追加">＋ユニオン</button>
       <button id="btnRenUnion" class="ghost hide rmore" title="ユニオン名を変更（名簿・イベント・出席・集計・NAVIGATORのユーザーまで一括・オーナーのみ）">✏ ユニオン名を変更</button>
+      <button id="btnLaunch" class="ghost hide rmore" title="BLUE DIAMOND・TEAM ELITEのPLATINUMカードを解禁（オーナーのみ）">🖤 カード解禁</button>
       <button id="btnDelUnion" class="ghost hide rmore" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
@@ -1851,10 +1878,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v84';
+var APP_VER = 'v85';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v85', d: '2026/10/20', items: ['🖤 PLATINUMカードは解禁までのお楽しみに。BLUE DIAMOND・TEAM ELITEの人の会員証は、解禁までは「COMING SOON」を表示します（QRボタンで受付はいつも通りできます）'] },
   { v: 'v84', d: '2026/10/19', items: ['🖤 バッジがBLUE DIAMOND・TEAM ELITEの人の会員証を、黒い金属の「PLATINUM」デザインにしました。QRはDIAMONDと同じく、右下の「QR」ボタンで大きく出ます'] },
   { v: 'v83', d: '2026/10/18', items: ['🃏 REVEの会員証を裏返す時、1回転半したように見えていたのを、ちょうど半回転で裏になるように直しました'] },
   { v: 'v82', d: '2026/10/18', items: ['🔗 名簿の編集に「MAPで連携するユニオン」を追加。ほかの地域のユニオンのチームで活動している人は、そのユニオンを選ぶと、そのユニオンのGROOVE MAPの受付連携でこの人だけ（名前・研修の受講・稼働率）つなげるようになります（受付・集計はこれまでどおり所属ユニオンで）'] },
@@ -2777,6 +2805,51 @@ function ckBadgeHtml(k){
   var b = ckBadge(k);
   return b ? '<span class="bdg ' + b.t + '" style="--b1:' + b.c[0] + ';--b2:' + b.c[1] + ';"><i></i>' + esc(b.k) + '</span>' : '';
 }
+/* 🖤 PLATINUMの解禁スイッチ（checkinConfig/launch・オーナーが受付管理の名簿タブ「🖤 カード解禁」で切り替え）。
+   前回の状態を端末に覚えておき、開いた瞬間はそれで表示 → 最新を読んで違えば描き直す。読めない時は COMING SOON のまま */
+var PLAT_LIVE_KEY = 'bci_plat_live';
+var gPlatLive = (function(){ try{ return localStorage.getItem(PLAT_LIVE_KEY) === '1'; }catch(e){ return false; } })();
+var gCardLast = null, gPlatTimer = null;
+function ckPlatLiveOf(d){ return !!d && (d.platinum === true || (d.platinumAt > 0 && Date.now() >= d.platinumAt)); }
+function ckIsOwnerNow(){ var u = auth.currentUser; return !!u && OWNER_UIDS.indexOf(u.uid) >= 0; }
+function ckPlatSet(live){
+  var was = gPlatLive;
+  gPlatLive = !!live;
+  try{ localStorage.setItem(PLAT_LIVE_KEY, gPlatLive ? '1' : '0'); }catch(e){}
+  if(gPlatLive !== was && gCardLast) renderCard(gCardLast);
+}
+function ckPlatSync(){
+  db.collection('checkinConfig').doc('launch').get().then(function(s){
+    var d = s.exists ? s.data() : {};
+    ckPlatSet(ckPlatLiveOf(d));
+    // 予約の時刻まで開きっぱなしでも、その時刻に切り替わる（24時間以内の予約のみ）
+    clearTimeout(gPlatTimer);
+    var wait = (d.platinumAt || 0) - Date.now();
+    if(!gPlatLive && wait > 0 && wait < 864e5) gPlatTimer = setTimeout(function(){ ckPlatSet(true); }, wait + 500);
+  }).catch(function(){});
+}
+function ckPlatUnveil(card, c){
+  var k = 'bci_plat_seen_' + (c.no || '');
+  try{ if(localStorage.getItem(k)) return; localStorage.setItem(k, '1'); }catch(e){ return; }
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var ov = document.createElement('div');
+  ov.className = 'mc-unveil';
+  card.appendChild(ov);
+  var started = false;
+  var go = function(){
+    if(started) return;
+    started = true;
+    setTimeout(function(){
+      ov.classList.add('go');
+      card.classList.add('plat-pop');
+      setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); card.classList.remove('plat-pop'); }, 3200);
+    }, 700);
+  };
+  var im = new Image();
+  im.onload = im.onerror = go;
+  im.src = 'skins/platinum.webp';
+  setTimeout(go, 2500);
+}
 function renderCard(c){
   $('mcName').textContent = c.name || '';
   $('mcGroup').textContent = c.group || '';
@@ -2797,13 +2870,16 @@ function renderCard(c){
   var dia = !c.trainee && !skin && c.badge === 'DIAMOND';            // 💎 バッジがDIAMONDの人は金属のカード（特別デザインが優先）
   var plat = !c.trainee && !skin && (c.badge === 'BLUE DIAMOND' || c.badge === 'TEAM ELITE');   // 🖤 PLATINUMのカード
   if(plat) dia = true;                                               //    （QR収納などはDIAMONDと同じ仕組み）
+  var soon = plat && !gPlatLive && !ckIsOwnerNow();                  // 🖤 解禁前は COMING SOON（オーナーは本物で確認できる）
+  gCardLast = c;
   var ruby = !c.trainee && !skin && c.badge === 'RUBY';              // 💎 バッジがRUBYの人はルビーのカード
   if(skin){
     card.classList.add('skin-' + skin);
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
   } else if(dia){
     card.classList.add('skin-dia');
-    if(plat) card.classList.add('skin-plat');
+    if(soon) card.classList.add('skin-soon');
+    else if(plat) card.classList.add('skin-plat');
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
   } else if(ruby){
     card.classList.add('mc-ruby', 'premium');
@@ -2852,6 +2928,7 @@ function renderCard(c){
   qr.onclick = null;
   $('mcQrBtn').onclick = null;
   makeQr(qr, 'm:' + c.no + ':' + gCardToken.slice(0, 6), 180);
+  if(plat && !soon && gPlatLive) ckPlatUnveil(card, c);
   if(dia){
     // 💎 QRはふだん収納。「QR」ボタンで大きく出て、どこかをタップで閉じる。名前は1行に収まるよう自動で小さく
     $('mcQrBtn').onclick = function(){ qr.classList.add('big'); };
@@ -3568,6 +3645,8 @@ function colShowcase(i){
 }
 function showCardView(token){
   showView('vCard');
+  ckPlatSync();
+  auth.onAuthStateChanged(function(u){ if(u && ckIsOwnerNow() && gCardLast) renderCard(gCardLast); });   // オーナーは解禁前でも本物を確認
   var cached = null;
   try{ cached = JSON.parse(localStorage.getItem('bci_card_' + token) || 'null'); }catch(e){}
   if(cached) renderCard(cached);
@@ -5607,6 +5686,53 @@ $('btnFreeMembers').onclick = function(){
     };
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
 };
+// 🖤 PLATINUMカードの解禁（オーナーのみ）: 今すぐ解禁 / 日時を予約 / 取り消し
+$('btnLaunch').onclick = function(){
+  if(!isOwner()) return;
+  var ref = db.collection('checkinConfig').doc('launch');
+  var fmt = function(ms){ var d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2); };
+  var save = function(on, at, msg){
+    return ref.set({ platinum: on, platinumAt: Math.round(at || 0), by: gUser.uid, at: firebase.firestore.FieldValue.serverTimestamp() })
+      .then(function(){ toast(msg); closeModal(); })
+      .catch(function(e){ toast('保存できませんでした（ルールの更新が必要かもしれません）: ' + (e.code || e.message || e)); });
+  };
+  ref.get().then(function(s){
+    var d = s.exists ? s.data() : {};
+    var live = ckPlatLiveOf(d);
+    var st = live ? '<span class="pill g">解禁済み</span>'
+      : d.platinumAt > 0 ? '<span class="pill a">予約: ' + esc(fmt(d.platinumAt)) + ' に自動で解禁</span>'
+      : '<span class="pill n">解禁前（COMING SOON を表示中）</span>';
+    var img = function(src, cap){ return '<figure style="margin:0;flex:1;text-align:center;"><img src="' + src + '" alt="" style="width:100%;max-width:150px;aspect-ratio:2/3;object-fit:cover;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.3);">'
+      + '<figcaption style="font-size:12px;color:var(--sub);margin-top:4px;">' + cap + '</figcaption></figure>'; };
+    modal('<h2>🖤 PLATINUMカードの解禁</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">バッジが <b>BLUE DIAMOND・TEAM ELITE</b> の人の会員証は、解禁するまで「COMING SOON」を表示します（QRボタンで受付はできます）。'
+      + '解禁すると全員の会員証が一斉にPLATINUMに変わり、初めて開いた時に切り替わる演出が出ます。オーナーは解禁前でも会員証を開くと本物で確認できます。</p>'
+      + '<div style="margin:6px 0 10px;">' + st + '</div>'
+      + '<div style="display:flex;gap:12px;justify-content:center;margin-bottom:10px;">' + img('skins/platinum-soon.webp', '解禁前') + img('skins/platinum.webp', '解禁後') + '</div>'
+      + (live ? '' : '<label>日時を予約して自動で解禁（任意）</label><input type="datetime-local" id="plAt" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:15px;border:1px solid var(--line);border-radius:10px;"'
+        + (d.platinumAt > 0 ? ' value="' + (function(t){ var x = new Date(t - new Date(t).getTimezoneOffset() * 6e4); return x.toISOString().slice(0, 16); })(d.platinumAt) + '"' : '') + '>')
+      + '<div class="btns"><button id="plClose">閉じる</button>'
+      + (live ? '<button id="plOff">解禁を取り消す（COMING SOONに戻す）</button>'
+        : (d.platinumAt > 0 ? '<button id="plUnset">予約をやめる</button>' : '') + '<button id="plSched">予約を保存</button><button class="primary" id="plNow">今すぐ解禁</button>')
+      + '</div>');
+    $('plClose').onclick = closeModal;
+    if($('plNow')) $('plNow').onclick = function(){
+      if(!confirm('今すぐ、BLUE DIAMOND・TEAM ELITEの全員の会員証がPLATINUMになります。解禁しますか？')) return;
+      save(true, 0, '🖤 PLATINUMを解禁しました');
+    };
+    if($('plSched')) $('plSched').onclick = function(){
+      var v = $('plAt').value, t = v ? new Date(v).getTime() : 0;
+      if(!t){ toast('日時を選んでください'); return; }
+      if(t <= Date.now()){ toast('未来の日時を選んでください（今すぐなら「今すぐ解禁」）'); return; }
+      save(false, t, '🖤 ' + fmt(t) + ' に自動で解禁します');
+    };
+    if($('plUnset')) $('plUnset').onclick = function(){ save(false, 0, '予約をやめました'); };
+    if($('plOff')) $('plOff').onclick = function(){
+      if(!confirm('解禁を取り消して、COMING SOON に戻しますか？')) return;
+      save(false, 0, 'COMING SOON に戻しました');
+    };
+  }).catch(function(e){ toast('読み込めませんでした（ルールの更新が必要かもしれません）: ' + (e.code || e.message || e)); });
+};
 $('btnRenUnion').onclick = function(){
   if(!isOwner()) return;
   modal('<h2>✏ ユニオン名を変更</h2>'
@@ -5726,6 +5852,7 @@ function renderRoster(){
   $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnDelUnion').classList.toggle('hide', !isOwner());
   $('btnRenUnion').classList.toggle('hide', !isOwner());
+  $('btnLaunch').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnFreeMembers').classList.toggle('hide', !canEditUnion(gRosterUnion));
   $('btnTrainers').classList.toggle('hide', !isCoreAdmin(gRosterUnion));   // 🎓 任命はユニオン管理者だけ（受付管理者は不可）
