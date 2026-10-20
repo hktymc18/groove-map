@@ -23,8 +23,13 @@ T.run(async () => {
   $('#p2CkAdmIn').value = '名刺100枚'; w.p2CkAdmAdd(); await sleep(40);
   c('項目を足せる', $$('#p2CkAdmOv .ls .r').length === w.P2_CK_ESS.length + 1);
   const n = w.P2_CK_ESS.length;
-  w.p2CkAdmMv(n, -1); await sleep(5);
-  c('並べかえ（↑）', $$('#p2CkAdmOv .ls .r input')[n - 1].value === '名刺100枚');
+  { // v829: ⠿ をつかんで動かす（最後の行を1つ上へ）
+    const rows = $$('#p2CkAdmLs .tdo-row'), h = rows[n].querySelector('.tdo-handle');
+    h.dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true }));
+    rows[n].parentNode.insertBefore(rows[n], rows[n - 1]);
+    w.document.dispatchEvent(new w.MouseEvent('mouseup', { bubbles: true })); await sleep(5);
+  }
+  c('並べかえ（⠿で1つ上へ）', $$('#p2CkAdmOv .ls .r input')[n - 1].value === '名刺100枚');
   w.confirm = () => true; w.p2CkAdmDel(1); await sleep(5);
   c('外せる', $$('#p2CkAdmOv .ls .r').length === n);
   w.p2CkAdmT(0, '  手帳（新しい）  ');

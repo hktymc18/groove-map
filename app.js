@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v828';
+var APP_JS_VERSION = 'v829';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4083,7 +4083,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v828';
+  var DATA_VERSION = 'v829';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6190,6 +6190,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v829', d:'2026-10-20', items:['ユニオンのチェック項目の設定：並べ替えは↑↓をやめて、左の ⠿ を押したまま上下に動かす形にしました','新しい項目は、改行を押さずに「保存する」を押しても足されるようにしました（欄の横に［追加］ボタンも）'] },
   { v:'v828', d:'2026-10-20', items:['計画シートの印刷・PDFで、行動の表の見出し（流通アップに関して など）が上の表に重なっていたのを直しました。表の高さを行の数に合わせ、行がとても多い時は文字を小さくして1枚に収めます'] },
   { v:'v827', d:'2026-10-19', items:['MAPの共有はアップ（自分の上の人）だけにしました。配下（ダウン）の人には共有できず、アップか確かめられない人は「アップです」と確認してから共有します（#23）', 'プロフィールに「紹介者」を足しました（受付の名簿と紐付いている人は、名簿の紹介者が自動で入ります）', '共有中の一覧で、アップ以外への共有に印が付きます。アカウント管理で「共有してよい上の人」と「アップ以外への共有」を見られます'] },
   { v:'v826', d:'2026-10-19', items:['PCの時刻の入力を全部同じ形に：手入力（1930→19:30）に加えて、「時」と「分」を別々に選べます（分は15分刻み・時は10時のあたりから）。予定・研修の予定・タスク・OL・期日・企画書など'] },
@@ -23660,19 +23661,64 @@ function _p2CkAdmRender() {
   o.innerHTML = '<div class="shdt ckadm"><div class="hd">「' + evEsc(_p2CkUn()) + '」のチェック項目<span onclick="p2CkAdmX()">✕</span></div>'
     + '<div class="nt">ここで決めた項目が、このユニオンの全員のチェックに出ます</div>'
     + '<div class="seg">' + [['ess', '🎒 必須アイテム'], ['tr', '🎓 TRAINING']].map(function(t) { return '<span class="' + (E.tab === t[0] ? 'on' : '') + '" onclick="p2CkAdmTab(\'' + t[0] + '\')">' + t[1] + ' ' + E[t[0]].length + '</span>'; }).join('') + '</div>'
-    + '<div class="ls">' + L.map(function(x, i) { return '<div class="r"><input value="' + evEsc(x.t) + '" maxlength="40" onchange="p2CkAdmT(' + i + ',this.value)"><b class="' + (i ? '' : 'dis') + '" onclick="p2CkAdmMv(' + i + ',-1)">↑</b><b class="' + (i < L.length - 1 ? '' : 'dis') + '" onclick="p2CkAdmMv(' + i + ',1)">↓</b><b class="x" onclick="p2CkAdmDel(' + i + ')">✕</b></div>'; }).join('') + '</div>'
-    + '<div class="ad"><input id="p2CkAdmIn" maxlength="40" autocomplete="off" placeholder="＋ 項目を足す（Enter）" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2CkAdmAdd()}"></div>'
+    + '<div class="ls" id="p2CkAdmLs">' + L.map(function(x, i) { return '<div class="r tdo-row" data-i="' + i + '"><span class="tdo-handle" title="押したまま上下に動かす">⠿</span><input data-i="' + i + '" value="' + evEsc(x.t) + '" maxlength="40" onchange="p2CkAdmT(' + i + ',this.value)"><b class="x" onclick="p2CkAdmDel(' + i + ')">✕</b></div>'; }).join('') + '</div>' // v829: ↑↓をやめて ⠿ をつかんで並べ替え
+    + '<div class="ad"><input id="p2CkAdmIn" maxlength="40" autocomplete="off" placeholder="＋ 項目を足す" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2CkAdmAdd()}"><span class="adb" onclick="p2CkAdmAdd()">追加</span></div>'
+    + '<div class="nt" style="margin-top:6px">左の ⠿ を押したまま上下に動かすと、順番を変えられます</div>'
     + '<div class="bt"><span class="go" onclick="p2CkAdmSave()">保存する</span><span class="cl" onclick="p2CkAdmReset()">標準に戻す</span></div></div>';
+  _p2CkAdmDnd(document.getElementById('p2CkAdmLs'));
+}
+// v829: 画面の入力欄を読み直す（名前を直した行・下の欄に書きかけの項目も取りこぼさない）
+function _p2CkAdmSync() {
+  var E = _p2CkEd, o = document.getElementById('p2CkAdmOv'); if (!E || !o) return;
+  var L = E[E.tab];
+  [].forEach.call(o.querySelectorAll('.ls input[data-i]'), function(el) { var i = +el.getAttribute('data-i'), v = String(el.value || '').trim(); if (L[i] && v) L[i].t = v.slice(0, 40); });
+  var ad = document.getElementById('p2CkAdmIn'), nv = String((ad && ad.value) || '').trim();
+  if (nv) { L.push({ id: 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1000), t: nv.slice(0, 40) }); ad.value = ''; }
+}
+// v829: ⠿ をつかんだらすぐ上下に動かせる（ToDoの並べ替えと同じ動き。入力欄の長押しとぶつからない）
+function _p2CkAdmDnd(box) {
+  if (!box) return;
+  var drag = null;
+  var rowAt = function(x, y) { var el = document.elementFromPoint(x, y); return el && el.closest ? el.closest('#p2CkAdmLs .tdo-row') : null; };
+  var begin = function(h) { drag = h.closest('.tdo-row'); if (!drag) return; drag.classList.add('tpl-dragging'); box.classList.add('tdo-drag-active'); try { if (navigator.vibrate) navigator.vibrate(8); } catch (e0) {} };
+  var move = function(x, y, ev) {
+    if (!drag) return;
+    if (ev && ev.cancelable) ev.preventDefault();
+    var over = rowAt(x, y); if (!over || over === drag) return;
+    var rc = over.getBoundingClientRect();
+    if (y < rc.top + rc.height / 2) over.parentNode.insertBefore(drag, over); else over.parentNode.insertBefore(drag, over.nextSibling);
+  };
+  var end = function() {
+    if (!drag) return;
+    drag.classList.remove('tpl-dragging'); box.classList.remove('tdo-drag-active'); drag = null;
+    var E = _p2CkEd; if (!E) return;
+    _p2CkAdmSync();
+    var L = E[E.tab], ord = [].map.call(box.querySelectorAll('.tdo-row'), function(r) { return +r.getAttribute('data-i'); });
+    var out = ord.map(function(i) { return L[i]; }).filter(Boolean);
+    L.forEach(function(x, i) { if (ord.indexOf(i) < 0) out.push(x); });
+    E[E.tab] = out; _p2CkAdmRender();
+  };
+  box.addEventListener('touchstart', function(ev) { var h = ev.target && ev.target.closest ? ev.target.closest('.tdo-handle') : null; if (h) begin(h); }, { passive: true });
+  box.addEventListener('touchmove', function(ev) { move(ev.touches[0].clientX, ev.touches[0].clientY, ev); }, { passive: false });
+  box.addEventListener('touchend', end, { passive: true });
+  box.addEventListener('touchcancel', end, { passive: true });
+  box.addEventListener('mousedown', function(ev) {
+    var h = ev.target && ev.target.closest ? ev.target.closest('.tdo-handle') : null; if (!h) return;
+    ev.preventDefault(); begin(h);
+    var mm = function(e2) { move(e2.clientX, e2.clientY, e2); };
+    var mu = function() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); end(); };
+    document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
+  });
 }
 function p2CkAdmX() { _p2CkEd = null; var o = document.getElementById('p2CkAdmOv'); if (o) o.remove(); }
-function p2CkAdmTab(t) { if (_p2CkEd) { _p2CkEd.tab = t; _p2CkAdmRender(); } }
-function p2CkAdmT(i, v) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; v = String(v || '').trim(); if (L && L[i] && v) L[i].t = v.slice(0, 40); }
-function p2CkAdmMv(i, d) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; if (!L || !L[i + d]) return; var x = L[i]; L[i] = L[i + d]; L[i + d] = x; _p2CkAdmRender(); }
-function p2CkAdmDel(i) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; if (!L || !L[i]) return; if (!confirm('「' + L[i].t + '」を項目から外しますか？')) return; L.splice(i, 1); _p2CkAdmRender(); }
-function p2CkAdmAdd() { var el = document.getElementById('p2CkAdmIn'), v = String((el && el.value) || '').trim(); if (!v || !_p2CkEd) return; _p2CkEd[_p2CkEd.tab].push({ id: 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1000), t: v.slice(0, 40) }); _p2CkAdmRender(); setTimeout(function() { var n = document.getElementById('p2CkAdmIn'); if (n) n.focus(); }, 30); }
+function p2CkAdmTab(t) { if (_p2CkEd) { _p2CkAdmSync(); _p2CkEd.tab = t; _p2CkAdmRender(); } } // v829: 書きかけは切りかえる前のほうへ
+function p2CkAdmT(i, v) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; v = String(v || '').trim(); if (L && L[i] && v) { L[i].t = v.slice(0, 40); var el = document.querySelector('#p2CkAdmLs input[data-i="' + i + '"]'); if (el) el.value = L[i].t; } }
+function p2CkAdmDel(i) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; if (!L || !L[i]) return; if (!confirm('「' + L[i].t + '」を項目から外しますか？')) return; _p2CkAdmSync(); L.splice(i, 1); _p2CkAdmRender(); }
+function p2CkAdmAdd() { var el = document.getElementById('p2CkAdmIn'), v = String((el && el.value) || '').trim(); if (!v || !_p2CkEd) return; _p2CkAdmSync(); _p2CkAdmRender(); setTimeout(function() { var n = document.getElementById('p2CkAdmIn'); if (n) n.focus(); }, 30); }
 function p2CkAdmReset() { if (!_p2CkEd || !confirm('このユニオンの項目を標準に戻しますか？（保存すると全員に反映）')) return; _p2CkEd.ess = _p2CkDef('ess'); _p2CkEd.tr = _p2CkDef('tr'); _p2CkAdmRender(); }
 function p2CkAdmSave() {
   var E = _p2CkEd, un = _p2CkUn(); if (!E || !un || !isCurrentAdmin()) return;
+  _p2CkAdmSync(); // v829: 下の欄に書いたまま「保存する」を押しても足す
   var d = { ess: E.ess.map(function(x) { return { id: x.id, t: x.t }; }), tr: E.tr.map(function(x) { return { id: x.id, t: x.t }; }), at: new Date().toISOString(), by: (currentUser && currentUser.name) || '' };
   (db ? db.doc('unions/' + un + '/cdata/mapChecklist').set(d) : Promise.resolve()).then(function() { _p2CkCfg = d; p2CkAdmX(); toast('✓ 「' + un + '」のチェック項目を保存しました'); if (currentView === 'plan') renderPlan(); })
     .catch(function() { toast('保存できませんでした（ユニオンの管理者だけが保存できます）'); });
@@ -23680,7 +23726,7 @@ function p2CkAdmSave() {
 function _p2CkCss() {
   if (document.getElementById('p2CkCss')) return;
   var st = document.createElement('style'); st.id = 'p2CkCss';
-  st.textContent = ".ckadm .ls{max-height:46vh;overflow:auto;margin-top:12px}.ckadm .r{display:flex;align-items:center;gap:6px;padding:5px 0}.ckadm .r input,.ckadm .ad input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:9px 11px}.ckadm .ad input{width:100%;border-style:dashed}.ckadm .ad input:focus,.ckadm .r input:focus{outline:none;border-color:var(--accent);border-style:solid}.ckadm .r b{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}.ckadm .r b.dis{opacity:.25;pointer-events:none}.ckadm .r b.x{color:#FF6B7F}.ckadm .ad{margin-top:8px}.p2ck-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.p2ck-tabs span{height:48px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}"
+  st.textContent = ".ckadm .ls{max-height:46vh;overflow:auto;margin-top:12px}.ckadm .r{display:flex;align-items:center;gap:6px;padding:5px 0}.ckadm .r input,.ckadm .ad input{flex:1;min-width:0;box-sizing:border-box;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-weight:800;font-size:16px;font-family:inherit;padding:9px 11px}.ckadm .ad{display:flex;gap:6px}.ckadm .ad input{width:100%;border-style:dashed}.ckadm .ad .adb{flex:none;padding:0 14px;border-radius:10px;background:var(--accent);color:var(--go-ink,#06251C);font-weight:900;font-size:14px;display:flex;align-items:center;cursor:pointer}.ckadm .r .tdo-handle{width:38px}.ckadm .ad input:focus,.ckadm .r input:focus{outline:none;border-color:var(--accent);border-style:solid}.ckadm .r b{flex:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-mid)}.ckadm .r b.dis{opacity:.25;pointer-events:none}.ckadm .r b.x{color:#FF6B7F}.ckadm .ad{margin-top:8px}.p2ck-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.p2ck-tabs span{height:48px;border-radius:13px;background:var(--surface2);border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}"
     + ".p2ck-tabs span small{font-size:11px;font-weight:800;color:var(--text-dim)}.p2ck-tabs span.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface2))}"
     + ".p2ck-bar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin:12px 0 6px}.p2ck-bar i{display:block;height:100%;background:var(--accent);border-radius:3px}"
     + ".p2ck-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:13px;background:var(--surface);border:1px solid var(--border);margin-top:8px}"
