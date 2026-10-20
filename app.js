@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v829';
+var APP_JS_VERSION = 'v830';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -2480,32 +2480,49 @@ function _opdfFileName(pages) {
   if (pages.length === 1 && pages[0].suffix) base += '_' + pages[0].suffix;
   return base.replace(/[\\\/:*?"<>|]/g, '') + '.pdf';
 }
-// SVG → A3横 200dpi のJPEG（白背景・余白8mm・中央寄せ）
-var _OPDF_W = 3307, _OPDF_H = 2339, _OPDF_M = 63;
+// SVG → A3横のJPEG（白背景・余白8mm・中央寄せ）
+// v830: 画質を上げる。400dpi で、ページを 2×2 に分けて描く（iPhoneのキャンバスの大きさの上限をこえないように）。
+//   前は 200dpi の1枚で、iPhoneでは小さく描いた画像を引き伸ばしていたため、拡大すると文字がにじんでいた。
+//   分けた1枚ずつ、その範囲だけの SVG（viewBox を切り出し・幅と高さ＝描く大きさ）にして描くので、どの端末でもくっきり
+var _OPDF_DPI = 400, _OPDF_TILES = 2;
 function _opdfSvgToJpeg(svg, SW, SH, nr, cb) {
-  var cl = svg.cloneNode(true);
-  cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  cl.setAttribute('width', SW); cl.setAttribute('height', SH);
-  cl.setAttribute('font-family', '"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Noto Sans CJK JP","Yu Gothic","Meiryo",sans-serif');
-  cl.removeAttribute('style');
-  var str = new XMLSerializer().serializeToString(cl).replace(/var\(--[^)]*\)/g, '#ffffff');
-  var img = new Image();
-  img.onload = function() {
-    try {
-      var cv = document.createElement('canvas');
-      cv.width = _OPDF_W; cv.height = _OPDF_H;
-      var cx = cv.getContext('2d');
-      cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, _OPDF_W, _OPDF_H);
-      var sc = Math.min((_OPDF_W - 2 * _OPDF_M) / SW, (_OPDF_H - 2 * _OPDF_M) / SH, _OPDF_MAX_MM * (_OPDF_W / 420) / (2 * nr));
-      var w = SW * sc, h = SH * sc;
-      cx.drawImage(img, (_OPDF_W - w) / 2, (_OPDF_H - h) / 2, w, h);
-      var url = cv.toDataURL('image/jpeg', 0.9);
-      cv.width = cv.height = 1; // メモリを早めに解放（iPhone対策）
-      cb(url);
-    } catch (e) { cb(null, e); }
+  var dpm = _OPDF_DPI / 25.4, PW = Math.round(420 * dpm), PH = Math.round(297 * dpm), M = 8 * dpm;
+  var sc = Math.min((PW - 2 * M) / SW, (PH - 2 * M) / SH, _OPDF_MAX_MM * dpm / (2 * nr));
+  var w = SW * sc, h = SH * sc, ox = (PW - w) / 2, oy = (PH - h) / 2;
+  var base = svg.cloneNode(true);
+  base.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  base.setAttribute('font-family', '"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Noto Sans CJK JP","Yu Gothic","Meiryo",sans-serif');
+  base.setAttribute('preserveAspectRatio', 'none');
+  base.removeAttribute('style');
+  var N = _OPDF_TILES, TW = Math.ceil(PW / N), TH = Math.ceil(PH / N), OV = 2, jobs = [];
+  for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
+    var tx = Math.max(0, c * TW - OV), ty = Math.max(0, r * TH - OV), tw = Math.min(PW, (c + 1) * TW + OV) - tx, th = Math.min(PH, (r + 1) * TH + OV) - ty;
+    if (tx + tw <= ox || tx >= ox + w || ty + th <= oy || ty >= oy + h) continue; // MAPがかからない所は白のまま（画像なし）
+    jobs.push({ x: tx, y: ty, w: tw, h: th });
+  }
+  var out = [], k = 0;
+  var one = function() {
+    if (k >= jobs.length) { cb(out); return; }
+    var J = jobs[k++], cl = base.cloneNode(true);
+    cl.setAttribute('viewBox', ((J.x - ox) / sc).toFixed(3) + ' ' + ((J.y - oy) / sc).toFixed(3) + ' ' + (J.w / sc).toFixed(3) + ' ' + (J.h / sc).toFixed(3));
+    cl.setAttribute('width', J.w); cl.setAttribute('height', J.h);
+    var str = new XMLSerializer().serializeToString(cl).replace(/var\(--[^)]*\)/g, '#ffffff');
+    var img = new Image();
+    img.onload = function() {
+      try {
+        var cv = document.createElement('canvas'); cv.width = J.w; cv.height = J.h;
+        var cx = cv.getContext('2d');
+        cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, J.w, J.h);
+        cx.drawImage(img, 0, 0, J.w, J.h);
+        out.push({ url: cv.toDataURL('image/jpeg', 0.92), x: J.x / dpm, y: J.y / dpm, w: J.w / dpm, h: J.h / dpm });
+        cv.width = cv.height = 1; // メモリを早めに解放（iPhone対策）
+        setTimeout(one, 0);
+      } catch (e) { cb(null, e); }
+    };
+    img.onerror = function(e) { cb(null, e || new Error('svg image')); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(str);
   };
-  img.onerror = function(e) { cb(null, e || new Error('svg image')); };
-  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(str);
+  one();
 }
 function _opdfLoadLib(cb) {
   if (window.jspdf && window.jspdf.jsPDF) { cb(true); return; }
@@ -2559,11 +2576,11 @@ function orbitPdfMake() {
         svg = host.querySelector('svg'); sz = host._orbitSize;
       }
       if (!svg || !sz) { i++; setTimeout(next, 0); return; }
-      _opdfSvgToJpeg(svg, sz.SW, sz.SH, sz.nr, function(url) {
-        if (!url) { fail('MAPの画像化に失敗しました（' + pg.title + '）'); return; }
+      _opdfSvgToJpeg(svg, sz.SW, sz.SH, sz.nr, function(tiles) {
+        if (!tiles) { fail('MAPの画像化に失敗しました（' + pg.title + '）'); return; }
         try {
           if (i > 0) doc.addPage('a3', 'landscape');
-          doc.addImage(url, 'JPEG', 0, 0, 420, 297);
+          tiles.forEach(function(t) { doc.addImage(t.url, 'JPEG', t.x, t.y, t.w, t.h); }); // v830: 分けて描いた画像を並べる
         } catch (e) { fail('PDFの作成に失敗しました'); return; }
         i++;
         setTimeout(next, 30); // 画面の固まりを避けて1ページずつ
@@ -4083,7 +4100,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v829';
+  var DATA_VERSION = 'v830';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6190,6 +6207,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v830', d:'2026-10-20', items:['MAPのPDFの画質を上げました（前の2倍の細かさ）。拡大しても丸の中の名前や数字がにじまずに読めます'] },
   { v:'v829', d:'2026-10-20', items:['ユニオンのチェック項目の設定：並べ替えは↑↓をやめて、左の ⠿ を押したまま上下に動かす形にしました','新しい項目は、改行を押さずに「保存する」を押しても足されるようにしました（欄の横に［追加］ボタンも）'] },
   { v:'v828', d:'2026-10-20', items:['計画シートの印刷・PDFで、行動の表の見出し（流通アップに関して など）が上の表に重なっていたのを直しました。表の高さを行の数に合わせ、行がとても多い時は文字を小さくして1枚に収めます'] },
   { v:'v827', d:'2026-10-19', items:['MAPの共有はアップ（自分の上の人）だけにしました。配下（ダウン）の人には共有できず、アップか確かめられない人は「アップです」と確認してから共有します（#23）', 'プロフィールに「紹介者」を足しました（受付の名簿と紐付いている人は、名簿の紹介者が自動で入ります）', '共有中の一覧で、アップ以外への共有に印が付きます。アカウント管理で「共有してよい上の人」と「アップ以外への共有」を見られます'] },
