@@ -434,8 +434,9 @@ service cloud.firestore {
       allow update: if (isCkCoreAdmin(un)
             && (isOwnerAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['coreAdmins'])))
         // 🎓 v25: 研修生登録の担当（trainers）の任命・解除もユニオン管理者（コア管理者）だけ。受付管理者は不可
+        // 🙈 v29: 受付の金額を統括だけに見せる設定（hideMoney）もユニオン管理者だけ
         || (isCkAdmin(un)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers']));
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney']));
       allow delete: if isOwnerAdmin();
     }
 

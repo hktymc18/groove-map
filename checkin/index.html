@@ -144,6 +144,15 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hw-r .v{font-weight:800;}
 .hw-r.no{opacity:.45;}
 .hw-line{display:block;background:#06c755;color:#fff;font-weight:800;border-radius:10px;padding:12px;text-decoration:none;margin:10px 0;}
+.easy-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:10px 14px;border-radius:12px;background:#e7f0fb;border:1px solid #a9c6ea;color:#163a66;font-weight:700;font-size:13.5px;}
+.easy-bar span{flex:1;min-width:200px;}
+/* 👥 誰でも受付モード: 金額（PayPay受領・手元金額）・MC/スピーカー/運営・ユニオン別・系列別と、受付以外のタブを隠す */
+body.easy-rec #cashTile,body.easy-rec #roleTile,body.easy-rec #unionTallyTile,body.easy-rec #groupTile,
+body.easy-rec #btnMC,body.easy-rec #btnSpeaker,body.easy-rec #btnStaffRole,body.easy-rec #lblRoles,body.easy-rec #btnEasy,
+body.easy-rec nav button[data-pane]:not([data-pane="pKiosk"]),body.easy-rec #unionSel{display:none !important;}
+body.easy-rec #totalTile,body.easy-rec #recentTile,body.easy-rec #recent li{cursor:default !important;}
+body.easy-rec .tile.tap h3::after{content:none;}
+body.easy-rec .tile.tap:hover{border-color:var(--line);}
 .auto-out{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
   max-width:calc(100% - 24px);padding:10px 14px;border-radius:12px;background:#33290a;color:#fff4c2;font-size:13.5px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.3);}
 .auto-out button{background:#fff4c2;color:#33290a;border:none;font-weight:800;padding:6px 12px;border-radius:99px;}
@@ -1135,7 +1144,9 @@ body.practice .topbar{top:var(--pxh,36px);}
       </select>
       <button class="primary" id="btnRecStart">受付を開始</button>
       <button id="btnRecStop">受付を終了</button>
+      <button id="btnEasy" title="金額・MC/スピーカー・系列別を隠した画面にして、誰にでも受付を任せる（解除はパスワード）">👥 誰でも受付モード</button>
     </div>
+    <div id="easyBar" class="easy-bar hide"></div>
     <div id="recNone" class="notice">今月のイベントから受付するものを選んでください（イベントタブから作成できます）。</div>
     <div class="kiosk hide" id="recArea">
       <div>
@@ -1174,7 +1185,7 @@ body.practice .topbar{top:var(--pxh,36px);}
         </div>
         <div class="manualrow">
           <button id="btnGuest">ゲスト受付</button>
-          <label style="font-size:12.5px;font-weight:700;color:var(--sub);margin-left:8px;">登壇者・運営:</label>
+          <label id="lblRoles" style="font-size:12.5px;font-weight:700;color:var(--sub);margin-left:8px;">登壇者・運営:</label>
           <button id="btnMC">MCを登録</button>
           <button id="btnSpeaker">スピーカーを登録</button>
           <button id="btnStaffRole">👥 受付担当・運営を登録</button>
@@ -1212,6 +1223,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnAddUnion" class="ghost hide rmore" title="ユニオンを追加">＋ユニオン</button>
       <button id="btnRenUnion" class="ghost hide rmore" title="ユニオン名を変更（名簿・イベント・出席・集計・NAVIGATORのユーザーまで一括・オーナーのみ）">✏ ユニオン名を変更</button>
       <button id="btnLaunch" class="ghost hide rmore" title="BLUE DIAMOND・TEAM ELITEのPLATINUMカードを解禁（オーナーのみ）">🖤 カード解禁</button>
+      <button id="btnHideMoney" class="hide rmore" title="受付画面の金額を統括（ユニオン管理者）だけに見せる">🙈 受付の金額</button>
       <button id="btnDelUnion" class="ghost hide rmore" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
@@ -1810,6 +1822,55 @@ function ckApplyFinUi(){
 function isCkStaffAdmin(un){ return !!(gUser && (gCkAdmins[un] || []).indexOf(gUser.uid) >= 0); }
 function canEditUnion(un){ return isCoreAdmin(un) || isCkStaffAdmin(un); }
 function isAdminHere(){ return canEditUnion(gUnion); }
+/* 👥 誰でも受付モード: 受付の合計金額を統括（ユニオン管理者・オーナー）だけが見られるようにする。
+   A) ユニオン設定 hideMoney（統括が名簿タブの「🙈 受付の金額」でON）→ 統括以外の人はいつもこの画面
+   B) 受付画面の「👥 誰でも受付モード」→ 統括のPCでもその場で切り替え（端末に記録。解除はログイン中の人のパスワード） */
+var gHideMoney = {}, CK_EASY_KEY = 'bci_easy';
+function ckEasyForced(){ return !!gHideMoney[gUnion] && !isCoreAdmin(gUnion); }
+function ckEasyLocal(){ try{ return localStorage.getItem(CK_EASY_KEY) === '1'; }catch(e){ return false; } }
+function ckEasyOn(){ return !!gUser && (ckEasyLocal() || ckEasyForced()); }
+function ckEasyApply(){
+  var on = ckEasyOn(), forced = ckEasyForced();
+  document.body.classList.toggle('easy-rec', on);
+  var bar = $('easyBar');
+  if(bar){
+    bar.classList.toggle('hide', !on);
+    bar.innerHTML = on ? '<span>👥 誰でも受付モード — 金額は表示されません' + (forced ? '（このユニオンの設定）' : '') + '</span>'
+      + (forced ? '' : '<button id="easyOff">解除（パスワード）</button>') : '';
+    if($('easyOff')) $('easyOff').onclick = ckEasyOffModal;
+  }
+  if(on){
+    // 受付以外のタブにいたら受付へ。開いている一覧（金額入り）も閉じる
+    var k = document.querySelector('nav button[data-pane="pKiosk"]');
+    if(k && !$('pKiosk').classList.contains('on')) k.click();
+  }
+}
+function ckEasyOffModal(){
+  var u = auth.currentUser;
+  if(!u) return;
+  modal('<h2>👥 誰でも受付モードを解除</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:0 0 8px;">ログイン中のアカウント（' + esc(u.email || '') + '）のパスワードを入れてください。</p>'
+    + '<input type="password" id="easyPw" autocomplete="current-password">'
+    + '<p class="mc-err" id="easyErr"></p>'
+    + '<div class="btns"><button id="easyCancel">キャンセル</button><button class="primary" id="easyGo">解除する</button></div>');
+  $('easyCancel').onclick = closeModal;
+  $('easyPw').focus();
+  $('easyPw').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('easyGo').click(); });
+  $('easyGo').onclick = function(){
+    var pw = $('easyPw').value;
+    if(!pw){ $('easyErr').textContent = 'パスワードを入れてください'; return; }
+    $('easyGo').disabled = true;
+    u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, pw)).then(function(){
+      try{ localStorage.removeItem(CK_EASY_KEY); }catch(e){}
+      closeModal();
+      ckEasyApply();
+      toast('誰でも受付モードを解除しました');
+    }).catch(function(e){
+      $('easyGo').disabled = false;
+      $('easyErr').textContent = authMsg(e).replace('メールアドレスまたは', '');
+    });
+  };
+}
 // 無効メンバー判定: 旧「休会(resting)」は無効に統合（既存データはそのまま無効扱い。
 // 「有効化」で active:true＋resting削除に戻る）。領収書・出席履歴は無効化しても消えない
 function ckMemberOff(m){ return !m || m.active === false || !!m.resting; }
@@ -1969,10 +2030,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v89';
+var APP_VER = 'v90';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v90', d: '2026/10/20', items: ['👥 「誰でも受付モード」を追加しました。金額（PayPay受領・手元金額）・MC/スピーカー/運営・系列別と、受付以外のタブを隠して、出席の人数と受付履歴だけの画面で誰にでも受付を任せられます（解除はパスワード）', '🙈 ユニオン管理者は名簿タブの「🙈 受付の金額」で、受付の金額を統括（ユニオン管理者）だけに見せる設定にできます'] },
   { v: 'v89', d: '2026/10/20', items: ['⏱ 受付は、ログインから4時間で自動的にログアウトするようになりました（共用PCの閉じ忘れによる情報漏れを防ぐため）。10分前に画面の下にお知らせが出て、「延長する」で1時間延ばせます'] },
   { v: 'v88', d: '2026/10/20', items: ['🔔 本人がスマホで送った面談シートは、📱で解錠した担当者の「お知らせ」に届くようになりました（研修生を選んで取り込む手間がなくなりました）', '📝 お知らせから開いて「承認して保存」するだけ。管理者・面談者の名前は必須で、管理者は候補から1タップで選べます', '⏰ 24時間たっても承認されていない面談シートは、ユニオン管理者にもお知らせします', '🔔 研修受講カードのお知らせは1本にまとめました（面談シート・目標設定の宿題）'] },
   { v: 'v87', d: '2026/10/20', items: ['📜 オーナーは「🎓 研修生登録の担当」から、担当者に出る秘密保持契約の誓約画面をプレビューできるようになりました'] },
@@ -4987,6 +5049,7 @@ function afterLogin(){
       gUnions.push(un);
       gCkAdmins[un] = d.data().admins || [];
       gCoreAdmins[un] = d.data().coreAdmins || [];
+      gHideMoney[un] = !!d.data().hideMoney;
       gUnionPrefix[un] = d.data().noPrefix || '';
       var ad = d.data().addon;
       gUnionAddon[un] = (ad && ad.on && ad.price > 0) ? ad : null;
@@ -5056,6 +5119,7 @@ function enterApp(){
   ckApplyFinUi();
   loadFinanceTab();
   initOnlineAlert();
+  ckEasyApply();
 }
 
 /* ── オンライン申請の到着を受付タブでリアルタイム通知 ──
@@ -5988,6 +6052,8 @@ function renderRoster(){
   $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnDelUnion').classList.toggle('hide', !isOwner());
   $('btnRenUnion').classList.toggle('hide', !isOwner());
+  $('btnHideMoney').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
+  $('btnHideMoney').textContent = gHideMoney[gRosterUnion] ? '🙈 受付の金額: 統括のみ' : '🙈 受付の金額';
   $('btnLaunch').classList.toggle('hide', !isOwner());
   $('btnCkAdmins').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnFreeMembers').classList.toggle('hide', !canEditUnion(gRosterUnion));
@@ -10310,6 +10376,33 @@ $('btnRecStart').onclick = function(){
   var ev = null; gEvents.forEach(function(x){ if(x.id === id) ev = x; });
   if(ev) startReception(ev);
 };
+$('btnEasy').onclick = function(){
+  if(!window.confirm('誰でも受付モードにしますか？\n金額（PayPay受領・手元金額）・MC/スピーカー/運営・系列別と、受付以外のタブが隠れます。\n解除するには、ログイン中のアカウントのパスワードが必要です。')) return;
+  try{ localStorage.setItem(CK_EASY_KEY, '1'); }catch(e){}
+  closeModal();
+  ckEasyApply();
+  toast('👥 誰でも受付モードにしました');
+};
+// 🙈 ユニオン設定: 受付画面の金額を統括だけに見せる（統括以外はいつも誰でも受付モード）
+$('btnHideMoney').onclick = function(){
+  var un = gRosterUnion;
+  if(!isCoreAdmin(un)) return;
+  var on = !!gHideMoney[un];
+  modal('<h2>🙈 受付の金額（' + esc(un) + '）</h2>'
+    + '<p style="font-size:13px;margin:0 0 8px;">いま: <b>' + (on ? '統括（ユニオン管理者）だけに表示' : '受付する人全員に表示') + '</b></p>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">ONにすると、このユニオンでは<b>ユニオン管理者とオーナー以外</b>の人が受付する時、いつも「誰でも受付モード」になります'
+    + '（出席の人数と受付履歴だけ。PayPay受領・手元金額・MC/スピーカー/運営・系列別と、会計などのタブは出ません）。1人ずつの受付で受け取る金額は表示されます。</p>'
+    + '<div class="btns"><button id="hmClose">閉じる</button><button class="primary" id="hmGo">' + (on ? '全員に表示に戻す' : '統括だけに表示にする') + '</button></div>');
+  $('hmClose').onclick = closeModal;
+  $('hmGo').onclick = function(){
+    $('hmGo').disabled = true;
+    db.collection('checkinUnions').doc(un).set({ hideMoney: !on }, { merge: true }).then(function(){
+      gHideMoney[un] = !on;
+      closeModal(); renderRoster(); ckEasyApply();
+      toast(!on ? '受付の金額を統括だけに表示にしました' : '受付の金額を全員に表示に戻しました');
+    }).catch(function(e){ $('hmGo').disabled = false; toast(permMsg(e, '変更できませんでした（ユニオン管理者のみ）')); });
+  };
+};
 $('btnRecStop').onclick = function(){
   // 🆓 まだ受付していない「徴収なしメンバー」がいれば、来ていた人をチェックで出席に入れてから終了
   var miss = (gRec && gRec.free) ? Object.keys(gRec.free).filter(function(no){ return !gRec.att[no] && !(gRec.off && gRec.off[no]); }) : [];
@@ -10733,7 +10826,7 @@ function payModal(no){
 }
 $('recent').addEventListener('click', function(e){
   var li = e.target.closest ? e.target.closest('li[data-no]') : null;
-  if(li) payModal(li.getAttribute('data-no'));
+  if(li && !ckEasyOn()) payModal(li.getAttribute('data-no'));
 });
 $('unpaidList').addEventListener('click', function(e){
   var b = e.target.closest ? e.target.closest('button[data-pno]') : null;
@@ -10833,6 +10926,7 @@ function attListModal(mode){
     var el = $(id);
     if(!el) return;
     el.addEventListener('click', function(e){
+      if(ckEasyOn()) return;   // 👥 誰でも受付モードでは一覧（金額・取消）を開かない
       // タイル内のボタン・履歴行のタップは既存の操作（徴収済・会計操作）を優先
       if(e.target.closest && (e.target.closest('button') || e.target.closest('li[data-no]'))) return;
       attListModal(map[id]);
