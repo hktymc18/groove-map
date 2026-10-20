@@ -5709,7 +5709,7 @@ $('btnLaunch').onclick = function(){
       + '解禁すると全員の会員証が一斉にPLATINUMに変わり、初めて開いた時に切り替わる演出が出ます。オーナーは解禁前でも会員証を開くと本物で確認できます。</p>'
       + '<div style="margin:6px 0 10px;">' + st + '</div>'
       + '<div style="display:flex;gap:12px;justify-content:center;margin-bottom:10px;">' + img('skins/platinum-soon.webp', '解禁前') + img('skins/platinum.webp', '解禁後') + '</div>'
-      + (live ? '' : '<label>日時を予約して自動で解禁（任意）</label><input type="datetime-local" id="plAt"'
+      + (live ? '' : '<label>日時を予約して自動で解禁（任意）</label><input type="datetime-local" id="plAt" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:15px;border:1px solid var(--line);border-radius:10px;"'
         + (d.platinumAt > 0 ? ' value="' + (function(t){ var x = new Date(t - new Date(t).getTimezoneOffset() * 6e4); return x.toISOString().slice(0, 16); })(d.platinumAt) + '"' : '') + '>')
       + '<div class="btns"><button id="plClose">閉じる</button>'
       + (live ? '<button id="plOff">解禁を取り消す（COMING SOONに戻す）</button>'
