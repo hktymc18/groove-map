@@ -1890,10 +1890,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v86';
+var APP_VER = 'v87';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v87', d: '2026/10/20', items: ['📜 オーナーは「🎓 研修生登録の担当」から、担当者に出る秘密保持契約の誓約画面をプレビューできるようになりました'] },
   { v: 'v86', d: '2026/10/20', items: ['📜 研修生登録のページは、初めて使う時に秘密保持契約（PROMOTE）に同意してから使えるようになりました（最初の1回だけ）', '名簿の「🎓 研修生登録の担当」で、誓約済みかどうかと、誓約した契約書（印刷・PDF保存）を確認できます'] },
   { v: 'v85', d: '2026/10/20', items: ['🖤 PLATINUMカードは解禁までのお楽しみに。BLUE DIAMOND・TEAM ELITEの人の会員証は、解禁までは「COMING SOON」を表示します（QRボタンで受付はいつも通りできます）'] },
   { v: 'v84', d: '2026/10/19', items: ['🖤 バッジがBLUE DIAMOND・TEAM ELITEの人の会員証を、黒い金属の「PLATINUM」デザインにしました。QRはDIAMONDと同じく、右下の「QR」ボタンで大きく出ます'] },
@@ -5248,13 +5249,22 @@ $('btnTrainers').onclick = function(){
         }).join('')
       + '</div>'
       + '<p style="font-size:12px;color:var(--sub);margin:8px 0 0;">📜 任命された人は、研修生登録ページを初めて開いた時に秘密保持契約に誓約してから使えます。'
-      + (ndas.length ? ' <a href="#" id="trnNdaList">誓約の記録を見る（' + ndas.length + '件）</a>' : '') + '</p>'
+      + (ndas.length ? ' <a href="#" id="trnNdaList">誓約の記録を見る（' + ndas.length + '件）</a>' : '')
+      + (isOwner() ? ' <a href="#" id="trnNdaPrev">誓約画面をプレビュー</a>' : '') + '</p>'
       + '<label style="margin-top:12px;">研修生登録ページのURL（担当者に共有。スマホのホーム画面に追加推奨）</label>'
       + '<input type="text" id="trnUrl" readonly value="' + esc(trUrl) + '" style="width:100%;font-size:12px;">'
       + '<div class="btns"><button id="trnCopy">URLをコピー</button><button id="trnCancel">キャンセル</button><button class="primary" id="trnSave">保存</button></div>',
       true);
     $('trnCancel').onclick = closeModal;
     $('trnCopy').onclick = function(){ copyText(trUrl); };
+    // 📜 オーナーは誓約の対象外なので、担当者に出る誓約画面をここで確認する（保存はしない）
+    var np = $('trnNdaPrev');
+    if(np) np.onclick = function(e){
+      e.preventDefault();
+      modal('<div id="ndaPrevBox"></div><div class="btns"><button id="ndaPrevClose">閉じる</button></div>', true);
+      $('ndaPrevClose').onclick = closeModal;
+      trNdaShow(function(){}, $('ndaPrevBox'));
+    };
     var nl = $('trnNdaList');
     if(nl) nl.onclick = function(e){
       e.preventDefault();
@@ -8075,10 +8085,10 @@ function trNdaGate(done){
     if(s.exists) done(); else trNdaShow(done);
   }).catch(function(){ trNdaShow(done); });
 }
-function trNdaShow(done){
-  var el = $('trNda');
+function trNdaShow(done, previewEl){
+  var el = previewEl || $('trNda');
   el.classList.remove('hide');
-  el.innerHTML = '<div class="nda"><h3>📜 秘密保持契約書</h3>'
+  el.innerHTML = '<div class="nda">' + (previewEl ? '<p class="pill a" style="margin:0 0 8px;">プレビュー（オーナー確認用・同意しても保存しません）</p>' : '') + '<h3>📜 秘密保持契約書</h3>'
     + '<p class="s">研修生登録のページを使う前に、PROMOTEとの秘密保持契約の内容を確認して、同意してください（最初の1回だけです）。</p>'
     + '<div class="nda-doc" id="ndaDoc">' + ndaDocHtml(gProf.name || '', '', '') + '</div>'
     + '<p class="nda-hint" id="ndaHint">↓ 最後まで読むと同意できます</p>'
@@ -8102,6 +8112,7 @@ function trNdaShow(done){
   setTimeout(scr, 0);   // 画面が大きくて全文が見えている時はそのまま
   $('ndaName').oninput = $('ndaAddr').oninput = $('ndaOk').onchange = upd;
   $('ndaGo').onclick = function(){
+    if(previewEl){ closeModal(); toast('プレビューなので保存していません（担当者はここで研修生登録に進みます）'); return; }
     var n = $('ndaName').value.trim(), a = $('ndaAddr').value.trim();
     $('ndaGo').disabled = true; $('ndaErr').textContent = '';
     db.collection('trainerNda').doc(ndaDocId(gUser.uid)).set({
