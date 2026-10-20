@@ -174,6 +174,17 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
   .rmhint{display:block;}
 }
 .sugitem:hover{background:var(--paper);}
+/* 📜 研修担当者の秘密保持契約（研修生登録ページを初めて使う時に誓約） */
+.nda h3{margin:6px 0 4px;font-size:17px;}
+.nda .s{font-size:12.5px;color:var(--sub);margin:0 0 10px;line-height:1.6;}
+.nda-doc{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;font-size:13px;line-height:1.75;}
+.nda-doc h4{text-align:center;font-size:16px;margin:2px 0 12px;letter-spacing:.2em;}
+.nda-doc b{display:block;margin:12px 0 2px;}
+.nda-doc p{margin:0 0 4px;}
+.nda-doc .ind{padding-left:1.2em;}
+.nda-doc .sig{margin-top:16px;text-align:right;line-height:1.9;}
+.nda-hint{font-size:12px;color:var(--amber);text-align:center;margin:8px 0;}
+.nda label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:12px 0 4px;}
 /* 🎓 研修生登録ページ（スマホ向け・大きめの入力とボタン） */
 #vTrainer input,#vTrainer select,#vTrainer textarea{width:100%;font-size:16px;padding:12px;box-sizing:border-box;}
 /* 全幅ルールの例外: チェックボックスまで全幅になると隣のラベルが潰れて表示が崩れる */
@@ -1366,6 +1377,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <span id="trMe" style="font-size:12px;color:var(--sub);"></span>
     </div>
     <div id="trDeny" class="notice hide"></div>
+    <div id="trNda" class="hide"></div>
     <div id="trMain" class="hide">
       <div id="trHwTop"></div>
       <div class="trtabs">
@@ -1878,10 +1890,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v85';
+var APP_VER = 'v86';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v86', d: '2026/10/20', items: ['📜 研修生登録のページは、初めて使う時に秘密保持契約（PROMOTE）に同意してから使えるようになりました（最初の1回だけ）', '名簿の「🎓 研修生登録の担当」で、誓約済みかどうかと、誓約した契約書（印刷・PDF保存）を確認できます'] },
   { v: 'v85', d: '2026/10/20', items: ['🖤 PLATINUMカードは解禁までのお楽しみに。BLUE DIAMOND・TEAM ELITEの人の会員証は、解禁までは「COMING SOON」を表示します（QRボタンで受付はいつも通りできます）'] },
   { v: 'v84', d: '2026/10/19', items: ['🖤 バッジがBLUE DIAMOND・TEAM ELITEの人の会員証を、黒い金属の「PLATINUM」デザインにしました。QRはDIAMONDと同じく、右下の「QR」ボタンで大きく出ます'] },
   { v: 'v83', d: '2026/10/18', items: ['🃏 REVEの会員証を裏返す時、1回転半したように見えていたのを、ちょうど半回転で裏になるように直しました'] },
@@ -5195,7 +5208,8 @@ $('btnTrainers').onclick = function(){
   var un = gRosterUnion;
   Promise.all([
     db.collection('users').where('union', '==', un).get(),
-    db.collection('checkinUnions').doc(un).get()
+    db.collection('checkinUnions').doc(un).get(),
+    db.collection('trainerNda').where('union', '==', un).get().catch(function(){ return null; })   // 📜 誓約の記録
   ]).then(function(res){
     var users = [];
     res[0].forEach(function(d){
@@ -5205,6 +5219,15 @@ $('btnTrainers').onclick = function(){
     });
     users.sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; });
     var cur = (res[1].exists && res[1].data().trainers) || [];
+    var ndas = [], ndaOf = {};
+    if(res[2]) res[2].forEach(function(d){ var r = d.data(); ndas.push(r); if(r.ver === NDA_VER) ndaOf[r.uid] = r; });
+    ndas.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
+    function ndaPill(uid){
+      var r = ndaOf[uid];
+      if(!r) return '<span class="pill n" title="研修生登録ページを初めて開いた時に誓約します">未誓約</span>';
+      var d = new Date(r.atMs || 0);
+      return '<span class="pill g" title="秘密保持契約に同意済み">📜 誓約済 ' + (d.getMonth() + 1) + '/' + d.getDate() + '</span>';
+    }
     if(!users.length){ toast('「' + un + '」のユーザーが見つかりません'); return; }
     var trUrl = location.href.split('#')[0] + '#trainer';
     modal('<h2>🎓 研修生登録の担当 — ' + esc(un) + '</h2>'
@@ -5220,15 +5243,34 @@ $('btnTrainers').onclick = function(){
             + '<label for="trn_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">'
             + esc(u.name || u.uid.slice(0, 8)) + '</label>'
             + (isRoleAdmin ? '<span class="pill g">管理者</span>' : '')
+            + ((isRoleAdmin || cur.indexOf(u.uid) >= 0) ? ndaPill(u.uid) : '')
             + '</div>';
         }).join('')
       + '</div>'
+      + '<p style="font-size:12px;color:var(--sub);margin:8px 0 0;">📜 任命された人は、研修生登録ページを初めて開いた時に秘密保持契約に誓約してから使えます。'
+      + (ndas.length ? ' <a href="#" id="trnNdaList">誓約の記録を見る（' + ndas.length + '件）</a>' : '') + '</p>'
       + '<label style="margin-top:12px;">研修生登録ページのURL（担当者に共有。スマホのホーム画面に追加推奨）</label>'
       + '<input type="text" id="trnUrl" readonly value="' + esc(trUrl) + '" style="width:100%;font-size:12px;">'
       + '<div class="btns"><button id="trnCopy">URLをコピー</button><button id="trnCancel">キャンセル</button><button class="primary" id="trnSave">保存</button></div>',
       true);
     $('trnCancel').onclick = closeModal;
     $('trnCopy').onclick = function(){ copyText(trUrl); };
+    var nl = $('trnNdaList');
+    if(nl) nl.onclick = function(e){
+      e.preventDefault();
+      modal('<h2>📜 秘密保持契約の記録 — ' + esc(un) + '</h2>'
+        + '<div style="max-height:56vh;overflow:auto;">' + ndas.map(function(r, i){
+            return '<div style="display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line);">'
+              + '<div style="flex:1;min-width:0;"><b>' + esc(r.name || '') + '</b>'
+              + '<div style="font-size:12px;color:var(--sub);">' + esc(r.atLocal || '') + (r.ver !== NDA_VER ? '（旧様式 ' + esc(r.ver || '') + '）' : '') + '</div></div>'
+              + '<button data-ndap="' + i + '">表示・印刷</button></div>';
+          }).join('') + '</div>'
+        + '<div class="btns"><button id="ndaLClose">閉じる</button></div>', true);
+      $('ndaLClose').onclick = closeModal;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ndap]'), function(b){
+        b.onclick = function(){ ndaPrint(ndas[+b.getAttribute('data-ndap')]); };
+      });
+    };
     $('trnSave').onclick = function(){
       var arr = [];
       users.forEach(function(u, i){
@@ -7989,6 +8031,107 @@ $('btnPledges').onclick = function(){ pledgeArchiveModal(null); };
    任命された担当（checkinUnions.trainers）＋管理者だけが、研修生の登録と
    チュートリアル記録を行える。登録と同時に会員証を発行し、QRを本人に読ませて渡す */
 var gTrMembers = [], gTrToday = [], gTrSex = '', gTrLast = null;
+/* ══════ 📜 研修担当者の秘密保持契約（PROMOTE 様式） ══════
+   研修生登録ページ（#trainer）は、初めて使う時に誓約してから使える（任命された担当者・管理者とも。オーナーは甲の側なので不要）。
+   記録は trainerNda/{uid}__{版}（作成のみ・本人も書き換え不可）。文面を変えたら NDA_VER を上げる → 全員もう一度誓約 */
+var NDA_VER = '2026-10-19';
+var NDA_TEXT = [
+  ['1.（秘密情報）', ['本契約における「秘密情報」とは、甲又は乙が相手方に開示し、かつ開示の際に秘密である旨を明示した技術上又は営業上の情報、本契約の存在及び内容その他一切の情報をいう。ただし、開示を受けた当事者が書面によってその根拠を立証できる場合に限り、以下の情報は秘密情報の対象外とするものとする。',
+    '(1) 開示を受けたときに既に保有していた情報', '(2) 開示を受けた後、秘密保持義務を負うことなく第三者から正当に入手した情報',
+    '(3) 開示を受けた後、相手方から開示を受けた情報に関係なく独自に取得し、又は創出した情報', '(4) 開示を受けたときに既に公知であった情報',
+    '(5) 開示を受けた後、自己の責めに帰し得ない事由により公知となった情報']],
+  ['2.（秘密情報等の取扱い）', ['1. 甲又は乙は、相手方から開示を受けた秘密情報及び秘密情報を含む記録媒体（複写物及び複製物を含む。以下「秘密情報等」という。）の取扱いについて、次の各号に定める事項を遵守するものとする。',
+    '(1) 情報取扱管理者を定め、相手方から開示された秘密情報等を、善良なる管理者としての注意義務をもって厳重に保管、管理する。',
+    '(2) 秘密情報等は、本取引の目的以外には使用しないものとする。',
+    '(3) 秘密情報等を複製する場合には、本取引の目的の範囲内に限って行うものとし、その複製物は、原本と同等の保管、管理をする。',
+    '(4) 漏えい、紛失、盗難、盗用等の事態が発生し、又はそのおそれがあることを知った場合は、直ちにその旨を相手方に書面をもって通知する。',
+    '(5) 秘密情報の管理について、取扱責任者を定め、書面をもって取扱責任者の氏名及び連絡先を相手方に通知する。',
+    '2. 甲又は乙は、次項に定める場合を除き、秘密情報等を第三者に開示する場合には、書面により相手方の事前承諾を得なければならない。この場合、甲又は乙は、当該第三者との間で本契約書と同等の義務を負わせ、これを遵守させる義務を負うものとする。',
+    '3. 甲又は乙は、法令に基づき秘密情報等の開示が義務づけられた場合には、事前に相手方に通知し、開示につき可能な限り相手方の指示に従うものとする。']],
+  ['3.（返還義務等）', ['1. 本契約に基づき相手方から開示を受けた秘密情報を含む記録媒体、物件及びその複製物（以下「記録媒体等」という。）は、不要となった場合又は相手方の請求がある場合には、直ちに相手方に返還するものとする。',
+    '2. 前項に定める場合において、秘密情報が自己の記録媒体等に含まれているときは、当該秘密情報を消去するとともに、消去した旨（自己の記録媒体等に秘密情報が含まれていないときは、その旨）を相手方に書面にて報告するものとする。']],
+  ['4.（損害賠償等）', ['甲若しくは乙、甲若しくは乙の従業員若しくは元従業員又は第二条第二項の第三者が相手方の秘密情報等を開示するなど本契約の条項に違反した場合には、甲又は乙は、相手方が必要と認める措置を直ちに講ずるとともに、相手方に生じた損害を賠償しなければならない。']],
+  ['5.（有効期限）', ['本契約の有効期限は、本契約の締結日から起算し、満5年間とする。期間満了後の1ヵ月前までに甲又は乙のいずれからも相手方に対する書面の通知がなければ、本契約は同一条件でさらに5年間継続するものとし、以後も同様とする。']],
+  ['6.（協議事項）', ['本契約に定めのない事項について又は本契約に疑義が生じた場合は、協議の上解決する。']],
+  ['7.（管轄）', ['本契約に関する紛争については福岡地方裁判所を第一審の専属管轄裁判所とする。']]
+];
+var NDA_KO = '福岡県福岡市博多区綱場町6-9 PROGRESS SPACE2 5F　PROMOTE';
+// 契約書の本文（name: 乙の氏名・addr: 乙の住所・date: 締結日の表示。未入力は下線）
+function ndaDocHtml(name, addr, date){
+  var blank = '<span style="display:inline-block;min-width:8em;border-bottom:1px solid currentColor;">&nbsp;</span>';
+  return '<h4>秘密保持契約書</h4>'
+    + '<p>PROMOTE（以下「甲」という。）と<span class="nda-otsu">' + (name ? esc(name) : blank) + '</span>（以下「乙」という。）とは、PROMOTEが作成したYOUTUBE・KEYNOTE・映像の一切の使用について（以下「本取引」という。）、甲又は乙が相手方に開示する秘密情報の取扱いについて、以下のとおりの秘密保持契約（以下「本契約」という。）を締結する。</p>'
+    + NDA_TEXT.map(function(sec){
+        return '<b>' + esc(sec[0]) + '</b>' + sec[1].map(function(t){ return '<p' + (/^\(\d\)/.test(t) ? ' class="ind"' : '') + '>' + esc(t) + '</p>'; }).join('');
+      }).join('')
+    + '<div class="sig">' + (date ? esc(date) : '　　年　　月　　日') + '<br>甲　' + esc(NDA_KO)
+    + '<br>乙　住所　' + (addr ? esc(addr) : blank) + '<br>名前　' + (name ? esc(name) : blank) + '</div>';
+}
+function ndaDocId(uid){ return uid + '__' + NDA_VER; }
+// 研修生登録ページの入口: 誓約済みならそのまま、まだなら契約書の画面
+function trNdaGate(done){
+  if(isOwner()){ done(); return; }
+  db.collection('trainerNda').doc(ndaDocId(gUser.uid)).get().then(function(s){
+    if(s.exists) done(); else trNdaShow(done);
+  }).catch(function(){ trNdaShow(done); });
+}
+function trNdaShow(done){
+  var el = $('trNda');
+  el.classList.remove('hide');
+  el.innerHTML = '<div class="nda"><h3>📜 秘密保持契約書</h3>'
+    + '<p class="s">研修生登録のページを使う前に、PROMOTEとの秘密保持契約の内容を確認して、同意してください（最初の1回だけです）。</p>'
+    + '<div class="nda-doc" id="ndaDoc">' + ndaDocHtml(gProf.name || '', '', '') + '</div>'
+    + '<p class="nda-hint" id="ndaHint">↓ 最後まで読むと同意できます</p>'
+    + '<label for="ndaName">氏名</label><input type="text" id="ndaName" value="' + esc(gProf.name || '') + '" autocomplete="name">'
+    + '<label for="ndaAddr">住所</label><input type="text" id="ndaAddr" placeholder="例：福岡県福岡市〇〇区〇〇1-2-3" autocomplete="street-address">'
+    + '<div class="chkrow" style="margin-top:14px;"><input type="checkbox" id="ndaOk"><label for="ndaOk" style="margin:0;font-weight:700;color:var(--ink);font-size:14px;">上記の秘密保持契約の内容を確認し、同意します</label></div>'
+    + '<p class="mc-err" id="ndaErr"></p>'
+    + '<button class="primary" id="ndaGo" disabled style="width:100%;padding:13px;font-size:15px;margin-top:6px;">同意して研修生登録をはじめる</button></div>';
+  var doc = $('ndaDoc'), read = false;
+  function upd(){
+    var n = $('ndaName').value.trim(), a = $('ndaAddr').value.trim();
+    var o = doc.querySelector('.nda-otsu');
+    if(o) o.textContent = n || '＿＿＿＿＿';
+    $('ndaGo').disabled = !(read && n && a && $('ndaOk').checked);
+  }
+  function scr(){
+    if(doc.scrollTop + doc.clientHeight >= doc.scrollHeight - 12){ read = true; $('ndaHint').textContent = '✓ 最後まで確認しました'; }
+    upd();
+  }
+  doc.addEventListener('scroll', scr);
+  setTimeout(scr, 0);   // 画面が大きくて全文が見えている時はそのまま
+  $('ndaName').oninput = $('ndaAddr').oninput = $('ndaOk').onchange = upd;
+  $('ndaGo').onclick = function(){
+    var n = $('ndaName').value.trim(), a = $('ndaAddr').value.trim();
+    $('ndaGo').disabled = true; $('ndaErr').textContent = '';
+    db.collection('trainerNda').doc(ndaDocId(gUser.uid)).set({
+      uid: gUser.uid, name: n, address: a, union: gUnion, ver: NDA_VER,
+      agreedAt: FV.serverTimestamp(), atMs: Date.now(), atLocal: new Date().toLocaleString('ja-JP')
+    }).then(function(){
+      el.classList.add('hide'); el.innerHTML = '';
+      toast('秘密保持契約に同意しました');
+      done();
+    }).catch(function(e){
+      $('ndaGo').disabled = false;
+      $('ndaErr').textContent = '保存できませんでした。電波の良い所でもう一度お試しください（' + (e && e.message || e) + '）';
+    });
+  };
+}
+// 管理者: 誓約した契約書を、紙と同じ体裁で表示・印刷（PDF保存）
+function ndaPrint(r){
+  var d = new Date(r.atMs || Date.now()), date = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  var w = window.open('', '_blank');
+  if(!w){ toast('ポップアップがブロックされました'); return; }
+  w.document.write('<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>秘密保持契約書_' + esc(r.name || '') + '</title>'
+    + '<style>body{font-family:"Noto Serif JP","Hiragino Mincho ProN",serif;max-width:720px;margin:24px auto;padding:0 20px;font-size:13.5px;line-height:1.9;color:#111;}'
+    + 'h4{text-align:center;font-size:20px;letter-spacing:.3em;margin:10px 0 20px;}b{display:block;margin:14px 0 2px;}p{margin:0 0 4px;}.ind{padding-left:1.4em;}'
+    + '.sig{margin-top:28px;text-align:right;line-height:2.1;}.meta{margin-top:24px;font-size:11px;color:#666;border-top:1px solid #ccc;padding-top:8px;font-family:sans-serif;}'
+    + '.pb{font-family:sans-serif;margin:0 0 16px;padding:8px 16px;font-size:14px;}@media print{.pb{display:none;}}</style></head><body>'
+    + '<button class="pb" onclick="print()">印刷・PDFで保存</button>'
+    + ndaDocHtml(r.name || '', r.address || '', date)
+    + '<div class="meta">BASE CHECK-IN で電子的に同意（' + esc(r.atLocal || '') + '・ユニオン ' + esc(r.union || '') + '・様式 ' + esc(r.ver || '') + '）</div></body></html>');
+  w.document.close();
+}
 function trainerEnter(){
   showView('vTrainer');
   $('trUnionLbl').textContent = gUnion;
@@ -8005,9 +8148,12 @@ function trainerEnter(){
       $('trDeny').textContent = '研修生登録の担当に任命されていません。ユニオンの管理者に「🎓 研修生登録の担当」への任命を依頼してください。';
       return;
     }
-    $('trMain').classList.remove('hide');
-    trLoadMembers();
-    trHwLoad();
+    // 📜 初めて使う時は秘密保持契約に誓約してから
+    trNdaGate(function(){
+      $('trMain').classList.remove('hide');
+      trLoadMembers();
+      trHwLoad();
+    });
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
 }
 function trLoadMembers(){
