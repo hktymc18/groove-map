@@ -676,20 +676,31 @@ service cloud.firestore {
     //   本人（未ログイン・トークン照合）が下書きを1件送信できる。
     //   読み取りはその人のユニオンを見られる担当者・管理者のみ（電話・住所など個人情報を含むため）。
     //   本人による変更・削除は不可＝正式記録は担当者が checkinMembers.coSheet へ保存して確定。
+    // 🔔 v28: 解錠した担当者（cards.coOpen.byUid）に届く。trUid/trName/union は解錠時の記録と一致すること。
+    //   届いた担当者本人と、そのユニオンの管理者（24時間たっても未承認の時のお知らせ用）も読める・消せる
     match /coSheetInbox/{iid} {
       allow read: if isOwnerAdmin()
+        || (signedIn() && resource.data.get('trUid', '') == request.auth.uid)
+        || isCkAdmin(resource.data.get('union', '__none'))
         || (exists(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none')))
             && ckCanSee(get(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none'))).data.get('union','')));
       allow create: if request.resource.data.keys().hasOnly(
           ['no','name','cardToken','ver','checks','pledge','date','sign','phone','addrBirth',
-           'referrer','manager','atLocal','atMs'])
+           'referrer','manager','atLocal','atMs','trUid','trName','union'])
         && exists(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
         && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
              .data.get('no','') == request.resource.data.get('no','__x')
         && get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
-             .data.get('coOpen', {}).get('until', 0) > request.time.toMillis();
+             .data.get('coOpen', {}).get('until', 0) > request.time.toMillis()
+        && request.resource.data.get('trUid', '') == get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+             .data.get('coOpen', {}).get('byUid', '')
+        && request.resource.data.get('union', '') in ['', get(/databases/$(database)/documents/cards/$(request.resource.data.get('cardToken','__none')))
+             .data.get('union', '')]   // 空＝更新前のアプリからの送信
+        && request.resource.data.get('trName', '') is string && request.resource.data.get('trName', '').size() <= 60;
       allow update: if false;
       allow delete: if isOwnerAdmin()   // 担当者の保存時の掃除用
+        || (signedIn() && resource.data.get('trUid', '') == request.auth.uid)
+        || isCkAdmin(resource.data.get('union', '__none'))
         || (exists(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none')))
             && ckCanSee(get(/databases/$(database)/documents/checkinMembers/$(resource.data.get('no','__none'))).data.get('union','')));
     }
