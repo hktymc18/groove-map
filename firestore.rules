@@ -404,6 +404,26 @@ service cloud.firestore {
         || (ev.get('unions', []).size() > 1 && isCkAdmin(ev.get('unions', [])[1]));
     }
 
+    // 📜 v27: 研修担当者の秘密保持契約（研修生登録ページを初めて使う時に誓約）。docId = {uid}__{様式の版}
+    //   本人だけが作成（自分のユニオンで）。作成後は本人も書き換え・削除できない（削除はオーナーのみ）。
+    //   見られるのは本人・そのユニオンの管理者（受付管理者含む）・オーナー
+    match /trainerNda/{id} {
+      allow get: if signedIn() && (id.split('__')[0] == request.auth.uid
+        || (resource != null && (isOwnerAdmin() || isCkAdmin(resource.data.get('union', '')))));
+      allow list: if isOwnerAdmin() || isCkAdmin(resource.data.get('union', ''));
+      allow create: if signedIn() && notDisabled(request.auth.uid)
+        && request.resource.data.uid == request.auth.uid
+        && id == request.auth.uid + '__' + request.resource.data.ver
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'address', 'union', 'ver', 'agreedAt', 'atMs', 'atLocal'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+        && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 200
+        && request.resource.data.ver is string && request.resource.data.ver.size() <= 20
+        && request.resource.data.union == profile(request.auth.uid).get('union', '')
+        && request.resource.data.agreedAt == request.time;
+      allow update: if false;
+      allow delete: if isOwnerAdmin();
+    }
+
     match /checkinUnions/{un} {
       allow read: if signedIn();
       // 有効化・受付管理者(admins)の変更はコア管理者のみ。
