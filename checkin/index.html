@@ -144,6 +144,9 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hw-r .v{font-weight:800;}
 .hw-r.no{opacity:.45;}
 .hw-line{display:block;background:#06c755;color:#fff;font-weight:800;border-radius:10px;padding:12px;text-decoration:none;margin:10px 0;}
+.auto-out{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;
+  max-width:calc(100% - 24px);padding:10px 14px;border-radius:12px;background:#33290a;color:#fff4c2;font-size:13.5px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.auto-out button{background:#fff4c2;color:#33290a;border:none;font-weight:800;padding:6px 12px;border-radius:99px;}
 .hw-bell{width:100%;text-align:left;padding:10px 12px;margin:0 0 10px;font-weight:700;border-radius:10px;}
 .hw-bell.on{background:#fff4c2;border-color:#e8c23a;color:#33290a;}
 .hw-li{display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
@@ -1845,6 +1848,7 @@ function authMsg(e){
 }
 $('btnLogin').onclick = function(){
   $('authErr').textContent = '';
+  gAutoOutFresh = true;   // ⏱ ログインし直したら、そこから4時間
   authPersistReady.then(function(){ return auth.signInWithEmailAndPassword($('liEmail').value.trim(), $('liPw').value); })
     .catch(function(e){ $('authErr').textContent = authMsg(e); });
 };
@@ -1866,6 +1870,68 @@ $('btnSignup').onclick = function(){
 $('btnLogout').onclick = function(){ auth.signOut(); };
 $('pfLogout').onclick = function(){ auth.signOut(); };
 $('actLogout').onclick = function(){ auth.signOut(); };
+
+/* ⏱ #24 受付の自動ログアウト: 共用PCで閉じ忘れても情報が見られないよう、ログインから4時間で自動的にログアウトする
+   （SEEDの受付開始〜三部の終わりまで使える長さ）。10分前に下に「延長（+1時間）」を出す。
+   期限は端末に保存（再読み込み・別タブでも同じ期限）。研修受講カード・会員証などの画面は対象外 */
+var CK_AUTO_OUT_MS = 4 * 3600e3, CK_AUTO_WARN_MS = 10 * 60e3, CK_AUTO_KEY = 'bci_login_until';
+var gAutoOutFresh = false, gAutoOutTimer = null;
+function ckAutoUntil(){ try{ return +(localStorage.getItem(CK_AUTO_KEY) || 0); }catch(e){ return 0; } }
+function ckAutoSet(t){ try{ if(t) localStorage.setItem(CK_AUTO_KEY, String(t)); else localStorage.removeItem(CK_AUTO_KEY); }catch(e){} }
+function ckAutoBar(left){
+  var bar = $('autoOutBar');
+  if(left == null || left > CK_AUTO_WARN_MS){ if(bar) bar.remove(); return; }
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'autoOutBar';
+    bar.className = 'auto-out';
+    bar.innerHTML = '<span id="autoOutTx"></span><button id="autoOutExt">延長する（+1時間）</button>';
+    document.body.appendChild(bar);
+    $('autoOutExt').onclick = function(){
+      ckAutoSet(Math.max(ckAutoUntil(), Date.now()) + 3600e3);
+      ckAutoTick();
+      toast('自動ログアウトを1時間延長しました');
+    };
+  }
+  $('autoOutTx').textContent = '⏱ あと' + Math.max(1, Math.ceil(left / 60e3)) + '分で自動ログアウトします（共用PCの閉じ忘れ防止）';
+}
+function ckAutoTick(){
+  if(!gUser){ ckAutoBar(null); return; }
+  var until = ckAutoUntil();
+  if(!until){ until = Date.now() + CK_AUTO_OUT_MS; ckAutoSet(until); }   // 別タブでログアウト→ログインし直した時など
+  var left = until - Date.now();
+  if(left <= 0){ ckAutoOut(); return; }
+  ckAutoBar(left);
+  var d = new Date(until), lb = $('btnLogout');
+  if(lb) lb.title = 'ログアウト（' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2) + ' に自動でログアウト）';
+}
+function ckAutoOut(){
+  ckAutoSet(0);
+  ckAutoBar(null);
+  try{ sessionStorage.setItem('bci_auto_out', '1'); }catch(e){}
+  closeModal();
+  auth.signOut();
+}
+// ログイン状態が変わるたびに呼ぶ。期限切れならログアウトして false
+function ckAutoOutCheck(u){
+  clearInterval(gAutoOutTimer); gAutoOutTimer = null;
+  if(!u){
+    ckAutoSet(0); ckAutoBar(null);
+    var auto = false;
+    try{ auto = sessionStorage.getItem('bci_auto_out') === '1'; sessionStorage.removeItem('bci_auto_out'); }catch(e){}
+    if(auto) setTimeout(function(){ $('authErr').textContent = '⏱ ログインから4時間たったので、自動でログアウトしました（共用PCの閉じ忘れ防止）。続けて使う時はもう一度ログインしてください。'; }, 0);
+    return true;
+  }
+  var until = ckAutoUntil();
+  if(gAutoOutFresh || !until){ until = Date.now() + CK_AUTO_OUT_MS; ckAutoSet(until); }
+  gAutoOutFresh = false;
+  if(until <= Date.now()){ ckAutoOut(); return false; }
+  gAutoOutTimer = setInterval(ckAutoTick, 30000);
+  setTimeout(ckAutoTick, 0);
+  return true;
+}
+// スリープ明け・タブに戻った時もすぐ確認（タイマーが止まっていても期限を守る）
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && gAutoOutTimer) ckAutoTick(); });
 
 /* ── スマホ会員証モード（#c=トークン で開くとログイン不要の会員証表示） ── */
 var gCardToken = (function(){ var m = /[#&]c=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
@@ -1903,10 +1969,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v88';
+var APP_VER = 'v89';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v89', d: '2026/10/20', items: ['⏱ 受付は、ログインから4時間で自動的にログアウトするようになりました（共用PCの閉じ忘れによる情報漏れを防ぐため）。10分前に画面の下にお知らせが出て、「延長する」で1時間延ばせます'] },
   { v: 'v88', d: '2026/10/20', items: ['🔔 本人がスマホで送った面談シートは、📱で解錠した担当者の「お知らせ」に届くようになりました（研修生を選んで取り込む手間がなくなりました）', '📝 お知らせから開いて「承認して保存」するだけ。管理者・面談者の名前は必須で、管理者は候補から1タップで選べます', '⏰ 24時間たっても承認されていない面談シートは、ユニオン管理者にもお知らせします', '🔔 研修受講カードのお知らせは1本にまとめました（面談シート・目標設定の宿題）'] },
   { v: 'v87', d: '2026/10/20', items: ['📜 オーナーは「🎓 研修生登録の担当」から、担当者に出る秘密保持契約の誓約画面をプレビューできるようになりました'] },
   { v: 'v86', d: '2026/10/20', items: ['📜 研修生登録のページは、初めて使う時に秘密保持契約（PROMOTE）に同意してから使えるようになりました（最初の1回だけ）', '名簿の「🎓 研修生登録の担当」で、誓約済みかどうかと、誓約した契約書（印刷・PDF保存）を確認できます'] },
@@ -4877,6 +4944,7 @@ if(gReceiveMode){
 auth.onAuthStateChanged(function(u){
   if(gCardToken || gReceiveMode || gOlKey || gColMode) return;   // 会員証・受け取り・OLチェックアウト中は通常画面に切り替えない
   gUser = u;
+  if(!gTrainerMode && !ckAutoOutCheck(u)) return;   // ⏱ #24 受付は4時間で自動ログアウト
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
     if(!snap.exists || !(snap.data().union)){
