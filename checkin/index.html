@@ -147,6 +147,18 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hw-bell{width:100%;text-align:left;padding:10px 12px;margin:0 0 10px;font-weight:700;border-radius:10px;}
 .hw-bell.on{background:#fff4c2;border-color:#e8c23a;color:#33290a;}
 .hw-li{display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+/* 🔔 お知らせ（面談シートの承認・宿題）/ 面談シートの承認画面 */
+.ib-k{flex:0 0 auto;font-size:11px;font-weight:800;border-radius:6px;padding:2px 6px;background:var(--paper);border:1px solid var(--line);color:var(--sub);}
+.ib-k.co{background:#e7f3ec;border-color:#9fd0b4;color:#1d6b43;}
+.co-need{border:2px solid #e8c23a;background:#fffbea;border-radius:12px;padding:4px 12px 12px;margin-top:12px;}
+.co-need label .req{display:inline-block;margin-left:6px;font-size:10.5px;color:#fff;background:var(--accent);border-radius:5px;padding:0 5px;vertical-align:1px;}
+.co-need input.miss{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+.co-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.co-chips button{font-size:12.5px;padding:4px 10px;border-radius:99px;}
+.co-det{margin-top:8px;font-size:13px;}
+.co-det summary{cursor:pointer;color:var(--sub);font-weight:700;padding:4px 0;}
+.co-menu{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--paper);}
+.co-menu button{text-align:left;}
 .hw-li .nm{flex:1;font-weight:700;}
 .hw-li .nm small{display:block;font-weight:400;font-size:12px;color:var(--sub);}
 .hw-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle;}
@@ -1185,6 +1197,7 @@ body.practice .topbar{top:var(--pxh,36px);}
   <!-- 名簿 -->
   <section class="pane" id="pRoster">
     <div class="panehead">
+    <div id="coOverdue"></div>
     <div class="toolrow">
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
@@ -1890,10 +1903,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v87';
+var APP_VER = 'v88';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v88', d: '2026/10/20', items: ['🔔 本人がスマホで送った面談シートは、📱で解錠した担当者の「お知らせ」に届くようになりました（研修生を選んで取り込む手間がなくなりました）', '📝 お知らせから開いて「承認して保存」するだけ。管理者・面談者の名前は必須で、管理者は候補から1タップで選べます', '⏰ 24時間たっても承認されていない面談シートは、ユニオン管理者にもお知らせします', '🔔 研修受講カードのお知らせは1本にまとめました（面談シート・目標設定の宿題）'] },
   { v: 'v87', d: '2026/10/20', items: ['📜 オーナーは「🎓 研修生登録の担当」から、担当者に出る秘密保持契約の誓約画面をプレビューできるようになりました'] },
   { v: 'v86', d: '2026/10/20', items: ['📜 研修生登録のページは、初めて使う時に秘密保持契約（PROMOTE）に同意してから使えるようになりました（最初の1回だけ）', '名簿の「🎓 研修生登録の担当」で、誓約済みかどうかと、誓約した契約書（印刷・PDF保存）を確認できます'] },
   { v: 'v85', d: '2026/10/20', items: ['🖤 PLATINUMカードは解禁までのお楽しみに。BLUE DIAMOND・TEAM ELITEの人の会員証は、解禁までは「COMING SOON」を表示します（QRボタンで受付はいつも通りできます）'] },
@@ -3796,11 +3810,12 @@ function renderCoSheetEntry(c){
         date: $('ccDate').value, sign: $('ccSign').value.trim(),
         phone: $('ccPhone').value.trim(), addrBirth: $('ccAddr').value.trim(),
         referrer: $('ccRef').value.trim(), manager: $('ccMgr').value.trim(),
+        trUid: op.byUid || '', trName: op.by || '', union: c.union || '',   // 🔔 解錠した担当者のお知らせに届く
         atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now()
       }).then(function(){
         el.innerHTML = '<div style="border:2px solid var(--green);border-radius:12px;padding:14px;margin-top:10px;background:var(--card);text-align:center;">'
           + '<b style="color:var(--green);font-size:15px;">✓ 送信しました</b>'
-          + '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">担当者が内容を確認して記録します。スマホを担当者に見せてお知らせください。</p></div>';
+          + '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">担当者に届きました。担当者が内容を確認して記録します。</p></div>';
       }).catch(function(){
         $('ccSend').disabled = false;
         el.insertAdjacentHTML('beforeend', '<p style="color:var(--accent);font-size:12.5px;">送信に失敗しました。担当者の解錠が切れている可能性があります（担当者にもう一度ボタンを押してもらってください）。</p>');
@@ -5878,6 +5893,7 @@ function loadMembers(cb){
     gMembers = arr;
     gMembersLoaded = true;
     renderRoster();
+    coOverdueLoad();   // ⏰ 24時間以上承認されていない面談シート
     ckClaimSync(arr, gRosterUnion);   // 🔑 受け取りキーの作成・名前変更の反映（管理者のみ・裏で）
     // 集計タブから編集・無効化等をした場合は集計も描き直す（氏名・系列・状態の変更を反映）
     if(gStat && $('pStats').classList.contains('on')) loadStats();
@@ -8040,7 +8056,7 @@ $('btnPledges').onclick = function(){ pledgeArchiveModal(null); };
 /* ══════════ 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） ══════════
    任命された担当（checkinUnions.trainers）＋管理者だけが、研修生の登録と
    チュートリアル記録を行える。登録と同時に会員証を発行し、QRを本人に読ませて渡す */
-var gTrMembers = [], gTrToday = [], gTrSex = '', gTrLast = null;
+var gTrMembers = [], gTrToday = [], gTrSex = '', gTrLast = null, gTrAdmin = false;
 /* ══════ 📜 研修担当者の秘密保持契約（PROMOTE 様式） ══════
    研修生登録ページ（#trainer）は、初めて使う時に誓約してから使える（任命された担当者・管理者とも。オーナーは甲の側なので不要）。
    記録は trainerNda/{uid}__{版}（作成のみ・本人も書き換え不可）。文面を変えたら NDA_VER を上げる → 全員もう一度誓約 */
@@ -8154,6 +8170,7 @@ function trainerEnter(){
     gCoreAdmins[gUnion] = d.coreAdmins || [];
     var isAdmin = isOwner() || gProf.role === 'admin' || ((d.admins || []).indexOf(gUser.uid) >= 0) || ((d.coreAdmins || []).indexOf(gUser.uid) >= 0);
     var allowed = isAdmin || ((d.trainers || []).indexOf(gUser.uid) >= 0);
+    gTrAdmin = isOwner() || ((d.admins || []).indexOf(gUser.uid) >= 0) || ((d.coreAdmins || []).indexOf(gUser.uid) >= 0) || (gProf.role === 'admin' && gProf.union === gUnion);
     if(!allowed){
       $('trDeny').classList.remove('hide');
       $('trDeny').textContent = '研修生登録の担当に任命されていません。ユニオンの管理者に「🎓 研修生登録の担当」への任命を依頼してください。';
@@ -8696,20 +8713,30 @@ function trChecklist(m){
 }
 // ── 研修担当側: 届いた宿題の確認・書き直し依頼 ──
 function hwUnseen(d){ return d && d.status === 'submitted' && !(d.seenMs && d.seenMs >= (d.atMs || 0)); }
-// 自分（PAの担当者）に届いた宿題の🔔。研修受講カードの上部に出す
+// 🔔 お知らせ（研修受講カードの上部に1本だけ）: 自分が解錠した面談シートの承認待ち＋自分に届いた宿題。
+//    管理者は、そのユニオンで24時間以上承認されていない面談シートも
 function trHwLoad(){
   var el = $('trHwTop');
   if(!el || !gUser) return;
-  db.collection('goalHw').where('trUid', '==', gUser.uid).get().then(function(qs){
-    var list = [];
-    qs.forEach(function(s){ var d = s.data(); d.t = s.id; list.push(d); });
-    list.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
-    var unseen = list.filter(hwUnseen);
-    if(!list.length){ el.innerHTML = ''; return; }
-    el.innerHTML = '<button class="hw-bell' + (unseen.length ? ' on' : '') + '" id="trHwBell">'
-      + (unseen.length ? '🔔 目標設定の宿題が届いています（' + unseen.length + '件）' : '📝 目標設定の宿題（' + list.length + '件・すべて確認済み）')
-      + ' ›</button>';
-    $('trHwBell').onclick = function(){ hwListModal(list); };
+  var me = gUser.uid;
+  var hwOf = function(qs){ var L = []; qs.forEach(function(x){ var d = x.data(); d.t = x.id; L.push(d); }); return L; };
+  Promise.all([
+    db.collection('goalHw').where('trUid', '==', me).get().then(hwOf).catch(function(){ return []; }),
+    db.collection('coSheetInbox').where('trUid', '==', me).get().then(coDocs).catch(function(){ return []; }),
+    gTrAdmin ? db.collection('coSheetInbox').where('union', '==', gUnion).get().then(coDocs).catch(function(){ return []; }) : Promise.resolve([])
+  ]).then(function(r){
+    var hw = r[0], co = r[1], mine = {};
+    co.forEach(function(d){ mine[d.id] = 1; });
+    var over = r[2].filter(function(d){ return !mine[d.id] && d.trUid !== me && coOverdue(d); });
+    over.forEach(function(d){ d.overdue = true; });
+    var items = co.concat(over).map(function(d){ return { k: 'co', d: d, at: d.atMs || 0 }; })
+      .concat(hw.map(function(d){ return { k: 'hw', d: d, at: d.atMs || 0 }; }));
+    items.sort(function(a, b){ return (a.k === 'co') !== (b.k === 'co') ? (a.k === 'co' ? -1 : 1) : b.at - a.at; });
+    var n = co.length + over.length + hw.filter(hwUnseen).length;
+    if(!items.length){ el.innerHTML = ''; return; }
+    el.innerHTML = '<button class="hw-bell' + (n ? ' on' : '') + '" id="trHwBell">'
+      + (n ? '🔔 お知らせ（' + n + '件）' : '🔔 お知らせ（新着なし）') + ' ›</button>';
+    $('trHwBell').onclick = function(){ inboxListModal(items, function(sh){ trHwLoad(); if(sh) trLoadMembers(); }); };
   }).catch(function(){ el.innerHTML = ''; });
 }
 function hwListModal(list){
@@ -8920,6 +8947,188 @@ var CO_SHEET_ITEMS = [
   { g: 'ビジネス活動について', q: 'いかなる理由があっても許可なく第三者に開示する行為（掲示板・ブログ・Twitter・Facebook・Instagram等全てのSNS含む）や録音録画は損害賠償の対象となることに同意できますか？（インプレッション内容・関係者の氏名などの個人情報は機密として取り扱われます）※東京地方裁判所を第一審の合意管轄裁判所とします' }
 ];
 var CO_SHEET_PLEDGE = 'ビジネスの活動中ならびに終了後に起こりうる出来事は自分自身に帰属するもので、関係者に対し責任を転化するものではありません。ビジネスマナーを守り誠実に活動すると誓約します。';
+/* 🔔 面談シートの届け先・承認 ──
+   📱で解錠した担当者（coOpen.byUid）に、本人の送信が🔔お知らせとして届く。
+   承認画面では「管理者」「面談者」を必ず入れる（空だと保存できない）。管理者は候補（ユニオン管理者）から1タップで選べる */
+function coOpenRec(){ return { until: Date.now() + 30 * 60 * 1000, by: (gProf && gProf.name) || '', byUid: (gUser && gUser.uid) || '' }; }
+function coMgrLast(un){ try{ return localStorage.getItem('bci_co_mgr_' + (un || '')) || ''; }catch(e){ return ''; } }
+function coMgrRemember(un, name){ try{ if(name) localStorage.setItem('bci_co_mgr_' + (un || ''), name); }catch(e){} }
+function coNeedHtml(px, mgr, intv){
+  return '<div class="co-need">'
+    + '<label for="' + px + 'Mgr">管理者（ユニオン管理者）<b class="req">必須</b></label><input type="text" id="' + px + 'Mgr" value="' + esc(mgr || '') + '" autocomplete="off">'
+    + '<div class="co-chips" id="' + px + 'MgrC"></div>'
+    + '<label for="' + px + 'Intv">面談者<b class="req">必須</b></label><input type="text" id="' + px + 'Intv" value="' + esc(intv || '') + '" autocomplete="off">'
+    + '<p class="mc-err" id="' + px + 'NeedErr" style="margin:6px 0 0;"></p></div>';
+}
+// 管理者の候補: そのユニオンのユニオン管理者（アカウント権限）＋兼務のユニオン管理者。前回入れた名前も
+function coNeedBind(px, un){
+  var box = $(px + 'MgrC'), inp = $(px + 'Mgr');
+  [inp, $(px + 'Intv')].forEach(function(x){ if(x) x.addEventListener('input', function(){ x.classList.remove('miss'); $(px + 'NeedErr').textContent = ''; }); });
+  if(!box || !un) return;
+  Promise.all([
+    db.collection('users').where('union', '==', un).where('role', '==', 'admin').get().catch(function(){ return null; }),
+    db.collection('checkinUnions').doc(un).get().catch(function(){ return null; })
+  ]).then(function(r){
+    var names = [], add = function(n){ n = String(n || '').trim(); if(n && names.indexOf(n) < 0) names.push(n); };
+    add(coMgrLast(un));
+    if(r[0]) r[0].forEach(function(d){ var u = d.data(); if(u.status !== 'disabled') add(u.name); });
+    var cores = r[1] && r[1].exists ? (r[1].data().coreAdmins || []) : [];
+    return Promise.all(cores.map(function(uid){ return db.collection('users').doc(uid).get().then(function(x){ if(x.exists) add(x.data().name); }).catch(function(){}); }))
+      .then(function(){ return names; });
+  }).then(function(names){
+    if(!$(px + 'MgrC')) return;
+    box.innerHTML = names.slice(0, 8).map(function(n, i){ return '<button type="button" data-mgr="' + i + '">' + esc(n) + '</button>'; }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-mgr]'), function(bt){
+      bt.onclick = function(){ inp.value = names[+bt.getAttribute('data-mgr')]; inp.classList.remove('miss'); $(px + 'NeedErr').textContent = ''; };
+    });
+  });
+}
+function coNeedCheck(px){
+  var miss = [];
+  [['Mgr', '管理者'], ['Intv', '面談者']].forEach(function(f){
+    var x = $(px + f[0]);
+    if(x && !x.value.trim()){ x.classList.add('miss'); miss.push(f[1]); }
+  });
+  if(miss.length){
+    $(px + 'NeedErr').textContent = miss.join('と') + 'の名前を入れてください';
+    var x0 = $(px + (miss[0] === '管理者' ? 'Mgr' : 'Intv'));
+    if(x0){ x0.focus(); x0.scrollIntoView({ block: 'center' }); }
+    return false;
+  }
+  return true;
+}
+function coDocs(qs){ var L = []; qs.forEach(function(x){ var d = x.data(); d.id = x.id; L.push(d); }); return L; }
+// その研修生に届いている最新の送信（なければ null）
+function coInboxOf(no){
+  return db.collection('coSheetInbox').where('no', '==', no).get().then(function(qs){
+    var L = coDocs(qs);
+    L.sort(function(a, b){ return (b.atMs || 0) - (a.atMs || 0); });
+    return L[0] || null;
+  }).catch(function(){ return null; });
+}
+function coOverdue(d){ return Date.now() - (d.atMs || 0) >= 864e5; }
+// 承認画面: 本人の入力を確認 → 管理者・面談者を入れて「承認して保存」（正式記録・フォームを閉じる・お知らせから消える）
+function coApproveModal(d, back){
+  function goBack(sheet){ closeModal(); if(back) back(sheet); }
+  db.collection('checkinMembers').doc(d.no).get().then(function(ms){
+    if(!ms.exists){ toast('名簿にこの研修生が見つかりません（' + (d.no || '') + '）'); return; }
+    var m = ms.data(); m.no = ms.id;
+    var un = m.union || d.union || gUnion;
+    var checks = d.checks || {}, miss = [];
+    CO_SHEET_ITEMS.forEach(function(it, i){ if(!checks['c' + i]) miss.push(it.q); });
+    if(!d.pledge) miss.push('誓約に同意');
+    var allList = CO_SHEET_ITEMS.map(function(it, i){
+      return '<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--line);">'
+        + (checks['c' + i] ? '<span style="color:var(--green);font-weight:700;">✓</span>' : '<span style="color:var(--accent);">□</span>')
+        + '<span style="white-space:pre-line;">' + esc(it.q) + '</span></div>';
+    }).join('');
+    var row = function(k, v){ return '<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13.5px;"><span style="flex:0 0 7.5em;color:var(--sub);">' + k + '</span><b style="font-weight:600;min-width:0;overflow-wrap:anywhere;">' + esc(v || '—') + '</b></div>'; };
+    modal('<h2>📝 面談シートの承認 — ' + esc(d.name || m.name || '') + '</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">' + esc(d.atLocal || '') + ' に本人が送信' + (d.trName ? '・解錠: ' + esc(d.trName) : '')
+      + (coOverdue(d) ? '　<span class="pill a">⏰ 24時間以上未承認</span>' : '') + '</p>'
+      + (miss.length
+        ? '<p style="margin:0 0 4px;"><span class="pill a">未チェック ' + miss.length + '件</span></p>'
+          + miss.map(function(q){ return '<div style="display:flex;gap:8px;padding:4px 0;font-size:13px;"><span style="color:var(--accent);">□</span><span style="white-space:pre-line;">' + esc(q) + '</span></div>'; }).join('')
+        : '<p style="margin:0;"><span class="pill g">✓ 全項目チェック済み・誓約に同意</span></p>')
+      + '<details class="co-det"><summary>チェック項目をすべて見る</summary>' + allList + '</details>'
+      + '<div style="margin-top:8px;">' + row('日付', d.date) + row('署名', d.sign) + row('電話番号', d.phone) + row('住所／生年月日', d.addrBirth) + row('紹介者', d.referrer || m.referrer) + '</div>'
+      + coNeedHtml('coa', d.manager || coMgrLast(un), d.trName || ((gProf && gProf.name) || ''))
+      + '<div class="btns"><button id="coaClose">閉じる</button><button id="coaMore" aria-expanded="false" title="その他" style="flex:0 0 52px;">⋯</button><button class="primary" id="coaOk">承認して保存</button></div>'
+      + '<div id="coaMenu" class="co-menu hide"><button id="coaRedo">✏️ 本人に書き直してもらう（もう一度フォームを出す）</button><button id="coaDel">🗑 この送信を削除</button></div>', true);
+    coNeedBind('coa', un);
+    $('coaClose').onclick = goBack;
+    $('coaMore').onclick = function(){
+      var h = $('coaMenu').classList.toggle('hide');
+      $('coaMore').setAttribute('aria-expanded', h ? 'false' : 'true');
+    };
+    var tok = m.cardToken || d.cardToken;
+    $('coaRedo').onclick = function(){
+      if(!tok){ toast('会員証が未発行です'); return; }
+      if(!confirm((d.name || '') + ' さんの会員証に、もう一度入力フォームを出します（30分間）。\n今回の送信は消えます。よろしいですか？')) return;
+      var rec = coOpenRec();
+      if(d.trUid && d.trUid !== rec.byUid){ rec.byUid = d.trUid; rec.by = d.trName || rec.by; }   // 届け先は最初に解錠した担当者のまま
+      db.collection('cards').doc(tok).set({ coOpen: rec }, { merge: true }).then(function(){
+        return db.collection('coSheetInbox').doc(d.id).delete();
+      }).then(function(){ toast('本人の会員証にもう一度フォームを出しました（30分間）'); goBack(); })
+        .catch(function(e){ toast(permMsg(e, '書き直しの依頼ができませんでした')); });
+    };
+    $('coaDel').onclick = function(){
+      if(!confirm('この送信を削除しますか？（正式な記録には影響しません）')) return;
+      db.collection('coSheetInbox').doc(d.id).delete().then(function(){ toast('削除しました'); goBack(); })
+        .catch(function(e){ toast(permMsg(e, '削除できませんでした')); });
+    };
+    $('coaOk').onclick = function(){
+      if(!coNeedCheck('coa')) return;
+      if(m.coSheet && !confirm('この人にはすでに面談シートの記録があります。本人の入力で上書きしますか？')) return;
+      var sheet = {
+        ver: d.ver || CO_SHEET_VER, checks: checks, pledge: !!d.pledge,
+        date: d.date || todayStr(), sign: d.sign || '', phone: d.phone || '', addrBirth: d.addrBirth || '',
+        referrer: d.referrer || m.referrer || '', manager: $('coaMgr').value.trim(), interviewer: $('coaIntv').value.trim(),
+        byName: (gProf && gProf.name) || '', byUid: (gUser && gUser.uid) || '',
+        atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now()
+      };
+      coMgrRemember(un, sheet.manager);
+      $('coaOk').disabled = true;
+      db.collection('checkinMembers').doc(m.no).update({ coSheet: sheet }).then(function(){
+        if(tok) db.collection('cards').doc(tok).set({ coOpen: FV.delete() }, { merge: true }).catch(function(){});
+        var dels = [db.collection('coSheetInbox').doc(d.id).delete().catch(function(){})];
+        return coInboxAll(m.no).then(function(L){
+          L.forEach(function(x){ if(x.id !== d.id) dels.push(db.collection('coSheetInbox').doc(x.id).delete().catch(function(){})); });
+          return Promise.all(dels);
+        });
+      }).then(function(){
+        toast(miss.length ? '承認して保存しました（未チェックの項目があります・あとから追記できます）' : '承認して保存しました');
+        goBack(sheet);
+      }).catch(function(e){
+        $('coaOk').disabled = false;
+        toast(permMsg(e, '面談シートの保存権限がありません（担当への任命を確認してください）'));
+      });
+    };
+  }).catch(function(e){ toast(permMsg(e, '読み込めませんでした')); });
+}
+function coInboxAll(no){
+  return db.collection('coSheetInbox').where('no', '==', no).get().then(coDocs).catch(function(){ return []; });
+}
+// 🔔 お知らせの一覧（面談シートの承認待ち＋目標設定の宿題）
+function inboxListModal(items, after){
+  modal('<h2>🔔 お知らせ</h2>'
+    + (items.length ? '' : '<p style="font-size:13px;color:var(--sub);">新しいお知らせはありません。</p>')
+    + items.map(function(it, i){
+      var d = it.d;
+      if(it.k === 'co') return '<div class="hw-li" data-ib="' + i + '"><span class="nm"><i class="hw-dot"></i><span class="ib-k co">面談シート</span> ' + esc(d.name || d.no)
+        + '<small>' + esc(d.no) + '・' + esc(d.atLocal || '') + (d.overdue ? '・⏰ 24時間以上未承認（担当: ' + esc(d.trName || '—') + '）' : '') + '</small></span>'
+        + '<span class="pill a">承認待ち</span></div>';
+      return '<div class="hw-li" data-ib="' + i + '"><span class="nm">' + (hwUnseen(d) ? '<i class="hw-dot"></i>' : '') + '<span class="ib-k">宿題</span> ' + esc(d.name || d.no)
+        + '<small>' + esc(d.no) + '・' + esc(d.atLocal || '') + (d.status === 'redo' ? '・書き直し依頼中' : '') + '</small></span>'
+        + '<b>月' + (d.total || 0) + '万</b></div>';
+    }).join('')
+    + '<div class="btns"><button id="ibClose">閉じる</button></div>', true);
+  $('ibClose').onclick = closeModal;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-ib]'), function(r){
+    r.onclick = function(){
+      var it = items[+r.getAttribute('data-ib')], d = it.d;
+      if(it.k === 'co') coApproveModal(d, after);
+      else hwViewModal({ no: d.no, name: d.name, cardToken: d.t }, after);
+    };
+  });
+}
+// 🧑‍💼 受付管理: そのユニオンで24時間以上承認されていない面談シート（ユニオン管理者・受付管理者に出す）
+function coOverdueLoad(){
+  var el = $('coOverdue');
+  if(!el) return;
+  var un = gRosterUnion;
+  if(!un || !canEditUnion(un)){ el.innerHTML = ''; return; }
+  db.collection('coSheetInbox').where('union', '==', un).get().then(function(qs){
+    var L = coDocs(qs).filter(coOverdue);
+    if(un !== gRosterUnion) return;
+    if(!L.length){ el.innerHTML = ''; return; }
+    L.sort(function(a, b){ return (a.atMs || 0) - (b.atMs || 0); });
+    el.innerHTML = '<button class="hw-bell on" id="coOverBtn">⏰ 面談シートが24時間以上承認されていません（' + L.length + '件）›</button>';
+    $('coOverBtn').onclick = function(){
+      inboxListModal(L.map(function(d){ d.overdue = true; return { k: 'co', d: d }; }), function(){ coOverdueLoad(); loadMembers(); });
+    };
+  }).catch(function(){ el.innerHTML = ''; });
+}
 function coSheetModal(m, back){
   var editing = !m.coSheet;   // 未記入なら入力モード、記入済みなら閲覧モードで開く
   function goBack(){ closeModal(); if(back) back(); }
@@ -8932,10 +9141,10 @@ function coSheetModal(m, back){
         + '　本人に確認しながらチェックしてください。<b>途中保存できます。</b></p>'
         + (m.cardToken
           ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 4px;">'
-            + '<button id="cosOpenPhone" style="font-size:12.5px;">📱 本人のスマホで入力してもらう</button>'
-            + '<button id="cosPull" style="font-size:12.5px;">📥 本人の入力を取り込む</button></div>'
+            + '<button id="cosOpenPhone" style="font-size:12.5px;">📱 本人のスマホで入力してもらう</button></div>'
+            + '<div id="cosInbox"></div>'
             + '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">📱を押すと本人の会員証に30分だけ入力フォームが出ます。'
-            + '本人が送信したら📥で読み込み、内容を確認して「保存」してください（保存で正式記録・フォームは自動で閉じます）。</p>'
+            + '本人が送信すると🔔お知らせに届くので、そこで確認して承認してください。</p>'
           : '');
       var lastG = '';
       CO_SHEET_ITEMS.forEach(function(it, i){
@@ -8953,8 +9162,7 @@ function coSheetModal(m, back){
         + '<label>電話番号</label><input type="tel" id="cosPhone" value="' + esc(s.phone || '') + '">'
         + '<label>住所または生年月日</label><input type="text" id="cosAddr" value="' + esc(s.addrBirth || '') + '">'
         + '<label>紹介者</label><input type="text" id="cosRef" value="' + esc(s.referrer != null ? s.referrer : (m.referrer || '')) + '">'
-        + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>管理者</label><input type="text" id="cosMgr" value="' + esc(s.manager || '') + '"></div>'
-        + '<div style="flex:1;min-width:0;"><label>面談者</label><input type="text" id="cosIntv" value="' + esc(s.interviewer != null ? s.interviewer : ((gProf && gProf.name) || '')) + '"></div></div>'
+        + coNeedHtml('cos', s.manager || coMgrLast(m.union), s.interviewer || ((gProf && gProf.name) || ''))
         + '<div class="btns"><button id="cosCancel">キャンセル</button><button class="primary" id="cosSave">保存</button></div>';
     } else {
       var nDone = 0;
@@ -8991,25 +9199,18 @@ function coSheetModal(m, back){
     if((b = $('cosEdit'))) b.onclick = function(){ editing = true; render(); };
     if((b = $('cosOpenPhone'))) b.onclick = function(){
       db.collection('cards').doc(m.cardToken)
-        .set({ coOpen: { until: Date.now() + 30 * 60 * 1000, by: (gProf && gProf.name) || '' } }, { merge: true })
-        .then(function(){ toast('本人の会員証に入力フォームを表示しました（30分間）。本人に会員証を開き直してもらってください'); })
+        .set({ coOpen: coOpenRec() }, { merge: true })
+        .then(function(){ toast('本人の会員証に入力フォームを表示しました（30分間）。送信されると🔔お知らせに届きます'); })
         .catch(function(e){ toast(permMsg(e, '解錠に失敗しました')); });
     };
-    if((b = $('cosPull'))) b.onclick = function(){
-      db.collection('coSheetInbox').where('no', '==', m.no).get().then(function(qs){
-        var latest = null;
-        qs.forEach(function(d){ var x = d.data(); if(!latest || (x.atMs || 0) > (latest.atMs || 0)) latest = x; });
-        if(!latest){ toast('本人からの入力はまだ届いていません（送信後にもう一度押してください）'); return; }
-        CO_SHEET_ITEMS.forEach(function(it, i){
-          if($('cos_' + i)) $('cos_' + i).checked = !!(latest.checks && latest.checks['c' + i]);
-        });
-        if($('cosPledge')) $('cosPledge').checked = !!latest.pledge;
-        if(latest.date && $('cosDate')) $('cosDate').value = latest.date;
-        [['sign','cosSign'],['phone','cosPhone'],['addrBirth','cosAddr'],['referrer','cosRef'],['manager','cosMgr']]
-          .forEach(function(pr){ if(latest[pr[0]] && $(pr[1])) $(pr[1]).value = latest[pr[0]]; });
-        toast('本人の入力（' + (latest.atLocal || '') + '）を読み込みました。内容を確認して「保存」を押してください');
-      }).catch(function(e){ toast('読み込みエラー: ' + e.message); });
-    };
+    if($('cosMgr')) coNeedBind('cos', m.union);
+    // 📩 本人の入力が届いていれば、承認画面へ
+    if($('cosInbox')) coInboxOf(m.no).then(function(d){
+      var el = $('cosInbox');
+      if(!el || !d) return;
+      el.innerHTML = '<button class="hw-bell on" id="cosInboxGo">📩 本人の入力が届いています（' + esc(d.atLocal || '') + '）→ 確認して承認 ›</button>';
+      $('cosInboxGo').onclick = function(){ closeModal(); coApproveModal(d, function(sh){ if(sh) m.coSheet = sh; if(back) back(); }); };
+    });
     if((b = $('cosSave'))) b.onclick = function(){
       var newChecks = {}, all = true;
       CO_SHEET_ITEMS.forEach(function(it, i){
@@ -9026,6 +9227,8 @@ function coSheetModal(m, back){
         byName: (gProf && gProf.name) || '', byUid: (gUser && gUser.uid) || '',
         atLocal: new Date().toLocaleString('ja-JP'), atMs: Date.now()
       };
+      if(!coNeedCheck('cos')) return;
+      coMgrRemember(m.union, sheet.manager);
       $('cosSave').disabled = true;
       db.collection('checkinMembers').doc(m.no).update({ coSheet: sheet }).then(function(){
         m.coSheet = sheet;
