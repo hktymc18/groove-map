@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v827';
+var APP_JS_VERSION = 'v828';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4083,7 +4083,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v827';
+  var DATA_VERSION = 'v828';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6190,6 +6190,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v828', d:'2026-10-20', items:['計画シートの印刷・PDFで、行動の表の見出し（流通アップに関して など）が上の表に重なっていたのを直しました。表の高さを行の数に合わせ、行がとても多い時は文字を小さくして1枚に収めます'] },
   { v:'v827', d:'2026-10-19', items:['MAPの共有はアップ（自分の上の人）だけにしました。配下（ダウン）の人には共有できず、アップか確かめられない人は「アップです」と確認してから共有します（#23）', 'プロフィールに「紹介者」を足しました（受付の名簿と紐付いている人は、名簿の紹介者が自動で入ります）', '共有中の一覧で、アップ以外への共有に印が付きます。アカウント管理で「共有してよい上の人」と「アップ以外への共有」を見られます'] },
   { v:'v826', d:'2026-10-19', items:['PCの時刻の入力を全部同じ形に：手入力（1930→19:30）に加えて、「時」と「分」を別々に選べます（分は15分刻み・時は10時のあたりから）。予定・研修の予定・タスク・OL・期日・企画書など'] },
   { v:'v825', d:'2026-10-19', items:['レビューの結果の「まだ答えていない人」：開発メンバーだけの時は指定した人全員を、みんなの時はアカウント管理の「使える人」と同じ人を数えるように（前は一部の人が外れていた）'] },
@@ -41056,12 +41057,25 @@ function _p2ShPrintHtml(ym, o) {
   var v = function(x) { return x === null || x === undefined ? '' : x; };
   var rows = K.map(function(k) { var X = _p2ShKv(ym, k, A), P = _p2ShKv(pv, k, Ap); return '<tr><th>' + evEsc(k.lb) + '</th><td>' + v(P.t) + '</td><td>' + v(P.v) + '</td><td>' + v(X.t) + '</td><td>' + v(X.v) + '</td><td class="kz">' + evEsc(kz[k.id] || '') + '</td></tr>'; }).join('');
   // 行動：空いた行は合わせて40行まで（多すぎて下が切れないように）
-  var AL = P2_SH_CAT.map(function(c) { return _p2ShActs(ym, c.k); }), minR = 7;
-  while (minR > 2 && AL.reduce(function(s, L) { return s + Math.max(minR, L.length); }, 0) > (two ? 44 : 40)) minR--;
+  var AL = P2_SH_CAT.map(function(c) { return _p2ShActs(ym, c.k); }), minR = 7, afs = 9.5;
+  // v828: 行の数・折り返しに合わせて表の高さを分ける（前は4つの表が同じ高さで、行の多い表がはみ出して次の見出しに重なっていた）。
+  //   入りきらない時は、まず空いた行を減らし、それでも入らなければ文字を小さくする
+  var _aw = function(t) { var n = 0; String(t || '').split('').forEach(function(ch) { n += /[\x20-\x7e\uff61-\uff9f]/.test(ch) ? 0.55 : 1; }); return n; };
+  var _aLn = function(e, fs) { return e ? Math.max(1, Math.ceil(_aw(e.title) / (72 / (fs * 0.3528)))) : 1; };
+  var aTight = false; // とても多い時は行の上下の余白と行間も詰める
+  var _aNeed = function(fs, mr) { // 表の中身に要る高さ（mm）
+    var lh = fs * 0.3528 * (aTight ? 1.2 : 1.45), pd = aTight ? 0.9 : 2;
+    return AL.reduce(function(s, L) { var n = Math.max(mr, L.length), h = aTight ? 4.5 : 6.5; for (var j = 0; j < n; j++) h += _aLn(L[j], fs) * lh + pd; return s + h; }, 0);
+  };
+  var aAvail = 279 - P2_SH_CAT.length * 6.5 - (P2_SH_CAT.length - 1) * 3 - 2; // 見出しと間を引いた残り
+  while (minR > 2 && _aNeed(afs, minR) > aAvail) minR--;
+  while (afs > 6.5 && _aNeed(afs, minR) > aAvail) afs -= 0.5;
+  if (_aNeed(afs, minR) > aAvail) { aTight = true; minR = 1; afs = 8; while (afs > 5.5 && _aNeed(afs, minR) > aAvail) afs -= 0.5; }
   var acts = P2_SH_CAT.map(function(c, ci) {
-    var L = AL[ci], n = Math.max(minR, L.length), r = '';
+    var L = AL[ci], n = Math.max(minR, L.length), r = '', g = 1;
+    for (var j0 = 0; j0 < n; j0++) g += _aLn(L[j0], afs);
     for (var j = 0; j < n; j++) { var e = L[j]; r += '<tr><td class="ck">' + (e && e.done ? '✔' : '') + '</td><td>' + (e ? evEsc(e.title || '') : '') + '</td><td class="dd">' + (e && _p2ShD(e) ? parseInt(_p2ShD(e).slice(5, 7), 10) + '/' + parseInt(_p2ShD(e).slice(8), 10) : '/') + '</td></tr>'; }
-    return '<div class="al"><div class="at">' + c.lb + '</div><div class="aw"><table><tr><th></th><th></th><th class="dd">実行期日</th></tr>' + r + '</table></div></div>';
+    return '<div class="al" style="flex-grow:' + g + '"><div class="at">' + c.lb + '</div><div class="aw"><table><tr><th></th><th></th><th class="dd">実行期日</th></tr>' + r + '</table></div></div>';
   }).join('');
   var ms = Y.ms ? parseInt(Y.ms.ym.slice(5), 10) + '月 ' + evEsc(Y.ms.t || '') : '';
   var css = '@page{size:A3 landscape;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans JP","Hiragino Sans",sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
@@ -41073,7 +41087,7 @@ function _p2ShPrintHtml(ym, o) {
     + '.mp{margin-top:2mm;flex:none}.mp h2{margin:0;font-size:12pt}.mp svg{display:block;width:100%;height:118mm}.lg{font-size:8.5pt;color:#333}'
     + '.pg.one .mp{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pg.one .mp svg{flex:1 1 0;min-height:0;height:auto}'
     + 'table{border-collapse:collapse;width:100%}.kpw{margin-top:2mm;flex:1 1 0;min-height:0}.kp{height:100%}.kp th,.kp td{border:1px solid #111;padding:1mm 2mm;font-size:10pt;text-align:center}.kp tr>th:first-child{text-align:left;width:34mm;white-space:nowrap}.kp td.kz{text-align:left;width:52%}'
-    + '.al{flex:1 1 0;display:flex;flex-direction:column;min-height:0;margin-bottom:3mm}.al:last-child{margin-bottom:0}.al .at{font-weight:700;font-size:10.5pt;margin-bottom:1mm;flex:none}.al .aw{flex:1 1 0;min-height:0}.al table{height:100%}.al th,.al td{border:1px solid #111;padding:.6mm 1.5mm;font-size:9.5pt}.al th{font-weight:400;font-size:8.5pt;height:5mm}.al .ck{width:6mm;text-align:center}.al .dd{width:17mm;text-align:center}';
+    + '.al{flex:1 1 auto;display:flex;flex-direction:column;margin-bottom:3mm}.al:last-child{margin-bottom:0}.pg:not(.one)>div:last-child{padding-bottom:.6mm}.al .at{font-weight:700;font-size:10.5pt;line-height:1.45;margin-bottom:1mm;flex:none}.al .aw{flex:1 1 auto}.al table{height:100%}.al th,.al td{border:1px solid #111;padding:.6mm 1.5mm;font-size:' + afs + 'pt;line-height:' + (aTight ? '1.2;padding-top:.15mm;padding-bottom:.15mm' : '1.45') + '}.al th{font-weight:400;font-size:' + Math.min(8.5, afs) + 'pt;height:' + (aTight ? 3.5 : 5) + 'mm}.al .ck{width:6mm;text-align:center}.al .dd{width:17mm;text-align:center}'; // v828: 高さは中身（行の数）に合わせて伸ばす
   // v780 #8: 紙がA3より小さい時（iPhoneの印刷はA4など）は、紙に合わせて全体を縮める
   for (var z9 = 95; z9 >= 30; z9 -= 5) css += '@media print and (max-width:' + (Math.floor(404 * (z9 + 5) / 100) - 1) + 'mm),print and (max-height:' + (Math.floor(279 * (z9 + 5) / 100) - 1) + 'mm){.pg{zoom:' + (z9 / 100) + '}}'; // ちょうどA3（404×281mm）は縮めない
   var hd = function(pn) { return '<div class="hd"><h1>計画立案シート</h1><span>' + parseInt(ym.slice(0, 4), 10) + '年　' + _p2ShMonLb(ym) + '</span><span>【ユニオン名：' + evEsc(un) + '】</span>' + (pn ? '<span style="margin-left:auto;font-size:11pt;color:#555">' + pn + '</span>' : '') + '</div>'; };
