@@ -591,6 +591,20 @@ service cloud.firestore {
       }
     }
 
+    // 🖤 v26: 会員証デザインの解禁スイッチ（checkinConfig/launch）。
+    //   会員証は未ログインで開くので誰でも読める（中身は解禁のON/OFFと予約日時だけ）。書けるのはオーナーだけ
+    match /checkinConfig/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if isOwnerUid() && id == 'launch'
+        && request.resource.data.keys().hasOnly(['platinum', 'platinumAt', 'by', 'at'])
+        && request.resource.data.platinum is bool
+        && request.resource.data.platinumAt is int && request.resource.data.platinumAt >= 0
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.at == request.time;
+      allow delete: if isOwnerUid();
+    }
+
     // スマホ会員証: トークン(URL)を知っている本人だけが自分のカードを表示できる。
     // get のみ公開（list 不可＝一覧の抜き出しはできない）。
     // 発行・再発行・無効化はログイン済みなら誰でも可（受付スタッフが配布できるように）。
