@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v830';
+var APP_JS_VERSION = 'v831';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3432,15 +3432,51 @@ var OWNER_UID = 'j2DPDAccCygHmR9i5K3bTvHnH0V2'; // 永久管理者（ルール�
 var OWNER_UIDS = [OWNER_UID, 'E4WT7EHai5c6WANUgASz42Euu1y1']; // v669: オーナー（馬越さんを追加）。firestore.rules の isOwnerUid と一致させること
 function isOwnerUid(uid) { return OWNER_UIDS.indexOf(uid) >= 0; }
 
-// 現在のユーザーが管理者か（オーナー or role:'admin'）
+// 現在のユーザーが管理者か（オーナー or role:'admin'）。v831: 自分の所属ユニオンの兼務の管理者も
 function isCurrentAdmin() {
-  return !!currentUser && (isOwnerUid(currentUser.uid) || currentUser.role === 'admin');
+  return !!currentUser && (isOwnerUid(currentUser.uid) || currentUser.role === 'admin' || (!!currentUser.union && _admCoreList().indexOf(currentUser.union) >= 0));
+}
+// ════ v831: 兼務のユニオン管理者 ════
+//  オーナーが checkinUnions/{ユニオン}.coreAdmins に指定（受付システムの「兼務のユニオン管理者」と同じ設定）。
+//  管理しているユニオン＝（管理者の印があれば）所属ユニオン＋兼務のユニオン
+var _admCore = null;
+function _admCoreList() {
+  if (_admCore) return _admCore;
+  if (!currentUser || !currentUser.uid) return [];
+  try { var c = JSON.parse(localStorage.getItem('gm_admCore_' + currentUser.uid) || '[]'); return Array.isArray(c) ? c : []; } catch (e) { return []; }
+}
+function _admCoreLoad() {
+  if (!db || !currentUser || !currentUser.uid) return;
+  var uid = currentUser.uid, before = JSON.stringify(_admCoreList());
+  db.collection('checkinUnions').where('coreAdmins', 'array-contains', uid).get().then(function(qs) {
+    if (!currentUser || currentUser.uid !== uid) return;
+    var L = []; qs.forEach(function(d) { if (d.id) L.push(d.id); }); L.sort();
+    _admCore = L;
+    try { localStorage.setItem('gm_admCore_' + uid, JSON.stringify(L)); } catch (e) {}
+    if (JSON.stringify(L) !== before) _admUiSync();
+  }).catch(function() {});
+}
+function _admUnions() {
+  if (!currentUser) return [];
+  var L = [];
+  if ((isOwnerUid(currentUser.uid) || currentUser.role === 'admin') && currentUser.union) L.push(currentUser.union);
+  _admCoreList().forEach(function(u) { if (u && L.indexOf(u) < 0) L.push(u); });
+  return L;
+}
+function _admOf(un) { return !!currentUser && (isOwnerUid(currentUser.uid) || (!!un && _admUnions().indexOf(un) >= 0)); }
+function _canAdmPanel() { return isCurrentAdmin() || _admUnions().length > 0; }
+function _admUiSync() { // 兼務がわかった時：メニュー・ユニオン予定を出し直す
+  try { if (document.getElementById('setPg') && typeof _stRender === 'function') _stRender(); } catch (e1) {}
+  try { if (typeof renderMenuHub === 'function' && document.getElementById('menuHub')) renderMenuHub(); } catch (e2) {}
+  try { var w = document.getElementById('profileAdminWrap'); if (w && document.getElementById('profileModal').classList.contains('open')) w.style.display = _canAdmPanel() ? '' : 'none'; } catch (e3) {}
+  try { loadUnionEvents(); } catch (e4) {}
+  try { checkPendingApprovals(); } catch (e5) {}
 }
 
 // ===== アカウント管理（管理者のみ） =====
 var _adminUsers = [];
 function openAdminPanel() {
-  if (!isCurrentAdmin()) { toast('権限がありません'); return; }
+  if (!_canAdmPanel()) { toast('権限がありません'); return; } // v831: 兼務のユニオン管理者も
   closeProfileModal(null);
   document.getElementById('adminPanel').classList.add('open');
   loadAdminUsers();
@@ -3456,6 +3492,7 @@ function loadAdminUsers() {
     renderAdminList();
     _admCkLoad(); // v770: 紐付いた受付の名簿（無効かどうか）
     _accLoad(); // v790: 公開範囲・登録待ちの名簿
+    _admCoreAllLoad(); // v831: 兼務の設定（オーナー）
     _shAdmLoad(); // v827: 共有してよい上の人・アップ以外への共有
   }).catch(function() {
     if (body) body.innerHTML = '<div class="ev-empty">読み込みに失敗しました（権限をご確認ください）</div>';
@@ -3470,18 +3507,73 @@ function _myUnionUsersQuery(q) {
 }
 function _adminUsersFetch() {
   if (currentUser && isOwnerUid(currentUser.uid)) return fsGetCol('users');
-  var c = _myUnionUsersQuery(); if (!c) return Promise.resolve([]);
-  return c.get().then(function(snap) { var L = []; snap.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; });
+  return _admUsersIn(); // v831: 管理しているユニオン（所属・兼務）の人
+}
+// v831: 管理しているユニオンの人（10ユニオンずつ in で読む）
+function _admUsersIn(q) {
+  var U = _admUnions(); if (!U.length || !db) return Promise.resolve([]);
+  var ch = []; for (var i = 0; i < U.length; i += 10) ch.push(U.slice(i, i + 10));
+  return Promise.all(ch.map(function(c) { var qq = db.collection('users').where('union', 'in', c); if (q) qq = q(qq); return qq.get(); })).then(function(rs) {
+    var L = [], seen = {};
+    rs.forEach(function(snap) { snap.forEach(function(d) { if (seen[d.id]) return; seen[d.id] = 1; L.push(Object.assign({ id: d.id }, d.data())); }); });
+    return L;
+  });
 }
 function _adminFindUser(uid) {
   for (var i=0;i<_adminUsers.length;i++) if (_adminUsers[i].id === uid) return _adminUsers[i];
   return null;
 }
 // v586: データ使用状況レポートは廃止（他のユーザーのデータを読むため。ルールで管理者も読めなくした）
+var _admUnF = ''; // v831: 兼務の管理者が見るユニオンの絞り込み（''＝すべて）
 function _adminScopedUsers() {
   var owner = !!(currentUser && isOwnerUid(currentUser.uid));
-  var myUnion = (currentUser && currentUser.union) ? currentUser.union : '';
-  return owner ? _adminUsers : (myUnion ? _adminUsers.filter(function(u){ return (u.union||'') === myUnion; }) : []); // v777: ユニオンが空なら誰も出さない
+  var U = _admUnions();
+  var L = owner ? _adminUsers : _adminUsers.filter(function(u){ return !!u.union && U.indexOf(u.union) >= 0; }); // v777: ユニオンが空なら誰も出さない／v831: 兼務のユニオンも
+  if (!owner && _admUnF && U.indexOf(_admUnF) >= 0) L = L.filter(function(u) { return u.union === _admUnF; });
+  return L;
+}
+function admUnF(un) { _admUnF = un || ''; _accNames = _accNamesVis().map(function(x) { return x.n; }); renderAdminList(); }
+// 兼務の管理者：上に「すべて／ユニオンごと」の切りかえ
+function _admUnFHtml() {
+  if (!currentUser || isOwnerUid(currentUser.uid)) return '';
+  var U = _admUnions(); if (U.length < 2) return '';
+  if (_admUnF && U.indexOf(_admUnF) < 0) _admUnF = '';
+  var n = function(un) { return _adminUsers.filter(function(u) { return un ? u.union === un : U.indexOf(u.union) >= 0; }).length; };
+  _accCss();
+  return '<div class="acc-un" id="admUnF" style="margin:4px 12px 6px">' + ['' ].concat(U).map(function(un) { return '<span class="' + (_admUnF === un ? 'on' : '') + '" data-u="' + evEsc(un) + '" onclick="admUnF(this.dataset.u)">' + (un ? evEsc(un) : 'すべて') + ' ' + n(un) + '人</span>'; }).join('') + '</div>';
+}
+// ── v831: 兼務の設定（オーナー）──
+var _admCoreAll = null; // ユニオン → 兼務の管理者のUID（受付に登録されているユニオン）
+function _admCoreAllLoad() {
+  if (!db || !currentUser || !isOwnerUid(currentUser.uid)) return;
+  fsGetCol('checkinUnions').then(function(L) { var M = {}; (L || []).forEach(function(d) { if (d.id) M[d.id] = (d.coreAdmins || []).slice(); }); _admCoreAll = M; _accRe(); }).catch(function() { _admCoreAll = _admCoreAll || {}; });
+}
+function _admCoreOf(uid) { var M = _admCoreAll || {}; return Object.keys(M).filter(function(un) { return M[un].indexOf(uid) >= 0; }).sort(); }
+function _admCoreChip(u) {
+  if (!currentUser || !isOwnerUid(currentUser.uid) || isOwnerUid(u.id) || !_admCoreAll) return '';
+  var L = _admCoreOf(u.id);
+  return '<span class="acc-ev' + (L.length ? ' on' : '') + '" onclick="admCoreOpen(\'' + u.id + '\')">' + (L.length ? '兼務：' + evEsc(L.join('・')) : '＋ 兼務するユニオン') + '</span>';
+}
+function admCoreOpen(uid) {
+  var u = _adminFindUser(uid); if (!u || !_admCoreAll) return;
+  var mine = _admCoreOf(uid), uns = Object.keys(_admCoreAll).sort();
+  _accDlg('<div class="hd">' + evEsc(u.name || '') + ' さんが兼務するユニオン<span onclick="_accDlgClose()">閉じる</span></div>'
+    + '<div class="nt">選んだユニオンの管理者になります（アカウント管理・チェック項目・ユニオン予定）。受付システム（BASE CHECK-IN）の「兼務のユニオン管理者」と同じ設定です。選べるのは受付に登録されているユニオンです。</div>'
+    + '<div id="admCoreL" style="margin-top:8px">' + (uns.length ? uns.map(function(un) { return '<label class="r"><input type="checkbox" value="' + evEsc(un) + '"' + (mine.indexOf(un) >= 0 ? ' checked' : '') + '>' + evEsc(un) + (un === u.union ? '<small>所属</small>' : '') + '</label>'; }).join('') : '<div class="nt">受付に登録されているユニオンがありません</div>') + '</div>'
+    + '<div class="bt"><span onclick="_accDlgClose()">やめる</span><span class="p" onclick="admCoreSave(\'' + uid + '\')">保存する</span></div>');
+}
+function admCoreSave(uid) {
+  if (!_admCoreAll || !currentUser || !isOwnerUid(currentUser.uid)) return;
+  var on = Array.prototype.map.call(document.querySelectorAll('#admCoreL input:checked'), function(x) { return x.value; }), ps = [];
+  Object.keys(_admCoreAll).forEach(function(un) {
+    var L = _admCoreAll[un], has = L.indexOf(uid) >= 0, want = on.indexOf(un) >= 0;
+    if (has === want) return;
+    var N = want ? L.concat([uid]) : L.filter(function(x) { return x !== uid; });
+    _admCoreAll[un] = N;
+    ps.push(db.doc('checkinUnions/' + un).set({ coreAdmins: N }, { merge: true }));
+  });
+  Promise.all(ps).then(function() { if (ps.length) toast('✓ 兼務するユニオンを保存しました'); }).catch(function() { toast('保存できませんでした'); _admCoreAllLoad(); });
+  _accDlgClose(); renderAdminList();
 }
 function renderAdminList() {
   var body = document.getElementById('adminBody');
@@ -3510,7 +3602,7 @@ function renderAdminList() {
     html += pending.map(adminPendingRowHtml).join('');
     html += '<div style="height:6px;border-bottom:1px solid var(--border);margin-bottom:6px"></div>';
   }
-  html = _accPanelHtml() + _shAdmHtml() + html; // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
+  html = _accPanelHtml() + _shAdmHtml() + _admUnFHtml() + html; // v831: 兼務の管理者はユニオンで絞れる // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
   if (!others.length && !pending.length) { body.innerHTML = html + '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
   html += others.map(adminRowHtml).join('');
   body.innerHTML = html;
@@ -3570,7 +3662,7 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admCkLine(u) + _accRowChip(u)
+    + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u)
     + '</div><div class="adm-actions">' + actions + '</div></div>';
 }
 // ── v770: 受付（BASE CHECK-IN）の名簿とアカウントの紐付け ──
@@ -3818,6 +3910,7 @@ function openProfileModal() {
   populateUnionSelects();
   // 選択制ユニオン：既に選び直し済みのユーザーだけ現在値を復元。旧ユーザーは未選択にして選び直しを強制。
   if (el('profileUnion')) el('profileUnion').value = currentUser.unionSelectedV2 ? (currentUser.union || '') : '';
+  _profUnionLock(el('profileUnion')); // v831
   if (el('profileUpRuby'))el('profileUpRuby').value = currentUser.upRuby || '';
   if (el('profileUpBd')) el('profileUpBd').value  = currentUser.upBd || '';
   if (el('profileReferrer')) el('profileReferrer').value = currentUser.referrer || ''; // v827
@@ -3830,7 +3923,7 @@ function openProfileModal() {
   var cancel = el('profileCancelBtn'); if (cancel) cancel.style.display = _profileMandatory ? 'none' : '';
   var title = el('profileModalTitle'); if (title) title.textContent = _profileMandatory ? 'プロフィール入力（必須）' : 'プロフィール設定';
   var perr = el('profileError'); if (perr) perr.style.display = 'none';
-  var adm = el('profileAdminWrap'); if (adm) adm.style.display = (!_profileMandatory && isCurrentAdmin()) ? '' : 'none';
+  var adm = el('profileAdminWrap'); if (adm) adm.style.display = (!_profileMandatory && _canAdmPanel()) ? '' : 'none';
   try { _fbSyncEntry(); } catch (eFb) {} // v585
   syncThemeButtons();
   if (typeof applyMembersTabVisible === 'function') applyMembersTabVisible();
@@ -3838,6 +3931,15 @@ function openProfileModal() {
   if (m) m.classList.add('open');
 }
 
+// v831: 管理者は所属ユニオンを変えられない（変えると別のユニオンの管理者になれてしまうため。オーナーに頼む）
+function _profUnionLocked() { return !!(currentUser && !isOwnerUid(currentUser.uid) && currentUser.role === 'admin' && currentUser.unionSelectedV2 && currentUser.union); }
+function _profUnionLock(sel) {
+  if (!sel) return;
+  var on = _profUnionLocked(); sel.disabled = on; sel.style.opacity = on ? '.65' : '';
+  var id = sel.id + 'Lock', n = document.getElementById(id);
+  if (on && !n) { n = document.createElement('div'); n.id = id; n.style.cssText = 'font-size:11.5px;color:var(--text-dim);margin-top:4px;line-height:1.5'; n.textContent = '管理者は所属ユニオンを変えられません。変える時はオーナーに伝えてください'; sel.parentNode.insertBefore(n, sel.nextSibling); }
+  if (n) n.style.display = on ? '' : 'none';
+}
 function closeProfileModal(e) {
   if (e && e.target !== document.getElementById('profileModal')) return;
   if (_profileMandatory) { // 必須未入力の間は閉じさせない
@@ -3855,7 +3957,7 @@ function saveProfile() {
   var el = function(id){ return ((document.getElementById(id)||{}).value||'').trim(); };
   var name  = el('profileName');
   var org   = el('profileOrg');
-  var union = el('profileUnion');
+  var union = _profUnionLocked() ? currentUser.union : el('profileUnion'); // v831
   var area  = el('profileArea');
   var upRuby= el('profileUpRuby');
   var upBd  = el('profileUpBd');
@@ -4100,7 +4202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v830';
+  var DATA_VERSION = 'v831';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6207,6 +6309,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v831', d:'2026-10-21', items:['ユニオン管理者の兼務：オーナーがアカウント管理で「兼務するユニオン」を設定できるように（受付システムの兼務の設定と共通）','兼務している管理者は、アカウント管理で所属と兼務のユニオンの人を見られます（上で「すべて／ユニオンごと」を切りかえ）。チェック項目の設定・ユニオン予定の配信も兼務のユニオンで使えます','管理者は自分の所属ユニオンを変えられないようにしました（変える時はオーナーへ）。登録待ちの名簿はユニオンごとに分けました'] },
   { v:'v830', d:'2026-10-20', items:['MAPのPDFの画質を上げました（前の2倍の細かさ）。拡大しても丸の中の名前や数字がにじまずに読めます'] },
   { v:'v829', d:'2026-10-20', items:['ユニオンのチェック項目の設定：並べ替えは↑↓をやめて、左の ⠿ を押したまま上下に動かす形にしました','新しい項目は、改行を押さずに「保存する」を押しても足されるようにしました（欄の横に［追加］ボタンも）'] },
   { v:'v828', d:'2026-10-20', items:['計画シートの印刷・PDFで、行動の表の見出し（流通アップに関して など）が上の表に重なっていたのを直しました。表の高さを行の数に合わせ、行がとても多い時は文字を小さくして1枚に収めます'] },
@@ -20253,7 +20356,7 @@ function _efFill(o, isNew) {
     _evDupStage = o.dupStage || '';
     var rs = document.getElementById('evRepeat'); if (rs) { rs.value = o.rep || ''; try { evRepeatChanged(); } catch (e4) {} }
     var ru = document.getElementById('evRepeatUntil'); if (ru && o.rep && o.repUntil) ru.value = o.repUntil;
-    if (o.union) { try { evUnionScope(true); } catch (e5) {} }
+    if (o.union) { try { evUnionScope(true, typeof o.union === 'string' ? o.union : ''); } catch (e5) {} } // v831: 兼務のユニオンへも
   }
 }
 function _efSaveEdit(o, label, quiet) {
@@ -20341,7 +20444,13 @@ function efVis(v) { _efKeepTitle(); efSet('vis', v, '出すカレンダー'); }
 function efRemind(v) { _efKeepTitle(); efSet('remind', v, '通知'); }
 function efRep(v) { _efKeepTitle(); if (_ef && _ef.mode === 'add') { _ef.o.rep = v; if (v && !_ef.o.repUntil) _ef.o.repUntil = _evYmdAdd(_ef.o.date, 90); _efRender(); } }
 function efRepUntil(v) { if (_ef && _ef.mode === 'add') _ef.o.repUntil = v || ''; }
-function efUnion(on) { _efKeepTitle(); if (_ef && _ef.mode === 'add') { _ef.o.union = !!on; _efRender(); } }
+function efUnion(on) { _efKeepTitle(); if (_ef && _ef.mode === 'add') { _ef.o.union = typeof on === 'string' && on ? on : !!on; _efRender(); } } // v831: ユニオン名＝そのユニオンへ配信
+function _efUnionList() { // 予定を配信できるユニオン（所属ユニオンの管理者なら所属ユニオン＋兼務のユニオン）
+  if (!currentUser || viewingOwnerUid) return [];
+  var L = []; if (isCurrentAdmin() && currentUser.union) L.push(currentUser.union);
+  _admCoreList().forEach(function(u) { if (u && L.indexOf(u) < 0) L.push(u); });
+  return L;
+}
 function efPlace(v) { efSet('place', String(v || '').trim(), '場所', true); }
 var _efMemoT = 0;
 function efMemo(v) {
@@ -20433,9 +20542,12 @@ function _efHtml(o) {
     h += '<div class="rw" onclick="efTgl(\'rep\')">' + icn('repeat') + ' 繰り返し<span' + (o.rep ? ' class="v"' : '') + '>' + rp + (op.rep ? ' ▾' : ' ›') + '</span></div>';
     if (op.rep) h += '<div class="op"><div class="efch">' + EV_REP.map(function(x) { return '<span class="' + (o.rep === x[0] ? 'on' : '') + '" onclick="efRep(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>'
       + (o.rep ? '<div class="efdi"><small>いつまで</small><input type="date" value="' + evEsc(o.repUntil) + '" onchange="efRepUntil(this.value)"></div>' : '') + '</div>';
-    if (typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union) {
-      h += '<div class="rw" onclick="efTgl(\'union\')">' + icn('landmark') + ' 共有範囲<span' + (o.union ? ' class="v"' : '') + '>' + (o.union ? 'ユニオン全員' : '自分のみ') + (op.union ? ' ▾' : ' ›') + '</span></div>';
-      if (op.union) h += '<div class="op"><div class="efch"><span class="' + (!o.union ? 'on' : '') + '" onclick="efUnion(false)">自分のみ</span><span class="' + (o.union ? 'on' : '') + '" onclick="efUnion(true)">ユニオン全員</span></div></div>';
+    var efU = _efUnionList();
+    if (efU.length) { // v831: 兼務のユニオン管理者は、配信するユニオンを選べる
+      var efOn = o.union ? (typeof o.union === 'string' ? o.union : (currentUser.union || '')) : '';
+      var efLb = function(un) { return efU.length > 1 ? un + ' 全員' : 'ユニオン全員'; };
+      h += '<div class="rw" onclick="efTgl(\'union\')">' + icn('landmark') + ' 共有範囲<span' + (o.union ? ' class="v"' : '') + '>' + (o.union ? evEsc(efLb(efOn)) : '自分のみ') + (op.union ? ' ▾' : ' ›') + '</span></div>';
+      if (op.union) h += '<div class="op"><div class="efch"><span class="' + (!o.union ? 'on' : '') + '" onclick="efUnion(false)">自分のみ</span>' + efU.map(function(un) { return '<span class="' + (efOn === un ? 'on' : '') + '" data-u="' + evEsc(un) + '" onclick="efUnion(this.dataset.u)">' + evEsc(efLb(un)) + '</span>'; }).join('') + '</div></div>';
     }
   } else {
     var e = findEvent(_ef.id);
@@ -21289,7 +21401,7 @@ function _stRender() {
       + '<div class="st-gh">このアプリ</div><div class="st-ls"><div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">📣</span><span>お知らせ・更新内容<small>' + evEsc(RELEASE_NOTES[0].v + '（' + RELEASE_NOTES[0].d + '）' + (RELEASE_NOTES[0].items[0] || '')) + '</small></span>' + (hasUnseenNotes() ? '<em class="nw">NEW</em>' : '') + '<span class="ch">›</span></div>'
       + '<div onclick="openReleaseNotes();setTimeout(_stRender,50)"><span class="ic">ℹ</span><span>バージョン<small class="gm-saved">' + (window._gmSavedHM ? window._gmSavedHM + ' 保存済み' : '') + '</small></span><span style="flex:none;font-family:Inter,sans-serif;color:var(--text-mid)">' + evEsc(APP_JS_VERSION) + '</span></div></div>'
       + '<div class="st-gh">使い方</div><div class="st-ls">' + _stLi('❓', '使い方ガイド', 'はじめての案内・画面ごとの説明・よくある質問', 'gdMenu()') + '</div>' // v755
-      + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof isCurrentAdmin === 'function' && isCurrentAdmin() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
+      + '<div class="st-gh">そのほか</div><div class="st-ls">' + (typeof _canAdmPanel === 'function' && _canAdmPanel() ? _stLi(icn('shield'), 'アカウント管理', '', 'openAdminPanel()') : '')
       + (_fb && _fb.ok ? _stLi(icn('bug'), 'バグ・要望・アイデア', '', 'fbOpen()') : '') // v667・v817
       + _rvStLis() // v816: 使い勝手レビュー・結果
       + _stLi('↩', 'ログアウト', evEsc(u.email || (auth && auth.currentUser && auth.currentUser.email) || ''), "if(confirm('ログアウトしますか？'))doLogout()", true) + '</div>'; // v773: 「組織MAPをクリア」は削除
@@ -21316,7 +21428,7 @@ function _stRender() {
   var pg = document.getElementById('setPg');
   if (!pg) { pg = document.createElement('div'); pg.id = 'setPg'; document.body.appendChild(pg); }
   pg.innerHTML = h; pg.scrollTop = 0;
-  if (_stPg === 'prof') { var su = document.getElementById('stUnion'); if (su) su.value = u.unionSelectedV2 ? (u.union || '') : ''; var sa = document.getElementById('stArea'); if (sa) _areaSelectSet(sa, u.area || ''); }
+  if (_stPg === 'prof') { var su = document.getElementById('stUnion'); if (su) { su.value = u.unionSelectedV2 ? (u.union || '') : ''; _profUnionLock(su); } var sa = document.getElementById('stArea'); if (sa) _areaSelectSet(sa, u.area || ''); }
 }
 function stSaveProf() {
   var g = function(id) { return ((document.getElementById(id) || {}).value || '').trim(); };
@@ -22376,7 +22488,7 @@ function renderMenuHub() {
   if (_fb && _fb.ok) S += sb(icn('bug') + ' バグ・要望・アイデア', 'fbOpen()', _fb.newN || ''); // v666: 絵文字ではなくアイコン
   if (_rvActive() && !viewingOwnerUid) S += sb(icn('star') + ' レビュー', 'rvOpen()', _rv.mine ? '' : '!'); // v816
   if (_rvViewer()) S += sb(icn('chart') + ' レビューの結果', 'rvResOpen()'); // v816
-  if (typeof isCurrentAdmin === 'function' && isCurrentAdmin()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
+  if (typeof _canAdmPanel === 'function' && _canAdmPanel()) S += sb(icn('shield') + ' アカウント管理', 'openAdminPanel()');
   S += sb('❓ 使い方', 'gdMenu()'); // v755
   S += sb(icn('gear') + ' 設定', 'setOpen()'); // v618: スマホは設定のページ
   var lg = '<i class="hm-logo gm-lg w" role="img" aria-label="NWP"></i><i class="hm-logo gm-lg d" role="img" aria-label="NWP"></i>'; // v664: 左上にロゴ（ライト＝濃い色・ダーク＝白）。v802: 画像として保存されないよう背景で表示
@@ -23654,7 +23766,7 @@ function _p2CkPageHtml() {
         + '<span class="dtc' + (dt ? ' on' : '') + (ev && ev.type !== 'task' ? ' ev' : '') + '" onclick="p2CkDt(\'' + tab + '\',' + i + ')" title="ToDoか予定に入れる">' + dl + '</span></div>';
     }).join('')
     + '<div class="ux-hint">右の日付を押すと、ToDoか予定に入れられます' + (_p2CkCfg ? '<br>項目は「' + evEsc(_p2CkUn()) + '」の設定です' : '') + '</div>'
-    + (isCurrentAdmin() && _p2CkUn() ? '<span class="ux-lk" onclick="p2CkAdm()">⚙ ユニオンのチェック項目を設定（管理者）</span>' : '');
+    + ((isCurrentAdmin() && _p2CkUn()) || _admUnions().length ? '<span class="ux-lk" onclick="p2CkAdm()">⚙ ユニオンのチェック項目を設定（管理者）</span>' : ''); // v831: 兼務のユニオンも
 }
 function p2CkCal(pre, i) {
   var it = _p2CkIt(pre, i), ck = _p2().check, d = ck[it.dk] || evTodayYmd();
@@ -23667,17 +23779,27 @@ function p2CkCal(pre, i) {
 }
 // ── v738: ユニオンのチェック項目の設定（管理者） ──
 var _p2CkEd = null;
-function p2CkAdm() {
-  if (!isCurrentAdmin()) return;
-  _p2CkEd = { tab: _p2CkTab === 'tr' ? 'tr' : 'ess', ess: _p2CkItems('ess').map(function(x) { return { id: x.id, t: x.t }; }), tr: _p2CkItems('tr').map(function(x) { return { id: x.id, t: x.t }; }) };
-  _p2CkAdmRender();
+function _p2CkAdmUns() { var U = _admUnions(), own = _p2CkUn(); if (own && isCurrentAdmin() && U.indexOf(own) < 0) U.unshift(own); return U; }
+function p2CkAdm(un) {
+  var U = _p2CkAdmUns(); if (!U.length) return;
+  var own = _p2CkUn(); un = un && U.indexOf(un) >= 0 ? un : (U.indexOf(own) >= 0 ? own : U[0]);
+  var tab = _p2CkEd ? _p2CkEd.tab : (_p2CkTab === 'tr' ? 'tr' : 'ess');
+  var mk = function(cfg) { var it = function(pre) { var L = cfg && Array.isArray(cfg[pre]) ? cfg[pre] : _p2CkDef(pre); return L.map(function(x) { return { id: x.id, t: x.t }; }); }; return { un: un, tab: tab, ess: it('ess'), tr: it('tr') }; };
+  if (un === own) { _p2CkEd = mk(_p2CkCfg); _p2CkAdmRender(); return; }
+  // v831: 兼務のユニオンは、そのユニオンの設定を読んでから
+  _p2CkEd = mk(null); _p2CkEd.loading = 1; _p2CkAdmRender();
+  fsGet('unions/' + un + '/cdata/mapChecklist').then(function(d) { if (!_p2CkEd || _p2CkEd.un !== un) return; var nx = d && (Array.isArray(d.ess) || Array.isArray(d.tr)) ? d : null; _p2CkEd = mk(nx); _p2CkAdmRender(); })
+    .catch(function() { if (_p2CkEd && _p2CkEd.un === un) { _p2CkEd.loading = 0; _p2CkAdmRender(); } });
 }
+function p2CkAdmUn(un) { if (!_p2CkEd || un === _p2CkEd.un) return; _p2CkAdmSync(); p2CkAdm(un); }
 function _p2CkAdmRender() {
   var E = _p2CkEd; if (!E) return; _p2CkCss(); try { _p2ShCss2(); } catch (e0) {}
   var o = document.getElementById('p2CkAdmOv'); if (!o) { o = document.createElement('div'); o.id = 'p2CkAdmOv'; o.className = 'shdt-ov'; o.onclick = function(x) { if (x.target === o) p2CkAdmX(); }; document.body.appendChild(o); }
   var L = E[E.tab];
-  o.innerHTML = '<div class="shdt ckadm"><div class="hd">「' + evEsc(_p2CkUn()) + '」のチェック項目<span onclick="p2CkAdmX()">✕</span></div>'
-    + '<div class="nt">ここで決めた項目が、このユニオンの全員のチェックに出ます</div>'
+  var UU = _p2CkAdmUns();
+  o.innerHTML = '<div class="shdt ckadm"><div class="hd">「' + evEsc(E.un) + '」のチェック項目<span onclick="p2CkAdmX()">✕</span></div>'
+    + (UU.length > 1 ? '<div class="seg ckun">' + UU.map(function(un) { return '<span class="' + (un === E.un ? 'on' : '') + '" data-u="' + evEsc(un) + '" onclick="p2CkAdmUn(this.dataset.u)">' + evEsc(un) + '</span>'; }).join('') + '</div>' : '') // v831: 兼務のユニオン
+    + '<div class="nt">ここで決めた項目が、このユニオンの全員のチェックに出ます' + (E.loading ? '（読み込み中…）' : '') + '</div>'
     + '<div class="seg">' + [['ess', '🎒 必須アイテム'], ['tr', '🎓 TRAINING']].map(function(t) { return '<span class="' + (E.tab === t[0] ? 'on' : '') + '" onclick="p2CkAdmTab(\'' + t[0] + '\')">' + t[1] + ' ' + E[t[0]].length + '</span>'; }).join('') + '</div>'
     + '<div class="ls" id="p2CkAdmLs">' + L.map(function(x, i) { return '<div class="r tdo-row" data-i="' + i + '"><span class="tdo-handle" title="押したまま上下に動かす">⠿</span><input data-i="' + i + '" value="' + evEsc(x.t) + '" maxlength="40" onchange="p2CkAdmT(' + i + ',this.value)"><b class="x" onclick="p2CkAdmDel(' + i + ')">✕</b></div>'; }).join('') + '</div>' // v829: ↑↓をやめて ⠿ をつかんで並べ替え
     + '<div class="ad"><input id="p2CkAdmIn" maxlength="40" autocomplete="off" placeholder="＋ 項目を足す" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2CkAdmAdd()}"><span class="adb" onclick="p2CkAdmAdd()">追加</span></div>'
@@ -23735,10 +23857,10 @@ function p2CkAdmDel(i) { var L = _p2CkEd && _p2CkEd[_p2CkEd.tab]; if (!L || !L[i
 function p2CkAdmAdd() { var el = document.getElementById('p2CkAdmIn'), v = String((el && el.value) || '').trim(); if (!v || !_p2CkEd) return; _p2CkAdmSync(); _p2CkAdmRender(); setTimeout(function() { var n = document.getElementById('p2CkAdmIn'); if (n) n.focus(); }, 30); }
 function p2CkAdmReset() { if (!_p2CkEd || !confirm('このユニオンの項目を標準に戻しますか？（保存すると全員に反映）')) return; _p2CkEd.ess = _p2CkDef('ess'); _p2CkEd.tr = _p2CkDef('tr'); _p2CkAdmRender(); }
 function p2CkAdmSave() {
-  var E = _p2CkEd, un = _p2CkUn(); if (!E || !un || !isCurrentAdmin()) return;
+  var E = _p2CkEd, un = E && E.un; if (!E || !un || E.loading || !(_admOf(un) || (isCurrentAdmin() && un === _p2CkUn()))) return; // v831
   _p2CkAdmSync(); // v829: 下の欄に書いたまま「保存する」を押しても足す
   var d = { ess: E.ess.map(function(x) { return { id: x.id, t: x.t }; }), tr: E.tr.map(function(x) { return { id: x.id, t: x.t }; }), at: new Date().toISOString(), by: (currentUser && currentUser.name) || '' };
-  (db ? db.doc('unions/' + un + '/cdata/mapChecklist').set(d) : Promise.resolve()).then(function() { _p2CkCfg = d; p2CkAdmX(); toast('✓ 「' + un + '」のチェック項目を保存しました'); if (currentView === 'plan') renderPlan(); })
+  (db ? db.doc('unions/' + un + '/cdata/mapChecklist').set(d) : Promise.resolve()).then(function() { if (un === _p2CkUn()) _p2CkCfg = d; p2CkAdmX(); toast('✓ 「' + un + '」のチェック項目を保存しました'); if (currentView === 'plan') renderPlan(); })
     .catch(function() { toast('保存できませんでした（ユニオンの管理者だけが保存できます）'); });
 }
 function _p2CkCss() {
@@ -29924,10 +30046,10 @@ function _fitMuscleCard(big) {
 //  所属ユニオン＆活動地域(&条件)で購読し、UN_プレフィックスで自分の予定に合成表示。
 //  書き込みはユニオン管理者のみ（ルール側で担保）。個人ドキュメントへのコピーはしない。
 // ============================================================
-var _evUnionOn = false, _evUnionAreaMine = false;
+var _evUnionOn = false, _evUnionAreaMine = false, _evUnionTo = ''; // v831: _evUnionTo＝配信先（''＝所属ユニオン）
 var _unionRaw = [], _unionPrefs = { off: false, hidden: [] };
-function evUnionScope(on) {
-  _evUnionOn = !!on;
+function evUnionScope(on, un) {
+  _evUnionOn = !!on; _evUnionTo = (on && typeof un === 'string') ? un : '';
   var b0 = document.getElementById('evUnScope0'), b1 = document.getElementById('evUnScope1'), ar = document.getElementById('evUnionAreaRow');
   if (b0) b0.classList.toggle('sel', !on);
   if (b1) b1.classList.toggle('sel', !!on);
@@ -29955,17 +30077,23 @@ function _evUnionRowUpdate() {
   } else { _evUnionOn = false; }
 }
 function loadUnionEvents() {
-  if (!db || !currentUser || !currentUser.union || viewingOwnerUid) return;
-  var un = currentUser.union;
-  if (un.indexOf('/') >= 0) return;
+  if (!db || !currentUser || viewingOwnerUid) return;
+  var un = currentUser.union || '';
+  // v831: 兼務のユニオン管理者は、兼務のユニオンの予定も（直す・消すため）
+  var extra = _admCoreList().filter(function(x) { return x && x !== un && x.indexOf('/') < 0; });
+  if ((!un || un.indexOf('/') >= 0) && !extra.length) return;
+  if (un.indexOf('/') >= 0) un = '';
   // v807: 読み取りを減らす。表示に使うのは過去120日〜これからの予定だけなので、その分と設定（plan_meta）だけ読む（前はユニオンの予定を全部読んでいた）
   var cut0 = evYmd(new Date(Date.now() - 120 * 86400000)), base = 'unions/' + un + '/events';
+  var rd = function(u0) { return db.collection('unions/' + u0 + '/events').where('date', '>=', cut0).get().then(function(qs) { var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id, union: u0 }, d.data())); }); return L; }); };
   Promise.all([
-    db.collection(base).where('date', '>=', cut0).get().then(function(qs) { var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; }),
+    un ? rd(un) : Promise.resolve([]),
     fsGet('maps/' + currentUser.uid + '/meta/unionPrefs'),
-    fsGet(base + '/plan_meta').catch(function() { return null; })
+    un ? fsGet(base + '/plan_meta').catch(function() { return null; }) : Promise.resolve(null),
+    Promise.all(extra.map(function(x) { return rd(x).catch(function() { return []; }); }))
   ]).then(function(rs) {
     _unionRaw = (rs[0] || []).concat(rs[2] ? [Object.assign({ id: 'plan_meta' }, rs[2])] : []);
+    (rs[3] || []).forEach(function(L) { _unionRaw = _unionRaw.concat((L || []).filter(function(d) { return d && d.id !== 'plan_meta' && !d.pm2; })); });
     // v469: PLAN用メタ（ユニオン係数・マイルストーン）はカレンダー合成から分離
     try {
       window._unPlanMeta = null;
@@ -29988,7 +30116,7 @@ function _unionApplyToState() {
       if ((u.endDate || u.date) < cut) return;
       if (_unionPrefs.hidden.indexOf(u.id) >= 0) return;
       // 地域&条件：地域指定ありの予定は同じ活動地域の人だけ（管理者と作成者は管理のため全地域見える）
-      if (u.area && u.area !== myArea && !admin && u.createdBy !== currentUser.uid) return;
+      if (u.area && u.area !== myArea && !(admin || _admOf(u.union)) && u.createdBy !== currentUser.uid) return;
       var c = {};
       for (var k in u) { if (u.hasOwnProperty(k)) c[k] = u[k]; }
       c.id = 'UN_' + u.id;
@@ -30021,7 +30149,8 @@ function _unionRawById(id) {
 }
 function _unionSaveFromModal(editRawId) {
   try {
-  var un = currentUser.union;
+  var un = editRawId ? ((_unionRawById(editRawId) || {}).union || currentUser.union) : (_evUnionTo || currentUser.union); // v831: 兼務のユニオンへも
+  if (!un || !_admOf(un) && !(isCurrentAdmin() && un === currentUser.union)) { toast('このユニオンの予定は作れません'); return; }
   var title = document.getElementById('evTitle').value.trim().replace(/^🏛/, '');
   if (!title) { toast('タイトルを入力してください'); return; }
   var date = document.getElementById('evDate').value;
@@ -30061,7 +30190,7 @@ function _unionSaveFromModal(editRawId) {
 }
 function unionDelete(rawId) {
   if (!confirm('このユニオン予定を削除しますか？（全メンバーのカレンダーから消えます）')) return;
-  var un = currentUser.union;
+  var un = (_unionRawById(rawId) || {}).union || currentUser.union; // v831
   db.doc('unions/' + un + '/events/' + rawId).delete().then(function() { toast('削除しました'); })
     .catch(function(err) { toast('削除できませんでした: ' + ((err && err.message) || '')); });
   _unionRaw = _unionRaw.filter(function(u) { return u.id !== rawId; });
@@ -30095,7 +30224,8 @@ function openUnionEventSheet(compId) {
     return;
   }
   window._unRetry = '';
-  var admin = (typeof isCurrentAdmin === 'function') && isCurrentAdmin();
+  var unU = u.union || (currentUser && currentUser.union) || '';
+  var admin = (isCurrentAdmin() && unU === ((currentUser && currentUser.union) || '')) || _admOf(unU); // v831: 兼務のユニオンの予定も直せる
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'unSheetOv';
   ov.onclick = function(e) { if (e.target === ov) closeUnionSheet(); };
   var tmTx = u.allDay ? '終日' : ((u.time || '') + (u.endTime ? '〜' + u.endTime : ''));
@@ -30121,7 +30251,7 @@ function openUnionListSheet() {
   closeUnionSheet();
   var t = evTodayYmd();
   var myArea = (currentUser && currentUser.area) || '';
-  var admin = (typeof isCurrentAdmin === 'function') && isCurrentAdmin();
+  var admin = _efUnionList().length > 0; // v831
   var list = _unionRaw.slice().filter(function(u) { return (u.endDate || u.date || '') >= t; })
     .sort(function(a, b) { return (a.date || '') < (b.date || '') ? -1 : 1; });
   var rows2 = '';
@@ -37825,7 +37955,35 @@ function accCheck(user, gated) {
 function _accLoad() {
   if (!db) return;
   db.doc('appAccess/mode').get().then(function(d) { _accA = d.exists ? (d.data() || {}) : { mode: 'open', unions: [] }; if (!_accA.unions) _accA.unions = []; _accRe(); }).catch(function() { _accA = _accA || { mode: 'open', unions: [], err: 1 }; _accRe(); });
-  db.doc('appAccess/names').get().then(function(d) { _accNames = d.exists ? ((d.data() || {}).names || []) : []; _accRe(); }).catch(function() { _accNames = _accNames || []; });
+  _accNamesLoad(); // v831: ユニオンごと
+}
+// ── v831: 登録待ちの名簿はユニオンごと（accNames/{ユニオン}）。前からある全体の名簿（appAccess/names）はオーナーだけ ──
+var _accNB = {}; // ユニオン（''＝前からある全体の名簿）→ 名前
+function _accNamesLoad() {
+  if (!db || !currentUser) return;
+  var owner = isOwnerUid(currentUser.uid), B = {}, ps = [];
+  if (owner) {
+    ps.push(db.doc('appAccess/names').get().then(function(d) { B[''] = d.exists ? ((d.data() || {}).names || []) : []; }).catch(function() {}));
+    ps.push(fsGetCol('accNames').then(function(L) { (L || []).forEach(function(d) { if (d.id) B[d.id] = d.names || []; }); }).catch(function() {}));
+  } else {
+    _admUnions().forEach(function(un) { ps.push(fsGet('accNames/' + un).then(function(d) { B[un] = (d && d.names) || []; }).catch(function() {})); });
+  }
+  Promise.all(ps).then(function() { _accNB = B; _accNames = _accNamesVis().map(function(x) { return x.n; }); _accRe(); });
+}
+function _accNamesVis() { // 今見ている範囲の名前（兼務の管理者はユニオンの絞り込みに合わせる）
+  var out = [];
+  Object.keys(_accNB).sort().forEach(function(un) { if (_admUnF && un !== _admUnF) return; (_accNB[un] || []).forEach(function(n, i) { out.push({ n: n, un: un, i: i }); }); });
+  return out;
+}
+function _accNamesSave(un) {
+  var L = _accNB[un] || [], d = { names: L, at: new Date().toISOString(), by: currentUser.uid };
+  _accNames = _accNamesVis().map(function(x) { return x.n; });
+  return un ? db.doc('accNames/' + un).set(d) : db.doc('appAccess/names').set(d);
+}
+function _accNamesTarget() { // 貼り付けた名簿で見つからなかった人を入れるユニオン
+  if (_admUnF) return _admUnF;
+  if (currentUser && isOwnerUid(currentUser.uid)) return '';
+  return _admUnions()[0] || '';
 }
 function _accRe() { var p = document.getElementById('adminPanel'); if (p && p.classList.contains('open')) renderAdminList(); }
 function _accActive(u) { return u && u.status !== 'pending' && u.status !== 'disabled'; }
@@ -37961,32 +38119,35 @@ function accApply() {
   var ps = [], n = 0;
   ids.forEach(function(id) { var u = _adminFindUser(id); if (u && !u.early && u.role !== 'admin' && !isOwnerUid(id)) { n++; ps.push(_accSave(id, true)); } });
   var wait = (P.R.none || []).slice();
-  if (wait.length) {
-    var cur = (_accNames || []).slice(), have = {}; cur.forEach(function(x) { have[_ckNorm(x)] = 1; });
+  if (wait.length) { // v831: ユニオンごとの名簿へ
+    var tun = _accNamesTarget(), cur = (_accNB[tun] || []).slice(), have = {}; cur.forEach(function(x) { have[_ckNorm(x)] = 1; });
     wait.forEach(function(x) { if (!have[_ckNorm(x)]) cur.push(x); });
-    _accNames = cur; ps.push(db.doc('appAccess/names').set({ names: cur, at: new Date().toISOString(), by: currentUser.uid }));
+    _accNB[tun] = cur; ps.push(_accNamesSave(tun));
   }
   Promise.all(ps).then(function() { toast('✓ 先行利用にした人 ' + n + '人' + (wait.length ? '・登録待ちの名簿 ' + wait.length + '人' : '')); }).catch(function() { toast('一部を保存できませんでした。もう一度お試しください'); });
   _accDlgClose(); renderAdminList();
 }
 function accNamesOpen() {
-  var L = _accNames || [];
-  _accDlg('<div class="hd">登録待ちの名簿（' + L.length + '人）<span onclick="_accDlgClose()">閉じる</span></div>'
+  var V = _accNamesVis(), multi = Object.keys(_accNB).filter(function(k) { return (_accNB[k] || []).length; }).length > 1;
+  _accDlg('<div class="hd">登録待ちの名簿（' + V.length + '人）<span onclick="_accDlgClose()">閉じる</span></div>'
     + '<div class="nt">まだアカウントが見つからない人です。登録して承認された時に、名前が同じなら自動で先行利用になります。×で外せます。</div>'
-    + '<div style="margin-top:8px">' + L.map(function(x, i) { return '<span class="nm">' + evEsc(x) + ' <b style="cursor:pointer;color:var(--text-dim)" onclick="accNameDel(' + i + ')">×</b></span>'; }).join('') + '</div>');
+    + '<div style="margin-top:8px">' + V.map(function(x) { return '<span class="nm">' + evEsc(x.n) + (multi ? '<small style="color:var(--text-dim);margin-left:4px">' + evEsc(x.un || '全体') + '</small>' : '') + ' <b style="cursor:pointer;color:var(--text-dim)" data-u="' + evEsc(x.un) + '" onclick="accNameDel(this.dataset.u,' + x.i + ')">×</b></span>'; }).join('') + '</div>');
 }
-function accNameDel(i) {
-  var L = (_accNames || []).slice(); L.splice(i, 1); _accNames = L;
-  db.doc('appAccess/names').set({ names: L, at: new Date().toISOString(), by: currentUser.uid }).catch(function() { toast('保存できませんでした'); });
-  if (L.length) accNamesOpen(); else _accDlgClose(); renderAdminList();
+function accNameDel(un, i) {
+  if (typeof un === 'number') { i = un; un = (_accNamesVis()[i] || {}).un || ''; } // 前の呼び方
+  var L = (_accNB[un] || []).slice(); L.splice(i, 1); _accNB[un] = L;
+  _accNamesSave(un).catch(function() { toast('保存できませんでした'); });
+  if (_accNamesVis().length) accNamesOpen(); else _accDlgClose(); renderAdminList();
 }
-// 承認した時：登録待ちの名簿に同じ名前があれば先行利用にして、名簿から外す
+// 承認した時：登録待ちの名簿（その人のユニオン・前からある全体の名簿）に同じ名前があれば先行利用にして、名簿から外す
 function _accOnApprove(u) {
-  var L = _accNames || [], k = _ckNorm(u.name || ''); if (!k || !L.length) return;
-  var i = -1; L.forEach(function(x, j) { if (i < 0 && _ckNorm(x) === k) i = j; }); if (i < 0) return;
+  var k = _ckNorm(u.name || ''); if (!k) return;
+  var hit = null;
+  [u.union || '', ''].forEach(function(un) { if (hit || !(un in _accNB)) return; (_accNB[un] || []).forEach(function(x, j) { if (!hit && _ckNorm(x) === k) hit = { un: un, i: j }; }); });
+  if (!hit) return;
   _accSave(u.id, true).catch(function() {});
-  var N = L.slice(); N.splice(i, 1); _accNames = N;
-  db.doc('appAccess/names').set({ names: N, at: new Date().toISOString(), by: currentUser.uid }).catch(function() {});
+  var N = (_accNB[hit.un] || []).slice(); N.splice(hit.i, 1); _accNB[hit.un] = N;
+  _accNamesSave(hit.un).catch(function() {});
   setTimeout(function() { toast('✓ 登録待ちの名簿にあったので、先行利用にしました'); }, 900);
 }
 // ============================================================
@@ -38109,15 +38270,16 @@ function _pvBadge(u) {
 }
 // 管理者ログイン時：自ユニオン（オーナーは全体）の承認待ち件数を通知
 function checkPendingApprovals(){
-  if(!isCurrentAdmin() || !db) return;
+  if(!_canAdmPanel() || !db) return;
   var owner = isOwnerUid(currentUser.uid);
-  var myUnion = currentUser.union || '';
+  if (window._pendChkAt && Date.now() - window._pendChkAt < 60000) return; window._pendChkAt = Date.now();
   // v511: 全ユーザーを読んでいたのを「承認待ちのみ」のクエリに（読み取り件数を大幅削減）
-  var q9 = owner ? db.collection('users').where('status', '==', 'pending') : _myUnionUsersQuery(function(c) { return c.where('status', '==', 'pending'); }); // v777: 自分のユニオンだけ
-  if (!q9) return;
-  q9.get().then(function(snap){
-    var list = []; snap.forEach(function(d){ list.push(Object.assign({ id: d.id }, d.data())); });
-    var scoped = owner ? list : list.filter(function(u){ return (u.union||'')===myUnion; });
+  // v777: 自分のユニオンだけ／v831: 兼務のユニオンも
+  var p9 = owner ? db.collection('users').where('status', '==', 'pending').get().then(function(snap) { var L = []; snap.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; })
+    : _admUsersIn(function(c) { return c.where('status', '==', 'pending'); });
+  p9.then(function(list){
+    var U = _admUnions();
+    var scoped = owner ? list : list.filter(function(u){ return U.indexOf(u.union || '') >= 0; });
     var pend = scoped.filter(function(u){ return u.status==='pending'; });
     if(pend.length){ setTimeout(function(){ toast('⏳ 承認待ち '+pend.length+'件（プロフィール→アカウント管理）'); }, 2200); }
   }).catch(function(){});
@@ -38140,6 +38302,7 @@ function loginSuccess(user) {
   // v668: 個人情報保護方針・利用規約に（今の版で）同意するまでアプリに入れない
   if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
   ckAccessCheck(user, false); // v770: 受付の名簿を確認（無効ならゲート）
+  _admCore = null; setTimeout(_admCoreLoad, 1200); // v831: 兼務のユニオン管理者か
   accCheck(user, false); // v790: 公開範囲を確認（まだ使えない人はゲート）
   setTimeout(function() { _shRefFill(user); _shDailyCheck(); }, 2500); // v827: 紹介者を名簿から・前からある共有を確かめる（#23）
   setTimeout(function() { try { if (_gdAuto()) return; } catch (eGd) {} try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容（v755: はじめての人は先に使い方の案内）
@@ -41902,7 +42065,7 @@ function _p2YearPageHtml(pc) {
 //  ① はじめての案内（スライド・最初の1回）② はじめの5ステップ（HOMEのカード）
 //  ③ 画面ごとのスポットライト（その画面を初めて開いた時・1回）④ 使い方ガイド（いつでも見返せる・よくある質問）
 //  「見た」は users/{uid}.guide ＋ 端末（localStorage gm_guide）。どちらかで見ていれば見た扱い。ユニオン管理者には管理者の説明も
-function _gdAdm() { try { return typeof isCurrentAdmin === 'function' && isCurrentAdmin(); } catch (e) { return false; } }
+function _gdAdm() { try { return typeof _canAdmPanel === 'function' && _canAdmPanel(); } catch (e) { return false; } }
 function _gdSt() {
   var a = {}, b = {};
   try { a = JSON.parse(localStorage.getItem('gm_guide') || '{}') || {}; } catch (e) {}

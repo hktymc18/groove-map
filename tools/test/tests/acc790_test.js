@@ -88,7 +88,7 @@ T.run(async () => {
   w.accEarlyTgl('b5'); await sleep(5);
   c('外せる', !early('b5'));
   // 承認した時に登録待ちの名簿にあれば先行利用に
-  docs['appAccess/names'] = { names: ['新人架空'] }; w._accNames = ['新人架空'];
+  docs['appAccess/names'] = { names: ['新人架空'] }; w._accNames = ['新人架空']; w._accNB = { '': ['新人架空'] }; // v831: 名簿はユニオンごと（''＝前からある全体の名簿）
   w.adminApprove('p1'); await sleep(30);
   c('承認した人が登録待ちの名簿にいれば、先行利用にして名簿から外す', early('p1') && docs['appAccess/names'].names.length === 0);
   // オーナー以外は公開範囲を変えられない（画面）

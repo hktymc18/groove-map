@@ -7,8 +7,8 @@ T.run(async () => {
   const ALL = [{ id: 'a', name: '同じ 一', union: 'GRANT', status: 'active' }, { id: 'b', name: '同じ 二', union: 'GRANT', status: 'pending' }, { id: 'x', name: '他 三', union: 'LIEN', status: 'pending' }];
   const qs = [];
   const mkQ = (filters) => ({
-    where(f, op, v) { return mkQ(filters.concat([[f, v]])); },
-    get() { qs.push(filters); const L = ALL.filter(u => filters.every(([f, v]) => u[f] === v)); return Promise.resolve({ empty: !L.length, forEach(fn) { L.forEach(u => fn({ id: u.id, data: () => Object.assign({}, u) })); } }); },
+    where(f, op, v) { return mkQ(filters.concat([[f, v, op]])); },
+    get() { qs.push(filters); const L = ALL.filter(u => filters.every(([f, v, op]) => op === 'in' ? v.indexOf(u[f]) >= 0 : u[f] === v)); return Promise.resolve({ empty: !L.length, forEach(fn) { L.forEach(u => fn({ id: u.id, data: () => Object.assign({}, u) })); } }); },
   });
   const coll0 = w.db.collection;
   w.db = Object.assign({}, w.db, { collection(path) { return path === 'users' ? mkQ([]) : coll0(path); } });
@@ -16,9 +16,9 @@ T.run(async () => {
   // ユニオン管理者
   w.currentUser = { uid: 'adm', name: '管理者', union: 'GRANT', role: 'admin' };
   w.loadAdminUsers(); await sleep(30);
-  c('ユニオン管理者は自分のユニオンだけ読み込む（全員を読まない）', fullRead === 0 && qs.some(q => q.length === 1 && q[0][0] === 'union' && q[0][1] === 'GRANT') && w._adminUsers.every(u => u.union === 'GRANT') && w._adminUsers.length === 2);
+  c('ユニオン管理者は自分のユニオンだけ読み込む（全員を読まない）', fullRead === 0 && qs.some(q => q.length === 1 && q[0][0] === 'union' && String(q[0][1]) === 'GRANT') && w._adminUsers.every(u => u.union === 'GRANT') && w._adminUsers.length === 2);
   qs.length = 0; w.checkPendingApprovals(); await sleep(20);
-  c('承認待ちの件数も自分のユニオンだけ', qs.length === 1 && qs[0].some(f => f[0] === 'union' && f[1] === 'GRANT') && qs[0].some(f => f[0] === 'status'));
+  c('承認待ちの件数も自分のユニオンだけ', qs.length === 1 && qs[0].some(f => f[0] === 'union' && String(f[1]) === 'GRANT') && qs[0].some(f => f[0] === 'status'));
   qs.length = 0; w._rankFetchCache = null; let rows = null; w.gameFetchRanking(r => { rows = r; }); await sleep(20);
   c('ランキングも自分のユニオンだけ', qs.length === 1 && qs[0][0][1] === 'GRANT' && rows && rows.length === 2 && !rows.some(r => r.uid === 'x'));
   w.currentUser = { uid: 'adm2', name: '空', union: '', role: 'admin' }; w._adminUsers = ALL; 
@@ -28,6 +28,6 @@ T.run(async () => {
   w.loadAdminUsers(); await sleep(30);
   c('オーナーは全ユニオン', fullRead === 1 && w._adminUsers.length === 3);
   const rules = fs.readFileSync(R + '/firestore.rules', 'utf8');
-  c('ルール：アカウントの削除はオーナー／同じユニオンの管理者だけ', /allow delete: if isOwnerAdmin\(\) \|\| \(isUnionAdmin\(\) && sameUnionAsTarget\(\)\);/.test(rules));
-  c('ルール：同意の履歴は本人・オーナー・同じユニオンの管理者だけ', /match \/consents\/\{ver\}[\s\S]{0,400}isOwnerAdmin\(\) \|\| \(isUnionAdmin\(\)/.test(rules));
+  c('ルール：アカウントの削除はオーナー／管理しているユニオンの管理者だけ（v831: 兼務も）', /allow delete: if isOwnerAdmin\(\) \|\| admOf\(resource\.data\.get\('union', ''\)\);/.test(rules));
+  c('ルール：同意の履歴は本人・オーナー・同じユニオンの管理者だけ', /match \/consents\/\{ver\}[\s\S]{0,400}isOwnerAdmin\(\) \|\| \(profileExists\(uid\) && admOf\(/.test(rules));
 });
