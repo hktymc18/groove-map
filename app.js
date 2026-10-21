@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v831';
+var APP_JS_VERSION = 'v832';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3399,6 +3399,9 @@ function syncThemeButtons() {
   var l = document.getElementById('rbThemeLight');
   if (d) d.classList.toggle('sel', !isLight);
   if (l) l.classList.toggle('sel', isLight);
+  var hi = _homeImgOn(), h1 = document.getElementById('rbHomeImg1'), h0 = document.getElementById('rbHomeImg0'); // v832
+  if (h1) h1.classList.toggle('sel', hi);
+  if (h0) h0.classList.toggle('sel', !hi);
 }
 function initTheme() {
   var t = 'dark';
@@ -4202,7 +4205,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v831';
+  var DATA_VERSION = 'v832';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6309,6 +6312,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v832', d:'2026-10-21', items:['HOMEのタイルを「画像あり／画像なし」から選べるように（設定 › 見た目）。端末ごとに覚えます'] },
   { v:'v831', d:'2026-10-21', items:['ユニオン管理者の兼務：オーナーがアカウント管理で「兼務するユニオン」を設定できるように（受付システムの兼務の設定と共通）','兼務している管理者は、アカウント管理で所属と兼務のユニオンの人を見られます（上で「すべて／ユニオンごと」を切りかえ）。チェック項目の設定・ユニオン予定の配信も兼務のユニオンで使えます','管理者は自分の所属ユニオンを変えられないようにしました（変える時はオーナーへ）。登録待ちの名簿はユニオンごとに分けました'] },
   { v:'v830', d:'2026-10-20', items:['MAPのPDFの画質を上げました（前の2倍の細かさ）。拡大しても丸の中の名前や数字がにじまずに読めます'] },
   { v:'v829', d:'2026-10-20', items:['ユニオンのチェック項目の設定：並べ替えは↑↓をやめて、左の ⠿ を押したまま上下に動かす形にしました','新しい項目は、改行を押さずに「保存する」を押しても足されるようにしました（欄の横に［追加］ボタンも）'] },
@@ -21391,7 +21395,7 @@ function _stRender() {
   if (!_stPg) {
     h += '<h2 class="ux-h2">設定</h2>'
       + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
-      + _stLi('🎨', '見た目', light ? 'ライト' : 'ダーク', "setOpen('look')")
+      + _stLi('🎨', '見た目', (light ? 'ライト' : 'ダーク') + '・HOMEのタイル ' + (_homeImgOn() ? '画像あり' : '画像なし'), "setOpen('look')")
       + _stLi(icn('bell'), '通知', pushOn ? 'オン' : 'オフ', "setOpen('ntf')") + '</div>'
       + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', (currentUser && currentUser.union ? 'ユニオン予定・' : '') + '週の始まり・スクロール・予定の帯', 'openCalSettings()') + '</div>'
       + '<div class="st-gh">MAP・データ</div><div class="st-ls">' + (state.isEditor && !viewingOwnerUid ? _stLi('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
@@ -21416,7 +21420,9 @@ function _stRender() {
       + '<div class="ppl">紹介者</div><input class="ppin" id="stReferrer" value="' + evEsc(u.referrer || '') + '" placeholder="紹介してくれた人（任意）"><div class="ux-hint">MAPの共有で、アップ（上の人）かどうかを見分けるのに使います' + (u.referrerFrom === 'ck' ? '（受付の名簿から入れました）' : '') + '</div>' // v827
       + '<div class="ux-btm"><span class="ux-bk" onclick="setOpen()">‹ 戻る</span><span class="ux-nx" onclick="stSaveProf()">✓ 保存</span></div>';
   } else if (_stPg === 'look') {
+    var hImg = _homeImgOn(); // v832: HOMEのタイル
     h += '<h2 class="ux-h2">見た目</h2><div class="ppl">テーマ</div><div class="ppb sm" style="--n:2"><span class="' + (!light ? 'on' : '') + '" onclick="setTheme(\'dark\');_stRender()">🌙 ダーク</span><span class="' + (light ? 'on' : '') + '" onclick="setTheme(\'light\');_stRender()">☀ ライト</span></div>'
+      + '<div class="ppl">HOMEのタイル</div><div class="ppb sm" style="--n:2"><span class="' + (hImg ? 'on' : '') + '" onclick="setHomeImg(true);_stRender()">画像あり</span><span class="' + (!hImg ? 'on' : '') + '" onclick="setHomeImg(false);_stRender()">画像なし</span></div>'
       ; // v633: メンバーの一覧はMAPと同じ内容なので、スマホのメニューからは外した（表示/非表示の切り替えもなし）
   } else if (_stPg === 'ntf') {
     var den = ('Notification' in window) && Notification.permission === 'denied';
@@ -22447,6 +22453,13 @@ function _uxMenuCss() {
     + "body:not(.light) #view-menu .ux-t.ph{border-color:rgba(255,255,255,.12)!important}#view-menu .ux-t.ph .ic .lic{filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}";
   document.head.appendChild(st);
 }
+// v832: HOMEのタイルの画像あり／なし（端末ごと・テーマと同じく localStorage。何も選んでいない時は画像あり）
+function _homeImgOn() { try { return localStorage.getItem('gm_homeImg') !== '0'; } catch (e) { return true; } }
+function setHomeImg(on) {
+  try { localStorage.setItem('gm_homeImg', on ? '1' : '0'); } catch (e) {}
+  syncThemeButtons();
+  try { if (document.getElementById('view-menu')) renderMenuHub(); } catch (e2) {}
+}
 var UX_MENU_IMG = { plan: 'img/tile-plan.webp', map: 'img/tile-map.webp', cal: 'img/tile-cal.webp', todo: 'img/tile-todo.webp', stats: 'img/tile-stats.webp' };
 function _uxMenuView() {
   var v = document.getElementById('view-menu');
@@ -22476,7 +22489,7 @@ function renderMenuHub() {
     { k: 'stats', c: 'rose', ic: icn('chart'), lb: 'ANALYTICS', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' },
     { k: 'cal', c: 'gold', ic: icn('calendar'), lb: 'CALENDAR', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
     { k: 'todo', c: 'pur', ic: icn('checksq'), lb: 'TODO', st: '今日のタスク<br><em>' + (tkN ? 'のこり' + tkN + '件' : 'なし') + '</em>', on: 'switchView(\'events\');setEventsMode(\'agenda\')' }];
-  T.forEach(function(t) { if (UX_MENU_IMG[t.k]) { t.c += ' ph' + (t.k === 'stats' ? ' dk' : ''); t.img = UX_MENU_IMG[t.k]; } }); // v661
+  if (_homeImgOn()) T.forEach(function(t) { if (UX_MENU_IMG[t.k]) { t.c += ' ph' + (t.k === 'stats' ? ' dk' : ''); t.img = UX_MENU_IMG[t.k]; } }); // v661／v832: 設定で画像なしにもできる
   var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
     + sb(icn('target') + ' 理想MAP', 'switchView(\'ideal\')') + sb(icn('clipboard') + ' OL', 'switchView(\'ol\')')
