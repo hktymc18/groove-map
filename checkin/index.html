@@ -144,6 +144,42 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hw-r .v{font-weight:800;}
 .hw-r.no{opacity:.45;}
 .hw-line{display:block;background:#06c755;color:#fff;font-weight:800;border-radius:10px;padding:12px;text-decoration:none;margin:10px 0;}
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.kb-c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;cursor:pointer;}
+.kb-c:hover{border-color:var(--focus);}
+.kb-th{aspect-ratio:2/3;border-radius:9px;background:#1c1c26 center/cover no-repeat;background-size:auto 92%,100% 100%;background-position:50% 100%,center;}
+.kb-th.empty{background:repeating-linear-gradient(135deg,#ecebe5 0 10px,#e4e2da 10px 20px);display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;font-weight:700;text-align:center;padding:8px;}
+.kb-nm{font-weight:800;font-size:13.5px;margin:7px 2px 2px;}
+.kb-who{font-size:11.5px;color:var(--sub);margin:0 2px 4px;}
+.kb-new{border:2px dashed #b9b6aa;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--sub);font-weight:800;font-size:13px;min-height:220px;gap:6px;cursor:pointer;background:rgba(255,255,255,.35);}
+.kb-new b{font-size:30px;line-height:1;}
+.kb-lock{background:#fff8e6;border:1px solid #ecd9a4;border-radius:10px;padding:8px 10px;font-size:12px;color:#6b5414;margin-top:12px;}
+.kb-prev{display:flex;justify-content:center;padding:16px 0 8px;margin:0 -16px;background:radial-gradient(circle at 50% 40%,#3a3550,#16151c 70%);}
+.kb-prev .olc-tilt{width:250px;}
+.kb-prevcap{text-align:center;font-size:11px;color:#bdb8d6;background:#16151c;margin:0 -16px 12px;padding:0 0 10px;}
+.kb-sec{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
+.kb-sec h4{margin:0 0 8px;font-size:13.5px;}
+.kb-imgs{display:flex;gap:8px;}
+.kb-slot{flex:1;text-align:center;min-width:0;}
+.kb-slot .im{aspect-ratio:2/3;border-radius:8px;background:#2b2640 center/cover no-repeat;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#cfc9e6;font-size:12px;font-weight:700;}
+.kb-slot .im.art{background-size:contain;}
+.kb-slot .lb{font-size:11.5px;font-weight:700;margin-top:4px;}
+.kb-slot .sz{font-size:10.5px;color:var(--sub);}
+.kb-cols{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12.5px;}
+.kb-cols input[type=color]{width:34px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;vertical-align:middle;}
+.kb-sec details{border-top:1px solid var(--line);padding:6px 0;}
+.kb-sec details:first-of-type{border-top:none;}
+.kb-sec summary{cursor:pointer;font-size:13px;font-weight:700;padding:4px 0;}
+.kb-pick{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13.5px;}
+.kb-pick:hover{background:var(--paper);}
+.kb-bk{width:54px;aspect-ratio:656/1002;border-radius:6px;position:relative;overflow:hidden;background:#0c2d96 url('skins/back-base.webp') center/cover;flex:0 0 auto;}
+.kb-bk.full{background-size:cover;}
+.kb-bk i{position:absolute;left:14.9%;right:14.9%;top:31%;bottom:31%;background:center/contain no-repeat;}
+.kb-bk b{position:absolute;left:0;right:0;bottom:12%;text-align:center;font-family:'Lilita One',Verdana,sans-serif;color:#ffd84a;font-size:9px;font-weight:400;text-shadow:0 1px 0 #1a3d7a;}
+.kb-ui{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line);}
+.kb-ui .t{flex:1;min-width:0;}
+.kb-ui .t b{display:block;font-size:14px;}
+.kb-ui .t small{font-size:11.5px;color:var(--sub);}
 .easy-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:10px 14px;border-radius:12px;background:#e7f0fb;border:1px solid #a9c6ea;color:#163a66;font-weight:700;font-size:13.5px;}
 .easy-bar span{flex:1;min-width:200px;}
 /* 👥 誰でも受付モード: 金額（PayPay受領・手元金額）・MC/スピーカー/運営・ユニオン別・系列別と、受付以外のタブを隠す */
@@ -784,6 +820,31 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 @media (prefers-reduced-motion: reduce){
   .mc-tilt.on .mc-float,.membercard.skin-reaperTcg .mc-pop::before,.mc-tilt.on .membercard.skin-tcg .mc-pop::before,.mc-tilt.on .membercard.skin-tcg .mc-art{animation:none !important;}
 }
+/* 🃏 特別カード工房のカード（skin-x・1人1セット）: 枠・ホロ・イラスト・色は CSS 変数（--sk-*）で人ごとに。
+   配置・傾け・裏返しは skin-tcg 共通。工房に取り込んだ死神（reaperTcg）もこちらで表示 */
+.membercard.skin-x{background:var(--sk-frame,none) center/100% 100% no-repeat,#1c1c26;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+.membercard.skin-x .mc-art{inset:3.4% 4.6%;border-radius:4px;
+  background:var(--sk-holo,radial-gradient(90% 55% at 50% 50%,rgba(122,58,214,.6),rgba(52,18,96,.42) 50%,transparent 80%)) var(--bx,50%) var(--by,42%)/auto 125% no-repeat,var(--sk-bg,#3c3554);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),inset 0 0 34px 6px rgba(20,10,40,.35);}
+.membercard.skin-x .mc-art::after{background:linear-gradient(180deg,rgba(10,5,25,.5),rgba(10,5,25,.1) 20%,transparent 32%,transparent 60%,rgba(10,5,25,.35));}
+.membercard.skin-x .mc-pop::after{background:var(--sk-art,none) 50% 100%/auto 100% no-repeat;}
+.membercard.skin-x .mc-pop::before{background:var(--sk-art,none) 50% 100%/auto 100% no-repeat;transform-origin:50% 100%;
+  filter:brightness(var(--sk-bright,1)) contrast(1.12) drop-shadow(0 0 3px var(--sk-glow-a)) drop-shadow(0 0 12px var(--sk-glow-b));
+  animation:reaperSway 7s ease-in-out infinite alternate,skGlow 3.2s ease-in-out infinite alternate;}
+.mc-tilt.on .membercard.skin-x .mc-pop::before{animation:skGlow 3.2s ease-in-out infinite alternate;}
+@keyframes skGlow{
+  from{filter:brightness(calc(var(--sk-bright,1) * .95)) contrast(1.12) drop-shadow(0 0 2px var(--sk-glow-b)) drop-shadow(0 0 8px var(--sk-glow-c));}
+  to{filter:brightness(calc(var(--sk-bright,1) * 1.08)) contrast(1.12) drop-shadow(0 0 4px var(--sk-glow-a)) drop-shadow(0 0 18px var(--sk-glow-b));}
+}
+.membercard.skin-x .mc-name{text-shadow:0 0 2px #000,0 1px 0 #000,0 0 10px var(--sk-glow-a);}
+.membercard.skin-x .mc-hp{text-shadow:0 0 2px #000,0 2px 0 #000,0 0 10px var(--sk-glow-b);}
+.membercard.skin-x .mc-hp .orb{background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.75),var(--sk-glow-a) 55%,rgba(0,0,0,.55));box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 10px var(--sk-glow-a);}
+.membercard.skin-x .mc-union{background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(0,0,0,.14)),var(--sk-band,#d9b56a);color:var(--sk-bandink,#2a1d02);}
+.membercard.skin-x .mc-grade{background:linear-gradient(90deg,var(--sk-band,#d9b56a),var(--sk-band-0,rgba(212,180,90,0)));color:var(--sk-bandink,#1f1504);}
+.membercard.skin-x .mc-ab .ab-tag{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,.28)),var(--sk-tag,#c0392b);}
+.membercard.skin-x .mc-ab .ab-nm{color:var(--sk-tagtx,#ff7a5c);}
+.membercard.skin-x #mcQr.big img,.membercard.skin-x #mcQr.big canvas{box-shadow:0 0 0 2px rgba(255,255,255,.8),0 0 24px var(--sk-glow-b);}
+@media (prefers-reduced-motion: reduce){ .membercard.skin-x .mc-pop::before,.mc-tilt.on .membercard.skin-x .mc-pop::before{animation:none !important;} }
 /* 🎓 OLチェックアウト（会員証のボタン・入力・カードGET!・コレクション） */
 .ol-box{margin-top:14px;display:flex;flex-direction:column;gap:8px;text-align:left;}
 .ico{width:1.15em;height:1.15em;vertical-align:-.2em;flex:0 0 auto;}
@@ -1221,6 +1282,8 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
       <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide rmore" title="ユニオンを追加">＋ユニオン</button>
+      <button id="btnKobo" class="hide rmore" title="BLUE DIAMOND・TEAM ELITE の人の特別カードを作る・付ける（オーナーのみ）">🃏 特別カード工房</button>
+      <button id="btnBacks" class="hide rmore" title="ユニオンごとのカードの裏面（ロゴ）を設定（オーナーのみ）">🂠 カードの裏面</button>
       <button id="btnRenUnion" class="ghost hide rmore" title="ユニオン名を変更（名簿・イベント・出席・集計・NAVIGATORのユーザーまで一括・オーナーのみ）">✏ ユニオン名を変更</button>
       <button id="btnLaunch" class="ghost hide rmore" title="BLUE DIAMOND・TEAM ELITEのPLATINUMカードを解禁（オーナーのみ）">🖤 カード解禁</button>
       <button id="btnHideMoney" class="hide rmore" title="受付画面の金額を統括（ユニオン管理者）だけに見せる">🙈 受付の金額</button>
@@ -2030,10 +2093,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v91';
+var APP_VER = 'v92';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v92', d: '2026/10/21', items: ['🃏 「特別カード工房」（オーナーのみ）: BLUE DIAMOND・TEAM ELITE の人の特別カードを、枠・イラスト・ホロの画像と色・文字から作って付けられるようになりました（画像は自動で軽量化・その場でプレビュー）', '🂠 カードの裏面をユニオンごとに設定できるようになりました（ロゴを選ぶと自動で背景を透過・オーナーのみ）', '🔒 BLUE DIAMOND・TEAM ELITE のバッジと特別カードは、オーナーだけが付け外しできるようになりました'] },
   { v: 'v91', d: '2026/10/21', items: ['👤 ゲスト受付の所属ユニオンに「その他（ユニオン外）」を追加しました。選ぶと、どのユニオンの集計（イベントの出席人数）にも入りません'] },
   { v: 'v90', d: '2026/10/20', items: ['👥 「誰でも受付モード」を追加しました。金額（PayPay受領・手元金額）・MC/スピーカー/運営・系列別と、受付以外のタブを隠して、出席の人数と受付履歴だけの画面で誰にでも受付を任せられます（解除はパスワード）', '🙈 ユニオン管理者は名簿タブの「🙈 受付の金額」で、受付の金額を統括（ユニオン管理者）だけに見せる設定にできます'] },
   { v: 'v89', d: '2026/10/20', items: ['⏱ 受付は、ログインから4時間で自動的にログアウトするようになりました（共用PCの閉じ忘れによる情報漏れを防ぐため）。10分前に画面の下にお知らせが出て、「延長する」で1時間延ばせます'] },
@@ -2925,6 +2989,112 @@ function pxPanel(){
 var CARD_SKINS = { reaper: '💀 死神', reaperTcg: '💀 死神（レアカード風）' };
 // 🃏 レアカード風のデザイン（表示名・HP・レアリティをオーナーが設定。系列は出さない）
 var CARD_SKIN_TCG = { reaperTcg: 1 };
+/* 🃏 特別カード工房（オーナーだけ）で作ったカードセット: cardSkins/{id}（色・文字・付けた人・画像の版）＋ cardArt/{id}__frame|art|holo（画像）。
+   id は x_〜（死神は reaperTcg のまま工房に取り込む。取り込むまでは組み込みの画像で表示）。
+   画像は端末（IndexedDB）に版ごとに保存し、差し替えた時だけ読み直す */
+var CK_SKIN_KINDS = ['frame', 'art', 'holo'];
+function ckIsTcg(id){ return !!id && (!!CARD_SKIN_TCG[id] || /^x_/.test(id)); }
+function ckIsSkin(id){ return !!id && (!!CARD_SKINS[id] || /^x_/.test(id)); }
+var ckIdb = (function(){
+  var mem = {}, dbp = null;
+  function open(){
+    if(dbp) return dbp;
+    dbp = new Promise(function(res){
+      try{
+        var rq = indexedDB.open('bci_cards', 1);
+        rq.onupgradeneeded = function(){ rq.result.createObjectStore('kv'); };
+        rq.onsuccess = function(){ res(rq.result); };
+        rq.onerror = function(){ res(null); };
+      }catch(e){ res(null); }
+    });
+    return dbp;
+  }
+  return {
+    get: function(k){
+      if(mem[k]) return Promise.resolve(mem[k]);
+      return open().then(function(d){
+        if(!d) return null;
+        return new Promise(function(res){
+          try{ var r = d.transaction('kv').objectStore('kv').get(k); r.onsuccess = function(){ if(r.result) mem[k] = r.result; res(r.result || null); }; r.onerror = function(){ res(null); }; }catch(e){ res(null); }
+        });
+      });
+    },
+    set: function(k, v){
+      mem[k] = v;
+      return open().then(function(d){
+        if(!d) return;
+        try{ d.transaction('kv', 'readwrite').objectStore('kv').put(v, k); }catch(e){}
+      });
+    }
+  };
+})();
+function ckSkinDefCache(id, def){
+  try{
+    if(def === undefined) return JSON.parse(localStorage.getItem('bci_skd_' + id) || 'null');
+    localStorage.setItem('bci_skd_' + id, JSON.stringify(def));
+  }catch(e){ return null; }
+}
+// 画像（版が同じなら端末から・違えば読み直す）→ { frame, art, holo }（data URL か null）
+function ckSkinImgs(id, def){
+  var v = (def && def.v) || {};
+  return Promise.all(CK_SKIN_KINDS.map(function(k){
+    if(!v[k]) return Promise.resolve(null);
+    var key = id + '__' + k;
+    return ckIdb.get(key).then(function(c){
+      if(c && c.v === v[k]) return c.d;
+      return db.collection('cardArt').doc(key).get().then(function(s){
+        var d = s.exists ? (s.data().d || '') : '';
+        if(d) ckIdb.set(key, { v: v[k], d: d });
+        return d || null;
+      }).catch(function(){ return c ? c.d : null; });
+    });
+  })).then(function(a){ return { frame: a[0], art: a[1], holo: a[2] }; });
+}
+function ckHexRgb(h){ var m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if(!m) return null; var n = parseInt(m[1], 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+function ckRgba(c, a){ return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+function ckLum(c){ return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
+function ckMix(c, w, t){ return [0, 1, 2].map(function(i){ return Math.round(c[i] + (w[i] - c[i]) * t); }); }
+var CK_SKIN_VARS = ['--sk-frame', '--sk-art', '--sk-holo', '--sk-bright', '--sk-glow-a', '--sk-glow-b', '--sk-glow-c', '--sk-band', '--sk-band-0', '--sk-bandink', '--sk-tag', '--sk-tagtx', '--sk-bg'];
+function ckSkinClear(card){
+  card.classList.remove('skin-x');
+  CK_SKIN_VARS.forEach(function(k){ card.style.removeProperty(k); });
+}
+// カードに色・画像をのせる（img は data URL。工房のプレビューも同じ関数）
+function ckSkinPaint(card, def, img){
+  var st = card.style, col = (def && def.colors) || {};
+  ckSkinClear(card);
+  var url = function(k, v){ if(v) st.setProperty(k, 'url("' + v + '")'); };
+  url('--sk-frame', img.frame); url('--sk-art', img.art); url('--sk-holo', img.holo);
+  st.setProperty('--sk-bright', String(def && def.bright > 0 ? def.bright : 1));
+  var g = ckHexRgb(col.glow) || [170, 100, 255], b = ckHexRgb(col.band) || [217, 181, 106], t = ckHexRgb(col.tag) || [192, 57, 43];
+  st.setProperty('--sk-glow-a', ckRgba(ckMix(g, [255, 255, 255], .25), .95));
+  st.setProperty('--sk-glow-b', ckRgba(g, .85));
+  st.setProperty('--sk-glow-c', ckRgba(g, .45));
+  st.setProperty('--sk-band', ckRgba(b, .95)); st.setProperty('--sk-band-0', ckRgba(b, 0));
+  st.setProperty('--sk-bandink', ckLum(b) > .55 ? '#1f1504' : '#ffffff');
+  st.setProperty('--sk-tag', ckRgba(t, 1)); st.setProperty('--sk-tagtx', ckRgba(ckMix(t, [255, 255, 255], .35), 1));
+  st.setProperty('--sk-bg', ckRgba(ckMix(g, [20, 14, 34], .7), 1));
+  card.classList.add('skin-x');
+  var orb = card.querySelector('.mc-hp .orb');
+  if(orb) orb.textContent = (def && def.orb) || '✦';
+}
+// 会員証・コレクションのカードに、そのカードセットを当てる（端末に保存してある分ですぐ表示 → 最新を読んで更新）
+function ckSkinUse(card, id){
+  ckSkinClear(card);
+  card.setAttribute('data-skid', id || '');
+  if(!ckIsTcg(id)) return;
+  var cur = function(){ return card.getAttribute('data-skid') === id; };
+  var cached = ckSkinDefCache(id);
+  if(cached) ckSkinImgs(id, cached).then(function(img){ if(cur() && img.frame) ckSkinPaint(card, cached, img); });
+  db.collection('cardSkins').doc(id).get().then(function(s){
+    if(!s.exists){ try{ localStorage.removeItem('bci_skd_' + id); }catch(e){} if(cur() && !/^x_/.test(id)) ckSkinClear(card); return; }
+    var def = s.data();
+    ckSkinDefCache(id, def);
+    if(cached && JSON.stringify(cached.v || {}) === JSON.stringify(def.v || {}) && JSON.stringify(cached.colors || {}) === JSON.stringify(def.colors || {}) && cached.bright === def.bright && cached.orb === def.orb && card.classList.contains('skin-x')) return;
+    return ckSkinImgs(id, def).then(function(img){ if(cur() && img.frame) ckSkinPaint(card, def, img); });
+  }).catch(function(){});
+}
+function ckSkinOrb(id){ var d = ckSkinDefCache(id); return (d && d.orb) || (id === 'reaperTcg' ? '💀' : '✦'); }
 // 🏅 バッジ（役職名）: 1人1つ。gem=タイトル（宝石）、role=役職（メダル）。色は [明るい, 濃い]
 var CARD_BADGES = [
   { k: 'BR', t: 'gem', c: ['#eef2f7', '#8d97a6'] },
@@ -3024,7 +3194,7 @@ function renderCard(c){
     brand.textContent = 'BASE CHECK-IN';
   }
   var style = GRADE_STYLES[c.grade || ''];
-  var skin = !c.trainee && CARD_SKINS[c.skin || ''] ? c.skin : '';   // ✨ 特別デザインはグレードの色より優先（研修生は除く）
+  var skin = !c.trainee && ckIsSkin(c.skin || '') ? c.skin : '';   // ✨ 特別デザインはグレードの色より優先（研修生は除く）
   var dia = !c.trainee && !skin && c.badge === 'DIAMOND';            // 💎 バッジがDIAMONDの人は金属のカード（特別デザインが優先）
   var plat = !c.trainee && !skin && (c.badge === 'BLUE DIAMOND' || c.badge === 'TEAM ELITE');   // 🖤 PLATINUMのカード
   if(plat) dia = true;                                               //    （QR収納などはDIAMONDと同じ仕組み）
@@ -3049,7 +3219,8 @@ function renderCard(c){
     if(!c.trainee) card.classList.add('mc-plain');   // 🗺 通常会員: 世界地図の透かし
     $('mcGrade').textContent = '';
   }
-  var tcg = !!(skin && CARD_SKIN_TCG[skin]);
+  var tcg = !!(skin && ckIsTcg(skin));
+  ckSkinUse(card, tcg ? skin : '');   // 🃏 工房のカードセット（色・画像）
   var tilt = $('mcTilt');
   tilt.className = tcg ? 'mc-tilt on' : 'mc-tilt';
   tilt.style.transform = '';
@@ -3060,13 +3231,13 @@ function renderCard(c){
     // 裏面: ユニオンのロゴ（無いユニオンはユニオン名の文字）
     ckPaintBack($('mcBack'), c.union);
     ckBindCardGesture();
-  } else if(!c.trainee && (CARD_BACKS[c.union || ''] || {}).all){
+  } else if(!c.trainee && ckBackCfg(c.union).all){
     // 🃏 通常の会員証も裏返せるユニオン（QR以外をタップ→裏返る・もう一度で表）
     card.classList.add('cb-flip');
     ckPaintBack($('mcBack'), c.union);
     ckBindPlainFlip();
   }
-  $('mcHp').innerHTML = tcg && c.skinHp ? '<small>HP</small>' + esc(c.skinHp) + '<i class="orb">💀</i>' : '';
+  $('mcHp').innerHTML = tcg && c.skinHp ? '<small>HP</small>' + esc(c.skinHp) + '<i class="orb">' + esc(ckSkinOrb(skin)) + '</i>' : '';
   // 左下: 通し番号（例: 1/1000）＋レアリティ（斜体の文字だけ）
   $('mcRare').innerHTML = tcg && (c.skinSerial || c.skinRare)
     ? (c.skinSerial ? '<span class="ser">' + esc(c.skinSerial) + '</span>' : '') + (c.skinRare ? '<span class="rr">' + esc(c.skinRare) + '</span>' : '') : '';
@@ -3116,9 +3287,37 @@ var CARD_BACKS = {
   'REVE': { logo: 'skins/logo-reve.webp', all: true }
 };
 var CARD_BACK_BASE = 'skins/back-base.webp';
+/* 🃏 裏面はユニオンごと（オーナーが名簿タブ「🃏 カードの裏面」で設定）: cardBacks/{ユニオン} = { logoV（ロゴの版・0=なし）, all（通常の会員証も裏返せる）}
+   ロゴは cardArt/back__{ユニオン}。端末に保存して、開くたびに最新を確認。設定がないユニオンは CARD_BACKS（組み込み）のまま */
+function ckBackCfg(union){
+  var c = null;
+  try{ c = JSON.parse(localStorage.getItem('bci_cbk_' + (union || '')) || 'null'); }catch(e){}
+  if(c) return { logo: c.logo || '', all: !!c.all, img: c.img || '' };
+  return CARD_BACKS[union || ''] || {};
+}
+var gBackSynced = {};
+function ckBackSync(union, after){
+  if(!union) return;
+  var key = 'bci_cbk_' + union, old = null;
+  try{ old = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){}
+  var done = function(nc){
+    var was = JSON.stringify(old), now = JSON.stringify(nc);
+    try{ if(nc) localStorage.setItem(key, now); else localStorage.removeItem(key); }catch(e){}
+    if(was !== now && after) after();
+  };
+  (gBackSynced[union] || (gBackSynced[union] = db.collection('cardBacks').doc(union).get())).then(function(s){
+    if(!s.exists){ done(null); return; }
+    var d = s.data();
+    if(!d.logoV){ done({ all: !!d.all, logoV: 0, logo: '' }); return; }
+    if(old && old.logoV === d.logoV && old.logo){ done({ all: !!d.all, logoV: d.logoV, logo: old.logo }); return; }
+    return db.collection('cardArt').doc('back__' + union).get().then(function(a){
+      done({ all: !!d.all, logoV: d.logoV, logo: a.exists ? (a.data().d || '') : '' });
+    });
+  }).catch(function(){});
+}
 function ckPaintBack(back, union){
   if(!back) return;
-  var cfg = CARD_BACKS[union || ''] || {}, nm = union || 'BASE CHECK-IN';
+  var cfg = ckBackCfg(union), nm = union || 'BASE CHECK-IN';
   if(cfg.img){
     back.classList.remove('cb');
     back.style.setProperty('--back', "url('" + cfg.img + "')"); back.innerHTML = '';
@@ -3251,7 +3450,7 @@ function olDesign(m){
     .forEach(function(k){ d[k] = m[k] || ''; });
   return d;
 }
-function olSpecial(d){ return !!(d && CARD_SKIN_TCG[d.skin || '']); }
+function olSpecial(d){ return !!(d && ckIsTcg(d.skin || '')); }
 // 通し番号＝そのAさんの何人目か。Aさんの「1/1000」の分母を使って「12/1000」と出す
 function olSerialText(d, serial){
   var m = /\/\s*(\d+)/.exec((d && d.skinSerial) || '');
@@ -3273,7 +3472,7 @@ function ckTcgBuild(d, serialText){
   q('.mc-no').textContent = 'No. ' + (d.no || '');
   q('.mc-group').textContent = '';
   q('.mc-grade').textContent = GRADE_STYLES[d.grade || ''] ? (GRADE_LABELS[d.grade] || d.grade) : '';
-  q('.mc-hp').innerHTML = d.skinHp ? '<small>HP</small>' + esc(d.skinHp) + '<i class="orb">💀</i>' : '';
+  q('.mc-hp').innerHTML = d.skinHp ? '<small>HP</small>' + esc(d.skinHp) + '<i class="orb">' + esc(ckSkinOrb(d.skin || '')) + '</i>' : '';
   var ser = serialText != null ? serialText : (d.skinSerial || '');
   q('.mc-rare').innerHTML = (ser ? '<span class="ser">' + esc(ser) + '</span>' : '') + (d.skinRare ? '<span class="rr">' + esc(d.skinRare) + '</span>' : '');
   q('.mc-ab').innerHTML = d.skinAbName ? '<span class="ab-tag">特性</span><span class="ab-nm">' + esc(d.skinAbName) + '</span>' : '';
@@ -3285,6 +3484,8 @@ function ckTcgBuild(d, serialText){
   q('.mc-atktx').textContent = d.skinAtkText || '';
   q('.mc-badge').innerHTML = ckBadgeHtml(d.badge || '');
   ckPaintBack(card.querySelector('.mc-back'), d.union);
+  ckBackSync(d.union, function(){ ckPaintBack(card.querySelector('.mc-back'), d.union); });
+  ckSkinUse(card, d.skin || '');   // 🃏 工房のカードセット
   var wrap = document.createElement('div'), fl = document.createElement('div');
   wrap.className = 'mc-tilt on olc-tilt'; fl.className = 'mc-float';
   fl.appendChild(card); wrap.appendChild(fl);
@@ -3821,6 +4022,7 @@ function showCardView(token){
         return;
       }
       renderCard(c);
+      ckBackSync(c.union, function(){ if(gCardLast) renderCard(gCardLast); });   // 🃏 ユニオンの裏面の設定（変わっていたら描き直す）
       renderTrainee(c);
       renderCoSheetEntry(c);
       renderGoalHw(c);
@@ -5933,6 +6135,473 @@ $('btnLaunch').onclick = function(){
     };
   }).catch(function(e){ toast('読み込めませんでした（ルールの更新が必要かもしれません）: ' + (e.code || e.message || e)); });
 };
+/* ─────────────────────────────────────────────
+   🃏 特別カード工房（オーナーだけ）: BLUE DIAMOND・TEAM ELITE の人の特別カード。1人1セット（枠・イラスト・ホロ・色・文字）。
+   画像は選ぶと自動で軽量化して cardArt に、定義は cardSkins に保存。付けると名簿と会員証に skin＝カードセットのID と文字を写す
+   ───────────────────────────────────────────── */
+var KB_TEXT_KEYS = ['skinName', 'skinHp', 'skinRare', 'skinSerial', 'skinAbName', 'skinAbText', 'skinAtkEls', 'skinAtkName', 'skinAtkDmg', 'skinAtkText'];
+var KB_KIND_LABEL = { frame: '枠', art: 'イラスト', holo: 'ホロ（任意）' };
+function kbReadFile(f){ return new Promise(function(res, rej){ var r = new FileReader(); r.onload = function(){ res(r.result); }; r.onerror = rej; r.readAsDataURL(f); }); }
+function kbImg(src){ return new Promise(function(res, rej){ var im = new Image(); im.onload = function(){ res(im); }; im.onerror = rej; im.src = src; }); }
+function kbCanvas(w, h){ var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
+// できるだけ軽く（1枚 ~600KB 以内の data URL）。透過が要る画像は webp か png、それ以外は webp か jpeg
+function kbEncode(cv, alpha){
+  var q = .86, out = '';
+  for(var i = 0; i < 8; i++){
+    out = cv.toDataURL('image/webp', q);
+    if(out.indexOf('data:image/webp') !== 0) out = alpha ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', q);
+    if(out.length < 800000) return out;
+    if(q > .6 && out.indexOf('image/png') < 0){ q -= .1; continue; }
+    var c2 = kbCanvas(cv.width * .8, cv.height * .8);
+    c2.getContext('2d').drawImage(cv, 0, 0, c2.width, c2.height);
+    cv = c2; q = .82;
+  }
+  return out;
+}
+function kbHasAlpha(ctx, w, h){
+  var d = ctx.getImageData(0, 0, w, h).data;
+  for(var i = 3; i < d.length; i += 4 * 7) if(d[i] < 245) return true;
+  return false;
+}
+// 背景の透過: 四隅の色に近い色を透明にする（ロゴ・イラストの白や単色の背景向け）
+function kbKeyOut(ctx, w, h){
+  var img = ctx.getImageData(0, 0, w, h), d = img.data, bg = [0, 0, 0], n = 0;
+  [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]].forEach(function(p){ var i = (p[1] * w + p[0]) * 4; bg[0] += d[i]; bg[1] += d[i + 1]; bg[2] += d[i + 2]; n++; });
+  bg = bg.map(function(x){ return x / n; });
+  for(var i = 0; i < d.length; i += 4){
+    var dist = Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2]);
+    if(dist < 45) d[i + 3] = 0;
+    else if(dist < 95) d[i + 3] = Math.round(d[i + 3] * (dist - 45) / 50);
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function kbTrim(cv){
+  var ctx = cv.getContext('2d'), d = ctx.getImageData(0, 0, cv.width, cv.height).data, x0 = cv.width, y0 = cv.height, x1 = -1, y1 = -1;
+  for(var y = 0; y < cv.height; y++) for(var x = 0; x < cv.width; x++){
+    if(d[(y * cv.width + x) * 4 + 3] > 12){ if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; }
+  }
+  if(x1 < 0) return cv;
+  var c2 = kbCanvas(x1 - x0 + 1, y1 - y0 + 1);
+  c2.getContext('2d').drawImage(cv, x0, y0, c2.width, c2.height, 0, 0, c2.width, c2.height);
+  return c2;
+}
+// 画像を読み込んで縮小・軽量化。opt: { maxW, maxH, alpha, key（背景を透過）, trim }
+function kbProcess(src, opt){
+  return kbImg(src).then(function(im){
+    var sc = Math.min(1, opt.maxW / im.naturalWidth, opt.maxH / im.naturalHeight);
+    var cv = kbCanvas(im.naturalWidth * sc, im.naturalHeight * sc), ctx = cv.getContext('2d');
+    ctx.drawImage(im, 0, 0, cv.width, cv.height);
+    var alpha = !!opt.alpha;
+    if(opt.key && !kbHasAlpha(ctx, cv.width, cv.height)){ kbKeyOut(ctx, cv.width, cv.height); alpha = true; }
+    else if(opt.alpha) alpha = kbHasAlpha(ctx, cv.width, cv.height);
+    if(opt.trim) cv = kbTrim(cv);
+    return kbEncode(cv, alpha);
+  });
+}
+function kbKB(d){ return d ? Math.round(d.length * .75 / 1024) + 'KB' : ''; }
+function kbHex(c){ return '#' + c.map(function(x){ return ('0' + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2); }).join(''); }
+// ✨ 画像から色を自動で: 文字の光＝イラストの鮮やかな色、名前の帯＝枠の明るい色
+function kbAutoColors(img){
+  var pick = function(src, fn){
+    if(!src) return Promise.resolve(null);
+    return kbImg(src).then(function(im){
+      var cv = kbCanvas(48, 72), ctx = cv.getContext('2d');
+      ctx.drawImage(im, 0, 0, 48, 72);
+      return fn(ctx.getImageData(0, 0, 48, 72).data);
+    }).catch(function(){ return null; });
+  };
+  var vivid = function(d){
+    var b = {}, best = null;
+    for(var i = 0; i < d.length; i += 4){
+      if(d[i + 3] < 200) continue;
+      var r = d[i], g = d[i + 1], bl = d[i + 2], mx = Math.max(r, g, bl), mn = Math.min(r, g, bl), s = mx ? (mx - mn) / mx : 0, v = mx / 255;
+      if(s < .3 || v < .3) continue;
+      var h = mx === mn ? 0 : mx === r ? ((g - bl) / (mx - mn) + 6) % 6 : mx === g ? (bl - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4, k = Math.floor(h * 2);
+      var o = b[k] || (b[k] = { w: 0, c: [0, 0, 0] }), w = s * v;
+      o.w += w; o.c[0] += r * w; o.c[1] += g * w; o.c[2] += bl * w;
+    }
+    Object.keys(b).forEach(function(k){ if(!best || b[k].w > best.w) best = b[k]; });
+    if(!best) return null;
+    var c = best.c.map(function(x){ return x / best.w; }), mx = Math.max.apply(null, c) || 1;
+    return kbHex(c.map(function(x){ return x * 235 / mx; }));
+  };
+  var bright = function(d){
+    var c = [0, 0, 0], n = 0;
+    for(var i = 0; i < d.length; i += 4){
+      var v = Math.max(d[i], d[i + 1], d[i + 2]);
+      if(d[i + 3] > 200 && v > 170){ c[0] += d[i]; c[1] += d[i + 1]; c[2] += d[i + 2]; n++; }
+    }
+    return n > 20 ? kbHex(c.map(function(x){ return x / n; })) : null;
+  };
+  return Promise.all([pick(img.art, vivid), pick(img.frame, bright)]).then(function(r){ return { glow: r[0], band: r[1] }; });
+}
+function kbStatus(def, has){
+  if(!has.frame || !has.art) return '<span class="pill n">画像を入れてください</span>';
+  return def.no ? '<span class="pill g">付けています</span>' : '<span class="pill a">作成中</span>';
+}
+// 死神（組み込みの reaperTcg）を工房のカードセット第1号として取り込む（初回だけ・見た目は同じ）
+function kbMigrateReaper(){
+  var toData = function(u){
+    return fetch(u).then(function(r){ return r.blob(); }).then(function(b){ return kbReadFile(b); });
+  };
+  return db.collection('checkinMembers').where('skin', '==', 'reaperTcg').get().then(function(qs){
+    var m = null; qs.forEach(function(d){ if(!m){ m = d.data(); m.no = d.id; } });
+    return Promise.all([toData('skins/reaper-frame.webp'), toData('skins/reaper.webp'), toData('skins/reaper-holo.webp')]).then(function(r){
+      var v = Date.now(), text = {};
+      KB_TEXT_KEYS.forEach(function(k){ text[k] = (m && m[k]) || ''; });
+      var def = { label: (m && m.skinName) || 'シニガミ', colors: { glow: '#aa64ff', band: '#e0c26a', tag: '#c0302a' }, bright: 1.9, orb: '💀',
+        v: { frame: v, art: v, holo: v }, text: text, no: m ? m.no : '', memberName: m ? (m.name || '') : '', union: m ? (m.union || '') : '', createdAt: v, updatedAt: v };
+      return Promise.all([
+        db.collection('cardArt').doc('reaperTcg__frame').set({ d: r[0], v: v }),
+        db.collection('cardArt').doc('reaperTcg__art').set({ d: r[1], v: v }),
+        db.collection('cardArt').doc('reaperTcg__holo').set({ d: r[2], v: v })
+      ]).then(function(){ return db.collection('cardSkins').doc('reaperTcg').set(def); });
+    });
+  });
+}
+function koboList(){
+  if(!isOwner()) return;
+  modal('<h2>🃏 特別カード工房</h2><p style="font-size:13px;color:var(--sub);">読み込み中…</p>', true);
+  db.collection('cardSkins').get().then(function(qs){
+    var has = false; qs.forEach(function(d){ if(d.id === 'reaperTcg') has = true; });
+    if(!has) return kbMigrateReaper().then(function(){ return db.collection('cardSkins').get(); }).catch(function(){ return qs; });
+    return qs;
+  }).then(function(qs){
+    var list = [];
+    qs.forEach(function(d){ var x = d.data(); x.id = d.id; list.push(x); });
+    list.sort(function(a, b){ return (a.createdAt || 0) - (b.createdAt || 0); });
+    modal('<h2>🃏 特別カード工房</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 10px;">BLUE DIAMOND・TEAM ELITE の人の特別カード。1人1セット（枠・イラスト・ホロ・色）。作って「付ける」と、その人の会員証がこのカードになります。</p>'
+      + '<div class="kb-grid">' + list.map(function(d, i){
+          return '<div class="kb-c" data-kb="' + i + '"><div class="kb-th" id="kbTh' + i + '"></div>'
+            + '<div class="kb-nm">' + esc(d.label || (d.text && d.text.skinName) || '（名前なし）') + '</div>'
+            + '<div class="kb-who">' + (d.no ? esc((d.memberName || d.no) + (d.union ? '・' + d.union : '')) : 'まだ誰にも付けていない') + '</div>'
+            + '<span id="kbSt' + i + '">' + kbStatus(d, { frame: (d.v || {}).frame, art: (d.v || {}).art }) + '</span></div>';
+        }).join('') + '<div class="kb-new" id="kbNew"><b>＋</b>新しいカードを作る</div></div>'
+      + '<div class="kb-lock">🔒 BLUE DIAMOND・TEAM ELITE の付け外しと、この工房は <b>オーナー（馬越さん・北斗さん）</b> だけ操作できます（ルールでも制限）。</div>'
+      + '<div class="btns"><button id="kbClose">閉じる</button></div>', true);
+    $('kbClose').onclick = closeModal;
+    $('kbNew').onclick = function(){ koboEdit(null); };
+    list.forEach(function(d, i){
+      ckSkinImgs(d.id, d).then(function(img){
+        var th = $('kbTh' + i);
+        if(!th) return;
+        if(img.frame || img.art) th.style.backgroundImage = (img.art ? 'url("' + img.art + '"),' : '') + (img.frame ? 'url("' + img.frame + '")' : 'none');
+        else{ th.classList.add('empty'); th.textContent = '枠・イラスト未設定'; }
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-kb]'), function(el){
+      el.onclick = function(){ koboEdit(list[+el.getAttribute('data-kb')]); };
+    });
+  }).catch(function(e){ toast(permMsg(e, '読み込めませんでした（オーナーのみ）')); });
+}
+// カードを作る・直す。def=null は新規
+function koboEdit(def0, presetMem){
+  if(!isOwner()) return;
+  var isNew = !def0;
+  var id = isNew ? 'x_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) : def0.id;
+  var def = JSON.parse(JSON.stringify(def0 || { label: '', colors: { glow: '#aa64ff', band: '#d9b56a', tag: '#c0392b' }, bright: 1, orb: '✦', v: {}, text: {}, no: '', memberName: '', union: '' }));
+  delete def.id;
+  def.colors = def.colors || {}; def.text = def.text || {}; def.v = def.v || {};
+  var img = { frame: null, art: null, holo: null }, changed = {}, removed = {};
+  var mem = def.no ? { no: def.no, name: def.memberName, union: def.union } : (presetMem || null);
+  var oldNo = def.no || '';
+  ckSkinImgs(id, def).then(function(r){ img = r; render(); });
+  function txt(k){ return def.text[k] || ''; }
+  function render(){
+    var slot = function(k){
+      var d = img[k];
+      return '<div class="kb-slot"><div class="im' + (k === 'art' ? ' art' : '') + '" data-kpick="' + k + '" style="' + (d ? 'background-image:url(\'' + d + '\')' : '') + '">' + (d ? '' : '＋ 選ぶ') + '</div>'
+        + '<div class="lb">' + KB_KIND_LABEL[k] + '</div><div class="sz">' + (d ? kbKB(d) : '') + (k === 'holo' && d ? ' ・<a href="#" data-kdel="holo">外す</a>' : '') + '</div></div>';
+    };
+    var els = String(txt('skinAtkEls')).split(',');
+    modal('<h2>🃏 ' + esc(def.label || txt('skinName') || '新しいカード') + (mem ? ' <span class="pill g" style="font-size:12px;vertical-align:3px;">' + esc(mem.name || mem.no) + 'に付けています</span>' : '') + '</h2>'
+      + '<div class="kb-prev" id="kbPrev"></div><div class="kb-prevcap">↑ 本物の会員証と同じ見た目</div>'
+      + '<div class="kb-sec"><h4>🖼 画像（選ぶと自動で軽量化）</h4><div class="kb-imgs">' + slot('frame') + slot('art') + slot('holo') + '</div>'
+      + '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:400;margin-top:8px;"><input type="checkbox" id="kbKey" style="width:auto;"> イラストの背景を透過する（白や単色の背景の時）</label>'
+      + '<p style="font-size:11.5px;color:var(--sub);margin:4px 0 0;">枠＝カード全体の絵（縁）、イラスト＝キャラクター（背景を透過した画像だと枠から飛び出して見えます）、ホロ＝絵の後ろのきらめき。</p>'
+      + '<input type="file" id="kbFile" accept="image/*" class="hide"></div>'
+      + '<div class="kb-sec"><h4>🎨 色</h4><div class="kb-cols">'
+      + '<label style="margin:0;font-weight:400;">文字の光 <input type="color" id="kbGlow" value="' + esc(def.colors.glow || '#aa64ff') + '"></label>'
+      + '<label style="margin:0;font-weight:400;">名前の帯 <input type="color" id="kbBand" value="' + esc(def.colors.band || '#d9b56a') + '"></label>'
+      + '<label style="margin:0;font-weight:400;">特性ラベル <input type="color" id="kbTag" value="' + esc(def.colors.tag || '#c0392b') + '"></label>'
+      + '<button id="kbAuto" style="font-size:12px;padding:4px 10px;">✨ 画像から自動</button></div>'
+      + '<div class="kb-cols" style="margin-top:8px;"><label style="margin:0;font-weight:400;">イラストの明るさ <input type="range" id="kbBright" min="0.6" max="2.4" step="0.1" value="' + (def.bright || 1) + '" style="vertical-align:middle;width:120px;"></label>'
+      + '<label style="margin:0;font-weight:400;">HPの横のマーク <input type="text" id="kbOrb" maxlength="2" value="' + esc(def.orb || '✦') + '" style="width:3em;text-align:center;"></label></div></div>'
+      + '<div class="kb-sec"><h4>📝 カードの文字</h4>'
+      + '<details open><summary>表示名・HP・レアリティ・通し番号</summary>'
+      + '<label>表示名</label><input type="text" id="kbName" maxlength="20" value="' + esc(txt('skinName')) + '" placeholder="例: シニガミ">'
+      + '<div style="display:flex;gap:8px;"><div style="flex:1;"><label>HP</label><input type="text" id="kbHp" maxlength="5" inputmode="numeric" value="' + esc(txt('skinHp')) + '" style="width:100%;"></div>'
+      + '<div style="flex:1;"><label>通し番号</label><input type="text" id="kbSer" maxlength="12" value="' + esc(txt('skinSerial')) + '" placeholder="1/1000" style="width:100%;"></div>'
+      + '<div style="flex:1;"><label>レアリティ</label><input type="text" id="kbRare" maxlength="6" value="' + esc(txt('skinRare')) + '" placeholder="SAR" style="width:100%;"></div></div></details>'
+      + '<details><summary>特性</summary><label>特性の名前</label><input type="text" id="kbAb" maxlength="20" value="' + esc(txt('skinAbName')) + '">'
+      + '<label>特性の説明</label><textarea id="kbAbTx" maxlength="120" rows="3" style="width:100%;">' + esc(txt('skinAbText')) + '</textarea></details>'
+      + '<details><summary>技（属性・名前・威力）</summary><label>技の属性（最大3つ）</label><div style="display:flex;gap:6px;">' + [0, 1, 2].map(function(i){
+          return '<select class="kbEl" style="flex:1;min-width:0;"><option value="">—</option>' + CARD_ELEMENTS.map(function(e){
+            return '<option value="' + e.k + '"' + (els[i] === e.k ? ' selected' : '') + '>' + e.i + ' ' + esc(e.n) + '</option>';
+          }).join('') + '</select>';
+        }).join('') + '</div>'
+      + '<div style="display:flex;gap:8px;"><div style="flex:2;"><label>技の名前</label><input type="text" id="kbAtk" maxlength="16" value="' + esc(txt('skinAtkName')) + '" style="width:100%;"></div>'
+      + '<div style="flex:1;"><label>威力</label><input type="text" id="kbDmg" maxlength="6" value="' + esc(txt('skinAtkDmg')) + '" style="width:100%;"></div></div>'
+      + '<label>技の説明</label><textarea id="kbAtkTx" maxlength="120" rows="3" style="width:100%;">' + esc(txt('skinAtkText')) + '</textarea></details></div>'
+      + '<div class="kb-sec"><h4>👤 付ける人</h4><div id="kbWho" style="display:flex;align-items:center;gap:10px;">'
+      + (mem ? '<div style="flex:1;"><b>' + esc(mem.name || '') + '</b><br><small style="color:var(--sub);">' + esc((mem.union || '') + '・' + mem.no + (mem.badge ? '・' + mem.badge : '')) + '</small></div>'
+             : '<div style="flex:1;color:var(--sub);font-size:13px;">まだ誰にも付けていません</div>')
+      + '<button id="kbWhoPick" style="font-size:12.5px;">' + (mem ? '変更' : '選ぶ') + '</button>' + (mem ? '<button id="kbWhoOff" style="font-size:12.5px;">外す</button>' : '') + '</div></div>'
+      + '<p class="mc-err" id="kbErr"></p>'
+      + '<div class="btns"><button id="kbBack">一覧へ</button>' + (!isNew && !mem ? '<button id="kbDel" class="danger">削除</button>' : '') + '<button class="primary" id="kbSave">保存' + (mem ? '（会員証に反映）' : '') + '</button></div>', true);
+    bind();
+    preview();
+  }
+  function collect(){
+    def.colors = { glow: $('kbGlow').value, band: $('kbBand').value, tag: $('kbTag').value };
+    def.bright = Math.round(parseFloat($('kbBright').value) * 10) / 10 || 1;
+    def.orb = $('kbOrb').value.trim() || '✦';
+    var v = function(x){ return $(x).value.trim(); };
+    def.text = { skinName: v('kbName'), skinHp: v('kbHp'), skinSerial: v('kbSer'), skinRare: v('kbRare'), skinAbName: v('kbAb'), skinAbText: v('kbAbTx'),
+      skinAtkEls: [].slice.call(document.querySelectorAll('.kbEl')).map(function(x){ return x.value; }).filter(Boolean).join(','),
+      skinAtkName: v('kbAtk'), skinAtkDmg: v('kbDmg'), skinAtkText: v('kbAtkTx') };
+    def.label = def.text.skinName || def.label || '';
+  }
+  var prevT = null;
+  function preview(){
+    var box = $('kbPrev');
+    if(!box) return;
+    collect();
+    var d = { no: mem ? mem.no : '0000', name: mem ? mem.name : '', union: mem ? mem.union : 'ANTARES', grade: '', badge: mem ? (mem.badge || '') : 'TEAM ELITE', skin: id };
+    KB_TEXT_KEYS.forEach(function(k){ d[k] = def.text[k]; });
+    var w = ckTcgBuild(d);
+    var card = w.querySelector('.membercard');
+    card.setAttribute('data-skid', 'preview');   // 保存済みの見た目で上書きさせない
+    if(img.frame || img.art) ckSkinPaint(card, def, img); else ckSkinClear(card);
+    var orb = card.querySelector('.mc-hp .orb'); if(orb) orb.textContent = def.orb;
+    box.innerHTML = ''; box.appendChild(w);
+    if(typeof ckTcgFit === 'function') try{ ckTcgFit(w); }catch(e){}
+  }
+  function prevSoon(){ clearTimeout(prevT); prevT = setTimeout(preview, 250); }
+  var picking = '';
+  function bind(){
+    Array.prototype.forEach.call(document.querySelectorAll('#modalHost input, #modalHost textarea, #modalHost select'), function(x){
+      if(x.id === 'kbFile') return;
+      x.addEventListener('input', prevSoon); x.addEventListener('change', prevSoon);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-kpick]'), function(el){
+      el.onclick = function(){ picking = el.getAttribute('data-kpick'); $('kbFile').value = ''; $('kbFile').click(); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-kdel]'), function(el){
+      el.onclick = function(e){ e.preventDefault(); collect(); var k = el.getAttribute('data-kdel'); img[k] = null; removed[k] = 1; delete changed[k]; render(); };
+    });
+    $('kbFile').onchange = function(){
+      var f = this.files && this.files[0];
+      if(!f || !picking) return;
+      collect();
+      var k = picking, key = $('kbKey') && $('kbKey').checked;
+      toast('画像を軽量化しています…');
+      kbReadFile(f).then(function(src){
+        return kbProcess(src, k === 'art' ? { maxW: 900, maxH: 1100, alpha: true, key: key } : { maxW: 760, maxH: 1140, alpha: false });
+      }).then(function(d){
+        img[k] = d; changed[k] = 1; delete removed[k];
+        if(k !== 'holo' && img.art && img.frame && isNew && !def._autoDone){
+          def._autoDone = 1;
+          return kbAutoColors(img).then(function(c){ if(c.glow) def.colors.glow = c.glow; if(c.band) def.colors.band = c.band; });
+        }
+      }).then(function(){ render(); toast(KB_KIND_LABEL[k] + 'を入れました（' + kbKB(img[k]) + '）'); })
+        .catch(function(){ toast('この画像は読み込めませんでした'); });
+    };
+    $('kbAuto').onclick = function(){
+      collect();
+      kbAutoColors(img).then(function(c){
+        if(!c.glow && !c.band){ toast('先に枠とイラストを入れてください'); return; }
+        if(c.glow) def.colors.glow = c.glow; if(c.band) def.colors.band = c.band;
+        render(); toast('画像から色を決めました');
+      });
+    };
+    $('kbBack').onclick = koboList;
+    $('kbWhoPick').onclick = function(){ collect(); kbPickMember(function(m){ mem = m; render(); }); };
+    if($('kbWhoOff')) $('kbWhoOff').onclick = function(){ collect(); mem = null; render(); };
+    if($('kbDel')) $('kbDel').onclick = function(){
+      if(!confirm('このカードを削除しますか？（画像も消えます）')) return;
+      Promise.all(CK_SKIN_KINDS.map(function(k){ return db.collection('cardArt').doc(id + '__' + k).delete().catch(function(){}); }))
+        .then(function(){ return db.collection('cardSkins').doc(id).delete(); })
+        .then(function(){ toast('削除しました'); koboList(); })
+        .catch(function(e){ toast(permMsg(e, '削除できませんでした')); });
+    };
+    $('kbSave').onclick = save;
+  }
+  function save(){
+    collect();
+    if(!img.frame || !img.art){ $('kbErr').textContent = '枠とイラストの画像を入れてください'; return; }
+    $('kbSave').disabled = true; $('kbErr').textContent = '';
+    var now = Date.now();
+    delete def._autoDone;
+    var ops = [];
+    CK_SKIN_KINDS.forEach(function(k){
+      if(changed[k]){ def.v[k] = now; ops.push(db.collection('cardArt').doc(id + '__' + k).set({ d: img[k], v: now })); }
+      if(removed[k]){ def.v[k] = 0; ops.push(db.collection('cardArt').doc(id + '__' + k).delete()); }
+    });
+    def.no = mem ? mem.no : ''; def.memberName = mem ? (mem.name || '') : ''; def.union = mem ? (mem.union || '') : '';
+    def.updatedAt = now; if(!def.createdAt) def.createdAt = now;
+    Promise.all(ops).then(function(){
+      return db.collection('cardSkins').doc(id).set(def);
+    }).then(function(){
+      // 画像はこの端末に保存（会員証・コレクションでもすぐ出る）
+      CK_SKIN_KINDS.forEach(function(k){ if(changed[k]) ckIdb.set(id + '__' + k, { v: now, d: img[k] }); });
+      ckSkinDefCache(id, def);
+      return kbAssign(id, def, oldNo, mem);
+    }).then(function(){
+      toast(mem ? '保存しました。' + (mem.name || mem.no) + ' さんの会員証に反映されます（本人が開き直すと反映）' : '保存しました');
+      koboList();
+    }).catch(function(e){
+      $('kbSave').disabled = false;
+      $('kbErr').textContent = permMsg(e, '保存できませんでした（オーナーのみ・画像が大きすぎる可能性もあります）');
+    });
+  }
+  render();
+}
+// 付ける人を選ぶ: BLUE DIAMOND・TEAM ELITE の人（それ以外の人は番号で）
+function kbPickMember(cb){
+  var back = document.getElementById('modalHost').innerHTML;
+  var host = document.createElement('div');
+  host.className = 'modalback';
+  host.style.zIndex = 10001;
+  host.innerHTML = '<div class="modal"><h2>👤 付ける人を選ぶ</h2><div id="kbPl"><p style="font-size:13px;color:var(--sub);">読み込み中…</p></div>'
+    + '<label>番号で探す（BLUE DIAMOND・TEAM ELITE 以外の人）</label><div style="display:flex;gap:6px;"><input type="text" id="kbNo" placeholder="例: AN0001" style="flex:1;"><button id="kbNoGo">探す</button></div>'
+    + '<div class="btns"><button id="kbPlClose">閉じる</button></div></div>';
+  document.body.appendChild(host);
+  var close = function(){ host.remove(); };
+  host.querySelector('#kbPlClose').onclick = close;
+  var pick = function(m){ close(); cb({ no: m.no, name: m.name || '', union: m.union || '', badge: m.badge || '', cardToken: m.cardToken || '', olKey: m.olKey || '' }); };
+  Promise.all([
+    db.collection('checkinMembers').where('badge', 'in', ['BLUE DIAMOND', 'TEAM ELITE']).get(),
+    db.collection('cardSkins').get()
+  ]).then(function(r){
+    var used = {}; r[1].forEach(function(d){ if(d.data().no) used[d.data().no] = d.data().label || d.id; });
+    var L = []; r[0].forEach(function(d){ var m = d.data(); m.no = d.id; if(m.active !== false) L.push(m); });
+    L.sort(function(a, b){ return String(a.union + a.no).localeCompare(String(b.union + b.no)); });
+    host.querySelector('#kbPl').innerHTML = L.length ? L.map(function(m, i){
+      return '<div class="kb-pick" data-kpm="' + i + '"><span style="flex:1;"><b>' + esc(m.name || '') + '</b> <small style="color:var(--sub);">' + esc(m.union + '・' + m.no) + '</small></span>'
+        + ckBadgeHtml(m.badge) + (used[m.no] ? ' <span class="pill n">カードあり: ' + esc(used[m.no]) + '</span>' : '') + '</div>';
+    }).join('') : '<p style="font-size:13px;color:var(--sub);">BLUE DIAMOND・TEAM ELITE の人はまだいません（会員証のバッジで付けてください）。</p>';
+    Array.prototype.forEach.call(host.querySelectorAll('[data-kpm]'), function(el){ el.onclick = function(){ pick(L[+el.getAttribute('data-kpm')]); }; });
+  }).catch(function(e){ host.querySelector('#kbPl').innerHTML = '<p class="mc-err">' + esc(permMsg(e, '読み込めませんでした')) + '</p>'; });
+  host.querySelector('#kbNoGo').onclick = function(){
+    var no = host.querySelector('#kbNo').value.trim();
+    if(!no) return;
+    db.collection('checkinMembers').doc(no).get().then(function(s){
+      if(!s.exists){ toast('その番号の人は見つかりません'); return; }
+      var m = s.data(); m.no = s.id; pick(m);
+    }).catch(function(e){ toast(permMsg(e, '探せませんでした')); });
+  };
+}
+// 名簿と会員証に、カードセットの ID と文字を写す。前に付けていた人からは外す・その人の別のカードは外す
+function kbAssign(id, def, oldNo, mem){
+  // vals: 書く値（'' は消す）
+  var setTo = function(no, vals){
+    return db.collection('checkinMembers').doc(no).get().then(function(s){
+      if(!s.exists) return;
+      var m = s.data(); m.no = s.id;
+      var fields = {};
+      Object.keys(vals).forEach(function(k){ fields[k] = vals[k] ? vals[k] : FV.delete(); });
+      var b = db.batch();
+      b.set(db.collection('checkinMembers').doc(no), fields, { merge: true });
+      if(m.cardToken) b.set(db.collection('cards').doc(m.cardToken), fields, { merge: true });
+      return b.commit().then(function(){
+        Object.keys(vals).forEach(function(k){ if(vals[k]) m[k] = vals[k]; else delete m[k]; });
+        try{ olSyncDesign(m); }catch(e){}
+        // 開いている名簿の一覧も最新に（古い内容で再発行・一括発行しないように）
+        delete gMemCache[m.union];
+        gMembers.forEach(function(x){ if(x.no === no) Object.keys(vals).forEach(function(k){ if(vals[k]) x[k] = vals[k]; else delete x[k]; }); });
+      });
+    });
+  };
+  var blank = { skin: '' }; KB_TEXT_KEYS.forEach(function(k){ blank[k] = ''; });
+  var ps = [];
+  if(oldNo && (!mem || mem.no !== oldNo)) ps.push(setTo(oldNo, blank));
+  if(mem){
+    var v = { skin: id };
+    KB_TEXT_KEYS.forEach(function(k){ v[k] = def.text[k] || ''; });
+    ps.push(db.collection('cardSkins').where('no', '==', mem.no).get().then(function(qs){
+      var b = db.batch(), n = 0;
+      qs.forEach(function(d){ if(d.id !== id){ b.set(d.ref, { no: '', memberName: '', union: '' }, { merge: true }); n++; } });
+      return n ? b.commit() : null;
+    }).then(function(){ return setTo(mem.no, v); }));
+  }
+  return Promise.all(ps);
+}
+/* 🂠 カードの裏面（オーナーだけ）: ユニオンごとにロゴを登録（自動で背景を透過・軽量化）、通常の会員証も裏返せるかを切り替え */
+function koboBacks(){
+  if(!isOwner()) return;
+  db.collection('cardBacks').get().then(function(qs){
+    var cfg = {}; qs.forEach(function(d){ cfg[d.id] = d.data(); });
+    var uns = gUnions.slice();
+    modal('<h2>🂠 カードの裏面</h2>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">共通の青い台紙＋ユニオンのロゴ＋ユニオン名。ロゴを選ぶと自動で背景を透過・軽量化します。ロゴがないユニオンは名前の文字だけ。<br>スイッチ＝通常の会員証も裏返せる（特別カードはいつでも裏返せます）。</p>'
+      + '<div id="kbBkList">' + uns.map(function(u, i){
+          var c = cfg[u], bi = CARD_BACKS[u] || {};
+          var full = !c && bi.img, all = c ? !!c.all : !!bi.all;
+          var desc = c ? (c.logoV ? 'ロゴ登録済み' : (bi.img ? '1枚絵（組み込み）' : 'ロゴ未登録（名前だけ）')) : (bi.img ? '1枚絵（組み込み）' : bi.logo ? 'ロゴ（組み込み）' : 'ロゴ未登録（名前だけ）');
+          return '<div class="kb-ui"><div class="kb-bk' + (full ? ' full' : '') + '" id="kbBk' + i + '"' + (full ? ' style="background-image:url(\'' + bi.img + '\')"' : '') + '>' + (full ? '' : '<i></i><b>' + esc(u) + '</b>') + '</div>'
+            + '<div class="t"><b>' + esc(u) + '</b><small>' + desc + (all ? '・通常の会員証も裏返せる' : '') + '</small></div>'
+            + '<button data-bklogo="' + i + '" style="font-size:12px;padding:5px 10px;">' + ((c && c.logoV) || bi.logo ? 'ロゴを変更' : 'ロゴを選ぶ') + '</button>'
+            + (c && c.logoV ? '<button data-bkdel="' + i + '" style="font-size:12px;padding:5px 10px;">外す</button>' : '')
+            + '<label style="margin:0;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:400;"><input type="checkbox" data-bkall="' + i + '"' + (all ? ' checked' : '') + ' style="width:auto;">裏返す</label></div>';
+        }).join('') + '</div>'
+      + '<input type="file" id="kbBkFile" accept="image/*" class="hide">'
+      + '<div class="btns"><button id="kbBkClose">閉じる</button></div>', true);
+    $('kbBkClose').onclick = closeModal;
+    uns.forEach(function(u, i){
+      var c = cfg[u], bi = CARD_BACKS[u] || {}, el = $('kbBk' + i);
+      if(!el || (!c && bi.img)) return;
+      var show = function(src){ var ic = el.querySelector('i'); if(ic && src) ic.style.backgroundImage = 'url("' + src + '")'; };
+      if(c && c.logoV) db.collection('cardArt').doc('back__' + u).get().then(function(a){ if(a.exists) show(a.data().d); }).catch(function(){});
+      else if(!c && bi.logo) show(bi.logo);
+    });
+    var cur = -1;
+    var ensure = function(u){
+      // 組み込みのロゴ（REVE など）は、初めて設定を変える時にロゴも登録しておく（消えないように）
+      var c = cfg[u], bi = CARD_BACKS[u] || {};
+      if(c || !bi.logo) return Promise.resolve(c || { all: !!bi.all, logoV: 0 });
+      return fetch(bi.logo).then(function(r){ return r.blob(); }).then(kbReadFile).then(function(d){
+        var v = Date.now();
+        return db.collection('cardArt').doc('back__' + u).set({ d: d, v: v }).then(function(){ return { all: !!bi.all, logoV: v }; });
+      });
+    };
+    var done = function(u, msg){ delete gBackSynced[u]; try{ localStorage.removeItem('bci_cbk_' + u); }catch(e){} toast(msg); koboBacks(); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-bklogo]'), function(b){
+      b.onclick = function(){ cur = +b.getAttribute('data-bklogo'); $('kbBkFile').value = ''; $('kbBkFile').click(); };
+    });
+    $('kbBkFile').onchange = function(){
+      var f = this.files && this.files[0], u = uns[cur];
+      if(!f || !u) return;
+      toast('ロゴを軽量化しています…');
+      kbReadFile(f).then(function(src){ return kbProcess(src, { maxW: 600, maxH: 600, alpha: true, key: true, trim: true }); }).then(function(d){
+        var v = Date.now(), c = cfg[u], bi = CARD_BACKS[u] || {};
+        return db.collection('cardArt').doc('back__' + u).set({ d: d, v: v })
+          .then(function(){ return db.collection('cardBacks').doc(u).set({ logoV: v, all: c ? !!c.all : !!bi.all }); });
+      }).then(function(){ done(u, u + ' のロゴを登録しました'); })
+        .catch(function(e){ toast(permMsg(e, 'ロゴを登録できませんでした')); });
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-bkdel]'), function(b){
+      b.onclick = function(){
+        var u = uns[+b.getAttribute('data-bkdel')];
+        if(!confirm(u + ' のロゴを外しますか？（名前だけの裏面になります）')) return;
+        db.collection('cardBacks').doc(u).set({ logoV: 0 }, { merge: true })
+          .then(function(){ return db.collection('cardArt').doc('back__' + u).delete().catch(function(){}); })
+          .then(function(){ done(u, 'ロゴを外しました'); }).catch(function(e){ toast(permMsg(e, '外せませんでした')); });
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-bkall]'), function(x){
+      x.onchange = function(){
+        var u = uns[+x.getAttribute('data-bkall')], on = x.checked;
+        ensure(u).then(function(c){ return db.collection('cardBacks').doc(u).set({ logoV: c.logoV || 0, all: on }); })
+          .then(function(){ done(u, on ? u + ' は通常の会員証も裏返せるようにしました' : u + ' の通常の会員証は裏返さないようにしました'); })
+          .catch(function(e){ x.checked = !on; toast(permMsg(e, '変更できませんでした')); });
+      };
+    });
+  }).catch(function(e){ toast(permMsg(e, '読み込めませんでした（オーナーのみ）')); });
+}
+$('btnKobo').onclick = koboList;
+$('btnBacks').onclick = koboBacks;
 $('btnRenUnion').onclick = function(){
   if(!isOwner()) return;
   modal('<h2>✏ ユニオン名を変更</h2>'
@@ -6053,6 +6722,8 @@ function renderRoster(){
   $('btnAddUnion').classList.toggle('hide', !isOwner());
   $('btnDelUnion').classList.toggle('hide', !isOwner());
   $('btnRenUnion').classList.toggle('hide', !isOwner());
+  $('btnKobo').classList.toggle('hide', !isOwner());
+  $('btnBacks').classList.toggle('hide', !isOwner());
   $('btnHideMoney').classList.toggle('hide', !isCoreAdmin(gRosterUnion));
   $('btnHideMoney').textContent = gHideMoney[gRosterUnion] ? '🙈 受付の金額: 統括のみ' : '🙈 受付の金額';
   $('btnLaunch').classList.toggle('hide', !isOwner());
@@ -6573,6 +7244,14 @@ function copyText(text){
   }
 }
 function issueCard(m, cb){
+  // 🃏 特別カード・バッジは名簿の最新を引き継ぐ（工房で付けた直後の古い一覧から再発行しても消えないように）
+  return db.collection('checkinMembers').doc(String(m.no)).get().then(function(s){
+    if(!s.exists) return;
+    var f = s.data();
+    ['skin', 'badge'].concat(KB_TEXT_KEYS).forEach(function(k){ if(f[k]) m[k] = f[k]; else delete m[k]; });
+  }).catch(function(){}).then(function(){ return issueCardNow(m, cb); });
+}
+function issueCardNow(m, cb){
   var token = randToken(), oldToken = m.cardToken || '';
   var batch = db.batch();
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));   // 旧カードを無効化
@@ -6632,8 +7311,11 @@ function cardModal(m){
       + '<div class="btns"><button id="cmClose">閉じる</button></div>';
   }
   // 🏅 バッジ（役職名）: 会員証の名前の上に表示。1人1つ・役職がない人は無印。発行前に選んでおけば発行時に反映
+  // 🔒 BLUE DIAMOND・TEAM ELITE はオーナーだけが付け外しできる（ルールでも制限）
+  var topB = function(k){ return k === 'BLUE DIAMOND' || k === 'TEAM ELITE'; };
+  var bLock = !isOwner() && topB(m.badge || '');
   var bOpt = function(t){
-    return CARD_BADGES.filter(function(b){ return b.t === t; }).map(function(b){
+    return CARD_BADGES.filter(function(b){ return b.t === t && (isOwner() || !topB(b.k) || m.badge === b.k); }).map(function(b){
       return '<option value="' + esc(b.k) + '"' + (m.badge === b.k ? ' selected' : '') + '>' + esc(b.k) + '</option>';
     }).join('');
   };
@@ -6641,33 +7323,14 @@ function cardModal(m){
     + '<label>🏅 バッジ（会員証に役職名を表示）</label>'
     + '<select id="cmBadge"><option value="">なし（無印）</option>'
     + '<optgroup label="タイトル">' + bOpt('gem') + '</optgroup><optgroup label="役職">' + bOpt('role') + '</optgroup>'
-    + '</select> <span id="cmBadgePv">' + ckBadgeHtml(m.badge || '') + '</span></div>';
+    + '</select> <span id="cmBadgePv">' + ckBadgeHtml(m.badge || '') + '</span>'
+    + (bLock ? '<p style="font-size:11.5px;color:var(--sub);margin:4px 0 0;">🔒 BLUE DIAMOND・TEAM ELITE はオーナーが設定します</p>' : '') + '</div>';
   if(isOwner()){
-    // ✨ 特別デザイン（オーナーのみ）: 会員証の背景を特別なものに。発行前に選んでおけば発行時に反映
+    // ✨ 特別カード（オーナーのみ）: 🃏 特別カード工房で作って付ける
     body += '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:6px;">'
-      + '<label>✨ 特別デザイン（オーナーだけが設定できます）</label>'
-      + '<select id="cmSkin"><option value="">なし（グレードの通常デザイン）</option>'
-      + Object.keys(CARD_SKINS).map(function(k){ return '<option value="' + k + '"' + (m.skin === k ? ' selected' : '') + '>' + esc(CARD_SKINS[k]) + '</option>'; }).join('')
-      + '</select>'
-      // 🃏 レアカード風の表示内容（表示名・HP・レアリティ）
-      + '<div id="cmTcg" style="display:' + (CARD_SKIN_TCG[m.skin || ''] ? 'block' : 'none') + ';margin-top:8px;">'
-      + '<label>カードの表示名（空欄なら名簿の名前）</label><input type="text" id="cmTcgName" maxlength="20" value="' + esc(m.skinName || '') + '" placeholder="' + esc(m.name || '') + '" style="width:100%;">'
-      + '<div style="display:flex;gap:8px;"><div style="flex:1;"><label>HP</label><input type="text" id="cmTcgHp" maxlength="5" inputmode="numeric" value="' + esc(m.skinHp || '') + '" placeholder="例: 330" style="width:100%;"></div>'
-      + '<div style="flex:1;"><label>通し番号</label><input type="text" id="cmTcgSer" maxlength="12" value="' + esc(m.skinSerial || '') + '" placeholder="例: 1/1000" style="width:100%;"></div>'
-      + '<div style="flex:1;"><label>レアリティ</label><input type="text" id="cmTcgRare" maxlength="6" value="' + esc(m.skinRare || '') + '" placeholder="例: SAR" style="width:100%;"></div></div>'
-      + '<label>特性の名前（空欄なら出しません）</label><input type="text" id="cmTcgAb" maxlength="20" value="' + esc(m.skinAbName || '') + '" style="width:100%;">'
-      + '<label>特性の説明</label><textarea id="cmTcgAbTx" maxlength="120" rows="3" style="width:100%;">' + esc(m.skinAbText || '') + '</textarea>'
-      + '<label>技の属性（最大3つ）</label><div style="display:flex;gap:6px;">' + [0, 1, 2].map(function(i){
-          var cur = String(m.skinAtkEls || '').split(',')[i] || '';
-          return '<select class="cmTcgEl" style="flex:1;min-width:0;"><option value="">—</option>' + CARD_ELEMENTS.map(function(e){
-            return '<option value="' + e.k + '"' + (cur === e.k ? ' selected' : '') + '>' + e.i + ' ' + esc(e.n) + '</option>';
-          }).join('') + '</select>';
-        }).join('') + '</div>'
-      + '<div style="display:flex;gap:8px;"><div style="flex:2;"><label>技の名前</label><input type="text" id="cmTcgAtk" maxlength="16" value="' + esc(m.skinAtkName || '') + '" style="width:100%;"></div>'
-      + '<div style="flex:1;"><label>威力</label><input type="text" id="cmTcgDmg" maxlength="6" value="' + esc(m.skinAtkDmg || '') + '" placeholder="例: 50×" style="width:100%;"></div></div>'
-      + '<label>技の説明</label><textarea id="cmTcgAtkTx" maxlength="120" rows="3" style="width:100%;">' + esc(m.skinAtkText || '') + '</textarea>'
-      + '<div class="btns" style="justify-content:flex-start;"><button id="cmTcgSave">表示内容を保存</button></div></div>'
-      + '</div>';
+      + '<label>✨ 特別カード（オーナーだけが設定できます）</label>'
+      + '<div style="display:flex;align-items:center;gap:8px;font-size:13.5px;"><span style="flex:1;" id="cmSkinNow">' + (m.skin ? '設定あり（' + esc(m.skinName || m.skin) + '）' : 'なし') + '</span>'
+      + '<button id="cmKobo">🃏 特別カード工房で' + (m.skin ? '開く' : '作る') + '</button></div></div>';
   }
   if(isOwner() || canEditUnion(m.union)){
     // 🎓 OLチェックアウト（オーナー・ユニオン管理者）: この人をアウトラインをする「Aさん」にする
@@ -6692,32 +7355,20 @@ function cardModal(m){
     }).catch(function(e){ if(el) el.disabled = false; toast(permMsg(e, '変更できませんでした')); });
   }
   var bd = $('cmBadge');
+  if(bLock) bd.disabled = true;
+  if($('cmKobo')) $('cmKobo').onclick = function(){
+    // この人に付いているカードを開く（なければ新規で、付ける人をこの人にして）
+    db.collection('cardSkins').where('no', '==', m.no).get().then(function(qs){
+      var d = null; qs.forEach(function(x){ if(!d){ d = x.data(); d.id = x.id; } });
+      if(d) koboEdit(d);
+      else if(m.skin === 'reaperTcg') koboList();
+      else koboEdit(null, { no: m.no, name: m.name || '', union: m.union || '', badge: m.badge || '' });
+    }).catch(function(e){ toast(permMsg(e, '開けませんでした')); });
+  };
   bd.onchange = function(){
     var v = bd.value;
     $('cmBadgePv').innerHTML = ckBadgeHtml(v);
     saveDeco({ badge: v }, v ? 'バッジ「' + v + '」を付けました（本人が会員証を開き直すと反映）' : 'バッジを外しました', bd);
-  };
-  var ts = $('cmTcgSave');
-  if(ts) ts.onclick = function(){
-    var v = function(id){ return $(id).value.trim(); };
-    var els = [].slice.call(document.querySelectorAll('.cmTcgEl')).map(function(x){ return x.value; }).filter(Boolean);
-    saveDeco({ skinName: v('cmTcgName'), skinHp: v('cmTcgHp'), skinSerial: v('cmTcgSer'), skinRare: v('cmTcgRare'),
-      skinAbName: v('cmTcgAb'), skinAbText: v('cmTcgAbTx'), skinAtkEls: els.join(','), skinAtkName: v('cmTcgAtk'), skinAtkDmg: v('cmTcgDmg'), skinAtkText: v('cmTcgAtkTx') },
-      'カードの表示内容を保存しました（本人が会員証を開き直すと反映）', ts);
-  };
-  var sk = $('cmSkin');
-  if(sk) sk.onchange = function(){
-    var v = sk.value, batch = db.batch();
-    batch.set(db.collection('checkinMembers').doc(m.no), { skin: v ? v : FV.delete() }, { merge: true });
-    if(m.cardToken) batch.set(db.collection('cards').doc(m.cardToken), { skin: v ? v : FV.delete() }, { merge: true });
-    sk.disabled = true;
-    batch.commit().then(function(){
-      if(v) m.skin = v; else delete m.skin;
-      sk.disabled = false;
-      olSyncDesign(m);
-      $('cmTcg').style.display = CARD_SKIN_TCG[v] ? 'block' : 'none';
-      toast(v ? '特別デザイン「' + CARD_SKINS[v] + '」にしました（本人が会員証を開き直すと反映）' : '通常のデザインに戻しました');
-    }).catch(function(e){ sk.disabled = false; toast(permMsg(e, '変更できませんでした')); });
   };
   var bIssue = $('cmIssue'), bCopy = $('cmCopy'), bRe = $('cmReissue'), bRv = $('cmRevoke');
   if(bIssue) bIssue.onclick = function(){
