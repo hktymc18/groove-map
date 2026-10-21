@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v832';
+var APP_JS_VERSION = 'v833';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4205,7 +4205,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v832';
+  var DATA_VERSION = 'v833';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6312,6 +6312,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v833', d:'2026-10-21', items:['ダークモードのHOMEのタイル：ふちが少しズレて見えていたのを直し、ふんわり浮いたカードの見た目にしました（ライトモードは今まで通り）'] },
   { v:'v832', d:'2026-10-21', items:['HOMEのタイルを「画像あり／画像なし」から選べるように（設定 › 見た目）。端末ごとに覚えます'] },
   { v:'v831', d:'2026-10-21', items:['ユニオン管理者の兼務：オーナーがアカウント管理で「兼務するユニオン」を設定できるように（受付システムの兼務の設定と共通）','兼務している管理者は、アカウント管理で所属と兼務のユニオンの人を見られます（上で「すべて／ユニオンごと」を切りかえ）。チェック項目の設定・ユニオン予定の配信も兼務のユニオンで使えます','管理者は自分の所属ユニオンを変えられないようにしました（変える時はオーナーへ）。登録待ちの名簿はユニオンごとに分けました'] },
   { v:'v830', d:'2026-10-20', items:['MAPのPDFの画質を上げました（前の2倍の細かさ）。拡大しても丸の中の名前や数字がにじまずに読めます'] },
@@ -22450,7 +22451,10 @@ function _uxMenuCss() {
     + "#view-menu .ux-t.ph>b,#view-menu .ux-t.ph>.st{position:relative;z-index:1}#view-menu .ux-t.ph>.ic,#view-menu .ux-t.ph>.bd{z-index:2}#view-menu .ux-t.ph b{color:#111827}#view-menu .ux-t.ph .st{color:#374151}"
     + "#view-menu .ux-t.ph.dk:before,body:not(.light) #view-menu .ux-t.ph:before{background:linear-gradient(to top,rgba(8,12,22,.86) 0%,rgba(8,12,22,.5) 40%,rgba(8,12,22,0) 72%)}"
     + "#view-menu .ux-t.ph.dk b,body:not(.light) #view-menu .ux-t.ph b{color:#fff}#view-menu .ux-t.ph.dk .st,body:not(.light) #view-menu .ux-t.ph .st{color:rgba(255,255,255,.85)}"
-    + "body:not(.light) #view-menu .ux-t.ph{border-color:rgba(255,255,255,.12)!important}#view-menu .ux-t.ph .ic .lic{filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}";
+    // v833: ダークは「浮いたカード」。前はマスク（暗いグラデーション）が枠の1px内側までで、枠の下から写真がのぞいてズレた線に見えていた
+    //   → 枠をなくしてマスクを写真ぴったりに。ふちは上に重ねた細い線（上だけ少し明るい）＋下にやわらかい影。ライトは今まで通り
+    + "body:not(.light) #view-menu .ux-t.ph{border:0!important;box-shadow:0 8px 20px rgba(0,0,0,.55)!important}"
+    + "body:not(.light) #view-menu .ux-t.ph:after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.35)}#view-menu .ux-t.ph .ic .lic{filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))}";
   document.head.appendChild(st);
 }
 // v832: HOMEのタイルの画像あり／なし（端末ごと・テーマと同じく localStorage。何も選んでいない時は画像あり）
