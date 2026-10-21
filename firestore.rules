@@ -394,6 +394,40 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/checkinUnions/$(un))
                  .data.get('trainers', []).hasAny([request.auth.uid]));
     }
+    // 🃏 v30: 特別カード（skin系の項目）と BLUE DIAMOND・TEAM ELITE のバッジは、オーナー（馬越さん・北斗さん）だけが付け外しできる
+    function ckSkinKeys() {
+      return ['skin', 'skinName', 'skinHp', 'skinRare', 'skinSerial', 'skinAbName', 'skinAbText',
+              'skinAtkEls', 'skinAtkName', 'skinAtkDmg', 'skinAtkText'];
+    }
+    function ckTopBadge(b) { return b in ['BLUE DIAMOND', 'TEAM ELITE']; }
+    // 更新: 特別カードの項目を変えない／BD・TEのバッジを付けも外しもしない（オーナーは何でも可）
+    function ckDecoUpdOk() {
+      return isOwnerUid() || (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(ckSkinKeys())
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['badge'])
+            || (!ckTopBadge(resource.data.get('badge', '')) && !ckTopBadge(request.resource.data.get('badge', '')))));
+    }
+    // 作成: 特別カードの項目が空・BD/TEのバッジなし
+    function ckDecoEmpty(d) {
+      return d.get('skin', '') == '' && d.get('skinName', '') == '' && d.get('skinHp', '') == '' && d.get('skinRare', '') == ''
+        && d.get('skinSerial', '') == '' && d.get('skinAbName', '') == '' && d.get('skinAbText', '') == ''
+        && d.get('skinAtkEls', '') == '' && d.get('skinAtkName', '') == '' && d.get('skinAtkDmg', '') == '' && d.get('skinAtkText', '') == ''
+        && !ckTopBadge(d.get('badge', ''));
+    }
+    // 会員証の発行・再発行: 名簿（オーナーしか変えられない）と同じ値なら、スタッフがそのまま引き継げる
+    function ckDecoSameAs(d, m) {
+      return d.get('skin', '') == m.get('skin', '') && d.get('skinName', '') == m.get('skinName', '') && d.get('skinHp', '') == m.get('skinHp', '')
+        && d.get('skinRare', '') == m.get('skinRare', '') && d.get('skinSerial', '') == m.get('skinSerial', '')
+        && d.get('skinAbName', '') == m.get('skinAbName', '') && d.get('skinAbText', '') == m.get('skinAbText', '')
+        && d.get('skinAtkEls', '') == m.get('skinAtkEls', '') && d.get('skinAtkName', '') == m.get('skinAtkName', '')
+        && d.get('skinAtkDmg', '') == m.get('skinAtkDmg', '') && d.get('skinAtkText', '') == m.get('skinAtkText', '')
+        && (!ckTopBadge(d.get('badge', '')) || d.get('badge', '') == m.get('badge', ''));
+    }
+    function ckCardDecoNewOk(d) {
+      return isOwnerUid() || ckDecoEmpty(d)
+        || (existsAfter(/databases/$(database)/documents/checkinMembers/$(d.get('no', '__none')))
+            && ckDecoSameAs(d, getAfter(/databases/$(database)/documents/checkinMembers/$(d.get('no', '__none'))).data));
+    }
     // 自分のプロフィールの所属ユニオン
     function ckMyUnion() {
       return profileExists(request.auth.uid)
@@ -491,9 +525,11 @@ service cloud.firestore {
       // 🔗 v82: ほかの地域のユニオンのチームで活動している人（名簿の alsoUnions に自分のユニオン）は、その人だけ見られる
       //   GROOVE MAPの受付連携は where('alsoUnions','array-contains', 自分のユニオン) で読む
       allow list: if ckCanSee(resource.data.get('union','')) || ckAlsoSee();
-      allow create: if isCkAdmin(request.resource.data.get('union',''));
+      allow create: if isCkAdmin(request.resource.data.get('union',''))
+                    && (isOwnerUid() || ckDecoEmpty(request.resource.data));   // 🃏 v30
       allow update: if isCkAdmin(resource.data.get('union',''))
-                    && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')));
+                    && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')))
+                    && ckDecoUpdOk();   // 🃏 v30: 特別カード・BD/TEバッジはオーナーだけ
       // 会員証の発行・再発行・無効化はログイン済みなら誰でも可
       // （変更できるのはカード関連フィールドのみ。名簿本体の編集は管理者のみ）
       allow update: if ckCanSee(resource.data.get('union',''))
@@ -503,7 +539,8 @@ service cloud.firestore {
       // 研修生のチュートリアル記録（trainings）・CO面談シート（coSheet）・
       // 紹介者（referrer）・DLR予約（dlrRsv）の更新、自分が登録した研修生の削除（取消用）だけ可
       allow create: if isCkTrainer(request.resource.data.get('union',''))
-                    && request.resource.data.get('trainee', false) == true;
+                    && request.resource.data.get('trainee', false) == true
+                    && ckDecoEmpty(request.resource.data);
       allow update: if isCkTrainer(resource.data.get('union',''))
                     && resource.data.get('trainee', false) == true
                     && request.resource.data.diff(resource.data).affectedKeys()
@@ -677,10 +714,26 @@ service cloud.firestore {
     match /cards/{token} {
       allow get: if true;
       allow list: if false;
-      allow create: if signedIn();
+      // 🃏 v30: 特別カードの項目・BD/TEバッジは、名簿と同じ値（発行・再発行の引き継ぎ）かオーナーだけ
+      allow create: if signedIn() && ckCardDecoNewOk(request.resource.data);
       allow delete: if signedIn();
       // オンライン申請の承認結果マーカー(online_<eventId>)の書込みに使用
-      allow update: if signedIn();
+      allow update: if signedIn() && ckDecoUpdOk();
+    }
+    // 🃏 v30: 特別カード工房。カードセットの定義（色・文字・付けた人・画像の版）と画像（data URL・1枚ずつ）、
+    //   ユニオンごとの裏面の設定。会員証は未ログインで開くので get は公開、作る・変えるのはオーナーだけ
+    match /cardSkins/{id} {
+      allow get: if true;
+      allow list, create, update, delete: if isOwnerUid();
+    }
+    match /cardArt/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if isOwnerUid();
+    }
+    match /cardBacks/{un} {
+      allow get: if true;
+      allow list, create, update, delete: if isOwnerUid();
     }
     // 🃏 v24: 参加者のコレクション（OLチェックアウトの控え）。パスに会員証トークンが入る＝本人だけが開ける（cards と同じ扱い）
     //   作成＝チェックアウトと同時（同じIDの olCheckouts が同じ番号で作られること）。会員証の再発行時は新しいトークンへ写す
