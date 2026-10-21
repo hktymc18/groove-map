@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v833';
+var APP_JS_VERSION = 'v834';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4205,7 +4205,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v833';
+  var DATA_VERSION = 'v834';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6312,6 +6312,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v834', d:'2026-10-21', items:['メンバーのプロフィールで誕生日を直しても保存されないことがあったのを直しました（入れている途中で欄が作り直され、残りの入力が消えていました）','研修の記録の「日付で」も同じように直しました'] },
   { v:'v833', d:'2026-10-21', items:['ダークモードのHOMEのタイル：ふちが少しズレて見えていたのを直し、ふんわり浮いたカードの見た目にしました（ライトモードは今まで通り）'] },
   { v:'v832', d:'2026-10-21', items:['HOMEのタイルを「画像あり／画像なし」から選べるように（設定 › 見た目）。端末ごとに覚えます'] },
   { v:'v831', d:'2026-10-21', items:['ユニオン管理者の兼務：オーナーがアカウント管理で「兼務するユニオン」を設定できるように（受付システムの兼務の設定と共通）','兼務している管理者は、アカウント管理で所属と兼務のユニオンの人を見られます（上で「すべて／ユニオンごと」を切りかえ）。チェック項目の設定・ユニオン予定の配信も兼務のユニオンで使えます','管理者は自分の所属ユニオンを変えられないようにしました（変える時はオーナーへ）。登録待ちの名簿はユニオンごとに分けました'] },
@@ -19418,11 +19419,12 @@ function ppOpen(id, map) {
   _ppRender();
 }
 function _ppFind(id, map) { var arr = map === 'ideal' ? (state.idealMembers || []) : (state.members || []); for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
-function ppClose() { _ppShClose(); if (_pp && _pp.ph) _cropImg = null; var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null;  if (document.getElementById('mxOrbit') && typeof mxOrbitRender === 'function') setTimeout(mxOrbitRender, 0); } // v663: サークルMAPを開いていたら描き直す
-function ppGo(pg) { if (!_pp) return; _ppShClose(); if (_pp.ph) { _pp.ph = null; _cropImg = null; } _pp.pg = pg || ''; _ttlOpen = ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
+function ppClose() { ppBirthDone(); _ppShClose(); if (_pp && _pp.ph) _cropImg = null; var p = document.getElementById('ppPg'); if (p && p.parentNode) p.parentNode.removeChild(p); document.body.classList.remove('pp-on'); _pp = null;  if (document.getElementById('mxOrbit') && typeof mxOrbitRender === 'function') setTimeout(mxOrbitRender, 0); } // v663: サークルMAPを開いていたら描き直す
+function ppGo(pg) { if (!_pp) return; ppBirthDone(); _ppShClose(); if (_pp.ph) { _pp.ph = null; _cropImg = null; } _pp.pg = pg || ''; _ttlOpen = ''; _ppRender(); var p = document.getElementById('ppPg'); if (p) p.scrollTop = 0; }
 function ppGoI(i) { var L = _pp && _pp.map === 'ideal' ? PP_PG_I : PP_PG; if (L[i]) ppGo(L[i][0]); }
 function ppNext(d) { // 左右スワイプ：入口ではMAPの次の人、ページでは次のページ
-  if (!_pp || PP_SUB[_pp.pg]) return; // v780/v783: 研修・活動・写真の画面はスワイプで動かない
+  if (!_pp || PP_SUB[_pp.pg]) return;
+  ppBirthDone(); // v834 // v780/v783: 研修・活動・写真の画面はスワイプで動かない
   var L = _pp.map === 'ideal' ? PP_PG_I : PP_PG;
   if (_pp.pg) { var i = -1; L.forEach(function(x, k) { if (x[0] === _pp.pg) i = k; }); if (L[i + d]) ppGo(L[i + d][0]); return; }
   var ids = (_uxLists.map && _uxLists.map.ids) || [], j = ids.indexOf(_pp.id);
@@ -19468,6 +19470,21 @@ function ppName() {
 }
 function ppStart(d) { var m = _ppM(); if (!m) return; var sm = String(m.startMonth || memberStartMonth(m) || (state.currentMonth || currentMonthStr())).replace('.', '-'); ppSetF('fStartMonth', _p2YmAdd(sm, d), 'スタート月を保存しました'); }
 function ppBirth(v) { _ppSave(function() { _fBirthSet(v || '', ''); }, '誕生日を保存しました'); }
+// v834: 誕生日は入れ終わってから保存する（前は1つ変えた瞬間に保存して画面を描き直していたので、
+//   年・月・日を入れている途中で欄が作り直され、残りが消えて保存されなかった。iPhoneのカレンダーも同じ）
+var _ppBdP = null, _ppBdT = null;
+function ppBirthIn(el) {
+  _ppBdP = (el && el.value) || '';
+  clearTimeout(_ppBdT);
+  _ppBdT = setTimeout(function() { if (document.activeElement !== el) ppBirthDone(); }, 900); // 欄から離れたら保存（離れていない時は blur を待つ）
+}
+function ppBirthDone() {
+  clearTimeout(_ppBdT);
+  if (_ppBdP === null) return;
+  var v = _ppBdP; _ppBdP = null;
+  var m = _ppM(); if (!m || (m.birthday || '') === v) return;
+  ppBirth(v);
+}
 var _ppMemoT = null;
 function ppMemo(v) { if (_ppMemoT) clearTimeout(_ppMemoT); _ppMemoT = setTimeout(function() { _ppMemoT = null; if (_pp && _pp.pg === 'memo') _ppSave(function() { document.getElementById('fMemo').value = v; }, ''); var s = document.getElementById('ppMemoSv'); if (s) s.textContent = '保存しました ✓'; }, 900); var s0 = document.getElementById('ppMemoSv'); if (s0) s0.textContent = '保存中…'; }
 // ════ v783: 研修・活動・写真も新しいメンバー画面の中で（今までの編集画面は開かない）。変えるとすぐ保存。PCは右側のパネル ════
@@ -19539,9 +19556,12 @@ function ppTrSheet(step) {
   _ppSh = { k: 'add', step: step, date: _ppYmd(0), dm: 't', a: '', res: 'next', fr: '' };
   _ppShRender();
 }
-function _ppShSync() { var a = document.getElementById('ppShA'), f = document.getElementById('ppShFr'); if (_ppSh && a) _ppSh.a = a.value; if (_ppSh && f) _ppSh.fr = f.value; }
+function _ppShSync() { var a = document.getElementById('ppShA'), f = document.getElementById('ppShFr'), dd = document.getElementById('ppShDate'); if (_ppSh && a) _ppSh.a = a.value; if (_ppSh && f) _ppSh.fr = f.value; if (_ppSh && dd && dd.value && _ppSh.dm === 'p' && dd.value !== _ppSh.date) { _ppSh.date = dd.value; _ppSh.dt = 1; } } // v834: 入れかけの日付も
 function ppShSet(k, v) { if (!_ppSh) return; _ppShSync(); _ppSh[k] = v; if (k === 'step' && v === '__fr' && _ppSh.res === 'left') _ppSh.res = 'next'; _ppShRender(); }
 function ppShDay(d) { if (!_ppSh) return; _ppShSync(); _ppSh.dm = d; if (d === 't') _ppSh.date = _ppYmd(0); else if (d === 'y') _ppSh.date = _ppYmd(-1); if (d !== 'p') _ppSh.dt = 1; _ppShRender(); }
+// v834: 日付は入れ終わってから描き直す（入れている途中で欄が作り直されて残りが消えないように）
+function ppShDateIn(el) { if (!_ppSh || !el) return; clearTimeout(window._ppShDT); window._ppShDT = setTimeout(function() { if (document.activeElement !== el) ppShDateDone(el); }, 900); }
+function ppShDateDone(el) { clearTimeout(window._ppShDT); if (!_ppSh || !el || !el.isConnected) return; var v = el.value || ''; if (v && v === _ppSh.date && _ppSh.dt) return; if (v) ppShDate(v); }
 function ppShDate(v) { if (!_ppSh) return; _ppShSync(); _ppSh.dt = 1; _ppSh.date = v || _ppYmd(0); if (_ppSh.date > _ppYmd(0) && _ppSh.res === 'next') _ppSh.res = 'planned'; _ppShRender(); }
 function ppShA(n) { var a = document.getElementById('ppShA'); if (a) a.value = n; if (_ppSh) _ppSh.a = n; }
 function _ppShAddHtml() {
@@ -19552,7 +19572,7 @@ function _ppShAddHtml() {
   if (fl) h += '<div class="ppl ppl2">内容</div><input class="ppin" id="ppShFr" placeholder="例：ごはんフォロー・電話で状況確認" value="' + evEsc(S.fr) + '">';
   h += '<div class="ppl ppl2">日にち</div><div class="ppch"><span class="' + (S.dm === 't' ? 'on' : '') + '" onclick="ppShDay(\'t\')">今日 ' + _ppMD(_ppYmd(0)) + '</span><span class="' + (S.dm === 'y' ? 'on' : '') + '" onclick="ppShDay(\'y\')">昨日</span>'
     + '<span class="' + (S.dm === 'p' ? 'on' : '') + '" onclick="ppShDay(\'p\')">' + icn('calendar') + (S.dm === 'p' ? _ppMD(S.date) + '（' + _ppWd(S.date) + '）' : '日付を選ぶ') + '</span></div>';
-  if (S.dm === 'p') h += '<input class="ppin" type="date" id="ppShDate" style="margin-top:8px" value="' + evEsc(S.date) + '" onchange="ppShDate(this.value)">';
+  if (S.dm === 'p') h += '<input class="ppin" type="date" id="ppShDate" style="margin-top:8px" value="' + evEsc(S.date) + '" onchange="ppShDateIn(this)" onblur="ppShDateDone(this)">';
   h += '<div class="ppl ppl2">Aさん</div><input class="ppin" id="ppShA" placeholder="名前" autocomplete="off" value="' + evEsc(S.a) + '">';
   var sug = _ppAsanSug(); if (sug.length) h += '<div class="ppsug">' + sug.map(function(n) { return '<span onclick="ppShA(this.textContent)">' + evEsc(n) + '</span>'; }).join('') + '</div>';
   h += '<div class="ppl ppl2">どうだった</div><div class="ppseg">' + (fl ? [['next', '実施した', 'var(--accent)'], ['planned', '予定', 'var(--gold)']] : [['next', '進んだ', 'var(--accent)'], ['planned', '予定', 'var(--gold)'], ['left', '流れた', 'var(--red)']]).map(function(x) {
@@ -19881,7 +19901,7 @@ function _ppPage(m, pg) {
       + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (m.gender !== 'female' ? 'on' : '') + '" onclick="ppGender(\'male\')">男性</span><span class="' + (m.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="ppGender(\'female\')">女性</span></div>'
       + '<div class="ppl">地域</div><div class="ppt" style="--k:var(--accent)">' + regs.map(function(r) { return '<span class="' + (r === rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'' + evEsc(r) + '\',\'地域を保存しました\')">' + evEsc(r) + '</span>'; }).join('') + '<span class="' + (!rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'\',\'地域を外しました\')">未設定</span><span onclick="var v=prompt(\'地域を入力\',\'\');if(v)ppSetF(\'fRegion\',v.trim(),\'地域を保存しました\')">＋ ほか</span></div>'
       + '<div class="ppl">スタート月（組織に入った月）</div>' + _ymSelHtml(sm, 'ppStartYM') // v615: 年・月をリストで
-      + '<div class="ppl">誕生日</div><input class="ppin" type="date" value="' + evEsc(m.birthday || '') + '" onchange="ppBirth(this.value)">'
+      + '<div class="ppl">誕生日</div><input class="ppin" type="date" id="ppBirthIn" value="' + evEsc(m.birthday || '') + '" onchange="ppBirthIn(this)" onblur="ppBirthDone()">'
       + (m.birthday ? '' : '<div class="ppl">年齢（誕生日がわからない時）</div><input class="ppin" id="ppAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例：27" value="' + evEsc(String(m.age || (m.birthYear ? new Date().getFullYear() - parseInt(m.birthYear, 10) : ''))) + '" onfocus="edSelAll(this)" onchange="ppAge(this.value)">')
       + '<div class="ppl">研修生</div><div class="ppb sm" style="--n:2"><span class="' + (!m.trainee ? 'on' : '') + '" onclick="ppTrainee(0)">いいえ</span><span class="' + (m.trainee ? 'on' : '') + '" style="--a:var(--mxtr)" onclick="ppTrainee(1)">研修生（水色）</span></div>'
       + '<div class="ppl">Instagram・LINE</div><input class="ppin" placeholder="InstagramのURL" value="' + evEsc(m.instaUrl || '') + '" onchange="ppSetF(\'fInsta\',this.value.trim(),\'保存しました\')"><input class="ppin" style="margin-top:8px" placeholder="LINE ID または URL" value="' + evEsc(m.lineId || '') + '" onchange="ppSetF(\'fLine\',this.value.trim(),\'保存しました\')">'
