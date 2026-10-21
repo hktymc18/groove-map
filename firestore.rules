@@ -67,6 +67,17 @@ service cloud.firestore {
     function isUnionAdmin() {
       return signedIn() && profileExists(request.auth.uid) && profile(request.auth.uid).get('role','') == 'admin';
     }
+    // v831: 兼務のユニオン管理者（オーナーが checkinUnions/{un}.coreAdmins に指定・受付システムと共通の設定）
+    function isCoreAdminOf(un) {
+      return signedIn() && un is string && un != '' && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/checkinUnions/$(un))
+        && get(/databases/$(database)/documents/checkinUnions/$(un)).data.get('coreAdmins', []).hasAny([request.auth.uid]);
+    }
+    // v831: そのユニオンの管理者＝（管理者の印があって、所属がそのユニオン）または兼務の管理者
+    function admOf(un) {
+      return (isUnionAdmin() && un is string && un != '' && profile(request.auth.uid).get('union', '__a') == un)
+        || isCoreAdminOf(un);
+    }
     // 更新対象(resource)が自分と同じユニオン
     function sameUnionAsTarget() {
       return profileExists(request.auth.uid)
@@ -97,16 +108,21 @@ service cloud.firestore {
 
       // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
       //       本人は role/status/ckNo（受付の名簿との紐付け）/early（先行利用）を変えない範囲のみ可。
+      // v831: ユニオンの管理者は、管理しているユニオン（所属・兼務）の人だけ。管理していないユニオンへは移せない
       allow update: if isOwnerAdmin()
-        || (isUnionAdmin() && sameUnionAsTarget())
+        || (admOf(resource.data.get('union', '')) && admOf(request.resource.data.get('union', '')))
         || (isSelf(uid)
             && request.resource.data.get('role','member')   == resource.data.get('role','member')
             && request.resource.data.get('status','active') == resource.data.get('status','active')
             && request.resource.data.get('ckNo','')         == resource.data.get('ckNo','')
-            && request.resource.data.get('early', false)    == resource.data.get('early', false)); // v790: 先行利用は本人が変えられない
+            && request.resource.data.get('early', false)    == resource.data.get('early', false) // v790: 先行利用は本人が変えられない
+            // v831: 管理者は自分の所属ユニオンを変えられない（変えると別のユニオンの管理者になれてしまうため。オーナーに頼む）
+            && (resource.data.get('role', 'member') != 'admin'
+                || resource.data.get('unionSelectedV2', false) != true
+                || request.resource.data.get('union', '') == resource.data.get('union', '')));
 
-      // v777: 削除はオーナー／同じユニオンの管理者だけ（前はどのユニオンの管理者でも消せた）
-      allow delete: if isOwnerAdmin() || (isUnionAdmin() && sameUnionAsTarget());
+      // v777: 削除はオーナー／同じユニオンの管理者だけ（前はどのユニオンの管理者でも消せた）。v831: 兼務のユニオンも
+      allow delete: if isOwnerAdmin() || admOf(resource.data.get('union', ''));
 
       // ---- AttackList：人物リスト ----
       // v586: 本人と、本人が共有した人だけ（管理者も読めない）
@@ -151,8 +167,7 @@ service cloud.firestore {
       // ---- v668: 個人情報保護方針・利用規約の同意の履歴（追記のみ。書き換え・削除は不可） ----
       match /consents/{ver} {
         // v777: 同意の履歴を見られるのは本人・オーナー・同じユニオンの管理者だけ
-        allow read:   if isSelf(uid) || isOwnerAdmin() || (isUnionAdmin() && profileExists(uid)
-                        && profile(uid).get('union', '__b') == profile(request.auth.uid).get('union', '__a'));
+        allow read:   if isSelf(uid) || isOwnerAdmin() || (profileExists(uid) && admOf(profile(uid).get('union', ''))); // v831: 兼務のユニオンも
         allow create: if isSelf(uid);
       }
       // ---- 目標シート（v586: 本人だけ） ----
@@ -164,10 +179,14 @@ service cloud.firestore {
 
     // ============ v790: 公開範囲（先行利用 → ユニオン単位 → 全国公開） ============
     //   appAccess/mode  … ログインした人は読める（使えるかの判定）。変えられるのはオーナーだけ
-    //   appAccess/names … 登録待ちの名簿（名前）。オーナーと管理者だけ（承認した時に先行利用にするため）
+    //   appAccess/names … 前からある登録待ちの名簿（ユニオンの区別なし）。v831: オーナーだけ
     match /appAccess/{doc} {
-      allow read:  if (doc == 'mode' && signedIn()) || isOwnerAdmin() || isUnionAdmin();
-      allow write: if (doc == 'mode' && isOwnerAdmin()) || (doc == 'names' && (isOwnerAdmin() || isUnionAdmin()));
+      allow read:  if (doc == 'mode' && signedIn()) || isOwnerAdmin();
+      allow write: if (doc == 'mode' && isOwnerAdmin()) || (doc == 'names' && isOwnerAdmin());
+    }
+    //   v831: accNames/{ユニオン} … 登録待ちの名簿をユニオンごとに。オーナーとそのユニオンの管理者（所属・兼務）だけ
+    match /accNames/{un} {
+      allow read, write: if isOwnerAdmin() || admOf(un);
     }
 
     // ============ v827: MAPの共有はアップだけ（#23） ============
@@ -287,11 +306,13 @@ service cloud.firestore {
       // v22: オーナーも読める（受付システムの「ユニオン名を変更」で新しい名前へ移すため）
       allow read: if isOwnerAdmin()
                   || (signedIn() && profileExists(request.auth.uid)
-                      && profile(request.auth.uid).get('union', '') == un);
+                      && profile(request.auth.uid).get('union', '') == un)
+                  || isCoreAdminOf(un); // v831: 兼務のユニオン管理者
       allow create, update, delete: if isOwnerAdmin()
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('role', '') == 'admin'
-            && profile(request.auth.uid).get('union', '') == un);
+            && profile(request.auth.uid).get('union', '') == un)
+        || isCoreAdminOf(un); // v831
     }
 
     // ============ ATTACK LIST: CDATAフォーマット（ユニオン別テンプレート） ============
@@ -302,7 +323,8 @@ service cloud.firestore {
       allow create, update, delete: if isOwnerAdmin()
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('role', '') == 'admin'
-            && profile(request.auth.uid).get('union', '') == un);
+            && profile(request.auth.uid).get('union', '') == un)
+        || isCoreAdminOf(un); // v831: 兼務のユニオン管理者
     }
 
     // ============ ATTACK LIST：共有コードと受信箱 ============
