@@ -2030,10 +2030,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v90';
+var APP_VER = 'v91';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v91', d: '2026/10/21', items: ['👤 ゲスト受付の所属ユニオンに「その他（ユニオン外）」を追加しました。選ぶと、どのユニオンの集計（イベントの出席人数）にも入りません'] },
   { v: 'v90', d: '2026/10/20', items: ['👥 「誰でも受付モード」を追加しました。金額（PayPay受領・手元金額）・MC/スピーカー/運営・系列別と、受付以外のタブを隠して、出席の人数と受付履歴だけの画面で誰にでも受付を任せられます（解除はパスワード）', '🙈 ユニオン管理者は名簿タブの「🙈 受付の金額」で、受付の金額を統括（ユニオン管理者）だけに見せる設定にできます'] },
   { v: 'v89', d: '2026/10/20', items: ['⏱ 受付は、ログインから4時間で自動的にログアウトするようになりました（共用PCの閉じ忘れによる情報漏れを防ぐため）。10分前に画面の下にお知らせが出て、「延長する」で1時間延ばせます'] },
   { v: 'v88', d: '2026/10/20', items: ['🔔 本人がスマホで送った面談シートは、📱で解錠した担当者の「お知らせ」に届くようになりました（研修生を選んで取り込む手間がなくなりました）', '📝 お知らせから開いて「承認して保存」するだけ。管理者・面談者の名前は必須で、管理者は候補から1タップで選べます', '⏰ 24時間たっても承認されていない面談シートは、ユニオン管理者にもお知らせします', '🔔 研修受講カードのお知らせは1本にまとめました（面談シート・目標設定の宿題）'] },
@@ -7565,7 +7566,7 @@ function renderEvents(){
 var CK_METHOD_LABEL = { scan: 'QR', manual: '手入力', self: 'セルフ', online: '💻 オンライン', guest: 'ゲスト受付', 'import': '取込' };
 function evAttCat(ev, a){
   var u = a.union || '';
-  if(!u) return 'ゲスト';
+  if(!u) return a.guest ? 'その他（ユニオン外）' : 'ゲスト';
   return (ev.unions || []).indexOf(u) >= 0 ? u : 'ビジター（' + u + '）';
 }
 function evAttModal(ev){
@@ -7632,7 +7633,7 @@ function evAttShow(ev, rows, info){
           tags += '<span style="font-size:11.5px;color:var(--sub);">' + esc(CK_METHOD_LABEL[a.method] || a.method || '') + '</span>';
           return '<tr><td class="mono">' + esc(a.atLocal || '') + '</td><td><b>' + esc(a.name || '') + '</b>'
             + (a.group ? '<div style="font-size:11.5px;color:var(--sub);">' + esc(a.group) + '</div>' : '') + '</td>'
-            + '<td>' + esc(a.union || '') + '</td><td>' + tags + '</td>'
+            + '<td>' + esc(a.union || (a.guest ? 'その他' : '')) + '</td><td>' + tags + '</td>'
             + '<td style="font-size:12.5px;">' + esc(a._by) + '</td>'
             + (rcCol ? '<td>' + (rcOk(a) ? '<button data-ear="' + esc(a._id) + '" style="padding:4px 10px;font-size:12px;white-space:nowrap;">🧾 ' + (a.rcptToken ? '再表示' : '発行') + '</button>' : '') + '</td>' : '')
             + '</tr>';
@@ -7653,7 +7654,7 @@ function evAttShow(ev, rows, info){
     var out = [['受付時刻', '番号', '氏名', '系列', 'ユニオン', '区分', '役割', '受付方法', '徴収額', '受付担当', 'オプション']];
     cur().forEach(function(a){
       var fee = (a.fee || 0) > 0 && a.paid !== false ? (a.fee || 0) - (a.refund || 0) : 0;
-      out.push([a.atLocal || '', a.guest ? '' : (a.no || a._id), a.name || '', a.group || '', a.union || '',
+      out.push([a.atLocal || '', a.guest ? '' : (a.no || a._id), a.name || '', a.group || '', a.union || (a.guest ? 'その他' : ''),
         a.guest ? 'ゲスト' : (a._cat.indexOf('ビジター') === 0 ? 'ビジター' : '参加'),
         roleLabel(a.role || ''), CK_METHOD_LABEL[a.method] || a.method || '', fee, a._by, (a.addon || 0) > 0 ? (a.addonName || 'オプション') : '']);
     });
@@ -11588,7 +11589,9 @@ $('btnGuest').onclick = function(){
     + '<label>氏名</label><input type="text" id="gName">'
     + '<label>所属ユニオン</label><select id="gUnion">'
     + unions.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
+    + '<option value="">その他（ユニオン外）</option>'
     + '</select>'
+    + '<p style="font-size:11.5px;color:var(--sub);margin:4px 0 0;">選んだユニオンの集計（イベントの出席人数）に入ります。どのユニオンにも入れない時は「その他」</p>'
     + '<label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select>'
     + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
   );
@@ -11646,7 +11649,7 @@ function renderTallies(){
     var sx = a.sex || (gRec.roster[id] && gRec.roster[id].sex) || '';
     if(sx === 'm') sexM++;
     else if(sx === 'f') sexF++;
-    var uk = a.union || 'ゲスト';
+    var uk = a.union || (a.guest ? 'その他' : 'ゲスト');   // ゲスト受付で「その他（ユニオン外）」を選んだ人はどのユニオンの集計にも入らない
     byUnion[uk] = (byUnion[uk] || 0) + 1;
     if(a.role) roles.push(a);
     var fee = a.fee || 0;
