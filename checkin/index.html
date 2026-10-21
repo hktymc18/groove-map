@@ -1889,6 +1889,64 @@ function isAdminHere(){ return canEditUnion(gUnion); }
    A) ユニオン設定 hideMoney（統括が名簿タブの「🙈 受付の金額」でON）→ 統括以外の人はいつもこの画面
    B) 受付画面の「👥 誰でも受付モード」→ 統括のPCでもその場で切り替え（端末に記録。解除はログイン中の人のパスワード） */
 var gHideMoney = {}, CK_EASY_KEY = 'bci_easy';
+/* 🧾 領収書をイベントごとに: ev.rcpt（true/false）が優先。未設定のイベントは主催ユニオンの初期値（checkinUnions.rcptDefault・既定は発行する）。
+   発行者名が未設定のユニオンは、どのイベントでも発行しない（今まで通り） */
+var gRcptDef = {};
+function ckEvRcptOn(ev, unionDoc){
+  if(ev && ev.rcpt === false) return false;
+  if(ev && ev.rcpt === true) return true;
+  if(unionDoc) return unionDoc.rcptDefault !== false;
+  return gRcptDef[(ev && ev.hostUnion) || ''] !== false;
+}
+// このイベントの出席者の会員証（領収書の入る先）: [{ t: トークン, a: 出席記録 }]
+function ckEvRcptTargets(evId){
+  return db.collection('checkinEvents').doc(evId).collection('attendance').get().then(function(qs){
+    var jobs = [];
+    qs.forEach(function(d){
+      var a = d.data(), no = a.no || d.id;
+      a._id = d.id;
+      if(a.cardToken || a.rcptToken) jobs.push(Promise.resolve({ t: a.cardToken || a.rcptToken, a: a }));
+      else if(!a.guest && no.charAt(0) !== 'g'){
+        jobs.push(db.collection('checkinMembers').doc(no).get()
+          .then(function(sn){ return { t: sn.exists ? (sn.data().cardToken || '') : '', a: a }; })
+          .catch(function(){ return { t: '', a: a }; }));
+      }
+    });
+    return Promise.all(jobs);
+  }).then(function(L){ return L.filter(function(x){ return x.t; }); });
+}
+// 「発行しない」にしたら、このイベントで発行済みの領収書を取り下げる
+function ckEvRcptRetract(evId){
+  return ckEvRcptTargets(evId).then(function(L){
+    var seen = {}, u = {}, n = 0;
+    u['rcpt_' + evId] = FV.delete();
+    return Promise.all(L.map(function(x){
+      if(seen[x.t]) return null;
+      seen[x.t] = 1; n++;
+      return db.collection('cards').doc(x.t).set(u, { merge: true }).catch(function(){});
+    })).then(function(){ return n; });
+  });
+}
+// 「発行する」にしたら、受付済み（徴収済み）の人にも発行する（会員証がある人・領収書QRを渡した人）
+function ckEvRcptIssueAll(ev){
+  return db.collection('checkinUnions').doc(ev.hostUnion || '').get().then(function(s){
+    var d = s.exists ? s.data() : {};
+    if(!d.issuer) return 0;
+    var info = ckRcptInfo(d);
+    return ckEvRcptTargets(ev.id).then(function(L){
+      var n = 0;
+      return Promise.all(L.map(function(x){
+        var a = x.a;
+        if(!((a.fee || 0) > 0) || a.paid === false || a.rcptNone || a.status === 'pending' || a.status === 'rejected') return null;
+        var u = {};
+        u['rcpt_' + ev.id] = ckRcptWith({ d: ev.date || '', ev: ev.name || '', amt: (a.fee || 0) - (a.refund || 0), no: a.no || a._id, at: Date.now(),
+          pm: (a.payMethod === 'paypay' || a.method === 'online') ? 'PayPay' : '現金' }, info);
+        n++;
+        return db.collection('cards').doc(x.t).set(u, { merge: true }).catch(function(){});
+      })).then(function(){ return n; });
+    });
+  });
+}
 function ckEasyForced(){ return !!gHideMoney[gUnion] && !isCoreAdmin(gUnion); }
 function ckEasyLocal(){ try{ return localStorage.getItem(CK_EASY_KEY) === '1'; }catch(e){ return false; } }
 function ckEasyOn(){ return !!gUser && (ckEasyLocal() || ckEasyForced()); }
@@ -2093,10 +2151,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v92';
+var APP_VER = 'v93';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v93', d: '2026/10/21', items: ['🧾 領収書をイベントごとに「発行する／しない」を選べるようになりました（イベントの編集）。ユニオンごとの初期値は会計タブの「🧾 領収書設定」で選べます', '🧾 途中で「発行しない」にすると、そのイベントで発行済みの領収書は取り下げます。「発行する」にした時は、受付済みの人にも発行できます'] },
   { v: 'v92', d: '2026/10/21', items: ['🃏 「特別カード工房」（オーナーのみ）: BLUE DIAMOND・TEAM ELITE の人の特別カードを、枠・イラスト・ホロの画像と色・文字から作って付けられるようになりました（画像は自動で軽量化・その場でプレビュー）', '🂠 カードの裏面をユニオンごとに設定できるようになりました（ロゴを選ぶと自動で背景を透過・オーナーのみ）', '🔒 BLUE DIAMOND・TEAM ELITE のバッジと特別カードは、オーナーだけが付け外しできるようになりました'] },
   { v: 'v91', d: '2026/10/21', items: ['👤 ゲスト受付の所属ユニオンに「その他（ユニオン外）」を追加しました。選ぶと、どのユニオンの集計（イベントの出席人数）にも入りません'] },
   { v: 'v90', d: '2026/10/20', items: ['👥 「誰でも受付モード」を追加しました。金額（PayPay受領・手元金額）・MC/スピーカー/運営・系列別と、受付以外のタブを隠して、出席の人数と受付履歴だけの画面で誰にでも受付を任せられます（解除はパスワード）', '🙈 ユニオン管理者は名簿タブの「🙈 受付の金額」で、受付の金額を統括（ユニオン管理者）だけに見せる設定にできます'] },
@@ -5253,6 +5312,7 @@ function afterLogin(){
       gCkAdmins[un] = d.data().admins || [];
       gCoreAdmins[un] = d.data().coreAdmins || [];
       gHideMoney[un] = !!d.data().hideMoney;
+      gRcptDef[un] = d.data().rcptDefault !== false;   // 🧾 新しく作るイベントの領収書（既定: 発行する）
       gUnionPrefix[un] = d.data().noPrefix || '';
       var ad = d.data().addon;
       gUnionAddon[un] = (ad && ad.on && ad.price > 0) ? ad : null;
@@ -8159,6 +8219,7 @@ function renderEvents(){
       + (ev.payMode === 'paypay' ? '<span class="jointtag">💳 PayPay集金</span>' : '')
       + (ev.addonOn && gUnionAddon[ev.hostUnion] ? '<span class="jointtag">🎓 ' + esc(gUnionAddon[ev.hostUnion].name || 'オプション') + '</span>' : '')
       + (ev.payMode === 'both' ? '<span class="jointtag">💴💳 現金・PayPay</span>' : '')
+      + (!ckEvRcptOn(ev) ? '<span class="jointtag">🧾なし</span>' : '')
       + (isSelf ? '<span class="jointtag" style="background:var(--green-soft);color:var(--green);">' + esc(ev.hostLabel || 'CLAVIS') + '主催・セルフ</span>' : '')
       + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
@@ -8614,6 +8675,9 @@ function eventForm(ev){
         + '<input type="date" id="evRsvpDl" value="' + esc((ev && ev.rsvpDeadline) || '') + '" style="width:190px;">'
         + '</div>'
       : '')
+    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRcpt"' + (ckEvRcptOn(ev || { hostUnion: host }) ? ' checked' : '') + '>'
+    + '<label for="evRcpt" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🧾 このイベントは領収書を発行する'
+    + '<span style="color:var(--sub);font-size:12px;">（' + esc(host) + 'の初期値: ' + (gRcptDef[host] !== false ? '発行する' : '発行しない') + '・会計タブの「🧾 領収書設定」で変更）</span></label></div>'
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
@@ -8677,8 +8741,18 @@ function eventForm(ev){
       onlinePayTo: $('evOnPay').value.trim(),
       onlinePayLink: payLink,
       onlineEnvName: envName,
-      zoomUrl: $('evZoom').value.trim()
+      zoomUrl: $('evZoom').value.trim(),
+      rcpt: $('evRcpt').checked
     };
+    // 🧾 途中で切り替えた時: 発行しない→発行済みを取り下げ / 発行する→受付済みの人にも発行
+    var wasRcpt = isNew ? null : ckEvRcptOn(ev);
+    var rcptJob = null;
+    if(!isNew && wasRcpt && !data.rcpt){
+      if(!window.confirm('このイベントを「領収書を発行しない」にします。\nすでに発行した領収書は取り下げます（会員証から消えます）。よろしいですか？')) return;
+      rcptJob = 'retract';
+    } else if(!isNew && !wasRcpt && data.rcpt){
+      rcptJob = window.confirm('このイベントを「領収書を発行する」にします。\nすでに受付済み（徴収済み）の人にも発行しますか？\n（キャンセル＝これからの受付だけ発行）') ? 'issue' : null;
+    }
     var p;
     if(isNew){
       data.hostUnion = host;
@@ -8690,6 +8764,12 @@ function eventForm(ev){
       p = db.collection('checkinEvents').doc(ev.id).set(data, { merge: true });
     }
     p.then(function(){
+      if(!isNew){
+        ev.rcpt = data.rcpt;
+        ckRecRcptApply(ev);   // この端末で受付中なら、すぐ反映
+        if(rcptJob === 'retract') ckEvRcptRetract(ev.id).then(function(n){ toast('発行済みの領収書を取り下げました（' + n + '件）'); }).catch(function(){});
+        if(rcptJob === 'issue') ckEvRcptIssueAll(Object.assign({}, ev, data, { id: ev.id, hostUnion: ev.hostUnion || host })).then(function(n){ toast(n ? '受付済みの人に領収書を発行しました（' + n + '件）' : '発行する領収書はありませんでした（発行者名・徴収済みの人を確認してください）'); }).catch(function(){});
+      }
       closeModal(); toast(isNew ? 'イベントを作成しました' : '保存しました');
       gMonth = { y: parseInt(date.slice(0,4), 10), m: parseInt(date.slice(5,7), 10) };
       loadEvents(); loadStats();
@@ -10053,9 +10133,10 @@ function trWrite(m, k, rec){
 }
 function onlineModal(ev){
   // 電子領収書の発行者名（主催ユニオンの設定）
-  var olIssuer = '', olInfo = null;
+  var olIssuer = '', olInfo = null, olOff = false;
   db.collection('checkinUnions').doc(ev.hostUnion || '').get().then(function(s){
-    if(s.exists && s.data().issuer){ olIssuer = s.data().issuer; olInfo = ckRcptInfo(s.data()); }
+    olOff = s.exists && !ckEvRcptOn(ev, s.data());   // 🧾 このイベントは領収書を発行しない
+    if(s.exists && s.data().issuer && !olOff){ olIssuer = s.data().issuer; olInfo = ckRcptInfo(s.data()); }
   }).catch(function(){});
   // ライブ承認画面: 開いている間もリアルタイムで新着申請が追加される（当日ラッシュ対応）。
   // 再描画は申請の構成が変わったときだけにして、入力途中の金額・チェックを守る
@@ -10246,7 +10327,8 @@ function onlineModal(ev){
       if(act === 'rercpt'){
         // 承認済みへの領収書の再発行（発行者名の設定前に承認した分の救済）
         if(!olIssuer){
-          toast('先に会計タブの「🧾 領収書設定」で発行者名を設定してください（主催: ' + (ev.hostUnion || '') + '）');
+          toast(olOff ? 'このイベントは領収書を発行しない設定です（イベントの編集で変えられます）'
+            : '先に会計タブの「🧾 領収書設定」で発行者名を設定してください（主催: ' + (ev.hostUnion || '') + '）');
           return;
         }
         if(!a.cardToken){ toast('この申請には会員証の情報がないため発行できません'); return; }
@@ -10739,6 +10821,9 @@ $('btnRcptSet').onclick = function(){
       + '<input type="text" id="rsIssuer" value="' + esc(cur) + '" placeholder="例: 株式会社PROMOTE">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
       + '<b>未設定（空欄）の間、このユニオンでは電子領収書は発行されません。</b></p>'
+      + '<label style="margin-top:10px;">新しく作るイベントの領収書（初期値）</label>'
+      + '<div class="chkrow"><input type="radio" name="rsDef" id="rsDefOn"' + (s0 && s0.rcptDefault === false ? '' : ' checked') + '><label for="rsDefOn" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">発行する（発行しないイベントだけ、イベントの編集でオフ）</label></div>'
+      + '<div class="chkrow"><input type="radio" name="rsDef" id="rsDefOff"' + (s0 && s0.rcptDefault === false ? ' checked' : '') + '><label for="rsDefOff" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">発行しない（発行するイベントだけ、イベントの編集でオン）</label></div>'
       + '<label style="margin-top:10px;">領収書の住所（任意）</label>'
       + '<input type="text" id="rsAddr" value="' + esc((s0 && s0.issuerAddr) || '') + '" placeholder="例: 福岡県福岡市中央区…">'
       + '<label>領収書の電話番号（任意）</label>'
@@ -10788,7 +10873,8 @@ $('btnRcptSet').onclick = function(){
         invoiceNo: inv,
         area: $('rsArea').value.trim(),
         payLink: pl,
-        noPrefix: ckPrefixNorm($('rsPrefix').value)
+        noPrefix: ckPrefixNorm($('rsPrefix').value),
+        rcptDefault: !$('rsDefOff').checked
       };
       var perr = ckPrefixError(upd.noPrefix, un);
       if(perr){ toast(perr); return; }
@@ -10800,6 +10886,7 @@ $('btnRcptSet').onclick = function(){
       }
       db.collection('checkinUnions').doc(un).set(upd, { merge: true })
         .then(function(){
+          gRcptDef[un] = upd.rcptDefault;
           gUnionPrefix[un] = upd.noPrefix;
           closeModal(); toast('ユニオン設定を保存しました');
         })
@@ -11165,7 +11252,10 @@ function startReception(ev){
   // 電子領収書の発行者名とPayPay受け取りリンク（主催ユニオンの設定を読む）
   db.collection('checkinUnions').doc(ev.hostUnion || gUnion).get().then(function(s){
     if(gRec && gRec.ev === ev && s.exists){
-      if(s.data().issuer){ gRec.issuer = s.data().issuer; gRec.rcptInfo = ckRcptInfo(s.data()); }
+      gRec.unionDoc = s.data();
+      gRec.rcptOn = ckEvRcptOn(ev, s.data());
+      if(s.data().issuer && gRec.rcptOn){ gRec.issuer = s.data().issuer; gRec.rcptInfo = ckRcptInfo(s.data()); }
+      renderFeeRow();
       gRec.unionPayLink = s.data().payLink || '';
       var ad = s.data().addon;
       gRec.unionAddon = (ad && ad.on && ad.price > 0) ? { name: ad.name || 'オプション', price: Number(ad.price) } : null;
@@ -11246,7 +11336,7 @@ function stopReception(){
 }
 
 // 受付中のイベント設定の変更を画面に反映（ckApplyEventLive）。変わった内容は画面下のお知らせで伝える
-var CK_LIVE_KEYS = ['payMode', 'fee1', 'fee2', 'fee3', 'onlinePayLink', 'unions', 'hostUnion', 'name', 'speaker', 'recClosed', 'addonOn'];
+var CK_LIVE_KEYS = ['payMode', 'fee1', 'fee2', 'fee3', 'onlinePayLink', 'unions', 'hostUnion', 'name', 'speaker', 'recClosed', 'addonOn', 'rcpt'];
 function ckApplyEventLive(d){
   if(!gRec) return;
   var ev = gRec.ev, changed = [];
@@ -11256,6 +11346,11 @@ function ckApplyEventLive(d){
   if(!changed.length) return;
   if(changed.indexOf('recClosed') >= 0 && !ev.recClosed && gRec.closedOpen){   // 別のPCで「終了を取り消す」が押された
     gRec.closedOpen = false; $('recReopenBar').classList.add('hide');
+  }
+  if(changed.indexOf('rcpt') >= 0){
+    var r0 = !!gRec.issuer;
+    ckRecRcptApply(ev);
+    if(r0 !== !!gRec.issuer) toast(gRec.issuer ? '🧾 このイベントは領収書を発行する設定になりました' : '🧾 このイベントは領収書を発行しない設定になりました');
   }
   var pm0 = gRec.payMode, pb0 = gRec.payBoth;
   gRec.addon = (ev.addonOn && gRec.unionAddon) ? gRec.unionAddon : null;
@@ -11282,6 +11377,16 @@ function currentFee(){
   if(gRec.part === 3){ var f3 = evFee3(gRec.ev); return f3 != null ? f3 : evFee2(gRec.ev); }
   return gRec.part === 2 ? evFee2(gRec.ev) : evFee1(gRec.ev);
 }
+// 🧾 受付中にイベントの領収書の設定が変わったら反映（別の端末で変えた時も）
+function ckRecRcptApply(ev){
+  if(!gRec || !gRec.ev || gRec.ev.id !== ev.id) return;
+  gRec.ev.rcpt = ev.rcpt;
+  var d = gRec.unionDoc || {};
+  gRec.rcptOn = ckEvRcptOn(gRec.ev, d);
+  if(gRec.rcptOn && d.issuer){ gRec.issuer = d.issuer; gRec.rcptInfo = ckRcptInfo(d); }
+  else { gRec.issuer = ''; }
+  renderFeeRow();
+}
 function renderFeeRow(){
   if(!gRec) return;
   var moneyIcon = gRec.payMode ? '💳' : '💰';
@@ -11299,6 +11404,7 @@ function renderFeeRow(){
         ? '第3部受付に切替（新規' + yen(f3) + '）'
         : '第1部受付に戻す（新規' + yen(evFee1(gRec.ev)) + '）';
   }
+  if(gRec.unionDoc) $('feeInfo').textContent += '　🧾 領収書' + (gRec.issuer ? 'あり' : 'なし');
   renderPpPanel();
 }
 // 💳 PayPay集金モード: 受付画面に金額入りの送金QRを常時表示（料金の部切替に追従）
