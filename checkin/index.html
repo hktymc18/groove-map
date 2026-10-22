@@ -2151,10 +2151,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v94';
+var APP_VER = 'v95';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v95', d: '2026/10/22', items: ['📄 予定表PDF（ハウディ予定表）の金額の欄をなくし、「受付サイン」と「馬越サイン」の欄にしました'] },
   { v: 'v94', d: '2026/10/22', items: ['📝 研修生の会員証で、目標設定の宿題を受講記録の一覧より上に出すようにしました（受講済みが増えると宿題が下に押し出されて見えにくかったため）'] },
   { v: 'v93', d: '2026/10/21', items: ['🧾 領収書をイベントごとに「発行する／しない」を選べるようになりました（イベントの編集）。ユニオンごとの初期値は会計タブの「🧾 領収書設定」で選べます', '🧾 途中で「発行しない」にすると、そのイベントで発行済みの領収書は取り下げます。「発行する」にした時は、受付済みの人にも発行できます'] },
   { v: 'v92', d: '2026/10/21', items: ['🃏 「特別カード工房」（オーナーのみ）: BLUE DIAMOND・TEAM ELITE の人の特別カードを、枠・イラスト・ホロの画像と色・文字から作って付けられるようになりました（画像は自動で軽量化・その場でプレビュー）', '🂠 カードの裏面をユニオンごとに設定できるようになりました（ロゴを選ぶと自動で背景を透過・オーナーのみ）', '🔒 BLUE DIAMOND・TEAM ELITE のバッジと特別カードは、オーナーだけが付け外しできるようになりました'] },
@@ -8451,7 +8452,8 @@ $('evList').addEventListener('click', function(e){
   }
 });
 /* 📄 予定表PDF: 表示中の月のイベント一覧を、棚の入金チェック表として使えるA4で印刷
-   （日付・曜日・イベント名・スピーカー・「お金入れました」チェック欄・金額・サイン欄） */
+   （日付・曜日・イベント名・スピーカー・「お金入れました」チェック欄・受付サイン・馬越サイン）
+   金額の欄は無し（封筒に書くので二度手間になるため・馬越さんの指示） */
 $('btnSchedPdf').onclick = function(){
   var evs = gEvents.slice().sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
   if(!evs.length){ toast('この月のイベントがありません。先にイベントを登録してください'); return; }
@@ -8464,7 +8466,7 @@ $('btnSchedPdf').onclick = function(){
       + '<td class="dt mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '<span class="wd">（' + day + '）</span></td>'
       + '<td class="nm">' + esc(ev.name || '') + (ev.speaker ? '<span class="sp">🎤 ' + esc(ev.speaker) + '</span>' : '') + '</td>'
       + '<td class="ck"><span class="box"></span></td>'
-      + '<td class="amt">¥</td>'
+      + '<td class="sg"></td>'
       + '<td class="sg"></td>'
       + '</tr>';
   }).join('');
@@ -8481,8 +8483,7 @@ $('btnSchedPdf').onclick = function(){
     + '.nm .sp{font-size:8.5pt;color:#555;font-weight:400;margin-left:2mm;}'
     + '.ck{width:26mm;text-align:center;}'
     + '.box{display:inline-block;width:7mm;height:7mm;border:0.4mm solid #333;border-radius:1mm;vertical-align:middle;}'
-    + '.amt{width:26mm;font-size:9pt;color:#555;vertical-align:bottom;}'
-    + '.sg{width:26mm;}'
+    + '.sg{width:30mm;}'
     + '.foot{font-size:8pt;color:#777;margin-top:3mm;}'
     + '.mono{font-family:"Courier New",monospace;}';
   var title = '予定表_' + gEventUnion + '_' + gMonth.y + '-' + pad(gMonth.m);
@@ -8492,7 +8493,7 @@ $('btnSchedPdf').onclick = function(){
     + '<style>' + css + '</style></head><body>'
     + '<h1>' + esc(yl) + '　ハウディ予定表</h1>'
     + '<p class="sub">' + esc(gEventUnion) + '　（全' + evs.length + '回）　✔ = お金を入れました</p>'
-    + '<table><tr><th>日付</th><th>イベント</th><th>お金入れました</th><th>金額</th><th>サイン</th></tr>'
+    + '<table><tr><th>日付</th><th>イベント</th><th>お金入れました</th><th>受付サイン</th><th>馬越サイン</th></tr>'
     + rows + '</table>'
     + '<div class="foot">BASE CHECK-IN で出力（' + esc(todayStr()) + '）</div>'
     + '<' + 'script>setTimeout(function(){ window.print(); }, 50);</' + 'script>'
