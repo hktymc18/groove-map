@@ -2151,10 +2151,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v96';
+var APP_VER = 'v97';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v97', d: '2026/10/23', items: ['📄 予定表PDFの受付サイン・管理者サインの横に、それぞれ日付を書く欄を付けました'] },
   { v: 'v96', d: '2026/10/22', items: ['📄 予定表PDFの「馬越サイン」の欄を「管理者サイン」にしました'] },
   { v: 'v95', d: '2026/10/22', items: ['📄 予定表PDF（ハウディ予定表）の金額の欄をなくし、「受付サイン」と「馬越サイン」の欄にしました'] },
   { v: 'v94', d: '2026/10/22', items: ['📝 研修生の会員証で、目標設定の宿題を受講記録の一覧より上に出すようにしました（受講済みが増えると宿題が下に押し出されて見えにくかったため）'] },
@@ -8453,7 +8454,7 @@ $('evList').addEventListener('click', function(e){
   }
 });
 /* 📄 予定表PDF: 表示中の月のイベント一覧を、棚の入金チェック表として使えるA4で印刷
-   （日付・曜日・イベント名・スピーカー・「お金入れました」チェック欄・受付サイン・管理者サイン）
+   （日付・曜日・イベント名・スピーカー・「お金入れました」チェック欄・受付サイン＋日付・管理者サイン＋日付）
    金額の欄は無し（封筒に書くので二度手間になるため） */
 $('btnSchedPdf').onclick = function(){
   var evs = gEvents.slice().sort(function(a, b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
@@ -8467,8 +8468,8 @@ $('btnSchedPdf').onclick = function(){
       + '<td class="dt mono">' + esc((ev.date || '').slice(5).replace('-', '/')) + '<span class="wd">（' + day + '）</span></td>'
       + '<td class="nm">' + esc(ev.name || '') + (ev.speaker ? '<span class="sp">🎤 ' + esc(ev.speaker) + '</span>' : '') + '</td>'
       + '<td class="ck"><span class="box"></span></td>'
-      + '<td class="sg"></td>'
-      + '<td class="sg"></td>'
+      + '<td class="sg"></td><td class="sd">／</td>'
+      + '<td class="sg"></td><td class="sd">／</td>'
       + '</tr>';
   }).join('');
   var css = '@page{size:A4;margin:12mm;}'
@@ -8482,9 +8483,11 @@ $('btnSchedPdf').onclick = function(){
     + '.wd{font-size:8.5pt;color:#555;font-weight:400;}'
     + '.nm{font-weight:700;}'
     + '.nm .sp{font-size:8.5pt;color:#555;font-weight:400;margin-left:2mm;}'
-    + '.ck{width:26mm;text-align:center;}'
+    + '.ck{width:20mm;text-align:center;}'
     + '.box{display:inline-block;width:7mm;height:7mm;border:0.4mm solid #333;border-radius:1mm;vertical-align:middle;}'
-    + '.sg{width:30mm;}'
+    + '.sg{width:27mm;}'
+    + '.sd{width:15mm;text-align:center;color:#999;font-size:10pt;}'
+    + 'th{font-size:8.5pt;}'
     + '.foot{font-size:8pt;color:#777;margin-top:3mm;}'
     + '.mono{font-family:"Courier New",monospace;}';
   var title = '予定表_' + gEventUnion + '_' + gMonth.y + '-' + pad(gMonth.m);
@@ -8494,7 +8497,7 @@ $('btnSchedPdf').onclick = function(){
     + '<style>' + css + '</style></head><body>'
     + '<h1>' + esc(yl) + '　ハウディ予定表</h1>'
     + '<p class="sub">' + esc(gEventUnion) + '　（全' + evs.length + '回）　✔ = お金を入れました</p>'
-    + '<table><tr><th>日付</th><th>イベント</th><th>お金入れました</th><th>受付サイン</th><th>管理者サイン</th></tr>'
+    + '<table><tr><th>日付</th><th>イベント</th><th>お金<br>入れました</th><th>受付サイン</th><th>日付</th><th>管理者サイン</th><th>日付</th></tr>'
     + rows + '</table>'
     + '<div class="foot">BASE CHECK-IN で出力（' + esc(todayStr()) + '）</div>'
     + '<' + 'script>setTimeout(function(){ window.print(); }, 50);</' + 'script>'
