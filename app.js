@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v834';
+var APP_JS_VERSION = 'v835';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4205,7 +4205,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v834';
+  var DATA_VERSION = 'v835';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6312,6 +6312,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v835', d:'2026-10-24', items:['PLANのファーストボーナスの金額の下に「※概算（税抜）です。実際の支給額は条件や実績によって変わり、この金額を保証するものではありません」と小さく出すようにしました'] },
   { v:'v834', d:'2026-10-21', items:['メンバーのプロフィールで誕生日を直しても保存されないことがあったのを直しました（入れている途中で欄が作り直され、残りの入力が消えていました）','研修の記録の「日付で」も同じように直しました'] },
   { v:'v833', d:'2026-10-21', items:['ダークモードのHOMEのタイル：ふちが少しズレて見えていたのを直し、ふんわり浮いたカードの見た目にしました（ライトモードは今まで通り）'] },
   { v:'v832', d:'2026-10-21', items:['HOMEのタイルを「画像あり／画像なし」から選べるように（設定 › 見た目）。端末ごとに覚えます'] },
@@ -22212,7 +22213,7 @@ function _p2SimOneHtml() {
     + (_p2SimBig(nodes, mo) ? _p2SimNumHtml(nodes, mo) : '<div class="p2sm-tree">' + _p2SimSvg(nodes, mo) + '</div>')
     + '<div class="p2sm-lg">' + (cfg.fronts[0] > 0 ? [0, 1, 2, 3, 4] : [1, 2, 3, 4]).map(function(m) { return '<span><i style="background:' + P2_SIM_COL[m] + '"></i>' + ymL(m) + '（' + lab[m] + '）<b>new</b></span>'; }).join('') + '</div>'
     // v709: ファーストボーナスは組織図の下（結果として見る）。BRの月を選んだ時だけ（ほかの月は組織とGSVだけ）
-    + '<div class="sm1-r"><div class="fb">' + (mo === 4 ? '<small>ファーストボーナス（BR昇格後）' + (_p2FbShown ? _uxIb('simfb').replace('class="ux-ib"', 'class="ux-ib" style="display:inline-flex;width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle"') : '') + '</small><b>' + _p2FbAmt(R9.fb, '<i>/月</i>') + '</b>'
+    + '<div class="sm1-r"><div class="fb">' + (mo === 4 ? '<small>ファーストボーナス（BR昇格後）' + (_p2FbShown ? _uxIb('simfb').replace('class="ux-ib"', 'class="ux-ib" style="display:inline-flex;width:16px;height:16px;font-size:10px;margin-left:4px;vertical-align:middle"') : '') + '</small><b>' + _p2FbAmt(R9.fb, '<i>/月</i>') + '</b>' + (_p2FbShown ? _p2FbNote() : '')
       : '<small>ファーストボーナス</small><span class="fbh" onclick="p2SimMo(4)">' + ymL(4) + '（BR）を選ぶと見られます ›</span>') + '</div>'
     + '<div class="k">組織（' + ymL(mo) + '）<b>' + cnt + '</b>人<br>GSV <b>' + mon.gsv.toLocaleString() + '</b>P</div></div>';
 }
@@ -22259,6 +22260,9 @@ function _p2FbCss() {
     + '@media (prefers-reduced-motion:reduce){.fbr .rs{transition:none!important}.fbr.hit{animation:none}}';
   document.head.appendChild(st);
 }
+// v835: ファーストボーナスの金額の下の注意書き（計算で出した金額のところだけ）
+var P2_FB_NOTE = '※概算（税抜）です。実際の支給額は条件や実績によって変わり、この金額を保証するものではありません';
+function _p2FbNote(st) { return '<span class="p2fb-nt" style="display:block;margin-top:6px;font-size:10.5px;font-weight:600;line-height:1.5;color:var(--text-dim);letter-spacing:0;white-space:normal;text-align:inherit;' + (st || '') + '">' + P2_FB_NOTE + '</span>'; }
 // v652: ファーストボーナス（一番のお楽しみ）は大きく。内訳は (i) に
 function _p2SimFbHint(lb) { _p2FbCss(); return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb"><span class="fbh" onclick="p2SimMo(4)">' + lb + '（BR）を選ぶと見られます ›</span></div>'; } // v709: BRの月だけ
 function _p2SimFbHtml(R9) {
@@ -22266,7 +22270,7 @@ function _p2SimFbHtml(R9) {
   UX_INFO.simfb = { t: 'ファーストボーナスの内訳', ok: 'とじる', h: '<b>ビルディングボーナス</b>：¥' + bb.toLocaleString() + '（' + (Math.max(0, R9.gsv - 1000) / 500).toFixed(1) + 'ブロック / ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'GSV）<br>'
     + '※ GSV ' + R9.gsv.toLocaleString() + ' − 1,000P（BR昇格分）＝ ' + Math.max(0, R9.gsv - 1000).toLocaleString() + 'P がBB対象<br>'
     + (loi ? '<b>エリートLOI特典</b>：¥50,000（BR維持で翌月進呈）' : '<b>エリートLOI特典</b>：BRの月のGSVが2,000以上で ¥50,000') };
-  return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb">' + (_p2FbShown ? '<span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span>' : '') + '<small>ファーストボーナス（BR昇格後）</small><b>' + _p2FbAmt(R9.fb, '<i>/月</i>') + '</b></div>';
+  return '<div class="p2fb-h">ファーストボーナス</div><div class="p2fb">' + (_p2FbShown ? '<span class="p2fb-i" onclick="uxInfo(\'simfb\')">i</span>' : '') + '<small>ファーストボーナス（BR昇格後）</small><b>' + _p2FbAmt(R9.fb, '<i>/月</i>') + '</b>' + (_p2FbShown ? _p2FbNote('margin-top:10px') : '') + '</div>';
 }
 function _p2SimSwipe() {
   var el = document.querySelector('.p2sm-tree,.p2sm-num'); if (!el || typeof _uxSwipe !== 'function') return;
@@ -24764,7 +24768,7 @@ function _p2FbPlanHtml(target, brYm) {
     + '<div class="p2fb-g"><div><b>' + r.n + '人</b><span>毎月のフロント<br>（Q2・Q3で計' + sm.fr + '人）</span></div><div><b>' + sm.nb + '人</b><span>新規B1（5ヶ月の計）</span></div><div><b>' + sm.org + '人</b><span>組織（自分を含む）</span></div><div><b>' + sm.gsv.toLocaleString() + 'P</b><span>BRの月のGSV</span></div></div>'
     + '<table class="p2fb-t"><tr><th></th><th>フロント</th><th>新規B1</th><th>GSV</th></tr>' + rows + '</table>'
     + '<div class="p2fb-r"><span>審査の条件</span><b>LOI〜Q4の各月1,000P以上 ' + (okM ? '✓' : '✗') + '・累計 ' + sm.cum.toLocaleString() + ' / 5,000P ' + (okC ? '✓' : '✗') + '</b></div>'
-    + '<div class="p2fb-r"><span>この人数のファーストボーナス</span><b>' + yen(sm.fb) + '</b><small>BB ' + yen(_p2BBCalc(Math.max(0, sm.gsv - 1000))) + (sm.gsv >= 2000 ? '＋エリートLOI特典 ¥50,000' : '') + '</small></div>'
+    + '<div class="p2fb-r"><span>この人数のファーストボーナス</span><b>' + yen(sm.fb) + '</b><small>BB ' + yen(_p2BBCalc(Math.max(0, sm.gsv - 1000))) + (sm.gsv >= 2000 ? '＋エリートLOI特典 ¥50,000' : '') + '</small>' + _p2FbNote() + '</div>'
     + '<div class="p2-meta">シミュレーションの設定：各B1が毎月 ' + c.dup + '人・BPC ' + c.psv.toLocaleString() + 'P・自分のADP ' + c.myPsv + 'P　<span class="p2a-lk" onclick="p2FbSim(' + r.n + ')">シミュレーションで詳しく ›</span></div>'
     + '</div>';
 }
@@ -26677,7 +26681,7 @@ function p2SimRun() {
       var loiB = br.gsv >= 2000 ? 50000 : 0;
       fb.innerHTML = '<div class="p2b-big"><div class="p2-meta">ファーストボーナス（BR昇格後）</div><div class="amt">¥' + (br.bonus + loiB).toLocaleString() + '<small style="font-size:12px"> /月</small></div>'
         + '<div class="p2-meta" style="margin-top:6px">BB: ¥' + br.bonus.toLocaleString() + '（' + (br.bbGsv / 500).toFixed(1) + 'ブロック / GSV ' + br.gsv.toLocaleString() + '−1,000P）<br>'
-        + (loiB ? 'エリートLOI特典: ¥50,000（BR維持で翌月進呈）' : '<span style="color:var(--red)">※GSV 2,000以上でエリートLOI特典対象</span>') + '</div></div>';
+        + (loiB ? 'エリートLOI特典: ¥50,000（BR維持で翌月進呈）' : '<span style="color:var(--red)">※GSV 2,000以上でエリートLOI特典対象</span>') + '</div>' + _p2FbNote() + '</div>';
     }
   }
   saveGoals();
