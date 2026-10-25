@@ -104,7 +104,8 @@ service cloud.firestore {
         && (!('role'   in request.resource.data) || request.resource.data.role   == 'member')
         && request.resource.data.get('status','pending') != 'active'
         && !('ckNo' in request.resource.data)
-        && !('early' in request.resource.data);
+        && !('early' in request.resource.data)
+        && !('alLeader' in request.resource.data);
 
       // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
       //       本人は role/status/ckNo（受付の名簿との紐付け）/early（先行利用）を変えない範囲のみ可。
@@ -116,22 +117,47 @@ service cloud.firestore {
             && request.resource.data.get('status','active') == resource.data.get('status','active')
             && request.resource.data.get('ckNo','')         == resource.data.get('ckNo','')
             && request.resource.data.get('early', false)    == resource.data.get('early', false) // v790: 先行利用は本人が変えられない
+            && request.resource.data.get('alLeader', false) == resource.data.get('alLeader', false) // ATTACK LIST のリーダー指定は本人が変えられない
             // v831: 管理者は自分の所属ユニオンを変えられない（変えると別のユニオンの管理者になれてしまうため。オーナーに頼む）
             && (resource.data.get('role', 'member') != 'admin'
                 || resource.data.get('unionSelectedV2', false) != true
-                || request.resource.data.get('union', '') == resource.data.get('union', '')));
+                || request.resource.data.get('union', '') == resource.data.get('union', '')))
+        || alLeaderOut();
+
+      // ATTACK LIST のリーダー（オーナー／ユニオン管理者が users/{uid}.alLeader=true にした人）は、
+      // 自分にリストを共有しているメンバーに限り、利用停止（OUT）とその解除ができる。
+      //   ・変えられるのは status / outPrev（停止前の状態）/ disabledAt / disabledBy だけ
+      //   ・停止するとき: outPrev に今の status を控える
+      //   ・解除するとき: status は outPrev に戻すだけ（承認待ちの人を勝手に承認済みにはできない）
+      //   ・オーナーと管理者は対象外
+      function alLeaderOut() {
+        return signedIn() && request.auth.uid != uid
+            && uid != 'j2DPDAccCygHmR9i5K3bTvHnH0V2'
+            && resource.data.get('role', 'member') != 'admin'
+            && profileExists(request.auth.uid)
+            && profile(request.auth.uid).get('alLeader', false) == true
+            && profile(request.auth.uid).get('status', 'active') != 'disabled'
+            && exists(/databases/$(database)/documents/users/$(uid)/alShares/$(request.auth.uid))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'outPrev', 'disabledAt', 'disabledBy'])
+            && ( ( request.resource.data.get('status', '') == 'disabled'
+                   && resource.data.get('status', 'active') != 'disabled'
+                   && request.resource.data.get('outPrev', '') == resource.data.get('status', 'active') )
+              || ( resource.data.get('status', '') == 'disabled'
+                   && request.resource.data.get('status', '') == resource.data.get('outPrev', 'active') ) );
+      }
 
       // v777: 削除はオーナー／同じユニオンの管理者だけ（前はどのユニオンの管理者でも消せた）。v831: 兼務のユニオンも
       allow delete: if isOwnerAdmin() || admOf(resource.data.get('union', ''));
 
       // ---- AttackList：人物リスト ----
       // v586: 本人と、本人が共有した人だけ（管理者も読めない）
-      // 共有された人は、本人・相手のどちらかが無効化されたら読めない（退会者の持ち出し防止）。
+      // 共有された人（読む側）が無効化されたら読めない（退会者の持ち出し防止）。
+      // リストの持ち主が無効化（OUT）されても、共有を受けていた側は引き続き読める（辞めた人のリストをチームに残すため）。
       //   新方式: users/{uid}/alShares/{相手uid} があること
       //   旧方式: settings/share の sharedWith に相手のメールアドレスがあること（新方式へ移行するまでの経過措置）
       match /people/{pid} {
         function alSharedToMe() {
-          return signedIn() && notDisabled(uid) && notDisabled(request.auth.uid)
+          return signedIn() && notDisabled(request.auth.uid)
               && ( exists(/databases/$(database)/documents/users/$(uid)/alShares/$(request.auth.uid))
                    || ( exists(/databases/$(database)/documents/users/$(uid)/settings/share)
                         && get(/databases/$(database)/documents/users/$(uid)/settings/share)
