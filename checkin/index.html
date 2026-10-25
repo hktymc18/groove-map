@@ -2151,10 +2151,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v98';
+var APP_VER = 'v99';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v99', d: '2026/10/25', items: ['⚠️ 研修生・会員を削除する時は「本当に削除しますか？」の確認画面を出すようにしました（名前と消えるものを確認し、「理解した上で削除します」にチェックしてから削除）'] },
   { v: 'v98', d: '2026/10/25', items: ['🗑 研修生登録の担当は、自分が担当した研修生（自分が登録した・受講済みにした）を削除できるようになりました（研修後入力で研修生を開いて「🗑 この研修生を削除」）'] },
   { v: 'v97', d: '2026/10/23', items: ['📄 予定表PDFの受付サイン・管理者サインの横に、それぞれ日付を書く欄を付けました'] },
   { v: 'v96', d: '2026/10/22', items: ['📄 予定表PDFの「馬越サイン」の欄を「管理者サイン」にしました'] },
@@ -6973,11 +6974,13 @@ function deleteMany(nos, done){
 $('btnDelSel').onclick = function(){
   var nos = Object.keys(gSel);
   if(!nos.length) return;
-  modal('<h2>選択したメンバーの削除</h2>'
+  modal('<h2 style="color:var(--accent);">⚠️ 本当に削除しますか？</h2>'
     + '<p>選択した <b style="color:var(--accent);font-size:18px;">' + nos.length + '名</b> を「' + esc(gRosterUnion) + '」の名簿から削除しますか？<br><small>この操作は取り消せません（過去の出席記録は残ります）。</small></p>'
+    + '<div class="chkrow"><input type="checkbox" id="dsChk"><label for="dsChk" style="margin:0;font-weight:700;color:var(--ink);font-size:14px;">理解した上で' + nos.length + '名を削除します</label></div>'
     + '<div class="btns"><button id="dsCancel">キャンセル</button>'
-    + '<button class="primary" id="dsGo" style="background:var(--accent);border-color:var(--accent)">' + nos.length + '名を削除</button></div>');
+    + '<button class="primary" id="dsGo" disabled style="background:var(--accent);border-color:var(--accent)">' + nos.length + '名を削除</button></div>');
   $('dsCancel').onclick = closeModal;
+  $('dsChk').onchange = function(){ $('dsGo').disabled = !$('dsChk').checked; };
   $('dsGo').onclick = function(){
     $('dsGo').disabled = true;
     deleteMany(nos, function(){
@@ -7205,13 +7208,11 @@ function memberAction(m, a){
     promoteTrainee(m, function(){ loadMembers(); });
   }
   if(a === 'del'){
-    modal('<h2>メンバー削除</h2>'
-      + '<p>「' + esc(m.name || '') + '」（' + esc(no) + '）を名簿から削除しますか？<br>'
-      + '<small>過去の出席記録は消えません。休会・退会は削除ではなく「無効化」がおすすめです（集計と受付の対象から外れるだけで、領収書の控えや出席履歴はそのまま。いつでも有効化で戻せます）。</small></p>'
-      + '<div class="btns"><button id="mdCancel">キャンセル</button>'
-      + '<button class="primary" id="mdGo" style="background:var(--accent);border-color:var(--accent)">削除する</button></div>');
-    $('mdCancel').onclick = closeModal;
-    $('mdGo').onclick = function(){
+    ckDeleteConfirm({ who: ckDelWho(m), okLabel: 'このメンバーを削除する',
+      items: ['名簿の登録（氏名・番号・系列・グレード・バッジなど）'].concat(m.trainee ? ['研修生の受講記録・面談シート'] : []),
+      hint: '過去の出席・領収書・集計の記録は残ります。休会・退会なら、削除ではなく<b>「無効化」</b>がおすすめです（あとで有効化して元に戻せます）。',
+      onOk: function(){ mdDelNow(); } });
+    var mdDelNow = function(){
       // 📱 通信が遅いスマホでも、押した瞬間に一覧から消す（サーバーの完了を待たない）。失敗したら元に戻す
       var keep = gMembers;
       gMembers = gMembers.filter(function(x){ return x.no !== no; });
@@ -9171,7 +9172,11 @@ $('tqShare').onclick = function(){
 $('tqUndo').onclick = function(){
   var m = gTrLast;
   if(!m) return;
-  if(!window.confirm(m.name + ' さんの登録を取り消しますか？（会員証も無効になります）')) return;
+  ckDeleteConfirm({ who: ckDelWho(m), okLabel: '登録を取り消す',
+    items: ['名簿の登録', 'スマホ会員証（このQRのURLが使えなくなります）'],
+    onOk: function(){ closeModal(); tqUndoNow(m); } });
+};
+function tqUndoNow(m){
   var batch = db.batch();
   batch.delete(db.collection('checkinMembers').doc(m.no));
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
@@ -9187,7 +9192,7 @@ $('tqUndo').onclick = function(){
     trRenderToday();
     $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
   }).catch(function(e){ toast(permMsg(e, '取消できるのは自分が登録した研修生だけです')); });
-};
+}
 function trRenderToday(){
   $('trToday').innerHTML = gTrToday.length
     ? '<label>本日の登録（この端末）</label>' + gTrToday.map(function(m, i){
@@ -9488,10 +9493,33 @@ function demoteTrainee(m, cb){
     })
     .catch(function(e){ toast(permMsg(e, '昇格の取り消しはユニオン管理者・受付管理者のみ可能です')); });
 }
+/* ⚠️ 人を削除する時の確認画面（研修生・既存会員の共通）: 名前・消えるもの・元に戻せないことを見せ、
+   「理解した上で削除します」にチェックしないと「削除する」を押せない */
+function ckDeleteConfirm(o){
+  modal('<h2 style="color:var(--accent);">⚠️ 本当に削除しますか？</h2>'
+    + '<div style="border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 10px;background:var(--paper);">'
+    + o.who + '</div>'
+    + '<p style="font-size:13.5px;margin:0 0 4px;">削除すると、次のものが消えます。<b style="color:var(--accent);">元に戻せません。</b></p>'
+    + '<ul style="font-size:13px;margin:0 0 10px;padding-left:1.3em;line-height:1.8;">' + o.items.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>'
+    + (o.hint ? '<p style="font-size:12.5px;color:var(--sub);margin:0 0 10px;">💡 ' + o.hint + '</p>' : '')
+    + '<div class="chkrow"><input type="checkbox" id="dcChk"><label for="dcChk" style="margin:0;font-weight:700;color:var(--ink);font-size:14px;">理解した上で削除します</label></div>'
+    + '<div class="btns"><button id="dcCancel">キャンセル</button>'
+    + '<button class="primary" id="dcGo" disabled style="background:var(--accent);border-color:var(--accent);">' + esc(o.okLabel || '削除する') + '</button></div>');
+  $('dcCancel').onclick = function(){ closeModal(); if(o.onCancel) o.onCancel(); };
+  $('dcChk').onchange = function(){ $('dcGo').disabled = !$('dcChk').checked; };
+  $('dcGo').onclick = function(){ $('dcGo').disabled = true; o.onOk(); };
+}
+function ckDelWho(m){ return '<b style="font-size:17px;">' + esc(m.name || '') + '</b> <span class="mono" style="color:var(--sub);font-size:12.5px;">' + esc(m.no || '') + '</span>'
+  + (m.trainee ? ' <span class="pill n">研修生</span>' : '') + (m.union ? '<div style="font-size:12px;color:var(--sub);margin-top:2px;">' + esc(m.union) + (m.group ? '・' + esc(m.group) : '') + '</div>' : ''); }
 // 🗑 研修生の削除: 研修担当は自分が担当した研修生（自分が登録した・どれかを受講済みにした）だけ。管理者は誰でも。
 //   名簿・会員証・受け取りキー・宿題・面談シートの下書きをまとめて消す（研修生のあいだだけ・昇格後は管理者が名簿で）
 function trDeleteTrainee(m){
-  if(!window.confirm(m.name + ' さん（' + m.no + '）を削除しますか？\n会員証・受講記録・宿題・面談シートもすべて消え、元に戻せません。')) return;
+  ckDeleteConfirm({ who: ckDelWho(m), okLabel: 'この研修生を削除する',
+    items: ['名簿の登録', 'スマホ会員証（URLが使えなくなります）', '受講記録（PG・DLR・PA など）', '目標設定の宿題・面談シート'],
+    onCancel: function(){ trChecklist(m); },
+    onOk: function(){ trDeleteNow(m); } });
+}
+function trDeleteNow(m){
   var batch = db.batch();
   batch.delete(db.collection('checkinMembers').doc(m.no));
   if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
