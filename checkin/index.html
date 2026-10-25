@@ -2151,10 +2151,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v97';
+var APP_VER = 'v98';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v98', d: '2026/10/25', items: ['🗑 研修生登録の担当は、自分が担当した研修生（自分が登録した・受講済みにした）を削除できるようになりました（研修後入力で研修生を開いて「🗑 この研修生を削除」）'] },
   { v: 'v97', d: '2026/10/23', items: ['📄 予定表PDFの受付サイン・管理者サインの横に、それぞれ日付を書く欄を付けました'] },
   { v: 'v96', d: '2026/10/22', items: ['📄 予定表PDFの「馬越サイン」の欄を「管理者サイン」にしました'] },
   { v: 'v95', d: '2026/10/22', items: ['📄 予定表PDF（ハウディ予定表）の金額の欄をなくし、「受付サイン」と「馬越サイン」の欄にしました'] },
@@ -9487,6 +9488,27 @@ function demoteTrainee(m, cb){
     })
     .catch(function(e){ toast(permMsg(e, '昇格の取り消しはユニオン管理者・受付管理者のみ可能です')); });
 }
+// 🗑 研修生の削除: 研修担当は自分が担当した研修生（自分が登録した・どれかを受講済みにした）だけ。管理者は誰でも。
+//   名簿・会員証・受け取りキー・宿題・面談シートの下書きをまとめて消す（研修生のあいだだけ・昇格後は管理者が名簿で）
+function trDeleteTrainee(m){
+  if(!window.confirm(m.name + ' さん（' + m.no + '）を削除しますか？\n会員証・受講記録・宿題・面談シートもすべて消え、元に戻せません。')) return;
+  var batch = db.batch();
+  batch.delete(db.collection('checkinMembers').doc(m.no));
+  if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
+  batch.delete(db.collection('cardClaims').doc(m.no));
+  ckClaimDel(batch, m.no, m.name);
+  batch.commit().then(function(){
+    if(m.cardToken) db.collection('goalHw').doc(m.cardToken).delete().catch(function(){});
+    coInboxAll(m.no).then(function(L){ L.forEach(function(x){ db.collection('coSheetInbox').doc(x.id).delete().catch(function(){}); }); });
+    gTrMembers = gTrMembers.filter(function(x){ return x.no !== m.no; });
+    gTrToday = gTrToday.filter(function(x){ return x.no !== m.no; });
+    if(gTrAll) gTrAll = gTrAll.filter(function(x){ return x.no !== m.no; });
+    delete gMemCache[m.union];
+    closeModal();
+    toast(m.name + ' さんを削除しました');
+    trRenderList(); trRenderToday(); trHwLoad();
+  }).catch(function(e){ toast(permMsg(e, '削除できるのは、自分が登録した・受講済みにした研修生だけです')); });
+}
 function trChecklist(m){
   var tr = m.trainings || {};
   function rowHtml(it){
@@ -9528,8 +9550,11 @@ function trChecklist(m){
     + (!m.trainee && canEditUnion(gUnion)
       ? '<div class="btns" style="justify-content:flex-start;"><button id="tcDemote">↩︎ 研修生に戻す（昇格の取り消し）</button></div>'
       : '')
-    + '<div class="btns"><button id="tcClose">閉じる</button></div>', true);
+    + '<div class="btns">'
+    + (m.trainee && (trMine(m) || canEditUnion(gUnion)) ? '<button id="tcDel" class="danger ghost" style="margin-right:auto;">🗑 この研修生を削除</button>' : '')
+    + '<button id="tcClose">閉じる</button></div>', true);
   $('tcClose').onclick = closeModal;
+  if($('tcDel')) $('tcDel').onclick = function(){ trDeleteTrainee(m); };
   // 📝 宿題（目標設定）の状況をPGの行に表示（PGの記録がない以前の人はPAの行）
   if($('tcHw') && m.cardToken){
     db.collection('goalHw').doc(m.cardToken).get().then(function(s){
