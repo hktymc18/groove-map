@@ -2151,10 +2151,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v99';
+var APP_VER = 'v100';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v100', d: '2026/10/25', items: ['🗑 名簿からメンバーを削除した時は、その人のスマホ会員証も一緒に無効にするようにしました（古いURLを開いても会員証が出ません）'] },
   { v: 'v99', d: '2026/10/25', items: ['⚠️ 研修生・会員を削除する時は「本当に削除しますか？」の確認画面を出すようにしました（名前と消えるものを確認し、「理解した上で削除します」にチェックしてから削除）'] },
   { v: 'v98', d: '2026/10/25', items: ['🗑 研修生登録の担当は、自分が担当した研修生（自分が登録した・受講済みにした）を削除できるようになりました（研修後入力で研修生を開いて「🗑 この研修生を削除」）'] },
   { v: 'v97', d: '2026/10/23', items: ['📄 予定表PDFの受付サイン・管理者サインの横に、それぞれ日付を書く欄を付けました'] },
@@ -6959,13 +6960,25 @@ $('rosterBody').addEventListener('change', function(e){
     updateSelCount();
   }
 });
+// 🗑 名簿から削除する時は、スマホ会員証・番号→会員証・受け取りキーも一緒に消す（古いURLで会員証が開けないように）
+function ckMemberCardDel(batch, m){
+  if(!m) return;
+  if(m.cardToken) batch.delete(db.collection('cards').doc(m.cardToken));
+  batch.delete(db.collection('cardClaims').doc(String(m.no)));
+  ckClaimDel(batch, m.no, m.claimName || m.name);
+  if(m.claimName && m.name && m.claimName !== m.name) ckClaimDel(batch, m.no, m.name);
+}
+function ckMemberCardDelAfter(m){
+  if(m && m.cardToken) db.collection('goalHw').doc(m.cardToken).delete().catch(function(){});
+}
 function deleteMany(nos, done){
-  var i = 0;
+  var i = 0, byNo = {};
+  gMembers.forEach(function(m){ byNo[m.no] = m; });
   function nextBatch(){
     if(i >= nos.length){ done(); return; }
-    var batch = db.batch(), end = Math.min(i + 400, nos.length);
-    for(; i < end; i++) batch.delete(db.collection('checkinMembers').doc(nos[i]));
-    batch.commit().then(nextBatch).catch(function(e){
+    var batch = db.batch(), end = Math.min(i + 50, nos.length), part = nos.slice(i, end);   // 1人あたり最大10件ほどの書き込み（上限500件/回）
+    for(; i < end; i++){ batch.delete(db.collection('checkinMembers').doc(nos[i])); ckMemberCardDel(batch, byNo[nos[i]]); }
+    batch.commit().then(function(){ part.forEach(function(no){ ckMemberCardDelAfter(byNo[no]); }); nextBatch(); }).catch(function(e){
       toast(permMsg(e, '削除の権限がありません（そのユニオンの管理者のみ）'));
     });
   }
@@ -6975,7 +6988,7 @@ $('btnDelSel').onclick = function(){
   var nos = Object.keys(gSel);
   if(!nos.length) return;
   modal('<h2 style="color:var(--accent);">⚠️ 本当に削除しますか？</h2>'
-    + '<p>選択した <b style="color:var(--accent);font-size:18px;">' + nos.length + '名</b> を「' + esc(gRosterUnion) + '」の名簿から削除しますか？<br><small>この操作は取り消せません（過去の出席記録は残ります）。</small></p>'
+    + '<p>選択した <b style="color:var(--accent);font-size:18px;">' + nos.length + '名</b> を「' + esc(gRosterUnion) + '」の名簿から削除しますか？<br><small>この操作は取り消せません。<b>スマホ会員証も使えなくなります</b>（過去の出席・会計の記録は残ります）。</small></p>'
     + '<div class="chkrow"><input type="checkbox" id="dsChk"><label for="dsChk" style="margin:0;font-weight:700;color:var(--ink);font-size:14px;">理解した上で' + nos.length + '名を削除します</label></div>'
     + '<div class="btns"><button id="dsCancel">キャンセル</button>'
     + '<button class="primary" id="dsGo" disabled style="background:var(--accent);border-color:var(--accent)">' + nos.length + '名を削除</button></div>');
@@ -6994,7 +7007,7 @@ $('btnDelAll').onclick = function(){
   var total = gMembers.length;
   if(!total){ toast('メンバーがいません'); return; }
   modal('<h2 style="color:var(--accent)">全メンバー削除</h2>'
-    + '<p>「' + esc(gRosterUnion) + '」の名簿 <b style="color:var(--accent);font-size:18px;">全' + total + '名</b> をすべて削除します。<br><small>この操作は取り消せません（過去の出席記録は残ります）。</small></p>'
+    + '<p>「' + esc(gRosterUnion) + '」の名簿 <b style="color:var(--accent);font-size:18px;">全' + total + '名</b> をすべて削除します。<br><small>この操作は取り消せません。<b>スマホ会員証も使えなくなります</b>（過去の出席・会計の記録は残ります）。</small></p>'
     + '<div class="chkrow"><input type="checkbox" id="daConfirm"><label for="daConfirm" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">理解した上で全' + total + '名を削除します</label></div>'
     + '<div class="btns"><button id="daCancel">キャンセル</button>'
     + '<button class="primary" id="daGo" disabled style="background:var(--accent);border-color:var(--accent)">全削除する</button></div>');
@@ -7209,8 +7222,8 @@ function memberAction(m, a){
   }
   if(a === 'del'){
     ckDeleteConfirm({ who: ckDelWho(m), okLabel: 'このメンバーを削除する',
-      items: ['名簿の登録（氏名・番号・系列・グレード・バッジなど）'].concat(m.trainee ? ['研修生の受講記録・面談シート'] : []),
-      hint: '過去の出席・領収書・集計の記録は残ります。休会・退会なら、削除ではなく<b>「無効化」</b>がおすすめです（あとで有効化して元に戻せます）。',
+      items: ['名簿の登録（氏名・番号・系列・グレード・バッジなど）'].concat(m.cardToken ? ['スマホ会員証（URLが使えなくなり、会員証の中の領収書の控えも見られなくなります）'] : [], m.trainee ? ['研修生の受講記録・面談シート'] : []),
+      hint: '過去の出席・会計・集計の記録は残ります。休会・退会なら、削除ではなく<b>「無効化」</b>がおすすめです（会員証も記録もそのまま、あとで有効化して元に戻せます）。',
       onOk: function(){ mdDelNow(); } });
     var mdDelNow = function(){
       // 📱 通信が遅いスマホでも、押した瞬間に一覧から消す（サーバーの完了を待たない）。失敗したら元に戻す
@@ -7218,7 +7231,11 @@ function memberAction(m, a){
       gMembers = gMembers.filter(function(x){ return x.no !== no; });
       delete gSel[no];
       closeModal(); renderRoster();
-      db.collection('checkinMembers').doc(no).delete().then(function(){
+      var bt = db.batch();
+      bt.delete(db.collection('checkinMembers').doc(no));
+      ckMemberCardDel(bt, m);
+      bt.commit().then(function(){
+        ckMemberCardDelAfter(m);
         toast('削除しました');
         loadMembers();
       }).catch(function(err){
