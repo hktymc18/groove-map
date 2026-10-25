@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v836';
+var APP_JS_VERSION = 'v837';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4205,7 +4205,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v836';
+  var DATA_VERSION = 'v837';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -4487,6 +4487,8 @@ function _rvSyncEntry() {
     if (a0) { a0.style.display = ans ? '' : 'none'; a0.textContent = _rv.mine ? '⭐ 使い勝手レビュー（回答ずみ・直せます）' : '⭐ 使い勝手レビューに答える'; }
     if (r0) r0.style.display = res ? '' : 'none';
   } catch (eP) {}
+  // v837: スマホのHOME（currentView＝'menu'）も描き直す。前はPCのホームだけで、アプリを開いてHOMEにいる間はお願いのカードが出なかった（ほかの画面から戻ると出た）
+  try { if (currentView === 'menu' && typeof renderMenuHub === 'function') renderMenuHub(); } catch (eM) {}
   try { if (currentView === 'home') { if (typeof renderMenuHub === 'function') renderMenuHub(); if (typeof renderHome === 'function' && typeof isPCMode === 'function' && isPCMode()) renderHome(); } } catch (e) {}
 }
 // HOMEのお願い（期間中・まだ答えていない人だけ）
@@ -6312,6 +6314,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v837', d:'2026-10-25', items:['使い勝手レビューにまだ答えていない人は、アプリを開いてすぐHOMEのいちばん上にお願いが出るようにしました（前はほかの画面から戻るまで出ないことがありました）','答えるとHOMEのお願いがすぐ消えるようにしました'] },
   { v:'v836', d:'2026-10-25', items:['「今月の目標が未設定です」の赤い帯・HOMEのPLANを押すと、◯月の目標を決める画面がすぐ開くようにしました（前はPLANの入口が開くだけで、行き方がわかりにくかった）','PLANの入口のいちばん上に「◯月の目標」を出しました。PCはPLANの上のタブに「◯月の目標」'] },
   { v:'v835', d:'2026-10-24', items:['PLANのファーストボーナスの金額の下に「※概算（税抜）です。実際の支給額は条件や実績によって変わり、この金額を保証するものではありません」と小さく出すようにしました'] },
   { v:'v834', d:'2026-10-21', items:['メンバーのプロフィールで誕生日を直しても保存されないことがあったのを直しました（入れている途中で欄が作り直され、残りの入力が消えていました）','研修の記録の「日付で」も同じように直しました'] },
