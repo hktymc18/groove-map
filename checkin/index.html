@@ -1280,6 +1280,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnCkAdmins" class="hide rmore">👑 受付管理者</button>
       <button id="btnFreeMembers" class="hide rmore" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
       <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
+      <button id="btnUnionAdmins" class="hide rmore" title="ユニオン管理者の任命（オーナーのみ）">🛡 ユニオン管理者</button>
       <button id="btnLeaders" class="hide rmore" title="名簿・集計の閲覧と研修生登録の担当の任命ができる人（オーナーのみ指定）">⭐ リーダー</button>
       <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide rmore" title="ユニオンを追加">＋ユニオン</button>
@@ -1824,7 +1825,7 @@ var gUnions = [];           // checkinUnions 一覧
 var FEATURE_PAYPAY = true;    // 2026-09-30 復活（オーナー指示）
 var RSVP_UNIONS = ['REVE', 'BASE REVE'];   // 2026-10 ユニオン名変更（BASE REVE→REVE）。旧名は移行が終わるまでの互換
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
-var gCoreAdmins = {};       // ユニオン名 → 兼務のユニオン管理者のUID（checkinUnions.coreAdmins・オーナーが指定）
+var gUnionAdmins = {};      // 🔒 ユニオン名 → 受付のユニオン管理者のUID（checkinUnions.unionAdmins・オーナーが受付で任命）
 var gLeaders = {};          // ⭐ ユニオン名 → リーダーのUID（checkinUnions.leaders・オーナーが指定）。名簿・集計の閲覧と研修担当の任命ができる
 var gUnionAddon = {};       // ユニオン名 → 追加オプションの設定（checkinUnions.addon・有効なものだけ）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
@@ -1866,10 +1867,10 @@ var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.g
 var gEvents = [];           // 表示月のイベント（gUnion 参加分）
 var gRec = null;            // 受付中 {ev, roster:{no:member}, att:{id:rec}, unsub}
 function isOwner(){ return !!gUser && OWNER_UIDS.indexOf(gUser.uid) >= 0; }
-// コア管理者 = オーナー or MAPのユニオン管理者(role=admin)。受付管理者の任命はこの権限のみ
+// コア管理者（ユニオン管理者）= オーナー or オーナーが受付で任命した人（checkinUnions.unionAdmins）。受付管理者の任命はこの権限のみ
+// 🔒 v102: NAVIGATORの管理者（role=admin）・NAVIGATORの兼務（coreAdmins）だけでは、受付のユニオン管理者にならない
 function isCoreAdmin(un){
-  return isOwner() || (gProf && gProf.role === 'admin' && gProf.union === un)
-    || !!(gUser && (gCoreAdmins[un] || []).indexOf(gUser.uid) >= 0);   // 兼務のユニオン管理者（オーナーが指定）
+  return isOwner() || !!(gUser && (gUnionAdmins[un] || []).indexOf(gUser.uid) >= 0);
 }
 // 💴 会計を扱える人: オーナー／そのイベントの主催・参加ユニオンのユニオン管理者・受付管理者（兼務含む）。一般メンバーは不可
 function canFinEv(ev){
@@ -2167,10 +2168,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v101';
+var APP_VER = 'v102';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v102', d: '2026/10/25', items: ['🛡 受付のユニオン管理者は、オーナーが受付で任命した人だけになりました（NAVIGATORの管理者になっても自動では受付のユニオン管理者になりません。今までの管理者はそのまま引き継いでいます）', '📱 名簿で「無効」にする時に確認画面を出し、NAVIGATORも使えなくなるかを表示するようにしました。NAVIGATORのアカウントが紐付いていなければ、同じ名前のアカウントをその場で紐付けてNAVIGATORも止められます（受付で有効に戻すと、また使えます）'] },
   { v: 'v101', d: '2026/10/25', items: ['⭐ 新しい立場「リーダー」ができました（オーナーがユニオンごとに指定）。リーダーは名簿と集計を見られて、研修生登録の担当を任命できます（研修生の登録も可）', '🔒 名簿・集計タブは、オーナー・ユニオン管理者・受付管理者・リーダーだけに表示するようにしました（受付はこれまで通り誰でもできます）'] },
   { v: 'v100', d: '2026/10/25', items: ['🗑 名簿からメンバーを削除した時は、その人のスマホ会員証も一緒に無効にするようにしました（古いURLを開いても会員証が出ません）'] },
   { v: 'v99', d: '2026/10/25', items: ['⚠️ 研修生・会員を削除する時は「本当に削除しますか？」の確認画面を出すようにしました（名前と消えるものを確認し、「理解した上で削除します」にチェックしてから削除）'] },
@@ -5330,17 +5332,37 @@ $('btnProfile').onclick = function(){
   }).catch(function(e){ $('pfErr').textContent = 'エラー: ' + e.message; });
 };
 
+/* 🔒 v102: 受付のユニオン管理者を「受付で任命した人だけ」にした時の引き継ぎ（オーナーが開いた時に1回だけ・裏で）。
+   その時点で受付のユニオン管理者だった人（NAVIGATORの管理者 role=admin のそのユニオン所属・兼務 coreAdmins）を
+   checkinUnions/{un}.unionAdmins に入れて ckMig33 の印を付ける。あとはオーナーが「👑 ユニオン管理者」で外せる */
+function ckMig33(list){
+  list.forEach(function(x){
+    db.collection('users').where('union', '==', x.un).get().then(function(qs){
+      var arr = (x.d.unionAdmins || []).slice();
+      function add(uid){ if(uid && arr.indexOf(uid) < 0) arr.push(uid); }
+      qs.forEach(function(u){ var v = u.data(); if(v.role === 'admin' && v.status !== 'disabled') add(u.id); });
+      (x.d.coreAdmins || []).forEach(add);
+      return db.collection('checkinUnions').doc(x.id).set({ unionAdmins: arr, ckMig33: true }, { merge: true }).then(function(){
+        gUnionAdmins[x.un] = arr;
+        if($('vApp') && !$('vApp').classList.contains('hide')){ refreshUnionSelectors(); ckApplyFinUi(); if(gMembersLoaded) renderRoster(); }
+      });
+    }).catch(function(e){ console.warn('ckMig33', x.un, e); });
+  });
+}
+
 /* ---------- 起動 ---------- */
 function afterLogin(){
   db.collection('checkinUnions').get().then(function(qs){
     gUnions = [];
     gCkAdmins = {};
+    var mig = [];
     qs.forEach(function(d){
       var un = d.data().name || d.id;
       gUnions.push(un);
       gCkAdmins[un] = d.data().admins || [];
-      gCoreAdmins[un] = d.data().coreAdmins || [];
+      gUnionAdmins[un] = d.data().unionAdmins || [];
       gLeaders[un] = d.data().leaders || [];
+      if(isOwner() && !d.data().ckMig33) mig.push({ id: d.id, un: un, d: d.data() });
       gHideMoney[un] = !!d.data().hideMoney;
       gRcptDef[un] = d.data().rcptDefault !== false;   // 🧾 新しく作るイベントの領収書（既定: 発行する）
       gUnionPrefix[un] = d.data().noPrefix || '';
@@ -5348,12 +5370,13 @@ function afterLogin(){
       gUnionAddon[un] = (ad && ad.on && ad.price > 0) ? ad : null;
     });
     gUnions.sort();
+    if(mig.length) ckMig33(mig);
     if(gUnions.indexOf(gUnion) < 0){
       // 自ユニオンが未有効化
       if(isOwner() && gUnions.length){ gUnion = gUnions[0]; enterApp(); return; }
       $('actMsg').textContent = isAdminHere() || isOwner()
         ? '「' + gUnion + '」はまだ受付システムで有効化されていません。有効化すると名簿の登録とイベント作成ができるようになります。'
-        : '「' + gUnion + '」はまだ受付システムで有効化されていません。ユニオンの管理者に有効化を依頼してください。';
+        : '「' + gUnion + '」はまだ受付システムで有効化されていません。オーナーに有効化を依頼してください。';
       $('btnActivate').classList.toggle('hide', !(isAdminHere() || isOwner()));
       showView('vActivate');
       return;
@@ -5369,7 +5392,7 @@ $('btnActivate').onclick = function(){
   }).then(function(){ afterLogin(); })
   .catch(function(e){
     $('actErr').textContent = (e.code === 'permission-denied')
-      ? '権限がありません。ユニオン管理者（role=admin）のみ有効化できます。'
+      ? '権限がありません。有効化できるのはオーナーだけです。'
       : 'エラー: ' + e.message;
   });
 };
@@ -5571,7 +5594,7 @@ function openCkAdminsModal(un, users, cur, xRows){
     + 'ユニオン管理者とオーナーのみです。</p>'
     + '<div style="max-height:36vh;overflow:auto;">'
     + users.map(function(u, i){
-        var isRoleAdmin = u.role === 'admin';
+        var isRoleAdmin = (gUnionAdmins[un] || []).indexOf(u.uid) >= 0;   // ユニオン管理者（オーナーが任命）は元から全権
         return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
           + '<input type="checkbox" id="cka_' + i + '"' + (cur.indexOf(u.uid) >= 0 ? ' checked' : '')
           + (isRoleAdmin ? ' disabled checked' : '') + '>'
@@ -5630,7 +5653,7 @@ function openCkAdminsModal(un, users, cur, xRows){
   $('ckaSave').onclick = function(){
     var arr = [];
     users.forEach(function(u, i){
-      if(u.role === 'admin') return;   // ユニオン管理者は元から全権なのでリストには入れない
+      if((gUnionAdmins[un] || []).indexOf(u.uid) >= 0) return;   // ユニオン管理者は元から全権なのでリストには入れない
       var cb = $('cka_' + i);
       if(cb && cb.checked) arr.push(u.uid);
     });
@@ -5681,7 +5704,7 @@ $('btnTrainers').onclick = function(){
       + '（名簿の編集や正規メンバーの登録はできません）。管理者・リーダーは任命なしで常に操作できます。</p>'
       + '<div style="max-height:44vh;overflow:auto;">'
       + users.map(function(u, i){
-          var isRoleAdmin = u.role === 'admin';
+          var isRoleAdmin = (gUnionAdmins[un] || []).indexOf(u.uid) >= 0;   // ユニオン管理者は任命なしで常に可
           return '<div style="display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);">'
             + '<input type="checkbox" id="trn_' + i + '"' + (cur.indexOf(u.uid) >= 0 ? ' checked' : '')
             + (isRoleAdmin ? ' disabled checked' : '') + '>'
@@ -5728,7 +5751,7 @@ $('btnTrainers').onclick = function(){
     $('trnSave').onclick = function(){
       var arr = [];
       users.forEach(function(u, i){
-        if(u.role === 'admin') return;
+        if((gUnionAdmins[un] || []).indexOf(u.uid) >= 0){ if(cur.indexOf(u.uid) >= 0) arr.push(u.uid); return; }   // 管理者の行は変えない
         var cb = $('trn_' + i);
         if(cb && cb.checked) arr.push(u.uid);
       });
@@ -5743,21 +5766,23 @@ $('btnTrainers').onclick = function(){
     };
   }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
 };
-/* ⭐ リーダーの設定（オーナーのみ）: 名簿タブの「⭐ リーダー」ボタン */
-$('btnLeaders').onclick = function(){
+/* ⭐ リーダーの設定・🛡 ユニオン管理者の任命（オーナーのみ）: 名簿タブのボタン */
+function ckOwnerListOpen(key){
   if(!isOwner()) return;
   var un = gRosterUnion;
   db.collection('checkinUnions').doc(un).get().then(function(sn){
-    var cur = (sn.exists && sn.data().leaders) || [];
+    var cur = (sn.exists && sn.data()[key]) || [];
     return Promise.all(cur.map(function(uid){
       return db.collection('users').doc(uid).get().then(function(u){
         var d = u.exists ? u.data() : {};
         return { uid: uid, name: d.name || uid.slice(0, 8), union: d.union || '?', role: d.role || '', checked: true };
       }).catch(function(){ return { uid: uid, name: uid.slice(0, 8), union: '?', role: '', checked: true }; });
     }));
-  }).then(function(rows){ coreAdminsModal(un, rows, 'leaders'); })
+  }).then(function(rows){ coreAdminsModal(un, rows, key === 'leaders' ? 'leaders' : ''); })
   .catch(function(e){ toast('読込エラー: ' + e.message); });
-};
+}
+$('btnLeaders').onclick = function(){ ckOwnerListOpen('leaders'); };
+$('btnUnionAdmins').onclick = function(){ ckOwnerListOpen('unionAdmins'); };
 /* 👥 管理者一覧（閲覧用）: 誰がユニオン管理者・受付管理者・研修生登録の担当なのかを誰でも確認できる */
 $('btnAdminsView').onclick = function(){
   var un = gRosterUnion;
@@ -5772,7 +5797,7 @@ $('btnAdminsView').onclick = function(){
       byUid[d.id] = { name: u.name || d.id.slice(0, 8), union: u.union || un, role: u.role || '' };
     });
     var s0 = res[1].exists ? res[1].data() : {};
-    var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice(), cores = (s0.coreAdmins || []).slice(), leaders = (s0.leaders || []).slice();
+    var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice(), cores = (s0.unionAdmins || []).slice(), leaders = (s0.leaders || []).slice();
     // 他ユニオン所属の兼務者はプロフィールを個別取得して所属付きで表示
     var need = {};
     admins.concat(trainers, cores, leaders).forEach(function(uid){ if(!byUid[uid]) need[uid] = 1; });
@@ -5789,16 +5814,10 @@ $('btnAdminsView').onclick = function(){
           + (u.union !== un ? '<span class="pill n">所属: ' + esc(u.union) + '</span>' : '')
           + (pill || '') + '</div>';
       }
-      var roleAdmins = Object.keys(byUid).filter(function(uid){
-        return byUid[uid].role === 'admin' && byUid[uid].union === un;
-      });
-      var h = '<label>ユニオン管理者（アカウント権限）</label>'
-        + (roleAdmins.map(function(uid){ return row(uid, '<span class="pill g">ユニオン管理者</span>'); }).join('')
+      var h = '<label>🛡 ユニオン管理者（オーナーが受付で任命）</label>'
+        + (cores.map(function(uid){ return row(uid, '<span class="pill g">ユニオン管理者</span>'); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
-        + '<label style="margin-top:14px;">🔗 ユニオン管理者（兼務・オーナーが指定）</label>'
-        + (cores.map(function(uid){ return row(uid, '<span class="pill g">兼務</span>'); }).join('')
-          || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
-        + (isOwner() ? '<div class="btns" style="justify-content:flex-start;margin-top:6px;"><button id="avCore">✏️ 兼務のユニオン管理者を設定</button></div>' : '')
+        + (isOwner() ? '<div class="btns" style="justify-content:flex-start;margin-top:6px;"><button id="avCore">✏️ ユニオン管理者を任命</button></div>' : '')
         + '<label style="margin-top:14px;">👑 受付管理者（任命制・管理者と同じ操作ができる）</label>'
         + (admins.map(function(uid){ return row(uid, ''); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
@@ -5814,7 +5833,7 @@ $('btnAdminsView').onclick = function(){
         + '<div class="btns"><button id="avClose">閉じる</button></div>', true);
       $('avClose').onclick = closeModal;
       if($('avCore')) $('avCore').onclick = function(){
-        coreAdminsModal(un, cores.map(function(uid){ var u = byUid[uid] || {}; return { uid: uid, name: u.name || uid.slice(0, 8), union: u.union || '?', checked: true }; }));
+        coreAdminsModal(un, cores.map(function(uid){ var u = byUid[uid] || {}; return { uid: uid, name: u.name || uid.slice(0, 8), union: u.union || '?', role: u.role || '', checked: true }; }));
       };
       if($('avLead')) $('avLead').onclick = function(){
         coreAdminsModal(un, leaders.map(function(uid){ var u = byUid[uid] || {}; return { uid: uid, name: u.name || uid.slice(0, 8), union: u.union || '?', role: u.role || '', checked: true }; }), 'leaders');
@@ -5822,23 +5841,25 @@ $('btnAdminsView').onclick = function(){
     });
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
 };
-/* 🔗 兼務のユニオン管理者（オーナーのみ）: 他のユニオン所属のユニオン管理者を、このユニオンでもユニオン管理者として扱う。
-   受付管理者の任命・会計の操作ログなど、ユニオン管理者だけの操作もできる（checkinUnions/{un}.coreAdmins） */
+/* 🛡 ユニオン管理者の任命（オーナーのみ・checkinUnions/{un}.unionAdmins）。所属ユニオンに関係なく選べる（複数ユニオンの管理も可）。
+   受付管理者の任命・会計の操作ログなど、ユニオン管理者だけの操作ができる。
+   v102: NAVIGATORの管理者・NAVIGATORの兼務（coreAdmins）とは別。受付ではここで任命した人だけがユニオン管理者 */
 // ⭐ kind === 'leaders' のときは「リーダー」の設定（checkinUnions/{un}.leaders・オーナーのみ）。同じユニオンの人も選べる
 function coreAdminsModal(un, rows, kind){
   if(!isOwner()) return;
   var lead = kind === 'leaders';
-  var others = lead ? [un].concat(gUnions.filter(function(u){ return u !== un; })) : gUnions.filter(function(u){ return u !== un; });
+  var others = [un].concat(gUnions.filter(function(u){ return u !== un; }));
   modal((lead
       ? '<h2>⭐ リーダー — ' + esc(un) + '</h2>'
         + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">チェックした人は、このユニオンの<b>名簿と集計を見られて（編集はできません）、研修生登録の担当を任命</b>できます。'
         + '研修生の登録もできます。イベント・会計・受付管理者の任命はできません。1人を複数のユニオンのリーダーにもできます。設定できるのはオーナーだけです。</p>'
-      : '<h2>🔗 兼務のユニオン管理者 — ' + esc(un) + '</h2>'
-        + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">チェックした人は、所属ユニオンに関係なく、このユニオンの<b>ユニオン管理者</b>として扱われます'
-        + '（受付管理者の任命・会計の操作ログもできます）。設定できるのはオーナーだけです。</p>')
+      : '<h2>🛡 ユニオン管理者 — ' + esc(un) + '</h2>'
+        + '<p style="font-size:13px;color:var(--sub);margin:0 0 10px;">チェックした人は、このユニオンの<b>ユニオン管理者</b>になります'
+        + '（名簿の編集・イベント・会計・受付管理者や研修担当の任命など）。所属ユニオンに関係なく選べます。任命できるのはオーナーだけです。'
+        + '<br>※NAVIGATORで管理者になっていても、ここで任命しない限り受付のユニオン管理者にはなりません。</p>')
     + '<div id="caList"></div>'
     + (others.length
-      ? '<label style="margin-top:12px;">' + (lead ? 'ユニオンの人を表示して追加' : '他のユニオンの人を追加') + '</label><div style="display:flex;gap:8px;align-items:center;">'
+      ? '<label style="margin-top:12px;">ユニオンの人を表示して追加</label><div style="display:flex;gap:8px;align-items:center;">'
         + '<select id="caUn" style="flex:1;min-width:0;">' + others.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('') + '</select>'
         + '<button id="caLoad">ユーザーを表示</button></div>'
       : '')
@@ -5849,7 +5870,7 @@ function coreAdminsModal(un, rows, kind){
         + '<input type="checkbox" id="cax_' + i + '"' + (r.checked ? ' checked' : '') + '>'
         + '<label for="cax_' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;flex:1;">' + esc(r.name) + '</label>'
         + '<span class="pill n">所属: ' + esc(r.union) + '</span>'
-        + (r.role === 'admin' && !lead ? '<span class="pill g">所属先の管理者</span>' : '') + '</div>';
+        + (r.role === 'admin' ? '<span class="pill">NAVIGATOR管理者</span>' : '') + '</div>';
     }).join('') || '<p style="font-size:12px;color:var(--sub);margin:4px 0;">まだいません。下で選んで追加できます。</p>';
     rows.forEach(function(r, i){ var cb = $('cax_' + i); if(cb) cb.onchange = function(){ r.checked = cb.checked; }; });
   }
@@ -5876,12 +5897,12 @@ function coreAdminsModal(un, rows, kind){
   $('caSave').onclick = function(){
     var arr = rows.filter(function(r){ return r.checked; }).map(function(r){ return r.uid; });
     $('caSave').disabled = true;
-    db.collection('checkinUnions').doc(un).set(lead ? { leaders: arr } : { coreAdmins: arr }, { merge: true }).then(function(){
-      if(lead) gLeaders[un] = arr; else gCoreAdmins[un] = arr;
+    db.collection('checkinUnions').doc(un).set(lead ? { leaders: arr } : { unionAdmins: arr }, { merge: true }).then(function(){
+      if(lead) gLeaders[un] = arr; else gUnionAdmins[un] = arr;
       closeModal();
-      toast((lead ? 'リーダー' : '兼務のユニオン管理者') + 'を保存しました（' + arr.length + '名）');
+      toast((lead ? 'リーダー' : 'ユニオン管理者') + 'を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます');
       refreshUnionSelectors(); ckApplyFinUi(); renderRoster();
-    }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, (lead ? 'リーダー' : '兼務') + 'の設定はオーナーのみ可能です')); });
+    }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, (lead ? 'リーダー' : 'ユニオン管理者') + 'の任命はオーナーのみ可能です')); });
   };
 }
 $('btnAddUnion').onclick = function(){
@@ -6015,7 +6036,7 @@ function ckRenameUnion(oldUn, newUn, log){
       var out = {}, k;
       for(k in src) out[k] = src[k];
       if(dst) for(k in dst){
-        if(['admins', 'trainers', 'coreAdmins'].indexOf(k) >= 0){
+        if(['admins', 'trainers', 'coreAdmins', 'unionAdmins', 'leaders'].indexOf(k) >= 0){
           out[k] = (src[k] || []).concat((dst[k] || []).filter(function(x){ return (src[k] || []).indexOf(x) < 0; }));
         } else if(dst[k] !== '' && dst[k] != null) out[k] = dst[k];
       }
@@ -6853,6 +6874,7 @@ function renderRoster(){
   $('btnFreeMembers').classList.toggle('hide', !canEditUnion(gRosterUnion));
   $('btnTrainers').classList.toggle('hide', !(isCoreAdmin(gRosterUnion) || isLeader(gRosterUnion)));   // 🎓 任命はユニオン管理者とリーダーだけ（受付管理者は不可）
   $('btnLeaders').classList.toggle('hide', !isOwner());   // ⭐ リーダーの指定はオーナーだけ
+  $('btnUnionAdmins').classList.toggle('hide', !isOwner());   // 🛡 ユニオン管理者の任命もオーナーだけ
   $('btnAddMember').classList.toggle('hide', !edit);
   $('btnCsvIn').classList.toggle('hide', !edit);
   $('btnGroupRen').classList.toggle('hide', !edit);
@@ -7239,6 +7261,15 @@ function memberAction(m, a){
   if(a === 'card') cardModal(m);
   if(a === 'edit') memberForm(m);
   if(a === 'tog'){
+    // 📱 v102: 無効にする時は確認画面で、NAVIGATORのアカウントも止まるか（紐付け）を見せる・その場で紐付けられる
+    if(!ckMemberOff(m)){ ckOffConfirm(m, function(linkTo){ ckTogNow(m, linkTo); }); return; }
+    ckTogNow(m, null);
+  }
+  memberAction2(m, a);
+}
+function ckTogNow(m, linkTo){
+  var no = m.no;
+  {
     // 無効化（旧「休会」も統合）: 稼働率の分母から外れ、受付スキャンと先のハウディの表示が止まる。
     // 領収書の控え・出席履歴・会員証データはそのまま残り、「有効化」でいつでも戻せる
     var toOff = !ckMemberOff(m);
@@ -7269,9 +7300,72 @@ function memberAction(m, a){
           ? '無効にしました（集計・受付の対象外。領収書と出席履歴は残ります）'
           : '有効化しました（集計・受付に戻ります）'));
         loadMembers();
+        // 📱 NAVIGATORのアカウントを名簿と紐付ける → NAVIGATORも使えなくなる（受付で有効に戻せば使える）
+        if(toOff && linkTo) db.collection('users').doc(linkTo.uid).update({ ckNo: no, ckSetBy: gUser.uid, ckSetAt: new Date().toISOString() })
+          .then(function(){ toast(m.name + ' さんを無効にし、NAVIGATORのアカウント（' + (linkTo.name || '') + '）も止めました'); })
+          .catch(function(err){ toast(permMsg(err, 'NAVIGATORのアカウントと紐付けられませんでした（NAVIGATORのアカウント管理で紐付けてください）')); });
       })
       .catch(function(err){ toast(permMsg(err, '名簿の編集はユニオン管理者・受付管理者のみ可能です')); });
   }
+}
+/* 📱 v102: 無効にする前の確認。NAVIGATORのアカウント（users.ckNo＝この会員番号）が紐付いていれば「NAVIGATORも止まる」、
+   なければ同じユニオンで同じ名前のアカウントを候補に出して、その場で紐付けられる（紐付けない＝NAVIGATORは使えるまま） */
+function ckOffNav(m){
+  return db.collection('users').where('ckNo', '==', m.no).get().then(function(qs){
+    var linked = [];
+    qs.forEach(function(d){ var u = d.data(); linked.push({ uid: d.id, name: u.name || '', role: u.role || '', status: u.status || '' }); });
+    if(linked.length) return { linked: linked, cands: [] };
+    return db.collection('users').where('union', '==', m.union || '').get().then(function(q2){
+      var ks = [groupKey(m.name)], cands = [];
+      if(m.claimName && groupKey(m.claimName) !== ks[0]) ks.push(groupKey(m.claimName));
+      q2.forEach(function(d){
+        var u = d.data();
+        if(u.ckNo || u.status === 'disabled' || !u.name || ks.indexOf(groupKey(u.name)) < 0) return;
+        cands.push({ uid: d.id, name: u.name, role: u.role || '', area: u.area || '' });
+      });
+      return { linked: [], cands: cands };
+    });
+  }).catch(function(){ return { err: true, linked: [], cands: [] }; });
+}
+function ckNavExempt(u){ return OWNER_UIDS.indexOf(u.uid) >= 0 || u.role === 'admin'; }
+function ckOffConfirm(m, go){
+  ckOffNav(m).then(function(r){
+    var nav;
+    if(r.linked.length){
+      var stop = r.linked.filter(function(u){ return !ckNavExempt(u); });
+      nav = stop.length
+        ? '📱 <b>NAVIGATOR</b>: 「' + esc(stop.map(function(u){ return u.name; }).join('・')) + '」のアカウントも<b>使えなくなります</b>（受付で有効に戻すと、また使えます）'
+        : '📱 <b>NAVIGATOR</b>: 紐付いているアカウント（' + esc(r.linked.map(function(u){ return u.name; }).join('・')) + '）はNAVIGATORの管理者なので、NAVIGATORは止まりません';
+    } else if(r.cands.length){
+      nav = '📱 <b>NAVIGATOR</b>: まだアカウントと紐付いていません。同じ名前のアカウントが見つかりました。<b>紐付けると、NAVIGATORも使えなくなります</b>（受付で有効に戻すと、また使えます）。'
+        + '<div style="margin-top:8px;">' + r.cands.map(function(u, i){
+            return '<label style="display:flex;align-items:center;gap:8px;margin:0;padding:7px 2px;border-bottom:1px solid var(--line);font-weight:400;color:var(--ink);font-size:14px;">'
+              + '<input type="radio" name="offNav" value="' + i + '"' + (r.cands.length === 1 ? ' checked' : '') + '>'
+              + '<span style="flex:1;">' + esc(u.name) + (u.area ? ' <small style="color:var(--sub);">' + esc(u.area) + '</small>' : '') + '</span>'
+              + (ckNavExempt(u) ? '<span class="pill n">NAVIGATOR管理者（止まりません）</span>' : '') + '</label>';
+          }).join('')
+        + '<label style="display:flex;align-items:center;gap:8px;margin:0;padding:7px 2px;font-weight:400;color:var(--ink);font-size:14px;">'
+        + '<input type="radio" name="offNav" value="-1"' + (r.cands.length === 1 ? '' : ' checked') + '><span>紐付けない（NAVIGATORは使えるまま）</span></label></div>';
+    } else {
+      nav = r.err
+        ? '📱 <b>NAVIGATOR</b>: アカウントを確認できませんでした（通信状態を確認してください）。NAVIGATORの利用は変わりません。'
+        : '📱 <b>NAVIGATOR</b>: 紐付いているアカウントがなく、同じ名前のアカウントも見つからないので、<b>NAVIGATORは使えるまま</b>です（必要ならNAVIGATORのアカウント管理で紐付けてください）。';
+    }
+    modal('<h2>⏸ 無効にする — ' + esc(m.name || '') + '（' + esc(m.no) + '）</h2>'
+      + '<p style="font-size:13.5px;margin:0 0 10px;">集計・受付の対象から外れます。領収書の控え・出席履歴はそのまま残り、「有効化」でいつでも戻せます。</p>'
+      + '<div id="offNavBox" style="font-size:13.5px;background:var(--soft,rgba(127,127,127,.08));border-radius:10px;padding:10px 12px;">' + nav + '</div>'
+      + '<div class="btns"><button id="offCancel">キャンセル</button><button class="primary" id="offGo">無効にする</button></div>');
+    $('offCancel').onclick = closeModal;
+    $('offGo').onclick = function(){
+      var pick = document.querySelector('input[name="offNav"]:checked'), to = null;
+      if(pick && +pick.value >= 0) to = r.cands[+pick.value];
+      closeModal();
+      go(to);
+    };
+  });
+}
+function memberAction2(m, a){
+  var no = m.no;
   if(a === 'promote'){
     if(!window.confirm(m.name + ' さんを正規メンバーに昇格しますか？\n会員証は同じURLのまま正規仕様に切り替わります。研修履歴は編集画面の「🎓 研修履歴」から確認できます。')) return;
     promoteTrainee(m, function(){ loadMembers(); });
@@ -8784,12 +8878,10 @@ function eventForm(ev){
     // オンライン受付イベントには環境責任者（=主催ユニオンの管理者名）を自動で載せる
     // （会員証は未ログインでイベントしか読めないため、保存時に取得してイベントに保持）
     var envPre = $('evOnline').checked
-      ? db.collection('users').where('union', '==', host).get().then(function(qs){
-          var names = [];
-          qs.forEach(function(d){
-            var u = d.data();
-            if(u.role === 'admin' && u.name) names.push(u.name);
-          });
+      ? Promise.all((gUnionAdmins[host] || []).map(function(uid){
+          return db.collection('users').doc(uid).get().then(function(d){ var u = d.exists ? d.data() : {}; return u.status !== 'disabled' ? (u.name || '') : ''; }).catch(function(){ return ''; });
+        })).then(function(L){
+          var names = L.filter(function(n){ return !!n; });
           return names.join('・') || ((ev && ev.onlineEnvName) || '');
         }).catch(function(){ return (ev && ev.onlineEnvName) || ''; })
       : Promise.resolve('');
@@ -9114,11 +9206,11 @@ function trainerEnter(){
     var d = sn.exists ? sn.data() : {};
     gUnionPrefix[gUnion] = d.noPrefix || '';   // 自動発番用（このページはafterLoginを通らない）
     gCkAdmins[gUnion] = d.admins || [];        // canEditUnion（検索パネルの管理者判定）用
-    gCoreAdmins[gUnion] = d.coreAdmins || [];
+    gUnionAdmins[gUnion] = d.unionAdmins || [];
     gLeaders[gUnion] = d.leaders || [];
-    var isAdmin = isOwner() || gProf.role === 'admin' || ((d.admins || []).indexOf(gUser.uid) >= 0) || ((d.coreAdmins || []).indexOf(gUser.uid) >= 0);
+    var isAdmin = isOwner() || ((d.admins || []).indexOf(gUser.uid) >= 0) || ((d.unionAdmins || []).indexOf(gUser.uid) >= 0);
     var allowed = isAdmin || ((d.trainers || []).indexOf(gUser.uid) >= 0) || ((d.leaders || []).indexOf(gUser.uid) >= 0);   // ⭐ リーダーも研修生を登録できる
-    gTrAdmin = isOwner() || ((d.admins || []).indexOf(gUser.uid) >= 0) || ((d.coreAdmins || []).indexOf(gUser.uid) >= 0) || (gProf.role === 'admin' && gProf.union === gUnion);
+    gTrAdmin = isOwner() || ((d.admins || []).indexOf(gUser.uid) >= 0) || ((d.unionAdmins || []).indexOf(gUser.uid) >= 0);
     if(!allowed){
       $('trDeny').classList.remove('hide');
       $('trDeny').textContent = '研修生登録の担当に任命されていません。ユニオンの管理者に「🎓 研修生登録の担当」への任命を依頼してください。';
@@ -9959,20 +10051,16 @@ function coNeedHtml(px, mgr, intv){
     + '<label for="' + px + 'Intv">面談者<b class="req">必須</b></label><input type="text" id="' + px + 'Intv" value="' + esc(intv || '') + '" autocomplete="off">'
     + '<p class="mc-err" id="' + px + 'NeedErr" style="margin:6px 0 0;"></p></div>';
 }
-// 管理者の候補: そのユニオンのユニオン管理者（アカウント権限）＋兼務のユニオン管理者。前回入れた名前も
+// 管理者の候補: そのユニオンのユニオン管理者（オーナーが受付で任命）。前回入れた名前も
 function coNeedBind(px, un){
   var box = $(px + 'MgrC'), inp = $(px + 'Mgr');
   [inp, $(px + 'Intv')].forEach(function(x){ if(x) x.addEventListener('input', function(){ x.classList.remove('miss'); $(px + 'NeedErr').textContent = ''; }); });
   if(!box || !un) return;
-  Promise.all([
-    db.collection('users').where('union', '==', un).where('role', '==', 'admin').get().catch(function(){ return null; }),
-    db.collection('checkinUnions').doc(un).get().catch(function(){ return null; })
-  ]).then(function(r){
+  db.collection('checkinUnions').doc(un).get().catch(function(){ return null; }).then(function(sn){
     var names = [], add = function(n){ n = String(n || '').trim(); if(n && names.indexOf(n) < 0) names.push(n); };
     add(coMgrLast(un));
-    if(r[0]) r[0].forEach(function(d){ var u = d.data(); if(u.status !== 'disabled') add(u.name); });
-    var cores = r[1] && r[1].exists ? (r[1].data().coreAdmins || []) : [];
-    return Promise.all(cores.map(function(uid){ return db.collection('users').doc(uid).get().then(function(x){ if(x.exists) add(x.data().name); }).catch(function(){}); }))
+    var cores = sn && sn.exists ? (sn.data().unionAdmins || []) : [];
+    return Promise.all(cores.map(function(uid){ return db.collection('users').doc(uid).get().then(function(x){ if(x.exists && x.data().status !== 'disabled') add(x.data().name); }).catch(function(){}); }))
       .then(function(){ return names; });
   }).then(function(names){
     if(!$(px + 'MgrC')) return;
