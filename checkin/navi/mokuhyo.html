@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>今月の目標の設定手順｜NAVIGATOR</title>
+<!-- NAVIGATORの使い方の手順書（だれでも見られる公開ページ）。
+     /checkin/ の下に置くのは、NAVIGATORのサービスワーカー（sw.js）が /checkin を「ネットワーク優先・別キャッシュ」で扱うため。
+     /checkin 以外（例 /guide/）だと、古いサービスワーカーがこのページをアプリ本体（index.html）のキャッシュに入れてしまう -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* 縦1列の手順書：スマホで上から順に読む。各ステップ＝説明＋アプリの画面（押す所に輪） */
+:root {
+  --bg: #f4f6f8;
+  --paper: #ffffff;
+  --ink: #17202b;
+  --mid: #4f5b69;
+  --dim: #7b8794;
+  --line: #dde3ea;
+  --mint: #0f9f7c;
+  --mint-soft: #e2f6f0;
+  --alert: #c2333a;
+  --alert-soft: #fdecec;
+  --ring: #ff7a1a;
+  --f-display: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --f-body: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117; --paper: #161c24; --ink: #e8edf2; --mid: #b2bcc8; --dim: #8693a2; --line: #283240;
+    --mint: #2ee0b6; --mint-soft: #123128; --alert: #ff8a8f; --alert-soft: #3a1a1d; --ring: #ff9a45;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117; --paper: #161c24; --ink: #e8edf2; --mid: #b2bcc8; --dim: #8693a2; --line: #283240;
+  --mint: #2ee0b6; --mint-soft: #123128; --alert: #ff8a8f; --alert-soft: #3a1a1d; --ring: #ff9a45;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.35; }
+h1 { font-size: 26px; font-weight: 900; }
+h2 { font-size: 19px; font-weight: 900; }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--mint); }
+.lead { color: var(--mid); }
+.msg {
+  display: inline-block; padding: 2px 10px; border-radius: 8px; font-weight: 700;
+  background: var(--alert-soft); color: var(--alert); white-space: nowrap;
+}
+.box { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.box.tip { border-color: color-mix(in srgb, var(--mint) 45%, var(--line)); }
+ol.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; counter-reset: st; }
+ol.steps > li {
+  counter-increment: st; background: var(--paper); border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px; display: grid; grid-template-columns: 1fr; gap: 14px; min-width: 0;
+}
+.sthd { display: flex; gap: 12px; align-items: flex-start; }
+.sthd::before {
+  content: counter(st); flex: none; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--mint); color: var(--paper); font-family: var(--f-display); font-weight: 900; font-size: 18px;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+.sthd div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sthd p { color: var(--mid); font-size: 14px; }
+.shot { position: relative; width: 100%; max-width: 300px; margin: 0 auto; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: #0a0d12; }
+.shot.wide { max-width: 100%; border-radius: 12px; }
+.shot img { display: block; width: 100%; height: auto; }
+.tap {
+  position: absolute; transform: translate(-50%, -50%); border: 3px solid var(--ring); border-radius: 999px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ring) 30%, transparent); pointer-events: none;
+}
+.tap span {
+  position: absolute; left: 50%; top: 100%; transform: translate(-50%, 6px); white-space: nowrap;
+  background: var(--ring); color: #fff; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px;
+}
+.tap.up span { top: auto; bottom: 100%; transform: translate(-50%, -6px); }
+@media (prefers-reduced-motion: no-preference) {
+  .tap { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--ring) 12%, transparent); } }
+}
+.qa { display: flex; flex-direction: column; gap: 14px; }
+.qa dt { font-weight: 700; }
+.qa dd { margin: 2px 0 0; color: var(--mid); font-size: 14px; }
+.foot { font-size: 12px; color: var(--dim); text-align: center; }
+b.k { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <div class="eyebrow">NAVIGATOR の使い方</div>
+    <h1>「今月の目標が未設定です」を消すには</h1>
+    <p class="lead">HOME の下に出る赤い帯 <span class="msg">⚠ 今月の目標が未設定です</span> は、<b class="k">今月の目標を最後の「設定する」まで押していない</b>と出ます。計画シートを書いただけでは消えません。下の手順で設定すると消えます（約1分）。</p>
+  </header>
+
+  <section class="box tip">
+    <h2>まず、アプリを最新版にしてください</h2>
+    <p>v836 から、赤い帯を押すとすぐ目標の画面が開くようになりました。赤い帯を押しても目標の画面が開かない時は、アプリを一度閉じて開き直してください（最新版になります）。</p>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>スマホでの手順</h2>
+    <ol class="steps">
+      <li>
+        <div class="sthd"><div><h3>赤い帯を押す</h3><p>HOME の一番上の PLAN を押しても同じ画面が開きます。</p></div></div>
+        <div class="shot"><img src="mokuhyo-1.jpg" alt="HOME 画面。上に PLAN のタイル、下に赤い帯「今月の目標が未設定です」"><i class="tap up" style="left:50%;top:87.1%;width:94%;height:5%"><span>ここ</span></i></div>
+      </li>
+      <li>
+        <div class="sthd"><div><h3>S稼働の目標の人数を選んで、右下のボタンで先へ進む</h3><p>S稼働だけは<b class="k">必ず</b>決めます（「次の段」と書いてある数字がおすすめ）。ほかの項目（コミッション・チームの数字など）は空のままでも大丈夫です。右下のボタンを押して、最後の「確認」まで進みます（全部で9画面）。</p></div></div>
+        <div class="shot"><img src="mokuhyo-2.jpg" alt="S稼働の画面。人数の候補（3・4・5・10）と、右下に次へのボタン"><i class="tap" style="left:61.5%;top:45.5%;width:22%;height:6%"><span>人数を選ぶ</span></i><i class="tap up" style="left:80.5%;top:95.7%;width:34%;height:6.4%"><span>次へ</span></i></div>
+      </li>
+      <li>
+        <div class="sthd"><div><h3>最後の「確認」で、右下の「設定する」を押す</h3><p>「◯月の目標を設定しました」と出たら完了です。</p></div></div>
+        <div class="shot"><img src="mokuhyo-3.jpg" alt="確認の画面。右下に「設定する」のボタン"><i class="tap up" style="left:84%;top:95.7%;width:22%;height:6.4%"><span>設定する</span></i></div>
+      </li>
+      <li>
+        <div class="sthd"><div><h3>HOME で消えたか確かめる</h3><p>赤い帯が消えて、PLAN のタイルが「今週 あと◯件」に変わっていれば OK です。</p></div></div>
+        <div class="shot"><img src="mokuhyo-4.jpg" alt="設定後の HOME。赤い帯がなく、PLAN のタイルに「今週 あと11件」"></div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="box">
+    <h2>PC の手順</h2>
+    <p>PLAN を開いて、上のタブの<b class="k">「◯月の目標」</b>を押します。S稼働の目標の欄に人数を入れて、右上の<b class="k">「設定する」</b>を押せば完了です。</p>
+    <div class="shot wide"><img src="mokuhyo-pc.jpg" alt="PC の PLAN。上のタブに「10月の目標」、右上に「設定する」のボタン"><i class="tap" style="left:47%;top:28%;width:12%;height:30%"></i><i class="tap" style="left:91.6%;top:71%;width:10%;height:30%"></i></div>
+  </section>
+
+  <section class="box">
+    <h2>よくある質問</h2>
+    <dl class="qa">
+      <div><dt>計画シートを書いたのに消えません</dt><dd>計画シートとは別に、今月の目標を「設定する」まで押す必要があります。上の手順でできます。</dd></div>
+      <div><dt>毎月出ますか？</dt><dd>はい。月が変わると、その月の目標を設定するまで出ます。同じ手順で設定してください。</dd></div>
+      <div><dt>設定したあとで数字を変えられますか？</dt><dd>PLAN のいちばん上の「◯月の目標　なおす ›」（PC はタブの「◯月の目標」）から、いつでも直せます。直した数字はその場で保存されます。</dd></div>
+      <div><dt>「設定する」が押せません</dt><dd>S稼働の目標が空だと設定できません。手順 2 の画面で人数を選んでください。</dd></div>
+    </dl>
+  </section>
+
+  <p class="foot">NAVIGATOR v836 の画面で説明しています（画面の名前・数字は例です）</p>
+</div>
+</body>
+</html>
