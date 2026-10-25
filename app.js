@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v837';
+var APP_JS_VERSION = 'v838';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3605,7 +3605,7 @@ function renderAdminList() {
     html += pending.map(adminPendingRowHtml).join('');
     html += '<div style="height:6px;border-bottom:1px solid var(--border);margin-bottom:6px"></div>';
   }
-  html = _accPanelHtml() + _shAdmHtml() + _admUnFHtml() + html; // v831: 兼務の管理者はユニオンで絞れる // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
+  html = _accPanelHtml() + _shAdmHtml() + _unAdmHtml() + _admUnFHtml() + html; // v838: ユニオンとUPBD（オーナー） // v831: 兼務の管理者はユニオンで絞れる // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
   if (!others.length && !pending.length) { body.innerHTML = html + '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
   html += others.map(adminRowHtml).join('');
   body.innerHTML = html;
@@ -3803,6 +3803,7 @@ function adminToggleRole(uid) {
 }
 
 // ── ユニオン一覧（選択制）＋デフォルトUPBD（ユニオン管理者） ──
+// v838: オーナーがアカウント管理の「ユニオンとUPBD」で設定する（appConfig/unions.list）。設定がまだ無い・読めない時だけ下の一覧を使う
 var UNION_LIST = [
   { name:'GRANT',        upbd:'木村妃咲' },
   { name:'PRESTO',       upbd:'中原賢三' },
@@ -3829,12 +3830,126 @@ function _unionRenameHeal(user) {
   user.union = nu;
   if (user.uid && USE_FIREBASE) fsSet('users/' + user.uid, { union: nu }).catch(function(){});
 }
+var _unionCfg = null; // v838: appConfig/unions.list（オーナーが設定）
+function _unionList() {
+  if (_unionCfg && _unionCfg.length) return _unionCfg;
+  try { var c = JSON.parse(localStorage.getItem('gm_unions') || 'null'); if (Array.isArray(c) && c.length) return c; } catch (e) {}
+  return UNION_LIST;
+}
+// 起動時に読む（新規登録の画面でも使うので、ログイン前に読める設定。ルールで読み＝だれでも・書き＝オーナーだけ）
+function _unionCfgLoad() {
+  if (typeof db === 'undefined' || !db) return Promise.resolve();
+  return db.doc('appConfig/unions').get().then(function(d) {
+    var dd = d && d.exists ? (d.data() || {}) : null;
+    var L = dd && Array.isArray(dd.list) ? dd.list.filter(function(x) { return x && String(x.name || '').trim(); }).map(function(x) { return { name: String(x.name).trim(), upbd: String(x.upbd || '').trim() }; }) : null;
+    if (!L || !L.length) return;
+    var ch = JSON.stringify(L) !== JSON.stringify(_unionList());
+    _unionCfg = L;
+    try { localStorage.setItem('gm_unions', JSON.stringify(L)); } catch (e) {}
+    if (ch) _unionSelectsRefresh();
+  }).catch(function() {});
+}
+// 選択肢を作り直す（選んでいる値はそのまま）
+function _unionSelectsRefresh() {
+  [['signupUnion', '所属ユニオンを選択'], ['profileUnion', 'ユニオンを選択'], ['stUnion', 'ユニオンを選択']].forEach(function(t) {
+    var sel = document.getElementById(t[0]); if (!sel || sel.tagName !== 'SELECT') return;
+    var v = sel.value; sel.innerHTML = unionOptionsHtml(t[1]); _unionSelSet(sel, v);
+  });
+}
+// 一覧に無いユニオン（一覧から外した・名前を変えた）でも、その人のユニオンは選んだまま見せる
+function _unionSelSet(sel, val) {
+  if (!sel) return;
+  if (val && !Array.prototype.some.call(sel.options, function(o) { return o.value === val; })) { var o = document.createElement('option'); o.value = val; o.textContent = val; sel.appendChild(o); }
+  sel.value = val || '';
+}
 function unionOptionsHtml(placeholder) {
   var h = '<option value="">' + (placeholder || 'ユニオンを選択') + '</option>';
-  UNION_LIST.forEach(function(u){
-    h += '<option value="' + u.name + '" data-upbd="' + u.upbd + '">' + u.name + '</option>';
+  _unionList().forEach(function(u){
+    h += '<option value="' + evEsc(u.name) + '" data-upbd="' + evEsc(u.upbd || '') + '">' + evEsc(u.name) + '</option>';
   });
   return h;
+}
+// ── v838: アカウント管理（オーナー）：ユニオンとUPBD ──
+var _unEd = null;
+function _unAdmHtml() {
+  if (!(currentUser && isOwnerUid(currentUser.uid))) return '';
+  _accCss();
+  var L = _unionList(), noUp = L.filter(function(u) { return !u.upbd; }).length;
+  return '<div class="acc-box" id="unAdmBox"><div class="h">ユニオンとUPBD<small>登録・プロフィールで所属ユニオンを選んだ時に、UPBDの欄に入る名前</small></div>'
+    + '<div class="acc-st">' + L.length + 'ユニオン' + (noUp ? '・<span class="ng">UPBDが空 ' + noUp + '</span>' : '') + (_unionCfg ? '' : '・<span class="ng">まだ保存していません（アプリに入っている初期の一覧を使っています）</span>') + '</div>'
+    + '<div class="acc-acts"><span class="p" onclick="unAdmOpen()">ユニオンとUPBDを直す ›</span></div></div>';
+}
+function unAdmOpen() {
+  if (!(currentUser && isOwnerUid(currentUser.uid))) return;
+  _unEd = { L: _unionList().map(function(u) { return { name: u.name, upbd: u.upbd || '', old: u.name }; }) };
+  _unAdmRender();
+}
+function _unAdmSync() {
+  var E = _unEd, o = document.getElementById('accOv'); if (!E || !o) return;
+  [].forEach.call(o.querySelectorAll('#unAdmL .tdo-row'), function(r) {
+    var i = +r.getAttribute('data-i'), x = E.L[i]; if (!x) return;
+    x.name = String((r.querySelector('.un-n') || {}).value || '').trim();
+    x.upbd = String((r.querySelector('.un-u') || {}).value || '').trim();
+  });
+}
+function _unAdmRender() {
+  var E = _unEd; if (!E) return;
+  _accCss();
+  _accDlg('<div class="hd">ユニオンとUPBD<span onclick="_accDlgClose()">閉じる</span></div>'
+    + '<div class="nt">登録・プロフィールで所属ユニオンを選ぶと、右の名前がUPBDの欄に入ります（本人があとで直せます）。左の ⠿ を押したまま上下に動かすと、選ぶ時の並び順が変わります。</div>'
+    + '<div id="unAdmL" style="margin-top:8px">' + E.L.map(function(x, i) {
+      return '<div class="tdo-row un-r" data-i="' + i + '" style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)"><span class="tdo-handle" style="width:34px;height:34px">⠿</span>'
+        + '<input class="fi un-n" value="' + evEsc(x.name) + '" placeholder="ユニオン名" maxlength="30" style="flex:1;min-width:0;padding:8px 10px;font-size:15px">'
+        + '<input class="fi un-u" value="' + evEsc(x.upbd) + '" placeholder="UPBD（空でもOK）" maxlength="30" style="flex:1;min-width:0;padding:8px 10px;font-size:15px">'
+        + '<b style="flex:none;width:30px;text-align:center;color:#FF6B7F;cursor:pointer" onclick="unAdmDel(' + i + ')">✕</b></div>';
+    }).join('') + '</div>'
+    + '<div class="acc-acts"><span onclick="unAdmAdd()">＋ ユニオンを足す</span></div>'
+    + '<div class="nt">ユニオン名を変えたり外したりしても、もう登録している人の所属ユニオンは変わりません（その人の画面ではそのまま選ばれています）。</div>'
+    + '<div class="bt"><span onclick="_accDlgClose()">やめる</span><span class="p" onclick="unAdmSave()">保存する</span></div>');
+  _unAdmDnd(document.getElementById('unAdmL'));
+}
+function unAdmAdd() { if (!_unEd) return; _unAdmSync(); _unEd.L.push({ name: '', upbd: '', old: '' }); _unAdmRender(); setTimeout(function() { var r = document.querySelectorAll('#unAdmL .un-n'); if (r.length) r[r.length - 1].focus(); }, 30); }
+function unAdmDel(i) { if (!_unEd || !_unEd.L[i]) return; _unAdmSync(); var x = _unEd.L[i]; if (x.name && !confirm('「' + x.name + '」を一覧から外しますか？（登録ずみの人の所属ユニオンはそのままです）')) return; _unEd.L.splice(i, 1); _unAdmRender(); }
+function _unAdmDnd(box) { // ⠿ をつかんで上下に（チェック項目の設定と同じ動き）
+  if (!box) return;
+  var drag = null;
+  var rowAt = function(x, y) { var el = document.elementFromPoint(x, y); return el && el.closest ? el.closest('#unAdmL .tdo-row') : null; };
+  var begin = function(h) { drag = h.closest('.tdo-row'); if (!drag) return; drag.classList.add('tpl-dragging'); box.classList.add('tdo-drag-active'); };
+  var move = function(x, y, ev) { if (!drag) return; if (ev && ev.cancelable) ev.preventDefault(); var over = rowAt(x, y); if (!over || over === drag) return; var rc = over.getBoundingClientRect(); if (y < rc.top + rc.height / 2) over.parentNode.insertBefore(drag, over); else over.parentNode.insertBefore(drag, over.nextSibling); };
+  var end = function() {
+    if (!drag) return; drag.classList.remove('tpl-dragging'); box.classList.remove('tdo-drag-active'); drag = null;
+    if (!_unEd) return; _unAdmSync();
+    var ord = [].map.call(box.querySelectorAll('.tdo-row'), function(r) { return +r.getAttribute('data-i'); });
+    var out = ord.map(function(i) { return _unEd.L[i]; }).filter(Boolean);
+    _unEd.L.forEach(function(x, i) { if (ord.indexOf(i) < 0) out.push(x); });
+    _unEd.L = out; _unAdmRender();
+  };
+  box.addEventListener('touchstart', function(ev) { var h = ev.target && ev.target.closest ? ev.target.closest('.tdo-handle') : null; if (h) begin(h); }, { passive: true });
+  box.addEventListener('touchmove', function(ev) { move(ev.touches[0].clientX, ev.touches[0].clientY, ev); }, { passive: false });
+  box.addEventListener('touchend', end, { passive: true });
+  box.addEventListener('touchcancel', end, { passive: true });
+  box.addEventListener('mousedown', function(ev) {
+    var h = ev.target && ev.target.closest ? ev.target.closest('.tdo-handle') : null; if (!h) return;
+    ev.preventDefault(); begin(h);
+    var mm = function(e2) { move(e2.clientX, e2.clientY, e2); };
+    var mu = function() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); end(); };
+    document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu);
+  });
+}
+function unAdmSave() {
+  var E = _unEd; if (!E || !(currentUser && isOwnerUid(currentUser.uid))) return;
+  _unAdmSync();
+  var L = E.L.filter(function(x) { return x.name; }), seen = {}, dup = '';
+  L.forEach(function(x) { var k = x.name.toUpperCase(); if (seen[k]) dup = dup || x.name; seen[k] = 1; });
+  if (!L.length) { toast('ユニオンを1つ以上入れてください'); return; }
+  if (dup) { toast('「' + dup + '」が2つあります'); return; }
+  var ren = L.filter(function(x) { return x.old && x.old !== x.name; });
+  if (ren.length && !confirm(ren.map(function(x) { return x.old + ' → ' + x.name; }).join('\n') + '\n\nユニオン名を変えます。もう登録している人の所属ユニオンは変わりません。よろしいですか？')) return;
+  var list = L.map(function(x) { return { name: x.name, upbd: x.upbd }; });
+  db.doc('appConfig/unions').set({ list: list, at: new Date().toISOString(), by: currentUser.uid })
+    .then(function() { _unionCfg = list; try { localStorage.setItem('gm_unions', JSON.stringify(list)); } catch (e) {} _unionSelectsRefresh(); toast('✓ ユニオンとUPBDを保存しました'); renderAdminList(); })
+    .catch(function() { toast('保存できませんでした（ルールの反映をご確認ください）'); });
+  _accDlgClose(); _unEd = null;
 }
 // v393: 活動地域の選択肢はメンバー編集の「地域」と同じリスト（REGION_PRESETS）＋その他（自由入力）
 function areaOptionsHtml(ph) {
@@ -3912,7 +4027,7 @@ function openProfileModal() {
   if (el('profileArea')) { populateUnionSelects(); _areaSelectSet(el('profileArea'), currentUser.area || ''); } // v392: 選択式
   populateUnionSelects();
   // 選択制ユニオン：既に選び直し済みのユーザーだけ現在値を復元。旧ユーザーは未選択にして選び直しを強制。
-  if (el('profileUnion')) el('profileUnion').value = currentUser.unionSelectedV2 ? (currentUser.union || '') : '';
+  if (el('profileUnion')) _unionSelSet(el('profileUnion'), currentUser.unionSelectedV2 ? (currentUser.union || '') : ''); // v838: 一覧に無いユニオンでも選んだまま
   _profUnionLock(el('profileUnion')); // v831
   if (el('profileUpRuby'))el('profileUpRuby').value = currentUser.upRuby || '';
   if (el('profileUpBd')) el('profileUpBd').value  = currentUser.upBd || '';
@@ -4205,8 +4320,9 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v837';
+  var DATA_VERSION = 'v838';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
+  _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
     localStorage.removeItem('grooveMap_v2');
@@ -6314,6 +6430,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v838', d:'2026-10-25', items:['所属ユニオンを選んだ時に入るUPBDの名前を、オーナーがアカウント管理の「ユニオンとUPBD」で直せるようにしました（ユニオンの追加・並べ替えもできます）'] },
   { v:'v837', d:'2026-10-25', items:['使い勝手レビューにまだ答えていない人は、アプリを開いてすぐHOMEのいちばん上にお願いが出るようにしました（前はほかの画面から戻るまで出ないことがありました）','答えるとHOMEのお願いがすぐ消えるようにしました'] },
   { v:'v836', d:'2026-10-25', items:['「今月の目標が未設定です」の赤い帯・HOMEのPLANを押すと、◯月の目標を決める画面がすぐ開くようにしました（前はPLANの入口が開くだけで、行き方がわかりにくかった）','PLANの入口のいちばん上に「◯月の目標」を出しました。PCはPLANの上のタブに「◯月の目標」'] },
   { v:'v835', d:'2026-10-24', items:['PLANのファーストボーナスの金額の下に「※概算（税抜）です。実際の支給額は条件や実績によって変わり、この金額を保証するものではありません」と小さく出すようにしました'] },
@@ -21466,7 +21583,7 @@ function _stRender() {
   var pg = document.getElementById('setPg');
   if (!pg) { pg = document.createElement('div'); pg.id = 'setPg'; document.body.appendChild(pg); }
   pg.innerHTML = h; pg.scrollTop = 0;
-  if (_stPg === 'prof') { var su = document.getElementById('stUnion'); if (su) { su.value = u.unionSelectedV2 ? (u.union || '') : ''; _profUnionLock(su); } var sa = document.getElementById('stArea'); if (sa) _areaSelectSet(sa, u.area || ''); }
+  if (_stPg === 'prof') { var su = document.getElementById('stUnion'); if (su) { _unionSelSet(su, u.unionSelectedV2 ? (u.union || '') : ''); _profUnionLock(su); } var sa = document.getElementById('stArea'); if (sa) _areaSelectSet(sa, u.area || ''); }
 }
 function stSaveProf() {
   var g = function(id) { return ((document.getElementById(id) || {}).value || '').trim(); };

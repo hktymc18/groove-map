@@ -231,6 +231,17 @@ service cloud.firestore {
       allow read, write: if isOwnerAdmin() || admOf(un);
     }
 
+    // ============ v838: ユニオンとUPBD（登録・プロフィールで所属ユニオンを選ぶと入るUPBD） ============
+    //   appConfig/unions = { list:[{name, upbd}], at, by }。新規登録の画面（ログイン前）でも使うので読みはだれでも。
+    //   変えられるのはオーナーだけ
+    match /appConfig/{doc} {
+      allow read: if doc == 'unions';
+      allow write: if doc == 'unions' && isOwnerAdmin()
+        && request.resource.data.keys().hasOnly(['list', 'at', 'by'])
+        && request.resource.data.list is list
+        && request.resource.data.list.size() <= 100;
+    }
+
     // ============ v827: MAPの共有はアップだけ（#23） ============
     //   appShare/top … 共有してよい上の人（uids）。ログインした人は読める。変えられるのはオーナーだけ
     match /appShare/{doc} {
