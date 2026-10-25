@@ -428,6 +428,13 @@ service cloud.firestore {
         || (existsAfter(/databases/$(database)/documents/checkinMembers/$(d.get('no', '__none')))
             && ckDecoSameAs(d, getAfter(/databases/$(database)/documents/checkinMembers/$(d.get('no', '__none'))).data));
     }
+    // 研修生の受講記録のどれかを、この人が受講済みにした
+    function ckTrainedBy(d) {
+      let t = d.get('trainings', {});
+      let u = request.auth.uid;
+      return t.get('PG', {}).get('by', '') == u || t.get('DLR', {}).get('by', '') == u || t.get('PA', {}).get('by', '') == u
+        || t.get('EXP', {}).get('by', '') == u || t.get('CO', {}).get('by', '') == u || t.get('BPC済み', {}).get('by', '') == u;
+    }
     // 自分のプロフィールの所属ユニオン
     function ckMyUnion() {
       return profileExists(request.auth.uid)
@@ -545,9 +552,10 @@ service cloud.firestore {
                     && resource.data.get('trainee', false) == true
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['trainings','coSheet','referrer','dlrRsv']);
+      // 🗑 v31: 研修担当は、自分が担当した研修生（自分が登録した・どれかを受講済みにした）を削除できる（研修生のあいだだけ）
       allow delete: if isCkTrainer(resource.data.get('union',''))
                     && resource.data.get('trainee', false) == true
-                    && resource.data.get('regBy','') == request.auth.uid;
+                    && (resource.data.get('regBy','') == request.auth.uid || ckTrainedBy(resource.data));
       allow delete: if isCkAdmin(resource.data.get('union',''));
     }
 
