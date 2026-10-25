@@ -427,10 +427,18 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/checkinUnions/$(un))
                  .data.get('admins', []).hasAny([request.auth.uid]));
     }
-    // 🎓 研修生登録の担当: checkinUnions.trainers に任命された人（管理者は常に可）。
+    // ⭐ v32: リーダー（オーナーがユニオンごとに checkinUnions/{un}.leaders に指定。1人で複数ユニオンも可）。
+    //   できるのは「名簿・集計の閲覧」「研修生登録の担当（trainers）の任命・解除」「研修生の登録」だけ
+    function isCkLeader(un) {
+      return signedIn() && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/checkinUnions/$(un))
+        && get(/databases/$(database)/documents/checkinUnions/$(un))
+             .data.get('leaders', []).hasAny([request.auth.uid]);
+    }
+    // 🎓 研修生登録の担当: checkinUnions.trainers に任命された人（管理者・リーダーは常に可）。
     // できるのは「研修生の新規登録」と「研修生のチュートリアル記録」だけ（下のルールで限定）
     function isCkTrainer(un) {
-      return isCkAdmin(un)
+      return isCkAdmin(un) || isCkLeader(un)
         || (signedIn() && notDisabled(request.auth.uid)
             && exists(/databases/$(database)/documents/checkinUnions/$(un))
             && get(/databases/$(database)/documents/checkinUnions/$(un))
@@ -488,7 +496,7 @@ service cloud.firestore {
     function ckCanSee(un) {
       return isOwnerAdmin()
         || (signedIn() && notDisabled(request.auth.uid)
-            && (ckMyUnion() == un || isCkAdmin(un) || isCkTrainer(un)));
+            && (ckMyUnion() == un || isCkAdmin(un) || isCkTrainer(un)));   // ⭐ v32: リーダーは isCkTrainer に含む
     }
     // イベント配下（出席・予約・会計・操作ログ）を見られる人 =
     //   オーナー／参加ユニオンの所属メンバー／主催ユニオン・参加ユニオン（合同は2つ目まで）の管理者
@@ -514,8 +522,9 @@ service cloud.firestore {
     //   見られるのは本人・そのユニオンの管理者（受付管理者含む）・オーナー
     match /trainerNda/{id} {
       allow get: if signedIn() && (id.split('__')[0] == request.auth.uid
-        || (resource != null && (isOwnerAdmin() || isCkAdmin(resource.data.get('union', '')))));
-      allow list: if isOwnerAdmin() || isCkAdmin(resource.data.get('union', ''));
+        || (resource != null && (isOwnerAdmin() || isCkAdmin(resource.data.get('union', ''))
+            || isCkLeader(resource.data.get('union', '')))));   // ⭐ v32: リーダーも（研修担当の任命画面で誓約済みかを見る）
+      allow list: if isOwnerAdmin() || isCkAdmin(resource.data.get('union', '')) || isCkLeader(resource.data.get('union', ''));
       allow create: if signedIn() && notDisabled(request.auth.uid)
         && request.resource.data.uid == request.auth.uid
         && id == request.auth.uid + '__' + request.resource.data.ver
@@ -534,14 +543,17 @@ service cloud.firestore {
       // 有効化・受付管理者(admins)の変更はコア管理者のみ。
       // 受付管理者は発行者名(issuer)などadmins以外の設定は変更できる
       // 兼務のユニオン管理者（coreAdmins）の指定・解除はオーナーのみ
+      // ⭐ v32: リーダー（leaders）の指定・解除もオーナーのみ。リーダーは研修生登録の担当（trainers）だけ変えられる
       allow create: if isCkCoreAdmin(un)
-        && (isOwnerAdmin() || !('coreAdmins' in request.resource.data));
+        && (isOwnerAdmin() || (!('coreAdmins' in request.resource.data) && !('leaders' in request.resource.data)));
       allow update: if (isCkCoreAdmin(un)
-            && (isOwnerAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['coreAdmins'])))
+            && (isOwnerAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['coreAdmins', 'leaders'])))
+        || (isCkLeader(un)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trainers']))
         // 🎓 v25: 研修生登録の担当（trainers）の任命・解除もユニオン管理者（コア管理者）だけ。受付管理者は不可
         // 🙈 v29: 受付の金額を統括だけに見せる設定（hideMoney）もユニオン管理者だけ
         || (isCkAdmin(un)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney']));
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney', 'leaders']));
       allow delete: if isOwnerAdmin();
     }
 
