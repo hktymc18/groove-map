@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v835';
+var APP_JS_VERSION = 'v836';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4205,7 +4205,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v835';
+  var DATA_VERSION = 'v836';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   // localStorageを完全クリア（旧キャッシュ対策）
   try {
@@ -6312,6 +6312,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v836', d:'2026-10-25', items:['「今月の目標が未設定です」の赤い帯・HOMEのPLANを押すと、◯月の目標を決める画面がすぐ開くようにしました（前はPLANの入口が開くだけで、行き方がわかりにくかった）','PLANの入口のいちばん上に「◯月の目標」を出しました。PCはPLANの上のタブに「◯月の目標」'] },
   { v:'v835', d:'2026-10-24', items:['PLANのファーストボーナスの金額の下に「※概算（税抜）です。実際の支給額は条件や実績によって変わり、この金額を保証するものではありません」と小さく出すようにしました'] },
   { v:'v834', d:'2026-10-21', items:['メンバーのプロフィールで誕生日を直しても保存されないことがあったのを直しました（入れている途中で欄が作り直され、残りの入力が消えていました）','研修の記録の「日付で」も同じように直しました'] },
   { v:'v833', d:'2026-10-21', items:['ダークモードのHOMEのタイル：ふちが少しズレて見えていたのを直し、ふんわり浮いたカードの見た目にしました（ライトモードは今まで通り）'] },
@@ -18240,6 +18241,7 @@ function _p2HubLand(T, nk, S, rv, left, why) {
   var ym = _p2Ym(0);
   var tiles = T.map(function(t) { t.next = t.k === nk || (t.k === 'mon' && nk === 'do'); t.on = t.on || 'p2Go(\'' + t.k + '\')'; t.x = _p2HubX(t.k); if (!t.x) t.c += ' p2-nx'; return _uxTile(t); }).join('');
   return '<div class="ux-hub p2-lh"><div class="ux-hd"><h1>PLAN</h1>' + (why && !_p2HubX('why') ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span>'
+    + (!_p2Declared(ym) ? '<span class="ux-sb hot" onclick="p2Go(\'mon\')">🎯 ' + parseInt(ym.slice(5), 10) + '月の目標を決める<span class="dot"></span></span>' : '') // v836
     + (rv ? '<span class="ux-sb hot" onclick="p2Go(\'rev\')">🔁 振り返り<span class="dot"></span></span>' : '') + '<span class="ux-sb" onclick="p2ShPrint()">🖨 印刷</span><span class="ux-sb" onclick="p2Go(\'tool\')">🧰 ツール</span></div>'
     + '<div class="ux-tiles">' + tiles + '</div>'
     + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div></div></div>';
@@ -18335,6 +18337,7 @@ function _p2HubHtml() {
   var D = _p2HubData(), ym = D.ym, T = D.T, nk = D.nk, S = D.S, rv = D.rv, left = D.left, why = D.why;
   if (_uxLand()) return _p2HubLand(T, nk, S, rv, left, why); // v606: 横は見出し1行＋中身のあるタイル
   var h = '<div class="ux-hub"><div class="ux-hd"><h1>PLAN</h1>' + (why ? '<span class="ux-why">💗 ' + evEsc(why.slice(0, 40)) + '</span>' : '') + '<span class="r">' + parseInt(ym.slice(5), 10) + '月・残り' + left + '日</span></div>'
+    + _p2HubMonRow(ym) // v836: 今月の目標への入口（前はPLANの入口に無く、赤い帯を押しても行けなかった）
     + '<div class="ux-tiles">' + T.map(function(t) { t.next = t.k === nk || (t.k === 'mon' && nk === 'do'); t.on = t.on || 'p2Go(\'' + t.k + '\')'; return _uxTile(t); }).join('') + '</div>'
     + '<div class="ux-foot"><div class="lad">🔥 <b style="white-space:nowrap">S稼働 ' + S + '人</b>' + _sLadderHtml(S, true) + '</div>'
     + (rv ? '<span class="ux-sb hot" onclick="p2Go(\'rev\')">🔁 振り返り<span class="dot"></span></span>' : '')
@@ -18342,6 +18345,10 @@ function _p2HubHtml() {
   return h;
 }
 // v624: ページの中身（スマホは下の帯つきの1画面、PCは右の欄）
+function _p2HubMonRow(ym) { // v836: PLANの入口の「◯月の目標」（まだの時は目立たせる）
+  var dec = _p2Declared(ym);
+  return _p2DoMonHead(ym).replace('class="ux-li" style="margin:4px 0 10px"', 'class="ux-li' + (dec ? '' : ' p2-monx') + '" style="margin:10px 0 0' + (dec ? '' : ';border:1.5px solid #FF5D73;background:color-mix(in srgb,#FF5D73 9%,var(--surface))') + '"');
+}
 function _p2DoMonHead(ym) { // v653: 今週やることの上に「◯月の目標」（押すと目標のページ）
   var m = _p2M(ym), S = 0; try { S = _dtEzNow().S; } catch (e) { S = _sNow(); }
   var dec = _p2Declared(ym), has = !(m.s === '' || m.s == null);
@@ -21524,7 +21531,7 @@ function _pcxTile(t, on, next) {
     + '<span class="ic">' + t.ic + '</span><b>' + t.lb + '</b><div class="st">' + (t.st || '') + '</div></div>';
 }
 // ── PLAN（PC） ──
-var P2_PCX_PAR = { essay: 'tool', gap: 'tool', bb: 'tool', gapset: 'tool', gapal: 'tool', rm: 'tool', rmm: 'tool', rmt: 'tool', rmrows: 'tool', rmms: 'tool', dok: 'tool', do: 'tool', sum: 'tool', goal: 'tool', mon: 'tool', rev: 'tool' }; // v686: 前の画面はツールの下
+var P2_PCX_PAR = { essay: 'tool', gap: 'tool', bb: 'tool', gapset: 'tool', gapal: 'tool', rm: 'tool', rmm: 'tool', rmt: 'tool', rmrows: 'tool', rmms: 'tool', dok: 'tool', do: 'tool', sum: 'tool', goal: 'tool', rev: 'tool' }; // v836: mon はタブになった // v686: 前の画面はツールの下
 function _p2PcxHtml() {
   _uxCss(); _ux2Css(); _pcxCss();
   var D = _p2HubData(), ym = D.ym;
@@ -21533,7 +21540,8 @@ function _p2PcxHtml() {
   var mk = { ideal: !!g.p1, goal: !!(p.title && p.deadline), mon: _p2Declared(_p2Ym(0)) };
   var tab = function(k, lb) { return '<span class="' + (k === sel ? 'on' : '') + '" onclick="p2Go(\'' + k + '\')">' + lb + (mk[k] ? '<i>✓</i>' : (k === D.nk ? '<i class="w">●</i>' : '')) + (k === 'rev' && D.rv ? '<i class="r">●</i>' : '') + '</span>'; };
   var hd = '<div class="pcx2-hd"><h1>PLAN<small>' + parseInt(ym.slice(5), 10) + '月・残り' + D.left + '日</small></h1><div class="pcx2-tabs">'
-    + tab('year', '年の目標・ロードマップ') + tab('sheet', '計画シート') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') + tab('ck', 'チェック') // v686・v742: チェック
+    // v836: PCにも今月の目標の入口（タブ）
+    + tab('year', '年の目標・ロードマップ') + tab('sheet', '計画シート') + tab('mon', parseInt(ym.slice(5), 10) + '月の目標') + tab('ideal', '理想') + tab('dream', '夢100') + tab('sim', 'シミュレーション') + tab('ck', 'チェック') // v686・v742: チェック
     + '<b class="sep"></b>' + (D.rv ? tab('rev', '振り返り') : '') + tab('tool', 'ツール') + '</div></div>';
   return '<div class="pcx2">' + hd + '<div class="pcx-p">' + _p2PcxPane(D) + '</div></div>'; // v630: 左の大きなタイルの列をやめて、上にタブ
 }
@@ -22511,7 +22519,7 @@ function renderMenuHub() {
   var td = evTodayYmd(), evN = 0, tkN = 0, S0 = null;
   (state.events || []).forEach(function(e) { if (!e || e.deleted || e.date !== td) return; if (e.type === 'task') { if (!e.done) tkN++; } else evN++; });
   try { S0 = _dtEzNow().S; } catch (eS) {}
-  var T = [{ k: 'plan', c: 'mint', ic: icn('compass'), lb: 'PLAN', w: 1, wide: 1, next: nk !== 'do', st: planSt || '目標・計画・振り返り', on: 'switchView(\'plan\')' },
+  var T = [{ k: 'plan', c: 'mint', ic: icn('compass'), lb: 'PLAN', w: 1, wide: 1, next: nk !== 'do', st: planSt || '目標・計画・振り返り', on: 'p2OpenHome()' },
     // v683: PLANの下は 左上MAP・右上ANALYTICS／左下CALENDAR・右下TODO
     { k: 'map', c: 'sky', ic: icn('map'), lb: 'MAP', st: '組織図・メンバー<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'current\')' },
     { k: 'stats', c: 'rose', ic: icn('chart'), lb: 'ANALYTICS', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' },
@@ -26246,13 +26254,17 @@ function _p2BannerSync() {
     }
   } catch(e) {}
 }
+// v836: 「◯月の目標」の画面を直接開く（赤い帯・HOMEのPLAN・PLANの入口から）
+function p2OpenMon() { if (currentView !== 'plan') switchView('plan'); p2Go('mon'); }
+// HOMEのPLAN：今月の目標がまだの時は、目標の画面を直接
+function p2OpenHome() { var nk = 'do'; try { nk = _p2NextKey(); } catch (e) {} if (nk === 'mon') { p2OpenMon(); return; } switchView('plan'); }
 // 起動時: バナーとFAB・インク画面を用意
 function _p2Boot() {
   if (document.getElementById('p2Banner')) return;
   var b = document.createElement('div');
   b.id = 'p2Banner'; b.className = 'p2-banner';
   b.textContent = '⚠️ 今月の目標が未設定です — タップして設定';
-  b.onclick = function() { switchView('plan'); };
+  b.onclick = function() { p2OpenMon(); }; // v836: 前はPLANの入口が開くだけで、目標の画面への行き方がわからなかった
   document.body.appendChild(b);
   _p2BannerSync();
 }
