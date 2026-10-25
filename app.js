@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v838';
+var APP_JS_VERSION = 'v839';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3440,7 +3440,7 @@ function isCurrentAdmin() {
   return !!currentUser && (isOwnerUid(currentUser.uid) || currentUser.role === 'admin' || (!!currentUser.union && _admCoreList().indexOf(currentUser.union) >= 0));
 }
 // ════ v831: 兼務のユニオン管理者 ════
-//  オーナーが checkinUnions/{ユニオン}.coreAdmins に指定（受付システムの「兼務のユニオン管理者」と同じ設定）。
+//  オーナーが checkinUnions/{ユニオン}.coreAdmins に指定。受付システムの権限とは別（受付 v102〜：受付のユニオン管理者は受付で任命＝unionAdmins）。
 //  管理しているユニオン＝（管理者の印があれば）所属ユニオン＋兼務のユニオン
 var _admCore = null;
 function _admCoreList() {
@@ -3561,7 +3561,7 @@ function admCoreOpen(uid) {
   var u = _adminFindUser(uid); if (!u || !_admCoreAll) return;
   var mine = _admCoreOf(uid), uns = Object.keys(_admCoreAll).sort();
   _accDlg('<div class="hd">' + evEsc(u.name || '') + ' さんが兼務するユニオン<span onclick="_accDlgClose()">閉じる</span></div>'
-    + '<div class="nt">選んだユニオンの管理者になります（アカウント管理・チェック項目・ユニオン予定）。受付システム（BASE CHECK-IN）の「兼務のユニオン管理者」と同じ設定です。選べるのは受付に登録されているユニオンです。</div>'
+    + '<div class="nt">選んだユニオンの管理者になります（アカウント管理・チェック項目・ユニオン予定）。受付システム（BASE CHECK-IN）の権限とは別です（受付のユニオン管理者は、受付の「🛡 ユニオン管理者」でオーナーが任命します）。選べるのは受付に登録されているユニオンです。</div>'
     + '<div id="admCoreL" style="margin-top:8px">' + (uns.length ? uns.map(function(un) { return '<label class="r"><input type="checkbox" value="' + evEsc(un) + '"' + (mine.indexOf(un) >= 0 ? ' checked' : '') + '>' + evEsc(un) + (un === u.union ? '<small>所属</small>' : '') + '</label>'; }).join('') : '<div class="nt">受付に登録されているユニオンがありません</div>') + '</div>'
     + '<div class="bt"><span onclick="_accDlgClose()">やめる</span><span class="p" onclick="admCoreSave(\'' + uid + '\')">保存する</span></div>');
 }
@@ -4320,7 +4320,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v838';
+  var DATA_VERSION = 'v839';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6430,6 +6430,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v839', d:'2026-10-25', items:['アカウント管理の「兼務するユニオン」の説明を、受付システム（BASE CHECK-IN）の権限とは別であることがわかるように直しました'] },
   { v:'v838', d:'2026-10-25', items:['所属ユニオンを選んだ時に入るUPBDの名前を、オーナーがアカウント管理の「ユニオンとUPBD」で直せるようにしました（ユニオンの追加・並べ替えもできます）'] },
   { v:'v837', d:'2026-10-25', items:['使い勝手レビューにまだ答えていない人は、アプリを開いてすぐHOMEのいちばん上にお願いが出るようにしました（前はほかの画面から戻るまで出ないことがありました）','答えるとHOMEのお願いがすぐ消えるようにしました'] },
   { v:'v836', d:'2026-10-25', items:['「今月の目標が未設定です」の赤い帯・HOMEのPLANを押すと、◯月の目標を決める画面がすぐ開くようにしました（前はPLANの入口が開くだけで、行き方がわかりにくかった）','PLANの入口のいちばん上に「◯月の目標」を出しました。PCはPLANの上のタブに「◯月の目標」'] },

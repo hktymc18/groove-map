@@ -2168,10 +2168,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v102';
+var APP_VER = 'v103';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v103', d: '2026/10/25', items: ['📊 イベントの「編集」で「集計（稼働率）に入れない」を選べるようにしました。参加必須でないイベントや間違って立てたイベントは、開催数にも出席回数にも入りません（イベント一覧に「📊集計外」と出ます。受付・会計はふつうにできます）'] },
   { v: 'v102', d: '2026/10/25', items: ['🛡 受付のユニオン管理者は、オーナーが受付で任命した人だけになりました（NAVIGATORの管理者になっても自動では受付のユニオン管理者になりません。今までの管理者はそのまま引き継いでいます）', '📱 名簿で「無効」にする時に確認画面を出し、NAVIGATORも使えなくなるかを表示するようにしました。NAVIGATORのアカウントが紐付いていなければ、同じ名前のアカウントをその場で紐付けてNAVIGATORも止められます（受付で有効に戻すと、また使えます）'] },
   { v: 'v101', d: '2026/10/25', items: ['⭐ 新しい立場「リーダー」ができました（オーナーがユニオンごとに指定）。リーダーは名簿と集計を見られて、研修生登録の担当を任命できます（研修生の登録も可）', '🔒 名簿・集計タブは、オーナー・ユニオン管理者・受付管理者・リーダーだけに表示するようにしました（受付はこれまで通り誰でもできます）'] },
   { v: 'v100', d: '2026/10/25', items: ['🗑 名簿からメンバーを削除した時は、その人のスマホ会員証も一緒に無効にするようにしました（古いURLを開いても会員証が出ません）'] },
@@ -8393,6 +8394,7 @@ function renderEvents(){
       + (ev.addonOn && gUnionAddon[ev.hostUnion] ? '<span class="jointtag">🎓 ' + esc(gUnionAddon[ev.hostUnion].name || 'オプション') + '</span>' : '')
       + (ev.payMode === 'both' ? '<span class="jointtag">💴💳 現金・PayPay</span>' : '')
       + (!ckEvRcptOn(ev) ? '<span class="jointtag">🧾なし</span>' : '')
+      + (ev.noStat === true ? '<span class="jointtag" title="集計（稼働率）に入れないイベント">📊集計外</span>' : '')
       + (isSelf ? '<span class="jointtag" style="background:var(--green-soft);color:var(--green);">' + esc(ev.hostLabel || 'CLAVIS') + '主催・セルフ</span>' : '')
       + joint
       + (ev.date === t ? '<span class="pill g">本日</span>' : '')
@@ -8853,6 +8855,9 @@ function eventForm(ev){
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRcpt"' + (ckEvRcptOn(ev || { hostUnion: host }) ? ' checked' : '') + '>'
     + '<label for="evRcpt" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🧾 このイベントは領収書を発行する'
     + '<span style="color:var(--sub);font-size:12px;">（' + esc(host) + 'の初期値: ' + (gRcptDef[host] !== false ? '発行する' : '発行しない') + '・会計タブの「🧾 領収書設定」で変更）</span></label></div>'
+    + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evNoStat"' + (ev && ev.noStat === true ? ' checked' : '') + '>'
+    + '<label for="evNoStat" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">📊 集計（稼働率）に入れない'
+    + '<span style="color:var(--sub);font-size:12px;">（参加必須でないイベント・間違って立てたイベントなど。開催数にも出席回数にも入りません。受付・会計はふつうにできます）</span></label></div>'
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
@@ -8915,7 +8920,8 @@ function eventForm(ev){
       onlinePayLink: payLink,
       onlineEnvName: envName,
       zoomUrl: $('evZoom').value.trim(),
-      rcpt: $('evRcpt').checked
+      rcpt: $('evRcpt').checked,
+      noStat: $('evNoStat').checked
     };
     // 🧾 途中で切り替えた時: 発行しない→発行済みを取り下げ / 発行する→受付済みの人にも発行
     var wasRcpt = isNew ? null : ckEvRcptOn(ev);
@@ -8941,6 +8947,8 @@ function eventForm(ev){
         ev.rcpt = data.rcpt;
         ckRecRcptApply(ev);   // この端末で受付中なら、すぐ反映
         if(rcptJob === 'retract') ckEvRcptRetract(ev.id).then(function(n){ toast('発行済みの領収書を取り下げました（' + n + '件）'); }).catch(function(){});
+        // 📊 集計に入れる／入れないを変えたら、MAP連携の稼働率（checkinStats）も作り直す
+        if((ev.noStat === true) !== data.noStat){ ev.noStat = data.noStat; ckRefreshForEvent(Object.assign({}, ev, data)); }
         if(rcptJob === 'issue') ckEvRcptIssueAll(Object.assign({}, ev, data, { id: ev.id, hostUnion: ev.hostUnion || host })).then(function(n){ toast(n ? '受付済みの人に領収書を発行しました（' + n + '件）' : '発行する領収書はありませんでした（発行者名・徴収済みの人を確認してください）'); }).catch(function(){});
       }
       closeModal(); toast(isNew ? 'イベントを作成しました' : '保存しました');
@@ -13052,9 +13060,11 @@ function impCommit(ev){
 // 当日分は「受付を終了」した時点（recClosed）で算入する
 // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
 // 未来日は誤って受付を開始・終了しても算入しない
+// 📊 v103: イベントの編集で「集計の母数に入れない」（noStat）にしたイベントは、分母にも出席回数にも入れない
 function ckHeldEvents(evs){
   var tdy = todayStr();
   return evs.filter(function(ev){
+    if(ev.noStat === true) return false;
     var d = ev.date || '';
     return d < tdy || (d === tdy && ev.recClosed === true);
   });
@@ -13235,6 +13245,9 @@ function loadStatsNow(){
       else otherEvs.push(ev);
     });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
+    // 📊 集計に入れないイベント（noStat）は別に分けて、画面に「集計に入れていないイベント」として出すだけ
+    var exEvs = evs.filter(function(ev){ return ev.noStat === true; });
+    evs = evs.filter(function(ev){ return ev.noStat !== true; });
     // 稼働率の分母は「受付が終了したハウディ」のみ。過去日は無条件に開催済み扱い、
     // 当日分は「受付を終了」した時点（recClosed）で算入する
     // （受付前・受付中に分母へ入れると、全出席のメンバーでも当日朝は92%等に見えてしまう）
@@ -13242,7 +13255,7 @@ function loadStatsNow(){
     var heldEvs = ckHeldEvents(evs);
     var pendingEvs = evs.filter(function(ev){ return heldEvs.indexOf(ev) < 0; });
     evs = heldEvs;
-    if(!evs.length && !otherEvs.length && !pendingEvs.length){
+    if(!evs.length && !otherEvs.length && !pendingEvs.length && !exEvs.length){
       $('statBody').innerHTML = '<p style="color:var(--sub)">この月のイベントはありません。</p>';
       gStat = null; return;
     }
@@ -13273,19 +13286,23 @@ function loadStatsNow(){
     });
     // どれか1つでも失敗したら「集計中…」のまま止まらないよう、必ずエラーを表示する
     Promise.all(reads.concat(vreads).concat([fetchMembers(gStatUnion)])).then(function(results){
-      renderStats(evs, attMaps, results[results.length - 1], visits, pendingEvs);
+      renderStats(evs, attMaps, results[results.length - 1], visits, pendingEvs, exEvs);
     }).catch(function(e){
       $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc((e && e.message) || String(e))
         + '</p><p style="color:var(--sub);font-size:13px;">「再集計」を押しても直らない場合は、オーナーに連絡してください。</p>';
     });
   }).catch(function(e){ $('statBody').innerHTML = '<p style="color:var(--accent)">集計エラー: ' + esc(e.message) + '</p>'; });
 }
-function renderStats(evs, attMaps, unionMembers, visits, pendingEvs){
+function renderStats(evs, attMaps, unionMembers, visits, pendingEvs, exEvs){
   var held = evs.length;
   // 受付が終わっていないイベントの一覧表示は廃止し、?ボタンだけ置く（押すと説明を表示）
   var pendHtml = (pendingEvs && pendingEvs.length)
     ? '<p style="margin:0 0 8px;"><button class="statq" id="stPendInfo" title="集計に入っていないイベントがあります">?</button></p>'
     : '';
+  // 📊 集計に入れないイベント（イベントの編集で設定）
+  if(exEvs && exEvs.length) pendHtml += '<p id="stExEvs" style="margin:0 0 8px;font-size:12.5px;color:var(--sub);">📊 集計に入れていないイベント: '
+    + exEvs.map(function(ev){ return esc((ev.date || '').slice(5).replace('-', '/')) + ' ' + esc(ev.name || ''); }).join('、')
+    + '（イベントの「編集」で変えられます）</p>';
   function bindPendInfo(){
     var b = $('stPendInfo');
     if(b) b.onclick = function(){
