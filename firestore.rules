@@ -132,7 +132,7 @@ service cloud.firestore {
       //   ・オーナーと管理者は対象外
       function alLeaderOut() {
         return signedIn() && request.auth.uid != uid
-            && uid != 'j2DPDAccCygHmR9i5K3bTvHnH0V2'
+            && !(uid in ['j2DPDAccCygHmR9i5K3bTvHnH0V2', 'E4WT7EHai5c6WANUgASz42Euu1y1']) // オーナー2人とも対象外（isOwnerUid と同じ一覧）
             && resource.data.get('role', 'member') != 'admin'
             && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('alLeader', false) == true
