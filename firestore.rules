@@ -122,7 +122,22 @@ service cloud.firestore {
             && (resource.data.get('role', 'member') != 'admin'
                 || resource.data.get('unionSelectedV2', false) != true
                 || request.resource.data.get('union', '') == resource.data.get('union', '')))
-        || alLeaderOut();
+        || alLeaderOut()
+        || ckLinkByCk();
+
+      // 🎫 v33: 受付で無効にする時、受付の管理者（ユニオン管理者・受付管理者）がその場でNAVIGATORのアカウントを名簿と紐付けられる
+      //   ・まだ紐付いていないアカウントだけ（付け替え・解除はNAVIGATORのアカウント管理で）
+      //   ・名簿の人とアカウントが同じユニオンで、そのユニオンの受付の管理者であること
+      function ckLinkByCk() {
+        return signedIn() && notDisabled(request.auth.uid)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ckNo', 'ckSetBy', 'ckSetAt'])
+            && resource.data.get('ckNo', '') == ''
+            && request.resource.data.get('ckSetBy', '') == request.auth.uid
+            && request.resource.data.get('ckNo', '') is string && request.resource.data.get('ckNo', '') != ''
+            && exists(/databases/$(database)/documents/checkinMembers/$(request.resource.data.ckNo))
+            && get(/databases/$(database)/documents/checkinMembers/$(request.resource.data.ckNo)).data.get('union', '') == resource.data.get('union', '')
+            && isCkAdmin(resource.data.get('union', ''));
+      }
 
       // ATTACK LIST のリーダー（オーナー／ユニオン管理者が users/{uid}.alLeader=true にした人）は、
       // 自分にリストを共有しているメンバーに限り、利用停止（OUT）とその解除ができる。
@@ -403,20 +418,18 @@ service cloud.firestore {
     //   checkinMembers/{QRコード番号}   … 名簿（union フィールドで所属を分離）
     //   checkinEvents/{eventId}        … イベント（unions 配列で合同対応、month で月管理）
     //     └ attendance/{番号|gXXX}     … 出席レコード（union フィールドで集計分離）
-    // 権限: 管理 = オーナー or 同ユニオンの role=='admin'。
+    // 権限: 管理 = オーナー or オーナーが受付で任命したユニオン管理者（unionAdmins）・受付管理者（admins）。
     //       受付(出席の記録) = 参加ユニオンの有効メンバーなら誰でも可。
 
-    // コア管理者: オーナー or 指定ユニオンの管理者(role=admin)。
+    // コア管理者（受付のユニオン管理者）: オーナー or オーナーが受付で任命した人（checkinUnions/{un}.unionAdmins）。
     // 受付管理者の任命・ユニオンの有効化はこの権限のみ
+    // 🔒 v33: NAVIGATORの管理者（role=admin）・NAVIGATORの兼務（coreAdmins）だけでは受付のユニオン管理者にならない
+    //   （coreAdmins はNAVIGATORのアカウント管理用として残す。v33移行時に、その時点の管理者を unionAdmins に引き継ぎ）
     function isCkCoreAdmin(un) {
       return isOwnerAdmin()
-        || (signedIn() && profileExists(request.auth.uid)
-            && profile(request.auth.uid).get('role','') == 'admin'
-            && profile(request.auth.uid).get('union','') == un)
-        // 🔗 v20: 兼務のユニオン管理者（オーナーが checkinUnions/{un}.coreAdmins に指定）
         || (signedIn() && notDisabled(request.auth.uid)
             && exists(/databases/$(database)/documents/checkinUnions/$(un))
-            && get(/databases/$(database)/documents/checkinUnions/$(un)).data.get('coreAdmins', []).hasAny([request.auth.uid]));
+            && get(/databases/$(database)/documents/checkinUnions/$(un)).data.get('unionAdmins', []).hasAny([request.auth.uid]));
     }
     // 受付システムの管理権限: コア管理者 or 任命された受付管理者
     // （checkinUnions/{un}.admins にUIDが登録されたユーザー）
@@ -544,16 +557,17 @@ service cloud.firestore {
       // 受付管理者は発行者名(issuer)などadmins以外の設定は変更できる
       // 兼務のユニオン管理者（coreAdmins）の指定・解除はオーナーのみ
       // ⭐ v32: リーダー（leaders）の指定・解除もオーナーのみ。リーダーは研修生登録の担当（trainers）だけ変えられる
+      // 🔒 v33: 受付のユニオン管理者（unionAdmins）の任命・解除もオーナーのみ
       allow create: if isCkCoreAdmin(un)
-        && (isOwnerAdmin() || (!('coreAdmins' in request.resource.data) && !('leaders' in request.resource.data)));
+        && (isOwnerAdmin() || (!('coreAdmins' in request.resource.data) && !('leaders' in request.resource.data) && !('unionAdmins' in request.resource.data)));
       allow update: if (isCkCoreAdmin(un)
-            && (isOwnerAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['coreAdmins', 'leaders'])))
+            && (isOwnerAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['coreAdmins', 'leaders', 'unionAdmins', 'ckMig33'])))
         || (isCkLeader(un)
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trainers']))
         // 🎓 v25: 研修生登録の担当（trainers）の任命・解除もユニオン管理者（コア管理者）だけ。受付管理者は不可
         // 🙈 v29: 受付の金額を統括だけに見せる設定（hideMoney）もユニオン管理者だけ
         || (isCkAdmin(un)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney', 'leaders']));
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney', 'leaders', 'unionAdmins', 'ckMig33']));
       allow delete: if isOwnerAdmin();
     }
 
