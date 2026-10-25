@@ -9,7 +9,7 @@ T.run(async () => {
   c('馬越さんは管理者扱い（全ユニオンの承認・受付）', w.isCurrentAdmin() && w._ckIsOwner());
   c('バグ・要望・アイデアの管理は馬越さんも（v817）・フィットネスは山内さんだけ', w._fbIsOwner() && !w._fitOwner());
   const rules = fs.readFileSync(R + '/firestore.rules', 'utf8');
-  c('ルール：isOwnerUid に2人・isOwnerAdmin/isAdmin が使う', rules.indexOf("request.auth.uid in ['" + T.OWNER + "', '" + U2 + "']") >= 0 && /function isOwnerAdmin\(\) \{\s*return isOwnerUid\(\);/.test(rules) && (rules.match(/'j2DPDAccCygHmR9i5K3bTvHnH0V2'/g) || []).length === 2); // v786: rosterOff のオーナー除外にも
+  c('ルール：isOwnerUid に2人・isOwnerAdmin/isAdmin が使う', rules.indexOf("request.auth.uid in ['" + T.OWNER + "', '" + U2 + "']") >= 0 && /function isOwnerAdmin\(\) \{\s*return isOwnerUid\(\);/.test(rules) && (rules.match(/\['j2DPDAccCygHmR9i5K3bTvHnH0V2', 'E4WT7EHai5c6WANUgASz42Euu1y1'\]/g) || []).length >= 2); // v786: rosterOff のオーナー除外にも（2人そろって）。ATTACK LIST の OUT（alLeaderOut）で1人目のIDが単独でも出るようになったので数は見ない
   const ck = fs.readFileSync(R + '/checkin/index.html', 'utf8');
   c('受付：オーナーに2人', ck.indexOf("OWNER_UIDS = [OWNER_UID, '" + U2 + "']") >= 0 && /function isOwner\(\)\{ return !!gUser && OWNER_UIDS\.indexOf/.test(ck));
 });
