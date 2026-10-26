@@ -301,6 +301,12 @@ tr:last-child td{border-bottom:none;}
 #pRoster .tblwrap{max-height:calc(100vh - var(--tbh, 56px) - var(--phh, 120px) - 64px);overflow-y:auto;}
 #pRoster .tblwrap thead th{position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line);}
 /* 集計: 未終了イベントの説明を出す?ボタン */
+/* ❔ v105: 説明は「？」に（PCはマウスを乗せる・スマホはタップで吹き出し） */
+button.hq{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;min-width:18px;border-radius:50%;padding:0;margin:0 0 0 6px;
+  border:1px solid var(--line);background:transparent;color:var(--sub);font-size:11.5px;font-weight:700;line-height:1;vertical-align:middle;cursor:help;font-family:inherit;}
+button.hq:hover,button.hq.on{color:var(--ink);border-color:var(--sub);}
+#hqTip{position:fixed;z-index:100000;max-width:min(300px,calc(100vw - 16px));background:#2a2a2a;color:#fff;font-size:12.5px;font-weight:400;line-height:1.65;
+  padding:8px 11px;border-radius:9px;box-shadow:0 6px 18px rgba(0,0,0,.28);white-space:pre-line;pointer-events:none;display:none;text-align:left;letter-spacing:0;}
 .statq{width:26px;height:26px;border-radius:50%;padding:0;font-weight:700;color:var(--sub);line-height:1;}
 .monthnav b{font-size:16px;min-width:7.5em;text-align:center;}
 
@@ -1553,6 +1559,34 @@ var FV = firebase.firestore.FieldValue;
 
 /* ---------- utils ---------- */
 function $(id){ return document.getElementById(id); }
+/* ❔ v105: 説明の「？」。hq('説明') を項目名の横に置く。PCはマウスを乗せる・スマホはタップで吹き出しを出す
+   （ラベルの中に置いてもチェックは切り替わらない。ほかの所をタップ・スクロールで閉じる） */
+function hq(t){ return '<button type="button" class="hq" aria-label="説明" data-tip="' + esc(t) + '">?</button>'; }
+(function(){
+  var tip = null, cur = null;
+  function canHover(){ try{ return window.matchMedia('(hover:hover)').matches; }catch(e){ return false; } }
+  function show(b){
+    if(!tip){ tip = document.createElement('div'); tip.id = 'hqTip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
+    tip.textContent = b.getAttribute('data-tip') || '';
+    tip.style.display = 'block'; tip.style.left = '0px'; tip.style.top = '0px';
+    var r = b.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    var y = r.top - h - 8; if(y < 8) y = r.bottom + 8;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    if(cur && cur !== b) cur.classList.remove('on');
+    cur = b; b.classList.add('on');
+  }
+  function hide(){ if(tip) tip.style.display = 'none'; if(cur) cur.classList.remove('on'); cur = null; }
+  document.addEventListener('click', function(e){
+    var b = e.target && e.target.closest ? e.target.closest('.hq') : null;
+    if(b){ e.preventDefault(); e.stopPropagation(); if(cur === b && !canHover()) hide(); else show(b); return; }
+    if(cur) hide();
+  }, true);
+  document.addEventListener('mouseover', function(e){ var b = e.target && e.target.closest ? e.target.closest('.hq') : null; if(b && canHover()) show(b); });
+  document.addEventListener('mouseout', function(e){ var b = e.target && e.target.closest ? e.target.closest('.hq') : null; if(b && canHover() && !(e.relatedTarget && b.contains(e.relatedTarget))) hide(); });
+  window.addEventListener('scroll', function(){ if(cur) hide(); }, true);
+  window.addEventListener('resize', function(){ if(cur) hide(); });
+})();
 function esc(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -2168,10 +2202,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v104';
+var APP_VER = 'v105';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v105', d: '2026/10/26', items: ['❔ 項目名のうしろの長いカッコ書きの説明を「？」ボタンにまとめました（PCはマウスを乗せる・スマホはタップで説明が出ます）。イベントの作成・編集など約30か所'] },
   { v: 'v104', d: '2026/10/26', items: ['🔤 日付・金額・会員番号などの数字のフォントを、読みやすいフォント（Manrope）に変えました（会員証・受付画面・印刷物）'] },
   { v: 'v103', d: '2026/10/25', items: ['📊 イベントの「編集」で「集計（稼働率）に入れない」を選べるようにしました。参加必須でないイベントや間違って立てたイベントは、開催数にも出席回数にも入りません（イベント一覧に「📊集計外」と出ます。受付・会計はふつうにできます）'] },
   { v: 'v102', d: '2026/10/25', items: ['🛡 受付のユニオン管理者は、オーナーが受付で任命した人だけになりました（NAVIGATORの管理者になっても自動では受付のユニオン管理者になりません。今までの管理者はそのまま引き継いでいます）', '📱 名簿で「無効」にする時に確認画面を出し、NAVIGATORも使えなくなるかを表示するようにしました。NAVIGATORのアカウントが紐付いていなければ、同じ名前のアカウントをその場で紐付けてNAVIGATORも止められます（受付で有効に戻すと、また使えます）'] },
@@ -5720,7 +5755,7 @@ $('btnTrainers').onclick = function(){
       + '<p style="font-size:12px;color:var(--sub);margin:8px 0 0;">📜 任命された人は、研修生登録ページを初めて開いた時に秘密保持契約に誓約してから使えます。'
       + (ndas.length ? ' <a href="#" id="trnNdaList">誓約の記録を見る（' + ndas.length + '件）</a>' : '')
       + (isOwner() ? ' <a href="#" id="trnNdaPrev">誓約画面をプレビュー</a>' : '') + '</p>'
-      + '<label style="margin-top:12px;">研修生登録ページのURL（担当者に共有。スマホのホーム画面に追加推奨）</label>'
+      + '<label style="margin-top:12px;">研修生登録ページのURL' + hq('研修生登録の担当に共有してください。スマホのホーム画面に追加しておくと便利です。') + '</label>'
       + '<input type="text" id="trnUrl" readonly value="' + esc(trUrl) + '" style="width:100%;font-size:12px;">'
       + '<div class="btns"><button id="trnCopy">URLをコピー</button><button id="trnCancel">キャンセル</button><button class="primary" id="trnSave">保存</button></div>',
       true);
@@ -5820,10 +5855,10 @@ $('btnAdminsView').onclick = function(){
         + (cores.map(function(uid){ return row(uid, '<span class="pill g">ユニオン管理者</span>'); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
         + (isOwner() ? '<div class="btns" style="justify-content:flex-start;margin-top:6px;"><button id="avCore">✏️ ユニオン管理者を任命</button></div>' : '')
-        + '<label style="margin-top:14px;">👑 受付管理者（任命制・管理者と同じ操作ができる）</label>'
+        + '<label style="margin-top:14px;">👑 受付管理者' + hq('ユニオン管理者が任命します。このシステムの中で、管理者とほぼ同じ操作ができます。') + '</label>'
         + (admins.map(function(uid){ return row(uid, ''); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
-        + '<label style="margin-top:14px;">⭐ リーダー（オーナーが指定・名簿と集計の閲覧、研修生登録の担当の任命）</label>'
+        + '<label style="margin-top:14px;">⭐ リーダー' + hq('オーナーが指定します。名簿と集計を見ること、研修生登録の担当の任命ができます。') + '</label>'
         + (leaders.map(function(uid){ return row(uid, '<span class="pill g">リーダー</span>'); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>')
         + (isOwner() ? '<div class="btns" style="justify-content:flex-start;margin-top:6px;"><button id="avLead">✏️ リーダーを設定</button></div>' : '')
@@ -5913,7 +5948,7 @@ $('btnAddUnion').onclick = function(){
     + '<label>ユニオン名</label><input type="text" id="nuName" placeholder="例: REVE">'
     + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">NAVIGATOR（MAP）のプロフィールのユニオン名と<b>同じ表記</b>にしてください（MAPとの連携に使います）。</p>'
     + '<label>地域</label><input type="text" id="nuArea" placeholder="例: 福岡">'
-    + '<label>会員番号の頭文字（英字2〜4文字・他のユニオンと重複不可）</label>'
+    + '<label>会員番号の頭文字' + hq('英字2〜4文字。他のユニオンと同じものは使えません。') + '</label>'
     + '<input type="text" id="nuPre" autocapitalize="characters" placeholder="例: RV → RV0001, RV0002…">'
     + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">番号は全国のユニオンで共通の台帳です。新しく番号を付ける時は「頭文字＋4桁」になります。</p>'
     + '<div class="btns"><button id="nuCancel">キャンセル</button><button class="primary" id="nuGo">追加</button></div>');
@@ -6610,7 +6645,7 @@ function kbPickMember(cb){
   host.className = 'modalback';
   host.style.zIndex = 10001;
   host.innerHTML = '<div class="modal"><h2>👤 付ける人を選ぶ</h2><div id="kbPl"><p style="font-size:13px;color:var(--sub);">読み込み中…</p></div>'
-    + '<label>番号で探す（BLUE DIAMOND・TEAM ELITE 以外の人）</label><div style="display:flex;gap:6px;"><input type="text" id="kbNo" placeholder="例: AN0001" style="flex:1;"><button id="kbNoGo">探す</button></div>'
+    + '<label>番号で探す' + hq('BLUE DIAMOND・TEAM ELITE 以外の人を、会員番号で探せます。') + '</label><div style="display:flex;gap:6px;"><input type="text" id="kbNo" placeholder="例: AN0001" style="flex:1;"><button id="kbNoGo">探す</button></div>'
     + '<div class="btns"><button id="kbPlClose">閉じる</button></div></div>';
   document.body.appendChild(host);
   var close = function(){ host.remove(); };
@@ -7570,7 +7605,7 @@ function cardModal(m){
   if(isOwner() || canEditUnion(m.union)){
     // 🎓 OLチェックアウト（オーナー・ユニオン管理者）: この人をアウトラインをする「Aさん」にする
     body += '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:6px;">'
-      + '<label>🎓 OLチェックアウト（アウトライン後の感想・気づき）</label><div id="cmOl"><p style="font-size:12px;color:var(--sub);">読み込み中…</p></div></div>';
+      + '<label>🎓 OLチェックアウト' + hq('アウトラインの後に、受けた人が感想・気づきを送る仕組みです。') + '</label><div id="cmOl"><p style="font-size:12px;color:var(--sub);">読み込み中…</p></div></div>';
   }
   modal('<h2>スマホ会員証 — ' + esc(m.name || '') + '</h2>' + body);
   $('cmClose').onclick = closeModal;
@@ -8264,7 +8299,7 @@ $('btnGroupRen').onclick = function(){
   Object.keys(cntA).forEach(function(g){ var k = groupKey(g); (clus[k] = clus[k] || []).push(g); });
   var dups = Object.keys(clus).filter(function(k){ return clus[k].length >= 2; }).map(function(k){ return clus[k]; });
   var autoHtml = dups.length
-    ? '<label>🧹 表記ゆれの自動検出（' + dups.length + '組）— 正しい表記をタップすると下の変更欄に入ります</label>'
+    ? '<label>🧹 表記ゆれの自動検出（' + dups.length + '組）' + hq('正しい表記をタップすると、下の変更欄に入ります。') + '</label>'
       + dups.map(function(vs, ci){
           return '<div style="border:1px solid var(--line);border-radius:8px;padding:8px;margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">'
             + vs.map(function(v, vi){
@@ -8793,7 +8828,7 @@ function eventForm(ev){
   var evUnions = (ev && ev.unions) || [];
   var others = gUnions.filter(function(u){ return u !== host; });
   var chk = others.length
-    ? '<div id="evUnionsBox"><label>合同ユニオン（合同のときだけ・いっしょに開くユニオンを全部チェック）</label>' + others.map(function(u, i){
+    ? '<div id="evUnionsBox"><label>合同ユニオン' + hq('合同のときだけ、いっしょに開くユニオンを全部チェックします。チェックしたユニオンの人の出席は、それぞれのユニオンの集計に入ります。') + '</label>' + others.map(function(u, i){
         return '<div class="chkrow"><input type="checkbox" id="evU' + i + '" value="' + esc(u) + '"'
           + (evUnions.indexOf(u) >= 0 ? ' checked' : '')
           + '><label for="evU' + i + '" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">' + esc(u) + '</label></div>';
@@ -8811,7 +8846,7 @@ function eventForm(ev){
     + '<div class="chkrow"><input type="radio" name="evMode" id="evModeSelf"' + (isSelfCur ? ' checked' : '') + '>'
     + '<label for="evModeSelf" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">CLAVIS主催・セルフチェックイン</label></div>'
     + '<div class="chkrow' + (isSelfCur ? '' : ' hide') + '" id="rowReqCode" style="margin-left:22px;"><input type="checkbox" id="evReqCode"' + (ev && ev.requireCode ? ' checked' : '') + '>'
-    + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する（会場で案内された4桁を入れないとチェックインできない）</label></div>'
+    + '<label for="evReqCode" style="margin:0;font-weight:400;color:var(--ink);font-size:13px;">会場コードを要求する' + hq('会場で案内された4桁のコードを入れないと、チェックインできなくなります。') + '</label></div>'
     + '<div style="display:flex;gap:10px;margin-top:4px;">'
     + '<div style="flex:1;min-width:0;"><label>受付料金 第1部（¥）</label>'
     + '<input type="text" id="evFee1" inputmode="numeric" value="' + esc(ev && ev.fee1 != null ? ev.fee1 : 1000) + '"></div>'
@@ -8825,40 +8860,40 @@ function eventForm(ev){
         + '<div class="chkrow"><input type="radio" name="evPay" id="evPayCash"' + (curPay !== 'paypay' && curPay !== 'both' ? ' checked' : '') + '>'
         + '<label for="evPayCash" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💴 現金のみ</label></div>'
         + '<div class="chkrow"><input type="radio" name="evPay" id="evPayMode"' + (curPay === 'paypay' ? ' checked' : '') + '>'
-        + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayのみ（現金なし。受付画面に金額入りの送金QRを表示）</label></div>'
+        + '<label for="evPayMode" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💳 PayPayのみ' + hq('現金は受け取りません。受付画面に金額入りのPayPay送金QRを表示します。') + '</label></div>'
         + '<div class="chkrow"><input type="radio" name="evPay" id="evPayBoth"' + (curPay === 'both' ? ' checked' : '') + '>'
-        + '<label for="evPayBoth" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💴💳 現金とPayPayの両方（受付のたびに「現金」「PayPay」をワンタップで選ぶ）</label></div>'
+        + '<label for="evPayBoth" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💴💳 現金とPayPayの両方' + hq('受付のたびに「現金」「PayPay」をワンタップで選びます。') + '</label></div>'
       : '')
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evOnline"' + (ev && ev.online ? ' checked' : '') + '>'
-    + '<label for="evOnline" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">オンライン受講を受け付ける（会員証から申請→承認でZoom URL自動表示）</label></div>'
+    + '<label for="evOnline" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">オンライン受講を受け付ける' + hq('会員証から申請 → 承認すると、その人の会員証にZoom URLが自動で表示されます。') + '</label></div>'
     + '<div id="rowOnline" class="' + (ev && ev.online ? '' : 'hide') + '" style="margin-left:22px;">'
     + '<label>オンライン受講料（¥）</label><input type="text" id="evOnFee" inputmode="numeric" value="' + esc(ev && ev.onlineFee != null ? ev.onlineFee : 1000) + '">'
-    + '<label>PayPay送金先（申請フォームに表示）</label><input type="text" id="evOnPay" value="' + esc((ev && ev.onlinePayTo) || '') + '" placeholder="例: PayPay ID xxxx（きむ）">'
-    + '<label>PayPay受け取りリンク（設定すると申請フォームに金額入りの送金ボタンが出ます）</label>'
-    + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…（未入力ならユニオン設定の値）">'
-    + '<label>Zoom URL（あとからでも可。承認キュー画面でも入力できます）</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
+    + '<label>PayPay送金先' + hq('オンライン受講の申請フォームに表示されます。') + '</label><input type="text" id="evOnPay" value="' + esc((ev && ev.onlinePayTo) || '') + '" placeholder="例: PayPay ID xxxx（きむ）">'
+    + '<label>PayPay受け取りリンク' + hq('設定すると、申請フォームに金額入りの送金ボタンが出ます。未入力ならユニオン設定の値を使います。') + '</label>'
+    + '<input type="text" id="evOnPayLink" value="' + esc((ev && ev.onlinePayLink) || '') + '" placeholder="paypay.me/xxxx か https://qr.paypay.ne.jp/…">'
+    + '<label>Zoom URL' + hq('あとからでも入れられます。オンライン受講の承認画面でも入力できます。') + '</label><input type="text" id="evZoom" value="' + esc((ev && ev.zoomUrl) || '') + '">'
     + '</div>'
     + ((hostAddon || (ev && ev.addonOn))
       ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evAddon"' + (ev && ev.addonOn ? ' checked' : '') + '>'
         + '<label for="evAddon" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎓 このイベントで「' + esc((hostAddon && hostAddon.name) || 'オプション') + '」を受け付ける'
-        + (hostAddon ? '（受付でピッした後に、対象者だけ＋' + yen(hostAddon.price) + '）' : '') + '</label></div>'
+        + (hostAddon ? hq('受付でピッした後に、対象の人だけ＋' + yen(hostAddon.price) + 'を受け付けます。') : '') + '</label></div>'
       : '')
     + (showRsvp
       ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRsvp"' + (ev && ev.rsvp ? ' checked' : '') + '>'
-        + '<label for="evRsvp" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎟 会員証から予約を受け付ける（UR等。期日が来ると会員証に「予約する」ボタンが自動表示）</label></div>'
+        + '<label for="evRsvp" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🎟 会員証から予約を受け付ける' + hq('UR など。下の日が来ると、会員証に「予約する」ボタンが自動で表示されます。') + '</label></div>'
         + '<div id="rowRsvp" class="' + (ev && ev.rsvp ? '' : 'hide') + '" style="margin-left:22px;">'
-        + '<label>予約ボタンを表示する日（開催の何日前から）</label>'
+        + '<label>予約ボタンを表示する日' + hq('開催の何日前から、会員証に「予約する」ボタンを出すかです。') + '</label>'
         + '<input type="text" id="evRsvpDays" inputmode="numeric" value="' + esc(ev && ev.rsvpDays != null ? ev.rsvpDays : 4) + '" style="width:80px;">'
-        + '<label>予約締切日（任意。過ぎると会員証の「予約する」が自動で閉じます）</label>'
+        + '<label>予約締切日（任意）' + hq('この日を過ぎると、会員証の「予約する」が自動で閉じます。') + '</label>'
         + '<input type="date" id="evRsvpDl" value="' + esc((ev && ev.rsvpDeadline) || '') + '" style="width:190px;">'
         + '</div>'
       : '')
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRcpt"' + (ckEvRcptOn(ev || { hostUnion: host }) ? ' checked' : '') + '>'
     + '<label for="evRcpt" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🧾 このイベントは領収書を発行する'
-    + '<span style="color:var(--sub);font-size:12px;">（' + esc(host) + 'の初期値: ' + (gRcptDef[host] !== false ? '発行する' : '発行しない') + '・会計タブの「🧾 領収書設定」で変更）</span></label></div>'
+    + hq(host + 'の初期値は「' + (gRcptDef[host] !== false ? '発行する' : '発行しない') + '」です。初期値は会計タブの「🧾 領収書設定」で変えられます。') + '</label></div>'
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evNoStat"' + (ev && ev.noStat === true ? ' checked' : '') + '>'
     + '<label for="evNoStat" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">📊 集計（稼働率）に入れない'
-    + '<span style="color:var(--sub);font-size:12px;">（参加必須でないイベント・間違って立てたイベントなど。開催数にも出席回数にも入りません。受付・会計はふつうにできます）</span></label></div>'
+    + hq('参加必須でないイベントや、間違って立てたイベントに使います。開催数にも出席回数にも入りません。受付・会計はふつうにできます。') + '</label></div>'
     + chk
     + '<div class="btns"><button id="evCancel">キャンセル</button><button class="primary" id="evSave">' + (isNew ? '作成' : '保存') + '</button></div>'
   );
@@ -9957,7 +9992,7 @@ function dlrRsvModal(m, back){
         }).join('')
       + '<option value="__all"' + (selArea === '__all' ? ' selected' : '') + '>すべての地域</option>'
       + '</select>'
-      + '<label>日程（今後のDLR / P&amp;P から選択）</label>'
+      + '<label>日程' + hq('これからの DLR / P&P から選びます。') + '</label>'
       + '<select id="dlrEv"></select>'
       + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>開始</label>'
       + '<input type="time" id="dlrFrom" value="' + esc((cur && cur.timeFrom) || '20:00') + '"></div>'
@@ -10439,7 +10474,7 @@ function onlineModal(ev){
         + '</div>';
     }).join('');
     modal('<h2>💻 オンライン受講 — ' + esc(ev.date || '') + ' ' + esc(ev.name || '') + '<span id="olmMark" class="hide"></span></h2>'
-      + '<label>Zoom参加情報（保存すると承認済みの受講者の会員証に表示されます）</label>'
+      + '<label>Zoom参加情報' + hq('保存すると、承認済みの受講者の会員証に表示されます。') + '</label>'
       + '<textarea id="olZoomPaste" rows="2" placeholder="Zoomの「招待をコピー」の全文をここに貼り付けると、URL・ID・パスコードを自動で抜き出します"'
       + ' style="width:100%;font-size:12.5px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical;"></textarea>'
       + '<div id="olZoomMsg" style="font-size:12px;color:var(--green);min-height:1.2em;margin:3px 0 4px;"></div>'
@@ -11052,8 +11087,8 @@ $('btnRcptSet').onclick = function(){
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
       + '<b>未設定（空欄）の間、このユニオンでは電子領収書は発行されません。</b></p>'
       + '<label style="margin-top:10px;">新しく作るイベントの領収書（初期値）</label>'
-      + '<div class="chkrow"><input type="radio" name="rsDef" id="rsDefOn"' + (s0 && s0.rcptDefault === false ? '' : ' checked') + '><label for="rsDefOn" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">発行する（発行しないイベントだけ、イベントの編集でオフ）</label></div>'
-      + '<div class="chkrow"><input type="radio" name="rsDef" id="rsDefOff"' + (s0 && s0.rcptDefault === false ? ' checked' : '') + '><label for="rsDefOff" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">発行しない（発行するイベントだけ、イベントの編集でオン）</label></div>'
+      + '<div class="chkrow"><input type="radio" name="rsDef" id="rsDefOn"' + (s0 && s0.rcptDefault === false ? '' : ' checked') + '><label for="rsDefOn" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">発行する' + hq('発行しないイベントだけ、イベントの編集でオフにします。') + '</label></div>'
+      + '<div class="chkrow"><input type="radio" name="rsDef" id="rsDefOff"' + (s0 && s0.rcptDefault === false ? ' checked' : '') + '><label for="rsDefOff" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">発行しない' + hq('発行するイベントだけ、イベントの編集でオンにします。') + '</label></div>'
       + '<label style="margin-top:10px;">領収書の住所（任意）</label>'
       + '<input type="text" id="rsAddr" value="' + esc((s0 && s0.issuerAddr) || '') + '" placeholder="例: 福岡県福岡市中央区…">'
       + '<label>領収書の電話番号（任意）</label>'
@@ -11062,7 +11097,7 @@ $('btnRcptSet').onclick = function(){
       + '<input type="text" id="rsInv" value="' + esc((s0 && s0.invoiceNo) || '') + '" placeholder="例: T1234567890123">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">入れた項目だけ領収書に載ります。登録番号を入れると、適格簡易請求書として「10%対象・うち消費税」も表示します。'
       + '変更はこれから発行する領収書から反映されます（発行済みの領収書はそのまま）。</p>'
-      + '<label style="margin-top:14px;">会員番号の頭文字（自動発番・英字2〜4文字・他のユニオンと重複不可）</label>'
+      + '<label style="margin-top:14px;">会員番号の頭文字' + hq('新しく登録する人の番号を自動で付ける時に使います。英字2〜4文字。他のユニオンと同じものは使えません。') + '</label>'
       + '<input type="text" id="rsPrefix" value="' + esc(curPre) + '" placeholder="例: RV → RV0001, RV0002…">'
       + '<p style="font-size:12.5px;color:var(--sub);margin-top:6px;">'
       + 'メンバー追加・研修生登録・名簿の取込（番号が空欄の人）で「頭文字＋4桁」を自動発番します。'
@@ -11080,7 +11115,7 @@ $('btnRcptSet').onclick = function(){
       + '・<b>qr.paypay.ne.jp/…</b>（送る・受け取るのリンク）… 宛先のみ自動、金額は送る人が入力</p>'
       + (isOwner()
         ? '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:8px;">'
-          + '<label style="margin-top:0;">✨ 追加オプション（このユニオン専用・オーナーだけが設定）</label>'
+          + '<label style="margin-top:0;">✨ 追加オプション' + hq('このユニオン専用の設定です。設定できるのはオーナーだけです。') + '</label>'
           + '<div class="chkrow"><input type="checkbox" id="rsAddOn"' + (s0 && s0.addon && s0.addon.on ? ' checked' : '') + '>'
           + '<label for="rsAddOn" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">受付で、対象者だけに追加料金のオプションを付けられるようにする</label></div>'
           + '<div style="display:flex;gap:8px;"><div style="flex:1;min-width:0;"><label>名前</label><input type="text" id="rsAddName" value="' + esc((s0 && s0.addon && s0.addon.name) || 'アウトライン') + '"></div>'
@@ -12352,7 +12387,7 @@ function staffModal(){
     + '<label>役割</label><select id="smRole"><option value="staff">受付担当</option><option value="unionadmin">ユニオン管理者</option>'
     + '<option value="mc">MC</option><option value="speaker">スピーカー</option></select>'
     + '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">徴収なし（¥0）で出席に入ります（稼働率にも入ります）。QRの読み取りは不要です。何人でもまとめて選べます。</p>'
-    + '<div class="rmgrid"><div><label>名簿から名前検索（見られるユニオンの名簿が対象）</label>'
+    + '<div class="rmgrid"><div><label>名簿から名前検索' + hq('あなたが見られるユニオンの名簿から探します。') + '</label>'
     + '<input type="text" id="rmQ" placeholder="氏名の一部を入力"></div>'
     + '<div id="rmList" class="rmlist"><div class="rmhint">名前を入力して、候補をタップで選択（もう一度タップで外す）</div></div></div>'
     + '<label>選んだ人</label><div id="smSel" style="font-size:13.5px;min-height:1.6em;"><span style="color:var(--sub);">まだいません</span></div>'
@@ -12439,7 +12474,7 @@ function roleModal(role){
   var lbl = roleLabel(role);
   modal('<h2>' + lbl + 'を登録</h2>'
     // PCでは候補リストを入力欄の右に出す（日本語変換の候補ウィンドウが入力欄の下に重なって見えなくなるため）
-    + '<div class="rmgrid"><div><label>名簿から名前検索（見られるユニオンの名簿が対象）</label>'
+    + '<div class="rmgrid"><div><label>名簿から名前検索' + hq('あなたが見られるユニオンの名簿から探します。') + '</label>'
     + '<input type="text" id="rmQ" placeholder="氏名の一部を入力"></div>'
     + '<div id="rmList" class="rmlist"><div class="rmhint">名前を入力すると、ここに候補が出ます</div></div></div>'
     + (role === 'speaker'
