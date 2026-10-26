@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png">
 <meta name="apple-mobile-web-app-title" content="BASE CHECK-IN">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
 :root{
   --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
@@ -41,7 +41,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 input[type=text],input[type=search],input[type=email],input[type=password],input[type=date],select,textarea{
   font-family:inherit;font-size:14px;padding:8px 12px;border-radius:7px;
   border:1px solid var(--line);background:var(--card);color:var(--ink);}
-.mono{font-family:"IBM Plex Mono",monospace;}
+.mono{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;}
 h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;}
 .hide{display:none !important;}
 
@@ -215,7 +215,7 @@ body.easy-rec .tile.tap:hover{border-color:var(--line);}
 .ok .hit-badge{background:var(--green);color:#fff;}
 .dup .hit-badge{background:var(--amber);color:#fff;}
 .ng .hit-badge{background:var(--accent);color:#fff;}
-.counter{position:absolute;top:12px;right:16px;font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--sub);}
+.counter{position:absolute;top:12px;right:16px;font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;font-size:13px;color:var(--sub);}
 #scanBuf{position:absolute;opacity:0.01;width:2px;height:2px;border:none;padding:0;left:-5px;top:-5px;}
 .recbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
 .recbar select{min-width:200px;}
@@ -273,7 +273,7 @@ body.easy-rec .tile.tap:hover{border-color:var(--line);}
 .recent{list-style:none;margin:0;padding:0;font-size:13px;}
 .recent li{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);align-items:baseline;}
 .recent li:last-child{border-bottom:none;}
-.recent .tm{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--sub);flex:0 0 auto;}
+.recent .tm{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;font-size:11.5px;color:var(--sub);flex:0 0 auto;}
 .recent .who{font-weight:700;}
 .recent .gr{color:var(--sub);font-size:12px;margin-left:auto;white-space:nowrap;}
 
@@ -309,14 +309,14 @@ tr:last-child td{border-bottom:none;}
 .evrow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 15px;
   display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 .evrow.today{border-color:var(--green);}
-.evrow .d{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--sub);width:4.6em;}
+.evrow .d{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;font-size:13px;color:var(--sub);width:4.6em;}
 .evrow b{font-family:"Zen Kaku Gothic New",sans-serif;font-size:15px;}
 .evrow .att{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--sub);font-size:13px;}
 .jointtag{background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:700;border-radius:99px;padding:1px 10px;}
 
 /* stats */
 .stattiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px;}
-.matrix td.mk{text-align:center;font-family:"IBM Plex Mono",monospace;}
+.matrix td.mk{text-align:center;font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;}
 .mk .y{color:var(--green);font-weight:700;}
 .mk .nn{color:var(--line);}
 .rate{font-variant-numeric:tabular-nums;font-weight:700;}
@@ -427,7 +427,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .next-head::after{content:'';flex:1;height:1px;background:var(--line);}
 .nextrow{display:flex;align-items:baseline;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line);}
 .nextrow:last-child{border-bottom:none;}
-.nextrow .nd{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;letter-spacing:.02em;}
+.nextrow .nd{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;font-size:15px;font-weight:600;letter-spacing:.02em;}
 .nextrow .nn{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:700;font-size:14.5px;}
 .nextrow .ns{margin-left:auto;color:var(--sub);font-size:12px;white-space:nowrap;}
 .nextrow .today-pill{font-size:10.5px;font-weight:700;color:var(--green);border:1px solid var(--green);border-radius:99px;padding:1px 8px;margin-left:auto;white-space:nowrap;}
@@ -712,7 +712,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 /* 左下: 通し番号＋レアリティ（斜体の文字だけ） */
 .membercard.skin-tcg .mc-rare{display:flex;grid-area:rare;align-items:baseline;gap:6px;justify-self:start;margin-top:2px;}
 .membercard.skin-tcg .mc-rare:empty{display:none;}
-.mc-rare .ser{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:700;color:#fff;}
+.mc-rare .ser{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;color:#fff;}
 .mc-rare .rr{font-family:Verdana,sans-serif;font-style:italic;font-weight:900;font-size:15px;letter-spacing:.04em;color:#ffe9a0;
   text-shadow:0 0 2px #000,0 1px 0 #000,0 0 8px rgba(255,210,90,.7);}
 .membercard.skin-tcg .mc-brand{grid-area:brand;align-self:start;margin-top:5px;font-size:8.5px;letter-spacing:.12em;color:rgba(235,225,255,.65);text-shadow:0 0 3px #000;}
@@ -865,7 +865,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .ol-cnt{position:absolute;top:-6px;right:-6px;z-index:5;background:#e2463c;color:#fff;font-style:normal;font-weight:900;font-size:12px;border-radius:99px;padding:2px 8px;box-shadow:0 0 0 2px var(--card);}
 .ol-mini small{font-size:11.5px;color:var(--sub);}
 .ol-hist{display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);font-size:13px;}
-.ol-hist b{font-family:"IBM Plex Mono",monospace;font-weight:600;}
+.ol-hist b{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;font-weight:600;}
 .ol-hist span{white-space:nowrap;}
 .ol-hist em{font-style:normal;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
 .ol-cam{position:relative;width:100%;aspect-ratio:1;background:#000;border-radius:12px;overflow:hidden;}
@@ -931,7 +931,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .col-h{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px;font-size:13px;line-height:1.65;background:var(--card);}
 .col-h small{display:inline-block;font-size:10.5px;color:var(--sub);margin-right:6px;}
 .col-h-hd{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
-.col-h-hd b{font-family:"IBM Plex Mono",monospace;}
+.col-h-hd b{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;}
 .col-chip{margin-left:auto;padding:3px 9px;font-size:11.5px;font-weight:800;border-radius:99px;border:none;background:linear-gradient(135deg,#ffe08a,#c9a2ff);color:#2a1660;}
 .col-show{position:fixed;inset:0;z-index:9000;overflow-y:auto;color:#fff;background:radial-gradient(circle at 50% 30%,#3a1d6e,#0b0714 65%);padding:10px 14px 40px;}
 .col-show-top{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;opacity:.85;}
@@ -944,7 +944,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .col-show-nm{font-weight:800;font-size:15px;margin:6px 0 8px;display:flex;gap:8px;align-items:baseline;}
 .col-show-nm span{font-size:12px;opacity:.7;}
 .col-show-r{background:rgba(255,255,255,.08);border-radius:12px;padding:9px 12px;margin-bottom:8px;font-size:13px;line-height:1.65;}
-.col-show-r b{font-family:"IBM Plex Mono",monospace;}
+.col-show-r b{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;}
 .col-show-r small{display:inline-block;font-size:10.5px;opacity:.65;margin-right:6px;}
 .col-ser{margin-left:8px;font-weight:800;color:#ffe08a;}
 /* 紙カード印刷 */
@@ -961,7 +961,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
   .pcard .pg{font-size:8pt;color:#555;}
   .pcard .pq{margin:2mm 0;}
   .pcard .pq img,.pcard .pq canvas{width:22mm !important;height:22mm !important;}
-  .pcard .pno{font-size:8pt;font-family:"IBM Plex Mono",monospace;color:#555;}
+  .pcard .pno{font-size:8pt;font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;color:#555;}
 }
 @page{size:A4;margin:8mm;}
 
@@ -2168,10 +2168,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v103';
+var APP_VER = 'v104';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v104', d: '2026/10/26', items: ['🔤 日付・金額・会員番号などの数字のフォントを、読みやすいフォント（Manrope）に変えました（会員証・受付画面・印刷物）'] },
   { v: 'v103', d: '2026/10/25', items: ['📊 イベントの「編集」で「集計（稼働率）に入れない」を選べるようにしました。参加必須でないイベントや間違って立てたイベントは、開催数にも出席回数にも入りません（イベント一覧に「📊集計外」と出ます。受付・会計はふつうにできます）'] },
   { v: 'v102', d: '2026/10/25', items: ['🛡 受付のユニオン管理者は、オーナーが受付で任命した人だけになりました（NAVIGATORの管理者になっても自動では受付のユニオン管理者になりません。今までの管理者はそのまま引き継いでいます）', '📱 名簿で「無効」にする時に確認画面を出し、NAVIGATORも使えなくなるかを表示するようにしました。NAVIGATORのアカウントが紐付いていなければ、同じ名前のアカウントをその場で紐付けてNAVIGATORも止められます（受付で有効に戻すと、また使えます）'] },
   { v: 'v101', d: '2026/10/25', items: ['⭐ 新しい立場「リーダー」ができました（オーナーがユニオンごとに指定）。リーダーは名簿と集計を見られて、研修生登録の担当を任命できます（研修生の登録も可）', '🔒 名簿・集計タブは、オーナー・ユニオン管理者・受付管理者・リーダーだけに表示するようにしました（受付はこれまで通り誰でもできます）'] },
@@ -8660,11 +8661,11 @@ $('btnSchedPdf').onclick = function(){
     + '.sd{width:15mm;text-align:center;color:#999;font-size:10pt;}'
     + 'th{font-size:8.5pt;}'
     + '.foot{font-size:8pt;color:#777;margin-top:3mm;}'
-    + '.mono{font-family:"Courier New",monospace;}';
+    + '.mono{font-family:"Manrope","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-variant-numeric:tabular-nums;}';
   var title = '予定表_' + gEventUnion + '_' + gMonth.y + '-' + pad(gMonth.m);
   var w = window.open('', '_blank');
   if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>' + '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">'
     + '<style>' + css + '</style></head><body>'
     + '<h1>' + esc(yl) + '　ハウディ予定表</h1>'
     + '<p class="sub">' + esc(gEventUnion) + '　（全' + evs.length + '回）　✔ = お金を入れました</p>'
@@ -10679,11 +10680,11 @@ function printCashSlip(ev, f, live){
     + '.cs-foot{font-size:8pt;color:#444;margin-top:3mm;}'
     + '.cs-sign{font-size:9.5pt;margin-top:4mm;border-top:0.2mm dashed #999;padding-top:3mm;}'
     + '.cs-note{font-size:7.5pt;color:#999;text-align:center;margin-top:2mm;}'
-    + '.mono{font-family:"Courier New",monospace;}';
+    + '.mono{font-family:"Manrope","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-variant-numeric:tabular-nums;}';
   var title = '納金表_' + (ev.hostUnion || '') + '_' + (ev.date || '');
   var w = window.open('', '_blank');
   if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title>' + '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">'
     + '<style>' + css + '</style></head><body>'
     + '<div class="cs-quarter"><div class="cs-cap">【提出用】</div>' + slip + '</div>'
     + '<div class="cs-cut">✂ ここで切り取り</div>'
@@ -12745,8 +12746,8 @@ function pledgeListOpen(){
     + '.sub{font-size:12px;color:#888;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
     + '.cpb{padding:5px 12px;font-size:13px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;}'
     + '.empty{color:#999;font-size:13px;padding:20px 14px;}'
-    + '.mono{font-family:"Courier New",monospace;}';
-  gPlWin.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>誓約書リスト（受付順）</title>'
+    + '.mono{font-family:"Manrope","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-variant-numeric:tabular-nums;}';
+  gPlWin.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>誓約書リスト（受付順）</title>' + '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">'
     + '<style>' + css + '</style></head><body>'
     + '<div class="cfg">誓約書1枚あたり: 1枚目 <input id="n1" type="number" min="1" value="' + gPlN1 + '"> 名 / 2枚目以降 <input id="n2" type="number" min="1" value="' + gPlN2 + '"> 名'
     + '<button onclick="ps(10,10)">ゼネラル(10/10)</button><button onclick="ps(10,9)">SG(10/9)</button>'
