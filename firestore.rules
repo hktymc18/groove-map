@@ -185,14 +185,14 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']);
       }
       // ---- AttackList：Family DATA（家族の情報。1人1つ＝family/main） ----
-      // 本人が読み書きする。リストを共有している相手（alShares）は、本人が share=true にしたときだけ読める。
+      // 本人が読み書きする。リストを共有している相手（alShares）のうち、本人が viewers（見せる人の uid 一覧）に入れた人だけ読める。
       // 共有された相手が書けるのは「Uラインからのアドバイス」（advice / adviceAt）だけ。
       // 持ち主が OUT されても、共有を受けていた側は人物リストと同じく引き続き読める。
       match /family/{fid} {
         function famSharedToMe() {
           return signedIn() && request.auth.uid != uid && notDisabled(request.auth.uid)
               && exists(/databases/$(database)/documents/users/$(uid)/alShares/$(request.auth.uid))
-              && resource.data.get('share', false) == true;
+              && resource.data.get('viewers', []).hasAny([request.auth.uid]);
         }
         allow read:  if ownerActive(uid) || famSharedToMe();
         allow write: if ownerActive(uid);
