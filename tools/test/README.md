@@ -20,6 +20,7 @@ node tools/test/tests/ef614_test.js   # 1本だけ
 VIEW=events VW=390 VH=844 PFX=cal SHOTS='[["month","setTheme(\"light\");setEventsMode(\"calendar\")"]]' node tools/test/shot/shot.js
 # → tools/test/out/cal_month.png（横向きは VW=844 VH=390）
 node tools/test/shot/mockfull.js <mock.html> <out.png>   # モックHTMLの写真
+CASES='[["gold",{"cardTitle":"GOLD","badges":["EXPERT"]}]]' DARK=1 node tools/test/shot/ckcard.js   # 受付の会員証の写真（架空データ）→ out/ck_gold.png
 ```
 
 ## バージョンを上げる・公開の確認
