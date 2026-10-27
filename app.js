@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v839';
+var APP_JS_VERSION = 'v840';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1678,8 +1678,9 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       var tg = byLane[d9].map(function(id, k) {
         var ch = kids(id);
         if (!ch.length) return laneS[d9][k];
-        var ua = uOf(ch[0].id), ub = uOf(ch[ch.length - 1].id), du = ub - ua;
-        if (du > 2) du -= 4; if (du < -2) du += 4;
+        // v840 #30: 子は並び順どおり前向きに並ぶので、最初→最後の子の幅は前向きに測る（0〜4）。前は近い向きで測っていて、
+        //   子が半周より広く散らばった親が反対側に飛び、くしが長く回り込んで隣の親のくしと二重線のように並んでいた
+        var ua = uOf(ch[0].id), ub = uOf(ch[ch.length - 1].id), du = ((ub - ua) % 4 + 4) % 4;
         return uToS(r9, ua + du / 2);
       });
       laneS[d9] = placeLane(d9, r9, tg).s;
@@ -1693,14 +1694,33 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       var tg8 = byLane[d8].map(function(id, k) {
         var m8 = _byId[id], pu = m8 && m8.parentId ? uOf(m8.parentId) : null;
         if (pu == null || uT[id] == null || uT[m8.parentId] == null) return laneS[d8][k];
-        var du8 = uT[id] - uT[m8.parentId]; if (du8 > 2) du8 -= 4; if (du8 < -2) du8 += 4;
+        var du8 = uT[id] - uT[m8.parentId]; // v840 #30: 整った木の位置は一周の中でまっすぐ並ぶので、ずれはそのまま（近い向きに直さない）
         return uToS(r8, pu + du8);
       });
       var res8 = placeLane(d8, r8, tg8); if (res8.ok) laneS[d8] = res8.s;
     }
   };
+  // v840 #30: くし（親→子の横の線）が、同じ段の別の親のくしと並んで走る長さ＋くしの長さ（少し）。小さいほど見やすい
+  //   （内側の段が混んで親が子の真ん中に置けないと、くしが隣の親のくしと二重線のように長く並ぶ）
+  var snapS = function() { var o = {}; for (var k in laneS) o[k] = laneS[k].slice(); return o; };
+  var combScore = function() {
+    var sc = 0;
+    for (var d7 = 1; d7 < maxLane; d7++) {
+      if (!byLane[d7] || !byLane[d7 + 1]) continue;
+      var uL = perim(laneR(d7) + GAP * KR / 2) / 4, R7 = [];
+      byLane[d7].forEach(function(id) {
+        var ch = kids(id), pu = uOf(id), lo = 0, hi = 0; if (!ch.length || pu == null) return;
+        ch.forEach(function(c) { var cu = uOf(c.id); if (cu == null) return; var du = cu - pu; if (du > 2) du -= 4; if (du < -2) du += 4; if (du < lo) lo = du; if (du > hi) hi = du; });
+        R7.push([pu + lo, pu + hi]); sc += 0.1 * (hi - lo) * uL;
+      });
+      for (var i7 = 0; i7 < R7.length; i7++) for (var j7 = i7 + 1; j7 < R7.length; j7++) for (var k7 = -1; k7 <= 1; k7++) {
+        var ov = Math.min(R7[i7][1] + 4 * k7, R7[j7][1]) - Math.max(R7[i7][0] + 4 * k7, R7[j7][0]); if (ov > 0) sc += ov * uL;
+      }
+    }
+    return sc;
+  };
   // 今の KR で、全レーンの丸が重ならずに並ぶ最短の直線長 Lh を求めて配置
-  var solve = function() {
+  var solve = function(pick) { // pick：v840 最後の1回だけ、置き方の候補を比べる（大きさを探す間は v767 の置き方）
     Lh = Math.max(R1, laneR(maxLane) * 0.3);
     for (var dq2 in byLane) Lh = Math.max(Lh, (laneNeed[dq2] / 0.82 - 2 * Math.PI * laneR(+dq2)) / 4);
     // 基準レーンに「整った木」の並び（親ごとのくしの範囲を含む）がそのまま入る長さにする（押し出しで親子がずれない）
@@ -1714,7 +1734,15 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
         var res = placeLane(+dk, rr0, byLane[dk].map(function(id) { return uToS(rr0, uT[id]); }));
         laneS[dk] = res.s; if (!res.ok) allOk = false;
       }
-      if (allOk) { recenter(); follow(); recenter(); break; } // v767 #6: 子も親についていく（押し出された親から子が遠く離れて、線が長く回り込んでいた）
+      if (allOk && !pick) { recenter(); follow(); recenter(); break; }
+      if (allOk) { // v840 #30: 置き方を3通り作り、くしの並走がいちばん少ないものを使う（同じなら v767 の「子が親についていく」置き方）
+        recenter(); var cA = snapS(), sA = combScore();
+        follow(); recenter(); var cB = snapS(), sB = combScore();
+        follow(); recenter(); var cC = snapS(), sC = combScore();
+        var best = cB, bs = sB; if (sA < bs - 1e-6) { best = cA; bs = sA; } if (sC < bs - 1e-6) { best = cC; bs = sC; }
+        for (var bk in best) laneS[bk] = best[bk];
+        break;
+      }
       Lh *= 1.18;
     }
   };
@@ -1739,7 +1767,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     if (ki === 0 && (isPrint ? 2 * nr * sc0 >= 24 : sc0 >= 1)) break; // 小さいMAPはそのまま（コンパクト）
     if (ki >= 2 && sc0 < bestSc * 0.9) break;
   }
-  KR = bestK; solve();
+  KR = bestK; solve(true);
   var BAND = GAP * KR; // レーンの間隔
   var rOut = laneR(maxLane);
   var dm = dimsOf(), SW = dm.w, SH = dm.h;
@@ -4320,7 +4348,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v839';
+  var DATA_VERSION = 'v840';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6430,6 +6458,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v840', d:'2026-10-27', items:['サークルMAP（計画シートの理想MAP・MAPの◎サークル）で、同じ色の線が2本ぴったり並んで長く走り、二重線に見えるのを直しました（フロントが一部の人に集まっている組織で起きていました）'] },
   { v:'v839', d:'2026-10-25', items:['アカウント管理の「兼務するユニオン」の説明を、受付システム（BASE CHECK-IN）の権限とは別であることがわかるように直しました'] },
   { v:'v838', d:'2026-10-25', items:['所属ユニオンを選んだ時に入るUPBDの名前を、オーナーがアカウント管理の「ユニオンとUPBD」で直せるようにしました（ユニオンの追加・並べ替えもできます）'] },
   { v:'v837', d:'2026-10-25', items:['使い勝手レビューにまだ答えていない人は、アプリを開いてすぐHOMEのいちばん上にお願いが出るようにしました（前はほかの画面から戻るまで出ないことがありました）','答えるとHOMEのお願いがすぐ消えるようにしました'] },
