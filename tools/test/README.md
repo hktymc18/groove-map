@@ -21,10 +21,18 @@ VIEW=events VW=390 VH=844 PFX=cal SHOTS='[["month","setTheme(\"light\");setEvent
 # → tools/test/out/cal_month.png（横向きは VW=844 VH=390）
 node tools/test/shot/mockfull.js <mock.html> <out.png>   # モックHTMLの写真
 CASES='[["gold",{"cardTitle":"GOLD","badges":["EXPERT"]}]]' DARK=1 node tools/test/shot/ckcard.js   # 受付の会員証の写真（架空データ）→ out/ck_gold.png
+#   DATA='{"cards/tok1/prof/me":{"intro":"…"}}' で架空のデータを足す・FULL=1 でページ全体・HASH='#col' でカードコレクション
 ```
 
 ## バージョンを上げる・公開の確認
 ```bash
 python3 tools/test/bump.py v614 v615 "  { v:'v615', d:'YYYY-MM-DD', items:['…'] },"   # sw.js・index.html・app.js の7か所＋お知らせ
 bash tools/test/waitdeploy.sh <mainのSHA> v615   # "completed success" と 3 が出たら本番に反映済み
+```
+
+## firestore.rules をエミュレータで試す（任意）
+```bash
+# 別の場所に npm i firebase-tools@13 @firebase/rules-unit-testing@3 firebase@10 → npx firebase setup:emulators:firestore
+java -jar ~/.cache/firebase/emulators/cloud-firestore-emulator-*.jar --host 127.0.0.1 --port 8089 &
+NODE_PATH=<その場所>/node_modules node tools/test/rules/ckpf109_rules.js   # 受付v109 プロフィールのルール（架空データ）
 ```

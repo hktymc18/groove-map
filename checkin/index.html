@@ -966,6 +966,27 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .col-nav{flex:0 0 auto;width:34px;height:60px;border-radius:12px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:28px;line-height:1;padding:0;}
 .col-show-tip{text-align:center;font-size:11.5px;opacity:.6;margin:10px 0;}
 .col-show-info{max-width:460px;margin:0 auto;}
+/* 👤 PROFILE（#21・会員証の下とコレクションのショーケース）。ふだんは細い線1本だけ */
+.pf{margin:16px 0 0;text-align:left;}
+.pf-tg{width:100%;display:flex;align-items:center;gap:10px;background:transparent;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;padding:9px 2px;color:var(--ink);}
+.pf-tg:hover{border-color:var(--line);}
+.pf-tl{flex:1;text-align:left;font-family:"Manrope",sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.32em;}
+.pf-tr{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:6px;}
+.pf-tr::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform .2s;}
+.pf.open .pf-tr::after{transform:translateY(1px) rotate(-135deg);}
+.pf-body{padding:12px 2px 4px;border-bottom:1px solid var(--line);}
+.pf-sec{margin-bottom:12px;}
+.pf-lb{display:flex;align-items:baseline;gap:8px;font-size:11.5px;color:var(--sub);margin:0 0 3px;font-weight:500;}
+.pf-lb b{font-family:"Manrope",sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.24em;color:var(--ink);opacity:.8;}
+.pf-tx{font-size:13.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word;}
+.pf-empty{font-size:12.5px;color:var(--sub);margin:2px 0 10px;}
+.pf-note{font-size:11.5px;color:var(--sub);margin:2px 0 6px;}
+.pf-cnt{margin-left:auto;font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;font-size:10.5px;}
+.pf-cnt.over{color:var(--accent);font-weight:800;}
+.pf-body textarea{width:100%;font:inherit;font-size:14px;line-height:1.65;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);margin-bottom:10px;resize:vertical;}
+.pf-act{display:flex;justify-content:flex-end;gap:8px;margin:2px 0 10px;}
+.pf-ed{background:transparent;font-size:12.5px;padding:5px 16px;border-radius:999px;}
+.pf.dk{--line:rgba(255,255,255,.2);--sub:rgba(255,255,255,.62);--ink:#fff;color:#fff;margin:4px 0 12px;}
 .col-show-nm{font-weight:800;font-size:15px;margin:6px 0 8px;display:flex;gap:8px;align-items:baseline;}
 .col-show-nm span{font-size:12px;opacity:.7;}
 .col-show-r{background:rgba(255,255,255,.08);border-radius:12px;padding:9px 12px;margin-bottom:8px;font-size:13px;line-height:1.65;}
@@ -1437,6 +1458,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <i class="mc-sp s1" aria-hidden="true"></i><i class="mc-sp s2" aria-hidden="true"></i><i class="mc-sp s3" aria-hidden="true"></i><i class="mc-sp s4" aria-hidden="true"></i>
     </div>
     </div></div>
+    <div id="mcProf"></div><!-- 👤 #21 プロフィール（ルビー以上・ふだんは閉じる） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
@@ -2221,10 +2243,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v108';
+var APP_VER = 'v109';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v109', d: '2026/10/28', items: ['👤 タイトルが RUBY 以上の人は、会員証の下の「PROFILE 詳細」から、自己紹介（200字まで・資格もここに）・得意なこと・苦手なことを書けるようになりました', '🃏 カードコレクションのAさんのカードでも「詳細」を押すと、そのAさんの最新のプロフィールが見られます'] },
   { v: 'v108', d: '2026/10/28', items: ['👑 会員証の「タイトル」（BR〜TEAM ELITE）と「バッジ」（役職）を分けました。名簿の会員証で、タイトルは1つ、バッジ（EXPERT・ASSOCIATE・マコシエイト・DIRECTOR・受付・設営・個別・体感）はいくつでも付けられます', '🎨 RUBY・DIAMOND・PLATINUM のカードのデザインは、これからはタイトルで決まります（今付いている宝石のバッジは、そのままタイトルに引き継がれます・見た目は変わりません）', '🏅 バッジの一覧から「NTC Ambassador」をなくしました'] },
   { v: 'v107', d: '2026/10/27', items: ['❔ 画面の上や項目の下にあった灰色の長い説明文も「？」ボタンにまとめました（任命画面・ユニオン追加・会員証・会計・研修生登録ページなど約35か所）。削除などの注意書きは、これまでどおり表示したままです'] },
   { v: 'v106', d: '2026/10/27', items: ['📝 目標設定の宿題（理想の生活）：自分には必要ない分野は「いらない」を押せるようにしました（あとで答える、とは別に記録されます）', '★ 質問にない大事なこと（推し活など）を「＋ 自分の項目を足す」で5つまで足せます。金額は合計に入り、担当者の画面にも「大事にしたいこと」「いらない」として出ます'] },
@@ -4168,6 +4191,7 @@ function colShowcase(i){
     + '<div class="col-show-card" id="colShowCard"></div>' + (groups.length > 1 ? '<button class="col-nav r" id="colNext">›</button>' : '') + '</div>'
     + '<p class="col-show-tip">ドラッグで傾く・タップで裏返る' + (groups.length > 1 ? '・左右で次のカード' : '') + '</p>'
     + '<div class="col-show-info"><div class="col-show-nm">' + esc(g.name || '') + 'さんのアウトライン<span>' + g.list.length + '回</span></div>'
+    + '<div id="colShowPf"></div>'
     + g.list.map(function(r){
         return '<div class="col-show-r"><div><b>' + esc(olMd(r.ymd)) + '</b><span class="col-ser">No.' + esc(olSerialText(r.design, r.serial)) + '</span></div>'
           + '<div><small>感想</small>' + esc(r.impression || '') + '</div><div><small>気づき</small>' + esc(r.notice || '') + '</div></div>';
@@ -4176,6 +4200,7 @@ function colShowcase(i){
   var w = ckTcgMini($('colShowCard'), g.d, olSerialText(g.d, g.list[0].serial), Math.min(310, window.innerWidth - 90));
   w._base = w.style.transform;
   ckTcgGesture(w);
+  pfCollectionBox($('colShowPf'), g.list[0].aNo);   // 👤 そのAさんの最新のプロフィール（詳細を押すと開く）
   $('colShowX').onclick = function(){ ov.parentNode.removeChild(ov); };
   if($('colPrev')) $('colPrev').onclick = function(){ colShowcase(i - 1); };
   if($('colNext')) $('colNext').onclick = function(){ colShowcase(i + 1); };
@@ -4211,6 +4236,7 @@ function showCardView(token){
       ckBackSync(c.union, function(){ if(gCardLast) renderCard(gCardLast); });   // 🃏 ユニオンの裏面の設定（変わっていたら描き直す）
       renderTrainee(c);
       renderCoSheetEntry(c);
+      renderProfile(c);
       renderGoalHw(c);
       renderOlArea(c);
       try{ localStorage.setItem('bci_me', token); }catch(e){}   // 🎓 OLチェックアウト（カメラで読んだ時）に使う「このスマホの会員証」
@@ -4279,6 +4305,110 @@ function renderDlrTicket(c){
     + '<div class="dt-note">当日はこの画面を受付でお見せください</div>'
     + (r.byName ? '<div class="dt-by">ご案内: ' + esc(r.byName) + '</div>' : '')
     + '</div>';
+}
+/* 👤 #21 プロフィール（タイトルが RUBY 以上の人が、本人の会員証から書く・ふだんは閉じておく）
+   本人の分: cards/{トークン}/prof/me（トークン＝本人だけが書ける）
+   公開用の写し: cardProfiles/{番号}（同じ一括書き込みで書く。コレクションのAさんのカードの「詳細」が読む・トークンは入れない）
+   会員証の再発行（無効化→発行も）: 写しから新しい会員証へ戻す（pfMoveToken） */
+var PF_TITLES = ['RUBY', 'EMERALD', 'DIAMOND', 'BLUE DIAMOND', 'TEAM ELITE'];
+var PF_FIELDS = [
+  { k: 'intro', n: '自己紹介', en: 'ABOUT', max: 200, rows: 6, ph: '例: ビジネスキャリアは1年半です。元々は○○をしていて…\nスキル: ○○資格／PG' },
+  { k: 'good', n: '得意なこと', en: 'GOOD AT', max: 100, rows: 2, ph: '例: 旅行好きのNAのお手伝い' },
+  { k: 'bad', n: '苦手なこと', en: 'NOT YET', max: 100, rows: 2, ph: '例: PAはまだ苦手' }
+];
+function pfEligible(c){ return !!c && !c.trainee && !c.rcptOnly && c.active !== false && PF_TITLES.indexOf(ckTitleOf(c)) >= 0; }
+function pfEmpty(p){ return !p || !(p.intro || p.good || p.bad); }
+// 字数の上限を超えた項目の名前（なければ ''）
+function pfOver(p){
+  for(var i = 0; i < PF_FIELDS.length; i++){ var f = PF_FIELDS[i]; if(String(p[f.k] || '').length > f.max) return f.n; }
+  return '';
+}
+function pfViewHtml(p){
+  if(pfEmpty(p)) return '<p class="pf-empty">まだ書かれていません</p>';
+  return PF_FIELDS.filter(function(f){ return p[f.k]; }).map(function(f){
+    return '<div class="pf-sec"><div class="pf-lb"><b>' + f.en + '</b>' + esc(f.n) + '</div><div class="pf-tx">' + esc(p[f.k]) + '</div></div>';
+  }).join('');
+}
+// 「詳細」の開け閉め（中身は初めて開いた時に load で読む）
+function pfToggleBox(el, load, dark){
+  el.innerHTML = '<div class="pf' + (dark ? ' dk' : '') + '"><button type="button" class="pf-tg" aria-expanded="false"><span class="pf-tl">PROFILE</span><span class="pf-tr">詳細</span></button>'
+    + '<div class="pf-body hide"></div></div>';
+  var tg = el.querySelector('.pf-tg'), body = el.querySelector('.pf-body'), loaded = false;
+  tg.onclick = function(){
+    var open = body.classList.contains('hide');
+    body.classList.toggle('hide', !open);
+    el.querySelector('.pf').classList.toggle('open', open);
+    tg.setAttribute('aria-expanded', open ? 'true' : 'false');
+    tg.querySelector('.pf-tr').textContent = open ? '閉じる' : '詳細';
+    if(open && !loaded){ loaded = true; body.innerHTML = '<p class="pf-empty">読み込み中…</p>'; load(body); }
+  };
+  return { tg: tg, body: body };
+}
+// 本人の会員証: 自分のプロフィール＋「編集」
+function renderProfile(c){
+  var el = $('mcProf');
+  if(!el) return;
+  if(!pfEligible(c) || !gCardToken){ el.innerHTML = ''; return; }
+  var me = db.collection('cards').doc(gCardToken).collection('prof').doc('me'), p = null;
+  var view = function(body){
+    body.innerHTML = pfViewHtml(p || {}) + '<div class="pf-act"><button type="button" class="pf-ed" id="mpEdit">編集</button></div>';
+    $('mpEdit').onclick = function(){ edit(body); };
+  };
+  var edit = function(body){
+    var q = p || {};
+    body.innerHTML = PF_FIELDS.map(function(f){
+      return '<label class="pf-lb" for="mpIn_' + f.k + '"><b>' + f.en + '</b>' + esc(f.n) + '<span class="pf-cnt" id="mpCnt_' + f.k + '"></span></label>'
+        + '<textarea id="mpIn_' + f.k + '" rows="' + f.rows + '" maxlength="' + f.max + '" placeholder="' + esc(f.ph) + '">' + esc(q[f.k] || '') + '</textarea>';
+    }).join('') + '<p class="pf-note">資格・スキルは自己紹介に書いてください。会ったことのある人が、カードコレクションから見られます。</p>'
+      + '<p class="mc-err" id="mpErr"></p><div class="pf-act"><button type="button" id="mpCancel">やめる</button><button type="button" class="primary" id="mpSave">保存</button></div>';
+    var cnt = function(f){
+      var n = $('mpIn_' + f.k).value.length, ce = $('mpCnt_' + f.k);
+      ce.textContent = n + ' / ' + f.max;
+      ce.classList.toggle('over', n > f.max);
+    };
+    PF_FIELDS.forEach(function(f){ cnt(f); $('mpIn_' + f.k).oninput = function(){ cnt(f); }; });
+    $('mpCancel').onclick = function(){ view(body); };
+    $('mpSave').onclick = function(){
+      var d = { atMs: Date.now() };
+      PF_FIELDS.forEach(function(f){ d[f.k] = $('mpIn_' + f.k).value.trim(); });
+      var over = pfOver(d);
+      if(over){ $('mpErr').textContent = over + 'が長すぎます（字数を減らしてください）'; return; }
+      $('mpErr').textContent = '';
+      $('mpSave').disabled = true;
+      var batch = db.batch();
+      batch.set(me, d);
+      batch.set(db.collection('cardProfiles').doc(String(c.no)), { no: String(c.no), intro: d.intro, good: d.good, bad: d.bad, atMs: d.atMs });
+      batch.commit().then(function(){ p = d; view(body); toast('プロフィールを保存しました'); })
+        .catch(function(e){ $('mpSave').disabled = false; $('mpErr').textContent = permMsg(e, '保存できませんでした。電波の良いところでもう一度お試しください'); });
+    };
+  };
+  pfToggleBox(el, function(body){
+    me.get().then(function(s){ p = s.exists ? s.data() : null; view(body); })
+      .catch(function(){ body.innerHTML = '<p class="pf-empty">読み込みに失敗しました。電波の良いところで開き直してください。</p>'; });
+  });
+}
+// コレクションのAさんのカード: そのAさんの最新のプロフィール（公開用の写し・番号で1件）
+function pfCollectionBox(el, aNo){
+  if(!el) return;
+  if(!aNo){ el.innerHTML = ''; return; }
+  pfToggleBox(el, function(body){
+    db.collection('cardProfiles').doc(String(aNo)).get().then(function(s){ body.innerHTML = pfViewHtml(s.exists ? s.data() : null); })
+      .catch(function(){ body.innerHTML = '<p class="pf-empty">読み込みに失敗しました。電波の良いところで開き直してください。</p>'; });
+  }, true);
+}
+// 会員証の再発行（無効化→発行も）: 写しから新しい会員証へ戻す
+function pfMoveToken(no, newT){
+  if(!no || !newT) return Promise.resolve();
+  return db.collection('cardProfiles').doc(String(no)).get().then(function(s){
+    if(!s.exists) return;
+    var d = s.data();
+    return db.collection('cards').doc(newT).collection('prof').doc('me').set({ intro: d.intro || '', good: d.good || '', bad: d.bad || '', atMs: d.atMs || 0 });
+  }).catch(function(){});
+}
+// 名簿から削除した人のプロフィール（公開用の写し）も消す
+function pfDelete(no){
+  if(!no) return;
+  db.collection('cardProfiles').doc(String(no)).delete().catch(function(){});
 }
 /* 📝 CO面談シートの本人入力: 担当者がチェックリストから解錠（cards.coOpen・30分）した間だけ、
    本人の会員証にフォームを表示。送信内容は下書き（coSheetInbox）として担当者に届き、
@@ -7202,6 +7332,7 @@ function ckMemberCardDel(batch, m){
 }
 function ckMemberCardDelAfter(m){
   if(m && m.cardToken) db.collection('goalHw').doc(m.cardToken).delete().catch(function(){});
+  if(m) pfDelete(m.no);
 }
 function deleteMany(nos, done){
   var i = 0, byNo = {};
@@ -7661,6 +7792,7 @@ function issueCardNow(m, cb){
     m.cardToken = token; m.cardSig = token.slice(0, 6); m.claimName = m.name || '';
     hwMoveToken(oldToken, token);   // 📝 目標設定の宿題も新しい会員証へ
     olMoveToken(oldToken, token);   // 🃏 OLチェックアウトのコレクションも新しい会員証へ
+    pfMoveToken(m.no, token);       // 👤 プロフィールも新しい会員証へ（無効化のあとの発行も）
     if(cb) cb(token);
   }).catch(function(e){ toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）')); });
 }
@@ -7865,6 +7997,7 @@ $('btnCardBulk').onclick = function(){
         return;
       }
       var batch = db.batch(), end = Math.min(i + 60, targets.length);   // 1人あたり最大8件の書き込み（上限500件/回）
+      var moved = [];
       for(; i < end; i++){
         var m = targets[i], token = randToken();
         batch.set(db.collection('cards').doc(token), {
@@ -7880,8 +8013,12 @@ $('btnCardBulk').onclick = function(){
         }, { merge: true });
         batch.set(db.collection('cardClaims').doc(m.no), { t: token });
         ckClaimSet(batch, m.no, m.name, token);
+        moved.push([m.no, token]);
       }
-      batch.commit().then(nextBatch).catch(function(e){
+      batch.commit().then(function(){
+        moved.splice(0).forEach(function(x){ pfMoveToken(x[0], x[1]); });   // 👤 無効化したあとの人のプロフィールを戻す
+        nextBatch();
+      }).catch(function(e){
         toast(permMsg(e, '会員証の発行に失敗しました（ログイン状態を確認してください）'));
       });
     }
@@ -9872,6 +10009,7 @@ function trDeleteNow(m){
   ckClaimDel(batch, m.no, m.name);
   batch.commit().then(function(){
     if(m.cardToken) db.collection('goalHw').doc(m.cardToken).delete().catch(function(){});
+    pfDelete(m.no);
     coInboxAll(m.no).then(function(L){ L.forEach(function(x){ db.collection('coSheetInbox').doc(x.id).delete().catch(function(){}); }); });
     gTrMembers = gTrMembers.filter(function(x){ return x.no !== m.no; });
     gTrToday = gTrToday.filter(function(x){ return x.no !== m.no; });
