@@ -474,19 +474,24 @@ service cloud.firestore {
               'skinAtkEls', 'skinAtkName', 'skinAtkDmg', 'skinAtkText'];
     }
     function ckTopBadge(b) { return b in ['BLUE DIAMOND', 'TEAM ELITE']; }
-    // 更新: 特別カードの項目を変えない／BD・TEのバッジを付けも外しもしない（オーナーは何でも可）
+    // 👑 受付v108: タイトル（cardTitle）を役職のバッジ（badges）と分けた。BD・TE はタイトルでもオーナーだけ。
+    //   古いデータの badge（宝石が入っている人）も今まで通り守る
+    function ckTopKeyOk(k) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([k])
+        || (!ckTopBadge(resource.data.get(k, '')) && !ckTopBadge(request.resource.data.get(k, '')));
+    }
+    // 更新: 特別カードの項目を変えない／BD・TEのタイトル（古い badge も）を付けも外しもしない（オーナーは何でも可）
     function ckDecoUpdOk() {
       return isOwnerUid() || (
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(ckSkinKeys())
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['badge'])
-            || (!ckTopBadge(resource.data.get('badge', '')) && !ckTopBadge(request.resource.data.get('badge', '')))));
+        && ckTopKeyOk('badge') && ckTopKeyOk('cardTitle'));
     }
     // 作成: 特別カードの項目が空・BD/TEのバッジなし
     function ckDecoEmpty(d) {
       return d.get('skin', '') == '' && d.get('skinName', '') == '' && d.get('skinHp', '') == '' && d.get('skinRare', '') == ''
         && d.get('skinSerial', '') == '' && d.get('skinAbName', '') == '' && d.get('skinAbText', '') == ''
         && d.get('skinAtkEls', '') == '' && d.get('skinAtkName', '') == '' && d.get('skinAtkDmg', '') == '' && d.get('skinAtkText', '') == ''
-        && !ckTopBadge(d.get('badge', ''));
+        && !ckTopBadge(d.get('badge', '')) && !ckTopBadge(d.get('cardTitle', ''));
     }
     // 会員証の発行・再発行: 名簿（オーナーしか変えられない）と同じ値なら、スタッフがそのまま引き継げる
     function ckDecoSameAs(d, m) {
@@ -495,7 +500,8 @@ service cloud.firestore {
         && d.get('skinAbName', '') == m.get('skinAbName', '') && d.get('skinAbText', '') == m.get('skinAbText', '')
         && d.get('skinAtkEls', '') == m.get('skinAtkEls', '') && d.get('skinAtkName', '') == m.get('skinAtkName', '')
         && d.get('skinAtkDmg', '') == m.get('skinAtkDmg', '') && d.get('skinAtkText', '') == m.get('skinAtkText', '')
-        && (!ckTopBadge(d.get('badge', '')) || d.get('badge', '') == m.get('badge', ''));
+        && (!ckTopBadge(d.get('badge', '')) || d.get('badge', '') == m.get('badge', ''))
+        && (!ckTopBadge(d.get('cardTitle', '')) || d.get('cardTitle', '') == m.get('cardTitle', ''));
     }
     function ckCardDecoNewOk(d) {
       return isOwnerUid() || ckDecoEmpty(d)
@@ -615,7 +621,7 @@ service cloud.firestore {
                     && (isOwnerUid() || ckDecoEmpty(request.resource.data));   // 🃏 v30
       allow update: if isCkAdmin(resource.data.get('union',''))
                     && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')))
-                    && ckDecoUpdOk();   // 🃏 v30: 特別カード・BD/TEバッジはオーナーだけ
+                    && ckDecoUpdOk();   // 🃏 v30: 特別カード・BD/TEのタイトル（・古いバッジ）はオーナーだけ
       // 会員証の発行・再発行・無効化はログイン済みなら誰でも可
       // （変更できるのはカード関連フィールドのみ。名簿本体の編集は管理者のみ）
       allow update: if ckCanSee(resource.data.get('union',''))

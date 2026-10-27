@@ -581,8 +581,17 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 }
 @keyframes reaperMist{from{transform:translateX(-6%);opacity:.7;}to{transform:translateX(6%);opacity:1;}}
 @media (prefers-reduced-motion: reduce){ .membercard.skin-reaper::before,.membercard.skin-reaper::after{animation:none;} }
-/* 🏅 バッジ（役職名）: 全デザイン共通。タイトルは宝石、役職はメダル */
+/* 👑 タイトル（宝石・1つ）＋🏅 バッジ（役職のメダル・複数）: 全デザイン共通。並んで、入りきらなければ折り返す */
 .mc-badge{margin-top:8px;}
+.mc-badge .bdg+.bdg{margin-left:6px;}
+.mc-badge .bdg:not(:only-child){margin-top:2px;margin-bottom:3px;}
+.mc-badge.many .bdg{font-size:10px;padding:3px 10px 3px 5px;gap:5px;letter-spacing:.06em;}.mc-badge.many .bdg i{width:12px;height:12px;}
+.mc-badge.many .bdg+.bdg{margin-left:4px;}
+/* 名簿の会員証設定: バッジのチェック（押すとすぐ保存） */
+.cm-bdgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.cm-bdg{display:inline-flex !important;align-items:center;gap:4px;margin:0 !important;padding:3px 6px 3px 4px;border:1px solid var(--line);border-radius:99px;cursor:pointer;font-size:12px;}
+.cm-bdg input{margin:0;}
+.cm-bdg .bdg{font-size:10.5px;padding:3px 10px 3px 5px;}.cm-bdg .bdg i{width:12px;height:12px;}
 .mc-badge:empty{display:none;}
 .bdg{display:inline-flex;align-items:center;gap:7px;padding:4px 13px 4px 6px;border-radius:99px;
   background:linear-gradient(180deg,#2c2c34,#121217);color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.1em;
@@ -2212,10 +2221,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v107';
+var APP_VER = 'v108';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v108', d: '2026/10/28', items: ['👑 会員証の「タイトル」（BR〜TEAM ELITE）と「バッジ」（役職）を分けました。名簿の会員証で、タイトルは1つ、バッジ（EXPERT・ASSOCIATE・マコシエイト・DIRECTOR・受付・設営・個別・体感）はいくつでも付けられます', '🎨 RUBY・DIAMOND・PLATINUM のカードのデザインは、これからはタイトルで決まります（今付いている宝石のバッジは、そのままタイトルに引き継がれます・見た目は変わりません）', '🏅 バッジの一覧から「NTC Ambassador」をなくしました'] },
   { v: 'v107', d: '2026/10/27', items: ['❔ 画面の上や項目の下にあった灰色の長い説明文も「？」ボタンにまとめました（任命画面・ユニオン追加・会員証・会計・研修生登録ページなど約35か所）。削除などの注意書きは、これまでどおり表示したままです'] },
   { v: 'v106', d: '2026/10/27', items: ['📝 目標設定の宿題（理想の生活）：自分には必要ない分野は「いらない」を押せるようにしました（あとで答える、とは別に記録されます）', '★ 質問にない大事なこと（推し活など）を「＋ 自分の項目を足す」で5つまで足せます。金額は合計に入り、担当者の画面にも「大事にしたいこと」「いらない」として出ます'] },
   { v: 'v105', d: '2026/10/26', items: ['❔ 項目名のうしろの長いカッコ書きの説明を「？」ボタンにまとめました（PCはマウスを乗せる・スマホはタップで説明が出ます）。イベントの作成・編集など約30か所'] },
@@ -3234,8 +3244,8 @@ function ckSkinUse(card, id){
   }).catch(function(){});
 }
 function ckSkinOrb(id){ var d = ckSkinDefCache(id); return (d && d.orb) || (id === 'reaperTcg' ? '💀' : '✦'); }
-// 🏅 バッジ（役職名）: 1人1つ。gem=タイトル（宝石）、role=役職（メダル）。色は [明るい, 濃い]
-var CARD_BADGES = [
+// 👑 タイトル（宝石）: 1人1つ（cardTitle）。RUBY・DIAMOND・BLUE DIAMOND・TEAM ELITE はカードの見た目も変わる。色は [明るい, 濃い]
+var CARD_TITLES = [
   { k: 'BR', t: 'gem', c: ['#eef2f7', '#8d97a6'] },
   { k: 'GOLD', t: 'gem', c: ['#ffe58a', '#b8891c'] },
   { k: 'LAPIS', t: 'gem', c: ['#6f9bff', '#1b2f86'] },
@@ -3243,13 +3253,48 @@ var CARD_BADGES = [
   { k: 'EMERALD', t: 'gem', c: ['#5af0b0', '#0d7a50'] },
   { k: 'DIAMOND', t: 'gem', c: ['#ffffff', '#9fc3dc'] },
   { k: 'BLUE DIAMOND', t: 'gem', c: ['#9feaff', '#1a77c9'] },
-  { k: 'TEAM ELITE', t: 'gem', c: ['#ffe08a', '#3a2a06'] },
-  { k: 'NTC Ambassador', t: 'role', c: ['#6ff0ea', '#14858a'] },
+  { k: 'TEAM ELITE', t: 'gem', c: ['#ffe08a', '#3a2a06'] }
+];
+// 🏅 バッジ（役職）: 複数付けられる（badges: 配列）。一覧に無い値（前の「NTC Ambassador」など）はデータに残したまま表示しない
+var CARD_BADGES = [
   { k: 'EXPERT', t: 'role', c: ['#c9a6ff', '#5a2fb8'] },
+  { k: 'ASSOCIATE', t: 'role', c: ['#8ec5ff', '#2a62c9'] },
+  { k: 'マコシエイト', t: 'role', c: ['#ffa6d9', '#b8287a'] },
   { k: 'DIRECTOR', t: 'role', c: ['#ff8a8a', '#a3161f'] },
   { k: '受付', t: 'role', c: ['#8af0a8', '#1f8a43'] },
-  { k: '設営', t: 'role', c: ['#ffc27a', '#c25a0a'] }
+  { k: '設営', t: 'role', c: ['#ffc27a', '#c25a0a'] },
+  { k: '個別', t: 'role', c: ['#7ae8e0', '#13807a'] },
+  { k: '体感', t: 'role', c: ['#ffe27a', '#b88a00'] }
 ];
+// 🔒 オーナーだけが付け外しできるタイトル（firestore.rules の ckTopBadge と一致させること）
+function ckTopTitle(k){ return k === 'BLUE DIAMOND' || k === 'TEAM ELITE'; }
+function ckIsTitle(k){ for(var i = 0; i < CARD_TITLES.length; i++) if(CARD_TITLES[i].k === k) return true; return false; }
+// 古いデータ（1つの badge に宝石か役職が入っている）も読めるように、タイトルとバッジを取り出す
+function ckTitleOf(m){
+  if(!m) return '';
+  if(m.cardTitle) return m.cardTitle;
+  return ckIsTitle(m.badge || '') ? m.badge : '';
+}
+function ckBadgesOf(m){   // 保存されている値そのまま（表示しない値も含む・重複なし）
+  var a = [];
+  if(!m) return a;
+  (Array.isArray(m.badges) ? m.badges : []).concat(m.badge && !ckIsTitle(m.badge) ? [m.badge] : []).forEach(function(k){
+    if(k && a.indexOf(k) < 0) a.push(k);
+  });
+  return a;
+}
+// 会員証に出すタイトル＋バッジ（バッジは一覧の順・一覧に無いものは出さない）
+function ckBadgeKeys(m){
+  var bs = ckBadgesOf(m), t = ckTitleOf(m);
+  return (ckBadge(t) ? [t] : []).concat(CARD_BADGES.filter(function(b){ return bs.indexOf(b.k) >= 0; }).map(function(b){ return b.k; }));
+}
+function ckBadgeRowHtml(m){ return ckBadgeKeys(m).map(ckBadgeHtml).join(''); }
+function ckPaintBadges(el, m){   // 3つ以上の時は小さめにして、カードが伸びすぎないように
+  if(!el) return;
+  var n = ckBadgeKeys(m).length;
+  el.innerHTML = ckBadgeRowHtml(m);
+  el.classList.toggle('many', n >= 3);
+}
 // 🃏 レアカード風の技の属性（丸いバッジ・最大3つ）。skinAtkEls は "fire,thunder" のようにカンマ区切りで保存
 var CARD_ELEMENTS = [
   { k: 'fire', n: '炎', i: '🔥', c: ['#ffb36b', '#d4280f'] },
@@ -3265,7 +3310,8 @@ function ckElement(k){
   return null;
 }
 function ckBadge(k){
-  for(var i = 0; i < CARD_BADGES.length; i++) if(CARD_BADGES[i].k === k) return CARD_BADGES[i];
+  var L = CARD_TITLES.concat(CARD_BADGES);
+  for(var i = 0; i < L.length; i++) if(L[i].k === k) return L[i];
   return null;
 }
 function ckBadgeHtml(k){
@@ -3334,12 +3380,13 @@ function renderCard(c){
   }
   var style = GRADE_STYLES[c.grade || ''];
   var skin = !c.trainee && ckIsSkin(c.skin || '') ? c.skin : '';   // ✨ 特別デザインはグレードの色より優先（研修生は除く）
-  var dia = !c.trainee && !skin && c.badge === 'DIAMOND';            // 💎 バッジがDIAMONDの人は金属のカード（特別デザインが優先）
-  var plat = !c.trainee && !skin && (c.badge === 'BLUE DIAMOND' || c.badge === 'TEAM ELITE');   // 🖤 PLATINUMのカード
+  var ttl = ckTitleOf(c);                                             // 👑 タイトル（古いデータは badge から）
+  var dia = !c.trainee && !skin && ttl === 'DIAMOND';                // 💎 タイトルがDIAMONDの人は金属のカード（特別デザインが優先）
+  var plat = !c.trainee && !skin && ckTopTitle(ttl);                 // 🖤 BLUE DIAMOND・TEAM ELITE は PLATINUMのカード
   if(plat) dia = true;                                               //    （QR収納などはDIAMONDと同じ仕組み）
   var soon = plat && !gPlatLive && !ckIsOwnerNow();                  // 🖤 解禁前は COMING SOON（オーナーは本物で確認できる）
   gCardLast = c;
-  var ruby = !c.trainee && !skin && c.badge === 'RUBY';              // 💎 バッジがRUBYの人はルビーのカード
+  var ruby = !c.trainee && !skin && ttl === 'RUBY';                  // 💎 タイトルがRUBYの人はルビーのカード
   if(skin){
     card.classList.add('skin-' + skin);
     $('mcGrade').textContent = style ? (GRADE_LABELS[c.grade] || c.grade) : '';
@@ -3388,7 +3435,7 @@ function renderCard(c){
     ? '<span class="el">' + els.map(function(e){ return '<i title="' + esc(e.n) + '" style="--e1:' + e.c[0] + ';--e2:' + e.c[1] + ';">' + e.i + '</i>'; }).join('') + '</span>'
       + '<span class="at-nm">' + esc(c.skinAtkName || '') + '</span><span class="at-dmg">' + esc(c.skinAtkDmg || '') + '</span>' : '';
   $('mcAtkTx').textContent = tcg ? (c.skinAtkText || '') : '';
-  $('mcBadge').innerHTML = ckBadgeHtml(c.badge || '');
+  ckPaintBadges($('mcBadge'), c);
   var qr = $('mcQr');
   qr.classList.remove('big');
   $('mcTilt').classList.remove('still');
@@ -3584,7 +3631,7 @@ function olYmd(){ return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0
 function olMd(ymd){ ymd = String(ymd || ''); return ymd.length === 8 ? (+ymd.slice(4, 6)) + '/' + (+ymd.slice(6)) : ''; }
 // Aさんのカードの見た目（コレクションに残す控え）。会員証トークンは入れない
 function olDesign(m){
-  var d = { no: String(m.no || ''), name: m.name || '', union: m.union || '', grade: m.grade || '', badge: m.badge || '', skin: m.skin || '' };
+  var d = { no: String(m.no || ''), name: m.name || '', union: m.union || '', grade: m.grade || '', badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m), skin: m.skin || '' };
   ['skinName', 'skinHp', 'skinRare', 'skinSerial', 'skinAbName', 'skinAbText', 'skinAtkEls', 'skinAtkName', 'skinAtkDmg', 'skinAtkText']
     .forEach(function(k){ d[k] = m[k] || ''; });
   return d;
@@ -3621,7 +3668,7 @@ function ckTcgBuild(d, serialText){
     ? '<span class="el">' + els.map(function(e){ return '<i title="' + esc(e.n) + '" style="--e1:' + e.c[0] + ';--e2:' + e.c[1] + ';">' + e.i + '</i>'; }).join('') + '</span>'
       + '<span class="at-nm">' + esc(d.skinAtkName || '') + '</span><span class="at-dmg">' + esc(d.skinAtkDmg || '') + '</span>' : '';
   q('.mc-atktx').textContent = d.skinAtkText || '';
-  q('.mc-badge').innerHTML = ckBadgeHtml(d.badge || '');
+  ckPaintBadges(card.querySelector('.mc-badge'), d);
   ckPaintBack(card.querySelector('.mc-back'), d.union);
   ckBackSync(d.union, function(){ ckPaintBack(card.querySelector('.mc-back'), d.union); });
   ckSkinUse(card, d.skin || '');   // 🃏 工房のカードセット
@@ -4184,7 +4231,7 @@ function showCardView(token){
       }
       renderReceipts(c);
       try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ no: c.no, name: c.name, group: c.group, union: c.union, grade: c.grade || '', trainee: !!c.trainee, skin: c.skin || '',
-        badge: c.badge || '', skinName: c.skinName || '', skinHp: c.skinHp || '', skinRare: c.skinRare || '', skinSerial: c.skinSerial || '',
+        badge: c.badge || '', cardTitle: c.cardTitle || '', badges: ckBadgesOf(c), skinName: c.skinName || '', skinHp: c.skinHp || '', skinRare: c.skinRare || '', skinSerial: c.skinSerial || '',
         skinAbName: c.skinAbName || '', skinAbText: c.skinAbText || '', skinAtkEls: c.skinAtkEls || '', skinAtkName: c.skinAtkName || '', skinAtkDmg: c.skinAtkDmg || '', skinAtkText: c.skinAtkText || '', olKey: c.olKey || '' })); }catch(e){}
       // 再発行チェック: 番号→現在の会員証（cardClaims・公開get）と照合。古いLINEリンクや
       // ホーム画面ショートカットから開いた旧トークンのページでは、QRを出さず案内する
@@ -6594,7 +6641,7 @@ function koboEdit(def0, presetMem){
       + '<div style="flex:1;"><label>威力</label><input type="text" id="kbDmg" maxlength="6" value="' + esc(txt('skinAtkDmg')) + '" style="width:100%;"></div></div>'
       + '<label>技の説明</label><textarea id="kbAtkTx" maxlength="120" rows="3" style="width:100%;">' + esc(txt('skinAtkText')) + '</textarea></details></div>'
       + '<div class="kb-sec"><h4>👤 付ける人</h4><div id="kbWho" style="display:flex;align-items:center;gap:10px;">'
-      + (mem ? '<div style="flex:1;"><b>' + esc(mem.name || '') + '</b><br><small style="color:var(--sub);">' + esc((mem.union || '') + '・' + mem.no + (mem.badge ? '・' + mem.badge : '')) + '</small></div>'
+      + (mem ? '<div style="flex:1;"><b>' + esc(mem.name || '') + '</b><br><small style="color:var(--sub);">' + esc((mem.union || '') + '・' + mem.no + (ckTitleOf(mem) ? '・' + ckTitleOf(mem) : '')) + '</small></div>'
              : '<div style="flex:1;color:var(--sub);font-size:13px;">まだ誰にも付けていません</div>')
       + '<button id="kbWhoPick" style="font-size:12.5px;">' + (mem ? '変更' : '選ぶ') + '</button>' + (mem ? '<button id="kbWhoOff" style="font-size:12.5px;">外す</button>' : '') + '</div></div>'
       + '<p class="mc-err" id="kbErr"></p>'
@@ -6617,7 +6664,7 @@ function koboEdit(def0, presetMem){
     var box = $('kbPrev');
     if(!box) return;
     collect();
-    var d = { no: mem ? mem.no : '0000', name: mem ? mem.name : '', union: mem ? mem.union : 'ANTARES', grade: '', badge: mem ? (mem.badge || '') : 'TEAM ELITE', skin: id };
+    var d = { no: mem ? mem.no : '0000', name: mem ? mem.name : '', union: mem ? mem.union : 'ANTARES', grade: '', badge: mem ? (mem.badge || '') : '', cardTitle: mem ? (mem.cardTitle || '') : 'TEAM ELITE', badges: mem ? ckBadgesOf(mem) : [], skin: id };
     KB_TEXT_KEYS.forEach(function(k){ d[k] = def.text[k]; });
     var w = ckTcgBuild(d);
     var card = w.querySelector('.membercard');
@@ -6719,18 +6766,20 @@ function kbPickMember(cb){
   document.body.appendChild(host);
   var close = function(){ host.remove(); };
   host.querySelector('#kbPlClose').onclick = close;
-  var pick = function(m){ close(); cb({ no: m.no, name: m.name || '', union: m.union || '', badge: m.badge || '', cardToken: m.cardToken || '', olKey: m.olKey || '' }); };
+  var pick = function(m){ close(); cb({ no: m.no, name: m.name || '', union: m.union || '', badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m), cardToken: m.cardToken || '', olKey: m.olKey || '' }); };
   Promise.all([
-    db.collection('checkinMembers').where('badge', 'in', ['BLUE DIAMOND', 'TEAM ELITE']).get(),
-    db.collection('cardSkins').get()
+    db.collection('checkinMembers').where('badge', 'in', ['BLUE DIAMOND', 'TEAM ELITE']).get(),   // 古いデータ（バッジに入っている人）
+    db.collection('cardSkins').get(),
+    db.collection('checkinMembers').where('cardTitle', 'in', ['BLUE DIAMOND', 'TEAM ELITE']).get()
   ]).then(function(r){
     var used = {}; r[1].forEach(function(d){ if(d.data().no) used[d.data().no] = d.data().label || d.id; });
-    var L = []; r[0].forEach(function(d){ var m = d.data(); m.no = d.id; if(m.active !== false) L.push(m); });
+    var L = [], seen = {};
+    [r[0], r[2]].forEach(function(qs){ qs.forEach(function(d){ var m = d.data(); m.no = d.id; if(m.active !== false && !seen[m.no] && ckTopTitle(ckTitleOf(m))){ seen[m.no] = 1; L.push(m); } }); });
     L.sort(function(a, b){ return String(a.union + a.no).localeCompare(String(b.union + b.no)); });
     host.querySelector('#kbPl').innerHTML = L.length ? L.map(function(m, i){
       return '<div class="kb-pick" data-kpm="' + i + '"><span style="flex:1;"><b>' + esc(m.name || '') + '</b> <small style="color:var(--sub);">' + esc(m.union + '・' + m.no) + '</small></span>'
-        + ckBadgeHtml(m.badge) + (used[m.no] ? ' <span class="pill n">カードあり: ' + esc(used[m.no]) + '</span>' : '') + '</div>';
-    }).join('') : '<p style="font-size:13px;color:var(--sub);">BLUE DIAMOND・TEAM ELITE の人はまだいません（会員証のバッジで付けてください）。</p>';
+        + ckBadgeHtml(ckTitleOf(m)) + (used[m.no] ? ' <span class="pill n">カードあり: ' + esc(used[m.no]) + '</span>' : '') + '</div>';
+    }).join('') : '<p style="font-size:13px;color:var(--sub);">BLUE DIAMOND・TEAM ELITE の人はまだいません（名簿の会員証のタイトルで付けてください）。</p>';
     Array.prototype.forEach.call(host.querySelectorAll('[data-kpm]'), function(el){ el.onclick = function(){ pick(L[+el.getAttribute('data-kpm')]); }; });
   }).catch(function(e){ host.querySelector('#kbPl').innerHTML = '<p class="mc-err">' + esc(permMsg(e, '読み込めませんでした')) + '</p>'; });
   host.querySelector('#kbNoGo').onclick = function(){
@@ -7114,7 +7163,7 @@ $('btnGradeSel').onclick = function(){
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
           grade: grade,
           trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m), skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
           skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
           createdAt: FV.serverTimestamp()
         });
@@ -7567,7 +7616,7 @@ function refreshCardDoc(token, m){
       no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
       grade: m.grade || '',
       trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m), skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
           skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
       active: !ckMemberOff(m),   // 無効の間は本人のカードに先のハウディの予定を出さない
       createdAt: FV.serverTimestamp()
@@ -7587,7 +7636,7 @@ function issueCard(m, cb){
   return db.collection('checkinMembers').doc(String(m.no)).get().then(function(s){
     if(!s.exists) return;
     var f = s.data();
-    ['skin', 'badge'].concat(KB_TEXT_KEYS).forEach(function(k){ if(f[k]) m[k] = f[k]; else delete m[k]; });
+    ['skin', 'badge', 'cardTitle', 'badges'].concat(KB_TEXT_KEYS).forEach(function(k){ if(f[k]) m[k] = f[k]; else delete m[k]; });
   }).catch(function(){}).then(function(){ return issueCardNow(m, cb); });
 }
 function issueCardNow(m, cb){
@@ -7598,7 +7647,7 @@ function issueCardNow(m, cb){
     no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
     grade: m.grade || '',
     trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m), skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
           skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
     createdAt: FV.serverTimestamp()
   });
@@ -7649,21 +7698,20 @@ function cardModal(m){
       + '<p style="font-size:12px;color:var(--sub);margin-top:10px;text-align:right;">再発行・無効化の使い分け' + hq('再発行＝機種変更・紛失の時（古いURLはすぐ使えなくなります）。\n無効化＝退会の時。') + '</p>'
       + '<div class="btns"><button id="cmClose">閉じる</button></div>';
   }
-  // 🏅 バッジ（役職名）: 会員証の名前の上に表示。1人1つ・役職がない人は無印。発行前に選んでおけば発行時に反映
-  // 🔒 BLUE DIAMOND・TEAM ELITE はオーナーだけが付け外しできる（ルールでも制限）
-  var topB = function(k){ return k === 'BLUE DIAMOND' || k === 'TEAM ELITE'; };
-  var bLock = !isOwner() && topB(m.badge || '');
-  var bOpt = function(t){
-    return CARD_BADGES.filter(function(b){ return b.t === t && (isOwner() || !topB(b.k) || m.badge === b.k); }).map(function(b){
-      return '<option value="' + esc(b.k) + '"' + (m.badge === b.k ? ' selected' : '') + '>' + esc(b.k) + '</option>';
-    }).join('');
-  };
+  // 👑 タイトル（1つ）と 🏅 バッジ（複数）: 会員証の名前の上に表示。発行前に選んでおけば発行時に反映
+  // 🔒 BLUE DIAMOND・TEAM ELITE のタイトルはオーナーだけが付け外しできる（ルールでも制限）
+  var curT = ckTitleOf(m), curB = ckBadgesOf(m);
+  var tLock = !isOwner() && ckTopTitle(curT);
   body += '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:6px;">'
-    + '<label>🏅 バッジ（会員証に役職名を表示）</label>'
-    + '<select id="cmBadge"><option value="">なし（無印）</option>'
-    + '<optgroup label="タイトル">' + bOpt('gem') + '</optgroup><optgroup label="役職">' + bOpt('role') + '</optgroup>'
-    + '</select> <span id="cmBadgePv">' + ckBadgeHtml(m.badge || '') + '</span>'
-    + (bLock ? '<p style="font-size:11.5px;color:var(--sub);margin:4px 0 0;">🔒 BLUE DIAMOND・TEAM ELITE はオーナーが設定します</p>' : '') + '</div>';
+    + '<label>👑 タイトル' + hq('1人1つ。RUBY・DIAMOND・BLUE DIAMOND・TEAM ELITE は会員証のデザインも変わります。') + '</label>'
+    + '<select id="cmTitle"><option value="">なし</option>' + CARD_TITLES.filter(function(b){ return isOwner() || !ckTopTitle(b.k) || curT === b.k; }).map(function(b){
+        return '<option value="' + esc(b.k) + '"' + (curT === b.k ? ' selected' : '') + '>' + esc(b.k) + '</option>';
+      }).join('') + '</select> <span id="cmTitlePv">' + ckBadgeHtml(curT) + '</span>'
+    + (tLock ? '<p style="font-size:11.5px;color:var(--sub);margin:4px 0 0;">🔒 BLUE DIAMOND・TEAM ELITE はオーナーが設定します</p>' : '')
+    + '<label style="margin-top:8px;">🏅 バッジ（役職・いくつでも）</label><div id="cmBadges" class="cm-bdgs">'
+    + CARD_BADGES.map(function(b){
+        return '<label class="cm-bdg"><input type="checkbox" value="' + esc(b.k) + '"' + (curB.indexOf(b.k) >= 0 ? ' checked' : '') + '>' + ckBadgeHtml(b.k) + '</label>';
+      }).join('') + '</div></div>';
   if(isOwner()){
     // ✨ 特別カード（オーナーのみ）: 🃏 特別カード工房で作って付ける
     body += '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:6px;">'
@@ -7682,33 +7730,52 @@ function cardModal(m){
   // 会員証の見た目に関する項目を、名簿と発行済みの会員証の両方へ保存する（未発行なら名簿だけ。発行時に引き継ぐ）
   function saveDeco(fields, ok, el){
     var batch = db.batch(), w = {};
-    Object.keys(fields).forEach(function(k){ w[k] = fields[k] ? fields[k] : FV.delete(); });
+    var has = function(v){ return Array.isArray(v) ? v.length > 0 : !!v; };
+    Object.keys(fields).forEach(function(k){ w[k] = has(fields[k]) ? fields[k] : FV.delete(); });
     batch.set(db.collection('checkinMembers').doc(m.no), w, { merge: true });
     if(m.cardToken) batch.set(db.collection('cards').doc(m.cardToken), w, { merge: true });
     if(el) el.disabled = true;
     batch.commit().then(function(){
-      Object.keys(fields).forEach(function(k){ if(fields[k]) m[k] = fields[k]; else delete m[k]; });
+      Object.keys(fields).forEach(function(k){ if(has(fields[k])) m[k] = fields[k]; else delete m[k]; });
       if(el) el.disabled = false;
       olSyncDesign(m);   // 🎓 Aさんのカードの見た目をOLチェックアウトにも反映
-      toast(ok);
-    }).catch(function(e){ if(el) el.disabled = false; toast(permMsg(e, '変更できませんでした')); });
+      if(ok) toast(ok);
+    }).catch(function(e){ if(el) el.disabled = false; if(ok) toast(permMsg(e, '変更できませんでした')); });
   }
-  var bd = $('cmBadge');
-  if(bLock) bd.disabled = true;
+  // タイトル・バッジを新しい形（cardTitle・badges）で保存する。古い badge は消す
+  //   （BLUE DIAMOND・TEAM ELITE の古い badge はオーナーしか消せないので、オーナー以外の時は残す＝表示は同じ）
+  var deco = function(t, bs){
+    var f = { badges: bs };
+    if(isOwner() || !ckTopTitle(t)) f.cardTitle = t;   // オーナー以外は BD・TE のタイトルに触れない
+    if(m.badge && (isOwner() || !ckTopTitle(m.badge))) f.badge = '';
+    return f;
+  };
+  // 🔁 古いデータ（badge 1つ）の人は、開いた時に自動でタイトル・バッジへ移す（値はそのまま・表示も変わらない）
+  if(m.badge && (isOwner() || !ckTopTitle(m.badge))) saveDeco(deco(curT, curB), '', null);
+  var bd = $('cmTitle');
+  if(tLock) bd.disabled = true;
   if($('cmKobo')) $('cmKobo').onclick = function(){
     // この人に付いているカードを開く（なければ新規で、付ける人をこの人にして）
     db.collection('cardSkins').where('no', '==', m.no).get().then(function(qs){
       var d = null; qs.forEach(function(x){ if(!d){ d = x.data(); d.id = x.id; } });
       if(d) koboEdit(d);
       else if(m.skin === 'reaperTcg') koboList();
-      else koboEdit(null, { no: m.no, name: m.name || '', union: m.union || '', badge: m.badge || '' });
+      else koboEdit(null, { no: m.no, name: m.name || '', union: m.union || '', badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m) });
     }).catch(function(e){ toast(permMsg(e, '開けませんでした')); });
   };
   bd.onchange = function(){
     var v = bd.value;
-    $('cmBadgePv').innerHTML = ckBadgeHtml(v);
-    saveDeco({ badge: v }, v ? 'バッジ「' + v + '」を付けました（本人が会員証を開き直すと反映）' : 'バッジを外しました', bd);
+    $('cmTitlePv').innerHTML = ckBadgeHtml(v);
+    saveDeco(deco(v, ckBadgesOf(m)), v ? 'タイトル「' + v + '」にしました（本人が会員証を開き直すと反映）' : 'タイトルを外しました', bd);
   };
+  // バッジ: 一覧に無い値（前の NTC Ambassador など）は消さずに残す
+  Array.prototype.forEach.call($('cmBadges').querySelectorAll('input'), function(cb){
+    cb.onchange = function(){
+      var keep = ckBadgesOf(m).filter(function(k){ return k !== cb.value; });
+      if(cb.checked) keep.push(cb.value);
+      saveDeco(deco(ckTitleOf(m), keep), (cb.checked ? 'バッジ「' + cb.value + '」を付けました' : 'バッジ「' + cb.value + '」を外しました') + '（本人が会員証を開き直すと反映）', cb);
+    };
+  });
   var bIssue = $('cmIssue'), bCopy = $('cmCopy'), bRe = $('cmReissue'), bRv = $('cmRevoke');
   if(bIssue) bIssue.onclick = function(){
     bIssue.disabled = true;
@@ -7804,7 +7871,7 @@ $('btnCardBulk').onclick = function(){
           no: m.no, name: m.name || '', group: m.group || '', union: m.union || gRosterUnion,
           grade: m.grade || '',
           trainee: !!m.trainee, trainings: m.trainings || {}, skin: m.skin || '',
-          badge: m.badge || '', skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
+          badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m), skinName: m.skinName || '', skinHp: m.skinHp || '', skinRare: m.skinRare || '', skinSerial: m.skinSerial || '',
           skinAbName: m.skinAbName || '', skinAbText: m.skinAbText || '', skinAtkEls: m.skinAtkEls || '', skinAtkName: m.skinAtkName || '', skinAtkDmg: m.skinAtkDmg || '', skinAtkText: m.skinAtkText || '', olKey: m.olKey || '',
           createdAt: FV.serverTimestamp()
         });
