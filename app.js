@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v844';
+var APP_JS_VERSION = 'v845';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4363,7 +4363,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v844';
+  var DATA_VERSION = 'v845';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6473,6 +6473,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v845', d:'2026-10-27', items:['ユーザーの画面のいちばん下に「このユーザーを削除」を出しました（削除したあと「元に戻す」で戻せます）'] },
   { v:'v844', d:'2026-10-27', items:['ユーザーを押すと、MAPと同じメンバー画面のユーザー版が開くようにしました（ポイント・ADP・購入・ニーズ・活動・メモ・プロフィール。稼働・やる気・研修は出しません）','ADP・購入の入力が重なって見えていたのを直しました（製品名・日付・記録するを1行ずつ。日付が空の時は「日付を選ぶ」）','ニーズは選ぶボタンをやめて自由に書く欄だけに（前に選んだものは文章に入れて残しました）','「＋ ToDo」で、いつものタスクを足す画面がその人にひもづいて開き、記録は「活動」に残ります'] },
   { v:'v843', d:'2026-10-27', items:['MAPに「ビジネス｜ユーザー」の切り替え：ユーザーはビジネスのMAPに出さず、紹介者のカードに「ユーザー○人・○P」（押すとその人のユーザーの一覧）','ユーザーの一覧（PCは表）：今月のポイント・固定で上がるポイント（数字で直接入力）・ADP・直近の購入・ニーズ・プロフィール。ADPなし／60日買ってない／ニーズありで絞り込み','「研修生にする」で、ビジネスのMAPの紹介者の下に研修生として出ます（元ユーザーの札つき・記録はそのまま）'], pop:{ t:'MAPでユーザーを管理できるようになりました', items:['MAPの上の「ビジネス｜ユーザー」で切り替え','ポイント・ADP・購入・ニーズ・プロフィールを1人ずつ記録','ユーザーから「研修生にする」でビジネスのMAPへ'], go:['MAPを開く','umSet(true)'] } },
   { v:'v842', d:'2026-10-27', items:['PLAN › 理想の生活：一覧の金額を押すと、その場で金額だけ直せるようにしました（PC・スマホ／理想の生活シートも。Enterか外を押して保存、Escでやめる）','車を選んでいる人の移動はローン・保険などの合計なので、金額を押すとローンの画面が開きます'] },
@@ -19965,7 +19966,7 @@ function _ppObsOn() {
   });
   _ppObs.observe(document.body, { childList: true });
 }
-function ppDel() { var id = _pp.id; editingId = id; var n = state.members.length; ppClose(); deleteMember(); }
+function ppDel() { if (_umTgt()) { umDel(); return; } var id = _pp.id; editingId = id; var n = state.members.length; ppClose(); deleteMember(); }
 function ppUp() { var id = _pp.id; ppClose(); openParentPicker(id); }
 // 理想MAP：この人の下に足す（＋で1人、−で最後に足した人を取り消す）
 function ppAddKid(kind) { var p = _ppM(); if (!p) return; _idq = _idq && _idq.id === p.id ? _idq : { id: p.id, act: p.activity || '', n: 1, added: [] }; idqAdd(kind); _ppRender(); }
@@ -23162,6 +23163,15 @@ function umToTrainee() {
   toast(_umNm(u) + 'さんを研修生にしました（ビジネスのMAPに出ます）');
   if (_pp) _ppRender();
 }
+// v845: ユーザーを削除（消したあと「元に戻す」で戻せる）
+function umDel() {
+  var u = _umTgt(); if (!u || !state.isEditor) return;
+  if (!confirm(_umNm(u) + 'さんを削除しますか？\n（ポイントは紹介者のGSVから外れます）')) return;
+  var id = u.id; u.deleted = true;
+  state.members.forEach(function(x) { if (x.parentId === id && !x.deleted) x.parentId = u.parentId || ''; }); // 下に人がいたら紹介者の下へ
+  ppClose(); try { recalcAllGSV(); } catch (e) {} autoSave(); renderCurrentView();
+  toastAction(_umNm(u) + 'さんを削除しました', '↩ 元に戻す', function() { var w2 = _umById(id); if (!w2) return; w2.deleted = false; try { recalcAllGSV(); } catch (e2) {} autoSave(); renderCurrentView(); }, 6000);
+}
 // メンバー画面の入口（ユーザー版）
 function _ppHubU(m) {
   var par = _umById(m.parentId), nm = _umNm(m), k = '#E08A1D';
@@ -23183,7 +23193,8 @@ function _ppHubU(m) {
     + tile('memo', '#D19500', icn('pencil'), 'メモ', memo ? '「' + evEsc(memo.slice(0, 30)) + '」' : 'まだない')
     + tile('prof', '#56627A', icn('users'), 'プロフィール', '名前・性別・地域<br>誕生日・写真・SNS')
     + '</div>';
-  if (state.isEditor) h += '<div class="ux-list" style="margin-top:12px"><div class="ux-li" onclick="umToTrainee()"><span class="ic">' + icn('cap') + '</span><span>研修生にする<small>ビジネスのMAPの紹介者の下に研修生として出ます</small></span><span class="ch">›</span></div></div>';
+  if (state.isEditor) h += '<div class="ux-list" style="margin-top:12px"><div class="ux-li" onclick="umToTrainee()"><span class="ic">' + icn('cap') + '</span><span>研修生にする<small>ビジネスのMAPの紹介者の下に研修生として出ます</small></span><span class="ch">›</span></div>'
+    + '<div class="ux-li" onclick="umDel()"><span class="ic">' + icn('trash') + '</span><span style="color:var(--red)">このユーザーを削除</span><span class="ch">›</span></div></div>'; // v845: 削除を見つけやすく
   return h;
 }
 // メンバー画面のページ（ユーザー版）
