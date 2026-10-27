@@ -143,6 +143,16 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .hw-r .lb small{display:block;font-weight:400;font-size:12px;color:var(--sub);}
 .hw-r .v{font-weight:800;}
 .hw-r.no{opacity:.45;}
+.hw-r.sk{opacity:.5;}.hw-r.sk .lb small{font-weight:700;}
+.hw-star{color:#e8a317;}
+.hw-sec{margin:12px 0 2px;font-size:12.5px;font-weight:800;color:var(--sub);}
+.hw-skl{margin:8px 0 0;font-size:12.5px;color:var(--sub);}
+.hw-exadd{display:block;width:100%;margin:8px 0 2px;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:12px;background:none;color:var(--accent);font-weight:800;font-size:13.5px;text-align:left;cursor:pointer;}
+.hw-exadd small{display:block;font-weight:400;font-size:11.5px;color:var(--sub);}
+.hw-no{display:block;margin:10px auto 0;padding:8px 16px;border:1px solid var(--line);border-radius:10px;background:none;color:var(--ink);font-weight:800;font-size:13.5px;cursor:pointer;}
+.hw-no small{margin-left:6px;font-weight:400;font-size:11.5px;color:var(--sub);}
+.hw-exl{display:block;margin:10px 0 0;font-size:13px;font-weight:700;}
+.hw-exl input{display:block;width:100%;margin-top:4px;}
 .hw-line{display:block;background:#06c755;color:#fff;font-weight:800;border-radius:10px;padding:12px;text-decoration:none;margin:10px 0;}
 .kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
 .kb-c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;cursor:pointer;}
@@ -2202,10 +2212,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v105';
+var APP_VER = 'v106';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v106', d: '2026/10/27', items: ['📝 目標設定の宿題（理想の生活）：自分には必要ない分野は「いらない」を押せるようにしました（あとで答える、とは別に記録されます）', '★ 質問にない大事なこと（推し活など）を「＋ 自分の項目を足す」で5つまで足せます。金額は合計に入り、担当者の画面にも「大事にしたいこと」「いらない」として出ます'] },
   { v: 'v105', d: '2026/10/26', items: ['❔ 項目名のうしろの長いカッコ書きの説明を「？」ボタンにまとめました（PCはマウスを乗せる・スマホはタップで説明が出ます）。イベントの作成・編集など約30か所'] },
   { v: 'v104', d: '2026/10/26', items: ['🔤 日付・金額・会員番号などの数字のフォントを、読みやすいフォント（Manrope）に変えました（会員証・受付画面・印刷物）'] },
   { v: 'v103', d: '2026/10/25', items: ['📊 イベントの「編集」で「集計（稼働率）に入れない」を選べるようにしました。参加必須でないイベントや間違って立てたイベントは、開催数にも出席回数にも入りません（イベント一覧に「📊集計外」と出ます。受付・会計はふつうにできます）'] },
@@ -4329,7 +4340,7 @@ var HW_TITLES = [[3010000, 'チームエリート'], [1010000, 'ブルーダイ�
   [170000, 'ルビー'], [110000, 'ラピス'], [60000, 'ゴールド'], [0, 'ブランドレプリゼンタティブ']];
 function hwTitle(man){ var inc = (parseInt(man, 10) || 0) * 10000; for(var i = 0; i < HW_TITLES.length; i++) if(inc >= HW_TITLES[i][0]) return HW_TITLES[i][1]; return HW_TITLES[HW_TITLES.length - 1][1]; }
 function hwHasCar(a){ return a.transport === '外車' || a.transport === '国産車'; }
-function hwShow(q, a){ return q.car ? hwHasCar(a) : (q.noCar ? !hwHasCar(a) : true); }
+function hwShow(q, a){ var ct = hwCatOf(q.id); if(ct && hwSkipped(ct.k, a)) return false; return q.car ? hwHasCar(a) : (q.noCar ? !hwHasCar(a) : true); }
 function hwQs(a){ return HW_Q.filter(function(q){ return hwShow(q, a); }); }
 function hwFilled(v){ return v !== undefined && v !== null && v !== ''; }
 function hwCarMonthly(ln){
@@ -4342,14 +4353,64 @@ function hwCarMonthly(ln){
   }
   return Math.floor(base) + (parseInt(ln.insurance, 10) || 0) + (parseInt(ln.parking, 10) || 0) + (parseInt(ln.gas, 10) || 0);
 }
+/* v106 #29: 「いらない」（分野ごと）と「自分で足した項目」（推し活など）。NAVIGATOR（app.js の _p2SkipOf / _p2ExtraOf）と同じ形:
+   ans.skip = { 分野のk: 1 }（いらない＝その人が求めていないもの。あとで＝まだ答えていないだけ、とは別。金額0・質問も出さない）
+   ans.extra = [{ t: 名前, v: 月の万円, m: ひとこと }]（5つまで・合計に入る） */
+var HW_EXTRA_MAX = 5;
+function hwCatOf(id){ for(var i = 0; i < HW_CATS.length; i++) if(HW_CATS[i].ids.indexOf(id) >= 0) return HW_CATS[i]; return null; }
+function hwSkipOf(a){ var s = a && a.skip; return (s && typeof s === 'object' && !(s instanceof Array)) ? s : {}; }
+function hwSkipped(k, a){ return !!hwSkipOf(a)[k]; }
+function hwExtraOf(a){ var x = a && a.extra; if(!(x instanceof Array)) return []; return x.filter(function(e){ return e && String(e.t || '').replace(/\s/g, ''); }); }
+function hwExtraTot(a){ var t = 0; hwExtraOf(a).forEach(function(e){ t += Math.max(0, parseInt(e.v, 10) || 0); }); return t; }
+function hwSkipNames(a){ return HW_CATS.filter(function(c){ return hwSkipped(c.k, a); }).map(function(c){ return c.lb; }); }
+function hwSetSkip(k, on){
+  var s = {}, o = hwSkipOf(gHw.a);
+  for(var x in o) if(o.hasOwnProperty(x) && o[x]) s[x] = 1;
+  if(on) s[k] = 1; else delete s[k];
+  gHw.a.skip = s; hwSaveDraft(gHw.a);
+}
+// 自分の項目を足す・直す（i<0＝新しく足す）。back：閉じたあとに戻る画面
+function hwExtraEdit(i, back){
+  var L = hwExtraOf(gHw.a), e = i >= 0 ? L[i] : null;
+  if(!e && L.length >= HW_EXTRA_MAX){ toast('自分の項目は' + HW_EXTRA_MAX + 'つまでです'); return; }
+  modal('<div class="hw-wiz"><h2 style="margin-bottom:4px;">' + (e ? '自分の項目を直す' : '＋ 自分の項目を足す') + '</h2>'
+    + '<p class="hw-note" style="margin-top:0;">質問にない、あなたが大事にしたいこと（例：推し活・サウナ・子どもの習い事）</p>'
+    + '<label class="hw-exl">名前<input type="text" id="hwExT" maxlength="20" placeholder="例：推し活" value="' + esc(e ? e.t : '') + '"></label>'
+    + '<label class="hw-exl">月いくら？（万円）<input type="number" inputmode="numeric" id="hwExV" min="0" max="999" placeholder="0" value="' + (e ? (parseInt(e.v, 10) || 0) : '') + '"></label>'
+    + '<label class="hw-exl">ひとこと（なくてもOK）<input type="text" id="hwExM" maxlength="60" placeholder="例：推しのライブは全部行きたい" value="' + esc(e ? (e.m || '') : '') + '"></label>'
+    + '<div class="hw-foot">' + (e ? '<button id="hwExDel">消す</button>' : '<button id="hwExNo">やめる</button>') + '<button class="primary" id="hwExSave">保存</button></div></div>');
+  hwOnBackdrop();
+  $('hwExSave').onclick = function(){
+    var t = String($('hwExT').value || '').replace(/^\s+|\s+$/g, '').slice(0, 20);
+    if(!t){ toast('名前を入れてください'); return; }
+    var v = Math.max(0, Math.min(999, parseInt($('hwExV').value, 10) || 0)), m = String($('hwExM').value || '').replace(/^\s+|\s+$/g, '').slice(0, 60);
+    var L2 = hwExtraOf(gHw.a).slice(), o = { t: t, v: v, m: m };
+    if(e) L2[i] = o; else L2.push(o);
+    gHw.a.extra = L2; hwSaveDraft(gHw.a); back();
+  };
+  if($('hwExDel')) $('hwExDel').onclick = function(){
+    var L2 = hwExtraOf(gHw.a).slice(); L2.splice(i, 1);
+    gHw.a.extra = L2; hwSaveDraft(gHw.a); toast('「' + e.t + '」を消しました'); back();
+  };
+  if($('hwExNo')) $('hwExNo').onclick = back;
+}
+// 足した項目の行（★）＋「＋ 自分の項目を足す」
+function hwExtraRowsHtml(a, edit){
+  var L = hwExtraOf(a), h = L.map(function(e, i){
+    return '<div class="hw-r ex"' + (edit ? ' data-x="' + i + '"' : '') + '><span class="lb"><b class="hw-star">★</b> ' + esc(e.t) + (e.m ? '<small>' + esc(e.m) + '</small>' : '') + '</span><span class="v">' + (parseInt(e.v, 10) || 0) + '万</span></div>';
+  }).join('');
+  if(edit && L.length < HW_EXTRA_MAX) h += '<button class="hw-exadd" id="hwExAdd">＋ 自分の項目を足す<small>推し活など、質問にない大事なこと</small></button>';
+  return h;
+}
 function hwQ(id){ for(var i = 0; i < HW_Q.length; i++) if(HW_Q[i].id === id) return HW_Q[i]; return null; }
 function hwCatAmt(cat, a){
   var n = 0;
+  if(hwSkipped(cat.k, a)) return 0;
   cat.ids.forEach(function(id){ var q = hwQ(id); if(q && q.cost && hwShow(q, a)) n += parseInt(a[id], 10) || 0; });
   if(cat.k === 'move' && hwHasCar(a)) n += hwCarMonthly(a.car_loan);
   return n;
 }
-function hwTotal(a){ var t = 0; HW_CATS.forEach(function(c){ t += hwCatAmt(c, a || {}); }); return t; }
+function hwTotal(a){ var t = 0; HW_CATS.forEach(function(c){ t += hwCatAmt(c, a || {}); }); return t + hwExtraTot(a || {}); }
 function hwCatDesc(cat, a){
   var bits = [];
   cat.ids.forEach(function(id){
@@ -4361,18 +4422,21 @@ function hwCatDesc(cat, a){
 }
 function hwYm(v){ var d = String(v || ''); return d.length >= 7 ? parseInt(d.slice(0, 4), 10) + '年' + parseInt(d.slice(5, 7), 10) + '月' : ''; }
 // 答えの一覧（会員証の確認画面・研修担当の画面で共通）
-function hwSummaryHtml(a){
+function hwSummaryHtml(a, edit){
   a = a || {};
-  var tot = hwTotal(a);
+  var tot = hwTotal(a), skN = hwSkipNames(a), ex = hwExtraOf(a);
   var rows = HW_CATS.map(function(c){
+    if(hwSkipped(c.k, a)) return '<div class="hw-r sk" data-c="' + c.k + '"><span class="lb">' + ckIco(c.ic) + ' ' + esc(c.lb) + '<small>いらない' + (edit ? '（押すと答えられます）' : '') + '</small></span><span class="v">—</span></div>';
     var done = c.ids.some(function(id){ return hwFilled(a[id]); });
     var ds = hwCatDesc(c, a);
-    return '<div class="hw-r' + (done ? '' : ' no') + '"><span class="lb">' + ckIco(c.ic) + ' ' + esc(c.lb)
+    return '<div class="hw-r' + (done ? '' : ' no') + '" data-c="' + c.k + '"><span class="lb">' + ckIco(c.ic) + ' ' + esc(c.lb)
       + (ds ? '<small>' + esc(ds) + '</small>' : '') + '</span><span class="v">' + (done ? hwCatAmt(c, a) + '万' : '—') + '</span></div>';
   }).join('');
+  // v106 #29: 自分で足した項目（大事にしたいこと）と、いらないと答えた分野
+  var exH = (ex.length || edit) ? '<div class="hw-sec">' + ckIco('heart') + ' 大事にしたいこと（自分で足した項目）</div>' + hwExtraRowsHtml(a, edit) : '';
   return '<div class="hw-sum"><div class="hw-tot">月 <b>' + tot + '</b>万円<small>' + esc(hwTitle(tot)) + '</small></div>'
     + (a.deadline ? '<div class="hw-dl">' + ckIco('calendar') + ' ' + esc(hwYm(a.deadline)) + 'までに実現したい</div>' : '')
-    + rows + '</div>';
+    + rows + exH + (skN.length ? '<div class="hw-skl">いらない：' + esc(skN.join('・')) + '</div>' : '') + '</div>';
 }
 // 会員証の宿題ボックス: PAの受講記録がある人だけ。下書きはこの端末に保存、提出で担当者に届く
 function hwDraftKey(){ return 'bci_hw_' + gCardToken; }
@@ -4466,9 +4530,14 @@ function hwRenderQ(){
     for(var y = ny; y <= ny + 5; y++) ys += '<option value="' + y + '"' + (y === cy ? ' selected' : '') + '>' + y + '年</option>';
     for(var m = 1; m <= 12; m++) ms += '<option value="' + m + '"' + (m === cm ? ' selected' : '') + '>' + m + '月</option>';
     body = '<div class="hw-ttl"><small>目標タイトル</small><b>' + esc(hwTitle(tot)) + '</b><small>目標月収 ' + tot + '万円</small></div>'
+      + '<div class="hw-sum" style="margin:0 0 10px;">' + (hwExtraOf(a).length ? '<div class="hw-sec">' + ckIco('heart') + ' 自分で足した項目</div>' : '') + hwExtraRowsHtml(a, true)
+      + (hwSkipNames(a).length ? '<div class="hw-skl">いらない：' + esc(hwSkipNames(a).join('・')) + '</div>' : '') + '</div>'
       + '<div class="hw-ym"><select id="hwY">' + ys + '</select><select id="hwM">' + ms + '</select></div>';
   }
   var last = hwNextIdx(g.i) >= HW_Q.length;
+  // v106 #29: 分野の最初の質問に「いらない」（あとで＝まだ答えていないだけ、とは別）
+  var nc = hwCatOf(q.id), noB = (nc && nc.ids.filter(function(x){ var qq = hwQ(x); return qq && hwShow(qq, a); })[0] === q.id)
+    ? '<button class="hw-no" id="hwNo">いらない<small>' + esc(nc.lb) + 'は自分には必要ない</small></button>' : '';
   modal('<div class="hw-wiz"><div class="hw-dots">' + dots + '</div>'
     + '<div class="hw-ph">' + ckIco('note') + ' 理想のライフスタイル（' + (pi + 1) + '/' + qs.length + '）</div>'
     + '<div class="hw-bub"><span class="av">' + CK_CHICK + '</span><div>' + esc(text) + '</div></div>'
@@ -4476,7 +4545,7 @@ function hwRenderQ(){
     + '<div class="hw-body">' + body + '</div>'
     + '<div class="hw-foot">' + (hwPrevIdx(g.i) >= 0 ? '<button id="hwBack">←</button>' : '<button id="hwClose">とじる</button>')
     + '<button class="primary" id="hwNext">' + (last ? '確認する ✓' : '次へ →') + '</button>'
-    + (last ? '' : '<span id="hwSkip">スキップ</span>') + '</div>'
+    + (last ? '' : '<span id="hwSkip">あとで</span>') + '</div>' + noB
     + '<p class="hw-note">答えはこの端末に自動で保存されます。途中で閉じてもOK</p></div>');
   hwOnBackdrop();
   // 入力のつなぎこみ
@@ -4504,6 +4573,16 @@ function hwRenderQ(){
   if($('hwClose')) $('hwClose').onclick = function(){ closeModal(); renderGoalHw(gHw.c); };
   $('hwNext').onclick = function(){ hwGoNext(false); };
   if($('hwSkip')) $('hwSkip').onclick = function(){ hwGoNext(true); };
+  if($('hwNo')) $('hwNo').onclick = function(){ hwSetSkip(nc.k, true); toast(nc.lb + 'を「いらない」にしました（確認の画面で戻せます）'); hwGoNext(true); };
+  hwExtraBind(hwRenderQ);
+}
+// 自分の項目の行（直す）と「＋ 自分の項目を足す」のつなぎこみ
+function hwExtraBind(back){
+  Array.prototype.forEach.call(document.querySelectorAll('.hw-r[data-x]'), function(r){
+    r.style.cursor = 'pointer';
+    r.onclick = function(){ hwExtraEdit(+r.getAttribute('data-x'), back); };
+  });
+  if($('hwExAdd')) $('hwExAdd').onclick = function(){ hwExtraEdit(-1, back); };
 }
 // 外側を押して閉じたときも、会員証の宿題ボックス（続きから n/20 など）を最新にする
 function hwOnBackdrop(){
@@ -4523,17 +4602,21 @@ function hwRenderSum(){
   var again = !!g.d;
   modal('<div class="hw-wiz"><h2 style="margin-bottom:6px;">' + ckIco('house') + ' あなたの理想の生活</h2>'
     + '<p class="hw-note" style="margin-top:0;">分野を押すと、その質問から答え直せます</p>'
-    + hwSummaryHtml(a)
+    + hwSummaryHtml(a, true)
     + (miss ? '<p class="hw-msg warn">まだ答えていない質問が ' + miss + ' 問あります（そのままでも提出できます）</p>' : '')
     + '<div class="hw-foot"><button id="hwLater">あとで</button><button class="primary" id="hwSend">' + (again ? 'もう一度提出する' : '担当者に提出する') + '</button></div></div>');
   hwOnBackdrop();
-  Array.prototype.forEach.call(document.querySelectorAll('.hw-sum .hw-r'), function(r, k){
+  Array.prototype.forEach.call(document.querySelectorAll('.hw-sum .hw-r[data-c]'), function(r){
     r.style.cursor = 'pointer';
     r.onclick = function(){
-      var cat = HW_CATS[k], id = cat.ids.filter(function(x){ return hwShow(hwQ(x), gHw.a); })[0] || cat.ids[0];
+      var cat = null; HW_CATS.forEach(function(c){ if(c.k === r.getAttribute('data-c')) cat = c; });
+      if(!cat) return;
+      if(hwSkipped(cat.k, gHw.a)) hwSetSkip(cat.k, false);   // v106: いらないにした分野を押したら、戻して質問へ
+      var id = cat.ids.filter(function(x){ return hwShow(hwQ(x), gHw.a); })[0] || cat.ids[0];
       gHw.i = HW_Q.indexOf(hwQ(id)); hwRenderQ();
     };
   });
+  hwExtraBind(hwRenderSum);
   $('hwLater').onclick = function(){ closeModal(); renderGoalHw(g.c); };
   $('hwSend').onclick = function(){ hwSubmit(); };
 }
@@ -4541,6 +4624,9 @@ function hwSubmit(){
   var g = gHw, c = g.c, pa = hwTr(c) || {}, tot = hwTotal(g.a);
   var ans = {};
   hwQs(g.a).forEach(function(q){ if(hwFilled(g.a[q.id])) ans[q.id] = g.a[q.id]; });
+  if(hwSkipNames(g.a).length){ ans.skip = {}; HW_CATS.forEach(function(c){ if(hwSkipped(c.k, g.a)) ans.skip[c.k] = 1; }); }   // v106 #29
+  var exs = hwExtraOf(g.a).slice(0, HW_EXTRA_MAX);
+  if(exs.length) ans.extra = exs.map(function(e){ return { t: String(e.t).slice(0, 20), v: Math.max(0, parseInt(e.v, 10) || 0), m: String(e.m || '').slice(0, 60) }; });
   $('hwSend').disabled = true;
   var doc = { no: String(c.no || ''), name: c.name || '', union: c.union || '', group: c.group || '',
     trUid: pa.by || '', trName: pa.byName || '', ans: ans, total: tot, status: 'submitted',
@@ -4548,7 +4634,9 @@ function hwSubmit(){
   db.collection('goalHw').doc(gCardToken).set(doc).then(function(){
     var who = pa.byName || '担当者';
     var txt = '【目標設定の宿題を提出しました】\n' + (c.name || '') + '\n理想の生活：月' + tot + '万円（' + hwTitle(tot) + '）'
-      + (ans.deadline ? '\nいつまでに：' + hwYm(ans.deadline) : '');
+      + (ans.deadline ? '\nいつまでに：' + hwYm(ans.deadline) : '')
+      + (ans.extra ? '\n大事にしたいこと：' + ans.extra.map(function(e){ return e.t; }).join('・') : '')
+      + (ans.skip ? '\nいらない：' + hwSkipNames(ans).join('・') : '');
     modal('<div class="hw-wiz" style="text-align:center;"><div style="font-size:44px;color:#e8a317;">' + ckIco('party') + '</div>'
       + '<h2>提出しました！</h2><p class="hw-msg">' + esc(who) + 'さんの研修受講カードに届きました。</p>'
       + '<div class="hw-tot" style="margin:10px 0;">月 <b>' + tot + '</b>万円<small>' + esc(hwTitle(tot)) + '</small></div>'

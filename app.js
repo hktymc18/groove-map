@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v840';
+var APP_JS_VERSION = 'v841';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4348,7 +4348,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v840';
+  var DATA_VERSION = 'v841';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6458,6 +6458,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v841', d:'2026-10-27', items:['PLAN › 理想の生活：自分には必要ない分野は「いらない」を押せるようにしました（「あとで」とは別に記録され、金額は0・その分野の質問は出ません。一覧の「↺ 戻す」で答えられます）','「＋ 自分の項目を足す」で、推し活など質問にない大事なことを5つまで足せます（金額は理想の生活の合計に入ります）','受付の宿題（目標設定）でも同じように使えて、NAVIGATORに引き継ぐと「いらない」と自分の項目も入ります'] },
   { v:'v840', d:'2026-10-27', items:['サークルMAP（計画シートの理想MAP・MAPの◎サークル）で、同じ色の線が2本ぴったり並んで長く走り、二重線に見えるのを直しました（フロントが一部の人に集まっている組織で起きていました）'] },
   { v:'v839', d:'2026-10-25', items:['アカウント管理の「兼務するユニオン」の説明を、受付システム（BASE CHECK-IN）の権限とは別であることがわかるように直しました'] },
   { v:'v838', d:'2026-10-25', items:['所属ユニオンを選んだ時に入るUPBDの名前を、オーナーがアカウント管理の「ユニオンとUPBD」で直せるようにしました（ユニオンの追加・並べ替えもできます）'] },
@@ -21923,16 +21924,25 @@ function _p2IdealListHtml() {
   var m0 = _p2LfMode; _p2LfMode = '';
   var rows = P2_LIFE_CATS.filter(function(c) { return c.k !== 'deadline'; }).map(function(c) {
     var done = c.ids.some(function(id) { var v = a[id]; return v !== undefined && v !== null && v !== ''; }), amt = 0, ds = '';
+    if (_p2CatSkipped(c.k, a)) { _p2ExCss(); return '<div class="p2id-r p2-skr" onclick="p2IdealCat(\'' + c.k + '\')"><span class="lb">' + c.ic + ' ' + c.lb + '<span class="p2-skp">いらない</span></span><span class="v">—</span><span class="p2-unsk" onclick="event.stopPropagation();p2CatUnskip(\'' + c.k + '\')">↺ 戻す</span></div>'; } // v841 #29
     try { amt = _p2LfAmt(c); ds = _p2LfDesc(c); } catch (e2) {}
     return '<div class="p2id-r' + (done ? '' : ' no') + '" onclick="p2IdealCat(\'' + c.k + '\')"><span class="lb">' + c.ic + ' ' + c.lb + (ds ? '<small>' + evEsc(String(ds).slice(0, 28)) + '</small>' : '') + '</span><span class="v">' + (done ? amt + '万' : 'これから') + '</span><span class="e">✎</span></div>';
   }).join('');
   _p2LfMode = m0;
+  _p2LfMode = '';
+  rows += _p2ExtraRowsHtml(a, _p2ExRowHtml); // v841 #29: 自分で足した項目（★）と「＋ 自分の項目を足す」
+  _p2LfMode = m0;
   return '<div class="p2id-h">🏡 あなたの理想の生活<b>' + tot + '<small>万円/月</small></b></div>' + rows
-    + '<div class="ux-sub" style="font-size:12px">答えた分はすぐここに並びます。押すとその分野の質問へ</div>';
+    + '<div class="ux-sub" style="font-size:12px">答えた分はすぐここに並びます。押すとその分野の質問へ。「いらない」は ↺ 戻す で答えられます</div>';
+}
+// v841 #29: 自分で足した項目の行（押すと直す・消す）
+function _p2ExRowHtml(e, i) {
+  return '<div class="p2id-r" onclick="p2ExtraEdit(' + i + ')"><span class="lb"><span class="p2ex-st">' + icn('star') + '</span> ' + evEsc(e.t) + (e.m ? '<small>' + evEsc(String(e.m).slice(0, 40)) + '</small>' : '') + '</span><span class="v">' + (parseInt(e.v, 10) || 0) + '万</span><span class="e">✎</span></div>';
 }
 function _p2IdealListPaint() { var el = document.getElementById('p2IdList'); if (el) el.innerHTML = _p2IdealListHtml(); }
 function p2IdealCat(k) {
   var c = P2_LIFE_CATS.filter(function(x) { return x.k === k; })[0]; if (!c) return;
+  if (_p2CatSkipped(k, _p2G().ans)) { var m9 = _p2LfMode; _p2LfMode = ''; p2CatSkipOff(k); _p2LfMode = m9; } // v841 #29: いらないにした分野を押したら、戻して質問へ
   var id = c.ids.filter(function(x) { var q = _p2LfQ(x); return q && _p2GwShow(q); })[0] || c.ids[0];
   var ix = -1; for (var i = 0; i < P2GW_Q.length; i++) if (P2GW_Q[i].id === id) ix = i;
   if (ix < 0) return;
@@ -22077,6 +22087,7 @@ function _p2SumHtml() {
   var a = _p2G().ans, cats = [];
   var m0 = _p2LfMode; _p2LfMode = '';
   P2_LIFE_CATS.forEach(function(c) { if (c.k === 'deadline') return; var v = 0, ds = ''; try { v = _p2LfAmt(c); ds = _p2LfDesc(c); } catch (e5) {} if (v > 0) cats.push({ c: c, v: v, ds: ds }); });
+  _p2ExtraOf(a).forEach(function(e) { var v = parseInt(e.v, 10) || 0; if (v > 0) cats.push({ c: { ic: icn('star'), lb: e.t }, v: v, ds: e.m || '' }); }); // v841 #29: 自分で足した項目
   _p2LfMode = m0;
   cats.sort(function(x, y) { return y.v - x.v; });
   var rest = cats.slice(3).reduce(function(n, x) { return n + x.v; }, 0);
@@ -23428,7 +23439,10 @@ function _p2WhyPageHtml(i) {
     var tot = 0; try { tot = _p2GwTotal(); } catch (e) {}
     var rows = P2_LIFE_CATS.filter(function(c) { return c.k !== 'deadline'; }).map(function(c) {
       var a = 0, ds = ''; try { a = _p2LfAmt(c); ds = _p2LfDesc(c); } catch (e) {}
+      if (_p2CatSkipped(c.k, _p2G().ans)) ds = 'いらない'; // v841 #29
       return '<div class="ux-rw" style="cursor:pointer" onclick="p2LifeOpen()"><span class="lb">' + (c.ic || '') + ' ' + c.lb + '<small>' + evEsc(String(ds || 'まだ決めていない').slice(0, 30)) + '</small></span><span style="font-size:17px;font-weight:900;font-family:Inter,sans-serif">' + (a ? (Math.round(a * 10) / 10).toLocaleString() + '<small style="font-size:11px;color:var(--text-dim)">万/月</small>' : '<small style="font-size:12px;color:var(--gold)">決める ›</small>') + '</span></div>';
+    }).join('') + _p2ExtraOf(_p2G().ans).map(function(e) { // v841 #29: 自分で足した項目
+      return '<div class="ux-rw" style="cursor:pointer" onclick="p2LifeOpen()"><span class="lb">' + icn('star') + ' ' + evEsc(e.t) + '<small>' + evEsc(String(e.m || '自分で足した項目').slice(0, 30)) + '</small></span><span style="font-size:17px;font-weight:900;font-family:Inter,sans-serif">' + (parseInt(e.v, 10) || 0) + '<small style="font-size:11px;color:var(--text-dim)"> 万</small></span></div>';
     }).join('');
     return head + '<h2 class="ux-h2">理想の生活</h2><div class="ux-sum"><b>' + (Math.round(tot * 10) / 10).toLocaleString() + '<small> 万円/月</small></b><span>理想の暮らしに必要な月収</span></div>'
       + '<div class="ux-box">' + rows + '</div><span class="ux-lk" onclick="p2LifeOpen()">理想の生活を決める・なおす ›</span>';
@@ -24621,12 +24635,83 @@ var _p2LfOpen = '';
 // v559: 「1年以内の理想（直近）」を最終ゴールの理想とは別に描ける。同じ12分野・同じ質問で、答えは別に保存（p2.lifeNear）
 var _p2LfMode = '';
 function _p2LfA() { if (_p2LfMode === 'near') { var p2 = _p2(); return p2.lifeNear || (p2.lifeNear = {}); } return _p2G().ans; }
-function _p2LfShow(q) { return !q.showIf || q.showIf(_p2LfA()); }
-function _p2LfTotal() { if (_p2LfMode !== 'near') return _p2GwTotal(); var t = 0; P2_LIFE_CATS.forEach(function(c) { if (c.k !== 'deadline') t += _p2LfAmt(c); }); return t; }
+function _p2LfShow(q) { var a = _p2LfA(); if (_p2QSkipped(q, a)) return false; return !q.showIf || q.showIf(a); }
+function _p2LfTotal() { if (_p2LfMode !== 'near') return _p2GwTotal(); var t = 0; P2_LIFE_CATS.forEach(function(c) { if (c.k !== 'deadline') t += _p2LfAmt(c); }); return t + _p2ExtraTot(_p2LfA()); }
 function _p2NearTotal() { var m = _p2LfMode; _p2LfMode = 'near'; var t = _p2LfTotal(); _p2LfMode = m; return t; }
 function _p2LfQ(id) { for (var i = 0; i < P2GW_Q.length; i++) if (P2GW_Q[i].id === id) return P2GW_Q[i]; return null; }
+// ════ v841 #29: 理想の生活の「いらない」（分野ごと）と「自分で足した項目」（推し活など）════
+//   答えの中に skip: { 分野のk: 1 } と extra: [{ t: 名前, v: 月の万円, m: ひとこと }] で持つ（受付の宿題 checkin/index.html と同じ形）。
+//   「いらない」＝その人が求めていないもの（あとで＝まだ答えていないだけ、とは別）。いらない分野は金額0・質問も出さない
+var P2_EXTRA_MAX = 5;
+function _p2CatOf(id) { for (var i = 0; i < P2_LIFE_CATS.length; i++) { var c = P2_LIFE_CATS[i]; if (c.k !== 'deadline' && c.ids.indexOf(id) >= 0) return c; } return null; }
+function _p2SkipOf(a) { var s = a && a.skip; return (s && typeof s === 'object' && !Array.isArray(s)) ? s : {}; }
+function _p2CatSkipped(k, a) { return !!_p2SkipOf(a || _p2LfA())[k]; }
+function _p2QSkipped(q, a) { if (!q || q.ph !== 1) return false; var c = _p2CatOf(q.id); return !!(c && _p2SkipOf(a)[c.k]); }
+function _p2ExtraOf(a) { var x = a && a.extra; return Array.isArray(x) ? x.filter(function(e) { return e && String(e.t || '').trim(); }) : []; }
+function _p2ExtraTot(a) { var t = 0; _p2ExtraOf(a).forEach(function(e) { t += Math.max(0, parseInt(e.v, 10) || 0); }); return t; }
+function _p2SkipNames(a) { return P2_LIFE_CATS.filter(function(c) { return c.k !== 'deadline' && _p2SkipOf(a)[c.k]; }).map(function(c) { return c.lb; }); }
+function p2CatSkip(k) { var a = _p2LfA(); a.skip = Object.assign({}, _p2SkipOf(a)); a.skip[k] = 1; saveGoals(); }
+function p2CatSkipOff(k) { var a = _p2LfA(), s = Object.assign({}, _p2SkipOf(a)); delete s[k]; a.skip = s; saveGoals(); }
+function p2CatUnskip(k) { var a = _p2LfA(), s = Object.assign({}, _p2SkipOf(a)); delete s[k]; a.skip = s; saveGoals(); _p2ExRefresh(); }
+// 足した項目を直す・消すシート（i<0＝新しく足す）
+function p2ExtraEdit(i) {
+  var a = _p2LfA(), L = _p2ExtraOf(a), e = i >= 0 ? L[i] : null;
+  if (!e && L.length >= P2_EXTRA_MAX) { toast('自分の項目は' + P2_EXTRA_MAX + 'つまでです'); return; }
+  _p2SheetClose('p2ExOv');
+  var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'p2ExOv'; ov.style.zIndex = '660';
+  ov.onclick = function(ev) { if (ev.target === ov) _p2SheetClose('p2ExOv'); };
+  ov.innerHTML = '<div class="ms-sheet" style="max-width:460px;margin:0 auto"><div class="ms-grip"></div><div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + (e ? '自分の項目を直す' : '＋ 自分の項目を足す') + '</div>'
+    + '<div style="font-size:11.5px;color:var(--text-dim)">質問にない、あなたが大事にしたいこと（例：推し活・サウナ・子どもの習い事）</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2ExOv\')">✕</span></div>'
+    + '<div style="padding:4px 16px 18px;display:grid;gap:10px">'
+    + '<label class="p2ex-l">名前<input class="fi" id="p2ExT" maxlength="20" placeholder="例：推し活" value="' + evEsc(e ? e.t : '') + '"></label>'
+    + '<label class="p2ex-l">月いくら？<span style="display:flex;align-items:center;gap:8px"><input class="fi" id="p2ExV" type="number" inputmode="numeric" min="0" max="999" style="flex:1" value="' + (e ? (parseInt(e.v, 10) || 0) : '') + '" placeholder="0"><b>万円</b></span></label>'
+    + '<label class="p2ex-l">ひとこと（なくてもOK）<input class="fi" id="p2ExM" maxlength="60" placeholder="例：推しのライブは全部行きたい" value="' + evEsc(e ? (e.m || '') : '') + '"></label>'
+    + '<div class="ux-acts" style="grid-template-columns:' + (e ? '1fr 2fr' : '1fr') + '">' + (e ? '<span onclick="p2ExtraDel(' + i + ')">' + icn('trash') + ' 消す</span>' : '') + '<span class="p" onclick="p2ExtraSave(' + i + ')">保存</span></div></div></div>';
+  document.body.appendChild(ov);
+  _p2ExCss();
+  requestAnimationFrame(function() { ov.classList.add('show'); });
+  setTimeout(function() { var t = document.getElementById('p2ExT'); if (t && !e) try { t.focus(); } catch (eF) {} }, 60);
+}
+function p2ExtraSave(i) {
+  var t = String((document.getElementById('p2ExT') || {}).value || '').trim().slice(0, 20);
+  if (!t) { toast('名前を入れてください'); return; }
+  var v = Math.max(0, Math.min(999, parseInt((document.getElementById('p2ExV') || {}).value, 10) || 0)), m = String((document.getElementById('p2ExM') || {}).value || '').trim().slice(0, 60);
+  var a = _p2LfA(), L = _p2ExtraOf(a).slice();
+  if (i >= 0 && L[i]) L[i] = { t: t, v: v, m: m }; else { if (L.length >= P2_EXTRA_MAX) return; L.push({ t: t, v: v, m: m }); }
+  a.extra = L; saveGoals(); _p2SheetClose('p2ExOv'); toast('「' + t + '」を' + (i >= 0 ? '直しました' : '足しました')); _p2ExRefresh();
+}
+function p2ExtraDel(i) {
+  var a = _p2LfA(), L = _p2ExtraOf(a).slice(), e = L[i]; if (!e) return;
+  L.splice(i, 1); a.extra = L; saveGoals(); _p2SheetClose('p2ExOv'); _p2ExRefresh();
+  toastAction('「' + e.t + '」を消しました', '↩ 元に戻す', function() { var b = _p2LfA(), M = _p2ExtraOf(b).slice(); M.splice(Math.min(i, M.length), 0, e); b.extra = M; saveGoals(); _p2ExRefresh(); });
+}
+// 開いている画面を描き直す（理想の生活シート・理想のページの一覧と質問）
+function _p2ExRefresh() {
+  if (document.getElementById('p2LfOv')) { _p2LfRender(); return; }
+  if (_p2GwInline()) { _p2IdealListPaint(); var q = P2GW_Q[_p2GwStep]; if (q && !_p2GwShow(q)) _p2IdealAfter(); else _p2GwRender(); return; }
+  if (document.getElementById('p2GwOv')) { _p2GwRender(); return; }
+  if (currentView === 'plan') renderPlan();
+}
+// 足した項目の行を並べて、下に「＋ 自分の項目を足す」（5つまで）
+function _p2ExtraRowsHtml(a, rowFn) {
+  _p2ExCss();
+  var L = _p2ExtraOf(a), h = L.map(function(e, i) { return rowFn(e, i); }).join('');
+  if (L.length < P2_EXTRA_MAX) h += '<div class="p2ex-add" onclick="p2ExtraEdit(-1)">＋ 自分の項目を足す<small>推し活など、質問にない大事なこと</small></div>';
+  return h;
+}
+function _p2ExCss() {
+  if (document.getElementById('p2ExCss')) return;
+  var st = document.createElement('style'); st.id = 'p2ExCss';
+  st.textContent = '.p2ex-l{display:grid;gap:5px;font-size:12.5px;font-weight:800;color:var(--text-mid)}'
+    + '.p2ex-add{margin:8px 0 2px;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:12px;color:var(--accent);font-weight:900;font-size:13px;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}.p2ex-add small{font-size:11px;font-weight:700;color:var(--text-dim)}'
+    + '.p2ex-st{color:#FFB454}.p2-skp{display:inline-block;font-size:10.5px;font-weight:900;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--text-dim) 18%,transparent);color:var(--text-dim);margin-left:6px}'
+    + '.p2-unsk{font-size:11px;font-weight:900;color:var(--accent);cursor:pointer;white-space:nowrap;margin-left:8px}.gw2-no{display:block;margin:10px auto 0;font-size:12.5px;font-weight:900;color:var(--text-mid);border:1px solid var(--border);border-radius:10px;padding:7px 14px;cursor:pointer;background:none;width:max-content}'
+    + '.p2-skr{opacity:.62}.p2id-r.p2-skr .v{color:var(--text-dim)}';
+  document.head.appendChild(st);
+}
 function _p2LfAmt(cat) { // その分野の月額（万円）
   var a = _p2LfA(), n = 0;
+  if (_p2SkipOf(a)[cat.k]) return 0; // v841 #29: いらない分野は0
   cat.ids.forEach(function(id) { var q = _p2LfQ(id); if (q && q.cost && _p2LfShow(q)) n += parseInt(a[id], 10) || 0; });
   if (cat.k === 'move') {
     var loan = a.car_loan;
@@ -24684,7 +24769,7 @@ function p2LifeOpen(mode) {
 function p2LfMode(m) { _p2LfSnap(); _p2LfMode = m === 'near' ? 'near' : ''; _p2LfOpen = ''; _p2LfRender(); }
 function p2LfNearCopy() { // 最終ゴールの理想を写して、1年以内の形に直す
   var src = _p2G().ans || {}, dst = {};
-  Object.keys(src).forEach(function(k) { if (k !== 'deadline' && P2_LIFE_CATS.some(function(c) { return c.ids.indexOf(k) >= 0; })) dst[k] = JSON.parse(JSON.stringify(src[k])); });
+  Object.keys(src).forEach(function(k) { if ((k !== 'deadline' && P2_LIFE_CATS.some(function(c) { return c.ids.indexOf(k) >= 0; })) || k === 'skip' || k === 'extra') dst[k] = JSON.parse(JSON.stringify(src[k])); }); // v841: いらない・自分の項目も写す
   _p2().lifeNear = dst; saveGoals(); _p2LfRender(); toast('最終ゴールの理想を写しました。1年以内に叶えたい形に直しましょう');
 }
 function p2LifeClose() { _p2LfSnap(); _p2SheetClose('p2LfOv'); _p2LfMode = ''; if (currentView === 'plan' && !document.getElementById('p2GeOv')) renderPlan(); }
@@ -24712,7 +24797,8 @@ function _p2LfRender() {
   if (carT) dreamsH += '<div class="p2lf-dream"><span class="ic">🏎</span><b>' + evEsc(carT) + '</b>' + _p2LfDreamBtn(carT, 'want') + '</div>';
   if (trT) dreamsH += '<div class="p2lf-dream"><span class="ic">🌴</span><b>' + evEsc(trT) + '</b>' + _p2LfDreamBtn(trT, 'do') + '</div>';
   var cats = P2_LIFE_CATS.filter(function(c) { return c.k !== 'deadline'; });
-  var bar = cats.map(function(c) { var v = _p2LfAmt(c); return v > 0 && total > 0 ? '<i style="width:' + (v / total * 100).toFixed(2) + '%;background:' + c.col + '" title="' + c.lb + ' ' + v + '万円"></i>' : ''; }).join('');
+  var bar = cats.map(function(c) { var v = _p2LfAmt(c); return v > 0 && total > 0 ? '<i style="width:' + (v / total * 100).toFixed(2) + '%;background:' + c.col + '" title="' + c.lb + ' ' + v + '万円"></i>' : ''; }).join('')
+    + _p2ExtraOf(a).map(function(e) { var v = parseInt(e.v, 10) || 0; return v > 0 && total > 0 ? '<i style="width:' + (v / total * 100).toFixed(2) + '%;background:#9aa3b5" title="' + evEsc(e.t) + ' ' + v + '万円"></i>' : ''; }).join(''); // v841 #29
   var prev = near ? null : _p2LfPrev(), diffH = '';
   if (prev) {
     var cur = _p2LfCats(), parts = [];
@@ -24731,8 +24817,17 @@ function _p2LfRender() {
     + (dreamsH ? '<div class="p2lf-dreams">' + dreamsH + '</div>' : '')
     + '<div class="p2lf-total">合計 <b>月 ' + total + '万円</b>' + (inc ? '<span>' + (inc === total ? '＝ ' + incLb + ' ' + inc + '万 ✓' : incLb + ' ' + inc + '万（差 ' + (total > inc ? '＋' : '−') + Math.abs(total - inc) + '万）') + '</span>' : '') + '</div>'
     + '<div class="p2lf-bar">' + bar + '</div>' + diffH + ask;
+  _p2ExCss();
   P2_LIFE_CATS.forEach(function(c) {
     var v = c.k === 'deadline' ? null : _p2LfAmt(c), ans = _p2LfAnswered(c), desc = _p2LfDesc(c), open = _p2LfOpen === c.k;
+    if (c.k !== 'deadline' && _p2CatSkipped(c.k, a)) { // v841 #29: いらない分野（↺ 戻す で答えられる）
+      h += '<div class="p2lf-row p2-skr"><div class="p2lf-h"><span class="ic">' + c.ic + '</span><span class="lb">' + c.lb + '</span><span class="ds"><span class="p2-skp" style="margin-left:0">いらない</span></span><span class="am">—</span><span class="p2-unsk" onclick="p2CatUnskip(\'' + c.k + '\')">↺ 戻す</span></div></div>';
+      return;
+    }
+    if (c.k === 'deadline') h += '<div style="margin:12px 0 4px">' + _p2ExtraRowsHtml(a, function(e, i) { // v841 #29: 自分で足した項目（★）
+      var v9 = parseInt(e.v, 10) || 0;
+      return '<div class="p2lf-row"><div class="p2lf-h" onclick="p2ExtraEdit(' + i + ')"><span class="ic"><span class="p2ex-st">' + icn('star') + '</span></span><span class="lb">' + evEsc(e.t) + '</span><span class="ds">' + evEsc(e.m || '自分で足した項目') + '</span><span class="am">' + (v9 ? v9 + '万' : '—') + '</span><span class="pc">' + (v9 && total ? Math.round(v9 / total * 100) + '%' : '') + '</span><span class="ar">✎</span></div></div>';
+    }) + '</div>';
     h += '<div class="p2lf-row' + (open ? ' open' : '') + '"><div class="p2lf-h" onclick="p2LfToggle(\'' + c.k + '\')">'
       + '<span class="ic" style="' + (c.col ? 'box-shadow:inset 3px 0 0 ' + c.col : '') + '">' + c.ic + '</span><span class="lb">' + c.lb + '</span>'
       + '<span class="ds">' + (ans ? evEsc(desc) : '<span class="un">未回答 — タップして答える</span>') + '</span>'
@@ -24746,6 +24841,7 @@ function _p2LfRender() {
 function p2LfToggle(k) { _p2LfOpen = _p2LfOpen === k ? '' : k; _p2LfRender(); }
 function _p2LfEditor(cat) {
   var a = _p2LfA(), h = '';
+  if (cat.k !== 'deadline') h += '<div style="text-align:right;margin-bottom:6px"><span class="p2-unsk" onclick="p2LfNo(\'' + cat.k + '\')">いらない（' + cat.lb + 'は自分には必要ない）</span></div>'; // v841 #29
   cat.ids.forEach(function(id) {
     var q = _p2LfQ(id); if (!q || !_p2LfShow(q)) return;
     var v = a[id];
@@ -24766,6 +24862,7 @@ function _p2LfEditor(cat) {
   });
   return h;
 }
+function p2LfNo(k) { p2CatSkip(k); _p2LfOpen = ''; _p2LfRender(); }
 function p2LfSet(id, v) { _p2LfA()[id] = v; saveGoals(); _p2LfRender(); }
 function p2LfLoan(k, v) { var a = _p2LfA(); var ln = a.car_loan || { price: 500, down: 0, years: 5, rate: 3, insurance: 3, parking: 2, gas: 2 }; ln[k] = k === 'rate' ? (parseFloat(v) || 0) : (parseInt(v, 10) || 0); a.car_loan = ln; saveGoals(); _p2LfRender(); }
 function p2LfDl() {
@@ -26543,7 +26640,7 @@ var P2GW_Q = [
 ];
 var P2GW_AV = ['😎','🔥','💪','🎯','✨','🚀','👊','🌟'];
 var _p2GwStep = 0;
-function _p2GwShow(q) { var g = _p2G(); return !q.showIf || q.showIf(g.ans); }
+function _p2GwShow(q) { var g = _p2G(); if (_p2QSkipped(q, g.ans)) return false; return !q.showIf || q.showIf(g.ans); } // v841 #29: いらない分野の質問は出さない
 // v676: 19問目の旧回答（ビタミールのパック数）は、新しい質問（社会貢献の金額）に答えるまで従来どおり月額に入れる
 function _p2SocialLegacy(a) {
   if (!a || (a.social_cost !== undefined && a.social_cost !== null && a.social_cost !== '')) return 0;
@@ -26561,12 +26658,12 @@ function _p2GwTotal() {
   var g = _p2G(), total = 0;
   P2GW_Q.forEach(function(q) { if (q.cost && _p2GwShow(q)) total += parseInt(g.ans[q.id], 10) || 0; });
   var loan = g.ans.car_loan;
-  if (loan && (g.ans.transport === '外車' || g.ans.transport === '国産車')) {
+  if (loan && !_p2CatSkipped('move', g.ans) && (g.ans.transport === '外車' || g.ans.transport === '国産車')) {
     total += Math.floor(_p2CarMonthly(loan.price, loan.down, loan.years, loan.rate));
     total += (parseInt(loan.insurance, 10) || 0) + (parseInt(loan.parking, 10) || 0) + (parseInt(loan.gas, 10) || 0);
   }
-  total += _p2SocialLegacy(g.ans);
-  return total;
+  if (!_p2CatSkipped('social', g.ans)) total += _p2SocialLegacy(g.ans);
+  return total + _p2ExtraTot(g.ans); // v841 #29: 自分で足した項目も合計に入れる
 }
 var _p2GwPh = 1; // v551: ウィザードは1つのパートだけ（①理想の生活20問で終わり。②③は⚙から書きたい時に）
 function p2GwOpen(ph) {
@@ -26635,6 +26732,11 @@ function _p2GwRender() {
     var rank = glTitleFromIncome(total * 10000);
     body += '<div class="gw2-total"><div class="p2-meta">目標タイトル</div><div style="font-size:22px;font-weight:900;color:var(--accent);letter-spacing:1px">' + evEsc(rank) + '</div>'
       + '<div class="p2-meta" style="margin-top:2px">目標月収 ' + total + '万円</div></div>';
+    // v841 #29: 質問にない大事なこと（推し活など）を足せる・いらないにした分野
+    _p2IdealCss();
+    var gA = _p2G().ans, skN = _p2SkipNames(gA);
+    body += '<div style="max-width:420px;margin:0 auto 12px;text-align:left">' + _p2ExtraRowsHtml(gA, _p2ExRowHtml)
+      + (skN.length ? '<div class="p2-meta" style="margin-top:6px">いらない：' + evEsc(skN.join('・')) + '</div>' : '') + '</div>';
     var cur = String(ans || '');
     var cy = parseInt(cur.slice(0, 4), 10) || 0, cm = parseInt(cur.slice(5, 7), 10) || 0;
     var nowY = new Date().getFullYear();
@@ -26654,14 +26756,25 @@ function _p2GwRender() {
     body += '<div style="max-width:420px;margin:0 auto"><textarea class="fta" id="p2gwTa" style="min-height:110px" oninput="p2GwIn(this.value)" placeholder="自由に書いてね...">' + evEsc(ans || '') + '</textarea></div>';
   }
   var isLastAll = _p2GwNextStep() >= P2GW_Q.length;
+  // v841 #29: 分野の最初の質問に「いらない」（あとで＝まだ答えていないだけ、とは別）
+  var noCat = q.ph === 1 ? _p2CatOf(q.id) : null, noBtn = '';
+  if (noCat && noCat.ids.filter(function(id) { var x = _p2LfQ(id); return x && _p2GwShow(x); })[0] === q.id) { _p2ExCss(); noBtn = '<button class="gw2-no" onclick="p2GwNo()">いらない<small style="font-weight:700;color:var(--text-dim);margin-left:6px">' + evEsc(noCat.lb) + 'は自分には必要ない</small></button>'; }
   wrap.innerHTML = '<div class="gw2-dots">' + dots + '</div>'
     + '<div class="gw2-phase">' + phNames[q.ph] + '（' + (pi + 1) + '/' + phaseQs.length + '）</div>'
     + '<div class="gw2-body">' + body + '</div>'
     + '<div class="gw2-foot">'
     + (_p2GwStep > 0 ? '<button class="gw2-back" onclick="p2GwBack()">←</button>' : '')
     + '<button class="gw2-next" onclick="p2GwNext()">' + (isLastAll ? '完了！🎉' : '次へ →') + '</button>'
-    + (isLastAll ? '' : '<span class="gw2-skip" onclick="p2GwNext(true)">スキップ</span>')
-    + '</div>';
+    + (isLastAll ? '' : '<span class="gw2-skip" onclick="p2GwNext(true)">' + (q.ph === 1 ? 'あとで' : 'スキップ') + '</span>')
+    + '</div>' + noBtn;
+}
+// v841 #29: 「いらない」＝この分野は自分には必要ない（記録に残る・金額0・この分野の質問は出さない）
+function p2GwNo() {
+  var q = P2GW_Q[_p2GwStep], c = q && _p2CatOf(q.id); if (!c) return;
+  p2CatSkip(c.k);
+  toast(c.lb + 'を「いらない」にしました（一覧の ↺ 戻す で戻せます）');
+  if (_p2GwInline()) _p2IdealListPaint();
+  p2GwNext(true);
 }
 function _p2GwNextStep() {
   var next = _p2GwStep + 1;
@@ -30734,9 +30847,15 @@ function gwImportTry(tries) {
       if (q.ph !== 1 || !_gwFilled(src[q.id])) return;
       if (_gwFilled(a[q.id])) kept++; else add.push(q.id);
     });
-    if (!add.length) { toast(kept ? '理想の生活はすでに答えてあるので、引き継ぐ項目はありませんでした' : '引き継げる答えがありませんでした'); return; }
-    if (!confirm('研修生のときの宿題（目標設定）の答えを、PLANの「理想の生活」に入れますか？\n\n' + (d.name || '') + '　月' + (d.total || 0) + '万円\n空いている ' + add.length + ' 項目に入れます' + (kept ? '（すでに答えてある ' + kept + ' 項目はそのまま）' : ''))) return;
+    // v841 #29: 「いらない」と「自分で足した項目」も、こちらでまだ決めていなければ引き継ぐ
+    var skS = _p2SkipOf(src), addSk = Object.keys(skS).length && !Object.keys(_p2SkipOf(a)).length ? skS : null;
+    var exS = _p2ExtraOf(src), addEx = exS.length && !_p2ExtraOf(a).length ? exS.slice(0, P2_EXTRA_MAX) : null;
+    if (!add.length && !addSk && !addEx) { toast(kept ? '理想の生活はすでに答えてあるので、引き継ぐ項目はありませんでした' : '引き継げる答えがありませんでした'); return; }
+    if (!confirm('研修生のときの宿題（目標設定）の答えを、PLANの「理想の生活」に入れますか？\n\n' + (d.name || '') + '　月' + (d.total || 0) + '万円\n空いている ' + add.length + ' 項目に入れます' + (kept ? '（すでに答えてある ' + kept + ' 項目はそのまま）' : '')
+      + (addEx ? '\n自分で足した項目：' + addEx.map(function(e) { return e.t; }).join('・') : '') + (addSk ? '\nいらない：' + _p2SkipNames(src).join('・') : ''))) return;
     add.forEach(function(id) { var v = src[id]; a[id] = (v && typeof v === 'object') ? JSON.parse(JSON.stringify(v)) : v; });
+    if (addSk) a.skip = JSON.parse(JSON.stringify(addSk));
+    if (addEx) a.extra = addEx.map(function(e) { return { t: String(e.t || '').slice(0, 20), v: Math.max(0, parseInt(e.v, 10) || 0), m: String(e.m || '').slice(0, 60) }; });
     var p = state.goals.plan, tot = _p2GwTotal(), n = _p2().north;
     if (!p.income && tot > 0) { p.income = tot * 10000; p.title = glTitleFromIncome(p.income); }
     if (!p.deadline && a.deadline) p.deadline = (typeof _normYm === 'function' ? (_normYm(a.deadline) || a.deadline) : a.deadline);
@@ -30749,7 +30868,7 @@ function gwImportTry(tries) {
     }
     if (_p2IdealAnsN() >= _p2IdealQs().length) { g.p1 = true; g.wiz = true; _p2().wiz = true; try { _p2LfSnap(); } catch (eS) {} }
     saveGoals();
-    toast('🌟 宿題の答えを理想の生活に入れました（' + add.length + '項目）');
+    toast('🌟 宿題の答えを理想の生活に入れました（' + (add.length + (addEx ? addEx.length : 0)) + '項目）');
     try { p2Go('ideal', 0); } catch (eG) {}
   }).catch(function() { toast('宿題の答えを読み込めませんでした。通信状態を確認してください'); });
 }
