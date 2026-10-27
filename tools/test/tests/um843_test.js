@@ -36,44 +36,55 @@ T.run(async () => {
   w.umFlt('needs'); await sleep(10); c('ニーズありで絞る（タグ・メモ）', $$('#treeCurrent .umcd').length === 2);
   w.umFlt('all'); await sleep(10);
   c('スマホの下のボタンは「＋ ユーザー」', /ユーザー/.test(($('#mxBtm') || {}).textContent || ''));
-  // ── 詳細
-  w.umOpen('u1'); await sleep(30);
-  const sh = $('#umSheet');
-  c('詳細：ポイントは数字の入力欄＋ − ＋、？で説明', sh && $$('#umSheet .umin').length === 2 && $$('#umSheet .umpm').length === 2 && $$('#umSheet .umq').length >= 3);
-  const inp = $$('#umSheet .umin')[0]; inp.value = '2500'; inp.dispatchEvent(new w.Event('change')); await sleep(20);
-  c('今月のポイントを手入力 → 紹介者のGSVにも入る', M('u1').ptCurrent === 2500 && M('u1').ptSelf === 2500 && M('a').ptCurrent === 1200 + 2500 + 2700);
-  w.umPtStep('u1', 'f', 100); await sleep(10);
+  // ── v844: ユーザーの画面（MAPと同じメンバー画面のユーザー版）
+  w.umOpen('u1'); await sleep(40);
+  const pg = () => $('#ppPg'), tx = () => (pg() || {}).textContent || '';
+  c('押すとメンバー画面のユーザー版（稼働・やる気・研修は出ない）', !!pg() && /ADP・購入/.test(tx()) && /ニーズ/.test(tx()) && !/稼働/.test(tx()) && !/やる気/.test(tx()) && /紹介者：鈴木 一/.test(tx()));
+  c('前のニーズのタグは文章に入れて残す', M('u1').needs.length === 0 && /美容/.test(M('u1').needMemo));
+  c('下のボタンは「＋ ToDo」', /ToDo/.test($('#ppPg .ux-btm').textContent) && !/フロント追加/.test($('#ppPg .ux-btm').textContent));
+  w.ppGo('upt'); await sleep(20);
+  const inp = $('#ppPg .ux-sv input'); inp.value = '2500'; inp.dispatchEvent(new w.Event('change')); await sleep(20);
+  c('ポイント：数字を直接入れる → 紹介者のGSVにも入る', M('u1').ptCurrent === 2500 && M('u1').ptSelf === 2500 && M('a').ptCurrent === 1200 + 2500 + 2700);
+  w.umPpStep('f', 100); await sleep(10);
   c('− ＋ でも直せる（固定）', M('u1').ptFixed === 1600);
-  w.umAdpSet(0); await sleep(10); c('ADPを「なし」に', M('u1').adp.on === false);
-  w.umAdpSet(1); w.umAdpNext('2026-12-01'); await sleep(10); c('ADPの次の発送日', M('u1').adp.on && M('u1').adp.next === '2026-12-01');
-  w.umBuyForm(); await sleep(10); $('#umBuyT').value = '美容液'; $('#umBuyD').value = '2026-10-25'; w.umBuyAdd(); await sleep(10);
-  c('購入を記録（新しい順）', M('u1').buys[0].t === '美容液' && M('u1').buys.length === 2);
-  w.umNeed('睡眠'); await sleep(10); c('ニーズのタグ', M('u1').needs.indexOf('睡眠') >= 0);
-  w.umTxt('uMemo', '平日夜なら連絡OK'); w.umTxt('birthday', '1990-03-14'); await sleep(10);
-  c('プロフィール（メモ・誕生日）', M('u1').uMemo === '平日夜なら連絡OK' && M('u1').birthday === '1990-03-14');
-  const n0 = w.state.events.length; w.umTodo(); await sleep(10);
-  c('予定・ToDoに入れる', w.state.events.length === n0 + 1 && /仮田 花子さん/.test(w.state.events[w.state.events.length - 1].title));
-  w.umClose();
+  w.ppGo('uadp'); await sleep(20);
+  c('ADP・購入：製品名・日付・記録するを1行ずつ', !!$('#ppPg #umBuyT') && !!$('#ppPg #umBuyD') && /記録する/.test(tx()));
+  w.umAdpSet(0); await sleep(10); c('ADPを「なし」に', M('u1').adp.on === false && !$('#ppPg .umdt input[onchange^="umAdpNext"]'));
+  M('u1').adp = { on: false, next: '' }; w.umAdpSet(1); await sleep(10);
+  c('次の発送日が空なら「日付を選ぶ」', !!$('#ppPg .umdt.em'));
+  w.umAdpNext('2026-12-01'); await sleep(10); c('ADPの次の発送日', M('u1').adp.on && M('u1').adp.next === '2026-12-01');
+  $('#umBuyT').value = '美容液'; $('#umBuyD').value = '2026-10-25'; w.umBuyAdd(); await sleep(10);
+  c('購入を記録（新しい順）・一覧に出る', M('u1').buys[0].t === '美容液' && M('u1').buys.length === 2 && $$('#ppPg .umbl .r').length === 2);
+  w.umBuyDel(0); await sleep(10); c('購入の記録を消せる', M('u1').buys.length === 1);
+  w.ppGo('uneed'); await sleep(10);
+  c('ニーズは自由に書く欄だけ（ボタンなし）', !!$('#ppPg textarea.ppmemo') && !$('#ppPg .umtg'));
+  w.umNeedTxt('乾燥肌が悩み'); await sleep(10); c('ニーズを書ける', M('u1').needMemo === '乾燥肌が悩み');
+  w.ppGo('prof'); await sleep(10);
+  c('プロフィールはMAPと同じ（研修生の欄は出ない・ユーザーになった月）', /誕生日/.test(tx()) && /ユーザーになった月/.test(tx()) && !/研修生（水色）/.test(tx()));
+  w.ppGo(''); await sleep(10);
+  let called = null; const orig = w.openEventModal; w.openEventModal = function(id, mid, d, type) { called = [mid, type]; }; w.umTodo(); w.openEventModal = orig;
+  c('＋ ToDo はいつものタスクを足す画面（この人にひもづく＝活動に残る）', called && called[0] === 'u1' && called[1] === 'task');
+  w.ppClose(); await sleep(10);
   // ── 足す
   w._umRef = 'b'; w.umAdd(); await sleep(20);
   c('足す：紹介者は今見ている人が最初から選ばれている', $('#umAP').value === 'b');
   $('#umAL').value = '新井'; $('#umAF').value = '空'; $('#umAPt').value = '500'; w.umAddSave(); await sleep(30);
   const nu = w.state.members.find(m => m.lastName === '新井');
   c('ユーザーを足せる（紹介者の下・ポイントはGSVへ）', nu && nu.title === 'ユーザー' && nu.parentId === 'b' && M('b').ptCurrent === 300 + 1600 + 500);
-  w.umClose(); w._umRef = '';
+  w.ppClose(); w._umRef = '';
   // ── 研修生にする
-  w._umOpenId = 'u4'; w.umOpen('u4'); await sleep(10);
+  w.umOpen('u4'); await sleep(20);
   w.confirm = () => true; w.umToTrainee(); await sleep(20);
   c('研修生にする：タイトルを外して研修生に（記録は残す）', M('u4').title === '' && M('u4').trainee === true && !!M('u4').fromUser && M('u4').needMemo === '乾燥肌');
-  w.umSet(false); await sleep(400);
+  w.ppClose(); w.umSet(false); await sleep(400);
   const r4 = $('#treeCurrent .mr[data-cid="u4"]');
   c('ビジネスのMAPに研修生として出る（元ユーザー）', !!r4 && /元ユーザー/.test(r4.textContent));
   // ── 見るだけの人（共有MAP）
   w.state.isEditor = false; w.umSet(true); await sleep(400);
   c('見るだけの人には「＋ ユーザーを足す」は出ない', !$('#treeCurrent .umadd'));
-  w.umOpen('u1'); await sleep(10);
-  c('見るだけの人は詳細を直せない', $('#umSheet .umin').disabled && !$('#umSheet .umbtn'));
-  w.umClose(); w.state.isEditor = true;
+  w.umOpen('u1'); await sleep(20);
+  c('見るだけの人は編集画面を開かない', !w.document.body.classList.contains('pp-on'));
+  try { w.uxMemClose(); } catch (e) {} w.state.isEditor = true;
   // ── 理想MAPはそのまま（ユーザーも出る）
   w.umSet(false); await sleep(400); w.switchView('ideal'); await sleep(400);
   c('理想MAPにはユーザーがそのまま出る', $$('#treeIdeal .mr[data-cid]').some(r => /^u/.test(r.getAttribute('data-cid'))));
