@@ -839,6 +839,55 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if signedIn();
     }
+    // 👤 #21 受付v109: プロフィール（タイトルが RUBY 以上の人が、本人の会員証から書く）
+    //   cards/{トークン}/prof/me = 本人の分（パスにトークン＝トークンを持っている本人だけが書ける）
+    //   cardProfiles/{番号}      = 公開用の写し（コレクションの「詳細」用。会員証トークンは入れない）。
+    //     同じ一括書き込みで本人の分を書き換えた時だけ書ける（中身が一致すること）＝他人の番号では書けない
+    //   会員証の再発行（無効化→発行も）では、受付・管理者が写しから新しい会員証へ戻す
+    function ckProfTitleOk(d) {
+      return d.get('trainee', false) != true && d.get('rcptOnly', false) != true && d.get('active', true) != false
+        && (d.get('cardTitle', '') != '' ? d.get('cardTitle', '') : d.get('badge', ''))
+             in ['RUBY', 'EMERALD', 'DIAMOND', 'BLUE DIAMOND', 'TEAM ELITE'];
+    }
+    function ckProfShapeOk(d) {
+      return d.get('intro', '') is string && d.get('intro', '').size() <= 200
+        && d.get('good', '') is string && d.get('good', '').size() <= 100
+        && d.get('bad', '') is string && d.get('bad', '').size() <= 100
+        && d.get('atMs', 0) is int;
+    }
+    match /cards/{token}/prof/{pid} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if pid == 'me'
+        && request.resource.data.keys().hasOnly(['intro', 'good', 'bad', 'atMs'])
+        && ckProfShapeOk(request.resource.data)
+        && exists(/databases/$(database)/documents/cards/$(token))
+        && (ckProfTitleOk(get(/databases/$(database)/documents/cards/$(token)).data)
+            || (signedIn() && notDisabled(request.auth.uid)));   // 再発行の引き継ぎ（受付・管理者）
+      allow delete: if signedIn();
+    }
+    function ckProfSame(p, d) {
+      return existsAfter(p)
+        && getAfter(p).data.get('intro', '') == d.get('intro', '')
+        && getAfter(p).data.get('good', '') == d.get('good', '')
+        && getAfter(p).data.get('bad', '') == d.get('bad', '')
+        && getAfter(p).data.get('atMs', 0) == d.get('atMs', 0)
+        && (!exists(p) || get(p).data.get('atMs', 0) != d.get('atMs', 0));   // この書き込みで本人の分も書き換えた
+    }
+    match /cardProfiles/{no} {
+      allow get: if signedIn() && notDisabled(request.auth.uid);   // ログインしたNAVIGATOR・受付の人だけ（番号で1件ずつ）
+      allow list: if false;
+      allow create, update: if request.resource.data.keys().hasOnly(['no', 'intro', 'good', 'bad', 'atMs'])
+        && request.resource.data.get('no', '') == no
+        && ckProfShapeOk(request.resource.data)
+        && exists(/databases/$(database)/documents/checkinMembers/$(no))
+        && ckProfSame(/databases/$(database)/documents/cards/$(get(/databases/$(database)/documents/checkinMembers/$(no)).data.get('cardToken', '__none'))/prof/me,
+             request.resource.data);
+      allow delete: if isOwnerAdmin()
+        || (signedIn() && notDisabled(request.auth.uid)
+            && (!exists(/databases/$(database)/documents/checkinMembers/$(no))   // 名簿から削除した人の後片付け
+                || ckCanSee(get(/databases/$(database)/documents/checkinMembers/$(no)).data.get('union', ''))));
+    }
 
     // 📝 CO面談シートの本人入力（下書き送信箱）:
     //   担当者が本人の会員証に解錠マーカー（cards.coOpen・期限つき）を付けている間だけ、
