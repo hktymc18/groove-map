@@ -73,7 +73,7 @@ const slice = (a, b) => { const i = H.indexOf(a), j = H.indexOf(b, i); if (i < 0
     c('見た目: タイトル ' + t + ' → ' + (want || '通常'), judge({ cardTitle: t, badges: ['EXPERT'] }, '') === want && judge({ badge: t }, '') === want);
   });
   c('見た目: 特別カード・研修生はタイトルより優先（今まで通り）', judge({ cardTitle: 'RUBY' }, 'reaperTcg') === '' && judge({ cardTitle: 'DIAMOND', trainee: true }, '') === '');
-  c('会員証・コレクションの控えはタイトル＋バッジを描く', /ckPaintBadges\(\$\('mcBadge'\), c\)/.test(H) && /ckPaintBadges\(card\.querySelector\('\.mc-badge'\), d\)/.test(H));
+  c('会員証・コレクションの控えはタイトル＋バッジを描く', /ckPaintBadges\(\$\('mcBadge'\), c(, ruby \|\| dia)?\)/.test(H) && /ckPaintBadges\(card\.querySelector\('\.mc-badge'\), d\)/.test(H));
 
   // ── 名簿の会員証設定（管理者）──
   W.eval("STORE['checkinMembers/ZZ0001'] = { no: 'ZZ0001', name: '見本 太郎', union: 'U1', badge: 'EXPERT', cardToken: 'tok1' }; STORE['cards/tok1'] = { no: 'ZZ0001', badge: 'EXPERT' };");
