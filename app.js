@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v841';
+var APP_JS_VERSION = 'v842';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4348,7 +4348,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v841';
+  var DATA_VERSION = 'v842';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6458,6 +6458,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v842', d:'2026-10-27', items:['PLAN › 理想の生活：一覧の金額を押すと、その場で金額だけ直せるようにしました（PC・スマホ／理想の生活シートも。Enterか外を押して保存、Escでやめる）','車を選んでいる人の移動はローン・保険などの合計なので、金額を押すとローンの画面が開きます'] },
   { v:'v841', d:'2026-10-27', items:['PLAN › 理想の生活：自分には必要ない分野は「いらない」を押せるようにしました（「あとで」とは別に記録され、金額は0・その分野の質問は出ません。一覧の「↺ 戻す」で答えられます）','「＋ 自分の項目を足す」で、推し活など質問にない大事なことを5つまで足せます（金額は理想の生活の合計に入ります）','受付の宿題（目標設定）でも同じように使えて、NAVIGATORに引き継ぐと「いらない」と自分の項目も入ります'] },
   { v:'v840', d:'2026-10-27', items:['サークルMAP（計画シートの理想MAP・MAPの◎サークル）で、同じ色の線が2本ぴったり並んで長く走り、二重線に見えるのを直しました（フロントが一部の人に集まっている組織で起きていました）'] },
   { v:'v839', d:'2026-10-25', items:['アカウント管理の「兼務するユニオン」の説明を、受付システム（BASE CHECK-IN）の権限とは別であることがわかるように直しました'] },
@@ -21926,7 +21927,7 @@ function _p2IdealListHtml() {
     var done = c.ids.some(function(id) { var v = a[id]; return v !== undefined && v !== null && v !== ''; }), amt = 0, ds = '';
     if (_p2CatSkipped(c.k, a)) { _p2ExCss(); return '<div class="p2id-r p2-skr" onclick="p2IdealCat(\'' + c.k + '\')"><span class="lb">' + c.ic + ' ' + c.lb + '<span class="p2-skp">いらない</span></span><span class="v">—</span><span class="p2-unsk" onclick="event.stopPropagation();p2CatUnskip(\'' + c.k + '\')">↺ 戻す</span></div>'; } // v841 #29
     try { amt = _p2LfAmt(c); ds = _p2LfDesc(c); } catch (e2) {}
-    return '<div class="p2id-r' + (done ? '' : ' no') + '" onclick="p2IdealCat(\'' + c.k + '\')"><span class="lb">' + c.ic + ' ' + c.lb + (ds ? '<small>' + evEsc(String(ds).slice(0, 28)) + '</small>' : '') + '</span><span class="v">' + (done ? amt + '万' : 'これから') + '</span><span class="e">✎</span></div>';
+    return '<div class="p2id-r' + (done ? '' : ' no') + '" onclick="p2IdealCat(\'' + c.k + '\')"><span class="lb">' + c.ic + ' ' + c.lb + (ds ? '<small>' + evEsc(String(ds).slice(0, 28)) + '</small>' : '') + '</span><span class="v p2amt" onclick="p2AmtEd(event,\'' + c.k + '\',this)">' + (done ? amt + '万' : 'これから') + '</span><span class="e">✎</span></div>'; // v842: 金額を押すと金額だけ直せる
   }).join('');
   _p2LfMode = m0;
   _p2LfMode = '';
@@ -21937,7 +21938,7 @@ function _p2IdealListHtml() {
 }
 // v841 #29: 自分で足した項目の行（押すと直す・消す）
 function _p2ExRowHtml(e, i) {
-  return '<div class="p2id-r" onclick="p2ExtraEdit(' + i + ')"><span class="lb"><span class="p2ex-st">' + icn('star') + '</span> ' + evEsc(e.t) + (e.m ? '<small>' + evEsc(String(e.m).slice(0, 40)) + '</small>' : '') + '</span><span class="v">' + (parseInt(e.v, 10) || 0) + '万</span><span class="e">✎</span></div>';
+  return '<div class="p2id-r" onclick="p2ExtraEdit(' + i + ')"><span class="lb"><span class="p2ex-st">' + icn('star') + '</span> ' + evEsc(e.t) + (e.m ? '<small>' + evEsc(String(e.m).slice(0, 40)) + '</small>' : '') + '</span><span class="v p2amt" onclick="p2ExAmtEd(event,' + i + ',this)">' + (parseInt(e.v, 10) || 0) + '万</span><span class="e">✎</span></div>';
 }
 function _p2IdealListPaint() { var el = document.getElementById('p2IdList'); if (el) el.innerHTML = _p2IdealListHtml(); }
 function p2IdealCat(k) {
@@ -24693,6 +24694,47 @@ function _p2ExRefresh() {
   if (currentView === 'plan') renderPlan();
 }
 // 足した項目の行を並べて、下に「＋ 自分の項目を足す」（5つまで）
+// ════ v842: 理想の生活の一覧で、金額を押すと金額だけその場で直せる（PC・スマホ共通／理想のページの一覧・理想の生活シート）════
+//   分野の金額＝その分野の月額の質問（住居費・食費など）の答えを書き換える。車を選んだ移動は、ローン・保険などの合計なのでローンの画面を開く
+function _p2AmtQ(c) { for (var i = 0; i < c.ids.length; i++) { var q = _p2LfQ(c.ids[i]); if (q && q.cost && _p2LfShow(q)) return q; } return null; }
+function p2AmtEd(ev, k, el) {
+  if (ev) ev.stopPropagation();
+  var c = P2_LIFE_CATS.filter(function(x) { return x.k === k; })[0]; if (!c || _p2CatSkipped(k)) return;
+  var a = _p2LfA(), q = _p2AmtQ(c);
+  if (!q) { // 車：ローンの画面へ
+    toast('車の金額は、ローンの画面で直せます');
+    if (document.getElementById('p2LfOv')) { _p2LfOpen = k; _p2LfRender(); return; }
+    var ix = -1; for (var i = 0; i < P2GW_Q.length; i++) if (P2GW_Q[i].id === 'car_loan') ix = i;
+    if (ix < 0) return;
+    _p2GwStep = ix; _p2GwPh = 1;
+    if (_p2Pg === 'ideal' && !_p2PgI && document.getElementById('p2GwWrap')) { _p2GwRender(); try { if (!isPCMode()) document.getElementById('p2GwWrap').scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (eS) {} return; }
+    window._p2IdOpenQ = 1; p2Go('ideal', 0); return;
+  }
+  var cur = a[q.id]; cur = (cur === undefined || cur === null || cur === '') ? '' : (parseInt(cur, 10) || 0);
+  _p2AmtInput(el, cur, function(v) { a[q.id] = v; saveGoals(); toast(c.lb + 'を 月' + v + '万円 にしました'); });
+}
+function p2ExAmtEd(ev, i, el) {
+  if (ev) ev.stopPropagation();
+  var a = _p2LfA(), e = _p2ExtraOf(a)[i]; if (!e) return;
+  _p2AmtInput(el, parseInt(e.v, 10) || 0, function(v) { var M = _p2ExtraOf(a).slice(), o = {}; for (var k in M[i]) o[k] = M[i][k]; o.v = v; M[i] = o; a.extra = M; saveGoals(); toast(e.t + 'を 月' + v + '万円 にしました'); });
+}
+// 金額の所を入力欄にする。Enter・外を押す＝保存／Esc・空のまま＝やめる
+function _p2AmtInput(el, cur, save) {
+  if (!el || el.querySelector('input')) return;
+  _p2ExCss();
+  el.innerHTML = '<input class="p2amt-in" type="number" inputmode="numeric" min="0" max="999" value="' + cur + '">万';
+  var inp = el.querySelector('input'), done = false;
+  var fin = function(ok) {
+    if (done) return; done = true;
+    var s = String(inp.value).trim();
+    if (ok && s !== '') save(Math.max(0, Math.min(999, parseInt(s, 10) || 0)));
+    _p2ExRefresh();
+  };
+  inp.onclick = function(e) { e.stopPropagation(); };
+  inp.onkeydown = function(e) { if (e.key === 'Enter') { e.preventDefault(); fin(true); } else if (e.key === 'Escape') { e.preventDefault(); fin(false); } };
+  inp.onblur = function() { fin(true); };
+  try { inp.focus(); inp.select(); } catch (eF) {}
+}
 function _p2ExtraRowsHtml(a, rowFn) {
   _p2ExCss();
   var L = _p2ExtraOf(a), h = L.map(function(e, i) { return rowFn(e, i); }).join('');
@@ -24706,7 +24748,9 @@ function _p2ExCss() {
     + '.p2ex-add{margin:8px 0 2px;padding:10px 12px;border:1.5px dashed var(--accent);border-radius:12px;color:var(--accent);font-weight:900;font-size:13px;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}.p2ex-add small{font-size:11px;font-weight:700;color:var(--text-dim)}'
     + '.p2ex-st{color:#FFB454}.p2-skp{display:inline-block;font-size:10.5px;font-weight:900;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--text-dim) 18%,transparent);color:var(--text-dim);margin-left:6px}'
     + '.p2-unsk{font-size:11px;font-weight:900;color:var(--accent);cursor:pointer;white-space:nowrap;margin-left:8px}.gw2-no{display:block;margin:10px auto 0;font-size:12.5px;font-weight:900;color:var(--text-mid);border:1px solid var(--border);border-radius:10px;padding:7px 14px;cursor:pointer;background:none;width:max-content}'
-    + '.p2-skr{opacity:.62}.p2id-r.p2-skr .v{color:var(--text-dim)}';
+    + '.p2-skr{opacity:.62}.p2id-r.p2-skr .v{color:var(--text-dim)}'
+    + '.p2amt{cursor:text;border-bottom:1px dashed color-mix(in srgb,var(--text-dim) 70%,transparent);padding:2px 1px}.p2amt:hover{color:var(--accent);border-bottom-color:var(--accent)}'
+    + '.p2amt-in{width:72px;font:inherit;font-size:16px;font-weight:900;text-align:right;padding:4px 6px;margin-right:2px;border:1.5px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--text);-moz-appearance:textfield;appearance:textfield}.p2amt-in::-webkit-inner-spin-button,.p2amt-in::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.p2amt:has(input){border-bottom:0}'; // v842: 金額だけ直す（16px＝iPhoneで拡大されない）
   document.head.appendChild(st);
 }
 function _p2LfAmt(cat) { // その分野の月額（万円）
@@ -24826,12 +24870,12 @@ function _p2LfRender() {
     }
     if (c.k === 'deadline') h += '<div style="margin:12px 0 4px">' + _p2ExtraRowsHtml(a, function(e, i) { // v841 #29: 自分で足した項目（★）
       var v9 = parseInt(e.v, 10) || 0;
-      return '<div class="p2lf-row"><div class="p2lf-h" onclick="p2ExtraEdit(' + i + ')"><span class="ic"><span class="p2ex-st">' + icn('star') + '</span></span><span class="lb">' + evEsc(e.t) + '</span><span class="ds">' + evEsc(e.m || '自分で足した項目') + '</span><span class="am">' + (v9 ? v9 + '万' : '—') + '</span><span class="pc">' + (v9 && total ? Math.round(v9 / total * 100) + '%' : '') + '</span><span class="ar">✎</span></div></div>';
+      return '<div class="p2lf-row"><div class="p2lf-h" onclick="p2ExtraEdit(' + i + ')"><span class="ic"><span class="p2ex-st">' + icn('star') + '</span></span><span class="lb">' + evEsc(e.t) + '</span><span class="ds">' + evEsc(e.m || '自分で足した項目') + '</span><span class="am p2amt" onclick="p2ExAmtEd(event,' + i + ',this)">' + (v9 ? v9 + '万' : '—') + '</span><span class="pc">' + (v9 && total ? Math.round(v9 / total * 100) + '%' : '') + '</span><span class="ar">✎</span></div></div>';
     }) + '</div>';
     h += '<div class="p2lf-row' + (open ? ' open' : '') + '"><div class="p2lf-h" onclick="p2LfToggle(\'' + c.k + '\')">'
       + '<span class="ic" style="' + (c.col ? 'box-shadow:inset 3px 0 0 ' + c.col : '') + '">' + c.ic + '</span><span class="lb">' + c.lb + '</span>'
       + '<span class="ds">' + (ans ? evEsc(desc) : '<span class="un">未回答 — タップして答える</span>') + '</span>'
-      + (v !== null ? '<span class="am">' + (v ? v + '万' : '—') + '</span><span class="pc">' + (v && total ? Math.round(v / total * 100) + '%' : '') + '</span>' : '')
+      + (v !== null ? '<span class="am p2amt" onclick="p2AmtEd(event,\'' + c.k + '\',this)">' + (v ? v + '万' : '—') + '</span><span class="pc">' + (v && total ? Math.round(v / total * 100) + '%' : '') + '</span>' : '')
       + '<span class="ar">' + (open ? '▴' : '›') + '</span></div>'
       + (open ? '<div class="p2lf-ed">' + _p2LfEditor(c) + '</div>' : '') + '</div>';
   });
