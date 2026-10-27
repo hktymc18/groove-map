@@ -72,6 +72,18 @@ T.run(async () => {
   const nu = w.state.members.find(m => m.lastName === '新井');
   c('ユーザーを足せる（紹介者の下・ポイントはGSVへ）', nu && nu.title === 'ユーザー' && nu.parentId === 'b' && M('b').ptCurrent === 300 + 1600 + 500);
   w.ppClose(); w._umRef = '';
+  // ── v845: 削除（入口に「このユーザーを削除」・元に戻す）
+  w.umOpen('u3'); await sleep(20);
+  c('入口に「このユーザーを削除」', /このユーザーを削除/.test(tx()));
+  let undo = null; const ta = w.toastAction; w.toastAction = function(m, l, fn) { undo = fn; };
+  w.confirm = () => true; w.umDel(); await sleep(300);
+  c('削除できる（紹介者のGSVから外れる）', M('u3').deleted === true && M('a').ptCurrent === 1200 + 2500 + 0 && !w.document.body.classList.contains('pp-on'));
+  undo(); await sleep(300); w.toastAction = ta;
+  c('元に戻せる', !M('u3').deleted && M('a').ptCurrent === 1200 + 2500 + 2700);
+  w.umOpen('u3'); await sleep(20); w.ppGo('prof'); await sleep(10); undo = null; w.toastAction = function(m, l, fn) { undo = fn; };
+  w.ppDel(); await sleep(300); w.toastAction = ta;
+  c('プロフィールの削除も同じ（元に戻すつき）', M('u3').deleted === true && typeof undo === 'function');
+  undo(); await sleep(300);
   // ── 研修生にする
   w.umOpen('u4'); await sleep(20);
   w.confirm = () => true; w.umToTrainee(); await sleep(20);
