@@ -522,11 +522,10 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
   .membercard.mc-black::before,.membercard.mc-black::after,.mc-deco .g-map{animation:none;}
 }
 /* 💎 RUBY（バッジがRUBYの人）: 深いルビーのグラデーション＋世界地図の透かし。
-   JETCLUBと同じく、中央の光がゆっくり脈打ち、斜めの光沢が走る。カード自体がルビーなのでバッジは出さない */
+   JETCLUBと同じく、中央の光がゆっくり脈打ち、斜めの光沢が走る。カード自体がルビーなのでタイトルは出さず、役職バッジだけ（v110） */
 .membercard.mc-ruby{background:url('skins/worldmap-faint.webp') 50% 50%/100% auto no-repeat,
   linear-gradient(135deg,#5e0718,#a3122e 36%,#e0405e 54%,#9b0f2b 82%,#c42a48);color:#fff4f6;}
 .membercard.mc-ruby > *{position:relative;z-index:1;}
-.membercard.mc-ruby .mc-badge{display:none;}
 .membercard.mc-ruby .mc-brand,.membercard.mc-ruby .mc-grade{color:#ffd9e0;}
 .membercard.mc-ruby .mc-grade{text-shadow:0 0 14px rgba(255,150,175,.55);}
 .membercard.mc-ruby .mc-group,.membercard.mc-ruby .mc-no{color:#ffdbe2;}
@@ -758,7 +757,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .mc-sp{display:none;}
 .membercard.skin-dia{aspect-ratio:720/1076;min-height:0;padding:0;border-radius:16px;color:#45484e;text-align:center;
   background:url('skins/diamond.webp') center/100% 100% no-repeat,#c3c6cb;box-shadow:0 14px 34px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.25);}
-.membercard.skin-dia .mc-deco,.membercard.skin-dia .mc-group,.membercard.skin-dia .mc-badge{display:none;}
+.membercard.skin-dia .mc-deco,.membercard.skin-dia .mc-group{display:none;}
 .membercard.skin-dia .mc-brand,.membercard.skin-dia .mc-union,.membercard.skin-dia .mc-name,.membercard.skin-dia .mc-grade,.membercard.skin-dia .mc-no{
   position:absolute;margin:0;color:#45484e;text-shadow:0 1px 0 rgba(255,255,255,.85),0 -1px 0 rgba(0,0,0,.35);white-space:nowrap;}
 .membercard.skin-dia .mc-union{left:7%;top:4.2%;max-width:44%;overflow:hidden;text-overflow:ellipsis;font-family:Verdana,"Zen Kaku Gothic New",sans-serif;font-size:10px;font-weight:800;letter-spacing:.28em;}
@@ -803,10 +802,32 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.skin-plat .mc-qrb{bottom:4.6%;}
 /* ✨ 反射と星はDIAMONDと同じ（光の流れ・ふちの光・4つの星）。真ん中の星だけロゴの星の位置に合わせる */
 .membercard.skin-plat .mc-sp.s1{left:53.9%;top:35.5%;}
+/* 🏅 ルビー以上のカードの役職バッジ（v110）: カードの質感に合わせた控えめな見た目。いくつでも同じ大きさで折り返す
+   RUBY: 透けるガラスの札（ふつうのカードと同じ位置） / DIAMOND・PLATINUM: 上の文字の下に、金属に刻んだ小さな札（ロゴより上） */
+.membercard.mc-ruby .mc-badge:not(:empty),.membercard.skin-dia:not(.skin-soon) .mc-badge:not(:empty){display:flex;flex-wrap:wrap;justify-content:center;gap:5px 5px;}
+.membercard.mc-ruby .mc-badge .bdg,.membercard.skin-dia .mc-badge .bdg{margin:0;gap:5px;font-weight:700;box-shadow:none;}
+.membercard.mc-ruby .mc-badge .bdg::after,.membercard.skin-dia .mc-badge .bdg::after{display:none;}
+.membercard.mc-ruby .mc-badge .bdg i,.membercard.skin-dia .mc-badge .bdg i{width:7px;height:7px;border-radius:50%;transform:none;}
+.membercard.mc-ruby .mc-badge{margin:10px -4px 0;}
+.membercard.mc-ruby .mc-badge .bdg{padding:3px 8px 3px 6px;font-size:9.5px;letter-spacing:.07em;color:#fff4f6;
+  background:rgba(70,0,16,.26);box-shadow:inset 0 0 0 1px rgba(255,214,224,.45),0 1px 6px rgba(70,0,18,.22);}
+.membercard.mc-ruby .mc-badge .bdg i{box-shadow:0 0 0 1px rgba(255,255,255,.55),0 0 6px var(--b1);}
+.membercard.skin-dia .mc-badge{position:absolute;left:6%;right:6%;top:9.4%;margin:0;z-index:4;gap:4px 4px;}
+.membercard.skin-dia .mc-badge .bdg{padding:2px 8px 2px 6px;font-size:8.5px;letter-spacing:.16em;border-radius:4px;color:#45484e;
+  text-shadow:0 1px 0 rgba(255,255,255,.8);background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.08));
+  box-shadow:inset 0 0 0 1px rgba(60,64,72,.38),inset 0 1px 0 rgba(255,255,255,.7),0 1px 0 rgba(255,255,255,.5);}
+.membercard.skin-dia .mc-badge .bdg i{width:6px;height:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 0 4px var(--b1);}
+.membercard.skin-plat .mc-badge{top:9.8%;}
+/* 小さいスマホ（カードが細い）でもロゴにかからないよう、札の大きさをカードの幅に合わせて縮める（対応していない古い端末は上の固定の大きさ） */
+.membercard.skin-dia .mc-badge{container-type:inline-size;gap:min(4px,1.4cqw);}
+.membercard.skin-dia .mc-badge .bdg{font-size:min(8.5px,2.95cqw);padding:2px min(8px,2.75cqw) 2px min(6px,2.1cqw);gap:min(5px,1.7cqw);}
+.membercard.skin-plat .mc-badge .bdg{color:#d9dce1;text-shadow:0 1px 2px rgba(0,0,0,.9);background:rgba(8,9,11,.5);
+  box-shadow:inset 0 0 0 1px rgba(220,224,232,.32),inset 0 1px 0 rgba(255,255,255,.12),0 1px 3px rgba(0,0,0,.6);}
+.membercard.skin-plat .mc-badge .bdg i{box-shadow:0 0 0 1px rgba(255,255,255,.35),0 0 5px var(--b1);}
 /* 🖤 PLATINUM解禁前（COMING SOON）: 名前は出さず、会員番号とQRボタンだけ。カードの縁と線の光がゆっくり瞬く */
 .membercard.skin-soon{aspect-ratio:2/3;background:url('skins/platinum-soon.webp') center/100% 100% no-repeat,#050505;
   box-shadow:0 14px 34px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.35);}
-.membercard.skin-soon .mc-brand,.membercard.skin-soon .mc-union,.membercard.skin-soon .mc-name,.membercard.skin-soon .mc-grade,.membercard.skin-soon .mc-sp{display:none;}
+.membercard.skin-soon .mc-brand,.membercard.skin-soon .mc-union,.membercard.skin-soon .mc-name,.membercard.skin-soon .mc-grade,.membercard.skin-soon .mc-sp,.membercard.skin-soon .mc-badge{display:none;}
 .membercard.skin-soon .mc-no{bottom:5.6%;color:#bdb29e;text-shadow:0 1px 3px #000;}
 .membercard.skin-soon .mc-qrb{bottom:4.6%;}
 .membercard.skin-soon::before,.membercard.skin-soon::after{inset:auto;border-radius:50%;box-shadow:none;opacity:0;mix-blend-mode:screen;
@@ -2243,10 +2264,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v109';
+var APP_VER = 'v110';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v110', d: '2026/10/28', items: ['🏅 タイトルが RUBY・DIAMOND・BLUE DIAMOND・TEAM ELITE の人の会員証にも、役職バッジ（EXPERT・受付など）が出るようになりました。カードの質感に合わせた控えめなデザインです'] },
   { v: 'v109', d: '2026/10/28', items: ['👤 タイトルが RUBY 以上の人は、会員証の下の「PROFILE 詳細」から、自己紹介（200字まで・資格もここに）・得意なこと・苦手なことを書けるようになりました', '🃏 カードコレクションのAさんのカードでも「詳細」を押すと、そのAさんの最新のプロフィールが見られます'] },
   { v: 'v108', d: '2026/10/28', items: ['👑 会員証の「タイトル」（BR〜TEAM ELITE）と「バッジ」（役職）を分けました。名簿の会員証で、タイトルは1つ、バッジ（EXPERT・ASSOCIATE・マコシエイト・DIRECTOR・受付・設営・個別・体感）はいくつでも付けられます', '🎨 RUBY・DIAMOND・PLATINUM のカードのデザインは、これからはタイトルで決まります（今付いている宝石のバッジは、そのままタイトルに引き継がれます・見た目は変わりません）', '🏅 バッジの一覧から「NTC Ambassador」をなくしました'] },
   { v: 'v107', d: '2026/10/27', items: ['❔ 画面の上や項目の下にあった灰色の長い説明文も「？」ボタンにまとめました（任命画面・ユニオン追加・会員証・会計・研修生登録ページなど約35か所）。削除などの注意書きは、これまでどおり表示したままです'] },
@@ -3312,11 +3334,12 @@ function ckBadgeKeys(m){
   return (ckBadge(t) ? [t] : []).concat(CARD_BADGES.filter(function(b){ return bs.indexOf(b.k) >= 0; }).map(function(b){ return b.k; }));
 }
 function ckBadgeRowHtml(m){ return ckBadgeKeys(m).map(ckBadgeHtml).join(''); }
-function ckPaintBadges(el, m){   // 3つ以上の時は小さめにして、カードが伸びすぎないように
+function ckPaintBadges(el, m, noTitle){   // 3つ以上の時は小さめにして、カードが伸びすぎないように
   if(!el) return;
-  var n = ckBadgeKeys(m).length;
-  el.innerHTML = ckBadgeRowHtml(m);
-  el.classList.toggle('many', n >= 3);
+  // noTitle: ルビー・ダイヤ・プラチナのカードはカード自体がタイトルなので、役職バッジだけを出す
+  var t = ckTitleOf(m), keys = ckBadgeKeys(m).filter(function(k){ return !(noTitle && k === t && ckIsTitle(k)); });
+  el.innerHTML = keys.map(ckBadgeHtml).join('');
+  el.classList.toggle('many', keys.length >= 3);
 }
 // 🃏 レアカード風の技の属性（丸いバッジ・最大3つ）。skinAtkEls は "fire,thunder" のようにカンマ区切りで保存
 var CARD_ELEMENTS = [
@@ -3458,7 +3481,7 @@ function renderCard(c){
     ? '<span class="el">' + els.map(function(e){ return '<i title="' + esc(e.n) + '" style="--e1:' + e.c[0] + ';--e2:' + e.c[1] + ';">' + e.i + '</i>'; }).join('') + '</span>'
       + '<span class="at-nm">' + esc(c.skinAtkName || '') + '</span><span class="at-dmg">' + esc(c.skinAtkDmg || '') + '</span>' : '';
   $('mcAtkTx').textContent = tcg ? (c.skinAtkText || '') : '';
-  ckPaintBadges($('mcBadge'), c);
+  ckPaintBadges($('mcBadge'), c, ruby || dia);   // 💎 ルビー以上は役職バッジだけ（タイトルはカードの見た目で分かる）
   var qr = $('mcQr');
   qr.classList.remove('big');
   $('mcTilt').classList.remove('still');

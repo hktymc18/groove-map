@@ -126,7 +126,7 @@ const slice = (a, b) => { const i = H.indexOf(a), j = H.indexOf(b, i); if (i < 0
 
   // ── 画面への組み込み・お知らせ ──
   c('会員証の下に mcProf・renderProfile を呼ぶ・ID が重ならない', ['mcProf', 'mpEdit', 'mpErr', 'mpSave', 'mpCancel', 'colShowPf'].every(id => H.split('id="' + id + '"').length === 2) && /<\/div><\/div>\n    <div id="mcProf"><\/div>/.test(H) && /renderCoSheetEntry\(c\);\n      renderProfile\(c\);/.test(H));
-  c('APP_VER v109・お知らせの先頭が v109', /var APP_VER = 'v109';/.test(H) && /var CHANGELOG = \[\n  \{ v: 'v109', d: '2026\/10\/28'/.test(H));
+  c('APP_VER v109以降・v109のお知らせ', (+(H.match(/var APP_VER = 'v(\d+)';/) || [0, 0])[1]) >= 109 && /\n  \{ v: 'v109', d: '2026\/10\/28'/.test(H));
 
   // ── 3. firestore.rules ──
   const rp = rules.slice(rules.indexOf('match /cards/{token}/prof/{pid}'), rules.indexOf('match /cardProfiles/{no}'));
