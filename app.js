@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v850';
+var APP_JS_VERSION = 'v851';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v850';
+  var DATA_VERSION = 'v851';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v851', d:'2026-10-28', items:['メンバーのタイトルに「ユーザー」を追加（そのほか → ユーザー／OUT）。間違えて変えても選び直せば戻ります。BA・研修生からユーザーにすると、ユーザーの一覧に入ります（#39）'] },
   { v:'v850', d:'2026-10-28', items:['（開発メンバーで試し中）スマホの計画シートを1画面に：目標・MAP・行動・振り返りを切りかえて、下にスクロールしない形に'] },
   { v:'v849', d:'2026-10-28', items:['アカウント管理を見やすく：「アカウント｜設定」のタブに分け、一覧は「すべて・承認待ち・未同意・管理者・先行利用」で絞り込めるように。公開範囲・MAPの共有・ユニオンとUPBD・新機能のテストは「設定」に1行ずつ'] },
   { v:'v848', d:'2026-10-28', items:['（開発メンバーで試し中）「○月の目標」を計画シートにまとめる準備をしました。全員に出す時はあらためてお知らせします'] },
@@ -19713,7 +19714,7 @@ var _pp = null; // { id, map:'current'|'ideal', pg:'' }
 var PP_PG = [['title', 'タイトル'], ['num', '今月の数字'], ['mood', 'やる気・優先'], ['memo', 'メモ'], ['prof', 'プロフィール']];
 var PP_PG_I = [['title', 'タイトル'], ['num', '今月の数字']];
 var PP_TITLES = [['tr', '研修生', ['FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO']], ['ex', '審査中', ['LOI', 'Q2', 'Q3', 'Q4']], ['ot', 'BA', ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'BM']],
-  ['br', 'BR', ['BR', 'ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'PD', 'チームエリート']], ['out', 'そのほか', ['OUT']]];
+  ['br', 'BR', ['BR', 'ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'PD', 'チームエリート']], ['out', 'そのほか', ['ユーザー', 'OUT']]]; // v851: ユーザーも選べる（#39）
 function _ppCss() {
   if (document.getElementById('ppCss')) return;
   var st = document.createElement('style'); st.id = 'ppCss';
@@ -19855,7 +19856,25 @@ function _ppCatOf(t) { t = (t || '').trim(); if (t === 'OUT') return 'OUT'; var 
 function ppTitle(t) {
   _ttlOpen = ''; // v615: 選んだらカードを閉じる
   if (_pp.map === 'ideal') { idqTitle(t); _ppRender(); return; }
-  var wasU = isUserM(_ppM()); // v844: ユーザーから別のタイトルにしたら「元ユーザー」
+  var m0 = _ppM(), wasU = isUserM(m0); // v844: ユーザーから別のタイトルにしたら「元ユーザー」
+  // v851: ユーザーにする（#39）。BA・研修生などからは確かめてから（ビジネスのMAPから外れてユーザーの一覧へ）
+  if (t === 'ユーザー' && !wasU && m0) {
+    if (!confirm(_umNm(m0) + 'さんをユーザーにしますか？\nビジネスのMAPから外れて、ユーザーの一覧に入ります（下に人がいる時は線が切れないようにビジネスのMAPにも残ります）')) { _ppRender(); return; }
+    _ppSave(function() {
+      selCategory('');
+      var sel = document.getElementById('fTitle');
+      if (sel) { if (!sel.querySelector('option[value="ユーザー"]')) { var o = document.createElement('option'); o.value = o.textContent = 'ユーザー'; sel.appendChild(o); } sel.value = 'ユーザー'; }
+    }, '');
+    var u = _ppM();
+    if (u) {
+      u.trainee = false;
+      if (u.fromUser && u.fromUser === evTodayYmd()) delete u.fromUser; // 間違えて変えて、その日のうちに戻した時は「元ユーザー」を消す
+      else u.toUser = evTodayYmd(); // ユーザーになった日（スタート月はそのまま）
+      try { recalcAllGSV(); } catch (e) {} autoSave(); try { renderCurrentView(); } catch (e2) {}
+    }
+    toast('✓ ' + _umNm(u || m0) + 'さんをユーザーにしました（ユーザーの一覧に入ります）');
+    _ppRender(); return;
+  }
   setTimeout(function() { if (!wasU || t === 'ユーザー') return; var m2 = _ppM(); if (m2 && !isUserM(m2) && !m2.fromUser) { m2.fromUser = evTodayYmd(); autoSave(); try { renderCurrentView(); } catch (e) {} } }, 0);
   _ppSave(function() {
     selCategory(_ppCatOf(t));
@@ -21039,7 +21058,7 @@ function _ttlPickHtml(cur, groups, pick, reFn, extra) { // v753: extra＝{ グ�
   return groups.map(function(g, i) {
     var k = 'var(--mx' + g[0] + ')', has = g[2].indexOf(cur) >= 0, open = _ttlOpen === g[1];
     var ab = function(x) { return titleAbbr(x) || x; };
-    var rng = g[2].length > 1 ? ab(g[2][0]) + '〜' + ab(g[2][g[2].length - 1]) : ab(g[2][0]);
+    var rng = g[2].length > 2 ? ab(g[2][0]) + '〜' + ab(g[2][g[2].length - 1]) : g[2].map(ab).join('・'); // v851: 2つの時は「ユーザー・OUT」
     var h = '<div class="ttc' + (open ? ' on' : '') + '" style="--k:' + k + '"><div class="hd" onclick="ttlTgl(\'' + g[1] + '\',\'' + reFn + '\')"><i></i><div><b>' + evEsc(g[1]) + '</b><small>' + evEsc(rng) + '</small></div>'
       + (has ? '<span class="cur">' + evEsc(ab(cur)) + '</span>' : '') + '<span class="ch">' + (open ? '▾' : '›') + '</span></div>';
     if (open) h += '<div class="ls">' + g[2].map(function(x) {
@@ -23197,7 +23216,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade']; // メンバー画面の保存で落とさない
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade']; // メンバー画面の保存で落とさない
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
