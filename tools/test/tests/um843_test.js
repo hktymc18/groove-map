@@ -84,6 +84,15 @@ T.run(async () => {
   w.ppDel(); await sleep(300); w.toastAction = ta;
   c('プロフィールの削除も同じ（元に戻すつき）', M('u3').deleted === true && typeof undo === 'function');
   undo(); await sleep(300);
+  // ── v846: 一覧からも削除
+  w.umSet(true); await sleep(400);
+  const card = $$('#treeCurrent .umcd').find(x => /例山/.test(x.textContent));
+  c('一覧のカードに削除ボタン', !!(card && card.querySelector('.umdel')));
+  undo = null; w.toastAction = function(m, l, fn) { undo = fn; };
+  card.querySelector('.umdel').click(); await sleep(400); w.toastAction = ta;
+  c('一覧から削除できる（人の画面は開かない）', M('u3').deleted === true && !w.document.body.classList.contains('pp-on') && !$$('#treeCurrent .umcd').some(x => /例山/.test(x.textContent)));
+  undo(); await sleep(400);
+  c('一覧から消しても元に戻せる', !M('u3').deleted && $$('#treeCurrent .umcd').some(x => /例山/.test(x.textContent)));
   // ── 研修生にする
   w.umOpen('u4'); await sleep(20);
   w.confirm = () => true; w.umToTrainee(); await sleep(20);
@@ -93,7 +102,7 @@ T.run(async () => {
   c('ビジネスのMAPに研修生として出る（元ユーザー）', !!r4 && /元ユーザー/.test(r4.textContent));
   // ── 見るだけの人（共有MAP）
   w.state.isEditor = false; w.umSet(true); await sleep(400);
-  c('見るだけの人には「＋ ユーザーを足す」は出ない', !$('#treeCurrent .umadd'));
+  c('見るだけの人には「＋ ユーザーを足す」と削除ボタンは出ない', !$('#treeCurrent .umadd') && !$('#treeCurrent .umdel'));
   w.umOpen('u1'); await sleep(20);
   c('見るだけの人は編集画面を開かない', !w.document.body.classList.contains('pp-on'));
   try { w.uxMemClose(); } catch (e) {} w.state.isEditor = true;
@@ -110,6 +119,7 @@ T.run(async () => {
   w.renderPCTable('current'); await sleep(20);
   c('PC：表のビューにもユーザーは出ない', !/仮田/.test(($('#pcTableCurrent') || {}).textContent || ''));
   w.umSet(true); await sleep(400);
+  c('PC：表の行に削除ボタン', $$('#umPane .umtb tbody tr .umdel').length === 4);
   c('PC：ユーザーは表で出る', $$('#umPane .umtb tbody tr').length === 4 && w.document.body.classList.contains('um-on'));
   const cell = $$('#umPane .umtb tbody tr').find(tr => /仮田/.test(tr.textContent)).querySelector('td.umed');
   cell.click(); await sleep(10);
