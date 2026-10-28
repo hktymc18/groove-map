@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v845';
+var APP_JS_VERSION = 'v846';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4363,7 +4363,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v845';
+  var DATA_VERSION = 'v846';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6473,6 +6473,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v846', d:'2026-10-28', items:['ユーザーの一覧（スマホのカード・PCの表）からも、右のゴミ箱で削除できるようにしました（削除したあと「元に戻す」で戻せます）'] },
   { v:'v845', d:'2026-10-27', items:['ユーザーの画面のいちばん下に「このユーザーを削除」を出しました（削除したあと「元に戻す」で戻せます）'] },
   { v:'v844', d:'2026-10-27', items:['ユーザーを押すと、MAPと同じメンバー画面のユーザー版が開くようにしました（ポイント・ADP・購入・ニーズ・活動・メモ・プロフィール。稼働・やる気・研修は出しません）','ADP・購入の入力が重なって見えていたのを直しました（製品名・日付・記録するを1行ずつ。日付が空の時は「日付を選ぶ」）','ニーズは選ぶボタンをやめて自由に書く欄だけに（前に選んだものは文章に入れて残しました）','「＋ ToDo」で、いつものタスクを足す画面がその人にひもづいて開き、記録は「活動」に残ります'] },
   { v:'v843', d:'2026-10-27', items:['MAPに「ビジネス｜ユーザー」の切り替え：ユーザーはビジネスのMAPに出さず、紹介者のカードに「ユーザー○人・○P」（押すとその人のユーザーの一覧）','ユーザーの一覧（PCは表）：今月のポイント・固定で上がるポイント（数字で直接入力）・ADP・直近の購入・ニーズ・プロフィール。ADPなし／60日買ってない／ニーズありで絞り込み','「研修生にする」で、ビジネスのMAPの紹介者の下に研修生として出ます（元ユーザーの札つき・記録はそのまま）'], pop:{ t:'MAPでユーザーを管理できるようになりました', items:['MAPの上の「ビジネス｜ユーザー」で切り替え','ポイント・ADP・購入・ニーズ・プロフィールを1人ずつ記録','ユーザーから「研修生にする」でビジネスのMAPへ'], go:['MAPを開く','umSet(true)'] } },
@@ -23079,19 +23080,21 @@ function _umCardHtml(u) {
   var ph = _avatars[u.id], av = ph ? '<img src="' + ph + '" alt="">' : evEsc((u.lastName || u.firstName || '?').charAt(0));
   return '<div class="umcd" onclick="umOpen(\'' + u.id + '\')"><div class="umav">' + av + '</div><div class="umb2"><div class="umn">' + evEsc(_umNm(u)) + '<em class="' + (_umAdp(u) ? 'adp' : 'no') + '">' + (_umAdp(u) ? 'ADP' : 'ADPなし') + '</em></div>'
     + _umBuyLine(u) + (_umTags(u) ? '<div>' + _umTags(u) + '</div>' : '') + '</div>'
-    + '<div class="umpt"><b>' + (parseInt(u.ptCurrent, 10) || 0).toLocaleString() + '</b><small>固定 ' + (parseInt(u.ptFixed, 10) || 0).toLocaleString() + '</small></div></div>';
+    + '<div class="umpt"><b>' + (parseInt(u.ptCurrent, 10) || 0).toLocaleString() + '</b><small>固定 ' + (parseInt(u.ptFixed, 10) || 0).toLocaleString() + '</small></div>'
+    + (state.isEditor ? '<span class="umdel" title="削除" onclick="umDel(\'' + u.id + '\',event)">' + icn('trash') + '</span>' : '') + '</div>'; // v846: 一覧からも削除
 }
 function _umTableHtml(L) {
   var ed = state.isEditor;
   var cell = function(u, k) { var v = parseInt(k === 'c' ? u.ptCurrent : u.ptFixed, 10) || 0; return '<td class="num' + (ed ? ' umed' : '') + '"' + (ed ? ' onclick="umPtCell(event,\'' + u.id + '\',\'' + k + '\',this)"' : '') + '>' + v.toLocaleString() + '</td>'; };
-  return '<div class="umtw"><table class="umtb"><thead><tr><th>氏名</th><th>紹介者</th><th class="num">今月PT</th><th class="num">固定PT</th><th>ADP</th><th>直近の購入</th><th>ニーズ</th><th>プロフィール</th></tr></thead><tbody>'
+  return '<div class="umtw"><table class="umtb"><thead><tr><th>氏名</th><th>紹介者</th><th class="num">今月PT</th><th class="num">固定PT</th><th>ADP</th><th>直近の購入</th><th>ニーズ</th><th>プロフィール</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>'
     + L.map(function(u) {
       var r = _umById(u.parentId), b = _umLast(u), d = b ? _umDays(b.d) : null, old = d !== null && d >= 60;
       var prof = [u.birthday ? _umMD(u.birthday) + '生' : '', String(u.uMemo || '').trim()].filter(Boolean).join('・');
       return '<tr onclick="umOpen(\'' + u.id + '\')"><td><b>' + evEsc(_umNm(u)) + '</b></td><td>' + evEsc(r ? _umNm(r) : '—') + '</td>' + cell(u, 'c') + cell(u, 'f')
         + '<td>' + (_umAdp(u) ? '<span class="umt adp">あり' + (u.adp.next ? ' ' + _umMD(u.adp.next) : '') + '</span>' : '<span class="umt no">なし</span>') + '</td>'
         + '<td class="' + (old ? 'old' : '') + '">' + (b ? evEsc(b.t || '') + ' <span class="dim">' + _umMD(b.d) + (old ? '（' + d + '日前）' : '') + '</span>' : '<span class="dim">—</span>') + '</td>'
-        + '<td>' + (_umTags(u) || '<span class="dim">—</span>') + '</td><td class="dim">' + evEsc(prof.slice(0, 30) || '—') + '</td></tr>';
+        + '<td>' + (_umTags(u) || '<span class="dim">—</span>') + '</td><td class="dim">' + evEsc(prof.slice(0, 30) || '—') + '</td>'
+        + (ed ? '<td class="umdelc"><span class="umdel" title="削除" onclick="umDel(\'' + u.id + '\',event)">' + icn('trash') + '</span></td>' : '') + '</tr>';
     }).join('') + '</tbody></table></div>';
 }
 // 表の今月PT・固定PTを押して、その場で入力（Enter・外＝保存／Esc＝やめる）
@@ -23164,12 +23167,13 @@ function umToTrainee() {
   if (_pp) _ppRender();
 }
 // v845: ユーザーを削除（消したあと「元に戻す」で戻せる）
-function umDel() {
-  var u = _umTgt(); if (!u || !state.isEditor) return;
+function umDel(uid, ev) { // uid：一覧から（v846）／なし：開いている人の画面から
+  if (ev) ev.stopPropagation();
+  var u = uid ? _umById(uid) : _umTgt(); if (!u || !isUserM(u) || !state.isEditor) return;
   if (!confirm(_umNm(u) + 'さんを削除しますか？\n（ポイントは紹介者のGSVから外れます）')) return;
   var id = u.id; u.deleted = true;
   state.members.forEach(function(x) { if (x.parentId === id && !x.deleted) x.parentId = u.parentId || ''; }); // 下に人がいたら紹介者の下へ
-  ppClose(); try { recalcAllGSV(); } catch (e) {} autoSave(); renderCurrentView();
+  if (document.getElementById('ppPg')) ppClose(); try { recalcAllGSV(); } catch (e) {} autoSave(); renderCurrentView();
   toastAction(_umNm(u) + 'さんを削除しました', '↩ 元に戻す', function() { var w2 = _umById(id); if (!w2) return; w2.deleted = false; try { recalcAllGSV(); } catch (e2) {} autoSave(); renderCurrentView(); }, 6000);
 }
 // メンバー画面の入口（ユーザー版）
@@ -23263,7 +23267,8 @@ function _umCss() {
     + '.umf{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}.umc{position:relative;font-size:12.5px;font-weight:800;border:1px solid var(--border);border-radius:999px;padding:6px 11px;color:var(--text-mid);cursor:pointer;white-space:nowrap}.umc.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.umc select{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}'
     + '.umadd-pc{margin-left:auto;color:var(--accent);font-weight:900;cursor:pointer}'
     + '.umg{font-size:12px;font-weight:900;color:var(--text-dim);margin:10px 2px 6px}'
-    + '.umcd{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer}'
+    + '.umdel{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;cursor:pointer;opacity:.75}.umdel:hover{opacity:1;background:color-mix(in srgb,var(--red) 12%,transparent)}.umdel .lic{width:18px;height:18px}.umtb td.umdelc{width:40px;padding:4px 6px}'
+    + '.umcd{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer}'
     + '.umav{width:42px;height:42px;border-radius:50%;border:2px solid #E08A1D;display:flex;align-items:center;justify-content:center;font-weight:900;color:#E08A1D;overflow:hidden}.umav img{width:100%;height:100%;object-fit:cover}'
     + '.umn{font-weight:900;font-size:15px}.umn em{font-style:normal;font-size:10.5px;font-weight:900;border-radius:7px;padding:1px 6px;margin-left:6px;vertical-align:2px}.umn em.adp,.umt.adp{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}.umn em.no,.umt.no{background:color-mix(in srgb,var(--text-dim) 16%,transparent);color:var(--text-dim)}'
     + '.umd{display:block;font-size:12px;color:var(--text-dim);margin-top:2px}.umd b{color:var(--text-mid)}.umd.old,.umtb td.old{color:#E08A1D}'
