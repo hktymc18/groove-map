@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v851';
+var APP_JS_VERSION = 'v852';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v851';
+  var DATA_VERSION = 'v852';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v852', d:'2026-10-28', items:['（開発メンバーで試し中）計画シートの振り返りで、数字の列がそろうように'] },
   { v:'v851', d:'2026-10-28', items:['メンバーのタイトルに「ユーザー」を追加（そのほか → ユーザー／OUT）。間違えて変えても選び直せば戻ります。BA・研修生からユーザーにすると、ユーザーの一覧に入ります（#39）'] },
   { v:'v850', d:'2026-10-28', items:['（開発メンバーで試し中）スマホの計画シートを1画面に：目標・MAP・行動・振り返りを切りかえて、下にスクロールしない形に'] },
   { v:'v849', d:'2026-10-28', items:['アカウント管理を見やすく：「アカウント｜設定」のタブに分け、一覧は「すべて・承認待ち・未同意・管理者・先行利用」で絞り込めるように。公開範囲・MAPの共有・ユニオンとUPBD・新機能のテストは「設定」に1行ずつ'] },
@@ -42337,7 +42338,7 @@ function _p2S3Css() {
     + '.s3-ar.gone input{color:var(--text-dim)}.s3-ar .gb{flex:none;font-size:12px;font-weight:900;color:var(--accent);margin-left:8px;cursor:pointer}'
     + '.s3-add{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 12px 0 14px;border-top:1px solid var(--border);flex:none;background:color-mix(in srgb,var(--surface) 92%,var(--bg))}.s3-add input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font-size:16px;font-weight:800;font-family:inherit;padding:12px 0}.s3-add input::placeholder{color:var(--accent);opacity:1}.s3-add span{flex:none;font-size:13.5px;font-weight:900;color:var(--md);cursor:pointer}'
     // 振り返り
-    + '.s3-rv{padding:10px 14px 11px;border-bottom:1px solid var(--border);cursor:pointer}.s3-rv .a1{display:flex;align-items:center}.s3-rv .a1 .n{font-size:16px;font-weight:800}.s3-rv .a1 .t{margin-left:auto;font:800 16.5px Inter,sans-serif;color:var(--text-mid)}.s3-rv .a1 .a{width:20px;text-align:center;font-size:10px;opacity:.5}.s3-rv .a1 .v{width:44px;text-align:right;font:900 20px Inter,sans-serif}'
+    + '.s3-rv{padding:10px 14px 11px;border-bottom:1px solid var(--border);cursor:pointer}.s3-rv .a1{display:flex;align-items:center}.s3-rv .a1 .n{font-size:16px;font-weight:800}.s3-rv .a1 .n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.s3-rv .a1 .t{margin-left:auto;flex:none;width:54px;text-align:right;font:800 16.5px Inter,sans-serif;color:var(--text-mid)}.s3-rv .a1 .a{flex:none;width:20px;text-align:center;font-size:10px;opacity:.5}.s3-rv .a1 .v{flex:none;width:50px;text-align:right;font:900 20px Inter,sans-serif}.s3-rv .a1 .sk{flex:none;width:27px;display:flex;justify-content:flex-end}.s3-rv .a1 .sk .s3-stp{margin-left:0}.s3-ch .sk{width:27px}'
     + '.s3-rv .k{margin-top:4px;font-size:14px;font-weight:700;color:var(--text-mid);line-height:1.5;white-space:pre-wrap}.s3-rv .k b{color:var(--text-dim);font-weight:800;font-size:12px;margin-right:6px}.s3-rv .k.e{color:var(--md);font-weight:900}'
     // 下から出る画面
     + '.s3-ov{position:fixed;inset:0;z-index:640;background:rgba(10,16,28,.45);display:flex;align-items:flex-end}.s3-sh{width:100%;max-height:86vh;overflow-y:auto;background:var(--surface);border-radius:22px 22px 0 0;padding:10px 18px calc(env(safe-area-inset-bottom) + 20px)}'
@@ -42455,10 +42456,10 @@ function _p2S3RvList(ym) {
 function _p2S3Rv(ym, ro) {
   var pv = _p2ShPrevYm(ym), L = _p2S3RvList(ym);
   var rows = L.map(function(r) {
-    return '<div class="s3-rv" onclick="p2S3Sheet(\'kz:' + r.id + '\')"><div class="a1"><span class="n">' + evEsc(r.lb) + '</span><span class="t">' + _p2S3Num(r.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(r.v, r.t) + '">' + _p2S3Num(r.v) + '</span>' + (r.miss ? '' : '<span class="s3-stp">✓</span>') + '</div>'
+    return '<div class="s3-rv" onclick="p2S3Sheet(\'kz:' + r.id + '\')"><div class="a1"><span class="n">' + evEsc(r.lb) + '</span><span class="t">' + _p2S3Num(r.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(r.v, r.t) + '">' + _p2S3Num(r.v) + '</span><span class="sk">' + (r.miss ? '' : '<span class="s3-stp">✓</span>') + '</span></div>'
       + (r.kz ? '<div class="k"><b>改善点</b>' + evEsc(r.kz) + '</div>' : (r.miss && !ro ? '<div class="k e">＋ 改善点を書く</div>' : '')) + '</div>';
   }).join('');
-  return '<div class="s3-ttl"><b>' + _p2ShMonLb(pv) + 'の振り返り</b><small>届かなかった順</small><span class="r">目標 ▶ 結果</span></div>'
+  return '<div class="s3-ttl"><b>' + _p2ShMonLb(pv) + 'の振り返り</b><small>届かなかった順</small></div><div class="s3-ch"><span class="t">目標</span><span class="a"></span><span class="v" style="width:50px">結果</span><span class="sk"></span></div>'
     + '<div class="s3-sc">' + (rows || '<div class="s3-em">' + _p2ShMonLb(pv) + 'の目標がまだありません。<br>今月の目標を決めると、来月ここで振り返れます</div>') + '</div>';
 }
 // ── 下から出る画面 ──
