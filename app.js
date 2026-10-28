@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v849';
+var APP_JS_VERSION = 'v850';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v849';
+  var DATA_VERSION = 'v850';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v850', d:'2026-10-28', items:['（開発メンバーで試し中）スマホの計画シートを1画面に：目標・MAP・行動・振り返りを切りかえて、下にスクロールしない形に'] },
   { v:'v849', d:'2026-10-28', items:['アカウント管理を見やすく：「アカウント｜設定」のタブに分け、一覧は「すべて・承認待ち・未同意・管理者・先行利用」で絞り込めるように。公開範囲・MAPの共有・ユニオンとUPBD・新機能のテストは「設定」に1行ずつ'] },
   { v:'v848', d:'2026-10-28', items:['（開発メンバーで試し中）「○月の目標」を計画シートにまとめる準備をしました。全員に出す時はあらためてお知らせします'] },
   { v:'v847', d:'2026-10-28', items:['新しい機能を、先に開発メンバーだけで試してから全員に出せる仕組みを入れました（今の画面は変わりません）'] },
@@ -18665,6 +18666,7 @@ function _p2MonToSheet() { var my = _p2MonYm; _p2MonYm = ''; _p2ShYm = (my && my
 var _p2From = ''; // v652: ツールから開いたか（戻る先）
 function p2Go(k, i) {
   if (k === 'mon' && _p2Sh2()) { _p2MonToSheet(); k = 'sheet'; i = 0; }
+  if (k === 'sheet' && _p2Pg !== 'sheet') { _p2S3T = 0; _p2S3Sh = ''; } // v850: 開いた時は目標から
   if (k !== _p2Pg) _p2From = _p2Pg;
   if (k === 'why') { var wi = i || 0; if (wi <= 2) { k = 'essay'; i = wi; } else if (wi <= 6) { k = 'ideal'; i = wi - 1; } else if (wi === 8) { k = 'dream'; i = 0; } else { k = 'ideal'; i = wi === 7 ? 0 : 6; } } // v629: 想い→理想・作文・夢100
   if (k !== 'mon') _p2MonYm = ''; // v597: 来月を見ていたら今月に戻す
@@ -19031,6 +19033,7 @@ function _p2PageParts() {
   } else if (k === 'sheet') { // v686: 計画シート（目標・MAP → 数字 → 行動 → 改善点）
     _ux2Css(); body = _p2ShPageHtml(i);
     if (i < P2_SH_PG.length - 1) { next = P2_SH_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } // v787: 「✓ 完了」はなくした（戻るで戻る）
+    if (_p2S3On()) { dots = P2_S3_T.slice(); dotI = _p2S3T; dotOn = 'p2S3Tab'; } // v850: 下の●＝4つのタブ
   } else if (k === 'yk') { // v715: やること
     _ux2Css(); body = _p2YkHtml();
   } else if (k === 'year') { // v686: 年の目標・ロードマップ（1画面）
@@ -42023,6 +42026,7 @@ function _p2IssRe() { if (currentView === 'plan') renderPlan(); else if (_mapIss
 function _p2ShIssInEl() { return (_mapIssShown() && document.getElementById('mapIssIn')) || document.getElementById('p2ShIssIn'); }
 function p2ShIssTap(mid) {
   if (!mid || /^__new/.test(mid)) return;
+  if (currentView === 'plan' && _p2S3On()) _p2S3Sh = 'iss'; // v850: スマホの1画面では下から出す
   if (_p2ShIssC()) _p2ShLs('gm_shIssC', null); // たたんでいても、人を押したら課題をひらく
   _p2ShIssSel = mid; _p2ShIssAct = ''; _p2IssRe();
   setTimeout(function() { var el = _p2ShIssInEl(); if (el) { try { el.focus(); el.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }, 40);
@@ -42248,8 +42252,257 @@ function _p2ShIssSync(ym, mid, oldT, newT) { // 課題を書き直したら、�
   ['act', 'task', 'ev', 'yk'].forEach(function(k) { var e = L[k] && findEvent(L[k]); if (e && !e.deleted && !e.done && e.title === o && newT) { e.title = n; e.updatedAt = new Date().toISOString(); saveEventDoc(e); } });
   if (L.memo) _p2ShMemoPut(ym, mid, newT);
 }
+// ════ v850: スマホの計画シートを1画面に（新機能のテスト sheet2）════
+//   上（計画シート ‹月›）と下（戻る・●）は動かさず、真ん中は「目標・MAP・行動・振り返り」の4つを切りかえる（左右にめくっても）。
+//   ページは下にスクロールしない（多い時は枠の中だけ）。押すと下から小さな画面（数字の − ＋・課題・例・改善点・…）。PCは今のまま
+var P2_S3_T = ['目標', 'MAP', '行動', '振り返り'];
+var _p2S3T = 0, _p2S3Mine = 'self', _p2S3Cat = 'front', _p2S3Sh = '';
+function _p2S3On() { try { return _p2Sh2() && !isPCMode() && !_p2SumOn('sh'); } catch (e) { return false; } }
+function p2S3Tab(i) { _p2S3T = Math.max(0, Math.min(P2_S3_T.length - 1, +i || 0)); _p2S3Sh = ''; renderPlan(); }
+function p2S3Sw(v) { _p2S3Mine = v === 'team' ? 'team' : 'self'; renderPlan(); }
+function p2S3Cat(k) { _p2S3Cat = k; renderPlan(); }
+function p2S3Sheet(s) { _p2S3Sh = s || ''; if (!s) _p2ShIssSel = ''; renderPlan(); }
+function _p2S3Cls(v, t) { var r = _p2ShRate(v, t); return r === null ? '' : (r >= 100 ? 'ok' : (r >= 70 ? 'md' : 'lo')); }
+function _p2S3Num(v) { return v === null || v === undefined || v === '' ? '—' : (+v).toLocaleString(); }
+// 自分自身・チームの行（フロントは上の大きい行に出すので入れない）
+function _p2S3Self() { return _p2Sh2Self().filter(function(k) { return k.a !== 'front'; }); }
+// 今月の達成度＝目標を入れた項目の達成率（100%まで）の平均
+function _p2S3Score(ym) {
+  var A = _p2Act(ym), L = [], I = _p2ShInc(ym), F = _p2ShFr(ym);
+  if (I.t && I.now !== null) L.push(_p2ShRate(I.now, I.t));
+  if (F.t) L.push(_p2ShRate(F.now, F.t));
+  _p2S3Self().concat(_p2Sh2Team()).forEach(function(k) { var X = _p2ShKv(ym, k, A); if (X.t && X.v !== null) L.push(_p2ShRate(X.v, X.t)); });
+  if (!L.length) return null;
+  var s = 0; L.forEach(function(r) { s += Math.min(100, r); });
+  return { pct: Math.round(s / L.length), n: L.length, all: L.every(function(r) { return r >= 100; }) };
+}
+function _p2S3Css() {
+  if (document.getElementById('p2S3Css')) return;
+  var st = document.createElement('style'); st.id = 'p2S3Css';
+  st.textContent = '.scroll-area:has(#p2S3){overflow:hidden!important;padding-bottom:0!important}#view-plan .ux-body:has(#p2S3){padding-bottom:0}'
+    + '.s3{--pk:#E0457B;--ok:#12B886;--md:#3B8BEB;--lo:#E8862A;--ng:#E5484D;display:flex;flex-direction:column;min-height:300px}'
+    + '.s3 .ok{color:var(--ok)!important}.s3 .md{color:var(--md)!important}.s3 .lo{color:var(--lo)!important}.s3 .dim{opacity:.62}'
+    + '.s3-hr{display:flex;align-items:center;height:42px;flex:none;white-space:nowrap}.s3-hr b{font-size:19px;font-weight:900;flex:none}.s3-tst{margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,#8B7CFF 55%,transparent);color:#8B7CFF;font-size:10.5px;font-weight:900;flex:none}.s3-hr .ym{display:flex;align-items:center;gap:12px;margin-left:12px;flex:none;font-size:17px;font-weight:900}.s3-hr .ym span{color:var(--text-mid);cursor:pointer;padding:4px}.s3-hr .ym span.off{opacity:.3;pointer-events:none}'
+    + '.s3-hr .mo{margin-left:auto;width:38px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--text-mid);cursor:pointer;letter-spacing:1px}'
+    + '.s3-tb{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;border-radius:14px;background:var(--surface2,var(--surface));border:1px solid var(--border);margin-top:4px}'
+    + '.s3-tb span{position:relative;display:flex;align-items:center;justify-content:center;height:38px;border-radius:10px;font-size:14.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.s3-tb span.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(20,30,50,.14)}'
+    + '.s3-tb span i{position:absolute;top:7px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--ng)}'
+    + '.s3-p{flex:1;min-height:0;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}'
+    + '.s3-sc{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}'
+    + '.s3-lr{display:flex;align-items:center;min-height:46px;padding:0 14px;border-bottom:1px solid var(--border);cursor:pointer}.s3-lr:last-child{border-bottom:0}'
+    + '.s3-lr .n{font-size:16px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.s3-lr .t{margin-left:auto;flex:none;width:54px;text-align:right;font:800 16.5px Inter,sans-serif;color:var(--text-mid)}.s3-lr .a{flex:none;width:20px;text-align:center;color:var(--border2,var(--text-dim));font-size:10px;opacity:.7}.s3-lr .v{flex:none;width:58px;text-align:right;font:900 20px Inter,sans-serif}'
+    + '.s3-ch{display:flex;padding:7px 14px 5px;font-size:11.5px;font-weight:900;color:var(--text-dim);border-bottom:1px solid var(--border);flex:none}.s3-ch .t{margin-left:auto;width:54px;text-align:right}.s3-ch .a{width:20px}.s3-ch .v{width:58px;text-align:right}'
+    + '.s3-band{display:flex;align-items:center;gap:6px;min-height:42px;padding:0 14px;border-bottom:1px solid var(--border);font-size:13.5px;font-weight:800;color:var(--text-mid);white-space:nowrap;overflow:hidden;flex:none;cursor:pointer}.s3-band b{color:var(--text);font-weight:900}.s3-band em{font-style:normal;color:#C98A1B;font-weight:900;overflow:hidden;text-overflow:ellipsis}.s3-band .g{margin-left:auto;color:var(--text-dim);flex:none}.s3-band svg{flex:none}'
+    + '.s3-top{display:grid;grid-template-columns:116px 1fr;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);flex:none}'
+    + '.s3-cd{height:146px;border-radius:13px;padding:10px 11px;color:#fff;background:linear-gradient(155deg,#0FA97A 0%,#0B7F86 55%,#173A73 100%);position:relative;overflow:hidden;box-shadow:0 5px 14px rgba(15,80,90,.22)}'
+    + '.s3-cd.gold{background:linear-gradient(155deg,#F5C84B 0%,#D99A1E 55%,#8A5A0B 100%);box-shadow:0 5px 16px rgba(200,140,20,.35)}'
+    + '.s3-cd:before{content:"";position:absolute;right:-30px;top:-20px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.12)}'
+    + '.s3-cd .m{font-size:11px;font-weight:900;opacity:.92}.s3-cd .big{font:900 46px/1 Inter,sans-serif;margin-top:6px;letter-spacing:-1px}.s3-cd .big small{font-size:17px}.s3-cd .big.na{font-size:30px}'
+    + '.s3-cd .lb{font-size:12px;font-weight:900;margin-top:3px}.s3-cd .st{margin-top:9px;display:flex;gap:2px}.s3-cd .st i{display:inline-flex;color:rgba(255,255,255,.32)}.s3-cd .st i svg{width:15px;height:15px;fill:currentColor}.s3-cd .st i.on{color:#FFD84D}.s3-cd.gold .st i.on{color:#fff}'
+    + '.s3-top .h{font-size:11.5px;font-weight:900;color:var(--text-dim);text-align:right;padding-bottom:4px;border-bottom:1px solid var(--border)}.s3-top .s3-lr{padding:0}.s3-top .s3-lr .t{width:40px}.s3-top .s3-lr .v{width:48px}.s3-top .nt{font-size:11.5px;color:var(--text-dim);font-weight:700;margin-top:6px}'
+    + '.s3-sw{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:10px 14px 2px;padding:3px;border-radius:11px;background:var(--surface2,var(--bg));flex:none}.s3-sw span{text-align:center;padding:7px 0;border-radius:8px;font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.s3-sw span.on{background:var(--text);color:var(--bg)}.s3-sw span small{font-weight:800;margin-left:4px;opacity:.75;font-size:11.5px}'
+    + '.s3-ttl{display:flex;align-items:center;gap:6px;padding:11px 14px 9px;border-bottom:1px solid var(--border);flex:none}.s3-ttl b{font-size:15px;font-weight:900;color:var(--pk)}.s3-ttl small{font-size:12px;color:var(--text-dim);font-weight:800}.s3-ttl .r{margin-left:auto;font-size:11.5px;color:var(--text-dim);font-weight:900}'
+    + '.s3-stp{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--ok);color:#fff;font-size:11px;font-weight:900;margin-left:6px;flex:none}'
+    + '.s3-em{padding:18px 16px;font-size:13.5px;color:var(--text-dim);font-weight:700;line-height:1.7}'
+    // MAP
+    + '.s3-mh{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);flex:none}.s3-seg{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}.s3-seg span{padding:6px 13px;font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.s3-seg span.on{background:var(--accent);color:var(--go-ink,#06251C)}'
+    + '.s3-mh .st{font-size:12.5px;font-weight:800;color:var(--text-dim)}.s3-mh .st b{color:var(--ng);font-size:15px;font-weight:900;margin:0 2px}.s3-mh .go{margin-left:auto;font-size:13px;font-weight:900;color:var(--accent);cursor:pointer;white-space:nowrap}'
+    + '.s3 #p2ShMF{flex:1;min-height:0;height:auto!important;max-height:none!important;overflow-y:auto!important;border:0!important}.s3 .mxin.spt{padding-bottom:6px}'
+    + '.s3 .spt .mr.iss-on{background:color-mix(in srgb,#E5484D 7%,var(--surface))}.s3 .spt .mr.iss-on .n:after{content:"課題";margin-left:6px;padding:1px 6px;border-radius:6px;background:#E5484D;color:#fff;font-size:10.5px;font-weight:900;vertical-align:2px}'
+    + '.s3-ft{display:flex;align-items:center;min-height:48px;padding:0 14px;border-top:1px solid var(--border);font-size:15px;font-weight:800;flex:none;background:color-mix(in srgb,var(--surface) 92%,var(--bg));cursor:pointer}.s3-ft span{margin-left:auto;color:var(--text-dim);font-size:13px;font-weight:800}'
+    // 行動
+    + '.s3-chips{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--border);overflow-x:auto;flex:none;scrollbar-width:none}.s3-chips::-webkit-scrollbar{display:none}.s3-chips span{flex:none;padding:7px 10px;border-radius:999px;border:1px solid var(--border2,var(--border));font-size:13px;font-weight:900;color:var(--text-mid);white-space:nowrap;cursor:pointer}.s3-chips span b{margin-left:3px;font-size:11.5px;opacity:.75}.s3-chips span.on{background:var(--text);border-color:var(--text);color:var(--bg)}.s3-chips span i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ng);margin-left:4px;vertical-align:2px}'
+    + '.s3-ar{display:flex;align-items:center;min-height:48px;padding:0 12px 0 14px;border-bottom:1px solid var(--border)}.s3-ar .ck{width:24px;height:24px;border-radius:7px;border:2px solid var(--border2,var(--text-dim));flex:none;margin-right:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:900;cursor:pointer}.s3-ar .ck.on{background:var(--accent);border-color:var(--accent)}'
+    + '.s3-ar input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font-size:16px;font-weight:800;font-family:inherit;padding:10px 0}.s3-ar.dn input{color:var(--text-dim);text-decoration:line-through}'
+    + '.s3-ar .d{flex:none;margin-left:8px;font:900 14px Inter,sans-serif;color:var(--text-mid);white-space:nowrap;cursor:pointer;padding:6px 2px}.s3-ar .d.od{color:var(--ng)}.s3-ar .d.no{font:800 12.5px inherit;color:var(--text-dim)}'
+    + '.s3-ar.gone input{color:var(--text-dim)}.s3-ar .gb{flex:none;font-size:12px;font-weight:900;color:var(--accent);margin-left:8px;cursor:pointer}'
+    + '.s3-add{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 12px 0 14px;border-top:1px solid var(--border);flex:none;background:color-mix(in srgb,var(--surface) 92%,var(--bg))}.s3-add input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font-size:16px;font-weight:800;font-family:inherit;padding:12px 0}.s3-add input::placeholder{color:var(--accent);opacity:1}.s3-add span{flex:none;font-size:13.5px;font-weight:900;color:var(--md);cursor:pointer}'
+    // 振り返り
+    + '.s3-rv{padding:10px 14px 11px;border-bottom:1px solid var(--border);cursor:pointer}.s3-rv .a1{display:flex;align-items:center}.s3-rv .a1 .n{font-size:16px;font-weight:800}.s3-rv .a1 .t{margin-left:auto;font:800 16.5px Inter,sans-serif;color:var(--text-mid)}.s3-rv .a1 .a{width:20px;text-align:center;font-size:10px;opacity:.5}.s3-rv .a1 .v{width:44px;text-align:right;font:900 20px Inter,sans-serif}'
+    + '.s3-rv .k{margin-top:4px;font-size:14px;font-weight:700;color:var(--text-mid);line-height:1.5;white-space:pre-wrap}.s3-rv .k b{color:var(--text-dim);font-weight:800;font-size:12px;margin-right:6px}.s3-rv .k.e{color:var(--md);font-weight:900}'
+    // 下から出る画面
+    + '.s3-ov{position:fixed;inset:0;z-index:640;background:rgba(10,16,28,.45);display:flex;align-items:flex-end}.s3-sh{width:100%;max-height:86vh;overflow-y:auto;background:var(--surface);border-radius:22px 22px 0 0;padding:10px 18px calc(env(safe-area-inset-bottom) + 20px)}'
+    + '.s3-sh .grab{width:40px;height:5px;border-radius:3px;background:var(--border2,var(--border));margin:0 auto 12px}.s3-sh h3{margin:0;font-size:19px;font-weight:900;display:flex;align-items:center;gap:8px}.s3-sh h3 small{font-size:13px;color:var(--text-dim);font-weight:800}.s3-sh h3 .x{margin-left:auto;font-size:15px;color:var(--text-dim);cursor:pointer;padding:4px 6px}'
+    + '.s3-sr{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}.s3-sr .n{font-size:16px;font-weight:900;color:var(--text-mid)}.s3-sr .n small{display:block;font-size:11.5px;color:var(--text-dim);font-weight:700;margin-top:2px}'
+    + '.s3-pm{margin-left:auto;display:flex;align-items:center;gap:8px}.s3-pm i{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:22px;font-weight:900;color:var(--text-mid);cursor:pointer}.s3-pm input{width:76px;text-align:center;border:0;border-bottom:2px solid var(--border);background:transparent;color:var(--text);font:900 26px Inter,sans-serif;padding:2px 0;border-radius:0}'
+    + '.s3-sr .sp-st{margin-left:auto;display:flex;align-items:center;gap:8px}.s3-sr .sp-st i{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:22px;font-weight:900;color:var(--text-mid);cursor:pointer}.s3-sr .sp-st input{width:76px;text-align:center;border:0;border-bottom:2px solid var(--border);background:transparent;color:var(--text);font:900 26px Inter,sans-serif;padding:2px 0}'
+    + '.s3-sr .au{margin-left:auto;text-align:right;font:900 26px Inter,sans-serif}.s3-sr .au small{display:block;font:800 11.5px inherit;color:var(--text-dim)}'
+    + '.s3-sh .nt{margin-top:10px;font-size:13px;color:var(--text-dim);font-weight:700;line-height:1.6}.s3-sh .nt span{color:var(--md);font-weight:900;cursor:pointer}'
+    + '.s3-sh textarea{display:block;width:100%;box-sizing:border-box;margin-top:12px;border:1.5px solid var(--accent);border-radius:14px;padding:12px 14px;min-height:100px;font-size:16px;font-weight:700;line-height:1.6;color:var(--text);background:var(--bg);font-family:inherit;resize:vertical}'
+    + '.s3-exl{display:flex;align-items:center;gap:6px;margin-top:16px;font-size:13px;font-weight:900;color:var(--text-dim)}.s3-exl:after{content:"";flex:1;height:1px;background:var(--border)}'
+    + '.s3-ex{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--surface2,var(--bg));font-size:14.5px;font-weight:700;color:var(--text-dim);line-height:1.5;user-select:text;-webkit-user-select:text}'
+    + '.s3-go{margin-top:16px;height:50px;border-radius:14px;background:var(--accent);color:var(--go-ink,#06251C);font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer}.s3-go.dk{background:var(--text);color:var(--bg)}'
+    + '.s3-mn>div{display:flex;align-items:center;gap:10px;padding:15px 2px;border-bottom:1px solid var(--border);font-size:16px;font-weight:800;cursor:pointer}.s3-mn>div:last-child{border-bottom:0}.s3-mn>div span{margin-left:auto;color:var(--text-dim)}'
+    + '.s3-sh .iss-hd{display:none}.s3-sh .iss{padding:0;border:0}.s3-sh .iss-r .t{font-size:14px}.s3-sh .iss-r .h b{font-size:15px}.s3-sh textarea.sp-kz{min-height:70px;margin-top:6px}.s3-sh .iss-fi{width:100%;box-sizing:border-box;margin:4px 0 6px;font-size:16px}'
+    + '.s3-sh .sh-ke{margin:4px 0 0;border:0;padding:0;background:none}';
+  document.head.appendChild(st);
+}
+// ── ページ全体 ──
+function _p2S3Html() {
+  _p2ShCss(); _p2ShCss2(); _p2S3Css(); _p2Sh2Css(); _p2ShIssCss();
+  var ym = _p2ShYmN(), t = _p2S3T, ro = _p2ShRo();
+  try { _p2Sh2Snap(ym); } catch (e) {}
+  var dots = _p2S3Dots(ym);
+  var h = '<div class="s3" id="p2S3"><div class="s3-hr"><b>計画シート</b><span class="ym"><span onclick="p2ShMon(-1)">‹</span>' + _p2ShMonLb(ym) + '<span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></span>' + (ym === _p2Ym(0) ? '' : '<small style="margin-left:8px;font-size:12px;color:var(--text-dim);font-weight:800;white-space:nowrap">' + parseInt(ym.slice(0, 4), 10) + '年</small>') + (featTesting('sheet2') ? '<span class="s3-tst">テスト中</span>' : '') + '<span class="mo" onclick="p2S3Sheet(\'menu\')" title="PDF・印刷・サマリー・項目">…</span></div>'
+    + '<div class="s3-tb">' + P2_S3_T.map(function(lb, i) { return '<span class="' + (i === t ? 'on' : '') + '" onclick="p2S3Tab(' + i + ')">' + lb + (dots[i] ? '<i></i>' : '') + '</span>'; }).join('') + '</div>'
+    + '<div class="s3-p" id="p2S3P">' + (t === 1 ? _p2S3Map(ym, ro) : t === 2 ? _p2S3Act(ym, ro) : t === 3 ? _p2S3Rv(ym, ro) : _p2S3Goal(ym, ro)) + '</div></div>';
+  if (_p2S3Sh) h += _p2S3SheetHtml(ym, ro);
+  setTimeout(_p2S3After, 0);
+  return h;
+}
+// タブの赤い点（行動＝期日すぎ・振り返り＝届かなかったのに改善点がない）
+function _p2S3Dots(ym) {
+  var td = evTodayYmd(), od = _p2ShActs(ym).filter(function(e) { return !e.done && _p2ShD(e) && _p2ShD(e) < td; }).length;
+  return [0, 0, od, _p2S3RvList(ym).filter(function(r) { return r.miss && !r.kz; }).length];
+}
+function _p2S3After() {
+  var el = document.getElementById('p2S3'); if (!el) return;
+  _p2S3Fit();
+  if (!window._p2S3Rs) { window._p2S3Rs = 1; var tR = 0; window.addEventListener('resize', function() { clearTimeout(tR); tR = setTimeout(function() { if (document.getElementById('p2S3')) _p2S3Fit(); }, 120); }); }
+  var p = document.getElementById('p2S3P'); if (p) _uxSwipe(p, function() { if (_p2S3T > 0) p2S3Tab(_p2S3T - 1); }, function() { if (_p2S3T < P2_S3_T.length - 1) p2S3Tab(_p2S3T + 1); });
+  if (_p2S3T === 1) { try { _p2ShMapDraw(); } catch (e) {} }
+  if (/^kz:/.test(_p2S3Sh)) { var ta = document.getElementById('p2S3Kz'); if (ta && !ta.value) setTimeout(function() { try { ta.focus(); } catch (e) {} }, 60); }
+}
+// 下の帯までの高さに合わせる（ページは下にスクロールしない）
+function _p2S3Fit() {
+  var el = document.getElementById('p2S3'); if (!el) return;
+  var vh = window.innerHeight || 700, b = document.querySelector('#view-plan .ux-btm'), bh = b ? b.getBoundingClientRect().height : 64;
+  var sa = document.getElementById('scrollArea'); if (sa && sa.scrollTop) sa.scrollTop = 0;
+  el.style.height = Math.max(300, Math.round(vh - el.getBoundingClientRect().top - bh - 10)) + 'px';
+}
+// ── ① 目標 ──
+function _p2S3Goal(ym, ro) {
+  var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), A = _p2Act(ym), S = _p2S3Score(ym), cur = _p2Ym(0);
+  var dl = (function() { if (ym !== cur) return ''; var d0 = new Date(); return '残り' + (new Date(d0.getFullYear(), d0.getMonth() + 1, 0).getDate() - d0.getDate() + 1) + '日'; })();
+  var ms = Y.ms ? '<em>' + evEsc(Y.ms.t || '') + '</em>（' + (Y.ms.ym === cur ? '今月' : _p2ShMonLb(Y.ms.ym)) + '）' : (Y.nx && Y.nx.title && !Y.nx.isFinal ? '<em>' + evEsc(Y.nx.title) + '</em>' : '');
+  var band = (Y.title || Y.inc) ? '<div class="s3-band" onclick="p2Go(\'year\')">' + icn('trophy', 'width:15px;height:15px;color:#C98A1B') + (Y.inc ? '<b>' + Y.inc + '万</b>' : '') + (Y.title ? '<em>' + evEsc(Y.title) + '</em>' : '') + (ms ? '・' + icn('mountain', 'width:14px;height:14px;color:#C98A1B') + ms : '') + '<span class="g">›</span></div>'
+    : '<div class="s3-band" onclick="p2Go(\'goal\',0)">' + icn('trophy', 'width:15px;height:15px;color:#C98A1B') + '<em>年の目標を決める</em><span class="g">›</span></div>';
+  var st = S ? Math.min(5, Math.floor(S.pct / 20)) : 0, gold = S && S.all;
+  var card = '<div class="s3-cd' + (gold ? ' gold' : '') + '"><div class="m">' + (dl || _p2ShMonLb(ym)) + '</div>' + (S ? '<div class="big">' + S.pct + '<small>%</small></div><div class="lb">' + (gold ? '全部達成' : '今月の達成度') + '</div><div class="st">' + [0, 1, 2, 3, 4].map(function(j) { return '<i class="' + (j < st ? 'on' : '') + '">' + icn('star') + '</i>'; }).join('') + '</div>' : '<div class="big na">—</div><div class="lb">目標を決めると<br>達成度が出ます</div>') + '</div>';
+  var top = '<div class="s3-top">' + card + '<div><div class="h">目標 ▶ 今</div>'
+    + '<div class="s3-lr" onclick="p2S3Sheet(\'kp:comm\')"><span class="n">月収</span><span class="t">' + _p2S3Num(I.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(I.now, I.t) + '">' + _p2S3Num(I.now) + '</span></div>'
+    + '<div class="s3-lr" style="border:0" onclick="p2S3Sheet(\'kp:front\')"><span class="n">フロント</span><span class="t">' + _p2S3Num(F.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(F.now, F.t) + '">' + F.now + '</span></div>'
+    + '<div class="nt">' + (ro ? '月収は万円・フロントは人' : '押すと − ＋ で直せます') + '</div></div></div>';
+  var Ls = _p2S3Self(), Lt = _p2Sh2Team(), cnt = function(L) { var ok = 0, n = 0; L.forEach(function(k) { var X = _p2ShKv(ym, k, A); if (X.t) { n++; if ((+X.v || 0) >= X.t) ok++; } }); return ok + '/' + n; };
+  var mine = Lt.length && _p2S3Mine === 'team' ? 'team' : 'self', L = mine === 'team' ? Lt : Ls;
+  var sw = Lt.length ? '<div class="s3-sw"><span class="' + (mine === 'self' ? 'on' : '') + '" onclick="p2S3Sw(\'self\')">自分自身<small>' + cnt(Ls) + '</small></span><span class="' + (mine === 'team' ? 'on' : '') + '" onclick="p2S3Sw(\'team\')">チーム<small>' + cnt(Lt) + '</small></span></div>'
+    : '<div class="s3-ttl"><b>自分自身の目標</b><small>達成 ' + cnt(Ls) + '</small><span onclick="event.stopPropagation()">' + _uxIb('sh2self') + '</span></div>';
+  var rows = L.map(function(k) {
+    var X = _p2ShKv(ym, k, A);
+    return '<div class="s3-lr" onclick="p2S3Sheet(\'kp:' + k.id + '\')"><span class="n">' + evEsc(_p2S3Lb(k)) + '</span><span class="t">' + _p2S3Num(X.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(X.v, X.t) + (k.auto ? ' dim' : '') + '">' + _p2S3Num(X.v) + '</span></div>';
+  }).join('');
+  return band + top + sw + '<div class="s3-ch"><span class="t">目標</span><span class="a"></span><span class="v">今</span></div><div class="s3-sc">' + (rows || '<div class="s3-em">項目がありません（右上の … → 数字の項目を変える）</div>') + '</div>';
+}
+var P2_S3_LB = { teamB1: 'チームB1', actN: '平均稼働', teamPg: 'チームPG', teamDlr: 'チームDLR', front: 'フロント', dlr: 'DLR動員', pg: 'マケPG', ft: 'FT', ct: 'CT', ids: 'IDシェア', seed: 'SEED動員', ur: 'UR動員' };
+function _p2S3Lb(k) { var d = P2_S3_LB[k.id], def = P2_SH_KPI_DEF.filter(function(x) { return x.id === k.id; })[0]; return d && (!def || def.lb === k.lb || k.m) ? d : k.lb; } // 自分で名前を変えた項目はその名前
+// ── ② MAP（いつものモバイルのMAPの行）──
+function _p2S3Map(ym, ro) {
+  var F = _p2ShFr(ym), cm = String(state.currentMonth || '').replace('.', '-'), same = !cm || cm === ym, hasI = _hasIdeal();
+  var mode = _p2ShMapMode === 'cur' || !hasI ? 'cur' : 'ideal', newN = mode === 'cur' && same && F.t !== null ? Math.max(0, F.t - F.now) : 0;
+  _p2ShMapO = { mode: mode, newN: newN }; _p2ShMapPc = false; _p2ShMapLr = false;
+  var nI = _p2ShIssN(ym), nF = (_p2ShM(ym).issF || []).length;
+  return '<div class="s3-mh">' + (hasI ? '<span class="s3-seg"><span class="' + (mode === 'cur' ? 'on' : '') + '" onclick="p2ShMap(\'cur\')">現状</span><span class="' + (mode === 'ideal' ? 'on' : '') + '" onclick="p2ShMap(\'ideal\')">理想</span></span>' : '<span class="s3-seg"><span class="on">現状</span></span>')
+    + '<span class="st">課題<b>' + nI + '</b>人</span><span class="go" onclick="switchView(\'' + (mode === 'ideal' ? 'ideal' : 'current') + '\')">MAPを開く ›</span></div>'
+    + '<div class="sp-mf" id="p2ShMF" data-kind="tree"><div id="p2ShMI"></div></div>'
+    + '<div class="s3-ft" onclick="p2S3Sheet(\'iss\')">課題・自分と全体のメモ<span>' + (nI + nF) + '件 ›</span></div>';
+}
+// ── ③ 行動 ──
+function _p2S3Act(ym, ro) {
+  var td = evTodayYmd(), cat = P2_SH_CAT.some(function(c) { return c.k === _p2S3Cat; }) ? _p2S3Cat : P2_SH_CAT[0].k;
+  var chips = '<div class="s3-chips p2r-scroll">' + P2_SH_CAT.map(function(c) {
+    var L = _p2ShActs(ym, c.k), dn = L.filter(function(e) { return e.done; }).length, od = L.some(function(e) { return !e.done && _p2ShD(e) && _p2ShD(e) < td; });
+    return '<span class="' + (c.k === cat ? 'on' : '') + '" onclick="p2S3Cat(\'' + c.k + '\')">' + c.s + '<b>' + dn + '/' + L.length + '</b>' + (od ? '<i></i>' : '') + '</span>';
+  }).join('') + '</div>';
+  var L = _p2ShActs(ym, cat);
+  var rows = L.map(function(e) {
+    var dd = _p2ShD(e), od = !e.done && dd && dd < td;
+    return '<div class="s3-ar' + (e.done ? ' dn' : '') + '"><span class="ck' + (e.done ? ' on' : '') + '" onclick="p2ShActTg(\'' + e.id + '\')">' + (e.done ? '✓' : '') + '</span><input value="' + evEsc(e.title || '') + '" maxlength="120" onchange="p2ShActEdit(\'' + e.id + '\',this.value)"' + (ro ? ' readonly' : '') + '>'
+      + '<span class="d' + (od ? ' od' : '') + (dd ? '' : ' no') + '"' + (ro ? '' : ' onclick="p2ShDt(\'' + e.id + '\')"') + '>' + (dd ? parseInt(dd.slice(5, 7), 10) + '/' + parseInt(dd.slice(8), 10) : (ro ? '' : '＋期日')) + '</span></div>';
+  }).join('') + _p2ShActGone(ym, cat).map(function(e) {
+    return '<div class="s3-ar gone"><span class="ck">✕</span><input value="' + evEsc(e.title || '') + '" readonly>' + (ro ? '' : '<span class="gb" onclick="p2ShGone(\'' + e.id + '\',1)">戻す</span><span class="gb" style="color:var(--text-dim)" onclick="p2ShGone(\'' + e.id + '\',0)">外す</span>') + '</div>';
+  }).join('');
+  var c0 = P2_SH_CAT.filter(function(c) { return c.k === cat; })[0];
+  return chips + '<div class="s3-sc">' + (rows || '<div class="s3-em">' + evEsc(c0.lb) + 'の行動はまだありません。' + (ro ? '' : '下の欄に書くと足されます') + '</div>') + '</div>'
+    + (ro ? '' : '<div class="s3-add"><input id="p2ShIn_' + cat + '" placeholder="＋ 行動を足す" maxlength="120" enterkeyhint="done" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){p2ShActAdd(\'' + cat + '\')}" onblur="if(this.value.trim())p2ShActAdd(\'' + cat + '\')"><span onclick="p2S3Sheet(\'ex:' + cat + '\')">例を見る ›</span></div>');
+}
+// ── ④ 振り返り（先月の 目標 ▶ 結果 と、今月の改善点）──
+function _p2S3RvList(ym) {
+  var pv = _p2ShPrevYm(ym), Ap = _p2Act(pv), kz = _p2ShM(ym).kz || {}, out = [];
+  var Fp = _p2ShFr(pv); if (Fp.t) out.push({ id: 'front', lb: 'フロント', t: Fp.t, v: Fp.now });
+  _p2S3Self().concat(_p2Sh2Team()).forEach(function(k) { var P = _p2ShKv(pv, k, Ap); if (P.t) out.push({ id: k.id, lb: _p2S3Lb(k), t: P.t, v: P.v }); });
+  out.forEach(function(r) { r.r = _p2ShRate(r.v, r.t); r.miss = r.v === null || r.r < 100; r.kz = String(kz[r.id] || '').trim(); });
+  return out.sort(function(a, b) { return (a.miss ? 0 : 1) - (b.miss ? 0 : 1) || (a.r || 0) - (b.r || 0); });
+}
+function _p2S3Rv(ym, ro) {
+  var pv = _p2ShPrevYm(ym), L = _p2S3RvList(ym);
+  var rows = L.map(function(r) {
+    return '<div class="s3-rv" onclick="p2S3Sheet(\'kz:' + r.id + '\')"><div class="a1"><span class="n">' + evEsc(r.lb) + '</span><span class="t">' + _p2S3Num(r.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(r.v, r.t) + '">' + _p2S3Num(r.v) + '</span>' + (r.miss ? '' : '<span class="s3-stp">✓</span>') + '</div>'
+      + (r.kz ? '<div class="k"><b>改善点</b>' + evEsc(r.kz) + '</div>' : (r.miss && !ro ? '<div class="k e">＋ 改善点を書く</div>' : '')) + '</div>';
+  }).join('');
+  return '<div class="s3-ttl"><b>' + _p2ShMonLb(pv) + 'の振り返り</b><small>届かなかった順</small><span class="r">目標 ▶ 結果</span></div>'
+    + '<div class="s3-sc">' + (rows || '<div class="s3-em">' + _p2ShMonLb(pv) + 'の目標がまだありません。<br>今月の目標を決めると、来月ここで振り返れます</div>') + '</div>';
+}
+// ── 下から出る画面 ──
+function _p2S3SheetHtml(ym, ro) {
+  var s = _p2S3Sh, body = '';
+  var x = '<span class="x" onclick="p2S3Sheet(\'\')">✕</span>';
+  if (s === 'menu') {
+    body = '<h3>計画シート' + x + '</h3><div class="s3-mn" style="margin-top:6px">'
+      + '<div onclick="p2S3Sheet(\'\');p2ShPrint(1)">' + icn('save', 'width:18px;height:18px') + ' PDF<span>›</span></div>'
+      + '<div onclick="p2S3Sheet(\'\');p2ShPrint()">' + icn('printer', 'width:18px;height:18px') + ' 印刷<span>›</span></div>'
+      + '<div onclick="_p2S3Sh=\'\';p2SumTgl(\'sh\',1)">' + icn('doc', 'width:18px;height:18px') + ' サマリーを見る<span>›</span></div>'
+      + (ro ? '' : '<div onclick="p2S3Sheet(\'ked\')">' + icn('gear', 'width:18px;height:18px') + ' 数字の項目を変える<span>›</span></div>') + '</div>';
+  } else if (s === 'ked') {
+    body = '<h3>数字の項目を変える' + x + '</h3><div class="nt" style="margin-top:4px">自分自身の目標の項目です（名前・並び・足す・消す）</div>' + _p2ShKEdHtml();
+  } else if (s === 'iss') {
+    var sel = _p2ShIssSel, m = sel ? _p2ShMem(sel) : null;
+    body = '<h3>' + (m ? evEsc(_uxName(m)) + '<small>' + _p2ShMonLb(ym) + 'の課題</small>' : '課題・メモ<small>' + _p2ShMonLb(ym) + '</small>') + x + '</h3>'
+      + '<div class="nt" style="margin-top:4px">' + (m ? '書くと自動で保存。「→ 残す先」で行動・立案・予定にできます' : 'MAPの人を押すと、その人の課題を書けます') + '</div>'
+      + _p2ShIssHtml(ym) + (m ? '<div class="s3-go dk" onclick="var i=\'' + sel + '\';p2S3Sheet(\'\');ppOpen(i,\'current\')">メンバー画面を開く ›</div>' : '<div class="s3-go dk" onclick="p2S3Sheet(\'\')">閉じる</div>');
+  } else if (/^ex:/.test(s)) {
+    var cat = s.slice(3), c = P2_SH_CAT.filter(function(q) { return q.k === cat; })[0] || P2_SH_CAT[0], ex = P2_SH_ACT_EXS[c.k] || [];
+    body = '<h3>' + evEsc(c.s) + 'の例' + x + '</h3><div class="nt" style="margin-top:4px">考えるヒントです。自分の言葉で「＋ 行動を足す」に書いてください</div>'
+      + ex.map(function(t) { return '<div class="s3-ex">' + evEsc(t) + '</div>'; }).join('') + '<div class="s3-go dk" onclick="p2S3Sheet(\'\')">閉じる</div>';
+  } else if (/^kz:/.test(s)) {
+    var id = s.slice(3), r = _p2S3RvList(ym).filter(function(q) { return q.id === id; })[0], k = id === 'front' ? { lb: 'フロント' } : _p2ShK(id), kz = String((_p2ShM(ym).kz || {})[id] || ''), exT = P2_SH_KZ_EX[id];
+    body = '<h3>' + evEsc(r ? r.lb : (k ? _p2S3Lb(k) : '')) + 'の改善点' + (r ? '<small>' + _p2ShMonLb(_p2ShPrevYm(ym)) + ' ' + _p2S3Num(r.t) + ' ▶ ' + _p2S3Num(r.v) + '</small>' : '') + x + '</h3>'
+      + '<textarea id="p2S3Kz" maxlength="300" placeholder="なぜ届かなかった？　次は何をする？"' + (ro ? ' readonly' : '') + '>' + evEsc(kz) + '</textarea>'
+      + (exT ? '<div class="s3-exl">例</div><div class="s3-ex">' + evEsc(exT) + '</div>' : '')
+      + (ro ? '<div class="s3-go dk" onclick="p2S3Sheet(\'\')">閉じる</div>' : '<div class="s3-go" onclick="p2S3KzSave(\'' + id + '\')">保存する</div>');
+  } else if (/^kp:/.test(s)) {
+    body = _p2S3KpHtml(ym, s.slice(3), ro, x);
+  }
+  return body ? '<div class="s3-ov" onclick="if(event.target===this)p2S3Sheet(\'\')"><div class="s3-sh"><div class="grab"></div>' + body + '</div></div>' : '';
+}
+function p2S3KzSave(id) { var ta = document.getElementById('p2S3Kz'); if (ta) p2ShKzR(id, ta.value); _p2S3Sh = ''; renderPlan(); toast('✓ 改善点を保存しました'); }
+// 数字の − ＋（目標と今）
+function _p2S3KpHtml(ym, id, ro, x) {
+  var pm = function(mi, pl, ch, v, step) { return ro ? '<span class="au">' + _p2S3Num(v) + '</span>' : '<span class="s3-pm"><i onclick="' + mi + '">−</i><input type="number" inputmode="decimal"' + (step ? ' step="' + step + '"' : '') + ' value="' + (v === null || v === undefined ? '' : v) + '" onfocus="edSelAll(this)" onchange="' + ch + '"><i onclick="' + pl + '">＋</i></span>'; };
+  var h = '';
+  if (id === 'comm') {
+    var I = _p2ShInc(ym);
+    h = '<h3>月収<small>' + _p2ShMonLb(ym) + '・万円</small>' + x + '</h3>'
+      + '<div class="s3-sr"><span class="n">目標</span>' + pm('p2ShIncStep(-1)', 'p2ShIncStep(1)', 'p2ShInc(this.value)', I.t, '0.1') + '</div>'
+      + '<div class="s3-sr" style="border:0"><span class="n">今<small>MAPから見込み</small></span><span class="au ' + _p2S3Cls(I.now, I.t) + '">' + _p2S3Num(I.now) + '</span></div>'
+      + '<div class="nt">目標は − ＋ で5万円ずつ。数字を直接入れることもできます</div>';
+  } else if (id === 'front') {
+    var F = _p2ShFr(ym);
+    h = '<h3>フロント<small>' + _p2ShMonLb(ym) + '・人</small>' + x + '</h3>'
+      + '<div class="s3-sr"><span class="n">目標</span>' + (F.ideal ? '<span class="au">' + _p2S3Num(F.t) + '<small>理想MAPの人数</small></span>' : pm('p2ShFrStep(-1)', 'p2ShFrStep(1)', 'p2ShFr(this.value)', F.t)) + '</div>'
+      + '<div class="s3-sr" style="border:0"><span class="n">今<small>MAPの直下・今月スタート</small></span><span class="au ' + _p2S3Cls(F.now, F.t) + '">' + F.now + '</span></div>';
+  } else {
+    var k = _p2ShK(id); if (!k) return '';
+    var X = _p2ShKv(ym, k);
+    h = '<h3>' + evEsc(_p2S3Lb(k)) + '<small>' + _p2ShMonLb(ym) + '</small>' + x + '</h3>' + (k.id === 's' ? '<div class="nt" style="margin-top:2px">' + _p2Sh2Lb(ym, k, X).replace(/^[^<]*/, '') + '</div>' : '')
+      + '<div class="s3-sr"><span class="n">目標</span>' + pm('p2ShKT(\'' + id + '\',-1)', 'p2ShKT(\'' + id + '\',1)', 'p2ShKT(\'' + id + '\',0,this.value)', X.t, k.dec ? '0.1' : '') + '</div>'
+      + '<div class="s3-sr" style="border:0"><span class="n">今' + (k.auto ? '<small>MAPから自動</small>' : '') + '</span>' + (k.auto ? '<span class="au ' + _p2S3Cls(X.v, X.t) + '">' + _p2S3Num(X.v) + '</span>' : _p2ShStep(ym, k, X)) + '</div>'
+      + (k.auto || ro ? '' : '<div class="nt">やったことを記録に残す時は：<span onclick="_p2S3Sh=\'\';p2SmKpAdd(\'' + id + '\',\'ev\')">予定に入れる</span> ／ <span onclick="_p2S3Sh=\'\';p2SmKpAdd(\'' + id + '\',\'todo\')">ToDoに入れる</span>（入れると今も＋1）</div>');
+  }
+  return h + '<div class="s3-go dk" onclick="p2S3Sheet(\'\')">閉じる</div>';
+}
 // ── スマホ：上から順に1ページ（目標 → MAP → 数字と改善点 → 行動）──
 function _p2ShPageHtml() {
+  if (_p2S3On()) return _p2S3Html(); // v850: スマホは1画面（新機能のテスト）
   _p2ShCss(); _p2ShCss2();
   var ym = _p2ShYmN();
   _p2ShMbCss();
