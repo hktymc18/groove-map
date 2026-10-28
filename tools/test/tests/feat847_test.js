@@ -68,7 +68,7 @@ T.run(async () => {
   c('オーナー以外には「新機能のテスト」は出ない', w._featAdmHtml() === '');
   w.currentUser = { uid: T.OWNER, name: '架空 オーナー', union: 'GRANT', area: '福岡' };
   w.document.getElementById('adminPanel').classList.add('open');
-  w.renderAdminList(); await sleep(20);
+  w.renderAdminList(); w.admTab('set'); w.admPg('feat'); await sleep(20); // v849: 設定 › 新機能のテスト
   const box = $('#featAdmBox');
   c('オーナーのアカウント管理に「新機能のテスト」', !!box && /新機能のテスト/.test(box.textContent) && /計画シートにまとめる/.test(box.textContent));
   c('状態と人数が見える', /テスト中・先に見られる人 1人/.test(box.textContent));

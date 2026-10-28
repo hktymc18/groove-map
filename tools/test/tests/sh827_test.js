@@ -116,7 +116,7 @@ T.run(async () => {
     { id: 'uA_uB', fromName: '架空 太郎', toName: '下田 一', rel: 'down', how: 'old', perm: 'view', at: '2026-10-18T01:00:00Z' },
     { id: 'uA_uC', fromName: '架空 太郎', toName: '横山 三', rel: 'unknown', how: 'confirm', perm: 'view', at: '2026-10-19T01:00:00Z' }
   ] : []);
-  w.openAdminPanel(); await sleep(60);
+  w.openAdminPanel(); await sleep(60); w.admTab('set'); w.admPg('sh'); // v849: 設定 › MAPの共有
   const box = () => $('#shAdmBox') ? $('#shAdmBox').textContent : '';
   c('アカウント管理に「MAPの共有」：上の人・アップ以外への共有の件数', /共有してよい上の人/.test(box()) && /上野 頂/.test(box()) && /アップ以外への共有 2件（ダウン1）/.test(box()));
   w.shAudOpen(); await sleep(5);
