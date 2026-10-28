@@ -249,12 +249,18 @@ service cloud.firestore {
     // ============ v838: ユニオンとUPBD（登録・プロフィールで所属ユニオンを選ぶと入るUPBD） ============
     //   appConfig/unions = { list:[{name, upbd}], at, by }。新規登録の画面（ログイン前）でも使うので読みはだれでも。
     //   変えられるのはオーナーだけ
+    //   v847: appConfig/features = { flags:{ 機能名:{ on, testers:[uid] } }, at, by }（新機能のテスト）。
+    //   読みはログインした人（自分に出すかを決めるため）・変えられるのはオーナーだけ
     match /appConfig/{doc} {
-      allow read: if doc == 'unions';
+      allow read: if doc == 'unions' || (doc == 'features' && signedIn());
       allow write: if doc == 'unions' && isOwnerAdmin()
         && request.resource.data.keys().hasOnly(['list', 'at', 'by'])
         && request.resource.data.list is list
         && request.resource.data.list.size() <= 100;
+      allow write: if doc == 'features' && isOwnerAdmin()
+        && request.resource.data.keys().hasOnly(['flags', 'at', 'by'])
+        && request.resource.data.flags is map
+        && request.resource.data.flags.size() <= 50;
     }
 
     // ============ v827: MAPの共有はアップだけ（#23） ============
