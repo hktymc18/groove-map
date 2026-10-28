@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v848';
+var APP_JS_VERSION = 'v849';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3524,6 +3524,7 @@ var _adminUsers = [];
 function openAdminPanel() {
   if (!_canAdmPanel()) { toast('権限がありません'); return; } // v831: 兼務のユニオン管理者も
   closeProfileModal(null);
+  _admTab = 'acc'; _admPg = ''; _admF = 'all'; // v849: 開いた時はアカウントの一覧
   document.getElementById('adminPanel').classList.add('open');
   loadAdminUsers();
 }
@@ -3621,16 +3622,97 @@ function admCoreSave(uid) {
   Promise.all(ps).then(function() { if (ps.length) toast('✓ 兼務するユニオンを保存しました'); }).catch(function() { toast('保存できませんでした'); _admCoreAllLoad(); });
   _accDlgClose(); renderAdminList();
 }
+// ── v849: アカウント管理を見やすく（アカウント｜設定 のタブ・絞り込み・設定は1行ずつのメニュー）──
+var _admTab = 'acc', _admPg = '', _admF = 'all';
+var ADM_F = [['all', 'すべて'], ['pend', '承認待ち'], ['pv', '未同意'], ['adm', '管理者'], ['early', '先行利用'], ['ok', '使える人']];
+function _admOwner() { return !!(currentUser && isOwnerUid(currentUser.uid)); }
+function admTab(t) { _admTab = t === 'set' ? 'set' : 'acc'; _admPg = ''; renderAdminList(); try { document.getElementById('adminBody').scrollTop = 0; } catch (e) {} }
+function admPg(k) { _admPg = k || ''; renderAdminList(); try { document.getElementById('adminBody').scrollTop = 0; } catch (e) {} }
+function admF(k) { _admF = k || 'all'; renderAdminList(); }
+function _admFOk(u, k) {
+  if (k === 'pend') return u.status === 'pending';
+  if (k === 'pv') return _pvNeed(u);
+  if (k === 'adm') return isOwnerUid(u.id) || u.role === 'admin';
+  if (k === 'early') return u.early === true && !_accExempt({ uid: u.id, role: u.role });
+  if (k === 'ok') return !!_accA && u.status !== 'pending' && _accAllowed({ uid: u.id, role: u.role, early: u.early, union: u.union }, _accA);
+  return true;
+}
+function _admCss() {
+  if (document.getElementById('admCss')) return;
+  var st = document.createElement('style'); st.id = 'admCss';
+  st.textContent = '.adm-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 16px 0;padding:4px;border-radius:12px;background:var(--surface2,var(--surface));border:1px solid var(--border)}'
+    + '.adm-tabs span{position:relative;padding:8px 4px;border-radius:9px;text-align:center;font-size:14px;font-weight:900;color:var(--text-mid);cursor:pointer}.adm-tabs span.on{background:var(--accent);color:var(--go-ink,#06251C)}'
+    + '.adm-tabs span i{position:absolute;top:7px;margin-left:4px;width:7px;height:7px;border-radius:50%;background:#FF5D73}'
+    + '.adm-fl{display:flex;gap:6px;overflow-x:auto;padding:10px 12px 6px;scrollbar-width:none}.adm-fl::-webkit-scrollbar{display:none}'
+    + '.adm-fl span{flex:none;padding:6px 11px;border-radius:999px;border:1px solid var(--border2);font-size:12.5px;font-weight:800;color:var(--text-mid);cursor:pointer;white-space:nowrap}.adm-fl span b{margin-left:4px;font-weight:900}.adm-fl span.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}'
+    + '.adm-fl span.hot b{color:#FF5D73}'
+    + '.adm-ln{display:flex;align-items:center;gap:8px;margin:8px 12px 2px;padding:10px 12px;border-radius:12px;border:1px solid var(--border);font-size:13px;font-weight:800;color:var(--text-mid);cursor:pointer}.adm-ln b{color:var(--text)}.adm-ln .ch{margin-left:auto;color:var(--text-dim)}'
+    + '.adm-mn{margin:10px 12px;border-radius:14px;border:1px solid var(--border);overflow:hidden;background:var(--surface)}'
+    + '.adm-mn>div{display:flex;align-items:center;gap:10px;padding:14px 14px;border-top:1px solid var(--border);cursor:pointer}.adm-mn>div:first-child{border-top:0}'
+    + '.adm-mn b{font-size:15px;font-weight:900;white-space:nowrap}.adm-mn small{margin-left:auto;text-align:right;font-size:12px;font-weight:700;color:var(--text-dim);line-height:1.4}.adm-mn small .ng{color:#FF6B7F}.adm-mn .ch{flex:none;color:var(--text-dim);font-weight:900}'
+    + '.adm-mnt{margin:14px 16px 0;font-size:12px;font-weight:700;color:var(--text-dim);line-height:1.6}'
+    + '.adm-sph{display:flex;align-items:center;gap:6px;padding:12px 14px 4px}.adm-sph span{font-size:14px;font-weight:800;color:var(--accent);cursor:pointer}.adm-sph b{font-size:17px;font-weight:900;margin-left:4px}'
+    + '.adm-sp .acc-box{margin:0;padding:6px 16px 12px;border:0;border-radius:0;background:none}.adm-sp .acc-box>.h{display:block;font-size:0}.adm-sp .acc-box>.h small{display:block;font-size:12.5px;line-height:1.6}';
+  document.head.appendChild(st);
+}
+// 上のタブ（オーナーだけ）
+function _admTabsSync(owner) {
+  var p = document.getElementById('adminPanel'); if (!p) return;
+  var t = document.getElementById('adminTabs'), sr = p.querySelector('.sd-search');
+  if (!t) { t = document.createElement('div'); t.id = 'adminTabs'; if (sr) p.insertBefore(t, sr); else p.insertBefore(t, document.getElementById('adminBody')); }
+  var al = owner && _admSetAlert();
+  t.innerHTML = owner ? '<div class="adm-tabs"><span class="' + (_admTab === 'acc' ? 'on' : '') + '" onclick="admTab(\'acc\')">アカウント</span><span class="' + (_admTab === 'set' ? 'on' : '') + '" onclick="admTab(\'set\')">設定' + (al ? '<i></i>' : '') + '</span></div>' : '';
+  if (sr) sr.style.display = (owner && _admTab === 'set') ? 'none' : '';
+}
+// 設定の気にした方がいいこと（タブに赤丸）
+function _admSetAlert() { try { return _unionList().some(function(u) { return !u.upbd; }) || !_unionCfg; } catch (e) { return false; } }
+// 設定：1項目1行（右に今の状態）
+function _admSetMenuHtml() {
+  var A = _accA, cur = A ? (ACC_MODES.filter(function(m) { return m[0] === (A.mode || 'open'); })[0] || ACC_MODES[2]) : null, C = A ? _accCount(A) : null;
+  var acc = A ? cur[1] + '・使える人' + C.ok.length + '人' + (_accNames && _accNames.length ? '<br>登録待ちの名簿 ' + _accNames.length + '人' : '') : '読み込み中…';
+  var top = (_shTop && _shTop.uids) || null, aud = _shAud;
+  var sh = (top ? '上の人' + top.length + '人' : '…') + '・アップ以外' + (aud ? aud.length + '件' : '…');
+  var L = _unionList(), noUp = L.filter(function(u) { return !u.upbd; }).length;
+  var un = L.length + 'ユニオン' + (noUp ? '<br><span class="ng">UPBDが空 ' + noUp + '</span>' : '') + (_unionCfg ? '' : '<br><span class="ng">まだ保存していません</span>');
+  var FL = _featFlags(), nt = 0, no = 0; FEATURES.forEach(function(F) { var f = FL[F.k]; if (f && f.on) no++; else nt++; });
+  var ft = (nt ? 'テスト中' + nt + '件' : '') + (nt && no ? '・' : '') + (no ? '全員に公開' + no + '件' : '');
+  var row = function(k, lb, st) { return '<div onclick="admPg(\'' + k + '\')"><b>' + lb + '</b><small>' + st + '</small><span class="ch">›</span></div>'; };
+  return '<div class="adm-mn">' + row('acc', '公開範囲', acc) + row('sh', 'MAPの共有', sh) + row('un', 'ユニオンとUPBD', un) + row('feat', '新機能のテスト', ft || '—') + '</div>'
+    + '<div class="adm-mnt">押すと、その設定の画面が開きます。</div>';
+}
+var ADM_PG = { acc: '公開範囲', sh: 'MAPの共有', un: 'ユニオンとUPBD', feat: '新機能のテスト' };
+function _admPgHtml(k, owner) {
+  var inner = k === 'acc' ? _accPanelHtml() : k === 'sh' ? _shAdmHtml() : k === 'un' ? _unAdmHtml() : k === 'feat' ? _featAdmHtml() : '';
+  var back = owner ? '<span onclick="admPg(\'\')">‹ 設定</span>' : '<span onclick="admPg(\'\')">‹ アカウント</span>';
+  return '<div class="adm-sph">' + back + '<b>' + (ADM_PG[k] || '') + '</b></div><div class="adm-sp">' + inner + '</div>';
+}
+// オーナー以外：公開範囲は1行（押すと名簿の貼り付けなど）
+function _admAccLine() {
+  var A = _accA; if (!A) return '';
+  var cur = ACC_MODES.filter(function(m) { return m[0] === (A.mode || 'open'); })[0] || ACC_MODES[2], C = _accCount(A);
+  return '<div class="adm-ln" onclick="admPg(\'acc\')">公開範囲：<b>' + cur[1] + '</b>・使える人 ' + C.ok.length + '人<span class="ch">›</span></div>';
+}
 function renderAdminList() {
   var body = document.getElementById('adminBody');
   if (!body) return;
-  var q = ((document.getElementById('adminSearch')||{}).value||'').toLowerCase();
+  _accCss(); _admCss();
+  var owner = _admOwner();
+  if (!owner) { _admTab = 'acc'; if (_admPg !== 'acc') _admPg = ''; }
+  _admTabsSync(owner);
   var scoped = _adminScopedUsers();
-  var list = scoped.filter(function(u) {
-    if (_accFilter && _accA && !_accAllowed({ uid: u.id, role: u.role, early: u.early, union: u.union }, _accA)) return false; // v790: 使える人だけ
+  var cnt = document.getElementById('adminCount');
+  if (cnt) cnt.textContent = scoped.length + '人';
+  if (owner && _admTab === 'set') { body.innerHTML = _admPg ? _admPgHtml(_admPg, true) : _admSetMenuHtml(); return; }
+  if (_admPg === 'acc') { body.innerHTML = _admPgHtml('acc', false); return; }
+  var q = ((document.getElementById('adminSearch')||{}).value||'').toLowerCase();
+  var hit = scoped.filter(function(u) {
     if (!q) return true;
     return ((u.name||'')+(u.union||'')+(u.area||'')+(u.email||'')+(u.upRuby||'')+(u.upBd||'')).toLowerCase().indexOf(q) >= 0;
   });
+  if (_admF === 'ok' && !(_accA && (_accA.mode || 'open') !== 'open')) _admF = 'all';
+  var F = ADM_F.filter(function(f) { return f[0] !== 'ok' || (_accA && (_accA.mode || 'open') !== 'open'); });
+  var fl = '<div class="adm-fl">' + F.map(function(f) { var n = hit.filter(function(u) { return _admFOk(u, f[0]); }).length; return '<span class="' + (_admF === f[0] ? 'on' : '') + (f[0] === 'pend' && n ? ' hot' : '') + '" onclick="admF(\'' + f[0] + '\')">' + f[1] + '<b>' + n + '</b></span>'; }).join('') + '</div>';
+  var list = hit.filter(function(u) { return _admFOk(u, _admF); });
   var pending = list.filter(function(u){ return u.status === 'pending'; });
   var others  = list.filter(function(u){ return u.status !== 'pending'; });
   others.sort(function(a,b) {
@@ -3639,16 +3721,12 @@ function renderAdminList() {
     if (ra!==rb) return ra-rb;
     return (a.name||'').localeCompare(b.name||'');
   });
-  var cnt = document.getElementById('adminCount');
-  var _pvNo = scoped.filter(function(u){ return _pvNeed(u); }).length; // v668: 未同意の人数
-  if (cnt) cnt.textContent = scoped.length + '人' + (pending.length ? '・承認待ち'+pending.length : '') + (_pvNo ? '・未同意'+_pvNo : '');
-  var html = '';
+  var html = (owner ? '' : _admAccLine()) + _admUnFHtml() + fl;
   if (pending.length) {
     html += '<div style="padding:12px 14px 4px;font-size:12px;font-weight:700;color:#FFB454">⏳ 承認待ち（' + pending.length + '）</div>';
     html += pending.map(adminPendingRowHtml).join('');
     html += '<div style="height:6px;border-bottom:1px solid var(--border);margin-bottom:6px"></div>';
   }
-  html = _accPanelHtml() + _shAdmHtml() + _unAdmHtml() + _featAdmHtml() + _admUnFHtml() + html; // v847: 新機能のテスト（オーナー） // v838: ユニオンとUPBD（オーナー） // v831: 兼務の管理者はユニオンで絞れる // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
   if (!others.length && !pending.length) { body.innerHTML = html + '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
   html += others.map(adminRowHtml).join('');
   body.innerHTML = html;
@@ -4493,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v848';
+  var DATA_VERSION = 'v849';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6603,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v849', d:'2026-10-28', items:['アカウント管理を見やすく：「アカウント｜設定」のタブに分け、一覧は「すべて・承認待ち・未同意・管理者・先行利用」で絞り込めるように。公開範囲・MAPの共有・ユニオンとUPBD・新機能のテストは「設定」に1行ずつ'] },
   { v:'v848', d:'2026-10-28', items:['（開発メンバーで試し中）「○月の目標」を計画シートにまとめる準備をしました。全員に出す時はあらためてお知らせします'] },
   { v:'v847', d:'2026-10-28', items:['新しい機能を、先に開発メンバーだけで試してから全員に出せる仕組みを入れました（今の画面は変わりません）'] },
   { v:'v846', d:'2026-10-28', items:['ユーザーの一覧（スマホのカード・PCの表）からも、右のゴミ箱で削除できるようにしました（削除したあと「元に戻す」で戻せます）'] },
@@ -38889,7 +38968,7 @@ function _accPanelHtml() {
     }
   }
   h += '<div class="acc-st">使える人 <b>' + C.ok.length + '人</b>（先行利用 ' + early + '人）' + (mode === 'open' ? '' : '・<span class="ng">まだ使えない人 ' + C.ng.length + '人</span>') + (_accNames && _accNames.length ? '・登録待ちの名簿 ' + _accNames.length + '人' : '') + '</div>';
-  h += '<div class="acc-acts"><span class="p" onclick="accPasteOpen()">名簿を貼り付けて先行利用に</span><span class="' + (_accFilter ? 'on' : '') + '" onclick="_accFilter=!_accFilter;renderAdminList()">' + (_accFilter ? '✓ ' : '') + '使える人だけ表示</span>'
+  h += '<div class="acc-acts"><span class="p" onclick="accPasteOpen()">名簿を貼り付けて先行利用に</span>'
     + (_accNames && _accNames.length ? '<span onclick="accNamesOpen()">登録待ちの名簿 ›</span>' : '') + '</div></div>';
   return h;
 }

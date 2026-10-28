@@ -58,7 +58,9 @@ T.run(async () => {
     { id: 'p1', name: '新人 架空', union: 'GRANT', status: 'pending' }];
   w.document.getElementById('adminPanel').classList.add('open');
   w.renderAdminList(); w._accLoad(); await sleep(30);
+  w.admTab('set'); w.admPg('acc'); // v849: 公開範囲は 設定 › 公開範囲
   c('アカウント管理の上に公開範囲（3段階）', !!$('#adminBody .acc-box') && $$('#adminBody .acc-seg span').length === 3 && /全国公開/.test($('#adminBody .acc-seg span.on').textContent));
+  w.admTab('acc');
   c('行ごとに「先行利用にする」・管理者は「使えます」', $$('#adminBody .acc-ev').some(x => /先行利用にする/.test(x.textContent)) && $$('#adminBody .acc-ev').some(x => /管理者＝使えます/.test(x.textContent)));
   // 貼り付け
   w.accPasteOpen(); await sleep(5);
@@ -78,10 +80,11 @@ T.run(async () => {
   w.accSetMode('early'); await sleep(5);
   c('先行利用に切りかえる前に、使えなくなる人の名前', !!$('#accOv') && /使えなくなる人がいます/.test($('#accOv').textContent) && /2人/.test($('#accOv').textContent) && /使う 予定外/.test($('#accOv').textContent) && /鈴木 花/.test($('#accOv').textContent));
   w._accP.go(); await sleep(10);
+  w.admTab('set'); w.admPg('acc');
   c('切りかえると保存', docs['appAccess/mode'].mode === 'early' && /先行利用/.test($('#adminBody .acc-seg span.on').textContent));
-  w._accFilter = true; w.renderAdminList();
-  c('「使える人だけ表示」', !$$('#adminBody .adm-row').some(r => /使う 予定外/.test(r.textContent)) && $$('#adminBody .adm-row').some(r => /佐藤太郎/.test(r.textContent)));
-  w._accFilter = false; w.renderAdminList();
+  w.admTab('acc'); w.admF('ok');
+  c('「使える人だけ表示」（v849：絞り込みの「使える人」）', !$$('#adminBody .adm-row').some(r => /使う 予定外/.test(r.textContent)) && $$('#adminBody .adm-row').some(r => /佐藤太郎/.test(r.textContent)));
+  w.admF('all');
   // 1人ずつ
   w.accEarlyTgl('b5'); await sleep(5);
   c('1人ずつ先行利用にできる', early('b5') && writes.some(x => x[0] === 'users/b5' && x[1].early === true));
@@ -92,7 +95,7 @@ T.run(async () => {
   w.adminApprove('p1'); await sleep(30);
   c('承認した人が登録待ちの名簿にいれば、先行利用にして名簿から外す', early('p1') && docs['appAccess/names'].names.length === 0);
   // オーナー以外は公開範囲を変えられない（画面）
-  w.currentUser = { uid: 'a1', name: '架空 管理', union: 'GRANT', role: 'admin' }; w.renderAdminList();
+  w.currentUser = { uid: 'a1', name: '架空 管理', union: 'GRANT', role: 'admin' }; w.renderAdminList(); w.admPg('acc');
   c('管理者には公開範囲の切りかえを出さない（貼り付けはできる）', !$('#adminBody .acc-seg') && /名簿を貼り付けて先行利用に/.test($('#adminBody .acc-box').textContent));
   w.closeAdminPanel();
   // ルール

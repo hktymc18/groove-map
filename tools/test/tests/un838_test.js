@@ -24,7 +24,7 @@ T.run(async () => {
   w.closeProfileModal(null);
   // オーナーの設定画面
   w._adminUsersFetch = () => Promise.resolve([]); w._admCkLoad = () => {}; w._accLoad = () => { w._accA = { mode: 'open', unions: [] }; }; w._shAdmLoad = () => {}; w._admCoreAllLoad = () => {};
-  w.openAdminPanel(); await sleep(30);
+  w.openAdminPanel(); await sleep(30); w.admTab('set'); w.admPg('un'); // v849: 設定 › ユニオンとUPBD
   c('オーナーのアカウント管理に「ユニオンとUPBD」', /ユニオンとUPBD/.test($('#unAdmBox').textContent) && /UPBDが空 1/.test($('#unAdmBox').textContent));
   w.unAdmOpen(); await sleep(5);
   c('一覧が開く（⠿・名前・UPBD・✕）', $$('#unAdmL .tdo-row').length === 2 && $$('#unAdmL .tdo-handle').length === 2);
