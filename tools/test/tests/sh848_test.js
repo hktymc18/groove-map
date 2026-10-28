@@ -11,6 +11,7 @@ T.run(async () => {
     { id: 'u3', lastName: '利用', firstName: '三', title: 'ユーザー', parentId: 'a', mapType: 'both', ptCurrent: 500 }];
   const ym = w._p2Ym(0), nx = w._p2Ym(1);
   setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('plan');
+  w._p2S3On = () => false; // v850: スマホは1画面（s3_850_test）になったので、ここではv848の並び（PCの表と同じ作り）を確かめる
   const nms = () => $$('.sp-kr .nm').map(x => x.textContent);
 
   // ① スイッチが切れている時は今までどおり
