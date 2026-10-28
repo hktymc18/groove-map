@@ -34,5 +34,5 @@ T.run(async () => {
   c('設定ずみなら入口の行は目立たせない（なおす ›）', !$('#view-plan .ux-li.p2-monx') && /なおす/.test($('#view-plan').textContent));
   // PC：タブ
   const src = require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8');
-  c('PCのPLANのタブに「◯月の目標」・ほかのタブも全部ある', /tab\('mon', parseInt\(ym\.slice\(5\), 10\) \+ '月の目標'\) \+ tab\('ideal', '理想'\) \+ tab\('dream', '夢100'\) \+ tab\('sim', 'シミュレーション'\) \+ tab\('ck', 'チェック'\)/.test(src) && !/goal: 'tool', mon: 'tool'/.test(src));
+  c('PCのPLANのタブに「◯月の目標」・ほかのタブも全部ある', /\(_p2Sh2\(\) \? '' : tab\('mon', parseInt\(ym\.slice\(5\), 10\) \+ '月の目標'\)\) \+ tab\('ideal', '理想'\) \+ tab\('dream', '夢100'\) \+ tab\('sim', 'シミュレーション'\) \+ tab\('ck', 'チェック'\)/.test(src) && !/goal: 'tool', mon: 'tool'/.test(src));
 });
